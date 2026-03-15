@@ -4,6 +4,7 @@ using MegaCrit.Sts2.Core.Modding;
 using STS2RitsuLib.Content;
 using STS2RitsuLib.Content.Patches;
 using STS2RitsuLib.Data;
+using STS2RitsuLib.Keywords;
 using STS2RitsuLib.Lifecycle.Patches;
 using STS2RitsuLib.Patching.Core;
 using STS2RitsuLib.Timeline;
@@ -97,6 +98,8 @@ namespace STS2RitsuLib
                     _frameworkPatcher.RegisterPatch<ProfileDeletePatch>();
 
                     _frameworkPatcher.RegisterPatch<AllCharactersPatch>();
+                    _frameworkPatcher.RegisterPatch<AllPowersPatch>();
+                    _frameworkPatcher.RegisterPatch<AllOrbsPatch>();
                     _frameworkPatcher.RegisterPatch<AllSharedEventsPatch>();
                     _frameworkPatcher.RegisterPatch<AllEventsPatch>();
                     _frameworkPatcher.RegisterPatch<AllSharedAncientsPatch>();
@@ -181,6 +184,11 @@ namespace STS2RitsuLib
         public static ModContentRegistry GetContentRegistry(string modId)
         {
             return ModContentRegistry.For(modId);
+        }
+
+        public static ModKeywordRegistry GetKeywordRegistry(string modId)
+        {
+            return ModKeywordRegistry.For(modId);
         }
 
         public static ModTimelineRegistry GetTimelineRegistry(string modId)

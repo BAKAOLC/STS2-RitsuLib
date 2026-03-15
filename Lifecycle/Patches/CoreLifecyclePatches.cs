@@ -2,6 +2,7 @@ using System.Reflection;
 using MegaCrit.Sts2.Core.Helpers;
 using MegaCrit.Sts2.Core.Models;
 using MegaCrit.Sts2.Core.Multiplayer.Game;
+using MegaCrit.Sts2.Core.Multiplayer.Serialization;
 using MegaCrit.Sts2.Core.Nodes;
 using MegaCrit.Sts2.Core.Runs;
 using MegaCrit.Sts2.Core.Saves;
@@ -74,6 +75,9 @@ namespace STS2RitsuLib.Lifecycle.Patches
 
     public class ModelRegistryLifecyclePatch : IPatchMethod
     {
+        private static readonly FieldInfo? ReflectionHelperModTypesField =
+            typeof(ReflectionHelper).GetField("_modTypes", BindingFlags.Static | BindingFlags.NonPublic);
+
         public static string PatchId => "model_registry_lifecycle";
         public static string Description => "Publish lifecycle events around ModelDb initialization phases";
         public static bool IsCritical => false;
@@ -83,6 +87,7 @@ namespace STS2RitsuLib.Lifecycle.Patches
             return
             [
                 new(typeof(ModelDb), nameof(ModelDb.Init)),
+                new(typeof(ModelIdSerializationCache), nameof(ModelIdSerializationCache.Init)),
                 new(typeof(ModelDb), nameof(ModelDb.InitIds)),
                 new(typeof(ModelDb), nameof(ModelDb.Preload)),
             ];
@@ -91,25 +96,30 @@ namespace STS2RitsuLib.Lifecycle.Patches
         // ReSharper disable once InconsistentNaming
         public static void Prefix(MethodBase __originalMethod)
         {
-            switch (__originalMethod.Name)
+            switch (__originalMethod.DeclaringType, __originalMethod.Name)
             {
-                case nameof(ModelDb.Init):
+                case ({ } declaringType, nameof(ModelDb.Init)) when declaringType == typeof(ModelDb):
                     ModContentRegistry.FreezeRegistrations(nameof(ModelDb.Init));
                     ModTimelineRegistry.FreezeRegistrations(nameof(ModelDb.Init));
                     ModUnlockRegistry.FreezeRegistrations(nameof(ModelDb.Init));
                     RegistrationConflictDetector.ValidateAndLogModelIdCollisions();
+                    RefreshModTypeCache();
                     RitsuLibFramework.PublishLifecycleEvent(
                         new ModelRegistryInitializingEvent(DateTimeOffset.UtcNow),
                         nameof(ModelRegistryInitializingEvent)
                     );
                     break;
-                case nameof(ModelDb.InitIds):
+                case ({ } declaringType, nameof(ModelIdSerializationCache.Init))
+                    when declaringType == typeof(ModelIdSerializationCache):
+                    RefreshModTypeCache();
+                    break;
+                case ({ } declaringType, nameof(ModelDb.InitIds)) when declaringType == typeof(ModelDb):
                     RitsuLibFramework.PublishLifecycleEvent(
                         new ModelIdsInitializingEvent(DateTimeOffset.UtcNow),
                         nameof(ModelIdsInitializingEvent)
                     );
                     break;
-                case nameof(ModelDb.Preload):
+                case ({ } declaringType, nameof(ModelDb.Preload)) when declaringType == typeof(ModelDb):
                     RitsuLibFramework.PublishLifecycleEvent(
                         new ModelPreloadingStartingEvent(DateTimeOffset.UtcNow),
                         nameof(ModelPreloadingStartingEvent)
@@ -143,6 +153,11 @@ namespace STS2RitsuLib.Lifecycle.Patches
                     );
                     break;
             }
+        }
+
+        private static void RefreshModTypeCache()
+        {
+            ReflectionHelperModTypesField?.SetValue(null, null);
         }
     }
 
@@ -200,8 +215,8 @@ namespace STS2RitsuLib.Lifecycle.Patches
 
         // ReSharper disable InconsistentNaming
         public static void Postfix(
-            MethodBase __originalMethod,
-            RunManager __instance)
+                MethodBase __originalMethod,
+                RunManager __instance)
             // ReSharper restore InconsistentNaming
         {
             var state = __instance.State;

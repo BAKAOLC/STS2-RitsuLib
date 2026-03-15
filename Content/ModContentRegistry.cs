@@ -20,6 +20,8 @@ namespace STS2RitsuLib.Content
 
         private static readonly HashSet<(Type PoolType, Type ModelType)> RegisteredPoolContent = [];
         private static readonly HashSet<Type> RegisteredCharacters = [];
+        private static readonly HashSet<Type> RegisteredPowers = [];
+        private static readonly HashSet<Type> RegisteredOrbs = [];
         private static readonly HashSet<Type> RegisteredSharedEvents = [];
         private static readonly HashSet<Type> RegisteredSharedAncients = [];
         private static readonly Dictionary<Type, HashSet<Type>> RegisteredActEvents = [];
@@ -82,6 +84,16 @@ namespace STS2RitsuLib.Content
             RegisterStandaloneModel(RegisteredCharacters, typeof(TCharacter), typeof(CharacterModel), "character");
         }
 
+        public void RegisterPower<TPower>() where TPower : PowerModel
+        {
+            RegisterStandaloneModel(RegisteredPowers, typeof(TPower), typeof(PowerModel), "power");
+        }
+
+        public void RegisterOrb<TOrb>() where TOrb : OrbModel
+        {
+            RegisterStandaloneModel(RegisteredOrbs, typeof(TOrb), typeof(OrbModel), "orb");
+        }
+
         public void RegisterSharedEvent<TEvent>() where TEvent : EventModel
         {
             RegisterStandaloneModel(RegisteredSharedEvents, typeof(TEvent), typeof(EventModel), "shared event");
@@ -138,6 +150,16 @@ namespace STS2RitsuLib.Content
             return AppendResolved(source, ResolveModels<EventModel>(RegisteredSharedEvents));
         }
 
+        internal static IEnumerable<PowerModel> AppendPowers(IEnumerable<PowerModel> source)
+        {
+            return AppendResolved(source, ResolveModels<PowerModel>(RegisteredPowers));
+        }
+
+        internal static IEnumerable<OrbModel> AppendOrbs(IEnumerable<OrbModel> source)
+        {
+            return AppendResolved(source, ResolveModels<OrbModel>(RegisteredOrbs));
+        }
+
         internal static IEnumerable<EventModel> AppendActEvents(ActModel act, IEnumerable<EventModel> source)
         {
             return AppendResolved(source, ResolveScopedModels<EventModel>(RegisteredActEvents, act.GetType()));
@@ -152,6 +174,29 @@ namespace STS2RitsuLib.Content
             IEnumerable<AncientEventModel> source)
         {
             return AppendResolved(source, ResolveScopedModels<AncientEventModel>(RegisteredActAncients, act.GetType()));
+        }
+
+        internal static void InjectRegisteredModels()
+        {
+            Type[] typesToInject;
+
+            lock (SyncRoot)
+            {
+                typesToInject = RegisteredPoolContent
+                    .SelectMany(static entry => new[] { entry.PoolType, entry.ModelType })
+                    .Concat(RegisteredCharacters)
+                    .Concat(RegisteredPowers)
+                    .Concat(RegisteredOrbs)
+                    .Concat(RegisteredSharedEvents)
+                    .Concat(RegisteredSharedAncients)
+                    .Concat(RegisteredActEvents.Values.SelectMany(static set => set))
+                    .Concat(RegisteredActAncients.Values.SelectMany(static set => set))
+                    .Distinct()
+                    .ToArray();
+            }
+
+            foreach (var type in typesToInject)
+                ModelDb.Inject(type);
         }
 
         private void RegisterPoolModel(Type poolType, Type modelType, string contentKind)

@@ -39,6 +39,42 @@ namespace STS2RitsuLib.Content.Patches
         }
     }
 
+    public class AllPowersPatch : IPatchMethod
+    {
+        public static string PatchId => "modeldb_all_powers";
+        public static string Description => "Append registered powers to ModelDb.AllPowers";
+        public static bool IsCritical => true;
+
+        public static ModPatchTarget[] GetTargets()
+        {
+            return [new(typeof(ModelDb), "get_AllPowers")];
+        }
+
+        // ReSharper disable once InconsistentNaming
+        public static void Postfix(ref IEnumerable<PowerModel> __result)
+        {
+            __result = ModContentRegistry.AppendPowers(__result);
+        }
+    }
+
+    public class AllOrbsPatch : IPatchMethod
+    {
+        public static string PatchId => "modeldb_orbs";
+        public static string Description => "Append registered orbs to ModelDb.Orbs";
+        public static bool IsCritical => true;
+
+        public static ModPatchTarget[] GetTargets()
+        {
+            return [new(typeof(ModelDb), "get_Orbs")];
+        }
+
+        // ReSharper disable once InconsistentNaming
+        public static void Postfix(ref IEnumerable<OrbModel> __result)
+        {
+            __result = ModContentRegistry.AppendOrbs(__result);
+        }
+    }
+
     public class AllEventsPatch : IPatchMethod
     {
         public static string PatchId => "modeldb_all_events";
