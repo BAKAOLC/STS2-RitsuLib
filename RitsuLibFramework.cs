@@ -125,6 +125,7 @@ namespace STS2RitsuLib
                     _frameworkPatcher.RegisterPatch<CharacterCastSfxPatch>();
                     _frameworkPatcher.RegisterPatch<CharacterDeathSfxPatch>();
                     _frameworkPatcher.RegisterPatch<CharacterCombatSpineOverridePatch>();
+                    _frameworkPatcher.RegisterPatch<CharacterGameOverScreenCompatibilityPatch>();
 
                     _frameworkPatcher.RegisterPatch<CharacterUnlockFilterPatch>();
                     _frameworkPatcher.RegisterPatch<SharedAncientUnlockFilterPatch>();
