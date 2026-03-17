@@ -158,6 +158,8 @@ namespace STS2RitsuLib
                     _frameworkPatcher.RegisterPatch<CardOverlayPathPatch>();
                     _frameworkPatcher.RegisterPatch<CardOverlayAvailabilityPatch>();
                     _frameworkPatcher.RegisterPatch<CardOverlayCreatePatch>();
+                    _frameworkPatcher.RegisterPatch<CardBannerTexturePatch>();
+                    _frameworkPatcher.RegisterPatch<CardBannerMaterialPatch>();
                     _frameworkPatcher.RegisterPatch<CardDynamicVarTooltipPatch>();
                     _frameworkPatcher.RegisterPatch<DynamicVarTooltipClonePatch>();
                     _frameworkPatcher.RegisterPatch<RelicIconPathPatch>();
@@ -169,6 +171,11 @@ namespace STS2RitsuLib
                     _frameworkPatcher.RegisterPatch<OrbAssetPathsPatch>();
                     _frameworkPatcher.RegisterPatch<PotionImagePathPatch>();
                     _frameworkPatcher.RegisterPatch<PotionTexturePatch>();
+                    _frameworkPatcher.RegisterPatch<AfflictionOverlayPathPatch>();
+                    _frameworkPatcher.RegisterPatch<AfflictionHasOverlayPatch>();
+                    _frameworkPatcher.RegisterPatch<AfflictionCreateOverlayPatch>();
+                    _frameworkPatcher.RegisterPatch<EnchantmentIntendedIconPathPatch>();
+                    _frameworkPatcher.RegisterPatch<PowerResolvedBigIconPathPatch>();
 
                     _frameworkPatcher.RegisterPatch<ProfilePathInitializedPatch>();
                     _frameworkPatcher.RegisterPatch<ProfileDeletePatch>();
@@ -197,6 +204,10 @@ namespace STS2RitsuLib
                     _frameworkPatcher.RegisterPatch<CharacterAttackSfxPatch>();
                     _frameworkPatcher.RegisterPatch<CharacterCastSfxPatch>();
                     _frameworkPatcher.RegisterPatch<CharacterDeathSfxPatch>();
+                    _frameworkPatcher.RegisterPatch<CharacterArmPointingTexturePathPatch>();
+                    _frameworkPatcher.RegisterPatch<CharacterArmRockTexturePathPatch>();
+                    _frameworkPatcher.RegisterPatch<CharacterArmPaperTexturePathPatch>();
+                    _frameworkPatcher.RegisterPatch<CharacterArmScissorsTexturePathPatch>();
                     _frameworkPatcher.RegisterPatch<CharacterCombatSpineOverridePatch>();
                     _frameworkPatcher.RegisterPatch<CharacterGameOverScreenCompatibilityPatch>();
 

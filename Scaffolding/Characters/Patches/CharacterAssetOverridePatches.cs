@@ -283,4 +283,84 @@ namespace STS2RitsuLib.Scaffolding.Characters.Patches
             return CharacterAssetOverridePatchHelper.TryUseOverride(__instance, ref __result, o => o.CustomDeathSfx);
         }
     }
+
+    public class CharacterArmPointingTexturePathPatch : IPatchMethod
+    {
+        public static string PatchId => "character_asset_override_arm_pointing_texture_path";
+        public static string Description => "Allow mod characters to override CharacterModel.ArmPointingTexturePath";
+        public static bool IsCritical => false;
+
+        public static ModPatchTarget[] GetTargets()
+        {
+            return [new(typeof(CharacterModel), "get_ArmPointingTexturePath")];
+        }
+
+        // ReSharper disable InconsistentNaming
+        public static bool Prefix(CharacterModel __instance, ref string __result)
+            // ReSharper restore InconsistentNaming
+        {
+            return CharacterAssetOverridePatchHelper.TryUseOverride(__instance, ref __result,
+                o => o.CustomArmPointingTexturePath);
+        }
+    }
+
+    public class CharacterArmRockTexturePathPatch : IPatchMethod
+    {
+        public static string PatchId => "character_asset_override_arm_rock_texture_path";
+        public static string Description => "Allow mod characters to override CharacterModel.ArmRockTexturePath";
+        public static bool IsCritical => false;
+
+        public static ModPatchTarget[] GetTargets()
+        {
+            return [new(typeof(CharacterModel), "get_ArmRockTexturePath")];
+        }
+
+        // ReSharper disable InconsistentNaming
+        public static bool Prefix(CharacterModel __instance, ref string __result)
+            // ReSharper restore InconsistentNaming
+        {
+            return CharacterAssetOverridePatchHelper.TryUseOverride(__instance, ref __result,
+                o => o.CustomArmRockTexturePath);
+        }
+    }
+
+    public class CharacterArmPaperTexturePathPatch : IPatchMethod
+    {
+        public static string PatchId => "character_asset_override_arm_paper_texture_path";
+        public static string Description => "Allow mod characters to override CharacterModel.ArmPaperTexturePath";
+        public static bool IsCritical => false;
+
+        public static ModPatchTarget[] GetTargets()
+        {
+            return [new(typeof(CharacterModel), "get_ArmPaperTexturePath")];
+        }
+
+        // ReSharper disable InconsistentNaming
+        public static bool Prefix(CharacterModel __instance, ref string __result)
+            // ReSharper restore InconsistentNaming
+        {
+            return CharacterAssetOverridePatchHelper.TryUseOverride(__instance, ref __result,
+                o => o.CustomArmPaperTexturePath);
+        }
+    }
+
+    public class CharacterArmScissorsTexturePathPatch : IPatchMethod
+    {
+        public static string PatchId => "character_asset_override_arm_scissors_texture_path";
+        public static string Description => "Allow mod characters to override CharacterModel.ArmScissorsTexturePath";
+        public static bool IsCritical => false;
+
+        public static ModPatchTarget[] GetTargets()
+        {
+            return [new(typeof(CharacterModel), "get_ArmScissorsTexturePath")];
+        }
+
+        // ReSharper disable InconsistentNaming
+        public static bool Prefix(CharacterModel __instance, ref string __result)
+            // ReSharper restore InconsistentNaming
+        {
+            return CharacterAssetOverridePatchHelper.TryUseOverride(__instance, ref __result,
+                o => o.CustomArmScissorsTexturePath);
+        }
+    }
 }

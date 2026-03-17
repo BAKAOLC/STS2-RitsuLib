@@ -30,7 +30,12 @@ namespace STS2RitsuLib.Scaffolding.Characters
                     $"event:/sfx/ui/wipe_{id}",
                     $"event:/sfx/characters/{id}/{id}_attack",
                     $"event:/sfx/characters/{id}/{id}_cast",
-                    $"event:/sfx/characters/{id}/{id}_die"));
+                    $"event:/sfx/characters/{id}/{id}_die"),
+                Multiplayer: new(
+                    $"res://images/ui/hands/multiplayer_hand_{id}_point.png",
+                    $"res://images/ui/hands/multiplayer_hand_{id}_rock.png",
+                    $"res://images/ui/hands/multiplayer_hand_{id}_paper.png",
+                    $"res://images/ui/hands/multiplayer_hand_{id}_scissors.png"));
         }
 
         public static CharacterAssetProfile Ironclad()
@@ -86,6 +91,13 @@ namespace STS2RitsuLib.Scaffolding.Characters
                 ArgumentNullException.ThrowIfNull(profile);
                 ArgumentNullException.ThrowIfNull(audio);
                 return profile with { Audio = audio };
+            }
+
+            public CharacterAssetProfile WithMultiplayer(CharacterMultiplayerAssetSet multiplayer)
+            {
+                ArgumentNullException.ThrowIfNull(profile);
+                ArgumentNullException.ThrowIfNull(multiplayer);
+                return profile with { Multiplayer = multiplayer };
             }
         }
     }

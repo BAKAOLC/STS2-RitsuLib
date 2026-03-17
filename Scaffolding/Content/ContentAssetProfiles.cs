@@ -9,7 +9,9 @@ namespace STS2RitsuLib.Scaffolding.Content
         string? PortraitBorderPath = null,
         string? EnergyIconPath = null,
         string? FrameMaterialPath = null,
-        string? OverlayScenePath = null)
+        string? OverlayScenePath = null,
+        string? BannerTexturePath = null,
+        string? BannerMaterialPath = null)
     {
         public static CardAssetProfile Empty { get; } = new();
     }

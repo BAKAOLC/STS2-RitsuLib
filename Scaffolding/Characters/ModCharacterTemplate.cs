@@ -25,6 +25,10 @@ namespace STS2RitsuLib.Scaffolding.Characters
         string? CustomAttackSfx { get; }
         string? CustomCastSfx { get; }
         string? CustomDeathSfx { get; }
+        string? CustomArmPointingTexturePath { get; }
+        string? CustomArmRockTexturePath { get; }
+        string? CustomArmPaperTexturePath { get; }
+        string? CustomArmScissorsTexturePath { get; }
     }
 
     public abstract class ModCharacterTemplate<TCardPool, TRelicPool, TPotionPool> : CharacterModel
@@ -95,6 +99,10 @@ namespace STS2RitsuLib.Scaffolding.Characters
         public virtual string? CustomAttackSfx => AssetProfile.Audio?.AttackSfx;
         public virtual string? CustomCastSfx => AssetProfile.Audio?.CastSfx;
         public virtual string? CustomDeathSfx => AssetProfile.Audio?.DeathSfx;
+        public virtual string? CustomArmPointingTexturePath => AssetProfile.Multiplayer?.ArmPointingTexturePath;
+        public virtual string? CustomArmRockTexturePath => AssetProfile.Multiplayer?.ArmRockTexturePath;
+        public virtual string? CustomArmPaperTexturePath => AssetProfile.Multiplayer?.ArmPaperTexturePath;
+        public virtual string? CustomArmScissorsTexturePath => AssetProfile.Multiplayer?.ArmScissorsTexturePath;
 
         protected static IEnumerable<TModel> ResolveModels<TModel>(IEnumerable<Type> types)
             where TModel : AbstractModel

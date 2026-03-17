@@ -119,6 +119,8 @@ namespace STS2RitsuLib.Scaffolding.Content.Patches
         string? CustomEnergyIconPath { get; }
         string? CustomFrameMaterialPath { get; }
         string? CustomOverlayScenePath { get; }
+        string? CustomBannerTexturePath { get; }
+        string? CustomBannerMaterialPath { get; }
     }
 
     public interface IModRelicAssetOverrides
@@ -624,6 +626,172 @@ namespace STS2RitsuLib.Scaffolding.Content.Patches
                     __instance, ref __result, o => o.CustomOutlinePath),
                 _ => true,
             };
+        }
+    }
+
+    public class CardBannerTexturePatch : IPatchMethod
+    {
+        public static string PatchId => "content_asset_override_card_banner_texture";
+        public static string Description => "Allow mod cards to override BannerTexture";
+        public static bool IsCritical => false;
+
+        public static ModPatchTarget[] GetTargets()
+        {
+            return [new(typeof(CardModel), "get_BannerTexture")];
+        }
+
+        // ReSharper disable InconsistentNaming
+        public static bool Prefix(CardModel __instance, ref Texture2D __result)
+            // ReSharper restore InconsistentNaming
+        {
+            return ContentAssetOverridePatchHelper.TryUseTextureOverride<IModCardAssetOverrides>(
+                __instance, ref __result, o => o.CustomBannerTexturePath);
+        }
+    }
+
+    public class CardBannerMaterialPatch : IPatchMethod
+    {
+        public static string PatchId => "content_asset_override_card_banner_material";
+        public static string Description => "Allow mod cards to override BannerMaterial";
+        public static bool IsCritical => false;
+
+        public static ModPatchTarget[] GetTargets()
+        {
+            return [new(typeof(CardModel), "get_BannerMaterial")];
+        }
+
+        // ReSharper disable InconsistentNaming
+        public static bool Prefix(CardModel __instance, ref Material __result)
+            // ReSharper restore InconsistentNaming
+        {
+            return ContentAssetOverridePatchHelper.TryUseMaterialOverride<IModCardAssetOverrides>(
+                __instance, ref __result, o => o.CustomBannerMaterialPath);
+        }
+    }
+
+    public interface IModAfflictionAssetOverrides
+    {
+        string? CustomOverlayScenePath { get; }
+    }
+
+    public class AfflictionOverlayPathPatch : IPatchMethod
+    {
+        public static string PatchId => "content_asset_override_affliction_overlay_path";
+        public static string Description => "Allow mod afflictions to override OverlayPath";
+        public static bool IsCritical => false;
+
+        public static ModPatchTarget[] GetTargets()
+        {
+            return [new(typeof(AfflictionModel), "get_OverlayPath")];
+        }
+
+        // ReSharper disable InconsistentNaming
+        public static bool Prefix(AfflictionModel __instance, ref string __result)
+            // ReSharper restore InconsistentNaming
+        {
+            return ContentAssetOverridePatchHelper.TryUseStringOverride<IModAfflictionAssetOverrides>(
+                __instance, ref __result, o => o.CustomOverlayScenePath);
+        }
+    }
+
+    public class AfflictionHasOverlayPatch : IPatchMethod
+    {
+        public static string PatchId => "content_asset_override_affliction_has_overlay";
+        public static string Description => "Allow mod afflictions to advertise overlay availability";
+        public static bool IsCritical => false;
+
+        public static ModPatchTarget[] GetTargets()
+        {
+            return [new(typeof(AfflictionModel), "get_HasOverlay")];
+        }
+
+        // ReSharper disable InconsistentNaming
+        public static bool Prefix(AfflictionModel __instance, ref bool __result)
+            // ReSharper restore InconsistentNaming
+        {
+            var path = string.Empty;
+            if (ContentAssetOverridePatchHelper.TryUseStringOverride<IModAfflictionAssetOverrides>(
+                    __instance,
+                    ref path,
+                    o => o.CustomOverlayScenePath))
+                return true;
+
+            return ContentAssetOverridePatchHelper.TryUseExistenceOverride(path, ref __result);
+        }
+    }
+
+    public class AfflictionCreateOverlayPatch : IPatchMethod
+    {
+        public static string PatchId => "content_asset_override_affliction_create_overlay";
+        public static string Description => "Allow mod afflictions to instantiate overlays from custom scene paths";
+        public static bool IsCritical => false;
+
+        public static ModPatchTarget[] GetTargets()
+        {
+            return [new(typeof(AfflictionModel), nameof(AfflictionModel.CreateOverlay))];
+        }
+
+        // ReSharper disable InconsistentNaming
+        public static bool Prefix(AfflictionModel __instance, ref Control __result)
+            // ReSharper restore InconsistentNaming
+        {
+            var path = string.Empty;
+            if (ContentAssetOverridePatchHelper.TryUseStringOverride<IModAfflictionAssetOverrides>(
+                    __instance,
+                    ref path,
+                    o => o.CustomOverlayScenePath))
+                return true;
+
+            if (!ResourceLoader.Exists(path))
+                return true;
+
+            __result = ResourceLoader.Load<PackedScene>(path).Instantiate<Control>();
+            return false;
+        }
+    }
+
+    public interface IModEnchantmentAssetOverrides
+    {
+        string? CustomIconPath { get; }
+    }
+
+    public class EnchantmentIntendedIconPathPatch : IPatchMethod
+    {
+        public static string PatchId => "content_asset_override_enchantment_intended_icon_path";
+        public static string Description => "Allow mod enchantments to override IntendedIconPath";
+        public static bool IsCritical => false;
+
+        public static ModPatchTarget[] GetTargets()
+        {
+            return [new(typeof(EnchantmentModel), "get_IntendedIconPath")];
+        }
+
+        // ReSharper disable InconsistentNaming
+        public static bool Prefix(EnchantmentModel __instance, ref string __result)
+            // ReSharper restore InconsistentNaming
+        {
+            return ContentAssetOverridePatchHelper.TryUseStringOverride<IModEnchantmentAssetOverrides>(
+                __instance, ref __result, o => o.CustomIconPath);
+        }
+    }
+
+    public class PowerResolvedBigIconPathPatch : IPatchMethod
+    {
+        public static string PatchId => "content_asset_override_power_resolved_big_icon_path";
+        public static string Description => "Allow mod powers to override ResolvedBigIconPath for preloading";
+        public static bool IsCritical => false;
+
+        public static ModPatchTarget[] GetTargets()
+        {
+            return [new(typeof(PowerModel), "get_ResolvedBigIconPath")];
+        }
+
+        // ReSharper disable InconsistentNaming
+        public static bool Prefix(PowerModel __instance, ref string __result)
+            // ReSharper restore InconsistentNaming
+        {
+            return ContentAssetOverridePatchHelper.TryUseStringOverride<IModPowerAssetOverrides>(
+                __instance, ref __result, o => o.CustomBigIconPath);
         }
     }
 }

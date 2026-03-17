@@ -44,12 +44,19 @@ namespace STS2RitsuLib.Scaffolding.Characters
         string? CastSfx = null,
         string? DeathSfx = null);
 
+    public sealed record CharacterMultiplayerAssetSet(
+        string? ArmPointingTexturePath = null,
+        string? ArmRockTexturePath = null,
+        string? ArmPaperTexturePath = null,
+        string? ArmScissorsTexturePath = null);
+
     public sealed record CharacterAssetProfile(
         CharacterSceneAssetSet? Scenes = null,
         CharacterUiAssetSet? Ui = null,
         CharacterVfxAssetSet? Vfx = null,
         CharacterSpineAssetSet? Spine = null,
-        CharacterAudioAssetSet? Audio = null)
+        CharacterAudioAssetSet? Audio = null,
+        CharacterMultiplayerAssetSet? Multiplayer = null)
     {
         public static CharacterAssetProfile Empty { get; } = new();
     }

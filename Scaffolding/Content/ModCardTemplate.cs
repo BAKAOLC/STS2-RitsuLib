@@ -32,5 +32,7 @@ namespace STS2RitsuLib.Scaffolding.Content
         public virtual string? CustomEnergyIconPath => AssetProfile.EnergyIconPath;
         public virtual string? CustomFrameMaterialPath => AssetProfile.FrameMaterialPath;
         public virtual string? CustomOverlayScenePath => AssetProfile.OverlayScenePath;
+        public virtual string? CustomBannerTexturePath => AssetProfile.BannerTexturePath;
+        public virtual string? CustomBannerMaterialPath => AssetProfile.BannerMaterialPath;
     }
 }
