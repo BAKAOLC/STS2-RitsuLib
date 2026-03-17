@@ -8,7 +8,8 @@ namespace STS2RitsuLib.Scaffolding.Content
         string? FramePath = null,
         string? PortraitBorderPath = null,
         string? EnergyIconPath = null,
-        string? FrameMaterialPath = null)
+        string? FrameMaterialPath = null,
+        string? OverlayScenePath = null)
     {
         public static CardAssetProfile Empty { get; } = new();
     }
@@ -53,7 +54,8 @@ namespace STS2RitsuLib.Scaffolding.Content
             var normalizedCard = Normalize(cardEntry);
             return new(
                 ImageHelper.GetImagePath($"packed/card_portraits/{normalizedPool}/{normalizedCard}.png"),
-                ImageHelper.GetImagePath($"packed/card_portraits/{normalizedPool}/beta/{normalizedCard}.png"));
+                ImageHelper.GetImagePath($"packed/card_portraits/{normalizedPool}/beta/{normalizedCard}.png"),
+                OverlayScenePath: SceneHelper.GetScenePath($"cards/overlays/{normalizedCard}"));
         }
 
         public static RelicAssetProfile Relic(string relicEntry)

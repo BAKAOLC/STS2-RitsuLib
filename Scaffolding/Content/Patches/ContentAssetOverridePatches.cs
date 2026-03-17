@@ -118,6 +118,7 @@ namespace STS2RitsuLib.Scaffolding.Content.Patches
         string? CustomPortraitBorderPath { get; }
         string? CustomEnergyIconPath { get; }
         string? CustomFrameMaterialPath { get; }
+        string? CustomOverlayScenePath { get; }
     }
 
     public interface IModRelicAssetOverrides
@@ -286,6 +287,87 @@ namespace STS2RitsuLib.Scaffolding.Content.Patches
         {
             return __instance is not IModCardAssetOverrides overrides ||
                    ContentAssetOverridePatchHelper.TryUsePortraitPathList(overrides, ref __result);
+        }
+    }
+
+    public class CardOverlayPathPatch : IPatchMethod
+    {
+        public static string PatchId => "content_asset_override_card_overlay_path";
+        public static string Description => "Allow mod cards to override overlay scene paths";
+        public static bool IsCritical => false;
+
+        public static ModPatchTarget[] GetTargets()
+        {
+            return
+            [
+                new(typeof(CardModel), "get_OverlayPath"),
+            ];
+        }
+
+        // ReSharper disable InconsistentNaming
+        public static bool Prefix(CardModel __instance, ref string __result)
+            // ReSharper restore InconsistentNaming
+        {
+            return ContentAssetOverridePatchHelper.TryUseStringOverride<IModCardAssetOverrides>(
+                __instance,
+                ref __result,
+                o => o.CustomOverlayScenePath);
+        }
+    }
+
+    public class CardOverlayAvailabilityPatch : IPatchMethod
+    {
+        public static string PatchId => "content_asset_override_card_overlay_availability";
+        public static string Description => "Allow mod cards to advertise overlay availability from custom scene paths";
+        public static bool IsCritical => false;
+
+        public static ModPatchTarget[] GetTargets()
+        {
+            return
+            [
+                new(typeof(CardModel), "get_HasBuiltInOverlay"),
+            ];
+        }
+
+        // ReSharper disable InconsistentNaming
+        public static bool Prefix(CardModel __instance, ref bool __result)
+            // ReSharper restore InconsistentNaming
+        {
+            if (__instance is not IModCardAssetOverrides overrides)
+                return true;
+
+            return ContentAssetOverridePatchHelper.TryUseExistenceOverride(overrides.CustomOverlayScenePath,
+                ref __result);
+        }
+    }
+
+    public class CardOverlayCreatePatch : IPatchMethod
+    {
+        public static string PatchId => "content_asset_override_card_create_overlay";
+        public static string Description => "Allow mod cards to instantiate overlays from custom scene paths";
+        public static bool IsCritical => false;
+
+        public static ModPatchTarget[] GetTargets()
+        {
+            return
+            [
+                new(typeof(CardModel), nameof(CardModel.CreateOverlay)),
+            ];
+        }
+
+        // ReSharper disable InconsistentNaming
+        public static bool Prefix(CardModel __instance, ref Control __result)
+            // ReSharper restore InconsistentNaming
+        {
+            if (__instance is not IModCardAssetOverrides overrides)
+                return true;
+
+            var path = overrides.CustomOverlayScenePath;
+            if (string.IsNullOrWhiteSpace(path) || !ResourceLoader.Exists(path))
+                return true;
+
+            __result = ResourceLoader.Load<PackedScene>(path).Instantiate<Control>();
+            return false;
         }
     }
 

@@ -155,6 +155,9 @@ namespace STS2RitsuLib
                     _frameworkPatcher.RegisterPatch<CardTextureOverridePatch>();
                     _frameworkPatcher.RegisterPatch<CardFrameMaterialPatch>();
                     _frameworkPatcher.RegisterPatch<CardAllPortraitPathsPatch>();
+                    _frameworkPatcher.RegisterPatch<CardOverlayPathPatch>();
+                    _frameworkPatcher.RegisterPatch<CardOverlayAvailabilityPatch>();
+                    _frameworkPatcher.RegisterPatch<CardOverlayCreatePatch>();
                     _frameworkPatcher.RegisterPatch<CardDynamicVarTooltipPatch>();
                     _frameworkPatcher.RegisterPatch<DynamicVarTooltipClonePatch>();
                     _frameworkPatcher.RegisterPatch<RelicIconPathPatch>();
