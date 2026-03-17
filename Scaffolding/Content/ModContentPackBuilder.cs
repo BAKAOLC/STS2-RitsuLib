@@ -38,6 +38,11 @@ namespace STS2RitsuLib.Scaffolding.Content
             return AddStep(ctx => ctx.Content.RegisterCharacter<TCharacter>());
         }
 
+        public ModContentPackBuilder Act<TAct>() where TAct : ActModel
+        {
+            return AddStep(ctx => ctx.Content.RegisterAct<TAct>());
+        }
+
         public ModContentPackBuilder Card<TPool, TCard>()
             where TPool : CardPoolModel
             where TCard : CardModel

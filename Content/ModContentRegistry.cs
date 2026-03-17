@@ -21,6 +21,7 @@ namespace STS2RitsuLib.Content
 
         private static readonly HashSet<(Type PoolType, Type ModelType)> RegisteredPoolContent = [];
         private static readonly HashSet<Type> RegisteredCharacters = [];
+        private static readonly HashSet<Type> RegisteredActs = [];
         private static readonly HashSet<Type> RegisteredPowers = [];
         private static readonly HashSet<Type> RegisteredOrbs = [];
         private static readonly HashSet<Type> RegisteredSharedEvents = [];
@@ -121,6 +122,11 @@ namespace STS2RitsuLib.Content
             RegisterStandaloneModel(RegisteredCharacters, typeof(TCharacter), typeof(CharacterModel), "character");
         }
 
+        public void RegisterAct<TAct>() where TAct : ActModel
+        {
+            RegisterStandaloneModel(RegisteredActs, typeof(TAct), typeof(ActModel), "act");
+        }
+
         public void RegisterPower<TPower>() where TPower : PowerModel
         {
             RegisterStandaloneModel(RegisteredPowers, typeof(TPower), typeof(PowerModel), "power");
@@ -187,6 +193,11 @@ namespace STS2RitsuLib.Content
             return AppendResolved(source, ResolveModels<EventModel>(RegisteredSharedEvents));
         }
 
+        internal static IEnumerable<ActModel> AppendActs(IEnumerable<ActModel> source)
+        {
+            return AppendResolved(source, ResolveModels<ActModel>(RegisteredActs));
+        }
+
         internal static IEnumerable<PowerModel> AppendPowers(IEnumerable<PowerModel> source)
         {
             return AppendResolved(source, ResolveModels<PowerModel>(RegisteredPowers));
@@ -222,6 +233,7 @@ namespace STS2RitsuLib.Content
                 typesToInject = RegisteredPoolContent
                     .SelectMany(static entry => new[] { entry.PoolType, entry.ModelType })
                     .Concat(RegisteredCharacters)
+                    .Concat(RegisteredActs)
                     .Concat(RegisteredPowers)
                     .Concat(RegisteredOrbs)
                     .Concat(RegisteredSharedEvents)

@@ -57,6 +57,17 @@ namespace STS2RitsuLib.Scaffolding.Content
         public static EnchantmentAssetProfile Empty { get; } = new();
     }
 
+    public sealed record ActAssetProfile(
+        string? BackgroundScenePath = null,
+        string? RestSiteBackgroundPath = null,
+        string? MapTopBgPath = null,
+        string? MapMidBgPath = null,
+        string? MapBotBgPath = null,
+        string? ChestSpineResourcePath = null)
+    {
+        public static ActAssetProfile Empty { get; } = new();
+    }
+
     public static class ContentAssetProfiles
     {
         public static CardAssetProfile Card(string poolEntry, string cardEntry)
@@ -129,6 +140,20 @@ namespace STS2RitsuLib.Scaffolding.Content
             var normalized = Normalize(enchantmentEntry);
             return new(
                 ImageHelper.GetImagePath($"enchantments/{normalized}.png"));
+        }
+
+        public static ActAssetProfile Act(string actEntry)
+        {
+            ArgumentException.ThrowIfNullOrWhiteSpace(actEntry);
+
+            var normalized = Normalize(actEntry);
+            return new(
+                SceneHelper.GetScenePath($"backgrounds/{normalized}/{normalized}_background"),
+                SceneHelper.GetScenePath($"rest_site/{normalized}_rest_site"),
+                ImageHelper.GetImagePath($"packed/map/map_bgs/{normalized}/map_top_{normalized}.png"),
+                ImageHelper.GetImagePath($"packed/map/map_bgs/{normalized}/map_middle_{normalized}.png"),
+                ImageHelper.GetImagePath($"packed/map/map_bgs/{normalized}/map_bottom_{normalized}.png"),
+                $"res://animations/backgrounds/treasure_room/chest_room_act_{normalized}_skel_data.tres");
         }
 
         private static string Normalize(string value)

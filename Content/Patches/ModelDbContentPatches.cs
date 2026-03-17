@@ -21,6 +21,24 @@ namespace STS2RitsuLib.Content.Patches
         }
     }
 
+    public class ActsPatch : IPatchMethod
+    {
+        public static string PatchId => "modeldb_acts";
+        public static string Description => "Append registered acts to ModelDb.Acts";
+        public static bool IsCritical => true;
+
+        public static ModPatchTarget[] GetTargets()
+        {
+            return [new(typeof(ModelDb), "get_Acts")];
+        }
+
+        // ReSharper disable once InconsistentNaming
+        public static void Postfix(ref IEnumerable<ActModel> __result)
+        {
+            __result = ModContentRegistry.AppendActs(__result);
+        }
+    }
+
     public class AllSharedEventsPatch : IPatchMethod
     {
         public static string PatchId => "modeldb_all_shared_events";

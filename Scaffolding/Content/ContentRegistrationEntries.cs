@@ -17,6 +17,15 @@ namespace STS2RitsuLib.Scaffolding.Content
         }
     }
 
+    public sealed class ActRegistrationEntry<TAct> : IContentRegistrationEntry
+        where TAct : ActModel
+    {
+        public void Register(ModContentRegistry registry)
+        {
+            registry.RegisterAct<TAct>();
+        }
+    }
+
     public sealed class CardRegistrationEntry<TPool, TCard> : IContentRegistrationEntry
         where TPool : CardPoolModel
         where TCard : CardModel

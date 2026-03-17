@@ -176,11 +176,15 @@ namespace STS2RitsuLib
                     _frameworkPatcher.RegisterPatch<AfflictionCreateOverlayPatch>();
                     _frameworkPatcher.RegisterPatch<EnchantmentIntendedIconPathPatch>();
                     _frameworkPatcher.RegisterPatch<PowerResolvedBigIconPathPatch>();
+                    _frameworkPatcher.RegisterPatch<ActBackgroundScenePathPatch>();
+                    _frameworkPatcher.RegisterPatch<ActRestSiteBackgroundPathPatch>();
+                    _frameworkPatcher.RegisterPatch<ActMapBackgroundPathPatch>();
 
                     _frameworkPatcher.RegisterPatch<ProfilePathInitializedPatch>();
                     _frameworkPatcher.RegisterPatch<ProfileDeletePatch>();
 
                     _frameworkPatcher.RegisterPatch<AllCharactersPatch>();
+                    _frameworkPatcher.RegisterPatch<ActsPatch>();
                     _frameworkPatcher.RegisterPatch<AllPowersPatch>();
                     _frameworkPatcher.RegisterPatch<AllOrbsPatch>();
                     _frameworkPatcher.RegisterPatch<AllSharedEventsPatch>();

@@ -145,6 +145,17 @@ namespace STS2RitsuLib.Scaffolding.Content.Patches
         string? CustomVisualsScenePath { get; }
     }
 
+    public interface IModActAssetOverrides
+    {
+        ActAssetProfile AssetProfile => ActAssetProfile.Empty;
+        string? CustomBackgroundScenePath => AssetProfile.BackgroundScenePath;
+        string? CustomRestSiteBackgroundPath => AssetProfile.RestSiteBackgroundPath;
+        string? CustomMapTopBgPath => AssetProfile.MapTopBgPath;
+        string? CustomMapMidBgPath => AssetProfile.MapMidBgPath;
+        string? CustomMapBotBgPath => AssetProfile.MapBotBgPath;
+        string? CustomChestSpineResourcePath => AssetProfile.ChestSpineResourcePath;
+    }
+
     public class CardPortraitPathPatch : IPatchMethod
     {
         public static string PatchId => "content_asset_override_card_portrait_path";
@@ -666,6 +677,89 @@ namespace STS2RitsuLib.Scaffolding.Content.Patches
         {
             return ContentAssetOverridePatchHelper.TryUseMaterialOverride<IModCardAssetOverrides>(
                 __instance, ref __result, o => o.CustomBannerMaterialPath);
+        }
+    }
+
+    public class ActBackgroundScenePathPatch : IPatchMethod
+    {
+        public static string PatchId => "content_asset_override_act_background_scene_path";
+        public static string Description => "Allow mod acts to override background scene path";
+        public static bool IsCritical => false;
+
+        public static ModPatchTarget[] GetTargets()
+        {
+            return [new(typeof(ActModel), "get_BackgroundScenePath")];
+        }
+
+        // ReSharper disable InconsistentNaming
+        public static bool Prefix(ActModel __instance, ref string __result)
+            // ReSharper restore InconsistentNaming
+        {
+            return ContentAssetOverridePatchHelper.TryUseStringOverride<IModActAssetOverrides>(
+                __instance,
+                ref __result,
+                o => o.CustomBackgroundScenePath);
+        }
+    }
+
+    public class ActRestSiteBackgroundPathPatch : IPatchMethod
+    {
+        public static string PatchId => "content_asset_override_act_rest_site_background_path";
+        public static string Description => "Allow mod acts to override rest site background path";
+        public static bool IsCritical => false;
+
+        public static ModPatchTarget[] GetTargets()
+        {
+            return [new(typeof(ActModel), "get_RestSiteBackgroundPath")];
+        }
+
+        // ReSharper disable InconsistentNaming
+        public static bool Prefix(ActModel __instance, ref string __result)
+            // ReSharper restore InconsistentNaming
+        {
+            return ContentAssetOverridePatchHelper.TryUseStringOverride<IModActAssetOverrides>(
+                __instance,
+                ref __result,
+                o => o.CustomRestSiteBackgroundPath);
+        }
+    }
+
+    public class ActMapBackgroundPathPatch : IPatchMethod
+    {
+        public static string PatchId => "content_asset_override_act_map_background_path";
+        public static string Description => "Allow mod acts to override map background paths";
+        public static bool IsCritical => false;
+
+        public static ModPatchTarget[] GetTargets()
+        {
+            return
+            [
+                new(typeof(ActModel), "get_MapTopBgPath"),
+                new(typeof(ActModel), "get_MapMidBgPath"),
+                new(typeof(ActModel), "get_MapBotBgPath"),
+            ];
+        }
+
+        // ReSharper disable InconsistentNaming
+        public static bool Prefix(MethodBase __originalMethod, ActModel __instance, ref string __result)
+            // ReSharper restore InconsistentNaming
+        {
+            return __originalMethod.Name switch
+            {
+                "get_MapTopBgPath" => ContentAssetOverridePatchHelper.TryUseStringOverride<IModActAssetOverrides>(
+                    __instance,
+                    ref __result,
+                    o => o.CustomMapTopBgPath),
+                "get_MapMidBgPath" => ContentAssetOverridePatchHelper.TryUseStringOverride<IModActAssetOverrides>(
+                    __instance,
+                    ref __result,
+                    o => o.CustomMapMidBgPath),
+                "get_MapBotBgPath" => ContentAssetOverridePatchHelper.TryUseStringOverride<IModActAssetOverrides>(
+                    __instance,
+                    ref __result,
+                    o => o.CustomMapBotBgPath),
+                _ => true,
+            };
         }
     }
 
