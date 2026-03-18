@@ -188,6 +188,11 @@ namespace STS2RitsuLib.Content
             return AppendResolved(source, ResolveModels<CharacterModel>(RegisteredCharacters));
         }
 
+        internal static IEnumerable<CharacterModel> GetModCharacters()
+        {
+            return ResolveModels<CharacterModel>(RegisteredCharacters);
+        }
+
         internal static IEnumerable<EventModel> AppendSharedEvents(IEnumerable<EventModel> source)
         {
             return AppendResolved(source, ResolveModels<EventModel>(RegisteredSharedEvents));

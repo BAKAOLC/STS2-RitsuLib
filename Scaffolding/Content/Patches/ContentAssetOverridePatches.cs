@@ -888,4 +888,18 @@ namespace STS2RitsuLib.Scaffolding.Content.Patches
                 __instance, ref __result, o => o.CustomBigIconPath);
         }
     }
+
+    /// <summary>
+    ///     Implement on a <see cref="CardPoolModel" /> subclass to supply a custom image path for the
+    ///     small energy icon rendered inside rich-text card descriptions
+    ///     (e.g. <c>[img]…/winefox_energy_icon.png[/img]</c>).
+    ///     <para />
+    ///     The default game path pattern is:
+    ///     <c>res://images/packed/sprite_fonts/{EnergyColorName}_energy_icon.png</c>.
+    ///     Use this interface only when you need a different path.
+    /// </summary>
+    public interface IModTextEnergyIconPool
+    {
+        string? TextEnergyIconPath { get; }
+    }
 }

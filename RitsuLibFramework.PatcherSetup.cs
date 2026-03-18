@@ -81,6 +81,7 @@ namespace STS2RitsuLib
             patcher.RegisterPatch<CardBannerMaterialPatch>();
             patcher.RegisterPatch<CardDynamicVarTooltipPatch>();
             patcher.RegisterPatch<DynamicVarTooltipClonePatch>();
+            patcher.RegisterPatch<EnergyIconFormatterPatch>();
 
             patcher.RegisterPatch<RelicIconPathPatch>();
             patcher.RegisterPatch<RelicTexturePatch>();
@@ -131,6 +132,7 @@ namespace STS2RitsuLib
             patcher.RegisterPatch<CharacterArmScissorsTexturePathPatch>();
             patcher.RegisterPatch<CharacterCombatSpineOverridePatch>();
             patcher.RegisterPatch<CharacterGameOverScreenCompatibilityPatch>();
+            patcher.RegisterPatch<CardLibraryCompendiumPatch>();
             RegisterFrameworkPatcher(FrameworkPatcherArea.CharacterAssets, patcher);
         }
 
