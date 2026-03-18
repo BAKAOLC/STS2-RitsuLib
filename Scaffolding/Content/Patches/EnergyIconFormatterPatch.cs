@@ -1,6 +1,7 @@
 using System.Reflection.Emit;
 using HarmonyLib;
 using MegaCrit.Sts2.Core.Localization.Formatters;
+using MegaCrit.Sts2.Core.Models;
 using STS2RitsuLib.Content;
 using STS2RitsuLib.Patching.Models;
 
@@ -120,11 +121,29 @@ namespace STS2RitsuLib.Scaffolding.Content.Patches
             var dict = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
 
             foreach (var character in ModContentRegistry.GetModCharacters())
-                if (character.CardPool is IModTextEnergyIconPool pool &&
-                    !string.IsNullOrWhiteSpace(pool.TextEnergyIconPath))
-                    dict.TryAdd(character.CardPool.EnergyColorName, pool.TextEnergyIconPath!);
+                AddPoolIfMapped(dict, character.CardPool);
+
+            foreach (var pool in ModelDb.AllCards.Select(c => c.Pool).Distinct())
+                AddPoolIfMapped(dict, pool);
+
+            foreach (var pool in ModelDb.AllRelics.Select(r => r.Pool).Distinct())
+                AddPoolIfMapped(dict, pool);
+
+            foreach (var pool in ModelDb.AllPotions.Select(p => p.Pool).Distinct())
+                AddPoolIfMapped(dict, pool);
 
             return dict;
+        }
+
+        private static void AddPoolIfMapped(Dictionary<string, string> dict, IPoolModel pool)
+        {
+            if (pool is not IModTextEnergyIconPool mapped)
+                return;
+
+            if (string.IsNullOrWhiteSpace(mapped.TextEnergyIconPath))
+                return;
+
+            dict.TryAdd(pool.EnergyColorName, mapped.TextEnergyIconPath!);
         }
     }
 }
