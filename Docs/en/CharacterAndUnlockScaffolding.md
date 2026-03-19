@@ -49,6 +49,30 @@ public class WineFoxPotionPool : TypeListPotionPoolModel
 }
 ```
 
+### Configure Card Frame Color (HSV)
+
+`TypeListCardPoolModel` supports directly overriding `PoolFrameMaterial`. When this property returns a non-null material, that material is used for card frame rendering and `CardFrameMaterialPath` is no longer required.
+
+```csharp
+using Godot;
+using STS2RitsuLib.Utils;
+
+public class WineFoxCardPool : TypeListCardPoolModel
+{
+    protected override IEnumerable<Type> CardTypes =>
+    [
+        typeof(WineFoxStrike),
+        typeof(WineFoxDefend),
+    ];
+
+    // Generate a frame material from HSV: H=0.55, S=0.45, V=0.95
+    public override Material? PoolFrameMaterial =>
+        MaterialUtils.CreateHsvShaderMaterial(0.55f, 0.45f, 0.95f);
+}
+```
+
+If you prefer path-based configuration, simply leave `PoolFrameMaterial` as `null` and override `CardFrameMaterialPath` instead.
+
 ---
 
 ## Character Template

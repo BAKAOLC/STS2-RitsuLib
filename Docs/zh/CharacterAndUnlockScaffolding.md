@@ -49,6 +49,30 @@ public class WineFoxPotionPool : TypeListPotionPoolModel
 }
 ```
 
+### 配置卡牌边框颜色（HSV）
+
+`TypeListCardPoolModel` 支持直接覆盖 `PoolFrameMaterial`。当该属性返回非空材质时，会优先使用这个材质渲染卡牌边框，不再依赖 `CardFrameMaterialPath`。
+
+```csharp
+using Godot;
+using STS2RitsuLib.Utils;
+
+public class WineFoxCardPool : TypeListCardPoolModel
+{
+    protected override IEnumerable<Type> CardTypes =>
+    [
+        typeof(WineFoxStrike),
+        typeof(WineFoxDefend),
+    ];
+
+    // 直接用 HSV 生成边框材质：H=0.55, S=0.45, V=0.95
+    public override Material? PoolFrameMaterial =>
+        MaterialUtils.CreateHsvShaderMaterial(0.55f, 0.45f, 0.95f);
+}
+```
+
+若你希望继续走资源路径模式，也可以不覆盖 `PoolFrameMaterial`，仅覆盖 `CardFrameMaterialPath`。
+
 ---
 
 ## 角色模板
