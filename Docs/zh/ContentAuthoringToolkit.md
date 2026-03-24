@@ -146,6 +146,7 @@ public class MyCard : ModCardTemplate(1, CardType.Attack, CardRarity.Common, Tar
 - [快速入门](GettingStarted.md)
 - [内容包与注册器](ContentPacksAndRegistries.md)
 - [角色与解锁脚手架](CharacterAndUnlockScaffolding.md)
+- [自定义事件](CustomEvents.md)
 - [卡牌动态变量](CardDynamicVarToolkit.md)
 - [本地化与关键词](LocalizationAndKeywords.md)
 - [框架设计](FrameworkDesign.md)

@@ -187,3 +187,4 @@ RitsuLib 现在内置了 `AncientDialogueLocalization`。
 - [内容注册规则](ContentAuthoringToolkit.md)
 - [角色与解锁脚手架](CharacterAndUnlockScaffolding.md)
 - [诊断与兼容层](DiagnosticsAndCompatibility.md)
+- [LocString 占位符解析](LocStringPlaceholderResolution.md)

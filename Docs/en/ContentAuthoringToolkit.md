@@ -146,6 +146,7 @@ The fixed-entry rule applies only to model types explicitly registered through t
 - [Getting Started](GettingStarted.md)
 - [Content Packs & Registries](ContentPacksAndRegistries.md)
 - [Character & Unlock Scaffolding](CharacterAndUnlockScaffolding.md)
+- [Custom Events](CustomEvents.md)
 - [Card Dynamic Variables](CardDynamicVarToolkit.md)
 - [Localization & Keywords](LocalizationAndKeywords.md)
 - [Framework Design](FrameworkDesign.md)
