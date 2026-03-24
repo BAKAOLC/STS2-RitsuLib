@@ -124,12 +124,24 @@ namespace STS2RitsuLib.Unlocks.Patches
             var roomsField = typeof(ActModel).GetField("_rooms", BindingFlags.Instance | BindingFlags.NonPublic)
                              ?? throw new MissingFieldException(typeof(ActModel).FullName, "_rooms");
             var roomSet = (RoomSet)roomsField.GetValue(__instance)!;
+            var originalEvents = roomSet.events.ToArray();
+            var filteredEvents = originalEvents
+                .Where(eventModel => ModUnlockRegistry.IsUnlocked(eventModel, unlockState))
+                .ToArray();
 
-            roomSet.events.RemoveAll(eventModel => !ModUnlockRegistry.IsUnlocked(eventModel, unlockState));
+            if (filteredEvents.Length == originalEvents.Length)
+                return;
 
-            if (roomSet.events.Count == 0)
+            if (filteredEvents.Length == 0)
+            {
                 RitsuLibFramework.Logger.Warn(
-                    $"[Unlocks] All generated events for act '{__instance.Id}' were filtered out by mod unlock rules.");
+                    $"[Unlocks] Filtering generated events for act '{__instance.Id}' would leave the pool empty. " +
+                    "Keeping the unfiltered pool to avoid a hard failure; ensure at least one event remains unlocked.");
+                return;
+            }
+
+            roomSet.events.Clear();
+            roomSet.events.AddRange(filteredEvents);
         }
     }
 }

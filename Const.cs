@@ -4,7 +4,7 @@ namespace STS2RitsuLib
     {
         public const string Name = "RitsuLib";
         public const string ModId = "com.ritsukage.sts2-RitsuLib";
-        public const string Version = "0.0.12";
+        public const string Version = "0.0.13";
         public const string SettingsKey = "settings";
         public const string SettingsFileName = "settings.json";
     }

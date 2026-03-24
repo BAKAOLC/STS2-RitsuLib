@@ -187,3 +187,4 @@ Use the right tool for the right job:
 - [Content Authoring Toolkit](ContentAuthoringToolkit.md)
 - [Character & Unlock Scaffolding](CharacterAndUnlockScaffolding.md)
 - [Diagnostics & Compatibility](DiagnosticsAndCompatibility.md)
+- [LocString Placeholder Resolution](LocStringPlaceholderResolution.md)

@@ -19,11 +19,13 @@
 |---|---|
 | [Content Authoring Toolkit](en/ContentAuthoringToolkit.md) | Authoring overview: identity, localization coupling, asset override basics |
 | [Character & Unlock Scaffolding](en/CharacterAndUnlockScaffolding.md) | Practical character-mod assembly guide |
+| [Custom Events](en/CustomEvents.md) | Shared events, act events, ancients, and custom event scene workflow |
 | [Timeline & Unlocks](en/TimelineAndUnlocks.md) | Story / epoch registration, progression rules, and compatibility bridges |
 | [Asset Profiles & Fallbacks](en/AssetProfilesAndFallbacks.md) | Character placeholder fallback, content profiles, and path diagnostics |
 | [Localization & Keywords](en/LocalizationAndKeywords.md) | `I18N`, keyword registry, and ancient dialogue localization |
 | [Godot Scene Authoring](en/GodotSceneAuthoring.md) | Scene-script wrappers, editor caveats, and runtime script registration |
 | [Card Dynamic Variables](en/CardDynamicVarToolkit.md) | Custom card vars with tooltip support |
+| [LocString Placeholder Resolution](en/LocStringPlaceholderResolution.md) | Placeholder syntax, custom formatters, and extension guide |
 
 ### Runtime & Infrastructure
 
@@ -50,11 +52,13 @@
 |---|---|
 | [内容注册规则](zh/ContentAuthoringToolkit.md) | 内容编写总览：身份规则、本地化关系、资源覆写基础 |
 | [角色与解锁脚手架](zh/CharacterAndUnlockScaffolding.md) | 角色 Mod 的实践搭建指南 |
+| [自定义事件](zh/CustomEvents.md) | 共享事件、Act 事件、Ancient 与自定义事件场景工作流 |
 | [时间线与解锁](zh/TimelineAndUnlocks.md) | Story / Epoch 注册、进度规则与兼容桥接 |
 | [资源配置与回退规则](zh/AssetProfilesAndFallbacks.md) | 角色 placeholder、内容 profile 与路径诊断 |
 | [本地化与关键词](zh/LocalizationAndKeywords.md) | `I18N`、关键词注册与 Ancient 对话本地化 |
 | [Godot 场景编写说明](zh/GodotSceneAuthoring.md) | 场景脚本包装、编辑器问题与运行时脚本注册 |
 | [卡牌动态变量](zh/CardDynamicVarToolkit.md) | 带 Tooltip 支持的自定义卡牌变量 |
+| [LocString 占位符解析](zh/LocStringPlaceholderResolution.md) | 占位符语法、自定义格式化器与扩展指南 |
 
 ### 运行时与基础设施
 
