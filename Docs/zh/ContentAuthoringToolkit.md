@@ -135,10 +135,12 @@ public class MyCard : ModCardTemplate(1, CardType.Attack, CardRarity.Common, Tar
 | Orb | icon、visuals scene |
 | Potion | image、outline |
 
-覆写条件（全部满足时生效）：
-1. 模型实现了对应的 override 接口（直接或通过 `Mod*Template`）
-2. override 成员返回非空路径
-3. 被引用资源实际存在（在要求存在性校验时）
+覆写行为如下：
+1. 模型必须实现对应的 override 接口（直接或通过 `Mod*Template`）
+2. override 成员必须返回非空路径
+3. 如果资源路径不存在，RitsuLib 会输出一次 warning，并回退到原始资源
+
+这点对角色资源尤其重要，因为原版游戏对缺失角色资源几乎没有安全兜底。角色资源的占位回退机制见 [CharacterAndUnlockScaffolding.md](CharacterAndUnlockScaffolding.md)。
 
 ---
 
@@ -161,3 +163,5 @@ public class MyCard : ModCardTemplate(1, CardType.Attack, CardRarity.Common, Tar
 - [快速入门](GettingStarted.md)
 - [角色与解锁脚手架](CharacterAndUnlockScaffolding.md)
 - [卡牌动态变量](CardDynamicVarToolkit.md)
+- [本地化与关键词](LocalizationAndKeywords.md)
+- [框架设计](FrameworkDesign.md)

@@ -135,10 +135,12 @@ Supported card fields: `PortraitPath`, `BetaPortraitPath`, `FramePath`, `Portrai
 | Orb | icon, visuals scene |
 | Potion | image, outline |
 
-An override is applied only when all conditions are met:
-1. The model implements the matching override interface (directly or via `Mod*Template`)
-2. The override member returns a non-empty path
-3. The referenced resource exists (when existence check is required)
+Override behavior:
+1. The model must implement the matching override interface (directly or via `Mod*Template`)
+2. The override member must return a non-empty path
+3. If the resource path does not exist, RitsuLib emits a one-time warning and falls back to the base asset
+
+This warning behavior is especially important for character assets because the base game has almost no safe fallback for missing paths. Character-specific placeholder fallback is documented in [CharacterAndUnlockScaffolding.md](CharacterAndUnlockScaffolding.md).
 
 ---
 
@@ -161,3 +163,5 @@ The fixed-entry rule applies only to model types explicitly registered through t
 - [GettingStarted.md](GettingStarted.md)
 - [CharacterAndUnlockScaffolding.md](CharacterAndUnlockScaffolding.md)
 - [CardDynamicVarToolkit.md](CardDynamicVarToolkit.md)
+- [LocalizationAndKeywords.md](LocalizationAndKeywords.md)
+- [FrameworkDesign.md](FrameworkDesign.md)

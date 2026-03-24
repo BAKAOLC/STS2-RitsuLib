@@ -135,12 +135,18 @@ Override `PlaceholderCharacterId` with another base character such as `silent` o
 
 ## Story Template
 
-Inherit `ModStoryTemplate` to bind a narrative campaign to the character:
+Inherit `ModStoryTemplate` to define a story node and the epoch sequence it exposes on the timeline:
 
 ```csharp
 public class WineFoxStory : ModStoryTemplate
 {
-    public override Type CharacterType => typeof(WineFoxCharacter);
+    protected override string StoryKey => "wine-fox";
+
+    protected override IEnumerable<Type> EpochTypes =>
+    [
+        typeof(WineFoxCharacterEpoch),
+        typeof(WineFoxEpoch2),
+    ];
 }
 ```
 

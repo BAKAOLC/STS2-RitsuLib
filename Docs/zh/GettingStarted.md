@@ -24,6 +24,8 @@
 
 ```csharp
 using STS2RitsuLib;
+using STS2RitsuLib.Patching.Core;
+using MegaCrit.Sts2.Core.Logging;
 using MegaCrit.Sts2.Core.Modding;
 
 [ModInitializer(nameof(Initialize))]
@@ -35,8 +37,9 @@ public static class MyMod
     {
         Logger = RitsuLibFramework.CreateLogger("MyMod");
 
-        RitsuLibFramework.CreatePatcher("MyMod", "core-patches")
-            .Apply(new MyModPatches());
+        var patcher = RitsuLibFramework.CreatePatcher("MyMod", "core-patches");
+        patcher.RegisterPatches<MyModPatches>();
+        patcher.PatchAll();
 
         RitsuLibFramework.CreateContentPack("MyMod")
             .Card<MyCardPool, MyCard>()
@@ -47,7 +50,7 @@ public static class MyMod
 }
 ```
 
-`CreatePatcher` 的 `patcherName` 参数用于日志标识。同一个 Mod 可以创建多个 Patcher。
+`CreatePatcher` 的 `patcherName` 参数用于日志标识。同一个 Mod 可以创建多个 Patcher。完整补丁写法见 [PatchingGuide.md](PatchingGuide.md)。
 
 ---
 
@@ -141,15 +144,26 @@ RitsuLibFramework.SubscribeLifecycle<CombatStartingEvent>(evt =>
 
 ## 7. 数据持久化
 
-使用 `BeginModDataRegistration` 批量注册存档数据键：
+使用 `BeginModDataRegistration` 批量注册存档数据键。持久化条目以 class 为单位注册，同时需要注册 key 和文件名：
 
 ```csharp
+public sealed class CounterData
+{
+    public int Value { get; set; }
+}
+
 using (RitsuLibFramework.BeginModDataRegistration("MyMod"))
 {
     var store = RitsuLibFramework.GetDataStore("MyMod");
-    store.Register("my_counter", SaveScope.Profile, () => 0);
+    store.Register<CounterData>(
+        key: "my_counter",
+        fileName: "counter.json",
+        scope: SaveScope.Profile,
+        defaultFactory: () => new CounterData());
 }
 ```
+
+关于作用域、重载时机和迁移机制，可继续阅读 [PersistenceGuide.md](PersistenceGuide.md)。
 
 ---
 
@@ -159,3 +173,7 @@ using (RitsuLibFramework.BeginModDataRegistration("MyMod"))
 - [角色与解锁脚手架](CharacterAndUnlockScaffolding.md)
 - [卡牌动态变量](CardDynamicVarToolkit.md)
 - [生命周期事件](LifecycleEvents.md)
+- [补丁系统](PatchingGuide.md)
+- [持久化设计](PersistenceGuide.md)
+- [本地化与关键词](LocalizationAndKeywords.md)
+- [框架设计](FrameworkDesign.md)

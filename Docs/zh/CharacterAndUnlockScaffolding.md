@@ -138,12 +138,18 @@ public class WineFoxCharacter : ModCharacterTemplate<WineFoxCardPool, WineFoxRel
 
 ## 故事模板
 
-继承 `ModStoryTemplate`，为角色绑定战役叙事线：
+继承 `ModStoryTemplate`，定义一个故事节点以及它在时间线中展开的纪元序列：
 
 ```csharp
 public class WineFoxStory : ModStoryTemplate
 {
-    public override Type CharacterType => typeof(WineFoxCharacter);
+    protected override string StoryKey => "wine-fox";
+
+    protected override IEnumerable<Type> EpochTypes =>
+    [
+        typeof(WineFoxCharacterEpoch),
+        typeof(WineFoxEpoch2),
+    ];
 }
 ```
 

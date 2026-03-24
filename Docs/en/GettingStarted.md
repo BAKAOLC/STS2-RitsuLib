@@ -24,6 +24,8 @@ Use `[ModInitializer]` to declare the entry point. Obtain a logger, create a pat
 
 ```csharp
 using STS2RitsuLib;
+using STS2RitsuLib.Patching.Core;
+using MegaCrit.Sts2.Core.Logging;
 using MegaCrit.Sts2.Core.Modding;
 
 [ModInitializer(nameof(Initialize))]
@@ -35,8 +37,9 @@ public static class MyMod
     {
         Logger = RitsuLibFramework.CreateLogger("MyMod");
 
-        RitsuLibFramework.CreatePatcher("MyMod", "core-patches")
-            .Apply(new MyModPatches());
+        var patcher = RitsuLibFramework.CreatePatcher("MyMod", "core-patches");
+        patcher.RegisterPatches<MyModPatches>();
+        patcher.PatchAll();
 
         RitsuLibFramework.CreateContentPack("MyMod")
             .Card<MyCardPool, MyCard>()
@@ -47,7 +50,7 @@ public static class MyMod
 }
 ```
 
-`CreatePatcher` takes a `patcherName` used for log identification. A mod may create multiple patchers.
+`CreatePatcher` takes a `patcherName` used for log identification. A mod may create multiple patchers. See [PatchingGuide.md](PatchingGuide.md) for the full patch workflow.
 
 ---
 
@@ -143,15 +146,26 @@ Replayable events (`IReplayableFrameworkLifecycleEvent`) fire immediately upon l
 
 ## 7. Persistent Data
 
-Use `BeginModDataRegistration` for batch key registration:
+Use `BeginModDataRegistration` for batch key registration. Persistent entries are class-based and need both a registry key and a file name:
 
 ```csharp
+public sealed class CounterData
+{
+    public int Value { get; set; }
+}
+
 using (RitsuLibFramework.BeginModDataRegistration("MyMod"))
 {
     var store = RitsuLibFramework.GetDataStore("MyMod");
-    store.Register("my_counter", SaveScope.Profile, () => 0);
+    store.Register<CounterData>(
+        key: "my_counter",
+        fileName: "counter.json",
+        scope: SaveScope.Profile,
+        defaultFactory: () => new CounterData());
 }
 ```
+
+See [PersistenceGuide.md](PersistenceGuide.md) for scopes, reload timing, and migrations.
 
 ---
 
@@ -161,3 +175,7 @@ using (RitsuLibFramework.BeginModDataRegistration("MyMod"))
 - [Character & Unlock Scaffolding](CharacterAndUnlockScaffolding.md)
 - [Card Dynamic Variables](CardDynamicVarToolkit.md)
 - [Lifecycle Events](LifecycleEvents.md)
+- [Patching Guide](PatchingGuide.md)
+- [Persistence Guide](PersistenceGuide.md)
+- [Localization & Keywords](LocalizationAndKeywords.md)
+- [Framework Design](FrameworkDesign.md)
