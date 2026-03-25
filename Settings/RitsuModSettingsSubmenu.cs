@@ -27,6 +27,7 @@ namespace STS2RitsuLib.Settings
             new(StringComparer.OrdinalIgnoreCase);
 
         private VBoxContainer _contentList = null!;
+        private bool _focusSelectedPageButtonOnNextRefresh;
         private Control? _initialFocusedControl;
         private bool _localeSubscribed;
         private VBoxContainer _modButtonList = null!;
@@ -194,7 +195,8 @@ namespace STS2RitsuLib.Settings
             _selectedModId = modId;
             _selectedPageId = pageId;
             _selectedSectionId = null;
-            _expandedModIds.Add(modId);
+            ExpandOnlyMod(modId);
+            _focusSelectedPageButtonOnNextRefresh = true;
             Rebuild();
         }
 
@@ -379,7 +381,7 @@ namespace STS2RitsuLib.Settings
                     !string.Equals(group.Key, _selectedModId, StringComparison.OrdinalIgnoreCase)))
                 _selectedModId = rootPages[0].Key;
 
-            _expandedModIds.Add(_selectedModId);
+            ExpandOnlyMod(_selectedModId);
 
             foreach (var group in rootPages)
             {
@@ -419,10 +421,10 @@ namespace STS2RitsuLib.Settings
                     () =>
                     {
                         _selectedModId = modId;
-                        _selectedPageId ??= pages.FirstOrDefault(page => string.IsNullOrWhiteSpace(page.ParentPageId))
-                            ?.Id;
-                        if (!_expandedModIds.Add(modId))
-                            _expandedModIds.Remove(modId);
+                        _selectedPageId = pages.FirstOrDefault(page => string.IsNullOrWhiteSpace(page.ParentPageId))?.Id;
+                        _selectedSectionId = null;
+                        ExpandOnlyMod(modId);
+                        _focusSelectedPageButtonOnNextRefresh = true;
                         Rebuild();
                     },
                     ModSettingsSidebarItemKind.ModGroup,
@@ -537,6 +539,7 @@ namespace STS2RitsuLib.Settings
                     _selectedModId = page.ModId;
                     _selectedPageId = page.Id;
                     _selectedSectionId = null;
+                    ExpandOnlyMod(page.ModId);
                     Rebuild();
                 },
                 ModSettingsSidebarItemKind.Page,
@@ -666,7 +669,7 @@ namespace STS2RitsuLib.Settings
         {
             var controls = new List<Control>();
             CollectFocusableControls(this, controls);
-            _initialFocusedControl = controls.FirstOrDefault();
+            _initialFocusedControl = ResolvePreferredFocusControl() ?? controls.FirstOrDefault();
 
             for (var index = 0; index < controls.Count; index++)
             {
@@ -678,6 +681,25 @@ namespace STS2RitsuLib.Settings
             }
 
             Callable.From(() => _initialFocusedControl?.GrabFocus()).CallDeferred();
+        }
+
+        private Control? ResolvePreferredFocusControl()
+        {
+            if (!_focusSelectedPageButtonOnNextRefresh)
+                return null;
+
+            _focusSelectedPageButtonOnNextRefresh = false;
+            if (!string.IsNullOrWhiteSpace(_selectedPageId)
+                && _pageButtons.TryGetValue(_selectedPageId, out var pageButton)
+                && pageButton.Visible)
+                return pageButton;
+
+            if (!string.IsNullOrWhiteSpace(_selectedModId)
+                && _modButtons.TryGetValue(_selectedModId, out var modButton)
+                && modButton.Visible)
+                return modButton;
+
+            return null;
         }
 
         private static void CollectFocusableControls(Node node, ICollection<Control> controls)
@@ -697,6 +719,13 @@ namespace STS2RitsuLib.Settings
             _titleLabel.SetTextAutoSize(ModSettingsLocalization.Get("entry.title", "Mod Settings (RitsuLib)"));
             _subtitleLabel.SetTextAutoSize(ModSettingsLocalization.Get("entry.subtitle",
                 "Edit player-facing mod options here."));
+        }
+
+        private void ExpandOnlyMod(string? modId)
+        {
+            _expandedModIds.Clear();
+            if (!string.IsNullOrWhiteSpace(modId))
+                _expandedModIds.Add(modId);
         }
 
         private void FlushDirtyBindings()

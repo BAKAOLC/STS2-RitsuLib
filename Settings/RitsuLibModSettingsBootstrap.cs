@@ -265,12 +265,14 @@ namespace STS2RitsuLib.Settings
             var nameEdit = CreateListField(itemContext.Item.Name, value =>
                 itemContext.Update(itemContext.Item with { Name = value }));
             nameEdit.CustomMinimumSize = new(220f, 44f);
-            grid.AddChild(CreateListFieldGroup("Name", nameEdit));
+            grid.AddChild(CreateListFieldGroup(ModSettingsLocalization.Get("ritsulib.showcase.list.field.name", "Name"),
+                nameEdit));
 
             var tagEdit = CreateListField(itemContext.Item.Tag, value =>
                 itemContext.Update(itemContext.Item with { Tag = value }));
             tagEdit.CustomMinimumSize = new(180f, 44f);
-            grid.AddChild(CreateListFieldGroup("Tag", tagEdit));
+            grid.AddChild(CreateListFieldGroup(ModSettingsLocalization.Get("ritsulib.showcase.list.field.tag", "Tag"),
+                tagEdit));
 
             var weightEdit = CreateListField(itemContext.Item.Weight.ToString(), value =>
             {
@@ -280,7 +282,8 @@ namespace STS2RitsuLib.Settings
                     itemContext.RequestRefresh();
             });
             weightEdit.CustomMinimumSize = new(120f, 44f);
-            grid.AddChild(CreateListFieldGroup("Weight", weightEdit));
+            grid.AddChild(CreateListFieldGroup(
+                ModSettingsLocalization.Get("ritsulib.showcase.list.field.weight", "Weight"), weightEdit));
 
             var enabledButton = new ModSettingsToggleControl(itemContext.Item.Enabled,
                 value => itemContext.Update(itemContext.Item with { Enabled = value }))
@@ -288,7 +291,8 @@ namespace STS2RitsuLib.Settings
                 CustomMinimumSize = new(140f, 44f),
                 SizeFlagsHorizontal = Control.SizeFlags.ShrinkBegin,
             };
-            grid.AddChild(CreateListFieldGroup("Enabled", enabledButton, false));
+            grid.AddChild(CreateListFieldGroup(
+                ModSettingsLocalization.Get("ritsulib.showcase.list.field.enabled", "Enabled"), enabledButton, false));
 
             var nestedListBinding = itemContext.Project(
                 "details",
@@ -298,14 +302,16 @@ namespace STS2RitsuLib.Settings
 
             content.AddChild(itemContext.CreateListEditor(
                 "details",
-                ModSettingsText.Literal("Detail Notes"),
+                ModSettingsText.I18N(ModSettingsLocalization.Instance, "ritsulib.showcase.details.title",
+                    "Detail Notes"),
                 nestedListBinding,
-                () => new("New note", "value"),
+                () => new(ModSettingsLocalization.Get("ritsulib.showcase.details.defaultLabel", "New note"), "value"),
                 detail => ModSettingsText.Literal(detail.Label),
                 detail => ModSettingsText.Literal(detail.Value),
                 CreateShowcaseDetailEditor,
-                ModSettingsText.Literal("Add Detail"),
-                ModSettingsText.Literal("Nested list editor example inside each item.")));
+                ModSettingsText.I18N(ModSettingsLocalization.Instance, "ritsulib.showcase.details.add", "Add Detail"),
+                ModSettingsText.I18N(ModSettingsLocalization.Instance, "ritsulib.showcase.details.description",
+                    "Nested list editor example inside each item.")));
 
             return content;
         }
@@ -324,12 +330,14 @@ namespace STS2RitsuLib.Settings
             var labelEdit = CreateListField(itemContext.Item.Label, value =>
                 itemContext.Update(itemContext.Item with { Label = value }));
             labelEdit.CustomMinimumSize = new(180f, 42f);
-            grid.AddChild(CreateListFieldGroup("Label", labelEdit));
+            grid.AddChild(CreateListFieldGroup(
+                ModSettingsLocalization.Get("ritsulib.showcase.details.field.label", "Label"), labelEdit));
 
             var valueEdit = CreateListField(itemContext.Item.Value, value =>
                 itemContext.Update(itemContext.Item with { Value = value }));
             valueEdit.CustomMinimumSize = new(220f, 42f);
-            grid.AddChild(CreateListFieldGroup("Value", valueEdit));
+            grid.AddChild(CreateListFieldGroup(
+                ModSettingsLocalization.Get("ritsulib.showcase.details.field.value", "Value"), valueEdit));
             return grid;
         }
 

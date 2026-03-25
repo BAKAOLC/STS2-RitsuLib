@@ -18,6 +18,11 @@ namespace STS2RitsuLib.Settings
         void Write(TValue value);
     }
 
+    public interface IDefaultModSettingsValueBinding<TValue> : IModSettingsValueBinding<TValue>
+    {
+        TValue CreateDefaultValue();
+    }
+
     public interface ITransientModSettingsBinding : IModSettingsBinding
     {
     }
@@ -82,6 +87,14 @@ namespace STS2RitsuLib.Settings
             return new(inner, adapter);
         }
 
+        public static DefaultModSettingsValueBinding<TValue> WithDefault<TValue>(
+            IModSettingsValueBinding<TValue> inner,
+            Func<TValue> defaultValueFactory,
+            IStructuredModSettingsValueAdapter<TValue>? adapter = null)
+        {
+            return new(inner, defaultValueFactory, adapter);
+        }
+
         public static ProjectedModSettingsValueBinding<TSource, TValue> Project<TSource, TValue>(
             IModSettingsValueBinding<TSource> parent,
             string dataKey,
@@ -140,13 +153,21 @@ namespace STS2RitsuLib.Settings
     }
 
     public sealed class InMemoryModSettingsValueBinding<TValue>(string modId, string dataKey, TValue initialValue)
-        : IModSettingsValueBinding<TValue>, ITransientModSettingsBinding
+        : IStructuredModSettingsValueBinding<TValue>, ITransientModSettingsBinding,
+            IDefaultModSettingsValueBinding<TValue>
     {
+        private readonly TValue _defaultValue = initialValue;
         private TValue _value = initialValue;
+
+        public TValue CreateDefaultValue()
+        {
+            return Adapter.Clone(_defaultValue);
+        }
 
         public string ModId { get; } = modId;
         public string DataKey { get; } = dataKey;
         public SaveScope Scope { get; } = SaveScope.Global;
+        public IStructuredModSettingsValueAdapter<TValue> Adapter { get; } = ModSettingsStructuredData.Json<TValue>();
 
         public TValue Read()
         {
@@ -221,6 +242,42 @@ namespace STS2RitsuLib.Settings
         }
     }
 
+    public sealed class DefaultModSettingsValueBinding<TValue>(
+        IModSettingsValueBinding<TValue> inner,
+        Func<TValue> defaultValueFactory,
+        IStructuredModSettingsValueAdapter<TValue>? adapter = null)
+        : IStructuredModSettingsValueBinding<TValue>, IDefaultModSettingsValueBinding<TValue>
+    {
+        public TValue CreateDefaultValue()
+        {
+            return defaultValueFactory();
+        }
+
+        public string ModId => inner.ModId;
+        public string DataKey => inner.DataKey;
+        public SaveScope Scope => inner.Scope;
+
+        public IStructuredModSettingsValueAdapter<TValue> Adapter { get; } =
+            inner is IStructuredModSettingsValueBinding<TValue> structured
+                ? structured.Adapter
+                : adapter ?? ModSettingsStructuredData.Json<TValue>();
+
+        public TValue Read()
+        {
+            return inner.Read();
+        }
+
+        public void Write(TValue value)
+        {
+            inner.Write(value);
+        }
+
+        public void Save()
+        {
+            inner.Save();
+        }
+    }
+
     internal sealed class JsonStructuredValueAdapter<TValue>(JsonSerializerOptions? options)
         : IStructuredModSettingsValueAdapter<TValue>
     {
@@ -281,6 +338,12 @@ namespace STS2RitsuLib.Settings
     }
 
     public readonly record struct ModSettingsChoiceOption<TValue>(TValue Value, ModSettingsText Label);
+
+    public enum ModSettingsChoicePresentation
+    {
+        Stepper = 0,
+        Dropdown = 1,
+    }
 
     public enum ModSettingsButtonTone
     {
@@ -406,15 +469,49 @@ namespace STS2RitsuLib.Settings
         ModSettingsText label,
         IModSettingsValueBinding<TValue> binding,
         IReadOnlyList<ModSettingsChoiceOption<TValue>> options,
+        ModSettingsChoicePresentation presentation,
         ModSettingsText? description)
         : ModSettingsEntryDefinition(id, label, description)
     {
         public IModSettingsValueBinding<TValue> Binding { get; } = binding;
         public IReadOnlyList<ModSettingsChoiceOption<TValue>> Options { get; } = options;
+        public ModSettingsChoicePresentation Presentation { get; } = presentation;
 
         internal override Control CreateControl(ModSettingsUiContext context)
         {
             return ModSettingsUiFactory.CreateChoiceEntry(context, this);
+        }
+    }
+
+    public sealed class ColorModSettingsEntryDefinition(
+        string id,
+        ModSettingsText label,
+        IModSettingsValueBinding<string> binding,
+        ModSettingsText? description)
+        : ModSettingsEntryDefinition(id, label, description)
+    {
+        public IModSettingsValueBinding<string> Binding { get; } = binding;
+
+        internal override Control CreateControl(ModSettingsUiContext context)
+        {
+            return ModSettingsUiFactory.CreateColorEntry(context, this);
+        }
+    }
+
+    public sealed class KeyBindingModSettingsEntryDefinition(
+        string id,
+        ModSettingsText label,
+        IModSettingsValueBinding<string> binding,
+        bool allowModifierCombos,
+        ModSettingsText? description)
+        : ModSettingsEntryDefinition(id, label, description)
+    {
+        public IModSettingsValueBinding<string> Binding { get; } = binding;
+        public bool AllowModifierCombos { get; } = allowModifierCombos;
+
+        internal override Control CreateControl(ModSettingsUiContext context)
+        {
+            return ModSettingsUiFactory.CreateKeyBindingEntry(context, this);
         }
     }
 
@@ -553,19 +650,42 @@ namespace STS2RitsuLib.Settings
             _requestRefresh();
         }
 
-        public bool TryCopyToClipboard()
+        public bool TryCopyToClipboard(ModSettingsClipboardScope scope = ModSettingsClipboardScope.Self)
         {
             if (Binding is not IStructuredModSettingsValueBinding<TItem> structured)
                 return false;
 
-            DisplayServer.ClipboardSet(structured.Adapter.Serialize(Item));
+            DisplayServer.ClipboardSet(JsonSerializer.Serialize(new ModSettingsClipboardEnvelope(
+                "ritsulib.settings.value",
+                typeof(TItem).FullName ?? typeof(TItem).Name,
+                scope,
+                structured.Adapter.Serialize(Item))));
             return true;
         }
 
         public bool CanPasteFromClipboard()
         {
-            return Binding is IStructuredModSettingsValueBinding<TItem> structured
-                   && structured.Adapter.TryDeserialize(DisplayServer.ClipboardGet(), out _);
+            if (Binding is not IStructuredModSettingsValueBinding<TItem> structured)
+                return false;
+
+            var clipboard = DisplayServer.ClipboardGet();
+            if (string.IsNullOrWhiteSpace(clipboard))
+                return false;
+
+            try
+            {
+                var envelope = JsonSerializer.Deserialize<ModSettingsClipboardEnvelope>(clipboard);
+                if (envelope is { Kind: "ritsulib.settings.value" }
+                    && string.Equals(envelope.TypeName, typeof(TItem).FullName ?? typeof(TItem).Name,
+                        StringComparison.Ordinal))
+                    return structured.Adapter.TryDeserialize(envelope.Payload, out _);
+            }
+            catch
+            {
+                // ignored
+            }
+
+            return structured.Adapter.TryDeserialize(clipboard, out _);
         }
 
         public bool TryPasteFromClipboard()
@@ -573,8 +693,31 @@ namespace STS2RitsuLib.Settings
             if (Binding is not IStructuredModSettingsValueBinding<TItem> structured)
                 return false;
 
-            if (!structured.Adapter.TryDeserialize(DisplayServer.ClipboardGet(), out var value))
+            var clipboard = DisplayServer.ClipboardGet();
+            if (string.IsNullOrWhiteSpace(clipboard))
                 return false;
+
+            TItem value;
+            try
+            {
+                var envelope = JsonSerializer.Deserialize<ModSettingsClipboardEnvelope>(clipboard);
+                if (envelope is { Kind: "ritsulib.settings.value" }
+                    && string.Equals(envelope.TypeName, typeof(TItem).FullName ?? typeof(TItem).Name,
+                        StringComparison.Ordinal))
+                {
+                    if (!structured.Adapter.TryDeserialize(envelope.Payload, out value))
+                        return false;
+                }
+                else if (!structured.Adapter.TryDeserialize(clipboard, out value))
+                {
+                    return false;
+                }
+            }
+            catch
+            {
+                if (!structured.Adapter.TryDeserialize(clipboard, out value))
+                    return false;
+            }
 
             Update(value);
             return true;
@@ -614,7 +757,7 @@ namespace STS2RitsuLib.Settings
                 itemDescription,
                 itemEditorFactory,
                 null,
-                addButtonText ?? ModSettingsText.Literal("Add"),
+                addButtonText ?? ModSettingsText.I18N(ModSettingsLocalization.Instance, "button.add", "Add"),
                 description));
         }
     }
@@ -862,7 +1005,7 @@ namespace STS2RitsuLib.Settings
                 itemDescription,
                 itemEditorFactory,
                 itemDataAdapter,
-                addButtonText ?? ModSettingsText.Literal("Add"),
+                addButtonText ?? ModSettingsText.I18N(ModSettingsLocalization.Instance, "button.add", "Add"),
                 description));
             return this;
         }
@@ -938,7 +1081,8 @@ namespace STS2RitsuLib.Settings
             ModSettingsText label,
             IModSettingsValueBinding<TValue> binding,
             IEnumerable<ModSettingsChoiceOption<TValue>> options,
-            ModSettingsText? description = null)
+            ModSettingsText? description = null,
+            ModSettingsChoicePresentation presentation = ModSettingsChoicePresentation.Stepper)
         {
             ArgumentNullException.ThrowIfNull(options);
             var materializedOptions = options.ToArray();
@@ -950,6 +1094,7 @@ namespace STS2RitsuLib.Settings
                 label,
                 binding,
                 materializedOptions,
+                presentation,
                 description));
             return this;
         }
@@ -959,7 +1104,8 @@ namespace STS2RitsuLib.Settings
             ModSettingsText label,
             IModSettingsValueBinding<TEnum> binding,
             Func<TEnum, ModSettingsText>? optionLabelFactory = null,
-            ModSettingsText? description = null)
+            ModSettingsText? description = null,
+            ModSettingsChoicePresentation presentation = ModSettingsChoicePresentation.Stepper)
             where TEnum : struct, Enum
         {
             optionLabelFactory ??= value => ModSettingsText.Literal(value.ToString());
@@ -970,7 +1116,30 @@ namespace STS2RitsuLib.Settings
                 binding,
                 Enum.GetValues<TEnum>()
                     .Select(value => new ModSettingsChoiceOption<TEnum>(value, optionLabelFactory(value))),
-                description);
+                description,
+                presentation);
+        }
+
+        public ModSettingsSectionBuilder AddColor(
+            string id,
+            ModSettingsText label,
+            IModSettingsValueBinding<string> binding,
+            ModSettingsText? description = null)
+        {
+            AddEntry(id, new ColorModSettingsEntryDefinition(id, label, binding, description));
+            return this;
+        }
+
+        public ModSettingsSectionBuilder AddKeyBinding(
+            string id,
+            ModSettingsText label,
+            IModSettingsValueBinding<string> binding,
+            bool allowModifierCombos = true,
+            ModSettingsText? description = null)
+        {
+            AddEntry(id,
+                new KeyBindingModSettingsEntryDefinition(id, label, binding, allowModifierCombos, description));
+            return this;
         }
 
         public ModSettingsSectionBuilder AddButton(
