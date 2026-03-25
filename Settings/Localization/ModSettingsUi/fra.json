@@ -113,5 +113,6 @@
   "button.actionsShort": "Actions",
   "button.resetDefault": "Retablir par defaut",
   "button.copySelf": "Copier cet element",
-  "button.copySubtree": "Copier avec les elements enfants"
+  "button.copySubtree": "Copier avec les elements enfants",
+  "keybinding.hint.comboNonModifier": "Cliquez pour enregistrer. Les combinaisons de touches sont prises en charge et doivent inclure une touche non modificatrice."
 }

@@ -113,5 +113,6 @@
   "button.actionsShort": "การทำงาน",
   "button.resetDefault": "คืนค่าเริ่มต้น",
   "button.copySelf": "คัดลอกเฉพาะรายการนี้",
-  "button.copySubtree": "คัดลอกรวมรายการย่อย"
+  "button.copySubtree": "คัดลอกรวมรายการย่อย",
+  "keybinding.hint.comboNonModifier": "คลิกเพื่อบันทึก รองรับชุดปุ่ม และต้องมีปุ่มที่ไม่ใช่ปุ่มเสริมอย่างน้อยหนึ่งปุ่ม"
 }

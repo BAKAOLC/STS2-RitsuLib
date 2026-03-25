@@ -113,5 +113,6 @@
   "button.actionsShort": "操作",
   "button.resetDefault": "デフォルトに戻す",
   "button.copySelf": "この項目をコピー",
-  "button.copySubtree": "子項目込みでコピー"
+  "button.copySubtree": "子項目込みでコピー",
+  "keybinding.hint.comboNonModifier": "クリックして記録します。キーの組み合わせに対応しており、修飾キー以外のキーを1つ含める必要があります。"
 }

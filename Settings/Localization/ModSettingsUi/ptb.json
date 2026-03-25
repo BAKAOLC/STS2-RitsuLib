@@ -113,5 +113,6 @@
   "button.actionsShort": "Acoes",
   "button.resetDefault": "Restaurar padrao",
   "button.copySelf": "Copiar este item",
-  "button.copySubtree": "Copiar com itens filhos"
+  "button.copySubtree": "Copiar com itens filhos",
+  "keybinding.hint.comboNonModifier": "Clique para gravar. Combinacoes de teclas sao suportadas e devem incluir uma tecla nao modificadora."
 }

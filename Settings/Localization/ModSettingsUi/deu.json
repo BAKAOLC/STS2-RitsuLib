@@ -113,5 +113,6 @@
   "button.actionsShort": "Aktionen",
   "button.resetDefault": "Auf Standard zurucksetzen",
   "button.copySelf": "Selbst kopieren",
-  "button.copySubtree": "Mit Unterelementen kopieren"
+  "button.copySubtree": "Mit Unterelementen kopieren",
+  "keybinding.hint.comboNonModifier": "Klicken, um aufzuzeichnen. Tastenkombinationen werden unterstuetzt und muessen eine Nicht-Modifikatortaste enthalten."
 }

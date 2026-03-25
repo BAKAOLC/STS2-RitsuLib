@@ -504,12 +504,14 @@ namespace STS2RitsuLib.Settings
         IModSettingsValueBinding<string> binding,
         bool allowModifierCombos,
         bool allowModifierOnly,
+        bool distinguishModifierSides,
         ModSettingsText? description)
         : ModSettingsEntryDefinition(id, label, description)
     {
         public IModSettingsValueBinding<string> Binding { get; } = binding;
         public bool AllowModifierCombos { get; } = allowModifierCombos;
         public bool AllowModifierOnly { get; } = allowModifierOnly;
+        public bool DistinguishModifierSides { get; } = distinguishModifierSides;
 
         internal override Control CreateControl(ModSettingsUiContext context)
         {
@@ -1138,11 +1140,12 @@ namespace STS2RitsuLib.Settings
             IModSettingsValueBinding<string> binding,
             bool allowModifierCombos = true,
             bool allowModifierOnly = true,
+            bool distinguishModifierSides = false,
             ModSettingsText? description = null)
         {
             AddEntry(id,
                 new KeyBindingModSettingsEntryDefinition(id, label, binding, allowModifierCombos, allowModifierOnly,
-                    description));
+                    distinguishModifierSides, description));
             return this;
         }
 

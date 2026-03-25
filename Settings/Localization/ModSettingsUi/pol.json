@@ -113,5 +113,6 @@
   "button.actionsShort": "Akcje",
   "button.resetDefault": "Przywroc domyslne",
   "button.copySelf": "Kopiuj ten element",
-  "button.copySubtree": "Kopiuj z elementami podrzednymi"
+  "button.copySubtree": "Kopiuj z elementami podrzednymi",
+  "keybinding.hint.comboNonModifier": "Kliknij, aby nagrac. Obslugiwane sa kombinacje klawiszy i musza zawierac klawisz inny niz modyfikator."
 }

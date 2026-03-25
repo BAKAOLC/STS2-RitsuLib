@@ -113,5 +113,6 @@
   "button.actionsShort": "Islemler",
   "button.resetDefault": "Varsayilana sifirla",
   "button.copySelf": "Bu ogeyi kopyala",
-  "button.copySubtree": "Alt ogelerle birlikte kopyala"
+  "button.copySubtree": "Alt ogelerle birlikte kopyala",
+  "keybinding.hint.comboNonModifier": "Kaydetmek icin tiklayin. Tus kombinasyonlari desteklenir ve modifiye olmayan bir tus icermelidir."
 }

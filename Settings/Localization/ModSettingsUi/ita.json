@@ -113,5 +113,6 @@
   "button.actionsShort": "Azioni",
   "button.resetDefault": "Ripristina predefinito",
   "button.copySelf": "Copia elemento",
-  "button.copySubtree": "Copia con elementi figli"
+  "button.copySubtree": "Copia con elementi figli",
+  "keybinding.hint.comboNonModifier": "Fai clic per registrare. Le combinazioni di tasti sono supportate e devono includere un tasto non modificatore."
 }

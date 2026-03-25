@@ -98,6 +98,7 @@
   "color.channel.saturation": "饱和度",
   "color.channel.value": "明度",
   "keybinding.hint.combo": "点击后录制按键，支持组合键。",
+  "keybinding.hint.comboNonModifier": "点击后录制按键，支持组合键，并且必须包含一个非修饰键。",
   "keybinding.hint.single": "点击后录制单个按键。",
   "keybinding.hint.capturing": "请按下按键组合。Esc 取消，Backspace/Delete 清空。",
   "keybinding.unbound": "未绑定",

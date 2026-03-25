@@ -98,6 +98,7 @@
   "color.channel.saturation": "Saturation",
   "color.channel.value": "Value",
   "keybinding.hint.combo": "Click to record. Supports key combinations.",
+  "keybinding.hint.comboNonModifier": "Click to record. Supports key combinations and requires a non-modifier key.",
   "keybinding.hint.single": "Click to record a single key.",
   "keybinding.hint.capturing": "Press a key combination. Esc cancels, Backspace/Delete clears.",
   "keybinding.unbound": "Unbound",

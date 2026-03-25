@@ -113,5 +113,6 @@
   "button.actionsShort": "동작",
   "button.resetDefault": "기본값으로 되돌리기",
   "button.copySelf": "현재 항목 복사",
-  "button.copySubtree": "하위 항목 포함 복사"
+  "button.copySubtree": "하위 항목 포함 복사",
+  "keybinding.hint.comboNonModifier": "클릭하여 기록합니다. 조합 키를 지원하며, 반드시 비수식 키를 하나 포함해야 합니다."
 }
