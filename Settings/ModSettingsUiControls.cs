@@ -1,4 +1,5 @@
 using System.Globalization;
+using System.Text.Json;
 using Godot;
 using Godot.Collections;
 using MegaCrit.Sts2.addons.mega_text;
@@ -9,6 +10,7 @@ using MegaCrit.Sts2.Core.Nodes.Screens.Settings;
 using STS2RitsuLib.Utils;
 using STS2RitsuLib.Utils.Persistence;
 using Array = System.Array;
+using Timer = Godot.Timer;
 
 namespace STS2RitsuLib.Settings
 {
@@ -126,7 +128,8 @@ namespace STS2RitsuLib.Settings
                 context,
                 () => ModSettingsUiContext.Resolve(entry.Label),
                 () => context.ComposeBindingDescription(entry.Description, entry.Binding),
-                control);
+                control,
+                entry.Binding);
         }
 
         public static Control CreateSliderEntry(ModSettingsUiContext context, SliderModSettingsEntryDefinition entry)
@@ -149,7 +152,8 @@ namespace STS2RitsuLib.Settings
                 context,
                 () => ModSettingsUiContext.Resolve(entry.Label),
                 () => context.ComposeBindingDescription(entry.Description, entry.Binding),
-                control);
+                control,
+                entry.Binding);
 
             string FormatValue(float value)
             {
@@ -164,8 +168,51 @@ namespace STS2RitsuLib.Settings
                 .Select(option => (option.Value, Label: ModSettingsUiContext.Resolve(option.Label)))
                 .ToArray();
 
-            var control = new ModSettingsChoiceControl<TValue>(
-                resolvedOptions,
+            Control control;
+            Action refreshRegistration;
+
+            if (entry.Presentation == ModSettingsChoicePresentation.Dropdown)
+            {
+                var dropdown = new ModSettingsDropdownChoiceControl<TValue>(
+                    resolvedOptions,
+                    entry.Binding.Read(),
+                    value =>
+                    {
+                        entry.Binding.Write(value);
+                        context.MarkDirty(entry.Binding);
+                        context.RequestRefresh();
+                    });
+                control = dropdown;
+                refreshRegistration = () => dropdown.SetValue(entry.Binding.Read());
+            }
+            else
+            {
+                var stepper = new ModSettingsChoiceControl<TValue>(
+                    resolvedOptions,
+                    entry.Binding.Read(),
+                    value =>
+                    {
+                        entry.Binding.Write(value);
+                        context.MarkDirty(entry.Binding);
+                        context.RequestRefresh();
+                    });
+                control = stepper;
+                refreshRegistration = () => stepper.SetValue(entry.Binding.Read());
+            }
+
+            context.RegisterRefresh(refreshRegistration);
+
+            return CreateSettingLine(
+                context,
+                () => ModSettingsUiContext.Resolve(entry.Label),
+                () => context.ComposeBindingDescription(entry.Description, entry.Binding),
+                control,
+                entry.Binding);
+        }
+
+        public static Control CreateColorEntry(ModSettingsUiContext context, ColorModSettingsEntryDefinition entry)
+        {
+            var control = new ModSettingsColorControl(
                 entry.Binding.Read(),
                 value =>
                 {
@@ -179,7 +226,30 @@ namespace STS2RitsuLib.Settings
                 context,
                 () => ModSettingsUiContext.Resolve(entry.Label),
                 () => context.ComposeBindingDescription(entry.Description, entry.Binding),
-                control);
+                control,
+                entry.Binding);
+        }
+
+        public static Control CreateKeyBindingEntry(ModSettingsUiContext context,
+            KeyBindingModSettingsEntryDefinition entry)
+        {
+            var control = new ModSettingsKeyBindingControl(
+                entry.Binding.Read(),
+                entry.AllowModifierCombos,
+                value =>
+                {
+                    entry.Binding.Write(value);
+                    context.MarkDirty(entry.Binding);
+                    context.RequestRefresh();
+                });
+            context.RegisterRefresh(() => control.SetValue(entry.Binding.Read()));
+
+            return CreateSettingLine(
+                context,
+                () => ModSettingsUiContext.Resolve(entry.Label),
+                () => context.ComposeBindingDescription(entry.Description, entry.Binding),
+                control,
+                entry.Binding);
         }
 
         public static Control CreateButtonEntry(ModSettingsUiContext context, ButtonModSettingsEntryDefinition entry)
@@ -286,7 +356,8 @@ namespace STS2RitsuLib.Settings
                 context,
                 () => ModSettingsUiContext.Resolve(entry.Label),
                 () => context.ComposeBindingDescription(entry.Description, entry.Binding),
-                control);
+                control,
+                entry.Binding);
 
             string FormatValue(float value)
             {
@@ -371,8 +442,16 @@ namespace STS2RitsuLib.Settings
             };
         }
 
+        private static MarginContainer CreateSettingLine<TValue>(ModSettingsUiContext context,
+            Func<string> labelProvider,
+            Func<string> descriptionProvider, Control valueControl, IModSettingsValueBinding<TValue> binding)
+        {
+            return CreateSettingLine(context, labelProvider, descriptionProvider, valueControl,
+                CreateEntryActionsButton(context, binding));
+        }
+
         private static MarginContainer CreateSettingLine(ModSettingsUiContext context, Func<string> labelProvider,
-            Func<string> descriptionProvider, Control valueControl)
+            Func<string> descriptionProvider, Control valueControl, Control? actionControl = null)
         {
             var descriptionText = descriptionProvider();
             var line = new MarginContainer
@@ -423,7 +502,161 @@ namespace STS2RitsuLib.Settings
                 valueControl.CustomMinimumSize.Y);
             valueControl.SizeFlagsHorizontal = Control.SizeFlags.ShrinkEnd;
             row.AddChild(valueControl);
+
+            if (actionControl == null) return line;
+            row.AddChild(actionControl);
+            if (actionControl is ModSettingsActionsButton actionsButton)
+                AttachContextMenu(surface, actionsButton);
+
             return line;
+        }
+
+        internal static void AttachContextMenu(Control target, ModSettingsActionsButton button)
+        {
+            var longPressTimer = new Timer
+            {
+                OneShot = true,
+                WaitTime = 0.55f,
+                Autostart = false,
+                ProcessCallback = Timer.TimerProcessCallback.Idle,
+            };
+            target.AddChild(longPressTimer);
+            var pendingTouchPosition = Vector2.Zero;
+            longPressTimer.Timeout += () => button.OpenAt(pendingTouchPosition);
+
+            target.GuiInput += @event =>
+            {
+                switch (@event)
+                {
+                    case InputEventScreenTouch touch:
+                    {
+                        if (touch.Pressed)
+                        {
+                            pendingTouchPosition = target.GetGlobalTransformWithCanvas().Origin + touch.Position;
+                            longPressTimer.Start();
+                        }
+                        else
+                        {
+                            longPressTimer.Stop();
+                        }
+
+                        return;
+                    }
+                    case InputEventScreenDrag:
+                        longPressTimer.Stop();
+                        return;
+                }
+
+                if (@event is not InputEventMouseButton
+                    {
+                        Pressed: true,
+                        ButtonIndex: MouseButton.Right,
+                    })
+                    return;
+
+                button.OpenAt(target.GetGlobalMousePosition());
+                target.GetViewport().SetInputAsHandled();
+            };
+        }
+
+        private static Control? CreateEntryActionsButton<TValue>(ModSettingsUiContext context,
+            IModSettingsValueBinding<TValue> binding)
+        {
+            var actions = BuildBindingActions(context, binding);
+            return actions.Count == 0 ? null : new ModSettingsActionsButton(actions, context.RequestRefresh);
+        }
+
+        private static List<ModSettingsMenuAction> BuildBindingActions<TValue>(ModSettingsUiContext context,
+            IModSettingsValueBinding<TValue> binding)
+        {
+            var actions = new List<ModSettingsMenuAction>();
+            if (binding is IDefaultModSettingsValueBinding<TValue> defaults)
+                actions.Add(new(
+                    ModSettingsLocalization.Get("button.resetDefault", "Reset to default"),
+                    true,
+                    () =>
+                    {
+                        binding.Write(defaults.CreateDefaultValue());
+                        context.MarkDirty(binding);
+                        context.RequestRefresh();
+                    }));
+
+            actions.Add(new(
+                ModSettingsLocalization.Get("button.copy", "Copy data"),
+                true,
+                () =>
+                {
+                    CopyBindingValueToClipboard(binding);
+                    context.RequestRefresh();
+                }));
+            actions.Add(new(
+                ModSettingsLocalization.Get("button.paste", "Paste data"),
+                CanPasteBindingValueFromClipboard(binding),
+                () =>
+                {
+                    if (!TryPasteBindingValueFromClipboard(binding)) return;
+                    context.MarkDirty(binding);
+                    context.RequestRefresh();
+                }));
+            return actions;
+        }
+
+        private static void CopyBindingValueToClipboard<TValue>(IModSettingsValueBinding<TValue> binding)
+        {
+            var adapter = ResolveClipboardAdapter(binding);
+            DisplayServer.ClipboardSet(JsonSerializer.Serialize(new ModSettingsClipboardEnvelope(
+                "ritsulib.settings.value",
+                typeof(TValue).FullName ?? typeof(TValue).Name,
+                ModSettingsClipboardScope.Self,
+                adapter.Serialize(binding.Read()))));
+        }
+
+        private static bool CanPasteBindingValueFromClipboard<TValue>(IModSettingsValueBinding<TValue> binding)
+        {
+            return TryReadClipboardValue(binding, out _);
+        }
+
+        private static bool TryPasteBindingValueFromClipboard<TValue>(IModSettingsValueBinding<TValue> binding)
+        {
+            if (!TryReadClipboardValue(binding, out var value))
+                return false;
+
+            binding.Write(value);
+            return true;
+        }
+
+        private static bool TryReadClipboardValue<TValue>(IModSettingsValueBinding<TValue> binding, out TValue value)
+        {
+            var adapter = ResolveClipboardAdapter(binding);
+            var clipboard = DisplayServer.ClipboardGet();
+            if (string.IsNullOrWhiteSpace(clipboard))
+            {
+                value = default!;
+                return false;
+            }
+
+            try
+            {
+                var envelope = JsonSerializer.Deserialize<ModSettingsClipboardEnvelope>(clipboard);
+                if (envelope is { Kind: "ritsulib.settings.value" }
+                    && string.Equals(envelope.TypeName, typeof(TValue).FullName ?? typeof(TValue).Name,
+                        StringComparison.Ordinal))
+                    return adapter.TryDeserialize(envelope.Payload, out value);
+            }
+            catch
+            {
+                // ignored
+            }
+
+            return adapter.TryDeserialize(clipboard, out value);
+        }
+
+        private static IStructuredModSettingsValueAdapter<TValue> ResolveClipboardAdapter<TValue>(
+            IModSettingsValueBinding<TValue> binding)
+        {
+            return binding is IStructuredModSettingsValueBinding<TValue> structured
+                ? structured.Adapter
+                : ModSettingsStructuredData.Json<TValue>();
         }
 
         private static Control CreateSection(ModSettingsUiContext context, ModSettingsSection section)
@@ -756,7 +989,7 @@ namespace STS2RitsuLib.Settings
             _initialValue = initialValue;
             _onChanged = onChanged;
 
-            CustomMinimumSize = new(248f, 56f);
+            CustomMinimumSize = new(264f, 64f);
             SizeFlagsHorizontal = SizeFlags.ShrinkEnd;
             FocusMode = FocusModeEnum.All;
             MouseFilter = MouseFilterEnum.Stop;
@@ -1118,6 +1351,795 @@ namespace STS2RitsuLib.Settings
             if (_optionsWithValues == null || _label == null)
                 return;
             _label.Text = _optionsWithValues[_currentIndex].Label;
+        }
+    }
+
+    internal sealed partial class ModSettingsDropdownChoiceControl<TValue> : HBoxContainer
+    {
+        private readonly Action<TValue>? _onChanged;
+        private readonly (TValue Value, string Label)[]? _optionsWithValues;
+        private OptionButton? _optionButton;
+        private bool _suppressCallbacks;
+
+        public ModSettingsDropdownChoiceControl(
+            IReadOnlyList<(TValue Value, string Label)> options,
+            TValue currentValue,
+            Action<TValue> onChanged)
+        {
+            _optionsWithValues = options.ToArray();
+            _onChanged = onChanged;
+
+            CustomMinimumSize = new(248f, 56f);
+            SizeFlagsHorizontal = SizeFlags.ShrinkEnd;
+            MouseFilter = MouseFilterEnum.Ignore;
+
+            var dropdown = new OptionButton
+            {
+                CustomMinimumSize = new(264f, 64f),
+                SizeFlagsHorizontal = SizeFlags.ExpandFill,
+                FocusMode = FocusModeEnum.All,
+                MouseFilter = MouseFilterEnum.Stop,
+                ClipText = true,
+                FitToLongestItem = false,
+            };
+            dropdown.AddThemeFontOverride("font", ModSettingsUiResources.KreonBold);
+            dropdown.AddThemeFontSizeOverride("font_size", 18);
+            dropdown.AddThemeColorOverride("font_color", new(0.95f, 0.98f, 1f));
+            dropdown.AddThemeColorOverride("font_hover_color", new(1f, 1f, 1f));
+            dropdown.AddThemeColorOverride("font_pressed_color", new(1f, 1f, 1f));
+            dropdown.AddThemeColorOverride("font_focus_color", new(1f, 1f, 1f));
+            dropdown.AddThemeStyleboxOverride("normal", ModSettingsUiFactory.CreateSurfaceStyle());
+            dropdown.AddThemeStyleboxOverride("hover", ModSettingsUiFactory.CreateSurfaceStyle());
+            dropdown.AddThemeStyleboxOverride("pressed", ModSettingsUiFactory.CreateSurfaceStyle());
+            dropdown.AddThemeStyleboxOverride("focus", ModSettingsUiFactory.CreateSurfaceStyle());
+            AddChild(dropdown);
+            _optionButton = dropdown;
+
+            PopulateOptions(currentValue);
+        }
+
+        public ModSettingsDropdownChoiceControl()
+        {
+        }
+
+        public override void _Ready()
+        {
+            if (_optionButton == null)
+                return;
+
+            _optionButton.ItemSelected += OnItemSelected;
+            if (_optionButton.GetPopup() is not { } popup) return;
+            popup.AddThemeFontOverride("font", ModSettingsUiResources.KreonRegular);
+            popup.AddThemeFontSizeOverride("font_size", 18);
+            popup.AddThemeConstantOverride("v_separation", 12);
+            popup.AddThemeConstantOverride("h_separation", 10);
+        }
+
+        public void SetValue(TValue value)
+        {
+            PopulateOptions(value);
+        }
+
+        private void PopulateOptions(TValue currentValue)
+        {
+            if (_optionButton == null || _optionsWithValues == null)
+                return;
+
+            _suppressCallbacks = true;
+            _optionButton.Clear();
+            var selectedIndex = 0;
+
+            for (var i = 0; i < _optionsWithValues.Length; i++)
+            {
+                var option = _optionsWithValues[i];
+                _optionButton.AddItem(option.Label, i);
+                if (EqualityComparer<TValue>.Default.Equals(option.Value, currentValue))
+                    selectedIndex = i;
+            }
+
+            if (_optionsWithValues.Length > 0)
+                _optionButton.Select(selectedIndex);
+            _suppressCallbacks = false;
+        }
+
+        private void OnItemSelected(long index)
+        {
+            if (_suppressCallbacks || _optionsWithValues == null)
+                return;
+
+            var optionIndex = (int)index;
+            if (optionIndex < 0 || optionIndex >= _optionsWithValues.Length)
+                return;
+
+            _onChanged?.Invoke(_optionsWithValues[optionIndex].Value);
+        }
+    }
+
+    internal sealed partial class ModSettingsColorControl : HBoxContainer
+    {
+        private readonly Action<string>? _onChanged;
+        private ModSettingsSliderControl? _alphaSlider;
+        private ModSettingsSliderControl? _blueSlider;
+        private ModSettingsSliderControl? _greenSlider;
+        private LineEdit? _hexEdit;
+        private Control? _hsvEditor;
+        private ModSettingsSliderControl? _hueSlider;
+        private OptionButton? _modeDropdown;
+        private PopupPanel? _popup;
+        private ColorRect? _popupPreview;
+        private ColorRect? _preview;
+        private Button? _previewButton;
+        private ModSettingsSliderControl? _redSlider;
+        private Control? _rgbEditor;
+        private ModSettingsSliderControl? _satSlider;
+        private bool _suppressCallbacks;
+        private ModSettingsSliderControl? _valueSlider;
+
+        public ModSettingsColorControl(string initialValue, Action<string> onChanged)
+        {
+            _onChanged = onChanged;
+
+            CustomMinimumSize = new(320f, 56f);
+            SizeFlagsHorizontal = SizeFlags.ShrinkEnd;
+            MouseFilter = MouseFilterEnum.Ignore;
+            AddThemeConstantOverride("separation", 10);
+
+            var previewButton = new Button
+            {
+                CustomMinimumSize = new(64f, 56f),
+                MouseFilter = MouseFilterEnum.Stop,
+                FocusMode = FocusModeEnum.All,
+            };
+            previewButton.AddThemeStyleboxOverride("normal", ModSettingsUiFactory.CreateSurfaceStyle());
+            previewButton.AddThemeStyleboxOverride("hover", ModSettingsUiFactory.CreateSurfaceStyle());
+            previewButton.AddThemeStyleboxOverride("pressed", ModSettingsUiFactory.CreateSurfaceStyle());
+            previewButton.AddThemeStyleboxOverride("focus", ModSettingsUiFactory.CreateSurfaceStyle());
+            AddChild(previewButton);
+            _previewButton = previewButton;
+
+            var previewHost = new MarginContainer
+            {
+                MouseFilter = MouseFilterEnum.Ignore,
+            };
+            previewHost.SetAnchorsPreset(LayoutPreset.FullRect);
+            previewHost.AddThemeConstantOverride("margin_left", 8);
+            previewHost.AddThemeConstantOverride("margin_top", 8);
+            previewHost.AddThemeConstantOverride("margin_right", 8);
+            previewHost.AddThemeConstantOverride("margin_bottom", 8);
+            previewButton.AddChild(previewHost);
+
+            var previewLayer = new Control
+            {
+                MouseFilter = MouseFilterEnum.Ignore,
+                SizeFlagsHorizontal = SizeFlags.ExpandFill,
+                SizeFlagsVertical = SizeFlags.ExpandFill,
+            };
+            previewLayer.SetAnchorsPreset(LayoutPreset.FullRect);
+            previewHost.AddChild(previewLayer);
+
+            var checker = new ColorRect
+            {
+                Color = new(0.18f, 0.22f, 0.27f),
+                MouseFilter = MouseFilterEnum.Ignore,
+            };
+            checker.SetAnchorsPreset(LayoutPreset.FullRect);
+            previewLayer.AddChild(checker);
+
+            var preview = new ColorRect
+            {
+                MouseFilter = MouseFilterEnum.Ignore,
+            };
+            preview.SetAnchorsAndOffsetsPreset(LayoutPreset.FullRect);
+            preview.OffsetLeft = 2f;
+            preview.OffsetTop = 2f;
+            preview.OffsetRight = -2f;
+            preview.OffsetBottom = -2f;
+            previewLayer.AddChild(preview);
+            _preview = preview;
+
+            var hexEdit = new LineEdit
+            {
+                PlaceholderText = "#RRGGBBAA",
+                SelectAllOnFocus = true,
+                Alignment = HorizontalAlignment.Center,
+                CustomMinimumSize = new(246f, 56f),
+                SizeFlagsHorizontal = SizeFlags.ExpandFill,
+            };
+            hexEdit.AddThemeFontOverride("font", ModSettingsUiResources.KreonBold);
+            hexEdit.AddThemeFontSizeOverride("font_size", 18);
+            hexEdit.AddThemeColorOverride("font_color", new(1f, 0.964706f, 0.886275f));
+            hexEdit.AddThemeStyleboxOverride("normal", ModSettingsUiFactory.CreateSurfaceStyle());
+            hexEdit.AddThemeStyleboxOverride("focus", ModSettingsUiFactory.CreateSurfaceStyle());
+            AddChild(hexEdit);
+            _hexEdit = hexEdit;
+
+            CreatePopup();
+
+            ApplyFromHex(initialValue, false);
+        }
+
+        public ModSettingsColorControl()
+        {
+        }
+
+        public override void _Ready()
+        {
+            if (_hexEdit == null)
+                return;
+
+            _hexEdit.TextSubmitted += text =>
+            {
+                ApplyFromHex(text, true);
+                _hexEdit.ReleaseFocus();
+            };
+            _hexEdit.FocusExited += () => ApplyFromHex(_hexEdit.Text, true);
+            if (_previewButton != null)
+                _previewButton.Pressed += TogglePopup;
+            if (_modeDropdown != null)
+                _modeDropdown.ItemSelected += index => SetEditorMode(index == 0 ? "RGB" : "HSV");
+        }
+
+        public void SetValue(string value)
+        {
+            ApplyFromHex(value, false);
+        }
+
+        private void CreatePopup()
+        {
+            var popup = new PopupPanel
+            {
+                Visible = false,
+                Size = new(420, 460),
+            };
+            popup.AddThemeStyleboxOverride("panel", ModSettingsUiFactory.CreateListEditorSurfaceStyle());
+            AddChild(popup);
+            _popup = popup;
+
+            var frame = new MarginContainer { MouseFilter = MouseFilterEnum.Ignore };
+            frame.AddThemeConstantOverride("margin_left", 16);
+            frame.AddThemeConstantOverride("margin_top", 16);
+            frame.AddThemeConstantOverride("margin_right", 16);
+            frame.AddThemeConstantOverride("margin_bottom", 16);
+            popup.AddChild(frame);
+
+            var root = new VBoxContainer { MouseFilter = MouseFilterEnum.Ignore };
+            root.AddThemeConstantOverride("separation", 12);
+            frame.AddChild(root);
+
+            var title = new Label
+            {
+                Text = ModSettingsLocalization.Get("color.title", "Color Editor"),
+                MouseFilter = MouseFilterEnum.Ignore,
+            };
+            title.AddThemeFontOverride("font", ModSettingsUiResources.KreonBold);
+            title.AddThemeFontSizeOverride("font_size", 22);
+            title.AddThemeColorOverride("font_color", new(0.96f, 0.98f, 1f));
+            root.AddChild(title);
+
+            var mode = new OptionButton
+            {
+                CustomMinimumSize = new(0f, 48f),
+                FocusMode = FocusModeEnum.All,
+                MouseFilter = MouseFilterEnum.Stop,
+            };
+            mode.AddItem(ModSettingsLocalization.Get("color.mode.rgb", "RGB"), 0);
+            mode.AddItem(ModSettingsLocalization.Get("color.mode.hsv", "HSV"), 1);
+            mode.AddThemeFontOverride("font", ModSettingsUiResources.KreonBold);
+            mode.AddThemeFontSizeOverride("font_size", 16);
+            mode.AddThemeStyleboxOverride("normal", ModSettingsUiFactory.CreateSurfaceStyle());
+            mode.AddThemeStyleboxOverride("hover", ModSettingsUiFactory.CreateSurfaceStyle());
+            mode.AddThemeStyleboxOverride("pressed", ModSettingsUiFactory.CreateSurfaceStyle());
+            mode.AddThemeStyleboxOverride("focus", ModSettingsUiFactory.CreateSurfaceStyle());
+            root.AddChild(mode);
+            _modeDropdown = mode;
+
+            var popupPreviewShell = new PanelContainer
+            {
+                CustomMinimumSize = new(0f, 92f),
+                MouseFilter = MouseFilterEnum.Ignore,
+            };
+            popupPreviewShell.AddThemeStyleboxOverride("panel", ModSettingsUiFactory.CreateSurfaceStyle());
+            root.AddChild(popupPreviewShell);
+
+            var popupPreviewFrame = new MarginContainer { MouseFilter = MouseFilterEnum.Ignore };
+            popupPreviewFrame.SetAnchorsPreset(LayoutPreset.FullRect);
+            popupPreviewFrame.AddThemeConstantOverride("margin_left", 10);
+            popupPreviewFrame.AddThemeConstantOverride("margin_top", 10);
+            popupPreviewFrame.AddThemeConstantOverride("margin_right", 10);
+            popupPreviewFrame.AddThemeConstantOverride("margin_bottom", 10);
+            popupPreviewShell.AddChild(popupPreviewFrame);
+
+            var popupChecker = new ColorRect
+            {
+                Color = new(0.18f, 0.22f, 0.27f),
+                MouseFilter = MouseFilterEnum.Ignore,
+            };
+            popupChecker.SetAnchorsAndOffsetsPreset(LayoutPreset.FullRect);
+            popupPreviewFrame.AddChild(popupChecker);
+
+            var popupPreview = new ColorRect { MouseFilter = MouseFilterEnum.Ignore };
+            popupPreview.SetAnchorsAndOffsetsPreset(LayoutPreset.FullRect);
+            popupPreview.OffsetLeft = 2f;
+            popupPreview.OffsetTop = 2f;
+            popupPreview.OffsetRight = -2f;
+            popupPreview.OffsetBottom = -2f;
+            popupPreviewFrame.AddChild(popupPreview);
+            _popupPreview = popupPreview;
+
+            _rgbEditor = CreateRgbEditor();
+            _hsvEditor = CreateHsvEditor();
+            root.AddChild(_rgbEditor);
+            root.AddChild(_hsvEditor);
+            SetEditorMode("RGB");
+        }
+
+        private Control CreateRgbEditor()
+        {
+            var box = new VBoxContainer { MouseFilter = MouseFilterEnum.Ignore };
+            box.AddThemeConstantOverride("separation", 8);
+            _redSlider = CreateChannelSlider("R", 255f, value => ApplyRgbChange(value, null, null, null));
+            _greenSlider = CreateChannelSlider("G", 255f, value => ApplyRgbChange(null, value, null, null));
+            _blueSlider = CreateChannelSlider("B", 255f, value => ApplyRgbChange(null, null, value, null));
+            _alphaSlider = CreateChannelSlider("A", 255f, value => ApplyRgbChange(null, null, null, value));
+            box.AddChild(WrapSlider(ModSettingsLocalization.Get("color.channel.red", "Red"), _redSlider));
+            box.AddChild(WrapSlider(ModSettingsLocalization.Get("color.channel.green", "Green"), _greenSlider));
+            box.AddChild(WrapSlider(ModSettingsLocalization.Get("color.channel.blue", "Blue"), _blueSlider));
+            box.AddChild(WrapSlider(ModSettingsLocalization.Get("color.channel.alpha", "Alpha"), _alphaSlider));
+            return box;
+        }
+
+        private Control CreateHsvEditor()
+        {
+            var box = new VBoxContainer { MouseFilter = MouseFilterEnum.Ignore };
+            box.AddThemeConstantOverride("separation", 8);
+            _hueSlider = CreateChannelSlider("H", 360f, value => ApplyHsvChange(value, null, null));
+            _satSlider = CreateChannelSlider("S", 100f, value => ApplyHsvChange(null, value, null));
+            _valueSlider = CreateChannelSlider("V", 100f, value => ApplyHsvChange(null, null, value));
+            box.AddChild(WrapSlider(ModSettingsLocalization.Get("color.channel.hue", "Hue"), _hueSlider));
+            box.AddChild(WrapSlider(ModSettingsLocalization.Get("color.channel.saturation", "Saturation"), _satSlider));
+            box.AddChild(WrapSlider(ModSettingsLocalization.Get("color.channel.value", "Value"), _valueSlider));
+            return box;
+        }
+
+        private ModSettingsSliderControl CreateChannelSlider(string prefix, float maxValue, Action<float> onChanged)
+        {
+            return new(maxValue, 0f, maxValue, 1f,
+                value => $"{prefix}:{Mathf.RoundToInt(value)}", onChanged);
+        }
+
+        private static Control WrapSlider(string labelText, Control slider)
+        {
+            var row = new VBoxContainer { MouseFilter = MouseFilterEnum.Ignore };
+            row.AddThemeConstantOverride("separation", 4);
+
+            var label = new Label { Text = labelText, MouseFilter = MouseFilterEnum.Ignore };
+            label.AddThemeFontOverride("font", ModSettingsUiResources.KreonRegular);
+            label.AddThemeFontSizeOverride("font_size", 15);
+            label.AddThemeColorOverride("font_color", new(0.86f, 0.93f, 0.98f, 0.94f));
+            row.AddChild(label);
+            row.AddChild(slider);
+            return row;
+        }
+
+        private void TogglePopup()
+        {
+            if (_popup == null)
+                return;
+            if (_popup.Visible)
+            {
+                _popup.Hide();
+                return;
+            }
+
+            _popup.Popup();
+            PositionPopupInViewport();
+        }
+
+        private void PositionPopupInViewport()
+        {
+            if (_popup == null)
+                return;
+
+            var viewportRect = GetViewportRect();
+            var popupSize = _popup.Size;
+            var preferredX = Mathf.RoundToInt(GlobalPosition.X);
+            var preferredY = Mathf.RoundToInt(GlobalPosition.Y + Size.Y + 6f);
+
+            var minX = Mathf.RoundToInt(viewportRect.Position.X);
+            var maxX = Mathf.RoundToInt(viewportRect.End.X - popupSize.X);
+            var minY = Mathf.RoundToInt(viewportRect.Position.Y);
+            var maxY = Mathf.RoundToInt(viewportRect.End.Y - popupSize.Y);
+            var x = Mathf.Clamp(preferredX, minX, maxX);
+            var y = preferredY;
+
+            if (y + popupSize.Y > viewportRect.End.Y)
+                y = Mathf.RoundToInt(GlobalPosition.Y - popupSize.Y - 6f);
+
+            y = Mathf.Clamp(y, minY, maxY);
+            _popup.Position = new(x, y);
+        }
+
+        private void SetEditorMode(string mode)
+        {
+            _rgbEditor?.Visible = mode == "RGB";
+            _hsvEditor?.Visible = mode == "HSV";
+        }
+
+        private void ApplyRgbChange(float? red, float? green, float? blue, float? alpha)
+        {
+            if (_suppressCallbacks)
+                return;
+
+            var current = ReadCurrentColor();
+            ApplyColor(new(
+                (red ?? current.R * 255f) / 255f,
+                (green ?? current.G * 255f) / 255f,
+                (blue ?? current.B * 255f) / 255f,
+                (alpha ?? current.A * 255f) / 255f), true);
+        }
+
+        private void ApplyHsvChange(float? hue, float? saturation, float? value)
+        {
+            if (_suppressCallbacks)
+                return;
+
+            var current = ReadCurrentColor();
+            var h = hue ?? current.H * 360f;
+            var s = saturation ?? current.S * 100f;
+            var v = value ?? current.V * 100f;
+            ApplyColor(Color.FromHsv(h / 360f, s / 100f, v / 100f, current.A), true);
+        }
+
+        private void ApplyFromHex(string text, bool notify)
+        {
+            if (!TryParseColor(text, out var color))
+            {
+                ApplyColor(ReadCurrentColor(), false);
+                return;
+            }
+
+            ApplyColor(color, notify);
+        }
+
+        private void ApplyColor(Color color, bool notify)
+        {
+            _suppressCallbacks = true;
+            _preview?.Color = color;
+            _popupPreview?.Color = color;
+            _hexEdit?.Text = FormatColor(color);
+            _redSlider?.SetValue(Mathf.RoundToInt(color.R * 255f));
+            _greenSlider?.SetValue(Mathf.RoundToInt(color.G * 255f));
+            _blueSlider?.SetValue(Mathf.RoundToInt(color.B * 255f));
+            _alphaSlider?.SetValue(Mathf.RoundToInt(color.A * 255f));
+            _hueSlider?.SetValue(Mathf.RoundToInt(color.H * 360f));
+            _satSlider?.SetValue(Mathf.RoundToInt(color.S * 100f));
+            _valueSlider?.SetValue(Mathf.RoundToInt(color.V * 100f));
+            _suppressCallbacks = false;
+
+            if (notify)
+                _onChanged?.Invoke(FormatColor(color));
+        }
+
+        private Color ReadCurrentColor()
+        {
+            return _preview?.Color ?? new(1f, 215f / 255f, 64f / 255f);
+        }
+
+        private static bool TryParseColor(string text, out Color color)
+        {
+            var trimmed = text.Trim();
+            if (string.IsNullOrWhiteSpace(trimmed))
+            {
+                color = default;
+                return false;
+            }
+
+            if (!trimmed.StartsWith('#'))
+                trimmed = $"#{trimmed}";
+
+            var hex = trimmed[1..];
+            if (hex.Length is not (3 or 4 or 6 or 8) || hex.Any(c => !Uri.IsHexDigit(c)))
+            {
+                color = default;
+                return false;
+            }
+
+            if (hex.Length is 3 or 4)
+                hex = string.Concat(hex.Select(c => new string(c, 2)));
+            if (hex.Length == 6)
+                hex += "FF";
+
+            color = new(
+                Convert.ToByte(hex[..2], 16) / 255f,
+                Convert.ToByte(hex[2..4], 16) / 255f,
+                Convert.ToByte(hex[4..6], 16) / 255f,
+                Convert.ToByte(hex[6..8], 16) / 255f);
+            return true;
+        }
+
+        private static string FormatColor(Color color)
+        {
+            return
+                $"#{Mathf.RoundToInt(color.R * 255f):X2}{Mathf.RoundToInt(color.G * 255f):X2}{Mathf.RoundToInt(color.B * 255f):X2}{Mathf.RoundToInt(color.A * 255f):X2}";
+        }
+    }
+
+    internal sealed partial class ModSettingsKeyBindingControl : VBoxContainer
+    {
+        private readonly bool _allowModifierCombos;
+        private readonly Action<string>? _onChanged;
+        private Button? _captureButton;
+        private bool _capturing;
+        private string _currentValue = string.Empty;
+        private Label? _hintLabel;
+
+        public ModSettingsKeyBindingControl(string initialValue, bool allowModifierCombos, Action<string> onChanged)
+        {
+            _allowModifierCombos = allowModifierCombos;
+            _onChanged = onChanged;
+            _currentValue = initialValue;
+
+            CustomMinimumSize = new(320f, 84f);
+            SizeFlagsHorizontal = SizeFlags.ShrinkEnd;
+            MouseFilter = MouseFilterEnum.Ignore;
+            AddThemeConstantOverride("separation", 8);
+
+            var row = new HBoxContainer { MouseFilter = MouseFilterEnum.Ignore };
+            row.AddThemeConstantOverride("separation", 8);
+            AddChild(row);
+
+            var captureButton = new Button
+            {
+                CustomMinimumSize = new(240f, 56f),
+                SizeFlagsHorizontal = SizeFlags.ExpandFill,
+                FocusMode = FocusModeEnum.All,
+                MouseFilter = MouseFilterEnum.Stop,
+            };
+            captureButton.AddThemeFontOverride("font", ModSettingsUiResources.KreonBold);
+            captureButton.AddThemeFontSizeOverride("font_size", 17);
+            captureButton.AddThemeStyleboxOverride("normal", ModSettingsUiFactory.CreateSurfaceStyle());
+            captureButton.AddThemeStyleboxOverride("hover", ModSettingsUiFactory.CreateSurfaceStyle());
+            captureButton.AddThemeStyleboxOverride("pressed", ModSettingsUiFactory.CreateSurfaceStyle());
+            captureButton.AddThemeStyleboxOverride("focus", ModSettingsUiFactory.CreateSurfaceStyle());
+            row.AddChild(captureButton);
+            _captureButton = captureButton;
+
+            row.AddChild(new ModSettingsMiniButton(ModSettingsLocalization.Get("button.clear", "Clear"),
+                () => ApplyBinding(string.Empty, true))
+            {
+                CustomMinimumSize = new(72f, 56f),
+            });
+
+            var hint = new Label
+            {
+                MouseFilter = MouseFilterEnum.Ignore,
+                Text = allowModifierCombos
+                    ? ModSettingsLocalization.Get("keybinding.hint.combo",
+                        "Click to record. Supports key combinations.")
+                    : ModSettingsLocalization.Get("keybinding.hint.single", "Click to record a single key."),
+            };
+            hint.AddThemeFontOverride("font", ModSettingsUiResources.KreonRegular);
+            hint.AddThemeFontSizeOverride("font_size", 14);
+            hint.AddThemeColorOverride("font_color", new(0.82f, 0.89f, 0.94f, 0.92f));
+            AddChild(hint);
+            _hintLabel = hint;
+
+            RefreshText();
+            SetProcessUnhandledKeyInput(true);
+        }
+
+        public ModSettingsKeyBindingControl()
+        {
+        }
+
+        public override void _Ready()
+        {
+            if (_captureButton != null)
+                _captureButton.Pressed += BeginCapture;
+        }
+
+        public void SetValue(string value)
+        {
+            _currentValue = value;
+            if (!_capturing)
+                RefreshText();
+        }
+
+        public override void _UnhandledKeyInput(InputEvent @event)
+        {
+            if (!_capturing || @event is not InputEventKey { Pressed: true } keyEvent || keyEvent.IsEcho())
+                return;
+
+            GetViewport().SetInputAsHandled();
+
+            switch (keyEvent.Keycode)
+            {
+                case Key.Escape:
+                    _capturing = false;
+                    RefreshText();
+                    return;
+                case Key.Backspace or Key.Delete:
+                    ApplyBinding(string.Empty, true);
+                    _capturing = false;
+                    return;
+            }
+
+            var binding = FormatKeyBinding(keyEvent, _allowModifierCombos);
+            if (string.IsNullOrWhiteSpace(binding))
+                return;
+
+            ApplyBinding(binding, true);
+            _capturing = false;
+        }
+
+        private void BeginCapture()
+        {
+            _capturing = true;
+            RefreshText();
+            _captureButton?.GrabFocus();
+        }
+
+        private void ApplyBinding(string value, bool notify)
+        {
+            _currentValue = value;
+            RefreshText();
+            if (notify)
+                _onChanged?.Invoke(value);
+        }
+
+        private void RefreshText()
+        {
+            _captureButton?.Text = _capturing
+                ? ModSettingsLocalization.Get("keybinding.capturing", "Press combination...")
+                : string.IsNullOrWhiteSpace(_currentValue)
+                    ? ModSettingsLocalization.Get("keybinding.unbound", "Unbound")
+                    : _currentValue;
+            _hintLabel?.Text = _capturing
+                ? ModSettingsLocalization.Get("keybinding.hint.capturing",
+                    "Press a key combination. Esc cancels, Backspace/Delete clears.")
+                : _allowModifierCombos
+                    ? ModSettingsLocalization.Get("keybinding.hint.combo",
+                        "Click to record. Supports key combinations.")
+                    : ModSettingsLocalization.Get("keybinding.hint.single", "Click to record a single key.");
+        }
+
+        private static string FormatKeyBinding(InputEventKey keyEvent, bool allowModifierCombos)
+        {
+            var parts = new List<string>();
+            if (allowModifierCombos && keyEvent.CtrlPressed)
+                parts.Add("Ctrl");
+            if (allowModifierCombos && keyEvent.AltPressed)
+                parts.Add("Alt");
+            if (allowModifierCombos && keyEvent.ShiftPressed)
+                parts.Add("Shift");
+            if (allowModifierCombos && keyEvent.MetaPressed)
+                parts.Add("Meta");
+
+            if (!IsModifierKey(keyEvent.Keycode) || parts.Count == 0)
+                parts.Add(keyEvent.Keycode.ToString());
+
+            if (!allowModifierCombos && IsModifierKey(keyEvent.Keycode))
+                return keyEvent.Keycode.ToString();
+
+            return string.Join('+', parts);
+        }
+
+        private static bool IsModifierKey(Key key)
+        {
+            return key is Key.Shift or Key.Ctrl or Key.Alt or Key.Meta;
+        }
+    }
+
+    internal sealed record ModSettingsMenuAction(string Label, bool Enabled, Action Action);
+
+    public enum ModSettingsClipboardScope
+    {
+        Self = 0,
+        Subtree = 1,
+    }
+
+    internal sealed record ModSettingsClipboardEnvelope(
+        string Kind,
+        string TypeName,
+        ModSettingsClipboardScope Scope,
+        string Payload);
+
+    internal sealed partial class ModSettingsActionsButton : MenuButton
+    {
+        private readonly IReadOnlyList<ModSettingsMenuAction> _actions;
+        private readonly Action? _afterAction;
+        private PopupMenu? _popup;
+        private Vector2I? _preferredPopupPosition;
+
+        public ModSettingsActionsButton(IReadOnlyList<ModSettingsMenuAction> actions, Action? afterAction = null)
+        {
+            _actions = actions;
+            _afterAction = afterAction;
+            Text = ModSettingsLocalization.Get("button.actionsShort", "Actions");
+            FocusMode = FocusModeEnum.All;
+            MouseFilter = MouseFilterEnum.Stop;
+            CustomMinimumSize = new(120f, 56f);
+            AddThemeFontOverride("font", ModSettingsUiResources.KreonBold);
+            AddThemeFontSizeOverride("font_size", 18);
+            AddThemeColorOverride("font_color", new(0.95f, 0.98f, 1f));
+            AddThemeColorOverride("font_hover_color", new(1f, 1f, 1f));
+            AddThemeColorOverride("font_pressed_color", new(1f, 1f, 1f));
+            AddThemeStyleboxOverride("normal", ModSettingsUiFactory.CreateSurfaceStyle());
+            AddThemeStyleboxOverride("hover", ModSettingsUiFactory.CreateSurfaceStyle());
+            AddThemeStyleboxOverride("pressed", ModSettingsUiFactory.CreateSurfaceStyle());
+            AddThemeStyleboxOverride("focus", ModSettingsUiFactory.CreateSurfaceStyle());
+        }
+
+        public ModSettingsActionsButton()
+        {
+            _actions = [];
+        }
+
+        public override void _Ready()
+        {
+            var popup = GetPopup();
+            _popup = popup;
+            popup.Clear();
+            ApplyTouchFriendlyPopupTheme(popup);
+            for (var i = 0; i < _actions.Count; i++)
+            {
+                popup.AddItem(_actions[i].Label, i);
+                popup.SetItemDisabled(i, !_actions[i].Enabled);
+            }
+
+            popup.AboutToPopup += ClampPopupToViewport;
+
+            popup.IdPressed += id =>
+            {
+                if (id < 0 || id >= _actions.Count)
+                    return;
+
+                var action = _actions[(int)id];
+                if (!action.Enabled)
+                    return;
+
+                action.Action();
+                _afterAction?.Invoke();
+            };
+        }
+
+        public void OpenAt(Vector2 globalPosition)
+        {
+            _preferredPopupPosition = new Vector2I(
+                Mathf.RoundToInt(globalPosition.X),
+                Mathf.RoundToInt(globalPosition.Y));
+            _popup ??= GetPopup();
+            _popup.Popup();
+            ClampPopupToViewport();
+        }
+
+        private void ClampPopupToViewport()
+        {
+            _popup ??= GetPopup();
+            var popup = _popup;
+            if (popup == null)
+                return;
+
+            var viewportRect = GetViewportRect();
+            var size = popup.Size;
+            var position = _preferredPopupPosition ?? popup.Position;
+
+            var minX = Mathf.RoundToInt(viewportRect.Position.X);
+            var maxX = Mathf.RoundToInt(Math.Max(viewportRect.Position.X, viewportRect.End.X - size.X));
+            var minY = Mathf.RoundToInt(viewportRect.Position.Y);
+            var maxY = Mathf.RoundToInt(Math.Max(viewportRect.Position.Y, viewportRect.End.Y - size.Y));
+
+            popup.Position = new(
+                Mathf.Clamp(position.X, minX, maxX),
+                Mathf.Clamp(position.Y, minY, maxY));
+        }
+
+        private static void ApplyTouchFriendlyPopupTheme(PopupMenu popup)
+        {
+            popup.AddThemeFontOverride("font", ModSettingsUiResources.KreonRegular);
+            popup.AddThemeFontSizeOverride("font_size", 18);
+            popup.AddThemeConstantOverride("v_separation", 12);
+            popup.AddThemeConstantOverride("h_separation", 10);
         }
     }
 
@@ -1844,70 +2866,26 @@ namespace STS2RitsuLib.Settings
             };
             actions.AddThemeConstantOverride("separation", 8);
             header.AddChild(actions);
-
-            var moveUpButton = new ModSettingsMiniButton(ModSettingsLocalization.Get("button.moveUpShort", "Up"),
-                itemContext.MoveUp)
-            {
-                CustomMinimumSize = new(68f, 42f),
-                Disabled = !itemContext.CanMoveUp,
-                TooltipText = ModSettingsLocalization.Get("button.moveUp", "Move up"),
-            };
-            actions.AddChild(moveUpButton);
-
-            var moveDownButton = new ModSettingsMiniButton(ModSettingsLocalization.Get("button.moveDownShort", "Down"),
-                itemContext.MoveDown)
-            {
-                CustomMinimumSize = new(68f, 42f),
-                Disabled = !itemContext.CanMoveDown,
-                TooltipText = ModSettingsLocalization.Get("button.moveDown", "Move down"),
-            };
-            actions.AddChild(moveDownButton);
-
-            var duplicateButton = new ModSettingsMiniButton(
-                ModSettingsLocalization.Get("button.duplicateShort", "Dup"),
-                itemContext.Duplicate)
-            {
-                CustomMinimumSize = new(72f, 42f),
-                Disabled = !itemContext.SupportsStructuredClipboard,
-                TooltipText = ModSettingsLocalization.Get("button.duplicate", "Duplicate"),
-            };
-            actions.AddChild(duplicateButton);
-
-            var copyButton = new ModSettingsMiniButton(
-                ModSettingsLocalization.Get("button.copyShort", "Copy"),
-                () =>
-                {
-                    if (itemContext.TryCopyToClipboard())
-                        itemContext.RequestRefresh();
-                })
-            {
-                CustomMinimumSize = new(78f, 42f),
-                Disabled = !itemContext.SupportsStructuredClipboard,
-                TooltipText = ModSettingsLocalization.Get("button.copy", "Copy data"),
-            };
-            actions.AddChild(copyButton);
-
-            var pasteButton = new ModSettingsMiniButton(
-                ModSettingsLocalization.Get("button.pasteShort", "Paste"),
-                () =>
-                {
-                    if (itemContext.TryPasteFromClipboard())
-                        itemContext.RequestRefresh();
-                })
-            {
-                CustomMinimumSize = new(82f, 42f),
-                Disabled = !itemContext.CanPasteFromClipboard(),
-                TooltipText = ModSettingsLocalization.Get("button.paste", "Paste data"),
-            };
-            actions.AddChild(pasteButton);
-
-            var deleteButton = new ModSettingsMiniButton(
-                ModSettingsLocalization.Get("button.remove", "Remove"),
-                itemContext.Remove)
-            {
-                CustomMinimumSize = new(96f, 42f),
-            };
-            actions.AddChild(deleteButton);
+            var actionsButton = new ModSettingsActionsButton([
+                new(ModSettingsLocalization.Get("button.moveUp", "Move up"), itemContext.CanMoveUp,
+                    itemContext.MoveUp),
+                new(ModSettingsLocalization.Get("button.moveDown", "Move down"), itemContext.CanMoveDown,
+                    itemContext.MoveDown),
+                new(ModSettingsLocalization.Get("button.duplicate", "Duplicate"),
+                    itemContext.SupportsStructuredClipboard,
+                    itemContext.Duplicate),
+                new(ModSettingsLocalization.Get("button.copySelf", "Copy self"),
+                    itemContext.SupportsStructuredClipboard,
+                    () => { itemContext.TryCopyToClipboard(); }),
+                new(ModSettingsLocalization.Get("button.copySubtree", "Copy with children"),
+                    itemContext.SupportsStructuredClipboard,
+                    () => { itemContext.TryCopyToClipboard(ModSettingsClipboardScope.Subtree); }),
+                new(ModSettingsLocalization.Get("button.paste", "Paste data"), itemContext.CanPasteFromClipboard(),
+                    () => { itemContext.TryPasteFromClipboard(); }),
+                new(ModSettingsLocalization.Get("button.remove", "Remove"), true, itemContext.Remove),
+            ], itemContext.RequestRefresh);
+            actions.AddChild(actionsButton);
+            ModSettingsUiFactory.AttachContextMenu(this, actionsButton);
 
             if (editorContent != null)
             {

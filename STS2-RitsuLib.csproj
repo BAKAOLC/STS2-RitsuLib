@@ -1,5 +1,5 @@
 <Project Sdk="Godot.NET.Sdk/4.5.1">
-    <Import Project="..\local.props" Condition="Exists('..\local.props')"/>
+    <Import Project=".\local.props" Condition="Exists('.\local.props')"/>
     <PropertyGroup>
         <RootNamespace>STS2RitsuLib</RootNamespace>
         <TargetFramework>net9.0</TargetFramework>
@@ -10,7 +10,7 @@
         <NoWarn>CS0436</NoWarn>
         <IsPackable>true</IsPackable>
         <PackageId>STS2.RitsuLib</PackageId>
-        <Version>0.0.14</Version>
+        <Version>0.0.15</Version>
         <Authors>OLC</Authors>
         <Description>Shared framework library for Slay the Spire 2 mods.</Description>
         <PackageReadmeFile>README.md</PackageReadmeFile>
@@ -23,8 +23,8 @@
         <Sts2DataDir>$(Sts2Dir)\data_sts2_windows_x86_64</Sts2DataDir>
     </PropertyGroup>
 
-    <Target Name="EnsureLocalProps" BeforeTargets="PrepareForBuild" Condition="!Exists('..\local.props')">
-        <Error Text="Missing '..\local.props'. Copy '..\local.props.template' to '..\local.props', then update 'Sts2Dir' for your local environment."/>
+    <Target Name="EnsureLocalProps" BeforeTargets="PrepareForBuild" Condition="!Exists('.\local.props')">
+        <Error Text="Missing '.\local.props'. Copy '..\local.props.template' to '.\local.props', then update 'Sts2Dir' for your local environment."/>
     </Target>
 
     <ItemGroup>

@@ -6,5 +6,7 @@
 *.sln.DotSettings.user
 artifacts/nuget/
 
+.vs/
+
 local.props
 !local.props.template
