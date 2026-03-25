@@ -2392,7 +2392,7 @@ namespace STS2RitsuLib.Settings
             var image = new TextureRect
             {
                 Name = "Image",
-                Material = ModSettingsUiResources.CreateToneMaterial(ModSettingsButtonTone.Normal),
+                Material = ModSettingsUiResources.CreateToneMaterial(ModSettingsButtonTone.Accent),
                 CustomMinimumSize = new(64f, 64f),
                 AnchorRight = 1f,
                 AnchorBottom = 1f,
@@ -2417,10 +2417,10 @@ namespace STS2RitsuLib.Settings
                 HorizontalAlignment = HorizontalAlignment.Center,
                 VerticalAlignment = VerticalAlignment.Center,
             };
-            label.AddThemeColorOverride("font_color", new(0.91f, 0.86359f, 0.7462f));
+            label.AddThemeColorOverride("font_color", new(0.82f, 0.94f, 0.78f));
             label.AddThemeColorOverride("font_shadow_color", new(0f, 0f, 0f, 0.25098f));
             label.AddThemeColorOverride("font_outline_color",
-                ModSettingsUiResources.GetToneOutlineColor(ModSettingsButtonTone.Normal));
+                ModSettingsUiResources.GetToneOutlineColor(ModSettingsButtonTone.Accent));
             label.AddThemeConstantOverride("shadow_offset_x", 4);
             label.AddThemeConstantOverride("shadow_offset_y", 3);
             label.AddThemeConstantOverride("outline_size", 12);
