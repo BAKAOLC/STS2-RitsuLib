@@ -503,11 +503,13 @@ namespace STS2RitsuLib.Settings
         ModSettingsText label,
         IModSettingsValueBinding<string> binding,
         bool allowModifierCombos,
+        bool allowModifierOnly,
         ModSettingsText? description)
         : ModSettingsEntryDefinition(id, label, description)
     {
         public IModSettingsValueBinding<string> Binding { get; } = binding;
         public bool AllowModifierCombos { get; } = allowModifierCombos;
+        public bool AllowModifierOnly { get; } = allowModifierOnly;
 
         internal override Control CreateControl(ModSettingsUiContext context)
         {
@@ -1135,10 +1137,12 @@ namespace STS2RitsuLib.Settings
             ModSettingsText label,
             IModSettingsValueBinding<string> binding,
             bool allowModifierCombos = true,
+            bool allowModifierOnly = true,
             ModSettingsText? description = null)
         {
             AddEntry(id,
-                new KeyBindingModSettingsEntryDefinition(id, label, binding, allowModifierCombos, description));
+                new KeyBindingModSettingsEntryDefinition(id, label, binding, allowModifierCombos, allowModifierOnly,
+                    description));
             return this;
         }
 
