@@ -1,5 +1,5 @@
 ﻿<Project Sdk="Godot.NET.Sdk/4.5.1">
-    <Import Project="..\local.props" Condition="Exists('..\local.props')" />
+    <Import Project="..\local.props" Condition="Exists('..\local.props')"/>
     <PropertyGroup>
         <RootNamespace>STS2RitsuLib</RootNamespace>
         <TargetFramework>net9.0</TargetFramework>
@@ -40,6 +40,9 @@
     </ItemGroup>
     <ItemGroup>
         <Content Include="mod_manifest.json"/>
+    </ItemGroup>
+    <ItemGroup>
+        <EmbeddedResource Include="Settings\Localization\**\*.json"/>
     </ItemGroup>
     <ItemGroup>
         <None Include="README.md" Pack="true" PackagePath="\"/>

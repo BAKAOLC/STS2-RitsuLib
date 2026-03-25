@@ -8,6 +8,7 @@ using STS2RitsuLib.Data;
 using STS2RitsuLib.Keywords;
 using STS2RitsuLib.Patching.Core;
 using STS2RitsuLib.Scaffolding.Content;
+using STS2RitsuLib.Settings;
 using STS2RitsuLib.Timeline;
 using STS2RitsuLib.Unlocks;
 using STS2RitsuLib.Utils;
@@ -39,6 +40,8 @@ namespace STS2RitsuLib
         public static Logger Logger { get; private set; }
         public static bool IsInitialized { get; private set; }
         public static bool IsActive { get; private set; }
+
+        public static bool HasRegisteredModSettings => ModSettingsRegistry.HasPages;
 
         public static IDisposable SubscribeLifecycle(ILifecycleObserver observer, bool replayCurrentState = true)
         {
@@ -117,6 +120,7 @@ namespace STS2RitsuLib
                 Logger.Info($"Version: {Const.Version}");
                 Logger.Info("Initializing shared framework...");
                 RitsuLibSettingsStore.Initialize();
+                RitsuLibModSettingsBootstrap.Initialize();
                 PublishLifecycleEvent(
                     new FrameworkInitializingEvent(Const.ModId, Const.Version, DateTimeOffset.UtcNow),
                     nameof(FrameworkInitializingEvent)
@@ -126,6 +130,7 @@ namespace STS2RitsuLib
                 {
                     FrameworkPatchersByArea.Clear();
                     RegisterLifecyclePatches();
+                    RegisterSettingsUiPatches();
                     RegisterContentAssetPatches();
                     RegisterCharacterAssetPatches();
                     RegisterContentRegistryPatches();
@@ -223,6 +228,17 @@ namespace STS2RitsuLib
         public static ModContentPackBuilder CreateContentPack(string modId)
         {
             return ModContentPackBuilder.For(modId);
+        }
+
+        public static void RegisterModSettings(string modId, Action<ModSettingsPageBuilder> configure,
+            string? pageId = null)
+        {
+            ModSettingsRegistry.Register(modId, configure, pageId);
+        }
+
+        public static IReadOnlyList<ModSettingsPage> GetRegisteredModSettings()
+        {
+            return ModSettingsRegistry.GetPages();
         }
 
         public static Logger CreateLogger(string modId, LogType logType = LogType.Generic)

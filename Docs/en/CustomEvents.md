@@ -1,40 +1,43 @@
 # Custom Events
 
-This guide explains custom event authoring by relating the event runtime flow in `sts-2-source` to the registration APIs provided by RitsuLib.
+This document explains how custom events fit into the base game's event pipeline, and how RitsuLib exposes that pipeline through its registration APIs.
 
-It covers three cases:
+It covers three content shapes:
 
-- normal shared events via `SharedEvent<TEvent>()`
+- shared events via `SharedEvent<TEvent>()`
 - act-specific events via `ActEvent<TAct, TEvent>()`
 - ancients via `SharedAncient<TAncient>()` / `ActAncient<TAct, TAncient>()`
 
 ---
 
-## How the game loads events
+## Runtime Model
 
-In `sts-2-source`, events enter the game through several key access points:
+RitsuLib does not replace the game's event flow.
+It extends the existing flow by registering additional event and ancient models at the points where the base game already consumes them.
 
-- `ActModel.GenerateRooms(...)` merges `AllEvents` with `ModelDb.AllSharedEvents`
-- `RoomSet.EnsureNextEventIsValid(...)` skips events that fail `IsAllowed(runState)` or were already visited
-- `EventRoom.Enter(...)` preloads assets, creates a mutable event instance, and builds the event UI
-- `EventModel.GetAssetPaths(...)` decides which room assets must be preloaded
+The relevant runtime responsibilities in `sts-2-source` are:
 
-RitsuLib does not replace that pipeline. Instead, it appends registered content to those existing access points:
+- `ActModel.GenerateRooms(...)` builds event pools from shared and act-local sources
+- `RoomSet.EnsureNextEventIsValid(...)` filters by `IsAllowed(runState)` and visited-state rules
+- `EventRoom.Enter(...)` preloads assets, creates the mutable event instance, and builds the event UI
+- `EventModel.GetAssetPaths(...)` determines which assets must be ready before the room opens
 
-- shared events are appended to `ModelDb.AllSharedEvents` and `ModelDb.AllEvents`
-- act events are appended to each act's `AllEvents` via dynamic patches
-- ancients are appended similarly to shared and act ancient lists
+Within that model, RitsuLib appends registered content to the existing lists used by the game:
 
-In practice, the essential steps are:
+- shared events are added to the shared event collections
+- act events are added to the selected act's event list
+- ancients are added to the corresponding shared or act-local ancient lists
 
-1. write a valid `EventModel` / `AncientEventModel` subclass
+For authors, the practical consequence is simple:
+
+1. define a valid `EventModel` or `AncientEventModel` subtype
 2. register it before content registration freezes
 
 ---
 
-## Minimal normal event
+## Minimal Normal Event
 
-Prefer inheriting from `ModEventTemplate` rather than directly from `EventModel`.
+For most mod events, prefer `ModEventTemplate` over a raw `EventModel` subclass.
 
 ```csharp
 using MegaCrit.Sts2.Core.Events;
@@ -65,17 +68,17 @@ public sealed class MyFirstEvent : ModEventTemplate
 }
 ```
 
-A minimal event model should satisfy the following requirements:
+A minimal event model should do three things correctly:
 
 - implement `GenerateInitialOptions()`
-- advance the event state or call `SetEventFinished(...)` from option callbacks
+- advance the event state, or finish the event, inside option callbacks
 - keep localization keys aligned with the final `ModelId.Entry`
 
 ---
 
 ## Registration
 
-### Shared event
+### Shared Event
 
 ```csharp
 RitsuLibFramework.CreateContentPack("MyMod")
@@ -83,9 +86,9 @@ RitsuLibFramework.CreateContentPack("MyMod")
     .Apply();
 ```
 
-This appends the event to the shared pool used across acts.
+This makes the event part of the shared event pool.
 
-### Act event
+### Act Event
 
 ```csharp
 RitsuLibFramework.CreateContentPack("MyMod")
@@ -93,7 +96,7 @@ RitsuLibFramework.CreateContentPack("MyMod")
     .Apply();
 ```
 
-This appends the event only to the chosen act.
+This makes the event available only in the selected act.
 
 ### Ancient
 
@@ -113,21 +116,21 @@ RitsuLibFramework.CreateContentPack("MyMod")
 
 ---
 
-## Localization keys
+## Localization Keys
 
-After RitsuLib registration, an event gets a fixed public entry in the form:
+After registration, a RitsuLib event receives a fixed public `ModelId.Entry` in the form:
 
 ```text
 <MODID>_EVENT_<TYPENAME>
 ```
 
-For `MyMod` + `MyFirstEvent`, that becomes:
+For `MyMod` and `MyFirstEvent`, that becomes:
 
 ```text
 MY_MOD_EVENT_MY_FIRST_EVENT
 ```
 
-A minimal normal-event localization block usually looks like this:
+A minimal normal-event localization block typically looks like this:
 
 ```json
 {
@@ -142,36 +145,49 @@ A minimal normal-event localization block usually looks like this:
 }
 ```
 
-Two details are especially important here:
+What matters here is consistency:
 
-- event title and body text are looked up by `Id.Entry`
-- `ModEventTemplate.InitialOptionKey(...)` also generates option keys from `Id.Entry`
+- event title and page text are resolved through `Id.Entry`
+- option keys should also be generated from that same final identifier
 
 ---
 
-## Why `ModEventTemplate` exists
+## Why `ModEventTemplate` And `ModAncientEventTemplate` Exist
 
-There is an implementation mismatch in the base-game helper methods:
+The base game contains an implementation mismatch that is usually harmless for vanilla content, but becomes important for registered mod events.
 
-- vanilla `EventModel.InitialOptionKey(...)` / internal `OptionKey(...)` use `GetType().Name`
+The mismatch is:
+
+- vanilla `EventModel.InitialOptionKey(...)` and the internal option-key helpers use `GetType().Name`
 - event title lookup, page descriptions, and `GameInfoOptions` use `Id.Entry`
-- for vanilla content, those values usually match
-- for RitsuLib-registered mod events, they usually do not
 
-As a result, a raw `EventModel` subclass can easily generate option keys under something like `MY_FIRST_EVENT...` while the event body and title live under `MY_MOD_EVENT_MY_FIRST_EVENT...`, producing inconsistent localization lookups.
+For base-game events those values often happen to match.
+For RitsuLib-registered events they usually do not.
 
-To resolve that mismatch, RitsuLib now provides:
+That can lead to one part of the event resolving text under something like:
+
+```text
+MY_FIRST_EVENT...
+```
+
+while the actual event title and pages live under:
+
+```text
+MY_MOD_EVENT_MY_FIRST_EVENT...
+```
+
+To keep those lookups aligned, RitsuLib provides:
 
 - `ModEventTemplate`
 - `ModAncientEventTemplate`
 
-Their `InitialOptionKey(...)` / `ModOptionKey(...)` helpers stay aligned with the final public `Id.Entry`.
+Their helper methods generate option keys from the final registered `Id.Entry` rather than the raw CLR type name.
 
 ---
 
 ## `IsAllowed`
 
-If an event should only appear in some runs, override `IsAllowed(RunState runState)`:
+Override `IsAllowed(RunState runState)` when the event should only appear in some runs:
 
 ```csharp
 public override bool IsAllowed(RunState runState)
@@ -180,16 +196,16 @@ public override bool IsAllowed(RunState runState)
 }
 ```
 
-The game rotates the pool in `RoomSet.EnsureNextEventIsValid(...)` until it finds an event that:
+At runtime, the game rotates through the available event pool until it finds an event that:
 
 - returns `true` from `IsAllowed(...)`
 - has not already been visited in the current run
 
-Accordingly, `IsAllowed` should describe run-time availability rather than registration-time setup.
+So `IsAllowed` should describe run-time availability conditions, not registration-time setup.
 
 ---
 
-## Custom event scenes
+## Custom Event Scenes
 
 If the default event layout is not appropriate, return a custom layout type:
 
@@ -197,7 +213,7 @@ If the default event layout is not appropriate, return a custom layout type:
 public override EventLayoutType LayoutType => EventLayoutType.Custom;
 ```
 
-The game then loads:
+The game will then load:
 
 ```text
 res://scenes/events/custom/<event-id-lower>.tscn
@@ -214,28 +230,28 @@ The scene root must implement `ICustomEventNode` and provide at least:
 - `Initialize(EventModel eventModel)`
 - `CurrentScreenContext`
 
-`EventModel.SetNode(...)` hard-casts custom layouts to `ICustomEventNode`, so implementing that interface is mandatory.
+This is required because `EventModel.SetNode(...)` hard-casts custom layouts to `ICustomEventNode`.
 
 ---
 
-## Asset preloading
+## Asset Preloading
 
-Normal events preload, by default:
+By default, normal events preload:
 
 - the layout scene
 - `res://images/events/<event-id-lower>.png`
 - optional `res://scenes/vfx/events/<event-id-lower>_vfx.tscn`
 
-Ancients preload, by default:
+By default, ancients preload:
 
 - the layout scene
 - `res://scenes/events/background_scenes/<event-id-lower>.tscn`
 
-If the event requires additional assets, override `GetAssetPaths(IRunState runState)` and append those paths.
+If an event needs additional assets, override `GetAssetPaths(IRunState runState)` and append those paths.
 
 ---
 
-## Minimal ancient example
+## Minimal Ancient Example
 
 ```csharp
 using MegaCrit.Sts2.Core.Entities.Ancients;
@@ -261,60 +277,18 @@ public sealed class MyAncient : ModAncientEventTemplate
 
     private Task Accept()
     {
-        Done();
+        SetEventFinished(L10NLookup($"{Id.Entry}.pages.ACCEPT.description"));
         return Task.CompletedTask;
     }
 }
 ```
 
-Compared with a normal event, ancients add a few requirements:
-
-- `LocTable` is `ancients`
-- you must implement `DefineDialogues()`
-- finishing should usually go through `Done()` so ancient history is recorded correctly
-
-If you only want to add dialogue for a custom character to an existing ancient, use `AncientDialogueLocalization` instead of creating a new ancient model. See `LocalizationAndKeywords.md`.
+The same identity and localization guidance applies here: keep option keys, page keys, and final registered `Id.Entry` aligned.
 
 ---
 
-## Using unlock rules with events
+## Related Docs
 
-Events can also be gated behind epochs:
-
-```csharp
-RitsuLibFramework.CreateContentPack("MyMod")
-    .SharedEvent<MyFirstEvent>()
-    .RequireEpoch<MyFirstEvent, MyEpoch>()
-    .Apply();
-```
-
-RitsuLib filters generated act event pools after room generation.
-
-This area also included a framework-level stability gap:
-
-- previously, if unlock filtering removed every generated event for an act, later room selection could fail at run time
-- RitsuLib now preserves the original generated pool and logs a warning instead of leaving the act with no available events
-
-Even with that safeguard, the preferred content design is still:
-
-- do not lock every possible event in an act
-- keep at least one event available at all times
-
----
-
-## Recommended Practices
-
-- inherit normal events from `ModEventTemplate`
-- inherit ancients from `ModAncientEventTemplate`
-- generate option keys through `InitialOptionKey(...)` / `ModOptionKey(...)`
-- for custom layouts, make the scene root implement `ICustomEventNode`
-- if you add epoch gating, leave at least one event available in each pool
-
----
-
-## Related docs
-
+- [Content Authoring Toolkit](ContentAuthoringToolkit.md)
 - [Content Packs & Registries](ContentPacksAndRegistries.md)
-- [Timeline & Unlocks](TimelineAndUnlocks.md)
 - [Localization & Keywords](LocalizationAndKeywords.md)
-- [Godot Scene Authoring](GodotSceneAuthoring.md)

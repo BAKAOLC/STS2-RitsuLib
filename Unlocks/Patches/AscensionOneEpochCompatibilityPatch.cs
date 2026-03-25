@@ -51,6 +51,11 @@ namespace STS2RitsuLib.Unlocks.Patches
             if (SaveManager.Instance.Progress.IsEpochObtained(epochId))
                 return false;
 
+            if (!EpochRuntimeCompatibility.CanUseEpochId(
+                    epochId,
+                    $"ascension-one epoch rule for mod character '{character.Id}'"))
+                return false;
+
             SaveManager.Instance.ObtainEpoch(epochId);
             if (!serializablePlayer.DiscoveredEpochs.Contains(epochId, StringComparer.Ordinal))
                 serializablePlayer.DiscoveredEpochs.Add(epochId);
@@ -98,6 +103,11 @@ namespace STS2RitsuLib.Unlocks.Patches
                 return false;
 
             if (SaveManager.Instance.Progress.IsEpochObtained(epochId))
+                return false;
+
+            if (!EpochRuntimeCompatibility.CanUseEpochId(
+                    epochId,
+                    $"post-run character unlock epoch rule for mod character '{character.Id}'"))
                 return false;
 
             SaveManager.Instance.ObtainEpoch(epochId);

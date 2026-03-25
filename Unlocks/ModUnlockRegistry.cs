@@ -334,6 +334,11 @@ namespace STS2RitsuLib.Unlocks
                 if (!rule.ShouldUnlock(context))
                     continue;
 
+                if (!EpochRuntimeCompatibility.CanUseEpochId(
+                        rule.EpochId,
+                        $"post-run epoch rule '{rule.Description}'"))
+                    continue;
+
                 SaveManager.Instance.ObtainEpoch(rule.EpochId);
                 if (!localPlayer.DiscoveredEpochs.Contains(rule.EpochId, StringComparer.Ordinal))
                     localPlayer.DiscoveredEpochs.Add(rule.EpochId);

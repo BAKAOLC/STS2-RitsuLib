@@ -82,7 +82,8 @@ namespace STS2RitsuLib.Scaffolding.Content.Patches
             if (string.IsNullOrWhiteSpace(mapped.BigEnergyIconPath))
                 return;
 
-            if (!AssetPathDiagnostics.Exists(mapped.BigEnergyIconPath!, pool, nameof(IModBigEnergyIconPool.BigEnergyIconPath)))
+            if (!AssetPathDiagnostics.Exists(mapped.BigEnergyIconPath!, pool,
+                    nameof(IModBigEnergyIconPool.BigEnergyIconPath)))
                 return;
 
             dict.TryAdd(pool.EnergyColorName, mapped.BigEnergyIconPath!);

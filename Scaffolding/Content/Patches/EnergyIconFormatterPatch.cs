@@ -144,7 +144,8 @@ namespace STS2RitsuLib.Scaffolding.Content.Patches
             if (string.IsNullOrWhiteSpace(mapped.TextEnergyIconPath))
                 return;
 
-            if (!AssetPathDiagnostics.Exists(mapped.TextEnergyIconPath!, pool, nameof(IModTextEnergyIconPool.TextEnergyIconPath)))
+            if (!AssetPathDiagnostics.Exists(mapped.TextEnergyIconPath!, pool,
+                    nameof(IModTextEnergyIconPool.TextEnergyIconPath)))
                 return;
 
             dict.TryAdd(pool.EnergyColorName, mapped.TextEnergyIconPath!);

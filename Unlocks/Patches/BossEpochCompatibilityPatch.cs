@@ -45,6 +45,11 @@ namespace STS2RitsuLib.Unlocks.Patches
             if (wins < rule.RequiredWins)
                 return false;
 
+            if (!EpochRuntimeCompatibility.CanUseEpochId(
+                    rule.EpochId,
+                    $"boss-win epoch rule for mod character '{character.Id}'"))
+                return false;
+
             SaveManager.Instance.ObtainEpoch(rule.EpochId);
             if (!localPlayer.DiscoveredEpochs.Contains(rule.EpochId, StringComparer.Ordinal))
                 localPlayer.DiscoveredEpochs.Add(rule.EpochId);

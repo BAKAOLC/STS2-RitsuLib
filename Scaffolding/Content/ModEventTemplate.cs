@@ -1,4 +1,3 @@
-using System.Threading.Tasks;
 using MegaCrit.Sts2.Core.Events;
 using MegaCrit.Sts2.Core.Models;
 

@@ -17,7 +17,8 @@ namespace STS2RitsuLib.Utils
             return false;
         }
 
-        internal static string[] CollectExistingPaths(object owner, params (string? Path, string MemberName)[] candidates)
+        internal static string[] CollectExistingPaths(object owner,
+            params (string? Path, string MemberName)[] candidates)
         {
             var results = new List<string>(candidates.Length);
 

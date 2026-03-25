@@ -5,6 +5,7 @@ using STS2RitsuLib.Localization.Patches;
 using STS2RitsuLib.Patching.Core;
 using STS2RitsuLib.Scaffolding.Characters.Patches;
 using STS2RitsuLib.Scaffolding.Content.Patches;
+using STS2RitsuLib.Settings.Patches;
 using STS2RitsuLib.Unlocks.Patches;
 using STS2RitsuLib.Utils.Persistence.Patches;
 
@@ -115,6 +116,14 @@ namespace STS2RitsuLib
             RegisterFrameworkPatcher(FrameworkPatcherArea.ContentAssets, patcher);
         }
 
+        private static void RegisterSettingsUiPatches()
+        {
+            var patcher = CreatePatcher(Const.ModId, "framework-settings-ui", "settings ui");
+            patcher.RegisterPatch<ModSettingsSubmenuPatch>();
+            patcher.RegisterPatch<SettingsScreenModSettingsButtonPatch>();
+            RegisterFrameworkPatcher(FrameworkPatcherArea.SettingsUi, patcher);
+        }
+
         private static void RegisterCharacterAssetPatches()
         {
             var patcher = CreatePatcher(Const.ModId, "framework-character-assets", "character assets");
@@ -171,6 +180,7 @@ namespace STS2RitsuLib
         {
             var patcher = CreatePatcher(Const.ModId, "framework-unlocks", "unlocks");
             patcher.RegisterPatch<CharacterUnlockFilterPatch>();
+            patcher.RegisterPatch<CharacterUnlockEpochRuntimeCompatibilityPatch>();
             patcher.RegisterPatch<SharedAncientUnlockFilterPatch>();
             patcher.RegisterPatch<CardUnlockFilterPatch>();
             patcher.RegisterPatch<RelicUnlockFilterPatch>();
@@ -187,6 +197,7 @@ namespace STS2RitsuLib
         internal enum FrameworkPatcherArea
         {
             Core,
+            SettingsUi,
             ContentAssets,
             CharacterAssets,
             ContentRegistry,

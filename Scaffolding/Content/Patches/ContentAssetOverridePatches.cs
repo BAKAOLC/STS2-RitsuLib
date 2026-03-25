@@ -93,7 +93,8 @@ namespace STS2RitsuLib.Scaffolding.Content.Patches
         }
 
         // ReSharper disable once InconsistentNaming
-        internal static bool TryUseExistenceOverride(object instance, string? path, string memberName, ref bool __result)
+        internal static bool TryUseExistenceOverride(object instance, string? path, string memberName,
+            ref bool __result)
         {
             if (string.IsNullOrWhiteSpace(path))
                 return true;
@@ -138,15 +139,15 @@ namespace STS2RitsuLib.Scaffolding.Content.Patches
     }
 
     /// <summary>
-    /// Implement this interface on a <see cref="MegaCrit.Sts2.Core.Models.CardPoolModel"/> to directly supply
-    /// a <see cref="Material"/> for card frames in the pool.
-    /// When <see cref="PoolFrameMaterial"/> is non-null, <c>CardFrameMaterialPath</c> is ignored entirely.
+    ///     Implement this interface on a <see cref="MegaCrit.Sts2.Core.Models.CardPoolModel" /> to directly supply
+    ///     a <see cref="Material" /> for card frames in the pool.
+    ///     When <see cref="PoolFrameMaterial" /> is non-null, <c>CardFrameMaterialPath</c> is ignored entirely.
     /// </summary>
     public interface IModCardPoolFrameMaterial
     {
         /// <summary>
-        /// The material to use for card frames in this pool.
-        /// Return <c>null</c> to fall back to the path-based default.
+        ///     The material to use for card frames in this pool.
+        ///     Return <c>null</c> to fall back to the path-based default.
         /// </summary>
         Material? PoolFrameMaterial { get; }
     }
@@ -206,7 +207,8 @@ namespace STS2RitsuLib.Scaffolding.Content.Patches
             return __originalMethod.Name switch
             {
                 "get_PortraitPath" => ContentAssetOverridePatchHelper.TryUseStringOverride<IModCardAssetOverrides>(
-                    __instance, ref __result, o => o.CustomPortraitPath, nameof(IModCardAssetOverrides.CustomPortraitPath)),
+                    __instance, ref __result, o => o.CustomPortraitPath,
+                    nameof(IModCardAssetOverrides.CustomPortraitPath)),
                 "get_BetaPortraitPath" => ContentAssetOverridePatchHelper.TryUseStringOverride<IModCardAssetOverrides>(
                     __instance, ref __result, o => o.CustomBetaPortraitPath,
                     nameof(IModCardAssetOverrides.CustomBetaPortraitPath)),
@@ -893,10 +895,10 @@ namespace STS2RitsuLib.Scaffolding.Content.Patches
         {
             var path = string.Empty;
             return ContentAssetOverridePatchHelper.TryUseStringOverride<IModAfflictionAssetOverrides>(
-                        __instance,
-                        ref path,
-                        o => o.CustomOverlayScenePath,
-                        nameof(IModAfflictionAssetOverrides.CustomOverlayScenePath)) ||
+                       __instance,
+                       ref path,
+                       o => o.CustomOverlayScenePath,
+                       nameof(IModAfflictionAssetOverrides.CustomOverlayScenePath)) ||
                    ContentAssetOverridePatchHelper.TryUseExistenceOverride(
                        __instance,
                        path,

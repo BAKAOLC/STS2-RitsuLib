@@ -50,7 +50,7 @@ namespace STS2RitsuLib.Localization
 
                 var endAttackers = ResolveArchitectAttackers(locTable, baseKey, dialogueIndex, isArchitect);
 
-                dialogues.Add(new AncientDialogue(sfxPaths.ToArray())
+                dialogues.Add(new(sfxPaths.ToArray())
                 {
                     VisitIndex = visitIndex,
                     EndAttackers = endAttackers,
@@ -100,11 +100,8 @@ namespace STS2RitsuLib.Localization
             bool isArchitect)
         {
             if (isArchitect)
-            {
                 currentVisitIndex = dialogueIndex;
-            }
             else
-            {
                 currentVisitIndex = dialogueIndex switch
                 {
                     0 => 0,
@@ -112,7 +109,6 @@ namespace STS2RitsuLib.Localization
                     2 => 4,
                     _ => currentVisitIndex + 3,
                 };
-            }
 
             var visitLoc = LocString.GetIfExists(locTable, $"{baseKey}{dialogueIndex}{VisitIndexKeySuffix}");
             if (visitLoc != null)

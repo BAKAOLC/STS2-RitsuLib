@@ -89,7 +89,8 @@ namespace STS2RitsuLib.Scaffolding.Characters
             return FromCharacterId("necrobinder");
         }
 
-        private static CharacterSceneAssetSet? MergeScenes(CharacterSceneAssetSet? fallback, CharacterSceneAssetSet? profile)
+        private static CharacterSceneAssetSet? MergeScenes(CharacterSceneAssetSet? fallback,
+            CharacterSceneAssetSet? profile)
         {
             if (fallback == null)
                 return profile;
@@ -97,13 +98,10 @@ namespace STS2RitsuLib.Scaffolding.Characters
             if (profile == null)
                 return fallback;
 
-            return fallback with
-            {
-                VisualsPath = profile.VisualsPath ?? fallback.VisualsPath,
-                EnergyCounterPath = profile.EnergyCounterPath ?? fallback.EnergyCounterPath,
-                MerchantAnimPath = profile.MerchantAnimPath ?? fallback.MerchantAnimPath,
-                RestSiteAnimPath = profile.RestSiteAnimPath ?? fallback.RestSiteAnimPath,
-            };
+            return new(profile.VisualsPath ?? fallback.VisualsPath,
+                profile.EnergyCounterPath ?? fallback.EnergyCounterPath,
+                profile.MerchantAnimPath ?? fallback.MerchantAnimPath,
+                profile.RestSiteAnimPath ?? fallback.RestSiteAnimPath);
         }
 
         private static CharacterUiAssetSet? MergeUi(CharacterUiAssetSet? fallback, CharacterUiAssetSet? profile)
@@ -114,17 +112,13 @@ namespace STS2RitsuLib.Scaffolding.Characters
             if (profile == null)
                 return fallback;
 
-            return fallback with
-            {
-                IconTexturePath = profile.IconTexturePath ?? fallback.IconTexturePath,
-                IconOutlineTexturePath = profile.IconOutlineTexturePath ?? fallback.IconOutlineTexturePath,
-                IconPath = profile.IconPath ?? fallback.IconPath,
-                CharacterSelectBgPath = profile.CharacterSelectBgPath ?? fallback.CharacterSelectBgPath,
-                CharacterSelectIconPath = profile.CharacterSelectIconPath ?? fallback.CharacterSelectIconPath,
-                CharacterSelectLockedIconPath = profile.CharacterSelectLockedIconPath ?? fallback.CharacterSelectLockedIconPath,
-                CharacterSelectTransitionPath = profile.CharacterSelectTransitionPath ?? fallback.CharacterSelectTransitionPath,
-                MapMarkerPath = profile.MapMarkerPath ?? fallback.MapMarkerPath,
-            };
+            return new(profile.IconTexturePath ?? fallback.IconTexturePath,
+                profile.IconOutlineTexturePath ?? fallback.IconOutlineTexturePath,
+                profile.IconPath ?? fallback.IconPath, profile.CharacterSelectBgPath ?? fallback.CharacterSelectBgPath,
+                profile.CharacterSelectIconPath ?? fallback.CharacterSelectIconPath,
+                profile.CharacterSelectLockedIconPath ?? fallback.CharacterSelectLockedIconPath,
+                profile.CharacterSelectTransitionPath ?? fallback.CharacterSelectTransitionPath,
+                profile.MapMarkerPath ?? fallback.MapMarkerPath);
         }
 
         private static CharacterVfxAssetSet? MergeVfx(CharacterVfxAssetSet? fallback, CharacterVfxAssetSet? profile)
@@ -132,46 +126,32 @@ namespace STS2RitsuLib.Scaffolding.Characters
             if (fallback == null)
                 return profile;
 
-            if (profile == null)
-                return fallback;
-
-            return fallback with
-            {
-                TrailPath = profile.TrailPath ?? fallback.TrailPath,
-                TrailStyle = profile.TrailStyle ?? fallback.TrailStyle,
-            };
+            return profile == null
+                ? fallback
+                : new(profile.TrailPath ?? fallback.TrailPath, profile.TrailStyle ?? fallback.TrailStyle);
         }
 
-        private static CharacterSpineAssetSet? MergeSpine(CharacterSpineAssetSet? fallback, CharacterSpineAssetSet? profile)
+        private static CharacterSpineAssetSet? MergeSpine(CharacterSpineAssetSet? fallback,
+            CharacterSpineAssetSet? profile)
         {
             if (fallback == null)
                 return profile;
 
-            if (profile == null)
-                return fallback;
-
-            return fallback with
-            {
-                CombatSkeletonDataPath = profile.CombatSkeletonDataPath ?? fallback.CombatSkeletonDataPath,
-            };
+            return profile == null ? fallback : new(profile.CombatSkeletonDataPath ?? fallback.CombatSkeletonDataPath);
         }
 
-        private static CharacterAudioAssetSet? MergeAudio(CharacterAudioAssetSet? fallback, CharacterAudioAssetSet? profile)
+        private static CharacterAudioAssetSet? MergeAudio(CharacterAudioAssetSet? fallback,
+            CharacterAudioAssetSet? profile)
         {
             if (fallback == null)
                 return profile;
 
-            if (profile == null)
-                return fallback;
-
-            return fallback with
-            {
-                CharacterSelectSfx = profile.CharacterSelectSfx ?? fallback.CharacterSelectSfx,
-                CharacterTransitionSfx = profile.CharacterTransitionSfx ?? fallback.CharacterTransitionSfx,
-                AttackSfx = profile.AttackSfx ?? fallback.AttackSfx,
-                CastSfx = profile.CastSfx ?? fallback.CastSfx,
-                DeathSfx = profile.DeathSfx ?? fallback.DeathSfx,
-            };
+            return profile == null
+                ? fallback
+                : new(profile.CharacterSelectSfx ?? fallback.CharacterSelectSfx,
+                    profile.CharacterTransitionSfx ?? fallback.CharacterTransitionSfx,
+                    profile.AttackSfx ?? fallback.AttackSfx, profile.CastSfx ?? fallback.CastSfx,
+                    profile.DeathSfx ?? fallback.DeathSfx);
         }
 
         private static CharacterMultiplayerAssetSet? MergeMultiplayer(
@@ -181,16 +161,12 @@ namespace STS2RitsuLib.Scaffolding.Characters
             if (fallback == null)
                 return profile;
 
-            if (profile == null)
-                return fallback;
-
-            return fallback with
-            {
-                ArmPointingTexturePath = profile.ArmPointingTexturePath ?? fallback.ArmPointingTexturePath,
-                ArmRockTexturePath = profile.ArmRockTexturePath ?? fallback.ArmRockTexturePath,
-                ArmPaperTexturePath = profile.ArmPaperTexturePath ?? fallback.ArmPaperTexturePath,
-                ArmScissorsTexturePath = profile.ArmScissorsTexturePath ?? fallback.ArmScissorsTexturePath,
-            };
+            return profile == null
+                ? fallback
+                : new(profile.ArmPointingTexturePath ?? fallback.ArmPointingTexturePath,
+                    profile.ArmRockTexturePath ?? fallback.ArmRockTexturePath,
+                    profile.ArmPaperTexturePath ?? fallback.ArmPaperTexturePath,
+                    profile.ArmScissorsTexturePath ?? fallback.ArmScissorsTexturePath);
         }
 
         extension(CharacterAssetProfile profile)

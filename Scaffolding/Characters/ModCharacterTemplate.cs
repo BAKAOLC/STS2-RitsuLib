@@ -77,11 +77,14 @@ namespace STS2RitsuLib.Scaffolding.Characters
         protected abstract IEnumerable<Type> StartingRelicTypes { get; }
         protected virtual IEnumerable<Type> StartingPotionTypes => [];
         protected virtual Type? UnlocksAfterRunAsType => null;
-        public virtual CharacterAssetProfile AssetProfile => CharacterAssetProfile.Empty;
+
+        // ReSharper disable once ReturnTypeCanBeNotNullable
         public virtual string? PlaceholderCharacterId => CharacterAssetProfiles.DefaultPlaceholderCharacterId;
 
         protected CharacterAssetProfile ResolvedAssetProfile =>
             CharacterAssetProfiles.Resolve(AssetProfile, PlaceholderCharacterId);
+
+        public virtual CharacterAssetProfile AssetProfile => CharacterAssetProfile.Empty;
 
         public virtual string? CustomVisualsPath => ResolvedAssetProfile.Scenes?.VisualsPath;
         public virtual string? CustomEnergyCounterPath => ResolvedAssetProfile.Scenes?.EnergyCounterPath;
@@ -92,8 +95,13 @@ namespace STS2RitsuLib.Scaffolding.Characters
         public virtual string? CustomIconPath => ResolvedAssetProfile.Ui?.IconPath;
         public virtual string? CustomCharacterSelectBgPath => ResolvedAssetProfile.Ui?.CharacterSelectBgPath;
         public virtual string? CustomCharacterSelectIconPath => ResolvedAssetProfile.Ui?.CharacterSelectIconPath;
-        public virtual string? CustomCharacterSelectLockedIconPath => ResolvedAssetProfile.Ui?.CharacterSelectLockedIconPath;
-        public virtual string? CustomCharacterSelectTransitionPath => ResolvedAssetProfile.Ui?.CharacterSelectTransitionPath;
+
+        public virtual string? CustomCharacterSelectLockedIconPath =>
+            ResolvedAssetProfile.Ui?.CharacterSelectLockedIconPath;
+
+        public virtual string? CustomCharacterSelectTransitionPath =>
+            ResolvedAssetProfile.Ui?.CharacterSelectTransitionPath;
+
         public virtual string? CustomMapMarkerPath => ResolvedAssetProfile.Ui?.MapMarkerPath;
         public virtual string? CustomTrailPath => ResolvedAssetProfile.Vfx?.TrailPath;
         public virtual CharacterTrailStyle? CustomTrailStyle => ResolvedAssetProfile.Vfx?.TrailStyle;

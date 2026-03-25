@@ -51,7 +51,10 @@ namespace STS2RitsuLib.Localization.Patches
     public class LocTableGetLocStringCompatibilityPatch : IPatchMethod
     {
         public static string PatchId => "loc_table_get_loc_string_debug_compat";
-        public static string Description => "Use key placeholder for LocTable.GetLocString missing entries in debug compatibility mode";
+
+        public static string Description =>
+            "Use key placeholder for LocTable.GetLocString missing entries in debug compatibility mode";
+
         public static bool IsCritical => false;
 
         public static ModPatchTarget[] GetTargets()
@@ -73,7 +76,7 @@ namespace STS2RitsuLib.Localization.Patches
                     out var tableName))
                 return true;
 
-            __result = new LocString(tableName, key);
+            __result = new(tableName, key);
             return false;
         }
     }
@@ -81,7 +84,10 @@ namespace STS2RitsuLib.Localization.Patches
     public class LocTableGetRawTextCompatibilityPatch : IPatchMethod
     {
         public static string PatchId => "loc_table_get_raw_text_debug_compat";
-        public static string Description => "Use key placeholder for LocTable.GetRawText missing entries in debug compatibility mode";
+
+        public static string Description =>
+            "Use key placeholder for LocTable.GetRawText missing entries in debug compatibility mode";
+
         public static bool IsCritical => false;
 
         public static ModPatchTarget[] GetTargets()

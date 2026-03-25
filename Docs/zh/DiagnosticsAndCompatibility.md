@@ -5,7 +5,7 @@
 重点包括：
 
 - 帮助作者尽早发现错误的一次性警告
-- 面向调试的缺失本地化兼容行为
+- 面向调试的缺失本地化与缺失 Epoch 兼容行为
 - 原版系统本身不支持 Mod 内容时的窄桥接补丁
 
 ---
@@ -55,19 +55,27 @@ RitsuLib 有几类诊断只会对同一个问题警告一次。
 
 ---
 
-## 本地化 Debug 兼容模式
+## Debug 兼容模式
 
-RitsuLib 提供了一个只用于调试阶段的 `LocTable` 缺失 Key 兼容层。
+RitsuLib 提供了一个只用于调试阶段的兼容层。
 
 当开启 `debug_compatibility_mode` 后：
 
 - `LocTable.GetLocString(key)` 缺失时返回占位 `LocString`
 - `LocTable.GetRawText(key)` 缺失时直接返回该键本身
 - 同一个缺失键只会警告一次
+- RitsuLib 的解锁兼容桥若在运行时遇到缺失的 Epoch id，会输出一次警告、跳过该次解锁，并允许当前跑局继续执行
 
 该模式默认关闭。
 
-它的目的是降低调试本地化时的痛苦，不是替代正确的本地化内容。
+它的目的是降低调试阶段的中断成本，不是替代正确的本地化内容或正确的时间线注册。
+
+需要注意的是，缺失 Epoch 的降级只覆盖 RitsuLib 自己接管的兼容桥接路径，例如：
+
+- Mod 角色沿用原版 `ObtainCharUnlockEpoch(...)` 时推导出的 `CHARACTER...2_EPOCH/3_EPOCH/4_EPOCH`
+- RitsuLib 注册的 Boss / Elite / Ascension / Post-run Epoch 解锁规则
+
+这类警告表示你的时间线或解锁配置仍需修正；兼容模式只是避免它在调试阶段直接中断当前跑局。
 
 Windows 下设置文件路径：
 

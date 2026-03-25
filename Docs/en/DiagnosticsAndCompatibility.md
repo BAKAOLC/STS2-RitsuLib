@@ -5,7 +5,7 @@ This document explains the small safety and compatibility layers RitsuLib adds a
 It focuses on:
 
 - one-time warnings that help authors find broken setup
-- debug-only compatibility behaviors for missing localization
+- debug-only compatibility behaviors for missing localization and missing epoch ids
 - narrow bridge patches for vanilla systems that do not naturally support mod content
 
 ---
@@ -55,19 +55,27 @@ Detailed asset semantics live in [Asset Profiles & Fallbacks](AssetProfilesAndFa
 
 ---
 
-## Localization Debug Compatibility Mode
+## Debug Compatibility Mode
 
-RitsuLib includes a debug-only compatibility shim for missing `LocTable` keys.
+RitsuLib includes a debug-only compatibility shim for selected runtime failures.
 
 When `debug_compatibility_mode` is enabled:
 
 - missing `LocTable.GetLocString(key)` returns a placeholder `LocString`
 - missing `LocTable.GetRawText(key)` returns the key text itself
 - the missing key is logged once with a warning
+- missing epoch ids encountered by RitsuLib unlock compatibility bridges are logged once, skipped, and allowed to continue
 
 This mode is disabled by default.
 
-It exists to make iterative localization work less painful while debugging, not to replace correct localization data.
+It exists to reduce interruption during iteration, not to replace correct localization data or correct timeline registration.
+
+The missing-epoch downgrade only applies to compatibility paths owned by RitsuLib itself, such as:
+
+- vanilla-style `ObtainCharUnlockEpoch(...)` handling for mod characters when the derived `...2_EPOCH/3_EPOCH/4_EPOCH` id is absent
+- RitsuLib-managed boss / elite / ascension / post-run epoch unlock bridges
+
+Warnings from this mode still indicate a real configuration problem that should be fixed in the mod.
 
 Windows settings path:
 
