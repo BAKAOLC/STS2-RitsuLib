@@ -10,3 +10,9 @@ artifacts/nuget/
 
 local.props
 !local.props.template
+
+# Python (scripts/release_cli.py, uv)
+__pycache__/
+*.py[cod]
+*$py.class
+.venv/
