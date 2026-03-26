@@ -3,6 +3,7 @@ using System.Reflection;
 using Godot;
 using MegaCrit.Sts2.Core.Logging;
 using MegaCrit.Sts2.Core.Modding;
+using STS2RitsuLib.Cards.Costs;
 using STS2RitsuLib.Content;
 using STS2RitsuLib.Data;
 using STS2RitsuLib.Interop;
@@ -148,6 +149,8 @@ namespace STS2RitsuLib
 
                     IsInitialized = true;
                     IsActive = true;
+
+                    CustomCardPlayCostLedger.EnsureSubscribed();
 
                     var frameworkInitializedEvent = new FrameworkInitializedEvent(
                         Const.ModId,

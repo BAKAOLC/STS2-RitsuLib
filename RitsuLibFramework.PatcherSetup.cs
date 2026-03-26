@@ -57,6 +57,8 @@ namespace STS2RitsuLib
             patcher.RegisterPatch<RunLifecyclePatch>();
             patcher.RegisterPatch<RunEndedLifecyclePatch>();
             patcher.RegisterPatch<CombatHookLifecyclePatch>();
+            patcher.RegisterPatch<CustomCardPlayCostHasEnoughResourcesPatch>();
+            patcher.RegisterPatch<CustomCardPlayCostSpendResourcesPatch>();
             patcher.RegisterPatch<RewardHookLifecyclePatch>();
             patcher.RegisterPatch<GoldLossLifecyclePatch>();
             patcher.RegisterPatch<RelicObtainedLifecyclePatch>();
