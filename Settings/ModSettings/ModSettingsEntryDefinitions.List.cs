@@ -27,6 +27,23 @@ namespace STS2RitsuLib.Settings
         public IStructuredModSettingsValueAdapter<TItem>? ItemDataAdapter { get; } = itemDataAdapter;
         public ModSettingsText AddButtonText { get; } = addButtonText;
 
+        internal override void CollectChromeBindingSnapshots(
+            Dictionary<string, ModSettingsChromeBindingSnapshot> target)
+        {
+            ModSettingsClipboardData.AddChromeBindingSnapshot(target, Id, Binding);
+        }
+
+        internal override bool TryPasteChromeBindingSnapshot(ModSettingsChromeBindingSnapshot snap,
+            IModSettingsUiActionHost host)
+        {
+            var adapter = ModSettingsUiFactory.ResolveClipboardAdapter(Binding);
+            if (!ModSettingsClipboardData.TryApplySerializedValueToBinding(Binding, adapter, snap, out var v))
+                return false;
+            Binding.Write(v);
+            host.MarkDirty(Binding);
+            return true;
+        }
+
         internal override Control CreateControl(ModSettingsUiContext context)
         {
             return ModSettingsUiFactory.CreateListEntry(context, this);
@@ -49,6 +66,23 @@ namespace STS2RitsuLib.Settings
         public int MaxValue { get; } = maxValue;
         public int Step { get; } = step;
         public Func<int, string>? ValueFormatter { get; } = valueFormatter;
+
+        internal override void CollectChromeBindingSnapshots(
+            Dictionary<string, ModSettingsChromeBindingSnapshot> target)
+        {
+            ModSettingsClipboardData.AddChromeBindingSnapshot(target, Id, Binding);
+        }
+
+        internal override bool TryPasteChromeBindingSnapshot(ModSettingsChromeBindingSnapshot snap,
+            IModSettingsUiActionHost host)
+        {
+            var adapter = ModSettingsUiFactory.ResolveClipboardAdapter(Binding);
+            if (!ModSettingsClipboardData.TryApplySerializedValueToBinding(Binding, adapter, snap, out var v))
+                return false;
+            Binding.Write(v);
+            host.MarkDirty(Binding);
+            return true;
+        }
 
         internal override Control CreateControl(ModSettingsUiContext context)
         {

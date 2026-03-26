@@ -40,6 +40,54 @@ namespace STS2RitsuLib.Settings
             return TryReadValue(binding, adapter, out value, false);
         }
 
+        internal static string GetSchemaSignatureForType(Type type)
+        {
+            return GetSchemaSignature(type);
+        }
+
+        /// <summary>
+        ///     Applies a value captured in <see cref="ModSettingsChromeBindingSnapshot" /> onto <paramref name="binding" />
+        ///     (same compatibility rules as a value clipboard envelope with no source-binding match requirement).
+        /// </summary>
+        internal static bool TryApplySerializedValueToBinding<TValue>(
+            IModSettingsValueBinding<TValue> binding,
+            IStructuredModSettingsValueAdapter<TValue> adapter,
+            ModSettingsChromeBindingSnapshot snap,
+            out TValue value)
+        {
+            var envelope = new ModSettingsClipboardEnvelope(
+                ClipboardKind,
+                snap.TypeFullName,
+                string.Empty,
+                snap.SchemaSignature,
+                ModSettingsClipboardScope.Self,
+                snap.JsonPayload);
+
+            if (!TryReadEnvelopePayloadForTarget<TValue>(binding, envelope, false, out var payload))
+                return TryReadCoercedScalarFromEnvelope(binding, envelope, false, out value);
+            if (adapter.TryDeserialize(payload, out value))
+                return true;
+            if (TryCoerceJsonPayloadToValue(payload, out value))
+                return true;
+            value = default!;
+            return false;
+
+        }
+
+        internal static void AddChromeBindingSnapshot<T>(Dictionary<string, ModSettingsChromeBindingSnapshot> target,
+            string entryId, IModSettingsValueBinding<T> binding)
+        {
+            var adapter = binding is IStructuredModSettingsValueBinding<T> structured
+                ? structured.Adapter
+                : ModSettingsStructuredData.Json<T>();
+
+            var t = typeof(T);
+            target[entryId] = new(
+                t.FullName ?? t.Name,
+                GetSchemaSignature(t),
+                adapter.Serialize(binding.Read()));
+        }
+
         internal static bool TryReadValue<TValue>(IModSettingsBinding binding,
             IStructuredModSettingsValueAdapter<TValue> adapter, out TValue value,
             bool requireMatchingSourceBinding)

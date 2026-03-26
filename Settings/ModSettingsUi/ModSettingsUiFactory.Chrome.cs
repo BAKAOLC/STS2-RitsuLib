@@ -357,7 +357,7 @@ namespace STS2RitsuLib.Settings
             return true;
         }
 
-        private static IStructuredModSettingsValueAdapter<TValue> ResolveClipboardAdapter<TValue>(
+        internal static IStructuredModSettingsValueAdapter<TValue> ResolveClipboardAdapter<TValue>(
             IModSettingsValueBinding<TValue> binding)
         {
             return binding is IStructuredModSettingsValueBinding<TValue> structured

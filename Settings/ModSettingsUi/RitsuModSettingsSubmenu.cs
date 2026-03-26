@@ -11,6 +11,7 @@ namespace STS2RitsuLib.Settings
     {
         private const float SidebarWidth = 324f;
         private const double AutosaveDelaySeconds = 0.35;
+        private const int ScrollContentRightGutter = 12;
 
         private readonly HashSet<IModSettingsBinding> _dirtyBindings = [];
         private readonly HashSet<string> _expandedModIds = new(StringComparer.OrdinalIgnoreCase);
@@ -319,13 +320,22 @@ namespace STS2RitsuLib.Settings
             };
             root.AddChild(scroll);
 
+            var sidebarScrollFrame = new MarginContainer
+            {
+                SizeFlagsHorizontal = SizeFlags.ExpandFill,
+                SizeFlagsVertical = SizeFlags.ExpandFill,
+                MouseFilter = MouseFilterEnum.Ignore,
+            };
+            sidebarScrollFrame.AddThemeConstantOverride("margin_right", ScrollContentRightGutter);
+            scroll.AddChild(sidebarScrollFrame);
+
             _modButtonList = new()
             {
                 SizeFlagsHorizontal = SizeFlags.ExpandFill,
                 MouseFilter = MouseFilterEnum.Ignore,
             };
             _modButtonList.AddThemeConstantOverride("separation", 12);
-            scroll.AddChild(_modButtonList);
+            sidebarScrollFrame.AddChild(_modButtonList);
             return panel;
         }
 
@@ -376,13 +386,22 @@ namespace STS2RitsuLib.Settings
             };
             root.AddChild(_scrollContainer);
 
+            var contentScrollFrame = new MarginContainer
+            {
+                SizeFlagsHorizontal = SizeFlags.ExpandFill,
+                SizeFlagsVertical = SizeFlags.ExpandFill,
+                MouseFilter = MouseFilterEnum.Ignore,
+            };
+            contentScrollFrame.AddThemeConstantOverride("margin_right", ScrollContentRightGutter);
+            _scrollContainer.AddChild(contentScrollFrame);
+
             _contentList = new()
             {
                 SizeFlagsHorizontal = SizeFlags.ExpandFill,
                 MouseFilter = MouseFilterEnum.Ignore,
             };
             _contentList.AddThemeConstantOverride("separation", 8);
-            _scrollContainer.AddChild(_contentList);
+            contentScrollFrame.AddChild(_contentList);
 
             return panel;
         }

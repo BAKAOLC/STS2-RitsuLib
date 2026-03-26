@@ -3,40 +3,6 @@ using System.Text.Json;
 namespace STS2RitsuLib.Settings
 {
     /// <summary>
-    ///     Per-section UI snapshot carried inside <see cref="ModSettingsPageClipboardPayload" />.
-    /// </summary>
-    public sealed record ModSettingsSectionStructureSnapshot(
-        string SectionId,
-        bool IsCollapsible,
-        bool StartCollapsed,
-        string[] EntryIds);
-
-    /// <summary>
-    ///     Clipboard payload for a page (no binding data; UI structure metadata only).
-    /// </summary>
-    public sealed record ModSettingsPageClipboardPayload(
-        string ModId,
-        string PageId,
-        string? ParentPageId,
-        int SortOrder,
-        string[] SectionIds,
-        string? TitleSnapshot = null,
-        ModSettingsSectionStructureSnapshot[]? SectionStructures = null);
-
-    /// <summary>
-    ///     Clipboard payload for a section.
-    /// </summary>
-    public sealed record ModSettingsSectionClipboardPayload(
-        string ModId,
-        string PageId,
-        string SectionId,
-        bool IsCollapsible,
-        string[] EntryIds,
-        bool StartCollapsed = false,
-        string? TitleSnapshot = null,
-        string? DescriptionSnapshot = null);
-
-    /// <summary>
     ///     Raised before page copy; when <see cref="SuppressDefaultClipboardWrite" /> is true, the default JSON envelope is
     ///     not written.
     /// </summary>
@@ -47,15 +13,16 @@ namespace STS2RitsuLib.Settings
     }
 
     /// <summary>
-    ///     Page paste: subscribers apply semantics (e.g. layout); default does not write any binding.
+    ///     Page paste: subscribers run first; if none handle, default applies binding values from
+    ///     <see cref="ModSettingsPageDataClipboardPayload" />.
     /// </summary>
     public sealed class ModSettingsPagePasteEventArgs(
         ModSettingsPageUiContext target,
-        ModSettingsPageClipboardPayload? payload)
+        ModSettingsPageDataClipboardPayload? payload)
         : EventArgs
     {
         public ModSettingsPageUiContext Target { get; } = target;
-        public ModSettingsPageClipboardPayload? Payload { get; } = payload;
+        public ModSettingsPageDataClipboardPayload? Payload { get; } = payload;
 
         /// <summary>When true, this paste was consumed and later subscribers should not run.</summary>
         public bool Handled { get; set; }
@@ -73,41 +40,39 @@ namespace STS2RitsuLib.Settings
     }
 
     /// <summary>
-    ///     Section paste: subscribers apply semantics.
+    ///     Section paste: subscribers first, then default applies binding snapshots by entry id.
     /// </summary>
     public sealed class ModSettingsSectionPasteEventArgs(
         ModSettingsSectionUiContext target,
-        ModSettingsSectionClipboardPayload? payload)
+        ModSettingsSectionDataClipboardPayload? payload)
         : EventArgs
     {
         public ModSettingsSectionUiContext Target { get; } = target;
-        public ModSettingsSectionClipboardPayload? Payload { get; } = payload;
+        public ModSettingsSectionDataClipboardPayload? Payload { get; } = payload;
         public bool Handled { get; set; }
         public bool Success { get; set; }
     }
 
     /// <summary>
-    ///     Clipboard helpers for binding-less UI chrome (pages/sections): default copy serializes structure metadata; paste
-    ///     requires custom handlers.
+    ///     Clipboard helpers for page/section chrome: copy serializes binding values; paste restores matching entry ids.
     /// </summary>
     public static class ModSettingsUiChromeClipboard
     {
         public const string PageKind = "ritsulib.settings.ui.page";
         public const string SectionKind = "ritsulib.settings.ui.section";
 
-        private const string PageTypeName = "ritsulib.settings.ui.page.v2";
-        private const string SectionTypeName = "ritsulib.settings.ui.section.v2";
+        private const string PageDataTypeName = "ritsulib.settings.ui.page.data.v1";
+        private const string SectionDataTypeName = "ritsulib.settings.ui.section.data.v1";
 
         /// <summary>
-        ///     When true, the page Paste menu item is enabled when the clipboard matches and ModId matches the page;
-        ///     <see cref="PagePasteRequested" /> performs the work.
+        ///     When true, page Paste is enabled when clipboard matches and ModId/PageId match the page.
         /// </summary>
-        public static bool EnablePagePasteUi { get; set; }
+        public static bool EnablePagePasteUi { get; set; } = true;
 
         /// <summary>
-        ///     When true, the section Paste menu item is enabled when the clipboard matches and ModId matches.
+        ///     When true, section Paste is enabled when clipboard matches and ModId/PageId match.
         /// </summary>
-        public static bool EnableSectionPasteUi { get; set; }
+        public static bool EnableSectionPasteUi { get; set; } = true;
 
         public static event Action<ModSettingsPageCopyEventArgs>? PageCopyRequested;
         public static event Action<ModSettingsPagePasteEventArgs>? PagePasteRequested;
@@ -121,27 +86,26 @@ namespace STS2RitsuLib.Settings
             if (args.SuppressDefaultClipboardWrite)
                 return true;
 
-            var sectionIds = context.Page.Sections.Select(s => s.Id).ToArray();
-            var sectionStructures = context.Page.Sections
-                .Select(s => new ModSettingsSectionStructureSnapshot(
-                    s.Id,
-                    s.IsCollapsible,
-                    s.StartCollapsed,
-                    s.Entries.Select(e => e.Id).ToArray()))
-                .ToArray();
+            var sections =
+                new Dictionary<string, Dictionary<string, ModSettingsChromeBindingSnapshot>>(
+                    StringComparer.OrdinalIgnoreCase);
+            foreach (var section in context.Page.Sections)
+            {
+                var map = new Dictionary<string, ModSettingsChromeBindingSnapshot>(StringComparer.Ordinal);
+                foreach (var entry in section.Entries)
+                    entry.CollectChromeBindingSnapshots(map);
 
-            var payload = new ModSettingsPageClipboardPayload(
+                sections[section.Id] = map;
+            }
+
+            var payload = new ModSettingsPageDataClipboardPayload(
                 context.Page.ModId,
                 context.Page.Id,
-                context.Page.ParentPageId,
-                context.Page.SortOrder,
-                sectionIds,
-                context.Page.Title?.Resolve(),
-                sectionStructures);
+                sections);
 
             ModSettingsClipboardData.WriteClipboardEnvelope(new(
                 PageKind,
-                PageTypeName,
+                PageDataTypeName,
                 $"{context.Page.ModId}|{context.Page.Id}",
                 string.Empty,
                 ModSettingsClipboardScope.Self,
@@ -150,7 +114,7 @@ namespace STS2RitsuLib.Settings
             return true;
         }
 
-        public static bool TryGetPagePayload(string clipboardText, out ModSettingsPageClipboardPayload? payload)
+        public static bool TryGetPageDataPayload(string clipboardText, out ModSettingsPageDataClipboardPayload? payload)
         {
             payload = null;
             if (!ModSettingsClipboardData.TryDeserializeEnvelope(clipboardText, out var env) || env == null)
@@ -159,9 +123,12 @@ namespace STS2RitsuLib.Settings
             if (!string.Equals(env.Kind, PageKind, StringComparison.Ordinal))
                 return false;
 
+            if (!string.Equals(env.TypeName, PageDataTypeName, StringComparison.Ordinal))
+                return false;
+
             try
             {
-                payload = JsonSerializer.Deserialize<ModSettingsPageClipboardPayload>(env.Payload);
+                payload = JsonSerializer.Deserialize<ModSettingsPageDataClipboardPayload>(env.Payload);
                 return payload != null;
             }
             catch
@@ -176,29 +143,30 @@ namespace STS2RitsuLib.Settings
                 return false;
 
             if (!ModSettingsClipboardAccess.TryGetText(out var clip) ||
-                !TryGetPagePayload(clip, out var payload) || payload == null)
+                !TryGetPageDataPayload(clip, out var payload) || payload == null)
                 return false;
 
-            return string.Equals(payload.ModId, context.Page.ModId, StringComparison.Ordinal);
+            return string.Equals(payload.ModId, context.Page.ModId, StringComparison.Ordinal) &&
+                   string.Equals(payload.PageId, context.Page.Id, StringComparison.Ordinal);
         }
 
         public static bool TryPastePage(ModSettingsPageUiContext context)
         {
             ModSettingsClipboardAccess.TryGetText(out var clip);
-            TryGetPagePayload(clip, out var payload);
+            TryGetPageDataPayload(clip, out var payload);
 
             var args = new ModSettingsPagePasteEventArgs(context, payload);
             var h = PagePasteRequested;
-            if (h == null) return false;
-            foreach (var @delegate in h.GetInvocationList())
-            {
-                var d = (Action<ModSettingsPagePasteEventArgs>)@delegate;
-                d(args);
-                if (args.Handled)
-                    return args.Success;
-            }
+            if (h != null)
+                foreach (var @delegate in h.GetInvocationList())
+                {
+                    var d = (Action<ModSettingsPagePasteEventArgs>)@delegate;
+                    d(args);
+                    if (args.Handled)
+                        return args.Success;
+                }
 
-            return false;
+            return TryApplyDefaultPageDataPaste(context, payload);
         }
 
         public static bool TryCopySection(ModSettingsSectionUiContext context)
@@ -208,19 +176,19 @@ namespace STS2RitsuLib.Settings
             if (args.SuppressDefaultClipboardWrite)
                 return true;
 
-            var payload = new ModSettingsSectionClipboardPayload(
+            var map = new Dictionary<string, ModSettingsChromeBindingSnapshot>(StringComparer.Ordinal);
+            foreach (var entry in context.Section.Entries)
+                entry.CollectChromeBindingSnapshots(map);
+
+            var payload = new ModSettingsSectionDataClipboardPayload(
                 context.Page.ModId,
                 context.Page.Id,
                 context.Section.Id,
-                context.Section.IsCollapsible,
-                context.Section.Entries.Select(e => e.Id).ToArray(),
-                context.Section.StartCollapsed,
-                context.Section.Title?.Resolve(),
-                context.Section.Description?.Resolve());
+                map);
 
             ModSettingsClipboardData.WriteClipboardEnvelope(new(
                 SectionKind,
-                SectionTypeName,
+                SectionDataTypeName,
                 $"{context.Page.ModId}|{context.Page.Id}|{context.Section.Id}",
                 string.Empty,
                 ModSettingsClipboardScope.Self,
@@ -229,7 +197,8 @@ namespace STS2RitsuLib.Settings
             return true;
         }
 
-        public static bool TryGetSectionPayload(string clipboardText, out ModSettingsSectionClipboardPayload? payload)
+        public static bool TryGetSectionDataPayload(string clipboardText,
+            out ModSettingsSectionDataClipboardPayload? payload)
         {
             payload = null;
             if (!ModSettingsClipboardData.TryDeserializeEnvelope(clipboardText, out var env) || env == null)
@@ -238,9 +207,12 @@ namespace STS2RitsuLib.Settings
             if (!string.Equals(env.Kind, SectionKind, StringComparison.Ordinal))
                 return false;
 
+            if (!string.Equals(env.TypeName, SectionDataTypeName, StringComparison.Ordinal))
+                return false;
+
             try
             {
-                payload = JsonSerializer.Deserialize<ModSettingsSectionClipboardPayload>(env.Payload);
+                payload = JsonSerializer.Deserialize<ModSettingsSectionDataClipboardPayload>(env.Payload);
                 return payload != null;
             }
             catch
@@ -255,29 +227,72 @@ namespace STS2RitsuLib.Settings
                 return false;
 
             if (!ModSettingsClipboardAccess.TryGetText(out var clip) ||
-                !TryGetSectionPayload(clip, out var payload) || payload == null)
+                !TryGetSectionDataPayload(clip, out var payload) || payload == null)
                 return false;
 
-            return string.Equals(payload.ModId, context.Page.ModId, StringComparison.Ordinal);
+            return string.Equals(payload.ModId, context.Page.ModId, StringComparison.Ordinal) &&
+                   string.Equals(payload.PageId, context.Page.Id, StringComparison.Ordinal);
         }
 
         public static bool TryPasteSection(ModSettingsSectionUiContext context)
         {
             ModSettingsClipboardAccess.TryGetText(out var clip);
-            TryGetSectionPayload(clip, out var payload);
+            TryGetSectionDataPayload(clip, out var payload);
 
             var args = new ModSettingsSectionPasteEventArgs(context, payload);
             var h = SectionPasteRequested;
-            if (h == null) return false;
-            foreach (var @delegate in h.GetInvocationList())
+            if (h != null)
+                foreach (var @delegate in h.GetInvocationList())
+                {
+                    var d = (Action<ModSettingsSectionPasteEventArgs>)@delegate;
+                    d(args);
+                    if (args.Handled)
+                        return args.Success;
+                }
+
+            return TryApplyDefaultSectionDataPaste(context, payload);
+        }
+
+        private static bool TryApplyDefaultPageDataPaste(ModSettingsPageUiContext target,
+            ModSettingsPageDataClipboardPayload? payload)
+        {
+            if (payload?.Sections.Count is not > 0)
+                return false;
+
+            var any = false;
+            foreach (var section in target.Page.Sections)
             {
-                var d = (Action<ModSettingsSectionPasteEventArgs>)@delegate;
-                d(args);
-                if (args.Handled)
-                    return args.Success;
+                if (!payload.Sections.TryGetValue(section.Id, out var map) || map.Count == 0)
+                    continue;
+
+                foreach (var entry in section.Entries)
+                {
+                    if (!map.TryGetValue(entry.Id, out var snap))
+                        continue;
+                    if (entry.TryPasteChromeBindingSnapshot(snap, target.Host))
+                        any = true;
+                }
             }
 
-            return false;
+            return any;
+        }
+
+        private static bool TryApplyDefaultSectionDataPaste(ModSettingsSectionUiContext target,
+            ModSettingsSectionDataClipboardPayload? payload)
+        {
+            if (payload?.Bindings.Count is not > 0)
+                return false;
+
+            var any = false;
+            foreach (var entry in target.Section.Entries)
+            {
+                if (!payload.Bindings.TryGetValue(entry.Id, out var snap))
+                    continue;
+                if (entry.TryPasteChromeBindingSnapshot(snap, target.Host))
+                    any = true;
+            }
+
+            return any;
         }
     }
 }

@@ -19,6 +19,16 @@ namespace STS2RitsuLib.Settings
         public ModSettingsText? Description { get; }
 
         internal abstract Control CreateControl(ModSettingsUiContext context);
+
+        internal virtual void CollectChromeBindingSnapshots(Dictionary<string, ModSettingsChromeBindingSnapshot> target)
+        {
+        }
+
+        internal virtual bool TryPasteChromeBindingSnapshot(ModSettingsChromeBindingSnapshot snap,
+            IModSettingsUiActionHost host)
+        {
+            return false;
+        }
     }
 
     public sealed class ToggleModSettingsEntryDefinition(
@@ -29,6 +39,23 @@ namespace STS2RitsuLib.Settings
         : ModSettingsEntryDefinition(id, label, description)
     {
         public IModSettingsValueBinding<bool> Binding { get; } = binding;
+
+        internal override void CollectChromeBindingSnapshots(
+            Dictionary<string, ModSettingsChromeBindingSnapshot> target)
+        {
+            ModSettingsClipboardData.AddChromeBindingSnapshot(target, Id, Binding);
+        }
+
+        internal override bool TryPasteChromeBindingSnapshot(ModSettingsChromeBindingSnapshot snap,
+            IModSettingsUiActionHost host)
+        {
+            var adapter = ModSettingsUiFactory.ResolveClipboardAdapter(Binding);
+            if (!ModSettingsClipboardData.TryApplySerializedValueToBinding(Binding, adapter, snap, out var v))
+                return false;
+            Binding.Write(v);
+            host.MarkDirty(Binding);
+            return true;
+        }
 
         internal override Control CreateControl(ModSettingsUiContext context)
         {
@@ -53,6 +80,23 @@ namespace STS2RitsuLib.Settings
         public float Step { get; } = step;
         public Func<float, string>? ValueFormatter { get; } = valueFormatter;
 
+        internal override void CollectChromeBindingSnapshots(
+            Dictionary<string, ModSettingsChromeBindingSnapshot> target)
+        {
+            ModSettingsClipboardData.AddChromeBindingSnapshot(target, Id, Binding);
+        }
+
+        internal override bool TryPasteChromeBindingSnapshot(ModSettingsChromeBindingSnapshot snap,
+            IModSettingsUiActionHost host)
+        {
+            var adapter = ModSettingsUiFactory.ResolveClipboardAdapter(Binding);
+            if (!ModSettingsClipboardData.TryApplySerializedValueToBinding(Binding, adapter, snap, out var v))
+                return false;
+            Binding.Write(v);
+            host.MarkDirty(Binding);
+            return true;
+        }
+
         internal override Control CreateControl(ModSettingsUiContext context)
         {
             return ModSettingsUiFactory.CreateSliderEntry(context, this);
@@ -72,6 +116,23 @@ namespace STS2RitsuLib.Settings
         public IReadOnlyList<ModSettingsChoiceOption<TValue>> Options { get; } = options;
         public ModSettingsChoicePresentation Presentation { get; } = presentation;
 
+        internal override void CollectChromeBindingSnapshots(
+            Dictionary<string, ModSettingsChromeBindingSnapshot> target)
+        {
+            ModSettingsClipboardData.AddChromeBindingSnapshot(target, Id, Binding);
+        }
+
+        internal override bool TryPasteChromeBindingSnapshot(ModSettingsChromeBindingSnapshot snap,
+            IModSettingsUiActionHost host)
+        {
+            var adapter = ModSettingsUiFactory.ResolveClipboardAdapter(Binding);
+            if (!ModSettingsClipboardData.TryApplySerializedValueToBinding(Binding, adapter, snap, out var v))
+                return false;
+            Binding.Write(v);
+            host.MarkDirty(Binding);
+            return true;
+        }
+
         internal override Control CreateControl(ModSettingsUiContext context)
         {
             return ModSettingsUiFactory.CreateChoiceEntry(context, this);
@@ -86,6 +147,23 @@ namespace STS2RitsuLib.Settings
         : ModSettingsEntryDefinition(id, label, description)
     {
         public IModSettingsValueBinding<string> Binding { get; } = binding;
+
+        internal override void CollectChromeBindingSnapshots(
+            Dictionary<string, ModSettingsChromeBindingSnapshot> target)
+        {
+            ModSettingsClipboardData.AddChromeBindingSnapshot(target, Id, Binding);
+        }
+
+        internal override bool TryPasteChromeBindingSnapshot(ModSettingsChromeBindingSnapshot snap,
+            IModSettingsUiActionHost host)
+        {
+            var adapter = ModSettingsUiFactory.ResolveClipboardAdapter(Binding);
+            if (!ModSettingsClipboardData.TryApplySerializedValueToBinding(Binding, adapter, snap, out var v))
+                return false;
+            Binding.Write(v);
+            host.MarkDirty(Binding);
+            return true;
+        }
 
         internal override Control CreateControl(ModSettingsUiContext context)
         {
@@ -107,6 +185,23 @@ namespace STS2RitsuLib.Settings
         public bool AllowModifierCombos { get; } = allowModifierCombos;
         public bool AllowModifierOnly { get; } = allowModifierOnly;
         public bool DistinguishModifierSides { get; } = distinguishModifierSides;
+
+        internal override void CollectChromeBindingSnapshots(
+            Dictionary<string, ModSettingsChromeBindingSnapshot> target)
+        {
+            ModSettingsClipboardData.AddChromeBindingSnapshot(target, Id, Binding);
+        }
+
+        internal override bool TryPasteChromeBindingSnapshot(ModSettingsChromeBindingSnapshot snap,
+            IModSettingsUiActionHost host)
+        {
+            var adapter = ModSettingsUiFactory.ResolveClipboardAdapter(Binding);
+            if (!ModSettingsClipboardData.TryApplySerializedValueToBinding(Binding, adapter, snap, out var v))
+                return false;
+            Binding.Write(v);
+            host.MarkDirty(Binding);
+            return true;
+        }
 
         internal override Control CreateControl(ModSettingsUiContext context)
         {
