@@ -1,81 +1,73 @@
 # Diagnostics & Compatibility
 
-This document explains the small safety and compatibility layers RitsuLib adds around the base game.
+This document describes the safety and compatibility mechanisms RitsuLib adds on top of the base game.
 
 It focuses on:
 
-- one-time warnings that help authors find broken setup
-- debug-only compatibility behaviors for missing localization and missing epoch ids
-- narrow bridge patches for vanilla systems that do not naturally support mod content
+- One-time warnings that help authors catch mistakes early
+- Debug-oriented behavior for missing localization and missing epochs
+- Narrow bridge patches where vanilla systems do not support mod content
 
 ---
 
 ## Design Intent
 
-RitsuLib does not try to hide every engine problem behind implicit magic.
+RitsuLib does not hide every engine issue behind implicit magic. It follows these rules:
 
-Instead, it follows a narrower rule:
+- Surface real errors as early as possible
+- Where vanilla offers no safe extension point, the framework may add a bridge
+- When a shim would hide too much, prefer staying explicit
 
-- if the framework can surface a real mistake early, it should
-- if the base game lacks a safe extension point, the framework may bridge it
-- if a shim would hide too much behavior, the framework prefers to keep it explicit
-
-So this layer is intentionally limited and targeted.
+This layer is deliberately narrow and only handles edge cases.
 
 ---
 
 ## One-Time Warning Policy
 
-Several diagnostics in RitsuLib only warn once per unique issue.
+Some RitsuLib diagnostics warn only once per issue, including:
 
-That includes cases like:
+- Missing resource paths
+- Missing localization keys in debug compatibility mode
 
-- missing resource paths
-- missing localization keys in debug compatibility mode
-
-The goal is to keep logs actionable:
-
-- visible enough to notice
-- not noisy enough to flood every frame or every screen refresh
+The goal is actionable logs: noticeable enough to act on, without spamming every frame.
 
 ---
 
 ## Asset Path Diagnostics
 
-Explicit asset overrides are validated through `AssetPathDiagnostics`.
+Explicit asset override paths are validated by `AssetPathDiagnostics`.
 
-When a resource-like override path is missing:
+When a path is missing:
 
-- the framework logs a warning once
-- the base asset path or base behavior is used instead
+- A one-time warning is logged (host type, model id, member name, missing path)
+- Behavior falls back to the original asset path or original behavior
 
-This is especially important for character assets, where the base game offers very little safe fallback on its own.
+This matters especially for character assets, where vanilla has almost no safe fallback.
 
-Detailed asset semantics live in [Asset Profiles & Fallbacks](AssetProfilesAndFallbacks.md).
+See [Asset Profiles & Fallbacks](AssetProfilesAndFallbacks.md).
 
 ---
 
 ## Debug Compatibility Mode
 
-RitsuLib includes a debug-only compatibility shim for selected runtime failures.
+> This feature patches vanilla `LocTable` and RitsuLib unlock bridges. It is for debugging only.
 
 When `debug_compatibility_mode` is enabled:
 
-- missing `LocTable.GetLocString(key)` returns a placeholder `LocString`
-- missing `LocTable.GetRawText(key)` returns the key text itself
-- the missing key is logged once with a warning
-- missing epoch ids encountered by RitsuLib unlock compatibility bridges are logged once, skipped, and allowed to continue
+### Localization downgrade (vanilla behavior patched)
 
-This mode is disabled by default.
+- If `LocTable.GetLocString(key)` misses, it returns a placeholder `LocString` instead of throwing
+- If `LocTable.GetRawText(key)` misses, it returns the key string instead of throwing
+- Each missing key is warned only once
 
-It exists to reduce interruption during iteration, not to replace correct localization data or correct timeline registration.
+### Epoch downgrade (RitsuLib bridge)
 
-The missing-epoch downgrade only applies to compatibility paths owned by RitsuLib itself, such as:
+- When RitsuLib’s unlock compatibility bridges encounter a missing epoch id at runtime, they log once, skip that unlock, and let the current run continue
+- Scope is limited to paths RitsuLib owns, for example:
+  - Epoch ids derived when mod characters follow vanilla `ObtainCharUnlockEpoch(...)`-style flow
+  - RitsuLib-registered boss / elite / ascension / post-run epoch unlock rules
 
-- vanilla-style `ObtainCharUnlockEpoch(...)` handling for mod characters when the derived `...2_EPOCH/3_EPOCH/4_EPOCH` id is absent
-- RitsuLib-managed boss / elite / ascension / post-run epoch unlock bridges
-
-Warnings from this mode still indicate a real configuration problem that should be fixed in the mod.
+This mode is off by default. It reduces interruption while debugging; it does not replace correct localization or timeline registration.
 
 Windows settings path:
 
@@ -87,81 +79,69 @@ Windows settings path:
 
 ## Registration Conflict Diagnostics
 
-RitsuLib performs explicit conflict checks for:
+RitsuLib checks these conflicts explicitly:
 
-- model id collisions
-- epoch id collisions
-- story id collisions
+| Conflict | Typical cause |
+|---|---|
+| Model id collision | Two registered models in the same mod/category share the same CLR type name |
+| Epoch id collision | Two epochs resolve to the same `Id` |
+| Story id collision | Two stories resolve to the same story identity |
 
-These checks exist because fixed public identity is only useful if collisions are caught loudly.
-
-Typical failure situations include:
-
-- two registered model types in the same mod/category sharing the same CLR type name
-- two epochs resolving to the same `Id`
-- two stories resolving to the same story id
-
-When collisions are detected, the framework throws or logs instead of silently accepting ambiguous identity.
+When detected, the framework throws or logs errors — it does not accept ambiguous identity silently.
 
 ---
 
 ## Ancient Dialogue Compatibility Layer
 
-RitsuLib now auto-appends localization-defined ancient dialogues for registered mod characters before `AncientDialogueSet.PopulateLocKeys` runs.
+> This runs before vanilla `AncientDialogueSet.PopulateLocKeys`, extending vanilla behavior.
 
-This is a compatibility convenience layer, not a replacement for author intent:
+RitsuLib automatically appends localization-defined ancient dialogues for registered mod characters.
 
-- you still own the localization keys
-- the framework just discovers and appends the dialogues so mod characters participate in the same ancient dialogue pattern as base characters
+It is positioned as a compatibility convenience:
 
-Detailed key structure lives in [Localization & Keywords](LocalizationAndKeywords.md).
+- Authors still author dialogue keys
+- The framework discovers and appends them so mod characters follow the same ancient-dialogue pattern as vanilla
+
+For key structure, see [Localization & Keywords](LocalizationAndKeywords.md).
 
 ---
 
 ## Unlock Compatibility Bridges
 
-Vanilla progression checks were built around vanilla characters.
+> This section explains vanilla progression limits for mod characters and RitsuLib’s bridging strategy.
 
-RitsuLib adds narrow bridge patches so registered unlock rules can drive equivalent behavior for mod characters in places such as:
+Several vanilla progression checks assume vanilla characters. RitsuLib uses narrow bridge patches so registered unlock rules apply at those nodes for mod characters:
 
-- elite-win based epoch unlocks
-- boss-win based epoch unlocks
-- ascension-one epoch unlocks
-- post-run character unlock epochs
-- ascension reveal checks
+| Bridge | Description |
+|---|---|
+| Elite wins | Elite kill count → epoch checks |
+| Boss wins | Boss kill count → epoch checks |
+| Ascension 1 | Ascension 1 → epoch checks |
+| Post-run character unlock | Post-run character-unlock epochs |
+| Ascension reveal | Ascension reveal unlock checks |
 
-These patches do not invent a second progression system. They only forward registered RitsuLib rules into the vanilla checkpoints that would otherwise ignore mod characters.
+These patches do not invent a second progression system; they forward RitsuLib-registered rules into vanilla checkpoints that would otherwise ignore mod characters.
 
-Detailed rule semantics live in [Timeline & Unlocks](TimelineAndUnlocks.md).
+See [Timeline & Unlocks](TimelineAndUnlocks.md).
 
 ---
 
-## Freeze Errors Are Intentional Diagnostics
+## Freeze Errors
 
-When content, timeline, or unlock registration is attempted after freeze, RitsuLib throws.
+If content, timeline, or unlock registration runs after freeze, RitsuLib throws.
 
-This should be understood as a diagnostic feature, not a usability bug.
-
-Late registration would mean:
-
-- ModelDb caches may already be warm
-- fixed identity may already be relied on
-- unlock filters may already be running
-
-So the framework fails hard rather than letting the mod continue in a partial state.
+That is intentional: late registration often means ModelDb caches are already built, fixed identity rules are in use, and unlock filters are active. Failing fast is the safe choice.
 
 ---
 
 ## Recommended Debugging Mindset
 
-When you see a compatibility or diagnostic warning:
+1. Treat warnings as configuration issues first, not random instability
+2. Fix missing assets and localization at the source
+3. Use debug compatibility mode only while iterating
+4. Do not rely on compatibility layers when a clean explicit API exists
 
-1. treat it as a setup issue first, not as random engine instability
-2. fix missing assets or missing localization at the source
-3. use debug compatibility mode only while iterating
-4. avoid depending on compatibility shims where a clean explicit API already exists
-
-The framework is trying to make mistakes visible, not make them disappear.
+The framework is meant to make problems visible, not hide them permanently.
 
 ---
 

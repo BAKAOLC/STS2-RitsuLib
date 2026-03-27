@@ -1,27 +1,29 @@
 # Godot Scene Authoring
 
-This document covers one practical caveat of working with Godot scenes in STS2 mods:
+This document covers two practical concerns for STS2 mods authoring Godot scenes:
 
-- many scene-facing game types should be wrapped in a mod-local subclass before you bind them in the editor
-- your mod assembly's Godot scripts should be registered during initialization
-
----
-
-## Why This Exists
-
-In the current Godot Mono workflow used by STS2 modding, binding scenes directly to many game-assembly C# types is unreliable in the editor.
-
-In practice, scenes behave more predictably when the script bound in the `.tscn` belongs to your own mod assembly, even if that script is only a thin subclass of a game type.
-
-So the stable rule of thumb is:
-
-- if a scene node needs to behave as a game/editor-facing Godot type, create a mod-local subclass and bind the scene to that subclass
+- Scene-facing game types should be subclassed in the mod first, then bound in the editor
+- Godot C# scripts in the mod assembly must be registered during initialization
 
 ---
 
-## The Wrapper Pattern
+## Why Mod-Local Subclasses
 
-Instead of binding a scene directly to a game type like `NEnergyCounter`, create a mod-local script:
+> The following describes an engine behavior in the Godot Mono workflow.
+
+In the Godot Mono workflow used for STS2 modding, binding C# types from the game assembly directly to `.tscn` scenes is unreliable in the editor.
+
+Experience shows that opening, serializing, and rebinding works more reliably when the `.tscn` binds to a script type from your own mod assembly.
+
+Practical rule:
+
+- Whenever a scene node needs to behave as an in-game Godot type, add a thin mod-local subclass first, then bind the scene to that subclass
+
+---
+
+## Wrapper Pattern
+
+Do not bind scenes directly to game types such as `NEnergyCounter`. Write a mod-local script:
 
 ```csharp
 using MegaCrit.Sts2.Core.Nodes.Combat;
@@ -34,62 +36,60 @@ namespace MyMod.Scripts
 }
 ```
 
-Then bind the scene to `MyEnergyCounter`, not directly to `NEnergyCounter`.
+Bind the `.tscn` to `MyEnergyCounter`, not to `NEnergyCounter` directly.
 
-This wrapper can be empty. Its job is often just to give the editor a local script type it can bind reliably.
-
----
-
-## Typical Targets That Benefit From Local Wrappers
-
-Common examples include scene-facing types such as:
-
-- `NEnergyCounter`
-- `NRestSiteCharacter`
-- `NCreatureVisuals`
-- `NSelectionReticle`
-- `MegaLabel`
-
-These are exactly the kinds of classes that often appear as scene roots or scripted child controls.
+The wrapper can be empty. Its purpose is to give the editor a local script type owned by your mod.
 
 ---
 
-## Generic Example Pattern
+## Common Types That Need Wrapping
 
-A custom energy-counter scene might use bindings like:
+| Game type | Typical use |
+|---|---|
+| `NEnergyCounter` | Energy orb scene root |
+| `NRestSiteCharacter` | Rest site character scene |
+| `NCreatureVisuals` | Character visuals scene |
+| `NSelectionReticle` | Selection reticle |
+| `MegaLabel` | Label child control |
 
-- root counter script -> `MyEnergyCounter : NEnergyCounter`
-- label child script -> `MyCounterLabel : MegaLabel`
+---
 
-A character visuals scene might use:
+## Generic Binding Examples
 
-- root visuals script -> `MyCreatureVisuals : NCreatureVisuals`
+Custom energy orb scene:
 
-A rest-site scene might use:
+- Root script → `MyEnergyCounter : NEnergyCounter`
+- Label child → `MyCounterLabel : MegaLabel`
 
-- root rest-site script -> `MyRestSiteCharacter : NRestSiteCharacter`
+Character visuals scene:
 
-The important point is not the exact class names. The important point is that the bound script belongs to your mod assembly.
+- Root script → `MyCreatureVisuals : NCreatureVisuals`
+
+Rest site scene:
+
+- Root script → `MyRestSiteCharacter : NRestSiteCharacter`
+
+The point is not the class names — it is that bound scripts live in your mod assembly.
 
 ---
 
 ## Editor Rule
 
-If the Godot editor needs to open, serialize, or rebind the script from your mod scene, prefer a mod-local subclass.
+Whenever the Godot editor must open, serialize, or rebind a script in your mod scene, prefer a mod-local subclass.
 
-That applies even when:
+Even when:
 
-- you do not add any new logic yet
-- the class is only one line of inheritance
-- the runtime target already exists in the game assembly
+- You have no extra logic yet
+- Inheritance is a single line
+- The runtime type already exists in the game assembly
 
-The wrapper is not redundant. It is the compatibility layer between your mod scene and the editor.
+The wrapper is the compatibility layer between your scene and the editor.
 
 ---
 
 ## Runtime Script Registration
 
-If your mod uses Godot C# scene scripts, call `EnsureGodotScriptsRegistered(...)` during initialization:
+If your mod uses Godot C# scene scripts, call this during initialization:
 
 ```csharp
 using System.Reflection;
@@ -99,34 +99,30 @@ RitsuLibFramework.EnsureGodotScriptsRegistered(
     Logger);
 ```
 
-This asks Godot's script bridge to discover C# scripts from your mod assembly.
+This lets Godot’s script bridge discover and register C# scripts from your mod assembly.
 
-A typical mod initializer should do this before content registration so custom scene scripts can be discovered reliably at runtime.
+Do this before content registration so scene scripts resolve reliably at runtime.
 
 ---
 
 ## Recommended Workflow
 
-For any custom Godot scene in a mod:
-
-1. identify the game/editor-facing base type you need
-2. create a thin mod-local `partial class` inheriting that type
-3. bind the `.tscn` to the mod-local script
-4. call `EnsureGodotScriptsRegistered(Assembly.GetExecutingAssembly(), Logger)` during mod init
-
-This keeps both editor binding and runtime script lookup much more predictable.
+1. Pick the game-side base type you need
+2. Add a thin mod-local `partial class` that inherits it
+3. Bind the `.tscn` to that local script
+4. In your entry point, call `EnsureGodotScriptsRegistered(Assembly.GetExecutingAssembly(), Logger)`
 
 ---
 
-## When You Do Not Need This
+## When You Do Not Need Wrapping
 
-You usually do not need a wrapper for:
+You usually do not need extra wrapper subclasses for:
 
-- plain content model classes like cards, relics, powers, or characters
-- pure C# helpers not used as Godot scripts
-- logic that is never bound into a `.tscn` / Godot scene resource
+- Plain content model classes (card / relic / power / character)
+- Pure C# helpers not used as Godot scripts
+- Logic classes never bound to `.tscn` resources
 
-This guidance is specifically about Godot scene authoring and script binding.
+This document is only about Godot scenes and script binding.
 
 ---
 

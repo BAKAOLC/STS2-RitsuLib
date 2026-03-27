@@ -1,44 +1,38 @@
 # Timeline & Unlocks
 
-This is the reference document for timeline registration and unlock semantics.
+This is the reference for timeline registration and unlock semantics.
 
-RitsuLib separates timeline registration from unlock rules, but the two systems are designed to work together.
+RitsuLib splits timeline registration and unlock rules into two systems that are meant to work together. This document covers:
 
-This document explains:
-
-- how stories and epochs are registered
-- what the scaffold templates actually do
-- how unlock rules are evaluated
-- where compatibility patches bridge vanilla progression logic for mod characters
+- How `Story` and `Epoch` are registered
+- What the scaffold templates are responsible for
+- How unlock rules are evaluated
+- Limitations of vanilla progression for mod characters and RitsuLib’s compatibility bridges
 
 ---
 
 ## The Two Registries
 
-There are two related registries:
+| Registry | Role |
+|---|---|
+| `ModTimelineRegistry` | Registers `StoryModel` and `EpochModel` |
+| `ModUnlockRegistry` | Defines unlock conditions for content or epochs |
 
-- `ModTimelineRegistry`: registers `StoryModel` and `EpochModel` types
-- `ModUnlockRegistry`: defines when content or epochs become available
+In the fluent builder, these correspond to:
 
-In the fluent builder they are exposed through:
+- `.Story<TStory>()`, `.Epoch<TEpoch>()`
+- `.RequireEpoch<TModel, TEpoch>()`, `.UnlockEpochAfter...()`
 
-- `.Story<TStory>()`
-- `.Epoch<TEpoch>()`
-- `.RequireEpoch<TModel, TEpoch>()`
-- `.UnlockEpochAfter...()`
+Core distinction:
 
-The important distinction is:
-
-- timeline registration says what exists
-- unlock registration says when it becomes available
+- **Timeline registration** answers “does this thing exist?”
+- **Unlock registration** answers “when does it become available?”
 
 ---
 
 ## Story Registration
 
-`ModTimelineRegistry.RegisterStory<TStory>()` registers a concrete `StoryModel` type.
-
-The recommended base class is `ModStoryTemplate`:
+The recommended approach is `ModStoryTemplate`:
 
 ```csharp
 public class MyStory : ModStoryTemplate
@@ -53,57 +47,45 @@ public class MyStory : ModStoryTemplate
 }
 ```
 
-What `ModStoryTemplate` does for you:
+`ModStoryTemplate` is responsible for:
 
-- derives the story id by slugifying `StoryKey`
-- resolves `EpochTypes` into the `Epochs` array expected by the game
-
-So the story template is really a thin bridge from a type list to the game's story model.
+- Deriving a normalized story identity from `StoryKey`
+- Resolving `EpochTypes` into the `Epochs` array the game expects
 
 ---
 
 ## Epoch Registration
 
-`ModTimelineRegistry.RegisterEpoch<TEpoch>()` registers a concrete `EpochModel` type.
+You can write plain `EpochModel` subclasses, or use RitsuLib scaffold templates:
 
-You can always write raw `EpochModel` subclasses, but RitsuLib also provides several scaffold bases:
+| Template | Description |
+|---|---|
+| `CharacterUnlockEpochTemplate<TCharacter>` | Epoch that unlocks the character |
+| `CardUnlockEpochTemplate` | Epoch that unlocks extra cards |
+| `RelicUnlockEpochTemplate` | Epoch that unlocks extra relics |
+| `PotionUnlockEpochTemplate` | Epoch that unlocks extra potions |
 
-- `CharacterUnlockEpochTemplate<TCharacter>`
-- `CardUnlockEpochTemplate`
-- `RelicUnlockEpochTemplate`
-- `PotionUnlockEpochTemplate`
+These templates mainly handle:
 
-These templates do two jobs:
+- Enqueue logic for the timeline unlock UI
+- Follow-up epochs via `ExpansionEpochTypes`
 
-- generate the unlock queue logic for the timeline screen
-- optionally expose follow-up expansions through `ExpansionEpochTypes`
+### Character unlock epoch template
 
----
+Built-in behavior of `CharacterUnlockEpochTemplate<TCharacter>`:
 
-## Character Epoch Template
+- Queues a character unlock in `NTimelineScreen`
+- Writes the pending character unlock to save progress
+- If `ExpansionEpochTypes` is set, queues further epochs into the timeline expansion
 
-`CharacterUnlockEpochTemplate<TCharacter>` is used when an epoch unlocks a character.
-
-Its built-in behavior:
-
-- queues a character unlock in `NTimelineScreen`
-- writes the pending character unlock to save progress
-- expands into any epochs returned by `ExpansionEpochTypes`
-
-Use it when the epoch itself is the presentation step for unlocking the character.
-
----
-
-## Card / Relic / Potion Epoch Templates
+### Card / relic / potion epoch templates
 
 `CardUnlockEpochTemplate`, `RelicUnlockEpochTemplate`, and `PotionUnlockEpochTemplate` work similarly:
 
-- you declare the unlocked model types
-- the template resolves them from `ModelDb`
-- `UnlockText` is generated from the resolved models
-- `QueueUnlocks()` pushes the right unlock payload to the timeline screen
-
-This lets you define timeline unlocks in terms of model types instead of hand-building the queue logic.
+- You declare the model types to unlock
+- The template resolves types through `ModelDb`
+- `UnlockText` is generated automatically
+- `QueueUnlocks()` pushes into the timeline UI
 
 ---
 
@@ -115,128 +97,112 @@ All unlock epoch templates support:
 protected virtual IEnumerable<Type> ExpansionEpochTypes => [];
 ```
 
-If you return epoch types here, they are queued as timeline expansion once the current epoch resolves.
+When the current epoch completes, these epochs are added automatically as timeline expansions, which helps chain unlocks:
 
-That is the main mechanism for building a sequence like:
-
-- unlock character
-- then reveal card unlocks
-- then reveal relic unlocks
-
-without manually wiring every transition in UI code.
+1. Unlock the character first
+2. Then reveal card unlocks
+3. Then reveal relic unlocks
 
 ---
 
-## Registration Timing And Freeze
+## Registration Timing and Freeze
 
-Both timeline and unlock registries freeze after early initialization.
+Both the timeline and unlock registries freeze after early initialization because:
 
-Why:
+- Story and epoch identities must stay stable
+- Unlock filtering and compatibility patches need a finalized rule set
 
-- story ids must remain stable
-- epoch ids must remain stable
-- unlock filters and compatibility patches need a finalized rule set
-
-So register stories, epochs, and unlock rules from your mod initializer.
-Do not wait until later gameplay hooks.
+Register `Story`, `Epoch`, and unlock rules from your initializer — not later at runtime.
 
 ---
 
-## Requiring An Epoch For Content
+## Requiring an Epoch for Content
 
-Use `RequireEpoch<TModel, TEpoch>()` when a model exists, but should only appear after an epoch is obtained or revealed.
+When a model is registered but should only appear after an epoch is obtained, use `RequireEpoch<TModel, TEpoch>()`.
 
 Typical uses:
 
-- cards that should stay hidden before a progression milestone
-- relics tied to a specific narrative branch
-- shared ancients or events gated behind timeline progress
+- Late-game cards stay out of the pool until progress is met
+- Relics open only after a specific story branch
+- Shared ancients / events need a timeline milestone
 
-RitsuLib applies unlock filtering to multiple content access paths, including:
+RitsuLib applies the gate across multiple entry points:
 
 - `UnlockState.Characters`
-- unlocked card/relic/potion pool queries
-- shared ancient lists
-- generated act events
+- Unlocked card / relic / potion pool queries
+- Shared ancient lists
+- Events generated for acts
 
-So the rule is not just cosmetic; it affects what the game actually offers.
+This is not UI-only filtering; it changes what the game can actually offer.
 
 ---
 
 ## Post-Run Epoch Rules
 
-`ModUnlockRegistry` supports several post-run convenience APIs:
+Common convenience APIs on `ModUnlockRegistry`:
 
-- `UnlockEpochAfterRunAs<TCharacter, TEpoch>()`
-- `UnlockEpochAfterWinAs<TCharacter, TEpoch>()`
-- `UnlockEpochAfterAscensionWin<TCharacter, TEpoch>(level)`
-- `UnlockEpochAfterRunCount<TEpoch>(requiredRuns, requireVictory)`
+| Method | Description |
+|---|---|
+| `UnlockEpochAfterRunAs<TCharacter, TEpoch>()` | Unlock after completing a run with the given character |
+| `UnlockEpochAfterWinAs<TCharacter, TEpoch>()` | Unlock after a win with that character |
+| `UnlockEpochAfterAscensionWin<TCharacter, TEpoch>(level)` | Unlock after a win at the given ascension |
+| `UnlockEpochAfterRunCount<TEpoch>(requiredRuns, requireVictory)` | Unlock after enough runs |
 
-These all compile down to `PostRunEpochUnlockRule`.
+These all compile to `PostRunEpochUnlockRule`.
 
-If you need more control, you can register a custom rule directly:
+You can also register a custom rule:
 
 ```csharp
-registry.RegisterPostRunRule(
+unlocks.RegisterPostRunRule(
     PostRunEpochUnlockRule.Create(
         epochId: new MyEpoch().Id,
         description: "Unlock after any abandoned ascension-5 run",
         shouldUnlock: ctx => ctx.IsAbandoned && ctx.AscensionLevel >= 5));
 ```
 
-The rule receives a `PostRunUnlockContext` with run result, character id, total run count, total wins, and ascension level.
-
 ---
 
 ## Counted Progression Rules
 
-RitsuLib also supports progression rules backed by cumulative stats:
-
-- `UnlockEpochAfterEliteVictories<TCharacter, TEpoch>(requiredEliteWins)`
-- `UnlockEpochAfterBossVictories<TCharacter, TEpoch>(requiredBossWins)`
-- `UnlockEpochAfterAscensionOneWin<TCharacter, TEpoch>()`
-- `RevealAscensionAfterEpoch<TCharacter, TEpoch>()`
-- `UnlockCharacterAfterRunAs<TCharacter, TEpoch>()`
-
-These rules exist because vanilla progression checks are character-specific and do not naturally understand mod characters.
-
-RitsuLib bridges that with compatibility patches that read the registered mod rules and apply equivalent progression behavior.
+| Method | Description |
+|---|---|
+| `UnlockEpochAfterEliteVictories<TCharacter, TEpoch>(count)` | Elite kill count |
+| `UnlockEpochAfterBossVictories<TCharacter, TEpoch>(count)` | Boss kill count |
+| `UnlockEpochAfterAscensionOneWin<TCharacter, TEpoch>()` | Ascension 1 win |
+| `RevealAscensionAfterEpoch<TCharacter, TEpoch>()` | Show ascension after the epoch |
+| `UnlockCharacterAfterRunAs<TCharacter, TEpoch>()` | Unlock character after using that character |
 
 ---
 
 ## Compatibility Patches
 
-The unlock system relies on a few focused compatibility patches:
+> This section explains how vanilla progression limits mod characters and how RitsuLib bridges those gaps.
 
-- elite-win epoch check bridge
-- boss-win epoch check bridge
-- ascension-one epoch bridge
-- post-run character-unlock epoch bridge
-- ascension reveal bridge
+Several vanilla progression checks assume vanilla characters and do not naturally include mod characters. RitsuLib applies narrow bridge patches so registered unlock rules still apply at those checkpoints:
 
-These are intentionally narrow.
+- Elite kill count → epoch checks
+- Boss kill count → epoch checks
+- Ascension 1 → epoch checks
+- Post-run character-unlock epochs
+- Ascension reveal unlock checks
 
-RitsuLib does not try to replace all progression logic; it only intercepts the vanilla locations that would otherwise skip mod characters entirely.
-
-This is why the registry stores rules in explicit maps keyed by `ModelId` rather than trying to infer progression from the timeline graph alone.
+These patches do not replace vanilla progression; they only add a bridge where vanilla would skip mod characters. That is why the unlock registry stores rules explicitly by `ModelId` instead of inferring all progression from the timeline graph alone.
 
 ---
 
 ## Recommended Pattern
 
-For a story-driven character mod, a good pattern is:
+For a story-driven character mod:
 
-1. Register the character, pools, epochs, and story in one content pack
+1. Register character, pools, epochs, and story in one content pack
 2. Use `CharacterUnlockEpochTemplate<TCharacter>` for the character unlock epoch
-3. Use follow-up card/relic/potion epoch templates for content reveals
-4. Gate late content with `RequireEpoch<TModel, TEpoch>()`
-5. Register one or two clear progression rules instead of many overlapping ones
-
-This keeps the timeline readable and the unlock logic easy to explain.
+3. Use card / relic / potion epoch templates for follow-up content
+4. Use `RequireEpoch<TModel, TEpoch>()` for late-game gates
+5. Prefer a small set of clear progression rules over many overlapping ones
 
 ---
 
-## Example Builder Flow
+## Builder Example
 
 ```csharp
 RitsuLibFramework.CreateContentPack("MyMod")
@@ -257,11 +223,11 @@ RitsuLibFramework.CreateContentPack("MyMod")
 
 ## Common Mistakes
 
-- registering epochs but forgetting to register the story that exposes them
-- registering stories after timeline freeze
-- using `RequireEpoch` for content but never registering a rule that can actually obtain that epoch
-- stacking many overlapping unlock rules for the same epoch without a clear reason
-- assuming vanilla counted unlock logic will automatically work for mod characters without RitsuLib rule registration
+- Registering epochs but forgetting the story that lists those epochs
+- Registering story/epochs after the timeline has frozen
+- Using `RequireEpoch` without any rule that can actually unlock that epoch
+- Stacking many overlapping rules for the same epoch without a clear design
+- Assuming vanilla counted progression works for mod characters without registering RitsuLib unlock rules
 
 ---
 

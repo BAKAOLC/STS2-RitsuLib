@@ -1,17 +1,19 @@
 # Localization & Keywords
 
-RitsuLib intentionally treats localization as two related but separate layers:
+RitsuLib separates localization into two distinct layers:
 
-- the game's `LocString` model-key pipeline
-- framework-owned helper localization via `I18N`
+- **The base game's `LocString` model-key pipeline** — in-game text such as model titles and descriptions
+- **Framework-provided `I18N` helper localization** — auxiliary text for the mod itself
 
-It also provides a small keyword registry so mod-defined terms can produce consistent hover tips and card text helpers.
+It also provides a lightweight keyword registry to unify hover tips and keyword text.
 
 ---
 
 ## Game Model Localization
 
-For registered models, the game still reads localization through normal tables such as:
+> The following describes the game engine's own localization mechanism; RitsuLib does not replace this system.
+
+The game reads model text through `LocString` and various localization tables, commonly including:
 
 - `cards`
 - `relics`
@@ -19,15 +21,15 @@ For registered models, the game still reads localization through normal tables s
 - `characters`
 - `card_keywords`
 
-Those keys are based on the fixed `ModelId.Entry` described in [Content Authoring Toolkit](ContentAuthoringToolkit.md).
+Those keys are built on `ModelId.Entry`.
 
-RitsuLib does not replace that system. It makes the identity side deterministic so those keys are easier to author.
+RitsuLib's role is limited to making model identity more stable and predictable so keys are easier to author. For concrete model ID rules, see [Content Authoring Toolkit](ContentAuthoringToolkit.md).
 
 ---
 
 ## `CreateLocalization` And `CreateModLocalization`
 
-For framework-owned helper text, use `I18N`:
+`I18N` is RitsuLib's helper-text localization system, independent of the game's `LocString`:
 
 ```csharp
 var i18n = RitsuLibFramework.CreateModLocalization(
@@ -54,7 +56,7 @@ user://mod-configs/<modId>/localization
 2. embedded resources
 3. PCK folders
 
-Merge behavior is first-wins, not last-wins:
+Merge behavior is first-wins:
 
 - file-system entries are loaded first
 - embedded entries only fill missing keys
@@ -66,13 +68,13 @@ This lets local overrides take priority over packaged defaults.
 
 ## Language Normalization
 
-`I18N` normalizes locale names before loading JSON files.
+`I18N` normalizes locale names before loading JSON files:
 
-Examples:
-
-- `en`, `en_us`, `eng` -> `eng`
-- `zh`, `zh_cn`, `zh_hans` -> `zhs`
-- `ja`, `ja_jp` -> `jpn`
+| Input | Normalized |
+|---|---|
+| `en`, `en_us`, `eng` | `eng` |
+| `zh`, `zh_cn`, `zh_hans` | `zhs` |
+| `ja`, `ja_jp` | `jpn` |
 
 If no language can be resolved, it falls back to `eng`.
 
@@ -80,30 +82,27 @@ If no language can be resolved, it falls back to `eng`.
 
 ## Runtime Reload Behavior
 
-`I18N` subscribes to locale changes when possible.
+`I18N` subscribes to locale changes when possible:
 
-That means:
+- when the game language changes, helper localization reloads automatically
+- `Changed` is raised after reload completes
+- if the game localization manager is unavailable at that moment, `I18N` falls back to lazy detection
 
-- switching the game language reloads the helper localization
-- `Changed` listeners are notified after reload
-- if the game localization manager is unavailable, `I18N` falls back to lazy detection
-
-This behavior is separate from normal `LocString` resolution.
+This behavior is independent of base-game `LocString` resolution.
 
 ---
 
 ## Debug Compatibility Mode
 
-RitsuLib includes a debug-only compatibility shim for missing `LocTable` keys.
+> This feature patches the base game's `LocTable` behavior and is intended for debugging only.
 
 When `debug_compatibility_mode` is enabled:
 
-- missing `LocTable.GetLocString(...)` no longer throws immediately
-- missing `LocTable.GetRawText(...)` no longer throws immediately
-- the framework returns a placeholder based on the key
-- a one-time warning is logged
+- `LocTable.GetLocString(...)` no longer throws on missing keys; it returns a placeholder value derived from the key
+- `LocTable.GetRawText(...)` no longer throws on missing keys; it returns the key itself
+- each missing key is warned about only once
 
-This is a debugging aid, not a replacement for correct localization.
+The goal is to help troubleshoot issues, not to replace correct localization authoring.
 
 ---
 
@@ -128,11 +127,13 @@ This creates a normalized keyword id and binds it to title / description localiz
 
 Common helpers:
 
-- `ModKeywordRegistry.CreateHoverTip(id)`
-- `ModKeywordRegistry.GetTitle(id)`
-- `ModKeywordRegistry.GetDescription(id)`
-- `keywordId.GetModKeywordCardText()`
-- `enumerable.ToHoverTips()`
+| Method | Description |
+|---|---|
+| `ModKeywordRegistry.CreateHoverTip(id)` | Create hover tip |
+| `ModKeywordRegistry.GetTitle(id)` | Get title |
+| `ModKeywordRegistry.GetDescription(id)` | Get description |
+| `keywordId.GetModKeywordCardText()` | Get card text |
+| `enumerable.ToHoverTips()` | Batch-convert to hover tips |
 
 You can also attach runtime keywords to arbitrary objects via `ModKeywordExtensions`:
 
@@ -151,34 +152,34 @@ This is useful when keyword presence is driven by runtime state rather than stat
 
 ## Ancient Dialogue Localization
 
-RitsuLib now includes `AncientDialogueLocalization`.
+RitsuLib includes `AncientDialogueLocalization`. It serves two roles:
 
-It serves two roles:
-
-- helper API for building dialogue discovery from localization keys
+- helper API for scanning dialogue from localization keys
 - automatic append of localization-defined mod-character ancient dialogues before `AncientDialogueSet.PopulateLocKeys` runs
 
-The expected key shape matches the base game:
+The key shape matches the base game:
 
-- `<ancientEntry>.talk.<characterEntry>.<dialogueIndex>-<lineIndex>.ancient`
-- `<ancientEntry>.talk.<characterEntry>.<dialogueIndex>-<lineIndex>.char`
-- optional repeating suffix: `r`
-- optional `.sfx`
-- optional `-visit`
-- architect-only optional `-attack`
+| Key component | Description |
+|---|---|
+| `<ancientEntry>.talk.<characterEntry>.<dialogueIndex>-<lineIndex>.ancient` | Ancient line |
+| `<ancientEntry>.talk.<characterEntry>.<dialogueIndex>-<lineIndex>.char` | Character line |
+| Optional suffix `r` | Repeated dialogue |
+| Optional suffix `.sfx` | Sound effect |
+| Optional suffix `-visit` | Visit override |
+| Optional suffix `-attack` | Architect-only attacker override |
 
-This means authors can add character-specific ancient dialogue by writing localization entries, without manually patching each ancient dialogue set.
+Authors only need to write localization entries to add ancient dialogue for custom characters, without manually patching each `AncientDialogueSet`.
 
 ---
 
 ## Recommended Split
 
-Use the right tool for the right job:
-
-- game-facing card / relic / character text -> `LocString` tables
-- framework-owned helper strings -> `I18N`
-- reusable keyword definitions -> `ModKeywordRegistry`
-- ancient event conversations -> localization keys plus `AncientDialogueLocalization`
+| Use case | Tool |
+|---|---|
+| Game model text (titles, descriptions) | Base game `LocString` tables |
+| Mod-owned auxiliary text (settings, explanations) | `I18N` |
+| Reusable keyword definitions | `ModKeywordRegistry` |
+| Ancient dialogue | Localization keys + `AncientDialogueLocalization` |
 
 ---
 
@@ -188,3 +189,4 @@ Use the right tool for the right job:
 - [Character & Unlock Scaffolding](CharacterAndUnlockScaffolding.md)
 - [Diagnostics & Compatibility](DiagnosticsAndCompatibility.md)
 - [LocString Placeholder Resolution](LocStringPlaceholderResolution.md)
+- [Mod Settings UI](ModSettings.md)

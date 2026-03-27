@@ -1,8 +1,8 @@
 # 自定义事件
 
-本文说明自定义事件如何接入游戏原本的事件管线，以及 RitsuLib 如何把这条管线整理成可注册、可预测的作者接口。
+本文说明如何通过 RitsuLib 将自定义事件接入游戏的事件管线。
 
-它覆盖三类内容：
+它覆盖三类注册：
 
 - 共享事件：`SharedEvent<TEvent>()`
 - Act 专属事件：`ActEvent<TAct, TEvent>()`
@@ -10,34 +10,39 @@
 
 ---
 
-## 运行时模型
+## 游戏原版事件管线
 
-RitsuLib 不会替换游戏原本的事件流程。
-它做的是把已注册的事件和 Ancient 模型补充进原版已经在使用的事件入口。
+> 以下是游戏引擎自身的事件运行时流程，帮助理解 RitsuLib 的注册内容最终在哪里生效。
 
-在 `sts-2-source` 中，相关运行时职责主要包括：
+游戏中事件的生成与执行涉及以下环节：
 
-- `ActModel.GenerateRooms(...)`：从共享池和 Act 本地池构建事件候选
-- `RoomSet.EnsureNextEventIsValid(...)`：按 `IsAllowed(runState)` 与访问记录过滤事件
-- `EventRoom.Enter(...)`：预加载资源、创建 mutable 实例、搭建事件界面
-- `EventModel.GetAssetPaths(...)`：给出进入事件前需要准备的资源路径
+| 阶段 | 游戏类型 | 职责 |
+|---|---|---|
+| 候选生成 | `ActModel.GenerateRooms(...)` | 从 Act 本地事件池和 `ModelDb.AllSharedEvents` 共享池构建候选列表 |
+| 过滤 | `RoomSet.EnsureNextEventIsValid(...)` | 按 `IsAllowed(runState)` 与已访问记录过滤 |
+| 进入 | `EventRoom.Enter(...)` | 预加载资源、创建可变实例、搭建事件界面 |
+| 资源 | `EventModel.GetAssetPaths(...)` | 提供进入事件前需要准备的资源路径 |
 
-在这套模型上，RitsuLib 追加注册内容：
+---
 
-- 共享事件追加到共享事件集合
+## RitsuLib 的注册机制
+
+RitsuLib 不替换上述流程，而是在注册阶段把 Mod 事件补充进原版已有的事件入口：
+
+- 共享事件追加到 `ModelDb.AllSharedEvents`
 - Act 事件追加到对应 Act 的事件列表
 - Ancient 追加到对应的共享或 Act 本地 Ancient 列表
 
-对作者来说，实际工作可以概括为两步：
+对 Mod 作者来说，实际工作可以概括为两步：
 
 1. 定义一个合法的 `EventModel` 或 `AncientEventModel` 子类
-2. 在内容注册冻结之前把它注册进去
+2. 在内容注册冻结之前将其注册
 
 ---
 
 ## 最小普通事件
 
-对大多数 Mod 事件，推荐继承 `ModEventTemplate`，而不是直接继承原版 `EventModel`。
+推荐继承 `ModEventTemplate`，而不是直接继承原版 `EventModel`（原因见下文）。
 
 ```csharp
 using MegaCrit.Sts2.Core.Events;
@@ -68,11 +73,11 @@ public sealed class MyFirstEvent : ModEventTemplate
 }
 ```
 
-一个最小可用的事件模型至少应满足：
+最小可用事件至少应满足：
 
 - 实现 `GenerateInitialOptions()`
-- 在选项回调里推进事件状态，或结束事件
-- 让本地化 key 与最终 `ModelId.Entry` 保持一致
+- 在选项回调里推进或结束事件
+- 本地化 key 与最终 `ModelId.Entry` 保持一致
 
 ---
 
@@ -86,8 +91,6 @@ RitsuLibFramework.CreateContentPack("MyMod")
     .Apply();
 ```
 
-这样事件会进入共享事件池。
-
 ### Act 专属事件
 
 ```csharp
@@ -96,8 +99,6 @@ RitsuLibFramework.CreateContentPack("MyMod")
     .Apply();
 ```
 
-这样事件只会进入指定 Act 的事件列表。
-
 ### Ancient
 
 ```csharp
@@ -105,8 +106,6 @@ RitsuLibFramework.CreateContentPack("MyMod")
     .SharedAncient<MyAncient>()
     .Apply();
 ```
-
-或者：
 
 ```csharp
 RitsuLibFramework.CreateContentPack("MyMod")
@@ -118,7 +117,7 @@ RitsuLibFramework.CreateContentPack("MyMod")
 
 ## 本地化键
 
-通过 RitsuLib 注册后，事件的公开 `ModelId.Entry` 采用固定格式：
+通过 RitsuLib 注册后，事件的 `ModelId.Entry` 采用固定格式：
 
 ```text
 <MODID>_EVENT_<TYPENAME>
@@ -130,7 +129,7 @@ RitsuLibFramework.CreateContentPack("MyMod")
 MY_MOD_EVENT_MY_FIRST_EVENT
 ```
 
-一个最小普通事件的本地化块通常可以写成：
+最小普通事件的本地化块示例：
 
 ```json
 {
@@ -145,47 +144,25 @@ MY_MOD_EVENT_MY_FIRST_EVENT
 }
 ```
 
-这里最重要的是一致性：
-
-- 事件标题和页面文本通过 `Id.Entry` 查找
-- 选项 key 也应该基于同一个最终标识生成
+关键要求是一致性：事件标题、页面文本和选项 key 都应基于同一个最终的 `Id.Entry` 生成。
 
 ---
 
-## 为什么有 `ModEventTemplate` 与 `ModAncientEventTemplate`
+## 为什么要用 `ModEventTemplate`
 
-原版事件实现里有一个对 vanilla 内容通常无害、但对注册式 Mod 事件很重要的差异。
+> 以下解释涉及游戏原版 `EventModel` 的一个行为特征。
 
-这个差异是：
+原版 `EventModel.InitialOptionKey(...)` 及内部 option-key 辅助方法使用 `GetType().Name`（经 `Slugify` 处理）拼接键前缀，而事件标题、页面描述等使用 `Id.Entry`。
 
-- 原版 `EventModel.InitialOptionKey(...)` 以及内部 option-key helper 使用 `GetType().Name`
-- 但事件标题、页面描述、`GameInfoOptions` 使用的是 `Id.Entry`
+对原版事件，这两者通常一致。但对通过 RitsuLib 注册的事件，`GetType().Name` 和 `Id.Entry` 不同，会导致部分文本查找落在不同的键前缀上。
 
-对原版事件，这两者经常正好相同。
-但对通过 RitsuLib 注册的事件，它们通常不同。
-
-结果就是，事件有可能一部分文本落在：
-
-```text
-MY_FIRST_EVENT...
-```
-
-另一部分文本却落在：
-
-```text
-MY_MOD_EVENT_MY_FIRST_EVENT...
-```
-
-为了让这些查找统一起来，RitsuLib 提供了：
-
-- `ModEventTemplate`
-- `ModAncientEventTemplate`
-
-它们的 helper 会统一基于最终注册后的 `Id.Entry` 来生成选项 key，而不是直接使用 CLR 类型名。
+`ModEventTemplate` 和 `ModAncientEventTemplate` 通过 `protected new` 隐藏了基类的 `InitialOptionKey`，统一基于最终注册后的 `Id.Entry` 生成选项 key，从而消除这种不一致。
 
 ---
 
 ## `IsAllowed`
+
+> 以下描述游戏原版的事件过滤机制。
 
 如果事件只应在部分跑局中出现，可以覆写 `IsAllowed(RunState runState)`：
 
@@ -196,18 +173,20 @@ public override bool IsAllowed(RunState runState)
 }
 ```
 
-运行时，游戏会在可用事件池中轮换，直到找到同时满足以下条件的事件：
+运行时，游戏会在候选事件池中轮询，直到找到同时满足以下条件的事件：
 
 - `IsAllowed(...)` 返回 `true`
 - 当前跑局尚未访问过该事件
 
-因此，`IsAllowed` 应表达的是“当前跑局是否允许出现”，而不是注册阶段的准备逻辑。
+`IsAllowed` 表达的是"当前跑局是否允许出现"，不是注册阶段的准备逻辑。
 
 ---
 
 ## 自定义事件场景
 
-如果默认事件布局不适合，可以返回自定义布局类型：
+> 以下描述游戏原版的自定义事件布局机制。
+
+返回自定义布局类型：
 
 ```csharp
 public override EventLayoutType LayoutType => EventLayoutType.Custom;
@@ -219,35 +198,26 @@ public override EventLayoutType LayoutType => EventLayoutType.Custom;
 res://scenes/events/custom/<event-id-lower>.tscn
 ```
 
-例如：
-
-```text
-res://scenes/events/custom/my_mod_event_my_first_event.tscn
-```
-
-该场景根节点必须实现 `ICustomEventNode`，并至少提供：
-
-- `Initialize(EventModel eventModel)`
-- `CurrentScreenContext`
-
-这是因为 `EventModel.SetNode(...)` 在处理自定义布局时会将节点强制转换为 `ICustomEventNode`。
+该场景根节点必须实现 `ICustomEventNode`，至少提供 `Initialize(EventModel)` 和 `CurrentScreenContext`。
 
 ---
 
 ## 资源预加载
 
-普通事件默认会预加载：
+> 以下描述游戏原版的事件资源预加载规则。
+
+普通事件默认预加载：
 
 - 布局场景
 - `res://images/events/<event-id-lower>.png`
 - 可选的 `res://scenes/vfx/events/<event-id-lower>_vfx.tscn`
 
-Ancient 默认会预加载：
+Ancient 默认预加载：
 
 - 布局场景
 - `res://scenes/events/background_scenes/<event-id-lower>.tscn`
 
-如果事件还需要额外资源，可以覆写 `GetAssetPaths(IRunState runState)` 并追加路径。
+如需额外资源，可覆写 `GetAssetPaths(IRunState runState)` 追加路径。
 
 ---
 
@@ -283,7 +253,7 @@ public sealed class MyAncient : ModAncientEventTemplate
 }
 ```
 
-这里同样遵循相同原则：选项 key、页面 key 与最终注册后的 `Id.Entry` 应当保持一致。
+选项 key、页面 key 与最终注册后的 `Id.Entry` 保持一致的原则同样适用。
 
 ---
 

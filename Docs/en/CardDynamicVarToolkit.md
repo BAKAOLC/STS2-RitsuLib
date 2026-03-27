@@ -1,22 +1,30 @@
 # Card Dynamic Var Toolkit
 
-This document covers dynamic variable construction, tooltip binding, and automatic card hover injection.
+This document describes how RitsuLib creates card dynamic variables, how tooltip binding works, and how values are injected when a card is hovered.
 
 ---
 
-## Overview
+## Vanilla DynamicVar System
 
-The game's `DynamicVar` system lets cards carry runtime-variable values. RitsuLib adds:
+> The following describes the game engine’s own dynamic variable system. RitsuLib builds convenience constructors on top of it.
 
-- Convenience constructors via `ModCardVars`
-- Per-variable tooltip binding via `DynamicVarExtensions`
-- Automatic tooltip injection into the card hover sequence (via Patch)
+The game’s `DynamicVar` system lets cards carry values that can change at runtime. Each `DynamicVar` subclass may carry extra metadata for formatters (for example `DamageVar` for highlighting, `EnergyVar` for colors). For the full list of subclasses, see [LocString Placeholder Resolution](LocStringPlaceholderResolution.md).
+
+---
+
+## RitsuLib Capabilities
+
+On top of the vanilla system, RitsuLib provides:
+
+- **`ModCardVars`** — convenient variable constructors
+- **`DynamicVarExtensions`** — each variable can bind its own tooltip independently
+- **Automatic injection** — on card hover, all bound tooltips are appended automatically (implemented via patches; no extra setup)
 
 ---
 
 ## Variable Construction
 
-Create variables with `ModCardVars` and include them in a card's `DynamicVarSet`:
+Create variables with `ModCardVars` and add them to the card’s `DynamicVarSet`:
 
 ```csharp
 public class MyCard : ModCardTemplate(1, CardType.Attack, CardRarity.Common, TargetType.SingleEnemy)
@@ -37,6 +45,7 @@ public class MyCard : ModCardTemplate(1, CardType.Attack, CardRarity.Common, Tar
 |---|---|
 | `ModCardVars.Int(name, amount)` | Creates a numeric variable (`decimal`) |
 | `ModCardVars.String(name, value)` | Creates a string variable |
+| `ModCardVars.Computed(...)` | Creates a computed variable |
 
 RitsuLib does not assign gameplay semantics to these variables. Their meaning is entirely defined by the content author.
 
@@ -44,11 +53,11 @@ RitsuLib does not assign gameplay semantics to these variables. Their meaning is
 
 ## Tooltip Binding
 
-Bind tooltips to variables at definition time via extension methods:
+Bind tooltips at definition time via chained extension methods:
 
 ### Shared tooltip (recommended)
 
-Reads from the `static_hover_tips` localization table:
+Reads keys from the `static_hover_tips` table:
 
 ```csharp
 var myVar = ModCardVars.Int("my_var", 2)
@@ -64,9 +73,8 @@ var myVar = ModCardVars.Int("my_var", 2)
 var myVar = ModCardVars.Int("my_var", 2)
     .WithTooltip(
         titleTable: "card_keywords",
-        titleKey:   "my_mod_my_var.title",   // description defaults to .title → .description
-        iconPath:   "res://MyMod/art/kw.png" // optional
-    );
+        titleKey:   "my_mod_my_var.title",
+        iconPath:   "res://MyMod/art/kw.png");
 ```
 
 ### Custom factory
@@ -75,15 +83,14 @@ var myVar = ModCardVars.Int("my_var", 2)
 var myVar = ModCardVars.Int("my_var", 2)
     .WithTooltip(var => new HoverTip(
         new LocString("my_table", "my_var.title"),
-        new LocString("my_table", "my_var.description")
-    ));
+        new LocString("my_table", "my_var.description")));
 ```
 
 ---
 
-## Localization
+## Localization Example
 
-If using `WithSharedTooltip("my_mod_charges")`, provide these entries in `static_hover_tips`:
+When using `WithSharedTooltip("my_mod_charges")`, provide entries in your `static_hover_tips` localization file:
 
 ```json
 {
@@ -92,34 +99,29 @@ If using `WithSharedTooltip("my_mod_charges")`, provide these entries in `static
 }
 ```
 
-RitsuLib does not provide built-in localization entries for dynamic variables.
+RitsuLib does not ship built-in localization entries for these; if you use `WithSharedTooltip`, you must supply the strings yourself.
 
 ---
 
 ## Card Hover Injection
 
-RitsuLib's patch automatically appends all registered dynamic-variable tooltips from `CardModel.DynamicVars` to the card hover-tip sequence. No additional setup is required; simply bind a tooltip to the variable.
+RitsuLib’s patches automatically append every dynamic variable in `CardModel.DynamicVars` that has a bound tooltip to the end of the hover-tip sequence. No extra configuration is required.
 
 ---
 
 ## Clone Behavior
 
-Tooltip metadata is copied to clones when `DynamicVar.Clone()` is called. This means upgraded or copied cards in combat carry the correct tooltips without any extra handling.
+When `DynamicVar.Clone()` runs, tooltip metadata bound on the source variable is copied to the clone. Upgraded or duplicated cards in combat therefore behave correctly without extra handling.
 
 ---
 
-## Reading Var Values at Runtime
+## Reading Variable Values at Runtime
 
-`DynamicVarExtensions` provides convenience methods for reading variable values:
+Read values through `DynamicVarExtensions`:
 
 ```csharp
-// Read int value (default 0)
 int charges = card.DynamicVars.GetIntOrDefault("charges");
-
-// Read decimal value
 decimal val = card.DynamicVars.GetValueOrDefault("charges");
-
-// Check for a positive value
 bool active = card.DynamicVars.HasPositiveValue("charges");
 ```
 
@@ -129,3 +131,4 @@ bool active = card.DynamicVars.HasPositiveValue("charges");
 
 - [Content Authoring Toolkit](ContentAuthoringToolkit.md)
 - [Getting Started](GettingStarted.md)
+- [LocString Placeholder Resolution](LocStringPlaceholderResolution.md)

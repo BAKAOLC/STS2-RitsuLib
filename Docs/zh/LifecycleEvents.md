@@ -4,12 +4,11 @@
 
 ---
 
-## 订阅事件
+## 订阅方式
 
-**按类型订阅（推荐）：**
+### 按类型订阅（推荐）
 
 ```csharp
-// 持有返回的 IDisposable 以便稍后取消订阅
 var sub = RitsuLibFramework.SubscribeLifecycle<GameReadyEvent>(evt =>
 {
     Logger.Info($"游戏已就绪：{evt.Game}");
@@ -19,7 +18,7 @@ var sub = RitsuLibFramework.SubscribeLifecycle<GameReadyEvent>(evt =>
 sub.Dispose();
 ```
 
-**通过 `ILifecycleObserver` 订阅多种事件：**
+### 通过 `ILifecycleObserver` 订阅多种事件
 
 ```csharp
 public class MyObserver : ILifecycleObserver
@@ -36,13 +35,13 @@ public class MyObserver : ILifecycleObserver
 RitsuLibFramework.SubscribeLifecycle(new MyObserver());
 ```
 
-> **可重放事件（`IReplayableFrameworkLifecycleEvent`）：** 若在事件已发生后才订阅，框架会立即以已存储的事件回调，无需关心订阅时机。
+> **可重放事件（`IReplayableFrameworkLifecycleEvent`）：** 若在事件已发生后才订阅，框架会立即以已存储的事件实例回调，无需关心订阅时机。
 
 ---
 
 ## 框架事件
 
-在框架初始化和 Profile 服务初始化阶段触发。
+框架初始化与 Profile 服务初始化阶段触发。
 
 | 事件 | 可重放 | 携带数据 |
 |---|---|---|
@@ -55,7 +54,7 @@ RitsuLibFramework.SubscribeLifecycle(new MyObserver());
 
 ## 游戏引导事件
 
-在游戏启动流程中依次触发，覆盖 Model 注册到游戏就绪全程。
+游戏启动流程中依次触发，覆盖 Model 注册到游戏就绪全程。
 
 | 事件 | 可重放 | 携带数据 |
 |---|---|---|
@@ -74,7 +73,6 @@ RitsuLibFramework.SubscribeLifecycle(new MyObserver());
 | `GameReadyEvent` | ✓ | `Game` |
 
 ```csharp
-// ModelId 初始化完成后，可安全读取 ModelId
 RitsuLibFramework.SubscribeLifecycle<ModelIdsInitializedEvent>(_ =>
 {
     var id = ModelDb.GetId<MyCard>();
@@ -120,7 +118,15 @@ RitsuLibFramework.SubscribeLifecycle<ModelIdsInitializedEvent>(_ =>
 | `CardDrawnEvent` | `CombatState`、`Card`、`FromHandDraw` |
 | `CardDiscardedEvent` | `CombatState`、`Card` |
 | `CardExhaustedEvent` | `CombatState`、`Card`、`CausedByEthereal` |
+| `CardRetainedEvent` | `CombatState`、`Card` |
 | `CardMovedBetweenPilesEvent` | `RunState`、`CombatState?`、`Card`、`PreviousPile`、`Source` |
+
+### 生物事件
+
+| 事件 | 携带数据 |
+|---|---|
+| `CreatureDyingEvent` | `CombatState`、`Creature` |
+| `CreatureDiedEvent` | `CombatState`、`Creature` |
 
 ```csharp
 RitsuLibFramework.SubscribeLifecycle<CardDrawnEvent>(evt =>
@@ -132,15 +138,68 @@ RitsuLibFramework.SubscribeLifecycle<CardDrawnEvent>(evt =>
 
 ---
 
+## 奖励事件
+
+| 事件 | 携带数据 |
+|---|---|
+| `GoldGainedEvent` | `Amount` |
+| `GoldLostEvent` | `Amount` |
+| `PotionProcuredEvent` | `Potion` |
+| `PotionDiscardedEvent` | `Potion` |
+| `RelicObtainedEvent` | `Relic` |
+| `RelicRemovedEvent` | `Relic` |
+| `RewardTakenEvent` | `Reward` |
+
+---
+
+## 解锁事件
+
+| 事件 | 携带数据 |
+|---|---|
+| `EpochObtainedEvent` | `Epoch` |
+| `EpochRevealedEvent` | `Epoch` |
+| `UnlockIncrementedEvent` | `UnlockState` |
+
+---
+
 ## 存档与持久化事件
+
+### Profile 生命周期
+
+| 事件 | 携带数据 |
+|---|---|
+| `ProfileIdInitializedEvent` | `ProfileId` |
+| `ProfileSwitchingEvent` | `OldProfileId`、`NewProfileId` |
+| `ProfileSwitchedEvent` | `ProfileId` |
+| `ProfileDeletingEvent` | `ProfileId` |
+| `ProfileDeletedEvent` | `ProfileId` |
+
+### 存档写入
+
+| 事件 | 携带数据 |
+|---|---|
+| `RunSavingEvent` | `RunState` |
+| `RunSavedEvent` | `RunState` |
+| `ProgressSavingEvent` | — |
+| `ProgressSavedEvent` | — |
+
+### ModDataStore 数据事件
 
 由 `ModDataStore` 内部使用，也可供 Mod 监听存档状态变化。
 
 | 事件 | 说明 |
 |---|---|
-| `ProfileDataReady` | 存档数据加载完毕，可安全读写 |
-| `ProfileDataChanged` | 存档数据发生变更 |
-| `ProfileDataInvalidated` | 存档数据失效（如切换档案） |
+| `ProfileDataReadyEvent` | 存档数据加载完毕，可安全读写 |
+| `ProfileDataChangedEvent` | 存档数据发生变更 |
+| `ProfileDataInvalidatedEvent` | 存档数据失效（如切换档案） |
+
+---
+
+## 游戏结算事件
+
+| 事件 | 携带数据 |
+|---|---|
+| `GameOverScreenCreatedEvent` | `Screen` |
 
 ---
 
@@ -148,3 +207,5 @@ RitsuLibFramework.SubscribeLifecycle<CardDrawnEvent>(evt =>
 
 - [快速入门](GettingStarted.md)
 - [内容注册规则](ContentAuthoringToolkit.md)
+- [持久化设计](PersistenceGuide.md)
+- [时间线与解锁](TimelineAndUnlocks.md)

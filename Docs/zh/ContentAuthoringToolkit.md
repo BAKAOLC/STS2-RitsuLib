@@ -83,7 +83,7 @@ RitsuLibFramework.CreateContentPack("MyMod")
 
 ## 资源覆写规则
 
-RitsuLib 通过接口匹配在渲染时将默认资源替换为 Mod 提供的资源。
+RitsuLib 通过接口匹配，在渲染时将默认资源替换为 Mod 提供的资源。
 
 ### 卡牌资源覆写
 

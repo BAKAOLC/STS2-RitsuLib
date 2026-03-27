@@ -1,8 +1,8 @@
 # Character & Unlock Scaffolding
 
-This document is the practical assembly guide for a character mod: character templates, content pools, epoch templates, and unlock registration with full examples.
+This document is the practical assembly guide for a character mod: character templates, content pools, epoch templates, and unlock registration, with full examples.
 
-Detailed fallback semantics live in [Asset Profiles & Fallbacks](AssetProfilesAndFallbacks.md). Detailed timeline and progression semantics live in [Timeline & Unlocks](TimelineAndUnlocks.md). For scene-script wrappers used by visuals, rest sites, and counters, see [Godot Scene Authoring](GodotSceneAuthoring.md).
+Detailed fallback rules are in [Asset Profiles & Fallbacks](AssetProfilesAndFallbacks.md). Detailed timeline and progression semantics are in [Timeline & Unlocks](TimelineAndUnlocks.md). For wrapping scene scripts (visuals, rest sites, energy orbs), see [Godot Scene Authoring](GodotSceneAuthoring.md).
 
 ---
 
@@ -107,12 +107,14 @@ Unspecified character assets automatically fall back to `PlaceholderCharacterId`
 ```csharp
 public class MyCharacter : ModCharacterTemplate<MyCardPool, MyRelicPool, MyPotionPool>
 {
+    // Starting deck (framework resolves types to ModelIds)
     protected override IEnumerable<Type> StartingDeckTypes =>
     [
         typeof(MyStrike), typeof(MyStrike), typeof(MyStrike),
         typeof(MyDefend), typeof(MyDefend),
     ];
 
+    // Starting relic
     protected override IEnumerable<Type> StartingRelicTypes =>
     [
         typeof(MyStarterRelic),
@@ -120,6 +122,7 @@ public class MyCharacter : ModCharacterTemplate<MyCardPool, MyRelicPool, MyPotio
 
     public override string? PlaceholderCharacterId => "ironclad";
 
+    // Asset paths (configured via AssetProfile)
     public override CharacterAssetProfile AssetProfile => new(
         Spine: new(
             CombatSkeletonDataPath: "res://MyMod/spine/my_character.tres"),
@@ -131,7 +134,7 @@ public class MyCharacter : ModCharacterTemplate<MyCardPool, MyRelicPool, MyPotio
 }
 ```
 
-Override `PlaceholderCharacterId` with another base character such as `silent` or `defect` if you want their merchant / rest-site / map marker / default SFX alignment instead. Return `null` if you want strict no-fallback behavior.
+Override `PlaceholderCharacterId` with another base character such as `silent` or `defect` if you want their merchant / rest-site / map / default SFX alignment. Return `null` to disable this fallback.
 
 ---
 
@@ -154,16 +157,20 @@ public class MyStory : ModStoryTemplate
 
 ### Ancient Dialogue Localization
 
-RitsuLib now auto-appends localization-defined ancient dialogues for registered mod characters before `AncientDialogueSet.PopulateLocKeys` runs.
+RitsuLib appends localization-defined ancient dialogues for registered mod characters before vanilla `AncientDialogueSet.PopulateLocKeys` runs.
 
-Use the same key pattern as the base game:
+Key format matches vanilla:
 
-- dialogue lines: `<ancientEntry>.talk.<characterEntry>.<dialogueIndex>-<lineIndex>[r].ancient|char`
-- optional SFX: append `.sfx`
-- optional visit override: append `-visit`
-- architect-only attack override: append `-attack`
+| Key component | Description |
+|---|---|
+| `<ancientEntry>.talk.<characterEntry>.<dialogueIndex>-<lineIndex>.ancient` | Ancient line |
+| `<ancientEntry>.talk.<characterEntry>.<dialogueIndex>-<lineIndex>.char` | Character line |
+| Optional suffix `.sfx` | Sound effect |
+| Optional suffix `-visit` | Visit override |
+| Optional suffix `-attack` | Architect attacker override |
+| Optional suffix `r` | Repeat dialogue |
 
-If you need the helpers directly, see `STS2RitsuLib.Localization.AncientDialogueLocalization`.
+If you need the helpers directly, use `STS2RitsuLib.Localization.AncientDialogueLocalization`.
 
 ---
 
@@ -171,12 +178,12 @@ If you need the helpers directly, see `STS2RitsuLib.Localization.AncientDialogue
 
 RitsuLib provides pre-built epoch templates for common unlock targets:
 
-| Template | Purpose |
+| Template | Description |
 |---|---|
 | `CharacterUnlockEpochTemplate<TCharacter>` | Epoch that unlocks the character itself |
-| `CardUnlockEpochTemplate` | Epoch that unlocks additional cards |
-| `RelicUnlockEpochTemplate` | Epoch that unlocks additional relics |
-| `PotionUnlockEpochTemplate` | Epoch that unlocks additional potions |
+| `CardUnlockEpochTemplate` | Epoch that unlocks extra cards |
+| `RelicUnlockEpochTemplate` | Epoch that unlocks extra relics |
+| `PotionUnlockEpochTemplate` | Epoch that unlocks extra potions |
 
 ```csharp
 public class MyCharacterEpoch : CharacterUnlockEpochTemplate<MyCharacter>
@@ -198,7 +205,7 @@ public class MyEpoch2 : CardUnlockEpochTemplate
 
 ```csharp
 RitsuLibFramework.CreateContentPack("MyMod")
-    // Cards (specify the owning pool)
+    // Cards (specify owning pool)
     .Card<MyCardPool, MyStrike>()
     .Card<MyCardPool, MyDefend>()
     .Card<MyCardPool, MySignatureCard>()
@@ -210,13 +217,13 @@ RitsuLibFramework.CreateContentPack("MyMod")
     // Character
     .Character<MyCharacter>()
 
-    // Story and epoch
+    // Story and epochs
     .Story<MyStory>()
     .Epoch<MyCharacterEpoch>()
     .Epoch<MyEpoch2>()
 
     // Unlock rules
-    .RequireEpoch<MyAdvancedCard, MyEpoch2>()       // hide card until epoch 2
+    .RequireEpoch<MyAdvancedCard, MyEpoch2>()       // card appears only after epoch 2
     .UnlockEpochAfterRunAs<MyCharacter, MyEpoch2>() // unlock epoch 2 after one completed run
 
     .Apply();
@@ -232,15 +239,15 @@ Example — mod id `MyMod`, type `MyCharacter`:
 - `ModelId.Entry` → `MY_MOD_CHARACTER_MY_CHARACTER`
 - Localization key → `MY_MOD_CHARACTER_MY_CHARACTER.title`
 
-> Renaming a CLR type changes its derived entry. Avoid renaming types after they have been published.
+> Renaming a CLR type changes its derived entry and affects save compatibility. Avoid renaming after release.
 
 ---
 
 ## Dependency Rules
 
-- All card / relic / potion types referenced by a pool must be registered before runtime model lookup occurs.
-- A character's referenced pool types must all be registered.
-- Every model — including epoch-gated content — must still be registered. Unlock rules do not replace registration.
+- Card / relic / potion types must be registered before runtime model lookup
+- Pool types referenced by the character must already be registered
+- Every model — including epoch-gated content — must be registered; unlock rules do not replace registration
 
 ---
 

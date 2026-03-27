@@ -4,22 +4,21 @@ This document lists all lifecycle events provided by RitsuLib, explains subscrip
 
 ---
 
-## Subscribing to Events
+## Subscription Patterns
 
-**Subscribe by event type (recommended):**
+### Subscribe by Event Type (Recommended)
 
 ```csharp
-// Hold the returned IDisposable to unsubscribe later
 var sub = RitsuLibFramework.SubscribeLifecycle<GameReadyEvent>(evt =>
 {
     Logger.Info($"Game ready: {evt.Game}");
 });
 
-// Unsubscribe when no longer needed
+// Unsubscribe
 sub.Dispose();
 ```
 
-**Subscribe to multiple event types via `ILifecycleObserver`:**
+### Subscribe via `ILifecycleObserver`
 
 ```csharp
 public class MyObserver : ILifecycleObserver
@@ -36,7 +35,7 @@ public class MyObserver : ILifecycleObserver
 RitsuLibFramework.SubscribeLifecycle(new MyObserver());
 ```
 
-> **Replayable events** (`IReplayableFrameworkLifecycleEvent`): if you subscribe after the event has already fired, the framework immediately calls your handler with the stored event — no timing concerns.
+> **Replayable events** (`IReplayableFrameworkLifecycleEvent`): if you subscribe after the event has already fired, the framework immediately calls your handler with the stored event instance — no timing concerns.
 
 ---
 
@@ -74,7 +73,6 @@ Fired in sequence during game startup, from model registration through to game r
 | `GameReadyEvent` | ✓ | `Game` |
 
 ```csharp
-// Safe to resolve ModelId after this event
 RitsuLibFramework.SubscribeLifecycle<ModelIdsInitializedEvent>(_ =>
 {
     var id = ModelDb.GetId<MyCard>();
@@ -120,7 +118,15 @@ RitsuLibFramework.SubscribeLifecycle<ModelIdsInitializedEvent>(_ =>
 | `CardDrawnEvent` | `CombatState`, `Card`, `FromHandDraw` |
 | `CardDiscardedEvent` | `CombatState`, `Card` |
 | `CardExhaustedEvent` | `CombatState`, `Card`, `CausedByEthereal` |
+| `CardRetainedEvent` | `CombatState`, `Card` |
 | `CardMovedBetweenPilesEvent` | `RunState`, `CombatState?`, `Card`, `PreviousPile`, `Source` |
+
+### Creature Events
+
+| Event | Payload |
+|---|---|
+| `CreatureDyingEvent` | `CombatState`, `Creature` |
+| `CreatureDiedEvent` | `CombatState`, `Creature` |
 
 ```csharp
 RitsuLibFramework.SubscribeLifecycle<CardDrawnEvent>(evt =>
@@ -132,15 +138,68 @@ RitsuLibFramework.SubscribeLifecycle<CardDrawnEvent>(evt =>
 
 ---
 
-## Save / Persistence Events
+## Reward Events
 
-Used internally by `ModDataStore` and available for mods that need to react to save state changes.
+| Event | Payload |
+|---|---|
+| `GoldGainedEvent` | `Amount` |
+| `GoldLostEvent` | `Amount` |
+| `PotionProcuredEvent` | `Potion` |
+| `PotionDiscardedEvent` | `Potion` |
+| `RelicObtainedEvent` | `Relic` |
+| `RelicRemovedEvent` | `Relic` |
+| `RewardTakenEvent` | `Reward` |
+
+---
+
+## Unlock Events
+
+| Event | Payload |
+|---|---|
+| `EpochObtainedEvent` | `Epoch` |
+| `EpochRevealedEvent` | `Epoch` |
+| `UnlockIncrementedEvent` | `UnlockState` |
+
+---
+
+## Save & Persistence Events
+
+### Profile Lifecycle
+
+| Event | Payload |
+|---|---|
+| `ProfileIdInitializedEvent` | `ProfileId` |
+| `ProfileSwitchingEvent` | `OldProfileId`, `NewProfileId` |
+| `ProfileSwitchedEvent` | `ProfileId` |
+| `ProfileDeletingEvent` | `ProfileId` |
+| `ProfileDeletedEvent` | `ProfileId` |
+
+### Save Writing
+
+| Event | Payload |
+|---|---|
+| `RunSavingEvent` | `RunState` |
+| `RunSavedEvent` | `RunState` |
+| `ProgressSavingEvent` | — |
+| `ProgressSavedEvent` | — |
+
+### ModDataStore Data Events
+
+Used internally by `ModDataStore`, also available for mods to react to save state changes.
 
 | Event | Description |
 |---|---|
-| `ProfileDataReady` | Save data is loaded — safe to read/write |
-| `ProfileDataChanged` | Save data has changed |
-| `ProfileDataInvalidated` | Save data is invalidated (e.g. profile switch) |
+| `ProfileDataReadyEvent` | Save data loaded — safe to read/write |
+| `ProfileDataChangedEvent` | Save data changed |
+| `ProfileDataInvalidatedEvent` | Save data invalidated (e.g. profile switch) |
+
+---
+
+## Game Over Events
+
+| Event | Payload |
+|---|---|
+| `GameOverScreenCreatedEvent` | `Screen` |
 
 ---
 
@@ -148,3 +207,5 @@ Used internally by `ModDataStore` and available for mods that need to react to s
 
 - [Getting Started](GettingStarted.md)
 - [Content Authoring Toolkit](ContentAuthoringToolkit.md)
+- [Persistence Guide](PersistenceGuide.md)
+- [Timeline & Unlocks](TimelineAndUnlocks.md)

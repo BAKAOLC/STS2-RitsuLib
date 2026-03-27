@@ -32,17 +32,24 @@ That separation keeps internal data, runtime caches, and player configuration fr
 
 | API | Purpose |
 |---|---|
-| `RitsuLibFramework.RegisterModSettings(...)` | Register a settings page |
+| `RitsuLibFramework.RegisterModSettings(modId, configure, pageId?)` | Register one page; when `pageId` is omitted it defaults to `modId` |
+| `RitsuLibFramework.GetRegisteredModSettings()` | Returns all registered pages (read-only) |
 | `ModSettingsBindings.Global(...)` / `Profile(...)` | Bind a field to persisted data |
 | `ModSettingsBindings.InMemory(...)` | Create preview-only or transient bindings |
 | `ModSettingsText.Literal(...)` | Plain text |
 | `ModSettingsText.LocString(...)` | Game localization text |
 | `ModSettingsText.I18N(...)` | `I18N`-backed helper text |
+| `ModSettingsText.Dynamic(...)` | Dynamic string resolved whenever the UI refreshes (useful with preview state) |
 | `WithModDisplayName(...)` | Override the mod name shown in the sidebar |
+| `WithSortOrder(...)` | Ordering when a mod registers multiple root pages (lower sorts earlier) |
+| `AsChildOf(parentPageId)` | Mark this page as a child (must match `AddSubpage` `targetPageId` registration) |
+| `section.Collapsible(startCollapsed?)` | Collapsible section; optional initial collapsed state |
 | `AddToggle(...)`, `AddSlider(...)`, `AddIntSlider(...)`, `AddChoice(...)`, `AddEnumChoice(...)` | Standard value-entry builders |
+| `AddColor(...)`, `AddKeyBinding(...)`, `AddImage(...)` | Color string, key binding, image preview |
 | `AddButton(...)`, `AddHeader(...)`, `AddParagraph(...)` | Action and structure helpers |
-| `AddSubpage(...)` | Link to a child page |
+| `AddSubpage(...)` | Navigate to a registered child page |
 | `AddList(...)` | Structured, reorderable, nestable list editor |
+| `ModSettingsUiActionRegistry.Register*ActionAppender(...)` | Append items to the Actions menu for rows, list items, pages, or sections |
 
 ---
 
@@ -54,6 +61,15 @@ That separation keeps internal data, runtime caches, and player configuration fr
 4. Localize all visible labels, descriptions, and option names
 
 This gives you explicit control over what players can edit and how it is presented.
+
+---
+
+## In-game entry and UI behavior
+
+- **Entry point**: Main menu → **Settings** → **General**. When at least one settings page is registered (`ModSettingsRegistry.HasPages`), the patch adds a **Mod Settings (RitsuLib)** row (divider + button) to that panel; pressing it pushes `RitsuModSettingsSubmenu` onto the main-menu submenu stack. If no mod registers a page, the row is **not** injected (avoids an empty screen).
+- **Left sidebar**: Mod groups; only one mod expanded at a time. When expanded, shows a **root page** tree (parent/child depth). Under the selected page, quick **Section** buttons are listed.
+- **Right pane**: Page header (child pages show a back affordance) and scrollable body. Clicking a section scrolls to its anchor; scrolling updates which section is highlighted on the left based on viewport position.
+- **Persistence timing**: Dirty bindings are saved on a **~0.35s** debounce after edits. Closing the submenu, hiding it, leaving the scene tree, or **changing the game locale** triggers an **immediate** flush so values and layout stay consistent.
 
 ---
 
@@ -151,6 +167,7 @@ Use `ModSettingsText` so your page definition stays independent from how text is
 - `Literal(...)`: simple hardcoded text or quick prototypes
 - `I18N(...)`: mod-owned helper text and settings UI copy
 - `LocString(...)`: text already managed by the game localization pipeline
+- `Dynamic(...)`: delegate resolved on each UI rebuild (for descriptions that track live control state; see the built-in Debug Showcase)
 
 Recommended split:
 
@@ -164,12 +181,15 @@ Recommended split:
 - `AddToggle(...)` for `bool`
 - `AddSlider(...)` for `float`
 - `AddIntSlider(...)` for `int`
-- `AddChoice(...)` for typed option lists
-- `AddEnumChoice(...)` for enum-backed choices
-- `AddButton(...)` for reset, sync, import, export, and helper actions
-- `AddSubpage(...)` for child-page navigation
+- `AddChoice(...)` / `AddEnumChoice(...)` for option lists; optional `ModSettingsChoicePresentation`: **Stepper** or **Dropdown**
+- `AddColor(...)` for color strings (parsed and shown by the UI)
+- `AddKeyBinding(...)` for binding strings (modifier combos, modifier-only, and left/right distinction are configurable)
+- `AddImage(...)` for a `Func<Texture2D?>` preview with height
+- `AddButton(...)` for custom actions (optional `ModSettingsButtonTone`)
+- `AddSubpage(...)` to navigate to a registered child page (see **Multiple pages and subpages** below)
 - `AddList(...)` for reorderable structured collections
 - `AddHeader(...)` / `AddParagraph(...)` for explanatory structure
+- **Collapsible sections**: inside `AddSection`, call `.Collapsible(startCollapsed: false)` (or `true` to start collapsed) on the section builder
 
 ---
 
@@ -213,6 +233,27 @@ Use:
 - `AddSubpage(...)` for drill-down flows
 - collapsible sections for low-frequency settings
 - lists when players edit collections rather than single values
+
+### Multiple pages and subpages
+
+- **Default page id**: `RegisterModSettings("MyMod", configure)` without a third argument uses `PageId == "MyMod"` (same as `ModSettingsPageBuilder`).
+- **Extra root pages**: call again with `RegisterModSettings("MyMod", configure, pageId: "audio")` and use `WithSortOrder` to order multiple roots for the same mod in the sidebar.
+- **Child page registration**: register the child in its own call and chain `AsChildOf("parentPageId")`, e.g. when the parent id is the default `"MyMod"`:  
+  `RegisterModSettings("MyMod", p => p.AsChildOf("MyMod").WithTitle(...).AddSection(...), "my-child")`.  
+  The parent links with `AddSubpage(..., targetPageId: "my-child", ...)`.
+- **Child UI**: Child pages show a back control in the header; the sidebar tree still reflects the full hierarchy.
+
+---
+
+## Extending the Actions menu
+
+Built-in copy/paste/reset flows are injected by the framework. To add commands for specific value types, list items, whole pages, or sections, use `ModSettingsUiActionRegistry`:
+
+- `RegisterBindingActionAppender<TValue>(...)`
+- `RegisterListItemActionAppender<TItem>(...)`
+- `RegisterPageActionAppender(...)` / `RegisterSectionActionAppender(...)`
+
+Callbacks receive `IModSettingsUiActionHost` so you can call `RequestRefresh()` and `MarkDirty(...)` to drive UI and saves.
 
 ---
 
@@ -271,3 +312,4 @@ Use it as a behavior reference when designing your own settings pages.
 - [Persistence Guide](PersistenceGuide.md)
 - [Localization & Keywords](LocalizationAndKeywords.md)
 - [Lifecycle Events](LifecycleEvents.md)
+- [Patching Guide](PatchingGuide.md) (settings entry and submenu injection live in `Settings/Patches/ModSettingsUiPatches.cs`, including General panel height refresh)

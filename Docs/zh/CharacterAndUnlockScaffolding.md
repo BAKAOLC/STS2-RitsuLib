@@ -157,16 +157,20 @@ public class MyStory : ModStoryTemplate
 
 ### Ancient 对话本地化
 
-RitsuLib 现在会在 `AncientDialogueSet.PopulateLocKeys` 之前，自动为已注册的 Mod 角色追加基于本地化定义的 Ancient 对话。
+RitsuLib 会在游戏原版 `AncientDialogueSet.PopulateLocKeys` 之前，自动为已注册的 Mod 角色追加基于本地化定义的 Ancient 对话。
 
-Key 格式与原版保持一致：
+键格式与原版保持一致：
 
-- 对话行：`<ancientEntry>.talk.<characterEntry>.<dialogueIndex>-<lineIndex>[r].ancient|char`
-- 可选音效：末尾追加 `.sfx`
-- 可选 visit 覆盖：末尾追加 `-visit`
-- Architect 专用攻击者覆盖：末尾追加 `-attack`
+| 键组件 | 说明 |
+|---|---|
+| `<ancientEntry>.talk.<characterEntry>.<dialogueIndex>-<lineIndex>.ancient` | Ancient 台词 |
+| `<ancientEntry>.talk.<characterEntry>.<dialogueIndex>-<lineIndex>.char` | 角色台词 |
+| 可选后缀 `.sfx` | 音效 |
+| 可选后缀 `-visit` | 访问覆盖 |
+| 可选后缀 `-attack` | Architect 专用攻击者覆盖 |
+| 可选后缀 `r` | 重复对话 |
 
-如果你需要直接操作这些工具方法，可使用 `STS2RitsuLib.Localization.AncientDialogueLocalization`。
+如果需要直接操作工具方法，可使用 `STS2RitsuLib.Localization.AncientDialogueLocalization`。
 
 ---
 
