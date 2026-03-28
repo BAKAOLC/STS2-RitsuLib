@@ -93,7 +93,7 @@ namespace STS2RitsuLib.Settings.Patches
             var divider = ModSettingsUiFactory.CreateDivider();
             divider.Name = "RitsuLibModSettingsDivider";
 
-            var line = ModSettingsUiFactory.CreateModdingScreenButtonLine(OpenSubmenu);
+            var line = ModSettingsGameSettingsEntryLine.Create(OpenSubmenu);
 
             content.AddChild(divider);
             content.AddChild(line);
@@ -116,8 +116,8 @@ namespace STS2RitsuLib.Settings.Patches
 
         /// <summary>
         ///     Vanilla <see cref="NSettingsPanel" /> only recomputes height on ready and viewport resize; injected rows
-        ///     (this mod and others) never trigger <c>RefreshSize</c>. Hooks <see cref="VBoxContainer.ChildEnteredTree" /> so
-        ///     we recalculate after layout and whenever the list of direct children changes.
+        ///     (this mod and others) never trigger <c>RefreshSize</c>. Hooks <c>ChildEnteredTree</c> on the content
+        ///     <see cref="VBoxContainer" /> so we recalculate after layout and whenever direct children change.
         /// </summary>
         private static void EnsureGeneralSettingsContentTracksChildAdds(VBoxContainer content)
         {

@@ -33,6 +33,10 @@ namespace STS2RitsuLib.Settings
                     ModSettingsBindings.InMemory(Const.ModId, "preview_choice", showcaseState.ChoiceValue);
                 var previewEnumBinding =
                     ModSettingsBindings.InMemory(Const.ModId, "preview_mode", showcaseState.ModeValue);
+                var previewStringBinding =
+                    ModSettingsBindings.InMemory(Const.ModId, "preview_string", showcaseState.StringValue);
+                var previewStringMultiBinding =
+                    ModSettingsBindings.InMemory(Const.ModId, "preview_string_multi", showcaseState.StringMultiValue);
                 var previewListBinding =
                     ModSettingsBindings.InMemory(Const.ModId, "preview_list", showcaseState.ListItems.ToList());
 
@@ -165,7 +169,35 @@ namespace STS2RitsuLib.Settings
                                 mode => T($"ritsulib.showcase.mode.{mode}", mode.ToString()),
                                 ModSettingsText.Dynamic(() =>
                                     string.Format(L("ritsulib.showcase.mode.description", "Current mode: {0}"),
-                                        showcaseState.ModeValue))))
+                                        showcaseState.ModeValue)))
+                            .AddString(
+                                "preview_string",
+                                T("ritsulib.showcase.string.label", "Preview string field"),
+                                new ShowcaseBinding<string>(previewStringBinding,
+                                    value => showcaseState.StringValue = value),
+                                T("ritsulib.showcase.string.placeholder", "Plain string binding (LineEdit)"),
+                                null,
+                                ModSettingsText.Dynamic(() =>
+                                    string.Format(L("ritsulib.showcase.string.description", "Current text: {0}"),
+                                        showcaseState.StringValue)))
+                            .AddMultilineString(
+                                "preview_string_multi",
+                                T("ritsulib.showcase.stringMulti.label", "Preview multiline string"),
+                                new ShowcaseBinding<string>(previewStringMultiBinding,
+                                    value => showcaseState.StringMultiValue = value),
+                                T("ritsulib.showcase.stringMulti.placeholder",
+                                    "Multiple lines — Enter inserts a new line."),
+                                null,
+                                ModSettingsText.Dynamic(() =>
+                                {
+                                    var t = showcaseState.StringMultiValue ?? string.Empty;
+                                    var lineCount = string.IsNullOrEmpty(t) ? 0 : t.Split('\n').Length;
+                                    return string.Format(
+                                        L("ritsulib.showcase.stringMulti.description",
+                                            "{0} characters, {1} lines."),
+                                        t.Length,
+                                        lineCount);
+                                })))
                         .AddSection("actions", section => section
                             .WithTitle(T("ritsulib.showcase.actions.title", "Actions"))
                             .WithDescription(T("ritsulib.showcase.actions.description",
@@ -193,11 +225,15 @@ namespace STS2RitsuLib.Settings
                                     showcaseState.ChoiceValue = "balanced";
                                     showcaseState.ModeValue = ShowcaseMode.Balanced;
                                     showcaseState.ActionCount = 0;
+                                    showcaseState.StringValue = "Single line";
+                                    showcaseState.StringMultiValue = "First line\nSecond line";
                                     previewToggleBinding.Write(showcaseState.ToggleValue);
                                     previewSliderBinding.Write(showcaseState.SliderValue);
                                     previewIntSliderBinding.Write(showcaseState.IntSliderValue);
                                     previewChoiceBinding.Write(showcaseState.ChoiceValue);
                                     previewEnumBinding.Write(showcaseState.ModeValue);
+                                    previewStringBinding.Write(showcaseState.StringValue);
+                                    previewStringMultiBinding.Write(showcaseState.StringMultiValue);
                                 },
                                 ModSettingsButtonTone.Danger,
                                 T("ritsulib.showcase.reset.description",
@@ -406,6 +442,8 @@ namespace STS2RitsuLib.Settings
             public int IntSliderValue { get; set; } = 2;
             public string ChoiceValue { get; set; } = "balanced";
             public ShowcaseMode ModeValue { get; set; } = ShowcaseMode.Balanced;
+            public string StringValue { get; set; } = "Single line";
+            public string StringMultiValue { get; set; } = "First line\nSecond line";
             public int ActionCount { get; set; }
 
             public List<ShowcaseListItem> ListItems { get; set; } =

@@ -4,7 +4,7 @@ namespace STS2RitsuLib.Settings
 {
     internal static partial class ModSettingsUiFactory
     {
-        private const float EntryControlWidth = 248f;
+        internal const float EntryControlWidth = ModSettingsUiMetrics.EntryValueMinWidth;
         private const float PageContentWidth = 0f;
 
         private const string ContextMenuAttachedMetaKey = "_ritsulib_context_menu_attached";
@@ -36,12 +36,6 @@ namespace STS2RitsuLib.Settings
 
             container.AddThemeConstantOverride("separation", 8);
 
-            var pageDescription =
-                CreateRefreshableDescriptionLabel(context,
-                    () => ModSettingsUiContext.ResolvePageDescription(page) ?? string.Empty);
-            container.AddChild(pageDescription);
-            pageDescription.Visible = !string.IsNullOrWhiteSpace(pageDescription.Text);
-
             for (var index = 0; index < page.Sections.Count; index++)
             {
                 var section = page.Sections[index];
@@ -69,7 +63,7 @@ namespace STS2RitsuLib.Settings
             return CreateSettingLine(
                 context,
                 () => ModSettingsUiContext.Resolve(entry.Label),
-                () => ModSettingsUiContext.ComposeBindingDescription(entry.Description, entry.Binding),
+                () => ModSettingsUiContext.ResolveBindingDescriptionBody(entry.Description),
                 control,
                 entry.Binding);
         }
@@ -93,7 +87,7 @@ namespace STS2RitsuLib.Settings
             return CreateSettingLine(
                 context,
                 () => ModSettingsUiContext.Resolve(entry.Label),
-                () => ModSettingsUiContext.ComposeBindingDescription(entry.Description, entry.Binding),
+                () => ModSettingsUiContext.ResolveBindingDescriptionBody(entry.Description),
                 control,
                 entry.Binding);
 
@@ -147,7 +141,7 @@ namespace STS2RitsuLib.Settings
             return CreateSettingLine(
                 context,
                 () => ModSettingsUiContext.Resolve(entry.Label),
-                () => ModSettingsUiContext.ComposeBindingDescription(entry.Description, entry.Binding),
+                () => ModSettingsUiContext.ResolveBindingDescriptionBody(entry.Description),
                 control,
                 entry.Binding);
         }
@@ -167,9 +161,63 @@ namespace STS2RitsuLib.Settings
             return CreateSettingLine(
                 context,
                 () => ModSettingsUiContext.Resolve(entry.Label),
-                () => ModSettingsUiContext.ComposeBindingDescription(entry.Description, entry.Binding),
+                () => ModSettingsUiContext.ResolveBindingDescriptionBody(entry.Description),
                 control,
                 entry.Binding);
+        }
+
+        public static Control CreateStringLineEntry(ModSettingsUiContext context,
+            StringModSettingsEntryDefinition entry)
+        {
+            var placeholder = ResolveStringFieldPlaceholder(entry);
+            var control = new ModSettingsStringLineControl(
+                entry.Binding.Read(),
+                placeholder,
+                entry.MaxLength,
+                CreateStringFieldCommitHandler(context, entry));
+            RegisterRefreshWhenAlive(context, control, () => control.SetValue(entry.Binding.Read()));
+
+            return CreateSettingLine(
+                context,
+                () => ModSettingsUiContext.Resolve(entry.Label),
+                () => ModSettingsUiContext.ResolveBindingDescriptionBody(entry.Description),
+                control,
+                entry.Binding);
+        }
+
+        public static Control CreateStringMultilineEntry(ModSettingsUiContext context,
+            MultilineStringModSettingsEntryDefinition entry)
+        {
+            var placeholder = ResolveStringFieldPlaceholder(entry);
+            var control = new ModSettingsStringMultilineControl(
+                entry.Binding.Read(),
+                placeholder,
+                entry.MaxLength,
+                CreateStringFieldCommitHandler(context, entry));
+            RegisterRefreshWhenAlive(context, control, () => control.SetValue(entry.Binding.Read()));
+
+            return CreateSettingLine(
+                context,
+                () => ModSettingsUiContext.Resolve(entry.Label),
+                () => ModSettingsUiContext.ResolveBindingDescriptionBody(entry.Description),
+                control,
+                entry.Binding);
+        }
+
+        private static string? ResolveStringFieldPlaceholder(StringFieldModSettingsEntryDefinition entry)
+        {
+            return entry.Placeholder != null ? ModSettingsUiContext.Resolve(entry.Placeholder) : null;
+        }
+
+        private static Action<string> CreateStringFieldCommitHandler(ModSettingsUiContext context,
+            StringFieldModSettingsEntryDefinition entry)
+        {
+            return value =>
+            {
+                entry.Binding.Write(value);
+                context.MarkDirty(entry.Binding);
+                context.RequestRefresh();
+            };
         }
 
         public static Control CreateKeyBindingEntry(ModSettingsUiContext context,
@@ -191,7 +239,7 @@ namespace STS2RitsuLib.Settings
             return CreateSettingLine(
                 context,
                 () => ModSettingsUiContext.Resolve(entry.Label),
-                () => ModSettingsUiContext.ComposeBindingDescription(entry.Description, entry.Binding),
+                () => ModSettingsUiContext.ResolveBindingDescriptionBody(entry.Description),
                 control,
                 entry.Binding);
         }
@@ -218,12 +266,12 @@ namespace STS2RitsuLib.Settings
         {
             var container = new VBoxContainer
             {
-                CustomMinimumSize = new(0f, 48f),
                 SizeFlagsHorizontal = Control.SizeFlags.ExpandFill,
                 MouseFilter = Control.MouseFilterEnum.Ignore,
             };
-            container.AddThemeConstantOverride("separation", 2);
-            container.AddChild(CreateRefreshableSectionTitle(context, () => ModSettingsUiContext.Resolve(entry.Label)));
+            container.AddThemeConstantOverride("separation", 6);
+            container.AddChild(CreateRefreshableSectionTitle(context,
+                () => ResolveEntryLabelDisplay(entry.Label)));
             if (entry.Description != null)
                 container.AddChild(CreateRefreshableDescriptionLabel(context,
                     () => ModSettingsUiContext.Resolve(entry.Description)));
@@ -233,7 +281,8 @@ namespace STS2RitsuLib.Settings
         public static Control CreateParagraphEntry(ModSettingsUiContext context,
             ParagraphModSettingsEntryDefinition entry)
         {
-            return CreateRefreshableDescriptionLabel(context, () => ModSettingsUiContext.Resolve(entry.Label));
+            var cap = entry.MaxBodyHeight ?? ModSettingsUiPresentation.ParagraphMaxBodyHeight;
+            return CreateRefreshableParagraphBlock(context, () => ModSettingsUiContext.Resolve(entry.Label), cap);
         }
 
         public static Control CreateImageEntry(ModSettingsUiContext context, ImageModSettingsEntryDefinition entry)
@@ -244,7 +293,8 @@ namespace STS2RitsuLib.Settings
                 MouseFilter = Control.MouseFilterEnum.Ignore,
             };
             container.AddThemeConstantOverride("separation", 8);
-            container.AddChild(CreateRefreshableSectionTitle(context, () => ModSettingsUiContext.Resolve(entry.Label)));
+            container.AddChild(CreateRefreshableSectionTitle(context,
+                () => ResolveEntryLabelDisplay(entry.Label)));
 
             if (entry.Description != null)
                 container.AddChild(CreateRefreshableDescriptionLabel(context,
@@ -299,7 +349,7 @@ namespace STS2RitsuLib.Settings
             return CreateSettingLine(
                 context,
                 () => ModSettingsUiContext.Resolve(entry.Label),
-                () => ModSettingsUiContext.ComposeBindingDescription(entry.Description, entry.Binding),
+                () => ModSettingsUiContext.ResolveBindingDescriptionBody(entry.Description),
                 control,
                 entry.Binding);
 
@@ -316,7 +366,7 @@ namespace STS2RitsuLib.Settings
                 ModSettingsUiContext.Resolve(entry.ButtonText, ModSettingsLocalization.Get("button.open", "Open")),
                 ModSettingsButtonTone.Accent,
                 () => context.NavigateToPage(entry.TargetPageId));
-            control.CustomMinimumSize = new(248f, 56f);
+            control.CustomMinimumSize = new(EntryControlWidth, ModSettingsUiMetrics.EntryValueMinHeight);
 
             return CreateSettingLine(
                 context,

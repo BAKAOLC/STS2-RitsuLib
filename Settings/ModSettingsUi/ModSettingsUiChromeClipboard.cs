@@ -24,7 +24,9 @@ namespace STS2RitsuLib.Settings
         public ModSettingsPageUiContext Target { get; } = target;
         public ModSettingsPageDataClipboardPayload? Payload { get; } = payload;
 
-        /// <summary>When true, this paste was consumed and later subscribers should not run.</summary>
+        /// <summary>
+        ///     When true, this paste was consumed and later subscribers should not run.
+        /// </summary>
         public bool Handled { get; set; }
 
         public bool Success { get; set; }

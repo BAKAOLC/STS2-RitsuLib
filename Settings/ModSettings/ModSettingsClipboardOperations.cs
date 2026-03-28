@@ -97,10 +97,14 @@ namespace STS2RitsuLib.Settings
     /// </summary>
     public enum ModSettingsPasteVerdict
     {
-        /// <summary>Continue with default rules (type name and schema signature match target; optional source-binding match).</summary>
+        /// <summary>
+        ///     Continue with default rules (type name and schema signature match target; optional source-binding match).
+        /// </summary>
         UseDefault = 0,
 
-        /// <summary>Reject paste into this target.</summary>
+        /// <summary>
+        ///     Reject paste into this target.
+        /// </summary>
         Deny = 1,
     }
 
@@ -117,7 +121,7 @@ namespace STS2RitsuLib.Settings
 
     /// <summary>
     ///     Tries to parse the clipboard into <typeparamref name="TValue" /> before default deserialization; if true, skips
-    ///     <see cref="ModSettingsClipboardData.TryReadValue" />.
+    ///     <c>ModSettingsClipboardData.TryReadValue</c>.
     /// </summary>
     public delegate bool ModSettingsTryPasteApplier<TValue>(
         IModSettingsValueBinding<TValue> binding,

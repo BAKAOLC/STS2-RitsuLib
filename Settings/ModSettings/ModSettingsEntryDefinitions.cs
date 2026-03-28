@@ -171,6 +171,66 @@ namespace STS2RitsuLib.Settings
         }
     }
 
+    public abstract class StringFieldModSettingsEntryDefinition(
+        string id,
+        ModSettingsText label,
+        IModSettingsValueBinding<string> binding,
+        ModSettingsText? placeholder,
+        int? maxLength,
+        ModSettingsText? description) : ModSettingsEntryDefinition(id, label, description)
+    {
+        public IModSettingsValueBinding<string> Binding { get; } = binding;
+        public ModSettingsText? Placeholder { get; } = placeholder;
+        public int? MaxLength { get; } = maxLength;
+
+        internal override void CollectChromeBindingSnapshots(
+            Dictionary<string, ModSettingsChromeBindingSnapshot> target)
+        {
+            ModSettingsClipboardData.AddChromeBindingSnapshot(target, Id, Binding);
+        }
+
+        internal override bool TryPasteChromeBindingSnapshot(ModSettingsChromeBindingSnapshot snap,
+            IModSettingsUiActionHost host)
+        {
+            var adapter = ModSettingsUiFactory.ResolveClipboardAdapter(Binding);
+            if (!ModSettingsClipboardData.TryApplySerializedValueToBinding(Binding, adapter, snap, out var v))
+                return false;
+            Binding.Write(v);
+            host.MarkDirty(Binding);
+            return true;
+        }
+    }
+
+    public sealed class StringModSettingsEntryDefinition(
+        string id,
+        ModSettingsText label,
+        IModSettingsValueBinding<string> binding,
+        ModSettingsText? placeholder,
+        int? maxLength,
+        ModSettingsText? description)
+        : StringFieldModSettingsEntryDefinition(id, label, binding, placeholder, maxLength, description)
+    {
+        internal override Control CreateControl(ModSettingsUiContext context)
+        {
+            return ModSettingsUiFactory.CreateStringLineEntry(context, this);
+        }
+    }
+
+    public sealed class MultilineStringModSettingsEntryDefinition(
+        string id,
+        ModSettingsText label,
+        IModSettingsValueBinding<string> binding,
+        ModSettingsText? placeholder,
+        int? maxLength,
+        ModSettingsText? description)
+        : StringFieldModSettingsEntryDefinition(id, label, binding, placeholder, maxLength, description)
+    {
+        internal override Control CreateControl(ModSettingsUiContext context)
+        {
+            return ModSettingsUiFactory.CreateStringMultilineEntry(context, this);
+        }
+    }
+
     public sealed class KeyBindingModSettingsEntryDefinition(
         string id,
         ModSettingsText label,
@@ -243,9 +303,12 @@ namespace STS2RitsuLib.Settings
     public sealed class ParagraphModSettingsEntryDefinition(
         string id,
         ModSettingsText label,
-        ModSettingsText? description)
+        ModSettingsText? description,
+        float? maxBodyHeight = null)
         : ModSettingsEntryDefinition(id, label, description)
     {
+        public float? MaxBodyHeight { get; } = maxBodyHeight;
+
         internal override Control CreateControl(ModSettingsUiContext context)
         {
             return ModSettingsUiFactory.CreateParagraphEntry(context, this);

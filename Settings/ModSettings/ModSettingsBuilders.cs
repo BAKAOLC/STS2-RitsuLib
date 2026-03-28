@@ -133,9 +133,10 @@ namespace STS2RitsuLib.Settings
         public ModSettingsSectionBuilder AddParagraph(
             string id,
             ModSettingsText text,
-            ModSettingsText? description = null)
+            ModSettingsText? description = null,
+            float? maxBodyHeight = null)
         {
-            AddEntry(id, new ParagraphModSettingsEntryDefinition(id, text, description));
+            AddEntry(id, new ParagraphModSettingsEntryDefinition(id, text, description, maxBodyHeight));
             return this;
         }
 
@@ -296,6 +297,38 @@ namespace STS2RitsuLib.Settings
             ModSettingsText? description = null)
         {
             AddEntry(id, new ColorModSettingsEntryDefinition(id, label, binding, description));
+            return this;
+        }
+
+        public ModSettingsSectionBuilder AddString(
+            string id,
+            ModSettingsText label,
+            IModSettingsValueBinding<string> binding,
+            ModSettingsText? placeholder = null,
+            int? maxLength = null,
+            ModSettingsText? description = null)
+        {
+            if (maxLength is < 1)
+                throw new ArgumentOutOfRangeException(nameof(maxLength), "maxLength must be null or >= 1.");
+
+            AddEntry(id,
+                new StringModSettingsEntryDefinition(id, label, binding, placeholder, maxLength, description));
+            return this;
+        }
+
+        public ModSettingsSectionBuilder AddMultilineString(
+            string id,
+            ModSettingsText label,
+            IModSettingsValueBinding<string> binding,
+            ModSettingsText? placeholder = null,
+            int? maxLength = null,
+            ModSettingsText? description = null)
+        {
+            if (maxLength is < 1)
+                throw new ArgumentOutOfRangeException(nameof(maxLength), "maxLength must be null or >= 1.");
+
+            AddEntry(id,
+                new MultilineStringModSettingsEntryDefinition(id, label, binding, placeholder, maxLength, description));
             return this;
         }
 

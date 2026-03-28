@@ -4,6 +4,9 @@ using STS2RitsuLib.Utils;
 
 namespace STS2RitsuLib.Settings
 {
+    /// <summary>
+    ///     Embedded JSON i18n for mod settings UI plus mod/page name resolution helpers.
+    /// </summary>
     internal static class ModSettingsLocalization
     {
         private static readonly Lazy<I18N> InstanceFactory = new(() => new(

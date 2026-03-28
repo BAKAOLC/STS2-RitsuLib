@@ -6,49 +6,6 @@ namespace STS2RitsuLib.Settings
 {
     internal static partial class ModSettingsUiFactory
     {
-        public static MarginContainer CreateModdingScreenButtonLine(Action openAction)
-        {
-            var line = new MarginContainer
-            {
-                Name = "RitsuLibModSettings",
-                CustomMinimumSize = new(0f, 64f),
-            };
-
-            line.AddThemeConstantOverride("margin_left", 12);
-            line.AddThemeConstantOverride("margin_right", 12);
-
-            var row = new HBoxContainer
-            {
-                Name = "ContentRow",
-                SizeFlagsHorizontal = Control.SizeFlags.ExpandFill,
-                SizeFlagsVertical = Control.SizeFlags.Fill,
-                Alignment = BoxContainer.AlignmentMode.Center,
-                MouseFilter = Control.MouseFilterEnum.Ignore,
-            };
-            row.AddThemeConstantOverride("separation", 24);
-            line.AddChild(row);
-
-            var label = CreateHeaderLabel(
-                ModSettingsLocalization.Get("entry.title", "Mod Settings (RitsuLib)"),
-                28,
-                HorizontalAlignment.Left);
-            label.Name = "Label";
-            label.SizeFlagsHorizontal = Control.SizeFlags.ExpandFill;
-            row.AddChild(label);
-
-            var button =
-                new ModSettingsSettingsEntryButton(ModSettingsLocalization.Get("button.open", "Open"), openAction)
-                {
-                    Name = "RitsuLibModSettingsButton",
-                    FocusNeighborLeft = new("."),
-                    FocusNeighborRight = new("."),
-                };
-            button.CustomMinimumSize = new(320f, 64f);
-            row.AddChild(button);
-
-            return line;
-        }
-
         public static ModSettingsSidebarButton CreateSidebarButton(string text, Action onPressed,
             ModSettingsSidebarItemKind kind = ModSettingsSidebarItemKind.Page,
             string? prefix = null,
@@ -69,30 +26,37 @@ namespace STS2RitsuLib.Settings
 
         private static MarginContainer CreateSettingLine<TValue>(ModSettingsUiContext context,
             Func<string> labelProvider,
-            Func<string> descriptionProvider, Control valueControl, IModSettingsValueBinding<TValue> binding)
+            Func<string> descriptionBodyProvider, Control valueControl, IModSettingsValueBinding<TValue> binding)
         {
-            return CreateSettingLine(context, labelProvider, descriptionProvider, valueControl,
-                CreateEntryActionsButton(context, binding));
+            return CreateSettingLine(context, labelProvider, descriptionBodyProvider, valueControl,
+                CreateEntryActionsButton(context, binding), binding);
         }
 
         private static MarginContainer CreateSettingLine(ModSettingsUiContext context, Func<string> labelProvider,
-            Func<string> descriptionProvider, Control valueControl, Control? actionControl = null)
+            Func<string> descriptionBodyProvider, Control valueControl, Control? actionControl = null,
+            IModSettingsBinding? scopeBinding = null)
         {
-            var descriptionText = descriptionProvider();
-            var line = new MarginContainer
+            string ResolveLabelText()
             {
-                CustomMinimumSize = new(0f, string.IsNullOrWhiteSpace(descriptionText) ? 64f : 86f),
-            };
+                var s = labelProvider();
+                return string.IsNullOrWhiteSpace(s)
+                    ? ModSettingsLocalization.Get("entry.label.empty", "—")
+                    : s;
+            }
 
-            line.AddThemeConstantOverride("margin_left", 6);
-            line.AddThemeConstantOverride("margin_right", 6);
-            line.AddThemeConstantOverride("margin_top", 4);
-            line.AddThemeConstantOverride("margin_bottom", 4);
+            var descriptionText = descriptionBodyProvider();
+            var line = new MarginContainer();
+
+            line.AddThemeConstantOverride("margin_left", 8);
+            line.AddThemeConstantOverride("margin_right", 8);
+            line.AddThemeConstantOverride("margin_top", 6);
+            line.AddThemeConstantOverride("margin_bottom", 6);
 
             var surface = new PanelContainer
             {
                 SizeFlagsHorizontal = Control.SizeFlags.ExpandFill,
                 MouseFilter = Control.MouseFilterEnum.Ignore,
+                ClipContents = false,
             };
             surface.AddThemeStyleboxOverride("panel", CreateEntrySurfaceStyle());
             line.AddChild(surface);
@@ -100,35 +64,43 @@ namespace STS2RitsuLib.Settings
             var row = new HBoxContainer
             {
                 SizeFlagsHorizontal = Control.SizeFlags.ExpandFill,
+                SizeFlagsVertical = Control.SizeFlags.ShrinkCenter,
                 MouseFilter = Control.MouseFilterEnum.Ignore,
                 Alignment = BoxContainer.AlignmentMode.Center,
             };
-            row.AddThemeConstantOverride("separation", 24);
+            row.AddThemeConstantOverride("separation", 20);
             surface.AddChild(row);
 
             var leftColumn = new VBoxContainer
             {
                 SizeFlagsHorizontal = Control.SizeFlags.ExpandFill,
+                SizeFlagsVertical = Control.SizeFlags.ShrinkCenter,
                 MouseFilter = Control.MouseFilterEnum.Ignore,
             };
-            leftColumn.AddThemeConstantOverride("separation", 4);
+            leftColumn.AddThemeConstantOverride("separation", 5);
 
-            var label = CreateRefreshableHeaderLabel(context, labelProvider, 28, HorizontalAlignment.Left);
+            var label = CreateRefreshableHeaderLabel(context, ResolveLabelText, 24, HorizontalAlignment.Left,
+                ModSettingsUiPalette.RichTextTitle);
             label.SizeFlagsHorizontal = Control.SizeFlags.ExpandFill;
             leftColumn.AddChild(label);
 
-            var descriptionLabel = CreateRefreshableDescriptionLabel(context, descriptionProvider);
+            var descriptionLabel = CreateRefreshableDescriptionLabel(context, descriptionBodyProvider);
             descriptionLabel.Visible = !string.IsNullOrWhiteSpace(descriptionText);
             leftColumn.AddChild(descriptionLabel);
+
+            if (scopeBinding != null)
+                leftColumn.AddChild(CreatePersistenceScopeTag(scopeBinding));
 
             row.AddChild(leftColumn);
 
             valueControl.CustomMinimumSize = new(Math.Max(EntryControlWidth, valueControl.CustomMinimumSize.X),
-                valueControl.CustomMinimumSize.Y);
+                Mathf.Max(valueControl.CustomMinimumSize.Y, ModSettingsUiMetrics.EntryValueMinHeight));
             valueControl.SizeFlagsHorizontal = Control.SizeFlags.ShrinkEnd;
+            valueControl.SizeFlagsVertical = Control.SizeFlags.ShrinkCenter;
             row.AddChild(valueControl);
 
             if (actionControl == null) return line;
+            actionControl.SizeFlagsVertical = Control.SizeFlags.ShrinkCenter;
             row.AddChild(actionControl);
             if (actionControl is ModSettingsActionsButton actionsButton)
                 AttachContextMenuTargets(line, valueControl, actionsButton);
@@ -365,6 +337,21 @@ namespace STS2RitsuLib.Settings
                 : ModSettingsStructuredData.Json<TValue>();
         }
 
+        internal static string ResolveEntryLabelDisplay(ModSettingsText? label)
+        {
+            var s = ModSettingsUiContext.Resolve(label);
+            return string.IsNullOrWhiteSpace(s)
+                ? ModSettingsLocalization.Get("entry.label.empty", "—")
+                : s;
+        }
+
+        private static string ResolveSectionTitleText(ModSettingsSection section)
+        {
+            return section.Title != null
+                ? ResolveEntryLabelDisplay(section.Title)
+                : ModSettingsLocalization.Get("section.default", "Section");
+        }
+
         private static Control CreateSection(ModSettingsUiContext context, ModSettingsPage page,
             ModSettingsSection section)
         {
@@ -378,9 +365,7 @@ namespace STS2RitsuLib.Settings
             if (section.IsCollapsible)
             {
                 var collapsible = new ModSettingsCollapsibleSection(
-                    section.Title != null
-                        ? ModSettingsUiContext.Resolve(section.Title)
-                        : ModSettingsLocalization.Get("section.default", "Section"),
+                    ResolveSectionTitleText(section),
                     section.Id,
                     section.Description != null ? ModSettingsUiContext.Resolve(section.Description) : null,
                     section.StartCollapsed,
@@ -397,7 +382,7 @@ namespace STS2RitsuLib.Settings
                     Name = $"Section_{section.Id}",
                     MouseFilter = Control.MouseFilterEnum.Ignore,
                 };
-                container.AddThemeConstantOverride("separation", 6);
+                container.AddThemeConstantOverride("separation", 8);
 
                 if (section.Title != null || sectionActionsButton != null)
                 {
@@ -407,11 +392,11 @@ namespace STS2RitsuLib.Settings
                         MouseFilter = Control.MouseFilterEnum.Ignore,
                         Alignment = BoxContainer.AlignmentMode.Center,
                     };
-                    headerRow.AddThemeConstantOverride("separation", 8);
+                    headerRow.AddThemeConstantOverride("separation", 10);
                     if (section.Title != null)
                     {
                         var title = CreateRefreshableSectionTitle(context,
-                            () => ModSettingsUiContext.Resolve(section.Title));
+                            () => ResolveEntryLabelDisplay(section.Title));
                         title.SizeFlagsHorizontal = Control.SizeFlags.ExpandFill;
                         headerRow.AddChild(title);
                     }
@@ -442,8 +427,8 @@ namespace STS2RitsuLib.Settings
 
         internal static MegaRichTextLabel CreateSectionTitle(string text)
         {
-            var label = CreateHeaderLabel(text, 24, HorizontalAlignment.Left);
-            label.CustomMinimumSize = new(0f, 40f);
+            var label = CreateHeaderLabel(text, 22, HorizontalAlignment.Left, null, ModSettingsUiPalette.RichTextTitle);
+            label.CustomMinimumSize = new(0f, 34f);
             label.SizeFlagsHorizontal = Control.SizeFlags.ExpandFill;
             return label;
         }
@@ -458,26 +443,35 @@ namespace STS2RitsuLib.Settings
 
         private static MegaRichTextLabel CreateRefreshableHeaderLabel(ModSettingsUiContext context,
             Func<string> textProvider,
-            int fontSize, HorizontalAlignment alignment)
+            int fontSize, HorizontalAlignment alignment, Color? textModulate = null)
         {
-            var label = CreateHeaderLabel(textProvider(), fontSize, alignment);
+            var label = CreateHeaderLabel(textProvider(), fontSize, alignment, null, textModulate);
             RegisterRefreshWhenAlive(context, label, () => label.SetTextAutoSize(textProvider()));
             return label;
         }
 
-        private static MegaRichTextLabel CreateHeaderLabel(string text, int fontSize, HorizontalAlignment alignment)
+        private static MegaRichTextLabel CreateHeaderLabel(string text, int fontSize, HorizontalAlignment alignment,
+            float? scrollViewportHeight = null, Color? textModulate = null)
         {
+            var boundedScroll = scrollViewportHeight is > 0f;
             var label = new MegaRichTextLabel
             {
                 BbcodeEnabled = true,
                 AutoSizeEnabled = false,
-                ScrollActive = false,
+                FitContent = !boundedScroll,
+                ScrollActive = boundedScroll,
+                ClipContents = boundedScroll,
                 FocusMode = Control.FocusModeEnum.None,
                 MouseFilter = Control.MouseFilterEnum.Ignore,
-                VerticalAlignment = VerticalAlignment.Center,
+                VerticalAlignment = VerticalAlignment.Top,
                 HorizontalAlignment = alignment,
                 Theme = ModSettingsUiResources.SettingsLineTheme,
+                IsHorizontallyBound = true,
+                Modulate = textModulate ?? Colors.White,
             };
+
+            if (boundedScroll)
+                label.CustomMinimumSize = new(0f, scrollViewportHeight!.Value);
 
             label.AddThemeFontOverride("normal_font", ModSettingsUiResources.KreonRegular);
             label.AddThemeFontOverride("bold_font", ModSettingsUiResources.KreonBold);
@@ -486,18 +480,70 @@ namespace STS2RitsuLib.Settings
             label.AddThemeFontSizeOverride("italics_font_size", fontSize);
             label.AddThemeFontSizeOverride("bold_italics_font_size", fontSize);
             label.AddThemeFontSizeOverride("mono_font_size", fontSize);
-            label.MinFontSize = Math.Min(fontSize, 18);
+            label.MinFontSize = Math.Max(14, fontSize - 3);
             label.MaxFontSize = fontSize;
             label.SetTextAutoSize(text);
             return label;
         }
 
+        private static MegaRichTextLabel CreatePageToolbarTitleLabel(string primaryTitle, string fallbackId)
+        {
+            var text = !string.IsNullOrWhiteSpace(primaryTitle)
+                ? primaryTitle
+                : !string.IsNullOrWhiteSpace(fallbackId)
+                    ? fallbackId
+                    : ModSettingsLocalization.Get("page.untitled", "Untitled");
+            var label = CreateHeaderLabel(text, 24, HorizontalAlignment.Center, null,
+                ModSettingsUiPalette.RichTextTitle);
+            label.SizeFlagsHorizontal = Control.SizeFlags.ExpandFill;
+            label.CustomMinimumSize = new(0f, 30f);
+            return label;
+        }
+
+        internal static Control CreateRefreshableParagraphBlock(ModSettingsUiContext context,
+            Func<string> textProvider, float? maxViewportHeight)
+        {
+            var wrap = new MarginContainer
+            {
+                SizeFlagsHorizontal = Control.SizeFlags.ExpandFill,
+                MouseFilter = Control.MouseFilterEnum.Ignore,
+            };
+            wrap.AddThemeConstantOverride("margin_top", 0);
+            wrap.AddThemeConstantOverride("margin_bottom", 0);
+
+            var initial = ResolvedText();
+            wrap.Visible = initial.Length > 0;
+
+            var useCap = maxViewportHeight is > 0f;
+            var label = CreateHeaderLabel(
+                initial.Length == 0 ? "\u200b" : initial,
+                16,
+                HorizontalAlignment.Left,
+                useCap ? maxViewportHeight : null,
+                ModSettingsUiPalette.RichTextBody);
+            label.SizeFlagsHorizontal = Control.SizeFlags.ExpandFill;
+            wrap.AddChild(label);
+
+            RegisterRefreshWhenAlive(context, wrap, () =>
+            {
+                var t = ResolvedText();
+                wrap.Visible = t.Length > 0;
+                label.SetTextAutoSize(t.Length == 0 ? "\u200b" : t);
+            });
+
+            return wrap;
+
+            string ResolvedText()
+            {
+                return textProvider()?.Trim() ?? string.Empty;
+            }
+        }
+
         internal static MegaRichTextLabel CreateInlineDescription(string text)
         {
-            var label = CreateHeaderLabel(text, 16, HorizontalAlignment.Left);
-            label.CustomMinimumSize = new(0f, 24f);
+            var label = CreateHeaderLabel(text, 16, HorizontalAlignment.Left, null,
+                ModSettingsUiPalette.RichTextSecondary);
             label.SizeFlagsHorizontal = Control.SizeFlags.ExpandFill;
-            label.Modulate = new(0.82f, 0.79f, 0.72f, 0.92f);
             return label;
         }
 
@@ -509,7 +555,9 @@ namespace STS2RitsuLib.Settings
         internal static MegaRichTextLabel CreateRefreshableDescriptionLabel(ModSettingsUiContext context,
             Func<string> textProvider)
         {
-            var label = CreateDescriptionLabel(textProvider());
+            var initial = textProvider();
+            var label = CreateDescriptionLabel(initial);
+            label.Visible = !string.IsNullOrWhiteSpace(initial);
             RegisterRefreshWhenAlive(context, label, () =>
             {
                 var text = textProvider();
@@ -517,6 +565,48 @@ namespace STS2RitsuLib.Settings
                 label.Visible = !string.IsNullOrWhiteSpace(text);
             });
             return label;
+        }
+
+        internal static Control CreatePersistenceScopeTag(IModSettingsBinding binding)
+        {
+            var panel = new PanelContainer
+            {
+                MouseFilter = Control.MouseFilterEnum.Ignore,
+                SizeFlagsHorizontal = Control.SizeFlags.ShrinkBegin,
+            };
+            panel.AddThemeStyleboxOverride("panel", CreateScopeTagStyle());
+            var label = new Label
+            {
+                Text = ModSettingsUiContext.GetPersistenceScopeChipText(binding),
+                VerticalAlignment = VerticalAlignment.Center,
+                MouseFilter = Control.MouseFilterEnum.Ignore,
+            };
+            label.AddThemeFontOverride("font", ModSettingsUiResources.KreonRegular);
+            label.AddThemeFontSizeOverride("font_size", 13);
+            label.AddThemeColorOverride("font_color", ModSettingsUiPalette.RichTextMuted);
+            panel.AddChild(label);
+            return panel;
+        }
+
+        private static StyleBoxFlat CreateScopeTagStyle()
+        {
+            return new()
+            {
+                BgColor = new(0.085f, 0.108f, 0.138f, 0.97f),
+                BorderColor = new(0.32f, 0.48f, 0.58f, 0.5f),
+                BorderWidthLeft = 1,
+                BorderWidthTop = 1,
+                BorderWidthRight = 1,
+                BorderWidthBottom = 1,
+                CornerRadiusTopLeft = ModSettingsUiMetrics.CornerRadius,
+                CornerRadiusTopRight = ModSettingsUiMetrics.CornerRadius,
+                CornerRadiusBottomRight = ModSettingsUiMetrics.CornerRadius,
+                CornerRadiusBottomLeft = ModSettingsUiMetrics.CornerRadius,
+                ContentMarginLeft = 8,
+                ContentMarginTop = 3,
+                ContentMarginRight = 8,
+                ContentMarginBottom = 3,
+            };
         }
 
         private static string SanitizeName(string text)
@@ -534,16 +624,43 @@ namespace STS2RitsuLib.Settings
                 BorderWidthTop = 1,
                 BorderWidthRight = 1,
                 BorderWidthBottom = 1,
-                CornerRadiusTopLeft = 14,
-                CornerRadiusTopRight = 14,
-                CornerRadiusBottomRight = 14,
-                CornerRadiusBottomLeft = 14,
-                ShadowColor = new(0f, 0f, 0f, 0.18f),
-                ShadowSize = 4,
-                ContentMarginLeft = 16,
-                ContentMarginTop = 12,
-                ContentMarginRight = 16,
-                ContentMarginBottom = 12,
+                CornerRadiusTopLeft = ModSettingsUiMetrics.CornerRadius,
+                CornerRadiusTopRight = ModSettingsUiMetrics.CornerRadius,
+                CornerRadiusBottomRight = ModSettingsUiMetrics.CornerRadius,
+                CornerRadiusBottomLeft = ModSettingsUiMetrics.CornerRadius,
+                ShadowColor = new(0f, 0f, 0f, 0.14f),
+                ShadowSize = 2,
+                ContentMarginLeft = 12,
+                ContentMarginTop = 8,
+                ContentMarginRight = 12,
+                ContentMarginBottom = 8,
+            };
+        }
+
+        /// <summary>
+        ///     Frame for <see cref="ColorPickerButton" />: same border/bg language as <see cref="CreateSurfaceStyle" />,
+        ///     but <b>equal</b> content margins so the inner color swatch stays square inside a square button.
+        /// </summary>
+        internal static StyleBoxFlat CreateColorPickerSwatchFrameStyle()
+        {
+            const int inset = 5;
+            return new()
+            {
+                BgColor = new(0.095f, 0.115f, 0.15f, 0.965f),
+                BorderColor = new(0.38f, 0.58f, 0.70f, 0.42f),
+                BorderWidthLeft = 1,
+                BorderWidthTop = 1,
+                BorderWidthRight = 1,
+                BorderWidthBottom = 1,
+                CornerRadiusTopLeft = ModSettingsUiMetrics.CornerRadius,
+                CornerRadiusTopRight = ModSettingsUiMetrics.CornerRadius,
+                CornerRadiusBottomRight = ModSettingsUiMetrics.CornerRadius,
+                CornerRadiusBottomLeft = ModSettingsUiMetrics.CornerRadius,
+                ShadowSize = 0,
+                ContentMarginLeft = inset,
+                ContentMarginTop = inset,
+                ContentMarginRight = inset,
+                ContentMarginBottom = inset,
             };
         }
 
@@ -562,20 +679,17 @@ namespace STS2RitsuLib.Settings
                 BorderWidthTop = 1,
                 BorderWidthRight = 1,
                 BorderWidthBottom = 1,
-                CornerRadiusTopLeft = 12,
-                CornerRadiusTopRight = 12,
-                CornerRadiusBottomRight = 12,
-                CornerRadiusBottomLeft = 12,
-                ContentMarginLeft = 14,
-                ContentMarginTop = 12,
-                ContentMarginRight = 14,
-                ContentMarginBottom = 12,
+                CornerRadiusTopLeft = ModSettingsUiMetrics.CornerRadius,
+                CornerRadiusTopRight = ModSettingsUiMetrics.CornerRadius,
+                CornerRadiusBottomRight = ModSettingsUiMetrics.CornerRadius,
+                CornerRadiusBottomLeft = ModSettingsUiMetrics.CornerRadius,
+                ContentMarginLeft = 10,
+                ContentMarginTop = 8,
+                ContentMarginRight = 10,
+                ContentMarginBottom = 8,
             };
         }
 
-        /// <summary>
-        ///     Compact MenuButton chrome for page/section toolbars (lighter than <see cref="CreateSurfaceStyle" />).
-        /// </summary>
         internal static StyleBoxFlat CreateChromeActionsMenuStyle(bool highlighted)
         {
             return new()
@@ -590,10 +704,10 @@ namespace STS2RitsuLib.Settings
                 BorderWidthTop = 1,
                 BorderWidthRight = 1,
                 BorderWidthBottom = 1,
-                CornerRadiusTopLeft = 8,
-                CornerRadiusTopRight = 8,
-                CornerRadiusBottomRight = 8,
-                CornerRadiusBottomLeft = 8,
+                CornerRadiusTopLeft = ModSettingsUiMetrics.CornerRadius,
+                CornerRadiusTopRight = ModSettingsUiMetrics.CornerRadius,
+                CornerRadiusBottomRight = ModSettingsUiMetrics.CornerRadius,
+                CornerRadiusBottomLeft = ModSettingsUiMetrics.CornerRadius,
                 ContentMarginLeft = 10,
                 ContentMarginTop = 6,
                 ContentMarginRight = 10,
@@ -601,9 +715,6 @@ namespace STS2RitsuLib.Settings
             };
         }
 
-        /// <summary>
-        ///     Subtle tray behind the page-level actions row.
-        /// </summary>
         internal static StyleBoxFlat CreatePageToolbarTrayStyle()
         {
             return new()
@@ -614,20 +725,17 @@ namespace STS2RitsuLib.Settings
                 BorderWidthTop = 1,
                 BorderWidthRight = 1,
                 BorderWidthBottom = 1,
-                CornerRadiusTopLeft = 10,
-                CornerRadiusTopRight = 10,
-                CornerRadiusBottomRight = 10,
-                CornerRadiusBottomLeft = 10,
-                ContentMarginLeft = 8,
-                ContentMarginTop = 6,
-                ContentMarginRight = 8,
-                ContentMarginBottom = 6,
+                CornerRadiusTopLeft = ModSettingsUiMetrics.CornerRadius,
+                CornerRadiusTopRight = ModSettingsUiMetrics.CornerRadius,
+                CornerRadiusBottomRight = ModSettingsUiMetrics.CornerRadius,
+                CornerRadiusBottomLeft = ModSettingsUiMetrics.CornerRadius,
+                ContentMarginLeft = 10,
+                ContentMarginTop = 8,
+                ContentMarginRight = 10,
+                ContentMarginBottom = 8,
             };
         }
 
-        /// <summary>
-        ///     Fixed bar above the scrolling page body: optional back, centered page title, optional page ⋮ menu.
-        /// </summary>
         internal static Control CreateModSettingsPageHeaderBar(ModSettingsUiContext context, ModSettingsPage page,
             bool showBack, Action onBack)
         {
@@ -638,22 +746,24 @@ namespace STS2RitsuLib.Settings
                 : new ModSettingsActionsButton(pageActions, context.RequestRefresh);
             pageBtn?.SizeFlagsVertical = Control.SizeFlags.ShrinkCenter;
 
-            var bar = CreatePageHeaderBar(ModSettingsLocalization.ResolvePageDisplayName(page), showBack, onBack,
-                pageBtn);
+            var bar = CreatePageHeaderBar(context, page, showBack, onBack, pageBtn);
             if (pageBtn != null)
                 AttachContextMenuTargets(bar, bar, pageBtn);
             return bar;
         }
 
-        private static Control CreatePageHeaderBar(string pageTitle, bool showBack, Action onBack,
+        private static Control CreatePageHeaderBar(ModSettingsUiContext context, ModSettingsPage page, bool showBack,
+            Action onBack,
             ModSettingsActionsButton? trailingMenu)
         {
-            const float sideSlotMin = 108f;
+            const float sideSlotMin = 104f;
+            var pageTitle = ModSettingsLocalization.ResolvePageDisplayName(page);
 
             var tray = new PanelContainer
             {
                 SizeFlagsHorizontal = Control.SizeFlags.ExpandFill,
                 MouseFilter = Control.MouseFilterEnum.Ignore,
+                ClipContents = false,
             };
             tray.AddThemeStyleboxOverride("panel", CreatePageToolbarTrayStyle());
 
@@ -663,11 +773,11 @@ namespace STS2RitsuLib.Settings
                 MouseFilter = Control.MouseFilterEnum.Ignore,
                 Alignment = BoxContainer.AlignmentMode.Center,
             };
-            row.AddThemeConstantOverride("separation", 8);
+            row.AddThemeConstantOverride("separation", 10);
 
             var left = new HBoxContainer
             {
-                CustomMinimumSize = new(sideSlotMin, 40f),
+                CustomMinimumSize = new(sideSlotMin, 44f),
                 SizeFlagsHorizontal = Control.SizeFlags.ShrinkBegin,
                 MouseFilter = Control.MouseFilterEnum.Ignore,
                 Alignment = BoxContainer.AlignmentMode.Begin,
@@ -682,30 +792,33 @@ namespace STS2RitsuLib.Settings
                 left.AddChild(back);
             }
 
-            var center = new HBoxContainer
+            var center = new VBoxContainer
             {
                 SizeFlagsHorizontal = Control.SizeFlags.ExpandFill,
                 MouseFilter = Control.MouseFilterEnum.Ignore,
                 Alignment = BoxContainer.AlignmentMode.Center,
             };
-            var titleLabel = new Label
-            {
-                Text = pageTitle,
-                HorizontalAlignment = HorizontalAlignment.Center,
-                VerticalAlignment = VerticalAlignment.Center,
-                AutowrapMode = TextServer.AutowrapMode.Off,
-                TextOverrunBehavior = TextServer.OverrunBehavior.TrimEllipsis,
-                SizeFlagsHorizontal = Control.SizeFlags.ExpandFill,
-                SizeFlagsVertical = Control.SizeFlags.ShrinkCenter,
-            };
-            titleLabel.AddThemeFontOverride("font", ModSettingsUiResources.KreonBold);
-            titleLabel.AddThemeFontSizeOverride("font_size", 22);
-            titleLabel.AddThemeColorOverride("font_color", new(0.96f, 0.98f, 1f));
+            center.AddThemeConstantOverride("separation", 5);
+
+            var titleLabel = CreatePageToolbarTitleLabel(pageTitle, page.Id);
             center.AddChild(titleLabel);
+
+            var pageDescription = CreateRefreshableDescriptionLabel(context,
+                () => ModSettingsUiContext.ResolvePageDescription(page) ?? string.Empty);
+            pageDescription.HorizontalAlignment = HorizontalAlignment.Center;
+            pageDescription.AddThemeFontSizeOverride("normal_font_size", 18);
+            pageDescription.AddThemeFontSizeOverride("bold_font_size", 18);
+            pageDescription.AddThemeFontSizeOverride("italics_font_size", 18);
+            pageDescription.AddThemeFontSizeOverride("bold_italics_font_size", 18);
+            pageDescription.AddThemeFontSizeOverride("mono_font_size", 18);
+            pageDescription.MinFontSize = 16;
+            pageDescription.MaxFontSize = 18;
+            pageDescription.Modulate = ModSettingsUiPalette.RichTextSecondary;
+            center.AddChild(pageDescription);
 
             var right = new HBoxContainer
             {
-                CustomMinimumSize = new(sideSlotMin, 40f),
+                CustomMinimumSize = new(sideSlotMin, 44f),
                 SizeFlagsHorizontal = Control.SizeFlags.ShrinkBegin,
                 MouseFilter = Control.MouseFilterEnum.Ignore,
                 Alignment = BoxContainer.AlignmentMode.End,
@@ -730,16 +843,16 @@ namespace STS2RitsuLib.Settings
                 BorderWidthTop = 1,
                 BorderWidthRight = 1,
                 BorderWidthBottom = 1,
-                CornerRadiusTopLeft = 18,
-                CornerRadiusTopRight = 18,
-                CornerRadiusBottomRight = 18,
-                CornerRadiusBottomLeft = 18,
-                ShadowColor = new(0f, 0f, 0f, 0.22f),
-                ShadowSize = 6,
-                ContentMarginLeft = 18,
-                ContentMarginTop = 18,
-                ContentMarginRight = 18,
-                ContentMarginBottom = 18,
+                CornerRadiusTopLeft = ModSettingsUiMetrics.CornerRadius,
+                CornerRadiusTopRight = ModSettingsUiMetrics.CornerRadius,
+                CornerRadiusBottomRight = ModSettingsUiMetrics.CornerRadius,
+                CornerRadiusBottomLeft = ModSettingsUiMetrics.CornerRadius,
+                ShadowColor = new(0f, 0f, 0f, 0.16f),
+                ShadowSize = 3,
+                ContentMarginLeft = 12,
+                ContentMarginTop = 12,
+                ContentMarginRight = 12,
+                ContentMarginBottom = 12,
             };
         }
 
@@ -757,16 +870,16 @@ namespace STS2RitsuLib.Settings
                 BorderWidthTop = 1,
                 BorderWidthRight = 1,
                 BorderWidthBottom = 1,
-                CornerRadiusTopLeft = 16,
-                CornerRadiusTopRight = 16,
-                CornerRadiusBottomRight = 16,
-                CornerRadiusBottomLeft = 16,
-                ShadowColor = new(0f, 0f, 0f, 0.18f),
-                ShadowSize = 4,
-                ContentMarginLeft = 16,
-                ContentMarginTop = 16,
-                ContentMarginRight = 16,
-                ContentMarginBottom = 16,
+                CornerRadiusTopLeft = ModSettingsUiMetrics.CornerRadius,
+                CornerRadiusTopRight = ModSettingsUiMetrics.CornerRadius,
+                CornerRadiusBottomRight = ModSettingsUiMetrics.CornerRadius,
+                CornerRadiusBottomLeft = ModSettingsUiMetrics.CornerRadius,
+                ShadowColor = new(0f, 0f, 0f, 0.12f),
+                ShadowSize = 2,
+                ContentMarginLeft = 10,
+                ContentMarginTop = 10,
+                ContentMarginRight = 10,
+                ContentMarginBottom = 10,
             };
         }
 
@@ -780,16 +893,16 @@ namespace STS2RitsuLib.Settings
                 BorderWidthTop = 1,
                 BorderWidthRight = 1,
                 BorderWidthBottom = 1,
-                CornerRadiusTopLeft = 16,
-                CornerRadiusTopRight = 16,
-                CornerRadiusBottomRight = 16,
-                CornerRadiusBottomLeft = 16,
-                ShadowColor = new(0f, 0f, 0f, 0.16f),
-                ShadowSize = 3,
-                ContentMarginLeft = 18,
-                ContentMarginTop = 16,
-                ContentMarginRight = 18,
-                ContentMarginBottom = 16,
+                CornerRadiusTopLeft = ModSettingsUiMetrics.CornerRadius,
+                CornerRadiusTopRight = ModSettingsUiMetrics.CornerRadius,
+                CornerRadiusBottomRight = ModSettingsUiMetrics.CornerRadius,
+                CornerRadiusBottomLeft = ModSettingsUiMetrics.CornerRadius,
+                ShadowColor = new(0f, 0f, 0f, 0.12f),
+                ShadowSize = 2,
+                ContentMarginLeft = 10,
+                ContentMarginTop = 8,
+                ContentMarginRight = 10,
+                ContentMarginBottom = 8,
             };
         }
 
@@ -807,14 +920,14 @@ namespace STS2RitsuLib.Settings
                 BorderWidthTop = 1,
                 BorderWidthRight = 1,
                 BorderWidthBottom = 1,
-                CornerRadiusTopLeft = 999,
-                CornerRadiusTopRight = 999,
-                CornerRadiusBottomRight = 999,
-                CornerRadiusBottomLeft = 999,
-                ContentMarginLeft = 12,
-                ContentMarginTop = 6,
-                ContentMarginRight = 12,
-                ContentMarginBottom = 6,
+                CornerRadiusTopLeft = ModSettingsUiMetrics.CornerRadius,
+                CornerRadiusTopRight = ModSettingsUiMetrics.CornerRadius,
+                CornerRadiusBottomRight = ModSettingsUiMetrics.CornerRadius,
+                CornerRadiusBottomLeft = ModSettingsUiMetrics.CornerRadius,
+                ContentMarginLeft = 10,
+                ContentMarginTop = 5,
+                ContentMarginRight = 10,
+                ContentMarginBottom = 5,
             };
         }
     }

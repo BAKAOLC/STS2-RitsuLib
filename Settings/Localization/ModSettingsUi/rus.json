@@ -1,4 +1,6 @@
 {
+  "page.untitled": "Без названия",
+  "entry.label.empty": "\u2014",
   "entry.title": "Настройки модов (RitsuLib)",
   "entry.subtitle": "Здесь можно изменить параметры модов, предназначенные для игрока.",
   "ritsulib.mod.displayName": "RitsuLib",
@@ -36,6 +38,12 @@
   "ritsulib.showcase.choice.wide": "Широкий",
   "ritsulib.showcase.mode.label": "Выбор enum для предпросмотра",
   "ritsulib.showcase.mode.description": "Текущий режим: {0}",
+  "ritsulib.showcase.string.label": "Поле предпросмотра строки",
+  "ritsulib.showcase.string.description": "Текущий текст: {0}",
+  "ritsulib.showcase.string.placeholder": "Простая однострочная привязка (одна строка)",
+  "ritsulib.showcase.stringMulti.label": "Многострочное поле предпросмотра",
+  "ritsulib.showcase.stringMulti.description": "Символов: {0}, строк: {1}.",
+  "ritsulib.showcase.stringMulti.placeholder": "Несколько строк — клавиша ввода добавляет новую строку.",
   "ritsulib.showcase.mode.Compact": "Компактный",
   "ritsulib.showcase.mode.Balanced": "Сбалансированный",
   "ritsulib.showcase.mode.Detailed": "Подробный",
@@ -111,8 +119,14 @@
   "ritsulib.showcase.details.field.label": "Метка",
   "ritsulib.showcase.details.field.value": "Значение",
   "button.actionsShort": "Действия",
+  "button.actionsGlyph": "\u22ee",
   "button.resetDefault": "Сбросить по умолчанию",
   "button.copySelf": "Скопировать элемент",
   "button.copySubtree": "Скопировать с дочерними элементами",
-  "keybinding.hint.comboNonModifier": "Нажмите, чтобы записать. Поддерживаются сочетания клавиш, и они должны включать хотя бы одну немодифицирующую клавишу."
+  "keybinding.hint.comboNonModifier": "Нажмите, чтобы записать. Поддерживаются сочетания клавиш, и они должны включать хотя бы одну немодифицирующую клавишу.",
+  "clipboard.pasteFailedTitle": "Не удалось вставить",
+  "clipboard.pasteErrorOk": "Понятно",
+  "clipboard.pasteFailedEmpty": "Буфер обмена пуст или недоступен.",
+  "clipboard.pasteFailedBlocked": "Вставка заблокирована пользовательским правилом.",
+  "clipboard.pasteFailedIncompatible": "Содержимое буфера обмена несовместимо с этой настройкой."
 }

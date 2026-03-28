@@ -1,5 +1,8 @@
 namespace STS2RitsuLib.Settings
 {
+    /// <summary>
+    ///     Global registry of mod settings pages and optional per-mod display names for the UI.
+    /// </summary>
     public static class ModSettingsRegistry
     {
         private static readonly Dictionary<string, ModSettingsText> ModDisplayNames =
@@ -10,6 +13,9 @@ namespace STS2RitsuLib.Settings
         private static readonly Dictionary<string, ModSettingsPage> PagesById =
             new(StringComparer.OrdinalIgnoreCase);
 
+        /// <summary>
+        ///     True after at least one page has been registered.
+        /// </summary>
         public static bool HasPages
         {
             get
@@ -21,6 +27,9 @@ namespace STS2RitsuLib.Settings
             }
         }
 
+        /// <summary>
+        ///     Registers a built <see cref="ModSettingsPage" /> (typically from <see cref="ModSettingsPageBuilder" />).
+        /// </summary>
         public static void Register(ModSettingsPage page)
         {
             ArgumentNullException.ThrowIfNull(page);
@@ -31,6 +40,9 @@ namespace STS2RitsuLib.Settings
             }
         }
 
+        /// <summary>
+        ///     Registers localized (or literal) text shown for <paramref name="modId" /> in the settings chrome.
+        /// </summary>
         public static void RegisterModDisplayName(string modId, ModSettingsText displayName)
         {
             ArgumentException.ThrowIfNullOrWhiteSpace(modId);
@@ -42,6 +54,9 @@ namespace STS2RitsuLib.Settings
             }
         }
 
+        /// <summary>
+        ///     Returns the display name for <paramref name="modId" />, if any.
+        /// </summary>
         public static ModSettingsText? GetModDisplayName(string modId)
         {
             ArgumentException.ThrowIfNullOrWhiteSpace(modId);
@@ -52,6 +67,9 @@ namespace STS2RitsuLib.Settings
             }
         }
 
+        /// <summary>
+        ///     Fluent helper: builds a page via <paramref name="configure" /> and registers it.
+        /// </summary>
         public static void Register(string modId, Action<ModSettingsPageBuilder> configure, string? pageId = null)
         {
             ArgumentException.ThrowIfNullOrWhiteSpace(modId);
@@ -62,6 +80,9 @@ namespace STS2RitsuLib.Settings
             Register(builder.Build());
         }
 
+        /// <summary>
+        ///     Looks up a page by mod id and page id.
+        /// </summary>
         public static bool TryGetPage(string modId, string pageId, out ModSettingsPage? page)
         {
             ArgumentException.ThrowIfNullOrWhiteSpace(modId);
@@ -73,6 +94,9 @@ namespace STS2RitsuLib.Settings
             }
         }
 
+        /// <summary>
+        ///     All registered pages, ordered for stable sidebar display.
+        /// </summary>
         public static IReadOnlyList<ModSettingsPage> GetPages()
         {
             lock (SyncRoot)

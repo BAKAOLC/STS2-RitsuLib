@@ -3,21 +3,37 @@ using STS2RitsuLib.Utils;
 
 namespace STS2RitsuLib.Settings
 {
+    /// <summary>
+    ///     Deferred label or body text for mod settings (literal, dynamic, or localized).
+    /// </summary>
     public abstract class ModSettingsText
     {
+        /// <summary>
+        ///     Resolves to the final string for the current locale / state.
+        /// </summary>
         public abstract string Resolve();
 
+        /// <summary>
+        ///     Fixed string that never changes.
+        /// </summary>
         public static ModSettingsText Literal(string text)
         {
             return new LiteralModSettingsText(text);
         }
 
+        /// <summary>
+        ///     Recomputed on each <see cref="Resolve" /> (e.g. live statistics in descriptions).
+        /// </summary>
         public static ModSettingsText Dynamic(Func<string> resolver)
         {
             ArgumentNullException.ThrowIfNull(resolver);
             return new DynamicModSettingsText(resolver);
         }
 
+        /// <summary>
+        ///     Looks up a <see cref="MegaCrit.Sts2.Core.Localization.LocString" /> by table and key with
+        ///     <paramref name="fallback" />.
+        /// </summary>
         public static ModSettingsText LocString(string table, string key, string fallback)
         {
             ArgumentException.ThrowIfNullOrWhiteSpace(table);
@@ -25,12 +41,18 @@ namespace STS2RitsuLib.Settings
             return new LocStringModSettingsText(table, key, fallback);
         }
 
+        /// <summary>
+        ///     Wraps an existing <see cref="MegaCrit.Sts2.Core.Localization.LocString" /> with optional fallback text.
+        /// </summary>
         public static ModSettingsText LocString(LocString locString, string? fallback = null)
         {
             ArgumentNullException.ThrowIfNull(locString);
             return new ExistingLocStringModSettingsText(locString, fallback ?? locString.LocEntryKey);
         }
 
+        /// <summary>
+        ///     Resolves via <see cref="I18N.Get" /> (mod settings UI localization tables).
+        /// </summary>
         public static ModSettingsText I18N(I18N localization, string key, string fallback)
         {
             ArgumentNullException.ThrowIfNull(localization);
@@ -65,6 +87,7 @@ namespace STS2RitsuLib.Settings
                 }
                 catch
                 {
+                    // ignored
                     return fallback;
                 }
             }
@@ -80,6 +103,7 @@ namespace STS2RitsuLib.Settings
                 }
                 catch
                 {
+                    // ignored
                     return fallback;
                 }
             }
@@ -95,6 +119,7 @@ namespace STS2RitsuLib.Settings
                 }
                 catch
                 {
+                    // ignored
                     return fallback;
                 }
             }

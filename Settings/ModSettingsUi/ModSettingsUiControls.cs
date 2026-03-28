@@ -1,9 +1,7 @@
 using System.Globalization;
 using Godot;
 using Godot.Collections;
-using MegaCrit.Sts2.addons.mega_text;
 using MegaCrit.Sts2.Core.Helpers;
-using MegaCrit.Sts2.Core.Nodes.Screens.Settings;
 using Array = System.Array;
 
 namespace STS2RitsuLib.Settings
@@ -19,17 +17,18 @@ namespace STS2RitsuLib.Settings
             _initialValue = initialValue;
             _onChanged = onChanged;
 
-            CustomMinimumSize = new(264f, 64f);
+            CustomMinimumSize = new(ModSettingsUiFactory.EntryControlWidth, ModSettingsUiMetrics.EntryValueMinHeight);
             SizeFlagsHorizontal = SizeFlags.ShrinkEnd;
+            SizeFlagsVertical = SizeFlags.ShrinkCenter;
             FocusMode = FocusModeEnum.All;
             MouseFilter = MouseFilterEnum.Stop;
             Flat = false;
             AddThemeFontOverride("font", ModSettingsUiResources.KreonBold);
-            AddThemeFontSizeOverride("font_size", 20);
-            AddThemeColorOverride("font_color", new(0.95f, 0.98f, 1f));
-            AddThemeColorOverride("font_hover_color", new(1f, 1f, 1f));
-            AddThemeColorOverride("font_pressed_color", new(1f, 1f, 1f));
-            AddThemeColorOverride("font_focus_color", new(1f, 1f, 1f));
+            AddThemeFontSizeOverride("font_size", 18);
+            AddThemeColorOverride("font_color", ModSettingsUiPalette.LabelPrimary);
+            AddThemeColorOverride("font_hover_color", Colors.White);
+            AddThemeColorOverride("font_pressed_color", Colors.White);
+            AddThemeColorOverride("font_focus_color", Colors.White);
             Pressed += ToggleValue;
         }
 
@@ -85,14 +84,14 @@ namespace STS2RitsuLib.Settings
                 BorderWidthTop = 2,
                 BorderWidthRight = 2,
                 BorderWidthBottom = 2,
-                CornerRadiusTopLeft = 12,
-                CornerRadiusTopRight = 12,
-                CornerRadiusBottomRight = 12,
-                CornerRadiusBottomLeft = 12,
-                ContentMarginLeft = 20,
-                ContentMarginTop = 10,
-                ContentMarginRight = 20,
-                ContentMarginBottom = 10,
+                CornerRadiusTopLeft = ModSettingsUiMetrics.CornerRadius,
+                CornerRadiusTopRight = ModSettingsUiMetrics.CornerRadius,
+                CornerRadiusBottomRight = ModSettingsUiMetrics.CornerRadius,
+                CornerRadiusBottomLeft = ModSettingsUiMetrics.CornerRadius,
+                ContentMarginLeft = 14,
+                ContentMarginTop = 8,
+                ContentMarginRight = 14,
+                ContentMarginBottom = 8,
             };
         }
 
@@ -106,14 +105,14 @@ namespace STS2RitsuLib.Settings
                 BorderWidthTop = 2,
                 BorderWidthRight = 2,
                 BorderWidthBottom = 2,
-                CornerRadiusTopLeft = 12,
-                CornerRadiusTopRight = 12,
-                CornerRadiusBottomRight = 12,
-                CornerRadiusBottomLeft = 12,
-                ContentMarginLeft = 20,
-                ContentMarginTop = 10,
-                ContentMarginRight = 20,
-                ContentMarginBottom = 10,
+                CornerRadiusTopLeft = ModSettingsUiMetrics.CornerRadius,
+                CornerRadiusTopRight = ModSettingsUiMetrics.CornerRadius,
+                CornerRadiusBottomRight = ModSettingsUiMetrics.CornerRadius,
+                CornerRadiusBottomLeft = ModSettingsUiMetrics.CornerRadius,
+                ContentMarginLeft = 14,
+                ContentMarginTop = 8,
+                ContentMarginRight = 14,
+                ContentMarginBottom = 8,
             };
         }
     }
@@ -139,36 +138,39 @@ namespace STS2RitsuLib.Settings
             _onChanged = onChanged;
             _bindingValueAtConstruct = initialValue;
 
-            CustomMinimumSize = new(248f, 56f);
+            CustomMinimumSize = new(ModSettingsUiMetrics.SliderRowMinWidth, ModSettingsUiMetrics.EntryValueMinHeight);
             SizeFlagsHorizontal = SizeFlags.ShrinkEnd;
+            SizeFlagsVertical = SizeFlags.ShrinkCenter;
             Alignment = AlignmentMode.Center;
             MouseFilter = MouseFilterEnum.Ignore;
-            AddThemeConstantOverride("separation", 10);
+            AddThemeConstantOverride("separation", 8);
 
             var valueEdit = new LineEdit
             {
                 Name = "SliderValue",
-                CustomMinimumSize = new(80f, 56f),
+                CustomMinimumSize = new(ModSettingsUiMetrics.SliderValueFieldWidth,
+                    ModSettingsUiMetrics.SliderValueFieldHeight),
+                SizeFlagsHorizontal = SizeFlags.ShrinkBegin,
+                SizeFlagsVertical = SizeFlags.ShrinkCenter,
                 Alignment = HorizontalAlignment.Center,
                 SelectAllOnFocus = true,
                 CaretBlink = true,
             };
-            valueEdit.AddThemeFontOverride("font", ModSettingsUiResources.KreonRegular);
-            valueEdit.AddThemeFontSizeOverride("font_size", 18);
-            valueEdit.AddThemeColorOverride("font_color", new(1f, 0.964706f, 0.886275f));
-            valueEdit.AddThemeStyleboxOverride("normal", ModSettingsUiFactory.CreateSurfaceStyle());
-            valueEdit.AddThemeStyleboxOverride("focus", ModSettingsUiFactory.CreateSurfaceStyle());
+            ModSettingsUiControlTheming.ApplyEntryLineEditValueFieldTheme(valueEdit,
+                ModSettingsUiResources.KreonRegular);
             AddChild(valueEdit);
             _valueEdit = valueEdit;
 
             var sliderPanel = new MarginContainer
             {
                 SizeFlagsHorizontal = SizeFlags.ExpandFill,
-                CustomMinimumSize = new(240f, 56f),
+                SizeFlagsVertical = SizeFlags.ShrinkCenter,
+                CustomMinimumSize = new(ModSettingsUiMetrics.SliderTrackMinWidth,
+                    ModSettingsUiMetrics.SliderValueFieldHeight),
                 MouseFilter = MouseFilterEnum.Ignore,
             };
-            sliderPanel.AddThemeConstantOverride("margin_top", 16);
-            sliderPanel.AddThemeConstantOverride("margin_bottom", 16);
+            sliderPanel.AddThemeConstantOverride("margin_top", 4);
+            sliderPanel.AddThemeConstantOverride("margin_bottom", 4);
             AddChild(sliderPanel);
 
             var normalizedInitial = NormalizeSliderValue(initialValue, minValue, maxValue, step);
@@ -301,10 +303,10 @@ namespace STS2RitsuLib.Settings
                 BgColor = highlighted
                     ? new(0.48f, 0.73f, 0.92f, 0.95f)
                     : new Color(0.26f, 0.34f, 0.43f, 0.98f),
-                CornerRadiusTopLeft = 6,
-                CornerRadiusTopRight = 6,
-                CornerRadiusBottomRight = 6,
-                CornerRadiusBottomLeft = 6,
+                CornerRadiusTopLeft = ModSettingsUiMetrics.CornerRadius,
+                CornerRadiusTopRight = ModSettingsUiMetrics.CornerRadius,
+                CornerRadiusBottomRight = ModSettingsUiMetrics.CornerRadius,
+                CornerRadiusBottomLeft = ModSettingsUiMetrics.CornerRadius,
                 ContentMarginLeft = 8,
                 ContentMarginTop = 6,
                 ContentMarginRight = 8,
@@ -331,18 +333,26 @@ namespace STS2RitsuLib.Settings
             _currentValue = currentValue;
             _onChanged = onChanged;
 
-            CustomMinimumSize = new(248f, 56f);
+            CustomMinimumSize = new(ModSettingsUiMetrics.ChoiceRowMinWidth, ModSettingsUiMetrics.EntryValueMinHeight);
             SizeFlagsHorizontal = SizeFlags.ShrinkEnd;
+            SizeFlagsVertical = SizeFlags.ShrinkCenter;
             MouseFilter = MouseFilterEnum.Ignore;
             Alignment = AlignmentMode.Center;
-            AddThemeConstantOverride("separation", 8);
+            AddThemeConstantOverride("separation", 6);
 
-            AddChild(new ModSettingsMiniButton("<", () => Shift(-1)) { CustomMinimumSize = new(44f, 56f) });
+            AddChild(new ModSettingsMiniButton("<", () => Shift(-1))
+            {
+                CustomMinimumSize = new(ModSettingsUiMetrics.MiniStepperButtonSize,
+                    ModSettingsUiMetrics.MiniStepperButtonSize),
+                SizeFlagsVertical = SizeFlags.ShrinkCenter,
+            });
 
             var center = new PanelContainer
             {
-                CustomMinimumSize = new(152f, 56f),
+                CustomMinimumSize = new(ModSettingsUiMetrics.ChoiceCenterMinWidth,
+                    ModSettingsUiMetrics.SliderValueFieldHeight),
                 SizeFlagsHorizontal = SizeFlags.ExpandFill,
+                SizeFlagsVertical = SizeFlags.ShrinkCenter,
                 MouseFilter = MouseFilterEnum.Ignore,
             };
             center.AddThemeStyleboxOverride("panel", ModSettingsUiFactory.CreateSurfaceStyle());
@@ -354,14 +364,22 @@ namespace STS2RitsuLib.Settings
                 HorizontalAlignment = HorizontalAlignment.Center,
                 VerticalAlignment = VerticalAlignment.Center,
                 SizeFlagsHorizontal = SizeFlags.ExpandFill,
+                AutowrapMode = TextServer.AutowrapMode.Off,
+                TextOverrunBehavior = TextServer.OverrunBehavior.TrimEllipsis,
+                ClipText = true,
             };
             label.AddThemeFontOverride("font", ModSettingsUiResources.KreonBold);
-            label.AddThemeFontSizeOverride("font_size", 18);
-            label.AddThemeColorOverride("font_color", new(0.95f, 0.98f, 1f));
+            label.AddThemeFontSizeOverride("font_size", 17);
+            label.AddThemeColorOverride("font_color", ModSettingsUiPalette.LabelPrimary);
             center.AddChild(label);
             _label = label;
 
-            AddChild(new ModSettingsMiniButton(">", () => Shift(1)) { CustomMinimumSize = new(44f, 56f) });
+            AddChild(new ModSettingsMiniButton(">", () => Shift(1))
+            {
+                CustomMinimumSize = new(ModSettingsUiMetrics.MiniStepperButtonSize,
+                    ModSettingsUiMetrics.MiniStepperButtonSize),
+                SizeFlagsVertical = SizeFlags.ShrinkCenter,
+            });
         }
 
         public ModSettingsChoiceControl()
@@ -429,29 +447,29 @@ namespace STS2RitsuLib.Settings
             _optionsWithValues = options.ToArray();
             _onChanged = onChanged;
 
-            CustomMinimumSize = new(248f, 56f);
+            CustomMinimumSize = new(ModSettingsUiFactory.EntryControlWidth, ModSettingsUiMetrics.EntryValueMinHeight);
             SizeFlagsHorizontal = SizeFlags.ShrinkEnd;
+            SizeFlagsVertical = SizeFlags.ShrinkCenter;
             MouseFilter = MouseFilterEnum.Ignore;
 
             var dropdown = new OptionButton
             {
-                CustomMinimumSize = new(264f, 64f),
+                CustomMinimumSize = new(ModSettingsUiFactory.EntryControlWidth,
+                    ModSettingsUiMetrics.EntryValueMinHeight),
                 SizeFlagsHorizontal = SizeFlags.ExpandFill,
+                SizeFlagsVertical = SizeFlags.ShrinkCenter,
                 FocusMode = FocusModeEnum.All,
                 MouseFilter = MouseFilterEnum.Stop,
                 ClipText = true,
                 FitToLongestItem = false,
             };
             dropdown.AddThemeFontOverride("font", ModSettingsUiResources.KreonBold);
-            dropdown.AddThemeFontSizeOverride("font_size", 18);
-            dropdown.AddThemeColorOverride("font_color", new(0.95f, 0.98f, 1f));
+            dropdown.AddThemeFontSizeOverride("font_size", 17);
+            dropdown.AddThemeColorOverride("font_color", ModSettingsUiPalette.LabelPrimary);
             dropdown.AddThemeColorOverride("font_hover_color", new(1f, 1f, 1f));
             dropdown.AddThemeColorOverride("font_pressed_color", new(1f, 1f, 1f));
             dropdown.AddThemeColorOverride("font_focus_color", new(1f, 1f, 1f));
-            dropdown.AddThemeStyleboxOverride("normal", ModSettingsUiFactory.CreateSurfaceStyle());
-            dropdown.AddThemeStyleboxOverride("hover", ModSettingsUiFactory.CreateSurfaceStyle());
-            dropdown.AddThemeStyleboxOverride("pressed", ModSettingsUiFactory.CreateSurfaceStyle());
-            dropdown.AddThemeStyleboxOverride("focus", ModSettingsUiFactory.CreateSurfaceStyle());
+            ModSettingsUiControlTheming.ApplyUniformSurfaceButtonStates(dropdown);
             AddChild(dropdown);
             _optionButton = dropdown;
 
@@ -469,10 +487,7 @@ namespace STS2RitsuLib.Settings
 
             _optionButton.ItemSelected += OnItemSelected;
             if (_optionButton.GetPopup() is not { } popup) return;
-            popup.AddThemeFontOverride("font", ModSettingsUiResources.KreonRegular);
-            popup.AddThemeFontSizeOverride("font_size", 18);
-            popup.AddThemeConstantOverride("v_separation", 12);
-            popup.AddThemeConstantOverride("h_separation", 10);
+            ModSettingsUiControlTheming.ApplyPopupMenuListTheme(popup, 17);
         }
 
         public void SetValue(TValue value)
@@ -526,23 +541,22 @@ namespace STS2RitsuLib.Settings
         {
             _onChanged = onChanged;
 
-            CustomMinimumSize = new(320f, 56f);
+            CustomMinimumSize = new(ModSettingsUiMetrics.ColorRowMinWidth, ModSettingsUiMetrics.EntryValueMinHeight);
             SizeFlagsHorizontal = SizeFlags.ShrinkEnd;
+            SizeFlagsVertical = SizeFlags.ShrinkCenter;
             MouseFilter = MouseFilterEnum.Ignore;
             Alignment = AlignmentMode.Center;
-            AddThemeConstantOverride("separation", 10);
+            AddThemeConstantOverride("separation", 8);
 
             var pickerButton = new ColorPickerButton
             {
-                CustomMinimumSize = new(72f, 56f),
+                CustomMinimumSize = new(ModSettingsUiMetrics.ColorSwatchSize, ModSettingsUiMetrics.ColorSwatchSize),
+                SizeFlagsVertical = SizeFlags.ShrinkCenter,
                 MouseFilter = MouseFilterEnum.Stop,
                 FocusMode = FocusModeEnum.All,
                 EditAlpha = true,
             };
-            pickerButton.AddThemeStyleboxOverride("normal", ModSettingsUiFactory.CreateSurfaceStyle());
-            pickerButton.AddThemeStyleboxOverride("hover", ModSettingsUiFactory.CreateSurfaceStyle());
-            pickerButton.AddThemeStyleboxOverride("pressed", ModSettingsUiFactory.CreateSurfaceStyle());
-            pickerButton.AddThemeStyleboxOverride("focus", ModSettingsUiFactory.CreateSurfaceStyle());
+            ModSettingsUiControlTheming.ApplyColorPickerSwatchButtonChrome(pickerButton);
             AddChild(pickerButton);
             _pickerButton = pickerButton;
 
@@ -551,14 +565,11 @@ namespace STS2RitsuLib.Settings
                 PlaceholderText = "#RRGGBBAA",
                 SelectAllOnFocus = true,
                 Alignment = HorizontalAlignment.Center,
-                CustomMinimumSize = new(246f, 56f),
+                CustomMinimumSize = new(0f, ModSettingsUiMetrics.SliderValueFieldHeight),
                 SizeFlagsHorizontal = SizeFlags.ExpandFill,
+                SizeFlagsVertical = SizeFlags.ShrinkCenter,
             };
-            hexEdit.AddThemeFontOverride("font", ModSettingsUiResources.KreonBold);
-            hexEdit.AddThemeFontSizeOverride("font_size", 18);
-            hexEdit.AddThemeColorOverride("font_color", new(1f, 0.964706f, 0.886275f));
-            hexEdit.AddThemeStyleboxOverride("normal", ModSettingsUiFactory.CreateSurfaceStyle());
-            hexEdit.AddThemeStyleboxOverride("focus", ModSettingsUiFactory.CreateSurfaceStyle());
+            ModSettingsUiControlTheming.ApplyEntryLineEditValueFieldTheme(hexEdit, ModSettingsUiResources.KreonBold);
             AddChild(hexEdit);
             _hexEdit = hexEdit;
 
@@ -615,10 +626,8 @@ namespace STS2RitsuLib.Settings
                 return;
 
             _suppressCallbacks = true;
-            if (_pickerButton != null)
-                _pickerButton.Color = color;
-            if (_hexEdit != null)
-                _hexEdit.Text = FormatColor(color);
+            _pickerButton?.Color = color;
+            _hexEdit?.Text = FormatColor(color);
             _suppressCallbacks = false;
 
             if (notify)
@@ -689,48 +698,57 @@ namespace STS2RitsuLib.Settings
             _onChanged = onChanged;
             _currentValue = initialValue;
 
-            CustomMinimumSize = new(320f, 84f);
+            CustomMinimumSize = new(ModSettingsUiMetrics.KeybindingBlockWidth, 80f);
             SizeFlagsHorizontal = SizeFlags.ShrinkEnd;
             MouseFilter = MouseFilterEnum.Ignore;
             AddThemeConstantOverride("separation", 8);
 
-            var row = new HBoxContainer { MouseFilter = MouseFilterEnum.Ignore };
-            row.AddThemeConstantOverride("separation", 8);
+            var row = new HBoxContainer
+            {
+                MouseFilter = MouseFilterEnum.Ignore,
+                SizeFlagsHorizontal = SizeFlags.ExpandFill,
+                SizeFlagsVertical = SizeFlags.ShrinkCenter,
+            };
+            row.AddThemeConstantOverride("separation", 6);
             AddChild(row);
 
             var captureButton = new Button
             {
-                CustomMinimumSize = new(240f, 56f),
+                CustomMinimumSize = new(ModSettingsUiMetrics.KeybindingCaptureMinWidth,
+                    ModSettingsUiMetrics.EntryValueMinHeight),
                 SizeFlagsHorizontal = SizeFlags.ExpandFill,
+                SizeFlagsVertical = SizeFlags.ShrinkCenter,
                 FocusMode = FocusModeEnum.All,
                 MouseFilter = MouseFilterEnum.Stop,
+                ClipText = true,
             };
             captureButton.AddThemeFontOverride("font", ModSettingsUiResources.KreonBold);
             captureButton.AddThemeFontSizeOverride("font_size", 17);
-            captureButton.AddThemeStyleboxOverride("normal", ModSettingsUiFactory.CreateSurfaceStyle());
-            captureButton.AddThemeStyleboxOverride("hover", ModSettingsUiFactory.CreateSurfaceStyle());
-            captureButton.AddThemeStyleboxOverride("pressed", ModSettingsUiFactory.CreateSurfaceStyle());
-            captureButton.AddThemeStyleboxOverride("focus", ModSettingsUiFactory.CreateSurfaceStyle());
+            captureButton.AddThemeColorOverride("font_color", ModSettingsUiPalette.LabelPrimary);
+            ModSettingsUiControlTheming.ApplyUniformSurfaceButtonStates(captureButton);
             row.AddChild(captureButton);
             _captureButton = captureButton;
 
             row.AddChild(new ModSettingsMiniButton(ModSettingsLocalization.Get("button.clear", "Clear"),
                 () => ApplyBinding(string.Empty, true))
             {
-                CustomMinimumSize = new(72f, 56f),
+                CustomMinimumSize = new(64f, ModSettingsUiMetrics.EntryValueMinHeight),
+                SizeFlagsVertical = SizeFlags.ShrinkCenter,
             });
 
             var hint = new Label
             {
                 MouseFilter = MouseFilterEnum.Ignore,
+                SizeFlagsHorizontal = SizeFlags.ExpandFill,
+                AutowrapMode = TextServer.AutowrapMode.WordSmart,
                 Text = allowModifierCombos
                     ? ModSettingsLocalization.Get("keybinding.hint.combo",
                         "Click to record. Supports key combinations.")
                     : ModSettingsLocalization.Get("keybinding.hint.single", "Click to record a single key."),
             };
             hint.AddThemeFontOverride("font", ModSettingsUiResources.KreonRegular);
-            hint.AddThemeFontSizeOverride("font_size", 14);
-            hint.AddThemeColorOverride("font_color", new(0.82f, 0.89f, 0.94f, 0.92f));
+            hint.AddThemeFontSizeOverride("font_size", ModSettingsUiMetrics.KeybindingHintFontSize);
+            hint.AddThemeColorOverride("font_color", ModSettingsUiPalette.LabelSecondary);
             AddChild(hint);
             _hintLabel = hint;
 
@@ -876,10 +894,12 @@ namespace STS2RitsuLib.Settings
             Flat = false;
             Text = ModSettingsLocalization.Get("button.actionsGlyph", "\u22ee");
             TooltipText = ModSettingsLocalization.Get("button.actionsShort", "Actions");
-            CustomMinimumSize = new(44f, 40f);
+            CustomMinimumSize = new(36f, 32f);
+            SizeFlagsHorizontal = SizeFlags.ShrinkBegin;
+            SizeFlagsVertical = SizeFlags.ShrinkCenter;
             AddThemeFontOverride("font", ModSettingsUiResources.KreonBold);
-            AddThemeFontSizeOverride("font_size", 17);
-            AddThemeColorOverride("font_color", new(0.86f, 0.92f, 0.97f));
+            AddThemeFontSizeOverride("font_size", 18);
+            AddThemeColorOverride("font_color", ModSettingsUiPalette.RichTextSecondary);
             AddThemeColorOverride("font_hover_color", new(0.98f, 1f, 1f));
             AddThemeColorOverride("font_pressed_color", new(1f, 1f, 1f));
             AddThemeStyleboxOverride("normal", ModSettingsUiFactory.CreateChromeActionsMenuStyle(false));
@@ -939,7 +959,7 @@ namespace STS2RitsuLib.Settings
                 return;
 
             popup.Clear();
-            ApplyTouchFriendlyPopupTheme(popup);
+            ModSettingsUiControlTheming.ApplyPopupMenuListTheme(popup, 18);
             for (var i = 0; i < _actions.Count; i++)
             {
                 popup.AddItem(_actions[i].Label, i);
@@ -967,14 +987,6 @@ namespace STS2RitsuLib.Settings
                 Mathf.Clamp(position.X, minX, maxX),
                 Mathf.Clamp(position.Y, minY, maxY));
         }
-
-        private static void ApplyTouchFriendlyPopupTheme(PopupMenu popup)
-        {
-            popup.AddThemeFontOverride("font", ModSettingsUiResources.KreonRegular);
-            popup.AddThemeFontSizeOverride("font_size", 18);
-            popup.AddThemeConstantOverride("v_separation", 12);
-            popup.AddThemeConstantOverride("h_separation", 10);
-        }
     }
 
     internal sealed partial class ModSettingsMiniButton : Button
@@ -985,11 +997,12 @@ namespace STS2RitsuLib.Settings
             FocusMode = FocusModeEnum.All;
             MouseFilter = MouseFilterEnum.Stop;
             Flat = false;
+            ClipText = true;
             AddThemeFontOverride("font", ModSettingsUiResources.KreonBold);
-            AddThemeFontSizeOverride("font_size", 16);
-            AddThemeColorOverride("font_color", new(0.95f, 0.98f, 1f));
-            AddThemeColorOverride("font_hover_color", new(1f, 1f, 1f));
-            AddThemeColorOverride("font_pressed_color", new(1f, 1f, 1f));
+            AddThemeFontSizeOverride("font_size", 17);
+            AddThemeColorOverride("font_color", ModSettingsUiPalette.LabelPrimary);
+            AddThemeColorOverride("font_hover_color", Colors.White);
+            AddThemeColorOverride("font_pressed_color", Colors.White);
             AddThemeStyleboxOverride("normal", CreateStyle(false, false));
             AddThemeStyleboxOverride("hover", CreateStyle(true, false));
             AddThemeStyleboxOverride("pressed", CreateStyle(true, false));
@@ -1024,14 +1037,14 @@ namespace STS2RitsuLib.Settings
                 BorderWidthTop = 1,
                 BorderWidthRight = 1,
                 BorderWidthBottom = 1,
-                CornerRadiusTopLeft = 999,
-                CornerRadiusTopRight = 999,
-                CornerRadiusBottomRight = 999,
-                CornerRadiusBottomLeft = 999,
-                ContentMarginLeft = 12,
-                ContentMarginTop = 6,
-                ContentMarginRight = 12,
-                ContentMarginBottom = 6,
+                CornerRadiusTopLeft = ModSettingsUiMetrics.CornerRadius,
+                CornerRadiusTopRight = ModSettingsUiMetrics.CornerRadius,
+                CornerRadiusBottomRight = ModSettingsUiMetrics.CornerRadius,
+                CornerRadiusBottomLeft = ModSettingsUiMetrics.CornerRadius,
+                ContentMarginLeft = 10,
+                ContentMarginTop = 5,
+                ContentMarginRight = 10,
+                ContentMarginBottom = 5,
             };
         }
     }
@@ -1047,7 +1060,7 @@ namespace STS2RitsuLib.Settings
             FocusMode = FocusModeEnum.All;
             MouseFilter = MouseFilterEnum.Stop;
             Flat = false;
-            CustomMinimumSize = new(76f, 0f);
+            CustomMinimumSize = new(52f, 0f);
             SizeFlagsVertical = SizeFlags.ExpandFill;
             AddThemeStyleboxOverride("normal", CreateRailStyle(false));
             AddThemeStyleboxOverride("hover", CreateRailStyle(true));
@@ -1062,7 +1075,7 @@ namespace STS2RitsuLib.Settings
                 MouseFilter = MouseFilterEnum.Ignore,
                 Alignment = BoxContainer.AlignmentMode.Center,
             };
-            content.AddThemeConstantOverride("separation", 8);
+            content.AddThemeConstantOverride("separation", 3);
             AddChild(content);
 
             var number = new Label
@@ -1073,7 +1086,7 @@ namespace STS2RitsuLib.Settings
                 MouseFilter = MouseFilterEnum.Ignore,
             };
             number.AddThemeFontOverride("font", ModSettingsUiResources.KreonBold);
-            number.AddThemeFontSizeOverride("font_size", 26);
+            number.AddThemeFontSizeOverride("font_size", 17);
             number.AddThemeColorOverride("font_color", new(0.96f, 0.98f, 1f));
             content.AddChild(number);
 
@@ -1085,7 +1098,7 @@ namespace STS2RitsuLib.Settings
                 MouseFilter = MouseFilterEnum.Ignore,
             };
             grip.AddThemeFontOverride("font", ModSettingsUiResources.KreonBold);
-            grip.AddThemeFontSizeOverride("font_size", 18);
+            grip.AddThemeFontSizeOverride("font_size", 14);
             grip.AddThemeColorOverride("font_color", new(0.78f, 0.88f, 0.94f, 0.95f));
             content.AddChild(grip);
 
@@ -1098,7 +1111,7 @@ namespace STS2RitsuLib.Settings
                 MouseFilter = MouseFilterEnum.Ignore,
             };
             hint.AddThemeFontOverride("font", ModSettingsUiResources.KreonRegular);
-            hint.AddThemeFontSizeOverride("font_size", 13);
+            hint.AddThemeFontSizeOverride("font_size", 12);
             hint.AddThemeColorOverride("font_color", new(0.80f, 0.89f, 0.94f, 0.90f));
             content.AddChild(hint);
         }
@@ -1114,22 +1127,10 @@ namespace STS2RitsuLib.Settings
 
             var preview = new PanelContainer
             {
-                CustomMinimumSize = new(120f, 40f),
+                CustomMinimumSize = new(48f, ModSettingsUiMetrics.EntryValueMinHeight),
                 MouseFilter = MouseFilterEnum.Ignore,
             };
-            preview.AddThemeStyleboxOverride("panel", ModSettingsUiFactory.CreatePillStyle(true));
-
-            var label = new Label
-            {
-                Text = ModSettingsLocalization.Get("list.dragHint", "Drag to reorder"),
-                HorizontalAlignment = HorizontalAlignment.Center,
-                VerticalAlignment = VerticalAlignment.Center,
-                MouseFilter = MouseFilterEnum.Ignore,
-            };
-            label.AddThemeFontOverride("font", ModSettingsUiResources.KreonBold);
-            label.AddThemeFontSizeOverride("font_size", 16);
-            label.AddThemeColorOverride("font_color", new(0.93f, 0.97f, 1f));
-            preview.AddChild(label);
+            preview.AddThemeStyleboxOverride("panel", ModSettingsUiFactory.CreateListItemCardStyle(true));
             SetDragPreview(preview);
             return Variant.From(_dragDataProvider());
         }
@@ -1148,14 +1149,14 @@ namespace STS2RitsuLib.Settings
                 BorderWidthTop = 0,
                 BorderWidthRight = 1,
                 BorderWidthBottom = 0,
-                CornerRadiusTopLeft = 14,
-                CornerRadiusTopRight = 0,
-                CornerRadiusBottomRight = 0,
-                CornerRadiusBottomLeft = 14,
-                ContentMarginLeft = 10,
-                ContentMarginTop = 16,
-                ContentMarginRight = 10,
-                ContentMarginBottom = 16,
+                CornerRadiusTopLeft = ModSettingsUiMetrics.CornerRadius,
+                CornerRadiusTopRight = ModSettingsUiMetrics.CornerRadius,
+                CornerRadiusBottomRight = ModSettingsUiMetrics.CornerRadius,
+                CornerRadiusBottomLeft = ModSettingsUiMetrics.CornerRadius,
+                ContentMarginLeft = 6,
+                ContentMarginTop = 8,
+                ContentMarginRight = 6,
+                ContentMarginBottom = 8,
             };
         }
     }
@@ -1245,7 +1246,7 @@ namespace STS2RitsuLib.Settings
                 SizeFlagsHorizontal = SizeFlags.ExpandFill,
                 MouseFilter = MouseFilterEnum.Ignore,
             };
-            root.AddThemeConstantOverride("separation", 14);
+            root.AddThemeConstantOverride("separation", 10);
             shell.AddChild(root);
 
             var header = new HBoxContainer
@@ -1254,7 +1255,7 @@ namespace STS2RitsuLib.Settings
                 MouseFilter = MouseFilterEnum.Ignore,
                 Alignment = AlignmentMode.Center,
             };
-            header.AddThemeConstantOverride("separation", 12);
+            header.AddThemeConstantOverride("separation", 10);
             root.AddChild(header);
 
             var textColumn = new VBoxContainer
@@ -1262,19 +1263,21 @@ namespace STS2RitsuLib.Settings
                 SizeFlagsHorizontal = SizeFlags.ExpandFill,
                 MouseFilter = MouseFilterEnum.Ignore,
             };
-            textColumn.AddThemeConstantOverride("separation", 4);
+            textColumn.AddThemeConstantOverride("separation", 3);
             header.AddChild(textColumn);
 
             textColumn.AddChild(ModSettingsUiFactory.CreateRefreshableSectionTitle(UiContext,
-                () => ModSettingsUiContext.Resolve(_entry.Label)));
+                () => ModSettingsUiFactory.ResolveEntryLabelDisplay(_entry.Label)));
 
             var descriptionLabel = ModSettingsUiFactory.CreateRefreshableDescriptionLabel(UiContext,
-                () => ModSettingsUiContext.ComposeBindingDescription(_entry.Description, _entry.Binding));
+                () => ModSettingsUiContext.ResolveBindingDescriptionBody(_entry.Description));
             textColumn.AddChild(descriptionLabel);
+
+            textColumn.AddChild(ModSettingsUiFactory.CreatePersistenceScopeTag(_entry.Binding));
 
             var summary = new PanelContainer
             {
-                CustomMinimumSize = new(108f, 38f),
+                CustomMinimumSize = new(96f, 32f),
                 MouseFilter = MouseFilterEnum.Ignore,
                 SizeFlagsVertical = SizeFlags.ShrinkCenter,
             };
@@ -1288,8 +1291,8 @@ namespace STS2RitsuLib.Settings
                 MouseFilter = MouseFilterEnum.Ignore,
             };
             countLabel.AddThemeFontOverride("font", ModSettingsUiResources.KreonBold);
-            countLabel.AddThemeFontSizeOverride("font_size", 16);
-            countLabel.AddThemeColorOverride("font_color", new(0.90f, 0.96f, 1f));
+            countLabel.AddThemeFontSizeOverride("font_size", 15);
+            countLabel.AddThemeColorOverride("font_color", ModSettingsUiPalette.LabelPrimary);
             summary.AddChild(countLabel);
             _countLabel = countLabel;
 
@@ -1297,8 +1300,9 @@ namespace STS2RitsuLib.Settings
                 ModSettingsButtonTone.Accent,
                 () => Mutate(items => items.Add(_entry.CreateItem())))
             {
-                CustomMinimumSize = new(184f, 56f),
+                CustomMinimumSize = new(152f, ModSettingsUiMetrics.EntryValueMinHeight),
                 SizeFlagsHorizontal = SizeFlags.ShrinkEnd,
+                SizeFlagsVertical = SizeFlags.ShrinkCenter,
             };
             header.AddChild(addButton);
 
@@ -1322,19 +1326,15 @@ namespace STS2RitsuLib.Settings
                 SizeFlagsHorizontal = SizeFlags.ExpandFill,
                 MouseFilter = MouseFilterEnum.Ignore,
             };
-            bodyContent.AddThemeConstantOverride("separation", 8);
+            bodyContent.AddThemeConstantOverride("separation", 6);
             body.AddChild(bodyContent);
-
-            var hintLabel = ModSettingsUiFactory.CreateInlineDescription(
-                ModSettingsLocalization.Get("list.dragHint", "Drag to reorder"));
-            bodyContent.AddChild(hintLabel);
 
             _rows = new()
             {
                 SizeFlagsHorizontal = SizeFlags.ExpandFill,
                 MouseFilter = MouseFilterEnum.Ignore,
             };
-            _rows.AddThemeConstantOverride("separation", 10);
+            _rows.AddThemeConstantOverride("separation", 6);
             bodyContent.AddChild(_rows);
 
             var emptyState = new PanelContainer
@@ -1355,8 +1355,8 @@ namespace STS2RitsuLib.Settings
                 MouseFilter = MouseFilterEnum.Ignore,
             };
             emptyLabel.AddThemeFontOverride("font", ModSettingsUiResources.KreonRegular);
-            emptyLabel.AddThemeFontSizeOverride("font_size", 18);
-            emptyLabel.AddThemeColorOverride("font_color", new(0.83f, 0.89f, 0.94f, 0.92f));
+            emptyLabel.AddThemeFontSizeOverride("font_size", 16);
+            emptyLabel.AddThemeColorOverride("font_color", ModSettingsUiPalette.LabelSecondary);
             emptyState.AddChild(emptyLabel);
             _emptyState = emptyState;
 
@@ -1407,8 +1407,7 @@ namespace STS2RitsuLib.Settings
             return new ModSettingsListItemCard<TItem>(
                 this,
                 index,
-                itemCount,
-                ModSettingsUiContext.Resolve(_entry.ItemLabel(item)),
+                ModSettingsUiFactory.ResolveEntryLabelDisplay(_entry.ItemLabel(item)),
                 _entry.ItemDescription?.Invoke(item) is { } description
                     ? ModSettingsUiContext.Resolve(description)
                     : null,
@@ -1629,14 +1628,14 @@ namespace STS2RitsuLib.Settings
                 BorderWidthBottom = highlighted ? 1 : 0,
                 BorderWidthLeft = 0,
                 BorderWidthRight = 0,
-                CornerRadiusTopLeft = 999,
-                CornerRadiusTopRight = 999,
-                CornerRadiusBottomRight = 999,
-                CornerRadiusBottomLeft = 999,
+                CornerRadiusTopLeft = ModSettingsUiMetrics.CornerRadius,
+                CornerRadiusTopRight = ModSettingsUiMetrics.CornerRadius,
+                CornerRadiusBottomRight = ModSettingsUiMetrics.CornerRadius,
+                CornerRadiusBottomLeft = ModSettingsUiMetrics.CornerRadius,
                 ContentMarginLeft = 0,
-                ContentMarginTop = highlighted ? 2 : 0,
+                ContentMarginTop = highlighted ? 1 : 0,
                 ContentMarginRight = 0,
-                ContentMarginBottom = highlighted ? 2 : 0,
+                ContentMarginBottom = highlighted ? 1 : 0,
             };
         }
     }
@@ -1649,7 +1648,6 @@ namespace STS2RitsuLib.Settings
         public ModSettingsListItemCard(
             ModSettingsListControl<TItem> owner,
             int index,
-            int itemCount,
             string title,
             string? subtitle,
             ModSettingsListItemContext<TItem> itemContext,
@@ -1667,7 +1665,7 @@ namespace STS2RitsuLib.Settings
                 MouseFilter = MouseFilterEnum.Ignore,
                 Alignment = BoxContainer.AlignmentMode.Begin,
             };
-            outer.AddThemeConstantOverride("separation", 14);
+            outer.AddThemeConstantOverride("separation", 8);
             AddChild(outer);
 
             outer.AddChild(new ModSettingsDragHandle((index + 1).ToString(), () => owner.CreateDragData(index)));
@@ -1677,7 +1675,7 @@ namespace STS2RitsuLib.Settings
                 SizeFlagsHorizontal = SizeFlags.ExpandFill,
                 MouseFilter = MouseFilterEnum.Ignore,
             };
-            root.AddThemeConstantOverride("separation", 12);
+            root.AddThemeConstantOverride("separation", 8);
             outer.AddChild(root);
 
             var header = new HBoxContainer
@@ -1686,7 +1684,7 @@ namespace STS2RitsuLib.Settings
                 MouseFilter = MouseFilterEnum.Ignore,
                 Alignment = BoxContainer.AlignmentMode.Center,
             };
-            header.AddThemeConstantOverride("separation", 12);
+            header.AddThemeConstantOverride("separation", 8);
             root.AddChild(header);
 
             var textColumn = new VBoxContainer
@@ -1694,7 +1692,7 @@ namespace STS2RitsuLib.Settings
                 SizeFlagsHorizontal = SizeFlags.ExpandFill,
                 MouseFilter = MouseFilterEnum.Ignore,
             };
-            textColumn.AddThemeConstantOverride("separation", 3);
+            textColumn.AddThemeConstantOverride("separation", 2);
             header.AddChild(textColumn);
 
             textColumn.AddChild(ModSettingsUiFactory.CreateSectionTitle(title));
@@ -1726,20 +1724,6 @@ namespace STS2RitsuLib.Settings
                 root.AddChild(editorSurface);
                 editorSurface.AddChild(editorContent);
             }
-
-            var footer = new HBoxContainer
-            {
-                SizeFlagsHorizontal = SizeFlags.ExpandFill,
-                MouseFilter = MouseFilterEnum.Ignore,
-            };
-            footer.AddThemeConstantOverride("separation", 8);
-            root.AddChild(footer);
-
-            var statusLabel = ModSettingsUiFactory.CreateInlineDescription(string.Format(
-                ModSettingsLocalization.Get("list.position", "Item {0} of {1}"),
-                index + 1,
-                itemCount));
-            footer.AddChild(statusLabel);
         }
 
         public ModSettingsListItemCard()
@@ -1781,6 +1765,8 @@ namespace STS2RitsuLib.Settings
             FocusMode = FocusModeEnum.Click;
             MouseFilter = MouseFilterEnum.Stop;
             Flat = false;
+            ClipContents = false;
+            Text = string.Empty;
             CustomMinimumSize = new(0f, string.IsNullOrWhiteSpace(subtitle) ? 56f : 84f);
             SizeFlagsHorizontal = SizeFlags.ExpandFill;
 
@@ -1791,10 +1777,13 @@ namespace STS2RitsuLib.Settings
 
             var frame = new MarginContainer
             {
-                AnchorRight = 1f,
-                AnchorBottom = 1f,
                 MouseFilter = MouseFilterEnum.Ignore,
             };
+            frame.SetAnchorsPreset(LayoutPreset.FullRect);
+            frame.OffsetLeft = 0;
+            frame.OffsetTop = 0;
+            frame.OffsetRight = 0;
+            frame.OffsetBottom = 0;
             frame.AddThemeConstantOverride("margin_left", 14);
             frame.AddThemeConstantOverride("margin_top", 10);
             frame.AddThemeConstantOverride("margin_right", 14);
@@ -1803,9 +1792,9 @@ namespace STS2RitsuLib.Settings
 
             var root = new HBoxContainer
             {
-                AnchorRight = 1f,
-                AnchorBottom = 1f,
                 MouseFilter = MouseFilterEnum.Ignore,
+                SizeFlagsHorizontal = SizeFlags.ExpandFill,
+                SizeFlagsVertical = SizeFlags.ExpandFill,
                 Alignment = BoxContainer.AlignmentMode.Center,
             };
             root.AddThemeConstantOverride("separation", 12);
@@ -1820,8 +1809,8 @@ namespace STS2RitsuLib.Settings
                 SizeFlagsVertical = SizeFlags.ShrinkCenter,
             };
             arrowLabel.AddThemeFontOverride("font", ModSettingsUiResources.KreonBold);
-            arrowLabel.AddThemeFontSizeOverride("font_size", 20);
-            arrowLabel.AddThemeColorOverride("font_color", new(0.90f, 0.95f, 0.98f));
+            arrowLabel.AddThemeFontSizeOverride("font_size", 21);
+            arrowLabel.AddThemeColorOverride("font_color", ModSettingsUiPalette.RichTextSecondary);
             root.AddChild(arrowLabel);
             _arrowLabel = arrowLabel;
 
@@ -1839,10 +1828,13 @@ namespace STS2RitsuLib.Settings
                 HorizontalAlignment = HorizontalAlignment.Left,
                 VerticalAlignment = VerticalAlignment.Center,
                 MouseFilter = MouseFilterEnum.Ignore,
+                AutowrapMode = TextServer.AutowrapMode.WordSmart,
+                ClipText = false,
+                SizeFlagsHorizontal = SizeFlags.ExpandFill,
             };
             titleLabel.AddThemeFontOverride("font", ModSettingsUiResources.KreonBold);
-            titleLabel.AddThemeFontSizeOverride("font_size", 22);
-            titleLabel.AddThemeColorOverride("font_color", new(0.96f, 0.98f, 1f));
+            titleLabel.AddThemeFontSizeOverride("font_size", 24);
+            titleLabel.AddThemeColorOverride("font_color", ModSettingsUiPalette.LabelPrimary);
             textColumn.AddChild(titleLabel);
             _titleLabel = titleLabel;
 
@@ -1854,10 +1846,12 @@ namespace STS2RitsuLib.Settings
                     HorizontalAlignment = HorizontalAlignment.Left,
                     VerticalAlignment = VerticalAlignment.Center,
                     MouseFilter = MouseFilterEnum.Ignore,
+                    SizeFlagsHorizontal = SizeFlags.ExpandFill,
+                    ClipText = false,
                 };
                 subtitleLabel.AddThemeFontOverride("font", ModSettingsUiResources.KreonRegular);
-                subtitleLabel.AddThemeFontSizeOverride("font_size", 15);
-                subtitleLabel.AddThemeColorOverride("font_color", new(0.75f, 0.84f, 0.90f, 0.94f));
+                subtitleLabel.AddThemeFontSizeOverride("font_size", 17);
+                subtitleLabel.AddThemeColorOverride("font_color", ModSettingsUiPalette.LabelSecondary);
                 textColumn.AddChild(subtitleLabel);
                 _subtitleLabel = subtitleLabel;
             }
@@ -1911,10 +1905,10 @@ namespace STS2RitsuLib.Settings
                 BorderWidthTop = 2,
                 BorderWidthRight = 2,
                 BorderWidthBottom = 2,
-                CornerRadiusTopLeft = 10,
-                CornerRadiusTopRight = 10,
-                CornerRadiusBottomRight = 10,
-                CornerRadiusBottomLeft = 10,
+                CornerRadiusTopLeft = ModSettingsUiMetrics.CornerRadius,
+                CornerRadiusTopRight = ModSettingsUiMetrics.CornerRadius,
+                CornerRadiusBottomRight = ModSettingsUiMetrics.CornerRadius,
+                CornerRadiusBottomLeft = ModSettingsUiMetrics.CornerRadius,
             };
         }
     }
@@ -1941,7 +1935,7 @@ namespace STS2RitsuLib.Settings
             _contentControls = contentControls;
             _headerActions = headerActions;
             MouseFilter = MouseFilterEnum.Ignore;
-            AddThemeConstantOverride("separation", 6);
+            AddThemeConstantOverride("separation", 8);
         }
 
         public ModSettingsCollapsibleSection()
@@ -1965,7 +1959,7 @@ namespace STS2RitsuLib.Settings
             {
                 MouseFilter = MouseFilterEnum.Ignore,
             };
-            cardContent.AddThemeConstantOverride("separation", 6);
+            cardContent.AddThemeConstantOverride("separation", 8);
             card.AddChild(cardContent);
 
             if (_title != null)
@@ -1982,7 +1976,7 @@ namespace STS2RitsuLib.Settings
                     MouseFilter = MouseFilterEnum.Ignore,
                     Alignment = AlignmentMode.Center,
                 };
-                headerRow.AddThemeConstantOverride("separation", 8);
+                headerRow.AddThemeConstantOverride("separation", 10);
                 if (_toggle != null)
                 {
                     _toggle.SizeFlagsHorizontal = SizeFlags.ExpandFill;
@@ -2007,7 +2001,7 @@ namespace STS2RitsuLib.Settings
             }
 
             _content = new() { MouseFilter = MouseFilterEnum.Ignore };
-            _content.AddThemeConstantOverride("separation", 6);
+            _content.AddThemeConstantOverride("separation", 8);
             if (_contentControls != null)
                 foreach (var control in _contentControls)
                     _content.AddChild(control);
@@ -2083,8 +2077,8 @@ namespace STS2RitsuLib.Settings
                 _ => 17,
             });
             AddThemeColorOverride("font_color", kind == ModSettingsSidebarItemKind.Section
-                ? new(0.82f, 0.89f, 0.94f)
-                : new Color(0.93f, 0.96f, 0.98f));
+                ? ModSettingsUiPalette.SidebarSection
+                : ModSettingsUiPalette.LabelPrimary);
             AddThemeColorOverride("font_hover_color", new(0.98f, 1f, 1f));
             AddThemeColorOverride("font_pressed_color", new(1f, 1f, 1f));
             AddThemeColorOverride("font_focus_color", new(1f, 1f, 1f));
@@ -2176,10 +2170,10 @@ namespace STS2RitsuLib.Settings
                 BorderWidthTop = 1,
                 BorderWidthRight = 1,
                 BorderWidthBottom = 1,
-                CornerRadiusTopLeft = kind == ModSettingsSidebarItemKind.Section ? 10 : 16,
-                CornerRadiusTopRight = kind == ModSettingsSidebarItemKind.Section ? 10 : 16,
-                CornerRadiusBottomRight = kind == ModSettingsSidebarItemKind.Section ? 10 : 16,
-                CornerRadiusBottomLeft = kind == ModSettingsSidebarItemKind.Section ? 10 : 16,
+                CornerRadiusTopLeft = ModSettingsUiMetrics.CornerRadius,
+                CornerRadiusTopRight = ModSettingsUiMetrics.CornerRadius,
+                CornerRadiusBottomRight = ModSettingsUiMetrics.CornerRadius,
+                CornerRadiusBottomLeft = ModSettingsUiMetrics.CornerRadius,
                 ShadowColor = new(0f, 0f, 0f, 0.18f),
                 ShadowSize = kind == ModSettingsSidebarItemKind.ModGroup ? 4 : 2,
                 ContentMarginLeft = (kind == ModSettingsSidebarItemKind.Section ? 14 : 18) + indentLevel * 14,
@@ -2199,99 +2193,15 @@ namespace STS2RitsuLib.Settings
                 BorderWidthTop = 2,
                 BorderWidthRight = 2,
                 BorderWidthBottom = 2,
-                CornerRadiusTopLeft = 12,
-                CornerRadiusTopRight = 12,
-                CornerRadiusBottomRight = 12,
-                CornerRadiusBottomLeft = 12,
-                ContentMarginLeft = 18,
-                ContentMarginTop = 10,
-                ContentMarginRight = 18,
-                ContentMarginBottom = 10,
+                CornerRadiusTopLeft = ModSettingsUiMetrics.CornerRadius,
+                CornerRadiusTopRight = ModSettingsUiMetrics.CornerRadius,
+                CornerRadiusBottomRight = ModSettingsUiMetrics.CornerRadius,
+                CornerRadiusBottomLeft = ModSettingsUiMetrics.CornerRadius,
+                ContentMarginLeft = 14,
+                ContentMarginTop = 8,
+                ContentMarginRight = 14,
+                ContentMarginBottom = 8,
             };
-        }
-    }
-
-    internal sealed partial class ModSettingsSettingsEntryButton : NSettingsButton
-    {
-        private readonly Action? _action;
-        private readonly string? _text;
-        private MegaLabel? _buttonLabel;
-
-        public ModSettingsSettingsEntryButton(string text, Action action)
-        {
-            _text = text;
-            _action = action;
-
-            CustomMinimumSize = new(320f, 64f);
-            SizeFlagsHorizontal = SizeFlags.ShrinkEnd;
-            SizeFlagsVertical = SizeFlags.Fill;
-            FocusMode = FocusModeEnum.All;
-
-            var image = new TextureRect
-            {
-                Name = "Image",
-                Material = ModSettingsUiResources.CreateToneMaterial(ModSettingsButtonTone.Accent),
-                CustomMinimumSize = new(64f, 64f),
-                AnchorRight = 1f,
-                AnchorBottom = 1f,
-                GrowHorizontal = GrowDirection.Both,
-                GrowVertical = GrowDirection.Both,
-                PivotOffset = new(140f, 32f),
-                Texture = ModSettingsUiResources.SettingsButtonTexture,
-                ExpandMode = TextureRect.ExpandModeEnum.IgnoreSize,
-                StretchMode = TextureRect.StretchModeEnum.KeepAspectCentered,
-                MouseFilter = MouseFilterEnum.Ignore,
-            };
-            AddChild(image);
-
-            var label = new MegaLabel
-            {
-                Name = "Label",
-                AnchorRight = 1f,
-                AnchorBottom = 1f,
-                GrowHorizontal = GrowDirection.Both,
-                GrowVertical = GrowDirection.Both,
-                PivotOffset = new(140f, 32f),
-                HorizontalAlignment = HorizontalAlignment.Center,
-                VerticalAlignment = VerticalAlignment.Center,
-            };
-            label.AddThemeColorOverride("font_color", new(0.82f, 0.94f, 0.78f));
-            label.AddThemeColorOverride("font_shadow_color", new(0f, 0f, 0f, 0.25098f));
-            label.AddThemeColorOverride("font_outline_color",
-                ModSettingsUiResources.GetToneOutlineColor(ModSettingsButtonTone.Accent));
-            label.AddThemeConstantOverride("shadow_offset_x", 4);
-            label.AddThemeConstantOverride("shadow_offset_y", 3);
-            label.AddThemeConstantOverride("outline_size", 12);
-            label.AddThemeConstantOverride("shadow_outline_size", 0);
-            label.AddThemeFontOverride("font", ModSettingsUiResources.KreonButton);
-            label.AddThemeFontSizeOverride("font_size", 28);
-            label.MinFontSize = 16;
-            label.MaxFontSize = 28;
-            AddChild(label);
-
-            var reticle = ModSettingsUiResources.SelectionReticleScene.Instantiate<Control>();
-            reticle.Name = "SelectionReticle";
-            reticle.SetAnchorsPreset(LayoutPreset.FullRect);
-            AddChild(reticle);
-        }
-
-        public ModSettingsSettingsEntryButton()
-        {
-        }
-
-        public override void _Ready()
-        {
-            ConnectSignals();
-            _buttonLabel = GetNode<MegaLabel>("Label");
-            if (_text != null)
-                _buttonLabel.SetTextAutoSize(_text);
-        }
-
-        protected override void OnRelease()
-        {
-            base.OnRelease();
-            _action?.Invoke();
-            ReleaseFocus();
         }
     }
 
@@ -2307,18 +2217,19 @@ namespace STS2RitsuLib.Settings
             _tone = tone;
 
             Text = text;
-            CustomMinimumSize = new(248f, 56f);
+            CustomMinimumSize = new(ModSettingsUiFactory.EntryControlWidth, ModSettingsUiMetrics.EntryValueMinHeight);
             SizeFlagsHorizontal = SizeFlags.ShrinkEnd;
-            SizeFlagsVertical = SizeFlags.Fill;
+            SizeFlagsVertical = SizeFlags.ShrinkCenter;
             FocusMode = FocusModeEnum.Click;
             MouseFilter = MouseFilterEnum.Stop;
             Flat = false;
+            ClipText = true;
             AddThemeFontOverride("font", ModSettingsUiResources.KreonBold);
-            AddThemeFontSizeOverride("font_size", 20);
-            AddThemeColorOverride("font_color", new(0.95f, 0.98f, 1f));
-            AddThemeColorOverride("font_hover_color", new(1f, 1f, 1f));
-            AddThemeColorOverride("font_pressed_color", new(1f, 1f, 1f));
-            AddThemeColorOverride("font_focus_color", new(1f, 1f, 1f));
+            AddThemeFontSizeOverride("font_size", 18);
+            AddThemeColorOverride("font_color", ModSettingsUiPalette.LabelPrimary);
+            AddThemeColorOverride("font_hover_color", Colors.White);
+            AddThemeColorOverride("font_pressed_color", Colors.White);
+            AddThemeColorOverride("font_focus_color", Colors.White);
             ApplyVisualState();
             Pressed += () =>
             {
@@ -2380,16 +2291,16 @@ namespace STS2RitsuLib.Settings
                 BorderWidthTop = 1,
                 BorderWidthRight = 1,
                 BorderWidthBottom = 1,
-                CornerRadiusTopLeft = 14,
-                CornerRadiusTopRight = 14,
-                CornerRadiusBottomRight = 14,
-                CornerRadiusBottomLeft = 14,
-                ShadowColor = new(0f, 0f, 0f, 0.18f),
-                ShadowSize = 4,
-                ContentMarginLeft = 18,
-                ContentMarginTop = 10,
-                ContentMarginRight = 18,
-                ContentMarginBottom = 10,
+                CornerRadiusTopLeft = ModSettingsUiMetrics.CornerRadius,
+                CornerRadiusTopRight = ModSettingsUiMetrics.CornerRadius,
+                CornerRadiusBottomRight = ModSettingsUiMetrics.CornerRadius,
+                CornerRadiusBottomLeft = ModSettingsUiMetrics.CornerRadius,
+                ShadowColor = new(0f, 0f, 0f, 0.12f),
+                ShadowSize = 2,
+                ContentMarginLeft = 14,
+                ContentMarginTop = 8,
+                ContentMarginRight = 14,
+                ContentMarginBottom = 8,
             };
         }
     }

@@ -1,4 +1,6 @@
 {
+  "page.untitled": "제목 없음",
+  "entry.label.empty": "\u2014",
   "entry.title": "Mod 설정 (RitsuLib)",
   "entry.subtitle": "플레이어용 모드 옵션을 여기서 편집하세요.",
   "ritsulib.mod.displayName": "RitsuLib",
@@ -36,6 +38,12 @@
   "ritsulib.showcase.choice.wide": "넓게",
   "ritsulib.showcase.mode.label": "미리보기 열거형 선택",
   "ritsulib.showcase.mode.description": "현재 모드: {0}",
+  "ritsulib.showcase.string.label": "미리보기 문자열 입력",
+  "ritsulib.showcase.string.description": "현재 텍스트: {0}",
+  "ritsulib.showcase.string.placeholder": "한 줄 문자열 바인딩(한 줄 입력)",
+  "ritsulib.showcase.stringMulti.label": "미리보기 여러 줄 문자열",
+  "ritsulib.showcase.stringMulti.description": "글자 {0}개, 줄 {1}줄.",
+  "ritsulib.showcase.stringMulti.placeholder": "여러 줄 — 줄 바꿈 키로 새 줄을 넣습니다.",
   "ritsulib.showcase.mode.Compact": "컴팩트",
   "ritsulib.showcase.mode.Balanced": "균형",
   "ritsulib.showcase.mode.Detailed": "상세",
@@ -111,8 +119,14 @@
   "ritsulib.showcase.details.field.label": "라벨",
   "ritsulib.showcase.details.field.value": "값",
   "button.actionsShort": "동작",
+  "button.actionsGlyph": "\u22ee",
   "button.resetDefault": "기본값으로 되돌리기",
   "button.copySelf": "현재 항목 복사",
   "button.copySubtree": "하위 항목 포함 복사",
-  "keybinding.hint.comboNonModifier": "클릭하여 기록합니다. 조합 키를 지원하며, 반드시 비수식 키를 하나 포함해야 합니다."
+  "keybinding.hint.comboNonModifier": "클릭하여 기록합니다. 조합 키를 지원하며, 반드시 비수식 키를 하나 포함해야 합니다.",
+  "clipboard.pasteFailedTitle": "붙여넣기 실패",
+  "clipboard.pasteErrorOk": "확인",
+  "clipboard.pasteFailedEmpty": "클립보드가 비어 있거나 사용할 수 없습니다.",
+  "clipboard.pasteFailedBlocked": "사용자 규칙으로 붙여넣기가 차단되었습니다.",
+  "clipboard.pasteFailedIncompatible": "클립보드 내용이 이 설정 항목과 호환되지 않습니다."
 }

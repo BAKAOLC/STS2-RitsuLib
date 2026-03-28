@@ -1,4 +1,6 @@
 {
+  "page.untitled": "Unbenannt",
+  "entry.label.empty": "\u2014",
   "entry.title": "Mod-Einstellungen (RitsuLib)",
   "entry.subtitle": "Bearbeite hier spielerrelevante Mod-Optionen.",
   "ritsulib.mod.displayName": "RitsuLib",
@@ -36,6 +38,12 @@
   "ritsulib.showcase.choice.wide": "Breit",
   "ritsulib.showcase.mode.label": "Vorschau-Enum-Auswahl",
   "ritsulib.showcase.mode.description": "Aktueller Modus: {0}",
+  "ritsulib.showcase.string.label": "Vorschau-Textfeld",
+  "ritsulib.showcase.string.description": "Aktueller Text: {0}",
+  "ritsulib.showcase.string.placeholder": "Einfache String-Bindung (einzeilig)",
+  "ritsulib.showcase.stringMulti.label": "Vorschau-Mehrzeilentext",
+  "ritsulib.showcase.stringMulti.description": "{0} Zeichen, {1} Zeilen.",
+  "ritsulib.showcase.stringMulti.placeholder": "Mehrere Zeilen \u2014 Eingabetaste fuegt eine neue Zeile ein.",
   "ritsulib.showcase.mode.Compact": "Kompakt",
   "ritsulib.showcase.mode.Balanced": "Ausgewogen",
   "ritsulib.showcase.mode.Detailed": "Detailliert",
@@ -111,8 +119,14 @@
   "ritsulib.showcase.details.field.label": "Bezeichnung",
   "ritsulib.showcase.details.field.value": "Wert",
   "button.actionsShort": "Aktionen",
+  "button.actionsGlyph": "\u22ee",
   "button.resetDefault": "Auf Standard zurucksetzen",
   "button.copySelf": "Selbst kopieren",
   "button.copySubtree": "Mit Unterelementen kopieren",
-  "keybinding.hint.comboNonModifier": "Klicken, um aufzuzeichnen. Tastenkombinationen werden unterstuetzt und muessen eine Nicht-Modifikatortaste enthalten."
+  "keybinding.hint.comboNonModifier": "Klicken, um aufzuzeichnen. Tastenkombinationen werden unterstuetzt und muessen eine Nicht-Modifikatortaste enthalten.",
+  "clipboard.pasteFailedTitle": "Einfuegen fehlgeschlagen",
+  "clipboard.pasteErrorOk": "Verstanden",
+  "clipboard.pasteFailedEmpty": "Die Zwischenablage ist leer oder nicht verfuegbar.",
+  "clipboard.pasteFailedBlocked": "Einfuegen wurde durch eine benutzerdefinierte Regel blockiert.",
+  "clipboard.pasteFailedIncompatible": "Der Inhalt der Zwischenablage ist mit dieser Einstellung nicht kompatibel."
 }

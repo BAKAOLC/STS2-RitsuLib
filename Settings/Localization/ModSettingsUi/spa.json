@@ -1,4 +1,6 @@
 {
+  "page.untitled": "Sin titulo",
+  "entry.label.empty": "\u2014",
   "entry.title": "Configuracion de Mods (RitsuLib)",
   "entry.subtitle": "Edita aqui las opciones de mods orientadas al jugador.",
   "ritsulib.mod.displayName": "RitsuLib",
@@ -36,6 +38,12 @@
   "ritsulib.showcase.choice.wide": "Amplio",
   "ritsulib.showcase.mode.label": "Seleccion enum de vista previa",
   "ritsulib.showcase.mode.description": "Modo actual: {0}",
+  "ritsulib.showcase.string.label": "Campo de texto de vista previa",
+  "ritsulib.showcase.string.description": "Texto actual: {0}",
+  "ritsulib.showcase.string.placeholder": "Texto simple en una linea (campo de una linea)",
+  "ritsulib.showcase.stringMulti.label": "Texto multilinea de vista previa",
+  "ritsulib.showcase.stringMulti.description": "{0} caracteres, {1} lineas.",
+  "ritsulib.showcase.stringMulti.placeholder": "Varias lineas: Intro inserta una linea nueva.",
   "ritsulib.showcase.mode.Compact": "Compacto",
   "ritsulib.showcase.mode.Balanced": "Equilibrado",
   "ritsulib.showcase.mode.Detailed": "Detallado",
@@ -111,8 +119,14 @@
   "ritsulib.showcase.details.field.label": "Etiqueta",
   "ritsulib.showcase.details.field.value": "Valor",
   "button.actionsShort": "Acciones",
+  "button.actionsGlyph": "\u22ee",
   "button.resetDefault": "Restablecer por defecto",
   "button.copySelf": "Copiar este valor",
   "button.copySubtree": "Copiar con elementos hijos",
-  "keybinding.hint.comboNonModifier": "Haz clic para registrar. Se admiten combinaciones de teclas y deben incluir una tecla no modificadora."
+  "keybinding.hint.comboNonModifier": "Haz clic para registrar. Se admiten combinaciones de teclas y deben incluir una tecla no modificadora.",
+  "clipboard.pasteFailedTitle": "Error al pegar",
+  "clipboard.pasteErrorOk": "Aceptar",
+  "clipboard.pasteFailedEmpty": "El portapapeles esta vacio o no esta disponible.",
+  "clipboard.pasteFailedBlocked": "El pegado fue bloqueado por una regla personalizada.",
+  "clipboard.pasteFailedIncompatible": "El contenido del portapapeles no es compatible con esta opcion."
 }

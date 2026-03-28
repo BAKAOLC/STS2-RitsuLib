@@ -36,25 +36,19 @@ namespace STS2RitsuLib.Settings
                 ?.manifest?.description;
         }
 
-        public static string ComposeBindingDescription(ModSettingsText? description, IModSettingsBinding binding)
+        public static string ResolveBindingDescriptionBody(ModSettingsText? description)
+        {
+            return Resolve(description);
+        }
+
+        public static string GetPersistenceScopeChipText(IModSettingsBinding binding)
         {
             if (binding is ITransientModSettingsBinding)
-            {
-                var transientText = ModSettingsLocalization.Get("scope.transient", "Preview only - not persisted");
-                var transientDescription = Resolve(description);
-                return string.IsNullOrWhiteSpace(transientDescription)
-                    ? transientText
-                    : $"{transientDescription}  [color=#B9B09A]- {transientText}[/color]";
-            }
+                return ModSettingsLocalization.Get("scope.transient", "Preview only - not persisted");
 
-            var scopeText = binding.Scope == SaveScope.Profile
+            return binding.Scope == SaveScope.Profile
                 ? ModSettingsLocalization.Get("scope.profile", "Stored per profile")
                 : ModSettingsLocalization.Get("scope.global", "Stored globally");
-
-            var resolvedDescription = Resolve(description);
-            return string.IsNullOrWhiteSpace(resolvedDescription)
-                ? scopeText
-                : $"{resolvedDescription}  [color=#B9B09A]- {scopeText}[/color]";
         }
 
         public void RegisterRefresh(Action action)
