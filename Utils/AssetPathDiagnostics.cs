@@ -17,6 +17,26 @@ namespace STS2RitsuLib.Utils
             return false;
         }
 
+        /// <summary>
+        ///     Logs once when a mod character asset profile supplies a non-empty path that does not resolve
+        ///     (empty overrides are ignored by callers).
+        /// </summary>
+        internal static void WarnModCharacterAssetOverrideMissing(object owner, string memberName, string path)
+        {
+            var ownerLabel = DescribeOwner(owner);
+            var warnKey = $"mod_char_override|{ownerLabel}|{memberName}|{path}";
+
+            lock (SyncRoot)
+            {
+                if (!WarnedMissingPaths.Add(warnKey))
+                    return;
+            }
+
+            RitsuLibFramework.Logger.Warn(
+                $"[Assets] Mod character asset override path not found for {ownerLabel}.{memberName}: '{path}'. " +
+                "Falling back to the base game asset.");
+        }
+
         internal static string[] CollectExistingPaths(object owner,
             params (string? Path, string MemberName)[] candidates)
         {

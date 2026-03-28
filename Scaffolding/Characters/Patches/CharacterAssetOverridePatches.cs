@@ -1,3 +1,4 @@
+using Godot;
 using MegaCrit.Sts2.Core.Models;
 using STS2RitsuLib.Patching.Models;
 using STS2RitsuLib.Utils;
@@ -21,8 +22,11 @@ namespace STS2RitsuLib.Scaffolding.Characters.Patches
             if (string.IsNullOrWhiteSpace(overrideValue))
                 return true;
 
-            if (requireExistingResource && !AssetPathDiagnostics.Exists(overrideValue, instance, memberName))
+            if (requireExistingResource && !ResourceLoader.Exists(overrideValue))
+            {
+                AssetPathDiagnostics.WarnModCharacterAssetOverrideMissing(instance, memberName, overrideValue);
                 return true;
+            }
 
             __result = overrideValue;
             return false;
