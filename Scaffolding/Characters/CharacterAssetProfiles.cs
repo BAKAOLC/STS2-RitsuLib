@@ -1,9 +1,18 @@
 namespace STS2RitsuLib.Scaffolding.Characters
 {
+    /// <summary>
+    ///     Factory and merge helpers for <see cref="CharacterAssetProfile" /> using vanilla path conventions.
+    /// </summary>
     public static class CharacterAssetProfiles
     {
+        /// <summary>
+        ///     Default character id used when no placeholder is specified (<c>ironclad</c>).
+        /// </summary>
         public const string DefaultPlaceholderCharacterId = "ironclad";
 
+        /// <summary>
+        ///     Builds a profile with <c>res://</c> paths matching base-game layout for <paramref name="characterId" />.
+        /// </summary>
         public static CharacterAssetProfile FromCharacterId(string characterId)
         {
             ArgumentException.ThrowIfNullOrWhiteSpace(characterId);
@@ -40,16 +49,22 @@ namespace STS2RitsuLib.Scaffolding.Characters
                     $"res://images/ui/hands/multiplayer_hand_{id}_scissors.png"));
         }
 
+        /// <summary>
+        ///     Returns <paramref name="profile" /> or empty; if <paramref name="placeholderCharacterId" /> is set, merges
+        ///     missing fields from that vanilla character.
+        /// </summary>
         public static CharacterAssetProfile Resolve(CharacterAssetProfile? profile, string? placeholderCharacterId)
         {
             profile ??= CharacterAssetProfile.Empty;
 
-            if (string.IsNullOrWhiteSpace(placeholderCharacterId))
-                return profile;
-
-            return Merge(FromCharacterId(placeholderCharacterId), profile);
+            return string.IsNullOrWhiteSpace(placeholderCharacterId)
+                ? profile
+                : Merge(FromCharacterId(placeholderCharacterId), profile);
         }
 
+        /// <summary>
+        ///     Per-field prefer-<paramref name="profile" /> / fallback-<paramref name="fallback" /> merge.
+        /// </summary>
         public static CharacterAssetProfile Merge(CharacterAssetProfile? fallback, CharacterAssetProfile? profile)
         {
             fallback ??= CharacterAssetProfile.Empty;
@@ -64,26 +79,41 @@ namespace STS2RitsuLib.Scaffolding.Characters
                 MergeMultiplayer(fallback.Multiplayer, profile.Multiplayer));
         }
 
+        /// <summary>
+        ///     Shortcut for <see cref="FromCharacterId" /> with id <c>ironclad</c>.
+        /// </summary>
         public static CharacterAssetProfile Ironclad()
         {
             return FromCharacterId("ironclad");
         }
 
+        /// <summary>
+        ///     Shortcut for <see cref="FromCharacterId" /> with id <c>silent</c>.
+        /// </summary>
         public static CharacterAssetProfile Silent()
         {
             return FromCharacterId("silent");
         }
 
+        /// <summary>
+        ///     Shortcut for <see cref="FromCharacterId" /> with id <c>defect</c>.
+        /// </summary>
         public static CharacterAssetProfile Defect()
         {
             return FromCharacterId("defect");
         }
 
+        /// <summary>
+        ///     Shortcut for <see cref="FromCharacterId" /> with id <c>regent</c>.
+        /// </summary>
         public static CharacterAssetProfile Regent()
         {
             return FromCharacterId("regent");
         }
 
+        /// <summary>
+        ///     Shortcut for <see cref="FromCharacterId" /> with id <c>necrobinder</c>.
+        /// </summary>
         public static CharacterAssetProfile Necrobinder()
         {
             return FromCharacterId("necrobinder");
@@ -171,6 +201,9 @@ namespace STS2RitsuLib.Scaffolding.Characters
 
         extension(CharacterAssetProfile profile)
         {
+            /// <summary>
+            ///     Merges <paramref name="fallback" /> into <paramref name="profile" /> for any null component or field.
+            /// </summary>
             public CharacterAssetProfile FillMissingFrom(CharacterAssetProfile fallback)
             {
                 ArgumentNullException.ThrowIfNull(profile);
@@ -178,12 +211,18 @@ namespace STS2RitsuLib.Scaffolding.Characters
                 return Merge(fallback, profile);
             }
 
+            /// <summary>
+            ///     Fills missing entries using <see cref="FromCharacterId" />.
+            /// </summary>
             public CharacterAssetProfile WithPlaceholder(string characterId)
             {
                 ArgumentNullException.ThrowIfNull(profile);
                 return profile.FillMissingFrom(FromCharacterId(characterId));
             }
 
+            /// <summary>
+            ///     Returns a copy with <see cref="CharacterAssetProfile.Scenes" /> replaced.
+            /// </summary>
             public CharacterAssetProfile WithScenes(CharacterSceneAssetSet scenes)
             {
                 ArgumentNullException.ThrowIfNull(profile);
@@ -191,6 +230,9 @@ namespace STS2RitsuLib.Scaffolding.Characters
                 return profile with { Scenes = scenes };
             }
 
+            /// <summary>
+            ///     Returns a copy with <see cref="CharacterAssetProfile.Ui" /> replaced.
+            /// </summary>
             public CharacterAssetProfile WithUi(CharacterUiAssetSet ui)
             {
                 ArgumentNullException.ThrowIfNull(profile);
@@ -198,6 +240,9 @@ namespace STS2RitsuLib.Scaffolding.Characters
                 return profile with { Ui = ui };
             }
 
+            /// <summary>
+            ///     Returns a copy with <see cref="CharacterAssetProfile.Vfx" /> replaced.
+            /// </summary>
             public CharacterAssetProfile WithVfx(CharacterVfxAssetSet vfx)
             {
                 ArgumentNullException.ThrowIfNull(profile);
@@ -205,6 +250,9 @@ namespace STS2RitsuLib.Scaffolding.Characters
                 return profile with { Vfx = vfx };
             }
 
+            /// <summary>
+            ///     Returns a copy with <see cref="CharacterAssetProfile.Spine" /> replaced.
+            /// </summary>
             public CharacterAssetProfile WithSpine(CharacterSpineAssetSet spine)
             {
                 ArgumentNullException.ThrowIfNull(profile);
@@ -212,6 +260,9 @@ namespace STS2RitsuLib.Scaffolding.Characters
                 return profile with { Spine = spine };
             }
 
+            /// <summary>
+            ///     Returns a copy with <see cref="CharacterAssetProfile.Audio" /> replaced.
+            /// </summary>
             public CharacterAssetProfile WithAudio(CharacterAudioAssetSet audio)
             {
                 ArgumentNullException.ThrowIfNull(profile);
@@ -219,6 +270,9 @@ namespace STS2RitsuLib.Scaffolding.Characters
                 return profile with { Audio = audio };
             }
 
+            /// <summary>
+            ///     Returns a copy with <see cref="CharacterAssetProfile.Multiplayer" /> replaced.
+            /// </summary>
             public CharacterAssetProfile WithMultiplayer(CharacterMultiplayerAssetSet multiplayer)
             {
                 ArgumentNullException.ThrowIfNull(profile);

@@ -48,15 +48,23 @@ namespace STS2RitsuLib.Localization.Patches
         }
     }
 
+    /// <summary>
+    ///     When debug compatibility mode is enabled, returns a placeholder <c>LocString</c> instead of throwing
+    ///     for missing keys in <c>LocTable.GetLocString</c>.
+    /// </summary>
     public class LocTableGetLocStringCompatibilityPatch : IPatchMethod
     {
+        /// <inheritdoc />
         public static string PatchId => "loc_table_get_loc_string_debug_compat";
 
+        /// <inheritdoc />
         public static string Description =>
             "Use key placeholder for LocTable.GetLocString missing entries in debug compatibility mode";
 
+        /// <inheritdoc />
         public static bool IsCritical => false;
 
+        /// <inheritdoc />
         public static ModPatchTarget[] GetTargets()
         {
             return
@@ -66,6 +74,9 @@ namespace STS2RitsuLib.Localization.Patches
         }
 
         // ReSharper disable InconsistentNaming
+        /// <summary>
+        ///     Short-circuits the target method with a synthesized loc string when a placeholder is required.
+        /// </summary>
         public static bool Prefix(LocTable __instance, string key, ref LocString __result)
             // ReSharper restore InconsistentNaming
         {
@@ -81,15 +92,23 @@ namespace STS2RitsuLib.Localization.Patches
         }
     }
 
+    /// <summary>
+    ///     When debug compatibility mode is enabled, returns the raw key string instead of throwing for missing
+    ///     entries in <c>LocTable.GetRawText</c>.
+    /// </summary>
     public class LocTableGetRawTextCompatibilityPatch : IPatchMethod
     {
+        /// <inheritdoc />
         public static string PatchId => "loc_table_get_raw_text_debug_compat";
 
+        /// <inheritdoc />
         public static string Description =>
             "Use key placeholder for LocTable.GetRawText missing entries in debug compatibility mode";
 
+        /// <inheritdoc />
         public static bool IsCritical => false;
 
+        /// <inheritdoc />
         public static ModPatchTarget[] GetTargets()
         {
             return
@@ -99,6 +118,9 @@ namespace STS2RitsuLib.Localization.Patches
         }
 
         // ReSharper disable InconsistentNaming
+        /// <summary>
+        ///     Short-circuits the target method with the key as raw text when a placeholder is required.
+        /// </summary>
         public static bool Prefix(LocTable __instance, string key, ref string __result)
             // ReSharper restore InconsistentNaming
         {

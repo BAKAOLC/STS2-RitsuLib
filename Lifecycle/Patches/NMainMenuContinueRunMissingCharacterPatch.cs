@@ -31,18 +31,26 @@ namespace STS2RitsuLib.Lifecycle.Patches
             AccessTools.MethodDelegate<Action<NMainMenu>>(
                 AccessTools.DeclaredMethod(typeof(NMainMenu), "DisplayLoadSaveError"));
 
+        /// <inheritdoc />
         public static string PatchId => "nmain_menu_continue_run_missing_character";
 
+        /// <inheritdoc />
         public static string Description =>
             "Main menu Continue: block resume when CharacterModel is missing; no save deletion; avoid throw after invalid-save UI";
 
+        /// <inheritdoc />
         public static bool IsCritical => false;
 
+        /// <inheritdoc />
         public static ModPatchTarget[] GetTargets()
         {
             return [new(typeof(NMainMenu), "OnContinueButtonPressed", [typeof(NButton)])];
         }
 
+        /// <summary>
+        ///     Harmony prefix: replaces Continue handling with safe read validation and async continue; returns false to
+        ///     skip vanilla.
+        /// </summary>
         // ReSharper disable once InconsistentNaming
         public static bool Prefix(NMainMenu __instance, NButton _)
         {

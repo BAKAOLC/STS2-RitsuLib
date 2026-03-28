@@ -3,6 +3,9 @@ using STS2RitsuLib.Utils.Persistence.Migration;
 
 namespace STS2RitsuLib.Utils.Persistence
 {
+    /// <summary>
+    ///     Typed JSON persistence wrapper with optional migrations, backup recovery, and change notifications.
+    /// </summary>
     public class PersistentDataEntry<T> where T : class, new()
     {
         private readonly bool _autoCreateIfMissing;
@@ -10,8 +13,10 @@ namespace STS2RitsuLib.Utils.Persistence
         private readonly string _fileName;
         private readonly JsonSerializerOptions _jsonOptions;
         private readonly MigrationManager _migrationManager;
-        private readonly string _modId;
 
+        /// <summary>
+        ///     Initializes in-memory data from <paramref name="defaultValues" /> and captures persistence settings.
+        /// </summary>
         public PersistentDataEntry(
             string modId,
             string fileName,
@@ -21,7 +26,7 @@ namespace STS2RitsuLib.Utils.Persistence
             MigrationManager migrationManager,
             bool autoCreateIfMissing = false)
         {
-            _modId = modId;
+            FilePath = modId;
             _fileName = fileName;
             Scope = scope;
             _defaultValues = defaultValues;
@@ -31,12 +36,30 @@ namespace STS2RitsuLib.Utils.Persistence
             Data = DeepClone(defaultValues);
         }
 
+        /// <summary>
+        ///     Current deserialized data object (mutate via <see cref="Modify" /> for change notifications).
+        /// </summary>
         public T Data { get; private set; }
-        public string FilePath => ProfileManager.Instance.GetFilePath(_fileName, Scope, _modId);
+
+        /// <summary>
+        ///     Resolved absolute path for this entry using the active profile.
+        /// </summary>
+        public string FilePath => ProfileManager.Instance.GetFilePath(_fileName, Scope, field);
+
+        /// <summary>
+        ///     Whether this file lives under global account storage or a profile subdirectory.
+        /// </summary>
         public SaveScope Scope { get; }
 
+        /// <summary>
+        ///     Raised after load/save cycles and in-memory modifications.
+        /// </summary>
         public event Action? Changed;
 
+        /// <summary>
+        ///     Reads JSON from disk (with backup fallback), applies migrations, and updates <see cref="Data" />.
+        /// </summary>
+        /// <returns>False when defaults were used due to missing or invalid files.</returns>
         public bool Load()
         {
             var currentPath = FilePath;
@@ -88,11 +111,17 @@ namespace STS2RitsuLib.Utils.Persistence
             return true;
         }
 
+        /// <summary>
+        ///     Serializes <see cref="Data" /> to <see cref="FilePath" />.
+        /// </summary>
         public bool Save()
         {
             return SaveTo(FilePath);
         }
 
+        /// <summary>
+        ///     Serializes <see cref="Data" /> to an explicit path (for exports or tests).
+        /// </summary>
         public bool SaveTo(string path)
         {
             try
@@ -109,6 +138,9 @@ namespace STS2RitsuLib.Utils.Persistence
             }
         }
 
+        /// <summary>
+        ///     Applies an in-place mutation to <see cref="Data" /> and raises <see cref="Changed" />.
+        /// </summary>
         public void Modify(Action<T> modifier)
         {
             modifier(Data);

@@ -10,11 +10,17 @@ namespace STS2RitsuLib.Audio
     /// </summary>
     public static class FmodStudioDirectOneShots
     {
+        /// <summary>
+        ///     Plays a one-shot by event path via the Godot FMOD addon.
+        /// </summary>
         public static bool TryPlay(string eventPath)
         {
             return FmodStudioGateway.TryCall(FmodStudioMethodNames.PlayOneShot, eventPath);
         }
 
+        /// <summary>
+        ///     Plays a one-shot with initial parameter values.
+        /// </summary>
         public static bool TryPlay(string eventPath, IReadOnlyDictionary<string, float> parameters)
         {
             var server = FmodStudioGateway.TryGetServer();
@@ -37,6 +43,9 @@ namespace STS2RitsuLib.Audio
             }
         }
 
+        /// <summary>
+        ///     Plays a one-shot using a Studio event GUID string.
+        /// </summary>
         public static bool TryPlayUsingGuid(string eventGuid)
         {
             return FmodStudioGateway.TryCall(FmodStudioMethodNames.PlayOneShotUsingGuid, eventGuid);

@@ -7,6 +7,14 @@ using STS2RitsuLib.Unlocks;
 
 namespace STS2RitsuLib.Scaffolding.Content
 {
+    /// <summary>
+    ///     Immutable snapshot of registries and ids used while applying a content pack.
+    /// </summary>
+    /// <param name="ModId">Owning mod identifier string.</param>
+    /// <param name="Content">Content registry for models and pools.</param>
+    /// <param name="Keywords">Keyword registration surface.</param>
+    /// <param name="Timeline">Epoch/story timeline registry.</param>
+    /// <param name="Unlocks">Unlock rule registry.</param>
     public readonly record struct ModContentPackContext(
         string ModId,
         ModContentRegistry Content,
@@ -27,22 +35,34 @@ namespace STS2RitsuLib.Scaffolding.Content
             _modId = modId;
         }
 
+        /// <summary>
+        ///     Starts a builder for the given <paramref name="modId" />.
+        /// </summary>
         public static ModContentPackBuilder For(string modId)
         {
             ArgumentException.ThrowIfNullOrWhiteSpace(modId);
             return new(modId);
         }
 
+        /// <summary>
+        ///     Queues <see cref="ModContentRegistry.RegisterCharacter{TCharacter}" />.
+        /// </summary>
         public ModContentPackBuilder Character<TCharacter>() where TCharacter : CharacterModel
         {
             return AddStep(ctx => ctx.Content.RegisterCharacter<TCharacter>());
         }
 
+        /// <summary>
+        ///     Queues <see cref="ModContentRegistry.RegisterAct{TAct}" />.
+        /// </summary>
         public ModContentPackBuilder Act<TAct>() where TAct : ActModel
         {
             return AddStep(ctx => ctx.Content.RegisterAct<TAct>());
         }
 
+        /// <summary>
+        ///     Queues <c>RegisterCard&lt;TPool, TCard&gt;()</c> on the content registry with default public entry options.
+        /// </summary>
         public ModContentPackBuilder Card<TPool, TCard>()
             where TPool : CardPoolModel
             where TCard : CardModel
@@ -50,6 +70,9 @@ namespace STS2RitsuLib.Scaffolding.Content
             return AddStep(ctx => ctx.Content.RegisterCard<TPool, TCard>());
         }
 
+        /// <summary>
+        ///     Queues <c>RegisterCard&lt;TPool, TCard&gt;(ModelPublicEntryOptions)</c> on the content registry.
+        /// </summary>
         public ModContentPackBuilder Card<TPool, TCard>(ModelPublicEntryOptions publicEntry)
             where TPool : CardPoolModel
             where TCard : CardModel
@@ -77,6 +100,9 @@ namespace STS2RitsuLib.Scaffolding.Content
             return Card<TPool, TCard>(ModelPublicEntryOptions.FromStem(stableEntryStem));
         }
 
+        /// <summary>
+        ///     Queues <c>RegisterRelic&lt;TPool, TRelic&gt;()</c> with default public entry options.
+        /// </summary>
         public ModContentPackBuilder Relic<TPool, TRelic>()
             where TPool : RelicPoolModel
             where TRelic : RelicModel
@@ -84,6 +110,9 @@ namespace STS2RitsuLib.Scaffolding.Content
             return AddStep(ctx => ctx.Content.RegisterRelic<TPool, TRelic>());
         }
 
+        /// <summary>
+        ///     Queues <c>RegisterRelic&lt;TPool, TRelic&gt;(ModelPublicEntryOptions)</c>.
+        /// </summary>
         public ModContentPackBuilder Relic<TPool, TRelic>(ModelPublicEntryOptions publicEntry)
             where TPool : RelicPoolModel
             where TRelic : RelicModel
@@ -91,6 +120,9 @@ namespace STS2RitsuLib.Scaffolding.Content
             return AddStep(ctx => ctx.Content.RegisterRelic<TPool, TRelic>(publicEntry));
         }
 
+        /// <summary>
+        ///     Queues placeholder relic emission via <c>RegisterPlaceholderRelic&lt;TPool&gt;(...)</c>.
+        /// </summary>
         public ModContentPackBuilder PlaceholderRelic<TPool>(string stableEntryStem,
             PlaceholderRelicDescriptor descriptor = default)
             where TPool : RelicPoolModel
@@ -98,6 +130,9 @@ namespace STS2RitsuLib.Scaffolding.Content
             return AddStep(ctx => ctx.Content.RegisterPlaceholderRelic<TPool>(stableEntryStem, descriptor));
         }
 
+        /// <summary>
+        ///     Registers a relic type using a stable entry stem mapped through <see cref="ModelPublicEntryOptions.FromStem" />.
+        /// </summary>
         public ModContentPackBuilder PlaceholderRelic<TPool, TRelic>(string stableEntryStem)
             where TPool : RelicPoolModel
             where TRelic : RelicModel
@@ -105,6 +140,9 @@ namespace STS2RitsuLib.Scaffolding.Content
             return Relic<TPool, TRelic>(ModelPublicEntryOptions.FromStem(stableEntryStem));
         }
 
+        /// <summary>
+        ///     Queues <c>RegisterPotion&lt;TPool, TPotion&gt;()</c> with default public entry options.
+        /// </summary>
         public ModContentPackBuilder Potion<TPool, TPotion>()
             where TPool : PotionPoolModel
             where TPotion : PotionModel
@@ -112,6 +150,9 @@ namespace STS2RitsuLib.Scaffolding.Content
             return AddStep(ctx => ctx.Content.RegisterPotion<TPool, TPotion>());
         }
 
+        /// <summary>
+        ///     Queues <c>RegisterPotion&lt;TPool, TPotion&gt;(ModelPublicEntryOptions)</c>.
+        /// </summary>
         public ModContentPackBuilder Potion<TPool, TPotion>(ModelPublicEntryOptions publicEntry)
             where TPool : PotionPoolModel
             where TPotion : PotionModel
@@ -119,6 +160,9 @@ namespace STS2RitsuLib.Scaffolding.Content
             return AddStep(ctx => ctx.Content.RegisterPotion<TPool, TPotion>(publicEntry));
         }
 
+        /// <summary>
+        ///     Queues placeholder potion emission via <c>RegisterPlaceholderPotion&lt;TPool&gt;(...)</c>.
+        /// </summary>
         public ModContentPackBuilder PlaceholderPotion<TPool>(string stableEntryStem,
             PlaceholderPotionDescriptor descriptor = default)
             where TPool : PotionPoolModel
@@ -126,6 +170,9 @@ namespace STS2RitsuLib.Scaffolding.Content
             return AddStep(ctx => ctx.Content.RegisterPlaceholderPotion<TPool>(stableEntryStem, descriptor));
         }
 
+        /// <summary>
+        ///     Registers a potion type using a stable entry stem mapped through <see cref="ModelPublicEntryOptions.FromStem" />.
+        /// </summary>
         public ModContentPackBuilder PlaceholderPotion<TPool, TPotion>(string stableEntryStem)
             where TPool : PotionPoolModel
             where TPotion : PotionModel
@@ -133,26 +180,41 @@ namespace STS2RitsuLib.Scaffolding.Content
             return Potion<TPool, TPotion>(ModelPublicEntryOptions.FromStem(stableEntryStem));
         }
 
+        /// <summary>
+        ///     Queues <see cref="ModContentRegistry.RegisterPower{TPower}" />.
+        /// </summary>
         public ModContentPackBuilder Power<TPower>() where TPower : PowerModel
         {
             return AddStep(ctx => ctx.Content.RegisterPower<TPower>());
         }
 
+        /// <summary>
+        ///     Queues <see cref="ModContentRegistry.RegisterOrb{TOrb}" />.
+        /// </summary>
         public ModContentPackBuilder Orb<TOrb>() where TOrb : OrbModel
         {
             return AddStep(ctx => ctx.Content.RegisterOrb<TOrb>());
         }
 
+        /// <summary>
+        ///     Queues <see cref="ModContentRegistry.RegisterSharedCardPool{TPool}" />.
+        /// </summary>
         public ModContentPackBuilder SharedCardPool<TPool>() where TPool : CardPoolModel
         {
             return AddStep(ctx => ctx.Content.RegisterSharedCardPool<TPool>());
         }
 
+        /// <summary>
+        ///     Queues <see cref="ModContentRegistry.RegisterSharedEvent{TEvent}" />.
+        /// </summary>
         public ModContentPackBuilder SharedEvent<TEvent>() where TEvent : EventModel
         {
             return AddStep(ctx => ctx.Content.RegisterSharedEvent<TEvent>());
         }
 
+        /// <summary>
+        ///     Queues <see cref="ModContentRegistry.RegisterActEvent{TAct,TEvent}" />.
+        /// </summary>
         public ModContentPackBuilder ActEvent<TAct, TEvent>()
             where TAct : ActModel
             where TEvent : EventModel
@@ -160,11 +222,17 @@ namespace STS2RitsuLib.Scaffolding.Content
             return AddStep(ctx => ctx.Content.RegisterActEvent<TAct, TEvent>());
         }
 
+        /// <summary>
+        ///     Queues <see cref="ModContentRegistry.RegisterSharedAncient{TAncient}" />.
+        /// </summary>
         public ModContentPackBuilder SharedAncient<TAncient>() where TAncient : AncientEventModel
         {
             return AddStep(ctx => ctx.Content.RegisterSharedAncient<TAncient>());
         }
 
+        /// <summary>
+        ///     Queues <see cref="ModContentRegistry.RegisterActAncient{TAct,TAncient}" />.
+        /// </summary>
         public ModContentPackBuilder ActAncient<TAct, TAncient>()
             where TAct : ActModel
             where TAncient : AncientEventModel
@@ -172,11 +240,17 @@ namespace STS2RitsuLib.Scaffolding.Content
             return AddStep(ctx => ctx.Content.RegisterActAncient<TAct, TAncient>());
         }
 
+        /// <summary>
+        ///     Queues <see cref="ModKeywordRegistry.RegisterCardKeyword" />.
+        /// </summary>
         public ModContentPackBuilder CardKeyword(string id, string? locKeyPrefix = null, string? iconPath = null)
         {
             return AddStep(ctx => ctx.Keywords.RegisterCardKeyword(id, locKeyPrefix, iconPath));
         }
 
+        /// <summary>
+        ///     Queues a general keyword registration on <see cref="ModKeywordRegistry" />.
+        /// </summary>
         public ModContentPackBuilder Keyword(
             string id,
             string titleTable = "card_keywords",
@@ -189,16 +263,25 @@ namespace STS2RitsuLib.Scaffolding.Content
                 ctx.Keywords.Register(id, titleTable, titleKey, descriptionTable, descriptionKey, iconPath));
         }
 
+        /// <summary>
+        ///     Queues <see cref="ModTimelineRegistry.RegisterEpoch{TEpoch}" />.
+        /// </summary>
         public ModContentPackBuilder Epoch<TEpoch>() where TEpoch : EpochModel, new()
         {
             return AddStep(ctx => ctx.Timeline.RegisterEpoch<TEpoch>());
         }
 
+        /// <summary>
+        ///     Queues <see cref="ModTimelineRegistry.RegisterStory{TStory}" />.
+        /// </summary>
         public ModContentPackBuilder Story<TStory>() where TStory : StoryModel, new()
         {
             return AddStep(ctx => ctx.Timeline.RegisterStory<TStory>());
         }
 
+        /// <summary>
+        ///     Queues <see cref="ModUnlockRegistry.RequireEpoch{TModel,TEpoch}" />.
+        /// </summary>
         public ModContentPackBuilder RequireEpoch<TModel, TEpoch>()
             where TModel : AbstractModel
             where TEpoch : EpochModel, new()
@@ -206,6 +289,9 @@ namespace STS2RitsuLib.Scaffolding.Content
             return AddStep(ctx => ctx.Unlocks.RequireEpoch<TModel, TEpoch>());
         }
 
+        /// <summary>
+        ///     Queues <see cref="ModUnlockRegistry.UnlockEpochAfterRunAs{TCharacter,TEpoch}" />.
+        /// </summary>
         public ModContentPackBuilder UnlockEpochAfterRunAs<TCharacter, TEpoch>()
             where TCharacter : CharacterModel
             where TEpoch : EpochModel, new()
@@ -213,6 +299,9 @@ namespace STS2RitsuLib.Scaffolding.Content
             return AddStep(ctx => ctx.Unlocks.UnlockEpochAfterRunAs<TCharacter, TEpoch>());
         }
 
+        /// <summary>
+        ///     Queues <see cref="ModUnlockRegistry.UnlockEpochAfterWinAs{TCharacter,TEpoch}" />.
+        /// </summary>
         public ModContentPackBuilder UnlockEpochAfterWinAs<TCharacter, TEpoch>()
             where TCharacter : CharacterModel
             where TEpoch : EpochModel, new()
@@ -220,6 +309,9 @@ namespace STS2RitsuLib.Scaffolding.Content
             return AddStep(ctx => ctx.Unlocks.UnlockEpochAfterWinAs<TCharacter, TEpoch>());
         }
 
+        /// <summary>
+        ///     Queues <see cref="ModUnlockRegistry.UnlockEpochAfterAscensionWin{TCharacter,TEpoch}" />.
+        /// </summary>
         public ModContentPackBuilder UnlockEpochAfterAscensionWin<TCharacter, TEpoch>(int ascensionLevel)
             where TCharacter : CharacterModel
             where TEpoch : EpochModel, new()
@@ -227,12 +319,18 @@ namespace STS2RitsuLib.Scaffolding.Content
             return AddStep(ctx => ctx.Unlocks.UnlockEpochAfterAscensionWin<TCharacter, TEpoch>(ascensionLevel));
         }
 
+        /// <summary>
+        ///     Queues <see cref="ModUnlockRegistry.UnlockEpochAfterRunCount{TEpoch}" />.
+        /// </summary>
         public ModContentPackBuilder UnlockEpochAfterRunCount<TEpoch>(int requiredRuns, bool requireVictory = false)
             where TEpoch : EpochModel, new()
         {
             return AddStep(ctx => ctx.Unlocks.UnlockEpochAfterRunCount<TEpoch>(requiredRuns, requireVictory));
         }
 
+        /// <summary>
+        ///     Queues <see cref="ModUnlockRegistry.UnlockEpochAfterEliteVictories{TCharacter,TEpoch}" />.
+        /// </summary>
         public ModContentPackBuilder UnlockEpochAfterEliteVictories<TCharacter, TEpoch>(int requiredEliteWins = 15)
             where TCharacter : CharacterModel
             where TEpoch : EpochModel, new()
@@ -240,6 +338,9 @@ namespace STS2RitsuLib.Scaffolding.Content
             return AddStep(ctx => ctx.Unlocks.UnlockEpochAfterEliteVictories<TCharacter, TEpoch>(requiredEliteWins));
         }
 
+        /// <summary>
+        ///     Queues <see cref="ModUnlockRegistry.UnlockEpochAfterBossVictories{TCharacter,TEpoch}" />.
+        /// </summary>
         public ModContentPackBuilder UnlockEpochAfterBossVictories<TCharacter, TEpoch>(int requiredBossWins = 15)
             where TCharacter : CharacterModel
             where TEpoch : EpochModel, new()
@@ -247,6 +348,9 @@ namespace STS2RitsuLib.Scaffolding.Content
             return AddStep(ctx => ctx.Unlocks.UnlockEpochAfterBossVictories<TCharacter, TEpoch>(requiredBossWins));
         }
 
+        /// <summary>
+        ///     Queues <see cref="ModUnlockRegistry.UnlockEpochAfterAscensionOneWin{TCharacter,TEpoch}" />.
+        /// </summary>
         public ModContentPackBuilder UnlockEpochAfterAscensionOneWin<TCharacter, TEpoch>()
             where TCharacter : CharacterModel
             where TEpoch : EpochModel, new()
@@ -254,6 +358,9 @@ namespace STS2RitsuLib.Scaffolding.Content
             return AddStep(ctx => ctx.Unlocks.UnlockEpochAfterAscensionOneWin<TCharacter, TEpoch>());
         }
 
+        /// <summary>
+        ///     Queues <see cref="ModUnlockRegistry.RevealAscensionAfterEpoch{TCharacter,TEpoch}" />.
+        /// </summary>
         public ModContentPackBuilder RevealAscensionAfterEpoch<TCharacter, TEpoch>()
             where TCharacter : CharacterModel
             where TEpoch : EpochModel, new()
@@ -261,6 +368,9 @@ namespace STS2RitsuLib.Scaffolding.Content
             return AddStep(ctx => ctx.Unlocks.RevealAscensionAfterEpoch<TCharacter, TEpoch>());
         }
 
+        /// <summary>
+        ///     Queues <see cref="ModUnlockRegistry.UnlockCharacterAfterRunAs{TCharacter,TEpoch}" />.
+        /// </summary>
         public ModContentPackBuilder UnlockCharacterAfterRunAs<TCharacter, TEpoch>()
             where TCharacter : CharacterModel
             where TEpoch : EpochModel, new()
@@ -268,12 +378,18 @@ namespace STS2RitsuLib.Scaffolding.Content
             return AddStep(ctx => ctx.Unlocks.UnlockCharacterAfterRunAs<TCharacter, TEpoch>());
         }
 
+        /// <summary>
+        ///     Appends a manifest <see cref="IContentRegistrationEntry" /> step.
+        /// </summary>
         public ModContentPackBuilder Entry(IContentRegistrationEntry entry)
         {
             ArgumentNullException.ThrowIfNull(entry);
             return AddStep(ctx => entry.Register(ctx.Content));
         }
 
+        /// <summary>
+        ///     Appends each content registration entry in order.
+        /// </summary>
         public ModContentPackBuilder Entries(IEnumerable<IContentRegistrationEntry> entries)
         {
             ArgumentNullException.ThrowIfNull(entries);
@@ -284,12 +400,18 @@ namespace STS2RitsuLib.Scaffolding.Content
             return this;
         }
 
+        /// <summary>
+        ///     Appends a typed <see cref="KeywordRegistrationEntry" /> registration step.
+        /// </summary>
         public ModContentPackBuilder Keyword(KeywordRegistrationEntry entry)
         {
             ArgumentNullException.ThrowIfNull(entry);
             return AddStep(ctx => entry.Register(ctx.Keywords));
         }
 
+        /// <summary>
+        ///     Appends each keyword registration entry in order.
+        /// </summary>
         public ModContentPackBuilder Keywords(IEnumerable<KeywordRegistrationEntry> entries)
         {
             ArgumentNullException.ThrowIfNull(entries);
@@ -300,6 +422,9 @@ namespace STS2RitsuLib.Scaffolding.Content
             return this;
         }
 
+        /// <summary>
+        ///     Convenience batch for optional content and keyword manifest enumerables.
+        /// </summary>
         public ModContentPackBuilder Manifest(
             IEnumerable<IContentRegistrationEntry>? contentEntries = null,
             IEnumerable<KeywordRegistrationEntry>? keywordEntries = null)
@@ -313,11 +438,17 @@ namespace STS2RitsuLib.Scaffolding.Content
             return this;
         }
 
+        /// <summary>
+        ///     Appends an arbitrary delegate executed during <see cref="Apply" />.
+        /// </summary>
         public ModContentPackBuilder Custom(Action<ModContentPackContext> step)
         {
             return AddStep(step);
         }
 
+        /// <summary>
+        ///     Materializes registries for the builder’s mod id without running queued steps.
+        /// </summary>
         public ModContentPackContext BuildContext()
         {
             return new(
@@ -328,6 +459,9 @@ namespace STS2RitsuLib.Scaffolding.Content
                 RitsuLibFramework.GetUnlockRegistry(_modId));
         }
 
+        /// <summary>
+        ///     Builds context, runs all queued steps, logs a summary, and returns the context.
+        /// </summary>
         public ModContentPackContext Apply()
         {
             var context = BuildContext();

@@ -5,12 +5,22 @@ using STS2RitsuLib.Patching.Models;
 
 namespace STS2RitsuLib.Lifecycle.Patches
 {
+    /// <summary>
+    ///     Publishes profile initialization, switching, progress save, and profile deletion lifecycle events around
+    ///     <see cref="SaveManager" /> APIs.
+    /// </summary>
     public class SaveManagerLifecyclePatch : IPatchMethod
     {
+        /// <inheritdoc />
         public static string PatchId => "save_manager_lifecycle";
+
+        /// <inheritdoc />
         public static string Description => "Publish profile and progress save lifecycle events";
+
+        /// <inheritdoc />
         public static bool IsCritical => false;
 
+        /// <inheritdoc />
         public static ModPatchTarget[] GetTargets()
         {
             return
@@ -22,6 +32,9 @@ namespace STS2RitsuLib.Lifecycle.Patches
             ];
         }
 
+        /// <summary>
+        ///     Harmony prefix: publishes events before profile switch, progress save, or profile delete run.
+        /// </summary>
         // ReSharper disable InconsistentNaming
         public static void Prefix(MethodBase __originalMethod, SaveManager __instance, object[] __args)
             // ReSharper restore InconsistentNaming
@@ -54,6 +67,9 @@ namespace STS2RitsuLib.Lifecycle.Patches
             }
         }
 
+        /// <summary>
+        ///     Harmony postfix: publishes events after profile id init/switch, progress save, or profile delete complete.
+        /// </summary>
         // ReSharper disable InconsistentNaming
         public static void Postfix(MethodBase __originalMethod, SaveManager __instance, object[] __args)
             // ReSharper restore InconsistentNaming
@@ -107,12 +123,21 @@ namespace STS2RitsuLib.Lifecycle.Patches
         }
     }
 
+    /// <summary>
+    ///     Publishes lifecycle events when a run is saved through <see cref="SaveManager.SaveRun" />.
+    /// </summary>
     public class RunSavingLifecyclePatch : IPatchMethod
     {
+        /// <inheritdoc />
         public static string PatchId => "run_saving_lifecycle";
+
+        /// <inheritdoc />
         public static string Description => "Publish run save lifecycle events";
+
+        /// <inheritdoc />
         public static bool IsCritical => false;
 
+        /// <inheritdoc />
         public static ModPatchTarget[] GetTargets()
         {
             return
@@ -121,6 +146,9 @@ namespace STS2RitsuLib.Lifecycle.Patches
             ];
         }
 
+        /// <summary>
+        ///     Harmony prefix: publishes <see cref="RunSavingEvent" /> before the async save begins.
+        /// </summary>
         // ReSharper disable once InconsistentNaming
         public static void Prefix(SaveManager __instance, AbstractRoom? preFinishedRoom, bool saveProgress)
         {
@@ -130,6 +158,9 @@ namespace STS2RitsuLib.Lifecycle.Patches
             );
         }
 
+        /// <summary>
+        ///     Harmony postfix: chains onto the save task and publishes <see cref="RunSavedEvent" /> when it completes.
+        /// </summary>
         // ReSharper disable InconsistentNaming
         public static void Postfix(SaveManager __instance, AbstractRoom? preFinishedRoom, bool saveProgress,
                 ref Task __result)

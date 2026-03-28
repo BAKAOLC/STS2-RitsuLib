@@ -63,16 +63,41 @@ namespace STS2RitsuLib.Settings
         ModSettingsClipboardScope scope)
         : EventArgs
     {
+        /// <summary>
+        ///     Binding whose value is being copied.
+        /// </summary>
         public IModSettingsBinding Binding { get; } = binding;
+
+        /// <summary>
+        ///     CLR type of the value being copied.
+        /// </summary>
         public Type ValueType { get; } = valueType;
+
+        /// <summary>
+        ///     Current value snapshot passed to serializers.
+        /// </summary>
         public object? Value { get; } = value;
+
+        /// <summary>
+        ///     Self-only vs. subtree copy semantics.
+        /// </summary>
         public ModSettingsClipboardScope Scope { get; } = scope;
+
+        /// <summary>
+        ///     When set by a handler, the default JSON envelope write is skipped.
+        /// </summary>
         public bool SuppressDefaultClipboardWrite { get; set; }
     }
 
     /// <summary>
     ///     Public snapshot of a clipboard envelope for paste validation (hides internal serialization types).
     /// </summary>
+    /// <param name="Kind">Envelope discriminator (e.g. binding vs. chrome).</param>
+    /// <param name="TypeName">Serialized CLR or logical type name inside the payload.</param>
+    /// <param name="TargetSignature">Binding identity when copied from a specific setting.</param>
+    /// <param name="SchemaSignature">Adapter/schema version token for compatibility checks.</param>
+    /// <param name="Scope">Self vs. subtree copy semantics.</param>
+    /// <param name="Payload">JSON or opaque payload string.</param>
     public sealed record ModSettingsClipboardEnvelopeView(
         string Kind,
         string TypeName,
@@ -86,9 +111,24 @@ namespace STS2RitsuLib.Settings
     /// </summary>
     public enum ModSettingsPasteFailureReason
     {
+        /// <summary>
+        ///     Paste succeeded or no failure was classified.
+        /// </summary>
         None = 0,
+
+        /// <summary>
+        ///     Clipboard text was missing or unusable.
+        /// </summary>
         ClipboardEmpty = 1,
+
+        /// <summary>
+        ///     A registered paste rule returned <see cref="ModSettingsPasteVerdict.Deny" />.
+        /// </summary>
         PasteRuleDenied = 2,
+
+        /// <summary>
+        ///     Envelope or payload did not match the target binding or adapter.
+        /// </summary>
         TypeOrShapeMismatch = 3,
     }
 
@@ -113,9 +153,24 @@ namespace STS2RitsuLib.Settings
     /// </summary>
     public sealed class ModSettingsPasteValidationContext
     {
+        /// <summary>
+        ///     Binding that would receive the paste.
+        /// </summary>
         public required IModSettingsBinding TargetBinding { get; init; }
+
+        /// <summary>
+        ///     Expected value type of <see cref="TargetBinding" />.
+        /// </summary>
         public required Type TargetValueType { get; init; }
+
+        /// <summary>
+        ///     Raw clipboard string (may or may not be a valid envelope).
+        /// </summary>
         public required string ClipboardText { get; init; }
+
+        /// <summary>
+        ///     Parsed envelope metadata when <see cref="ClipboardText" /> is a known RitsuLib settings envelope.
+        /// </summary>
         public ModSettingsClipboardEnvelopeView? Envelope { get; init; }
     }
 
@@ -144,6 +199,10 @@ namespace STS2RitsuLib.Settings
         /// </summary>
         public static bool RequireMatchingSourceBindingForPaste { get; set; }
 
+        /// <summary>
+        ///     Raised before the default copy-to-clipboard for a binding; handlers may set
+        ///     <see cref="ModSettingsCopyActionEventArgs.SuppressDefaultClipboardWrite" />.
+        /// </summary>
         public static event Action<ModSettingsCopyActionEventArgs>? BindingValueCopyRequested;
 
         /// <summary>
@@ -167,6 +226,9 @@ namespace STS2RitsuLib.Settings
             PasteAppliers.GetOrAdd(typeof(TValue), _ => []).Add(applier);
         }
 
+        /// <summary>
+        ///     Runs copy hooks then writes the default clipboard envelope unless suppressed.
+        /// </summary>
         public static void InvokeCopy<TValue>(IModSettingsValueBinding<TValue> binding,
             ModSettingsClipboardScope scope,
             IStructuredModSettingsValueAdapter<TValue> adapter,
@@ -185,6 +247,10 @@ namespace STS2RitsuLib.Settings
                 ModSettingsClipboardData.CopyValue(binding, scope, adapter, value);
         }
 
+        /// <summary>
+        ///     Returns whether the current clipboard can be deserialized into <typeparamref name="TValue" /> for
+        ///     <paramref name="binding" /> after paste rules.
+        /// </summary>
         public static bool CanPasteBindingValue<TValue>(IModSettingsValueBinding<TValue> binding,
             IStructuredModSettingsValueAdapter<TValue> adapter)
         {
@@ -199,12 +265,18 @@ namespace STS2RitsuLib.Settings
                    ModSettingsClipboardData.TryReadValue(binding, adapter, out _, RequireMatchingSourceBindingForPaste);
         }
 
+        /// <summary>
+        ///     Attempts to paste into <paramref name="binding" />; returns false when clipboard or validation fails.
+        /// </summary>
         public static bool TryPasteBindingValue<TValue>(IModSettingsValueBinding<TValue> binding,
             IStructuredModSettingsValueAdapter<TValue> adapter, out TValue value)
         {
             return TryPasteBindingValue(binding, adapter, out value, out _);
         }
 
+        /// <summary>
+        ///     Attempts to paste into <paramref name="binding" /> and reports a <paramref name="failureReason" /> when false.
+        /// </summary>
         public static bool TryPasteBindingValue<TValue>(IModSettingsValueBinding<TValue> binding,
             IStructuredModSettingsValueAdapter<TValue> adapter, out TValue value,
             out ModSettingsPasteFailureReason failureReason)

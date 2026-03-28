@@ -5,21 +5,32 @@ using STS2RitsuLib.Patching.Models;
 
 namespace STS2RitsuLib.Scaffolding.Characters.Patches
 {
+    /// <summary>
+    ///     After <see cref="NCardTrailVfx.Create" />, applies <see cref="IModCharacterAssetOverrides.CustomTrailStyle" />
+    ///     modulates and widths to line, particle, and sprite nodes when present.
+    /// </summary>
     public class CharacterTrailStyleOverridePatch : IPatchMethod
     {
+        /// <inheritdoc cref="IPatchMethod.PatchId" />
         public static string PatchId => "character_trail_style_override";
 
+        /// <inheritdoc cref="IPatchMethod.Description" />
         public static string Description =>
             "Allow mod characters to reuse a vanilla trail scene and override its visual properties";
 
+        /// <inheritdoc cref="IPatchMethod.IsCritical" />
         public static bool IsCritical => false;
 
+        /// <inheritdoc cref="IPatchMethod.GetTargets" />
         public static ModPatchTarget[] GetTargets()
         {
             return [new(typeof(NCardTrailVfx), nameof(NCardTrailVfx.Create), [typeof(Control), typeof(string)])];
         }
 
         // ReSharper disable InconsistentNaming
+        /// <summary>
+        ///     Mutates the created trail instance in place when the owning card’s character supplies a trail style.
+        /// </summary>
         public static void Postfix(Control card, ref NCardTrailVfx? __result)
             // ReSharper restore InconsistentNaming
         {

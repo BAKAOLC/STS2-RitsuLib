@@ -1,8 +1,13 @@
 namespace STS2RitsuLib.Audio
 {
-    /// <summary>Game-routed FMOD Studio API (vanilla <see cref="MegaCrit.Sts2.Core.Nodes.Audio.NAudioManager" />).</summary>
+    /// <summary>
+    ///     Game-routed FMOD Studio API (vanilla <see cref="MegaCrit.Sts2.Core.Nodes.Audio.NAudioManager" />).
+    /// </summary>
     public static class GameFmod
     {
-        public static IGameFmodAudio Studio { get; } = GameFmodAudioService.Shared;
+        /// <summary>
+        ///     Vanilla-routed FMOD API (singleton <see cref="GameFmodAudioService" />).
+        /// </summary>
+        public static IGameFmodAudio Studio => GameFmodAudioService.Shared;
     }
 }

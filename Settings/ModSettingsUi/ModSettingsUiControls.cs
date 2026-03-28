@@ -1713,17 +1713,15 @@ namespace STS2RitsuLib.Settings
             actions.AddChild(actionsButton);
             ModSettingsUiFactory.AttachContextMenuTargets(this, outer, actionsButton);
 
-            if (editorContent != null)
+            if (editorContent == null) return;
+            var editorSurface = new PanelContainer
             {
-                var editorSurface = new PanelContainer
-                {
-                    SizeFlagsHorizontal = SizeFlags.ExpandFill,
-                    MouseFilter = MouseFilterEnum.Ignore,
-                };
-                editorSurface.AddThemeStyleboxOverride("panel", ModSettingsUiFactory.CreateListEditorSurfaceStyle());
-                root.AddChild(editorSurface);
-                editorSurface.AddChild(editorContent);
-            }
+                SizeFlagsHorizontal = SizeFlags.ExpandFill,
+                MouseFilter = MouseFilterEnum.Ignore,
+            };
+            editorSurface.AddThemeStyleboxOverride("panel", ModSettingsUiFactory.CreateListEditorSurfaceStyle());
+            root.AddChild(editorSurface);
+            editorSurface.AddChild(editorContent);
         }
 
         public ModSettingsListItemCard()

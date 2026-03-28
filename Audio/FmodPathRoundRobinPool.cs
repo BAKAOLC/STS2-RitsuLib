@@ -1,30 +1,41 @@
 namespace STS2RitsuLib.Audio
 {
-    /// <summary>In-memory pool of event or file paths with simple no-repeat random selection.</summary>
+    /// <summary>
+    ///     In-memory pool of event or file paths with simple no-repeat random selection.
+    /// </summary>
     public sealed class FmodPathRoundRobinPool
     {
         private readonly List<string> _entries;
         private readonly Random _rng = new();
         private int _lastIndex = -1;
 
+        /// <summary>
+        ///     Copies <paramref name="paths" /> into an internal list (may be empty).
+        /// </summary>
         public FmodPathRoundRobinPool(IEnumerable<string> paths)
         {
             ArgumentNullException.ThrowIfNull(paths);
             _entries = [.. paths];
         }
 
+        /// <summary>
+        ///     Snapshot of configured paths.
+        /// </summary>
         public IReadOnlyList<string> Entries => _entries;
 
+        /// <summary>
+        ///     Picks a random path, avoiding the same index as the previous pick when more than one entry exists.
+        /// </summary>
         public bool TryPickNext(out string path)
         {
             path = "";
-            if (_entries.Count == 0)
-                return false;
-
-            if (_entries.Count == 1)
+            switch (_entries.Count)
             {
-                path = _entries[0];
-                return true;
+                case 0:
+                    return false;
+                case 1:
+                    path = _entries[0];
+                    return true;
             }
 
             int index;

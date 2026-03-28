@@ -3,7 +3,9 @@ using STS2RitsuLib.Audio.Internal;
 
 namespace STS2RitsuLib.Audio
 {
-    /// <summary>Direct bus objects from FMOD Studio (parallel to strings in <see cref="FmodStudioRouting" />).</summary>
+    /// <summary>
+    ///     Direct bus objects from FMOD Studio (parallel to strings in <see cref="FmodStudioRouting" />).
+    /// </summary>
     public static class FmodStudioBusAccess
     {
         private static readonly StringName GetVolume = new("get_volume");
@@ -11,6 +13,9 @@ namespace STS2RitsuLib.Audio
         private static readonly StringName SetMute = new("set_mute");
         private static readonly StringName SetPaused = new("set_paused");
 
+        /// <summary>
+        ///     Resolves a Studio bus object for <paramref name="busPath" />; null when the addon call fails.
+        /// </summary>
         public static GodotObject? TryGetBus(string busPath)
         {
             return !FmodStudioGateway.TryCall(out var v, FmodStudioMethodNames.GetBus, busPath)
@@ -18,6 +23,9 @@ namespace STS2RitsuLib.Audio
                 : v.AsGodotObject();
         }
 
+        /// <summary>
+        ///     Reads linear volume for <paramref name="busPath" />; 0 when missing or on error.
+        /// </summary>
         public static float TryGetVolume(string busPath)
         {
             var bus = TryGetBus(busPath);
@@ -35,6 +43,9 @@ namespace STS2RitsuLib.Audio
             }
         }
 
+        /// <summary>
+        ///     Sets linear volume on the resolved bus.
+        /// </summary>
         public static bool TrySetVolume(string busPath, float linearVolume)
         {
             var bus = TryGetBus(busPath);
@@ -53,6 +64,9 @@ namespace STS2RitsuLib.Audio
             }
         }
 
+        /// <summary>
+        ///     Mutes or unmutes the bus.
+        /// </summary>
         public static bool TrySetMute(string busPath, bool muted)
         {
             var bus = TryGetBus(busPath);
@@ -71,6 +85,9 @@ namespace STS2RitsuLib.Audio
             }
         }
 
+        /// <summary>
+        ///     Pauses or resumes the bus.
+        /// </summary>
         public static bool TrySetPaused(string busPath, bool paused)
         {
             var bus = TryGetBus(busPath);

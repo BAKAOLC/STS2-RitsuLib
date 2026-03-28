@@ -21,6 +21,9 @@ namespace STS2RitsuLib.Scaffolding.Content
         bool showInCardLibrary = false)
         : ModCardTemplate(baseCost, type, rarity, target, showInCardLibrary)
     {
+        /// <summary>
+        ///     No-op play handler for placeholder cards.
+        /// </summary>
         protected override Task OnPlay(PlayerChoiceContext choiceContext, CardPlay cardPlay)
         {
             return Task.CompletedTask;
@@ -48,30 +51,43 @@ namespace STS2RitsuLib.Scaffolding.Content
         bool shouldFlashOnPlayer = true)
         : ModRelicTemplate
     {
+        /// <inheritdoc />
         public override RelicRarity Rarity => rarity;
 
+        /// <inheritdoc />
         public override bool IsUsedUp => isUsedUp;
 
+        /// <inheritdoc />
         public override bool HasUponPickupEffect => hasUponPickupEffect;
 
+        /// <inheritdoc />
         public override bool SpawnsPets => spawnsPets;
 
+        /// <inheritdoc />
         public override bool IsStackable => isStackable;
 
+        /// <inheritdoc />
         public override bool AddsPet => addsPet;
 
+        /// <inheritdoc />
         public override bool ShowCounter => showCounter;
 
+        /// <inheritdoc />
         public override int DisplayAmount => displayAmount;
 
+        /// <inheritdoc />
         protected override bool IncludeEnergyHoverTip => includeEnergyHoverTip;
 
+        /// <inheritdoc />
         public override int MerchantCost => merchantCostOverride >= 0 ? merchantCostOverride : base.MerchantCost;
 
+        /// <inheritdoc />
         public override string FlashSfx => flashSfx;
 
+        /// <inheritdoc />
         public override bool ShouldFlashOnPlayer => shouldFlashOnPlayer;
 
+        /// <inheritdoc />
         public override bool IsAllowed(IRunState runState)
         {
             return alwaysAllowedInRun;
@@ -91,16 +107,24 @@ namespace STS2RitsuLib.Scaffolding.Content
         bool passesCustomUsabilityCheck = true)
         : ModPotionTemplate
     {
+        /// <inheritdoc />
         public override PotionRarity Rarity => rarity;
 
+        /// <inheritdoc />
         public override PotionUsage Usage => usage;
 
+        /// <inheritdoc />
         public override TargetType TargetType => targetType;
 
+        /// <inheritdoc />
         public override bool CanBeGeneratedInCombat => canBeGeneratedInCombat;
 
+        /// <inheritdoc />
         public override bool PassesCustomUsabilityCheck => passesCustomUsabilityCheck;
 
+        /// <summary>
+        ///     No-op use handler for placeholder potions.
+        /// </summary>
         protected override Task OnUse(PlayerChoiceContext choiceContext, Creature? target)
         {
             return Task.CompletedTask;

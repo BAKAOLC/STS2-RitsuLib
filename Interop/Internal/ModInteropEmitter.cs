@@ -10,8 +10,8 @@ namespace STS2RitsuLib.Interop.Internal
     /// </summary>
     internal static class ModInteropEmitter
     {
-        private static readonly BindingFlags ValidMemberFlags =
-            BindingFlags.DeclaredOnly | BindingFlags.Public | BindingFlags.Static | BindingFlags.Instance;
+        private const BindingFlags ValidMemberFlags = BindingFlags.DeclaredOnly | BindingFlags.Public |
+                                                      BindingFlags.Static | BindingFlags.Instance;
 
         private static readonly FieldInfo WrappedValueField =
             AccessTools.DeclaredField(typeof(InteropClassWrapper), nameof(InteropClassWrapper.Value))!;

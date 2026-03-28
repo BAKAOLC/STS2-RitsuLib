@@ -38,12 +38,32 @@ namespace STS2RitsuLib
             Logger = CreateLogger(Const.ModId);
         }
 
+        /// <summary>
+        ///     Framework logger instance (typed as <c>MegaCrit.Sts2.Core.Logging.Logger</c>).
+        /// </summary>
         public static Logger Logger { get; private set; }
+
+        /// <summary>
+        ///     True after <see cref="Initialize" /> completes without a fatal patch failure.
+        /// </summary>
         public static bool IsInitialized { get; private set; }
+
+        /// <summary>
+        ///     True when the framework finished initialization and critical patches succeeded.
+        /// </summary>
         public static bool IsActive { get; private set; }
 
+        /// <summary>
+        ///     True when at least one mod has registered a settings page via <see cref="RegisterModSettings" />.
+        /// </summary>
         public static bool HasRegisteredModSettings => ModSettingsRegistry.HasPages;
 
+        /// <summary>
+        ///     Subscribes an observer to framework lifecycle events, optionally replaying the current replayable state.
+        /// </summary>
+        /// <param name="observer">Receives lifecycle notifications via <c>OnEvent</c>.</param>
+        /// <param name="replayCurrentState">When true, dispatches replayable events that already occurred.</param>
+        /// <returns>Disposing unsubscribes the observer.</returns>
         public static IDisposable SubscribeLifecycle(ILifecycleObserver observer, bool replayCurrentState = true)
         {
             ArgumentNullException.ThrowIfNull(observer);
@@ -73,6 +93,16 @@ namespace STS2RitsuLib
             });
         }
 
+        /// <summary>
+        ///     Subscribes a typed callback for a specific <typeparamref name="TEvent" /> lifecycle event.
+        /// </summary>
+        /// <typeparam name="TEvent">Concrete lifecycle event type.</typeparam>
+        /// <param name="handler">Invoked for each matching event.</param>
+        /// <param name="replayCurrentState">
+        ///     When true, invokes <paramref name="handler" /> with the last replayable event if
+        ///     present.
+        /// </param>
+        /// <returns>Disposing unsubscribes the handler.</returns>
         public static IDisposable SubscribeLifecycle<TEvent>(Action<TEvent> handler, bool replayCurrentState = true)
             where TEvent : IFrameworkLifecycleEvent
         {
@@ -104,6 +134,9 @@ namespace STS2RitsuLib
             });
         }
 
+        /// <summary>
+        ///     Initializes the shared framework: settings, patch registration, and lifecycle publication.
+        /// </summary>
         public static void Initialize()
         {
             lock (SyncRoot)
@@ -168,6 +201,9 @@ namespace STS2RitsuLib
             }
         }
 
+        /// <summary>
+        ///     Ensures profile-bound services (<c>ProfileManager</c>, profile-scoped <c>ModDataStore</c>) are initialized once.
+        /// </summary>
         public static void EnsureProfileServicesInitialized()
         {
             lock (SyncRoot)
@@ -196,59 +232,96 @@ namespace STS2RitsuLib
             }
         }
 
+        /// <summary>
+        ///     Begins a registration scope for the given mod's <c>ModDataStore</c> entries.
+        /// </summary>
+        /// <param name="modId">Owning mod identifier.</param>
+        /// <param name="initializeProfileIfReady">When true, initializes profile services if the profile is already ready.</param>
+        /// <returns>Disposing ends the registration scope.</returns>
         public static IDisposable BeginModDataRegistration(string modId, bool initializeProfileIfReady = true)
         {
             ArgumentException.ThrowIfNullOrWhiteSpace(modId);
             return ModDataStore.For(modId).BeginRegistrationScope(initializeProfileIfReady);
         }
 
+        /// <summary>
+        ///     Returns the persistent data store facade for <paramref name="modId" />.
+        /// </summary>
         public static ModDataStore GetDataStore(string modId)
         {
             return ModDataStore.For(modId);
         }
 
+        /// <summary>
+        ///     Returns the content registry for <paramref name="modId" />.
+        /// </summary>
         public static ModContentRegistry GetContentRegistry(string modId)
         {
             return ModContentRegistry.For(modId);
         }
 
+        /// <summary>
+        ///     Returns the keyword registry for <paramref name="modId" />.
+        /// </summary>
         public static ModKeywordRegistry GetKeywordRegistry(string modId)
         {
             return ModKeywordRegistry.For(modId);
         }
 
+        /// <summary>
+        ///     Returns the timeline (epoch/story) registry for <paramref name="modId" />.
+        /// </summary>
         public static ModTimelineRegistry GetTimelineRegistry(string modId)
         {
             return ModTimelineRegistry.For(modId);
         }
 
+        /// <summary>
+        ///     Returns the unlock rules registry for <paramref name="modId" />.
+        /// </summary>
         public static ModUnlockRegistry GetUnlockRegistry(string modId)
         {
             return ModUnlockRegistry.For(modId);
         }
 
+        /// <summary>
+        ///     Creates a content pack builder for <paramref name="modId" />.
+        /// </summary>
         public static ModContentPackBuilder CreateContentPack(string modId)
         {
             return ModContentPackBuilder.For(modId);
         }
 
+        /// <summary>
+        ///     Registers a page in the RitsuLib mod settings submenu.
+        /// </summary>
+        /// <remarks>Optional layout: <see cref="ModSettingsUiPresentation.ParagraphMaxBodyHeight" />.</remarks>
         public static void RegisterModSettings(string modId, Action<ModSettingsPageBuilder> configure,
             string? pageId = null)
         {
             ModSettingsRegistry.Register(modId, configure, pageId);
         }
 
+        /// <summary>
+        ///     Returns all registered mod settings pages (same snapshot as <see cref="ModSettingsRegistry.GetPages" />).
+        /// </summary>
         public static IReadOnlyList<ModSettingsPage> GetRegisteredModSettings()
         {
             return ModSettingsRegistry.GetPages();
         }
 
+        /// <summary>
+        ///     Creates a <c>MegaCrit.Sts2.Core.Logging.Logger</c> for <paramref name="modId" />.
+        /// </summary>
         public static Logger CreateLogger(string modId, LogType logType = LogType.Generic)
         {
             ArgumentException.ThrowIfNullOrWhiteSpace(modId);
             return new(modId, logType);
         }
 
+        /// <summary>
+        ///     Creates a <see cref="STS2RitsuLib.Patching.Core.ModPatcher" /> with a dedicated logger for the owning mod.
+        /// </summary>
         public static ModPatcher CreatePatcher(
             string ownerModId,
             string patcherName,
@@ -267,6 +340,10 @@ namespace STS2RitsuLib
             );
         }
 
+        /// <summary>
+        ///     Creates a <see cref="STS2RitsuLib.Utils.I18N" /> instance with optional file, embedded resource, and PCK
+        ///     translation roots.
+        /// </summary>
         public static I18N CreateLocalization(
             string instanceName,
             IEnumerable<string>? fileSystemFolders = null,
@@ -285,6 +362,10 @@ namespace STS2RitsuLib
             );
         }
 
+        /// <summary>
+        ///     Creates a <see cref="STS2RitsuLib.Utils.I18N" /> instance for a mod, defaulting the file-system folder to
+        ///     <c>user://mod-configs/{modId}/localization</c> when none are supplied.
+        /// </summary>
         public static I18N CreateModLocalization(
             string modId,
             string instanceName,
@@ -300,6 +381,9 @@ namespace STS2RitsuLib
             return CreateLocalization(instanceName, folders, resourceFolders, pckFolders, resourceAssembly);
         }
 
+        /// <summary>
+        ///     Registers C# scripts from <paramref name="assembly" /> with Godot (once per assembly).
+        /// </summary>
         public static void EnsureGodotScriptsRegistered(Assembly assembly, Logger? logger = null)
         {
             ArgumentNullException.ThrowIfNull(assembly);
@@ -338,6 +422,10 @@ namespace STS2RitsuLib
             }
         }
 
+        /// <summary>
+        ///     Applies all patches on <paramref name="patcher" />; on failure logs, invokes <paramref name="disableMod" />, and
+        ///     returns false.
+        /// </summary>
         public static bool ApplyRequiredPatcher(ModPatcher patcher, Action disableMod, string? failureMessage = null)
         {
             ArgumentNullException.ThrowIfNull(patcher);

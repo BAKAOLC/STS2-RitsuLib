@@ -8,7 +8,14 @@ namespace STS2RitsuLib.Settings
     /// </summary>
     public sealed class ModSettingsPageCopyEventArgs(ModSettingsPageUiContext context) : EventArgs
     {
+        /// <summary>
+        ///     Page context being copied.
+        /// </summary>
         public ModSettingsPageUiContext Context { get; } = context;
+
+        /// <summary>
+        ///     When true, <see cref="ModSettingsUiChromeClipboard" /> skips writing the default envelope.
+        /// </summary>
         public bool SuppressDefaultClipboardWrite { get; set; }
     }
 
@@ -21,7 +28,14 @@ namespace STS2RitsuLib.Settings
         ModSettingsPageDataClipboardPayload? payload)
         : EventArgs
     {
+        /// <summary>
+        ///     Page receiving the paste.
+        /// </summary>
         public ModSettingsPageUiContext Target { get; } = target;
+
+        /// <summary>
+        ///     Deserialized page payload from the clipboard, when valid.
+        /// </summary>
         public ModSettingsPageDataClipboardPayload? Payload { get; } = payload;
 
         /// <summary>
@@ -29,6 +43,9 @@ namespace STS2RitsuLib.Settings
         /// </summary>
         public bool Handled { get; set; }
 
+        /// <summary>
+        ///     Outcome after handling (whether paste applied successfully).
+        /// </summary>
         public bool Success { get; set; }
     }
 
@@ -37,7 +54,14 @@ namespace STS2RitsuLib.Settings
     /// </summary>
     public sealed class ModSettingsSectionCopyEventArgs(ModSettingsSectionUiContext context) : EventArgs
     {
+        /// <summary>
+        ///     Section context being copied.
+        /// </summary>
         public ModSettingsSectionUiContext Context { get; } = context;
+
+        /// <summary>
+        ///     When true, default envelope write is skipped.
+        /// </summary>
         public bool SuppressDefaultClipboardWrite { get; set; }
     }
 
@@ -49,9 +73,24 @@ namespace STS2RitsuLib.Settings
         ModSettingsSectionDataClipboardPayload? payload)
         : EventArgs
     {
+        /// <summary>
+        ///     Section receiving the paste.
+        /// </summary>
         public ModSettingsSectionUiContext Target { get; } = target;
+
+        /// <summary>
+        ///     Deserialized section payload when the clipboard is valid.
+        /// </summary>
         public ModSettingsSectionDataClipboardPayload? Payload { get; } = payload;
+
+        /// <summary>
+        ///     When true, a subscriber handled the paste and defaults should not run.
+        /// </summary>
         public bool Handled { get; set; }
+
+        /// <summary>
+        ///     Whether the handler or default paste reported success.
+        /// </summary>
         public bool Success { get; set; }
     }
 
@@ -60,7 +99,14 @@ namespace STS2RitsuLib.Settings
     /// </summary>
     public static class ModSettingsUiChromeClipboard
     {
+        /// <summary>
+        ///     Clipboard envelope kind for whole-page chrome data.
+        /// </summary>
         public const string PageKind = "ritsulib.settings.ui.page";
+
+        /// <summary>
+        ///     Clipboard envelope kind for single-section chrome data.
+        /// </summary>
         public const string SectionKind = "ritsulib.settings.ui.section";
 
         private const string PageDataTypeName = "ritsulib.settings.ui.page.data.v1";
@@ -76,11 +122,29 @@ namespace STS2RitsuLib.Settings
         /// </summary>
         public static bool EnableSectionPasteUi { get; set; } = true;
 
+        /// <summary>
+        ///     Raised before default page copy; handlers may suppress the default clipboard write.
+        /// </summary>
         public static event Action<ModSettingsPageCopyEventArgs>? PageCopyRequested;
+
+        /// <summary>
+        ///     Raised before default page paste; set <see cref="ModSettingsPagePasteEventArgs.Handled" /> to take over.
+        /// </summary>
         public static event Action<ModSettingsPagePasteEventArgs>? PagePasteRequested;
+
+        /// <summary>
+        ///     Raised before default section copy.
+        /// </summary>
         public static event Action<ModSettingsSectionCopyEventArgs>? SectionCopyRequested;
+
+        /// <summary>
+        ///     Raised before default section paste.
+        /// </summary>
         public static event Action<ModSettingsSectionPasteEventArgs>? SectionPasteRequested;
 
+        /// <summary>
+        ///     Serializes all binding snapshots on <paramref name="context" />.Page to the clipboard unless suppressed.
+        /// </summary>
         public static bool TryCopyPage(ModSettingsPageUiContext context)
         {
             var args = new ModSettingsPageCopyEventArgs(context);
@@ -116,6 +180,9 @@ namespace STS2RitsuLib.Settings
             return true;
         }
 
+        /// <summary>
+        ///     Parses <paramref name="clipboardText" /> into a page payload when kind and type match.
+        /// </summary>
         public static bool TryGetPageDataPayload(string clipboardText, out ModSettingsPageDataClipboardPayload? payload)
         {
             payload = null;
@@ -139,6 +206,10 @@ namespace STS2RitsuLib.Settings
             }
         }
 
+        /// <summary>
+        ///     True when paste UI should be enabled and clipboard payload targets the same mod and page as
+        ///     <paramref name="context" />.
+        /// </summary>
         public static bool CanPastePage(ModSettingsPageUiContext context)
         {
             if (!EnablePagePasteUi)
@@ -152,6 +223,9 @@ namespace STS2RitsuLib.Settings
                    string.Equals(payload.PageId, context.Page.Id, StringComparison.Ordinal);
         }
 
+        /// <summary>
+        ///     Invokes paste subscribers then applies default binding restore when unhandled.
+        /// </summary>
         public static bool TryPastePage(ModSettingsPageUiContext context)
         {
             ModSettingsClipboardAccess.TryGetText(out var clip);
@@ -159,18 +233,21 @@ namespace STS2RitsuLib.Settings
 
             var args = new ModSettingsPagePasteEventArgs(context, payload);
             var h = PagePasteRequested;
-            if (h != null)
-                foreach (var @delegate in h.GetInvocationList())
-                {
-                    var d = (Action<ModSettingsPagePasteEventArgs>)@delegate;
-                    d(args);
-                    if (args.Handled)
-                        return args.Success;
-                }
+            if (h == null) return TryApplyDefaultPageDataPaste(context, payload);
+            foreach (var @delegate in h.GetInvocationList())
+            {
+                var d = (Action<ModSettingsPagePasteEventArgs>)@delegate;
+                d(args);
+                if (args.Handled)
+                    return args.Success;
+            }
 
             return TryApplyDefaultPageDataPaste(context, payload);
         }
 
+        /// <summary>
+        ///     Copies binding snapshots for one section to the clipboard unless suppressed.
+        /// </summary>
         public static bool TryCopySection(ModSettingsSectionUiContext context)
         {
             var args = new ModSettingsSectionCopyEventArgs(context);
@@ -199,6 +276,9 @@ namespace STS2RitsuLib.Settings
             return true;
         }
 
+        /// <summary>
+        ///     Parses <paramref name="clipboardText" /> into a section payload when valid.
+        /// </summary>
         public static bool TryGetSectionDataPayload(string clipboardText,
             out ModSettingsSectionDataClipboardPayload? payload)
         {
@@ -223,6 +303,9 @@ namespace STS2RitsuLib.Settings
             }
         }
 
+        /// <summary>
+        ///     True when section paste UI is allowed and clipboard matches the page’s mod and page id.
+        /// </summary>
         public static bool CanPasteSection(ModSettingsSectionUiContext context)
         {
             if (!EnableSectionPasteUi)
@@ -236,6 +319,9 @@ namespace STS2RitsuLib.Settings
                    string.Equals(payload.PageId, context.Page.Id, StringComparison.Ordinal);
         }
 
+        /// <summary>
+        ///     Invokes section paste subscribers then restores bindings by entry id when unhandled.
+        /// </summary>
         public static bool TryPasteSection(ModSettingsSectionUiContext context)
         {
             ModSettingsClipboardAccess.TryGetText(out var clip);
@@ -243,14 +329,14 @@ namespace STS2RitsuLib.Settings
 
             var args = new ModSettingsSectionPasteEventArgs(context, payload);
             var h = SectionPasteRequested;
-            if (h != null)
-                foreach (var @delegate in h.GetInvocationList())
-                {
-                    var d = (Action<ModSettingsSectionPasteEventArgs>)@delegate;
-                    d(args);
-                    if (args.Handled)
-                        return args.Success;
-                }
+            if (h == null) return TryApplyDefaultSectionDataPaste(context, payload);
+            foreach (var @delegate in h.GetInvocationList())
+            {
+                var d = (Action<ModSettingsSectionPasteEventArgs>)@delegate;
+                d(args);
+                if (args.Handled)
+                    return args.Success;
+            }
 
             return TryApplyDefaultSectionDataPaste(context, payload);
         }

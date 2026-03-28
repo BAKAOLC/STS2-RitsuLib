@@ -9,6 +9,7 @@ namespace STS2RitsuLib.Interop
     /// </summary>
     public sealed class ModInteropTypeDiscoveryContributor : IModTypeDiscoveryContributor
     {
+        /// <inheritdoc />
         public void Contribute(
             Harmony harmony,
             IReadOnlyDictionary<string, Assembly> modAssembliesByManifestId,

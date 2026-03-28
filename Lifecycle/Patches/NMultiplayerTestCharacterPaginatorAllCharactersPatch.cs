@@ -27,18 +27,26 @@ namespace STS2RitsuLib.Lifecycle.Patches
         private static readonly AccessTools.FieldRef<NPaginator, MegaLabel> LabelRef =
             AccessTools.FieldRefAccess<NPaginator, MegaLabel>("_label");
 
+        /// <inheritdoc />
         public static string PatchId => "nmultiplayer_test_character_paginator_all_characters";
 
+        /// <inheritdoc />
         public static string Description =>
             "Multiplayer test scene: character paginator lists ModelDb.AllCharacters (vanilla + mod)";
 
+        /// <inheritdoc />
         public static bool IsCritical => false;
 
+        /// <inheritdoc />
         public static ModPatchTarget[] GetTargets()
         {
             return [new(typeof(NMultiplayerTestCharacterPaginator), "_Ready")];
         }
 
+        /// <summary>
+        ///     Harmony postfix: repopulates paginator options and label from <see cref="ModelDb.AllCharacters" /> after
+        ///     <c>_Ready</c>.
+        /// </summary>
         // ReSharper disable once InconsistentNaming
         public static void Postfix(NMultiplayerTestCharacterPaginator __instance)
         {

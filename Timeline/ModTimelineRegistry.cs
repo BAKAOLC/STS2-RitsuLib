@@ -4,6 +4,10 @@ using STS2RitsuLib.Diagnostics;
 
 namespace STS2RitsuLib.Timeline
 {
+    /// <summary>
+    ///     Per-mod registry for custom <c>EpochModel</c> and <c>StoryModel</c> types wired into the game's static
+    ///     timeline dictionaries.
+    /// </summary>
     public sealed class ModTimelineRegistry
     {
         private static readonly Lock SyncRoot = new();
@@ -23,8 +27,14 @@ namespace STS2RitsuLib.Timeline
             _modId = modId;
         }
 
+        /// <summary>
+        ///     True after the framework freezes further epoch/story registrations (e.g. at model init).
+        /// </summary>
         public static bool IsFrozen { get; private set; }
 
+        /// <summary>
+        ///     Returns the timeline registry singleton for <paramref name="modId" />.
+        /// </summary>
         public static ModTimelineRegistry For(string modId)
         {
             ArgumentException.ThrowIfNullOrWhiteSpace(modId);
@@ -40,11 +50,17 @@ namespace STS2RitsuLib.Timeline
             }
         }
 
+        /// <summary>
+        ///     Registers a concrete epoch type so its id appears in vanilla epoch discovery.
+        /// </summary>
         public void RegisterEpoch<TEpoch>() where TEpoch : EpochModel, new()
         {
             RegisterEpoch(typeof(TEpoch));
         }
 
+        /// <summary>
+        ///     Registers a concrete story type in the game's story type dictionary.
+        /// </summary>
         public void RegisterStory<TStory>() where TStory : StoryModel, new()
         {
             RegisterStory(typeof(TStory));

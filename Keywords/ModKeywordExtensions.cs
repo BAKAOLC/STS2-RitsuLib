@@ -3,6 +3,9 @@ using MegaCrit.Sts2.Core.HoverTips;
 
 namespace STS2RitsuLib.Keywords
 {
+    /// <summary>
+    ///     Extension methods for attaching runtime keyword ids to arbitrary objects and for hover-tip helpers.
+    /// </summary>
     public static class ModKeywordExtensions
     {
         private static readonly Lock SyncRoot = new();
@@ -10,6 +13,9 @@ namespace STS2RitsuLib.Keywords
 
         extension(object target)
         {
+            /// <summary>
+            ///     Adds a runtime keyword id to the extended object (deduplicated, case-insensitive).
+            /// </summary>
             public void AddModKeyword(string keywordId)
             {
                 ArgumentNullException.ThrowIfNull(target);
@@ -24,6 +30,10 @@ namespace STS2RitsuLib.Keywords
                 }
             }
 
+            /// <summary>
+            ///     Removes a previously added runtime keyword id.
+            /// </summary>
+            /// <returns>True if the id was present.</returns>
             public bool RemoveModKeyword(string keywordId)
             {
                 ArgumentNullException.ThrowIfNull(target);
@@ -36,6 +46,9 @@ namespace STS2RitsuLib.Keywords
                 }
             }
 
+            /// <summary>
+            ///     Returns whether the extended object has the given runtime keyword id.
+            /// </summary>
             public bool HasModKeyword(string keywordId)
             {
                 ArgumentNullException.ThrowIfNull(target);
@@ -48,6 +61,9 @@ namespace STS2RitsuLib.Keywords
                 }
             }
 
+            /// <summary>
+            ///     Sorted list of runtime keyword ids on the extended object.
+            /// </summary>
             public IReadOnlyList<string> GetModKeywordIds()
             {
                 ArgumentNullException.ThrowIfNull(target);
@@ -60,6 +76,9 @@ namespace STS2RitsuLib.Keywords
                 }
             }
 
+            /// <summary>
+            ///     Hover tips for all runtime keyword ids on the extended object.
+            /// </summary>
             public IEnumerable<IHoverTip> GetModKeywordHoverTips()
             {
                 ArgumentNullException.ThrowIfNull(target);
@@ -69,6 +88,9 @@ namespace STS2RitsuLib.Keywords
 
         extension(IEnumerable<string> keywords)
         {
+            /// <summary>
+            ///     Case-insensitive containment check for a keyword id in the sequence.
+            /// </summary>
             public bool ContainsModKeyword(string keywordId)
             {
                 ArgumentNullException.ThrowIfNull(keywords);
@@ -78,6 +100,9 @@ namespace STS2RitsuLib.Keywords
                 return keywords.Any(id => string.Equals(id?.Trim(), normalized, StringComparison.OrdinalIgnoreCase));
             }
 
+            /// <summary>
+            ///     Maps each non-empty keyword id to a registered <see cref="IHoverTip" />.
+            /// </summary>
             public IEnumerable<IHoverTip> ToHoverTips()
             {
                 ArgumentNullException.ThrowIfNull(keywords);
@@ -93,6 +118,9 @@ namespace STS2RitsuLib.Keywords
 
         extension(string keywordId)
         {
+            /// <summary>
+            ///     Card BBCode for the extended keyword id string via <see cref="ModKeywordRegistry.GetCardText" />.
+            /// </summary>
             public string GetModKeywordCardText()
             {
                 ArgumentException.ThrowIfNullOrWhiteSpace(keywordId);

@@ -14,12 +14,27 @@ namespace STS2RitsuLib.Utils.Persistence
 
         private static ProfileDataReadyEvent? _lastReadyEvent;
 
+        /// <summary>
+        ///     True when profile path initialization completed and data is considered safe to use.
+        /// </summary>
         public static bool IsReady { get; private set; }
+
+        /// <summary>
+        ///     Profile id associated with the last ready notification, or <c>-1</c> when not ready.
+        /// </summary>
         public static int ReadyProfileId { get; private set; } = -1;
 
+        /// <summary>
+        ///     Derived lifecycle state from <see cref="IsReady" />.
+        /// </summary>
         public static DataLifecycleState State =>
             IsReady ? DataLifecycleState.Ready : DataLifecycleState.WaitingForProfile;
 
+        /// <summary>
+        ///     Refreshes the current profile, ensures profile services, reloads data if paths changed, and raises
+        ///     lifecycle events when appropriate.
+        /// </summary>
+        /// <param name="source">Diagnostic label for log and event payloads.</param>
         public static void NotifyPotentialReady(string source)
         {
             try
@@ -83,6 +98,11 @@ namespace STS2RitsuLib.Utils.Persistence
             }
         }
 
+        /// <summary>
+        ///     Marks the given profile as invalid and raises
+        ///     <see cref="STS2RitsuLib.Utils.Persistence.ProfileDataInvalidatedEvent" /> when it was the active ready
+        ///     profile.
+        /// </summary>
         public static void NotifyProfileInvalidated(int profileId, string reason)
         {
             if (profileId < 0)

@@ -4,6 +4,10 @@ using MegaCrit.Sts2.Core.Models;
 
 namespace STS2RitsuLib.Localization
 {
+    /// <summary>
+    ///     Loads ancient dialogue lines from localization tables and merges them into <c>AncientDialogueSet</c>
+    ///     instances for mod characters.
+    /// </summary>
     public static class AncientDialogueLocalization
     {
         private const string AncientLocTable = "ancients";
@@ -11,6 +15,10 @@ namespace STS2RitsuLib.Localization
         private const string AttackKeySuffix = "-attack";
         private const string VisitIndexKeySuffix = "-visit";
 
+        /// <summary>
+        ///     Builds the localization key prefix for a given ancient and character entry id
+        ///     (e.g. <c>{ancient}.talk.{character}.</c>).
+        /// </summary>
         public static string BaseLocKey(string ancientEntry, string characterEntry)
         {
             ArgumentException.ThrowIfNullOrWhiteSpace(ancientEntry);
@@ -18,6 +26,9 @@ namespace STS2RitsuLib.Localization
             return $"{ancientEntry}.talk.{characterEntry}.";
         }
 
+        /// <summary>
+        ///     Reads all dialogue sequences for an ancient and character from the <c>ancients</c> localization table.
+        /// </summary>
         public static List<AncientDialogue> GetDialoguesForCharacter(string ancientEntry, CharacterModel character)
         {
             ArgumentException.ThrowIfNullOrWhiteSpace(ancientEntry);
@@ -25,6 +36,10 @@ namespace STS2RitsuLib.Localization
             return GetDialoguesForKey(AncientLocTable, BaseLocKey(ancientEntry, character.Id.Entry));
         }
 
+        /// <summary>
+        ///     Reads all dialogue sequences under <paramref name="baseKey" /> from the specified
+        ///     <paramref name="locTable" />.
+        /// </summary>
         public static List<AncientDialogue> GetDialoguesForKey(string locTable, string baseKey)
         {
             ArgumentException.ThrowIfNullOrWhiteSpace(locTable);
@@ -62,6 +77,11 @@ namespace STS2RitsuLib.Localization
             return dialogues;
         }
 
+        /// <summary>
+        ///     Appends localization-defined dialogues for each <paramref name="characters" /> entry to
+        ///     <paramref name="dialogueSet" /> for <paramref name="ancientEntry" />.
+        /// </summary>
+        /// <returns>The number of <c>AncientDialogue</c> instances added.</returns>
         public static int AppendCharacterDialogues(
             AncientDialogueSet dialogueSet,
             string ancientEntry,
@@ -152,9 +172,7 @@ namespace STS2RitsuLib.Localization
             if (LocString.Exists(locTable, locEntry)) return locEntry;
 
             locEntry = $"{baseKey}{dialogueIndex}-{lineIndex}.char";
-            if (LocString.Exists(locTable, locEntry)) return locEntry;
-
-            return null;
+            return LocString.Exists(locTable, locEntry) ? locEntry : null;
         }
     }
 }

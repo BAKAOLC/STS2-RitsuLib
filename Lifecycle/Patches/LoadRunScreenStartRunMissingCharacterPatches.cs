@@ -16,6 +16,10 @@ using STS2RitsuLib.Saves;
 
 namespace STS2RitsuLib.Lifecycle.Patches
 {
+    /// <summary>
+    ///     Compatibility: replaces multiplayer load-screen <c>BeginRun</c> so starting a run is blocked when any player
+    ///     references an unregistered character, without deleting saves; otherwise mirrors vanilla load flow.
+    /// </summary>
     public class NMultiplayerLoadGameScreenBeginRunMissingCharacterPatch : IPatchMethod
     {
         private static readonly AccessTools.FieldRef<NMultiplayerLoadGameScreen, LoadRunLobby> RunLobbyRef =
@@ -27,18 +31,25 @@ namespace STS2RitsuLib.Lifecycle.Patches
         private static readonly AccessTools.FieldRef<NMultiplayerLoadGameScreen, NBackButton> UnreadyRef =
             AccessTools.FieldRefAccess<NMultiplayerLoadGameScreen, NBackButton>("_unreadyButton");
 
+        /// <inheritdoc />
         public static string PatchId => "nmultiplayer_load_game_begin_run_missing_character";
 
+        /// <inheritdoc />
         public static string Description =>
             "Multiplayer load screen: block StartRun when a saved player character is not registered; no save deletion";
 
+        /// <inheritdoc />
         public static bool IsCritical => false;
 
+        /// <inheritdoc />
         public static ModPatchTarget[] GetTargets()
         {
             return [new(typeof(NMultiplayerLoadGameScreen), "BeginRun")];
         }
 
+        /// <summary>
+        ///     Harmony prefix: skips vanilla <c>BeginRun</c>, disables confirm/back, and runs async validation and load.
+        /// </summary>
         // ReSharper disable once InconsistentNaming
         public static bool Prefix(NMultiplayerLoadGameScreen __instance)
         {
@@ -94,6 +105,10 @@ namespace STS2RitsuLib.Lifecycle.Patches
         }
     }
 
+    /// <summary>
+    ///     Compatibility: replaces custom-run load-screen <c>BeginRun</c> so starting a run is blocked when any player
+    ///     references an unregistered character, without deleting saves; otherwise mirrors vanilla load flow.
+    /// </summary>
     public class NCustomRunLoadScreenBeginRunMissingCharacterPatch : IPatchMethod
     {
         private static readonly AccessTools.FieldRef<NCustomRunLoadScreen, LoadRunLobby> LobbyRef =
@@ -105,18 +120,25 @@ namespace STS2RitsuLib.Lifecycle.Patches
         private static readonly AccessTools.FieldRef<NCustomRunLoadScreen, NBackButton> UnreadyRef =
             AccessTools.FieldRefAccess<NCustomRunLoadScreen, NBackButton>("_unreadyButton");
 
+        /// <inheritdoc />
         public static string PatchId => "ncustom_run_load_begin_run_missing_character";
 
+        /// <inheritdoc />
         public static string Description =>
             "Custom run load screen: block StartRun when a saved player character is not registered; no save deletion";
 
+        /// <inheritdoc />
         public static bool IsCritical => false;
 
+        /// <inheritdoc />
         public static ModPatchTarget[] GetTargets()
         {
             return [new(typeof(NCustomRunLoadScreen), "BeginRun")];
         }
 
+        /// <summary>
+        ///     Harmony prefix: skips vanilla <c>BeginRun</c>, disables confirm/back, and runs async validation and load.
+        /// </summary>
         // ReSharper disable once InconsistentNaming
         public static bool Prefix(NCustomRunLoadScreen __instance)
         {
@@ -172,6 +194,10 @@ namespace STS2RitsuLib.Lifecycle.Patches
         }
     }
 
+    /// <summary>
+    ///     Compatibility: replaces daily-run load-screen <c>BeginRun</c> so starting a run is blocked when any player
+    ///     references an unregistered character, without deleting saves; otherwise mirrors vanilla load flow.
+    /// </summary>
     public class NDailyRunLoadScreenBeginRunMissingCharacterPatch : IPatchMethod
     {
         private static readonly AccessTools.FieldRef<NDailyRunLoadScreen, LoadRunLobby?> LobbyRef =
@@ -183,18 +209,25 @@ namespace STS2RitsuLib.Lifecycle.Patches
         private static readonly AccessTools.FieldRef<NDailyRunLoadScreen, NBackButton> UnreadyRef =
             AccessTools.FieldRefAccess<NDailyRunLoadScreen, NBackButton>("_unreadyButton");
 
+        /// <inheritdoc />
         public static string PatchId => "ndaily_run_load_begin_run_missing_character";
 
+        /// <inheritdoc />
         public static string Description =>
             "Daily run load screen: block StartRun when a saved player character is not registered; no save deletion";
 
+        /// <inheritdoc />
         public static bool IsCritical => false;
 
+        /// <inheritdoc />
         public static ModPatchTarget[] GetTargets()
         {
             return [new(typeof(NDailyRunLoadScreen), "BeginRun")];
         }
 
+        /// <summary>
+        ///     Harmony prefix: skips vanilla <c>BeginRun</c>, disables embark/back, and runs async validation and load.
+        /// </summary>
         // ReSharper disable once InconsistentNaming
         public static bool Prefix(NDailyRunLoadScreen __instance)
         {

@@ -2,11 +2,18 @@ using Godot;
 
 namespace STS2RitsuLib.Settings
 {
+    /// <summary>
+    ///     Fluent builder for a registered mod settings page: metadata, optional parent page, and sections.
+    /// </summary>
     public sealed class ModSettingsPageBuilder
     {
         private readonly HashSet<string> _sectionIds = new(StringComparer.OrdinalIgnoreCase);
         private readonly List<ModSettingsSection> _sections = [];
 
+        /// <summary>
+        ///     Initializes a builder for mod <paramref name="modId" />; <paramref name="pageId" /> defaults to the mod id when
+        ///     null or whitespace.
+        /// </summary>
         public ModSettingsPageBuilder(string modId, string? pageId = null)
         {
             ArgumentException.ThrowIfNullOrWhiteSpace(modId);
@@ -14,44 +21,90 @@ namespace STS2RitsuLib.Settings
             PageId = string.IsNullOrWhiteSpace(pageId) ? modId : pageId;
         }
 
+        /// <summary>
+        ///     Owning mod identifier.
+        /// </summary>
         public string ModId { get; }
+
+        /// <summary>
+        ///     Stable page id (used for navigation and chrome clipboard).
+        /// </summary>
         public string PageId { get; }
+
+        /// <summary>
+        ///     When set, this page appears as a child of the given parent page id.
+        /// </summary>
         public string? ParentPageId { get; private set; }
+
+        /// <summary>
+        ///     Localized title shown in tabs and headers.
+        /// </summary>
         public ModSettingsText? Title { get; private set; }
+
+        /// <summary>
+        ///     Optional subtitle or long description for the page.
+        /// </summary>
         public ModSettingsText? Description { get; private set; }
+
+        /// <summary>
+        ///     Display name for the mod in the settings sidebar (separate from page titles).
+        /// </summary>
         public ModSettingsText? ModDisplayName { get; private set; }
+
+        /// <summary>
+        ///     Ordering among sibling pages (lower first).
+        /// </summary>
         public int SortOrder { get; private set; }
 
+        /// <summary>
+        ///     Nests this page under <paramref name="parentPageId" /> in the UI hierarchy.
+        /// </summary>
         public ModSettingsPageBuilder AsChildOf(string parentPageId)
         {
             ParentPageId = parentPageId;
             return this;
         }
 
+        /// <summary>
+        ///     Sets the page title.
+        /// </summary>
         public ModSettingsPageBuilder WithTitle(ModSettingsText title)
         {
             Title = title;
             return this;
         }
 
+        /// <summary>
+        ///     Sets the page description.
+        /// </summary>
         public ModSettingsPageBuilder WithDescription(ModSettingsText description)
         {
             Description = description;
             return this;
         }
 
+        /// <summary>
+        ///     Sets the mod display name in the sidebar and registers it with <see cref="ModSettingsRegistry" /> on
+        ///     <see cref="Build" />.
+        /// </summary>
         public ModSettingsPageBuilder WithModDisplayName(ModSettingsText displayName)
         {
             ModDisplayName = displayName;
             return this;
         }
 
+        /// <summary>
+        ///     Sets <see cref="SortOrder" />.
+        /// </summary>
         public ModSettingsPageBuilder WithSortOrder(int sortOrder)
         {
             SortOrder = sortOrder;
             return this;
         }
 
+        /// <summary>
+        ///     Adds a section built by <paramref name="configure" />; <paramref name="id" /> must be unique on this page.
+        /// </summary>
         public ModSettingsPageBuilder AddSection(string id, Action<ModSettingsSectionBuilder> configure)
         {
             ArgumentException.ThrowIfNullOrWhiteSpace(id);
@@ -66,6 +119,9 @@ namespace STS2RitsuLib.Settings
             return this;
         }
 
+        /// <summary>
+        ///     Materializes the page; throws if no sections were added.
+        /// </summary>
         public ModSettingsPage Build()
         {
             if (_sections.Count == 0)
@@ -86,6 +142,9 @@ namespace STS2RitsuLib.Settings
         }
     }
 
+    /// <summary>
+    ///     Fluent builder for a settings section: collapsible chrome and typed entries (toggles, sliders, lists, etc.).
+    /// </summary>
     public sealed class ModSettingsSectionBuilder
     {
         private readonly List<ModSettingsEntryDefinition> _entries = [];
@@ -96,24 +155,52 @@ namespace STS2RitsuLib.Settings
             Id = id;
         }
 
+        /// <summary>
+        ///     Stable section id within the page.
+        /// </summary>
         public string Id { get; }
+
+        /// <summary>
+        ///     Optional section heading.
+        /// </summary>
         public ModSettingsText? Title { get; private set; }
+
+        /// <summary>
+        ///     Optional body text under the title.
+        /// </summary>
         public ModSettingsText? Description { get; private set; }
+
+        /// <summary>
+        ///     When true, the section can be collapsed in the UI.
+        /// </summary>
         public bool IsCollapsible { get; private set; }
+
+        /// <summary>
+        ///     Initial collapsed state when <see cref="IsCollapsible" /> is true.
+        /// </summary>
         public bool StartCollapsed { get; private set; }
 
+        /// <summary>
+        ///     Sets <see cref="Title" />.
+        /// </summary>
         public ModSettingsSectionBuilder WithTitle(ModSettingsText title)
         {
             Title = title;
             return this;
         }
 
+        /// <summary>
+        ///     Sets <see cref="Description" />.
+        /// </summary>
         public ModSettingsSectionBuilder WithDescription(ModSettingsText description)
         {
             Description = description;
             return this;
         }
 
+        /// <summary>
+        ///     Marks the section collapsible; optionally starts collapsed.
+        /// </summary>
         public ModSettingsSectionBuilder Collapsible(bool startCollapsed = false)
         {
             IsCollapsible = true;
@@ -121,6 +208,9 @@ namespace STS2RitsuLib.Settings
             return this;
         }
 
+        /// <summary>
+        ///     Adds a non-interactive header row.
+        /// </summary>
         public ModSettingsSectionBuilder AddHeader(
             string id,
             ModSettingsText label,
@@ -130,6 +220,9 @@ namespace STS2RitsuLib.Settings
             return this;
         }
 
+        /// <summary>
+        ///     Adds read-only paragraph text with optional max height for scrolling.
+        /// </summary>
         public ModSettingsSectionBuilder AddParagraph(
             string id,
             ModSettingsText text,
@@ -140,6 +233,9 @@ namespace STS2RitsuLib.Settings
             return this;
         }
 
+        /// <summary>
+        ///     Adds a preview image resolved by <paramref name="textureProvider" />.
+        /// </summary>
         public ModSettingsSectionBuilder AddImage(
             string id,
             ModSettingsText label,
@@ -152,6 +248,10 @@ namespace STS2RitsuLib.Settings
             return this;
         }
 
+        /// <summary>
+        ///     Adds an editable list bound to <paramref name="binding" /> with per-row editor from
+        ///     <paramref name="itemEditorFactory" /> or defaults.
+        /// </summary>
         public ModSettingsSectionBuilder AddList<TItem>(
             string id,
             ModSettingsText label,
@@ -180,6 +280,9 @@ namespace STS2RitsuLib.Settings
             return this;
         }
 
+        /// <summary>
+        ///     Adds a boolean toggle.
+        /// </summary>
         public ModSettingsSectionBuilder AddToggle(
             string id,
             ModSettingsText label,
@@ -190,6 +293,9 @@ namespace STS2RitsuLib.Settings
             return this;
         }
 
+        /// <summary>
+        ///     Adds an integer range slider.
+        /// </summary>
         public ModSettingsSectionBuilder AddIntSlider(
             string id,
             ModSettingsText label,
@@ -218,6 +324,9 @@ namespace STS2RitsuLib.Settings
             return this;
         }
 
+        /// <summary>
+        ///     Adds a floating-point range slider.
+        /// </summary>
         public ModSettingsSectionBuilder AddSlider(
             string id,
             ModSettingsText label,
@@ -246,6 +355,9 @@ namespace STS2RitsuLib.Settings
             return this;
         }
 
+        /// <summary>
+        ///     Adds a fixed set of choices (stepper, dropdown, etc. per <paramref name="presentation" />).
+        /// </summary>
         public ModSettingsSectionBuilder AddChoice<TValue>(
             string id,
             ModSettingsText label,
@@ -269,6 +381,9 @@ namespace STS2RitsuLib.Settings
             return this;
         }
 
+        /// <summary>
+        ///     Adds a choice control for enum <typeparamref name="TEnum" /> with optional per-value labels.
+        /// </summary>
         public ModSettingsSectionBuilder AddEnumChoice<TEnum>(
             string id,
             ModSettingsText label,
@@ -290,6 +405,9 @@ namespace STS2RitsuLib.Settings
                 presentation);
         }
 
+        /// <summary>
+        ///     Adds a color picker bound to a string (serialized color).
+        /// </summary>
         public ModSettingsSectionBuilder AddColor(
             string id,
             ModSettingsText label,
@@ -300,6 +418,9 @@ namespace STS2RitsuLib.Settings
             return this;
         }
 
+        /// <summary>
+        ///     Adds a single-line string field.
+        /// </summary>
         public ModSettingsSectionBuilder AddString(
             string id,
             ModSettingsText label,
@@ -316,6 +437,9 @@ namespace STS2RitsuLib.Settings
             return this;
         }
 
+        /// <summary>
+        ///     Adds a multiline string field.
+        /// </summary>
         public ModSettingsSectionBuilder AddMultilineString(
             string id,
             ModSettingsText label,
@@ -332,6 +456,9 @@ namespace STS2RitsuLib.Settings
             return this;
         }
 
+        /// <summary>
+        ///     Adds a key binding capture row.
+        /// </summary>
         public ModSettingsSectionBuilder AddKeyBinding(
             string id,
             ModSettingsText label,
@@ -347,6 +474,9 @@ namespace STS2RitsuLib.Settings
             return this;
         }
 
+        /// <summary>
+        ///     Adds a button that runs <paramref name="action" /> (no persisted value).
+        /// </summary>
         public ModSettingsSectionBuilder AddButton(
             string id,
             ModSettingsText label,
@@ -360,6 +490,9 @@ namespace STS2RitsuLib.Settings
             return this;
         }
 
+        /// <summary>
+        ///     Adds navigation to another registered page <paramref name="targetPageId" />.
+        /// </summary>
         public ModSettingsSectionBuilder AddSubpage(
             string id,
             ModSettingsText label,

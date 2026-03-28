@@ -2,13 +2,17 @@ using System.Diagnostics;
 
 namespace STS2RitsuLib.Audio
 {
-    /// <summary>Per-key cooldown for rapid triggers (ms, via <see cref="Stopwatch" /> ticks).</summary>
+    /// <summary>
+    ///     Per-key cooldown for rapid triggers (ms, via <see cref="Stopwatch" /> ticks).
+    /// </summary>
     public static class FmodPlaybackThrottle
     {
         private static readonly Lock Gate = new();
         private static readonly Dictionary<string, long> LastTicks = new(StringComparer.Ordinal);
 
-        /// <summary>Returns false if <paramref name="key" /> was used within <paramref name="cooldownMs" />.</summary>
+        /// <summary>
+        ///     Returns false if <paramref name="key" /> was used within <paramref name="cooldownMs" />.
+        /// </summary>
         public static bool TryEnter(string key, int cooldownMs)
         {
             if (cooldownMs <= 0)
@@ -27,6 +31,9 @@ namespace STS2RitsuLib.Audio
             }
         }
 
+        /// <summary>
+        ///     Removes cooldown state for <paramref name="key" /> so the next <see cref="TryEnter" /> may pass.
+        /// </summary>
         public static void Clear(string key)
         {
             lock (Gate)
@@ -35,6 +42,9 @@ namespace STS2RitsuLib.Audio
             }
         }
 
+        /// <summary>
+        ///     Clears all throttle keys.
+        /// </summary>
         public static void ClearAll()
         {
             lock (Gate)

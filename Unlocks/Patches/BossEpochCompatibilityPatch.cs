@@ -7,21 +7,31 @@ using STS2RitsuLib.Patching.Models;
 
 namespace STS2RitsuLib.Unlocks.Patches
 {
+    /// <summary>
+    ///     Applies mod-specific boss-win epoch rules instead of vanilla fifteen-boss logic for mod characters.
+    /// </summary>
     public class BossEpochCompatibilityPatch : IPatchMethod
     {
+        /// <inheritdoc />
         public static string PatchId => "boss_epoch_compatibility";
 
+        /// <inheritdoc />
         public static string Description =>
             "Handle boss-win epoch unlock checks for mod characters via registered RitsuLib unlock rules";
 
+        /// <inheritdoc />
         public static bool IsCritical => false;
 
+        /// <inheritdoc />
         public static ModPatchTarget[] GetTargets()
         {
             return [new(typeof(ProgressSaveManager), "CheckFifteenBossesDefeatedEpoch", [typeof(Player)])];
         }
 
         // ReSharper disable once InconsistentNaming
+        /// <summary>
+        ///     Counts boss wins and obtains the registered epoch, or suppresses vanilla when no rule exists.
+        /// </summary>
         public static bool Prefix(ProgressSaveManager __instance, Player localPlayer)
         {
             ArgumentNullException.ThrowIfNull(__instance);

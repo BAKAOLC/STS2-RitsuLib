@@ -2,7 +2,9 @@ using Godot;
 
 namespace STS2RitsuLib.Audio.Internal
 {
-    /// <summary>GDExtension method names on <c>FmodServer</c> (Godot FMOD addon).</summary>
+    /// <summary>
+    ///     GDExtension method names on <c>FmodServer</c> (Godot FMOD addon).
+    /// </summary>
     internal static class FmodStudioMethodNames
     {
         internal static readonly StringName LoadBank = new("load_bank");

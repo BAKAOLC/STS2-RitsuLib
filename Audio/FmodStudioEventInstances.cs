@@ -3,9 +3,14 @@ using STS2RitsuLib.Audio.Internal;
 
 namespace STS2RitsuLib.Audio
 {
-    /// <summary>Long-lived Studio event instances (manual start/stop/release).</summary>
+    /// <summary>
+    ///     Long-lived Studio event instances (manual start/stop/release).
+    /// </summary>
     public static class FmodStudioEventInstances
     {
+        /// <summary>
+        ///     Creates a Studio event or snapshot instance; null when creation fails.
+        /// </summary>
         public static GodotObject? TryCreate(string eventOrSnapshotPath)
         {
             return !FmodStudioGateway.TryCall(out var v, FmodStudioMethodNames.CreateEventInstance, eventOrSnapshotPath)
@@ -13,6 +18,9 @@ namespace STS2RitsuLib.Audio
                 : v.AsGodotObject();
         }
 
+        /// <summary>
+        ///     Calls <c>start</c> on the instance when non-null.
+        /// </summary>
         public static bool TryStart(GodotObject? instance)
         {
             if (instance is null)
@@ -30,6 +38,9 @@ namespace STS2RitsuLib.Audio
             }
         }
 
+        /// <summary>
+        ///     Stops the instance; <paramref name="allowFadeOut" /> maps to FMOD stop mode.
+        /// </summary>
         public static bool TryStop(GodotObject? instance, bool allowFadeOut = true)
         {
             if (instance is null)
@@ -47,6 +58,9 @@ namespace STS2RitsuLib.Audio
             }
         }
 
+        /// <summary>
+        ///     Releases native resources for the instance; errors are logged only.
+        /// </summary>
         public static void TryRelease(GodotObject? instance)
         {
             if (instance is null)

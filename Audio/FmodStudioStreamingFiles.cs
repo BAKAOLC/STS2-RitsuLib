@@ -12,6 +12,9 @@ namespace STS2RitsuLib.Audio
     {
         private static readonly ConcurrentDictionary<string, LoadedKind> Loaded = new(StringComparer.Ordinal);
 
+        /// <summary>
+        ///     Preloads <paramref name="absoluteOrResPath" /> as a sound; succeeds immediately if already tracked.
+        /// </summary>
         public static bool TryPreloadAsSound(string absoluteOrResPath)
         {
             if (Loaded.ContainsKey(absoluteOrResPath))
@@ -24,6 +27,9 @@ namespace STS2RitsuLib.Audio
             return true;
         }
 
+        /// <summary>
+        ///     Preloads <paramref name="absoluteOrResPath" /> as streaming music; succeeds immediately if already tracked.
+        /// </summary>
         public static bool TryPreloadAsStreamingMusic(string absoluteOrResPath)
         {
             if (Loaded.ContainsKey(absoluteOrResPath))
@@ -36,6 +42,9 @@ namespace STS2RitsuLib.Audio
             return true;
         }
 
+        /// <summary>
+        ///     Returns a playable sound instance, preloading as sound when needed.
+        /// </summary>
         public static GodotObject? TryCreateSoundInstance(string absoluteOrResPath)
         {
             if (Loaded.ContainsKey(absoluteOrResPath))
@@ -51,6 +60,9 @@ namespace STS2RitsuLib.Audio
                 : v.AsGodotObject();
         }
 
+        /// <summary>
+        ///     Returns a streaming music instance, preloading as music when needed.
+        /// </summary>
         public static GodotObject? TryCreateStreamingMusicInstance(string absoluteOrResPath)
         {
             if (Loaded.ContainsKey(absoluteOrResPath))
@@ -66,6 +78,9 @@ namespace STS2RitsuLib.Audio
                 : v.AsGodotObject();
         }
 
+        /// <summary>
+        ///     Creates a sound instance and calls <c>play</c> with optional volume and pitch.
+        /// </summary>
         public static bool TryPlaySoundFile(string absoluteOrResPath, float volume = 1f, float pitch = 1f)
         {
             var sound = TryCreateSoundInstance(absoluteOrResPath);
@@ -90,12 +105,18 @@ namespace STS2RitsuLib.Audio
             }
         }
 
+        /// <summary>
+        ///     Unloads a tracked file from FMOD and removes it from the local registry.
+        /// </summary>
         public static bool TryUnloadFile(string absoluteOrResPath)
         {
             return !Loaded.TryRemove(absoluteOrResPath, out _) ||
                    FmodStudioGateway.TryCall(FmodStudioMethodNames.UnloadFile, absoluteOrResPath);
         }
 
+        /// <summary>
+        ///     Unloads every path currently tracked by this helper.
+        /// </summary>
         public static void TryUnloadAllTracked()
         {
             foreach (var key in Loaded.Keys.ToArray())

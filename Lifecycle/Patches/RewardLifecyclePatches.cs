@@ -11,12 +11,21 @@ using STS2RitsuLib.Patching.Models;
 
 namespace STS2RitsuLib.Lifecycle.Patches
 {
+    /// <summary>
+    ///     Publishes gold gain, potion procure/discard, and reward-taken lifecycle events via <see cref="Hook" />.
+    /// </summary>
     public class RewardHookLifecyclePatch : IPatchMethod
     {
+        /// <inheritdoc />
         public static string PatchId => "reward_hook_lifecycle";
+
+        /// <inheritdoc />
         public static string Description => "Publish reward, potion, and gold gain lifecycle events";
+
+        /// <inheritdoc />
         public static bool IsCritical => false;
 
+        /// <inheritdoc />
         public static ModPatchTarget[] GetTargets()
         {
             return
@@ -30,70 +39,52 @@ namespace STS2RitsuLib.Lifecycle.Patches
             ];
         }
 
+        /// <summary>
+        ///     Harmony postfix: after matching hook methods complete, publishes the corresponding reward/economy lifecycle
+        ///     event on the continuation of the original task.
+        /// </summary>
         // ReSharper disable InconsistentNaming
         public static void Postfix(MethodBase __originalMethod, object[] __args, ref Task __result)
             // ReSharper restore InconsistentNaming
         {
-            switch (__originalMethod.Name)
+            __result = __originalMethod.Name switch
             {
-                case nameof(Hook.AfterGoldGained):
-                    __result = LifecyclePatchTaskBridge.After(__result, () =>
-                        RitsuLibFramework.PublishLifecycleEvent(
-                            new GoldGainedEvent(
-                                (IRunState)__args[0],
-                                (Player)__args[1],
-                                ((Player)__args[1]).Gold,
-                                DateTimeOffset.UtcNow
-                            ),
-                            nameof(GoldGainedEvent)
-                        ));
-                    break;
-                case nameof(Hook.AfterPotionProcured):
-                    __result = LifecyclePatchTaskBridge.After(__result, () =>
-                        RitsuLibFramework.PublishLifecycleEvent(
-                            new PotionProcuredEvent(
-                                (IRunState)__args[0],
-                                (CombatState?)__args[1],
-                                (PotionModel)__args[2],
-                                DateTimeOffset.UtcNow
-                            ),
-                            nameof(PotionProcuredEvent)
-                        ));
-                    break;
-                case nameof(Hook.AfterPotionDiscarded):
-                    __result = LifecyclePatchTaskBridge.After(__result, () =>
-                        RitsuLibFramework.PublishLifecycleEvent(
-                            new PotionDiscardedEvent(
-                                (IRunState)__args[0],
-                                (CombatState?)__args[1],
-                                (PotionModel)__args[2],
-                                DateTimeOffset.UtcNow
-                            ),
-                            nameof(PotionDiscardedEvent)
-                        ));
-                    break;
-                case nameof(Hook.AfterRewardTaken):
-                    __result = LifecyclePatchTaskBridge.After(__result, () =>
-                        RitsuLibFramework.PublishLifecycleEvent(
-                            new RewardTakenEvent(
-                                (IRunState)__args[0],
-                                (Player)__args[1],
-                                (Reward)__args[2],
-                                DateTimeOffset.UtcNow
-                            ),
-                            nameof(RewardTakenEvent)
-                        ));
-                    break;
-            }
+                nameof(Hook.AfterGoldGained) => LifecyclePatchTaskBridge.After(__result,
+                    () => RitsuLibFramework.PublishLifecycleEvent(
+                        new GoldGainedEvent((IRunState)__args[0], (Player)__args[1], ((Player)__args[1]).Gold,
+                            DateTimeOffset.UtcNow), nameof(GoldGainedEvent))),
+                nameof(Hook.AfterPotionProcured) => LifecyclePatchTaskBridge.After(__result,
+                    () => RitsuLibFramework.PublishLifecycleEvent(
+                        new PotionProcuredEvent((IRunState)__args[0], (CombatState?)__args[1], (PotionModel)__args[2],
+                            DateTimeOffset.UtcNow), nameof(PotionProcuredEvent))),
+                nameof(Hook.AfterPotionDiscarded) => LifecyclePatchTaskBridge.After(__result,
+                    () => RitsuLibFramework.PublishLifecycleEvent(
+                        new PotionDiscardedEvent((IRunState)__args[0], (CombatState?)__args[1], (PotionModel)__args[2],
+                            DateTimeOffset.UtcNow), nameof(PotionDiscardedEvent))),
+                nameof(Hook.AfterRewardTaken) => LifecyclePatchTaskBridge.After(__result,
+                    () => RitsuLibFramework.PublishLifecycleEvent(
+                        new RewardTakenEvent((IRunState)__args[0], (Player)__args[1], (Reward)__args[2],
+                            DateTimeOffset.UtcNow), nameof(RewardTakenEvent))),
+                _ => __result,
+            };
         }
     }
 
+    /// <summary>
+    ///     Publishes a lifecycle event when the player loses gold through <see cref="PlayerCmd.LoseGold" />.
+    /// </summary>
     public class GoldLossLifecyclePatch : IPatchMethod
     {
+        /// <inheritdoc />
         public static string PatchId => "gold_loss_lifecycle";
+
+        /// <inheritdoc />
         public static string Description => "Publish gold loss lifecycle events";
+
+        /// <inheritdoc />
         public static bool IsCritical => false;
 
+        /// <inheritdoc />
         public static ModPatchTarget[] GetTargets()
         {
             return
@@ -103,6 +94,9 @@ namespace STS2RitsuLib.Lifecycle.Patches
             ];
         }
 
+        /// <summary>
+        ///     Harmony postfix: publishes <see cref="GoldLostEvent" /> with the updated gold total.
+        /// </summary>
         public static void Postfix(decimal amount, Player player, GoldLossType goldLossType)
         {
             RitsuLibFramework.PublishLifecycleEvent(
@@ -112,12 +106,21 @@ namespace STS2RitsuLib.Lifecycle.Patches
         }
     }
 
+    /// <summary>
+    ///     Publishes a lifecycle event when a relic is obtained via <see cref="RelicCmd.Obtain" />.
+    /// </summary>
     public class RelicObtainedLifecyclePatch : IPatchMethod
     {
+        /// <inheritdoc />
         public static string PatchId => "relic_obtained_lifecycle";
+
+        /// <inheritdoc />
         public static string Description => "Publish relic obtain lifecycle events";
+
+        /// <inheritdoc />
         public static bool IsCritical => false;
 
+        /// <inheritdoc />
         public static ModPatchTarget[] GetTargets()
         {
             return
@@ -126,6 +129,9 @@ namespace STS2RitsuLib.Lifecycle.Patches
             ];
         }
 
+        /// <summary>
+        ///     Harmony postfix: when obtain completes, publishes <see cref="RelicObtainedEvent" /> for the resolved relic.
+        /// </summary>
         // ReSharper disable once InconsistentNaming
         public static void Postfix(Player player, ref Task<RelicModel> __result)
         {
@@ -137,12 +143,21 @@ namespace STS2RitsuLib.Lifecycle.Patches
         }
     }
 
+    /// <summary>
+    ///     Publishes a lifecycle event when a relic is removed via <see cref="RelicCmd.Remove" />.
+    /// </summary>
     public class RelicRemovedLifecyclePatch : IPatchMethod
     {
+        /// <inheritdoc />
         public static string PatchId => "relic_removed_lifecycle";
+
+        /// <inheritdoc />
         public static string Description => "Publish relic removal lifecycle events";
+
+        /// <inheritdoc />
         public static bool IsCritical => false;
 
+        /// <inheritdoc />
         public static ModPatchTarget[] GetTargets()
         {
             return
@@ -151,6 +166,9 @@ namespace STS2RitsuLib.Lifecycle.Patches
             ];
         }
 
+        /// <summary>
+        ///     Harmony postfix: after removal completes, publishes <see cref="RelicRemovedEvent" /> using the relic owner.
+        /// </summary>
         // ReSharper disable once InconsistentNaming
         public static void Postfix(RelicModel relic, ref Task __result)
         {

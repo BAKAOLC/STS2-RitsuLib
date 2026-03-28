@@ -5,18 +5,28 @@ using MegaCrit.Sts2.Core.Timeline;
 
 namespace STS2RitsuLib.Timeline.Scaffolding
 {
+    /// <summary>
+    ///     <see cref="EpochModel" /> base that unlocks <typeparamref name="TCharacter" /> and optional follow-on epochs.
+    /// </summary>
+    /// <typeparam name="TCharacter">Character model type being unlocked.</typeparam>
     public abstract class CharacterUnlockEpochTemplate<TCharacter> : EpochModel
         where TCharacter : CharacterModel
     {
+        /// <inheritdoc />
         public override bool IsArtPlaceholder => false;
 
+        /// <summary>
+        ///     Additional epoch types to append when this unlock fires; default none.
+        /// </summary>
         protected virtual IEnumerable<Type> ExpansionEpochTypes => [];
 
+        /// <inheritdoc />
         public override EpochModel[] GetTimelineExpansion()
         {
             return ExpansionEpochTypes.Select(type => Get(GetId(type))).ToArray();
         }
 
+        /// <inheritdoc />
         public override void QueueUnlocks()
         {
             NTimelineScreen.Instance.QueueCharacterUnlock<TCharacter>(this);

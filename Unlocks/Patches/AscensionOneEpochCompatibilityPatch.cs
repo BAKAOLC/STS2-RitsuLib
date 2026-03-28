@@ -11,15 +11,22 @@ using SerializableRun = MegaCrit.Sts2.Core.Saves.SerializableRun;
 
 namespace STS2RitsuLib.Unlocks.Patches
 {
+    /// <summary>
+    ///     Replaces vanilla ascension-one epoch checks for mod-owned characters with registry-driven epoch grants.
+    /// </summary>
     public class AscensionOneEpochCompatibilityPatch : IPatchMethod
     {
+        /// <inheritdoc />
         public static string PatchId => "ascension_one_epoch_compatibility";
 
+        /// <inheritdoc />
         public static string Description =>
             "Handle ascension-one epoch unlock checks for mod characters via registered RitsuLib unlock rules";
 
+        /// <inheritdoc />
         public static bool IsCritical => false;
 
+        /// <inheritdoc />
         public static ModPatchTarget[] GetTargets()
         {
             return
@@ -30,6 +37,9 @@ namespace STS2RitsuLib.Unlocks.Patches
             ];
         }
 
+        /// <summary>
+        ///     Obtains the registered ascension-one epoch when appropriate; skips vanilla when handled.
+        /// </summary>
         public static bool Prefix(SerializablePlayer serializablePlayer, SerializableRun serializableRun)
         {
             ArgumentNullException.ThrowIfNull(serializablePlayer);
@@ -74,15 +84,22 @@ namespace STS2RitsuLib.Unlocks.Patches
         }
     }
 
+    /// <summary>
+    ///     Replaces vanilla post-run character-unlock epoch checks for mod characters with registry-driven grants.
+    /// </summary>
     public class PostRunCharacterUnlockEpochCompatibilityPatch : IPatchMethod
     {
+        /// <inheritdoc />
         public static string PatchId => "postrun_character_unlock_epoch_compatibility";
 
+        /// <inheritdoc />
         public static string Description =>
             "Handle post-run character unlock epochs for mod characters via registered RitsuLib unlock rules";
 
+        /// <inheritdoc />
         public static bool IsCritical => false;
 
+        /// <inheritdoc />
         public static ModPatchTarget[] GetTargets()
         {
             return
@@ -93,6 +110,9 @@ namespace STS2RitsuLib.Unlocks.Patches
             ];
         }
 
+        /// <summary>
+        ///     Obtains the registered post-run character-unlock epoch when appropriate; skips vanilla when handled.
+        /// </summary>
         public static bool Prefix(SerializablePlayer serializablePlayer, SerializableRun serializableRun)
         {
             ArgumentNullException.ThrowIfNull(serializablePlayer);
@@ -134,22 +154,32 @@ namespace STS2RitsuLib.Unlocks.Patches
         }
     }
 
+    /// <summary>
+    ///     Overrides ascension reveal queries for characters with a registered reveal epoch dependency.
+    /// </summary>
     public class AscensionEpochRevealCompatibilityPatch : IPatchMethod
     {
+        /// <inheritdoc />
         public static string PatchId => "ascension_epoch_reveal_compatibility";
 
+        /// <inheritdoc />
         public static string Description =>
             "Handle ascension reveal checks for mod characters via registered RitsuLib unlock rules";
 
+        /// <inheritdoc />
         public static bool IsCritical => false;
 
+        /// <inheritdoc />
         public static ModPatchTarget[] GetTargets()
         {
             return [new(typeof(StartRunLobby), "IsAscensionEpochRevealed", [typeof(ModelId)])];
         }
 
-        [HarmonyPriority(Priority.First)]
         // ReSharper disable once InconsistentNaming
+        /// <summary>
+        ///     Sets the result from save state when a custom ascension reveal epoch is registered.
+        /// </summary>
+        [HarmonyPriority(Priority.First)]
         public static bool Prefix(ModelId characterId, ref bool __result)
         {
             if (!ModUnlockRegistry.TryGetAscensionRevealEpoch(characterId, out var epochId))

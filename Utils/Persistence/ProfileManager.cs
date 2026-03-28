@@ -3,6 +3,9 @@ using MegaCrit.Sts2.Core.Saves;
 
 namespace STS2RitsuLib.Utils.Persistence
 {
+    /// <summary>
+    ///     Tracks the active game profile id and resolves mod data paths under Godot <c>user://</c> storage.
+    /// </summary>
     public class ProfileManager
     {
         private static ProfileManager? _instance;
@@ -12,14 +15,29 @@ namespace STS2RitsuLib.Utils.Persistence
         {
         }
 
+        /// <summary>
+        ///     Singleton accessor for the shared profile manager.
+        /// </summary>
         public static ProfileManager Instance => _instance ??= new();
 
+        /// <summary>
+        ///     Last known game profile id, or <c>-1</c> before initialization.
+        /// </summary>
         public int CurrentProfileId { get; private set; } = -1;
 
+        /// <summary>
+        ///     Raised with <c>(oldProfileId, newProfileId)</c> after the active profile changes.
+        /// </summary>
         public event Action<int, int>? ProfileChanged;
 
+        /// <summary>
+        ///     Raised when mod data for a profile is deleted via game APIs.
+        /// </summary>
         public event Action<int>? ProfileDeleted;
 
+        /// <summary>
+        ///     Subscribes to game profile changes and seeds <see cref="CurrentProfileId" />.
+        /// </summary>
         public void Initialize()
         {
             if (_isInitialized) return;
@@ -37,6 +55,9 @@ namespace STS2RitsuLib.Utils.Persistence
             OnProfileChanged(newProfileId);
         }
 
+        /// <summary>
+        ///     Updates <see cref="CurrentProfileId" /> and notifies subscribers when the value changes.
+        /// </summary>
         public void OnProfileChanged(int newProfileId)
         {
             if (newProfileId == CurrentProfileId) return;
@@ -49,6 +70,9 @@ namespace STS2RitsuLib.Utils.Persistence
             ProfileChanged?.Invoke(oldProfileId, newProfileId);
         }
 
+        /// <summary>
+        ///     Re-reads the profile id from the game and applies <see cref="OnProfileChanged" /> if needed.
+        /// </summary>
         public void RefreshCurrentProfile()
         {
             var newProfileId = GetCurrentProfileIdFromGame();
@@ -56,6 +80,9 @@ namespace STS2RitsuLib.Utils.Persistence
                 OnProfileChanged(newProfileId);
         }
 
+        /// <summary>
+        ///     Returns the account-level mod data root for <paramref name="modId" /> (not profile-specific).
+        /// </summary>
         public static string GetAccountBasePath(string modId = Const.ModId)
         {
             var platformDir = GetPlatformDirectory();
@@ -63,21 +90,33 @@ namespace STS2RitsuLib.Utils.Persistence
             return $"user://{platformDir}/{userId}/mod_data/{modId}";
         }
 
+        /// <summary>
+        ///     Returns the profile subdirectory path for <see cref="CurrentProfileId" />.
+        /// </summary>
         public string GetProfileDirectory()
         {
             return GetProfileDirectory(CurrentProfileId);
         }
 
+        /// <summary>
+        ///     Returns the game's relative profile directory name for <paramref name="profileId" />.
+        /// </summary>
         public static string GetProfileDirectory(int profileId)
         {
             return UserDataPathProvider.GetProfileDir(profileId);
         }
 
+        /// <summary>
+        ///     Resolves the base storage path for <paramref name="scope" /> using <see cref="CurrentProfileId" />.
+        /// </summary>
         public string GetBasePath(SaveScope scope)
         {
             return GetBasePath(scope, CurrentProfileId);
         }
 
+        /// <summary>
+        ///     Resolves the base storage path for <paramref name="scope" /> and explicit profile/mod ids.
+        /// </summary>
         public static string GetBasePath(SaveScope scope, int profileId, string modId = Const.ModId)
         {
             var accountBase = GetAccountBasePath(modId);
@@ -89,26 +128,43 @@ namespace STS2RitsuLib.Utils.Persistence
             };
         }
 
+        /// <summary>
+        ///     Returns the full path for <paramref name="fileName" /> under the active profile and framework mod id.
+        /// </summary>
         public string GetFilePath(string fileName, SaveScope scope)
         {
             return GetFilePath(fileName, scope, CurrentProfileId, Const.ModId);
         }
 
+        /// <summary>
+        ///     Returns the full path for <paramref name="fileName" /> using explicit <paramref name="profileId" />
+        ///     and the framework mod id.
+        /// </summary>
         public static string GetFilePath(string fileName, SaveScope scope, int profileId)
         {
             return GetFilePath(fileName, scope, profileId, Const.ModId);
         }
 
+        /// <summary>
+        ///     Returns the full path for <paramref name="fileName" /> under the active profile and
+        ///     <paramref name="modId" />.
+        /// </summary>
         public string GetFilePath(string fileName, SaveScope scope, string modId)
         {
             return GetFilePath(fileName, scope, CurrentProfileId, modId);
         }
 
+        /// <summary>
+        ///     Returns the full path for <paramref name="fileName" /> using explicit profile and mod ids.
+        /// </summary>
         public static string GetFilePath(string fileName, SaveScope scope, int profileId, string modId)
         {
             return $"{GetBasePath(scope, profileId, modId)}/{fileName}";
         }
 
+        /// <summary>
+        ///     Deletes all profile-scoped mod files for <paramref name="profileId" />.
+        /// </summary>
         public static void DeleteProfileData(int profileId, string modId = Const.ModId)
         {
             var profilePath = GetBasePath(SaveScope.Profile, profileId, modId);

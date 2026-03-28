@@ -124,17 +124,59 @@ namespace STS2RitsuLib.Scaffolding.Content.Patches
         }
     }
 
+    /// <summary>
+    ///     Optional card art paths consumed by content asset Harmony patches on <see cref="CardModel" />.
+    /// </summary>
     public interface IModCardAssetOverrides
     {
+        /// <summary>
+        ///     Path bundle; individual properties usually mirror these fields unless overridden.
+        /// </summary>
         CardAssetProfile AssetProfile { get; }
+
+        /// <summary>
+        ///     Override for main portrait image path.
+        /// </summary>
         string? CustomPortraitPath { get; }
+
+        /// <summary>
+        ///     Override for beta/alternate portrait path.
+        /// </summary>
         string? CustomBetaPortraitPath { get; }
+
+        /// <summary>
+        ///     Override for card frame texture path.
+        /// </summary>
         string? CustomFramePath { get; }
+
+        /// <summary>
+        ///     Override for portrait border texture path.
+        /// </summary>
         string? CustomPortraitBorderPath { get; }
+
+        /// <summary>
+        ///     Override for small energy icon texture path.
+        /// </summary>
         string? CustomEnergyIconPath { get; }
+
+        /// <summary>
+        ///     Override for frame <see cref="Material" /> resource path.
+        /// </summary>
         string? CustomFrameMaterialPath { get; }
+
+        /// <summary>
+        ///     Override for built-in overlay packed scene path.
+        /// </summary>
         string? CustomOverlayScenePath { get; }
+
+        /// <summary>
+        ///     Override for banner texture path.
+        /// </summary>
         string? CustomBannerTexturePath { get; }
+
+        /// <summary>
+        ///     Override for banner material path.
+        /// </summary>
         string? CustomBannerMaterialPath { get; }
     }
 
@@ -152,45 +194,131 @@ namespace STS2RitsuLib.Scaffolding.Content.Patches
         Material? PoolFrameMaterial { get; }
     }
 
+    /// <summary>
+    ///     Optional relic icon paths for Harmony patches on <see cref="RelicModel" />.
+    /// </summary>
     public interface IModRelicAssetOverrides
     {
+        /// <summary>
+        ///     Path bundle for relic presentation assets.
+        /// </summary>
         RelicAssetProfile AssetProfile { get; }
+
+        /// <summary>
+        ///     Primary relic icon path override.
+        /// </summary>
         string? CustomIconPath { get; }
+
+        /// <summary>
+        ///     Outline icon path override.
+        /// </summary>
         string? CustomIconOutlinePath { get; }
+
+        /// <summary>
+        ///     Large relic art path override.
+        /// </summary>
         string? CustomBigIconPath { get; }
     }
 
+    /// <summary>
+    ///     Optional power icon paths for Harmony patches on <see cref="PowerModel" />.
+    /// </summary>
     public interface IModPowerAssetOverrides
     {
+        /// <summary>
+        ///     Path bundle for power icons.
+        /// </summary>
         PowerAssetProfile AssetProfile { get; }
+
+        /// <summary>
+        ///     Standard icon path override.
+        /// </summary>
         string? CustomIconPath { get; }
+
+        /// <summary>
+        ///     Large icon path override.
+        /// </summary>
         string? CustomBigIconPath { get; }
     }
 
+    /// <summary>
+    ///     Optional orb icon and visuals scene paths for Harmony patches on <see cref="OrbModel" />.
+    /// </summary>
     public interface IModOrbAssetOverrides
     {
+        /// <summary>
+        ///     Path bundle for orb HUD and combat visuals.
+        /// </summary>
         OrbAssetProfile AssetProfile { get; }
+
+        /// <summary>
+        ///     Orb icon texture path override.
+        /// </summary>
         string? CustomIconPath { get; }
+
+        /// <summary>
+        ///     Orb combat visuals scene path override.
+        /// </summary>
         string? CustomVisualsScenePath { get; }
     }
 
+    /// <summary>
+    ///     Default act asset override surface; concrete mods typically use <see cref="ModActTemplate" /> instead of
+    ///     implementing this directly.
+    /// </summary>
     public interface IModActAssetOverrides
     {
+        /// <summary>
+        ///     Path bundle; default is empty.
+        /// </summary>
         ActAssetProfile AssetProfile => ActAssetProfile.Empty;
+
+        /// <summary>
+        ///     Main act background scene path override.
+        /// </summary>
         string? CustomBackgroundScenePath => AssetProfile.BackgroundScenePath;
+
+        /// <summary>
+        ///     Rest site background scene path override.
+        /// </summary>
         string? CustomRestSiteBackgroundPath => AssetProfile.RestSiteBackgroundPath;
+
+        /// <summary>
+        ///     Map top-layer background image path override.
+        /// </summary>
         string? CustomMapTopBgPath => AssetProfile.MapTopBgPath;
+
+        /// <summary>
+        ///     Map middle-layer background image path override.
+        /// </summary>
         string? CustomMapMidBgPath => AssetProfile.MapMidBgPath;
+
+        /// <summary>
+        ///     Map bottom-layer background image path override.
+        /// </summary>
         string? CustomMapBotBgPath => AssetProfile.MapBotBgPath;
+
+        /// <summary>
+        ///     Treasure chest Spine resource path override.
+        /// </summary>
         string? CustomChestSpineResourcePath => AssetProfile.ChestSpineResourcePath;
     }
 
+    /// <summary>
+    ///     Patches <see cref="CardModel" /> portrait path getters for <see cref="IModCardAssetOverrides" />.
+    /// </summary>
     public class CardPortraitPathPatch : IPatchMethod
     {
+        /// <inheritdoc cref="IPatchMethod.PatchId" />
         public static string PatchId => "content_asset_override_card_portrait_path";
+
+        /// <inheritdoc cref="IPatchMethod.Description" />
         public static string Description => "Allow mod cards to override CardModel portrait paths";
+
+        /// <inheritdoc cref="IPatchMethod.IsCritical" />
         public static bool IsCritical => false;
 
+        /// <inheritdoc cref="IPatchMethod.GetTargets" />
         public static ModPatchTarget[] GetTargets()
         {
             return
@@ -201,6 +329,9 @@ namespace STS2RitsuLib.Scaffolding.Content.Patches
         }
 
         // ReSharper disable InconsistentNaming
+        /// <summary>
+        ///     Dispatches to portrait or beta portrait override based on the patched getter.
+        /// </summary>
         public static bool Prefix(MethodBase __originalMethod, CardModel __instance, ref string __result)
             // ReSharper restore InconsistentNaming
         {
@@ -217,12 +348,21 @@ namespace STS2RitsuLib.Scaffolding.Content.Patches
         }
     }
 
+    /// <summary>
+    ///     Patches portrait availability flags so custom paths from <see cref="IModCardAssetOverrides" /> are honored.
+    /// </summary>
     public class CardPortraitAvailabilityPatch : IPatchMethod
     {
+        /// <inheritdoc cref="IPatchMethod.PatchId" />
         public static string PatchId => "content_asset_override_card_portrait_availability";
+
+        /// <inheritdoc cref="IPatchMethod.Description" />
         public static string Description => "Allow mod cards to override CardModel portrait availability checks";
+
+        /// <inheritdoc cref="IPatchMethod.IsCritical" />
         public static bool IsCritical => false;
 
+        /// <inheritdoc cref="IPatchMethod.GetTargets" />
         public static ModPatchTarget[] GetTargets()
         {
             return
@@ -233,6 +373,9 @@ namespace STS2RitsuLib.Scaffolding.Content.Patches
         }
 
         // ReSharper disable InconsistentNaming
+        /// <summary>
+        ///     Sets boolean availability from whether the corresponding custom portrait path exists on disk.
+        /// </summary>
         public static bool Prefix(MethodBase __originalMethod, CardModel __instance, ref bool __result)
             // ReSharper restore InconsistentNaming
         {
@@ -252,15 +395,22 @@ namespace STS2RitsuLib.Scaffolding.Content.Patches
         }
     }
 
+    /// <summary>
+    ///     Patches card frame, portrait border, and energy icon texture getters for mod path overrides.
+    /// </summary>
     public class CardTextureOverridePatch : IPatchMethod
     {
+        /// <inheritdoc cref="IPatchMethod.PatchId" />
         public static string PatchId => "content_asset_override_card_texture";
 
+        /// <inheritdoc cref="IPatchMethod.Description" />
         public static string Description =>
             "Allow mod cards to override card frame, portrait border, and energy icon textures";
 
+        /// <inheritdoc cref="IPatchMethod.IsCritical" />
         public static bool IsCritical => false;
 
+        /// <inheritdoc cref="IPatchMethod.GetTargets" />
         public static ModPatchTarget[] GetTargets()
         {
             return
@@ -272,6 +422,9 @@ namespace STS2RitsuLib.Scaffolding.Content.Patches
         }
 
         // ReSharper disable InconsistentNaming
+        /// <summary>
+        ///     Loads textures from the matching <see cref="IModCardAssetOverrides" /> path when present.
+        /// </summary>
         public static bool Prefix(MethodBase __originalMethod, CardModel __instance, ref Texture2D __result)
             // ReSharper restore InconsistentNaming
         {
@@ -290,12 +443,21 @@ namespace STS2RitsuLib.Scaffolding.Content.Patches
         }
     }
 
+    /// <summary>
+    ///     Patches <see cref="CardModel" /> frame material resolution for custom <c>.tres</c> paths.
+    /// </summary>
     public class CardFrameMaterialPatch : IPatchMethod
     {
+        /// <inheritdoc cref="IPatchMethod.PatchId" />
         public static string PatchId => "content_asset_override_card_frame_material";
+
+        /// <inheritdoc cref="IPatchMethod.Description" />
         public static string Description => "Allow mod cards to override card frame materials";
+
+        /// <inheritdoc cref="IPatchMethod.IsCritical" />
         public static bool IsCritical => false;
 
+        /// <inheritdoc cref="IPatchMethod.GetTargets" />
         public static ModPatchTarget[] GetTargets()
         {
             return
@@ -305,6 +467,9 @@ namespace STS2RitsuLib.Scaffolding.Content.Patches
         }
 
         // ReSharper disable InconsistentNaming
+        /// <summary>
+        ///     Loads <see cref="Material" /> from <see cref="IModCardAssetOverrides.CustomFrameMaterialPath" /> when valid.
+        /// </summary>
         public static bool Prefix(CardModel __instance, ref Material __result)
             // ReSharper restore InconsistentNaming
         {
@@ -316,12 +481,22 @@ namespace STS2RitsuLib.Scaffolding.Content.Patches
         }
     }
 
+    /// <summary>
+    ///     Patches pool-level frame material so <see cref="IModCardPoolFrameMaterial.PoolFrameMaterial" /> can replace path
+    ///     lookup.
+    /// </summary>
     public class CardPoolFrameMaterialPatch : IPatchMethod
     {
+        /// <inheritdoc cref="IPatchMethod.PatchId" />
         public static string PatchId => "content_asset_override_card_pool_frame_material";
+
+        /// <inheritdoc cref="IPatchMethod.Description" />
         public static string Description => "Allow mod card pools to directly supply a Material for card frames";
+
+        /// <inheritdoc cref="IPatchMethod.IsCritical" />
         public static bool IsCritical => false;
 
+        /// <inheritdoc cref="IPatchMethod.GetTargets" />
         public static ModPatchTarget[] GetTargets()
         {
             return
@@ -331,6 +506,9 @@ namespace STS2RitsuLib.Scaffolding.Content.Patches
         }
 
         // ReSharper disable InconsistentNaming
+        /// <summary>
+        ///     Returns the pool’s inline material when the pool implements <see cref="IModCardPoolFrameMaterial" />.
+        /// </summary>
         public static bool Prefix(CardPoolModel __instance, ref Material __result)
             // ReSharper restore InconsistentNaming
         {
@@ -346,12 +524,21 @@ namespace STS2RitsuLib.Scaffolding.Content.Patches
         }
     }
 
+    /// <summary>
+    ///     Patches <see cref="CardModel.AllPortraitPaths" /> so custom portrait/beta paths participate in preload lists.
+    /// </summary>
     public class CardAllPortraitPathsPatch : IPatchMethod
     {
+        /// <inheritdoc cref="IPatchMethod.PatchId" />
         public static string PatchId => "content_asset_override_card_all_portrait_paths";
+
+        /// <inheritdoc cref="IPatchMethod.Description" />
         public static string Description => "Allow mod cards to advertise custom portrait assets for preloading";
+
+        /// <inheritdoc cref="IPatchMethod.IsCritical" />
         public static bool IsCritical => false;
 
+        /// <inheritdoc cref="IPatchMethod.GetTargets" />
         public static ModPatchTarget[] GetTargets()
         {
             return
@@ -361,6 +548,9 @@ namespace STS2RitsuLib.Scaffolding.Content.Patches
         }
 
         // ReSharper disable InconsistentNaming
+        /// <summary>
+        ///     Replaces the enumerable with verified custom portrait paths when the card implements overrides.
+        /// </summary>
         public static bool Prefix(CardModel __instance, ref IEnumerable<string> __result)
             // ReSharper restore InconsistentNaming
         {
@@ -369,12 +559,21 @@ namespace STS2RitsuLib.Scaffolding.Content.Patches
         }
     }
 
+    /// <summary>
+    ///     Patches built-in overlay scene path for cards implementing <see cref="IModCardAssetOverrides" />.
+    /// </summary>
     public class CardOverlayPathPatch : IPatchMethod
     {
+        /// <inheritdoc cref="IPatchMethod.PatchId" />
         public static string PatchId => "content_asset_override_card_overlay_path";
+
+        /// <inheritdoc cref="IPatchMethod.Description" />
         public static string Description => "Allow mod cards to override overlay scene paths";
+
+        /// <inheritdoc cref="IPatchMethod.IsCritical" />
         public static bool IsCritical => false;
 
+        /// <inheritdoc cref="IPatchMethod.GetTargets" />
         public static ModPatchTarget[] GetTargets()
         {
             return
@@ -384,6 +583,9 @@ namespace STS2RitsuLib.Scaffolding.Content.Patches
         }
 
         // ReSharper disable InconsistentNaming
+        /// <summary>
+        ///     Supplies <see cref="IModCardAssetOverrides.CustomOverlayScenePath" /> when the resource exists.
+        /// </summary>
         public static bool Prefix(CardModel __instance, ref string __result)
             // ReSharper restore InconsistentNaming
         {
@@ -395,12 +597,21 @@ namespace STS2RitsuLib.Scaffolding.Content.Patches
         }
     }
 
+    /// <summary>
+    ///     Patches <see cref="CardModel.HasBuiltInOverlay" /> using existence checks on custom overlay scene paths.
+    /// </summary>
     public class CardOverlayAvailabilityPatch : IPatchMethod
     {
+        /// <inheritdoc cref="IPatchMethod.PatchId" />
         public static string PatchId => "content_asset_override_card_overlay_availability";
+
+        /// <inheritdoc cref="IPatchMethod.Description" />
         public static string Description => "Allow mod cards to advertise overlay availability from custom scene paths";
+
+        /// <inheritdoc cref="IPatchMethod.IsCritical" />
         public static bool IsCritical => false;
 
+        /// <inheritdoc cref="IPatchMethod.GetTargets" />
         public static ModPatchTarget[] GetTargets()
         {
             return
@@ -410,6 +621,10 @@ namespace STS2RitsuLib.Scaffolding.Content.Patches
         }
 
         // ReSharper disable InconsistentNaming
+        /// <summary>
+        ///     Sets <c>true</c> when <see cref="IModCardAssetOverrides.CustomOverlayScenePath" /> resolves to an existing
+        ///     resource.
+        /// </summary>
         public static bool Prefix(CardModel __instance, ref bool __result)
             // ReSharper restore InconsistentNaming
         {
@@ -424,12 +639,21 @@ namespace STS2RitsuLib.Scaffolding.Content.Patches
         }
     }
 
+    /// <summary>
+    ///     Patches <see cref="CardModel.CreateOverlay" /> to instantiate mod overlay scenes when configured.
+    /// </summary>
     public class CardOverlayCreatePatch : IPatchMethod
     {
+        /// <inheritdoc cref="IPatchMethod.PatchId" />
         public static string PatchId => "content_asset_override_card_create_overlay";
+
+        /// <inheritdoc cref="IPatchMethod.Description" />
         public static string Description => "Allow mod cards to instantiate overlays from custom scene paths";
+
+        /// <inheritdoc cref="IPatchMethod.IsCritical" />
         public static bool IsCritical => false;
 
+        /// <inheritdoc cref="IPatchMethod.GetTargets" />
         public static ModPatchTarget[] GetTargets()
         {
             return
@@ -439,6 +663,9 @@ namespace STS2RitsuLib.Scaffolding.Content.Patches
         }
 
         // ReSharper disable InconsistentNaming
+        /// <summary>
+        ///     Instantiates <see cref="IModCardAssetOverrides.CustomOverlayScenePath" /> when the packed scene exists.
+        /// </summary>
         public static bool Prefix(CardModel __instance, ref Control __result)
             // ReSharper restore InconsistentNaming
         {
@@ -454,12 +681,21 @@ namespace STS2RitsuLib.Scaffolding.Content.Patches
         }
     }
 
+    /// <summary>
+    ///     Patches <see cref="RelicModel.IconPath" /> for <see cref="IModRelicAssetOverrides" />.
+    /// </summary>
     public class RelicIconPathPatch : IPatchMethod
     {
+        /// <inheritdoc cref="IPatchMethod.PatchId" />
         public static string PatchId => "content_asset_override_relic_icon_path";
+
+        /// <inheritdoc cref="IPatchMethod.Description" />
         public static string Description => "Allow mod relics to override icon path assets";
+
+        /// <inheritdoc cref="IPatchMethod.IsCritical" />
         public static bool IsCritical => false;
 
+        /// <inheritdoc cref="IPatchMethod.GetTargets" />
         public static ModPatchTarget[] GetTargets()
         {
             return
@@ -469,6 +705,9 @@ namespace STS2RitsuLib.Scaffolding.Content.Patches
         }
 
         // ReSharper disable InconsistentNaming
+        /// <summary>
+        ///     Supplies <see cref="IModRelicAssetOverrides.CustomIconPath" /> when the resource exists.
+        /// </summary>
         public static bool Prefix(RelicModel __instance, ref string __result)
             // ReSharper restore InconsistentNaming
         {
@@ -480,12 +719,21 @@ namespace STS2RitsuLib.Scaffolding.Content.Patches
         }
     }
 
+    /// <summary>
+    ///     Patches relic icon texture getters (main, outline, big) for mod path overrides.
+    /// </summary>
     public class RelicTexturePatch : IPatchMethod
     {
+        /// <inheritdoc cref="IPatchMethod.PatchId" />
         public static string PatchId => "content_asset_override_relic_texture";
+
+        /// <inheritdoc cref="IPatchMethod.Description" />
         public static string Description => "Allow mod relics to override icon textures";
+
+        /// <inheritdoc cref="IPatchMethod.IsCritical" />
         public static bool IsCritical => false;
 
+        /// <inheritdoc cref="IPatchMethod.GetTargets" />
         public static ModPatchTarget[] GetTargets()
         {
             return
@@ -497,6 +745,9 @@ namespace STS2RitsuLib.Scaffolding.Content.Patches
         }
 
         // ReSharper disable InconsistentNaming
+        /// <summary>
+        ///     Dispatches texture loading to the matching <see cref="IModRelicAssetOverrides" /> path property.
+        /// </summary>
         public static bool Prefix(MethodBase __originalMethod, RelicModel __instance, ref Texture2D __result)
             // ReSharper restore InconsistentNaming
         {
@@ -515,12 +766,21 @@ namespace STS2RitsuLib.Scaffolding.Content.Patches
         }
     }
 
+    /// <summary>
+    ///     Patches <see cref="PowerModel.IconPath" /> for <see cref="IModPowerAssetOverrides" />.
+    /// </summary>
     public class PowerIconPathPatch : IPatchMethod
     {
+        /// <inheritdoc cref="IPatchMethod.PatchId" />
         public static string PatchId => "content_asset_override_power_icon_path";
+
+        /// <inheritdoc cref="IPatchMethod.Description" />
         public static string Description => "Allow mod powers to override icon path assets";
+
+        /// <inheritdoc cref="IPatchMethod.IsCritical" />
         public static bool IsCritical => false;
 
+        /// <inheritdoc cref="IPatchMethod.GetTargets" />
         public static ModPatchTarget[] GetTargets()
         {
             return
@@ -530,6 +790,9 @@ namespace STS2RitsuLib.Scaffolding.Content.Patches
         }
 
         // ReSharper disable InconsistentNaming
+        /// <summary>
+        ///     Supplies <see cref="IModPowerAssetOverrides.CustomIconPath" /> when the resource exists.
+        /// </summary>
         public static bool Prefix(PowerModel __instance, ref string __result)
             // ReSharper restore InconsistentNaming
         {
@@ -541,12 +804,21 @@ namespace STS2RitsuLib.Scaffolding.Content.Patches
         }
     }
 
+    /// <summary>
+    ///     Patches power standard and big icon textures for mod path overrides.
+    /// </summary>
     public class PowerTexturePatch : IPatchMethod
     {
+        /// <inheritdoc cref="IPatchMethod.PatchId" />
         public static string PatchId => "content_asset_override_power_texture";
+
+        /// <inheritdoc cref="IPatchMethod.Description" />
         public static string Description => "Allow mod powers to override icon textures";
+
+        /// <inheritdoc cref="IPatchMethod.IsCritical" />
         public static bool IsCritical => false;
 
+        /// <inheritdoc cref="IPatchMethod.GetTargets" />
         public static ModPatchTarget[] GetTargets()
         {
             return
@@ -557,6 +829,10 @@ namespace STS2RitsuLib.Scaffolding.Content.Patches
         }
 
         // ReSharper disable InconsistentNaming
+        /// <summary>
+        ///     Dispatches to <see cref="IModPowerAssetOverrides.CustomIconPath" /> or
+        ///     <see cref="IModPowerAssetOverrides.CustomBigIconPath" />.
+        /// </summary>
         public static bool Prefix(MethodBase __originalMethod, PowerModel __instance, ref Texture2D __result)
             // ReSharper restore InconsistentNaming
         {
@@ -572,12 +848,21 @@ namespace STS2RitsuLib.Scaffolding.Content.Patches
         }
     }
 
+    /// <summary>
+    ///     Patches orb HUD icon (<see cref="CompressedTexture2D" />) for <see cref="IModOrbAssetOverrides" />.
+    /// </summary>
     public class OrbIconPatch : IPatchMethod
     {
+        /// <inheritdoc cref="IPatchMethod.PatchId" />
         public static string PatchId => "content_asset_override_orb_icon";
+
+        /// <inheritdoc cref="IPatchMethod.Description" />
         public static string Description => "Allow mod orbs to override icon textures";
+
+        /// <inheritdoc cref="IPatchMethod.IsCritical" />
         public static bool IsCritical => false;
 
+        /// <inheritdoc cref="IPatchMethod.GetTargets" />
         public static ModPatchTarget[] GetTargets()
         {
             return
@@ -587,6 +872,9 @@ namespace STS2RitsuLib.Scaffolding.Content.Patches
         }
 
         // ReSharper disable InconsistentNaming
+        /// <summary>
+        ///     Loads compressed icon texture from <see cref="IModOrbAssetOverrides.CustomIconPath" /> when valid.
+        /// </summary>
         public static bool Prefix(OrbModel __instance, ref CompressedTexture2D __result)
             // ReSharper restore InconsistentNaming
         {
@@ -598,12 +886,21 @@ namespace STS2RitsuLib.Scaffolding.Content.Patches
         }
     }
 
+    /// <summary>
+    ///     Patches orb visuals scene path for combat presentation overrides.
+    /// </summary>
     public class OrbSpritePathPatch : IPatchMethod
     {
+        /// <inheritdoc cref="IPatchMethod.PatchId" />
         public static string PatchId => "content_asset_override_orb_sprite_path";
+
+        /// <inheritdoc cref="IPatchMethod.Description" />
         public static string Description => "Allow mod orbs to override visuals scene paths";
+
+        /// <inheritdoc cref="IPatchMethod.IsCritical" />
         public static bool IsCritical => false;
 
+        /// <inheritdoc cref="IPatchMethod.GetTargets" />
         public static ModPatchTarget[] GetTargets()
         {
             return
@@ -613,6 +910,9 @@ namespace STS2RitsuLib.Scaffolding.Content.Patches
         }
 
         // ReSharper disable InconsistentNaming
+        /// <summary>
+        ///     Supplies <see cref="IModOrbAssetOverrides.CustomVisualsScenePath" /> when the resource exists.
+        /// </summary>
         public static bool Prefix(OrbModel __instance, ref string __result)
             // ReSharper restore InconsistentNaming
         {
@@ -624,12 +924,21 @@ namespace STS2RitsuLib.Scaffolding.Content.Patches
         }
     }
 
+    /// <summary>
+    ///     Patches <see cref="OrbModel.AssetPaths" /> so custom icon and visuals paths appear in preload enumeration.
+    /// </summary>
     public class OrbAssetPathsPatch : IPatchMethod
     {
+        /// <inheritdoc cref="IPatchMethod.PatchId" />
         public static string PatchId => "content_asset_override_orb_asset_paths";
+
+        /// <inheritdoc cref="IPatchMethod.Description" />
         public static string Description => "Allow mod orbs to advertise custom asset paths";
+
+        /// <inheritdoc cref="IPatchMethod.IsCritical" />
         public static bool IsCritical => false;
 
+        /// <inheritdoc cref="IPatchMethod.GetTargets" />
         public static ModPatchTarget[] GetTargets()
         {
             return
@@ -639,6 +948,9 @@ namespace STS2RitsuLib.Scaffolding.Content.Patches
         }
 
         // ReSharper disable InconsistentNaming
+        /// <summary>
+        ///     Collects existing paths from <see cref="IModOrbAssetOverrides" /> for icon and visuals scenes.
+        /// </summary>
         public static bool Prefix(OrbModel __instance, ref IEnumerable<string> __result)
             // ReSharper restore InconsistentNaming
         {
@@ -657,12 +969,21 @@ namespace STS2RitsuLib.Scaffolding.Content.Patches
         }
     }
 
+    /// <summary>
+    ///     Patches potion image and outline path getters for <see cref="IModPotionAssetOverrides" />.
+    /// </summary>
     public class PotionImagePathPatch : IPatchMethod
     {
+        /// <inheritdoc cref="IPatchMethod.PatchId" />
         public static string PatchId => "content_asset_override_potion_image_path";
+
+        /// <inheritdoc cref="IPatchMethod.Description" />
         public static string Description => "Allow mod potions to override image paths";
+
+        /// <inheritdoc cref="IPatchMethod.IsCritical" />
         public static bool IsCritical => false;
 
+        /// <inheritdoc cref="IPatchMethod.GetTargets" />
         public static ModPatchTarget[] GetTargets()
         {
             return
@@ -673,6 +994,10 @@ namespace STS2RitsuLib.Scaffolding.Content.Patches
         }
 
         // ReSharper disable InconsistentNaming
+        /// <summary>
+        ///     Dispatches to <see cref="IModPotionAssetOverrides.CustomImagePath" /> or
+        ///     <see cref="IModPotionAssetOverrides.CustomOutlinePath" />.
+        /// </summary>
         public static bool Prefix(MethodBase __originalMethod, PotionModel __instance, ref string __result)
             // ReSharper restore InconsistentNaming
         {
@@ -689,12 +1014,21 @@ namespace STS2RitsuLib.Scaffolding.Content.Patches
         }
     }
 
+    /// <summary>
+    ///     Patches potion image and outline textures for mod path overrides.
+    /// </summary>
     public class PotionTexturePatch : IPatchMethod
     {
+        /// <inheritdoc cref="IPatchMethod.PatchId" />
         public static string PatchId => "content_asset_override_potion_texture";
+
+        /// <inheritdoc cref="IPatchMethod.Description" />
         public static string Description => "Allow mod potions to override image textures";
+
+        /// <inheritdoc cref="IPatchMethod.IsCritical" />
         public static bool IsCritical => false;
 
+        /// <inheritdoc cref="IPatchMethod.GetTargets" />
         public static ModPatchTarget[] GetTargets()
         {
             return
@@ -705,6 +1039,9 @@ namespace STS2RitsuLib.Scaffolding.Content.Patches
         }
 
         // ReSharper disable InconsistentNaming
+        /// <summary>
+        ///     Loads textures from the matching <see cref="IModPotionAssetOverrides" /> path property.
+        /// </summary>
         public static bool Prefix(MethodBase __originalMethod, PotionModel __instance, ref Texture2D __result)
             // ReSharper restore InconsistentNaming
         {
@@ -721,18 +1058,30 @@ namespace STS2RitsuLib.Scaffolding.Content.Patches
         }
     }
 
+    /// <summary>
+    ///     Patches run-summary banner texture for cards implementing <see cref="IModCardAssetOverrides" />.
+    /// </summary>
     public class CardBannerTexturePatch : IPatchMethod
     {
+        /// <inheritdoc cref="IPatchMethod.PatchId" />
         public static string PatchId => "content_asset_override_card_banner_texture";
+
+        /// <inheritdoc cref="IPatchMethod.Description" />
         public static string Description => "Allow mod cards to override BannerTexture";
+
+        /// <inheritdoc cref="IPatchMethod.IsCritical" />
         public static bool IsCritical => false;
 
+        /// <inheritdoc cref="IPatchMethod.GetTargets" />
         public static ModPatchTarget[] GetTargets()
         {
             return [new(typeof(CardModel), "get_BannerTexture")];
         }
 
         // ReSharper disable InconsistentNaming
+        /// <summary>
+        ///     Loads banner texture from <see cref="IModCardAssetOverrides.CustomBannerTexturePath" /> when valid.
+        /// </summary>
         public static bool Prefix(CardModel __instance, ref Texture2D __result)
             // ReSharper restore InconsistentNaming
         {
@@ -742,18 +1091,30 @@ namespace STS2RitsuLib.Scaffolding.Content.Patches
         }
     }
 
+    /// <summary>
+    ///     Patches banner <see cref="Material" /> resolution for mod cards.
+    /// </summary>
     public class CardBannerMaterialPatch : IPatchMethod
     {
+        /// <inheritdoc cref="IPatchMethod.PatchId" />
         public static string PatchId => "content_asset_override_card_banner_material";
+
+        /// <inheritdoc cref="IPatchMethod.Description" />
         public static string Description => "Allow mod cards to override BannerMaterial";
+
+        /// <inheritdoc cref="IPatchMethod.IsCritical" />
         public static bool IsCritical => false;
 
+        /// <inheritdoc cref="IPatchMethod.GetTargets" />
         public static ModPatchTarget[] GetTargets()
         {
             return [new(typeof(CardModel), "get_BannerMaterial")];
         }
 
         // ReSharper disable InconsistentNaming
+        /// <summary>
+        ///     Loads material from <see cref="IModCardAssetOverrides.CustomBannerMaterialPath" /> when valid.
+        /// </summary>
         public static bool Prefix(CardModel __instance, ref Material __result)
             // ReSharper restore InconsistentNaming
         {
@@ -763,18 +1124,30 @@ namespace STS2RitsuLib.Scaffolding.Content.Patches
         }
     }
 
+    /// <summary>
+    ///     Patches act main background scene path for <see cref="IModActAssetOverrides" />.
+    /// </summary>
     public class ActBackgroundScenePathPatch : IPatchMethod
     {
+        /// <inheritdoc cref="IPatchMethod.PatchId" />
         public static string PatchId => "content_asset_override_act_background_scene_path";
+
+        /// <inheritdoc cref="IPatchMethod.Description" />
         public static string Description => "Allow mod acts to override background scene path";
+
+        /// <inheritdoc cref="IPatchMethod.IsCritical" />
         public static bool IsCritical => false;
 
+        /// <inheritdoc cref="IPatchMethod.GetTargets" />
         public static ModPatchTarget[] GetTargets()
         {
             return [new(typeof(ActModel), "get_BackgroundScenePath")];
         }
 
         // ReSharper disable InconsistentNaming
+        /// <summary>
+        ///     Supplies <see cref="IModActAssetOverrides.CustomBackgroundScenePath" /> when the resource exists.
+        /// </summary>
         public static bool Prefix(ActModel __instance, ref string __result)
             // ReSharper restore InconsistentNaming
         {
@@ -786,18 +1159,30 @@ namespace STS2RitsuLib.Scaffolding.Content.Patches
         }
     }
 
+    /// <summary>
+    ///     Patches rest-site background scene path for mod acts.
+    /// </summary>
     public class ActRestSiteBackgroundPathPatch : IPatchMethod
     {
+        /// <inheritdoc cref="IPatchMethod.PatchId" />
         public static string PatchId => "content_asset_override_act_rest_site_background_path";
+
+        /// <inheritdoc cref="IPatchMethod.Description" />
         public static string Description => "Allow mod acts to override rest site background path";
+
+        /// <inheritdoc cref="IPatchMethod.IsCritical" />
         public static bool IsCritical => false;
 
+        /// <inheritdoc cref="IPatchMethod.GetTargets" />
         public static ModPatchTarget[] GetTargets()
         {
             return [new(typeof(ActModel), "get_RestSiteBackgroundPath")];
         }
 
         // ReSharper disable InconsistentNaming
+        /// <summary>
+        ///     Supplies <see cref="IModActAssetOverrides.CustomRestSiteBackgroundPath" /> when the resource exists.
+        /// </summary>
         public static bool Prefix(ActModel __instance, ref string __result)
             // ReSharper restore InconsistentNaming
         {
@@ -809,12 +1194,21 @@ namespace STS2RitsuLib.Scaffolding.Content.Patches
         }
     }
 
+    /// <summary>
+    ///     Patches act map layer background image paths (top/mid/bottom) for mod acts.
+    /// </summary>
     public class ActMapBackgroundPathPatch : IPatchMethod
     {
+        /// <inheritdoc cref="IPatchMethod.PatchId" />
         public static string PatchId => "content_asset_override_act_map_background_path";
+
+        /// <inheritdoc cref="IPatchMethod.Description" />
         public static string Description => "Allow mod acts to override map background paths";
+
+        /// <inheritdoc cref="IPatchMethod.IsCritical" />
         public static bool IsCritical => false;
 
+        /// <inheritdoc cref="IPatchMethod.GetTargets" />
         public static ModPatchTarget[] GetTargets()
         {
             return
@@ -826,6 +1220,9 @@ namespace STS2RitsuLib.Scaffolding.Content.Patches
         }
 
         // ReSharper disable InconsistentNaming
+        /// <summary>
+        ///     Dispatches to the matching <see cref="IModActAssetOverrides" /> map layer path property.
+        /// </summary>
         public static bool Prefix(MethodBase __originalMethod, ActModel __instance, ref string __result)
             // ReSharper restore InconsistentNaming
         {
@@ -851,24 +1248,46 @@ namespace STS2RitsuLib.Scaffolding.Content.Patches
         }
     }
 
+    /// <summary>
+    ///     Optional affliction overlay scene path for patches on <see cref="AfflictionModel" />.
+    /// </summary>
     public interface IModAfflictionAssetOverrides
     {
+        /// <summary>
+        ///     Path bundle; default is empty.
+        /// </summary>
         AfflictionAssetProfile AssetProfile => AfflictionAssetProfile.Empty;
+
+        /// <summary>
+        ///     Overlay packed scene path override.
+        /// </summary>
         string? CustomOverlayScenePath => AssetProfile.OverlayScenePath;
     }
 
+    /// <summary>
+    ///     Patches <see cref="AfflictionModel" /> overlay scene path for <see cref="IModAfflictionAssetOverrides" />.
+    /// </summary>
     public class AfflictionOverlayPathPatch : IPatchMethod
     {
+        /// <inheritdoc cref="IPatchMethod.PatchId" />
         public static string PatchId => "content_asset_override_affliction_overlay_path";
+
+        /// <inheritdoc cref="IPatchMethod.Description" />
         public static string Description => "Allow mod afflictions to override OverlayPath";
+
+        /// <inheritdoc cref="IPatchMethod.IsCritical" />
         public static bool IsCritical => false;
 
+        /// <inheritdoc cref="IPatchMethod.GetTargets" />
         public static ModPatchTarget[] GetTargets()
         {
             return [new(typeof(AfflictionModel), "get_OverlayPath")];
         }
 
         // ReSharper disable InconsistentNaming
+        /// <summary>
+        ///     Supplies <see cref="IModAfflictionAssetOverrides.CustomOverlayScenePath" /> when the resource exists.
+        /// </summary>
         public static bool Prefix(AfflictionModel __instance, ref string __result)
             // ReSharper restore InconsistentNaming
         {
@@ -878,18 +1297,30 @@ namespace STS2RitsuLib.Scaffolding.Content.Patches
         }
     }
 
+    /// <summary>
+    ///     Patches <see cref="AfflictionModel.HasOverlay" /> from custom overlay path existence.
+    /// </summary>
     public class AfflictionHasOverlayPatch : IPatchMethod
     {
+        /// <inheritdoc cref="IPatchMethod.PatchId" />
         public static string PatchId => "content_asset_override_affliction_has_overlay";
+
+        /// <inheritdoc cref="IPatchMethod.Description" />
         public static string Description => "Allow mod afflictions to advertise overlay availability";
+
+        /// <inheritdoc cref="IPatchMethod.IsCritical" />
         public static bool IsCritical => false;
 
+        /// <inheritdoc cref="IPatchMethod.GetTargets" />
         public static ModPatchTarget[] GetTargets()
         {
             return [new(typeof(AfflictionModel), "get_HasOverlay")];
         }
 
         // ReSharper disable InconsistentNaming
+        /// <summary>
+        ///     Resolves the custom overlay path then sets boolean availability from resource existence.
+        /// </summary>
         public static bool Prefix(AfflictionModel __instance, ref bool __result)
             // ReSharper restore InconsistentNaming
         {
@@ -907,18 +1338,30 @@ namespace STS2RitsuLib.Scaffolding.Content.Patches
         }
     }
 
+    /// <summary>
+    ///     Patches <see cref="AfflictionModel.CreateOverlay" /> to instantiate mod overlay scenes when configured.
+    /// </summary>
     public class AfflictionCreateOverlayPatch : IPatchMethod
     {
+        /// <inheritdoc cref="IPatchMethod.PatchId" />
         public static string PatchId => "content_asset_override_affliction_create_overlay";
+
+        /// <inheritdoc cref="IPatchMethod.Description" />
         public static string Description => "Allow mod afflictions to instantiate overlays from custom scene paths";
+
+        /// <inheritdoc cref="IPatchMethod.IsCritical" />
         public static bool IsCritical => false;
 
+        /// <inheritdoc cref="IPatchMethod.GetTargets" />
         public static ModPatchTarget[] GetTargets()
         {
             return [new(typeof(AfflictionModel), nameof(AfflictionModel.CreateOverlay))];
         }
 
         // ReSharper disable InconsistentNaming
+        /// <summary>
+        ///     Instantiates <see cref="IModAfflictionAssetOverrides.CustomOverlayScenePath" /> when the packed scene exists.
+        /// </summary>
         public static bool Prefix(AfflictionModel __instance, ref Control __result)
             // ReSharper restore InconsistentNaming
         {
@@ -938,24 +1381,46 @@ namespace STS2RitsuLib.Scaffolding.Content.Patches
         }
     }
 
+    /// <summary>
+    ///     Optional enchantment icon path for patches on <see cref="EnchantmentModel" />.
+    /// </summary>
     public interface IModEnchantmentAssetOverrides
     {
+        /// <summary>
+        ///     Path bundle; default is empty.
+        /// </summary>
         EnchantmentAssetProfile AssetProfile => EnchantmentAssetProfile.Empty;
+
+        /// <summary>
+        ///     Intended icon path override.
+        /// </summary>
         string? CustomIconPath => AssetProfile.IconPath;
     }
 
+    /// <summary>
+    ///     Patches <see cref="EnchantmentModel" /> intended icon path for <see cref="IModEnchantmentAssetOverrides" />.
+    /// </summary>
     public class EnchantmentIntendedIconPathPatch : IPatchMethod
     {
+        /// <inheritdoc cref="IPatchMethod.PatchId" />
         public static string PatchId => "content_asset_override_enchantment_intended_icon_path";
+
+        /// <inheritdoc cref="IPatchMethod.Description" />
         public static string Description => "Allow mod enchantments to override IntendedIconPath";
+
+        /// <inheritdoc cref="IPatchMethod.IsCritical" />
         public static bool IsCritical => false;
 
+        /// <inheritdoc cref="IPatchMethod.GetTargets" />
         public static ModPatchTarget[] GetTargets()
         {
             return [new(typeof(EnchantmentModel), "get_IntendedIconPath")];
         }
 
         // ReSharper disable InconsistentNaming
+        /// <summary>
+        ///     Supplies <see cref="IModEnchantmentAssetOverrides.CustomIconPath" /> when the resource exists.
+        /// </summary>
         public static bool Prefix(EnchantmentModel __instance, ref string __result)
             // ReSharper restore InconsistentNaming
         {
@@ -965,18 +1430,30 @@ namespace STS2RitsuLib.Scaffolding.Content.Patches
         }
     }
 
+    /// <summary>
+    ///     Patches <see cref="PowerModel.ResolvedBigIconPath" /> so preload lists include mod big-icon paths.
+    /// </summary>
     public class PowerResolvedBigIconPathPatch : IPatchMethod
     {
+        /// <inheritdoc cref="IPatchMethod.PatchId" />
         public static string PatchId => "content_asset_override_power_resolved_big_icon_path";
+
+        /// <inheritdoc cref="IPatchMethod.Description" />
         public static string Description => "Allow mod powers to override ResolvedBigIconPath for preloading";
+
+        /// <inheritdoc cref="IPatchMethod.IsCritical" />
         public static bool IsCritical => false;
 
+        /// <inheritdoc cref="IPatchMethod.GetTargets" />
         public static ModPatchTarget[] GetTargets()
         {
             return [new(typeof(PowerModel), "get_ResolvedBigIconPath")];
         }
 
         // ReSharper disable InconsistentNaming
+        /// <summary>
+        ///     Supplies <see cref="IModPowerAssetOverrides.CustomBigIconPath" /> when the resource exists.
+        /// </summary>
         public static bool Prefix(PowerModel __instance, ref string __result)
             // ReSharper restore InconsistentNaming
         {
@@ -997,6 +1474,9 @@ namespace STS2RitsuLib.Scaffolding.Content.Patches
     /// </summary>
     public interface IModTextEnergyIconPool
     {
+        /// <summary>
+        ///     Custom image path for the small energy icon embedded in rich-text card descriptions.
+        /// </summary>
         string? TextEnergyIconPath { get; }
     }
 }

@@ -71,7 +71,6 @@ namespace STS2RitsuLib.Settings
                 return true;
             value = default!;
             return false;
-
         }
 
         internal static void AddChromeBindingSnapshot<T>(Dictionary<string, ModSettingsChromeBindingSnapshot> target,
@@ -130,7 +129,7 @@ namespace STS2RitsuLib.Settings
             try
             {
                 envelope = JsonSerializer.Deserialize<ModSettingsClipboardEnvelope>(clipboard);
-                return envelope is { Kind: { Length: > 0 } };
+                return envelope is { Kind.Length: > 0 };
             }
             catch
             {

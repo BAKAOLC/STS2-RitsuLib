@@ -60,9 +60,7 @@ namespace STS2RitsuLib.Settings
     /// <summary>
     ///     Marker binding that is not written to disk (preview / transient UI state).
     /// </summary>
-    public interface ITransientModSettingsBinding : IModSettingsBinding
-    {
-    }
+    public interface ITransientModSettingsBinding : IModSettingsBinding;
 
     /// <summary>
     ///     Converts between live objects and clipboard/JSON text for structured settings.

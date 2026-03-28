@@ -2,6 +2,10 @@ using Godot;
 
 namespace STS2RitsuLib.Settings
 {
+    /// <summary>
+    ///     Reorderable list editor for a bound list of <typeparamref name="TItem" /> with optional structured clipboard per
+    ///     item.
+    /// </summary>
     public sealed class ListModSettingsEntryDefinition<TItem>(
         string id,
         ModSettingsText label,
@@ -15,16 +19,42 @@ namespace STS2RitsuLib.Settings
         ModSettingsText? description)
         : ModSettingsEntryDefinition(id, label, description)
     {
+        /// <summary>
+        ///     List binding; wrapped with a list adapter when the inner binding is not already structured.
+        /// </summary>
         public IModSettingsValueBinding<List<TItem>> Binding { get; } =
             binding is IStructuredModSettingsValueBinding<List<TItem>>
                 ? binding
                 : ModSettingsBindings.WithAdapter(binding, ModSettingsStructuredData.List(itemDataAdapter));
 
+        /// <summary>
+        ///     Factory for a new row when Add is pressed.
+        /// </summary>
         public Func<TItem> CreateItem { get; } = createItem;
+
+        /// <summary>
+        ///     Row title resolver.
+        /// </summary>
         public Func<TItem, ModSettingsText> ItemLabel { get; } = itemLabel;
+
+        /// <summary>
+        ///     Optional per-row description.
+        /// </summary>
         public Func<TItem, ModSettingsText?>? ItemDescription { get; } = itemDescription;
+
+        /// <summary>
+        ///     Custom editor for one row; when null, a default layout is used.
+        /// </summary>
         public Func<ModSettingsListItemContext<TItem>, Control>? ItemEditorFactory { get; } = itemEditorFactory;
+
+        /// <summary>
+        ///     Adapter for item clipboard when not using JSON defaults.
+        /// </summary>
         public IStructuredModSettingsValueAdapter<TItem>? ItemDataAdapter { get; } = itemDataAdapter;
+
+        /// <summary>
+        ///     Localized label for the add button.
+        /// </summary>
         public ModSettingsText AddButtonText { get; } = addButtonText;
 
         internal override void CollectChromeBindingSnapshots(
@@ -50,6 +80,9 @@ namespace STS2RitsuLib.Settings
         }
     }
 
+    /// <summary>
+    ///     Integer range slider with discrete steps.
+    /// </summary>
     public sealed class IntSliderModSettingsEntryDefinition(
         string id,
         ModSettingsText label,
@@ -61,10 +94,29 @@ namespace STS2RitsuLib.Settings
         ModSettingsText? description)
         : ModSettingsEntryDefinition(id, label, description)
     {
+        /// <summary>
+        ///     Backing binding for the integer value.
+        /// </summary>
         public IModSettingsValueBinding<int> Binding { get; } = binding;
+
+        /// <summary>
+        ///     Minimum value (inclusive).
+        /// </summary>
         public int MinValue { get; } = minValue;
+
+        /// <summary>
+        ///     Maximum value (inclusive).
+        /// </summary>
         public int MaxValue { get; } = maxValue;
+
+        /// <summary>
+        ///     Step between valid values.
+        /// </summary>
         public int Step { get; } = step;
+
+        /// <summary>
+        ///     Optional display formatter.
+        /// </summary>
         public Func<int, string>? ValueFormatter { get; } = valueFormatter;
 
         internal override void CollectChromeBindingSnapshots(
@@ -90,6 +142,9 @@ namespace STS2RitsuLib.Settings
         }
     }
 
+    /// <summary>
+    ///     Navigation row that opens another registered settings page.
+    /// </summary>
     public sealed class SubpageModSettingsEntryDefinition(
         string id,
         ModSettingsText label,
@@ -98,7 +153,14 @@ namespace STS2RitsuLib.Settings
         ModSettingsText? description)
         : ModSettingsEntryDefinition(id, label, description)
     {
+        /// <summary>
+        ///     Destination page id.
+        /// </summary>
         public string TargetPageId { get; } = targetPageId;
+
+        /// <summary>
+        ///     Label shown on the navigation control.
+        /// </summary>
         public ModSettingsText ButtonText { get; } = buttonText;
 
         internal override Control CreateControl(ModSettingsUiContext context)

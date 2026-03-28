@@ -42,6 +42,9 @@ namespace STS2RitsuLib.Data
             _migrationManager = new();
         }
 
+        /// <summary>
+        ///     Owning mod id for this store instance.
+        /// </summary>
         public string ModId { get; }
 
         internal static bool HasAnyProfileScopedEntries
@@ -49,10 +52,27 @@ namespace STS2RitsuLib.Data
             get { return GetStoresSnapshot().Any(store => store.HasProfileScopedEntries); }
         }
 
+        /// <summary>
+        ///     True after every global-scoped entry has completed initialization and load.
+        /// </summary>
         public bool IsGlobalInitialized { get; private set; }
+
+        /// <summary>
+        ///     True after profile-scoped entries for the active profile are initialized.
+        /// </summary>
         public bool IsProfileInitialized { get; private set; }
+
+        /// <summary>
+        ///     Whether this store has at least one <see cref="SaveScope.Profile" /> registration.
+        /// </summary>
         public bool HasProfileScopedEntries => _entries.Values.Any(e => e.Scope == SaveScope.Profile);
 
+        /// <summary>
+        ///     Defers eager initialization of newly <see cref="Register{T}" /> calls until the scope is disposed.
+        /// </summary>
+        /// <param name="initializeProfileIfReady">
+        ///     When true and profile data is already initialized, profile-scoped registrations initialize on scope end.
+        /// </param>
         public IDisposable BeginRegistrationScope(bool initializeProfileIfReady = true)
         {
             _registrationScopeDepth++;
@@ -60,6 +80,9 @@ namespace STS2RitsuLib.Data
             return new RegistrationScope(this);
         }
 
+        /// <summary>
+        ///     Returns the process-wide store for <paramref name="modId" />.
+        /// </summary>
         public static ModDataStore For(string modId)
         {
             ArgumentException.ThrowIfNullOrWhiteSpace(modId);
@@ -101,7 +124,7 @@ namespace STS2RitsuLib.Data
         }
 
         /// <summary>
-        ///     Initialize global-scoped data only (safe at early startup)
+        ///     Initializes and loads every global-scoped entry that is not yet initialized (safe during early startup).
         /// </summary>
         public void InitializeGlobal()
         {
@@ -115,7 +138,7 @@ namespace STS2RitsuLib.Data
         }
 
         /// <summary>
-        ///     Initialize profile-scoped data (must be called at safe profile path timing)
+        ///     Initializes and loads profile-scoped entries once the profile path is valid (subscribes to profile changes).
         /// </summary>
         public void InitializeProfileScoped()
         {
@@ -140,6 +163,30 @@ namespace STS2RitsuLib.Data
                 .All(e => e.IsInitialized);
         }
 
+        /// <summary>
+        ///     Registers a JSON-backed persistence slot identified by <paramref name="key" />.
+        /// </summary>
+        /// <param name="key">
+        ///     Logical key used with <see cref="Get{T}" />, <see cref="Modify{T}" />, and <see cref="Save" />.
+        /// </param>
+        /// <param name="fileName">
+        ///     File name segment passed to <see cref="ProfileManager" /> path resolution.
+        /// </param>
+        /// <param name="scope">
+        ///     Global or profile persistence scope.
+        /// </param>
+        /// <param name="defaultFactory">
+        ///     Factory for the in-memory default when no file exists.
+        /// </param>
+        /// <param name="autoCreateIfMissing">
+        ///     When true, creates the on-disk file if absent after first save.
+        /// </param>
+        /// <param name="migrationConfig">
+        ///     Optional schema versioning configuration for migrations.
+        /// </param>
+        /// <param name="migrations">
+        ///     Optional migration steps; requires <paramref name="migrationConfig" />.
+        /// </param>
         public void Register<T>(
             string key,
             string fileName,
@@ -199,26 +246,44 @@ namespace STS2RitsuLib.Data
                 _migrationManager.RegisterMigration<T>(migration);
         }
 
+        /// <summary>
+        ///     Returns the live instance for <paramref name="key" />.
+        /// </summary>
         public T Get<T>(string key) where T : class, new()
         {
             return GetEntry<T>(key).Data;
         }
 
+        /// <summary>
+        ///     Mutates the instance for <paramref name="key" /> in place (persists via <see cref="Save" />).
+        /// </summary>
         public void Modify<T>(string key, Action<T> modifier) where T : class, new()
         {
             GetEntry<T>(key).Modify(modifier);
         }
 
+        /// <summary>
+        ///     Writes the entry for <paramref name="key" /> to disk.
+        /// </summary>
         public void Save(string key)
         {
             GetEntry(key).Save();
         }
 
+        /// <summary>
+        ///     Whether a file already existed when the entry was first loaded.
+        /// </summary>
         public bool HasExistingData(string key)
         {
             return GetEntry(key).HadExistingData;
         }
 
+        /// <summary>
+        ///     Reloads entries whose resolved path changed (e.g. after profile switch).
+        /// </summary>
+        /// <returns>
+        ///     True if any entry reloaded.
+        /// </returns>
         public bool ReloadIfPathChanged()
         {
             if (!IsGlobalInitialized) return false;
@@ -233,7 +298,7 @@ namespace STS2RitsuLib.Data
         }
 
         /// <summary>
-        ///     Save all data
+        ///     Persists every registered entry.
         /// </summary>
         public void SaveAll()
         {

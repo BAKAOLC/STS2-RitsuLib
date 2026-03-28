@@ -17,12 +17,20 @@ namespace STS2RitsuLib
         private const float HoverTipSpacing = 5f;
         private const float HoverTipWidth = 360f;
 
+        /// <summary>
+        ///     Appends a text hover tip to <paramref name="owner" />'s active hover tip set.
+        /// </summary>
+        /// <returns>False when no hover tip set is bound to the control.</returns>
         public static bool AddTipToOwner(Control owner, string title, string description)
         {
             return NHoverTipSet._activeHoverTips.TryGetValue(owner, out var hoverTipSet) &&
                    AddTipToSet(hoverTipSet, owner, title, description);
         }
 
+        /// <summary>
+        ///     Appends card preview hover tips for <paramref name="cards" /> to <paramref name="owner" />.
+        /// </summary>
+        /// <returns>False when no hover tip set is bound or no tips were added.</returns>
         public static bool AddCardTipsToOwner(Control owner, IEnumerable<CardModel> cards)
         {
             return NHoverTipSet._activeHoverTips.TryGetValue(owner, out var hoverTipSet) &&

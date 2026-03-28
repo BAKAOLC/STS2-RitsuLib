@@ -5,6 +5,10 @@ using MegaCrit.Sts2.Core.Localization;
 
 namespace STS2RitsuLib.Utils
 {
+    /// <summary>
+    ///     Loads merged JSON translation dictionaries from the file system, embedded resources, and PCK paths,
+    ///     reacting to game locale changes when possible.
+    /// </summary>
     public class I18N : IDisposable
     {
         private readonly string[] _fsFolders;
@@ -17,6 +21,9 @@ namespace STS2RitsuLib.Utils
         private bool _subscribed;
         private Dictionary<string, string> _translations = new(StringComparer.OrdinalIgnoreCase);
 
+        /// <summary>
+        ///     Creates an instance, optionally wiring locale change subscription when sources are configured.
+        /// </summary>
         public I18N(string? instanceName = null,
             string[]? fsFolders = null,
             string[]? resourceFolders = null,
@@ -35,6 +42,9 @@ namespace STS2RitsuLib.Utils
                 Initialize();
         }
 
+        /// <summary>
+        ///     Releases subscriptions and clears loaded translations.
+        /// </summary>
         public void Dispose()
         {
             if (_disposed) return;
@@ -47,8 +57,14 @@ namespace STS2RitsuLib.Utils
             GC.SuppressFinalize(this);
         }
 
+        /// <summary>
+        ///     Raised after translations are reloaded (locale change or <see cref="ForceReload" />).
+        /// </summary>
         public event Action? Changed;
 
+        /// <summary>
+        ///     Returns the translation for <paramref name="key" /> or <paramref name="fallback" /> if missing.
+        /// </summary>
         public string Get(string key, string fallback)
         {
             ObjectDisposedException.ThrowIf(_disposed, this);
@@ -56,6 +72,9 @@ namespace STS2RitsuLib.Utils
             return _translations.GetValueOrDefault(key) ?? fallback;
         }
 
+        /// <summary>
+        ///     Reloads translations for the current resolved language and raises <see cref="Changed" />.
+        /// </summary>
         public void ForceReload()
         {
             var language = ResolveLanguage();

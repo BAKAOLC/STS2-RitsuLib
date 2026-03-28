@@ -10,6 +10,9 @@ namespace STS2RitsuLib.Patching.Core
     {
         private static readonly ConcurrentDictionary<Type, Logger> Registry = new();
 
+        /// <summary>
+        ///     Associates <paramref name="logger" /> with <paramref name="patchType" /> for <see cref="For(Type)" />.
+        /// </summary>
         public static void Bind(Type patchType, Logger logger)
         {
             ArgumentNullException.ThrowIfNull(patchType);
@@ -18,6 +21,9 @@ namespace STS2RitsuLib.Patching.Core
             Registry[patchType] = logger;
         }
 
+        /// <summary>
+        ///     Returns the bound logger for <paramref name="patchType" />, or <see cref="RitsuLibFramework.Logger" />.
+        /// </summary>
         public static Logger For(Type patchType)
         {
             ArgumentNullException.ThrowIfNull(patchType);
@@ -26,6 +32,9 @@ namespace STS2RitsuLib.Patching.Core
                 : RitsuLibFramework.Logger;
         }
 
+        /// <summary>
+        ///     <see cref="For(Type)" /> for <typeparamref name="TPatch" />.
+        /// </summary>
         public static Logger For<TPatch>()
         {
             return For(typeof(TPatch));

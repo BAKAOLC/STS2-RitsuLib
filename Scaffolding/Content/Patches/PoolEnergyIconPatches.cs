@@ -12,18 +12,29 @@ namespace STS2RitsuLib.Scaffolding.Content.Patches
     /// </summary>
     public interface IModBigEnergyIconPool
     {
+        /// <summary>
+        ///     Custom large energy icon path for this pool’s <see cref="MegaCrit.Sts2.Core.Models.IPoolModel.EnergyColorName" />.
+        /// </summary>
         string? BigEnergyIconPath { get; }
     }
 
+    /// <summary>
+    ///     Prefixes <see cref="EnergyIconHelper.GetPath(string)" /> so pools implementing <see cref="IModBigEnergyIconPool" />
+    ///     can replace the resolved big icon path.
+    /// </summary>
     public class EnergyIconHelperPathPatch : IPatchMethod
     {
+        /// <inheritdoc cref="IPatchMethod.PatchId" />
         public static string PatchId => "energy_icon_helper_big_icon_override";
 
+        /// <inheritdoc cref="IPatchMethod.Description" />
         public static string Description =>
             "Allow mod pools to override the large energy icon path resolved by EnergyIconHelper";
 
+        /// <inheritdoc cref="IPatchMethod.IsCritical" />
         public static bool IsCritical => false;
 
+        /// <inheritdoc cref="IPatchMethod.GetTargets" />
         public static ModPatchTarget[] GetTargets()
         {
             return
@@ -33,6 +44,9 @@ namespace STS2RitsuLib.Scaffolding.Content.Patches
         }
 
         // ReSharper disable InconsistentNaming
+        /// <summary>
+        ///     Delegates to <see cref="ModBigEnergyIconHelper.TryOverridePath" /> to substitute a cached pool override.
+        /// </summary>
         public static bool Prefix(string prefix, ref string __result)
             // ReSharper restore InconsistentNaming
         {

@@ -12,7 +12,7 @@ namespace STS2RitsuLib.Settings
         private string _lastCommitted = string.Empty;
         private bool _suppressCallbacks;
 
-        public ModSettingsStringLineControl(string initialValue, string? placeholder, int? maxLength,
+        public ModSettingsStringLineControl(string? initialValue, string? placeholder, int? maxLength,
             Action<string> onChanged)
         {
             _onChanged = onChanged;
@@ -39,7 +39,7 @@ namespace STS2RitsuLib.Settings
             if (maxLength is >= 1)
                 edit.MaxLength = maxLength.Value;
             ModSettingsStringEditorShared.ApplyStringLineEditTheme(edit);
-            edit.TextChanged += newText => OnLineEditTextChanged(edit, newText);
+            edit.TextChanged += OnLineEditTextChanged;
             edit.TextSubmitted += text =>
             {
                 Commit(text);
@@ -59,7 +59,7 @@ namespace STS2RitsuLib.Settings
         /// </summary>
         public LineEdit? Editor { get; private set; }
 
-        public void SetValue(string value)
+        public void SetValue(string? value)
         {
             if (Editor == null)
                 return;
@@ -74,14 +74,14 @@ namespace STS2RitsuLib.Settings
             _suppressCallbacks = false;
         }
 
-        private void OnLineEditTextChanged(LineEdit edit, string newText)
+        private void OnLineEditTextChanged(string newText)
         {
             if (_suppressCallbacks)
                 return;
             Commit(newText);
         }
 
-        private void Commit(string text)
+        private void Commit(string? text)
         {
             if (_suppressCallbacks)
                 return;
@@ -105,7 +105,7 @@ namespace STS2RitsuLib.Settings
         private string _lastCommitted = string.Empty;
         private bool _suppressCallbacks;
 
-        public ModSettingsStringMultilineControl(string initialValue, string? placeholder, int? maxLength,
+        public ModSettingsStringMultilineControl(string? initialValue, string? placeholder, int? maxLength,
             Action<string> onChanged)
         {
             _onChanged = onChanged;
@@ -149,7 +149,7 @@ namespace STS2RitsuLib.Settings
         /// </summary>
         public TextEdit? Editor { get; private set; }
 
-        public void SetValue(string value)
+        public void SetValue(string? value)
         {
             if (Editor == null)
                 return;
@@ -164,7 +164,7 @@ namespace STS2RitsuLib.Settings
             _suppressCallbacks = false;
         }
 
-        private void Commit(string text)
+        private void Commit(string? text)
         {
             if (_suppressCallbacks || Editor == null)
                 return;

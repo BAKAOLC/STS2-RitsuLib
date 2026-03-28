@@ -14,15 +14,23 @@ using STS2RitsuLib.Unlocks;
 
 namespace STS2RitsuLib.Lifecycle.Patches
 {
+    /// <summary>
+    ///     Publishes <see cref="EssentialInitializationStartingEvent" /> / <see cref="DeferredInitializationStartingEvent" />
+    ///     and matching completed events around vanilla one-time initialization.
+    /// </summary>
     public class CoreInitializationLifecyclePatch : IPatchMethod
     {
+        /// <inheritdoc />
         public static string PatchId => "core_initialization_lifecycle";
 
+        /// <inheritdoc />
         public static string Description =>
             "Publish framework lifecycle events around essential and deferred initialization";
 
+        /// <inheritdoc />
         public static bool IsCritical => false;
 
+        /// <inheritdoc />
         public static ModPatchTarget[] GetTargets()
         {
             return
@@ -33,6 +41,9 @@ namespace STS2RitsuLib.Lifecycle.Patches
         }
 
         // ReSharper disable once InconsistentNaming
+        /// <summary>
+        ///     Emits “starting” lifecycle events before essential or deferred initialization runs.
+        /// </summary>
         public static void Prefix(MethodBase __originalMethod)
         {
             switch (__originalMethod.Name)
@@ -53,6 +64,9 @@ namespace STS2RitsuLib.Lifecycle.Patches
         }
 
         // ReSharper disable once InconsistentNaming
+        /// <summary>
+        ///     Emits “completed” lifecycle events after essential or deferred initialization runs.
+        /// </summary>
         public static void Postfix(MethodBase __originalMethod)
         {
             switch (__originalMethod.Name)
@@ -73,15 +87,25 @@ namespace STS2RitsuLib.Lifecycle.Patches
         }
     }
 
+    /// <summary>
+    ///     Hooks <see cref="ModelDb" /> and related init to freeze registries, inject models, and publish model lifecycle
+    ///     events.
+    /// </summary>
     public class ModelRegistryLifecyclePatch : IPatchMethod
     {
         private static readonly FieldInfo? ReflectionHelperModTypesField =
             typeof(ReflectionHelper).GetField("_modTypes", BindingFlags.Static | BindingFlags.NonPublic);
 
+        /// <inheritdoc />
         public static string PatchId => "model_registry_lifecycle";
+
+        /// <inheritdoc />
         public static string Description => "Publish lifecycle events around ModelDb initialization phases";
+
+        /// <inheritdoc />
         public static bool IsCritical => false;
 
+        /// <inheritdoc />
         public static ModPatchTarget[] GetTargets()
         {
             return
@@ -94,6 +118,9 @@ namespace STS2RitsuLib.Lifecycle.Patches
         }
 
         // ReSharper disable once InconsistentNaming
+        /// <summary>
+        ///     Runs registry freezes, validation, and “starting” model lifecycle events before targeted init methods.
+        /// </summary>
         public static void Prefix(MethodBase __originalMethod)
         {
             switch (__originalMethod.DeclaringType, __originalMethod.Name)
@@ -130,6 +157,9 @@ namespace STS2RitsuLib.Lifecycle.Patches
         }
 
         // ReSharper disable once InconsistentNaming
+        /// <summary>
+        ///     Publishes “completed” model lifecycle events after <see cref="ModelDb" /> init phases.
+        /// </summary>
         public static void Postfix(MethodBase __originalMethod)
         {
             switch (__originalMethod.Name)
@@ -162,12 +192,21 @@ namespace STS2RitsuLib.Lifecycle.Patches
         }
     }
 
+    /// <summary>
+    ///     Publishes <see cref="GameTreeEnteredEvent" /> and <see cref="GameReadyEvent" /> for <see cref="NGame" />.
+    /// </summary>
     public class GameNodeLifecyclePatch : IPatchMethod
     {
+        /// <inheritdoc />
         public static string PatchId => "game_node_lifecycle";
+
+        /// <inheritdoc />
         public static string Description => "Publish lifecycle events when NGame enters the tree and becomes ready";
+
+        /// <inheritdoc />
         public static bool IsCritical => false;
 
+        /// <inheritdoc />
         public static ModPatchTarget[] GetTargets()
         {
             return
@@ -178,6 +217,9 @@ namespace STS2RitsuLib.Lifecycle.Patches
         }
 
         // ReSharper disable InconsistentNaming
+        /// <summary>
+        ///     Dispatches game tree / ready lifecycle events based on which <see cref="NGame" /> method was patched.
+        /// </summary>
         public static void Postfix(MethodBase __originalMethod, NGame __instance)
             // ReSharper restore InconsistentNaming
         {
@@ -199,12 +241,21 @@ namespace STS2RitsuLib.Lifecycle.Patches
         }
     }
 
+    /// <summary>
+    ///     Publishes <see cref="RunStartedEvent" /> and <see cref="RunLoadedEvent" /> from <see cref="RunManager" />.
+    /// </summary>
     public class RunLifecyclePatch : IPatchMethod
     {
+        /// <inheritdoc />
         public static string PatchId => "run_lifecycle";
+
+        /// <inheritdoc />
         public static string Description => "Publish lifecycle events for run creation and loading";
+
+        /// <inheritdoc />
         public static bool IsCritical => false;
 
+        /// <inheritdoc />
         public static ModPatchTarget[] GetTargets()
         {
             return
@@ -215,6 +266,9 @@ namespace STS2RitsuLib.Lifecycle.Patches
         }
 
         // ReSharper disable InconsistentNaming
+        /// <summary>
+        ///     Emits run started/loaded events after new or saved run initialization.
+        /// </summary>
         public static void Postfix(
                 MethodBase __originalMethod,
                 RunManager __instance)
@@ -242,12 +296,21 @@ namespace STS2RitsuLib.Lifecycle.Patches
         }
     }
 
+    /// <summary>
+    ///     Publishes <see cref="RunEndedEvent" /> and forwards run end to <see cref="ModUnlockRegistry" />.
+    /// </summary>
     public class RunEndedLifecyclePatch : IPatchMethod
     {
+        /// <inheritdoc />
         public static string PatchId => "run_ended_lifecycle";
+
+        /// <inheritdoc />
         public static string Description => "Publish lifecycle events when a run ends";
+
+        /// <inheritdoc />
         public static bool IsCritical => false;
 
+        /// <inheritdoc />
         public static ModPatchTarget[] GetTargets()
         {
             return
@@ -257,6 +320,9 @@ namespace STS2RitsuLib.Lifecycle.Patches
         }
 
         // ReSharper disable InconsistentNaming
+        /// <summary>
+        ///     Runs unlock bookkeeping and publishes <see cref="RunEndedEvent" /> when a run terminates.
+        /// </summary>
         public static void Postfix(RunManager __instance, bool isVictory, SerializableRun __result)
             // ReSharper restore InconsistentNaming
         {

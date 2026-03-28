@@ -7,8 +7,11 @@ using STS2RitsuLib.Patching.Models;
 namespace STS2RitsuLib.Patching.Core
 {
     /// <summary>
-    ///     Manages Harmony patch application and lifecycle
+    ///     Owns one Harmony instance: registers static and dynamic patches, applies them, and can roll back.
     /// </summary>
+    /// <param name="patcherId">Harmony id (must be unique per logical patcher).</param>
+    /// <param name="logger">Logger used for patch diagnostics.</param>
+    /// <param name="patcherName">Optional display name included in log prefix.</param>
     public class ModPatcher(string patcherId, Logger logger, string patcherName = "")
     {
         private readonly Harmony _harmony = new(patcherId);
@@ -20,14 +23,44 @@ namespace STS2RitsuLib.Patching.Core
         private readonly List<DynamicPatchInfo> _registeredDynamicPatches = [];
         private readonly List<ModPatchInfo> _registeredPatches = [];
 
+        /// <summary>
+        ///     Harmony instance id passed to the constructor.
+        /// </summary>
         public string PatcherId => patcherId;
+
+        /// <summary>
+        ///     Human-readable patcher label for logs.
+        /// </summary>
         public string PatcherName => patcherName;
+
+        /// <summary>
+        ///     Logger associated with this patcher.
+        /// </summary>
         public Logger Logger => logger;
+
+        /// <summary>
+        ///     Count of registered static <see cref="ModPatchInfo" /> entries.
+        /// </summary>
         public int RegisteredPatchCount => _registeredPatches.Count;
+
+        /// <summary>
+        ///     Count of registered <see cref="DynamicPatchInfo" /> entries.
+        /// </summary>
         public int RegisteredDynamicPatchCount => _registeredDynamicPatches.Count;
+
+        /// <summary>
+        ///     Number of patches currently marked applied in internal state.
+        /// </summary>
         public int AppliedPatchCount => _patchedStatus.Count(kvp => kvp.Value);
+
+        /// <summary>
+        ///     True after <see cref="PatchAll" /> succeeds without rolling back.
+        /// </summary>
         public bool IsApplied { get; private set; }
 
+        /// <summary>
+        ///     Queues a static patch; throws if <see cref="IsApplied" /> is already true.
+        /// </summary>
         public void RegisterPatch(ModPatchInfo modPatchInfo)
         {
             if (IsApplied)
@@ -50,11 +83,17 @@ namespace STS2RitsuLib.Patching.Core
             logger.Debug($"{_logPrefix}Registered patch: {modPatchInfo.Id} - {modPatchInfo.Description}");
         }
 
+        /// <summary>
+        ///     Calls <see cref="RegisterPatch" /> for each entry in <paramref name="patches" />.
+        /// </summary>
         public void RegisterPatches(params ReadOnlySpan<ModPatchInfo> patches)
         {
             foreach (var patch in patches) RegisterPatch(patch);
         }
 
+        /// <summary>
+        ///     Queues a dynamic patch (resolved <see cref="MethodBase" /> + Harmony methods).
+        /// </summary>
         public void RegisterDynamicPatch(DynamicPatchInfo dynamicPatchInfo)
         {
             ArgumentNullException.ThrowIfNull(dynamicPatchInfo);
@@ -71,11 +110,19 @@ namespace STS2RitsuLib.Patching.Core
                 $"{_logPrefix}Registered dynamic patch: {dynamicPatchInfo.Id} - {dynamicPatchInfo.Description}");
         }
 
+        /// <summary>
+        ///     Calls <see cref="RegisterDynamicPatch" /> for each entry.
+        /// </summary>
         public void RegisterDynamicPatches(params ReadOnlySpan<DynamicPatchInfo> dynamicPatches)
         {
             foreach (var patch in dynamicPatches) RegisterDynamicPatch(patch);
         }
 
+        /// <summary>
+        ///     Registers and immediately applies dynamic patches; optionally rolls back all Harmony patches on critical
+        ///     failure.
+        /// </summary>
+        /// <returns>False when any critical patch fails and rollback was requested or needed.</returns>
         public bool ApplyDynamicPatches(IEnumerable<DynamicPatchInfo> dynamicPatches,
             bool rollbackOnCriticalFailure = false)
         {
@@ -134,6 +181,10 @@ namespace STS2RitsuLib.Patching.Core
             return false;
         }
 
+        /// <summary>
+        ///     Applies all registered static patches once; on critical failure calls <see cref="UnpatchAll" />.
+        /// </summary>
+        /// <returns>True when no critical patch failed.</returns>
         public bool PatchAll()
         {
             if (IsApplied)
@@ -172,6 +223,9 @@ namespace STS2RitsuLib.Patching.Core
             return success;
         }
 
+        /// <summary>
+        ///     Removes all applied patches tracked by this instance from the underlying Harmony id.
+        /// </summary>
         public void UnpatchAll()
         {
             if (_registeredPatches.Count == 0 && _registeredDynamicPatches.Count == 0)

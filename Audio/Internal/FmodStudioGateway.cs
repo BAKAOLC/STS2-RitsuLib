@@ -2,7 +2,9 @@ using Godot;
 
 namespace STS2RitsuLib.Audio.Internal
 {
-    /// <summary>Centralized FmodServer lookup and guarded <see cref="GodotObject.Call(Variant, Variant[])" />.</summary>
+    /// <summary>
+    ///     Centralized FmodServer lookup and guarded <see cref="GodotObject.Call(StringName, Variant[])" /> calls.
+    /// </summary>
     internal static class FmodStudioGateway
     {
         internal static readonly StringName ServerName = new("FmodServer");

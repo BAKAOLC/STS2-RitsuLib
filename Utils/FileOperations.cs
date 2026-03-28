@@ -552,10 +552,29 @@ namespace STS2RitsuLib.Utils
         /// </summary>
         public record ReadResult
         {
+            /// <summary>
+            ///     True when the file was read successfully with non-empty content.
+            /// </summary>
             public bool Success { get; init; }
+
+            /// <summary>
+            ///     File text when <see cref="Success" /> is true.
+            /// </summary>
             public string? Content { get; init; }
+
+            /// <summary>
+            ///     Godot error code when a low-level open/read failure occurred.
+            /// </summary>
             public Error? ErrorCode { get; init; }
+
+            /// <summary>
+            ///     Human-readable failure reason when <see cref="Success" /> is false.
+            /// </summary>
             public string? ErrorMessage { get; init; }
+
+            /// <summary>
+            ///     True when content was recovered from the <c>.backup</c> sibling file.
+            /// </summary>
             public bool LoadedFromBackup { get; init; }
         }
 
@@ -564,8 +583,19 @@ namespace STS2RitsuLib.Utils
         /// </summary>
         public class WriteResult
         {
+            /// <summary>
+            ///     True when the write (or no-op delete) completed successfully.
+            /// </summary>
             public bool Success { get; init; }
+
+            /// <summary>
+            ///     Godot error code when a low-level operation failed.
+            /// </summary>
             public Error? ErrorCode { get; init; }
+
+            /// <summary>
+            ///     Human-readable failure reason when <see cref="Success" /> is false.
+            /// </summary>
             public string? ErrorMessage { get; init; }
         }
 
@@ -574,8 +604,19 @@ namespace STS2RitsuLib.Utils
         /// </summary>
         public class JsonResult<T>
         {
+            /// <summary>
+            ///     True when JSON was parsed into a non-null instance.
+            /// </summary>
             public bool Success { get; init; }
+
+            /// <summary>
+            ///     Deserialized object when <see cref="Success" /> is true.
+            /// </summary>
             public T? Data { get; init; }
+
+            /// <summary>
+            ///     Human-readable failure reason when <see cref="Success" /> is false.
+            /// </summary>
             public string? ErrorMessage { get; init; }
         }
     }

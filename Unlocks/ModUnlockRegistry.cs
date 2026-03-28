@@ -9,6 +9,10 @@ using STS2RitsuLib.Diagnostics;
 
 namespace STS2RitsuLib.Unlocks
 {
+    /// <summary>
+    ///     Per-mod registration of epoch requirements and post-run / combat-derived unlock rules integrated via
+    ///     Harmony patches.
+    /// </summary>
     public sealed class ModUnlockRegistry
     {
         private static readonly Lock SyncRoot = new();
@@ -31,9 +35,19 @@ namespace STS2RitsuLib.Unlocks
             ModId = modId;
         }
 
+        /// <summary>
+        ///     Owning mod identifier for this registry instance.
+        /// </summary>
         public string ModId { get; }
+
+        /// <summary>
+        ///     True after the framework freezes further unlock rule registration.
+        /// </summary>
         public static bool IsFrozen { get; private set; }
 
+        /// <summary>
+        ///     Returns the unlock registry singleton for <paramref name="modId" />.
+        /// </summary>
         public static ModUnlockRegistry For(string modId)
         {
             ArgumentException.ThrowIfNullOrWhiteSpace(modId);
@@ -49,6 +63,10 @@ namespace STS2RitsuLib.Unlocks
             }
         }
 
+        /// <summary>
+        ///     Requires <typeparamref name="TModel" /> content to remain locked until <typeparamref name="TEpoch" />
+        ///     is obtained or revealed.
+        /// </summary>
         public void RequireEpoch<TModel, TEpoch>()
             where TModel : AbstractModel
             where TEpoch : EpochModel, new()
@@ -56,6 +74,10 @@ namespace STS2RitsuLib.Unlocks
             RequireEpoch(typeof(TModel), new TEpoch().Id);
         }
 
+        /// <summary>
+        ///     Requires <paramref name="modelType" /> content to remain locked until <paramref name="epochId" /> is
+        ///     obtained or revealed.
+        /// </summary>
         public void RequireEpoch(Type modelType, string epochId)
         {
             EnsureMutable($"register unlock requirement for '{modelType.Name}'");
@@ -71,6 +93,10 @@ namespace STS2RitsuLib.Unlocks
             }
         }
 
+        /// <summary>
+        ///     Registers a rule that obtains <typeparamref name="TEpoch" /> after any completed run as
+        ///     <typeparamref name="TCharacter" />.
+        /// </summary>
         public void UnlockEpochAfterRunAs<TCharacter, TEpoch>()
             where TCharacter : CharacterModel
             where TEpoch : EpochModel, new()
@@ -82,6 +108,10 @@ namespace STS2RitsuLib.Unlocks
                     context => context.CharacterId == ModelDb.GetId<TCharacter>()));
         }
 
+        /// <summary>
+        ///     Registers a rule that obtains <typeparamref name="TEpoch" /> after a victorious run as
+        ///     <typeparamref name="TCharacter" />.
+        /// </summary>
         public void UnlockEpochAfterWinAs<TCharacter, TEpoch>()
             where TCharacter : CharacterModel
             where TEpoch : EpochModel, new()
@@ -93,6 +123,10 @@ namespace STS2RitsuLib.Unlocks
                     context => context.IsVictory && context.CharacterId == ModelDb.GetId<TCharacter>()));
         }
 
+        /// <summary>
+        ///     Registers a rule that obtains <typeparamref name="TEpoch" /> after a win at or above
+        ///     <paramref name="ascensionLevel" /> as <typeparamref name="TCharacter" />.
+        /// </summary>
         public void UnlockEpochAfterAscensionWin<TCharacter, TEpoch>(int ascensionLevel)
             where TCharacter : CharacterModel
             where TEpoch : EpochModel, new()
@@ -106,6 +140,10 @@ namespace STS2RitsuLib.Unlocks
                                context.AscensionLevel >= ascensionLevel));
         }
 
+        /// <summary>
+        ///     Registers a rule that obtains <typeparamref name="TEpoch" /> after <paramref name="requiredRuns" />
+        ///     runs, optionally requiring a win on each qualifying run.
+        /// </summary>
         public void UnlockEpochAfterRunCount<TEpoch>(int requiredRuns, bool requireVictory = false)
             where TEpoch : EpochModel, new()
         {
@@ -116,6 +154,9 @@ namespace STS2RitsuLib.Unlocks
                     context => context.TotalRuns >= requiredRuns && (!requireVictory || context.IsVictory)));
         }
 
+        /// <summary>
+        ///     Registers a custom post-run epoch unlock rule.
+        /// </summary>
         public void RegisterPostRunRule(PostRunEpochUnlockRule rule)
         {
             EnsureMutable($"register post-run epoch rule '{rule.Description}'");
@@ -127,6 +168,10 @@ namespace STS2RitsuLib.Unlocks
             }
         }
 
+        /// <summary>
+        ///     Registers elite-win counting for <typeparamref name="TCharacter" /> toward obtaining
+        ///     <typeparamref name="TEpoch" />.
+        /// </summary>
         public void UnlockEpochAfterEliteVictories<TCharacter, TEpoch>(int requiredEliteWins = 15)
             where TCharacter : CharacterModel
             where TEpoch : EpochModel, new()
@@ -139,6 +184,9 @@ namespace STS2RitsuLib.Unlocks
                     $"Unlock {typeof(TEpoch).Name} after defeating {requiredEliteWins} elite(s) as {typeof(TCharacter).Name}"));
         }
 
+        /// <summary>
+        ///     Registers a custom elite-win epoch rule for a character.
+        /// </summary>
         public void RegisterEliteEpochRule(EliteEpochUnlockRule rule)
         {
             EnsureMutable($"register elite epoch rule '{rule.Description}'");
@@ -150,6 +198,10 @@ namespace STS2RitsuLib.Unlocks
             }
         }
 
+        /// <summary>
+        ///     Registers boss-win counting for <typeparamref name="TCharacter" /> toward obtaining
+        ///     <typeparamref name="TEpoch" />.
+        /// </summary>
         public void UnlockEpochAfterBossVictories<TCharacter, TEpoch>(int requiredBossWins = 15)
             where TCharacter : CharacterModel
             where TEpoch : EpochModel, new()
@@ -162,6 +214,9 @@ namespace STS2RitsuLib.Unlocks
                     $"Unlock {typeof(TEpoch).Name} after defeating {requiredBossWins} boss(es) as {typeof(TCharacter).Name}"));
         }
 
+        /// <summary>
+        ///     Registers a custom boss-win epoch rule for a character.
+        /// </summary>
         public void RegisterBossEpochRule(CountedEpochUnlockRule rule)
         {
             EnsureMutable($"register boss epoch rule '{rule.Description}'");
@@ -173,6 +228,10 @@ namespace STS2RitsuLib.Unlocks
             }
         }
 
+        /// <summary>
+        ///     Maps ascension-level-one completion for <typeparamref name="TCharacter" /> to obtaining
+        ///     <typeparamref name="TEpoch" />.
+        /// </summary>
         public void UnlockEpochAfterAscensionOneWin<TCharacter, TEpoch>()
             where TCharacter : CharacterModel
             where TEpoch : EpochModel, new()
@@ -180,6 +239,9 @@ namespace STS2RitsuLib.Unlocks
             RegisterAscensionOneEpoch(ModelDb.GetId<TCharacter>(), new TEpoch().Id);
         }
 
+        /// <summary>
+        ///     Registers which epoch is granted after an ascension-one win for <paramref name="characterId" />.
+        /// </summary>
         public void RegisterAscensionOneEpoch(ModelId characterId, string epochId)
         {
             EnsureMutable($"register ascension-one epoch '{epochId}'");
@@ -191,6 +253,10 @@ namespace STS2RitsuLib.Unlocks
             }
         }
 
+        /// <summary>
+        ///     Configures ascension UI reveal for <typeparamref name="TCharacter" /> to depend on
+        ///     <typeparamref name="TEpoch" /> being revealed.
+        /// </summary>
         public void RevealAscensionAfterEpoch<TCharacter, TEpoch>()
             where TCharacter : CharacterModel
             where TEpoch : EpochModel, new()
@@ -198,6 +264,9 @@ namespace STS2RitsuLib.Unlocks
             RegisterAscensionRevealEpoch(ModelDb.GetId<TCharacter>(), new TEpoch().Id);
         }
 
+        /// <summary>
+        ///     Registers which epoch must be revealed before ascension is shown for <paramref name="characterId" />.
+        /// </summary>
         public void RegisterAscensionRevealEpoch(ModelId characterId, string epochId)
         {
             EnsureMutable($"register ascension reveal epoch '{epochId}'");
@@ -209,6 +278,10 @@ namespace STS2RitsuLib.Unlocks
             }
         }
 
+        /// <summary>
+        ///     Registers the vanilla-style character-unlock epoch obtained after a run as
+        ///     <typeparamref name="TCharacter" />.
+        /// </summary>
         public void UnlockCharacterAfterRunAs<TCharacter, TEpoch>()
             where TCharacter : CharacterModel
             where TEpoch : EpochModel, new()
@@ -216,6 +289,10 @@ namespace STS2RitsuLib.Unlocks
             RegisterPostRunCharacterUnlockEpoch(ModelDb.GetId<TCharacter>(), new TEpoch().Id);
         }
 
+        /// <summary>
+        ///     Registers which epoch is granted by the post-run character-unlock check for
+        ///     <paramref name="characterId" />.
+        /// </summary>
         public void RegisterPostRunCharacterUnlockEpoch(ModelId characterId, string epochId)
         {
             EnsureMutable($"register post-run character unlock epoch '{epochId}'");
@@ -363,6 +440,17 @@ namespace STS2RitsuLib.Unlocks
         }
     }
 
+    /// <summary>
+    ///     Snapshot of run and profile statistics passed to post-run unlock predicates.
+    /// </summary>
+    /// <param name="Run">Serializable run being finalized.</param>
+    /// <param name="LocalPlayer">Local player state from the run.</param>
+    /// <param name="IsVictory">True if the run ended in victory.</param>
+    /// <param name="IsAbandoned">True if the run was abandoned.</param>
+    /// <param name="TotalRuns">Total runs recorded in progress at evaluation time.</param>
+    /// <param name="TotalWins">Total wins recorded in progress at evaluation time.</param>
+    /// <param name="CharacterId">Character played for this run.</param>
+    /// <param name="AscensionLevel">Ascension level of the run.</param>
     public sealed record PostRunUnlockContext(
         SerializableRun Run,
         SerializablePlayer LocalPlayer,
@@ -373,11 +461,20 @@ namespace STS2RitsuLib.Unlocks
         ModelId CharacterId,
         int AscensionLevel);
 
+    /// <summary>
+    ///     Describes an epoch granted when a post-run predicate returns true.
+    /// </summary>
+    /// <param name="EpochId">Epoch identifier to obtain.</param>
+    /// <param name="Description">Human-readable label used in logs.</param>
+    /// <param name="ShouldUnlock">Predicate evaluated after each run ends.</param>
     public sealed record PostRunEpochUnlockRule(
         string EpochId,
         string Description,
         Func<PostRunUnlockContext, bool> ShouldUnlock)
     {
+        /// <summary>
+        ///     Creates a <see cref="PostRunEpochUnlockRule" /> with validated inputs.
+        /// </summary>
         public static PostRunEpochUnlockRule Create(string epochId, string description,
             Func<PostRunUnlockContext, bool> shouldUnlock)
         {
@@ -388,12 +485,22 @@ namespace STS2RitsuLib.Unlocks
         }
     }
 
+    /// <summary>
+    ///     Elite-win counting rule that obtains an epoch after enough elite victories as a character.
+    /// </summary>
+    /// <param name="CharacterId">Character whose elite wins are counted.</param>
+    /// <param name="EpochId">Epoch identifier to obtain.</param>
+    /// <param name="RequiredEliteWins">Minimum elite wins required.</param>
+    /// <param name="Description">Human-readable label used in logs.</param>
     public sealed record EliteEpochUnlockRule(
         ModelId CharacterId,
         string EpochId,
         int RequiredEliteWins,
         string Description)
     {
+        /// <summary>
+        ///     Creates an <see cref="EliteEpochUnlockRule" /> with validated inputs.
+        /// </summary>
         public static EliteEpochUnlockRule Create(
             ModelId characterId,
             string epochId,
@@ -407,12 +514,22 @@ namespace STS2RitsuLib.Unlocks
         }
     }
 
+    /// <summary>
+    ///     Generic counted encounter-win rule (used for boss epochs) for a character.
+    /// </summary>
+    /// <param name="CharacterId">Character whose wins are counted.</param>
+    /// <param name="EpochId">Epoch identifier to obtain.</param>
+    /// <param name="RequiredWins">Minimum wins required.</param>
+    /// <param name="Description">Human-readable label used in logs.</param>
     public sealed record CountedEpochUnlockRule(
         ModelId CharacterId,
         string EpochId,
         int RequiredWins,
         string Description)
     {
+        /// <summary>
+        ///     Creates a <see cref="CountedEpochUnlockRule" /> with validated inputs.
+        /// </summary>
         public static CountedEpochUnlockRule Create(
             ModelId characterId,
             string epochId,

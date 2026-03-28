@@ -9,7 +9,14 @@ namespace STS2RitsuLib.Interop
     [AttributeUsage(AttributeTargets.Class, Inherited = false)]
     public sealed class ModInteropAttribute(string modId, string? type = null) : Attribute
     {
+        /// <summary>
+        ///     Target mod manifest id required for this interop surface.
+        /// </summary>
         public string ModId { get; } = modId;
+
+        /// <summary>
+        ///     Default remote CLR type name for members without <see cref="InteropTargetAttribute" />.
+        /// </summary>
         public string? Type { get; } = type;
     }
 
@@ -21,18 +28,35 @@ namespace STS2RitsuLib.Interop
         Inherited = false)]
     public sealed class InteropTargetAttribute : Attribute
     {
+        /// <summary>
+        ///     Overrides the remote type and optionally the member name.
+        /// </summary>
+        /// <param name="type">Fully qualified or assembly-qualified type name in the remote mod.</param>
+        /// <param name="name">Remote member name when different from the stub.</param>
         public InteropTargetAttribute(string type, string? name = null)
         {
             Type = type;
             Name = name;
         }
 
+        /// <summary>
+        ///     Overrides only the remote member name (type comes from <see cref="ModInteropAttribute.Type" /> or enclosing
+        ///     context).
+        /// </summary>
+        /// <param name="name">Remote member name when different from the stub.</param>
         public InteropTargetAttribute(string? name = null)
         {
             Name = name;
         }
 
+        /// <summary>
+        ///     Remote type name when specified; otherwise inferred from <see cref="ModInteropAttribute" />.
+        /// </summary>
         public string? Type { get; }
+
+        /// <summary>
+        ///     Remote member name when specified.
+        /// </summary>
         public string? Name { get; }
     }
 }

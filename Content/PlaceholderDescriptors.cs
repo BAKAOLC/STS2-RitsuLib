@@ -1,7 +1,6 @@
 using MegaCrit.Sts2.Core.Entities.Cards;
 using MegaCrit.Sts2.Core.Entities.Potions;
 using MegaCrit.Sts2.Core.Entities.Relics;
-using MegaCrit.Sts2.Core.Models;
 
 namespace STS2RitsuLib.Content
 {
@@ -18,10 +17,6 @@ namespace STS2RitsuLib.Content
     /// <summary>
     ///     Shape-only configuration for a generated placeholder relic (no relic logic).
     /// </summary>
-    /// <param name="MerchantCostOverride">
-    ///     If zero or positive, overrides <see cref="RelicModel.MerchantCost" />; if negative,
-    ///     use rarity-based default.
-    /// </param>
     public readonly record struct PlaceholderRelicDescriptor(
         RelicRarity Rarity = RelicRarity.Common,
         bool IsUsedUp = false,

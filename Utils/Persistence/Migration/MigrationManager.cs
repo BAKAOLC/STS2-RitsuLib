@@ -206,11 +206,34 @@ namespace STS2RitsuLib.Utils.Persistence.Migration
     /// </summary>
     public class MigrationResult<T>
     {
+        /// <summary>
+        ///     True when JSON was parsed and optional migrations succeeded.
+        /// </summary>
         public bool Success { get; init; }
+
+        /// <summary>
+        ///     Migrated instance when <see cref="Success" /> is true.
+        /// </summary>
         public T? Data { get; init; }
+
+        /// <summary>
+        ///     Failure explanation when <see cref="Success" /> is false.
+        /// </summary>
         public string? ErrorMessage { get; init; }
+
+        /// <summary>
+        ///     True when at least one migration step ran.
+        /// </summary>
         public bool WasMigrated { get; init; }
+
+        /// <summary>
+        ///     Schema version after migration (or the detected version when no migrations ran).
+        /// </summary>
         public int FinalVersion { get; init; }
+
+        /// <summary>
+        ///     True when the on-disk file should be quarantined or reset (corrupt or unsupported version).
+        /// </summary>
         public bool RequiresRecovery { get; init; }
     }
 }

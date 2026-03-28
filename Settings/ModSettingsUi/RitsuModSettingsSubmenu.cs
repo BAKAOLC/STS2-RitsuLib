@@ -7,6 +7,10 @@ using MegaCrit.Sts2.Core.Nodes.Screens.MainMenu;
 
 namespace STS2RitsuLib.Settings
 {
+    /// <summary>
+    ///     Full-screen mod settings browser: sidebar (mods, pages, sections), content pane, deferred save, and locale
+    ///     refresh.
+    /// </summary>
     public partial class RitsuModSettingsSubmenu : NSubmenu
     {
         private const float SidebarWidth = 324f;
@@ -44,6 +48,9 @@ namespace STS2RitsuLib.Settings
         private bool _suppressScrollSync;
         private MegaRichTextLabel _titleLabel;
 
+        /// <summary>
+        ///     Builds layout (header, sidebar, scrollable content) and wires initial structure.
+        /// </summary>
         public RitsuModSettingsSubmenu()
         {
             AnchorRight = 1f;
@@ -110,8 +117,10 @@ namespace STS2RitsuLib.Settings
             body.AddChild(CreateContentPanel());
         }
 
+        /// <inheritdoc />
         protected override Control? InitialFocusedControl => _initialFocusedControl;
 
+        /// <inheritdoc />
         public override void _Ready()
         {
             var backButton = PreloadManager.Cache.GetScene(SceneHelper.GetScenePath("ui/back_button"))
@@ -126,6 +135,7 @@ namespace STS2RitsuLib.Settings
             ProcessMode = ProcessModeEnum.Disabled;
         }
 
+        /// <inheritdoc />
         public override void _ExitTree()
         {
             base._ExitTree();
@@ -133,6 +143,7 @@ namespace STS2RitsuLib.Settings
             UnsubscribeLocaleChanges();
         }
 
+        /// <inheritdoc />
         public override void OnSubmenuOpened()
         {
             base.OnSubmenuOpened();
@@ -140,6 +151,7 @@ namespace STS2RitsuLib.Settings
             Rebuild();
         }
 
+        /// <inheritdoc />
         public override void OnSubmenuClosed()
         {
             FlushDirtyBindings();
@@ -147,6 +159,7 @@ namespace STS2RitsuLib.Settings
             base.OnSubmenuClosed();
         }
 
+        /// <inheritdoc />
         protected override void OnSubmenuHidden()
         {
             FlushDirtyBindings();
@@ -154,6 +167,7 @@ namespace STS2RitsuLib.Settings
             base.OnSubmenuHidden();
         }
 
+        /// <inheritdoc />
         public override void _Process(double delta)
         {
             base._Process(delta);
@@ -228,6 +242,9 @@ namespace STS2RitsuLib.Settings
                 action();
         }
 
+        /// <summary>
+        ///     Selects a mod in the sidebar, optionally opening <paramref name="pageId" />, and rebuilds the UI.
+        /// </summary>
         public void SelectMod(string modId, string? pageId = null)
         {
             _selectedModId = modId;
@@ -238,6 +255,9 @@ namespace STS2RitsuLib.Settings
             Rebuild();
         }
 
+        /// <summary>
+        ///     Switches to <paramref name="pageId" /> within the currently selected mod.
+        /// </summary>
         public void NavigateToPage(string pageId)
         {
             if (string.IsNullOrWhiteSpace(_selectedModId))
@@ -248,6 +268,9 @@ namespace STS2RitsuLib.Settings
             Rebuild();
         }
 
+        /// <summary>
+        ///     Opens <paramref name="pageId" /> and scrolls/focuses <paramref name="sectionId" />.
+        /// </summary>
         public void NavigateToSection(string pageId, string sectionId)
         {
             if (string.IsNullOrWhiteSpace(_selectedModId))

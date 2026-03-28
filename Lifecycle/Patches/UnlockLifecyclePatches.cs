@@ -4,12 +4,21 @@ using STS2RitsuLib.Patching.Models;
 
 namespace STS2RitsuLib.Lifecycle.Patches
 {
+    /// <summary>
+    ///     Publishes epoch obtain and reveal lifecycle events from <see cref="SaveManager" />.
+    /// </summary>
     public class EpochLifecyclePatch : IPatchMethod
     {
+        /// <inheritdoc />
         public static string PatchId => "epoch_lifecycle";
+
+        /// <inheritdoc />
         public static string Description => "Publish epoch obtain and reveal lifecycle events";
+
+        /// <inheritdoc />
         public static bool IsCritical => false;
 
+        /// <inheritdoc />
         public static ModPatchTarget[] GetTargets()
         {
             return
@@ -19,6 +28,10 @@ namespace STS2RitsuLib.Lifecycle.Patches
             ];
         }
 
+        /// <summary>
+        ///     Harmony postfix: publishes <see cref="EpochObtainedEvent" /> or <see cref="EpochRevealedEvent" /> after the
+        ///     matching method runs.
+        /// </summary>
         // ReSharper disable InconsistentNaming
         public static void Postfix(MethodBase __originalMethod, SaveManager __instance, object[] __args)
             // ReSharper restore InconsistentNaming
@@ -41,12 +54,21 @@ namespace STS2RitsuLib.Lifecycle.Patches
         }
     }
 
+    /// <summary>
+    ///     Publishes a lifecycle event when <see cref="SaveManager.IncrementUnlock" /> completes and returns a key.
+    /// </summary>
     public class UnlockIncrementLifecyclePatch : IPatchMethod
     {
+        /// <inheritdoc />
         public static string PatchId => "unlock_increment_lifecycle";
+
+        /// <inheritdoc />
         public static string Description => "Publish agnostic unlock increment lifecycle events";
+
+        /// <inheritdoc />
         public static bool IsCritical => false;
 
+        /// <inheritdoc />
         public static ModPatchTarget[] GetTargets()
         {
             return
@@ -55,6 +77,9 @@ namespace STS2RitsuLib.Lifecycle.Patches
             ];
         }
 
+        /// <summary>
+        ///     Harmony postfix: publishes <see cref="UnlockIncrementedEvent" /> with total unlocks and optional result key.
+        /// </summary>
         // ReSharper disable InconsistentNaming
         public static void Postfix(SaveManager __instance, string? __result)
             // ReSharper restore InconsistentNaming

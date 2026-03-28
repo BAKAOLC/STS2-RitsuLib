@@ -12,6 +12,10 @@ using STS2RitsuLib.Patching.Models;
 
 namespace STS2RitsuLib.Scaffolding.Characters.Patches
 {
+    /// <summary>
+    ///     Replaces <c>MoveCreaturesToDifferentLayerAndDisableUi</c> so game-over layout works for mod characters that
+    ///     use non-Spine or differently structured combat visuals.
+    /// </summary>
     public class CharacterGameOverScreenCompatibilityPatch : IPatchMethod
     {
         private static readonly AccessTools.FieldRef<NGameOverScreen, RunState> RunStateRef =
@@ -20,19 +24,27 @@ namespace STS2RitsuLib.Scaffolding.Characters.Patches
         private static readonly AccessTools.FieldRef<NGameOverScreen, Control> CreatureContainerRef =
             AccessTools.FieldRefAccess<NGameOverScreen, Control>("_creatureContainer");
 
+        /// <inheritdoc cref="IPatchMethod.PatchId" />
         public static string PatchId => "character_game_over_screen_compatibility";
 
+        /// <inheritdoc cref="IPatchMethod.Description" />
         public static string Description =>
             "Handle non-Spine mod character visuals when GameOverScreen recreates player visuals";
 
+        /// <inheritdoc cref="IPatchMethod.IsCritical" />
         public static bool IsCritical => false;
 
+        /// <inheritdoc cref="IPatchMethod.GetTargets" />
         public static ModPatchTarget[] GetTargets()
         {
             return [new(typeof(NGameOverScreen), "MoveCreaturesToDifferentLayerAndDisableUi")];
         }
 
         // ReSharper disable InconsistentNaming
+        /// <summary>
+        ///     Runs a safe reimplementation of creature relocation; returns <c>false</c> to skip the original method on
+        ///     success, or <c>true</c> to fall back if an unexpected error occurs.
+        /// </summary>
         public static bool Prefix(NGameOverScreen __instance)
             // ReSharper restore InconsistentNaming
         {

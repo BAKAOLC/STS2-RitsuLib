@@ -21,19 +21,26 @@ namespace STS2RitsuLib.Content.Patches
     /// </summary>
     public class ModelIdSerializationCacheDynamicContentPatch : IPatchMethod
     {
+        /// <inheritdoc />
         public static string PatchId => "model_id_serialization_cache_dynamic_content";
 
+        /// <inheritdoc />
         public static string Description =>
             "Include ModelDb-injected dynamic mod models in ModelIdSerializationCache maps and hash";
 
+        /// <inheritdoc />
         public static bool IsCritical => true;
 
+        /// <inheritdoc />
         public static ModPatchTarget[] GetTargets()
         {
             return [new(typeof(ModelIdSerializationCache), nameof(ModelIdSerializationCache.Init))];
         }
 
-        // ReSharper disable once InconsistentNaming
+        /// <summary>
+        ///     After vanilla <see cref="ModelIdSerializationCache.Init" />, merges injected <see cref="ModelDb" /> entries
+        ///     into net ID maps and refreshes bit sizes and hash.
+        /// </summary>
         public static void Postfix()
         {
             var contentById = GetModelDbContentById();
@@ -97,9 +104,8 @@ namespace STS2RitsuLib.Content.Patches
             var sorted = types.ToList();
             sorted.Sort((a, b) => string.CompareOrdinal(a.Name, b.Name));
 
-            foreach (var type in sorted)
+            foreach (var id in sorted.Select(ModelDb.GetId))
             {
-                var id = ModelDb.GetId(type);
                 AppendUtf8(xxHash, id.Category, buffer);
                 AppendUtf8(xxHash, id.Entry, buffer);
             }

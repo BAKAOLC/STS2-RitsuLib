@@ -11,15 +11,20 @@ namespace STS2RitsuLib.Audio
         {
         }
 
+        /// <summary>
+        ///     Shared singleton used by <see cref="GameFmod.Studio" />.
+        /// </summary>
         public static GameFmodAudioService Shared { get; } = new();
 
         private static NAudioManager? Manager => NAudioManager.Instance;
 
+        /// <inheritdoc />
         public void PlayOneShot(string eventPath, float volume = 1f)
         {
             Manager?.PlayOneShot(eventPath, volume);
         }
 
+        /// <inheritdoc />
         public void PlayOneShot(string eventPath, IReadOnlyDictionary<string, float> parameters, float volume = 1f)
         {
             if (Manager is null)
@@ -34,56 +39,67 @@ namespace STS2RitsuLib.Audio
             Manager.PlayOneShot(eventPath, ToManagedDictionary(parameters), volume);
         }
 
+        /// <inheritdoc />
         public void PlayLoop(string eventPath, bool usesLoopParam = true)
         {
             Manager?.PlayLoop(eventPath, usesLoopParam);
         }
 
+        /// <inheritdoc />
         public void StopLoop(string eventPath)
         {
             Manager?.StopLoop(eventPath);
         }
 
+        /// <inheritdoc />
         public void SetLoopParameter(string eventPath, string parameterName, float value)
         {
             Manager?.SetParam(eventPath, parameterName, value);
         }
 
+        /// <inheritdoc />
         public void StopAllLoops()
         {
             Manager?.StopAllLoops();
         }
 
+        /// <inheritdoc />
         public void PlayMusic(string eventPath)
         {
             Manager?.PlayMusic(eventPath);
         }
 
+        /// <inheritdoc />
         public void StopMusic()
         {
             Manager?.StopMusic();
         }
 
+        /// <inheritdoc />
         public void UpdateMusicParameter(string parameterName, string labelValue)
         {
             Manager?.UpdateMusicParameter(parameterName, labelValue);
         }
 
+        /// <inheritdoc />
         public void SetMasterVolume(float linear01)
         {
             Manager?.SetMasterVol(linear01);
         }
 
+        /// <inheritdoc />
         public void SetSfxVolume(float linear01)
         {
             Manager?.SetSfxVol(linear01);
         }
 
+        /// <inheritdoc />
         public void SetAmbienceVolume(float linear01)
         {
             Manager?.SetAmbienceVol(linear01);
         }
 
+        /// <inheritdoc />
         public void SetBgmVolume(float linear01)
         {
             Manager?.SetBgmVol(linear01);

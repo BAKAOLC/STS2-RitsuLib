@@ -5,12 +5,21 @@ using STS2RitsuLib.Patching.Models;
 
 namespace STS2RitsuLib.Lifecycle.Patches
 {
+    /// <summary>
+    ///     Publishes a lifecycle event when <see cref="NGameOverScreen" /> is created from run state and save data.
+    /// </summary>
     public class GameOverScreenLifecyclePatch : IPatchMethod
     {
+        /// <inheritdoc />
         public static string PatchId => "game_over_screen_lifecycle";
+
+        /// <inheritdoc />
         public static string Description => "Publish lifecycle events when the game over screen is created";
+
+        /// <inheritdoc />
         public static bool IsCritical => false;
 
+        /// <inheritdoc />
         public static ModPatchTarget[] GetTargets()
         {
             return
@@ -20,6 +29,9 @@ namespace STS2RitsuLib.Lifecycle.Patches
             ];
         }
 
+        /// <summary>
+        ///     Harmony postfix: when creation succeeds, publishes <see cref="GameOverScreenCreatedEvent" />.
+        /// </summary>
         // ReSharper disable once InconsistentNaming
         public static void Postfix(RunState runState, SerializableRun serializableRun, NGameOverScreen? __result)
         {

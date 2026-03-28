@@ -2,11 +2,12 @@ using System.Reflection;
 using HarmonyLib;
 using MegaCrit.Sts2.Core.Helpers;
 using STS2RitsuLib.Compat;
+using STS2RitsuLib.Interop.Patches;
 
 namespace STS2RitsuLib.Interop
 {
     /// <summary>
-    ///     Extensible pipeline invoked from <see cref="Patches.ModTypeDiscoveryPatch" /> (early localization init),
+    ///     Extensible pipeline invoked from <see cref="ModTypeDiscoveryPatch" /> (early localization init),
     ///     mirroring BaseLib's post-mod-init scan without hard-wiring a single feature.
     /// </summary>
     public static class ModTypeDiscoveryHub

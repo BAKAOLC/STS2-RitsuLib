@@ -12,19 +12,26 @@ namespace STS2RitsuLib.Interop.Patches
     {
         private static readonly Lock RunGate = new();
         private static bool _completed;
+
+        /// <inheritdoc />
         public static string PatchId => "ritsulib_mod_type_discovery";
 
+        /// <inheritdoc />
         public static string Description =>
             "Post-mod-load type discovery (ModInterop and extensible contributors)";
 
+        /// <inheritdoc />
         public static bool IsCritical => false;
 
+        /// <inheritdoc />
         public static ModPatchTarget[] GetTargets()
         {
             return [new(typeof(LocManager), nameof(LocManager.Initialize))];
         }
 
-        // ReSharper disable once InconsistentNaming
+        /// <summary>
+        ///     Runs <see cref="ModTypeDiscoveryHub.RunOnce" /> once before localization initialization proceeds.
+        /// </summary>
         public static void Prefix()
         {
             lock (RunGate)

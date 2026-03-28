@@ -13,19 +13,27 @@ namespace STS2RitsuLib.Scaffolding.Characters.Patches
     /// </summary>
     public class StatsScreenCharacterStatsPatch : IPatchMethod
     {
+        /// <inheritdoc cref="IPatchMethod.PatchId" />
         public static string PatchId => "stats_screen_mod_character_sections";
 
+        /// <inheritdoc cref="IPatchMethod.Description" />
         public static string Description =>
             "Append registered mod characters to NGeneralStatsGrid character history sections";
 
+        /// <inheritdoc cref="IPatchMethod.IsCritical" />
         public static bool IsCritical => false;
 
+        /// <inheritdoc cref="IPatchMethod.GetTargets" />
         public static ModPatchTarget[] GetTargets()
         {
             return [new(typeof(NGeneralStatsGrid), nameof(NGeneralStatsGrid.LoadStats))];
         }
 
         // ReSharper disable InconsistentNaming
+        /// <summary>
+        ///     Invokes private <c>CreateCharacterSection</c> for each entry from
+        ///     <see cref="ModContentRegistry.GetModCharacters" />.
+        /// </summary>
         public static void Postfix(NGeneralStatsGrid __instance)
             // ReSharper restore InconsistentNaming
         {

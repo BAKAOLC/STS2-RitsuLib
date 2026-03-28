@@ -5,15 +5,23 @@ using STS2RitsuLib.Patching.Models;
 
 namespace STS2RitsuLib.Unlocks.Patches
 {
+    /// <summary>
+    ///     Skips vanilla character-unlock epoch grants when the inferred epoch id is unusable at runtime for mod
+    ///     characters.
+    /// </summary>
     public class CharacterUnlockEpochRuntimeCompatibilityPatch : IPatchMethod
     {
+        /// <inheritdoc />
         public static string PatchId => "character_unlock_epoch_runtime_compatibility";
 
+        /// <inheritdoc />
         public static string Description =>
             "Prevent missing vanilla-style character unlock epochs from aborting runs for mod characters";
 
+        /// <inheritdoc />
         public static bool IsCritical => false;
 
+        /// <inheritdoc />
         public static ModPatchTarget[] GetTargets()
         {
             return
@@ -22,6 +30,9 @@ namespace STS2RitsuLib.Unlocks.Patches
             ];
         }
 
+        /// <summary>
+        ///     Returns false to cancel the original method when the expected epoch cannot be used safely.
+        /// </summary>
         public static bool Prefix(Player localPlayer, int act)
         {
             ArgumentNullException.ThrowIfNull(localPlayer);

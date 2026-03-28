@@ -18,19 +18,27 @@ namespace STS2RitsuLib.Scaffolding.Characters.Patches
     /// </summary>
     public class CardLibraryCompendiumPatch : IPatchMethod
     {
+        /// <inheritdoc cref="IPatchMethod.PatchId" />
         public static string PatchId => "card_library_compendium_mod_character_filter";
 
+        /// <inheritdoc cref="IPatchMethod.Description" />
         public static string Description =>
             "Add mod character pool filter buttons to the card library compendium";
 
+        /// <inheritdoc cref="IPatchMethod.IsCritical" />
         public static bool IsCritical => false;
 
+        /// <inheritdoc cref="IPatchMethod.GetTargets" />
         public static ModPatchTarget[] GetTargets()
         {
             return [new(typeof(NCardLibrary), nameof(NCardLibrary._Ready))];
         }
 
         // ReSharper disable InconsistentNaming
+        /// <summary>
+        ///     Clones vanilla pool-filter UI for each mod character and wires pool predicates so compendium filtering
+        ///     works without <c>KeyNotFoundException</c>.
+        /// </summary>
         public static void Postfix(
                 NCardLibrary __instance,
                 Dictionary<NCardPoolFilter, Func<CardModel, bool>> ____poolFilters,

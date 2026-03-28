@@ -9,6 +9,12 @@ namespace STS2RitsuLib.Interop
     /// </summary>
     public interface IModTypeDiscoveryContributor
     {
+        /// <summary>
+        ///     Invoked once per concrete mod entry type so contributors can emit patches or rewrite types.
+        /// </summary>
+        /// <param name="harmony">Harmony instance owned by the discovery pipeline.</param>
+        /// <param name="modAssembliesByManifestId">Loaded mod assemblies keyed by manifest id.</param>
+        /// <param name="modType">The mod’s attributed entry or discovery root type.</param>
         void Contribute(Harmony harmony, IReadOnlyDictionary<string, Assembly> modAssembliesByManifestId, Type modType);
     }
 }

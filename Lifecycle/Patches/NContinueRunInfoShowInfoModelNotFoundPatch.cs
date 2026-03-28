@@ -17,18 +17,26 @@ namespace STS2RitsuLib.Lifecycle.Patches
             AccessTools.MethodDelegate<Action<NContinueRunInfo>>(
                 AccessTools.DeclaredMethod(typeof(NContinueRunInfo), "ShowError"));
 
+        /// <inheritdoc />
         public static string PatchId => "ncontinue_run_info_show_info_model_not_found";
 
+        /// <inheritdoc />
         public static string Description =>
             "When continue-run preview hits ModelNotFoundException, show NContinueRunInfo error state instead of crashing";
 
+        /// <inheritdoc />
         public static bool IsCritical => false;
 
+        /// <inheritdoc />
         public static ModPatchTarget[] GetTargets()
         {
             return [new(typeof(NContinueRunInfo), "ShowInfo", [typeof(SerializableRun)])];
         }
 
+        /// <summary>
+        ///     Harmony finalizer: swallows <see cref="ModelNotFoundException" /> from preview and shows the panel error
+        ///     state.
+        /// </summary>
         // ReSharper disable InconsistentNaming
         public static Exception? Finalizer(Exception? __exception, NContinueRunInfo __instance)
             // ReSharper restore InconsistentNaming

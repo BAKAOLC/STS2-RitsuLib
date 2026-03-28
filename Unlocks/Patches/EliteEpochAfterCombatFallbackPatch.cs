@@ -8,18 +8,23 @@ namespace STS2RitsuLib.Unlocks.Patches
 {
     /// <summary>
     ///     When <c>CheckFifteenElitesDefeatedEpoch</c> is absent, elite logic may live only inside
-    ///     <see cref="ProgressSaveManager.UpdateAfterCombatWon" />. Postfix covers the non-throwing case; Finalizer
-    ///     recovers from vanilla <see cref="ArgumentOutOfRangeException" /> for unknown mod characters.
+    ///     <c>MegaCrit.Sts2.Core.Saves.Managers.ProgressSaveManager.UpdateAfterCombatWon</c>. Postfix covers the
+    ///     non-throwing case; Finalizer recovers from vanilla <c>ArgumentOutOfRangeException</c> for unknown mod
+    ///     characters.
     /// </summary>
     public class EliteEpochAfterCombatFallbackPatch : IPatchMethod
     {
+        /// <inheritdoc />
         public static string PatchId => "elite_epoch_after_combat_fallback";
 
+        /// <inheritdoc />
         public static string Description =>
             "Elite epoch unlock fallback when CheckFifteenElitesDefeatedEpoch is missing (stable vs beta)";
 
+        /// <inheritdoc />
         public static bool IsCritical => false;
 
+        /// <inheritdoc />
         public static ModPatchTarget[] GetTargets()
         {
             return
@@ -30,6 +35,9 @@ namespace STS2RitsuLib.Unlocks.Patches
         }
 
         // ReSharper disable once InconsistentNaming
+        /// <summary>
+        ///     After an elite combat win, applies mod elite epoch handling when no dedicated check method exists.
+        /// </summary>
         public static void Postfix(ProgressSaveManager __instance, Player localPlayer, CombatRoom room)
         {
             if (EliteEpochModHandling.HasDedicatedEliteEpochCheckMethod)
@@ -45,6 +53,9 @@ namespace STS2RitsuLib.Unlocks.Patches
         }
 
         // ReSharper disable InconsistentNaming
+        /// <summary>
+        ///     Swallows expected vanilla argument exceptions after attempting mod elite epoch recovery.
+        /// </summary>
         public static Exception? Finalizer(
                 Exception? __exception,
                 ProgressSaveManager __instance,
@@ -57,7 +68,7 @@ namespace STS2RitsuLib.Unlocks.Patches
 
             if (EliteEpochModHandling.HasDedicatedEliteEpochCheckMethod || room.RoomType != RoomType.Elite ||
                 !ModContentRegistry.TryGetOwnerModId(localPlayer.Character.GetType(), out _) ||
-                __exception is not ArgumentOutOfRangeException aex || aex.ParamName != "character")
+                __exception is not ArgumentOutOfRangeException { ParamName: "character" })
                 return __exception;
 
             EliteEpochModHandling.TryHandleModEliteEpoch(__instance, localPlayer);

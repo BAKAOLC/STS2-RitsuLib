@@ -7,12 +7,26 @@ using STS2RitsuLib.Diagnostics;
 
 namespace STS2RitsuLib.Content
 {
+    /// <summary>
+    ///     Whether <see cref="ModContentRegistry" /> still accepts new registrations from mods.
+    /// </summary>
     public enum ContentRegistrationState
     {
+        /// <summary>
+        ///     Registrations are allowed until the framework freezes them.
+        /// </summary>
         Open = 0,
+
+        /// <summary>
+        ///     Further registration throws; game content lists are considered sealed.
+        /// </summary>
         Frozen = 1,
     }
 
+    /// <summary>
+    ///     Per-mod content registration surface: pool models, standalone models, act-scoped content, and stable public
+    ///     entry overrides used by patched <see cref="ModelDb" /> identity.
+    /// </summary>
     public sealed partial class ModContentRegistry
     {
         private static readonly Lock SyncRoot = new();
@@ -45,13 +59,26 @@ namespace STS2RitsuLib.Content
             _logger = RitsuLibFramework.CreateLogger(modId);
         }
 
+        /// <summary>
+        ///     Mod identifier this registry instance was created for (<see cref="For" />).
+        /// </summary>
         public string ModId { get; }
+
+        /// <summary>
+        ///     True after <c>FreezeRegistrations</c> has run globally.
+        /// </summary>
         public static bool IsFrozen { get; private set; }
 
+        /// <summary>
+        ///     Convenience view of <see cref="IsFrozen" /> as <see cref="ContentRegistrationState" />.
+        /// </summary>
         public static ContentRegistrationState State => IsFrozen
             ? ContentRegistrationState.Frozen
             : ContentRegistrationState.Open;
 
+        /// <summary>
+        ///     Resolves which mod registered <paramref name="modelType" />, if any.
+        /// </summary>
         public static bool TryGetOwnerModId(Type modelType, out string modId)
         {
             ArgumentNullException.ThrowIfNull(modelType);
@@ -62,6 +89,9 @@ namespace STS2RitsuLib.Content
             }
         }
 
+        /// <summary>
+        ///     Returns the stable public entry string for a RitsuLib-registered model type (override or generated).
+        /// </summary>
         public static bool TryGetFixedPublicEntry(Type modelType, out string entry)
         {
             ArgumentNullException.ThrowIfNull(modelType);
@@ -85,6 +115,10 @@ namespace STS2RitsuLib.Content
             return true;
         }
 
+        /// <summary>
+        ///     Builds the default normalized entry <c>MOD_CATEGORY_TYPENAME</c> for a type owned by
+        ///     <paramref name="modId" />.
+        /// </summary>
         public static string GetFixedPublicEntry(string modId, Type modelType)
         {
             ArgumentException.ThrowIfNullOrWhiteSpace(modId);
@@ -96,6 +130,9 @@ namespace STS2RitsuLib.Content
             return $"{modStem}_{categoryStem}_{typeStem}";
         }
 
+        /// <summary>
+        ///     Returns the singleton registry for <paramref name="modId" /> (created on first use).
+        /// </summary>
         public static ModContentRegistry For(string modId)
         {
             ArgumentException.ThrowIfNullOrWhiteSpace(modId);
@@ -111,6 +148,10 @@ namespace STS2RitsuLib.Content
             }
         }
 
+        /// <summary>
+        ///     Registers <typeparamref name="TCard" /> into <typeparamref name="TPool" /> with default public entry
+        ///     naming.
+        /// </summary>
         public void RegisterCard<TPool, TCard>()
             where TPool : CardPoolModel
             where TCard : CardModel
@@ -118,6 +159,10 @@ namespace STS2RitsuLib.Content
             RegisterCard<TPool, TCard>(default);
         }
 
+        /// <summary>
+        ///     Registers <typeparamref name="TCard" /> into <typeparamref name="TPool" /> using
+        ///     <paramref name="publicEntry" /> rules.
+        /// </summary>
         public void RegisterCard<TPool, TCard>(ModelPublicEntryOptions publicEntry)
             where TPool : CardPoolModel
             where TCard : CardModel
@@ -125,6 +170,10 @@ namespace STS2RitsuLib.Content
             RegisterPoolModel(typeof(TPool), typeof(TCard), "card", publicEntry);
         }
 
+        /// <summary>
+        ///     Registers <typeparamref name="TRelic" /> into <typeparamref name="TPool" /> with default public entry
+        ///     naming.
+        /// </summary>
         public void RegisterRelic<TPool, TRelic>()
             where TPool : RelicPoolModel
             where TRelic : RelicModel
@@ -132,6 +181,10 @@ namespace STS2RitsuLib.Content
             RegisterRelic<TPool, TRelic>(default);
         }
 
+        /// <summary>
+        ///     Registers <typeparamref name="TRelic" /> into <typeparamref name="TPool" /> using
+        ///     <paramref name="publicEntry" /> rules.
+        /// </summary>
         public void RegisterRelic<TPool, TRelic>(ModelPublicEntryOptions publicEntry)
             where TPool : RelicPoolModel
             where TRelic : RelicModel
@@ -139,6 +192,10 @@ namespace STS2RitsuLib.Content
             RegisterPoolModel(typeof(TPool), typeof(TRelic), "relic", publicEntry);
         }
 
+        /// <summary>
+        ///     Registers <typeparamref name="TPotion" /> into <typeparamref name="TPool" /> with default public entry
+        ///     naming.
+        /// </summary>
         public void RegisterPotion<TPool, TPotion>()
             where TPool : PotionPoolModel
             where TPotion : PotionModel
@@ -146,6 +203,10 @@ namespace STS2RitsuLib.Content
             RegisterPotion<TPool, TPotion>(default);
         }
 
+        /// <summary>
+        ///     Registers <typeparamref name="TPotion" /> into <typeparamref name="TPool" /> using
+        ///     <paramref name="publicEntry" /> rules.
+        /// </summary>
         public void RegisterPotion<TPool, TPotion>(ModelPublicEntryOptions publicEntry)
             where TPool : PotionPoolModel
             where TPotion : PotionModel
@@ -153,42 +214,66 @@ namespace STS2RitsuLib.Content
             RegisterPoolModel(typeof(TPool), typeof(TPotion), "potion", publicEntry);
         }
 
+        /// <summary>
+        ///     Registers a mod character model for inclusion in <see cref="ModelDb.AllCharacters" />.
+        /// </summary>
         public void RegisterCharacter<TCharacter>() where TCharacter : CharacterModel
         {
             RegisterStandaloneModel(RegisteredCharacters, typeof(TCharacter), typeof(CharacterModel), "character");
         }
 
+        /// <summary>
+        ///     Registers a mod act model for inclusion in <see cref="ModelDb.Acts" />.
+        /// </summary>
         public void RegisterAct<TAct>() where TAct : ActModel
         {
             RegisterStandaloneModel(RegisteredActs, typeof(TAct), typeof(ActModel), "act");
         }
 
+        /// <summary>
+        ///     Registers a mod monster model type for RitsuLib tracking and pool wiring.
+        /// </summary>
         public void RegisterMonster<TMonster>() where TMonster : MonsterModel
         {
             RegisterStandaloneModel(RegisteredMonsters, typeof(TMonster), typeof(MonsterModel), "monster");
         }
 
+        /// <summary>
+        ///     Registers a mod power model for inclusion in <see cref="ModelDb.AllPowers" />.
+        /// </summary>
         public void RegisterPower<TPower>() where TPower : PowerModel
         {
             RegisterStandaloneModel(RegisteredPowers, typeof(TPower), typeof(PowerModel), "power");
         }
 
+        /// <summary>
+        ///     Registers a mod orb model for inclusion in <see cref="ModelDb.Orbs" />.
+        /// </summary>
         public void RegisterOrb<TOrb>() where TOrb : OrbModel
         {
             RegisterStandaloneModel(RegisteredOrbs, typeof(TOrb), typeof(OrbModel), "orb");
         }
 
+        /// <summary>
+        ///     Registers a shared card pool model for inclusion in <see cref="ModelDb.AllSharedCardPools" />.
+        /// </summary>
         public void RegisterSharedCardPool<TPool>() where TPool : CardPoolModel
         {
             RegisterStandaloneModel(RegisteredSharedCardPools, typeof(TPool), typeof(CardPoolModel),
                 "shared card pool");
         }
 
+        /// <summary>
+        ///     Registers a shared event model for inclusion in shared event enumerations.
+        /// </summary>
         public void RegisterSharedEvent<TEvent>() where TEvent : EventModel
         {
             RegisterStandaloneModel(RegisteredSharedEvents, typeof(TEvent), typeof(EventModel), "shared event");
         }
 
+        /// <summary>
+        ///     Registers an encounter model scoped to <typeparamref name="TAct" />.
+        /// </summary>
         public void RegisterActEncounter<TAct, TEncounter>()
             where TAct : ActModel
             where TEncounter : EncounterModel
@@ -197,6 +282,9 @@ namespace STS2RitsuLib.Content
                 typeof(EncounterModel), "act encounter");
         }
 
+        /// <summary>
+        ///     Registers an event model scoped to <typeparamref name="TAct" />.
+        /// </summary>
         public void RegisterActEvent<TAct, TEvent>()
             where TAct : ActModel
             where TEvent : EventModel
@@ -205,12 +293,18 @@ namespace STS2RitsuLib.Content
                 "act event");
         }
 
+        /// <summary>
+        ///     Registers a shared ancient event model for inclusion in ancient enumerations.
+        /// </summary>
         public void RegisterSharedAncient<TAncient>() where TAncient : AncientEventModel
         {
             RegisterStandaloneModel(RegisteredSharedAncients, typeof(TAncient), typeof(AncientEventModel),
                 "shared ancient");
         }
 
+        /// <summary>
+        ///     Registers an ancient event model scoped to <typeparamref name="TAct" />.
+        /// </summary>
         public void RegisterActAncient<TAct, TAncient>()
             where TAct : ActModel
             where TAncient : AncientEventModel
@@ -502,6 +596,7 @@ namespace STS2RitsuLib.Content
             if (options.Kind == ModelPublicEntryKind.FromTypeName)
                 return;
 
+            // ReSharper disable once SwitchExpressionHandlesSomeKnownEnumValuesWithExceptionInDefault
             var resolved = options.Kind switch
             {
                 ModelPublicEntryKind.Stem =>

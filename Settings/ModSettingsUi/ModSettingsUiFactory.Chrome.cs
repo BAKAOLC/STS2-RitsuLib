@@ -36,14 +36,6 @@ namespace STS2RitsuLib.Settings
             Func<string> descriptionBodyProvider, Control valueControl, Control? actionControl = null,
             IModSettingsBinding? scopeBinding = null)
         {
-            string ResolveLabelText()
-            {
-                var s = labelProvider();
-                return string.IsNullOrWhiteSpace(s)
-                    ? ModSettingsLocalization.Get("entry.label.empty", "—")
-                    : s;
-            }
-
             var descriptionText = descriptionBodyProvider();
             var line = new MarginContainer();
 
@@ -106,6 +98,14 @@ namespace STS2RitsuLib.Settings
                 AttachContextMenuTargets(line, valueControl, actionsButton);
 
             return line;
+
+            string ResolveLabelText()
+            {
+                var s = labelProvider();
+                return string.IsNullOrWhiteSpace(s)
+                    ? ModSettingsLocalization.Get("entry.label.empty", "—")
+                    : s;
+            }
         }
 
         internal static void AttachContextMenuTargets(Control line, Control valueControl,

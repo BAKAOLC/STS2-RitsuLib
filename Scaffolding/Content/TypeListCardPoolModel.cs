@@ -4,6 +4,10 @@ using STS2RitsuLib.Scaffolding.Content.Patches;
 
 namespace STS2RitsuLib.Scaffolding.Content
 {
+    /// <summary>
+    ///     Card pool base that can enumerate legacy CLR card types, expose optional pool frame material overrides,
+    ///     and map energy icon paths for UI patches.
+    /// </summary>
     public abstract class TypeListCardPoolModel : CardPoolModel, IModBigEnergyIconPool, IModTextEnergyIconPool,
         IModCardPoolFrameMaterial
     {
@@ -38,6 +42,7 @@ namespace STS2RitsuLib.Scaffolding.Content
         /// <inheritdoc cref="IModTextEnergyIconPool.TextEnergyIconPath" />
         public virtual string? TextEnergyIconPath => null;
 
+        /// <inheritdoc />
         protected sealed override CardModel[] GenerateAllCards()
         {
 #pragma warning disable CS0618 // Intentional: base invokes legacy CardTypes hook; suppress warning at call site only

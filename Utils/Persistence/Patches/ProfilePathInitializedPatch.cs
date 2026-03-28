@@ -9,10 +9,16 @@ namespace STS2RitsuLib.Utils.Persistence.Patches
     /// </summary>
     public class ProfilePathInitializedPatch : IPatchMethod
     {
+        /// <inheritdoc />
         public static string PatchId => "profile_path_initialized";
+
+        /// <inheritdoc />
         public static string Description => "Notify safe data-ready lifecycle after profile path initialization";
+
+        /// <inheritdoc />
         public static bool IsCritical => true;
 
+        /// <inheritdoc />
         public static ModPatchTarget[] GetTargets()
         {
             return
@@ -22,6 +28,9 @@ namespace STS2RitsuLib.Utils.Persistence.Patches
             ];
         }
 
+        /// <summary>
+        ///     Publishes data-ready lifecycle notifications after profile path initialization completes.
+        /// </summary>
         public static void Postfix()
         {
             try

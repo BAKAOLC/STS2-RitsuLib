@@ -6,6 +6,9 @@ namespace STS2RitsuLib.Interop
     /// </summary>
     public abstract class InteropClassWrapper
     {
+        /// <summary>
+        ///     Runtime instance in the remote mod that receives forwarded calls.
+        /// </summary>
         public object Value = null!;
     }
 }

@@ -8,7 +8,8 @@
         <ImplicitUsings>true</ImplicitUsings>
         <Nullable>enable</Nullable>
         <EnableDynamicLoading>true</EnableDynamicLoading>
-        <NoWarn>CS0436</NoWarn>
+        <GenerateDocumentationFile>true</GenerateDocumentationFile>
+        <NoWarn>$(NoWarn);CS0436</NoWarn>
         <IsPackable>true</IsPackable>
         <PackageId>STS2.RitsuLib</PackageId>
         <Version>0.0.20</Version>
