@@ -1,5 +1,6 @@
 using Godot;
 using MegaCrit.Sts2.addons.mega_text;
+using MegaCrit.Sts2.Core.Nodes.Combat;
 using MegaCrit.Sts2.Core.Nodes.Screens.Settings;
 
 namespace STS2RitsuLib.Settings
@@ -48,11 +49,9 @@ namespace STS2RitsuLib.Settings
                 ModSettingsLocalization.Get("button.open", "Open"), openAction)
             {
                 Name = "RitsuLibModSettingsButton",
-                FocusNeighborLeft = new("."),
-                FocusNeighborRight = new("."),
             };
             button.CustomMinimumSize = new(320f, 64f);
-            button.SizeFlagsHorizontal = Control.SizeFlags.ShrinkEnd;
+            button.SizeFlagsHorizontal = Control.SizeFlags.ShrinkCenter;
             button.SizeFlagsVertical = Control.SizeFlags.ShrinkBegin;
             row.AddChild(button);
 
@@ -110,8 +109,8 @@ namespace STS2RitsuLib.Settings
             _action = action;
 
             CustomMinimumSize = new(320f, 64f);
-            SizeFlagsHorizontal = SizeFlags.ShrinkEnd;
-            SizeFlagsVertical = SizeFlags.Fill;
+            SizeFlagsHorizontal = SizeFlags.ShrinkCenter;
+            SizeFlagsVertical = SizeFlags.ShrinkBegin;
             FocusMode = FocusModeEnum.All;
 
             var image = new TextureRect
@@ -156,9 +155,11 @@ namespace STS2RitsuLib.Settings
             label.MaxFontSize = 28;
             AddChild(label);
 
-            var reticle = ModSettingsUiResources.SelectionReticleScene.Instantiate<Control>();
+            // selection_reticle.tscn root ships with large default offsets for other UIs; must match
+            // settings_screen FeedbackButton / NConfigButton: full rect with zero margins.
+            var reticle = ModSettingsUiResources.SelectionReticleScene.Instantiate<NSelectionReticle>();
             reticle.Name = "SelectionReticle";
-            reticle.SetAnchorsPreset(LayoutPreset.FullRect);
+            reticle.SetAnchorsAndOffsetsPreset(LayoutPreset.FullRect);
             AddChild(reticle);
         }
 
@@ -172,6 +173,19 @@ namespace STS2RitsuLib.Settings
             _buttonLabel = GetNode<MegaLabel>("Label");
             if (_text != null)
                 _buttonLabel.SetTextAutoSize(_text);
+
+            Callable.From(SyncLayoutDependentPivots).CallDeferred();
+        }
+
+        private void SyncLayoutDependentPivots()
+        {
+            if (!IsInsideTree())
+                return;
+
+            PivotOffset = Size * 0.5f;
+            if (GetNodeOrNull<TextureRect>("Image") is { } image)
+                image.PivotOffset = image.Size * 0.5f;
+            _buttonLabel?.PivotOffset = _buttonLabel.Size * 0.5f;
         }
 
         protected override void OnRelease()

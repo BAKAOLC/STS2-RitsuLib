@@ -2,6 +2,7 @@ using System.Runtime.CompilerServices;
 using Godot;
 using MegaCrit.Sts2.addons.mega_text;
 using MegaCrit.Sts2.Core.Helpers;
+using MegaCrit.Sts2.Core.Nodes.CommonUi;
 using MegaCrit.Sts2.Core.Nodes.GodotExtensions;
 using MegaCrit.Sts2.Core.Nodes.Screens.MainMenu;
 using MegaCrit.Sts2.Core.Nodes.Screens.Settings;
@@ -52,6 +53,7 @@ namespace STS2RitsuLib.Settings.Patches
             {
                 Visible = false,
                 MouseFilter = Control.MouseFilterEnum.Ignore,
+                FocusMode = Control.FocusModeEnum.None,
             };
 
             stack.AddChildSafely(submenu);
@@ -100,6 +102,8 @@ namespace STS2RitsuLib.Settings.Patches
                 RefreshState(line);
                 var generalPanel = __instance.GetNode<NSettingsPanel>("%GeneralSettings");
                 ScheduleRefreshGeneralSettingsPanelSize(generalPanel);
+                if (generalPanel.Content is { } generalVBox)
+                    GeneralSettingsModEntryFocusWire.ScheduleTryWire(generalVBox);
             }
             catch (Exception ex)
             {
@@ -138,11 +142,7 @@ namespace STS2RitsuLib.Settings.Patches
             }
         }
 
-        /// <summary>
-        ///     Vanilla <see cref="NSettingsPanel" /> only recomputes height on ready and viewport resize; injected rows
-        ///     (this mod and others) never trigger <c>RefreshSize</c>. Hooks <c>ChildEnteredTree</c> on the content
-        ///     <see cref="VBoxContainer" /> so we recalculate after layout and whenever direct children change.
-        /// </summary>
+
         private static void EnsureGeneralSettingsContentTracksChildAdds(VBoxContainer content)
         {
             if (content.HasMeta(GeneralSettingsResizeHookMeta))
@@ -155,11 +155,17 @@ namespace STS2RitsuLib.Settings.Patches
         private static void OnGeneralSettingsContentChildEntered(Node child)
         {
             var content = child.GetParentOrNull<VBoxContainer>();
-            var panel = content?.GetParentOrNull<NSettingsPanel>();
+            // ReSharper disable once UseNullPropagation
+            if (content is null)
+                return;
+
+            var panel = content.GetParentOrNull<NSettingsPanel>();
             if (panel is null)
                 return;
 
             ScheduleRefreshGeneralSettingsPanelSize(panel);
+            if (content.GetNodeOrNull("RitsuLibModSettings") != null)
+                GeneralSettingsModEntryFocusWire.ScheduleTryWire(content);
         }
 
         private static void ScheduleRefreshGeneralSettingsPanelSize(NSettingsPanel panel)
@@ -230,6 +236,66 @@ namespace STS2RitsuLib.Settings.Patches
             }
 
             return y;
+        }
+    }
+
+    /// <summary>
+    ///     Rebuilds the General tab vertical focus chain the same way <see cref="NSettingsPanel" /> does in
+    ///     <c>_Ready</c>, after our row is injected (vanilla never sees the new controls).
+    /// </summary>
+    internal static class GeneralSettingsModEntryFocusWire
+    {
+        internal static void ScheduleTryWire(VBoxContainer content)
+        {
+            Callable.From(() =>
+            {
+                TryRebuildEntireGeneralFocusChain(content);
+                Callable.From(() => TryRebuildEntireGeneralFocusChain(content)).CallDeferred();
+            }).CallDeferred();
+        }
+
+        internal static void TryRebuildEntireGeneralFocusChain(VBoxContainer content)
+        {
+            if (content.GetNodeOrNull("RitsuLibModSettings") == null)
+                return;
+
+            var list = new List<Control>();
+            GetSettingsOptionsRecursive(content, list);
+            if (list.Count == 0)
+                return;
+
+            for (var i = 0; i < list.Count; i++)
+            {
+                var current = list[i];
+                current.FocusNeighborLeft = current.GetPath();
+                current.FocusNeighborRight = current.GetPath();
+                current.FocusNeighborTop = i > 0 ? list[i - 1].GetPath() : current.GetPath();
+                current.FocusNeighborBottom = i < list.Count - 1 ? list[i + 1].GetPath() : current.GetPath();
+            }
+        }
+
+        private static void GetSettingsOptionsRecursive(Control parent, List<Control> ancestors)
+        {
+            foreach (var child in parent.GetChildren())
+            {
+                if (child is not Control item)
+                    continue;
+
+                if (!IsVanillaGeneralSettingsFocusTarget(item))
+                    GetSettingsOptionsRecursive(item, ancestors);
+                else if (item.GetParent<Control>() is { } itemParent &&
+                         itemParent.IsVisible() &&
+                         item.FocusMode == Control.FocusModeEnum.All)
+                    ancestors.Add(item);
+            }
+        }
+
+        private static bool IsVanillaGeneralSettingsFocusTarget(Control c)
+        {
+            if (c is NButton nButton)
+                return nButton.IsEnabled;
+
+            return c is NPaginator or NTickbox or NButton or NDropdownPositioner or NSettingsSlider;
         }
     }
 }

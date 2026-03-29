@@ -1,9 +1,14 @@
 using Godot;
 using MegaCrit.Sts2.addons.mega_text;
 using MegaCrit.Sts2.Core.Assets;
+using MegaCrit.Sts2.Core.ControllerInput;
 using MegaCrit.Sts2.Core.Helpers;
 using MegaCrit.Sts2.Core.Localization;
+using MegaCrit.Sts2.Core.Nodes.CommonUi;
+using MegaCrit.Sts2.Core.Nodes.GodotExtensions;
 using MegaCrit.Sts2.Core.Nodes.Screens.MainMenu;
+using MegaCrit.Sts2.Core.Nodes.Screens.ScreenContext;
+using Timer = Godot.Timer;
 
 namespace STS2RitsuLib.Settings
 {
@@ -16,6 +21,11 @@ namespace STS2RitsuLib.Settings
         private const float SidebarWidth = 324f;
         private const double AutosaveDelaySeconds = 0.35;
         private const int ScrollContentRightGutter = 12;
+
+        private static readonly StringName PaneSidebarHotkey = MegaInput.viewDeckAndTabLeft;
+        private static readonly StringName PaneContentHotkey = MegaInput.viewExhaustPileAndTabRight;
+
+        private readonly List<Control> _contentFocusChain = [];
 
         private readonly HashSet<IModSettingsBinding> _dirtyBindings = [];
         private readonly HashSet<string> _expandedModIds = new(StringComparer.OrdinalIgnoreCase);
@@ -31,22 +41,41 @@ namespace STS2RitsuLib.Settings
         private readonly Dictionary<string, ModSettingsSidebarButton> _sectionButtons =
             new(StringComparer.OrdinalIgnoreCase);
 
+        private readonly List<Control> _sidebarFocusChain = [];
+
         private VBoxContainer _contentList = null!;
+
+        private bool _contentOnlyRebuildNeedsContentFocus;
+        private Control _contentPanelRoot = null!;
+        private bool _focusNavigationRefreshScheduled;
         private bool _focusSelectedPageButtonOnNextRefresh;
+        private bool _guiFocusSignalConnected;
+        private Action? _hotkeyPaneContent;
+        private Action? _hotkeyPaneSidebar;
         private Control? _initialFocusedControl;
+        private TextureRect? _leftPaneHotkeyIcon;
         private bool _localeSubscribed;
         private VBoxContainer _modButtonList = null!;
+        private Callable _modSettingsGuiFocusCallable;
         private HBoxContainer _pageTabRow = null!;
+        private HBoxContainer? _paneHotkeyHintRow;
+        private bool _paneHotkeySignalsConnected;
+        private bool _paneHotkeysPushed;
         private AcceptDialog? _pasteErrorDialog;
-        private bool _refreshQueued;
+        private bool _pendingRefreshFlush;
+        private Timer? _refreshDebounceTimer;
+        private TextureRect? _rightPaneHotkeyIcon;
         private double _saveTimer = -1;
         private ScrollContainer _scrollContainer = null!;
         private string? _selectedModId;
         private string? _selectedPageId;
         private string? _selectedSectionId;
+        private Control _sidebarPanelRoot = null!;
+        private ScrollContainer _sidebarScrollContainer = null!;
         private MegaRichTextLabel _subtitleLabel;
         private bool _suppressScrollSync;
         private MegaRichTextLabel _titleLabel;
+        private Callable _updatePaneHotkeyIconsCallable;
 
         /// <summary>
         ///     Builds layout (header, sidebar, scrollable content) and wires initial structure.
@@ -57,6 +86,7 @@ namespace STS2RitsuLib.Settings
             AnchorBottom = 1f;
             GrowHorizontal = GrowDirection.Both;
             GrowVertical = GrowDirection.Both;
+            FocusMode = FocusModeEnum.None;
 
             var frame = new MarginContainer
             {
@@ -104,6 +134,8 @@ namespace STS2RitsuLib.Settings
             _subtitleLabel.SizeFlagsHorizontal = SizeFlags.ExpandFill;
             header.AddChild(_subtitleLabel);
 
+            root.AddChild(CreatePaneHotkeyHintRow());
+
             var body = new HBoxContainer
             {
                 SizeFlagsHorizontal = SizeFlags.ExpandFill,
@@ -129,15 +161,41 @@ namespace STS2RitsuLib.Settings
             AddChild(backButton);
 
             ConnectSignals();
+            _updatePaneHotkeyIconsCallable = Callable.From(UpdatePaneHotkeyHintIcons);
+            TryConnectPaneHotkeyStyleSignals();
             _scrollContainer.GetVScrollBar().ValueChanged += OnContentScrollChanged;
             SubscribeLocaleChanges();
             Rebuild();
             ProcessMode = ProcessModeEnum.Disabled;
+            FocusMode = FocusModeEnum.None;
+        }
+
+        /// <inheritdoc />
+        protected override void ConnectSignals()
+        {
+            base.ConnectSignals();
+            var vp = GetViewport();
+            if (vp == null)
+                return;
+
+            _modSettingsGuiFocusCallable = Callable.From<Control>(OnModSettingsGuiFocusChanged);
+            vp.Connect(Viewport.SignalName.GuiFocusChanged, _modSettingsGuiFocusCallable);
+            _guiFocusSignalConnected = true;
         }
 
         /// <inheritdoc />
         public override void _ExitTree()
         {
+            var vp = GetViewport();
+            if (vp != null && _guiFocusSignalConnected &&
+                vp.IsConnected(Viewport.SignalName.GuiFocusChanged, _modSettingsGuiFocusCallable))
+            {
+                vp.Disconnect(Viewport.SignalName.GuiFocusChanged, _modSettingsGuiFocusCallable);
+                _guiFocusSignalConnected = false;
+            }
+
+            TryDisconnectPaneHotkeyStyleSignals();
+            PopPaneHotkeys();
             base._ExitTree();
             FlushDirtyBindings();
             UnsubscribeLocaleChanges();
@@ -147,6 +205,8 @@ namespace STS2RitsuLib.Settings
         public override void OnSubmenuOpened()
         {
             base.OnSubmenuOpened();
+            FocusMode = FocusModeEnum.None;
+            FocusBehaviorRecursive = FocusBehaviorRecursiveEnum.Enabled;
             ProcessMode = ProcessModeEnum.Inherit;
             Rebuild();
         }
@@ -154,16 +214,30 @@ namespace STS2RitsuLib.Settings
         /// <inheritdoc />
         public override void OnSubmenuClosed()
         {
+            PopPaneHotkeys();
             FlushDirtyBindings();
             ProcessMode = ProcessModeEnum.Disabled;
+            Callable.From(this.UpdateControllerNavEnabled).CallDeferred();
             base.OnSubmenuClosed();
+        }
+
+        /// <inheritdoc />
+        protected override void OnSubmenuShown()
+        {
+            base.OnSubmenuShown();
+            SetProcessInput(true);
+            PushPaneHotkeys();
+            UpdatePaneHotkeyHintIcons();
         }
 
         /// <inheritdoc />
         protected override void OnSubmenuHidden()
         {
+            PopPaneHotkeys();
+            FlushPendingRefreshActionsImmediate();
             FlushDirtyBindings();
             ProcessMode = ProcessModeEnum.Disabled;
+            Callable.From(this.UpdateControllerNavEnabled).CallDeferred();
             base.OnSubmenuHidden();
         }
 
@@ -187,11 +261,10 @@ namespace STS2RitsuLib.Settings
 
         internal void RequestRefresh()
         {
-            if (_refreshQueued)
-                return;
-
-            _refreshQueued = true;
-            Callable.From(FlushRefreshActions).CallDeferred();
+            _pendingRefreshFlush = true;
+            EnsureRefreshDebounceTimer();
+            _refreshDebounceTimer!.Stop();
+            _refreshDebounceTimer.Start();
         }
 
         internal void RegisterRefreshAction(Action action)
@@ -235,11 +308,67 @@ namespace STS2RitsuLib.Settings
             AddChild(_pasteErrorDialog);
         }
 
-        private void FlushRefreshActions()
+        private void EnsureRefreshDebounceTimer()
         {
-            _refreshQueued = false;
+            if (_refreshDebounceTimer != null)
+                return;
+
+            _refreshDebounceTimer = new()
+            {
+                Name = "ModSettingsRefreshDebounce",
+                OneShot = true,
+                WaitTime = 0.07,
+                ProcessCallback = Timer.TimerProcessCallback.Idle,
+            };
+            AddChild(_refreshDebounceTimer);
+            _refreshDebounceTimer.Timeout += OnRefreshDebounceTimeout;
+        }
+
+        private void OnRefreshDebounceTimeout()
+        {
+            if (!_pendingRefreshFlush)
+                return;
+
+            _pendingRefreshFlush = false;
             foreach (var action in _refreshActions.ToArray())
                 action();
+        }
+
+        private void CancelDeferredRefreshFlush()
+        {
+            _pendingRefreshFlush = false;
+            _refreshDebounceTimer?.Stop();
+        }
+
+        private void FlushPendingRefreshActionsImmediate()
+        {
+            _refreshDebounceTimer?.Stop();
+            if (!_pendingRefreshFlush)
+                return;
+
+            _pendingRefreshFlush = false;
+            foreach (var action in _refreshActions.ToArray())
+                action();
+        }
+
+        private void OnModSettingsGuiFocusChanged(Control node)
+        {
+            if (!Visible || !IsInstanceValid(this) || !IsInstanceValid(node))
+                return;
+
+            if (!ActiveScreenContext.Instance.IsCurrent(this))
+                return;
+
+            if (NControllerManager.Instance?.IsUsingController != true)
+                return;
+
+            if (_suppressScrollSync)
+                return;
+
+            if (_sidebarScrollContainer.IsAncestorOf(node))
+                _sidebarScrollContainer.EnsureControlVisible(node);
+            else if (_scrollContainer.IsAncestorOf(node))
+                _scrollContainer.EnsureControlVisible(node);
         }
 
         /// <summary>
@@ -265,6 +394,7 @@ namespace STS2RitsuLib.Settings
 
             _selectedPageId = pageId;
             _selectedSectionId = null;
+            ModSettingsBaseLibReflectionMirror.TryRegisterMirroredPages();
             Rebuild();
         }
 
@@ -276,19 +406,302 @@ namespace STS2RitsuLib.Settings
             if (string.IsNullOrWhiteSpace(_selectedModId))
                 return;
 
+            if (string.Equals(_selectedPageId, pageId, StringComparison.OrdinalIgnoreCase) &&
+                string.Equals(_selectedSectionId, sectionId, StringComparison.OrdinalIgnoreCase))
+            {
+                Callable.From(ScrollToSelectedAnchor).CallDeferred();
+                RefreshFocusNavigation();
+                Callable.From(() =>
+                {
+                    if (_sectionButtons.TryGetValue(sectionId, out var btn) && btn.IsVisibleInTree())
+                        btn.GrabFocus();
+                }).CallDeferred();
+                return;
+            }
+
+            var pageChanged = !string.Equals(_selectedPageId, pageId, StringComparison.OrdinalIgnoreCase);
             _selectedPageId = pageId;
             _selectedSectionId = sectionId;
-            Rebuild();
+            ModSettingsBaseLibReflectionMirror.TryRegisterMirroredPages();
+            if (pageChanged)
+                Rebuild();
+            else
+                RebuildContent();
+        }
+
+        private Control CreatePaneHotkeyHintRow()
+        {
+            var row = new HBoxContainer
+            {
+                Name = "PaneHotkeyHints",
+                SizeFlagsHorizontal = SizeFlags.ExpandFill,
+                MouseFilter = MouseFilterEnum.Ignore,
+                Visible = false,
+            };
+            _paneHotkeyHintRow = row;
+
+            _leftPaneHotkeyIcon = new()
+            {
+                CustomMinimumSize = new(44f, 32f),
+                MouseFilter = MouseFilterEnum.Ignore,
+                ExpandMode = TextureRect.ExpandModeEnum.IgnoreSize,
+                StretchMode = TextureRect.StretchModeEnum.KeepAspectCentered,
+            };
+            row.AddChild(_leftPaneHotkeyIcon);
+
+            row.AddChild(new Control
+            {
+                SizeFlagsHorizontal = SizeFlags.ExpandFill,
+                MouseFilter = MouseFilterEnum.Ignore,
+            });
+
+            _rightPaneHotkeyIcon = new()
+            {
+                CustomMinimumSize = new(44f, 32f),
+                MouseFilter = MouseFilterEnum.Ignore,
+                ExpandMode = TextureRect.ExpandModeEnum.IgnoreSize,
+                StretchMode = TextureRect.StretchModeEnum.KeepAspectCentered,
+            };
+            row.AddChild(_rightPaneHotkeyIcon);
+
+            return row;
+        }
+
+        private void TryConnectPaneHotkeyStyleSignals()
+        {
+            if (_paneHotkeySignalsConnected)
+                return;
+
+            if (NControllerManager.Instance != null)
+            {
+                NControllerManager.Instance.Connect(NControllerManager.SignalName.MouseDetected,
+                    _updatePaneHotkeyIconsCallable);
+                NControllerManager.Instance.Connect(NControllerManager.SignalName.ControllerDetected,
+                    _updatePaneHotkeyIconsCallable);
+            }
+
+            if (NInputManager.Instance != null)
+                NInputManager.Instance.Connect(NInputManager.SignalName.InputRebound, _updatePaneHotkeyIconsCallable);
+
+            _paneHotkeySignalsConnected = true;
+        }
+
+        private void TryDisconnectPaneHotkeyStyleSignals()
+        {
+            if (!_paneHotkeySignalsConnected)
+                return;
+
+            if (NControllerManager.Instance != null)
+            {
+                NControllerManager.Instance.Disconnect(NControllerManager.SignalName.MouseDetected,
+                    _updatePaneHotkeyIconsCallable);
+                NControllerManager.Instance.Disconnect(NControllerManager.SignalName.ControllerDetected,
+                    _updatePaneHotkeyIconsCallable);
+            }
+
+            if (NInputManager.Instance != null)
+                NInputManager.Instance.Disconnect(NInputManager.SignalName.InputRebound,
+                    _updatePaneHotkeyIconsCallable);
+
+            _paneHotkeySignalsConnected = false;
+        }
+
+        private void UpdatePaneHotkeyHintIcons()
+        {
+            if (_paneHotkeyHintRow == null)
+                return;
+
+            var usingController = NControllerManager.Instance?.IsUsingController ?? false;
+            _paneHotkeyHintRow.Visible = usingController && Visible;
+            if (!usingController)
+                return;
+
+            if (NInputManager.Instance == null)
+                return;
+
+            _leftPaneHotkeyIcon?.Texture = NInputManager.Instance.GetHotkeyIcon(PaneSidebarHotkey);
+            _rightPaneHotkeyIcon?.Texture = NInputManager.Instance.GetHotkeyIcon(PaneContentHotkey);
+        }
+
+        private void PushPaneHotkeys()
+        {
+            if (_paneHotkeysPushed || NHotkeyManager.Instance == null)
+                return;
+
+            _hotkeyPaneSidebar = OnHotkeyPressedFocusSidebar;
+            _hotkeyPaneContent = OnHotkeyPressedFocusContent;
+            NHotkeyManager.Instance.PushHotkeyPressedBinding(PaneSidebarHotkey, _hotkeyPaneSidebar);
+            NHotkeyManager.Instance.PushHotkeyPressedBinding(PaneContentHotkey, _hotkeyPaneContent);
+            _paneHotkeysPushed = true;
+        }
+
+        private void PopPaneHotkeys()
+        {
+            if (!_paneHotkeysPushed || NHotkeyManager.Instance == null)
+                return;
+
+            if (_hotkeyPaneSidebar != null)
+                NHotkeyManager.Instance.RemoveHotkeyPressedBinding(PaneSidebarHotkey, _hotkeyPaneSidebar);
+            if (_hotkeyPaneContent != null)
+                NHotkeyManager.Instance.RemoveHotkeyPressedBinding(PaneContentHotkey, _hotkeyPaneContent);
+
+            _hotkeyPaneSidebar = null;
+            _hotkeyPaneContent = null;
+            _paneHotkeysPushed = false;
+        }
+
+        private void OnHotkeyPressedFocusSidebar()
+        {
+            if (!Visible || !IsInstanceValid(this) || !ActiveScreenContext.Instance.IsCurrent(this))
+                return;
+
+            FocusSidebarPaneFromInput();
+        }
+
+        private void OnHotkeyPressedFocusContent()
+        {
+            if (!Visible || !IsInstanceValid(this) || !ActiveScreenContext.Instance.IsCurrent(this))
+                return;
+
+            FocusContentPaneFromInput();
+        }
+
+        private static bool IsFocusUnderPopupOrTransientWindow(Control? c)
+        {
+            for (Node? n = c; n != null; n = n.GetParent())
+                switch (n)
+                {
+                    case PopupMenu:
+                    case Window { Visible: true, PopupWindow: true }:
+                        return true;
+                }
+
+            return false;
+        }
+
+        private void FocusContentPaneFromInput()
+        {
+            if (!IsInstanceValid(this) || !Visible || !ActiveScreenContext.Instance.IsCurrent(this))
+                return;
+
+            var fo = GetViewport()?.GuiGetFocusOwner();
+            if (IsFocusUnderPopupOrTransientWindow(fo))
+                return;
+
+            if (fo != null && IsInstanceValid(fo) && _contentPanelRoot.IsAncestorOf(fo))
+                return;
+
+            RebuildFocusChainsOnly();
+            GrabControlDeferred(ResolveContentFocusFirstInContentPanel());
+        }
+
+        private Control? ResolveContentFocusFirstInContentPanel()
+        {
+            return _contentFocusChain.FirstOrDefault();
+        }
+
+        private Control? ResolveContentFocusTargetForSection()
+        {
+            if (_contentFocusChain.Count == 0)
+                return null;
+
+            if (!string.IsNullOrWhiteSpace(_selectedSectionId))
+                if (_contentList.FindChild($"Section_{_selectedSectionId}", true, false) is Control anchor)
+                    foreach (var c in _contentFocusChain.Where(UnderScrollBody)
+                                 .Where(c => anchor == c || anchor.IsAncestorOf(c)))
+                        return c;
+
+            foreach (var c in _contentFocusChain.Where(UnderScrollBody))
+                return c;
+
+            return _contentFocusChain.FirstOrDefault();
+
+            bool UnderScrollBody(Control c)
+            {
+                return _contentList.IsAncestorOf(c);
+            }
+        }
+
+        private void FocusSidebarPaneFromInput()
+        {
+            if (!IsInstanceValid(this) || !Visible || !ActiveScreenContext.Instance.IsCurrent(this))
+                return;
+
+            var fo = GetViewport()?.GuiGetFocusOwner();
+            if (IsFocusUnderPopupOrTransientWindow(fo))
+                return;
+
+            if (fo != null && IsInstanceValid(fo) && _sidebarPanelRoot.IsAncestorOf(fo))
+                return;
+
+            RebuildFocusChainsOnly();
+            GrabControlDeferred(ResolveSidebarTargetMatchingContent());
+        }
+
+        private Control? ResolveSidebarTargetMatchingContent()
+        {
+            if (!string.IsNullOrWhiteSpace(_selectedSectionId)
+                && _sectionButtons.TryGetValue(_selectedSectionId, out var sectionBtn)
+                && sectionBtn.IsVisibleInTree())
+                return sectionBtn;
+
+            if (!string.IsNullOrWhiteSpace(_selectedPageId)
+                && _pageButtons.TryGetValue(_selectedPageId, out var pageBtn)
+                && pageBtn.IsVisibleInTree())
+                return pageBtn;
+
+            if (!string.IsNullOrWhiteSpace(_selectedModId)
+                && _modButtons.TryGetValue(_selectedModId, out var modBtn)
+                && modBtn.IsVisibleInTree())
+                return modBtn;
+
+            return _sidebarFocusChain.FirstOrDefault();
+        }
+
+        private Control? ResolveInitialSidebarFocus()
+        {
+            if (_focusSelectedPageButtonOnNextRefresh)
+            {
+                _focusSelectedPageButtonOnNextRefresh = false;
+                if (!string.IsNullOrWhiteSpace(_selectedPageId)
+                    && _pageButtons.TryGetValue(_selectedPageId, out var pageButton)
+                    && pageButton.Visible)
+                    return pageButton;
+
+                if (!string.IsNullOrWhiteSpace(_selectedModId)
+                    && _modButtons.TryGetValue(_selectedModId, out var modButton)
+                    && modButton.Visible)
+                    return modButton;
+            }
+
+            if (!string.IsNullOrWhiteSpace(_selectedSectionId)
+                && _sectionButtons.TryGetValue(_selectedSectionId, out var sectionBtn)
+                && sectionBtn.IsVisibleInTree())
+                return sectionBtn;
+
+            if (!string.IsNullOrWhiteSpace(_selectedPageId)
+                && _pageButtons.TryGetValue(_selectedPageId, out var pb)
+                && pb.Visible)
+                return pb;
+
+            if (!string.IsNullOrWhiteSpace(_selectedModId)
+                && _modButtons.TryGetValue(_selectedModId, out var mb)
+                && mb.Visible)
+                return mb;
+
+            return null;
         }
 
         private Control CreateSidebarPanel()
         {
             var panel = new Panel
             {
+                Name = "RitsuSidebarPanel",
                 CustomMinimumSize = new(SidebarWidth, 0f),
                 SizeFlagsVertical = SizeFlags.ExpandFill,
                 MouseFilter = MouseFilterEnum.Ignore,
             };
+            _sidebarPanelRoot = panel;
             panel.AddThemeStyleboxOverride("panel", CreatePanelStyle(new(0.10f, 0.115f, 0.145f, 0.96f)));
 
             var frame = new MarginContainer
@@ -340,7 +753,10 @@ namespace STS2RitsuLib.Settings
                 SizeFlagsHorizontal = SizeFlags.ExpandFill,
                 SizeFlagsVertical = SizeFlags.ExpandFill,
                 HorizontalScrollMode = ScrollContainer.ScrollMode.Disabled,
+                FollowFocus = false,
+                FocusMode = FocusModeEnum.None,
             };
+            _sidebarScrollContainer = scroll;
             root.AddChild(scroll);
 
             var sidebarScrollFrame = new MarginContainer
@@ -366,10 +782,12 @@ namespace STS2RitsuLib.Settings
         {
             var panel = new Panel
             {
+                Name = "RitsuContentPanel",
                 SizeFlagsHorizontal = SizeFlags.ExpandFill,
                 SizeFlagsVertical = SizeFlags.ExpandFill,
                 MouseFilter = MouseFilterEnum.Ignore,
             };
+            _contentPanelRoot = panel;
             panel.AddThemeStyleboxOverride("panel", CreatePanelStyle(new(0.08f, 0.095f, 0.125f, 0.98f)));
 
             var frame = new MarginContainer
@@ -406,6 +824,8 @@ namespace STS2RitsuLib.Settings
                 SizeFlagsHorizontal = SizeFlags.ExpandFill,
                 SizeFlagsVertical = SizeFlags.ExpandFill,
                 HorizontalScrollMode = ScrollContainer.ScrollMode.Disabled,
+                FollowFocus = true,
+                FocusMode = FocusModeEnum.None,
             };
             root.AddChild(_scrollContainer);
 
@@ -431,9 +851,10 @@ namespace STS2RitsuLib.Settings
 
         private void Rebuild()
         {
+            ModSettingsBaseLibReflectionMirror.TryRegisterMirroredPages();
             ApplyStaticTexts();
             RebuildSidebar();
-            RebuildContent();
+            RebuildContent(true);
         }
 
         private void RebuildSidebar()
@@ -446,7 +867,9 @@ namespace STS2RitsuLib.Settings
             var rootPages = ModSettingsRegistry.GetPages()
                 .Where(page => string.IsNullOrWhiteSpace(page.ParentPageId))
                 .GroupBy(page => page.ModId, StringComparer.OrdinalIgnoreCase)
-                .OrderBy(group => group.Min(page => page.SortOrder))
+                .OrderBy(group => ModSettingsRegistry.GetModSidebarOrder(group.Key))
+                .ThenBy(group => ModSettingsLocalization.ResolveModName(group.Key, group.Key),
+                    StringComparer.OrdinalIgnoreCase)
                 .ThenBy(group => group.Key, StringComparer.OrdinalIgnoreCase)
                 .ToArray();
 
@@ -467,7 +890,7 @@ namespace STS2RitsuLib.Settings
                 var modId = group.Key;
                 var pages = ModSettingsRegistry.GetPages()
                     .Where(page => string.Equals(page.ModId, modId, StringComparison.OrdinalIgnoreCase))
-                    .OrderBy(page => page.SortOrder)
+                    .OrderBy(ModSettingsRegistry.GetEffectivePageSortOrder)
                     .ThenBy(page => page.Id, StringComparer.OrdinalIgnoreCase)
                     .ToArray();
 
@@ -537,8 +960,10 @@ namespace STS2RitsuLib.Settings
             }
         }
 
-        private void RebuildContent()
+        private void RebuildContent(bool fromFullRebuild = false)
         {
+            CancelDeferredRefreshFlush();
+            _contentOnlyRebuildNeedsContentFocus = !fromFullRebuild;
             _pageTabRow.FreeChildren();
             _pageTabRow.Visible = false;
             _contentList.FreeChildren();
@@ -564,7 +989,7 @@ namespace STS2RitsuLib.Settings
             var rootPages = ModSettingsRegistry.GetPages()
                 .Where(page => string.Equals(page.ModId, _selectedModId, StringComparison.OrdinalIgnoreCase) &&
                                string.IsNullOrWhiteSpace(page.ParentPageId))
-                .OrderBy(page => page.SortOrder)
+                .OrderBy(ModSettingsRegistry.GetEffectivePageSortOrder)
                 .ThenBy(page => page.Id, StringComparer.OrdinalIgnoreCase)
                 .ToArray();
 
@@ -619,9 +1044,11 @@ namespace STS2RitsuLib.Settings
             var button = ModSettingsUiFactory.CreateSidebarButton(
                 ResolvePageTabTitle(page), () =>
                 {
+                    var samePage = string.Equals(_selectedPageId, page.Id, StringComparison.OrdinalIgnoreCase);
                     _selectedModId = page.ModId;
                     _selectedPageId = page.Id;
-                    _selectedSectionId = null;
+                    if (!samePage)
+                        _selectedSectionId = null;
                     ExpandOnlyMod(page.ModId);
                     Rebuild();
                 },
@@ -670,7 +1097,7 @@ namespace STS2RitsuLib.Settings
 
             foreach (var child in pages.Where(candidate =>
                              string.Equals(candidate.ParentPageId, page.Id, StringComparison.OrdinalIgnoreCase))
-                         .OrderBy(candidate => candidate.SortOrder)
+                         .OrderBy(ModSettingsRegistry.GetEffectivePageSortOrder)
                          .ThenBy(candidate => candidate.Id, StringComparer.OrdinalIgnoreCase))
                 container.AddChild(CreateSidebarPageTreeButton(pages, child, depth + 1));
 
@@ -750,51 +1177,128 @@ namespace STS2RitsuLib.Settings
 
         private void RefreshFocusNavigation()
         {
-            var controls = new List<Control>();
-            CollectFocusableControls(this, controls);
-            _initialFocusedControl = ResolvePreferredFocusControl() ?? controls.FirstOrDefault();
+            if (_focusNavigationRefreshScheduled)
+                return;
+            _focusNavigationRefreshScheduled = true;
+            Callable.From(FlushFocusNavigationDeferred).CallDeferred();
+        }
 
-            for (var index = 0; index < controls.Count; index++)
+        private void FlushFocusNavigationDeferred()
+        {
+            _focusNavigationRefreshScheduled = false;
+            if (!IsInstanceValid(this) || !Visible)
+                return;
+
+            ApplySplitPaneFocusNavigation();
+            this.UpdateControllerNavEnabled();
+        }
+
+        private void RebuildFocusChainsOnly()
+        {
+            _sidebarFocusChain.Clear();
+            _contentFocusChain.Clear();
+            CollectSettingsFocusChainPreorder(_sidebarPanelRoot, _sidebarFocusChain);
+            CollectSettingsFocusChainPreorder(_contentPanelRoot, _contentFocusChain);
+
+            WireVerticalOnlyChain(_sidebarFocusChain);
+            WireVerticalOnlyChain(_contentFocusChain);
+
+            _initialFocusedControl = ResolveInitialSidebarFocus() ?? _sidebarFocusChain.FirstOrDefault();
+
+            UpdatePaneHotkeyHintIcons();
+        }
+
+        private void ApplySplitPaneFocusNavigation()
+        {
+            RebuildFocusChainsOnly();
+            var owner = GetViewport()?.GuiGetFocusOwner();
+            switch (_contentOnlyRebuildNeedsContentFocus)
             {
-                var current = controls[index];
-                current.FocusNeighborLeft = current.GetPath();
-                current.FocusNeighborRight = current.GetPath();
-                current.FocusNeighborTop = (index > 0 ? controls[index - 1] : current).GetPath();
-                current.FocusNeighborBottom = (index < controls.Count - 1 ? controls[index + 1] : current).GetPath();
+                case false when
+                    IsInstanceValid(owner) && IsAncestorOf(owner):
+                    return;
+                case true:
+                {
+                    _contentOnlyRebuildNeedsContentFocus = false;
+                    var contentTarget = ResolveContentFocusTargetForSection();
+                    if (contentTarget != null && contentTarget.IsVisibleInTree())
+                    {
+                        GrabControlDeferred(contentTarget);
+                        return;
+                    }
+
+                    break;
+                }
             }
 
-            Callable.From(() => _initialFocusedControl?.GrabFocus()).CallDeferred();
+            if (IsFocusUnderPopupOrTransientWindow(owner))
+                return;
+
+            var focusLost = owner == null || !IsInstanceValid(owner) || !IsAncestorOf(owner);
+            if (focusLost)
+                GrabControlDeferred(_initialFocusedControl);
+            else
+                _initialFocusedControl?.TryGrabFocus();
         }
 
-        private Control? ResolvePreferredFocusControl()
+        private static void GrabControlDeferred(Control? target)
         {
-            if (!_focusSelectedPageButtonOnNextRefresh)
-                return null;
+            if (target == null)
+                return;
 
-            _focusSelectedPageButtonOnNextRefresh = false;
-            if (!string.IsNullOrWhiteSpace(_selectedPageId)
-                && _pageButtons.TryGetValue(_selectedPageId, out var pageButton)
-                && pageButton.Visible)
-                return pageButton;
+            var t = target;
+            Callable.From(() =>
+            {
+                if (!IsInstanceValid(t) || !t.IsVisibleInTree())
+                    return;
 
-            if (!string.IsNullOrWhiteSpace(_selectedModId)
-                && _modButtons.TryGetValue(_selectedModId, out var modButton)
-                && modButton.Visible)
-                return modButton;
-
-            return null;
+                t.GrabFocus();
+            }).CallDeferred();
         }
 
-        private static void CollectFocusableControls(Node node, ICollection<Control> controls)
+        private static void WireVerticalOnlyChain(IReadOnlyList<Control> chain)
         {
-            foreach (var child in node.GetChildren())
-                if (child is Control control)
+            for (var index = 0; index < chain.Count; index++)
+            {
+                var current = chain[index];
+                var selfPath = current.GetPath();
+                current.FocusNeighborLeft = selfPath;
+                current.FocusNeighborRight = selfPath;
+                current.FocusNeighborTop = index > 0 ? chain[index - 1].GetPath() : null;
+                current.FocusNeighborBottom =
+                    index < chain.Count - 1 ? chain[index + 1].GetPath() : null;
+            }
+        }
+
+        private static void CollectSettingsFocusChainPreorder(Control parent, List<Control> controls)
+        {
+            foreach (var child in parent.GetChildren())
+            {
+                if (child is not Control item || !item.IsVisibleInTree())
+                    continue;
+
+                if (IsSettingsFocusTerminal(item))
                 {
-                    if (control is { FocusMode: FocusModeEnum.All, Visible: true })
-                        controls.Add(control);
-
-                    CollectFocusableControls(control, controls);
+                    if (item.FocusMode == FocusModeEnum.All)
+                        controls.Add(item);
+                    continue;
                 }
+
+                CollectSettingsFocusChainPreorder(item, controls);
+            }
+        }
+
+        private static bool IsSettingsFocusTerminal(Control c)
+        {
+            return c switch
+            {
+                ModSettingsSidebarButton or ModSettingsTextButton or ModSettingsCollapsibleHeaderButton
+                    or ModSettingsToggleControl or ModSettingsMiniButton or ModSettingsDragHandle
+                    or ModSettingsActionsButton or NButton
+                    or HSlider or OptionButton or ColorPickerButton or MenuButton => true,
+                LineEdit or TextEdit => c.FocusMode == FocusModeEnum.All,
+                _ => c is Button,
+            };
         }
 
         private void ApplyStaticTexts()

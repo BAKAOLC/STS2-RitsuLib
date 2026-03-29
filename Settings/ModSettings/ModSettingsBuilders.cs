@@ -10,6 +10,8 @@ namespace STS2RitsuLib.Settings
         private readonly HashSet<string> _sectionIds = new(StringComparer.OrdinalIgnoreCase);
         private readonly List<ModSettingsSection> _sections = [];
 
+        private int? _modSidebarOrder;
+
         /// <summary>
         ///     Initializes a builder for mod <paramref name="modId" />; <paramref name="pageId" /> defaults to the mod id when
         ///     null or whitespace.
@@ -103,6 +105,16 @@ namespace STS2RitsuLib.Settings
         }
 
         /// <summary>
+        ///     Registers <see cref="ModSettingsRegistry.RegisterModSidebarOrder" /> for <see cref="ModId" /> when this page
+        ///     is built (repeat calls from the same mod should use the same value).
+        /// </summary>
+        public ModSettingsPageBuilder WithModSidebarOrder(int order)
+        {
+            _modSidebarOrder = order;
+            return this;
+        }
+
+        /// <summary>
         ///     Adds a section built by <paramref name="configure" />; <paramref name="id" /> must be unique on this page.
         /// </summary>
         public ModSettingsPageBuilder AddSection(string id, Action<ModSettingsSectionBuilder> configure)
@@ -129,6 +141,9 @@ namespace STS2RitsuLib.Settings
 
             if (ModDisplayName != null)
                 ModSettingsRegistry.RegisterModDisplayName(ModId, ModDisplayName);
+
+            if (_modSidebarOrder is { } modOrder)
+                ModSettingsRegistry.RegisterModSidebarOrder(ModId, modOrder);
 
             return new(
                 ModId,
@@ -325,8 +340,42 @@ namespace STS2RitsuLib.Settings
         }
 
         /// <summary>
-        ///     Adds a floating-point range slider.
+        ///     Adds a floating-point range slider (<see cref="double" /> value domain).
         /// </summary>
+        public ModSettingsSectionBuilder AddSlider(
+            string id,
+            ModSettingsText label,
+            IModSettingsValueBinding<double> binding,
+            double minValue,
+            double maxValue,
+            double step = 1d,
+            Func<double, string>? valueFormatter = null,
+            ModSettingsText? description = null)
+        {
+            if (maxValue < minValue)
+                throw new ArgumentOutOfRangeException(nameof(maxValue), "Slider maxValue must be >= minValue.");
+
+            if (step <= 0d)
+                throw new ArgumentOutOfRangeException(nameof(step), "Slider step must be > 0.");
+
+            AddEntry(id, new SliderModSettingsEntryDefinition(
+                id,
+                label,
+                binding,
+                minValue,
+                maxValue,
+                step,
+                valueFormatter,
+                description));
+            return this;
+        }
+
+        /// <summary>
+        ///     Legacy <see cref="float" /> overload for binary compatibility; uses a dedicated float slider entry (not
+        ///     the <see cref="double" /> control path) to avoid float/double conversion feedback loops.
+        /// </summary>
+        [Obsolete(
+            "Prefer AddSlider with IModSettingsValueBinding<double> and double range parameters. This overload exists only for compatibility with mods compiled against pre-double slider APIs.")]
         public ModSettingsSectionBuilder AddSlider(
             string id,
             ModSettingsText label,
@@ -337,13 +386,14 @@ namespace STS2RitsuLib.Settings
             Func<float, string>? valueFormatter = null,
             ModSettingsText? description = null)
         {
+            ArgumentNullException.ThrowIfNull(binding);
             if (maxValue < minValue)
                 throw new ArgumentOutOfRangeException(nameof(maxValue), "Slider maxValue must be >= minValue.");
 
             if (step <= 0f)
                 throw new ArgumentOutOfRangeException(nameof(step), "Slider step must be > 0.");
 
-            AddEntry(id, new SliderModSettingsEntryDefinition(
+            AddEntry(id, new FloatSliderModSettingsEntryDefinition(
                 id,
                 label,
                 binding,

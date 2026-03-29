@@ -637,6 +637,33 @@ namespace STS2RitsuLib.Settings
             };
         }
 
+        internal static StyleBoxFlat CreateEntryFieldFrameStyle(bool emphasized)
+        {
+            var borderColor = new Color(0.38f, 0.58f, 0.70f, 0.42f);
+            var borderW = emphasized ? 2 : 1;
+            return new()
+            {
+                BgColor = new(0.095f, 0.115f, 0.15f, 0.965f),
+                BorderColor = borderColor,
+                BorderWidthLeft = borderW,
+                BorderWidthTop = borderW,
+                BorderWidthRight = borderW,
+                BorderWidthBottom = borderW,
+                CornerRadiusTopLeft = ModSettingsUiMetrics.CornerRadius,
+                CornerRadiusTopRight = ModSettingsUiMetrics.CornerRadius,
+                CornerRadiusBottomRight = ModSettingsUiMetrics.CornerRadius,
+                CornerRadiusBottomLeft = ModSettingsUiMetrics.CornerRadius,
+                ShadowColor = emphasized
+                    ? new Color(borderColor.R, borderColor.G, borderColor.B, 0.42f)
+                    : new Color(0f, 0f, 0f, 0.14f),
+                ShadowSize = emphasized ? 7 : 2,
+                ContentMarginLeft = 12,
+                ContentMarginTop = 8,
+                ContentMarginRight = 12,
+                ContentMarginBottom = 8,
+            };
+        }
+
         /// <summary>
         ///     Frame for <see cref="ColorPickerButton" />: same border/bg language as <see cref="CreateSurfaceStyle" />,
         ///     but <b>equal</b> content margins so the inner color swatch stays square inside a square button.

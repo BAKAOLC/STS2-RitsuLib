@@ -60,6 +60,27 @@ namespace STS2RitsuLib.Settings
         }
 
         /// <summary>
+        ///     Value binding backed by caller-supplied read/write/save delegates (external persistence, legacy configs,
+        ///     etc.). Uses <see cref="SaveScope.Global" /> by default.
+        /// </summary>
+        public static ModSettingsCallbackValueBinding<TValue> Callback<TValue>(
+            string modId,
+            string dataKey,
+            Func<TValue> read,
+            Action<TValue> write,
+            Action save,
+            SaveScope scope = SaveScope.Global)
+        {
+            ArgumentException.ThrowIfNullOrWhiteSpace(modId);
+            ArgumentException.ThrowIfNullOrWhiteSpace(dataKey);
+            ArgumentNullException.ThrowIfNull(read);
+            ArgumentNullException.ThrowIfNull(write);
+            ArgumentNullException.ThrowIfNull(save);
+
+            return new(modId, dataKey, scope, read, write, save);
+        }
+
+        /// <summary>
         ///     Attaches a structured adapter for clipboard / JSON round-trip.
         /// </summary>
         public static StructuredModSettingsValueBinding<TValue> WithAdapter<TValue>(

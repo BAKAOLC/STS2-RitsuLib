@@ -1,4 +1,5 @@
 using System.Collections.Concurrent;
+using System.Collections.Frozen;
 using System.Globalization;
 using System.Reflection;
 using System.Text;
@@ -15,6 +16,16 @@ namespace STS2RitsuLib.Settings
 
         private static readonly ConcurrentDictionary<Type, ClipboardSerializableMember[]> SerializableMemberCache =
             new();
+
+        /// <summary>
+        ///     CLR full names for numeric primitives that may appear in <see cref="ModSettingsClipboardEnvelope.TypeName" />.
+        /// </summary>
+        private static readonly FrozenSet<string> NumericEnvelopeTypeFullNames = new[]
+        {
+            typeof(byte).FullName!, typeof(sbyte).FullName!, typeof(short).FullName!, typeof(ushort).FullName!,
+            typeof(int).FullName!, typeof(uint).FullName!, typeof(long).FullName!, typeof(ulong).FullName!,
+            typeof(float).FullName!, typeof(double).FullName!, typeof(decimal).FullName!,
+        }.ToFrozenSet(StringComparer.Ordinal);
 
         public static void CopyValue<TValue>(IModSettingsBinding binding, ModSettingsClipboardScope scope,
             IStructuredModSettingsValueAdapter<TValue> adapter, TValue value)
@@ -378,7 +389,41 @@ namespace STS2RitsuLib.Settings
                 && !string.Equals(envelope.TargetSignature, CreateTargetSignature(binding), StringComparison.Ordinal))
                 return false;
 
+            if (!CanCoerceClipboardEnvelopeScalarTo(typeof(TValue), envelope.TypeName))
+                return false;
+
             return TryCoerceJsonPayloadToValue(envelope.Payload, out value);
+        }
+
+        /// <summary>
+        ///     Loose scalar coercion is only for same declared CLR type (e.g. schema/shape mismatch) or safe numeric widening;
+        ///     it must not turn unrelated copies (e.g. slider <see cref="double" />) into <see cref="string" /> choice keys.
+        /// </summary>
+        private static bool CanCoerceClipboardEnvelopeScalarTo(Type targetValueType, string envelopeTypeName)
+        {
+            if (string.IsNullOrEmpty(envelopeTypeName))
+                return false;
+
+            var ut = Nullable.GetUnderlyingType(targetValueType) ?? targetValueType;
+            var targetTn = ut.FullName ?? ut.Name;
+            if (string.Equals(envelopeTypeName, targetTn, StringComparison.Ordinal))
+                return true;
+
+            if (ut == typeof(string))
+                return false;
+
+            if (IsNumericType(ut) && NumericEnvelopeTypeFullNames.Contains(envelopeTypeName))
+                return true;
+
+            if (ut.IsEnum)
+                return NumericEnvelopeTypeFullNames.Contains(envelopeTypeName) ||
+                       string.Equals(envelopeTypeName, ut.FullName ?? ut.Name, StringComparison.Ordinal);
+
+            if (ut == typeof(bool))
+                return NumericEnvelopeTypeFullNames.Contains(envelopeTypeName) ||
+                       string.Equals(envelopeTypeName, typeof(bool).FullName, StringComparison.Ordinal);
+
+            return false;
         }
 
         private static bool IsCoercibleScalarTarget(Type type)

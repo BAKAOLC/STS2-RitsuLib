@@ -49,7 +49,9 @@ namespace STS2RitsuLib.Settings
         public ModSettingsText? Description { get; }
 
         /// <summary>
-        ///     Lower values appear earlier in the sidebar among siblings.
+        ///     Lower values appear earlier among sibling pages (same <see cref="ModId" /> and
+        ///     <see cref="ParentPageId" />). Use <see cref="ModSettingsRegistry.RegisterPageSortOrder" /> to adjust without
+        ///     rebuilding the page.
         /// </summary>
         public int SortOrder { get; }
 
