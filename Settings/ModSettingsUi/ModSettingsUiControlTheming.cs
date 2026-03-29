@@ -30,8 +30,12 @@ namespace STS2RitsuLib.Settings
             edit.AddThemeFontOverride("font", font);
             edit.AddThemeFontSizeOverride("font_size", fontSize);
             edit.AddThemeColorOverride("font_color", ModSettingsUiPalette.RichTextBody);
-            edit.AddThemeStyleboxOverride("normal", ModSettingsUiFactory.CreateSurfaceStyle());
-            edit.AddThemeStyleboxOverride("focus", ModSettingsUiFactory.CreateSurfaceStyle());
+            var normal = ModSettingsUiFactory.CreateEntryFieldFrameStyle(false);
+            var emphasis = ModSettingsUiFactory.CreateEntryFieldFrameStyle(true);
+            edit.AddThemeStyleboxOverride("normal", normal);
+            edit.AddThemeStyleboxOverride("hover", emphasis);
+            edit.AddThemeStyleboxOverride("focus", emphasis);
+            edit.AddThemeStyleboxOverride("read_only", normal);
         }
 
         internal static void ApplyEntryTextEditValueFieldTheme(TextEdit edit, Font font, int fontSize = 17)
@@ -39,8 +43,12 @@ namespace STS2RitsuLib.Settings
             edit.AddThemeFontOverride("font", font);
             edit.AddThemeFontSizeOverride("font_size", fontSize);
             edit.AddThemeColorOverride("font_color", ModSettingsUiPalette.RichTextBody);
-            edit.AddThemeStyleboxOverride("normal", ModSettingsUiFactory.CreateSurfaceStyle());
-            edit.AddThemeStyleboxOverride("focus", ModSettingsUiFactory.CreateSurfaceStyle());
+            var normal = ModSettingsUiFactory.CreateEntryFieldFrameStyle(false);
+            var emphasis = ModSettingsUiFactory.CreateEntryFieldFrameStyle(true);
+            edit.AddThemeStyleboxOverride("normal", normal);
+            edit.AddThemeStyleboxOverride("hover", emphasis);
+            edit.AddThemeStyleboxOverride("focus", emphasis);
+            edit.AddThemeStyleboxOverride("read_only", normal);
         }
 
         /// <summary>

@@ -42,6 +42,7 @@ namespace STS2RitsuLib.Settings
 
                 RitsuLibFramework.RegisterModSettings(Const.ModId, page => page
                     .WithModDisplayName(T("ritsulib.mod.displayName", "RitsuLib"))
+                    .WithModSidebarOrder(-10_000)
                     .WithTitle(T("ritsulib.page.title", "Settings"))
                     .WithDescription(T("ritsulib.page.description",
                         "Shared framework options and API reference examples."))
@@ -92,7 +93,7 @@ namespace STS2RitsuLib.Settings
                                 ModSettingsText.Dynamic(() =>
                                     string.Format(
                                         L("ritsulib.showcase.summary",
-                                            "Toggle: {0} | Float: {1:0.##} | Int: {2} | Choice: {3} | Mode: {4} | Action Count: {5}"),
+                                            "Toggle: {0} | Double: {1:0.##} | Int: {2} | Choice: {3} | Mode: {4} | Action Count: {5}"),
                                         showcaseState.ToggleValue,
                                         showcaseState.SliderValue,
                                         showcaseState.IntSliderValue,
@@ -125,15 +126,15 @@ namespace STS2RitsuLib.Settings
                             .AddSlider(
                                 "preview_slider",
                                 T("ritsulib.showcase.slider.label", "Preview slider"),
-                                new ShowcaseBinding<float>(previewSliderBinding,
+                                new ShowcaseBinding<double>(previewSliderBinding,
                                     value => showcaseState.SliderValue = value),
-                                0f,
-                                100f,
-                                0.25f,
+                                0d,
+                                100d,
+                                0.25d,
                                 value => value.ToString("0.##"),
                                 ModSettingsText.Dynamic(() =>
                                     string.Format(
-                                        L("ritsulib.showcase.slider.description", "Current float value: {0:0.##}"),
+                                        L("ritsulib.showcase.slider.description", "Current double value: {0:0.##}"),
                                         showcaseState.SliderValue)))
                             .AddIntSlider(
                                 "preview_int_slider",
@@ -220,7 +221,7 @@ namespace STS2RitsuLib.Settings
                                 () =>
                                 {
                                     showcaseState.ToggleValue = true;
-                                    showcaseState.SliderValue = 35f;
+                                    showcaseState.SliderValue = 35d;
                                     showcaseState.IntSliderValue = 2;
                                     showcaseState.ChoiceValue = "balanced";
                                     showcaseState.ModeValue = ShowcaseMode.Balanced;
@@ -438,7 +439,7 @@ namespace STS2RitsuLib.Settings
         {
             private int _nextItemIndex = 4;
             public bool ToggleValue { get; set; } = true;
-            public float SliderValue { get; set; } = 35f;
+            public double SliderValue { get; set; } = 35d;
             public int IntSliderValue { get; set; } = 2;
             public string ChoiceValue { get; set; } = "balanced";
             public ShowcaseMode ModeValue { get; set; } = ShowcaseMode.Balanced;

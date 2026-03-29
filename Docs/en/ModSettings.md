@@ -84,7 +84,7 @@ using STS2RitsuLib.Utils.Persistence;
 public sealed class MyModSettings
 {
     public bool EnableFancyVfx { get; set; } = true;
-    public float ScreenShakeScale { get; set; } = 1.0f;
+    public double ScreenShakeScale { get; set; } = 1.0;
     public MyDifficultyMode DifficultyMode { get; set; } = MyDifficultyMode.Normal;
 }
 
@@ -117,7 +117,7 @@ var fancyVfx = ModSettingsBindings.Global<MyModSettings, bool>(
     model => model.EnableFancyVfx,
     (model, value) => model.EnableFancyVfx = value);
 
-var shakeScale = ModSettingsBindings.Global<MyModSettings, float>(
+var shakeScale = ModSettingsBindings.Global<MyModSettings, double>(
     "MyMod",
     "settings",
     model => model.ScreenShakeScale,
@@ -144,9 +144,9 @@ RitsuLibFramework.RegisterModSettings("MyMod", page => page
             "screen_shake_scale",
             ModSettingsText.I18N(settingsLoc, "screen_shake.label", "Screen Shake Scale"),
             shakeScale,
-            minValue: 0.0f,
-            maxValue: 2.0f,
-            step: 0.05f,
+            minValue: 0.0,
+            maxValue: 2.0,
+            step: 0.05,
             valueFormatter: value => $"{value:0.00}x")
         .AddEnumChoice(
             "difficulty_mode",
@@ -157,6 +157,13 @@ RitsuLibFramework.RegisterModSettings("MyMod", page => page
 
 `WithModDisplayName(...)` controls the mod-group label shown in the left navigation.
 If you omit it, RitsuLib falls back to the manifest name, then to the mod id.
+
+---
+
+## Sidebar ordering
+
+- **Mod groups**: call `WithModSidebarOrder(int)` on the page builder, or `ModSettingsRegistry.RegisterModSidebarOrder` / `RitsuLibFramework.RegisterModSettingsSidebarOrder`. **Lower** values appear earlier. Mods without an explicit value use `0` and sort by **display name** (`WithModDisplayName` → manifest name → mod id).
+- **Pages within one mod** (siblings sharing `ParentPageId`): use `WithSortOrder(int)` when building; after registration you can call `RegisterPageSortOrder`, `TryRegisterPageSortOrderAfter`, or `TryRegisterPageSortOrderBefore` (or the `RitsuLibFramework` wrappers) to pin a page before/after another.
 
 ---
 
@@ -179,7 +186,7 @@ Recommended split:
 ## Supported Entry Types
 
 - `AddToggle(...)` for `bool`
-- `AddSlider(...)` for `float`
+- `AddSlider(...)` for `double`
 - `AddIntSlider(...)` for `int`
 - `AddChoice(...)` / `AddEnumChoice(...)` for option lists; optional `ModSettingsChoicePresentation`: **Stepper** or **Dropdown**
 - `AddColor(...)` for color strings (parsed and shown by the UI)

@@ -83,7 +83,7 @@ using STS2RitsuLib.Utils.Persistence;
 public sealed class MyModSettings
 {
     public bool EnableFancyVfx { get; set; } = true;
-    public float ScreenShakeScale { get; set; } = 1.0f;
+    public double ScreenShakeScale { get; set; } = 1.0;
     public MyDifficultyMode DifficultyMode { get; set; } = MyDifficultyMode.Normal;
 }
 
@@ -116,7 +116,7 @@ var fancyVfx = ModSettingsBindings.Global<MyModSettings, bool>(
     model => model.EnableFancyVfx,
     (model, value) => model.EnableFancyVfx = value);
 
-var shakeScale = ModSettingsBindings.Global<MyModSettings, float>(
+var shakeScale = ModSettingsBindings.Global<MyModSettings, double>(
     "MyMod",
     "settings",
     model => model.ScreenShakeScale,
@@ -143,9 +143,9 @@ RitsuLibFramework.RegisterModSettings("MyMod", page => page
             "screen_shake_scale",
             ModSettingsText.I18N(settingsLoc, "screen_shake.label", "Screen Shake Scale"),
             shakeScale,
-            minValue: 0.0f,
-            maxValue: 2.0f,
-            step: 0.05f,
+            minValue: 0.0,
+            maxValue: 2.0,
+            step: 0.05,
             valueFormatter: value => $"{value:0.00}x")
         .AddEnumChoice(
             "difficulty_mode",
@@ -156,6 +156,13 @@ RitsuLibFramework.RegisterModSettings("MyMod", page => page
 
 `WithModDisplayName(...)` 控制左侧导航里 mod 分组显示的名称。
 如果不设置，RitsuLib 会依次回退到 manifest 名称，再回退到 mod id。
+
+---
+
+## 侧边栏排序
+
+- **Mod 分组顺序**：在注册页时使用 `WithModSidebarOrder(int)`，或调用 `ModSettingsRegistry.RegisterModSidebarOrder` / `RitsuLibFramework.RegisterModSettingsSidebarOrder`。数值**越小**越靠上。未显式注册的 mod 使用 `0`，在同一档内按**显示名称**（`WithModDisplayName` → manifest 名称 → mod id）排序。
+- **同一 mod 内的页面**（相同 `ParentPageId` 的兄弟页）：默认用 `WithSortOrder(int)`；注册后仍可用 `RegisterPageSortOrder`、`TryRegisterPageSortOrderAfter` / `TryRegisterPageSortOrderBefore`（或 `RitsuLibFramework` 上同名封装）把某一页插到指定页之前/之后。
 
 ---
 
@@ -178,7 +185,7 @@ RitsuLibFramework.RegisterModSettings("MyMod", page => page
 ## 当前支持的设置项类型
 
 - `AddToggle(...)`：`bool`
-- `AddSlider(...)`：`float`
+- `AddSlider(...)`：`double`
 - `AddIntSlider(...)`：`int`
 - `AddChoice(...)` / `AddEnumChoice(...)`：候选列表；可选 `ModSettingsChoicePresentation`：**Stepper**（步进切换）或 **Dropdown**（下拉）
 - `AddColor(...)`：颜色字符串（由 UI 解析与展示）

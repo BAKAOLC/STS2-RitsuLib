@@ -87,9 +87,74 @@ namespace STS2RitsuLib.Settings
     }
 
     /// <summary>
-    ///     Floating-point slider with range and optional formatter.
+    ///     Floating-point slider with range and optional formatter (<see cref="double" /> domain).
     /// </summary>
     public sealed class SliderModSettingsEntryDefinition(
+        string id,
+        ModSettingsText label,
+        IModSettingsValueBinding<double> binding,
+        double minValue,
+        double maxValue,
+        double step,
+        Func<double, string>? valueFormatter,
+        ModSettingsText? description)
+        : ModSettingsEntryDefinition(id, label, description)
+    {
+        /// <summary>
+        ///     Backing binding for the slider value.
+        /// </summary>
+        public IModSettingsValueBinding<double> Binding { get; } = binding;
+
+        /// <summary>
+        ///     Minimum slider value (inclusive).
+        /// </summary>
+        public double MinValue { get; } = minValue;
+
+        /// <summary>
+        ///     Maximum slider value (inclusive).
+        /// </summary>
+        public double MaxValue { get; } = maxValue;
+
+        /// <summary>
+        ///     Step between valid values.
+        /// </summary>
+        public double Step { get; } = step;
+
+        /// <summary>
+        ///     Optional formatter for the displayed value string.
+        /// </summary>
+        public Func<double, string>? ValueFormatter { get; } = valueFormatter;
+
+        internal override void CollectChromeBindingSnapshots(
+            Dictionary<string, ModSettingsChromeBindingSnapshot> target)
+        {
+            ModSettingsClipboardData.AddChromeBindingSnapshot(target, Id, Binding);
+        }
+
+        internal override bool TryPasteChromeBindingSnapshot(ModSettingsChromeBindingSnapshot snap,
+            IModSettingsUiActionHost host)
+        {
+            var adapter = ModSettingsUiFactory.ResolveClipboardAdapter(Binding);
+            if (!ModSettingsClipboardData.TryApplySerializedValueToBinding(Binding, adapter, snap, out var v))
+                return false;
+            Binding.Write(v);
+            host.MarkDirty(Binding);
+            return true;
+        }
+
+        internal override Control CreateControl(ModSettingsUiContext context)
+        {
+            return ModSettingsUiFactory.CreateSliderEntry(context, this);
+        }
+    }
+
+    /// <summary>
+    ///     Internal <see cref="float" /> slider entry (legacy pipeline). Only produced by the obsolete
+    ///     <c>ModSettingsSectionBuilder.AddSlider</c> overload taking <see cref="IModSettingsValueBinding{T}" /> of
+    ///     <see cref="float" />; separate from <see cref="SliderModSettingsEntryDefinition" /> to avoid float/double
+    ///     drift and refresh feedback loops.
+    /// </summary>
+    public sealed class FloatSliderModSettingsEntryDefinition(
         string id,
         ModSettingsText label,
         IModSettingsValueBinding<float> binding,
@@ -144,7 +209,7 @@ namespace STS2RitsuLib.Settings
 
         internal override Control CreateControl(ModSettingsUiContext context)
         {
-            return ModSettingsUiFactory.CreateSliderEntry(context, this);
+            return ModSettingsUiFactory.CreateFloatSliderEntry(context, this);
         }
     }
 

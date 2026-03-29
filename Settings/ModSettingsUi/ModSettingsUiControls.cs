@@ -70,6 +70,10 @@ namespace STS2RitsuLib.Settings
 
         private static StyleBoxFlat CreateStyle(bool on, bool hovered)
         {
+            var borderColor = on
+                ? new Color(0.52f, 0.87f, 0.69f, 0.95f)
+                : new Color(0.34f, 0.46f, 0.58f, 0.45f);
+            var borderW = hovered ? 3 : 2;
             return new()
             {
                 BgColor = on
@@ -77,17 +81,19 @@ namespace STS2RitsuLib.Settings
                     : hovered
                         ? new(0.18f, 0.22f, 0.28f, 0.98f)
                         : new Color(0.12f, 0.15f, 0.19f, 0.98f),
-                BorderColor = on
-                    ? new(0.52f, 0.87f, 0.69f, 0.95f)
-                    : new Color(0.34f, 0.46f, 0.58f, 0.45f),
-                BorderWidthLeft = 2,
-                BorderWidthTop = 2,
-                BorderWidthRight = 2,
-                BorderWidthBottom = 2,
+                BorderColor = borderColor,
+                BorderWidthLeft = borderW,
+                BorderWidthTop = borderW,
+                BorderWidthRight = borderW,
+                BorderWidthBottom = borderW,
                 CornerRadiusTopLeft = ModSettingsUiMetrics.CornerRadius,
                 CornerRadiusTopRight = ModSettingsUiMetrics.CornerRadius,
                 CornerRadiusBottomRight = ModSettingsUiMetrics.CornerRadius,
                 CornerRadiusBottomLeft = ModSettingsUiMetrics.CornerRadius,
+                ShadowColor = hovered
+                    ? new Color(borderColor.R, borderColor.G, borderColor.B, 0.42f)
+                    : new Color(0f, 0f, 0f, 0.12f),
+                ShadowSize = hovered ? 7 : 2,
                 ContentMarginLeft = 14,
                 ContentMarginTop = 8,
                 ContentMarginRight = 14,
@@ -119,20 +125,22 @@ namespace STS2RitsuLib.Settings
 
     internal sealed partial class ModSettingsSliderControl : HBoxContainer
     {
-        private readonly float _bindingValueAtConstruct;
-        private readonly Func<float, string>? _formatter;
-        private readonly Action<float>? _onChanged;
+        private const double SliderEpsilon = 1e-9;
+
+        private readonly double _bindingValueAtConstruct;
+        private readonly Func<double, string>? _formatter;
+        private readonly Action<double>? _onChanged;
         private HSlider? _slider;
         private bool _suppressCallbacks;
         private LineEdit? _valueEdit;
 
         public ModSettingsSliderControl(
-            float initialValue,
-            float minValue,
-            float maxValue,
-            float step,
-            Func<float, string> formatter,
-            Action<float> onChanged)
+            double initialValue,
+            double minValue,
+            double maxValue,
+            double step,
+            Func<double, string> formatter,
+            Action<double> onChanged)
         {
             _formatter = formatter;
             _onChanged = onChanged;
@@ -203,6 +211,212 @@ namespace STS2RitsuLib.Settings
             if (_slider == null)
                 return;
 
+            RefreshValueLabel(_slider.Value);
+            _slider.ValueChanged += OnSliderValueChanged;
+            _slider.DragEnded += _ => _slider.ReleaseFocus();
+            if (_valueEdit == null) return;
+            _valueEdit.TextSubmitted += OnValueSubmitted;
+            _valueEdit.FocusExited += OnValueFocusExited;
+
+            SyncBindingToCanonicalSliderValue(_bindingValueAtConstruct);
+        }
+
+        private void OnSliderValueChanged(double value)
+        {
+            if (_suppressCallbacks)
+                return;
+            RefreshValueLabel(value);
+            _onChanged?.Invoke(value);
+        }
+
+        public void SetValue(double value)
+        {
+            if (_slider == null)
+                return;
+
+            var min = _slider.MinValue;
+            var max = _slider.MaxValue;
+            var normalized = NormalizeSliderValue(value, min, max, _slider.Step);
+
+            _suppressCallbacks = true;
+            _slider.Value = normalized;
+            var actual = _slider.Value;
+            RefreshValueLabel(actual);
+            _suppressCallbacks = false;
+
+            if (!IsApproxEqual(value, actual))
+                _onChanged?.Invoke(actual);
+        }
+
+        private static double NormalizeSliderValue(double value, double minValue, double maxValue, double step)
+        {
+            var v = Math.Clamp(value, minValue, maxValue);
+            if (step > 0d)
+                v = Mathf.Snapped(v, step);
+            return v;
+        }
+
+        private static bool IsApproxEqual(double a, double b)
+        {
+            return Math.Abs(a - b) <= SliderEpsilon * Math.Max(1d, Math.Max(Math.Abs(a), Math.Abs(b)));
+        }
+
+        private void SyncBindingToCanonicalSliderValue(double bindingClaimed)
+        {
+            if (_slider == null)
+                return;
+
+            var onSlider = _slider.Value;
+            if (!IsApproxEqual(bindingClaimed, onSlider))
+                _onChanged?.Invoke(onSlider);
+        }
+
+        private void RefreshValueLabel(double value)
+        {
+            if (_valueEdit == null || _formatter == null)
+                return;
+            _valueEdit.Text = _formatter(value);
+        }
+
+        private void OnValueSubmitted(string text)
+        {
+            TryApplyTypedValue(text);
+            _valueEdit?.ReleaseFocus();
+        }
+
+        private void OnValueFocusExited()
+        {
+            if (_valueEdit != null)
+                TryApplyTypedValue(_valueEdit.Text);
+        }
+
+        private void TryApplyTypedValue(string text)
+        {
+            if (_slider == null)
+                return;
+
+            if (!double.TryParse(text, NumberStyles.Float,
+                    CultureInfo.InvariantCulture, out var value) &&
+                !double.TryParse(text, out value))
+            {
+                RefreshValueLabel(_slider.Value);
+                return;
+            }
+
+            value = NormalizeSliderValue(value, _slider.MinValue, _slider.MaxValue, _slider.Step);
+            _slider.Value = value;
+        }
+
+        private static StyleBoxFlat CreateSliderStyle(bool highlighted)
+        {
+            return new()
+            {
+                BgColor = highlighted
+                    ? new(0.48f, 0.73f, 0.92f, 0.95f)
+                    : new Color(0.26f, 0.34f, 0.43f, 0.98f),
+                CornerRadiusTopLeft = ModSettingsUiMetrics.CornerRadius,
+                CornerRadiusTopRight = ModSettingsUiMetrics.CornerRadius,
+                CornerRadiusBottomRight = ModSettingsUiMetrics.CornerRadius,
+                CornerRadiusBottomLeft = ModSettingsUiMetrics.CornerRadius,
+                ContentMarginLeft = 8,
+                ContentMarginTop = 6,
+                ContentMarginRight = 8,
+                ContentMarginBottom = 6,
+            };
+        }
+    }
+
+    /// <summary>
+    ///     Legacy <see cref="float" /> slider row: Godot <see cref="HSlider" /> still uses <see cref="double" /> values,
+    ///     but comparisons and binding I/O stay in <see cref="float" /> space to match obsolete
+    ///     <c>AddSlider(..., IModSettingsValueBinding&lt;float&gt;, ...)</c> mods without double bridges.
+    /// </summary>
+    internal sealed partial class ModSettingsFloatSliderControl : HBoxContainer
+    {
+        private readonly float _bindingValueAtConstruct;
+        private readonly Func<float, string>? _formatter;
+        private readonly Action<float>? _onChanged;
+        private HSlider? _slider;
+        private bool _suppressCallbacks;
+        private LineEdit? _valueEdit;
+
+        public ModSettingsFloatSliderControl(
+            float initialValue,
+            float minValue,
+            float maxValue,
+            float step,
+            Func<float, string> formatter,
+            Action<float> onChanged)
+        {
+            _formatter = formatter;
+            _onChanged = onChanged;
+            _bindingValueAtConstruct = initialValue;
+
+            CustomMinimumSize = new(ModSettingsUiMetrics.SliderRowMinWidth, ModSettingsUiMetrics.EntryValueMinHeight);
+            SizeFlagsHorizontal = SizeFlags.ShrinkEnd;
+            SizeFlagsVertical = SizeFlags.ShrinkCenter;
+            Alignment = AlignmentMode.Center;
+            MouseFilter = MouseFilterEnum.Ignore;
+            AddThemeConstantOverride("separation", 8);
+
+            var valueEdit = new LineEdit
+            {
+                Name = "SliderValue",
+                CustomMinimumSize = new(ModSettingsUiMetrics.SliderValueFieldWidth,
+                    ModSettingsUiMetrics.SliderValueFieldHeight),
+                SizeFlagsHorizontal = SizeFlags.ShrinkBegin,
+                SizeFlagsVertical = SizeFlags.ShrinkCenter,
+                Alignment = HorizontalAlignment.Center,
+                SelectAllOnFocus = true,
+                CaretBlink = true,
+            };
+            ModSettingsUiControlTheming.ApplyEntryLineEditValueFieldTheme(valueEdit,
+                ModSettingsUiResources.KreonRegular);
+            AddChild(valueEdit);
+            _valueEdit = valueEdit;
+
+            var sliderPanel = new MarginContainer
+            {
+                SizeFlagsHorizontal = SizeFlags.ExpandFill,
+                SizeFlagsVertical = SizeFlags.ShrinkCenter,
+                CustomMinimumSize = new(ModSettingsUiMetrics.SliderTrackMinWidth,
+                    ModSettingsUiMetrics.SliderValueFieldHeight),
+                MouseFilter = MouseFilterEnum.Ignore,
+            };
+            sliderPanel.AddThemeConstantOverride("margin_top", 4);
+            sliderPanel.AddThemeConstantOverride("margin_bottom", 4);
+            AddChild(sliderPanel);
+
+            var normalizedInitial = NormalizeSliderValue(initialValue, minValue, maxValue, step);
+            var slider = new HSlider
+            {
+                Name = "Slider",
+                SizeFlagsHorizontal = SizeFlags.ExpandFill,
+                SizeFlagsVertical = SizeFlags.ShrinkCenter,
+                CustomMinimumSize = new(0f, 24f),
+                FocusMode = FocusModeEnum.Click,
+                MouseFilter = MouseFilterEnum.Pass,
+                MinValue = minValue,
+                MaxValue = maxValue,
+                Step = step,
+                Value = normalizedInitial,
+            };
+            slider.AddThemeStyleboxOverride("slider", CreateFloatSliderStyle(false));
+            slider.AddThemeStyleboxOverride("grabber_area", CreateFloatSliderStyle(false));
+            slider.AddThemeStyleboxOverride("grabber_area_highlight", CreateFloatSliderStyle(true));
+            sliderPanel.AddChild(slider);
+            _slider = slider;
+        }
+
+        public ModSettingsFloatSliderControl()
+        {
+        }
+
+        public override void _Ready()
+        {
+            if (_slider == null)
+                return;
+
             RefreshValueLabel((float)_slider.Value);
             _slider.ValueChanged += OnSliderValueChanged;
             _slider.DragEnded += _ => _slider.ReleaseFocus();
@@ -217,9 +431,9 @@ namespace STS2RitsuLib.Settings
         {
             if (_suppressCallbacks)
                 return;
-            var floatValue = (float)value;
-            RefreshValueLabel(floatValue);
-            _onChanged?.Invoke(floatValue);
+            var f = (float)value;
+            RefreshValueLabel(f);
+            _onChanged?.Invoke(f);
         }
 
         public void SetValue(float value)
@@ -229,7 +443,8 @@ namespace STS2RitsuLib.Settings
 
             var min = (float)_slider.MinValue;
             var max = (float)_slider.MaxValue;
-            var normalized = NormalizeSliderValue(value, min, max, (float)_slider.Step);
+            var step = (float)_slider.Step;
+            var normalized = NormalizeSliderValue(value, min, max, step);
 
             _suppressCallbacks = true;
             _slider.Value = normalized;
@@ -296,7 +511,7 @@ namespace STS2RitsuLib.Settings
             _slider.Value = value;
         }
 
-        private static StyleBoxFlat CreateSliderStyle(bool highlighted)
+        private static StyleBoxFlat CreateFloatSliderStyle(bool highlighted)
         {
             return new()
             {
@@ -2281,20 +2496,25 @@ namespace STS2RitsuLib.Settings
                 _ => selected || hovered ? new(0.13f, 0.21f, 0.28f, 0.985f) : new Color(0.10f, 0.16f, 0.22f, 0.97f),
             };
 
+            var shadowSize = hovered ? 7 : 2;
+            var shadowColor = hovered
+                ? new(borderColor.R, borderColor.G, borderColor.B, 0.42f)
+                : new Color(0f, 0f, 0f, 0.12f);
+
             return new()
             {
                 BgColor = backgroundColor,
                 BorderColor = borderColor,
-                BorderWidthLeft = 1,
-                BorderWidthTop = 1,
-                BorderWidthRight = 1,
-                BorderWidthBottom = 1,
+                BorderWidthLeft = hovered ? 2 : 1,
+                BorderWidthTop = hovered ? 2 : 1,
+                BorderWidthRight = hovered ? 2 : 1,
+                BorderWidthBottom = hovered ? 2 : 1,
                 CornerRadiusTopLeft = ModSettingsUiMetrics.CornerRadius,
                 CornerRadiusTopRight = ModSettingsUiMetrics.CornerRadius,
                 CornerRadiusBottomRight = ModSettingsUiMetrics.CornerRadius,
                 CornerRadiusBottomLeft = ModSettingsUiMetrics.CornerRadius,
-                ShadowColor = new(0f, 0f, 0f, 0.12f),
-                ShadowSize = 2,
+                ShadowColor = shadowColor,
+                ShadowSize = shadowSize,
                 ContentMarginLeft = 14,
                 ContentMarginTop = 8,
                 ContentMarginRight = 14,

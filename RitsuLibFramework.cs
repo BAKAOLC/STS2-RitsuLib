@@ -303,6 +303,42 @@ namespace STS2RitsuLib
         }
 
         /// <summary>
+        ///     Sets ordering for this mod&apos;s group in the RitsuLib mod settings sidebar (lower first). Mods without a
+        ///     value use <c>0</c> and sort by display name. Prefer <see cref="ModSettingsPageBuilder.WithModSidebarOrder" /> when
+        ///     registering pages.
+        /// </summary>
+        public static void RegisterModSettingsSidebarOrder(string modId, int order)
+        {
+            ModSettingsRegistry.RegisterModSidebarOrder(modId, order);
+        }
+
+        /// <summary>
+        ///     Overrides sort order for a registered page among siblings (same mod and parent page).
+        /// </summary>
+        public static void RegisterModSettingsPageOrder(string modId, string pageId, int sortOrder)
+        {
+            ModSettingsRegistry.RegisterPageSortOrder(modId, pageId, sortOrder);
+        }
+
+        /// <summary>
+        ///     Places <paramref name="pageId" /> after <paramref name="afterPageId" /> in the sidebar for this mod.
+        /// </summary>
+        public static bool TryRegisterModSettingsPageOrderAfter(string modId, string pageId, string afterPageId,
+            int gap = 1)
+        {
+            return ModSettingsRegistry.TryRegisterPageSortOrderAfter(modId, pageId, afterPageId, gap);
+        }
+
+        /// <summary>
+        ///     Places <paramref name="pageId" /> before <paramref name="beforePageId" /> in the sidebar for this mod.
+        /// </summary>
+        public static bool TryRegisterModSettingsPageOrderBefore(string modId, string pageId, string beforePageId,
+            int gap = 1)
+        {
+            return ModSettingsRegistry.TryRegisterPageSortOrderBefore(modId, pageId, beforePageId, gap);
+        }
+
+        /// <summary>
         ///     Returns all registered mod settings pages (same snapshot as <see cref="ModSettingsRegistry.GetPages" />).
         /// </summary>
         public static IReadOnlyList<ModSettingsPage> GetRegisteredModSettings()

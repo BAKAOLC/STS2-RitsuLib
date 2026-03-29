@@ -91,6 +91,36 @@ namespace STS2RitsuLib.Settings
                 control,
                 entry.Binding);
 
+            string FormatValue(double value)
+            {
+                return entry.ValueFormatter?.Invoke(value) ?? value.ToString("0.##");
+            }
+        }
+
+        public static Control CreateFloatSliderEntry(ModSettingsUiContext context,
+            FloatSliderModSettingsEntryDefinition entry)
+        {
+            var control = new ModSettingsFloatSliderControl(
+                entry.Binding.Read(),
+                entry.MinValue,
+                entry.MaxValue,
+                entry.Step,
+                FormatValue,
+                value =>
+                {
+                    entry.Binding.Write(value);
+                    context.MarkDirty(entry.Binding);
+                    context.RequestRefresh();
+                });
+            RegisterRefreshWhenAlive(context, control, () => control.SetValue(entry.Binding.Read()));
+
+            return CreateSettingLine(
+                context,
+                () => ModSettingsUiContext.Resolve(entry.Label),
+                () => ModSettingsUiContext.ResolveBindingDescriptionBody(entry.Description),
+                control,
+                entry.Binding);
+
             string FormatValue(float value)
             {
                 return entry.ValueFormatter?.Invoke(value) ?? value.ToString("0.##");
@@ -353,7 +383,7 @@ namespace STS2RitsuLib.Settings
                 control,
                 entry.Binding);
 
-            string FormatValue(float value)
+            string FormatValue(double value)
             {
                 var intValue = Mathf.RoundToInt(value);
                 return entry.ValueFormatter?.Invoke(intValue) ?? intValue.ToString();

@@ -431,6 +431,7 @@ namespace STS2RitsuLib.Settings
 
         private void Rebuild()
         {
+            ModSettingsBaseLibReflectionMirror.TryRegisterMirroredPages();
             ApplyStaticTexts();
             RebuildSidebar();
             RebuildContent();
@@ -446,7 +447,9 @@ namespace STS2RitsuLib.Settings
             var rootPages = ModSettingsRegistry.GetPages()
                 .Where(page => string.IsNullOrWhiteSpace(page.ParentPageId))
                 .GroupBy(page => page.ModId, StringComparer.OrdinalIgnoreCase)
-                .OrderBy(group => group.Min(page => page.SortOrder))
+                .OrderBy(group => ModSettingsRegistry.GetModSidebarOrder(group.Key))
+                .ThenBy(group => ModSettingsLocalization.ResolveModName(group.Key, group.Key),
+                    StringComparer.OrdinalIgnoreCase)
                 .ThenBy(group => group.Key, StringComparer.OrdinalIgnoreCase)
                 .ToArray();
 
@@ -467,7 +470,7 @@ namespace STS2RitsuLib.Settings
                 var modId = group.Key;
                 var pages = ModSettingsRegistry.GetPages()
                     .Where(page => string.Equals(page.ModId, modId, StringComparison.OrdinalIgnoreCase))
-                    .OrderBy(page => page.SortOrder)
+                    .OrderBy(ModSettingsRegistry.GetEffectivePageSortOrder)
                     .ThenBy(page => page.Id, StringComparer.OrdinalIgnoreCase)
                     .ToArray();
 
@@ -564,7 +567,7 @@ namespace STS2RitsuLib.Settings
             var rootPages = ModSettingsRegistry.GetPages()
                 .Where(page => string.Equals(page.ModId, _selectedModId, StringComparison.OrdinalIgnoreCase) &&
                                string.IsNullOrWhiteSpace(page.ParentPageId))
-                .OrderBy(page => page.SortOrder)
+                .OrderBy(ModSettingsRegistry.GetEffectivePageSortOrder)
                 .ThenBy(page => page.Id, StringComparer.OrdinalIgnoreCase)
                 .ToArray();
 
@@ -670,7 +673,7 @@ namespace STS2RitsuLib.Settings
 
             foreach (var child in pages.Where(candidate =>
                              string.Equals(candidate.ParentPageId, page.Id, StringComparison.OrdinalIgnoreCase))
-                         .OrderBy(candidate => candidate.SortOrder)
+                         .OrderBy(ModSettingsRegistry.GetEffectivePageSortOrder)
                          .ThenBy(candidate => candidate.Id, StringComparer.OrdinalIgnoreCase))
                 container.AddChild(CreateSidebarPageTreeButton(pages, child, depth + 1));
 
