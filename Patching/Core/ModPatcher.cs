@@ -390,11 +390,13 @@ namespace STS2RitsuLib.Patching.Core
                     if (result.ModPatchInfo.IsCritical)
                         criticalFailureCount++;
 
-                    logger.Error($"{_logPrefix}[{importance}] {result.ModPatchInfo.Id} - Failed ✗");
-                    logger.Error($"{_logPrefix}  Description: {result.ModPatchInfo.Description}");
-                    logger.Error($"{_logPrefix}  Error: {result.ErrorMessage}");
-
-                    if (result.Exception != null) logger.Error($"{_logPrefix}  Exception: {result.Exception}");
+                    var failureLog = new StringBuilder();
+                    failureLog.AppendLine($"{_logPrefix}[{importance}] {result.ModPatchInfo.Id} - Failed ✗");
+                    failureLog.AppendLine($"{_logPrefix}  Description: {result.ModPatchInfo.Description}");
+                    failureLog.AppendLine($"{_logPrefix}  Error: {result.ErrorMessage}");
+                    if (result.Exception != null)
+                        failureLog.Append($"{_logPrefix}  Exception: {result.Exception}");
+                    logger.Error(failureLog.ToString());
                 }
             }
 

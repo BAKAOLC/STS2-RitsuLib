@@ -331,20 +331,20 @@ namespace STS2RitsuLib.Scaffolding.Content
     }
 
     /// <summary>
-    ///     Registers an <see cref="ArchaicTooth" /> transcendence mapping with explicit ids/templates.
+    ///     Registers an <see cref="ArchaicTooth" /> transcendence mapping with explicit starter id and ancient card type.
     /// </summary>
     /// <param name="StarterCardId">Deck card model id to match.</param>
-    /// <param name="AncientCardTemplate">Ancient card prototype (same usage as vanilla table values).</param>
+    /// <param name="AncientCardType">Concrete ancient card type (resolved via <see cref="ModelDb" /> at runtime).</param>
     public sealed record ArchaicToothTranscendenceByIdRegistrationEntry(
         ModelId StarterCardId,
-        CardModel AncientCardTemplate) : IContentRegistrationEntry
+        Type AncientCardType) : IContentRegistrationEntry
     {
         /// <inheritdoc />
         public void Register(ModContentRegistry registry)
         {
             RitsuLibFramework.RegisterArchaicToothTranscendenceMapping(
                 StarterCardId,
-                AncientCardTemplate,
+                AncientCardType,
                 registry.ModId);
         }
     }
@@ -367,20 +367,20 @@ namespace STS2RitsuLib.Scaffolding.Content
     }
 
     /// <summary>
-    ///     Registers a <see cref="TouchOfOrobas" /> refinement mapping with explicit ids/templates.
+    ///     Registers a <see cref="TouchOfOrobas" /> refinement mapping with explicit starter id and upgraded relic type.
     /// </summary>
     /// <param name="StarterRelicId">Starter relic id to match.</param>
-    /// <param name="UpgradedRelicTemplate">Replacement relic prototype.</param>
+    /// <param name="UpgradedRelicType">Concrete upgraded relic type (resolved via <see cref="ModelDb" /> at runtime).</param>
     public sealed record TouchOfOrobasRefinementByIdRegistrationEntry(
         ModelId StarterRelicId,
-        RelicModel UpgradedRelicTemplate) : IContentRegistrationEntry
+        Type UpgradedRelicType) : IContentRegistrationEntry
     {
         /// <inheritdoc />
         public void Register(ModContentRegistry registry)
         {
             RitsuLibFramework.RegisterTouchOfOrobasRefinementMapping(
                 StarterRelicId,
-                UpgradedRelicTemplate,
+                UpgradedRelicType,
                 registry.ModId);
         }
     }

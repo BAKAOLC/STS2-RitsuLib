@@ -467,16 +467,16 @@ namespace STS2RitsuLib.Scaffolding.Content
         }
 
         /// <summary>
-        ///     Queues ArchaicTooth transcendence registration by starter card id and ancient card template, using this
-        ///     pack’s mod id.
+        ///     Queues ArchaicTooth transcendence registration by starter card id and ancient card type, using this pack’s
+        ///     mod id.
         /// </summary>
-        public ModContentPackBuilder ArchaicToothTranscendence(ModelId starterCardId, CardModel ancientCardTemplate)
+        public ModContentPackBuilder ArchaicToothTranscendence(ModelId starterCardId, Type ancientCardType)
         {
-            ArgumentNullException.ThrowIfNull(ancientCardTemplate);
+            ArgumentNullException.ThrowIfNull(ancientCardType);
             return AddStep(ctx =>
                 RitsuLibFramework.RegisterArchaicToothTranscendenceMapping(
                     starterCardId,
-                    ancientCardTemplate,
+                    ancientCardType,
                     ctx.ModId));
         }
 
@@ -493,16 +493,16 @@ namespace STS2RitsuLib.Scaffolding.Content
         }
 
         /// <summary>
-        ///     Queues TouchOfOrobas refinement registration by starter relic id and upgraded relic template, using this
-        ///     pack’s mod id.
+        ///     Queues TouchOfOrobas refinement registration by starter relic id and upgraded relic type, using this pack’s
+        ///     mod id.
         /// </summary>
-        public ModContentPackBuilder TouchOfOrobasRefinement(ModelId starterRelicId, RelicModel upgradedRelicTemplate)
+        public ModContentPackBuilder TouchOfOrobasRefinement(ModelId starterRelicId, Type upgradedRelicType)
         {
-            ArgumentNullException.ThrowIfNull(upgradedRelicTemplate);
+            ArgumentNullException.ThrowIfNull(upgradedRelicType);
             return AddStep(ctx =>
                 RitsuLibFramework.RegisterTouchOfOrobasRefinementMapping(
                     starterRelicId,
-                    upgradedRelicTemplate,
+                    upgradedRelicType,
                     ctx.ModId));
         }
 
