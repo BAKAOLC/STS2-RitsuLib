@@ -207,11 +207,75 @@ namespace STS2RitsuLib.Scaffolding.Content
         }
 
         /// <summary>
+        ///     Queues <see cref="ModContentRegistry.RegisterEnchantment{TEnchantment}" />.
+        /// </summary>
+        public ModContentPackBuilder Enchantment<TEnchantment>() where TEnchantment : EnchantmentModel
+        {
+            return AddStep(ctx => ctx.Content.RegisterEnchantment<TEnchantment>());
+        }
+
+        /// <summary>
+        ///     Queues <see cref="ModContentRegistry.RegisterAffliction{TAffliction}" />.
+        /// </summary>
+        public ModContentPackBuilder Affliction<TAffliction>() where TAffliction : AfflictionModel
+        {
+            return AddStep(ctx => ctx.Content.RegisterAffliction<TAffliction>());
+        }
+
+        /// <summary>
+        ///     Queues <see cref="ModContentRegistry.RegisterAchievement{TAchievement}" />.
+        /// </summary>
+        public ModContentPackBuilder Achievement<TAchievement>() where TAchievement : AchievementModel
+        {
+            return AddStep(ctx => ctx.Content.RegisterAchievement<TAchievement>());
+        }
+
+        /// <summary>
+        ///     Queues <see cref="ModContentRegistry.RegisterSingleton{TSingleton}" />.
+        /// </summary>
+        public ModContentPackBuilder Singleton<TSingleton>() where TSingleton : SingletonModel
+        {
+            return AddStep(ctx => ctx.Content.RegisterSingleton<TSingleton>());
+        }
+
+        /// <summary>
+        ///     Queues <see cref="ModContentRegistry.RegisterGoodModifier{TModifier}" />.
+        /// </summary>
+        public ModContentPackBuilder GoodModifier<TModifier>() where TModifier : ModifierModel
+        {
+            return AddStep(ctx => ctx.Content.RegisterGoodModifier<TModifier>());
+        }
+
+        /// <summary>
+        ///     Queues <see cref="ModContentRegistry.RegisterBadModifier{TModifier}" />.
+        /// </summary>
+        public ModContentPackBuilder BadModifier<TModifier>() where TModifier : ModifierModel
+        {
+            return AddStep(ctx => ctx.Content.RegisterBadModifier<TModifier>());
+        }
+
+        /// <summary>
         ///     Queues <see cref="ModContentRegistry.RegisterSharedCardPool{TPool}" />.
         /// </summary>
         public ModContentPackBuilder SharedCardPool<TPool>() where TPool : CardPoolModel
         {
             return AddStep(ctx => ctx.Content.RegisterSharedCardPool<TPool>());
+        }
+
+        /// <summary>
+        ///     Queues <see cref="ModContentRegistry.RegisterSharedRelicPool{TPool}" />.
+        /// </summary>
+        public ModContentPackBuilder SharedRelicPool<TPool>() where TPool : RelicPoolModel
+        {
+            return AddStep(ctx => ctx.Content.RegisterSharedRelicPool<TPool>());
+        }
+
+        /// <summary>
+        ///     Queues <see cref="ModContentRegistry.RegisterSharedPotionPool{TPool}" />.
+        /// </summary>
+        public ModContentPackBuilder SharedPotionPool<TPool>() where TPool : PotionPoolModel
+        {
+            return AddStep(ctx => ctx.Content.RegisterSharedPotionPool<TPool>());
         }
 
         /// <summary>

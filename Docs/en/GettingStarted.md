@@ -53,6 +53,8 @@ public static class MyMod
 }
 ```
 
+For the full mapping of fluent methods, `ModContentRegistry` calls, and `IContentRegistrationEntry` types (enchantments, achievements, shared pools, manifests, etc.), see [Content Packs & Registries](ContentPacksAndRegistries.md).
+
 `CreatePatcher` takes a `patcherName` used for log identification. A mod may create multiple patchers. See [Patching Guide](PatchingGuide.md) for the full patch workflow.
 
 If your mod uses custom Godot C# scene scripts, keep `EnsureGodotScriptsRegistered(...)` in your initializer. See [Godot Scene Authoring](GodotSceneAuthoring.md).

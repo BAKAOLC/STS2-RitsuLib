@@ -140,6 +140,118 @@ namespace STS2RitsuLib.Scaffolding.Content
     }
 
     /// <summary>
+    ///     Registers a mod enchantment model type.
+    /// </summary>
+    /// <typeparam name="TEnchantment">Concrete <see cref="EnchantmentModel" />.</typeparam>
+    public sealed class EnchantmentRegistrationEntry<TEnchantment> : IContentRegistrationEntry
+        where TEnchantment : EnchantmentModel
+    {
+        /// <inheritdoc />
+        public void Register(ModContentRegistry registry)
+        {
+            registry.RegisterEnchantment<TEnchantment>();
+        }
+    }
+
+    /// <summary>
+    ///     Registers a mod affliction model type.
+    /// </summary>
+    /// <typeparam name="TAffliction">Concrete <see cref="AfflictionModel" />.</typeparam>
+    public sealed class AfflictionRegistrationEntry<TAffliction> : IContentRegistrationEntry
+        where TAffliction : AfflictionModel
+    {
+        /// <inheritdoc />
+        public void Register(ModContentRegistry registry)
+        {
+            registry.RegisterAffliction<TAffliction>();
+        }
+    }
+
+    /// <summary>
+    ///     Registers a mod achievement model type.
+    /// </summary>
+    /// <typeparam name="TAchievement">Concrete <see cref="AchievementModel" />.</typeparam>
+    public sealed class AchievementRegistrationEntry<TAchievement> : IContentRegistrationEntry
+        where TAchievement : AchievementModel
+    {
+        /// <inheritdoc />
+        public void Register(ModContentRegistry registry)
+        {
+            registry.RegisterAchievement<TAchievement>();
+        }
+    }
+
+    /// <summary>
+    ///     Registers a mod singleton model type.
+    /// </summary>
+    /// <typeparam name="TSingleton">Concrete <see cref="SingletonModel" />.</typeparam>
+    public sealed class SingletonRegistrationEntry<TSingleton> : IContentRegistrationEntry
+        where TSingleton : SingletonModel
+    {
+        /// <inheritdoc />
+        public void Register(ModContentRegistry registry)
+        {
+            registry.RegisterSingleton<TSingleton>();
+        }
+    }
+
+    /// <summary>
+    ///     Registers a mod modifier as a good daily modifier.
+    /// </summary>
+    /// <typeparam name="TModifier">Concrete <see cref="ModifierModel" />.</typeparam>
+    public sealed class GoodModifierRegistrationEntry<TModifier> : IContentRegistrationEntry
+        where TModifier : ModifierModel
+    {
+        /// <inheritdoc />
+        public void Register(ModContentRegistry registry)
+        {
+            registry.RegisterGoodModifier<TModifier>();
+        }
+    }
+
+    /// <summary>
+    ///     Registers a mod modifier as a bad daily modifier.
+    /// </summary>
+    /// <typeparam name="TModifier">Concrete <see cref="ModifierModel" />.</typeparam>
+    public sealed class BadModifierRegistrationEntry<TModifier> : IContentRegistrationEntry
+        where TModifier : ModifierModel
+    {
+        /// <inheritdoc />
+        public void Register(ModContentRegistry registry)
+        {
+            registry.RegisterBadModifier<TModifier>();
+        }
+    }
+
+    /// <summary>
+    ///     Registers a shared relic pool model type.
+    /// </summary>
+    /// <typeparam name="TPool">Concrete <see cref="RelicPoolModel" />.</typeparam>
+    public sealed class SharedRelicPoolRegistrationEntry<TPool> : IContentRegistrationEntry
+        where TPool : RelicPoolModel
+    {
+        /// <inheritdoc />
+        public void Register(ModContentRegistry registry)
+        {
+            registry.RegisterSharedRelicPool<TPool>();
+        }
+    }
+
+    /// <summary>
+    ///     Registers a shared potion pool model type.
+    /// </summary>
+    /// <typeparam name="TPool">Concrete <see cref="PotionPoolModel" />.</typeparam>
+    public sealed class SharedPotionPoolRegistrationEntry<TPool> : IContentRegistrationEntry
+        where TPool : PotionPoolModel
+    {
+        /// <inheritdoc />
+        public void Register(ModContentRegistry registry)
+        {
+            registry.RegisterSharedPotionPool<TPool>();
+        }
+    }
+
+    /// <summary>
     ///     Registers a mod monster model type.
     /// </summary>
     /// <typeparam name="TMonster">Concrete <see cref="MonsterModel" />.</typeparam>

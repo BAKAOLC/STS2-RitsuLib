@@ -53,6 +53,8 @@ public static class MyMod
 }
 ```
 
+链式方法、`ModContentRegistry` 与 `IContentRegistrationEntry`（附魔、成就、共享池、Manifest 等）的完整对照见 [内容包与注册器](ContentPacksAndRegistries.md)。
+
 `CreatePatcher` 的 `patcherName` 参数用于日志标识。同一个 Mod 可以创建多个 Patcher。完整补丁写法见 [补丁系统](PatchingGuide.md)。
 
 如果你的 Mod 使用了自定义 Godot C# 场景脚本，请把 `EnsureGodotScriptsRegistered(...)` 保留在初始化入口里。详见 [Godot 场景编写说明](GodotSceneAuthoring.md)。
