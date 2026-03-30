@@ -48,6 +48,14 @@ namespace STS2RitsuLib.Content
         private static readonly Dictionary<Type, HashSet<Type>> RegisteredActEncounters = [];
         private static readonly Dictionary<Type, HashSet<Type>> RegisteredActEvents = [];
         private static readonly Dictionary<Type, HashSet<Type>> RegisteredActAncients = [];
+        private static readonly HashSet<Type> RegisteredEnchantments = [];
+        private static readonly HashSet<Type> RegisteredAfflictions = [];
+        private static readonly HashSet<Type> RegisteredAchievements = [];
+        private static readonly HashSet<Type> RegisteredSingletons = [];
+        private static readonly HashSet<Type> RegisteredSharedRelicPools = [];
+        private static readonly HashSet<Type> RegisteredSharedPotionPools = [];
+        private static readonly HashSet<Type> RegisteredGoodModifiers = [];
+        private static readonly HashSet<Type> RegisteredBadModifiers = [];
         private static readonly Dictionary<Type, string> RegisteredTypeOwners = [];
 
         private readonly Logger _logger;
@@ -255,12 +263,84 @@ namespace STS2RitsuLib.Content
         }
 
         /// <summary>
+        ///     Registers a mod enchantment model for RitsuLib tracking, fixed <see cref="ModelDb" /> entry identity, dynamic
+        ///     injection, and inclusion in patched <see cref="ModelDb.DebugEnchantments" />.
+        /// </summary>
+        public void RegisterEnchantment<TEnchantment>() where TEnchantment : EnchantmentModel
+        {
+            RegisterStandaloneModel(RegisteredEnchantments, typeof(TEnchantment), typeof(EnchantmentModel),
+                "enchantment");
+        }
+
+        /// <summary>
+        ///     Registers a mod affliction model for RitsuLib tracking, fixed entry identity, dynamic injection, and patched
+        ///     <see cref="ModelDb.DebugAfflictions" />.
+        /// </summary>
+        public void RegisterAffliction<TAffliction>() where TAffliction : AfflictionModel
+        {
+            RegisterStandaloneModel(RegisteredAfflictions, typeof(TAffliction), typeof(AfflictionModel), "affliction");
+        }
+
+        /// <summary>
+        ///     Registers a mod achievement model for fixed entry identity, dynamic injection, and patched
+        ///     <see cref="ModelDb.Achievements" />.
+        /// </summary>
+        public void RegisterAchievement<TAchievement>() where TAchievement : AchievementModel
+        {
+            RegisterStandaloneModel(RegisteredAchievements, typeof(TAchievement), typeof(AchievementModel),
+                "achievement");
+        }
+
+        /// <summary>
+        ///     Registers a mod singleton model for fixed entry identity and dynamic injection (resolved via
+        ///     <see cref="ModelDb.Singleton{T}" />).
+        /// </summary>
+        public void RegisterSingleton<TSingleton>() where TSingleton : SingletonModel
+        {
+            RegisterStandaloneModel(RegisteredSingletons, typeof(TSingleton), typeof(SingletonModel), "singleton");
+        }
+
+        /// <summary>
+        ///     Registers a mod modifier as a &quot;good&quot; daily modifier for patched <see cref="ModelDb.GoodModifiers" />.
+        /// </summary>
+        public void RegisterGoodModifier<TModifier>() where TModifier : ModifierModel
+        {
+            RegisterStandaloneModel(RegisteredGoodModifiers, typeof(TModifier), typeof(ModifierModel), "good modifier");
+        }
+
+        /// <summary>
+        ///     Registers a mod modifier as a &quot;bad&quot; daily modifier for patched <see cref="ModelDb.BadModifiers" />.
+        /// </summary>
+        public void RegisterBadModifier<TModifier>() where TModifier : ModifierModel
+        {
+            RegisterStandaloneModel(RegisteredBadModifiers, typeof(TModifier), typeof(ModifierModel), "bad modifier");
+        }
+
+        /// <summary>
         ///     Registers a shared card pool model for inclusion in <see cref="ModelDb.AllSharedCardPools" />.
         /// </summary>
         public void RegisterSharedCardPool<TPool>() where TPool : CardPoolModel
         {
             RegisterStandaloneModel(RegisteredSharedCardPools, typeof(TPool), typeof(CardPoolModel),
                 "shared card pool");
+        }
+
+        /// <summary>
+        ///     Registers a shared relic pool model for inclusion in patched <see cref="ModelDb.AllRelicPools" />.
+        /// </summary>
+        public void RegisterSharedRelicPool<TPool>() where TPool : RelicPoolModel
+        {
+            RegisterStandaloneModel(RegisteredSharedRelicPools, typeof(TPool), typeof(RelicPoolModel),
+                "shared relic pool");
+        }
+
+        /// <summary>
+        ///     Registers a shared potion pool model for inclusion in patched <see cref="ModelDb.AllPotionPools" />.
+        /// </summary>
+        public void RegisterSharedPotionPool<TPool>() where TPool : PotionPoolModel
+        {
+            RegisterStandaloneModel(RegisteredSharedPotionPools, typeof(TPool), typeof(PotionPoolModel),
+                "shared potion pool");
         }
 
         /// <summary>
@@ -364,6 +444,44 @@ namespace STS2RitsuLib.Content
             return AppendResolved(source, ResolveModels<OrbModel>(RegisteredOrbs));
         }
 
+        internal static IEnumerable<EnchantmentModel> AppendEnchantments(IEnumerable<EnchantmentModel> source)
+        {
+            return AppendResolved(source, ResolveModels<EnchantmentModel>(RegisteredEnchantments));
+        }
+
+        internal static IEnumerable<AfflictionModel> AppendAfflictions(IEnumerable<AfflictionModel> source)
+        {
+            return AppendResolved(source, ResolveModels<AfflictionModel>(RegisteredAfflictions));
+        }
+
+        internal static IReadOnlyList<AchievementModel> AppendAchievements(IReadOnlyList<AchievementModel> source)
+        {
+            var additional = ResolveModels<AchievementModel>(RegisteredAchievements);
+            return additional.Length == 0 ? source : MergeDistinctByModelId(source, additional);
+        }
+
+        internal static IReadOnlyList<ModifierModel> AppendGoodModifiers(IReadOnlyList<ModifierModel> source)
+        {
+            var additional = ResolveModels<ModifierModel>(RegisteredGoodModifiers);
+            return additional.Length == 0 ? source : MergeDistinctByModelId(source, additional);
+        }
+
+        internal static IReadOnlyList<ModifierModel> AppendBadModifiers(IReadOnlyList<ModifierModel> source)
+        {
+            var additional = ResolveModels<ModifierModel>(RegisteredBadModifiers);
+            return additional.Length == 0 ? source : MergeDistinctByModelId(source, additional);
+        }
+
+        internal static IEnumerable<RelicPoolModel> AppendSharedRelicPools(IEnumerable<RelicPoolModel> source)
+        {
+            return AppendResolved(source, ResolveModels<RelicPoolModel>(RegisteredSharedRelicPools));
+        }
+
+        internal static IEnumerable<PotionPoolModel> AppendSharedPotionPools(IEnumerable<PotionPoolModel> source)
+        {
+            return AppendResolved(source, ResolveModels<PotionPoolModel>(RegisteredSharedPotionPools));
+        }
+
         internal static IEnumerable<CardPoolModel> AppendSharedCardPools(IEnumerable<CardPoolModel> source)
         {
             return AppendResolved(source, ResolveModels<CardPoolModel>(RegisteredSharedCardPools));
@@ -409,7 +527,15 @@ namespace STS2RitsuLib.Content
                     .Concat(RegisteredMonsters)
                     .Concat(RegisteredPowers)
                     .Concat(RegisteredOrbs)
+                    .Concat(RegisteredEnchantments)
+                    .Concat(RegisteredAfflictions)
+                    .Concat(RegisteredAchievements)
+                    .Concat(RegisteredSingletons)
                     .Concat(RegisteredSharedCardPools)
+                    .Concat(RegisteredSharedRelicPools)
+                    .Concat(RegisteredSharedPotionPools)
+                    .Concat(RegisteredGoodModifiers)
+                    .Concat(RegisteredBadModifiers)
                     .Concat(RegisteredSharedEvents)
                     .Concat(RegisteredSharedAncients)
                     .Concat(RegisteredActEncounters.Values.SelectMany(static set => set))
@@ -567,6 +693,13 @@ namespace STS2RitsuLib.Content
             where TModel : AbstractModel
         {
             return source.Concat(additional).Distinct().ToArray();
+        }
+
+        private static List<TModel> MergeDistinctByModelId<TModel>(IEnumerable<TModel> first,
+            IEnumerable<TModel> second)
+            where TModel : AbstractModel
+        {
+            return first.Concat(second).DistinctBy(static m => m.Id).ToList();
         }
 
         private static string NormalizePublicStem(string value)

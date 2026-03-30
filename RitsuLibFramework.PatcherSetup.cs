@@ -178,6 +178,13 @@ namespace STS2RitsuLib
             patcher.RegisterPatch<AllEventsPatch>();
             patcher.RegisterPatch<AllSharedAncientsPatch>();
             patcher.RegisterPatch<AllAncientsPatch>();
+            patcher.RegisterPatch<DebugEnchantmentsPatch>();
+            patcher.RegisterPatch<DebugAfflictionsPatch>();
+            patcher.RegisterPatch<AchievementsPatch>();
+            patcher.RegisterPatch<GoodModifiersPatch>();
+            patcher.RegisterPatch<BadModifiersPatch>();
+            patcher.RegisterPatch<AllRelicPoolsPatch>();
+            patcher.RegisterPatch<AllPotionPoolsPatch>();
             patcher.RegisterPatch<ModelDbModdedEntryPatch>();
             patcher.RegisterPatch<ModelIdSerializationCacheDynamicContentPatch>();
             patcher.RegisterPatch<DynamicActContentPatchBootstrap>();

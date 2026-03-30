@@ -18,7 +18,7 @@ RitsuLib keeps registration responsibilities split by concern:
 
 | Registry | Purpose |
 |---|---|
-| `ModContentRegistry` | Register models such as characters, cards, relics, potions, powers, orbs, acts, events, ancients |
+| `ModContentRegistry` | Register models: characters, acts, pool-bound cards/relics/potions, powers, orbs, enchantments, afflictions, achievements, singletons, good/bad daily modifiers, shared card/relic/potion pools, events, ancients, monsters, and generated placeholders |
 | `ModKeywordRegistry` | Register reusable keyword definitions |
 | `ModTimelineRegistry` | Register stories and epochs |
 | `ModUnlockRegistry` | Register epoch requirements and progression rules |
@@ -100,6 +100,7 @@ Less obvious helpers that are still useful:
 - `Manifest(contentEntries, keywordEntries)`
 - `Custom(Action<ModContentPackContext>)`
 - generated placeholders: `PlaceholderCard<TPool>(...)`, `PlaceholderRelic<TPool>(...)`, `PlaceholderPotion<TPool>(...)` (see “Generated placeholder content” below)
+- extended standalone / pool types: `.Enchantment<T>()`, `.Affliction<T>()`, `.Achievement<T>()`, `.Singleton<T>()`, `.GoodModifier<T>()` / `.BadModifier<T>()`, `.SharedRelicPool<T>()`, `.SharedPotionPool<T>()` (see “Content model registration matrix” below)
 
 These are useful when you want registration declared as data instead of written inline in one long chain.
 
@@ -136,7 +137,7 @@ The registries are first-class APIs, not implementation details.
 
 - recording which model types belong to which mod
 - validating ownership and duplicate registration
-- feeding ModelDb integration: global accessors such as `AllCharacters`, acts, powers, orbs, shared events, ancients, and **shared card pool types** are appended via patches; **per-pool** cards/relics/potions are merged through `ModHelper.AddModelToPool` when each pool expands `AllCards` / `AllRelics` / `AllPotions` (a different code path than those global appenders)
+- feeding ModelDb integration: global accessors such as `AllCharacters`, acts, powers, orbs, shared events, ancients, **shared card / relic / potion pool types**, `DebugEnchantments`, `DebugAfflictions`, `Achievements`, `GoodModifiers`, `BadModifiers`, and related enumerations are extended via patches where needed; **per-pool** cards/relics/potions are merged through `ModHelper.AddModelToPool` when each pool expands `AllCards` / `AllRelics` / `AllPotions` (a different code path than those global appenders)
 - generating fixed public `ModelId.Entry` values for registered types
 
 That owner tracking is what lets RitsuLib safely answer questions like:
@@ -173,10 +174,13 @@ Registration alone is not enough; the game still needs to see the content.
 
 RitsuLib patches ModelDb and related model access points to:
 
-- append registered characters, acts, powers, orbs, events, ancients, and shared card pools where applicable
+- append registered characters, acts, powers, orbs, events, ancients, shared card pools, **shared relic pools** (`AllRelicPools`), **shared potion pools** (`AllPotionPools`), **debug enchantments** (`DebugEnchantments`), **debug afflictions** (`DebugAfflictions`), **achievements** (`Achievements`), and **daily modifiers** (`GoodModifiers` / `BadModifiers`) where applicable
 - attach registered cards/relics/potions to their **target pools** via `ModHelper.AddModelToPool` (concatenated when each pool materializes its `All*` sequence)
 - force fixed public entries for registered model types
+- inject types that live in **dynamic assemblies** (e.g. Reflection.Emit placeholders) into `ModelDb` before init completes, for every registered model category the registry tracks
 - bootstrap dynamic act-content patching before caches lock in
+
+`MutuallyExclusiveModifiers` is **not** extended automatically; mod modifiers registered as good/bad appear only in those two lists.
 
 This is why registration must happen before the framework freeze points.
 
@@ -224,6 +228,61 @@ RitsuLibFramework.CreateContentPack("MyMod")
 ```
 
 This is useful when you want a declarative registration list or want to share registration bundles across modules.
+
+You can mix entry types freely—for example:
+
+```csharp
+var contentEntries = new IContentRegistrationEntry[]
+{
+    new CharacterRegistrationEntry<MyCharacter>(),
+    new CardRegistrationEntry<MyCardPool, MyCard>(),
+    new EnchantmentRegistrationEntry<MyEnchantment>(),
+    new PowerRegistrationEntry<MyPower>(),
+    new SharedRelicPoolRegistrationEntry<MyModSharedRelicPool>(),
+};
+```
+
+---
+
+## Content model registration matrix
+
+Every row below is **one conceptual kind of content**. You can register it in **three equivalent ways** (unless noted):
+
+1. **Fluent** — `ModContentPackBuilder` method on `CreateContentPack(...)`  
+2. **Registry** — `ModContentRegistry` method from `RitsuLibFramework.GetContentRegistry(modId)` or `ctx.Content` in `Custom(...)`  
+3. **Manifest entry** — a type implementing `IContentRegistrationEntry` in `STS2RitsuLib.Scaffolding.Content` (use `.Entry(...)`, `.Entries(...)`, or `.Manifest(...)`)
+
+| Content | Fluent | Registry | Manifest entry |
+|---|---|---|---|
+| Character | `.Character<T>()` | `RegisterCharacter<T>()` | `CharacterRegistrationEntry<T>` |
+| Act | `.Act<T>()` | `RegisterAct<T>()` | `ActRegistrationEntry<T>` |
+| Card in pool | `.Card<TPool,TCard>(...)` | `RegisterCard<TPool,TCard>(...)` | `CardRegistrationEntry<TPool,TCard>` |
+| Relic in pool | `.Relic<TPool,TRelic>(...)` | `RegisterRelic<TPool,TRelic>(...)` | `RelicRegistrationEntry<TPool,TRelic>` |
+| Potion in pool | `.Potion<TPool,TPotion>(...)` | `RegisterPotion<TPool,TPotion>(...)` | `PotionRegistrationEntry<TPool,TPotion>` |
+| Power | `.Power<T>()` | `RegisterPower<T>()` | `PowerRegistrationEntry<T>` |
+| Orb | `.Orb<T>()` | `RegisterOrb<T>()` | `OrbRegistrationEntry<T>` |
+| Enchantment | `.Enchantment<T>()` | `RegisterEnchantment<T>()` | `EnchantmentRegistrationEntry<T>` |
+| Affliction | `.Affliction<T>()` | `RegisterAffliction<T>()` | `AfflictionRegistrationEntry<T>` |
+| Achievement | `.Achievement<T>()` | `RegisterAchievement<T>()` | `AchievementRegistrationEntry<T>` |
+| Singleton | `.Singleton<T>()` | `RegisterSingleton<T>()` | `SingletonRegistrationEntry<T>` |
+| Daily modifier (good) | `.GoodModifier<T>()` | `RegisterGoodModifier<T>()` | `GoodModifierRegistrationEntry<T>` |
+| Daily modifier (bad) | `.BadModifier<T>()` | `RegisterBadModifier<T>()` | `BadModifierRegistrationEntry<T>` |
+| Shared card pool | `.SharedCardPool<T>()` | `RegisterSharedCardPool<T>()` | `SharedCardPoolRegistrationEntry<T>` |
+| Shared relic pool | `.SharedRelicPool<T>()` | `RegisterSharedRelicPool<T>()` | `SharedRelicPoolRegistrationEntry<T>` |
+| Shared potion pool | `.SharedPotionPool<T>()` | `RegisterSharedPotionPool<T>()` | `SharedPotionPoolRegistrationEntry<T>` |
+| Shared event | `.SharedEvent<T>()` | `RegisterSharedEvent<T>()` | `SharedEventRegistrationEntry<T>` |
+| Act encounter | `.ActEncounter<TAct,TEncounter>()` | `RegisterActEncounter<TAct,TEncounter>()` | `ActEncounterRegistrationEntry<TAct,TEncounter>` |
+| Act event | `.ActEvent<TAct,TEvent>()` | `RegisterActEvent<TAct,TEvent>()` | `ActEventRegistrationEntry<TAct,TEvent>` |
+| Shared ancient | `.SharedAncient<T>()` | `RegisterSharedAncient<T>()` | `SharedAncientRegistrationEntry<T>` |
+| Act ancient | `.ActAncient<TAct,TAnc>()` | `RegisterActAncient<TAct,TAnc>()` | `ActAncientRegistrationEntry<TAct,TAncient>` |
+| Monster | *(no fluent helper)* | `RegisterMonster<T>()` | `MonsterRegistrationEntry<T>` |
+| Placeholder card / relic / potion | `.PlaceholderCard<...>(...)` etc. | `RegisterPlaceholderCard<...>(...)` etc. | `PlaceholderCardRegistrationEntry<...>` etc. |
+| Archaic Tooth mapping | `.ArchaicToothTranscendence<...>()` or `.ArchaicToothTranscendence(id, type)` | `RitsuLibFramework.RegisterArchaicToothTranscendenceMapping(...)` | `ArchaicToothTranscendenceRegistrationEntry<...>` / `ArchaicToothTranscendenceByIdRegistrationEntry` |
+| Touch of Orobas mapping | `.TouchOfOrobasRefinement<...>()` or `.TouchOfOrobasRefinement(id, type)` | `RitsuLibFramework.RegisterTouchOfOrobasRefinementMapping(...)` | `TouchOfOrobasRefinementRegistrationEntry<...>` / `TouchOfOrobasRefinementByIdRegistrationEntry` |
+
+**Enchantments:** optional authoring baseline `ModEnchantmentTemplate` plus `IModEnchantmentAssetOverrides` / `EnchantmentIntendedIconPathPatch` (see scaffolding content patches) for custom icon paths; registration in this table is still required for ownership, fixed `ModelId.Entry`, and dynamic-assembly injection like other model kinds.
+
+**Singletons:** there is no global `ModelDb` list to patch; registration still records ownership and injects dynamic types so `ModelDb.Singleton<T>()` resolves correctly.
 
 ---
 

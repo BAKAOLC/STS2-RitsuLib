@@ -18,7 +18,7 @@ RitsuLib 按职责拆分了几类注册器：
 
 | 注册器 | 作用 |
 |---|---|
-| `ModContentRegistry` | 注册角色、卡牌、遗物、药水、能力、球体、Act、事件、Ancient 等模型 |
+| `ModContentRegistry` | 注册角色、Act、池内卡牌/遗物/药水、能力、球体、附魔（Enchantment）、苦难（Affliction）、成就、单例、好/坏每日修正、共享卡/遗物/药水池、事件、Ancient、怪物及生成式占位等模型 |
 | `ModKeywordRegistry` | 注册可复用关键词定义 |
 | `ModTimelineRegistry` | 注册 `Story` 与 `Epoch` |
 | `ModUnlockRegistry` | 注册纪元门槛与进度解锁规则 |
@@ -100,6 +100,7 @@ RitsuLibFramework.CreateContentPack("MyMod")
 - `Manifest(contentEntries, keywordEntries)`
 - `Custom(Action<ModContentPackContext>)`
 - 生成式占位：`PlaceholderCard<TPool>(...)`、`PlaceholderRelic<TPool>(...)`、`PlaceholderPotion<TPool>(...)`（详见下文「生成式占位内容」）
+- 扩展的单体/池类型：`.Enchantment<T>()`、`.Affliction<T>()`、`.Achievement<T>()`、`.Singleton<T>()`、`.GoodModifier<T>()` / `.BadModifier<T>()`、`.SharedRelicPool<T>()`、`.SharedPotionPool<T>()`（详见下文「内容模型注册速查表」）
 
 如果你希望“注册声明本身也是数据”，这些入口会很好用。
 
@@ -136,7 +137,7 @@ timeline.RegisterEpoch<MyEpoch>();
 
 - 记录某个模型类型归属于哪个 Mod
 - 校验重复注册与冲突
-- 为 ModelDb 补丁与其它集成点提供数据：例如向 `AllCharacters`、Act、能力、球体、共享事件、Ancient、**共享卡池类型**等全局访问器追加已注册模型；卡牌/遗物/药水进入**具体池**则通过 `ModHelper.AddModelToPool` 在池展开 `AllCards` / `AllRelics` / `AllPotions` 时合并（与上述全局追加不是同一条实现路径）
+- 为 ModelDb 补丁与其它集成点提供数据：例如向 `AllCharacters`、Act、能力、球体、共享事件、Ancient、**共享卡池 / 遗物池 / 药水池类型**、`DebugEnchantments`、`DebugAfflictions`、`Achievements`、`GoodModifiers`、`BadModifiers` 等访问器在需要时追加已注册模型；卡牌/遗物/药水进入**具体池**则通过 `ModHelper.AddModelToPool` 在池展开 `AllCards` / `AllRelics` / `AllPotions` 时合并（与上述全局追加不是同一条实现路径）
 - 为已注册类型生成固定公开 `ModelId.Entry`
 
 这套归属跟踪很关键，因为它让 RitsuLib 可以安全回答这些问题：
@@ -173,10 +174,13 @@ timeline.RegisterEpoch<MyEpoch>();
 
 RitsuLib 通过对 ModelDb 及相关访问点打补丁来完成这件事，包括：
 
-- 追加已注册的角色、Act、能力、球体、事件、Ancient，以及共享卡池等
+- 追加已注册的角色、Act、能力、球体、事件、Ancient、共享卡池、**共享遗物池**（`AllRelicPools`）、**共享药水池**（`AllPotionPools`）、**调试用附魔**（`DebugEnchantments`）、**调试用苦难**（`DebugAfflictions`）、**成就**（`Achievements`）、**每日修正**（`GoodModifiers` / `BadModifiers`）等
 - 将已注册卡牌/遗物/药水等与**目标池**绑定（`ModHelper.AddModelToPool`，在对应池的 `All*` 枚举中与原版生成结果拼接）
 - 对已注册模型类型强制固定公开条目标识
+- 在 `ModelDb` 初始化完成前，把注册器跟踪到的、位于**动态程序集**中的类型（例如 Reflection.Emit 占位）注入 `_contentById`
 - 在缓存锁定前引导动态 Act 内容补丁
+
+`MutuallyExclusiveModifiers` **不会**自动扩展；通过好/坏列表注册的 Mod 修正只会出现在上述两个列表中。
 
 这也是为什么注册必须发生在框架冻结之前。
 
@@ -224,6 +228,61 @@ RitsuLibFramework.CreateContentPack("MyMod")
 ```
 
 这对“声明式注册列表”或“跨模块复用注册清单”的场景会很方便。
+
+也可以混用多种 `IContentRegistrationEntry`，例如：
+
+```csharp
+var contentEntries = new IContentRegistrationEntry[]
+{
+    new CharacterRegistrationEntry<MyCharacter>(),
+    new CardRegistrationEntry<MyCardPool, MyCard>(),
+    new EnchantmentRegistrationEntry<MyEnchantment>(),
+    new PowerRegistrationEntry<MyPower>(),
+    new SharedRelicPoolRegistrationEntry<MyModSharedRelicPool>(),
+};
+```
+
+---
+
+## 内容模型注册速查表
+
+下表中每一行是一种**内容类别**。在默认情况下，可用**三种等价方式**登记（另有注明的除外）：
+
+1. **链式**：`CreateContentPack(...)` 上的 `ModContentPackBuilder` 方法  
+2. **注册器**：`RitsuLibFramework.GetContentRegistry(modId)` 或 `Custom(ctx => ctx.Content...)` 上的 `ModContentRegistry` 方法  
+3. **Manifest 条目**：`STS2RitsuLib.Scaffolding.Content` 中实现 `IContentRegistrationEntry` 的类型，经 `.Entry(...)`、`.Entries(...)` 或 `.Manifest(...)` 应用
+
+| 内容 | 链式 | 注册器 | Manifest 条目 |
+|---|---|---|---|
+| 角色 | `.Character<T>()` | `RegisterCharacter<T>()` | `CharacterRegistrationEntry<T>` |
+| Act | `.Act<T>()` | `RegisterAct<T>()` | `ActRegistrationEntry<T>` |
+| 池内卡牌 | `.Card<TPool,TCard>(...)` | `RegisterCard<TPool,TCard>(...)` | `CardRegistrationEntry<TPool,TCard>` |
+| 池内遗物 | `.Relic<TPool,TRelic>(...)` | `RegisterRelic<TPool,TRelic>(...)` | `RelicRegistrationEntry<TPool,TRelic>` |
+| 池内药水 | `.Potion<TPool,TPotion>(...)` | `RegisterPotion<TPool,TPotion>(...)` | `PotionRegistrationEntry<TPool,TPotion>` |
+| 能力 | `.Power<T>()` | `RegisterPower<T>()` | `PowerRegistrationEntry<T>` |
+| 球体 | `.Orb<T>()` | `RegisterOrb<T>()` | `OrbRegistrationEntry<T>` |
+| 附魔 | `.Enchantment<T>()` | `RegisterEnchantment<T>()` | `EnchantmentRegistrationEntry<T>` |
+| 苦难 | `.Affliction<T>()` | `RegisterAffliction<T>()` | `AfflictionRegistrationEntry<T>` |
+| 成就 | `.Achievement<T>()` | `RegisterAchievement<T>()` | `AchievementRegistrationEntry<T>` |
+| 单例 | `.Singleton<T>()` | `RegisterSingleton<T>()` | `SingletonRegistrationEntry<T>` |
+| 每日修正（好） | `.GoodModifier<T>()` | `RegisterGoodModifier<T>()` | `GoodModifierRegistrationEntry<T>` |
+| 每日修正（坏） | `.BadModifier<T>()` | `RegisterBadModifier<T>()` | `BadModifierRegistrationEntry<T>` |
+| 共享卡池 | `.SharedCardPool<T>()` | `RegisterSharedCardPool<T>()` | `SharedCardPoolRegistrationEntry<T>` |
+| 共享遗物池 | `.SharedRelicPool<T>()` | `RegisterSharedRelicPool<T>()` | `SharedRelicPoolRegistrationEntry<T>` |
+| 共享药水池 | `.SharedPotionPool<T>()` | `RegisterSharedPotionPool<T>()` | `SharedPotionPoolRegistrationEntry<T>` |
+| 共享事件 | `.SharedEvent<T>()` | `RegisterSharedEvent<T>()` | `SharedEventRegistrationEntry<T>` |
+| Act 遭遇 | `.ActEncounter<TAct,TEncounter>()` | `RegisterActEncounter<TAct,TEncounter>()` | `ActEncounterRegistrationEntry<TAct,TEncounter>` |
+| Act 事件 | `.ActEvent<TAct,TEvent>()` | `RegisterActEvent<TAct,TEvent>()` | `ActEventRegistrationEntry<TAct,TEvent>` |
+| 共享 Ancient | `.SharedAncient<T>()` | `RegisterSharedAncient<T>()` | `SharedAncientRegistrationEntry<T>` |
+| Act Ancient | `.ActAncient<TAct,TAnc>()` | `RegisterActAncient<TAct,TAnc>()` | `ActAncientRegistrationEntry<TAct,TAncient>` |
+| 怪物 | *（无链式封装）* | `RegisterMonster<T>()` | `MonsterRegistrationEntry<T>` |
+| 占位卡牌/遗物/药水 | `.PlaceholderCard<...>(...)` 等 | `RegisterPlaceholderCard<...>(...)` 等 | `PlaceholderCardRegistrationEntry<...>` 等 |
+| Archaic Tooth 映射 | `.ArchaicToothTranscendence<...>()` 或 `.ArchaicToothTranscendence(id, type)` | `RitsuLibFramework.RegisterArchaicToothTranscendenceMapping(...)` | `ArchaicToothTranscendenceRegistrationEntry<...>` / `ArchaicToothTranscendenceByIdRegistrationEntry` |
+| Touch of Orobas 映射 | `.TouchOfOrobasRefinement<...>()` 或 `.TouchOfOrobasRefinement(id, type)` | `RitsuLibFramework.RegisterTouchOfOrobasRefinementMapping(...)` | `TouchOfOrobasRefinementRegistrationEntry<...>` / `TouchOfOrobasRefinementByIdRegistrationEntry` |
+
+**附魔：**可选用脚手架里的 `ModEnchantmentTemplate`、`IModEnchantmentAssetOverrides` 与 `EnchantmentIntendedIconPathPatch` 自定义图标路径；上表中的注册仍负责归属、固定 `ModelId.Entry` 以及与别类模型一致的动态程序集注入。
+
+**单例：**本体没有可补丁的「全局单例列表」；注册仍用于归属与动态类型注入，以便 `ModelDb.Singleton<T>()` 能正确解析。
 
 ---
 

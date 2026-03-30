@@ -272,4 +272,215 @@ namespace STS2RitsuLib.Content.Patches
             __result = ModContentRegistry.AppendSharedAncients(__result);
         }
     }
+
+    /// <summary>
+    ///     Appends RitsuLib-registered enchantments to <see cref="ModelDb.DebugEnchantments" /> (covers dynamic types not in
+    ///     subtype scan).
+    /// </summary>
+    public class DebugEnchantmentsPatch : IPatchMethod
+    {
+        /// <inheritdoc />
+        public static string PatchId => "modeldb_debug_enchantments";
+
+        /// <inheritdoc />
+        public static string Description => "Append registered enchantments to ModelDb.DebugEnchantments";
+
+        /// <inheritdoc />
+        public static bool IsCritical => true;
+
+        /// <inheritdoc />
+        public static ModPatchTarget[] GetTargets()
+        {
+            return [new(typeof(ModelDb), "get_DebugEnchantments")];
+        }
+
+        // ReSharper disable once InconsistentNaming
+        /// <summary>
+        ///     Concatenates mod enchantments onto the vanilla sequence.
+        /// </summary>
+        public static void Postfix(ref IEnumerable<EnchantmentModel> __result)
+        {
+            __result = ModContentRegistry.AppendEnchantments(__result);
+        }
+    }
+
+    /// <summary>
+    ///     Appends RitsuLib-registered afflictions to <see cref="ModelDb.DebugAfflictions" />.
+    /// </summary>
+    public class DebugAfflictionsPatch : IPatchMethod
+    {
+        /// <inheritdoc />
+        public static string PatchId => "modeldb_debug_afflictions";
+
+        /// <inheritdoc />
+        public static string Description => "Append registered afflictions to ModelDb.DebugAfflictions";
+
+        /// <inheritdoc />
+        public static bool IsCritical => true;
+
+        /// <inheritdoc />
+        public static ModPatchTarget[] GetTargets()
+        {
+            return [new(typeof(ModelDb), "get_DebugAfflictions")];
+        }
+
+        // ReSharper disable once InconsistentNaming
+        /// <summary>
+        ///     Concatenates mod afflictions onto the vanilla sequence.
+        /// </summary>
+        public static void Postfix(ref IEnumerable<AfflictionModel> __result)
+        {
+            __result = ModContentRegistry.AppendAfflictions(__result);
+        }
+    }
+
+    /// <summary>
+    ///     Appends RitsuLib-registered achievements to <see cref="ModelDb.Achievements" />.
+    /// </summary>
+    public class AchievementsPatch : IPatchMethod
+    {
+        /// <inheritdoc />
+        public static string PatchId => "modeldb_achievements";
+
+        /// <inheritdoc />
+        public static string Description => "Append registered achievements to ModelDb.Achievements";
+
+        /// <inheritdoc />
+        public static bool IsCritical => true;
+
+        /// <inheritdoc />
+        public static ModPatchTarget[] GetTargets()
+        {
+            return [new(typeof(ModelDb), "get_Achievements")];
+        }
+
+        // ReSharper disable once InconsistentNaming
+        /// <summary>
+        ///     Merges mod achievements into the vanilla list by <see cref="AbstractModel.Id" />.
+        /// </summary>
+        public static void Postfix(ref IReadOnlyList<AchievementModel> __result)
+        {
+            __result = ModContentRegistry.AppendAchievements(__result);
+        }
+    }
+
+    /// <summary>
+    ///     Appends RitsuLib-registered modifiers to <see cref="ModelDb.GoodModifiers" />.
+    /// </summary>
+    public class GoodModifiersPatch : IPatchMethod
+    {
+        /// <inheritdoc />
+        public static string PatchId => "modeldb_good_modifiers";
+
+        /// <inheritdoc />
+        public static string Description => "Append registered good modifiers to ModelDb.GoodModifiers";
+
+        /// <inheritdoc />
+        public static bool IsCritical => true;
+
+        /// <inheritdoc />
+        public static ModPatchTarget[] GetTargets()
+        {
+            return [new(typeof(ModelDb), "get_GoodModifiers")];
+        }
+
+        // ReSharper disable once InconsistentNaming
+        /// <summary>
+        ///     Merges mod good modifiers into the vanilla list by <see cref="AbstractModel.Id" />.
+        /// </summary>
+        public static void Postfix(ref IReadOnlyList<ModifierModel> __result)
+        {
+            __result = ModContentRegistry.AppendGoodModifiers(__result);
+        }
+    }
+
+    /// <summary>
+    ///     Appends RitsuLib-registered modifiers to <see cref="ModelDb.BadModifiers" />.
+    /// </summary>
+    public class BadModifiersPatch : IPatchMethod
+    {
+        /// <inheritdoc />
+        public static string PatchId => "modeldb_bad_modifiers";
+
+        /// <inheritdoc />
+        public static string Description => "Append registered bad modifiers to ModelDb.BadModifiers";
+
+        /// <inheritdoc />
+        public static bool IsCritical => true;
+
+        /// <inheritdoc />
+        public static ModPatchTarget[] GetTargets()
+        {
+            return [new(typeof(ModelDb), "get_BadModifiers")];
+        }
+
+        // ReSharper disable once InconsistentNaming
+        /// <summary>
+        ///     Merges mod bad modifiers into the vanilla list by <see cref="AbstractModel.Id" />.
+        /// </summary>
+        public static void Postfix(ref IReadOnlyList<ModifierModel> __result)
+        {
+            __result = ModContentRegistry.AppendBadModifiers(__result);
+        }
+    }
+
+    /// <summary>
+    ///     Appends RitsuLib-registered shared relic pools to <see cref="ModelDb.AllRelicPools" />.
+    /// </summary>
+    public class AllRelicPoolsPatch : IPatchMethod
+    {
+        /// <inheritdoc />
+        public static string PatchId => "modeldb_all_relic_pools";
+
+        /// <inheritdoc />
+        public static string Description => "Append registered shared relic pools to ModelDb.AllRelicPools";
+
+        /// <inheritdoc />
+        public static bool IsCritical => true;
+
+        /// <inheritdoc />
+        public static ModPatchTarget[] GetTargets()
+        {
+            return [new(typeof(ModelDb), "get_AllRelicPools")];
+        }
+
+        // ReSharper disable once InconsistentNaming
+        /// <summary>
+        ///     Concatenates mod shared relic pools onto the vanilla sequence.
+        /// </summary>
+        public static void Postfix(ref IEnumerable<RelicPoolModel> __result)
+        {
+            __result = ModContentRegistry.AppendSharedRelicPools(__result);
+        }
+    }
+
+    /// <summary>
+    ///     Appends RitsuLib-registered shared potion pools to <see cref="ModelDb.AllPotionPools" />.
+    /// </summary>
+    public class AllPotionPoolsPatch : IPatchMethod
+    {
+        /// <inheritdoc />
+        public static string PatchId => "modeldb_all_potion_pools";
+
+        /// <inheritdoc />
+        public static string Description => "Append registered shared potion pools to ModelDb.AllPotionPools";
+
+        /// <inheritdoc />
+        public static bool IsCritical => true;
+
+        /// <inheritdoc />
+        public static ModPatchTarget[] GetTargets()
+        {
+            return [new(typeof(ModelDb), "get_AllPotionPools")];
+        }
+
+        // ReSharper disable once InconsistentNaming
+        /// <summary>
+        ///     Concatenates mod shared potion pools onto the vanilla sequence.
+        /// </summary>
+        public static void Postfix(ref IEnumerable<PotionPoolModel> __result)
+        {
+            __result = ModContentRegistry.AppendSharedPotionPools(__result);
+        }
+    }
 }
