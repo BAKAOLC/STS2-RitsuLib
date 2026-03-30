@@ -4,6 +4,7 @@ using HarmonyLib;
 using MegaCrit.Sts2.Core.Entities.Ancients;
 using MegaCrit.Sts2.Core.Models.Events;
 using STS2RitsuLib.Content;
+using STS2RitsuLib.Data;
 using STS2RitsuLib.Patching.Models;
 
 namespace STS2RitsuLib.Localization.Patches
@@ -16,9 +17,9 @@ namespace STS2RitsuLib.Localization.Patches
     ///     patch injects an <see cref="AncientDialogue" /> with <b>empty</b> lines so vanilla follows the same path as
     ///     <c>Dialogue == null</c> for options/UI while <c>WinRun</c> can read <c>EndAttackers</c>.
     ///     <para />
-    ///     Scope: only when the current character type is registered through <see cref="ModContentRegistry" /> (same
-    ///     surface as <see cref="AncientDialoguePopulateLocKeysPatch" />). Vanilla and non-RitsuLib mod characters are
-    ///     unchanged.
+    ///     Scope: only when debug compatibility <b>master</b> and the <b>Ancient / THE_ARCHITECT</b> sub-setting are
+    ///     enabled, and the character type is registered through <see cref="ModContentRegistry" />. Otherwise vanilla
+    ///     behavior (possible NRE on PROCEED) applies.
     /// </summary>
     public class TheArchitectLoadDialogueMissingFallbackPatch : IPatchMethod
     {
@@ -27,7 +28,7 @@ namespace STS2RitsuLib.Localization.Patches
 
         /// <inheritdoc />
         public static string Description =>
-            "THE_ARCHITECT: RitsuLib-registered characters only — fallback when LoadDialogue yields null; one-time warn per entry";
+            "THE_ARCHITECT: requires debug compat master + ancient shim; registry characters only; LoadDialogue null fallback";
 
         /// <inheritdoc />
         public static bool IsCritical => false;
@@ -57,6 +58,9 @@ namespace STS2RitsuLib.Localization.Patches
                 return;
 
             if (!ModContentRegistry.TryGetOwnerModId(character.GetType(), out _))
+                return;
+
+            if (!RitsuLibSettingsStore.IsAncientArchitectCompatEnabled())
                 return;
 
             var characterEntry = character.Id.Entry;

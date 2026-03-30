@@ -97,7 +97,7 @@ RitsuLib does include compatibility-oriented helpers, but they are kept narrow.
 
 The framework tries not to make every system magical by default. Instead, it adds shims where the game or modding surface would otherwise be unsafe or needlessly repetitive.
 
-Representative examples include localization debug compatibility, ancient dialogue append helpers, and unlock bridge patches for vanilla progression hooks that ignore mod characters.
+Representative examples include optional `LocTable` soft-fail (`debug_compatibility_mode`), ancient dialogue append plus the narrow `THE_ARCHITECT` stub for registry characters (independent of that flag), and unlock bridge patches for vanilla progression hooks that ignore mod characters.
 
 See [Diagnostics & Compatibility](DiagnosticsAndCompatibility.md) for the concrete compatibility layers.
 

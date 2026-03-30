@@ -24,10 +24,12 @@ This layer is deliberately narrow and only handles edge cases.
 
 ## One-Time Warning Policy
 
-Some RitsuLib diagnostics warn only once per issue, including:
+Some RitsuLib diagnostics warn only once per issue (or once per stable key), including:
 
-- Missing resource paths
-- Missing localization keys in debug compatibility mode
+- Missing resource paths (`AssetPathDiagnostics`)
+- Missing `LocTable` keys when **master + LocTable** sub-toggle are on (`[Localization][DebugCompat]`)
+- **`THE_ARCHITECT`** stub when debug compat master + ancient sub-toggle are on (`[Ancient]`)
+- Other unlock-related one-shots (for example `ModUnlockMissingRuleWarnings`)
 
 The goal is actionable logs: noticeable enough to act on, without spamming every frame.
 
@@ -50,24 +52,27 @@ See [Asset Profiles & Fallbacks](AssetProfilesAndFallbacks.md).
 
 ## Debug Compatibility Mode
 
-> This feature patches vanilla `LocTable` and RitsuLib unlock bridges. It is for debugging only.
+> **Master** switch `debug_compatibility_mode` plus **per-subsystem** toggles in mod settings. When the master switch is off, **all** compatibility shims are inactive (vanilla `LocTable` throws, invalid epochs throw from `EpochRuntimeCompatibility`, no `THE_ARCHITECT` stub).
 
-When `debug_compatibility_mode` is enabled:
+### Master off (default)
 
-### Localization downgrade (vanilla behavior patched)
+- No `LocTable` placeholder patches run.
+- `EpochRuntimeCompatibility` throws `InvalidOperationException` when a compatibility path would use an invalid epoch id (explicit failure).
+- No `THE_ARCHITECT` empty-dialogue injection.
 
-- If `LocTable.GetLocString(key)` misses, it returns a placeholder `LocString` instead of throwing
-- If `LocTable.GetRawText(key)` misses, it returns the key string instead of throwing
-- Each missing key is warned only once
+### Master on
 
-### Epoch downgrade (RitsuLib bridge)
+The settings UI expands a **Compatibility shims** section. Each sub-toggle defaults to **on** (preserving the old “single global toggle” behavior). A sub-toggle **off** restores vanilla behavior for that area only.
 
-- When RitsuLib’s unlock compatibility bridges encounter a missing epoch id at runtime, they log once, skip that unlock, and let the current run continue
-- Scope is limited to paths RitsuLib owns, for example:
-  - Epoch ids derived when mod characters follow vanilla `ObtainCharUnlockEpoch(...)`-style flow
-  - RitsuLib-registered boss / elite / ascension / post-run epoch unlock rules
+| Sub-toggle | When on |
+|---|---|
+| **LocTable missing keys** | Placeholder resolution + one-time `[Localization][DebugCompat]` warnings |
+| **Invalid unlock epochs** | Skip the grant + one-time `[Unlocks][DebugCompat]` warnings (RitsuLib-owned unlock bridges only) |
+| **THE_ARCHITECT missing dialogue** | Empty-lines stub for `ModContentRegistry` characters + one-time `[Ancient]` warning |
 
-This mode is off by default. It reduces interruption while debugging; it does not replace correct localization or timeline registration.
+Scope for epoch handling remains RitsuLib-owned bridges (e.g. mod `ObtainCharUnlockEpoch` flow, registered boss/elite/post-run rules). **`ModUnlockMissingRuleWarnings`** (e.g. missing boss-win rule) still logs independently.
+
+This mode does not replace correct localization or timeline registration.
 
 Windows settings path:
 
@@ -101,6 +106,10 @@ It is positioned as a compatibility convenience:
 
 - Authors still author dialogue keys
 - The framework discovers and appends them so mod characters follow the same ancient-dialogue pattern as vanilla
+
+### `THE_ARCHITECT` dialogue fallback
+
+Same as the **Ancient / THE_ARCHITECT** sub-toggle under debug compatibility (master must be on). If vanilla `TheArchitect.LoadDialogue` resolves **no** dialogue, RitsuLib injects an empty-lines stub for `ModContentRegistry` characters and logs **`[Ancient]`** once.
 
 For key structure, see [Localization & Keywords](LocalizationAndKeywords.md).
 

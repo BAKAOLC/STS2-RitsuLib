@@ -1,4 +1,5 @@
 using Godot;
+using STS2RitsuLib.Data;
 using STS2RitsuLib.Data.Models;
 using STS2RitsuLib.Utils.Persistence;
 
@@ -21,6 +22,24 @@ namespace STS2RitsuLib.Settings
                     Const.SettingsKey,
                     settings => settings.DebugCompatibilityMode,
                     (settings, value) => settings.DebugCompatibilityMode = value);
+
+                var debugCompatLocTableBinding = ModSettingsBindings.Global<RitsuLibSettings, bool>(
+                    Const.ModId,
+                    Const.SettingsKey,
+                    settings => settings.DebugCompatLocTable,
+                    (settings, value) => settings.DebugCompatLocTable = value);
+
+                var debugCompatUnlockEpochBinding = ModSettingsBindings.Global<RitsuLibSettings, bool>(
+                    Const.ModId,
+                    Const.SettingsKey,
+                    settings => settings.DebugCompatUnlockEpoch,
+                    (settings, value) => settings.DebugCompatUnlockEpoch = value);
+
+                var debugCompatAncientArchitectBinding = ModSettingsBindings.Global<RitsuLibSettings, bool>(
+                    Const.ModId,
+                    Const.SettingsKey,
+                    settings => settings.DebugCompatAncientArchitect,
+                    (settings, value) => settings.DebugCompatAncientArchitect = value);
 
                 var showcaseState = new DebugShowcaseState();
                 var previewToggleBinding =
@@ -59,7 +78,32 @@ namespace STS2RitsuLib.Settings
                             T("ritsulib.debugCompatibility.label", "Debug compatibility mode"),
                             debugCompatibilityBinding,
                             T("ritsulib.debugCompatibility.description",
-                                "Missing LocString keys fall back to placeholders and warnings instead of throwing immediately.")))
+                                "Master switch: when off, RitsuLib uses vanilla LocTable errors, no unlock-epoch skip path, and no THE_ARCHITECT dialogue stub. When on, each sub-option below controls a specific shim (all default on).")))
+                    .AddSection(
+                        "debug_compat_shims",
+                        section => section
+                            .WithVisibleWhen(RitsuLibSettingsStore.IsDebugCompatibilityMasterEnabled)
+                            .WithTitle(T("ritsulib.section.debugCompatShims.title", "Compatibility shims"))
+                            .WithDescription(T("ritsulib.section.debugCompatShims.description",
+                                "Only active while debug compatibility mode is on. Turn a shim off to force vanilla behavior for that subsystem."))
+                            .AddToggle(
+                                "debug_compat_loc_table",
+                                T("ritsulib.debugCompatLocTable.label", "LocTable missing keys"),
+                                debugCompatLocTableBinding,
+                                T("ritsulib.debugCompatLocTable.description",
+                                    "Placeholder LocString + one-time [Localization][DebugCompat] warnings instead of throwing."))
+                            .AddToggle(
+                                "debug_compat_unlock_epoch",
+                                T("ritsulib.debugCompatUnlockEpoch.label", "Invalid unlock epochs"),
+                                debugCompatUnlockEpochBinding,
+                                T("ritsulib.debugCompatUnlockEpoch.description",
+                                    "Skip invalid epoch grants with one-time [Unlocks][DebugCompat] warnings instead of throwing."))
+                            .AddToggle(
+                                "debug_compat_ancient_architect",
+                                T("ritsulib.debugCompatAncientArchitect.label", "THE_ARCHITECT missing dialogue"),
+                                debugCompatAncientArchitectBinding,
+                                T("ritsulib.debugCompatAncientArchitect.description",
+                                    "Empty-lines dialogue stub for ModContentRegistry characters when vanilla resolves none (avoids WinRun NRE).")))
                     .AddSection("reference", section => section
                         .WithTitle(T("ritsulib.section.reference.title", "Reference"))
                         .WithDescription(T("ritsulib.section.reference.description",

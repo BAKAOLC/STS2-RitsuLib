@@ -50,6 +50,15 @@ That separation keeps internal data, runtime caches, and player configuration fr
 | `AddSubpage(...)` | Navigate to a registered child page |
 | `AddList(...)` | Structured, reorderable, nestable list editor |
 | `ModSettingsUiActionRegistry.Register*ActionAppender(...)` | Append items to the Actions menu for rows, list items, pages, or sections |
+| `page.WithVisibleWhen(() => ...)` | Hide the whole page (sidebar + body) while the predicate is false; re-evaluated on debounced refresh |
+| `section.WithVisibleWhen(() => ...)` | Hide the section and its sidebar shortcut while false |
+| `AddToggle(..., visibleWhen: () => ...)` | Hide a single row while false (optional last parameter) |
+
+---
+
+## Dynamic visibility
+
+`WithVisibleWhen` / `visibleWhen` drive Godot `Control.Visible` on each debounced settings refresh (after bindings change). Sidebar section buttons for hidden sections register the same predicate so the left rail stays in sync. Predicates should be cheap and avoid throwing; failures fall back to **visible**.
 
 ---
 

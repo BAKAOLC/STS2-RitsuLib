@@ -25,14 +25,20 @@ Guide: [Docs/en/ModSettings.md](Docs/en/ModSettings.md)
 
 ## Debug Compatibility Mode
 
-RitsuLib provides a debug compatibility mode for selected runtime compatibility failures during iteration.
+Master switch `debug_compatibility_mode` defaults to **off**: RitsuLib does **not** soften `LocTable` misses, does **not
+** skip invalid epoch grants (vanilla or explicit `InvalidOperationException`), and does **not** inject the
+`THE_ARCHITECT` dialogue stub.
 
-- Setting: debug_compatibility_mode
-- Default: disabled (false)
-- Behavior when enabled:
-    - missing `LocTable` keys no longer throw immediately; they fall back to key placeholder text and emit a warning log
-    - missing epoch ids encountered by RitsuLib unlock compatibility bridges are downgraded to warnings and skipped so
-      the run can continue
+When the master switch is **on**, the in-game settings page shows **sub-toggles** (each defaults **on** so behavior
+matches the previous single-toggle era):
+
+| Sub-setting                    | Effect when on                                                 |
+|--------------------------------|----------------------------------------------------------------|
+| LocTable missing keys          | Placeholders + one-time `[Localization][DebugCompat]` warnings |
+| Invalid unlock epochs          | Skip grant + one-time `[Unlocks][DebugCompat]` warnings        |
+| THE_ARCHITECT missing dialogue | Empty-lines stub for `ModContentRegistry` characters           |
+
+Turning a sub-toggle **off** while the master remains on forces **vanilla-style** behavior for that subsystem only.
 
 Settings file path on Windows:
 

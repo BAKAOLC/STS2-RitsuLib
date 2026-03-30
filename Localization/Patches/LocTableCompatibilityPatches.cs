@@ -17,7 +17,7 @@ namespace STS2RitsuLib.Localization.Patches
         {
             tableName = GetTableName(table);
 
-            if (!RitsuLibSettingsStore.IsDebugCompatibilityModeEnabled())
+            if (!RitsuLibSettingsStore.IsLocTableCompatEnabled())
                 return false;
 
             if (table.HasEntry(key))
@@ -49,8 +49,9 @@ namespace STS2RitsuLib.Localization.Patches
     }
 
     /// <summary>
-    ///     When debug compatibility mode is enabled, returns a placeholder <c>LocString</c> instead of throwing
-    ///     for missing keys in <c>LocTable.GetLocString</c>.
+    ///     When <see cref="RitsuLibSettingsStore.IsLocTableCompatEnabled" /> is true, returns a placeholder
+    ///     <c>LocString</c> and logs <c>[Localization][DebugCompat]</c> once per key for misses in
+    ///     <c>LocTable.GetLocString</c>. When false, vanilla throw-on-miss behavior applies.
     /// </summary>
     public class LocTableGetLocStringCompatibilityPatch : IPatchMethod
     {
@@ -93,8 +94,9 @@ namespace STS2RitsuLib.Localization.Patches
     }
 
     /// <summary>
-    ///     When debug compatibility mode is enabled, returns the raw key string instead of throwing for missing
-    ///     entries in <c>LocTable.GetRawText</c>.
+    ///     When <see cref="RitsuLibSettingsStore.IsLocTableCompatEnabled" /> is true, returns the raw key
+    ///     string and logs <c>[Localization][DebugCompat]</c> once per key for misses in <c>LocTable.GetRawText</c>.
+    ///     When false, vanilla throw-on-miss behavior applies.
     /// </summary>
     public class LocTableGetRawTextCompatibilityPatch : IPatchMethod
     {

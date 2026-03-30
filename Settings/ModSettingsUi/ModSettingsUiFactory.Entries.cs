@@ -45,7 +45,7 @@ namespace STS2RitsuLib.Settings
                 container.AddChild(CreateSection(context, page, section));
             }
 
-            return container;
+            return MaybeWrapDynamicVisibility(context, container, page.VisibleWhen);
         }
 
         public static Control CreateToggleEntry(ModSettingsUiContext context, ToggleModSettingsEntryDefinition entry)

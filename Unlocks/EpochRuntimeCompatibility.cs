@@ -16,6 +16,12 @@ namespace STS2RitsuLib.Unlocks
             if (EpochModel.IsValid(epochId))
                 return true;
 
+            if (!RitsuLibSettingsStore.IsUnlockEpochCompatEnabled())
+                throw new InvalidOperationException(
+                    $"Missing or invalid epoch id '{epochId}' during {context}. " +
+                    "Enable RitsuLib debug compatibility (master + Unlock epoch) to skip this grant with a warning, " +
+                    "or register/fix the epoch in your timeline/unlock rules.");
+
             WarnMissingEpochOnce(epochId, context);
             return false;
         }
@@ -30,17 +36,9 @@ namespace STS2RitsuLib.Unlocks
                     return;
             }
 
-            if (RitsuLibSettingsStore.IsDebugCompatibilityModeEnabled())
-            {
-                RitsuLibFramework.Logger.Warn(
-                    $"[Unlocks][DebugCompat] Missing epoch '{epochId}' during {context}. " +
-                    "Skipping this unlock attempt and continuing execution.");
-                return;
-            }
-
-            RitsuLibFramework.Logger.Error(
-                $"[Unlocks] Missing epoch '{epochId}' during {context}. " +
-                "Skipping this unlock attempt to avoid terminating the current run.");
+            RitsuLibFramework.Logger.Warn(
+                $"[Unlocks][DebugCompat] Missing epoch '{epochId}' during {context}. " +
+                "Skipping this unlock attempt and continuing execution.");
         }
     }
 }

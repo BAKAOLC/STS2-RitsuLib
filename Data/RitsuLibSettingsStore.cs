@@ -31,17 +31,57 @@ namespace STS2RitsuLib.Data
                 NormalizeSchemaVersionIfNeeded();
 
                 _initialized = true;
-                var enabled = GetSettings().DebugCompatibilityMode;
-                RitsuLibFramework.Logger.Info(
-                    $"[Config] Debug compatibility mode is {(enabled ? "enabled" : "disabled")}. " +
-                    $"Config file: {ProfileManager.GetFilePath(Const.SettingsFileName, SaveScope.Global, 0, Const.ModId)}");
+                LogConfigSnapshot();
             }
         }
 
-        internal static bool IsDebugCompatibilityModeEnabled()
+        private static void LogConfigSnapshot()
+        {
+            var s = GetSettings();
+            var master = s.DebugCompatibilityMode;
+            RitsuLibFramework.Logger.Info(
+                $"[Config] Debug compatibility master is {(master ? "enabled" : "disabled")}. " +
+                $"Sub-flags (only when master on): LocTable={s.DebugCompatLocTable}, UnlockEpoch={s.DebugCompatUnlockEpoch}, AncientArchitect={s.DebugCompatAncientArchitect}. " +
+                $"Config file: {ProfileManager.GetFilePath(Const.SettingsFileName, SaveScope.Global, 0, Const.ModId)}");
+        }
+
+        /// <summary>
+        ///     Master debug-compatibility switch. When false, no RitsuLib soft-fail shims run.
+        /// </summary>
+        internal static bool IsDebugCompatibilityMasterEnabled()
         {
             Initialize();
             return GetSettings().DebugCompatibilityMode;
+        }
+
+        /// <summary>
+        ///     <c>LocTable</c> missing-key placeholders + warnings.
+        /// </summary>
+        internal static bool IsLocTableCompatEnabled()
+        {
+            Initialize();
+            var s = GetSettings();
+            return s is { DebugCompatibilityMode: true, DebugCompatLocTable: true };
+        }
+
+        /// <summary>
+        ///     Skip invalid epoch grants with warnings instead of throwing.
+        /// </summary>
+        internal static bool IsUnlockEpochCompatEnabled()
+        {
+            Initialize();
+            var s = GetSettings();
+            return s is { DebugCompatibilityMode: true, DebugCompatUnlockEpoch: true };
+        }
+
+        /// <summary>
+        ///     <c>THE_ARCHITECT</c> empty dialogue stub for registry characters.
+        /// </summary>
+        internal static bool IsAncientArchitectCompatEnabled()
+        {
+            Initialize();
+            var s = GetSettings();
+            return s is { DebugCompatibilityMode: true, DebugCompatAncientArchitect: true };
         }
 
         private static RitsuLibSettings GetSettings()
@@ -55,8 +95,17 @@ namespace STS2RitsuLib.Data
             if (settings.SchemaVersion >= RitsuLibSettings.CurrentSchemaVersion)
                 return;
 
-            Store.Modify<RitsuLibSettings>(Const.SettingsKey,
-                model => model.SchemaVersion = RitsuLibSettings.CurrentSchemaVersion);
+            Store.Modify<RitsuLibSettings>(Const.SettingsKey, model =>
+            {
+                if (model.SchemaVersion < 2)
+                {
+                    model.DebugCompatLocTable = true;
+                    model.DebugCompatUnlockEpoch = true;
+                    model.DebugCompatAncientArchitect = true;
+                }
+
+                model.SchemaVersion = RitsuLibSettings.CurrentSchemaVersion;
+            });
             Store.Save(Const.SettingsKey);
         }
     }

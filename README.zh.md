@@ -24,13 +24,17 @@ RitsuLib 现在内置了一套专门的 Mod 设置 API，以及对应的设置 s
 
 ## Debug 兼容模式
 
-RitsuLib 提供了一个用于调试阶段的运行时兼容模式，用于处理若干可降级的兼容错误。
+总开关 `debug_compatibility_mode` 默认**关闭**：此时 RitsuLib **不会**软化 `LocTable` 缺键、**不会**跳过无效 Epoch 授予（将走原版或抛出显式异常）、**不会**注入 `THE_ARCHITECT` 对话兜底。
 
-- 配置项: debug_compatibility_mode
-- 默认值: 关闭（false）
-- 开启后行为:
-  - `LocTable` 缺失键不再直接抛异常，而是回退为 Key 占位符并输出警告日志
-  - RitsuLib 解锁兼容桥遇到缺失 Epoch id 时，会降级为警告并跳过该次解锁，使当前跑局继续执行
+总开关**开启**后，游戏内设置页会展开**子开关**（默认均为**开启**，以兼容过去“只开一个总开关”的体验）：
+
+| 子项 | 开启时 |
+|---|---|
+| LocTable 缺键 | 占位 + 一次性 `[Localization][DebugCompat]` 警告 |
+| 无效解锁 Epoch | 跳过授予 + 一次性 `[Unlocks][DebugCompat]` 警告 |
+| 建筑师缺对话 | 对 `ModContentRegistry` 角色注入空 Lines 占位 |
+
+总开关保持开启但**关闭某个子项**时，仅该子系统恢复**原版式**行为。
 
 Windows 下 settings 文件路径:
 

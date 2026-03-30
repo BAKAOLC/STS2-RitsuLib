@@ -35,6 +35,11 @@ namespace STS2RitsuLib.Settings
         /// </summary>
         public ModSettingsText? Description { get; }
 
+        /// <summary>
+        ///     When non-null, the entry row is hidden while the predicate returns false (re-evaluated on UI refresh).
+        /// </summary>
+        public virtual Func<bool>? VisibilityPredicate => null;
+
         internal abstract Control CreateControl(ModSettingsUiContext context);
 
         internal virtual void CollectChromeBindingSnapshots(Dictionary<string, ModSettingsChromeBindingSnapshot> target)
@@ -55,13 +60,17 @@ namespace STS2RitsuLib.Settings
         string id,
         ModSettingsText label,
         IModSettingsValueBinding<bool> binding,
-        ModSettingsText? description)
+        ModSettingsText? description,
+        Func<bool>? visibilityPredicate = null)
         : ModSettingsEntryDefinition(id, label, description)
     {
         /// <summary>
         ///     Backing binding for the toggle.
         /// </summary>
         public IModSettingsValueBinding<bool> Binding { get; } = binding;
+
+        /// <inheritdoc />
+        public override Func<bool>? VisibilityPredicate => visibilityPredicate;
 
         internal override void CollectChromeBindingSnapshots(
             Dictionary<string, ModSettingsChromeBindingSnapshot> target)

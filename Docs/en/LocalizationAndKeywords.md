@@ -94,13 +94,9 @@ This behavior is independent of base-game `LocString` resolution.
 
 ## Debug Compatibility Mode
 
-> This feature patches the base game's `LocTable` behavior and is intended for debugging only.
+> Master `debug_compatibility_mode` plus per-area sub-toggles in RitsuLib settings. See [Diagnostics & Compatibility](DiagnosticsAndCompatibility.md).
 
-When `debug_compatibility_mode` is enabled:
-
-- `LocTable.GetLocString(...)` no longer throws on missing keys; it returns a placeholder value derived from the key
-- `LocTable.GetRawText(...)` no longer throws on missing keys; it returns the key itself
-- each missing key is warned about only once
+When the **master** switch is off, `LocTable` keeps vanilla throw-on-miss. When master is on and the **LocTable** sub-toggle is on, missing keys resolve to placeholders with one-time `[Localization][DebugCompat]` warnings.
 
 The goal is to help troubleshoot issues, not to replace correct localization authoring.
 
@@ -169,6 +165,8 @@ The key shape matches the base game:
 | Optional suffix `-attack` | Architect-only attacker override |
 
 Authors only need to write localization entries to add ancient dialogue for custom characters, without manually patching each `AncientDialogueSet`.
+
+If **no** keys exist for an ancient, vanilla may still show PROCEED for `THE_ARCHITECT` while `WinRun` assumes `Dialogue` is non-null. RitsuLib adds a narrow fallback (empty lines, safe attackers) for `ModContentRegistry` characters **only** when debug compat **master** and the **THE_ARCHITECT** sub-toggle are on, with a one-time `[Ancient]` warning.
 
 ---
 

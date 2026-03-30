@@ -352,6 +352,43 @@ namespace STS2RitsuLib.Settings
                 : ModSettingsLocalization.Get("section.default", "Section");
         }
 
+        /// <summary>
+        ///     Wraps <paramref name="inner" /> so Godot <c>Control.Visible</c> tracks <paramref name="predicate" /> on
+        ///     each settings UI refresh.
+        /// </summary>
+        internal static Control MaybeWrapDynamicVisibility(ModSettingsUiContext context, Control inner,
+            Func<bool>? predicate)
+        {
+            if (predicate == null)
+                return inner;
+
+            var host = new MarginContainer
+            {
+                Name = "DynamicVisibilityHost",
+                MouseFilter = Control.MouseFilterEnum.Ignore,
+                SizeFlagsHorizontal = Control.SizeFlags.ExpandFill,
+            };
+            host.AddChild(inner);
+
+            void Apply()
+            {
+                if (!GodotObject.IsInstanceValid(host))
+                    return;
+                try
+                {
+                    host.Visible = predicate();
+                }
+                catch
+                {
+                    host.Visible = true;
+                }
+            }
+
+            Apply();
+            RegisterRefreshWhenAlive(context, host, Apply);
+            return host;
+        }
+
         private static Control CreateSection(ModSettingsUiContext context, ModSettingsPage page,
             ModSettingsSection section)
         {
@@ -362,6 +399,12 @@ namespace STS2RitsuLib.Settings
                 : new ModSettingsActionsButton(sectionMenuActions, context.RequestRefresh);
             sectionActionsButton?.SizeFlagsVertical = Control.SizeFlags.ShrinkCenter;
 
+            var wrappedEntries = section.Entries
+                .Select(entry => MaybeWrapDynamicVisibility(context, entry.CreateControl(context),
+                    entry.VisibilityPredicate))
+                .ToArray();
+
+            Control built;
             if (section.IsCollapsible)
             {
                 var collapsible = new ModSettingsCollapsibleSection(
@@ -369,13 +412,13 @@ namespace STS2RitsuLib.Settings
                     section.Id,
                     section.Description != null ? ModSettingsUiContext.Resolve(section.Description) : null,
                     section.StartCollapsed,
-                    section.Entries.Select(entry => entry.CreateControl(context)).ToArray(),
+                    wrappedEntries,
                     sectionActionsButton);
                 if (sectionActionsButton != null)
                     AttachContextMenuTargets(collapsible, collapsible, sectionActionsButton);
-                return collapsible;
+                built = collapsible;
             }
-
+            else
             {
                 var container = new VBoxContainer
                 {
@@ -417,12 +460,14 @@ namespace STS2RitsuLib.Settings
                 if (section.Description != null)
                     container.AddChild(CreateRefreshableDescriptionLabel(context,
                         () => ModSettingsUiContext.Resolve(section.Description)));
-                foreach (var entry in section.Entries)
-                    container.AddChild(entry.CreateControl(context));
+                foreach (var wrapped in wrappedEntries)
+                    container.AddChild(wrapped);
                 if (sectionActionsButton != null)
                     AttachContextMenuTargets(container, container, sectionActionsButton);
-                return container;
+                built = container;
             }
+
+            return MaybeWrapDynamicVisibility(context, built, section.VisibleWhen);
         }
 
         internal static MegaRichTextLabel CreateSectionTitle(string text)
@@ -654,7 +699,7 @@ namespace STS2RitsuLib.Settings
                 CornerRadiusBottomRight = ModSettingsUiMetrics.CornerRadius,
                 CornerRadiusBottomLeft = ModSettingsUiMetrics.CornerRadius,
                 ShadowColor = emphasized
-                    ? new Color(borderColor.R, borderColor.G, borderColor.B, 0.42f)
+                    ? new(borderColor.R, borderColor.G, borderColor.B, 0.42f)
                     : new Color(0f, 0f, 0f, 0.14f),
                 ShadowSize = emphasized ? 7 : 2,
                 ContentMarginLeft = 12,

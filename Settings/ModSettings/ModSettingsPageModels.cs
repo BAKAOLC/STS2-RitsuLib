@@ -12,7 +12,8 @@ namespace STS2RitsuLib.Settings
             ModSettingsText? title,
             ModSettingsText? description,
             int sortOrder,
-            IReadOnlyList<ModSettingsSection> sections)
+            IReadOnlyList<ModSettingsSection> sections,
+            Func<bool>? visibleWhen = null)
         {
             ModId = modId;
             Id = id;
@@ -21,6 +22,7 @@ namespace STS2RitsuLib.Settings
             Description = description;
             SortOrder = sortOrder;
             Sections = sections;
+            VisibleWhen = visibleWhen;
         }
 
         /// <summary>
@@ -59,6 +61,12 @@ namespace STS2RitsuLib.Settings
         ///     Section list in display order.
         /// </summary>
         public IReadOnlyList<ModSettingsSection> Sections { get; }
+
+        /// <summary>
+        ///     When non-null, sidebar and main page chrome hide this page when the predicate returns false. Refreshed on
+        ///     settings UI refresh.
+        /// </summary>
+        public Func<bool>? VisibleWhen { get; }
     }
 
     /// <summary>
@@ -72,7 +80,8 @@ namespace STS2RitsuLib.Settings
             ModSettingsText? description,
             bool isCollapsible,
             bool startCollapsed,
-            IReadOnlyList<ModSettingsEntryDefinition> entries)
+            IReadOnlyList<ModSettingsEntryDefinition> entries,
+            Func<bool>? visibleWhen = null)
         {
             Id = id;
             Title = title;
@@ -80,6 +89,7 @@ namespace STS2RitsuLib.Settings
             IsCollapsible = isCollapsible;
             StartCollapsed = startCollapsed;
             Entries = entries;
+            VisibleWhen = visibleWhen;
         }
 
         /// <summary>
@@ -111,5 +121,10 @@ namespace STS2RitsuLib.Settings
         ///     Entries in display order.
         /// </summary>
         public IReadOnlyList<ModSettingsEntryDefinition> Entries { get; }
+
+        /// <summary>
+        ///     When non-null, the section (and its sidebar shortcut) is hidden while the predicate is false.
+        /// </summary>
+        public Func<bool>? VisibleWhen { get; }
     }
 }

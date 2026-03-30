@@ -1,3 +1,4 @@
+using Godot;
 using STS2RitsuLib.Compat;
 using STS2RitsuLib.Utils.Persistence;
 
@@ -54,6 +55,15 @@ namespace STS2RitsuLib.Settings
         public void RegisterRefresh(Action action)
         {
             submenu.RegisterRefreshAction(action);
+        }
+
+        /// <summary>
+        ///     Re-evaluates Godot <c>Control.Visible</c> on each debounced refresh (sidebar targets that are not part of
+        ///     the main content refresh graph).
+        /// </summary>
+        public void RegisterDynamicVisibility(Control control, Func<bool> predicate)
+        {
+            submenu.RegisterDynamicVisibility(control, predicate);
         }
 
         public void NavigateToPage(string pageId)

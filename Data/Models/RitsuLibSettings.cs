@@ -11,7 +11,7 @@ namespace STS2RitsuLib.Data.Models
         /// <summary>
         ///     Current schema version written by the library when creating or normalizing settings.
         /// </summary>
-        public const int CurrentSchemaVersion = 1;
+        public const int CurrentSchemaVersion = 2;
 
         /// <summary>
         ///     Persisted schema version used by the migration pipeline
@@ -21,9 +21,31 @@ namespace STS2RitsuLib.Data.Models
         public int SchemaVersion { get; set; } = CurrentSchemaVersion;
 
         /// <summary>
-        ///     When true, enables library debug compatibility behavior (see startup log for file path).
+        ///     Master switch: when false, all debug-compatibility shims are inactive and sub-flags are ignored (vanilla
+        ///     behavior for <c>LocTable</c>, no RitsuLib epoch skip path, no <c>THE_ARCHITECT</c> dialogue stub).
         /// </summary>
         [JsonPropertyName("debug_compatibility_mode")]
         public bool DebugCompatibilityMode { get; set; }
+
+        /// <summary>
+        ///     When master is on: soft-fail missing <c>LocTable</c> keys with placeholders and one-time
+        ///     <c>[Localization][DebugCompat]</c> warnings. Default true (on new installs and after schema migration).
+        /// </summary>
+        [JsonPropertyName("debug_compat_loc_table")]
+        public bool DebugCompatLocTable { get; set; } = true;
+
+        /// <summary>
+        ///     When master is on: skip invalid epoch grants with one-time <c>[Unlocks][DebugCompat]</c> warnings instead of
+        ///     throwing. When master is off, this flag is ignored. Default true.
+        /// </summary>
+        [JsonPropertyName("debug_compat_unlock_epoch")]
+        public bool DebugCompatUnlockEpoch { get; set; } = true;
+
+        /// <summary>
+        ///     When master is on: inject empty-lines <c>THE_ARCHITECT</c> dialogue for <c>ModContentRegistry</c>
+        ///     characters when vanilla resolves none. Default true.
+        /// </summary>
+        [JsonPropertyName("debug_compat_ancient_architect")]
+        public bool DebugCompatAncientArchitect { get; set; } = true;
     }
 }

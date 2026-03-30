@@ -11,6 +11,7 @@ namespace STS2RitsuLib.Settings
         private readonly List<ModSettingsSection> _sections = [];
 
         private int? _modSidebarOrder;
+        private Func<bool>? _pageVisibleWhen;
 
         /// <summary>
         ///     Initializes a builder for mod <paramref name="modId" />; <paramref name="pageId" /> defaults to the mod id when
@@ -115,6 +116,17 @@ namespace STS2RitsuLib.Settings
         }
 
         /// <summary>
+        ///     Hides the page in the sidebar and main content when <paramref name="predicate" /> returns false (re-evaluated
+        ///     on settings UI refresh).
+        /// </summary>
+        public ModSettingsPageBuilder WithVisibleWhen(Func<bool> predicate)
+        {
+            ArgumentNullException.ThrowIfNull(predicate);
+            _pageVisibleWhen = predicate;
+            return this;
+        }
+
+        /// <summary>
         ///     Adds a section built by <paramref name="configure" />; <paramref name="id" /> must be unique on this page.
         /// </summary>
         public ModSettingsPageBuilder AddSection(string id, Action<ModSettingsSectionBuilder> configure)
@@ -152,7 +164,8 @@ namespace STS2RitsuLib.Settings
                 Title,
                 Description,
                 SortOrder,
-                _sections.ToArray()
+                _sections.ToArray(),
+                _pageVisibleWhen
             );
         }
     }
@@ -164,6 +177,7 @@ namespace STS2RitsuLib.Settings
     {
         private readonly List<ModSettingsEntryDefinition> _entries = [];
         private readonly HashSet<string> _entryIds = new(StringComparer.OrdinalIgnoreCase);
+        private Func<bool>? _sectionVisibleWhen;
 
         internal ModSettingsSectionBuilder(string id)
         {
@@ -220,6 +234,16 @@ namespace STS2RitsuLib.Settings
         {
             IsCollapsible = true;
             StartCollapsed = startCollapsed;
+            return this;
+        }
+
+        /// <summary>
+        ///     Hides the section (and its sidebar shortcut) while <paramref name="predicate" /> is false.
+        /// </summary>
+        public ModSettingsSectionBuilder WithVisibleWhen(Func<bool> predicate)
+        {
+            ArgumentNullException.ThrowIfNull(predicate);
+            _sectionVisibleWhen = predicate;
             return this;
         }
 
@@ -302,9 +326,10 @@ namespace STS2RitsuLib.Settings
             string id,
             ModSettingsText label,
             IModSettingsValueBinding<bool> binding,
-            ModSettingsText? description = null)
+            ModSettingsText? description = null,
+            Func<bool>? visibleWhen = null)
         {
-            AddEntry(id, new ToggleModSettingsEntryDefinition(id, label, binding, description));
+            AddEntry(id, new ToggleModSettingsEntryDefinition(id, label, binding, description, visibleWhen));
             return this;
         }
 
@@ -564,7 +589,7 @@ namespace STS2RitsuLib.Settings
         {
             return _entries.Count == 0
                 ? throw new InvalidOperationException($"Settings section '{Id}' has no entries.")
-                : new(Id, Title, Description, IsCollapsible, StartCollapsed, _entries.ToArray());
+                : new(Id, Title, Description, IsCollapsible, StartCollapsed, _entries.ToArray(), _sectionVisibleWhen);
         }
 
         private void AddEntry(string id, ModSettingsEntryDefinition entry)

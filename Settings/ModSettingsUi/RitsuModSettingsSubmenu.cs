@@ -28,6 +28,8 @@ namespace STS2RitsuLib.Settings
         private readonly List<Control> _contentFocusChain = [];
 
         private readonly HashSet<IModSettingsBinding> _dirtyBindings = [];
+
+        private readonly List<(Control Control, Func<bool> Predicate)> _dynamicVisibilityTargets = [];
         private readonly HashSet<string> _expandedModIds = new(StringComparer.OrdinalIgnoreCase);
 
         private readonly Dictionary<string, ModSettingsSidebarButton> _modButtons =
@@ -272,6 +274,30 @@ namespace STS2RitsuLib.Settings
             _refreshActions.Add(action);
         }
 
+        internal void RegisterDynamicVisibility(Control control, Func<bool> predicate)
+        {
+            ArgumentNullException.ThrowIfNull(control);
+            ArgumentNullException.ThrowIfNull(predicate);
+            _dynamicVisibilityTargets.Add((control, predicate));
+        }
+
+        private void ApplyDynamicVisibilityTargets()
+        {
+            foreach (var (control, predicate) in _dynamicVisibilityTargets)
+            {
+                if (!IsInstanceValid(control))
+                    continue;
+                try
+                {
+                    control.Visible = predicate();
+                }
+                catch
+                {
+                    control.Visible = true;
+                }
+            }
+        }
+
         internal void ShowPasteFailure(ModSettingsPasteFailureReason reason)
         {
             if (reason == ModSettingsPasteFailureReason.None)
@@ -332,6 +358,7 @@ namespace STS2RitsuLib.Settings
             _pendingRefreshFlush = false;
             foreach (var action in _refreshActions.ToArray())
                 action();
+            ApplyDynamicVisibilityTargets();
         }
 
         private void CancelDeferredRefreshFlush()
@@ -859,6 +886,7 @@ namespace STS2RitsuLib.Settings
 
         private void RebuildSidebar()
         {
+            _dynamicVisibilityTargets.Clear();
             _modButtonList.FreeChildren();
             _modButtons.Clear();
             _pageButtons.Clear();
@@ -1034,6 +1062,7 @@ namespace STS2RitsuLib.Settings
             _pageTabRow.AddChild(pageHeader);
 
             _contentList.AddChild(ModSettingsUiFactory.CreatePageContent(context, pageToRender));
+            ApplyDynamicVisibilityTargets();
             RefreshFocusNavigation();
             Callable.From(ScrollToSelectedAnchor).CallDeferred();
         }
@@ -1058,6 +1087,8 @@ namespace STS2RitsuLib.Settings
             button.CustomMinimumSize = new(0f, 48f);
             button.SetSelected(string.Equals(page.Id, _selectedPageId, StringComparison.OrdinalIgnoreCase));
             _pageButtons[page.Id] = button;
+            if (page.VisibleWhen != null)
+                RegisterDynamicVisibility(button, page.VisibleWhen);
 
             var container = new VBoxContainer
             {
@@ -1089,6 +1120,8 @@ namespace STS2RitsuLib.Settings
                     sectionButton.SetSelected(string.Equals(section.Id, _selectedSectionId,
                         StringComparison.OrdinalIgnoreCase));
                     _sectionButtons[section.Id] = sectionButton;
+                    if (section.VisibleWhen != null)
+                        RegisterDynamicVisibility(sectionButton, section.VisibleWhen);
                     sectionRail.AddChild(sectionButton);
                 }
 

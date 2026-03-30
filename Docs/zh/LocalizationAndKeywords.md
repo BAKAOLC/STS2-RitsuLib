@@ -89,13 +89,9 @@ user://mod-configs/<modId>/localization
 
 ## 调试兼容模式
 
-> 此功能通过补丁修改游戏原版 `LocTable` 的行为，仅用于调试。
+> 总开关 `debug_compatibility_mode` 与分项子开关；详见 [诊断与兼容层](DiagnosticsAndCompatibility.md)。
 
-开启 `debug_compatibility_mode` 后：
-
-- `LocTable.GetLocString(...)` 缺失键时不再抛异常，而是返回基于键的占位值
-- `LocTable.GetRawText(...)` 缺失键时不再抛异常，而是直接返回键本身
-- 同一个缺失键只会警告一次
+**总开关关闭**时，`LocTable` 保持原版缺键抛异常。总开关开启且 **LocTable 子项**开启时，缺键改为占位并各键至多一次 `[Localization][DebugCompat]` 警告。
 
 目标是帮助排查问题，不是替代正确的本地化编写。
 
@@ -164,6 +160,8 @@ RitsuLib 内置了 `AncientDialogueLocalization`，它有两个作用：
 | 可选后缀 `-attack` | Architect 专用攻击者覆盖 |
 
 作者只需编写本地化条目，即可为自定义角色补充 Ancient 对话，无需手动为每个 `AncientDialogueSet` 打补丁。
+
+若某个 Ancient **完全没有**对应 key，原版仍可能在 `THE_ARCHITECT` 显示 PROCEED，但 `WinRun` 会假定 `Dialogue` 非空。RitsuLib 仅在调试**总开关 + 建筑师子项**开启时，对 `ModContentRegistry` 角色注入窄兜底（空 `Lines`、安全的攻击方枚举），并打一次性 `[Ancient]` 警告。
 
 ---
 
