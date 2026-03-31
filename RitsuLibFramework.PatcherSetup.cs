@@ -142,6 +142,8 @@ namespace STS2RitsuLib
             patcher.RegisterPatch<EncounterMapNodeAssetPathsPatch>();
             patcher.RegisterPatch<EncounterGetAssetPathsPatch>();
 
+            patcher.RegisterPatch<MonsterVisualsPathPatch>();
+
             patcher.RegisterPatch<EventLayoutScenePatch>();
             patcher.RegisterPatch<EventInitialPortraitPatch>();
             patcher.RegisterPatch<EventBackgroundScenePatch>();
@@ -194,6 +196,7 @@ namespace STS2RitsuLib
         {
             var patcher = CreatePatcher(Const.ModId, "framework-content-registry", "content registry");
             patcher.RegisterPatch<AllCharactersPatch>();
+            patcher.RegisterPatch<AllMonstersPatch>();
             patcher.RegisterPatch<ActsPatch>();
             patcher.RegisterPatch<AllPowersPatch>();
             patcher.RegisterPatch<AllOrbsPatch>();

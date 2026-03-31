@@ -9,6 +9,12 @@ namespace STS2RitsuLib.Scaffolding.Content
     ///     preload list, and extra asset paths. Background pipeline matches vanilla
     ///     <c>EncounterModel.HasCustomBackground</c> semantics, with an explicit switch to keep using the act’s combat
     ///     background when desired.
+    ///     <para />
+    ///     <b>Registration:</b> act-only — <c>ModContentRegistry.RegisterActEncounter&lt;TAct, TEncounter&gt;()</c> or
+    ///     <c>ModContentPackBuilder.ActEncounter&lt;TAct, TEncounter&gt;()</c>; all acts —
+    ///     <c>RegisterGlobalEncounter&lt;TEncounter&gt;()</c> or
+    ///     <c>GlobalEncounter&lt;TEncounter&gt;()</c>. Register each <see cref="MonsterModel" /> used in this encounter with
+    ///     <c>RegisterMonster&lt;T&gt;()</c> / <c>Monster&lt;T&gt;()</c> so <c>ModelDb.Monsters</c> lists them.
     /// </summary>
     public abstract class ModEncounterTemplate : EncounterModel, IModEncounterAssetOverrides
     {

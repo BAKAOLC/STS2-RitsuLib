@@ -62,13 +62,31 @@ namespace STS2RitsuLib.Scaffolding.Content
         }
 
         /// <summary>
-        ///     Queues <see cref="ModContentRegistry.RegisterActEncounter{TAct,TEncounter}" />.
+        ///     Queues <see cref="ModContentRegistry.RegisterActEncounter{TAct,TEncounter}" /> (encounter only in that act).
         /// </summary>
         public ModContentPackBuilder ActEncounter<TAct, TEncounter>()
             where TAct : ActModel
             where TEncounter : EncounterModel
         {
             return AddStep(ctx => ctx.Content.RegisterActEncounter<TAct, TEncounter>());
+        }
+
+        /// <summary>
+        ///     Queues <see cref="ModContentRegistry.RegisterGlobalEncounter{TEncounter}" /> (encounter merged into every act’s
+        ///     encounter pool).
+        /// </summary>
+        public ModContentPackBuilder GlobalEncounter<TEncounter>() where TEncounter : EncounterModel
+        {
+            return AddStep(ctx => ctx.Content.RegisterGlobalEncounter<TEncounter>());
+        }
+
+        /// <summary>
+        ///     Queues <see cref="ModContentRegistry.RegisterMonster{TMonster}" /> (standalone monster type + patched
+        ///     <c>ModelDb.Monsters</c> merge).
+        /// </summary>
+        public ModContentPackBuilder Monster<TMonster>() where TMonster : MonsterModel
+        {
+            return AddStep(ctx => ctx.Content.RegisterMonster<TMonster>());
         }
 
         /// <summary>

@@ -34,6 +34,37 @@ namespace STS2RitsuLib.Content.Patches
     }
 
     /// <summary>
+    ///     Merges RitsuLib-registered monster types into <see cref="ModelDb.Monsters" /> by <see cref="AbstractModel.Id" />.
+    /// </summary>
+    public class AllMonstersPatch : IPatchMethod
+    {
+        /// <inheritdoc />
+        public static string PatchId => "modeldb_all_monsters";
+
+        /// <inheritdoc />
+        public static string Description => "Merge registered monsters into ModelDb.Monsters";
+
+        /// <inheritdoc />
+        public static bool IsCritical => true;
+
+        /// <inheritdoc />
+        public static ModPatchTarget[] GetTargets()
+        {
+            return [new(typeof(ModelDb), "get_Monsters")];
+        }
+
+        // ReSharper disable once InconsistentNaming
+        /// <summary>
+        ///     Ensures standalone-registered monsters appear in global monster enumeration even before every act lists them.
+        /// </summary>
+        public static void Postfix(ref IEnumerable<MonsterModel> __result)
+            // ReSharper restore InconsistentNaming
+        {
+            __result = ModContentRegistry.AppendRegisteredMonsters(__result);
+        }
+    }
+
+    /// <summary>
     ///     Appends RitsuLib-registered acts to <see cref="ModelDb.Acts" />.
     /// </summary>
     public class ActsPatch : IPatchMethod

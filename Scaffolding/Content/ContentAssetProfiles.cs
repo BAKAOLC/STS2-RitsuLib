@@ -150,6 +150,19 @@ namespace STS2RitsuLib.Scaffolding.Content
     }
 
     /// <summary>
+    ///     Optional creature visuals scene path for <see cref="MegaCrit.Sts2.Core.Models.MonsterModel" /> (<c>VisualsPath</c>
+    ///     ).
+    /// </summary>
+    /// <param name="VisualsScenePath">Packed scene root under <c>creature_visuals/</c> convention.</param>
+    public sealed record MonsterAssetProfile(string? VisualsScenePath = null)
+    {
+        /// <summary>
+        ///     Default empty profile (no custom paths).
+        /// </summary>
+        public static MonsterAssetProfile Empty { get; } = new();
+    }
+
+    /// <summary>
     ///     Optional encounter combat scene, background (main scene + parallax layers dir), boss map node spine, and extra
     ///     preload paths (vanilla <c>EncounterModel</c> pipeline).
     /// </summary>
@@ -356,6 +369,39 @@ namespace STS2RitsuLib.Scaffolding.Content
         {
             ArgumentException.ThrowIfNullOrWhiteSpace(actEntry);
             return $"res://scenes/backgrounds/{Normalize(actEntry)}/layers";
+        }
+
+        /// <summary>
+        ///     Builds default encounter asset paths for <paramref name="encounterEntry" /> (vanilla <c>EncounterModel</c> layout).
+        /// </summary>
+        public static EncounterAssetProfile Encounter(string encounterEntry)
+        {
+            ArgumentException.ThrowIfNullOrWhiteSpace(encounterEntry);
+
+            var normalized = Normalize(encounterEntry);
+            return new(
+                SceneHelper.GetScenePath($"encounters/{normalized}"),
+                SceneHelper.GetScenePath($"backgrounds/{normalized}/{normalized}_background"),
+                $"res://scenes/backgrounds/{normalized}/layers",
+                $"res://animations/map/{normalized}/{normalized}_node_skel_data.tres");
+        }
+
+        /// <summary>
+        ///     Vanilla per-encounter combat layers directory (<c>res://scenes/backgrounds/&lt;encounter&gt;/layers</c>).
+        /// </summary>
+        public static string EncounterVanillaBackgroundLayersDirectory(string encounterEntry)
+        {
+            ArgumentException.ThrowIfNullOrWhiteSpace(encounterEntry);
+            return $"res://scenes/backgrounds/{Normalize(encounterEntry)}/layers";
+        }
+
+        /// <summary>
+        ///     Builds default creature visuals scene path for <paramref name="monsterEntry" />.
+        /// </summary>
+        public static MonsterAssetProfile Monster(string monsterEntry)
+        {
+            ArgumentException.ThrowIfNullOrWhiteSpace(monsterEntry);
+            return new(SceneHelper.GetScenePath($"creature_visuals/{Normalize(monsterEntry)}"));
         }
 
         /// <summary>

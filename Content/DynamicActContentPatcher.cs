@@ -132,7 +132,8 @@ namespace STS2RitsuLib.Content
         private static void AllEncountersPostfix(ActModel __instance, ref IEnumerable<EncounterModel> __result)
             // ReSharper restore InconsistentNaming
         {
-            __result = ModContentRegistry.AppendActEncounters(__instance, __result);
+            __result = ModContentRegistry.AppendGlobalEncounters(
+                ModContentRegistry.AppendActEncounters(__instance, __result));
         }
 
         // ReSharper disable InconsistentNaming

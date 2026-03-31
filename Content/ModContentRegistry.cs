@@ -46,6 +46,8 @@ namespace STS2RitsuLib.Content
         private static readonly HashSet<Type> RegisteredSharedEvents = [];
         private static readonly HashSet<Type> RegisteredSharedAncients = [];
         private static readonly Dictionary<Type, HashSet<Type>> RegisteredActEncounters = [];
+
+        private static readonly HashSet<Type> RegisteredGlobalEncounters = [];
         private static readonly Dictionary<Type, HashSet<Type>> RegisteredActEvents = [];
         private static readonly Dictionary<Type, HashSet<Type>> RegisteredActAncients = [];
         private static readonly HashSet<Type> RegisteredEnchantments = [];
@@ -239,7 +241,8 @@ namespace STS2RitsuLib.Content
         }
 
         /// <summary>
-        ///     Registers a mod monster model type for RitsuLib tracking and pool wiring.
+        ///     Registers a mod monster model type for RitsuLib tracking, <see cref="ModelDb" /> identity, dynamic injection, and
+        ///     patched merge into <c>ModelDb.Monsters</c>.
         /// </summary>
         public void RegisterMonster<TMonster>() where TMonster : MonsterModel
         {
@@ -360,6 +363,18 @@ namespace STS2RitsuLib.Content
         {
             RegisterScopedModel(RegisteredActEncounters, typeof(TAct), typeof(TEncounter), typeof(ActModel),
                 typeof(EncounterModel), "act encounter");
+        }
+
+        /// <summary>
+        ///     Registers an encounter model appended to <strong>every</strong> act’s
+        ///     <see cref="ActModel.GenerateAllEncounters" /> result (after vanilla and act-scoped mod encounters).
+        ///     Use for elites / monsters / bosses that should appear in multiple acts; use
+        ///     <see cref="RegisterActEncounter{TAct,TEncounter}" /> when the encounter belongs to one act only.
+        /// </summary>
+        public void RegisterGlobalEncounter<TEncounter>() where TEncounter : EncounterModel
+        {
+            RegisterStandaloneModel(RegisteredGlobalEncounters, typeof(TEncounter), typeof(EncounterModel),
+                "global encounter");
         }
 
         /// <summary>
@@ -498,6 +513,17 @@ namespace STS2RitsuLib.Content
             return AppendResolved(source, ResolveScopedModels<EncounterModel>(RegisteredActEncounters, act.GetType()));
         }
 
+        internal static IEnumerable<EncounterModel> AppendGlobalEncounters(IEnumerable<EncounterModel> source)
+        {
+            return AppendResolved(source, ResolveModels<EncounterModel>(RegisteredGlobalEncounters));
+        }
+
+        internal static IEnumerable<MonsterModel> AppendRegisteredMonsters(IEnumerable<MonsterModel> source)
+        {
+            var additional = ResolveModels<MonsterModel>(RegisteredMonsters);
+            return MergeDistinctByModelId(source, additional);
+        }
+
         internal static IEnumerable<AncientEventModel> AppendSharedAncients(IEnumerable<AncientEventModel> source)
         {
             return AppendResolved(source, ResolveModels<AncientEventModel>(RegisteredSharedAncients));
@@ -539,6 +565,7 @@ namespace STS2RitsuLib.Content
                     .Concat(RegisteredSharedEvents)
                     .Concat(RegisteredSharedAncients)
                     .Concat(RegisteredActEncounters.Values.SelectMany(static set => set))
+                    .Concat(RegisteredGlobalEncounters)
                     .Concat(RegisteredActEvents.Values.SelectMany(static set => set))
                     .Concat(RegisteredActAncients.Values.SelectMany(static set => set))
                     .Distinct()

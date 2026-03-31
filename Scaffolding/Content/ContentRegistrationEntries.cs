@@ -311,6 +311,21 @@ namespace STS2RitsuLib.Scaffolding.Content
     }
 
     /// <summary>
+    ///     Registers an encounter model merged into every act’s encounter list (see
+    ///     <c>ModContentRegistry.RegisterGlobalEncounter&lt;TEncounter&gt;()</c>).
+    /// </summary>
+    /// <typeparam name="TEncounter">Concrete <see cref="EncounterModel" />.</typeparam>
+    public sealed class GlobalEncounterRegistrationEntry<TEncounter> : IContentRegistrationEntry
+        where TEncounter : EncounterModel
+    {
+        /// <inheritdoc />
+        public void Register(ModContentRegistry registry)
+        {
+            registry.RegisterGlobalEncounter<TEncounter>();
+        }
+    }
+
+    /// <summary>
     ///     Registers an event model scoped to <typeparamref name="TAct" />.
     /// </summary>
     public sealed class ActEventRegistrationEntry<TAct, TEvent> : IContentRegistrationEntry
