@@ -8,7 +8,7 @@ namespace STS2RitsuLib.Timeline.Scaffolding
     ///     <see cref="EpochModel" /> base that unlocks a set of cards (from declared CLR types) and optional timeline
     ///     expansions.
     /// </summary>
-    public abstract class CardUnlockEpochTemplate : EpochModel
+    public abstract class CardUnlockEpochTemplate : ModEpochTemplate
     {
         /// <summary>
         ///     Resolved <see cref="CardModel" /> instances for <see cref="CardTypes" />.

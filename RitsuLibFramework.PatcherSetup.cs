@@ -93,6 +93,7 @@ namespace STS2RitsuLib
         private static void RegisterContentAssetPatches()
         {
             var patcher = CreatePatcher(Const.ModId, "framework-content-assets", "content assets");
+            patcher.RegisterPatch<EpochPortraitPathPatch>();
             patcher.RegisterPatch<CardPortraitPathPatch>();
             patcher.RegisterPatch<CardPortraitAvailabilityPatch>();
             patcher.RegisterPatch<CardTextureOverridePatch>();

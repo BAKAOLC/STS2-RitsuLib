@@ -181,6 +181,21 @@ namespace STS2RitsuLib.Scaffolding.Content
     }
 
     /// <summary>
+    ///     Optional timeline epoch portrait paths (vanilla <c>EpochModel.PackedPortraitPath</c> / <c>BigPortraitPath</c>).
+    /// </summary>
+    /// <param name="PackedPortraitPath">Atlas sprite resource path for the small timeline portrait.</param>
+    /// <param name="BigPortraitPath">Large epoch portrait texture path.</param>
+    public sealed record EpochAssetProfile(
+        string? PackedPortraitPath = null,
+        string? BigPortraitPath = null)
+    {
+        /// <summary>
+        ///     Default empty profile (no custom paths).
+        /// </summary>
+        public static EpochAssetProfile Empty { get; } = new();
+    }
+
+    /// <summary>
     ///     Factory methods that build vanilla-style default asset paths from pool/card/relic entry names.
     /// </summary>
     public static class ContentAssetProfiles
@@ -332,6 +347,19 @@ namespace STS2RitsuLib.Scaffolding.Content
                 ImageHelper.GetImagePath($"packed/map/ancients/ancient_node_{normalized}_outline.png"),
                 ImageHelper.GetImagePath($"ui/run_history/{normalized}.png"),
                 ImageHelper.GetImagePath($"ui/run_history/{normalized}_outline.png"));
+        }
+
+        /// <summary>
+        ///     Builds default epoch portrait paths for <paramref name="epochId" /> (matches <c>EpochModel</c> conventions).
+        /// </summary>
+        public static EpochAssetProfile Epoch(string epochId)
+        {
+            ArgumentException.ThrowIfNullOrWhiteSpace(epochId);
+
+            var normalized = Normalize(epochId);
+            return new(
+                ImageHelper.GetImagePath($"atlases/epoch_atlas.sprites/{normalized}.tres"),
+                ImageHelper.GetImagePath($"timeline/epoch_portraits/{normalized}.png"));
         }
 
         private static string Normalize(string value)

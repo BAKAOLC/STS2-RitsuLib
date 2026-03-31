@@ -3,6 +3,7 @@ using Godot;
 using MegaCrit.Sts2.Core.Assets;
 using MegaCrit.Sts2.Core.Models;
 using MegaCrit.Sts2.Core.Runs;
+using MegaCrit.Sts2.Core.Timeline;
 using STS2RitsuLib.Patching.Models;
 using STS2RitsuLib.Utils;
 
@@ -414,6 +415,77 @@ namespace STS2RitsuLib.Scaffolding.Content.Patches
         ///     Override for <c>AncientEventModel.RunHistoryIconOutline</c>.
         /// </summary>
         string? CustomRunHistoryIconOutlinePath => AncientPresentationAssetProfile.RunHistoryIconOutlinePath;
+    }
+
+    /// <summary>
+    ///     Optional epoch timeline portrait paths; use <see cref="STS2RitsuLib.Timeline.Scaffolding.ModEpochTemplate" /> or
+    ///     implement on a mod <see cref="MegaCrit.Sts2.Core.Timeline.EpochModel" />.
+    /// </summary>
+    public interface IModEpochAssetOverrides
+    {
+        /// <summary>
+        ///     Path bundle; <c>Custom*</c> properties mirror these fields unless overridden.
+        /// </summary>
+        EpochAssetProfile AssetProfile => EpochAssetProfile.Empty;
+
+        /// <summary>
+        ///     Override for <c>EpochModel.PackedPortraitPath</c> (atlas sprite entry).
+        /// </summary>
+        string? CustomPackedPortraitPath => AssetProfile.PackedPortraitPath;
+
+        /// <summary>
+        ///     Override for <c>EpochModel.BigPortraitPath</c> (large portrait texture).
+        /// </summary>
+        string? CustomBigPortraitPath => AssetProfile.BigPortraitPath;
+    }
+
+    /// <summary>
+    ///     Patches <see cref="EpochModel" /> portrait path getters for <see cref="IModEpochAssetOverrides" />.
+    /// </summary>
+    public class EpochPortraitPathPatch : IPatchMethod
+    {
+        /// <inheritdoc cref="IPatchMethod.PatchId" />
+        public static string PatchId => "content_asset_override_epoch_portrait_path";
+
+        /// <inheritdoc cref="IPatchMethod.Description" />
+        public static string Description => "Allow mod epochs to override PackedPortraitPath and BigPortraitPath";
+
+        /// <inheritdoc cref="IPatchMethod.IsCritical" />
+        public static bool IsCritical => false;
+
+        /// <inheritdoc cref="IPatchMethod.GetTargets" />
+        public static ModPatchTarget[] GetTargets()
+        {
+            return
+            [
+                new(typeof(EpochModel), "get_PackedPortraitPath"),
+                new(typeof(EpochModel), "get_BigPortraitPath"),
+            ];
+        }
+
+        // ReSharper disable InconsistentNaming
+        /// <summary>
+        ///     Dispatches string overrides for packed atlas vs large portrait paths.
+        /// </summary>
+        public static bool Prefix(MethodBase __originalMethod, EpochModel __instance, ref string __result)
+            // ReSharper restore InconsistentNaming
+        {
+            return __originalMethod.Name switch
+            {
+                "get_PackedPortraitPath" => ContentAssetOverridePatchHelper
+                    .TryUseStringOverride<IModEpochAssetOverrides>(
+                        __instance,
+                        ref __result,
+                        o => o.CustomPackedPortraitPath,
+                        nameof(IModEpochAssetOverrides.CustomPackedPortraitPath)),
+                "get_BigPortraitPath" => ContentAssetOverridePatchHelper.TryUseStringOverride<IModEpochAssetOverrides>(
+                    __instance,
+                    ref __result,
+                    o => o.CustomBigPortraitPath,
+                    nameof(IModEpochAssetOverrides.CustomBigPortraitPath)),
+                _ => true,
+            };
+        }
     }
 
     /// <summary>

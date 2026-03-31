@@ -7,7 +7,7 @@ namespace STS2RitsuLib.Timeline.Scaffolding
     /// <summary>
     ///     <see cref="EpochModel" /> base that unlocks relics from declared CLR types and optional timeline expansions.
     /// </summary>
-    public abstract class RelicUnlockEpochTemplate : EpochModel
+    public abstract class RelicUnlockEpochTemplate : ModEpochTemplate
     {
         /// <summary>
         ///     Resolved <see cref="RelicModel" /> instances for <see cref="RelicTypes" />.

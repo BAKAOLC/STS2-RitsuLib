@@ -7,7 +7,7 @@ namespace STS2RitsuLib.Timeline.Scaffolding
     /// <summary>
     ///     <see cref="EpochModel" /> base that unlocks potions from declared CLR types and optional timeline expansions.
     /// </summary>
-    public abstract class PotionUnlockEpochTemplate : EpochModel
+    public abstract class PotionUnlockEpochTemplate : ModEpochTemplate
     {
         /// <summary>
         ///     Resolved <see cref="PotionModel" /> instances for <see cref="PotionTypes" />.

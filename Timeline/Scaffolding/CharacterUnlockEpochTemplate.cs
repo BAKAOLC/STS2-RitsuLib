@@ -9,7 +9,7 @@ namespace STS2RitsuLib.Timeline.Scaffolding
     ///     <see cref="EpochModel" /> base that unlocks <typeparamref name="TCharacter" /> and optional follow-on epochs.
     /// </summary>
     /// <typeparam name="TCharacter">Character model type being unlocked.</typeparam>
-    public abstract class CharacterUnlockEpochTemplate<TCharacter> : EpochModel
+    public abstract class CharacterUnlockEpochTemplate<TCharacter> : ModEpochTemplate
         where TCharacter : CharacterModel
     {
         /// <inheritdoc />
