@@ -4,7 +4,7 @@
   "name": "RitsuLib",
   "author": "OLC",
   "description": "A shared Slay the Spire 2 mod framework library providing reusable patching, persistence, lifecycle, localization, and utility APIs for other mods.",
-  "version": "0.0.29",
+  "version": "0.0.30",
   "has_pck": false,
   "has_dll": true,
   "affects_gameplay": false,
