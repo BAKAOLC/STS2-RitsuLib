@@ -89,6 +89,16 @@ namespace STS2RitsuLib.Data
             return Store.Get<RitsuLibSettings>(Const.SettingsKey);
         }
 
+        /// <summary>
+        ///     Harmony patch dump UI / lifecycle reads paths and flags without exposing the store surface publicly.
+        /// </summary>
+        internal static (string OutputPath, bool DumpOnFirstMainMenu) GetHarmonyPatchDumpOptions()
+        {
+            Initialize();
+            var s = GetSettings();
+            return (s.HarmonyPatchDumpOutputPath, s.HarmonyPatchDumpOnFirstMainMenu);
+        }
+
         private static void NormalizeSchemaVersionIfNeeded()
         {
             var settings = GetSettings();
@@ -103,6 +113,8 @@ namespace STS2RitsuLib.Data
                     model.DebugCompatUnlockEpoch = true;
                     model.DebugCompatAncientArchitect = true;
                 }
+
+                // Schema 3 adds Harmony patch dump options; new properties default via type initializers / JSON.
 
                 model.SchemaVersion = RitsuLibSettings.CurrentSchemaVersion;
             });

@@ -292,6 +292,25 @@ namespace STS2RitsuLib.Settings
                 control);
         }
 
+        public static Control CreateHostContextButtonEntry(ModSettingsUiContext context,
+            HostContextButtonModSettingsEntryDefinition entry)
+        {
+            var control = new ModSettingsTextButton(
+                ModSettingsUiContext.Resolve(entry.ButtonText),
+                entry.Tone,
+                () =>
+                {
+                    entry.Action(context);
+                    context.RequestRefresh();
+                });
+
+            return CreateSettingLine(
+                context,
+                () => ModSettingsUiContext.Resolve(entry.Label),
+                () => ModSettingsUiContext.Resolve(entry.Description),
+                control);
+        }
+
         public static Control CreateHeaderEntry(ModSettingsUiContext context, HeaderModSettingsEntryDefinition entry)
         {
             var container = new VBoxContainer

@@ -480,6 +480,41 @@ namespace STS2RitsuLib.Settings
     }
 
     /// <summary>
+    ///     Button that receives <see cref="IModSettingsUiActionHost" /> so callbacks can refresh the pane after async work
+    ///     (e.g. native file dialogs).
+    /// </summary>
+    public sealed class HostContextButtonModSettingsEntryDefinition(
+        string id,
+        ModSettingsText label,
+        ModSettingsText buttonText,
+        Action<IModSettingsUiActionHost> action,
+        ModSettingsButtonTone tone,
+        ModSettingsText? description)
+        : ModSettingsEntryDefinition(id, label, description)
+    {
+        /// <summary>
+        ///     Caption on the button control.
+        /// </summary>
+        public ModSettingsText ButtonText { get; } = buttonText;
+
+        /// <summary>
+        ///     Callback when the button is activated; use <see cref="IModSettingsUiActionHost.RequestRefresh" /> after
+        ///     mutating bindings outside the control graph.
+        /// </summary>
+        public Action<IModSettingsUiActionHost> Action { get; } = action;
+
+        /// <summary>
+        ///     Visual emphasis (normal, primary, danger).
+        /// </summary>
+        public ModSettingsButtonTone Tone { get; } = tone;
+
+        internal override Control CreateControl(ModSettingsUiContext context)
+        {
+            return ModSettingsUiFactory.CreateHostContextButtonEntry(context, this);
+        }
+    }
+
+    /// <summary>
     ///     Section heading without a control.
     /// </summary>
     public sealed class HeaderModSettingsEntryDefinition(

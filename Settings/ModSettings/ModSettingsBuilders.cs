@@ -566,6 +566,23 @@ namespace STS2RitsuLib.Settings
         }
 
         /// <summary>
+        ///     Adds a button that runs <paramref name="action" /> with a settings UI host (for refresh after deferred work).
+        /// </summary>
+        public ModSettingsSectionBuilder AddButton(
+            string id,
+            ModSettingsText label,
+            ModSettingsText buttonText,
+            Action<IModSettingsUiActionHost> action,
+            ModSettingsButtonTone tone = ModSettingsButtonTone.Normal,
+            ModSettingsText? description = null)
+        {
+            ArgumentNullException.ThrowIfNull(action);
+            AddEntry(id,
+                new HostContextButtonModSettingsEntryDefinition(id, label, buttonText, action, tone, description));
+            return this;
+        }
+
+        /// <summary>
         ///     Adds navigation to another registered page <paramref name="targetPageId" />.
         /// </summary>
         public ModSettingsSectionBuilder AddSubpage(

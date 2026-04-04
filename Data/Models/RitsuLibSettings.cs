@@ -11,7 +11,7 @@ namespace STS2RitsuLib.Data.Models
         /// <summary>
         ///     Current schema version written by the library when creating or normalizing settings.
         /// </summary>
-        public const int CurrentSchemaVersion = 2;
+        public const int CurrentSchemaVersion = 3;
 
         /// <summary>
         ///     Persisted schema version used by the migration pipeline
@@ -48,5 +48,17 @@ namespace STS2RitsuLib.Data.Models
         /// </summary>
         [JsonPropertyName("debug_compat_ancient_architect")]
         public bool DebugCompatAncientArchitect { get; set; } = true;
+
+        /// <summary>
+        ///     Absolute path or Godot <c>user://</c> path for Harmony patch dump output (text log).
+        /// </summary>
+        [JsonPropertyName("harmony_patch_dump_output_path")]
+        public string HarmonyPatchDumpOutputPath { get; set; } = string.Empty;
+
+        /// <summary>
+        ///     When true, writes a dump once when the main menu first finishes loading this session (deferred).
+        /// </summary>
+        [JsonPropertyName("harmony_patch_dump_on_first_main_menu")]
+        public bool HarmonyPatchDumpOnFirstMainMenu { get; set; }
     }
 }

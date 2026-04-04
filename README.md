@@ -4,7 +4,8 @@ Shared framework library for Slay the Spire 2 mods.
 
 Chinese README: [README.zh.md](README.zh.md)
 
-RitsuLib is maintained as a practical authoring library. API growth is demand-driven and focused on the patterns used by the bundled mods.
+RitsuLib is maintained as a practical authoring library. API growth is demand-driven and focused on the patterns used by
+the bundled mods.
 
 The library exists alongside [BaseLib](https://github.com/Alchyr/BaseLib-StS2) and currently does not conflict with it.
 
@@ -25,13 +26,14 @@ Guide: [Docs/en/ModSettings.md](Docs/en/ModSettings.md)
 
 `debug_compatibility_mode` defaults to **off**. In that state, patched systems keep vanilla behavior.
 
-When the master toggle is **on**, the settings page exposes per-feature compatibility fallbacks. Sub-toggles default to **on**.
+When the master toggle is **on**, the settings page exposes per-feature compatibility fallbacks. Sub-toggles default to
+**on**.
 
-| Sub-setting | Effect when enabled |
-|---|---|
-| LocTable missing keys | Resolve to placeholder `LocString` values and log one `[Localization][DebugCompat]` warning per key |
-| Invalid unlock epochs | Skip invalid epoch grants and log one `[Unlocks][DebugCompat]` warning per stable key |
-| THE_ARCHITECT missing dialogue | Inject empty `Lines` entries for `ModContentRegistry` characters when vanilla provides no dialogue |
+| Sub-setting                    | Effect when enabled                                                                                 |
+|--------------------------------|-----------------------------------------------------------------------------------------------------|
+| LocTable missing keys          | Resolve to placeholder `LocString` values and log one `[Localization][DebugCompat]` warning per key |
+| Invalid unlock epochs          | Skip invalid epoch grants and log one `[Unlocks][DebugCompat]` warning per stable key               |
+| THE_ARCHITECT missing dialogue | Inject empty `Lines` entries for `ModContentRegistry` characters when vanilla provides no dialogue  |
 
 Disabling a sub-toggle removes only that fallback.
 

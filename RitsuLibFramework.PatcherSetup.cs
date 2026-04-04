@@ -54,6 +54,7 @@ namespace STS2RitsuLib
             patcher.RegisterPatch<ModTypeDiscoveryPatch>();
             patcher.RegisterPatch<CoreInitializationLifecyclePatch>();
             patcher.RegisterPatch<NMainMenuContinueRunMissingCharacterPatch>();
+            patcher.RegisterPatch<NMainMenuHarmonyPatchDumpPatch>();
             patcher.RegisterPatch<NContinueRunInfoShowInfoModelNotFoundPatch>();
             patcher.RegisterPatch<NMultiplayerLoadGameScreenBeginRunMissingCharacterPatch>();
             patcher.RegisterPatch<NMultiplayerTestCharacterPaginatorAllCharactersPatch>();

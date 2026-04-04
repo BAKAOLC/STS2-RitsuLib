@@ -1,6 +1,7 @@
 using Godot;
 using STS2RitsuLib.Data;
 using STS2RitsuLib.Data.Models;
+using STS2RitsuLib.Diagnostics;
 using STS2RitsuLib.Utils.Persistence;
 
 namespace STS2RitsuLib.Settings
@@ -40,6 +41,18 @@ namespace STS2RitsuLib.Settings
                     Const.SettingsKey,
                     settings => settings.DebugCompatAncientArchitect,
                     (settings, value) => settings.DebugCompatAncientArchitect = value);
+
+                var harmonyPatchDumpPathBinding = ModSettingsBindings.Global<RitsuLibSettings, string>(
+                    Const.ModId,
+                    Const.SettingsKey,
+                    settings => settings.HarmonyPatchDumpOutputPath,
+                    (settings, value) => settings.HarmonyPatchDumpOutputPath = value);
+
+                var harmonyPatchDumpOnFirstMainMenuBinding = ModSettingsBindings.Global<RitsuLibSettings, bool>(
+                    Const.ModId,
+                    Const.SettingsKey,
+                    settings => settings.HarmonyPatchDumpOnFirstMainMenu,
+                    (settings, value) => settings.HarmonyPatchDumpOnFirstMainMenu = value);
 
                 var showcaseState = new DebugShowcaseState();
                 var previewToggleBinding =
@@ -104,6 +117,41 @@ namespace STS2RitsuLib.Settings
                                 debugCompatAncientArchitectBinding,
                                 T("ritsulib.debugCompatAncientArchitect.description",
                                     "Inject empty Lines entries for ModContentRegistry ancients when vanilla provides no dialogue.")))
+                    .AddSection("harmony_patch_dump", section => section
+                        .WithTitle(T("ritsulib.section.harmonyDump.title", "Harmony patch dump"))
+                        .WithDescription(T("ritsulib.section.harmonyDump.description",
+                            "Export a text report of patched methods (prefix/postfix/transpiler/finalizer) for debugging mod interactions."))
+                        .AddString(
+                            "harmony_patch_dump_output_path",
+                            T("ritsulib.harmonyDump.path.label", "Output file path"),
+                            harmonyPatchDumpPathBinding,
+                            T("ritsulib.harmonyDump.path.placeholder",
+                                "Absolute path or user://… (e.g. user://ritsulib_harmony_patch_dump.log)"),
+                            1024,
+                            T("ritsulib.harmonyDump.path.description",
+                                "Where to write the dump. Use Browse to pick a folder and filename, or type a full path / Godot user:// path."))
+                        .AddToggle(
+                            "harmony_patch_dump_on_first_main_menu",
+                            T("ritsulib.harmonyDump.auto.label", "Dump when main menu first loads"),
+                            harmonyPatchDumpOnFirstMainMenuBinding,
+                            T("ritsulib.harmonyDump.auto.description",
+                                "Once per game session, after the main menu finishes loading, write the report if the output path is set."))
+                        .AddButton(
+                            "harmony_patch_dump_browse",
+                            T("ritsulib.harmonyDump.browse.label", "Choose output file"),
+                            T("ritsulib.harmonyDump.browse.button", "Browse…"),
+                            host => HarmonyPatchDumpSaveDialog.Show(harmonyPatchDumpPathBinding, host),
+                            ModSettingsButtonTone.Normal,
+                            T("ritsulib.harmonyDump.browse.hint",
+                                "Opens a save dialog and stores the chosen path in the field above."))
+                        .AddButton(
+                            "harmony_patch_dump_now",
+                            T("ritsulib.harmonyDump.now.label", "Write dump now"),
+                            T("ritsulib.harmonyDump.now.button", "Dump now"),
+                            HarmonyPatchDumpCoordinator.TryManualDumpFromSettings,
+                            ModSettingsButtonTone.Accent,
+                            T("ritsulib.harmonyDump.now.description",
+                                "Generates the report immediately using the output path above. Check the game log for success or errors.")))
                     .AddSection("reference", section => section
                         .WithTitle(T("ritsulib.section.reference.title", "Reference"))
                         .WithDescription(T("ritsulib.section.reference.description",
@@ -319,7 +367,7 @@ namespace STS2RitsuLib.Settings
                                 T("ritsulib.showcase.list.label", "Preview structured collection"),
                                 new ShowcaseBinding<List<ShowcaseListItem>>(previewListBinding,
                                     value => showcaseState.ListItems = value.ToList()),
-                                () => showcaseState.CreateListItem(),
+                                showcaseState.CreateListItem,
                                 item => ModSettingsText.Literal($"{item.Name} ({item.Weight})"),
                                 item => ModSettingsText.Literal(item.Enabled
                                     ? $"Enabled item - tag: {item.Tag} - notes: {item.Details.Count}"
