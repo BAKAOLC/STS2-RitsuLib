@@ -1,211 +1,153 @@
 # LocString 占位符解析
 
-本文档分为两部分：
-
-1. **游戏原版**的占位符解析机制——帮助 Mod 作者理解运行时文本是如何被格式化的
-2. **扩展指南**——如何通过补丁注册自定义格式化器
+本文档分为两部分：**游戏原版机制**（`LocString`、SmartFormat 配置、内置格式化器）和**扩展指南**（Mod 如何注册自定义 `IFormatter`）。
 
 ---
 
-## 第一部分：游戏原版占位符系统
+## 第一部分：游戏原版机制
 
 > 以下内容描述的是杀戮尖塔 2 引擎自身的本地化解析机制，不是 RitsuLib 提供的功能。
 
-### LocString 基础
+### 核心组件
 
-`LocString` 是游戏核心的本地化类型。它持有本地化表和键的引用，以及一组变量字典；在运行时调用 `GetFormattedText()` 时，变量会被插入到文本中。
+- **`LocString`**：持有本地化表 id、条目键与变量字典，调用 `GetFormattedText()` 执行格式化。
+- **`LocManager.SmartFormat`**：从 `LocTable` 取原始模板，根据键是否已本地化选择 `CultureInfo`，再由 `SmartFormatter.Format(...)` 解析。
+- **`LocManager.LoadLocFormatters`**：初始化 `SmartFormatter`，注册数据源与格式化器扩展。
 
-实际的占位符解析由 `SmartFormat` 库处理，游戏在 `LocManager.LoadLocFormatters` 中注册了一组自定义格式化器。
+### 变量绑定
 
-### 占位符语法
-
-本地化文本中的占位符遵循 SmartFormat 语法：
-
-- 简单变量：`{variableName}`
-- 格式化变量：`{variableName:formatterName}`
-- 带选项的格式化：`{variableName:formatterName:options}`
-
-示例：
-
-```json
-{
-  "damage_text": "对所有敌人造成 {damage} 点伤害。",
-  "energy_text": "本回合获得 {energy:energyIcons}。"
-}
-```
-
-### 变量存储
-
-变量存储在 `LocString` 实例的字典中：
+变量通过 `LocString.Add` 写入字典，**名称中的空格会被替换为连字符**。
 
 ```csharp
 var locString = new LocString("cards", "strike");
 locString.Add("damage", 6);
-locString.Add("target", "enemy");
 string result = locString.GetFormattedText();
 ```
 
-`Add` 方法存储命名值。变量名中的空格会被替换为连字符。
+### 占位符语法
 
-### SmartFormat 内置格式化器
+游戏本地化 JSON 中使用 SmartFormat 占位符。
 
-以下是游戏注册的标准 SmartFormat 扩展：
+**仅变量名** — 直接输出变量值：
 
-| 格式化器 | 说明 |
-|---|---|
+```
+{VariableName}
+```
+
+**指定格式化器** — 格式化器以函数调用形式写在冒号后，括号内内容（`FormatterOptions`）由格式化器自行解读：
+
+```
+{VariableName:formatterName()}
+{VariableName:formatterName(options)}
+```
+
+格式化器由 `IFormatter.Name` 匹配。`(` `)` 是调用语法的必要组成部分，不可省略。
+
+**带额外格式段的格式化器**（如 `show`、`choose`、`cond`）在调用后通过第二个冒号传递格式文本，详见后续各格式化器说明及高级示例。
+
+**示例：**
+
+```json
+{
+  "damage_text": "对所有敌人造成 {Damage:diff()} 点伤害。",
+  "energy_text": "本回合获得 {Energy:energyIcons()}。"
+}
+```
+
+### SmartFormat 内置扩展
+
+游戏注册的标准 SmartFormat 扩展（节选）：
+
+| 类型 | 作用 |
+|------|------|
 | `ListFormatter` | 列表格式化 |
-| `DictionarySource` | 从字典读取 |
-| `ValueTupleSource` | 值元组处理 |
+| `DictionarySource` | 按键读取变量 |
+| `ValueTupleSource` | 值元组 |
 | `ReflectionSource` | 反射访问属性 |
-| `DefaultSource` | 默认源处理器 |
-| `PluralLocalizationFormatter` | 基于语言环境的复数处理 |
+| `DefaultSource` | 默认数据源 |
+| `PluralLocalizationFormatter` | 语言环境复数 |
 | `ConditionalFormatter` | 条件格式化 |
-| `ChooseFormatter` | 选择格式化 |
-| `SubStringFormatter` | 子字符串提取 |
+| `ChooseFormatter` | `choose(...)` |
+| `SubStringFormatter` | 子字符串 |
 | `IsMatchFormatter` | 正则匹配 |
-| `DefaultFormatter` | 默认格式化处理器 |
+| `LocaleNumberFormatter` | 区域数字格式 |
+| `DefaultFormatter` | 无匹配时的回退 |
 
 ### 游戏自定义格式化器
 
-以下是杀戮尖塔 2 自己注册的格式化器：
+游戏在 `MegaCrit.Sts2.Core.Localization.Formatters` 中注册了以下 `IFormatter`：
 
-#### `abs` — AbsoluteValueFormatter
+| `IFormatter.Name` | 占位符写法 | `FormatterOptions` | 说明 |
+|-------------------|-----------|--------------------|------|
+| `abs` | `{v:abs()}` | 不使用 | 输出数值的绝对值 |
+| `energyIcons` | `{Energy:energyIcons()}` 或 `{energyPrefix:energyIcons(n)}` | `CurrentValue` 为 `string` 时，必须提供整数参数作为图标个数 | 将数值渲染为能量图标，详见下方说明 |
+| `starIcons` | `{v:starIcons()}` | 不使用 | 将数值渲染为星星图标 |
+| `diff` | `{v:diff()}` | 不使用 | 以绿色（升级）高亮显示数值变化，需传入 `DynamicVar` |
+| `inverseDiff` | `{v:inverseDiff()}` | 不使用 | 与 `diff` 相同但颜色方向相反，需传入 `DynamicVar` |
+| `percentMore` | `{v:percentMore()}` | 不使用 | 将乘数转换为增加百分比，例如 `1.25` 输出 `25` |
+| `percentLess` | `{v:percentLess()}` | 不使用 | 将乘数转换为减少百分比，例如 `0.75` 输出 `25` |
+| `show` | `{v:show:升级文案\|普通文案}` | 不使用（选项由格式段 `|` 分隔提供） | 根据升级状态条件显示文案，需传入 `IfUpgradedVar` |
 
-将数值格式化为绝对值。
+**`energyIcons` 用法补充**
 
-```json
-{ "text": "失去 {damage:abs} 点生命值。" }
-```
+`CurrentValue` 决定图标个数的来源：
 
-#### `energyIcons` — EnergyIconsFormatter
+- `EnergyVar`：使用 `PreviewValue` 与可选颜色前缀，使用 `{Energy:energyIcons()}`。
+- `CalculatedVar` 或数值类型：直接使用数值，使用 `{Energy:energyIcons()}`。
+- `string`（如固定文本中的 `energyPrefix` 变量）：个数由 `FormatterOptions` 提供，必须写 `energyIcons(n)`，例如 `{energyPrefix:energyIcons(1)}`。
 
-将能量值转换为能量图标。
+图标渲染规则：个数 1–3 重复单独图标；个数 ≤0 或 ≥4 输出数字加单个图标。
 
-```json
-{ "text": "本回合获得 {energy:energyIcons}。" }
-```
+**`show` 用法补充**
 
-- 值 1–3：显示为独立图标
-- 值 ≥ 4：显示数字后跟单个图标
-- 优先使用角色特定的能量图标颜色
+`show:` 后的格式文本按 `|` 拆分为一至两段：
 
-#### `starIcons` — StarIconsFormatter
-
-将数值转换为星星图标。
-
-```json
-{ "text": "升级 {count:starIcons} 张卡牌。" }
-```
-
-#### `diff` — HighlightDifferencesFormatter
-
-使用颜色编码高亮值变化（升级通常为绿色）。
-
-```json
-{ "text": "伤害：{damage:diff}" }
-```
-
-#### `inverseDiff` — HighlightDifferencesInverseFormatter
-
-使用反向颜色编码高亮值变化。
-
-```json
-{ "text": "费用：{cost:inverseDiff}" }
-```
-
-#### `percentMore` — PercentMoreFormatter
-
-将乘数转换为百分比增加。对于值 `1.25`，输出 `25`。
-
-```json
-{ "text": "造成 {multiplier:percentMore}% 更多伤害。" }
-```
-
-#### `percentLess` — PercentLessFormatter
-
-将乘数转换为百分比减少。对于值 `0.75`，输出 `25`。
-
-```json
-{ "text": "费用减少 {discount:percentLess}%。" }
-```
-
-#### `show` — ShowIfUpgradedFormatter
-
-基于升级状态条件性地显示内容，以管道符 `|` 分隔选项。
-
-```json
-{ "text": "{var:show:升级文本|普通文本}" }
-```
-
-- 升级时：显示 `|` 之前的内容
-- 普通时：显示 `|` 之后的内容
-- 预览升级时：以绿色显示升级文本
+- 升级状态（`Upgraded`）：渲染第一段。
+- 普通状态（`Normal`）：渲染第二段；若只有一段则输出空白。
+- 升级预览（`UpgradePreview`）：以绿色渲染第一段。
 
 ### DynamicVar 类型
 
-游戏使用 `DynamicVar` 子类携带额外元数据，以供格式化器读取：
+`DynamicVar` 子类携带格式化元数据，是 `diff`、`inverseDiff` 等格式化器的必要输入：
 
 | 类型 | 说明 |
-|---|---|
-| `DamageVar` | 带高亮的伤害值 |
+|------|------|
+| `DamageVar` | 伤害值，携带高亮元数据 |
 | `BlockVar` | 格挡值 |
-| `EnergyVar` | 带颜色信息的能量值 |
-| `CalculatedVar` | 计算值（中间基类） |
-| `CalculatedDamageVar` | 计算伤害 |
-| `CalculatedBlockVar` | 计算格挡 |
-| `ExtraDamageVar` | 额外伤害值 |
-| `BoolVar` | 布尔值 |
-| `IntVar` | 整数值 |
-| `StringVar` | 字符串值 |
-| `GoldVar` | 金币数量 |
-| `HealVar` | 治疗量 |
-| `HpLossVar` | 生命损失 |
-| `MaxHpVar` | 最大生命值 |
+| `EnergyVar` | 能量值，携带颜色信息 |
+| `CalculatedVar` | 计算值基类 |
+| `CalculatedDamageVar` / `CalculatedBlockVar` | 计算后的伤害/格挡 |
+| `ExtraDamageVar` | 额外伤害 |
+| `BoolVar` / `IntVar` / `StringVar` | 基础类型 |
+| `GoldVar` / `HealVar` / `HpLossVar` / `MaxHpVar` | 资源类型 |
 | `PowerVar<T>` | 能力值（泛型） |
-| `StarsVar` | 星星数量 |
-| `CardsVar` | 卡牌引用 |
-| `IfUpgradedVar` | 升级状态指示器 |
-| `ForgeVar` | 锻造值 |
-| `RepeatVar` | 重复次数 |
-| `SummonVar` | 召唤值 |
+| `StarsVar` / `CardsVar` | 星/牌引用 |
+| `IfUpgradedVar` | 升级显示状态 |
+| `ForgeVar` / `RepeatVar` / `SummonVar` | 其它卡牌变量 |
 
 ### 格式化流程
 
 1. 调用 `LocString.GetFormattedText()`
-2. `LocManager.SmartFormat()` 从本地化表获取原始文本
-3. 根据键是否已本地化选择合适的 `CultureInfo`
-4. `SmartFormatter.Format()` 使用变量处理文本
-5. 根据格式字符串中的指定应用自定义格式化器
-6. 格式化失败时，返回原始文本并记录错误
+2. `LocManager.SmartFormat` 从 `LocTable` 取原始模板
+3. 根据键是否已本地化选择 `CultureInfo`
+4. `SmartFormatter.Format` 解析占位符并调用匹配的格式化器
+5. 若格式化失败（`FormattingException` 或 `ParsingErrors`），记录错误并返回原始模板
 
-### 错误处理
+### 高级示例
 
-格式化失败时：
-
-1. 捕获 `FormattingException` 或 `ParsingErrors`
-2. 记录包含表、键和变量的错误消息
-3. 基于错误模式创建 Sentry 事件指纹
-4. 返回原始文本作为回退
-
-这确保本地化错误不会导致游戏崩溃。
-
-### 高级语法
-
-游戏支持复杂的嵌套格式化模式：
-
-#### 条件格式化
+**条件格式**（`ConditionalFormatter`）
 
 ```json
 { "text": "{HasRider:此卡有附加效果|此卡无附加效果}" }
 ```
 
-#### 选择格式化
+**选择格式**（`ChooseFormatter`）
 
 ```json
 { "text": "{CardType:choose(Attack|Skill|Power):攻击文本|技能文本|能力文本}" }
 ```
 
-#### 嵌套格式化器
+**嵌套格式化器**
 
 ```json
 {
@@ -213,32 +155,23 @@ string result = locString.GetFormattedText();
 }
 ```
 
-#### BBCode 颜色标签
+**BBCode 颜色标签**
 
 ```json
-{ "text": "获得等于 [gold]格挡[/gold] [green]{value}[/green]" }
+{ "text": "获得 [gold]{Gold}[/gold] 金币，当前生命 [green]{Hp}[/green]。" }
 ```
 
-常用颜色标签：
-
-- `[gold]...[/gold]` — 金色高亮
-- `[green]...[/green]` — 绿色高亮（增益）
-- `[red]...[/red]` — 红色高亮（减益）
+常用标签：`[gold]`、`[green]`、`[red]`、`[blue]`。
 
 ---
 
-## 第二部分：为 Mod 添加自定义格式化器
+## 第二部分：自定义格式化器（Mod）
 
-> 以下内容描述如何通过补丁扩展游戏的格式化器注册，需要使用 RitsuLib 的补丁系统。
+> 以下内容描述如何通过 RitsuLib 补丁系统为游戏注册自定义格式化器。
 
-### 实现步骤
+通过对 `LocManager.LoadLocFormatters` 打 `Postfix` 补丁，可在 `SmartFormatter` 中注册额外的 `IFormatter` 实现。
 
-1. 创建一个实现 `SmartFormat.Core.Extensions.IFormatter` 的类
-2. 设置 `Name` 为格式化器标识符
-3. 实现 `TryEvaluateFormat` 处理格式化逻辑
-4. 通过补丁在 `LocManager.LoadLocFormatters` 中注册
-
-示例：
+**实现 `IFormatter`：**
 
 ```csharp
 public class MyCustomFormatter : IFormatter
@@ -248,14 +181,16 @@ public class MyCustomFormatter : IFormatter
 
     public bool TryEvaluateFormat(IFormattingInfo formattingInfo)
     {
-        var value = formattingInfo.CurrentValue;
-        formattingInfo.Write($"处理后: {value}");
+        formattingInfo.Write($"自定义输出: {formattingInfo.CurrentValue}");
         return true;
     }
 }
 ```
 
-注册补丁示例（使用 RitsuLib 补丁系统）：
+- `Name` 是格式化器标识符，对应 JSON 中 `{Var:myCustom()}` 的 `myCustom` 部分。
+- 若需要参数，通过 `formattingInfo.FormatterOptions` 读取括号内的字符串。
+
+**注册补丁：**
 
 ```csharp
 public class RegisterMyFormatterPatch : IPatchMethod
@@ -265,16 +200,14 @@ public class RegisterMyFormatterPatch : IPatchMethod
     public static bool IsCritical => true;
 
     public static ModPatchTarget[] GetTargets()
-    {
-        return [new(typeof(LocManager), "LoadLocFormatters")];
-    }
+        => [new(typeof(LocManager), "LoadLocFormatters")];
 
     public static void Postfix(SmartFormatter ____smartFormatter)
-    {
-        ____smartFormatter.AddExtensions(new MyCustomFormatter());
-    }
+        => ____smartFormatter.AddExtensions(new MyCustomFormatter());
 }
 ```
+
+注册后，在 JSON 中通过 `{SomeVar:myCustom()}` 或 `{SomeVar:myCustom(args)}` 调用。
 
 ---
 

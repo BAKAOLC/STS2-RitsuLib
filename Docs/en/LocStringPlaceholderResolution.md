@@ -1,211 +1,153 @@
 # LocString Placeholder Resolution
 
-This document has two parts:
-
-1. **Game-native** placeholder resolution — how runtime text formatting works in the engine
-2. **Extension guide** — how to register custom formatters via patches
+This document covers two topics: the **game-native** localization system (`LocString`, SmartFormat configuration, built-in formatters) and the **extension guide** for registering custom `IFormatter` implementations from mods.
 
 ---
 
-## Part 1: Game-Native Placeholder System
+## Part 1: Game-native system
 
-> The following describes the Slay the Spire 2 engine's own localization resolution mechanism, not RitsuLib functionality.
+> The following describes the Slay the Spire 2 engine's own localization mechanism, not RitsuLib functionality.
 
-### LocString Basics
+### Core components
 
-`LocString` is the core localization type. It holds a reference to a localization table and key, plus a variable dictionary. When `GetFormattedText()` is called at runtime, variables are inserted into the text.
+- **`LocString`**: holds a localization table id, entry key, and variable dictionary; `GetFormattedText()` triggers formatting.
+- **`LocManager.SmartFormat`**: retrieves the raw template from `LocTable`, selects `CultureInfo` based on whether the key is localized, then calls `SmartFormatter.Format(...)`.
+- **`LocManager.LoadLocFormatters`**: constructs `SmartFormatter`, registers data sources and formatter extensions.
 
-The actual placeholder resolution is handled by the `SmartFormat` library, configured with custom formatters registered in `LocManager.LoadLocFormatters`.
+### Variable binding
 
-### Placeholder Syntax
-
-Placeholders follow SmartFormat syntax:
-
-- Simple variable: `{variableName}`
-- Formatted variable: `{variableName:formatterName}`
-- Formatted with options: `{variableName:formatterName:options}`
-
-Example:
-
-```json
-{
-  "damage_text": "Deal {damage} damage to all enemies.",
-  "energy_text": "Gain {energy:energyIcons} this turn."
-}
-```
-
-### Variable Storage
-
-Variables are stored in a dictionary within the LocString instance:
+Variables are written to `LocString` via `Add`. **Spaces in variable names are replaced with hyphens.**
 
 ```csharp
 var locString = new LocString("cards", "strike");
 locString.Add("damage", 6);
-locString.Add("target", "enemy");
 string result = locString.GetFormattedText();
 ```
 
-The `Add` method stores named values. Spaces in variable names are replaced with hyphens.
+### Placeholder syntax
 
-### Built-in SmartFormat Formatters
+Game localization JSON uses SmartFormat placeholders.
 
-Standard SmartFormat extensions registered by the game:
+**Variable only** — outputs the formatted value of the variable:
 
-| Formatter | Description |
-|---|---|
+```
+{VariableName}
+```
+
+**With formatter** — the formatter is specified after a colon using function-call syntax. The content inside `( )` is passed to the formatter as `IFormattingInfo.FormatterOptions`:
+
+```
+{VariableName:formatterName()}
+{VariableName:formatterName(options)}
+```
+
+Formatters are matched by `IFormatter.Name`. The parentheses are a required part of the invocation syntax.
+
+**Formatters with format segments** (e.g. `show`, `choose`, `cond`) receive additional text after a second colon, split by `|`. See individual formatter notes and the advanced examples below.
+
+**Example:**
+
+```json
+{
+  "damage_text": "Deal {Damage:diff()} damage to all enemies.",
+  "energy_text": "Gain {Energy:energyIcons()} this turn."
+}
+```
+
+### SmartFormat built-in extensions
+
+Standard SmartFormat extensions registered by the game (non-exhaustive):
+
+| Type | Role |
+|------|------|
 | `ListFormatter` | List formatting |
-| `DictionarySource` | Dictionary reading |
-| `ValueTupleSource` | Value tuple handling |
+| `DictionarySource` | Keyed variable lookup |
+| `ValueTupleSource` | Value tuples |
 | `ReflectionSource` | Reflection-based property access |
-| `DefaultSource` | Default source handler |
-| `PluralLocalizationFormatter` | Locale-based pluralization |
+| `DefaultSource` | Fallback source |
+| `PluralLocalizationFormatter` | Locale-sensitive pluralization |
 | `ConditionalFormatter` | Conditional formatting |
-| `ChooseFormatter` | Choice formatting |
-| `SubStringFormatter` | Substring extraction |
+| `ChooseFormatter` | `choose(...)` |
+| `SubStringFormatter` | Substrings |
 | `IsMatchFormatter` | Regex matching |
-| `DefaultFormatter` | Default formatting handler |
+| `LocaleNumberFormatter` | Locale number formatting |
+| `DefaultFormatter` | Fallback when no formatter matches |
 
-### Game-Specific Formatters
+### Game-specific formatters
 
-Custom formatters registered by Slay the Spire 2:
+The game registers the following `IFormatter` types in `MegaCrit.Sts2.Core.Localization.Formatters`:
 
-#### `abs` — AbsoluteValueFormatter
+| `IFormatter.Name` | Placeholder | `FormatterOptions` | Notes |
+|-------------------|-----------|--------------------|-------|
+| `abs` | `{v:abs()}` | unused | Outputs the absolute value of a number |
+| `energyIcons` | `{Energy:energyIcons()}` or `{energyPrefix:energyIcons(n)}` | Required as integer icon count when `CurrentValue` is `string` | Renders a value as energy icon glyphs; see details below |
+| `starIcons` | `{v:starIcons()}` | unused | Renders a value as star icon glyphs |
+| `diff` | `{v:diff()}` | unused | Highlights value changes (green for upgrades); requires `DynamicVar` |
+| `inverseDiff` | `{v:inverseDiff()}` | unused | Same as `diff` with inverted color direction; requires `DynamicVar` |
+| `percentMore` | `{v:percentMore()}` | unused | Converts a multiplier to a percent increase, e.g. `1.25` → `25` |
+| `percentLess` | `{v:percentLess()}` | unused | Converts a multiplier to a percent decrease, e.g. `0.75` → `25` |
+| `show` | `{v:show:upgrade text\|normal text}` | unused (options come from the format segment split on `|`) | Conditionally shows text based on upgrade state; requires `IfUpgradedVar` |
 
-Formats numeric values as their absolute values.
+**`energyIcons` details**
 
-```json
-{ "text": "Lose {damage:abs} HP." }
-```
+The source of the icon count depends on `CurrentValue`:
 
-#### `energyIcons` — EnergyIconsFormatter
+- `EnergyVar`: uses `PreviewValue` and an optional color prefix. Use `{Energy:energyIcons()}`.
+- `CalculatedVar` or numeric type: uses the numeric value directly. Use `{Energy:energyIcons()}`.
+- `string` (e.g. the `energyPrefix` variable used in fixed-cost text): count is read from `FormatterOptions` and must be an integer literal, e.g. `{energyPrefix:energyIcons(1)}`.
 
-Converts energy values to energy icon images.
+Rendering rule: counts 1–3 repeat the icon glyph; counts ≤0 or ≥4 output the digit followed by one icon.
 
-```json
-{ "text": "Gain {energy:energyIcons} this turn." }
-```
+**`show` details**
 
-- Values 1–3: displayed as individual icons
-- Values ≥ 4: number followed by a single icon
-- Uses character-specific energy icon colors when available
+The format segment after `show:` is split on `|` into one or two child formats:
 
-#### `starIcons` — StarIconsFormatter
+- `Upgraded`: renders the first segment.
+- `Normal`: renders the second segment; if only one segment is provided, nothing is rendered.
+- `UpgradePreview`: renders the first segment wrapped in `[green]...[/green]`.
 
-Converts numeric values to star icon images.
+### DynamicVar types
 
-```json
-{ "text": "Upgrade {count:starIcons} cards." }
-```
-
-#### `diff` — HighlightDifferencesFormatter
-
-Highlights value changes with color coding (typically green for upgrades).
-
-```json
-{ "text": "Damage: {damage:diff}" }
-```
-
-#### `inverseDiff` — HighlightDifferencesInverseFormatter
-
-Highlights value changes with inverse color coding.
-
-```json
-{ "text": "Cost: {cost:inverseDiff}" }
-```
-
-#### `percentMore` — PercentMoreFormatter
-
-Converts a multiplier to a percentage increase. For value `1.25`, outputs `25`.
-
-```json
-{ "text": "Deal {multiplier:percentMore}% more damage." }
-```
-
-#### `percentLess` — PercentLessFormatter
-
-Converts a multiplier to a percentage decrease. For value `0.75`, outputs `25`.
-
-```json
-{ "text": "Costs {discount:percentLess}% less." }
-```
-
-#### `show` — ShowIfUpgradedFormatter
-
-Conditionally displays content based on upgrade state, using pipe `|` as delimiter.
-
-```json
-{ "text": "{var:show:Upgrade text|Normal text}" }
-```
-
-- When upgraded: shows content before `|`
-- When normal: shows content after `|`
-- When previewing upgrade: shows upgrade text in green
-
-### DynamicVar Types
-
-The game uses `DynamicVar` subclasses that carry extra metadata for formatters:
+`DynamicVar` subclasses carry metadata consumed by formatters such as `diff` and `inverseDiff`:
 
 | Type | Description |
-|---|---|
-| `DamageVar` | Damage values with highlighting |
-| `BlockVar` | Block values |
-| `EnergyVar` | Energy values with color info |
-| `CalculatedVar` | Calculated values (intermediate base class) |
-| `CalculatedDamageVar` | Calculated damage |
-| `CalculatedBlockVar` | Calculated block |
-| `ExtraDamageVar` | Extra damage values |
-| `BoolVar` | Boolean values |
-| `IntVar` | Integer values |
-| `StringVar` | String values |
-| `GoldVar` | Gold amounts |
-| `HealVar` | Healing amounts |
-| `HpLossVar` | HP loss |
-| `MaxHpVar` | Max HP values |
-| `PowerVar<T>` | Power values (generic) |
-| `StarsVar` | Star counts |
-| `CardsVar` | Card references |
-| `IfUpgradedVar` | Upgrade state indicator |
-| `ForgeVar` | Forge values |
-| `RepeatVar` | Repeat counts |
-| `SummonVar` | Summon values |
+|------|-------------|
+| `DamageVar` | Damage value with highlight metadata |
+| `BlockVar` | Block value |
+| `EnergyVar` | Energy value with color information |
+| `CalculatedVar` | Base class for calculated values |
+| `CalculatedDamageVar` / `CalculatedBlockVar` | Calculated damage / block |
+| `ExtraDamageVar` | Extra damage |
+| `BoolVar` / `IntVar` / `StringVar` | Primitive types |
+| `GoldVar` / `HealVar` / `HpLossVar` / `MaxHpVar` | Resource types |
+| `PowerVar<T>` | Power value (generic) |
+| `StarsVar` / `CardsVar` | Stars / card references |
+| `IfUpgradedVar` | Upgrade UI display state |
+| `ForgeVar` / `RepeatVar` / `SummonVar` | Other card variables |
 
-### Formatting Pipeline
+### Formatting pipeline
 
 1. `LocString.GetFormattedText()` is called
-2. `LocManager.SmartFormat()` retrieves raw text from the localization table
-3. Appropriate `CultureInfo` is selected based on whether the key is localized
-4. `SmartFormatter.Format()` processes text with variables
-5. Custom formatters are applied as specified in format strings
-6. If formatting fails, raw text is returned and an error is logged
+2. `LocManager.SmartFormat` retrieves the raw template from `LocTable`
+3. `CultureInfo` is selected based on whether the key is localized
+4. `SmartFormatter.Format` evaluates placeholders and dispatches to matching formatters
+5. On failure (`FormattingException` or `ParsingErrors`): error is logged and the raw template is returned
 
-### Error Handling
+### Advanced examples
 
-When formatting fails:
-
-1. Exception is caught (`FormattingException` or `ParsingErrors`)
-2. Error message is logged with table, key, and variables
-3. Sentry event fingerprint is created based on the error pattern
-4. Raw text is returned as fallback
-
-This ensures localization errors don't crash the game.
-
-### Advanced Syntax
-
-The game supports complex nested formatting patterns:
-
-#### Conditional Formatting
+**Conditional** (`ConditionalFormatter`)
 
 ```json
 { "text": "{HasRider:This card has a rider effect|This card has no rider}" }
 ```
 
-#### Choice Formatting
+**Choose** (`ChooseFormatter`)
 
 ```json
 { "text": "{CardType:choose(Attack|Skill|Power):Attack text|Skill text|Power text}" }
 ```
 
-#### Nested Formatters
+**Nested formatters**
 
 ```json
 {
@@ -213,32 +155,23 @@ The game supports complex nested formatting patterns:
 }
 ```
 
-#### BBCode Color Tags
+**BBCode color tags**
 
 ```json
-{ "text": "Gain [gold]Block[/gold] equal to [green]{value}[/green]" }
+{ "text": "Gain [gold]{Gold}[/gold] gold. Current HP: [green]{Hp}[/green]." }
 ```
 
-Common color tags:
-
-- `[gold]...[/gold]` — Gold highlighting
-- `[green]...[/green]` — Green highlighting (buffs)
-- `[red]...[/red]` — Red highlighting (debuffs)
+Common tags: `[gold]`, `[green]`, `[red]`, `[blue]`.
 
 ---
 
-## Part 2: Adding Custom Formatters for Mods
+## Part 2: Custom formatters (mods)
 
-> The following describes how to extend the game's formatter registration via patches, using the RitsuLib patching system.
+> The following describes how to register additional formatters via the RitsuLib patching system.
 
-### Steps
+A `Postfix` patch on `LocManager.LoadLocFormatters` provides access to the `SmartFormatter` instance, which accepts additional `IFormatter` implementations.
 
-1. Create a class implementing `SmartFormat.Core.Extensions.IFormatter`
-2. Set `Name` to the formatter's identifier
-3. Implement `TryEvaluateFormat` for formatting logic
-4. Register the formatter via a patch on `LocManager.LoadLocFormatters`
-
-Example:
+**Implementing `IFormatter`:**
 
 ```csharp
 public class MyCustomFormatter : IFormatter
@@ -248,14 +181,16 @@ public class MyCustomFormatter : IFormatter
 
     public bool TryEvaluateFormat(IFormattingInfo formattingInfo)
     {
-        var value = formattingInfo.CurrentValue;
-        formattingInfo.Write($"Processed: {value}");
+        formattingInfo.Write($"Custom output: {formattingInfo.CurrentValue}");
         return true;
     }
 }
 ```
 
-Registration patch example (using RitsuLib patching system):
+- `Name` is the formatter identifier matched in placeholder strings (the `myCustom` in `{Var:myCustom()}`).
+- Access `formattingInfo.FormatterOptions` to read any text supplied inside the parentheses.
+
+**Registration patch:**
 
 ```csharp
 public class RegisterMyFormatterPatch : IPatchMethod
@@ -265,20 +200,18 @@ public class RegisterMyFormatterPatch : IPatchMethod
     public static bool IsCritical => true;
 
     public static ModPatchTarget[] GetTargets()
-    {
-        return [new(typeof(LocManager), "LoadLocFormatters")];
-    }
+        => [new(typeof(LocManager), "LoadLocFormatters")];
 
     public static void Postfix(SmartFormatter ____smartFormatter)
-    {
-        ____smartFormatter.AddExtensions(new MyCustomFormatter());
-    }
+        => ____smartFormatter.AddExtensions(new MyCustomFormatter());
 }
 ```
 
+Once registered, invoke the formatter in JSON as `{SomeVar:myCustom()}` or `{SomeVar:myCustom(args)}`.
+
 ---
 
-## Related Documents
+## Related documents
 
 - [Localization & Keywords](LocalizationAndKeywords.md)
 - [Card Dynamic Variables](CardDynamicVarToolkit.md)
