@@ -1,3 +1,4 @@
+using STS2RitsuLib.Cards.FreePlay.Patches;
 using STS2RitsuLib.Cards.Patches;
 using STS2RitsuLib.Combat.HealthBars.Patches;
 using STS2RitsuLib.Content.Patches;
@@ -85,6 +86,7 @@ namespace STS2RitsuLib
             patcher.RegisterPatch<NHealthBarReadyForecastPatch>();
             patcher.RegisterPatch<CardModelShouldGlowGoldRegistryPatch>();
             patcher.RegisterPatch<CardModelShouldGlowRedRegistryPatch>();
+            patcher.RegisterPatch<CardModelSetToFreeBindingPatch>();
             patcher.RegisterPatch<NHandCardHolderUpdateCardHandOutlinePatch>();
             patcher.RegisterPatch<NHandCardHolderFlashHandOutlinePatch>();
             patcher.RegisterPatch<NHealthBarRefreshForegroundForecastPatch>();

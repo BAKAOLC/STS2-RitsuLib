@@ -1,8 +1,10 @@
 using System.Collections.Concurrent;
 using System.Reflection;
 using Godot;
+using MegaCrit.Sts2.Core.Entities.Cards;
 using MegaCrit.Sts2.Core.Logging;
 using MegaCrit.Sts2.Core.Modding;
+using STS2RitsuLib.Cards.FreePlay;
 using STS2RitsuLib.Combat.HealthBars;
 using STS2RitsuLib.Content;
 using STS2RitsuLib.Data;
@@ -292,6 +294,14 @@ namespace STS2RitsuLib
             where TSource : IHealthBarForecastSource, new()
         {
             HealthBarForecastRegistry.Register<TSource>(modId, sourceId);
+        }
+
+        /// <summary>
+        ///     Registers an additional free-play detector used by framework consumers (for example material logic).
+        /// </summary>
+        public static void RegisterFreePlayBinding(string bindingId, Func<CardPlay, bool> detector)
+        {
+            FreePlayBindingRegistry.Register(bindingId, detector);
         }
 
         /// <summary>
