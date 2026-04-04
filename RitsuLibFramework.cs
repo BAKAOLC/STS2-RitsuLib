@@ -184,6 +184,7 @@ namespace STS2RitsuLib
 
                     IsInitialized = true;
                     IsActive = true;
+                    BaseLibHealthBarForecastBridge.TryRegister();
 
                     var frameworkInitializedEvent = new FrameworkInitializedEvent(
                         Const.ModId,
