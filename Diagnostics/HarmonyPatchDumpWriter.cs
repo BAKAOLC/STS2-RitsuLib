@@ -20,11 +20,18 @@ namespace STS2RitsuLib.Diagnostics
                 return null;
 
             var trimmed = rawPath.Trim();
-            if (trimmed.StartsWith("user://", StringComparison.OrdinalIgnoreCase) ||
-                trimmed.StartsWith("res://", StringComparison.OrdinalIgnoreCase))
-                return ProjectSettings.GlobalizePath(trimmed);
+            try
+            {
+                if (trimmed.StartsWith("user://", StringComparison.OrdinalIgnoreCase) ||
+                    trimmed.StartsWith("res://", StringComparison.OrdinalIgnoreCase))
+                    return ProjectSettings.GlobalizePath(trimmed);
 
-            return Path.GetFullPath(trimmed);
+                return Path.GetFullPath(trimmed);
+            }
+            catch
+            {
+                return null;
+            }
         }
 
         internal static bool TryWrite(string filesystemPath, out string? errorMessage)
