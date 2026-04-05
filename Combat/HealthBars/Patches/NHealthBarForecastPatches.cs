@@ -204,7 +204,11 @@ namespace STS2RitsuLib.Combat.HealthBars.Patches
             if (!lethalColor.HasValue)
             {
                 if (!IsDoomLethalAfterRight(healthBar, creature))
+                {
+                    hpLabel.RemoveThemeColorOverride("font_color");
+                    hpLabel.RemoveThemeColorOverride("font_outline_color");
                     return;
+                }
                 hpLabel.AddThemeColorOverride("font_color", DoomLethalTextColor);
                 hpLabel.AddThemeColorOverride("font_outline_color", DoomLethalOutlineColor);
                 return;
@@ -277,6 +281,7 @@ namespace STS2RitsuLib.Combat.HealthBars.Patches
             duplicate.Name = name;
             duplicate.Visible = false;
             duplicate.SelfModulate = Colors.White;
+            duplicate.Material = null;
             return duplicate;
         }
 
@@ -296,7 +301,9 @@ namespace STS2RitsuLib.Combat.HealthBars.Patches
             mask.MoveChild(state.RightContainer, rightTargetIndex);
 
             var doomIndex = doomForeground.GetIndex();
-            mask.MoveChild(state.LeftContainer, doomIndex + 1);
+            var childCount = mask.GetChildCount();
+            var leftTargetIndex = Math.Clamp(doomIndex + 1, 0, Math.Max(0, childCount - 1));
+            mask.MoveChild(state.LeftContainer, leftTargetIndex);
         }
 
         private static void EnsureSegmentCount(

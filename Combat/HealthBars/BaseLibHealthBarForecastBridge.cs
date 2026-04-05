@@ -10,6 +10,7 @@ namespace STS2RitsuLib.Combat.HealthBars
         private static bool _registered;
         private static bool _baselibSupportsForecastInterop;
         private static bool _loggedMissingInterop;
+        private static bool _loggedMissingRegisterForeign;
         private static bool _primaryAttemptIssued;
         private static bool _secondaryAttemptIssued;
 
@@ -60,7 +61,18 @@ namespace STS2RitsuLib.Combat.HealthBars
                     null);
 
                 if (registerForeign == null)
+                {
+                    _baselibSupportsForecastInterop = false;
+                    if (!_loggedMissingRegisterForeign)
+                    {
+                        _loggedMissingRegisterForeign = true;
+                        RitsuLibFramework.Logger.Warn(
+                            $"[HealthBarForecast] BaseLib registry type '{registryType.FullName}' does not expose " +
+                            "RegisterForeign(string, string, Func<Creature, IEnumerable<object>>); forecast interop unavailable.");
+                    }
+
                     return;
+                }
 
                 var provider = GetSegmentsForCreature;
                 registerForeign.Invoke(null, [Const.ModId, SourceId, provider]);
