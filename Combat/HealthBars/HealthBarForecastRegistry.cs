@@ -24,7 +24,10 @@ namespace STS2RitsuLib.Combat.HealthBars
     ///     One forecast overlay segment for a creature health bar.
     /// </summary>
     /// <param name="Amount">HP amount represented by this segment.</param>
-    /// <param name="Color">Overlay tint.</param>
+    /// <param name="Color">
+    ///     Lethal HP label theming; also used as the forecast nine-patch <see cref="CanvasItem.SelfModulate" /> when
+    ///     <see cref="OverlaySelfModulate" /> is null.
+    /// </param>
     /// <param name="Direction">Which edge the segment grows from.</param>
     /// <param name="Order">
     ///     Lower values are rendered earlier in the chain.
@@ -32,11 +35,45 @@ namespace STS2RitsuLib.Combat.HealthBars
     ///     edge; for <see cref="HealthBarForecastGrowthDirection.FromLeft" />, earlier segments stay closer to the empty
     ///     edge.
     /// </param>
+    /// <param name="OverlayMaterial">
+    ///     Optional Godot material (e.g. shader like vanilla doom). When null, only <see cref="Color" /> tint applies.
+    /// </param>
+    /// <param name="OverlaySelfModulate">
+    ///     Optional <see cref="CanvasItem.SelfModulate" /> for the forecast nine-patch. When null, <see cref="Color" /> is
+    ///     used
+    ///     for both overlay tint and lethal HP label; when set, <see cref="Color" /> is still used for lethal label theming.
+    /// </param>
     public readonly record struct HealthBarForecastSegment(
         int Amount,
         Color Color,
         HealthBarForecastGrowthDirection Direction,
-        int Order = 0);
+        int Order,
+        Material? OverlayMaterial,
+        Color? OverlaySelfModulate = null)
+    {
+        /// <summary>
+        ///     Initializes a segment without overlay material or separate overlay modulate.
+        /// </summary>
+        public HealthBarForecastSegment(int amount, Color color, HealthBarForecastGrowthDirection direction,
+            int order = 0)
+            : this(amount, color, direction, order, null, null)
+        {
+        }
+
+        /// <summary>
+        ///     Initializes a segment with an optional <see cref="OverlayMaterial" /> and default overlay modulate.
+        /// </summary>
+        // ReSharper disable once RedundantOverload.Global
+        public HealthBarForecastSegment(
+            int amount,
+            Color color,
+            HealthBarForecastGrowthDirection direction,
+            int order,
+            Material? overlayMaterial)
+            : this(amount, color, direction, order, overlayMaterial, null)
+        {
+        }
+    }
 
     /// <summary>
     ///     Helpers for common turn-relative ordering of forecast segments.
@@ -74,6 +111,9 @@ namespace STS2RitsuLib.Combat.HealthBars
         /// <summary>
         ///     Registers or replaces a forecast provider for <paramref name="modId" />.
         /// </summary>
+        /// <typeparam name="TSource">Concrete <see cref="IHealthBarForecastSource" /> with a parameterless constructor.</typeparam>
+        /// <param name="modId">Owning mod identifier.</param>
+        /// <param name="sourceId">Optional unique id; defaults to the type full name.</param>
         public static void Register<TSource>(string modId, string? sourceId = null)
             where TSource : IHealthBarForecastSource, new()
         {
@@ -83,6 +123,9 @@ namespace STS2RitsuLib.Combat.HealthBars
         /// <summary>
         ///     Registers or replaces a forecast source instance for <paramref name="modId" />.
         /// </summary>
+        /// <param name="modId">Owning mod identifier.</param>
+        /// <param name="sourceId">Unique id for this source within the mod.</param>
+        /// <param name="source">Provider instance.</param>
         public static void Register(
             string modId,
             string sourceId,
@@ -106,6 +149,9 @@ namespace STS2RitsuLib.Combat.HealthBars
         /// <summary>
         ///     Removes a previously registered provider.
         /// </summary>
+        /// <param name="modId">Mod identifier used at registration.</param>
+        /// <param name="sourceId">Source id used at registration.</param>
+        /// <returns><see langword="true" /> if an entry was removed.</returns>
         public static bool Unregister(string modId, string sourceId)
         {
             ArgumentException.ThrowIfNullOrWhiteSpace(modId);
@@ -117,6 +163,10 @@ namespace STS2RitsuLib.Combat.HealthBars
             }
         }
 
+        /// <summary>
+        ///     Collects segments from powers implementing <see cref="IHealthBarForecastSource" /> and registered providers.
+        /// </summary>
+        /// <param name="creature">Creature whose bar is being evaluated.</param>
         internal static IReadOnlyList<RegisteredHealthBarForecastSegment> GetSegments(Creature creature)
         {
             ArgumentNullException.ThrowIfNull(creature);
@@ -176,6 +226,11 @@ namespace STS2RitsuLib.Combat.HealthBars
             }
         }
 
+        /// <summary>
+        ///     Segment plus a sequence key for stable ordering when <see cref="HealthBarForecastSegment.Order" /> ties.
+        /// </summary>
+        /// <param name="Segment">Forecast data.</param>
+        /// <param name="SequenceOrder">Monotonic key (powers first, then registered sources).</param>
         internal readonly record struct RegisteredHealthBarForecastSegment(
             HealthBarForecastSegment Segment,
             long SequenceOrder);

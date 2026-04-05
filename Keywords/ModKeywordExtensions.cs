@@ -101,7 +101,8 @@ namespace STS2RitsuLib.Keywords
             }
 
             /// <summary>
-            ///     Maps each non-empty keyword id to a registered <see cref="IHoverTip" />.
+            ///     Maps each non-empty keyword id to a registered <see cref="IHoverTip" /> when
+            ///     <see cref="ModKeywordDefinition.IncludeInCardHoverTip" /> is true.
             /// </summary>
             public IEnumerable<IHoverTip> ToHoverTips()
             {
@@ -111,6 +112,8 @@ namespace STS2RitsuLib.Keywords
                     .Where(static id => !string.IsNullOrWhiteSpace(id))
                     .Select(static id => id.Trim().ToLowerInvariant())
                     .Distinct(StringComparer.OrdinalIgnoreCase)
+                    .Where(static id =>
+                        ModKeywordRegistry.TryGet(id, out var def) && def.IncludeInCardHoverTip)
                     .Select(ModKeywordRegistry.CreateHoverTip)
                     .ToArray();
             }
