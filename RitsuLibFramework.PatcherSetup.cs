@@ -116,6 +116,7 @@ namespace STS2RitsuLib
             patcher.RegisterPatch<CardBannerMaterialPatch>();
             patcher.RegisterPatch<CardDynamicVarTooltipPatch>();
             patcher.RegisterPatch<DynamicVarTooltipClonePatch>();
+            patcher.RegisterPatch<ModKeywordCardDescriptionPatches>();
             patcher.RegisterPatch<EnergyIconHelperPathPatch>();
             patcher.RegisterPatch<EnergyIconFormatterPatch>();
 

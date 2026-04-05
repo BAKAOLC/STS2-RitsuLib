@@ -84,5 +84,13 @@ namespace STS2RitsuLib.Scaffolding.Content
 
         /// <inheritdoc />
         public virtual string? CustomBannerMaterialPath => AssetProfile.BannerMaterialPath;
+
+        /// <summary>
+        ///     Materializes <see cref="RegisteredKeywordIds" /> for keyword plumbing in the same assembly.
+        /// </summary>
+        internal IEnumerable<string> EnumerateDeclaredModKeywordIds()
+        {
+            return RegisteredKeywordIds;
+        }
     }
 }
