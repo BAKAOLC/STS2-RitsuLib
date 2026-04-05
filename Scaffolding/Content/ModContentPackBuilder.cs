@@ -362,15 +362,58 @@ namespace STS2RitsuLib.Scaffolding.Content
         }
 
         /// <summary>
-        ///     Queues <see cref="ModKeywordRegistry.RegisterCardKeyword" />.
+        ///     Queues full-signature
+        ///     <see cref="ModKeywordRegistry.RegisterCardKeyword(string,string?,string?,ModKeywordCardDescriptionPlacement,bool)" />
+        ///     .
         /// </summary>
-        public ModContentPackBuilder CardKeyword(string id, string? locKeyPrefix = null, string? iconPath = null)
+        public ModContentPackBuilder CardKeyword(
+            string id,
+            string? locKeyPrefix,
+            string? iconPath,
+            ModKeywordCardDescriptionPlacement cardDescriptionPlacement,
+            bool includeInCardHoverTip)
         {
-            return AddStep(ctx => ctx.Keywords.RegisterCardKeyword(id, locKeyPrefix, iconPath));
+            return AddStep(ctx =>
+                ctx.Keywords.RegisterCardKeyword(id, locKeyPrefix, iconPath, cardDescriptionPlacement,
+                    includeInCardHoverTip));
         }
 
         /// <summary>
-        ///     Queues a general keyword registration on <see cref="ModKeywordRegistry" />.
+        ///     Legacy <c>CardKeyword</c> signature preserved for older mods; forwards with prior hover-tip behavior.
+        /// </summary>
+        public ModContentPackBuilder CardKeyword(string id, string? locKeyPrefix = null, string? iconPath = null)
+        {
+            return CardKeyword(
+                id,
+                locKeyPrefix,
+                iconPath,
+                ModKeywordCardDescriptionPlacement.None,
+                true);
+        }
+
+        /// <summary>
+        ///     Queues full-signature
+        ///     <see
+        ///         cref="ModKeywordRegistry.Register(string,string,string?,string?,string?,string?,ModKeywordCardDescriptionPlacement,bool)" />
+        ///     .
+        /// </summary>
+        public ModContentPackBuilder Keyword(
+            string id,
+            string titleTable,
+            string? titleKey,
+            string? descriptionTable,
+            string? descriptionKey,
+            string? iconPath,
+            ModKeywordCardDescriptionPlacement cardDescriptionPlacement,
+            bool includeInCardHoverTip)
+        {
+            return AddStep(ctx =>
+                ctx.Keywords.Register(id, titleTable, titleKey, descriptionTable, descriptionKey, iconPath,
+                    cardDescriptionPlacement, includeInCardHoverTip));
+        }
+
+        /// <summary>
+        ///     Legacy <c>Keyword</c> signature preserved for older mods; forwards with prior hover-tip behavior.
         /// </summary>
         public ModContentPackBuilder Keyword(
             string id,
@@ -380,8 +423,15 @@ namespace STS2RitsuLib.Scaffolding.Content
             string? descriptionKey = null,
             string? iconPath = null)
         {
-            return AddStep(ctx =>
-                ctx.Keywords.Register(id, titleTable, titleKey, descriptionTable, descriptionKey, iconPath));
+            return Keyword(
+                id,
+                titleTable,
+                titleKey,
+                descriptionTable,
+                descriptionKey,
+                iconPath,
+                ModKeywordCardDescriptionPlacement.None,
+                true);
         }
 
         /// <summary>

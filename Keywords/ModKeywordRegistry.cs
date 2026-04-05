@@ -48,7 +48,8 @@ namespace STS2RitsuLib.Keywords
         }
 
         /// <summary>
-        ///     Registers a keyword for this mod; duplicates from the same mod return the existing definition.
+        ///     Registers a keyword for this mod; duplicates from the same mod return the existing definition (full
+        ///     signature).
         /// </summary>
         /// <param name="id">Keyword id (trimmed, lowercased).</param>
         /// <param name="titleTable">Title localization table.</param>
@@ -56,13 +57,17 @@ namespace STS2RitsuLib.Keywords
         /// <param name="descriptionTable">Description table; defaults to <paramref name="titleTable" /> when null.</param>
         /// <param name="descriptionKey">Description key; defaults to <c>{id}.description</c> when null.</param>
         /// <param name="iconPath">Optional Godot resource path for the icon.</param>
+        /// <param name="cardDescriptionPlacement">Inline card-description injection placement.</param>
+        /// <param name="includeInCardHoverTip">Whether this id participates in template keyword hover-tip expansion.</param>
         public ModKeywordDefinition Register(
             string id,
-            string titleTable = "card_keywords",
-            string? titleKey = null,
-            string? descriptionTable = null,
-            string? descriptionKey = null,
-            string? iconPath = null)
+            string titleTable,
+            string? titleKey,
+            string? descriptionTable,
+            string? descriptionKey,
+            string? iconPath,
+            ModKeywordCardDescriptionPlacement cardDescriptionPlacement,
+            bool includeInCardHoverTip)
         {
             ArgumentException.ThrowIfNullOrWhiteSpace(id);
             ArgumentException.ThrowIfNullOrWhiteSpace(titleTable);
@@ -75,7 +80,9 @@ namespace STS2RitsuLib.Keywords
                 titleKey ?? $"{normalizedId}.title",
                 descriptionTable ?? titleTable,
                 descriptionKey ?? $"{normalizedId}.description",
-                iconPath);
+                iconPath,
+                cardDescriptionPlacement,
+                includeInCardHoverTip);
 
             lock (SyncRoot)
             {
@@ -96,10 +103,36 @@ namespace STS2RitsuLib.Keywords
         }
 
         /// <summary>
-        ///     Convenience for card keywords: uses <c>card_keywords</c> and slugified keys from <paramref name="id" /> or
-        ///     <paramref name="locKeyPrefix" />.
+        ///     Legacy <c>Register</c> signature preserved for older mods; forwards with prior hover-tip behavior.
         /// </summary>
-        public ModKeywordDefinition RegisterCardKeyword(string id, string? locKeyPrefix = null, string? iconPath = null)
+        public ModKeywordDefinition Register(
+            string id,
+            string titleTable = "card_keywords",
+            string? titleKey = null,
+            string? descriptionTable = null,
+            string? descriptionKey = null,
+            string? iconPath = null)
+        {
+            return Register(
+                id,
+                titleTable,
+                titleKey,
+                descriptionTable,
+                descriptionKey,
+                iconPath,
+                ModKeywordCardDescriptionPlacement.None,
+                true);
+        }
+
+        /// <summary>
+        ///     Convenience for card keywords: uses <c>card_keywords</c> and slugified keys (full signature).
+        /// </summary>
+        public ModKeywordDefinition RegisterCardKeyword(
+            string id,
+            string? locKeyPrefix,
+            string? iconPath,
+            ModKeywordCardDescriptionPlacement cardDescriptionPlacement,
+            bool includeInCardHoverTip)
         {
             ArgumentException.ThrowIfNullOrWhiteSpace(id);
 
@@ -113,7 +146,22 @@ namespace STS2RitsuLib.Keywords
                 $"{prefix}.title",
                 "card_keywords",
                 $"{prefix}.description",
-                iconPath);
+                iconPath,
+                cardDescriptionPlacement,
+                includeInCardHoverTip);
+        }
+
+        /// <summary>
+        ///     Legacy <c>RegisterCardKeyword</c> signature preserved for older mods; forwards with prior hover-tip behavior.
+        /// </summary>
+        public ModKeywordDefinition RegisterCardKeyword(string id, string? locKeyPrefix = null, string? iconPath = null)
+        {
+            return RegisterCardKeyword(
+                id,
+                locKeyPrefix,
+                iconPath,
+                ModKeywordCardDescriptionPlacement.None,
+                true);
         }
 
         /// <summary>
