@@ -163,11 +163,9 @@ namespace STS2RitsuLib.Diagnostics.CardExport
                 var failures = 0;
                 var stepIndex = 0;
 
-                foreach (var canonical in cards)
+                foreach (var canonical in cards.TakeWhile(canonical =>
+                             request.MaxBaseCards <= 0 || exportedBase < request.MaxBaseCards))
                 {
-                    if (request.MaxBaseCards > 0 && exportedBase >= request.MaxBaseCards)
-                        break;
-
                     try
                     {
                         progressUi.SetProgress(stepIndex, canonical.Id.Entry);
@@ -387,20 +385,10 @@ namespace STS2RitsuLib.Diagnostics.CardExport
 
             var postOrder = new List<Node>();
 
-            void CollectPostOrder(Node n)
-            {
-                foreach (var c in n.GetChildren())
-                    CollectPostOrder(c);
-                postOrder.Add(n);
-            }
-
             CollectPostOrder(host);
 
-            foreach (var node in postOrder)
+            foreach (var node in postOrder.Where(GodotObject.IsInstanceValid))
             {
-                if (!GodotObject.IsInstanceValid(node))
-                    continue;
-
                 if (node is NCard nCard)
                 {
                     nCard.QueueFreeSafelyNoPool();
@@ -408,6 +396,15 @@ namespace STS2RitsuLib.Diagnostics.CardExport
                 }
 
                 node.QueueFreeSafelyNoPool();
+            }
+
+            return;
+
+            void CollectPostOrder(Node n)
+            {
+                foreach (var c in n.GetChildren())
+                    CollectPostOrder(c);
+                postOrder.Add(n);
             }
         }
 
@@ -432,9 +429,8 @@ namespace STS2RitsuLib.Diagnostics.CardExport
         {
             if (built.MainCard != null && GodotObject.IsInstanceValid(built.MainCard))
                 RefreshMainExportCardVisuals(built.MainCard);
-            foreach (var n in built.RefHoverTipCards)
-                if (GodotObject.IsInstanceValid(n))
-                    ApplyCardLibraryStyleExportVisuals(n, PileType.Deck);
+            foreach (var n in built.RefHoverTipCards.Where(GodotObject.IsInstanceValid))
+                ApplyCardLibraryStyleExportVisuals(n, PileType.Deck);
         }
 
         private static void ResizeViewportToHoverRow(BuiltCaptureViewport built)
@@ -457,9 +453,7 @@ namespace STS2RitsuLib.Diagnostics.CardExport
         private static BuiltCaptureViewport BuildCaptureViewport(CardModel card, CardPngExportRequest request,
             float scale)
         {
-            var padded = ComputePaddedCardViewportSize(scale);
-            var cardW = padded.X;
-            var cardH = padded.Y;
+            var (cardW, cardH) = ComputePaddedCardViewportSize(scale);
             var refHoverNcArds = new List<NCard>();
 
             var vp = new SubViewport
@@ -643,19 +637,18 @@ namespace STS2RitsuLib.Diagnostics.CardExport
             var control = PreloadManager.Cache.GetScene(CardHoverTipScenePath).Instantiate<Control>();
             refCardsColumn.AddChild(control);
 
-            var s = CardHoverTipSceneCardScale;
-            var padded = ComputePaddedCardViewportSize(s);
+            var padded = ComputePaddedCardViewportSize(CardHoverTipSceneCardScale);
             control.CustomMinimumSize = new(padded.X, padded.Y);
             control.ResetSize();
 
             var node = control.GetNode<NCard>("%Card");
             node.Model = refTip.Card;
             node.SetAnchorsPreset(Control.LayoutPreset.TopLeft);
-            node.Scale = Vector2.One * s;
+            node.Scale = Vector2.One * CardHoverTipSceneCardScale;
             var minLocal = CardExportContentMinInNCardLocal();
             node.Position = new(
-                Mathf.Round(-minLocal.X * s),
-                Mathf.Round(-minLocal.Y * s));
+                Mathf.Round(-minLocal.X * CardHoverTipSceneCardScale),
+                Mathf.Round(-minLocal.Y * CardHoverTipSceneCardScale));
             refHoverTipCardNodes.Add(node);
         }
 

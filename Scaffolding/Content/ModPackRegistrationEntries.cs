@@ -12,8 +12,8 @@ namespace STS2RitsuLib.Scaffolding.Content
         internal static void ApplyExplicitTypes<TEpoch>(ModContentPackContext context, IReadOnlyList<Type> cardTypes,
             IReadOnlyList<Type> relicTypes) where TEpoch : EpochModel, new()
         {
-            var cards = cardTypes ?? Array.Empty<Type>();
-            var relics = relicTypes ?? Array.Empty<Type>();
+            var cards = cardTypes ?? [];
+            var relics = relicTypes ?? [];
             if (cards.Count == 0 && relics.Count == 0)
                 throw new ArgumentException(
                     $"Epoch gated content for '{typeof(TEpoch).Name}' needs at least one card or relic type.");

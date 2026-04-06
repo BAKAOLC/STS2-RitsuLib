@@ -181,7 +181,7 @@ namespace STS2RitsuLib.Scaffolding.Content
         {
             ArgumentNullException.ThrowIfNull(types);
             _pending.Add(() =>
-                ModEpochGatedContentPackHelper.ApplyExplicitTypes<TEpoch>(_context, types, Array.Empty<Type>()));
+                ModEpochGatedContentPackHelper.ApplyExplicitTypes<TEpoch>(_context, types, []));
             return this;
         }
 
@@ -192,7 +192,7 @@ namespace STS2RitsuLib.Scaffolding.Content
         {
             ArgumentNullException.ThrowIfNull(types);
             _pending.Add(() =>
-                ModEpochGatedContentPackHelper.ApplyExplicitTypes<TEpoch>(_context, Array.Empty<Type>(), types));
+                ModEpochGatedContentPackHelper.ApplyExplicitTypes<TEpoch>(_context, [], types));
             return this;
         }
 

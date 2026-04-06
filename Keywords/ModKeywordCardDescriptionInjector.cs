@@ -37,17 +37,12 @@ namespace STS2RitsuLib.Keywords
             if (before.Count == 0 && after.Count == 0)
                 return;
 
-            List<string> lines;
-            if (description.Length == 0)
-                lines = new();
-            else
-                lines = description.Split('\n').ToList();
+            var lines = description.Length == 0 ? [] : description.Split('\n').ToList();
 
             for (var i = before.Count - 1; i >= 0; i--)
                 lines.Insert(0, before[i]);
 
-            foreach (var line in after)
-                lines.Add(line);
+            lines.AddRange(after);
 
             description = string.Join('\n', lines);
         }
