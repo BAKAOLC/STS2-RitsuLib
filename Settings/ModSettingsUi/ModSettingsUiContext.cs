@@ -44,12 +44,16 @@ namespace STS2RitsuLib.Settings
 
         public static string GetPersistenceScopeChipText(IModSettingsBinding binding)
         {
-            if (binding is ITransientModSettingsBinding)
-                return ModSettingsLocalization.Get("scope.transient", "Preview only - not persisted");
-
-            return binding.Scope == SaveScope.Profile
-                ? ModSettingsLocalization.Get("scope.profile", "Stored per profile")
-                : ModSettingsLocalization.Get("scope.global", "Stored globally");
+            return binding switch
+            {
+                ITransientModSettingsBinding => ModSettingsLocalization.Get("scope.transient",
+                    "Preview only - not persisted"),
+                IModSettingsRunOverlayBinding => ModSettingsLocalization.Get("scope.runOverlay",
+                    "Per-run overlay (values isolated during an active run; commit/discards depend on binding)"),
+                _ => binding.Scope == SaveScope.Profile
+                    ? ModSettingsLocalization.Get("scope.profile", "Stored per profile")
+                    : ModSettingsLocalization.Get("scope.global", "Stored globally"),
+            };
         }
 
         public void RegisterRefresh(Action action)

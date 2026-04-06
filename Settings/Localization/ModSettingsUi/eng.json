@@ -142,6 +142,7 @@
   "scope.transient": "Preview only - not saved",
   "scope.global": "Stored globally",
   "scope.profile": "Stored per profile",
+  "scope.runOverlay": "Per-run overlay (values isolated while a run is active; commit/discards depend on binding)",
   "section.default": "Section",
   "empty.none": "No mod settings pages are currently registered.",
   "empty.mod": "This mod has no registered settings page.",

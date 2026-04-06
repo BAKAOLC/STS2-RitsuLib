@@ -9,6 +9,7 @@ using MegaCrit.Sts2.Core.Saves;
 using STS2RitsuLib.Content;
 using STS2RitsuLib.Diagnostics;
 using STS2RitsuLib.Patching.Models;
+using STS2RitsuLib.Settings;
 using STS2RitsuLib.Timeline;
 using STS2RitsuLib.Unlocks;
 
@@ -282,12 +283,14 @@ namespace STS2RitsuLib.Lifecycle.Patches
             switch (__originalMethod.Name)
             {
                 case "InitializeNewRun" when state != null:
+                    ModSettingsRunSessionCoordinator.NotifyRunStarted(__instance, isMultiplayer, isDaily);
                     RitsuLibFramework.PublishLifecycleEvent(
                         new RunStartedEvent(state, isMultiplayer, isDaily, DateTimeOffset.UtcNow),
                         nameof(RunStartedEvent)
                     );
                     break;
                 case "InitializeSavedRun" when state != null:
+                    ModSettingsRunSessionCoordinator.NotifyRunStarted(__instance, isMultiplayer, isDaily);
                     RitsuLibFramework.PublishLifecycleEvent(
                         new RunLoadedEvent(state, isMultiplayer, isDaily, DateTimeOffset.UtcNow),
                         nameof(RunLoadedEvent)
@@ -328,6 +331,7 @@ namespace STS2RitsuLib.Lifecycle.Patches
             // ReSharper restore InconsistentNaming
         {
             ModUnlockRegistry.ProcessRunEnded(__instance, __result, isVictory, __instance.IsAbandoned);
+            ModSettingsRunSessionCoordinator.NotifyRunEnded();
             RitsuLibFramework.PublishLifecycleEvent(
                 new RunEndedEvent(__result, isVictory, __instance.IsAbandoned, DateTimeOffset.UtcNow),
                 nameof(RunEndedEvent)

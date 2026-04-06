@@ -2186,6 +2186,7 @@ namespace STS2RitsuLib.Settings
 
             ModSettingsUiFactory.RegisterRefreshWhenAlive(UiContext, this, RebuildRows);
             RebuildRows();
+            ModSettingsInteractionUi.ApplySessionReadOnlyGates(this, _entry.Binding);
         }
 
         private void RebuildRows()
@@ -2211,6 +2212,8 @@ namespace STS2RitsuLib.Settings
                 _rows.AddChild(CreateRow(index, item, items.Count));
                 _rows.AddChild(RegisterDropSlot(new(this, index + 1), index + 1));
             }
+
+            ModSettingsInteractionUi.ApplySessionReadOnlyGates(this, _entry.Binding);
         }
 
         private Control CreateRow(int index, TItem item, int itemCount)

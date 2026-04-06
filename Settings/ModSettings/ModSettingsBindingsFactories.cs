@@ -113,6 +113,33 @@ namespace STS2RitsuLib.Settings
         {
             return new(parent, dataKey, getter, setter, adapter);
         }
+
+        /// <summary>
+        ///     Restricts edits to certain sessions (e.g. main menu only) via <see cref="ModSettingsEditPolicy" />.
+        ///     Compose outside run overlays: prefer <c>WithRunSessionOverlay(WithEditPolicy(inner, …), …)</c> so in-run writes
+        ///     hit the overlay; wrapping <c>WithEditPolicy</c> on the outside with
+        ///     <see cref="ModSettingsEditPolicy.OutOfRunOnly" />
+        ///     blocks every in-run write including overlay updates.
+        /// </summary>
+        public static ModSettingsPolicyGatedValueBinding<TValue> WithEditPolicy<TValue>(
+            IModSettingsValueBinding<TValue> inner,
+            ModSettingsEditPolicy policy)
+        {
+            ArgumentNullException.ThrowIfNull(inner);
+            return new(inner, policy);
+        }
+
+        /// <summary>
+        ///     Adds a per-run overlay on top of a persisted binding; snapshots at run start and commits or discards at run end.
+        /// </summary>
+        public static ModSettingsRunScopedValueBinding<TValue> WithRunSessionOverlay<TValue>(
+            IModSettingsValueBinding<TValue> inner,
+            ModSettingsRunOverlayCommitMode commitMode,
+            ModSettingsRunOverlayAuthority authority = ModSettingsRunOverlayAuthority.Independent)
+        {
+            ArgumentNullException.ThrowIfNull(inner);
+            return new(inner, commitMode, authority);
+        }
     }
 
     /// <summary>

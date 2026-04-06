@@ -64,6 +64,11 @@ namespace STS2RitsuLib
         public static bool HasRegisteredModSettings => ModSettingsRegistry.HasPages;
 
         /// <summary>
+        ///     True while a run is active (new run, loaded run, until victory/defeat/abandon), for mod settings session APIs.
+        /// </summary>
+        public static bool IsModSettingsRunSessionActive => ModSettingsSessionState.IsInActiveRun;
+
+        /// <summary>
         ///     Subscribes an observer to framework lifecycle events, optionally replaying the current replayable state.
         /// </summary>
         /// <param name="observer">Receives lifecycle notifications via <c>OnEvent</c>.</param>

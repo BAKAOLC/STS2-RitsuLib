@@ -91,12 +91,18 @@ namespace STS2RitsuLib.Settings
             valueControl.SizeFlagsVertical = Control.SizeFlags.ShrinkCenter;
             row.AddChild(valueControl);
 
-            if (actionControl == null) return line;
+            if (actionControl == null)
+            {
+                ModSettingsInteractionUi.ApplySessionReadOnlyGates(valueControl, scopeBinding);
+                return line;
+            }
+
             actionControl.SizeFlagsVertical = Control.SizeFlags.ShrinkCenter;
             row.AddChild(actionControl);
             if (actionControl is ModSettingsActionsButton actionsButton)
                 AttachContextMenuTargets(line, valueControl, actionsButton);
 
+            ModSettingsInteractionUi.ApplySessionReadOnlyGates(valueControl, scopeBinding);
             return line;
 
             string ResolveLabelText()
@@ -190,7 +196,8 @@ namespace STS2RitsuLib.Settings
             IModSettingsValueBinding<TValue> binding)
         {
             var actions = new List<ModSettingsMenuAction>();
-            if (binding is IDefaultModSettingsValueBinding<TValue> defaults)
+            var coreBinding = ModSettingsBindingUnwrap.Unwrap(binding);
+            if (coreBinding is IDefaultModSettingsValueBinding<TValue> defaults)
                 actions.Add(new(
                     ModSettingsStandardActionIds.ResetToDefault,
                     ModSettingsLocalization.Get("button.resetDefault", "Reset to default"),
@@ -332,7 +339,8 @@ namespace STS2RitsuLib.Settings
         internal static IStructuredModSettingsValueAdapter<TValue> ResolveClipboardAdapter<TValue>(
             IModSettingsValueBinding<TValue> binding)
         {
-            return binding is IStructuredModSettingsValueBinding<TValue> structured
+            var core = ModSettingsBindingUnwrap.Unwrap(binding);
+            return core is IStructuredModSettingsValueBinding<TValue> structured
                 ? structured.Adapter
                 : ModSettingsStructuredData.Json<TValue>();
         }
