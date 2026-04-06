@@ -142,7 +142,7 @@
   "scope.transient": "仅预览，不会写入",
   "scope.global": "全局保存",
   "scope.profile": "按档位保存",
-  "scope.runOverlay": "对局内覆盖层（进行中的对局使用独立内存；是否在结束时写回由绑定配置决定）",
+  "scope.runOverlay": "对局覆盖",
   "section.default": "设置分组",
   "empty.none": "当前还没有任何已注册的模组设置页。",
   "empty.mod": "该模组没有已注册的设置页。",

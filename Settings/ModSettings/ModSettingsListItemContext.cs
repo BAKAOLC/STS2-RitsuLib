@@ -26,7 +26,8 @@ namespace STS2RitsuLib.Settings
             Action? moveDown,
             Action? duplicate,
             Action remove,
-            Action requestRefresh)
+            Action requestRefresh,
+            IModSettingsBinding? listHostBindingForReadOnly = null)
         {
             _uiContext = uiContext;
             Binding = binding;
@@ -39,6 +40,7 @@ namespace STS2RitsuLib.Settings
             _duplicate = duplicate;
             _remove = remove;
             _requestRefresh = requestRefresh;
+            ListHostBindingForReadOnly = listHostBindingForReadOnly;
         }
 
         /// <summary>
@@ -70,6 +72,18 @@ namespace STS2RitsuLib.Settings
         ///     Binding scoped to this row’s value (structured clipboard when implemented).
         /// </summary>
         public IModSettingsValueBinding<TItem> Binding { get; }
+
+        /// <summary>
+        ///     The list’s root binding (for session read-only / paste rules); null for legacy callers.
+        /// </summary>
+        public IModSettingsBinding? ListHostBindingForReadOnly { get; }
+
+        /// <summary>
+        ///     True when the owning list binding is session read-only (e.g. host-authoritative client).
+        /// </summary>
+        public bool IsListHostReadOnly =>
+            ListHostBindingForReadOnly != null &&
+            ModSettingsInteractionUi.IsBindingReadOnly(ListHostBindingForReadOnly);
 
         /// <summary>
         ///     True when <see cref="Binding" /> exposes structured copy/paste.
@@ -141,6 +155,9 @@ namespace STS2RitsuLib.Settings
         /// </summary>
         public bool CanPasteFromClipboard()
         {
+            if (IsListHostReadOnly)
+                return false;
+
             return Binding is IStructuredModSettingsValueBinding<TItem> structured &&
                    ModSettingsClipboardOperations.CanPasteBindingValue(Binding, structured.Adapter);
         }

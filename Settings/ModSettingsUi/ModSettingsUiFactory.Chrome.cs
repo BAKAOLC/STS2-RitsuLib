@@ -201,7 +201,7 @@ namespace STS2RitsuLib.Settings
                 actions.Add(new(
                     ModSettingsStandardActionIds.ResetToDefault,
                     ModSettingsLocalization.Get("button.resetDefault", "Reset to default"),
-                    true,
+                    () => !ModSettingsInteractionUi.IsBindingReadOnly(binding),
                     () =>
                     {
                         binding.Write(defaults.CreateDefaultValue());
@@ -221,7 +221,8 @@ namespace STS2RitsuLib.Settings
             actions.Add(new(
                 ModSettingsStandardActionIds.Paste,
                 ModSettingsLocalization.Get("button.paste", "Paste data"),
-                () => CanPasteBindingValueFromClipboard(binding),
+                () => CanPasteBindingValueFromClipboard(binding) &&
+                      !ModSettingsInteractionUi.IsBindingReadOnly(binding),
                 () =>
                 {
                     if (!TryPasteBindingValueFromClipboard(context, binding)) return;
@@ -237,23 +238,35 @@ namespace STS2RitsuLib.Settings
         {
             var actions = new List<ModSettingsMenuAction>
             {
-                new(ModSettingsStandardActionIds.MoveUp, ModSettingsLocalization.Get("button.moveUp", "Move up"),
-                    itemContext.CanMoveUp,
+                new(
+                    ModSettingsStandardActionIds.MoveUp,
+                    ModSettingsLocalization.Get("button.moveUp", "Move up"),
+                    () => itemContext is { CanMoveUp: true, IsListHostReadOnly: false },
                     itemContext.MoveUp),
-                new(ModSettingsStandardActionIds.MoveDown, ModSettingsLocalization.Get("button.moveDown", "Move down"),
-                    itemContext.CanMoveDown,
+                new(
+                    ModSettingsStandardActionIds.MoveDown,
+                    ModSettingsLocalization.Get("button.moveDown", "Move down"),
+                    () => itemContext is { CanMoveDown: true, IsListHostReadOnly: false },
                     itemContext.MoveDown),
-                new(ModSettingsStandardActionIds.Duplicate,
+                new(
+                    ModSettingsStandardActionIds.Duplicate,
                     ModSettingsLocalization.Get("button.duplicate", "Duplicate"),
-                    itemContext.SupportsStructuredClipboard,
+                    () => itemContext is { SupportsStructuredClipboard: true, IsListHostReadOnly: false },
                     itemContext.Duplicate),
-                new(ModSettingsStandardActionIds.Copy, ModSettingsLocalization.Get("button.copy", "Copy data"),
+                new(
+                    ModSettingsStandardActionIds.Copy,
+                    ModSettingsLocalization.Get("button.copy", "Copy data"),
                     itemContext.SupportsStructuredClipboard,
                     () => { itemContext.TryCopyToClipboard(); }),
-                new(ModSettingsStandardActionIds.Paste, ModSettingsLocalization.Get("button.paste", "Paste data"),
+                new(
+                    ModSettingsStandardActionIds.Paste,
+                    ModSettingsLocalization.Get("button.paste", "Paste data"),
                     itemContext.CanPasteFromClipboard,
                     () => { itemContext.TryPasteFromClipboard(); }),
-                new(ModSettingsStandardActionIds.Remove, ModSettingsLocalization.Get("button.remove", "Remove"), true,
+                new(
+                    ModSettingsStandardActionIds.Remove,
+                    ModSettingsLocalization.Get("button.remove", "Remove"),
+                    () => !itemContext.IsListHostReadOnly,
                     itemContext.Remove),
             };
             ModSettingsUiActionRegistry.AppendListItemActions(context, itemContext, actions);

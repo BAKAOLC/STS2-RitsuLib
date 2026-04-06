@@ -2229,7 +2229,8 @@ namespace STS2RitsuLib.Settings
                 index < itemCount - 1 ? () => Mutate(items => MoveItem(items, index, index + 1)) : null,
                 () => Mutate(items => DuplicateItem(items, index)),
                 () => Mutate(items => items.RemoveAt(index)),
-                UiContext.RequestRefresh);
+                UiContext.RequestRefresh,
+                _entry.Binding);
 
             return new ModSettingsListItemCard<TItem>(
                 this,

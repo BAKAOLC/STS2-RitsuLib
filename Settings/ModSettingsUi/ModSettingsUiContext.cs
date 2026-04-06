@@ -48,8 +48,7 @@ namespace STS2RitsuLib.Settings
             {
                 ITransientModSettingsBinding => ModSettingsLocalization.Get("scope.transient",
                     "Preview only - not persisted"),
-                IModSettingsRunOverlayBinding => ModSettingsLocalization.Get("scope.runOverlay",
-                    "Per-run overlay (values isolated during an active run; commit/discards depend on binding)"),
+                IModSettingsRunOverlayBinding => ModSettingsLocalization.Get("scope.runOverlay", "Run overlay"),
                 _ => binding.Scope == SaveScope.Profile
                     ? ModSettingsLocalization.Get("scope.profile", "Stored per profile")
                     : ModSettingsLocalization.Get("scope.global", "Stored globally"),
