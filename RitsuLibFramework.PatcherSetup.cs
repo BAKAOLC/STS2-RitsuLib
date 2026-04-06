@@ -57,6 +57,8 @@ namespace STS2RitsuLib
             patcher.RegisterPatch<NMainMenuContinueRunMissingCharacterPatch>();
             patcher.RegisterPatch<NMainMenuHarmonyPatchDumpPatch>();
             patcher.RegisterPatch<NContinueRunInfoShowInfoModelNotFoundPatch>();
+            patcher.RegisterPatch<NRunHistoryRefreshAndSelectRunSuppressRethrowPatch>();
+            patcher.RegisterPatch<RunHistoryMissingModelDbGetByIdTranspilerPatch>();
             patcher.RegisterPatch<NMultiplayerLoadGameScreenBeginRunMissingCharacterPatch>();
             patcher.RegisterPatch<NMultiplayerTestCharacterPaginatorAllCharactersPatch>();
             patcher.RegisterPatch<NCustomRunLoadScreenBeginRunMissingCharacterPatch>();
@@ -156,12 +158,14 @@ namespace STS2RitsuLib
 
             patcher.RegisterPatch<EventLayoutScenePatch>();
             patcher.RegisterPatch<EventInitialPortraitPatch>();
+            patcher.RegisterPatch<EventBackgroundScenePathGetterPatch>();
             patcher.RegisterPatch<EventBackgroundScenePatch>();
             patcher.RegisterPatch<EventHasVfxPatch>();
             patcher.RegisterPatch<EventCreateVfxPatch>();
             patcher.RegisterPatch<EventGetAssetPathsPatch>();
             patcher.RegisterPatch<AncientMapIconTexturePatch>();
             patcher.RegisterPatch<AncientRunHistoryIconTexturePatch>();
+            patcher.RegisterPatch<ImageHelperAncientModRunHistoryIconPathPatch>();
             patcher.RegisterPatch<AncientMapNodeAssetPathsPatch>();
             RegisterFrameworkPatcher(FrameworkPatcherArea.ContentAssets, patcher);
         }

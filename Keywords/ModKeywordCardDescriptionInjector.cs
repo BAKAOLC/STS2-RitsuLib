@@ -39,7 +39,7 @@ namespace STS2RitsuLib.Keywords
 
             List<string> lines;
             if (description.Length == 0)
-                lines = new List<string>();
+                lines = new();
             else
                 lines = description.Split('\n').ToList();
 

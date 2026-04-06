@@ -75,13 +75,13 @@ namespace STS2RitsuLib.Scaffolding.Content
         /// </summary>
         protected EventOption CreateModRelicOption(RelicModel relic, string pageName = "INITIAL")
         {
-            var owner = Owner ?? throw new InvalidOperationException(
-                $"Ancient '{Id.Entry}' tried to create a relic option before the event owner was assigned.");
-
             return CreateModRelicOption(
                 relic,
                 async () =>
                 {
+                    var owner = Owner ?? throw new InvalidOperationException(
+                        $"Ancient '{Id.Entry}' had no owner when a relic option was chosen.");
+                    relic.Owner = owner;
                     await RelicCmd.Obtain(relic, owner);
                     Done();
                 },
@@ -90,6 +90,8 @@ namespace STS2RitsuLib.Scaffolding.Content
 
         /// <summary>
         ///     Creates a relic option with an explicit post-pick handler and localization key.
+        ///     When <see cref="EventModel.Owner" /> is still null (e.g. dev-console completion on <c>AllPossibleOptions</c>),
+        ///     <paramref name="relic" />.Owner is left unset until the option runs or real event flow assigns it.
         /// </summary>
         protected EventOption CreateModRelicOption(
             RelicModel relic,
@@ -97,8 +99,9 @@ namespace STS2RitsuLib.Scaffolding.Content
             string pageName = "INITIAL")
         {
             relic.AssertMutable();
-            relic.Owner = Owner ?? throw new InvalidOperationException(
-                $"Ancient '{Id.Entry}' tried to create a relic option before the event owner was assigned.");
+            if (Owner != null)
+                relic.Owner = Owner;
+
             return EventOption.FromRelic(relic, this, onChosen, ModOptionKey(pageName, relic.Id.Entry));
         }
     }

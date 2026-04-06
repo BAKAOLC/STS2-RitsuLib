@@ -583,7 +583,6 @@ namespace STS2RitsuLib.Content
             EnsureMutable($"register {contentKind} '{modelType.Name}' into pool '{poolType.Name}'");
             EnsureModelType(poolType, typeof(AbstractModel), nameof(poolType));
             EnsureModelType(modelType, typeof(AbstractModel), nameof(modelType));
-            PrimeOwnedType(poolType);
             PrimeOwnedType(modelType);
             ApplyFixedPublicEntryForModel(modelType, publicEntry);
             RegistrationConflictDetector.ThrowIfModelIdConflicts(poolType);
@@ -598,7 +597,6 @@ namespace STS2RitsuLib.Content
                     return;
                 }
 
-                RememberOwner(poolType);
                 RememberOwner(modelType);
             }
 
@@ -642,7 +640,6 @@ namespace STS2RitsuLib.Content
             EnsureMutable($"register {contentKind} '{modelType.Name}' for '{scopeType.Name}'");
             EnsureModelType(scopeType, expectedScopeType, nameof(scopeType));
             EnsureModelType(modelType, expectedModelBaseType, nameof(modelType));
-            PrimeOwnedType(scopeType);
             PrimeOwnedType(modelType);
             RegistrationConflictDetector.ThrowIfModelIdConflicts(scopeType);
             RegistrationConflictDetector.ThrowIfModelIdConflicts(modelType);
@@ -662,7 +659,6 @@ namespace STS2RitsuLib.Content
                     return;
                 }
 
-                RememberOwner(scopeType);
                 RememberOwner(modelType);
             }
 

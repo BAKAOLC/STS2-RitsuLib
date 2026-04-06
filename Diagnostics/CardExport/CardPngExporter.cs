@@ -570,7 +570,7 @@ namespace STS2RitsuLib.Diagnostics.CardExport
                 throw new InvalidOperationException("NCard export is unavailable in TestMode.");
 
             var nCard = PreloadManager.Cache.GetScene(CardScenePath)
-                .Instantiate<NCard>(PackedScene.GenEditState.Disabled);
+                .Instantiate<NCard>();
             nCard.OnInstantiated();
             nCard.Model = card;
             nCard.Visibility = ModelVisibility.Visible;
