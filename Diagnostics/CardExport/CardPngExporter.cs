@@ -196,7 +196,6 @@ namespace STS2RitsuLib.Diagnostics.CardExport
 
                             var upgraded = canonical.ToMutable();
                             upgraded.UpgradeInternal();
-                            upgraded.FinalizeUpgradeInternal();
                             var upName = SanitizeFilePart(canonical.Id.Entry) + "_upgraded.png";
                             var upPath = Path.Combine(outDir, upName);
                             progressUi.SetProgress(stepIndex, $"{canonical.Id.Entry} (upgraded)");
