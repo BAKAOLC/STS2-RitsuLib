@@ -1,6 +1,7 @@
 using MegaCrit.Sts2.Core.Entities.Ancients;
 using MegaCrit.Sts2.Core.Localization;
 using MegaCrit.Sts2.Core.Models;
+using STS2RitsuLib.Content;
 
 namespace STS2RitsuLib.Localization
 {
@@ -75,6 +76,50 @@ namespace STS2RitsuLib.Localization
             }
 
             return dialogues;
+        }
+
+        /// <summary>
+        ///     Builds a full <see cref="AncientDialogueSet" /> for a mod ancient by scanning the <c>ancients</c> localization
+        ///     table (<c>{id}.talk.firstVisitEver.*</c>, <c>{id}.talk.ANY.*</c>, and per-vanilla-character
+        ///     <c>{id}.talk.&lt;Character&gt;.*</c>). Lines and SFX keys follow the same rules as
+        ///     <see cref="GetDialoguesForKey" />.
+        /// </summary>
+        /// <remarks>
+        ///     Dialogue entries for characters registered in <see cref="ModContentRegistry" /> are omitted here so
+        ///     The <c>PopulateLocKeys</c> prefix patch in this library can append them once via
+        ///     <see cref="AppendCharacterDialogues" />
+        ///     without duplicating lines.
+        /// </remarks>
+        public static AncientDialogueSet BuildDialogueSetForModAncient(string ancientEntry)
+        {
+            ArgumentException.ThrowIfNullOrWhiteSpace(ancientEntry);
+
+            var modCharacterEntries = ModContentRegistry.GetModCharacters()
+                .Select(static c => c.Id.Entry)
+                .ToHashSet(StringComparer.Ordinal);
+
+            var firstVisitSequences = GetDialoguesForKey(AncientLocTable, BaseLocKey(ancientEntry, "firstVisitEver"));
+            var firstVisitEver = firstVisitSequences.Count > 0 ? firstVisitSequences[0] : null;
+
+            var characterDialogues = new Dictionary<string, IReadOnlyList<AncientDialogue>>();
+            foreach (var character in ModelDb.AllCharacters)
+            {
+                if (modCharacterEntries.Contains(character.Id.Entry))
+                    continue;
+
+                var forCharacter = GetDialoguesForKey(AncientLocTable, BaseLocKey(ancientEntry, character.Id.Entry));
+                if (forCharacter.Count > 0)
+                    characterDialogues[character.Id.Entry] = forCharacter;
+            }
+
+            var agnostic = GetDialoguesForKey(AncientLocTable, BaseLocKey(ancientEntry, "ANY"));
+
+            return new()
+            {
+                FirstVisitEverDialogue = firstVisitEver,
+                CharacterDialogues = characterDialogues,
+                AgnosticDialogues = agnostic,
+            };
         }
 
         /// <summary>

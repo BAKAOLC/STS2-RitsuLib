@@ -8,10 +8,10 @@ namespace STS2RitsuLib.Diagnostics.CardExport
     /// </summary>
     internal sealed partial class CardPngExportProgressOverlay : CanvasLayer
     {
-        private readonly Label _countLabel;
-        private readonly Label _nameLabel;
-        private readonly ProgressBar _progressBar;
-        private readonly Label _titleLabel;
+        private readonly Label? _countLabel;
+        private readonly Label? _nameLabel;
+        private readonly ProgressBar? _progressBar;
+        private readonly Label? _titleLabel;
 
         private CardPngExportProgressOverlay(int totalSteps)
         {
@@ -91,6 +91,10 @@ namespace STS2RitsuLib.Diagnostics.CardExport
             detailCol.AddChild(_nameLabel);
         }
 
+        public CardPngExportProgressOverlay()
+        {
+        }
+
         public static CardPngExportProgressOverlay Attach(Node root, int totalSteps)
         {
             var overlay = new CardPngExportProgressOverlay(totalSteps);
@@ -100,13 +104,14 @@ namespace STS2RitsuLib.Diagnostics.CardExport
 
         public void SetProgress(int completedSteps, string? currentCardId)
         {
+            if (_progressBar == null) return;
             _progressBar.Value = completedSteps;
             var total = (int)_progressBar.MaxValue;
             var id = string.IsNullOrWhiteSpace(currentCardId) ? "…" : currentCardId;
             var countFmt = ModSettingsLocalization.Get("ritsulib.cardPngExport.progress.count",
                 "{0} / {1}");
-            _countLabel.Text = string.Format(countFmt, completedSteps, total);
-            _nameLabel.Text = id;
+            _countLabel?.Text = string.Format(countFmt, completedSteps, total);
+            _nameLabel?.Text = id;
         }
 
         public void Detach()

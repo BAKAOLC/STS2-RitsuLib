@@ -84,13 +84,11 @@ namespace STS2RitsuLib.Combat.HealthBars
                 if (registerForeign == null)
                 {
                     _baselibSupportsForecastInterop = false;
-                    if (!_loggedMissingRegisterForeign)
-                    {
-                        _loggedMissingRegisterForeign = true;
-                        RitsuLibFramework.Logger.Warn(
-                            $"[HealthBarForecast] BaseLib registry type '{registryType.FullName}' does not expose " +
-                            "RegisterForeign(string, string, Func<Creature, IEnumerable<object>>); forecast interop unavailable.");
-                    }
+                    if (_loggedMissingRegisterForeign) return;
+                    _loggedMissingRegisterForeign = true;
+                    RitsuLibFramework.Logger.Warn(
+                        $"[HealthBarForecast] BaseLib registry type '{registryType.FullName}' does not expose " +
+                        "RegisterForeign(string, string, Func<Creature, IEnumerable<object>>); forecast interop unavailable.");
 
                     return;
                 }
@@ -166,14 +164,9 @@ namespace STS2RitsuLib.Combat.HealthBars
                     return type;
             }
 
-            foreach (var assembly in AppDomain.CurrentDomain.GetAssemblies())
-            {
-                var type = assembly.GetType("BaseLib.Hooks.HealthBarForecastRegistry");
-                if (type != null)
-                    return type;
-            }
-
-            return null;
+            return AppDomain.CurrentDomain.GetAssemblies()
+                .Select(assembly => assembly.GetType("BaseLib.Hooks.HealthBarForecastRegistry")).OfType<Type>()
+                .FirstOrDefault();
         }
     }
 }

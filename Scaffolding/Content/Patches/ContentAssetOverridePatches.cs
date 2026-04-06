@@ -1464,7 +1464,7 @@ namespace STS2RitsuLib.Scaffolding.Content.Patches
             return [new(typeof(EventModel), "get_BackgroundScenePath")];
         }
 
-        // ReSharper disable once InconsistentNaming
+        // ReSharper disable InconsistentNaming
         /// <summary>
         ///     Supplies <see cref="IModEventAssetOverrides.CustomBackgroundScenePath" /> when the resource exists.
         /// </summary>

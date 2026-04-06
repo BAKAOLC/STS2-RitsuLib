@@ -1,13 +1,16 @@
 using MegaCrit.Sts2.Core.Commands;
+using MegaCrit.Sts2.Core.Entities.Ancients;
 using MegaCrit.Sts2.Core.Events;
 using MegaCrit.Sts2.Core.Models;
+using STS2RitsuLib.Localization;
 using STS2RitsuLib.Scaffolding.Content.Patches;
 
 namespace STS2RitsuLib.Scaffolding.Content
 {
     /// <summary>
     ///     Base <see cref="AncientEventModel" /> with helpers for option keys, relic rewards that complete the ancient flow,
-    ///     and optional <see cref="IModAncientEventAssetOverrides" /> presentation paths.
+    ///     optional <see cref="IModAncientEventAssetOverrides" /> presentation paths, and dialogue loaded from the
+    ///     <c>ancients</c> localization table (<see cref="AncientDialogueLocalization.BuildDialogueSetForModAncient" />).
     /// </summary>
     public abstract class ModAncientEventTemplate : AncientEventModel, IModAncientEventAssetOverrides
     {
@@ -42,6 +45,16 @@ namespace STS2RitsuLib.Scaffolding.Content
         /// <inheritdoc />
         public virtual string? CustomRunHistoryIconOutlinePath =>
             AncientPresentationAssetProfile.RunHistoryIconOutlinePath;
+
+        /// <inheritdoc />
+        /// <remarks>
+        ///     Default implementation scans <c>ancients</c> JSON (and other loaded loc) for this ancient&apos;s
+        ///     <c>talk</c> keys. Override if you need a non-localized or custom dialogue structure.
+        /// </remarks>
+        protected override AncientDialogueSet DefineDialogues()
+        {
+            return AncientDialogueLocalization.BuildDialogueSetForModAncient(Id.Entry);
+        }
 
         /// <summary>
         ///     Builds a namespaced option key for <paramref name="pageName" /> / <paramref name="optionName" /> under this ancient

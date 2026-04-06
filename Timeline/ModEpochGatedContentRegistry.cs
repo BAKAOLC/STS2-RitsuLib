@@ -56,8 +56,8 @@ namespace STS2RitsuLib.Timeline
             ArgumentException.ThrowIfNullOrWhiteSpace(modId);
             ArgumentException.ThrowIfNullOrWhiteSpace(epochId);
 
-            var cards = cardTypes ?? Array.Empty<Type>();
-            var relics = relicTypes ?? Array.Empty<Type>();
+            var cards = cardTypes ?? [];
+            var relics = relicTypes ?? [];
             if (cards.Count == 0 && relics.Count == 0)
                 throw new ArgumentException(
                     $"Gated content for epoch '{epochId}' must include at least one card or relic type.",

@@ -35,7 +35,7 @@ namespace STS2RitsuLib.Settings
                 if (NControllerManager.Instance?.IsUsingController == true)
                     reticle.OnSelect();
             };
-            host.FocusExited += () => reticle.OnDeselect();
+            host.FocusExited += reticle.OnDeselect;
         }
     }
 }
