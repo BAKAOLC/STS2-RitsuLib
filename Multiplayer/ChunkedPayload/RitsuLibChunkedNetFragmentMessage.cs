@@ -12,34 +12,54 @@ namespace STS2RitsuLib.Multiplayer.ChunkedPayload
     /// </summary>
     public sealed class RitsuLibChunkedNetFragmentMessage : INetMessage
     {
-        /// <summary>Current wire schema; bump when changing <see cref="Serialize" /> layout.</summary>
+        /// <summary>
+        ///     Current wire schema; bump when changing <see cref="Serialize" /> layout.
+        /// </summary>
         public const byte SupportedSchemaVersion = 1;
 
-        /// <summary>Total fragments for this transfer.</summary>
+        /// <summary>
+        ///     Total fragments for this transfer.
+        /// </summary>
         public uint ChunkCount;
 
-        /// <summary>Zero-based index.</summary>
+        /// <summary>
+        ///     Zero-based index.
+        /// </summary>
         public uint ChunkIndex;
 
-        /// <summary>Must match sender <see cref="ChunkedTransferOptions.MaxFragmentPayloadBytes" />.</summary>
+        /// <summary>
+        ///     Must match sender <see cref="ChunkedTransferOptions.MaxFragmentPayloadBytes" />.
+        /// </summary>
         public ushort DeclaredMaxFragmentBytes;
 
-        /// <summary>CRC32 (IEEE) of the full payload before splitting.</summary>
+        /// <summary>
+        ///     CRC32 (IEEE) of the full payload before splitting.
+        /// </summary>
         public uint PayloadCrc32;
 
-        /// <summary>Wire schema of this instance.</summary>
+        /// <summary>
+        ///     Wire schema of this instance.
+        /// </summary>
         public byte SchemaVersion = SupportedSchemaVersion;
 
-        /// <summary>Multiplex key; must match the receiving <see cref="ChunkedPayloadChannel.StreamId" />.</summary>
+        /// <summary>
+        ///     Multiplex key; must match the receiving <see cref="ChunkedPayloadChannel.StreamId" />.
+        /// </summary>
         public ushort StreamId;
 
-        /// <summary>Final reassembled size in bytes.</summary>
+        /// <summary>
+        ///     Final reassembled size in bytes.
+        /// </summary>
         public uint TotalPayloadLength;
 
-        /// <summary>Random id scoped per send operation.</summary>
+        /// <summary>
+        ///     Random id scoped per send operation.
+        /// </summary>
         public ulong TransferId;
 
-        /// <summary>Raw bytes for this chunk.</summary>
+        /// <summary>
+        ///     Raw bytes for this chunk.
+        /// </summary>
         public byte[] Fragment { get; set; } = [];
 
         /// <inheritdoc />
@@ -79,14 +99,25 @@ namespace STS2RitsuLib.Multiplayer.ChunkedPayload
             ChunkCount = reader.ReadUInt();
             PayloadCrc32 = reader.ReadUInt();
             var len = reader.ReadInt();
-            if (len < 0)
-                throw new InvalidOperationException("Negative fragment length.");
+            switch (len)
+            {
+                case < 0:
+                    throw new InvalidOperationException("Negative fragment length.");
+                case > ushort.MaxValue:
+                    throw new InvalidOperationException($"Fragment length {len} exceeds {ushort.MaxValue}.");
+            }
+
+            if (len > DeclaredMaxFragmentBytes)
+                throw new InvalidOperationException(
+                    $"Fragment length {len} exceeds declared maximum {DeclaredMaxFragmentBytes}.");
             Fragment = len == 0 ? [] : new byte[len];
             if (len > 0)
                 reader.ReadBytes(Fragment, len);
         }
 
-        /// <summary>Computes CRC32 (IEEE polynomial) for a full payload.</summary>
+        /// <summary>
+        ///     Computes CRC32 (IEEE polynomial) for a full payload.
+        /// </summary>
         public static uint ComputePayloadCrc32(ReadOnlySpan<byte> payload)
         {
             Span<byte> dest = stackalloc byte[4];

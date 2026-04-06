@@ -1,4 +1,3 @@
-using System.Diagnostics;
 using MegaCrit.Sts2.Core.Multiplayer.Game;
 
 namespace STS2RitsuLib.Multiplayer.ChunkedPayload
@@ -8,17 +7,23 @@ namespace STS2RitsuLib.Multiplayer.ChunkedPayload
     /// </summary>
     public interface IChunkedPayloadChannel : IDisposable
     {
-        /// <summary>Logical sub-channel id (multiplexing).</summary>
+        /// <summary>
+        ///     Logical sub-channel id (multiplexing).
+        /// </summary>
         ushort StreamId { get; }
 
         /// <inheritdoc cref="ChunkedPayloadChannel.Send" />
         ChunkedPayloadSendResult Send(ReadOnlySpan<byte> payload, ulong? targetPeerId = null,
             CancellationToken cancellationToken = default);
 
-        /// <summary>Fired when a payload is fully received and CRC-checked.</summary>
+        /// <summary>
+        ///     Fired when a payload is fully received and CRC-checked.
+        /// </summary>
         event EventHandler<ChunkedPayloadReceivedEventArgs>? Received;
 
-        /// <summary>Fired when a transfer is aborted (timeout, CRC, limits, etc.).</summary>
+        /// <summary>
+        ///     Fired when a transfer is aborted (timeout, CRC, limits, etc.).
+        /// </summary>
         event EventHandler<ChunkedPayloadFailedEventArgs>? Failed;
     }
 
@@ -165,12 +170,12 @@ namespace STS2RitsuLib.Multiplayer.ChunkedPayload
 
         private static void DelayWithCancellation(TimeSpan delay, CancellationToken cancellationToken)
         {
-            var sw = Stopwatch.StartNew();
-            while (sw.Elapsed < delay)
-            {
+            if (delay <= TimeSpan.Zero)
+                return;
+            cancellationToken.ThrowIfCancellationRequested();
+            // Single wait avoids 1 ms spin loops on the networking thread (Copilot PR review).
+            if (cancellationToken.WaitHandle.WaitOne(delay))
                 cancellationToken.ThrowIfCancellationRequested();
-                Thread.Sleep(1);
-            }
         }
 
         private void OnFragmentReceived(RitsuLibChunkedNetFragmentMessage msg, ulong senderId)
@@ -393,20 +398,47 @@ namespace STS2RitsuLib.Multiplayer.ChunkedPayload
 
         private static void ValidateOptions(ChunkedTransferOptions o)
         {
-            if (o.MaxFragmentPayloadBytes is < 256 or > 65535)
-                throw new ArgumentOutOfRangeException(nameof(o), o.MaxFragmentPayloadBytes,
+            ThrowIfMaxFragmentPayloadBytesInvalid(o.MaxFragmentPayloadBytes);
+            ThrowIfMaxTotalPayloadBytesInvalid(o.MaxTotalPayloadBytes);
+            ThrowIfMaxConcurrentIncomingTransfersInvalid(o.MaxConcurrentIncomingTransfers);
+            ThrowIfMaxReassemblyBytesInFlightInvalid(o.MaxReassemblyBytesInFlight);
+            ThrowIfTransferTimeoutInvalid(o.TransferTimeout);
+        }
+
+        private static void ThrowIfMaxFragmentPayloadBytesInvalid(int maxFragmentPayloadBytes)
+        {
+            if (maxFragmentPayloadBytes is < 256 or > 65535)
+                throw new ArgumentOutOfRangeException(nameof(maxFragmentPayloadBytes), maxFragmentPayloadBytes,
                     $"{nameof(ChunkedTransferOptions.MaxFragmentPayloadBytes)} must be within [256, 65535].");
-            if (o.MaxTotalPayloadBytes < 0)
-                throw new ArgumentOutOfRangeException(nameof(o), o.MaxTotalPayloadBytes,
+        }
+
+        private static void ThrowIfMaxTotalPayloadBytesInvalid(int maxTotalPayloadBytes)
+        {
+            if (maxTotalPayloadBytes < 0)
+                throw new ArgumentOutOfRangeException(nameof(maxTotalPayloadBytes), maxTotalPayloadBytes,
                     $"{nameof(ChunkedTransferOptions.MaxTotalPayloadBytes)} cannot be negative.");
-            if (o.MaxConcurrentIncomingTransfers <= 0)
-                throw new ArgumentOutOfRangeException(nameof(o), o.MaxConcurrentIncomingTransfers,
+        }
+
+        private static void ThrowIfMaxConcurrentIncomingTransfersInvalid(int maxConcurrentIncomingTransfers)
+        {
+            if (maxConcurrentIncomingTransfers <= 0)
+                throw new ArgumentOutOfRangeException(nameof(maxConcurrentIncomingTransfers),
+                    maxConcurrentIncomingTransfers,
                     $"{nameof(ChunkedTransferOptions.MaxConcurrentIncomingTransfers)} must be positive.");
-            if (o.MaxReassemblyBytesInFlight <= 0)
-                throw new ArgumentOutOfRangeException(nameof(o), o.MaxReassemblyBytesInFlight,
+        }
+
+        private static void ThrowIfMaxReassemblyBytesInFlightInvalid(long maxReassemblyBytesInFlight)
+        {
+            if (maxReassemblyBytesInFlight <= 0)
+                throw new ArgumentOutOfRangeException(nameof(maxReassemblyBytesInFlight),
+                    maxReassemblyBytesInFlight,
                     $"{nameof(ChunkedTransferOptions.MaxReassemblyBytesInFlight)} must be positive.");
-            if (o.TransferTimeout <= TimeSpan.Zero)
-                throw new ArgumentOutOfRangeException(nameof(o), o.TransferTimeout,
+        }
+
+        private static void ThrowIfTransferTimeoutInvalid(TimeSpan transferTimeout)
+        {
+            if (transferTimeout <= TimeSpan.Zero)
+                throw new ArgumentOutOfRangeException(nameof(transferTimeout), transferTimeout,
                     $"{nameof(ChunkedTransferOptions.TransferTimeout)} must be greater than zero.");
         }
 

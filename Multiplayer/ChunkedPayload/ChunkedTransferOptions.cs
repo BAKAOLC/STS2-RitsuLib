@@ -22,7 +22,9 @@ namespace STS2RitsuLib.Multiplayer.ChunkedPayload
         /// </summary>
         public int MaxFragmentPayloadBytes { get; init; } = 6144;
 
-        /// <summary>Upper bound on a single logical payload after reassembly.</summary>
+        /// <summary>
+        ///     Upper bound on a single logical payload after reassembly.
+        /// </summary>
         public int MaxTotalPayloadBytes { get; init; } = 16 * 1024 * 1024;
 
         /// <summary>
