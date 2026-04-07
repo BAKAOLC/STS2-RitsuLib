@@ -69,6 +69,9 @@ namespace STS2RitsuLib.Scaffolding.Cards.HandOutline
         /// <returns><see langword="true" /> if a rule was applied.</returns>
         public static bool TryRefreshOutlineForHolder(NHandCardHolder? holder)
         {
+            if (BaseLibModCardHandOutlineBridge.TryDelegatedRefresh(holder))
+                return true;
+
             if (holder == null || !holder.IsNodeReady() || holder.CardNode?.Model is not { } model)
                 return false;
 

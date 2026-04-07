@@ -22,6 +22,10 @@ namespace STS2RitsuLib.Scaffolding.Cards.HandOutline.Patches
         // ReSharper disable once InconsistentNaming
         public static void Postfix(NHandCardHolder __instance)
         {
+            BaseLibModCardHandOutlineBridge.TryRegisterSecondary();
+            if (BaseLibModCardHandOutlineBridge.ShouldRitsuHandOutlineStandDown())
+                return;
+
             if (!ModCardHandOutlinePatchHelper.TryGetRule(__instance, out _, out var rule))
                 return;
 
