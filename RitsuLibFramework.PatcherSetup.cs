@@ -167,6 +167,8 @@ namespace STS2RitsuLib
             patcher.RegisterPatch<AncientRunHistoryIconTexturePatch>();
             patcher.RegisterPatch<ImageHelperAncientModRunHistoryIconPathPatch>();
             patcher.RegisterPatch<AncientMapNodeAssetPathsPatch>();
+            patcher.RegisterPatch<AncientEventProceduralBackgroundScenePatch>();
+            patcher.RegisterPatch<NAncientEventLayoutProceduralStagePatch>();
             RegisterFrameworkPatcher(FrameworkPatcherArea.ContentAssets, patcher);
         }
 
@@ -201,6 +203,11 @@ namespace STS2RitsuLib
             patcher.RegisterPatch<CharacterArmScissorsTexturePathPatch>();
             patcher.RegisterPatch<CharacterCombatSpineOverridePatch>();
             patcher.RegisterPatch<CharacterGameOverScreenCompatibilityPatch>();
+            patcher.RegisterPatch<ModCreatureNonSpineAnimationPlaybackPatch>();
+            patcher.RegisterPatch<ModMerchantCharacterVisualPlaybackPatch>();
+            patcher.RegisterPatch<NMerchantRoomProceduralCharacterInstantiationPatch>();
+            patcher.RegisterPatch<NRestSiteCharacterCreateProceduralPatch>();
+            patcher.RegisterPatch<NRestSiteRoomProceduralVisualPlaybackPatch>();
             patcher.RegisterPatch<CardLibraryCompendiumPatch>();
             patcher.RegisterPatch<StatsScreenCharacterStatsPatch>();
             RegisterFrameworkPatcher(FrameworkPatcherArea.CharacterAssets, patcher);

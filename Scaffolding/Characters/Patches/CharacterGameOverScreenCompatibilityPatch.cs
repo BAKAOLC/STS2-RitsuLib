@@ -9,6 +9,7 @@ using MegaCrit.Sts2.Core.Rooms;
 using MegaCrit.Sts2.Core.Runs;
 using STS2RitsuLib.Compat;
 using STS2RitsuLib.Patching.Models;
+using STS2RitsuLib.Scaffolding.Characters.Visuals;
 
 namespace STS2RitsuLib.Scaffolding.Characters.Patches
 {
@@ -164,7 +165,7 @@ namespace STS2RitsuLib.Scaffolding.Characters.Patches
 
             try
             {
-                creatureVisuals.SpineBody?.GetAnimationState().SetAnimation("die", false);
+                ModCreatureVisualPlayback.TryPlayCue(creatureVisuals, player.Character, "die");
             }
             catch (Exception ex)
             {

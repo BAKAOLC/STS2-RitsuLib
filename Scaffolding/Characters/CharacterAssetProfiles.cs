@@ -1,3 +1,6 @@
+using STS2RitsuLib.Scaffolding.Characters.Visuals.Definition;
+using STS2RitsuLib.Scaffolding.Visuals.Definition;
+
 namespace STS2RitsuLib.Scaffolding.Characters
 {
     /// <summary>
@@ -76,7 +79,9 @@ namespace STS2RitsuLib.Scaffolding.Characters
                 MergeVfx(fallback.Vfx, profile.Vfx),
                 MergeSpine(fallback.Spine, profile.Spine),
                 MergeAudio(fallback.Audio, profile.Audio),
-                MergeMultiplayer(fallback.Multiplayer, profile.Multiplayer));
+                MergeMultiplayer(fallback.Multiplayer, profile.Multiplayer),
+                MergeVisualCues(fallback.VisualCues, profile.VisualCues),
+                MergeWorldProceduralVisuals(fallback.WorldProceduralVisuals, profile.WorldProceduralVisuals));
         }
 
         /// <summary>
@@ -199,6 +204,75 @@ namespace STS2RitsuLib.Scaffolding.Characters
                     profile.ArmScissorsTexturePath ?? fallback.ArmScissorsTexturePath);
         }
 
+        private static CharacterWorldProceduralVisualSet? MergeWorldProceduralVisuals(
+            CharacterWorldProceduralVisualSet? fallback,
+            CharacterWorldProceduralVisualSet? profile)
+        {
+            if (fallback == null)
+                return profile;
+
+            if (profile == null)
+                return fallback;
+
+            var merchant = profile.Merchant ?? fallback.Merchant;
+            var restSite = profile.RestSite ?? fallback.RestSite;
+
+            if (merchant == null && restSite == null)
+                return null;
+
+            return new(merchant, restSite);
+        }
+
+        private static VisualCueSet? MergeVisualCues(
+            VisualCueSet? fallback,
+            VisualCueSet? profile)
+        {
+            if (fallback == null)
+                return profile;
+
+            if (profile == null)
+                return fallback;
+
+            var mergedTex = MergeCueTextureMap(fallback.TexturePathByCue, profile.TexturePathByCue);
+            var mergedSeq = MergeCueFrameSequenceMap(fallback.FrameSequenceByCue, profile.FrameSequenceByCue);
+
+            if (mergedTex == null && mergedSeq == null)
+                return new();
+
+            return new(mergedTex, mergedSeq);
+        }
+
+        private static IReadOnlyDictionary<string, string>? MergeCueTextureMap(
+            IReadOnlyDictionary<string, string>? fallback,
+            IReadOnlyDictionary<string, string>? profile)
+        {
+            if (profile is not { Count: > 0 }) return fallback is { Count: > 0 } ? fallback : null;
+            if (fallback is not { Count: > 0 })
+                return profile;
+
+            var merged = new Dictionary<string, string>(fallback, StringComparer.OrdinalIgnoreCase);
+            foreach (var kv in profile)
+                merged[kv.Key] = kv.Value;
+
+            return merged;
+        }
+
+        private static IReadOnlyDictionary<string, VisualFrameSequence>? MergeCueFrameSequenceMap(
+            IReadOnlyDictionary<string, VisualFrameSequence>? fallback,
+            IReadOnlyDictionary<string, VisualFrameSequence>? profile)
+        {
+            if (profile is not { Count: > 0 }) return fallback is { Count: > 0 } ? fallback : null;
+            if (fallback is not { Count: > 0 })
+                return profile;
+
+            var merged = new Dictionary<string, VisualFrameSequence>(fallback,
+                StringComparer.OrdinalIgnoreCase);
+            foreach (var kv in profile)
+                merged[kv.Key] = kv.Value;
+
+            return merged;
+        }
+
         extension(CharacterAssetProfile profile)
         {
             /// <summary>
@@ -278,6 +352,26 @@ namespace STS2RitsuLib.Scaffolding.Characters
                 ArgumentNullException.ThrowIfNull(profile);
                 ArgumentNullException.ThrowIfNull(multiplayer);
                 return profile with { Multiplayer = multiplayer };
+            }
+
+            /// <summary>
+            ///     Returns a copy with <see cref="CharacterAssetProfile.VisualCues" /> replaced.
+            /// </summary>
+            public CharacterAssetProfile WithVisualCues(VisualCueSet visualCues)
+            {
+                ArgumentNullException.ThrowIfNull(profile);
+                ArgumentNullException.ThrowIfNull(visualCues);
+                return profile with { VisualCues = visualCues };
+            }
+
+            /// <summary>
+            ///     Returns a copy with <see cref="CharacterAssetProfile.WorldProceduralVisuals" /> replaced.
+            /// </summary>
+            public CharacterAssetProfile WithWorldProceduralVisuals(CharacterWorldProceduralVisualSet worldVisuals)
+            {
+                ArgumentNullException.ThrowIfNull(profile);
+                ArgumentNullException.ThrowIfNull(worldVisuals);
+                return profile with { WorldProceduralVisuals = worldVisuals };
             }
         }
     }
