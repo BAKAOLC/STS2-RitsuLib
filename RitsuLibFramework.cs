@@ -17,6 +17,7 @@ using STS2RitsuLib.Keywords;
 using STS2RitsuLib.Patching.Core;
 using STS2RitsuLib.RuntimeInput;
 using STS2RitsuLib.Scaffolding.Ancients.Options;
+using STS2RitsuLib.Scaffolding.Cards.HandOutline;
 using STS2RitsuLib.Scaffolding.Content;
 using STS2RitsuLib.Settings;
 using STS2RitsuLib.Settings.RunSidecar;
@@ -198,6 +199,7 @@ namespace STS2RitsuLib
                     BaseLibHealthBarForecastBridge.TryRegister();
                     BaseLibVisualGraftBridge.TryRegister();
                     RuntimeHotkeyService.Initialize();
+                    BaseLibModCardHandOutlineBridge.TryRegisterPrimary();
 
                     var frameworkInitializedEvent = new FrameworkInitializedEvent(
                         Const.ModId,
