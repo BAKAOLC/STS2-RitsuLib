@@ -4,7 +4,7 @@ using MegaCrit.Sts2.Core.Nodes.Rooms;
 using MegaCrit.Sts2.Core.Nodes.Screens.Shops;
 using STS2RitsuLib.Patching.Models;
 using STS2RitsuLib.Scaffolding.Characters.Visuals;
-using STS2RitsuLib.Scaffolding.Characters.Visuals.Definition;
+using STS2RitsuLib.Scaffolding.Visuals.Definition;
 
 namespace STS2RitsuLib.Scaffolding.Characters.Patches
 {
@@ -50,7 +50,7 @@ namespace STS2RitsuLib.Scaffolding.Characters.Patches
             return !ModCreatureVisualPlayback.TryPlayOnVisualRoot(__instance, character, anim, loop, worldCues);
         }
 
-        private static CharacterCombatVisualCueSet? TryGetMerchantWorldCueSet(CharacterModel? character)
+        private static VisualCueSet? TryGetMerchantWorldCueSet(CharacterModel? character)
         {
             return character is not IModCharacterAssetOverrides
             {

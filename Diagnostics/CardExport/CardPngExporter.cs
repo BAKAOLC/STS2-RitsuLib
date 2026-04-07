@@ -154,7 +154,7 @@ namespace STS2RitsuLib.Diagnostics.CardExport
             CardPngExportProgressOverlay? progressUi = null;
             try
             {
-                progressUi = CardPngExportProgressOverlay.Attach(NGame.Instance!, totalSteps);
+                progressUi = CardPngExportProgressOverlay.Attach(NGame.Instance, totalSteps);
                 progressUi.SetProgress(0, null);
                 await tree.ToSignal(tree, SceneTree.SignalName.ProcessFrame);
 
@@ -279,12 +279,10 @@ namespace STS2RitsuLib.Diagnostics.CardExport
             CardPngExportRequest request, float scale, Action<string>? log, string? logLinePrefix, string logFileTag)
         {
             var host = new Control { Name = "RitsuCardPngExportHost", Position = new(-5000, -5000) };
-            BuiltCaptureViewport? built = null;
             var ok = false;
             try
             {
                 var viewportBuilt = BuildCaptureViewport(card, request, scale);
-                built = viewportBuilt;
                 host.AddChild(viewportBuilt.Viewport);
                 NGame.Instance!.AddChild(host);
 

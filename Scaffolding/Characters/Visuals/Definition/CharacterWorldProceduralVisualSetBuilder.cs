@@ -1,3 +1,6 @@
+using STS2RitsuLib.Scaffolding.Visuals;
+using STS2RitsuLib.Scaffolding.Visuals.Definition;
+
 namespace STS2RitsuLib.Scaffolding.Characters.Visuals.Definition
 {
     /// <summary>
@@ -23,7 +26,7 @@ namespace STS2RitsuLib.Scaffolding.Characters.Visuals.Definition
         /// <summary>
         ///     Uses a programmatic merchant-room character (no merchant <c>tscn</c>) with the given cue set.
         /// </summary>
-        public CharacterWorldProceduralVisualSetBuilder Merchant(CharacterCombatVisualCueSet cueSet)
+        public CharacterWorldProceduralVisualSetBuilder Merchant(VisualCueSet cueSet)
         {
             ArgumentNullException.ThrowIfNull(cueSet);
             _merchant = new(cueSet);
@@ -31,12 +34,12 @@ namespace STS2RitsuLib.Scaffolding.Characters.Visuals.Definition
         }
 
         /// <summary>
-        ///     Uses <see cref="ModCharacterCombatVisuals.CueSet" /> output for the merchant room.
+        ///     Uses <see cref="ModVisualCues.CueSet" /> output for the merchant room.
         /// </summary>
-        public CharacterWorldProceduralVisualSetBuilder Merchant(Action<CharacterCombatVisualCueSetBuilder> configure)
+        public CharacterWorldProceduralVisualSetBuilder Merchant(Action<VisualCueSetBuilder> configure)
         {
             ArgumentNullException.ThrowIfNull(configure);
-            var inner = CharacterCombatVisualCueSetBuilder.Create();
+            var inner = VisualCueSetBuilder.Create();
             configure(inner);
             return Merchant(inner.Build());
         }
@@ -45,7 +48,7 @@ namespace STS2RitsuLib.Scaffolding.Characters.Visuals.Definition
         ///     Uses a programmatic rest-site character shell (no rest-site character <c>tscn</c>) with the given cue
         ///     set.
         /// </summary>
-        public CharacterWorldProceduralVisualSetBuilder RestSite(CharacterCombatVisualCueSet cueSet)
+        public CharacterWorldProceduralVisualSetBuilder RestSite(VisualCueSet cueSet)
         {
             ArgumentNullException.ThrowIfNull(cueSet);
             _restSite = new(cueSet);
@@ -53,12 +56,12 @@ namespace STS2RitsuLib.Scaffolding.Characters.Visuals.Definition
         }
 
         /// <summary>
-        ///     Uses <see cref="ModCharacterCombatVisuals.CueSet" /> output for the rest site.
+        ///     Uses <see cref="ModVisualCues.CueSet" /> output for the rest site.
         /// </summary>
-        public CharacterWorldProceduralVisualSetBuilder RestSite(Action<CharacterCombatVisualCueSetBuilder> configure)
+        public CharacterWorldProceduralVisualSetBuilder RestSite(Action<VisualCueSetBuilder> configure)
         {
             ArgumentNullException.ThrowIfNull(configure);
-            var inner = CharacterCombatVisualCueSetBuilder.Create();
+            var inner = VisualCueSetBuilder.Create();
             configure(inner);
             return RestSite(inner.Build());
         }

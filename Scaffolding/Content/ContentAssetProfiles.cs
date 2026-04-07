@@ -212,17 +212,23 @@ namespace STS2RitsuLib.Scaffolding.Content
     }
 
     /// <summary>
-    ///     Optional ancient map node and run-history icon paths (vanilla <c>AncientEventModel</c> presentation).
+    ///     Optional ancient map node and run-history icon paths (vanilla <c>AncientEventModel</c> presentation), plus
+    ///     optional procedural stage layers (background / foreground cues) for the ancient encounter backdrop.
     /// </summary>
     /// <param name="MapIconPath">Compressed texture for map node icon.</param>
     /// <param name="MapIconOutlinePath">Compressed texture for map node outline.</param>
     /// <param name="RunHistoryIconPath">Run history main icon texture.</param>
     /// <param name="RunHistoryIconOutlinePath">Run history outline texture.</param>
+    /// <param name="StageProcedural">
+    ///     When set, replaces the packed background scene in <c>NAncientEventLayout</c> with in-memory layered sprites and
+    ///     cue playback (see <see cref="AncientEventStageProceduralVisualSet" />).
+    /// </param>
     public sealed record AncientEventPresentationAssetProfile(
         string? MapIconPath = null,
         string? MapIconOutlinePath = null,
         string? RunHistoryIconPath = null,
-        string? RunHistoryIconOutlinePath = null)
+        string? RunHistoryIconOutlinePath = null,
+        AncientEventStageProceduralVisualSet? StageProcedural = null)
     {
         /// <summary>
         ///     Default empty profile (no custom paths).

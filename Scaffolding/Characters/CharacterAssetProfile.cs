@@ -1,5 +1,6 @@
 using Godot;
 using STS2RitsuLib.Scaffolding.Characters.Visuals.Definition;
+using STS2RitsuLib.Scaffolding.Visuals.Definition;
 
 namespace STS2RitsuLib.Scaffolding.Characters
 {
@@ -115,7 +116,7 @@ namespace STS2RitsuLib.Scaffolding.Characters
     /// <param name="Spine">Spine data.</param>
     /// <param name="Audio">FMOD event ids or paths.</param>
     /// <param name="Multiplayer">Multiplayer hand art.</param>
-    /// <param name="CombatVisuals">Non-Spine combat / game-over visual cues (texture swaps).</param>
+    /// <param name="VisualCues">Per-cue textures / frame sequences (combat, game-over, and other consumers).</param>
     /// <param name="WorldProceduralVisuals">Merchant / rest-site shells without custom character <c>tscn</c> scenes.</param>
     public sealed record CharacterAssetProfile(
         CharacterSceneAssetSet? Scenes = null,
@@ -124,7 +125,7 @@ namespace STS2RitsuLib.Scaffolding.Characters
         CharacterSpineAssetSet? Spine = null,
         CharacterAudioAssetSet? Audio = null,
         CharacterMultiplayerAssetSet? Multiplayer = null,
-        CharacterCombatVisualCueSet? CombatVisuals = null,
+        VisualCueSet? VisualCues = null,
         CharacterWorldProceduralVisualSet? WorldProceduralVisuals = null)
     {
         /// <summary>

@@ -1,3 +1,5 @@
+using STS2RitsuLib.Scaffolding.Visuals.Definition;
+
 namespace STS2RitsuLib.Scaffolding.Characters.Visuals.Definition
 {
     /// <summary>
@@ -12,14 +14,14 @@ namespace STS2RitsuLib.Scaffolding.Characters.Visuals.Definition
         CharacterRestSiteWorldDefinition? RestSite = null);
 
     /// <summary>
-    ///     Merchant-room procedural visuals: same cue model as combat (<see cref="CharacterCombatVisualCueSet" />).
+    ///     Merchant-room procedural visuals: uses <see cref="VisualCueSet" /> (textures / frame sequences per cue).
     /// </summary>
     /// <param name="CueSet">Texture / frame sequences keyed by animation name.</param>
-    public sealed record CharacterMerchantWorldDefinition(CharacterCombatVisualCueSet CueSet);
+    public sealed record CharacterMerchantWorldDefinition(VisualCueSet CueSet);
 
     /// <summary>
     ///     Rest-site procedural visuals: cue keys match vanilla Spine loop names per act.
     /// </summary>
     /// <param name="CueSet">Typically <c>overgrowth_loop</c>, <c>hive_loop</c>, <c>glory_loop</c>.</param>
-    public sealed record CharacterRestSiteWorldDefinition(CharacterCombatVisualCueSet CueSet);
+    public sealed record CharacterRestSiteWorldDefinition(VisualCueSet CueSet);
 }

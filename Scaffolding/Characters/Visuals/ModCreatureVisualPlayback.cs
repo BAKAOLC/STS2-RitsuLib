@@ -7,13 +7,14 @@ using MegaCrit.Sts2.Core.Models;
 using MegaCrit.Sts2.Core.Nodes.Combat;
 using MegaCrit.Sts2.Core.Nodes.Rooms;
 using MegaCrit.Sts2.Core.Nodes.Screens.Shops;
-using STS2RitsuLib.Scaffolding.Characters.Visuals.Definition;
+using STS2RitsuLib.Scaffolding.Visuals;
+using STS2RitsuLib.Scaffolding.Visuals.Definition;
 
 namespace STS2RitsuLib.Scaffolding.Characters.Visuals
 {
     /// <summary>
     ///     Central playback for mod creature visuals: optional per-cue textures and data-only frame sequences from
-    ///     <see cref="IModCharacterAssetOverrides.CombatVisualCues" />, Spine tracks when present, otherwise Godot
+    ///     <see cref="IModCharacterAssetOverrides.VisualCues" />, Spine tracks when present, otherwise Godot
     ///     <see cref="AnimationPlayer" /> / <see cref="AnimatedSprite2D" /> under the visuals subtree.
     /// </summary>
     public static class ModCreatureVisualPlayback
@@ -56,7 +57,7 @@ namespace STS2RitsuLib.Scaffolding.Characters.Visuals
 
             CueFrameSequencePlayer.StopUnder(visuals);
 
-            if (TryApplyCombatVisualCues(visuals, character, names, null))
+            if (TryApplyVisualCues(visuals, character, names, null))
                 return true;
 
             return TryPlaySpine(visuals, names, loop) || TryPlayGodotAnimations(visuals, names);
@@ -72,10 +73,10 @@ namespace STS2RitsuLib.Scaffolding.Characters.Visuals
         /// <param name="loop">Loop hint for Spine (non-Spine paths ignore where not applicable).</param>
         /// <param name="cueSetOverride">
         ///     When set (e.g. <see cref="IModCharacterAssetOverrides.WorldProceduralVisuals" /> merchant / rest cues),
-        ///     used instead of <see cref="IModCharacterAssetOverrides.CombatVisualCues" /> for texture / frame lookup.
+        ///     used instead of <see cref="IModCharacterAssetOverrides.VisualCues" /> for texture / frame lookup.
         /// </param>
         public static bool TryPlayOnVisualRoot(Node root, CharacterModel? character, string animName, bool loop = false,
-            CharacterCombatVisualCueSet? cueSetOverride = null)
+            VisualCueSet? cueSetOverride = null)
         {
             if (!GodotObject.IsInstanceValid(root) || string.IsNullOrWhiteSpace(animName))
                 return false;
@@ -84,7 +85,7 @@ namespace STS2RitsuLib.Scaffolding.Characters.Visuals
 
             CueFrameSequencePlayer.StopUnder(root);
 
-            return TryApplyCombatVisualCues(root, character, names, cueSetOverride)
+            return TryApplyVisualCues(root, character, names, cueSetOverride)
                    || TryPlayGodotAnimations(root, names);
         }
 
@@ -162,11 +163,11 @@ namespace STS2RitsuLib.Scaffolding.Characters.Visuals
                 : [primaryCue, lower];
         }
 
-        private static bool TryApplyCombatVisualCues(Node visualsRoot, CharacterModel? character,
-            ReadOnlySpan<string> names, CharacterCombatVisualCueSet? cueOverride)
+        private static bool TryApplyVisualCues(Node visualsRoot, CharacterModel? character,
+            ReadOnlySpan<string> names, VisualCueSet? cueOverride)
         {
             var cues = cueOverride;
-            if (cues == null && character is IModCharacterAssetOverrides { CombatVisualCues: { } cc })
+            if (cues == null && character is IModCharacterAssetOverrides { VisualCues: { } cc })
                 cues = cc;
 
             if (cues == null)
@@ -176,7 +177,7 @@ namespace STS2RitsuLib.Scaffolding.Characters.Visuals
                    || TryApplySingleTextureCues(visualsRoot, cues.TexturePathByCue, names);
         }
 
-        private static bool TryApplyFrameSequences(Node visualsRoot, CharacterCombatVisualCueSet cues,
+        private static bool TryApplyFrameSequences(Node visualsRoot, VisualCueSet cues,
             ReadOnlySpan<string> names)
         {
             var map = cues.FrameSequenceByCue;
@@ -234,8 +235,8 @@ namespace STS2RitsuLib.Scaffolding.Characters.Visuals
             return false;
         }
 
-        private static bool TryGetFrameSequence(IReadOnlyDictionary<string, CharacterVisualFrameSequence> map,
-            string key, out CharacterVisualFrameSequence? sequence)
+        private static bool TryGetFrameSequence(IReadOnlyDictionary<string, VisualFrameSequence> map,
+            string key, out VisualFrameSequence? sequence)
         {
             if (map.TryGetValue(key, out var found))
             {

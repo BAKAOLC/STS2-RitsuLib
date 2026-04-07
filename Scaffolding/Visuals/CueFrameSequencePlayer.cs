@@ -1,11 +1,10 @@
 using Godot;
-using STS2RitsuLib.Scaffolding.Characters.Visuals.Definition;
+using STS2RitsuLib.Scaffolding.Visuals.Definition;
 
-namespace STS2RitsuLib.Scaffolding.Characters.Visuals
+namespace STS2RitsuLib.Scaffolding.Visuals
 {
     /// <summary>
-    ///     Internal driver that swaps a <see cref="Sprite2D.Texture" /> through
-    ///     <see cref="CharacterVisualFrameSequence" /> (per-frame durations).
+    ///     Internal driver that swaps a <see cref="Sprite2D.Texture" /> through a <see cref="VisualFrameSequence" />.
     /// </summary>
     internal partial class CueFrameSequencePlayer : Node
     {
@@ -14,7 +13,7 @@ namespace STS2RitsuLib.Scaffolding.Characters.Visuals
         private Texture2D?[] _cache = [];
         private double _carry;
         private double _frameDurationSeconds;
-        private CharacterVisualFrame[] _frames = [];
+        private VisualFrame[] _frames = [];
         private int _index;
         private bool _loop;
 
@@ -49,12 +48,12 @@ namespace STS2RitsuLib.Scaffolding.Characters.Visuals
             SetProcess(false);
         }
 
-        internal bool TryStart(Sprite2D sprite, CharacterVisualFrameSequence sequence)
+        internal bool TryStart(Sprite2D sprite, VisualFrameSequence sequence)
         {
             if (sequence.Frames.Count == 0)
                 return false;
 
-            var frames = new CharacterVisualFrame[sequence.Frames.Count];
+            var frames = new VisualFrame[sequence.Frames.Count];
             for (var i = 0; i < sequence.Frames.Count; i++)
             {
                 var f = sequence.Frames[i];
@@ -145,7 +144,7 @@ namespace STS2RitsuLib.Scaffolding.Characters.Visuals
             if (!IsInstanceValid(parent))
                 return;
 
-            (parent!.GetNodeOrNull(NodeName) as CueFrameSequencePlayer)?.StopAndReset();
+            (parent.GetNodeOrNull(NodeName) as CueFrameSequencePlayer)?.StopAndReset();
         }
     }
 }

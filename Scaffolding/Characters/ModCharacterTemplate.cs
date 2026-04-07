@@ -1,5 +1,6 @@
 using MegaCrit.Sts2.Core.Models;
 using STS2RitsuLib.Scaffolding.Characters.Visuals.Definition;
+using STS2RitsuLib.Scaffolding.Visuals.Definition;
 
 namespace STS2RitsuLib.Scaffolding.Characters
 {
@@ -137,9 +138,9 @@ namespace STS2RitsuLib.Scaffolding.Characters
 
         /// <summary>
         ///     Optional per-cue static textures and frame sequences for non-Spine combat / game-over visuals; define with
-        ///     <see cref="ModCharacterCombatVisuals" /> (runtime: <see cref="Visuals.ModCreatureVisualPlayback" />).
+        ///     <c>ModVisualCues</c> (runtime: <c>ModCreatureVisualPlayback</c>).
         /// </summary>
-        CharacterCombatVisualCueSet? CombatVisualCues { get; }
+        VisualCueSet? VisualCues { get; }
 
         /// <summary>
         ///     Optional merchant / rest-site procedural shells (no custom merchant or rest-site character <c>tscn</c>);
@@ -329,7 +330,7 @@ namespace STS2RitsuLib.Scaffolding.Characters
         public virtual string? CustomArmScissorsTexturePath => ResolvedAssetProfile.Multiplayer?.ArmScissorsTexturePath;
 
         /// <inheritdoc />
-        public virtual CharacterCombatVisualCueSet? CombatVisualCues => ResolvedAssetProfile.CombatVisuals;
+        public virtual VisualCueSet? VisualCues => ResolvedAssetProfile.VisualCues;
 
         /// <inheritdoc />
         public virtual CharacterWorldProceduralVisualSet? WorldProceduralVisuals =>
