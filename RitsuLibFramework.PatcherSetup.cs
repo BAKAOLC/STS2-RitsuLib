@@ -11,6 +11,7 @@ using STS2RitsuLib.Scaffolding.Cards.HandGlow.Patches;
 using STS2RitsuLib.Scaffolding.Cards.HandOutline.Patches;
 using STS2RitsuLib.Scaffolding.Characters.Patches;
 using STS2RitsuLib.Scaffolding.Content.Patches;
+using STS2RitsuLib.Scaffolding.Godot;
 using STS2RitsuLib.Settings.Patches;
 using STS2RitsuLib.Timeline.Patches;
 using STS2RitsuLib.Unlocks.Patches;
@@ -81,6 +82,7 @@ namespace STS2RitsuLib
             patcher.RegisterPatch<ActHookLifecyclePatch>();
             patcher.RegisterPatch<RoomExitLifecyclePatch>();
             patcher.RegisterPatch<ActTransitionLifecyclePatch>();
+            patcher.RegisterPatch<ActEnterMapSelectionSyncPatch>();
             patcher.RegisterPatch<SaveManagerLifecyclePatch>();
             patcher.RegisterPatch<RunSavingLifecyclePatch>();
             patcher.RegisterPatch<EpochLifecyclePatch>();
@@ -104,6 +106,8 @@ namespace STS2RitsuLib
 
         private static void RegisterContentAssetPatches()
         {
+            RitsuGodotNodeFactoryBootstrap.EnsureRegistered();
+
             var patcher = CreatePatcher(Const.ModId, "framework-content-assets", "content assets");
             patcher.RegisterPatch<EpochPortraitPathPatch>();
             patcher.RegisterPatch<CardPortraitPathPatch>();
@@ -149,7 +153,15 @@ namespace STS2RitsuLib
             patcher.RegisterPatch<ActGenerateBackgroundAssetsPatch>();
             patcher.RegisterPatch<ActAssetPathsBackgroundLayersPatch>();
 
+            patcher.RegisterPatch<ModModelRuntimeGodotFactoryPatches.MonsterCreatureVisualsRuntimeFactoryPatch>();
+            patcher.RegisterPatch<ModModelRuntimeGodotFactoryPatches.EncounterCombatSceneRuntimeFactoryPatch>();
+            patcher.RegisterPatch<ModModelRuntimeGodotFactoryPatches.EventLayoutPackedSceneRuntimeFactoryPatch>();
+            patcher.RegisterPatch<ModModelRuntimeGodotFactoryPatches.EventBackgroundPackedSceneRuntimeFactoryPatch>();
+            patcher.RegisterPatch<ModModelRuntimeGodotFactoryPatches.EventHasVfxRuntimeFactoryPatch>();
+            patcher.RegisterPatch<ModModelRuntimeGodotFactoryPatches.EventCreateVfxRuntimeFactoryPatch>();
+            patcher.RegisterPatch<ModModelRuntimeGodotFactoryPatches.OrbSpriteRuntimeFactoryPatch>();
             patcher.RegisterPatch<EncounterCreateScenePatch>();
+            patcher.RegisterPatch<EncounterGetBackgroundAssetsProgrammaticPrepPatch>();
             patcher.RegisterPatch<EncounterCreateBackgroundAssetsForCustomPatch>();
             patcher.RegisterPatch<EncounterBossNodePathPatch>();
             patcher.RegisterPatch<EncounterMapNodeAssetPathsPatch>();
@@ -167,6 +179,7 @@ namespace STS2RitsuLib
             patcher.RegisterPatch<AncientMapIconTexturePatch>();
             patcher.RegisterPatch<AncientRunHistoryIconTexturePatch>();
             patcher.RegisterPatch<ImageHelperAncientModRunHistoryIconPathPatch>();
+            patcher.RegisterPatch<ImageHelperModEncounterRunHistoryIconPathPatch>();
             patcher.RegisterPatch<AncientMapNodeAssetPathsPatch>();
             patcher.RegisterPatch<AncientEventProceduralBackgroundScenePatch>();
             patcher.RegisterPatch<NAncientEventLayoutProceduralStagePatch>();
@@ -185,6 +198,7 @@ namespace STS2RitsuLib
         {
             var patcher = CreatePatcher(Const.ModId, "framework-character-assets", "character assets");
             patcher.RegisterPatch<CharacterIconOutlineTexturePathPatch>();
+            patcher.RegisterPatch<ModModelRuntimeGodotFactoryPatches.CharacterCreatureVisualsRuntimeFactoryPatch>();
             patcher.RegisterPatch<CharacterVisualsPathPatch>();
             patcher.RegisterPatch<CharacterEnergyCounterPathPatch>();
             patcher.RegisterPatch<CharacterMerchantAnimPathPatch>();

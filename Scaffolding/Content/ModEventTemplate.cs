@@ -1,3 +1,4 @@
+using Godot;
 using MegaCrit.Sts2.Core.Events;
 using MegaCrit.Sts2.Core.Models;
 using STS2RitsuLib.Scaffolding.Content.Patches;
@@ -5,11 +6,19 @@ using STS2RitsuLib.Scaffolding.Content.Patches;
 namespace STS2RitsuLib.Scaffolding.Content
 {
     /// <summary>
-    ///     Base <see cref="EventModel" /> with helpers for stable localization keys, relic options owned by the event, and
-    ///     optional <see cref="IModEventAssetOverrides" /> paths.
+    ///     Base <see cref="EventModel" /> for mods: localization helpers, relic options,
+    ///     <see cref="IModEventAssetOverrides" />
+    ///     paths, and optional runtime hooks <see cref="TryCreateLayoutPackedScene" />,
+    ///     <see cref="TryCreateBackgroundPackedScene" />, <see cref="TryCreateEventVfx" />.
     /// </summary>
-    public abstract class ModEventTemplate : EventModel, IModEventAssetOverrides
+    public abstract class ModEventTemplate : EventModel, IModEventAssetOverrides, IModEventLayoutPackedSceneFactory,
+        IModEventBackgroundPackedSceneFactory, IModEventVfxFactory
     {
+        /// <summary>
+        ///     <c>true</c> enables <see cref="TryCreateEventVfx" /> instead of the default VFX path.
+        /// </summary>
+        protected virtual bool SuppliesCustomEventVfx => false;
+
         /// <inheritdoc />
         public virtual EventAssetProfile AssetProfile => EventAssetProfile.Empty;
 
@@ -24,6 +33,47 @@ namespace STS2RitsuLib.Scaffolding.Content
 
         /// <inheritdoc />
         public virtual string? CustomVfxScenePath => AssetProfile.VfxScenePath;
+
+        PackedScene? IModEventBackgroundPackedSceneFactory.TryCreateBackgroundPackedScene()
+        {
+            return TryCreateBackgroundPackedScene();
+        }
+
+        PackedScene? IModEventLayoutPackedSceneFactory.TryCreateLayoutPackedScene()
+        {
+            return TryCreateLayoutPackedScene();
+        }
+
+        bool IModEventVfxFactory.SuppliesCustomEventVfx => SuppliesCustomEventVfx;
+
+        Node2D? IModEventVfxFactory.TryCreateEventVfx()
+        {
+            return TryCreateEventVfx();
+        }
+
+        /// <summary>
+        ///     Non-null layout scene; otherwise <see cref="CustomLayoutScenePath" /> resolution runs.
+        /// </summary>
+        protected virtual PackedScene? TryCreateLayoutPackedScene()
+        {
+            return null;
+        }
+
+        /// <summary>
+        ///     Non-null background scene; otherwise <see cref="CustomBackgroundScenePath" /> resolution runs.
+        /// </summary>
+        protected virtual PackedScene? TryCreateBackgroundPackedScene()
+        {
+            return null;
+        }
+
+        /// <summary>
+        ///     VFX root when <see cref="SuppliesCustomEventVfx" /> is <c>true</c>; <c>null</c> falls through to path loading.
+        /// </summary>
+        protected virtual Node2D? TryCreateEventVfx()
+        {
+            return null;
+        }
 
         /// <summary>
         ///     Builds a namespaced option key for <paramref name="pageName" /> / <paramref name="optionName" /> under this event

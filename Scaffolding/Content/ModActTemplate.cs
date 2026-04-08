@@ -5,7 +5,9 @@ namespace STS2RitsuLib.Scaffolding.Content
 {
     /// <summary>
     ///     Base <see cref="ActModel" /> for mods: chest Spine path override, <see cref="IModActAssetOverrides" /> scene/map
-    ///     paths, and optional custom combat background layers directory (<c>_bg_</c> / <c>_fg_</c> scenes).
+    ///     paths, and optional custom combat background layers directory (<c>_bg_</c> / <c>_fg_</c> scenes). To reuse a
+    ///     vanilla act’s shipped art, set <see cref="AssetProfile" /> from
+    ///     <see cref="ContentAssetProfiles.FromVanillaActId" /> (vanilla folder name, not this act’s model id).
     /// </summary>
     public abstract class ModActTemplate : ActModel, IModActAssetOverrides
     {

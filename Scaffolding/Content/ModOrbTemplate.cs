@@ -8,9 +8,9 @@ namespace STS2RitsuLib.Scaffolding.Content
 {
     /// <summary>
     ///     Base <see cref="OrbModel" /> for mods: keyword hover tips, dimmed UI color default, and
-    ///     <see cref="IModOrbAssetOverrides" /> paths.
+    ///     <see cref="IModOrbAssetOverrides" /> paths and optional <see cref="TryCreateOrbSprite" />.
     /// </summary>
-    public abstract class ModOrbTemplate : OrbModel, IModOrbAssetOverrides
+    public abstract class ModOrbTemplate : OrbModel, IModOrbAssetOverrides, IModOrbSpriteFactory
     {
         /// <summary>
         ///     Keyword ids merged into this orb’s hover tips.
@@ -40,5 +40,19 @@ namespace STS2RitsuLib.Scaffolding.Content
 
         /// <inheritdoc />
         public virtual string? CustomVisualsScenePath => AssetProfile.VisualsScenePath;
+
+        Node2D? IModOrbSpriteFactory.TryCreateOrbSprite()
+        {
+            return TryCreateOrbSprite();
+        }
+
+        /// <summary>
+        ///     Non-null node replaces the scene from <see cref="CustomVisualsScenePath" />; provide Spine and animations
+        ///     compatible with <c>CreateSprite</c> callers if required.
+        /// </summary>
+        protected virtual Node2D? TryCreateOrbSprite()
+        {
+            return null;
+        }
     }
 }

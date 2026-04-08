@@ -8,6 +8,7 @@ using MegaCrit.Sts2.Core.Runs;
 using MegaCrit.Sts2.Core.Saves;
 using STS2RitsuLib.Content;
 using STS2RitsuLib.Diagnostics;
+using STS2RitsuLib.Keywords;
 using STS2RitsuLib.Patching.Models;
 using STS2RitsuLib.Timeline;
 using STS2RitsuLib.Unlocks;
@@ -127,6 +128,7 @@ namespace STS2RitsuLib.Lifecycle.Patches
             {
                 case ({ } declaringType, nameof(ModelDb.Init)) when declaringType == typeof(ModelDb):
                     ModContentRegistry.FreezeRegistrations(nameof(ModelDb.Init));
+                    ModKeywordRegistry.FreezeRegistrations(nameof(ModelDb.Init));
                     ModTimelineRegistry.FreezeRegistrations(nameof(ModelDb.Init));
                     ModEpochGatedContentRegistry.FreezeRegistrations(nameof(ModelDb.Init));
                     ModUnlockRegistry.FreezeRegistrations(nameof(ModelDb.Init));

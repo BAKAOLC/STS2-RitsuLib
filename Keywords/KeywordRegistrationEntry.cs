@@ -1,3 +1,5 @@
+using STS2RitsuLib.Content;
+
 namespace STS2RitsuLib.Keywords
 {
     /// <summary>
@@ -96,7 +98,7 @@ namespace STS2RitsuLib.Keywords
         /// </summary>
         public void Register(ModKeywordRegistry registry)
         {
-            registry.Register(
+            registry.RegisterCore(
                 Id,
                 TitleTable,
                 TitleKey,
@@ -108,8 +110,51 @@ namespace STS2RitsuLib.Keywords
         }
 
         /// <summary>
+        ///     <c>card_keywords</c> row with an id from <see cref="ModContentRegistry.GetQualifiedKeywordId" />.
+        /// </summary>
+        public static KeywordRegistrationEntry OwnedCard(
+            string modId,
+            string localKeywordStem,
+            string locKeyPrefix,
+            string? iconPath,
+            ModKeywordCardDescriptionPlacement cardDescriptionPlacement,
+            bool includeInCardHoverTip)
+        {
+            var id = ModContentRegistry.GetQualifiedKeywordId(modId, localKeywordStem);
+            return new(
+                id,
+                "card_keywords",
+                $"{locKeyPrefix}.title",
+                "card_keywords",
+                $"{locKeyPrefix}.description",
+                iconPath,
+                cardDescriptionPlacement,
+                includeInCardHoverTip);
+        }
+
+        /// <summary>
+        ///     <c>OwnedCard</c> overload with legacy hover defaults.
+        /// </summary>
+        public static KeywordRegistrationEntry OwnedCard(
+            string modId,
+            string localKeywordStem,
+            string locKeyPrefix,
+            string? iconPath = null)
+        {
+            return OwnedCard(
+                modId,
+                localKeywordStem,
+                locKeyPrefix,
+                iconPath,
+                ModKeywordCardDescriptionPlacement.None,
+                true);
+        }
+
+        /// <summary>
         ///     Builds a <c>card_keywords</c> entry (full factory signature).
         /// </summary>
+        [Obsolete(
+            "Prefer OwnedCard(modId, localKeywordStem, ...) so the keyword id is mod-qualified like fixed model entries; flat ids collide globally.")]
         public static KeywordRegistrationEntry Card(
             string id,
             string locKeyPrefix,
@@ -131,6 +176,8 @@ namespace STS2RitsuLib.Keywords
         /// <summary>
         ///     Legacy <c>Card</c> factory signature preserved for older mods.
         /// </summary>
+        [Obsolete(
+            "Prefer OwnedCard(modId, localKeywordStem, ...) so the keyword id is mod-qualified like fixed model entries; flat ids collide globally.")]
         public static KeywordRegistrationEntry Card(string id, string locKeyPrefix, string? iconPath = null)
         {
             return Card(

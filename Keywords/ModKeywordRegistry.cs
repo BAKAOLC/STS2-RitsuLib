@@ -2,12 +2,15 @@ using Godot;
 using MegaCrit.Sts2.Core.Helpers;
 using MegaCrit.Sts2.Core.HoverTips;
 using MegaCrit.Sts2.Core.Localization;
+using STS2RitsuLib.Content;
 using Logger = MegaCrit.Sts2.Core.Logging.Logger;
 
 namespace STS2RitsuLib.Keywords
 {
     /// <summary>
-    ///     Per-mod registry for hover-tip keywords (titles, descriptions, icons) with global lookup by id.
+    ///     Per-mod registration surface for hover-tip keywords. Definitions are stored in a single global map keyed by
+    ///     normalized id; prefer <c>RegisterOwned</c> / <c>RegisterCardKeywordOwned</c> so ids stay mod-scoped like fixed
+    ///     model public entries.
     /// </summary>
     public sealed class ModKeywordRegistry
     {
@@ -22,12 +25,25 @@ namespace STS2RitsuLib.Keywords
         private readonly Logger _logger;
 
         private readonly string _modId;
+        private string? _freezeReason;
 
         private ModKeywordRegistry(string modId)
         {
             _modId = modId;
             _logger = RitsuLibFramework.CreateLogger(modId);
         }
+
+        /// <summary>
+        ///     True after the framework freezes keyword registration (with content/timeline at model init).
+        /// </summary>
+        public static bool IsFrozen { get; private set; }
+
+        /// <summary>
+        ///     Convenience view of <see cref="IsFrozen" /> as <see cref="KeywordRegistrationState" />.
+        /// </summary>
+        public static KeywordRegistrationState State => IsFrozen
+            ? KeywordRegistrationState.Frozen
+            : KeywordRegistrationState.Open;
 
         /// <summary>
         ///     Returns the singleton registry for <paramref name="modId" />, creating it on first use.
@@ -47,19 +63,238 @@ namespace STS2RitsuLib.Keywords
             }
         }
 
+        internal static void FreezeRegistrations(string reason)
+        {
+            ModKeywordRegistry[] registriesSnapshot;
+            lock (SyncRoot)
+            {
+                if (IsFrozen)
+                    return;
+
+                IsFrozen = true;
+                foreach (var registry in Registries.Values)
+                    registry._freezeReason = reason;
+
+                registriesSnapshot = [.. Registries.Values];
+            }
+
+            foreach (var registry in registriesSnapshot)
+                registry._logger.Info($"[Keywords] Keyword registration is now frozen ({reason}).");
+        }
+
         /// <summary>
-        ///     Registers a keyword for this mod; duplicates from the same mod return the existing definition (full
-        ///     signature).
+        ///     Resolves which mod registered <paramref name="keywordId" />, if any.
         /// </summary>
-        /// <param name="id">Keyword id (trimmed, lowercased).</param>
-        /// <param name="titleTable">Title localization table.</param>
-        /// <param name="titleKey">Title key; defaults to <c>{id}.title</c> when null.</param>
-        /// <param name="descriptionTable">Description table; defaults to <paramref name="titleTable" /> when null.</param>
-        /// <param name="descriptionKey">Description key; defaults to <c>{id}.description</c> when null.</param>
-        /// <param name="iconPath">Optional Godot resource path for the icon.</param>
-        /// <param name="cardDescriptionPlacement">Inline card-description injection placement.</param>
-        /// <param name="includeInCardHoverTip">Whether this id participates in template keyword hover-tip expansion.</param>
+        public static bool TryGetOwnerModId(string keywordId, out string modId)
+        {
+            ArgumentException.ThrowIfNullOrWhiteSpace(keywordId);
+
+            lock (SyncRoot)
+            {
+                if (Definitions.TryGetValue(NormalizeId(keywordId), out var def))
+                {
+                    modId = def.ModId;
+                    return true;
+                }
+            }
+
+            modId = string.Empty;
+            return false;
+        }
+
+        /// <summary>
+        ///     Registers a keyword with an id derived from <see cref="ModContentRegistry.GetQualifiedKeywordId" /> using
+        ///     this registry’s mod id and <paramref name="localKeywordStem" />.
+        /// </summary>
+        public ModKeywordDefinition RegisterOwned(
+            string localKeywordStem,
+            string titleTable,
+            string? titleKey,
+            string? descriptionTable,
+            string? descriptionKey,
+            string? iconPath,
+            ModKeywordCardDescriptionPlacement cardDescriptionPlacement,
+            bool includeInCardHoverTip)
+        {
+            ArgumentException.ThrowIfNullOrWhiteSpace(localKeywordStem);
+            var id = ModContentRegistry.GetQualifiedKeywordId(_modId, localKeywordStem);
+            return RegisterCore(
+                id,
+                titleTable,
+                titleKey,
+                descriptionTable,
+                descriptionKey,
+                iconPath,
+                cardDescriptionPlacement,
+                includeInCardHoverTip);
+        }
+
+        /// <summary>
+        ///     <c>RegisterOwned</c> with default title/description key rules (same as legacy
+        ///     <c>Register(string, titleTable, ...)</c>).
+        /// </summary>
+        public ModKeywordDefinition RegisterOwned(
+            string localKeywordStem,
+            string titleTable = "card_keywords",
+            string? titleKey = null,
+            string? descriptionTable = null,
+            string? descriptionKey = null,
+            string? iconPath = null)
+        {
+            return RegisterOwned(
+                localKeywordStem,
+                titleTable,
+                titleKey,
+                descriptionTable,
+                descriptionKey,
+                iconPath,
+                ModKeywordCardDescriptionPlacement.None,
+                true);
+        }
+
+        /// <summary>
+        ///     Registers a <c>card_keywords</c> entry whose id is mod-qualified from <paramref name="localKeywordStem" />.
+        /// </summary>
+        public ModKeywordDefinition RegisterCardKeywordOwned(
+            string localKeywordStem,
+            string? locKeyPrefix,
+            string? iconPath,
+            ModKeywordCardDescriptionPlacement cardDescriptionPlacement,
+            bool includeInCardHoverTip)
+        {
+            ArgumentException.ThrowIfNullOrWhiteSpace(localKeywordStem);
+
+            var prefix = string.IsNullOrWhiteSpace(locKeyPrefix)
+                ? StringHelper.Slugify(localKeywordStem)
+                : locKeyPrefix.Trim();
+
+            var id = ModContentRegistry.GetQualifiedKeywordId(_modId, localKeywordStem);
+            return RegisterCore(
+                id,
+                "card_keywords",
+                $"{prefix}.title",
+                "card_keywords",
+                $"{prefix}.description",
+                iconPath,
+                cardDescriptionPlacement,
+                includeInCardHoverTip);
+        }
+
+        /// <summary>
+        ///     <c>RegisterCardKeywordOwned</c> with legacy hover defaults.
+        /// </summary>
+        public ModKeywordDefinition RegisterCardKeywordOwned(
+            string localKeywordStem,
+            string? locKeyPrefix = null,
+            string? iconPath = null)
+        {
+            return RegisterCardKeywordOwned(
+                localKeywordStem,
+                locKeyPrefix,
+                iconPath,
+                ModKeywordCardDescriptionPlacement.None,
+                true);
+        }
+
+        /// <summary>
+        ///     Registers a keyword with a raw global id. Prefer <c>RegisterOwned</c> to avoid cross-mod collisions.
+        /// </summary>
+        [Obsolete(
+            "Flat keyword ids are global: they collide across mods and do not follow fixed public entry naming. Use RegisterOwned / RegisterCardKeywordOwned, or ModContentRegistry.GetQualifiedKeywordId for cross-mod references.")]
         public ModKeywordDefinition Register(
+            string id,
+            string titleTable,
+            string? titleKey,
+            string? descriptionTable,
+            string? descriptionKey,
+            string? iconPath,
+            ModKeywordCardDescriptionPlacement cardDescriptionPlacement,
+            bool includeInCardHoverTip)
+        {
+            return RegisterCore(
+                id,
+                titleTable,
+                titleKey,
+                descriptionTable,
+                descriptionKey,
+                iconPath,
+                cardDescriptionPlacement,
+                includeInCardHoverTip);
+        }
+
+        /// <summary>
+        ///     Legacy <c>Register</c> signature preserved for older mods; forwards with prior hover-tip behavior.
+        /// </summary>
+        [Obsolete(
+            "Flat keyword ids are global: they collide across mods and do not follow fixed public entry naming. Use RegisterOwned / RegisterCardKeywordOwned, or ModContentRegistry.GetQualifiedKeywordId for cross-mod references.")]
+        public ModKeywordDefinition Register(
+            string id,
+            string titleTable = "card_keywords",
+            string? titleKey = null,
+            string? descriptionTable = null,
+            string? descriptionKey = null,
+            string? iconPath = null)
+        {
+            return RegisterCore(
+                id,
+                titleTable,
+                titleKey,
+                descriptionTable,
+                descriptionKey,
+                iconPath,
+                ModKeywordCardDescriptionPlacement.None,
+                true);
+        }
+
+        /// <summary>
+        ///     Registers a card keyword with a raw global id. Prefer <c>RegisterCardKeywordOwned</c>.
+        /// </summary>
+        [Obsolete(
+            "Flat keyword ids are global: they collide across mods and do not follow fixed public entry naming. Use RegisterCardKeywordOwned, or ModContentRegistry.GetQualifiedKeywordId for cross-mod references.")]
+        public ModKeywordDefinition RegisterCardKeyword(
+            string id,
+            string? locKeyPrefix,
+            string? iconPath,
+            ModKeywordCardDescriptionPlacement cardDescriptionPlacement,
+            bool includeInCardHoverTip)
+        {
+            ArgumentException.ThrowIfNullOrWhiteSpace(id);
+
+            var prefix = string.IsNullOrWhiteSpace(locKeyPrefix)
+                ? StringHelper.Slugify(id)
+                : locKeyPrefix.Trim();
+
+            return RegisterCore(
+                id,
+                "card_keywords",
+                $"{prefix}.title",
+                "card_keywords",
+                $"{prefix}.description",
+                iconPath,
+                cardDescriptionPlacement,
+                includeInCardHoverTip);
+        }
+
+        /// <summary>
+        ///     Legacy <c>RegisterCardKeyword</c> signature preserved for older mods; forwards with prior hover-tip behavior.
+        /// </summary>
+        [Obsolete(
+            "Flat keyword ids are global: they collide across mods and do not follow fixed public entry naming. Use RegisterCardKeywordOwned, or ModContentRegistry.GetQualifiedKeywordId for cross-mod references.")]
+        public ModKeywordDefinition RegisterCardKeyword(string id, string? locKeyPrefix = null, string? iconPath = null)
+        {
+            return RegisterCardKeyword(
+                id,
+                locKeyPrefix,
+                iconPath,
+                ModKeywordCardDescriptionPlacement.None,
+                true);
+        }
+
+        /// <summary>
+        ///     Same as obsolete <c>Register</c> (full signature) without triggering obsolete warnings; for in-library
+        ///     forwarding from manifests.
+        /// </summary>
+        internal ModKeywordDefinition RegisterCore(
             string id,
             string titleTable,
             string? titleKey,
@@ -71,6 +306,8 @@ namespace STS2RitsuLib.Keywords
         {
             ArgumentException.ThrowIfNullOrWhiteSpace(id);
             ArgumentException.ThrowIfNullOrWhiteSpace(titleTable);
+
+            EnsureMutable("register keywords");
 
             var normalizedId = NormalizeId(id);
             var definition = new ModKeywordDefinition(
@@ -90,7 +327,7 @@ namespace STS2RitsuLib.Keywords
                 {
                     if (existing != definition)
                         throw new InvalidOperationException(
-                            $"Keyword '{normalizedId}' is already registered by mod '{existing.ModId}'.");
+                            $"Keyword '{normalizedId}' is already registered by mod '{existing.ModId}' with different data; ids are global and must not be reused with conflicting definitions.");
 
                     return existing;
                 }
@@ -100,68 +337,6 @@ namespace STS2RitsuLib.Keywords
 
             _logger.Info($"[Keywords] Registered keyword: {normalizedId}");
             return definition;
-        }
-
-        /// <summary>
-        ///     Legacy <c>Register</c> signature preserved for older mods; forwards with prior hover-tip behavior.
-        /// </summary>
-        public ModKeywordDefinition Register(
-            string id,
-            string titleTable = "card_keywords",
-            string? titleKey = null,
-            string? descriptionTable = null,
-            string? descriptionKey = null,
-            string? iconPath = null)
-        {
-            return Register(
-                id,
-                titleTable,
-                titleKey,
-                descriptionTable,
-                descriptionKey,
-                iconPath,
-                ModKeywordCardDescriptionPlacement.None,
-                true);
-        }
-
-        /// <summary>
-        ///     Convenience for card keywords: uses <c>card_keywords</c> and slugified keys (full signature).
-        /// </summary>
-        public ModKeywordDefinition RegisterCardKeyword(
-            string id,
-            string? locKeyPrefix,
-            string? iconPath,
-            ModKeywordCardDescriptionPlacement cardDescriptionPlacement,
-            bool includeInCardHoverTip)
-        {
-            ArgumentException.ThrowIfNullOrWhiteSpace(id);
-
-            var prefix = string.IsNullOrWhiteSpace(locKeyPrefix)
-                ? StringHelper.Slugify(id)
-                : locKeyPrefix.Trim();
-
-            return Register(
-                id,
-                "card_keywords",
-                $"{prefix}.title",
-                "card_keywords",
-                $"{prefix}.description",
-                iconPath,
-                cardDescriptionPlacement,
-                includeInCardHoverTip);
-        }
-
-        /// <summary>
-        ///     Legacy <c>RegisterCardKeyword</c> signature preserved for older mods; forwards with prior hover-tip behavior.
-        /// </summary>
-        public ModKeywordDefinition RegisterCardKeyword(string id, string? locKeyPrefix = null, string? iconPath = null)
-        {
-            return RegisterCardKeyword(
-                id,
-                locKeyPrefix,
-                iconPath,
-                ModKeywordCardDescriptionPlacement.None,
-                true);
         }
 
         /// <summary>
@@ -227,6 +402,16 @@ namespace STS2RitsuLib.Keywords
         {
             var period = new LocString("card_keywords", "PERIOD");
             return "[gold]" + GetTitle(id).GetFormattedText() + "[/gold]" + period.GetRawText();
+        }
+
+        private void EnsureMutable(string operation)
+        {
+            if (!IsFrozen)
+                return;
+
+            throw new InvalidOperationException(
+                $"Cannot {operation} after keyword registration has been frozen ({_freezeReason ?? "unknown"}). " +
+                "Register keywords from your mod initializer before model initialization.");
         }
 
         private static string NormalizeId(string id)

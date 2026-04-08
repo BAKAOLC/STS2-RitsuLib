@@ -141,6 +141,22 @@ namespace STS2RitsuLib.Content
         }
 
         /// <summary>
+        ///     Builds a mod-scoped keyword id using the same stem normalization as fixed public model entries, then
+        ///     lowercases the result for keyword registry storage. Other mods can
+        ///     reference a provider’s keyword by passing the same <paramref name="modId" /> and
+        ///     <paramref name="localKeywordStem" />.
+        /// </summary>
+        public static string GetQualifiedKeywordId(string modId, string localKeywordStem)
+        {
+            ArgumentException.ThrowIfNullOrWhiteSpace(modId);
+            ArgumentException.ThrowIfNullOrWhiteSpace(localKeywordStem);
+
+            var modStem = NormalizePublicStem(modId);
+            var keyStem = NormalizePublicStem(localKeywordStem);
+            return $"{modStem}_{keyStem}".ToLowerInvariant();
+        }
+
+        /// <summary>
         ///     Returns the singleton registry for <paramref name="modId" /> (created on first use).
         /// </summary>
         public static ModContentRegistry For(string modId)

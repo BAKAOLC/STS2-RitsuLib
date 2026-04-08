@@ -1,5 +1,7 @@
 using MegaCrit.Sts2.Core.Models;
+using MegaCrit.Sts2.Core.Nodes.Combat;
 using STS2RitsuLib.Scaffolding.Characters.Visuals.Definition;
+using STS2RitsuLib.Scaffolding.Content;
 using STS2RitsuLib.Scaffolding.Visuals.Definition;
 
 namespace STS2RitsuLib.Scaffolding.Characters
@@ -150,14 +152,14 @@ namespace STS2RitsuLib.Scaffolding.Characters
     }
 
     /// <summary>
-    ///     Base <see cref="CharacterModel" /> for mods: wires typed card/relic/potion pools, starting loadout types,
-    ///     and optional asset overrides via <see cref="IModCharacterAssetOverrides" />.
+    ///     Base <see cref="CharacterModel" /> for mods: typed card/relic/potion pools, starting loadout,
+    ///     <see cref="IModCharacterAssetOverrides" />, and optional <see cref="TryCreateCreatureVisuals" />.
     /// </summary>
     /// <typeparam name="TCardPool">Concrete <see cref="CardPoolModel" /> type registered for this character.</typeparam>
     /// <typeparam name="TRelicPool">Concrete <see cref="RelicPoolModel" /> type registered for this character.</typeparam>
     /// <typeparam name="TPotionPool">Concrete <see cref="PotionPoolModel" /> type registered for this character.</typeparam>
     public abstract class ModCharacterTemplate<TCardPool, TRelicPool, TPotionPool> : CharacterModel
-        , IModCharacterAssetOverrides
+        , IModCharacterAssetOverrides, IModCharacterCreatureVisualsFactory
         where TCardPool : CardPoolModel
         where TRelicPool : RelicPoolModel
         where TPotionPool : PotionPoolModel
@@ -335,6 +337,20 @@ namespace STS2RitsuLib.Scaffolding.Characters
         /// <inheritdoc />
         public virtual CharacterWorldProceduralVisualSet? WorldProceduralVisuals =>
             ResolvedAssetProfile.WorldProceduralVisuals;
+
+        NCreatureVisuals? IModCharacterCreatureVisualsFactory.TryCreateCreatureVisuals()
+        {
+            return TryCreateCreatureVisuals();
+        }
+
+        /// <summary>
+        ///     Non-null combat visuals; otherwise <see cref="IModCharacterAssetOverrides.CustomVisualsPath" /> / vanilla
+        ///     paths apply.
+        /// </summary>
+        protected virtual NCreatureVisuals? TryCreateCreatureVisuals()
+        {
+            return null;
+        }
 
         /// <summary>
         ///     Maps model CLR types to live <typeparamref name="TModel" /> instances from <see cref="ModelDb" />.

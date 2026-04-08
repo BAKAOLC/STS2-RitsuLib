@@ -178,13 +178,23 @@ namespace STS2RitsuLib.Scaffolding.Content
     /// </param>
     /// <param name="ExtraAssetPaths">Additional paths merged into <c>GetAssetPaths</c> preload.</param>
     /// <param name="MapNodeAssetPaths">When non-empty, replaces <c>MapNodeAssetPaths</c> enumeration for this encounter.</param>
+    /// <param name="RunHistoryIconPath">
+    ///     Full <c>res://images/…</c> path for run-history / top-bar main icon (see
+    ///     <see cref="ImageHelper.GetImagePath" />).
+    /// </param>
+    /// <param name="RunHistoryIconOutlinePath">
+    ///     Outline texture path, same conventions as
+    ///     <paramref name="RunHistoryIconPath" />.
+    /// </param>
     public sealed record EncounterAssetProfile(
         string? EncounterScenePath = null,
         string? BackgroundScenePath = null,
         string? BackgroundLayersDirectoryPath = null,
         string? BossNodeSpinePath = null,
         string[]? ExtraAssetPaths = null,
-        string[]? MapNodeAssetPaths = null)
+        string[]? MapNodeAssetPaths = null,
+        string? RunHistoryIconPath = null,
+        string? RunHistoryIconOutlinePath = null)
     {
         /// <summary>
         ///     Default empty profile (no custom paths).
@@ -252,7 +262,10 @@ namespace STS2RitsuLib.Scaffolding.Content
     }
 
     /// <summary>
-    ///     Factory methods that build vanilla-style default asset paths from pool/card/relic entry names.
+    ///     Factory methods that build <strong>base-game</strong> (<c>res://</c>) asset paths from vanilla folder and atlas
+    ///     entry names. They do not infer paths from mod model ids — mod-only art uses explicit profile fields or your PCK
+    ///     layout. Act borrowing mirrors <see cref="Characters.CharacterAssetProfiles.FromCharacterId" /> (vanilla id in,
+    ///     vanilla paths out).
     /// </summary>
     public static class ContentAssetProfiles
     {
@@ -351,45 +364,74 @@ namespace STS2RitsuLib.Scaffolding.Content
         }
 
         /// <summary>
-        ///     Builds default act background, map layers, rest site, and chest Spine paths for <paramref name="actEntry" />.
+        ///     Builds a full <see cref="ActAssetProfile" /> for a <strong>vanilla</strong> act folder name (e.g. <c>hive</c>,
+        ///     <c>ship</c>): main background scene, <c>scenes/backgrounds/&lt;id&gt;/layers</c>, map parallax images, rest
+        ///     site, chest Spine. Pass the base-game directory name, not a mod <see cref="ActModel" /> <c>Id.Entry</c>.
         /// </summary>
-        public static ActAssetProfile Act(string actEntry)
+        public static ActAssetProfile FromVanillaActId(string vanillaActId)
         {
-            ArgumentException.ThrowIfNullOrWhiteSpace(actEntry);
+            ArgumentException.ThrowIfNullOrWhiteSpace(vanillaActId);
 
-            var normalized = Normalize(actEntry);
+            var normalized = Normalize(vanillaActId);
             return new(
                 SceneHelper.GetScenePath($"backgrounds/{normalized}/{normalized}_background"),
                 SceneHelper.GetScenePath($"rest_site/{normalized}_rest_site"),
                 ImageHelper.GetImagePath($"packed/map/map_bgs/{normalized}/map_top_{normalized}.png"),
                 ImageHelper.GetImagePath($"packed/map/map_bgs/{normalized}/map_middle_{normalized}.png"),
                 ImageHelper.GetImagePath($"packed/map/map_bgs/{normalized}/map_bottom_{normalized}.png"),
-                $"res://animations/backgrounds/treasure_room/chest_room_act_{normalized}_skel_data.tres");
+                $"res://animations/backgrounds/treasure_room/chest_room_act_{normalized}_skel_data.tres",
+                ActVanillaBackgroundLayersDirectory(normalized));
         }
 
         /// <summary>
-        ///     Vanilla combat background layers directory for <paramref name="actEntry" />
+        ///     Short alias for <see cref="FromVanillaActId" />.
+        /// </summary>
+        public static ActAssetProfile Act(string actEntry)
+        {
+            return FromVanillaActId(actEntry);
+        }
+
+        /// <summary>
+        ///     Base-game combat background layers directory for <paramref name="vanillaActFolderName" />
         ///     (<c>res://scenes/backgrounds/&lt;act&gt;/layers</c>).
         /// </summary>
-        public static string ActVanillaBackgroundLayersDirectory(string actEntry)
+        /// <param name="vanillaActFolderName">Vanilla act directory name (e.g. <c>hive</c>), not a mod act model id.</param>
+        public static string ActVanillaBackgroundLayersDirectory(string vanillaActFolderName)
         {
-            ArgumentException.ThrowIfNullOrWhiteSpace(actEntry);
-            return $"res://scenes/backgrounds/{Normalize(actEntry)}/layers";
+            ArgumentException.ThrowIfNullOrWhiteSpace(vanillaActFolderName);
+            return $"res://scenes/backgrounds/{Normalize(vanillaActFolderName)}/layers";
         }
 
         /// <summary>
-        ///     Builds default encounter asset paths for <paramref name="encounterEntry" /> (vanilla <c>EncounterModel</c> layout).
+        ///     Builds default encounter asset paths for <paramref name="encounterEntry" /> (vanilla <c>EncounterModel</c> layout),
+        ///     including concrete run-history texture paths under <c>ui/run_history/</c> (same files vanilla uses for that slug).
         /// </summary>
-        public static EncounterAssetProfile Encounter(string encounterEntry)
+        /// <param name="encounterEntry">Vanilla encounter folder / animation slug (normalized to lowercase).</param>
+        /// <param name="runHistoryIconPath">
+        ///     When non-null, overrides the main run-history icon path; otherwise
+        ///     <see cref="ImageHelper.GetImagePath" /><c>($\"ui/run_history/{normalized}.png\")</c>.
+        /// </param>
+        /// <param name="runHistoryIconOutlinePath">
+        ///     When non-null, overrides the outline path; otherwise
+        ///     <see cref="ImageHelper.GetImagePath" /><c>($\"ui/run_history/{normalized}_outline.png\")</c>.
+        /// </param>
+        public static EncounterAssetProfile Encounter(string encounterEntry,
+            string? runHistoryIconPath = null,
+            string? runHistoryIconOutlinePath = null)
         {
             ArgumentException.ThrowIfNullOrWhiteSpace(encounterEntry);
 
             var normalized = Normalize(encounterEntry);
+            var rhMain = runHistoryIconPath ?? ImageHelper.GetImagePath($"ui/run_history/{normalized}.png");
+            var rhOut = runHistoryIconOutlinePath ??
+                        ImageHelper.GetImagePath($"ui/run_history/{normalized}_outline.png");
             return new(
                 SceneHelper.GetScenePath($"encounters/{normalized}"),
                 SceneHelper.GetScenePath($"backgrounds/{normalized}/{normalized}_background"),
                 $"res://scenes/backgrounds/{normalized}/layers",
-                $"res://animations/map/{normalized}/{normalized}_node_skel_data.tres");
+                $"res://animations/map/{normalized}/{normalized}_node_skel_data.tres",
+                RunHistoryIconPath: rhMain,
+                RunHistoryIconOutlinePath: rhOut);
         }
 
         /// <summary>

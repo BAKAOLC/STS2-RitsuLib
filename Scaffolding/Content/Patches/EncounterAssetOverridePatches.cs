@@ -51,6 +51,17 @@ namespace STS2RitsuLib.Scaffolding.Content.Patches
         ///     When non-null and non-empty after filtering to existing resources, replaces <c>MapNodeAssetPaths</c>.
         /// </summary>
         IEnumerable<string>? CustomMapNodeAssetPaths => AssetProfile.MapNodeAssetPaths;
+
+        /// <summary>
+        ///     When set and the resource exists, overrides <see cref="ImageHelper.GetRoomIconPath" /> for this encounter id.
+        /// </summary>
+        string? CustomRunHistoryIconPath => AssetProfile.RunHistoryIconPath;
+
+        /// <summary>
+        ///     When set and the resource exists, overrides <see cref="ImageHelper.GetRoomIconOutlinePath" /> for this encounter
+        ///     id.
+        /// </summary>
+        string? CustomRunHistoryIconOutlinePath => AssetProfile.RunHistoryIconOutlinePath;
     }
 
     /// <summary>
@@ -105,7 +116,7 @@ namespace STS2RitsuLib.Scaffolding.Content.Patches
 
         /// <inheritdoc cref="IPatchMethod.Description" />
         public static string Description =>
-            "Allow mod encounters to customize BackgroundAssets for encounter-specific combat bg";
+            "Allow mod encounters to customize BackgroundAssets (path-based or programmatic via ModEncounterTemplate)";
 
         /// <inheritdoc cref="IPatchMethod.IsCritical" />
         public static bool IsCritical => false;
@@ -121,39 +132,57 @@ namespace STS2RitsuLib.Scaffolding.Content.Patches
 
         // ReSharper disable InconsistentNaming
         /// <summary>
-        ///     Builds <see cref="BackgroundAssets" /> via <see cref="ActBackgroundLayersFactory" /> when custom paths are set.
+        ///     Path-based <see cref="ActBackgroundLayersFactory" /> when overrides supply paths; otherwise
+        ///     <see cref="ModEncounterTemplate" /> programmatic slot from
+        ///     <see cref="EncounterGetBackgroundAssetsProgrammaticPrepPatch" />.
         /// </summary>
         public static bool Prefix(EncounterModel __instance, Rng rng, ref BackgroundAssets __result)
             // ReSharper restore InconsistentNaming
         {
-            if (__instance is not IModEncounterAssetOverrides overrides)
-                return true;
-
-            var customLayers = overrides.CustomBackgroundLayersDirectoryPath;
-            var customMain = overrides.CustomBackgroundScenePath;
-            if (string.IsNullOrWhiteSpace(customLayers) && string.IsNullOrWhiteSpace(customMain))
-                return true;
-
-            var id = __instance.Id.Entry.ToLowerInvariant();
-            var layersDir = string.IsNullOrWhiteSpace(customLayers)
-                ? $"res://scenes/backgrounds/{id}/layers"
-                : customLayers.TrimEnd('/');
-            var mainBg = string.IsNullOrWhiteSpace(customMain)
-                ? SceneHelper.GetScenePath($"backgrounds/{id}/{id}_background")
-                : customMain;
-
-            try
+            if (__instance is IModEncounterAssetOverrides overrides)
             {
-                __result = ActBackgroundLayersFactory.CreateFromCustomLayersDirectory(layersDir, mainBg, rng);
+                var customLayers = overrides.CustomBackgroundLayersDirectoryPath;
+                var customMain = overrides.CustomBackgroundScenePath;
+                if (!string.IsNullOrWhiteSpace(customLayers) || !string.IsNullOrWhiteSpace(customMain))
+                {
+                    var id = __instance.Id.Entry.ToLowerInvariant();
+                    var layersDir = string.IsNullOrWhiteSpace(customLayers)
+                        ? $"res://scenes/backgrounds/{id}/layers"
+                        : customLayers.TrimEnd('/');
+                    var mainBg = string.IsNullOrWhiteSpace(customMain)
+                        ? SceneHelper.GetScenePath($"backgrounds/{id}/{id}_background")
+                        : customMain;
+
+                    try
+                    {
+                        __result = ActBackgroundLayersFactory.CreateFromCustomLayersDirectory(layersDir, mainBg, rng);
+                        if (__instance is ModEncounterTemplate pathTemplate)
+                            pathTemplate.AbandonProgrammaticCombatBackgroundSlot();
+                        return false;
+                    }
+                    catch (Exception ex)
+                    {
+                        RitsuLibFramework.Logger.Warn(
+                            $"[Assets] Mod encounter '{__instance.Id.Entry}' custom BackgroundAssets failed ({ex.GetType().Name}: {ex.Message}). " +
+                            "Trying programmatic or vanilla encounter background.");
+                    }
+                }
+            }
+
+            if (__instance is not ModEncounterTemplate template) return true;
+            var slot = template.ConsumeProgrammaticCombatBackgroundSlot();
+            if (slot != null)
+            {
+                __result = slot;
                 return false;
             }
-            catch (Exception ex)
-            {
+
+            if (template.UsesProgrammaticCombatBackground)
                 RitsuLibFramework.Logger.Warn(
-                    $"[Assets] Mod encounter '{__instance.Id.Entry}' custom BackgroundAssets failed ({ex.GetType().Name}: {ex.Message}). " +
-                    "Falling back to vanilla encounter background.");
-                return true;
-            }
+                    $"[Assets] Mod encounter '{__instance.Id.Entry}' has UseProgrammaticCombatBackground but " +
+                    "BuildProgrammaticCombatBackground returned null; using vanilla per-encounter background layout.");
+
+            return true;
         }
     }
 
@@ -252,7 +281,8 @@ namespace STS2RitsuLib.Scaffolding.Content.Patches
         public static string PatchId => "content_asset_override_encounter_get_asset_paths";
 
         /// <inheritdoc cref="IPatchMethod.Description" />
-        public static string Description => "Merge mod encounter scene, extras, and layer scenes into GetAssetPaths";
+        public static string Description =>
+            "Merge mod encounter scene, extras, and layer scenes into GetAssetPaths; omit synthetic encounters/<modId> preload when using borrowed or factory scenes";
 
         /// <inheritdoc cref="IPatchMethod.IsCritical" />
         public static bool IsCritical => false;
@@ -274,6 +304,15 @@ namespace STS2RitsuLib.Scaffolding.Content.Patches
 
             if (__instance is not IModEncounterAssetOverrides overrides)
                 return;
+
+            var syntheticEncounterScene =
+                SceneHelper.GetScenePath($"encounters/{__instance.Id.Entry.ToLowerInvariant()}");
+            var customScene = overrides.CustomEncounterScenePath;
+            var customSceneOk = !string.IsNullOrWhiteSpace(customScene) && ResourceLoader.Exists(customScene);
+            var factoryOnly =
+                (__instance as IModEncounterCombatSceneFactory)?.SuppliesEncounterCombatSceneFromFactory == true;
+            if ((customSceneOk && !ResPathEquals(syntheticEncounterScene, customScene!)) || factoryOnly)
+                __result = __result.Where(p => !ResPathEquals(p, syntheticEncounterScene)).ToList();
 
             var extras = new List<string>();
 
@@ -311,6 +350,11 @@ namespace STS2RitsuLib.Scaffolding.Content.Patches
                 return;
 
             __result = __result.Concat(extras);
+        }
+
+        private static bool ResPathEquals(string a, string b)
+        {
+            return string.Equals(a.TrimEnd('/'), b.TrimEnd('/'), StringComparison.OrdinalIgnoreCase);
         }
     }
 }

@@ -2,6 +2,7 @@ using System.Reflection;
 using MegaCrit.Sts2.Core.Hooks;
 using MegaCrit.Sts2.Core.Rooms;
 using MegaCrit.Sts2.Core.Runs;
+using STS2RitsuLib.Content;
 using STS2RitsuLib.Patching.Models;
 
 namespace STS2RitsuLib.Lifecycle.Patches
@@ -151,7 +152,8 @@ namespace STS2RitsuLib.Lifecycle.Patches
         public static string PatchId => "act_transition_lifecycle";
 
         /// <inheritdoc />
-        public static string Description => "Publish act transition and rewards continuation lifecycle events";
+        public static string Description =>
+            "Resolve registered act-enter forces/pools on EnterAct, then publish act transition and rewards continuation events";
 
         /// <inheritdoc />
         public static bool IsCritical => false;
@@ -175,6 +177,10 @@ namespace STS2RitsuLib.Lifecycle.Patches
         {
             if (__originalMethod.Name != nameof(RunManager.EnterAct))
                 return;
+
+            var state = __instance.State;
+            if (state != null && ModContentRegistry.HasAnyActEnterRegistration)
+                ModContentRegistry.ResolveActEnterForEnterAct(__instance, state, (int)__args[0]);
 
             RitsuLibFramework.PublishLifecycleEvent(
                 new ActEnteringEvent(__instance, (int)__args[0], (bool)__args[1], DateTimeOffset.UtcNow),

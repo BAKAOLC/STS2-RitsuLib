@@ -7,6 +7,7 @@ using MegaCrit.Sts2.Core.Models;
 using MegaCrit.Sts2.Core.Nodes.Combat;
 using MegaCrit.Sts2.Core.Nodes.Rooms;
 using MegaCrit.Sts2.Core.Nodes.Screens.Shops;
+using STS2RitsuLib.Scaffolding.Godot;
 using STS2RitsuLib.Scaffolding.Visuals;
 using STS2RitsuLib.Scaffolding.Visuals.Definition;
 
@@ -15,7 +16,10 @@ namespace STS2RitsuLib.Scaffolding.Characters.Visuals
     /// <summary>
     ///     Central playback for mod creature visuals: optional per-cue textures and data-only frame sequences from
     ///     <see cref="IModCharacterAssetOverrides.VisualCues" />, Spine tracks when present, otherwise Godot
-    ///     <see cref="AnimationPlayer" /> / <see cref="AnimatedSprite2D" /> under the visuals subtree.
+    ///     <see cref="AnimationPlayer" /> / <see cref="AnimatedSprite2D" /> under the visuals subtree. Procedural roots from
+    ///     <see cref="RitsuGodotNodeFactories" /> (explicit <c>CreateFromResource</c> / <c>CreateFromScenePath</c>, e.g.
+    ///     <c>Texture2D</c> → <see cref="NCreatureVisuals" />) use the same cue names and trigger mapping as patched
+    ///     <see cref="NCreature.SetAnimationTrigger" />.
     /// </summary>
     public static class ModCreatureVisualPlayback
     {
