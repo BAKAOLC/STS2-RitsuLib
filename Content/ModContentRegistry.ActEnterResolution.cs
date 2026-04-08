@@ -1,4 +1,5 @@
 using System.Reflection;
+using System.Threading;
 using MegaCrit.Sts2.Core.Entities.Ascension;
 using MegaCrit.Sts2.Core.Models;
 using MegaCrit.Sts2.Core.Multiplayer.Game;
@@ -15,6 +16,7 @@ namespace STS2RitsuLib.Content
         private static readonly Dictionary<int, Func<ActEnterResolveContext, double>> ActEnterWeightedBaselines = [];
         private static int _actEnterForceTieBreakSeq;
         private static int _actEnterRegistrationCount;
+        private static int _actEnterPostMapUiMapSyncBumpPending;
 
         private static readonly Action<RunState, IReadOnlyList<ActModel>> RunStateActsSetter =
             CreateRunStateActsSetter();
@@ -23,6 +25,17 @@ namespace STS2RitsuLib.Content
         ///     True when any act-enter force or pool registration exists (cheap check before <see cref="RunManager" /> work).
         /// </summary>
         public static bool HasAnyActEnterRegistration => Volatile.Read(ref _actEnterRegistrationCount) > 0;
+
+        /// <summary>
+        ///     When true, <see cref="MegaCrit.Sts2.Core.Nodes.Screens.Map.NMapScreen.SetMap" /> postfix should call
+        ///     <see cref="MapSelectionSynchronizer.BeforeMapGenerated" /> once so multiplayer map votes match the layout after
+        ///     act-enter replacement (same idea as custom-act transitions in community mods).
+        /// </summary>
+        internal static void RequestActEnterPostMapUiMapSyncBump() =>
+            Interlocked.Exchange(ref _actEnterPostMapUiMapSyncBumpPending, 1);
+
+        internal static bool TryConsumeActEnterPostMapUiMapSyncBump() =>
+            Interlocked.Exchange(ref _actEnterPostMapUiMapSyncBumpPending, 0) != 0;
 
         private static Action<RunState, IReadOnlyList<ActModel>> CreateRunStateActsSetter()
         {
@@ -255,12 +268,15 @@ namespace STS2RitsuLib.Content
             InitializeRoomsForReplacedActIfNeeded(runManager, runState, slotIndex, beforeId);
         }
 
-        private static void InitializeRoomsForReplacedActIfNeeded(RunManager runManager, RunState runState, int actIndex,
+        private static void InitializeRoomsForReplacedActIfNeeded(RunManager runManager, RunState runState,
+            int actIndex,
             ModelId actIdBeforeReplace)
         {
             var act = runState.Acts[actIndex];
             if (act.Id == actIdBeforeReplace)
                 return;
+
+            RequestActEnterPostMapUiMapSyncBump();
 
             act.AssertMutable();
             act.GenerateRooms(runState.Rng.UpFront, runState.UnlockState, runState.Players.Count > 1);

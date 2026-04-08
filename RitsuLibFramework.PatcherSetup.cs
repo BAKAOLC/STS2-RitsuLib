@@ -82,6 +82,7 @@ namespace STS2RitsuLib
             patcher.RegisterPatch<ActHookLifecyclePatch>();
             patcher.RegisterPatch<RoomExitLifecyclePatch>();
             patcher.RegisterPatch<ActTransitionLifecyclePatch>();
+            patcher.RegisterPatch<ActEnterMapSelectionSyncPatch>();
             patcher.RegisterPatch<SaveManagerLifecyclePatch>();
             patcher.RegisterPatch<RunSavingLifecyclePatch>();
             patcher.RegisterPatch<EpochLifecyclePatch>();
