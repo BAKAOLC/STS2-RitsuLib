@@ -25,10 +25,90 @@ namespace STS2RitsuLib.Scaffolding.Content
     public sealed class CharacterRegistrationEntry<TCharacter> : IContentRegistrationEntry
         where TCharacter : CharacterModel
     {
+        private readonly List<Action<ModContentRegistry>> _starterRegistrations = [];
+
         /// <inheritdoc />
         public void Register(ModContentRegistry registry)
         {
             registry.RegisterCharacter<TCharacter>();
+
+            foreach (var registration in _starterRegistrations)
+                registration(registry);
+        }
+
+        /// <summary>
+        ///     Appends starter-deck copies of <typeparamref name="TCard" /> when this character entry is registered.
+        /// </summary>
+        public CharacterRegistrationEntry<TCharacter> AddStartingCard<TCard>(int count = 1)
+            where TCard : CardModel
+        {
+            _starterRegistrations.Add(registry => registry.RegisterCharacterStarterCard<TCharacter, TCard>(count));
+            return this;
+        }
+
+        /// <summary>
+        ///     Appends starting relic copies of <typeparamref name="TRelic" /> when this character entry is registered.
+        /// </summary>
+        public CharacterRegistrationEntry<TCharacter> AddStartingRelic<TRelic>(int count = 1)
+            where TRelic : RelicModel
+        {
+            _starterRegistrations.Add(registry => registry.RegisterCharacterStarterRelic<TCharacter, TRelic>(count));
+            return this;
+        }
+
+        /// <summary>
+        ///     Appends starting potion copies of <typeparamref name="TPotion" /> when this character entry is registered.
+        /// </summary>
+        public CharacterRegistrationEntry<TCharacter> AddStartingPotion<TPotion>(int count = 1)
+            where TPotion : PotionModel
+        {
+            _starterRegistrations.Add(registry => registry.RegisterCharacterStarterPotion<TCharacter, TPotion>(count));
+            return this;
+        }
+    }
+
+    /// <summary>
+    ///     Registers additional starter-deck copies of a card for an already-known character type.
+    /// </summary>
+    public sealed class CharacterStarterCardRegistrationEntry<TCharacter, TCard>(int count = 1)
+        : IContentRegistrationEntry
+        where TCharacter : CharacterModel
+        where TCard : CardModel
+    {
+        /// <inheritdoc />
+        public void Register(ModContentRegistry registry)
+        {
+            registry.RegisterCharacterStarterCard<TCharacter, TCard>(count);
+        }
+    }
+
+    /// <summary>
+    ///     Registers additional starting relic copies for an already-known character type.
+    /// </summary>
+    public sealed class CharacterStarterRelicRegistrationEntry<TCharacter, TRelic>(int count = 1)
+        : IContentRegistrationEntry
+        where TCharacter : CharacterModel
+        where TRelic : RelicModel
+    {
+        /// <inheritdoc />
+        public void Register(ModContentRegistry registry)
+        {
+            registry.RegisterCharacterStarterRelic<TCharacter, TRelic>(count);
+        }
+    }
+
+    /// <summary>
+    ///     Registers additional starting potion copies for an already-known character type.
+    /// </summary>
+    public sealed class CharacterStarterPotionRegistrationEntry<TCharacter, TPotion>(int count = 1)
+        : IContentRegistrationEntry
+        where TCharacter : CharacterModel
+        where TPotion : PotionModel
+    {
+        /// <inheritdoc />
+        public void Register(ModContentRegistry registry)
+        {
+            registry.RegisterCharacterStarterPotion<TCharacter, TPotion>(count);
         }
     }
 

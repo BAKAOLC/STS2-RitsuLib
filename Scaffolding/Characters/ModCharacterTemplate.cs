@@ -1,11 +1,28 @@
 using MegaCrit.Sts2.Core.Models;
 using MegaCrit.Sts2.Core.Nodes.Combat;
+using STS2RitsuLib.Content;
 using STS2RitsuLib.Scaffolding.Characters.Visuals.Definition;
 using STS2RitsuLib.Scaffolding.Content;
 using STS2RitsuLib.Scaffolding.Visuals.Definition;
 
 namespace STS2RitsuLib.Scaffolding.Characters
 {
+    /// <summary>
+    ///     Declarative starting-deck entry that expands one card CLR type into <see cref="Count" /> copies.
+    /// </summary>
+    /// <param name="CardType">Registered <see cref="CardModel" /> CLR type.</param>
+    /// <param name="Count">Number of copies to add to the starting deck.</param>
+    public readonly record struct StartingDeckEntry(Type CardType, int Count = 1)
+    {
+        /// <summary>
+        ///     Typed helper for concise collection expressions.
+        /// </summary>
+        public static StartingDeckEntry Of<TCard>(int count = 1) where TCard : CardModel
+        {
+            return new(typeof(TCard), count);
+        }
+    }
+
     /// <summary>
     ///     Optional asset paths and profile data for mod characters. Patches read these values to override
     ///     vanilla <see cref="CharacterModel" /> asset resolution (visuals, UI, audio, multiplayer arms, combat Spine).
@@ -203,15 +220,13 @@ namespace STS2RitsuLib.Scaffolding.Characters
             ModelDb.GetById<PotionPoolModel>(ModelDb.GetId<TPotionPool>());
 
         /// <inheritdoc />
-        public sealed override IEnumerable<CardModel> StartingDeck => ResolveModels<CardModel>(StartingDeckTypes);
+        public sealed override IEnumerable<CardModel> StartingDeck => ResolveStartingDeck();
 
         /// <inheritdoc />
-        public sealed override IReadOnlyList<RelicModel> StartingRelics =>
-            ResolveModels<RelicModel>(StartingRelicTypes).ToArray();
+        public sealed override IReadOnlyList<RelicModel> StartingRelics => ResolveStartingRelics();
 
         /// <inheritdoc />
-        public sealed override IReadOnlyList<PotionModel> StartingPotions =>
-            ResolveModels<PotionModel>(StartingPotionTypes).ToArray();
+        public sealed override IReadOnlyList<PotionModel> StartingPotions => ResolveStartingPotions();
 
         /// <inheritdoc />
         protected sealed override CharacterModel? UnlocksAfterRunAs => UnlocksAfterRunAsType == null
@@ -219,18 +234,45 @@ namespace STS2RitsuLib.Scaffolding.Characters
             : ModelDb.GetById<CharacterModel>(ModelDb.GetId(UnlocksAfterRunAsType));
 
         /// <summary>
+        ///     Legacy local starter-deck hook. Prefer additive character-starter registration so starter content can be
+        ///     appended outside the character class and remain insensitive to registration order.
+        /// </summary>
+        [Obsolete(
+            "Prefer additive character-starter registration through CharacterRegistrationEntry.AddStartingCard(...) or "
+            + "ModContentRegistry.RegisterCharacterStarterCard(...). Override only for legacy mods; suppress CS0618 if required.")]
+        protected virtual IEnumerable<StartingDeckEntry> StartingDeckEntries
+        {
+            get
+            {
+#pragma warning disable CS0618 // Intentional compatibility bridge from legacy StartingDeckTypes
+                return StartingDeckTypes.Select(static type => new StartingDeckEntry(type));
+#pragma warning restore CS0618
+            }
+        }
+
+        /// <summary>
         ///     CLR types of cards that form the starting deck; each type must be registered as a <see cref="CardModel" />.
+        ///     Prefer additive character-starter registration in new mods.
         /// </summary>
-        protected abstract IEnumerable<Type> StartingDeckTypes { get; }
+        [Obsolete(
+            "Prefer additive character-starter registration. This legacy hook requires repeating the same type for duplicate starter cards. "
+            + "Override only for legacy mods; suppress CS0618 if required.")]
+        protected virtual IEnumerable<Type> StartingDeckTypes => [];
 
         /// <summary>
-        ///     CLR types of relics granted at run start; each type must be registered as a <see cref="RelicModel" />.
+        ///     Legacy local starting-relic hook. Prefer additive character-starter registration in new mods.
         /// </summary>
-        protected abstract IEnumerable<Type> StartingRelicTypes { get; }
+        [Obsolete(
+            "Prefer additive character-starter registration through CharacterRegistrationEntry.AddStartingRelic(...) or "
+            + "ModContentRegistry.RegisterCharacterStarterRelic(...). Override only for legacy mods; suppress CS0618 if required.")]
+        protected virtual IEnumerable<Type> StartingRelicTypes => [];
 
         /// <summary>
-        ///     Optional starting potion types; defaults to none.
+        ///     Legacy local starting-potion hook. Prefer additive character-starter registration in new mods.
         /// </summary>
+        [Obsolete(
+            "Prefer additive character-starter registration through CharacterRegistrationEntry.AddStartingPotion(...) or "
+            + "ModContentRegistry.RegisterCharacterStarterPotion(...). Override only for legacy mods; suppress CS0618 if required.")]
         protected virtual IEnumerable<Type> StartingPotionTypes => [];
 
         /// <summary>
@@ -361,6 +403,58 @@ namespace STS2RitsuLib.Scaffolding.Characters
             return types
                 .Select(type => ModelDb.GetById<TModel>(ModelDb.GetId(type)))
                 .ToArray();
+        }
+
+        private IEnumerable<CardModel> ResolveStartingDeck()
+        {
+            var characterType = GetType();
+            var localEntries = GetLocalStartingDeckEntries();
+            var registeredEntries = ModContentRegistry.GetRegisteredCharacterStarterCards(characterType);
+
+            return localEntries
+                .SelectMany(static entry => Enumerable.Repeat(entry.CardType, Math.Max(entry.Count, 0)))
+                .Concat(registeredEntries)
+                .Select(type => ModelDb.GetById<CardModel>(ModelDb.GetId(type)))
+                .ToArray();
+        }
+
+        private IReadOnlyList<RelicModel> ResolveStartingRelics()
+        {
+            var characterType = GetType();
+            return GetLocalStartingRelicTypes()
+                .Concat(ModContentRegistry.GetRegisteredCharacterStarterRelics(characterType))
+                .Select(type => ModelDb.GetById<RelicModel>(ModelDb.GetId(type)))
+                .ToArray();
+        }
+
+        private IReadOnlyList<PotionModel> ResolveStartingPotions()
+        {
+            var characterType = GetType();
+            return GetLocalStartingPotionTypes()
+                .Concat(ModContentRegistry.GetRegisteredCharacterStarterPotions(characterType))
+                .Select(type => ModelDb.GetById<PotionModel>(ModelDb.GetId(type)))
+                .ToArray();
+        }
+
+        private IReadOnlyList<StartingDeckEntry> GetLocalStartingDeckEntries()
+        {
+#pragma warning disable CS0618 // Intentional legacy compatibility hooks
+            return StartingDeckEntries.ToArray();
+#pragma warning restore CS0618
+        }
+
+        private IReadOnlyList<Type> GetLocalStartingRelicTypes()
+        {
+#pragma warning disable CS0618 // Intentional legacy compatibility hooks
+            return StartingRelicTypes.ToArray();
+#pragma warning restore CS0618
+        }
+
+        private IReadOnlyList<Type> GetLocalStartingPotionTypes()
+        {
+#pragma warning disable CS0618 // Intentional legacy compatibility hooks
+            return StartingPotionTypes.ToArray();
+#pragma warning restore CS0618
         }
     }
 }

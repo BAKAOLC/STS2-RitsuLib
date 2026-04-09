@@ -24,7 +24,7 @@ A full character mod typically includes:
 ## Pools
 
 - **Card pools:** register members through `CreateContentPack` / manifest via `.Card<Pool, Card>()` or `CardRegistrationEntry`. `TypeListCardPoolModel` already defaults `CardTypes` to empty and marks it `[Obsolete]`—**do not override** it in new mods.
-- **Relic / potion pools:** still use `RelicTypes` / `PotionTypes` on `TypeListRelicPoolModel` / `TypeListPotionPoolModel` (or pack registration only—do not register the same model twice through both paths).
+- **Relic / potion pools:** `TypeListRelicPoolModel` / `TypeListPotionPoolModel` now match card pools: `RelicTypes` / `PotionTypes` default to empty and are marked `[Obsolete]`. Register members through `CreateContentPack` / manifest via `.Relic<Pool, Relic>()`, `.Potion<Pool, Potion>()`, `RelicRegistrationEntry`, or `PotionRegistrationEntry` in new mods.
 
 ```csharp
 using Godot;
@@ -40,19 +40,14 @@ public class MyCardPool : TypeListCardPoolModel
 
 public class MyRelicPool : TypeListRelicPoolModel
 {
-    protected override IEnumerable<Type> RelicTypes =>
-    [
-        typeof(MyStarterRelic),
-    ];
 }
 
 public class MyPotionPool : TypeListPotionPoolModel
 {
-    protected override IEnumerable<Type> PotionTypes => [];
 }
 ```
 
-**Cards and `CardTypes` (obsolete hook):** do not override `CardTypes` to list cards. Legacy overrides emit **CS0618** and still duplicate `AllCards` if pack registration covers the same pool + card—remove the override and rely on the pack. For relics and potions, avoid pairing `RelicTypes` / `PotionTypes` with `RegisterRelic` / `RegisterPotion` for the same concrete model.
+**Legacy pool hooks (`CardTypes`, `RelicTypes`, `PotionTypes`):** do not override them in new mods. Legacy overrides emit **CS0618** and still duplicate pool content if pack registration covers the same pool + model. Migrate by deleting the override and relying on the content pack / manifest only.
 
 ### Configure Card Frame Color (HSV)
 
@@ -93,26 +88,13 @@ public class MyCardPool : TypeListCardPoolModel
 
 ## Character Template
 
-Inherit `ModCharacterTemplate<TCardPool, TRelicPool, TPotionPool>` and provide the starting deck plus any custom assets you actually want to replace.
+Inherit `ModCharacterTemplate<TCardPool, TRelicPool, TPotionPool>` for the character itself, then register starter content additively from your content manifest / pack.
 
 Unspecified character assets automatically fall back to `PlaceholderCharacterId`, which defaults to `ironclad`.
 
 ```csharp
 public class MyCharacter : ModCharacterTemplate<MyCardPool, MyRelicPool, MyPotionPool>
 {
-    // Starting deck (framework resolves types to ModelIds)
-    protected override IEnumerable<Type> StartingDeckTypes =>
-    [
-        typeof(MyStrike), typeof(MyStrike), typeof(MyStrike),
-        typeof(MyDefend), typeof(MyDefend),
-    ];
-
-    // Starting relic
-    protected override IEnumerable<Type> StartingRelicTypes =>
-    [
-        typeof(MyStarterRelic),
-    ];
-
     public override string? PlaceholderCharacterId => "ironclad";
 
     // Asset paths (configured via AssetProfile)
@@ -125,7 +107,15 @@ public class MyCharacter : ModCharacterTemplate<MyCardPool, MyRelicPool, MyPotio
         Scenes: new(
             RestSiteAnimPath: "res://MyMod/scenes/rest_site/my_character_rest_site.tscn"));
 }
+
+var character = new CharacterRegistrationEntry<MyCharacter>()
+    .AddStartingCard<MyStrike>(4)
+    .AddStartingCard<MyDefend>(4)
+    .AddStartingCard<MySpecialStarter>()
+    .AddStartingRelic<MyStarterRelic>();
 ```
+
+Another mod can append content to that same character later with `CharacterStarterCardRegistrationEntry<MyCharacter, OtherCard>(count)` or `ModContentRegistry.RegisterCharacterStarterCard<MyCharacter, OtherCard>(count)`. These starter additions are resolved when the character model is queried, so registration order does not matter as long as everything is registered before content freeze.
 
 Override `PlaceholderCharacterId` with another base character such as `silent` or `defect` if you want their merchant / rest-site / map / default SFX alignment. Return `null` to disable this fallback.
 

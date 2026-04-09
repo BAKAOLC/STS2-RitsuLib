@@ -35,7 +35,7 @@ namespace STS2RitsuLib.Scaffolding.Godot.NodeFactories
             if (string.IsNullOrEmpty(resourcePath))
                 return "TextureRect";
 
-            ReadOnlySpan<char> s = resourcePath.AsSpan();
+            var s = resourcePath.AsSpan();
             var slash = s.LastIndexOf('/');
             if (slash >= 0)
                 s = s[(slash + 1)..];
@@ -54,7 +54,7 @@ namespace STS2RitsuLib.Scaffolding.Godot.NodeFactories
                 buf[i] = char.IsAsciiLetterOrDigit(c) || c == '_' ? c : '_';
             }
 
-            return new string(buf);
+            return new(buf);
         }
 
         protected override void GenerateNode(Control target, IRitsuGodotNodeSlot required)

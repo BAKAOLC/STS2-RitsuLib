@@ -333,7 +333,7 @@ namespace STS2RitsuLib.Timeline
         private static bool TryClaimFirstFreeInColumnLocked(Type epochType, EpochEra era, bool preferPositionZeroOnly)
         {
             var positions = preferPositionZeroOnly
-                ? (IEnumerable<int>)[0]
+                ? [0]
                 : Enumerable.Range(0, MaxAutoPositionScan);
 
             foreach (var p in positions)

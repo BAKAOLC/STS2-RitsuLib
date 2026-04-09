@@ -37,6 +37,7 @@ namespace STS2RitsuLib.Content
         private static readonly Dictionary<Type, string> FixedPublicEntryOverrides = [];
 
         private static readonly HashSet<(Type PoolType, Type ModelType)> RegisteredPoolContent = [];
+        private static readonly List<CharacterStarterRegistration> RegisteredCharacterStarterContent = [];
         private static readonly HashSet<Type> RegisteredCharacters = [];
         private static readonly HashSet<Type> RegisteredActs = [];
         private static readonly HashSet<Type> RegisteredMonsters = [];
@@ -249,6 +250,48 @@ namespace STS2RitsuLib.Content
         }
 
         /// <summary>
+        ///     Registers additional starter-deck copies of <typeparamref name="TCard" /> for <typeparamref name="TCharacter" />.
+        ///     The target character may be registered before or after this call; resolution happens when the character model is
+        ///     queried.
+        /// </summary>
+        public void RegisterCharacterStarterCard<TCharacter, TCard>(int count = 1)
+            where TCharacter : CharacterModel
+            where TCard : CardModel
+        {
+            RegisterCharacterStarterModel(typeof(TCharacter), typeof(TCard), typeof(CardModel),
+                CharacterStarterContentKind.Card,
+                count);
+        }
+
+        /// <summary>
+        ///     Registers additional starting relic copies of <typeparamref name="TRelic" /> for <typeparamref name="TCharacter" />
+        ///     .
+        ///     The target character may be registered before or after this call; resolution happens when the character model is
+        ///     queried.
+        /// </summary>
+        public void RegisterCharacterStarterRelic<TCharacter, TRelic>(int count = 1)
+            where TCharacter : CharacterModel
+            where TRelic : RelicModel
+        {
+            RegisterCharacterStarterModel(typeof(TCharacter), typeof(TRelic), typeof(RelicModel),
+                CharacterStarterContentKind.Relic, count);
+        }
+
+        /// <summary>
+        ///     Registers additional starting potion copies of <typeparamref name="TPotion" /> for
+        ///     <typeparamref name="TCharacter" />.
+        ///     The target character may be registered before or after this call; resolution happens when the character model is
+        ///     queried.
+        /// </summary>
+        public void RegisterCharacterStarterPotion<TCharacter, TPotion>(int count = 1)
+            where TCharacter : CharacterModel
+            where TPotion : PotionModel
+        {
+            RegisterCharacterStarterModel(typeof(TCharacter), typeof(TPotion), typeof(PotionModel),
+                CharacterStarterContentKind.Potion, count);
+        }
+
+        /// <summary>
         ///     Registers a mod act model for inclusion in <see cref="ModelDb.Acts" />.
         /// </summary>
         public void RegisterAct<TAct>() where TAct : ActModel
@@ -455,6 +498,21 @@ namespace STS2RitsuLib.Content
             return ResolveModels<CharacterModel>(RegisteredCharacters);
         }
 
+        internal static Type[] GetRegisteredCharacterStarterCards(Type characterType)
+        {
+            return GetRegisteredCharacterStarterTypes(characterType, CharacterStarterContentKind.Card);
+        }
+
+        internal static Type[] GetRegisteredCharacterStarterRelics(Type characterType)
+        {
+            return GetRegisteredCharacterStarterTypes(characterType, CharacterStarterContentKind.Relic);
+        }
+
+        internal static Type[] GetRegisteredCharacterStarterPotions(Type characterType)
+        {
+            return GetRegisteredCharacterStarterTypes(characterType, CharacterStarterContentKind.Potion);
+        }
+
         internal static IEnumerable<EventModel> AppendSharedEvents(IEnumerable<EventModel> source)
         {
             return AppendResolved(source, ResolveModels<EventModel>(RegisteredSharedEvents));
@@ -620,6 +678,28 @@ namespace STS2RitsuLib.Content
             _logger.Info($"[Content] Registered {contentKind}: {modelType.Name} -> {poolType.Name}");
         }
 
+        private void RegisterCharacterStarterModel(Type characterType, Type modelType, Type expectedModelBaseType,
+            CharacterStarterContentKind kind, int count)
+        {
+            if (count <= 0)
+                throw new ArgumentOutOfRangeException(nameof(count), count, "Starter content count must be positive.");
+
+            EnsureMutable(
+                $"register starter {kind.ToString().ToLowerInvariant()} '{modelType.Name}' for '{characterType.Name}'");
+            EnsureModelType(characterType, typeof(CharacterModel), nameof(characterType));
+            EnsureModelType(modelType, expectedModelBaseType, nameof(modelType));
+            RegistrationConflictDetector.ThrowIfModelIdConflicts(characterType);
+            RegistrationConflictDetector.ThrowIfModelIdConflicts(modelType);
+
+            lock (SyncRoot)
+            {
+                RegisteredCharacterStarterContent.Add(new(characterType, modelType, kind, count));
+            }
+
+            _logger.Info(
+                $"[Content] Registered starter {kind.ToString().ToLowerInvariant()}: {modelType.Name} x{count} -> {characterType.Name}");
+        }
+
         private void RegisterStandaloneModel(
             HashSet<Type> registry,
             Type modelType,
@@ -727,6 +807,19 @@ namespace STS2RitsuLib.Content
             }
         }
 
+        private static Type[] GetRegisteredCharacterStarterTypes(Type characterType, CharacterStarterContentKind kind)
+        {
+            ArgumentNullException.ThrowIfNull(characterType);
+
+            lock (SyncRoot)
+            {
+                return RegisteredCharacterStarterContent
+                    .Where(entry => entry.CharacterType == characterType && entry.Kind == kind)
+                    .SelectMany(static entry => Enumerable.Repeat(entry.ModelType, entry.Count))
+                    .ToArray();
+            }
+        }
+
         private static TModel[] AppendResolved<TModel>(IEnumerable<TModel> source,
             IEnumerable<TModel> additional)
             where TModel : AbstractModel
@@ -816,5 +909,18 @@ namespace STS2RitsuLib.Content
                 RegisteredTypeOwners[type] = ModId;
             }
         }
+
+        private enum CharacterStarterContentKind
+        {
+            Card,
+            Relic,
+            Potion,
+        }
+
+        private readonly record struct CharacterStarterRegistration(
+            Type CharacterType,
+            Type ModelType,
+            CharacterStarterContentKind Kind,
+            int Count);
     }
 }

@@ -24,7 +24,7 @@
 ## 内容池定义
 
 - **卡池**：`TypeListCardPoolModel` 的池成员在 `CreateContentPack` / Manifest 中通过 `.Card<卡池, 卡牌>()` / `CardRegistrationEntry` 登记；基类已提供默认空的 `CardTypes`（`[Obsolete]`），**无需覆写**。
-- **遗物池 / 药水池**：仍通过 `TypeListRelicPoolModel` / `TypeListPotionPoolModel` 的 `RelicTypes` / `PotionTypes` 列举（或配合内容包 `RegisterRelic` / `RegisterPotion`，勿对同一模型重复两种来源）。
+- **遗物池 / 药水池**：现在与卡池保持一致，`TypeListRelicPoolModel` / `TypeListPotionPoolModel` 的 `RelicTypes` / `PotionTypes` 已提供默认空实现并标记为 `[Obsolete]`。新 Mod 请通过 `CreateContentPack` / Manifest 的 `.Relic<池, 遗物>()`、`.Potion<池, 药水>()`、`RelicRegistrationEntry`、`PotionRegistrationEntry` 注册内容。
 
 ```csharp
 using Godot;
@@ -40,19 +40,14 @@ public class MyCardPool : TypeListCardPoolModel
 
 public class MyRelicPool : TypeListRelicPoolModel
 {
-    protected override IEnumerable<Type> RelicTypes =>
-    [
-        typeof(MyStarterRelic),
-    ];
 }
 
 public class MyPotionPool : TypeListPotionPoolModel
 {
-    protected override IEnumerable<Type> PotionTypes => [];
 }
 ```
 
-**卡牌与 `CardTypes`（过时钩子）：** 不要再覆写 `CardTypes` 来列牌；若旧代码仍覆写并列举类型，会得到 **CS0618**，且与内容包注册叠用时 `AllCards` 仍会重复。迁移方式为删除覆写、仅保留内容包注册。遗物池、药水池仍避免「`RelicTypes`/`PotionTypes` + 同一模型的 `RegisterRelic`/`RegisterPotion`」双登记。
+**旧池钩子（`CardTypes` / `RelicTypes` / `PotionTypes`）：** 新 Mod 不要再覆写。旧代码若继续覆写会得到 **CS0618**，且与内容包注册叠用时仍会重复拼接池内容。迁移方式是删除覆写、仅保留内容包 / Manifest 注册。
 
 ### 配置卡牌边框颜色（HSV）
 
@@ -93,26 +88,13 @@ public class MyCardPool : TypeListCardPoolModel
 
 ## 角色模板
 
-继承 `ModCharacterTemplate<TCardPool, TRelicPool, TPotionPool>`，指定三个池类型参数，并声明初始牌组以及你真正想替换的资源即可。
+继承 `ModCharacterTemplate<TCardPool, TRelicPool, TPotionPool>` 负责角色本身，然后把 starter 内容放到内容注册阶段做追加式登记。
 
 未填写的角色资源会自动回退到 `PlaceholderCharacterId`，默认值为 `ironclad`。
 
 ```csharp
 public class MyCharacter : ModCharacterTemplate<MyCardPool, MyRelicPool, MyPotionPool>
 {
-    // 初始牌组（框架自动按类型解析为 ModelId）
-    protected override IEnumerable<Type> StartingDeckTypes =>
-    [
-        typeof(MyStrike), typeof(MyStrike), typeof(MyStrike),
-        typeof(MyDefend), typeof(MyDefend),
-    ];
-
-    // 起始遗物
-    protected override IEnumerable<Type> StartingRelicTypes =>
-    [
-        typeof(MyStarterRelic),
-    ];
-
     public override string? PlaceholderCharacterId => "ironclad";
 
     // 资源路径（使用 AssetProfile 统一配置）
@@ -125,7 +107,15 @@ public class MyCharacter : ModCharacterTemplate<MyCardPool, MyRelicPool, MyPotio
         Scenes: new(
             RestSiteAnimPath: "res://MyMod/scenes/rest_site/my_character_rest_site.tscn"));
 }
+
+var character = new CharacterRegistrationEntry<MyCharacter>()
+    .AddStartingCard<MyStrike>(4)
+    .AddStartingCard<MyDefend>(4)
+    .AddStartingCard<MySpecialStarter>()
+    .AddStartingRelic<MyStarterRelic>();
 ```
+
+别的 mod 之后也可以继续给这个角色追加内容：可以用 `CharacterStarterCardRegistrationEntry<MyCharacter, OtherCard>(count)`，也可以直接调用 `ModContentRegistry.RegisterCharacterStarterCard<MyCharacter, OtherCard>(count)`。这些 starter 内容是在角色模型被读取时统一解析的，所以只要都发生在内容冻结前，注册先后顺序不会影响结果。
 
 如果你更想继承 `silent`、`defect` 等角色的商人 / 休息点 / 小地图 / 默认音效风格，可以改写 `PlaceholderCharacterId`。若你想关闭这层兜底，可返回 `null`。
 

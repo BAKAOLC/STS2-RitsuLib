@@ -58,6 +58,49 @@ namespace STS2RitsuLib.Scaffolding.Content
         }
 
         /// <summary>
+        ///     Queues character registration plus additive starter content configuration in one place.
+        /// </summary>
+        public ModContentPackBuilder Character<TCharacter>(Action<CharacterRegistrationEntry<TCharacter>> configure)
+            where TCharacter : CharacterModel
+        {
+            ArgumentNullException.ThrowIfNull(configure);
+
+            var entry = new CharacterRegistrationEntry<TCharacter>();
+            configure(entry);
+            return AddStep(ctx => entry.Register(ctx.Content));
+        }
+
+        /// <summary>
+        ///     Queues <see cref="ModContentRegistry.RegisterCharacterStarterCard{TCharacter,TCard}" />.
+        /// </summary>
+        public ModContentPackBuilder CharacterStarterCard<TCharacter, TCard>(int count = 1)
+            where TCharacter : CharacterModel
+            where TCard : CardModel
+        {
+            return AddStep(ctx => ctx.Content.RegisterCharacterStarterCard<TCharacter, TCard>(count));
+        }
+
+        /// <summary>
+        ///     Queues <see cref="ModContentRegistry.RegisterCharacterStarterRelic{TCharacter,TRelic}" />.
+        /// </summary>
+        public ModContentPackBuilder CharacterStarterRelic<TCharacter, TRelic>(int count = 1)
+            where TCharacter : CharacterModel
+            where TRelic : RelicModel
+        {
+            return AddStep(ctx => ctx.Content.RegisterCharacterStarterRelic<TCharacter, TRelic>(count));
+        }
+
+        /// <summary>
+        ///     Queues <see cref="ModContentRegistry.RegisterCharacterStarterPotion{TCharacter,TPotion}" />.
+        /// </summary>
+        public ModContentPackBuilder CharacterStarterPotion<TCharacter, TPotion>(int count = 1)
+            where TCharacter : CharacterModel
+            where TPotion : PotionModel
+        {
+            return AddStep(ctx => ctx.Content.RegisterCharacterStarterPotion<TCharacter, TPotion>(count));
+        }
+
+        /// <summary>
         ///     Queues <see cref="ModContentRegistry.RegisterAct{TAct}" />.
         /// </summary>
         public ModContentPackBuilder Act<TAct>() where TAct : ActModel
