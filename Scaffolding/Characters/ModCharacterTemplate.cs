@@ -169,7 +169,8 @@ namespace STS2RitsuLib.Scaffolding.Characters
 
         /// <summary>
         ///     When <paramref name="relic" /> is owned by a player using this character, returns icon path overrides
-        ///     registered for that relic’s <c>ModelId.Entry</c>; otherwise <c>null</c>.
+        ///     registered for that relic’s <c>ModelId.Entry</c>; otherwise <c>null</c>. Patches resolve this before
+        ///     mod-relic <c>IModRelicAssetOverrides</c> so per-owner character art wins over relic-wide defaults.
         /// </summary>
         RelicAssetProfile? TryGetVanillaRelicVisualOverrideForOwnedRelic(RelicModel relic);
     }

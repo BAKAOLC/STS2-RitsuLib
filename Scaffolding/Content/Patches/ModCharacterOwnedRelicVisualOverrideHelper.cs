@@ -5,6 +5,10 @@ using STS2RitsuLib.Utils;
 
 namespace STS2RitsuLib.Scaffolding.Content.Patches
 {
+    /// <summary>
+    ///     Per-owner character relic visuals; applied before <see cref="IModRelicAssetOverrides" /> in
+    ///     <see cref="RelicIconPathPatch" /> / <see cref="RelicTexturePatch" />.
+    /// </summary>
     internal static class ModCharacterOwnedRelicVisualOverrideHelper
     {
         internal static bool TryRelicIconPath(RelicModel instance, ref string result)
