@@ -159,6 +159,32 @@ namespace STS2RitsuLib.Scaffolding.Characters
         CharacterVanillaRelicVisualOverride[]? VanillaRelicVisualOverrides = null)
     {
         /// <summary>
+        ///     Binary compatibility constructor for assemblies compiled before
+        ///     <see cref="VanillaRelicVisualOverrides" /> was added (legacy eight-parameter <c>.ctor</c>).
+        /// </summary>
+        public CharacterAssetProfile(
+            CharacterSceneAssetSet? scenes,
+            CharacterUiAssetSet? ui,
+            CharacterVfxAssetSet? vfx,
+            CharacterSpineAssetSet? spine,
+            CharacterAudioAssetSet? audio,
+            CharacterMultiplayerAssetSet? multiplayer,
+            VisualCueSet? visualCues,
+            CharacterWorldProceduralVisualSet? worldProceduralVisuals)
+            : this(
+                scenes,
+                ui,
+                vfx,
+                spine,
+                audio,
+                multiplayer,
+                visualCues,
+                worldProceduralVisuals,
+                null)
+        {
+        }
+
+        /// <summary>
         ///     Profile with all components null (merge / fill helpers treat null as “missing”).
         /// </summary>
         public static CharacterAssetProfile Empty { get; } = new();
