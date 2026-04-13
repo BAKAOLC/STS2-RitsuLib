@@ -4,6 +4,7 @@ using MegaCrit.Sts2.Core.Saves;
 using MegaCrit.Sts2.Core.Saves.Managers;
 using STS2RitsuLib.Content;
 using STS2RitsuLib.Patching.Models;
+using STS2RitsuLib.Scaffolding.Characters;
 
 namespace STS2RitsuLib.Unlocks.Patches
 {
@@ -43,6 +44,9 @@ namespace STS2RitsuLib.Unlocks.Patches
 
             if (!ModUnlockRegistry.TryGetBossEpochRule(character.Id, out var rule))
             {
+                if (character is IModCharacterEpochTimelineRequirement { RequiresEpochAndTimeline: false })
+                    return false;
+
                 ModUnlockMissingRuleWarnings.WarnOnce(
                     $"boss_epoch_rule:{character.Id}",
                     $"[Unlocks] Mod character '{character.Id}' has no registered boss-win epoch rule (UnlockEpochAfterBossVictories / RegisterBossEpochRule). " +

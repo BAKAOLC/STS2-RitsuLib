@@ -5,6 +5,7 @@ using MegaCrit.Sts2.Core.Saves;
 using MegaCrit.Sts2.Core.Saves.Managers;
 using STS2RitsuLib.Compat;
 using STS2RitsuLib.Content;
+using STS2RitsuLib.Scaffolding.Characters;
 
 namespace STS2RitsuLib.Unlocks.Patches
 {
@@ -49,6 +50,9 @@ namespace STS2RitsuLib.Unlocks.Patches
 
             if (!ModUnlockRegistry.TryGetEliteEpochRule(character.Id, out var rule))
             {
+                if (character is IModCharacterEpochTimelineRequirement { RequiresEpochAndTimeline: false })
+                    return;
+
                 ModUnlockMissingRuleWarnings.WarnOnce(
                     $"elite_epoch_rule:{character.Id}",
                     $"[Unlocks] Mod character '{character.Id}' has no registered elite-win epoch rule (UnlockEpochAfterEliteVictories / RegisterEliteEpochRule). " +

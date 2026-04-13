@@ -136,6 +136,9 @@ namespace STS2RitsuLib.Scaffolding.Content
     {
         private readonly ModContentPackContext _context;
         private readonly List<Action> _pending = [];
+        private bool? _axisIconEnabled;
+        private bool _axisIconRuleSet;
+        private string? _axisIconTexturePath;
         private Action? _layoutRegistration;
 
         internal EpochSlotBuilder(ModContentPackContext context)
@@ -211,15 +214,72 @@ namespace STS2RitsuLib.Scaffolding.Content
             return this;
         }
 
+        /// <summary>
+        ///     Reserves a slot in the same era column as <typeparamref name="TReferenceEpoch" />, using the first free
+        ///     position in that column.
+        /// </summary>
+        public EpochSlotBuilder<TEpoch> AutoTimelineSlotInEpochColumn<TReferenceEpoch>()
+            where TReferenceEpoch : EpochModel, new()
+        {
+            var modId = _context.ModId;
+            _layoutRegistration = () =>
+                ModTimelineLayoutRegistry.RegisterAutoTimelineSlotInEpochColumn(typeof(TEpoch),
+                    typeof(TReferenceEpoch), modId);
+            return this;
+        }
+
+        /// <summary>
+        ///     Hides the axis icon for this epoch's resolved era column.
+        /// </summary>
+        public EpochSlotBuilder<TEpoch> DisableEraAxisIcon()
+        {
+            _axisIconRuleSet = true;
+            _axisIconEnabled = false;
+            return this;
+        }
+
+        /// <summary>
+        ///     Enables the axis icon for this epoch's resolved era column.
+        /// </summary>
+        public EpochSlotBuilder<TEpoch> EnableEraAxisIcon()
+        {
+            _axisIconRuleSet = true;
+            _axisIconEnabled = true;
+            return this;
+        }
+
+        /// <summary>
+        ///     Overrides axis icon texture for this epoch's resolved era column.
+        /// </summary>
+        public EpochSlotBuilder<TEpoch> EraAxisIcon(string texturePath)
+        {
+            ArgumentException.ThrowIfNullOrWhiteSpace(texturePath);
+            _axisIconRuleSet = true;
+            _axisIconEnabled = true;
+            _axisIconTexturePath = texturePath;
+            return this;
+        }
+
         internal List<Action> DrainSteps()
         {
             var copy = new List<Action>();
             if (_layoutRegistration != null)
                 copy.Add(_layoutRegistration);
+            if (_axisIconRuleSet)
+                copy.Add(ApplyEraIconRule);
             copy.AddRange(_pending);
             _pending.Clear();
             _layoutRegistration = null;
+            _axisIconRuleSet = false;
+            _axisIconEnabled = null;
+            _axisIconTexturePath = null;
             return copy;
+        }
+
+        private void ApplyEraIconRule()
+        {
+            var era = ModTimelineLayoutRegistry.ResolveEra(typeof(TEpoch));
+            ModTimelineEraIconRegistry.Configure(era, _axisIconEnabled, _axisIconTexturePath);
         }
 
         /// <summary>

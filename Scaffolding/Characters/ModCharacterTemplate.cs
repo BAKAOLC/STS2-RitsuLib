@@ -8,6 +8,34 @@ using STS2RitsuLib.Scaffolding.Visuals.Definition;
 namespace STS2RitsuLib.Scaffolding.Characters
 {
     /// <summary>
+    ///     Declares whether a character participates in vanilla epoch and timeline progression.
+    /// </summary>
+    public interface IModCharacterEpochTimelineRequirement
+    {
+        /// <summary>
+        ///     When false, runtime compatibility patches skip vanilla character epoch/timeline grant paths that assume
+        ///     built-in <c>*_EPOCH</c> ids exist.
+        /// </summary>
+        bool RequiresEpochAndTimeline { get; }
+    }
+
+    /// <summary>
+    ///     Controls whether a mod character should appear in vanilla character-select and random selection flows.
+    /// </summary>
+    public interface IModCharacterVanillaSelectionPolicy
+    {
+        /// <summary>
+        ///     When true, hides the character from vanilla character-select UI lists.
+        /// </summary>
+        bool HideFromVanillaCharacterSelect { get; }
+
+        /// <summary>
+        ///     When false, excludes the character from vanilla random character selection.
+        /// </summary>
+        bool AllowInVanillaRandomCharacterSelect { get; }
+    }
+
+    /// <summary>
     ///     Declarative starting-deck entry that expands one card CLR type into <see cref="Count" /> copies.
     /// </summary>
     /// <param name="CardType">Registered <see cref="CardModel" /> CLR type.</param>
@@ -183,7 +211,8 @@ namespace STS2RitsuLib.Scaffolding.Characters
     /// <typeparam name="TRelicPool">Concrete <see cref="RelicPoolModel" /> type registered for this character.</typeparam>
     /// <typeparam name="TPotionPool">Concrete <see cref="PotionPoolModel" /> type registered for this character.</typeparam>
     public abstract class ModCharacterTemplate<TCardPool, TRelicPool, TPotionPool> : CharacterModel
-        , IModCharacterAssetOverrides, IModCharacterCreatureVisualsFactory
+        , IModCharacterAssetOverrides, IModCharacterCreatureVisualsFactory, IModCharacterEpochTimelineRequirement,
+        IModCharacterVanillaSelectionPolicy
         where TCardPool : CardPoolModel
         where TRelicPool : RelicPoolModel
         where TPotionPool : PotionPoolModel
@@ -415,6 +444,15 @@ namespace STS2RitsuLib.Scaffolding.Characters
         {
             return TryCreateCreatureVisuals();
         }
+
+        /// <inheritdoc />
+        public virtual bool RequiresEpochAndTimeline => true;
+
+        /// <inheritdoc />
+        public virtual bool HideFromVanillaCharacterSelect => false;
+
+        /// <inheritdoc />
+        public virtual bool AllowInVanillaRandomCharacterSelect => !HideFromVanillaCharacterSelect;
 
         /// <summary>
         ///     Non-null combat visuals; otherwise <see cref="IModCharacterAssetOverrides.CustomVisualsPath" /> / vanilla

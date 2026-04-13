@@ -183,6 +183,53 @@ namespace STS2RitsuLib.Timeline
             }
         }
 
+        /// <summary>
+        ///     Places this epoch into the same era column as <paramref name="anchorEra" />, using the first free position.
+        /// </summary>
+        public static void RegisterAutoTimelineSlotInEraColumn(Type epochType, EpochEra anchorEra, string modId)
+        {
+            RegisterAutoTimelineSlot(epochType, anchorEra, modId);
+        }
+
+        /// <summary>
+        ///     Places this epoch into the same era column as <paramref name="referenceEpochType" />, using the first free
+        ///     position.
+        /// </summary>
+        public static void RegisterAutoTimelineSlotInEpochColumn(Type epochType, Type referenceEpochType,
+            string modId)
+        {
+            ArgumentNullException.ThrowIfNull(epochType);
+            ArgumentNullException.ThrowIfNull(referenceEpochType);
+            ArgumentException.ThrowIfNullOrWhiteSpace(modId);
+            ThrowIfNotModEpochTemplate(epochType);
+            if (referenceEpochType.IsAbstract || !typeof(EpochModel).IsAssignableFrom(referenceEpochType))
+                throw new ArgumentException(
+                    $"Type '{referenceEpochType.Name}' must be a concrete {nameof(EpochModel)}.",
+                    nameof(referenceEpochType));
+
+            lock (Sync)
+            {
+                ThrowIfFrozen();
+                EnsureVanillaOccupancySeededLocked();
+                ThrowIfLayoutAlreadyRegistered(epochType);
+                var reference = (EpochModel)Activator.CreateInstance(referenceEpochType)!;
+                var era = reference.Era;
+
+                for (var p = 0; p < MaxAutoPositionScan; p++)
+                {
+                    var key = ToOccupancyKey(era, p);
+                    if (!Occupied.Add(key))
+                        continue;
+
+                    LayoutByEpochType[epochType] = new(era, p);
+                    return;
+                }
+
+                throw new InvalidOperationException(
+                    $"No free timeline position in reference era {(int)era} for '{epochType.Name}' (mod '{modId}') within 0..{MaxAutoPositionScan - 1}.");
+            }
+        }
+
         private static void RegisterAutoTimelineSlotBeforeEraColumnLocked(Type epochType, EpochEra anchorEra,
             string modId)
         {

@@ -7,6 +7,7 @@ using MegaCrit.Sts2.Core.Saves.Runs;
 using STS2RitsuLib.Compat;
 using STS2RitsuLib.Content;
 using STS2RitsuLib.Patching.Models;
+using STS2RitsuLib.Scaffolding.Characters;
 using SerializableRun = MegaCrit.Sts2.Core.Saves.SerializableRun;
 
 namespace STS2RitsuLib.Unlocks.Patches
@@ -58,6 +59,9 @@ namespace STS2RitsuLib.Unlocks.Patches
 
             if (!ModUnlockRegistry.TryGetAscensionOneEpoch(character.Id, out var epochId))
             {
+                if (character is IModCharacterEpochTimelineRequirement { RequiresEpochAndTimeline: false })
+                    return false;
+
                 ModUnlockMissingRuleWarnings.WarnOnce(
                     $"ascension_one_epoch:{character.Id}",
                     $"[Unlocks] Mod character '{character.Id}' has no registered ascension-one win epoch (UnlockEpochAfterAscensionOneWin / RegisterAscensionOneEpoch). " +
@@ -128,6 +132,9 @@ namespace STS2RitsuLib.Unlocks.Patches
 
             if (!ModUnlockRegistry.TryGetPostRunCharacterUnlockEpoch(character.Id, out var epochId))
             {
+                if (character is IModCharacterEpochTimelineRequirement { RequiresEpochAndTimeline: false })
+                    return false;
+
                 ModUnlockMissingRuleWarnings.WarnOnce(
                     $"postrun_char_unlock_epoch:{character.Id}",
                     $"[Unlocks] Mod character '{character.Id}' has no registered post-run character-unlock epoch (UnlockCharacterAfterRunAs / RegisterPostRunCharacterUnlockEpoch). " +
@@ -182,10 +189,18 @@ namespace STS2RitsuLib.Unlocks.Patches
         [HarmonyPriority(Priority.First)]
         public static bool Prefix(ModelId characterId, ref bool __result)
         {
-            if (!ModUnlockRegistry.TryGetAscensionRevealEpoch(characterId, out var epochId))
-                return true;
-
             var character = ModelDb.GetById<CharacterModel>(characterId);
+            if (!ModUnlockRegistry.TryGetAscensionRevealEpoch(characterId, out var epochId))
+            {
+                if (character is IModCharacterEpochTimelineRequirement { RequiresEpochAndTimeline: false })
+                {
+                    __result = true;
+                    return false;
+                }
+
+                return true;
+            }
+
             if (ModUnlockRegistry.IsEpochRequirementIgnoredForModelType(character.GetType()))
             {
                 __result = true;

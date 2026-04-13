@@ -1223,10 +1223,10 @@ namespace STS2RitsuLib.Settings
     public sealed partial class ModSettingsColorControl : HBoxContainer
     {
         private readonly Action<string?>? _onChanged;
-        private string _lastCommitted = string.Empty;
-        private bool _pickerChangedWhileOpen;
         private LineEdit? _hexEdit;
+        private string _lastCommitted = string.Empty;
         private ColorPickerButton? _pickerButton;
+        private bool _pickerChangedWhileOpen;
         private bool _suppressCallbacks;
         private Color _unsetPreviewColor = new(1f, 215f / 255f, 64f / 255f);
 
@@ -1290,6 +1290,11 @@ namespace STS2RitsuLib.Settings
         }
 
         /// <summary>
+        ///     Current hex text shown by the editor, or an empty string when the color is unset.
+        /// </summary>
+        public string ValueText => _hexEdit?.Text ?? _lastCommitted;
+
+        /// <summary>
         ///     Wires editor events after the control enters the scene tree.
         /// </summary>
         public override void _Ready()
@@ -1320,11 +1325,6 @@ namespace STS2RitsuLib.Settings
             ApplyFromHex(value, false);
         }
 
-        /// <summary>
-        ///     Current hex text shown by the editor, or an empty string when the color is unset.
-        /// </summary>
-        public string ValueText => _hexEdit?.Text ?? _lastCommitted;
-
         private void ApplyFromHex(string? text, bool notify)
         {
             var trimmed = text?.Trim() ?? string.Empty;
@@ -1350,7 +1350,7 @@ namespace STS2RitsuLib.Settings
 
             _suppressCallbacks = true;
             _hexEdit?.Set("text", string.Empty);
-            _pickerButton?.Set("color",_unsetPreviewColor);
+            _pickerButton?.Set("color", _unsetPreviewColor);
             _suppressCallbacks = false;
             _lastCommitted = string.Empty;
 
@@ -1365,7 +1365,7 @@ namespace STS2RitsuLib.Settings
 
             var formatted = FormatColor(color);
             _suppressCallbacks = true;
-            _pickerButton?.Set("color",color);
+            _pickerButton?.Set("color", color);
             _hexEdit?.Set("text", formatted);
             _suppressCallbacks = false;
             _lastCommitted = formatted;

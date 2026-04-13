@@ -1,7 +1,9 @@
 using MegaCrit.Sts2.Core.Entities.Players;
 using MegaCrit.Sts2.Core.Saves.Managers;
+using MegaCrit.Sts2.Core.Timeline;
 using STS2RitsuLib.Content;
 using STS2RitsuLib.Patching.Models;
+using STS2RitsuLib.Scaffolding.Characters;
 
 namespace STS2RitsuLib.Unlocks.Patches
 {
@@ -51,6 +53,10 @@ namespace STS2RitsuLib.Unlocks.Patches
 
             if (expectedEpochId == null)
                 return true;
+
+            if (character is IModCharacterEpochTimelineRequirement { RequiresEpochAndTimeline: false } &&
+                !EpochModel.IsValid(expectedEpochId))
+                return false;
 
             return EpochRuntimeCompatibility.CanUseEpochId(
                 expectedEpochId,

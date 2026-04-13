@@ -1,13 +1,13 @@
 using Godot;
 using STS2RitsuLib.Compat;
 using STS2RitsuLib.Utils.Persistence;
-using System.Collections.Generic;
 
 namespace STS2RitsuLib.Settings
 {
     internal sealed class ModSettingsUiContext(RitsuModSettingsSubmenu submenu) : IModSettingsUiActionHost
     {
         private readonly Dictionary<string, Dictionary<string, object?>> _rowUiState = [];
+
         public void MarkDirty(IModSettingsBinding binding)
         {
             submenu.MarkDirty(binding);
@@ -88,6 +88,7 @@ namespace STS2RitsuLib.Settings
                 value = typed;
                 return true;
             }
+
             return false;
         }
 
@@ -98,6 +99,7 @@ namespace STS2RitsuLib.Settings
                 row = [];
                 _rowUiState[rowKey] = row;
             }
+
             row[stateKey] = value;
         }
     }
