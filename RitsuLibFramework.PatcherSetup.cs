@@ -1,5 +1,6 @@
 using STS2RitsuLib.Cards.FreePlay.Patches;
 using STS2RitsuLib.Cards.Patches;
+using STS2RitsuLib.Combat.CardTargeting.Patches;
 using STS2RitsuLib.Combat.HealthBars.Patches;
 using STS2RitsuLib.Content.Patches;
 using STS2RitsuLib.Interop.Patches;
@@ -102,6 +103,12 @@ namespace STS2RitsuLib
             patcher.RegisterPatch<ArchaicToothGetTranscendenceTransformedCardPatch>();
             patcher.RegisterPatch<ArchaicToothTranscendenceCardsPatch>();
             patcher.RegisterPatch<TouchOfOrobasGetUpgradedStarterRelicPatch>();
+            patcher.RegisterPatch<CardModelIsValidTargetAnyPlayerPatch>();
+            patcher.RegisterPatch<NCardPlayTryPlayCardAnyPlayerPatch>();
+            patcher.RegisterPatch<NMouseCardPlayTargetSelectionAnyPlayerPatch>();
+            patcher.RegisterPatch<NControllerCardPlayStartAnyPlayerPatch>();
+            patcher.RegisterPatch<NControllerCardPlaySingleTargetingAnyPlayerPatch>();
+            patcher.RegisterPatch<CardCmdAutoPlayAnyPlayerPatch>();
             RegisterFrameworkPatcher(FrameworkPatcherArea.Core, patcher);
         }
 
