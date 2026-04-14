@@ -43,13 +43,21 @@ namespace STS2RitsuLib.Settings
                 var added = 0;
                 foreach (var provider in providers)
                 {
-                    if (!TryReadSchema(provider, out var schema))
-                        continue;
+                    try
+                    {
+                        if (!TryReadSchema(provider, out var schema))
+                            continue;
 
-                    if (!TryRegisterFromSchema(provider, schema))
-                        continue;
+                        if (!TryRegisterFromSchema(provider, schema))
+                            continue;
 
-                    added++;
+                        added++;
+                    }
+                    catch (Exception ex)
+                    {
+                        RitsuLibFramework.Logger.Warn(
+                            $"[ModSettingsRuntimeReflectionInteropMirror] Provider '{provider.ProviderType.FullName}' failed but was isolated: {ex.Message}");
+                    }
                 }
 
                 return added;
@@ -514,22 +522,31 @@ namespace STS2RitsuLib.Settings
         private static bool TryResolveSchemaRoot(object? rawSchema, out IDictionary<string, object?> root)
         {
             root = null!;
-            if (rawSchema == null)
+            try
+            {
+                if (rawSchema == null)
+                    return false;
+
+                if (rawSchema is string text)
+                {
+                    if (string.IsNullOrWhiteSpace(text))
+                        return false;
+
+                    if (TryParseJsonSchemaPayload(text, out root))
+                        return true;
+
+                    if (!TryReadSchemaTextFromFile(text, out var fileContent))
+                        return false;
+
+                    return TryParseJsonSchemaPayload(fileContent, out root);
+                }
+
+                return TryAsMap(rawSchema, out root);
+            }
+            catch
+            {
                 return false;
-
-            if (TryAsMap(rawSchema, out root))
-                return true;
-
-            if (rawSchema is not string text || string.IsNullOrWhiteSpace(text))
-                return false;
-
-            if (TryParseJsonSchemaPayload(text, out root))
-                return true;
-
-            if (!TryReadSchemaTextFromFile(text, out var fileContent))
-                return false;
-
-            return TryParseJsonSchemaPayload(fileContent, out root);
+            }
         }
 
         private static bool TryReadSchemaTextFromFile(string filePath, out string content)
@@ -723,6 +740,12 @@ namespace STS2RitsuLib.Settings
 
         private static bool TryAsMap(object obj, out IDictionary<string, object?> map)
         {
+            if (obj is string)
+            {
+                map = null!;
+                return false;
+            }
+
             switch (obj)
             {
                 case IDictionary<string, object?> direct:
@@ -743,7 +766,17 @@ namespace STS2RitsuLib.Settings
                 }
             }
 
-            var props = obj.GetType().GetProperties(BindingFlags.Public | BindingFlags.Instance);
+            PropertyInfo[] props;
+            try
+            {
+                props = obj.GetType().GetProperties(BindingFlags.Public | BindingFlags.Instance);
+            }
+            catch
+            {
+                map = null!;
+                return false;
+            }
+
             if (props.Length == 0)
             {
                 map = null!;
@@ -755,7 +788,23 @@ namespace STS2RitsuLib.Settings
             {
                 if (!prop.CanRead)
                     continue;
-                converted[prop.Name] = prop.GetValue(obj);
+                if (prop.GetIndexParameters().Length != 0)
+                    continue;
+
+                try
+                {
+                    converted[prop.Name] = prop.GetValue(obj);
+                }
+                catch
+                {
+                    // ignore unreadable reflected property and continue
+                }
+            }
+
+            if (converted.Count == 0)
+            {
+                map = null!;
+                return false;
             }
 
             map = converted;
