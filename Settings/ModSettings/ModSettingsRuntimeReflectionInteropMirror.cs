@@ -1,5 +1,7 @@
 using System.Collections;
 using System.Reflection;
+using System.Text.Json;
+using STS2RitsuLib.Utils;
 using STS2RitsuLib.Utils.Persistence;
 
 namespace STS2RitsuLib.Settings
@@ -141,7 +143,7 @@ namespace STS2RitsuLib.Settings
                 return false;
             }
 
-            if (rawSchema == null || !TryAsMap(rawSchema, out var root))
+            if (!TryResolveSchemaRoot(rawSchema, out var root))
             {
                 RitsuLibFramework.Logger.Warn(
                     $"[ModSettingsRuntimeReflectionInteropMirror] Schema payload is null/invalid for {provider.ProviderType.FullName}.");
@@ -152,7 +154,6 @@ namespace STS2RitsuLib.Settings
             RitsuLibFramework.Logger.Warn(
                 $"[ModSettingsRuntimeReflectionInteropMirror] Schema parse failed for {provider.ProviderType.FullName}.");
             return false;
-
         }
 
         private static bool TryRegisterFromSchema(InteropProvider provider, InteropSchema schema)
@@ -508,6 +509,79 @@ namespace STS2RitsuLib.Settings
 
             schema = new(modId, pageId, title, description, sortOrder, modDisplayName, modSidebarOrder, sections);
             return true;
+        }
+
+        private static bool TryResolveSchemaRoot(object? rawSchema, out IDictionary<string, object?> root)
+        {
+            root = null!;
+            if (rawSchema == null)
+                return false;
+
+            if (TryAsMap(rawSchema, out root))
+                return true;
+
+            if (rawSchema is not string text || string.IsNullOrWhiteSpace(text))
+                return false;
+
+            if (TryParseJsonSchemaPayload(text, out root))
+                return true;
+
+            if (!TryReadSchemaTextFromFile(text, out var fileContent))
+                return false;
+
+            return TryParseJsonSchemaPayload(fileContent, out root);
+        }
+
+        private static bool TryReadSchemaTextFromFile(string filePath, out string content)
+        {
+            content = "";
+            var trimmed = filePath.Trim();
+            var read = FileOperations.ReadText(trimmed, "ModSettingsRuntimeReflectionInteropMirror");
+            if (!read.Success || string.IsNullOrWhiteSpace(read.Content))
+                return false;
+
+            content = read.Content;
+            return true;
+        }
+
+        private static bool TryParseJsonSchemaPayload(string json, out IDictionary<string, object?> root)
+        {
+            root = null!;
+            try
+            {
+                using var doc = JsonDocument.Parse(json);
+                if (doc.RootElement.ValueKind != JsonValueKind.Object)
+                    return false;
+                root = JsonObjectToDictionary(doc.RootElement);
+                return true;
+            }
+            catch
+            {
+                return false;
+            }
+        }
+
+        private static Dictionary<string, object?> JsonObjectToDictionary(JsonElement element)
+        {
+            var result = new Dictionary<string, object?>(StringComparer.OrdinalIgnoreCase);
+            foreach (var prop in element.EnumerateObject())
+                result[prop.Name] = JsonElementToObject(prop.Value);
+            return result;
+        }
+
+        private static object? JsonElementToObject(JsonElement element)
+        {
+            return element.ValueKind switch
+            {
+                JsonValueKind.Object => JsonObjectToDictionary(element),
+                JsonValueKind.Array => element.EnumerateArray().Select(JsonElementToObject).ToArray(),
+                JsonValueKind.String => element.GetString(),
+                JsonValueKind.Number => element.TryGetInt64(out var l) ? l : element.GetDouble(),
+                JsonValueKind.True => true,
+                JsonValueKind.False => false,
+                JsonValueKind.Null => null,
+                _ => element.ToString(),
+            };
         }
 
         private static bool TryParseSection(IDictionary<string, object?> map, out InteropSection section)

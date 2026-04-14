@@ -138,7 +138,15 @@ Provider contract (all methods are `static`):
   - `double GetRitsuLibSettingDouble(string key)` / `void SetRitsuLibSettingDouble(string key, double value)`
   - `string GetRitsuLibSettingString(string key)` / `void SetRitsuLibSettingString(string key, string value)`
 
-`CreateRitsuLibSettingsSchema()` returns an object (commonly a `Dictionary<string, object?>`) with:
+`CreateRitsuLibSettingsSchema()` can return:
+
+- `Dictionary<string, object?>` (or equivalent object)
+- a JSON string (root must be an object)
+- a JSON file path (file root must be an object)
+
+Godot paths (`res://`, `user://`) are recommended, and regular file paths are also supported.
+
+Structure:
 
 - page: `modId`, `pageId`, `title`, `description`, `sortOrder`, `sections`
 - section: `id`, `title`, `description`, `entries`

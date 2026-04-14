@@ -137,7 +137,15 @@ Provider 约定（全部为 `static` 方法）：
   - `double GetRitsuLibSettingDouble(string key)` / `void SetRitsuLibSettingDouble(string key, double value)`
   - `string GetRitsuLibSettingString(string key)` / `void SetRitsuLibSettingString(string key, string value)`
 
-`CreateRitsuLibSettingsSchema()` 返回一个对象（通常是 `Dictionary<string, object?>`），字段结构：
+`CreateRitsuLibSettingsSchema()` 可以返回：
+
+- `Dictionary<string, object?>`（或等价对象）
+- JSON 字符串（根节点必须是对象）
+- JSON 文件路径（内容根节点必须是对象）
+
+推荐使用 Godot 路径（`res://`、`user://`），也支持普通文件路径。
+
+字段结构：
 
 - page: `modId`, `pageId`, `title`, `description`, `sortOrder`, `sections`
 - section: `id`, `title`, `description`, `entries`
