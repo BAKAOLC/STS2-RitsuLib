@@ -531,14 +531,29 @@ namespace STS2RitsuLib.Scaffolding.Content.Patches
         {
             return __originalMethod.Name switch
             {
-                "get_PortraitPath" => ContentAssetOverridePatchHelper.TryUseStringOverride<IModCardAssetOverrides>(
-                    __instance, ref __result, o => o.CustomPortraitPath,
-                    nameof(IModCardAssetOverrides.CustomPortraitPath)),
-                "get_BetaPortraitPath" => ContentAssetOverridePatchHelper.TryUseStringOverride<IModCardAssetOverrides>(
-                    __instance, ref __result, o => o.CustomBetaPortraitPath,
-                    nameof(IModCardAssetOverrides.CustomBetaPortraitPath)),
+                "get_PortraitPath" => TryCardPortraitPath(__instance, ref __result),
+                "get_BetaPortraitPath" => TryCardBetaPortraitPath(__instance, ref __result),
                 _ => true,
             };
+        }
+
+        private static bool TryCardPortraitPath(CardModel instance, ref string result)
+        {
+            if (!ModCharacterOwnedVisualOverrideHelper.TryCardPortraitPath(instance, ref result))
+                return false;
+
+            return ContentAssetOverridePatchHelper.TryUseStringOverride<IModCardAssetOverrides>(
+                instance, ref result, o => o.CustomPortraitPath, nameof(IModCardAssetOverrides.CustomPortraitPath));
+        }
+
+        private static bool TryCardBetaPortraitPath(CardModel instance, ref string result)
+        {
+            if (!ModCharacterOwnedVisualOverrideHelper.TryCardBetaPortraitPath(instance, ref result))
+                return false;
+
+            return ContentAssetOverridePatchHelper.TryUseStringOverride<IModCardAssetOverrides>(
+                instance, ref result, o => o.CustomBetaPortraitPath,
+                nameof(IModCardAssetOverrides.CustomBetaPortraitPath));
         }
     }
 
@@ -578,14 +593,29 @@ namespace STS2RitsuLib.Scaffolding.Content.Patches
 
             return __originalMethod.Name switch
             {
-                "get_HasPortrait" => ContentAssetOverridePatchHelper.TryUseExistenceOverride(
-                    __instance, overrides.CustomPortraitPath, nameof(IModCardAssetOverrides.CustomPortraitPath),
-                    ref __result),
-                "get_HasBetaPortrait" => ContentAssetOverridePatchHelper.TryUseExistenceOverride(
-                    __instance, overrides.CustomBetaPortraitPath, nameof(IModCardAssetOverrides.CustomBetaPortraitPath),
-                    ref __result),
+                "get_HasPortrait" => TryHasPortrait(__instance, overrides, ref __result),
+                "get_HasBetaPortrait" => TryHasBetaPortrait(__instance, overrides, ref __result),
                 _ => true,
             };
+        }
+
+        private static bool TryHasPortrait(CardModel instance, IModCardAssetOverrides overrides, ref bool result)
+        {
+            if (!ModCharacterOwnedVisualOverrideHelper.TryCardPortraitExists(instance, ref result))
+                return false;
+
+            return ContentAssetOverridePatchHelper.TryUseExistenceOverride(
+                instance, overrides.CustomPortraitPath, nameof(IModCardAssetOverrides.CustomPortraitPath), ref result);
+        }
+
+        private static bool TryHasBetaPortrait(CardModel instance, IModCardAssetOverrides overrides, ref bool result)
+        {
+            if (!ModCharacterOwnedVisualOverrideHelper.TryCardBetaPortraitExists(instance, ref result))
+                return false;
+
+            return ContentAssetOverridePatchHelper.TryUseExistenceOverride(
+                instance, overrides.CustomBetaPortraitPath, nameof(IModCardAssetOverrides.CustomBetaPortraitPath),
+                ref result);
         }
     }
 
@@ -624,16 +654,39 @@ namespace STS2RitsuLib.Scaffolding.Content.Patches
         {
             return __originalMethod.Name switch
             {
-                "get_Frame" => ContentAssetOverridePatchHelper.TryUseTextureOverride<IModCardAssetOverrides>(__instance,
-                    ref __result, o => o.CustomFramePath, nameof(IModCardAssetOverrides.CustomFramePath)),
-                "get_PortraitBorder" => ContentAssetOverridePatchHelper.TryUseTextureOverride<IModCardAssetOverrides>(
-                    __instance, ref __result, o => o.CustomPortraitBorderPath,
-                    nameof(IModCardAssetOverrides.CustomPortraitBorderPath)),
-                "get_EnergyIcon" => ContentAssetOverridePatchHelper.TryUseTextureOverride<IModCardAssetOverrides>(
-                    __instance, ref __result, o => o.CustomEnergyIconPath,
-                    nameof(IModCardAssetOverrides.CustomEnergyIconPath)),
+                "get_Frame" => TryCardFrameTexture(__instance, ref __result),
+                "get_PortraitBorder" => TryCardPortraitBorderTexture(__instance, ref __result),
+                "get_EnergyIcon" => TryCardEnergyIconTexture(__instance, ref __result),
                 _ => true,
             };
+        }
+
+        private static bool TryCardFrameTexture(CardModel instance, ref Texture2D result)
+        {
+            if (!ModCharacterOwnedVisualOverrideHelper.TryCardFrameTexture(instance, ref result))
+                return false;
+
+            return ContentAssetOverridePatchHelper.TryUseTextureOverride<IModCardAssetOverrides>(
+                instance, ref result, o => o.CustomFramePath, nameof(IModCardAssetOverrides.CustomFramePath));
+        }
+
+        private static bool TryCardPortraitBorderTexture(CardModel instance, ref Texture2D result)
+        {
+            if (!ModCharacterOwnedVisualOverrideHelper.TryCardPortraitBorderTexture(instance, ref result))
+                return false;
+
+            return ContentAssetOverridePatchHelper.TryUseTextureOverride<IModCardAssetOverrides>(
+                instance, ref result, o => o.CustomPortraitBorderPath,
+                nameof(IModCardAssetOverrides.CustomPortraitBorderPath));
+        }
+
+        private static bool TryCardEnergyIconTexture(CardModel instance, ref Texture2D result)
+        {
+            if (!ModCharacterOwnedVisualOverrideHelper.TryCardEnergyIconTexture(instance, ref result))
+                return false;
+
+            return ContentAssetOverridePatchHelper.TryUseTextureOverride<IModCardAssetOverrides>(
+                instance, ref result, o => o.CustomEnergyIconPath, nameof(IModCardAssetOverrides.CustomEnergyIconPath));
         }
     }
 
@@ -667,6 +720,9 @@ namespace STS2RitsuLib.Scaffolding.Content.Patches
         public static bool Prefix(CardModel __instance, ref Material __result)
             // ReSharper restore InconsistentNaming
         {
+            if (!ModCharacterOwnedVisualOverrideHelper.TryCardFrameMaterial(__instance, ref __result))
+                return false;
+
             return ContentAssetOverridePatchHelper.TryUseMaterialOverride<IModCardAssetOverrides>(
                 __instance,
                 ref __result,
@@ -748,8 +804,13 @@ namespace STS2RitsuLib.Scaffolding.Content.Patches
         public static bool Prefix(CardModel __instance, ref IEnumerable<string> __result)
             // ReSharper restore InconsistentNaming
         {
-            return __instance is not IModCardAssetOverrides overrides ||
-                   ContentAssetOverridePatchHelper.TryUsePortraitPathList(__instance, overrides, ref __result);
+            var ownedCharacterPaths = ModCharacterOwnedVisualOverrideHelper.GetExistingCardPortraitPaths(__instance);
+            if (ownedCharacterPaths.Length <= 0)
+                return __instance is not IModCardAssetOverrides overrides
+                       || ContentAssetOverridePatchHelper.TryUsePortraitPathList(__instance, overrides, ref __result);
+            __result = ownedCharacterPaths;
+            return false;
+
         }
     }
 
@@ -783,6 +844,9 @@ namespace STS2RitsuLib.Scaffolding.Content.Patches
         public static bool Prefix(CardModel __instance, ref string __result)
             // ReSharper restore InconsistentNaming
         {
+            if (!ModCharacterOwnedVisualOverrideHelper.TryCardOverlayPath(__instance, ref __result))
+                return false;
+
             return ContentAssetOverridePatchHelper.TryUseStringOverride<IModCardAssetOverrides>(
                 __instance,
                 ref __result,
@@ -822,6 +886,9 @@ namespace STS2RitsuLib.Scaffolding.Content.Patches
         public static bool Prefix(CardModel __instance, ref bool __result)
             // ReSharper restore InconsistentNaming
         {
+            if (!ModCharacterOwnedVisualOverrideHelper.TryCardOverlayExists(__instance, ref __result))
+                return false;
+
             if (__instance is not IModCardAssetOverrides overrides)
                 return true;
 
@@ -863,6 +930,9 @@ namespace STS2RitsuLib.Scaffolding.Content.Patches
         public static bool Prefix(CardModel __instance, ref Control __result)
             // ReSharper restore InconsistentNaming
         {
+            if (!ModCharacterOwnedVisualOverrideHelper.TryCardCreateOverlay(__instance, ref __result))
+                return false;
+
             if (__instance is not IModCardAssetOverrides overrides)
                 return true;
 
@@ -909,7 +979,7 @@ namespace STS2RitsuLib.Scaffolding.Content.Patches
             // ReSharper restore InconsistentNaming
         {
             // ReSharper disable once ConvertIfStatementToReturnStatement
-            if (!ModCharacterOwnedRelicVisualOverrideHelper.TryRelicIconPath(__instance, ref __result))
+            if (!ModCharacterOwnedVisualOverrideHelper.TryRelicIconPath(__instance, ref __result))
                 return false;
 
             return ContentAssetOverridePatchHelper.TryUseStringOverride<IModRelicAssetOverrides>(
@@ -966,7 +1036,7 @@ namespace STS2RitsuLib.Scaffolding.Content.Patches
         private static bool TryRelicIconTexture(RelicModel instance, ref Texture2D result)
         {
             // ReSharper disable once ConvertIfStatementToReturnStatement
-            if (!ModCharacterOwnedRelicVisualOverrideHelper.TryRelicIconTexture(instance, ref result))
+            if (!ModCharacterOwnedVisualOverrideHelper.TryRelicIconTexture(instance, ref result))
                 return false;
 
             return ContentAssetOverridePatchHelper.TryUseTextureOverride<IModRelicAssetOverrides>(instance,
@@ -976,7 +1046,7 @@ namespace STS2RitsuLib.Scaffolding.Content.Patches
         private static bool TryRelicIconOutlineTexture(RelicModel instance, ref Texture2D result)
         {
             // ReSharper disable once ConvertIfStatementToReturnStatement
-            if (!ModCharacterOwnedRelicVisualOverrideHelper.TryRelicIconOutlineTexture(instance, ref result))
+            if (!ModCharacterOwnedVisualOverrideHelper.TryRelicIconOutlineTexture(instance, ref result))
                 return false;
 
             return ContentAssetOverridePatchHelper.TryUseTextureOverride<IModRelicAssetOverrides>(instance,
@@ -987,7 +1057,7 @@ namespace STS2RitsuLib.Scaffolding.Content.Patches
         private static bool TryRelicBigIconTexture(RelicModel instance, ref Texture2D result)
         {
             // ReSharper disable once ConvertIfStatementToReturnStatement
-            if (!ModCharacterOwnedRelicVisualOverrideHelper.TryRelicBigIconTexture(instance, ref result))
+            if (!ModCharacterOwnedVisualOverrideHelper.TryRelicBigIconTexture(instance, ref result))
                 return false;
 
             return ContentAssetOverridePatchHelper.TryUseTextureOverride<IModRelicAssetOverrides>(instance,
@@ -1232,14 +1302,28 @@ namespace STS2RitsuLib.Scaffolding.Content.Patches
         {
             return __originalMethod.Name switch
             {
-                "get_ImagePath" => ContentAssetOverridePatchHelper.TryUseStringOverride<IModPotionAssetOverrides>(
-                    __instance, ref __result, o => o.CustomImagePath,
-                    nameof(IModPotionAssetOverrides.CustomImagePath)),
-                "get_OutlinePath" => ContentAssetOverridePatchHelper.TryUseStringOverride<IModPotionAssetOverrides>(
-                    __instance, ref __result, o => o.CustomOutlinePath,
-                    nameof(IModPotionAssetOverrides.CustomOutlinePath)),
+                "get_ImagePath" => TryPotionImagePath(__instance, ref __result),
+                "get_OutlinePath" => TryPotionOutlinePath(__instance, ref __result),
                 _ => true,
             };
+        }
+
+        private static bool TryPotionImagePath(PotionModel instance, ref string result)
+        {
+            if (!ModCharacterOwnedVisualOverrideHelper.TryPotionImagePath(instance, ref result))
+                return false;
+
+            return ContentAssetOverridePatchHelper.TryUseStringOverride<IModPotionAssetOverrides>(
+                instance, ref result, o => o.CustomImagePath, nameof(IModPotionAssetOverrides.CustomImagePath));
+        }
+
+        private static bool TryPotionOutlinePath(PotionModel instance, ref string result)
+        {
+            if (!ModCharacterOwnedVisualOverrideHelper.TryPotionOutlinePath(instance, ref result))
+                return false;
+
+            return ContentAssetOverridePatchHelper.TryUseStringOverride<IModPotionAssetOverrides>(
+                instance, ref result, o => o.CustomOutlinePath, nameof(IModPotionAssetOverrides.CustomOutlinePath));
         }
     }
 
@@ -1276,14 +1360,28 @@ namespace STS2RitsuLib.Scaffolding.Content.Patches
         {
             return __originalMethod.Name switch
             {
-                "get_Image" => ContentAssetOverridePatchHelper.TryUseTextureOverride<IModPotionAssetOverrides>(
-                    __instance, ref __result, o => o.CustomImagePath,
-                    nameof(IModPotionAssetOverrides.CustomImagePath)),
-                "get_Outline" => ContentAssetOverridePatchHelper.TryUseTextureOverride<IModPotionAssetOverrides>(
-                    __instance, ref __result, o => o.CustomOutlinePath,
-                    nameof(IModPotionAssetOverrides.CustomOutlinePath)),
+                "get_Image" => TryPotionImageTexture(__instance, ref __result),
+                "get_Outline" => TryPotionOutlineTexture(__instance, ref __result),
                 _ => true,
             };
+        }
+
+        private static bool TryPotionImageTexture(PotionModel instance, ref Texture2D result)
+        {
+            if (!ModCharacterOwnedVisualOverrideHelper.TryPotionImageTexture(instance, ref result))
+                return false;
+
+            return ContentAssetOverridePatchHelper.TryUseTextureOverride<IModPotionAssetOverrides>(
+                instance, ref result, o => o.CustomImagePath, nameof(IModPotionAssetOverrides.CustomImagePath));
+        }
+
+        private static bool TryPotionOutlineTexture(PotionModel instance, ref Texture2D result)
+        {
+            if (!ModCharacterOwnedVisualOverrideHelper.TryPotionOutlineTexture(instance, ref result))
+                return false;
+
+            return ContentAssetOverridePatchHelper.TryUseTextureOverride<IModPotionAssetOverrides>(
+                instance, ref result, o => o.CustomOutlinePath, nameof(IModPotionAssetOverrides.CustomOutlinePath));
         }
     }
 
@@ -1314,6 +1412,9 @@ namespace STS2RitsuLib.Scaffolding.Content.Patches
         public static bool Prefix(CardModel __instance, ref Texture2D __result)
             // ReSharper restore InconsistentNaming
         {
+            if (!ModCharacterOwnedVisualOverrideHelper.TryCardBannerTexture(__instance, ref __result))
+                return false;
+
             return ContentAssetOverridePatchHelper.TryUseTextureOverride<IModCardAssetOverrides>(
                 __instance, ref __result, o => o.CustomBannerTexturePath,
                 nameof(IModCardAssetOverrides.CustomBannerTexturePath));
@@ -1347,6 +1448,9 @@ namespace STS2RitsuLib.Scaffolding.Content.Patches
         public static bool Prefix(CardModel __instance, ref Material __result)
             // ReSharper restore InconsistentNaming
         {
+            if (!ModCharacterOwnedVisualOverrideHelper.TryCardBannerMaterial(__instance, ref __result))
+                return false;
+
             return ContentAssetOverridePatchHelper.TryUseMaterialOverride<IModCardAssetOverrides>(
                 __instance, ref __result, o => o.CustomBannerMaterialPath,
                 nameof(IModCardAssetOverrides.CustomBannerMaterialPath));

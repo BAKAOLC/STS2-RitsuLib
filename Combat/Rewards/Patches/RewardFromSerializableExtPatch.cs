@@ -63,7 +63,7 @@ namespace STS2RitsuLib.Combat.Rewards.Patches
                 {
                     var options = new CardCreationOptions(cards, source, rarityOdds);
                     if (flags != 0) options.WithFlags(flags);
-                    return new CardReward(options, save.OptionCount, player);
+                    return new(options, save.OptionCount, player);
                 }
 
                 Log.Warn("[RitsuLib] Reward.FromSerializable: CustomCardPool had no resolvable cards, " +
@@ -77,7 +77,7 @@ namespace STS2RitsuLib.Combat.Rewards.Patches
             if (flags != 0)
                 poolOptions.WithFlags(flags);
 
-            return new CardReward(poolOptions, save.OptionCount, player);
+            return new(poolOptions, save.OptionCount, player);
         }
     }
 }

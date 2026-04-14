@@ -201,6 +201,20 @@ namespace STS2RitsuLib.Scaffolding.Characters
         ///     mod-relic <c>IModRelicAssetOverrides</c> so per-owner character art wins over relic-wide defaults.
         /// </summary>
         RelicAssetProfile? TryGetVanillaRelicVisualOverrideForOwnedRelic(RelicModel relic);
+
+        /// <summary>
+        ///     When <paramref name="potion" /> is encountered or held by a player using this character, returns
+        ///     image/outline overrides registered for that potion’s <c>ModelId.Entry</c>; otherwise <c>null</c>.
+        ///     Patches resolve this before mod-potion <c>IModPotionAssetOverrides</c>.
+        /// </summary>
+        PotionAssetProfile? TryGetVanillaPotionVisualOverrideForContext(PotionModel potion);
+
+        /// <summary>
+        ///     When <paramref name="card" /> is encountered or held by a player using this character, returns
+        ///     portrait/frame/banner/overlay overrides registered for that card’s <c>ModelId.Entry</c>;
+        ///     otherwise <c>null</c>. Patches resolve this before mod-card <c>IModCardAssetOverrides</c>.
+        /// </summary>
+        CardAssetProfile? TryGetVanillaCardVisualOverrideForContext(CardModel card);
     }
 
     /// <summary>
@@ -424,6 +438,54 @@ namespace STS2RitsuLib.Scaffolding.Characters
 
                 if (string.IsNullOrWhiteSpace(a.IconPath) && string.IsNullOrWhiteSpace(a.IconOutlinePath) &&
                     string.IsNullOrWhiteSpace(a.BigIconPath))
+                    return null;
+
+                return a;
+            }
+
+            return null;
+        }
+
+        /// <inheritdoc />
+        public virtual PotionAssetProfile? TryGetVanillaPotionVisualOverrideForContext(PotionModel potion)
+        {
+            var entries = ResolvedAssetProfile.VanillaPotionVisualOverrides;
+            if (entries is not { Length: > 0 })
+                return null;
+
+            var id = potion.Id.Entry;
+            foreach (var (potionModelIdEntry, a) in entries)
+            {
+                if (!id.Equals(potionModelIdEntry, StringComparison.OrdinalIgnoreCase))
+                    continue;
+
+                if (string.IsNullOrWhiteSpace(a.ImagePath) && string.IsNullOrWhiteSpace(a.OutlinePath))
+                    return null;
+
+                return a;
+            }
+
+            return null;
+        }
+
+        /// <inheritdoc />
+        public virtual CardAssetProfile? TryGetVanillaCardVisualOverrideForContext(CardModel card)
+        {
+            var entries = ResolvedAssetProfile.VanillaCardVisualOverrides;
+            if (entries is not { Length: > 0 })
+                return null;
+
+            var id = card.Id.Entry;
+            foreach (var (cardModelIdEntry, a) in entries)
+            {
+                if (!id.Equals(cardModelIdEntry, StringComparison.OrdinalIgnoreCase))
+                    continue;
+
+                if (string.IsNullOrWhiteSpace(a.PortraitPath) && string.IsNullOrWhiteSpace(a.BetaPortraitPath) &&
+                    string.IsNullOrWhiteSpace(a.FramePath) && string.IsNullOrWhiteSpace(a.PortraitBorderPath) &&
+                    string.IsNullOrWhiteSpace(a.EnergyIconPath) && string.IsNullOrWhiteSpace(a.FrameMaterialPath) &&
+                    string.IsNullOrWhiteSpace(a.OverlayScenePath) && string.IsNullOrWhiteSpace(a.BannerTexturePath) &&
+                    string.IsNullOrWhiteSpace(a.BannerMaterialPath))
                     return null;
 
                 return a;
