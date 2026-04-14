@@ -116,13 +116,20 @@ using System.Reflection;
 ## 运行时反射协议（无库引用）
 
 除了 BaseLib / ModConfig 镜像外，RitsuLib 还支持“纯反射协议”注册设置页。  
-模组无需引用 `STS2RitsuLib`，只需在程序集元数据中声明 provider 类型：
+模组无需引用 `STS2RitsuLib`，只需在程序集元数据中显式声明 provider 类型：
 
 ```xml
 <ItemGroup>
   <AssemblyMetadata Include="RitsuLib.ModSettingsInterop.ProviderType" Value="YourMod.Scripts.RitsuLibModSettingsInteropProvider" />
 </ItemGroup>
 ```
+
+也支持在运行时主动注册 provider（适合你在初始化流程中按需反射调用）：
+
+- `ModSettingsRuntimeReflectionInteropMirror.RegisterProviderType(string providerTypeFullName, string? assemblyName = null)`
+- `ModSettingsRuntimeReflectionInteropMirror.RegisterProviderType(Type providerType)`
+- `ModSettingsRuntimeReflectionInteropMirror.RegisterProviderTypeAndTryRegister(string providerTypeFullName, string? assemblyName = null)`
+- `ModSettingsRuntimeReflectionInteropMirror.RegisterProviderTypeAndTryRegister(Type providerType)`
 
 Provider 约定（全部为 `static` 方法）：
 

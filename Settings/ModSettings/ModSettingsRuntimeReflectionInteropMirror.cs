@@ -30,6 +30,68 @@ namespace STS2RitsuLib.Settings
         private static readonly Lock Gate = new();
         private static readonly HashSet<string> SchemaPayloadWarningDedup = new(StringComparer.Ordinal);
 
+        private static readonly Dictionary<string, string?> RuntimeRegisteredProviderTypes =
+            new(StringComparer.Ordinal);
+
+        /// <summary>
+        ///     Registers an interop provider type name explicitly for runtime discovery.
+        ///     This is intended for reflection-based callers that do not reference RitsuLib at compile time.
+        /// </summary>
+        public static bool RegisterProviderType(string providerTypeFullName, string? assemblyName = null)
+        {
+            if (string.IsNullOrWhiteSpace(providerTypeFullName))
+                return false;
+
+            lock (Gate)
+            {
+                RuntimeRegisteredProviderTypes[providerTypeFullName.Trim()] =
+                    string.IsNullOrWhiteSpace(assemblyName) ? null : assemblyName.Trim();
+                return true;
+            }
+        }
+
+        /// <summary>
+        ///     Registers an interop provider type explicitly for runtime discovery.
+        /// </summary>
+        public static bool RegisterProviderType(Type providerType)
+        {
+            ArgumentNullException.ThrowIfNull(providerType);
+            return !string.IsNullOrWhiteSpace(providerType.FullName) &&
+                   RegisterProviderType(providerType.FullName, providerType.Assembly.GetName().Name);
+        }
+
+        /// <summary>
+        ///     Registers an interop provider type explicitly for runtime discovery.
+        /// </summary>
+        public static bool RegisterProviderType<TProvider>()
+        {
+            return RegisterProviderType(typeof(TProvider));
+        }
+
+        /// <summary>
+        ///     Registers a provider type and immediately attempts mirror registration.
+        /// </summary>
+        public static int RegisterProviderTypeAndTryRegister(string providerTypeFullName, string? assemblyName = null)
+        {
+            return !RegisterProviderType(providerTypeFullName, assemblyName) ? 0 : TryRegisterMirroredPages();
+        }
+
+        /// <summary>
+        ///     Registers a provider type and immediately attempts mirror registration.
+        /// </summary>
+        public static int RegisterProviderTypeAndTryRegister(Type providerType)
+        {
+            return !RegisterProviderType(providerType) ? 0 : TryRegisterMirroredPages();
+        }
+
+        /// <summary>
+        ///     Registers a provider type and immediately attempts mirror registration.
+        /// </summary>
+        public static int RegisterProviderTypeAndTryRegister<TProvider>()
+        {
+            return RegisterProviderTypeAndTryRegister(typeof(TProvider));
+        }
+
         /// <summary>
         ///     Discovers reflection providers and registers mirrored pages from their declared schemas.
         /// </summary>
@@ -66,16 +128,10 @@ namespace STS2RitsuLib.Settings
         private static List<InteropProvider> DiscoverProviders()
         {
             var providers = new List<InteropProvider>();
+            var seen = new HashSet<string>(StringComparer.Ordinal);
             foreach (var asm in AppDomain.CurrentDomain.GetAssemblies())
             {
                 var typeNames = ReadProviderTypeNames(asm);
-                if (typeNames.Count == 0)
-                {
-                    var convention = asm.GetType("RitsuLibModSettingsInteropProvider", false);
-                    if (convention != null)
-                        typeNames.Add(convention.FullName ?? "RitsuLibModSettingsInteropProvider");
-                }
-
                 if (typeNames.Count == 0)
                     continue;
 
@@ -101,11 +157,52 @@ namespace STS2RitsuLib.Settings
                         continue;
                     }
 
+                    var providerName = providerType.FullName ?? providerType.Name;
+                    if (!seen.Add(providerName))
+                        continue;
                     providers.Add(new(providerType, schemaMethod));
                 }
             }
 
+            foreach (var (providerTypeName, assemblyName) in RuntimeRegisteredProviderTypes)
+            {
+                var providerType = ResolveProviderType(providerTypeName, assemblyName);
+                if (providerType == null)
+                    continue;
+
+                var schemaMethod = providerType.GetMethod(SchemaMethodName,
+                    BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Static);
+                if (schemaMethod == null)
+                    continue;
+
+                var providerName = providerType.FullName ?? providerType.Name;
+                if (!seen.Add(providerName))
+                    continue;
+                providers.Add(new(providerType, schemaMethod));
+            }
+
             return providers;
+        }
+
+        private static Type? ResolveProviderType(string providerTypeName, string? assemblyName)
+        {
+            if (string.IsNullOrWhiteSpace(assemblyName))
+                return AppDomain.CurrentDomain.GetAssemblies().Select(asm => asm.GetType(providerTypeName, false))
+                    .OfType<Type>().FirstOrDefault();
+            {
+                foreach (var asm in AppDomain.CurrentDomain.GetAssemblies())
+                {
+                    var asmName = asm.GetName().Name;
+                    if (!string.Equals(asmName, assemblyName, StringComparison.OrdinalIgnoreCase))
+                        continue;
+                    var inAsm = asm.GetType(providerTypeName, false);
+                    if (inAsm != null)
+                        return inAsm;
+                }
+            }
+
+            return AppDomain.CurrentDomain.GetAssemblies().Select(asm => asm.GetType(providerTypeName, false))
+                .OfType<Type>().FirstOrDefault();
         }
 
         private static HashSet<string> ReadProviderTypeNames(Assembly asm)

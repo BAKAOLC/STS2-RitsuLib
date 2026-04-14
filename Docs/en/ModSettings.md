@@ -117,13 +117,20 @@ You can also place the same directives directly in `csproj`:
 ## Runtime Reflection Protocol (No Library Reference)
 
 Besides BaseLib / ModConfig mirrors, RitsuLib also supports a pure reflection protocol for settings pages.  
-Your mod does not need to reference `STS2RitsuLib`; you only need assembly metadata that points to a provider type:
+Your mod does not need to reference `STS2RitsuLib`; you only need to explicitly declare provider types in assembly metadata:
 
 ```xml
 <ItemGroup>
   <AssemblyMetadata Include="RitsuLib.ModSettingsInterop.ProviderType" Value="YourMod.Scripts.RitsuLibModSettingsInteropProvider" />
 </ItemGroup>
 ```
+
+Runtime-initiated explicit registration is also supported (for reflection-driven init flows):
+
+- `ModSettingsRuntimeReflectionInteropMirror.RegisterProviderType(string providerTypeFullName, string? assemblyName = null)`
+- `ModSettingsRuntimeReflectionInteropMirror.RegisterProviderType(Type providerType)`
+- `ModSettingsRuntimeReflectionInteropMirror.RegisterProviderTypeAndTryRegister(string providerTypeFullName, string? assemblyName = null)`
+- `ModSettingsRuntimeReflectionInteropMirror.RegisterProviderTypeAndTryRegister(Type providerType)`
 
 Provider contract (all methods are `static`):
 
