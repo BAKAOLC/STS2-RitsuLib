@@ -2,6 +2,7 @@ using STS2RitsuLib.Cards.FreePlay.Patches;
 using STS2RitsuLib.Cards.Patches;
 using STS2RitsuLib.Combat.CardTargeting.Patches;
 using STS2RitsuLib.Combat.HealthBars.Patches;
+using STS2RitsuLib.Combat.Rewards.Patches;
 using STS2RitsuLib.Content.Patches;
 using STS2RitsuLib.Interop.Patches;
 using STS2RitsuLib.Lifecycle.Patches;
@@ -109,6 +110,10 @@ namespace STS2RitsuLib
             patcher.RegisterPatch<NControllerCardPlayStartAnyPlayerPatch>();
             patcher.RegisterPatch<NControllerCardPlaySingleTargetingAnyPlayerPatch>();
             patcher.RegisterPatch<CardCmdAutoPlayAnyPlayerPatch>();
+            patcher.RegisterPatch<CardRewardToSerializablePatch>();
+            patcher.RegisterPatch<CombatRoomToSerializableRewardExtPatch>();
+            patcher.RegisterPatch<CombatRoomFromSerializableRewardExtPatch>();
+            patcher.RegisterPatch<RewardFromSerializableExtPatch>();
             RegisterFrameworkPatcher(FrameworkPatcherArea.Core, patcher);
         }
 
