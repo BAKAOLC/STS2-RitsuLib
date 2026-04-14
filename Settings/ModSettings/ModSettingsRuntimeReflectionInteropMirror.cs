@@ -28,6 +28,7 @@ namespace STS2RitsuLib.Settings
         private const string TypedSetStringMethodName = "SetRitsuLibSettingString";
 
         private static readonly Lock Gate = new();
+        private static readonly HashSet<string> SchemaPayloadWarningDedup = new(StringComparer.Ordinal);
 
         /// <summary>
         ///     Discovers reflection providers and registers mirrored pages from their declared schemas.
@@ -42,7 +43,6 @@ namespace STS2RitsuLib.Settings
 
                 var added = 0;
                 foreach (var provider in providers)
-                {
                     try
                     {
                         if (!TryReadSchema(provider, out var schema))
@@ -58,7 +58,6 @@ namespace STS2RitsuLib.Settings
                         RitsuLibFramework.Logger.Warn(
                             $"[ModSettingsRuntimeReflectionInteropMirror] Provider '{provider.ProviderType.FullName}' failed but was isolated: {ex.Message}");
                     }
-                }
 
                 return added;
             }
@@ -153,8 +152,7 @@ namespace STS2RitsuLib.Settings
 
             if (!TryResolveSchemaRoot(rawSchema, out var root))
             {
-                RitsuLibFramework.Logger.Warn(
-                    $"[ModSettingsRuntimeReflectionInteropMirror] Schema payload is null/invalid for {provider.ProviderType.FullName}.");
+                WarnSchemaPayloadInvalidOnce(provider.ProviderType);
                 return false;
             }
 
@@ -162,6 +160,16 @@ namespace STS2RitsuLib.Settings
             RitsuLibFramework.Logger.Warn(
                 $"[ModSettingsRuntimeReflectionInteropMirror] Schema parse failed for {provider.ProviderType.FullName}.");
             return false;
+        }
+
+        private static void WarnSchemaPayloadInvalidOnce(Type providerType)
+        {
+            var providerName = providerType.FullName ?? providerType.Name;
+            if (!SchemaPayloadWarningDedup.Add(providerName))
+                return;
+
+            RitsuLibFramework.Logger.Warn(
+                $"[ModSettingsRuntimeReflectionInteropMirror] Schema payload is null/invalid for {providerName}.");
         }
 
         private static bool TryRegisterFromSchema(InteropProvider provider, InteropSchema schema)
