@@ -4,6 +4,7 @@ using STS2RitsuLib.Data;
 using STS2RitsuLib.Data.Models;
 using STS2RitsuLib.Diagnostics;
 using STS2RitsuLib.Diagnostics.CardExport;
+using STS2RitsuLib.RuntimeInput;
 using STS2RitsuLib.Utils.Persistence;
 
 namespace STS2RitsuLib.Settings
@@ -107,6 +108,14 @@ namespace STS2RitsuLib.Settings
                 var showcaseState = new DebugShowcaseState();
                 var previewToggleBinding =
                     ModSettingsBindings.InMemory(Const.ModId, "preview_toggle", showcaseState.ToggleValue);
+                var runtimeHotkeyCategoryOrder = new[]
+                {
+                    "Gameplay",
+                    "UI",
+                    "Debug",
+                    "Developer tools",
+                    "Other",
+                };
                 var previewSliderBinding =
                     ModSettingsBindings.InMemory(Const.ModId, "preview_slider", showcaseState.SliderValue);
                 var previewIntSliderBinding =
@@ -206,7 +215,14 @@ namespace STS2RitsuLib.Settings
                             "debug-showcase",
                             T("button.open", "Open"),
                             T("ritsulib.reference.gallery.description",
-                                "Reference page only. Values on this page are not persisted."))));
+                                "Reference page only. Values on this page are not persisted."))
+                        .AddSubpage(
+                            "reference_runtime_hotkeys",
+                            T("ritsulib.reference.runtimeHotkeys.label", "Registered hotkeys"),
+                            "runtime-hotkeys",
+                            T("button.open", "Open"),
+                            T("ritsulib.reference.runtimeHotkeys.description",
+                                "Inspect currently registered runtime hotkeys and their active bindings."))));
 
                 RitsuLibFramework.RegisterModSettings(
                     Const.ModId,
@@ -362,6 +378,11 @@ namespace STS2RitsuLib.Settings
                                     cardPngExportIncludeHiddenBinding),
                                 ModSettingsButtonTone.Accent)),
                     "card-png-export");
+
+                RitsuLibFramework.RegisterModSettings(
+                    Const.ModId,
+                    page => ConfigureRuntimeHotkeysPage(page, runtimeHotkeyCategoryOrder),
+                    "runtime-hotkeys");
 
                 RitsuLibFramework.RegisterModSettings(
                     Const.ModId,
@@ -581,6 +602,87 @@ namespace STS2RitsuLib.Settings
             }
         }
 
+        private static ModSettingsPageBuilder ConfigureRuntimeHotkeysPage(
+            ModSettingsPageBuilder page,
+            IReadOnlyList<string> categoryOrder)
+        {
+            page
+                .AsChildOf(Const.ModId)
+                .WithSortOrder(-175)
+                .WithTitle(T("ritsulib.page.runtimeHotkeys.title", "Registered hotkeys"))
+                .WithDescription(T("ritsulib.page.runtimeHotkeys.description",
+                    "Inspect currently registered runtime hotkeys and their active bindings."))
+                .AddSection("runtime_hotkeys_overview", section => section
+                    .WithTitle(T("ritsulib.section.runtimeHotkeys.title", "Runtime hotkeys"))
+                    .WithDescription(T("ritsulib.section.runtimeHotkeys.description",
+                        "Lists active runtime hotkey registrations grouped by category."))
+                    .AddParagraph(
+                        "runtime_hotkeys_summary",
+                        ModSettingsText.Dynamic(() =>
+                        {
+                            var hotkeys = RuntimeHotkeyService.GetRegisteredHotkeys();
+                            return hotkeys.Count == 0
+                                ? L("ritsulib.runtimeHotkeys.empty",
+                                    "No runtime hotkeys are currently registered.")
+                                : string.Format(
+                                    L("ritsulib.runtimeHotkeys.summary",
+                                        "{0} runtime hotkeys are currently registered."), hotkeys.Count);
+                        }))
+                    .AddParagraph(
+                        "runtime_hotkeys_intro",
+                        T("ritsulib.runtimeHotkeys.groups.description",
+                            "Each entry shows the current binding, display name, optional description, and registration id.")));
+
+            var groups = GetOrderedRuntimeHotkeyGroups(categoryOrder);
+            if (groups.Count == 0)
+            {
+                page.AddSection("runtime_hotkeys_empty", section => section
+                    .WithTitle(T("ritsulib.section.runtimeHotkeys.empty.title", "No registered hotkeys"))
+                    .AddParagraph(
+                        "runtime_hotkeys_empty_text",
+                        T("ritsulib.runtimeHotkeys.empty", "No runtime hotkeys are currently registered.")));
+                return page;
+            }
+
+            foreach (var (category, runtimeHotkeyRegistrationInfos) in groups)
+            {
+                var sectionId = $"runtime_hotkeys_group_{SanitizeRuntimeHotkeySectionId(category)}";
+                page.AddSection(sectionId, section =>
+                {
+                    section
+                        .WithTitle(ModSettingsText.Literal(category))
+                        .WithDescription(ModSettingsText.Dynamic(() => string.Format(
+                            L("ritsulib.runtimeHotkeys.groupSummary", "{0} hotkeys in this category."),
+                            CountRuntimeHotkeysInCategory(category))))
+                        .Collapsible(true);
+
+                    for (var i = 0; i < runtimeHotkeyRegistrationInfos.Count; i++)
+                    {
+                        var (lookupBinding, _, lookupId, lookupDisplayName, _, _, _, _, _, _, _) =
+                            runtimeHotkeyRegistrationInfos[i];
+                        var entryIdBase =
+                            $"{i}_{SanitizeRuntimeHotkeySectionId(lookupId ?? lookupDisplayName ?? lookupBinding)}";
+                        section
+                            .AddHeader(
+                                $"{entryIdBase}_header",
+                                ModSettingsText.Literal(lookupDisplayName ?? lookupId ?? lookupBinding),
+                                ModSettingsText.Dynamic(() => FormatRuntimeHotkeyHeaderDescription(
+                                    lookupId,
+                                    lookupBinding,
+                                    lookupDisplayName)))
+                            .AddParagraph(
+                                $"{entryIdBase}_details",
+                                ModSettingsText.Dynamic(() => FormatRuntimeHotkeyDetails(
+                                    lookupId,
+                                    lookupBinding,
+                                    lookupDisplayName)));
+                    }
+                });
+            }
+
+            return page;
+        }
+
         private static ModSettingsText T(string key, string fallback)
         {
             return ModSettingsText.I18N(ModSettingsLocalization.Instance, key, fallback);
@@ -589,6 +691,110 @@ namespace STS2RitsuLib.Settings
         private static string L(string key, string fallback)
         {
             return ModSettingsLocalization.Get(key, fallback);
+        }
+
+        private static List<RuntimeHotkeyCategoryGroup> GetOrderedRuntimeHotkeyGroups(
+            IReadOnlyList<string> categoryOrder)
+        {
+            var hotkeys = RuntimeHotkeyService.GetRegisteredHotkeys();
+            return hotkeys
+                .GroupBy(info => string.IsNullOrWhiteSpace(info.Category)
+                    ? L("ritsulib.runtimeHotkeys.category.other", "Other")
+                    : info.Category!)
+                .OrderBy(group =>
+                {
+                    var index = -1;
+                    for (var i = 0; i < categoryOrder.Count; i++)
+                    {
+                        if (!string.Equals(categoryOrder[i], group.Key, StringComparison.Ordinal))
+                            continue;
+                        index = i;
+                        break;
+                    }
+
+                    return index < 0 ? int.MaxValue : index;
+                })
+                .ThenBy(group => group.Key, StringComparer.OrdinalIgnoreCase)
+                .Select(group => new RuntimeHotkeyCategoryGroup(
+                    group.Key,
+                    group.OrderBy(info => info.DisplayName ?? info.Id ?? info.CurrentBinding,
+                            StringComparer.OrdinalIgnoreCase)
+                        .ToList()))
+                .ToList();
+        }
+
+        private static int CountRuntimeHotkeysInCategory(string category)
+        {
+            return RuntimeHotkeyService.GetRegisteredHotkeys().Count(info => string.Equals(
+                string.IsNullOrWhiteSpace(info.Category)
+                    ? L("ritsulib.runtimeHotkeys.category.other", "Other")
+                    : info.Category,
+                category,
+                StringComparison.Ordinal));
+        }
+
+        private static string FormatRuntimeHotkeyHeaderDescription(string? id, string binding, string? displayName)
+        {
+            var hotkey = FindRuntimeHotkey(id, binding, displayName);
+            if (hotkey == null)
+                return string.Empty;
+
+            var scope = hotkey.IsModifierOnly
+                ? L("ritsulib.runtimeHotkeys.scope.modifierOnly", "modifier-only")
+                : L("ritsulib.runtimeHotkeys.scope.standard", "standard");
+            return string.Format(
+                L("ritsulib.runtimeHotkeys.bindingLine", "Binding: {0} ({1})"),
+                hotkey.CurrentBinding,
+                scope);
+        }
+
+        private static string FormatRuntimeHotkeyDetails(string? id, string binding, string? displayName)
+        {
+            var hotkey = FindRuntimeHotkey(id, binding, displayName);
+            if (hotkey == null)
+                return string.Empty;
+
+            var lines = new List<string>();
+            if (!string.IsNullOrWhiteSpace(hotkey.Description))
+                lines.Add(hotkey.Description);
+            if (!string.IsNullOrWhiteSpace(hotkey.Id))
+                lines.Add(string.Format(L("ritsulib.runtimeHotkeys.idLine", "Id: {0}"), hotkey.Id));
+            if (!string.IsNullOrWhiteSpace(hotkey.Purpose))
+                lines.Add(string.Format(L("ritsulib.runtimeHotkeys.purposeLine", "Purpose: {0}"), hotkey.Purpose));
+            return string.Join("\n", lines);
+        }
+
+        private static RuntimeHotkeyRegistrationInfo? FindRuntimeHotkey(string? id, string binding, string? displayName)
+        {
+            var hotkeys = RuntimeHotkeyService.GetRegisteredHotkeys();
+            if (!string.IsNullOrWhiteSpace(id))
+                foreach (var info in hotkeys)
+                    if (string.Equals(info.Id, id, StringComparison.Ordinal))
+                        return info;
+
+            foreach (var info in hotkeys)
+            {
+                if (!string.Equals(info.CurrentBinding, binding, StringComparison.Ordinal))
+                    continue;
+                if (!string.Equals(info.DisplayName, displayName, StringComparison.Ordinal))
+                    continue;
+                return info;
+            }
+
+            return hotkeys.FirstOrDefault(info =>
+                string.Equals(info.CurrentBinding, binding, StringComparison.Ordinal));
+        }
+
+        private static string SanitizeRuntimeHotkeySectionId(string? value)
+        {
+            if (string.IsNullOrWhiteSpace(value))
+                return "other";
+
+            var chars = value
+                .Select(ch => char.IsLetterOrDigit(ch) ? char.ToLowerInvariant(ch) : '_')
+                .ToArray();
+            var sanitized = new string(chars).Trim('_');
+            return string.IsNullOrWhiteSpace(sanitized) ? "other" : sanitized;
         }
 
         private static Control CreateShowcaseListItemEditor(ModSettingsListItemContext<ShowcaseListItem> itemContext)
@@ -746,6 +952,8 @@ namespace STS2RitsuLib.Settings
             ModSettingsFocusChrome.AttachControllerSelectionReticle(edit);
             return edit;
         }
+
+        private sealed record RuntimeHotkeyCategoryGroup(string Category, List<RuntimeHotkeyRegistrationInfo> Hotkeys);
 
         private sealed class DebugShowcaseState
         {

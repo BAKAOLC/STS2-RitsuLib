@@ -13,6 +13,7 @@ using STS2RitsuLib.Diagnostics.CardExport;
 using STS2RitsuLib.Interop;
 using STS2RitsuLib.Keywords;
 using STS2RitsuLib.Patching.Core;
+using STS2RitsuLib.RuntimeInput;
 using STS2RitsuLib.Scaffolding.Content;
 using STS2RitsuLib.Settings;
 using STS2RitsuLib.Timeline;
@@ -187,6 +188,7 @@ namespace STS2RitsuLib
                     IsInitialized = true;
                     IsActive = true;
                     BaseLibHealthBarForecastBridge.TryRegister();
+                    RuntimeHotkeyService.Initialize();
 
                     var frameworkInitializedEvent = new FrameworkInitializedEvent(
                         Const.ModId,

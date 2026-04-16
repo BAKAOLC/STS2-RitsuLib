@@ -232,7 +232,7 @@ namespace STS2RitsuLib.Settings
             return result;
         }
 
-        private static bool TryReadSchema(InteropProvider provider, out InteropSchema schema)
+        private static bool TryReadSchema(InteropProvider provider, out InteropSchemaRoot schema)
         {
             schema = null!;
             object? rawSchema;
@@ -269,51 +269,55 @@ namespace STS2RitsuLib.Settings
                 $"[ModSettingsRuntimeReflectionInteropMirror] Schema payload is null/invalid for {providerName}.");
         }
 
-        private static bool TryRegisterFromSchema(InteropProvider provider, InteropSchema schema)
+        private static bool TryRegisterFromSchema(InteropProvider provider, InteropSchemaRoot schema)
         {
             if (!ModSettingsMirrorInteropPolicy.ShouldMirror(ModSettingsMirrorSource.RuntimeInterop, schema.ModId,
                     provider.ProviderType))
                 return false;
 
-            if (ModSettingsRegistry.TryGetPage(schema.ModId, schema.PageId, out _))
-                return false;
-
             var access = BuildAccessor(provider.ProviderType);
             var saveAction = access.SaveAction;
-            try
-            {
-                ModSettingsRegistry.Register(schema.ModId, page =>
+            var addedAny = false;
+
+            foreach (var pageSchema in schema.Pages.Where(pageSchema =>
+                         !ModSettingsRegistry.TryGetPage(schema.ModId, pageSchema.PageId, out _)))
+                try
                 {
-                    page.WithTitle(ModSettingsText.Literal(schema.Title));
-                    if (!string.IsNullOrWhiteSpace(schema.Description))
-                        page.WithDescription(ModSettingsText.Literal(schema.Description));
-                    page.WithSortOrder(schema.SortOrder);
-                    if (!string.IsNullOrWhiteSpace(schema.ModDisplayName))
-                        page.WithModDisplayName(ModSettingsText.Literal(schema.ModDisplayName));
-                    if (schema.ModSidebarOrder is { } sidebarOrder)
-                        page.WithModSidebarOrder(sidebarOrder);
+                    ModSettingsRegistry.Register(schema.ModId, page =>
+                    {
+                        page.WithTitle(ModSettingsText.Literal(pageSchema.Title));
+                        if (!string.IsNullOrWhiteSpace(pageSchema.Description))
+                            page.WithDescription(ModSettingsText.Literal(pageSchema.Description));
+                        page.WithSortOrder(pageSchema.SortOrder);
+                        if (!string.IsNullOrWhiteSpace(pageSchema.ParentPageId))
+                            page.AsChildOf(pageSchema.ParentPageId);
+                        if (!string.IsNullOrWhiteSpace(schema.ModDisplayName))
+                            page.WithModDisplayName(ModSettingsText.Literal(schema.ModDisplayName));
+                        if (schema.ModSidebarOrder is { } sidebarOrder)
+                            page.WithModSidebarOrder(sidebarOrder);
 
-                    foreach (var section in schema.Sections)
-                        page.AddSection(section.Id, sb =>
-                        {
-                            if (!string.IsNullOrWhiteSpace(section.Title))
-                                sb.WithTitle(ModSettingsText.Literal(section.Title));
-                            if (!string.IsNullOrWhiteSpace(section.Description))
-                                sb.WithDescription(ModSettingsText.Literal(section.Description));
+                        foreach (var section in pageSchema.Sections)
+                            page.AddSection(section.Id, sb =>
+                            {
+                                if (!string.IsNullOrWhiteSpace(section.Title))
+                                    sb.WithTitle(ModSettingsText.Literal(section.Title));
+                                if (!string.IsNullOrWhiteSpace(section.Description))
+                                    sb.WithDescription(ModSettingsText.Literal(section.Description));
 
-                            foreach (var entry in section.Entries)
-                                AppendEntry(sb, schema.ModId, entry, access, saveAction);
-                        });
-                }, schema.PageId);
+                                foreach (var entry in section.Entries)
+                                    AppendEntry(sb, schema.ModId, entry, access, saveAction);
+                            });
+                    }, pageSchema.PageId);
 
-                return true;
-            }
-            catch (Exception ex)
-            {
-                RitsuLibFramework.Logger.Warn(
-                    $"[ModSettingsRuntimeReflectionInteropMirror] Register failed for {schema.ModId}::{schema.PageId}: {ex.Message}");
-                return false;
-            }
+                    addedAny = true;
+                }
+                catch (Exception ex)
+                {
+                    RitsuLibFramework.Logger.Warn(
+                        $"[ModSettingsRuntimeReflectionInteropMirror] Register failed for {schema.ModId}::{pageSchema.PageId}: {ex.Message}");
+                }
+
+            return addedAny;
         }
 
         private static void AppendEntry(
@@ -331,6 +335,24 @@ namespace STS2RitsuLib.Settings
 
             switch (entry.Type)
             {
+                case InteropEntryType.Header:
+                    section.AddHeader(entry.Id, label, description);
+                    return;
+                case InteropEntryType.Paragraph:
+                    section.AddParagraph(entry.Id, label, description, entry.MaxBodyHeight);
+                    return;
+                case InteropEntryType.Subpage:
+                    if (string.IsNullOrWhiteSpace(entry.TargetPageId))
+                    {
+                        RitsuLibFramework.Logger.Warn(
+                            $"[ModSettingsRuntimeReflectionInteropMirror] Skipping subpage entry '{entry.Id}' because targetPageId is missing.");
+                        return;
+                    }
+
+                    section.AddSubpage(entry.Id, label, entry.TargetPageId,
+                        string.IsNullOrWhiteSpace(entry.ButtonText) ? null : ModSettingsText.Literal(entry.ButtonText),
+                        description);
+                    return;
                 case InteropEntryType.Toggle:
                 {
                     var binding = ModSettingsBindings.Callback(modId, dataKey,
@@ -579,38 +601,31 @@ namespace STS2RitsuLib.Settings
                 key => action?.Invoke(null, [key]));
         }
 
-        private static bool TryParseSchema(IDictionary<string, object?> root, out InteropSchema schema)
+        private static bool TryParseSchema(IDictionary<string, object?> root, out InteropSchemaRoot schema)
         {
             schema = null!;
             if (!TryGetString(root, "modId", out var modId) || string.IsNullOrWhiteSpace(modId))
                 return false;
 
-            var pageId = TryGetString(root, "pageId", out var p) && !string.IsNullOrWhiteSpace(p)
-                ? p
-                : "interop";
-            var title = TryGetString(root, "title", out var t) && !string.IsNullOrWhiteSpace(t) ? t : "Settings";
-            var description = TryGetString(root, "description", out var d) ? d : null;
             var modDisplayName = TryGetString(root, "modDisplayName", out var mdn) ? mdn : null;
-            var sortOrder = TryGetInt(root, "sortOrder", out var so) ? so ?? 10_040 : 10_040;
             var modSidebarOrder = TryGetInt(root, "modSidebarOrder", out var mso) ? mso : null;
 
-            if (!TryGetEnumerable(root, "sections", out var sectionsRaw))
+            var pages = new List<InteropPage>();
+            if (TryGetEnumerable(root, "pages", out var pagesRaw))
+                foreach (var pageRaw in pagesRaw)
+                {
+                    if (pageRaw == null || !TryAsMap(pageRaw, out var pageMap))
+                        continue;
+                    if (!TryParsePage(pageMap, out var page))
+                        continue;
+                    pages.Add(page);
+                }
+            else if (TryParseLegacySinglePage(root, out var legacyPage)) pages.Add(legacyPage);
+
+            if (pages.Count == 0)
                 return false;
 
-            var sections = new List<InteropSection>();
-            foreach (var sectionRaw in sectionsRaw)
-            {
-                if (sectionRaw == null || !TryAsMap(sectionRaw, out var sectionMap))
-                    continue;
-                if (!TryParseSection(sectionMap, out var section))
-                    continue;
-                sections.Add(section);
-            }
-
-            if (sections.Count == 0)
-                return false;
-
-            schema = new(modId, pageId, title, description, sortOrder, modDisplayName, modSidebarOrder, sections);
+            schema = new(modId, modDisplayName, modSidebarOrder, pages);
             return true;
         }
 
@@ -691,6 +706,69 @@ namespace STS2RitsuLib.Settings
             };
         }
 
+        private static bool TryParseLegacySinglePage(IDictionary<string, object?> root, out InteropPage page)
+        {
+            page = null!;
+            var pageId = TryGetString(root, "pageId", out var p) && !string.IsNullOrWhiteSpace(p)
+                ? p
+                : "interop";
+            var title = TryGetString(root, "title", out var t) && !string.IsNullOrWhiteSpace(t) ? t : "Settings";
+            var description = TryGetString(root, "description", out var d) ? d : null;
+            var sortOrder = TryGetInt(root, "sortOrder", out var so) ? so ?? 10_040 : 10_040;
+
+            if (!TryGetEnumerable(root, "sections", out var sectionsRaw))
+                return false;
+
+            var sections = new List<InteropSection>();
+            foreach (var sectionRaw in sectionsRaw)
+            {
+                if (sectionRaw == null || !TryAsMap(sectionRaw, out var sectionMap))
+                    continue;
+                if (!TryParseSection(sectionMap, out var section))
+                    continue;
+                sections.Add(section);
+            }
+
+            if (sections.Count == 0)
+                return false;
+
+            page = new(pageId, null, title, description, sortOrder, sections);
+            return true;
+        }
+
+        private static bool TryParsePage(IDictionary<string, object?> map, out InteropPage page)
+        {
+            page = null!;
+            var pageId = TryGetString(map, "pageId", out var p) && !string.IsNullOrWhiteSpace(p)
+                ? p
+                : "interop";
+            var title = TryGetString(map, "title", out var t) && !string.IsNullOrWhiteSpace(t) ? t : "Settings";
+            var description = TryGetString(map, "description", out var d) ? d : null;
+            var parentPageId = TryGetString(map, "parentPageId", out var parent) && !string.IsNullOrWhiteSpace(parent)
+                ? parent
+                : null;
+            var sortOrder = TryGetInt(map, "sortOrder", out var so) ? so ?? 10_040 : 10_040;
+
+            if (!TryGetEnumerable(map, "sections", out var sectionsRaw))
+                return false;
+
+            var sections = new List<InteropSection>();
+            foreach (var sectionRaw in sectionsRaw)
+            {
+                if (sectionRaw == null || !TryAsMap(sectionRaw, out var sectionMap))
+                    continue;
+                if (!TryParseSection(sectionMap, out var section))
+                    continue;
+                sections.Add(section);
+            }
+
+            if (sections.Count == 0)
+                return false;
+
+            page = new(pageId, parentPageId, title, description, sortOrder, sections);
+            return true;
+        }
+
         private static bool TryParseSection(IDictionary<string, object?> map, out InteropSection section)
         {
             section = null!;
@@ -731,6 +809,7 @@ namespace STS2RitsuLib.Settings
             var label = TryGetString(map, "label", out var l) && !string.IsNullOrWhiteSpace(l) ? l : id;
             var description = TryGetString(map, "description", out var d) ? d : null;
             var buttonText = TryGetString(map, "buttonText", out var bt) ? bt : null;
+            var targetPageId = TryGetString(map, "targetPageId", out var target) ? target : null;
             var min = TryGetDouble(map, "min", out var minValue) ? minValue : 0d;
             var max = TryGetDouble(map, "max", out var maxValue) ? maxValue : 100d;
             var step = TryGetDouble(map, "step", out var stepValue) ? stepValue : 1d;
@@ -739,6 +818,9 @@ namespace STS2RitsuLib.Settings
             if (step <= 0d)
                 step = 1d;
             var maxLength = TryGetInt(map, "maxLength", out var ml) ? ml : null;
+            var maxBodyHeight = TryGetDouble(map, "maxBodyHeight", out var maxBodyHeightValue)
+                ? (float?)maxBodyHeightValue
+                : null;
             var scope = ParseScope(TryGetString(map, "scope", out var scopeRaw) ? scopeRaw : null);
             var presentation = TryGetString(map, "presentation", out var p) ? p : "stepper";
             var tone = ParseButtonTone(TryGetString(map, "tone", out var toneRaw) ? toneRaw : null);
@@ -754,8 +836,10 @@ namespace STS2RitsuLib.Settings
                 max,
                 step,
                 maxLength,
+                maxBodyHeight,
                 options,
                 buttonText,
+                targetPageId,
                 tone,
                 scope,
                 presentation);
@@ -817,6 +901,9 @@ namespace STS2RitsuLib.Settings
         {
             type = raw.Trim().ToLowerInvariant() switch
             {
+                "header" => InteropEntryType.Header,
+                "paragraph" => InteropEntryType.Paragraph,
+                "subpage" => InteropEntryType.Subpage,
                 "toggle" => InteropEntryType.Toggle,
                 "slider" => InteropEntryType.Slider,
                 "int-slider" or "intslider" => InteropEntryType.IntSlider,
@@ -972,14 +1059,18 @@ namespace STS2RitsuLib.Settings
 
         private sealed record InteropProvider(Type ProviderType, MethodInfo SchemaMethod);
 
-        private sealed record InteropSchema(
+        private sealed record InteropSchemaRoot(
             string ModId,
+            string? ModDisplayName,
+            int? ModSidebarOrder,
+            List<InteropPage> Pages);
+
+        private sealed record InteropPage(
             string PageId,
+            string? ParentPageId,
             string Title,
             string? Description,
             int SortOrder,
-            string? ModDisplayName,
-            int? ModSidebarOrder,
             List<InteropSection> Sections);
 
         private sealed record InteropSection(string Id, string? Title, string? Description, List<InteropEntry> Entries);
@@ -994,8 +1085,10 @@ namespace STS2RitsuLib.Settings
             double Max,
             double Step,
             int? MaxLength,
+            float? MaxBodyHeight,
             List<InteropChoiceOption> Options,
             string? ButtonText,
+            string? TargetPageId,
             ModSettingsButtonTone ButtonTone,
             SaveScope Scope,
             string ChoicePresentation);
@@ -1004,6 +1097,9 @@ namespace STS2RitsuLib.Settings
 
         private enum InteropEntryType
         {
+            Header,
+            Paragraph,
+            Subpage,
             Toggle,
             Slider,
             IntSlider,

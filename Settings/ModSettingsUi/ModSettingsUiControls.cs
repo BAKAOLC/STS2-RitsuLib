@@ -1509,6 +1509,7 @@ namespace STS2RitsuLib.Settings
         private readonly bool _allowModifierOnly;
         private readonly bool _distinguishModifierSides;
         private readonly Action<string>? _onChanged;
+        private readonly HashSet<string> _pendingModifierBindings = [];
         private Button? _captureButton;
         private bool _capturing;
         private string _currentValue = string.Empty;
@@ -1617,35 +1618,63 @@ namespace STS2RitsuLib.Settings
         /// <inheritdoc />
         public override void _UnhandledKeyInput(InputEvent @event)
         {
-            if (!_capturing || @event is not InputEventKey { Pressed: true } keyEvent || keyEvent.IsEcho())
+            if (!_capturing || @event is not InputEventKey keyEvent || keyEvent.IsEcho())
                 return;
 
             GetViewport().SetInputAsHandled();
 
-            switch (keyEvent.Keycode)
+            if (keyEvent.Pressed)
             {
-                case Key.Escape:
-                    _capturing = false;
+                switch (keyEvent.Keycode)
+                {
+                    case Key.Escape:
+                        _capturing = false;
+                        _pendingModifierBindings.Clear();
+                        RefreshText();
+                        return;
+                    case Key.Backspace or Key.Delete:
+                        ApplyBinding(string.Empty, true);
+                        _capturing = false;
+                        _pendingModifierBindings.Clear();
+                        return;
+                }
+
+                if (IsModifierKey(keyEvent.Keycode))
+                {
+                    if (!_allowModifierCombos && !_allowModifierOnly)
+                        return;
+
+                    _pendingModifierBindings.Add(GetRecordedKeyName(keyEvent, _distinguishModifierSides));
                     RefreshText();
                     return;
-                case Key.Backspace or Key.Delete:
-                    ApplyBinding(string.Empty, true);
-                    _capturing = false;
+                }
+
+                var binding = BuildBindingFromPendingModifiers(keyEvent, _allowModifierCombos,
+                    _distinguishModifierSides, _pendingModifierBindings);
+                if (string.IsNullOrWhiteSpace(binding))
                     return;
+
+                ApplyBinding(binding, true);
+                _capturing = false;
+                _pendingModifierBindings.Clear();
+                return;
             }
 
-            var binding = FormatKeyBinding(keyEvent, _allowModifierCombos, _allowModifierOnly,
-                _distinguishModifierSides);
-            if (string.IsNullOrWhiteSpace(binding))
+            if (_pendingModifierBindings.Count == 0 || !IsModifierKey(keyEvent.Keycode))
                 return;
 
-            ApplyBinding(binding, true);
+            if (_allowModifierOnly)
+                ApplyBinding(string.Join('+', OrderedModifierTokens(_pendingModifierBindings)), true);
+
             _capturing = false;
+            _pendingModifierBindings.Clear();
+            RefreshText();
         }
 
         private void BeginCapture()
         {
             _capturing = true;
+            _pendingModifierBindings.Clear();
             RefreshText();
             _captureButton?.GrabFocus();
         }
@@ -1660,14 +1689,23 @@ namespace STS2RitsuLib.Settings
 
         private void RefreshText()
         {
+            var pendingBindingText = _pendingModifierBindings.Count == 0
+                ? string.Empty
+                : string.Join('+', OrderedModifierTokens(_pendingModifierBindings));
+
             _captureButton?.Text = _capturing
-                ? ModSettingsLocalization.Get("keybinding.capturing", "Press combination...")
+                ? string.IsNullOrWhiteSpace(pendingBindingText)
+                    ? ModSettingsLocalization.Get("keybinding.capturing", "Press combination...")
+                    : pendingBindingText + "+..."
                 : string.IsNullOrWhiteSpace(_currentValue)
                     ? ModSettingsLocalization.Get("keybinding.unbound", "Unbound")
                     : _currentValue;
             _hintLabel?.Text = _capturing
-                ? ModSettingsLocalization.Get("keybinding.hint.capturing",
-                    "Press a key combination. Esc cancels, Backspace/Delete clears.")
+                ? string.IsNullOrWhiteSpace(pendingBindingText)
+                    ? ModSettingsLocalization.Get("keybinding.hint.capturing",
+                        "Press a key combination. Esc cancels, Backspace/Delete clears.")
+                    : ModSettingsLocalization.Get("keybinding.hint.capturingPending",
+                        "Modifier keys recorded. Press another key to complete, or release to keep a modifier-only binding.")
                 : _allowModifierCombos
                     ? _allowModifierOnly
                         ? ModSettingsLocalization.Get("keybinding.hint.combo",
@@ -1677,28 +1715,13 @@ namespace STS2RitsuLib.Settings
                     : ModSettingsLocalization.Get("keybinding.hint.single", "Click to record a single key.");
         }
 
-        private static string FormatKeyBinding(InputEventKey keyEvent, bool allowModifierCombos, bool allowModifierOnly,
-            bool distinguishModifierSides)
+        private static string BuildBindingFromPendingModifiers(InputEventKey keyEvent, bool allowModifierCombos,
+            bool distinguishModifierSides, IEnumerable<string> pendingModifiers)
         {
-            var parts = new List<string>();
-            if (allowModifierCombos && keyEvent.CtrlPressed)
-                parts.Add("Ctrl");
-            if (allowModifierCombos && keyEvent.AltPressed)
-                parts.Add("Alt");
-            if (allowModifierCombos && keyEvent.ShiftPressed)
-                parts.Add("Shift");
-            if (allowModifierCombos && keyEvent.MetaPressed)
-                parts.Add("Meta");
-
-            if (!allowModifierOnly && IsModifierKey(keyEvent.Keycode))
-                return string.Empty;
-
-            if (!IsModifierKey(keyEvent.Keycode) || parts.Count == 0)
-                parts.Add(GetRecordedKeyName(keyEvent, distinguishModifierSides));
-
-            if (!allowModifierCombos && IsModifierKey(keyEvent.Keycode))
-                return GetRecordedKeyName(keyEvent, distinguishModifierSides);
-
+            var parts = allowModifierCombos
+                ? OrderedModifierTokens(pendingModifiers).ToList()
+                : [];
+            parts.Add(GetRecordedKeyName(keyEvent, distinguishModifierSides));
             return string.Join('+', parts);
         }
 
@@ -1714,9 +1737,31 @@ namespace STS2RitsuLib.Settings
             return code.ToString();
         }
 
+        private static IEnumerable<string> OrderedModifierTokens(IEnumerable<string> tokens)
+        {
+            return tokens.OrderBy(GetModifierSortOrder).ThenBy(static t => t, StringComparer.OrdinalIgnoreCase);
+        }
+
+        private static int GetModifierSortOrder(string token)
+        {
+            var normalized = token.ToLowerInvariant();
+            if (normalized.Contains("ctrl") || normalized.Contains("control"))
+                return 0;
+            if (normalized.Contains("alt"))
+                return 1;
+            if (normalized.Contains("shift"))
+                return 2;
+            if (normalized.Contains("meta") || normalized.Contains("cmd") || normalized.Contains("command"))
+                return 3;
+            return 100;
+        }
+
         private static bool IsModifierKey(Key key)
         {
-            return key is Key.Shift or Key.Ctrl or Key.Alt or Key.Meta;
+            var name = key.ToString().ToLowerInvariant();
+            return name.Contains("shift") || name.Contains("ctrl") || name.Contains("control") ||
+                   name.Contains("alt") || name.Contains("meta") || name.Contains("cmd") ||
+                   name.Contains("command");
         }
     }
 
