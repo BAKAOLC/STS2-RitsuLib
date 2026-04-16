@@ -5,6 +5,7 @@ namespace STS2RitsuLib.Settings
     internal enum ModSettingsMirrorSource
     {
         BaseLib,
+        BaseLibToRitsuGenerated,
         ModConfig,
         RuntimeInterop,
     }
@@ -124,6 +125,7 @@ namespace STS2RitsuLib.Settings
                     token.Equals("*", StringComparison.OrdinalIgnoreCase))
                 {
                     result.Add(ModSettingsMirrorSource.BaseLib);
+                    result.Add(ModSettingsMirrorSource.BaseLibToRitsuGenerated);
                     result.Add(ModSettingsMirrorSource.ModConfig);
                     result.Add(ModSettingsMirrorSource.RuntimeInterop);
                     continue;
@@ -156,6 +158,16 @@ namespace STS2RitsuLib.Settings
                 token.Equals("base-lib", StringComparison.OrdinalIgnoreCase))
             {
                 source = ModSettingsMirrorSource.BaseLib;
+                return true;
+            }
+
+            if (token.Equals("generated", StringComparison.OrdinalIgnoreCase) ||
+                token.Equals("baselibtoritsugenerated", StringComparison.OrdinalIgnoreCase) ||
+                token.Equals("base_lib_to_ritsu_generated", StringComparison.OrdinalIgnoreCase) ||
+                token.Equals("base-lib-to-ritsu-generated", StringComparison.OrdinalIgnoreCase) ||
+                token.Equals("baselib-generated", StringComparison.OrdinalIgnoreCase))
+            {
+                source = ModSettingsMirrorSource.BaseLibToRitsuGenerated;
                 return true;
             }
 

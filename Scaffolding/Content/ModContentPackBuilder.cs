@@ -682,6 +682,52 @@ namespace STS2RitsuLib.Scaffolding.Content
         }
 
         /// <summary>
+        ///     Queues <see cref="ModTimelineLayoutRegistry.RegisterAutoTimelineSlotInEraColumn" />.
+        /// </summary>
+        public ModContentPackBuilder ModEpochAutoTimelineSlotInColumn<TEpoch>(EpochEra anchorEra)
+            where TEpoch : ModEpochTemplate
+        {
+            return AddStep(ctx =>
+                ModTimelineLayoutRegistry.RegisterAutoTimelineSlotInEraColumn(typeof(TEpoch), anchorEra, ctx.ModId));
+        }
+
+        /// <summary>
+        ///     Queues <see cref="ModTimelineLayoutRegistry.RegisterAutoTimelineSlotBeforeEpochColumn" />.
+        /// </summary>
+        public ModContentPackBuilder ModEpochAutoTimelineSlotBeforeEpochColumn<TEpoch, TReferenceEpoch>()
+            where TEpoch : ModEpochTemplate
+            where TReferenceEpoch : EpochModel, new()
+        {
+            return AddStep(ctx =>
+                ModTimelineLayoutRegistry.RegisterAutoTimelineSlotBeforeEpochColumn(typeof(TEpoch),
+                    typeof(TReferenceEpoch), ctx.ModId));
+        }
+
+        /// <summary>
+        ///     Queues <see cref="ModTimelineLayoutRegistry.RegisterAutoTimelineSlotAfterEpochColumn" />.
+        /// </summary>
+        public ModContentPackBuilder ModEpochAutoTimelineSlotAfterEpochColumn<TEpoch, TReferenceEpoch>()
+            where TEpoch : ModEpochTemplate
+            where TReferenceEpoch : EpochModel, new()
+        {
+            return AddStep(ctx =>
+                ModTimelineLayoutRegistry.RegisterAutoTimelineSlotAfterEpochColumn(typeof(TEpoch),
+                    typeof(TReferenceEpoch), ctx.ModId));
+        }
+
+        /// <summary>
+        ///     Queues <see cref="ModTimelineLayoutRegistry.RegisterAutoTimelineSlotInEpochColumn" />.
+        /// </summary>
+        public ModContentPackBuilder ModEpochAutoTimelineSlotInEpochColumn<TEpoch, TReferenceEpoch>()
+            where TEpoch : ModEpochTemplate
+            where TReferenceEpoch : EpochModel, new()
+        {
+            return AddStep(ctx =>
+                ModTimelineLayoutRegistry.RegisterAutoTimelineSlotInEpochColumn(typeof(TEpoch),
+                    typeof(TReferenceEpoch), ctx.ModId));
+        }
+
+        /// <summary>
         ///     Queues <see cref="TimelineColumnPackEntry{TStory}" /> — one fluent block for column order + per-epoch unlock
         ///     bindings (recommended over many separate pack entry types).
         /// </summary>
@@ -1025,16 +1071,24 @@ namespace STS2RitsuLib.Scaffolding.Content
         }
 
         /// <summary>
-        ///     Builds context, runs all queued registration steps, and returns the context.
+        ///     Schedules all queued registration steps to apply during the framework discovery window and returns the
+        ///     materialized context for this mod id.
         /// </summary>
         public ModContentPackContext Apply()
         {
             var context = BuildContext();
-            foreach (var step in _steps)
-                step(context);
+            var steps = _steps.ToArray();
+            RitsuLibFramework.EnqueueDeferredContentPack(
+                _modId,
+                ctx =>
+                {
+                    foreach (var step in steps)
+                        step(ctx);
 
-            RitsuLibFramework.CreateLogger(_modId)
-                .Info($"[ContentPack] Applied {_steps.Count} registration step(s).");
+                    RitsuLibFramework.CreateLogger(_modId)
+                        .Info($"[ContentPack] Applied {steps.Length} deferred registration step(s).");
+                },
+                $"{_modId}:{steps.Length} step(s)");
             return context;
         }
 

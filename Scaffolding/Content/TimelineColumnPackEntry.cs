@@ -215,6 +215,18 @@ namespace STS2RitsuLib.Scaffolding.Content
         }
 
         /// <summary>
+        ///     Reserves a slot in the same era column as <paramref name="anchorEra" />, using the first free position in
+        ///     that column.
+        /// </summary>
+        public EpochSlotBuilder<TEpoch> AutoTimelineSlotInColumn(EpochEra anchorEra)
+        {
+            var modId = _context.ModId;
+            _layoutRegistration = () =>
+                ModTimelineLayoutRegistry.RegisterAutoTimelineSlotInEraColumn(typeof(TEpoch), anchorEra, modId);
+            return this;
+        }
+
+        /// <summary>
         ///     Reserves a slot in the same era column as <typeparamref name="TReferenceEpoch" />, using the first free
         ///     position in that column.
         /// </summary>

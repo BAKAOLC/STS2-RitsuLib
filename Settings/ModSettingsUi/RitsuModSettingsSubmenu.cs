@@ -420,9 +420,7 @@ namespace STS2RitsuLib.Settings
 
             _selectedPageId = pageId;
             _selectedSectionId = null;
-            ModSettingsBaseLibReflectionMirror.TryRegisterMirroredPages();
-            ModSettingsModConfigReflectionMirror.TryRegisterMirroredPages();
-            ModSettingsRuntimeReflectionInteropMirror.TryRegisterMirroredPages();
+            ModSettingsMirrorRegistrarBootstrap.TryRegisterMirroredPages();
             Rebuild();
         }
 
@@ -450,9 +448,7 @@ namespace STS2RitsuLib.Settings
             var pageChanged = !string.Equals(_selectedPageId, pageId, StringComparison.OrdinalIgnoreCase);
             _selectedPageId = pageId;
             _selectedSectionId = sectionId;
-            ModSettingsBaseLibReflectionMirror.TryRegisterMirroredPages();
-            ModSettingsModConfigReflectionMirror.TryRegisterMirroredPages();
-            ModSettingsRuntimeReflectionInteropMirror.TryRegisterMirroredPages();
+            ModSettingsMirrorRegistrarBootstrap.TryRegisterMirroredPages();
             if (pageChanged)
                 Rebuild();
             else
@@ -881,9 +877,7 @@ namespace STS2RitsuLib.Settings
 
         private void Rebuild()
         {
-            ModSettingsBaseLibReflectionMirror.TryRegisterMirroredPages();
-            ModSettingsModConfigReflectionMirror.TryRegisterMirroredPages();
-            ModSettingsRuntimeReflectionInteropMirror.TryRegisterMirroredPages();
+            ModSettingsMirrorRegistrarBootstrap.TryRegisterMirroredPages();
             ApplyStaticTexts();
             RebuildSidebar();
             RebuildContent(true);
