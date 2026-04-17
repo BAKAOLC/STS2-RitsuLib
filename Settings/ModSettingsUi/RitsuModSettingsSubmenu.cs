@@ -19,7 +19,6 @@ namespace STS2RitsuLib.Settings
     {
         private const float SidebarWidth = 324f;
         private const double AutosaveDelaySeconds = 0.35;
-        private const int ScrollContentRightGutter = 12;
 
         private static readonly StringName PaneSidebarHotkey = MegaInput.viewDeckAndTabLeft;
         private static readonly StringName PaneContentHotkey = MegaInput.viewExhaustPileAndTabRight;
@@ -67,12 +66,12 @@ namespace STS2RitsuLib.Settings
         private Timer? _refreshDebounceTimer;
         private TextureRect? _rightPaneHotkeyIcon;
         private double _saveTimer = -1;
-        private ScrollContainer _scrollContainer = null!;
+        private RitsuScrollContainer _scrollContainer = null!;
         private string? _selectedModId;
         private string? _selectedPageId;
         private string? _selectedSectionId;
         private Control _sidebarPanelRoot = null!;
-        private ScrollContainer _sidebarScrollContainer = null!;
+        private RitsuScrollContainer _sidebarScrollContainer = null!;
         private MegaRichTextLabel _subtitleLabel;
         private bool _suppressScrollSync;
         private MegaRichTextLabel _titleLabel;
@@ -99,9 +98,9 @@ namespace STS2RitsuLib.Settings
                 MouseFilter = MouseFilterEnum.Ignore,
             };
             frame.AddThemeConstantOverride("margin_left", 160);
-            frame.AddThemeConstantOverride("margin_top", 72);
-            frame.AddThemeConstantOverride("margin_right", 160);
-            frame.AddThemeConstantOverride("margin_bottom", 72);
+            frame.AddThemeConstantOverride("margin_top", 20);
+            frame.AddThemeConstantOverride("margin_right", 80);
+            frame.AddThemeConstantOverride("margin_bottom", 40);
             AddChild(frame);
 
             var root = new VBoxContainer
@@ -164,7 +163,8 @@ namespace STS2RitsuLib.Settings
             ConnectSignals();
             _updatePaneHotkeyIconsCallable = Callable.From(UpdatePaneHotkeyHintIcons);
             TryConnectPaneHotkeyStyleSignals();
-            _scrollContainer.GetVScrollBar().ValueChanged += OnContentScrollChanged;
+            _scrollContainer.Scrollbar.Connect(Godot.Range.SignalName.ValueChanged,
+                Callable.From<double>(OnContentScrollChanged));
             SubscribeLocaleChanges();
             Rebuild();
             ProcessMode = ProcessModeEnum.Disabled;
@@ -459,7 +459,7 @@ namespace STS2RitsuLib.Settings
                 RebuildContent();
         }
 
-        private Control CreatePaneHotkeyHintRow()
+        private HBoxContainer CreatePaneHotkeyHintRow()
         {
             var row = new HBoxContainer
             {
@@ -510,8 +510,7 @@ namespace STS2RitsuLib.Settings
                     _updatePaneHotkeyIconsCallable);
             }
 
-            if (NInputManager.Instance != null)
-                NInputManager.Instance.Connect(NInputManager.SignalName.InputRebound, _updatePaneHotkeyIconsCallable);
+            NInputManager.Instance?.Connect(NInputManager.SignalName.InputRebound, _updatePaneHotkeyIconsCallable);
 
             _paneHotkeySignalsConnected = true;
         }
@@ -529,8 +528,7 @@ namespace STS2RitsuLib.Settings
                     _updatePaneHotkeyIconsCallable);
             }
 
-            if (NInputManager.Instance != null)
-                NInputManager.Instance.Disconnect(NInputManager.SignalName.InputRebound,
+            NInputManager.Instance?.Disconnect(NInputManager.SignalName.InputRebound,
                     _updatePaneHotkeyIconsCallable);
 
             _paneHotkeySignalsConnected = false;
@@ -688,7 +686,7 @@ namespace STS2RitsuLib.Settings
             return _sidebarFocusChain.FirstOrDefault();
         }
 
-        private Control? ResolveInitialSidebarFocus()
+        private ModSettingsSidebarButton? ResolveInitialSidebarFocus()
         {
             if (_focusSelectedPageButtonOnNextRefresh)
             {
@@ -724,7 +722,7 @@ namespace STS2RitsuLib.Settings
 
         private Control CreateSidebarPanel()
         {
-            var panel = new Panel
+            var panel = new Control
             {
                 Name = "RitsuSidebarPanel",
                 CustomMinimumSize = new(SidebarWidth, 0f),
@@ -732,7 +730,7 @@ namespace STS2RitsuLib.Settings
                 MouseFilter = MouseFilterEnum.Ignore,
             };
             _sidebarPanelRoot = panel;
-            panel.AddThemeStyleboxOverride("panel", CreatePanelStyle(new(0.10f, 0.115f, 0.145f, 0.96f)));
+            // panel.AddThemeStyleboxOverride("panel", CreatePanelStyle(new(0.10f, 0.115f, 0.145f, 0.96f)));
 
             var frame = new MarginContainer
             {
@@ -778,39 +776,28 @@ namespace STS2RitsuLib.Settings
             headerBox.AddChild(ModSettingsUiFactory.CreateInlineDescription(
                 ModSettingsLocalization.Get("sidebar.subtitle", "Browse mods, pages, and sections.")));
 
-            var scroll = new ScrollContainer
+            _sidebarScrollContainer = new RitsuScrollContainer(topPadding: 4, bottomPadding: 4)
             {
                 SizeFlagsHorizontal = SizeFlags.ExpandFill,
                 SizeFlagsVertical = SizeFlags.ExpandFill,
-                HorizontalScrollMode = ScrollContainer.ScrollMode.Disabled,
-                FollowFocus = false,
                 FocusMode = FocusModeEnum.None,
             };
-            _sidebarScrollContainer = scroll;
-            root.AddChild(scroll);
-
-            var sidebarScrollFrame = new MarginContainer
-            {
-                SizeFlagsHorizontal = SizeFlags.ExpandFill,
-                SizeFlagsVertical = SizeFlags.ExpandFill,
-                MouseFilter = MouseFilterEnum.Ignore,
-            };
-            sidebarScrollFrame.AddThemeConstantOverride("margin_right", ScrollContentRightGutter);
-            scroll.AddChild(sidebarScrollFrame);
+            root.AddChild(_sidebarScrollContainer);
 
             _modButtonList = new()
             {
                 SizeFlagsHorizontal = SizeFlags.ExpandFill,
+                SizeFlagsVertical = SizeFlags.ShrinkBegin,
                 MouseFilter = MouseFilterEnum.Ignore,
             };
             _modButtonList.AddThemeConstantOverride("separation", 12);
-            sidebarScrollFrame.AddChild(_modButtonList);
+            _sidebarScrollContainer.AttachContent(_modButtonList);
             return panel;
         }
 
         private Control CreateContentPanel()
         {
-            var panel = new Panel
+            var panel = new Control
             {
                 Name = "RitsuContentPanel",
                 SizeFlagsHorizontal = SizeFlags.ExpandFill,
@@ -818,7 +805,6 @@ namespace STS2RitsuLib.Settings
                 MouseFilter = MouseFilterEnum.Ignore,
             };
             _contentPanelRoot = panel;
-            panel.AddThemeStyleboxOverride("panel", CreatePanelStyle(new(0.08f, 0.095f, 0.125f, 0.98f)));
 
             var frame = new MarginContainer
             {
@@ -849,32 +835,22 @@ namespace STS2RitsuLib.Settings
             _pageTabRow.AddThemeConstantOverride("separation", 8);
             root.AddChild(_pageTabRow);
 
-            _scrollContainer = new()
+            _scrollContainer = new RitsuScrollContainer(topPadding: 0f, bottomPadding: 0f)
             {
                 SizeFlagsHorizontal = SizeFlags.ExpandFill,
                 SizeFlagsVertical = SizeFlags.ExpandFill,
-                HorizontalScrollMode = ScrollContainer.ScrollMode.Disabled,
-                FollowFocus = true,
                 FocusMode = FocusModeEnum.None,
             };
             root.AddChild(_scrollContainer);
 
-            var contentScrollFrame = new MarginContainer
-            {
-                SizeFlagsHorizontal = SizeFlags.ExpandFill,
-                SizeFlagsVertical = SizeFlags.ExpandFill,
-                MouseFilter = MouseFilterEnum.Ignore,
-            };
-            contentScrollFrame.AddThemeConstantOverride("margin_right", ScrollContentRightGutter);
-            _scrollContainer.AddChild(contentScrollFrame);
-
             _contentList = new()
             {
                 SizeFlagsHorizontal = SizeFlags.ExpandFill,
+                SizeFlagsVertical = SizeFlags.ShrinkBegin,
                 MouseFilter = MouseFilterEnum.Ignore,
             };
             _contentList.AddThemeConstantOverride("separation", 8);
-            contentScrollFrame.AddChild(_contentList);
+            _scrollContainer.AttachContent(_contentList);
 
             return panel;
         }
@@ -952,7 +928,7 @@ namespace STS2RitsuLib.Settings
                 card.AddChild(cardContent);
 
                 var button = ModSettingsUiFactory.CreateSidebarButton(
-                    ResolveSidebarModTitle(group.ToArray()),
+                    ResolveSidebarModTitle([.. group]),
                     () =>
                     {
                         _selectedModId = modId;
@@ -1058,7 +1034,7 @@ namespace STS2RitsuLib.Settings
                     _selectedPageId = pageToRender.ParentPageId!;
                     RebuildContent();
                 }
-                : static () => { };
+            : static () => { };
 
             _pageTabRow.Visible = true;
             var pageHeader = ModSettingsUiFactory.CreateModSettingsPageHeaderBar(context, pageToRender, isChildPage,
@@ -1072,7 +1048,7 @@ namespace STS2RitsuLib.Settings
             Callable.From(ScrollToSelectedAnchor).CallDeferred();
         }
 
-        private Control CreateSidebarPageTreeButton(IReadOnlyList<ModSettingsPage> pages, ModSettingsPage page,
+        private VBoxContainer CreateSidebarPageTreeButton(IReadOnlyList<ModSettingsPage> pages, ModSettingsPage page,
             int depth)
         {
             var button = ModSettingsUiFactory.CreateSidebarButton(
@@ -1168,16 +1144,12 @@ namespace STS2RitsuLib.Settings
         private void ScrollToSelectedAnchor()
         {
             _suppressScrollSync = true;
-            if (!string.IsNullOrWhiteSpace(_selectedSectionId))
-                if (_contentList.FindChild($"Section_{_selectedSectionId}", true, false) is Control target)
-                {
-                    _scrollContainer.ScrollVertical = Mathf.RoundToInt(target.GlobalPosition.Y -
-                        _scrollContainer.GlobalPosition.Y + _scrollContainer.ScrollVertical - 12f);
-                    Callable.From(() => _suppressScrollSync = false).CallDeferred();
-                    return;
-                }
+            if (!string.IsNullOrWhiteSpace(_selectedSectionId)
+                && _contentList.FindChild($"Section_{_selectedSectionId}", true, false) is Control target)
+                _scrollContainer.ScrollTo(target, skipAnimation: false);
+            else
+                _scrollContainer.InstantlyScrollToTop();
 
-            _scrollContainer.ScrollVertical = 0;
             Callable.From(() => _suppressScrollSync = false).CallDeferred();
         }
 
@@ -1256,17 +1228,17 @@ namespace STS2RitsuLib.Settings
                     IsInstanceValid(owner) && IsAncestorOf(owner):
                     return;
                 case true:
-                {
-                    _contentOnlyRebuildNeedsContentFocus = false;
-                    var contentTarget = ResolveContentFocusTargetForSection();
-                    if (contentTarget != null && contentTarget.IsVisibleInTree())
                     {
-                        GrabControlDeferred(contentTarget);
-                        return;
-                    }
+                        _contentOnlyRebuildNeedsContentFocus = false;
+                        var contentTarget = ResolveContentFocusTargetForSection();
+                        if (contentTarget != null && contentTarget.IsVisibleInTree())
+                        {
+                            GrabControlDeferred(contentTarget);
+                            return;
+                        }
 
-                    break;
-                }
+                        break;
+                    }
             }
 
             if (IsFocusUnderPopupOrTransientWindow(owner))
