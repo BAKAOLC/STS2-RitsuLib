@@ -24,6 +24,46 @@ namespace STS2RitsuLib.Settings
             };
         }
 
+        /// <summary>
+        ///     Rule above the sidebar mod scroll: same white/subtle language as ModGroup row bottoms, but thicker.
+        /// </summary>
+        public static ColorRect CreateSidebarScrollTopDivider()
+        {
+            var a = ModSettingsUiMetrics.SidebarModListSubtleAlpha;
+            // 2px line: slightly higher alpha than 1px row border so it still reads, without looking heavy.
+            var alpha = Mathf.Clamp(a * 2.15f, 0.052f, 0.10f);
+            return new ColorRect
+            {
+                CustomMinimumSize = new(0f, ModSettingsUiMetrics.SidebarScrollTopDividerHeight),
+                MouseFilter = Control.MouseFilterEnum.Ignore,
+                Color = new Color(1f, 1f, 1f, alpha),
+            };
+        }
+
+        /// <summary>
+        ///     Flat rectangular tag behind the mod version (reference: stencil / inventory label).
+        /// </summary>
+        internal static StyleBoxFlat CreateSidebarModVersionBadgeStyle()
+        {
+            return new()
+            {
+                BgColor = new Color(0.14f, 0.15f, 0.17f, 0.78f),
+                BorderColor = Colors.Transparent,
+                BorderWidthLeft = 0,
+                BorderWidthTop = 0,
+                BorderWidthRight = 0,
+                BorderWidthBottom = 0,
+                CornerRadiusTopLeft = 0,
+                CornerRadiusTopRight = 0,
+                CornerRadiusBottomRight = 0,
+                CornerRadiusBottomLeft = 0,
+                ContentMarginLeft = 6,
+                ContentMarginTop = 3,
+                ContentMarginRight = 6,
+                ContentMarginBottom = 3,
+            };
+        }
+
         private static MarginContainer CreateSettingLine<TValue>(ModSettingsUiContext context,
             Func<string> labelProvider,
             Func<string> descriptionBodyProvider, Control valueControl, IModSettingsValueBinding<TValue> binding)
@@ -561,17 +601,84 @@ namespace STS2RitsuLib.Settings
             return label;
         }
 
-        private static MegaRichTextLabel CreatePageToolbarTitleLabel(string primaryTitle, string fallbackId)
+        /// <summary>
+        ///     Large left-aligned page title (uppercase), vanilla-style header line.
+        /// </summary>
+        private static MegaRichTextLabel CreatePageMainTitleLabel(string primaryTitle, string fallbackId)
         {
             var text = !string.IsNullOrWhiteSpace(primaryTitle)
                 ? primaryTitle
                 : !string.IsNullOrWhiteSpace(fallbackId)
                     ? fallbackId
                     : ModSettingsLocalization.Get("page.untitled", "Untitled");
-            var label = CreateHeaderLabel(text, 24, HorizontalAlignment.Center, null,
-                ModSettingsUiPalette.RichTextTitle);
+            var upper = text.ToUpperInvariant();
+            var label = CreateHeaderLabel(upper, 28, HorizontalAlignment.Left, null, ModSettingsUiPalette.RichTextTitle);
+            label.AddThemeFontOverride("normal_font", ModSettingsUiResources.KreonBold);
+            label.AddThemeFontOverride("bold_font", ModSettingsUiResources.KreonBold);
+            label.AddThemeFontSizeOverride("normal_font_size", 28);
+            label.AddThemeFontSizeOverride("bold_font_size", 28);
+            label.AddThemeFontSizeOverride("italics_font_size", 28);
+            label.AddThemeFontSizeOverride("bold_italics_font_size", 28);
+            label.AddThemeFontSizeOverride("mono_font_size", 28);
+            label.MinFontSize = 18;
+            label.MaxFontSize = 28;
+            // FitContent + narrow column can collapse width; fill row and disable wrap for one-line title.
+            label.FitContent = false;
+            label.AutowrapMode = TextServer.AutowrapMode.Off;
             label.SizeFlagsHorizontal = Control.SizeFlags.ExpandFill;
-            label.CustomMinimumSize = new(0f, 30f);
+            label.SizeFlagsStretchRatio = 1f;
+            label.CustomMinimumSize = new(0f, 36f);
+            return label;
+        }
+
+        private static string EscapeBbcodeUserText(string? s)
+        {
+            if (string.IsNullOrEmpty(s))
+                return string.Empty;
+            return s.Replace("[", "[lb]");
+        }
+
+        /// <summary>
+        ///     Content page header: mod name + current page (breadcrumb row).
+        /// </summary>
+        private static string BuildPageBreadcrumbBbcode(ModSettingsPage page)
+        {
+            var mod = EscapeBbcodeUserText(ModSettingsLocalization.ResolveModName(page.ModId, page.ModId));
+            var pageName = EscapeBbcodeUserText(ModSettingsLocalization.ResolvePageDisplayName(page));
+            const string sep = "[color=#4a5058] // [/color]";
+            const string muted = "#7a8088";
+            const string accentHex = "#ea9104";
+            return $"[font_size=12][color={muted}]{mod}[/color]{sep}[color={accentHex}]{pageName}[/color][/font_size]";
+        }
+
+        private static MegaRichTextLabel CreateRefreshableBreadcrumbLabel(ModSettingsUiContext context,
+            ModSettingsPage page)
+        {
+            var label = new MegaRichTextLabel
+            {
+                BbcodeEnabled = true,
+                AutoSizeEnabled = false,
+                FitContent = true,
+                ScrollActive = false,
+                ClipContents = false,
+                FocusMode = Control.FocusModeEnum.None,
+                MouseFilter = Control.MouseFilterEnum.Ignore,
+                VerticalAlignment = VerticalAlignment.Center,
+                HorizontalAlignment = HorizontalAlignment.Left,
+                Theme = ModSettingsUiResources.SettingsLineTheme,
+                IsHorizontallyBound = true,
+            };
+            label.AddThemeFontOverride("normal_font", ModSettingsUiResources.KreonBold);
+            label.AddThemeFontOverride("bold_font", ModSettingsUiResources.KreonBold);
+            label.AddThemeFontSizeOverride("normal_font_size", 12);
+            label.AddThemeFontSizeOverride("bold_font_size", 12);
+            label.AddThemeFontSizeOverride("italics_font_size", 12);
+            label.AddThemeFontSizeOverride("bold_italics_font_size", 12);
+            label.AddThemeFontSizeOverride("mono_font_size", 12);
+            label.MinFontSize = 10;
+            label.MaxFontSize = 12;
+            label.SetTextAutoSize(BuildPageBreadcrumbBbcode(page));
+            RegisterRefreshWhenAlive(context, label, () => label.SetTextAutoSize(BuildPageBreadcrumbBbcode(page)));
             return label;
         }
 
@@ -814,6 +921,30 @@ namespace STS2RitsuLib.Settings
             };
         }
 
+        /// <summary>
+        ///     Sidebar mod cover: square clip, no border (image or placeholder draws edge-to-edge).
+        /// </summary>
+        internal static StyleBoxFlat CreateModSidebarPreviewFrameStyle()
+        {
+            return new()
+            {
+                BgColor = Colors.Transparent,
+                BorderColor = Colors.Transparent,
+                BorderWidthLeft = 0,
+                BorderWidthTop = 0,
+                BorderWidthRight = 0,
+                BorderWidthBottom = 0,
+                CornerRadiusTopLeft = ModSettingsUiMetrics.CornerRadius,
+                CornerRadiusTopRight = ModSettingsUiMetrics.CornerRadius,
+                CornerRadiusBottomRight = ModSettingsUiMetrics.CornerRadius,
+                CornerRadiusBottomLeft = ModSettingsUiMetrics.CornerRadius,
+                ContentMarginLeft = 0,
+                ContentMarginTop = 0,
+                ContentMarginRight = 0,
+                ContentMarginBottom = 0,
+            };
+        }
+
         internal static StyleBoxFlat CreateChromeActionsMenuStyle(bool highlighted)
         {
             return new()
@@ -839,24 +970,28 @@ namespace STS2RitsuLib.Settings
             };
         }
 
-        internal static StyleBoxFlat CreatePageToolbarTrayStyle()
+        /// <summary>
+        ///     Vanilla-style page header: no panel fill; single bottom hairline separator.
+        /// </summary>
+        internal static StyleBoxFlat CreatePageHeaderTrayStyle()
         {
             return new()
             {
-                BgColor = new(0.055f, 0.068f, 0.09f, 0.88f),
-                BorderColor = new(0.28f, 0.42f, 0.54f, 0.32f),
-                BorderWidthLeft = 1,
-                BorderWidthTop = 1,
-                BorderWidthRight = 1,
+                BgColor = Colors.Transparent,
+                BorderColor = new Color(0.42f, 0.46f, 0.52f, 0.55f),
+                BorderWidthLeft = 0,
+                BorderWidthTop = 0,
+                BorderWidthRight = 0,
                 BorderWidthBottom = 1,
-                CornerRadiusTopLeft = ModSettingsUiMetrics.CornerRadius,
-                CornerRadiusTopRight = ModSettingsUiMetrics.CornerRadius,
-                CornerRadiusBottomRight = ModSettingsUiMetrics.CornerRadius,
-                CornerRadiusBottomLeft = ModSettingsUiMetrics.CornerRadius,
-                ContentMarginLeft = 10,
+                CornerRadiusTopLeft = 0,
+                CornerRadiusTopRight = 0,
+                CornerRadiusBottomRight = 0,
+                CornerRadiusBottomLeft = 0,
+                ShadowSize = 0,
+                ContentMarginLeft = 4,
                 ContentMarginTop = 8,
-                ContentMarginRight = 10,
-                ContentMarginBottom = 8,
+                ContentMarginRight = 4,
+                ContentMarginBottom = 12,
             };
         }
 
@@ -890,23 +1025,23 @@ namespace STS2RitsuLib.Settings
                 MouseFilter = Control.MouseFilterEnum.Ignore,
                 ClipContents = false,
             };
-            tray.AddThemeStyleboxOverride("panel", CreatePageToolbarTrayStyle());
+            tray.AddThemeStyleboxOverride("panel", CreatePageHeaderTrayStyle());
 
-            var row = new HBoxContainer
+            var column = new VBoxContainer
+            {
+                SizeFlagsHorizontal = Control.SizeFlags.ExpandFill,
+                MouseFilter = Control.MouseFilterEnum.Ignore,
+            };
+            column.AddThemeConstantOverride("separation", 6);
+
+            var crumbRow = new HBoxContainer
             {
                 SizeFlagsHorizontal = Control.SizeFlags.ExpandFill,
                 MouseFilter = Control.MouseFilterEnum.Ignore,
                 Alignment = BoxContainer.AlignmentMode.Center,
             };
-            row.AddThemeConstantOverride("separation", 10);
+            crumbRow.AddThemeConstantOverride("separation", 10);
 
-            var left = new HBoxContainer
-            {
-                CustomMinimumSize = new(sideSlotMin, 44f),
-                SizeFlagsHorizontal = Control.SizeFlags.ShrinkBegin,
-                MouseFilter = Control.MouseFilterEnum.Ignore,
-                Alignment = BoxContainer.AlignmentMode.Begin,
-            };
             if (showBack)
             {
                 var back = new ModSettingsMiniButton(ModSettingsLocalization.Get("button.back", "Back"), onBack)
@@ -914,32 +1049,23 @@ namespace STS2RitsuLib.Settings
                     SizeFlagsVertical = Control.SizeFlags.ShrinkCenter,
                     CustomMinimumSize = new(88f, 38f),
                 };
-                left.AddChild(back);
+                crumbRow.AddChild(back);
             }
 
-            var center = new VBoxContainer
+            var breadcrumb = CreateRefreshableBreadcrumbLabel(context, page);
+            breadcrumb.SizeFlagsHorizontal = Control.SizeFlags.ExpandFill;
+            crumbRow.AddChild(breadcrumb);
+
+            var titleRow = new HBoxContainer
             {
                 SizeFlagsHorizontal = Control.SizeFlags.ExpandFill,
                 MouseFilter = Control.MouseFilterEnum.Ignore,
                 Alignment = BoxContainer.AlignmentMode.Center,
             };
-            center.AddThemeConstantOverride("separation", 5);
+            titleRow.AddThemeConstantOverride("separation", 10);
 
-            var titleLabel = CreatePageToolbarTitleLabel(pageTitle, page.Id);
-            center.AddChild(titleLabel);
-
-            var pageDescription = CreateRefreshableDescriptionLabel(context,
-                () => ModSettingsUiContext.ResolvePageDescription(page) ?? string.Empty);
-            pageDescription.HorizontalAlignment = HorizontalAlignment.Center;
-            pageDescription.AddThemeFontSizeOverride("normal_font_size", 18);
-            pageDescription.AddThemeFontSizeOverride("bold_font_size", 18);
-            pageDescription.AddThemeFontSizeOverride("italics_font_size", 18);
-            pageDescription.AddThemeFontSizeOverride("bold_italics_font_size", 18);
-            pageDescription.AddThemeFontSizeOverride("mono_font_size", 18);
-            pageDescription.MinFontSize = 16;
-            pageDescription.MaxFontSize = 18;
-            pageDescription.Modulate = ModSettingsUiPalette.RichTextSecondary;
-            center.AddChild(pageDescription);
+            var titleLabel = CreatePageMainTitleLabel(pageTitle, page.Id);
+            titleLabel.SizeFlagsVertical = Control.SizeFlags.ShrinkCenter;
 
             var right = new HBoxContainer
             {
@@ -951,10 +1077,25 @@ namespace STS2RitsuLib.Settings
             if (trailingMenu != null)
                 right.AddChild(trailingMenu);
 
-            row.AddChild(left);
-            row.AddChild(center);
-            row.AddChild(right);
-            tray.AddChild(row);
+            titleRow.AddChild(titleLabel);
+            titleRow.AddChild(right);
+
+            var pageDescription = CreateRefreshableDescriptionLabel(context,
+                () => ModSettingsUiContext.ResolvePageDescription(page) ?? string.Empty);
+            pageDescription.HorizontalAlignment = HorizontalAlignment.Left;
+            pageDescription.AddThemeFontSizeOverride("normal_font_size", 16);
+            pageDescription.AddThemeFontSizeOverride("bold_font_size", 16);
+            pageDescription.AddThemeFontSizeOverride("italics_font_size", 16);
+            pageDescription.AddThemeFontSizeOverride("bold_italics_font_size", 16);
+            pageDescription.AddThemeFontSizeOverride("mono_font_size", 16);
+            pageDescription.MinFontSize = 14;
+            pageDescription.MaxFontSize = 16;
+            pageDescription.Modulate = ModSettingsUiPalette.RichTextMuted;
+
+            column.AddChild(crumbRow);
+            column.AddChild(titleRow);
+            column.AddChild(pageDescription);
+            tray.AddChild(column);
             return tray;
         }
 
