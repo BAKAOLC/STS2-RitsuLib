@@ -400,139 +400,140 @@ namespace STS2RitsuLib.Scaffolding.Characters
             return merged;
         }
 
-        extension(CharacterAssetProfile profile)
+        /// <summary>
+        ///     Merges <paramref name="fallback" /> into <paramref name="profile" /> for any null component or field.
+        /// </summary>
+        public static CharacterAssetProfile FillMissingFrom(this CharacterAssetProfile profile,
+            CharacterAssetProfile fallback)
         {
-            /// <summary>
-            ///     Merges <paramref name="fallback" /> into <paramref name="profile" /> for any null component or field.
-            /// </summary>
-            public CharacterAssetProfile FillMissingFrom(CharacterAssetProfile fallback)
-            {
-                ArgumentNullException.ThrowIfNull(profile);
-                ArgumentNullException.ThrowIfNull(fallback);
-                return Merge(fallback, profile);
-            }
+            ArgumentNullException.ThrowIfNull(profile);
+            ArgumentNullException.ThrowIfNull(fallback);
+            return Merge(fallback, profile);
+        }
 
-            /// <summary>
-            ///     Fills missing entries using <see cref="FromCharacterId" />.
-            /// </summary>
-            public CharacterAssetProfile WithPlaceholder(string characterId)
-            {
-                ArgumentNullException.ThrowIfNull(profile);
-                return profile.FillMissingFrom(FromCharacterId(characterId));
-            }
+        /// <summary>
+        ///     Fills missing entries using <see cref="FromCharacterId" />.
+        /// </summary>
+        public static CharacterAssetProfile WithPlaceholder(this CharacterAssetProfile profile, string characterId)
+        {
+            ArgumentNullException.ThrowIfNull(profile);
+            return profile.FillMissingFrom(FromCharacterId(characterId));
+        }
 
-            /// <summary>
-            ///     Returns a copy with <see cref="CharacterAssetProfile.Scenes" /> replaced.
-            /// </summary>
-            public CharacterAssetProfile WithScenes(CharacterSceneAssetSet scenes)
-            {
-                ArgumentNullException.ThrowIfNull(profile);
-                ArgumentNullException.ThrowIfNull(scenes);
-                return profile with { Scenes = scenes };
-            }
+        /// <summary>
+        ///     Returns a copy with <see cref="CharacterAssetProfile.Scenes" /> replaced.
+        /// </summary>
+        public static CharacterAssetProfile WithScenes(this CharacterAssetProfile profile,
+            CharacterSceneAssetSet scenes)
+        {
+            ArgumentNullException.ThrowIfNull(profile);
+            ArgumentNullException.ThrowIfNull(scenes);
+            return profile with { Scenes = scenes };
+        }
 
-            /// <summary>
-            ///     Returns a copy with <see cref="CharacterAssetProfile.Ui" /> replaced.
-            /// </summary>
-            public CharacterAssetProfile WithUi(CharacterUiAssetSet ui)
-            {
-                ArgumentNullException.ThrowIfNull(profile);
-                ArgumentNullException.ThrowIfNull(ui);
-                return profile with { Ui = ui };
-            }
+        /// <summary>
+        ///     Returns a copy with <see cref="CharacterAssetProfile.Ui" /> replaced.
+        /// </summary>
+        public static CharacterAssetProfile WithUi(this CharacterAssetProfile profile, CharacterUiAssetSet ui)
+        {
+            ArgumentNullException.ThrowIfNull(profile);
+            ArgumentNullException.ThrowIfNull(ui);
+            return profile with { Ui = ui };
+        }
 
-            /// <summary>
-            ///     Returns a copy with <see cref="CharacterAssetProfile.Vfx" /> replaced.
-            /// </summary>
-            public CharacterAssetProfile WithVfx(CharacterVfxAssetSet vfx)
-            {
-                ArgumentNullException.ThrowIfNull(profile);
-                ArgumentNullException.ThrowIfNull(vfx);
-                return profile with { Vfx = vfx };
-            }
+        /// <summary>
+        ///     Returns a copy with <see cref="CharacterAssetProfile.Vfx" /> replaced.
+        /// </summary>
+        public static CharacterAssetProfile WithVfx(this CharacterAssetProfile profile, CharacterVfxAssetSet vfx)
+        {
+            ArgumentNullException.ThrowIfNull(profile);
+            ArgumentNullException.ThrowIfNull(vfx);
+            return profile with { Vfx = vfx };
+        }
 
-            /// <summary>
-            ///     Returns a copy with <see cref="CharacterAssetProfile.Spine" /> replaced.
-            /// </summary>
-            public CharacterAssetProfile WithSpine(CharacterSpineAssetSet spine)
-            {
-                ArgumentNullException.ThrowIfNull(profile);
-                ArgumentNullException.ThrowIfNull(spine);
-                return profile with { Spine = spine };
-            }
+        /// <summary>
+        ///     Returns a copy with <see cref="CharacterAssetProfile.Spine" /> replaced.
+        /// </summary>
+        public static CharacterAssetProfile WithSpine(this CharacterAssetProfile profile, CharacterSpineAssetSet spine)
+        {
+            ArgumentNullException.ThrowIfNull(profile);
+            ArgumentNullException.ThrowIfNull(spine);
+            return profile with { Spine = spine };
+        }
 
-            /// <summary>
-            ///     Returns a copy with <see cref="CharacterAssetProfile.Audio" /> replaced.
-            /// </summary>
-            public CharacterAssetProfile WithAudio(CharacterAudioAssetSet audio)
-            {
-                ArgumentNullException.ThrowIfNull(profile);
-                ArgumentNullException.ThrowIfNull(audio);
-                return profile with { Audio = audio };
-            }
+        /// <summary>
+        ///     Returns a copy with <see cref="CharacterAssetProfile.Audio" /> replaced.
+        /// </summary>
+        public static CharacterAssetProfile WithAudio(this CharacterAssetProfile profile, CharacterAudioAssetSet audio)
+        {
+            ArgumentNullException.ThrowIfNull(profile);
+            ArgumentNullException.ThrowIfNull(audio);
+            return profile with { Audio = audio };
+        }
 
-            /// <summary>
-            ///     Returns a copy with <see cref="CharacterAssetProfile.Multiplayer" /> replaced.
-            /// </summary>
-            public CharacterAssetProfile WithMultiplayer(CharacterMultiplayerAssetSet multiplayer)
-            {
-                ArgumentNullException.ThrowIfNull(profile);
-                ArgumentNullException.ThrowIfNull(multiplayer);
-                return profile with { Multiplayer = multiplayer };
-            }
+        /// <summary>
+        ///     Returns a copy with <see cref="CharacterAssetProfile.Multiplayer" /> replaced.
+        /// </summary>
+        public static CharacterAssetProfile WithMultiplayer(this CharacterAssetProfile profile,
+            CharacterMultiplayerAssetSet multiplayer)
+        {
+            ArgumentNullException.ThrowIfNull(profile);
+            ArgumentNullException.ThrowIfNull(multiplayer);
+            return profile with { Multiplayer = multiplayer };
+        }
 
-            /// <summary>
-            ///     Returns a copy with <see cref="CharacterAssetProfile.VisualCues" /> replaced.
-            /// </summary>
-            public CharacterAssetProfile WithVisualCues(VisualCueSet visualCues)
-            {
-                ArgumentNullException.ThrowIfNull(profile);
-                ArgumentNullException.ThrowIfNull(visualCues);
-                return profile with { VisualCues = visualCues };
-            }
+        /// <summary>
+        ///     Returns a copy with <see cref="CharacterAssetProfile.VisualCues" /> replaced.
+        /// </summary>
+        public static CharacterAssetProfile WithVisualCues(this CharacterAssetProfile profile, VisualCueSet visualCues)
+        {
+            ArgumentNullException.ThrowIfNull(profile);
+            ArgumentNullException.ThrowIfNull(visualCues);
+            return profile with { VisualCues = visualCues };
+        }
 
-            /// <summary>
-            ///     Returns a copy with <see cref="CharacterAssetProfile.WorldProceduralVisuals" /> replaced.
-            /// </summary>
-            public CharacterAssetProfile WithWorldProceduralVisuals(CharacterWorldProceduralVisualSet worldVisuals)
-            {
-                ArgumentNullException.ThrowIfNull(profile);
-                ArgumentNullException.ThrowIfNull(worldVisuals);
-                return profile with { WorldProceduralVisuals = worldVisuals };
-            }
+        /// <summary>
+        ///     Returns a copy with <see cref="CharacterAssetProfile.WorldProceduralVisuals" /> replaced.
+        /// </summary>
+        public static CharacterAssetProfile WithWorldProceduralVisuals(this CharacterAssetProfile profile,
+            CharacterWorldProceduralVisualSet worldVisuals)
+        {
+            ArgumentNullException.ThrowIfNull(profile);
+            ArgumentNullException.ThrowIfNull(worldVisuals);
+            return profile with { WorldProceduralVisuals = worldVisuals };
+        }
 
-            /// <summary>
-            ///     Returns a copy with <see cref="CharacterAssetProfile.VanillaRelicVisualOverrides" /> replaced.
-            /// </summary>
-            public CharacterAssetProfile WithVanillaRelicVisualOverrides(
-                CharacterVanillaRelicVisualOverride[] vanillaRelicVisualOverrides)
-            {
-                ArgumentNullException.ThrowIfNull(profile);
-                ArgumentNullException.ThrowIfNull(vanillaRelicVisualOverrides);
-                return profile with { VanillaRelicVisualOverrides = vanillaRelicVisualOverrides };
-            }
+        /// <summary>
+        ///     Returns a copy with <see cref="CharacterAssetProfile.VanillaRelicVisualOverrides" /> replaced.
+        /// </summary>
+        public static CharacterAssetProfile WithVanillaRelicVisualOverrides(this CharacterAssetProfile profile,
+            CharacterVanillaRelicVisualOverride[] vanillaRelicVisualOverrides)
+        {
+            ArgumentNullException.ThrowIfNull(profile);
+            ArgumentNullException.ThrowIfNull(vanillaRelicVisualOverrides);
+            return profile with { VanillaRelicVisualOverrides = vanillaRelicVisualOverrides };
+        }
 
-            /// <summary>
-            ///     Returns a copy with <see cref="CharacterAssetProfile.VanillaPotionVisualOverrides" /> replaced.
-            /// </summary>
-            public CharacterAssetProfile WithVanillaPotionVisualOverrides(
-                CharacterVanillaPotionVisualOverride[] vanillaPotionVisualOverrides)
-            {
-                ArgumentNullException.ThrowIfNull(profile);
-                ArgumentNullException.ThrowIfNull(vanillaPotionVisualOverrides);
-                return profile with { VanillaPotionVisualOverrides = vanillaPotionVisualOverrides };
-            }
+        /// <summary>
+        ///     Returns a copy with <see cref="CharacterAssetProfile.VanillaPotionVisualOverrides" /> replaced.
+        /// </summary>
+        public static CharacterAssetProfile WithVanillaPotionVisualOverrides(this CharacterAssetProfile profile,
+            CharacterVanillaPotionVisualOverride[] vanillaPotionVisualOverrides)
+        {
+            ArgumentNullException.ThrowIfNull(profile);
+            ArgumentNullException.ThrowIfNull(vanillaPotionVisualOverrides);
+            return profile with { VanillaPotionVisualOverrides = vanillaPotionVisualOverrides };
+        }
 
-            /// <summary>
-            ///     Returns a copy with <see cref="CharacterAssetProfile.VanillaCardVisualOverrides" /> replaced.
-            /// </summary>
-            public CharacterAssetProfile WithVanillaCardVisualOverrides(
-                CharacterVanillaCardVisualOverride[] vanillaCardVisualOverrides)
-            {
-                ArgumentNullException.ThrowIfNull(profile);
-                ArgumentNullException.ThrowIfNull(vanillaCardVisualOverrides);
-                return profile with { VanillaCardVisualOverrides = vanillaCardVisualOverrides };
-            }
+        /// <summary>
+        ///     Returns a copy with <see cref="CharacterAssetProfile.VanillaCardVisualOverrides" /> replaced.
+        /// </summary>
+        public static CharacterAssetProfile WithVanillaCardVisualOverrides(this CharacterAssetProfile profile,
+            CharacterVanillaCardVisualOverride[] vanillaCardVisualOverrides)
+        {
+            ArgumentNullException.ThrowIfNull(profile);
+            ArgumentNullException.ThrowIfNull(vanillaCardVisualOverrides);
+            return profile with { VanillaCardVisualOverrides = vanillaCardVisualOverrides };
         }
     }
 }
