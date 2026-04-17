@@ -85,9 +85,8 @@ namespace STS2RitsuLib.Settings
         private string? _selectedSectionId;
         private bool _selectionDirty = true;
         private Control _sidebarPanelRoot = null!;
-        private ScrollContainer _sidebarScrollContainer = null!;
-        private bool _sidebarStructureDirty = true;
         private RitsuScrollContainer _sidebarScrollContainer = null!;
+        private bool _sidebarStructureDirty = true;
         private MegaRichTextLabel _subtitleLabel;
         private bool _suppressScrollSync;
         private MegaRichTextLabel _titleLabel;
@@ -886,29 +885,22 @@ namespace STS2RitsuLib.Settings
             _pageTabRow.AddThemeConstantOverride("separation", 8);
             root.AddChild(_pageTabRow);
 
-            _scrollContainer = new RitsuScrollContainer(topPadding: 0f, bottomPadding: 0f)
+            // Stack scroll + build overlay in one rect (overlay draws above scroll; only AttachContent may feed RitsuScrollContainer).
+            var contentArea = new Control
             {
+                Name = "RitsuContentArea",
                 SizeFlagsHorizontal = SizeFlags.ExpandFill,
                 SizeFlagsVertical = SizeFlags.ExpandFill,
+                MouseFilter = MouseFilterEnum.Ignore,
+            };
+            root.AddChild(contentArea);
+
+            _scrollContainer = new RitsuScrollContainer(topPadding: 0f, bottomPadding: 0f)
+            {
                 FocusMode = FocusModeEnum.None,
             };
-            root.AddChild(_scrollContainer);
-
-            var contentStack = new VBoxContainer
-            {
-                SizeFlagsHorizontal = SizeFlags.ExpandFill,
-                MouseFilter = MouseFilterEnum.Ignore,
-            };
-            contentStack.AddThemeConstantOverride("separation", 0);
-            _scrollContainer.AddChild(contentStack);
-
-            var contentScrollFrame = new MarginContainer
-            {
-                SizeFlagsHorizontal = SizeFlags.ExpandFill,
-                MouseFilter = MouseFilterEnum.Ignore,
-            };
-            contentScrollFrame.AddThemeConstantOverride("margin_right", ScrollContentRightGutter);
-            contentStack.AddChild(contentScrollFrame);
+            _scrollContainer.SetAnchorsPreset(LayoutPreset.FullRect);
+            contentArea.AddChild(_scrollContainer);
 
             _contentList = new()
             {
@@ -920,7 +912,8 @@ namespace STS2RitsuLib.Settings
             _scrollContainer.AttachContent(_contentList);
 
             _contentBuildOverlay = CreateContentBuildOverlay();
-            contentStack.AddChild(_contentBuildOverlay);
+            _contentBuildOverlay.SetAnchorsPreset(LayoutPreset.FullRect);
+            contentArea.AddChild(_contentBuildOverlay);
 
             return panel;
         }
@@ -1656,9 +1649,7 @@ namespace STS2RitsuLib.Settings
                 host.AddChild(child);
             }
 
-            host.ResetSize();
-            _contentList.ResetSize();
-            _scrollContainer.QueueSort();
+            // Do not ResetSize hosts — it collapses expand-fill controls to minimum size after async build.
             Callable.From(RefreshContentLayout).CallDeferred();
             stagedContent.QueueFree();
         }
@@ -1758,39 +1749,24 @@ namespace STS2RitsuLib.Settings
             if (!IsInstanceValid(_contentList) || !IsInstanceValid(_scrollContainer))
                 return;
 
-            _contentList.ResetSize();
             _contentList.QueueSort();
-            if (_contentList.GetParent() is Control contentFrame)
+            var depth = 0;
+            for (var n = _contentList.GetParent(); n != null && depth < 16; n = n.GetParent(), depth++)
             {
-                contentFrame.ResetSize();
-                if (contentFrame is Container contentFrameContainer)
-                    contentFrameContainer.QueueSort();
-                if (contentFrame.GetParent() is Control contentStack)
-                {
-                    contentStack.ResetSize();
-                    if (contentStack is Container contentStackContainer)
-                        contentStackContainer.QueueSort();
-                }
+                if (n is Container c)
+                    c.QueueSort();
             }
-
-            _scrollContainer.ResetSize();
-            _scrollContainer.QueueSort();
-            _scrollContainer.ScrollVertical = Mathf.Max(0, _scrollContainer.ScrollVertical);
         }
 
         private void ScrollToSelectedAnchor()
         {
             _suppressScrollSync = true;
-            if (!string.IsNullOrWhiteSpace(_selectedSectionId))
-                if (_contentList.FindChild($"Section_{_selectedSectionId}", true, false) is Control target)
-                {
-                    _scrollContainer.ScrollVertical = Mathf.RoundToInt(target.GlobalPosition.Y -
-                        _scrollContainer.GlobalPosition.Y + _scrollContainer.ScrollVertical - 12f);
-                    Callable.From(() => _suppressScrollSync = false).CallDeferred();
-                    return;
-                }
+            if (!string.IsNullOrWhiteSpace(_selectedSectionId)
+                && _contentList.FindChild($"Section_{_selectedSectionId}", true, false) is Control target)
+                _scrollContainer.ScrollTo(target, skipAnimation: false);
+            else
+                _scrollContainer.InstantlyScrollToTop();
 
-            _scrollContainer.ScrollVertical = 0;
             Callable.From(() => _suppressScrollSync = false).CallDeferred();
         }
 

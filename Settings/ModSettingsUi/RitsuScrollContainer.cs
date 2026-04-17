@@ -370,12 +370,8 @@ public sealed partial class RitsuScrollContainer : Control
 
         const float epsilon = 1f;
 
-        // NNativeScrollableContainer: keep scrollbar visible when scrolled down even if content "fits" by height alone.
         var contentFits = ContentHeight + _paddingTop + _paddingBottom - epsilon <= _clipper.Size.Y;
 
-        // Use logical Y (_targetDragPosY) for fade/chrome, not _content.Position.Y. After ScrollTo/Navigate,
-        // _targetDragPosY jumps immediately while content still lerps; using actual Y keeps the top fade at
-        // "still at top" and blocks the view until lerp catches up.
         var logicalContentY = _paddingTop + _targetDragPosY;
         var scrollIsAtTop = -logicalContentY <= _paddingTop + epsilon;
         var wasVisible = _scrollbar.Visible;
@@ -393,7 +389,6 @@ public sealed partial class RitsuScrollContainer : Control
         if (!showChrome)
             return;
 
-        // Top edge fade: only adjust the top stop alpha (index 4), same as NNativeScrollableContainer.
         var scrollDistanceFromTop = Mathf.Max(0f, _paddingTop - logicalContentY);
         var topAlpha = 1f - Mathf.Clamp(scrollDistanceFromTop / TopFade, 0f, 1f);
         var colors = _maskGradient.Colors;
@@ -401,9 +396,6 @@ public sealed partial class RitsuScrollContainer : Control
         _maskGradient.Colors = colors;
     }
 
-    /// <summary>
-    ///     Rebuilds gradient offsets from container height (NNativeScrollableContainer.OnContainerResized).
-    /// </summary>
     private void RebuildMaskGradientOffsets()
     {
         var actualHeight = Size.Y;
