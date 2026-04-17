@@ -10,9 +10,9 @@ namespace STS2RitsuLib.Scaffolding.Godot.NodeFactories
     internal sealed class RitsuNCreatureVisualsNodeFactory() : RitsuGodotNodeFactory<NCreatureVisuals>([
         new RitsuGodotNodeSlot<Node2D>("%Visuals"),
         new RitsuGodotNodeSlot<Node2D>("%PhobiaModeVisuals"),
-        new RitsuGodotNodeSlot<Control>("%Bounds"),
+        new RitsuGodotNodeSlot<Control>("Bounds", false),
         new RitsuGodotNodeSlot<Marker2D>("%CenterPos"),
-        new RitsuGodotNodeSlot<Marker2D>("%IntentPos"),
+        new RitsuGodotNodeSlot<Marker2D>("IntentPos", false),
         new RitsuGodotNodeSlot<Marker2D>("%OrbPos"),
         new RitsuGodotNodeSlot<Marker2D>("%TalkPos"),
     ])
@@ -51,7 +51,7 @@ namespace STS2RitsuLib.Scaffolding.Godot.NodeFactories
         {
             switch (required.Path)
             {
-                case "%Bounds":
+                case "Bounds":
                 {
                     var bounds = new Control
                     {
@@ -61,7 +61,7 @@ namespace STS2RitsuLib.Scaffolding.Godot.NodeFactories
                     target.AddUniqueChild(bounds, "Bounds");
                     break;
                 }
-                case "%IntentPos":
+                case "IntentPos":
                 {
                     var bounds = target.GetNode<Control>("%Bounds");
                     var intent = new Marker2D();
