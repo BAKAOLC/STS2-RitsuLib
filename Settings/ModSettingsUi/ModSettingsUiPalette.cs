@@ -46,5 +46,10 @@ namespace STS2RitsuLib.Settings
         ///     Accent color used by section labels in the settings sidebar.
         /// </summary>
         public static readonly Color SidebarSection = new(0.88f, 0.855f, 0.795f);
+
+        /// <summary>
+        ///     Left accent bar on the selected mod row in the sidebar mod list (#EA9104).
+        /// </summary>
+        public static readonly Color SidebarModActiveAccent = Color.FromHtml("#EA9104");
     }
 }

@@ -13,11 +13,10 @@ using Timer = Godot.Timer;
 namespace STS2RitsuLib.Settings
 {
     /// <summary>
-    ///     Full-screen mod settings browser: sidebar (mods, pages, sections) and content pane.
+    ///     Full-screen mod settings browser: sidebar (mod list + header) and content pane.
     /// </summary>
     public partial class RitsuModSettingsSubmenu : NSubmenu
     {
-        private const float SidebarWidth = 324f;
         private const double AutosaveDelaySeconds = 0.35;
         private const int ScrollContentRightGutter = 12;
 
@@ -34,13 +33,7 @@ namespace STS2RitsuLib.Settings
         private readonly Dictionary<string, ModSettingsSidebarButton> _modButtons =
             new(StringComparer.OrdinalIgnoreCase);
 
-        private readonly Dictionary<string, ModSettingsSidebarButton> _pageButtons =
-            new(StringComparer.OrdinalIgnoreCase);
-
         private readonly List<Action> _refreshActions = [];
-
-        private readonly Dictionary<string, ModSettingsSidebarButton> _sectionButtons =
-            new(StringComparer.OrdinalIgnoreCase);
 
         private readonly List<Control> _sidebarFocusChain = [];
 
@@ -49,7 +42,7 @@ namespace STS2RitsuLib.Settings
         private bool _contentOnlyRebuildNeedsContentFocus;
         private Control _contentPanelRoot = null!;
         private bool _focusNavigationRefreshScheduled;
-        private bool _focusSelectedPageButtonOnNextRefresh;
+        private bool _focusSelectedModButtonOnNextRefresh;
         private bool _guiFocusSignalConnected;
         private Action? _hotkeyPaneContent;
         private Action? _hotkeyPaneSidebar;
@@ -73,9 +66,17 @@ namespace STS2RitsuLib.Settings
         private string? _selectedSectionId;
         private Control _sidebarPanelRoot = null!;
         private ScrollContainer _sidebarScrollContainer = null!;
-        private MegaRichTextLabel _subtitleLabel;
+        private Control _sidebarModHeaderRoot = null!;
+        private Panel _sidebarModPreviewFrame = null!;
+        private Control _sidebarModPreviewPlaceholder = null!;
+        private MegaRichTextLabel _sidebarModPreviewCaption = null!;
+        private TextureRect _sidebarModIcon = null!;
+        private MegaRichTextLabel _sidebarModTitleLabel = null!;
+        private PanelContainer _sidebarModVersionBadgePanel = null!;
+        private MegaRichTextLabel _sidebarModVersionLabel = null!;
+        private MegaRichTextLabel _sidebarModMetaLabel = null!;
+        private MegaRichTextLabel _sidebarModDescLabel = null!;
         private bool _suppressScrollSync;
-        private MegaRichTextLabel _titleLabel;
         private Callable _updatePaneHotkeyIconsCallable;
 
         /// <summary>
@@ -115,25 +116,6 @@ namespace STS2RitsuLib.Settings
             };
             root.AddThemeConstantOverride("separation", 18);
             frame.AddChild(root);
-
-            var header = new VBoxContainer
-            {
-                SizeFlagsHorizontal = SizeFlags.ExpandFill,
-                MouseFilter = MouseFilterEnum.Ignore,
-            };
-            header.AddThemeConstantOverride("separation", 6);
-            root.AddChild(header);
-
-            _titleLabel = CreateTitleLabel(32, HorizontalAlignment.Left);
-            _titleLabel.CustomMinimumSize = new(0f, 42f);
-            _titleLabel.SizeFlagsHorizontal = SizeFlags.ExpandFill;
-            header.AddChild(_titleLabel);
-
-            _subtitleLabel = CreateTitleLabel(16, HorizontalAlignment.Left);
-            _subtitleLabel.CustomMinimumSize = new(0f, 24f);
-            _subtitleLabel.Modulate = new(0.82f, 0.79f, 0.72f, 0.92f);
-            _subtitleLabel.SizeFlagsHorizontal = SizeFlags.ExpandFill;
-            header.AddChild(_subtitleLabel);
 
             root.AddChild(CreatePaneHotkeyHintRow());
 
@@ -406,7 +388,7 @@ namespace STS2RitsuLib.Settings
             _selectedPageId = pageId;
             _selectedSectionId = null;
             ExpandOnlyMod(modId);
-            _focusSelectedPageButtonOnNextRefresh = true;
+            _focusSelectedModButtonOnNextRefresh = true;
             Rebuild();
         }
 
@@ -438,11 +420,6 @@ namespace STS2RitsuLib.Settings
             {
                 Callable.From(ScrollToSelectedAnchor).CallDeferred();
                 RefreshFocusNavigation();
-                Callable.From(() =>
-                {
-                    if (_sectionButtons.TryGetValue(sectionId, out var btn) && btn.IsVisibleInTree())
-                        btn.GrabFocus();
-                }).CallDeferred();
                 return;
             }
 
@@ -668,16 +645,6 @@ namespace STS2RitsuLib.Settings
 
         private Control? ResolveSidebarTargetMatchingContent()
         {
-            if (!string.IsNullOrWhiteSpace(_selectedSectionId)
-                && _sectionButtons.TryGetValue(_selectedSectionId, out var sectionBtn)
-                && sectionBtn.IsVisibleInTree())
-                return sectionBtn;
-
-            if (!string.IsNullOrWhiteSpace(_selectedPageId)
-                && _pageButtons.TryGetValue(_selectedPageId, out var pageBtn)
-                && pageBtn.IsVisibleInTree())
-                return pageBtn;
-
             if (!string.IsNullOrWhiteSpace(_selectedModId)
                 && _modButtons.TryGetValue(_selectedModId, out var modBtn)
                 && modBtn.IsVisibleInTree())
@@ -688,29 +655,14 @@ namespace STS2RitsuLib.Settings
 
         private Control? ResolveInitialSidebarFocus()
         {
-            if (_focusSelectedPageButtonOnNextRefresh)
+            if (_focusSelectedModButtonOnNextRefresh)
             {
-                _focusSelectedPageButtonOnNextRefresh = false;
-                if (!string.IsNullOrWhiteSpace(_selectedPageId)
-                    && _pageButtons.TryGetValue(_selectedPageId, out var pageButton)
-                    && pageButton.Visible)
-                    return pageButton;
-
+                _focusSelectedModButtonOnNextRefresh = false;
                 if (!string.IsNullOrWhiteSpace(_selectedModId)
                     && _modButtons.TryGetValue(_selectedModId, out var modButton)
                     && modButton.Visible)
                     return modButton;
             }
-
-            if (!string.IsNullOrWhiteSpace(_selectedSectionId)
-                && _sectionButtons.TryGetValue(_selectedSectionId, out var sectionBtn)
-                && sectionBtn.IsVisibleInTree())
-                return sectionBtn;
-
-            if (!string.IsNullOrWhiteSpace(_selectedPageId)
-                && _pageButtons.TryGetValue(_selectedPageId, out var pb)
-                && pb.Visible)
-                return pb;
 
             if (!string.IsNullOrWhiteSpace(_selectedModId)
                 && _modButtons.TryGetValue(_selectedModId, out var mb)
@@ -725,56 +677,152 @@ namespace STS2RitsuLib.Settings
             var panel = new Panel
             {
                 Name = "RitsuSidebarPanel",
-                CustomMinimumSize = new(SidebarWidth, 0f),
+                CustomMinimumSize = new(ModSettingsUiMetrics.SidebarPanelMinWidth, 0f),
                 SizeFlagsVertical = SizeFlags.ExpandFill,
                 MouseFilter = MouseFilterEnum.Ignore,
             };
             _sidebarPanelRoot = panel;
-            panel.AddThemeStyleboxOverride("panel", CreatePanelStyle(new(0.10f, 0.115f, 0.145f, 0.96f)));
+            panel.AddThemeStyleboxOverride("panel", CreateTransparentPanelStyle());
 
-            var frame = new MarginContainer
+            var mainVBox = new VBoxContainer
             {
                 AnchorRight = 1f,
                 AnchorBottom = 1f,
                 MouseFilter = MouseFilterEnum.Ignore,
+                SizeFlagsHorizontal = SizeFlags.ExpandFill,
+                SizeFlagsVertical = SizeFlags.ExpandFill,
             };
-            frame.AddThemeConstantOverride("margin_left", 16);
-            frame.AddThemeConstantOverride("margin_top", 16);
-            frame.AddThemeConstantOverride("margin_right", 16);
-            frame.AddThemeConstantOverride("margin_bottom", 16);
-            panel.AddChild(frame);
+            // Divider sits on its own row between the info card and the scroll list (not inside the expanding list).
+            mainVBox.AddThemeConstantOverride("separation", 0);
+            panel.AddChild(mainVBox);
 
-            var root = new VBoxContainer
-            {
-                AnchorRight = 1f,
-                AnchorBottom = 1f,
-                MouseFilter = MouseFilterEnum.Ignore,
-            };
-            root.AddThemeConstantOverride("separation", 14);
-            frame.AddChild(root);
-
-            var headerCard = new PanelContainer
+            var modHeaderOuter = new MarginContainer
             {
                 MouseFilter = MouseFilterEnum.Ignore,
                 SizeFlagsHorizontal = SizeFlags.ExpandFill,
             };
-            headerCard.AddThemeStyleboxOverride("panel", ModSettingsUiFactory.CreateInsetSurfaceStyle());
-            root.AddChild(headerCard);
+            modHeaderOuter.AddThemeConstantOverride("margin_left", ModSettingsUiMetrics.SidebarContentMarginH);
+            modHeaderOuter.AddThemeConstantOverride("margin_right", ModSettingsUiMetrics.SidebarContentMarginH);
+            modHeaderOuter.AddThemeConstantOverride("margin_top", 0);
+            modHeaderOuter.AddThemeConstantOverride("margin_bottom", 0);
 
-            var headerBox = new VBoxContainer
+            _sidebarModHeaderRoot = new PanelContainer
             {
                 MouseFilter = MouseFilterEnum.Ignore,
+                SizeFlagsHorizontal = SizeFlags.ExpandFill,
             };
-            headerBox.AddThemeConstantOverride("separation", 4);
-            headerCard.AddChild(headerBox);
+            _sidebarModHeaderRoot.AddThemeStyleboxOverride("panel", ModSettingsUiFactory.CreateModSidebarPreviewFrameStyle());
 
-            var headerTitle =
-                ModSettingsUiFactory.CreateSectionTitle(ModSettingsLocalization.Get("sidebar.title", "Mods"));
-            headerTitle.CustomMinimumSize = new(0f, 30f);
-            headerBox.AddChild(headerTitle);
+            var headerRow = new HBoxContainer
+            {
+                MouseFilter = MouseFilterEnum.Ignore,
+                SizeFlagsVertical = SizeFlags.ShrinkBegin,
+                Alignment = BoxContainer.AlignmentMode.Begin,
+            };
+            headerRow.AddThemeConstantOverride("separation", 12);
+            _sidebarModHeaderRoot.AddChild(headerRow);
 
-            headerBox.AddChild(ModSettingsUiFactory.CreateInlineDescription(
-                ModSettingsLocalization.Get("sidebar.subtitle", "Browse mods, pages, and sections.")));
+            headerRow.AddChild(CreateSidebarModPreviewFrame());
+
+            var textCol = new VBoxContainer
+            {
+                MouseFilter = MouseFilterEnum.Ignore,
+                SizeFlagsHorizontal = SizeFlags.ExpandFill,
+                SizeFlagsVertical = SizeFlags.ShrinkBegin,
+            };
+            textCol.AddThemeConstantOverride("separation", 6);
+            headerRow.AddChild(textCol);
+
+            var titleRow = new HBoxContainer
+            {
+                MouseFilter = MouseFilterEnum.Ignore,
+                SizeFlagsHorizontal = SizeFlags.ExpandFill,
+            };
+            titleRow.AddThemeConstantOverride("separation", 10);
+
+            _sidebarModTitleLabel = CreateSidebarWrapLabel(22, HorizontalAlignment.Left);
+            _sidebarModTitleLabel.SizeFlagsHorizontal = SizeFlags.ExpandFill;
+            _sidebarModTitleLabel.SizeFlagsVertical = SizeFlags.ShrinkCenter;
+            titleRow.AddChild(_sidebarModTitleLabel);
+
+            _sidebarModVersionBadgePanel = new PanelContainer
+            {
+                MouseFilter = MouseFilterEnum.Ignore,
+                Visible = false,
+                SizeFlagsHorizontal = SizeFlags.ShrinkBegin,
+                SizeFlagsVertical = SizeFlags.ShrinkCenter,
+            };
+            _sidebarModVersionBadgePanel.AddThemeStyleboxOverride("panel",
+                ModSettingsUiFactory.CreateSidebarModVersionBadgeStyle());
+
+            _sidebarModVersionLabel = new MegaRichTextLabel
+            {
+                Theme = ModSettingsUiResources.SettingsLineTheme,
+                BbcodeEnabled = false,
+                AutoSizeEnabled = false,
+                ScrollActive = false,
+                HorizontalAlignment = HorizontalAlignment.Center,
+                VerticalAlignment = VerticalAlignment.Center,
+                MouseFilter = MouseFilterEnum.Ignore,
+                FocusMode = FocusModeEnum.None,
+                FitContent = true,
+                Modulate = new Color(0.88f, 0.86f, 0.82f),
+            };
+            _sidebarModVersionLabel.AddThemeFontOverride("normal_font", ModSettingsUiResources.KreonBold);
+            _sidebarModVersionLabel.AddThemeFontOverride("bold_font", ModSettingsUiResources.KreonBold);
+            var vs = ModSettingsUiMetrics.SidebarModVersionBadgeFontSize;
+            _sidebarModVersionLabel.AddThemeFontSizeOverride("normal_font_size", vs);
+            _sidebarModVersionLabel.AddThemeFontSizeOverride("bold_font_size", vs);
+            _sidebarModVersionLabel.AddThemeFontSizeOverride("italics_font_size", vs);
+            _sidebarModVersionLabel.AddThemeFontSizeOverride("bold_italics_font_size", vs);
+            _sidebarModVersionLabel.AddThemeFontSizeOverride("mono_font_size", vs);
+            _sidebarModVersionLabel.MinFontSize = vs;
+            _sidebarModVersionLabel.MaxFontSize = vs;
+            _sidebarModVersionBadgePanel.AddChild(_sidebarModVersionLabel);
+            titleRow.AddChild(_sidebarModVersionBadgePanel);
+
+            textCol.AddChild(titleRow);
+
+            _sidebarModMetaLabel = CreateSidebarWrapLabel(14, HorizontalAlignment.Left);
+            _sidebarModMetaLabel.Modulate = new(0.75f, 0.72f, 0.65f, 0.95f);
+            _sidebarModMetaLabel.SizeFlagsHorizontal = SizeFlags.ExpandFill;
+            textCol.AddChild(_sidebarModMetaLabel);
+
+            _sidebarModDescLabel = CreateSidebarWrapLabel(13, HorizontalAlignment.Left);
+            _sidebarModDescLabel.Modulate = new(0.65f, 0.62f, 0.58f, 0.9f);
+            _sidebarModDescLabel.SizeFlagsHorizontal = SizeFlags.ExpandFill;
+            _sidebarModDescLabel.Visible = false;
+            textCol.AddChild(_sidebarModDescLabel);
+
+            modHeaderOuter.AddChild(_sidebarModHeaderRoot);
+            mainVBox.AddChild(modHeaderOuter);
+
+            var dividerPad = ModSettingsUiMetrics.SidebarListDividerPadSymmetric;
+            var cardToListDivider = new MarginContainer
+            {
+                MouseFilter = MouseFilterEnum.Ignore,
+                SizeFlagsHorizontal = SizeFlags.ExpandFill,
+                SizeFlagsVertical = SizeFlags.ShrinkBegin,
+            };
+            cardToListDivider.AddThemeConstantOverride("margin_left", ModSettingsUiMetrics.SidebarContentMarginH);
+            cardToListDivider.AddThemeConstantOverride("margin_right", ModSettingsUiMetrics.SidebarContentMarginH);
+            cardToListDivider.AddThemeConstantOverride("margin_top", dividerPad);
+            cardToListDivider.AddThemeConstantOverride("margin_bottom", dividerPad);
+            var dividerLine = ModSettingsUiFactory.CreateSidebarScrollTopDivider();
+            dividerLine.SizeFlagsHorizontal = SizeFlags.ExpandFill;
+            cardToListDivider.AddChild(dividerLine);
+            mainVBox.AddChild(cardToListDivider);
+
+            var listFrame = new MarginContainer
+            {
+                MouseFilter = MouseFilterEnum.Ignore,
+                SizeFlagsHorizontal = SizeFlags.ExpandFill,
+                SizeFlagsVertical = SizeFlags.ExpandFill,
+            };
+            listFrame.AddThemeConstantOverride("margin_left", ModSettingsUiMetrics.SidebarContentMarginH);
+            listFrame.AddThemeConstantOverride("margin_top", 0);
+            listFrame.AddThemeConstantOverride("margin_right", ModSettingsUiMetrics.SidebarContentMarginH);
+            listFrame.AddThemeConstantOverride("margin_bottom", 16);
 
             var scroll = new ScrollContainer
             {
@@ -785,25 +833,123 @@ namespace STS2RitsuLib.Settings
                 FocusMode = FocusModeEnum.None,
             };
             _sidebarScrollContainer = scroll;
-            root.AddChild(scroll);
 
-            var sidebarScrollFrame = new MarginContainer
+            var scrollInner = new VBoxContainer
+            {
+                Name = "SidebarScrollInner",
+                MouseFilter = MouseFilterEnum.Ignore,
+                SizeFlagsHorizontal = SizeFlags.ExpandFill,
+            };
+            scrollInner.AddThemeConstantOverride("separation", 10);
+
+            _modButtonList = new VBoxContainer
             {
                 SizeFlagsHorizontal = SizeFlags.ExpandFill,
-                SizeFlagsVertical = SizeFlags.ExpandFill,
                 MouseFilter = MouseFilterEnum.Ignore,
             };
-            sidebarScrollFrame.AddThemeConstantOverride("margin_right", ScrollContentRightGutter);
-            scroll.AddChild(sidebarScrollFrame);
+            _modButtonList.AddThemeConstantOverride("separation", 8);
+            scrollInner.AddChild(_modButtonList);
 
-            _modButtonList = new()
-            {
-                SizeFlagsHorizontal = SizeFlags.ExpandFill,
-                MouseFilter = MouseFilterEnum.Ignore,
-            };
-            _modButtonList.AddThemeConstantOverride("separation", 12);
-            sidebarScrollFrame.AddChild(_modButtonList);
+            scroll.AddChild(scrollInner);
+            listFrame.AddChild(scroll);
+            mainVBox.AddChild(listFrame);
             return panel;
+        }
+
+        private Panel CreateSidebarModPreviewFrame()
+        {
+            var outer = ModSettingsUiMetrics.ModSidebarPreviewOuterSize;
+
+            _sidebarModPreviewFrame = new Panel
+            {
+                Name = "ModPreviewFrame",
+                MouseFilter = MouseFilterEnum.Ignore,
+                CustomMinimumSize = new(outer, outer),
+                ClipContents = true,
+                SizeFlagsHorizontal = SizeFlags.ShrinkBegin,
+                SizeFlagsVertical = SizeFlags.ShrinkBegin,
+            };
+            _sidebarModPreviewFrame.AddThemeStyleboxOverride("panel",
+                ModSettingsUiFactory.CreateModSidebarPreviewFrameStyle());
+
+            var inner = new Control
+            {
+                Name = "ModPreviewInner",
+                MouseFilter = MouseFilterEnum.Ignore,
+                ClipContents = true,
+            };
+            inner.SetAnchorsAndOffsetsPreset(Control.LayoutPreset.FullRect);
+            _sidebarModPreviewFrame.AddChild(inner);
+
+            _sidebarModIcon = new TextureRect
+            {
+                Name = "ModIcon",
+                MouseFilter = MouseFilterEnum.Ignore,
+                ExpandMode = TextureRect.ExpandModeEnum.IgnoreSize,
+                StretchMode = TextureRect.StretchModeEnum.KeepAspectCentered,
+            };
+            _sidebarModIcon.SetAnchorsAndOffsetsPreset(Control.LayoutPreset.FullRect);
+            inner.AddChild(_sidebarModIcon);
+
+            _sidebarModPreviewPlaceholder = new Control
+            {
+                Name = "ModPreviewPlaceholder",
+                MouseFilter = MouseFilterEnum.Ignore,
+                Visible = true,
+            };
+            _sidebarModPreviewPlaceholder.SetAnchorsAndOffsetsPreset(Control.LayoutPreset.FullRect);
+            inner.AddChild(_sidebarModPreviewPlaceholder);
+
+            var bg = new ColorRect
+            {
+                MouseFilter = MouseFilterEnum.Ignore,
+                Color = Colors.Black,
+            };
+            bg.SetAnchorsAndOffsetsPreset(Control.LayoutPreset.FullRect);
+            _sidebarModPreviewPlaceholder.AddChild(bg);
+
+            var captionMargin = new MarginContainer
+            {
+                MouseFilter = MouseFilterEnum.Ignore,
+            };
+            captionMargin.SetAnchorsAndOffsetsPreset(Control.LayoutPreset.FullRect);
+            captionMargin.AddThemeConstantOverride("margin_left", 4);
+            captionMargin.AddThemeConstantOverride("margin_right", 4);
+            captionMargin.AddThemeConstantOverride("margin_top", 4);
+            captionMargin.AddThemeConstantOverride("margin_bottom", 4);
+            _sidebarModPreviewPlaceholder.AddChild(captionMargin);
+
+            _sidebarModPreviewCaption = CreateSidebarWrapLabel(13, HorizontalAlignment.Center, VerticalAlignment.Center);
+            _sidebarModPreviewCaption.Modulate = Colors.White;
+            _sidebarModPreviewCaption.SizeFlagsHorizontal = SizeFlags.ExpandFill;
+            _sidebarModPreviewCaption.SizeFlagsVertical = SizeFlags.ExpandFill;
+            captionMargin.AddChild(_sidebarModPreviewCaption);
+
+            return _sidebarModPreviewFrame;
+        }
+
+        private void ApplySidebarModPreviewState(Texture2D? tex, bool noModSelected)
+        {
+            if (!IsInstanceValid(_sidebarModPreviewPlaceholder) || !IsInstanceValid(_sidebarModIcon))
+                return;
+
+            var hasArt = tex != null && !noModSelected;
+            if (hasArt)
+            {
+                _sidebarModIcon.Texture = tex;
+                _sidebarModIcon.Visible = true;
+                _sidebarModPreviewPlaceholder.Visible = false;
+                _sidebarModIcon.Modulate = Colors.White;
+                return;
+            }
+
+            _sidebarModIcon.Texture = null;
+            _sidebarModIcon.Visible = false;
+            _sidebarModPreviewPlaceholder.Visible = true;
+            var caption = noModSelected
+                ? ModSettingsLocalization.Get("sidebar.modPreview.empty", "No preview")
+                : ModSettingsLocalization.Get("sidebar.modPreview.noImage", "No resources");
+            _sidebarModPreviewCaption.SetTextAutoSize(caption);
         }
 
         private Control CreateContentPanel()
@@ -816,7 +962,7 @@ namespace STS2RitsuLib.Settings
                 MouseFilter = MouseFilterEnum.Ignore,
             };
             _contentPanelRoot = panel;
-            panel.AddThemeStyleboxOverride("panel", CreatePanelStyle(new(0.08f, 0.095f, 0.125f, 0.98f)));
+            panel.AddThemeStyleboxOverride("panel", CreateTransparentPanelStyle());
 
             var frame = new MarginContainer
             {
@@ -881,7 +1027,6 @@ namespace STS2RitsuLib.Settings
         {
             ModSettingsBaseLibReflectionMirror.TryRegisterMirroredPages();
             ModSettingsModConfigReflectionMirror.TryRegisterMirroredPages();
-            ApplyStaticTexts();
             RebuildSidebar();
             RebuildContent(true);
         }
@@ -891,8 +1036,6 @@ namespace STS2RitsuLib.Settings
             _dynamicVisibilityTargets.Clear();
             _modButtonList.FreeChildren();
             _modButtons.Clear();
-            _pageButtons.Clear();
-            _sectionButtons.Clear();
 
             var rootPages = ModSettingsRegistry.GetPages()
                 .Where(page => string.IsNullOrWhiteSpace(page.ParentPageId))
@@ -906,6 +1049,7 @@ namespace STS2RitsuLib.Settings
             if (rootPages.Length == 0)
             {
                 _selectedModId = null;
+                RefreshSelectedModHeader();
                 return;
             }
 
@@ -924,30 +1068,6 @@ namespace STS2RitsuLib.Settings
                     .ThenBy(page => page.Id, StringComparer.OrdinalIgnoreCase)
                     .ToArray();
 
-                var section = new VBoxContainer
-                {
-                    SizeFlagsHorizontal = SizeFlags.ExpandFill,
-                    MouseFilter = MouseFilterEnum.Ignore,
-                };
-                section.AddThemeConstantOverride("separation", 8);
-
-                var card = new PanelContainer
-                {
-                    SizeFlagsHorizontal = SizeFlags.ExpandFill,
-                    MouseFilter = MouseFilterEnum.Ignore,
-                };
-                card.AddThemeStyleboxOverride("panel", CreateSidebarGroupStyle(
-                    string.Equals(modId, _selectedModId, StringComparison.OrdinalIgnoreCase)));
-                section.AddChild(card);
-
-                var cardContent = new VBoxContainer
-                {
-                    SizeFlagsHorizontal = SizeFlags.ExpandFill,
-                    MouseFilter = MouseFilterEnum.Ignore,
-                };
-                cardContent.AddThemeConstantOverride("separation", 8);
-                card.AddChild(cardContent);
-
                 var button = ModSettingsUiFactory.CreateSidebarButton(
                     ResolveSidebarModTitle(group.ToArray()),
                     () =>
@@ -957,37 +1077,75 @@ namespace STS2RitsuLib.Settings
                             ?.Id;
                         _selectedSectionId = null;
                         ExpandOnlyMod(modId);
-                        _focusSelectedPageButtonOnNextRefresh = true;
+                        _focusSelectedModButtonOnNextRefresh = true;
                         Rebuild();
                     },
-                    ModSettingsSidebarItemKind.ModGroup,
-                    _expandedModIds.Contains(modId) ? "▼" : "▶");
+                    ModSettingsSidebarItemKind.ModGroup);
                 button.Name = $"Mod_{modId}";
-                cardContent.AddChild(button);
-
-                var isExpanded = _expandedModIds.Contains(modId);
-                if (isExpanded)
-                {
-                    var meta = ModSettingsUiFactory.CreateInlineDescription(string.Format(
-                        ModSettingsLocalization.Get("sidebar.modMeta", "{0} pages"),
-                        pages.Length));
-                    cardContent.AddChild(meta);
-
-                    var navStack = new VBoxContainer
-                    {
-                        SizeFlagsHorizontal = SizeFlags.ExpandFill,
-                        MouseFilter = MouseFilterEnum.Ignore,
-                    };
-                    navStack.AddThemeConstantOverride("separation", 6);
-                    cardContent.AddChild(navStack);
-
-                    foreach (var page in pages.Where(page => string.IsNullOrWhiteSpace(page.ParentPageId)))
-                        navStack.AddChild(CreateSidebarPageTreeButton(pages, page, 1));
-                }
-
-                _modButtonList.AddChild(section);
+                button.SetSelected(string.Equals(modId, _selectedModId, StringComparison.OrdinalIgnoreCase));
+                _modButtonList.AddChild(button);
                 _modButtons[modId] = button;
             }
+
+            RefreshSelectedModHeader();
+        }
+
+        private void RefreshSelectedModHeader()
+        {
+            if (!IsInstanceValid(_sidebarModTitleLabel))
+                return;
+
+            if (string.IsNullOrWhiteSpace(_selectedModId))
+            {
+                _sidebarModTitleLabel.SetTextAutoSize(
+                    ModSettingsLocalization.Get("sidebar.modHeader.none", "No mod"));
+                if (IsInstanceValid(_sidebarModVersionBadgePanel))
+                    _sidebarModVersionBadgePanel.Visible = false;
+                _sidebarModMetaLabel.SetTextAutoSize("");
+                _sidebarModDescLabel.SetTextAutoSize("");
+                _sidebarModDescLabel.Visible = false;
+                ApplySidebarModPreviewState(null, true);
+                return;
+            }
+
+            var mod = ModSettingsModInfoResolver.TryFindMod(_selectedModId);
+            _sidebarModTitleLabel.SetTextAutoSize(ModSettingsModInfoResolver.ResolveTitle(mod, _selectedModId));
+
+            var ver = ModSettingsModInfoResolver.ResolveVersion(mod);
+            if (IsInstanceValid(_sidebarModVersionBadgePanel) && IsInstanceValid(_sidebarModVersionLabel))
+            {
+                if (string.IsNullOrWhiteSpace(ver))
+                {
+                    _sidebarModVersionBadgePanel.Visible = false;
+                }
+                else
+                {
+                    _sidebarModVersionBadgePanel.Visible = true;
+                    _sidebarModVersionLabel.SetTextAutoSize(FormatSidebarVersionBadgeText(ver));
+                }
+            }
+
+            var author = ModSettingsModInfoResolver.ResolveAuthor(mod);
+            var metaParts = new List<string>();
+            if (!string.IsNullOrWhiteSpace(author))
+                metaParts.Add(author);
+            metaParts.Add(_selectedModId);
+            _sidebarModMetaLabel.SetTextAutoSize(string.Join(" · ", metaParts));
+
+            var desc = ModSettingsModInfoResolver.ResolveDescription(mod);
+            if (string.IsNullOrWhiteSpace(desc))
+            {
+                _sidebarModDescLabel.Visible = false;
+                _sidebarModDescLabel.SetTextAutoSize("");
+            }
+            else
+            {
+                _sidebarModDescLabel.Visible = true;
+                _sidebarModDescLabel.SetTextAutoSize(desc);
+            }
+
+            var tex = ModSettingsModInfoResolver.TryLoadModIcon(mod, _selectedModId);
+            ApplySidebarModPreviewState(tex, false);
         }
 
         private void RebuildContent(bool fromFullRebuild = false)
@@ -1001,12 +1159,6 @@ namespace STS2RitsuLib.Settings
 
             foreach (var pair in _modButtons)
                 pair.Value.SetSelected(string.Equals(pair.Key, _selectedModId, StringComparison.OrdinalIgnoreCase));
-
-            foreach (var pair in _pageButtons)
-                pair.Value.SetSelected(string.Equals(pair.Key, _selectedPageId, StringComparison.OrdinalIgnoreCase));
-
-            foreach (var pair in _sectionButtons)
-                pair.Value.SetSelected(string.Equals(pair.Key, _selectedSectionId, StringComparison.OrdinalIgnoreCase));
 
             if (string.IsNullOrWhiteSpace(_selectedModId))
             {
@@ -1069,76 +1221,6 @@ namespace STS2RitsuLib.Settings
             Callable.From(ScrollToSelectedAnchor).CallDeferred();
         }
 
-        private Control CreateSidebarPageTreeButton(IReadOnlyList<ModSettingsPage> pages, ModSettingsPage page,
-            int depth)
-        {
-            var button = ModSettingsUiFactory.CreateSidebarButton(
-                ResolvePageTabTitle(page), () =>
-                {
-                    var samePage = string.Equals(_selectedPageId, page.Id, StringComparison.OrdinalIgnoreCase);
-                    _selectedModId = page.ModId;
-                    _selectedPageId = page.Id;
-                    if (!samePage)
-                        _selectedSectionId = null;
-                    ExpandOnlyMod(page.ModId);
-                    Rebuild();
-                },
-                ModSettingsSidebarItemKind.Page,
-                "◦",
-                Math.Max(0, depth - 1));
-            button.CustomMinimumSize = new(0f, 48f);
-            button.SetSelected(string.Equals(page.Id, _selectedPageId, StringComparison.OrdinalIgnoreCase));
-            _pageButtons[page.Id] = button;
-            if (page.VisibleWhen != null)
-                RegisterDynamicVisibility(button, page.VisibleWhen);
-
-            var container = new VBoxContainer
-            {
-                SizeFlagsHorizontal = SizeFlags.ExpandFill,
-                MouseFilter = MouseFilterEnum.Ignore,
-            };
-            container.AddThemeConstantOverride("separation", 4);
-            container.AddChild(button);
-
-            if (string.Equals(page.Id, _selectedPageId, StringComparison.OrdinalIgnoreCase))
-            {
-                var sectionRail = new VBoxContainer
-                {
-                    SizeFlagsHorizontal = SizeFlags.ExpandFill,
-                    MouseFilter = MouseFilterEnum.Ignore,
-                };
-                sectionRail.AddThemeConstantOverride("separation", 4);
-                foreach (var section in page.Sections)
-                {
-                    var sectionButton = ModSettingsUiFactory.CreateSidebarButton(ResolveSectionTitle(section), () =>
-                        {
-                            _selectedModId = page.ModId;
-                            NavigateToSection(page.Id, section.Id);
-                        },
-                        ModSettingsSidebarItemKind.Section,
-                        "·",
-                        depth + 1);
-                    sectionButton.CustomMinimumSize = new(0f, 40f);
-                    sectionButton.SetSelected(string.Equals(section.Id, _selectedSectionId,
-                        StringComparison.OrdinalIgnoreCase));
-                    _sectionButtons[section.Id] = sectionButton;
-                    if (section.VisibleWhen != null)
-                        RegisterDynamicVisibility(sectionButton, section.VisibleWhen);
-                    sectionRail.AddChild(sectionButton);
-                }
-
-                container.AddChild(sectionRail);
-            }
-
-            foreach (var child in pages.Where(candidate =>
-                             string.Equals(candidate.ParentPageId, page.Id, StringComparison.OrdinalIgnoreCase))
-                         .OrderBy(ModSettingsRegistry.GetEffectivePageSortOrder)
-                         .ThenBy(candidate => candidate.Id, StringComparer.OrdinalIgnoreCase))
-                container.AddChild(CreateSidebarPageTreeButton(pages, child, depth + 1));
-
-            return container;
-        }
-
         private ModSettingsPage? ResolveSelectedPage()
         {
             return ModSettingsRegistry.GetPages().FirstOrDefault(page =>
@@ -1146,20 +1228,10 @@ namespace STS2RitsuLib.Settings
                 string.Equals(page.Id, _selectedPageId, StringComparison.OrdinalIgnoreCase));
         }
 
-        private static string ResolvePageTabTitle(ModSettingsPage page)
-        {
-            return ModSettingsLocalization.ResolvePageDisplayName(page);
-        }
-
         private static string ResolveSidebarModTitle(IReadOnlyList<ModSettingsPage> pages)
         {
             var modId = pages[0].ModId;
             return ModSettingsLocalization.ResolveModName(modId, modId);
-        }
-
-        private static string ResolveSectionTitle(ModSettingsSection section)
-        {
-            return section.Title?.Resolve() ?? ModSettingsLocalization.Get("section.default", "Section");
         }
 
         private void ScrollToSelectedAnchor()
@@ -1206,8 +1278,6 @@ namespace STS2RitsuLib.Settings
                 return;
 
             _selectedSectionId = bestSectionId;
-            foreach (var pair in _sectionButtons)
-                pair.Value.SetSelected(string.Equals(pair.Key, _selectedSectionId, StringComparison.OrdinalIgnoreCase));
         }
 
         private void RefreshFocusNavigation()
@@ -1336,13 +1406,6 @@ namespace STS2RitsuLib.Settings
             };
         }
 
-        private void ApplyStaticTexts()
-        {
-            _titleLabel.SetTextAutoSize(ModSettingsLocalization.Get("entry.title", "Mod Settings (RitsuLib)"));
-            _subtitleLabel.SetTextAutoSize(ModSettingsLocalization.Get("entry.subtitle",
-                "Edit player-facing mod options here."));
-        }
-
         private void ExpandOnlyMod(string? modId)
         {
             _expandedModIds.Clear();
@@ -1412,6 +1475,49 @@ namespace STS2RitsuLib.Settings
             Callable.From(Rebuild).CallDeferred();
         }
 
+        private static string FormatSidebarVersionBadgeText(string raw)
+        {
+            var t = raw.Trim();
+            if (t.Length == 0)
+                return string.Empty;
+            if (t.StartsWith('v') || t.StartsWith('V'))
+                t = t[1..].TrimStart();
+            return $"V{t}".ToUpperInvariant();
+        }
+
+        /// <summary>
+        ///     Sidebar mod title / meta / description: bounded width, word wrap, height grows with content.
+        /// </summary>
+        private static MegaRichTextLabel CreateSidebarWrapLabel(int fontSize, HorizontalAlignment alignment,
+            VerticalAlignment verticalAlignment = VerticalAlignment.Top)
+        {
+            var label = new MegaRichTextLabel
+            {
+                Theme = ModSettingsUiResources.SettingsLineTheme,
+                BbcodeEnabled = true,
+                AutoSizeEnabled = false,
+                ScrollActive = false,
+                HorizontalAlignment = alignment,
+                VerticalAlignment = verticalAlignment,
+                MouseFilter = MouseFilterEnum.Ignore,
+                FocusMode = FocusModeEnum.None,
+                IsHorizontallyBound = true,
+                FitContent = true,
+                AutowrapMode = TextServer.AutowrapMode.WordSmart,
+            };
+
+            label.AddThemeFontOverride("normal_font", ModSettingsUiResources.KreonRegular);
+            label.AddThemeFontOverride("bold_font", ModSettingsUiResources.KreonBold);
+            label.AddThemeFontSizeOverride("normal_font_size", fontSize);
+            label.AddThemeFontSizeOverride("bold_font_size", fontSize);
+            label.AddThemeFontSizeOverride("italics_font_size", fontSize);
+            label.AddThemeFontSizeOverride("bold_italics_font_size", fontSize);
+            label.AddThemeFontSizeOverride("mono_font_size", fontSize);
+            label.MinFontSize = Math.Min(fontSize, 16);
+            label.MaxFontSize = fontSize;
+            return label;
+        }
+
         private static MegaRichTextLabel CreateTitleLabel(int fontSize, HorizontalAlignment alignment)
         {
             var label = new MegaRichTextLabel
@@ -1447,22 +1553,17 @@ namespace STS2RitsuLib.Settings
             return label;
         }
 
-        private static StyleBoxFlat CreatePanelStyle(Color bg)
+        private static StyleBoxFlat CreateTransparentPanelStyle()
         {
             return new()
             {
-                BgColor = bg,
-                BorderColor = new(0.44f, 0.68f, 0.80f, 0.36f),
-                BorderWidthLeft = 1,
-                BorderWidthTop = 1,
-                BorderWidthRight = 1,
-                BorderWidthBottom = 1,
-                CornerRadiusTopLeft = ModSettingsUiMetrics.CornerRadius,
-                CornerRadiusTopRight = ModSettingsUiMetrics.CornerRadius,
-                CornerRadiusBottomRight = ModSettingsUiMetrics.CornerRadius,
-                CornerRadiusBottomLeft = ModSettingsUiMetrics.CornerRadius,
-                ShadowColor = new(0f, 0f, 0f, 0.32f),
-                ShadowSize = 12,
+                BgColor = Colors.Transparent,
+                BorderColor = Colors.Transparent,
+                BorderWidthLeft = 0,
+                BorderWidthTop = 0,
+                BorderWidthRight = 0,
+                BorderWidthBottom = 0,
+                ShadowSize = 0,
                 ContentMarginLeft = 0,
                 ContentMarginTop = 0,
                 ContentMarginRight = 0,
@@ -1470,31 +1571,5 @@ namespace STS2RitsuLib.Settings
             };
         }
 
-        private static StyleBoxFlat CreateSidebarGroupStyle(bool selected)
-        {
-            return new()
-            {
-                BgColor = selected
-                    ? new(0.085f, 0.125f, 0.165f, 0.97f)
-                    : new Color(0.07f, 0.095f, 0.13f, 0.94f),
-                BorderColor = selected
-                    ? new(0.58f, 0.80f, 0.90f, 0.58f)
-                    : new Color(0.30f, 0.44f, 0.54f, 0.36f),
-                BorderWidthLeft = 1,
-                BorderWidthTop = 1,
-                BorderWidthRight = 1,
-                BorderWidthBottom = 1,
-                CornerRadiusTopLeft = ModSettingsUiMetrics.CornerRadius,
-                CornerRadiusTopRight = ModSettingsUiMetrics.CornerRadius,
-                CornerRadiusBottomRight = ModSettingsUiMetrics.CornerRadius,
-                CornerRadiusBottomLeft = ModSettingsUiMetrics.CornerRadius,
-                ShadowColor = new(0f, 0f, 0f, 0.16f),
-                ShadowSize = 4,
-                ContentMarginLeft = 10,
-                ContentMarginTop = 10,
-                ContentMarginRight = 10,
-                ContentMarginBottom = 10,
-            };
-        }
     }
 }
