@@ -27,25 +27,51 @@ namespace STS2RitsuLib.Settings
 
         public static Control CreatePageContent(ModSettingsUiContext context, ModSettingsPage page)
         {
+            var container = CreatePageContentHost(page);
+            foreach (var item in CreatePageBuildItems(context, page))
+                container.AddChild(item.Control);
+            return MaybeWrapDynamicVisibility(context, container, page.VisibleWhen);
+        }
+
+        internal static VBoxContainer CreatePageContentHost(ModSettingsPage page)
+        {
             var container = new VBoxContainer
             {
                 Name = $"Page_{SanitizeName(page.ModId)}_{SanitizeName(page.Id)}",
                 SizeFlagsHorizontal = Control.SizeFlags.ExpandFill,
                 MouseFilter = Control.MouseFilterEnum.Ignore,
             };
-
             container.AddThemeConstantOverride("separation", 8);
+            return container;
+        }
 
+        internal static IEnumerable<PageBuildItem> CreatePageBuildItems(ModSettingsUiContext context,
+            ModSettingsPage page)
+        {
             for (var index = 0; index < page.Sections.Count; index++)
             {
                 var section = page.Sections[index];
                 if (index > 0)
-                    container.AddChild(CreateDivider());
+                    yield return new(CreateDivider(), false);
 
-                container.AddChild(CreateSection(context, page, section));
+                Control builtSection;
+                try
+                {
+                    builtSection = CreateSection(context, page, section);
+                }
+                catch (Exception ex)
+                {
+                    RitsuLibFramework.Logger.Warn(
+                        $"[Settings] Failed to build section '{page.ModId}:{page.Id}:{section.Id}': {ex.Message}");
+                    builtSection = CreateBuildErrorPlaceholder(
+                        ModSettingsLocalization.Get("section.failed.title", "Section failed to load"),
+                        string.Format(
+                            ModSettingsLocalization.Get("section.failed.body", "Failed to build section '{0}'."),
+                            section.Id));
+                }
+
+                yield return new(builtSection, true);
             }
-
-            return MaybeWrapDynamicVisibility(context, container, page.VisibleWhen);
         }
 
         public static Control CreateToggleEntry(ModSettingsUiContext context, ToggleModSettingsEntryDefinition entry)
@@ -426,5 +452,7 @@ namespace STS2RitsuLib.Settings
                 () => ModSettingsUiContext.Resolve(entry.Description),
                 control);
         }
+
+        internal sealed record PageBuildItem(Control Control, bool YieldAfter);
     }
 }

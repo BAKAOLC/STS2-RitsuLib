@@ -43,6 +43,7 @@ namespace STS2RitsuLib.Interop.Patches
 
             var harmony = new Harmony($"{Const.ModId}.mod_type_discovery");
             ModTypeDiscoveryHub.RunOnce(harmony);
+            RitsuLibFramework.FlushDeferredContentPacks();
         }
     }
 }

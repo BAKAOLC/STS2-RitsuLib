@@ -152,11 +152,7 @@ namespace STS2RitsuLib.Scaffolding.Characters.Patches
             };
 
             image.Material = mat ?? MaterialUtils.CreateHsvShaderMaterial(1, 1, 1);
-
-            if (!string.IsNullOrWhiteSpace(iconTexturePath) &&
-                AssetPathDiagnostics.Exists(iconTexturePath, character,
-                    nameof(IModCharacterAssetOverrides.CustomIconTexturePath)))
-                image.Texture = ResourceLoader.Load<Texture2D>(iconTexturePath);
+            image.Texture = ResolveFilterIconTexture(character, iconTexturePath);
 
             filter.AddChild(image);
             image.Owner = filter;
@@ -169,6 +165,17 @@ namespace STS2RitsuLib.Scaffolding.Characters.Patches
             reticle.Owner = filter;
 
             return filter;
+        }
+
+        private static Texture2D ResolveFilterIconTexture(CharacterModel character, string? iconTexturePath)
+        {
+            if (!string.IsNullOrWhiteSpace(iconTexturePath) &&
+                AssetPathDiagnostics.Exists(iconTexturePath, character,
+                    nameof(IModCharacterAssetOverrides.CustomIconTexturePath)) &&
+                ResourceLoader.Load<Texture2D>(iconTexturePath) is { } iconTexture)
+                return iconTexture;
+
+            return character.IconTexture;
         }
     }
 }

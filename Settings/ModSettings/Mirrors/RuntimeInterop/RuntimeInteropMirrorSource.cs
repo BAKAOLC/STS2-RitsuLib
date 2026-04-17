@@ -6,11 +6,7 @@ using STS2RitsuLib.Utils.Persistence;
 
 namespace STS2RitsuLib.Settings
 {
-    /// <summary>
-    ///     Mirrors settings pages declared by third-party assemblies through a reflection-only protocol
-    ///     (no compile-time reference to RitsuLib required).
-    /// </summary>
-    public static class ModSettingsRuntimeReflectionInteropMirror
+    internal static class RuntimeInteropMirrorSource
     {
         private const string ProviderTypeMetadataKey = "RitsuLib.ModSettingsInterop.ProviderType";
         private const string SchemaMethodName = "CreateRitsuLibSettingsSchema";
@@ -33,10 +29,6 @@ namespace STS2RitsuLib.Settings
         private static readonly Dictionary<string, string?> RuntimeRegisteredProviderTypes =
             new(StringComparer.Ordinal);
 
-        /// <summary>
-        ///     Registers an interop provider type name explicitly for runtime discovery.
-        ///     This is intended for reflection-based callers that do not reference RitsuLib at compile time.
-        /// </summary>
         public static bool RegisterProviderType(string providerTypeFullName, string? assemblyName = null)
         {
             if (string.IsNullOrWhiteSpace(providerTypeFullName))
@@ -50,9 +42,6 @@ namespace STS2RitsuLib.Settings
             }
         }
 
-        /// <summary>
-        ///     Registers an interop provider type explicitly for runtime discovery.
-        /// </summary>
         public static bool RegisterProviderType(Type providerType)
         {
             ArgumentNullException.ThrowIfNull(providerType);
@@ -60,41 +49,26 @@ namespace STS2RitsuLib.Settings
                    RegisterProviderType(providerType.FullName, providerType.Assembly.GetName().Name);
         }
 
-        /// <summary>
-        ///     Registers an interop provider type explicitly for runtime discovery.
-        /// </summary>
         public static bool RegisterProviderType<TProvider>()
         {
             return RegisterProviderType(typeof(TProvider));
         }
 
-        /// <summary>
-        ///     Registers a provider type and immediately attempts mirror registration.
-        /// </summary>
         public static int RegisterProviderTypeAndTryRegister(string providerTypeFullName, string? assemblyName = null)
         {
             return !RegisterProviderType(providerTypeFullName, assemblyName) ? 0 : TryRegisterMirroredPages();
         }
 
-        /// <summary>
-        ///     Registers a provider type and immediately attempts mirror registration.
-        /// </summary>
         public static int RegisterProviderTypeAndTryRegister(Type providerType)
         {
             return !RegisterProviderType(providerType) ? 0 : TryRegisterMirroredPages();
         }
 
-        /// <summary>
-        ///     Registers a provider type and immediately attempts mirror registration.
-        /// </summary>
         public static int RegisterProviderTypeAndTryRegister<TProvider>()
         {
             return RegisterProviderTypeAndTryRegister(typeof(TProvider));
         }
 
-        /// <summary>
-        ///     Discovers reflection providers and registers mirrored pages from their declared schemas.
-        /// </summary>
         public static int TryRegisterMirroredPages()
         {
             lock (Gate)
@@ -118,7 +92,7 @@ namespace STS2RitsuLib.Settings
                     catch (Exception ex)
                     {
                         RitsuLibFramework.Logger.Warn(
-                            $"[ModSettingsRuntimeReflectionInteropMirror] Provider '{provider.ProviderType.FullName}' failed but was isolated: {ex.Message}");
+                            $"[RuntimeInteropMirrorSource] Provider '{provider.ProviderType.FullName}' failed but was isolated: {ex.Message}");
                     }
 
                 return added;
@@ -144,7 +118,7 @@ namespace STS2RitsuLib.Settings
                     if (providerType == null)
                     {
                         RitsuLibFramework.Logger.Warn(
-                            $"[ModSettingsRuntimeReflectionInteropMirror] Provider type not found: {asm.GetName().Name}::{typeName}");
+                            $"[RuntimeInteropMirrorSource] Provider type not found: {asm.GetName().Name}::{typeName}");
                         continue;
                     }
 
@@ -153,7 +127,7 @@ namespace STS2RitsuLib.Settings
                     if (schemaMethod == null)
                     {
                         RitsuLibFramework.Logger.Warn(
-                            $"[ModSettingsRuntimeReflectionInteropMirror] Missing static method '{SchemaMethodName}' on {providerType.FullName}.");
+                            $"[RuntimeInteropMirrorSource] Missing static method '{SchemaMethodName}' on {providerType.FullName}.");
                         continue;
                     }
 
@@ -243,7 +217,7 @@ namespace STS2RitsuLib.Settings
             catch (Exception ex)
             {
                 RitsuLibFramework.Logger.Warn(
-                    $"[ModSettingsRuntimeReflectionInteropMirror] Schema invoke failed for {provider.ProviderType.FullName}: {ex.Message}");
+                    $"[RuntimeInteropMirrorSource] Schema invoke failed for {provider.ProviderType.FullName}: {ex.Message}");
                 return false;
             }
 
@@ -255,7 +229,7 @@ namespace STS2RitsuLib.Settings
 
             if (TryParseSchema(root, out schema)) return true;
             RitsuLibFramework.Logger.Warn(
-                $"[ModSettingsRuntimeReflectionInteropMirror] Schema parse failed for {provider.ProviderType.FullName}.");
+                $"[RuntimeInteropMirrorSource] Schema parse failed for {provider.ProviderType.FullName}.");
             return false;
         }
 
@@ -266,7 +240,7 @@ namespace STS2RitsuLib.Settings
                 return;
 
             RitsuLibFramework.Logger.Warn(
-                $"[ModSettingsRuntimeReflectionInteropMirror] Schema payload is null/invalid for {providerName}.");
+                $"[RuntimeInteropMirrorSource] Schema payload is null/invalid for {providerName}.");
         }
 
         private static bool TryRegisterFromSchema(InteropProvider provider, InteropSchemaRoot schema)
@@ -314,7 +288,7 @@ namespace STS2RitsuLib.Settings
                 catch (Exception ex)
                 {
                     RitsuLibFramework.Logger.Warn(
-                        $"[ModSettingsRuntimeReflectionInteropMirror] Register failed for {schema.ModId}::{pageSchema.PageId}: {ex.Message}");
+                        $"[RuntimeInteropMirrorSource] Register failed for {schema.ModId}::{pageSchema.PageId}: {ex.Message}");
                 }
 
             return addedAny;
@@ -345,7 +319,7 @@ namespace STS2RitsuLib.Settings
                     if (string.IsNullOrWhiteSpace(entry.TargetPageId))
                     {
                         RitsuLibFramework.Logger.Warn(
-                            $"[ModSettingsRuntimeReflectionInteropMirror] Skipping subpage entry '{entry.Id}' because targetPageId is missing.");
+                            $"[RuntimeInteropMirrorSource] Skipping subpage entry '{entry.Id}' because targetPageId is missing.");
                         return;
                     }
 
@@ -658,7 +632,7 @@ namespace STS2RitsuLib.Settings
         {
             content = "";
             var trimmed = filePath.Trim();
-            var read = FileOperations.ReadText(trimmed, "ModSettingsRuntimeReflectionInteropMirror");
+            var read = FileOperations.ReadText(trimmed, "RuntimeInteropMirrorSource");
             if (!read.Success || string.IsNullOrWhiteSpace(read.Content))
                 return false;
 
@@ -974,7 +948,7 @@ namespace STS2RitsuLib.Settings
                 }
                 catch
                 {
-                    // ignore unreadable reflected property and continue
+                    // ignored
                 }
             }
 

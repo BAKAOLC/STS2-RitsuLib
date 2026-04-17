@@ -2,7 +2,6 @@ using System.Globalization;
 using Godot;
 using Godot.Collections;
 using MegaCrit.Sts2.Core.ControllerInput;
-using MegaCrit.Sts2.Core.Helpers;
 using MegaCrit.Sts2.Core.Nodes.CommonUi;
 using Array = System.Array;
 
@@ -800,6 +799,7 @@ namespace STS2RitsuLib.Settings
 
         private readonly Action<TValue>? _onChanged;
         private readonly (TValue Value, string Label)[]? _optionsWithValues;
+        private readonly System.Collections.Generic.Dictionary<int, ModSettingsMiniButton> _rowButtonCache = [];
         private readonly List<ModSettingsMiniButton> _rowButtons = [];
         private Control? _backdrop;
         private VBoxContainer? _dropList;
@@ -1029,11 +1029,12 @@ namespace STS2RitsuLib.Settings
                 return;
 
             _rowButtons.Clear();
-            for (var i = _dropList.GetChildCount() - 1; i >= 0; i--)
+            var liveIndexes = Enumerable.Range(0, _optionsWithValues.Length).ToHashSet();
+            foreach (var staleIndex in _rowButtonCache.Keys.Where(index => !liveIndexes.Contains(index)).ToArray())
             {
-                var child = _dropList.GetChild(i);
-                _dropList.RemoveChild(child);
-                child.QueueFree();
+                if (_rowButtonCache.TryGetValue(staleIndex, out var staleRow) && IsInstanceValid(staleRow))
+                    staleRow.QueueFree();
+                _rowButtonCache.Remove(staleIndex);
             }
 
             var panelMinW = DropListMinWidth;
@@ -1044,14 +1045,28 @@ namespace STS2RitsuLib.Settings
             {
                 var index = i;
                 var opt = _optionsWithValues[i];
-                var row = new ModSettingsMiniButton(opt.Label, () => ActivateRow(index))
+                if (!_rowButtonCache.TryGetValue(index, out var row) || !IsInstanceValid(row))
                 {
-                    CustomMinimumSize = new(panelMinW - 24f, RowHeight),
-                    SizeFlagsHorizontal = SizeFlags.ExpandFill,
-                    Alignment = HorizontalAlignment.Left,
-                };
-                row.AddThemeFontOverride("font", ModSettingsUiResources.KreonRegular);
-                row.AddThemeFontSizeOverride("font_size", 18);
+                    row = new(opt.Label, () => ActivateRow(index))
+                    {
+                        SizeFlagsHorizontal = SizeFlags.ExpandFill,
+                        Alignment = HorizontalAlignment.Left,
+                    };
+                    row.AddThemeFontOverride("font", ModSettingsUiResources.KreonRegular);
+                    row.AddThemeFontSizeOverride("font_size", 18);
+                    _rowButtonCache[index] = row;
+                }
+
+                row.Text = opt.Label;
+                row.CustomMinimumSize = new(panelMinW - 24f, RowHeight);
+                row.TooltipText = string.Empty;
+                row.AddThemeColorOverride("font_color", ModSettingsUiPalette.LabelPrimary);
+                row.AddThemeColorOverride("font_hover_color", Colors.White);
+                row.AddThemeColorOverride("font_pressed_color", Colors.White);
+                row.AddThemeStyleboxOverride("normal", ModSettingsMiniButton.CreateStyle(false));
+                row.AddThemeStyleboxOverride("hover", ModSettingsMiniButton.CreateStyle(true));
+                row.AddThemeStyleboxOverride("pressed", ModSettingsMiniButton.CreatePressedStyle());
+                row.AddThemeStyleboxOverride("focus", ModSettingsMiniButton.CreateFocusStyle());
                 if (index == _selectedIndex)
                 {
                     row.TooltipText = ModSettingsLocalization.Get("choice.dropdown.currentRow",
@@ -1065,7 +1080,9 @@ namespace STS2RitsuLib.Settings
                     row.AddThemeStyleboxOverride("focus", CreateDropdownCurrentRowFocus());
                 }
 
-                _dropList.AddChild(row);
+                if (row.GetParent() != _dropList)
+                    _dropList.AddChild(row);
+                _dropList.MoveChild(row, i);
                 _rowButtons.Add(row);
             }
 
@@ -1772,6 +1789,7 @@ namespace STS2RitsuLib.Settings
 
         private readonly IReadOnlyList<ModSettingsMenuAction> _actions;
         private readonly Action? _afterAction;
+        private readonly System.Collections.Generic.Dictionary<int, ModSettingsMiniButton> _rowButtonCache = [];
         private readonly List<ModSettingsMiniButton> _rowButtons = [];
         private Control? _backdrop;
         private VBoxContainer? _dropList;
@@ -1956,27 +1974,36 @@ namespace STS2RitsuLib.Settings
                 return;
 
             _rowButtons.Clear();
-            for (var i = _dropList.GetChildCount() - 1; i >= 0; i--)
+            var liveIndexes = Enumerable.Range(0, _actions.Count).ToHashSet();
+            foreach (var staleIndex in _rowButtonCache.Keys.Where(index => !liveIndexes.Contains(index)).ToArray())
             {
-                var child = _dropList.GetChild(i);
-                _dropList.RemoveChild(child);
-                child.QueueFree();
+                if (_rowButtonCache.TryGetValue(staleIndex, out var staleRow) && IsInstanceValid(staleRow))
+                    staleRow.QueueFree();
+                _rowButtonCache.Remove(staleIndex);
             }
 
             for (var i = 0; i < _actions.Count; i++)
             {
                 var index = i;
                 var def = _actions[i];
-                var row = new ModSettingsMiniButton(def.Label, () => ActivateRow(index))
+                if (!_rowButtonCache.TryGetValue(index, out var row) || !IsInstanceValid(row))
                 {
-                    CustomMinimumSize = new(DropMinWidth - 24f, RowHeight),
-                    SizeFlagsHorizontal = SizeFlags.ExpandFill,
-                    Disabled = !def.IsEnabled(),
-                    Alignment = HorizontalAlignment.Left,
-                };
-                row.AddThemeFontOverride("font", ModSettingsUiResources.KreonRegular);
-                row.AddThemeFontSizeOverride("font_size", 18);
-                _dropList.AddChild(row);
+                    row = new(def.Label, () => ActivateRow(index))
+                    {
+                        SizeFlagsHorizontal = SizeFlags.ExpandFill,
+                        Alignment = HorizontalAlignment.Left,
+                    };
+                    row.AddThemeFontOverride("font", ModSettingsUiResources.KreonRegular);
+                    row.AddThemeFontSizeOverride("font_size", 18);
+                    _rowButtonCache[index] = row;
+                }
+
+                row.Text = def.Label;
+                row.CustomMinimumSize = new(DropMinWidth - 24f, RowHeight);
+                row.Disabled = !def.IsEnabled();
+                if (row.GetParent() != _dropList)
+                    _dropList.AddChild(row);
+                _dropList.MoveChild(row, i);
                 _rowButtons.Add(row);
             }
         }
@@ -2070,10 +2097,10 @@ namespace STS2RitsuLib.Settings
             AddThemeColorOverride("font_color", ModSettingsUiPalette.LabelPrimary);
             AddThemeColorOverride("font_hover_color", Colors.White);
             AddThemeColorOverride("font_pressed_color", Colors.White);
-            AddThemeStyleboxOverride("normal", CreateStyle(false, false));
-            AddThemeStyleboxOverride("hover", CreateStyle(true, false));
-            AddThemeStyleboxOverride("pressed", CreateStyle(true, false));
-            AddThemeStyleboxOverride("focus", CreateStyle(true, false));
+            AddThemeStyleboxOverride("normal", CreateStyle(false));
+            AddThemeStyleboxOverride("hover", CreateStyle(true));
+            AddThemeStyleboxOverride("pressed", CreateStyle(true));
+            AddThemeStyleboxOverride("focus", CreateStyle(true));
             AddThemeStyleboxOverride("disabled", CreateStyle(false, true));
             Pressed += action;
         }
@@ -2085,7 +2112,10 @@ namespace STS2RitsuLib.Settings
         {
         }
 
-        private static StyleBoxFlat CreateStyle(bool highlighted, bool disabled)
+        /// <summary>
+        ///     Creates the standard mini-button surface for normal, hover, focus, and disabled states.
+        /// </summary>
+        public static StyleBoxFlat CreateStyle(bool highlighted, bool disabled = false)
         {
             return new()
             {
@@ -2112,6 +2142,22 @@ namespace STS2RitsuLib.Settings
                 ContentMarginRight = 10,
                 ContentMarginBottom = 5,
             };
+        }
+
+        /// <summary>
+        ///     Creates the pressed-state style for mini buttons.
+        /// </summary>
+        public static StyleBoxFlat CreatePressedStyle()
+        {
+            return CreateStyle(true);
+        }
+
+        /// <summary>
+        ///     Creates the focus-state style for mini buttons.
+        /// </summary>
+        public static StyleBoxFlat CreateFocusStyle()
+        {
+            return CreateStyle(true);
         }
     }
 
@@ -2275,6 +2321,7 @@ namespace STS2RitsuLib.Settings
         private readonly string _dragToken = Guid.NewGuid().ToString("N");
         private readonly System.Collections.Generic.Dictionary<int, ModSettingsListDropSlot<TItem>> _dropSlots = [];
         private readonly ListModSettingsEntryDefinition<TItem> _entry;
+        private readonly System.Collections.Generic.Dictionary<int, Control> _rowCards = [];
         private ModSettingsListDropSlot<TItem>? _activeDropSlot;
         private Label? _countLabel;
         private int _currentDragIndex = -1;
@@ -2479,9 +2526,6 @@ namespace STS2RitsuLib.Settings
                 return;
 
             ClearActiveDropSlot();
-            _dropSlots.Clear();
-            _rows.FreeChildren();
-
             var items = _entry.Binding.Read();
             _countLabel?.Text = string.Format(
                 ModSettingsLocalization.Get("list.count", "{0} items"),
@@ -2489,13 +2533,41 @@ namespace STS2RitsuLib.Settings
 
             _emptyState?.Visible = items.Count == 0;
 
-            _rows.AddChild(RegisterDropSlot(new(this, 0), 0));
-            for (var index = 0; index < items.Count; index++)
+            var liveIndexes = Enumerable.Range(0, items.Count).ToHashSet();
+            foreach (var staleIndex in _rowCards.Keys.Where(index => !liveIndexes.Contains(index)).ToArray())
             {
-                var item = items[index];
-                _rows.AddChild(CreateRow(index, item, items.Count));
-                _rows.AddChild(RegisterDropSlot(new(this, index + 1), index + 1));
+                if (_rowCards.TryGetValue(staleIndex, out var staleRow) && IsInstanceValid(staleRow))
+                    staleRow.QueueFree();
+                _rowCards.Remove(staleIndex);
             }
+
+            foreach (var staleSlot in _dropSlots.Keys.Where(index => index > items.Count).ToArray())
+            {
+                if (_dropSlots.TryGetValue(staleSlot, out var slot) && IsInstanceValid(slot))
+                    slot.QueueFree();
+                _dropSlots.Remove(staleSlot);
+            }
+
+            var childOrder = 0;
+            for (var slotIndex = 0; slotIndex <= items.Count; slotIndex++)
+            {
+                var dropSlot = EnsureDropSlot(slotIndex);
+                if (dropSlot.GetParent() != _rows)
+                    _rows.AddChild(dropSlot);
+                _rows.MoveChild(dropSlot, childOrder++);
+
+                if (slotIndex >= items.Count)
+                    continue;
+
+                var row = CreateRow(slotIndex, items[slotIndex], items.Count);
+                _rowCards[slotIndex] = row;
+                if (row.GetParent() != _rows)
+                    _rows.AddChild(row);
+                _rows.MoveChild(row, childOrder++);
+            }
+
+            _rows.ResetSize();
+            _rows.QueueSort();
         }
 
         private Control CreateRow(int index, TItem item, int itemCount)
@@ -2622,8 +2694,12 @@ namespace STS2RitsuLib.Settings
             Mutate(items => MoveItemToSlot(items, dragIndex, targetIndex));
         }
 
-        private ModSettingsListDropSlot<TItem> RegisterDropSlot(ModSettingsListDropSlot<TItem> slot, int index)
+        private ModSettingsListDropSlot<TItem> EnsureDropSlot(int index)
         {
+            if (_dropSlots.TryGetValue(index, out var slot) && IsInstanceValid(slot))
+                return slot;
+
+            slot = new(this, index);
             _dropSlots[index] = slot;
             return slot;
         }

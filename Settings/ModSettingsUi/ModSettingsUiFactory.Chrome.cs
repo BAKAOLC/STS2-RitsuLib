@@ -399,10 +399,23 @@ namespace STS2RitsuLib.Settings
                 : new ModSettingsActionsButton(sectionMenuActions, context.RequestRefresh);
             sectionActionsButton?.SizeFlagsVertical = Control.SizeFlags.ShrinkCenter;
 
-            var wrappedEntries = section.Entries
-                .Select(entry => MaybeWrapDynamicVisibility(context, entry.CreateControl(context),
-                    entry.VisibilityPredicate))
-                .ToArray();
+            var wrappedEntries = new List<Control>(section.Entries.Count);
+            foreach (var entry in section.Entries)
+                try
+                {
+                    wrappedEntries.Add(MaybeWrapDynamicVisibility(context, entry.CreateControl(context),
+                        entry.VisibilityPredicate));
+                }
+                catch (Exception ex)
+                {
+                    RitsuLibFramework.Logger.Warn(
+                        $"[Settings] Failed to build entry '{page.ModId}:{page.Id}:{section.Id}:{entry.Id}': {ex.Message}");
+                    wrappedEntries.Add(CreateBuildErrorPlaceholder(
+                        ModSettingsLocalization.Get("entry.failed.title", "Setting failed to load"),
+                        string.Format(
+                            ModSettingsLocalization.Get("entry.failed.body", "Failed to build setting '{0}'."),
+                            entry.Id)));
+                }
 
             Control built;
             if (section.IsCollapsible)
@@ -412,7 +425,7 @@ namespace STS2RitsuLib.Settings
                     section.Id,
                     section.Description != null ? ModSettingsUiContext.Resolve(section.Description) : null,
                     section.StartCollapsed,
-                    wrappedEntries,
+                    wrappedEntries.ToArray(),
                     sectionActionsButton);
                 if (sectionActionsButton != null)
                     AttachContextMenuTargets(collapsible, collapsible, sectionActionsButton);
@@ -590,6 +603,28 @@ namespace STS2RitsuLib.Settings
                 ModSettingsUiPalette.RichTextSecondary);
             label.SizeFlagsHorizontal = Control.SizeFlags.ExpandFill;
             return label;
+        }
+
+        internal static Control CreateBuildErrorPlaceholder(string title, string body)
+        {
+            var panel = new PanelContainer
+            {
+                SizeFlagsHorizontal = Control.SizeFlags.ExpandFill,
+                MouseFilter = Control.MouseFilterEnum.Ignore,
+            };
+            panel.AddThemeStyleboxOverride("panel", CreateChromeActionsMenuStyle(true));
+
+            var stack = new VBoxContainer
+            {
+                SizeFlagsHorizontal = Control.SizeFlags.ExpandFill,
+                MouseFilter = Control.MouseFilterEnum.Ignore,
+            };
+            stack.AddThemeConstantOverride("separation", 4);
+            panel.AddChild(stack);
+
+            stack.AddChild(CreateSectionTitle(title));
+            stack.AddChild(CreateInlineDescription(body));
+            return panel;
         }
 
         private static MegaRichTextLabel CreateDescriptionLabel(string text)

@@ -34,7 +34,7 @@ namespace STS2RitsuLib.RuntimeInput
         {
             lock (SyncRoot)
             {
-                return _router?.GetRegistrationInfos() ?? Array.Empty<RuntimeHotkeyRegistrationInfo>();
+                return _router?.GetRegistrationInfos() ?? [];
             }
         }
 

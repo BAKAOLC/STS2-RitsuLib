@@ -183,7 +183,15 @@ namespace STS2RitsuLib.Content
             where TPool : CardPoolModel
             where TCard : CardModel
         {
-            RegisterCard<TPool, TCard>(default);
+            RegisterCard(typeof(TPool), typeof(TCard));
+        }
+
+        /// <summary>
+        ///     Registers <paramref name="cardType" /> into <paramref name="poolType" /> with default public entry naming.
+        /// </summary>
+        public void RegisterCard(Type poolType, Type cardType)
+        {
+            RegisterCard(poolType, cardType, default);
         }
 
         /// <summary>
@@ -194,7 +202,16 @@ namespace STS2RitsuLib.Content
             where TPool : CardPoolModel
             where TCard : CardModel
         {
-            RegisterPoolModel(typeof(TPool), typeof(TCard), "card", publicEntry);
+            RegisterCard(typeof(TPool), typeof(TCard), publicEntry);
+        }
+
+        /// <summary>
+        ///     Registers <paramref name="cardType" /> into <paramref name="poolType" /> using
+        ///     <paramref name="publicEntry" /> rules.
+        /// </summary>
+        public void RegisterCard(Type poolType, Type cardType, ModelPublicEntryOptions publicEntry)
+        {
+            RegisterPoolModel(poolType, cardType, "card", publicEntry);
         }
 
         /// <summary>
@@ -205,7 +222,15 @@ namespace STS2RitsuLib.Content
             where TPool : RelicPoolModel
             where TRelic : RelicModel
         {
-            RegisterRelic<TPool, TRelic>(default);
+            RegisterRelic(typeof(TPool), typeof(TRelic));
+        }
+
+        /// <summary>
+        ///     Registers <paramref name="relicType" /> into <paramref name="poolType" /> with default public entry naming.
+        /// </summary>
+        public void RegisterRelic(Type poolType, Type relicType)
+        {
+            RegisterRelic(poolType, relicType, default);
         }
 
         /// <summary>
@@ -216,7 +241,16 @@ namespace STS2RitsuLib.Content
             where TPool : RelicPoolModel
             where TRelic : RelicModel
         {
-            RegisterPoolModel(typeof(TPool), typeof(TRelic), "relic", publicEntry);
+            RegisterRelic(typeof(TPool), typeof(TRelic), publicEntry);
+        }
+
+        /// <summary>
+        ///     Registers <paramref name="relicType" /> into <paramref name="poolType" /> using
+        ///     <paramref name="publicEntry" /> rules.
+        /// </summary>
+        public void RegisterRelic(Type poolType, Type relicType, ModelPublicEntryOptions publicEntry)
+        {
+            RegisterPoolModel(poolType, relicType, "relic", publicEntry);
         }
 
         /// <summary>
@@ -227,7 +261,15 @@ namespace STS2RitsuLib.Content
             where TPool : PotionPoolModel
             where TPotion : PotionModel
         {
-            RegisterPotion<TPool, TPotion>(default);
+            RegisterPotion(typeof(TPool), typeof(TPotion));
+        }
+
+        /// <summary>
+        ///     Registers <paramref name="potionType" /> into <paramref name="poolType" /> with default public entry naming.
+        /// </summary>
+        public void RegisterPotion(Type poolType, Type potionType)
+        {
+            RegisterPotion(poolType, potionType, default);
         }
 
         /// <summary>
@@ -238,7 +280,16 @@ namespace STS2RitsuLib.Content
             where TPool : PotionPoolModel
             where TPotion : PotionModel
         {
-            RegisterPoolModel(typeof(TPool), typeof(TPotion), "potion", publicEntry);
+            RegisterPotion(typeof(TPool), typeof(TPotion), publicEntry);
+        }
+
+        /// <summary>
+        ///     Registers <paramref name="potionType" /> into <paramref name="poolType" /> using
+        ///     <paramref name="publicEntry" /> rules.
+        /// </summary>
+        public void RegisterPotion(Type poolType, Type potionType, ModelPublicEntryOptions publicEntry)
+        {
+            RegisterPoolModel(poolType, potionType, "potion", publicEntry);
         }
 
         /// <summary>
@@ -246,7 +297,15 @@ namespace STS2RitsuLib.Content
         /// </summary>
         public void RegisterCharacter<TCharacter>() where TCharacter : CharacterModel
         {
-            RegisterStandaloneModel(RegisteredCharacters, typeof(TCharacter), typeof(CharacterModel), "character");
+            RegisterCharacter(typeof(TCharacter));
+        }
+
+        /// <summary>
+        ///     Registers <paramref name="characterType" /> for inclusion in <see cref="ModelDb.AllCharacters" />.
+        /// </summary>
+        public void RegisterCharacter(Type characterType)
+        {
+            RegisterStandaloneModel(RegisteredCharacters, characterType, typeof(CharacterModel), "character");
         }
 
         /// <summary>
@@ -258,7 +317,15 @@ namespace STS2RitsuLib.Content
             where TCharacter : CharacterModel
             where TCard : CardModel
         {
-            RegisterCharacterStarterModel(typeof(TCharacter), typeof(TCard), typeof(CardModel),
+            RegisterCharacterStarterCard(typeof(TCharacter), typeof(TCard), count);
+        }
+
+        /// <summary>
+        ///     Registers additional starter-deck copies of <paramref name="cardType" /> for <paramref name="characterType" />.
+        /// </summary>
+        public void RegisterCharacterStarterCard(Type characterType, Type cardType, int count = 1)
+        {
+            RegisterCharacterStarterModel(characterType, cardType, typeof(CardModel),
                 CharacterStarterContentKind.Card,
                 count);
         }
@@ -273,7 +340,15 @@ namespace STS2RitsuLib.Content
             where TCharacter : CharacterModel
             where TRelic : RelicModel
         {
-            RegisterCharacterStarterModel(typeof(TCharacter), typeof(TRelic), typeof(RelicModel),
+            RegisterCharacterStarterRelic(typeof(TCharacter), typeof(TRelic), count);
+        }
+
+        /// <summary>
+        ///     Registers additional starting relic copies of <paramref name="relicType" /> for <paramref name="characterType" />.
+        /// </summary>
+        public void RegisterCharacterStarterRelic(Type characterType, Type relicType, int count = 1)
+        {
+            RegisterCharacterStarterModel(characterType, relicType, typeof(RelicModel),
                 CharacterStarterContentKind.Relic, count);
         }
 
@@ -287,7 +362,16 @@ namespace STS2RitsuLib.Content
             where TCharacter : CharacterModel
             where TPotion : PotionModel
         {
-            RegisterCharacterStarterModel(typeof(TCharacter), typeof(TPotion), typeof(PotionModel),
+            RegisterCharacterStarterPotion(typeof(TCharacter), typeof(TPotion), count);
+        }
+
+        /// <summary>
+        ///     Registers additional starting potion copies of <paramref name="potionType" /> for <paramref name="characterType" />
+        ///     .
+        /// </summary>
+        public void RegisterCharacterStarterPotion(Type characterType, Type potionType, int count = 1)
+        {
+            RegisterCharacterStarterModel(characterType, potionType, typeof(PotionModel),
                 CharacterStarterContentKind.Potion, count);
         }
 
@@ -296,7 +380,15 @@ namespace STS2RitsuLib.Content
         /// </summary>
         public void RegisterAct<TAct>() where TAct : ActModel
         {
-            RegisterStandaloneModel(RegisteredActs, typeof(TAct), typeof(ActModel), "act");
+            RegisterAct(typeof(TAct));
+        }
+
+        /// <summary>
+        ///     Registers <paramref name="actType" /> for inclusion in <see cref="ModelDb.Acts" />.
+        /// </summary>
+        public void RegisterAct(Type actType)
+        {
+            RegisterStandaloneModel(RegisteredActs, actType, typeof(ActModel), "act");
         }
 
         /// <summary>
@@ -305,7 +397,15 @@ namespace STS2RitsuLib.Content
         /// </summary>
         public void RegisterMonster<TMonster>() where TMonster : MonsterModel
         {
-            RegisterStandaloneModel(RegisteredMonsters, typeof(TMonster), typeof(MonsterModel), "monster");
+            RegisterMonster(typeof(TMonster));
+        }
+
+        /// <summary>
+        ///     Registers <paramref name="monsterType" /> for RitsuLib tracking and patched monster injection.
+        /// </summary>
+        public void RegisterMonster(Type monsterType)
+        {
+            RegisterStandaloneModel(RegisteredMonsters, monsterType, typeof(MonsterModel), "monster");
         }
 
         /// <summary>
@@ -313,7 +413,15 @@ namespace STS2RitsuLib.Content
         /// </summary>
         public void RegisterPower<TPower>() where TPower : PowerModel
         {
-            RegisterStandaloneModel(RegisteredPowers, typeof(TPower), typeof(PowerModel), "power");
+            RegisterPower(typeof(TPower));
+        }
+
+        /// <summary>
+        ///     Registers <paramref name="powerType" /> for inclusion in <see cref="ModelDb.AllPowers" />.
+        /// </summary>
+        public void RegisterPower(Type powerType)
+        {
+            RegisterStandaloneModel(RegisteredPowers, powerType, typeof(PowerModel), "power");
         }
 
         /// <summary>
@@ -321,7 +429,15 @@ namespace STS2RitsuLib.Content
         /// </summary>
         public void RegisterOrb<TOrb>() where TOrb : OrbModel
         {
-            RegisterStandaloneModel(RegisteredOrbs, typeof(TOrb), typeof(OrbModel), "orb");
+            RegisterOrb(typeof(TOrb));
+        }
+
+        /// <summary>
+        ///     Registers <paramref name="orbType" /> for inclusion in <see cref="ModelDb.Orbs" />.
+        /// </summary>
+        public void RegisterOrb(Type orbType)
+        {
+            RegisterStandaloneModel(RegisteredOrbs, orbType, typeof(OrbModel), "orb");
         }
 
         /// <summary>
@@ -330,7 +446,15 @@ namespace STS2RitsuLib.Content
         /// </summary>
         public void RegisterEnchantment<TEnchantment>() where TEnchantment : EnchantmentModel
         {
-            RegisterStandaloneModel(RegisteredEnchantments, typeof(TEnchantment), typeof(EnchantmentModel),
+            RegisterEnchantment(typeof(TEnchantment));
+        }
+
+        /// <summary>
+        ///     Registers <paramref name="enchantmentType" /> for patched enchantment injection.
+        /// </summary>
+        public void RegisterEnchantment(Type enchantmentType)
+        {
+            RegisterStandaloneModel(RegisteredEnchantments, enchantmentType, typeof(EnchantmentModel),
                 "enchantment");
         }
 
@@ -340,7 +464,15 @@ namespace STS2RitsuLib.Content
         /// </summary>
         public void RegisterAffliction<TAffliction>() where TAffliction : AfflictionModel
         {
-            RegisterStandaloneModel(RegisteredAfflictions, typeof(TAffliction), typeof(AfflictionModel), "affliction");
+            RegisterAffliction(typeof(TAffliction));
+        }
+
+        /// <summary>
+        ///     Registers <paramref name="afflictionType" /> for patched affliction injection.
+        /// </summary>
+        public void RegisterAffliction(Type afflictionType)
+        {
+            RegisterStandaloneModel(RegisteredAfflictions, afflictionType, typeof(AfflictionModel), "affliction");
         }
 
         /// <summary>
@@ -349,7 +481,15 @@ namespace STS2RitsuLib.Content
         /// </summary>
         public void RegisterAchievement<TAchievement>() where TAchievement : AchievementModel
         {
-            RegisterStandaloneModel(RegisteredAchievements, typeof(TAchievement), typeof(AchievementModel),
+            RegisterAchievement(typeof(TAchievement));
+        }
+
+        /// <summary>
+        ///     Registers <paramref name="achievementType" /> for patched achievement injection.
+        /// </summary>
+        public void RegisterAchievement(Type achievementType)
+        {
+            RegisterStandaloneModel(RegisteredAchievements, achievementType, typeof(AchievementModel),
                 "achievement");
         }
 
@@ -359,7 +499,15 @@ namespace STS2RitsuLib.Content
         /// </summary>
         public void RegisterSingleton<TSingleton>() where TSingleton : SingletonModel
         {
-            RegisterStandaloneModel(RegisteredSingletons, typeof(TSingleton), typeof(SingletonModel), "singleton");
+            RegisterSingleton(typeof(TSingleton));
+        }
+
+        /// <summary>
+        ///     Registers <paramref name="singletonType" /> for dynamic singleton injection.
+        /// </summary>
+        public void RegisterSingleton(Type singletonType)
+        {
+            RegisterStandaloneModel(RegisteredSingletons, singletonType, typeof(SingletonModel), "singleton");
         }
 
         /// <summary>
@@ -367,7 +515,15 @@ namespace STS2RitsuLib.Content
         /// </summary>
         public void RegisterGoodModifier<TModifier>() where TModifier : ModifierModel
         {
-            RegisterStandaloneModel(RegisteredGoodModifiers, typeof(TModifier), typeof(ModifierModel), "good modifier");
+            RegisterGoodModifier(typeof(TModifier));
+        }
+
+        /// <summary>
+        ///     Registers <paramref name="modifierType" /> as a good daily modifier.
+        /// </summary>
+        public void RegisterGoodModifier(Type modifierType)
+        {
+            RegisterStandaloneModel(RegisteredGoodModifiers, modifierType, typeof(ModifierModel), "good modifier");
         }
 
         /// <summary>
@@ -375,7 +531,15 @@ namespace STS2RitsuLib.Content
         /// </summary>
         public void RegisterBadModifier<TModifier>() where TModifier : ModifierModel
         {
-            RegisterStandaloneModel(RegisteredBadModifiers, typeof(TModifier), typeof(ModifierModel), "bad modifier");
+            RegisterBadModifier(typeof(TModifier));
+        }
+
+        /// <summary>
+        ///     Registers <paramref name="modifierType" /> as a bad daily modifier.
+        /// </summary>
+        public void RegisterBadModifier(Type modifierType)
+        {
+            RegisterStandaloneModel(RegisteredBadModifiers, modifierType, typeof(ModifierModel), "bad modifier");
         }
 
         /// <summary>
@@ -383,7 +547,15 @@ namespace STS2RitsuLib.Content
         /// </summary>
         public void RegisterSharedCardPool<TPool>() where TPool : CardPoolModel
         {
-            RegisterStandaloneModel(RegisteredSharedCardPools, typeof(TPool), typeof(CardPoolModel),
+            RegisterSharedCardPool(typeof(TPool));
+        }
+
+        /// <summary>
+        ///     Registers <paramref name="poolType" /> for inclusion in <see cref="ModelDb.AllSharedCardPools" />.
+        /// </summary>
+        public void RegisterSharedCardPool(Type poolType)
+        {
+            RegisterStandaloneModel(RegisteredSharedCardPools, poolType, typeof(CardPoolModel),
                 "shared card pool");
         }
 
@@ -392,7 +564,15 @@ namespace STS2RitsuLib.Content
         /// </summary>
         public void RegisterSharedRelicPool<TPool>() where TPool : RelicPoolModel
         {
-            RegisterStandaloneModel(RegisteredSharedRelicPools, typeof(TPool), typeof(RelicPoolModel),
+            RegisterSharedRelicPool(typeof(TPool));
+        }
+
+        /// <summary>
+        ///     Registers <paramref name="poolType" /> for inclusion in patched <see cref="ModelDb.AllRelicPools" />.
+        /// </summary>
+        public void RegisterSharedRelicPool(Type poolType)
+        {
+            RegisterStandaloneModel(RegisteredSharedRelicPools, poolType, typeof(RelicPoolModel),
                 "shared relic pool");
         }
 
@@ -401,7 +581,15 @@ namespace STS2RitsuLib.Content
         /// </summary>
         public void RegisterSharedPotionPool<TPool>() where TPool : PotionPoolModel
         {
-            RegisterStandaloneModel(RegisteredSharedPotionPools, typeof(TPool), typeof(PotionPoolModel),
+            RegisterSharedPotionPool(typeof(TPool));
+        }
+
+        /// <summary>
+        ///     Registers <paramref name="poolType" /> for inclusion in patched <see cref="ModelDb.AllPotionPools" />.
+        /// </summary>
+        public void RegisterSharedPotionPool(Type poolType)
+        {
+            RegisterStandaloneModel(RegisteredSharedPotionPools, poolType, typeof(PotionPoolModel),
                 "shared potion pool");
         }
 
@@ -410,7 +598,15 @@ namespace STS2RitsuLib.Content
         /// </summary>
         public void RegisterSharedEvent<TEvent>() where TEvent : EventModel
         {
-            RegisterStandaloneModel(RegisteredSharedEvents, typeof(TEvent), typeof(EventModel), "shared event");
+            RegisterSharedEvent(typeof(TEvent));
+        }
+
+        /// <summary>
+        ///     Registers <paramref name="eventType" /> for inclusion in shared event enumerations.
+        /// </summary>
+        public void RegisterSharedEvent(Type eventType)
+        {
+            RegisterStandaloneModel(RegisteredSharedEvents, eventType, typeof(EventModel), "shared event");
         }
 
         /// <summary>
@@ -420,7 +616,15 @@ namespace STS2RitsuLib.Content
             where TAct : ActModel
             where TEncounter : EncounterModel
         {
-            RegisterScopedModel(RegisteredActEncounters, typeof(TAct), typeof(TEncounter), typeof(ActModel),
+            RegisterActEncounter(typeof(TAct), typeof(TEncounter));
+        }
+
+        /// <summary>
+        ///     Registers <paramref name="encounterType" /> scoped to <paramref name="actType" />.
+        /// </summary>
+        public void RegisterActEncounter(Type actType, Type encounterType)
+        {
+            RegisterScopedModel(RegisteredActEncounters, actType, encounterType, typeof(ActModel),
                 typeof(EncounterModel), "act encounter");
         }
 
@@ -432,7 +636,15 @@ namespace STS2RitsuLib.Content
         /// </summary>
         public void RegisterGlobalEncounter<TEncounter>() where TEncounter : EncounterModel
         {
-            RegisterStandaloneModel(RegisteredGlobalEncounters, typeof(TEncounter), typeof(EncounterModel),
+            RegisterGlobalEncounter(typeof(TEncounter));
+        }
+
+        /// <summary>
+        ///     Registers <paramref name="encounterType" /> as a global encounter.
+        /// </summary>
+        public void RegisterGlobalEncounter(Type encounterType)
+        {
+            RegisterStandaloneModel(RegisteredGlobalEncounters, encounterType, typeof(EncounterModel),
                 "global encounter");
         }
 
@@ -443,7 +655,15 @@ namespace STS2RitsuLib.Content
             where TAct : ActModel
             where TEvent : EventModel
         {
-            RegisterScopedModel(RegisteredActEvents, typeof(TAct), typeof(TEvent), typeof(ActModel), typeof(EventModel),
+            RegisterActEvent(typeof(TAct), typeof(TEvent));
+        }
+
+        /// <summary>
+        ///     Registers <paramref name="eventType" /> scoped to <paramref name="actType" />.
+        /// </summary>
+        public void RegisterActEvent(Type actType, Type eventType)
+        {
+            RegisterScopedModel(RegisteredActEvents, actType, eventType, typeof(ActModel), typeof(EventModel),
                 "act event");
         }
 
@@ -452,7 +672,15 @@ namespace STS2RitsuLib.Content
         /// </summary>
         public void RegisterSharedAncient<TAncient>() where TAncient : AncientEventModel
         {
-            RegisterStandaloneModel(RegisteredSharedAncients, typeof(TAncient), typeof(AncientEventModel),
+            RegisterSharedAncient(typeof(TAncient));
+        }
+
+        /// <summary>
+        ///     Registers <paramref name="ancientType" /> for inclusion in ancient enumerations.
+        /// </summary>
+        public void RegisterSharedAncient(Type ancientType)
+        {
+            RegisterStandaloneModel(RegisteredSharedAncients, ancientType, typeof(AncientEventModel),
                 "shared ancient");
         }
 
@@ -463,7 +691,15 @@ namespace STS2RitsuLib.Content
             where TAct : ActModel
             where TAncient : AncientEventModel
         {
-            RegisterScopedModel(RegisteredActAncients, typeof(TAct), typeof(TAncient), typeof(ActModel),
+            RegisterActAncient(typeof(TAct), typeof(TAncient));
+        }
+
+        /// <summary>
+        ///     Registers <paramref name="ancientType" /> scoped to <paramref name="actType" />.
+        /// </summary>
+        public void RegisterActAncient(Type actType, Type ancientType)
+        {
+            RegisterScopedModel(RegisteredActAncients, actType, ancientType, typeof(ActModel),
                 typeof(AncientEventModel), "act ancient");
         }
 

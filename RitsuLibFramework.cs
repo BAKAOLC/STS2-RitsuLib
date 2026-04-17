@@ -39,6 +39,10 @@ namespace STS2RitsuLib
         private static readonly Dictionary<Type, object> ReplayableLifecycleEvents = [];
         private static readonly HashSet<string> RegisteredScriptAssemblies = [];
 
+        private static readonly Lock DeferredContentPackSync = new();
+        private static readonly List<DeferredContentPackRegistration> DeferredContentPackRegistrations = [];
+        private static bool _deferredContentPacksFlushed;
+
         static RitsuLibFramework()
         {
             Logger = CreateLogger(Const.ModId);
@@ -315,6 +319,53 @@ namespace STS2RitsuLib
         public static ModContentPackBuilder CreateContentPack(string modId)
         {
             return ModContentPackBuilder.For(modId);
+        }
+
+        internal static void EnqueueDeferredContentPack(string modId, Action<ModContentPackContext> apply,
+            string? description = null)
+        {
+            ArgumentException.ThrowIfNullOrWhiteSpace(modId);
+            ArgumentNullException.ThrowIfNull(apply);
+
+            lock (DeferredContentPackSync)
+            {
+                if (_deferredContentPacksFlushed)
+                    throw new InvalidOperationException(
+                        $"Content pack registration for mod '{modId}' is already closed for this run.");
+
+                DeferredContentPackRegistrations.Add(new(modId, apply, description));
+            }
+        }
+
+        internal static void FlushDeferredContentPacks()
+        {
+            List<DeferredContentPackRegistration> pending;
+            lock (DeferredContentPackSync)
+            {
+                if (_deferredContentPacksFlushed)
+                    return;
+
+                _deferredContentPacksFlushed = true;
+                pending = [.. DeferredContentPackRegistrations];
+                DeferredContentPackRegistrations.Clear();
+            }
+
+            if (pending.Count == 0)
+                return;
+
+            pending.Sort(static (x, y) => StringComparer.OrdinalIgnoreCase.Compare(x.ModId, y.ModId));
+            foreach (var registration in pending)
+            {
+                var context = new ModContentPackContext(
+                    registration.ModId,
+                    GetContentRegistry(registration.ModId),
+                    GetKeywordRegistry(registration.ModId),
+                    GetTimelineRegistry(registration.ModId),
+                    GetUnlockRegistry(registration.ModId));
+                registration.Apply(context);
+            }
+
+            Logger.Info($"[ContentPack] Flushed {pending.Count} deferred content pack(s).");
         }
 
         /// <summary>
@@ -600,6 +651,11 @@ namespace STS2RitsuLib
                 static _ => new LifecycleTopic<TEvent>()
             );
         }
+
+        private sealed record DeferredContentPackRegistration(
+            string ModId,
+            Action<ModContentPackContext> Apply,
+            string? Description);
 
         private static class LifecycleEventTypeCache<TEvent>
             where TEvent : IFrameworkLifecycleEvent

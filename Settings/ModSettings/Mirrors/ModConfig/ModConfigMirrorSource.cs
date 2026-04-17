@@ -6,40 +6,7 @@ using MegaCrit.Sts2.Core.Helpers;
 
 namespace STS2RitsuLib.Settings
 {
-    /// <summary>
-    ///     Optional behavior for ModConfig mirror registration; pass to the four-parameter
-    ///     <c>TryRegisterMirroredPages</c> overload on <see cref="ModSettingsModConfigReflectionMirror" />.
-    /// </summary>
-    public sealed class ModConfigMirrorRegistrationOptions
-    {
-        /// <summary>
-        ///     Default options used when none are passed.
-        /// </summary>
-        public static ModConfigMirrorRegistrationOptions Default { get; } = new();
-
-        /// <summary>
-        ///     Forwarded to <see cref="ModSettingsSectionBuilder.AddKeyBinding" /> for mirrored ModConfig KeyBind rows.
-        /// </summary>
-        public bool KeyBindAllowModifierCombos { get; init; } = true;
-
-        /// <summary>
-        ///     Forwarded to <see cref="ModSettingsSectionBuilder.AddKeyBinding" /> for mirrored ModConfig KeyBind rows.
-        /// </summary>
-        public bool KeyBindAllowModifierOnly { get; init; } = true;
-
-        /// <summary>
-        ///     Forwarded to <see cref="ModSettingsSectionBuilder.AddKeyBinding" /> for mirrored ModConfig KeyBind rows.
-        /// </summary>
-        public bool KeyBindDistinguishModifierSides { get; init; } = false;
-    }
-
-    /// <summary>
-    ///     Mirrors the optional <c>ModConfig-STS2</c> (<c>ModConfig.ModConfigApi</c>) registrations into RitsuLib&apos;s
-    ///     mod settings UI via reflection (no compile-time reference). <c>TryRegisterMirroredPages</c> is
-    ///     invoked from <see cref="RitsuModSettingsSubmenu" /> on rebuilds so mods that register after the first paint
-    ///     are picked up.
-    /// </summary>
-    public static class ModSettingsModConfigReflectionMirror
+    internal static class ModConfigMirrorSource
     {
         private const string ApiTypeName = "ModConfig.ModConfigApi";
         private const string ManagerTypeName = "ModConfig.ModConfigManager";
@@ -54,19 +21,8 @@ namespace STS2RitsuLib.Settings
         private static MethodInfo? _cachedI18NGet;
         private static PropertyInfo? _cachedRegistrationsProp;
 
-        /// <summary>
-        ///     True when a loaded assembly exposes <c>ModConfig.ModConfigApi</c>.
-        /// </summary>
         public static bool IsModConfigPresent => ResolveType(ApiTypeName) != null;
 
-        /// <summary>
-        ///     Registers one RitsuLib settings page per ModConfig-registered mod that does not yet have page
-        ///     <paramref name="pageId" />. Returns how many new pages were added this call. Mirror directives from
-        ///     <see cref="AssemblyMetadataAttribute" /> are honored.
-        /// </summary>
-        /// <param name="pageId">Stable page id (default <c>modconfig</c>).</param>
-        /// <param name="sortOrder">Sidebar ordering among sibling pages.</param>
-        /// <param name="pageTitle">Optional page title.</param>
         public static int TryRegisterMirroredPages(
             string pageId = "modconfig",
             int sortOrder = 10_020,
@@ -75,13 +31,6 @@ namespace STS2RitsuLib.Settings
             return TryRegisterMirroredPages(pageId, sortOrder, pageTitle, null);
         }
 
-        /// <summary>
-        ///     Registers mirrored pages with optional KeyBind / future mirror behavior.
-        /// </summary>
-        /// <param name="pageId">Stable page id under each mod.</param>
-        /// <param name="sortOrder">Sidebar ordering among sibling pages.</param>
-        /// <param name="pageTitle">Optional page title.</param>
-        /// <param name="options">When null, <see cref="ModConfigMirrorRegistrationOptions.Default" /> is used.</param>
         public static int TryRegisterMirroredPages(
             string pageId,
             int sortOrder,
@@ -131,9 +80,6 @@ namespace STS2RitsuLib.Settings
             }
         }
 
-        /// <summary>
-        ///     Clears cached ModConfig reflection handles (e.g. after late-loaded assemblies in non-standard hosts).
-        /// </summary>
         public static void ClearModConfigReflectionCache()
         {
             lock (Gate)
@@ -336,7 +282,7 @@ namespace STS2RitsuLib.Settings
             catch (Exception ex)
             {
                 RitsuLibFramework.Logger.Warn(
-                    $"[ModSettingsModConfigReflectionMirror] Failed to register page '{modId}::{pageId}': {ex.Message}");
+                    $"[ModConfigMirrorSource] Failed to register page '{modId}::{pageId}': {ex.Message}");
                 return false;
             }
         }
@@ -757,7 +703,7 @@ namespace STS2RitsuLib.Settings
             catch (Exception ex)
             {
                 RitsuLibFramework.Logger.Warn(
-                    $"[ModSettingsModConfigReflectionMirror] SetValue failed [{modId}.{key}]: {ex.Message}");
+                    $"[ModConfigMirrorSource] SetValue failed [{modId}.{key}]: {ex.Message}");
             }
         }
 
@@ -809,7 +755,7 @@ namespace STS2RitsuLib.Settings
             catch (Exception ex)
             {
                 RitsuLibFramework.Logger.Warn(
-                    $"[ModSettingsModConfigReflectionMirror] Config button callback failed: {ex.Message}");
+                    $"[ModConfigMirrorSource] Config button callback failed: {ex.Message}");
             }
         }
 
@@ -928,32 +874,19 @@ namespace STS2RitsuLib.Settings
 
         private static void ConfirmAndResetModConfig(string modId, MethodInfo resetDefaults)
         {
-            if (Engine.GetMainLoop() is not SceneTree { Root: { } root })
-            {
-                TryResetDefaults(resetDefaults, modId);
-                return;
-            }
-
             var body = ModSettingsLocalization.Get("modconfig.restoreDefaults.body",
                 "Reset all ModConfig options for this mod to their default values?");
             var header = ModSettingsLocalization.Get("modconfig.restoreDefaults.header", "Restore defaults");
-            var submenu = FindRitsuModSettingsSubmenu(root);
-            var attachParent = (Node?)submenu ?? root;
             var cancelText = ModSettingsLocalization.Get("modconfig.restoreDefaults.cancel", "Cancel");
             var confirmText = ModSettingsLocalization.Get("modconfig.restoreDefaults.confirm", "Restore defaults");
 
-            ModSettingsUiFactory.ShowStyledConfirm(
-                attachParent,
+            ModSettingsMirrorUiActions.ConfirmAndRestoreDefaults(
+                () => TryResetDefaults(resetDefaults, modId),
+                null,
                 header,
                 body,
                 cancelText,
-                confirmText,
-                true,
-                () =>
-                {
-                    TryResetDefaults(resetDefaults, modId);
-                    submenu?.RequestRefresh();
-                });
+                confirmText);
         }
 
         private static void TryResetDefaults(MethodInfo resetDefaults, string modId)
@@ -965,25 +898,8 @@ namespace STS2RitsuLib.Settings
             catch (Exception ex)
             {
                 RitsuLibFramework.Logger.Warn(
-                    $"[ModSettingsModConfigReflectionMirror] ResetToDefaults failed for '{modId}': {ex.Message}");
+                    $"[ModConfigMirrorSource] ResetToDefaults failed for '{modId}': {ex.Message}");
             }
-        }
-
-        private static RitsuModSettingsSubmenu? FindRitsuModSettingsSubmenu(Node root)
-        {
-            var queue = new Queue<Node>();
-            queue.Enqueue(root);
-            while (queue.Count > 0)
-            {
-                var n = queue.Dequeue();
-                if (n is RitsuModSettingsSubmenu sm)
-                    return sm;
-
-                foreach (var child in n.GetChildren())
-                    queue.Enqueue(child);
-            }
-
-            return null;
         }
 
         private static Type? ResolveType(string fullName)

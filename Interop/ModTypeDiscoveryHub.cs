@@ -1,7 +1,6 @@
 using System.Reflection;
 using HarmonyLib;
-using MegaCrit.Sts2.Core.Helpers;
-using STS2RitsuLib.Compat;
+using STS2RitsuLib.Interop.AutoRegistration;
 using STS2RitsuLib.Interop.Patches;
 
 namespace STS2RitsuLib.Interop
@@ -14,6 +13,10 @@ namespace STS2RitsuLib.Interop
     {
         private static readonly Lock Gate = new();
         private static readonly List<IModTypeDiscoveryContributor> Contributors = [];
+
+        private static readonly Dictionary<string, Assembly> RegisteredAssembliesByModId =
+            new(StringComparer.Ordinal);
+
         private static bool _builtInsRegistered;
 
         /// <summary>
@@ -29,6 +32,21 @@ namespace STS2RitsuLib.Interop
             }
         }
 
+        /// <summary>
+        ///     Registers a mod assembly for the one-shot discovery pipeline. Mods should call this from their initializer
+        ///     before <see cref="ModTypeDiscoveryPatch" /> runs.
+        /// </summary>
+        public static void RegisterModAssembly(string modId, Assembly assembly)
+        {
+            ArgumentException.ThrowIfNullOrWhiteSpace(modId);
+            ArgumentNullException.ThrowIfNull(assembly);
+
+            lock (Gate)
+            {
+                RegisteredAssembliesByModId[modId] = assembly;
+            }
+        }
+
         internal static void EnsureBuiltInContributorsRegistered()
         {
             lock (Gate)
@@ -36,30 +54,25 @@ namespace STS2RitsuLib.Interop
                 if (_builtInsRegistered)
                     return;
                 Contributors.Add(new ModInteropTypeDiscoveryContributor());
+                Contributors.Add(new AttributeAutoRegistrationTypeDiscoveryContributor());
                 _builtInsRegistered = true;
             }
         }
 
         internal static void RunOnce(Harmony harmony)
         {
-            var map = new Dictionary<string, Assembly>(StringComparer.Ordinal);
-            foreach (var m in Sts2ModManagerCompat.EnumerateLoadedModsWithAssembly())
-            {
-                var id = m.manifest?.id;
-                if (string.IsNullOrEmpty(id) || m.assembly is null)
-                    continue;
-                map[id] = m.assembly;
-            }
-
+            Dictionary<string, Assembly> map;
             IModTypeDiscoveryContributor[] snapshot;
             lock (Gate)
             {
+                map = new(RegisteredAssembliesByModId, StringComparer.Ordinal);
                 snapshot = Contributors.ToArray();
             }
 
-            foreach (var modType in ReflectionHelper.ModTypes)
-            foreach (var c in snapshot)
-                c.Contribute(harmony, map, modType);
+            foreach (var assembly in map.Values.Distinct())
+            foreach (var modType in AssemblyTypeScanHelper.GetLoadableTypes(assembly, RitsuLibFramework.Logger))
+            foreach (var contributor in snapshot)
+                contributor.Contribute(harmony, map, modType);
         }
     }
 }

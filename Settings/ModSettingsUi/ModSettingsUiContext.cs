@@ -4,7 +4,8 @@ using STS2RitsuLib.Utils.Persistence;
 
 namespace STS2RitsuLib.Settings
 {
-    internal sealed class ModSettingsUiContext(RitsuModSettingsSubmenu submenu) : IModSettingsUiActionHost
+    internal sealed class ModSettingsUiContext(RitsuModSettingsSubmenu submenu, string? pageScopeId = null)
+        : IModSettingsUiActionHost
     {
         private readonly Dictionary<string, Dictionary<string, object?>> _rowUiState = [];
 
@@ -56,7 +57,7 @@ namespace STS2RitsuLib.Settings
 
         public void RegisterRefresh(Action action)
         {
-            submenu.RegisterRefreshAction(action);
+            submenu.RegisterRefreshAction(action, pageScopeId);
         }
 
         /// <summary>
@@ -65,7 +66,7 @@ namespace STS2RitsuLib.Settings
         /// </summary>
         public void RegisterDynamicVisibility(Control control, Func<bool> predicate)
         {
-            submenu.RegisterDynamicVisibility(control, predicate);
+            submenu.RegisterDynamicVisibility(control, predicate, pageScopeId);
         }
 
         public void NavigateToPage(string pageId)
