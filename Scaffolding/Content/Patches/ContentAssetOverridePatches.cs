@@ -48,7 +48,14 @@ namespace STS2RitsuLib.Scaffolding.Content.Patches
             if (!TryGetPath(instance, selector, memberName, out var path))
                 return true;
 
-            __result = ResourceLoader.Load<Texture2D>(path);
+            var texture = ResourceLoader.Load<Texture2D>(path);
+            if (texture == null)
+            {
+                LogLoadFailure(instance, memberName, path, nameof(Texture2D));
+                return true;
+            }
+
+            __result = texture;
             return false;
         }
 
@@ -129,6 +136,27 @@ namespace STS2RitsuLib.Scaffolding.Content.Patches
             return true;
         }
 
+        private static void LogLoadFailure(object instance, string memberName, string path, string expectedType)
+        {
+            RitsuLibFramework.Logger.Warn(
+                $"[Assets] Resource exists but failed to load as {expectedType} for {DescribeOwner(instance)}.{memberName}: '{path}'. Falling back to the base asset.");
+        }
+
+        private static string DescribeOwner(object owner)
+        {
+            try
+            {
+                if (owner is AbstractModel model && !string.IsNullOrWhiteSpace(model.Id.Entry))
+                    return $"{owner.GetType().Name}<{model.Id.Entry}>";
+            }
+            catch
+            {
+                // Ignore model identity lookup failures and fall back to the CLR type name.
+            }
+
+            return owner.GetType().Name;
+        }
+
         // ReSharper disable once InconsistentNaming
         internal static bool TryUsePackedSceneCacheOverride<TOverrides>(
             object instance,
@@ -170,7 +198,14 @@ namespace STS2RitsuLib.Scaffolding.Content.Patches
             if (!TryGetPath(instance, selector, memberName, out var path))
                 return true;
 
-            __result = ResourceLoader.Load<CompressedTexture2D>(path);
+            var texture = ResourceLoader.Load<Texture2D>(path);
+            if (texture == null)
+            {
+                LogLoadFailure(instance, memberName, path, nameof(Texture2D));
+                return true;
+            }
+
+            __result = texture;
             return false;
         }
     }
