@@ -67,14 +67,16 @@ if (FmodStudioServer.TryCheckEventPath("event:/mods/mymod/hit") is true)
 **短音效文件（按 sound 加载）**
 
 ```csharp
-FmodStudioStreamingFiles.TryPlaySoundFile("res://mods/MyMod/sfx/ping.wav", volume: 0.9f);
+var sfxPath = Path.Combine(Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location)!, "ping.wav");
+FmodStudioStreamingFiles.TryPlaySoundFile(sfxPath, volume: 0.9f);
 ```
 
 **流式音乐**
 
 ```csharp
-FmodStudioStreamingFiles.TryPreloadAsStreamingMusic("res://mods/MyMod/bgm/loop.ogg");
-var handle = FmodStudioStreamingFiles.TryCreateStreamingMusicInstance("res://mods/MyMod/bgm/loop.ogg");
+var musicPath = ProjectSettings.GlobalizePath("user://mymod/loop.ogg");
+FmodStudioStreamingFiles.TryPreloadAsStreamingMusic(musicPath);
+var handle = FmodStudioStreamingFiles.TryCreateStreamingMusicInstance(musicPath);
 handle?.Call("set_volume", 0.7f);
 handle?.Call("play");
 ```

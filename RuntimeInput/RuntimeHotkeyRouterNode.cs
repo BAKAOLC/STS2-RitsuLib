@@ -16,7 +16,13 @@ namespace STS2RitsuLib.RuntimeInput
         public RuntimeHotkeyHandle Register(RuntimeHotkeyBinding binding, Action callback,
             RuntimeHotkeyOptions? options)
         {
-            var registration = new RuntimeHotkeyRegistration(binding, callback, options ?? new RuntimeHotkeyOptions());
+            return Register([binding], callback, options);
+        }
+
+        public RuntimeHotkeyHandle Register(IReadOnlyList<RuntimeHotkeyBinding> bindings, Action callback,
+            RuntimeHotkeyOptions? options)
+        {
+            var registration = new RuntimeHotkeyRegistration(bindings, callback, options ?? new RuntimeHotkeyOptions());
             _registrations.Add(registration);
             return new(this, registration);
         }
@@ -25,7 +31,39 @@ namespace STS2RitsuLib.RuntimeInput
         {
             if (!RuntimeHotkeyParser.TryParse(bindingText, out var binding, out normalizedBinding))
                 return false;
-            registration.Binding = binding;
+            registration.SetBindings([binding]);
+            return true;
+        }
+
+        public bool TryRebind(RuntimeHotkeyRegistration registration, IEnumerable<string> bindingTexts,
+            out IReadOnlyList<string> normalizedBindings)
+        {
+            var bindings = new List<RuntimeHotkeyBinding>();
+            var normalized = new List<string>();
+            var seen = new HashSet<string>(StringComparer.Ordinal);
+            foreach (var bindingText in bindingTexts)
+            {
+                if (!RuntimeHotkeyParser.TryParse(bindingText, out var binding, out var normalizedBinding))
+                {
+                    normalizedBindings = [];
+                    return false;
+                }
+
+                if (!seen.Add(normalizedBinding))
+                    continue;
+
+                bindings.Add(binding);
+                normalized.Add(normalizedBinding);
+            }
+
+            if (bindings.Count == 0)
+            {
+                normalizedBindings = [];
+                return false;
+            }
+
+            registration.SetBindings(bindings);
+            normalizedBindings = normalized;
             return true;
         }
 
@@ -47,6 +85,14 @@ namespace STS2RitsuLib.RuntimeInput
             var infos = new RuntimeHotkeyRegistrationInfo[_registrations.Count];
             for (var i = 0; i < _registrations.Count; i++)
                 infos[i] = _registrations[i].ToRegistrationInfo();
+            return infos;
+        }
+
+        public IReadOnlyList<RuntimeHotkeyRegistrationDetails> GetRegistrationDetails()
+        {
+            var infos = new RuntimeHotkeyRegistrationDetails[_registrations.Count];
+            for (var i = 0; i < _registrations.Count; i++)
+                infos[i] = _registrations[i].ToRegistrationDetails();
             return infos;
         }
 
@@ -80,7 +126,7 @@ namespace STS2RitsuLib.RuntimeInput
                 var registration = _registrations[i];
                 if (!ShouldConsider(registration.Options))
                     continue;
-                if (!registration.Binding.Matches(keyEvent))
+                if (!registration.Matches(keyEvent))
                     continue;
 
                 registration.Callback();
@@ -108,19 +154,38 @@ namespace STS2RitsuLib.RuntimeInput
     }
 
     internal sealed class RuntimeHotkeyRegistration(
-        RuntimeHotkeyBinding binding,
+        IReadOnlyList<RuntimeHotkeyBinding> bindings,
         Action callback,
         RuntimeHotkeyOptions options)
     {
-        public RuntimeHotkeyBinding Binding { get; set; } = binding;
+        private readonly List<RuntimeHotkeyBinding> _bindings = bindings.ToList();
+
+        public IReadOnlyList<RuntimeHotkeyBinding> Bindings => _bindings;
         public Action Callback { get; } = callback;
         public RuntimeHotkeyOptions Options { get; } = options;
 
-        public RuntimeHotkeyRegistrationInfo ToRegistrationInfo()
+        public void SetBindings(IEnumerable<RuntimeHotkeyBinding> bindings)
         {
+            _bindings.Clear();
+            _bindings.AddRange(bindings);
+        }
+
+        public bool Matches(InputEventKey keyEvent)
+        {
+            for (var i = 0; i < _bindings.Count; i++)
+                if (_bindings[i].Matches(keyEvent))
+                    return true;
+
+            return false;
+        }
+
+        public RuntimeHotkeyRegistrationDetails ToRegistrationDetails()
+        {
+            var bindingTexts = _bindings.Select(static binding => binding.CanonicalString).ToArray();
+            var modifierStates = _bindings.Select(static binding => binding.IsModifierOnly).ToArray();
             return new(
-                Binding.CanonicalString,
-                Binding.IsModifierOnly,
+                bindingTexts,
+                modifierStates,
                 Options.Id,
                 ResolveText(Options.DisplayName),
                 ResolveText(Options.Description),
@@ -130,6 +195,11 @@ namespace STS2RitsuLib.RuntimeInput
                 Options.SuppressWhenTextInputFocused,
                 Options.SuppressWhenDevConsoleVisible,
                 Options.DebugName);
+        }
+
+        public RuntimeHotkeyRegistrationInfo ToRegistrationInfo()
+        {
+            return ToRegistrationDetails().ToRegistrationInfo();
         }
 
         private static string? ResolveText(RuntimeHotkeyText? text)
@@ -144,7 +214,11 @@ namespace STS2RitsuLib.RuntimeInput
         private RuntimeHotkeyRouterNode? _owner = owner;
         private RuntimeHotkeyRegistration? _registration = registration;
 
-        public string CurrentBinding => _registration?.Binding.CanonicalString ?? string.Empty;
+        public string CurrentBinding => CurrentBindings.FirstOrDefault() ?? string.Empty;
+
+        public IReadOnlyList<string> CurrentBindings =>
+            _registration?.Bindings.Select(static binding => binding.CanonicalString).ToArray() ?? [];
+
         public bool IsRegistered => _owner != null && _registration != null;
 
         public bool TryRebind(string bindingText, out string normalizedBinding)
@@ -152,6 +226,14 @@ namespace STS2RitsuLib.RuntimeInput
             if (_owner != null && _registration != null)
                 return _owner.TryRebind(_registration, bindingText, out normalizedBinding);
             normalizedBinding = string.Empty;
+            return false;
+        }
+
+        public bool TryRebind(IEnumerable<string> bindingTexts, out IReadOnlyList<string> normalizedBindings)
+        {
+            if (_owner != null && _registration != null)
+                return _owner.TryRebind(_registration, bindingTexts, out normalizedBindings);
+            normalizedBindings = [];
             return false;
         }
 

@@ -39,6 +39,17 @@ namespace STS2RitsuLib.RuntimeInput
         }
 
         /// <summary>
+        ///     Returns detailed read-only snapshots for all currently registered runtime hotkeys, including every binding.
+        /// </summary>
+        public static IReadOnlyList<RuntimeHotkeyRegistrationDetails> GetRegisteredHotkeyDetails()
+        {
+            lock (SyncRoot)
+            {
+                return _router?.GetRegistrationDetails() ?? [];
+            }
+        }
+
+        /// <summary>
         ///     Tries to return the currently registered hotkey snapshot for a stable registration id.
         /// </summary>
         /// <param name="id">Stable registration id to locate.</param>
@@ -92,10 +103,27 @@ namespace STS2RitsuLib.RuntimeInput
         public static IRuntimeHotkeyHandle Register(string bindingText, Action callback,
             RuntimeHotkeyOptions? options = null)
         {
+            return Register([bindingText], callback, options);
+        }
+
+        /// <summary>
+        ///     Registers one logical runtime hotkey against multiple persisted binding strings.
+        /// </summary>
+        /// <param name="bindingTexts">Persisted binding strings to parse.</param>
+        /// <param name="callback">Callback invoked when any registered binding matches.</param>
+        /// <param name="options">Optional router behavior overrides.</param>
+        /// <returns>A handle that supports explicit rebind and unregister operations.</returns>
+        /// <exception cref="FormatException">Thrown when any binding is invalid.</exception>
+        public static IRuntimeHotkeyHandle Register(IEnumerable<string> bindingTexts, Action callback,
+            RuntimeHotkeyOptions? options = null)
+        {
+            ArgumentNullException.ThrowIfNull(bindingTexts);
             ArgumentNullException.ThrowIfNull(callback);
             Initialize();
-            if (!RuntimeHotkeyParser.TryParse(bindingText, out var binding, out var normalizedBinding))
-                throw new FormatException($"Invalid runtime hotkey binding '{bindingText}'.");
+
+            var bindings = ParseBindings(bindingTexts);
+            if (bindings.Count == 0)
+                throw new FormatException("Runtime hotkey registration requires at least one valid binding.");
 
             lock (SyncRoot)
             {
@@ -103,11 +131,26 @@ namespace STS2RitsuLib.RuntimeInput
                 if (_router == null)
                     throw new InvalidOperationException("Runtime hotkey router is not available.");
 
-                var handle = _router.Register(binding, callback, options);
+                var handle = _router.Register(bindings, callback, options);
                 RitsuLibFramework.Logger.Info(
-                    $"[RuntimeHotkey] Registered '{normalizedBinding}'{FormatDebugName(options)}");
+                    $"[RuntimeHotkey] Registered '{string.Join("', '", bindings.Select(static b => b.CanonicalString))}'{FormatDebugName(options)}");
                 return handle;
             }
+        }
+
+        private static List<RuntimeHotkeyBinding> ParseBindings(IEnumerable<string> bindingTexts)
+        {
+            var bindings = new List<RuntimeHotkeyBinding>();
+            var seen = new HashSet<string>(StringComparer.Ordinal);
+            foreach (var bindingText in bindingTexts)
+            {
+                if (!RuntimeHotkeyParser.TryParse(bindingText, out var binding, out var normalizedBinding))
+                    throw new FormatException($"Invalid runtime hotkey binding '{bindingText}'.");
+                if (seen.Add(normalizedBinding))
+                    bindings.Add(binding);
+            }
+
+            return bindings;
         }
 
         private static void EnsureRouterAttached(Node? gameNode)
