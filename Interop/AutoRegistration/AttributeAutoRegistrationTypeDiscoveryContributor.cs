@@ -561,7 +561,8 @@ namespace STS2RitsuLib.Interop.AutoRegistration
                                 unlockAfterEliteVictories.EpochType,
                                 unlockAfterEliteVictories.RequiredEliteWins),
                             [
-                                TypeDependencyKey(type), $"RegisterEpoch:{unlockAfterEliteVictories.EpochType.FullName}",
+                                TypeDependencyKey(type),
+                                $"RegisterEpoch:{unlockAfterEliteVictories.EpochType.FullName}",
                             ]));
                         break;
                     case UnlockEpochAfterBossVictoriesAttribute unlockAfterBossVictories:

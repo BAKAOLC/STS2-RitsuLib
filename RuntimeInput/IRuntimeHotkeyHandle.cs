@@ -6,9 +6,14 @@ namespace STS2RitsuLib.RuntimeInput
     public interface IRuntimeHotkeyHandle : IDisposable
     {
         /// <summary>
-        ///     Gets the current normalized binding string for this registration.
+        ///     Gets the first current normalized binding string for this registration.
         /// </summary>
         string CurrentBinding { get; }
+
+        /// <summary>
+        ///     Gets all current normalized binding strings for this registration.
+        /// </summary>
+        IReadOnlyList<string> CurrentBindings { get; }
 
         /// <summary>
         ///     Gets whether this handle is still registered with the runtime hotkey router.
@@ -22,6 +27,14 @@ namespace STS2RitsuLib.RuntimeInput
         /// <param name="normalizedBinding">The normalized binding string if parsing succeeded.</param>
         /// <returns><c>true</c> when the new binding was parsed and applied.</returns>
         bool TryRebind(string bindingText, out string normalizedBinding);
+
+        /// <summary>
+        ///     Replaces all bindings with newly persisted binding strings.
+        /// </summary>
+        /// <param name="bindingTexts">Binding texts to parse and apply.</param>
+        /// <param name="normalizedBindings">Normalized binding strings if parsing succeeded.</param>
+        /// <returns><c>true</c> when all bindings were parsed and applied.</returns>
+        bool TryRebind(IEnumerable<string> bindingTexts, out IReadOnlyList<string> normalizedBindings);
 
         /// <summary>
         ///     Returns a read-only snapshot describing the current registration.

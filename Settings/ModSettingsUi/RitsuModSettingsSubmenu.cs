@@ -1,3 +1,4 @@
+using System.Text;
 using Godot;
 using MegaCrit.Sts2.addons.mega_text;
 using MegaCrit.Sts2.Core.Assets;
@@ -943,6 +944,7 @@ namespace STS2RitsuLib.Settings
         private void EnsureUiUpToDate(bool forceStructure = false, bool includeAllPagesRefresh = false)
         {
             ModSettingsMirrorRegistrarBootstrap.TryRegisterMirroredPages();
+            RitsuLibModSettingsBootstrap.RefreshDynamicPages();
             ApplyStaticTexts();
             RefreshPageSnapshots();
             EnsureSelectionIsValid();
@@ -965,7 +967,7 @@ namespace STS2RitsuLib.Settings
         {
             var pages = ModSettingsRegistry.GetPages();
             var next = pages.ToDictionary(page => CreatePageCacheKey(page.ModId, page.Id),
-                page => new PageSnapshot(page.Id, page.ModId, page.ParentPageId),
+                page => new PageSnapshot(page.Id, page.ModId, page.ParentPageId, CreatePageStructureSignature(page)),
                 StringComparer.OrdinalIgnoreCase);
             if (_pageSnapshots.Count != next.Count || _pageSnapshots.Any(pair =>
                     !next.TryGetValue(pair.Key, out var snapshot) || snapshot != pair.Value))
@@ -2131,6 +2133,35 @@ namespace STS2RitsuLib.Settings
             };
         }
 
+        private static string CreatePageStructureSignature(ModSettingsPage page)
+        {
+            var builder = new StringBuilder();
+            builder.Append(page.Id).Append('|')
+                .Append(page.ModId).Append('|')
+                .Append(page.ParentPageId ?? string.Empty).Append('|')
+                .Append(page.Sections.Count);
+
+            foreach (var section in page.Sections)
+            {
+                builder.Append("||")
+                    .Append(section.Id)
+                    .Append('|')
+                    .Append(section.IsCollapsible ? '1' : '0')
+                    .Append('|')
+                    .Append(section.StartCollapsed ? '1' : '0')
+                    .Append('|')
+                    .Append(section.Entries.Count);
+
+                foreach (var entry in section.Entries)
+                    builder.Append("::")
+                        .Append(entry.Id)
+                        .Append('@')
+                        .Append(entry.GetType().FullName);
+            }
+
+            return builder.ToString();
+        }
+
         private sealed class SidebarModCache
         {
             public required string ModId { get; init; }
@@ -2180,6 +2211,6 @@ namespace STS2RitsuLib.Settings
             Failed,
         }
 
-        private sealed record PageSnapshot(string Id, string ModId, string? ParentPageId);
+        private sealed record PageSnapshot(string Id, string ModId, string? ParentPageId, string StructureSignature);
     }
 }

@@ -40,7 +40,6 @@ namespace STS2RitsuLib.Diagnostics.Commands
                 var partial = args[^1];
                 return CompleteArgument(SelfCheckActions, completed, partial);
             }
-
         }
 
         /// <inheritdoc />
@@ -59,7 +58,6 @@ namespace STS2RitsuLib.Diagnostics.Commands
                 return new(false, "Usage: ritsulib selfcheck run|open-output");
             SelfCheckBundleCoordinator.TryOpenOutputFolderFromSettings();
             return new(true, "Requested to open RitsuLib self-check output folder.");
-
         }
     }
 }
