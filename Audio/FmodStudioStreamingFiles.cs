@@ -89,12 +89,8 @@ namespace STS2RitsuLib.Audio
 
             try
             {
-                if (Mathf.IsEqualApprox(volume, 1f))
-                    sound.Call("set_volume", volume);
-
-                if (Mathf.IsEqualApprox(pitch, 1f))
-                    sound.Call("set_pitch", pitch);
-
+                sound.Call("set_volume", volume);
+                sound.Call("set_pitch", pitch);
                 sound.Call("play");
                 return true;
             }
