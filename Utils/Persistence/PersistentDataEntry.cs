@@ -13,6 +13,7 @@ namespace STS2RitsuLib.Utils.Persistence
         private readonly string _fileName;
         private readonly JsonSerializerOptions _jsonOptions;
         private readonly MigrationManager _migrationManager;
+        private readonly string _modId;
 
         /// <summary>
         ///     Initializes in-memory data from <paramref name="defaultValues" /> and captures persistence settings.
@@ -26,7 +27,7 @@ namespace STS2RitsuLib.Utils.Persistence
             MigrationManager migrationManager,
             bool autoCreateIfMissing = false)
         {
-            FilePath = modId;
+            _modId = modId;
             _fileName = fileName;
             Scope = scope;
             _defaultValues = defaultValues;
@@ -44,7 +45,7 @@ namespace STS2RitsuLib.Utils.Persistence
         /// <summary>
         ///     Resolved absolute path for this entry using the active profile.
         /// </summary>
-        public string FilePath => ProfileManager.Instance.GetFilePath(_fileName, Scope, field);
+        public string FilePath => ProfileManager.Instance.GetFilePath(_fileName, Scope, _modId);
 
         /// <summary>
         ///     Whether this file lives under global account storage or a profile subdirectory.

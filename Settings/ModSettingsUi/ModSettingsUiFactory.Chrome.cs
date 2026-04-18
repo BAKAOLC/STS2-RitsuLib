@@ -413,7 +413,8 @@ namespace STS2RitsuLib.Settings
             var sectionActionsButton = sectionMenuActions.Count == 0
                 ? null
                 : new ModSettingsActionsButton(sectionMenuActions, context.RequestRefresh);
-            sectionActionsButton?.SizeFlagsVertical = Control.SizeFlags.ShrinkCenter;
+            if (sectionActionsButton != null)
+                sectionActionsButton.SizeFlagsVertical = Control.SizeFlags.ShrinkCenter;
 
             var wrappedEntries = new List<Control>(section.Entries.Count);
             foreach (var entry in section.Entries)
@@ -867,7 +868,8 @@ namespace STS2RitsuLib.Settings
             var pageBtn = pageActions.Count == 0
                 ? null
                 : new ModSettingsActionsButton(pageActions, context.RequestRefresh);
-            pageBtn?.SizeFlagsVertical = Control.SizeFlags.ShrinkCenter;
+            if (pageBtn != null)
+                pageBtn.SizeFlagsVertical = Control.SizeFlags.ShrinkCenter;
 
             var bar = CreatePageHeaderBar(context, page, showBack, onBack, pageBtn);
             if (pageBtn != null)

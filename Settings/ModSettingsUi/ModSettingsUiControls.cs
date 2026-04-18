@@ -1017,8 +1017,10 @@ namespace STS2RitsuLib.Settings
             _dropOpen = false;
             SetProcessInput(false);
             SetProcessUnhandledInput(false);
-            _backdrop?.Visible = false;
-            _dropPanel?.Visible = false;
+            if (_backdrop != null)
+                _backdrop.Visible = false;
+            if (_dropPanel != null)
+                _dropPanel.Visible = false;
 
             if (_faceButton != null && IsInstanceValid(_faceButton) && _faceButton.IsVisibleInTree())
                 _faceButton.GrabFocus();
@@ -1087,7 +1089,8 @@ namespace STS2RitsuLib.Settings
                 _rowButtons.Add(row);
             }
 
-            _dropPanel?.CustomMinimumSize = new(panelMinW, 0f);
+            if (_dropPanel != null)
+                _dropPanel.CustomMinimumSize = new(panelMinW, 0f);
         }
 
         private void ActivateRow(int index)
@@ -1711,14 +1714,17 @@ namespace STS2RitsuLib.Settings
                 ? string.Empty
                 : string.Join('+', OrderedModifierTokens(_pendingModifierBindings));
 
-            _captureButton?.Text = _capturing
+            var captureText = _capturing
                 ? string.IsNullOrWhiteSpace(pendingBindingText)
                     ? ModSettingsLocalization.Get("keybinding.capturing", "Press combination...")
                     : pendingBindingText + "+..."
                 : string.IsNullOrWhiteSpace(_currentValue)
                     ? ModSettingsLocalization.Get("keybinding.unbound", "Unbound")
                     : _currentValue;
-            _hintLabel?.Text = _capturing
+            if (_captureButton != null)
+                _captureButton.Text = captureText;
+
+            var hintText = _capturing
                 ? string.IsNullOrWhiteSpace(pendingBindingText)
                     ? ModSettingsLocalization.Get("keybinding.hint.capturing",
                         "Press a key combination. Esc cancels, Backspace/Delete clears.")
@@ -1731,6 +1737,8 @@ namespace STS2RitsuLib.Settings
                         : ModSettingsLocalization.Get("keybinding.hint.comboNonModifier",
                             "Click to record. Supports key combinations and requires a non-modifier key.")
                     : ModSettingsLocalization.Get("keybinding.hint.single", "Click to record a single key.");
+            if (_hintLabel != null)
+                _hintLabel.Text = hintText;
         }
 
         internal static string BuildBindingFromPendingModifiers(InputEventKey keyEvent, bool allowModifierCombos,
@@ -1962,8 +1970,10 @@ namespace STS2RitsuLib.Settings
             SetProcessInput(false);
             SetProcessUnhandledInput(false);
             _preferredPopupPosition = null;
-            _backdrop?.Visible = false;
-            _dropPanel?.Visible = false;
+            if (_backdrop != null)
+                _backdrop.Visible = false;
+            if (_dropPanel != null)
+                _dropPanel.Visible = false;
 
             if (IsInstanceValid(this) && IsVisibleInTree())
                 GrabFocus();
@@ -2329,7 +2339,7 @@ namespace STS2RitsuLib.Settings
                 ? string.Empty
                 : string.Join('+', ModSettingsKeyBindingControl.OrderedModifierTokens(_pendingModifierBindings));
 
-            _hintLabel?.Text = _capturing
+            var hintText = _capturing
                 ? string.IsNullOrWhiteSpace(pendingBindingText)
                     ? ModSettingsLocalization.Get("ritsulib.keybindingMulti.capturing",
                         _capturingIndex >= 0
@@ -2344,6 +2354,8 @@ namespace STS2RitsuLib.Settings
                         : ModSettingsLocalization.Get("keybinding.hint.comboNonModifier",
                             "Click to record. Supports key combinations and requires a non-modifier key.")
                     : ModSettingsLocalization.Get("keybinding.hint.single", "Click to record a single key.");
+            if (_hintLabel != null)
+                _hintLabel.Text = hintText;
 
             RebuildBindingsList();
         }
@@ -2913,11 +2925,13 @@ namespace STS2RitsuLib.Settings
 
             ClearActiveDropSlot();
             var items = _entry.Binding.Read();
-            _countLabel?.Text = string.Format(
-                ModSettingsLocalization.Get("list.count", "{0} items"),
-                items.Count);
+            if (_countLabel != null)
+                _countLabel.Text = string.Format(
+                    ModSettingsLocalization.Get("list.count", "{0} items"),
+                    items.Count);
 
-            _emptyState?.Visible = items.Count == 0;
+            if (_emptyState != null)
+                _emptyState.Visible = items.Count == 0;
 
             var liveIndexes = Enumerable.Range(0, items.Count).ToHashSet();
             foreach (var staleIndex in _rowCards.Keys.Where(index => !liveIndexes.Contains(index)).ToArray())
@@ -3534,8 +3548,10 @@ namespace STS2RitsuLib.Settings
 
         public override void _Ready()
         {
-            _titleLabel?.Text = _title;
-            _subtitleLabel?.Text = _subtitle ?? string.Empty;
+            if (_titleLabel != null)
+                _titleLabel.Text = _title;
+            if (_subtitleLabel != null)
+                _subtitleLabel.Text = _subtitle ?? string.Empty;
             ApplySelectedState();
             Callable.From(UpdateMinimumSize).CallDeferred();
         }
@@ -3552,7 +3568,8 @@ namespace STS2RitsuLib.Settings
             AddThemeStyleboxOverride("hover", CreateHeaderStyle(_selected, true));
             AddThemeStyleboxOverride("pressed", CreateHeaderStyle(true, true));
             AddThemeStyleboxOverride("focus", CreateHeaderStyle(_selected, true));
-            _arrowLabel?.Text = _selected ? "▼" : "▶";
+            if (_arrowLabel != null)
+                _arrowLabel.Text = _selected ? "▼" : "▶";
         }
 
         private static StyleBoxFlat CreateHeaderStyle(bool selected, bool hovered)
@@ -3687,7 +3704,8 @@ namespace STS2RitsuLib.Settings
 
         private void ApplyCollapsedState()
         {
-            _content?.Visible = !_collapsed;
+            if (_content != null)
+                _content.Visible = !_collapsed;
             _toggle?.SetSelected(!_collapsed);
         }
 

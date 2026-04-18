@@ -4,7 +4,6 @@
     <PropertyGroup>
         <RootNamespace>STS2RitsuLib</RootNamespace>
         <TargetFramework>net9.0</TargetFramework>
-        <LangVersion>latest</LangVersion>
         <ImplicitUsings>true</ImplicitUsings>
         <Nullable>enable</Nullable>
         <EnableDynamicLoading>true</EnableDynamicLoading>

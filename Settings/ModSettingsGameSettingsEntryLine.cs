@@ -185,7 +185,8 @@ namespace STS2RitsuLib.Settings
             PivotOffset = Size * 0.5f;
             if (GetNodeOrNull<TextureRect>("Image") is { } image)
                 image.PivotOffset = image.Size * 0.5f;
-            _buttonLabel?.PivotOffset = _buttonLabel.Size * 0.5f;
+            if (_buttonLabel != null)
+                _buttonLabel.PivotOffset = _buttonLabel.Size * 0.5f;
         }
 
         protected override void OnRelease()

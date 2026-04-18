@@ -11,6 +11,8 @@ namespace STS2RitsuLib.Scaffolding.Content.Visuals
     /// </summary>
     public static class AncientStageProceduralRootFactory
     {
+        private static PackedScene? _placeholderBackgroundPackedScene;
+
         /// <summary>
         ///     Empty control packed once so <c>EventModel.CreateBackgroundScene</c> can succeed when only procedural layers
         ///     are used (replaced in layout postfix).
@@ -19,13 +21,13 @@ namespace STS2RitsuLib.Scaffolding.Content.Visuals
         {
             get
             {
-                if (field != null)
-                    return field;
+                if (_placeholderBackgroundPackedScene != null)
+                    return _placeholderBackgroundPackedScene;
 
                 var placeholder = new Control { Name = "RitsuAncientStagePlaceholder" };
-                field = new();
-                field.Pack(placeholder);
-                return field;
+                _placeholderBackgroundPackedScene = new();
+                _placeholderBackgroundPackedScene.Pack(placeholder);
+                return _placeholderBackgroundPackedScene;
             }
         }
 

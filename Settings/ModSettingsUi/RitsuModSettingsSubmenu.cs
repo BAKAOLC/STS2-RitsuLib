@@ -596,8 +596,10 @@ namespace STS2RitsuLib.Settings
             if (NInputManager.Instance == null)
                 return;
 
-            _leftPaneHotkeyIcon?.Texture = NInputManager.Instance.GetHotkeyIcon(PaneSidebarHotkey);
-            _rightPaneHotkeyIcon?.Texture = NInputManager.Instance.GetHotkeyIcon(PaneContentHotkey);
+            if (_leftPaneHotkeyIcon != null)
+                _leftPaneHotkeyIcon.Texture = NInputManager.Instance.GetHotkeyIcon(PaneSidebarHotkey);
+            if (_rightPaneHotkeyIcon != null)
+                _rightPaneHotkeyIcon.Texture = NInputManager.Instance.GetHotkeyIcon(PaneContentHotkey);
         }
 
         private void PushPaneHotkeys()

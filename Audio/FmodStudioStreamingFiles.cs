@@ -1,5 +1,4 @@
 using System.Collections.Concurrent;
-using System.IO;
 using Godot;
 using STS2RitsuLib.Audio.Internal;
 
@@ -15,7 +14,8 @@ namespace STS2RitsuLib.Audio
         private static readonly ConcurrentDictionary<string, LoadedKind> Loaded = new(StringComparer.Ordinal);
 
         /// <summary>
-        ///     Preloads the loose audio file at <paramref name="absolutePath" /> as a sound; succeeds immediately if already tracked.
+        ///     Preloads the loose audio file at <paramref name="absolutePath" /> as a sound; succeeds immediately if already
+        ///     tracked.
         /// </summary>
         public static bool TryPreloadAsSound(string absolutePath)
         {
@@ -33,7 +33,8 @@ namespace STS2RitsuLib.Audio
         }
 
         /// <summary>
-        ///     Preloads the loose audio file at <paramref name="absolutePath" /> as streaming music; succeeds immediately if already tracked.
+        ///     Preloads the loose audio file at <paramref name="absolutePath" /> as streaming music; succeeds immediately if
+        ///     already tracked.
         /// </summary>
         public static bool TryPreloadAsStreamingMusic(string absolutePath)
         {
@@ -51,7 +52,8 @@ namespace STS2RitsuLib.Audio
         }
 
         /// <summary>
-        ///     Returns a playable sound instance for the loose audio file at <paramref name="absolutePath" />, preloading as sound when needed.
+        ///     Returns a playable sound instance for the loose audio file at <paramref name="absolutePath" />, preloading as sound
+        ///     when needed.
         ///     Accepts absolute filesystem paths and resolves <c>user://</c> to an absolute filesystem path.
         /// </summary>
         public static GodotObject? TryCreateSoundInstance(string absolutePath)
@@ -160,7 +162,9 @@ namespace STS2RitsuLib.Audio
                 return false;
             }
 
-            return true;
+            if (File.Exists(resolvedPath)) return true;
+            RitsuLibFramework.Logger.Error($"[Audio] FMOD file playback file not found: {resolvedPath}");
+            return false;
         }
 
         private enum LoadedKind : byte
