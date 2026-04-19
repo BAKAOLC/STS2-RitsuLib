@@ -6,7 +6,7 @@ It covers:
 
 - the relationship between `CreateContentPack(...)` and the underlying registries
 - what `Apply()` actually does
-- when to use builder steps, manifests, or direct registry access
+- when to use builder steps, manifests, direct registry access, or optional CLR attributes
 - how fixed model identity and ModelDb integration relate to registration
 - generated placeholders for cards/relics/potions (API, ordering, and risks)
 
@@ -244,9 +244,23 @@ var contentEntries = new IContentRegistrationEntry[]
 
 ---
 
+## Attribute-based registration (optional)
+
+CLR attributes in `STS2RitsuLib.Interop.AutoRegistration` (for example `[RegisterSharedCardPool]`, `[RegisterCard(typeof(MyPool))]`) ultimately call the **same registry APIs** as the fluent builder, direct registries, and manifest entries.
+
+RitsuLib runs them during the early **mod type discovery** pass (`ModTypeDiscoveryPatch`). The built-in `AttributeAutoRegistrationTypeDiscoveryContributor` scans **concrete** CLR types in assemblies you register with **`ModTypeDiscoveryHub.RegisterModAssembly(modId, Assembly.GetExecutingAssembly())`** from your mod initializer **before** `PatchAll`. A type must resolve to a mod id (usually via the manifest-mapped assembly); if not, annotate the type with **`[RitsuLibOwnedBy("modId")]`**.
+
+This does **not** replace `CreateContentPack(...)`; it is an alternative authoring style. Mixing approaches is acceptable when ordering and freeze rules remain valid.
+
+### `Inherit` on `AutoRegistrationAttribute`
+
+Attributes apply to the type they annotate. **`Inherit`** defaults to **`false`**. When **`Inherit = true`** on an attribute declared on a **base class**, **concrete derived types** are handled as if the same attribute were declared on each subclass (the registry still receives the **subclass** `Type`). If a subclass already has a **direct** attribute that would produce the **same registration signature**, the inherited duplicate is skipped. Abstract base types are skipped by the scan; only concrete types are registered.
+
+---
+
 ## Content model registration matrix
 
-Every row below is **one conceptual kind of content**. You can register it in **three equivalent ways** (unless noted):
+Every row below is **one conceptual kind of content**. You can register it in **three** primary equivalent ways below, plus the optional attribute path in the previous section (unless noted):
 
 1. **Fluent** — `ModContentPackBuilder` method on `CreateContentPack(...)`  
 2. **Registry** — `ModContentRegistry` method from `RitsuLibFramework.GetContentRegistry(modId)` or `ctx.Content` in `Custom(...)`  

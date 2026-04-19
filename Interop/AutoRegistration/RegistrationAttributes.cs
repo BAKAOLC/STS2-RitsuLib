@@ -12,6 +12,12 @@ namespace STS2RitsuLib.Interop.AutoRegistration
         ///     Local ordering within the same registration phase. Lower values run first.
         /// </summary>
         public int Order { get; set; }
+
+        /// <summary>
+        ///     When true on an attribute declared on a base type, the same registration is applied to concrete
+        ///     derived types (duplicate signatures from direct declarations on the derived type are skipped).
+        /// </summary>
+        public bool Inherit { get; set; }
     }
 
     /// <summary>

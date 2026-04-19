@@ -6,7 +6,7 @@
 
 - `CreateContentPack(...)` 与底层各个注册器的关系
 - `Apply()` 到底做了什么
-- 什么时候该用链式构建器，什么时候该直接用注册器
+- 什么时候该用链式构建器、清单条目、直接调用注册器，或可选的 CLR 特性
 - 固定模型身份与 ModelDb 集成是怎样建立在注册之上的
 - 生成式占位（卡牌 / 遗物 / 药水）的 API、顺序与风险说明
 
@@ -244,9 +244,23 @@ var contentEntries = new IContentRegistrationEntry[]
 
 ---
 
+## CLR 特性注册（可选）
+
+`STS2RitsuLib.Interop.AutoRegistration` 下的特性（例如 `[RegisterSharedCardPool]`、`[RegisterCard(typeof(MyPool))]`）最终会调用与链式构建器、清单和**直接注册器**相同的底层 API。
+
+它们在 RitsuLib 的早期 **Mod 类型发现** 阶段执行（`ModTypeDiscoveryPatch`）：内置的 `AttributeAutoRegistrationTypeDiscoveryContributor` 会扫描你已用 **`ModTypeDiscoveryHub.RegisterModAssembly(modId, Assembly.GetExecutingAssembly())`** 登记的程序集中的**具体** CLR 类型（在 `PatchAll` **之前**于 Mod 初始化器里调用）。类型必须能解析到某个 mod 身份（通常由 manifest 映射到程序集）；否则可在类型上使用 **`[RitsuLibOwnedBy("modId")]`**。
+
+这**不代替** `CreateContentPack(...)`，只是另一种编写方式。只要注册顺序与冻结时机仍合法，可以与链式/清单混用。
+
+### `AutoRegistrationAttribute.Inherit`
+
+特性默认只作用于其标注的类型。**`Inherit`** 默认为 **`false`**。在**基类**上将某特性设为 **`Inherit = true`** 时，**具体子类**会按「若子类自身也写了同一条特性」的方式处理（即仍以**子类的** `Type` 调用同一套注册 API）。若子类已有**直接**声明、且会产生**相同注册签名**的特性，则不再重复应用继承来的同签名项。扫描会跳过抽象基类，仅具体类型会进入注册流程。
+
+---
+
 ## 内容模型注册速查表
 
-下表中每一行是一种**内容类别**。在默认情况下，可用**三种等价方式**登记（另有注明的除外）：
+下表中每一行是一种**内容类别**。可主要用下面**三种**等价方式登记，另可加前一节所述的**可选特性路径**（另有注明的除外）：
 
 1. **链式**：`CreateContentPack(...)` 上的 `ModContentPackBuilder` 方法  
 2. **注册器**：`RitsuLibFramework.GetContentRegistry(modId)` 或 `Custom(ctx => ctx.Content...)` 上的 `ModContentRegistry` 方法  
