@@ -129,10 +129,7 @@ namespace STS2RitsuLib.Scaffolding.Godot.NodeFactories
         {
             if (targetType == typeof(NSelectionReticle))
             {
-                if (node is not Control control)
-                    return base.ConvertNodeType(node, targetType);
-
-                if (!ResourceLoader.Exists(SelectionReticleScenePath))
+                if (node is not Control control || !ResourceLoader.Exists(SelectionReticleScenePath))
                     return base.ConvertNodeType(node, targetType);
 
                 var reticle =
@@ -143,22 +140,19 @@ namespace STS2RitsuLib.Scaffolding.Godot.NodeFactories
                 return reticle;
             }
 
-            if (targetType == typeof(Control) && node is Marker2D marker)
-            {
-                if (marker.Name.Equals("ThoughtBubbleLeft") || marker.Name.Equals("ThoughtBubbleRight") ||
-                    marker.Name.Equals("ControlRoot"))
-                    return new Control
-                    {
-                        Name = marker.Name,
-                        Size = Vector2.Zero,
-                        Position = marker.Position,
-                    };
+            if (targetType != typeof(Control) || node is not Marker2D marker)
+                return base.ConvertNodeType(node, targetType);
+            if (marker.Name.Equals("ThoughtBubbleLeft") || marker.Name.Equals("ThoughtBubbleRight") ||
+                marker.Name.Equals("ControlRoot"))
+                return new Control
+                {
+                    Name = marker.Name,
+                    Size = Vector2.Zero,
+                    Position = marker.Position,
+                };
 
-                throw new InvalidOperationException(
-                    $"Marker2D can only be converted to Control for 'ControlRoot', 'ThoughtBubbleLeft', and 'ThoughtBubbleRight' in NRestSiteCharacter, not for '{marker.Name}'.");
-            }
-
-            return base.ConvertNodeType(node, targetType);
+            throw new InvalidOperationException(
+                $"Marker2D can only be converted to Control for 'ControlRoot', 'ThoughtBubbleLeft', and 'ThoughtBubbleRight' in NRestSiteCharacter, not for '{marker.Name}'.");
         }
     }
 }

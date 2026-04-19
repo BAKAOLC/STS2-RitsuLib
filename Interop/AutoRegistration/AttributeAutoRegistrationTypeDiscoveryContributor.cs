@@ -101,17 +101,16 @@ namespace STS2RitsuLib.Interop.AutoRegistration
             var operations = new List<AutoRegistrationOperation>();
             var signatures = new HashSet<string>(StringComparer.Ordinal);
 
+            foreach (var attribute in type.GetCustomAttributes(false).OfType<Attribute>())
+                Append(attribute, false);
+
+            foreach (var attribute in EnumerateInheritedRegistrationAttributes(type))
+                Append(attribute, true);
+
+            return operations;
+
             void Append(Attribute attribute, bool inherited)
             {
-                void RegisterCase(string signature, Action addOperation)
-                {
-                    if (inherited && signatures.Contains(signature))
-                        return;
-
-                    addOperation();
-                    signatures.Add(signature);
-                }
-
                 switch (attribute)
                 {
                     case RegisterCardAttribute registerCard:
@@ -826,15 +825,18 @@ namespace STS2RitsuLib.Interop.AutoRegistration
                             });
                         break;
                 }
+
+                return;
+
+                void RegisterCase(string signature, Action addOperation)
+                {
+                    if (inherited && signatures.Contains(signature))
+                        return;
+
+                    addOperation();
+                    signatures.Add(signature);
+                }
             }
-
-            foreach (var attribute in type.GetCustomAttributes(false).OfType<Attribute>())
-                Append(attribute, false);
-
-            foreach (var attribute in EnumerateInheritedRegistrationAttributes(type))
-                Append(attribute, true);
-
-            return operations;
         }
 
         private static IEnumerable<Attribute> EnumerateInheritedRegistrationAttributes(Type type)

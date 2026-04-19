@@ -33,6 +33,18 @@ namespace STS2RitsuLib.Audio
         }
 
         /// <summary>
+        ///     Same as <see cref="TryStart" />, but uses a snapshot event GUID instead of a path.
+        /// </summary>
+        public static GodotObject? TryStartFromGuid(string snapshotEventGuid)
+        {
+            var instance = FmodStudioEventInstances.TryCreateFromGuid(snapshotEventGuid);
+            if (instance is null)
+                return null;
+
+            return FmodStudioEventInstances.TryStart(instance) ? instance : null;
+        }
+
+        /// <summary>
         ///     Stops then releases <paramref name="snapshotInstance" />; no-op when null.
         /// </summary>
         public static void StopAndRelease(GodotObject? snapshotInstance, bool allowFadeOut = true)

@@ -65,9 +65,7 @@ namespace STS2RitsuLib.Utils
                 if (ResourceLoader.Exists(candidate))
                     return true;
 
-                foreach (var hint in ResourceExistenceTypeHints)
-                    if (ResourceLoader.Exists(candidate, hint))
-                        return true;
+                if (ResourceExistenceTypeHints.Any(hint => ResourceLoader.Exists(candidate, hint))) return true;
 
                 if (ResourceLoader.HasCached(candidate))
                     return true;

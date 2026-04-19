@@ -1,3 +1,5 @@
+using Godot;
+
 namespace STS2RitsuLib.Audio
 {
     /// <summary>
@@ -23,7 +25,7 @@ namespace STS2RitsuLib.Audio
                 return source switch
                 {
                     StudioEventSource eventSource => PlayStudioEvent(eventSource, options),
-                    StudioGuidSource guidSource => PlayStudioGuid(guidSource, options),
+                    StudioGuidSource guidSource => PlayStudioEventFromGuid(guidSource, options),
                     SoundFileSource fileSource => PlaySoundFile(fileSource, options),
                     StreamingMusicSource musicSource => PlayStreamingMusic(musicSource, options),
                     SnapshotSource snapshotSource => PlaySnapshot(snapshotSource, options),
@@ -36,7 +38,7 @@ namespace STS2RitsuLib.Audio
             return source switch
             {
                 StudioEventSource eventSource => PlayStudioEvent(eventSource, options),
-                StudioGuidSource guidSource => PlayStudioGuid(guidSource, options),
+                StudioGuidSource guidSource => PlayStudioEventFromGuid(guidSource, options),
                 SoundFileSource fileSource => PlaySoundFile(fileSource, options),
                 StreamingMusicSource musicSource => PlayStreamingMusic(musicSource, options),
                 SnapshotSource snapshotSource => PlaySnapshot(snapshotSource, options),
@@ -67,6 +69,7 @@ namespace STS2RitsuLib.Audio
             var result = source switch
             {
                 StudioEventSource eventSource => PlayStudioLoop(eventSource, options),
+                StudioGuidSource guidSource => PlayStudioLoopFromGuid(guidSource, options),
                 SoundFileSource fileSource => PlaySoundFile(fileSource, options),
                 StreamingMusicSource musicSource => PlayStreamingMusic(musicSource, options),
                 _ => AudioPlayResult.Fail(AudioPlayStatus.NotSupported),
@@ -83,6 +86,7 @@ namespace STS2RitsuLib.Audio
             {
                 StudioEventSource eventSource when options.UseVanillaRouting => PlayVanillaMusic(eventSource, options),
                 StudioEventSource eventSource => PlayStudioEvent(eventSource, options, true),
+                StudioGuidSource guidSource => PlayStudioEventFromGuid(guidSource, options, true),
                 StreamingMusicSource musicSource => PlayStreamingMusic(musicSource, options, true),
                 _ => AudioPlayResult.Fail(AudioPlayStatus.NotSupported),
             };
@@ -146,9 +150,22 @@ namespace STS2RitsuLib.Audio
         private static AudioPlayResult PlayStudioLoop(StudioEventSource source, AudioPlaybackOptions options)
         {
             var instance = FmodStudioEventInstances.TryCreate(source.Path);
-            if (instance is null)
-                return AudioPlayResult.Fail(AudioPlayStatus.MissingInstance);
+            return instance is null
+                ? AudioPlayResult.Fail(AudioPlayStatus.MissingInstance)
+                : AttachStudioLoop(source, instance, options);
+        }
 
+        private static AudioPlayResult PlayStudioLoopFromGuid(StudioGuidSource source, AudioPlaybackOptions options)
+        {
+            var instance = FmodStudioEventInstances.TryCreateFromGuid(source.Value);
+            return instance is null
+                ? AudioPlayResult.Fail(AudioPlayStatus.MissingInstance)
+                : AttachStudioLoop(source, instance, options);
+        }
+
+        private static AudioPlayResult AttachStudioLoop(AudioSource source, GodotObject instance,
+            AudioPlaybackOptions options)
+        {
             var handle = new AudioLoopHandle(source, ResolveScope(options), instance);
             if (!TryApplyRouting(handle, options))
             {
@@ -174,9 +191,23 @@ namespace STS2RitsuLib.Audio
             bool asMusic = false)
         {
             var instance = FmodStudioEventInstances.TryCreate(source.Path);
-            if (instance is null)
-                return AudioPlayResult.Fail(AudioPlayStatus.MissingInstance);
+            return instance is null
+                ? AudioPlayResult.Fail(AudioPlayStatus.MissingInstance)
+                : AttachStudioPlayback(source, instance, options, asMusic);
+        }
 
+        private static AudioPlayResult PlayStudioEventFromGuid(StudioGuidSource source, AudioPlaybackOptions options,
+            bool asMusic = false)
+        {
+            var instance = FmodStudioEventInstances.TryCreateFromGuid(source.Value);
+            return instance is null
+                ? AudioPlayResult.Fail(AudioPlayStatus.MissingInstance)
+                : AttachStudioPlayback(source, instance, options, asMusic);
+        }
+
+        private static AudioPlayResult AttachStudioPlayback(AudioSource source, GodotObject instance,
+            AudioPlaybackOptions options, bool asMusic)
+        {
             AudioHandleBase handle = asMusic
                 ? new AudioMusicHandle(source, ResolveScope(options), instance)
                 : new AudioEventHandle(source, ResolveScope(options), instance);
