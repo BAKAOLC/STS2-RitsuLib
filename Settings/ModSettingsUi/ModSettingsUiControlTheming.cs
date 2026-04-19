@@ -136,10 +136,10 @@ namespace STS2RitsuLib.Settings
             };
             ApplySettingsToggleButtonStyle(button, pressed, false);
             button.Toggled += on => ApplySettingsToggleButtonStyle(button, on, false);
-            button.MouseEntered += () => ApplySettingsToggleButtonStyle(button, button.ButtonPressed, true);
-            button.MouseExited += () => ApplySettingsToggleButtonStyle(button, button.ButtonPressed, false);
-            button.FocusEntered += () => ApplySettingsToggleButtonStyle(button, button.ButtonPressed, true);
-            button.FocusExited += () => ApplySettingsToggleButtonStyle(button, button.ButtonPressed, false);
+            // button.MouseEntered += () => ApplySettingsToggleButtonStyle(button, button.ButtonPressed, true);
+            // button.MouseExited += () => ApplySettingsToggleButtonStyle(button, button.ButtonPressed, false);
+            // button.FocusEntered += () => ApplySettingsToggleButtonStyle(button, button.ButtonPressed, true);
+            // button.FocusExited += () => ApplySettingsToggleButtonStyle(button, button.ButtonPressed, false);
             return button;
         }
 
@@ -162,10 +162,10 @@ namespace STS2RitsuLib.Settings
             };
             ApplySettingsToggleButtonStyle(button, pressed, false);
             button.Toggled += on => ApplySettingsToggleButtonStyle(button, on, false);
-            button.MouseEntered += () => ApplySettingsToggleButtonStyle(button, button.ButtonPressed, true);
-            button.MouseExited += () => ApplySettingsToggleButtonStyle(button, button.ButtonPressed, false);
-            button.FocusEntered += () => ApplySettingsToggleButtonStyle(button, button.ButtonPressed, true);
-            button.FocusExited += () => ApplySettingsToggleButtonStyle(button, button.ButtonPressed, false);
+            // button.MouseEntered += () => ApplySettingsToggleButtonStyle(button, button.ButtonPressed, true);
+            // button.MouseExited += () => ApplySettingsToggleButtonStyle(button, button.ButtonPressed, false);
+            // button.FocusEntered += () => ApplySettingsToggleButtonStyle(button, button.ButtonPressed, true);
+            // button.FocusExited += () => ApplySettingsToggleButtonStyle(button, button.ButtonPressed, false);
             return button;
         }
 
