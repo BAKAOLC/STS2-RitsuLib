@@ -1,5 +1,6 @@
 using Godot;
 using STS2RitsuLib.Audio.Internal;
+using FileAccess = Godot.FileAccess;
 
 namespace STS2RitsuLib.Audio
 {
@@ -22,7 +23,16 @@ namespace STS2RitsuLib.Audio
         /// </summary>
         public static bool TryLoadBank(string resourcePath, FmodStudioLoadBankMode mode = FmodStudioLoadBankMode.Normal)
         {
-            return FmodStudioGateway.TryCall(FmodStudioMethodNames.LoadBank, resourcePath, (int)mode);
+            if (string.IsNullOrWhiteSpace(resourcePath))
+            {
+                RitsuLibFramework.Logger.Warn("[Audio] FMOD load_bank: empty path.");
+                return false;
+            }
+
+            if (FileAccess.FileExists(resourcePath))
+                return FmodStudioGateway.TryCall(FmodStudioMethodNames.LoadBank, resourcePath, (int)mode);
+            RitsuLibFramework.Logger.Warn($"[Audio] FMOD load_bank: file not found: {resourcePath}");
+            return false;
         }
 
         /// <summary>
