@@ -1,81 +1,104 @@
 using System.Runtime.CompilerServices;
 using MegaCrit.Sts2.Core.HoverTips;
+using MegaCrit.Sts2.Core.Models;
 
 namespace STS2RitsuLib.Keywords
 {
     /// <summary>
     ///     Extension methods for attaching runtime keyword ids to arbitrary objects and for hover-tip helpers.
+    ///     For every <see cref="CardModel" /> target (vanilla or modded) all operations are backed by
+    ///     <see cref="CardModKeywordStore" />: the same single path handles instance storage, canonical seeding
+    ///     from <see cref="Scaffolding.Content.ModCardTemplate.RegisteredKeywordIds" />, clone propagation, save/load
+    ///     persistence, and hover-tip rendering. Non-card objects fall back to a weak-table lookup (no clone /
+    ///     save persistence) for ad-hoc use cases.
     /// </summary>
     public static class ModKeywordExtensions
     {
         private static readonly Lock SyncRoot = new();
-        private static readonly ConditionalWeakTable<object, HashSet<string>> RuntimeKeywords = new();
+        private static readonly ConditionalWeakTable<object, HashSet<string>> FallbackKeywords = new();
 
         /// <summary>
-        ///     Adds a runtime keyword id to the extended object (deduplicated, case-insensitive).
+        ///     Adds a runtime keyword id to the extended target (deduplicated, case-insensitive).
+        ///     For every <see cref="CardModel" /> (vanilla or modded) the instance set in
+        ///     <see cref="CardModKeywordStore" /> is used.
         /// </summary>
         public static void AddModKeyword(this object target, string keywordId)
         {
             ArgumentNullException.ThrowIfNull(target);
             ArgumentException.ThrowIfNullOrWhiteSpace(keywordId);
 
-            var normalized = keywordId.Trim().ToLowerInvariant();
-
-            lock (SyncRoot)
+            if (target is CardModel card)
             {
-                var set = RuntimeKeywords.GetOrCreateValue(target);
-                set.Add(normalized);
+                CardModKeywordStore.Add(card, keywordId);
+                return;
             }
+
+            var normalized = keywordId.Trim().ToLowerInvariant();
+            lock (SyncRoot)
+                FallbackKeywords.GetOrCreateValue(target).Add(normalized);
         }
 
         /// <summary>
         ///     Removes a previously added runtime keyword id.
+        ///     For every <see cref="CardModel" /> the instance set in <see cref="CardModKeywordStore" /> is used.
         /// </summary>
-        /// <returns>True if the id was present.</returns>
+        /// <returns>True when the id was present and removed.</returns>
         public static bool RemoveModKeyword(this object target, string keywordId)
         {
             ArgumentNullException.ThrowIfNull(target);
             ArgumentException.ThrowIfNullOrWhiteSpace(keywordId);
 
+            if (target is CardModel card)
+                return CardModKeywordStore.Remove(card, keywordId);
+
             lock (SyncRoot)
             {
-                return RuntimeKeywords.TryGetValue(target, out var set) &&
+                return FallbackKeywords.TryGetValue(target, out var set) &&
                        set.Remove(keywordId.Trim().ToLowerInvariant());
             }
         }
 
         /// <summary>
-        ///     Returns whether the extended object has the given runtime keyword id.
+        ///     Returns whether the target has the given runtime keyword id currently in effect.
         /// </summary>
         public static bool HasModKeyword(this object target, string keywordId)
         {
             ArgumentNullException.ThrowIfNull(target);
             ArgumentException.ThrowIfNullOrWhiteSpace(keywordId);
 
+            if (target is CardModel card)
+                return CardModKeywordStore.Contains(card, keywordId);
+
             lock (SyncRoot)
             {
-                return RuntimeKeywords.TryGetValue(target, out var set) &&
+                return FallbackKeywords.TryGetValue(target, out var set) &&
                        set.Contains(keywordId.Trim().ToLowerInvariant());
             }
         }
 
         /// <summary>
-        ///     Sorted list of runtime keyword ids on the extended object.
+        ///     Sorted list of effective runtime keyword ids on the target.
+        ///     For every <see cref="CardModel" /> this reflects the full runtime set
+        ///     (canonical <see cref="Scaffolding.Content.ModCardTemplate.RegisteredKeywordIds" /> seeded on first access
+        ///     plus any runtime additions / minus any removals).
         /// </summary>
         public static IReadOnlyList<string> GetModKeywordIds(this object target)
         {
             ArgumentNullException.ThrowIfNull(target);
 
+            if (target is CardModel card)
+                return CardModKeywordStore.GetIds(card);
+
             lock (SyncRoot)
             {
-                return RuntimeKeywords.TryGetValue(target, out var set)
+                return FallbackKeywords.TryGetValue(target, out var set)
                     ? set.OrderBy(static x => x).ToArray()
                     : [];
             }
         }
 
         /// <summary>
-        ///     Hover tips for all runtime keyword ids on the extended object.
+        ///     Hover tips for all runtime keyword ids on the target.
         /// </summary>
         public static IEnumerable<IHoverTip> GetModKeywordHoverTips(this object target)
         {

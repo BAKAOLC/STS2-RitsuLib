@@ -6,6 +6,7 @@ using STS2RitsuLib.Combat.HealthBars.Patches;
 using STS2RitsuLib.Combat.Rewards.Patches;
 using STS2RitsuLib.Content.Patches;
 using STS2RitsuLib.Interop.Patches;
+using STS2RitsuLib.Keywords.Patches;
 using STS2RitsuLib.Lifecycle.Patches;
 using STS2RitsuLib.Localization.Patches;
 using STS2RitsuLib.Patching.Core;
@@ -121,6 +122,8 @@ namespace STS2RitsuLib
             patcher.RegisterPatch<NControllerCardPlayStartAnyPlayerPatch>();
             patcher.RegisterPatch<NControllerCardPlaySingleTargetingAnyPlayerPatch>();
             patcher.RegisterPatch<CardCmdAutoPlayAnyPlayerPatch>();
+            patcher.RegisterPatch<CardModelMutableCloneModKeywordPatch>();
+            patcher.RegisterPatch<CardModelHoverTipsModKeywordPatch>();
             patcher.RegisterPatch<CardRewardToSerializablePatch>();
             patcher.RegisterPatch<CombatRoomToSerializableRewardExtPatch>();
             patcher.RegisterPatch<CombatRoomFromSerializableRewardExtPatch>();

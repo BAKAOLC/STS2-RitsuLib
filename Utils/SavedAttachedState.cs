@@ -158,7 +158,10 @@ namespace STS2RitsuLib.Utils
             typeof(SerializableCard),
             typeof(SerializableCard[]),
             typeof(List<SerializableCard>),
+            typeof(HashSet<string>),
         ];
+
+        internal const string HashSetStringSeparator = "\u001f";
 
         internal static void Register(ISavedAttachedState state)
         {
@@ -235,6 +238,9 @@ namespace STS2RitsuLib.Utils
                 case List<SerializableCard> cardList:
                     (props.cardArrays ??= []).Add(new(name, cardList.ToArray()));
                     break;
+                case HashSet<string> stringSet:
+                    (props.strings ??= []).Add(new(name, string.Join(HashSetStringSeparator, stringSet)));
+                    break;
             }
         }
 
@@ -268,6 +274,19 @@ namespace STS2RitsuLib.Utils
                 if (found == null) return false;
 
                 value = (T)(object)found.Value.value;
+                return true;
+            }
+
+            if (typeof(T) == typeof(HashSet<string>))
+            {
+                var found = props.strings?.FirstOrDefault(p => p.name == name);
+                if (found == null) return false;
+
+                var raw = found.Value.value ?? string.Empty;
+                var parts = raw.Length == 0
+                    ? []
+                    : raw.Split(HashSetStringSeparator, StringSplitOptions.RemoveEmptyEntries);
+                value = (T)(object)new HashSet<string>(parts, StringComparer.OrdinalIgnoreCase);
                 return true;
             }
 

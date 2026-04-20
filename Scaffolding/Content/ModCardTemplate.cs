@@ -39,7 +39,9 @@ namespace STS2RitsuLib.Scaffolding.Content
         }
 
         /// <summary>
-        ///     Registered card-keyword ids merged into hover tips together with mod-keyword resolution.
+        ///     Canonical (class-level) mod keyword ids merged into the instance's keyword set on first access,
+        ///     mirroring vanilla <c>CardModel.CanonicalKeywords</c>. Runtime additions/removals persist per card
+        ///     instance via <see cref="CardModKeywordStore" /> (clone-safe, save/load-safe, applies to all cards).
         /// </summary>
         protected virtual IEnumerable<string> RegisteredKeywordIds => [];
 
@@ -49,11 +51,7 @@ namespace STS2RitsuLib.Scaffolding.Content
         protected virtual IEnumerable<IHoverTip> AdditionalHoverTips => [];
 
         /// <inheritdoc />
-        protected sealed override IEnumerable<IHoverTip> ExtraHoverTips =>
-            AdditionalHoverTips
-                .Concat(RegisteredKeywordIds.ToHoverTips())
-                .Concat(this.GetModKeywordHoverTips())
-                .ToArray();
+        protected sealed override IEnumerable<IHoverTip> ExtraHoverTips => AdditionalHoverTips.ToArray();
 
         /// <inheritdoc />
         public virtual CardAssetProfile AssetProfile => CardAssetProfile.Empty;
@@ -86,9 +84,9 @@ namespace STS2RitsuLib.Scaffolding.Content
         public virtual string? CustomBannerMaterialPath => AssetProfile.BannerMaterialPath;
 
         /// <summary>
-        ///     Materializes <see cref="RegisteredKeywordIds" /> for keyword plumbing in the same assembly.
+        ///     Exposes <see cref="RegisteredKeywordIds" /> to the in-library keyword store as the canonical seed.
         /// </summary>
-        internal IEnumerable<string> EnumerateDeclaredModKeywordIds()
+        internal IEnumerable<string> EnumerateRegisteredKeywordIds()
         {
             return RegisteredKeywordIds;
         }
