@@ -17,7 +17,7 @@ namespace STS2RitsuLib.Scaffolding.Content.Patches
     public static class ModModelRuntimeGodotFactoryPatches
     {
         /// <summary>
-        ///     Patches <see cref="MonsterModel.CreateVisuals" /> for <see cref="IModMonsterCreatureVisualsFactory" />.
+        ///     Patches <see cref="MonsterModel.CreateVisuals" /> for <see cref="IModCreatureVisualsFactory" />.
         /// </summary>
         public class MonsterCreatureVisualsRuntimeFactoryPatch : IPatchMethod
         {
@@ -39,16 +39,22 @@ namespace STS2RitsuLib.Scaffolding.Content.Patches
 
             // ReSharper disable InconsistentNaming
             /// <summary>
-            ///     Uses <see cref="IModMonsterCreatureVisualsFactory.TryCreateCreatureVisuals" /> when it returns non-null.
+            ///     Uses <see cref="IModCreatureVisualsFactory.TryCreateCreatureVisuals" /> when it returns non-null,
+            ///     falling back to the obsolete <see cref="IModMonsterCreatureVisualsFactory" /> for existing mods.
             /// </summary>
             [HarmonyPriority(Priority.First)]
             public static bool Prefix(MonsterModel __instance, ref NCreatureVisuals __result)
                 // ReSharper restore InconsistentNaming
             {
-                if (__instance is not IModMonsterCreatureVisualsFactory factory)
-                    return true;
+                NCreatureVisuals? created = null;
+                if (__instance is IModCreatureVisualsFactory factory)
+                    created = factory.TryCreateCreatureVisuals();
 
-                var created = factory.TryCreateCreatureVisuals();
+#pragma warning disable CS0618
+                if (created == null && __instance is IModMonsterCreatureVisualsFactory legacyFactory)
+                    created = legacyFactory.TryCreateCreatureVisuals();
+#pragma warning restore CS0618
+
                 if (created == null)
                     return true;
 
@@ -58,7 +64,7 @@ namespace STS2RitsuLib.Scaffolding.Content.Patches
         }
 
         /// <summary>
-        ///     Patches <see cref="CharacterModel.CreateVisuals" /> for <see cref="IModCharacterCreatureVisualsFactory" />.
+        ///     Patches <see cref="CharacterModel.CreateVisuals" /> for <see cref="IModCreatureVisualsFactory" />.
         /// </summary>
         public class CharacterCreatureVisualsRuntimeFactoryPatch : IPatchMethod
         {
@@ -80,16 +86,22 @@ namespace STS2RitsuLib.Scaffolding.Content.Patches
 
             // ReSharper disable InconsistentNaming
             /// <summary>
-            ///     Uses <see cref="IModCharacterCreatureVisualsFactory.TryCreateCreatureVisuals" /> when it returns non-null.
+            ///     Uses <see cref="IModCreatureVisualsFactory.TryCreateCreatureVisuals" /> when it returns non-null,
+            ///     falling back to the obsolete <see cref="IModCharacterCreatureVisualsFactory" /> for existing mods.
             /// </summary>
             [HarmonyPriority(Priority.First)]
             public static bool Prefix(CharacterModel __instance, ref NCreatureVisuals __result)
                 // ReSharper restore InconsistentNaming
             {
-                if (__instance is not IModCharacterCreatureVisualsFactory factory)
-                    return true;
+                NCreatureVisuals? created = null;
+                if (__instance is IModCreatureVisualsFactory factory)
+                    created = factory.TryCreateCreatureVisuals();
 
-                var created = factory.TryCreateCreatureVisuals();
+#pragma warning disable CS0618
+                if (created == null && __instance is IModCharacterCreatureVisualsFactory legacyFactory)
+                    created = legacyFactory.TryCreateCreatureVisuals();
+#pragma warning restore CS0618
+
                 if (created == null)
                     return true;
 
@@ -100,7 +112,7 @@ namespace STS2RitsuLib.Scaffolding.Content.Patches
 
         /// <summary>
         ///     Patches <see cref="CharacterModel.GenerateAnimator" /> for
-        ///     <see cref="IModCharacterCreatureAnimatorFactory" />.
+        ///     <see cref="IModCreatureAnimatorFactory" />.
         /// </summary>
         public class CharacterCreatureAnimatorRuntimeFactoryPatch : IPatchMethod
         {
@@ -122,13 +134,60 @@ namespace STS2RitsuLib.Scaffolding.Content.Patches
 
             // ReSharper disable InconsistentNaming
             /// <summary>
-            ///     Uses <see cref="IModCharacterCreatureAnimatorFactory.TryCreateCreatureAnimator" /> when it returns non-null.
+            ///     Uses <see cref="IModCreatureAnimatorFactory.TryCreateCreatureAnimator" /> when it returns non-null,
+            ///     falling back to the obsolete <see cref="IModCharacterCreatureAnimatorFactory" /> for existing mods.
             /// </summary>
             [HarmonyPriority(Priority.First)]
             public static bool Prefix(CharacterModel __instance, MegaSprite controller, ref CreatureAnimator __result)
                 // ReSharper restore InconsistentNaming
             {
-                if (__instance is not IModCharacterCreatureAnimatorFactory factory)
+                CreatureAnimator? created = null;
+                if (__instance is IModCreatureAnimatorFactory factory)
+                    created = factory.TryCreateCreatureAnimator(controller);
+
+#pragma warning disable CS0618
+                if (created == null && __instance is IModCharacterCreatureAnimatorFactory legacyFactory)
+                    created = legacyFactory.TryCreateCreatureAnimator(controller);
+#pragma warning restore CS0618
+
+                if (created == null)
+                    return true;
+
+                __result = created;
+                return false;
+            }
+        }
+
+        /// <summary>
+        ///     Patches <see cref="MonsterModel.GenerateAnimator" /> for <see cref="IModCreatureAnimatorFactory" />.
+        /// </summary>
+        public class MonsterCreatureAnimatorRuntimeFactoryPatch : IPatchMethod
+        {
+            /// <inheritdoc cref="IPatchMethod.PatchId" />
+            public static string PatchId => "runtime_godot_factory_monster_creature_animator";
+
+            /// <inheritdoc cref="IPatchMethod.IsCritical" />
+            public static bool IsCritical => false;
+
+            /// <inheritdoc cref="IPatchMethod.Description" />
+            public static string Description =>
+                "Allow mod monsters to supply CreatureAnimator (Spine state graph) from code";
+
+            /// <inheritdoc cref="IPatchMethod.GetTargets" />
+            public static ModPatchTarget[] GetTargets()
+            {
+                return [new(typeof(MonsterModel), nameof(MonsterModel.GenerateAnimator))];
+            }
+
+            // ReSharper disable InconsistentNaming
+            /// <summary>
+            ///     Uses <see cref="IModCreatureAnimatorFactory.TryCreateCreatureAnimator" /> when it returns non-null.
+            /// </summary>
+            [HarmonyPriority(Priority.First)]
+            public static bool Prefix(MonsterModel __instance, MegaSprite controller, ref CreatureAnimator __result)
+                // ReSharper restore InconsistentNaming
+            {
+                if (__instance is not IModCreatureAnimatorFactory factory)
                     return true;
 
                 var created = factory.TryCreateCreatureAnimator(controller);

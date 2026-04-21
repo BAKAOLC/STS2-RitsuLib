@@ -16,10 +16,16 @@ namespace STS2RitsuLib.Scaffolding.Characters.Patches
     /// </summary>
     /// <remarks>
     ///     <para>
-    ///         When the character implements
-    ///         <see cref="IModCharacterNonSpineAnimationStateMachineFactory" />, the trigger is routed through the
-    ///         state machine's <see cref="ModAnimStateMachine.SetTrigger" /> so branches, any-state transitions and
-    ///         <see cref="ModAnimState.NextState" /> apply. Otherwise the original single-shot playback path is used.
+    ///         Routing for non-Spine creatures: if the creature's model (either
+    ///         <c>Entity.Player?.Character</c> or <c>Entity.Monster</c>) implements
+    ///         <see cref="IModNonSpineAnimationStateMachineFactory" />, the trigger is dispatched through the
+    ///         state machine's <see cref="ModAnimStateMachine.SetTrigger" /> so branches, any-state transitions
+    ///         and <see cref="ModAnimState.NextState" /> apply. Otherwise the single-shot cue playback path
+    ///         (<see cref="ModCreatureVisualPlayback.TryPlayFromCreatureAnimatorTrigger" />) runs.
+    ///     </para>
+    ///     <para>
+    ///         State machines are cached per visuals root via a
+    ///         <see cref="ConditionalWeakTable{TKey,TValue}" /> so factories run at most once per combat lifetime.
     ///     </para>
     /// </remarks>
     public class ModCreatureNonSpineAnimationPlaybackPatch : IPatchMethod
@@ -59,18 +65,17 @@ namespace STS2RitsuLib.Scaffolding.Characters.Patches
 
         private static bool TryRouteToStateMachine(NCreature creature, string trigger)
         {
-            var character = creature.Entity?.Player?.Character;
-            if (character is not IModCharacterNonSpineAnimationStateMachineFactory factory)
-                return false;
-
             var visuals = creature.Visuals;
             if (visuals == null || !GodotObject.IsInstanceValid(visuals))
                 return false;
 
-            var slot = StateMachinesByVisuals.GetValue(visuals,
-                _ => new());
+            var entity = creature.Entity;
+            if (entity == null)
+                return false;
 
-            slot.EnsureBuilt(factory, visuals, character);
+            var slot = StateMachinesByVisuals.GetValue(visuals, _ => new());
+            slot.EnsureBuilt(entity.Player?.Character, entity.Monster, visuals);
+
             if (slot.StateMachine == null)
                 return false;
 
@@ -83,14 +88,34 @@ namespace STS2RitsuLib.Scaffolding.Characters.Patches
             private bool _built;
             public ModAnimStateMachine? StateMachine { get; private set; }
 
-            public void EnsureBuilt(IModCharacterNonSpineAnimationStateMachineFactory factory, Node visuals,
-                CharacterModel character)
+            /// <summary>
+            ///     Resolves the first <see cref="IModNonSpineAnimationStateMachineFactory" /> opt-in across
+            ///     <paramref name="character" /> and <paramref name="monster" /> and caches the resulting state
+            ///     machine.
+            /// </summary>
+            public void EnsureBuilt(CharacterModel? character, MonsterModel? monster, Node visuals)
             {
                 if (_built)
                     return;
 
                 _built = true;
-                StateMachine = factory.TryCreateNonSpineAnimationStateMachine(visuals, character);
+                StateMachine = BuildFrom(character, monster, visuals);
+            }
+
+            private static ModAnimStateMachine? BuildFrom(CharacterModel? character, MonsterModel? monster,
+                Node visuals)
+            {
+                if (character is IModNonSpineAnimationStateMachineFactory characterFactory)
+                {
+                    var built = characterFactory.TryCreateNonSpineAnimationStateMachine(visuals);
+                    if (built != null)
+                        return built;
+                }
+
+                if (monster is IModNonSpineAnimationStateMachineFactory monsterFactory)
+                    return monsterFactory.TryCreateNonSpineAnimationStateMachine(visuals);
+
+                return null;
             }
         }
     }

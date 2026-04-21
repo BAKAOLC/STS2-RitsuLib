@@ -228,10 +228,15 @@ namespace STS2RitsuLib.Scaffolding.Characters
     /// <typeparam name="TCardPool">Concrete <see cref="CardPoolModel" /> type registered for this character.</typeparam>
     /// <typeparam name="TRelicPool">Concrete <see cref="RelicPoolModel" /> type registered for this character.</typeparam>
     /// <typeparam name="TPotionPool">Concrete <see cref="PotionPoolModel" /> type registered for this character.</typeparam>
+#pragma warning disable CS0618
+    // Template keeps the obsolete IModCharacter* visuals / animator factory interfaces wired so existing derived
+    // classes and external consumers that type-check against the old interface names continue to work.
     public abstract class ModCharacterTemplate<TCardPool, TRelicPool, TPotionPool> : CharacterModel
-        , IModCharacterAssetOverrides, IModCharacterCreatureVisualsFactory, IModCharacterCreatureAnimatorFactory,
-        IModCharacterNonSpineAnimationStateMachineFactory, IModCharacterMerchantAnimationStateMachineFactory,
+        , IModCharacterAssetOverrides, IModCreatureVisualsFactory, IModCharacterCreatureVisualsFactory,
+        IModCreatureAnimatorFactory, IModCharacterCreatureAnimatorFactory,
+        IModNonSpineAnimationStateMachineFactory, IModCharacterMerchantAnimationStateMachineFactory,
         IModCharacterEpochTimelineRequirement, IModCharacterVanillaSelectionPolicy
+#pragma warning restore CS0618
         where TCardPool : CardPoolModel
         where TRelicPool : RelicPoolModel
         where TPotionPool : PotionPoolModel
@@ -506,15 +511,19 @@ namespace STS2RitsuLib.Scaffolding.Characters
         public virtual CharacterWorldProceduralVisualSet? WorldProceduralVisuals =>
             ResolvedAssetProfile.WorldProceduralVisuals;
 
+#pragma warning disable CS0618
         CreatureAnimator? IModCharacterCreatureAnimatorFactory.TryCreateCreatureAnimator(MegaSprite controller)
         {
             return SetupCustomCreatureAnimator(controller);
         }
+#pragma warning restore CS0618
 
+#pragma warning disable CS0618
         NCreatureVisuals? IModCharacterCreatureVisualsFactory.TryCreateCreatureVisuals()
         {
             return TryCreateCreatureVisuals();
         }
+#pragma warning restore CS0618
 
         /// <inheritdoc />
         public virtual bool RequiresEpochAndTimeline => true;
@@ -525,17 +534,27 @@ namespace STS2RitsuLib.Scaffolding.Characters
             return SetupCustomMerchantAnimationStateMachine(merchantRoot, character);
         }
 
-        ModAnimStateMachine? IModCharacterNonSpineAnimationStateMachineFactory.
-            TryCreateNonSpineAnimationStateMachine(Node visualsRoot, CharacterModel character)
-        {
-            return SetupCustomNonSpineAnimationStateMachine(visualsRoot, character);
-        }
-
         /// <inheritdoc />
         public virtual bool HideFromVanillaCharacterSelect => false;
 
         /// <inheritdoc />
         public virtual bool AllowInVanillaRandomCharacterSelect => !HideFromVanillaCharacterSelect;
+
+        CreatureAnimator? IModCreatureAnimatorFactory.TryCreateCreatureAnimator(MegaSprite controller)
+        {
+            return SetupCustomCreatureAnimator(controller);
+        }
+
+        NCreatureVisuals? IModCreatureVisualsFactory.TryCreateCreatureVisuals()
+        {
+            return TryCreateCreatureVisuals();
+        }
+
+        ModAnimStateMachine? IModNonSpineAnimationStateMachineFactory.
+            TryCreateNonSpineAnimationStateMachine(Node visualsRoot)
+        {
+            return SetupCustomNonSpineAnimationStateMachine(visualsRoot, this);
+        }
 
         /// <summary>
         ///     Non-null combat visuals; otherwise <see cref="IModCharacterAssetOverrides.CustomVisualsPath" /> / vanilla
