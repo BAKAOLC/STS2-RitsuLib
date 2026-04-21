@@ -7,6 +7,7 @@ using MegaCrit.Sts2.Core.Timeline;
 using MegaCrit.Sts2.Core.Unlocks;
 using STS2RitsuLib.Content;
 using STS2RitsuLib.Diagnostics;
+using STS2RitsuLib.Timeline;
 
 namespace STS2RitsuLib.Unlocks
 {
@@ -69,7 +70,8 @@ namespace STS2RitsuLib.Unlocks
 
         /// <summary>
         ///     When <paramref name="ignored" /> is true, models registered by <paramref name="modId" /> skip
-        ///     <see cref="RequireEpoch" /> gating at runtime (cards/relics/characters appear as if every epoch were met).
+        ///     <see cref="RequireEpoch(Type,string)" /> gating at runtime (cards/relics/characters appear as if every epoch were
+        ///     met).
         ///     Ascension reveal rules tied to that character still consult this bypass via patch integration.
         /// </summary>
         public static void SetEpochRequirementsIgnoredForMod(string modId, bool ignored = true)
@@ -106,7 +108,16 @@ namespace STS2RitsuLib.Unlocks
             where TModel : AbstractModel
             where TEpoch : EpochModel, new()
         {
-            RequireEpoch(typeof(TModel), new TEpoch().Id);
+            RequireEpoch(typeof(TModel), typeof(TEpoch));
+        }
+
+        /// <summary>
+        ///     Requires <paramref name="modelType" /> content to remain locked until <paramref name="epochType" /> is
+        ///     obtained or revealed.
+        /// </summary>
+        public void RequireEpoch(Type modelType, Type epochType)
+        {
+            RequireEpoch(modelType, ModTimelineRegistry.GetEpochId(epochType));
         }
 
         /// <summary>
@@ -136,11 +147,20 @@ namespace STS2RitsuLib.Unlocks
             where TCharacter : CharacterModel
             where TEpoch : EpochModel, new()
         {
+            UnlockEpochAfterRunAs(typeof(TCharacter), typeof(TEpoch));
+        }
+
+        /// <summary>
+        ///     Registers a rule that obtains <paramref name="epochType" /> after any completed run as
+        ///     <paramref name="characterType" />.
+        /// </summary>
+        public void UnlockEpochAfterRunAs(Type characterType, Type epochType)
+        {
             RegisterPostRunRule(
                 PostRunEpochUnlockRule.Create(
-                    new TEpoch().Id,
-                    $"Unlock {typeof(TEpoch).Name} after finishing a run as {typeof(TCharacter).Name}",
-                    context => context.CharacterId == ModelDb.GetId<TCharacter>()));
+                    ModTimelineRegistry.GetEpochId(epochType),
+                    $"Unlock {epochType.Name} after finishing a run as {characterType.Name}",
+                    context => context.CharacterId == ModelDb.GetId(characterType)));
         }
 
         /// <summary>
@@ -151,11 +171,20 @@ namespace STS2RitsuLib.Unlocks
             where TCharacter : CharacterModel
             where TEpoch : EpochModel, new()
         {
+            UnlockEpochAfterWinAs(typeof(TCharacter), typeof(TEpoch));
+        }
+
+        /// <summary>
+        ///     Registers a rule that obtains <paramref name="epochType" /> after a victorious run as
+        ///     <paramref name="characterType" />.
+        /// </summary>
+        public void UnlockEpochAfterWinAs(Type characterType, Type epochType)
+        {
             RegisterPostRunRule(
                 PostRunEpochUnlockRule.Create(
-                    new TEpoch().Id,
-                    $"Unlock {typeof(TEpoch).Name} after winning as {typeof(TCharacter).Name}",
-                    context => context.IsVictory && context.CharacterId == ModelDb.GetId<TCharacter>()));
+                    ModTimelineRegistry.GetEpochId(epochType),
+                    $"Unlock {epochType.Name} after winning as {characterType.Name}",
+                    context => context.IsVictory && context.CharacterId == ModelDb.GetId(characterType)));
         }
 
         /// <summary>
@@ -166,12 +195,21 @@ namespace STS2RitsuLib.Unlocks
             where TCharacter : CharacterModel
             where TEpoch : EpochModel, new()
         {
+            UnlockEpochAfterAscensionWin(typeof(TCharacter), typeof(TEpoch), ascensionLevel);
+        }
+
+        /// <summary>
+        ///     Registers a rule that obtains <paramref name="epochType" /> after a win at or above
+        ///     <paramref name="ascensionLevel" /> as <paramref name="characterType" />.
+        /// </summary>
+        public void UnlockEpochAfterAscensionWin(Type characterType, Type epochType, int ascensionLevel)
+        {
             RegisterPostRunRule(
                 PostRunEpochUnlockRule.Create(
-                    new TEpoch().Id,
-                    $"Unlock {typeof(TEpoch).Name} after winning at ascension {ascensionLevel} as {typeof(TCharacter).Name}",
+                    ModTimelineRegistry.GetEpochId(epochType),
+                    $"Unlock {epochType.Name} after winning at ascension {ascensionLevel} as {characterType.Name}",
                     context => context.IsVictory &&
-                               context.CharacterId == ModelDb.GetId<TCharacter>() &&
+                               context.CharacterId == ModelDb.GetId(characterType) &&
                                context.AscensionLevel >= ascensionLevel));
         }
 
@@ -211,12 +249,21 @@ namespace STS2RitsuLib.Unlocks
             where TCharacter : CharacterModel
             where TEpoch : EpochModel, new()
         {
+            UnlockEpochAfterEliteVictories(typeof(TCharacter), typeof(TEpoch), requiredEliteWins);
+        }
+
+        /// <summary>
+        ///     Registers elite-win counting for <paramref name="characterType" /> toward obtaining
+        ///     <paramref name="epochType" />.
+        /// </summary>
+        public void UnlockEpochAfterEliteVictories(Type characterType, Type epochType, int requiredEliteWins = 15)
+        {
             RegisterEliteEpochRule(
                 EliteEpochUnlockRule.Create(
-                    ModelDb.GetId<TCharacter>(),
-                    new TEpoch().Id,
+                    ModelDb.GetId(characterType),
+                    ModTimelineRegistry.GetEpochId(epochType),
                     requiredEliteWins,
-                    $"Unlock {typeof(TEpoch).Name} after defeating {requiredEliteWins} elite(s) as {typeof(TCharacter).Name}"));
+                    $"Unlock {epochType.Name} after defeating {requiredEliteWins} elite(s) as {characterType.Name}"));
         }
 
         /// <summary>
@@ -241,12 +288,21 @@ namespace STS2RitsuLib.Unlocks
             where TCharacter : CharacterModel
             where TEpoch : EpochModel, new()
         {
+            UnlockEpochAfterBossVictories(typeof(TCharacter), typeof(TEpoch), requiredBossWins);
+        }
+
+        /// <summary>
+        ///     Registers boss-win counting for <paramref name="characterType" /> toward obtaining
+        ///     <paramref name="epochType" />.
+        /// </summary>
+        public void UnlockEpochAfterBossVictories(Type characterType, Type epochType, int requiredBossWins = 15)
+        {
             RegisterBossEpochRule(
                 CountedEpochUnlockRule.Create(
-                    ModelDb.GetId<TCharacter>(),
-                    new TEpoch().Id,
+                    ModelDb.GetId(characterType),
+                    ModTimelineRegistry.GetEpochId(epochType),
                     requiredBossWins,
-                    $"Unlock {typeof(TEpoch).Name} after defeating {requiredBossWins} boss(es) as {typeof(TCharacter).Name}"));
+                    $"Unlock {epochType.Name} after defeating {requiredBossWins} boss(es) as {characterType.Name}"));
         }
 
         /// <summary>
@@ -271,7 +327,16 @@ namespace STS2RitsuLib.Unlocks
             where TCharacter : CharacterModel
             where TEpoch : EpochModel, new()
         {
-            RegisterAscensionOneEpoch(ModelDb.GetId<TCharacter>(), new TEpoch().Id);
+            UnlockEpochAfterAscensionOneWin(typeof(TCharacter), typeof(TEpoch));
+        }
+
+        /// <summary>
+        ///     Maps ascension-level-one completion for <paramref name="characterType" /> to obtaining
+        ///     <paramref name="epochType" />.
+        /// </summary>
+        public void UnlockEpochAfterAscensionOneWin(Type characterType, Type epochType)
+        {
+            RegisterAscensionOneEpoch(ModelDb.GetId(characterType), ModTimelineRegistry.GetEpochId(epochType));
         }
 
         /// <summary>
@@ -296,7 +361,16 @@ namespace STS2RitsuLib.Unlocks
             where TCharacter : CharacterModel
             where TEpoch : EpochModel, new()
         {
-            RegisterAscensionRevealEpoch(ModelDb.GetId<TCharacter>(), new TEpoch().Id);
+            RevealAscensionAfterEpoch(typeof(TCharacter), typeof(TEpoch));
+        }
+
+        /// <summary>
+        ///     Configures ascension UI reveal for <paramref name="characterType" /> to depend on
+        ///     <paramref name="epochType" /> being revealed.
+        /// </summary>
+        public void RevealAscensionAfterEpoch(Type characterType, Type epochType)
+        {
+            RegisterAscensionRevealEpoch(ModelDb.GetId(characterType), ModTimelineRegistry.GetEpochId(epochType));
         }
 
         /// <summary>
@@ -321,7 +395,17 @@ namespace STS2RitsuLib.Unlocks
             where TCharacter : CharacterModel
             where TEpoch : EpochModel, new()
         {
-            RegisterPostRunCharacterUnlockEpoch(ModelDb.GetId<TCharacter>(), new TEpoch().Id);
+            UnlockCharacterAfterRunAs(typeof(TCharacter), typeof(TEpoch));
+        }
+
+        /// <summary>
+        ///     Registers the vanilla-style character-unlock epoch obtained after a run as
+        ///     <paramref name="characterType" />.
+        /// </summary>
+        public void UnlockCharacterAfterRunAs(Type characterType, Type epochType)
+        {
+            RegisterPostRunCharacterUnlockEpoch(ModelDb.GetId(characterType),
+                ModTimelineRegistry.GetEpochId(epochType));
         }
 
         /// <summary>

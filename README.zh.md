@@ -8,7 +8,7 @@ RitsuLib 按实际需求演进，主要服务于仓库内 Mod 的内容编写、
 
 该库可与 [BaseLib](https://github.com/Alchyr/BaseLib-StS2) 并存，当前不存在已知冲突。
 
-文档入口: [Docs/README.md](Docs/README.md)
+文档站（Valaxy，中英）: [docs/README.md](docs/README.md)
 
 ## Mod 设置
 
@@ -19,7 +19,7 @@ RitsuLib 提供一套用于玩家可编辑配置的设置 UI。
 - 标签与描述可来自 `I18N` 或游戏原生 `LocString`
 - 设置页注册与 BaseLib 的配置页注册、文件路径彼此独立
 
-说明文档: [Docs/zh/ModSettings.md](Docs/zh/ModSettings.md)
+Mod 设置说明: [docs/pages/guide/mod-settings.md](docs/pages/guide/mod-settings.md)
 
 ## Debug 兼容模式
 

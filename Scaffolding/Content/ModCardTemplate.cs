@@ -39,9 +39,20 @@ namespace STS2RitsuLib.Scaffolding.Content
         }
 
         /// <summary>
-        ///     Registered card-keyword ids merged into hover tips together with mod-keyword resolution.
+        ///     Mod keyword ids seeded onto every instance of this card on first <see cref="CardModel.Keywords" />
+        ///     access. Intentionally kept as a separate channel from vanilla
+        ///     <see cref="CardModel.CanonicalKeywords" /> so derived mods can still override
+        ///     <c>CanonicalKeywords</c> for vanilla keywords without accidentally dropping their mod keyword
+        ///     declarations. Each id is resolved to its pre-minted <see cref="CardKeyword" /> via
+        ///     <see cref="ModKeywordRegistry" /> and unioned into <c>CardModel.Keywords</c> right after the vanilla
+        ///     canonical seed runs, so runtime additions/removals and <c>DeepCloneFields</c> preserve them.
         /// </summary>
         protected virtual IEnumerable<string> RegisteredKeywordIds => [];
+
+        /// <summary>
+        ///     Internal accessor for the mod-keyword seeding patch.
+        /// </summary>
+        internal IEnumerable<string> EnumerateRegisteredKeywordIds() => RegisteredKeywordIds;
 
         /// <summary>
         ///     Extra hover tips appended after keyword-derived tips.
@@ -49,11 +60,7 @@ namespace STS2RitsuLib.Scaffolding.Content
         protected virtual IEnumerable<IHoverTip> AdditionalHoverTips => [];
 
         /// <inheritdoc />
-        protected sealed override IEnumerable<IHoverTip> ExtraHoverTips =>
-            AdditionalHoverTips
-                .Concat(RegisteredKeywordIds.ToHoverTips())
-                .Concat(this.GetModKeywordHoverTips())
-                .ToArray();
+        protected sealed override IEnumerable<IHoverTip> ExtraHoverTips => AdditionalHoverTips.ToArray();
 
         /// <inheritdoc />
         public virtual CardAssetProfile AssetProfile => CardAssetProfile.Empty;
@@ -84,13 +91,5 @@ namespace STS2RitsuLib.Scaffolding.Content
 
         /// <inheritdoc />
         public virtual string? CustomBannerMaterialPath => AssetProfile.BannerMaterialPath;
-
-        /// <summary>
-        ///     Materializes <see cref="RegisteredKeywordIds" /> for keyword plumbing in the same assembly.
-        /// </summary>
-        internal IEnumerable<string> EnumerateDeclaredModKeywordIds()
-        {
-            return RegisteredKeywordIds;
-        }
     }
 }

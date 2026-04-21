@@ -7,7 +7,10 @@ namespace STS2RitsuLib.Scaffolding.Godot
 {
     /// <summary>
     ///     Internal factory lookup for <see cref="RitsuGodotNodeFactories" />. Conversion runs only when you call
-    ///     <see cref="CreateFromScene{TNode}" /> or <see cref="CreateFromResource{TNode}" /> — there is no global
+    ///     <see>
+    ///         <cref>CreateFromScene{TNode}</cref>
+    ///     </see>
+    ///     or <see cref="CreateFromResource{TNode}" /> — there is no global
     ///     <c>PackedScene.Instantiate</c> postfix, so other libraries (e.g. baselib) and vanilla loads are unaffected.
     /// </summary>
     internal static class RitsuGodotNodeFactoryRegistry
@@ -24,6 +27,12 @@ namespace STS2RitsuLib.Scaffolding.Godot
 
         internal static TNode CreateFromScene<TNode>(PackedScene scene) where TNode : Node, new()
         {
+            return CreateFromScene<TNode>(scene, null);
+        }
+
+        internal static TNode CreateFromScene<TNode>(PackedScene scene, PackedScene.GenEditState? editState)
+            where TNode : Node, new()
+        {
             if (!GodotObject.IsInstanceValid(scene))
                 throw new ArgumentException(
                     "PackedScene is null or the native instance is invalid (freed).",
@@ -34,13 +43,19 @@ namespace STS2RitsuLib.Scaffolding.Godot
             if (!Factories.TryGetValue(typeof(TNode), out var factory))
                 throw new InvalidOperationException($"No node factory registered for {typeof(TNode).Name}");
 
-            var root = scene.Instantiate();
+            var root = editState is { } state ? scene.Instantiate(state) : scene.Instantiate();
             return (TNode)factory.CreateFromNode(root!);
         }
 
         internal static TNode CreateFromScenePath<TNode>(string scenePath) where TNode : Node, new()
         {
-            return CreateFromScene<TNode>(PreloadManager.Cache.GetScene(scenePath));
+            return CreateFromScenePath<TNode>(scenePath, null);
+        }
+
+        internal static TNode CreateFromScenePath<TNode>(string scenePath, PackedScene.GenEditState? editState)
+            where TNode : Node, new()
+        {
+            return CreateFromScene<TNode>(PreloadManager.Cache.GetScene(scenePath), editState);
         }
 
         internal static TNode CreateFromResource<TNode>(object resource) where TNode : Node, new()

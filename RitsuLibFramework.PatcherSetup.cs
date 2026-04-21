@@ -1,3 +1,4 @@
+using STS2RitsuLib.Audio.Patches;
 using STS2RitsuLib.Cards.FreePlay.Patches;
 using STS2RitsuLib.Cards.Patches;
 using STS2RitsuLib.Combat.CardTargeting.Patches;
@@ -5,6 +6,7 @@ using STS2RitsuLib.Combat.HealthBars.Patches;
 using STS2RitsuLib.Combat.Rewards.Patches;
 using STS2RitsuLib.Content.Patches;
 using STS2RitsuLib.Interop.Patches;
+using STS2RitsuLib.Keywords.Patches;
 using STS2RitsuLib.Lifecycle.Patches;
 using STS2RitsuLib.Localization.Patches;
 using STS2RitsuLib.Patching.Core;
@@ -57,7 +59,17 @@ namespace STS2RitsuLib
         {
             var patcher = CreatePatcher(Const.ModId, "framework-core", "framework core");
             patcher.RegisterPatch<ModTypeDiscoveryPatch>();
+            patcher.RegisterPatch<NAudioManagerGuidMappedStudioEventsPatches.PlayOneShot>();
+            patcher.RegisterPatch<NAudioManagerGuidMappedStudioEventsPatches.PlayLoop>();
+            patcher.RegisterPatch<NAudioManagerGuidMappedStudioEventsPatches.StopLoop>();
+            patcher.RegisterPatch<NAudioManagerGuidMappedStudioEventsPatches.SetParam>();
+            patcher.RegisterPatch<NAudioManagerGuidMappedStudioEventsPatches.StopAllLoops>();
+            patcher.RegisterPatch<NAudioManagerGuidMappedStudioEventsPatches.PlayMusic>();
+            patcher.RegisterPatch<NAudioManagerGuidMappedStudioEventsPatches.StopMusic>();
+            patcher.RegisterPatch<NAudioManagerGuidMappedStudioEventsPatches.UpdateMusicParameter>();
             patcher.RegisterPatch<SavedPropertiesTypeCacheInjectionPatch>();
+            patcher.RegisterPatch<SavedAttachedStatePatches.SavedPropertiesFromInternalPatch>();
+            patcher.RegisterPatch<SavedAttachedStatePatches.SavedPropertiesFillInternalPatch>();
             patcher.RegisterPatch<CoreInitializationLifecyclePatch>();
             patcher.RegisterPatch<NMainMenuContinueRunMissingCharacterPatch>();
             patcher.RegisterPatch<NMainMenuHarmonyPatchDumpPatch>();
@@ -110,6 +122,9 @@ namespace STS2RitsuLib
             patcher.RegisterPatch<NControllerCardPlayStartAnyPlayerPatch>();
             patcher.RegisterPatch<NControllerCardPlaySingleTargetingAnyPlayerPatch>();
             patcher.RegisterPatch<CardCmdAutoPlayAnyPlayerPatch>();
+            patcher.RegisterPatch<HoverTipFactoryFromKeywordPatch>();
+            patcher.RegisterPatch<CardModelKeywordsModSeedPatch>();
+            patcher.RegisterPatch<CardModelHoverTipsModKeywordPatch>();
             patcher.RegisterPatch<CardRewardToSerializablePatch>();
             patcher.RegisterPatch<CombatRoomToSerializableRewardExtPatch>();
             patcher.RegisterPatch<CombatRoomFromSerializableRewardExtPatch>();
@@ -167,6 +182,7 @@ namespace STS2RitsuLib
             patcher.RegisterPatch<ActAssetPathsBackgroundLayersPatch>();
 
             patcher.RegisterPatch<ModModelRuntimeGodotFactoryPatches.MonsterCreatureVisualsRuntimeFactoryPatch>();
+            patcher.RegisterPatch<ModModelRuntimeGodotFactoryPatches.MonsterCreatureAnimatorRuntimeFactoryPatch>();
             patcher.RegisterPatch<ModModelRuntimeGodotFactoryPatches.EncounterCombatSceneRuntimeFactoryPatch>();
             patcher.RegisterPatch<ModModelRuntimeGodotFactoryPatches.EventLayoutPackedSceneRuntimeFactoryPatch>();
             patcher.RegisterPatch<ModModelRuntimeGodotFactoryPatches.EventBackgroundPackedSceneRuntimeFactoryPatch>();
@@ -181,6 +197,9 @@ namespace STS2RitsuLib
             patcher.RegisterPatch<EncounterGetAssetPathsPatch>();
 
             patcher.RegisterPatch<MonsterVisualsPathPatch>();
+
+            patcher.RegisterPatch<RestSiteOptionIconPatch>();
+            patcher.RegisterPatch<RestSiteOptionTitlePatch>();
 
             patcher.RegisterPatch<EventLayoutScenePatch>();
             patcher.RegisterPatch<EventInitialPortraitPatch>();
@@ -212,7 +231,9 @@ namespace STS2RitsuLib
             var patcher = CreatePatcher(Const.ModId, "framework-character-assets", "character assets");
             patcher.RegisterPatch<CharacterIconOutlineTexturePathPatch>();
             patcher.RegisterPatch<ModModelRuntimeGodotFactoryPatches.CharacterCreatureVisualsRuntimeFactoryPatch>();
+            patcher.RegisterPatch<ModModelRuntimeGodotFactoryPatches.CharacterCreatureAnimatorRuntimeFactoryPatch>();
             patcher.RegisterPatch<CharacterVisualsPathPatch>();
+            patcher.RegisterPatch<CharacterEnergyCounterRuntimeFactoryPatch>();
             patcher.RegisterPatch<CharacterEnergyCounterPathPatch>();
             patcher.RegisterPatch<CharacterMerchantAnimPathPatch>();
             patcher.RegisterPatch<CharacterRestSiteAnimPathPatch>();
@@ -233,6 +254,8 @@ namespace STS2RitsuLib
             patcher.RegisterPatch<CharacterGameOverScreenCompatibilityPatch>();
             patcher.RegisterPatch<CharacterVanillaSelectionPolicyPatches>();
             patcher.RegisterPatch<ModCreatureNonSpineAnimationPlaybackPatch>();
+            patcher.RegisterPatch<NCreatureNonSpineDeathAnimationTriggerPatch>();
+            patcher.RegisterPatch<NCreatureNonSpineReviveAnimationTriggerPatch>();
             patcher.RegisterPatch<ModMerchantCharacterVisualPlaybackPatch>();
             patcher.RegisterPatch<NMerchantRoomProceduralCharacterInstantiationPatch>();
             patcher.RegisterPatch<NRestSiteCharacterCreateProceduralPatch>();

@@ -1,5 +1,4 @@
 using MegaCrit.Sts2.Core.Models;
-using STS2RitsuLib.Scaffolding.Content;
 
 namespace STS2RitsuLib.Keywords
 {
@@ -50,27 +49,9 @@ namespace STS2RitsuLib.Keywords
         private static IEnumerable<string> EnumerateKeywordIds(CardModel card)
         {
             var seen = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
-
-            if (card is ModCardTemplate mod)
-                foreach (var id in mod.EnumerateDeclaredModKeywordIds())
-                {
-                    if (string.IsNullOrWhiteSpace(id))
-                        continue;
-
-                    var normalized = id.Trim().ToLowerInvariant();
-                    if (string.IsNullOrEmpty(normalized) || !seen.Add(normalized))
-                        continue;
-
-                    yield return normalized;
-                }
-
             foreach (var id in card.GetModKeywordIds())
-            {
-                if (!seen.Add(id))
-                    continue;
-
-                yield return id;
-            }
+                if (seen.Add(id))
+                    yield return id;
         }
     }
 }

@@ -1,6 +1,38 @@
 namespace STS2RitsuLib.Settings
 {
     /// <summary>
+    ///     Chrome menu actions that can be exposed for pages, sections, and entries.
+    /// </summary>
+    [Flags]
+    public enum ModSettingsMenuCapabilities
+    {
+        /// <summary>
+        ///     No chrome menu actions are exposed.
+        /// </summary>
+        None = 0,
+
+        /// <summary>
+        ///     Allows copying the current value or subtree.
+        /// </summary>
+        Copy = 1 << 0,
+
+        /// <summary>
+        ///     Allows pasting compatible clipboard content.
+        /// </summary>
+        Paste = 1 << 1,
+
+        /// <summary>
+        ///     Allows restoring the value to its default.
+        /// </summary>
+        ResetToDefault = 1 << 2,
+
+        /// <summary>
+        ///     Exposes all standard chrome menu actions.
+        /// </summary>
+        All = Copy | Paste | ResetToDefault,
+    }
+
+    /// <summary>
     ///     One logical settings page (sidebar entry + sections).
     /// </summary>
     public sealed class ModSettingsPage
@@ -13,7 +45,9 @@ namespace STS2RitsuLib.Settings
             ModSettingsText? description,
             int sortOrder,
             IReadOnlyList<ModSettingsSection> sections,
-            Func<bool>? visibleWhen = null)
+            Func<bool>? visibleWhen = null,
+            ModSettingsMenuCapabilities menuCapabilities = ModSettingsMenuCapabilities.Copy |
+                                                           ModSettingsMenuCapabilities.Paste)
         {
             ModId = modId;
             Id = id;
@@ -23,6 +57,7 @@ namespace STS2RitsuLib.Settings
             SortOrder = sortOrder;
             Sections = sections;
             VisibleWhen = visibleWhen;
+            MenuCapabilities = menuCapabilities;
         }
 
         /// <summary>
@@ -67,6 +102,11 @@ namespace STS2RitsuLib.Settings
         ///     settings UI refresh.
         /// </summary>
         public Func<bool>? VisibleWhen { get; }
+
+        /// <summary>
+        ///     Built-in actions enabled for the page-level actions menu.
+        /// </summary>
+        public ModSettingsMenuCapabilities MenuCapabilities { get; }
     }
 
     /// <summary>
@@ -81,7 +121,9 @@ namespace STS2RitsuLib.Settings
             bool isCollapsible,
             bool startCollapsed,
             IReadOnlyList<ModSettingsEntryDefinition> entries,
-            Func<bool>? visibleWhen = null)
+            Func<bool>? visibleWhen = null,
+            ModSettingsMenuCapabilities menuCapabilities = ModSettingsMenuCapabilities.Copy |
+                                                           ModSettingsMenuCapabilities.Paste)
         {
             Id = id;
             Title = title;
@@ -90,6 +132,7 @@ namespace STS2RitsuLib.Settings
             StartCollapsed = startCollapsed;
             Entries = entries;
             VisibleWhen = visibleWhen;
+            MenuCapabilities = menuCapabilities;
         }
 
         /// <summary>
@@ -126,5 +169,10 @@ namespace STS2RitsuLib.Settings
         ///     When non-null, the section (and its sidebar shortcut) is hidden while the predicate is false.
         /// </summary>
         public Func<bool>? VisibleWhen { get; }
+
+        /// <summary>
+        ///     Built-in actions enabled for the section-level actions menu.
+        /// </summary>
+        public ModSettingsMenuCapabilities MenuCapabilities { get; }
     }
 }

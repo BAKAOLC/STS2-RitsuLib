@@ -28,12 +28,32 @@ namespace STS2RitsuLib.Scaffolding.Godot
         }
 
         /// <summary>
+        ///     Same as <see cref="CreateFromScene{TNode}(PackedScene)" /> but uses the given Godot instantiate edit
+        ///     state (match vanilla callsites such as <c>PackedScene.GenEditState.Disabled</c>).
+        /// </summary>
+        public static TNode CreateFromScene<TNode>(PackedScene scene, PackedScene.GenEditState editState)
+            where TNode : Node, new()
+        {
+            return RitsuGodotNodeFactoryRegistry.CreateFromScene<TNode>(scene, editState);
+        }
+
+        /// <summary>
         ///     Loads <paramref name="scenePath" /> via <see cref="PreloadManager.Cache" /> then
-        ///     <see cref="CreateFromScene{TNode}" />.
+        ///     <see>
+        ///         <cref>CreateFromScene{TNode}</cref>
+        ///     </see>
+        ///     .
         /// </summary>
         public static TNode CreateFromScenePath<TNode>(string scenePath) where TNode : Node, new()
         {
             return RitsuGodotNodeFactoryRegistry.CreateFromScenePath<TNode>(scenePath);
+        }
+
+        /// <inheritdoc cref="CreateFromScene{TNode}(PackedScene, PackedScene.GenEditState)" />
+        public static TNode CreateFromScenePath<TNode>(string scenePath, PackedScene.GenEditState editState)
+            where TNode : Node, new()
+        {
+            return RitsuGodotNodeFactoryRegistry.CreateFromScenePath<TNode>(scenePath, editState);
         }
     }
 }

@@ -1,9 +1,13 @@
+using Godot;
+using MegaCrit.Sts2.Core.Animation;
+using MegaCrit.Sts2.Core.Bindings.MegaSpine;
 using MegaCrit.Sts2.Core.Models;
 using MegaCrit.Sts2.Core.Nodes.Combat;
 using STS2RitsuLib.Content;
 using STS2RitsuLib.Scaffolding.Characters.Visuals.Definition;
 using STS2RitsuLib.Scaffolding.Content;
 using STS2RitsuLib.Scaffolding.Visuals.Definition;
+using STS2RitsuLib.Scaffolding.Visuals.StateMachine;
 
 namespace STS2RitsuLib.Scaffolding.Characters
 {
@@ -201,6 +205,20 @@ namespace STS2RitsuLib.Scaffolding.Characters
         ///     mod-relic <c>IModRelicAssetOverrides</c> so per-owner character art wins over relic-wide defaults.
         /// </summary>
         RelicAssetProfile? TryGetVanillaRelicVisualOverrideForOwnedRelic(RelicModel relic);
+
+        /// <summary>
+        ///     When <paramref name="potion" /> is encountered or held by a player using this character, returns
+        ///     image/outline overrides registered for that potion’s <c>ModelId.Entry</c>; otherwise <c>null</c>.
+        ///     Patches resolve this before mod-potion <c>IModPotionAssetOverrides</c>.
+        /// </summary>
+        PotionAssetProfile? TryGetVanillaPotionVisualOverrideForContext(PotionModel potion);
+
+        /// <summary>
+        ///     When <paramref name="card" /> is encountered or held by a player using this character, returns
+        ///     portrait/frame/banner/overlay overrides registered for that card’s <c>ModelId.Entry</c>;
+        ///     otherwise <c>null</c>. Patches resolve this before mod-card <c>IModCardAssetOverrides</c>.
+        /// </summary>
+        CardAssetProfile? TryGetVanillaCardVisualOverrideForContext(CardModel card);
     }
 
     /// <summary>
@@ -210,9 +228,15 @@ namespace STS2RitsuLib.Scaffolding.Characters
     /// <typeparam name="TCardPool">Concrete <see cref="CardPoolModel" /> type registered for this character.</typeparam>
     /// <typeparam name="TRelicPool">Concrete <see cref="RelicPoolModel" /> type registered for this character.</typeparam>
     /// <typeparam name="TPotionPool">Concrete <see cref="PotionPoolModel" /> type registered for this character.</typeparam>
+#pragma warning disable CS0618
+    // Template keeps the obsolete IModCharacter* visuals / animator factory interfaces wired so existing derived
+    // classes and external consumers that type-check against the old interface names continue to work.
     public abstract class ModCharacterTemplate<TCardPool, TRelicPool, TPotionPool> : CharacterModel
-        , IModCharacterAssetOverrides, IModCharacterCreatureVisualsFactory, IModCharacterEpochTimelineRequirement,
-        IModCharacterVanillaSelectionPolicy
+        , IModCharacterAssetOverrides, IModCreatureVisualsFactory, IModCharacterCreatureVisualsFactory,
+        IModCreatureAnimatorFactory, IModCharacterCreatureAnimatorFactory,
+        IModNonSpineAnimationStateMachineFactory, IModCharacterMerchantAnimationStateMachineFactory,
+        IModCharacterEpochTimelineRequirement, IModCharacterVanillaSelectionPolicy
+#pragma warning restore CS0618
         where TCardPool : CardPoolModel
         where TRelicPool : RelicPoolModel
         where TPotionPool : PotionPoolModel
@@ -433,19 +457,82 @@ namespace STS2RitsuLib.Scaffolding.Characters
         }
 
         /// <inheritdoc />
+        public virtual PotionAssetProfile? TryGetVanillaPotionVisualOverrideForContext(PotionModel potion)
+        {
+            var entries = ResolvedAssetProfile.VanillaPotionVisualOverrides;
+            if (entries is not { Length: > 0 })
+                return null;
+
+            var id = potion.Id.Entry;
+            foreach (var (potionModelIdEntry, a) in entries)
+            {
+                if (!id.Equals(potionModelIdEntry, StringComparison.OrdinalIgnoreCase))
+                    continue;
+
+                if (string.IsNullOrWhiteSpace(a.ImagePath) && string.IsNullOrWhiteSpace(a.OutlinePath))
+                    return null;
+
+                return a;
+            }
+
+            return null;
+        }
+
+        /// <inheritdoc />
+        public virtual CardAssetProfile? TryGetVanillaCardVisualOverrideForContext(CardModel card)
+        {
+            var entries = ResolvedAssetProfile.VanillaCardVisualOverrides;
+            if (entries is not { Length: > 0 })
+                return null;
+
+            var id = card.Id.Entry;
+            foreach (var (cardModelIdEntry, a) in entries)
+            {
+                if (!id.Equals(cardModelIdEntry, StringComparison.OrdinalIgnoreCase))
+                    continue;
+
+                if (string.IsNullOrWhiteSpace(a.PortraitPath) && string.IsNullOrWhiteSpace(a.BetaPortraitPath) &&
+                    string.IsNullOrWhiteSpace(a.FramePath) && string.IsNullOrWhiteSpace(a.PortraitBorderPath) &&
+                    string.IsNullOrWhiteSpace(a.EnergyIconPath) && string.IsNullOrWhiteSpace(a.FrameMaterialPath) &&
+                    string.IsNullOrWhiteSpace(a.OverlayScenePath) && string.IsNullOrWhiteSpace(a.BannerTexturePath) &&
+                    string.IsNullOrWhiteSpace(a.BannerMaterialPath))
+                    return null;
+
+                return a;
+            }
+
+            return null;
+        }
+
+        /// <inheritdoc />
         public virtual VisualCueSet? VisualCues => ResolvedAssetProfile.VisualCues;
 
         /// <inheritdoc />
         public virtual CharacterWorldProceduralVisualSet? WorldProceduralVisuals =>
             ResolvedAssetProfile.WorldProceduralVisuals;
 
+#pragma warning disable CS0618
+        CreatureAnimator? IModCharacterCreatureAnimatorFactory.TryCreateCreatureAnimator(MegaSprite controller)
+        {
+            return SetupCustomCreatureAnimator(controller);
+        }
+#pragma warning restore CS0618
+
+#pragma warning disable CS0618
         NCreatureVisuals? IModCharacterCreatureVisualsFactory.TryCreateCreatureVisuals()
         {
             return TryCreateCreatureVisuals();
         }
+#pragma warning restore CS0618
 
         /// <inheritdoc />
         public virtual bool RequiresEpochAndTimeline => true;
+
+        ModAnimStateMachine? IModCharacterMerchantAnimationStateMachineFactory.
+            TryCreateMerchantAnimationStateMachine(Node merchantRoot, CharacterModel character)
+        {
+            return SetupCustomMerchantAnimationStateMachine(merchantRoot, character);
+        }
 
         /// <inheritdoc />
         public virtual bool HideFromVanillaCharacterSelect => false;
@@ -453,11 +540,64 @@ namespace STS2RitsuLib.Scaffolding.Characters
         /// <inheritdoc />
         public virtual bool AllowInVanillaRandomCharacterSelect => !HideFromVanillaCharacterSelect;
 
+        CreatureAnimator? IModCreatureAnimatorFactory.TryCreateCreatureAnimator(MegaSprite controller)
+        {
+            return SetupCustomCreatureAnimator(controller);
+        }
+
+        NCreatureVisuals? IModCreatureVisualsFactory.TryCreateCreatureVisuals()
+        {
+            return TryCreateCreatureVisuals();
+        }
+
+        ModAnimStateMachine? IModNonSpineAnimationStateMachineFactory.
+            TryCreateNonSpineAnimationStateMachine(Node visualsRoot)
+        {
+            return SetupCustomNonSpineAnimationStateMachine(visualsRoot, this);
+        }
+
         /// <summary>
         ///     Non-null combat visuals; otherwise <see cref="IModCharacterAssetOverrides.CustomVisualsPath" /> / vanilla
         ///     paths apply.
         /// </summary>
         protected virtual NCreatureVisuals? TryCreateCreatureVisuals()
+        {
+            return null;
+        }
+
+        /// <summary>
+        ///     Optional override producing a fully wired Spine <see cref="CreatureAnimator" /> (state graph for idle /
+        ///     hit / attack / cast / die / relaxed). Return <see langword="null" /> to defer to vanilla
+        ///     <see cref="CharacterModel.GenerateAnimator" />. Prefer <see cref="ModAnimStateMachines.Standard" /> to
+        ///     match baselib semantics.
+        /// </summary>
+        /// <param name="controller">Spine controller attached to the character's combat visuals.</param>
+        protected virtual CreatureAnimator? SetupCustomCreatureAnimator(MegaSprite controller)
+        {
+            return null;
+        }
+
+        /// <summary>
+        ///     Optional override producing a non-Spine <see cref="ModAnimStateMachine" /> for the character's combat
+        ///     visuals (cue frame sequences, Godot animation player, animated sprite). Return <see langword="null" />
+        ///     to defer to single-shot playback via <c>ModCreatureVisualPlayback</c>.
+        /// </summary>
+        /// <param name="visualsRoot">Combat visuals root node.</param>
+        /// <param name="character">Character model (always <see langword="this" />, exposed for convenience).</param>
+        protected virtual ModAnimStateMachine? SetupCustomNonSpineAnimationStateMachine(Node visualsRoot,
+            CharacterModel character)
+        {
+            return null;
+        }
+
+        /// <summary>
+        ///     Optional override producing a merchant / rest-site <see cref="ModAnimStateMachine" /> for the character.
+        ///     Return <see langword="null" /> to defer to single-shot playback via <c>ModCreatureVisualPlayback</c>.
+        /// </summary>
+        /// <param name="merchantRoot">Merchant character root node.</param>
+        /// <param name="character">Character model (always <see langword="this" />, exposed for convenience).</param>
+        protected virtual ModAnimStateMachine? SetupCustomMerchantAnimationStateMachine(Node merchantRoot,
+            CharacterModel character)
         {
             return null;
         }

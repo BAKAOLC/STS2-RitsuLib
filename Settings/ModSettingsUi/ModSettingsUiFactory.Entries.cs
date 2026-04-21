@@ -27,25 +27,51 @@ namespace STS2RitsuLib.Settings
 
         public static Control CreatePageContent(ModSettingsUiContext context, ModSettingsPage page)
         {
+            var container = CreatePageContentHost(page);
+            foreach (var item in CreatePageBuildItems(context, page))
+                container.AddChild(item.Control);
+            return MaybeWrapDynamicVisibility(context, container, page.VisibleWhen);
+        }
+
+        internal static VBoxContainer CreatePageContentHost(ModSettingsPage page)
+        {
             var container = new VBoxContainer
             {
                 Name = $"Page_{SanitizeName(page.ModId)}_{SanitizeName(page.Id)}",
                 SizeFlagsHorizontal = Control.SizeFlags.ExpandFill,
                 MouseFilter = Control.MouseFilterEnum.Ignore,
             };
-
             container.AddThemeConstantOverride("separation", 8);
+            return container;
+        }
 
+        internal static IEnumerable<PageBuildItem> CreatePageBuildItems(ModSettingsUiContext context,
+            ModSettingsPage page)
+        {
             for (var index = 0; index < page.Sections.Count; index++)
             {
                 var section = page.Sections[index];
                 if (index > 0)
-                    container.AddChild(CreateDivider());
+                    yield return new(CreateDivider(), false);
 
-                container.AddChild(CreateSection(context, page, section));
+                Control builtSection;
+                try
+                {
+                    builtSection = CreateSection(context, page, section);
+                }
+                catch (Exception ex)
+                {
+                    RitsuLibFramework.Logger.Warn(
+                        $"[Settings] Failed to build section '{page.ModId}:{page.Id}:{section.Id}': {ex.Message}");
+                    builtSection = CreateBuildErrorPlaceholder(
+                        ModSettingsLocalization.Get("section.failed.title", "Section failed to load"),
+                        string.Format(
+                            ModSettingsLocalization.Get("section.failed.body", "Failed to build section '{0}'."),
+                            section.Id));
+                }
+
+                yield return new(builtSection, true);
             }
-
-            return MaybeWrapDynamicVisibility(context, container, page.VisibleWhen);
         }
 
         public static Control CreateToggleEntry(ModSettingsUiContext context, ToggleModSettingsEntryDefinition entry)
@@ -65,7 +91,8 @@ namespace STS2RitsuLib.Settings
                 () => ModSettingsUiContext.Resolve(entry.Label),
                 () => ModSettingsUiContext.ResolveBindingDescriptionBody(entry.Description),
                 control,
-                entry.Binding);
+                entry.Binding,
+                entry.MenuCapabilities);
         }
 
         public static Control CreateSliderEntry(ModSettingsUiContext context, SliderModSettingsEntryDefinition entry)
@@ -89,7 +116,8 @@ namespace STS2RitsuLib.Settings
                 () => ModSettingsUiContext.Resolve(entry.Label),
                 () => ModSettingsUiContext.ResolveBindingDescriptionBody(entry.Description),
                 control,
-                entry.Binding);
+                entry.Binding,
+                entry.MenuCapabilities);
 
             string FormatValue(double value)
             {
@@ -119,7 +147,8 @@ namespace STS2RitsuLib.Settings
                 () => ModSettingsUiContext.Resolve(entry.Label),
                 () => ModSettingsUiContext.ResolveBindingDescriptionBody(entry.Description),
                 control,
-                entry.Binding);
+                entry.Binding,
+                entry.MenuCapabilities);
 
             string FormatValue(float value)
             {
@@ -173,7 +202,8 @@ namespace STS2RitsuLib.Settings
                 () => ModSettingsUiContext.Resolve(entry.Label),
                 () => ModSettingsUiContext.ResolveBindingDescriptionBody(entry.Description),
                 control,
-                entry.Binding);
+                entry.Binding,
+                entry.MenuCapabilities);
         }
 
         public static Control CreateColorEntry(ModSettingsUiContext context, ColorModSettingsEntryDefinition entry)
@@ -195,7 +225,8 @@ namespace STS2RitsuLib.Settings
                 () => ModSettingsUiContext.Resolve(entry.Label),
                 () => ModSettingsUiContext.ResolveBindingDescriptionBody(entry.Description),
                 control,
-                entry.Binding);
+                entry.Binding,
+                entry.MenuCapabilities);
         }
 
         public static Control CreateStringLineEntry(ModSettingsUiContext context,
@@ -215,7 +246,8 @@ namespace STS2RitsuLib.Settings
                 () => ModSettingsUiContext.Resolve(entry.Label),
                 () => ModSettingsUiContext.ResolveBindingDescriptionBody(entry.Description),
                 control,
-                entry.Binding);
+                entry.Binding,
+                entry.MenuCapabilities);
         }
 
         public static Control CreateStringMultilineEntry(ModSettingsUiContext context,
@@ -234,7 +266,8 @@ namespace STS2RitsuLib.Settings
                 () => ModSettingsUiContext.Resolve(entry.Label),
                 () => ModSettingsUiContext.ResolveBindingDescriptionBody(entry.Description),
                 control,
-                entry.Binding);
+                entry.Binding,
+                entry.MenuCapabilities);
         }
 
         private static string? ResolveStringFieldPlaceholder(StringFieldModSettingsEntryDefinition entry)
@@ -274,7 +307,32 @@ namespace STS2RitsuLib.Settings
                 () => ModSettingsUiContext.Resolve(entry.Label),
                 () => ModSettingsUiContext.ResolveBindingDescriptionBody(entry.Description),
                 control,
-                entry.Binding);
+                entry.Binding,
+                entry.MenuCapabilities);
+        }
+
+        public static Control CreateMultiKeyBindingEntry(ModSettingsUiContext context,
+            MultiKeyBindingModSettingsEntryDefinition entry)
+        {
+            var control = new ModSettingsMultiKeyBindingControl(
+                entry.Binding.Read(),
+                entry.AllowModifierCombos,
+                entry.AllowModifierOnly,
+                entry.DistinguishModifierSides,
+                value =>
+                {
+                    entry.Binding.Write(value);
+                    context.MarkDirty(entry.Binding);
+                });
+            RegisterRefreshWhenAlive(context, control, () => control.SetValue(entry.Binding.Read()));
+
+            return CreateSettingLine(
+                context,
+                () => ModSettingsUiContext.Resolve(entry.Label),
+                () => ModSettingsUiContext.ResolveBindingDescriptionBody(entry.Description),
+                control,
+                entry.Binding,
+                entry.MenuCapabilities);
         }
 
         public static Control CreateButtonEntry(ModSettingsUiContext context, ButtonModSettingsEntryDefinition entry)
@@ -335,6 +393,167 @@ namespace STS2RitsuLib.Settings
         {
             var cap = entry.MaxBodyHeight ?? ModSettingsUiPresentation.ParagraphMaxBodyHeight;
             return CreateRefreshableParagraphBlock(context, () => ModSettingsUiContext.Resolve(entry.Label), cap);
+        }
+
+        public static Control CreateInfoCardEntry(ModSettingsUiContext context,
+            InfoCardModSettingsEntryDefinition entry)
+        {
+            var line = new MarginContainer
+            {
+                SizeFlagsHorizontal = Control.SizeFlags.ExpandFill,
+                MouseFilter = Control.MouseFilterEnum.Ignore,
+            };
+            line.AddThemeConstantOverride("margin_left", 8);
+            line.AddThemeConstantOverride("margin_right", 8);
+            line.AddThemeConstantOverride("margin_top", 6);
+            line.AddThemeConstantOverride("margin_bottom", 6);
+
+            var surface = new PanelContainer
+            {
+                SizeFlagsHorizontal = Control.SizeFlags.ExpandFill,
+                MouseFilter = Control.MouseFilterEnum.Ignore,
+            };
+            surface.AddThemeStyleboxOverride("panel", CreateInsetSurfaceStyle());
+            line.AddChild(surface);
+
+            var stack = new VBoxContainer
+            {
+                SizeFlagsHorizontal = Control.SizeFlags.ExpandFill,
+                MouseFilter = Control.MouseFilterEnum.Ignore,
+            };
+            stack.AddThemeConstantOverride("separation", 6);
+            surface.AddChild(stack);
+
+            stack.AddChild(CreateRefreshableSectionTitle(context,
+                () => ResolveEntryLabelDisplay(entry.Label)));
+
+            if (entry.Description != null)
+                stack.AddChild(CreateRefreshableDescriptionLabel(context,
+                    () => ModSettingsUiContext.Resolve(entry.Description)));
+
+            stack.AddChild(CreateRefreshableParagraphBlock(context,
+                () => ModSettingsUiContext.Resolve(entry.Body),
+                ModSettingsUiPresentation.ParagraphMaxBodyHeight));
+            return line;
+        }
+
+        public static Control CreateRuntimeHotkeySummaryEntry(ModSettingsUiContext context,
+            RuntimeHotkeySummaryModSettingsEntryDefinition entry)
+        {
+            var line = new MarginContainer
+            {
+                SizeFlagsHorizontal = Control.SizeFlags.ExpandFill,
+                MouseFilter = Control.MouseFilterEnum.Ignore,
+            };
+            line.AddThemeConstantOverride("margin_left", 8);
+            line.AddThemeConstantOverride("margin_right", 8);
+            line.AddThemeConstantOverride("margin_top", 6);
+            line.AddThemeConstantOverride("margin_bottom", 6);
+
+            var surface = new PanelContainer
+            {
+                SizeFlagsHorizontal = Control.SizeFlags.ExpandFill,
+                MouseFilter = Control.MouseFilterEnum.Ignore,
+            };
+            surface.AddThemeStyleboxOverride("panel", CreateEntrySurfaceStyle());
+            line.AddChild(surface);
+
+            var row = new HBoxContainer
+            {
+                SizeFlagsHorizontal = Control.SizeFlags.ExpandFill,
+                SizeFlagsVertical = Control.SizeFlags.ShrinkCenter,
+                MouseFilter = Control.MouseFilterEnum.Ignore,
+                Alignment = BoxContainer.AlignmentMode.Center,
+            };
+            row.AddThemeConstantOverride("separation", 20);
+            surface.AddChild(row);
+
+            var left = new VBoxContainer
+            {
+                CustomMinimumSize = new(220f, 0f),
+                SizeFlagsHorizontal = Control.SizeFlags.ExpandFill,
+                SizeFlagsVertical = Control.SizeFlags.ShrinkCenter,
+                MouseFilter = Control.MouseFilterEnum.Ignore,
+            };
+            left.AddThemeConstantOverride("separation", 6);
+            row.AddChild(left);
+
+            var titleRow = new HBoxContainer
+            {
+                SizeFlagsHorizontal = Control.SizeFlags.ExpandFill,
+                MouseFilter = Control.MouseFilterEnum.Ignore,
+                Alignment = BoxContainer.AlignmentMode.Begin,
+            };
+            titleRow.AddThemeConstantOverride("separation", 8);
+            left.AddChild(titleRow);
+
+            var title = CreateRefreshableHeaderLabel(context,
+                () => ResolveEntryLabelDisplay(entry.Label), 24, HorizontalAlignment.Left,
+                ModSettingsUiPalette.RichTextTitle);
+            title.SizeFlagsHorizontal = Control.SizeFlags.ExpandFill;
+            titleRow.AddChild(title);
+
+            var idLabel = new Label
+            {
+                MouseFilter = Control.MouseFilterEnum.Ignore,
+                VerticalAlignment = VerticalAlignment.Center,
+                Visible = entry.Description != null,
+            };
+            idLabel.AddThemeFontOverride("font", ModSettingsUiResources.KreonRegular);
+            idLabel.AddThemeFontSizeOverride("font_size", 16);
+            idLabel.AddThemeColorOverride("font_color", ModSettingsUiPalette.RichTextMuted);
+            titleRow.AddChild(idLabel);
+            RegisterRefreshWhenAlive(context, idLabel, () =>
+            {
+                var idText = entry.Description == null ? string.Empty : ModSettingsUiContext.Resolve(entry.Description);
+                idLabel.Text = string.IsNullOrWhiteSpace(idText) ? string.Empty : $"({idText})";
+                idLabel.Visible = !string.IsNullOrWhiteSpace(idText);
+            });
+
+            left.AddChild(CreateRefreshableDescriptionLabel(context,
+                () => ModSettingsUiContext.Resolve(entry.Body)));
+
+            var bindingsColumn = new VBoxContainer
+            {
+                CustomMinimumSize = new(ModSettingsUiMetrics.KeybindingBlockWidth, 0f),
+                SizeFlagsHorizontal = Control.SizeFlags.ShrinkEnd,
+                SizeFlagsVertical = Control.SizeFlags.ShrinkCenter,
+                MouseFilter = Control.MouseFilterEnum.Ignore,
+            };
+            bindingsColumn.AddThemeConstantOverride("separation", 6);
+            row.AddChild(bindingsColumn);
+
+            RegisterRefreshWhenAlive(context, bindingsColumn, () =>
+            {
+                foreach (var child in bindingsColumn.GetChildren())
+                    child.QueueFree();
+
+                foreach (var binding in entry.Bindings)
+                {
+                    var chip = new PanelContainer
+                    {
+                        MouseFilter = Control.MouseFilterEnum.Ignore,
+                        SizeFlagsHorizontal = Control.SizeFlags.ExpandFill,
+                    };
+                    chip.AddThemeStyleboxOverride("panel", CreateInsetSurfaceStyle());
+                    var chipLabel = new Label
+                    {
+                        Text = ModSettingsUiContext.Resolve(binding),
+                        MouseFilter = Control.MouseFilterEnum.Ignore,
+                        HorizontalAlignment = HorizontalAlignment.Center,
+                        VerticalAlignment = VerticalAlignment.Center,
+                        AutowrapMode = TextServer.AutowrapMode.Off,
+                        ClipText = true,
+                    };
+                    chipLabel.AddThemeFontOverride("font", ModSettingsUiResources.KreonBold);
+                    chipLabel.AddThemeFontSizeOverride("font_size", 16);
+                    chipLabel.AddThemeColorOverride("font_color", ModSettingsUiPalette.LabelPrimary);
+                    chip.AddChild(chipLabel);
+                    bindingsColumn.AddChild(chip);
+                }
+            });
+
+            return line;
         }
 
         public static Control CreateImageEntry(ModSettingsUiContext context, ImageModSettingsEntryDefinition entry)
@@ -403,7 +622,8 @@ namespace STS2RitsuLib.Settings
                 () => ModSettingsUiContext.Resolve(entry.Label),
                 () => ModSettingsUiContext.ResolveBindingDescriptionBody(entry.Description),
                 control,
-                entry.Binding);
+                entry.Binding,
+                entry.MenuCapabilities);
 
             string FormatValue(double value)
             {
@@ -426,5 +646,7 @@ namespace STS2RitsuLib.Settings
                 () => ModSettingsUiContext.Resolve(entry.Description),
                 control);
         }
+
+        internal sealed record PageBuildItem(Control Control, bool YieldAfter);
     }
 }

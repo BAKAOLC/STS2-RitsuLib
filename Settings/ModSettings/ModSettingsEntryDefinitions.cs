@@ -21,6 +21,11 @@ namespace STS2RitsuLib.Settings
         }
 
         /// <summary>
+        ///     Chrome menu actions available for this entry.
+        /// </summary>
+        public ModSettingsMenuCapabilities MenuCapabilities { get; internal set; } = ModSettingsMenuCapabilities.All;
+
+        /// <summary>
         ///     Unique entry id within its section (used for chrome clipboard and anchors).
         /// </summary>
         public string Id { get; }
@@ -489,6 +494,65 @@ namespace STS2RitsuLib.Settings
     }
 
     /// <summary>
+    ///     Multi-key binding capture row writing a binding list to <see cref="Binding" />.
+    /// </summary>
+    public sealed class MultiKeyBindingModSettingsEntryDefinition(
+        string id,
+        ModSettingsText label,
+        IModSettingsValueBinding<List<string>> binding,
+        bool allowModifierCombos,
+        bool allowModifierOnly,
+        bool distinguishModifierSides,
+        ModSettingsText? description)
+        : ModSettingsEntryDefinition(id, label, description)
+    {
+        /// <summary>
+        ///     Binding that stores the normalized list of captured hotkeys.
+        /// </summary>
+        public IModSettingsValueBinding<List<string>> Binding { get; } =
+            binding is IStructuredModSettingsValueBinding<List<string>>
+                ? binding
+                : ModSettingsBindings.WithAdapter(binding, ModSettingsStructuredData.List<string>());
+
+        /// <summary>
+        ///     Whether modifier combinations are allowed.
+        /// </summary>
+        public bool AllowModifierCombos { get; } = allowModifierCombos;
+
+        /// <summary>
+        ///     Whether modifier-only bindings are allowed.
+        /// </summary>
+        public bool AllowModifierOnly { get; } = allowModifierOnly;
+
+        /// <summary>
+        ///     Whether left/right modifier keys are distinguished while recording.
+        /// </summary>
+        public bool DistinguishModifierSides { get; } = distinguishModifierSides;
+
+        internal override void CollectChromeBindingSnapshots(
+            Dictionary<string, ModSettingsChromeBindingSnapshot> target)
+        {
+            ModSettingsClipboardData.AddChromeBindingSnapshot(target, Id, Binding);
+        }
+
+        internal override bool TryPasteChromeBindingSnapshot(ModSettingsChromeBindingSnapshot snap,
+            IModSettingsUiActionHost host)
+        {
+            var adapter = ModSettingsUiFactory.ResolveClipboardAdapter(Binding);
+            if (!ModSettingsClipboardData.TryApplySerializedValueToBinding(Binding, adapter, snap, out var v))
+                return false;
+            Binding.Write(v);
+            host.MarkDirty(Binding);
+            return true;
+        }
+
+        internal override Control CreateControl(ModSettingsUiContext context)
+        {
+            return ModSettingsUiFactory.CreateMultiKeyBindingEntry(context, this);
+        }
+    }
+
+    /// <summary>
     ///     Non-persisted button that invokes <see cref="Action" />.
     /// </summary>
     public sealed class ButtonModSettingsEntryDefinition(
@@ -590,6 +654,54 @@ namespace STS2RitsuLib.Settings
         internal override Control CreateControl(ModSettingsUiContext context)
         {
             return ModSettingsUiFactory.CreateParagraphEntry(context, this);
+        }
+    }
+
+    /// <summary>
+    ///     Read-only information card with title, optional subtitle, and rich-text body.
+    /// </summary>
+    public sealed class InfoCardModSettingsEntryDefinition(
+        string id,
+        ModSettingsText label,
+        ModSettingsText body,
+        ModSettingsText? description = null)
+        : ModSettingsEntryDefinition(id, label, description)
+    {
+        /// <summary>
+        ///     Main rich-text body shown inside the card.
+        /// </summary>
+        public ModSettingsText Body { get; } = body;
+
+        internal override Control CreateControl(ModSettingsUiContext context)
+        {
+            return ModSettingsUiFactory.CreateInfoCardEntry(context, this);
+        }
+    }
+
+    /// <summary>
+    ///     Read-only runtime hotkey summary row with left text and right binding chips.
+    /// </summary>
+    public sealed class RuntimeHotkeySummaryModSettingsEntryDefinition(
+        string id,
+        ModSettingsText label,
+        ModSettingsText body,
+        IReadOnlyList<ModSettingsText> bindings,
+        ModSettingsText? idSuffix = null)
+        : ModSettingsEntryDefinition(id, label, idSuffix)
+    {
+        /// <summary>
+        ///     Descriptive body text shown under the title.
+        /// </summary>
+        public ModSettingsText Body { get; } = body;
+
+        /// <summary>
+        ///     Binding chips shown in the right-hand column.
+        /// </summary>
+        public IReadOnlyList<ModSettingsText> Bindings { get; } = bindings;
+
+        internal override Control CreateControl(ModSettingsUiContext context)
+        {
+            return ModSettingsUiFactory.CreateRuntimeHotkeySummaryEntry(context, this);
         }
     }
 

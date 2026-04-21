@@ -1,3 +1,4 @@
+using MegaCrit.Sts2.Core.Helpers;
 using STS2RitsuLib.Content;
 
 namespace STS2RitsuLib.Keywords
@@ -112,6 +113,55 @@ namespace STS2RitsuLib.Keywords
         /// <summary>
         ///     <c>card_keywords</c> row with an id from <see cref="ModContentRegistry.GetQualifiedKeywordId" />.
         /// </summary>
+        public static KeywordRegistrationEntry OwnedCardByLocNamespace(
+            string modId,
+            string localKeywordStem,
+            string? locNamespace,
+            string? iconPath,
+            ModKeywordCardDescriptionPlacement cardDescriptionPlacement,
+            bool includeInCardHoverTip)
+        {
+            var ns = string.IsNullOrWhiteSpace(locNamespace)
+                ? StringHelper.Slugify(modId)
+                : locNamespace;
+
+            var stem = StringHelper.Slugify(ns) + "_" + StringHelper.Slugify(localKeywordStem);
+            var id = ModContentRegistry.GetQualifiedKeywordId(modId, localKeywordStem);
+
+            return new(
+                id,
+                "card_keywords",
+                $"{stem}.title",
+                "card_keywords",
+                $"{stem}.description",
+                iconPath,
+                cardDescriptionPlacement,
+                includeInCardHoverTip);
+        }
+
+        /// <summary>
+        ///     <c>OwnedCardByLocNamespace</c> overload with legacy hover defaults.
+        /// </summary>
+        public static KeywordRegistrationEntry OwnedCardByLocNamespace(
+            string modId,
+            string localKeywordStem,
+            string? locNamespace = null,
+            string? iconPath = null)
+        {
+            return OwnedCardByLocNamespace(
+                modId,
+                localKeywordStem,
+                locNamespace,
+                iconPath,
+                ModKeywordCardDescriptionPlacement.None,
+                true);
+        }
+
+        /// <summary>
+        ///     <c>card_keywords</c> row with an id from <see cref="ModContentRegistry.GetQualifiedKeywordId" />.
+        /// </summary>
+        [Obsolete(
+            "Pitfall: locKeyPrefix is NOT a prefix that affects only the modid/namespace portion. It is the full card_keywords entry stem used to form '{stem}.title' and '{stem}.description'. Prefer OwnedCardByLocNamespace (default stem: '<modid>_<keyword>').")]
         public static KeywordRegistrationEntry OwnedCard(
             string modId,
             string localKeywordStem,
@@ -135,6 +185,8 @@ namespace STS2RitsuLib.Keywords
         /// <summary>
         ///     <c>OwnedCard</c> overload with legacy hover defaults.
         /// </summary>
+        [Obsolete(
+            "Pitfall: locKeyPrefix is NOT a prefix that affects only the modid/namespace portion. It is the full card_keywords entry stem used to form '{stem}.title' and '{stem}.description'. Prefer OwnedCardByLocNamespace (default stem: '<modid>_<keyword>').")]
         public static KeywordRegistrationEntry OwnedCard(
             string modId,
             string localKeywordStem,

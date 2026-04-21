@@ -34,6 +34,7 @@ namespace STS2RitsuLib.Data
                         [
                             new RitsuLibSettingsV0Or1ToV2Migration(),
                             new RitsuLibSettingsV2ToV4Migration(),
+                            new RitsuLibSettingsV4ToV5Migration(),
                         ]);
                 }
 
@@ -104,6 +105,13 @@ namespace STS2RitsuLib.Data
             Initialize();
             var s = GetSettings();
             return (s.HarmonyPatchDumpOutputPath, s.HarmonyPatchDumpOnFirstMainMenu);
+        }
+
+        internal static (string OutputFolder, bool RunOnFirstMainMenu) GetSelfCheckOptions()
+        {
+            Initialize();
+            var s = GetSettings();
+            return (s.SelfCheckOutputFolderPath, s.SelfCheckOnFirstMainMenu);
         }
     }
 }

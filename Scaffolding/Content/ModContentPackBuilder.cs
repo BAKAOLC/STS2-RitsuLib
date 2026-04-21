@@ -464,6 +464,39 @@ namespace STS2RitsuLib.Scaffolding.Content
         /// <summary>
         ///     Queues <c>ModKeywordRegistry.RegisterCardKeywordOwned</c> (mod-local stem → qualified id).
         /// </summary>
+        public ModContentPackBuilder CardKeywordOwnedByLocNamespace(
+            string localKeywordStem,
+            string? locNamespace,
+            string? iconPath,
+            ModKeywordCardDescriptionPlacement cardDescriptionPlacement,
+            bool includeInCardHoverTip)
+        {
+            return AddStep(ctx =>
+                ctx.Keywords.RegisterCardKeywordOwnedByLocNamespace(localKeywordStem, locNamespace, iconPath,
+                    cardDescriptionPlacement, includeInCardHoverTip));
+        }
+
+        /// <summary>
+        ///     Queues <c>ModKeywordRegistry.RegisterCardKeywordOwnedByLocNamespace</c> with legacy hover defaults.
+        /// </summary>
+        public ModContentPackBuilder CardKeywordOwnedByLocNamespace(
+            string localKeywordStem,
+            string? locNamespace = null,
+            string? iconPath = null)
+        {
+            return CardKeywordOwnedByLocNamespace(
+                localKeywordStem,
+                locNamespace,
+                iconPath,
+                ModKeywordCardDescriptionPlacement.None,
+                true);
+        }
+
+        /// <summary>
+        ///     Queues <c>ModKeywordRegistry.RegisterCardKeywordOwned</c> (mod-local stem → qualified id).
+        /// </summary>
+        [Obsolete(
+            "Pitfall: locKeyPrefix is NOT a prefix that affects only the modid/namespace portion. It is the full card_keywords entry stem used to form '{stem}.title' and '{stem}.description'. Prefer CardKeywordOwnedByLocNamespace (default stem: '<modid>_<keyword>').")]
         public ModContentPackBuilder CardKeywordOwned(
             string localKeywordStem,
             string? locKeyPrefix,
@@ -479,6 +512,8 @@ namespace STS2RitsuLib.Scaffolding.Content
         /// <summary>
         ///     Queues <c>ModKeywordRegistry.RegisterCardKeywordOwned</c> with legacy hover defaults.
         /// </summary>
+        [Obsolete(
+            "Pitfall: locKeyPrefix is NOT a prefix that affects only the modid/namespace portion. It is the full card_keywords entry stem used to form '{stem}.title' and '{stem}.description'. Prefer CardKeywordOwnedByLocNamespace (default stem: '<modid>_<keyword>').")]
         public ModContentPackBuilder CardKeywordOwned(
             string localKeywordStem,
             string? locKeyPrefix = null,
@@ -679,6 +714,52 @@ namespace STS2RitsuLib.Scaffolding.Content
         {
             return AddStep(ctx =>
                 ModTimelineLayoutRegistry.RegisterAutoTimelineSlotAfterEraColumn(typeof(TEpoch), anchorEra, ctx.ModId));
+        }
+
+        /// <summary>
+        ///     Queues <see cref="ModTimelineLayoutRegistry.RegisterAutoTimelineSlotInEraColumn" />.
+        /// </summary>
+        public ModContentPackBuilder ModEpochAutoTimelineSlotInColumn<TEpoch>(EpochEra anchorEra)
+            where TEpoch : ModEpochTemplate
+        {
+            return AddStep(ctx =>
+                ModTimelineLayoutRegistry.RegisterAutoTimelineSlotInEraColumn(typeof(TEpoch), anchorEra, ctx.ModId));
+        }
+
+        /// <summary>
+        ///     Queues <see cref="ModTimelineLayoutRegistry.RegisterAutoTimelineSlotBeforeEpochColumn" />.
+        /// </summary>
+        public ModContentPackBuilder ModEpochAutoTimelineSlotBeforeEpochColumn<TEpoch, TReferenceEpoch>()
+            where TEpoch : ModEpochTemplate
+            where TReferenceEpoch : EpochModel, new()
+        {
+            return AddStep(ctx =>
+                ModTimelineLayoutRegistry.RegisterAutoTimelineSlotBeforeEpochColumn(typeof(TEpoch),
+                    typeof(TReferenceEpoch), ctx.ModId));
+        }
+
+        /// <summary>
+        ///     Queues <see cref="ModTimelineLayoutRegistry.RegisterAutoTimelineSlotAfterEpochColumn" />.
+        /// </summary>
+        public ModContentPackBuilder ModEpochAutoTimelineSlotAfterEpochColumn<TEpoch, TReferenceEpoch>()
+            where TEpoch : ModEpochTemplate
+            where TReferenceEpoch : EpochModel, new()
+        {
+            return AddStep(ctx =>
+                ModTimelineLayoutRegistry.RegisterAutoTimelineSlotAfterEpochColumn(typeof(TEpoch),
+                    typeof(TReferenceEpoch), ctx.ModId));
+        }
+
+        /// <summary>
+        ///     Queues <see cref="ModTimelineLayoutRegistry.RegisterAutoTimelineSlotInEpochColumn" />.
+        /// </summary>
+        public ModContentPackBuilder ModEpochAutoTimelineSlotInEpochColumn<TEpoch, TReferenceEpoch>()
+            where TEpoch : ModEpochTemplate
+            where TReferenceEpoch : EpochModel, new()
+        {
+            return AddStep(ctx =>
+                ModTimelineLayoutRegistry.RegisterAutoTimelineSlotInEpochColumn(typeof(TEpoch),
+                    typeof(TReferenceEpoch), ctx.ModId));
         }
 
         /// <summary>
@@ -1025,16 +1106,24 @@ namespace STS2RitsuLib.Scaffolding.Content
         }
 
         /// <summary>
-        ///     Builds context, runs all queued registration steps, and returns the context.
+        ///     Schedules all queued registration steps to apply during the framework discovery window and returns the
+        ///     materialized context for this mod id.
         /// </summary>
         public ModContentPackContext Apply()
         {
             var context = BuildContext();
-            foreach (var step in _steps)
-                step(context);
+            var steps = _steps.ToArray();
+            RitsuLibFramework.EnqueueDeferredContentPack(
+                _modId,
+                ctx =>
+                {
+                    foreach (var step in steps)
+                        step(ctx);
 
-            RitsuLibFramework.CreateLogger(_modId)
-                .Info($"[ContentPack] Applied {_steps.Count} registration step(s).");
+                    RitsuLibFramework.CreateLogger(_modId)
+                        .Info($"[ContentPack] Applied {steps.Length} deferred registration step(s).");
+                },
+                $"{_modId}:{steps.Length} step(s)");
             return context;
         }
 

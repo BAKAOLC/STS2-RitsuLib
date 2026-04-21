@@ -56,7 +56,7 @@ namespace STS2RitsuLib.Scaffolding.Content.Patches
             if (modelId is null)
                 return true;
 
-            if (ModelDb.GetByIdOrNull<AbstractModel>(modelId!) is not EncounterModel encounter)
+            if (ModelDb.GetByIdOrNull<AbstractModel>(modelId) is not EncounterModel encounter)
                 return true;
 
             if (encounter is not IModEncounterAssetOverrides overrides)

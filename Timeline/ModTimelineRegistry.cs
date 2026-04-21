@@ -63,11 +63,78 @@ namespace STS2RitsuLib.Timeline
         }
 
         /// <summary>
+        ///     Registers <paramref name="epochType" /> so its id appears in vanilla epoch discovery.
+        /// </summary>
+        public void RegisterEpoch(Type epochType)
+        {
+            EnsureMutable($"register epoch '{epochType.Name}'");
+            EnsureSubtype(epochType, typeof(EpochModel), nameof(epochType));
+
+            var epochId = GetEpochId(epochType);
+
+            lock (SyncRoot)
+            {
+                RegistrationConflictDetector.ThrowIfEpochIdConflicts(
+                    epochId,
+                    epochType,
+                    GetKnownEpochTypes());
+
+                if (!RegisteredEpochTypes.Add(epochType))
+                {
+                    _logger.Debug($"[Timeline] Skipping duplicate epoch registration: {epochType.Name} (id={epochId})");
+                    return;
+                }
+
+                var epochTypeDictionary =
+                    GetStaticField<Dictionary<string, Type>>(typeof(EpochModel), "_epochTypeDictionary");
+                var typeToIdDictionary =
+                    GetStaticField<Dictionary<Type, string>>(typeof(EpochModel), "_typeToIdDictionary");
+
+                epochTypeDictionary[epochId] = epochType;
+                typeToIdDictionary[epochType] = epochId;
+                RefreshAllEpochIdsSnapshotLocked();
+            }
+
+            _logger.Info($"[Timeline] Registered epoch: {epochType.Name} (id={epochId})");
+        }
+
+        /// <summary>
         ///     Registers a concrete story type in the game's story type dictionary.
         /// </summary>
         public void RegisterStory<TStory>() where TStory : StoryModel, new()
         {
             RegisterStory(typeof(TStory));
+        }
+
+        /// <summary>
+        ///     Registers <paramref name="storyType" /> in the game's story type dictionary.
+        /// </summary>
+        public void RegisterStory(Type storyType)
+        {
+            EnsureMutable($"register story '{storyType.Name}'");
+            EnsureSubtype(storyType, typeof(StoryModel), nameof(storyType));
+
+            var storyId = GetStoryId(storyType);
+
+            lock (SyncRoot)
+            {
+                RegistrationConflictDetector.ThrowIfStoryIdConflicts(
+                    storyId,
+                    storyType,
+                    GetKnownStoryTypes());
+
+                if (!RegisteredStoryTypes.Add(storyType))
+                {
+                    _logger.Debug($"[Timeline] Skipping duplicate story registration: {storyType.Name} (id={storyId})");
+                    return;
+                }
+
+                var storyDictionary =
+                    GetStaticField<Dictionary<string, Type>>(typeof(StoryModel), "_storyTypeDictionary");
+                storyDictionary[storyId] = storyType;
+            }
+
+            _logger.Info($"[Timeline] Registered story: {storyType.Name} (id={storyId})");
         }
 
         /// <summary>
@@ -126,66 +193,15 @@ namespace STS2RitsuLib.Timeline
             }
         }
 
-        private void RegisterEpoch(Type epochType)
+        internal static string GetEpochId(Type epochType)
         {
-            EnsureMutable($"register epoch '{epochType.Name}'");
             EnsureSubtype(epochType, typeof(EpochModel), nameof(epochType));
-
-            var epoch = (EpochModel)Activator.CreateInstance(epochType)!;
-            var epochId = epoch.Id;
-
-            lock (SyncRoot)
-            {
-                RegistrationConflictDetector.ThrowIfEpochIdConflicts(
-                    epochId,
-                    epochType,
-                    GetKnownEpochTypes());
-
-                if (!RegisteredEpochTypes.Add(epochType))
-                {
-                    _logger.Debug($"[Timeline] Skipping duplicate epoch registration: {epochType.Name} (id={epochId})");
-                    return;
-                }
-
-                var epochTypeDictionary =
-                    GetStaticField<Dictionary<string, Type>>(typeof(EpochModel), "_epochTypeDictionary");
-                var typeToIdDictionary =
-                    GetStaticField<Dictionary<Type, string>>(typeof(EpochModel), "_typeToIdDictionary");
-
-                epochTypeDictionary[epochId] = epochType;
-                typeToIdDictionary[epochType] = epochId;
-                RefreshAllEpochIdsSnapshotLocked();
-            }
-
-            _logger.Info($"[Timeline] Registered epoch: {epochType.Name} (id={epochId})");
-        }
-
-        private void RegisterStory(Type storyType)
-        {
-            EnsureMutable($"register story '{storyType.Name}'");
-            EnsureSubtype(storyType, typeof(StoryModel), nameof(storyType));
-
-            var storyId = GetStoryId(storyType);
-
-            lock (SyncRoot)
-            {
-                RegistrationConflictDetector.ThrowIfStoryIdConflicts(
-                    storyId,
-                    storyType,
-                    GetKnownStoryTypes());
-
-                if (!RegisteredStoryTypes.Add(storyType))
-                {
-                    _logger.Debug($"[Timeline] Skipping duplicate story registration: {storyType.Name} (id={storyId})");
-                    return;
-                }
-
-                var storyDictionary =
-                    GetStaticField<Dictionary<string, Type>>(typeof(StoryModel), "_storyTypeDictionary");
-                storyDictionary[storyId] = storyType;
-            }
-
-            _logger.Info($"[Timeline] Registered story: {storyType.Name} (id={storyId})");
+            var epoch = Activator.CreateInstance(epochType) as EpochModel
+                        ?? throw new InvalidOperationException(
+                            $"Could not construct epoch type '{epochType.FullName}'.");
+            return string.IsNullOrWhiteSpace(epoch.Id)
+                ? throw new InvalidOperationException($"Epoch type '{epochType.FullName}' returned an empty Id.")
+                : epoch.Id.Trim();
         }
 
         private void EnsureMutable(string operation)

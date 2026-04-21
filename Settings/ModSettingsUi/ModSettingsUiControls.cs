@@ -2,9 +2,8 @@ using System.Globalization;
 using Godot;
 using Godot.Collections;
 using MegaCrit.Sts2.Core.ControllerInput;
-using MegaCrit.Sts2.Core.Helpers;
 using MegaCrit.Sts2.Core.Nodes.CommonUi;
-using MegaCrit.Sts2.Core.Nodes.GodotExtensions;
+using STS2RitsuLib.RuntimeInput;
 using Array = System.Array;
 
 namespace STS2RitsuLib.Settings
@@ -801,6 +800,7 @@ namespace STS2RitsuLib.Settings
 
         private readonly Action<TValue>? _onChanged;
         private readonly (TValue Value, string Label)[]? _optionsWithValues;
+        private readonly System.Collections.Generic.Dictionary<int, ModSettingsMiniButton> _rowButtonCache = [];
         private readonly List<ModSettingsMiniButton> _rowButtons = [];
         private Control? _backdrop;
         private VBoxContainer? _dropList;
@@ -1017,8 +1017,10 @@ namespace STS2RitsuLib.Settings
             _dropOpen = false;
             SetProcessInput(false);
             SetProcessUnhandledInput(false);
-            _backdrop?.Visible = false;
-            _dropPanel?.Visible = false;
+            if (_backdrop != null)
+                _backdrop.Visible = false;
+            if (_dropPanel != null)
+                _dropPanel.Visible = false;
 
             if (_faceButton != null && IsInstanceValid(_faceButton) && _faceButton.IsVisibleInTree())
                 _faceButton.GrabFocus();
@@ -1030,11 +1032,12 @@ namespace STS2RitsuLib.Settings
                 return;
 
             _rowButtons.Clear();
-            for (var i = _dropList.GetChildCount() - 1; i >= 0; i--)
+            var liveIndexes = Enumerable.Range(0, _optionsWithValues.Length).ToHashSet();
+            foreach (var staleIndex in _rowButtonCache.Keys.Where(index => !liveIndexes.Contains(index)).ToArray())
             {
-                var child = _dropList.GetChild(i);
-                _dropList.RemoveChild(child);
-                child.QueueFree();
+                if (_rowButtonCache.TryGetValue(staleIndex, out var staleRow) && IsInstanceValid(staleRow))
+                    staleRow.QueueFree();
+                _rowButtonCache.Remove(staleIndex);
             }
 
             var panelMinW = DropListMinWidth;
@@ -1045,14 +1048,28 @@ namespace STS2RitsuLib.Settings
             {
                 var index = i;
                 var opt = _optionsWithValues[i];
-                var row = new ModSettingsMiniButton(opt.Label, () => ActivateRow(index))
+                if (!_rowButtonCache.TryGetValue(index, out var row) || !IsInstanceValid(row))
                 {
-                    CustomMinimumSize = new(panelMinW - 24f, RowHeight),
-                    SizeFlagsHorizontal = SizeFlags.ExpandFill,
-                    Alignment = HorizontalAlignment.Left,
-                };
-                row.AddThemeFontOverride("font", ModSettingsUiResources.KreonRegular);
-                row.AddThemeFontSizeOverride("font_size", 18);
+                    row = new(opt.Label, () => ActivateRow(index))
+                    {
+                        SizeFlagsHorizontal = SizeFlags.ExpandFill,
+                        Alignment = HorizontalAlignment.Left,
+                    };
+                    row.AddThemeFontOverride("font", ModSettingsUiResources.KreonRegular);
+                    row.AddThemeFontSizeOverride("font_size", 18);
+                    _rowButtonCache[index] = row;
+                }
+
+                row.Text = opt.Label;
+                row.CustomMinimumSize = new(panelMinW - 24f, RowHeight);
+                row.TooltipText = string.Empty;
+                row.AddThemeColorOverride("font_color", ModSettingsUiPalette.LabelPrimary);
+                row.AddThemeColorOverride("font_hover_color", Colors.White);
+                row.AddThemeColorOverride("font_pressed_color", Colors.White);
+                row.AddThemeStyleboxOverride("normal", ModSettingsMiniButton.CreateStyle(false));
+                row.AddThemeStyleboxOverride("hover", ModSettingsMiniButton.CreateStyle(true));
+                row.AddThemeStyleboxOverride("pressed", ModSettingsMiniButton.CreatePressedStyle());
+                row.AddThemeStyleboxOverride("focus", ModSettingsMiniButton.CreateFocusStyle());
                 if (index == _selectedIndex)
                 {
                     row.TooltipText = ModSettingsLocalization.Get("choice.dropdown.currentRow",
@@ -1066,11 +1083,14 @@ namespace STS2RitsuLib.Settings
                     row.AddThemeStyleboxOverride("focus", CreateDropdownCurrentRowFocus());
                 }
 
-                _dropList.AddChild(row);
+                if (row.GetParent() != _dropList)
+                    _dropList.AddChild(row);
+                _dropList.MoveChild(row, i);
                 _rowButtons.Add(row);
             }
 
-            _dropPanel?.CustomMinimumSize = new(panelMinW, 0f);
+            if (_dropPanel != null)
+                _dropPanel.CustomMinimumSize = new(panelMinW, 0f);
         }
 
         private void ActivateRow(int index)
@@ -1510,6 +1530,7 @@ namespace STS2RitsuLib.Settings
         private readonly bool _allowModifierOnly;
         private readonly bool _distinguishModifierSides;
         private readonly Action<string>? _onChanged;
+        private readonly HashSet<string> _pendingModifierBindings = [];
         private Button? _captureButton;
         private bool _capturing;
         private string _currentValue = string.Empty;
@@ -1618,35 +1639,63 @@ namespace STS2RitsuLib.Settings
         /// <inheritdoc />
         public override void _UnhandledKeyInput(InputEvent @event)
         {
-            if (!_capturing || @event is not InputEventKey { Pressed: true } keyEvent || keyEvent.IsEcho())
+            if (!_capturing || @event is not InputEventKey keyEvent || keyEvent.IsEcho())
                 return;
 
             GetViewport().SetInputAsHandled();
 
-            switch (keyEvent.Keycode)
+            if (keyEvent.Pressed)
             {
-                case Key.Escape:
-                    _capturing = false;
+                switch (keyEvent.Keycode)
+                {
+                    case Key.Escape:
+                        _capturing = false;
+                        _pendingModifierBindings.Clear();
+                        RefreshText();
+                        return;
+                    case Key.Backspace or Key.Delete:
+                        ApplyBinding(string.Empty, true);
+                        _capturing = false;
+                        _pendingModifierBindings.Clear();
+                        return;
+                }
+
+                if (IsModifierKey(keyEvent.Keycode))
+                {
+                    if (!_allowModifierCombos && !_allowModifierOnly)
+                        return;
+
+                    _pendingModifierBindings.Add(GetRecordedKeyName(keyEvent, _distinguishModifierSides));
                     RefreshText();
                     return;
-                case Key.Backspace or Key.Delete:
-                    ApplyBinding(string.Empty, true);
-                    _capturing = false;
+                }
+
+                var binding = BuildBindingFromPendingModifiers(keyEvent, _allowModifierCombos,
+                    _distinguishModifierSides, _pendingModifierBindings);
+                if (string.IsNullOrWhiteSpace(binding))
                     return;
+
+                ApplyBinding(binding, true);
+                _capturing = false;
+                _pendingModifierBindings.Clear();
+                return;
             }
 
-            var binding = FormatKeyBinding(keyEvent, _allowModifierCombos, _allowModifierOnly,
-                _distinguishModifierSides);
-            if (string.IsNullOrWhiteSpace(binding))
+            if (_pendingModifierBindings.Count == 0 || !IsModifierKey(keyEvent.Keycode))
                 return;
 
-            ApplyBinding(binding, true);
+            if (_allowModifierOnly)
+                ApplyBinding(string.Join('+', OrderedModifierTokens(_pendingModifierBindings)), true);
+
             _capturing = false;
+            _pendingModifierBindings.Clear();
+            RefreshText();
         }
 
         private void BeginCapture()
         {
             _capturing = true;
+            _pendingModifierBindings.Clear();
             RefreshText();
             _captureButton?.GrabFocus();
         }
@@ -1661,14 +1710,26 @@ namespace STS2RitsuLib.Settings
 
         private void RefreshText()
         {
-            _captureButton?.Text = _capturing
-                ? ModSettingsLocalization.Get("keybinding.capturing", "Press combination...")
+            var pendingBindingText = _pendingModifierBindings.Count == 0
+                ? string.Empty
+                : string.Join('+', OrderedModifierTokens(_pendingModifierBindings));
+
+            var captureText = _capturing
+                ? string.IsNullOrWhiteSpace(pendingBindingText)
+                    ? ModSettingsLocalization.Get("keybinding.capturing", "Press combination...")
+                    : pendingBindingText + "+..."
                 : string.IsNullOrWhiteSpace(_currentValue)
                     ? ModSettingsLocalization.Get("keybinding.unbound", "Unbound")
                     : _currentValue;
-            _hintLabel?.Text = _capturing
-                ? ModSettingsLocalization.Get("keybinding.hint.capturing",
-                    "Press a key combination. Esc cancels, Backspace/Delete clears.")
+            if (_captureButton != null)
+                _captureButton.Text = captureText;
+
+            var hintText = _capturing
+                ? string.IsNullOrWhiteSpace(pendingBindingText)
+                    ? ModSettingsLocalization.Get("keybinding.hint.capturing",
+                        "Press a key combination. Esc cancels, Backspace/Delete clears.")
+                    : ModSettingsLocalization.Get("keybinding.hint.capturingPending",
+                        "Modifier keys recorded. Press another key to complete, or release to keep a modifier-only binding.")
                 : _allowModifierCombos
                     ? _allowModifierOnly
                         ? ModSettingsLocalization.Get("keybinding.hint.combo",
@@ -1676,30 +1737,17 @@ namespace STS2RitsuLib.Settings
                         : ModSettingsLocalization.Get("keybinding.hint.comboNonModifier",
                             "Click to record. Supports key combinations and requires a non-modifier key.")
                     : ModSettingsLocalization.Get("keybinding.hint.single", "Click to record a single key.");
+            if (_hintLabel != null)
+                _hintLabel.Text = hintText;
         }
 
-        private static string FormatKeyBinding(InputEventKey keyEvent, bool allowModifierCombos, bool allowModifierOnly,
-            bool distinguishModifierSides)
+        internal static string BuildBindingFromPendingModifiers(InputEventKey keyEvent, bool allowModifierCombos,
+            bool distinguishModifierSides, IEnumerable<string> pendingModifiers)
         {
-            var parts = new List<string>();
-            if (allowModifierCombos && keyEvent.CtrlPressed)
-                parts.Add("Ctrl");
-            if (allowModifierCombos && keyEvent.AltPressed)
-                parts.Add("Alt");
-            if (allowModifierCombos && keyEvent.ShiftPressed)
-                parts.Add("Shift");
-            if (allowModifierCombos && keyEvent.MetaPressed)
-                parts.Add("Meta");
-
-            if (!allowModifierOnly && IsModifierKey(keyEvent.Keycode))
-                return string.Empty;
-
-            if (!IsModifierKey(keyEvent.Keycode) || parts.Count == 0)
-                parts.Add(GetRecordedKeyName(keyEvent, distinguishModifierSides));
-
-            if (!allowModifierCombos && IsModifierKey(keyEvent.Keycode))
-                return GetRecordedKeyName(keyEvent, distinguishModifierSides);
-
+            var parts = allowModifierCombos
+                ? OrderedModifierTokens(pendingModifiers).ToList()
+                : [];
+            parts.Add(GetRecordedKeyName(keyEvent, distinguishModifierSides));
             return string.Join('+', parts);
         }
 
@@ -1707,7 +1755,7 @@ namespace STS2RitsuLib.Settings
         ///     Uses <see cref="InputEventKey.PhysicalKeycode" /> when <paramref name="distinguishModifierSides" /> is true
         ///     so Left Ctrl / Right Shift etc. are distinguished; otherwise uses the logical <see cref="InputEventKey.Keycode" />.
         /// </summary>
-        private static string GetRecordedKeyName(InputEventKey keyEvent, bool distinguishModifierSides)
+        internal static string GetRecordedKeyName(InputEventKey keyEvent, bool distinguishModifierSides)
         {
             var code = distinguishModifierSides ? keyEvent.PhysicalKeycode : keyEvent.Keycode;
             if (code == Key.None)
@@ -1715,9 +1763,31 @@ namespace STS2RitsuLib.Settings
             return code.ToString();
         }
 
-        private static bool IsModifierKey(Key key)
+        internal static IEnumerable<string> OrderedModifierTokens(IEnumerable<string> tokens)
         {
-            return key is Key.Shift or Key.Ctrl or Key.Alt or Key.Meta;
+            return tokens.OrderBy(GetModifierSortOrder).ThenBy(static t => t, StringComparer.OrdinalIgnoreCase);
+        }
+
+        private static int GetModifierSortOrder(string token)
+        {
+            var normalized = token.ToLowerInvariant();
+            if (normalized.Contains("ctrl") || normalized.Contains("control"))
+                return 0;
+            if (normalized.Contains("alt"))
+                return 1;
+            if (normalized.Contains("shift"))
+                return 2;
+            if (normalized.Contains("meta") || normalized.Contains("cmd") || normalized.Contains("command"))
+                return 3;
+            return 100;
+        }
+
+        internal static bool IsModifierKey(Key key)
+        {
+            var name = key.ToString().ToLowerInvariant();
+            return name.Contains("shift") || name.Contains("ctrl") || name.Contains("control") ||
+                   name.Contains("alt") || name.Contains("meta") || name.Contains("cmd") ||
+                   name.Contains("command");
         }
     }
 
@@ -1728,6 +1798,7 @@ namespace STS2RitsuLib.Settings
 
         private readonly IReadOnlyList<ModSettingsMenuAction> _actions;
         private readonly Action? _afterAction;
+        private readonly System.Collections.Generic.Dictionary<int, ModSettingsMiniButton> _rowButtonCache = [];
         private readonly List<ModSettingsMiniButton> _rowButtons = [];
         private Control? _backdrop;
         private VBoxContainer? _dropList;
@@ -1899,8 +1970,10 @@ namespace STS2RitsuLib.Settings
             SetProcessInput(false);
             SetProcessUnhandledInput(false);
             _preferredPopupPosition = null;
-            _backdrop?.Visible = false;
-            _dropPanel?.Visible = false;
+            if (_backdrop != null)
+                _backdrop.Visible = false;
+            if (_dropPanel != null)
+                _dropPanel.Visible = false;
 
             if (IsInstanceValid(this) && IsVisibleInTree())
                 GrabFocus();
@@ -1912,27 +1985,36 @@ namespace STS2RitsuLib.Settings
                 return;
 
             _rowButtons.Clear();
-            for (var i = _dropList.GetChildCount() - 1; i >= 0; i--)
+            var liveIndexes = Enumerable.Range(0, _actions.Count).ToHashSet();
+            foreach (var staleIndex in _rowButtonCache.Keys.Where(index => !liveIndexes.Contains(index)).ToArray())
             {
-                var child = _dropList.GetChild(i);
-                _dropList.RemoveChild(child);
-                child.QueueFree();
+                if (_rowButtonCache.TryGetValue(staleIndex, out var staleRow) && IsInstanceValid(staleRow))
+                    staleRow.QueueFree();
+                _rowButtonCache.Remove(staleIndex);
             }
 
             for (var i = 0; i < _actions.Count; i++)
             {
                 var index = i;
                 var def = _actions[i];
-                var row = new ModSettingsMiniButton(def.Label, () => ActivateRow(index))
+                if (!_rowButtonCache.TryGetValue(index, out var row) || !IsInstanceValid(row))
                 {
-                    CustomMinimumSize = new(DropMinWidth - 24f, RowHeight),
-                    SizeFlagsHorizontal = SizeFlags.ExpandFill,
-                    Disabled = !def.IsEnabled(),
-                    Alignment = HorizontalAlignment.Left,
-                };
-                row.AddThemeFontOverride("font", ModSettingsUiResources.KreonRegular);
-                row.AddThemeFontSizeOverride("font_size", 18);
-                _dropList.AddChild(row);
+                    row = new(def.Label, () => ActivateRow(index))
+                    {
+                        SizeFlagsHorizontal = SizeFlags.ExpandFill,
+                        Alignment = HorizontalAlignment.Left,
+                    };
+                    row.AddThemeFontOverride("font", ModSettingsUiResources.KreonRegular);
+                    row.AddThemeFontSizeOverride("font_size", 18);
+                    _rowButtonCache[index] = row;
+                }
+
+                row.Text = def.Label;
+                row.CustomMinimumSize = new(DropMinWidth - 24f, RowHeight);
+                row.Disabled = !def.IsEnabled();
+                if (row.GetParent() != _dropList)
+                    _dropList.AddChild(row);
+                _dropList.MoveChild(row, i);
                 _rowButtons.Add(row);
             }
         }
@@ -2005,6 +2087,393 @@ namespace STS2RitsuLib.Settings
     }
 
     /// <summary>
+    ///     Multi-keybinding capture editor used by native settings pages.
+    /// </summary>
+    public sealed partial class ModSettingsMultiKeyBindingControl : VBoxContainer
+    {
+        private readonly bool _allowModifierCombos;
+        private readonly bool _allowModifierOnly;
+        private readonly bool _distinguishModifierSides;
+        private readonly Action<List<string>>? _onChanged;
+        private readonly HashSet<string> _pendingModifierBindings = [];
+        private VBoxContainer? _bindingsList;
+        private bool _capturing;
+        private int _capturingIndex = -1;
+        private bool _capturingNewBinding;
+        private Label? _hintLabel;
+        private List<string> _values = [];
+
+        /// <summary>
+        ///     Creates a native multi-binding capture editor.
+        /// </summary>
+        /// <param name="initialValues">Initial bindings shown by the control.</param>
+        /// <param name="allowModifierCombos">Whether modifier combinations are allowed.</param>
+        /// <param name="allowModifierOnly">Whether modifier-only bindings are allowed.</param>
+        /// <param name="distinguishModifierSides">Whether left/right modifier keys are recorded separately.</param>
+        /// <param name="onChanged">Invoked after the normalized binding list changes.</param>
+        public ModSettingsMultiKeyBindingControl(IEnumerable<string>? initialValues, bool allowModifierCombos,
+            bool allowModifierOnly, bool distinguishModifierSides, Action<List<string>> onChanged)
+        {
+            _allowModifierCombos = allowModifierCombos;
+            _allowModifierOnly = allowModifierOnly;
+            _distinguishModifierSides = distinguishModifierSides;
+            _onChanged = onChanged;
+            _values = NormalizeBindings(initialValues);
+
+            SizeFlagsHorizontal = SizeFlags.ShrinkEnd;
+            MouseFilter = MouseFilterEnum.Ignore;
+            AddThemeConstantOverride("separation", 8);
+
+            var bindingsList = new VBoxContainer
+            {
+                MouseFilter = MouseFilterEnum.Ignore,
+                SizeFlagsHorizontal = SizeFlags.ExpandFill,
+            };
+            bindingsList.AddThemeConstantOverride("separation", 6);
+            AddChild(bindingsList);
+            _bindingsList = bindingsList;
+
+            var hint = new Label
+            {
+                MouseFilter = MouseFilterEnum.Ignore,
+                SizeFlagsHorizontal = SizeFlags.ExpandFill,
+                AutowrapMode = TextServer.AutowrapMode.WordSmart,
+            };
+            hint.AddThemeFontOverride("font", ModSettingsUiResources.KreonRegular);
+            hint.AddThemeFontSizeOverride("font_size", ModSettingsUiMetrics.KeybindingHintFontSize);
+            hint.AddThemeColorOverride("font_color", ModSettingsUiPalette.LabelSecondary);
+            AddChild(hint);
+            _hintLabel = hint;
+
+            RefreshPresentation();
+            SetProcessUnhandledKeyInput(true);
+        }
+
+        /// <summary>
+        ///     Godot serialization constructor.
+        /// </summary>
+        public ModSettingsMultiKeyBindingControl()
+        {
+        }
+
+        /// <inheritdoc />
+        public override void _Ready()
+        {
+        }
+
+        /// <summary>
+        ///     Replaces the displayed binding list without starting capture mode.
+        /// </summary>
+        /// <param name="values">The bindings to display.</param>
+        public void SetValue(IEnumerable<string>? values)
+        {
+            _values = NormalizeBindings(values);
+            if (!_capturing)
+                RefreshPresentation();
+        }
+
+        /// <inheritdoc />
+        public override void _UnhandledKeyInput(InputEvent @event)
+        {
+            if (!_capturing || @event is not InputEventKey keyEvent || keyEvent.IsEcho())
+                return;
+
+            GetViewport().SetInputAsHandled();
+
+            if (keyEvent.Pressed)
+            {
+                switch (keyEvent.Keycode)
+                {
+                    case Key.Escape:
+                        CancelCapture();
+                        return;
+                    case Key.Backspace or Key.Delete:
+                        if (_capturingIndex >= 0)
+                            RemoveBindingAt(_capturingIndex);
+                        else
+                            ApplyBindings([], true);
+                        _capturing = false;
+                        _capturingIndex = -1;
+                        _capturingNewBinding = false;
+                        _pendingModifierBindings.Clear();
+                        return;
+                }
+
+                if (ModSettingsKeyBindingControl.IsModifierKey(keyEvent.Keycode))
+                {
+                    if (!_allowModifierCombos && !_allowModifierOnly)
+                        return;
+
+                    _pendingModifierBindings.Add(ModSettingsKeyBindingControl.GetRecordedKeyName(keyEvent,
+                        _distinguishModifierSides));
+                    RefreshPresentation();
+                    return;
+                }
+
+                var binding = ModSettingsKeyBindingControl.BuildBindingFromPendingModifiers(keyEvent,
+                    _allowModifierCombos, _distinguishModifierSides, _pendingModifierBindings);
+                if (string.IsNullOrWhiteSpace(binding))
+                    return;
+
+                CommitCapturedBinding(binding);
+                _capturing = false;
+                _capturingIndex = -1;
+                _capturingNewBinding = false;
+                _pendingModifierBindings.Clear();
+                RefreshPresentation();
+                return;
+            }
+
+            if (_pendingModifierBindings.Count == 0 || !ModSettingsKeyBindingControl.IsModifierKey(keyEvent.Keycode))
+                return;
+
+            if (_allowModifierOnly)
+                CommitCapturedBinding(string.Join('+',
+                    ModSettingsKeyBindingControl.OrderedModifierTokens(_pendingModifierBindings)));
+
+            _capturing = false;
+            _capturingIndex = -1;
+            _capturingNewBinding = false;
+            _pendingModifierBindings.Clear();
+            RefreshPresentation();
+        }
+
+        private void BeginAddCapture()
+        {
+            _capturing = true;
+            _capturingIndex = -1;
+            _capturingNewBinding = true;
+            _pendingModifierBindings.Clear();
+            RefreshPresentation();
+        }
+
+        private void BeginCapture(int index)
+        {
+            _capturing = true;
+            _capturingIndex = index;
+            _capturingNewBinding = false;
+            _pendingModifierBindings.Clear();
+            RefreshPresentation();
+            FocusCaptureRow(index);
+        }
+
+        private void FocusCaptureRow(int index)
+        {
+            if (index < 0 || !(_bindingsList?.GetChildCount() > index)) return;
+            if (_bindingsList.GetChild(index) is Control row)
+                row.GrabFocus();
+        }
+
+        private void CancelCapture()
+        {
+            _capturing = false;
+            _capturingIndex = -1;
+            _capturingNewBinding = false;
+            _pendingModifierBindings.Clear();
+            RefreshPresentation();
+        }
+
+        private void AddBinding(string value, bool notify)
+        {
+            var next = NormalizeBindings(_values.Append(value));
+            ApplyBindings(next, notify);
+        }
+
+        private void ReplaceBindingAt(int index, string value)
+        {
+            if (index < 0 || index >= _values.Count)
+            {
+                AddBinding(value, true);
+                return;
+            }
+
+            var next = _values.ToList();
+            next[index] = value;
+            ApplyBindings(next, true);
+        }
+
+        private void CommitCapturedBinding(string value)
+        {
+            if (_capturingNewBinding || _capturingIndex < 0)
+                AddBinding(value, true);
+            else
+                ReplaceBindingAt(_capturingIndex, value);
+        }
+
+        private void RemoveBindingAt(int index)
+        {
+            if (index < 0 || index >= _values.Count)
+                return;
+
+            var next = _values.ToList();
+            next.RemoveAt(index);
+            if (_capturing)
+            {
+                if (_capturingIndex == index)
+                {
+                    _capturing = false;
+                    _capturingIndex = -1;
+                    _capturingNewBinding = false;
+                    _pendingModifierBindings.Clear();
+                }
+                else if (_capturingIndex > index)
+                {
+                    _capturingIndex--;
+                }
+            }
+
+            ApplyBindings(next, true);
+        }
+
+        private void ApplyBindings(IEnumerable<string> values, bool notify)
+        {
+            _values = NormalizeBindings(values);
+            RefreshPresentation();
+            if (notify)
+                _onChanged?.Invoke(_values.ToList());
+        }
+
+        private void RefreshPresentation()
+        {
+            var pendingBindingText = _pendingModifierBindings.Count == 0
+                ? string.Empty
+                : string.Join('+', ModSettingsKeyBindingControl.OrderedModifierTokens(_pendingModifierBindings));
+
+            var hintText = _capturing
+                ? string.IsNullOrWhiteSpace(pendingBindingText)
+                    ? ModSettingsLocalization.Get("ritsulib.keybindingMulti.capturing",
+                        _capturingIndex >= 0
+                            ? "Press a new key combination for the selected binding. Esc cancels, Backspace/Delete removes it."
+                            : "Press a key combination to add. Esc cancels, Backspace/Delete clears all.")
+                    : ModSettingsLocalization.Get("keybinding.hint.capturingPending",
+                        "Modifier keys recorded. Press another key to complete, or release to keep a modifier-only binding.")
+                : _allowModifierCombos
+                    ? _allowModifierOnly
+                        ? ModSettingsLocalization.Get("ritsulib.keybindingMulti.hint",
+                            "Add one or more bindings. Use Rebind on a row to replace just that binding.")
+                        : ModSettingsLocalization.Get("keybinding.hint.comboNonModifier",
+                            "Click to record. Supports key combinations and requires a non-modifier key.")
+                    : ModSettingsLocalization.Get("keybinding.hint.single", "Click to record a single key.");
+            if (_hintLabel != null)
+                _hintLabel.Text = hintText;
+
+            RebuildBindingsList();
+        }
+
+        private void RebuildBindingsList()
+        {
+            if (_bindingsList == null)
+                return;
+
+            foreach (var child in _bindingsList.GetChildren())
+                child.QueueFree();
+
+            if (_values.Count == 0)
+            {
+                var empty = new Label
+                {
+                    Text = ModSettingsLocalization.Get("ritsulib.keybindingMulti.empty", "No bindings recorded."),
+                    MouseFilter = MouseFilterEnum.Ignore,
+                    AutowrapMode = TextServer.AutowrapMode.WordSmart,
+                };
+                empty.AddThemeFontOverride("font", ModSettingsUiResources.KreonRegular);
+                empty.AddThemeFontSizeOverride("font_size", 15);
+                empty.AddThemeColorOverride("font_color", ModSettingsUiPalette.LabelSecondary);
+                _bindingsList.AddChild(empty);
+            }
+
+            var rowPendingBindingText = _pendingModifierBindings.Count == 0
+                ? string.Empty
+                : string.Join('+', ModSettingsKeyBindingControl.OrderedModifierTokens(_pendingModifierBindings));
+
+            for (var i = 0; i < _values.Count; i++)
+            {
+                var bindingIndex = i;
+                var isCapturingThisRow = _capturing && _capturingIndex == bindingIndex;
+                var binding = _values[bindingIndex];
+                var rowText = isCapturingThisRow
+                    ? string.IsNullOrWhiteSpace(rowPendingBindingText)
+                        ? ModSettingsLocalization.Get("keybinding.capturing", "Press combination...")
+                        : rowPendingBindingText + "+..."
+                    : string.IsNullOrWhiteSpace(binding)
+                        ? ModSettingsLocalization.Get("keybinding.unbound", "Unbound")
+                        : binding;
+
+                _bindingsList.AddChild(CreateBindingRow(
+                    rowText,
+                    () => BeginCapture(bindingIndex),
+                    ModSettingsLocalization.Get("button.remove", "Remove"),
+                    () => RemoveBindingAt(bindingIndex)));
+            }
+
+            var addRowText = _capturing && _capturingNewBinding
+                ? string.IsNullOrWhiteSpace(rowPendingBindingText)
+                    ? ModSettingsLocalization.Get("keybinding.capturing", "Press combination...")
+                    : rowPendingBindingText + "+..."
+                : ModSettingsLocalization.Get("ritsulib.keybindingMulti.add", "Add binding");
+
+            _bindingsList.AddChild(CreateBindingRow(
+                addRowText,
+                BeginAddCapture,
+                ModSettingsLocalization.Get("button.clear", "Clear all"),
+                () => ApplyBindings([], true)));
+        }
+
+        private HBoxContainer CreateBindingRow(string primaryText, Action primaryAction, string secondaryText,
+            Action secondaryAction)
+        {
+            var row = new HBoxContainer
+            {
+                MouseFilter = MouseFilterEnum.Ignore,
+                SizeFlagsHorizontal = SizeFlags.ExpandFill,
+                SizeFlagsVertical = SizeFlags.ShrinkCenter,
+            };
+            row.AddThemeConstantOverride("separation", 6);
+
+            var primaryButton = new Button
+            {
+                Text = primaryText,
+                CustomMinimumSize = new(ModSettingsUiMetrics.KeybindingCaptureMinWidth,
+                    ModSettingsUiMetrics.EntryValueMinHeight),
+                SizeFlagsHorizontal = SizeFlags.ExpandFill,
+                SizeFlagsVertical = SizeFlags.ShrinkCenter,
+                FocusMode = FocusModeEnum.All,
+                MouseFilter = MouseFilterEnum.Stop,
+                ClipText = true,
+            };
+            primaryButton.AddThemeFontOverride("font", ModSettingsUiResources.KreonBold);
+            primaryButton.AddThemeFontSizeOverride("font_size", 17);
+            primaryButton.AddThemeColorOverride("font_color", ModSettingsUiPalette.LabelPrimary);
+            ModSettingsUiControlTheming.ApplyUniformSurfaceButtonStates(primaryButton);
+            primaryButton.Pressed += primaryAction;
+            row.AddChild(primaryButton);
+
+            row.AddChild(new ModSettingsMiniButton(secondaryText, secondaryAction)
+            {
+                CustomMinimumSize = new(86f, ModSettingsUiMetrics.EntryValueMinHeight),
+                SizeFlagsVertical = SizeFlags.ShrinkCenter,
+            });
+
+            return row;
+        }
+
+        private static List<string> NormalizeBindings(IEnumerable<string>? values)
+        {
+            var normalized = new List<string>();
+            var seen = new HashSet<string>(StringComparer.Ordinal);
+            foreach (var value in values ?? [])
+            {
+                if (!RuntimeHotkeyService.TryNormalizeBinding(value, out var normalizedBinding))
+                    continue;
+                if (seen.Add(normalizedBinding))
+                    normalized.Add(normalizedBinding);
+            }
+
+            return normalized;
+        }
+    }
+
+    /// <summary>
     ///     Compact button used by stepper controls, dropdown rows, and other dense settings editors.
     /// </summary>
     public sealed partial class ModSettingsMiniButton : ModSettingsGamepadCompatibleButton
@@ -2026,10 +2495,10 @@ namespace STS2RitsuLib.Settings
             AddThemeColorOverride("font_color", ModSettingsUiPalette.LabelPrimary);
             AddThemeColorOverride("font_hover_color", Colors.White);
             AddThemeColorOverride("font_pressed_color", Colors.White);
-            AddThemeStyleboxOverride("normal", CreateStyle(false, false));
-            AddThemeStyleboxOverride("hover", CreateStyle(true, false));
-            AddThemeStyleboxOverride("pressed", CreateStyle(true, false));
-            AddThemeStyleboxOverride("focus", CreateStyle(true, false));
+            AddThemeStyleboxOverride("normal", CreateStyle(false));
+            AddThemeStyleboxOverride("hover", CreateStyle(true));
+            AddThemeStyleboxOverride("pressed", CreateStyle(true));
+            AddThemeStyleboxOverride("focus", CreateStyle(true));
             AddThemeStyleboxOverride("disabled", CreateStyle(false, true));
             Pressed += action;
         }
@@ -2041,7 +2510,10 @@ namespace STS2RitsuLib.Settings
         {
         }
 
-        private static StyleBoxFlat CreateStyle(bool highlighted, bool disabled)
+        /// <summary>
+        ///     Creates the standard mini-button surface for normal, hover, focus, and disabled states.
+        /// </summary>
+        public static StyleBoxFlat CreateStyle(bool highlighted, bool disabled = false)
         {
             return new()
             {
@@ -2068,6 +2540,22 @@ namespace STS2RitsuLib.Settings
                 ContentMarginRight = 10,
                 ContentMarginBottom = 5,
             };
+        }
+
+        /// <summary>
+        ///     Creates the pressed-state style for mini buttons.
+        /// </summary>
+        public static StyleBoxFlat CreatePressedStyle()
+        {
+            return CreateStyle(true);
+        }
+
+        /// <summary>
+        ///     Creates the focus-state style for mini buttons.
+        /// </summary>
+        public static StyleBoxFlat CreateFocusStyle()
+        {
+            return CreateStyle(true);
         }
     }
 
@@ -2231,6 +2719,7 @@ namespace STS2RitsuLib.Settings
         private readonly string _dragToken = Guid.NewGuid().ToString("N");
         private readonly System.Collections.Generic.Dictionary<int, ModSettingsListDropSlot<TItem>> _dropSlots = [];
         private readonly ListModSettingsEntryDefinition<TItem> _entry;
+        private readonly System.Collections.Generic.Dictionary<int, Control> _rowCards = [];
         private ModSettingsListDropSlot<TItem>? _activeDropSlot;
         private Label? _countLabel;
         private int _currentDragIndex = -1;
@@ -2435,23 +2924,50 @@ namespace STS2RitsuLib.Settings
                 return;
 
             ClearActiveDropSlot();
-            _dropSlots.Clear();
-            _rows.FreeChildren();
-
             var items = _entry.Binding.Read();
-            _countLabel?.Text = string.Format(
-                ModSettingsLocalization.Get("list.count", "{0} items"),
-                items.Count);
+            if (_countLabel != null)
+                _countLabel.Text = string.Format(
+                    ModSettingsLocalization.Get("list.count", "{0} items"),
+                    items.Count);
 
-            _emptyState?.Visible = items.Count == 0;
+            if (_emptyState != null)
+                _emptyState.Visible = items.Count == 0;
 
-            _rows.AddChild(RegisterDropSlot(new(this, 0), 0));
-            for (var index = 0; index < items.Count; index++)
+            var liveIndexes = Enumerable.Range(0, items.Count).ToHashSet();
+            foreach (var staleIndex in _rowCards.Keys.Where(index => !liveIndexes.Contains(index)).ToArray())
             {
-                var item = items[index];
-                _rows.AddChild(CreateRow(index, item, items.Count));
-                _rows.AddChild(RegisterDropSlot(new(this, index + 1), index + 1));
+                if (_rowCards.TryGetValue(staleIndex, out var staleRow) && IsInstanceValid(staleRow))
+                    staleRow.QueueFree();
+                _rowCards.Remove(staleIndex);
             }
+
+            foreach (var staleSlot in _dropSlots.Keys.Where(index => index > items.Count).ToArray())
+            {
+                if (_dropSlots.TryGetValue(staleSlot, out var slot) && IsInstanceValid(slot))
+                    slot.QueueFree();
+                _dropSlots.Remove(staleSlot);
+            }
+
+            var childOrder = 0;
+            for (var slotIndex = 0; slotIndex <= items.Count; slotIndex++)
+            {
+                var dropSlot = EnsureDropSlot(slotIndex);
+                if (dropSlot.GetParent() != _rows)
+                    _rows.AddChild(dropSlot);
+                _rows.MoveChild(dropSlot, childOrder++);
+
+                if (slotIndex >= items.Count)
+                    continue;
+
+                var row = CreateRow(slotIndex, items[slotIndex], items.Count);
+                _rowCards[slotIndex] = row;
+                if (row.GetParent() != _rows)
+                    _rows.AddChild(row);
+                _rows.MoveChild(row, childOrder++);
+            }
+
+            _rows.ResetSize();
+            _rows.QueueSort();
         }
 
         private Control CreateRow(int index, TItem item, int itemCount)
@@ -2578,8 +3094,12 @@ namespace STS2RitsuLib.Settings
             Mutate(items => MoveItemToSlot(items, dragIndex, targetIndex));
         }
 
-        private ModSettingsListDropSlot<TItem> RegisterDropSlot(ModSettingsListDropSlot<TItem> slot, int index)
+        private ModSettingsListDropSlot<TItem> EnsureDropSlot(int index)
         {
+            if (_dropSlots.TryGetValue(index, out var slot) && IsInstanceValid(slot))
+                return slot;
+
+            slot = new(this, index);
             _dropSlots[index] = slot;
             return slot;
         }
@@ -3028,8 +3548,10 @@ namespace STS2RitsuLib.Settings
 
         public override void _Ready()
         {
-            _titleLabel?.Text = _title;
-            _subtitleLabel?.Text = _subtitle ?? string.Empty;
+            if (_titleLabel != null)
+                _titleLabel.Text = _title;
+            if (_subtitleLabel != null)
+                _subtitleLabel.Text = _subtitle ?? string.Empty;
             ApplySelectedState();
             Callable.From(UpdateMinimumSize).CallDeferred();
         }
@@ -3046,7 +3568,8 @@ namespace STS2RitsuLib.Settings
             AddThemeStyleboxOverride("hover", CreateHeaderStyle(_selected, true));
             AddThemeStyleboxOverride("pressed", CreateHeaderStyle(true, true));
             AddThemeStyleboxOverride("focus", CreateHeaderStyle(_selected, true));
-            _arrowLabel?.Text = _selected ? "▼" : "▶";
+            if (_arrowLabel != null)
+                _arrowLabel.Text = _selected ? "▼" : "▶";
         }
 
         private static StyleBoxFlat CreateHeaderStyle(bool selected, bool hovered)
@@ -3175,12 +3698,33 @@ namespace STS2RitsuLib.Settings
         {
             _collapsed = !_collapsed;
             ApplyCollapsedState();
+            if (!_collapsed)
+                Callable.From(EnsureExpandedSectionVisible).CallDeferred();
         }
 
         private void ApplyCollapsedState()
         {
-            _content?.Visible = !_collapsed;
+            if (_content != null)
+                _content.Visible = !_collapsed;
             _toggle?.SetSelected(!_collapsed);
+        }
+
+        private void EnsureExpandedSectionVisible()
+        {
+            if (!IsVisibleInTree())
+                return;
+
+            var scroll = FindAncestorScrollContainer(this);
+            scroll?.EnsureControlVisible(this);
+        }
+
+        private static ScrollContainer? FindAncestorScrollContainer(Node node)
+        {
+            for (var current = node.GetParent(); current != null; current = current.GetParent())
+                if (current is ScrollContainer scroll)
+                    return scroll;
+
+            return null;
         }
     }
 

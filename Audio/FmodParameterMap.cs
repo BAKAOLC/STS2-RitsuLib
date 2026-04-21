@@ -6,6 +6,14 @@ namespace STS2RitsuLib.Audio
     public static class FmodParameterMap
     {
         /// <summary>
+        ///     Builds an <see cref="AudioParameterSet" /> for the high-level playback API.
+        /// </summary>
+        public static AudioParameterSet Set(params (string Name, float Value)[] pairs)
+        {
+            return AudioParameterSet.From(Of(pairs));
+        }
+
+        /// <summary>
         ///     Empty parameter map for overloads that require a dictionary instance.
         /// </summary>
         public static Dictionary<string, float> Empty()

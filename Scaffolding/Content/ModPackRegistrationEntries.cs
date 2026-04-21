@@ -12,13 +12,19 @@ namespace STS2RitsuLib.Scaffolding.Content
         internal static void ApplyExplicitTypes<TEpoch>(ModContentPackContext context, IReadOnlyList<Type> cardTypes,
             IReadOnlyList<Type> relicTypes) where TEpoch : EpochModel, new()
         {
+            ApplyExplicitTypes(typeof(TEpoch), context, cardTypes, relicTypes);
+        }
+
+        internal static void ApplyExplicitTypes(Type epochType, ModContentPackContext context,
+            IReadOnlyList<Type> cardTypes, IReadOnlyList<Type> relicTypes)
+        {
             var cards = cardTypes ?? [];
             var relics = relicTypes ?? [];
             if (cards.Count == 0 && relics.Count == 0)
                 throw new ArgumentException(
-                    $"Epoch gated content for '{typeof(TEpoch).Name}' needs at least one card or relic type.");
+                    $"Epoch gated content for '{epochType.Name}' needs at least one card or relic type.");
 
-            var epochId = new TEpoch().Id;
+            var epochId = ModTimelineRegistry.GetEpochId(epochType);
             ModEpochGatedContentRegistry.Register(context.ModId, epochId, cards, relics);
             foreach (var t in cards)
                 context.Unlocks.RequireEpoch(t, epochId);
@@ -30,14 +36,19 @@ namespace STS2RitsuLib.Scaffolding.Content
             where TEpoch : EpochModel, new()
             where TRelicPool : RelicPoolModel
         {
-            var types = ModContentRegistry.GetRegisteredModelsInPool(context.ModId, typeof(TRelicPool))
+            ApplyRelicsFromPool(typeof(TEpoch), typeof(TRelicPool), context);
+        }
+
+        internal static void ApplyRelicsFromPool(Type epochType, Type relicPoolType, ModContentPackContext context)
+        {
+            var types = ModContentRegistry.GetRegisteredModelsInPool(context.ModId, relicPoolType)
                 .Where(static t => typeof(RelicModel).IsAssignableFrom(t))
                 .ToArray();
             if (types.Length == 0)
                 throw new InvalidOperationException(
-                    $"Epoch gated relics: no relic types in pool '{typeof(TRelicPool).Name}' for mod '{context.ModId}'.");
+                    $"Epoch gated relics: no relic types in pool '{relicPoolType.Name}' for mod '{context.ModId}'.");
 
-            var epochId = new TEpoch().Id;
+            var epochId = ModTimelineRegistry.GetEpochId(epochType);
             ModEpochGatedContentRegistry.Register(context.ModId, epochId, null, types);
             foreach (var t in types)
                 context.Unlocks.RequireEpoch(t, epochId);
@@ -47,14 +58,19 @@ namespace STS2RitsuLib.Scaffolding.Content
             where TEpoch : EpochModel, new()
             where TCardPool : CardPoolModel
         {
-            var types = ModContentRegistry.GetRegisteredModelsInPool(context.ModId, typeof(TCardPool))
+            ApplyCardsFromPool(typeof(TEpoch), typeof(TCardPool), context);
+        }
+
+        internal static void ApplyCardsFromPool(Type epochType, Type cardPoolType, ModContentPackContext context)
+        {
+            var types = ModContentRegistry.GetRegisteredModelsInPool(context.ModId, cardPoolType)
                 .Where(static t => typeof(CardModel).IsAssignableFrom(t))
                 .ToArray();
             if (types.Length == 0)
                 throw new InvalidOperationException(
-                    $"Epoch gated cards: no card types in pool '{typeof(TCardPool).Name}' for mod '{context.ModId}'.");
+                    $"Epoch gated cards: no card types in pool '{cardPoolType.Name}' for mod '{context.ModId}'.");
 
-            var epochId = new TEpoch().Id;
+            var epochId = ModTimelineRegistry.GetEpochId(epochType);
             ModEpochGatedContentRegistry.Register(context.ModId, epochId, types, null);
             foreach (var t in types)
                 context.Unlocks.RequireEpoch(t, epochId);
@@ -64,8 +80,13 @@ namespace STS2RitsuLib.Scaffolding.Content
             where TEpoch : EpochModel, new()
             where TPool : CardPoolModel
         {
-            var epochId = new TEpoch().Id;
-            foreach (var t in ModContentRegistry.GetRegisteredModelsInPool(context.ModId, typeof(TPool)))
+            ApplyRequireAllPoolCards(typeof(TEpoch), typeof(TPool), context);
+        }
+
+        internal static void ApplyRequireAllPoolCards(Type epochType, Type poolType, ModContentPackContext context)
+        {
+            var epochId = ModTimelineRegistry.GetEpochId(epochType);
+            foreach (var t in ModContentRegistry.GetRegisteredModelsInPool(context.ModId, poolType))
                 if (typeof(CardModel).IsAssignableFrom(t))
                     context.Unlocks.RequireEpoch(t, epochId);
         }
@@ -74,8 +95,13 @@ namespace STS2RitsuLib.Scaffolding.Content
             where TEpoch : EpochModel, new()
             where TPool : RelicPoolModel
         {
-            var epochId = new TEpoch().Id;
-            foreach (var t in ModContentRegistry.GetRegisteredModelsInPool(context.ModId, typeof(TPool)))
+            ApplyRequireAllPoolRelics(typeof(TEpoch), typeof(TPool), context);
+        }
+
+        internal static void ApplyRequireAllPoolRelics(Type epochType, Type poolType, ModContentPackContext context)
+        {
+            var epochId = ModTimelineRegistry.GetEpochId(epochType);
+            foreach (var t in ModContentRegistry.GetRegisteredModelsInPool(context.ModId, poolType))
                 if (typeof(RelicModel).IsAssignableFrom(t))
                     context.Unlocks.RequireEpoch(t, epochId);
         }
@@ -84,8 +110,13 @@ namespace STS2RitsuLib.Scaffolding.Content
             where TEpoch : EpochModel, new()
             where TPool : PotionPoolModel
         {
-            var epochId = new TEpoch().Id;
-            foreach (var t in ModContentRegistry.GetRegisteredModelsInPool(context.ModId, typeof(TPool)))
+            ApplyRequireAllPoolPotions(typeof(TEpoch), typeof(TPool), context);
+        }
+
+        internal static void ApplyRequireAllPoolPotions(Type epochType, Type poolType, ModContentPackContext context)
+        {
+            var epochId = ModTimelineRegistry.GetEpochId(epochType);
+            foreach (var t in ModContentRegistry.GetRegisteredModelsInPool(context.ModId, poolType))
                 if (typeof(PotionModel).IsAssignableFrom(t))
                     context.Unlocks.RequireEpoch(t, epochId);
         }
@@ -93,12 +124,18 @@ namespace STS2RitsuLib.Scaffolding.Content
         internal static void ApplyExplicitPotions<TEpoch>(ModContentPackContext context, IReadOnlyList<Type> types)
             where TEpoch : EpochModel, new()
         {
+            ApplyExplicitPotions(typeof(TEpoch), context, types);
+        }
+
+        internal static void ApplyExplicitPotions(Type epochType, ModContentPackContext context,
+            IReadOnlyList<Type> types)
+        {
             ArgumentNullException.ThrowIfNull(types);
             if (types.Count == 0)
                 throw new ArgumentException(
-                    $"Epoch potion gating for '{typeof(TEpoch).Name}' needs at least one potion type.");
+                    $"Epoch potion gating for '{epochType.Name}' needs at least one potion type.");
 
-            var epochId = new TEpoch().Id;
+            var epochId = ModTimelineRegistry.GetEpochId(epochType);
             foreach (var t in types)
             {
                 if (!typeof(PotionModel).IsAssignableFrom(t))

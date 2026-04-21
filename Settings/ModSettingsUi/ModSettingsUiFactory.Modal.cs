@@ -18,12 +18,14 @@ namespace STS2RitsuLib.Settings
             string cancelText,
             string confirmText,
             bool confirmIsDanger,
-            Action onConfirm)
+            Action onConfirm,
+            bool showCancel = true)
         {
             ArgumentNullException.ThrowIfNull(attachParent);
             ArgumentException.ThrowIfNullOrWhiteSpace(title);
             ArgumentNullException.ThrowIfNull(body);
-            ArgumentException.ThrowIfNullOrWhiteSpace(cancelText);
+            if (showCancel)
+                ArgumentException.ThrowIfNullOrWhiteSpace(cancelText);
             ArgumentException.ThrowIfNullOrWhiteSpace(confirmText);
             ArgumentNullException.ThrowIfNull(onConfirm);
 
@@ -115,10 +117,6 @@ namespace STS2RitsuLib.Settings
             btnRow.AddThemeConstantOverride("separation", 12);
             vbox.AddChild(btnRow);
 
-            var cancelBtn = new ModSettingsTextButton(cancelText, ModSettingsButtonTone.Normal, CloseDialog)
-            {
-                CustomMinimumSize = new(132f, ModSettingsUiMetrics.EntryValueMinHeight),
-            };
             var confirmBtn = new ModSettingsTextButton(
                 confirmText,
                 confirmIsDanger ? ModSettingsButtonTone.Danger : ModSettingsButtonTone.Accent,
@@ -131,24 +129,49 @@ namespace STS2RitsuLib.Settings
                 CustomMinimumSize = new(168f, ModSettingsUiMetrics.EntryValueMinHeight),
             };
 
-            btnRow.AddChild(cancelBtn);
+            ModSettingsTextButton? cancelBtn = null;
+            if (showCancel)
+            {
+                cancelBtn = new(cancelText, ModSettingsButtonTone.Normal, CloseDialog)
+                {
+                    CustomMinimumSize = new(132f, ModSettingsUiMetrics.EntryValueMinHeight),
+                };
+                btnRow.AddChild(cancelBtn);
+            }
+
             btnRow.AddChild(confirmBtn);
 
-            var cancelPath = cancelBtn.GetPath();
             var confirmPath = confirmBtn.GetPath();
-            cancelBtn.FocusNeighborLeft = cancelPath;
-            cancelBtn.FocusNeighborTop = cancelPath;
-            cancelBtn.FocusNeighborBottom = cancelPath;
-            cancelBtn.FocusNeighborRight = confirmPath;
+            if (cancelBtn != null)
+            {
+                var cancelPath = cancelBtn.GetPath();
+                cancelBtn.FocusNeighborLeft = cancelPath;
+                cancelBtn.FocusNeighborTop = cancelPath;
+                cancelBtn.FocusNeighborBottom = cancelPath;
+                cancelBtn.FocusNeighborRight = confirmPath;
+                confirmBtn.FocusNeighborLeft = cancelPath;
+            }
+            else
+            {
+                confirmBtn.FocusNeighborLeft = confirmPath;
+            }
+
             confirmBtn.FocusNeighborRight = confirmPath;
             confirmBtn.FocusNeighborTop = confirmPath;
             confirmBtn.FocusNeighborBottom = confirmPath;
-            confirmBtn.FocusNeighborLeft = cancelPath;
 
             var escShortcut = new Shortcut();
             escShortcut.Events = [new InputEventKey { Keycode = Key.Escape, Pressed = true }];
-            cancelBtn.Shortcut = escShortcut;
-            cancelBtn.ShortcutInTooltip = false;
+            if (cancelBtn != null)
+            {
+                cancelBtn.Shortcut = escShortcut;
+                cancelBtn.ShortcutInTooltip = false;
+            }
+            else
+            {
+                confirmBtn.Shortcut = escShortcut;
+                confirmBtn.ShortcutInTooltip = false;
+            }
 
             Callable.From(() =>
             {
@@ -201,10 +224,33 @@ namespace STS2RitsuLib.Settings
                 rootPanel.CustomMinimumSize = new(w, h);
                 Callable.From(() =>
                 {
-                    if (GodotObject.IsInstanceValid(cancelBtn) && cancelBtn.IsVisibleInTree())
+                    if (cancelBtn != null && GodotObject.IsInstanceValid(cancelBtn) && cancelBtn.IsVisibleInTree())
+                    {
                         cancelBtn.GrabFocus();
+                        return;
+                    }
+
+                    if (GodotObject.IsInstanceValid(confirmBtn) && confirmBtn.IsVisibleInTree())
+                        confirmBtn.GrabFocus();
                 }).CallDeferred();
             }
+        }
+
+        internal static void ShowStyledNotice(
+            Node attachParent,
+            string title,
+            string body,
+            string dismissText)
+        {
+            ShowStyledConfirm(
+                attachParent,
+                title,
+                body,
+                dismissText,
+                dismissText,
+                false,
+                static () => { },
+                false);
         }
 
         private sealed partial class ModSettingsModalShield : Control

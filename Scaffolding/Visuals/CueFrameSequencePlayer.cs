@@ -6,8 +6,24 @@ namespace STS2RitsuLib.Scaffolding.Visuals
     /// <summary>
     ///     Internal driver that swaps a <see cref="Sprite2D.Texture" /> through a <see cref="VisualFrameSequence" />.
     /// </summary>
+    /// <remarks>
+    ///     <para>
+    ///         Emits <see cref="SignalName.Finished" /> when a non-looping sequence reaches the last frame,
+    ///         and when <see cref="TryStart" /> short-circuits into a one-frame-non-loop state (i.e. the sequence
+    ///         has already reached its terminal frame during start). The signal is consumed by
+    ///         <c>CueAnimationBackend</c> so <see cref="StateMachine.ModAnimStateMachine" /> can advance
+    ///         <see cref="StateMachine.ModAnimState.NextState" />.
+    ///     </para>
+    /// </remarks>
     internal partial class CueFrameSequencePlayer : Node
     {
+        /// <summary>
+        ///     Raised when the sequence completes (non-loop) or is an already-terminal single frame.
+        ///     Not raised for looping sequences.
+        /// </summary>
+        [Signal]
+        public delegate void FinishedEventHandler();
+
         internal const string NodeName = "RitsuCueFrameSequencePlayer";
         private bool _active;
         private Texture2D?[] _cache = [];
@@ -80,6 +96,7 @@ namespace STS2RitsuLib.Scaffolding.Visuals
             {
                 _active = false;
                 SetProcess(false);
+                CallDeferred(GodotObject.MethodName.EmitSignal, SignalName.Finished);
                 return true;
             }
 
@@ -108,6 +125,7 @@ namespace STS2RitsuLib.Scaffolding.Visuals
 
             _active = false;
             SetProcess(false);
+            EmitSignal(SignalName.Finished);
         }
 
         private static double ClampFrameDuration(float seconds)

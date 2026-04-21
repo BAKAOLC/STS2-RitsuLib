@@ -32,6 +32,7 @@ namespace STS2RitsuLib.Lifecycle.Patches
         public static void Postfix()
         {
             Callable.From(HarmonyPatchDumpCoordinator.TryAutoDumpOnFirstMainMenu).CallDeferred();
+            Callable.From(SelfCheckBundleCoordinator.TryAutoRunOnFirstMainMenu).CallDeferred();
         }
     }
 }

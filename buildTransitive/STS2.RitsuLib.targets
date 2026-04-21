@@ -1,0 +1,17 @@
+<Project>
+    <PropertyGroup>
+        <RitsuLibAutoCopy Condition="'$(RitsuLibAutoCopy)' == ''">true</RitsuLibAutoCopy>
+        <RitsuLibPackageAssemblyPath>$(MSBuildThisFileDirectory)..\lib\net9.0\STS2-RitsuLib.dll</RitsuLibPackageAssemblyPath>
+        <RitsuLibPackageManifestPath>$(MSBuildThisFileDirectory)..\contentFiles\any\any\mod_manifest.json</RitsuLibPackageManifestPath>
+        <RitsuLibDeployDir>$(Sts2Dir)\mods\STS2-RitsuLib\</RitsuLibDeployDir>
+    </PropertyGroup>
+
+    <Target
+        Name="CopyRitsuLibPackageModFiles"
+        AfterTargets="Build"
+        Condition="'$(DesignTimeBuild)' != 'true' and '$(RitsuLibAutoCopy)' == 'true' and '$(Sts2Dir)' != '' and Exists('$(RitsuLibPackageAssemblyPath)') and Exists('$(RitsuLibPackageManifestPath)')">
+        <MakeDir Directories="$(RitsuLibDeployDir)"/>
+        <Copy SourceFiles="$(RitsuLibPackageAssemblyPath)" DestinationFolder="$(RitsuLibDeployDir)" SkipUnchangedFiles="true"/>
+        <Copy SourceFiles="$(RitsuLibPackageManifestPath)" DestinationFolder="$(RitsuLibDeployDir)" SkipUnchangedFiles="true"/>
+    </Target>
+</Project>

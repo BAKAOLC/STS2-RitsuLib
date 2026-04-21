@@ -1,5 +1,3 @@
-using System.Reflection;
-using Godot;
 using HarmonyLib;
 using MegaCrit.Sts2.Core.Entities.Cards;
 using MegaCrit.Sts2.Core.Entities.Creatures;
@@ -37,6 +35,18 @@ namespace STS2RitsuLib.Combat.CardTargeting.Patches
         private static readonly Action<NCardPlay, bool>? CleanupWithParam = CreateCleanupWithParam();
         private static readonly Action<NCardPlay>? CleanupNoParam = CreateCleanupNoParam();
 
+        public static string PatchId => "card_any_player_try_play_card";
+
+        public static string Description =>
+            "Fix NCardPlay.TryPlayCard to treat AnyPlayer as single-target in multiplayer";
+
+        public static bool IsCritical => true;
+
+        public static ModPatchTarget[] GetTargets()
+        {
+            return [new(typeof(NCardPlay), "TryPlayCard", [typeof(Creature)])];
+        }
+
         private static Action<NCardPlay, bool>? CreateCleanupWithParam()
         {
             var mi = AccessTools.DeclaredMethod(typeof(NCardPlay), "Cleanup", [typeof(bool)]);
@@ -52,18 +62,6 @@ namespace STS2RitsuLib.Combat.CardTargeting.Patches
             return mi != null
                 ? AccessTools.MethodDelegate<Action<NCardPlay>>(mi)
                 : null;
-        }
-
-        public static string PatchId => "card_any_player_try_play_card";
-
-        public static string Description =>
-            "Fix NCardPlay.TryPlayCard to treat AnyPlayer as single-target in multiplayer";
-
-        public static bool IsCritical => true;
-
-        public static ModPatchTarget[] GetTargets()
-        {
-            return [new(typeof(NCardPlay), "TryPlayCard", [typeof(Creature)])];
         }
 
         // ReSharper disable InconsistentNaming
@@ -97,7 +95,7 @@ namespace STS2RitsuLib.Combat.CardTargeting.Patches
                 if (__instance.Holder.IsInsideTree())
                 {
                     var size = __instance.GetViewport().GetVisibleRect().Size;
-                    __instance.Holder.SetTargetPosition(new Vector2(size.X / 2f, size.Y - __instance.Holder.Size.Y));
+                    __instance.Holder.SetTargetPosition(new(size.X / 2f, size.Y - __instance.Holder.Size.Y));
                 }
 
                 InvokeCleanupFinished(__instance, true);

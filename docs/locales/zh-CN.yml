@@ -1,0 +1,37 @@
+nova:
+  sidebar:
+    docs: 文档
+
+nav:
+  home: 首页
+  guide: 文档
+  guide_hub: 目录
+  guide_getting_started: 快速入门
+  guide_framework_design: 框架设计
+  guide_terminology: 术语表
+  guide_content_authoring: 内容注册规则
+  guide_content_packs: 内容包与注册器
+  guide_character_unlock: 角色与解锁
+  guide_card_dynamic_var: 卡牌动态变量
+  guide_custom_events: 自定义事件
+  guide_timeline_unlocks: 时间线与解锁
+  guide_asset_profiles: 资源配置与回退
+  guide_godot_scene: Godot 场景编写
+  guide_mod_settings: Mod 设置
+  guide_localization: 本地化与关键词
+  guide_loc_string: LocString 占位符
+  guide_lifecycle: 生命周期事件
+  guide_patching: 补丁系统
+  guide_persistence: 持久化
+  guide_fmod: FMOD 与音频
+  guide_diagnostics: 诊断与兼容
+
+category:
+  guide: 文档
+
+hero:
+  actions:
+    get-started: 阅读文档
+
+tooltip:
+  edit_this_page: 在 GitHub 上编辑此页

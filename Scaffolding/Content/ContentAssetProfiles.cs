@@ -247,6 +247,19 @@ namespace STS2RitsuLib.Scaffolding.Content
     }
 
     /// <summary>
+    ///     Optional rest site option icon path for mod-added campfire buttons.
+    /// </summary>
+    /// <param name="IconPath">Custom icon texture path (<c>res://</c> or PCK-relative).</param>
+    public sealed record RestSiteOptionAssetProfile(
+        string? IconPath = null)
+    {
+        /// <summary>
+        ///     Default empty profile (no custom paths).
+        /// </summary>
+        public static RestSiteOptionAssetProfile Empty { get; } = new();
+    }
+
+    /// <summary>
     ///     Optional timeline epoch portrait paths (vanilla <c>EpochModel.PackedPortraitPath</c> / <c>BigPortraitPath</c>).
     /// </summary>
     /// <param name="PackedPortraitPath">Atlas sprite resource path for the small timeline portrait.</param>

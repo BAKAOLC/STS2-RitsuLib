@@ -54,6 +54,11 @@ namespace STS2RitsuLib.Patching.Core
         public int AppliedPatchCount => _patchedStatus.Count(kvp => kvp.Value);
 
         /// <summary>
+        ///     Snapshot of static patch registrations.
+        /// </summary>
+        public IReadOnlyList<ModPatchInfo> RegisteredPatches => _registeredPatches;
+
+        /// <summary>
         ///     True after <see cref="PatchAll" /> succeeds without rolling back.
         /// </summary>
         public bool IsApplied { get; private set; }

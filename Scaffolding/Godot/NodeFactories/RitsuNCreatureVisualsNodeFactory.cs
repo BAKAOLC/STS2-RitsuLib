@@ -6,15 +6,15 @@ namespace STS2RitsuLib.Scaffolding.Godot.NodeFactories
     /// <summary>
     ///     Builds <see cref="NCreatureVisuals" /> from vanilla-style scenes or a <see cref="Texture2D" /> (Sprite2D body).
     ///     Non-Spine combat playback remains handled by <see cref="Characters.Visuals.ModCreatureVisualPlayback" />.
+    ///     Does not synthesize <c>%OrbPos</c> / <c>%TalkPos</c> when absent: <see cref="NCreatureVisuals" /> uses
+    ///     <c>IntentPos</c> and <c>null</c> for those, matching baselib <c>NCreatureVisualsFactory</c> and vanilla.
     /// </summary>
     internal sealed class RitsuNCreatureVisualsNodeFactory() : RitsuGodotNodeFactory<NCreatureVisuals>([
         new RitsuGodotNodeSlot<Node2D>("%Visuals"),
         new RitsuGodotNodeSlot<Node2D>("%PhobiaModeVisuals"),
-        new RitsuGodotNodeSlot<Control>("%Bounds"),
+        new RitsuGodotNodeSlot<Control>("Bounds", false),
         new RitsuGodotNodeSlot<Marker2D>("%CenterPos"),
-        new RitsuGodotNodeSlot<Marker2D>("%IntentPos"),
-        new RitsuGodotNodeSlot<Marker2D>("%OrbPos"),
-        new RitsuGodotNodeSlot<Marker2D>("%TalkPos"),
+        new RitsuGodotNodeSlot<Marker2D>("IntentPos", false),
     ])
     {
         protected override NCreatureVisuals CreateBareFromResourceImpl(object resource)
@@ -51,7 +51,7 @@ namespace STS2RitsuLib.Scaffolding.Godot.NodeFactories
         {
             switch (required.Path)
             {
-                case "%Bounds":
+                case "Bounds":
                 {
                     var bounds = new Control
                     {
@@ -61,7 +61,7 @@ namespace STS2RitsuLib.Scaffolding.Godot.NodeFactories
                     target.AddUniqueChild(bounds, "Bounds");
                     break;
                 }
-                case "%IntentPos":
+                case "IntentPos":
                 {
                     var bounds = target.GetNode<Control>("%Bounds");
                     var intent = new Marker2D();
@@ -81,18 +81,6 @@ namespace STS2RitsuLib.Scaffolding.Godot.NodeFactories
                 {
                     var phobia = new Node2D { Visible = false };
                     target.AddUniqueChild(phobia, "PhobiaModeVisuals");
-                    break;
-                }
-                case "%OrbPos":
-                {
-                    var orb = new Marker2D();
-                    target.AddUniqueChild(orb, "OrbPos");
-                    break;
-                }
-                case "%TalkPos":
-                {
-                    var talk = new Marker2D();
-                    target.AddUniqueChild(talk, "TalkPos");
                     break;
                 }
                 case "%Visuals":

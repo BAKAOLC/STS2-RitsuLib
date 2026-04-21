@@ -132,7 +132,8 @@ namespace STS2RitsuLib.Scaffolding.Godot.NodeFactories
                 UniqueNameInOwner = true,
             };
 
-            source?.Name = "_" + source.Name;
+            if (source != null)
+                source.Name = "_" + source.Name;
 
             if (source is CanvasItem sourceCanvas)
                 CopyCanvasItemProperties(container, sourceCanvas);

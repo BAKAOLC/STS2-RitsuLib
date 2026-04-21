@@ -11,7 +11,7 @@ namespace STS2RitsuLib.Data.Models
         /// <summary>
         ///     Current schema version written by the library when creating or normalizing settings.
         /// </summary>
-        public const int CurrentSchemaVersion = 4;
+        public const int CurrentSchemaVersion = 5;
 
         /// <summary>
         ///     Persisted schema version used by the migration pipeline
@@ -60,6 +60,18 @@ namespace STS2RitsuLib.Data.Models
         /// </summary>
         [JsonPropertyName("harmony_patch_dump_on_first_main_menu")]
         public bool HarmonyPatchDumpOnFirstMainMenu { get; set; }
+
+        /// <summary>
+        ///     Output folder for self-check bundles (report + harmony dump + copied godot.log + zip).
+        /// </summary>
+        [JsonPropertyName("self_check_output_folder_path")]
+        public string SelfCheckOutputFolderPath { get; set; } = "user://ritsulib_self_check";
+
+        /// <summary>
+        ///     When true, runs one self-check bundle export after the first main-menu load each session.
+        /// </summary>
+        [JsonPropertyName("self_check_on_first_main_menu")]
+        public bool SelfCheckOnFirstMainMenu { get; set; }
 
         /// <summary>
         ///     Output directory for dev card PNG batch export (absolute path or <c>user://</c>).

@@ -121,6 +121,29 @@ namespace STS2RitsuLib.Scaffolding.Characters
     public sealed record CharacterVanillaRelicVisualOverride(string RelicModelIdEntry, RelicAssetProfile Assets);
 
     /// <summary>
+    ///     One entry in <see cref="CharacterAssetProfile.VanillaPotionVisualOverrides" />: when this mod character
+    ///     encounters or holds a potion whose <c>ModelId.Entry</c> equals <paramref name="PotionModelIdEntry" />
+    ///     (ordinal ignore-case), use <paramref name="Assets" /> for image/outline paths.
+    /// </summary>
+    /// <param name="PotionModelIdEntry">Stable potion id (same string as <c>PotionModel.Id.Entry</c>).</param>
+    /// <param name="Assets">
+    ///     Bottle and outline paths (same shape as mod potion <see cref="PotionAssetProfile" />).
+    /// </param>
+    public sealed record CharacterVanillaPotionVisualOverride(string PotionModelIdEntry, PotionAssetProfile Assets);
+
+    /// <summary>
+    ///     One entry in <see cref="CharacterAssetProfile.VanillaCardVisualOverrides" />: when this mod character
+    ///     encounters or holds a card whose <c>ModelId.Entry</c> equals <paramref name="CardModelIdEntry" />
+    ///     (ordinal ignore-case), use <paramref name="Assets" /> for portrait/frame/banner/overlay paths.
+    /// </summary>
+    /// <param name="CardModelIdEntry">Stable card id (same string as <c>CardModel.Id.Entry</c>).</param>
+    /// <param name="Assets">
+    ///     Card portrait and frame/border/material/overlay/banner path bundle (same shape as
+    ///     mod card <see cref="CardAssetProfile" />).
+    /// </param>
+    public sealed record CharacterVanillaCardVisualOverride(string CardModelIdEntry, CardAssetProfile Assets);
+
+    /// <summary>
     ///     Well-known <see cref="CharacterVanillaRelicVisualOverride.RelicModelIdEntry" /> values for base-game relics
     ///     that commonly need per-character art.
     /// </summary>
@@ -147,6 +170,14 @@ namespace STS2RitsuLib.Scaffolding.Characters
     ///     Per–relic-id icon overrides when this character is the relic owner (see
     ///     <see cref="CharacterVanillaRelicVisualOverride" />).
     /// </param>
+    /// <param name="VanillaPotionVisualOverrides">
+    ///     Per–potion-id image/outline overrides when this character encounters or holds that potion (see
+    ///     <see cref="CharacterVanillaPotionVisualOverride" />).
+    /// </param>
+    /// <param name="VanillaCardVisualOverrides">
+    ///     Per–card-id portrait/frame/banner/overlay overrides when this character encounters or holds that card (see
+    ///     <see cref="CharacterVanillaCardVisualOverride" />).
+    /// </param>
     public sealed record CharacterAssetProfile(
         CharacterSceneAssetSet? Scenes = null,
         CharacterUiAssetSet? Ui = null,
@@ -156,7 +187,9 @@ namespace STS2RitsuLib.Scaffolding.Characters
         CharacterMultiplayerAssetSet? Multiplayer = null,
         VisualCueSet? VisualCues = null,
         CharacterWorldProceduralVisualSet? WorldProceduralVisuals = null,
-        CharacterVanillaRelicVisualOverride[]? VanillaRelicVisualOverrides = null)
+        CharacterVanillaRelicVisualOverride[]? VanillaRelicVisualOverrides = null,
+        CharacterVanillaPotionVisualOverride[]? VanillaPotionVisualOverrides = null,
+        CharacterVanillaCardVisualOverride[]? VanillaCardVisualOverrides = null)
     {
         /// <summary>
         ///     Binary compatibility constructor for assemblies compiled before

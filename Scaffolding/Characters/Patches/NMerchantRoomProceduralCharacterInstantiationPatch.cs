@@ -1,6 +1,5 @@
 using Godot;
 using HarmonyLib;
-using MegaCrit.Sts2.Core.Assets;
 using MegaCrit.Sts2.Core.Context;
 using MegaCrit.Sts2.Core.Entities.Players;
 using MegaCrit.Sts2.Core.Helpers;
@@ -8,13 +7,15 @@ using MegaCrit.Sts2.Core.Nodes.Rooms;
 using MegaCrit.Sts2.Core.Nodes.Screens.Shops;
 using STS2RitsuLib.Patching.Models;
 using STS2RitsuLib.Scaffolding.Characters.Visuals;
+using STS2RitsuLib.Scaffolding.Godot;
 
 namespace STS2RitsuLib.Scaffolding.Characters.Patches
 {
     /// <summary>
     ///     Reimplements <c>NMerchantRoom.AfterRoomIsLoaded</c> so characters with
     ///     <see cref="IModCharacterAssetOverrides.WorldProceduralVisuals" /><c>.Merchant</c> can use in-memory shells
-    ///     (mirrors vanilla layout; falls back to <c>PreloadManager</c> per player).
+    ///     (mirrors vanilla layout; otherwise loads <c>MerchantAnimPath</c> through
+    ///     <see cref="RitsuGodotNodeFactories" /> for baselib-style scenes).
     /// </summary>
     public class NMerchantRoomProceduralCharacterInstantiationPatch : IPatchMethod
     {
@@ -76,8 +77,8 @@ namespace STS2RitsuLib.Scaffolding.Characters.Patches
                     var player = players[num3];
                     var nMerchantCharacter =
                         ModWorldSceneVisualNodeFactory.TryInstantiateMerchantCharacter(player.Character)
-                        ?? PreloadManager.Cache.GetScene(player.Character.MerchantAnimPath)
-                            .Instantiate<NMerchantCharacter>();
+                        ?? RitsuGodotNodeFactories.CreateFromScenePath<NMerchantCharacter>(
+                            player.Character.MerchantAnimPath, PackedScene.GenEditState.Disabled);
                     characterContainer.AddChildSafely(nMerchantCharacter);
                     characterContainer.MoveChild(nMerchantCharacter, 0);
                     nMerchantCharacter.Position = new(num2, -50f * i);
