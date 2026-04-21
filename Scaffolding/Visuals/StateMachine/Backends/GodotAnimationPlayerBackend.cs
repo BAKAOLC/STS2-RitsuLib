@@ -9,17 +9,21 @@ namespace STS2RitsuLib.Scaffolding.Visuals.StateMachine.Backends
     {
         private readonly Callable _finishedCallable;
         private readonly AnimationPlayer _player;
+        private readonly Callable _startedCallable;
         private string? _currentId;
 
         /// <summary>
-        ///     Wraps <paramref name="player" /> and hooks <c>AnimationPlayer.AnimationFinished</c>.
+        ///     Wraps <paramref name="player" /> and hooks <c>AnimationPlayer.AnimationFinished</c> and
+        ///     <c>AnimationPlayer.AnimationStarted</c> so queued auto-advances surface as <see cref="Started" />.
         /// </summary>
         public GodotAnimationPlayerBackend(AnimationPlayer player)
         {
             ArgumentNullException.ThrowIfNull(player);
             _player = player;
             _finishedCallable = Callable.From<StringName>(OnAnimationFinished);
+            _startedCallable = Callable.From<StringName>(OnAnimationStarted);
             _player.Connect(AnimationMixer.SignalName.AnimationFinished, _finishedCallable);
+            _player.Connect(AnimationMixer.SignalName.AnimationStarted, _startedCallable);
         }
 
         /// <inheritdoc />
@@ -58,7 +62,6 @@ namespace STS2RitsuLib.Scaffolding.Visuals.StateMachine.Backends
                 _player.Stop();
 
             _player.Play(id);
-            Started?.Invoke(id);
         }
 
         /// <inheritdoc />
@@ -75,19 +78,26 @@ namespace STS2RitsuLib.Scaffolding.Visuals.StateMachine.Backends
         }
 
         /// <summary>
-        ///     Detaches the signal connection. Safe to call more than once.
+        ///     Detaches the signal connections. Safe to call more than once.
         /// </summary>
         public void Dispose()
         {
             if (_player.IsConnected(AnimationMixer.SignalName.AnimationFinished, _finishedCallable))
                 _player.Disconnect(AnimationMixer.SignalName.AnimationFinished, _finishedCallable);
+            if (_player.IsConnected(AnimationMixer.SignalName.AnimationStarted, _startedCallable))
+                _player.Disconnect(AnimationMixer.SignalName.AnimationStarted, _startedCallable);
+        }
+
+        private void OnAnimationStarted(StringName animName)
+        {
+            var name = animName.ToString();
+            _currentId = name;
+            Started?.Invoke(name);
         }
 
         private void OnAnimationFinished(StringName animName)
         {
             var name = animName.ToString();
-            _currentId = name;
-
             Completed?.Invoke(name);
         }
     }

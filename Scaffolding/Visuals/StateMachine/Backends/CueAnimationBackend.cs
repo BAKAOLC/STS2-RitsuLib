@@ -26,6 +26,8 @@ namespace STS2RitsuLib.Scaffolding.Visuals.StateMachine.Backends
         private readonly Node _root;
         private readonly Sprite2D _sprite;
         private string? _currentId;
+        private string? _queuedId;
+        private bool _queuedLoop;
         private CueFrameSequencePlayer? _subscribedPlayer;
 
         /// <summary>
@@ -80,6 +82,7 @@ namespace STS2RitsuLib.Scaffolding.Visuals.StateMachine.Backends
             UnsubscribeActivePlayer();
             CueFrameSequencePlayer.StopUnder(_root);
 
+            _queuedId = null;
             _currentId = id;
 
             if (_cues.FrameSequenceByCue is { Count: > 0 } sequences &&
@@ -112,7 +115,17 @@ namespace STS2RitsuLib.Scaffolding.Visuals.StateMachine.Backends
         /// <inheritdoc />
         public void Queue(string id, bool loop)
         {
-            Play(id, loop);
+            if (!HasAnimation(id))
+                return;
+
+            if (_currentId == null)
+            {
+                Play(id, loop);
+                return;
+            }
+
+            _queuedId = id;
+            _queuedLoop = loop;
         }
 
         /// <summary>
@@ -146,7 +159,9 @@ namespace STS2RitsuLib.Scaffolding.Visuals.StateMachine.Backends
         {
             UnsubscribeActivePlayer();
             var id = _currentId ?? string.Empty;
+            _currentId = null;
             Completed?.Invoke(id);
+            ConsumeQueue();
         }
 
         private void DeferCompletion(string id)
@@ -157,16 +172,32 @@ namespace STS2RitsuLib.Scaffolding.Visuals.StateMachine.Backends
             var tree = _root.GetTree();
             if (tree == null)
             {
+                _currentId = null;
                 Completed?.Invoke(id);
+                ConsumeQueue();
                 return;
             }
 
             var timer = tree.CreateTimer(0.0);
             timer.Timeout += () =>
             {
-                if (_currentId == id)
-                    Completed?.Invoke(id);
+                if (_currentId != id)
+                    return;
+
+                _currentId = null;
+                Completed?.Invoke(id);
+                ConsumeQueue();
             };
+        }
+
+        private void ConsumeQueue()
+        {
+            if (_queuedId is not { } next)
+                return;
+
+            var loop = _queuedLoop;
+            _queuedId = null;
+            Play(next, loop);
         }
 
         private static bool HasKeyOrdinalIgnoreCase<TValue>(IReadOnlyDictionary<string, TValue> map, string key)
