@@ -26,6 +26,7 @@
 | [Timeline & Unlocks](en/TimelineAndUnlocks.md) | Story / epoch registration, progression rules, and compatibility bridges |
 | [Asset Profiles & Fallbacks](en/AssetProfilesAndFallbacks.md) | Character placeholder fallback, content profiles, and path diagnostics |
 | [Godot Scene Authoring](en/GodotSceneAuthoring.md) | Scene-script wrappers, editor caveats, and runtime script registration |
+| [Creature Visuals & Animation](en/CreatureVisualsAndAnimation.md) | Creature visuals / animator factories and the non-Spine `ModAnimStateMachine` pipeline |
 | [Mod Settings](en/ModSettings.md) | Settings UI architecture, bindings, supported controls, and page composition |
 
 ### Localization
@@ -69,6 +70,7 @@
 | [时间线与解锁](zh/TimelineAndUnlocks.md) | Story / Epoch 注册、进度规则与兼容桥接 |
 | [资源配置与回退规则](zh/AssetProfilesAndFallbacks.md) | 角色 Placeholder、内容 Profile 与路径诊断 |
 | [Godot 场景编写说明](zh/GodotSceneAuthoring.md) | 场景脚本包装、编辑器问题与运行时脚本注册 |
+| [生物体视觉与动画](zh/CreatureVisualsAndAnimation.md) | 生物视觉 / animator 工厂接口与非 Spine `ModAnimStateMachine` 管线 |
 | [Mod 设置界面](zh/ModSettings.md) | 设置 UI 架构、绑定方式、支持控件与页面组合 |
 
 ### 本地化
