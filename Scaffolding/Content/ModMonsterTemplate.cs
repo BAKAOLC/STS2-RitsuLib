@@ -1,4 +1,6 @@
 using Godot;
+using MegaCrit.Sts2.Core.Animation;
+using MegaCrit.Sts2.Core.Bindings.MegaSpine;
 using MegaCrit.Sts2.Core.Models;
 using MegaCrit.Sts2.Core.Nodes.Combat;
 using STS2RitsuLib.Scaffolding.Content.Patches;
@@ -24,9 +26,15 @@ namespace STS2RitsuLib.Scaffolding.Content
     // Template keeps the obsolete IModMonsterCreatureVisualsFactory wired so existing derived classes and external
     // consumers that type-check against the old interface name continue to work.
     public abstract class ModMonsterTemplate : MonsterModel, IModMonsterAssetOverrides,
-        IModCreatureVisualsFactory, IModMonsterCreatureVisualsFactory, IModNonSpineAnimationStateMachineFactory
+        IModCreatureVisualsFactory, IModMonsterCreatureVisualsFactory, IModCreatureAnimatorFactory,
+        IModNonSpineAnimationStateMachineFactory
 #pragma warning restore CS0618
     {
+        CreatureAnimator? IModCreatureAnimatorFactory.TryCreateCreatureAnimator(MegaSprite controller)
+        {
+            return SetupCustomCreatureAnimator(controller);
+        }
+
         NCreatureVisuals? IModCreatureVisualsFactory.TryCreateCreatureVisuals()
         {
             return TryCreateCreatureVisuals();
@@ -55,6 +63,18 @@ namespace STS2RitsuLib.Scaffolding.Content
         ///     Non-null value becomes combat visuals; otherwise paths (<see cref="CustomVisualsPath" /> / vanilla) apply.
         /// </summary>
         protected virtual NCreatureVisuals? TryCreateCreatureVisuals()
+        {
+            return null;
+        }
+
+        /// <summary>
+        ///     Optional override producing a fully wired Spine <see cref="CreatureAnimator" /> (state graph for idle /
+        ///     hit / attack / cast / die / relaxed). Return <see langword="null" /> to defer to vanilla
+        ///     <see cref="MonsterModel.GenerateAnimator" />. Prefer <see cref="ModAnimStateMachines.Standard" /> to
+        ///     match baselib semantics.
+        /// </summary>
+        /// <param name="controller">Spine controller attached to the monster's combat visuals.</param>
+        protected virtual CreatureAnimator? SetupCustomCreatureAnimator(MegaSprite controller)
         {
             return null;
         }
