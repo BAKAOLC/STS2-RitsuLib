@@ -128,6 +128,15 @@ namespace STS2RitsuLib.Scaffolding.Visuals.StateMachine.Backends
             _queuedLoop = loop;
         }
 
+        /// <inheritdoc />
+        public void Stop()
+        {
+            _queuedId = null;
+            _currentId = null;
+            UnsubscribeActivePlayer();
+            CueFrameSequencePlayer.StopUnder(_root);
+        }
+
         /// <summary>
         ///     Stops active playback and detaches the frame-sequence signal, if any.
         /// </summary>

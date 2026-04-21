@@ -21,6 +21,7 @@ namespace STS2RitsuLib.Scaffolding.Visuals.StateMachine.Backends
         private readonly Callable _interruptedCallable;
         private readonly Callable _startedCallable;
         private string? _currentId;
+        private bool _paused;
 
         /// <summary>
         ///     Wraps the given <paramref name="controller" /> and hooks its lifecycle signals.
@@ -64,6 +65,12 @@ namespace STS2RitsuLib.Scaffolding.Visuals.StateMachine.Backends
 
             _currentId = id;
             var animationState = _controller.GetAnimationState();
+            if (_paused)
+            {
+                animationState.SetTimeScale(1f);
+                _paused = false;
+            }
+
             var track = animationState.SetAnimation(id, loop);
             if (track == null)
                 return;
@@ -82,6 +89,24 @@ namespace STS2RitsuLib.Scaffolding.Visuals.StateMachine.Backends
             var track = animationState.AddAnimation(id, 0f, loop);
             if (loop)
                 OffsetLoopingAnimation(track);
+        }
+
+        /// <inheritdoc />
+        /// <remarks>
+        ///     Spine exposes no clean "stop track" API through the MegaSpine bindings; this backend pauses playback
+        ///     by setting the animation state time scale to <c>0</c>. The character will freeze on its current pose
+        ///     until <see cref="Play" /> is called again (which restores the time scale). This keeps
+        ///     <see cref="Interrupted" /> / <see cref="Completed" /> silent as required by
+        ///     <see cref="IAnimationBackend.Stop" />.
+        /// </remarks>
+        public void Stop()
+        {
+            _currentId = null;
+            var animationState = _controller.GetAnimationState();
+            if (animationState == null)
+                return;
+            animationState.SetTimeScale(0f);
+            _paused = true;
         }
 
         /// <summary>

@@ -11,6 +11,7 @@ namespace STS2RitsuLib.Scaffolding.Visuals.StateMachine.Backends
         private readonly AnimationPlayer _player;
         private readonly Callable _startedCallable;
         private string? _currentId;
+        private bool _suppressEvents;
 
         /// <summary>
         ///     Wraps <paramref name="player" /> and hooks <c>AnimationPlayer.AnimationFinished</c> and
@@ -77,6 +78,23 @@ namespace STS2RitsuLib.Scaffolding.Visuals.StateMachine.Backends
             _player.Queue(id);
         }
 
+        /// <inheritdoc />
+        public void Stop()
+        {
+            _currentId = null;
+            _suppressEvents = true;
+            try
+            {
+                _player.ClearQueue();
+                if (_player.IsPlaying())
+                    _player.Stop();
+            }
+            finally
+            {
+                _suppressEvents = false;
+            }
+        }
+
         /// <summary>
         ///     Detaches the signal connections. Safe to call more than once.
         /// </summary>
@@ -90,6 +108,8 @@ namespace STS2RitsuLib.Scaffolding.Visuals.StateMachine.Backends
 
         private void OnAnimationStarted(StringName animName)
         {
+            if (_suppressEvents)
+                return;
             var name = animName.ToString();
             _currentId = name;
             Started?.Invoke(name);
@@ -97,6 +117,8 @@ namespace STS2RitsuLib.Scaffolding.Visuals.StateMachine.Backends
 
         private void OnAnimationFinished(StringName animName)
         {
+            if (_suppressEvents)
+                return;
             var name = animName.ToString();
             Completed?.Invoke(name);
         }

@@ -83,6 +83,15 @@ namespace STS2RitsuLib.Scaffolding.Visuals.StateMachine.Backends
             _queuedLoop = loop;
         }
 
+        /// <inheritdoc />
+        public void Stop()
+        {
+            _queuedId = null;
+            _currentId = null;
+            if (_sprite.IsPlaying())
+                _sprite.Stop();
+        }
+
         /// <summary>
         ///     Detaches the signal connection. Safe to call more than once.
         /// </summary>

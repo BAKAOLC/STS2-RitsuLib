@@ -14,8 +14,12 @@ namespace STS2RitsuLib.Scaffolding.Visuals.StateMachine.Backends
     ///         <see cref="STS2RitsuLib.Scaffolding.Visuals.StateMachine.ModAnimStateMachineBuilder" />.
     ///     </para>
     ///     <para>
-    ///         Only one child is <c>active</c> at a time; switching to a different backend during
-    ///         <see cref="Play" /> raises <see cref="Interrupted" /> for the previously active id.
+    ///         Only one child is <c>active</c> at a time. Switching to a different backend during
+    ///         <see cref="Play" /> raises <see cref="Interrupted" /> for the previously active id and
+    ///         <see cref="IAnimationBackend.Stop" />s the outgoing backend so it does not continue playing
+    ///         alongside the newly activated one. <see cref="Queue" /> across backends is deferred until the
+    ///         current backend reports <see cref="Completed" />, at which point the stashed
+    ///         <c>(backend, id, loop)</c> triple is activated.
     ///     </para>
     /// </remarks>
     public sealed class CompositeAnimationBackend : IAnimationBackend
@@ -23,6 +27,9 @@ namespace STS2RitsuLib.Scaffolding.Visuals.StateMachine.Backends
         private readonly IReadOnlyList<IAnimationBackend> _backends;
         private IAnimationBackend? _active;
         private string? _currentId;
+        private IAnimationBackend? _queuedBackend;
+        private string? _queuedId;
+        private bool _queuedLoop;
 
         /// <summary>
         ///     Creates a composite from <paramref name="backends" /> (priority order).
@@ -69,8 +76,14 @@ namespace STS2RitsuLib.Scaffolding.Visuals.StateMachine.Backends
             if (chosen == null)
                 return;
 
-            if (_active != null && !ReferenceEquals(_active, chosen) && _currentId != null)
+            var switching = _active != null && !ReferenceEquals(_active, chosen);
+            if (switching && _currentId != null)
                 Interrupted?.Invoke(_currentId);
+
+            if (switching)
+                _active!.Stop();
+
+            ClearQueued();
 
             _active = chosen;
             _currentId = id;
@@ -84,18 +97,44 @@ namespace STS2RitsuLib.Scaffolding.Visuals.StateMachine.Backends
             if (chosen == null)
                 return;
 
+            if (_active == null)
+            {
+                Play(id, loop);
+                return;
+            }
+
             if (ReferenceEquals(_active, chosen))
             {
+                ClearQueued();
                 chosen.Queue(id, loop);
                 return;
             }
 
-            Play(id, loop);
+            _queuedBackend = chosen;
+            _queuedId = id;
+            _queuedLoop = loop;
+        }
+
+        /// <inheritdoc />
+        public void Stop()
+        {
+            ClearQueued();
+            var previous = _active;
+            _active = null;
+            _currentId = null;
+            previous?.Stop();
         }
 
         private IAnimationBackend? Resolve(string id)
         {
             return _backends.FirstOrDefault(backend => backend.HasAnimation(id));
+        }
+
+        private void ClearQueued()
+        {
+            _queuedBackend = null;
+            _queuedId = null;
+            _queuedLoop = false;
         }
 
         private void OnChildStarted(IAnimationBackend backend, string id)
@@ -112,6 +151,18 @@ namespace STS2RitsuLib.Scaffolding.Visuals.StateMachine.Backends
                 return;
 
             Completed?.Invoke(id);
+
+            if (!ReferenceEquals(backend, _active) || _queuedBackend is not { } nextBackend ||
+                _queuedId is not { } nextId)
+                return;
+
+            var nextLoop = _queuedLoop;
+            ClearQueued();
+
+            backend.Stop();
+            _active = nextBackend;
+            _currentId = nextId;
+            nextBackend.Play(nextId, nextLoop);
         }
 
         private void OnChildInterrupted(IAnimationBackend backend, string id)

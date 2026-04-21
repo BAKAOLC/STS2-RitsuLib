@@ -57,5 +57,21 @@ namespace STS2RitsuLib.Scaffolding.Visuals.StateMachine
         ///     as a deferred <see cref="Play" /> triggered on the next <see cref="Completed" />.
         /// </summary>
         void Queue(string id, bool loop);
+
+        /// <summary>
+        ///     Stops any active playback silently (does not raise <see cref="Interrupted" /> / <see cref="Completed" />)
+        ///     and clears any pending queued animation. Intended for callers that need to relinquish the backend —
+        ///     typically <see cref="STS2RitsuLib.Scaffolding.Visuals.StateMachine.Backends.CompositeAnimationBackend" />
+        ///     during cross-backend transitions, so the previously active backend does not continue visibly playing
+        ///     alongside the newly activated one.
+        /// </summary>
+        /// <remarks>
+        ///     Default implementation is a no-op; backends that drive a visible node should override to halt
+        ///     playback and suppress any lifecycle events that the underlying engine may fire as a consequence
+        ///     of the stop.
+        /// </remarks>
+        void Stop()
+        {
+        }
     }
 }
