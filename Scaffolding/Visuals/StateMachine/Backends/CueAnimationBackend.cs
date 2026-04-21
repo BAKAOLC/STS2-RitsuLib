@@ -63,11 +63,13 @@ namespace STS2RitsuLib.Scaffolding.Visuals.StateMachine.Backends
                 return false;
 
             if (_cues.FrameSequenceByCue is { Count: > 0 } sequences &&
-                HasKeyOrdinalIgnoreCase(sequences, id))
+                TryGetOrdinalIgnoreCase(sequences, id, out var sequence) &&
+                sequence is { Frames.Count: > 0 })
                 return true;
 
             return _cues.TexturePathByCue is { Count: > 0 } textures &&
-                   HasKeyOrdinalIgnoreCase(textures, id);
+                   TryGetOrdinalIgnoreCase(textures, id, out var path) &&
+                   !string.IsNullOrWhiteSpace(path);
         }
 
         /// <inheritdoc />
@@ -207,12 +209,6 @@ namespace STS2RitsuLib.Scaffolding.Visuals.StateMachine.Backends
             var loop = _queuedLoop;
             _queuedId = null;
             Play(next, loop);
-        }
-
-        private static bool HasKeyOrdinalIgnoreCase<TValue>(IReadOnlyDictionary<string, TValue> map, string key)
-        {
-            return map.ContainsKey(key) ||
-                   map.Any(kv => string.Equals(kv.Key, key, StringComparison.OrdinalIgnoreCase));
         }
 
         private static bool TryGetOrdinalIgnoreCase<TValue>(IReadOnlyDictionary<string, TValue> map, string key,

@@ -116,12 +116,11 @@ namespace STS2RitsuLib.Scaffolding.Visuals.StateMachine
             Backend.Started -= OnBackendStarted;
             Backend.Completed -= OnBackendCompleted;
             Backend.Interrupted -= OnBackendInterrupted;
+            Current = null;
         }
 
         private void EnterState(ModAnimState state)
         {
-            Current = state;
-
             if (!Backend.HasAnimation(state.Id))
             {
                 RitsuLibFramework.Logger.Warn(
@@ -129,6 +128,7 @@ namespace STS2RitsuLib.Scaffolding.Visuals.StateMachine
                 return;
             }
 
+            Current = state;
             Backend.Play(state.Id, state.IsLooping);
 
             if (state.BoundsContainer != null)
@@ -179,6 +179,9 @@ namespace STS2RitsuLib.Scaffolding.Visuals.StateMachine
                 state.MarkHasLooped();
 
             AnimationCompleted?.Invoke(state);
+
+            if (Current != state)
+                return;
 
             if (state.NextState != null)
                 Current = state.NextState;

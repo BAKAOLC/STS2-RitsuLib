@@ -60,7 +60,7 @@ namespace STS2RitsuLib.Scaffolding.Visuals.StateMachine
         {
             return character is not IModCharacterAssetOverrides overrides
                 ? null
-                : overrides.WorldProceduralVisuals?.Merchant?.CueSet;
+                : overrides.VisualCues ?? overrides.WorldProceduralVisuals?.Merchant?.CueSet;
         }
 
         private static Sprite2D? FindPrimarySprite2D(Node root)

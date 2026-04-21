@@ -119,19 +119,44 @@ namespace STS2RitsuLib.Scaffolding.Visuals.StateMachine.Backends
             _controller.DisconnectAnimationInterrupted(_interruptedCallable);
         }
 
-        private void OnStarted(GodotObject _, GodotObject __, GodotObject ___)
+        private void OnStarted(GodotObject first, GodotObject second, GodotObject third)
         {
-            Started?.Invoke(_currentId ?? string.Empty);
+            Started?.Invoke(ResolveSignalAnimationId(first, second, third));
         }
 
-        private void OnCompleted(GodotObject _, GodotObject __, GodotObject ___)
+        private void OnCompleted(GodotObject first, GodotObject second, GodotObject third)
         {
-            Completed?.Invoke(_currentId ?? string.Empty);
+            Completed?.Invoke(ResolveSignalAnimationId(first, second, third));
         }
 
-        private void OnInterrupted(GodotObject _, GodotObject __, GodotObject ___)
+        private void OnInterrupted(GodotObject first, GodotObject second, GodotObject third)
         {
-            Interrupted?.Invoke(_currentId ?? string.Empty);
+            Interrupted?.Invoke(ResolveSignalAnimationId(first, second, third));
+        }
+
+        private string ResolveSignalAnimationId(GodotObject first, GodotObject second, GodotObject third)
+        {
+            var animationId =
+                TryGetAnimationId(first) ??
+                TryGetAnimationId(second) ??
+                TryGetAnimationId(third);
+
+            if (string.IsNullOrEmpty(animationId)) return _currentId ?? string.Empty;
+            _currentId = animationId;
+            return animationId;
+        }
+
+        private static string? TryGetAnimationId(GodotObject value)
+        {
+            if (value.GetClass() != "SpineTrackEntry")
+                return null;
+
+            var animationObj = value.Call("get_animation").AsGodotObject();
+            if (animationObj == null || !animationObj.HasMethod("get_name"))
+                return null;
+
+            var name = animationObj.Call("get_name");
+            return name.VariantType == Variant.Type.String ? name.AsString() : null;
         }
 
         private static void OffsetLoopingAnimation(MegaTrackEntry track)

@@ -161,10 +161,7 @@ namespace STS2RitsuLib.Scaffolding.Characters.Patches
             if (monster is IModNonSpineAnimationStateMachineFactory)
                 return true;
 
-            if (character is IModCharacterAssetOverrides)
-                return true;
-
-            return false;
+            return character is IModCharacterAssetOverrides;
         }
     }
 }
