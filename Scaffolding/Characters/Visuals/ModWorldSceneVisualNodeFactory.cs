@@ -43,6 +43,8 @@ namespace STS2RitsuLib.Scaffolding.Characters.Visuals
         /// <summary>
         ///     When the player character defines rest-site procedural visuals, builds an <see cref="NRestSiteCharacter" />
         ///     tree compatible with vanilla scripts (hitbox, thought anchors, selection reticle from base game assets).
+        ///     The <see cref="Sprite2D" /> named <c>Visuals</c> is parented under <c>ControlRoot</c> so vanilla
+        ///     <c>FlipX</c> matches BaseLib <c>NRestSiteCharacterFactory</c> rest-site layouts.
         /// </summary>
         public static NRestSiteCharacter? TryCreateRestSiteCharacter(Player player, int characterIndex)
         {
@@ -101,7 +103,7 @@ namespace STS2RitsuLib.Scaffolding.Characters.Visuals
             thoughtRight.Owner = root;
 
             var sprite = new Sprite2D { Name = "Visuals" };
-            root.AddChild(sprite);
+            controlRoot.AddChild(sprite);
             sprite.Owner = root;
 
             return root;

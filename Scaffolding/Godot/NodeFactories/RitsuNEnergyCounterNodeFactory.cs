@@ -49,10 +49,11 @@ namespace STS2RitsuLib.Scaffolding.Godot.NodeFactories
                     case CanvasItem targetItem when source is CanvasItem sourceItem:
                         CopyCanvasItemProperties(targetItem, sourceItem);
                         break;
+                    case Control energyCounter:
+                        energyCounter.Size = new Vector2(128f, 128f);
+                        energyCounter.PivotOffset = energyCounter.Size * 0.5f;
+                        break;
                 }
-
-                target.Size = new(128f, 128f);
-                target.PivotOffset = target.Size * 0.5f;
             }
 
             TransferAndCreateNodes(target, source);
@@ -65,12 +66,6 @@ namespace STS2RitsuLib.Scaffolding.Godot.NodeFactories
                 case "Label":
                     target.AddChild(CreateDefaultLabel());
                     break;
-                case "%Layers":
-                {
-                    var layers = CreateFullRectControl(null);
-                    target.AddUniqueChild(layers, "Layers");
-                    break;
-                }
                 case "%RotationLayers":
                 {
                     var control = CreateFullRectControl(null);
