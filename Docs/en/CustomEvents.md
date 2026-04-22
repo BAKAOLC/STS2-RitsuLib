@@ -262,6 +262,7 @@ The same principle applies: keep option keys, page keys, and the final registere
 If you want to append extra options to an **existing ancient** (including vanilla ancients) without modifying the ancient class itself, register `ModAncientOptionRule`.
 
 ```csharp
+using MegaCrit.Sts2.Core.Events;
 using MegaCrit.Sts2.Core.Models.Events;
 using STS2RitsuLib.Scaffolding.Ancients.Options;
 

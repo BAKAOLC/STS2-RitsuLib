@@ -262,6 +262,7 @@ public sealed class MyAncient : ModAncientEventTemplate
 如果你要给**已有 Ancient（包括原版 Ancient）**追加额外选项，而不想改它本体，可以注册 `ModAncientOptionRule`。
 
 ```csharp
+using MegaCrit.Sts2.Core.Events;
 using MegaCrit.Sts2.Core.Models.Events;
 using STS2RitsuLib.Scaffolding.Ancients.Options;
 

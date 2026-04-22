@@ -87,15 +87,15 @@ namespace STS2RitsuLib.Scaffolding.Ancients.Options
                 if (!ShouldApply(registration, ancient))
                     continue;
 
-                IEnumerable<EventOption>? generated;
+                EventOption[]? generated;
                 try
                 {
-                    generated = registration.Rule.OptionFactory(ancient);
+                    generated = registration.Rule.OptionFactory(ancient)?.ToArray();
                 }
                 catch (Exception ex)
                 {
                     RitsuLibFramework.CreateLogger(registration.OwnerModId).Warn(
-                        $"[AncientOption] OptionFactory threw for ancient '{ancient.Id.Entry}': {ex.Message}");
+                        $"[AncientOption] OptionFactory threw for ancient '{ancient.Id.Entry}': {ex}");
                     continue;
                 }
 
@@ -107,10 +107,12 @@ namespace STS2RitsuLib.Scaffolding.Ancients.Options
                     if (option == null)
                         continue;
 
-                    if (registration.Rule.SkipDuplicateTextKeys &&
-                        !string.IsNullOrWhiteSpace(option.TextKey) &&
-                        !existingTextKeys.Add(option.TextKey))
-                        continue;
+                    if (!string.IsNullOrWhiteSpace(option.TextKey))
+                    {
+                        var isNewTextKey = existingTextKeys.Add(option.TextKey);
+                        if (registration.Rule.SkipDuplicateTextKeys && !isNewTextKey)
+                            continue;
+                    }
 
                     options.Add(option);
                 }
@@ -130,7 +132,7 @@ namespace STS2RitsuLib.Scaffolding.Ancients.Options
             catch (Exception ex)
             {
                 RitsuLibFramework.CreateLogger(registration.OwnerModId).Warn(
-                    $"[AncientOption] Condition threw for ancient '{ancient.Id.Entry}': {ex.Message}");
+                    $"[AncientOption] Condition threw for ancient '{ancient.Id.Entry}': {ex}");
                 return false;
             }
         }
