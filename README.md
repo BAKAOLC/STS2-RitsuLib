@@ -11,6 +11,11 @@ The library exists alongside [BaseLib](https://github.com/Alchyr/BaseLib-StS2) a
 
 Documentation index: [Docs/README.md](Docs/README.md)
 
+## Optional analyzers
+
+Companion Roslyn package for RitsuLib-style mods (localization keys, `Mod*Template` usage, registration attributes):
+[STS2-ModAnalyzers-RitsuLib](https://github.com/BAKAOLC/STS2-ModAnalyzers-RitsuLib) (NuGet: `STS2.ModAnalyzers.RitsuLib`).
+
 ## Mod Settings
 
 RitsuLib includes a settings UI layer for player-editable values.

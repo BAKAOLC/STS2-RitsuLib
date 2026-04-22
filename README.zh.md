@@ -10,6 +10,11 @@ RitsuLib 按实际需求演进，主要服务于仓库内 Mod 的内容编写、
 
 文档入口: [Docs/README.md](Docs/README.md)
 
+## 可选：配套分析器
+
+面向 RitsuLib 脚手架与本地化的 Roslyn 分析器仓库：
+[STS2-ModAnalyzers-RitsuLib](https://github.com/BAKAOLC/STS2-ModAnalyzers-RitsuLib)（NuGet 包名：`STS2.ModAnalyzers.RitsuLib`）。
+
 ## Mod 设置
 
 RitsuLib 提供一套用于玩家可编辑配置的设置 UI。
