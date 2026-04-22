@@ -17,8 +17,10 @@ namespace STS2RitsuLib.Settings.RunSidecar
     ///         Layout under the framework profile base (<see cref="Const.ModId" />):
     ///         <c>{ProfileBase}/{RunSidecarSegment}/{fingerprintStem}/{sanitizedModId}.json</c>.
     ///         <c>RunSidecarSegment</c> is <c>run_sidecar/v1</c>; <c>fingerprintStem</c> is the lowercase hex SHA-256 from
-    ///         <see cref="ModRunSidecarFingerprint" /> (one folder per run for easy packaging); each consumer mod owns
-    ///         one JSON file in that folder. Writes use atomic replace via <see cref="FileOperations.WriteText" />;
+    ///         <see cref="ModRunSidecarFingerprint" /> (one folder per run). Each consumer mod owns one JSON file in
+    ///         that folder; the folder is removed when the run ends or when vanilla deletes the current run save file
+    ///         (see <see cref="ModRunSidecarSession" />). Writes
+    ///         use atomic replace via <see cref="FileOperations.WriteText" />;
     ///         if a write fails before any durable <c>*.json</c> exists, the empty run folder is removed best-effort.
     ///     </para>
     /// </remarks>
@@ -38,7 +40,7 @@ namespace STS2RitsuLib.Settings.RunSidecar
         /// <summary>
         ///     When a run is in progress, sets <paramref name="runDirectoryUserPath" /> to the per-run sidecar folder
         ///     (<c>…/run_sidecar/v1/{fingerprintStem}/</c>) so callers can zip or back up every mod file for that run in
-        ///     one step.
+        ///     one step. That directory is deleted when the run ends; copy it first if you need to keep it.
         /// </summary>
         /// <param name="runDirectoryUserPath">Godot <c>user://</c> path ending at the run directory, or empty when false.</param>
         /// <returns>False when no active run fingerprint is available.</returns>
@@ -127,6 +129,24 @@ namespace STS2RitsuLib.Settings.RunSidecar
 
                 TryRemoveRunDirectoryIfWithoutSidecarJson(runDir);
                 return false;
+            }
+        }
+
+        /// <summary>
+        ///     Deletes the on-disk per-run sidecar directory for <paramref name="fingerprint" /> (best-effort).
+        /// </summary>
+        /// <remarks>
+        ///     Called when a run ends so local sidecar data does not outlive the run instance. Uses the same path
+        ///     layout as reads/writes for that fingerprint.
+        /// </remarks>
+        internal static void TryDeleteRunDirectoryForFingerprint(ModRunSidecarFingerprint fingerprint)
+        {
+            lock (FileLock)
+            {
+                var runDir = ResolveRunDirectoryUserPath(fingerprint);
+                var abs = ProjectSettings.GlobalizePath(runDir);
+                if (DirAccess.DirExistsAbsolute(abs))
+                    _ = FileOperations.DeleteDirectoryRecursive(abs, "RunSidecarRunEnded");
             }
         }
 

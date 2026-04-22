@@ -91,8 +91,8 @@ namespace STS2RitsuLib
             patcher.RegisterPatch<ModelRegistryLifecyclePatch>();
             patcher.RegisterPatch<GameNodeLifecyclePatch>();
             patcher.RegisterPatch<RunLifecyclePatch>();
-            patcher.RegisterPatch<ModRunSidecarRunManagerPatches.InitializeSavedRun>();
-            patcher.RegisterPatch<ModRunSidecarRunManagerPatches.InitializeNewRun>();
+            patcher.RegisterPatch<ModRunSidecarSaveDeletionPatches.DeleteCurrentRun>();
+            patcher.RegisterPatch<ModRunSidecarSaveDeletionPatches.DeleteCurrentMultiplayerRun>();
             patcher.RegisterPatch<RunEndedLifecyclePatch>();
             patcher.RegisterPatch<CombatHookLifecyclePatch>();
             patcher.RegisterPatch<RewardHookLifecyclePatch>();
