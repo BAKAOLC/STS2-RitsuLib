@@ -49,6 +49,22 @@ namespace STS2RitsuLib.Settings
         }
 
         /// <summary>
+        ///     Binds to per-run JSON under the framework profile tree (<c>run_sidecar/v1/{fingerprintStem}/</c> under
+        ///     <see cref="Utils.Persistence.ProfileManager" /> for <see cref="Const.ModId" />), one file per consumer
+        ///     mod in that folder, keyed by the vanilla run fingerprint. Client-local only; does not modify
+        ///     <see cref="MegaCrit.Sts2.Core.Saves.SerializableRun" /> network payloads.
+        /// </summary>
+        public static ModSettingsRunSidecarValueBinding<TModel, TValue> RunSidecar<TModel, TValue>(
+            string modId,
+            string dataKey,
+            Func<TModel, TValue> getter,
+            Action<TModel, TValue> setter)
+            where TModel : class, new()
+        {
+            return new(modId, dataKey, getter, setter);
+        }
+
+        /// <summary>
         ///     Non-persisted binding for previews and debug UI.
         /// </summary>
         public static InMemoryModSettingsValueBinding<TValue> InMemory<TValue>(

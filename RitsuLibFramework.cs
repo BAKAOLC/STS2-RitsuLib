@@ -19,6 +19,7 @@ using STS2RitsuLib.RuntimeInput;
 using STS2RitsuLib.Scaffolding.Ancients.Options;
 using STS2RitsuLib.Scaffolding.Content;
 using STS2RitsuLib.Settings;
+using STS2RitsuLib.Settings.RunSidecar;
 using STS2RitsuLib.Timeline;
 using STS2RitsuLib.Unlocks;
 using STS2RitsuLib.Utils;
@@ -233,6 +234,7 @@ namespace STS2RitsuLib
 
                 ProfileManager.Instance.Initialize();
                 ModDataStore.InitializeAllProfileScoped();
+                ModRunSidecarSession.AttachLifecycleHandlers();
 
                 _profileServicesInitialized = true;
 

@@ -63,13 +63,14 @@ namespace STS2RitsuLib.Settings
             {
                 ITransientModSettingsBinding => ModSettingsLocalization.Get("scope.transient",
                     "Preview only - not persisted"),
+                IRunSidecarModSettingsBinding => ModSettingsLocalization.Get("scope.runSidecar", "Run sidecar"),
                 IModSettingsBindingSemantics { Semantics: ModSettingsValueSemantics.RunSnapshot } =>
-                    ModSettingsLocalization.Get("scope.runSnapshot", "Run snapshot (mod-owned save)"),
+                    ModSettingsLocalization.Get("scope.runSnapshot", "Run snapshot"),
                 IModSettingsBindingSemantics { Semantics: ModSettingsValueSemantics.SessionCombat } =>
                     ModSettingsLocalization.Get("scope.sessionCombat", "Combat/session only"),
                 _ => binding.Scope == SaveScope.Profile
                     ? ModSettingsLocalization.Get("scope.profile", "Stored per profile")
-                    : ModSettingsLocalization.Get("scope.global", "Stored globally")
+                    : ModSettingsLocalization.Get("scope.global", "Stored globally"),
             };
         }
 
