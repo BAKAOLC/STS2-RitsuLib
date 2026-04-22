@@ -54,14 +54,21 @@ namespace STS2RitsuLib.CardPiles
                 topBar.AddChildSafely(button);
 
                 var anchor = definition.Anchor;
-                if (anchor.Kind == ModCardPileAnchorKind.Custom)
-                    button.Position = anchor.CustomPosition + anchor.Offset;
-                else if (anchor.Kind == ModCardPileAnchorKind.TopBarAfterDeck)
-                    ModTopBarLayout.PlaceAfterDeck(topBar, button, anchor.Offset);
-                else if (anchor.Kind == ModCardPileAnchorKind.TopBarBeforeModifiers)
-                    ModTopBarLayout.PlaceBeforeModifiers(topBar, button, anchor.Offset);
-                else
-                    ModTopBarLayout.Place(topBar, button, anchor.Offset);
+                switch (anchor.Kind)
+                {
+                    case ModCardPileAnchorKind.Custom:
+                        button.Position = anchor.CustomPosition + anchor.Offset;
+                        break;
+                    case ModCardPileAnchorKind.TopBarAfterDeck:
+                        ModTopBarLayout.PlaceAfterDeck(topBar, button, anchor.Offset);
+                        break;
+                    case ModCardPileAnchorKind.TopBarBeforeModifiers:
+                        ModTopBarLayout.PlaceBeforeModifiers(topBar, button, anchor.Offset);
+                        break;
+                    default:
+                        ModTopBarLayout.Place(topBar, button, anchor.Offset);
+                        break;
+                }
             }
         }
 
@@ -101,9 +108,11 @@ namespace STS2RitsuLib.CardPiles
             // Pile-backed top-bar buttons are now siblings of %Deck inside `RightAlignedStuff`, not
             // direct children of NTopBar — mirror that when iterating for player binding.
             var rightAligned = ModTopBarLayout.GetRightAlignedContainer(topBar);
-            if (rightAligned != null)
+            if (rightAligned == null) return;
+            {
                 foreach (var child in rightAligned.GetChildren().OfType<NModCardPileButton>())
                     child.Initialize(player);
+            }
         }
 
         private static void MountBottomLeftButtons(

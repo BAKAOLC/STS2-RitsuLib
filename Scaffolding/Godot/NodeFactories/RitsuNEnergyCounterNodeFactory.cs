@@ -50,7 +50,7 @@ namespace STS2RitsuLib.Scaffolding.Godot.NodeFactories
                         CopyCanvasItemProperties(targetItem, sourceItem);
                         break;
                     case Control energyCounter:
-                        energyCounter.Size = new Vector2(128f, 128f);
+                        energyCounter.Size = new(128f, 128f);
                         energyCounter.PivotOffset = energyCounter.Size * 0.5f;
                         break;
                 }

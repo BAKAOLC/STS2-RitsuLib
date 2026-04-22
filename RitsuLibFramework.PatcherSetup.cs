@@ -238,6 +238,7 @@ namespace STS2RitsuLib
         {
             var patcher = CreatePatcher(Const.ModId, "framework-settings-ui", "settings ui");
             patcher.RegisterPatch<ModSettingsSubmenuPatch>();
+            patcher.RegisterPatch<ModSettingsRunSubmenuStackPatch>();
             patcher.RegisterPatch<SettingsScreenModSettingsButtonPatch>();
             RegisterFrameworkPatcher(FrameworkPatcherArea.SettingsUi, patcher);
         }

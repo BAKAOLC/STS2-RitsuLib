@@ -184,6 +184,8 @@ namespace STS2RitsuLib.Settings
                     ModSettingsStructuredData.List<string>());
                 var previewListBinding =
                     ModSettingsBindings.InMemory(Const.ModId, "preview_list", showcaseState.ListItems.ToList());
+                var hostSurfaceCombatReadOnlyDemoBinding =
+                    ModSettingsBindings.InMemory(Const.ModId, "host_surface_ro_demo", false);
 
                 RitsuLibFramework.RegisterModSettings(Const.ModId, page => page
                     .WithModDisplayName(T("ritsulib.mod.displayName", "RitsuLib"))
@@ -273,7 +275,34 @@ namespace STS2RitsuLib.Settings
                             "runtime-hotkeys",
                             T("button.open", "Open"),
                             T("ritsulib.reference.runtimeHotkeys.description",
-                                "Inspect currently registered runtime hotkeys and their active bindings."))));
+                                "Inspect currently registered runtime hotkeys and their active bindings.")))
+                    .AddSection("host_surface_reference", section => section
+                        .WithTitle(T("ritsulib.section.hostSurfaceReference.title", "Settings host surfaces"))
+                        .WithDescription(T("ritsulib.section.hostSurfaceReference.description",
+                            "Main menu vs run pause vs combat pause: visibility and read-only masks for mod settings pages."))
+                        .Collapsible()
+                        .AddParagraph(
+                            "host_surface_intro",
+                            T("ritsulib.hostSurface.intro",
+                                "Use WithVisibleOnHostSurfaces / WithReadOnlyOnHostSurfaces on pages and sections. Defaults keep classic global/profile controls editable on every surface."))
+                        .AddParagraph(
+                            "host_surface_tiers",
+                            T("ritsulib.hostSurface.tiers",
+                                "Preset ideas: (1) leave defaults for UI aids and hotkeys; (2) add WithReadOnlyOnHostSurfaces(CombatPause) for run-locked difficulty fields; (3) WithVisibleOnHostSurfaces(CombatPause) for in-fight debug tools. Combine WithVisibleWhen when a value may be reapplied from menus while a run is already in progress."))
+                        .AddToggle(
+                            "host_surface_combat_readonly_demo",
+                            T("ritsulib.hostSurface.demoToggle.label", "Combat pause read-only demo"),
+                            hostSurfaceCombatReadOnlyDemoBinding,
+                            T("ritsulib.hostSurface.demoToggle.description",
+                                "Read-only while paused mid-combat; editable on the main menu or when paused outside combat."))
+                        .WithReadOnlyOnHostSurfaces(ModSettingsHostSurface.CombatPause))
+                    .AddSection("host_surface_combat_only_demo", section => section
+                        .WithTitle(T("ritsulib.section.hostSurfaceCombatOnly.title", "Combat-only visibility demo"))
+                        .WithVisibleOnHostSurfaces(ModSettingsHostSurface.CombatPause)
+                        .AddParagraph(
+                            "host_surface_combat_only_body",
+                            T("ritsulib.hostSurface.combatOnly.body",
+                                "This block is hidden unless you open mod settings from a pause while a fight is active."))));
 
                 RitsuLibFramework.RegisterModSettings(
                     Const.ModId,

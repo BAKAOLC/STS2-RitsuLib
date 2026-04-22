@@ -1356,8 +1356,9 @@ namespace STS2RitsuLib.Settings
             cache.Button.TooltipText = ResolvePageTabTitle(page);
             cache.Button.SetSelected(string.Equals(page.Id, _selectedPageId, StringComparison.OrdinalIgnoreCase));
             _pageButtons[cache.PageKey] = cache.Button;
-            if (page.VisibleWhen != null)
-                _sidebarDynamicVisibilityTargets.Add((cache.Button, page.VisibleWhen));
+            var pageVisibility = ModSettingsHostSurfaceResolver.CombineVisibility(page.VisibleWhen,
+                () => ModSettingsHostSurfaceResolver.IsVisibleOnCurrentHost(page.VisibleOnHostSurfaces));
+            _sidebarDynamicVisibilityTargets.Add((cache.Button, pageVisibility));
 
             var showSections = string.Equals(page.Id, _selectedPageId, StringComparison.OrdinalIgnoreCase);
             cache.SectionRail.Visible = showSections;
@@ -1439,8 +1440,9 @@ namespace STS2RitsuLib.Settings
                 sectionButton.SetSelected(string.Equals(section.Id, _selectedSectionId,
                     StringComparison.OrdinalIgnoreCase));
                 _sectionButtons[sectionKey] = sectionButton;
-                if (section.VisibleWhen != null)
-                    _sidebarDynamicVisibilityTargets.Add((sectionButton, section.VisibleWhen));
+                var sectionVisibility = ModSettingsHostSurfaceResolver.CombineVisibility(section.VisibleWhen,
+                    () => ModSettingsHostSurfaceResolver.IsVisibleOnCurrentHost(section.VisibleOnHostSurfaces));
+                _sidebarDynamicVisibilityTargets.Add((sectionButton, sectionVisibility));
                 if (sectionButton.GetParent() != cache.SectionRail)
                     cache.SectionRail.AddChild(sectionButton);
                 cache.SectionRail.MoveChild(sectionButton, index);

@@ -64,7 +64,6 @@ namespace STS2RitsuLib.CardPiles.Nodes
         private MegaLabel _countLabel = null!;
         private int _currentCount;
         private bool _hovered;
-        private Control _iconHost = null!;
 
         private HoverTip? _hoverTip;
 
@@ -73,6 +72,7 @@ namespace STS2RitsuLib.CardPiles.Nodes
         // when no IconPath is given) — the latter is what makes bare action buttons render an icon
         // that is pixel-identical to the deck button the player is used to seeing.
         private Control _icon = null!;
+        private Control _iconHost = null!;
 
         // Pile-mode fields (null when ActionDefinition is set).
         private ModCardPile? _pile;
@@ -236,7 +236,7 @@ namespace STS2RitsuLib.CardPiles.Nodes
             //   └── Count (MegaLabel, anchored bottom-right with vanilla offsets)
             // Keeping the node names identical means tooling / scene inspection / future vanilla
             // lookups by path (`Control/Icon`) work on our buttons too.
-            _iconHost = new Control
+            _iconHost = new()
             {
                 Name = "Control",
                 MouseFilter = MouseFilterEnum.Ignore,
@@ -328,12 +328,14 @@ namespace STS2RitsuLib.CardPiles.Nodes
                 if (vanillaIcon == null)
                     return;
 
+                // ReSharper disable BitwiseOperatorOnEnumWithoutFlags
                 // Duplicate scripts + signals + groups so the clone is fully self-contained — without
                 // this flag set Godot strips the ShaderMaterial binding that drives the deck icon's
                 // HSV shader.
                 var clone = vanillaIcon.Duplicate((int)(DuplicateFlags.Scripts
                                                         | DuplicateFlags.Signals
                                                         | DuplicateFlags.Groups));
+                // ReSharper restore BitwiseOperatorOnEnumWithoutFlags
                 if (clone is not Control control)
                 {
                     clone.QueueFree();
@@ -375,9 +377,11 @@ namespace STS2RitsuLib.CardPiles.Nodes
                 if (vanillaCount == null)
                     return;
 
+                // ReSharper disable BitwiseOperatorOnEnumWithoutFlags
                 var clone = vanillaCount.Duplicate((int)(DuplicateFlags.Scripts
                                                          | DuplicateFlags.Signals
                                                          | DuplicateFlags.Groups));
+                // ReSharper restore BitwiseOperatorOnEnumWithoutFlags
                 if (clone is not MegaLabel cloneLabel)
                 {
                     clone.QueueFree();

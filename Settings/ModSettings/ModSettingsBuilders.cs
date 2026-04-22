@@ -14,6 +14,8 @@ namespace STS2RitsuLib.Settings
                                                                 ModSettingsMenuCapabilities.Paste;
 
         private int? _modSidebarOrder;
+        private ModSettingsHostSurface _pageReadOnlyOnHostSurfaces = ModSettingsHostSurface.None;
+        private ModSettingsHostSurface _pageVisibleOnHostSurfaces = ModSettingsHostSurface.All;
         private Func<bool>? _pageVisibleWhen;
 
         /// <summary>
@@ -130,6 +132,24 @@ namespace STS2RitsuLib.Settings
         }
 
         /// <summary>
+        ///     Limits where this page appears (main menu vs run pause vs combat pause). Defaults to all surfaces.
+        /// </summary>
+        public ModSettingsPageBuilder WithVisibleOnHostSurfaces(ModSettingsHostSurface surfaces)
+        {
+            _pageVisibleOnHostSurfaces = surfaces;
+            return this;
+        }
+
+        /// <summary>
+        ///     Host surfaces where controls on this page are read-only (combined with per-section masks).
+        /// </summary>
+        public ModSettingsPageBuilder WithReadOnlyOnHostSurfaces(ModSettingsHostSurface surfaces)
+        {
+            _pageReadOnlyOnHostSurfaces = surfaces;
+            return this;
+        }
+
+        /// <summary>
         ///     Restricts which chrome menu actions are exposed for the page itself.
         /// </summary>
         public ModSettingsPageBuilder WithMenuCapabilities(ModSettingsMenuCapabilities capabilities)
@@ -178,7 +198,9 @@ namespace STS2RitsuLib.Settings
                 SortOrder,
                 _sections.ToArray(),
                 _pageVisibleWhen,
-                _menuCapabilities
+                _menuCapabilities,
+                _pageVisibleOnHostSurfaces,
+                _pageReadOnlyOnHostSurfaces
             );
         }
     }
@@ -194,6 +216,9 @@ namespace STS2RitsuLib.Settings
 
         private ModSettingsMenuCapabilities _menuCapabilities = ModSettingsMenuCapabilities.Copy |
                                                                 ModSettingsMenuCapabilities.Paste;
+
+        private ModSettingsHostSurface _sectionReadOnlyOnHostSurfaces = ModSettingsHostSurface.None;
+        private ModSettingsHostSurface _sectionVisibleOnHostSurfaces = ModSettingsHostSurface.All;
 
         private Func<bool>? _sectionVisibleWhen;
 
@@ -262,6 +287,24 @@ namespace STS2RitsuLib.Settings
         {
             ArgumentNullException.ThrowIfNull(predicate);
             _sectionVisibleWhen = predicate;
+            return this;
+        }
+
+        /// <summary>
+        ///     Limits where this section is shown. Defaults to all host surfaces.
+        /// </summary>
+        public ModSettingsSectionBuilder WithVisibleOnHostSurfaces(ModSettingsHostSurface surfaces)
+        {
+            _sectionVisibleOnHostSurfaces = surfaces;
+            return this;
+        }
+
+        /// <summary>
+        ///     Host surfaces where this section’s value controls are read-only (OR’d with the owning page mask).
+        /// </summary>
+        public ModSettingsSectionBuilder WithReadOnlyOnHostSurfaces(ModSettingsHostSurface surfaces)
+        {
+            _sectionReadOnlyOnHostSurfaces = surfaces;
             return this;
         }
 
@@ -775,7 +818,7 @@ namespace STS2RitsuLib.Settings
             return _entries.Count == 0
                 ? throw new InvalidOperationException($"Settings section '{Id}' has no entries.")
                 : new(Id, Title, Description, IsCollapsible, StartCollapsed, BuildEntries(), _sectionVisibleWhen,
-                    _menuCapabilities);
+                    _menuCapabilities, _sectionVisibleOnHostSurfaces, _sectionReadOnlyOnHostSurfaces);
         }
 
         /// <summary>
