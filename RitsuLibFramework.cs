@@ -10,6 +10,7 @@ using STS2RitsuLib.Combat.HealthBars;
 using STS2RitsuLib.Content;
 using STS2RitsuLib.Data;
 using STS2RitsuLib.Diagnostics.CardExport;
+using STS2RitsuLib.Diagnostics.CompendiumExport;
 using STS2RitsuLib.Interop;
 using STS2RitsuLib.Keywords;
 using STS2RitsuLib.Patching.Core;
@@ -376,6 +377,16 @@ namespace STS2RitsuLib
         public static void BeginCardPngExport(CardPngExportRequest request, Player? issuingPlayer = null)
         {
             CardPngExporter.BeginExport(request, issuingPlayer, msg => Logger.Info(msg));
+        }
+
+        /// <summary>
+        ///     Starts a batch PNG export of compendium-style detail panels: relic <c>inspect_relic_screen</c> popup, and
+        ///     potion lab focus (scaled <c>NPotion</c> + hovers). Does not use save / unlock gating; content is the “seen
+        ///     unlocked” form.
+        /// </summary>
+        public static void BeginCompendiumDetailPngExport(CompendiumPngExportRequest request)
+        {
+            CompendiumDetailPngExporter.BeginExport(request, msg => Logger.Info(msg));
         }
 
         /// <summary>

@@ -1,10 +1,11 @@
+using System.Text.RegularExpressions;
 using Godot;
 using STS2RitsuLib.Compat;
 using STS2RitsuLib.Utils.Persistence;
 
 namespace STS2RitsuLib.Settings
 {
-    internal sealed class ModSettingsUiContext(RitsuModSettingsSubmenu submenu, string? pageScopeId = null)
+    internal sealed partial class ModSettingsUiContext(RitsuModSettingsSubmenu submenu, string? pageScopeId = null)
         : IModSettingsUiActionHost
     {
         private readonly Dictionary<string, Dictionary<string, object?>> _rowUiState = [];
@@ -42,8 +43,16 @@ namespace STS2RitsuLib.Settings
 
         public static string ResolveBindingDescriptionBody(ModSettingsText? description)
         {
-            return Resolve(description);
+            return NormalizeDescriptionRichText(Resolve(description));
         }
+
+        private static string NormalizeDescriptionRichText(string s)
+        {
+            return string.IsNullOrEmpty(s) ? s : LegacyCodeTagRegex().Replace(s, "[code]$1[/code]");
+        }
+
+        [GeneratedRegex("<c>(.*?)</c>", RegexOptions.Singleline)]
+        private static partial Regex LegacyCodeTagRegex();
 
         public static string GetPersistenceScopeChipText(IModSettingsBinding binding)
         {

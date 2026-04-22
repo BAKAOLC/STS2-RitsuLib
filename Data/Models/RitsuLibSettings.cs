@@ -115,5 +115,47 @@ namespace STS2RitsuLib.Data.Models
         /// </summary>
         [JsonPropertyName("card_png_export_include_hidden_from_library")]
         public bool CardPngExportIncludeHiddenFromLibrary { get; set; }
+
+        /// <summary>
+        ///     Output directory for relic inspect detail PNG export.
+        /// </summary>
+        [JsonPropertyName("relic_detail_png_export_output_path")]
+        public string RelicDetailPngExportOutputPath { get; set; } = "";
+
+        /// <summary>
+        ///     Render scale for relic detail export.
+        /// </summary>
+        [JsonPropertyName("relic_detail_png_export_scale")]
+        public double RelicDetailPngExportScale { get; set; } = 1d;
+
+        /// <summary>
+        ///     Optional <c>ModelId.Entry</c> substring for relic detail export; empty = all.
+        /// </summary>
+        [JsonPropertyName("relic_detail_png_export_id_filter")]
+        public string RelicDetailPngExportIdFilter { get; set; } = "";
+
+        /// <summary>
+        ///     When true, relic detail export includes the right-hand hover column.
+        /// </summary>
+        [JsonPropertyName("relic_detail_png_export_include_hover")]
+        public bool RelicDetailPngExportIncludeHover { get; set; } = true;
+
+        /// <summary>
+        ///     Output directory for potion lab focus detail PNG export.
+        /// </summary>
+        [JsonPropertyName("potion_detail_png_export_output_path")]
+        public string PotionDetailPngExportOutputPath { get; set; } = "";
+
+        /// <summary>
+        ///     Render scale for potion detail export.
+        /// </summary>
+        [JsonPropertyName("potion_detail_png_export_scale")]
+        public double PotionDetailPngExportScale { get; set; } = 1d;
+
+        /// <summary>
+        ///     Optional <c>ModelId.Entry</c> substring for potion detail export; empty = all.
+        /// </summary>
+        [JsonPropertyName("potion_detail_png_export_id_filter")]
+        public string PotionDetailPngExportIdFilter { get; set; } = "";
     }
 }

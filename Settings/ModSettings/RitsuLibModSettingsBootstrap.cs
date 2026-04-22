@@ -4,6 +4,7 @@ using STS2RitsuLib.Data;
 using STS2RitsuLib.Data.Models;
 using STS2RitsuLib.Diagnostics;
 using STS2RitsuLib.Diagnostics.CardExport;
+using STS2RitsuLib.Diagnostics.CompendiumExport;
 using STS2RitsuLib.RuntimeInput;
 using STS2RitsuLib.Utils.Persistence;
 
@@ -115,6 +116,48 @@ namespace STS2RitsuLib.Settings
                     settings => settings.CardPngExportIncludeHiddenFromLibrary,
                     (settings, value) => settings.CardPngExportIncludeHiddenFromLibrary = value);
 
+                var relicDetailPngPathBinding = ModSettingsBindings.Global<RitsuLibSettings, string>(
+                    Const.ModId,
+                    Const.SettingsKey,
+                    settings => settings.RelicDetailPngExportOutputPath,
+                    (settings, value) => settings.RelicDetailPngExportOutputPath = value);
+
+                var relicDetailPngScaleBinding = ModSettingsBindings.Global<RitsuLibSettings, double>(
+                    Const.ModId,
+                    Const.SettingsKey,
+                    settings => settings.RelicDetailPngExportScale,
+                    (settings, value) => settings.RelicDetailPngExportScale = value);
+
+                var relicDetailPngFilterBinding = ModSettingsBindings.Global<RitsuLibSettings, string>(
+                    Const.ModId,
+                    Const.SettingsKey,
+                    settings => settings.RelicDetailPngExportIdFilter,
+                    (settings, value) => settings.RelicDetailPngExportIdFilter = value);
+
+                var relicDetailPngIncludeHoverBinding = ModSettingsBindings.Global<RitsuLibSettings, bool>(
+                    Const.ModId,
+                    Const.SettingsKey,
+                    settings => settings.RelicDetailPngExportIncludeHover,
+                    (settings, value) => settings.RelicDetailPngExportIncludeHover = value);
+
+                var potionDetailPngPathBinding = ModSettingsBindings.Global<RitsuLibSettings, string>(
+                    Const.ModId,
+                    Const.SettingsKey,
+                    settings => settings.PotionDetailPngExportOutputPath,
+                    (settings, value) => settings.PotionDetailPngExportOutputPath = value);
+
+                var potionDetailPngScaleBinding = ModSettingsBindings.Global<RitsuLibSettings, double>(
+                    Const.ModId,
+                    Const.SettingsKey,
+                    settings => settings.PotionDetailPngExportScale,
+                    (settings, value) => settings.PotionDetailPngExportScale = value);
+
+                var potionDetailPngFilterBinding = ModSettingsBindings.Global<RitsuLibSettings, string>(
+                    Const.ModId,
+                    Const.SettingsKey,
+                    settings => settings.PotionDetailPngExportIdFilter,
+                    (settings, value) => settings.PotionDetailPngExportIdFilter = value);
+
                 var showcaseState = new DebugShowcaseState();
                 var previewToggleBinding =
                     ModSettingsBindings.InMemory(Const.ModId, "preview_toggle", showcaseState.ToggleValue);
@@ -202,12 +245,12 @@ namespace STS2RitsuLib.Settings
                             T("ritsulib.section.selfCheck.description",
                                 "Run framework self-checks, export logs and Harmony dump into one folder, then pack them into a zip."))
                         .AddSubpage(
-                            "card_png_export_open",
-                            T("ritsulib.section.cardPngExport.title", "Card PNG export (dev)"),
-                            "card-png-export",
+                            "image_png_export_open",
+                            T("ritsulib.section.imagePngExport.title", "Image PNG export (dev)"),
+                            "image-png-export",
                             T("button.open", "Open"),
-                            T("ritsulib.section.cardPngExport.description",
-                                "Library card set.")))
+                            T("ritsulib.section.imagePngExport.description",
+                                "Card, relic, and potion image exports.")))
                     .AddSection("reference", section => section
                         .WithTitle(T("ritsulib.section.reference.title", "Reference"))
                         .WithDescription(T("ritsulib.section.reference.description",
@@ -302,7 +345,12 @@ namespace STS2RitsuLib.Settings
                                 "self_check_browse",
                                 T("ritsulib.selfCheck.browse.label", "Choose output folder"),
                                 T("ritsulib.selfCheck.browse.button", "Browse…"),
-                                host => SelfCheckExportFolderDialog.Show(selfCheckOutputFolderBinding, host),
+                                host => ModSettingsOpenFolderDialog.Show(
+                                    selfCheckOutputFolderBinding,
+                                    host,
+                                    "SelfCheck",
+                                    "ritsulib.selfCheck.browseTitle",
+                                    "Choose self-check output folder"),
                                 ModSettingsButtonTone.Normal,
                                 T("ritsulib.selfCheck.browse.hint",
                                     "Opens a folder picker and fills the output folder above."))
@@ -329,10 +377,12 @@ namespace STS2RitsuLib.Settings
                     page => page
                         .AsChildOf(Const.ModId)
                         .WithSortOrder(-200)
-                        .WithTitle(T("ritsulib.page.cardPngExport.title", "Card PNG export (dev)"))
-                        .WithDescription(T("ritsulib.page.cardPngExport.description",
-                            "Same card set as the library."))
-                        .AddSection("card_png_export", section => section
+                        .WithTitle(T("ritsulib.page.imagePngExport.title", "Image PNG export (dev)"))
+                        .WithDescription(T("ritsulib.page.imagePngExport.description",
+                            "Batch export for library cards, relic inspection popups, and potion lab focus panels. Detail content uses unlocked / seen appearance; no save gating."))
+                        .AddSection("image_export_cards", section => section
+                            .WithTitle(T("ritsulib.section.imagePngExport.cards", "Cards"))
+                            .Collapsible(true)
                             .AddString(
                                 "card_png_export_output_path",
                                 T("ritsulib.cardPngExport.path.label", "Output folder"),
@@ -344,7 +394,12 @@ namespace STS2RitsuLib.Settings
                                 "card_png_export_browse",
                                 T("ritsulib.cardPngExport.browse.label", "Choose output folder"),
                                 T("ritsulib.cardPngExport.browse.button", "Browse…"),
-                                host => CardPngExportFolderDialog.Show(cardPngExportPathBinding, host))
+                                host => ModSettingsOpenFolderDialog.Show(
+                                    cardPngExportPathBinding,
+                                    host,
+                                    "CardPngExport",
+                                    "ritsulib.cardPngExport.browseTitle",
+                                    "Choose card PNG export folder"))
                             .AddToggle(
                                 "card_png_export_include_hover",
                                 T("ritsulib.cardPngExport.hover.label", "Include hover-tip panel"),
@@ -384,8 +439,105 @@ namespace STS2RitsuLib.Settings
                                     cardPngExportScaleBinding,
                                     cardPngExportFilterBinding,
                                     cardPngExportIncludeHiddenBinding),
+                                ModSettingsButtonTone.Accent))
+                        .AddSection("image_export_relics", section => section
+                            .WithTitle(T("ritsulib.section.imagePngExport.relics", "Relics"))
+                            .Collapsible(true)
+                            .AddString(
+                                "relic_detail_png_export_output_path",
+                                T("ritsulib.relicDetailPngExport.path.label", "Output folder"),
+                                relicDetailPngPathBinding,
+                                T("ritsulib.relicDetailPngExport.path.placeholder",
+                                    "Absolute path or user://… (e.g. user://ritsu_relic_png)"),
+                                1024)
+                            .AddButton(
+                                "relic_detail_png_export_browse",
+                                T("ritsulib.relicDetailPngExport.browse.label", "Choose output folder"),
+                                T("ritsulib.relicDetailPngExport.browse.button", "Browse…"),
+                                host => ModSettingsOpenFolderDialog.Show(
+                                    relicDetailPngPathBinding,
+                                    host,
+                                    "RelicDetailPngExport",
+                                    "ritsulib.relicDetailPngExport.browseTitle",
+                                    "Choose relic detail PNG export folder"))
+                            .AddSlider(
+                                "relic_detail_png_export_scale",
+                                T("ritsulib.relicDetailPngExport.scale.label", "Render scale"),
+                                relicDetailPngScaleBinding,
+                                0.25d,
+                                4d,
+                                0.25d,
+                                v => v.ToString("0.##", CultureInfo.InvariantCulture))
+                            .AddString(
+                                "relic_detail_png_export_id_filter",
+                                T("ritsulib.relicDetailPngExport.filter.label", "Relic id contains (optional)"),
+                                relicDetailPngFilterBinding,
+                                T("ritsulib.relicDetailPngExport.filter.placeholder", "Empty = all; e.g. CIRCLET"),
+                                256,
+                                T("ritsulib.relicDetailPngExport.filter.description",
+                                    "Substring on <c>ModelId.Entry</c>, case-insensitive."))
+                            .AddToggle(
+                                "relic_detail_png_export_include_hover",
+                                T("ritsulib.relicDetailPngExport.includeHover.label", "Include hover-tip panel"),
+                                relicDetailPngIncludeHoverBinding,
+                                T("ritsulib.relicDetailPngExport.includeHover.description",
+                                    "When true, export layout includes a right-hand hover-tip style column."))
+                            .AddButton(
+                                "relic_detail_png_export_start",
+                                T("ritsulib.relicDetailPngExport.start.label", "Start relic export"),
+                                T("ritsulib.relicDetailPngExport.start.button", "Start export"),
+                                () => CompendiumPngExportSettingsActions.TryBeginRelicDetailFromSettings(
+                                    relicDetailPngPathBinding,
+                                    relicDetailPngScaleBinding,
+                                    relicDetailPngFilterBinding,
+                                    relicDetailPngIncludeHoverBinding),
+                                ModSettingsButtonTone.Accent))
+                        .AddSection("image_export_potions", section => section
+                            .WithTitle(T("ritsulib.section.imagePngExport.potions", "Potions"))
+                            .Collapsible(true)
+                            .AddString(
+                                "potion_detail_png_export_output_path",
+                                T("ritsulib.potionDetailPngExport.path.label", "Output folder"),
+                                potionDetailPngPathBinding,
+                                T("ritsulib.potionDetailPngExport.path.placeholder",
+                                    "Absolute path or user://… (e.g. user://ritsu_potion_png)"),
+                                1024)
+                            .AddButton(
+                                "potion_detail_png_export_browse",
+                                T("ritsulib.potionDetailPngExport.browse.label", "Choose output folder"),
+                                T("ritsulib.potionDetailPngExport.browse.button", "Browse…"),
+                                host => ModSettingsOpenFolderDialog.Show(
+                                    potionDetailPngPathBinding,
+                                    host,
+                                    "PotionDetailPngExport",
+                                    "ritsulib.potionDetailPngExport.browseTitle",
+                                    "Choose potion detail PNG export folder"))
+                            .AddSlider(
+                                "potion_detail_png_export_scale",
+                                T("ritsulib.potionDetailPngExport.scale.label", "Render scale"),
+                                potionDetailPngScaleBinding,
+                                0.25d,
+                                4d,
+                                0.25d,
+                                v => v.ToString("0.##", CultureInfo.InvariantCulture))
+                            .AddString(
+                                "potion_detail_png_export_id_filter",
+                                T("ritsulib.potionDetailPngExport.filter.label", "Potion id contains (optional)"),
+                                potionDetailPngFilterBinding,
+                                T("ritsulib.potionDetailPngExport.filter.placeholder", "Empty = all; e.g. STRENGTH"),
+                                256,
+                                T("ritsulib.potionDetailPngExport.filter.description",
+                                    "Substring on <c>ModelId.Entry</c>, case-insensitive."))
+                            .AddButton(
+                                "potion_detail_png_export_start",
+                                T("ritsulib.potionDetailPngExport.start.label", "Start potion export"),
+                                T("ritsulib.potionDetailPngExport.start.button", "Start export"),
+                                () => CompendiumPngExportSettingsActions.TryBeginPotionDetailFromSettings(
+                                    potionDetailPngPathBinding,
+                                    potionDetailPngScaleBinding,
+                                    potionDetailPngFilterBinding),
                                 ModSettingsButtonTone.Accent)),
-                    "card-png-export");
+                    "image-png-export");
 
                 RefreshDynamicPages();
 
