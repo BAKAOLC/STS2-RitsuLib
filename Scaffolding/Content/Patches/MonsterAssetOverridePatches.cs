@@ -1,3 +1,4 @@
+using HarmonyLib;
 using MegaCrit.Sts2.Core.Models;
 using STS2RitsuLib.Patching.Models;
 
@@ -37,7 +38,7 @@ namespace STS2RitsuLib.Scaffolding.Content.Patches
         /// <inheritdoc cref="IPatchMethod.GetTargets" />
         public static ModPatchTarget[] GetTargets()
         {
-            return [new(typeof(MonsterModel), "get_VisualsPath")];
+            return [new(typeof(MonsterModel), "VisualsPath", MethodType.Getter)];
         }
 
         // ReSharper disable InconsistentNaming

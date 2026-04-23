@@ -1,4 +1,5 @@
 using System.Reflection;
+using HarmonyLib;
 using MegaCrit.Sts2.Core.Entities.Cards;
 using MegaCrit.Sts2.Core.Entities.Players;
 using STS2RitsuLib.Patching.Models;
@@ -40,7 +41,7 @@ namespace STS2RitsuLib.CardPiles.Patches
         /// <inheritdoc />
         public static ModPatchTarget[] GetTargets()
         {
-            return [new(typeof(PlayerCombatState), "get_" + nameof(PlayerCombatState.AllPiles))];
+            return [new(typeof(PlayerCombatState), nameof(PlayerCombatState.AllPiles), MethodType.Getter)];
         }
 
         // ReSharper disable InconsistentNaming

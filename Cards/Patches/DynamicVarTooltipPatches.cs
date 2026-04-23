@@ -1,3 +1,4 @@
+using HarmonyLib;
 using MegaCrit.Sts2.Core.HoverTips;
 using MegaCrit.Sts2.Core.Localization.DynamicVars;
 using MegaCrit.Sts2.Core.Models;
@@ -25,7 +26,7 @@ namespace STS2RitsuLib.Cards.Patches
         {
             return
             [
-                new(typeof(CardModel), "get_HoverTips"),
+                new(typeof(CardModel), "HoverTips", MethodType.Getter),
             ];
         }
 
