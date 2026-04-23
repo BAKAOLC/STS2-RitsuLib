@@ -260,7 +260,10 @@ namespace STS2RitsuLib
             patcher.RegisterPatch<CharacterIconTexturePathPatch>();
             patcher.RegisterPatch<CharacterIconPathPatch>();
             patcher.RegisterPatch<CharacterSelectBgPathPatch>();
+            patcher.RegisterPatch<CharacterSelectIconPathPatch>();
+            patcher.RegisterPatch<CharacterSelectLockedIconPathPatch>();
             patcher.RegisterPatch<CharacterSelectTransitionPathPatch>();
+            patcher.RegisterPatch<CharacterMapMarkerPathPatch>();
             patcher.RegisterPatch<CharacterTrailPathPatch>();
             patcher.RegisterPatch<CharacterTrailStyleOverridePatch>();
             patcher.RegisterPatch<CharacterAttackSfxPatch>();
