@@ -391,41 +391,35 @@ namespace STS2RitsuLib.Scaffolding.Content.Patches
 
         private static IModCharacterAssetOverrides? TryGetOwningCharacterOverrides(RelicModel instance)
         {
-            if (instance.IsCanonical)
-                return ResolveOwningCharacterOverrides(null);
-
-            return ResolveOwningCharacterOverrides(instance.Owner?.Character);
+            return ResolveOwningCharacterOverrides(instance.IsCanonical ? null : instance.Owner?.Character);
         }
 
         private static IModCharacterAssetOverrides? TryGetOwningCharacterOverrides(PotionModel instance)
         {
-            if (instance.IsCanonical)
-                return ResolveOwningCharacterOverrides(null);
-
-            return ResolveOwningCharacterOverrides(instance.Owner?.Character);
+            return ResolveOwningCharacterOverrides(instance.IsCanonical ? null : instance.Owner?.Character);
         }
 
         private static IModCharacterAssetOverrides? TryGetOwningCharacterOverrides(CardModel instance)
         {
-            if (instance.IsCanonical)
-                return ResolveOwningCharacterOverrides(null);
-
-            return ResolveOwningCharacterOverrides(instance.Owner?.Character);
+            return ResolveOwningCharacterOverrides(instance.IsCanonical ? null : instance.Owner?.Character);
         }
 
         private static IModCharacterAssetOverrides? ResolveOwningCharacterOverrides(CharacterModel? owner)
         {
             lock (SyncRoot)
             {
-                if (owner is IModCharacterAssetOverrides direct)
-                    return direct;
-
-                if (owner == null)
+                switch (owner)
                 {
-                    if (!ModContentRegistry.TryGetGlobalCharacterAssetReplacement(out var globalProfile))
-                        return null;
+                    case IModCharacterAssetOverrides direct:
+                        return direct;
+                    case null:
+                    {
+                        if (!ModContentRegistry.TryGetGlobalCharacterAssetReplacement(out var globalProfile))
+                            return null;
 
-                    return _cachedGlobalProfileAdapter ??= new RegisteredCharacterAssetOverrideAdapter(globalProfile);
+                        return _cachedGlobalProfileAdapter ??=
+                            new RegisteredCharacterAssetOverrideAdapter(globalProfile);
+                    }
                 }
 
                 if (!ModContentRegistry.TryGetEffectiveCharacterAssetReplacement(owner.Id.Entry, out var profile))

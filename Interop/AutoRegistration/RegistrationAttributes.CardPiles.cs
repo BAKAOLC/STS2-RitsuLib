@@ -80,5 +80,22 @@ namespace STS2RitsuLib.Interop.AutoRegistration
         ///     the pile are rendered as <c>NCard</c> nodes inside the pile container.
         /// </summary>
         public bool CardShouldBeVisible { get; set; }
+
+        /// <summary>
+        ///     Added to the hover tip position after automatic placement (see <see cref="ModCardPileSpec.HoverTipScreenOffset" />
+        ///     ).
+        /// </summary>
+        public float HoverTipOffsetX { get; set; }
+
+        /// <summary>
+        ///     Added to the hover tip position after automatic placement (see <see cref="ModCardPileSpec.HoverTipScreenOffset" />
+        ///     ).
+        /// </summary>
+        public float HoverTipOffsetY { get; set; }
+
+        /// <summary>
+        ///     Hover tip anchor relative to the pile button (see <see cref="ModCardPileSpec.HoverTipPlacement" />).
+        /// </summary>
+        public ModCardPileHoverTipPlacement HoverTipPlacement { get; set; }
     }
 }

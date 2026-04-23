@@ -1,3 +1,4 @@
+using Godot;
 using MegaCrit.Sts2.Core.Entities.Cards;
 using MegaCrit.Sts2.Core.Localization;
 
@@ -35,6 +36,16 @@ namespace STS2RitsuLib.CardPiles
         /// <param name="onOpen">
         ///     Optional callback invoked when the pile's UI button is released (see <see cref="OnOpen" />).
         /// </param>
+        /// <param name="hoverTipScreenOffset">
+        ///     Added to the hover tip position after automatic placement (see <see cref="HoverTipScreenOffset" />).
+        /// </param>
+        /// <param name="hoverTipPlacement">
+        ///     How the hover tip is anchored to the pile button (see <see cref="HoverTipPlacement" />).
+        /// </param>
+        /// <param name="visibleWhen">
+        ///     Optional visibility predicate (see <see cref="VisibleWhen" />). Null means always visible on the
+        ///     button node (subject to parent visibility).
+        /// </param>
         public ModCardPileDefinition(
             string modId,
             string id,
@@ -46,7 +57,10 @@ namespace STS2RitsuLib.CardPiles
             string? locStem,
             string[]? hotkeys,
             bool cardShouldBeVisible,
-            Action<ModCardPileOpenContext>? onOpen = null)
+            Action<ModCardPileOpenContext>? onOpen,
+            Vector2 hoverTipScreenOffset,
+            ModCardPileHoverTipPlacement hoverTipPlacement,
+            Func<ModCardPileVisibilityContext, bool>? visibleWhen)
         {
             ModId = modId;
             Id = id;
@@ -59,6 +73,98 @@ namespace STS2RitsuLib.CardPiles
             Hotkeys = hotkeys;
             CardShouldBeVisible = cardShouldBeVisible;
             OnOpen = onOpen;
+            HoverTipScreenOffset = hoverTipScreenOffset;
+            HoverTipPlacement = hoverTipPlacement;
+            VisibleWhen = visibleWhen;
+        }
+
+        /// <summary>
+        ///     Compatibility overload for the thirteen-parameter constructor shape that omitted
+        ///     <see cref="VisibleWhen" />; forwards with null.
+        /// </summary>
+        public ModCardPileDefinition(
+            string modId,
+            string id,
+            PileType pileType,
+            ModCardPileScope scope,
+            ModCardPileUiStyle style,
+            ModCardPileAnchor anchor,
+            string? iconPath,
+            string? locStem,
+            string[]? hotkeys,
+            bool cardShouldBeVisible,
+            Action<ModCardPileOpenContext>? onOpen,
+            Vector2 hoverTipScreenOffset,
+            ModCardPileHoverTipPlacement hoverTipPlacement)
+            : this(modId, id, pileType, scope, style, anchor, iconPath, locStem, hotkeys, cardShouldBeVisible, onOpen,
+                hoverTipScreenOffset, hoverTipPlacement, null)
+        {
+        }
+
+        /// <summary>
+        ///     Compatibility overload for the twelve-parameter constructor shape that omitted
+        ///     <see cref="HoverTipPlacement" />; forwards with <see cref="ModCardPileHoverTipPlacement.Auto" />.
+        /// </summary>
+        public ModCardPileDefinition(
+            string modId,
+            string id,
+            PileType pileType,
+            ModCardPileScope scope,
+            ModCardPileUiStyle style,
+            ModCardPileAnchor anchor,
+            string? iconPath,
+            string? locStem,
+            string[]? hotkeys,
+            bool cardShouldBeVisible,
+            Action<ModCardPileOpenContext>? onOpen,
+            Vector2 hoverTipScreenOffset)
+            : this(modId, id, pileType, scope, style, anchor, iconPath, locStem, hotkeys, cardShouldBeVisible, onOpen,
+                hoverTipScreenOffset, ModCardPileHoverTipPlacement.Auto)
+        {
+        }
+
+        /// <summary>
+        ///     Compatibility overload matching the historical call shape that omitted
+        ///     <see cref="OnOpen" />; forwards with a null <see cref="OnOpen" />,
+        ///     <see cref="Vector2.Zero" /> for <see cref="HoverTipScreenOffset" />, and
+        ///     <see cref="ModCardPileHoverTipPlacement.Auto" /> for <see cref="HoverTipPlacement" />.
+        /// </summary>
+        public ModCardPileDefinition(
+            string modId,
+            string id,
+            PileType pileType,
+            ModCardPileScope scope,
+            ModCardPileUiStyle style,
+            ModCardPileAnchor anchor,
+            string? iconPath,
+            string? locStem,
+            string[]? hotkeys,
+            bool cardShouldBeVisible)
+            : this(modId, id, pileType, scope, style, anchor, iconPath, locStem, hotkeys, cardShouldBeVisible, null,
+                default, ModCardPileHoverTipPlacement.Auto)
+        {
+        }
+
+        /// <summary>
+        ///     Compatibility overload for the historical eleven-parameter constructor shape (before
+        ///     <see cref="HoverTipScreenOffset" /> and <see cref="HoverTipPlacement" />); forwards with
+        ///     <see cref="Vector2.Zero" /> and <see cref="ModCardPileHoverTipPlacement.Auto" />.
+        /// </summary>
+        public ModCardPileDefinition(
+            string modId,
+            string id,
+            PileType pileType,
+            ModCardPileScope scope,
+            ModCardPileUiStyle style,
+            ModCardPileAnchor anchor,
+            string? iconPath,
+            string? locStem,
+            string[]? hotkeys,
+            bool cardShouldBeVisible,
+            Action<ModCardPileOpenContext>? onOpen)
+            : this(modId, id, pileType, scope, style, anchor, iconPath, locStem, hotkeys, cardShouldBeVisible, onOpen,
+                default, ModCardPileHoverTipPlacement.Auto)
+        {
         }
 
         /// <summary>
@@ -137,5 +243,21 @@ namespace STS2RitsuLib.CardPiles
         ///     <c>NCardPileScreen</c>". See <see cref="ModCardPileSpec.OnOpen" /> for the full contract.
         /// </summary>
         public Action<ModCardPileOpenContext>? OnOpen { get; }
+
+        /// <summary>
+        ///     Extra pixels added to the hover tip position (see <see cref="ModCardPileSpec.HoverTipScreenOffset" />).
+        /// </summary>
+        public Vector2 HoverTipScreenOffset { get; }
+
+        /// <summary>
+        ///     How the hover tip is anchored to the pile button (see <see cref="ModCardPileSpec.HoverTipPlacement" />).
+        /// </summary>
+        public ModCardPileHoverTipPlacement HoverTipPlacement { get; }
+
+        /// <summary>
+        ///     When non-null, the pile button evaluates this on <c>_Process</c> and hides itself when the
+        ///     predicate returns false (see <see cref="ModCardPileSpec.VisibleWhen" />).
+        /// </summary>
+        public Func<ModCardPileVisibilityContext, bool>? VisibleWhen { get; }
     }
 }

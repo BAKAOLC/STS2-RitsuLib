@@ -1,3 +1,4 @@
+using System.Diagnostics.CodeAnalysis;
 using System.Runtime.CompilerServices;
 using HarmonyLib;
 using MegaCrit.Sts2.Core.Models;
@@ -47,6 +48,55 @@ namespace STS2RitsuLib.Utils
         }
 
         /// <summary>
+        ///     Determines whether an entry exists for <paramref name="key" /> (without creating one).
+        /// </summary>
+        public bool ContainsKey(TKey key)
+        {
+            ArgumentNullException.ThrowIfNull(key);
+            return _table.TryGetValue(key, out _);
+        }
+
+        /// <summary>
+        ///     Adds an entry for <paramref name="key" /> if absent.
+        /// </summary>
+        /// <returns>True if the entry was added; false if <paramref name="key" /> already had a value.</returns>
+        public bool TryAdd(TKey key, TValue value)
+        {
+            ArgumentNullException.ThrowIfNull(key);
+            return _table.TryAdd(key, new(value));
+        }
+
+        /// <summary>
+        ///     Adds an entry for <paramref name="key" />.
+        /// </summary>
+        /// <exception cref="ArgumentException">An entry for <paramref name="key" /> already exists.</exception>
+        public void Add(TKey key, TValue value)
+        {
+            ArgumentNullException.ThrowIfNull(key);
+            if (!_table.TryAdd(key, new(value)))
+                throw new ArgumentException("An item with the same key has already been added.", nameof(key));
+        }
+
+        /// <summary>
+        ///     Returns the existing value for <paramref name="key" /> or adds <paramref name="value" /> and returns it.
+        /// </summary>
+        public TValue GetOrAdd(TKey key, TValue value)
+        {
+            ArgumentNullException.ThrowIfNull(key);
+            return _table.GetValue(key, _ => new(value)).Value;
+        }
+
+        /// <summary>
+        ///     Returns the existing value for <paramref name="key" /> or creates one with <paramref name="valueFactory" />.
+        /// </summary>
+        public TValue GetOrAdd(TKey key, Func<TKey, TValue> valueFactory)
+        {
+            ArgumentNullException.ThrowIfNull(key);
+            ArgumentNullException.ThrowIfNull(valueFactory);
+            return _table.GetValue(key, k => new(valueFactory(k))).Value;
+        }
+
+        /// <summary>
         ///     Returns the existing value for <paramref name="key" /> or creates and stores one.
         /// </summary>
         public TValue GetOrCreate(TKey key)
@@ -56,9 +106,27 @@ namespace STS2RitsuLib.Utils
         }
 
         /// <summary>
+        ///     Returns the value for <paramref name="key" /> if present; otherwise <c>default(TValue)</c>.
+        /// </summary>
+        public TValue? GetValueOrDefault(TKey key)
+        {
+            ArgumentNullException.ThrowIfNull(key);
+            return TryGetValue(key, out var value) ? value : default;
+        }
+
+        /// <summary>
+        ///     Returns the value for <paramref name="key" /> if present; otherwise <paramref name="defaultValue" />.
+        /// </summary>
+        public TValue GetValueOrDefault(TKey key, TValue defaultValue)
+        {
+            ArgumentNullException.ThrowIfNull(key);
+            return TryGetValue(key, out var value) ? value : defaultValue;
+        }
+
+        /// <summary>
         ///     Attempts to read the attached value without creating it.
         /// </summary>
-        public bool TryGetValue(TKey key, out TValue value)
+        public bool TryGetValue(TKey key, [MaybeNullWhen(false)] out TValue value)
         {
             ArgumentNullException.ThrowIfNull(key);
 
@@ -100,7 +168,40 @@ namespace STS2RitsuLib.Utils
         public bool Remove(TKey key)
         {
             ArgumentNullException.ThrowIfNull(key);
-            return _table.Remove(key);
+            return TryRemove(key, out _);
+        }
+
+        /// <summary>
+        ///     Removes the value attached to <paramref name="key" /> if present.
+        /// </summary>
+        /// <returns>True if an entry was removed.</returns>
+        public bool TryRemove(TKey key, [MaybeNullWhen(false)] out TValue value)
+        {
+            ArgumentNullException.ThrowIfNull(key);
+
+            if (!_table.TryGetValue(key, out var box))
+            {
+                value = default!;
+                return false;
+            }
+
+            var extracted = box.Value;
+            if (!_table.Remove(key))
+            {
+                value = default!;
+                return false;
+            }
+
+            value = extracted;
+            return true;
+        }
+
+        /// <summary>
+        ///     Removes all in-memory entries from the table (does not unregister the saved field or alter disk data).
+        /// </summary>
+        public void Clear()
+        {
+            _table.Clear();
         }
 
         private sealed class Box(TValue value)
