@@ -5,6 +5,7 @@ using STS2RitsuLib.Content;
 using STS2RitsuLib.Scaffolding.Ancients.Options;
 using STS2RitsuLib.Scaffolding.Cards.HandGlow;
 using STS2RitsuLib.Scaffolding.Cards.HandOutline;
+using STS2RitsuLib.Scaffolding.Characters;
 
 namespace STS2RitsuLib.Scaffolding.Content
 {
@@ -110,6 +111,20 @@ namespace STS2RitsuLib.Scaffolding.Content
         public void Register(ModContentRegistry registry)
         {
             registry.RegisterCharacterStarterPotion<TCharacter, TPotion>(count);
+        }
+    }
+
+    /// <summary>
+    ///     Registers direct asset replacement for a target character id (vanilla or mod).
+    /// </summary>
+    public sealed class CharacterAssetReplacementRegistrationEntry(
+        string characterEntry,
+        CharacterAssetProfile assetProfile) : IContentRegistrationEntry
+    {
+        /// <inheritdoc />
+        public void Register(ModContentRegistry registry)
+        {
+            registry.RegisterCharacterAssetReplacement(characterEntry, assetProfile);
         }
     }
 

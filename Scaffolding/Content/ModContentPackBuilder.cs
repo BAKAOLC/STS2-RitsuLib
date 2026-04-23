@@ -7,6 +7,7 @@ using STS2RitsuLib.Keywords;
 using STS2RitsuLib.Scaffolding.Ancients.Options;
 using STS2RitsuLib.Scaffolding.Cards.HandGlow;
 using STS2RitsuLib.Scaffolding.Cards.HandOutline;
+using STS2RitsuLib.Scaffolding.Characters;
 using STS2RitsuLib.Timeline;
 using STS2RitsuLib.Timeline.Scaffolding;
 using STS2RitsuLib.Unlocks;
@@ -99,6 +100,17 @@ namespace STS2RitsuLib.Scaffolding.Content
             where TPotion : PotionModel
         {
             return AddStep(ctx => ctx.Content.RegisterCharacterStarterPotion<TCharacter, TPotion>(count));
+        }
+
+        /// <summary>
+        ///     Queues direct character asset replacement registration by character id.
+        /// </summary>
+        public ModContentPackBuilder CharacterAssetReplacement(string characterEntry,
+            CharacterAssetProfile assetProfile)
+        {
+            ArgumentException.ThrowIfNullOrWhiteSpace(characterEntry);
+            ArgumentNullException.ThrowIfNull(assetProfile);
+            return AddStep(ctx => ctx.Content.RegisterCharacterAssetReplacement(characterEntry, assetProfile));
         }
 
         /// <summary>
