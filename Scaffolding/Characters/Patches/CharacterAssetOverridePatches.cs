@@ -1,3 +1,4 @@
+using HarmonyLib;
 using MegaCrit.Sts2.Core.Models;
 using STS2RitsuLib.Content;
 using STS2RitsuLib.Patching.Models;
@@ -111,7 +112,7 @@ namespace STS2RitsuLib.Scaffolding.Characters.Patches
         /// <inheritdoc />
         public static ModPatchTarget[] GetTargets()
         {
-            return [new(typeof(CharacterModel), "get_IconOutlineTexturePath")];
+            return [new(typeof(CharacterModel), nameof(CharacterModel.IconOutlineTexturePath), MethodType.Getter)];
         }
 
         // ReSharper disable InconsistentNaming
@@ -147,7 +148,7 @@ namespace STS2RitsuLib.Scaffolding.Characters.Patches
         /// <inheritdoc />
         public static ModPatchTarget[] GetTargets()
         {
-            return [new(typeof(CharacterModel), "get_VisualsPath")];
+            return [new(typeof(CharacterModel), nameof(CharacterModel.VisualsPath), MethodType.Getter)];
         }
 
         // ReSharper disable InconsistentNaming
@@ -182,7 +183,7 @@ namespace STS2RitsuLib.Scaffolding.Characters.Patches
         /// <inheritdoc />
         public static ModPatchTarget[] GetTargets()
         {
-            return [new(typeof(CharacterModel), "get_EnergyCounterPath")];
+            return [new(typeof(CharacterModel), nameof(CharacterModel.EnergyCounterPath), MethodType.Getter)];
         }
 
         // ReSharper disable InconsistentNaming
@@ -215,7 +216,7 @@ namespace STS2RitsuLib.Scaffolding.Characters.Patches
         /// <inheritdoc />
         public static ModPatchTarget[] GetTargets()
         {
-            return [new(typeof(CharacterModel), "get_MerchantAnimPath")];
+            return [new(typeof(CharacterModel), nameof(CharacterModel.MerchantAnimPath), MethodType.Getter)];
         }
 
         // ReSharper disable InconsistentNaming
@@ -248,7 +249,7 @@ namespace STS2RitsuLib.Scaffolding.Characters.Patches
         /// <inheritdoc />
         public static ModPatchTarget[] GetTargets()
         {
-            return [new(typeof(CharacterModel), "get_RestSiteAnimPath")];
+            return [new(typeof(CharacterModel), nameof(CharacterModel.RestSiteAnimPath), MethodType.Getter)];
         }
 
         // ReSharper disable InconsistentNaming
@@ -281,7 +282,7 @@ namespace STS2RitsuLib.Scaffolding.Characters.Patches
         /// <inheritdoc />
         public static ModPatchTarget[] GetTargets()
         {
-            return [new(typeof(CharacterModel), "get_IconTexturePath")];
+            return [new(typeof(CharacterModel), nameof(CharacterModel.IconTexturePath), MethodType.Getter)];
         }
 
         // ReSharper disable InconsistentNaming
@@ -314,7 +315,7 @@ namespace STS2RitsuLib.Scaffolding.Characters.Patches
         /// <inheritdoc />
         public static ModPatchTarget[] GetTargets()
         {
-            return [new(typeof(CharacterModel), "get_IconPath")];
+            return [new(typeof(CharacterModel), "IconPath", MethodType.Getter)];
         }
 
         // ReSharper disable InconsistentNaming
@@ -349,7 +350,7 @@ namespace STS2RitsuLib.Scaffolding.Characters.Patches
         /// <inheritdoc />
         public static ModPatchTarget[] GetTargets()
         {
-            return [new(typeof(CharacterModel), "get_CharacterSelectBg")];
+            return [new(typeof(CharacterModel), nameof(CharacterModel.CharacterSelectBg), MethodType.Getter)];
         }
 
         // ReSharper disable InconsistentNaming
@@ -382,7 +383,7 @@ namespace STS2RitsuLib.Scaffolding.Characters.Patches
         /// <inheritdoc />
         public static ModPatchTarget[] GetTargets()
         {
-            return [new(typeof(CharacterModel), "get_CharacterSelectIconPath", true)];
+            return [new(typeof(CharacterModel), "CharacterSelectIconPath", null, true, MethodType.Getter)];
         }
 
         // ReSharper disable InconsistentNaming
@@ -418,7 +419,7 @@ namespace STS2RitsuLib.Scaffolding.Characters.Patches
         /// <inheritdoc />
         public static ModPatchTarget[] GetTargets()
         {
-            return [new(typeof(CharacterModel), "get_CharacterSelectLockedIconPath", true)];
+            return [new(typeof(CharacterModel), "CharacterSelectLockedIconPath", null, true, MethodType.Getter)];
         }
 
         // ReSharper disable InconsistentNaming
@@ -453,7 +454,7 @@ namespace STS2RitsuLib.Scaffolding.Characters.Patches
         /// <inheritdoc />
         public static ModPatchTarget[] GetTargets()
         {
-            return [new(typeof(CharacterModel), "get_MapMarkerPath", true)];
+            return [new(typeof(CharacterModel), "MapMarkerPath", null, true, MethodType.Getter)];
         }
 
         // ReSharper disable InconsistentNaming
@@ -489,7 +490,10 @@ namespace STS2RitsuLib.Scaffolding.Characters.Patches
         /// <inheritdoc />
         public static ModPatchTarget[] GetTargets()
         {
-            return [new(typeof(CharacterModel), "get_CharacterSelectTransitionPath")];
+            return
+            [
+                new(typeof(CharacterModel), nameof(CharacterModel.CharacterSelectTransitionPath), MethodType.Getter),
+            ];
         }
 
         // ReSharper disable InconsistentNaming
@@ -524,7 +528,7 @@ namespace STS2RitsuLib.Scaffolding.Characters.Patches
         /// <inheritdoc />
         public static ModPatchTarget[] GetTargets()
         {
-            return [new(typeof(CharacterModel), "get_TrailPath")];
+            return [new(typeof(CharacterModel), nameof(CharacterModel.TrailPath), MethodType.Getter)];
         }
 
         // ReSharper disable InconsistentNaming
@@ -559,7 +563,7 @@ namespace STS2RitsuLib.Scaffolding.Characters.Patches
         /// <inheritdoc />
         public static ModPatchTarget[] GetTargets()
         {
-            return [new(typeof(CharacterModel), "get_AttackSfx")];
+            return [new(typeof(CharacterModel), nameof(CharacterModel.AttackSfx), MethodType.Getter)];
         }
 
         // ReSharper disable InconsistentNaming
@@ -595,7 +599,7 @@ namespace STS2RitsuLib.Scaffolding.Characters.Patches
         /// <inheritdoc />
         public static ModPatchTarget[] GetTargets()
         {
-            return [new(typeof(CharacterModel), "get_CastSfx")];
+            return [new(typeof(CharacterModel), nameof(CharacterModel.CastSfx), MethodType.Getter)];
         }
 
         // ReSharper disable InconsistentNaming
@@ -631,7 +635,7 @@ namespace STS2RitsuLib.Scaffolding.Characters.Patches
         /// <inheritdoc />
         public static ModPatchTarget[] GetTargets()
         {
-            return [new(typeof(CharacterModel), "get_DeathSfx")];
+            return [new(typeof(CharacterModel), nameof(CharacterModel.DeathSfx), MethodType.Getter)];
         }
 
         // ReSharper disable InconsistentNaming
@@ -667,7 +671,7 @@ namespace STS2RitsuLib.Scaffolding.Characters.Patches
         /// <inheritdoc />
         public static ModPatchTarget[] GetTargets()
         {
-            return [new(typeof(CharacterModel), "get_ArmPointingTexturePath")];
+            return [new(typeof(CharacterModel), nameof(CharacterModel.ArmPointingTexturePath), MethodType.Getter)];
         }
 
         // ReSharper disable InconsistentNaming
@@ -700,7 +704,7 @@ namespace STS2RitsuLib.Scaffolding.Characters.Patches
         /// <inheritdoc />
         public static ModPatchTarget[] GetTargets()
         {
-            return [new(typeof(CharacterModel), "get_ArmRockTexturePath")];
+            return [new(typeof(CharacterModel), nameof(CharacterModel.ArmRockTexturePath), MethodType.Getter)];
         }
 
         // ReSharper disable InconsistentNaming
@@ -733,7 +737,7 @@ namespace STS2RitsuLib.Scaffolding.Characters.Patches
         /// <inheritdoc />
         public static ModPatchTarget[] GetTargets()
         {
-            return [new(typeof(CharacterModel), "get_ArmPaperTexturePath")];
+            return [new(typeof(CharacterModel), nameof(CharacterModel.ArmPaperTexturePath), MethodType.Getter)];
         }
 
         // ReSharper disable InconsistentNaming
@@ -766,7 +770,7 @@ namespace STS2RitsuLib.Scaffolding.Characters.Patches
         /// <inheritdoc />
         public static ModPatchTarget[] GetTargets()
         {
-            return [new(typeof(CharacterModel), "get_ArmScissorsTexturePath")];
+            return [new(typeof(CharacterModel), nameof(CharacterModel.ArmScissorsTexturePath), MethodType.Getter)];
         }
 
         // ReSharper disable InconsistentNaming

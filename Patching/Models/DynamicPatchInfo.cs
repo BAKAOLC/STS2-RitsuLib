@@ -1,5 +1,6 @@
 using System.Reflection;
 using HarmonyLib;
+using STS2RitsuLib.Patching.Core;
 
 namespace STS2RitsuLib.Patching.Models
 {
@@ -75,6 +76,34 @@ namespace STS2RitsuLib.Patching.Models
         public override string ToString()
         {
             return $"{Id}: {OriginalMethod.DeclaringType?.Name}.{OriginalMethod.Name}";
+        }
+
+        /// <summary>
+        ///     Builds a dynamic patch by resolving <paramref name="target" /> the same way as <see cref="ModPatcher" />
+        ///     resolves <see cref="ModPatchInfo" />.
+        /// </summary>
+        public static DynamicPatchInfo FromModPatchTarget(
+            string id,
+            ModPatchTarget target,
+            HarmonyMethod? prefix = null,
+            HarmonyMethod? postfix = null,
+            HarmonyMethod? transpiler = null,
+            HarmonyMethod? finalizer = null,
+            bool isCritical = true,
+            string? description = null)
+        {
+            ArgumentNullException.ThrowIfNull(target);
+
+            var originalMethod = PatchTargetMethodResolver.ResolveRequired(target);
+            return new(
+                id,
+                originalMethod,
+                prefix,
+                postfix,
+                transpiler,
+                finalizer,
+                isCritical,
+                description);
         }
     }
 }

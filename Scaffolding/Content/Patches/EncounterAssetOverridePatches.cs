@@ -1,4 +1,5 @@
 using Godot;
+using HarmonyLib;
 using MegaCrit.Sts2.Core.Assets;
 using MegaCrit.Sts2.Core.Helpers;
 using MegaCrit.Sts2.Core.Models;
@@ -203,7 +204,7 @@ namespace STS2RitsuLib.Scaffolding.Content.Patches
         /// <inheritdoc cref="IPatchMethod.GetTargets" />
         public static ModPatchTarget[] GetTargets()
         {
-            return [new(typeof(EncounterModel), "get_BossNodePath")];
+            return [new(typeof(EncounterModel), "BossNodePath", MethodType.Getter)];
         }
 
         // ReSharper disable InconsistentNaming
@@ -238,7 +239,7 @@ namespace STS2RitsuLib.Scaffolding.Content.Patches
         /// <inheritdoc cref="IPatchMethod.GetTargets" />
         public static ModPatchTarget[] GetTargets()
         {
-            return [new(typeof(EncounterModel), "get_MapNodeAssetPaths")];
+            return [new(typeof(EncounterModel), "MapNodeAssetPaths", MethodType.Getter)];
         }
 
         // ReSharper disable InconsistentNaming

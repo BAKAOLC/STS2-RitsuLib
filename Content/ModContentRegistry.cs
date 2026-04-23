@@ -351,7 +351,8 @@ namespace STS2RitsuLib.Content
         /// <summary>
         ///     Registers additional starter-deck copies of <typeparamref name="TCard" /> for <typeparamref name="TCharacter" />.
         ///     The target character may be registered before or after this call; resolution happens when the character model is
-        ///     queried.
+        ///     queried. Matching uses the live instance CLR type; registrations against an assignable ancestor type also apply,
+        ///     except a registration keyed only to <see cref="CharacterModel" /> itself.
         /// </summary>
         public void RegisterCharacterStarterCard<TCharacter, TCard>(int count = 1)
             where TCharacter : CharacterModel
@@ -374,7 +375,8 @@ namespace STS2RitsuLib.Content
         ///     Registers additional starting relic copies of <typeparamref name="TRelic" /> for <typeparamref name="TCharacter" />
         ///     .
         ///     The target character may be registered before or after this call; resolution happens when the character model is
-        ///     queried.
+        ///     queried. Matching uses the live instance CLR type; registrations against an assignable ancestor type also apply,
+        ///     except a registration keyed only to <see cref="CharacterModel" /> itself.
         /// </summary>
         public void RegisterCharacterStarterRelic<TCharacter, TRelic>(int count = 1)
             where TCharacter : CharacterModel
@@ -396,7 +398,8 @@ namespace STS2RitsuLib.Content
         ///     Registers additional starting potion copies of <typeparamref name="TPotion" /> for
         ///     <typeparamref name="TCharacter" />.
         ///     The target character may be registered before or after this call; resolution happens when the character model is
-        ///     queried.
+        ///     queried. Matching uses the live instance CLR type; registrations against an assignable ancestor type also apply,
+        ///     except a registration keyed only to <see cref="CharacterModel" /> itself.
         /// </summary>
         public void RegisterCharacterStarterPotion<TCharacter, TPotion>(int count = 1)
             where TCharacter : CharacterModel
@@ -1159,6 +1162,17 @@ namespace STS2RitsuLib.Content
             }
         }
 
+        private static bool MatchesRegisteredStarterCharacter(Type registeredCharacterType, Type runtimeCharacterType)
+        {
+            if (registeredCharacterType == runtimeCharacterType)
+                return true;
+
+            if (!registeredCharacterType.IsAssignableFrom(runtimeCharacterType))
+                return false;
+
+            return registeredCharacterType != typeof(CharacterModel);
+        }
+
         private static Type[] GetRegisteredCharacterStarterTypes(Type characterType, CharacterStarterContentKind kind)
         {
             ArgumentNullException.ThrowIfNull(characterType);
@@ -1166,7 +1180,8 @@ namespace STS2RitsuLib.Content
             lock (SyncRoot)
             {
                 return RegisteredCharacterStarterContent
-                    .Where(entry => entry.CharacterType == characterType && entry.Kind == kind)
+                    .Where(entry => entry.Kind == kind && MatchesRegisteredStarterCharacter(entry.CharacterType,
+                        characterType))
                     .SelectMany(static entry => Enumerable.Repeat(entry.ModelType, entry.Count))
                     .ToArray();
             }

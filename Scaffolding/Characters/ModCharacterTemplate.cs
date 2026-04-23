@@ -3,7 +3,6 @@ using MegaCrit.Sts2.Core.Animation;
 using MegaCrit.Sts2.Core.Bindings.MegaSpine;
 using MegaCrit.Sts2.Core.Models;
 using MegaCrit.Sts2.Core.Nodes.Combat;
-using STS2RitsuLib.Content;
 using STS2RitsuLib.Scaffolding.Characters.Visuals.Definition;
 using STS2RitsuLib.Scaffolding.Content;
 using STS2RitsuLib.Scaffolding.Visuals.Definition;
@@ -615,31 +614,24 @@ namespace STS2RitsuLib.Scaffolding.Characters
 
         private IEnumerable<CardModel> ResolveStartingDeck()
         {
-            var characterType = GetType();
             var localEntries = GetLocalStartingDeckEntries();
-            var registeredEntries = ModContentRegistry.GetRegisteredCharacterStarterCards(characterType);
 
             return localEntries
                 .SelectMany(static entry => Enumerable.Repeat(entry.CardType, Math.Max(entry.Count, 0)))
-                .Concat(registeredEntries)
                 .Select(type => ModelDb.GetById<CardModel>(ModelDb.GetId(type)))
                 .ToArray();
         }
 
         private IReadOnlyList<RelicModel> ResolveStartingRelics()
         {
-            var characterType = GetType();
             return GetLocalStartingRelicTypes()
-                .Concat(ModContentRegistry.GetRegisteredCharacterStarterRelics(characterType))
                 .Select(type => ModelDb.GetById<RelicModel>(ModelDb.GetId(type)))
                 .ToArray();
         }
 
         private IReadOnlyList<PotionModel> ResolveStartingPotions()
         {
-            var characterType = GetType();
             return GetLocalStartingPotionTypes()
-                .Concat(ModContentRegistry.GetRegisteredCharacterStarterPotions(characterType))
                 .Select(type => ModelDb.GetById<PotionModel>(ModelDb.GetId(type)))
                 .ToArray();
         }
