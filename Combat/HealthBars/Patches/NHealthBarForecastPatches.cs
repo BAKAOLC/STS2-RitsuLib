@@ -221,13 +221,13 @@ namespace STS2RitsuLib.Combat.HealthBars.Patches
             {
                 if (!IsDoomLethalAfterRight(healthBar, creature))
                     return;
-                hpLabel.AddThemeColorOverride("font_color", DoomLethalTextColor);
-                hpLabel.AddThemeColorOverride("font_outline_color", DoomLethalOutlineColor);
+                hpLabel.AddThemeColorOverride(MegaLabelThemeColorKeys.FontColorKey, DoomLethalTextColor);
+                hpLabel.AddThemeColorOverride(MegaLabelThemeColorKeys.FontOutlineColorKey, DoomLethalOutlineColor);
                 return;
             }
 
-            hpLabel.AddThemeColorOverride("font_color", lethalColor.Value);
-            hpLabel.AddThemeColorOverride("font_outline_color", DarkenForOutline(lethalColor.Value));
+            hpLabel.AddThemeColorOverride(MegaLabelThemeColorKeys.FontColorKey, lethalColor.Value);
+            hpLabel.AddThemeColorOverride(MegaLabelThemeColorKeys.FontOutlineColorKey, DarkenForOutline(lethalColor.Value));
         }
 
         private static CustomSegment[] GetCustomSegments(Creature creature)
