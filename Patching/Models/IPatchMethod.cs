@@ -49,7 +49,8 @@ namespace STS2RitsuLib.Patching.Models
                     TPatch.IsCritical,
                     $"{TPatch.Description} -> {target}",
                     target.ParameterTypes,
-                    target.IgnoreIfMissing
+                    target.IgnoreIfMissing,
+                    target.HarmonyMethodType
                 );
             }
 

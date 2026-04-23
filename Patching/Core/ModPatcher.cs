@@ -415,7 +415,27 @@ namespace STS2RitsuLib.Patching.Core
             return false;
         }
 
-        private static MethodInfo? GetOriginalMethod(ModPatchInfo modPatchInfo)
+        private static MethodBase? GetOriginalMethod(ModPatchInfo modPatchInfo)
+        {
+            return modPatchInfo.HarmonyMethodType switch
+            {
+                MethodType.Normal => GetOriginalMethodByReflection(modPatchInfo),
+                MethodType.Async => GetAsyncStateMachineMoveNext(modPatchInfo),
+                MethodType.Getter => AccessTools
+                    .DeclaredProperty(modPatchInfo.TargetType, modPatchInfo.MethodName)
+                    ?.GetGetMethod(true),
+                MethodType.Setter => AccessTools
+                    .DeclaredProperty(modPatchInfo.TargetType, modPatchInfo.MethodName)
+                    ?.GetSetMethod(true),
+                MethodType.Constructor => AccessTools.DeclaredConstructor(
+                    modPatchInfo.TargetType,
+                    modPatchInfo.ParameterTypes),
+                MethodType.Enumerator => GetEnumeratorMoveNext(modPatchInfo),
+                _ => GetOriginalMethodByReflection(modPatchInfo),
+            };
+        }
+
+        private static MethodInfo? GetOriginalMethodByReflection(ModPatchInfo modPatchInfo)
         {
             if (modPatchInfo.ParameterTypes != null)
                 return modPatchInfo.TargetType.GetMethod(
@@ -430,6 +450,18 @@ namespace STS2RitsuLib.Patching.Core
                 modPatchInfo.MethodName,
                 BindingFlags.Instance | BindingFlags.Static | BindingFlags.Public | BindingFlags.NonPublic
             );
+        }
+
+        private static MethodInfo? GetAsyncStateMachineMoveNext(ModPatchInfo modPatchInfo)
+        {
+            var outer = GetOriginalMethodByReflection(modPatchInfo);
+            return outer is null ? null : AccessTools.AsyncMoveNext(outer);
+        }
+
+        private static MethodInfo? GetEnumeratorMoveNext(ModPatchInfo modPatchInfo)
+        {
+            var outer = GetOriginalMethodByReflection(modPatchInfo);
+            return outer is null ? null : AccessTools.EnumeratorMoveNext(outer);
         }
 
         private static MethodInfo? GetPatchMethod(Type patchType, string methodName)
