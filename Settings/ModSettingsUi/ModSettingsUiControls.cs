@@ -3264,12 +3264,18 @@ namespace STS2RitsuLib.Settings
 
     internal sealed partial class ModSettingsListItemCard<TItem> : PanelContainer
     {
+        private const double CollapseFadeDurationSeconds = 0.16;
+
         private readonly int _index;
+        private readonly Callable _editorSurfaceRectChangedCallable;
         private readonly bool _isCollapsible;
         private readonly ModSettingsListItemContext<TItem>? _itemContext;
         private readonly ModSettingsListControl<TItem> _owner;
         private bool _collapsed;
+        private Control? _editorClip;
+        private bool _trackEditorHeight;
         private PanelContainer? _editorSurface;
+        private Tween? _editorTween;
         private ModSettingsCollapsibleHeaderButton? _toggleButton;
 
         public ModSettingsListItemCard(
@@ -3283,6 +3289,7 @@ namespace STS2RitsuLib.Settings
             bool startCollapsed,
             Control? headerAccessory)
         {
+            _editorSurfaceRectChangedCallable = Callable.From(SyncEditorExpandedHeight);
             _owner = owner;
             _index = index;
             _itemContext = itemContext;
@@ -3371,36 +3378,174 @@ namespace STS2RitsuLib.Settings
             ModSettingsUiFactory.AttachContextMenuTargets(this, outer, actionsButton);
 
             if (editorContent == null) return;
+            _editorClip = new Control
+            {
+                SizeFlagsHorizontal = SizeFlags.ExpandFill,
+                SizeFlagsVertical = SizeFlags.ShrinkBegin,
+                ClipContents = true,
+                MouseFilter = MouseFilterEnum.Ignore,
+            };
             _editorSurface = new()
             {
                 SizeFlagsHorizontal = SizeFlags.ExpandFill,
                 MouseFilter = MouseFilterEnum.Ignore,
-                Visible = !_collapsed,
             };
+            _editorSurface.Modulate = _editorSurface.Modulate with { A = _collapsed ? 0f : 1f };
             _editorSurface.AddThemeStyleboxOverride("panel", ModSettingsUiFactory.CreateListEditorSurfaceStyle());
-            root.AddChild(_editorSurface);
+            _editorSurface.Connect(CanvasItem.SignalName.ItemRectChanged, _editorSurfaceRectChangedCallable);
+            _editorSurface.Resized += SyncEditorExpandedHeight;
             _editorSurface.AddChild(editorContent);
+            _editorSurface.AnchorLeft = 0f;
+            _editorSurface.AnchorTop = 0f;
+            _editorSurface.AnchorRight = 1f;
+            _editorSurface.AnchorBottom = 0f;
+            _editorSurface.OffsetLeft = 0f;
+            _editorSurface.OffsetTop = 0f;
+            _editorSurface.OffsetRight = 0f;
+            _editorSurface.OffsetBottom = 0f;
+            _editorClip.AddChild(_editorSurface);
+            root.AddChild(_editorClip);
             ApplyCollapsedState();
         }
 
         public ModSettingsListItemCard()
         {
+            _editorSurfaceRectChangedCallable = Callable.From(SyncEditorExpandedHeight);
             _owner = null!;
+        }
+
+        public override void _ExitTree()
+        {
+            if (_editorSurface != null)
+            {
+                _editorSurface.Resized -= SyncEditorExpandedHeight;
+                if (_editorSurface.IsConnected(CanvasItem.SignalName.ItemRectChanged, _editorSurfaceRectChangedCallable))
+                    _editorSurface.Disconnect(CanvasItem.SignalName.ItemRectChanged, _editorSurfaceRectChangedCallable);
+            }
+
+            base._ExitTree();
         }
 
         private void ToggleCollapsed()
         {
             if (!_isCollapsible)
                 return;
+
+            var wasCollapsed = _collapsed;
             _collapsed = !_collapsed;
             _itemContext?.SetRowState("collapsed", _collapsed);
-            ApplyCollapsedState();
+            ApplyCollapsedState(true);
+            if (wasCollapsed && !_collapsed)
+                Callable.From(EnsureExpandedVisible).CallDeferred();
         }
 
-        private void ApplyCollapsedState()
+        private void ApplyCollapsedState(bool animate = false)
         {
-            _editorSurface?.SetDeferred(CanvasItem.PropertyName.Visible, !_collapsed);
             _toggleButton?.SetSelected(!_collapsed);
+            if (_editorSurface == null || _editorClip == null)
+                return;
+
+            _editorTween?.Kill();
+            _editorTween = null;
+
+            if (!animate)
+            {
+                FinalizeEditorSurfaceState();
+                return;
+            }
+
+            _trackEditorHeight = false;
+            if (!_collapsed)
+            {
+                _editorClip.Visible = true;
+                _editorSurface.Visible = true;
+            }
+
+            var target = _editorSurface.Modulate with { A = _collapsed ? 0f : 1f };
+            var tween = CreateTween().SetParallel();
+            _editorTween = tween;
+            tween.TweenProperty(_editorSurface, "modulate", target, CollapseFadeDurationSeconds)
+                .SetEase(_collapsed ? Tween.EaseType.In : Tween.EaseType.Out)
+                .SetTrans(Tween.TransitionType.Cubic);
+            tween.TweenMethod(
+                    Callable.From<float>(SetEditorClipHeight),
+                    _editorClip.CustomMinimumSize.Y,
+                    _collapsed ? 0f : MeasureEditorExpandedHeight(),
+                    CollapseFadeDurationSeconds)
+                .SetEase(_collapsed ? Tween.EaseType.In : Tween.EaseType.Out)
+                .SetTrans(Tween.TransitionType.Cubic);
+            tween.Finished += () =>
+            {
+                if (_editorTween != tween)
+                    return;
+
+                _editorTween = null;
+                FinalizeEditorSurfaceState();
+                if (!_collapsed)
+                    Callable.From(EnsureExpandedVisible).CallDeferred();
+            };
+        }
+
+        private void FinalizeEditorSurfaceState()
+        {
+            if (_editorSurface == null || _editorClip == null)
+                return;
+
+            _trackEditorHeight = !_collapsed;
+            _editorSurface.Modulate = _editorSurface.Modulate with { A = _collapsed ? 0f : 1f };
+            _editorSurface.Visible = !_collapsed;
+            _editorClip.Visible = !_collapsed;
+            SetEditorClipHeight(_collapsed ? 0f : MeasureEditorExpandedHeight());
+            if (!_collapsed)
+                Callable.From(SyncEditorExpandedHeight).CallDeferred();
+        }
+
+        private float MeasureEditorExpandedHeight()
+        {
+            if (_editorSurface == null)
+                return 0f;
+
+            _editorSurface.UpdateMinimumSize();
+            return _editorSurface.GetCombinedMinimumSize().Y;
+        }
+
+        private void SyncEditorExpandedHeight()
+        {
+            if (!_trackEditorHeight || _editorSurface == null || _editorClip == null)
+                return;
+
+            SetEditorClipHeight(MeasureEditorExpandedHeight());
+        }
+
+        private void SetEditorClipHeight(float height)
+        {
+            if (_editorClip == null)
+                return;
+
+            _editorClip.CustomMinimumSize = _editorClip.CustomMinimumSize with { Y = Mathf.Max(0f, height) };
+            _editorClip.UpdateMinimumSize();
+            for (Node? current = _editorClip; current != null; current = current.GetParent())
+            {
+                if (current is Control control)
+                    control.UpdateMinimumSize();
+                if (current is Container container)
+                    container.QueueSort();
+            }
+        }
+
+        private void EnsureExpandedVisible()
+        {
+            if (!_isCollapsible || _collapsed || !IsVisibleInTree())
+                return;
+
+            for (var current = GetParent(); current != null; current = current.GetParent())
+            {
+                if (current is ModSettingsScrollContainer ritsuScroll)
+                {
+                    ritsuScroll.EnsureControlVisible(this);
+                    return;
+                }
+            }
         }
 
         public override bool _CanDropData(Vector2 atPosition, Variant data)
@@ -3598,6 +3743,9 @@ namespace STS2RitsuLib.Settings
 
     internal sealed partial class ModSettingsCollapsibleSection : VBoxContainer
     {
+        private const double CollapseFadeDurationSeconds = 0.16;
+
+        private readonly Callable _contentRectChangedCallable;
         private readonly Control[]? _contentControls;
         private readonly string? _description;
         private readonly ModSettingsActionsButton? _headerActions;
@@ -3605,12 +3753,16 @@ namespace STS2RitsuLib.Settings
         private readonly bool _startCollapsed;
         private readonly string? _title;
         private bool _collapsed;
+        private Control? _contentClip;
+        private bool _trackContentHeight;
         private VBoxContainer? _content;
+        private Tween? _contentTween;
         private ModSettingsCollapsibleHeaderButton? _toggle;
 
         public ModSettingsCollapsibleSection(string title, string? sectionId, string? description, bool startCollapsed,
             Control[] contentControls, ModSettingsActionsButton? headerActions = null)
         {
+            _contentRectChangedCallable = Callable.From(SyncContentExpandedHeight);
             _title = title;
             _sectionId = sectionId;
             _description = description;
@@ -3623,6 +3775,7 @@ namespace STS2RitsuLib.Settings
 
         public ModSettingsCollapsibleSection()
         {
+            _contentRectChangedCallable = Callable.From(SyncContentExpandedHeight);
         }
 
         public override void _Ready()
@@ -3683,48 +3836,164 @@ namespace STS2RitsuLib.Settings
                 cardContent.AddChild(headerRow);
             }
 
+            _contentClip = new Control
+            {
+                SizeFlagsHorizontal = SizeFlags.ExpandFill,
+                SizeFlagsVertical = SizeFlags.ShrinkBegin,
+                ClipContents = true,
+                MouseFilter = MouseFilterEnum.Ignore,
+            };
             _content = new() { MouseFilter = MouseFilterEnum.Ignore };
             _content.AddThemeConstantOverride("separation", 8);
             if (_contentControls != null)
                 foreach (var control in _contentControls)
                     _content.AddChild(control);
-            cardContent.AddChild(_content);
+            _content.Modulate = _content.Modulate with { A = _startCollapsed ? 0f : 1f };
+            _content.Connect(CanvasItem.SignalName.ItemRectChanged, _contentRectChangedCallable);
+            _content.Resized += SyncContentExpandedHeight;
+            _content.AnchorLeft = 0f;
+            _content.AnchorTop = 0f;
+            _content.AnchorRight = 1f;
+            _content.AnchorBottom = 0f;
+            _content.OffsetLeft = 0f;
+            _content.OffsetTop = 0f;
+            _content.OffsetRight = 0f;
+            _content.OffsetBottom = 0f;
+            _contentClip.AddChild(_content);
+            cardContent.AddChild(_contentClip);
 
             _collapsed = _startCollapsed;
             ApplyCollapsedState();
         }
 
+        public override void _ExitTree()
+        {
+            if (_content != null)
+            {
+                _content.Resized -= SyncContentExpandedHeight;
+                if (_content.IsConnected(CanvasItem.SignalName.ItemRectChanged, _contentRectChangedCallable))
+                    _content.Disconnect(CanvasItem.SignalName.ItemRectChanged, _contentRectChangedCallable);
+            }
+
+            base._ExitTree();
+        }
+
         private void ToggleCollapsed()
         {
+            var wasCollapsed = _collapsed;
             _collapsed = !_collapsed;
-            ApplyCollapsedState();
-            if (!_collapsed)
+            ApplyCollapsedState(true);
+            if (wasCollapsed && !_collapsed)
                 Callable.From(EnsureExpandedSectionVisible).CallDeferred();
         }
 
-        private void ApplyCollapsedState()
+        private void ApplyCollapsedState(bool animate = false)
         {
-            if (_content != null)
-                _content.Visible = !_collapsed;
             _toggle?.SetSelected(!_collapsed);
+            if (_content == null || _contentClip == null)
+                return;
+
+            _contentTween?.Kill();
+            _contentTween = null;
+
+            if (!animate)
+            {
+                FinalizeContentState();
+                return;
+            }
+
+            _trackContentHeight = false;
+            if (!_collapsed)
+            {
+                _contentClip.Visible = true;
+                _content.Visible = true;
+            }
+
+            var target = _content.Modulate with { A = _collapsed ? 0f : 1f };
+            var tween = CreateTween().SetParallel();
+            _contentTween = tween;
+            tween.TweenProperty(_content, "modulate", target, CollapseFadeDurationSeconds)
+                .SetEase(_collapsed ? Tween.EaseType.In : Tween.EaseType.Out)
+                .SetTrans(Tween.TransitionType.Cubic);
+            tween.TweenMethod(
+                    Callable.From<float>(SetContentClipHeight),
+                    _contentClip.CustomMinimumSize.Y,
+                    _collapsed ? 0f : MeasureContentExpandedHeight(),
+                    CollapseFadeDurationSeconds)
+                .SetEase(_collapsed ? Tween.EaseType.In : Tween.EaseType.Out)
+                .SetTrans(Tween.TransitionType.Cubic);
+            tween.Finished += () =>
+            {
+                if (_contentTween != tween)
+                    return;
+
+                _contentTween = null;
+                FinalizeContentState();
+                if (!_collapsed)
+                    Callable.From(EnsureExpandedSectionVisible).CallDeferred();
+            };
+        }
+
+        private void FinalizeContentState()
+        {
+            if (_content == null || _contentClip == null)
+                return;
+
+            _trackContentHeight = !_collapsed;
+            _content.Modulate = _content.Modulate with { A = _collapsed ? 0f : 1f };
+            _content.Visible = !_collapsed;
+            _contentClip.Visible = !_collapsed;
+            SetContentClipHeight(_collapsed ? 0f : MeasureContentExpandedHeight());
+            if (!_collapsed)
+                Callable.From(SyncContentExpandedHeight).CallDeferred();
+        }
+
+        private float MeasureContentExpandedHeight()
+        {
+            if (_content == null)
+                return 0f;
+
+            _content.UpdateMinimumSize();
+            return _content.GetCombinedMinimumSize().Y;
+        }
+
+        private void SyncContentExpandedHeight()
+        {
+            if (!_trackContentHeight || _content == null || _contentClip == null)
+                return;
+
+            SetContentClipHeight(MeasureContentExpandedHeight());
+        }
+
+        private void SetContentClipHeight(float height)
+        {
+            if (_contentClip == null)
+                return;
+
+            _contentClip.CustomMinimumSize = _contentClip.CustomMinimumSize with { Y = Mathf.Max(0f, height) };
+            _contentClip.UpdateMinimumSize();
+            for (Node? current = _contentClip; current != null; current = current.GetParent())
+            {
+                if (current is Control control)
+                    control.UpdateMinimumSize();
+                if (current is Container container)
+                    container.QueueSort();
+            }
         }
 
         private void EnsureExpandedSectionVisible()
         {
-            if (!IsVisibleInTree())
+            if (_collapsed || !IsVisibleInTree())
                 return;
 
-            var scroll = FindAncestorScrollContainer(this);
-            scroll?.EnsureControlVisible(this);
-        }
-
-        private static ScrollContainer? FindAncestorScrollContainer(Node node)
-        {
-            for (var current = node.GetParent(); current != null; current = current.GetParent())
-                if (current is ScrollContainer scroll)
-                    return scroll;
-
-            return null;
+            for (var current = GetParent(); current != null; current = current.GetParent())
+            {
+                if (current is ModSettingsScrollContainer ritsuScroll)
+                {
+                    ritsuScroll.EnsureControlVisible(this);
+                    return;
+                }
+            }
         }
     }
 

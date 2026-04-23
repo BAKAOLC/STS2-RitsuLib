@@ -80,13 +80,13 @@ namespace STS2RitsuLib.Settings
         private Timer? _refreshDebounceTimer;
         private TextureRect? _rightPaneHotkeyIcon;
         private double _saveTimer = -1;
-        private RitsuScrollContainer _scrollContainer = null!;
+        private ModSettingsScrollContainer _scrollContainer = null!;
         private string? _selectedModId;
         private string? _selectedPageId;
         private string? _selectedSectionId;
         private bool _selectionDirty = true;
         private Control _sidebarPanelRoot = null!;
-        private RitsuScrollContainer _sidebarScrollContainer = null!;
+        private ModSettingsScrollContainer _sidebarScrollContainer = null!;
         private bool _sidebarStructureDirty = true;
         private MegaRichTextLabel _subtitleLabel;
         private bool _suppressScrollSync;
@@ -829,7 +829,7 @@ namespace STS2RitsuLib.Settings
             headerBox.AddChild(ModSettingsUiFactory.CreateInlineDescription(
                 ModSettingsLocalization.Get("sidebar.subtitle", "Browse mods, pages, and sections.")));
 
-            _sidebarScrollContainer = new RitsuScrollContainer(topPadding: 4, bottomPadding: 4)
+            _sidebarScrollContainer = new ModSettingsScrollContainer(topPadding: 4, bottomPadding: 4)
             {
                 SizeFlagsHorizontal = SizeFlags.ExpandFill,
                 SizeFlagsVertical = SizeFlags.ExpandFill,
@@ -898,7 +898,7 @@ namespace STS2RitsuLib.Settings
             };
             root.AddChild(contentArea);
 
-            _scrollContainer = new RitsuScrollContainer(topPadding: 0f, bottomPadding: 0f)
+            _scrollContainer = new ModSettingsScrollContainer(topPadding: 0f, bottomPadding: 0f)
             {
                 FocusMode = FocusModeEnum.None,
             };
@@ -1573,7 +1573,7 @@ namespace STS2RitsuLib.Settings
                         _selectionDirty = true;
                         EnsureUiUpToDate();
                     }
-                    : static () => { };
+                : static () => { };
 
                 try
                 {

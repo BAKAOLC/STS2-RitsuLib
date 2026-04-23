@@ -9,15 +9,26 @@ namespace STS2RitsuLib.Settings;
 /// <summary>
 ///     Custom scroll area (clipper + fade mask + game <c>ui/scrollbar</c>) without Harmony-patched scroll types.
 /// </summary>
-public sealed partial class RitsuScrollContainer : Control
+public sealed partial class ModSettingsScrollContainer : Control
 {
     /// <summary>
     ///     When true, <see cref="ScrollTo" /> prints logical vs actual Y to the Godot output (debug chapter navigation).
     /// </summary>
     public static bool LogScrollNav;
 
+    /// <summary>
+    ///     Width reserved on the right for the scrollbar gutter.
+    /// </summary>
     public const float ScrollbarGutterWidth = 60f;
+
+    /// <summary>
+    ///     Height of the bottom fade mask region in pixels.
+    /// </summary>
     public const float BottomFade = 70f;
+
+    /// <summary>
+    ///     Height of the top fade mask region in pixels.
+    /// </summary>
     public const float TopFade = 24f;
 
     private readonly bool _disableScrollingIfContentFits;
@@ -43,7 +54,7 @@ public sealed partial class RitsuScrollContainer : Control
     /// <summary>
     ///     Creates a scroll container with inner top/bottom padding inside the clipper.
     /// </summary>
-    public RitsuScrollContainer(float topPadding = 0f, float bottomPadding = 0f, bool disableScrollingIfContentFits = false)
+    public ModSettingsScrollContainer(float topPadding = 0f, float bottomPadding = 0f, bool disableScrollingIfContentFits = false)
     {
         _contentRectChangedCallable = Callable.From(OnContentItemRectChanged);
         _paddingTop = topPadding;
@@ -73,12 +84,18 @@ public sealed partial class RitsuScrollContainer : Control
             ? 0f
             : Mathf.Min(0f, _clipper.Size.Y - _paddingTop - _paddingBottom - ContentHeight);
 
+    /// <summary>
+    ///     Subscribes resize handling and enables per-frame scroll interpolation.
+    /// </summary>
     public override void _Ready()
     {
         Resized += OnContainerResized;
         SetProcess(true);
     }
 
+    /// <summary>
+    ///     Unhooks resize and content signals before the node leaves the tree.
+    /// </summary>
     public override void _ExitTree()
     {
         Resized -= OnContainerResized;
@@ -210,6 +227,9 @@ public sealed partial class RitsuScrollContainer : Control
         UpdateScrollLayout();
     }
 
+    /// <summary>
+    ///     Routes mouse drag and wheel input to the custom scroll logic while visible.
+    /// </summary>
     public override void _GuiInput(InputEvent @event)
     {
         if (IsVisibleInTree())
@@ -219,6 +239,9 @@ public sealed partial class RitsuScrollContainer : Control
         }
     }
 
+    /// <summary>
+    ///     Routes controller scrolling input when no GUI control currently owns focus.
+    /// </summary>
     public override void _Input(InputEvent @event)
     {
         if (IsVisibleInTree())
@@ -229,6 +252,9 @@ public sealed partial class RitsuScrollContainer : Control
         }
     }
 
+    /// <summary>
+    ///     Advances smooth scrolling toward the current target position each frame.
+    /// </summary>
     public override void _Process(double delta)
     {
         if (!IsVisibleInTree() || _content == null)
