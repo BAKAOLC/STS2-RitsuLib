@@ -16,8 +16,10 @@ using STS2RitsuLib.TopBar;
 namespace STS2RitsuLib.CardPiles.Nodes
 {
     /// <summary>
-    ///     Procedurally built top-bar-style button reused by BOTH systems that want the "card pile with
-    ///     icon + count" look:
+    ///     Procedurally built pile button: <see cref="ModCardPileUiStyle.TopBarDeck" /> and action mode
+    ///     mirror the vanilla top-bar deck chrome (72×72 icon, deck count label); combat
+    ///     <see cref="ModCardPileUiStyle.BottomLeft" /> / <see cref="ModCardPileUiStyle.BottomRight" />
+    ///     mirror <c>NCombatCardPile</c> (full-slot icon, cloned <c>CountContainer</c>, 1.25 hover scale).
     ///     <list type="bullet">
     ///         <item>
     ///             <see cref="ModCardPileUiStyle.BottomLeft" /> / <see cref="ModCardPileUiStyle.BottomRight" /> /
@@ -52,16 +54,19 @@ namespace STS2RitsuLib.CardPiles.Nodes
 
         private const float DefaultButtonHeight = 80f;
 
-        // Matches `top_bar_deck_button.tscn`: the inner Icon is a 72x72 TextureRect centred in the
-        // 80x80 slot. Recreating the same numbers keeps the rendered glyph the same size as the deck's.
-        private const float IconSize = 72f;
-        private static readonly Vector2 HoverScale = Vector2.One * 1.1f;
+        private const float TopBarIconSize = 72f;
+
+        private static readonly Vector2 TopBarHoverScale = Vector2.One * 1.1f;
+
+        private static readonly Vector2 CombatPileHoverScale = Vector2.One * 1.25f;
 
         // Action-mode fields (null when Definition is set).
         private int _actionLastKnownCount = -1;
 
         // Shared state between the two modes.
         private Tween? _bumpTween;
+
+        private Control? _countContainer;
         private MegaLabel _countLabel = null!;
         private int _currentCount;
         private bool _hovered;
@@ -77,6 +82,8 @@ namespace STS2RitsuLib.CardPiles.Nodes
 
         // Pile-mode fields (null when ActionDefinition is set).
         private ModCardPile? _pile;
+
+        private Vector2 _pileHoverScale = TopBarHoverScale;
         private Player? _player;
         private bool _pressed;
 
@@ -95,6 +102,8 @@ namespace STS2RitsuLib.CardPiles.Nodes
 
         /// <summary>True when this button is an action-mode instance (has no backing pile).</summary>
         public bool IsActionMode => ActionDefinition != null;
+
+        private Control CountOffsetTarget => _countContainer ?? _countLabel;
 
         /// <summary>
         ///     Builds a new pile-mode button bound to <paramref name="definition" />.
@@ -153,14 +162,9 @@ namespace STS2RitsuLib.CardPiles.Nodes
             ArgumentNullException.ThrowIfNull(player);
             _player = player;
 
-            // Regardless of mode, adopt the vanilla %Deck's `DeckCardCount` label — this gives us the
-            // exact font, outline colour / size, shadow offsets and font size that the scene designer
-            // configured on the real deck button (see `top_bar_deck_button.tscn` lines 69-93).
-            // Procedural MegaLabels render without an outline and drift whenever the game updates.
-            TryReplaceCountLabelWithVanillaDeckClone();
-
             if (ActionDefinition != null)
             {
+                TryReplaceCountLabelWithVanillaDeckClone();
                 // Action mode: when no IconPath was provided we swap our placeholder TextureRect for a
                 // deep clone of the vanilla %Deck "Control/Icon" subtree. That's the only way to be
                 // "exactly like the pile icon" — we inherit the sprite, the HSV shader material, and
@@ -173,8 +177,17 @@ namespace STS2RitsuLib.CardPiles.Nodes
                 return;
             }
 
+            if (UsesCombatBottomChrome())
+                TryReplaceCountLabelWithVanillaCombatPileTemplate();
+            else
+                TryReplaceCountLabelWithVanillaDeckClone();
+
             if (Definition != null)
+            {
                 AttachPile(ModCardPileStorage.Resolve(Definition.PileType, player));
+                if (Definition.VisibleWhen != null)
+                    RefreshPileButtonVisibility();
+            }
         }
 
         /// <inheritdoc />
@@ -200,13 +213,17 @@ namespace STS2RitsuLib.CardPiles.Nodes
         public override void _Process(double delta)
         {
             base._Process(delta);
-            if (ActionDefinition == null)
+            if (ActionDefinition != null)
+            {
+                // Action-mode bookkeeping: visibility and count are polled here because there is no pile to
+                // subscribe to. Both predicates are best kept cheap per their docs.
+                RefreshActionVisibility();
+                PollActionCount(false);
                 return;
+            }
 
-            // Action-mode bookkeeping: visibility and count are polled here because there is no pile to
-            // subscribe to. Both predicates are best kept cheap per their docs.
-            RefreshActionVisibility();
-            PollActionCount(false);
+            if (Definition?.VisibleWhen != null)
+                RefreshPileButtonVisibility();
         }
 
         /// <inheritdoc />
@@ -230,13 +247,26 @@ namespace STS2RitsuLib.CardPiles.Nodes
 
         private void BuildChildren()
         {
-            // Mirrors the vanilla `top_bar_deck_button.tscn` hierarchy exactly:
-            //   Root (80x80 Control, mouse_filter=Stop — the click target)
-            //   └── Control (fills parent, mouse_filter=Ignore — holds the icon)
-            //       └── Icon (72x72 TextureRect, anchored centre, mouse_filter=Ignore)
-            //   └── Count (MegaLabel, anchored bottom-right with vanilla offsets)
-            // Keeping the node names identical means tooling / scene inspection / future vanilla
-            // lookups by path (`Control/Icon`) work on our buttons too.
+            if (UsesCombatBottomChrome())
+                BuildCombatPileLayout();
+            else
+                BuildTopBarDeckLayout();
+
+            _pileHoverScale = UsesCombatBottomChrome() ? CombatPileHoverScale : TopBarHoverScale;
+
+            Connect(Control.SignalName.MouseEntered, Callable.From(OnMouseEntered));
+            Connect(Control.SignalName.MouseExited, Callable.From(OnMouseExited));
+        }
+
+        private bool UsesCombatBottomChrome()
+        {
+            if (ActionDefinition != null)
+                return false;
+            return Definition?.Style is ModCardPileUiStyle.BottomLeft or ModCardPileUiStyle.BottomRight;
+        }
+
+        private void BuildTopBarDeckLayout()
+        {
             _iconHost = new()
             {
                 Name = "Control",
@@ -254,27 +284,20 @@ namespace STS2RitsuLib.CardPiles.Nodes
                 StretchMode = TextureRect.StretchModeEnum.KeepAspectCentered,
                 ExpandMode = TextureRect.ExpandModeEnum.IgnoreSize,
                 MouseFilter = MouseFilterEnum.Ignore,
-                CustomMinimumSize = new(IconSize, IconSize),
-                // Anchor preset 8 (centre) with explicit ±IconSize/2 offsets — same math the vanilla
-                // scene encodes as "offset_left = -36, offset_top = -36, offset_right = 36,
-                // offset_bottom = 36" on a 72x72 icon.
+                CustomMinimumSize = new(TopBarIconSize, TopBarIconSize),
                 AnchorLeft = 0.5f,
                 AnchorTop = 0.5f,
                 AnchorRight = 0.5f,
                 AnchorBottom = 0.5f,
-                OffsetLeft = -IconSize * 0.5f,
-                OffsetTop = -IconSize * 0.5f,
-                OffsetRight = IconSize * 0.5f,
-                OffsetBottom = IconSize * 0.5f,
-                PivotOffset = new(IconSize * 0.5f, IconSize * 0.5f - 2f),
+                OffsetLeft = -TopBarIconSize * 0.5f,
+                OffsetTop = -TopBarIconSize * 0.5f,
+                OffsetRight = TopBarIconSize * 0.5f,
+                OffsetBottom = TopBarIconSize * 0.5f,
+                PivotOffset = new(TopBarIconSize * 0.5f, TopBarIconSize * 0.5f - 2f),
             };
             _icon = textureRect;
             _iconHost.AddChild(_icon);
 
-            // A placeholder count label — this will be swapped in Initialize() for a deep clone of the
-            // vanilla %Deck's `DeckCardCount` MegaLabel, so we inherit the exact font / outline size /
-            // shadow offsets / font size (set by the scene designer in top_bar_deck_button.tscn). A
-            // procedural label would drift from vanilla on every visual update the game ships.
             _countLabel = new()
             {
                 Name = "Count",
@@ -294,9 +317,70 @@ namespace STS2RitsuLib.CardPiles.Nodes
             EnsureProceduralCountLabelHasThemeFont(_countLabel);
             _countLabel.SetTextAutoSize("0");
             AddChild(_countLabel);
+        }
 
-            Connect(Control.SignalName.MouseEntered, Callable.From(OnMouseEntered));
-            Connect(Control.SignalName.MouseExited, Callable.From(OnMouseExited));
+        private void BuildCombatPileLayout()
+        {
+            _iconHost = new()
+            {
+                Name = "Control",
+                MouseFilter = MouseFilterEnum.Ignore,
+                AnchorLeft = 0f,
+                AnchorTop = 0f,
+                AnchorRight = 1f,
+                AnchorBottom = 1f,
+                OffsetLeft = 0f,
+                OffsetTop = 0f,
+                OffsetRight = 0f,
+                OffsetBottom = 0f,
+                GrowHorizontal = GrowDirection.Both,
+                GrowVertical = GrowDirection.Both,
+            };
+            AddChild(_iconHost);
+
+            var texture = ResolveIconTexture();
+            var expand = Definition?.Style == ModCardPileUiStyle.BottomRight
+                ? (TextureRect.ExpandModeEnum)1
+                : (TextureRect.ExpandModeEnum)2;
+            var textureRect = new TextureRect
+            {
+                Name = "Icon",
+                Texture = texture,
+                StretchMode = TextureRect.StretchModeEnum.KeepAspectCentered,
+                ExpandMode = expand,
+                MouseFilter = MouseFilterEnum.Ignore,
+                AnchorLeft = 0f,
+                AnchorTop = 0f,
+                AnchorRight = 1f,
+                AnchorBottom = 1f,
+                GrowHorizontal = GrowDirection.Both,
+                GrowVertical = GrowDirection.Both,
+                PivotOffset = new(DefaultButtonWidth * 0.5f, DefaultButtonHeight * 0.5f),
+            };
+            _icon = textureRect;
+            _iconHost.AddChild(_icon);
+
+            _countLabel = new()
+            {
+                Name = "Count",
+                MouseFilter = MouseFilterEnum.Ignore,
+                HorizontalAlignment = HorizontalAlignment.Center,
+                VerticalAlignment = VerticalAlignment.Center,
+                AnchorLeft = 0.5f,
+                AnchorTop = 0.5f,
+                AnchorRight = 0.5f,
+                AnchorBottom = 0.5f,
+                OffsetLeft = -24f,
+                OffsetTop = -24f,
+                OffsetRight = 24f,
+                OffsetBottom = 24f,
+                GrowHorizontal = GrowDirection.Both,
+                GrowVertical = GrowDirection.Both,
+                PivotOffset = new(24f, 24f),
+            };
+            EnsureProceduralCountLabelHasCombatStyleFont(_countLabel);
+            _countLabel.SetTextAutoSize("0");
+            AddChild(_countLabel);
         }
 
         private static void EnsureProceduralCountLabelHasThemeFont(MegaLabel countLabel)
@@ -324,6 +408,24 @@ namespace STS2RitsuLib.CardPiles.Nodes
 
             countLabel.AddThemeFontOverride(RitsuMegaLabelThemeNames.Font, new SystemFont());
             countLabel.AddThemeFontSizeOverride(RitsuMegaLabelThemeNames.FontSize, 28);
+        }
+
+        private static void EnsureProceduralCountLabelHasCombatStyleFont(MegaLabel countLabel)
+        {
+            var vanilla = NCombatRoom.Instance?.Ui?.DrawPile?.GetNodeOrNull<MegaLabel>("CountContainer/Count");
+            if (vanilla != null)
+            {
+                var font = RitsuThemeLookupCompat.GetThemeFont(vanilla, RitsuMegaLabelThemeNames.Font);
+                if (font != null)
+                {
+                    countLabel.AddThemeFontOverride(RitsuMegaLabelThemeNames.Font, font);
+                    countLabel.AddThemeFontSizeOverride(RitsuMegaLabelThemeNames.FontSize,
+                        RitsuThemeLookupCompat.GetThemeFontSize(vanilla, RitsuMegaLabelThemeNames.FontSize));
+                    return;
+                }
+            }
+
+            EnsureProceduralCountLabelHasThemeFont(countLabel);
         }
 
         private Texture2D? ResolveIconTexture()
@@ -437,6 +539,105 @@ namespace STS2RitsuLib.CardPiles.Nodes
             }
         }
 
+        private void TryReplaceCountLabelWithVanillaCombatPileTemplate()
+        {
+            var text = _countLabel.Text;
+            var visible = _countLabel.Visible;
+            _countContainer?.QueueFree();
+            _countContainer = null;
+
+            try
+            {
+                _countLabel.QueueFree();
+                var source = ResolveVanillaCombatPileRootForCountTemplate();
+                var vanillaCc = source?.GetNodeOrNull<Control>("CountContainer");
+                if (vanillaCc == null)
+                {
+                    RestoreCombatFallbackCountLabel(text, visible);
+                    return;
+                }
+
+                // ReSharper disable BitwiseOperatorOnEnumWithoutFlags
+                var dup = vanillaCc.Duplicate((int)(DuplicateFlags.Scripts
+                                                    | DuplicateFlags.Signals
+                                                    | DuplicateFlags.Groups));
+                // ReSharper restore BitwiseOperatorOnEnumWithoutFlags
+                if (dup is not Control container)
+                {
+                    dup.QueueFree();
+                    RestoreCombatFallbackCountLabel(text, visible);
+                    return;
+                }
+
+                _countContainer = container;
+                _countContainer.Name = "CountContainer";
+                AddChild(_countContainer);
+                MoveChild(_countContainer, _iconHost.GetIndex() + 1);
+                _countLabel = _countContainer.GetNode<MegaLabel>("Count");
+                _countLabel.MouseFilter = MouseFilterEnum.Ignore;
+                _countLabel.Visible = visible;
+                _countLabel.SetTextAutoSize(string.IsNullOrEmpty(text) ? "0" : text);
+            }
+            catch (Exception ex)
+            {
+                _countContainer?.QueueFree();
+                _countContainer = null;
+                RitsuLibFramework.Logger.Warn(
+                    $"[ModCardPileButton] Could not clone vanilla combat CountContainer: {ex.Message}");
+                RestoreCombatFallbackCountLabel(text, visible);
+            }
+        }
+
+        private void RestoreCombatFallbackCountLabel(string text, bool visible)
+        {
+            _countContainer?.QueueFree();
+            _countContainer = null;
+            if (IsInstanceValid(_countLabel))
+                _countLabel.QueueFree();
+
+            _countLabel = new()
+            {
+                Name = "Count",
+                MouseFilter = MouseFilterEnum.Ignore,
+                HorizontalAlignment = HorizontalAlignment.Center,
+                VerticalAlignment = VerticalAlignment.Center,
+                AnchorLeft = 0.5f,
+                AnchorTop = 0.5f,
+                AnchorRight = 0.5f,
+                AnchorBottom = 0.5f,
+                OffsetLeft = -24f,
+                OffsetTop = -24f,
+                OffsetRight = 24f,
+                OffsetBottom = 24f,
+                GrowHorizontal = GrowDirection.Both,
+                GrowVertical = GrowDirection.Both,
+                PivotOffset = new(24f, 24f),
+                Visible = visible,
+            };
+            EnsureProceduralCountLabelHasCombatStyleFont(_countLabel);
+            _countLabel.SetTextAutoSize(string.IsNullOrEmpty(text) ? "0" : text);
+            AddChild(_countLabel);
+            MoveChild(_countLabel, _iconHost.GetIndex() + 1);
+        }
+
+        private Control? ResolveVanillaCombatPileRootForCountTemplate()
+        {
+            if (Definition is not { } def)
+                return null;
+            var ui = NCombatRoom.Instance?.Ui;
+            if (ui == null)
+                return null;
+
+            return def.Style switch
+            {
+                ModCardPileUiStyle.BottomLeft when def.Anchor.Kind == ModCardPileAnchorKind.BottomLeftSecondary => ui
+                    .DiscardPile,
+                ModCardPileUiStyle.BottomLeft => ui.DrawPile,
+                ModCardPileUiStyle.BottomRight => ui.ExhaustPile,
+                _ => null,
+            };
+        }
+
         private void AttachPile(ModCardPile? pile)
         {
             if (ReferenceEquals(_pile, pile))
@@ -510,7 +711,7 @@ namespace STS2RitsuLib.CardPiles.Nodes
             // buttons feel just as responsive when the number they track jumps.
             _bumpTween?.Kill();
             _bumpTween = CreateTween().SetParallel();
-            _countLabel.Scale = HoverScale;
+            _countLabel.Scale = _pileHoverScale;
             _bumpTween.TweenProperty(_countLabel, "scale", Vector2.One, 0.5)
                 .SetEase(Tween.EaseType.Out)
                 .SetTrans(Tween.TransitionType.Expo);
@@ -545,6 +746,35 @@ namespace STS2RitsuLib.CardPiles.Nodes
                 NHoverTipSet.Remove(this);
         }
 
+        private void RefreshPileButtonVisibility()
+        {
+            if (Definition is not { } def)
+                return;
+
+            if (def.VisibleWhen is null)
+                return;
+
+            bool visible;
+            try
+            {
+                visible = def.VisibleWhen(new(def, _player, this, _pile));
+            }
+            catch (Exception ex)
+            {
+                RitsuLibFramework.Logger.Warn(
+                    $"[CardPile] VisibleWhen predicate for '{def.Id}' threw: {ex.Message}; hiding button.");
+                visible = false;
+            }
+
+            if (Visible == visible)
+                return;
+
+            Visible = visible;
+            MouseFilter = visible ? MouseFilterEnum.Stop : MouseFilterEnum.Ignore;
+            if (!visible)
+                NHoverTipSet.Remove(this);
+        }
+
         private void DetachPile()
         {
             if (_pile == null)
@@ -565,11 +795,11 @@ namespace STS2RitsuLib.CardPiles.Nodes
             _countLabel.PivotOffset = _countLabel.Size * 0.5f;
             _bumpTween?.Kill();
             _bumpTween = CreateTween().SetParallel();
-            _icon.Scale = HoverScale;
+            _icon.Scale = _pileHoverScale;
             _bumpTween.TweenProperty(_icon, "scale", Vector2.One, 0.5)
                 .SetEase(Tween.EaseType.Out)
                 .SetTrans(Tween.TransitionType.Expo);
-            _countLabel.Scale = HoverScale;
+            _countLabel.Scale = _pileHoverScale;
             _bumpTween.TweenProperty(_countLabel, "scale", Vector2.One, 0.5)
                 .SetEase(Tween.EaseType.Out)
                 .SetTrans(Tween.TransitionType.Expo);
@@ -589,27 +819,99 @@ namespace STS2RitsuLib.CardPiles.Nodes
             _hovered = true;
             _bumpTween?.Kill();
             _bumpTween = CreateTween();
-            _bumpTween.TweenProperty(_icon, "scale", HoverScale, 0.05);
+            _bumpTween.TweenProperty(_icon, "scale", _pileHoverScale, 0.05);
 
             ShowHoverTipAnchored();
         }
 
         /// <summary>
-        ///     Shows our hover tip anchored the same way vanilla <c>NTopBarDeckButton.OnFocus</c> does it:
-        ///     right-aligned under the button with a 20 px gap. <c>NHoverTipSet.CreateAndShow</c> with
-        ///     <see cref="HoverTipAlignment.None" /> doesn't position the tip at all, so without this
-        ///     step our tip rendered at the <c>HoverTipsContainer</c>'s origin (top-left of the
-        ///     viewport) — the "weird location" the user reported.
+        ///     Positions the hover tip. Top-bar and action buttons mirror <c>NTopBarDeckButton.OnFocus</c>
+        ///     (right-aligned under the hit target). Combat bottom-row piles instead mirror
+        ///     <c>NCombatCardPile.OnFocus</c>, which uses pile-specific offsets — the old single formula
+        ///     placed tips below the 80×80 control like the deck button, which reads wrong at the bottom
+        ///     of the screen next to vanilla draw / discard / exhaust.
         /// </summary>
         private void ShowHoverTipAnchored()
         {
             if (_hoverTip == null)
                 return;
             var tipSet = NHoverTipSet.CreateAndShow(this, _hoverTip);
-            // `ResetSize()` inside Init already sized the text container; sampling Size here gives the
-            // real tip bounds so right-alignment is exact. Matches NTopBarDeckButton.OnFocus verbatim.
-            tipSet.GlobalPosition = GlobalPosition
-                                    + new Vector2(Size.X - tipSet.Size.X, Size.Y + 20f);
+            var desired = ResolveHoverTipGlobalPosition(tipSet);
+            tipSet.GlobalPosition = ModCardPileHoverTipViewport.ClampTipTopLeft(tipSet, desired);
+        }
+
+        private Vector2 ResolveHoverTipGlobalPosition(NHoverTipSet tipSet)
+        {
+            if (ActionDefinition != null)
+                return TopBarStyleTipBelowRight(_iconHost.GetGlobalRect(), tipSet);
+
+            if (Definition == null)
+                return TopBarStyleTipBelowRight(GetGlobalRect(), tipSet);
+
+            if (Definition.HoverTipPlacement != ModCardPileHoverTipPlacement.Auto)
+                return ResolveHoverTipByPlacement(Definition.HoverTipPlacement, tipSet) +
+                       Definition.HoverTipScreenOffset;
+
+            var basePos = Definition.Anchor.Kind == ModCardPileAnchorKind.Custom
+                ? ResolveCustomAnchorHoverTipBase(tipSet)
+                : Definition.Style switch
+                {
+                    ModCardPileUiStyle.BottomLeft when Definition.Anchor.Kind ==
+                                                       ModCardPileAnchorKind.BottomLeftSecondary
+                        =>
+                        GlobalPosition + new Vector2(-320f, -370f),
+                    ModCardPileUiStyle.BottomLeft => GlobalPosition + new Vector2(14f, -375f),
+                    ModCardPileUiStyle.BottomRight => GlobalPosition + new Vector2(-320f, -125f),
+                    ModCardPileUiStyle.TopBarDeck => TopBarStyleTipBelowRight(_iconHost.GetGlobalRect(), tipSet),
+                    _ => TopBarStyleTipBelowRight(GetGlobalRect(), tipSet),
+                };
+
+            return basePos + Definition.HoverTipScreenOffset;
+        }
+
+        private Vector2 ResolveHoverTipByPlacement(ModCardPileHoverTipPlacement placement, NHoverTipSet tipSet)
+        {
+            var rect = PileHoverTipAnchorRect();
+            return placement switch
+            {
+                ModCardPileHoverTipPlacement.BelowButtonTrailingEdge => TopBarStyleTipBelowRight(rect, tipSet),
+                ModCardPileHoverTipPlacement.AboveButtonCentered => TipAboveCentered(rect, tipSet),
+                ModCardPileHoverTipPlacement.BelowButtonCentered => TipBelowCentered(rect, tipSet),
+                _ => TipAboveCentered(rect, tipSet),
+            };
+        }
+
+        private Rect2 PileHoverTipAnchorRect()
+        {
+            return Definition?.Style == ModCardPileUiStyle.TopBarDeck ? _iconHost.GetGlobalRect() : GetGlobalRect();
+        }
+
+        private Vector2 ResolveCustomAnchorHoverTipBase(NHoverTipSet tipSet)
+        {
+            return Definition?.Style == ModCardPileUiStyle.TopBarDeck
+                ? TopBarStyleTipBelowRight(_iconHost.GetGlobalRect(), tipSet)
+                : TipAboveCentered(GetGlobalRect(), tipSet);
+        }
+
+        private static Vector2 TipAboveCentered(Rect2 anchor, NHoverTipSet tipSet)
+        {
+            const float gap = 20f;
+            return new(
+                anchor.Position.X + anchor.Size.X * 0.5f - tipSet.Size.X * 0.5f,
+                anchor.Position.Y - tipSet.Size.Y - gap);
+        }
+
+        private static Vector2 TipBelowCentered(Rect2 anchor, NHoverTipSet tipSet)
+        {
+            const float gap = 20f;
+            return new(
+                anchor.Position.X + anchor.Size.X * 0.5f - tipSet.Size.X * 0.5f,
+                anchor.Position.Y + anchor.Size.Y + gap);
+        }
+
+        private static Vector2 TopBarStyleTipBelowRight(Rect2 anchor, NHoverTipSet tipSet)
+        {
+            return anchor.Position + new Vector2(anchor.Size.X - tipSet.Size.X, anchor.Size.Y + 20f);
         }
 
         private void OnMouseExited()
@@ -642,7 +944,7 @@ namespace STS2RitsuLib.CardPiles.Nodes
         {
             _bumpTween?.Kill();
             _bumpTween = CreateTween();
-            _bumpTween.TweenProperty(_icon, "scale", _hovered ? HoverScale : Vector2.One, 0.05);
+            _bumpTween.TweenProperty(_icon, "scale", _hovered ? _pileHoverScale : Vector2.One, 0.05);
             _bumpTween.TweenProperty(_icon, "modulate", Colors.White, 0.5)
                 .SetEase(Tween.EaseType.Out)
                 .SetTrans(Tween.TransitionType.Expo);
@@ -701,7 +1003,7 @@ namespace STS2RitsuLib.CardPiles.Nodes
         internal void ApplyVisualOffset(Vector2 offset)
         {
             _iconHost.Position = offset;
-            _countLabel.Position = offset;
+            CountOffsetTarget.Position = offset;
         }
 
         /// <summary>

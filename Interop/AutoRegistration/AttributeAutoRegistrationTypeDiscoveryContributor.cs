@@ -1013,6 +1013,8 @@ namespace STS2RitsuLib.Interop.AutoRegistration
                 Hotkeys = attr.Hotkeys,
                 CardShouldBeVisible = attr.CardShouldBeVisible,
                 OnOpen = ResolveCardPileOpenHandler(declaringType),
+                HoverTipScreenOffset = new(attr.HoverTipOffsetX, attr.HoverTipOffsetY),
+                HoverTipPlacement = attr.HoverTipPlacement,
             };
         }
 

@@ -234,7 +234,10 @@ namespace STS2RitsuLib.CardPiles
                 spec.LocStem,
                 spec.Hotkeys,
                 spec.CardShouldBeVisible,
-                spec.OnOpen);
+                spec.OnOpen,
+                spec.HoverTipScreenOffset,
+                spec.HoverTipPlacement,
+                spec.VisibleWhen);
 
             lock (SyncRoot)
             {
