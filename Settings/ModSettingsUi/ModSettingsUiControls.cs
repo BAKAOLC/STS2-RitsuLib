@@ -3450,7 +3450,13 @@ namespace STS2RitsuLib.Settings
 
             if (!animate)
             {
-                FinalizeEditorSurfaceState();
+                _trackEditorHeight = false;
+                _editorSurface.Modulate = _editorSurface.Modulate with { A = _collapsed ? 0f : 1f };
+                _editorSurface.Visible = !_collapsed;
+                _editorClip.Visible = !_collapsed;
+                SetEditorClipHeight(0f);
+                if (!_collapsed)
+                    Callable.From(() => Callable.From(SyncEditorExpandedHeight).CallDeferred()).CallDeferred();
                 return;
             }
 
@@ -3526,10 +3532,11 @@ namespace STS2RitsuLib.Settings
             _editorClip.UpdateMinimumSize();
             for (Node? current = _editorClip; current != null; current = current.GetParent())
             {
-                if (current is Control control)
-                    control.UpdateMinimumSize();
-                if (current is Container container)
-                    container.QueueSort();
+                if (current is ModSettingsScrollContainer found)
+                {
+                    found.RefreshContentMetrics();
+                    break;
+                }
             }
         }
 
@@ -3898,7 +3905,13 @@ namespace STS2RitsuLib.Settings
 
             if (!animate)
             {
-                FinalizeContentState();
+                _trackContentHeight = false;
+                _content.Modulate = _content.Modulate with { A = _collapsed ? 0f : 1f };
+                _content.Visible = !_collapsed;
+                _contentClip.Visible = !_collapsed;
+                SetContentClipHeight(0f);
+                if (!_collapsed)
+                    Callable.From(() => Callable.From(SyncContentExpandedHeight).CallDeferred()).CallDeferred();
                 return;
             }
 
@@ -3974,10 +3987,11 @@ namespace STS2RitsuLib.Settings
             _contentClip.UpdateMinimumSize();
             for (Node? current = _contentClip; current != null; current = current.GetParent())
             {
-                if (current is Control control)
-                    control.UpdateMinimumSize();
-                if (current is Container container)
-                    container.QueueSort();
+                if (current is ModSettingsScrollContainer found)
+                {
+                    found.RefreshContentMetrics();
+                    break;
+                }
             }
         }
 

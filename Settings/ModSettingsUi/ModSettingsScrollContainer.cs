@@ -228,6 +228,19 @@ public sealed partial class ModSettingsScrollContainer : Control
     }
 
     /// <summary>
+    ///     Recomputes content sizing and scrollbar visibility after a child layout change inside the attached content.
+    /// </summary>
+    public void RefreshContentMetrics()
+    {
+        if (_content == null)
+            return;
+
+        _content.UpdateMinimumSize();
+        SyncScrollbarAfterContentResize();
+        UpdateScrollLayout();
+    }
+
+    /// <summary>
     ///     Routes mouse drag and wheel input to the custom scroll logic while visible.
     /// </summary>
     public override void _GuiInput(InputEvent @event)
