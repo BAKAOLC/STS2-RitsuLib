@@ -10,6 +10,7 @@ using MegaCrit.Sts2.Core.Nodes.Rooms;
 using MegaCrit.Sts2.Core.Nodes.Screens;
 using MegaCrit.Sts2.Core.Nodes.Screens.Capstones;
 using MegaCrit.Sts2.Core.Nodes.Vfx;
+using STS2RitsuLib.Scaffolding.Godot;
 using STS2RitsuLib.TopBar;
 
 namespace STS2RitsuLib.CardPiles.Nodes
@@ -64,7 +65,6 @@ namespace STS2RitsuLib.CardPiles.Nodes
         private MegaLabel _countLabel = null!;
         private int _currentCount;
         private bool _hovered;
-        private Control _iconHost = null!;
 
         private HoverTip? _hoverTip;
 
@@ -73,6 +73,7 @@ namespace STS2RitsuLib.CardPiles.Nodes
         // when no IconPath is given) — the latter is what makes bare action buttons render an icon
         // that is pixel-identical to the deck button the player is used to seeing.
         private Control _icon = null!;
+        private Control _iconHost = null!;
 
         // Pile-mode fields (null when ActionDefinition is set).
         private ModCardPile? _pile;
@@ -236,7 +237,7 @@ namespace STS2RitsuLib.CardPiles.Nodes
             //   └── Count (MegaLabel, anchored bottom-right with vanilla offsets)
             // Keeping the node names identical means tooling / scene inspection / future vanilla
             // lookups by path (`Control/Icon`) work on our buttons too.
-            _iconHost = new Control
+            _iconHost = new()
             {
                 Name = "Control",
                 MouseFilter = MouseFilterEnum.Ignore,
@@ -290,11 +291,39 @@ namespace STS2RitsuLib.CardPiles.Nodes
                 GrowVertical = GrowDirection.Begin,
                 PivotOffset = new(14f, 18f),
             };
+            EnsureProceduralCountLabelHasThemeFont(_countLabel);
             _countLabel.SetTextAutoSize("0");
             AddChild(_countLabel);
 
             Connect(Control.SignalName.MouseEntered, Callable.From(OnMouseEntered));
             Connect(Control.SignalName.MouseExited, Callable.From(OnMouseExited));
+        }
+
+        private static void EnsureProceduralCountLabelHasThemeFont(MegaLabel countLabel)
+        {
+            var vanilla = NRun.Instance?.GlobalUi?.TopBar?.Deck?.GetNodeOrNull<MegaLabel>("DeckCardCount");
+            if (vanilla != null)
+            {
+                var font = RitsuThemeLookupCompat.GetThemeFont(vanilla, RitsuMegaLabelThemeNames.Font);
+                if (font != null)
+                {
+                    countLabel.AddThemeFontOverride(RitsuMegaLabelThemeNames.Font, font);
+                    countLabel.AddThemeFontSizeOverride(RitsuMegaLabelThemeNames.FontSize,
+                        RitsuThemeLookupCompat.GetThemeFontSize(vanilla, RitsuMegaLabelThemeNames.FontSize));
+                    return;
+                }
+            }
+
+            var fallback = ThemeDB.FallbackFont;
+            if (fallback != null)
+            {
+                countLabel.AddThemeFontOverride(RitsuMegaLabelThemeNames.Font, fallback);
+                countLabel.AddThemeFontSizeOverride(RitsuMegaLabelThemeNames.FontSize, 28);
+                return;
+            }
+
+            countLabel.AddThemeFontOverride(RitsuMegaLabelThemeNames.Font, new SystemFont());
+            countLabel.AddThemeFontSizeOverride(RitsuMegaLabelThemeNames.FontSize, 28);
         }
 
         private Texture2D? ResolveIconTexture()
@@ -323,17 +352,19 @@ namespace STS2RitsuLib.CardPiles.Nodes
         {
             try
             {
-                var deck = NRun.Instance?.GlobalUi.TopBar.Deck;
+                var deck = NRun.Instance?.GlobalUi?.TopBar?.Deck;
                 var vanillaIcon = deck?.GetNodeOrNull<Control>("Control/Icon");
                 if (vanillaIcon == null)
                     return;
 
+                // ReSharper disable BitwiseOperatorOnEnumWithoutFlags
                 // Duplicate scripts + signals + groups so the clone is fully self-contained — without
                 // this flag set Godot strips the ShaderMaterial binding that drives the deck icon's
                 // HSV shader.
                 var clone = vanillaIcon.Duplicate((int)(DuplicateFlags.Scripts
                                                         | DuplicateFlags.Signals
                                                         | DuplicateFlags.Groups));
+                // ReSharper restore BitwiseOperatorOnEnumWithoutFlags
                 if (clone is not Control control)
                 {
                     clone.QueueFree();
@@ -370,14 +401,16 @@ namespace STS2RitsuLib.CardPiles.Nodes
         {
             try
             {
-                var deck = NRun.Instance?.GlobalUi.TopBar.Deck;
+                var deck = NRun.Instance?.GlobalUi?.TopBar?.Deck;
                 var vanillaCount = deck?.GetNodeOrNull<MegaLabel>("DeckCardCount");
                 if (vanillaCount == null)
                     return;
 
+                // ReSharper disable BitwiseOperatorOnEnumWithoutFlags
                 var clone = vanillaCount.Duplicate((int)(DuplicateFlags.Scripts
                                                          | DuplicateFlags.Signals
                                                          | DuplicateFlags.Groups));
+                // ReSharper restore BitwiseOperatorOnEnumWithoutFlags
                 if (clone is not MegaLabel cloneLabel)
                 {
                     clone.QueueFree();

@@ -4,6 +4,7 @@ using MegaCrit.Sts2.addons.mega_text;
 using MegaCrit.Sts2.Core.Helpers;
 using MegaCrit.Sts2.Core.Nodes.CommonUi;
 using MegaCrit.Sts2.Core.Nodes.GodotExtensions;
+using MegaCrit.Sts2.Core.Nodes.Screens;
 using MegaCrit.Sts2.Core.Nodes.Screens.MainMenu;
 using MegaCrit.Sts2.Core.Nodes.Screens.Settings;
 using STS2RitsuLib.Patching.Models;
@@ -16,7 +17,7 @@ namespace STS2RitsuLib.Settings.Patches
     /// </summary>
     public class ModSettingsSubmenuPatch : IPatchMethod
     {
-        private static readonly ConditionalWeakTable<NMainMenuSubmenuStack, RitsuModSettingsSubmenu> Submenus = new();
+        internal static readonly ConditionalWeakTable<NSubmenuStack, RitsuModSettingsSubmenu> Submenus = new();
 
         /// <inheritdoc />
         public static string PatchId => "ritsulib_mod_settings_submenu";
@@ -47,7 +48,7 @@ namespace STS2RitsuLib.Settings.Patches
             return false;
         }
 
-        private static RitsuModSettingsSubmenu CreateSubmenu(NMainMenuSubmenuStack stack)
+        internal static RitsuModSettingsSubmenu CreateSubmenu(NSubmenuStack stack)
         {
             var submenu = new RitsuModSettingsSubmenu
             {
@@ -58,6 +59,42 @@ namespace STS2RitsuLib.Settings.Patches
 
             stack.AddChildSafely(submenu);
             return submenu;
+        }
+    }
+
+    /// <summary>
+    ///     Harmony patch that reuses one <see cref="RitsuModSettingsSubmenu" /> per
+    ///     <see cref="NRunSubmenuStack" /> (in-run pause / settings), mirroring <see cref="ModSettingsSubmenuPatch" />.
+    /// </summary>
+    public class ModSettingsRunSubmenuStackPatch : IPatchMethod
+    {
+        /// <inheritdoc />
+        public static string PatchId => "ritsulib_mod_settings_submenu_run_stack";
+
+        /// <inheritdoc />
+        public static string Description => "Inject RitsuLib mod settings submenu into the run submenu stack";
+
+        /// <inheritdoc />
+        public static bool IsCritical => false;
+
+        /// <inheritdoc />
+        public static ModPatchTarget[] GetTargets()
+        {
+            return [new(typeof(NRunSubmenuStack), nameof(NRunSubmenuStack.GetSubmenuType), [typeof(Type)])];
+        }
+
+        // ReSharper disable InconsistentNaming
+        /// <summary>
+        ///     Returns a cached <see cref="RitsuModSettingsSubmenu" /> for the run stack when the requested type matches.
+        /// </summary>
+        public static bool Prefix(NRunSubmenuStack __instance, Type type, ref NSubmenu __result)
+            // ReSharper restore InconsistentNaming
+        {
+            if (type != typeof(RitsuModSettingsSubmenu))
+                return true;
+
+            __result = ModSettingsSubmenuPatch.Submenus.GetValue(__instance, ModSettingsSubmenuPatch.CreateSubmenu);
+            return false;
         }
     }
 
@@ -138,7 +175,7 @@ namespace STS2RitsuLib.Settings.Patches
 
             void OpenSubmenu()
             {
-                screen.GetAncestorOfType<NMainMenuSubmenuStack>()?.PushSubmenuType(typeof(RitsuModSettingsSubmenu));
+                screen.GetAncestorOfType<NSubmenuStack>()?.PushSubmenuType(typeof(RitsuModSettingsSubmenu));
             }
         }
 

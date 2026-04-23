@@ -100,12 +100,18 @@ namespace STS2RitsuLib.Settings
             valueControl.SizeFlagsVertical = Control.SizeFlags.ShrinkCenter;
             row.AddChild(valueControl);
 
-            if (actionControl == null) return line;
+            if (actionControl == null)
+            {
+                AttachHostSurfaceReadOnlySync(context, valueControl, null);
+                return line;
+            }
+
             actionControl.SizeFlagsVertical = Control.SizeFlags.ShrinkCenter;
             row.AddChild(actionControl);
             if (actionControl is ModSettingsActionsButton actionsButton)
                 AttachContextMenuTargets(line, valueControl, actionsButton);
 
+            AttachHostSurfaceReadOnlySync(context, valueControl, actionControl);
             return line;
 
             string ResolveLabelText()
@@ -114,6 +120,31 @@ namespace STS2RitsuLib.Settings
                 return string.IsNullOrWhiteSpace(s)
                     ? ModSettingsLocalization.Get("entry.label.empty", "—")
                     : s;
+            }
+        }
+
+        private static void AttachHostSurfaceReadOnlySync(ModSettingsUiContext context, Control valueControl,
+            Control? actionControl)
+        {
+            var readOnlyMask = context.GetSectionHostReadOnlyMask();
+
+            Sync();
+            RegisterRefreshWhenAlive(context, valueControl, Sync);
+            if (actionControl != null)
+                RegisterRefreshWhenAlive(context, actionControl, Sync);
+            return;
+
+            void Sync()
+            {
+                if (!GodotObject.IsInstanceValid(valueControl))
+                    return;
+
+                var locked = ModSettingsHostSurfaceResolver.IsReadOnlyOnCurrentHost(readOnlyMask);
+                valueControl.ProcessMode = locked ? Node.ProcessModeEnum.Disabled : Node.ProcessModeEnum.Inherit;
+                valueControl.Modulate = locked ? new(1f, 1f, 1f, 0.58f) : Colors.White;
+                if (actionControl == null || !GodotObject.IsInstanceValid(actionControl)) return;
+                actionControl.ProcessMode = locked ? Node.ProcessModeEnum.Disabled : Node.ProcessModeEnum.Inherit;
+                actionControl.Modulate = locked ? new(1f, 1f, 1f, 0.58f) : Colors.White;
             }
         }
 
@@ -417,22 +448,30 @@ namespace STS2RitsuLib.Settings
                 sectionActionsButton.SizeFlagsVertical = Control.SizeFlags.ShrinkCenter;
 
             var wrappedEntries = new List<Control>(section.Entries.Count);
-            foreach (var entry in section.Entries)
-                try
-                {
-                    wrappedEntries.Add(MaybeWrapDynamicVisibility(context, entry.CreateControl(context),
-                        entry.VisibilityPredicate));
-                }
-                catch (Exception ex)
-                {
-                    RitsuLibFramework.Logger.Warn(
-                        $"[Settings] Failed to build entry '{page.ModId}:{page.Id}:{section.Id}:{entry.Id}': {ex.Message}");
-                    wrappedEntries.Add(CreateBuildErrorPlaceholder(
-                        ModSettingsLocalization.Get("entry.failed.title", "Setting failed to load"),
-                        string.Format(
-                            ModSettingsLocalization.Get("entry.failed.body", "Failed to build setting '{0}'."),
-                            entry.Id)));
-                }
+            context.BeginSectionSurfaceScope(page, section);
+            try
+            {
+                foreach (var entry in section.Entries)
+                    try
+                    {
+                        wrappedEntries.Add(MaybeWrapDynamicVisibility(context, entry.CreateControl(context),
+                            entry.VisibilityPredicate));
+                    }
+                    catch (Exception ex)
+                    {
+                        RitsuLibFramework.Logger.Warn(
+                            $"[Settings] Failed to build entry '{page.ModId}:{page.Id}:{section.Id}:{entry.Id}': {ex.Message}");
+                        wrappedEntries.Add(CreateBuildErrorPlaceholder(
+                            ModSettingsLocalization.Get("entry.failed.title", "Setting failed to load"),
+                            string.Format(
+                                ModSettingsLocalization.Get("entry.failed.body", "Failed to build setting '{0}'."),
+                                entry.Id)));
+                    }
+            }
+            finally
+            {
+                context.EndSectionSurfaceScope();
+            }
 
             Control built;
             if (section.IsCollapsible)
@@ -497,7 +536,9 @@ namespace STS2RitsuLib.Settings
                 built = container;
             }
 
-            return MaybeWrapDynamicVisibility(context, built, section.VisibleWhen);
+            var hostCombined = ModSettingsHostSurfaceResolver.CombineVisibility(section.VisibleWhen,
+                () => ModSettingsHostSurfaceResolver.IsVisibleOnCurrentHost(section.VisibleOnHostSurfaces));
+            return MaybeWrapDynamicVisibility(context, built, hostCombined);
         }
 
         internal static MegaRichTextLabel CreateSectionTitle(string text)

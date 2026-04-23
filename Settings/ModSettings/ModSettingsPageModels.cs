@@ -47,7 +47,9 @@ namespace STS2RitsuLib.Settings
             IReadOnlyList<ModSettingsSection> sections,
             Func<bool>? visibleWhen = null,
             ModSettingsMenuCapabilities menuCapabilities = ModSettingsMenuCapabilities.Copy |
-                                                           ModSettingsMenuCapabilities.Paste)
+                                                           ModSettingsMenuCapabilities.Paste,
+            ModSettingsHostSurface visibleOnHostSurfaces = ModSettingsHostSurface.All,
+            ModSettingsHostSurface readOnlyOnHostSurfaces = ModSettingsHostSurface.None)
         {
             ModId = modId;
             Id = id;
@@ -58,6 +60,8 @@ namespace STS2RitsuLib.Settings
             Sections = sections;
             VisibleWhen = visibleWhen;
             MenuCapabilities = menuCapabilities;
+            VisibleOnHostSurfaces = visibleOnHostSurfaces;
+            ReadOnlyOnHostSurfaces = readOnlyOnHostSurfaces;
         }
 
         /// <summary>
@@ -107,6 +111,17 @@ namespace STS2RitsuLib.Settings
         ///     Built-in actions enabled for the page-level actions menu.
         /// </summary>
         public ModSettingsMenuCapabilities MenuCapabilities { get; }
+
+        /// <summary>
+        ///     Host surfaces where this page appears in the sidebar and content. Defaults to
+        ///     <see cref="ModSettingsHostSurface.All" />.
+        /// </summary>
+        public ModSettingsHostSurface VisibleOnHostSurfaces { get; }
+
+        /// <summary>
+        ///     Host surfaces where interactive controls on this page are forced read-only (dimmed, no writes).
+        /// </summary>
+        public ModSettingsHostSurface ReadOnlyOnHostSurfaces { get; }
     }
 
     /// <summary>
@@ -123,7 +138,9 @@ namespace STS2RitsuLib.Settings
             IReadOnlyList<ModSettingsEntryDefinition> entries,
             Func<bool>? visibleWhen = null,
             ModSettingsMenuCapabilities menuCapabilities = ModSettingsMenuCapabilities.Copy |
-                                                           ModSettingsMenuCapabilities.Paste)
+                                                           ModSettingsMenuCapabilities.Paste,
+            ModSettingsHostSurface visibleOnHostSurfaces = ModSettingsHostSurface.All,
+            ModSettingsHostSurface readOnlyOnHostSurfaces = ModSettingsHostSurface.None)
         {
             Id = id;
             Title = title;
@@ -133,6 +150,8 @@ namespace STS2RitsuLib.Settings
             Entries = entries;
             VisibleWhen = visibleWhen;
             MenuCapabilities = menuCapabilities;
+            VisibleOnHostSurfaces = visibleOnHostSurfaces;
+            ReadOnlyOnHostSurfaces = readOnlyOnHostSurfaces;
         }
 
         /// <summary>
@@ -174,5 +193,15 @@ namespace STS2RitsuLib.Settings
         ///     Built-in actions enabled for the section-level actions menu.
         /// </summary>
         public ModSettingsMenuCapabilities MenuCapabilities { get; }
+
+        /// <summary>
+        ///     Host surfaces where this section is shown. Defaults to <see cref="ModSettingsHostSurface.All" />.
+        /// </summary>
+        public ModSettingsHostSurface VisibleOnHostSurfaces { get; }
+
+        /// <summary>
+        ///     Host surfaces where entries in this section are read-only (combined with the owning page mask).
+        /// </summary>
+        public ModSettingsHostSurface ReadOnlyOnHostSurfaces { get; }
     }
 }
