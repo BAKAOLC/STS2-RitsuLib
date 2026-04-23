@@ -257,6 +257,52 @@ The same principle applies: keep option keys, page keys, and the final registere
 
 ---
 
+## Add conditional options to a target ancient
+
+If you want to append extra options to an **existing ancient** (including vanilla ancients) without modifying the ancient class itself, register `ModAncientOptionRule`.
+
+```csharp
+using MegaCrit.Sts2.Core.Events;
+using MegaCrit.Sts2.Core.Models.Events;
+using STS2RitsuLib.Scaffolding.Ancients.Options;
+
+RitsuLibFramework.CreateContentPack("MyMod")
+    .AncientOption<Neow>(
+        new ModAncientOptionRule(ancient =>
+            [
+                new EventOption(
+                    ancient,
+                    () =>
+                    {
+                        ancient.SetEventFinished(ancient.L10NLookup("NEOW.pages.DONE.description"));
+                        return Task.CompletedTask;
+                    },
+                    "NEOW.pages.INITIAL.options.MYMOD_BONUS")
+            ])
+        {
+            Condition = ancient => ancient.Owner?.Character is MyCharacter,
+            Priority = 100,
+        })
+    .Apply();
+```
+
+Rule fields:
+
+- `Condition`: optional gate; option injection runs only when this returns `true`
+- `Priority`: execution order (higher runs first)
+- `SkipDuplicateTextKeys`: default `true`; skips duplicate `TextKey` options
+
+You can also register directly via framework API:
+
+```csharp
+RitsuLibFramework.RegisterAncientOption<Neow>(
+    "MyMod",
+    new ModAncientOptionRule(...)
+);
+```
+
+---
+
 ## Related docs
 
 - [Content Authoring Toolkit](ContentAuthoringToolkit.md)

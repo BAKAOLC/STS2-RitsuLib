@@ -257,6 +257,52 @@ public sealed class MyAncient : ModAncientEventTemplate
 
 ---
 
+## 给指定 Ancient 追加可条件化选项
+
+如果你要给**已有 Ancient（包括原版 Ancient）**追加额外选项，而不想改它本体，可以注册 `ModAncientOptionRule`。
+
+```csharp
+using MegaCrit.Sts2.Core.Events;
+using MegaCrit.Sts2.Core.Models.Events;
+using STS2RitsuLib.Scaffolding.Ancients.Options;
+
+RitsuLibFramework.CreateContentPack("MyMod")
+    .AncientOption<Neow>(
+        new ModAncientOptionRule(ancient =>
+            [
+                new EventOption(
+                    ancient,
+                    () =>
+                    {
+                        ancient.SetEventFinished(ancient.L10NLookup("NEOW.pages.DONE.description"));
+                        return Task.CompletedTask;
+                    },
+                    "NEOW.pages.INITIAL.options.MYMOD_BONUS")
+            ])
+        {
+            Condition = ancient => ancient.Owner?.Character is MyCharacter,
+            Priority = 100,
+        })
+    .Apply();
+```
+
+规则字段说明：
+
+- `Condition`：可选条件，返回 `true` 才会注入
+- `Priority`：优先级（高优先级先执行）
+- `SkipDuplicateTextKeys`：默认 `true`，避免重复 `TextKey`
+
+也可以不用内容包，直接走框架入口：
+
+```csharp
+RitsuLibFramework.RegisterAncientOption<Neow>(
+    "MyMod",
+    new ModAncientOptionRule(...)
+);
+```
+
+---
+
 ## 相关文档
 
 - [内容注册规则](ContentAuthoringToolkit.md)

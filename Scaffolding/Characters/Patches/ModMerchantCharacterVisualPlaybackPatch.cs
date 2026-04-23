@@ -1,10 +1,14 @@
+using System.Runtime.CompilerServices;
+using Godot;
 using MegaCrit.Sts2.Core.Bindings.MegaSpine;
 using MegaCrit.Sts2.Core.Models;
 using MegaCrit.Sts2.Core.Nodes.Rooms;
 using MegaCrit.Sts2.Core.Nodes.Screens.Shops;
 using STS2RitsuLib.Patching.Models;
 using STS2RitsuLib.Scaffolding.Characters.Visuals;
+using STS2RitsuLib.Scaffolding.Content;
 using STS2RitsuLib.Scaffolding.Visuals.Definition;
+using STS2RitsuLib.Scaffolding.Visuals.StateMachine;
 
 namespace STS2RitsuLib.Scaffolding.Characters.Patches
 {
@@ -14,6 +18,8 @@ namespace STS2RitsuLib.Scaffolding.Characters.Patches
     /// </summary>
     public class ModMerchantCharacterVisualPlaybackPatch : IPatchMethod
     {
+        private static readonly ConditionalWeakTable<Node, StateMachineSlot> StateMachinesByRoot = new();
+
         /// <inheritdoc cref="IPatchMethod.PatchId" />
         public static string PatchId => "mod_merchant_character_visual_playback";
 
@@ -46,8 +52,26 @@ namespace STS2RitsuLib.Scaffolding.Characters.Patches
             ModCreatureVisualPlayback.TryResolveMerchantCharacterModel(NMerchantRoom.Instance, __instance,
                 out var character);
 
+            if (TryRouteToStateMachine(__instance, character, anim))
+                return false;
+
             var worldCues = TryGetMerchantWorldCueSet(character);
             return !ModCreatureVisualPlayback.TryPlayOnVisualRoot(__instance, character, anim, loop, worldCues);
+        }
+
+        private static bool TryRouteToStateMachine(NMerchantCharacter merchant, CharacterModel? character, string anim)
+        {
+            if (character is not IModCharacterMerchantAnimationStateMachineFactory factory)
+                return false;
+
+            var slot = StateMachinesByRoot.GetValue(merchant, _ => new());
+            slot.EnsureBuilt(factory, merchant, character);
+
+            if (slot.StateMachine == null)
+                return false;
+
+            slot.StateMachine.SetTrigger(anim);
+            return true;
         }
 
         private static VisualCueSet? TryGetMerchantWorldCueSet(CharacterModel? character)
@@ -58,6 +82,22 @@ namespace STS2RitsuLib.Scaffolding.Characters.Patches
             }
                 ? null
                 : cueSet;
+        }
+
+        private sealed class StateMachineSlot
+        {
+            private bool _built;
+            public ModAnimStateMachine? StateMachine { get; private set; }
+
+            public void EnsureBuilt(IModCharacterMerchantAnimationStateMachineFactory factory, Node root,
+                CharacterModel character)
+            {
+                if (_built)
+                    return;
+
+                _built = true;
+                StateMachine = factory.TryCreateMerchantAnimationStateMachine(root, character);
+            }
         }
     }
 }

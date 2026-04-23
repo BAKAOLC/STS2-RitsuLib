@@ -3,24 +3,30 @@ using STS2RitsuLib.Data.Models;
 
 namespace STS2RitsuLib.Settings
 {
-    internal static class SelfCheckExportFolderDialog
+    /// <summary>
+    ///     Reusable <see cref="FileDialog" /> in <c>OpenDir</c> mode for persisting a folder path to
+    ///     <see cref="RitsuLibSettings" />.
+    /// </summary>
+    internal static class ModSettingsOpenFolderDialog
     {
         internal static void Show(
             ModSettingsValueBinding<RitsuLibSettings, string> outputDirBinding,
-            IModSettingsUiActionHost uiHost)
+            IModSettingsUiActionHost uiHost,
+            string logPrefix,
+            string titleLocalizationKey,
+            string titleFallback)
         {
             var tree = Engine.GetMainLoop() as SceneTree;
             if (tree?.Root == null)
             {
                 RitsuLibFramework.Logger.Warn(
-                    "[SelfCheck] Cannot open folder dialog: SceneTree root is not available.");
+                    $"[{logPrefix}] Cannot open folder dialog: SceneTree root is not available.");
                 return;
             }
 
             var dialog = new FileDialog
             {
-                Title = ModSettingsLocalization.Get("ritsulib.selfCheck.browseTitle",
-                    "Choose self-check output folder"),
+                Title = ModSettingsLocalization.Get(titleLocalizationKey, titleFallback),
                 FileMode = FileDialog.FileModeEnum.OpenDir,
                 Access = FileDialog.AccessEnum.Filesystem,
             };

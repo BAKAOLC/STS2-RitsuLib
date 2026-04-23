@@ -102,13 +102,32 @@ user://mod-configs/<modId>/localization
 ```csharp
 var keywords = RitsuLibFramework.GetKeywordRegistry("MyMod");
 
-keywords.RegisterCardKeyword(
-    id: "brew",
-    locKeyPrefix: "my_mod_brew",
+keywords.RegisterCardKeywordOwnedByLocNamespace(
+    localKeywordStem: "brew",
     iconPath: "res://MyMod/ui/keywords/brew.png");
 ```
 
 注册后会生成规范化标识，并绑定标题/描述的本地化键。
+
+---
+
+## 自动注册关键词（可选：CLR 特性）
+
+如果你已经使用 `ModTypeDiscoveryHub.RegisterModAssembly(...)` 让 RitsuLib 扫描你的程序集，也可以用特性声明关键词注册：
+
+```csharp
+using STS2RitsuLib.Interop.AutoRegistration;
+
+[RegisterOwnedCardKeyword("brew", LocNamespace = "my_mod", IconPath = "res://MyMod/ui/keywords/brew.png")]
+public sealed class BrewKeywordMarker;
+```
+
+这里 `LocNamespace` 只影响本地化键的 namespace（即 `modid` 部分）。关键词 stem（`brew`）会自动参与默认生成规则：`<namespace>_<keyword>`，并形成：
+
+- `<namespace>_<keyword>.title`
+- `<namespace>_<keyword>.description`
+
+> 兼容性说明：旧字段 `LocKeyPrefix`/`locKeyPrefix` 历史上实际代表“完整 stem”，容易误解为 prefix + keyword，已标记为过时；新代码请使用 `LocNamespace`。
 
 ---
 

@@ -2,6 +2,7 @@ using MegaCrit.Sts2.Core.Models;
 using MegaCrit.Sts2.Core.Models.Relics;
 using STS2RitsuLib.Combat.HealthBars;
 using STS2RitsuLib.Content;
+using STS2RitsuLib.Scaffolding.Ancients.Options;
 using STS2RitsuLib.Scaffolding.Cards.HandGlow;
 using STS2RitsuLib.Scaffolding.Cards.HandOutline;
 
@@ -474,6 +475,19 @@ namespace STS2RitsuLib.Scaffolding.Content
         public void Register(ModContentRegistry registry)
         {
             registry.RegisterActAncient<TAct, TAncient>();
+        }
+    }
+
+    /// <summary>
+    ///     Registers extra initial-option injection rules for a specific ancient model type.
+    /// </summary>
+    public sealed class AncientOptionRegistrationEntry<TAncient>(ModAncientOptionRule rule) : IContentRegistrationEntry
+        where TAncient : AncientEventModel
+    {
+        /// <inheritdoc />
+        public void Register(ModContentRegistry registry)
+        {
+            registry.RegisterAncientOption<TAncient>(rule);
         }
     }
 

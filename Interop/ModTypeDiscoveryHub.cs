@@ -69,10 +69,22 @@ namespace STS2RitsuLib.Interop
                 snapshot = Contributors.ToArray();
             }
 
-            foreach (var assembly in map.Values.Distinct())
-            foreach (var modType in AssemblyTypeScanHelper.GetLoadableTypes(assembly, RitsuLibFramework.Logger))
-            foreach (var contributor in snapshot)
-                contributor.Contribute(harmony, map, modType);
+            var orderedAssemblies = map
+                .OrderBy(static kv => kv.Key, StringComparer.Ordinal)
+                .Select(static kv => kv.Value)
+                .Distinct()
+                .ToArray();
+
+            foreach (var assembly in orderedAssemblies)
+            {
+                var modTypes = AssemblyTypeScanHelper.GetLoadableTypes(assembly, RitsuLibFramework.Logger)
+                    .OrderBy(static t => t.FullName ?? t.Name, StringComparer.Ordinal)
+                    .ToArray();
+
+                foreach (var modType in modTypes)
+                foreach (var contributor in snapshot)
+                    contributor.Contribute(harmony, map, modType);
+            }
         }
     }
 }

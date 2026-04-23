@@ -10,7 +10,12 @@ namespace STS2RitsuLib.Settings
         private readonly HashSet<string> _sectionIds = new(StringComparer.OrdinalIgnoreCase);
         private readonly List<ModSettingsSection> _sections = [];
 
+        private ModSettingsMenuCapabilities _menuCapabilities = ModSettingsMenuCapabilities.Copy |
+                                                                ModSettingsMenuCapabilities.Paste;
+
         private int? _modSidebarOrder;
+        private ModSettingsHostSurface _pageReadOnlyOnHostSurfaces = ModSettingsHostSurface.None;
+        private ModSettingsHostSurface _pageVisibleOnHostSurfaces = ModSettingsHostSurface.All;
         private Func<bool>? _pageVisibleWhen;
 
         /// <summary>
@@ -127,6 +132,33 @@ namespace STS2RitsuLib.Settings
         }
 
         /// <summary>
+        ///     Limits where this page appears (main menu vs run pause vs combat pause). Defaults to all surfaces.
+        /// </summary>
+        public ModSettingsPageBuilder WithVisibleOnHostSurfaces(ModSettingsHostSurface surfaces)
+        {
+            _pageVisibleOnHostSurfaces = surfaces;
+            return this;
+        }
+
+        /// <summary>
+        ///     Host surfaces where controls on this page are read-only (combined with per-section masks).
+        /// </summary>
+        public ModSettingsPageBuilder WithReadOnlyOnHostSurfaces(ModSettingsHostSurface surfaces)
+        {
+            _pageReadOnlyOnHostSurfaces = surfaces;
+            return this;
+        }
+
+        /// <summary>
+        ///     Restricts which chrome menu actions are exposed for the page itself.
+        /// </summary>
+        public ModSettingsPageBuilder WithMenuCapabilities(ModSettingsMenuCapabilities capabilities)
+        {
+            _menuCapabilities = capabilities;
+            return this;
+        }
+
+        /// <summary>
         ///     Adds a section built by <paramref name="configure" />; <paramref name="id" /> must be unique on this page.
         /// </summary>
         public ModSettingsPageBuilder AddSection(string id, Action<ModSettingsSectionBuilder> configure)
@@ -165,7 +197,10 @@ namespace STS2RitsuLib.Settings
                 Description,
                 SortOrder,
                 _sections.ToArray(),
-                _pageVisibleWhen
+                _pageVisibleWhen,
+                _menuCapabilities,
+                _pageVisibleOnHostSurfaces,
+                _pageReadOnlyOnHostSurfaces
             );
         }
     }
@@ -177,6 +212,14 @@ namespace STS2RitsuLib.Settings
     {
         private readonly List<ModSettingsEntryDefinition> _entries = [];
         private readonly HashSet<string> _entryIds = new(StringComparer.OrdinalIgnoreCase);
+        private readonly Dictionary<string, Func<bool>> _entryVisibleWhen = new(StringComparer.OrdinalIgnoreCase);
+
+        private ModSettingsMenuCapabilities _menuCapabilities = ModSettingsMenuCapabilities.Copy |
+                                                                ModSettingsMenuCapabilities.Paste;
+
+        private ModSettingsHostSurface _sectionReadOnlyOnHostSurfaces = ModSettingsHostSurface.None;
+        private ModSettingsHostSurface _sectionVisibleOnHostSurfaces = ModSettingsHostSurface.All;
+
         private Func<bool>? _sectionVisibleWhen;
 
         internal ModSettingsSectionBuilder(string id)
@@ -248,6 +291,33 @@ namespace STS2RitsuLib.Settings
         }
 
         /// <summary>
+        ///     Limits where this section is shown. Defaults to all host surfaces.
+        /// </summary>
+        public ModSettingsSectionBuilder WithVisibleOnHostSurfaces(ModSettingsHostSurface surfaces)
+        {
+            _sectionVisibleOnHostSurfaces = surfaces;
+            return this;
+        }
+
+        /// <summary>
+        ///     Host surfaces where this section’s value controls are read-only (OR’d with the owning page mask).
+        /// </summary>
+        public ModSettingsSectionBuilder WithReadOnlyOnHostSurfaces(ModSettingsHostSurface surfaces)
+        {
+            _sectionReadOnlyOnHostSurfaces = surfaces;
+            return this;
+        }
+
+        /// <summary>
+        ///     Restricts which chrome menu actions are exposed for the section itself.
+        /// </summary>
+        public ModSettingsSectionBuilder WithMenuCapabilities(ModSettingsMenuCapabilities capabilities)
+        {
+            _menuCapabilities = capabilities;
+            return this;
+        }
+
+        /// <summary>
         ///     Adds a non-interactive header row.
         /// </summary>
         public ModSettingsSectionBuilder AddHeader(
@@ -269,6 +339,33 @@ namespace STS2RitsuLib.Settings
             float? maxBodyHeight = null)
         {
             AddEntry(id, new ParagraphModSettingsEntryDefinition(id, text, description, maxBodyHeight));
+            return this;
+        }
+
+        /// <summary>
+        ///     Adds a read-only information card with title, optional subtitle, and body text.
+        /// </summary>
+        public ModSettingsSectionBuilder AddInfoCard(
+            string id,
+            ModSettingsText label,
+            ModSettingsText body,
+            ModSettingsText? description = null)
+        {
+            AddEntry(id, new InfoCardModSettingsEntryDefinition(id, label, body, description));
+            return this;
+        }
+
+        /// <summary>
+        ///     Adds a read-only runtime hotkey summary row with left text and right binding chips.
+        /// </summary>
+        public ModSettingsSectionBuilder AddRuntimeHotkeySummary(
+            string id,
+            ModSettingsText label,
+            ModSettingsText body,
+            IReadOnlyList<ModSettingsText> bindings,
+            ModSettingsText? idSuffix = null)
+        {
+            AddEntry(id, new RuntimeHotkeySummaryModSettingsEntryDefinition(id, label, body, bindings, idSuffix));
             return this;
         }
 
@@ -628,9 +725,38 @@ namespace STS2RitsuLib.Settings
             bool distinguishModifierSides = false,
             ModSettingsText? description = null)
         {
-            AddEntry(id,
-                new KeyBindingModSettingsEntryDefinition(id, label, binding, allowModifierCombos, allowModifierOnly,
-                    distinguishModifierSides, description));
+            var entry = new KeyBindingModSettingsEntryDefinition(id, label, binding, allowModifierCombos,
+                allowModifierOnly, distinguishModifierSides, description)
+            {
+                MenuCapabilities = ModSettingsMenuCapabilities.Copy | ModSettingsMenuCapabilities.ResetToDefault,
+            };
+            AddEntry(id, entry);
+            return this;
+        }
+
+        /// <summary>
+        ///     Adds a multi-key binding capture row. This path is native-only and must be explicitly opted into.
+        /// </summary>
+        public ModSettingsSectionBuilder AddKeyBinding(
+            string id,
+            ModSettingsText label,
+            IModSettingsValueBinding<List<string>> binding,
+            bool allowMultipleBindings,
+            bool allowModifierCombos = true,
+            bool allowModifierOnly = true,
+            bool distinguishModifierSides = false,
+            ModSettingsText? description = null)
+        {
+            if (!allowMultipleBindings)
+                throw new InvalidOperationException(
+                    "List<string> key binding rows require allowMultipleBindings=true to opt into native multi-binding support.");
+
+            var entry = new MultiKeyBindingModSettingsEntryDefinition(id, label, binding, allowModifierCombos,
+                allowModifierOnly, distinguishModifierSides, description)
+            {
+                MenuCapabilities = ModSettingsMenuCapabilities.Copy | ModSettingsMenuCapabilities.ResetToDefault,
+            };
+            AddEntry(id, entry);
             return this;
         }
 
@@ -691,7 +817,33 @@ namespace STS2RitsuLib.Settings
         {
             return _entries.Count == 0
                 ? throw new InvalidOperationException($"Settings section '{Id}' has no entries.")
-                : new(Id, Title, Description, IsCollapsible, StartCollapsed, _entries.ToArray(), _sectionVisibleWhen);
+                : new(Id, Title, Description, IsCollapsible, StartCollapsed, BuildEntries(), _sectionVisibleWhen,
+                    _menuCapabilities, _sectionVisibleOnHostSurfaces, _sectionReadOnlyOnHostSurfaces);
+        }
+
+        /// <summary>
+        ///     Overrides the chrome menu capabilities for one entry in this section.
+        /// </summary>
+        public ModSettingsSectionBuilder ConfigureEntryMenu(string id, ModSettingsMenuCapabilities capabilities)
+        {
+            var entry = _entries.FirstOrDefault(existing =>
+                            string.Equals(existing.Id, id, StringComparison.OrdinalIgnoreCase))
+                        ?? throw new InvalidOperationException(
+                            $"Settings entry '{id}' does not exist in section '{Id}'.");
+            entry.MenuCapabilities = capabilities;
+            return this;
+        }
+
+        internal ModSettingsSectionBuilder WithEntryVisibleWhen(string id, Func<bool> predicate)
+        {
+            ArgumentException.ThrowIfNullOrWhiteSpace(id);
+            ArgumentNullException.ThrowIfNull(predicate);
+
+            if (!_entryIds.Contains(id))
+                throw new InvalidOperationException($"Settings entry '{id}' does not exist in section '{Id}'.");
+
+            _entryVisibleWhen[id] = predicate;
+            return this;
         }
 
         private void AddEntry(string id, ModSettingsEntryDefinition entry)
@@ -702,6 +854,28 @@ namespace STS2RitsuLib.Settings
                 throw new InvalidOperationException($"Duplicate settings entry id '{id}' in section '{Id}'.");
 
             _entries.Add(entry);
+        }
+
+        private ModSettingsEntryDefinition[] BuildEntries()
+        {
+            var result = new ModSettingsEntryDefinition[_entries.Count];
+            for (var i = 0; i < _entries.Count; i++)
+            {
+                var entry = _entries[i];
+                if (_entryVisibleWhen.TryGetValue(entry.Id, out var visibilityPredicate))
+                {
+                    var wrapped = new ModSettingsEntryVisibilityWrapper(entry, visibilityPredicate)
+                    {
+                        MenuCapabilities = entry.MenuCapabilities,
+                    };
+                    result[i] = wrapped;
+                    continue;
+                }
+
+                result[i] = entry;
+            }
+
+            return result;
         }
     }
 }

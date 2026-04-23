@@ -1,3 +1,5 @@
+using MegaCrit.Sts2.Core.Entities.Cards;
+
 namespace STS2RitsuLib.Keywords
 {
     /// <summary>
@@ -99,5 +101,14 @@ namespace STS2RitsuLib.Keywords
         ///     on cards and other mod templates.
         /// </summary>
         public bool IncludeInCardHoverTip { get; init; }
+
+        /// <summary>
+        ///     Deterministic <see cref="CardKeyword" /> value minted for this keyword (hash of <see cref="Id" />,
+        ///     forced above the vanilla enum range). Stored directly inside <c>CardModel.Keywords</c> so the mod
+        ///     keyword rides vanilla workflows (lookups, cloning, canonical seeding, per-run saves) without any
+        ///     parallel side-loaded state. Populated by <see cref="ModKeywordRegistry" /> at registration time;
+        ///     remains <see cref="CardKeyword.None" /> for definitions constructed outside the registry.
+        /// </summary>
+        public CardKeyword CardKeywordValue { get; init; } = CardKeyword.None;
     }
 }

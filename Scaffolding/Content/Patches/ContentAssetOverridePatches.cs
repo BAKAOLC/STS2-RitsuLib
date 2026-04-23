@@ -1,5 +1,6 @@
 using System.Reflection;
 using Godot;
+using HarmonyLib;
 using MegaCrit.Sts2.Core.Assets;
 using MegaCrit.Sts2.Core.Events;
 using MegaCrit.Sts2.Core.Helpers;
@@ -48,7 +49,14 @@ namespace STS2RitsuLib.Scaffolding.Content.Patches
             if (!TryGetPath(instance, selector, memberName, out var path))
                 return true;
 
-            __result = ResourceLoader.Load<Texture2D>(path);
+            var texture = ResourceLoader.Load<Texture2D>(path);
+            if (texture == null)
+            {
+                LogLoadFailure(instance, memberName, path, nameof(Texture2D));
+                return true;
+            }
+
+            __result = texture;
             return false;
         }
 
@@ -129,6 +137,27 @@ namespace STS2RitsuLib.Scaffolding.Content.Patches
             return true;
         }
 
+        private static void LogLoadFailure(object instance, string memberName, string path, string expectedType)
+        {
+            RitsuLibFramework.Logger.Warn(
+                $"[Assets] Resource exists but failed to load as {expectedType} for {DescribeOwner(instance)}.{memberName}: '{path}'. Falling back to the base asset.");
+        }
+
+        private static string DescribeOwner(object owner)
+        {
+            try
+            {
+                if (owner is AbstractModel model && !string.IsNullOrWhiteSpace(model.Id.Entry))
+                    return $"{owner.GetType().Name}<{model.Id.Entry}>";
+            }
+            catch
+            {
+                // Ignore model identity lookup failures and fall back to the CLR type name.
+            }
+
+            return owner.GetType().Name;
+        }
+
         // ReSharper disable once InconsistentNaming
         internal static bool TryUsePackedSceneCacheOverride<TOverrides>(
             object instance,
@@ -170,7 +199,14 @@ namespace STS2RitsuLib.Scaffolding.Content.Patches
             if (!TryGetPath(instance, selector, memberName, out var path))
                 return true;
 
-            __result = ResourceLoader.Load<CompressedTexture2D>(path);
+            var texture = ResourceLoader.Load<Texture2D>(path);
+            if (texture == null)
+            {
+                LogLoadFailure(instance, memberName, path, nameof(Texture2D));
+                return true;
+            }
+
+            __result = texture;
             return false;
         }
     }
@@ -936,7 +972,8 @@ namespace STS2RitsuLib.Scaffolding.Content.Patches
                 return true;
 
             var path = overrides.CustomOverlayScenePath;
-            if (string.IsNullOrWhiteSpace(path) || !ResourceLoader.Exists(path))
+            if (string.IsNullOrWhiteSpace(path) ||
+                !AssetPathDiagnostics.Exists(path, __instance, nameof(IModCardAssetOverrides.CustomOverlayScenePath)))
                 return true;
 
             __result = ResourceLoader.Load<PackedScene>(path).Instantiate<Control>();
@@ -945,7 +982,8 @@ namespace STS2RitsuLib.Scaffolding.Content.Patches
     }
 
     /// <summary>
-    ///     Patches <see cref="RelicModel.IconPath" /> for mod-character per–relic-id paths (owner match) first, then
+    ///     Patches <see cref="RelicModel.IconPath" /> and packed atlas icon/outline path getters (used by vanilla
+    ///     <c>Icon</c> / <c>IconOutline</c> loaders) for mod-character per–relic-id paths (owner match) first, then
     ///     <see cref="IModRelicAssetOverrides" />.
     /// </summary>
     public class RelicIconPathPatch : IPatchMethod
@@ -955,7 +993,7 @@ namespace STS2RitsuLib.Scaffolding.Content.Patches
 
         /// <inheritdoc cref="IPatchMethod.Description" />
         public static string Description =>
-            "Owned-relic character overrides first, then mod relic CustomIconPath";
+            "Owned-relic character overrides first, then mod relic custom icon and packed atlas paths";
 
         /// <inheritdoc cref="IPatchMethod.IsCritical" />
         public static bool IsCritical => false;
@@ -966,26 +1004,50 @@ namespace STS2RitsuLib.Scaffolding.Content.Patches
             return
             [
                 new(typeof(RelicModel), "get_IconPath"),
+                new(typeof(RelicModel), "get_PackedIconPath", true),
+                new(typeof(RelicModel), "get_PackedIconOutlinePath", true),
             ];
         }
 
         // ReSharper disable InconsistentNaming
         /// <summary>
         ///     Supplies <see cref="IModCharacterAssetOverrides.TryGetVanillaRelicVisualOverrideForOwnedRelic" /> when
-        ///     applicable, then <see cref="IModRelicAssetOverrides.CustomIconPath" />.
+        ///     applicable, then <see cref="IModRelicAssetOverrides" /> custom paths.
         /// </summary>
-        public static bool Prefix(RelicModel __instance, ref string __result)
+        [HarmonyPriority(410)]
+        public static bool Prefix(MethodBase __originalMethod, RelicModel __instance, ref string __result)
             // ReSharper restore InconsistentNaming
         {
-            // ReSharper disable once ConvertIfStatementToReturnStatement
-            if (!ModCharacterOwnedVisualOverrideHelper.TryRelicIconPath(__instance, ref __result))
+            return __originalMethod.Name switch
+            {
+                "get_IconPath" or "get_PackedIconPath" => TryRelicMainIconPath(__instance, ref __result),
+                "get_PackedIconOutlinePath" => TryRelicPackedIconOutlinePath(__instance, ref __result),
+                _ => true,
+            };
+        }
+
+        private static bool TryRelicMainIconPath(RelicModel instance, ref string result)
+        {
+            if (!ModCharacterOwnedVisualOverrideHelper.TryRelicIconPath(instance, ref result))
                 return false;
 
             return ContentAssetOverridePatchHelper.TryUseStringOverride<IModRelicAssetOverrides>(
-                __instance,
-                ref __result,
+                instance,
+                ref result,
                 o => o.CustomIconPath,
                 nameof(IModRelicAssetOverrides.CustomIconPath));
+        }
+
+        private static bool TryRelicPackedIconOutlinePath(RelicModel instance, ref string result)
+        {
+            if (!ModCharacterOwnedVisualOverrideHelper.TryRelicIconOutlinePath(instance, ref result))
+                return false;
+
+            return ContentAssetOverridePatchHelper.TryUseStringOverride<IModRelicAssetOverrides>(
+                instance,
+                ref result,
+                o => o.CustomIconOutlinePath,
+                nameof(IModRelicAssetOverrides.CustomIconOutlinePath));
         }
     }
 
@@ -1065,7 +1127,8 @@ namespace STS2RitsuLib.Scaffolding.Content.Patches
     }
 
     /// <summary>
-    ///     Patches <see cref="PowerModel.IconPath" /> for <see cref="IModPowerAssetOverrides" />.
+    ///     Patches <see cref="PowerModel.IconPath" /> and <see cref="PowerModel.PackedIconPath" /> (used by vanilla
+    ///     <c>Icon</c> loader) for <see cref="IModPowerAssetOverrides" />.
     /// </summary>
     public class PowerIconPathPatch : IPatchMethod
     {
@@ -1073,7 +1136,7 @@ namespace STS2RitsuLib.Scaffolding.Content.Patches
         public static string PatchId => "content_asset_override_power_icon_path";
 
         /// <inheritdoc cref="IPatchMethod.Description" />
-        public static string Description => "Allow mod powers to override icon path assets";
+        public static string Description => "Allow mod powers to override icon and packed atlas icon paths";
 
         /// <inheritdoc cref="IPatchMethod.IsCritical" />
         public static bool IsCritical => false;
@@ -1084,6 +1147,7 @@ namespace STS2RitsuLib.Scaffolding.Content.Patches
             return
             [
                 new(typeof(PowerModel), "get_IconPath"),
+                new(typeof(PowerModel), "get_PackedIconPath", true),
             ];
         }
 
@@ -1091,14 +1155,20 @@ namespace STS2RitsuLib.Scaffolding.Content.Patches
         /// <summary>
         ///     Supplies <see cref="IModPowerAssetOverrides.CustomIconPath" /> when the resource exists.
         /// </summary>
-        public static bool Prefix(PowerModel __instance, ref string __result)
+        [HarmonyPriority(410)]
+        public static bool Prefix(MethodBase __originalMethod, PowerModel __instance, ref string __result)
             // ReSharper restore InconsistentNaming
         {
-            return ContentAssetOverridePatchHelper.TryUseStringOverride<IModPowerAssetOverrides>(
-                __instance,
-                ref __result,
-                o => o.CustomIconPath,
-                nameof(IModPowerAssetOverrides.CustomIconPath));
+            return __originalMethod.Name switch
+            {
+                "get_IconPath" or "get_PackedIconPath" => ContentAssetOverridePatchHelper
+                    .TryUseStringOverride<IModPowerAssetOverrides>(
+                        __instance,
+                        ref __result,
+                        o => o.CustomIconPath,
+                        nameof(IModPowerAssetOverrides.CustomIconPath)),
+                _ => true,
+            };
         }
     }
 
@@ -1268,7 +1338,8 @@ namespace STS2RitsuLib.Scaffolding.Content.Patches
     }
 
     /// <summary>
-    ///     Patches potion image and outline path getters for <see cref="IModPotionAssetOverrides" />.
+    ///     Patches potion image and outline path getters (including packed atlas path getters used by vanilla
+    ///     <c>Image</c> / preload) for <see cref="IModPotionAssetOverrides" />.
     /// </summary>
     public class PotionImagePathPatch : IPatchMethod
     {
@@ -1276,7 +1347,7 @@ namespace STS2RitsuLib.Scaffolding.Content.Patches
         public static string PatchId => "content_asset_override_potion_image_path";
 
         /// <inheritdoc cref="IPatchMethod.Description" />
-        public static string Description => "Allow mod potions to override image paths";
+        public static string Description => "Allow mod potions to override image and packed atlas paths";
 
         /// <inheritdoc cref="IPatchMethod.IsCritical" />
         public static bool IsCritical => false;
@@ -1288,6 +1359,8 @@ namespace STS2RitsuLib.Scaffolding.Content.Patches
             [
                 new(typeof(PotionModel), "get_ImagePath"),
                 new(typeof(PotionModel), "get_OutlinePath"),
+                new(typeof(PotionModel), "get_PackedImagePath", true),
+                new(typeof(PotionModel), "get_PackedOutlinePath", true),
             ];
         }
 
@@ -1296,6 +1369,7 @@ namespace STS2RitsuLib.Scaffolding.Content.Patches
         ///     Dispatches to <see cref="IModPotionAssetOverrides.CustomImagePath" /> or
         ///     <see cref="IModPotionAssetOverrides.CustomOutlinePath" />.
         /// </summary>
+        [HarmonyPriority(410)]
         public static bool Prefix(MethodBase __originalMethod, PotionModel __instance, ref string __result)
             // ReSharper restore InconsistentNaming
         {
@@ -1303,6 +1377,8 @@ namespace STS2RitsuLib.Scaffolding.Content.Patches
             {
                 "get_ImagePath" => TryPotionImagePath(__instance, ref __result),
                 "get_OutlinePath" => TryPotionOutlinePath(__instance, ref __result),
+                "get_PackedImagePath" => TryPotionImagePath(__instance, ref __result),
+                "get_PackedOutlinePath" => TryPotionOutlinePath(__instance, ref __result),
                 _ => true,
             };
         }
@@ -2156,7 +2232,8 @@ namespace STS2RitsuLib.Scaffolding.Content.Patches
                     nameof(IModAfflictionAssetOverrides.CustomOverlayScenePath)))
                 return true;
 
-            if (!ResourceLoader.Exists(path))
+            if (!AssetPathDiagnostics.Exists(path, __instance,
+                    nameof(IModAfflictionAssetOverrides.CustomOverlayScenePath)))
                 return true;
 
             __result = ResourceLoader.Load<PackedScene>(path).Instantiate<Control>();

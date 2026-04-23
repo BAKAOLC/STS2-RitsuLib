@@ -5,17 +5,21 @@ using MegaCrit.Sts2.Core.Entities.Cards;
 using MegaCrit.Sts2.Core.Entities.Players;
 using MegaCrit.Sts2.Core.Logging;
 using MegaCrit.Sts2.Core.Modding;
+using MegaCrit.Sts2.Core.Models;
 using STS2RitsuLib.Cards.FreePlay;
 using STS2RitsuLib.Combat.HealthBars;
 using STS2RitsuLib.Content;
 using STS2RitsuLib.Data;
 using STS2RitsuLib.Diagnostics.CardExport;
+using STS2RitsuLib.Diagnostics.CompendiumExport;
 using STS2RitsuLib.Interop;
 using STS2RitsuLib.Keywords;
 using STS2RitsuLib.Patching.Core;
 using STS2RitsuLib.RuntimeInput;
+using STS2RitsuLib.Scaffolding.Ancients.Options;
 using STS2RitsuLib.Scaffolding.Content;
 using STS2RitsuLib.Settings;
+using STS2RitsuLib.Settings.RunSidecar;
 using STS2RitsuLib.Timeline;
 using STS2RitsuLib.Unlocks;
 using STS2RitsuLib.Utils;
@@ -230,6 +234,7 @@ namespace STS2RitsuLib
 
                 ProfileManager.Instance.Initialize();
                 ModDataStore.InitializeAllProfileScoped();
+                ModRunSidecarSession.AttachLifecycleHandlers();
 
                 _profileServicesInitialized = true;
 
@@ -314,6 +319,15 @@ namespace STS2RitsuLib
         }
 
         /// <summary>
+        ///     Registers an initial-option injection rule for <typeparamref name="TAncient" />.
+        /// </summary>
+        public static void RegisterAncientOption<TAncient>(string modId, ModAncientOptionRule rule)
+            where TAncient : AncientEventModel
+        {
+            GetContentRegistry(modId).RegisterAncientOption<TAncient>(rule);
+        }
+
+        /// <summary>
         ///     Creates a content pack builder for <paramref name="modId" />.
         /// </summary>
         public static ModContentPackBuilder CreateContentPack(string modId)
@@ -376,6 +390,16 @@ namespace STS2RitsuLib
         public static void BeginCardPngExport(CardPngExportRequest request, Player? issuingPlayer = null)
         {
             CardPngExporter.BeginExport(request, issuingPlayer, msg => Logger.Info(msg));
+        }
+
+        /// <summary>
+        ///     Starts a batch PNG export of compendium-style detail panels: relic <c>inspect_relic_screen</c> popup, and
+        ///     potion lab focus (scaled <c>NPotion</c> + hovers). Does not use save / unlock gating; content is the “seen
+        ///     unlocked” form.
+        /// </summary>
+        public static void BeginCompendiumDetailPngExport(CompendiumPngExportRequest request)
+        {
+            CompendiumDetailPngExporter.BeginExport(request, msg => Logger.Info(msg));
         }
 
         /// <summary>

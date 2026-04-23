@@ -40,6 +40,8 @@ namespace STS2RitsuLib.Scaffolding.Characters.Visuals
 
         private static readonly string[] ReviveCueNames = ["revive", "Revive"];
 
+        private static readonly string[] StunCueNames = ["stun", "Stun"];
+
         /// <summary>
         ///     Attempts to play a logical cue (idle, die, hurt, …) on combat-style <see cref="NCreatureVisuals" />.
         /// </summary>
@@ -141,6 +143,7 @@ namespace STS2RitsuLib.Scaffolding.Characters.Visuals
                 CreatureAnimator.hitTrigger => "hurt",
                 CreatureAnimator.deathTrigger => "die",
                 CreatureAnimator.reviveTrigger => "revive",
+                "Stun" or "stun" => "stun",
                 _ => trigger.ToLowerInvariant(),
             };
         }
@@ -155,6 +158,7 @@ namespace STS2RitsuLib.Scaffolding.Characters.Visuals
                 "attack" => AttackCueNames,
                 "cast" => CastCueNames,
                 "revive" => ReviveCueNames,
+                "stun" => StunCueNames,
                 _ => TwoNameFallback(primaryCue),
             };
         }

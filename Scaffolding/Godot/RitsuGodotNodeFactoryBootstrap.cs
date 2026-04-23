@@ -20,6 +20,8 @@ namespace STS2RitsuLib.Scaffolding.Godot
 
             _ = new RitsuNCreatureVisualsNodeFactory();
             _ = new RitsuNMerchantCharacterNodeFactory();
+            _ = new RitsuNRestSiteCharacterNodeFactory();
+            _ = new RitsuNode2DSceneRootFactory();
             _ = new RitsuTextureRectControlNodeFactory();
             _ = new RitsuNEnergyCounterNodeFactory();
             RitsuLibFramework.Logger.Info("[Godot] RitsuGodot node factories initialized.");

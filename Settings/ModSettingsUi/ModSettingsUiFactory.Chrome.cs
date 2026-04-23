@@ -32,6 +32,15 @@ namespace STS2RitsuLib.Settings
                 CreateEntryActionsButton(context, binding), binding);
         }
 
+        private static MarginContainer CreateSettingLine<TValue>(ModSettingsUiContext context,
+            Func<string> labelProvider,
+            Func<string> descriptionBodyProvider, Control valueControl, IModSettingsValueBinding<TValue> binding,
+            ModSettingsMenuCapabilities capabilities)
+        {
+            return CreateSettingLine(context, labelProvider, descriptionBodyProvider, valueControl,
+                CreateEntryActionsButton(context, binding, capabilities), binding);
+        }
+
         private static MarginContainer CreateSettingLine(ModSettingsUiContext context, Func<string> labelProvider,
             Func<string> descriptionBodyProvider, Control valueControl, Control? actionControl = null,
             IModSettingsBinding? scopeBinding = null)
@@ -91,12 +100,18 @@ namespace STS2RitsuLib.Settings
             valueControl.SizeFlagsVertical = Control.SizeFlags.ShrinkCenter;
             row.AddChild(valueControl);
 
-            if (actionControl == null) return line;
+            if (actionControl == null)
+            {
+                AttachHostSurfaceReadOnlySync(context, valueControl, null);
+                return line;
+            }
+
             actionControl.SizeFlagsVertical = Control.SizeFlags.ShrinkCenter;
             row.AddChild(actionControl);
             if (actionControl is ModSettingsActionsButton actionsButton)
                 AttachContextMenuTargets(line, valueControl, actionsButton);
 
+            AttachHostSurfaceReadOnlySync(context, valueControl, actionControl);
             return line;
 
             string ResolveLabelText()
@@ -105,6 +120,31 @@ namespace STS2RitsuLib.Settings
                 return string.IsNullOrWhiteSpace(s)
                     ? ModSettingsLocalization.Get("entry.label.empty", "—")
                     : s;
+            }
+        }
+
+        private static void AttachHostSurfaceReadOnlySync(ModSettingsUiContext context, Control valueControl,
+            Control? actionControl)
+        {
+            var readOnlyMask = context.GetSectionHostReadOnlyMask();
+
+            Sync();
+            RegisterRefreshWhenAlive(context, valueControl, Sync);
+            if (actionControl != null)
+                RegisterRefreshWhenAlive(context, actionControl, Sync);
+            return;
+
+            void Sync()
+            {
+                if (!GodotObject.IsInstanceValid(valueControl))
+                    return;
+
+                var locked = ModSettingsHostSurfaceResolver.IsReadOnlyOnCurrentHost(readOnlyMask);
+                valueControl.ProcessMode = locked ? Node.ProcessModeEnum.Disabled : Node.ProcessModeEnum.Inherit;
+                valueControl.Modulate = locked ? new(1f, 1f, 1f, 0.58f) : Colors.White;
+                if (actionControl == null || !GodotObject.IsInstanceValid(actionControl)) return;
+                actionControl.ProcessMode = locked ? Node.ProcessModeEnum.Disabled : Node.ProcessModeEnum.Inherit;
+                actionControl.Modulate = locked ? new(1f, 1f, 1f, 0.58f) : Colors.White;
             }
         }
 
@@ -180,17 +220,19 @@ namespace STS2RitsuLib.Settings
         }
 
         internal static Control? CreateEntryActionsButton<TValue>(ModSettingsUiContext context,
-            IModSettingsValueBinding<TValue> binding)
+            IModSettingsValueBinding<TValue> binding,
+            ModSettingsMenuCapabilities capabilities = ModSettingsMenuCapabilities.All)
         {
-            var actions = BuildBindingActions(context, binding);
+            var actions = BuildBindingActions(context, binding, capabilities);
             return actions.Count == 0 ? null : new ModSettingsActionsButton(actions, context.RequestRefresh);
         }
 
         private static List<ModSettingsMenuAction> BuildBindingActions<TValue>(ModSettingsUiContext context,
-            IModSettingsValueBinding<TValue> binding)
+            IModSettingsValueBinding<TValue> binding, ModSettingsMenuCapabilities capabilities)
         {
             var actions = new List<ModSettingsMenuAction>();
-            if (binding is IDefaultModSettingsValueBinding<TValue> defaults)
+            if (capabilities.HasFlag(ModSettingsMenuCapabilities.ResetToDefault) &&
+                binding is IDefaultModSettingsValueBinding<TValue> defaults)
                 actions.Add(new(
                     ModSettingsStandardActionIds.ResetToDefault,
                     ModSettingsLocalization.Get("button.resetDefault", "Reset to default"),
@@ -202,25 +244,27 @@ namespace STS2RitsuLib.Settings
                         context.RequestRefresh();
                     }));
 
-            actions.Add(new(
-                ModSettingsStandardActionIds.Copy,
-                ModSettingsLocalization.Get("button.copy", "Copy data"),
-                true,
-                () =>
-                {
-                    CopyBindingValueToClipboard(binding);
-                    context.RequestRefresh();
-                }));
-            actions.Add(new(
-                ModSettingsStandardActionIds.Paste,
-                ModSettingsLocalization.Get("button.paste", "Paste data"),
-                () => CanPasteBindingValueFromClipboard(binding),
-                () =>
-                {
-                    if (!TryPasteBindingValueFromClipboard(context, binding)) return;
-                    context.MarkDirty(binding);
-                    context.RequestRefresh();
-                }));
+            if (capabilities.HasFlag(ModSettingsMenuCapabilities.Copy))
+                actions.Add(new(
+                    ModSettingsStandardActionIds.Copy,
+                    ModSettingsLocalization.Get("button.copy", "Copy data"),
+                    true,
+                    () =>
+                    {
+                        CopyBindingValueToClipboard(binding);
+                        context.RequestRefresh();
+                    }));
+            if (capabilities.HasFlag(ModSettingsMenuCapabilities.Paste))
+                actions.Add(new(
+                    ModSettingsStandardActionIds.Paste,
+                    ModSettingsLocalization.Get("button.paste", "Paste data"),
+                    () => CanPasteBindingValueFromClipboard(binding),
+                    () =>
+                    {
+                        if (!TryPasteBindingValueFromClipboard(context, binding)) return;
+                        context.MarkDirty(binding);
+                        context.RequestRefresh();
+                    }));
             ModSettingsUiActionRegistry.AppendBindingActions(context, binding, actions);
             return actions;
         }
@@ -256,23 +300,25 @@ namespace STS2RitsuLib.Settings
         internal static List<ModSettingsMenuAction> BuildPageMenuActions(ModSettingsUiContext context,
             ModSettingsPageUiContext pageContext)
         {
-            var actions = new List<ModSettingsMenuAction>
-            {
-                new(ModSettingsStandardActionIds.PageCopy, ModSettingsLocalization.Get("button.copy", "Copy data"),
+            var actions = new List<ModSettingsMenuAction>();
+            if (pageContext.Page.MenuCapabilities.HasFlag(ModSettingsMenuCapabilities.Copy))
+                actions.Add(new(ModSettingsStandardActionIds.PageCopy,
+                    ModSettingsLocalization.Get("button.copy", "Copy data"),
                     true,
                     () =>
                     {
                         ModSettingsUiChromeClipboard.TryCopyPage(pageContext);
                         context.RequestRefresh();
-                    }),
-                new(ModSettingsStandardActionIds.PagePaste, ModSettingsLocalization.Get("button.paste", "Paste data"),
+                    }));
+            if (pageContext.Page.MenuCapabilities.HasFlag(ModSettingsMenuCapabilities.Paste))
+                actions.Add(new(ModSettingsStandardActionIds.PagePaste,
+                    ModSettingsLocalization.Get("button.paste", "Paste data"),
                     () => ModSettingsUiChromeClipboard.CanPastePage(pageContext),
                     () =>
                     {
                         ModSettingsUiChromeClipboard.TryPastePage(pageContext);
                         context.RequestRefresh();
-                    }),
-            };
+                    }));
             ModSettingsUiActionRegistry.AppendPageActions(context, pageContext, actions);
             return actions;
         }
@@ -280,24 +326,25 @@ namespace STS2RitsuLib.Settings
         internal static List<ModSettingsMenuAction> BuildSectionMenuActions(ModSettingsUiContext context,
             ModSettingsSectionUiContext sectionContext)
         {
-            var actions = new List<ModSettingsMenuAction>
-            {
-                new(ModSettingsStandardActionIds.SectionCopy, ModSettingsLocalization.Get("button.copy", "Copy data"),
+            var actions = new List<ModSettingsMenuAction>();
+            if (sectionContext.Section.MenuCapabilities.HasFlag(ModSettingsMenuCapabilities.Copy))
+                actions.Add(new(ModSettingsStandardActionIds.SectionCopy,
+                    ModSettingsLocalization.Get("button.copy", "Copy data"),
                     true,
                     () =>
                     {
                         ModSettingsUiChromeClipboard.TryCopySection(sectionContext);
                         context.RequestRefresh();
-                    }),
-                new(ModSettingsStandardActionIds.SectionPaste,
+                    }));
+            if (sectionContext.Section.MenuCapabilities.HasFlag(ModSettingsMenuCapabilities.Paste))
+                actions.Add(new(ModSettingsStandardActionIds.SectionPaste,
                     ModSettingsLocalization.Get("button.paste", "Paste data"),
                     () => ModSettingsUiChromeClipboard.CanPasteSection(sectionContext),
                     () =>
                     {
                         ModSettingsUiChromeClipboard.TryPasteSection(sectionContext);
                         context.RequestRefresh();
-                    }),
-            };
+                    }));
             ModSettingsUiActionRegistry.AppendSectionActions(context, sectionContext, actions);
             return actions;
         }
@@ -397,25 +444,34 @@ namespace STS2RitsuLib.Settings
             var sectionActionsButton = sectionMenuActions.Count == 0
                 ? null
                 : new ModSettingsActionsButton(sectionMenuActions, context.RequestRefresh);
-            sectionActionsButton?.SizeFlagsVertical = Control.SizeFlags.ShrinkCenter;
+            if (sectionActionsButton != null)
+                sectionActionsButton.SizeFlagsVertical = Control.SizeFlags.ShrinkCenter;
 
             var wrappedEntries = new List<Control>(section.Entries.Count);
-            foreach (var entry in section.Entries)
-                try
-                {
-                    wrappedEntries.Add(MaybeWrapDynamicVisibility(context, entry.CreateControl(context),
-                        entry.VisibilityPredicate));
-                }
-                catch (Exception ex)
-                {
-                    RitsuLibFramework.Logger.Warn(
-                        $"[Settings] Failed to build entry '{page.ModId}:{page.Id}:{section.Id}:{entry.Id}': {ex.Message}");
-                    wrappedEntries.Add(CreateBuildErrorPlaceholder(
-                        ModSettingsLocalization.Get("entry.failed.title", "Setting failed to load"),
-                        string.Format(
-                            ModSettingsLocalization.Get("entry.failed.body", "Failed to build setting '{0}'."),
-                            entry.Id)));
-                }
+            context.BeginSectionSurfaceScope(page, section);
+            try
+            {
+                foreach (var entry in section.Entries)
+                    try
+                    {
+                        wrappedEntries.Add(MaybeWrapDynamicVisibility(context, entry.CreateControl(context),
+                            entry.VisibilityPredicate));
+                    }
+                    catch (Exception ex)
+                    {
+                        RitsuLibFramework.Logger.Warn(
+                            $"[Settings] Failed to build entry '{page.ModId}:{page.Id}:{section.Id}:{entry.Id}': {ex.Message}");
+                        wrappedEntries.Add(CreateBuildErrorPlaceholder(
+                            ModSettingsLocalization.Get("entry.failed.title", "Setting failed to load"),
+                            string.Format(
+                                ModSettingsLocalization.Get("entry.failed.body", "Failed to build setting '{0}'."),
+                                entry.Id)));
+                    }
+            }
+            finally
+            {
+                context.EndSectionSurfaceScope();
+            }
 
             Control built;
             if (section.IsCollapsible)
@@ -480,7 +536,9 @@ namespace STS2RitsuLib.Settings
                 built = container;
             }
 
-            return MaybeWrapDynamicVisibility(context, built, section.VisibleWhen);
+            var hostCombined = ModSettingsHostSurfaceResolver.CombineVisibility(section.VisibleWhen,
+                () => ModSettingsHostSurfaceResolver.IsVisibleOnCurrentHost(section.VisibleOnHostSurfaces));
+            return MaybeWrapDynamicVisibility(context, built, hostCombined);
         }
 
         internal static MegaRichTextLabel CreateSectionTitle(string text)
@@ -851,7 +909,8 @@ namespace STS2RitsuLib.Settings
             var pageBtn = pageActions.Count == 0
                 ? null
                 : new ModSettingsActionsButton(pageActions, context.RequestRefresh);
-            pageBtn?.SizeFlagsVertical = Control.SizeFlags.ShrinkCenter;
+            if (pageBtn != null)
+                pageBtn.SizeFlagsVertical = Control.SizeFlags.ShrinkCenter;
 
             var bar = CreatePageHeaderBar(context, page, showBack, onBack, pageBtn);
             if (pageBtn != null)

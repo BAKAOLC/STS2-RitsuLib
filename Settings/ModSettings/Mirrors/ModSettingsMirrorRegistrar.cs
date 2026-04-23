@@ -33,6 +33,10 @@ namespace STS2RitsuLib.Settings
                                 section.WithTitle(sectionDefinition.Title);
                             if (sectionDefinition.Description != null)
                                 section.WithDescription(sectionDefinition.Description);
+                            if (sectionDefinition.IsCollapsible)
+                                section.Collapsible(sectionDefinition.StartCollapsed);
+                            if (sectionDefinition.VisibleWhen != null)
+                                section.WithVisibleWhen(sectionDefinition.VisibleWhen);
 
                             foreach (var entry in sectionDefinition.Entries)
                                 ModSettingsMirrorEntryAppender.Append(section, entry);

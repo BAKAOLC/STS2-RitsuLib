@@ -46,6 +46,23 @@ namespace STS2RitsuLib.Scaffolding.Content.Patches
             return false;
         }
 
+        internal static bool TryRelicIconOutlinePath(RelicModel instance, ref string result)
+        {
+            var overrides = TryGetOwningCharacterOverrides(instance);
+
+            var profile = overrides?.TryGetVanillaRelicVisualOverrideForOwnedRelic(instance);
+            if (profile == null)
+                return true;
+
+            var path = profile.IconOutlinePath;
+            if (string.IsNullOrWhiteSpace(path) ||
+                !AssetPathDiagnostics.Exists(path, instance, nameof(RelicAssetProfile.IconOutlinePath)))
+                return true;
+
+            result = path;
+            return false;
+        }
+
         internal static bool TryRelicIconOutlineTexture(RelicModel instance, ref Texture2D result)
         {
             var overrides = TryGetOwningCharacterOverrides(instance);

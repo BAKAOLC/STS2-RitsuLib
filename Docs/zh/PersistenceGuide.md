@@ -188,9 +188,63 @@ store.Register<MyData>(
 
 ---
 
+## AttachedState 与 SavedAttachedState
+
+`AttachedState<TKey, TValue>` 用于给引用类型对象挂运行时 sidecar 状态。
+
+适合场景：
+
+- 值只在当前进程内有效
+- 希望状态生命周期跟随 key 对象
+- 不想为目标类型做继承或直接改模型字段
+
+`SavedAttachedState<TKey, TValue>` 是它的可持久化版本，面向已经会经过 `SavedProperties.FromInternal(...)` 和 `SavedProperties.FillInternal(...)` 的对象。
+
+适合场景：
+
+- key 是会参与原生存档序列化的模型对象
+- 附加值需要跨 save/load 保留
+- 值类型本身受 `SavedProperties` 支持
+
+当前支持的值类型：
+
+- `int`
+- `bool`
+- `string`
+- `ModelId`
+- enum
+- `int[]`
+- enum 数组
+- `SerializableCard`
+- `SerializableCard[]`
+- `List<SerializableCard>`
+
+示例：
+
+```csharp
+using STS2RitsuLib.Utils;
+
+private static readonly SavedAttachedState<MyModel, int> BonusDamage =
+    new("bonus_damage", () => 0);
+
+BonusDamage[model] = 4;
+
+var bonus = BonusDamage.GetOrCreate(model);
+```
+
+说明：
+
+- 持久化字段名在套用 `"{typeof(TKey).Name}_{name}"` 前缀后必须全局唯一
+- `SavedAttachedState` 不是任意 JSON sideband 通道，而是刻意限制在 `SavedProperties` 可表示的值类型范围内
+- reward 专用的 `EncounterState` sideband 序列化依然只是特例，不是默认推荐模式
+
+---
+
 ## 推荐实践
 
 - 每个持久化概念定义一个独立 class
+- 纯运行时对象状态优先使用 `AttachedState`
+- 只有模型对象本来就参与 `SavedProperties` 时才使用 `SavedAttachedState`
 - 发布后尽量保持 `fileName` 稳定
 - 进度类数据默认优先考虑 `Profile`
 - 始终在 `BeginModDataRegistration` 中批量注册

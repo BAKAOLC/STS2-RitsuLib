@@ -188,9 +188,63 @@ Use migrations when a file format is published and later evolves.
 
 ---
 
+## AttachedState vs SavedAttachedState
+
+`AttachedState<TKey, TValue>` is for runtime-only sidecar state on reference objects.
+
+Use it when:
+
+- the value only matters during the current process
+- the key object already defines the lifetime you want
+- you do not want to subclass or mutate the target type
+
+`SavedAttachedState<TKey, TValue>` is the persisted counterpart for objects that already flow through `SavedProperties.FromInternal(...)` and `SavedProperties.FillInternal(...)`.
+
+Use it when:
+
+- the key is a model object that participates in vanilla save serialization
+- the attached value should survive save/load round-trips
+- the value type is already supported by `SavedProperties`
+
+Supported value types are:
+
+- `int`
+- `bool`
+- `string`
+- `ModelId`
+- enums
+- `int[]`
+- enum arrays
+- `SerializableCard`
+- `SerializableCard[]`
+- `List<SerializableCard>`
+
+Example:
+
+```csharp
+using STS2RitsuLib.Utils;
+
+private static readonly SavedAttachedState<MyModel, int> BonusDamage =
+    new("bonus_damage", () => 0);
+
+BonusDamage[model] = 4;
+
+var bonus = BonusDamage.GetOrCreate(model);
+```
+
+Notes:
+
+- persisted names must be globally unique after the `"{typeof(TKey).Name}_{name}"` prefix is applied
+- `SavedAttachedState` is not a generic JSON sideband channel; it is intentionally limited to `SavedProperties`-compatible value types
+- reward-specific `EncounterState` sideband serialization remains a special-case implementation, not the default persistence pattern
+
+---
+
 ## Recommended Usage Pattern
 
 - define one data class per persisted concept
+- use `AttachedState` for ephemeral runtime-only object state
+- use `SavedAttachedState` only for model objects that already participate in `SavedProperties`
 - keep file names stable after release
 - use `Profile` scope by default for progression-like data
 - batch registration inside `BeginModDataRegistration`

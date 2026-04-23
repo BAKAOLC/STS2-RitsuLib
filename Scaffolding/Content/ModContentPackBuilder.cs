@@ -4,6 +4,7 @@ using MegaCrit.Sts2.Core.Timeline;
 using STS2RitsuLib.Combat.HealthBars;
 using STS2RitsuLib.Content;
 using STS2RitsuLib.Keywords;
+using STS2RitsuLib.Scaffolding.Ancients.Options;
 using STS2RitsuLib.Scaffolding.Cards.HandGlow;
 using STS2RitsuLib.Scaffolding.Cards.HandOutline;
 using STS2RitsuLib.Timeline;
@@ -462,8 +463,50 @@ namespace STS2RitsuLib.Scaffolding.Content
         }
 
         /// <summary>
+        ///     Queues <see cref="ModContentRegistry.RegisterAncientOption{TAncient}" /> for injecting extra initial options.
+        /// </summary>
+        public ModContentPackBuilder AncientOption<TAncient>(ModAncientOptionRule rule)
+            where TAncient : AncientEventModel
+        {
+            return AddStep(ctx => ctx.Content.RegisterAncientOption<TAncient>(rule));
+        }
+
+        /// <summary>
         ///     Queues <c>ModKeywordRegistry.RegisterCardKeywordOwned</c> (mod-local stem → qualified id).
         /// </summary>
+        public ModContentPackBuilder CardKeywordOwnedByLocNamespace(
+            string localKeywordStem,
+            string? locNamespace,
+            string? iconPath,
+            ModKeywordCardDescriptionPlacement cardDescriptionPlacement,
+            bool includeInCardHoverTip)
+        {
+            return AddStep(ctx =>
+                ctx.Keywords.RegisterCardKeywordOwnedByLocNamespace(localKeywordStem, locNamespace, iconPath,
+                    cardDescriptionPlacement, includeInCardHoverTip));
+        }
+
+        /// <summary>
+        ///     Queues <c>ModKeywordRegistry.RegisterCardKeywordOwnedByLocNamespace</c> with legacy hover defaults.
+        /// </summary>
+        public ModContentPackBuilder CardKeywordOwnedByLocNamespace(
+            string localKeywordStem,
+            string? locNamespace = null,
+            string? iconPath = null)
+        {
+            return CardKeywordOwnedByLocNamespace(
+                localKeywordStem,
+                locNamespace,
+                iconPath,
+                ModKeywordCardDescriptionPlacement.None,
+                true);
+        }
+
+        /// <summary>
+        ///     Queues <c>ModKeywordRegistry.RegisterCardKeywordOwned</c> (mod-local stem → qualified id).
+        /// </summary>
+        [Obsolete(
+            "Pitfall: locKeyPrefix is NOT a prefix that affects only the modid/namespace portion. It is the full card_keywords entry stem used to form '{stem}.title' and '{stem}.description'. Prefer CardKeywordOwnedByLocNamespace (default stem: '<modid>_<keyword>').")]
         public ModContentPackBuilder CardKeywordOwned(
             string localKeywordStem,
             string? locKeyPrefix,
@@ -479,6 +522,8 @@ namespace STS2RitsuLib.Scaffolding.Content
         /// <summary>
         ///     Queues <c>ModKeywordRegistry.RegisterCardKeywordOwned</c> with legacy hover defaults.
         /// </summary>
+        [Obsolete(
+            "Pitfall: locKeyPrefix is NOT a prefix that affects only the modid/namespace portion. It is the full card_keywords entry stem used to form '{stem}.title' and '{stem}.description'. Prefer CardKeywordOwnedByLocNamespace (default stem: '<modid>_<keyword>').")]
         public ModContentPackBuilder CardKeywordOwned(
             string localKeywordStem,
             string? locKeyPrefix = null,

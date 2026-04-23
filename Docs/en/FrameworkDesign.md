@@ -8,13 +8,15 @@ This document explains the architectural decisions behind RitsuLib and the const
 
 RitsuLib is built around a small set of explicit design priorities:
 
-- explicit registration instead of implicit discovery
+- explicit registration instead of opaque “magic” discovery
 - fixed model identity instead of runtime name inference
 - composable asset records instead of large inheritance hierarchies
 - scene replacement instead of in-place mutation of vanilla assets
 - compatibility fallbacks only where the base game has no safe extension point
 
 The framework reduces repetitive authoring work, but it does not convert the mod into an implicit runtime graph.
+
+Optional **attribute-based** registration is still explicit: only types in assemblies registered with `ModTypeDiscoveryHub.RegisterModAssembly` are considered, each attribute maps to ordinary registry calls, and `AutoRegistrationAttribute.Inherit` defaults to **off** so derived types do not pick up base annotations unless you opt in. Details: [Content Packs & Registries](ContentPacksAndRegistries.md#attribute-based-registration-optional).
 
 ---
 

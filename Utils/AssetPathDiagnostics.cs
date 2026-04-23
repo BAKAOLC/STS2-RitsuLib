@@ -1,4 +1,3 @@
-using Godot;
 using MegaCrit.Sts2.Core.Models;
 
 namespace STS2RitsuLib.Utils
@@ -10,7 +9,7 @@ namespace STS2RitsuLib.Utils
 
         internal static bool Exists(string path, object owner, string memberName)
         {
-            if (ResourceLoader.Exists(path))
+            if (GodotResourcePath.ResourceExists(path))
                 return true;
 
             WarnMissingPathOnce(owner, memberName, path);

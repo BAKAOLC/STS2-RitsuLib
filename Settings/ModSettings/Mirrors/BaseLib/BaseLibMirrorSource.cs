@@ -18,6 +18,7 @@ namespace STS2RitsuLib.Settings
         private const string ConfigHoverTipAttributeName = "BaseLib.Config.ConfigHoverTipAttribute";
         private const string ConfigHoverTipsByDefaultAttributeName = "BaseLib.Config.ConfigHoverTipsByDefaultAttribute";
         private const string HoverTipsByDefaultAttributeName = "BaseLib.Config.HoverTipsByDefaultAttribute";
+        private const string ConfigVisibleIfAttributeName = "BaseLib.Config.ConfigVisibleIfAttribute";
 
         private static readonly Lock Gate = new();
         private static bool _pagesRegistered;
@@ -77,6 +78,7 @@ namespace STS2RitsuLib.Settings
                 var hoverTipAttrType = ResolveType(ConfigHoverTipAttributeName);
                 var configHoverTipsByDefaultAttrType = ResolveType(ConfigHoverTipsByDefaultAttributeName);
                 var hoverTipsByDefaultAttrType = ResolveType(HoverTipsByDefaultAttributeName);
+                var visibleIfAttrType = ResolveType(ConfigVisibleIfAttributeName);
 
                 pageTitle ??= ModSettingsText.I18N(ModSettingsLocalization.Instance, "baselib.mirroredPage.title",
                     "Mod config");
@@ -106,7 +108,8 @@ namespace STS2RitsuLib.Settings
                         host,
                         configProps, sectionAttrType, hideUiAttrType, buttonAttrType, configSliderType, sliderRangeType,
                         sliderFormatType, textInputAttrType, colorPickerAttrType, hoverTipAttrType,
-                        configHoverTipsByDefaultAttrType, hoverTipsByDefaultAttrType, configConcreteType);
+                        configHoverTipsByDefaultAttrType, hoverTipsByDefaultAttrType, visibleIfAttrType,
+                        configConcreteType, modConfigType);
                     if (page == null)
                         continue;
 

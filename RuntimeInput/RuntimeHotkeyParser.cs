@@ -318,13 +318,13 @@ namespace STS2RitsuLib.RuntimeInput
         private static bool IsLeftSpecific(Key key)
         {
             var name = key.ToString().ToLowerInvariant();
-            return name.Contains("left") || name.StartsWith("l");
+            return name.Contains("left") || name.StartsWith('l');
         }
 
         private static bool IsRightSpecific(Key key)
         {
             var name = key.ToString().ToLowerInvariant();
-            return name.Contains("right") || name.StartsWith("r");
+            return name.Contains("right") || name.StartsWith('r');
         }
     }
 }

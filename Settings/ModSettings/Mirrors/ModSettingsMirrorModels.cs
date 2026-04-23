@@ -32,7 +32,10 @@ namespace STS2RitsuLib.Settings
         string Id,
         IReadOnlyList<ModSettingsMirrorEntryDefinition> Entries,
         ModSettingsText? Title = null,
-        ModSettingsText? Description = null);
+        ModSettingsText? Description = null,
+        bool IsCollapsible = false,
+        bool StartCollapsed = false,
+        Func<bool>? VisibleWhen = null);
 
     internal sealed record ModSettingsMirrorChoiceOption(
         string Value,
@@ -75,5 +78,6 @@ namespace STS2RitsuLib.Settings
         float? MaxBodyHeight = null,
         bool EditAlpha = true,
         bool EditIntensity = false,
-        Type? EnumType = null);
+        Type? EnumType = null,
+        Func<bool>? VisibleWhen = null);
 }

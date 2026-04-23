@@ -158,6 +158,46 @@ namespace STS2RitsuLib.Content
         }
 
         /// <summary>
+        ///     Builds a mod-scoped card-pile id using the ritsulib <c>MODID_CATEGORY_TYPENAME</c> public-entry
+        ///     convention — three uppercase segments separated by underscores, aligning with
+        ///     <see cref="GetFixedPublicEntry(string, Type)" /> and the vanilla <c>static_hover_tips</c> key
+        ///     style (<c>DRAW_PILE</c>, <c>EXHAUST_PILE</c>, ...).
+        /// </summary>
+        /// <remarks>
+        ///     The returned string doubles as the default <c>LocStem</c> used when authoring
+        ///     <c>static_hover_tips.json</c>, so a pile registered by mod <c>com.example.my-mod</c> with
+        ///     local stem <c>overflow_pile</c> shows up both as id <c>MYMOD_CARDPILE_OVERFLOW_PILE</c> and
+        ///     loc keys <c>MYMOD_CARDPILE_OVERFLOW_PILE.title</c> / <c>.description</c> / <c>.empty</c>.
+        ///     Mods can still override the stem via <c>ModCardPileSpec.LocStem</c> when they need to share
+        ///     keys with an existing translation.
+        /// </remarks>
+        public static string GetQualifiedCardPileId(string modId, string localPileStem)
+        {
+            ArgumentException.ThrowIfNullOrWhiteSpace(modId);
+            ArgumentException.ThrowIfNullOrWhiteSpace(localPileStem);
+
+            var modStem = NormalizePublicStem(modId);
+            var keyStem = NormalizePublicStem(localPileStem);
+            return $"{modStem}_CARDPILE_{keyStem}";
+        }
+
+        /// <summary>
+        ///     Builds a mod-scoped top-bar-button id in the ritsulib <c>MODID_CATEGORY_TYPENAME</c> public
+        ///     entry style (uppercase, three segments, underscore-separated, middle segment fixed to
+        ///     <c>TOPBARBUTTON</c>). Used by <see cref="STS2RitsuLib.TopBar.ModTopBarButtonRegistry" />; the
+        ///     returned string doubles as the default <c>LocStem</c> for <c>static_hover_tips.json</c>.
+        /// </summary>
+        public static string GetQualifiedTopBarButtonId(string modId, string localButtonStem)
+        {
+            ArgumentException.ThrowIfNullOrWhiteSpace(modId);
+            ArgumentException.ThrowIfNullOrWhiteSpace(localButtonStem);
+
+            var modStem = NormalizePublicStem(modId);
+            var keyStem = NormalizePublicStem(localButtonStem);
+            return $"{modStem}_TOPBARBUTTON_{keyStem}";
+        }
+
+        /// <summary>
         ///     Returns the singleton registry for <paramref name="modId" /> (created on first use).
         /// </summary>
         public static ModContentRegistry For(string modId)
@@ -953,6 +993,7 @@ namespace STS2RitsuLib.Content
                     .Concat(RegisteredActAncients.Values.SelectMany(static set => set))
                     .Distinct()
                     .Where(static t => t.Assembly.IsDynamic)
+                    .OrderBy(static t => t.FullName ?? t.Name, StringComparer.Ordinal)
                     .ToArray();
             }
 
@@ -1095,6 +1136,7 @@ namespace STS2RitsuLib.Content
             lock (SyncRoot)
             {
                 return modelTypes
+                    .OrderBy(static t => t.FullName ?? t.Name, StringComparer.Ordinal)
                     .Select(ModelDb.GetId)
                     .Select(ModelDb.GetById<TModel>)
                     .ToArray();
@@ -1110,6 +1152,7 @@ namespace STS2RitsuLib.Content
                 return !registry.TryGetValue(scopeType, out var modelTypes)
                     ? []
                     : modelTypes
+                        .OrderBy(static t => t.FullName ?? t.Name, StringComparer.Ordinal)
                         .Select(ModelDb.GetId)
                         .Select(ModelDb.GetById<TModel>)
                         .ToArray();

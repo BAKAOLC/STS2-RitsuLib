@@ -4,7 +4,6 @@
     <PropertyGroup>
         <RootNamespace>STS2RitsuLib</RootNamespace>
         <TargetFramework>net9.0</TargetFramework>
-        <LangVersion>latest</LangVersion>
         <ImplicitUsings>true</ImplicitUsings>
         <Nullable>enable</Nullable>
         <EnableDynamicLoading>true</EnableDynamicLoading>
@@ -12,7 +11,7 @@
         <NoWarn>$(NoWarn);CS0436</NoWarn>
         <IsPackable>true</IsPackable>
         <PackageId>STS2.RitsuLib</PackageId>
-        <Version>0.0.58</Version>
+        <Version>0.1.2</Version>
         <Authors>OLC</Authors>
         <Description>Shared framework library for Slay the Spire 2 mods.</Description>
         <PackageReadmeFile>README.md</PackageReadmeFile>
@@ -47,6 +46,8 @@
     </ItemGroup>
     <ItemGroup>
         <None Include="README.md" Pack="true" PackagePath="\"/>
+        <None Include="mod_manifest.json" Pack="true" PackagePath="contentFiles/any/any/"/>
+        <None Include="buildTransitive\STS2.RitsuLib.targets" Pack="true" PackagePath="buildTransitive/"/>
     </ItemGroup>
     <!-- Exclude game source reference folder from compilation -->
     <ItemGroup>

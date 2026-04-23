@@ -1,9 +1,13 @@
+using Godot;
+using MegaCrit.Sts2.Core.Animation;
+using MegaCrit.Sts2.Core.Bindings.MegaSpine;
 using MegaCrit.Sts2.Core.Models;
 using MegaCrit.Sts2.Core.Nodes.Combat;
 using STS2RitsuLib.Content;
 using STS2RitsuLib.Scaffolding.Characters.Visuals.Definition;
 using STS2RitsuLib.Scaffolding.Content;
 using STS2RitsuLib.Scaffolding.Visuals.Definition;
+using STS2RitsuLib.Scaffolding.Visuals.StateMachine;
 
 namespace STS2RitsuLib.Scaffolding.Characters
 {
@@ -224,9 +228,15 @@ namespace STS2RitsuLib.Scaffolding.Characters
     /// <typeparam name="TCardPool">Concrete <see cref="CardPoolModel" /> type registered for this character.</typeparam>
     /// <typeparam name="TRelicPool">Concrete <see cref="RelicPoolModel" /> type registered for this character.</typeparam>
     /// <typeparam name="TPotionPool">Concrete <see cref="PotionPoolModel" /> type registered for this character.</typeparam>
+#pragma warning disable CS0618
+    // Template keeps the obsolete IModCharacter* visuals / animator factory interfaces wired so existing derived
+    // classes and external consumers that type-check against the old interface names continue to work.
     public abstract class ModCharacterTemplate<TCardPool, TRelicPool, TPotionPool> : CharacterModel
-        , IModCharacterAssetOverrides, IModCharacterCreatureVisualsFactory, IModCharacterEpochTimelineRequirement,
-        IModCharacterVanillaSelectionPolicy
+        , IModCharacterAssetOverrides, IModCreatureVisualsFactory, IModCharacterCreatureVisualsFactory,
+        IModCreatureAnimatorFactory, IModCharacterCreatureAnimatorFactory,
+        IModNonSpineAnimationStateMachineFactory, IModCharacterMerchantAnimationStateMachineFactory,
+        IModCharacterEpochTimelineRequirement, IModCharacterVanillaSelectionPolicy
+#pragma warning restore CS0618
         where TCardPool : CardPoolModel
         where TRelicPool : RelicPoolModel
         where TPotionPool : PotionPoolModel
@@ -501,13 +511,28 @@ namespace STS2RitsuLib.Scaffolding.Characters
         public virtual CharacterWorldProceduralVisualSet? WorldProceduralVisuals =>
             ResolvedAssetProfile.WorldProceduralVisuals;
 
+#pragma warning disable CS0618
+        CreatureAnimator? IModCharacterCreatureAnimatorFactory.TryCreateCreatureAnimator(MegaSprite controller)
+        {
+            return SetupCustomCreatureAnimator(controller);
+        }
+#pragma warning restore CS0618
+
+#pragma warning disable CS0618
         NCreatureVisuals? IModCharacterCreatureVisualsFactory.TryCreateCreatureVisuals()
         {
             return TryCreateCreatureVisuals();
         }
+#pragma warning restore CS0618
 
         /// <inheritdoc />
         public virtual bool RequiresEpochAndTimeline => true;
+
+        ModAnimStateMachine? IModCharacterMerchantAnimationStateMachineFactory.
+            TryCreateMerchantAnimationStateMachine(Node merchantRoot, CharacterModel character)
+        {
+            return SetupCustomMerchantAnimationStateMachine(merchantRoot, character);
+        }
 
         /// <inheritdoc />
         public virtual bool HideFromVanillaCharacterSelect => false;
@@ -515,11 +540,64 @@ namespace STS2RitsuLib.Scaffolding.Characters
         /// <inheritdoc />
         public virtual bool AllowInVanillaRandomCharacterSelect => !HideFromVanillaCharacterSelect;
 
+        CreatureAnimator? IModCreatureAnimatorFactory.TryCreateCreatureAnimator(MegaSprite controller)
+        {
+            return SetupCustomCreatureAnimator(controller);
+        }
+
+        NCreatureVisuals? IModCreatureVisualsFactory.TryCreateCreatureVisuals()
+        {
+            return TryCreateCreatureVisuals();
+        }
+
+        ModAnimStateMachine? IModNonSpineAnimationStateMachineFactory.
+            TryCreateNonSpineAnimationStateMachine(Node visualsRoot)
+        {
+            return SetupCustomNonSpineAnimationStateMachine(visualsRoot, this);
+        }
+
         /// <summary>
         ///     Non-null combat visuals; otherwise <see cref="IModCharacterAssetOverrides.CustomVisualsPath" /> / vanilla
         ///     paths apply.
         /// </summary>
         protected virtual NCreatureVisuals? TryCreateCreatureVisuals()
+        {
+            return null;
+        }
+
+        /// <summary>
+        ///     Optional override producing a fully wired Spine <see cref="CreatureAnimator" /> (state graph for idle /
+        ///     hit / attack / cast / die / relaxed). Return <see langword="null" /> to defer to vanilla
+        ///     <see cref="CharacterModel.GenerateAnimator" />. Prefer <see cref="ModAnimStateMachines.Standard" /> to
+        ///     match baselib semantics.
+        /// </summary>
+        /// <param name="controller">Spine controller attached to the character's combat visuals.</param>
+        protected virtual CreatureAnimator? SetupCustomCreatureAnimator(MegaSprite controller)
+        {
+            return null;
+        }
+
+        /// <summary>
+        ///     Optional override producing a non-Spine <see cref="ModAnimStateMachine" /> for the character's combat
+        ///     visuals (cue frame sequences, Godot animation player, animated sprite). Return <see langword="null" />
+        ///     to defer to single-shot playback via <c>ModCreatureVisualPlayback</c>.
+        /// </summary>
+        /// <param name="visualsRoot">Combat visuals root node.</param>
+        /// <param name="character">Character model (always <see langword="this" />, exposed for convenience).</param>
+        protected virtual ModAnimStateMachine? SetupCustomNonSpineAnimationStateMachine(Node visualsRoot,
+            CharacterModel character)
+        {
+            return null;
+        }
+
+        /// <summary>
+        ///     Optional override producing a merchant / rest-site <see cref="ModAnimStateMachine" /> for the character.
+        ///     Return <see langword="null" /> to defer to single-shot playback via <c>ModCreatureVisualPlayback</c>.
+        /// </summary>
+        /// <param name="merchantRoot">Merchant character root node.</param>
+        /// <param name="character">Character model (always <see langword="this" />, exposed for convenience).</param>
+        protected virtual ModAnimStateMachine? SetupCustomMerchantAnimationStateMachine(Node merchantRoot,
+            CharacterModel character)
         {
             return null;
         }

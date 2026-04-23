@@ -31,7 +31,12 @@ namespace STS2RitsuLib.Scaffolding.Content
     public abstract class ModPotionTemplate : PotionModel, IModPotionAssetOverrides
     {
         /// <summary>
-        ///     Keyword ids merged into this potion’s extra hover tips.
+        ///     Keyword ids surfaced on this potion's hover tips. <b>Display-only</b>: unlike
+        ///     <see cref="ModCardTemplate.RegisteredKeywordIds" />, this does <b>not</b> participate in any
+        ///     gameplay keyword set (vanilla <see cref="PotionModel" /> has no <c>Keywords</c>/<c>CardKeyword</c>
+        ///     storage) — each id is looked up in <see cref="ModKeywordRegistry" /> purely to render a hover tip
+        ///     via <c>ToHoverTips()</c>. Use it for visual documentation; gameplay behaviour must be implemented
+        ///     explicitly in the potion's own logic.
         /// </summary>
         protected virtual IEnumerable<string> RegisteredKeywordIds => [];
 

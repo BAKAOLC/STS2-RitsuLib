@@ -7,6 +7,7 @@ using MegaCrit.Sts2.Core.Models;
 using STS2RitsuLib.Content;
 using STS2RitsuLib.Keywords;
 using STS2RitsuLib.Scaffolding.Characters;
+using STS2RitsuLib.Utils;
 using Environment = System.Environment;
 
 namespace STS2RitsuLib.Diagnostics
@@ -195,7 +196,7 @@ namespace STS2RitsuLib.Diagnostics
                 }
 
                 var selected = string.Equals(overrideValue, resolved, StringComparison.Ordinal);
-                var exists = !requireResource || ResourceLoader.Exists(overrideValue);
+                var exists = !requireResource || GodotResourcePath.ResourceExists(overrideValue);
                 switch (selected)
                 {
                     case true when exists:

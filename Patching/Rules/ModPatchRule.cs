@@ -47,12 +47,17 @@ namespace STS2RitsuLib.Patching.Rules
             if (PatchType == null)
                 throw new InvalidOperationException("PatchType must be set before generating patches");
 
-            var types = assembly.GetTypes().Where(TypeSelector);
+            var types = assembly.GetTypes()
+                .Where(TypeSelector)
+                .OrderBy(static t => t.FullName ?? t.Name, StringComparer.Ordinal);
 
             return (from type in types
-                let methods =
-                    type.GetMethods(BindingFlags.Instance | BindingFlags.Static | BindingFlags.Public |
-                                    BindingFlags.NonPublic).Where(MethodSelector)
+                let methods = type
+                    .GetMethods(BindingFlags.Instance | BindingFlags.Static | BindingFlags.Public |
+                                BindingFlags.NonPublic)
+                    .Where(MethodSelector)
+                    .OrderBy(static m => m.Name, StringComparer.Ordinal)
+                    .ThenBy(static m => m.ToString(), StringComparer.Ordinal)
                 from method in methods
                 select new ModPatchInfo($"{Id}_{type.Name}_{method.Name}", type, method.Name, PatchType, IsCritical,
                     $"{Description} -> {type.Name}.{method.Name}")).ToArray();

@@ -1,3 +1,4 @@
+using System.Text;
 using Godot;
 using MegaCrit.Sts2.addons.mega_text;
 using MegaCrit.Sts2.Core.Assets;
@@ -593,8 +594,10 @@ namespace STS2RitsuLib.Settings
             if (NInputManager.Instance == null)
                 return;
 
-            _leftPaneHotkeyIcon?.Texture = NInputManager.Instance.GetHotkeyIcon(PaneSidebarHotkey);
-            _rightPaneHotkeyIcon?.Texture = NInputManager.Instance.GetHotkeyIcon(PaneContentHotkey);
+            if (_leftPaneHotkeyIcon != null)
+                _leftPaneHotkeyIcon.Texture = NInputManager.Instance.GetHotkeyIcon(PaneSidebarHotkey);
+            if (_rightPaneHotkeyIcon != null)
+                _rightPaneHotkeyIcon.Texture = NInputManager.Instance.GetHotkeyIcon(PaneContentHotkey);
         }
 
         private void PushPaneHotkeys()
@@ -921,6 +924,7 @@ namespace STS2RitsuLib.Settings
         private void EnsureUiUpToDate(bool forceStructure = false, bool includeAllPagesRefresh = false)
         {
             ModSettingsMirrorRegistrarBootstrap.TryRegisterMirroredPages();
+            RitsuLibModSettingsBootstrap.RefreshDynamicPages();
             ApplyStaticTexts();
             RefreshPageSnapshots();
             EnsureSelectionIsValid();
@@ -943,7 +947,7 @@ namespace STS2RitsuLib.Settings
         {
             var pages = ModSettingsRegistry.GetPages();
             var next = pages.ToDictionary(page => CreatePageCacheKey(page.ModId, page.Id),
-                page => new PageSnapshot(page.Id, page.ModId, page.ParentPageId),
+                page => new PageSnapshot(page.Id, page.ModId, page.ParentPageId, CreatePageStructureSignature(page)),
                 StringComparer.OrdinalIgnoreCase);
             if (_pageSnapshots.Count != next.Count || _pageSnapshots.Any(pair =>
                     !next.TryGetValue(pair.Key, out var snapshot) || snapshot != pair.Value))
@@ -1330,8 +1334,9 @@ namespace STS2RitsuLib.Settings
             cache.Button.TooltipText = ResolvePageTabTitle(page);
             cache.Button.SetSelected(string.Equals(page.Id, _selectedPageId, StringComparison.OrdinalIgnoreCase));
             _pageButtons[cache.PageKey] = cache.Button;
-            if (page.VisibleWhen != null)
-                _sidebarDynamicVisibilityTargets.Add((cache.Button, page.VisibleWhen));
+            var pageVisibility = ModSettingsHostSurfaceResolver.CombineVisibility(page.VisibleWhen,
+                () => ModSettingsHostSurfaceResolver.IsVisibleOnCurrentHost(page.VisibleOnHostSurfaces));
+            _sidebarDynamicVisibilityTargets.Add((cache.Button, pageVisibility));
 
             var showSections = string.Equals(page.Id, _selectedPageId, StringComparison.OrdinalIgnoreCase);
             cache.SectionRail.Visible = showSections;
@@ -1413,8 +1418,9 @@ namespace STS2RitsuLib.Settings
                 sectionButton.SetSelected(string.Equals(section.Id, _selectedSectionId,
                     StringComparison.OrdinalIgnoreCase));
                 _sectionButtons[sectionKey] = sectionButton;
-                if (section.VisibleWhen != null)
-                    _sidebarDynamicVisibilityTargets.Add((sectionButton, section.VisibleWhen));
+                var sectionVisibility = ModSettingsHostSurfaceResolver.CombineVisibility(section.VisibleWhen,
+                    () => ModSettingsHostSurfaceResolver.IsVisibleOnCurrentHost(section.VisibleOnHostSurfaces));
+                _sidebarDynamicVisibilityTargets.Add((sectionButton, sectionVisibility));
                 if (sectionButton.GetParent() != cache.SectionRail)
                     cache.SectionRail.AddChild(sectionButton);
                 cache.SectionRail.MoveChild(sectionButton, index);
@@ -2092,6 +2098,35 @@ namespace STS2RitsuLib.Settings
             };
         }
 
+        private static string CreatePageStructureSignature(ModSettingsPage page)
+        {
+            var builder = new StringBuilder();
+            builder.Append(page.Id).Append('|')
+                .Append(page.ModId).Append('|')
+                .Append(page.ParentPageId ?? string.Empty).Append('|')
+                .Append(page.Sections.Count);
+
+            foreach (var section in page.Sections)
+            {
+                builder.Append("||")
+                    .Append(section.Id)
+                    .Append('|')
+                    .Append(section.IsCollapsible ? '1' : '0')
+                    .Append('|')
+                    .Append(section.StartCollapsed ? '1' : '0')
+                    .Append('|')
+                    .Append(section.Entries.Count);
+
+                foreach (var entry in section.Entries)
+                    builder.Append("::")
+                        .Append(entry.Id)
+                        .Append('@')
+                        .Append(entry.GetType().FullName);
+            }
+
+            return builder.ToString();
+        }
+
         private sealed class SidebarModCache
         {
             public required string ModId { get; init; }
@@ -2141,6 +2176,6 @@ namespace STS2RitsuLib.Settings
             Failed,
         }
 
-        private sealed record PageSnapshot(string Id, string ModId, string? ParentPageId);
+        private sealed record PageSnapshot(string Id, string ModId, string? ParentPageId, string StructureSignature);
     }
 }

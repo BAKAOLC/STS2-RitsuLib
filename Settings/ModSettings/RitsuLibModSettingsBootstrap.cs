@@ -4,6 +4,7 @@ using STS2RitsuLib.Data;
 using STS2RitsuLib.Data.Models;
 using STS2RitsuLib.Diagnostics;
 using STS2RitsuLib.Diagnostics.CardExport;
+using STS2RitsuLib.Diagnostics.CompendiumExport;
 using STS2RitsuLib.RuntimeInput;
 using STS2RitsuLib.Utils.Persistence;
 
@@ -12,6 +13,16 @@ namespace STS2RitsuLib.Settings
     internal static class RitsuLibModSettingsBootstrap
     {
         private static readonly Lock InitLock = new();
+
+        private static readonly IReadOnlyList<string> RuntimeHotkeyCategoryOrder =
+        [
+            "Gameplay",
+            "UI",
+            "Debug",
+            "Developer tools",
+            "Other",
+        ];
+
         private static bool _initialized;
 
         internal static void Initialize()
@@ -105,17 +116,51 @@ namespace STS2RitsuLib.Settings
                     settings => settings.CardPngExportIncludeHiddenFromLibrary,
                     (settings, value) => settings.CardPngExportIncludeHiddenFromLibrary = value);
 
+                var relicDetailPngPathBinding = ModSettingsBindings.Global<RitsuLibSettings, string>(
+                    Const.ModId,
+                    Const.SettingsKey,
+                    settings => settings.RelicDetailPngExportOutputPath,
+                    (settings, value) => settings.RelicDetailPngExportOutputPath = value);
+
+                var relicDetailPngScaleBinding = ModSettingsBindings.Global<RitsuLibSettings, double>(
+                    Const.ModId,
+                    Const.SettingsKey,
+                    settings => settings.RelicDetailPngExportScale,
+                    (settings, value) => settings.RelicDetailPngExportScale = value);
+
+                var relicDetailPngFilterBinding = ModSettingsBindings.Global<RitsuLibSettings, string>(
+                    Const.ModId,
+                    Const.SettingsKey,
+                    settings => settings.RelicDetailPngExportIdFilter,
+                    (settings, value) => settings.RelicDetailPngExportIdFilter = value);
+
+                var relicDetailPngIncludeHoverBinding = ModSettingsBindings.Global<RitsuLibSettings, bool>(
+                    Const.ModId,
+                    Const.SettingsKey,
+                    settings => settings.RelicDetailPngExportIncludeHover,
+                    (settings, value) => settings.RelicDetailPngExportIncludeHover = value);
+
+                var potionDetailPngPathBinding = ModSettingsBindings.Global<RitsuLibSettings, string>(
+                    Const.ModId,
+                    Const.SettingsKey,
+                    settings => settings.PotionDetailPngExportOutputPath,
+                    (settings, value) => settings.PotionDetailPngExportOutputPath = value);
+
+                var potionDetailPngScaleBinding = ModSettingsBindings.Global<RitsuLibSettings, double>(
+                    Const.ModId,
+                    Const.SettingsKey,
+                    settings => settings.PotionDetailPngExportScale,
+                    (settings, value) => settings.PotionDetailPngExportScale = value);
+
+                var potionDetailPngFilterBinding = ModSettingsBindings.Global<RitsuLibSettings, string>(
+                    Const.ModId,
+                    Const.SettingsKey,
+                    settings => settings.PotionDetailPngExportIdFilter,
+                    (settings, value) => settings.PotionDetailPngExportIdFilter = value);
+
                 var showcaseState = new DebugShowcaseState();
                 var previewToggleBinding =
                     ModSettingsBindings.InMemory(Const.ModId, "preview_toggle", showcaseState.ToggleValue);
-                var runtimeHotkeyCategoryOrder = new[]
-                {
-                    "Gameplay",
-                    "UI",
-                    "Debug",
-                    "Developer tools",
-                    "Other",
-                };
                 var previewSliderBinding =
                     ModSettingsBindings.InMemory(Const.ModId, "preview_slider", showcaseState.SliderValue);
                 var previewIntSliderBinding =
@@ -131,8 +176,16 @@ namespace STS2RitsuLib.Settings
                     ModSettingsBindings.InMemory(Const.ModId, "preview_string", showcaseState.StringValue);
                 var previewStringMultiBinding =
                     ModSettingsBindings.InMemory(Const.ModId, "preview_string_multi", showcaseState.StringMultiValue);
+                var previewHotkeyBinding =
+                    ModSettingsBindings.InMemory(Const.ModId, "preview_hotkey", "Ctrl+K");
+                var previewHotkeyMultiBinding = ModSettingsBindings.WithAdapter(
+                    ModSettingsBindings.InMemory(Const.ModId, "preview_hotkey_multi",
+                        new List<string> { "Ctrl+K", "Shift+F1" }),
+                    ModSettingsStructuredData.List<string>());
                 var previewListBinding =
                     ModSettingsBindings.InMemory(Const.ModId, "preview_list", showcaseState.ListItems.ToList());
+                var hostSurfaceCombatReadOnlyDemoBinding =
+                    ModSettingsBindings.InMemory(Const.ModId, "host_surface_ro_demo", false);
 
                 RitsuLibFramework.RegisterModSettings(Const.ModId, page => page
                     .WithModDisplayName(T("ritsulib.mod.displayName", "RitsuLib"))
@@ -194,12 +247,12 @@ namespace STS2RitsuLib.Settings
                             T("ritsulib.section.selfCheck.description",
                                 "Run framework self-checks, export logs and Harmony dump into one folder, then pack them into a zip."))
                         .AddSubpage(
-                            "card_png_export_open",
-                            T("ritsulib.section.cardPngExport.title", "Card PNG export (dev)"),
-                            "card-png-export",
+                            "image_png_export_open",
+                            T("ritsulib.section.imagePngExport.title", "Image PNG export (dev)"),
+                            "image-png-export",
                             T("button.open", "Open"),
-                            T("ritsulib.section.cardPngExport.description",
-                                "Library card set.")))
+                            T("ritsulib.section.imagePngExport.description",
+                                "Card, relic, and potion image exports.")))
                     .AddSection("reference", section => section
                         .WithTitle(T("ritsulib.section.reference.title", "Reference"))
                         .WithDescription(T("ritsulib.section.reference.description",
@@ -222,7 +275,34 @@ namespace STS2RitsuLib.Settings
                             "runtime-hotkeys",
                             T("button.open", "Open"),
                             T("ritsulib.reference.runtimeHotkeys.description",
-                                "Inspect currently registered runtime hotkeys and their active bindings."))));
+                                "Inspect currently registered runtime hotkeys and their active bindings.")))
+                    .AddSection("host_surface_reference", section => section
+                        .WithTitle(T("ritsulib.section.hostSurfaceReference.title", "Settings host surfaces"))
+                        .WithDescription(T("ritsulib.section.hostSurfaceReference.description",
+                            "Main menu vs run pause vs combat pause: visibility and read-only masks for mod settings pages."))
+                        .Collapsible()
+                        .AddParagraph(
+                            "host_surface_intro",
+                            T("ritsulib.hostSurface.intro",
+                                "Use WithVisibleOnHostSurfaces / WithReadOnlyOnHostSurfaces on pages and sections. Defaults keep classic global/profile controls editable on every surface."))
+                        .AddParagraph(
+                            "host_surface_tiers",
+                            T("ritsulib.hostSurface.tiers",
+                                "Preset ideas: (1) leave defaults for UI aids and hotkeys; (2) add WithReadOnlyOnHostSurfaces(CombatPause) for run-locked difficulty fields; (3) WithVisibleOnHostSurfaces(CombatPause) for in-fight debug tools. Combine WithVisibleWhen when a value may be reapplied from menus while a run is already in progress."))
+                        .AddToggle(
+                            "host_surface_combat_readonly_demo",
+                            T("ritsulib.hostSurface.demoToggle.label", "Combat pause read-only demo"),
+                            hostSurfaceCombatReadOnlyDemoBinding,
+                            T("ritsulib.hostSurface.demoToggle.description",
+                                "Read-only while paused mid-combat; editable on the main menu or when paused outside combat."))
+                        .WithReadOnlyOnHostSurfaces(ModSettingsHostSurface.CombatPause))
+                    .AddSection("host_surface_combat_only_demo", section => section
+                        .WithTitle(T("ritsulib.section.hostSurfaceCombatOnly.title", "Combat-only visibility demo"))
+                        .WithVisibleOnHostSurfaces(ModSettingsHostSurface.CombatPause)
+                        .AddParagraph(
+                            "host_surface_combat_only_body",
+                            T("ritsulib.hostSurface.combatOnly.body",
+                                "This block is hidden unless you open mod settings from a pause while a fight is active."))));
 
                 RitsuLibFramework.RegisterModSettings(
                     Const.ModId,
@@ -294,7 +374,12 @@ namespace STS2RitsuLib.Settings
                                 "self_check_browse",
                                 T("ritsulib.selfCheck.browse.label", "Choose output folder"),
                                 T("ritsulib.selfCheck.browse.button", "Browse…"),
-                                host => SelfCheckExportFolderDialog.Show(selfCheckOutputFolderBinding, host),
+                                host => ModSettingsOpenFolderDialog.Show(
+                                    selfCheckOutputFolderBinding,
+                                    host,
+                                    "SelfCheck",
+                                    "ritsulib.selfCheck.browseTitle",
+                                    "Choose self-check output folder"),
                                 ModSettingsButtonTone.Normal,
                                 T("ritsulib.selfCheck.browse.hint",
                                     "Opens a folder picker and fills the output folder above."))
@@ -321,10 +406,12 @@ namespace STS2RitsuLib.Settings
                     page => page
                         .AsChildOf(Const.ModId)
                         .WithSortOrder(-200)
-                        .WithTitle(T("ritsulib.page.cardPngExport.title", "Card PNG export (dev)"))
-                        .WithDescription(T("ritsulib.page.cardPngExport.description",
-                            "Same card set as the library."))
-                        .AddSection("card_png_export", section => section
+                        .WithTitle(T("ritsulib.page.imagePngExport.title", "Image PNG export (dev)"))
+                        .WithDescription(T("ritsulib.page.imagePngExport.description",
+                            "Batch export for library cards, relic inspection popups, and potion lab focus panels. Detail content uses unlocked / seen appearance; no save gating."))
+                        .AddSection("image_export_cards", section => section
+                            .WithTitle(T("ritsulib.section.imagePngExport.cards", "Cards"))
+                            .Collapsible(true)
                             .AddString(
                                 "card_png_export_output_path",
                                 T("ritsulib.cardPngExport.path.label", "Output folder"),
@@ -336,7 +423,12 @@ namespace STS2RitsuLib.Settings
                                 "card_png_export_browse",
                                 T("ritsulib.cardPngExport.browse.label", "Choose output folder"),
                                 T("ritsulib.cardPngExport.browse.button", "Browse…"),
-                                host => CardPngExportFolderDialog.Show(cardPngExportPathBinding, host))
+                                host => ModSettingsOpenFolderDialog.Show(
+                                    cardPngExportPathBinding,
+                                    host,
+                                    "CardPngExport",
+                                    "ritsulib.cardPngExport.browseTitle",
+                                    "Choose card PNG export folder"))
                             .AddToggle(
                                 "card_png_export_include_hover",
                                 T("ritsulib.cardPngExport.hover.label", "Include hover-tip panel"),
@@ -376,13 +468,107 @@ namespace STS2RitsuLib.Settings
                                     cardPngExportScaleBinding,
                                     cardPngExportFilterBinding,
                                     cardPngExportIncludeHiddenBinding),
+                                ModSettingsButtonTone.Accent))
+                        .AddSection("image_export_relics", section => section
+                            .WithTitle(T("ritsulib.section.imagePngExport.relics", "Relics"))
+                            .Collapsible(true)
+                            .AddString(
+                                "relic_detail_png_export_output_path",
+                                T("ritsulib.relicDetailPngExport.path.label", "Output folder"),
+                                relicDetailPngPathBinding,
+                                T("ritsulib.relicDetailPngExport.path.placeholder",
+                                    "Absolute path or user://… (e.g. user://ritsu_relic_png)"),
+                                1024)
+                            .AddButton(
+                                "relic_detail_png_export_browse",
+                                T("ritsulib.relicDetailPngExport.browse.label", "Choose output folder"),
+                                T("ritsulib.relicDetailPngExport.browse.button", "Browse…"),
+                                host => ModSettingsOpenFolderDialog.Show(
+                                    relicDetailPngPathBinding,
+                                    host,
+                                    "RelicDetailPngExport",
+                                    "ritsulib.relicDetailPngExport.browseTitle",
+                                    "Choose relic detail PNG export folder"))
+                            .AddSlider(
+                                "relic_detail_png_export_scale",
+                                T("ritsulib.relicDetailPngExport.scale.label", "Render scale"),
+                                relicDetailPngScaleBinding,
+                                0.25d,
+                                4d,
+                                0.25d,
+                                v => v.ToString("0.##", CultureInfo.InvariantCulture))
+                            .AddString(
+                                "relic_detail_png_export_id_filter",
+                                T("ritsulib.relicDetailPngExport.filter.label", "Relic id contains (optional)"),
+                                relicDetailPngFilterBinding,
+                                T("ritsulib.relicDetailPngExport.filter.placeholder", "Empty = all; e.g. CIRCLET"),
+                                256,
+                                T("ritsulib.relicDetailPngExport.filter.description",
+                                    "Substring on <c>ModelId.Entry</c>, case-insensitive."))
+                            .AddToggle(
+                                "relic_detail_png_export_include_hover",
+                                T("ritsulib.relicDetailPngExport.includeHover.label", "Include hover-tip panel"),
+                                relicDetailPngIncludeHoverBinding,
+                                T("ritsulib.relicDetailPngExport.includeHover.description",
+                                    "When true, export layout includes a right-hand hover-tip style column."))
+                            .AddButton(
+                                "relic_detail_png_export_start",
+                                T("ritsulib.relicDetailPngExport.start.label", "Start relic export"),
+                                T("ritsulib.relicDetailPngExport.start.button", "Start export"),
+                                () => CompendiumPngExportSettingsActions.TryBeginRelicDetailFromSettings(
+                                    relicDetailPngPathBinding,
+                                    relicDetailPngScaleBinding,
+                                    relicDetailPngFilterBinding,
+                                    relicDetailPngIncludeHoverBinding),
+                                ModSettingsButtonTone.Accent))
+                        .AddSection("image_export_potions", section => section
+                            .WithTitle(T("ritsulib.section.imagePngExport.potions", "Potions"))
+                            .Collapsible(true)
+                            .AddString(
+                                "potion_detail_png_export_output_path",
+                                T("ritsulib.potionDetailPngExport.path.label", "Output folder"),
+                                potionDetailPngPathBinding,
+                                T("ritsulib.potionDetailPngExport.path.placeholder",
+                                    "Absolute path or user://… (e.g. user://ritsu_potion_png)"),
+                                1024)
+                            .AddButton(
+                                "potion_detail_png_export_browse",
+                                T("ritsulib.potionDetailPngExport.browse.label", "Choose output folder"),
+                                T("ritsulib.potionDetailPngExport.browse.button", "Browse…"),
+                                host => ModSettingsOpenFolderDialog.Show(
+                                    potionDetailPngPathBinding,
+                                    host,
+                                    "PotionDetailPngExport",
+                                    "ritsulib.potionDetailPngExport.browseTitle",
+                                    "Choose potion detail PNG export folder"))
+                            .AddSlider(
+                                "potion_detail_png_export_scale",
+                                T("ritsulib.potionDetailPngExport.scale.label", "Render scale"),
+                                potionDetailPngScaleBinding,
+                                0.25d,
+                                4d,
+                                0.25d,
+                                v => v.ToString("0.##", CultureInfo.InvariantCulture))
+                            .AddString(
+                                "potion_detail_png_export_id_filter",
+                                T("ritsulib.potionDetailPngExport.filter.label", "Potion id contains (optional)"),
+                                potionDetailPngFilterBinding,
+                                T("ritsulib.potionDetailPngExport.filter.placeholder", "Empty = all; e.g. STRENGTH"),
+                                256,
+                                T("ritsulib.potionDetailPngExport.filter.description",
+                                    "Substring on <c>ModelId.Entry</c>, case-insensitive."))
+                            .AddButton(
+                                "potion_detail_png_export_start",
+                                T("ritsulib.potionDetailPngExport.start.label", "Start potion export"),
+                                T("ritsulib.potionDetailPngExport.start.button", "Start export"),
+                                () => CompendiumPngExportSettingsActions.TryBeginPotionDetailFromSettings(
+                                    potionDetailPngPathBinding,
+                                    potionDetailPngScaleBinding,
+                                    potionDetailPngFilterBinding),
                                 ModSettingsButtonTone.Accent)),
-                    "card-png-export");
+                    "image-png-export");
 
-                RitsuLibFramework.RegisterModSettings(
-                    Const.ModId,
-                    page => ConfigureRuntimeHotkeysPage(page, runtimeHotkeyCategoryOrder),
-                    "runtime-hotkeys");
+                RefreshDynamicPages();
 
                 RitsuLibFramework.RegisterModSettings(
                     Const.ModId,
@@ -525,7 +711,26 @@ namespace STS2RitsuLib.Settings
                                             "{0} characters, {1} lines."),
                                         t.Length,
                                         lineCount);
-                                })))
+                                }))
+                            .AddKeyBinding(
+                                "preview_hotkey",
+                                T("ritsulib.showcase.hotkey.label", "Preview key binding"),
+                                new ShowcaseBinding<string>(previewHotkeyBinding, _ => { }),
+                                true,
+                                true,
+                                false,
+                                T("ritsulib.showcase.hotkey.description",
+                                    "Single-binding key capture preview."))
+                            .AddKeyBinding(
+                                "preview_hotkey_multi",
+                                T("ritsulib.showcase.hotkeyMulti.label", "Preview multi key binding"),
+                                new ShowcaseBinding<List<string>>(previewHotkeyMultiBinding, _ => { }),
+                                true,
+                                true,
+                                true,
+                                false,
+                                T("ritsulib.showcase.hotkeyMulti.description",
+                                    "Explicit opt-in native multi-binding key capture preview.")))
                         .AddSection("actions", section => section
                             .WithTitle(T("ritsulib.showcase.actions.title", "Commands"))
                             .WithDescription(T("ritsulib.showcase.actions.description",
@@ -602,6 +807,14 @@ namespace STS2RitsuLib.Settings
             }
         }
 
+        internal static void RefreshDynamicPages()
+        {
+            RitsuLibFramework.RegisterModSettings(
+                Const.ModId,
+                page => ConfigureRuntimeHotkeysPage(page, RuntimeHotkeyCategoryOrder),
+                "runtime-hotkeys");
+        }
+
         private static ModSettingsPageBuilder ConfigureRuntimeHotkeysPage(
             ModSettingsPageBuilder page,
             IReadOnlyList<string> categoryOrder)
@@ -609,10 +822,12 @@ namespace STS2RitsuLib.Settings
             page
                 .AsChildOf(Const.ModId)
                 .WithSortOrder(-175)
+                .WithMenuCapabilities(ModSettingsMenuCapabilities.Copy)
                 .WithTitle(T("ritsulib.page.runtimeHotkeys.title", "Registered hotkeys"))
                 .WithDescription(T("ritsulib.page.runtimeHotkeys.description",
                     "Inspect currently registered runtime hotkeys and their active bindings."))
                 .AddSection("runtime_hotkeys_overview", section => section
+                    .WithMenuCapabilities(ModSettingsMenuCapabilities.Copy)
                     .WithTitle(T("ritsulib.section.runtimeHotkeys.title", "Runtime hotkeys"))
                     .WithDescription(T("ritsulib.section.runtimeHotkeys.description",
                         "Lists active runtime hotkey registrations grouped by category."))
@@ -637,6 +852,7 @@ namespace STS2RitsuLib.Settings
             if (groups.Count == 0)
             {
                 page.AddSection("runtime_hotkeys_empty", section => section
+                    .WithMenuCapabilities(ModSettingsMenuCapabilities.Copy)
                     .WithTitle(T("ritsulib.section.runtimeHotkeys.empty.title", "No registered hotkeys"))
                     .AddParagraph(
                         "runtime_hotkeys_empty_text",
@@ -650,6 +866,7 @@ namespace STS2RitsuLib.Settings
                 page.AddSection(sectionId, section =>
                 {
                     section
+                        .WithMenuCapabilities(ModSettingsMenuCapabilities.Copy)
                         .WithTitle(ModSettingsText.Literal(category))
                         .WithDescription(ModSettingsText.Dynamic(() => string.Format(
                             L("ritsulib.runtimeHotkeys.groupSummary", "{0} hotkeys in this category."),
@@ -658,24 +875,14 @@ namespace STS2RitsuLib.Settings
 
                     for (var i = 0; i < runtimeHotkeyRegistrationInfos.Count; i++)
                     {
-                        var (lookupBinding, _, lookupId, lookupDisplayName, _, _, _, _, _, _, _) =
-                            runtimeHotkeyRegistrationInfos[i];
-                        var entryIdBase =
-                            $"{i}_{SanitizeRuntimeHotkeySectionId(lookupId ?? lookupDisplayName ?? lookupBinding)}";
-                        section
-                            .AddHeader(
-                                $"{entryIdBase}_header",
-                                ModSettingsText.Literal(lookupDisplayName ?? lookupId ?? lookupBinding),
-                                ModSettingsText.Dynamic(() => FormatRuntimeHotkeyHeaderDescription(
-                                    lookupId,
-                                    lookupBinding,
-                                    lookupDisplayName)))
-                            .AddParagraph(
-                                $"{entryIdBase}_details",
-                                ModSettingsText.Dynamic(() => FormatRuntimeHotkeyDetails(
-                                    lookupId,
-                                    lookupBinding,
-                                    lookupDisplayName)));
+                        var hotkey = runtimeHotkeyRegistrationInfos[i];
+                        var entryIdBase = $"{i}_{SanitizeRuntimeHotkeySectionId(GetRuntimeHotkeyStableKey(hotkey))}";
+                        section.AddRuntimeHotkeySummary(
+                            $"{entryIdBase}_card",
+                            ModSettingsText.Dynamic(() => GetRuntimeHotkeyCardTitle(hotkey)),
+                            ModSettingsText.Dynamic(() => FormatRuntimeHotkeyDetails(hotkey.Id, hotkey.CurrentBinding,
+                                hotkey.DisplayName)),
+                            GetRuntimeHotkeyBindingTexts(hotkey));
                     }
                 });
             }
@@ -733,19 +940,30 @@ namespace STS2RitsuLib.Settings
                 StringComparison.Ordinal));
         }
 
-        private static string FormatRuntimeHotkeyHeaderDescription(string? id, string binding, string? displayName)
+        private static string GetRuntimeHotkeyCardTitle(RuntimeHotkeyRegistrationInfo hotkey)
+        {
+            return FindRuntimeHotkey(hotkey.Id, hotkey.CurrentBinding, hotkey.DisplayName) is { } liveHotkey
+                ? liveHotkey.DisplayName ?? liveHotkey.Id ?? liveHotkey.CurrentBinding
+                : hotkey.DisplayName ?? hotkey.Id ?? hotkey.CurrentBinding;
+        }
+
+        private static IReadOnlyList<ModSettingsText> GetRuntimeHotkeyBindingTexts(RuntimeHotkeyRegistrationInfo hotkey)
+        {
+            return hotkey.CurrentBindings
+                .Select(binding => ModSettingsText.Dynamic(() => FormatRuntimeHotkeyBindingChip(hotkey.Id, binding,
+                    hotkey.DisplayName)))
+                .ToArray();
+        }
+
+        private static string GetRuntimeHotkeyStableKey(RuntimeHotkeyRegistrationInfo hotkey)
+        {
+            return hotkey.Id ?? hotkey.DisplayName ?? hotkey.CurrentBinding;
+        }
+
+        private static string FormatRuntimeHotkeyBindingChip(string? id, string binding, string? displayName)
         {
             var hotkey = FindRuntimeHotkey(id, binding, displayName);
-            if (hotkey == null)
-                return string.Empty;
-
-            var scope = hotkey.IsModifierOnly
-                ? L("ritsulib.runtimeHotkeys.scope.modifierOnly", "modifier-only")
-                : L("ritsulib.runtimeHotkeys.scope.standard", "standard");
-            return string.Format(
-                L("ritsulib.runtimeHotkeys.bindingLine", "Binding: {0} ({1})"),
-                hotkey.CurrentBinding,
-                scope);
+            return hotkey == null ? binding : binding;
         }
 
         private static string FormatRuntimeHotkeyDetails(string? id, string binding, string? displayName)
@@ -757,10 +975,10 @@ namespace STS2RitsuLib.Settings
             var lines = new List<string>();
             if (!string.IsNullOrWhiteSpace(hotkey.Description))
                 lines.Add(hotkey.Description);
-            if (!string.IsNullOrWhiteSpace(hotkey.Id))
-                lines.Add(string.Format(L("ritsulib.runtimeHotkeys.idLine", "Id: {0}"), hotkey.Id));
             if (!string.IsNullOrWhiteSpace(hotkey.Purpose))
                 lines.Add(string.Format(L("ritsulib.runtimeHotkeys.purposeLine", "Purpose: {0}"), hotkey.Purpose));
+            if (!string.IsNullOrWhiteSpace(hotkey.Id))
+                lines.Add(string.Format(L("ritsulib.runtimeHotkeys.idLine", "Id: {0}"), hotkey.Id));
             return string.Join("\n", lines);
         }
 

@@ -1,13 +1,17 @@
+using System.Text.RegularExpressions;
 using Godot;
 using STS2RitsuLib.Compat;
 using STS2RitsuLib.Utils.Persistence;
 
 namespace STS2RitsuLib.Settings
 {
-    internal sealed class ModSettingsUiContext(RitsuModSettingsSubmenu submenu, string? pageScopeId = null)
+    internal sealed partial class ModSettingsUiContext(RitsuModSettingsSubmenu submenu, string? pageScopeId = null)
         : IModSettingsUiActionHost
     {
         private readonly Dictionary<string, Dictionary<string, object?>> _rowUiState = [];
+
+        private ModSettingsPage? _sectionBuildPage;
+        private ModSettingsSection? _sectionBuildSection;
 
         public void MarkDirty(IModSettingsBinding binding)
         {
@@ -42,22 +46,59 @@ namespace STS2RitsuLib.Settings
 
         public static string ResolveBindingDescriptionBody(ModSettingsText? description)
         {
-            return Resolve(description);
+            return NormalizeDescriptionRichText(Resolve(description));
         }
+
+        private static string NormalizeDescriptionRichText(string s)
+        {
+            return string.IsNullOrEmpty(s) ? s : LegacyCodeTagRegex().Replace(s, "[code]$1[/code]");
+        }
+
+        [GeneratedRegex("<c>(.*?)</c>", RegexOptions.Singleline)]
+        private static partial Regex LegacyCodeTagRegex();
 
         public static string GetPersistenceScopeChipText(IModSettingsBinding binding)
         {
-            if (binding is ITransientModSettingsBinding)
-                return ModSettingsLocalization.Get("scope.transient", "Preview only - not persisted");
-
-            return binding.Scope == SaveScope.Profile
-                ? ModSettingsLocalization.Get("scope.profile", "Stored per profile")
-                : ModSettingsLocalization.Get("scope.global", "Stored globally");
+            return binding switch
+            {
+                ITransientModSettingsBinding => ModSettingsLocalization.Get("scope.transient",
+                    "Preview only - not persisted"),
+                IRunSidecarModSettingsBinding => ModSettingsLocalization.Get("scope.runSidecar", "Run sidecar"),
+                IModSettingsBindingSemantics { Semantics: ModSettingsValueSemantics.RunSnapshot } =>
+                    ModSettingsLocalization.Get("scope.runSnapshot", "Run snapshot"),
+                IModSettingsBindingSemantics { Semantics: ModSettingsValueSemantics.SessionCombat } =>
+                    ModSettingsLocalization.Get("scope.sessionCombat", "Combat/session only"),
+                _ => binding.Scope == SaveScope.Profile
+                    ? ModSettingsLocalization.Get("scope.profile", "Stored per profile")
+                    : ModSettingsLocalization.Get("scope.global", "Stored globally"),
+            };
         }
 
         public void RegisterRefresh(Action action)
         {
             submenu.RegisterRefreshAction(action, pageScopeId);
+        }
+
+        internal void BeginSectionSurfaceScope(ModSettingsPage page, ModSettingsSection section)
+        {
+            _sectionBuildPage = page;
+            _sectionBuildSection = section;
+        }
+
+        internal void EndSectionSurfaceScope()
+        {
+            _sectionBuildPage = null;
+            _sectionBuildSection = null;
+        }
+
+        internal ModSettingsHostSurface GetSectionHostReadOnlyMask()
+        {
+            var mask = ModSettingsHostSurface.None;
+            if (_sectionBuildPage != null)
+                mask |= _sectionBuildPage.ReadOnlyOnHostSurfaces;
+            if (_sectionBuildSection != null)
+                mask |= _sectionBuildSection.ReadOnlyOnHostSurfaces;
+            return mask;
         }
 
         /// <summary>

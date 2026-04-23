@@ -8,25 +8,22 @@ namespace STS2RitsuLib.Scaffolding.Cards.HandGlow
     /// </summary>
     public static class CardModelHandGlowExtensions
     {
-        extension(CardModel card)
+        /// <inheritdoc cref="ModCardHandGlowPredicates.OwnerCompanionOstyMissing" />
+        public static bool ModHandGlowOwnerCompanionOstyMissing(this CardModel card)
         {
-            /// <inheritdoc cref="ModCardHandGlowPredicates.OwnerCompanionOstyMissing" />
-            public bool ModHandGlowOwnerCompanionOstyMissing()
-            {
-                return ModCardHandGlowPredicates.OwnerCompanionOstyMissing(card);
-            }
+            return ModCardHandGlowPredicates.OwnerCompanionOstyMissing(card);
+        }
 
-            /// <inheritdoc cref="ModCardHandGlowPredicates.AnyOfOwnersCardsExhaustedThisTurn" />
-            public bool ModHandGlowAnyOfOwnersCardsExhaustedThisTurn()
-            {
-                return ModCardHandGlowPredicates.AnyOfOwnersCardsExhaustedThisTurn(card);
-            }
+        /// <inheritdoc cref="ModCardHandGlowPredicates.AnyOfOwnersCardsExhaustedThisTurn" />
+        public static bool ModHandGlowAnyOfOwnersCardsExhaustedThisTurn(this CardModel card)
+        {
+            return ModCardHandGlowPredicates.AnyOfOwnersCardsExhaustedThisTurn(card);
+        }
 
-            /// <inheritdoc cref="ModCardHandGlowPredicates.ThisCardNotFinishedPlayThisTurn" />
-            public bool ModHandGlowThisCardNotFinishedPlayThisTurn()
-            {
-                return ModCardHandGlowPredicates.ThisCardNotFinishedPlayThisTurn(card);
-            }
+        /// <inheritdoc cref="ModCardHandGlowPredicates.ThisCardNotFinishedPlayThisTurn" />
+        public static bool ModHandGlowThisCardNotFinishedPlayThisTurn(this CardModel card)
+        {
+            return ModCardHandGlowPredicates.ThisCardNotFinishedPlayThisTurn(card);
         }
     }
 }

@@ -26,6 +26,7 @@ RitsuLib layers the audio API so you can use the vanilla-aligned pipeline or tal
 
 | Need | Use |
 |------|-----|
+| Easier high-level playback, typed handles, lifecycle cleanup | **`GameFmod.Playback`** |
 | Same routing / `TestMode` behaviour as vanilla | **`GameFmod.Studio`** → `NAudioManager` |
 | Same guards as `SfxCmd` (non-interactive, combat ending, etc.) | **`Sts2SfxAlignedFmod`** |
 | Load/unload Studio banks, check paths | **`FmodStudioServer`** |
@@ -55,28 +56,44 @@ Sts2SfxAlignedFmod.PlayOneShot("event:/sfx/heal");
 GameFmod.Studio.PlayMusic("event:/music/menu_update");
 ```
 
-**Custom Studio bank (must match the game's FMOD Studio major version line)**
+**Mod content bank + `guids.txt` (must match the game's FMOD Studio major version line)**
 
 ```csharp
-FmodStudioServer.TryLoadBank("res://mods/MyMod/banks/MyMod.strings.bank");
 FmodStudioServer.TryLoadBank("res://mods/MyMod/banks/MyMod.bank");
+FmodStudioServer.TryWaitForAllLoads();
+if (!FmodStudioServer.TryLoadStudioGuidMappings("res://mods/MyMod/banks/MyMod.guids.txt"))
+    return;
 if (FmodStudioServer.TryCheckEventPath("event:/mods/mymod/hit") is true)
-    FmodStudioDirectOneShots.TryPlay("event:/mods/mymod/hit");
+    GameFmod.Studio.PlayOneShot("event:/mods/mymod/hit");
 ```
 
 **Loose file (short SFX — loaded as sound)**
 
 ```csharp
-FmodStudioStreamingFiles.TryPlaySoundFile("res://mods/MyMod/sfx/ping.wav", volume: 0.9f);
+var sfxPath = Path.Combine(Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location)!, "ping.wav");
+FmodStudioStreamingFiles.TryPlaySoundFile(sfxPath, volume: 0.9f);
 ```
 
-**Streaming music file**
+**Streaming music file (recommended: Playback/Handle API)**
 
 ```csharp
-FmodStudioStreamingFiles.TryPreloadAsStreamingMusic("res://mods/MyMod/bgm/loop.ogg");
-var handle = FmodStudioStreamingFiles.TryCreateStreamingMusicInstance("res://mods/MyMod/bgm/loop.ogg");
-handle?.Call("set_volume", 0.7f);
-handle?.Call("play");
+var musicPath = ProjectSettings.GlobalizePath("user://mymod/loop.ogg");
+var handle = GameFmod.Playback.PlayMusic(
+    AudioSource.StreamingMusic(musicPath),
+    new AudioPlaybackOptions { Volume = 0.7f, Scope = AudioLifecycleScope.Room }
+);
+```
+
+**Common adaptive music flow (room / combat / victory)**
+
+```csharp
+var adaptive = GameFmod.Playback.FollowAdaptiveMusic(
+    AudioAdaptivePlans.FullRunOverride(
+        roomSource: AudioSource.StreamingMusic(roomLoopPath),
+        combatSource: AudioSource.StreamingMusic(combatLoopPath),
+        victorySource: AudioSource.StreamingMusic(victoryStingerPath)
+    )
+);
 ```
 
 **Throttle rapid triggers**
@@ -84,6 +101,40 @@ handle?.Call("play");
 ```csharp
 if (FmodPlaybackThrottle.TryEnter("my_power_proc", cooldownMs: 120))
     Sts2SfxAlignedFmod.PlayOneShot("event:/sfx/buff");
+```
+
+**Singleton channel: replace the current playback**
+
+```csharp
+GameFmod.Playback.PlayMusic(
+    AudioSource.StreamingMusic(nextMusicPath),
+    new AudioPlaybackOptions
+    {
+        Volume = 0.8f,
+        Routing = new AudioRoutingOptions
+        {
+            Channel = "my-mod/music",
+            ChannelMode = AudioChannelMode.ReplaceExisting,
+            AllowFadeOutOnReplace = true,
+        },
+    }
+);
+```
+
+**Tagged group: replace an entire UI cue group**
+
+```csharp
+GameFmod.Playback.Play(
+    AudioSource.File(uiCuePath),
+    new AudioPlaybackOptions
+    {
+        Routing = new AudioRoutingOptions
+        {
+            Tag = "my-mod/ui-tooltips",
+            ReplaceTaggedGroup = true,
+        },
+    }
+);
 ```
 
 ---
@@ -111,14 +162,49 @@ RitsuLib does not include the following; they are common external workflows:
 | [sts2-fmod-tools](https://github.com/elliotttate/sts2-fmod-tools) (community) | Optional: align Studio projects/events from the game-data side |
 | DAW export | Export WAV/OGG, etc.; if mixing with vanilla SFX, watch loudness and dynamic range |
 
-> RitsuLib does not ship Harmony-based global event replacement. To intercept at the **`NAudioManager.PlayOneShot`** layer, implement it yourself with **`IPatchMethod`** and coordinate with other mods.
+> RitsuLib wires **guids.txt-style mappings** into **`NAudioManager`** for path-based Studio calls (one-shots, loops, music, stops, parameters, **`UpdateMusicParameter`**, etc.). After your mod loads its **`.bank`** and calls **`TryLoadStudioGuidMappings`**, **`event:/…`** paths keep using the same **`NAudioManager` → AudioManagerProxy** pipeline as vanilla. Custom Harmony that replaces or bypasses that chain must coordinate with other mods.
+
+---
+
+## Authoring an extra mod bank (recommended workflow)
+
+Use this workflow when you ship **only your own `.bank`** plus a **`*.guids.txt`** from the **same Studio build**.
+
+### 1. Bank type and naming
+
+- **Do not replace or overwrite** the shipped **`Master.bank`**.
+- Ship a **separately named content bank** (sometimes called a sidecar / child bank). Its file name and the **Bank** name inside FMOD Studio should be **globally unique** among mods and future official banks to avoid **naming collisions**.
+- That bank holds **your** events and media; the **mixer / Master routing** still comes from the game's already-loaded vanilla banks.
+
+### 2. Bus / Master alignment (match vanilla mixing)
+
+- At runtime, **`AudioManagerProxy`** expects buses such as **`bus:/master`**, **`bus:/master/sfx`**, **`bus:/master/music`**, **`bus:/master/ambience`** (consistent with the desktop bank load order).
+- **For vanilla-like loudness slider and bus behaviour**, route your events to those **`bus:/…`** paths—the same hierarchy **defined by the game's Master-side data**—instead of publishing a competing top-level Master bank that replaces the official one.
+- **When you must verify identifiers**: compare **Bus / VCA** paths and GUIDs against the game's **GUIDs.txt** or tools like **`sts2-fmod-tools`**. Export **GUIDs.txt** from **the same FMOD Studio build** as your **`.bank`** so text and binary never drift apart.
+
+### 3. Export GUIDs and ship them with the mod
+
+1. **Build** your bank in FMOD Studio.
+2. Take **`GUIDs.txt`** from the build output (or export a GUID list).
+3. Ship it as a text resource (e.g. **`YourMod.guids.txt`**): keep every **`event:/…`** line (`{guid} event:/…`, one record per line); you may keep other lines for debugging.
+4. After **`TryLoadBank`** + **`TryWaitForAllLoads`**, call **`FmodStudioServer.TryLoadStudioGuidMappings("res://…/YourMod.guids.txt")`**. That fills the path → GUID table and logs success/failure; together with RitsuLib's **`NAudioManager`** Harmony prefixes, **`event:/…`** paths keep resolving through **`NAudioManager`**.
+
+### 4. Runtime order and stability
+
+- Load your mod bank **after** the game's FMOD bootstrap and **`NAudioManager`** are ready (for example from a deferred-init callback); loading too early can leave the Studio cache in a bad state for probes.
+- Use **`FmodStudioServer.TryLoadBank`**: the implementation **pins** the returned **`FmodBank`** reference so it is not finalized immediately (the GDExtension **`FmodBank`** destructor calls **`unload_bank`**).
+
+### 5. Toolchain version and artefact pairing
+
+- Match the **FMOD Studio major line** to the game's **`addons/fmod`** / runtime.
+- Always ship **`.bank`** and **`GUIDs.txt` slice** from the **same build**. Mixing an old bank with a new GUID file (or vice versa) breaks **`check_event_guid`** / path resolution at runtime.
 
 ---
 
 ## Troubleshooting
 
 - **`FmodStudioServer.TryGet()` is null** — `FmodServer` not ready (scene, headless test, or extension failed to load); check the game log
-- **`TryCheckEventPath` is false** — bank not loaded or wrong path; Studio projects usually need the **strings** bank loaded first
+- **`TryCheckEventPath` is false** — the **`.bank`** is missing or unloaded, the path is wrong, **`TryLoadStudioGuidMappings`** did not succeed, or the bank was unloaded (use **`FmodStudioServer.TryLoadBank`**, which **pins** the returned **`FmodBank`** reference)
 - **No sound and no exception** — **`TestMode`** / **`NonInteractiveMode`** may suppress **`NAudioManager`**; direct **`FmodServer`** calls are not subject to those flags
 
 ---

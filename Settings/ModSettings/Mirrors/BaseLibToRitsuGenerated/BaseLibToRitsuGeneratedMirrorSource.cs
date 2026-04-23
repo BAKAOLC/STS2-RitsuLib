@@ -14,6 +14,7 @@ namespace STS2RitsuLib.Settings
         private const string HoverTipAttrName = "BaseLibToRitsu.Generated.ConfigHoverTipAttribute";
         private const string HoverTipsByDefaultAttrName = "BaseLibToRitsu.Generated.ConfigHoverTipsByDefaultAttribute";
         private const string LegacyHoverTipsByDefaultAttrName = "BaseLibToRitsu.Generated.HoverTipsByDefaultAttribute";
+        private const string VisibleIfAttrName = "BaseLibToRitsu.Generated.ConfigVisibleIfAttribute";
 
         private static readonly Lock Gate = new();
 
@@ -61,7 +62,8 @@ namespace STS2RitsuLib.Settings
                     select BaseLibToRitsuGeneratedMirrorMapper.TryCreatePage(modId, pageId, sortOrder, pageTitle,
                         pageDescription, host, propertyNames, context.SectionAttrType, context.HideUiAttrType,
                         context.ButtonAttrType, context.ColorPickerAttrType, context.HoverTipAttrType,
-                        context.HoverTipsByDefaultAttrType, context.LegacyHoverTipsByDefaultAttrType, configType))
+                        context.HoverTipsByDefaultAttrType, context.LegacyHoverTipsByDefaultAttrType,
+                        context.VisibleIfAttrType, configType, context.ModConfigType))
                 .Count(ModSettingsMirrorRegistrar.TryRegister);
         }
 
@@ -121,7 +123,8 @@ namespace STS2RitsuLib.Settings
                     assembly.GetType(HideUiAttrName, false), assembly.GetType(ButtonAttrName, false),
                     assembly.GetType(ColorPickerAttrName, false), assembly.GetType(HoverTipAttrName, false),
                     assembly.GetType(HoverTipsByDefaultAttrName, false),
-                    assembly.GetType(LegacyHoverTipsByDefaultAttrName, false));
+                    assembly.GetType(LegacyHoverTipsByDefaultAttrName, false),
+                    assembly.GetType(VisibleIfAttrName, false));
             }
         }
 
@@ -135,6 +138,7 @@ namespace STS2RitsuLib.Settings
             Type? ColorPickerAttrType,
             Type? HoverTipAttrType,
             Type? HoverTipsByDefaultAttrType,
-            Type? LegacyHoverTipsByDefaultAttrType);
+            Type? LegacyHoverTipsByDefaultAttrType,
+            Type? VisibleIfAttrType);
     }
 }

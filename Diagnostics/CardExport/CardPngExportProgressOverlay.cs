@@ -110,8 +110,10 @@ namespace STS2RitsuLib.Diagnostics.CardExport
             var id = string.IsNullOrWhiteSpace(currentCardId) ? "…" : currentCardId;
             var countFmt = ModSettingsLocalization.Get("ritsulib.cardPngExport.progress.count",
                 "{0} / {1}");
-            _countLabel?.Text = string.Format(countFmt, completedSteps, total);
-            _nameLabel?.Text = id;
+            if (_countLabel != null)
+                _countLabel.Text = string.Format(countFmt, completedSteps, total);
+            if (_nameLabel != null)
+                _nameLabel.Text = id;
         }
 
         public void Detach()

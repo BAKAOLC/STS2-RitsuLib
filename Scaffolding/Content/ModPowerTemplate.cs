@@ -12,7 +12,12 @@ namespace STS2RitsuLib.Scaffolding.Content
     public abstract class ModPowerTemplate : PowerModel, IModPowerAssetOverrides
     {
         /// <summary>
-        ///     Keyword ids merged into hover tips for this power.
+        ///     Keyword ids surfaced on this power's hover tips. <b>Display-only</b>: unlike
+        ///     <see cref="ModCardTemplate.RegisteredKeywordIds" />, this does <b>not</b> participate in any
+        ///     gameplay keyword set (vanilla <see cref="PowerModel" /> has no <c>Keywords</c>/<c>CardKeyword</c>
+        ///     storage) — each id is looked up in <see cref="ModKeywordRegistry" /> purely to render a hover tip
+        ///     via <c>ToHoverTips()</c>. Use it for visual documentation; gameplay behaviour must be implemented
+        ///     explicitly in the power's own logic.
         /// </summary>
         protected virtual IEnumerable<string> RegisteredKeywordIds => [];
 
