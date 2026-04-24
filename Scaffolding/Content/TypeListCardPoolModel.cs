@@ -11,6 +11,8 @@ namespace STS2RitsuLib.Scaffolding.Content
     public abstract class TypeListCardPoolModel : CardPoolModel, IModBigEnergyIconPool, IModTextEnergyIconPool,
         IModCardPoolFrameMaterial
     {
+        public override string Title => EnergyColorName;
+
         /// <summary>
         ///     Legacy hook: enumerating card types on the pool class. Prefer registering each card through
         ///     <c>ModContentRegistry.RegisterCard&lt;TPool, TCard&gt;()</c>, <c>CreateContentPack.Card&lt;TPool, TCard&gt;()</c>,

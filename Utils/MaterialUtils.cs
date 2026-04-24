@@ -20,13 +20,31 @@ namespace STS2RitsuLib.Utils
             _vanillaDoomBarNoiseTexture ??= CreateVanillaDoomBarNoiseTexture();
 
         /// <summary>
+        ///     Builds a <c>ShaderMaterial</c> using the game's HSV shader with the given RGB parameters.
+        /// </summary>
+        public static ShaderMaterial CreateRgbShaderMaterial(float r, float g, float b)
+        {
+            var shader = GameHsvShader ?? throw new InvalidOperationException($"Failed to load HSV shader ({HsvShaderPath}).");
+            var color = new Color(r, g, b);
+
+            var material = new ShaderMaterial
+            {
+                Shader = shader,
+            };
+
+            material.SetShaderParameter("h", color.H);
+            material.SetShaderParameter("s", color.S);
+            material.SetShaderParameter("v", color.V);
+
+            return material;
+        }
+
+        /// <summary>
         ///     Builds a <c>ShaderMaterial</c> using the game's HSV shader with the given parameters.
         /// </summary>
         public static ShaderMaterial CreateHsvShaderMaterial(float h, float s, float v)
         {
-            var shader = GameHsvShader;
-            if (shader == null)
-                throw new InvalidOperationException($"Failed to load HSV shader ({HsvShaderPath}).");
+            var shader = GameHsvShader ?? throw new InvalidOperationException($"Failed to load HSV shader ({HsvShaderPath}).");
 
             var material = new ShaderMaterial
             {
