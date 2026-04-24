@@ -92,7 +92,7 @@ namespace STS2RitsuLib.Lifecycle.Patches
             SfxCmd.Play(character.CharacterTransitionSfx);
             await game.Transition.FadeOut(0.8f, character.CharacterSelectTransitionPath);
             var runState = RunState.FromSerializable(lobby.Run);
-            RunManager.Instance.SetUpSavedMultiPlayer(runState, lobby);
+            await RunManager.Instance.SetUpSavedMultiPlayer(runState, lobby);
             await game.LoadRun(runState, lobby.Run.PreFinishedRoom);
             CleanUpLobby(screen, false);
             await game.Transition.FadeIn();
@@ -181,7 +181,7 @@ namespace STS2RitsuLib.Lifecycle.Patches
             SfxCmd.Play(character.CharacterTransitionSfx);
             await game.Transition.FadeOut(0.8f, character.CharacterSelectTransitionPath);
             var runState = RunState.FromSerializable(lobby.Run);
-            RunManager.Instance.SetUpSavedMultiPlayer(runState, lobby);
+            await RunManager.Instance.SetUpSavedMultiPlayer(runState, lobby);
             await game.LoadRun(runState, lobby.Run.PreFinishedRoom);
             CleanUpLobby(screen, false);
             await game.Transition.FadeIn();
@@ -273,7 +273,7 @@ namespace STS2RitsuLib.Lifecycle.Patches
             SfxCmd.Play(character.CharacterTransitionSfx);
             await game.Transition.FadeOut(0.8f, character.CharacterSelectTransitionPath);
             var runState = RunState.FromSerializable(lobby.Run);
-            RunManager.Instance.SetUpSavedMultiPlayer(runState, lobby);
+            await RunManager.Instance.SetUpSavedMultiPlayer(runState, lobby);
             await game.LoadRun(runState, lobby.Run.PreFinishedRoom);
             CleanUpLobby(screen, false);
             await game.Transition.FadeIn();

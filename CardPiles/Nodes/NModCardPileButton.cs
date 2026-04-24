@@ -836,6 +836,8 @@ namespace STS2RitsuLib.CardPiles.Nodes
             if (_hoverTip == null)
                 return;
             var tipSet = NHoverTipSet.CreateAndShow(this, _hoverTip);
+            if (tipSet == null)
+                return;
             var desired = ResolveHoverTipGlobalPosition(tipSet);
             tipSet.GlobalPosition = ModCardPileHoverTipViewport.ClampTipTopLeft(tipSet, desired);
         }
