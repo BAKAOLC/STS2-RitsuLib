@@ -194,7 +194,7 @@ namespace STS2RitsuLib.Cards.FreePlay
             return changedStar && starModified <= 0m;
         }
 
-        private static CombatState? ResolveCombatState(CardModel card)
+        private static ICombatState? ResolveCombatState(CardModel card)
         {
             return card.CombatState ?? card.Owner?.Creature?.CombatState;
         }
@@ -202,7 +202,7 @@ namespace STS2RitsuLib.Cards.FreePlay
         private sealed class CardFreeBindingState
         {
             public int NextPlayCharges { get; set; }
-            public CombatState? FreeThisCombatState { get; set; }
+            public ICombatState? FreeThisCombatState { get; set; }
         }
 
         private sealed class PlayFreeBindingState

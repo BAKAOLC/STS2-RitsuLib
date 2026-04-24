@@ -196,6 +196,7 @@ namespace STS2RitsuLib
                     IsInitialized = true;
                     IsActive = true;
                     BaseLibHealthBarForecastBridge.TryRegister();
+                    BaseLibVisualGraftBridge.TryRegister();
                     RuntimeHotkeyService.Initialize();
 
                     var frameworkInitializedEvent = new FrameworkInitializedEvent(
@@ -308,6 +309,15 @@ namespace STS2RitsuLib
             where TSource : IHealthBarForecastSource, new()
         {
             HealthBarForecastRegistry.Register<TSource>(modId, sourceId);
+        }
+
+        /// <summary>
+        ///     Registers a non-power health bar visual graft source type through the framework.
+        /// </summary>
+        public static void RegisterHealthBarVisualGraft<TSource>(string modId, string? sourceId = null)
+            where TSource : IHealthBarVisualGraftSource, new()
+        {
+            HealthBarVisualGraftRegistry.Register<TSource>(modId, sourceId);
         }
 
         /// <summary>

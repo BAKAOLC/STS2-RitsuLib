@@ -12,7 +12,7 @@ namespace STS2RitsuLib.Combat.HealthBars
         /// <summary>
         ///     Current combat state, when the creature is in combat.
         /// </summary>
-        public CombatState? CombatState => Creature.CombatState;
+        public ICombatState? CombatState => Creature.CombatState;
 
         /// <summary>
         ///     Side whose turn is currently active, when available.

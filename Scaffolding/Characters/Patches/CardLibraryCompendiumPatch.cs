@@ -12,7 +12,9 @@ using STS2RitsuLib.Utils;
 namespace STS2RitsuLib.Scaffolding.Characters.Patches
 {
     /// <summary>
-    ///     Adds a pool-filter button for each registered mod character in the card library compendium.
+    ///     Adds a pool-filter button for each registered mod character in the card library compendium, and
+    ///     re-applies pool-filter art from <see cref="CharacterModel.IconTexture" /> (so
+    ///     <see cref="ModContentRegistry.RegisterCharacterAssetReplacement(string, Scaffolding.Characters.CharacterAssetProfile)" /> icons match everywhere).
     ///     Without this patch, mod character cards are not visible in any filter category, and opening
     ///     the card library during a run with a mod character causes a KeyNotFoundException crash.
     ///     Buttons are inserted before the colorless pool filter when possible (then ancients, misc),
@@ -25,7 +27,7 @@ namespace STS2RitsuLib.Scaffolding.Characters.Patches
 
         /// <inheritdoc cref="IPatchMethod.Description" />
         public static string Description =>
-            "Add mod character pool filter buttons to the card library compendium";
+            "Sync card library compendium pool-filter icons to CharacterModel.IconTexture; add mod character filter buttons";
 
         /// <inheritdoc cref="IPatchMethod.IsCritical" />
         public static bool IsCritical => false;
@@ -47,9 +49,24 @@ namespace STS2RitsuLib.Scaffolding.Characters.Patches
                 Dictionary<CharacterModel, NCardPoolFilter> ____cardPoolFilters)
             // ReSharper restore InconsistentNaming
         {
+            if (____cardPoolFilters.Count == 0)
+                return;
+
+            foreach (var (character, filter) in ____cardPoolFilters)
+            {
+                if (filter.GetNodeOrNull<TextureRect>("Image") is not { } image)
+                    continue;
+
+                var texture = character.IconTexture;
+                if (texture is null)
+                    continue;
+
+                image.Texture = texture;
+            }
+
             var modCharacters = ModContentRegistry.GetModCharacters().ToArray();
-            if (modCharacters.Length == 0) return;
-            if (____cardPoolFilters.Count == 0) return;
+            if (modCharacters.Length == 0)
+                return;
 
             var referenceFilter = ____cardPoolFilters.Values.First();
             var filterParent = referenceFilter.GetParent();
