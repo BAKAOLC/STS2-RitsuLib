@@ -86,7 +86,7 @@ namespace STS2RitsuLib.Lifecycle.Patches
                 if (game == null)
                     throw new InvalidOperationException("NGame.Instance is null during continue run.");
 
-                RunManager.Instance.SetUpSavedSinglePlayer(runState, serializableRun);
+                await RunManager.Instance.SetUpSavedSinglePlayer(runState, serializableRun);
                 Log.Info($"Continuing run with character: {serializableRun.Players[0].CharacterId}");
                 SfxCmd.Play(runState.Players[0].Character.CharacterTransitionSfx);
                 await game.Transition.FadeOut(0.8f,

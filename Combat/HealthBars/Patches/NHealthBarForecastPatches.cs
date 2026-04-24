@@ -230,7 +230,8 @@ namespace STS2RitsuLib.Combat.HealthBars.Patches
             }
 
             hpLabel.AddThemeColorOverride(MegaLabelThemeColorKeys.FontColorKey, lethalColor.Value);
-            hpLabel.AddThemeColorOverride(MegaLabelThemeColorKeys.FontOutlineColorKey, DarkenForOutline(lethalColor.Value));
+            hpLabel.AddThemeColorOverride(MegaLabelThemeColorKeys.FontOutlineColorKey,
+                DarkenForOutline(lethalColor.Value));
         }
 
         private static void PlaceChainedLeftSegments(
@@ -351,9 +352,9 @@ namespace STS2RitsuLib.Combat.HealthBars.Patches
                 var runLen = j - i;
                 var rot = runLen <= 1
                     ? 0
-                    : (int)((Time.GetTicksMsec() / (ulong)OverlapEqualWidthRotatePeriodMs) % (ulong)runLen);
+                    : (int)(Time.GetTicksMsec() / OverlapEqualWidthRotatePeriodMs % (ulong)runLen);
                 for (var k = 0; k < runLen; k++)
-                    ranks[i + k] = i + ((k + rot) % runLen);
+                    ranks[i + k] = i + (k + rot) % runLen;
 
                 i = j;
             }
@@ -527,7 +528,6 @@ namespace STS2RitsuLib.Combat.HealthBars.Patches
 
         private static int HpFromOffsetRight(NHealthBar healthBar, float offsetRight, int visualDenom)
         {
-            var creature = healthBar._creature;
             if (visualDenom <= 0)
                 return 0;
 
@@ -588,9 +588,11 @@ namespace STS2RitsuLib.Combat.HealthBars.Patches
 
             List<LethalCandidate> candidates = [];
             candidates.AddRange(from segment in leftSegments
-                where segment.Amount > 0 &&
-                     segment.Direction == HealthBarForecastGrowthDirection.FromLeft &&
-                     segment.LeftOriginLayout == HealthBarForecastLeftOriginLayout.Chained
+                where segment is
+                {
+                    Amount: > 0, Direction: HealthBarForecastGrowthDirection.FromLeft,
+                    LeftOriginLayout: HealthBarForecastLeftOriginLayout.Chained,
+                }
                 select new LethalCandidate(segment.Amount, segment.Color, segment.Order, segment.SequenceOrder));
 
             var doomAmount = creature.GetPowerAmount<DoomPower>();

@@ -14,7 +14,9 @@ namespace STS2RitsuLib.Scaffolding.Characters.Patches
     /// <summary>
     ///     Adds a pool-filter button for each registered mod character in the card library compendium, and
     ///     re-applies pool-filter art from <see cref="CharacterModel.IconTexture" /> (so
-    ///     <see cref="ModContentRegistry.RegisterCharacterAssetReplacement(string, Scaffolding.Characters.CharacterAssetProfile)" /> icons match everywhere).
+    ///     <see
+    ///         cref="ModContentRegistry.RegisterCharacterAssetReplacement(string, Scaffolding.Characters.CharacterAssetProfile)" />
+    ///     icons match everywhere).
     ///     Without this patch, mod character cards are not visible in any filter category, and opening
     ///     the card library during a run with a mod character causes a KeyNotFoundException crash.
     ///     Buttons are inserted before the colorless pool filter when possible (then ancients, misc),

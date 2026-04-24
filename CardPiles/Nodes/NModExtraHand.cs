@@ -151,11 +151,11 @@ namespace STS2RitsuLib.CardPiles.Nodes
                 return;
 
             var orderedCards = _pile?.Cards
-                .Select(card => _cards.GetValueOrDefault(card))
-                .OfType<NCard>()
-                .Where(ncard => ncard.IsInsideTree())
-                .ToArray()
-                ?? _cards.Values.Where(ncard => ncard.IsInsideTree()).ToArray();
+                                   .Select(card => _cards.GetValueOrDefault(card))
+                                   .OfType<NCard>()
+                                   .Where(ncard => ncard.IsInsideTree())
+                                   .ToArray()
+                               ?? _cards.Values.Where(ncard => ncard.IsInsideTree()).ToArray();
             if (orderedCards.Length == 0)
                 return;
 

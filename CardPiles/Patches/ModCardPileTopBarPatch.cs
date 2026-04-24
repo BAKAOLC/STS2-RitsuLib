@@ -4,6 +4,7 @@ using MegaCrit.Sts2.Core.Nodes.CommonUi;
 using MegaCrit.Sts2.Core.Runs;
 using STS2RitsuLib.CardPiles.Nodes;
 using STS2RitsuLib.Patching.Models;
+using STS2RitsuLib.TopBar;
 
 namespace STS2RitsuLib.CardPiles.Patches
 {
@@ -69,7 +70,7 @@ namespace STS2RitsuLib.CardPiles.Patches
             var player = LocalContext.GetMe(runState);
             if (player == null)
                 return;
-            var container = TopBar.ModTopBarLayout.GetRightAlignedContainer(__instance);
+            var container = ModTopBarLayout.GetRightAlignedContainer(__instance);
             if (container == null)
                 return;
             foreach (var button in container.GetChildren().OfType<NModCardPileButton>())

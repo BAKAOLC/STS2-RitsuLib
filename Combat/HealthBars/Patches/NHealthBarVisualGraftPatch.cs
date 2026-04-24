@@ -11,7 +11,7 @@ namespace STS2RitsuLib.Combat.HealthBars.Patches
     {
         private static readonly Color DefaultGraftColor = new("5C8F6E");
 
-        private static readonly AttachedState<NHealthBar, GraftUiState> GraftStates = new(_ => new GraftUiState());
+        private static readonly AttachedState<NHealthBar, GraftUiState> GraftStates = new(_ => new());
 
         public static void RefreshGraftOverlay(NHealthBar healthBar)
         {
@@ -72,7 +72,7 @@ namespace STS2RitsuLib.Combat.HealthBars.Patches
             if (state.LastAppliedScale > 1.0001f)
             {
                 var w = healthBar.HpBarContainer.Size.X / state.LastAppliedScale;
-                NHealthBarGraftCompat.TryResizeHpBarContainer(healthBar, new Vector2(w, healthBar.HpBarContainer.Size.Y));
+                NHealthBarGraftCompat.TryResizeHpBarContainer(healthBar, new(w, healthBar.HpBarContainer.Size.Y));
             }
 
             state.LastAppliedScale = 1f;
@@ -144,10 +144,8 @@ namespace STS2RitsuLib.Combat.HealthBars.Patches
 
             if (healthBar._poisonForeground is not NinePatchRect poisonTemplate ||
                 poisonTemplate.GetParent() is not Control mask ||
-                healthBar._hpForeground is not Control hpForeground)
-            {
+                healthBar._hpForeground is not { } hpForeground)
                 return false;
-            }
 
             var strip = (NinePatchRect)poisonTemplate.Duplicate();
             strip.Name = "RitsuVisualGraftStrip";
@@ -182,6 +180,7 @@ namespace STS2RitsuLib.Combat.HealthBars.Patches
         }
 
         [HarmonyPriority(10)]
+        // ReSharper disable once InconsistentNaming
         public static void Postfix(NHealthBar __instance)
         {
             NHealthBarGraftUiPatchHelper.RefreshGraftOverlay(__instance);

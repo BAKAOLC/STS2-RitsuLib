@@ -182,12 +182,10 @@ namespace STS2RitsuLib.CardPiles.Nodes
             else
                 TryReplaceCountLabelWithVanillaDeckClone();
 
-            if (Definition != null)
-            {
-                AttachPile(ModCardPileStorage.Resolve(Definition.PileType, player));
-                if (Definition.VisibleWhen != null)
-                    RefreshPileButtonVisibility();
-            }
+            if (Definition == null) return;
+            AttachPile(ModCardPileStorage.Resolve(Definition.PileType, player));
+            if (Definition.VisibleWhen != null)
+                RefreshPileButtonVisibility();
         }
 
         /// <inheritdoc />
@@ -836,6 +834,8 @@ namespace STS2RitsuLib.CardPiles.Nodes
             if (_hoverTip == null)
                 return;
             var tipSet = NHoverTipSet.CreateAndShow(this, _hoverTip);
+            if (tipSet == null)
+                return;
             var desired = ResolveHoverTipGlobalPosition(tipSet);
             tipSet.GlobalPosition = ModCardPileHoverTipViewport.ClampTipTopLeft(tipSet, desired);
         }

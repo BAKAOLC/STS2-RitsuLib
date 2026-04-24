@@ -76,8 +76,12 @@ namespace STS2RitsuLib.Combat.HealthBars
                     return;
                 }
 
-                Func<Creature, object> handler = static c => HealthBarVisualGraftRegistry.Aggregate(c);
-                registerForeign.Invoke(null, [Const.ModId, SourceId, handler]);
+                static object Handler(Creature c)
+                {
+                    return HealthBarVisualGraftRegistry.Aggregate(c);
+                }
+
+                registerForeign.Invoke(null, [Const.ModId, SourceId, (Func<Creature, object>)Handler]);
                 _registered = true;
                 _interopOk = true;
                 RitsuLibFramework.Logger.Info("[HealthBarGraft] Registered BaseLib visual graft bridge.");
@@ -104,11 +108,9 @@ namespace STS2RitsuLib.Combat.HealthBars
                     continue;
 
                 var type = assembly.GetType("BaseLib.Hooks.HealthBarVisualGraftRegistry");
-                if (type != null)
-                {
-                    _interopOk = true;
-                    return type;
-                }
+                if (type == null) continue;
+                _interopOk = true;
+                return type;
             }
 
             if (!_loggedMissingRegistry)
