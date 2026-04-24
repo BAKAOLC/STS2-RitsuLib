@@ -60,12 +60,15 @@ namespace STS2RitsuLib.Diagnostics
                 var copiedLogs = CopyGameLogs(logDir, out var logErrors);
                 var keywordDefs = ModKeywordRegistry.GetDefinitionsSnapshot();
                 var modelSnapshots = ModContentRegistry.GetRegisteredTypeSnapshots();
+                var replacementLayerSnapshots = ModContentRegistry.GetCharacterAssetReplacementLayerSnapshots();
+                var replacementResolvedSnapshots =
+                    ModContentRegistry.GetCharacterAssetReplacementResolvedPropertySnapshots();
                 var charCheck = CheckCharacterAssets();
                 var locCheck = CheckLocalization(keywordDefs, modelSnapshots);
 
                 File.WriteAllText(reportPath,
                     BuildReport(runtime, dumpOk, dumpPath, dumpErr, copiedLogs, logErrors, charCheck, locCheck,
-                        keywordDefs, modelSnapshots),
+                        keywordDefs, modelSnapshots, replacementLayerSnapshots, replacementResolvedSnapshots),
                     new UTF8Encoding(false));
 
                 zipPath = Path.Combine(outputDirectory, $"{Path.GetFileName(bundleDir)}.zip");
@@ -99,7 +102,10 @@ namespace STS2RitsuLib.Diagnostics
             string? dumpErr,
             string[] copiedLogs, IReadOnlyList<string> logErrors, CheckResult charCheck, CheckResult locCheck,
             IReadOnlyList<ModKeywordDefinition> keywordDefs,
-            IReadOnlyList<ModContentRegistry.ModContentRegisteredTypeSnapshot> modelSnapshots)
+            IReadOnlyList<ModContentRegistry.ModContentRegisteredTypeSnapshot> modelSnapshots,
+            IReadOnlyList<ModContentRegistry.CharacterAssetReplacementLayerSnapshot> replacementLayerSnapshots,
+            IReadOnlyList<ModContentRegistry.CharacterAssetReplacementResolvedPropertySnapshot>
+                replacementResolvedSnapshots)
         {
             var sb = new StringBuilder();
             var perMod = BuildPerModSummary(charCheck, locCheck, keywordDefs, modelSnapshots);
@@ -125,6 +131,40 @@ namespace STS2RitsuLib.Diagnostics
                 sb.AppendLine($"- [{i.Level}] [{i.ModId}] {i.Source}: {i.Reason} | diagnosis={i.Diagnosis}");
 
             if (charCheck.Issues.Count == 0) sb.AppendLine("- none");
+            sb.AppendLine();
+            sb.AppendLine("Character Asset Replacement Layers:");
+            if (replacementLayerSnapshots.Count == 0)
+                sb.AppendLine("- none");
+            else
+                foreach (var layer in replacementLayerSnapshots
+                             .OrderBy(x => x.WriteOrder)
+                             .ThenBy(x => x.Scope, StringComparer.Ordinal)
+                             .ThenBy(x => x.CharacterEntry, StringComparer.OrdinalIgnoreCase)
+                             .ThenBy(x => x.ModId, StringComparer.OrdinalIgnoreCase))
+                {
+                    sb.AppendLine(
+                        $"- order={layer.WriteOrder} scope={layer.Scope} target={layer.CharacterEntry} mod={layer.ModId}");
+                    foreach (var field in EnumerateCharacterAssetProfilePathFields(layer.Profile))
+                        sb.AppendLine($"  - {field.PropertyPath} = {field.Value}");
+                }
+
+            sb.AppendLine();
+            sb.AppendLine("Character Asset Replacement Effective Properties:");
+            if (replacementResolvedSnapshots.Count == 0)
+                sb.AppendLine("- none");
+            else
+                foreach (var group in replacementResolvedSnapshots
+                             .GroupBy(x => x.CharacterEntry, StringComparer.OrdinalIgnoreCase)
+                             .OrderBy(x => x.Key, StringComparer.OrdinalIgnoreCase))
+                {
+                    sb.AppendLine($"- character={group.Key}");
+                    foreach (var item in group
+                                 .OrderBy(x => x.PropertyPath, StringComparer.Ordinal)
+                                 .ThenBy(x => x.SourceWriteOrder))
+                        sb.AppendLine(
+                            $"  - {item.PropertyPath} = {item.Value} [source: scope={item.SourceScope}, mod={item.SourceModId}, order={item.SourceWriteOrder}]");
+                }
+
             sb.AppendLine();
             sb.AppendLine($"Localization/Entry Runtime Check: FAIL={locCheck.Failures}, WARN={locCheck.Warnings}");
             foreach (var i in locCheck.Issues
@@ -505,6 +545,57 @@ namespace STS2RitsuLib.Diagnostics
                 if (!summaries.ContainsKey(modId))
                     summaries[modId] = new(modId, 0, 0, 0, 0, 0, 0);
             }
+        }
+
+        private static IEnumerable<(string PropertyPath, string Value)> EnumerateCharacterAssetProfilePathFields(
+            CharacterAssetProfile profile)
+        {
+            if (!string.IsNullOrWhiteSpace(profile.Scenes?.VisualsPath))
+                yield return ("Scenes.VisualsPath", profile.Scenes.VisualsPath);
+            if (!string.IsNullOrWhiteSpace(profile.Scenes?.EnergyCounterPath))
+                yield return ("Scenes.EnergyCounterPath", profile.Scenes.EnergyCounterPath);
+            if (!string.IsNullOrWhiteSpace(profile.Scenes?.MerchantAnimPath))
+                yield return ("Scenes.MerchantAnimPath", profile.Scenes.MerchantAnimPath);
+            if (!string.IsNullOrWhiteSpace(profile.Scenes?.RestSiteAnimPath))
+                yield return ("Scenes.RestSiteAnimPath", profile.Scenes.RestSiteAnimPath);
+            if (!string.IsNullOrWhiteSpace(profile.Ui?.IconTexturePath))
+                yield return ("Ui.IconTexturePath", profile.Ui.IconTexturePath);
+            if (!string.IsNullOrWhiteSpace(profile.Ui?.IconOutlineTexturePath))
+                yield return ("Ui.IconOutlineTexturePath", profile.Ui.IconOutlineTexturePath);
+            if (!string.IsNullOrWhiteSpace(profile.Ui?.IconPath))
+                yield return ("Ui.IconPath", profile.Ui.IconPath);
+            if (!string.IsNullOrWhiteSpace(profile.Ui?.CharacterSelectBgPath))
+                yield return ("Ui.CharacterSelectBgPath", profile.Ui.CharacterSelectBgPath);
+            if (!string.IsNullOrWhiteSpace(profile.Ui?.CharacterSelectIconPath))
+                yield return ("Ui.CharacterSelectIconPath", profile.Ui.CharacterSelectIconPath);
+            if (!string.IsNullOrWhiteSpace(profile.Ui?.CharacterSelectLockedIconPath))
+                yield return ("Ui.CharacterSelectLockedIconPath", profile.Ui.CharacterSelectLockedIconPath);
+            if (!string.IsNullOrWhiteSpace(profile.Ui?.CharacterSelectTransitionPath))
+                yield return ("Ui.CharacterSelectTransitionPath", profile.Ui.CharacterSelectTransitionPath);
+            if (!string.IsNullOrWhiteSpace(profile.Ui?.MapMarkerPath))
+                yield return ("Ui.MapMarkerPath", profile.Ui.MapMarkerPath);
+            if (!string.IsNullOrWhiteSpace(profile.Vfx?.TrailPath))
+                yield return ("Vfx.TrailPath", profile.Vfx.TrailPath);
+            if (!string.IsNullOrWhiteSpace(profile.Spine?.CombatSkeletonDataPath))
+                yield return ("Spine.CombatSkeletonDataPath", profile.Spine.CombatSkeletonDataPath);
+            if (!string.IsNullOrWhiteSpace(profile.Audio?.CharacterSelectSfx))
+                yield return ("Audio.CharacterSelectSfx", profile.Audio.CharacterSelectSfx);
+            if (!string.IsNullOrWhiteSpace(profile.Audio?.CharacterTransitionSfx))
+                yield return ("Audio.CharacterTransitionSfx", profile.Audio.CharacterTransitionSfx);
+            if (!string.IsNullOrWhiteSpace(profile.Audio?.AttackSfx))
+                yield return ("Audio.AttackSfx", profile.Audio.AttackSfx);
+            if (!string.IsNullOrWhiteSpace(profile.Audio?.CastSfx))
+                yield return ("Audio.CastSfx", profile.Audio.CastSfx);
+            if (!string.IsNullOrWhiteSpace(profile.Audio?.DeathSfx))
+                yield return ("Audio.DeathSfx", profile.Audio.DeathSfx);
+            if (!string.IsNullOrWhiteSpace(profile.Multiplayer?.ArmPointingTexturePath))
+                yield return ("Multiplayer.ArmPointingTexturePath", profile.Multiplayer.ArmPointingTexturePath);
+            if (!string.IsNullOrWhiteSpace(profile.Multiplayer?.ArmRockTexturePath))
+                yield return ("Multiplayer.ArmRockTexturePath", profile.Multiplayer.ArmRockTexturePath);
+            if (!string.IsNullOrWhiteSpace(profile.Multiplayer?.ArmPaperTexturePath))
+                yield return ("Multiplayer.ArmPaperTexturePath", profile.Multiplayer.ArmPaperTexturePath);
+            if (!string.IsNullOrWhiteSpace(profile.Multiplayer?.ArmScissorsTexturePath))
+                yield return ("Multiplayer.ArmScissorsTexturePath", profile.Multiplayer.ArmScissorsTexturePath);
         }
 
         private sealed class MutableModCheckCounter
