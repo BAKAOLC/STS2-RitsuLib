@@ -43,7 +43,7 @@ var i18n = RitsuLibFramework.CreateModLocalization(
 If you do not provide file-system folders, it defaults to:
 
 ```text
-user://mod-configs/<modId>/localization
+user://<platform>/<user_id>/mod_data/<modId>/localization
 ```
 
 ---

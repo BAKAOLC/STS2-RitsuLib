@@ -38,7 +38,7 @@ var i18n = RitsuLibFramework.CreateModLocalization(
 `CreateModLocalization` 是 `CreateLocalization` 的便捷包装。如果不传文件系统目录，默认使用：
 
 ```text
-user://mod-configs/<modId>/localization
+user://<platform>/<user_id>/mod_data/<modId>/localization
 ```
 
 ---

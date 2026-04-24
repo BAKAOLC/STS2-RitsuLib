@@ -110,13 +110,13 @@ namespace STS2RitsuLib
             patcher.RegisterPatch<UnlockIncrementLifecyclePatch>();
             patcher.RegisterPatch<GameOverScreenLifecyclePatch>();
             patcher.RegisterPatch<NHealthBarReadyForecastPatch>();
-            patcher.RegisterPatch<NHealthBarRefreshForegroundGraftPatch>();
+            patcher.RegisterPatch<NHealthBarRefreshForegroundOrderedPatch>();
             patcher.RegisterPatch<CardModelShouldGlowGoldRegistryPatch>();
             patcher.RegisterPatch<CardModelShouldGlowRedRegistryPatch>();
             patcher.RegisterPatch<CardModelSetToFreeBindingPatch>();
             patcher.RegisterPatch<NHandCardHolderUpdateCardHandOutlinePatch>();
             patcher.RegisterPatch<NHandCardHolderFlashHandOutlinePatch>();
-            patcher.RegisterPatch<NHealthBarRefreshForegroundForecastPatch>();
+            patcher.RegisterPatch<NHandCardHolderDynamicOutlineTickPatch>();
             patcher.RegisterPatch<NHealthBarRefreshMiddlegroundForecastPatch>();
             patcher.RegisterPatch<NHealthBarRefreshTextForecastPatch>();
             patcher.RegisterPatch<ArchaicToothGetTranscendenceStarterCardPatch>();
