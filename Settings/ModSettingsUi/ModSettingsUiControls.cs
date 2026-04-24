@@ -3450,7 +3450,7 @@ namespace STS2RitsuLib.Settings
 
             if (!animate)
             {
-                _trackEditorHeight = false;
+                _trackEditorHeight = !_collapsed;
                 _editorSurface.Modulate = _editorSurface.Modulate with { A = _collapsed ? 0f : 1f };
                 _editorSurface.Visible = !_collapsed;
                 _editorClip.Visible = !_collapsed;
@@ -3532,6 +3532,12 @@ namespace STS2RitsuLib.Settings
             _editorClip.UpdateMinimumSize();
             for (Node? current = _editorClip; current != null; current = current.GetParent())
             {
+                if (current is Control control)
+                    control.UpdateMinimumSize();
+                if (current is Container container)
+                    container.QueueSort();
+                if (current is ModSettingsCollapsibleSection section)
+                    section.RefreshNestedCollapseHeight();
                 if (current is ModSettingsScrollContainer found)
                 {
                     found.RefreshContentMetrics();
@@ -3905,7 +3911,7 @@ namespace STS2RitsuLib.Settings
 
             if (!animate)
             {
-                _trackContentHeight = false;
+                _trackContentHeight = !_collapsed;
                 _content.Modulate = _content.Modulate with { A = _collapsed ? 0f : 1f };
                 _content.Visible = !_collapsed;
                 _contentClip.Visible = !_collapsed;
@@ -3978,6 +3984,11 @@ namespace STS2RitsuLib.Settings
             SetContentClipHeight(MeasureContentExpandedHeight());
         }
 
+        internal void RefreshNestedCollapseHeight()
+        {
+            SyncContentExpandedHeight();
+        }
+
         private void SetContentClipHeight(float height)
         {
             if (_contentClip == null)
@@ -3987,6 +3998,12 @@ namespace STS2RitsuLib.Settings
             _contentClip.UpdateMinimumSize();
             for (Node? current = _contentClip; current != null; current = current.GetParent())
             {
+                if (current is Control control)
+                    control.UpdateMinimumSize();
+                if (current is Container container)
+                    container.QueueSort();
+                if (current is ModSettingsCollapsibleSection section && !ReferenceEquals(section, this))
+                    section.SyncContentExpandedHeight();
                 if (current is ModSettingsScrollContainer found)
                 {
                     found.RefreshContentMetrics();
