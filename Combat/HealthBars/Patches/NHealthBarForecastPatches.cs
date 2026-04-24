@@ -25,6 +25,7 @@ namespace STS2RitsuLib.Combat.HealthBars.Patches
         public static void RefreshForegroundOverlay(NHealthBar healthBar)
         {
             BaseLibHealthBarForecastBridge.TryRegisterSecondary();
+            BaseLibVisualGraftBridge.TryRegisterSecondary();
             if (BaseLibHealthBarForecastBridge.ShouldRitsuRendererStandDown())
                 return;
 
@@ -51,10 +52,13 @@ namespace STS2RitsuLib.Combat.HealthBars.Patches
 
             EnsureOverlayOrder(healthBar, state);
 
+            var graftAgg = HealthBarVisualGraftRegistry.Aggregate(creature);
+            var visualDenom = Math.Max(creature.MaxHp, creature.CurrentHp + Math.Max(0, graftAgg.GraftHp));
+
             var maxWidth = GetMaxFgWidth(healthBar);
             var hpForeground = healthBar._hpForeground;
             var hpFromForeground =
-                Math.Clamp(HpFromOffsetRight(healthBar, hpForeground.OffsetRight), 0, creature.CurrentHp);
+                Math.Clamp(HpFromOffsetRight(healthBar, hpForeground.OffsetRight, visualDenom), 0, creature.CurrentHp);
             var baseHp = hpForeground.Visible || hpFromForeground < creature.CurrentHp ? hpFromForeground : 0;
 
             var rightSegments = customSegments
@@ -63,7 +67,7 @@ namespace STS2RitsuLib.Combat.HealthBars.Patches
                 .ThenBy(segment => segment.SequenceOrder)
                 .ToArray();
 
-            var remainingHp = baseHp;
+            var remainingHp = baseHp + Math.Max(0, graftAgg.GraftHp);
             var rightForecastEdgeOffsetRight = hpForeground.OffsetRight;
             Color? lethalRightColor = null;
             var rightIndex = 0;
@@ -82,8 +86,8 @@ namespace STS2RitsuLib.Combat.HealthBars.Patches
                 var previousHp = remainingHp;
                 remainingHp -= visibleAmount;
 
-                var leftWidth = GetFgWidth(healthBar, remainingHp);
-                var rightWidth = GetFgWidth(healthBar, previousHp);
+                var leftWidth = GetFgWidth(healthBar, remainingHp, visualDenom);
+                var rightWidth = GetFgWidth(healthBar, previousHp, visualDenom);
                 node.Visible = true;
                 ApplyForecastSegmentAppearance(
                     node,
@@ -109,7 +113,7 @@ namespace STS2RitsuLib.Combat.HealthBars.Patches
                 if (remainingHp > 0)
                 {
                     hpForeground.Visible = true;
-                    hpForeground.OffsetRight = GetFgWidth(healthBar, remainingHp) - maxWidth;
+                    hpForeground.OffsetRight = GetFgWidth(healthBar, remainingHp, visualDenom) - maxWidth;
                 }
                 else
                 {
@@ -152,6 +156,7 @@ namespace STS2RitsuLib.Combat.HealthBars.Patches
                 maxWidth,
                 rightIndex,
                 rightForecastEdgeOffsetRight,
+                visualDenom,
                 ref leftIndex);
 
             var overlapLeft = leftSegments
@@ -165,6 +170,7 @@ namespace STS2RitsuLib.Combat.HealthBars.Patches
                 maxWidth,
                 rightIndex,
                 rightForecastEdgeOffsetRight,
+                visualDenom,
                 ref leftIndex);
 
             HideSegments(state.LeftSegments, leftIndex);
@@ -235,6 +241,7 @@ namespace STS2RitsuLib.Combat.HealthBars.Patches
             float maxWidth,
             int rightIndex,
             float rightForecastEdgeOffsetRight,
+            int visualDenom,
             ref int leftIndex)
         {
             var leftAccumulated = 0;
@@ -251,8 +258,8 @@ namespace STS2RitsuLib.Combat.HealthBars.Patches
                 EnsureSegmentCount(state.LeftSegments, state.LeftContainer, leftIndex + 1, state.LeftTemplate);
                 var node = state.LeftSegments[leftIndex];
                 node.ZIndex = 0;
-                var startWidth = GetFgWidth(healthBar, segmentStart);
-                var endWidth = GetFgWidth(healthBar, leftAccumulated);
+                var startWidth = GetFgWidth(healthBar, segmentStart, visualDenom);
+                var endWidth = GetFgWidth(healthBar, leftAccumulated, visualDenom);
 
                 node.Visible = true;
                 ApplyForecastSegmentAppearance(
@@ -278,6 +285,7 @@ namespace STS2RitsuLib.Combat.HealthBars.Patches
             float maxWidth,
             int rightIndex,
             float rightForecastEdgeOffsetRight,
+            int visualDenom,
             ref int leftIndex)
         {
             if (overlapSegments.Length == 0)
@@ -302,7 +310,7 @@ namespace STS2RitsuLib.Combat.HealthBars.Patches
 
                     EnsureSegmentCount(state.LeftSegments, state.LeftContainer, leftIndex + 1, state.LeftTemplate);
                     var node = state.LeftSegments[leftIndex];
-                    var endWidth = GetFgWidth(healthBar, visibleAmount);
+                    var endWidth = GetFgWidth(healthBar, visibleAmount, visualDenom);
                     var zKey = zBase + ranks[i];
                     node.ZIndex = zKey;
                     state.OverlapLeftZ.Add((segment, zKey));
@@ -507,20 +515,20 @@ namespace STS2RitsuLib.Combat.HealthBars.Patches
                 : healthBar._hpForegroundContainer.Size.X;
         }
 
-        private static float GetFgWidth(NHealthBar healthBar, int amount)
+        private static float GetFgWidth(NHealthBar healthBar, int amount, int visualDenom)
         {
             var creature = healthBar._creature;
-            if (creature.MaxHp <= 0 || amount <= 0)
+            if (visualDenom <= 0 || amount <= 0)
                 return 0f;
 
-            var width = (float)amount / creature.MaxHp * GetMaxFgWidth(healthBar);
+            var width = (float)amount / visualDenom * GetMaxFgWidth(healthBar);
             return Math.Max(width, creature.CurrentHp > 0 ? 12f : 0f);
         }
 
-        private static int HpFromOffsetRight(NHealthBar healthBar, float offsetRight)
+        private static int HpFromOffsetRight(NHealthBar healthBar, float offsetRight, int visualDenom)
         {
             var creature = healthBar._creature;
-            if (creature.MaxHp <= 0)
+            if (visualDenom <= 0)
                 return 0;
 
             var maxWidth = GetMaxFgWidth(healthBar);
@@ -528,7 +536,7 @@ namespace STS2RitsuLib.Combat.HealthBars.Patches
                 return 0;
 
             var width = Math.Clamp(offsetRight + maxWidth, 0f, maxWidth);
-            return (int)Math.Round(width / maxWidth * creature.MaxHp);
+            return (int)Math.Round(width / maxWidth * visualDenom);
         }
 
         private static Color DarkenForOutline(Color color)
@@ -545,8 +553,10 @@ namespace STS2RitsuLib.Combat.HealthBars.Patches
             if (doomAmount <= 0)
                 return false;
 
+            var graftAgg = HealthBarVisualGraftRegistry.Aggregate(creature);
+            var visualDenom = Math.Max(creature.MaxHp, creature.CurrentHp + Math.Max(0, graftAgg.GraftHp));
             var hpAfterRight = Math.Clamp(
-                HpFromOffsetRight(healthBar, healthBar._hpForeground.OffsetRight),
+                HpFromOffsetRight(healthBar, healthBar._hpForeground.OffsetRight, visualDenom),
                 0,
                 creature.CurrentHp);
             return hpAfterRight > 0 && doomAmount >= hpAfterRight;
@@ -669,6 +679,7 @@ namespace STS2RitsuLib.Combat.HealthBars.Patches
         public static void Postfix(NHealthBar __instance)
         {
             BaseLibHealthBarForecastBridge.TryRegisterPrimary();
+            BaseLibVisualGraftBridge.TryRegisterPrimary();
         }
     }
 
