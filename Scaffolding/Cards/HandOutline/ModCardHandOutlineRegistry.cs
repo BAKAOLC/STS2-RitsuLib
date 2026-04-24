@@ -25,7 +25,7 @@ namespace STS2RitsuLib.Scaffolding.Cards.HandOutline
         }
 
         /// <summary>
-        ///     Registers a rule for <paramref name="cardType" /> (concrete <see cref="CardModel" /> subtype).
+        ///     Registers a rule for <paramref name="cardType" /> (<see cref="CardModel" /> subtype).
         /// </summary>
         public static void Register(Type cardType, ModCardHandOutlineRule rule)
         {
@@ -37,9 +37,9 @@ namespace STS2RitsuLib.Scaffolding.Cards.HandOutline
                     "Cannot register card hand outline rules after content registration has been frozen. " +
                     "Register from your mod initializer before ModelDb initializes.");
 
-            if (cardType.IsAbstract || !typeof(CardModel).IsAssignableFrom(cardType))
+            if (!typeof(CardModel).IsAssignableFrom(cardType))
                 throw new ArgumentException(
-                    $"Type '{cardType.FullName}' must be a concrete subtype of {typeof(CardModel).FullName}.",
+                    $"Type '{cardType.FullName}' must be a subtype of {typeof(CardModel).FullName}.",
                     nameof(cardType));
 
             var seq = Interlocked.Increment(ref _sequence);
