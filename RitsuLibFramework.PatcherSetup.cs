@@ -116,6 +116,7 @@ namespace STS2RitsuLib
             patcher.RegisterPatch<CardModelSetToFreeBindingPatch>();
             patcher.RegisterPatch<NHandCardHolderUpdateCardHandOutlinePatch>();
             patcher.RegisterPatch<NHandCardHolderFlashHandOutlinePatch>();
+            patcher.RegisterPatch<NHandCardHolderDynamicOutlineTickPatch>();
             patcher.RegisterPatch<NHealthBarRefreshForegroundForecastPatch>();
             patcher.RegisterPatch<NHealthBarRefreshMiddlegroundForecastPatch>();
             patcher.RegisterPatch<NHealthBarRefreshTextForecastPatch>();

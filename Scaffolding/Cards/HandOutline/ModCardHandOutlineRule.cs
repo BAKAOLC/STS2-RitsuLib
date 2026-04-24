@@ -22,5 +22,34 @@ namespace STS2RitsuLib.Scaffolding.Cards.HandOutline
         Func<CardModel, bool> When,
         Color Color,
         int Priority = 0,
-        bool VisibleWhenUnplayable = false);
+        bool VisibleWhenUnplayable = false)
+    {
+        /// <summary>
+        ///     Optional dynamic color resolver. When assigned and <see cref="When" /> passes, this is evaluated each refresh
+        ///     to produce the current hand outline color.
+        /// </summary>
+        public Func<CardModel, Color>? DynamicColor { get; init; }
+
+        /// <summary>
+        ///     Creates a rule with a dynamic color resolver.
+        /// </summary>
+        public static ModCardHandOutlineRule Dynamic(
+            Func<CardModel, bool> when,
+            Func<CardModel, Color> colorWhen,
+            int priority = 0,
+            bool visibleWhenUnplayable = false)
+        {
+            ArgumentNullException.ThrowIfNull(when);
+            ArgumentNullException.ThrowIfNull(colorWhen);
+            return new(when, Colors.White, priority, visibleWhenUnplayable)
+            {
+                DynamicColor = colorWhen,
+            };
+        }
+
+        internal Color ResolveColor(CardModel card)
+        {
+            return DynamicColor?.Invoke(card) ?? Color;
+        }
+    }
 }

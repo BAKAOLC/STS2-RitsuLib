@@ -22,10 +22,10 @@ namespace STS2RitsuLib.Scaffolding.Cards.HandOutline.Patches
         // ReSharper disable once InconsistentNaming
         public static void Postfix(NHandCardHolder __instance)
         {
-            if (!ModCardHandOutlinePatchHelper.TryGetRule(__instance, out _, out var rule))
+            if (!ModCardHandOutlinePatchHelper.TryGetRule(__instance, out var model, out var rule))
                 return;
 
-            ModCardHandOutlinePatchHelper.ApplyFlash(__instance, rule);
+            ModCardHandOutlinePatchHelper.ApplyFlash(__instance, model, rule);
         }
     }
 }
