@@ -138,18 +138,27 @@ public sealed class BrewKeywordMarker;
 | `keywordId.GetModKeywordCardText()` | 获取卡牌文本 |
 | `enumerable.ToHoverTips()` | 批量转换为悬浮提示 |
 
-也可以通过 `ModKeywordExtensions` 把运行时关键词挂在任意对象上：
+也可以通过 `ModKeywordExtensions` 把运行时关键词挂在任意对象上。运行时 id 必须是**已注册**的字符串（与 `GetQualifiedKeywordId` 一致的全大写三段式 id）；`HasModKeyword` / `AddModKeyword` 对字符串比较为大小写不敏感，但短 stem（如仅 `"brew"`）不会命中注册表。
 
 ```csharp
-card.AddModKeyword("brew");
+using STS2RitsuLib.Content;
 
-if (card.HasModKeyword("brew"))
+var brewId = ModContentRegistry.GetQualifiedKeywordId("MyMod", "brew");
+card.AddModKeyword(brewId);
+
+if (card.HasModKeyword(brewId))
 {
     // ...
 }
 ```
 
-适合"关键词是否存在由运行时状态决定"的场景。
+适合「关键词是否存在由运行时状态决定」的场景。
+
+---
+
+## Card pile 与顶栏按钮的悬浮提示
+
+`ModCardPileRegistry` / `ModTopBarButtonRegistry` 注册的合格 id 分别由 `GetQualifiedCardPileId`、`GetQualifiedTopBarButtonId` 生成。`static_hover_tips` 中的键与关键词相同：**以注册 id 为 stem**，即 `{id}.title`、`.description`（card pile 另有 `{id}.empty`）。不再提供单独的 stem 覆盖字段；若需与旧键对齐，应改本地化键名以匹配合格 id。
 
 ---
 
@@ -191,6 +200,7 @@ RitsuLib 内置了 `AncientDialogueLocalization`，它有两个作用：
 ## 相关文档
 
 - [内容注册规则](ContentAuthoringToolkit.md)
+- [内容包与注册器](ContentPacksAndRegistries.md)
 - [角色与解锁模板](CharacterAndUnlockScaffolding.md)
 - [诊断与兼容层](DiagnosticsAndCompatibility.md)
 - [LocString 占位符解析](LocStringPlaceholderResolution.md)

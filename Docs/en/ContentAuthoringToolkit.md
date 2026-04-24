@@ -15,8 +15,12 @@ Detailed registration mechanics live in [Content Packs & Registries](ContentPack
 | `RitsuLibFramework.GetKeywordRegistry(modId)` | Keyword registry |
 | `RitsuLibFramework.GetTimelineRegistry(modId)` | Timeline (story / epoch) registry |
 | `RitsuLibFramework.GetUnlockRegistry(modId)` | Unlock rule registry |
+| `ModCardPileRegistry.For(modId)` | Mod-owned card pile registry (qualified ids + `static_hover_tips` keys) |
+| `ModTopBarButtonRegistry.For(modId)` | Mod-owned top-bar button registry (qualified ids + `static_hover_tips` keys) |
 
-`CreateContentPack` wraps all of the above in a fluent builder that executes registered steps in insertion order when `Apply()` is called.
+`CreateContentPack` wraps the **four** registries exposed on `ModContentPackContext` in a fluent builder that executes registered steps in insertion order when `Apply()` is called.
+
+`ModCardPileRegistry` / `ModTopBarButtonRegistry` are separate per-mod singletons (not fields on `ModContentPackContext`). See [Content Packs & Registries](ContentPacksAndRegistries.md) for how they fit the overall map, and [Localization & Keywords](LocalizationAndKeywords.md) for hover-tip key conventions.
 
 This document keeps the overview short. For builder surface, manifests, fixed-entry ownership, and freeze behavior, see [Content Packs & Registries](ContentPacksAndRegistries.md).
 

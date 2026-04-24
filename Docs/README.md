@@ -33,7 +33,7 @@
 
 | Document | Description |
 |---|---|
-| [Localization & Keywords](en/LocalizationAndKeywords.md) | `I18N`, keyword registration, and ancient dialogue localization |
+| [Localization & Keywords](en/LocalizationAndKeywords.md) | `I18N`, keyword / card-pile / top-bar `static_hover_tips` keys, and ancient dialogue localization |
 | [LocString Placeholder Resolution](en/LocStringPlaceholderResolution.md) | Placeholder syntax, custom formatters, and extension points |
 
 ### Runtime & Infrastructure
@@ -77,7 +77,7 @@
 
 | 文档 | 说明 |
 |---|---|
-| [本地化与关键词](zh/LocalizationAndKeywords.md) | `I18N`、关键词注册与 Ancient 对话本地化 |
+| [本地化与关键词](zh/LocalizationAndKeywords.md) | `I18N`、关键词 / 卡堆 / 顶栏按钮的 `static_hover_tips` 键约定与 Ancient 对话本地化 |
 | [LocString 占位符解析](zh/LocStringPlaceholderResolution.md) | 占位符语法、自定义格式化器与扩展点 |
 
 ### 运行时与基础设施
