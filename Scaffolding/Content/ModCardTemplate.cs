@@ -50,11 +50,6 @@ namespace STS2RitsuLib.Scaffolding.Content
         protected virtual IEnumerable<string> RegisteredKeywordIds => [];
 
         /// <summary>
-        ///     Internal accessor for the mod-keyword seeding patch.
-        /// </summary>
-        internal IEnumerable<string> EnumerateRegisteredKeywordIds() => RegisteredKeywordIds;
-
-        /// <summary>
         ///     Extra hover tips appended after keyword-derived tips.
         /// </summary>
         protected virtual IEnumerable<IHoverTip> AdditionalHoverTips => [];
@@ -91,5 +86,13 @@ namespace STS2RitsuLib.Scaffolding.Content
 
         /// <inheritdoc />
         public virtual string? CustomBannerMaterialPath => AssetProfile.BannerMaterialPath;
+
+        /// <summary>
+        ///     Internal accessor for the mod-keyword seeding patch.
+        /// </summary>
+        internal IEnumerable<string> EnumerateRegisteredKeywordIds()
+        {
+            return RegisteredKeywordIds;
+        }
     }
 }

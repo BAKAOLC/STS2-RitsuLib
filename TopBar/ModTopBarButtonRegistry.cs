@@ -113,9 +113,9 @@ namespace STS2RitsuLib.TopBar
         private ModTopBarButtonDefinition RegisterCore(string id, ModTopBarButtonSpec spec)
         {
             var normalizedId = id.Trim();
-        if (spec.OnClick == null)
-            throw new InvalidOperationException(
-                $"Top-bar button '{normalizedId}' must provide a non-null OnClick handler.");
+            if (spec.OnClick == null)
+                throw new InvalidOperationException(
+                    $"Top-bar button '{normalizedId}' must provide a non-null OnClick handler.");
 
             var definition = new ModTopBarButtonDefinition(
                 _modId,

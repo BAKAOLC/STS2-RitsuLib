@@ -9,7 +9,8 @@ namespace STS2RitsuLib.Combat.HealthBars
     /// </summary>
     internal static class NHealthBarGraftCompat
     {
-        private static readonly Lazy<MethodInfo?> SetHpBarContainerSizeWithOffsetsImmediately = new(ResolveResizeMethod);
+        private static readonly Lazy<MethodInfo?>
+            SetHpBarContainerSizeWithOffsetsImmediately = new(ResolveResizeMethod);
 
         private static MethodInfo? ResolveResizeMethod()
         {

@@ -182,12 +182,10 @@ namespace STS2RitsuLib.CardPiles.Nodes
             else
                 TryReplaceCountLabelWithVanillaDeckClone();
 
-            if (Definition != null)
-            {
-                AttachPile(ModCardPileStorage.Resolve(Definition.PileType, player));
-                if (Definition.VisibleWhen != null)
-                    RefreshPileButtonVisibility();
-            }
+            if (Definition == null) return;
+            AttachPile(ModCardPileStorage.Resolve(Definition.PileType, player));
+            if (Definition.VisibleWhen != null)
+                RefreshPileButtonVisibility();
         }
 
         /// <inheritdoc />

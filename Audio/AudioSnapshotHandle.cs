@@ -6,7 +6,5 @@ namespace STS2RitsuLib.Audio
     ///     Handle for active FMOD snapshots.
     /// </summary>
     public sealed class AudioSnapshotHandle(AudioSource source, AudioLifecycleScope scope, GodotObject? rawInstance)
-        : AudioHandleBase(source, scope, rawInstance)
-    {
-    }
+        : AudioHandleBase(source, scope, rawInstance);
 }

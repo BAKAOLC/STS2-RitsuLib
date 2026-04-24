@@ -165,7 +165,8 @@ namespace STS2RitsuLib.CardPiles
                     {
                         case ModCardPileAnchorKind.BottomRightSecondary:
                             button.Position = container.ExhaustPile.Position
-                                              + new Vector2(BottomRightStackDeltaX * (primaryIndex + secondaryIndex + 2),
+                                              + new Vector2(
+                                                  BottomRightStackDeltaX * (primaryIndex + secondaryIndex + 2),
                                                   0f)
                                               + anchor.Offset;
                             secondaryIndex++;

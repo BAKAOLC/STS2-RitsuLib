@@ -7,9 +7,7 @@ namespace STS2RitsuLib.Combat.HealthBars
     ///     Runtime context for resolving visual graft metrics on a creature health bar.
     /// </summary>
     /// <param name="Creature">Creature whose bar is being evaluated.</param>
-    public readonly record struct HealthBarVisualGraftContext(Creature Creature)
-    {
-    }
+    public readonly record struct HealthBarVisualGraftContext(Creature Creature);
 
     /// <summary>
     ///     Extra HP-length grafted onto the right end of the current HP fill for bar geometry and right-side forecasts.
@@ -37,7 +35,8 @@ namespace STS2RitsuLib.Combat.HealthBars
     public interface IHealthBarVisualGraftSource
     {
         /// <summary>
-        ///     Returns graft metrics for <paramref name="context" />; yield zero <see cref="HealthBarVisualGraftMetrics.GraftHp" />
+        ///     Returns graft metrics for <paramref name="context" />; yield zero
+        ///     <see cref="HealthBarVisualGraftMetrics.GraftHp" />
         ///     when none apply.
         /// </summary>
         HealthBarVisualGraftMetrics GetHealthBarVisualGraft(HealthBarVisualGraftContext context);
@@ -108,7 +107,6 @@ namespace STS2RitsuLib.Combat.HealthBars
             var context = new HealthBarVisualGraftContext(creature);
 
             foreach (var source in creature.Powers.OfType<IHealthBarVisualGraftSource>())
-            {
                 try
                 {
                     var m = source.GetHealthBarVisualGraft(context);
@@ -121,7 +119,6 @@ namespace STS2RitsuLib.Combat.HealthBars
                     RitsuLibFramework.Logger.Warn(
                         $"[HealthBarGraft] Power '{source.GetType().FullName}' graft failed for '{creature}': {ex}");
                 }
-            }
 
             ProviderEntry[] snapshot;
             lock (SyncRoot)
@@ -130,7 +127,6 @@ namespace STS2RitsuLib.Combat.HealthBars
             }
 
             foreach (var entry in snapshot)
-            {
                 try
                 {
                     var m = entry.Source.GetHealthBarVisualGraft(context);
@@ -143,9 +139,8 @@ namespace STS2RitsuLib.Combat.HealthBars
                     RitsuLibFramework.Logger.Warn(
                         $"[HealthBarGraft] Source '{entry.SourceId}' from mod '{entry.ModId}' failed for '{creature}': {ex}");
                 }
-            }
 
-            return new HealthBarVisualGraftMetrics(sumHp, color, material);
+            return new(sumHp, color, material);
         }
 
         private readonly record struct ProviderEntry(

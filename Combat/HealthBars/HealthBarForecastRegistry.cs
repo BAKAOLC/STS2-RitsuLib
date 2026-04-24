@@ -61,8 +61,10 @@ namespace STS2RitsuLib.Combat.HealthBars
     ///     for both overlay tint and lethal HP label; when set, <see cref="Color" /> is still used for lethal label theming.
     /// </param>
     /// <param name="LeftOriginLayout">
-    ///     For <see cref="HealthBarForecastGrowthDirection.FromLeft" /> only: <see cref="HealthBarForecastLeftOriginLayout.Chained" />
-    ///     or <see cref="HealthBarForecastLeftOriginLayout.OverlapFromOrigin" />. Ignored for <see cref="HealthBarForecastGrowthDirection.FromRight" />.
+    ///     For <see cref="HealthBarForecastGrowthDirection.FromLeft" /> only:
+    ///     <see cref="HealthBarForecastLeftOriginLayout.Chained" />
+    ///     or <see cref="HealthBarForecastLeftOriginLayout.OverlapFromOrigin" />. Ignored for
+    ///     <see cref="HealthBarForecastGrowthDirection.FromRight" />.
     /// </param>
     /// <param name="LeftExclusiveZGroup">
     ///     For <see cref="HealthBarForecastLeftOriginLayout.OverlapFromOrigin" />: larger values draw above smaller values.
@@ -83,7 +85,7 @@ namespace STS2RitsuLib.Combat.HealthBars
         /// </summary>
         public HealthBarForecastSegment(int amount, Color color, HealthBarForecastGrowthDirection direction,
             int order = 0)
-            : this(amount, color, direction, order, null, null, HealthBarForecastLeftOriginLayout.Chained, 0)
+            : this(amount, color, direction, order, null, null)
         {
         }
 
@@ -97,7 +99,7 @@ namespace STS2RitsuLib.Combat.HealthBars
             HealthBarForecastGrowthDirection direction,
             int order,
             Material? overlayMaterial)
-            : this(amount, color, direction, order, overlayMaterial, null, HealthBarForecastLeftOriginLayout.Chained, 0)
+            : this(amount, color, direction, order, overlayMaterial, null)
         {
         }
     }
