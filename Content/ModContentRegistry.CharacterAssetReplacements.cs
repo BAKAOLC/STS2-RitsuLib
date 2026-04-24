@@ -4,25 +4,56 @@ namespace STS2RitsuLib.Content
 {
     public sealed partial class ModContentRegistry
     {
-        private static CharacterAssetProfile? _registeredGlobalCharacterAssetReplacement;
+        private static readonly CharacterAssetPathField[] CharacterAssetPathFields =
+        [
+            new("Scenes.VisualsPath", static p => p.Scenes?.VisualsPath),
+            new("Scenes.EnergyCounterPath", static p => p.Scenes?.EnergyCounterPath),
+            new("Scenes.MerchantAnimPath", static p => p.Scenes?.MerchantAnimPath),
+            new("Scenes.RestSiteAnimPath", static p => p.Scenes?.RestSiteAnimPath),
+            new("Ui.IconTexturePath", static p => p.Ui?.IconTexturePath),
+            new("Ui.IconOutlineTexturePath", static p => p.Ui?.IconOutlineTexturePath),
+            new("Ui.IconPath", static p => p.Ui?.IconPath),
+            new("Ui.CharacterSelectBgPath", static p => p.Ui?.CharacterSelectBgPath),
+            new("Ui.CharacterSelectIconPath", static p => p.Ui?.CharacterSelectIconPath),
+            new("Ui.CharacterSelectLockedIconPath", static p => p.Ui?.CharacterSelectLockedIconPath),
+            new("Ui.CharacterSelectTransitionPath", static p => p.Ui?.CharacterSelectTransitionPath),
+            new("Ui.MapMarkerPath", static p => p.Ui?.MapMarkerPath),
+            new("Vfx.TrailPath", static p => p.Vfx?.TrailPath),
+            new("Spine.CombatSkeletonDataPath", static p => p.Spine?.CombatSkeletonDataPath),
+            new("Audio.CharacterSelectSfx", static p => p.Audio?.CharacterSelectSfx),
+            new("Audio.CharacterTransitionSfx", static p => p.Audio?.CharacterTransitionSfx),
+            new("Audio.AttackSfx", static p => p.Audio?.AttackSfx),
+            new("Audio.CastSfx", static p => p.Audio?.CastSfx),
+            new("Audio.DeathSfx", static p => p.Audio?.DeathSfx),
+            new("Multiplayer.ArmPointingTexturePath", static p => p.Multiplayer?.ArmPointingTexturePath),
+            new("Multiplayer.ArmRockTexturePath", static p => p.Multiplayer?.ArmRockTexturePath),
+            new("Multiplayer.ArmPaperTexturePath", static p => p.Multiplayer?.ArmPaperTexturePath),
+            new("Multiplayer.ArmScissorsTexturePath", static p => p.Multiplayer?.ArmScissorsTexturePath),
+        ];
 
-        private static readonly Dictionary<string, CharacterAssetProfile> RegisteredCharacterAssetReplacements =
-            new(StringComparer.OrdinalIgnoreCase);
+        private static long _characterAssetReplacementWriteOrder;
+
+        private static readonly Dictionary<string, CharacterAssetReplacementLayer>
+            RegisteredGlobalCharacterAssetReplacementsByMod =
+                new(StringComparer.OrdinalIgnoreCase);
+
+        private static readonly Dictionary<string, Dictionary<string, CharacterAssetReplacementLayer>>
+            RegisteredCharacterAssetReplacementsByEntry =
+                new(StringComparer.OrdinalIgnoreCase);
 
         /// <summary>
-        ///     Registers global asset overrides applied to all characters. Character-specific overrides still win.
+        ///     Registers global asset overrides applied to all characters for the current <see cref="ModId" />.
+        ///     Character-specific overrides still win.
         /// </summary>
         public void RegisterGlobalCharacterAssetReplacement(CharacterAssetProfile assetProfile)
         {
             ArgumentNullException.ThrowIfNull(assetProfile);
 
-            EnsureMutable("register global character asset replacement");
-
             lock (SyncRoot)
             {
-                _registeredGlobalCharacterAssetReplacement = _registeredGlobalCharacterAssetReplacement == null
-                    ? assetProfile
-                    : CharacterAssetProfiles.Merge(_registeredGlobalCharacterAssetReplacement, assetProfile);
+                RegisteredGlobalCharacterAssetReplacementsByMod[ModId] = new(
+                    assetProfile,
+                    NextCharacterAssetReplacementWriteOrder());
             }
 
             _logger.Info("[Content] Registered global character asset replacement.");
@@ -36,20 +67,69 @@ namespace STS2RitsuLib.Content
         {
             ArgumentException.ThrowIfNullOrWhiteSpace(characterEntry);
             ArgumentNullException.ThrowIfNull(assetProfile);
-
-            EnsureMutable($"register character asset replacement '{characterEntry}'");
             var normalizedEntry = characterEntry.Trim().ToLowerInvariant();
 
             lock (SyncRoot)
             {
-                if (RegisteredCharacterAssetReplacements.TryGetValue(normalizedEntry, out var existing))
-                    RegisteredCharacterAssetReplacements[normalizedEntry] =
-                        CharacterAssetProfiles.Merge(existing, assetProfile);
-                else
-                    RegisteredCharacterAssetReplacements[normalizedEntry] = assetProfile;
+                if (!RegisteredCharacterAssetReplacementsByEntry.TryGetValue(normalizedEntry, out var perMod))
+                {
+                    perMod = new(StringComparer.OrdinalIgnoreCase);
+                    RegisteredCharacterAssetReplacementsByEntry[normalizedEntry] = perMod;
+                }
+
+                perMod[ModId] = new(assetProfile, NextCharacterAssetReplacementWriteOrder());
             }
 
             _logger.Info($"[Content] Registered character asset replacement for '{normalizedEntry}'.");
+        }
+
+        /// <summary>
+        ///     Removes global character asset overrides registered by the current <see cref="ModId" />.
+        /// </summary>
+        /// <returns><c>true</c> when this mod had a global override and it was removed.</returns>
+        public bool ClearGlobalCharacterAssetReplacement()
+        {
+            bool removed;
+
+            lock (SyncRoot)
+            {
+                removed = RegisteredGlobalCharacterAssetReplacementsByMod.Remove(ModId);
+            }
+
+            if (removed)
+                _logger.Info("[Content] Cleared global character asset replacement.");
+
+            return removed;
+        }
+
+        /// <summary>
+        ///     Removes this mod's registered asset overrides for the specified character id.
+        /// </summary>
+        /// <returns><c>true</c> when this mod had an override and it was removed.</returns>
+        public bool RemoveCharacterAssetReplacement(string characterEntry)
+        {
+            ArgumentException.ThrowIfNullOrWhiteSpace(characterEntry);
+            var normalizedEntry = characterEntry.Trim().ToLowerInvariant();
+            bool removed;
+
+            lock (SyncRoot)
+            {
+                if (!RegisteredCharacterAssetReplacementsByEntry.TryGetValue(normalizedEntry, out var perMod))
+                {
+                    removed = false;
+                }
+                else
+                {
+                    removed = perMod.Remove(ModId);
+                    if (perMod.Count == 0)
+                        RegisteredCharacterAssetReplacementsByEntry.Remove(normalizedEntry);
+                }
+            }
+
+            if (removed)
+                _logger.Info($"[Content] Removed character asset replacement for '{normalizedEntry}'.");
+
+            return removed;
         }
 
         /// <summary>
@@ -60,10 +140,17 @@ namespace STS2RitsuLib.Content
             out CharacterAssetProfile assetProfile)
         {
             ArgumentException.ThrowIfNullOrWhiteSpace(characterEntry);
+            var normalizedEntry = characterEntry.Trim();
 
             lock (SyncRoot)
             {
-                return RegisteredCharacterAssetReplacements.TryGetValue(characterEntry.Trim(), out assetProfile!);
+                if (!RegisteredCharacterAssetReplacementsByEntry.TryGetValue(normalizedEntry, out var layersByMod))
+                {
+                    assetProfile = CharacterAssetProfile.Empty;
+                    return false;
+                }
+
+                return TryMergeCharacterAssetReplacementLayers(layersByMod.Values, out assetProfile);
             }
         }
 
@@ -74,14 +161,9 @@ namespace STS2RitsuLib.Content
         {
             lock (SyncRoot)
             {
-                if (_registeredGlobalCharacterAssetReplacement == null)
-                {
-                    assetProfile = CharacterAssetProfile.Empty;
-                    return false;
-                }
-
-                assetProfile = _registeredGlobalCharacterAssetReplacement;
-                return true;
+                return TryMergeCharacterAssetReplacementLayers(
+                    RegisteredGlobalCharacterAssetReplacementsByMod.Values,
+                    out assetProfile);
             }
         }
 
@@ -110,6 +192,145 @@ namespace STS2RitsuLib.Content
                     : globalProfile;
             return true;
         }
+
+        internal static IReadOnlyList<CharacterAssetReplacementLayerSnapshot>
+            GetCharacterAssetReplacementLayerSnapshots()
+        {
+            lock (SyncRoot)
+            {
+                var snapshots = new List<CharacterAssetReplacementLayerSnapshot>();
+
+                foreach (var (modId, layer) in RegisteredGlobalCharacterAssetReplacementsByMod)
+                    snapshots.Add(new("global", "*", modId, layer.WriteOrder, layer.Profile));
+
+                foreach (var (entry, perMod) in RegisteredCharacterAssetReplacementsByEntry)
+                foreach (var (modId, layer) in perMod)
+                    snapshots.Add(new("character", entry, modId, layer.WriteOrder, layer.Profile));
+
+                snapshots.Sort(static (x, y) => x.WriteOrder.CompareTo(y.WriteOrder));
+                return snapshots;
+            }
+        }
+
+        internal static IReadOnlyList<CharacterAssetReplacementResolvedPropertySnapshot>
+            GetCharacterAssetReplacementResolvedPropertySnapshots()
+        {
+            lock (SyncRoot)
+            {
+                var resolved = new List<CharacterAssetReplacementResolvedPropertySnapshot>();
+                var entries = RegisteredCharacterAssetReplacementsByEntry.Keys
+                    .OrderBy(static x => x, StringComparer.OrdinalIgnoreCase)
+                    .ToArray();
+
+                foreach (var entry in entries)
+                    resolved.AddRange(GetResolvedPropertiesForEntry(entry));
+
+                return resolved;
+            }
+        }
+
+        private static long NextCharacterAssetReplacementWriteOrder()
+        {
+            _characterAssetReplacementWriteOrder++;
+            return _characterAssetReplacementWriteOrder;
+        }
+
+        private static bool TryMergeCharacterAssetReplacementLayers(
+            IEnumerable<CharacterAssetReplacementLayer> layers,
+            out CharacterAssetProfile mergedProfile)
+        {
+            var ordered = layers.ToList();
+            if (ordered.Count == 0)
+            {
+                mergedProfile = CharacterAssetProfile.Empty;
+                return false;
+            }
+
+            ordered.Sort(static (x, y) => x.WriteOrder.CompareTo(y.WriteOrder));
+
+            var merged = ordered[0].Profile;
+            for (var i = 1; i < ordered.Count; i++)
+                merged = CharacterAssetProfiles.Merge(merged, ordered[i].Profile);
+
+            mergedProfile = merged;
+            return true;
+        }
+
+        private static List<CharacterAssetReplacementResolvedPropertySnapshot> GetResolvedPropertiesForEntry(
+            string characterEntry)
+        {
+            var values = new List<CharacterAssetReplacementResolvedPropertySnapshot>();
+
+            RegisteredCharacterAssetReplacementsByEntry.TryGetValue(characterEntry, out var characterLayersByMod);
+            var globalLayers = RegisteredGlobalCharacterAssetReplacementsByMod
+                .Select(static kv => (ModId: kv.Key, Layer: kv.Value))
+                .OrderBy(static x => x.Layer.WriteOrder)
+                .ToArray();
+            var characterLayers = characterLayersByMod == null
+                ? []
+                : characterLayersByMod
+                    .Select(static kv => (ModId: kv.Key, Layer: kv.Value))
+                    .OrderBy(static x => x.Layer.WriteOrder)
+                    .ToArray();
+
+            foreach (var field in CharacterAssetPathFields)
+            {
+                if (TryResolveFieldSource(characterEntry, field, characterLayers, "character", out var characterValue))
+                {
+                    values.Add(characterValue);
+                    continue;
+                }
+
+                if (TryResolveFieldSource(characterEntry, field, globalLayers, "global", out var globalValue))
+                    values.Add(globalValue);
+            }
+
+            return values;
+        }
+
+        private static bool TryResolveFieldSource(
+            string characterEntry,
+            CharacterAssetPathField field,
+            IEnumerable<(string ModId, CharacterAssetReplacementLayer Layer)> orderedLayers,
+            string scope,
+            out CharacterAssetReplacementResolvedPropertySnapshot resolved)
+        {
+            foreach (var layer in orderedLayers.Reverse())
+            {
+                var value = field.Selector(layer.Layer.Profile);
+                if (string.IsNullOrWhiteSpace(value))
+                    continue;
+
+                resolved = new(characterEntry, field.Name, value, scope, layer.ModId, layer.Layer.WriteOrder);
+                return true;
+            }
+
+            resolved = default;
+            return false;
+        }
+
+        private readonly record struct CharacterAssetReplacementLayer(
+            CharacterAssetProfile Profile,
+            long WriteOrder);
+
+        internal readonly record struct CharacterAssetReplacementLayerSnapshot(
+            string Scope,
+            string CharacterEntry,
+            string ModId,
+            long WriteOrder,
+            CharacterAssetProfile Profile);
+
+        internal readonly record struct CharacterAssetReplacementResolvedPropertySnapshot(
+            string CharacterEntry,
+            string PropertyPath,
+            string Value,
+            string SourceScope,
+            string SourceModId,
+            long SourceWriteOrder);
+
+        private readonly record struct CharacterAssetPathField(
+            string Name,
+            Func<CharacterAssetProfile, string?> Selector);
 
         /// <summary>
         ///     Well-known base-game character ids for
