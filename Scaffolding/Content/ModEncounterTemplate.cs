@@ -86,6 +86,12 @@ namespace STS2RitsuLib.Scaffolding.Content
         /// <inheritdoc />
         public virtual IEnumerable<string>? CustomMapNodeAssetPaths => AssetProfile.MapNodeAssetPaths;
 
+        /// <inheritdoc />
+        public virtual string? CustomRunHistoryIconPath => AssetProfile.RunHistoryIconPath;
+
+        /// <inheritdoc />
+        public virtual string? CustomRunHistoryIconOutlinePath => AssetProfile.RunHistoryIconOutlinePath;
+
         bool IModEncounterCombatSceneFactory.SuppliesEncounterCombatSceneFromFactory =>
             SuppliesEncounterCombatSceneFromFactory;
 
