@@ -520,7 +520,7 @@ namespace STS2RitsuLib
 
         /// <summary>
         ///     Creates a <see cref="STS2RitsuLib.Utils.I18N" /> instance for a mod, defaulting the file-system folder to
-        ///     <c>user://mod-configs/{modId}/localization</c> when none are supplied.
+        ///     <c>user://&lt;platform&gt;/&lt;userId&gt;/mod_data/{modId}/localization</c> when none are supplied.
         /// </summary>
         public static I18N CreateModLocalization(
             string modId,
@@ -533,7 +533,7 @@ namespace STS2RitsuLib
             ArgumentException.ThrowIfNullOrWhiteSpace(modId);
             ArgumentException.ThrowIfNullOrWhiteSpace(instanceName);
 
-            var folders = fileSystemFolders?.ToArray() ?? [$"user://mod-configs/{modId}/localization"];
+            var folders = fileSystemFolders?.ToArray() ?? [$"{ProfileManager.GetAccountBasePath(modId)}/localization"];
             return CreateLocalization(instanceName, folders, resourceFolders, pckFolders, resourceAssembly);
         }
 
