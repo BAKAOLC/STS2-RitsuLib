@@ -12,7 +12,6 @@ namespace STS2RitsuLib.TopBar
             string modId,
             string id,
             string? iconPath,
-            string? locStem,
             int order,
             Vector2 offset,
             Action<ModTopBarButtonContext>? onClick,
@@ -23,7 +22,6 @@ namespace STS2RitsuLib.TopBar
             ModId = modId;
             Id = id;
             IconPath = iconPath;
-            LocStem = string.IsNullOrWhiteSpace(locStem) ? id : locStem;
             Order = order;
             Offset = offset;
             OnClick = onClick;
@@ -40,9 +38,6 @@ namespace STS2RitsuLib.TopBar
 
         /// <summary>Godot resource path for the icon, or null.</summary>
         public string? IconPath { get; }
-
-        /// <summary>Effective loc stem (defaults to <see cref="Id" />).</summary>
-        public string LocStem { get; }
 
         /// <summary>Sort order within this mod's top-bar buttons.</summary>
         public int Order { get; }
@@ -62,10 +57,10 @@ namespace STS2RitsuLib.TopBar
         /// <summary>Optional count provider for the badge; see <see cref="ModTopBarButtonSpec.CountProvider" />.</summary>
         public Func<ModTopBarButtonContext, int>? CountProvider { get; }
 
-        /// <summary>Hover-tip title resolved against <c>static_hover_tips</c> with key <c>{LocStem}.title</c>.</summary>
-        public LocString Title => new(ModTopBarButtonSpec.HoverTipLocTable, $"{LocStem}.title");
+        /// <summary>Hover-tip title resolved against <c>static_hover_tips</c> with key <c>{Id}.title</c>.</summary>
+        public LocString Title => new(ModTopBarButtonSpec.HoverTipLocTable, $"{Id}.title");
 
-        /// <summary>Hover-tip description resolved against <c>static_hover_tips</c> with key <c>{LocStem}.description</c>.</summary>
-        public LocString Description => new(ModTopBarButtonSpec.HoverTipLocTable, $"{LocStem}.description");
+        /// <summary>Hover-tip description resolved against <c>static_hover_tips</c> with key <c>{Id}.description</c>.</summary>
+        public LocString Description => new(ModTopBarButtonSpec.HoverTipLocTable, $"{Id}.description");
     }
 }

@@ -8,9 +8,8 @@ namespace STS2RitsuLib.TopBar
     ///     button, hover-tip via <c>static_hover_tips</c>, click runs a callback".
     /// </summary>
     /// <remarks>
-    ///     Localization follows the same <c>static_hover_tips.{LocStem}.title</c> / <c>.description</c>
-    ///     convention used by <c>ModCardPileSpec</c>; <see cref="LocStem" /> defaults to the registered id
-    ///     (<c>MODID_TOPBARBUTTON_STEM</c>) when left null.
+    ///     Localization follows the same <c>static_hover_tips.{id}.title</c> / <c>.description</c>
+    ///     convention as mod card piles, where <c>id</c> is the qualified button id.
     /// </remarks>
     public sealed record ModTopBarButtonSpec
     {
@@ -19,13 +18,6 @@ namespace STS2RitsuLib.TopBar
 
         /// <summary>Godot resource path for the button icon (for example <c>res://my_mod/icon.png</c>).</summary>
         public string? IconPath { get; init; }
-
-        /// <summary>
-        ///     Stem used to build <c>{LocStem}.title</c> / <c>{LocStem}.description</c> under
-        ///     <c>static_hover_tips</c>. Defaults to the registered id (<c>MODID_TOPBARBUTTON_STEM</c>)
-        ///     when left null.
-        /// </summary>
-        public string? LocStem { get; init; }
 
         /// <summary>
         ///     Sort order within a single mod's top-bar buttons; lower values render closer to the vanilla

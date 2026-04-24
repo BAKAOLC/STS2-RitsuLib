@@ -20,7 +20,7 @@ namespace STS2RitsuLib.Interop.AutoRegistration
     ///     <para>
     ///         Localization follows the vanilla loc-table convention: title / description are resolved
     ///         against <c>static_hover_tips</c> using <c>"{id}.title"</c> and <c>"{id}.description"</c> where
-    ///         <c>id</c> is the qualified button id (same as <see cref="ModTopBarButtonSpec.LocStem" /> when unset).
+    ///         <c>id</c> is the qualified button id.
     ///     </para>
     /// </remarks>
     /// <param name="localButtonStem">

@@ -13,7 +13,7 @@ namespace STS2RitsuLib.Interop.AutoRegistration
     ///         pile convention — hover-tip title / description and the empty-pile thought bubble are all
     ///         resolved against <see cref="ModCardPileSpec.HoverTipLocTable" /> using the keys
     ///         <c>"{id}.title"</c>, <c>"{id}.description"</c> and <c>"{id}.empty"</c> where <c>id</c> is the
-    ///         qualified pile id (same as <see cref="ModCardPileSpec.LocStem" /> when unset). Because
+    ///         qualified pile id. Because
     ///         mods can only extend existing loc tables (not create new ones) the table itself is not
     ///         configurable; author your translations in <c>static_hover_tips.json</c>.
     ///     </para>

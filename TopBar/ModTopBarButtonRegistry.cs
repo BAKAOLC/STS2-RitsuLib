@@ -13,8 +13,8 @@ namespace STS2RitsuLib.TopBar
     ///     <para>
     ///         Ids follow the ritsulib <c>MODID_CATEGORY_TYPENAME</c> public-entry convention via
     ///         <see cref="ModContentRegistry.GetQualifiedTopBarButtonId" /> (middle segment fixed to
-    ///         <c>TOPBARBUTTON</c>). The registered id doubles as the default <c>LocStem</c> used to
-    ///         resolve <c>static_hover_tips</c> title / description keys.
+    ///         <c>TOPBARBUTTON</c>). The registered id is also the stem for <c>static_hover_tips</c>
+    ///         title / description keys (<c>{id}.title</c> / <c>{id}.description</c>).
     ///     </para>
     ///     <para>
     ///         Registrations do not need to be frozen alongside <c>ModelDb</c>: top-bar buttons are mounted
@@ -121,7 +121,6 @@ namespace STS2RitsuLib.TopBar
                 _modId,
                 normalizedId,
                 spec.IconPath,
-                spec.LocStem,
                 spec.Order,
                 spec.Offset,
                 spec.OnClick,
