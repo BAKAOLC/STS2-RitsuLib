@@ -52,7 +52,7 @@ namespace STS2RitsuLib.TopBar
             var deck = topBar.Deck;
             if (deck == null)
                 return null;
-            // Deck in 0.103.x lives inside a `DeckContainer` MarginContainer; walk up until we hit
+            // The deck may sit inside a `DeckContainer` MarginContainer; walk up until we hit
             // the HBoxContainer so the lookup is stable across scene refactors that add / remove the
             // wrapper.
             var cursor = deck.GetParent();
@@ -68,7 +68,7 @@ namespace STS2RitsuLib.TopBar
 
         /// <summary>
         ///     Returns the direct child of the right-aligned container that ultimately contains
-        ///     <c>%Deck</c> — in 0.103.x this is the <c>DeckContainer</c> <see cref="MarginContainer" />
+        ///     <c>%Deck</c> — often the <c>DeckContainer</c> <see cref="MarginContainer" />
         ///     that wraps the deck button. We insert mod buttons immediately <i>before</i> this node
         ///     so they land "just to the left of the deck", matching the existing vanilla placement
         ///     of Map / DeckContainer / PauseButton.

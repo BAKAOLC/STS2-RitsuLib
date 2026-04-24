@@ -1,7 +1,5 @@
-using System.Reflection;
 using Godot;
 using Godot.Collections;
-using HarmonyLib;
 using MegaCrit.Sts2.addons.mega_text;
 using MegaCrit.Sts2.Core.Assets;
 using MegaCrit.Sts2.Core.Nodes.Combat;
@@ -23,12 +21,10 @@ namespace STS2RitsuLib.Scaffolding.Godot.NodeFactories
     {
         private const string DefaultLabelFontPath = "res://themes/kreon_bold_shared.tres";
 
-        private static readonly FieldInfo? ParticlesField =
-            AccessTools.Field(typeof(NParticlesContainer), "_particles");
-
         private static readonly StringName ShadowOffsetX = "shadow_offset_x";
         private static readonly StringName ShadowOffsetY = "shadow_offset_y";
         private static readonly StringName ShadowOutlineSize = "shadow_outline_size";
+        private static readonly StringName LabelThemeType = "Label";
 
         protected override NEnergyCounter CreateBareFromResourceImpl(object resource)
         {
@@ -155,7 +151,7 @@ namespace STS2RitsuLib.Scaffolding.Godot.NodeFactories
         {
             var particles = new Array<GpuParticles2D>();
             CollectParticles(container, particles);
-            ParticlesField?.SetValue(container, particles);
+            container._particles = particles;
         }
 
         private static void CollectParticles(Node node, Array<GpuParticles2D> particles)
@@ -197,7 +193,7 @@ namespace STS2RitsuLib.Scaffolding.Godot.NodeFactories
                 label.AutoSizeEnabled = true;
                 label.MinFontSize = 32;
                 label.MaxFontSize = Math.Max(36,
-                    RitsuThemeLookupCompat.GetThemeFontSize(sourceLabel, RitsuMegaLabelThemeNames.FontSize));
+                    sourceLabel.GetThemeFontSize(ThemeConstants.Label.FontSize, LabelThemeType));
             }
 
             source.Free();
@@ -225,46 +221,46 @@ namespace STS2RitsuLib.Scaffolding.Godot.NodeFactories
                 MaxFontSize = 36,
             };
             EnsureLabelFont(label, null);
-            label.AddThemeColorOverride(RitsuMegaLabelThemeNames.FontColor, new(1f, 0.964706f, 0.886275f));
-            label.AddThemeColorOverride(RitsuMegaLabelThemeNames.FontShadowColor, new(0f, 0f, 0f, 0.188235f));
-            label.AddThemeColorOverride(RitsuMegaLabelThemeNames.FontOutlineColor, new(0.3f, 0.0759f, 0.051f));
+            label.AddThemeColorOverride(ThemeConstants.Label.FontColor, new(1f, 0.964706f, 0.886275f));
+            label.AddThemeColorOverride(ThemeConstants.Label.FontShadowColor, new(0f, 0f, 0f, 0.188235f));
+            label.AddThemeColorOverride(ThemeConstants.Label.FontOutlineColor, new(0.3f, 0.0759f, 0.051f));
             label.AddThemeConstantOverride(ShadowOffsetX, 3);
             label.AddThemeConstantOverride(ShadowOffsetY, 2);
-            label.AddThemeConstantOverride(RitsuMegaLabelThemeNames.OutlineSize, 16);
+            label.AddThemeConstantOverride(ThemeConstants.Label.OutlineSize, 16);
             label.AddThemeConstantOverride(ShadowOutlineSize, 16);
-            label.AddThemeFontSizeOverride(RitsuMegaLabelThemeNames.FontSize, 36);
+            label.AddThemeFontSizeOverride(ThemeConstants.Label.FontSize, 36);
             return label;
         }
 
         private static void EnsureLabelFont(MegaLabel target, Label? source)
         {
             var font = source != null
-                ? RitsuThemeLookupCompat.GetThemeFont(source, RitsuMegaLabelThemeNames.Font)
+                ? source.GetThemeFont(ThemeConstants.Label.Font, LabelThemeType)
                 : null;
-            if (source != null && ReferenceEquals(font, RitsuThemeLookupCompat.GetThemeDefaultFont(source)))
+            if (source != null && ReferenceEquals(font, source.GetThemeDefaultFont()))
                 font = PreloadManager.Cache.GetAsset<Font>(DefaultLabelFontPath);
             font ??= PreloadManager.Cache.GetAsset<Font>(DefaultLabelFontPath);
-            target.AddThemeFontOverride(RitsuMegaLabelThemeNames.Font, font);
+            target.AddThemeFontOverride(ThemeConstants.Label.Font, font);
         }
 
         private static void CopyLabelThemeOverrides(MegaLabel target, Label source)
         {
-            target.AddThemeColorOverride(RitsuMegaLabelThemeNames.FontColor,
-                RitsuThemeLookupCompat.GetThemeColor(source, RitsuMegaLabelThemeNames.FontColor));
-            target.AddThemeColorOverride(RitsuMegaLabelThemeNames.FontShadowColor,
-                RitsuThemeLookupCompat.GetThemeColor(source, RitsuMegaLabelThemeNames.FontShadowColor));
-            target.AddThemeColorOverride(RitsuMegaLabelThemeNames.FontOutlineColor,
-                RitsuThemeLookupCompat.GetThemeColor(source, RitsuMegaLabelThemeNames.FontOutlineColor));
+            target.AddThemeColorOverride(ThemeConstants.Label.FontColor,
+                source.GetThemeColor(ThemeConstants.Label.FontColor, LabelThemeType));
+            target.AddThemeColorOverride(ThemeConstants.Label.FontShadowColor,
+                source.GetThemeColor(ThemeConstants.Label.FontShadowColor, LabelThemeType));
+            target.AddThemeColorOverride(ThemeConstants.Label.FontOutlineColor,
+                source.GetThemeColor(ThemeConstants.Label.FontOutlineColor, LabelThemeType));
             target.AddThemeConstantOverride(ShadowOffsetX,
-                RitsuThemeLookupCompat.GetThemeConstant(source, ShadowOffsetX));
+                source.GetThemeConstant(ShadowOffsetX, LabelThemeType));
             target.AddThemeConstantOverride(ShadowOffsetY,
-                RitsuThemeLookupCompat.GetThemeConstant(source, ShadowOffsetY));
-            target.AddThemeConstantOverride(RitsuMegaLabelThemeNames.OutlineSize,
-                RitsuThemeLookupCompat.GetThemeConstant(source, RitsuMegaLabelThemeNames.OutlineSize));
+                source.GetThemeConstant(ShadowOffsetY, LabelThemeType));
+            target.AddThemeConstantOverride(ThemeConstants.Label.OutlineSize,
+                source.GetThemeConstant(ThemeConstants.Label.OutlineSize, LabelThemeType));
             target.AddThemeConstantOverride(ShadowOutlineSize,
-                RitsuThemeLookupCompat.GetThemeConstant(source, ShadowOutlineSize));
-            target.AddThemeFontSizeOverride(RitsuMegaLabelThemeNames.FontSize,
-                RitsuThemeLookupCompat.GetThemeFontSize(source, RitsuMegaLabelThemeNames.FontSize));
+                source.GetThemeConstant(ShadowOutlineSize, LabelThemeType));
+            target.AddThemeFontSizeOverride(ThemeConstants.Label.FontSize,
+                source.GetThemeFontSize(ThemeConstants.Label.FontSize, LabelThemeType));
         }
     }
 }

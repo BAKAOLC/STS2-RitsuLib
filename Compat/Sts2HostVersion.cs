@@ -5,13 +5,14 @@ namespace STS2RitsuLib.Compat
 {
     /// <summary>
     ///     Best-effort version of the running STS2 host from <c>release_info.json</c> or the <c>sts2</c> assembly.
+    ///     Not currently consumed by RitsuLib; kept for future version-gated behavior or diagnostics.
     /// </summary>
     internal static class Sts2HostVersion
     {
         private static readonly Lazy<HostVersionSnapshot> Lazy = new(Resolve);
 
         /// <summary>
-        ///     Parsed numeric version when reliable; otherwise <c>null</c> (then feature code uses reflection fallback).
+        ///     Parsed numeric version when reliable; otherwise <c>null</c>.
         /// </summary>
         internal static Version? Numeric => Lazy.Value.Numeric;
 

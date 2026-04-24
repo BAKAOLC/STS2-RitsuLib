@@ -1,4 +1,3 @@
-using System.Reflection;
 using HarmonyLib;
 using MegaCrit.Sts2.Core.Entities.Cards;
 using MegaCrit.Sts2.Core.Entities.Players;
@@ -18,16 +17,13 @@ namespace STS2RitsuLib.CardPiles.Patches
     ///         the base, and ritsulib's piles are concatenated on top.
     ///     </para>
     ///     <para>
-    ///         The underlying <c>_piles</c> field is also updated via reflection when present so subsequent
-    ///         getter calls see the combined array without reallocating per access; when the field is absent
-    ///         (future vanilla refactors), the postfix still works by replacing <c>__result</c>.
+    ///         The underlying <c>_piles</c> field is updated when present (publicized STS2) so subsequent
+    ///         getter calls see the combined array without reallocating per access; otherwise the postfix
+    ///         still works by replacing <c>__result</c>.
     ///     </para>
     /// </remarks>
     public sealed class ModCardPileAllPilesPatch : IPatchMethod
     {
-        private static readonly FieldInfo? PilesField =
-            typeof(PlayerCombatState).GetField("_piles", BindingFlags.Instance | BindingFlags.NonPublic);
-
         /// <inheritdoc />
         public static string PatchId => "ritsulib_player_combat_state_all_piles_append";
 
@@ -64,7 +60,7 @@ namespace STS2RitsuLib.CardPiles.Patches
             foreach (var pile in modPiles)
                 combined[j++] = pile;
 
-            PilesField?.SetValue(__instance, combined);
+            __instance._piles = combined;
             __result = combined;
         }
         // ReSharper restore InconsistentNaming

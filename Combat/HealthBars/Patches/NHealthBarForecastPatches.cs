@@ -1,4 +1,5 @@
 using Godot;
+using MegaCrit.Sts2.addons.mega_text;
 using MegaCrit.Sts2.Core.Entities.Creatures;
 using MegaCrit.Sts2.Core.Models.Powers;
 using MegaCrit.Sts2.Core.Nodes.Combat;
@@ -224,13 +225,13 @@ namespace STS2RitsuLib.Combat.HealthBars.Patches
             {
                 if (!IsDoomLethalAfterRight(healthBar, creature))
                     return;
-                hpLabel.AddThemeColorOverride(MegaLabelThemeColorKeys.FontColorKey, DoomLethalTextColor);
-                hpLabel.AddThemeColorOverride(MegaLabelThemeColorKeys.FontOutlineColorKey, DoomLethalOutlineColor);
+                hpLabel.AddThemeColorOverride(ThemeConstants.Label.FontColor, DoomLethalTextColor);
+                hpLabel.AddThemeColorOverride(ThemeConstants.Label.FontOutlineColor, DoomLethalOutlineColor);
                 return;
             }
 
-            hpLabel.AddThemeColorOverride(MegaLabelThemeColorKeys.FontColorKey, lethalColor.Value);
-            hpLabel.AddThemeColorOverride(MegaLabelThemeColorKeys.FontOutlineColorKey,
+            hpLabel.AddThemeColorOverride(ThemeConstants.Label.FontColor, lethalColor.Value);
+            hpLabel.AddThemeColorOverride(ThemeConstants.Label.FontOutlineColor,
                 DarkenForOutline(lethalColor.Value));
         }
 
