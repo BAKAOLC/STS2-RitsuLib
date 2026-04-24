@@ -79,7 +79,7 @@ namespace STS2RitsuLib.Scaffolding.Characters.Patches
             if (referenceFilter.GetNodeOrNull<Control>("Image") is { Material: ShaderMaterial refMat })
                 referenceMat = refMat;
 
-            var updateCallable = Callable.From<NCardPoolFilter>(f => __instance.UpdateCardPoolFilter(f));
+            var updateCallable = Callable.From<NCardPoolFilter>(__instance.UpdateCardPoolFilter);
 
             var nextIndex = insertIndex;
             foreach (var character in modCharacters)

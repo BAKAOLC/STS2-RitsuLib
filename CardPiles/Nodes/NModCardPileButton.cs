@@ -385,16 +385,14 @@ namespace STS2RitsuLib.CardPiles.Nodes
         private static void EnsureProceduralCountLabelHasThemeFont(MegaLabel countLabel)
         {
             var vanilla = NRun.Instance?.GlobalUi?.TopBar?.Deck?.GetNodeOrNull<MegaLabel>("DeckCardCount");
-            if (vanilla != null)
+            var font = vanilla?.GetThemeFont(ThemeConstants.Label.Font, LabelThemeType);
+            if (font != null)
             {
-                var font = vanilla.GetThemeFont(ThemeConstants.Label.Font, LabelThemeType);
-                if (font != null)
-                {
-                    countLabel.AddThemeFontOverride(ThemeConstants.Label.Font, font);
+                countLabel.AddThemeFontOverride(ThemeConstants.Label.Font, font);
+                if (vanilla != null)
                     countLabel.AddThemeFontSizeOverride(ThemeConstants.Label.FontSize,
                         vanilla.GetThemeFontSize(ThemeConstants.Label.FontSize, LabelThemeType));
-                    return;
-                }
+                return;
             }
 
             var fallback = ThemeDB.FallbackFont;
@@ -412,16 +410,14 @@ namespace STS2RitsuLib.CardPiles.Nodes
         private static void EnsureProceduralCountLabelHasCombatStyleFont(MegaLabel countLabel)
         {
             var vanilla = NCombatRoom.Instance?.Ui?.DrawPile?.GetNodeOrNull<MegaLabel>("CountContainer/Count");
-            if (vanilla != null)
+            var font = vanilla?.GetThemeFont(ThemeConstants.Label.Font, LabelThemeType);
+            if (font != null)
             {
-                var font = vanilla.GetThemeFont(ThemeConstants.Label.Font, LabelThemeType);
-                if (font != null)
-                {
-                    countLabel.AddThemeFontOverride(ThemeConstants.Label.Font, font);
+                countLabel.AddThemeFontOverride(ThemeConstants.Label.Font, font);
+                if (vanilla != null)
                     countLabel.AddThemeFontSizeOverride(ThemeConstants.Label.FontSize,
                         vanilla.GetThemeFontSize(ThemeConstants.Label.FontSize, LabelThemeType));
-                    return;
-                }
+                return;
             }
 
             EnsureProceduralCountLabelHasThemeFont(countLabel);

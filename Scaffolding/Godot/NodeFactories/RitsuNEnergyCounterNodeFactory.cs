@@ -234,9 +234,7 @@ namespace STS2RitsuLib.Scaffolding.Godot.NodeFactories
 
         private static void EnsureLabelFont(MegaLabel target, Label? source)
         {
-            var font = source != null
-                ? source.GetThemeFont(ThemeConstants.Label.Font, LabelThemeType)
-                : null;
+            var font = source?.GetThemeFont(ThemeConstants.Label.Font, LabelThemeType);
             if (source != null && ReferenceEquals(font, source.GetThemeDefaultFont()))
                 font = PreloadManager.Cache.GetAsset<Font>(DefaultLabelFontPath);
             font ??= PreloadManager.Cache.GetAsset<Font>(DefaultLabelFontPath);
