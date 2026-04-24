@@ -112,7 +112,7 @@ keywords.RegisterCardKeywordOwnedByLocNamespace(
     iconPath: "res://MyMod/ui/keywords/brew.png");
 ```
 
-This creates a normalized keyword id and binds it to title / description localization keys.
+This mints `GetQualifiedKeywordId(modId, localKeywordStem)` as the keyword id and uses the same string as the `card_keywords` stem: `<id>.title` and `<id>.description`.
 
 ---
 
@@ -123,16 +123,11 @@ If you already use `ModTypeDiscoveryHub.RegisterModAssembly(...)` to let RitsuLi
 ```csharp
 using STS2RitsuLib.Interop.AutoRegistration;
 
-[RegisterOwnedCardKeyword("brew", LocNamespace = "my_mod", IconPath = "res://MyMod/ui/keywords/brew.png")]
+[RegisterOwnedCardKeyword("brew", IconPath = "res://MyMod/ui/keywords/brew.png")]
 public sealed class BrewKeywordMarker;
 ```
 
-`LocNamespace` only affects the localization namespace (the `modid` portion). The keyword stem (`brew`) participates in the default rule `<namespace>_<keyword>`, producing:
-
-- `<namespace>_<keyword>.title`
-- `<namespace>_<keyword>.description`
-
-> Compatibility note: the legacy `LocKeyPrefix` / `locKeyPrefix` historically represents the **full stem** and is easy to misread as a prefix + keyword composition, so it is now obsolete. Use `LocNamespace` for new code.
+Title/description keys match `RegisterCardKeywordOwnedByLocNamespace`: `GetQualifiedKeywordId(...)` plus `.title` / `.description` (uppercase compound id).
 
 ---
 

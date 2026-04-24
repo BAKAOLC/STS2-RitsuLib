@@ -447,38 +447,11 @@ namespace STS2RitsuLib.Interop.AutoRegistration
                                         var localStem = ValidateNonEmpty(ownedCardKeyword.LocalKeywordStem,
                                             nameof(ownedCardKeyword.LocalKeywordStem));
 
-                                        if (!string.IsNullOrWhiteSpace(ownedCardKeyword.LocNamespace))
-                                        {
-                                            keywordRegistry.RegisterCardKeywordOwnedByLocNamespace(
-                                                localStem,
-                                                ownedCardKeyword.LocNamespace,
-                                                ownedCardKeyword.IconPath,
-                                                ownedCardKeyword.CardDescriptionPlacement,
-                                                ownedCardKeyword.IncludeInCardHoverTip);
-                                            return;
-                                        }
-
-#pragma warning disable CS0618
-                                        if (!string.IsNullOrWhiteSpace(ownedCardKeyword.LocKeyPrefix))
-                                        {
-                                            keywordRegistry.RegisterCardKeywordOwned(
-                                                localStem,
-                                                ownedCardKeyword.LocKeyPrefix,
-                                                ownedCardKeyword.IconPath,
-                                                ownedCardKeyword.CardDescriptionPlacement,
-                                                ownedCardKeyword.IncludeInCardHoverTip);
-                                            return;
-                                        }
-#pragma warning restore CS0618
-
-#pragma warning disable CS0618
-                                        keywordRegistry.RegisterCardKeywordOwned(
+                                        keywordRegistry.RegisterCardKeywordOwnedByLocNamespace(
                                             localStem,
-                                            null,
                                             ownedCardKeyword.IconPath,
                                             ownedCardKeyword.CardDescriptionPlacement,
                                             ownedCardKeyword.IncludeInCardHoverTip);
-#pragma warning restore CS0618
                                     }));
                             });
                         break;
@@ -1009,7 +982,6 @@ namespace STS2RitsuLib.Interop.AutoRegistration
                 Style = attr.Style,
                 Anchor = anchor,
                 IconPath = attr.IconPath,
-                LocStem = attr.LocStem,
                 Hotkeys = attr.Hotkeys,
                 CardShouldBeVisible = attr.CardShouldBeVisible,
                 OnOpen = ResolveCardPileOpenHandler(declaringType),
@@ -1051,7 +1023,6 @@ namespace STS2RitsuLib.Interop.AutoRegistration
             return new()
             {
                 IconPath = attr.IconPath,
-                LocStem = attr.LocStem,
                 Order = attr.ButtonOrder,
                 Offset = new(attr.OffsetX, attr.OffsetY),
                 OnClick = handler is null ? null : handler.OnClick,

@@ -12,7 +12,8 @@ namespace STS2RitsuLib.Interop.AutoRegistration
     ///         Field semantics mirror <see cref="ModCardPileSpec" />. Localization follows the vanilla
     ///         pile convention — hover-tip title / description and the empty-pile thought bubble are all
     ///         resolved against <see cref="ModCardPileSpec.HoverTipLocTable" /> using the keys
-    ///         <c>"{LocStem}.title"</c>, <c>"{LocStem}.description"</c> and <c>"{LocStem}.empty"</c>. Because
+    ///         <c>"{id}.title"</c>, <c>"{id}.description"</c> and <c>"{id}.empty"</c> where <c>id</c> is the
+    ///         qualified pile id (same as <see cref="ModCardPileSpec.LocStem" /> when unset). Because
     ///         mods can only extend existing loc tables (not create new ones) the table itself is not
     ///         configurable; author your translations in <c>static_hover_tips.json</c>.
     ///     </para>
@@ -62,12 +63,6 @@ namespace STS2RitsuLib.Interop.AutoRegistration
         ///     Godot resource path for the pile icon (e.g. <c>res://my_mod/icons/my_pile.png</c>).
         /// </summary>
         public string? IconPath { get; set; }
-
-        /// <summary>
-        ///     Optional localization stem (see <see cref="ModCardPileSpec.LocStem" />). When null, the
-        ///     normalized pile id is used as the stem — mirroring <c>ModKeywordRegistry</c>'s default.
-        /// </summary>
-        public string? LocStem { get; set; }
 
         /// <summary>
         ///     Optional hotkey ids forwarded to <c>NCardPileScreen.ShowScreen</c>. Separate ids with commas

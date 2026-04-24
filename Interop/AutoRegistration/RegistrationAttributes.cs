@@ -320,19 +320,6 @@ namespace STS2RitsuLib.Interop.AutoRegistration
         public string LocalKeywordStem { get; } = localKeywordStem;
 
         /// <summary>
-        ///     Optional localization namespace used to form the default <c>card_keywords</c> entry stem
-        ///     <c>"{namespace}_{keyword}"</c>.
-        /// </summary>
-        public string? LocNamespace { get; set; }
-
-        /// <summary>
-        ///     Optional explicit localization key prefix.
-        /// </summary>
-        [Obsolete(
-            "Pitfall: LocKeyPrefix is NOT a prefix that affects only the modid/namespace portion. It is the full card_keywords entry stem used to form '{stem}.title' and '{stem}.description'. Prefer LocNamespace.")]
-        public string? LocKeyPrefix { get; set; }
-
-        /// <summary>
         ///     Optional icon path used by hover-tip rendering.
         /// </summary>
         public string? IconPath { get; set; }

@@ -1,4 +1,3 @@
-using MegaCrit.Sts2.Core.Helpers;
 using STS2RitsuLib.Content;
 
 namespace STS2RitsuLib.Keywords
@@ -111,29 +110,23 @@ namespace STS2RitsuLib.Keywords
         }
 
         /// <summary>
-        ///     <c>card_keywords</c> row with an id from <see cref="ModContentRegistry.GetQualifiedKeywordId" />.
+        ///     <c>card_keywords</c> row: id and loc stem both from <see cref="ModContentRegistry.GetQualifiedKeywordId" />.
         /// </summary>
         public static KeywordRegistrationEntry OwnedCardByLocNamespace(
             string modId,
             string localKeywordStem,
-            string? locNamespace,
             string? iconPath,
             ModKeywordCardDescriptionPlacement cardDescriptionPlacement,
             bool includeInCardHoverTip)
         {
-            var ns = string.IsNullOrWhiteSpace(locNamespace)
-                ? StringHelper.Slugify(modId)
-                : locNamespace;
-
-            var stem = StringHelper.Slugify(ns) + "_" + StringHelper.Slugify(localKeywordStem);
             var id = ModContentRegistry.GetQualifiedKeywordId(modId, localKeywordStem);
 
             return new(
                 id,
                 "card_keywords",
-                $"{stem}.title",
+                $"{id}.title",
                 "card_keywords",
-                $"{stem}.description",
+                $"{id}.description",
                 iconPath,
                 cardDescriptionPlacement,
                 includeInCardHoverTip);
@@ -145,58 +138,11 @@ namespace STS2RitsuLib.Keywords
         public static KeywordRegistrationEntry OwnedCardByLocNamespace(
             string modId,
             string localKeywordStem,
-            string? locNamespace = null,
             string? iconPath = null)
         {
             return OwnedCardByLocNamespace(
                 modId,
                 localKeywordStem,
-                locNamespace,
-                iconPath,
-                ModKeywordCardDescriptionPlacement.None,
-                true);
-        }
-
-        /// <summary>
-        ///     <c>card_keywords</c> row with an id from <see cref="ModContentRegistry.GetQualifiedKeywordId" />.
-        /// </summary>
-        [Obsolete(
-            "Pitfall: locKeyPrefix is NOT a prefix that affects only the modid/namespace portion. It is the full card_keywords entry stem used to form '{stem}.title' and '{stem}.description'. Prefer OwnedCardByLocNamespace (default stem: '<modid>_<keyword>').")]
-        public static KeywordRegistrationEntry OwnedCard(
-            string modId,
-            string localKeywordStem,
-            string locKeyPrefix,
-            string? iconPath,
-            ModKeywordCardDescriptionPlacement cardDescriptionPlacement,
-            bool includeInCardHoverTip)
-        {
-            var id = ModContentRegistry.GetQualifiedKeywordId(modId, localKeywordStem);
-            return new(
-                id,
-                "card_keywords",
-                $"{locKeyPrefix}.title",
-                "card_keywords",
-                $"{locKeyPrefix}.description",
-                iconPath,
-                cardDescriptionPlacement,
-                includeInCardHoverTip);
-        }
-
-        /// <summary>
-        ///     <c>OwnedCard</c> overload with legacy hover defaults.
-        /// </summary>
-        [Obsolete(
-            "Pitfall: locKeyPrefix is NOT a prefix that affects only the modid/namespace portion. It is the full card_keywords entry stem used to form '{stem}.title' and '{stem}.description'. Prefer OwnedCardByLocNamespace (default stem: '<modid>_<keyword>').")]
-        public static KeywordRegistrationEntry OwnedCard(
-            string modId,
-            string localKeywordStem,
-            string locKeyPrefix,
-            string? iconPath = null)
-        {
-            return OwnedCard(
-                modId,
-                localKeywordStem,
-                locKeyPrefix,
                 iconPath,
                 ModKeywordCardDescriptionPlacement.None,
                 true);
@@ -206,10 +152,10 @@ namespace STS2RitsuLib.Keywords
         ///     Builds a <c>card_keywords</c> entry (full factory signature).
         /// </summary>
         [Obsolete(
-            "Prefer OwnedCard(modId, localKeywordStem, ...) so the keyword id is mod-qualified like fixed model entries; flat ids collide globally.")]
+            "Prefer OwnedCardByLocNamespace(modId, localKeywordStem, ...) so the keyword id is mod-qualified like fixed model entries; flat ids collide globally.")]
         public static KeywordRegistrationEntry Card(
             string id,
-            string locKeyPrefix,
+            string entryStem,
             string? iconPath,
             ModKeywordCardDescriptionPlacement cardDescriptionPlacement,
             bool includeInCardHoverTip)
@@ -217,9 +163,9 @@ namespace STS2RitsuLib.Keywords
             return new(
                 id,
                 "card_keywords",
-                $"{locKeyPrefix}.title",
+                $"{entryStem}.title",
                 "card_keywords",
-                $"{locKeyPrefix}.description",
+                $"{entryStem}.description",
                 iconPath,
                 cardDescriptionPlacement,
                 includeInCardHoverTip);
@@ -229,12 +175,12 @@ namespace STS2RitsuLib.Keywords
         ///     Legacy <c>Card</c> factory signature preserved for older mods.
         /// </summary>
         [Obsolete(
-            "Prefer OwnedCard(modId, localKeywordStem, ...) so the keyword id is mod-qualified like fixed model entries; flat ids collide globally.")]
-        public static KeywordRegistrationEntry Card(string id, string locKeyPrefix, string? iconPath = null)
+            "Prefer OwnedCardByLocNamespace(modId, localKeywordStem, ...) so the keyword id is mod-qualified like fixed model entries; flat ids collide globally.")]
+        public static KeywordRegistrationEntry Card(string id, string entryStem, string? iconPath = null)
         {
             return Card(
                 id,
-                locKeyPrefix,
+                entryStem,
                 iconPath,
                 ModKeywordCardDescriptionPlacement.None,
                 true);

@@ -35,10 +35,10 @@ namespace STS2RitsuLib.Keywords
                 return;
             }
 
-            var normalized = keywordId.Trim().ToLowerInvariant();
             lock (SyncRoot)
             {
-                FallbackKeywords.GetOrCreateValue(target).Add(normalized);
+                FallbackKeywords.GetValue(target, static _ => new(StringComparer.OrdinalIgnoreCase))
+                    .Add(keywordId.Trim());
             }
         }
 
@@ -74,7 +74,7 @@ namespace STS2RitsuLib.Keywords
             lock (SyncRoot)
             {
                 return FallbackKeywords.TryGetValue(target, out var set) &&
-                       set.Remove(keywordId.Trim().ToLowerInvariant());
+                       set.Remove(keywordId.Trim());
             }
         }
 
@@ -107,7 +107,7 @@ namespace STS2RitsuLib.Keywords
             lock (SyncRoot)
             {
                 return FallbackKeywords.TryGetValue(target, out var set) &&
-                       set.Contains(keywordId.Trim().ToLowerInvariant());
+                       set.Contains(keywordId.Trim());
             }
         }
 
@@ -165,8 +165,8 @@ namespace STS2RitsuLib.Keywords
             ArgumentNullException.ThrowIfNull(keywords);
             ArgumentException.ThrowIfNullOrWhiteSpace(keywordId);
 
-            var normalized = keywordId.Trim().ToLowerInvariant();
-            return keywords.Any(id => string.Equals(id?.Trim(), normalized, StringComparison.OrdinalIgnoreCase));
+            return keywords.Any(id =>
+                string.Equals(id?.Trim(), keywordId.Trim(), StringComparison.OrdinalIgnoreCase));
         }
 
         /// <summary>
@@ -179,7 +179,7 @@ namespace STS2RitsuLib.Keywords
 
             return keywords
                 .Where(static id => !string.IsNullOrWhiteSpace(id))
-                .Select(static id => id.Trim().ToLowerInvariant())
+                .Select(static id => id.Trim())
                 .Distinct(StringComparer.OrdinalIgnoreCase)
                 .Where(static id =>
                     ModKeywordRegistry.TryGet(id, out var def) && def.IncludeInCardHoverTip)

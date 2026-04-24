@@ -107,7 +107,7 @@ keywords.RegisterCardKeywordOwnedByLocNamespace(
     iconPath: "res://MyMod/ui/keywords/brew.png");
 ```
 
-注册后会生成规范化标识，并绑定标题/描述的本地化键。
+注册后会生成 `GetQualifiedKeywordId(modId, localKeywordStem)` 作为关键词 id，并在 `card_keywords` 表上使用同一字符串作为 stem：`<id>.title`、`<id>.description`。
 
 ---
 
@@ -118,16 +118,11 @@ keywords.RegisterCardKeywordOwnedByLocNamespace(
 ```csharp
 using STS2RitsuLib.Interop.AutoRegistration;
 
-[RegisterOwnedCardKeyword("brew", LocNamespace = "my_mod", IconPath = "res://MyMod/ui/keywords/brew.png")]
+[RegisterOwnedCardKeyword("brew", IconPath = "res://MyMod/ui/keywords/brew.png")]
 public sealed class BrewKeywordMarker;
 ```
 
-这里 `LocNamespace` 只影响本地化键的 namespace（即 `modid` 部分）。关键词 stem（`brew`）会自动参与默认生成规则：`<namespace>_<keyword>`，并形成：
-
-- `<namespace>_<keyword>.title`
-- `<namespace>_<keyword>.description`
-
-> 兼容性说明：旧字段 `LocKeyPrefix`/`locKeyPrefix` 历史上实际代表“完整 stem”，容易误解为 prefix + keyword，已标记为过时；新代码请使用 `LocNamespace`。
+标题/描述键与 `RegisterCardKeywordOwnedByLocNamespace` 相同，均为 `GetQualifiedKeywordId(...)` 的返回值加 `.title` / `.description`（全大写 id）。
 
 ---
 

@@ -388,7 +388,7 @@ namespace STS2RitsuLib.Diagnostics
             RegexOptions.IgnoreCase | RegexOptions.Compiled | RegexOptions.CultureInvariant)]
         private static partial Regex GodotLogNameRegex();
 
-        [GeneratedRegex("^[a-z0-9_]+$", RegexOptions.Compiled)]
+        [GeneratedRegex("^[A-Z0-9_]+$", RegexOptions.Compiled)]
         private static partial Regex KeywordIdRegex();
 
         [GeneratedRegex("^[A-Z0-9_]+$", RegexOptions.Compiled)]
@@ -405,7 +405,7 @@ namespace STS2RitsuLib.Diagnostics
                 "override_not_applied_possible_patch_skip_or_overwrite" =>
                     "Resource exists but resolved value does not match override.",
                 "keyword_id_invalid_format" =>
-                    "Keyword ID does not match lowercase underscore format.",
+                    "Keyword ID does not match uppercase underscore format.",
                 "keyword_id_not_owned_pattern_expected_prefix" =>
                     "Keyword ID prefix does not match this mod's ownership prefix.",
                 "title_loc_missing" => "Title localization key is not found.",
