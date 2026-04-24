@@ -2,7 +2,6 @@ using Godot;
 using MegaCrit.Sts2.Core.Entities.Creatures;
 using MegaCrit.Sts2.Core.Models.Powers;
 using MegaCrit.Sts2.Core.Nodes.Combat;
-using STS2RitsuLib.Patching.Models;
 using STS2RitsuLib.Utils;
 
 namespace STS2RitsuLib.Combat.HealthBars.Patches
@@ -115,15 +114,13 @@ namespace STS2RitsuLib.Combat.HealthBars.Patches
                 gp.X -= (targetX - vanillaX) * 0.5f;
             hpBar.GlobalPosition = gp;
 
-            NHealthBarGraftCompat.TryResizeHpBarContainer(healthBar, new Vector2(targetX, hpBar.Size.Y));
+            NHealthBarGraftCompat.TryResizeHpBarContainer(healthBar, new(targetX, hpBar.Size.Y));
 
-            if (healthBar.GetNodeOrNull<Control>("%BlockContainer") is { } block)
-            {
-                var half = block.Size.X * 0.5f;
-                var bgp = block.GlobalPosition;
-                bgp.X = bounds.GlobalPosition.X - half;
-                block.GlobalPosition = bgp;
-            }
+            if (healthBar.GetNodeOrNull<Control>("%BlockContainer") is not { } block) return;
+            var half = block.Size.X * 0.5f;
+            var bgp = block.GlobalPosition;
+            bgp.X = bounds.GlobalPosition.X - half;
+            block.GlobalPosition = bgp;
         }
 
         private static void ApplyMainForegroundDenom(NHealthBar healthBar, Creature creature, int visualDenom)
@@ -173,7 +170,8 @@ namespace STS2RitsuLib.Combat.HealthBars.Patches
                         var fgWidthAfterPoison = GetFgWidthForDenom(healthBar, hpAfterPoison, visualDenom);
                         hpForeground.OffsetRight = fgWidthAfterPoison - maxWidth;
                         hpForeground.Visible = true;
-                        poisonForeground.OffsetLeft = Math.Max(0f, fgWidthAfterPoison - poisonForeground.PatchMarginLeft);
+                        poisonForeground.OffsetLeft =
+                            Math.Max(0f, fgWidthAfterPoison - poisonForeground.PatchMarginLeft);
                         poisonForeground.OffsetRight = currentHpOffsetRight;
                     }
                 }
@@ -309,5 +307,3 @@ namespace STS2RitsuLib.Combat.HealthBars.Patches
         }
     }
 }
-
-

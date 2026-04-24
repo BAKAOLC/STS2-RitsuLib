@@ -54,6 +54,57 @@ namespace STS2RitsuLib.Settings.RunSidecar
             return true;
         }
 
+        internal static void AppendActiveRunSidecarSyncRelativePaths(int profileId, HashSet<string> sink)
+        {
+            if (!ModRunSidecarFingerprint.TryGetLive(out var fp) || fp.ProfileId != profileId)
+                return;
+            if (!TryGetRunSidecarPackDirectoryUserPath(out var runDirUser))
+                return;
+
+            var abs = ProjectSettings.GlobalizePath(runDirUser);
+            if (!DirAccess.DirExistsAbsolute(abs))
+                return;
+
+            string[] names;
+            using (var dir = DirAccess.Open(abs))
+            {
+                if (dir == null)
+                    return;
+                names = dir.GetFiles();
+            }
+
+            foreach (var name in names)
+            {
+                if (name is "." or "..")
+                    continue;
+                if (!name.EndsWith(".json", StringComparison.Ordinal))
+                    continue;
+
+                var fullUser = $"{runDirUser.TrimEnd('/')}/{name}";
+                if (ModAccountRelativePath.TryGetRelativeAccountPath(fullUser, out var rel))
+                    sink.Add(rel);
+            }
+        }
+
+        internal static bool IsActiveRunSidecarRelativeAccountPath(string relativeAccountPath, int activeProfileId)
+        {
+            if (!ModRunSidecarFingerprint.TryGetLive(out var fp) || fp.ProfileId != activeProfileId)
+                return false;
+            if (!TryGetRunSidecarPackDirectoryUserPath(out var runDirUser))
+                return false;
+            if (!ModAccountRelativePath.TryGetRelativeAccountPath(runDirUser.TrimEnd('/'), out var runDirRel))
+                return false;
+
+            var prefix = runDirRel + "/";
+            if (!relativeAccountPath.StartsWith(prefix, StringComparison.Ordinal) ||
+                relativeAccountPath.Length <= prefix.Length)
+                return false;
+
+            var remainder = relativeAccountPath[prefix.Length..];
+            return remainder.Length > 0 && !remainder.Contains('/') &&
+                   remainder.EndsWith(".json", StringComparison.Ordinal);
+        }
+
         /// <summary>
         ///     Attempts to read the sidecar for <paramref name="modId" /> for the active run.
         /// </summary>
@@ -125,7 +176,10 @@ namespace STS2RitsuLib.Settings.RunSidecar
                 var json = JsonSerializer.Serialize(envelope, JsonOptions);
                 var write = FileOperations.WriteText(path, json, "RunSidecar");
                 if (write.Success)
+                {
+                    ModDataCloudMirror.MirrorLocalFileAfterWriteIfEnabled(path);
                     return true;
+                }
 
                 TryRemoveRunDirectoryIfWithoutSidecarJson(runDir);
                 return false;

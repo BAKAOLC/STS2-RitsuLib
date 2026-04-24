@@ -105,6 +105,8 @@ namespace STS2RitsuLib
             patcher.RegisterPatch<ActTransitionLifecyclePatch>();
             patcher.RegisterPatch<ActEnterMapSelectionSyncPatch>();
             patcher.RegisterPatch<SaveManagerLifecyclePatch>();
+            patcher.RegisterPatch<ModDataCloudSyncPatches.AfterInitProfileId>();
+            patcher.RegisterPatch<ModDataCloudSyncPatches.AfterSwitchProfileId>();
             patcher.RegisterPatch<RunSavingLifecyclePatch>();
             patcher.RegisterPatch<EpochLifecyclePatch>();
             patcher.RegisterPatch<UnlockIncrementLifecyclePatch>();

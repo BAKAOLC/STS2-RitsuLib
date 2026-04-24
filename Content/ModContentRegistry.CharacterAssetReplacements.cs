@@ -144,13 +144,10 @@ namespace STS2RitsuLib.Content
 
             lock (SyncRoot)
             {
-                if (!RegisteredCharacterAssetReplacementsByEntry.TryGetValue(normalizedEntry, out var layersByMod))
-                {
-                    assetProfile = CharacterAssetProfile.Empty;
-                    return false;
-                }
-
-                return TryMergeCharacterAssetReplacementLayers(layersByMod.Values, out assetProfile);
+                if (RegisteredCharacterAssetReplacementsByEntry.TryGetValue(normalizedEntry, out var layersByMod))
+                    return TryMergeCharacterAssetReplacementLayers(layersByMod.Values, out assetProfile);
+                assetProfile = CharacterAssetProfile.Empty;
+                return false;
             }
         }
 

@@ -130,6 +130,9 @@ namespace STS2RitsuLib.Utils.Persistence
                 RitsuLibFramework.Logger.Debug($"[Persistence] [{_fileName}] Saving to: {path}");
                 var json = JsonSerializer.Serialize(Data, _jsonOptions);
                 var result = FileOperations.WriteText(path, json, _fileName);
+                if (result.Success)
+                    ModDataCloudMirror.MirrorLocalFileAfterWriteIfEnabled(path);
+
                 return result.Success;
             }
             catch (Exception ex)

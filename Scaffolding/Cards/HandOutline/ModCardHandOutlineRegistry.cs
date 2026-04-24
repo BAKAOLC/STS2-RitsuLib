@@ -89,7 +89,7 @@ namespace STS2RitsuLib.Scaffolding.Cards.HandOutline
                 return false;
 
             var rule = EvaluateBest(model);
-            if (!rule.HasValue || rule.Value.DynamicColor == null)
+            if (rule?.DynamicColor == null)
                 return false;
 
             ModCardHandOutlinePatchHelper.ApplyHighlight(holder, model, rule.Value);

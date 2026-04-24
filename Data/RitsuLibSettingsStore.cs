@@ -35,6 +35,7 @@ namespace STS2RitsuLib.Data
                             new RitsuLibSettingsV0Or1ToV2Migration(),
                             new RitsuLibSettingsV2ToV4Migration(),
                             new RitsuLibSettingsV4ToV5Migration(),
+                            new RitsuLibSettingsV5ToV6Migration(),
                         ]);
                 }
 
@@ -50,6 +51,7 @@ namespace STS2RitsuLib.Data
             RitsuLibFramework.Logger.Info(
                 $"[Config] Debug compatibility master is {(master ? "enabled" : "disabled")}. " +
                 $"Sub-flags (only when master on): LocTable={s.DebugCompatLocTable}, UnlockEpoch={s.DebugCompatUnlockEpoch}, AncientArchitect={s.DebugCompatAncientArchitect}. " +
+                $"Mod Steam cloud mirror: {(s.SyncModDataToSteamCloud ? "enabled" : "disabled")}. " +
                 $"Config file: {ProfileManager.GetFilePath(Const.SettingsFileName, SaveScope.Global, 0, Const.ModId)}");
         }
 
@@ -112,6 +114,12 @@ namespace STS2RitsuLib.Data
             Initialize();
             var s = GetSettings();
             return (s.SelfCheckOutputFolderPath, s.SelfCheckOnFirstMainMenu);
+        }
+
+        internal static bool IsSyncModDataToCloudEnabled()
+        {
+            Initialize();
+            return GetSettings().SyncModDataToSteamCloud;
         }
     }
 }
