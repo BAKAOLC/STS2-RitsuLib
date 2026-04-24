@@ -10,7 +10,6 @@ using MegaCrit.Sts2.Core.Nodes.Rooms;
 using MegaCrit.Sts2.Core.Nodes.Screens;
 using MegaCrit.Sts2.Core.Nodes.Screens.Capstones;
 using MegaCrit.Sts2.Core.Nodes.Vfx;
-using STS2RitsuLib.Scaffolding.Godot;
 using STS2RitsuLib.TopBar;
 
 namespace STS2RitsuLib.CardPiles.Nodes
@@ -59,6 +58,8 @@ namespace STS2RitsuLib.CardPiles.Nodes
         private static readonly Vector2 TopBarHoverScale = Vector2.One * 1.1f;
 
         private static readonly Vector2 CombatPileHoverScale = Vector2.One * 1.25f;
+
+        private static readonly StringName LabelThemeType = "Label";
 
         // Action-mode fields (null when Definition is set).
         private int _actionLastKnownCount = -1;
@@ -384,43 +385,39 @@ namespace STS2RitsuLib.CardPiles.Nodes
         private static void EnsureProceduralCountLabelHasThemeFont(MegaLabel countLabel)
         {
             var vanilla = NRun.Instance?.GlobalUi?.TopBar?.Deck?.GetNodeOrNull<MegaLabel>("DeckCardCount");
-            if (vanilla != null)
+            var font = vanilla?.GetThemeFont(ThemeConstants.Label.Font, LabelThemeType);
+            if (font != null)
             {
-                var font = RitsuThemeLookupCompat.GetThemeFont(vanilla, RitsuMegaLabelThemeNames.Font);
-                if (font != null)
-                {
-                    countLabel.AddThemeFontOverride(RitsuMegaLabelThemeNames.Font, font);
-                    countLabel.AddThemeFontSizeOverride(RitsuMegaLabelThemeNames.FontSize,
-                        RitsuThemeLookupCompat.GetThemeFontSize(vanilla, RitsuMegaLabelThemeNames.FontSize));
-                    return;
-                }
+                countLabel.AddThemeFontOverride(ThemeConstants.Label.Font, font);
+                if (vanilla != null)
+                    countLabel.AddThemeFontSizeOverride(ThemeConstants.Label.FontSize,
+                        vanilla.GetThemeFontSize(ThemeConstants.Label.FontSize, LabelThemeType));
+                return;
             }
 
             var fallback = ThemeDB.FallbackFont;
             if (fallback != null)
             {
-                countLabel.AddThemeFontOverride(RitsuMegaLabelThemeNames.Font, fallback);
-                countLabel.AddThemeFontSizeOverride(RitsuMegaLabelThemeNames.FontSize, 28);
+                countLabel.AddThemeFontOverride(ThemeConstants.Label.Font, fallback);
+                countLabel.AddThemeFontSizeOverride(ThemeConstants.Label.FontSize, 28);
                 return;
             }
 
-            countLabel.AddThemeFontOverride(RitsuMegaLabelThemeNames.Font, new SystemFont());
-            countLabel.AddThemeFontSizeOverride(RitsuMegaLabelThemeNames.FontSize, 28);
+            countLabel.AddThemeFontOverride(ThemeConstants.Label.Font, new SystemFont());
+            countLabel.AddThemeFontSizeOverride(ThemeConstants.Label.FontSize, 28);
         }
 
         private static void EnsureProceduralCountLabelHasCombatStyleFont(MegaLabel countLabel)
         {
             var vanilla = NCombatRoom.Instance?.Ui?.DrawPile?.GetNodeOrNull<MegaLabel>("CountContainer/Count");
-            if (vanilla != null)
+            var font = vanilla?.GetThemeFont(ThemeConstants.Label.Font, LabelThemeType);
+            if (font != null)
             {
-                var font = RitsuThemeLookupCompat.GetThemeFont(vanilla, RitsuMegaLabelThemeNames.Font);
-                if (font != null)
-                {
-                    countLabel.AddThemeFontOverride(RitsuMegaLabelThemeNames.Font, font);
-                    countLabel.AddThemeFontSizeOverride(RitsuMegaLabelThemeNames.FontSize,
-                        RitsuThemeLookupCompat.GetThemeFontSize(vanilla, RitsuMegaLabelThemeNames.FontSize));
-                    return;
-                }
+                countLabel.AddThemeFontOverride(ThemeConstants.Label.Font, font);
+                if (vanilla != null)
+                    countLabel.AddThemeFontSizeOverride(ThemeConstants.Label.FontSize,
+                        vanilla.GetThemeFontSize(ThemeConstants.Label.FontSize, LabelThemeType));
+                return;
             }
 
             EnsureProceduralCountLabelHasThemeFont(countLabel);

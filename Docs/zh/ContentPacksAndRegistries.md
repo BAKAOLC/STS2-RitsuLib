@@ -9,6 +9,7 @@
 - 什么时候该用链式构建器、清单条目、直接调用注册器，或可选的 CLR 特性
 - 固定模型身份与 ModelDb 集成是怎样建立在注册之上的
 - 生成式占位（卡牌 / 遗物 / 药水）的 API、顺序与风险说明
+- Mod 自有卡堆与顶栏按钮（`ModCardPileRegistry` / `ModTopBarButtonRegistry`，共用 mod id）
 
 ---
 
@@ -20,10 +21,12 @@ RitsuLib 按职责拆分了几类注册器：
 |---|---|
 | `ModContentRegistry` | 注册角色、Act、池内卡牌/遗物/药水、能力、球体、附魔（Enchantment）、苦难（Affliction）、成就、单例、好/坏每日修正、共享卡/遗物/药水池、事件、Ancient、怪物及生成式占位等模型 |
 | `ModKeywordRegistry` | 注册可复用关键词定义 |
+| `ModCardPileRegistry` | 注册 Mod 自有卡堆（战斗/跑团 UI 卡堆；`static_hover_tips` 键与合格 pile id 对齐） |
+| `ModTopBarButtonRegistry` | 注册 Mod 自有顶栏按钮（紧邻原版卡组按钮；`static_hover_tips` 键与合格按钮 id 对齐） |
 | `ModTimelineRegistry` | 注册 `Story` 与 `Epoch` |
 | `ModUnlockRegistry` | 注册纪元门槛与进度解锁规则 |
 
-`CreateContentPack(modId)` 就是把这四类能力打包成一个更顺手的入口。
+`CreateContentPack(modId)` 主要编排暴露在 **`ModContentPackContext`** 上的**四类**注册器（`Content`、`Keywords`、`Timeline`、`Unlocks`）。卡堆与顶栏按钮通过 `ModCardPileRegistry.For(modId)`、`ModTopBarButtonRegistry.For(modId)` 注册，或使用 `STS2RitsuLib.Interop.AutoRegistration` 下的可选 CLR 特性；它们与内容包共用同一 mod id，但**不是** `ModContentPackContext` 上的字段。
 
 ---
 
@@ -62,7 +65,9 @@ RitsuLibFramework.CreateContentPack("MyMod")
 - `Timeline`
 - `Unlocks`
 
-也就是说，构建器可以作为主要入口，同时你在需要时仍然可以拿到原始注册器继续操作。
+`ModCardPileRegistry` 与 `ModTopBarButtonRegistry` **不在**该结构体上；可在 `Custom(...)` 里调用 `ModCardPileRegistry.For(ctx.ModId)`、`ModTopBarButtonRegistry.For(ctx.ModId)`，或在 Mod 初始化流程中单独注册。
+
+也就是说，链式构建器适合作为「内容 / 关键词 / 时间线 / 解锁」的主入口，其余注册器仍可按需直接访问。
 
 ---
 
@@ -380,5 +385,6 @@ RitsuLibFramework.CreateContentPack("MyMod")
 ## 相关文档
 
 - [内容注册规则](ContentAuthoringToolkit.md)
+- [本地化与关键词](LocalizationAndKeywords.md)
 - [时间线与解锁](TimelineAndUnlocks.md)
 - [框架设计](FrameworkDesign.md)

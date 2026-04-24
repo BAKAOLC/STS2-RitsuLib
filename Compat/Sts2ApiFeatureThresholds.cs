@@ -9,20 +9,5 @@ namespace STS2RitsuLib.Compat
     /// </summary>
     internal static class Sts2ApiFeatureThresholds
     {
-        /// <summary>
-        ///     Host builds at or above this: use <c>SerializableRun.GameMode</c> and <c>RunState.GameMode</c> for epoch logic.
-        ///     Below: use pre-GameMode heuristics (daily / modifiers). <c>null</c> = decide only by reflection.
-        ///     <para />
-        ///     Floor matches STS2 <c>release_info.json</c> <c>v0.101.0</c> and later retail / beta lines.
-        /// </summary>
-        internal static readonly Version? RunAndStateGameModeApiMinimum = new(0, 100, 0);
-
-        /// <summary>
-        ///     Host builds at or above this: treat <c>Mod.state</c> (load-state enum) as authoritative when filtering
-        ///     <c>ModManager.Mods</c>. Below: use <c>Mod.wasLoaded</c>. <c>null</c> = decide only by reflection.
-        ///     <para />
-        ///     Same floor as <see cref="RunAndStateGameModeApiMinimum" /> (v0.101.0+).
-        /// </summary>
-        internal static readonly Version? ModLoadStateEnumApiMinimum = new(0, 100, 0);
     }
 }

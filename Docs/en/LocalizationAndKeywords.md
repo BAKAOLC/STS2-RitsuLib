@@ -112,7 +112,7 @@ keywords.RegisterCardKeywordOwnedByLocNamespace(
     iconPath: "res://MyMod/ui/keywords/brew.png");
 ```
 
-This creates a normalized keyword id and binds it to title / description localization keys.
+This mints `GetQualifiedKeywordId(modId, localKeywordStem)` as the keyword id and uses the same string as the `card_keywords` stem: `<id>.title` and `<id>.description`.
 
 ---
 
@@ -123,16 +123,11 @@ If you already use `ModTypeDiscoveryHub.RegisterModAssembly(...)` to let RitsuLi
 ```csharp
 using STS2RitsuLib.Interop.AutoRegistration;
 
-[RegisterOwnedCardKeyword("brew", LocNamespace = "my_mod", IconPath = "res://MyMod/ui/keywords/brew.png")]
+[RegisterOwnedCardKeyword("brew", IconPath = "res://MyMod/ui/keywords/brew.png")]
 public sealed class BrewKeywordMarker;
 ```
 
-`LocNamespace` only affects the localization namespace (the `modid` portion). The keyword stem (`brew`) participates in the default rule `<namespace>_<keyword>`, producing:
-
-- `<namespace>_<keyword>.title`
-- `<namespace>_<keyword>.description`
-
-> Compatibility note: the legacy `LocKeyPrefix` / `locKeyPrefix` historically represents the **full stem** and is easy to misread as a prefix + keyword composition, so it is now obsolete. Use `LocNamespace` for new code.
+Title/description keys match `RegisterCardKeywordOwnedByLocNamespace`: `GetQualifiedKeywordId(...)` plus `.title` / `.description` (uppercase compound id).
 
 ---
 
@@ -148,18 +143,31 @@ Common helpers:
 | `keywordId.GetModKeywordCardText()` | Get card text |
 | `enumerable.ToHoverTips()` | Batch-convert to hover tips |
 
-You can also attach runtime keywords to arbitrary objects via `ModKeywordExtensions`:
+You can also attach runtime keywords to arbitrary objects via `ModKeywordExtensions`.
+The string id must be the **registered** keyword id (the same uppercase compound string as `GetQualifiedKeywordId`).
+`AddModKeyword` / `HasModKeyword` compare ids case-insensitively, but a bare local stem such as `"brew"` will not resolve unless you actually registered a flat id with that exact value.
 
 ```csharp
-card.AddModKeyword("brew");
+using STS2RitsuLib.Content;
 
-if (card.HasModKeyword("brew"))
+var brewId = ModContentRegistry.GetQualifiedKeywordId("MyMod", "brew");
+card.AddModKeyword(brewId);
+
+if (card.HasModKeyword(brewId))
 {
     // ...
 }
 ```
 
 This is useful when keyword presence is driven by runtime state rather than static card text.
+
+---
+
+## Card piles and top-bar hover tips
+
+`ModCardPileRegistry` / `ModTopBarButtonRegistry` mint ids via `GetQualifiedCardPileId` / `GetQualifiedTopBarButtonId`.
+`static_hover_tips` keys follow the same rule as keywords: **the registered id is the stem** — `{id}.title`, `{id}.description`, and for card piles also `{id}.empty`.
+There is no separate loc-stem override on the spec; if you need to match legacy keys, rename your localization entries to the qualified id instead.
 
 ---
 
@@ -201,6 +209,7 @@ If **no** keys exist for an ancient, vanilla may still show `PROCEED` for `THE_A
 ## Related Documents
 
 - [Content Authoring Toolkit](ContentAuthoringToolkit.md)
+- [Content Packs & Registries](ContentPacksAndRegistries.md)
 - [Character & Unlock Templates](CharacterAndUnlockScaffolding.md)
 - [Diagnostics & Compatibility](DiagnosticsAndCompatibility.md)
 - [LocString Placeholder Resolution](LocStringPlaceholderResolution.md)

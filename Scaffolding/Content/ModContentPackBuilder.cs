@@ -484,17 +484,17 @@ namespace STS2RitsuLib.Scaffolding.Content
         }
 
         /// <summary>
-        ///     Queues <c>ModKeywordRegistry.RegisterCardKeywordOwned</c> (mod-local stem → qualified id).
+        ///     Queues <c>ModKeywordRegistry.RegisterCardKeywordOwnedByLocNamespace</c> (qualified id for both
+        ///     keyword id and <c>card_keywords</c> <c>{id}.title</c> / <c>.description</c> keys).
         /// </summary>
         public ModContentPackBuilder CardKeywordOwnedByLocNamespace(
             string localKeywordStem,
-            string? locNamespace,
             string? iconPath,
             ModKeywordCardDescriptionPlacement cardDescriptionPlacement,
             bool includeInCardHoverTip)
         {
             return AddStep(ctx =>
-                ctx.Keywords.RegisterCardKeywordOwnedByLocNamespace(localKeywordStem, locNamespace, iconPath,
+                ctx.Keywords.RegisterCardKeywordOwnedByLocNamespace(localKeywordStem, iconPath,
                     cardDescriptionPlacement, includeInCardHoverTip));
         }
 
@@ -503,47 +503,10 @@ namespace STS2RitsuLib.Scaffolding.Content
         /// </summary>
         public ModContentPackBuilder CardKeywordOwnedByLocNamespace(
             string localKeywordStem,
-            string? locNamespace = null,
             string? iconPath = null)
         {
             return CardKeywordOwnedByLocNamespace(
                 localKeywordStem,
-                locNamespace,
-                iconPath,
-                ModKeywordCardDescriptionPlacement.None,
-                true);
-        }
-
-        /// <summary>
-        ///     Queues <c>ModKeywordRegistry.RegisterCardKeywordOwned</c> (mod-local stem → qualified id).
-        /// </summary>
-        [Obsolete(
-            "Pitfall: locKeyPrefix is NOT a prefix that affects only the modid/namespace portion. It is the full card_keywords entry stem used to form '{stem}.title' and '{stem}.description'. Prefer CardKeywordOwnedByLocNamespace (default stem: '<modid>_<keyword>').")]
-        public ModContentPackBuilder CardKeywordOwned(
-            string localKeywordStem,
-            string? locKeyPrefix,
-            string? iconPath,
-            ModKeywordCardDescriptionPlacement cardDescriptionPlacement,
-            bool includeInCardHoverTip)
-        {
-            return AddStep(ctx =>
-                ctx.Keywords.RegisterCardKeywordOwned(localKeywordStem, locKeyPrefix, iconPath,
-                    cardDescriptionPlacement, includeInCardHoverTip));
-        }
-
-        /// <summary>
-        ///     Queues <c>ModKeywordRegistry.RegisterCardKeywordOwned</c> with legacy hover defaults.
-        /// </summary>
-        [Obsolete(
-            "Pitfall: locKeyPrefix is NOT a prefix that affects only the modid/namespace portion. It is the full card_keywords entry stem used to form '{stem}.title' and '{stem}.description'. Prefer CardKeywordOwnedByLocNamespace (default stem: '<modid>_<keyword>').")]
-        public ModContentPackBuilder CardKeywordOwned(
-            string localKeywordStem,
-            string? locKeyPrefix = null,
-            string? iconPath = null)
-        {
-            return CardKeywordOwned(
-                localKeywordStem,
-                locKeyPrefix,
                 iconPath,
                 ModKeywordCardDescriptionPlacement.None,
                 true);
@@ -553,10 +516,10 @@ namespace STS2RitsuLib.Scaffolding.Content
         ///     Queues extended <see cref="ModKeywordRegistry" /> card-keyword registration (placement + hover-tip flags).
         /// </summary>
         [Obsolete(
-            "Prefer CardKeywordOwned(localKeywordStem, ...) so the keyword id is mod-qualified; flat ids collide globally.")]
+            "Prefer CardKeywordOwnedByLocNamespace(localKeywordStem, ...) so the keyword id is mod-qualified; flat ids collide globally.")]
         public ModContentPackBuilder CardKeyword(
             string id,
-            string? locKeyPrefix,
+            string? entryStem,
             string? iconPath,
             ModKeywordCardDescriptionPlacement cardDescriptionPlacement,
             bool includeInCardHoverTip)
@@ -564,9 +527,9 @@ namespace STS2RitsuLib.Scaffolding.Content
             return AddStep(ctx =>
             {
                 ArgumentException.ThrowIfNullOrWhiteSpace(id);
-                var prefix = string.IsNullOrWhiteSpace(locKeyPrefix)
+                var prefix = string.IsNullOrWhiteSpace(entryStem)
                     ? StringHelper.Slugify(id)
-                    : locKeyPrefix.Trim();
+                    : entryStem.Trim();
 
                 ctx.Keywords.RegisterCore(
                     id,
@@ -584,12 +547,12 @@ namespace STS2RitsuLib.Scaffolding.Content
         ///     Legacy <c>CardKeyword</c> signature preserved for older mods; forwards with prior hover-tip behavior.
         /// </summary>
         [Obsolete(
-            "Prefer CardKeywordOwned(localKeywordStem, ...) so the keyword id is mod-qualified; flat ids collide globally.")]
-        public ModContentPackBuilder CardKeyword(string id, string? locKeyPrefix = null, string? iconPath = null)
+            "Prefer CardKeywordOwnedByLocNamespace(localKeywordStem, ...) so the keyword id is mod-qualified; flat ids collide globally.")]
+        public ModContentPackBuilder CardKeyword(string id, string? entryStem = null, string? iconPath = null)
         {
             return CardKeyword(
                 id,
-                locKeyPrefix,
+                entryStem,
                 iconPath,
                 ModKeywordCardDescriptionPlacement.None,
                 true);

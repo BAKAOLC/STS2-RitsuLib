@@ -1,5 +1,4 @@
 using Godot;
-using HarmonyLib;
 using MegaCrit.Sts2.Core.Assets;
 using MegaCrit.Sts2.Core.Helpers;
 using MegaCrit.Sts2.Core.Models;
@@ -80,9 +79,7 @@ namespace STS2RitsuLib.Scaffolding.Characters.Patches
             if (referenceFilter.GetNodeOrNull<Control>("Image") is { Material: ShaderMaterial refMat })
                 referenceMat = refMat;
 
-            var updateMethod = AccessTools.Method(typeof(NCardLibrary), "UpdateCardPoolFilter");
-            var updateCallable = Callable.From<NCardPoolFilter>(f => updateMethod.Invoke(__instance, [f]));
-            var lastHoveredField = AccessTools.Field(typeof(NCardLibrary), "_lastHoveredControl");
+            var updateCallable = Callable.From<NCardPoolFilter>(__instance.UpdateCardPoolFilter);
 
             var nextIndex = insertIndex;
             foreach (var character in modCharacters)
@@ -105,7 +102,7 @@ namespace STS2RitsuLib.Scaffolding.Characters.Patches
 
                 filter.Connect(NCardPoolFilter.SignalName.Toggled, updateCallable);
                 filter.Connect(Control.SignalName.FocusEntered,
-                    Callable.From(delegate { lastHoveredField.SetValue(__instance, filter); }));
+                    Callable.From(delegate { __instance._lastHoveredControl = filter; }));
             }
         }
 

@@ -14,7 +14,7 @@ namespace STS2RitsuLib.CardPiles
         /// <summary>
         ///     Produces a <see cref="HoverTip" /> for <paramref name="definition" />. Title and description
         ///     come from <see cref="ModCardPileDefinition.Title" /> / <see cref="ModCardPileDefinition.Description" />
-        ///     (both derived from <see cref="ModCardPileDefinition.LocStem" />), and the icon is loaded
+        ///     (keys use <see cref="ModCardPileDefinition.Id" /> as stem), and the icon is loaded
         ///     from <c>ResourceLoader</c> when <see cref="ModCardPileDefinition.IconPath" /> exists.
         /// </summary>
         public static HoverTip Create(ModCardPileDefinition definition)

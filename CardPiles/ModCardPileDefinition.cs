@@ -11,9 +11,8 @@ namespace STS2RitsuLib.CardPiles
     /// <remarks>
     ///     Localization follows the vanilla pile convention: the hover-tip title / description and
     ///     empty-pile message are always resolved against <see cref="ModCardPileSpec.HoverTipLocTable" />
-    ///     (<c>static_hover_tips</c>) using the keys <c>"{LocStem}.title"</c>,
-    ///     <c>"{LocStem}.description"</c> and <c>"{LocStem}.empty"</c>. See
-    ///     <see cref="ModCardPileSpec.LocStem" /> for the authoring contract.
+    ///     (<c>static_hover_tips</c>) using the keys <c>"{Id}.title"</c>, <c>"{Id}.description"</c> and
+    ///     <c>"{Id}.empty"</c> (same as the registered pile id).
     /// </remarks>
     public sealed record ModCardPileDefinition
     {
@@ -27,10 +26,6 @@ namespace STS2RitsuLib.CardPiles
         /// <param name="style">UI chrome style.</param>
         /// <param name="anchor">UI slot hint.</param>
         /// <param name="iconPath">Optional Godot resource path for the pile icon.</param>
-        /// <param name="locStem">
-        ///     Localization stem used to build title / description / empty-pile keys in
-        ///     <see cref="ModCardPileSpec.HoverTipLocTable" />. Null means "use the normalized id as stem".
-        /// </param>
         /// <param name="hotkeys">Optional hotkey ids for the pile button.</param>
         /// <param name="cardShouldBeVisible">Whether cards render as <c>NCard</c> nodes inside the pile container.</param>
         /// <param name="onOpen">
@@ -54,7 +49,6 @@ namespace STS2RitsuLib.CardPiles
             ModCardPileUiStyle style,
             ModCardPileAnchor anchor,
             string? iconPath,
-            string? locStem,
             string[]? hotkeys,
             bool cardShouldBeVisible,
             Action<ModCardPileOpenContext>? onOpen,
@@ -69,7 +63,6 @@ namespace STS2RitsuLib.CardPiles
             Style = style;
             Anchor = anchor;
             IconPath = iconPath;
-            LocStem = string.IsNullOrWhiteSpace(locStem) ? id : locStem;
             Hotkeys = hotkeys;
             CardShouldBeVisible = cardShouldBeVisible;
             OnOpen = onOpen;
@@ -79,8 +72,7 @@ namespace STS2RitsuLib.CardPiles
         }
 
         /// <summary>
-        ///     Compatibility overload for the thirteen-parameter constructor shape that omitted
-        ///     <see cref="VisibleWhen" />; forwards with null.
+        ///     Compatibility overload that omitted <see cref="VisibleWhen" />; forwards with null.
         /// </summary>
         public ModCardPileDefinition(
             string modId,
@@ -90,20 +82,19 @@ namespace STS2RitsuLib.CardPiles
             ModCardPileUiStyle style,
             ModCardPileAnchor anchor,
             string? iconPath,
-            string? locStem,
             string[]? hotkeys,
             bool cardShouldBeVisible,
             Action<ModCardPileOpenContext>? onOpen,
             Vector2 hoverTipScreenOffset,
             ModCardPileHoverTipPlacement hoverTipPlacement)
-            : this(modId, id, pileType, scope, style, anchor, iconPath, locStem, hotkeys, cardShouldBeVisible, onOpen,
+            : this(modId, id, pileType, scope, style, anchor, iconPath, hotkeys, cardShouldBeVisible, onOpen,
                 hoverTipScreenOffset, hoverTipPlacement, null)
         {
         }
 
         /// <summary>
-        ///     Compatibility overload for the twelve-parameter constructor shape that omitted
-        ///     <see cref="HoverTipPlacement" />; forwards with <see cref="ModCardPileHoverTipPlacement.Auto" />.
+        ///     Compatibility overload that omitted <see cref="HoverTipPlacement" />; forwards with
+        ///     <see cref="ModCardPileHoverTipPlacement.Auto" />.
         /// </summary>
         public ModCardPileDefinition(
             string modId,
@@ -113,12 +104,11 @@ namespace STS2RitsuLib.CardPiles
             ModCardPileUiStyle style,
             ModCardPileAnchor anchor,
             string? iconPath,
-            string? locStem,
             string[]? hotkeys,
             bool cardShouldBeVisible,
             Action<ModCardPileOpenContext>? onOpen,
             Vector2 hoverTipScreenOffset)
-            : this(modId, id, pileType, scope, style, anchor, iconPath, locStem, hotkeys, cardShouldBeVisible, onOpen,
+            : this(modId, id, pileType, scope, style, anchor, iconPath, hotkeys, cardShouldBeVisible, onOpen,
                 hoverTipScreenOffset, ModCardPileHoverTipPlacement.Auto)
         {
         }
@@ -137,17 +127,16 @@ namespace STS2RitsuLib.CardPiles
             ModCardPileUiStyle style,
             ModCardPileAnchor anchor,
             string? iconPath,
-            string? locStem,
             string[]? hotkeys,
             bool cardShouldBeVisible)
-            : this(modId, id, pileType, scope, style, anchor, iconPath, locStem, hotkeys, cardShouldBeVisible, null,
+            : this(modId, id, pileType, scope, style, anchor, iconPath, hotkeys, cardShouldBeVisible, null,
                 default, ModCardPileHoverTipPlacement.Auto)
         {
         }
 
         /// <summary>
-        ///     Compatibility overload for the historical eleven-parameter constructor shape (before
-        ///     <see cref="HoverTipScreenOffset" /> and <see cref="HoverTipPlacement" />); forwards with
+        ///     Compatibility overload for the historical shape before
+        ///     <see cref="HoverTipScreenOffset" /> and <see cref="HoverTipPlacement" />; forwards with
         ///     <see cref="Vector2.Zero" /> and <see cref="ModCardPileHoverTipPlacement.Auto" />.
         /// </summary>
         public ModCardPileDefinition(
@@ -158,11 +147,10 @@ namespace STS2RitsuLib.CardPiles
             ModCardPileUiStyle style,
             ModCardPileAnchor anchor,
             string? iconPath,
-            string? locStem,
             string[]? hotkeys,
             bool cardShouldBeVisible,
             Action<ModCardPileOpenContext>? onOpen)
-            : this(modId, id, pileType, scope, style, anchor, iconPath, locStem, hotkeys, cardShouldBeVisible, onOpen,
+            : this(modId, id, pileType, scope, style, anchor, iconPath, hotkeys, cardShouldBeVisible, onOpen,
                 default, ModCardPileHoverTipPlacement.Auto)
         {
         }
@@ -203,29 +191,22 @@ namespace STS2RitsuLib.CardPiles
         public string? IconPath { get; }
 
         /// <summary>
-        ///     Localization stem (never null; defaults to <see cref="Id" /> when the spec left it unset).
-        ///     Combined with <see cref="ModCardPileSpec.HoverTipLocTable" /> to produce title / description
-        ///     / empty-pile keys.
-        /// </summary>
-        public string LocStem { get; }
-
-        /// <summary>
         ///     Hover-tip title resolved against <see cref="ModCardPileSpec.HoverTipLocTable" /> with key
-        ///     <c>"{LocStem}.title"</c>.
+        ///     <c>"{Id}.title"</c>.
         /// </summary>
-        public LocString Title => new(ModCardPileSpec.HoverTipLocTable, $"{LocStem}.title");
+        public LocString Title => new(ModCardPileSpec.HoverTipLocTable, $"{Id}.title");
 
         /// <summary>
         ///     Hover-tip description resolved against <see cref="ModCardPileSpec.HoverTipLocTable" /> with
-        ///     key <c>"{LocStem}.description"</c>.
+        ///     key <c>"{Id}.description"</c>.
         /// </summary>
-        public LocString Description => new(ModCardPileSpec.HoverTipLocTable, $"{LocStem}.description");
+        public LocString Description => new(ModCardPileSpec.HoverTipLocTable, $"{Id}.description");
 
         /// <summary>
         ///     Message displayed when the pile is opened while empty; resolved against
-        ///     <see cref="ModCardPileSpec.HoverTipLocTable" /> with key <c>"{LocStem}.empty"</c>.
+        ///     <see cref="ModCardPileSpec.HoverTipLocTable" /> with key <c>"{Id}.empty"</c>.
         /// </summary>
-        public LocString EmptyPileMessage => new(ModCardPileSpec.HoverTipLocTable, $"{LocStem}.empty");
+        public LocString EmptyPileMessage => new(ModCardPileSpec.HoverTipLocTable, $"{Id}.empty");
 
         /// <summary>
         ///     Hotkey ids (see <c>MegaInput</c>) forwarded to <c>NCardPileScreen.ShowScreen</c>.

@@ -9,8 +9,9 @@ namespace STS2RitsuLib.CardPiles
     /// <remarks>
     ///     Localization follows the vanilla pile convention — the hover-tip title / description and the
     ///     "open empty pile" thought bubble are always resolved against the built-in
-    ///     <c>static_hover_tips</c> loc table, using the keys <c>"{LocStem}.title"</c>,
-    ///     <c>"{LocStem}.description"</c> and <c>"{LocStem}.empty"</c>. Mods cannot create additional loc
+    ///     <c>static_hover_tips</c> loc table, using the keys <c>"{id}.title"</c>,
+    ///     <c>"{id}.description"</c> and <c>"{id}.empty"</c> where <c>id</c> is the registered pile id. Mods cannot create
+    ///     additional loc
     ///     tables, so all entries are expected to live in <c>static_hover_tips.json</c> merged through
     ///     the normal mod-localization pipeline.
     /// </remarks>
@@ -51,18 +52,6 @@ namespace STS2RitsuLib.CardPiles
         ///     null or missing the placeholder texture is used.
         /// </summary>
         public string? IconPath { get; init; }
-
-        /// <summary>
-        ///     Localization stem used to build the hover-tip title / description and the empty-pile message
-        ///     (all resolved against <see cref="HoverTipLocTable" />). When null, the pile's normalized id
-        ///     is used as the stem, mirroring how <c>ModKeywordRegistry</c> derives default loc keys.
-        /// </summary>
-        /// <remarks>
-        ///     Expected JSON keys are <c>"{stem}.title"</c>, <c>"{stem}.description"</c> and
-        ///     <c>"{stem}.empty"</c>. Follow the vanilla convention (see <c>DRAW_PILE.title</c> /
-        ///     <c>DRAW_PILE.description</c> in <c>static_hover_tips.json</c>) when authoring translations.
-        /// </remarks>
-        public string? LocStem { get; init; }
 
         /// <summary>
         ///     Optional controller / keyboard hotkey ids that open the pile's view screen.
