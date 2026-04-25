@@ -17,9 +17,6 @@ namespace STS2RitsuLib.CardPiles
     /// </summary>
     internal static class ModCardPileInjector
     {
-        private const float BottomLeftStackDeltaX = 100f;
-        private const float BottomRightStackDeltaX = -100f;
-
         /// <summary>
         ///     Mounts all <see cref="ModCardPileUiStyle.BottomLeft" /> / <see cref="ModCardPileUiStyle.BottomRight" />
         ///     buttons onto the combat piles container.
@@ -34,6 +31,7 @@ namespace STS2RitsuLib.CardPiles
 
             MountBottomLeftButtons(container, leftDefinitions);
             MountBottomRightButtons(container, rightDefinitions);
+            ModCardPileCombatLayout.Relayout(container);
         }
 
         /// <summary>
@@ -100,8 +98,11 @@ namespace STS2RitsuLib.CardPiles
 
             var pilesContainer = combatUi.GetChildren().OfType<NCombatPilesContainer>().FirstOrDefault();
             if (pilesContainer != null)
+            {
                 foreach (var child in pilesContainer.GetChildren().OfType<NModCardPileButton>())
                     child.Initialize(player);
+                ModCardPileCombatLayout.Relayout(pilesContainer);
+            }
 
             var topBar = NRun.Instance?.GlobalUi?.TopBar;
             if (topBar == null) return;
@@ -119,31 +120,11 @@ namespace STS2RitsuLib.CardPiles
             NCombatPilesContainer container,
             ModCardPileDefinition[] definitions)
         {
-            var primaryIndex = 0;
-            var secondaryIndex = 0;
             foreach (var definition in definitions)
             {
                 var button = NModCardPileButton.Create(definition);
-                var anchor = definition.Anchor;
-                if (anchor.Kind == ModCardPileAnchorKind.Custom)
-                    button.Position = anchor.CustomPosition + anchor.Offset;
-                else
-                    switch (anchor.Kind)
-                    {
-                        case ModCardPileAnchorKind.BottomLeftSecondary:
-                            button.Position = container.DiscardPile.Position
-                                              + new Vector2(100f * (secondaryIndex + 1), 0f)
-                                              + anchor.Offset;
-                            secondaryIndex++;
-                            break;
-                        default:
-                            button.Position = container.DrawPile.Position
-                                              + new Vector2(BottomLeftStackDeltaX * (primaryIndex + 1), 0f)
-                                              + anchor.Offset;
-                            primaryIndex++;
-                            break;
-                    }
-
+                if (definition.Anchor.Kind == ModCardPileAnchorKind.Custom)
+                    button.Position = definition.Anchor.CustomPosition + definition.Anchor.Offset;
                 container.AddChildSafely(button);
             }
         }
@@ -152,33 +133,11 @@ namespace STS2RitsuLib.CardPiles
             NCombatPilesContainer container,
             ModCardPileDefinition[] definitions)
         {
-            var primaryIndex = 0;
-            var secondaryIndex = 0;
             foreach (var definition in definitions)
             {
                 var button = NModCardPileButton.Create(definition);
-                var anchor = definition.Anchor;
-                if (anchor.Kind == ModCardPileAnchorKind.Custom)
-                    button.Position = anchor.CustomPosition + anchor.Offset;
-                else
-                    switch (anchor.Kind)
-                    {
-                        case ModCardPileAnchorKind.BottomRightSecondary:
-                            button.Position = container.ExhaustPile.Position
-                                              + new Vector2(
-                                                  BottomRightStackDeltaX * (primaryIndex + secondaryIndex + 2),
-                                                  0f)
-                                              + anchor.Offset;
-                            secondaryIndex++;
-                            break;
-                        default:
-                            button.Position = container.ExhaustPile.Position
-                                              + new Vector2(BottomRightStackDeltaX * (primaryIndex + 1), 0f)
-                                              + anchor.Offset;
-                            primaryIndex++;
-                            break;
-                    }
-
+                if (definition.Anchor.Kind == ModCardPileAnchorKind.Custom)
+                    button.Position = definition.Anchor.CustomPosition + definition.Anchor.Offset;
                 container.AddChildSafely(button);
             }
         }

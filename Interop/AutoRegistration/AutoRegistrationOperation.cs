@@ -8,11 +8,12 @@ namespace STS2RitsuLib.Interop.AutoRegistration
         ContentSecondary = 1,
         AncientMappings = 2,
         Keywords = 3,
-        CardPiles = 4,
-        TopBarButtons = 5,
-        TimelineLayout = 6,
-        Timeline = 7,
-        Unlocks = 8,
+        CardTags = 4,
+        CardPiles = 5,
+        TopBarButtons = 6,
+        TimelineLayout = 7,
+        Timeline = 8,
+        Unlocks = 9,
     }
 
     internal sealed record AutoRegistrationOperation(

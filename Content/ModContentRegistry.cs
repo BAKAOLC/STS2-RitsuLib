@@ -197,6 +197,19 @@ namespace STS2RitsuLib.Content
         }
 
         /// <summary>
+        ///     Builds a mod-scoped <see cref="MegaCrit.Sts2.Core.Entities.Cards.CardTag" /> id using the ritsulib
+        ///     <c>MODID_CATEGORY_TYPENAME</c> convention with middle segment <c>CARDTAG</c>, aligned with
+        ///     <see cref="GetQualifiedKeywordId" /> and <see cref="GetQualifiedCardPileId" />.
+        /// </summary>
+        public static string GetQualifiedCardTagId(string modId, string localTagStem)
+        {
+            ArgumentException.ThrowIfNullOrWhiteSpace(modId);
+            ArgumentException.ThrowIfNullOrWhiteSpace(localTagStem);
+
+            return GetCompoundId(modId, "CARDTAG", localTagStem);
+        }
+
+        /// <summary>
         ///     Builds a mod-scoped top-bar-button id in the ritsulib <c>MODID_CATEGORY_TYPENAME</c> public
         ///     entry style (uppercase, three segments, underscore-separated, middle segment fixed to
         ///     <c>TOPBARBUTTON</c>). Used by <see cref="STS2RitsuLib.TopBar.ModTopBarButtonRegistry" />; the

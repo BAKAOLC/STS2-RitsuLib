@@ -337,6 +337,19 @@ namespace STS2RitsuLib.Interop.AutoRegistration
     }
 
     /// <summary>
+    ///     Registers an owned custom <see cref="MegaCrit.Sts2.Core.Entities.Cards.CardTag" /> id for this mod assembly.
+    /// </summary>
+    /// <param name="localCardTagStem">Local stem; combined with the mod id via <c>GetQualifiedCardTagId</c>.</param>
+    [AttributeUsage(AttributeTargets.Class, AllowMultiple = true, Inherited = false)]
+    public sealed class RegisterOwnedCardTagAttribute(string localCardTagStem) : AutoRegistrationAttribute
+    {
+        /// <summary>
+        ///     Local mod-scoped card-tag stem.
+        /// </summary>
+        public string LocalCardTagStem { get; } = localCardTagStem;
+    }
+
+    /// <summary>
     ///     Registers the annotated type as a timeline epoch.
     /// </summary>
     [AttributeUsage(AttributeTargets.Class, AllowMultiple = true, Inherited = false)]

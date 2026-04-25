@@ -7,6 +7,7 @@ using MegaCrit.Sts2.Core.Logging;
 using MegaCrit.Sts2.Core.Modding;
 using MegaCrit.Sts2.Core.Models;
 using STS2RitsuLib.Cards.FreePlay;
+using STS2RitsuLib.CardTags;
 using STS2RitsuLib.Combat.HealthBars;
 using STS2RitsuLib.Content;
 using STS2RitsuLib.Data;
@@ -287,6 +288,14 @@ namespace STS2RitsuLib
         }
 
         /// <summary>
+        ///     Returns the custom card-tag registry for <paramref name="modId" />.
+        /// </summary>
+        public static ModCardTagRegistry GetCardTagRegistry(string modId)
+        {
+            return ModCardTagRegistry.For(modId);
+        }
+
+        /// <summary>
         ///     Returns the timeline (epoch/story) registry for <paramref name="modId" />.
         /// </summary>
         public static ModTimelineRegistry GetTimelineRegistry(string modId)
@@ -385,7 +394,8 @@ namespace STS2RitsuLib
                     GetContentRegistry(registration.ModId),
                     GetKeywordRegistry(registration.ModId),
                     GetTimelineRegistry(registration.ModId),
-                    GetUnlockRegistry(registration.ModId));
+                    GetUnlockRegistry(registration.ModId),
+                    GetCardTagRegistry(registration.ModId));
                 registration.Apply(context);
             }
 
