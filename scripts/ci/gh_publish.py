@@ -127,26 +127,58 @@ def _release_title_from_version_tag(tag: str) -> str:
     return t
 
 
-def _ensure_tag_points_to_sha(repo_root: Path, tag: str, sha: str) -> None:
+def _remote_has_tag(repo_root: Path, remote: str, tag: str) -> bool:
+    """True if `refs/tags/{tag}` exists on the given remote (annotated or lightweight)."""
+    r = subprocess.run(
+        ["git", "ls-remote", remote, f"refs/tags/{tag}"],
+        cwd=repo_root,
+        capture_output=True,
+        text=True,
+        encoding="utf-8",
+        errors="replace",
+    )
+    if r.returncode != 0:
+        return False
+    return bool(r.stdout.strip())
+
+
+def _create_tag_at_sha_if_absent_on_remote(repo_root: Path, tag: str, sha: str) -> None:
+    """Create and push a lightweight tag once; never move an existing tag (avoids local fetch conflicts)."""
     if not sha:
-        print("GITHUB_SHA is required to move release tag.", file=sys.stderr)
+        print("GITHUB_SHA is required to create the dev prerelease tag.", file=sys.stderr)
         raise SystemExit(1)
+    remote = DEFAULT_GIT_REMOTE
+    if _remote_has_tag(repo_root, remote, tag):
+        print(
+            f"Tag {tag!r} already exists on {remote!r}; leaving it unchanged "
+            f"(prerelease notes and assets still reflect this run’s commit).",
+            file=sys.stderr,
+        )
+        return
     subprocess.run(
-        ["git", "tag", "-f", tag, sha],
+        ["git", "tag", tag, sha],
         cwd=repo_root,
         check=True,
         text=True,
         encoding="utf-8",
         errors="replace",
     )
-    subprocess.run(
-        ["git", "push", "--force", DEFAULT_GIT_REMOTE, f"refs/tags/{tag}"],
+    push = subprocess.run(
+        ["git", "push", remote, f"refs/tags/{tag}"],
         cwd=repo_root,
-        check=True,
         text=True,
         encoding="utf-8",
         errors="replace",
     )
+    if push.returncode == 0:
+        return
+    if _remote_has_tag(repo_root, remote, tag):
+        print(
+            f"Tag {tag!r} appeared on {remote!r} (likely a concurrent run); continuing without moving it.",
+            file=sys.stderr,
+        )
+        return
+    push.check_returncode()
 
 
 def _read_csproj_version(repo_root: Path) -> str:
@@ -184,7 +216,7 @@ def cmd_dev_prerelease(repo_root: Path) -> None:
         f"- Commit: [`{sha[:8]}`]({commit_url})\n"
         + (f"- Workflow Run: [#{run_id}]({run_url})\n" if run_url else "")
     )
-    _ensure_tag_points_to_sha(repo_root, tag, sha)
+    _create_tag_at_sha_if_absent_on_remote(repo_root, tag, sha)
     zips = sorted((repo_root / ARTIFACTS_GITHUB).glob(f"*{GITHUB_ZIP_FILENAME_SUFFIX}"))
     if not zips:
         print(f"No *{GITHUB_ZIP_FILENAME_SUFFIX} under {ARTIFACTS_GITHUB}/", file=sys.stderr)

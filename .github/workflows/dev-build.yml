@@ -1,4 +1,4 @@
-# dev: shallow checkouts + scripted CI build + fixed prerelease (dev-build).
+# dev: shallow checkouts + scripted CI build; prerelease (dev-build tag created once, not force-moved).
 name: Dev build
 
 on:
