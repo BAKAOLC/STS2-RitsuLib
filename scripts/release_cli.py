@@ -4,6 +4,7 @@ import argparse
 import os
 import subprocess
 import sys
+import xml.etree.ElementTree as ET
 from pathlib import Path
 
 from release_lib import git_ops
@@ -58,6 +59,11 @@ def _parse_args(argv: list[str]) -> argparse.Namespace:
     p.add_argument("--no-pull", action="store_true", help="Skip git pull on dev/main before merge")
     p.add_argument("--skip-nuget", action="store_true", help="Do not pack/push NuGet after push")
     p.add_argument("--configuration", default="Release")
+    p.add_argument(
+        "--compat-targets",
+        default="all",
+        help='Compatibility targets to publish, comma-separated (for example "0.104.0,0.103.2"), or "all" (default).',
+    )
     p.add_argument("--nuget-source", default=DEFAULT_NUGET_SOURCE)
     p.add_argument("--api-key", default=None, help="NuGet API key (else env NUGET_API_KEY)")
     p.add_argument("--skip-build", action="store_true", help="Pass --no-build to dotnet pack")
@@ -72,6 +78,20 @@ def _parse_args(argv: list[str]) -> argparse.Namespace:
         help="With --dry-run: run git fetch for dev/main before computing [may conflict] hints from refs",
     )
     return p.parse_args(argv)
+
+
+def _read_default_compat_targets(csproj_path: Path) -> list[str]:
+    root = ET.fromstring(csproj_path.read_text(encoding="utf-8"))
+    node = root.find(".//RitsuLibCompatTargets")
+    if node is None or not node.text:
+        return ["0.104.0"]
+    return [v.strip() for v in node.text.split(";") if v.strip()]
+
+
+def _resolve_compat_targets(raw: str, defaults: list[str]) -> list[str]:
+    if raw.strip().lower() == "all":
+        return defaults
+    return [v.strip() for v in raw.split(",") if v.strip()]
 
 
 def _commit_message_bump(v: str) -> str:
@@ -144,6 +164,13 @@ def main(argv: list[str] | None = None) -> int:
 
     ritsulib = repo
     csproj, manifest, const_cs = read_paths(ritsulib)
+    compat_targets = _resolve_compat_targets(
+        args.compat_targets,
+        _read_default_compat_targets(csproj),
+    )
+    if not compat_targets:
+        print("[release] no compatibility targets resolved from --compat-targets.", file=sys.stderr)
+        return 1
     current_text = read_csproj_version(csproj)
     current_v = VersionTriple.parse(current_text)
     next_v = resolve_next_version(
@@ -157,6 +184,7 @@ def main(argv: list[str] | None = None) -> int:
     print(f"[release] repo root: {repo}", flush=True)
     print(f"[release] version:   {current_text} -> {next_text}", flush=True)
     print(f"[release] tag:       {tag}", flush=True)
+    print(f"[release] nuget targets: {', '.join(compat_targets)}", flush=True)
 
     if args.dry_run:
         _dry_run_git_warnings(repo, args.dev_branch)
@@ -220,6 +248,7 @@ def main(argv: list[str] | None = None) -> int:
             args,
             next_text,
             tag,
+            compat_targets,
             conflict_marks=plan_marks,
             suggest_plan_fetch=bool(
                 plan_marks is not None
@@ -229,12 +258,13 @@ def main(argv: list[str] | None = None) -> int:
         )
         if args.dry_run_verify_pack:
             print("[release] DRY-RUN: verifying dotnet pack (temp directory)...")
-            pkg_name = nuget_ops.verify_pack_in_tempdir(
+            pkg_names = nuget_ops.verify_pack_in_tempdir(
                 ritsulib,
                 configuration=args.configuration,
                 skip_build=args.skip_build,
+                compat_targets=compat_targets,
             )
-            print(f"[release] DRY-RUN: pack OK -> {pkg_name} (temp removed)")
+            print(f"[release] DRY-RUN: pack OK -> {', '.join(pkg_names)} (temp removed)")
         return 0
 
     try:
@@ -313,14 +343,15 @@ def main(argv: list[str] | None = None) -> int:
     subprocess.run(tag_push, cwd=repo, check=True)
 
     if not args.skip_nuget:
-        pkg = nuget_ops.publish_nuget(
+        published = nuget_ops.publish_nugets(
             ritsulib,
             configuration=args.configuration,
             source=args.nuget_source,
             api_key=args.api_key,
             skip_build=args.skip_build,
+            compat_targets=compat_targets,
         )
-        print(f"[release] NuGet published: {pkg.name}")
+        print(f"[release] NuGet published: {', '.join(pkg.name for pkg in published)}")
 
     print("[release] done.")
     return 0
@@ -347,6 +378,7 @@ def _print_git_plan(
     args: argparse.Namespace,
     next_text: str,
     tag: str,
+    compat_targets: list[str],
     *,
     conflict_marks: frozenset[str] | None = None,
     suggest_plan_fetch: bool = False,
@@ -410,7 +442,10 @@ def _print_git_plan(
     if args.skip_nuget:
         step("(skip NuGet)", step_id="")
     else:
-        step("dotnet pack + dotnet nuget push", step_id=plan_analysis.NUGET)
+        step(
+            f"dotnet pack + dotnet nuget push (targets: {', '.join(compat_targets)})",
+            step_id=plan_analysis.NUGET,
+        )
 
 
 _PESSIMISTIC_CONFLICT_STEPS = frozenset(
