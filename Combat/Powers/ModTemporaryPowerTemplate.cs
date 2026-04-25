@@ -84,7 +84,8 @@ namespace STS2RitsuLib.Combat.Powers
 
         /// <inheritdoc />
 #if STS2_V_0_103_2
-        public override async Task AfterPowerAmountChanged(PowerModel power, decimal amount, Creature? applier, CardModel? cardSource)
+        public override async Task AfterPowerAmountChanged(PowerModel power, decimal amount, Creature? applier,
+            CardModel? cardSource)
 #else
         public override async Task AfterPowerAmountChanged(PlayerChoiceContext choiceContext, PowerModel power,
             decimal amount,
@@ -101,7 +102,8 @@ namespace STS2RitsuLib.Combat.Powers
             }
 
 #if STS2_V_0_103_2
-            await ApplyInternalPower(new ThrowingPlayerChoiceContext(), Owner, SignedAmount(amount), applier, cardSource, true);
+            await ApplyInternalPower(new ThrowingPlayerChoiceContext(), Owner, SignedAmount(amount), applier,
+                cardSource, true);
 #else
             await ApplyInternalPower(choiceContext, Owner, SignedAmount(amount), applier, cardSource, true);
 #endif

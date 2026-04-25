@@ -1,12 +1,11 @@
-using MegaCrit.Sts2.Core.Combat;
-using MegaCrit.Sts2.Core.Entities.Cards;
-using MegaCrit.Sts2.Core.Models;
-using STS2RitsuLib.Utils;
 #if STS2_V_0_103_2
 using CombatStateLike = MegaCrit.Sts2.Core.Combat.CombatState;
 #else
 using CombatStateLike = MegaCrit.Sts2.Core.Combat.ICombatState;
 #endif
+using MegaCrit.Sts2.Core.Entities.Cards;
+using MegaCrit.Sts2.Core.Models;
+using STS2RitsuLib.Utils;
 
 namespace STS2RitsuLib.Cards.FreePlay
 {
