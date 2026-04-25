@@ -9,6 +9,18 @@ import zipfile
 import xml.etree.ElementTree as ET
 from pathlib import Path
 
+from release_lib.msbuild_eval import get_csproj_property
+from release_lib.repo_layout import (
+    ARTIFACTS_GITHUB,
+    ARTIFACTS_NUGET,
+    GITHUB_ZIP_FILENAME_SUFFIX,
+    GODOT_MONO_BIN_PREFIX,
+    MOD_MANIFEST_NAME,
+    RITSULIB_CSPROJ_NAME,
+    SNUPKG_SUFFIX,
+    ritsulib_built_dll_name,
+)
+
 
 def run_pack(
     ritsulib_root: Path,
@@ -17,9 +29,12 @@ def run_pack(
     skip_build: bool,
     artifacts_dir: Path,
     compat_target: str,
+    version_override: str | None = None,
+    sts2_api_signature_root: Path | None = None,
+    sts2_dir: Path | None = None,
 ) -> Path:
     artifacts_dir.mkdir(parents=True, exist_ok=True)
-    csproj = ritsulib_root / "STS2-RitsuLib.csproj"
+    csproj = ritsulib_root / RITSULIB_CSPROJ_NAME
     started_at = time.time()
     before = {p.resolve() for p in artifacts_dir.glob("*.nupkg")}
     args = [
@@ -33,12 +48,23 @@ def run_pack(
         "/p:ContinuousIntegrationBuild=false",
         f"/p:Sts2ApiCompat={compat_target}",
     ]
+    if version_override is not None and version_override.strip():
+        override = version_override.strip()
+        args.append(f"/p:Version={override}")
+        args.append(f"/p:PackageVersion={override}")
+        args.append(f"/p:AssemblyInformationalVersion={override}")
+    if sts2_api_signature_root is not None:
+        args.append(f"/p:Sts2ApiSignatureRoot={sts2_api_signature_root}")
+    if sts2_dir is not None:
+        args.append(f"/p:Sts2Dir={sts2_dir}")
     if skip_build:
         args.append("--no-build")
 
     subprocess.run(args, cwd=ritsulib_root, check=True)
 
-    nupkgs = sorted((p for p in artifacts_dir.glob("*.nupkg") if not p.name.endswith(".snupkg")))
+    nupkgs = sorted(
+        (p for p in artifacts_dir.glob("*.nupkg") if not p.name.endswith(SNUPKG_SUFFIX))
+    )
     created = [p for p in nupkgs if p.resolve() not in before]
     if created:
         return max(created, key=lambda p: p.stat().st_mtime)
@@ -47,7 +73,12 @@ def run_pack(
     if refreshed:
         return max(refreshed, key=lambda p: p.stat().st_mtime)
 
-    expected = _resolve_expected_package_path(csproj, artifacts_dir, compat_target)
+    expected = _resolve_expected_package_path(
+        csproj,
+        artifacts_dir,
+        compat_target,
+        version_override=version_override,
+    )
     if expected is not None and expected.is_file():
         return expected
 
@@ -55,17 +86,27 @@ def run_pack(
     raise RuntimeError(msg)
 
 
-def _resolve_expected_package_path(csproj: Path, artifacts_dir: Path, compat_target: str) -> Path | None:
+def _resolve_expected_package_path(
+    csproj: Path,
+    artifacts_dir: Path,
+    compat_target: str,
+    *,
+    version_override: str | None,
+) -> Path | None:
     try:
         root = ET.fromstring(csproj.read_text(encoding="utf-8"))
     except ET.ParseError:
         return None
 
     base_package_id = _first_node_text(root, ".//PackageId")
-    version = _first_node_text(root, ".//Version")
-    latest_compat = _first_node_text(root, ".//RitsuLibLatestApiCompat")
+    version = version_override.strip() if version_override and version_override.strip() else _first_node_text(root, ".//Version")
     if not base_package_id or not version:
         return None
+
+    try:
+        latest_compat = get_csproj_property(csproj, "RitsuLibLatestApiCompat").strip() or None
+    except (OSError, RuntimeError):
+        latest_compat = None
 
     if latest_compat and compat_target != latest_compat:
         package_id = f"{base_package_id}.Compat.{compat_target}"
@@ -98,9 +139,12 @@ def publish_nugets(
     api_key: str | None,
     skip_build: bool,
     compat_targets: list[str],
+    version_override: str | None = None,
+    sts2_api_signature_root: Path | None = None,
+    sts2_dir: Path | None = None,
 ) -> tuple[list[Path], list[Path]]:
-    artifacts_dir = ritsulib_root / "artifacts" / "nuget"
-    github_dir = ritsulib_root / "artifacts" / "github"
+    artifacts_dir = ritsulib_root / ARTIFACTS_NUGET
+    github_dir = ritsulib_root / ARTIFACTS_GITHUB
     key = _resolve_api_key(api_key)
     published: list[Path] = []
     zips: list[Path] = []
@@ -111,6 +155,9 @@ def publish_nugets(
             skip_build=skip_build,
             artifacts_dir=artifacts_dir,
             compat_target=compat_target,
+            version_override=version_override,
+            sts2_api_signature_root=sts2_api_signature_root,
+            sts2_dir=sts2_dir,
         )
         zip_path = create_github_zip(
             ritsulib_root,
@@ -131,9 +178,12 @@ def build_artifacts(
     configuration: str,
     skip_build: bool,
     compat_targets: list[str],
+    version_override: str | None = None,
+    sts2_api_signature_root: Path | None = None,
+    sts2_dir: Path | None = None,
 ) -> tuple[list[Path], list[Path]]:
-    artifacts_dir = ritsulib_root / "artifacts" / "nuget"
-    github_dir = ritsulib_root / "artifacts" / "github"
+    artifacts_dir = ritsulib_root / ARTIFACTS_NUGET
+    github_dir = ritsulib_root / ARTIFACTS_GITHUB
     packages: list[Path] = []
     zips: list[Path] = []
     for compat_target in compat_targets:
@@ -143,6 +193,9 @@ def build_artifacts(
             skip_build=skip_build,
             artifacts_dir=artifacts_dir,
             compat_target=compat_target,
+            version_override=version_override,
+            sts2_api_signature_root=sts2_api_signature_root,
+            sts2_dir=sts2_dir,
         )
         zip_path = create_github_zip(
             ritsulib_root,
@@ -164,6 +217,9 @@ def publish_nuget(
     api_key: str | None,
     skip_build: bool,
     compat_target: str | None = None,
+    version_override: str | None = None,
+    sts2_api_signature_root: Path | None = None,
+    sts2_dir: Path | None = None,
 ) -> Path:
     if compat_target is None or not compat_target.strip():
         msg = "compat_target is required for publish_nuget(). Use publish_nugets() for multi-target release."
@@ -175,6 +231,9 @@ def publish_nuget(
         api_key=api_key,
         skip_build=skip_build,
         compat_targets=[compat_target.strip()],
+        version_override=version_override,
+        sts2_api_signature_root=sts2_api_signature_root,
+        sts2_dir=sts2_dir,
     )
     return packages[0]
 
@@ -185,6 +244,9 @@ def verify_pack_in_tempdir(
     configuration: str,
     skip_build: bool,
     compat_targets: list[str],
+    version_override: str | None = None,
+    sts2_api_signature_root: Path | None = None,
+    sts2_dir: Path | None = None,
 ) -> list[str]:
     tmp = Path(tempfile.mkdtemp(prefix="ritsulib-nuget-"))
     try:
@@ -196,6 +258,9 @@ def verify_pack_in_tempdir(
                 skip_build=skip_build,
                 artifacts_dir=tmp,
                 compat_target=compat_target,
+                version_override=version_override,
+                sts2_api_signature_root=sts2_api_signature_root,
+                sts2_dir=sts2_dir,
             )
             package_names.append(pkg.name)
         return package_names
@@ -212,8 +277,8 @@ def create_github_zip(
     output_dir: Path,
 ) -> Path:
     output_dir.mkdir(parents=True, exist_ok=True)
-    dll_path = ritsulib_root / ".godot" / "mono" / "temp" / "bin" / configuration / "STS2-RitsuLib.dll"
-    manifest_path = ritsulib_root / "mod_manifest.json"
+    dll_path = ritsulib_root / GODOT_MONO_BIN_PREFIX / configuration / ritsulib_built_dll_name()
+    manifest_path = ritsulib_root / MOD_MANIFEST_NAME
     if not dll_path.is_file():
         msg = f"Could not find built DLL for zip packaging: {dll_path}"
         raise RuntimeError(msg)
@@ -221,10 +286,10 @@ def create_github_zip(
         msg = f"Could not find mod_manifest.json for zip packaging: {manifest_path}"
         raise RuntimeError(msg)
 
-    zip_name = f"{package.stem}.github.zip"
+    zip_name = f"{package.stem}{GITHUB_ZIP_FILENAME_SUFFIX}"
     zip_path = output_dir / zip_name
     with zipfile.ZipFile(zip_path, mode="w", compression=zipfile.ZIP_DEFLATED) as zf:
-        zf.write(dll_path, arcname="STS2-RitsuLib.dll")
+        zf.write(dll_path, arcname=ritsulib_built_dll_name())
         zf.write(manifest_path, arcname="mod_manifest.json")
         zf.writestr("compat-target.txt", compat_target + "\n")
     return zip_path

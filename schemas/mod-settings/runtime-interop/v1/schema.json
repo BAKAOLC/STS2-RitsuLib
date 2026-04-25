@@ -1,0 +1,492 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://raw.githubusercontent.com/BAKAOLC/STS2-RitsuLib/main/schemas/mod-settings/runtime-interop/v1/schema.json",
+  "title": "RitsuLib Runtime Interop mod settings mirror",
+  "description": "Payload shape returned by static CreateRitsuLibSettingsSchema() and parsed by RuntimeInteropMirrorSource. Recommended root: modId + pages[]. JSON property names are matched case-insensitively at runtime; this schema uses camelCase. Entry \"type\" values are also case-insensitive in C#; most branches here use lowercase literals for validation.",
+  "oneOf": [
+    {
+      "$ref": "#/$defs/multiPageDocument"
+    },
+    {
+      "$ref": "./legacy-single-page.schema.json"
+    }
+  ],
+  "$defs": {
+    "multiPageDocument": {
+      "title": "Multi-page document",
+      "type": "object",
+      "required": ["modId", "pages"],
+      "properties": {
+        "modId": {
+          "type": "string",
+          "minLength": 1,
+          "description": "Target mod id for mirrored settings pages."
+        },
+        "modDisplayName": {
+          "type": "string",
+          "description": "Optional display name in the mod settings sidebar."
+        },
+        "modSidebarOrder": {
+          "type": "integer",
+          "description": "Optional sidebar ordering hint."
+        },
+        "pages": {
+          "type": "array",
+          "minItems": 1,
+          "items": {
+            "$ref": "#/$defs/page"
+          }
+        }
+      },
+      "additionalProperties": true
+    },
+    "page": {
+      "type": "object",
+      "required": ["sections"],
+      "properties": {
+        "pageId": {
+          "type": "string",
+          "description": "Defaults to \"interop\" when empty or omitted."
+        },
+        "parentPageId": {
+          "type": "string",
+          "description": "Optional parent page id for nested pages."
+        },
+        "title": {
+          "type": "string",
+          "description": "Defaults to \"Settings\" when empty or omitted."
+        },
+        "description": {
+          "type": "string"
+        },
+        "sortOrder": {
+          "type": "integer",
+          "description": "Defaults to 10040 when omitted."
+        },
+        "sections": {
+          "type": "array",
+          "minItems": 1,
+          "items": {
+            "$ref": "#/$defs/section"
+          }
+        }
+      },
+      "additionalProperties": true
+    },
+    "section": {
+      "type": "object",
+      "required": ["id", "entries"],
+      "properties": {
+        "id": {
+          "type": "string",
+          "minLength": 1
+        },
+        "title": {
+          "type": "string"
+        },
+        "description": {
+          "type": "string"
+        },
+        "entries": {
+          "type": "array",
+          "minItems": 1,
+          "items": {
+            "$ref": "#/$defs/entry"
+          }
+        }
+      },
+      "additionalProperties": true
+    },
+    "entryBase": {
+      "type": "object",
+      "required": ["id", "type"],
+      "properties": {
+        "id": {
+          "type": "string",
+          "minLength": 1
+        },
+        "type": {
+          "type": "string",
+          "description": "Matched case-insensitively. int-slider alias: intslider."
+        },
+        "key": {
+          "type": "string",
+          "description": "Storage key passed to GetRitsuLibSettingValue / SetRitsuLibSettingValue; defaults to id."
+        },
+        "label": {
+          "type": "string",
+          "description": "Defaults to id when empty or omitted."
+        },
+        "description": {
+          "type": "string"
+        },
+        "scope": {
+          "type": "string",
+          "description": "Only \"profile\" (case-insensitive) selects profile scope; any other value is treated as global."
+        },
+        "visibleWhenMethod": {
+          "type": "string",
+          "description": "Optional static method on the provider type. Allowed signatures: Method() or Method(string key). Return value is coerced to bool; failures default to visible."
+        }
+      },
+      "additionalProperties": true
+    },
+    "entry": {
+      "oneOf": [
+        {
+          "title": "header",
+          "allOf": [
+            {
+              "$ref": "#/$defs/entryBase"
+            },
+            {
+              "properties": {
+                "type": {
+                  "const": "header"
+                }
+              }
+            }
+          ]
+        },
+        {
+          "title": "paragraph",
+          "allOf": [
+            {
+              "$ref": "#/$defs/entryBase"
+            },
+            {
+              "properties": {
+                "type": {
+                  "const": "paragraph"
+                },
+                "maxBodyHeight": {
+                  "type": "number",
+                  "description": "Optional max body height for paragraph layout."
+                }
+              }
+            }
+          ]
+        },
+        {
+          "title": "subpage",
+          "allOf": [
+            {
+              "$ref": "#/$defs/entryBase"
+            },
+            {
+              "properties": {
+                "type": {
+                  "const": "subpage"
+                },
+                "targetPageId": {
+                  "type": "string",
+                  "minLength": 1,
+                  "description": "Required; entries without this are skipped at runtime."
+                },
+                "buttonText": {
+                  "type": "string"
+                }
+              },
+              "required": ["targetPageId"]
+            }
+          ]
+        },
+        {
+          "title": "toggle",
+          "allOf": [
+            {
+              "$ref": "#/$defs/entryBase"
+            },
+            {
+              "properties": {
+                "type": {
+                  "const": "toggle"
+                }
+              }
+            }
+          ]
+        },
+        {
+          "title": "slider",
+          "allOf": [
+            {
+              "$ref": "#/$defs/entryBase"
+            },
+            {
+              "properties": {
+                "type": {
+                  "const": "slider"
+                },
+                "min": {
+                  "type": "number",
+                  "description": "Default 0; if max < min they are swapped at runtime."
+                },
+                "max": {
+                  "type": "number",
+                  "description": "Default 100."
+                },
+                "step": {
+                  "type": "number",
+                  "exclusiveMinimum": 0,
+                  "description": "Values <= 0 are treated as 1 at runtime."
+                }
+              }
+            }
+          ]
+        },
+        {
+          "title": "int-slider",
+          "allOf": [
+            {
+              "$ref": "#/$defs/entryBase"
+            },
+            {
+              "properties": {
+                "type": {
+                  "type": "string",
+                  "pattern": "^([Ii][Nn][Tt]-[Ss][Ll][Ii][Dd][Ee][Rr]|[Ii][Nn][Tt][Ss][Ll][Ii][Dd][Ee][Rr])$",
+                  "description": "int-slider or intslider; casing ignored at runtime."
+                },
+                "min": {
+                  "type": "number"
+                },
+                "max": {
+                  "type": "number"
+                },
+                "step": {
+                  "type": "number",
+                  "description": "Rounded to int; minimum step 1 after coercion at runtime."
+                }
+              }
+            }
+          ]
+        },
+        {
+          "title": "choice",
+          "allOf": [
+            {
+              "$ref": "#/$defs/entryBase"
+            },
+            {
+              "properties": {
+                "type": {
+                  "const": "choice"
+                },
+                "presentation": {
+                  "type": "string",
+                  "description": "String \"dropdown\" (case-insensitive) uses dropdown UI; any other value uses stepper."
+                },
+                "options": {
+                  "type": "array",
+                  "minItems": 1,
+                  "items": {
+                    "oneOf": [
+                      {
+                        "type": "string",
+                        "minLength": 1
+                      },
+                      {
+                        "type": "object",
+                        "required": ["value"],
+                        "properties": {
+                          "value": {
+                            "type": "string",
+                            "minLength": 1
+                          },
+                          "label": {
+                            "type": "string"
+                          }
+                        },
+                        "additionalProperties": true
+                      }
+                    ]
+                  },
+                  "description": "Empty options list causes the entry to be skipped at runtime."
+                },
+                "optionsMethod": {
+                  "type": "string",
+                  "description": "Optional static method on the provider type. Allowed signatures: Method() or Method(string key). Should return an enumerable of strings or { value, label } objects. Falls back to static options on failure."
+                }
+              },
+              "required": ["options"]
+            }
+          ]
+        },
+        {
+          "title": "string",
+          "allOf": [
+            {
+              "$ref": "#/$defs/entryBase"
+            },
+            {
+              "properties": {
+                "type": {
+                  "const": "string"
+                },
+                "placeholder": {
+                  "type": "string"
+                },
+                "maxLength": {
+                  "type": "integer",
+                  "minimum": 0,
+                  "description": "Values < 1 are ignored at runtime (treated as no limit)."
+                }
+              }
+            }
+          ]
+        },
+        {
+          "title": "multiline-string",
+          "allOf": [
+            {
+              "$ref": "#/$defs/entryBase"
+            },
+            {
+              "properties": {
+                "type": {
+                  "enum": ["multiline-string", "multiline"]
+                },
+                "placeholder": {
+                  "type": "string"
+                },
+                "maxLength": {
+                  "type": "integer",
+                  "minimum": 0
+                }
+              }
+            }
+          ]
+        },
+        {
+          "title": "color",
+          "allOf": [
+            {
+              "$ref": "#/$defs/entryBase"
+            },
+            {
+              "properties": {
+                "type": {
+                  "const": "color"
+                },
+                "editAlpha": {
+                  "type": "boolean",
+                  "description": "Default true when omitted."
+                },
+                "editIntensity": {
+                  "type": "boolean",
+                  "description": "Default false when omitted."
+                }
+              }
+            }
+          ]
+        },
+        {
+          "title": "key-binding",
+          "allOf": [
+            {
+              "$ref": "#/$defs/entryBase"
+            },
+            {
+              "properties": {
+                "type": {
+                  "enum": ["key-binding", "keybinding"]
+                },
+                "allowModifierCombos": {
+                  "type": "boolean",
+                  "description": "Default true when omitted."
+                },
+                "allowModifierOnly": {
+                  "type": "boolean",
+                  "description": "Default true when omitted."
+                },
+                "distinguishModifierSides": {
+                  "type": "boolean",
+                  "description": "Default false when omitted."
+                }
+              }
+            }
+          ]
+        },
+        {
+          "title": "info-card",
+          "allOf": [
+            {
+              "$ref": "#/$defs/entryBase"
+            },
+            {
+              "properties": {
+                "type": {
+                  "enum": ["info-card", "infocard"]
+                },
+                "body": {
+                  "type": "string",
+                  "description": "Card body text (rich-text); may be empty."
+                }
+              }
+            }
+          ]
+        },
+        {
+          "title": "runtime-hotkey-summary",
+          "allOf": [
+            {
+              "$ref": "#/$defs/entryBase"
+            },
+            {
+              "properties": {
+                "type": {
+                  "enum": [
+                    "runtime-hotkey-summary",
+                    "runtimehotkeysummary",
+                    "hotkey-summary"
+                  ]
+                },
+                "body": {
+                  "type": "string",
+                  "description": "Descriptive text under the title."
+                },
+                "bindings": {
+                  "type": "array",
+                  "minItems": 1,
+                  "items": {
+                    "type": "string",
+                    "minLength": 1
+                  },
+                  "description": "Right-hand binding chip labels; empty list skips registration at runtime."
+                },
+                "idSuffix": {
+                  "type": "string",
+                  "description": "Optional ModSettingsText id suffix passed to AddRuntimeHotkeySummary."
+                }
+              },
+              "required": ["bindings"]
+            }
+          ]
+        },
+        {
+          "title": "button",
+          "allOf": [
+            {
+              "$ref": "#/$defs/entryBase"
+            },
+            {
+              "properties": {
+                "type": {
+                  "const": "button"
+                },
+                "buttonText": {
+                  "type": "string",
+                  "description": "Defaults to label when omitted for the button caption."
+                },
+                "tone": {
+                  "type": "string",
+                  "description": "Only \"accent\" or \"danger\" (case-insensitive) change button tone; otherwise normal."
+                }
+              }
+            }
+          ]
+        }
+      ]
+    }
+  }
+}

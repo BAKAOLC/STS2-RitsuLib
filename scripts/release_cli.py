@@ -10,6 +10,17 @@ from pathlib import Path
 from release_lib import git_ops
 from release_lib import nuget as nuget_ops
 from release_lib import plan_analysis
+from release_lib.msbuild_eval import get_csproj_property
+from release_lib.repo_layout import (
+    CONST_CS_NAME,
+    DEFAULT_GIT_REMOTE,
+    GIT_DEFAULT_DEV_BRANCH,
+    GIT_DEFAULT_MAIN_BRANCH,
+    MOD_MANIFEST_NAME,
+    NUGET_ORG_V3_INDEX_URL,
+    RITSULIB_CSPROJ_NAME,
+    RITSLIB_RELEASE_TAG_MESSAGE_BASENAME,
+)
 from release_lib.version_sync import (
     read_csproj_version,
     read_paths,
@@ -19,16 +30,41 @@ from release_lib.version_sync import (
 )
 
 _SCRIPTS_DIR = Path(__file__).resolve().parent
-DEFAULT_DEV_BRANCH = "dev"
-DEFAULT_MAIN_BRANCH = "main"
-DEFAULT_REMOTE = "origin"
-DEFAULT_NUGET_SOURCE = "https://api.nuget.org/v3/index.json"
+DEFAULT_DEV_BRANCH = GIT_DEFAULT_DEV_BRANCH
+DEFAULT_MAIN_BRANCH = GIT_DEFAULT_MAIN_BRANCH
+DEFAULT_REMOTE = DEFAULT_GIT_REMOTE
 
-_VERSIONED_FILES = (
-    "STS2-RitsuLib.csproj",
-    "mod_manifest.json",
-    "Const.cs",
-)
+_VERSIONED_FILES = (RITSULIB_CSPROJ_NAME, MOD_MANIFEST_NAME, CONST_CS_NAME)
+
+
+def _resolve_release_tag_message_file(repo: Path) -> Path | None:
+    override = os.environ.get("RITSLIB_RELEASE_TAG_MESSAGE_FILE", "").strip()
+    if override:
+        p = Path(override).expanduser()
+        p = p.resolve() if p.is_absolute() else (repo / p).resolve()
+        try:
+            if p.is_file():
+                return p
+        except OSError:
+            pass
+    internal = (repo / RITSLIB_RELEASE_TAG_MESSAGE_BASENAME).resolve()
+    try:
+        if internal.is_file():
+            return internal
+    except OSError:
+        pass
+    return None
+
+
+def _git_tag_command(tag: str, *, force: bool, message_file: Path | None) -> list[str]:
+    cmd: list[str] = ["git", "tag"]
+    if force:
+        cmd.append("-f")
+    if message_file is not None:
+        cmd.extend(["-a", tag, "-F", str(message_file)])
+    else:
+        cmd.append(tag)
+    return cmd
 
 
 def _parse_args(argv: list[str]) -> argparse.Namespace:
@@ -69,8 +105,23 @@ def _parse_args(argv: list[str]) -> argparse.Namespace:
         default="all",
         help='Compatibility targets to publish, comma-separated (for example "x.y.z,a.b.c"), or "all" (default).',
     )
-    p.add_argument("--nuget-source", default=DEFAULT_NUGET_SOURCE)
+    p.add_argument("--nuget-source", default=NUGET_ORG_V3_INDEX_URL)
     p.add_argument("--api-key", default=None, help="NuGet API key (else env NUGET_API_KEY)")
+    p.add_argument(
+        "--version-override",
+        default=None,
+        help="Override package/DLL informational version for packing only (for example dev builds).",
+    )
+    p.add_argument(
+        "--sts2-api-signature-root",
+        default=None,
+        help="Optional override for /p:Sts2ApiSignatureRoot during pack.",
+    )
+    p.add_argument(
+        "--sts2-dir",
+        default=None,
+        help="Optional override for /p:Sts2Dir during pack.",
+    )
     p.add_argument("--skip-build", action="store_true", help="Pass --no-build to dotnet pack")
     p.add_argument(
         "--force-tag",
@@ -86,12 +137,18 @@ def _parse_args(argv: list[str]) -> argparse.Namespace:
 
 
 def _read_default_compat_targets(csproj_path: Path) -> list[str]:
-    root = ET.fromstring(csproj_path.read_text(encoding="utf-8"))
-    node = root.find(".//RitsuLibCompatTargets")
-    if node is None or not node.text:
-        msg = "RitsuLibCompatTargets is missing in STS2-RitsuLib.csproj."
+    if not csproj_path.is_file():
+        msg = f"Missing csproj: {csproj_path}"
         raise RuntimeError(msg)
-    return [v.strip() for v in node.text.split(";") if v.strip()]
+    try:
+        raw = get_csproj_property(csproj_path, "RitsuLibCompatTargets")
+    except (OSError, RuntimeError) as e:
+        msg = f"Could not evaluate MSBuild property RitsuLibCompatTargets: {e}"
+        raise RuntimeError(msg) from e
+    if not raw.strip():
+        msg = "RitsuLibCompatTargets evaluated empty (dotnet msbuild -getProperty)."
+        raise RuntimeError(msg)
+    return [v.strip() for v in raw.split(";") if v.strip()]
 
 
 def _resolve_compat_targets(raw: str, defaults: list[str]) -> list[str]:
@@ -164,8 +221,8 @@ def main(argv: list[str] | None = None) -> int:
             print(f"[release] {e}", file=sys.stderr)
             return 1
 
-    if not (repo / "STS2-RitsuLib.csproj").is_file():
-        print(f"[release] STS2-RitsuLib.csproj not found under {repo}", file=sys.stderr)
+    if not (repo / RITSULIB_CSPROJ_NAME).is_file():
+        print(f"[release] {RITSULIB_CSPROJ_NAME} not found under {repo}", file=sys.stderr)
         return 1
 
     ritsulib = repo
@@ -186,9 +243,12 @@ def main(argv: list[str] | None = None) -> int:
     )
     next_text = str(next_v)
     tag = _tag_name(next_text)
+    tag_msg_file = _resolve_release_tag_message_file(repo)
 
     print(f"[release] repo root: {repo}", flush=True)
     print(f"[release] version:   {current_text} -> {next_text}", flush=True)
+    if args.version_override:
+        print(f"[release] pack version override: {args.version_override}", flush=True)
     print(f"[release] tag:       {tag}", flush=True)
     print(f"[release] nuget targets: {', '.join(compat_targets)}", flush=True)
 
@@ -198,6 +258,9 @@ def main(argv: list[str] | None = None) -> int:
             configuration=args.configuration,
             skip_build=args.skip_build,
             compat_targets=compat_targets,
+            version_override=args.version_override,
+            sts2_api_signature_root=Path(args.sts2_api_signature_root) if args.sts2_api_signature_root else None,
+            sts2_dir=Path(args.sts2_dir) if args.sts2_dir else None,
         )
         print(f"[release] Artifacts packages: {', '.join(pkg.name for pkg in packages)}")
         print(f"[release] Artifacts zips: {', '.join(zip_path.name for zip_path in zips)}")
@@ -267,6 +330,7 @@ def main(argv: list[str] | None = None) -> int:
             next_text,
             tag,
             compat_targets,
+            tag_message_file=tag_msg_file,
             conflict_marks=plan_marks,
             suggest_plan_fetch=bool(
                 plan_marks is not None
@@ -281,6 +345,9 @@ def main(argv: list[str] | None = None) -> int:
                 configuration=args.configuration,
                 skip_build=args.skip_build,
                 compat_targets=compat_targets,
+                version_override=args.version_override,
+                sts2_api_signature_root=Path(args.sts2_api_signature_root) if args.sts2_api_signature_root else None,
+                sts2_dir=Path(args.sts2_dir) if args.sts2_dir else None,
             )
             print(f"[release] DRY-RUN: pack OK -> {', '.join(pkg_names)} (temp removed)")
         return 0
@@ -346,10 +413,11 @@ def main(argv: list[str] | None = None) -> int:
         cwd=repo,
         check=True,
     )
-    tag_cmd = ["git", "tag", tag]
-    if args.force_tag:
-        tag_cmd.insert(2, "-f")
-    subprocess.run(tag_cmd, cwd=repo, check=True)
+    subprocess.run(
+        _git_tag_command(tag, force=args.force_tag, message_file=tag_msg_file),
+        cwd=repo,
+        check=True,
+    )
 
     subprocess.run(["git", "checkout", args.dev_branch], cwd=repo, check=True)
 
@@ -368,6 +436,9 @@ def main(argv: list[str] | None = None) -> int:
             api_key=args.api_key,
             skip_build=args.skip_build,
             compat_targets=compat_targets,
+            version_override=args.version_override,
+            sts2_api_signature_root=Path(args.sts2_api_signature_root) if args.sts2_api_signature_root else None,
+            sts2_dir=Path(args.sts2_dir) if args.sts2_dir else None,
         )
         print(f"[release] NuGet published: {', '.join(pkg.name for pkg in published)}")
         print(f"[release] GitHub zips: {', '.join(zip_path.name for zip_path in github_zips)}")
@@ -399,6 +470,7 @@ def _print_git_plan(
     tag: str,
     compat_targets: list[str],
     *,
+    tag_message_file: Path | None = None,
     conflict_marks: frozenset[str] | None = None,
     suggest_plan_fetch: bool = False,
 ) -> None:
@@ -447,7 +519,13 @@ def _print_git_plan(
         f'git merge --no-ff {args.dev_branch} -m "{merge_msg}"',
         step_id=plan_analysis.MERGE,
     )
-    if args.force_tag:
+    if tag_message_file is not None:
+        fp = str(tag_message_file).replace('"', '\\"')
+        if args.force_tag:
+            step(f'git tag -f -a {tag} -F "{fp}"', step_id="")
+        else:
+            step(f'git tag -a {tag} -F "{fp}"', step_id=plan_analysis.TAG)
+    elif args.force_tag:
         step(f"git tag -f {tag}", step_id="")
     else:
         step(f"git tag {tag}", step_id=plan_analysis.TAG)

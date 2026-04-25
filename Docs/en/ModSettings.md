@@ -145,6 +145,8 @@ Provider contract (all methods are `static`):
   - `double GetRitsuLibSettingDouble(string key)` / `void SetRitsuLibSettingDouble(string key, double value)`
   - `string GetRitsuLibSettingString(string key)` / `void SetRitsuLibSettingString(string key, string value)`
 
+`visibleWhenMethod` / `optionsMethod` callbacks are resolved only as static methods on the current provider type (no cross-type execution). Signature mismatch or runtime failure logs a warning and falls back to safe defaults.
+
 `CreateRitsuLibSettingsSchema()` can return:
 
 - `Dictionary<string, object?>` (or equivalent object)
@@ -153,17 +155,37 @@ Provider contract (all methods are `static`):
 
 Godot paths (`res://`, `user://`) are recommended, and regular file paths are also supported.
 
+**JSON Schema (editor validation):** add `"$schema"` at the JSON root and set it to:
+
+`https://raw.githubusercontent.com/BAKAOLC/STS2-RitsuLib/main/schemas/mod-settings/runtime-interop/v1/schema.json`
+
 Structure:
 
-- page: `modId`, `pageId`, `title`, `description`, `sortOrder`, `sections`
-- section: `id`, `title`, `description`, `entries`
-- entry:
-  - common fields: `id`, `type`, `key`, `label`, `description`, `scope`
-  - `type=toggle|string|button|choice|slider|int-slider`
-  - `choice`: `options` (`[{ value, label }]`)
-  - `slider/int-slider`: `min`, `max`, `step`
-  - `string`: `maxLength`
-  - `button`: `buttonText`, `tone`
+- **Root object:** `modId`, optional `modDisplayName`, optional `modSidebarOrder`, **`pages`** (non-empty array).
+- **Page:** `pageId`, `title`, `description`, optional `parentPageId`, `sortOrder`, `sections`.
+- **Section:** `id`, `title`, `description`, `entries`.
+- **Entry:** common fields `id`, `type`, optional `key` (defaults to `id`), optional `label` (defaults to `id`), optional `description`, optional `scope` (`profile` = profile scope; anything else = global), optional `visibleWhenMethod` (static method name; supports `Method()` / `Method(string key)`).
+
+`type` values (case-insensitive unless noted; hyphens optional on some aliases):
+
+| `type` | Role |
+|--------|------|
+| `header` | Non-interactive title row |
+| `paragraph` | Read-only text; optional `maxBodyHeight` |
+| `subpage` | Navigation; requires `targetPageId`, optional `buttonText` |
+| `info-card` | Read-only card; `body` text (title from `label`) |
+| `runtime-hotkey-summary` | Summary row; requires non-empty `bindings` (string array), optional `body`, optional `idSuffix` |
+| `toggle` | Boolean |
+| `slider` | `double`; optional `min`, `max`, `step` (defaults 0, 100, 1; invalid step clamped) |
+| `int-slider` or `intslider` | Integer range |
+| `choice` | String value; requires `options`; optional `optionsMethod` (dynamic options static method, fallback to `options` on failure); optional `presentation` (`dropdown` vs stepper) |
+| `string` | Single-line string; optional `placeholder`, `maxLength` |
+| `multiline-string` or `multiline` | Multiline string; same optional fields as string |
+| `color` | Serialized color string; optional `editAlpha` (default true), `editIntensity` (default false) |
+| `key-binding` or `keybinding` | Key capture string; optional `allowModifierCombos`, `allowModifierOnly` (defaults true), `distinguishModifierSides` (default false) |
+| `button` | Invokes `InvokeRitsuLibSettingAction(key)`; optional `buttonText`, `tone` (`accent` / `danger`) |
+
+**Not exposed through this JSON protocol** (use in-process `ModSettingsSectionBuilder` with a `STS2RitsuLib` reference instead): `AddImage` (texture provider), `AddList` / structured list editors, `AddEnumChoice` (use `choice` with explicit string values), multi-binding `AddKeyBinding` with `List<string>`, and host-context `AddButton(..., Action<IModSettingsUiActionHost>)`.
 
 ---
 

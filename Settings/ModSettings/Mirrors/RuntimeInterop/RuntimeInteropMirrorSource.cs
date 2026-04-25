@@ -25,6 +25,7 @@ namespace STS2RitsuLib.Settings
 
         private static readonly Lock Gate = new();
         private static readonly HashSet<string> SchemaPayloadWarningDedup = new(StringComparer.Ordinal);
+        private static readonly HashSet<string> InteropMethodWarningDedup = new(StringComparer.Ordinal);
 
         private static readonly Dictionary<string, string?> RuntimeRegisteredProviderTypes =
             new(StringComparer.Ordinal);
@@ -311,9 +312,11 @@ namespace STS2RitsuLib.Settings
             {
                 case InteropEntryType.Header:
                     section.AddHeader(entry.Id, label, description);
+                    ApplyEntryVisibilityHook(section, entry, access);
                     return;
                 case InteropEntryType.Paragraph:
                     section.AddParagraph(entry.Id, label, description, entry.MaxBodyHeight);
+                    ApplyEntryVisibilityHook(section, entry, access);
                     return;
                 case InteropEntryType.Subpage:
                     if (string.IsNullOrWhiteSpace(entry.TargetPageId))
@@ -326,6 +329,7 @@ namespace STS2RitsuLib.Settings
                     section.AddSubpage(entry.Id, label, entry.TargetPageId,
                         string.IsNullOrWhiteSpace(entry.ButtonText) ? null : ModSettingsText.Literal(entry.ButtonText),
                         description);
+                    ApplyEntryVisibilityHook(section, entry, access);
                     return;
                 case InteropEntryType.Toggle:
                 {
@@ -335,6 +339,7 @@ namespace STS2RitsuLib.Settings
                         saveAction,
                         entry.Scope);
                     section.AddToggle(entry.Id, label, binding, description);
+                    ApplyEntryVisibilityHook(section, entry, access);
                     return;
                 }
                 case InteropEntryType.Slider:
@@ -345,6 +350,7 @@ namespace STS2RitsuLib.Settings
                         saveAction,
                         entry.Scope);
                     section.AddSlider(entry.Id, label, binding, entry.Min, entry.Max, entry.Step, null, description);
+                    ApplyEntryVisibilityHook(section, entry, access);
                     return;
                 }
                 case InteropEntryType.IntSlider:
@@ -357,6 +363,7 @@ namespace STS2RitsuLib.Settings
                     section.AddIntSlider(entry.Id, label, binding, (int)Math.Round(entry.Min),
                         (int)Math.Round(entry.Max),
                         Math.Max(1, (int)Math.Round(entry.Step)), null, description);
+                    ApplyEntryVisibilityHook(section, entry, access);
                     return;
                 }
                 case InteropEntryType.String:
@@ -366,14 +373,92 @@ namespace STS2RitsuLib.Settings
                         value => WriteString(entry.Key, value, access),
                         saveAction,
                         entry.Scope);
-                    section.AddString(entry.Id, label, binding, null, entry.MaxLength, description);
+                    var placeholder = string.IsNullOrWhiteSpace(entry.Placeholder)
+                        ? null
+                        : ModSettingsText.Literal(entry.Placeholder);
+                    section.AddString(entry.Id, label, binding, placeholder, NormalizeMaxLength(entry.MaxLength),
+                        description);
+                    ApplyEntryVisibilityHook(section, entry, access);
+                    return;
+                }
+                case InteropEntryType.MultilineString:
+                {
+                    var binding = ModSettingsBindings.Callback(modId, dataKey,
+                        () => ReadString(entry.Key, access),
+                        value => WriteString(entry.Key, value, access),
+                        saveAction,
+                        entry.Scope);
+                    var placeholder = string.IsNullOrWhiteSpace(entry.Placeholder)
+                        ? null
+                        : ModSettingsText.Literal(entry.Placeholder);
+                    section.AddMultilineString(entry.Id, label, binding, placeholder,
+                        NormalizeMaxLength(entry.MaxLength), description);
+                    ApplyEntryVisibilityHook(section, entry, access);
+                    return;
+                }
+                case InteropEntryType.Color:
+                {
+                    var binding = ModSettingsBindings.Callback(modId, dataKey,
+                        () => ReadString(entry.Key, access),
+                        value => WriteString(entry.Key, value, access),
+                        saveAction,
+                        entry.Scope);
+                    var editAlpha = entry.EditAlpha ?? true;
+                    var editIntensity = entry.EditIntensity ?? false;
+                    section.AddColor(entry.Id, label, binding, description, editAlpha, editIntensity);
+                    ApplyEntryVisibilityHook(section, entry, access);
+                    return;
+                }
+                case InteropEntryType.KeyBinding:
+                {
+                    var binding = ModSettingsBindings.Callback(modId, dataKey,
+                        () => ReadString(entry.Key, access),
+                        value => WriteString(entry.Key, value, access),
+                        saveAction,
+                        entry.Scope);
+                    var allowModifierCombos = entry.AllowModifierCombos ?? true;
+                    var allowModifierOnly = entry.AllowModifierOnly ?? true;
+                    var distinguishSides = entry.DistinguishModifierSides ?? false;
+                    section.AddKeyBinding(entry.Id, label, binding, allowModifierCombos, allowModifierOnly,
+                        distinguishSides, description);
+                    ApplyEntryVisibilityHook(section, entry, access);
+                    return;
+                }
+                case InteropEntryType.InfoCard:
+                {
+                    var bodyText = string.IsNullOrWhiteSpace(entry.Body)
+                        ? ModSettingsText.Literal(string.Empty)
+                        : ModSettingsText.Literal(entry.Body);
+                    section.AddInfoCard(entry.Id, label, bodyText, description);
+                    ApplyEntryVisibilityHook(section, entry, access);
+                    return;
+                }
+                case InteropEntryType.RuntimeHotkeySummary:
+                {
+                    if (entry.HotkeyBindings.Count == 0)
+                    {
+                        RitsuLibFramework.Logger.Warn(
+                            $"[RuntimeInteropMirrorSource] Skipping runtime-hotkey-summary entry '{entry.Id}' because bindings is empty.");
+                        return;
+                    }
+
+                    var bodyText = string.IsNullOrWhiteSpace(entry.Body)
+                        ? ModSettingsText.Literal(string.Empty)
+                        : ModSettingsText.Literal(entry.Body);
+                    var bindingChips = entry.HotkeyBindings.Select(static b => ModSettingsText.Literal(b)).ToArray();
+                    var idSuffix = string.IsNullOrWhiteSpace(entry.SummaryIdSuffix)
+                        ? null
+                        : ModSettingsText.Literal(entry.SummaryIdSuffix);
+                    section.AddRuntimeHotkeySummary(entry.Id, label, bodyText, bindingChips, idSuffix);
+                    ApplyEntryVisibilityHook(section, entry, access);
                     return;
                 }
                 case InteropEntryType.Choice:
                 {
-                    if (entry.Options.Count == 0)
+                    var optionsSource = ResolveChoiceOptions(entry, access);
+                    if (optionsSource.Count == 0)
                         return;
-                    var options = entry.Options
+                    var options = optionsSource
                         .Select(o => new ModSettingsChoiceOption<string>(o.Value, ModSettingsText.Literal(o.Label)))
                         .ToArray();
                     var firstValue = options[0].Value;
@@ -390,6 +475,7 @@ namespace STS2RitsuLib.Settings
                         entry.ChoicePresentation == "dropdown"
                             ? ModSettingsChoicePresentation.Dropdown
                             : ModSettingsChoicePresentation.Stepper);
+                    ApplyEntryVisibilityHook(section, entry, access);
                     return;
                 }
                 case InteropEntryType.Button:
@@ -399,9 +485,158 @@ namespace STS2RitsuLib.Settings
                         : entry.ButtonText);
                     section.AddButton(entry.Id, label, buttonText, () => access.InvokeAction(entry.Key),
                         entry.ButtonTone, description);
+                    ApplyEntryVisibilityHook(section, entry, access);
                     return;
                 }
             }
+        }
+
+        private static void ApplyEntryVisibilityHook(
+            ModSettingsSectionBuilder section,
+            InteropEntry entry,
+            InteropAccessor access)
+        {
+            if (string.IsNullOrWhiteSpace(entry.VisibleWhenMethod))
+                return;
+
+            section.WithEntryVisibleWhen(entry.Id, () => EvaluateVisibleWhen(entry, access));
+        }
+
+        private static bool EvaluateVisibleWhen(InteropEntry entry, InteropAccessor access)
+        {
+            if (!TryResolveInteropMethod(access.ProviderType, entry.VisibleWhenMethod, out var method))
+                return true;
+
+            object?[] args = method.GetParameters().Length == 0 ? [] : [entry.Key];
+            try
+            {
+                var result = method.Invoke(null, args);
+                return result is bool visible ? visible : CoerceBool(result);
+            }
+            catch (Exception ex)
+            {
+                WarnInteropMethodOnce(access.ProviderType,
+                    $"visibleWhenMethod '{entry.VisibleWhenMethod}' for entry '{entry.Id}' failed: {ex.Message}");
+                return true;
+            }
+        }
+
+        private static List<InteropChoiceOption> ResolveChoiceOptions(InteropEntry entry, InteropAccessor access)
+        {
+            if (string.IsNullOrWhiteSpace(entry.OptionsMethod))
+                return entry.Options;
+
+            if (!TryResolveInteropMethod(access.ProviderType, entry.OptionsMethod, out var method))
+                return entry.Options;
+
+            object?[] args = method.GetParameters().Length == 0 ? [] : [entry.Key];
+            try
+            {
+                var raw = method.Invoke(null, args);
+                var parsed = ParseOptionsFromRaw(raw);
+                if (parsed.Count > 0)
+                    return parsed;
+
+                WarnInteropMethodOnce(access.ProviderType,
+                    $"optionsMethod '{entry.OptionsMethod}' for entry '{entry.Id}' returned no valid options; falling back to static options.");
+                return entry.Options;
+            }
+            catch (Exception ex)
+            {
+                WarnInteropMethodOnce(access.ProviderType,
+                    $"optionsMethod '{entry.OptionsMethod}' for entry '{entry.Id}' failed: {ex.Message}");
+                return entry.Options;
+            }
+        }
+
+        private static List<InteropChoiceOption> ParseOptionsFromRaw(object? raw)
+        {
+            if (raw is not IEnumerable enumerable || raw is string)
+                return [];
+
+            var options = new List<InteropChoiceOption>();
+            foreach (var optionRaw in enumerable.Cast<object?>())
+            {
+                if (optionRaw == null)
+                    continue;
+
+                if (TryAsMap(optionRaw, out var optionMap))
+                {
+                    if (!TryGetString(optionMap, "value", out var value) || string.IsNullOrWhiteSpace(value))
+                        continue;
+                    var label = TryGetString(optionMap, "label", out var optionLabel) &&
+                                !string.IsNullOrWhiteSpace(optionLabel)
+                        ? optionLabel
+                        : value;
+                    options.Add(new(value, label));
+                    continue;
+                }
+
+                var str = optionRaw.ToString();
+                if (string.IsNullOrWhiteSpace(str))
+                    continue;
+                options.Add(new(str, str));
+            }
+
+            return options;
+        }
+
+        private static bool TryResolveInteropMethod(Type providerType, string? rawMethodName, out MethodInfo method)
+        {
+            method = null!;
+            if (string.IsNullOrWhiteSpace(rawMethodName))
+                return false;
+
+            var candidate = rawMethodName.Trim();
+            var methodName = ExtractMethodName(providerType, candidate);
+            if (methodName == null)
+                return false;
+
+            const BindingFlags flags = BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Static;
+            method = providerType.GetMethod(methodName, flags, Type.EmptyTypes)
+                     ?? providerType.GetMethod(methodName, flags, [typeof(string)])!;
+            if (method == null)
+            {
+                WarnInteropMethodOnce(providerType, $"Method '{candidate}' was not found.");
+                return false;
+            }
+
+            var ps = method.GetParameters();
+            switch (ps.Length)
+            {
+                case 0:
+                case 1 when ps[0].ParameterType == typeof(string):
+                    return true;
+                default:
+                    WarnInteropMethodOnce(providerType,
+                        $"Method '{candidate}' has unsupported signature. Allowed: {methodName}() or {methodName}(string).");
+                    return false;
+            }
+        }
+
+        private static string? ExtractMethodName(Type providerType, string candidate)
+        {
+            if (!candidate.Contains('.'))
+                return candidate;
+
+            var qualifiedPrefix = providerType.FullName + ".";
+            var shortPrefix = providerType.Name + ".";
+            if (candidate.StartsWith(qualifiedPrefix, StringComparison.Ordinal))
+                return candidate[qualifiedPrefix.Length..];
+            if (candidate.StartsWith(shortPrefix, StringComparison.Ordinal))
+                return candidate[shortPrefix.Length..];
+
+            WarnInteropMethodOnce(providerType,
+                $"Method '{candidate}' is outside provider type '{providerType.FullName}'. Only provider-owned static methods are allowed.");
+            return null;
+        }
+
+        private static void WarnInteropMethodOnce(Type providerType, string message)
+        {
+            var key = $"{providerType.FullName}::{message}";
+            if (!InteropMethodWarningDedup.Add(key))
+                return;
+            RitsuLibFramework.Logger.Warn($"[RuntimeInteropMirrorSource] {message}");
         }
 
         private static bool ReadBool(string key, InteropAccessor access)
@@ -553,6 +788,7 @@ namespace STS2RitsuLib.Settings
                     $"Provider {providerType.FullName} requires static {ResolverGetMethodName}(string) and {ResolverSetMethodName}(string, object).");
 
             return new(
+                providerType,
                 key => getObject.Invoke(null, [key]),
                 (key, value) => setObject.Invoke(null, [key, value]),
                 key =>
@@ -799,6 +1035,21 @@ namespace STS2RitsuLib.Settings
             var presentation = TryGetString(map, "presentation", out var p) ? p : "stepper";
             var tone = ParseButtonTone(TryGetString(map, "tone", out var toneRaw) ? toneRaw : null);
             var options = ParseOptions(map);
+            var visibleWhenMethod = TryGetString(map, "visibleWhenMethod", out var visibleWhenMethodRaw)
+                ? visibleWhenMethodRaw
+                : null;
+            var optionsMethod = TryGetString(map, "optionsMethod", out var optionsMethodRaw)
+                ? optionsMethodRaw
+                : null;
+            var body = TryGetString(map, "body", out var bodyStr) ? bodyStr : null;
+            var placeholder = TryGetString(map, "placeholder", out var phStr) ? phStr : null;
+            var editAlpha = TryGetNullableBool(map, "editAlpha");
+            var editIntensity = TryGetNullableBool(map, "editIntensity");
+            var allowModifierCombos = TryGetNullableBool(map, "allowModifierCombos");
+            var allowModifierOnly = TryGetNullableBool(map, "allowModifierOnly");
+            var distinguishModifierSides = TryGetNullableBool(map, "distinguishModifierSides");
+            var hotkeyBindings = ParseStringList(map, "bindings");
+            var summaryIdSuffix = TryGetString(map, "idSuffix", out var idSuf) ? idSuf : null;
 
             entry = new(
                 id,
@@ -816,8 +1067,62 @@ namespace STS2RitsuLib.Settings
                 targetPageId,
                 tone,
                 scope,
-                presentation);
+                presentation,
+                body,
+                editAlpha,
+                editIntensity,
+                allowModifierCombos,
+                allowModifierOnly,
+                distinguishModifierSides,
+                placeholder,
+                hotkeyBindings,
+                summaryIdSuffix,
+                visibleWhenMethod,
+                optionsMethod);
             return true;
+        }
+
+        private static int? NormalizeMaxLength(int? maxLength)
+        {
+            return maxLength is >= 1 ? maxLength : null;
+        }
+
+        private static bool? TryGetNullableBool(IDictionary<string, object?> map, string key)
+        {
+            if (!map.TryGetValue(key, out var raw) || raw == null)
+                return null;
+
+            try
+            {
+                return raw switch
+                {
+                    bool b => b,
+                    string s when bool.TryParse(s, out var pb) => pb,
+                    int i => i != 0,
+                    long l => l != 0,
+                    double d => Math.Abs(d) > double.Epsilon,
+                    _ => null,
+                };
+            }
+            catch
+            {
+                return null;
+            }
+        }
+
+        private static List<string> ParseStringList(IDictionary<string, object?> map, string key)
+        {
+            var list = new List<string>();
+            if (!TryGetEnumerable(map, key, out var raw))
+                return list;
+
+            list.AddRange(from item in raw.OfType<object>()
+                select item.ToString()
+                into text
+                where !string.IsNullOrWhiteSpace(text)
+                select text.Trim());
+
+            return list;
         }
 
         private static SaveScope ParseScope(string? value)
@@ -883,6 +1188,12 @@ namespace STS2RitsuLib.Settings
                 "int-slider" or "intslider" => InteropEntryType.IntSlider,
                 "choice" => InteropEntryType.Choice,
                 "string" => InteropEntryType.String,
+                "multiline-string" or "multiline" => InteropEntryType.MultilineString,
+                "color" => InteropEntryType.Color,
+                "key-binding" or "keybinding" => InteropEntryType.KeyBinding,
+                "info-card" or "infocard" => InteropEntryType.InfoCard,
+                "runtime-hotkey-summary" or "runtimehotkeysummary" or "hotkey-summary" =>
+                    InteropEntryType.RuntimeHotkeySummary,
                 "button" => InteropEntryType.Button,
                 _ => (InteropEntryType)(-1),
             };
@@ -1065,7 +1376,18 @@ namespace STS2RitsuLib.Settings
             string? TargetPageId,
             ModSettingsButtonTone ButtonTone,
             SaveScope Scope,
-            string ChoicePresentation);
+            string ChoicePresentation,
+            string? Body,
+            bool? EditAlpha,
+            bool? EditIntensity,
+            bool? AllowModifierCombos,
+            bool? AllowModifierOnly,
+            bool? DistinguishModifierSides,
+            string? Placeholder,
+            List<string> HotkeyBindings,
+            string? SummaryIdSuffix,
+            string? VisibleWhenMethod,
+            string? OptionsMethod);
 
         private sealed record InteropChoiceOption(string Value, string Label);
 
@@ -1079,10 +1401,16 @@ namespace STS2RitsuLib.Settings
             IntSlider,
             Choice,
             String,
+            MultilineString,
+            Color,
+            KeyBinding,
+            InfoCard,
+            RuntimeHotkeySummary,
             Button,
         }
 
         private sealed record InteropAccessor(
+            Type ProviderType,
             Func<string, object?> GetObject,
             Action<string, object?> SetObject,
             Func<string, bool>? GetBool,
