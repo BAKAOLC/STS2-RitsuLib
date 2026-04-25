@@ -119,6 +119,14 @@ def _read_tag_annotation(repo_root: Path, tag: str) -> str:
     return text
 
 
+def _release_title_from_version_tag(tag: str) -> str:
+    """Release title: X.Y.Z without a leading ``v`` (``v0.2.6`` -> ``0.2.6``)."""
+    t = tag.strip()
+    if len(t) > 1 and t[0] in "vV":
+        return t[1:].strip() or t
+    return t
+
+
 def _ensure_tag_points_to_sha(repo_root: Path, tag: str, sha: str) -> None:
     if not sha:
         print("GITHUB_SHA is required to move release tag.", file=sys.stderr)
@@ -191,7 +199,20 @@ def cmd_dev_prerelease(repo_root: Path) -> None:
     if _release_exists(tag, repo):
         _clear_release_assets(tag, repo)
         _gh(["release", "upload", tag, *upload_files, "--repo", repo])
-        _gh(["release", "edit", tag, "--notes", notes, "--prerelease", "--repo", repo])
+        _gh(
+            [
+                "release",
+                "edit",
+                tag,
+                "--title",
+                "Development build (dev)",
+                "--notes",
+                notes,
+                "--prerelease",
+                "--repo",
+                repo,
+            ]
+        )
     else:
         _gh(
             [
@@ -238,10 +259,24 @@ def cmd_tag_release(repo_root: Path, tag: str) -> None:
         if tag_note_prefix
         else generated_notes
     )
+    release_title = _release_title_from_version_tag(tag)
     if _release_exists(tag, repo):
         _clear_release_assets(tag, repo)
         _gh(["release", "upload", tag, *assets, "--repo", repo])
-        _gh(["release", "edit", tag, "--notes", final_notes, "--latest", "--repo", repo])
+        _gh(
+            [
+                "release",
+                "edit",
+                tag,
+                "--title",
+                release_title,
+                "--notes",
+                final_notes,
+                "--latest",
+                "--repo",
+                repo,
+            ]
+        )
     else:
         _gh(
             [
@@ -251,6 +286,8 @@ def cmd_tag_release(repo_root: Path, tag: str) -> None:
                 *assets,
                 "--repo",
                 repo,
+                "--title",
+                release_title,
                 "--notes",
                 final_notes,
                 "--verify-tag",
