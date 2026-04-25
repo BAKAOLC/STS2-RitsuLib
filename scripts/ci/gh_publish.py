@@ -90,41 +90,54 @@ def _generate_release_notes(tag: str, repo: str, target_commitish: str) -> str:
 
 
 def _read_tag_annotation(repo_root: Path, tag: str) -> str:
+    """Full annotated tag message via git for-each-ref; lightweight tags -> empty."""
     tag_ref = f"refs/tags/{tag}"
     kind = subprocess.run(
-        ["git", "cat-file", "-t", tag_ref],
+        ["git", "for-each-ref", "--count=1", tag_ref, "--format=%(objecttype)"],
         cwd=repo_root,
         capture_output=True,
         text=True,
+        encoding="utf-8",
+        errors="replace",
     )
-    if kind.returncode != 0:
+    if kind.returncode != 0 or kind.stdout.strip() != "tag":
         return ""
-    obj_type = kind.stdout.strip()
-    if obj_type == "tag":
-        show = subprocess.run(
-            ["git", "cat-file", "-p", tag_ref],
-            cwd=repo_root,
-            check=True,
-            capture_output=True,
-            text=True,
-        )
-        blob = show.stdout
-        if "\n\n" in blob:
-            return blob.split("\n\n", 1)[1].strip()
+    body = subprocess.run(
+        ["git", "for-each-ref", "--count=1", tag_ref, "--format=%(contents)"],
+        cwd=repo_root,
+        capture_output=True,
+        text=True,
+        encoding="utf-8",
+        errors="replace",
+    )
+    if body.returncode != 0:
         return ""
-    # commit = lightweight tag pointing at commit; do not use commit body as "tag description"
-    return ""
+    text = body.stdout.strip()
+    sig = "-----BEGIN PGP SIGNATURE-----"
+    if sig in text:
+        text = text.split(sig, 1)[0].rstrip()
+    return text
 
 
 def _ensure_tag_points_to_sha(repo_root: Path, tag: str, sha: str) -> None:
     if not sha:
         print("GITHUB_SHA is required to move release tag.", file=sys.stderr)
         raise SystemExit(1)
-    subprocess.run(["git", "tag", "-f", tag, sha], cwd=repo_root, check=True)
+    subprocess.run(
+        ["git", "tag", "-f", tag, sha],
+        cwd=repo_root,
+        check=True,
+        text=True,
+        encoding="utf-8",
+        errors="replace",
+    )
     subprocess.run(
         ["git", "push", "--force", DEFAULT_GIT_REMOTE, f"refs/tags/{tag}"],
         cwd=repo_root,
         check=True,
+        text=True,
+        encoding="utf-8",
+        errors="replace",
     )
 
 
