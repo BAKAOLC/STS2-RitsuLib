@@ -31,6 +31,7 @@ namespace STS2RitsuLib.Utils.Persistence.Patches
         {
             try
             {
+                ModDataCloudMirror.ScheduleDeleteCloudModDataForProfile(profileId);
                 ModDataStore.DeleteAllProfileData(profileId);
                 ProfileManager.Instance.OnProfileDeleted(profileId);
                 DataReadyLifecycle.NotifyProfileInvalidated(profileId, "SaveManager.DeleteProfile");

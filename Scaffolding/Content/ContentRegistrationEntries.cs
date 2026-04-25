@@ -163,7 +163,7 @@ namespace STS2RitsuLib.Scaffolding.Content
     /// <summary>
     ///     Registers <see cref="ModCardHandGlowRegistry" /> rules for a card type (gold/red hand highlights).
     /// </summary>
-    /// <typeparam name="TCard">Concrete <see cref="CardModel" />.</typeparam>
+    /// <typeparam name="TCard"><see cref="CardModel" /> subtype.</typeparam>
     /// <param name="rules">Predicate rules; merged with <see cref="ModCardHandGlowRules.Or" /> if registered twice.</param>
     public sealed class CardHandGlowRegistrationEntry<TCard>(ModCardHandGlowRules rules) : IContentRegistrationEntry
         where TCard : CardModel

@@ -9,9 +9,12 @@
         <EnableDynamicLoading>true</EnableDynamicLoading>
         <GenerateDocumentationFile>true</GenerateDocumentationFile>
         <NoWarn>$(NoWarn);CS0436</NoWarn>
+    </PropertyGroup>
+
+    <PropertyGroup Label="NuGet packaging">
         <IsPackable>true</IsPackable>
         <PackageId>STS2.RitsuLib</PackageId>
-        <Version>0.2.3</Version>
+        <Version>0.2.4</Version>
         <Authors>OLC</Authors>
         <Description>Shared framework library for Slay the Spire 2 mods.</Description>
         <PackageReadmeFile>README.md</PackageReadmeFile>
@@ -19,6 +22,19 @@
         <PackageProjectUrl>https://github.com/BAKAOLC/STS2-RitsuLib</PackageProjectUrl>
         <RepositoryUrl>https://github.com/BAKAOLC/STS2-RitsuLib</RepositoryUrl>
         <RepositoryType>git</RepositoryType>
+    </PropertyGroup>
+
+    <PropertyGroup Label="STS2 API compatibility">
+        <RitsuLibCompatTargets>0.104.0;0.103.2</RitsuLibCompatTargets>
+        <RitsuLibLatestApiCompat>0.104.0</RitsuLibLatestApiCompat>
+        <Sts2ApiCompat Condition="'$(Sts2ApiCompat)' == ''">$(RitsuLibLatestApiCompat)</Sts2ApiCompat>
+        <Sts2ApiSignatureRoot Condition="'$(Sts2ApiSignatureRoot)' == ''">$(MSBuildProjectDirectory)\..\sts2-api-signatures</Sts2ApiSignatureRoot>
+        <Sts2ApiSignatureDir>$(Sts2ApiSignatureRoot)\$(Sts2ApiCompat)</Sts2ApiSignatureDir>
+        <Sts2GameDataDir>$(Sts2DataDir)</Sts2GameDataDir>
+        <Sts2DataDir
+            Condition="Exists('$(Sts2ApiSignatureDir)\sts2.dll') and Exists('$(Sts2ApiSignatureDir)\0Harmony.dll') and Exists('$(Sts2ApiSignatureDir)\Steamworks.NET.dll')">$(Sts2ApiSignatureDir)</Sts2DataDir>
+        <DefineConstants Condition="'$(Sts2ApiCompat)' == '0.103.2'">$(DefineConstants);STS2_V_0_103_2</DefineConstants>
+        <PackageId Condition="'$(Sts2ApiCompat)' != '$(RitsuLibLatestApiCompat)'">STS2.RitsuLib.Compat.$(Sts2ApiCompat)</PackageId>
     </PropertyGroup>
     <Target Name="ValidateSts2GameInstall" BeforeTargets="ResolveAssemblyReferences">
         <Error
@@ -47,7 +63,7 @@
     <ItemGroup>
         <None Include="README.md" Pack="true" PackagePath="\"/>
         <None Include="mod_manifest.json" Pack="true" PackagePath="contentFiles/any/any/"/>
-        <None Include="buildTransitive\STS2.RitsuLib.targets" Pack="true" PackagePath="buildTransitive/"/>
+        <None Include="buildTransitive\STS2.RitsuLib.targets" Pack="true" PackagePath="buildTransitive/$(PackageId).targets"/>
     </ItemGroup>
     <!-- Exclude game source reference folder from compilation -->
     <ItemGroup>

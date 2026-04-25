@@ -413,6 +413,19 @@ namespace STS2RitsuLib
         }
 
         /// <summary>
+        ///     Declares a <c>mod_data</c> JSON path that may participate in RitsuLib Steam Cloud sync when the player enables
+        ///     it and the session uses Steam Cloud. Prefer <see cref="Data.ModDataStore.Register{T}" /> when you already use
+        ///     <see cref="Data.ModDataStore" />; this call is for custom persistence that still resolves via
+        ///     <see cref="Utils.Persistence.ProfileManager" />.
+        /// </summary>
+        public static void RegisterModCloudPersistedSlot(string modId, string fileName, SaveScope scope)
+        {
+            ArgumentException.ThrowIfNullOrWhiteSpace(modId);
+            ArgumentException.ThrowIfNullOrWhiteSpace(fileName);
+            ModCloudSyncPathRegistry.RegisterModDataSlot(modId, fileName, scope);
+        }
+
+        /// <summary>
         ///     Registers a page in the RitsuLib mod settings submenu.
         /// </summary>
         /// <remarks>Optional layout: <see cref="ModSettingsUiPresentation.ParagraphMaxBodyHeight" />.</remarks>
