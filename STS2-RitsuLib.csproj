@@ -72,7 +72,7 @@
         <Content Remove="sts-2-source\**"/>
         <EmbeddedResource Remove="sts-2-source\**"/>
     </ItemGroup>
-    <Target Name="Copy Mod" AfterTargets="Build">
+    <Target Name="Copy Mod" AfterTargets="Build" Condition="'$(Sts2ApiCompat)' == '$(RitsuLibLatestApiCompat)'">
         <Message Text="Copying mod to Slay the Spire 2 mods folder..." Importance="high"/>
         <MakeDir Directories="$(Sts2Dir)\mods\$(MSBuildProjectName)\"/>
         <Copy SourceFiles="$(TargetPath)" DestinationFolder="$(Sts2Dir)\mods\$(MSBuildProjectName)\"/>
