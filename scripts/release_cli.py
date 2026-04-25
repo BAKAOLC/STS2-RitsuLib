@@ -58,6 +58,11 @@ def _parse_args(argv: list[str]) -> argparse.Namespace:
     )
     p.add_argument("--no-pull", action="store_true", help="Skip git pull on dev/main before merge")
     p.add_argument("--skip-nuget", action="store_true", help="Do not pack/push NuGet after push")
+    p.add_argument(
+        "--artifacts-only",
+        action="store_true",
+        help="Build nupkg + GitHub zip artifacts only; no version/git/push/NuGet changes.",
+    )
     p.add_argument("--configuration", default="Release")
     p.add_argument(
         "--compat-targets",
@@ -186,6 +191,18 @@ def main(argv: list[str] | None = None) -> int:
     print(f"[release] version:   {current_text} -> {next_text}", flush=True)
     print(f"[release] tag:       {tag}", flush=True)
     print(f"[release] nuget targets: {', '.join(compat_targets)}", flush=True)
+
+    if args.artifacts_only:
+        packages, zips = nuget_ops.build_artifacts(
+            ritsulib,
+            configuration=args.configuration,
+            skip_build=args.skip_build,
+            compat_targets=compat_targets,
+        )
+        print(f"[release] Artifacts packages: {', '.join(pkg.name for pkg in packages)}")
+        print(f"[release] Artifacts zips: {', '.join(zip_path.name for zip_path in zips)}")
+        print("[release] done (artifacts-only).")
+        return 0
 
     if args.dry_run:
         _dry_run_git_warnings(repo, args.dev_branch)

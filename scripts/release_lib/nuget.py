@@ -4,7 +4,9 @@ import os
 import shutil
 import subprocess
 import tempfile
+import time
 import zipfile
+import xml.etree.ElementTree as ET
 from pathlib import Path
 
 
@@ -18,6 +20,7 @@ def run_pack(
 ) -> Path:
     artifacts_dir.mkdir(parents=True, exist_ok=True)
     csproj = ritsulib_root / "STS2-RitsuLib.csproj"
+    started_at = time.time()
     before = {p.resolve() for p in artifacts_dir.glob("*.nupkg")}
     args = [
         "dotnet",
@@ -37,10 +40,46 @@ def run_pack(
 
     nupkgs = sorted((p for p in artifacts_dir.glob("*.nupkg") if not p.name.endswith(".snupkg")))
     created = [p for p in nupkgs if p.resolve() not in before]
-    if not created:
-        msg = f"No new .nupkg generated for compat target {compat_target!r} under {artifacts_dir}"
-        raise RuntimeError(msg)
-    return max(created, key=lambda p: p.stat().st_mtime)
+    if created:
+        return max(created, key=lambda p: p.stat().st_mtime)
+
+    refreshed = [p for p in nupkgs if p.stat().st_mtime >= started_at - 1]
+    if refreshed:
+        return max(refreshed, key=lambda p: p.stat().st_mtime)
+
+    expected = _resolve_expected_package_path(csproj, artifacts_dir, compat_target)
+    if expected is not None and expected.is_file():
+        return expected
+
+    msg = f"No .nupkg generated for compat target {compat_target!r} under {artifacts_dir}"
+    raise RuntimeError(msg)
+
+
+def _resolve_expected_package_path(csproj: Path, artifacts_dir: Path, compat_target: str) -> Path | None:
+    try:
+        root = ET.fromstring(csproj.read_text(encoding="utf-8"))
+    except ET.ParseError:
+        return None
+
+    base_package_id = _first_node_text(root, ".//PackageId")
+    version = _first_node_text(root, ".//Version")
+    latest_compat = _first_node_text(root, ".//RitsuLibLatestApiCompat")
+    if not base_package_id or not version:
+        return None
+
+    if latest_compat and compat_target != latest_compat:
+        package_id = f"{base_package_id}.Compat.{compat_target}"
+    else:
+        package_id = base_package_id
+    return artifacts_dir / f"{package_id}.{version}.nupkg"
+
+
+def _first_node_text(root: ET.Element, xpath: str) -> str | None:
+    node = root.find(xpath)
+    if node is None or node.text is None:
+        return None
+    value = node.text.strip()
+    return value or None
 
 
 def _resolve_api_key(api_key: str | None) -> str:
@@ -84,6 +123,37 @@ def publish_nugets(
         published.append(package)
         zips.append(zip_path)
     return published, zips
+
+
+def build_artifacts(
+    ritsulib_root: Path,
+    *,
+    configuration: str,
+    skip_build: bool,
+    compat_targets: list[str],
+) -> tuple[list[Path], list[Path]]:
+    artifacts_dir = ritsulib_root / "artifacts" / "nuget"
+    github_dir = ritsulib_root / "artifacts" / "github"
+    packages: list[Path] = []
+    zips: list[Path] = []
+    for compat_target in compat_targets:
+        package = run_pack(
+            ritsulib_root,
+            configuration=configuration,
+            skip_build=skip_build,
+            artifacts_dir=artifacts_dir,
+            compat_target=compat_target,
+        )
+        zip_path = create_github_zip(
+            ritsulib_root,
+            package=package,
+            configuration=configuration,
+            compat_target=compat_target,
+            output_dir=github_dir,
+        )
+        packages.append(package)
+        zips.append(zip_path)
+    return packages, zips
 
 
 def publish_nuget(
