@@ -12,6 +12,9 @@ artifacts/github/
 local.props
 !local.props.template
 
+# CI dummy game dir used by workflow scripts
+.ci-sts2-dir/
+
 # Python (scripts/release_cli.py, uv)
 __pycache__/
 *.py[cod]
