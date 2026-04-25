@@ -58,11 +58,16 @@ def _parse_args(argv: list[str]) -> argparse.Namespace:
     )
     p.add_argument("--no-pull", action="store_true", help="Skip git pull on dev/main before merge")
     p.add_argument("--skip-nuget", action="store_true", help="Do not pack/push NuGet after push")
+    p.add_argument(
+        "--artifacts-only",
+        action="store_true",
+        help="Build nupkg + GitHub zip artifacts only; no version/git/push/NuGet changes.",
+    )
     p.add_argument("--configuration", default="Release")
     p.add_argument(
         "--compat-targets",
         default="all",
-        help='Compatibility targets to publish, comma-separated (for example "0.104.0,0.103.2"), or "all" (default).',
+        help='Compatibility targets to publish, comma-separated (for example "x.y.z,a.b.c"), or "all" (default).',
     )
     p.add_argument("--nuget-source", default=DEFAULT_NUGET_SOURCE)
     p.add_argument("--api-key", default=None, help="NuGet API key (else env NUGET_API_KEY)")
@@ -84,7 +89,8 @@ def _read_default_compat_targets(csproj_path: Path) -> list[str]:
     root = ET.fromstring(csproj_path.read_text(encoding="utf-8"))
     node = root.find(".//RitsuLibCompatTargets")
     if node is None or not node.text:
-        return ["0.104.0"]
+        msg = "RitsuLibCompatTargets is missing in STS2-RitsuLib.csproj."
+        raise RuntimeError(msg)
     return [v.strip() for v in node.text.split(";") if v.strip()]
 
 
@@ -185,6 +191,18 @@ def main(argv: list[str] | None = None) -> int:
     print(f"[release] version:   {current_text} -> {next_text}", flush=True)
     print(f"[release] tag:       {tag}", flush=True)
     print(f"[release] nuget targets: {', '.join(compat_targets)}", flush=True)
+
+    if args.artifacts_only:
+        packages, zips = nuget_ops.build_artifacts(
+            ritsulib,
+            configuration=args.configuration,
+            skip_build=args.skip_build,
+            compat_targets=compat_targets,
+        )
+        print(f"[release] Artifacts packages: {', '.join(pkg.name for pkg in packages)}")
+        print(f"[release] Artifacts zips: {', '.join(zip_path.name for zip_path in zips)}")
+        print("[release] done (artifacts-only).")
+        return 0
 
     if args.dry_run:
         _dry_run_git_warnings(repo, args.dev_branch)
@@ -343,7 +361,7 @@ def main(argv: list[str] | None = None) -> int:
     subprocess.run(tag_push, cwd=repo, check=True)
 
     if not args.skip_nuget:
-        published = nuget_ops.publish_nugets(
+        published, github_zips = nuget_ops.publish_nugets(
             ritsulib,
             configuration=args.configuration,
             source=args.nuget_source,
@@ -352,6 +370,7 @@ def main(argv: list[str] | None = None) -> int:
             compat_targets=compat_targets,
         )
         print(f"[release] NuGet published: {', '.join(pkg.name for pkg in published)}")
+        print(f"[release] GitHub zips: {', '.join(zip_path.name for zip_path in github_zips)}")
 
     print("[release] done.")
     return 0
@@ -443,7 +462,7 @@ def _print_git_plan(
         step("(skip NuGet)", step_id="")
     else:
         step(
-            f"dotnet pack + dotnet nuget push (targets: {', '.join(compat_targets)})",
+            f"dotnet pack + github zip + dotnet nuget push (targets: {', '.join(compat_targets)})",
             step_id=plan_analysis.NUGET,
         )
 

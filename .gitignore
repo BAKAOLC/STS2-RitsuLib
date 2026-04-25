@@ -5,6 +5,7 @@
 .idea/
 *.sln.DotSettings.user
 artifacts/nuget/
+artifacts/github/
 
 .vs/
 
