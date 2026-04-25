@@ -17,7 +17,7 @@ namespace STS2RitsuLib.CardPiles
     /// </summary>
     internal static class ModCardPileInjector
     {
-        private const float BottomLeftStackDeltaX = -100f;
+        private const float BottomLeftStackDeltaX = 100f;
         private const float BottomRightStackDeltaX = -100f;
 
         /// <summary>

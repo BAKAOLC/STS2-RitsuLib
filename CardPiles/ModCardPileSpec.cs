@@ -24,7 +24,8 @@ namespace STS2RitsuLib.CardPiles
         public const string HoverTipLocTable = "static_hover_tips";
 
         /// <summary>
-        ///     Builds a spec with defaults suitable for a combat-only, bottom-left auto-stacking pile.
+        ///     Builds a spec with defaults suitable for a combat-only bottom-left pile that auto-stacks
+        ///     toward the screen center (same row as the draw pile).
         /// </summary>
         public ModCardPileSpec()
         {
