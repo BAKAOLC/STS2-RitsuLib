@@ -24,19 +24,22 @@ namespace STS2RitsuLib.Utils
         /// </summary>
         public static ShaderMaterial CreateRgbShaderMaterial(float r, float g, float b)
         {
-            var shader = GameHsvShader ?? throw new InvalidOperationException($"Failed to load HSV shader ({HsvShaderPath}).");
-            var color = new Color(r, g, b);
+            var max = Math.Max(r, Math.Max(g, b));
+            var min = Math.Min(r, Math.Min(g, b));
+            var delta = max - min;
 
-            var material = new ShaderMaterial
+            float h = 0;
+            if (delta != 0)
             {
-                Shader = shader,
-            };
+                if (max == r) h = (g - b) / delta + (g < b ? 6 : 0);
+                else if (max == g) h = (b - r) / delta + 2;
+                else h = (r - g) / delta + 4;
+                h /= 6;
+            }
 
-            material.SetShaderParameter("h", color.H);
-            material.SetShaderParameter("s", color.S);
-            material.SetShaderParameter("v", color.V);
-
-            return material;
+            var s = (max == 0) ? 0 : (delta / max);
+            var v = max;
+            return CreateHsvShaderMaterial(h, s, v);
         }
 
         /// <summary>
