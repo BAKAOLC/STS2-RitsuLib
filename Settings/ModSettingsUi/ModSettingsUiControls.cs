@@ -3456,7 +3456,7 @@ namespace STS2RitsuLib.Settings
                 _editorClip.Visible = !_collapsed;
                 SetEditorClipHeight(0f);
                 if (!_collapsed)
-                    Callable.From(() => Callable.From(SyncEditorExpandedHeight).CallDeferred()).CallDeferred();
+                    DeferEditorExpandedHeightSync();
                 return;
             }
 
@@ -3506,6 +3506,11 @@ namespace STS2RitsuLib.Settings
                 Callable.From(SyncEditorExpandedHeight).CallDeferred();
         }
 
+        private void DeferEditorExpandedHeightSync()
+        {
+            Callable.From(() => Callable.From(SyncEditorExpandedHeight).CallDeferred()).CallDeferred();
+        }
+
         private float MeasureEditorExpandedHeight()
         {
             if (_editorSurface == null)
@@ -3537,7 +3542,7 @@ namespace STS2RitsuLib.Settings
                 if (current is Container container)
                     container.QueueSort();
                 if (current is ModSettingsCollapsibleSection section)
-                    section.RefreshNestedCollapseHeight();
+                    section.SyncContentExpandedHeight();
                 if (current is ModSettingsScrollContainer found)
                 {
                     found.RefreshContentMetrics();
@@ -3893,11 +3898,7 @@ namespace STS2RitsuLib.Settings
 
         private void ToggleCollapsed()
         {
-            var wasCollapsed = _collapsed;
-            _collapsed = !_collapsed;
-            ApplyCollapsedState(true);
-            if (wasCollapsed && !_collapsed)
-                Callable.From(EnsureExpandedSectionVisible).CallDeferred();
+            SetCollapsed(!_collapsed, true);
         }
 
         private void ApplyCollapsedState(bool animate = false)
@@ -3917,7 +3918,7 @@ namespace STS2RitsuLib.Settings
                 _contentClip.Visible = !_collapsed;
                 SetContentClipHeight(0f);
                 if (!_collapsed)
-                    Callable.From(() => Callable.From(SyncContentExpandedHeight).CallDeferred()).CallDeferred();
+                    DeferContentExpandedHeightSync();
                 return;
             }
 
@@ -3967,6 +3968,11 @@ namespace STS2RitsuLib.Settings
                 Callable.From(SyncContentExpandedHeight).CallDeferred();
         }
 
+        private void DeferContentExpandedHeightSync()
+        {
+            Callable.From(() => Callable.From(SyncContentExpandedHeight).CallDeferred()).CallDeferred();
+        }
+
         private float MeasureContentExpandedHeight()
         {
             if (_content == null)
@@ -3976,7 +3982,7 @@ namespace STS2RitsuLib.Settings
             return _content.GetCombinedMinimumSize().Y;
         }
 
-        private void SyncContentExpandedHeight()
+        internal void SyncContentExpandedHeight()
         {
             if (!_trackContentHeight || _content == null || _contentClip == null)
                 return;
@@ -3984,9 +3990,17 @@ namespace STS2RitsuLib.Settings
             SetContentClipHeight(MeasureContentExpandedHeight());
         }
 
-        internal void RefreshNestedCollapseHeight()
+        internal bool SetCollapsed(bool collapsed, bool ensureExpandedVisible)
         {
-            SyncContentExpandedHeight();
+            if (_collapsed == collapsed)
+                return false;
+
+            var wasCollapsed = _collapsed;
+            _collapsed = collapsed;
+            ApplyCollapsedState(true);
+            if (ensureExpandedVisible && wasCollapsed && !_collapsed)
+                Callable.From(EnsureExpandedSectionVisible).CallDeferred();
+            return true;
         }
 
         private void SetContentClipHeight(float height)

@@ -31,6 +31,8 @@ public sealed partial class ModSettingsScrollContainer : Control
     /// </summary>
     public const float TopFade = 24f;
 
+    private const float ExtraScrollExtent = 32f;
+
     private readonly bool _disableScrollingIfContentFits;
 
     private float _controllerScrollAmount = 400f;
@@ -75,7 +77,7 @@ public sealed partial class ModSettingsScrollContainer : Control
     /// <summary>Game scrollbar instance (0–100).</summary>
     public NScrollbar Scrollbar => _scrollbar;
 
-    private float ContentHeight => _content?.GetCombinedMinimumSize().Y ?? 0f;
+    private float ContentHeight => _content == null ? 0f : _content.GetCombinedMinimumSize().Y + ExtraScrollExtent;
 
     private float ScrollViewportSize => _clipper.Size.Y;
 
