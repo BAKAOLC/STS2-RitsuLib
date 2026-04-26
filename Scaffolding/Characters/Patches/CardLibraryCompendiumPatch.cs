@@ -11,7 +11,8 @@ using STS2RitsuLib.Utils;
 namespace STS2RitsuLib.Scaffolding.Characters.Patches
 {
     /// <summary>
-    ///     Adds a pool-filter button for each registered mod character in the card library compendium, and
+    ///     Adds a pool-filter button for each registered mod character in the card library compendium (skips
+    ///     characters with <see cref="IModCharacterVanillaSelectionPolicy.HideInCardLibraryCompendium" />), and
     ///     re-applies pool-filter art from <see cref="CharacterModel.IconTexture" /> (so
     ///     <see
     ///         cref="ModContentRegistry.RegisterCharacterAssetReplacement(string, Scaffolding.Characters.CharacterAssetProfile)" />
@@ -84,6 +85,9 @@ namespace STS2RitsuLib.Scaffolding.Characters.Patches
             var nextIndex = insertIndex;
             foreach (var character in modCharacters)
             {
+                if (character is IModCharacterVanillaSelectionPolicy { HideInCardLibraryCompendium: true })
+                    continue;
+
                 string? iconTexturePath = null;
                 if (character is IModCharacterAssetOverrides assetOverrides)
                     iconTexturePath = assetOverrides.CustomIconTexturePath;

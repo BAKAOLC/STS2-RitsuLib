@@ -23,7 +23,8 @@ namespace STS2RitsuLib.Scaffolding.Characters
     }
 
     /// <summary>
-    ///     Controls whether a mod character should appear in vanilla character-select and random selection flows.
+    ///     Controls mod-character visibility in vanilla character-select, random selection, and the card library
+    ///     compendium pool-filter row.
     /// </summary>
     public interface IModCharacterVanillaSelectionPolicy
     {
@@ -36,6 +37,13 @@ namespace STS2RitsuLib.Scaffolding.Characters
         ///     When false, excludes the character from vanilla random character selection.
         /// </summary>
         bool AllowInVanillaRandomCharacterSelect { get; }
+
+        /// <summary>
+        ///     When true, <see cref="STS2RitsuLib.Scaffolding.Characters.Patches.CardLibraryCompendiumPatch" /> does not add a
+        ///     card-pool filter toggle for
+        ///     this character (aligned with BaseLib <c>CustomCharacterModel.HideInCompendium</c>).
+        /// </summary>
+        bool HideInCardLibraryCompendium { get; }
     }
 
     /// <summary>
@@ -538,6 +546,9 @@ namespace STS2RitsuLib.Scaffolding.Characters
 
         /// <inheritdoc />
         public virtual bool AllowInVanillaRandomCharacterSelect => !HideFromVanillaCharacterSelect;
+
+        /// <inheritdoc />
+        public virtual bool HideInCardLibraryCompendium => false;
 
         CreatureAnimator? IModCreatureAnimatorFactory.TryCreateCreatureAnimator(MegaSprite controller)
         {
