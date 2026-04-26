@@ -504,8 +504,8 @@ namespace STS2RitsuLib.Scaffolding.Content.Patches
         {
             return
             [
-                new(typeof(EpochModel), "get_PackedPortraitPath"),
-                new(typeof(EpochModel), "get_BigPortraitPath"),
+                new(typeof(EpochModel), "PackedPortraitPath", MethodType.Getter),
+                new(typeof(EpochModel), "BigPortraitPath", MethodType.Getter),
             ];
         }
 
@@ -553,8 +553,8 @@ namespace STS2RitsuLib.Scaffolding.Content.Patches
         {
             return
             [
-                new(typeof(CardModel), "get_PortraitPath"),
-                new(typeof(CardModel), "get_BetaPortraitPath"),
+                new(typeof(CardModel), "PortraitPath", MethodType.Getter),
+                new(typeof(CardModel), "BetaPortraitPath", MethodType.Getter),
             ];
         }
 
@@ -612,8 +612,8 @@ namespace STS2RitsuLib.Scaffolding.Content.Patches
         {
             return
             [
-                new(typeof(CardModel), "get_HasPortrait"),
-                new(typeof(CardModel), "get_HasBetaPortrait"),
+                new(typeof(CardModel), "HasPortrait", MethodType.Getter),
+                new(typeof(CardModel), "HasBetaPortrait", MethodType.Getter),
             ];
         }
 
@@ -675,9 +675,9 @@ namespace STS2RitsuLib.Scaffolding.Content.Patches
         {
             return
             [
-                new(typeof(CardModel), "get_Frame"),
-                new(typeof(CardModel), "get_PortraitBorder"),
-                new(typeof(CardModel), "get_EnergyIcon"),
+                new(typeof(CardModel), "Frame", MethodType.Getter),
+                new(typeof(CardModel), "PortraitBorder", MethodType.Getter),
+                new(typeof(CardModel), "EnergyIcon", MethodType.Getter),
             ];
         }
 
@@ -745,7 +745,7 @@ namespace STS2RitsuLib.Scaffolding.Content.Patches
         {
             return
             [
-                new(typeof(CardModel), "get_FrameMaterial"),
+                new(typeof(CardModel), "FrameMaterial", MethodType.Getter),
             ];
         }
 
@@ -787,7 +787,7 @@ namespace STS2RitsuLib.Scaffolding.Content.Patches
         {
             return
             [
-                new(typeof(CardPoolModel), "get_FrameMaterial"),
+                new(typeof(CardPoolModel), "FrameMaterial", MethodType.Getter),
             ];
         }
 
@@ -829,7 +829,7 @@ namespace STS2RitsuLib.Scaffolding.Content.Patches
         {
             return
             [
-                new(typeof(CardModel), "get_AllPortraitPaths"),
+                new(typeof(CardModel), "AllPortraitPaths", MethodType.Getter),
             ];
         }
 
@@ -868,7 +868,7 @@ namespace STS2RitsuLib.Scaffolding.Content.Patches
         {
             return
             [
-                new(typeof(CardModel), "get_OverlayPath"),
+                new(typeof(CardModel), "OverlayPath", MethodType.Getter),
             ];
         }
 
@@ -909,7 +909,7 @@ namespace STS2RitsuLib.Scaffolding.Content.Patches
         {
             return
             [
-                new(typeof(CardModel), "get_HasBuiltInOverlay"),
+                new(typeof(CardModel), "HasBuiltInOverlay", MethodType.Getter),
             ];
         }
 
@@ -1003,9 +1003,9 @@ namespace STS2RitsuLib.Scaffolding.Content.Patches
         {
             return
             [
-                new(typeof(RelicModel), "get_IconPath"),
-                new(typeof(RelicModel), "get_PackedIconPath", true),
-                new(typeof(RelicModel), "get_PackedIconOutlinePath", true),
+                new(typeof(RelicModel), "IconPath", MethodType.Getter),
+                new(typeof(RelicModel), "PackedIconPath", null, true, MethodType.Getter),
+                new(typeof(RelicModel), "PackedIconOutlinePath", null, true, MethodType.Getter),
             ];
         }
 
@@ -1072,9 +1072,9 @@ namespace STS2RitsuLib.Scaffolding.Content.Patches
         {
             return
             [
-                new(typeof(RelicModel), "get_Icon"),
-                new(typeof(RelicModel), "get_IconOutline"),
-                new(typeof(RelicModel), "get_BigIcon"),
+                new(typeof(RelicModel), "Icon", MethodType.Getter),
+                new(typeof(RelicModel), "IconOutline", MethodType.Getter),
+                new(typeof(RelicModel), "BigIcon", MethodType.Getter),
             ];
         }
 
@@ -1146,8 +1146,8 @@ namespace STS2RitsuLib.Scaffolding.Content.Patches
         {
             return
             [
-                new(typeof(PowerModel), "get_IconPath"),
-                new(typeof(PowerModel), "get_PackedIconPath", true),
+                new(typeof(PowerModel), "IconPath", MethodType.Getter),
+                new(typeof(PowerModel), "PackedIconPath", null, true, MethodType.Getter),
             ];
         }
 
@@ -1191,8 +1191,8 @@ namespace STS2RitsuLib.Scaffolding.Content.Patches
         {
             return
             [
-                new(typeof(PowerModel), "get_Icon"),
-                new(typeof(PowerModel), "get_BigIcon"),
+                new(typeof(PowerModel), "Icon", MethodType.Getter),
+                new(typeof(PowerModel), "BigIcon", MethodType.Getter),
             ];
         }
 
@@ -1235,7 +1235,7 @@ namespace STS2RitsuLib.Scaffolding.Content.Patches
         {
             return
             [
-                new(typeof(OrbModel), "get_Icon"),
+                new(typeof(OrbModel), "Icon", MethodType.Getter),
             ];
         }
 
@@ -1273,7 +1273,7 @@ namespace STS2RitsuLib.Scaffolding.Content.Patches
         {
             return
             [
-                new(typeof(OrbModel), "get_SpritePath"),
+                new(typeof(OrbModel), "SpritePath", MethodType.Getter),
             ];
         }
 
@@ -1311,7 +1311,7 @@ namespace STS2RitsuLib.Scaffolding.Content.Patches
         {
             return
             [
-                new(typeof(OrbModel), "get_AssetPaths"),
+                new(typeof(OrbModel), "AssetPaths", MethodType.Getter),
             ];
         }
 
@@ -1357,10 +1357,10 @@ namespace STS2RitsuLib.Scaffolding.Content.Patches
         {
             return
             [
-                new(typeof(PotionModel), "get_ImagePath"),
-                new(typeof(PotionModel), "get_OutlinePath"),
-                new(typeof(PotionModel), "get_PackedImagePath", true),
-                new(typeof(PotionModel), "get_PackedOutlinePath", true),
+                new(typeof(PotionModel), "ImagePath", MethodType.Getter),
+                new(typeof(PotionModel), "OutlinePath", MethodType.Getter),
+                new(typeof(PotionModel), "PackedImagePath", null, true, MethodType.Getter),
+                new(typeof(PotionModel), "PackedOutlinePath", null, true, MethodType.Getter),
             ];
         }
 
@@ -1421,8 +1421,8 @@ namespace STS2RitsuLib.Scaffolding.Content.Patches
         {
             return
             [
-                new(typeof(PotionModel), "get_Image"),
-                new(typeof(PotionModel), "get_Outline"),
+                new(typeof(PotionModel), "Image", MethodType.Getter),
+                new(typeof(PotionModel), "Outline", MethodType.Getter),
             ];
         }
 
@@ -1477,7 +1477,7 @@ namespace STS2RitsuLib.Scaffolding.Content.Patches
         /// <inheritdoc cref="IPatchMethod.GetTargets" />
         public static ModPatchTarget[] GetTargets()
         {
-            return [new(typeof(CardModel), "get_BannerTexture")];
+            return [new(typeof(CardModel), "BannerTexture", MethodType.Getter)];
         }
 
         // ReSharper disable InconsistentNaming
@@ -1513,7 +1513,7 @@ namespace STS2RitsuLib.Scaffolding.Content.Patches
         /// <inheritdoc cref="IPatchMethod.GetTargets" />
         public static ModPatchTarget[] GetTargets()
         {
-            return [new(typeof(CardModel), "get_BannerMaterial")];
+            return [new(typeof(CardModel), "BannerMaterial", MethodType.Getter)];
         }
 
         // ReSharper disable InconsistentNaming
@@ -1549,7 +1549,7 @@ namespace STS2RitsuLib.Scaffolding.Content.Patches
         /// <inheritdoc cref="IPatchMethod.GetTargets" />
         public static ModPatchTarget[] GetTargets()
         {
-            return [new(typeof(ActModel), "get_BackgroundScenePath")];
+            return [new(typeof(ActModel), "BackgroundScenePath", MethodType.Getter)];
         }
 
         // ReSharper disable InconsistentNaming
@@ -1584,7 +1584,7 @@ namespace STS2RitsuLib.Scaffolding.Content.Patches
         /// <inheritdoc cref="IPatchMethod.GetTargets" />
         public static ModPatchTarget[] GetTargets()
         {
-            return [new(typeof(ActModel), "get_RestSiteBackgroundPath")];
+            return [new(typeof(ActModel), "RestSiteBackgroundPath", MethodType.Getter)];
         }
 
         // ReSharper disable InconsistentNaming
@@ -1621,9 +1621,9 @@ namespace STS2RitsuLib.Scaffolding.Content.Patches
         {
             return
             [
-                new(typeof(ActModel), "get_MapTopBgPath"),
-                new(typeof(ActModel), "get_MapMidBgPath"),
-                new(typeof(ActModel), "get_MapBotBgPath"),
+                new(typeof(ActModel), "MapTopBgPath", MethodType.Getter),
+                new(typeof(ActModel), "MapMidBgPath", MethodType.Getter),
+                new(typeof(ActModel), "MapBotBgPath", MethodType.Getter),
             ];
         }
 
@@ -1676,7 +1676,7 @@ namespace STS2RitsuLib.Scaffolding.Content.Patches
         /// <inheritdoc cref="IPatchMethod.GetTargets" />
         public static ModPatchTarget[] GetTargets()
         {
-            return [new(typeof(EventModel), "get_BackgroundScenePath")];
+            return [new(typeof(EventModel), "BackgroundScenePath", MethodType.Getter)];
         }
 
         // ReSharper disable InconsistentNaming
@@ -1816,7 +1816,7 @@ namespace STS2RitsuLib.Scaffolding.Content.Patches
         /// <inheritdoc cref="IPatchMethod.GetTargets" />
         public static ModPatchTarget[] GetTargets()
         {
-            return [new(typeof(EventModel), "get_HasVfx")];
+            return [new(typeof(EventModel), "HasVfx", MethodType.Getter)];
         }
 
         // ReSharper disable InconsistentNaming
@@ -1980,8 +1980,8 @@ namespace STS2RitsuLib.Scaffolding.Content.Patches
         {
             return
             [
-                new(typeof(AncientEventModel), "get_MapIcon"),
-                new(typeof(AncientEventModel), "get_MapIconOutline"),
+                new(typeof(AncientEventModel), "MapIcon", MethodType.Getter),
+                new(typeof(AncientEventModel), "MapIconOutline", MethodType.Getter),
             ];
         }
 
@@ -2030,8 +2030,8 @@ namespace STS2RitsuLib.Scaffolding.Content.Patches
         {
             return
             [
-                new(typeof(AncientEventModel), "get_RunHistoryIcon"),
-                new(typeof(AncientEventModel), "get_RunHistoryIconOutline"),
+                new(typeof(AncientEventModel), "RunHistoryIcon", MethodType.Getter),
+                new(typeof(AncientEventModel), "RunHistoryIconOutline", MethodType.Getter),
             ];
         }
 
@@ -2079,7 +2079,7 @@ namespace STS2RitsuLib.Scaffolding.Content.Patches
         /// <inheritdoc cref="IPatchMethod.GetTargets" />
         public static ModPatchTarget[] GetTargets()
         {
-            return [new(typeof(AncientEventModel), "get_MapNodeAssetPaths")];
+            return [new(typeof(AncientEventModel), "MapNodeAssetPaths", MethodType.Getter)];
         }
 
         // ReSharper disable InconsistentNaming
@@ -2140,7 +2140,7 @@ namespace STS2RitsuLib.Scaffolding.Content.Patches
         /// <inheritdoc cref="IPatchMethod.GetTargets" />
         public static ModPatchTarget[] GetTargets()
         {
-            return [new(typeof(AfflictionModel), "get_OverlayPath")];
+            return [new(typeof(AfflictionModel), "OverlayPath", MethodType.Getter)];
         }
 
         // ReSharper disable InconsistentNaming
@@ -2173,7 +2173,7 @@ namespace STS2RitsuLib.Scaffolding.Content.Patches
         /// <inheritdoc cref="IPatchMethod.GetTargets" />
         public static ModPatchTarget[] GetTargets()
         {
-            return [new(typeof(AfflictionModel), "get_HasOverlay")];
+            return [new(typeof(AfflictionModel), "HasOverlay", MethodType.Getter)];
         }
 
         // ReSharper disable InconsistentNaming
@@ -2274,7 +2274,7 @@ namespace STS2RitsuLib.Scaffolding.Content.Patches
         /// <inheritdoc cref="IPatchMethod.GetTargets" />
         public static ModPatchTarget[] GetTargets()
         {
-            return [new(typeof(EnchantmentModel), "get_IntendedIconPath")];
+            return [new(typeof(EnchantmentModel), "IntendedIconPath", MethodType.Getter)];
         }
 
         // ReSharper disable InconsistentNaming
@@ -2307,7 +2307,7 @@ namespace STS2RitsuLib.Scaffolding.Content.Patches
         /// <inheritdoc cref="IPatchMethod.GetTargets" />
         public static ModPatchTarget[] GetTargets()
         {
-            return [new(typeof(PowerModel), "get_ResolvedBigIconPath")];
+            return [new(typeof(PowerModel), "ResolvedBigIconPath", MethodType.Getter)];
         }
 
         // ReSharper disable InconsistentNaming

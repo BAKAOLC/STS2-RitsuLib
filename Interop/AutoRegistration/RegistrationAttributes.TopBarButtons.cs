@@ -19,9 +19,8 @@ namespace STS2RitsuLib.Interop.AutoRegistration
     ///     </para>
     ///     <para>
     ///         Localization follows the vanilla loc-table convention: title / description are resolved
-    ///         against <c>static_hover_tips</c> using the keys <c>"{LocStem}.title"</c> and
-    ///         <c>"{LocStem}.description"</c>. When <see cref="LocStem" /> is null the registered id
-    ///         (<c>MYMOD_TOPBARBUTTON_STEM</c>) is used as the stem.
+    ///         against <c>static_hover_tips</c> using <c>"{id}.title"</c> and <c>"{id}.description"</c> where
+    ///         <c>id</c> is the qualified button id.
     ///     </para>
     /// </remarks>
     /// <param name="localButtonStem">
@@ -35,12 +34,6 @@ namespace STS2RitsuLib.Interop.AutoRegistration
 
         /// <summary>Godot resource path for the icon (e.g. <c>res://my_mod/icons/recipes.png</c>).</summary>
         public string? IconPath { get; set; }
-
-        /// <summary>
-        ///     Optional localization stem (see <see cref="ModTopBarButtonSpec.LocStem" />). Defaults to
-        ///     the registered id.
-        /// </summary>
-        public string? LocStem { get; set; }
 
         /// <summary>Sort order within this mod's top-bar buttons.</summary>
         public int ButtonOrder { get; set; }

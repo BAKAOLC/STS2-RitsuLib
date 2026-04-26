@@ -32,6 +32,12 @@ namespace STS2RitsuLib.Settings
                 if (_initialized)
                     return;
 
+                var syncModDataSteamCloudBinding = ModSettingsBindings.Global<RitsuLibSettings, bool>(
+                    Const.ModId,
+                    Const.SettingsKey,
+                    settings => settings.SyncModDataToSteamCloud,
+                    (settings, value) => settings.SyncModDataToSteamCloud = value);
+
                 var debugCompatibilityBinding = ModSettingsBindings.Global<RitsuLibSettings, bool>(
                     Const.ModId,
                     Const.SettingsKey,
@@ -211,6 +217,7 @@ namespace STS2RitsuLib.Settings
                             .WithTitle(T("ritsulib.section.debugCompatShims.title", "Compatibility fallbacks"))
                             .WithDescription(T("ritsulib.section.debugCompatShims.description",
                                 "Shown only when debug compatibility mode is enabled. Each toggle controls one fallback."))
+                            .Collapsible()
                             .AddToggle(
                                 "debug_compat_loc_table",
                                 T("ritsulib.debugCompatLocTable.label", "LocTable missing keys"),
@@ -229,6 +236,41 @@ namespace STS2RitsuLib.Settings
                                 debugCompatAncientArchitectBinding,
                                 T("ritsulib.debugCompatAncientArchitect.description",
                                     "Inject empty Lines entries for ModContentRegistry ancients when vanilla provides no dialogue.")))
+                    .AddSection("steam_cloud_mod_data", section => section
+                        .WithTitle(T("ritsulib.section.steamCloudModData.title", "Steam Cloud (mod data)"))
+                        .WithDescription(T("ritsulib.section.steamCloudModData.description",
+                            "Manage syncing mod data with Steam Cloud here."))
+                        .Collapsible()
+                        .AddToggle(
+                            "sync_mod_data_to_steam_cloud",
+                            T("ritsulib.syncModDataSteamCloud.label", "Sync mod data to Steam Cloud"),
+                            syncModDataSteamCloudBinding,
+                            T("ritsulib.syncModDataSteamCloud.description",
+                                "When Steam Cloud is active, syncs mod data after saves and on profile load. Off keeps it local-only."))
+                        .AddButton(
+                            "mod_cloud_push_now",
+                            T("ritsulib.modCloud.pushNow.label", "Upload to Steam now"),
+                            T("ritsulib.modCloud.pushNow.button", "Push to cloud"),
+                            ModDataCloudManualCoordinator.TryManualPushFromSettings,
+                            ModSettingsButtonTone.Normal,
+                            T("ritsulib.modCloud.pushNow.description",
+                                "Uploads local mod data, overwriting the cloud copy."))
+                        .AddButton(
+                            "mod_cloud_pull_now",
+                            T("ritsulib.modCloud.pullNow.label", "Download from Steam now"),
+                            T("ritsulib.modCloud.pullNow.button", "Pull from cloud"),
+                            ModDataCloudManualCoordinator.TryManualPullFromSettings,
+                            ModSettingsButtonTone.Accent,
+                            T("ritsulib.modCloud.pullNow.description",
+                                "Downloads mod data from the cloud over the local copy, then reloads from disk."))
+                        .AddButton(
+                            "mod_cloud_clear_registered",
+                            T("ritsulib.modCloud.clear.label", "Clear mod data from Steam Cloud"),
+                            T("ritsulib.modCloud.clear.button", "Clear cloud…"),
+                            ModDataCloudManualCoordinator.TryClearRegisteredModDataFromSettings,
+                            ModSettingsButtonTone.Danger,
+                            T("ritsulib.modCloud.clear.description",
+                                "Deletes mod data from Steam Cloud for this profile. Local files are not removed. Requires confirmation.")))
                     .AddSection("dev_debug_tools", section => section
                         .WithTitle(T("ritsulib.section.devDebugTools.title", "Developer debug tools"))
                         .Collapsible(true)

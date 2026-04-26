@@ -415,21 +415,9 @@ namespace STS2RitsuLib.Patching.Core
             return false;
         }
 
-        private static MethodInfo? GetOriginalMethod(ModPatchInfo modPatchInfo)
+        private static MethodBase? GetOriginalMethod(ModPatchInfo modPatchInfo)
         {
-            if (modPatchInfo.ParameterTypes != null)
-                return modPatchInfo.TargetType.GetMethod(
-                    modPatchInfo.MethodName,
-                    BindingFlags.Instance | BindingFlags.Static | BindingFlags.Public | BindingFlags.NonPublic,
-                    null,
-                    modPatchInfo.ParameterTypes,
-                    null
-                );
-
-            return modPatchInfo.TargetType.GetMethod(
-                modPatchInfo.MethodName,
-                BindingFlags.Instance | BindingFlags.Static | BindingFlags.Public | BindingFlags.NonPublic
-            );
+            return PatchTargetMethodResolver.Resolve(modPatchInfo);
         }
 
         private static MethodInfo? GetPatchMethod(Type patchType, string methodName)

@@ -9,6 +9,7 @@ It covers:
 - when to use builder steps, manifests, direct registry access, or optional CLR attributes
 - how fixed model identity and ModelDb integration relate to registration
 - generated placeholders for cards/relics/potions (API, ordering, and risks)
+- mod-owned card piles and top-bar buttons (`ModCardPileRegistry` / `ModTopBarButtonRegistry`, same mod id)
 
 ---
 
@@ -20,10 +21,12 @@ RitsuLib keeps registration responsibilities split by concern:
 |---|---|
 | `ModContentRegistry` | Register models: characters, acts, pool-bound cards/relics/potions, powers, orbs, enchantments, afflictions, achievements, singletons, good/bad daily modifiers, shared card/relic/potion pools, events, ancients, monsters, and generated placeholders |
 | `ModKeywordRegistry` | Register reusable keyword definitions |
+| `ModCardPileRegistry` | Register mod-owned card piles (combat/run UI piles, hover tips via `static_hover_tips` keys tied to the qualified pile id) |
+| `ModTopBarButtonRegistry` | Register mod-owned top-bar buttons next to the vanilla deck control (hover tips via `static_hover_tips` keys tied to the qualified button id) |
 | `ModTimelineRegistry` | Register stories and epochs |
 | `ModUnlockRegistry` | Register epoch requirements and progression rules |
 
-`CreateContentPack(modId)` is the convenience layer that coordinates all four.
+`CreateContentPack(modId)` batches the **four** registries exposed on `ModContentPackContext` (`Content`, `Keywords`, `Timeline`, `Unlocks`). Card piles and top-bar buttons are registered through `ModCardPileRegistry.For(modId)` and `ModTopBarButtonRegistry.For(modId)` (or optional CLR attributes under `STS2RitsuLib.Interop.AutoRegistration`) — same mod id, but not properties on `ModContentPackContext`.
 
 ---
 
@@ -62,7 +65,9 @@ It simply records registration steps and runs them in insertion order when `Appl
 - `Timeline`
 - `Unlocks`
 
-That means the fluent builder can be your main registration path, while still letting you access the raw registries afterward.
+`ModCardPileRegistry` and `ModTopBarButtonRegistry` are **not** on this struct; call `ModCardPileRegistry.For(ctx.ModId)` / `ModTopBarButtonRegistry.For(ctx.ModId)` inside a `Custom(...)` step (or register piles/buttons from your initializer) when you need them.
+
+That means the fluent builder can be your main registration path for model/keyword/timeline/unlock work, while still letting you access every registry afterward.
 
 ---
 
@@ -380,5 +385,6 @@ If the mod grows large, keep the builder at the top level and feed it entry obje
 ## Related Documents
 
 - [Content Authoring Toolkit](ContentAuthoringToolkit.md)
+- [Localization & Keywords](LocalizationAndKeywords.md)
 - [Timeline & Unlocks](TimelineAndUnlocks.md)
 - [Framework Design](FrameworkDesign.md)

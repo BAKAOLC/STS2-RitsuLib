@@ -1,4 +1,5 @@
 using System.Reflection;
+using HarmonyLib;
 using MegaCrit.Sts2.Core.Entities.Cards;
 using MegaCrit.Sts2.Core.Models;
 using MegaCrit.Sts2.Core.Random;
@@ -25,7 +26,7 @@ namespace STS2RitsuLib.Unlocks.Patches
         /// <inheritdoc />
         public static ModPatchTarget[] GetTargets()
         {
-            return [new(typeof(UnlockState), "get_Characters")];
+            return [new(typeof(UnlockState), "Characters", MethodType.Getter)];
         }
 
         // ReSharper disable InconsistentNaming
@@ -56,7 +57,7 @@ namespace STS2RitsuLib.Unlocks.Patches
         /// <inheritdoc />
         public static ModPatchTarget[] GetTargets()
         {
-            return [new(typeof(UnlockState), "get_SharedAncients")];
+            return [new(typeof(UnlockState), "SharedAncients", MethodType.Getter)];
         }
 
         // ReSharper disable InconsistentNaming

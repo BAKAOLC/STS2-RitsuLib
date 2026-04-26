@@ -101,8 +101,8 @@ namespace STS2RitsuLib.CardPiles
         /// <summary>
         ///     Registers a card pile owned by this registry's mod. The id is mod-qualified via
         ///     <see cref="ModContentRegistry.GetQualifiedCardPileId" /> — producing the ritsulib-standard
-        ///     <c>MODID_CARDPILE_LOCALSTEM</c> shape (uppercase, three segments) that doubles as the default
-        ///     <c>LocStem</c>. Passing the same <paramref name="localStem" /> from the same mod returns the
+        ///     <c>MODID_CARDPILE_LOCALSTEM</c> shape (uppercase, three segments), also used as the
+        ///     <c>static_hover_tips</c> key stem. Passing the same <paramref name="localStem" /> from the same mod returns the
         ///     existing definition.
         /// </summary>
         /// <param name="localStem">Local identifier, unique within this mod.</param>
@@ -231,10 +231,12 @@ namespace STS2RitsuLib.CardPiles
                 spec.Style,
                 spec.Anchor,
                 spec.IconPath,
-                spec.LocStem,
                 spec.Hotkeys,
                 spec.CardShouldBeVisible,
-                spec.OnOpen);
+                spec.OnOpen,
+                spec.HoverTipScreenOffset,
+                spec.HoverTipPlacement,
+                spec.VisibleWhen);
 
             lock (SyncRoot)
             {
@@ -271,8 +273,7 @@ namespace STS2RitsuLib.CardPiles
         // The registry dictionaries use StringComparer.OrdinalIgnoreCase so we do not force a case here —
         // RegisterOwned emits the canonical uppercase form (MODID_CARDPILE_LOCAL) via
         // ModContentRegistry.GetQualifiedCardPileId and Register(string, ...) preserves whatever shape
-        // the caller chose. Keeping the caller's case means LocStem defaults line up with the visible id
-        // and the vanilla `DRAW_PILE.title` convention in static_hover_tips.
+        // the caller chose. Loc keys use the same id string (vanilla `DRAW_PILE.title` style in static_hover_tips).
         private static string NormalizeId(string id)
         {
             return id.Trim();

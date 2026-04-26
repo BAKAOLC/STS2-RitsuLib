@@ -1,6 +1,8 @@
 using MegaCrit.Sts2.Core.Entities.Cards;
 using MegaCrit.Sts2.Core.HoverTips;
 using MegaCrit.Sts2.Core.Models;
+using STS2RitsuLib.CardTags;
+using STS2RitsuLib.Content;
 using STS2RitsuLib.Keywords;
 using STS2RitsuLib.Scaffolding.Cards.HandGlow;
 using STS2RitsuLib.Scaffolding.Cards.HandOutline;
@@ -50,9 +52,12 @@ namespace STS2RitsuLib.Scaffolding.Content
         protected virtual IEnumerable<string> RegisteredKeywordIds => [];
 
         /// <summary>
-        ///     Internal accessor for the mod-keyword seeding patch.
+        ///     Mod card tag ids (qualified via <see cref="ModContentRegistry.GetQualifiedCardTagId" /> or any id
+        ///     registered in <see cref="ModCardTagRegistry" />) seeded onto every instance when
+        ///     <see cref="CardModel.Tags" /> is first materialized. Each id resolves to a minted
+        ///     <see cref="CardTag" /> and is unioned into the same backing set as <see cref="CardModel.CanonicalTags" />.
         /// </summary>
-        internal IEnumerable<string> EnumerateRegisteredKeywordIds() => RegisteredKeywordIds;
+        protected virtual IEnumerable<string> RegisteredCardTagIds => [];
 
         /// <summary>
         ///     Extra hover tips appended after keyword-derived tips.
@@ -91,5 +96,21 @@ namespace STS2RitsuLib.Scaffolding.Content
 
         /// <inheritdoc />
         public virtual string? CustomBannerMaterialPath => AssetProfile.BannerMaterialPath;
+
+        /// <summary>
+        ///     Internal accessor for the mod-keyword seeding patch.
+        /// </summary>
+        internal IEnumerable<string> EnumerateRegisteredKeywordIds()
+        {
+            return RegisteredKeywordIds;
+        }
+
+        /// <summary>
+        ///     Internal accessor for the mod card-tag seeding patch.
+        /// </summary>
+        internal IEnumerable<string> EnumerateRegisteredCardTagIds()
+        {
+            return RegisteredCardTagIds;
+        }
     }
 }

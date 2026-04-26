@@ -14,7 +14,8 @@ Documentation index: [Docs/README.md](Docs/README.md)
 ## Optional analyzers
 
 Companion Roslyn package for RitsuLib-style mods (localization keys, `Mod*Template` usage, registration attributes):
-[STS2-ModAnalyzers-RitsuLib](https://github.com/BAKAOLC/STS2-ModAnalyzers-RitsuLib) (NuGet: `STS2.ModAnalyzers.RitsuLib`).
+[STS2-ModAnalyzers-RitsuLib](https://github.com/BAKAOLC/STS2-ModAnalyzers-RitsuLib) (NuGet:
+`STS2.ModAnalyzers.RitsuLib`).
 
 ## Mod Settings
 

@@ -28,7 +28,7 @@ namespace STS2RitsuLib.Scaffolding.Content
         ///     Only used when <see cref="PoolFrameMaterial" /> is null.
         ///     Override this if you want to reference a pre-existing <c>.tres</c> material file.
         /// </summary>
-        public override string CardFrameMaterialPath => "card_frame_colorless_mat";
+        public override string CardFrameMaterialPath => "card_frame_colorless";
 
         /// <inheritdoc cref="IModBigEnergyIconPool.BigEnergyIconPath" />
         public virtual string? BigEnergyIconPath => null;

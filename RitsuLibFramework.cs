@@ -7,6 +7,7 @@ using MegaCrit.Sts2.Core.Logging;
 using MegaCrit.Sts2.Core.Modding;
 using MegaCrit.Sts2.Core.Models;
 using STS2RitsuLib.Cards.FreePlay;
+using STS2RitsuLib.CardTags;
 using STS2RitsuLib.Combat.HealthBars;
 using STS2RitsuLib.Content;
 using STS2RitsuLib.Data;
@@ -196,6 +197,7 @@ namespace STS2RitsuLib
                     IsInitialized = true;
                     IsActive = true;
                     BaseLibHealthBarForecastBridge.TryRegister();
+                    BaseLibVisualGraftBridge.TryRegister();
                     RuntimeHotkeyService.Initialize();
 
                     var frameworkInitializedEvent = new FrameworkInitializedEvent(
@@ -286,6 +288,14 @@ namespace STS2RitsuLib
         }
 
         /// <summary>
+        ///     Returns the custom card-tag registry for <paramref name="modId" />.
+        /// </summary>
+        public static ModCardTagRegistry GetCardTagRegistry(string modId)
+        {
+            return ModCardTagRegistry.For(modId);
+        }
+
+        /// <summary>
         ///     Returns the timeline (epoch/story) registry for <paramref name="modId" />.
         /// </summary>
         public static ModTimelineRegistry GetTimelineRegistry(string modId)
@@ -308,6 +318,15 @@ namespace STS2RitsuLib
             where TSource : IHealthBarForecastSource, new()
         {
             HealthBarForecastRegistry.Register<TSource>(modId, sourceId);
+        }
+
+        /// <summary>
+        ///     Registers a non-power health bar visual graft source type through the framework.
+        /// </summary>
+        public static void RegisterHealthBarVisualGraft<TSource>(string modId, string? sourceId = null)
+            where TSource : IHealthBarVisualGraftSource, new()
+        {
+            HealthBarVisualGraftRegistry.Register<TSource>(modId, sourceId);
         }
 
         /// <summary>
@@ -375,7 +394,8 @@ namespace STS2RitsuLib
                     GetContentRegistry(registration.ModId),
                     GetKeywordRegistry(registration.ModId),
                     GetTimelineRegistry(registration.ModId),
-                    GetUnlockRegistry(registration.ModId));
+                    GetUnlockRegistry(registration.ModId),
+                    GetCardTagRegistry(registration.ModId));
                 registration.Apply(context);
             }
 
@@ -400,6 +420,19 @@ namespace STS2RitsuLib
         public static void BeginCompendiumDetailPngExport(CompendiumPngExportRequest request)
         {
             CompendiumDetailPngExporter.BeginExport(request, msg => Logger.Info(msg));
+        }
+
+        /// <summary>
+        ///     Declares a <c>mod_data</c> JSON path that may participate in RitsuLib Steam Cloud sync when the player enables
+        ///     it and the session uses Steam Cloud. Prefer <see cref="Data.ModDataStore.Register{T}" /> when you already use
+        ///     <see cref="Data.ModDataStore" />; this call is for custom persistence that still resolves via
+        ///     <see cref="Utils.Persistence.ProfileManager" />.
+        /// </summary>
+        public static void RegisterModCloudPersistedSlot(string modId, string fileName, SaveScope scope)
+        {
+            ArgumentException.ThrowIfNullOrWhiteSpace(modId);
+            ArgumentException.ThrowIfNullOrWhiteSpace(fileName);
+            ModCloudSyncPathRegistry.RegisterModDataSlot(modId, fileName, scope);
         }
 
         /// <summary>
@@ -510,7 +543,7 @@ namespace STS2RitsuLib
 
         /// <summary>
         ///     Creates a <see cref="STS2RitsuLib.Utils.I18N" /> instance for a mod, defaulting the file-system folder to
-        ///     <c>user://mod-configs/{modId}/localization</c> when none are supplied.
+        ///     <c>user://&lt;platform&gt;/&lt;userId&gt;/mod_data/{modId}/localization</c> when none are supplied.
         /// </summary>
         public static I18N CreateModLocalization(
             string modId,
@@ -523,7 +556,7 @@ namespace STS2RitsuLib
             ArgumentException.ThrowIfNullOrWhiteSpace(modId);
             ArgumentException.ThrowIfNullOrWhiteSpace(instanceName);
 
-            var folders = fileSystemFolders?.ToArray() ?? [$"user://mod-configs/{modId}/localization"];
+            var folders = fileSystemFolders?.ToArray() ?? [$"{ProfileManager.GetAccountBasePath(modId)}/localization"];
             return CreateLocalization(instanceName, folders, resourceFolders, pckFolders, resourceAssembly);
         }
 

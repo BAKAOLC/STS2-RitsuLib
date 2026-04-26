@@ -5,6 +5,7 @@ using STS2RitsuLib.Content;
 using STS2RitsuLib.Scaffolding.Ancients.Options;
 using STS2RitsuLib.Scaffolding.Cards.HandGlow;
 using STS2RitsuLib.Scaffolding.Cards.HandOutline;
+using STS2RitsuLib.Scaffolding.Characters;
 
 namespace STS2RitsuLib.Scaffolding.Content
 {
@@ -114,6 +115,20 @@ namespace STS2RitsuLib.Scaffolding.Content
     }
 
     /// <summary>
+    ///     Registers direct asset replacement for a target character id (vanilla or mod).
+    /// </summary>
+    public sealed class CharacterAssetReplacementRegistrationEntry(
+        string characterEntry,
+        CharacterAssetProfile assetProfile) : IContentRegistrationEntry
+    {
+        /// <inheritdoc />
+        public void Register(ModContentRegistry registry)
+        {
+            registry.RegisterCharacterAssetReplacement(characterEntry, assetProfile);
+        }
+    }
+
+    /// <summary>
     ///     Registers a mod act model type.
     /// </summary>
     /// <typeparam name="TAct">Concrete <see cref="ActModel" /> to register.</typeparam>
@@ -148,7 +163,7 @@ namespace STS2RitsuLib.Scaffolding.Content
     /// <summary>
     ///     Registers <see cref="ModCardHandGlowRegistry" /> rules for a card type (gold/red hand highlights).
     /// </summary>
-    /// <typeparam name="TCard">Concrete <see cref="CardModel" />.</typeparam>
+    /// <typeparam name="TCard"><see cref="CardModel" /> subtype.</typeparam>
     /// <param name="rules">Predicate rules; merged with <see cref="ModCardHandGlowRules.Or" /> if registered twice.</param>
     public sealed class CardHandGlowRegistrationEntry<TCard>(ModCardHandGlowRules rules) : IContentRegistrationEntry
         where TCard : CardModel

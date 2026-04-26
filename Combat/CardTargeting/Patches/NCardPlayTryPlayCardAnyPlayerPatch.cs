@@ -1,7 +1,6 @@
 using HarmonyLib;
 using MegaCrit.Sts2.Core.Entities.Cards;
 using MegaCrit.Sts2.Core.Entities.Creatures;
-using MegaCrit.Sts2.Core.Models;
 using MegaCrit.Sts2.Core.Nodes.Combat;
 using MegaCrit.Sts2.Core.Nodes.GodotExtensions;
 using MegaCrit.Sts2.Core.Nodes.Rooms;
@@ -13,27 +12,14 @@ namespace STS2RitsuLib.Combat.CardTargeting.Patches
     ///     Fixes <see cref="NCardPlay.TryPlayCard" /> for <see cref="TargetType.AnyPlayer" /> in multiplayer.
     ///     Vanilla treats AnyPlayer as a non-targeted type, calling <c>TryManualPlay(null)</c>
     ///     and discarding the selected target.
+    ///     Direct field/method access where the publicized STS2 reference exposes them; <c>Cleanup(bool)</c> remains
+    ///     <c>protected</c> in the reference build, so invocation uses Harmony <see cref="AccessTools" />.
     /// </summary>
     internal sealed class NCardPlayTryPlayCardAnyPlayerPatch : IPatchMethod
     {
-        private static readonly Func<NCardPlay, CardModel?> GetCard =
-            AccessTools.MethodDelegate<Func<NCardPlay, CardModel?>>(
-                AccessTools.DeclaredPropertyGetter(typeof(NCardPlay), "Card"));
-
-        private static readonly AccessTools.FieldRef<NCardPlay, bool> IsTryingToPlayCardRef =
-            AccessTools.FieldRefAccess<NCardPlay, bool>("_isTryingToPlayCard");
-
-        private static readonly Action<NCardPlay, CardModel> CannotPlayThisCardFtueCheck =
-            AccessTools.MethodDelegate<Action<NCardPlay, CardModel>>(
-                AccessTools.DeclaredMethod(typeof(NCardPlay), "CannotPlayThisCardFtueCheck", [typeof(CardModel)]));
-
-        private static readonly Action<NCardPlay> AutoDisableCannotPlayCardFtueCheck =
-            AccessTools.MethodDelegate<Action<NCardPlay>>(
-                AccessTools.DeclaredMethod(typeof(NCardPlay), "AutoDisableCannotPlayCardFtueCheck"));
-
-        // 0.103.0+: Cleanup(bool isFinished); 0.99.1: Cleanup() + manual EmitSignal
-        private static readonly Action<NCardPlay, bool>? CleanupWithParam = CreateCleanupWithParam();
-        private static readonly Action<NCardPlay>? CleanupNoParam = CreateCleanupNoParam();
+        private static readonly Action<NCardPlay, bool> InvokeCleanup =
+            AccessTools.MethodDelegate<Action<NCardPlay, bool>>(
+                AccessTools.DeclaredMethod(typeof(NCardPlay), "Cleanup", [typeof(bool)])!);
 
         public static string PatchId => "card_any_player_try_play_card";
 
@@ -47,28 +33,11 @@ namespace STS2RitsuLib.Combat.CardTargeting.Patches
             return [new(typeof(NCardPlay), "TryPlayCard", [typeof(Creature)])];
         }
 
-        private static Action<NCardPlay, bool>? CreateCleanupWithParam()
-        {
-            var mi = AccessTools.DeclaredMethod(typeof(NCardPlay), "Cleanup", [typeof(bool)]);
-            return mi != null
-                ? AccessTools.MethodDelegate<Action<NCardPlay, bool>>(mi)
-                : null;
-        }
-
-        private static Action<NCardPlay>? CreateCleanupNoParam()
-        {
-            if (CleanupWithParam != null) return null;
-            var mi = AccessTools.DeclaredMethod(typeof(NCardPlay), "Cleanup", Type.EmptyTypes);
-            return mi != null
-                ? AccessTools.MethodDelegate<Action<NCardPlay>>(mi)
-                : null;
-        }
-
         // ReSharper disable InconsistentNaming
         public static bool Prefix(NCardPlay __instance, Creature? target)
             // ReSharper restore InconsistentNaming
         {
-            var card = GetCard(__instance);
+            var card = __instance.Card;
             if (!AnyPlayerCardTargetingHelper.IsAnyPlayerMultiplayer(card))
                 return true;
 
@@ -80,25 +49,25 @@ namespace STS2RitsuLib.Combat.CardTargeting.Patches
 
             if (!__instance.Holder.CardModel!.CanPlayTargeting(target))
             {
-                CannotPlayThisCardFtueCheck(__instance, __instance.Holder.CardModel!);
+                __instance.CannotPlayThisCardFtueCheck(__instance.Holder.CardModel!);
                 __instance.CancelPlayCard();
                 return false;
             }
 
-            IsTryingToPlayCardRef(__instance) = true;
+            __instance._isTryingToPlayCard = true;
             var played = card!.TryManualPlay(target);
-            IsTryingToPlayCardRef(__instance) = false;
+            __instance._isTryingToPlayCard = false;
 
             if (played)
             {
-                AutoDisableCannotPlayCardFtueCheck(__instance);
+                __instance.AutoDisableCannotPlayCardFtueCheck();
                 if (__instance.Holder.IsInsideTree())
                 {
                     var size = __instance.GetViewport().GetVisibleRect().Size;
                     __instance.Holder.SetTargetPosition(new(size.X / 2f, size.Y - __instance.Holder.Size.Y));
                 }
 
-                InvokeCleanupFinished(__instance, true);
+                InvokeCleanup(__instance, true);
                 NCombatRoom.Instance?.Ui.Hand.TryGrabFocus();
             }
             else
@@ -107,18 +76,6 @@ namespace STS2RitsuLib.Combat.CardTargeting.Patches
             }
 
             return false;
-        }
-
-        private static void InvokeCleanupFinished(NCardPlay instance, bool success)
-        {
-            if (CleanupWithParam != null)
-            {
-                CleanupWithParam(instance, success);
-                return;
-            }
-
-            CleanupNoParam?.Invoke(instance);
-            instance.EmitSignal(NCardPlay.SignalName.Finished, success);
         }
     }
 }

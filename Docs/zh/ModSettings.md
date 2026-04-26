@@ -144,6 +144,8 @@ Provider 约定（全部为 `static` 方法）：
   - `double GetRitsuLibSettingDouble(string key)` / `void SetRitsuLibSettingDouble(string key, double value)`
   - `string GetRitsuLibSettingString(string key)` / `void SetRitsuLibSettingString(string key, string value)`
 
+`visibleWhenMethod` / `optionsMethod` 这类回调只会在当前 provider 类型上按静态方法名解析，不会跨类型执行；签名不匹配或执行失败时会写日志并回退安全默认行为。
+
 `CreateRitsuLibSettingsSchema()` 可以返回：
 
 - `Dictionary<string, object?>`（或等价对象）
@@ -152,17 +154,37 @@ Provider 约定（全部为 `static` 方法）：
 
 推荐使用 Godot 路径（`res://`、`user://`），也支持普通文件路径。
 
+**JSON Schema（编辑器校验）：** 在你的 JSON 根对象里加一行 `"$schema"`，值写下面这个地址：
+
+`https://raw.githubusercontent.com/BAKAOLC/STS2-RitsuLib/main/schemas/mod-settings/runtime-interop/v1/schema.json`
+
 字段结构：
 
-- page: `modId`, `pageId`, `title`, `description`, `sortOrder`, `sections`
-- section: `id`, `title`, `description`, `entries`
-- entry:
-  - 公共字段：`id`, `type`, `key`, `label`, `description`, `scope`
-  - `type=toggle|string|button|choice|slider|int-slider`
-  - `choice`：`options`（`[{ value, label }]`）
-  - `slider/int-slider`：`min`, `max`, `step`
-  - `string`：`maxLength`
-  - `button`：`buttonText`, `tone`
+- **根对象：** `modId`，可选 `modDisplayName`、`modSidebarOrder`，**`pages`**（非空数组）。
+- **页：** `pageId`、`title`、`description`、可选 `parentPageId`、`sortOrder`、`sections`。
+- **节：** `id`、`title`、`description`、`entries`。
+- **条目：** 公共字段 `id`、`type`，可选 `key`（默认 `id`）、`label`（默认 `id`）、`description`、`scope`（仅 `profile` 大小写不敏感时为档案作用域，其余为全局）、`visibleWhenMethod`（静态方法名，支持 `Method()` / `Method(string key)`）。
+
+`type` 取值（大小写不敏感；部分别名可省略连字符）：
+
+| `type` | 作用 |
+|--------|------|
+| `header` | 非交互标题行 |
+| `paragraph` | 只读正文；可选 `maxBodyHeight` |
+| `subpage` | 子页跳转；必填 `targetPageId`，可选 `buttonText` |
+| `info-card` | 只读信息卡；`body` 为正文（标题用 `label`） |
+| `runtime-hotkey-summary` | 热键摘要行；`bindings` 为非空字符串数组，可选 `body`、`idSuffix` |
+| `toggle` | 布尔 |
+| `slider` | 双精度；可选 `min`、`max`、`step`（默认 0/100/1，非法步长会被修正） |
+| `int-slider` / `intslider` | 整数滑条 |
+| `choice` | 字符串枚举；必填 `options`；可选 `optionsMethod`（动态选项静态方法，失败回退 `options`）；可选 `presentation`（`dropdown` 与步进器） |
+| `string` | 单行；可选 `placeholder`、`maxLength` |
+| `multiline-string` / `multiline` | 多行；可选字段同 `string` |
+| `color` | 颜色序列化字符串；可选 `editAlpha`（默认 true）、`editIntensity`（默认 false） |
+| `key-binding` / `keybinding` | 按键绑定字符串；可选 `allowModifierCombos`、`allowModifierOnly`（默认 true）、`distinguishModifierSides`（默认 false） |
+| `button` | 调用 `InvokeRitsuLibSettingAction(key)`；可选 `buttonText`、`tone`（`accent` / `danger`） |
+
+**此 JSON 协议未覆盖的能力**（需引用 `STS2RitsuLib` 并用 `ModSettingsSectionBuilder` 在进程内注册）：`AddImage`（纹理回调）、`AddList` 与结构化列表编辑、`AddEnumChoice`（可用 `choice` + 显式字符串值代替）、`List<string>` 多键绑定行、以及带 `IModSettingsUiActionHost` 的 `AddButton` 重载。
 
 ---
 

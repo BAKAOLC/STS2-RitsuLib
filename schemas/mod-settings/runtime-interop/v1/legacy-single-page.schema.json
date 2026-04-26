@@ -1,0 +1,47 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://raw.githubusercontent.com/BAKAOLC/STS2-RitsuLib/main/schemas/mod-settings/runtime-interop/v1/legacy-single-page.schema.json",
+  "deprecated": true,
+  "title": "Legacy single-page root (deprecated)",
+  "type": "object",
+  "required": ["modId", "sections"],
+  "properties": {
+    "modId": {
+      "type": "string",
+      "minLength": 1
+    },
+    "modDisplayName": {
+      "type": "string"
+    },
+    "modSidebarOrder": {
+      "type": "integer"
+    },
+    "pageId": {
+      "type": "string",
+      "description": "Defaults to \"interop\" when empty or omitted."
+    },
+    "title": {
+      "type": "string",
+      "description": "Defaults to \"Settings\" when empty or omitted."
+    },
+    "description": {
+      "type": "string"
+    },
+    "sortOrder": {
+      "type": "integer",
+      "description": "Defaults to 10040 when omitted."
+    },
+    "sections": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "$ref": "./schema.json#/$defs/section"
+      }
+    }
+  },
+  "additionalProperties": true,
+  "not": {
+    "required": ["pages"]
+  },
+  "description": "Deprecated: sections on the document root without \"pages\". Runtime still accepts this for backward compatibility; new content should use multi-page schema."
+}

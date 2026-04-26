@@ -1,5 +1,10 @@
 using MegaCrit.Sts2.Core.Combat;
 using MegaCrit.Sts2.Core.Entities.Creatures;
+#if STS2_V_0_103_2
+using CombatStateLike = MegaCrit.Sts2.Core.Combat.CombatState;
+#else
+using CombatStateLike = MegaCrit.Sts2.Core.Combat.ICombatState;
+#endif
 
 namespace STS2RitsuLib.Combat.HealthBars
 {
@@ -12,7 +17,7 @@ namespace STS2RitsuLib.Combat.HealthBars
         /// <summary>
         ///     Current combat state, when the creature is in combat.
         /// </summary>
-        public CombatState? CombatState => Creature.CombatState;
+        public CombatStateLike? CombatState => Creature.CombatState;
 
         /// <summary>
         ///     Side whose turn is currently active, when available.

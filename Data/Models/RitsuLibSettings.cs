@@ -11,7 +11,7 @@ namespace STS2RitsuLib.Data.Models
         /// <summary>
         ///     Current schema version written by the library when creating or normalizing settings.
         /// </summary>
-        public const int CurrentSchemaVersion = 5;
+        public const int CurrentSchemaVersion = 6;
 
         /// <summary>
         ///     Persisted schema version used by the migration pipeline
@@ -19,6 +19,13 @@ namespace STS2RitsuLib.Data.Models
         /// </summary>
         [JsonPropertyName(ModDataVersion.SchemaVersionProperty)]
         public int SchemaVersion { get; set; } = CurrentSchemaVersion;
+
+        /// <summary>
+        ///     When true and Steam Cloud is active for the session, RitsuLib keeps managed mod data in sync with
+        ///     vanilla’s remote store after saves and on profile init / switch.
+        /// </summary>
+        [JsonPropertyName("sync_mod_data_to_steam_cloud")]
+        public bool SyncModDataToSteamCloud { get; set; }
 
         /// <summary>
         ///     Master switch: when false, sub-flags are ignored and shim logic no-ops so patched targets follow vanilla

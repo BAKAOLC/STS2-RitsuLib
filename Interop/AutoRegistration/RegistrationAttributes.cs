@@ -320,19 +320,6 @@ namespace STS2RitsuLib.Interop.AutoRegistration
         public string LocalKeywordStem { get; } = localKeywordStem;
 
         /// <summary>
-        ///     Optional localization namespace used to form the default <c>card_keywords</c> entry stem
-        ///     <c>"{namespace}_{keyword}"</c>.
-        /// </summary>
-        public string? LocNamespace { get; set; }
-
-        /// <summary>
-        ///     Optional explicit localization key prefix.
-        /// </summary>
-        [Obsolete(
-            "Pitfall: LocKeyPrefix is NOT a prefix that affects only the modid/namespace portion. It is the full card_keywords entry stem used to form '{stem}.title' and '{stem}.description'. Prefer LocNamespace.")]
-        public string? LocKeyPrefix { get; set; }
-
-        /// <summary>
         ///     Optional icon path used by hover-tip rendering.
         /// </summary>
         public string? IconPath { get; set; }
@@ -347,6 +334,19 @@ namespace STS2RitsuLib.Interop.AutoRegistration
         ///     Whether the keyword should appear in card hover tips.
         /// </summary>
         public bool IncludeInCardHoverTip { get; set; } = true;
+    }
+
+    /// <summary>
+    ///     Registers an owned custom <see cref="MegaCrit.Sts2.Core.Entities.Cards.CardTag" /> id for this mod assembly.
+    /// </summary>
+    /// <param name="localCardTagStem">Local stem; combined with the mod id via <c>GetQualifiedCardTagId</c>.</param>
+    [AttributeUsage(AttributeTargets.Class, AllowMultiple = true, Inherited = false)]
+    public sealed class RegisterOwnedCardTagAttribute(string localCardTagStem) : AutoRegistrationAttribute
+    {
+        /// <summary>
+        ///     Local mod-scoped card-tag stem.
+        /// </summary>
+        public string LocalCardTagStem { get; } = localCardTagStem;
     }
 
     /// <summary>

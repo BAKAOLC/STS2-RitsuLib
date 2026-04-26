@@ -411,7 +411,7 @@ namespace STS2RitsuLib.Diagnostics.CompendiumExport
             float scale, bool includeRelicHover, Action<string>? log, string? logLinePrefix, string logFileTag)
         {
             var host = new Control { Name = "RitsuCompendiumRelicExportHost", Position = new(-5000, -5000) };
-            var ok = false;
+            bool ok;
             var vp = BuildRelicInspectViewport(relic, scale, includeRelicHover, out var refList);
             if (vp == null)
             {
@@ -449,7 +449,7 @@ namespace STS2RitsuLib.Diagnostics.CompendiumExport
             float scale, Action<string>? log, string? logLinePrefix, string logFileTag)
         {
             var host = new Control { Name = "RitsuCompendiumPotionExportHost", Position = new(-5000, -5000) };
-            var ok = false;
+            bool ok;
             var vp = BuildPotionLabDetailViewport(potion, scale, out var refList);
             if (vp == null)
             {
@@ -612,7 +612,7 @@ namespace STS2RitsuLib.Diagnostics.CompendiumExport
                 return false;
             }
 
-            var err = image.SavePng(savePath!);
+            var err = image.SavePng(savePath);
             if (err == Error.Ok)
             {
                 await WaitMainThreadFrames(tree, FramesAfterSaveBeforeTeardown);

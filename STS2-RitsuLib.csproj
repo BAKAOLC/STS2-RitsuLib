@@ -1,7 +1,17 @@
 <Project Sdk="Godot.NET.Sdk/4.5.1">
     <Import Project=".\local.props" Condition="Exists('.\local.props')"/>
     <Import Project=".\Sts2PathDiscovery.props"/>
-    <PropertyGroup>
+
+    <PropertyGroup Label="Compatibility (STS2 API, signatures, defines)">
+        <RitsuLibCompatTargets>0.104.0;0.103.2</RitsuLibCompatTargets>
+        <RitsuLibLatestApiCompat>0.104.0</RitsuLibLatestApiCompat>
+        <Sts2ApiCompat Condition="'$(Sts2ApiCompat)' == ''">$(RitsuLibLatestApiCompat)</Sts2ApiCompat>
+        <Sts2ApiSignatureDir Condition="'$(Sts2ApiSignatureRoot)' != ''">$(Sts2ApiSignatureRoot)\$(Sts2ApiCompat)</Sts2ApiSignatureDir>
+        <Sts2DataDir Condition="'$(Sts2ApiSignatureRoot)' != ''">$(Sts2ApiSignatureDir)</Sts2DataDir>
+        <DefineConstants Condition="'$(Sts2ApiCompat)' == '0.103.2'">$(DefineConstants);STS2_V_0_103_2</DefineConstants>
+    </PropertyGroup>
+
+    <PropertyGroup Label="Assembly and build">
         <RootNamespace>STS2RitsuLib</RootNamespace>
         <TargetFramework>net9.0</TargetFramework>
         <ImplicitUsings>true</ImplicitUsings>
@@ -9,9 +19,11 @@
         <EnableDynamicLoading>true</EnableDynamicLoading>
         <GenerateDocumentationFile>true</GenerateDocumentationFile>
         <NoWarn>$(NoWarn);CS0436</NoWarn>
+    </PropertyGroup>
+
+    <PropertyGroup Label="NuGet package">
         <IsPackable>true</IsPackable>
-        <PackageId>STS2.RitsuLib</PackageId>
-        <Version>0.1.2</Version>
+        <Version>0.2.6</Version>
         <Authors>OLC</Authors>
         <Description>Shared framework library for Slay the Spire 2 mods.</Description>
         <PackageReadmeFile>README.md</PackageReadmeFile>
@@ -19,7 +31,24 @@
         <PackageProjectUrl>https://github.com/BAKAOLC/STS2-RitsuLib</PackageProjectUrl>
         <RepositoryUrl>https://github.com/BAKAOLC/STS2-RitsuLib</RepositoryUrl>
         <RepositoryType>git</RepositoryType>
+        <PackageId Condition="'$(Sts2ApiCompat)' == '$(RitsuLibLatestApiCompat)'">STS2.RitsuLib</PackageId>
+        <PackageId Condition="'$(Sts2ApiCompat)' != '$(RitsuLibLatestApiCompat)'">STS2.RitsuLib.Compat.$(Sts2ApiCompat)</PackageId>
     </PropertyGroup>
+
+    <Target Name="ValidateSts2ApiSignatures" BeforeTargets="ResolveAssemblyReferences">
+        <Error
+            Condition="'$(Sts2ApiSignatureRoot)' != '' and !Exists('$(Sts2ApiSignatureRoot)')"
+            Text="Sts2ApiSignatureRoot is set but the directory does not exist: '$(Sts2ApiSignatureRoot)'."/>
+        <Error
+            Condition="'$(Sts2ApiSignatureRoot)' != '' and Exists('$(Sts2ApiSignatureRoot)') and !Exists('$(Sts2ApiSignatureDir)\sts2.dll')"
+            Text="Sts2ApiSignatureRoot is set but missing expected file: '$(Sts2ApiSignatureDir)\sts2.dll'."/>
+        <Error
+            Condition="'$(Sts2ApiSignatureRoot)' != '' and Exists('$(Sts2ApiSignatureRoot)') and !Exists('$(Sts2ApiSignatureDir)\0Harmony.dll')"
+            Text="Sts2ApiSignatureRoot is set but missing expected file: '$(Sts2ApiSignatureDir)\0Harmony.dll'."/>
+        <Error
+            Condition="'$(Sts2ApiSignatureRoot)' != '' and Exists('$(Sts2ApiSignatureRoot)') and !Exists('$(Sts2ApiSignatureDir)\Steamworks.NET.dll')"
+            Text="Sts2ApiSignatureRoot is set but missing expected file: '$(Sts2ApiSignatureDir)\Steamworks.NET.dll'."/>
+    </Target>
     <Target Name="ValidateSts2GameInstall" BeforeTargets="ResolveAssemblyReferences">
         <Error
             Condition="!Exists('$(Sts2DataDir)\sts2.dll')"
@@ -47,7 +76,7 @@
     <ItemGroup>
         <None Include="README.md" Pack="true" PackagePath="\"/>
         <None Include="mod_manifest.json" Pack="true" PackagePath="contentFiles/any/any/"/>
-        <None Include="buildTransitive\STS2.RitsuLib.targets" Pack="true" PackagePath="buildTransitive/"/>
+        <None Include="buildTransitive\STS2.RitsuLib.targets" Pack="true" PackagePath="buildTransitive/$(PackageId).targets"/>
     </ItemGroup>
     <!-- Exclude game source reference folder from compilation -->
     <ItemGroup>
@@ -56,7 +85,7 @@
         <Content Remove="sts-2-source\**"/>
         <EmbeddedResource Remove="sts-2-source\**"/>
     </ItemGroup>
-    <Target Name="Copy Mod" AfterTargets="Build">
+    <Target Name="Copy Mod" AfterTargets="Build" Condition="'$(Sts2ApiCompat)' == '$(RitsuLibLatestApiCompat)'">
         <Message Text="Copying mod to Slay the Spire 2 mods folder..." Importance="high"/>
         <MakeDir Directories="$(Sts2Dir)\mods\$(MSBuildProjectName)\"/>
         <Copy SourceFiles="$(TargetPath)" DestinationFolder="$(Sts2Dir)\mods\$(MSBuildProjectName)\"/>

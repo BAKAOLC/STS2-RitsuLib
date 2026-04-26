@@ -15,8 +15,12 @@
 | `RitsuLibFramework.GetKeywordRegistry(modId)` | 关键词注册器 |
 | `RitsuLibFramework.GetTimelineRegistry(modId)` | Timeline（故事/纪元）注册器 |
 | `RitsuLibFramework.GetUnlockRegistry(modId)` | 解锁规则注册器 |
+| `ModCardPileRegistry.For(modId)` | Mod 自有卡堆注册器（合格 id 与 `static_hover_tips` 键） |
+| `ModTopBarButtonRegistry.For(modId)` | Mod 自有顶栏按钮注册器（合格 id 与 `static_hover_tips` 键） |
 
-`CreateContentPack` 是推荐用法，将以上注册器封装为流式 API，调用 `Apply()` 时按添加顺序依次执行。
+`CreateContentPack` 将 **`ModContentPackContext` 上暴露的四类**注册器封装为流式 API，调用 `Apply()` 时按添加顺序依次执行。
+
+`ModCardPileRegistry` / `ModTopBarButtonRegistry` 为按 mod 划分的独立单例（**不是** `ModContentPackContext` 的字段）。总览见 [内容包与注册器](ContentPacksAndRegistries.md)，悬浮提示键约定见 [本地化与关键词](LocalizationAndKeywords.md)。
 
 本文只保留总览层内容。关于构建器完整表面、清单式注册、固定条目标识归属和冻结机制，请阅读 [内容包与注册器](ContentPacksAndRegistries.md)。
 

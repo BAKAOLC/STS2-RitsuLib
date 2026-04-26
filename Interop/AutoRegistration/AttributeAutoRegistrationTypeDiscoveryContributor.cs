@@ -3,6 +3,7 @@ using HarmonyLib;
 using MegaCrit.Sts2.Core.Models;
 using MegaCrit.Sts2.Core.Timeline;
 using STS2RitsuLib.CardPiles;
+using STS2RitsuLib.CardTags;
 using STS2RitsuLib.Content;
 using STS2RitsuLib.Keywords;
 using STS2RitsuLib.Scaffolding.Content;
@@ -98,8 +99,14 @@ namespace STS2RitsuLib.Interop.AutoRegistration
             var keywordRegistry = ModKeywordRegistry.For(ownerModId);
             var timelineRegistry = RitsuLibFramework.GetTimelineRegistry(ownerModId);
             var unlockRegistry = RitsuLibFramework.GetUnlockRegistry(ownerModId);
-            var packContext = new ModContentPackContext(ownerModId, contentRegistry, keywordRegistry, timelineRegistry,
-                unlockRegistry);
+            var cardTagRegistry = RitsuLibFramework.GetCardTagRegistry(ownerModId);
+            var packContext = new ModContentPackContext(
+                ownerModId,
+                contentRegistry,
+                keywordRegistry,
+                timelineRegistry,
+                unlockRegistry,
+                cardTagRegistry);
             var operations = new List<AutoRegistrationOperation>();
             var signatures = new HashSet<string>(StringComparer.Ordinal);
 
@@ -447,40 +454,28 @@ namespace STS2RitsuLib.Interop.AutoRegistration
                                         var localStem = ValidateNonEmpty(ownedCardKeyword.LocalKeywordStem,
                                             nameof(ownedCardKeyword.LocalKeywordStem));
 
-                                        if (!string.IsNullOrWhiteSpace(ownedCardKeyword.LocNamespace))
-                                        {
-                                            keywordRegistry.RegisterCardKeywordOwnedByLocNamespace(
-                                                localStem,
-                                                ownedCardKeyword.LocNamespace,
-                                                ownedCardKeyword.IconPath,
-                                                ownedCardKeyword.CardDescriptionPlacement,
-                                                ownedCardKeyword.IncludeInCardHoverTip);
-                                            return;
-                                        }
-
-#pragma warning disable CS0618
-                                        if (!string.IsNullOrWhiteSpace(ownedCardKeyword.LocKeyPrefix))
-                                        {
-                                            keywordRegistry.RegisterCardKeywordOwned(
-                                                localStem,
-                                                ownedCardKeyword.LocKeyPrefix,
-                                                ownedCardKeyword.IconPath,
-                                                ownedCardKeyword.CardDescriptionPlacement,
-                                                ownedCardKeyword.IncludeInCardHoverTip);
-                                            return;
-                                        }
-#pragma warning restore CS0618
-
-#pragma warning disable CS0618
-                                        keywordRegistry.RegisterCardKeywordOwned(
+                                        keywordRegistry.RegisterCardKeywordOwnedByLocNamespace(
                                             localStem,
-                                            null,
                                             ownedCardKeyword.IconPath,
                                             ownedCardKeyword.CardDescriptionPlacement,
                                             ownedCardKeyword.IncludeInCardHoverTip);
-#pragma warning restore CS0618
                                     }));
                             });
+                        break;
+                    case RegisterOwnedCardTagAttribute ownedCardTag:
+                        RegisterCase($"RegisterOwnedCardTag:{ownedCardTag.LocalCardTagStem}:{type.FullName}", () =>
+                        {
+                            operations.Add(CreateOperation(ownerModId, type, AutoRegistrationPhase.CardTags,
+                                ownedCardTag.Order,
+                                $"RegisterOwnedCardTag:{ownedCardTag.LocalCardTagStem}:{type.FullName}",
+                                nameof(RegisterOwnedCardTagAttribute),
+                                () =>
+                                {
+                                    var localStem = ValidateNonEmpty(ownedCardTag.LocalCardTagStem,
+                                        nameof(ownedCardTag.LocalCardTagStem));
+                                    ModCardTagRegistry.For(ownerModId).RegisterOwned(localStem);
+                                }));
+                        });
                         break;
                     case RegisterOwnedCardPileAttribute ownedCardPile:
                         RegisterCase($"RegisterOwnedCardPile:{ownedCardPile.LocalPileStem}:{type.FullName}", () =>
@@ -1009,10 +1004,11 @@ namespace STS2RitsuLib.Interop.AutoRegistration
                 Style = attr.Style,
                 Anchor = anchor,
                 IconPath = attr.IconPath,
-                LocStem = attr.LocStem,
                 Hotkeys = attr.Hotkeys,
                 CardShouldBeVisible = attr.CardShouldBeVisible,
                 OnOpen = ResolveCardPileOpenHandler(declaringType),
+                HoverTipScreenOffset = new(attr.HoverTipOffsetX, attr.HoverTipOffsetY),
+                HoverTipPlacement = attr.HoverTipPlacement,
             };
         }
 
@@ -1049,7 +1045,6 @@ namespace STS2RitsuLib.Interop.AutoRegistration
             return new()
             {
                 IconPath = attr.IconPath,
-                LocStem = attr.LocStem,
                 Order = attr.ButtonOrder,
                 Offset = new(attr.OffsetX, attr.OffsetY),
                 OnClick = handler is null ? null : handler.OnClick,

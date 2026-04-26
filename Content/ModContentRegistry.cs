@@ -142,19 +142,38 @@ namespace STS2RitsuLib.Content
         }
 
         /// <summary>
-        ///     Builds a mod-scoped keyword id using the same stem normalization as fixed public model entries, then
-        ///     lowercases the result for keyword registry storage. Other mods can
-        ///     reference a provider’s keyword by passing the same <paramref name="modId" /> and
-        ///     <paramref name="localKeywordStem" />.
+        ///     Builds a stable three-segment compound id: <c>{normalizedModId}_{TYPE}_{normalizedName}</c>
+        ///     (underscore-separated). Mod and name use <see cref="NormalizePublicStem" />; the type segment is only
+        ///     trimmed then uppercased with <c>ToUpperInvariant</c> (no stem normalization).
+        /// </summary>
+        public static string GetCompoundId(string modId, string typeStem, string nameStem)
+        {
+            ArgumentException.ThrowIfNullOrWhiteSpace(modId);
+            ArgumentException.ThrowIfNullOrWhiteSpace(nameStem);
+            ArgumentNullException.ThrowIfNull(typeStem);
+
+            var trimmedType = typeStem.Trim();
+            if (trimmedType.Length == 0)
+                throw new ArgumentException("Type segment cannot be empty or whitespace.", nameof(typeStem));
+
+            var mod = NormalizePublicStem(modId);
+            var type = trimmedType.ToUpperInvariant();
+            var name = NormalizePublicStem(nameStem);
+            return $"{mod}_{type}_{name}";
+        }
+
+        /// <summary>
+        ///     Builds a mod-scoped keyword id: <c>{normalizedModId}_KEYWORD_{normalizedStem}</c>, matching the
+        ///     three-segment convention used by <see cref="GetQualifiedCardPileId" /> and
+        ///     <see cref="GetQualifiedTopBarButtonId" /> (all uppercase). Other mods can reference a provider’s keyword
+        ///     by passing the same <paramref name="modId" /> and <paramref name="localKeywordStem" />.
         /// </summary>
         public static string GetQualifiedKeywordId(string modId, string localKeywordStem)
         {
             ArgumentException.ThrowIfNullOrWhiteSpace(modId);
             ArgumentException.ThrowIfNullOrWhiteSpace(localKeywordStem);
 
-            var modStem = NormalizePublicStem(modId);
-            var keyStem = NormalizePublicStem(localKeywordStem);
-            return $"{modStem}_{keyStem}".ToLowerInvariant();
+            return GetCompoundId(modId, "KEYWORD", localKeywordStem);
         }
 
         /// <summary>
@@ -164,37 +183,44 @@ namespace STS2RitsuLib.Content
         ///     style (<c>DRAW_PILE</c>, <c>EXHAUST_PILE</c>, ...).
         /// </summary>
         /// <remarks>
-        ///     The returned string doubles as the default <c>LocStem</c> used when authoring
-        ///     <c>static_hover_tips.json</c>, so a pile registered by mod <c>com.example.my-mod</c> with
-        ///     local stem <c>overflow_pile</c> shows up both as id <c>MYMOD_CARDPILE_OVERFLOW_PILE</c> and
-        ///     loc keys <c>MYMOD_CARDPILE_OVERFLOW_PILE.title</c> / <c>.description</c> / <c>.empty</c>.
-        ///     Mods can still override the stem via <c>ModCardPileSpec.LocStem</c> when they need to share
-        ///     keys with an existing translation.
+        ///     The returned string is the stem for <c>static_hover_tips.json</c> keys, so a pile registered by
+        ///     mod <c>com.example.my-mod</c> with local stem <c>overflow_pile</c> uses id
+        ///     <c>MYMOD_CARDPILE_OVERFLOW_PILE</c> and loc keys <c>MYMOD_CARDPILE_OVERFLOW_PILE.title</c> /
+        ///     <c>.description</c> / <c>.empty</c>.
         /// </remarks>
         public static string GetQualifiedCardPileId(string modId, string localPileStem)
         {
             ArgumentException.ThrowIfNullOrWhiteSpace(modId);
             ArgumentException.ThrowIfNullOrWhiteSpace(localPileStem);
 
-            var modStem = NormalizePublicStem(modId);
-            var keyStem = NormalizePublicStem(localPileStem);
-            return $"{modStem}_CARDPILE_{keyStem}";
+            return GetCompoundId(modId, "CARDPILE", localPileStem);
+        }
+
+        /// <summary>
+        ///     Builds a mod-scoped <see cref="MegaCrit.Sts2.Core.Entities.Cards.CardTag" /> id using the ritsulib
+        ///     <c>MODID_CATEGORY_TYPENAME</c> convention with middle segment <c>CARDTAG</c>, aligned with
+        ///     <see cref="GetQualifiedKeywordId" /> and <see cref="GetQualifiedCardPileId" />.
+        /// </summary>
+        public static string GetQualifiedCardTagId(string modId, string localTagStem)
+        {
+            ArgumentException.ThrowIfNullOrWhiteSpace(modId);
+            ArgumentException.ThrowIfNullOrWhiteSpace(localTagStem);
+
+            return GetCompoundId(modId, "CARDTAG", localTagStem);
         }
 
         /// <summary>
         ///     Builds a mod-scoped top-bar-button id in the ritsulib <c>MODID_CATEGORY_TYPENAME</c> public
         ///     entry style (uppercase, three segments, underscore-separated, middle segment fixed to
         ///     <c>TOPBARBUTTON</c>). Used by <see cref="STS2RitsuLib.TopBar.ModTopBarButtonRegistry" />; the
-        ///     returned string doubles as the default <c>LocStem</c> for <c>static_hover_tips.json</c>.
+        ///     returned string is the stem for <c>static_hover_tips.json</c> title / description keys.
         /// </summary>
         public static string GetQualifiedTopBarButtonId(string modId, string localButtonStem)
         {
             ArgumentException.ThrowIfNullOrWhiteSpace(modId);
             ArgumentException.ThrowIfNullOrWhiteSpace(localButtonStem);
 
-            var modStem = NormalizePublicStem(modId);
-            var keyStem = NormalizePublicStem(localButtonStem);
-            return $"{modStem}_TOPBARBUTTON_{keyStem}";
+            return GetCompoundId(modId, "TOPBARBUTTON", localButtonStem);
         }
 
         /// <summary>
@@ -351,7 +377,8 @@ namespace STS2RitsuLib.Content
         /// <summary>
         ///     Registers additional starter-deck copies of <typeparamref name="TCard" /> for <typeparamref name="TCharacter" />.
         ///     The target character may be registered before or after this call; resolution happens when the character model is
-        ///     queried.
+        ///     queried. Matching uses the live instance CLR type; registrations against an assignable ancestor type also apply,
+        ///     except a registration keyed only to <see cref="CharacterModel" /> itself.
         /// </summary>
         public void RegisterCharacterStarterCard<TCharacter, TCard>(int count = 1)
             where TCharacter : CharacterModel
@@ -374,7 +401,8 @@ namespace STS2RitsuLib.Content
         ///     Registers additional starting relic copies of <typeparamref name="TRelic" /> for <typeparamref name="TCharacter" />
         ///     .
         ///     The target character may be registered before or after this call; resolution happens when the character model is
-        ///     queried.
+        ///     queried. Matching uses the live instance CLR type; registrations against an assignable ancestor type also apply,
+        ///     except a registration keyed only to <see cref="CharacterModel" /> itself.
         /// </summary>
         public void RegisterCharacterStarterRelic<TCharacter, TRelic>(int count = 1)
             where TCharacter : CharacterModel
@@ -396,7 +424,8 @@ namespace STS2RitsuLib.Content
         ///     Registers additional starting potion copies of <typeparamref name="TPotion" /> for
         ///     <typeparamref name="TCharacter" />.
         ///     The target character may be registered before or after this call; resolution happens when the character model is
-        ///     queried.
+        ///     queried. Matching uses the live instance CLR type; registrations against an assignable ancestor type also apply,
+        ///     except a registration keyed only to <see cref="CharacterModel" /> itself.
         /// </summary>
         public void RegisterCharacterStarterPotion<TCharacter, TPotion>(int count = 1)
             where TCharacter : CharacterModel
@@ -1159,6 +1188,17 @@ namespace STS2RitsuLib.Content
             }
         }
 
+        private static bool MatchesRegisteredStarterCharacter(Type registeredCharacterType, Type runtimeCharacterType)
+        {
+            if (registeredCharacterType == runtimeCharacterType)
+                return true;
+
+            if (!registeredCharacterType.IsAssignableFrom(runtimeCharacterType))
+                return false;
+
+            return registeredCharacterType != typeof(CharacterModel);
+        }
+
         private static Type[] GetRegisteredCharacterStarterTypes(Type characterType, CharacterStarterContentKind kind)
         {
             ArgumentNullException.ThrowIfNull(characterType);
@@ -1166,7 +1206,8 @@ namespace STS2RitsuLib.Content
             lock (SyncRoot)
             {
                 return RegisteredCharacterStarterContent
-                    .Where(entry => entry.CharacterType == characterType && entry.Kind == kind)
+                    .Where(entry => entry.Kind == kind && MatchesRegisteredStarterCharacter(entry.CharacterType,
+                        characterType))
                     .SelectMany(static entry => Enumerable.Repeat(entry.ModelType, entry.Count))
                     .ToArray();
             }

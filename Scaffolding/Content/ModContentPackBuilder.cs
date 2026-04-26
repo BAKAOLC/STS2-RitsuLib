@@ -1,12 +1,15 @@
+using MegaCrit.Sts2.Core.Entities.Cards;
 using MegaCrit.Sts2.Core.Helpers;
 using MegaCrit.Sts2.Core.Models;
 using MegaCrit.Sts2.Core.Timeline;
+using STS2RitsuLib.CardTags;
 using STS2RitsuLib.Combat.HealthBars;
 using STS2RitsuLib.Content;
 using STS2RitsuLib.Keywords;
 using STS2RitsuLib.Scaffolding.Ancients.Options;
 using STS2RitsuLib.Scaffolding.Cards.HandGlow;
 using STS2RitsuLib.Scaffolding.Cards.HandOutline;
+using STS2RitsuLib.Scaffolding.Characters;
 using STS2RitsuLib.Timeline;
 using STS2RitsuLib.Timeline.Scaffolding;
 using STS2RitsuLib.Unlocks;
@@ -26,7 +29,33 @@ namespace STS2RitsuLib.Scaffolding.Content
         ModContentRegistry Content,
         ModKeywordRegistry Keywords,
         ModTimelineRegistry Timeline,
-        ModUnlockRegistry Unlocks);
+        ModUnlockRegistry Unlocks)
+    {
+        /// <summary>
+        ///     Same as the 5-parameter <see cref="ModContentPackContext" /> primary constructor. The
+        ///     <paramref name="cardTagRegistry" /> argument is accepted so call sites can mirror
+        ///     <see cref="RitsuLibFramework.GetContentRegistry" /> / <see cref="RitsuLibFramework.GetKeywordRegistry" />
+        ///     / … style: pass <c>ModCardTagRegistry.For(<paramref name="modId" />)</c> or
+        ///     <see cref="RitsuLibFramework.GetCardTagRegistry" />. The value is not read; <see cref="CardTags" /> is
+        ///     always the per-mod singleton from <c>ModCardTagRegistry.For</c>.
+        /// </summary>
+        public ModContentPackContext(
+            string modId,
+            ModContentRegistry content,
+            ModKeywordRegistry keywords,
+            ModTimelineRegistry timeline,
+            ModUnlockRegistry unlocks,
+            ModCardTagRegistry cardTagRegistry) : this(modId, content, keywords, timeline, unlocks)
+        {
+            _ = cardTagRegistry;
+        }
+
+        /// <summary>
+        ///     Custom <see cref="CardTag" /> surface for <see cref="ModId" />; same singleton as
+        ///     <c>ModCardTagRegistry.For(ModId)</c> and <c>RitsuLibFramework.GetCardTagRegistry</c>.
+        /// </summary>
+        public ModCardTagRegistry CardTags => ModCardTagRegistry.For(ModId);
+    }
 
     /// <summary>
     ///     Fluent registration helper that batches common mod-author setup into a single readable flow.
@@ -99,6 +128,17 @@ namespace STS2RitsuLib.Scaffolding.Content
             where TPotion : PotionModel
         {
             return AddStep(ctx => ctx.Content.RegisterCharacterStarterPotion<TCharacter, TPotion>(count));
+        }
+
+        /// <summary>
+        ///     Queues direct character asset replacement registration by character id.
+        /// </summary>
+        public ModContentPackBuilder CharacterAssetReplacement(string characterEntry,
+            CharacterAssetProfile assetProfile)
+        {
+            ArgumentException.ThrowIfNullOrWhiteSpace(characterEntry);
+            ArgumentNullException.ThrowIfNull(assetProfile);
+            return AddStep(ctx => ctx.Content.RegisterCharacterAssetReplacement(characterEntry, assetProfile));
         }
 
         /// <summary>
@@ -472,17 +512,17 @@ namespace STS2RitsuLib.Scaffolding.Content
         }
 
         /// <summary>
-        ///     Queues <c>ModKeywordRegistry.RegisterCardKeywordOwned</c> (mod-local stem → qualified id).
+        ///     Queues <c>ModKeywordRegistry.RegisterCardKeywordOwnedByLocNamespace</c> (qualified id for both
+        ///     keyword id and <c>card_keywords</c> <c>{id}.title</c> / <c>.description</c> keys).
         /// </summary>
         public ModContentPackBuilder CardKeywordOwnedByLocNamespace(
             string localKeywordStem,
-            string? locNamespace,
             string? iconPath,
             ModKeywordCardDescriptionPlacement cardDescriptionPlacement,
             bool includeInCardHoverTip)
         {
             return AddStep(ctx =>
-                ctx.Keywords.RegisterCardKeywordOwnedByLocNamespace(localKeywordStem, locNamespace, iconPath,
+                ctx.Keywords.RegisterCardKeywordOwnedByLocNamespace(localKeywordStem, iconPath,
                     cardDescriptionPlacement, includeInCardHoverTip));
         }
 
@@ -491,47 +531,10 @@ namespace STS2RitsuLib.Scaffolding.Content
         /// </summary>
         public ModContentPackBuilder CardKeywordOwnedByLocNamespace(
             string localKeywordStem,
-            string? locNamespace = null,
             string? iconPath = null)
         {
             return CardKeywordOwnedByLocNamespace(
                 localKeywordStem,
-                locNamespace,
-                iconPath,
-                ModKeywordCardDescriptionPlacement.None,
-                true);
-        }
-
-        /// <summary>
-        ///     Queues <c>ModKeywordRegistry.RegisterCardKeywordOwned</c> (mod-local stem → qualified id).
-        /// </summary>
-        [Obsolete(
-            "Pitfall: locKeyPrefix is NOT a prefix that affects only the modid/namespace portion. It is the full card_keywords entry stem used to form '{stem}.title' and '{stem}.description'. Prefer CardKeywordOwnedByLocNamespace (default stem: '<modid>_<keyword>').")]
-        public ModContentPackBuilder CardKeywordOwned(
-            string localKeywordStem,
-            string? locKeyPrefix,
-            string? iconPath,
-            ModKeywordCardDescriptionPlacement cardDescriptionPlacement,
-            bool includeInCardHoverTip)
-        {
-            return AddStep(ctx =>
-                ctx.Keywords.RegisterCardKeywordOwned(localKeywordStem, locKeyPrefix, iconPath,
-                    cardDescriptionPlacement, includeInCardHoverTip));
-        }
-
-        /// <summary>
-        ///     Queues <c>ModKeywordRegistry.RegisterCardKeywordOwned</c> with legacy hover defaults.
-        /// </summary>
-        [Obsolete(
-            "Pitfall: locKeyPrefix is NOT a prefix that affects only the modid/namespace portion. It is the full card_keywords entry stem used to form '{stem}.title' and '{stem}.description'. Prefer CardKeywordOwnedByLocNamespace (default stem: '<modid>_<keyword>').")]
-        public ModContentPackBuilder CardKeywordOwned(
-            string localKeywordStem,
-            string? locKeyPrefix = null,
-            string? iconPath = null)
-        {
-            return CardKeywordOwned(
-                localKeywordStem,
-                locKeyPrefix,
                 iconPath,
                 ModKeywordCardDescriptionPlacement.None,
                 true);
@@ -541,10 +544,10 @@ namespace STS2RitsuLib.Scaffolding.Content
         ///     Queues extended <see cref="ModKeywordRegistry" /> card-keyword registration (placement + hover-tip flags).
         /// </summary>
         [Obsolete(
-            "Prefer CardKeywordOwned(localKeywordStem, ...) so the keyword id is mod-qualified; flat ids collide globally.")]
+            "Prefer CardKeywordOwnedByLocNamespace(localKeywordStem, ...) so the keyword id is mod-qualified; flat ids collide globally.")]
         public ModContentPackBuilder CardKeyword(
             string id,
-            string? locKeyPrefix,
+            string? entryStem,
             string? iconPath,
             ModKeywordCardDescriptionPlacement cardDescriptionPlacement,
             bool includeInCardHoverTip)
@@ -552,9 +555,9 @@ namespace STS2RitsuLib.Scaffolding.Content
             return AddStep(ctx =>
             {
                 ArgumentException.ThrowIfNullOrWhiteSpace(id);
-                var prefix = string.IsNullOrWhiteSpace(locKeyPrefix)
+                var prefix = string.IsNullOrWhiteSpace(entryStem)
                     ? StringHelper.Slugify(id)
-                    : locKeyPrefix.Trim();
+                    : entryStem.Trim();
 
                 ctx.Keywords.RegisterCore(
                     id,
@@ -572,12 +575,12 @@ namespace STS2RitsuLib.Scaffolding.Content
         ///     Legacy <c>CardKeyword</c> signature preserved for older mods; forwards with prior hover-tip behavior.
         /// </summary>
         [Obsolete(
-            "Prefer CardKeywordOwned(localKeywordStem, ...) so the keyword id is mod-qualified; flat ids collide globally.")]
-        public ModContentPackBuilder CardKeyword(string id, string? locKeyPrefix = null, string? iconPath = null)
+            "Prefer CardKeywordOwnedByLocNamespace(localKeywordStem, ...) so the keyword id is mod-qualified; flat ids collide globally.")]
+        public ModContentPackBuilder CardKeyword(string id, string? entryStem = null, string? iconPath = null)
         {
             return CardKeyword(
                 id,
-                locKeyPrefix,
+                entryStem,
                 iconPath,
                 ModKeywordCardDescriptionPlacement.None,
                 true);
@@ -955,6 +958,36 @@ namespace STS2RitsuLib.Scaffolding.Content
         }
 
         /// <summary>
+        ///     Queues <see cref="ModCardTagRegistry.RegisterOwned" /> for a local stem under this pack’s mod id.
+        /// </summary>
+        public ModContentPackBuilder CardTagOwned(string localTagStem)
+        {
+            return AddStep(ctx => ctx.CardTags.RegisterOwned(localTagStem));
+        }
+
+        /// <summary>
+        ///     Appends a <see cref="CardTagRegistrationEntry" /> registration step.
+        /// </summary>
+        public ModContentPackBuilder CardTag(CardTagRegistrationEntry entry)
+        {
+            ArgumentNullException.ThrowIfNull(entry);
+            return AddStep(ctx => entry.Register(ctx.CardTags));
+        }
+
+        /// <summary>
+        ///     Appends each card-tag registration entry in order.
+        /// </summary>
+        public ModContentPackBuilder CardTags(IEnumerable<CardTagRegistrationEntry> entries)
+        {
+            ArgumentNullException.ThrowIfNull(entries);
+
+            foreach (var entry in entries)
+                CardTag(entry);
+
+            return this;
+        }
+
+        /// <summary>
         ///     Registers <see cref="ModContentRegistry" /> entries (character, cards, relics, powers, …).
         /// </summary>
         public ModContentPackBuilder ContentManifest(IEnumerable<IContentRegistrationEntry>? entries)
@@ -968,6 +1001,14 @@ namespace STS2RitsuLib.Scaffolding.Content
         public ModContentPackBuilder KeywordManifest(IEnumerable<KeywordRegistrationEntry>? entries)
         {
             return entries != null ? Keywords(entries) : this;
+        }
+
+        /// <summary>
+        ///     Registers <see cref="ModCardTagRegistry" /> entries (custom <c>CardTag</c> ids separate from ModelDb).
+        /// </summary>
+        public ModContentPackBuilder CardTagManifest(IEnumerable<CardTagRegistrationEntry>? entries)
+        {
+            return entries != null ? CardTags(entries) : this;
         }
 
         /// <summary>
@@ -1112,7 +1153,8 @@ namespace STS2RitsuLib.Scaffolding.Content
                 RitsuLibFramework.GetContentRegistry(_modId),
                 RitsuLibFramework.GetKeywordRegistry(_modId),
                 RitsuLibFramework.GetTimelineRegistry(_modId),
-                RitsuLibFramework.GetUnlockRegistry(_modId));
+                RitsuLibFramework.GetUnlockRegistry(_modId),
+                RitsuLibFramework.GetCardTagRegistry(_modId));
         }
 
         /// <summary>

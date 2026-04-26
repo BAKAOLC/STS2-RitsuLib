@@ -1,3 +1,4 @@
+using HarmonyLib;
 using MegaCrit.Sts2.Core.Models;
 using STS2RitsuLib.Patching.Models;
 
@@ -20,7 +21,7 @@ namespace STS2RitsuLib.Content.Patches
         /// <inheritdoc />
         public static ModPatchTarget[] GetTargets()
         {
-            return [new(typeof(ModelDb), "get_AllCharacters")];
+            return [new(typeof(ModelDb), "AllCharacters", MethodType.Getter)];
         }
 
         // ReSharper disable once InconsistentNaming
@@ -50,7 +51,7 @@ namespace STS2RitsuLib.Content.Patches
         /// <inheritdoc />
         public static ModPatchTarget[] GetTargets()
         {
-            return [new(typeof(ModelDb), "get_Monsters")];
+            return [new(typeof(ModelDb), "Monsters", MethodType.Getter)];
         }
 
         // ReSharper disable once InconsistentNaming
@@ -81,7 +82,7 @@ namespace STS2RitsuLib.Content.Patches
         /// <inheritdoc />
         public static ModPatchTarget[] GetTargets()
         {
-            return [new(typeof(ModelDb), "get_Acts")];
+            return [new(typeof(ModelDb), "Acts", MethodType.Getter)];
         }
 
         // ReSharper disable once InconsistentNaming
@@ -111,7 +112,7 @@ namespace STS2RitsuLib.Content.Patches
         /// <inheritdoc />
         public static ModPatchTarget[] GetTargets()
         {
-            return [new(typeof(ModelDb), "get_AllSharedEvents")];
+            return [new(typeof(ModelDb), "AllSharedEvents", MethodType.Getter)];
         }
 
         // ReSharper disable once InconsistentNaming
@@ -141,7 +142,7 @@ namespace STS2RitsuLib.Content.Patches
         /// <inheritdoc />
         public static ModPatchTarget[] GetTargets()
         {
-            return [new(typeof(ModelDb), "get_AllPowers")];
+            return [new(typeof(ModelDb), "AllPowers", MethodType.Getter)];
         }
 
         // ReSharper disable once InconsistentNaming
@@ -171,7 +172,7 @@ namespace STS2RitsuLib.Content.Patches
         /// <inheritdoc />
         public static ModPatchTarget[] GetTargets()
         {
-            return [new(typeof(ModelDb), "get_Orbs")];
+            return [new(typeof(ModelDb), "Orbs", MethodType.Getter)];
         }
 
         // ReSharper disable once InconsistentNaming
@@ -201,7 +202,7 @@ namespace STS2RitsuLib.Content.Patches
         /// <inheritdoc />
         public static ModPatchTarget[] GetTargets()
         {
-            return [new(typeof(ModelDb), "get_AllSharedCardPools")];
+            return [new(typeof(ModelDb), "AllSharedCardPools", MethodType.Getter)];
         }
 
         // ReSharper disable once InconsistentNaming
@@ -231,7 +232,7 @@ namespace STS2RitsuLib.Content.Patches
         /// <inheritdoc />
         public static ModPatchTarget[] GetTargets()
         {
-            return [new(typeof(ModelDb), "get_AllEvents")];
+            return [new(typeof(ModelDb), "AllEvents", MethodType.Getter)];
         }
 
         // ReSharper disable once InconsistentNaming
@@ -261,7 +262,7 @@ namespace STS2RitsuLib.Content.Patches
         /// <inheritdoc />
         public static ModPatchTarget[] GetTargets()
         {
-            return [new(typeof(ModelDb), "get_AllSharedAncients")];
+            return [new(typeof(ModelDb), "AllSharedAncients", MethodType.Getter)];
         }
 
         // ReSharper disable once InconsistentNaming
@@ -291,7 +292,7 @@ namespace STS2RitsuLib.Content.Patches
         /// <inheritdoc />
         public static ModPatchTarget[] GetTargets()
         {
-            return [new(typeof(ModelDb), "get_AllAncients")];
+            return [new(typeof(ModelDb), "AllAncients", MethodType.Getter)];
         }
 
         // ReSharper disable once InconsistentNaming
@@ -322,7 +323,7 @@ namespace STS2RitsuLib.Content.Patches
         /// <inheritdoc />
         public static ModPatchTarget[] GetTargets()
         {
-            return [new(typeof(ModelDb), "get_DebugEnchantments")];
+            return [new(typeof(ModelDb), "DebugEnchantments", MethodType.Getter)];
         }
 
         // ReSharper disable once InconsistentNaming
@@ -352,7 +353,7 @@ namespace STS2RitsuLib.Content.Patches
         /// <inheritdoc />
         public static ModPatchTarget[] GetTargets()
         {
-            return [new(typeof(ModelDb), "get_DebugAfflictions")];
+            return [new(typeof(ModelDb), "DebugAfflictions", MethodType.Getter)];
         }
 
         // ReSharper disable once InconsistentNaming
@@ -382,7 +383,7 @@ namespace STS2RitsuLib.Content.Patches
         /// <inheritdoc />
         public static ModPatchTarget[] GetTargets()
         {
-            return [new(typeof(ModelDb), "get_Achievements")];
+            return [new(typeof(ModelDb), "Achievements", MethodType.Getter)];
         }
 
         // ReSharper disable once InconsistentNaming
@@ -412,7 +413,7 @@ namespace STS2RitsuLib.Content.Patches
         /// <inheritdoc />
         public static ModPatchTarget[] GetTargets()
         {
-            return [new(typeof(ModelDb), "get_GoodModifiers")];
+            return [new(typeof(ModelDb), "GoodModifiers", MethodType.Getter)];
         }
 
         // ReSharper disable once InconsistentNaming
@@ -442,7 +443,7 @@ namespace STS2RitsuLib.Content.Patches
         /// <inheritdoc />
         public static ModPatchTarget[] GetTargets()
         {
-            return [new(typeof(ModelDb), "get_BadModifiers")];
+            return [new(typeof(ModelDb), "BadModifiers", MethodType.Getter)];
         }
 
         // ReSharper disable once InconsistentNaming
@@ -472,7 +473,7 @@ namespace STS2RitsuLib.Content.Patches
         /// <inheritdoc />
         public static ModPatchTarget[] GetTargets()
         {
-            return [new(typeof(ModelDb), "get_AllRelicPools")];
+            return [new(typeof(ModelDb), "AllRelicPools", MethodType.Getter)];
         }
 
         // ReSharper disable once InconsistentNaming
@@ -502,7 +503,7 @@ namespace STS2RitsuLib.Content.Patches
         /// <inheritdoc />
         public static ModPatchTarget[] GetTargets()
         {
-            return [new(typeof(ModelDb), "get_AllPotionPools")];
+            return [new(typeof(ModelDb), "AllPotionPools", MethodType.Getter)];
         }
 
         // ReSharper disable once InconsistentNaming

@@ -1,3 +1,5 @@
+using Godot;
+
 namespace STS2RitsuLib.CardPiles
 {
     /// <summary>
@@ -7,8 +9,9 @@ namespace STS2RitsuLib.CardPiles
     /// <remarks>
     ///     Localization follows the vanilla pile convention — the hover-tip title / description and the
     ///     "open empty pile" thought bubble are always resolved against the built-in
-    ///     <c>static_hover_tips</c> loc table, using the keys <c>"{LocStem}.title"</c>,
-    ///     <c>"{LocStem}.description"</c> and <c>"{LocStem}.empty"</c>. Mods cannot create additional loc
+    ///     <c>static_hover_tips</c> loc table, using the keys <c>"{id}.title"</c>,
+    ///     <c>"{id}.description"</c> and <c>"{id}.empty"</c> where <c>id</c> is the registered pile id. Mods cannot create
+    ///     additional loc
     ///     tables, so all entries are expected to live in <c>static_hover_tips.json</c> merged through
     ///     the normal mod-localization pipeline.
     /// </remarks>
@@ -21,7 +24,8 @@ namespace STS2RitsuLib.CardPiles
         public const string HoverTipLocTable = "static_hover_tips";
 
         /// <summary>
-        ///     Builds a spec with defaults suitable for a combat-only, bottom-left auto-stacking pile.
+        ///     Builds a spec with defaults suitable for a combat-only bottom-left pile that auto-stacks
+        ///     toward the screen center (same row as the draw pile).
         /// </summary>
         public ModCardPileSpec()
         {
@@ -51,18 +55,6 @@ namespace STS2RitsuLib.CardPiles
         public string? IconPath { get; init; }
 
         /// <summary>
-        ///     Localization stem used to build the hover-tip title / description and the empty-pile message
-        ///     (all resolved against <see cref="HoverTipLocTable" />). When null, the pile's normalized id
-        ///     is used as the stem, mirroring how <c>ModKeywordRegistry</c> derives default loc keys.
-        /// </summary>
-        /// <remarks>
-        ///     Expected JSON keys are <c>"{stem}.title"</c>, <c>"{stem}.description"</c> and
-        ///     <c>"{stem}.empty"</c>. Follow the vanilla convention (see <c>DRAW_PILE.title</c> /
-        ///     <c>DRAW_PILE.description</c> in <c>static_hover_tips.json</c>) when authoring translations.
-        /// </remarks>
-        public string? LocStem { get; init; }
-
-        /// <summary>
         ///     Optional controller / keyboard hotkey ids that open the pile's view screen.
         /// </summary>
         public string[]? Hotkeys { get; init; }
@@ -72,6 +64,28 @@ namespace STS2RitsuLib.CardPiles
         ///     container (only meaningful for <see cref="ModCardPileUiStyle.ExtraHand" />).
         /// </summary>
         public bool CardShouldBeVisible { get; init; }
+
+        /// <summary>
+        ///     Extra screen-space pixels added to the hover tip's resolved <see cref="Godot.Control.GlobalPosition" />.
+        ///     Defaults to <see cref="Vector2.Zero" />. Most useful with <see cref="ModCardPileAnchorKind.Custom" />
+        ///     when the automatic placement needs a small nudge.
+        /// </summary>
+        public Vector2 HoverTipScreenOffset { get; init; }
+
+        /// <summary>
+        ///     How the hover tip is anchored relative to the pile button. Defaults to
+        ///     <see cref="ModCardPileHoverTipPlacement.Auto" />.
+        /// </summary>
+        public ModCardPileHoverTipPlacement HoverTipPlacement { get; init; } = ModCardPileHoverTipPlacement.Auto;
+
+        /// <summary>
+        ///     When non-null, evaluated periodically on the pile button's <c>_Process</c> tick (same pattern as
+        ///     <see cref="TopBar.ModTopBarButtonSpec.VisibleWhen" />). If the delegate returns false the button is
+        ///     hidden, ignores mouse input, and any active hover tip is removed. When null the button is always
+        ///     shown (subject to normal parent visibility). Attribute-driven registration cannot supply a
+        ///     delegate; use <see cref="ModCardPileRegistry.Register" /> from code when you need this.
+        /// </summary>
+        public Func<ModCardPileVisibilityContext, bool>? VisibleWhen { get; init; }
 
         /// <summary>
         ///     Optional callback invoked when the pile's UI button is released. When null (the default) the

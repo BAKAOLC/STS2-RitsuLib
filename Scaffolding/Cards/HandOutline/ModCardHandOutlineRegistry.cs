@@ -25,7 +25,7 @@ namespace STS2RitsuLib.Scaffolding.Cards.HandOutline
         }
 
         /// <summary>
-        ///     Registers a rule for <paramref name="cardType" /> (concrete <see cref="CardModel" /> subtype).
+        ///     Registers a rule for <paramref name="cardType" /> (<see cref="CardModel" /> subtype).
         /// </summary>
         public static void Register(Type cardType, ModCardHandOutlineRule rule)
         {
@@ -37,9 +37,9 @@ namespace STS2RitsuLib.Scaffolding.Cards.HandOutline
                     "Cannot register card hand outline rules after content registration has been frozen. " +
                     "Register from your mod initializer before ModelDb initializes.");
 
-            if (cardType.IsAbstract || !typeof(CardModel).IsAssignableFrom(cardType))
+            if (!typeof(CardModel).IsAssignableFrom(cardType))
                 throw new ArgumentException(
-                    $"Type '{cardType.FullName}' must be a concrete subtype of {typeof(CardModel).FullName}.",
+                    $"Type '{cardType.FullName}' must be a subtype of {typeof(CardModel).FullName}.",
                     nameof(cardType));
 
             var seq = Interlocked.Increment(ref _sequence);
@@ -74,6 +74,22 @@ namespace STS2RitsuLib.Scaffolding.Cards.HandOutline
 
             var rule = EvaluateBest(model);
             if (!rule.HasValue)
+                return false;
+
+            ModCardHandOutlinePatchHelper.ApplyHighlight(holder, model, rule.Value);
+            return true;
+        }
+
+        /// <summary>
+        ///     Applies outline only when the matching rule uses <see cref="ModCardHandOutlineRule.DynamicColor" />.
+        /// </summary>
+        public static bool TryRefreshDynamicOutlineForHolder(NHandCardHolder? holder)
+        {
+            if (holder == null || !holder.IsNodeReady() || holder.CardNode?.Model is not { } model)
+                return false;
+
+            var rule = EvaluateBest(model);
+            if (rule?.DynamicColor == null)
                 return false;
 
             ModCardHandOutlinePatchHelper.ApplyHighlight(holder, model, rule.Value);

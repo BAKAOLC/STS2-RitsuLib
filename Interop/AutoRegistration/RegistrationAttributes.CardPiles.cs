@@ -12,7 +12,8 @@ namespace STS2RitsuLib.Interop.AutoRegistration
     ///         Field semantics mirror <see cref="ModCardPileSpec" />. Localization follows the vanilla
     ///         pile convention — hover-tip title / description and the empty-pile thought bubble are all
     ///         resolved against <see cref="ModCardPileSpec.HoverTipLocTable" /> using the keys
-    ///         <c>"{LocStem}.title"</c>, <c>"{LocStem}.description"</c> and <c>"{LocStem}.empty"</c>. Because
+    ///         <c>"{id}.title"</c>, <c>"{id}.description"</c> and <c>"{id}.empty"</c> where <c>id</c> is the
+    ///         qualified pile id. Because
     ///         mods can only extend existing loc tables (not create new ones) the table itself is not
     ///         configurable; author your translations in <c>static_hover_tips.json</c>.
     ///     </para>
@@ -64,12 +65,6 @@ namespace STS2RitsuLib.Interop.AutoRegistration
         public string? IconPath { get; set; }
 
         /// <summary>
-        ///     Optional localization stem (see <see cref="ModCardPileSpec.LocStem" />). When null, the
-        ///     normalized pile id is used as the stem — mirroring <c>ModKeywordRegistry</c>'s default.
-        /// </summary>
-        public string? LocStem { get; set; }
-
-        /// <summary>
         ///     Optional hotkey ids forwarded to <c>NCardPileScreen.ShowScreen</c>. Separate ids with commas
         ///     at the call site (<c>Hotkeys = new[] { "combat_pile_deck" }</c>).
         /// </summary>
@@ -80,5 +75,22 @@ namespace STS2RitsuLib.Interop.AutoRegistration
         ///     the pile are rendered as <c>NCard</c> nodes inside the pile container.
         /// </summary>
         public bool CardShouldBeVisible { get; set; }
+
+        /// <summary>
+        ///     Added to the hover tip position after automatic placement (see <see cref="ModCardPileSpec.HoverTipScreenOffset" />
+        ///     ).
+        /// </summary>
+        public float HoverTipOffsetX { get; set; }
+
+        /// <summary>
+        ///     Added to the hover tip position after automatic placement (see <see cref="ModCardPileSpec.HoverTipScreenOffset" />
+        ///     ).
+        /// </summary>
+        public float HoverTipOffsetY { get; set; }
+
+        /// <summary>
+        ///     Hover tip anchor relative to the pile button (see <see cref="ModCardPileSpec.HoverTipPlacement" />).
+        /// </summary>
+        public ModCardPileHoverTipPlacement HoverTipPlacement { get; set; }
     }
 }

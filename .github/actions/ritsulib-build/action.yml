@@ -1,0 +1,43 @@
+name: RitsuLib CI build
+description: >-
+  Installs toolchain + caches, then runs scripts/ci/ci_build.py (signature
+  verification + release_cli --artifacts-only with explicit MSBuild overrides).
+
+inputs:
+  signatures-root:
+    description: Absolute path for Sts2ApiSignatureRoot (versioned folders with sts2.dll).
+    required: true
+  use-dev-version:
+    description: Build artifacts with dev-only package version (9999.0.0-dev.<run>+<sha>).
+    required: false
+    default: "false"
+
+runs:
+  using: composite
+  steps:
+    - uses: actions/setup-dotnet@v5
+      with:
+        dotnet-version: "9.x"
+
+    - uses: actions/cache@v5
+      with:
+        path: ~/.nuget/packages
+        key: ${{ runner.os }}-nuget-${{ hashFiles('STS2-RitsuLib.csproj') }}
+
+    - uses: astral-sh/setup-uv@v8.1.0
+      with:
+        enable-cache: true
+        activate-environment: true
+        no-project: true
+        cache-dependency-glob: |
+          scripts/**/*.py
+
+    - name: CI build (scripted)
+      shell: bash
+      working-directory: ${{ github.workspace }}
+      run: >
+        extra=""; if [[ "${{ inputs.use-dev-version }}" == "true" ]]; then extra="--use-dev-version"; fi;
+        uv run python scripts/ci/ci_build.py
+        --repo-root "${{ github.workspace }}"
+        --signature-root "${{ inputs.signatures-root }}"
+        $extra

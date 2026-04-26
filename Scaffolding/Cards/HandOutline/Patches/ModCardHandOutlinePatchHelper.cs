@@ -39,16 +39,16 @@ namespace STS2RitsuLib.Scaffolding.Cards.HandOutline.Patches
             if (force)
                 highlight.AnimShow();
 
-            highlight.Modulate = rule.Color;
+            highlight.Modulate = rule.ResolveColor(model);
         }
 
-        internal static void ApplyFlash(NHandCardHolder holder, ModCardHandOutlineRule rule)
+        internal static void ApplyFlash(NHandCardHolder holder, CardModel model, ModCardHandOutlineRule rule)
         {
             if (AccessTools.Field(typeof(NHandCardHolder), "_flash")?.GetValue(holder) is not Control flash ||
                 !GodotObject.IsInstanceValid(flash))
                 return;
 
-            flash.Modulate = rule.Color;
+            flash.Modulate = rule.ResolveColor(model);
         }
     }
 }

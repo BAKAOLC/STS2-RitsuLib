@@ -1,0 +1,48 @@
+# Tag v*: scripted build + GitHub Release + optional NuGet.org push.
+name: Release
+
+on:
+  push:
+    tags:
+      - "v*"
+
+permissions:
+  contents: write
+
+concurrency:
+  group: ritsulib-release-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          fetch-depth: 0
+
+      - name: Checkout API signatures (shallow)
+        uses: actions/checkout@v6
+        with:
+          repository: BAKAOLC/STS2-API-Signatures
+          path: sts2-api-signatures
+          fetch-depth: 1
+          token: ${{ secrets.STS2_SIGNATURES_TOKEN || github.token }}
+
+      - uses: ./.github/actions/ritsulib-build
+        with:
+          signatures-root: ${{ github.workspace }}/sts2-api-signatures
+
+      - name: GitHub Release (scripted)
+        env:
+          GH_TOKEN: ${{ github.token }}
+        shell: bash
+        working-directory: ${{ github.workspace }}
+        run: uv run python scripts/ci/gh_publish.py --repo-root "${{ github.workspace }}" tag-release
+
+      - name: NuGet.org push (scripted)
+        env:
+          NUGET_API_KEY: ${{ secrets.NUGET_API_KEY }}
+        shell: bash
+        working-directory: ${{ github.workspace }}
+        run: uv run python scripts/ci/gh_publish.py --repo-root "${{ github.workspace }}" nuget-push

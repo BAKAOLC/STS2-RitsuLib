@@ -2,6 +2,7 @@ using STS2RitsuLib.Audio.Patches;
 using STS2RitsuLib.CardPiles.Patches;
 using STS2RitsuLib.Cards.FreePlay.Patches;
 using STS2RitsuLib.Cards.Patches;
+using STS2RitsuLib.CardTags.Patches;
 using STS2RitsuLib.Combat.CardTargeting.Patches;
 using STS2RitsuLib.Combat.HealthBars.Patches;
 using STS2RitsuLib.Combat.Rewards.Patches;
@@ -105,17 +106,20 @@ namespace STS2RitsuLib
             patcher.RegisterPatch<ActTransitionLifecyclePatch>();
             patcher.RegisterPatch<ActEnterMapSelectionSyncPatch>();
             patcher.RegisterPatch<SaveManagerLifecyclePatch>();
+            patcher.RegisterPatch<ModDataCloudSyncPatches.AfterInitProfileId>();
+            patcher.RegisterPatch<ModDataCloudSyncPatches.AfterSwitchProfileId>();
             patcher.RegisterPatch<RunSavingLifecyclePatch>();
             patcher.RegisterPatch<EpochLifecyclePatch>();
             patcher.RegisterPatch<UnlockIncrementLifecyclePatch>();
             patcher.RegisterPatch<GameOverScreenLifecyclePatch>();
             patcher.RegisterPatch<NHealthBarReadyForecastPatch>();
+            patcher.RegisterPatch<NHealthBarRefreshForegroundOrderedPatch>();
             patcher.RegisterPatch<CardModelShouldGlowGoldRegistryPatch>();
             patcher.RegisterPatch<CardModelShouldGlowRedRegistryPatch>();
             patcher.RegisterPatch<CardModelSetToFreeBindingPatch>();
             patcher.RegisterPatch<NHandCardHolderUpdateCardHandOutlinePatch>();
             patcher.RegisterPatch<NHandCardHolderFlashHandOutlinePatch>();
-            patcher.RegisterPatch<NHealthBarRefreshForegroundForecastPatch>();
+            patcher.RegisterPatch<NHandCardHolderDynamicOutlineTickPatch>();
             patcher.RegisterPatch<NHealthBarRefreshMiddlegroundForecastPatch>();
             patcher.RegisterPatch<NHealthBarRefreshTextForecastPatch>();
             patcher.RegisterPatch<ArchaicToothGetTranscendenceStarterCardPatch>();
@@ -130,6 +134,7 @@ namespace STS2RitsuLib
             patcher.RegisterPatch<CardCmdAutoPlayAnyPlayerPatch>();
             patcher.RegisterPatch<HoverTipFactoryFromKeywordPatch>();
             patcher.RegisterPatch<CardModelKeywordsModSeedPatch>();
+            patcher.RegisterPatch<CardModelTagsModSeedPatch>();
             patcher.RegisterPatch<CardModelHoverTipsModKeywordPatch>();
             patcher.RegisterPatch<CardRewardToSerializablePatch>();
             patcher.RegisterPatch<CombatRoomToSerializableRewardExtPatch>();
@@ -260,7 +265,10 @@ namespace STS2RitsuLib
             patcher.RegisterPatch<CharacterIconTexturePathPatch>();
             patcher.RegisterPatch<CharacterIconPathPatch>();
             patcher.RegisterPatch<CharacterSelectBgPathPatch>();
+            patcher.RegisterPatch<CharacterSelectIconPathPatch>();
+            patcher.RegisterPatch<CharacterSelectLockedIconPathPatch>();
             patcher.RegisterPatch<CharacterSelectTransitionPathPatch>();
+            patcher.RegisterPatch<CharacterMapMarkerPathPatch>();
             patcher.RegisterPatch<CharacterTrailPathPatch>();
             patcher.RegisterPatch<CharacterTrailStyleOverridePatch>();
             patcher.RegisterPatch<CharacterAttackSfxPatch>();
@@ -308,6 +316,7 @@ namespace STS2RitsuLib
             patcher.RegisterPatch<ModelDbModdedEntryPatch>();
             patcher.RegisterPatch<ModelIdSerializationCacheDynamicContentPatch>();
             patcher.RegisterPatch<DynamicActContentPatchBootstrap>();
+            patcher.RegisterPatch<DynamicCharacterStarterContentPatchBootstrap>();
             RegisterFrameworkPatcher(FrameworkPatcherArea.ContentRegistry, patcher);
         }
 

@@ -4,11 +4,23 @@ import argparse
 import os
 import subprocess
 import sys
+import xml.etree.ElementTree as ET
 from pathlib import Path
 
 from release_lib import git_ops
 from release_lib import nuget as nuget_ops
 from release_lib import plan_analysis
+from release_lib.msbuild_eval import get_csproj_property
+from release_lib.repo_layout import (
+    CONST_CS_NAME,
+    DEFAULT_GIT_REMOTE,
+    GIT_DEFAULT_DEV_BRANCH,
+    GIT_DEFAULT_MAIN_BRANCH,
+    MOD_MANIFEST_NAME,
+    NUGET_ORG_V3_INDEX_URL,
+    RITSULIB_CSPROJ_NAME,
+    RITSLIB_RELEASE_TAG_MESSAGE_BASENAME,
+)
 from release_lib.version_sync import (
     read_csproj_version,
     read_paths,
@@ -18,21 +30,46 @@ from release_lib.version_sync import (
 )
 
 _SCRIPTS_DIR = Path(__file__).resolve().parent
-DEFAULT_DEV_BRANCH = "dev"
-DEFAULT_MAIN_BRANCH = "main"
-DEFAULT_REMOTE = "origin"
-DEFAULT_NUGET_SOURCE = "https://api.nuget.org/v3/index.json"
+DEFAULT_DEV_BRANCH = GIT_DEFAULT_DEV_BRANCH
+DEFAULT_MAIN_BRANCH = GIT_DEFAULT_MAIN_BRANCH
+DEFAULT_REMOTE = DEFAULT_GIT_REMOTE
 
-_VERSIONED_FILES = (
-    "STS2-RitsuLib.csproj",
-    "mod_manifest.json",
-    "Const.cs",
-)
+_VERSIONED_FILES = (RITSULIB_CSPROJ_NAME, MOD_MANIFEST_NAME, CONST_CS_NAME)
+
+
+def _resolve_release_tag_message_file(repo: Path) -> Path | None:
+    override = os.environ.get("RITSLIB_RELEASE_TAG_MESSAGE_FILE", "").strip()
+    if override:
+        p = Path(override).expanduser()
+        p = p.resolve() if p.is_absolute() else (repo / p).resolve()
+        try:
+            if p.is_file():
+                return p
+        except OSError:
+            pass
+    internal = (repo / RITSLIB_RELEASE_TAG_MESSAGE_BASENAME).resolve()
+    try:
+        if internal.is_file():
+            return internal
+    except OSError:
+        pass
+    return None
+
+
+def _git_tag_command(tag: str, *, force: bool, message_file: Path | None) -> list[str]:
+    cmd: list[str] = ["git", "tag"]
+    if force:
+        cmd.append("-f")
+    if message_file is not None:
+        cmd.extend(["-a", tag, "-F", str(message_file)])
+    else:
+        cmd.append(tag)
+    return cmd
 
 
 def _parse_args(argv: list[str]) -> argparse.Namespace:
     p = argparse.ArgumentParser(
-        description="STS2-RitsuLib release: dev → version bump → merge main → tag → push → NuGet",
+        description="STS2-RitsuLib release: dev → version bump → merge main → tag → push (NuGet.org optional via --push-nuget; tag CI publishes by default).",
     )
     p.add_argument(
         "--bump",
@@ -56,10 +93,39 @@ def _parse_args(argv: list[str]) -> argparse.Namespace:
         help="With --dry-run: run dotnet pack to a temp dir only (no repo writes, temp cleaned)",
     )
     p.add_argument("--no-pull", action="store_true", help="Skip git pull on dev/main before merge")
-    p.add_argument("--skip-nuget", action="store_true", help="Do not pack/push NuGet after push")
+    p.add_argument(
+        "--push-nuget",
+        action="store_true",
+        help="After tag push, pack and push NuGet.org from this machine (default: skip; tag CI publishes packages).",
+    )
+    p.add_argument(
+        "--artifacts-only",
+        action="store_true",
+        help="Build nupkg + GitHub zip artifacts only; no version/git/push/NuGet changes.",
+    )
     p.add_argument("--configuration", default="Release")
-    p.add_argument("--nuget-source", default=DEFAULT_NUGET_SOURCE)
+    p.add_argument(
+        "--compat-targets",
+        default="all",
+        help='Compatibility targets to publish, comma-separated (for example "x.y.z,a.b.c"), or "all" (default).',
+    )
+    p.add_argument("--nuget-source", default=NUGET_ORG_V3_INDEX_URL)
     p.add_argument("--api-key", default=None, help="NuGet API key (else env NUGET_API_KEY)")
+    p.add_argument(
+        "--version-override",
+        default=None,
+        help="Override package/DLL informational version for packing only (for example dev builds).",
+    )
+    p.add_argument(
+        "--sts2-api-signature-root",
+        default=None,
+        help="Optional override for /p:Sts2ApiSignatureRoot during pack.",
+    )
+    p.add_argument(
+        "--sts2-dir",
+        default=None,
+        help="Optional override for /p:Sts2Dir during pack.",
+    )
     p.add_argument("--skip-build", action="store_true", help="Pass --no-build to dotnet pack")
     p.add_argument(
         "--force-tag",
@@ -72,6 +138,27 @@ def _parse_args(argv: list[str]) -> argparse.Namespace:
         help="With --dry-run: run git fetch for dev/main before computing [may conflict] hints from refs",
     )
     return p.parse_args(argv)
+
+
+def _read_default_compat_targets(csproj_path: Path) -> list[str]:
+    if not csproj_path.is_file():
+        msg = f"Missing csproj: {csproj_path}"
+        raise RuntimeError(msg)
+    try:
+        raw = get_csproj_property(csproj_path, "RitsuLibCompatTargets")
+    except (OSError, RuntimeError) as e:
+        msg = f"Could not evaluate MSBuild property RitsuLibCompatTargets: {e}"
+        raise RuntimeError(msg) from e
+    if not raw.strip():
+        msg = "RitsuLibCompatTargets evaluated empty (dotnet msbuild -getProperty)."
+        raise RuntimeError(msg)
+    return [v.strip() for v in raw.split(";") if v.strip()]
+
+
+def _resolve_compat_targets(raw: str, defaults: list[str]) -> list[str]:
+    if raw.strip().lower() == "all":
+        return defaults
+    return [v.strip() for v in raw.split(",") if v.strip()]
 
 
 def _commit_message_bump(v: str) -> str:
@@ -138,13 +225,42 @@ def main(argv: list[str] | None = None) -> int:
             print(f"[release] {e}", file=sys.stderr)
             return 1
 
-    if not (repo / "STS2-RitsuLib.csproj").is_file():
-        print(f"[release] STS2-RitsuLib.csproj not found under {repo}", file=sys.stderr)
+    if not (repo / RITSULIB_CSPROJ_NAME).is_file():
+        print(f"[release] {RITSULIB_CSPROJ_NAME} not found under {repo}", file=sys.stderr)
         return 1
 
     ritsulib = repo
     csproj, manifest, const_cs = read_paths(ritsulib)
+    compat_targets = _resolve_compat_targets(
+        args.compat_targets,
+        _read_default_compat_targets(csproj),
+    )
+    if not compat_targets:
+        print("[release] no compatibility targets resolved from --compat-targets.", file=sys.stderr)
+        return 1
     current_text = read_csproj_version(csproj)
+
+    print(f"[release] repo root: {repo}", flush=True)
+
+    if args.artifacts_only:
+        print(f"[release] project version (csproj): {current_text}", flush=True)
+        if args.version_override:
+            print(f"[release] pack version override: {args.version_override}", flush=True)
+        print(f"[release] nuget targets: {', '.join(compat_targets)}", flush=True)
+        packages, zips = nuget_ops.build_artifacts(
+            ritsulib,
+            configuration=args.configuration,
+            skip_build=args.skip_build,
+            compat_targets=compat_targets,
+            version_override=args.version_override,
+            sts2_api_signature_root=Path(args.sts2_api_signature_root) if args.sts2_api_signature_root else None,
+            sts2_dir=Path(args.sts2_dir) if args.sts2_dir else None,
+        )
+        print(f"[release] Artifacts packages: {', '.join(pkg.name for pkg in packages)}")
+        print(f"[release] Artifacts zips: {', '.join(zip_path.name for zip_path in zips)}")
+        print("[release] done (artifacts-only).")
+        return 0
+
     current_v = VersionTriple.parse(current_text)
     next_v = resolve_next_version(
         current_v,
@@ -153,10 +269,13 @@ def main(argv: list[str] | None = None) -> int:
     )
     next_text = str(next_v)
     tag = _tag_name(next_text)
+    tag_msg_file = _resolve_release_tag_message_file(repo)
 
-    print(f"[release] repo root: {repo}", flush=True)
     print(f"[release] version:   {current_text} -> {next_text}", flush=True)
+    if args.version_override:
+        print(f"[release] pack version override: {args.version_override}", flush=True)
     print(f"[release] tag:       {tag}", flush=True)
+    print(f"[release] nuget targets: {', '.join(compat_targets)}", flush=True)
 
     if args.dry_run:
         _dry_run_git_warnings(repo, args.dev_branch)
@@ -207,7 +326,7 @@ def main(argv: list[str] | None = None) -> int:
                     tag,
                     force_tag=args.force_tag,
                     no_pull=args.no_pull,
-                    skip_nuget=args.skip_nuget,
+                    push_nuget=args.push_nuget,
                 )
             except (RuntimeError, subprocess.CalledProcessError) as e:
                 print(
@@ -220,6 +339,8 @@ def main(argv: list[str] | None = None) -> int:
             args,
             next_text,
             tag,
+            compat_targets,
+            tag_message_file=tag_msg_file,
             conflict_marks=plan_marks,
             suggest_plan_fetch=bool(
                 plan_marks is not None
@@ -229,12 +350,16 @@ def main(argv: list[str] | None = None) -> int:
         )
         if args.dry_run_verify_pack:
             print("[release] DRY-RUN: verifying dotnet pack (temp directory)...")
-            pkg_name = nuget_ops.verify_pack_in_tempdir(
+            pkg_names = nuget_ops.verify_pack_in_tempdir(
                 ritsulib,
                 configuration=args.configuration,
                 skip_build=args.skip_build,
+                compat_targets=compat_targets,
+                version_override=args.version_override,
+                sts2_api_signature_root=Path(args.sts2_api_signature_root) if args.sts2_api_signature_root else None,
+                sts2_dir=Path(args.sts2_dir) if args.sts2_dir else None,
             )
-            print(f"[release] DRY-RUN: pack OK -> {pkg_name} (temp removed)")
+            print(f"[release] DRY-RUN: pack OK -> {', '.join(pkg_names)} (temp removed)")
         return 0
 
     try:
@@ -298,10 +423,11 @@ def main(argv: list[str] | None = None) -> int:
         cwd=repo,
         check=True,
     )
-    tag_cmd = ["git", "tag", tag]
-    if args.force_tag:
-        tag_cmd.insert(2, "-f")
-    subprocess.run(tag_cmd, cwd=repo, check=True)
+    subprocess.run(
+        _git_tag_command(tag, force=args.force_tag, message_file=tag_msg_file),
+        cwd=repo,
+        check=True,
+    )
 
     subprocess.run(["git", "checkout", args.dev_branch], cwd=repo, check=True)
 
@@ -312,15 +438,24 @@ def main(argv: list[str] | None = None) -> int:
         tag_push.insert(2, "--force")
     subprocess.run(tag_push, cwd=repo, check=True)
 
-    if not args.skip_nuget:
-        pkg = nuget_ops.publish_nuget(
+    if args.push_nuget:
+        published, github_zips = nuget_ops.publish_nugets(
             ritsulib,
             configuration=args.configuration,
             source=args.nuget_source,
             api_key=args.api_key,
             skip_build=args.skip_build,
+            compat_targets=compat_targets,
+            version_override=args.version_override,
+            sts2_api_signature_root=Path(args.sts2_api_signature_root) if args.sts2_api_signature_root else None,
+            sts2_dir=Path(args.sts2_dir) if args.sts2_dir else None,
         )
-        print(f"[release] NuGet published: {pkg.name}")
+        print(f"[release] NuGet published: {', '.join(pkg.name for pkg in published)}")
+        print(f"[release] GitHub zips: {', '.join(zip_path.name for zip_path in github_zips)}")
+    else:
+        print(
+            "[release] Skipping local NuGet push (default); packages are published by the tag release workflow.",
+        )
 
     print("[release] done.")
     return 0
@@ -347,7 +482,9 @@ def _print_git_plan(
     args: argparse.Namespace,
     next_text: str,
     tag: str,
+    compat_targets: list[str],
     *,
+    tag_message_file: Path | None = None,
     conflict_marks: frozenset[str] | None = None,
     suggest_plan_fetch: bool = False,
 ) -> None:
@@ -396,7 +533,13 @@ def _print_git_plan(
         f'git merge --no-ff {args.dev_branch} -m "{merge_msg}"',
         step_id=plan_analysis.MERGE,
     )
-    if args.force_tag:
+    if tag_message_file is not None:
+        fp = str(tag_message_file).replace('"', '\\"')
+        if args.force_tag:
+            step(f'git tag -f -a {tag} -F "{fp}"', step_id="")
+        else:
+            step(f'git tag -a {tag} -F "{fp}"', step_id=plan_analysis.TAG)
+    elif args.force_tag:
         step(f"git tag -f {tag}", step_id="")
     else:
         step(f"git tag {tag}", step_id=plan_analysis.TAG)
@@ -407,10 +550,13 @@ def _print_git_plan(
         step(f"git push --force {args.remote} refs/tags/{tag}", step_id="")
     else:
         step(f"git push {args.remote} refs/tags/{tag}", step_id=plan_analysis.PUSH_TAG)
-    if args.skip_nuget:
-        step("(skip NuGet)", step_id="")
+    if args.push_nuget:
+        step(
+            f"dotnet pack + github zip + dotnet nuget push (targets: {', '.join(compat_targets)})",
+            step_id=plan_analysis.NUGET,
+        )
     else:
-        step("dotnet pack + dotnet nuget push", step_id=plan_analysis.NUGET)
+        step("(skip local NuGet; tag workflow publishes packages)", step_id="")
 
 
 _PESSIMISTIC_CONFLICT_STEPS = frozenset(
