@@ -9,8 +9,8 @@ namespace STS2RitsuLib.Scaffolding.Visuals.StateMachine
 {
     /// <summary>
     ///     Helper that composes a <see cref="CompositeAnimationBackend" /> from the nodes found under a visuals
-    ///     root, in priority order: cue frame sequences / static textures, Spine, Godot animation player,
-    ///     Godot animated sprite.
+    ///     root, in priority order: cue frame sequences / static textures, Spine, Godot animation tree state machine,
+    ///     Godot animation player, Godot animated sprite.
     /// </summary>
     public static class CompositeBackendFactory
     {
@@ -39,6 +39,11 @@ namespace STS2RitsuLib.Scaffolding.Visuals.StateMachine
             if (visualsRoot is NCreatureVisuals { HasSpineAnimation: true, SpineBody: { } spine })
                 backends.Add(new SpineAnimationBackend(spine));
 
+            var animationTree =
+                FindNode<AnimationTree>(visualsRoot) ?? SearchRecursive<AnimationTree>(visualsRoot);
+            if (animationTree is { TreeRoot: AnimationNodeStateMachine })
+                backends.Add(new AnimationTreeStateMachineBackend(animationTree));
+
             var animationPlayer =
                 FindNode<AnimationPlayer>(visualsRoot) ?? SearchRecursive<AnimationPlayer>(visualsRoot);
             if (animationPlayer != null)
@@ -51,7 +56,7 @@ namespace STS2RitsuLib.Scaffolding.Visuals.StateMachine
 
             if (backends.Count == 0)
                 throw new InvalidOperationException(
-                    $"No animation backend could be built for '{visualsRoot.Name}' (no cues, Spine, AnimationPlayer or AnimatedSprite2D).");
+                    $"No animation backend could be built for '{visualsRoot.Name}' (no cues, Spine, AnimationTree, AnimationPlayer or AnimatedSprite2D).");
 
             return backends.Count == 1 ? backends[0] : new CompositeAnimationBackend(backends, visualsRoot);
         }
