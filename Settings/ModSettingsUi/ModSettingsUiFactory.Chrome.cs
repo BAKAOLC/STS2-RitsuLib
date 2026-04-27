@@ -26,24 +26,32 @@ namespace STS2RitsuLib.Settings
 
         private static MarginContainer CreateSettingLine<TValue>(ModSettingsUiContext context,
             Func<string> labelProvider,
-            Func<string> descriptionBodyProvider, Control valueControl, IModSettingsValueBinding<TValue> binding)
+            Func<string> descriptionBodyProvider, Control valueControl, IModSettingsValueBinding<TValue> binding,
+            ModSettingsText? labelRefreshSource = null,
+            ModSettingsText? descriptionRefreshSource = null)
         {
             return CreateSettingLine(context, labelProvider, descriptionBodyProvider, valueControl,
-                CreateEntryActionsButton(context, binding), binding);
+                CreateEntryActionsButton(context, binding), binding,
+                labelRefreshSource, descriptionRefreshSource);
         }
 
         private static MarginContainer CreateSettingLine<TValue>(ModSettingsUiContext context,
             Func<string> labelProvider,
             Func<string> descriptionBodyProvider, Control valueControl, IModSettingsValueBinding<TValue> binding,
-            ModSettingsMenuCapabilities capabilities)
+            ModSettingsMenuCapabilities capabilities,
+            ModSettingsText? labelRefreshSource = null,
+            ModSettingsText? descriptionRefreshSource = null)
         {
             return CreateSettingLine(context, labelProvider, descriptionBodyProvider, valueControl,
-                CreateEntryActionsButton(context, binding, capabilities), binding);
+                CreateEntryActionsButton(context, binding, capabilities), binding,
+                labelRefreshSource, descriptionRefreshSource);
         }
 
         private static MarginContainer CreateSettingLine(ModSettingsUiContext context, Func<string> labelProvider,
             Func<string> descriptionBodyProvider, Control valueControl, Control? actionControl = null,
-            IModSettingsBinding? scopeBinding = null)
+            IModSettingsBinding? scopeBinding = null,
+            ModSettingsText? labelRefreshSource = null,
+            ModSettingsText? descriptionRefreshSource = null)
         {
             var descriptionText = descriptionBodyProvider();
             var line = new MarginContainer();
@@ -80,12 +88,14 @@ namespace STS2RitsuLib.Settings
             };
             leftColumn.AddThemeConstantOverride("separation", 5);
 
-            var label = CreateRefreshableHeaderLabel(context, ResolveLabelText, 24, HorizontalAlignment.Left,
+            var label = CreateRefreshableHeaderLabel(context, labelRefreshSource, ResolveLabelText, 24,
+                HorizontalAlignment.Left,
                 ModSettingsUiPalette.RichTextTitle);
             label.SizeFlagsHorizontal = Control.SizeFlags.ExpandFill;
             leftColumn.AddChild(label);
 
-            var descriptionLabel = CreateRefreshableDescriptionLabel(context, descriptionBodyProvider);
+            var descriptionLabel =
+                CreateRefreshableDescriptionLabel(context, descriptionRefreshSource, descriptionBodyProvider);
             descriptionLabel.Visible = !string.IsNullOrWhiteSpace(descriptionText);
             leftColumn.AddChild(descriptionLabel);
 
@@ -129,9 +139,9 @@ namespace STS2RitsuLib.Settings
             var readOnlyMask = context.GetSectionHostReadOnlyMask();
 
             Sync();
-            RegisterRefreshWhenAlive(context, valueControl, Sync);
+            RegisterRefreshWhenAlive(context, valueControl, Sync, ModSettingsUiRefreshSpec.Always);
             if (actionControl != null)
-                RegisterRefreshWhenAlive(context, actionControl, Sync);
+                RegisterRefreshWhenAlive(context, actionControl, Sync, ModSettingsUiRefreshSpec.Always);
             return;
 
             void Sync()
@@ -418,7 +428,7 @@ namespace STS2RitsuLib.Settings
             host.AddChild(inner);
 
             Apply();
-            RegisterRefreshWhenAlive(context, host, Apply);
+            RegisterRefreshWhenAlive(context, host, Apply, ModSettingsUiRefreshSpec.Always);
             return host;
 
             void Apply()
@@ -507,7 +517,7 @@ namespace STS2RitsuLib.Settings
                     headerRow.AddThemeConstantOverride("separation", 10);
                     if (section.Title != null)
                     {
-                        var title = CreateRefreshableSectionTitle(context,
+                        var title = CreateRefreshableSectionTitle(context, section.Title,
                             () => ResolveEntryLabelDisplay(section.Title));
                         title.SizeFlagsHorizontal = Control.SizeFlags.ExpandFill;
                         headerRow.AddChild(title);
@@ -527,7 +537,7 @@ namespace STS2RitsuLib.Settings
                 }
 
                 if (section.Description != null)
-                    container.AddChild(CreateRefreshableDescriptionLabel(context,
+                    container.AddChild(CreateRefreshableDescriptionLabel(context, section.Description,
                         () => ModSettingsUiContext.Resolve(section.Description)));
                 foreach (var wrapped in wrappedEntries)
                     container.AddChild(wrapped);
@@ -550,19 +560,23 @@ namespace STS2RitsuLib.Settings
         }
 
         internal static MegaRichTextLabel CreateRefreshableSectionTitle(ModSettingsUiContext context,
+            ModSettingsText? refreshSource,
             Func<string> textProvider)
         {
             var label = CreateSectionTitle(textProvider());
-            RegisterRefreshWhenAlive(context, label, () => label.SetTextAutoSize(textProvider()));
+            var spec = refreshSource?.GetUiRefreshSpec() ?? ModSettingsUiRefreshSpec.StaticDisplay;
+            RegisterRefreshWhenAlive(context, label, () => label.SetTextAutoSize(textProvider()), spec);
             return label;
         }
 
         private static MegaRichTextLabel CreateRefreshableHeaderLabel(ModSettingsUiContext context,
+            ModSettingsText? refreshSource,
             Func<string> textProvider,
             int fontSize, HorizontalAlignment alignment, Color? textModulate = null)
         {
             var label = CreateHeaderLabel(textProvider(), fontSize, alignment, null, textModulate);
-            RegisterRefreshWhenAlive(context, label, () => label.SetTextAutoSize(textProvider()));
+            var spec = refreshSource?.GetUiRefreshSpec() ?? ModSettingsUiRefreshSpec.StaticDisplay;
+            RegisterRefreshWhenAlive(context, label, () => label.SetTextAutoSize(textProvider()), spec);
             return label;
         }
 
@@ -617,6 +631,7 @@ namespace STS2RitsuLib.Settings
         }
 
         internal static Control CreateRefreshableParagraphBlock(ModSettingsUiContext context,
+            ModSettingsText? refreshSource,
             Func<string> textProvider, float? maxViewportHeight)
         {
             var wrap = new MarginContainer
@@ -640,12 +655,13 @@ namespace STS2RitsuLib.Settings
             label.SizeFlagsHorizontal = Control.SizeFlags.ExpandFill;
             wrap.AddChild(label);
 
+            var spec = refreshSource?.GetUiRefreshSpec() ?? ModSettingsUiRefreshSpec.StaticDisplay;
             RegisterRefreshWhenAlive(context, wrap, () =>
             {
                 var t = ResolvedText();
                 wrap.Visible = t.Length > 0;
                 label.SetTextAutoSize(t.Length == 0 ? "\u200b" : t);
-            });
+            }, spec);
 
             return wrap;
 
@@ -691,17 +707,19 @@ namespace STS2RitsuLib.Settings
         }
 
         internal static MegaRichTextLabel CreateRefreshableDescriptionLabel(ModSettingsUiContext context,
+            ModSettingsText? refreshSource,
             Func<string> textProvider)
         {
             var initial = textProvider();
             var label = CreateDescriptionLabel(initial);
             label.Visible = !string.IsNullOrWhiteSpace(initial);
+            var spec = refreshSource?.GetUiRefreshSpec() ?? ModSettingsUiRefreshSpec.StaticDisplay;
             RegisterRefreshWhenAlive(context, label, () =>
             {
                 var text = textProvider();
                 label.SetTextAutoSize(text);
                 label.Visible = !string.IsNullOrWhiteSpace(text);
-            });
+            }, spec);
             return label;
         }
 
@@ -969,7 +987,7 @@ namespace STS2RitsuLib.Settings
             var titleLabel = CreatePageToolbarTitleLabel(pageTitle, page.Id);
             center.AddChild(titleLabel);
 
-            var pageDescription = CreateRefreshableDescriptionLabel(context,
+            var pageDescription = CreateRefreshableDescriptionLabel(context, page.Description,
                 () => ModSettingsUiContext.ResolvePageDescription(page) ?? string.Empty);
             pageDescription.HorizontalAlignment = HorizontalAlignment.Center;
             pageDescription.AddThemeFontSizeOverride("normal_font_size", 18);

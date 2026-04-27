@@ -34,6 +34,7 @@ namespace STS2RitsuLib.Settings
         public void Write(T value)
         {
             write(value);
+            ModSettingsBindingWriteEvents.NotifyValueWritten(this);
         }
 
         /// <inheritdoc />

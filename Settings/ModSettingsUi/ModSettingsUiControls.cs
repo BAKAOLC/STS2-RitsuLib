@@ -1,6 +1,7 @@
 using System.Globalization;
 using Godot;
 using Godot.Collections;
+using MegaCrit.Sts2.addons.mega_text;
 using MegaCrit.Sts2.Core.ControllerInput;
 using MegaCrit.Sts2.Core.Nodes.CommonUi;
 using STS2RitsuLib.RuntimeInput;
@@ -2562,10 +2563,13 @@ namespace STS2RitsuLib.Settings
     internal sealed partial class ModSettingsDragHandle : Button
     {
         private readonly Func<Dictionary>? _dragDataProvider;
+        private readonly Func<int>? _rowIndexZeroBased;
         private NControllerManager? _hookedControllerManagerDrag;
+        private Label? _indexNumberLabel;
 
-        public ModSettingsDragHandle(string indexLabel, Func<Dictionary> dragDataProvider)
+        public ModSettingsDragHandle(Func<int> rowIndexZeroBased, Func<Dictionary> dragDataProvider)
         {
+            _rowIndexZeroBased = rowIndexZeroBased;
             _dragDataProvider = dragDataProvider;
 
             FocusMode = FocusModeEnum.All;
@@ -2591,7 +2595,7 @@ namespace STS2RitsuLib.Settings
 
             var number = new Label
             {
-                Text = indexLabel,
+                Text = FormatDragIndexLabel(_rowIndexZeroBased()),
                 HorizontalAlignment = HorizontalAlignment.Center,
                 VerticalAlignment = VerticalAlignment.Center,
                 MouseFilter = MouseFilterEnum.Ignore,
@@ -2600,6 +2604,7 @@ namespace STS2RitsuLib.Settings
             number.AddThemeFontSizeOverride("font_size", 17);
             number.AddThemeColorOverride("font_color", new(0.96f, 0.98f, 1f));
             content.AddChild(number);
+            _indexNumberLabel = number;
 
             var grip = new Label
             {
@@ -2629,6 +2634,17 @@ namespace STS2RitsuLib.Settings
 
         public ModSettingsDragHandle()
         {
+        }
+
+        internal void RefreshIndexDisplay()
+        {
+            if (_indexNumberLabel != null && _rowIndexZeroBased != null)
+                _indexNumberLabel.Text = FormatDragIndexLabel(_rowIndexZeroBased());
+        }
+
+        private static string FormatDragIndexLabel(int zeroBasedRowIndex)
+        {
+            return (zeroBasedRowIndex + 1).ToString();
         }
 
         public override void _EnterTree()
@@ -2725,6 +2741,7 @@ namespace STS2RitsuLib.Settings
         private int _currentDragIndex = -1;
         private bool _dropCommitted;
         private PanelContainer? _emptyState;
+        private List<TItem>? _listStructuralBaseline;
         private VBoxContainer? _rows;
 
         public ModSettingsListControl(ModSettingsUiContext context, ListModSettingsEntryDefinition<TItem> entry)
@@ -2820,10 +2837,10 @@ namespace STS2RitsuLib.Settings
             textColumn.AddThemeConstantOverride("separation", 3);
             header.AddChild(textColumn);
 
-            textColumn.AddChild(ModSettingsUiFactory.CreateRefreshableSectionTitle(UiContext,
+            textColumn.AddChild(ModSettingsUiFactory.CreateRefreshableSectionTitle(UiContext, _entry.Label,
                 () => ModSettingsUiFactory.ResolveEntryLabelDisplay(_entry.Label)));
 
-            var descriptionLabel = ModSettingsUiFactory.CreateRefreshableDescriptionLabel(UiContext,
+            var descriptionLabel = ModSettingsUiFactory.CreateRefreshableDescriptionLabel(UiContext, _entry.Description,
                 () => ModSettingsUiContext.ResolveBindingDescriptionBody(_entry.Description));
             textColumn.AddChild(descriptionLabel);
 
@@ -2914,17 +2931,32 @@ namespace STS2RitsuLib.Settings
             emptyState.AddChild(emptyLabel);
             _emptyState = emptyState;
 
-            ModSettingsUiFactory.RegisterRefreshWhenAlive(UiContext, this, RebuildRows);
-            RebuildRows();
+            ModSettingsUiFactory.RegisterRefreshWhenAlive(UiContext, this, SyncRows,
+                ModSettingsUiRefreshSpec.ForBinding(_entry.Binding));
+            SyncRows();
         }
 
-        private void RebuildRows()
+        private void SyncRows()
         {
             if (_rows == null || !IsInstanceValid(this))
                 return;
 
             ClearActiveDropSlot();
             var items = _entry.Binding.Read();
+            UpdateListHeaderChrome(items);
+
+            if (!TryIncrementalListSync(items))
+                FullRebuildRows(items);
+
+            PruneTrailingDropSlots(items);
+            LayoutRowsChildOrder(items);
+            UpdateStructuralBaseline(items);
+            _rows?.ResetSize();
+            _rows?.QueueSort();
+        }
+
+        private void UpdateListHeaderChrome(List<TItem> items)
+        {
             if (_countLabel != null)
                 _countLabel.Text = string.Format(
                     ModSettingsLocalization.Get("list.count", "{0} items"),
@@ -2932,21 +2964,167 @@ namespace STS2RitsuLib.Settings
 
             if (_emptyState != null)
                 _emptyState.Visible = items.Count == 0;
+        }
 
-            var liveIndexes = Enumerable.Range(0, items.Count).ToHashSet();
-            foreach (var staleIndex in _rowCards.Keys.Where(index => !liveIndexes.Contains(index)).ToArray())
+        private void UpdateStructuralBaseline(List<TItem> items)
+        {
+            _listStructuralBaseline = CloneBindingValue(items);
+        }
+
+        private bool BaselinePrefixMatches(List<TItem> items, int prefixLength)
+        {
+            if (_listStructuralBaseline == null || prefixLength > _listStructuralBaseline.Count ||
+                prefixLength > items.Count)
+                return false;
+
+            var comparer = EqualityComparer<TItem>.Default;
+            for (var i = 0; i < prefixLength; i++)
+                if (!comparer.Equals(items[i], _listStructuralBaseline[i]))
+                    return false;
+
+            return true;
+        }
+
+        private static bool RowKeysCoverRange(System.Collections.Generic.Dictionary<int, Control> rowCards, int count)
+        {
+            for (var i = 0; i < count; i++)
+                if (!rowCards.ContainsKey(i))
+                    return false;
+
+            return true;
+        }
+
+        private bool TryIncrementalListSync(List<TItem> items)
+        {
+            var n = items.Count;
+
+            if (n == _rowCards.Count && RowKeysCoverRange(_rowCards, n))
             {
-                if (_rowCards.TryGetValue(staleIndex, out var staleRow) && IsInstanceValid(staleRow))
-                    staleRow.QueueFree();
-                _rowCards.Remove(staleIndex);
+                var comparer = EqualityComparer<TItem>.Default;
+                List<int>? dirty = null;
+                for (var i = 0; i < n; i++)
+                {
+                    if (!_rowCards.TryGetValue(i, out var c) || c is not ModSettingsListItemCard<TItem> card)
+                        return false;
+                    if (comparer.Equals(items[i], card.ItemContext.Item))
+                        continue;
+                    dirty ??= [];
+                    dirty.Add(i);
+                }
+
+                if (dirty == null)
+                {
+                    for (var i = 0; i < n; i++)
+                        ResyncExistingRow(i, items);
+                    return true;
+                }
+
+                if (dirty.Count == n)
+                    return false;
+
+                var dirtySet = new HashSet<int>(dirty);
+                foreach (var i in dirtySet)
+                    ReplaceRowCardAt(i, items);
+
+                for (var i = 0; i < n; i++)
+                {
+                    if (dirtySet.Contains(i))
+                        continue;
+                    ResyncExistingRow(i, items);
+                }
+
+                return true;
             }
 
+            if (n == _rowCards.Count + 1
+                && RowKeysCoverRange(_rowCards, n - 1)
+                && !_rowCards.ContainsKey(n - 1)
+                && _listStructuralBaseline != null
+                && _listStructuralBaseline.Count == n - 1
+                && BaselinePrefixMatches(items, n - 1))
+            {
+                for (var i = 0; i < n - 1; i++)
+                    ResyncExistingRow(i, items);
+                AppendRow(items, n - 1, n);
+                return true;
+            }
+
+            if (n != _rowCards.Count - 1
+                || !_rowCards.ContainsKey(n)
+                || _listStructuralBaseline == null
+                || _listStructuralBaseline.Count != n + 1
+                || !BaselinePrefixMatches(items, n))
+                return false;
+
+            if (_rowCards.TryGetValue(n, out var trailing) && IsInstanceValid(trailing))
+                DetachAndQueueFree(trailing);
+            _rowCards.Remove(n);
+
+            for (var i = 0; i < n; i++)
+                ResyncExistingRow(i, items);
+            return true;
+        }
+
+        private static void DetachAndQueueFree(Control node)
+        {
+            if (!IsInstanceValid(node))
+                return;
+            node.GetParent()?.RemoveChild(node);
+            node.QueueFree();
+        }
+
+        private void ReplaceRowCardAt(int i, List<TItem> items)
+        {
+            if (_rows == null)
+                return;
+
+            if (_rowCards.TryGetValue(i, out var oldRow) && IsInstanceValid(oldRow))
+            {
+                DetachAndQueueFree(oldRow);
+                _rowCards.Remove(i);
+            }
+
+            var row = CreateRow(i, items[i], items.Count);
+            _rowCards[i] = row;
+            _rows.AddChild(row);
+        }
+
+        private void ResyncExistingRow(int i, List<TItem> items)
+        {
+            if (!_rowCards.TryGetValue(i, out var control) ||
+                control is not ModSettingsListItemCard<TItem> card) return;
+            var item = items[i];
+            card.ItemContext.SyncRowListState(i, items.Count, item);
+            var title = ModSettingsUiFactory.ResolveEntryLabelDisplay(_entry.ItemLabel(item));
+            var subtitle = _entry.ItemDescription?.Invoke(item) is { } d
+                ? ModSettingsUiContext.Resolve(d)
+                : null;
+            card.SyncRowChrome(i, title, subtitle, i == 0);
+            card.QueueSort();
+        }
+
+        private void AppendRow(List<TItem> items, int index, int itemCount)
+        {
+            var row = CreateRow(index, items[index], itemCount);
+            _rowCards[index] = row;
+            if (_rows != null && row.GetParent() != _rows)
+                _rows.AddChild(row);
+        }
+
+        private void PruneTrailingDropSlots(List<TItem> items)
+        {
             foreach (var staleSlot in _dropSlots.Keys.Where(index => index > items.Count).ToArray())
             {
                 if (_dropSlots.TryGetValue(staleSlot, out var slot) && IsInstanceValid(slot))
-                    slot.QueueFree();
+                    DetachAndQueueFree(slot);
                 _dropSlots.Remove(staleSlot);
             }
+        }
+
+        private void LayoutRowsChildOrder(List<TItem> items)
+        {
+            if (_rows == null)
+                return;
 
             var childOrder = 0;
             for (var slotIndex = 0; slotIndex <= items.Count; slotIndex++)
@@ -2959,31 +3137,62 @@ namespace STS2RitsuLib.Settings
                 if (slotIndex >= items.Count)
                     continue;
 
-                var row = CreateRow(slotIndex, items[slotIndex], items.Count);
-                _rowCards[slotIndex] = row;
+                if (!_rowCards.TryGetValue(slotIndex, out var row))
+                    continue;
+
                 if (row.GetParent() != _rows)
                     _rows.AddChild(row);
                 _rows.MoveChild(row, childOrder++);
             }
+        }
 
-            _rows.ResetSize();
-            _rows.QueueSort();
+        private void FullRebuildRows(List<TItem> items)
+        {
+            var liveIndexes = Enumerable.Range(0, items.Count).ToHashSet();
+            foreach (var staleIndex in _rowCards.Keys.Where(index => !liveIndexes.Contains(index)).ToArray())
+            {
+                if (_rowCards.TryGetValue(staleIndex, out var staleRow) && IsInstanceValid(staleRow))
+                    DetachAndQueueFree(staleRow);
+                _rowCards.Remove(staleIndex);
+            }
+
+            for (var slotIndex = 0; slotIndex < items.Count; slotIndex++)
+            {
+                if (_rowCards.TryGetValue(slotIndex, out var existing) && IsInstanceValid(existing))
+                    DetachAndQueueFree(existing);
+
+                var row = CreateRow(slotIndex, items[slotIndex], items.Count);
+                _rowCards[slotIndex] = row;
+                if (_rows != null && row.GetParent() != _rows)
+                    _rows.AddChild(row);
+            }
         }
 
         private Control CreateRow(int index, TItem item, int itemCount)
         {
+            var liveIndex = new ModSettingsListItemContext<TItem>.ListRowLiveIndex { Value = index };
             var itemContext = new ModSettingsListItemContext<TItem>(
                 UiContext,
                 CreateItemBinding(index),
                 $"{_entry.Id}[{index}]",
-                index,
+                liveIndex,
                 itemCount,
                 item,
-                updatedItem => Mutate(items => items[index] = updatedItem),
-                index > 0 ? () => Mutate(items => MoveItem(items, index, index - 1)) : null,
-                index < itemCount - 1 ? () => Mutate(items => MoveItem(items, index, index + 1)) : null,
-                () => Mutate(items => DuplicateItem(items, index)),
-                () => Mutate(items => items.RemoveAt(index)),
+                updatedItem => Mutate(items => items[liveIndex.Value] = updatedItem),
+                () => Mutate(items =>
+                {
+                    if (liveIndex.Value <= 0)
+                        return;
+                    MoveItem(items, liveIndex.Value, liveIndex.Value - 1);
+                }),
+                () => Mutate(items =>
+                {
+                    if (liveIndex.Value >= items.Count - 1)
+                        return;
+                    MoveItem(items, liveIndex.Value, liveIndex.Value + 1);
+                }),
+                () => Mutate(items => DuplicateItem(items, liveIndex.Value)),
+                () => Mutate(items => items.RemoveAt(liveIndex.Value)),
                 UiContext.RequestRefresh);
 
             return new ModSettingsListItemCard<TItem>(
@@ -3264,12 +3473,13 @@ namespace STS2RitsuLib.Settings
 
     internal sealed partial class ModSettingsListItemCard<TItem> : PanelContainer
     {
-        private readonly int _index;
         private readonly bool _isCollapsible;
-        private readonly ModSettingsListItemContext<TItem>? _itemContext;
         private readonly ModSettingsListControl<TItem> _owner;
         private bool _collapsed;
+        private ModSettingsDragHandle? _dragHandle;
         private PanelContainer? _editorSurface;
+        private MegaRichTextLabel? _plainSubtitleLabel;
+        private MegaRichTextLabel? _plainTitleLabel;
         private ModSettingsCollapsibleHeaderButton? _toggleButton;
 
         public ModSettingsListItemCard(
@@ -3284,8 +3494,7 @@ namespace STS2RitsuLib.Settings
             Control? headerAccessory)
         {
             _owner = owner;
-            _index = index;
-            _itemContext = itemContext;
+            ItemContext = itemContext;
             _isCollapsible = collapsible && editorContent != null;
             _collapsed = _isCollapsible && itemContext.GetRowState("collapsed", startCollapsed);
             SizeFlagsHorizontal = SizeFlags.ExpandFill;
@@ -3301,7 +3510,10 @@ namespace STS2RitsuLib.Settings
             outer.AddThemeConstantOverride("separation", 8);
             AddChild(outer);
 
-            outer.AddChild(new ModSettingsDragHandle((index + 1).ToString(), () => owner.CreateDragData(index)));
+            var drag = new ModSettingsDragHandle(() => itemContext.Index,
+                () => owner.CreateDragData(itemContext.Index));
+            _dragHandle = drag;
+            outer.AddChild(drag);
 
             var root = new VBoxContainer
             {
@@ -3347,9 +3559,14 @@ namespace STS2RitsuLib.Settings
                 textColumn.AddThemeConstantOverride("separation", 2);
                 header.AddChild(textColumn);
 
-                textColumn.AddChild(ModSettingsUiFactory.CreateSectionTitle(title));
-                if (!string.IsNullOrWhiteSpace(subtitle))
-                    textColumn.AddChild(ModSettingsUiFactory.CreateInlineDescription(subtitle));
+                var titleLabel = ModSettingsUiFactory.CreateSectionTitle(title);
+                textColumn.AddChild(titleLabel);
+                _plainTitleLabel = titleLabel;
+
+                var subtitleLabel = ModSettingsUiFactory.CreateInlineDescription(subtitle ?? string.Empty);
+                subtitleLabel.Visible = !string.IsNullOrWhiteSpace(subtitle);
+                textColumn.AddChild(subtitleLabel);
+                _plainSubtitleLabel = subtitleLabel;
             }
 
             var actions = new HBoxContainer
@@ -3386,6 +3603,27 @@ namespace STS2RitsuLib.Settings
         public ModSettingsListItemCard()
         {
             _owner = null!;
+            ItemContext = null!;
+        }
+
+        internal ModSettingsListItemContext<TItem> ItemContext { get; }
+
+        internal void SyncRowChrome(int logicalIndex, string title, string? subtitle, bool isFirstRow)
+        {
+            AddThemeStyleboxOverride("panel", ModSettingsUiFactory.CreateListItemCardStyle(isFirstRow));
+            _dragHandle?.RefreshIndexDisplay();
+
+            if (_isCollapsible)
+            {
+                _toggleButton?.SetTexts(title, subtitle);
+            }
+            else
+            {
+                _plainTitleLabel?.SetTextAutoSize(title);
+                if (_plainSubtitleLabel == null) return;
+                _plainSubtitleLabel.SetTextAutoSize(subtitle ?? string.Empty);
+                _plainSubtitleLabel.Visible = !string.IsNullOrWhiteSpace(subtitle);
+            }
         }
 
         private void ToggleCollapsed()
@@ -3393,7 +3631,7 @@ namespace STS2RitsuLib.Settings
             if (!_isCollapsible)
                 return;
             _collapsed = !_collapsed;
-            _itemContext?.SetRowState("collapsed", _collapsed);
+            ItemContext.SetRowState("collapsed", _collapsed);
             ApplyCollapsedState();
         }
 
@@ -3408,25 +3646,27 @@ namespace STS2RitsuLib.Settings
             if (!_owner.CanAcceptDrop(data))
                 return false;
 
-            _owner.PreviewDropAtIndex(atPosition.Y < Size.Y * 0.5f ? _index : _index + 1);
+            var i = ItemContext.Index;
+            _owner.PreviewDropAtIndex(atPosition.Y < Size.Y * 0.5f ? i : i + 1);
             return true;
         }
 
         public override void _DropData(Vector2 atPosition, Variant data)
         {
-            _owner.DropAtIndex(data, atPosition.Y < Size.Y * 0.5f ? _index : _index + 1);
+            var i = ItemContext.Index;
+            _owner.DropAtIndex(data, atPosition.Y < Size.Y * 0.5f ? i : i + 1);
         }
     }
 
     internal sealed partial class ModSettingsCollapsibleHeaderButton : ModSettingsGamepadCompatibleButton
     {
         private readonly Action? _action;
-        private readonly string? _subtitle;
-        private readonly string _title = string.Empty;
         private Label? _arrowLabel;
         private MarginContainer? _measureFrame;
         private bool _selected;
+        private string? _subtitle;
         private Label? _subtitleLabel;
+        private string _title = string.Empty;
         private Label? _titleLabel;
 
         public ModSettingsCollapsibleHeaderButton(string title, string? subtitle, Action action)
@@ -3512,29 +3752,44 @@ namespace STS2RitsuLib.Settings
             textColumn.AddChild(titleLabel);
             _titleLabel = titleLabel;
 
-            if (!string.IsNullOrWhiteSpace(subtitle))
+            var subtitleLabel = new Label
             {
-                var subtitleLabel = new Label
-                {
-                    AutowrapMode = TextServer.AutowrapMode.WordSmart,
-                    HorizontalAlignment = HorizontalAlignment.Left,
-                    VerticalAlignment = VerticalAlignment.Center,
-                    MouseFilter = MouseFilterEnum.Ignore,
-                    SizeFlagsHorizontal = SizeFlags.ExpandFill,
-                    ClipText = false,
-                };
-                subtitleLabel.AddThemeFontOverride("font", ModSettingsUiResources.KreonRegular);
-                subtitleLabel.AddThemeFontSizeOverride("font_size", 17);
-                subtitleLabel.AddThemeColorOverride("font_color", ModSettingsUiPalette.LabelSecondary);
-                textColumn.AddChild(subtitleLabel);
-                _subtitleLabel = subtitleLabel;
-            }
+                Text = subtitle ?? string.Empty,
+                Visible = !string.IsNullOrWhiteSpace(subtitle),
+                AutowrapMode = TextServer.AutowrapMode.WordSmart,
+                HorizontalAlignment = HorizontalAlignment.Left,
+                VerticalAlignment = VerticalAlignment.Center,
+                MouseFilter = MouseFilterEnum.Ignore,
+                SizeFlagsHorizontal = SizeFlags.ExpandFill,
+                ClipText = false,
+            };
+            subtitleLabel.AddThemeFontOverride("font", ModSettingsUiResources.KreonRegular);
+            subtitleLabel.AddThemeFontSizeOverride("font_size", 17);
+            subtitleLabel.AddThemeColorOverride("font_color", ModSettingsUiPalette.LabelSecondary);
+            textColumn.AddChild(subtitleLabel);
+            _subtitleLabel = subtitleLabel;
 
             Pressed += () => _action?.Invoke();
         }
 
         public ModSettingsCollapsibleHeaderButton()
         {
+        }
+
+        internal void SetTexts(string title, string? subtitle)
+        {
+            _title = title;
+            _subtitle = subtitle;
+            if (_titleLabel != null)
+                _titleLabel.Text = title;
+            if (_subtitleLabel != null)
+            {
+                _subtitleLabel.Text = subtitle ?? string.Empty;
+                _subtitleLabel.Visible = !string.IsNullOrWhiteSpace(subtitle);
+            }
+
+            CustomMinimumSize = new(0f, string.IsNullOrWhiteSpace(subtitle) ? 56f : 84f);
+            Callable.From(UpdateMinimumSize).CallDeferred();
         }
 
         public override Vector2 _GetMinimumSize()

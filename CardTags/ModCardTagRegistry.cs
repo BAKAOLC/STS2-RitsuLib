@@ -203,7 +203,10 @@ namespace STS2RitsuLib.CardTags
             return false;
         }
 
-        internal static ModCardTagDefinition[] GetDefinitionsSnapshot()
+        /// <summary>
+        ///     Snapshot of all registered card-tag definitions, stable-ordered by id.
+        /// </summary>
+        public static ModCardTagDefinition[] GetDefinitionsSnapshot()
         {
             lock (SyncRoot)
             {

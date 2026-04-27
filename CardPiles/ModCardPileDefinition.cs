@@ -41,6 +41,9 @@ namespace STS2RitsuLib.CardPiles
         ///     Optional visibility predicate (see <see cref="VisibleWhen" />). Null means always visible on the
         ///     button node (subject to parent visibility).
         /// </param>
+        /// <param name="flightTargetPositionResolver">
+        ///     Optional dynamic fly-in target resolver (see <see cref="FlightTargetPositionResolver" />).
+        /// </param>
         public ModCardPileDefinition(
             string modId,
             string id,
@@ -54,7 +57,8 @@ namespace STS2RitsuLib.CardPiles
             Action<ModCardPileOpenContext>? onOpen,
             Vector2 hoverTipScreenOffset,
             ModCardPileHoverTipPlacement hoverTipPlacement,
-            Func<ModCardPileVisibilityContext, bool>? visibleWhen)
+            Func<ModCardPileVisibilityContext, bool>? visibleWhen,
+            Func<ModCardPileFlightTargetContext, Vector2?>? flightTargetPositionResolver)
         {
             ModId = modId;
             Id = id;
@@ -69,6 +73,29 @@ namespace STS2RitsuLib.CardPiles
             HoverTipScreenOffset = hoverTipScreenOffset;
             HoverTipPlacement = hoverTipPlacement;
             VisibleWhen = visibleWhen;
+            FlightTargetPositionResolver = flightTargetPositionResolver;
+        }
+
+        /// <summary>
+        ///     Compatibility overload that omitted <see cref="FlightTargetPositionResolver" />; forwards with null.
+        /// </summary>
+        public ModCardPileDefinition(
+            string modId,
+            string id,
+            PileType pileType,
+            ModCardPileScope scope,
+            ModCardPileUiStyle style,
+            ModCardPileAnchor anchor,
+            string? iconPath,
+            string[]? hotkeys,
+            bool cardShouldBeVisible,
+            Action<ModCardPileOpenContext>? onOpen,
+            Vector2 hoverTipScreenOffset,
+            ModCardPileHoverTipPlacement hoverTipPlacement,
+            Func<ModCardPileVisibilityContext, bool>? visibleWhen)
+            : this(modId, id, pileType, scope, style, anchor, iconPath, hotkeys, cardShouldBeVisible, onOpen,
+                hoverTipScreenOffset, hoverTipPlacement, visibleWhen, null)
+        {
         }
 
         /// <summary>
@@ -88,7 +115,7 @@ namespace STS2RitsuLib.CardPiles
             Vector2 hoverTipScreenOffset,
             ModCardPileHoverTipPlacement hoverTipPlacement)
             : this(modId, id, pileType, scope, style, anchor, iconPath, hotkeys, cardShouldBeVisible, onOpen,
-                hoverTipScreenOffset, hoverTipPlacement, null)
+                hoverTipScreenOffset, hoverTipPlacement, null, null)
         {
         }
 
@@ -240,5 +267,10 @@ namespace STS2RitsuLib.CardPiles
         ///     predicate returns false (see <see cref="ModCardPileSpec.VisibleWhen" />).
         /// </summary>
         public Func<ModCardPileVisibilityContext, bool>? VisibleWhen { get; }
+
+        /// <summary>
+        ///     Optional resolver invoked for each fly-in targeting request to this pile.
+        /// </summary>
+        public Func<ModCardPileFlightTargetContext, Vector2?>? FlightTargetPositionResolver { get; }
     }
 }

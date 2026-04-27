@@ -8,6 +8,7 @@ namespace STS2RitsuLib.Settings
     public sealed class ModSettingsListItemContext<TItem>
     {
         private readonly Action? _duplicate;
+        private readonly ListRowLiveIndex _liveIndex;
         private readonly Action? _moveDown;
         private readonly Action? _moveUp;
         private readonly Action _remove;
@@ -19,7 +20,7 @@ namespace STS2RitsuLib.Settings
             ModSettingsUiContext uiContext,
             IModSettingsValueBinding<TItem> binding,
             string rowStateKey,
-            int index,
+            ListRowLiveIndex liveIndex,
             int itemCount,
             TItem item,
             Action<TItem> update,
@@ -32,7 +33,7 @@ namespace STS2RitsuLib.Settings
             _uiContext = uiContext;
             Binding = binding;
             RowStateKey = rowStateKey;
-            Index = index;
+            _liveIndex = liveIndex;
             ItemCount = itemCount;
             Item = item;
             _update = update;
@@ -51,17 +52,17 @@ namespace STS2RitsuLib.Settings
         /// <summary>
         ///     Zero-based index of this row in the list.
         /// </summary>
-        public int Index { get; }
+        public int Index => _liveIndex.Value;
 
         /// <summary>
         ///     Total number of rows in the list.
         /// </summary>
-        public int ItemCount { get; }
+        public int ItemCount { get; private set; }
 
         /// <summary>
         ///     Current item snapshot for this row.
         /// </summary>
-        public TItem Item { get; }
+        public TItem Item { get; private set; }
 
         /// <summary>
         ///     True when the row can move toward the start.
@@ -82,6 +83,13 @@ namespace STS2RitsuLib.Settings
         ///     True when <see cref="Binding" /> exposes structured copy/paste.
         /// </summary>
         public bool SupportsStructuredClipboard => Binding is IStructuredModSettingsValueBinding<TItem>;
+
+        internal void SyncRowListState(int index, int itemCount, TItem item)
+        {
+            _liveIndex.Value = index;
+            ItemCount = itemCount;
+            Item = item;
+        }
 
         /// <summary>
         ///     Writes <paramref name="item" /> back into the list at <see cref="Index" />.
@@ -237,6 +245,11 @@ namespace STS2RitsuLib.Settings
                 false,
                 false,
                 null));
+        }
+
+        internal sealed class ListRowLiveIndex
+        {
+            public int Value;
         }
     }
 }

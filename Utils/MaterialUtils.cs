@@ -31,15 +31,14 @@ namespace STS2RitsuLib.Utils
             float h = 0;
             if (delta != 0)
             {
-                if (max == r) h = (g - b) / delta + (g < b ? 6 : 0);
-                else if (max == g) h = (b - r) / delta + 2;
+                if (Mathf.IsEqualApprox(max, r)) h = (g - b) / delta + (g < b ? 6 : 0);
+                else if (Mathf.IsEqualApprox(max, g)) h = (b - r) / delta + 2;
                 else h = (r - g) / delta + 4;
                 h /= 6;
             }
 
-            var s = (max == 0) ? 0 : (delta / max);
-            var v = max;
-            return CreateHsvShaderMaterial(h, s, v);
+            var s = max == 0 ? 0 : delta / max;
+            return CreateHsvShaderMaterial(h, s, max);
         }
 
         /// <summary>
@@ -47,7 +46,8 @@ namespace STS2RitsuLib.Utils
         /// </summary>
         public static ShaderMaterial CreateHsvShaderMaterial(float h, float s, float v)
         {
-            var shader = GameHsvShader ?? throw new InvalidOperationException($"Failed to load HSV shader ({HsvShaderPath}).");
+            var shader = GameHsvShader ??
+                         throw new InvalidOperationException($"Failed to load HSV shader ({HsvShaderPath}).");
 
             var material = new ShaderMaterial
             {

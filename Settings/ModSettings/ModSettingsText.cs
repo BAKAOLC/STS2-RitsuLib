@@ -1,3 +1,4 @@
+using System.Collections.Immutable;
 using MegaCrit.Sts2.Core.Localization;
 using STS2RitsuLib.Utils;
 
@@ -14,6 +15,14 @@ namespace STS2RitsuLib.Settings
         public abstract string Resolve();
 
         /// <summary>
+        ///     Declares which binding dirties should invalidate live UI text derived from this instance.
+        /// </summary>
+        internal virtual ModSettingsUiRefreshSpec GetUiRefreshSpec()
+        {
+            return ModSettingsUiRefreshSpec.StaticDisplay;
+        }
+
+        /// <summary>
         ///     Fixed string that never changes.
         /// </summary>
         public static ModSettingsText Literal(string text)
@@ -27,7 +36,33 @@ namespace STS2RitsuLib.Settings
         public static ModSettingsText Dynamic(Func<string> resolver)
         {
             ArgumentNullException.ThrowIfNull(resolver);
-            return new DynamicModSettingsText(resolver);
+            return new DynamicModSettingsText(resolver, default);
+        }
+
+        /// <summary>
+        ///     Dynamic text that only needs UI refresh when one of the listed bindings was marked dirty (narrower than
+        ///     <see cref="Dynamic(Func{string})" />).
+        /// </summary>
+        public static ModSettingsText Dynamic(Func<string> resolver,
+            params IModSettingsBinding[] refreshWhenAnyOfTheseChange)
+        {
+            ArgumentNullException.ThrowIfNull(resolver);
+            ArgumentNullException.ThrowIfNull(refreshWhenAnyOfTheseChange);
+            return new DynamicModSettingsText(
+                resolver,
+                refreshWhenAnyOfTheseChange.Length > 0
+                    ? [..refreshWhenAnyOfTheseChange]
+                    : default);
+        }
+
+        /// <summary>
+        ///     Dynamic text that is only recomputed on a whole-page UI refresh (no binding dirty hints), for example
+        ///     counters updated by button actions without going through a settings binding.
+        /// </summary>
+        public static ModSettingsText DynamicFullRefreshOnly(Func<string> resolver)
+        {
+            ArgumentNullException.ThrowIfNull(resolver);
+            return new DynamicFullPassModSettingsText(resolver);
         }
 
         /// <summary>
@@ -68,11 +103,34 @@ namespace STS2RitsuLib.Settings
             }
         }
 
-        private sealed class DynamicModSettingsText(Func<string> resolver) : ModSettingsText
+        private sealed class DynamicModSettingsText(
+            Func<string> resolver,
+            ImmutableArray<IModSettingsBinding> refreshWhen)
+            : ModSettingsText
         {
             public override string Resolve()
             {
                 return resolver();
+            }
+
+            internal override ModSettingsUiRefreshSpec GetUiRefreshSpec()
+            {
+                return refreshWhen.IsDefaultOrEmpty
+                    ? ModSettingsUiRefreshSpec.AnyBindingDirty
+                    : new(ModSettingsRefreshRegistrationKind.SpecificBindings, refreshWhen);
+            }
+        }
+
+        private sealed class DynamicFullPassModSettingsText(Func<string> resolver) : ModSettingsText
+        {
+            public override string Resolve()
+            {
+                return resolver();
+            }
+
+            internal override ModSettingsUiRefreshSpec GetUiRefreshSpec()
+            {
+                return ModSettingsUiRefreshSpec.StaticDisplay;
             }
         }
 

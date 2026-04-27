@@ -102,5 +102,11 @@ namespace STS2RitsuLib.CardPiles
         ///     default pile screen continues to toggle it closed before the callback runs.
         /// </remarks>
         public Action<ModCardPileOpenContext>? OnOpen { get; init; }
+
+        /// <summary>
+        ///     Optional resolver called for each card fly-in to this pile, allowing mods to provide a dynamic
+        ///     target position for the tail/trail endpoint. Return null to use the default layout position.
+        /// </summary>
+        public Func<ModCardPileFlightTargetContext, Vector2?>? FlightTargetPositionResolver { get; init; }
     }
 }

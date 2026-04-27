@@ -46,6 +46,7 @@ namespace STS2RitsuLib.Settings
 
             setter(model, value);
             ModRunSidecarStore.TryWriteModel(ModId, model);
+            ModSettingsBindingWriteEvents.NotifyValueWritten(this);
         }
 
         /// <inheritdoc />

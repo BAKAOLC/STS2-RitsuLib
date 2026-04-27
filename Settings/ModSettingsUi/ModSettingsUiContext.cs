@@ -23,6 +23,11 @@ namespace STS2RitsuLib.Settings
             submenu.RequestRefresh();
         }
 
+        public void RequestRefreshAfterDataModelBatchChange()
+        {
+            submenu.RequestRefreshAfterDataModelBatchChange();
+        }
+
         public static string Resolve(ModSettingsText? text, string fallback = "")
         {
             return text?.Resolve() ?? fallback;
@@ -74,9 +79,23 @@ namespace STS2RitsuLib.Settings
             };
         }
 
+        /// <summary>
+        ///     Registers a callback invoked on the next UI refresh. Same as calling
+        ///     <see cref="RegisterRefresh(Action, ModSettingsUiRefreshSpec)" /> with a full-pass spec (legacy behavior for
+        ///     extensions compiled against older RitsuLib).
+        /// </summary>
         public void RegisterRefresh(Action action)
         {
-            submenu.RegisterRefreshAction(action, pageScopeId);
+            RegisterRefresh(action, default);
+        }
+
+        /// <summary>
+        ///     Registers a callback invoked on the next UI refresh when its <paramref name="spec" /> matches the
+        ///     bindings that were marked dirty since the last flush.
+        /// </summary>
+        public void RegisterRefresh(Action action, ModSettingsUiRefreshSpec spec)
+        {
+            submenu.RegisterRefreshAction(action, spec, pageScopeId);
         }
 
         internal void BeginSectionSurfaceScope(ModSettingsPage page, ModSettingsSection section)
@@ -139,6 +158,26 @@ namespace STS2RitsuLib.Settings
             }
 
             row[stateKey] = value;
+        }
+
+        internal void MigrateRowState(string fromRowKey, string toRowKey)
+        {
+            if (string.Equals(fromRowKey, toRowKey, StringComparison.Ordinal))
+                return;
+
+            if (!_rowUiState.TryGetValue(fromRowKey, out var fromRow) || fromRow.Count == 0)
+                return;
+
+            if (!_rowUiState.TryGetValue(toRowKey, out var toRow))
+            {
+                toRow = [];
+                _rowUiState[toRowKey] = toRow;
+            }
+
+            foreach (var kv in fromRow)
+                toRow[kv.Key] = kv.Value;
+
+            _rowUiState.Remove(fromRowKey);
         }
     }
 }
