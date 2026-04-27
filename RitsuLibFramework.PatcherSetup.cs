@@ -282,6 +282,7 @@ namespace STS2RitsuLib
             patcher.RegisterPatch<CharacterGameOverScreenCompatibilityPatch>();
             patcher.RegisterPatch<CharacterVanillaSelectionPolicyPatches>();
             patcher.RegisterPatch<ModCreatureCombatAnimationPlaybackPatch>();
+            patcher.RegisterPatch<NCreatureCombatAnimationInitialBootstrapPatch>();
             patcher.RegisterPatch<NCreatureNonSpineDeathAnimationTriggerPatch>();
             patcher.RegisterPatch<NCreatureNonSpineReviveAnimationTriggerPatch>();
             patcher.RegisterPatch<ModMerchantCharacterVisualPlaybackPatch>();
