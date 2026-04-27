@@ -192,7 +192,7 @@ namespace STS2RitsuLib.CardPiles
         /// <summary>
         ///     Snapshot of all registered definitions, stable-ordered by id.
         /// </summary>
-        internal static ModCardPileDefinition[] GetDefinitionsSnapshot()
+        public static ModCardPileDefinition[] GetDefinitionsSnapshot()
         {
             lock (SyncRoot)
             {

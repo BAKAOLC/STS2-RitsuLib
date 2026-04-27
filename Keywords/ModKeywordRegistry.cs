@@ -422,7 +422,10 @@ namespace STS2RitsuLib.Keywords
             return Get(id).CardKeywordValue;
         }
 
-        internal static ModKeywordDefinition[] GetDefinitionsSnapshot()
+        /// <summary>
+        ///     Snapshot of all registered keyword definitions, stable-ordered by id.
+        /// </summary>
+        public static ModKeywordDefinition[] GetDefinitionsSnapshot()
         {
             lock (SyncRoot)
             {

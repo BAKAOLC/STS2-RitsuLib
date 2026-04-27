@@ -803,7 +803,10 @@ namespace STS2RitsuLib.Content
             return ResolveModels<CharacterModel>(RegisteredCharacters);
         }
 
-        internal static ModContentRegisteredTypeSnapshot[] GetRegisteredTypeSnapshots()
+        /// <summary>
+        ///     Snapshot of registered model types with owner and resolved/public-entry diagnostics.
+        /// </summary>
+        public static ModContentRegisteredTypeSnapshot[] GetRegisteredTypeSnapshots()
         {
             lock (SyncRoot)
             {
@@ -1227,7 +1230,11 @@ namespace STS2RitsuLib.Content
             return first.Concat(second).DistinctBy(static m => m.Id).ToList();
         }
 
-        private static string NormalizePublicStem(string value)
+        /// <summary>
+        ///     Normalizes a public id segment: non-alphanumeric collapsed to underscores, acronym/camel boundaries
+        ///     split, repeated underscores merged, and final uppercase.
+        /// </summary>
+        public static string NormalizePublicStem(string value)
         {
             ArgumentException.ThrowIfNullOrWhiteSpace(value);
 
@@ -1310,13 +1317,60 @@ namespace STS2RitsuLib.Content
             Potion,
         }
 
-        internal readonly record struct ModContentRegisteredTypeSnapshot(
-            string ModId,
-            Type ModelType,
-            ModelId? ModelDbId,
-            string? ExpectedPublicEntry,
-            bool HasExplicitPublicEntryOverride,
-            string? TypeNamePublicEntry);
+        /// <summary>
+        ///     Immutable snapshot row describing one registered model type and its identity metadata.
+        /// </summary>
+        public readonly record struct ModContentRegisteredTypeSnapshot
+        {
+            /// <summary>
+            ///     Creates a registered-type snapshot row.
+            /// </summary>
+            public ModContentRegisteredTypeSnapshot(
+                string modId,
+                Type modelType,
+                ModelId? modelDbId,
+                string? expectedPublicEntry,
+                bool hasExplicitPublicEntryOverride,
+                string? typeNamePublicEntry)
+            {
+                ModId = modId;
+                ModelType = modelType;
+                ModelDbId = modelDbId;
+                ExpectedPublicEntry = expectedPublicEntry;
+                HasExplicitPublicEntryOverride = hasExplicitPublicEntryOverride;
+                TypeNamePublicEntry = typeNamePublicEntry;
+            }
+
+            /// <summary>
+            ///     Owning mod id recorded at registration time.
+            /// </summary>
+            public string ModId { get; }
+
+            /// <summary>
+            ///     Registered model CLR type.
+            /// </summary>
+            public Type ModelType { get; }
+
+            /// <summary>
+            ///     Resolved runtime <c>ModelDb</c> id, if currently available.
+            /// </summary>
+            public ModelId? ModelDbId { get; }
+
+            /// <summary>
+            ///     Expected fixed public entry for this model under current registry rules.
+            /// </summary>
+            public string? ExpectedPublicEntry { get; }
+
+            /// <summary>
+            ///     Whether the expected entry comes from an explicit override.
+            /// </summary>
+            public bool HasExplicitPublicEntryOverride { get; }
+
+            /// <summary>
+            ///     Type-name-derived public entry (<c>CATEGORY_TYPENAME</c>) when resolvable.
+            /// </summary>
+            public string? TypeNamePublicEntry { get; }
+        }
 
         private readonly record struct CharacterStarterRegistration(
             Type CharacterType,
