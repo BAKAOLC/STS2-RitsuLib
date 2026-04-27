@@ -451,6 +451,34 @@ namespace STS2RitsuLib.Scaffolding.Content
         }
 
         /// <summary>
+        ///     Queues <see cref="ModContentRegistry.RegisterCardLibraryCompendiumSharedPoolFilter{TPool}(string,string)" />.
+        /// </summary>
+        public ModContentPackBuilder CardLibraryCompendiumSharedPoolFilter<TPool>(string stableId,
+            string iconTexturePath)
+            where TPool : CardPoolModel
+        {
+            return AddStep(ctx =>
+                ctx.Content.RegisterCardLibraryCompendiumSharedPoolFilter<TPool>(stableId, iconTexturePath));
+        }
+
+        /// <summary>
+        ///     Queues
+        ///     <see
+        ///         cref="ModContentRegistry.RegisterCardLibraryCompendiumSharedPoolFilter{TPool}(string,string,IReadOnlyList{CardLibraryCompendiumPlacementRule}?)" />
+        ///     .
+        /// </summary>
+        public ModContentPackBuilder CardLibraryCompendiumSharedPoolFilter<TPool>(
+            string stableId,
+            string iconTexturePath,
+            IReadOnlyList<CardLibraryCompendiumPlacementRule>? placementRules)
+            where TPool : CardPoolModel
+        {
+            return AddStep(ctx =>
+                ctx.Content.RegisterCardLibraryCompendiumSharedPoolFilter<TPool>(stableId, iconTexturePath,
+                    placementRules));
+        }
+
+        /// <summary>
         ///     Queues <see cref="ModContentRegistry.RegisterSharedRelicPool{TPool}" />.
         /// </summary>
         public ModContentPackBuilder SharedRelicPool<TPool>() where TPool : RelicPoolModel

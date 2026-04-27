@@ -2,9 +2,10 @@
 
 This document covers the runtime-Godot factory interfaces that let mod creatures
 replace vanilla `CreateVisuals` / `GenerateAnimator`, and the backend-agnostic
-animation state machine (`ModAnimStateMachine`) that drives non-Spine combat
-visuals (`AnimatedSprite2D`, Godot `AnimationPlayer`, or cue frame sequences)
-through the same trigger protocol Spine creatures use.
+animation state machine (`ModAnimStateMachine`) that can drive combat visuals with
+the same trigger protocol vanilla uses for Spine `CreatureAnimator` — including
+non-Spine backends (`AnimatedSprite2D`, Godot `AnimationPlayer`, cue frame sequences)
+and optional Spine via `MegaSprite` (`BuildSpine`).
 
 For content pack registration, see [Content Packs & Registries](ContentPacksAndRegistries.md).
 For character assembly, see [Character & Unlock Templates](CharacterAndUnlockScaffolding.md).
@@ -32,16 +33,16 @@ Mods commonly need one or more of:
 - animating creatures **without** a Spine skeleton (sprite sheets, frame
   sequences, Godot `AnimationPlayer`).
 
-RitsuLib exposes three orthogonal factory interfaces for those hooks and one
-state machine abstraction for the non-Spine case. All four interfaces are
-creature-agnostic (players **and** monsters) and do not require subclassing any
-template.
+RitsuLib exposes three orthogonal factory interfaces for those hooks plus a
+combat `ModAnimStateMachine` factory that works with Spine or non-Spine backends.
+All four interfaces are creature-agnostic (players **and** monsters) and do not
+require subclassing any template.
 
 | Interface | Purpose | Vanilla entry point |
 |---|---|---|
 | `IModCreatureVisualsFactory` | Build `NCreatureVisuals` from code | `CharacterModel.CreateVisuals`, `MonsterModel.CreateVisuals` |
 | `IModCreatureAnimatorFactory` | Build Spine `CreatureAnimator` from code | `CharacterModel.GenerateAnimator`, `MonsterModel.GenerateAnimator` |
-| `IModNonSpineAnimationStateMachineFactory` | Build `ModAnimStateMachine` for non-Spine visuals | `NCreature.SetAnimationTrigger` (routing patch) |
+| `IModCreatureCombatAnimationStateMachineFactory` | Build `ModAnimStateMachine` for combat (any backend, including Spine) | `NCreature.SetAnimationTrigger` (`ModCreatureCombatAnimationPlaybackPatch`) |
 | `IModCharacterMerchantAnimationStateMachineFactory` | Build `ModAnimStateMachine` for merchant / rest-site character visuals | Merchant scene setup |
 
 The merchant factory is character-specific because monsters never appear in
@@ -116,23 +117,28 @@ The routing patches (`CharacterCreatureAnimatorRuntimeFactoryPatch`,
 
 ---
 
-## Non-Spine State Machine
+## Combat animation state machine
 
-For creatures whose combat visuals are **not** Spine (no `MegaSprite` controller),
-implement `IModNonSpineAnimationStateMachineFactory` and return a
-`ModAnimStateMachine` bound to the visuals root. The
-`ModCreatureNonSpineAnimationPlaybackPatch` routes
-`NCreature.SetAnimationTrigger(trigger)` into `ModAnimStateMachine.SetTrigger`,
-so the non-Spine path receives the **same trigger stream** as Spine creatures.
+When a model implements `IModCreatureCombatAnimationStateMachineFactory` and
+`TryCreateCombatAnimationStateMachine` returns a non-null `ModAnimStateMachine`,
+`ModCreatureCombatAnimationPlaybackPatch` routes `NCreature.SetAnimationTrigger`
+**first** into `ModAnimStateMachine.SetTrigger`, including for Spine-backed creatures.
+Return `null` to defer to vanilla `CreatureAnimator` when Spine is present, or to
+single-shot cue playback when there is no Spine animator.
+
+For Spine + `ModAnimStateMachine`, you can wire `BuildSpine(MegaSprite)` in the
+factory; keep supplying a `CreatureAnimator` from `GenerateAnimator` for bounds
+subscriptions and align `Revive` triggers with vanilla `StartReviveAnim` gating when
+possible (see interface XML remarks).
 
 ### Opting in
 
 ```csharp
 public class MyWolf : ModMonsterTemplate
 {
-    // IModNonSpineAnimationStateMachineFactory is already implemented by the
+    // IModCreatureCombatAnimationStateMachineFactory is implemented by the
     // template, forwarding to this protected virtual:
-    protected override ModAnimStateMachine? SetupCustomNonSpineAnimationStateMachine(
+    protected override ModAnimStateMachine? SetupCustomCombatAnimationStateMachine(
         Node visualsRoot, MonsterModel monster)
     {
         if (visualsRoot is not MyWolfVisuals wolfVisuals)
@@ -157,23 +163,24 @@ public class MyWolf : ModMonsterTemplate
 Equivalent if you do not use a template:
 
 ```csharp
-public class MyRawMonster : MonsterModel, IModNonSpineAnimationStateMachineFactory
+public class MyRawMonster : MonsterModel, IModCreatureCombatAnimationStateMachineFactory
 {
-    public ModAnimStateMachine? TryCreateNonSpineAnimationStateMachine(Node visualsRoot)
+    public ModAnimStateMachine? TryCreateCombatAnimationStateMachine(Node visualsRoot)
         => /* same builder code */;
 }
 ```
 
 ### Routing behaviour
 
-`ModCreatureNonSpineAnimationPlaybackPatch` is a prefix on
+`ModCreatureCombatAnimationPlaybackPatch` is a prefix on
 `NCreature.SetAnimationTrigger`:
 
-1. If the creature has a Spine animator, skip (vanilla path runs).
-2. Look up the creature's model (`Entity.Player?.Character` or `Entity.Monster`).
-3. If either implements `IModNonSpineAnimationStateMachineFactory` and
-   returns a non-null state machine, dispatch the trigger via
-   `ModAnimStateMachine.SetTrigger` and return.
+1. Resolve the creature model (`Entity.Player?.Character` or `Entity.Monster`),
+   build/cache a state machine from `TryCreateCombatAnimationStateMachine` (and still
+   honour the obsolete `IModNonSpineAnimationStateMachineFactory` name).
+2. If a non-null machine exists, dispatch via `ModAnimStateMachine.SetTrigger` and
+   skip the vanilla `_spineAnimator` path (including when Spine visuals are present).
+3. Otherwise, if the creature has Spine visuals, run vanilla `CreatureAnimator`.
 4. Otherwise, fall back to single-shot cue playback
    (`ModCreatureVisualPlayback.TryPlayFromCreatureAnimatorTrigger`).
 
@@ -190,6 +197,43 @@ uses `CompositeBackendFactory` to pick the best backend per state (cue frame
 sequences first, Godot `AnimationPlayer` or `AnimatedSprite2D` if they resolve
 the animation id) and returns a ready-to-use `ModAnimStateMachine`.
 
+### Recommended pattern: stable root + child-form switching
+
+For in-combat "model/form switching", prefer keeping one persistent
+`NCreatureVisuals` root and mounting multiple child forms (`FormA`, `FormB`, ...).
+Switch forms by changing the active animation backend instead of rebuilding the root.
+
+RitsuLib provides `FormSwitchingAnimationBackend` for this: wrap one
+`IAnimationBackend` per form, then call `SwitchForm(formId)` at runtime.
+With `replayCurrent: true`, it attempts to replay the current logical animation id
+on the new form.
+
+```csharp
+var forms = new Dictionary<string, IAnimationBackend>(StringComparer.Ordinal)
+{
+    ["base"] = new AnimatedSprite2DBackend(baseSprite),
+    ["alt"] = new AnimatedSprite2DBackend(altSprite),
+};
+
+var formBackend = new FormSwitchingAnimationBackend(forms, initialFormId: "base");
+
+var machine = ModAnimStateMachineBuilder.Create()
+    .AddState("idle", loop: true).AsInitial().Done()
+    .AddState("attack").WithNext("idle").Done()
+    .AddAnyState("Idle", "idle")
+    .AddAnyState("Attack", "attack")
+    .Build(formBackend);
+
+// Switch form on gameplay event without rebuilding visuals root
+formBackend.SwitchForm("alt", replayCurrent: true);
+```
+
+Benefits:
+
+- no `NCreatureVisuals` rebuild, so lifecycle wiring remains stable;
+- trigger flow stays unified (`SetAnimationTrigger` -> `ModAnimStateMachine`);
+- easy to standardise across mods: form is just `formId -> backend`.
+
 ---
 
 ## Animation Backends
@@ -205,6 +249,7 @@ reports `Started` / `Completed` / `Interrupted` events.
 | `CueAnimationBackend` | `VisualCueSet` (cue frame sequences, cue textures) | Per-cue static textures / sequence playback |
 | `SpineAnimationBackend` | `MegaSprite` | Spine skeletal animation |
 | `CompositeAnimationBackend` | Any mix | Multi-backend dispatch (one state plays via sprite, another via animation player, etc.) |
+| `FormSwitchingAnimationBackend` | Multiple child backends (selected by form id) | In-combat form switching under one visuals root |
 
 ### Event contract
 
@@ -265,19 +310,16 @@ RitsuLib fixes this with two Postfix patches:
 
 ### Scope gate
 
-The patches are **opt-in**: they only fire when the creature has no Spine
-animator and the model opts into the RitsuLib visuals pipeline. Specifically,
-`NonSpineAnimationTriggerScope.AppliesTo(NCreature)` returns `true` only when
-**one** of the following holds for the creature's model:
+The `Dead` postfix only runs for **non-Spine** creatures whose model opts into the
+RitsuLib combat animation pipeline (`IModCreatureCombatAnimationStateMachineFactory`,
+the legacy `IModNonSpineAnimationStateMachineFactory`, or player
+`IModCharacterAssetOverrides`), filling the gap where vanilla never calls
+`SetAnimationTrigger("Dead")` when `_spineAnimator` is null.
 
-| Model slot | Interface | Notes |
-|---|---|---|
-| `Entity.Player?.Character` | `IModNonSpineAnimationStateMachineFactory` | State machine path |
-| `Entity.Monster` | `IModNonSpineAnimationStateMachineFactory` | State machine path |
-| `Entity.Player?.Character` | `IModCharacterAssetOverrides` | Cue-playback fallback (player-only) |
-
-Vanilla creatures and mods that do not opt into RitsuLib visuals are never
-affected. The gate is identical for the `Dead` and `Revive` patches.
+The `Revive` postfix uses the same non-Spine opt-in, **and** additionally covers
+Spine-backed creatures when a cached combat state machine declares `Revive` but the
+vanilla `CreatureAnimator` does not — so `Revive` can still be dispatched without
+duplicating when the animator already exposes `Revive`.
 
 ---
 
@@ -290,6 +332,11 @@ now unified and the old names marked `[Obsolete]`:
 |---|---|
 | `IModCreatureVisualsFactory` | `IModMonsterCreatureVisualsFactory`, `IModCharacterCreatureVisualsFactory` |
 | `IModCreatureAnimatorFactory` | `IModCharacterCreatureAnimatorFactory` |
+| `IModCreatureCombatAnimationStateMachineFactory` | `IModNonSpineAnimationStateMachineFactory` (method `TryCreateNonSpineAnimationStateMachine`) |
+
+Template subclasses: rename `SetupCustomNonSpineAnimationStateMachine` to
+`SetupCustomCombatAnimationStateMachine`; the old hook remains as an `[Obsolete]`
+forwarder.
 
 ### Compatibility guarantees
 
@@ -310,14 +357,18 @@ now unified and the old names marked `[Obsolete]`:
    - `IModMonsterCreatureVisualsFactory` → `IModCreatureVisualsFactory`
    - `IModCharacterCreatureVisualsFactory` → `IModCreatureVisualsFactory`
    - `IModCharacterCreatureAnimatorFactory` → `IModCreatureAnimatorFactory`
+   - `IModNonSpineAnimationStateMachineFactory` → `IModCreatureCombatAnimationStateMachineFactory`
 2. The method signatures (`TryCreateCreatureVisuals()`,
    `TryCreateCreatureAnimator(MegaSprite)`) are unchanged; only the declaring
    interface name differs.
-3. Rebuild. CS0618 warnings disappear.
+3. Combat state machine: rename `TryCreateNonSpineAnimationStateMachine` to
+   `TryCreateCombatAnimationStateMachine`; template subclasses rename
+   `SetupCustomNonSpineAnimationStateMachine` to `SetupCustomCombatAnimationStateMachine`.
+4. Rebuild. CS0618 warnings disappear.
 
 No migration is required if you only subclass the templates and override the
 protected virtual hooks (`TryCreateCreatureVisuals`,
-`SetupCustomCreatureAnimator`); those hooks are unchanged.
+`SetupCustomCreatureAnimator`) without using the combat state machine hook.
 
 ---
 
@@ -328,7 +379,7 @@ Goal                                          Interface to implement
 ---------------------------------------------------------------------------
 Replace CreateVisuals (players or monsters)   IModCreatureVisualsFactory
 Replace Spine GenerateAnimator                IModCreatureAnimatorFactory
-Drive a non-Spine state machine               IModNonSpineAnimationStateMachineFactory
+Drive combat state machine (Spine or not)     IModCreatureCombatAnimationStateMachineFactory
 Drive merchant / rest-site state machine      IModCharacterMerchantAnimationStateMachineFactory
 ```
 

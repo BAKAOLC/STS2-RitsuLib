@@ -3,6 +3,7 @@ using MegaCrit.Sts2.Core.Animation;
 using MegaCrit.Sts2.Core.Bindings.MegaSpine;
 using MegaCrit.Sts2.Core.Models;
 using MegaCrit.Sts2.Core.Nodes.Combat;
+using STS2RitsuLib.Content;
 using STS2RitsuLib.Scaffolding.Characters.Visuals.Definition;
 using STS2RitsuLib.Scaffolding.Content;
 using STS2RitsuLib.Scaffolding.Content.Patches;
@@ -248,8 +249,10 @@ namespace STS2RitsuLib.Scaffolding.Characters
     public abstract class ModCharacterTemplate<TCardPool, TRelicPool, TPotionPool> : CharacterModel
         , IModCharacterAssetOverrides, IModCreatureVisualsFactory, IModCharacterCreatureVisualsFactory,
         IModCreatureAnimatorFactory, IModCharacterCreatureAnimatorFactory,
-        IModNonSpineAnimationStateMachineFactory, IModCharacterMerchantAnimationStateMachineFactory,
-        IModCharacterEpochTimelineRequirement, IModCharacterVanillaSelectionPolicy
+        IModCreatureCombatAnimationStateMachineFactory, IModNonSpineAnimationStateMachineFactory,
+        IModCharacterMerchantAnimationStateMachineFactory,
+        IModCharacterEpochTimelineRequirement, IModCharacterVanillaSelectionPolicy,
+        IModCharacterCardLibraryCompendiumPlacement
 #pragma warning restore CS0618
         where TCardPool : CardPoolModel
         where TRelicPool : RelicPoolModel
@@ -474,6 +477,9 @@ namespace STS2RitsuLib.Scaffolding.Characters
         public virtual CharacterWorldProceduralVisualSet? WorldProceduralVisuals =>
             ResolvedAssetProfile.WorldProceduralVisuals;
 
+        /// <inheritdoc cref="IModCharacterCardLibraryCompendiumPlacement.CardLibraryCompendiumPlacementRules" />
+        public virtual IReadOnlyList<CardLibraryCompendiumPlacementRule>? CardLibraryCompendiumPlacementRules => null;
+
 #pragma warning disable CS0618
         CreatureAnimator? IModCharacterCreatureAnimatorFactory.TryCreateCreatureAnimator(MegaSprite controller)
         {
@@ -511,15 +517,29 @@ namespace STS2RitsuLib.Scaffolding.Characters
             return SetupCustomCreatureAnimator(controller);
         }
 
+        ModAnimStateMachine? IModCreatureCombatAnimationStateMachineFactory.TryCreateCombatAnimationStateMachine(
+            Node visualsRoot)
+        {
+            return ResolveCombatAnimationStateMachine(visualsRoot);
+        }
+
         NCreatureVisuals? IModCreatureVisualsFactory.TryCreateCreatureVisuals()
         {
             return TryCreateCreatureVisuals();
         }
 
-        ModAnimStateMachine? IModNonSpineAnimationStateMachineFactory.
-            TryCreateNonSpineAnimationStateMachine(Node visualsRoot)
+        ModAnimStateMachine? IModNonSpineAnimationStateMachineFactory.TryCreateNonSpineAnimationStateMachine(
+            Node visualsRoot)
         {
-            return SetupCustomNonSpineAnimationStateMachine(visualsRoot, this);
+            return ResolveCombatAnimationStateMachine(visualsRoot);
+        }
+
+        private ModAnimStateMachine? ResolveCombatAnimationStateMachine(Node visualsRoot)
+        {
+            var fromNew = SetupCustomCombatAnimationStateMachine(visualsRoot, this);
+#pragma warning disable CS0618
+            return fromNew ?? SetupCustomNonSpineAnimationStateMachine(visualsRoot, this);
+#pragma warning restore CS0618
         }
 
         /// <summary>
@@ -544,16 +564,26 @@ namespace STS2RitsuLib.Scaffolding.Characters
         }
 
         /// <summary>
-        ///     Optional override producing a non-Spine <see cref="ModAnimStateMachine" /> for the character's combat
-        ///     visuals (cue frame sequences, Godot animation player, animated sprite). Return <see langword="null" />
-        ///     to defer to single-shot playback via <c>ModCreatureVisualPlayback</c>.
+        ///     Optional override producing a <see cref="ModAnimStateMachine" /> for the character's combat visuals
+        ///     (any <see cref="IAnimationBackend" />, including Spine via
+        ///     <see cref="ModAnimStateMachineBuilder.BuildSpine" />). Return <see langword="null" /> to defer to vanilla
+        ///     Spine <see cref="CreatureAnimator" /> triggers or, when there is no Spine animator, to single-shot
+        ///     playback via <c>ModCreatureVisualPlayback</c>.
         /// </summary>
         /// <param name="visualsRoot">Combat visuals root node.</param>
         /// <param name="character">Character model (always <see langword="this" />, exposed for convenience).</param>
-        protected virtual ModAnimStateMachine? SetupCustomNonSpineAnimationStateMachine(Node visualsRoot,
+        protected virtual ModAnimStateMachine? SetupCustomCombatAnimationStateMachine(Node visualsRoot,
             CharacterModel character)
         {
             return null;
+        }
+
+        /// <inheritdoc cref="SetupCustomCombatAnimationStateMachine" />
+        [Obsolete("Override SetupCustomCombatAnimationStateMachine instead.")]
+        protected virtual ModAnimStateMachine? SetupCustomNonSpineAnimationStateMachine(Node visualsRoot,
+            CharacterModel character)
+        {
+            return SetupCustomCombatAnimationStateMachine(visualsRoot, character);
         }
 
         /// <summary>

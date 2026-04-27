@@ -17,8 +17,8 @@ namespace STS2RitsuLib.Scaffolding.Content
     ///     the pack builder.
     /// </summary>
     /// <remarks>
-    ///     When the monster's visuals have no Spine skeleton, override
-    ///     <see cref="SetupCustomNonSpineAnimationStateMachine" /> to drive the creature with a
+    ///     When the monster's visuals should use a <see cref="ModAnimStateMachine" /> for combat triggers, override
+    ///     <see cref="SetupCustomCombatAnimationStateMachine" /> to drive the creature with a
     ///     <see cref="ModAnimStateMachine" /> (the same state-machine pipeline used by
     ///     <see cref="STS2RitsuLib.Scaffolding.Characters.ModCharacterTemplate{TCardPool,TRelicPool,TPotionPool}" />).
     /// </remarks>
@@ -27,12 +27,18 @@ namespace STS2RitsuLib.Scaffolding.Content
     // consumers that type-check against the old interface name continue to work.
     public abstract class ModMonsterTemplate : MonsterModel, IModMonsterAssetOverrides,
         IModCreatureVisualsFactory, IModMonsterCreatureVisualsFactory, IModCreatureAnimatorFactory,
-        IModNonSpineAnimationStateMachineFactory
+        IModCreatureCombatAnimationStateMachineFactory, IModNonSpineAnimationStateMachineFactory
 #pragma warning restore CS0618
     {
         CreatureAnimator? IModCreatureAnimatorFactory.TryCreateCreatureAnimator(MegaSprite controller)
         {
             return SetupCustomCreatureAnimator(controller);
+        }
+
+        ModAnimStateMachine? IModCreatureCombatAnimationStateMachineFactory.TryCreateCombatAnimationStateMachine(
+            Node visualsRoot)
+        {
+            return ResolveCombatAnimationStateMachine(visualsRoot);
         }
 
         NCreatureVisuals? IModCreatureVisualsFactory.TryCreateCreatureVisuals()
@@ -53,10 +59,18 @@ namespace STS2RitsuLib.Scaffolding.Content
         }
 #pragma warning restore CS0618
 
-        ModAnimStateMachine? IModNonSpineAnimationStateMachineFactory.
-            TryCreateNonSpineAnimationStateMachine(Node visualsRoot)
+        ModAnimStateMachine? IModNonSpineAnimationStateMachineFactory.TryCreateNonSpineAnimationStateMachine(
+            Node visualsRoot)
         {
-            return SetupCustomNonSpineAnimationStateMachine(visualsRoot, this);
+            return ResolveCombatAnimationStateMachine(visualsRoot);
+        }
+
+        private ModAnimStateMachine? ResolveCombatAnimationStateMachine(Node visualsRoot)
+        {
+            var fromNew = SetupCustomCombatAnimationStateMachine(visualsRoot, this);
+#pragma warning disable CS0618
+            return fromNew ?? SetupCustomNonSpineAnimationStateMachine(visualsRoot, this);
+#pragma warning restore CS0618
         }
 
         /// <summary>
@@ -80,16 +94,25 @@ namespace STS2RitsuLib.Scaffolding.Content
         }
 
         /// <summary>
-        ///     Optional override producing a non-Spine <see cref="ModAnimStateMachine" /> for the monster's combat
-        ///     visuals (cue frame sequences, Godot animation player, animated sprite). Return
-        ///     <see langword="null" /> to defer to the vanilla single-shot playback path.
+        ///     Optional override producing a <see cref="ModAnimStateMachine" /> for the monster's combat visuals (any
+        ///     animation backend, including Spine via <see cref="ModAnimStateMachineBuilder.BuildSpine" />). Return
+        ///     <see langword="null" /> to defer to vanilla Spine <see cref="CreatureAnimator" /> triggers or the vanilla
+        ///     single-shot playback path when there is no Spine animator.
         /// </summary>
         /// <param name="visualsRoot">Combat visuals root node.</param>
         /// <param name="monster">Monster model (always <see langword="this" />, exposed for convenience).</param>
-        protected virtual ModAnimStateMachine? SetupCustomNonSpineAnimationStateMachine(Node visualsRoot,
+        protected virtual ModAnimStateMachine? SetupCustomCombatAnimationStateMachine(Node visualsRoot,
             MonsterModel monster)
         {
             return null;
+        }
+
+        /// <inheritdoc cref="SetupCustomCombatAnimationStateMachine" />
+        [Obsolete("Override SetupCustomCombatAnimationStateMachine instead.")]
+        protected virtual ModAnimStateMachine? SetupCustomNonSpineAnimationStateMachine(Node visualsRoot,
+            MonsterModel monster)
+        {
+            return SetupCustomCombatAnimationStateMachine(visualsRoot, monster);
         }
     }
 }
