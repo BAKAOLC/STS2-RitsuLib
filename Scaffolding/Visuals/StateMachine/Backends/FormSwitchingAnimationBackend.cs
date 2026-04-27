@@ -22,6 +22,7 @@ namespace STS2RitsuLib.Scaffolding.Visuals.StateMachine.Backends
     public sealed class FormSwitchingAnimationBackend : IAnimationBackend
     {
         private readonly Dictionary<string, IAnimationBackend> _backendsByForm;
+        private readonly Dictionary<string, bool> _loopByAnimationId = new(StringComparer.Ordinal);
         private string? _currentId;
         private bool _currentLoop;
 
@@ -95,12 +96,14 @@ namespace STS2RitsuLib.Scaffolding.Visuals.StateMachine.Backends
         {
             _currentId = id;
             _currentLoop = loop;
+            _loopByAnimationId[id] = loop;
             CurrentBackend.Play(id, loop);
         }
 
         /// <inheritdoc />
         public void Queue(string id, bool loop)
         {
+            _loopByAnimationId[id] = loop;
             CurrentBackend.Queue(id, loop);
         }
 
@@ -147,6 +150,8 @@ namespace STS2RitsuLib.Scaffolding.Visuals.StateMachine.Backends
                 return;
 
             _currentId = id;
+            if (_loopByAnimationId.TryGetValue(id, out var loop))
+                _currentLoop = loop;
             Started?.Invoke(id);
         }
 
