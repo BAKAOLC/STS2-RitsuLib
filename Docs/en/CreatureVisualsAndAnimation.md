@@ -197,6 +197,43 @@ uses `CompositeBackendFactory` to pick the best backend per state (cue frame
 sequences first, Godot `AnimationPlayer` or `AnimatedSprite2D` if they resolve
 the animation id) and returns a ready-to-use `ModAnimStateMachine`.
 
+### Recommended pattern: stable root + child-form switching
+
+For in-combat "model/form switching", prefer keeping one persistent
+`NCreatureVisuals` root and mounting multiple child forms (`FormA`, `FormB`, ...).
+Switch forms by changing the active animation backend instead of rebuilding the root.
+
+RitsuLib provides `FormSwitchingAnimationBackend` for this: wrap one
+`IAnimationBackend` per form, then call `SwitchForm(formId)` at runtime.
+With `replayCurrent: true`, it attempts to replay the current logical animation id
+on the new form.
+
+```csharp
+var forms = new Dictionary<string, IAnimationBackend>(StringComparer.Ordinal)
+{
+    ["base"] = new AnimatedSprite2DBackend(baseSprite),
+    ["alt"] = new AnimatedSprite2DBackend(altSprite),
+};
+
+var formBackend = new FormSwitchingAnimationBackend(forms, initialFormId: "base");
+
+var machine = ModAnimStateMachineBuilder.Create()
+    .AddState("idle", loop: true).AsInitial().Done()
+    .AddState("attack").WithNext("idle").Done()
+    .AddAnyState("Idle", "idle")
+    .AddAnyState("Attack", "attack")
+    .Build(formBackend);
+
+// Switch form on gameplay event without rebuilding visuals root
+formBackend.SwitchForm("alt", replayCurrent: true);
+```
+
+Benefits:
+
+- no `NCreatureVisuals` rebuild, so lifecycle wiring remains stable;
+- trigger flow stays unified (`SetAnimationTrigger` -> `ModAnimStateMachine`);
+- easy to standardise across mods: form is just `formId -> backend`.
+
 ---
 
 ## Animation Backends
@@ -212,6 +249,7 @@ reports `Started` / `Completed` / `Interrupted` events.
 | `CueAnimationBackend` | `VisualCueSet` (cue frame sequences, cue textures) | Per-cue static textures / sequence playback |
 | `SpineAnimationBackend` | `MegaSprite` | Spine skeletal animation |
 | `CompositeAnimationBackend` | Any mix | Multi-backend dispatch (one state plays via sprite, another via animation player, etc.) |
+| `FormSwitchingAnimationBackend` | Multiple child backends (selected by form id) | In-combat form switching under one visuals root |
 
 ### Event contract
 

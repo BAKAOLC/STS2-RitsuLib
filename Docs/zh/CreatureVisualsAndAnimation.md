@@ -190,6 +190,41 @@ public class MyRawMonster : MonsterModel, IModCreatureCombatAnimationStateMachin
 Godot `AnimationPlayer` 或 `AnimatedSprite2D`），返回一个可直接使用的
 `ModAnimStateMachine`。
 
+### 推荐方案：单根节点 + 子节点形态切换（不重建）
+
+当角色需要局内“换模型/换形态”时，推荐保持 `NCreatureVisuals` 根节点不变，在其下
+挂多个子节点形态（例如 `FormA` / `FormB`），并通过状态机 + 后端切换完成外观切换。
+
+RitsuLib 提供 `FormSwitchingAnimationBackend` 用于这一模式：它将多个
+`IAnimationBackend`（每个形态一个）封装为一个后端，并在 `SwitchForm(formId)` 时切换活动形态。
+若 `replayCurrent: true`，会尝试在新形态重播当前动画 id。
+
+```csharp
+var forms = new Dictionary<string, IAnimationBackend>(StringComparer.Ordinal)
+{
+    ["base"] = new AnimatedSprite2DBackend(baseSprite),
+    ["alt"] = new AnimatedSprite2DBackend(altSprite),
+};
+
+var formBackend = new FormSwitchingAnimationBackend(forms, initialFormId: "base");
+
+var machine = ModAnimStateMachineBuilder.Create()
+    .AddState("idle", loop: true).AsInitial().Done()
+    .AddState("attack").WithNext("idle").Done()
+    .AddAnyState("Idle", "idle")
+    .AddAnyState("Attack", "attack")
+    .Build(formBackend);
+
+// 业务事件触发时切形态（不重建 visuals root）
+formBackend.SwitchForm("alt", replayCurrent: true);
+```
+
+这种方式的优点：
+
+- 不重建 `NCreatureVisuals`，避免和 `NCreature` 生命周期绑定打架；
+- 触发流保持统一（仍通过 `SetAnimationTrigger` / `ModAnimStateMachine.SetTrigger`）；
+- 便于推广：形态仅是“后端集合 + form id 切换”，业务层只关心何时切换。
+
 ---
 
 ## 动画后端
@@ -205,6 +240,7 @@ Godot 的一个动画子系统，并在对应时机发出 `Started` / `Completed
 | `CueAnimationBackend` | `VisualCueSet`（cue 帧序列 / cue 贴图） | 单帧贴图或帧序列播放 |
 | `SpineAnimationBackend` | `MegaSprite` | Spine 骨骼动画 |
 | `CompositeAnimationBackend` | 任意组合 | 多后端派发（同一状态机内部分状态走 sprite，另一部分走 animation player 等） |
+| `FormSwitchingAnimationBackend` | 多个子后端（按 form id 选择） | 单根视觉下的局内形态切换 |
 
 ### 事件契约
 
