@@ -210,6 +210,13 @@ namespace STS2RitsuLib.Settings
                                 ui.DebugShowcase.ActionCount = 0;
                                 ui.DebugShowcase.StringValue = "Single line";
                                 ui.DebugShowcase.StringMultiValue = "First line\nSecond line";
+                                ui.DebugShowcase.ListItems =
+                                [
+                                    new("Sample A", 3, true, "alpha", [new("Author", "Ritsu"), new("Mode", "Default")]),
+                                    new("Sample B", 1, false, "beta", [new("Author", "Debug")]),
+                                    new("Sample C", 5, true, "gamma",
+                                        [new("Mode", "Experimental"), new("Tier", "Rare")]),
+                                ];
                                 ui.PreviewToggle.Write(ui.DebugShowcase.ToggleValue);
                                 ui.PreviewSlider.Write(ui.DebugShowcase.SliderValue);
                                 ui.PreviewIntSlider.Write(ui.DebugShowcase.IntSliderValue);
@@ -218,14 +225,8 @@ namespace STS2RitsuLib.Settings
                                 ui.PreviewMode.Write(ui.DebugShowcase.ModeValue);
                                 ui.PreviewString.Write(ui.DebugShowcase.StringValue);
                                 ui.PreviewStringMulti.Write(ui.DebugShowcase.StringMultiValue);
-                                foreach (var b in (IModSettingsBinding[])
-                                         [
-                                             ui.PreviewToggle, ui.PreviewSlider, ui.PreviewIntSlider, ui.PreviewChoice,
-                                             ui.PreviewChoiceDropdown, ui.PreviewMode, ui.PreviewString,
-                                             ui.PreviewStringMulti, ui.PreviewList,
-                                         ])
-                                    host.MarkDirty(b);
-                                host.RequestRefresh();
+                                ui.PreviewList.Write(ui.DebugShowcase.ListItems);
+                                host.RequestRefreshAfterDataModelBatchChange();
                             },
                             ModSettingsButtonTone.Danger,
                             T("ritsulib.showcase.reset.description",

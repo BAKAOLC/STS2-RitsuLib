@@ -3,6 +3,16 @@ using System.Collections.Immutable;
 namespace STS2RitsuLib.Settings
 {
     /// <summary>
+    ///     When <see cref="RitsuModSettingsSubmenu.MarkDirty" /> is called on this binding, these bindings are also
+    ///     marked dirty so selective refresh specs and autosave see the same invalidation (e.g. projected field → list
+    ///     root, decorator → inner).
+    /// </summary>
+    internal interface IModSettingsUiRefreshPropagation
+    {
+        IEnumerable<IModSettingsBinding> ExtraBindingsToMarkDirtyForUi { get; }
+    }
+
+    /// <summary>
     ///     Bindings that participate in UI refresh invalidation as a group (e.g. decorator + inner store).
     /// </summary>
     internal interface IModSettingsUiRefreshEquivalence

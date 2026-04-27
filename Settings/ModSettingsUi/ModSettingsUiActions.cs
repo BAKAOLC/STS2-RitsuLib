@@ -17,6 +17,17 @@ namespace STS2RitsuLib.Settings
         ///     Marks <paramref name="binding" /> dirty so persistence runs on the next flush.
         /// </summary>
         void MarkDirty(IModSettingsBinding binding);
+
+        /// <summary>
+        ///     Schedules the next deferred refresh as a full binding pass for the current page: every
+        ///     <c>RegisterRefresh</c> callback on that page runs once, without requiring <see cref="MarkDirty" /> per
+        ///     binding. Use after batch-mutating many fields or a shared backing object. Persisted keys still need
+        ///     <see cref="MarkDirty" /> on each binding you changed so <see cref="IModSettingsBinding.Save" /> runs.
+        /// </summary>
+        void RequestRefreshAfterDataModelBatchChange()
+        {
+            RequestRefresh();
+        }
     }
 
     /// <summary>

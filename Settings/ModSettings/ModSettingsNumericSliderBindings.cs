@@ -33,6 +33,7 @@ namespace STS2RitsuLib.Settings
         public void Write(double value)
         {
             inner.Write((float)value);
+            ModSettingsBindingWriteEvents.NotifyValueWritten(this);
         }
 
         /// <inheritdoc />
@@ -68,6 +69,7 @@ namespace STS2RitsuLib.Settings
         public void Write(double value)
         {
             inner.Write(Mathf.RoundToInt(value));
+            ModSettingsBindingWriteEvents.NotifyValueWritten(this);
         }
 
         /// <inheritdoc />
@@ -102,6 +104,7 @@ namespace STS2RitsuLib.Settings
         public void Write(int value)
         {
             inner.Write(value);
+            ModSettingsBindingWriteEvents.NotifyValueWritten(this);
         }
 
         /// <inheritdoc />

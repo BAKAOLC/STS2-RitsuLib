@@ -23,6 +23,11 @@ namespace STS2RitsuLib.Settings
             submenu.RequestRefresh();
         }
 
+        public void RequestRefreshAfterDataModelBatchChange()
+        {
+            submenu.RequestRefreshAfterDataModelBatchChange();
+        }
+
         public static string Resolve(ModSettingsText? text, string fallback = "")
         {
             return text?.Resolve() ?? fallback;

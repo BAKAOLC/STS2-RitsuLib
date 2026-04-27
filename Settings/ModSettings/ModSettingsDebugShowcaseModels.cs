@@ -50,9 +50,11 @@ namespace STS2RitsuLib.Settings
     internal sealed class ModSettingsDebugShowcaseBinding<TValue>(
         IModSettingsValueBinding<TValue> inner,
         Action<TValue> afterWrite)
-        : IModSettingsValueBinding<TValue>, ITransientModSettingsBinding, IModSettingsUiRefreshEquivalence
+        : IModSettingsValueBinding<TValue>, ITransientModSettingsBinding, IModSettingsUiRefreshEquivalence,
+            IModSettingsUiRefreshPropagation
     {
         public IReadOnlyList<IModSettingsBinding> UiRefreshAlsoTreatAsDirty => [inner];
+        public IEnumerable<IModSettingsBinding> ExtraBindingsToMarkDirtyForUi => [inner];
         public string ModId => inner.ModId;
         public string DataKey => inner.DataKey;
         public SaveScope Scope => inner.Scope;
@@ -66,6 +68,7 @@ namespace STS2RitsuLib.Settings
         {
             inner.Write(value);
             afterWrite(value);
+            ModSettingsBindingWriteEvents.NotifyValueWritten(this);
         }
 
         public void Save()

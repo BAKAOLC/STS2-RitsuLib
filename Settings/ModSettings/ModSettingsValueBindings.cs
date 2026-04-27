@@ -46,6 +46,7 @@ namespace STS2RitsuLib.Settings
         {
             var store = RitsuLibFramework.GetDataStore(ModId);
             store.Modify<TModel>(DataKey, model => setter(model, value));
+            ModSettingsBindingWriteEvents.NotifyValueWritten(this);
         }
 
         /// <summary>
@@ -107,6 +108,7 @@ namespace STS2RitsuLib.Settings
         public void Write(TValue value)
         {
             _value = value;
+            ModSettingsBindingWriteEvents.NotifyValueWritten(this);
         }
 
         /// <inheritdoc />
@@ -121,8 +123,11 @@ namespace STS2RitsuLib.Settings
     public sealed class StructuredModSettingsValueBinding<TValue>(
         IModSettingsValueBinding<TValue> inner,
         IStructuredModSettingsValueAdapter<TValue> adapter)
-        : IStructuredModSettingsValueBinding<TValue>
+        : IStructuredModSettingsValueBinding<TValue>, IModSettingsUiRefreshPropagation
     {
+        /// <inheritdoc />
+        public IEnumerable<IModSettingsBinding> ExtraBindingsToMarkDirtyForUi => [inner];
+
         /// <inheritdoc />
         public string ModId => inner.ModId;
 
@@ -147,6 +152,7 @@ namespace STS2RitsuLib.Settings
         public void Write(TValue value)
         {
             inner.Write(value);
+            ModSettingsBindingWriteEvents.NotifyValueWritten(this);
         }
 
         /// <inheritdoc />
@@ -165,8 +171,11 @@ namespace STS2RitsuLib.Settings
         Func<TSource, TValue> getter,
         Func<TSource, TValue, TSource> setter,
         IStructuredModSettingsValueAdapter<TValue>? adapter = null)
-        : IStructuredModSettingsValueBinding<TValue>
+        : IStructuredModSettingsValueBinding<TValue>, IModSettingsUiRefreshPropagation
     {
+        /// <inheritdoc />
+        public IEnumerable<IModSettingsBinding> ExtraBindingsToMarkDirtyForUi => [parent];
+
         /// <inheritdoc />
         public string ModId => parent.ModId;
 
@@ -196,6 +205,7 @@ namespace STS2RitsuLib.Settings
         {
             var source = parent.Read();
             parent.Write(setter(source, value));
+            ModSettingsBindingWriteEvents.NotifyValueWritten(this);
         }
 
         /// <inheritdoc />
@@ -212,13 +222,17 @@ namespace STS2RitsuLib.Settings
         IModSettingsValueBinding<TValue> inner,
         Func<TValue> defaultValueFactory,
         IStructuredModSettingsValueAdapter<TValue>? adapter = null)
-        : IStructuredModSettingsValueBinding<TValue>, IDefaultModSettingsValueBinding<TValue>
+        : IStructuredModSettingsValueBinding<TValue>, IDefaultModSettingsValueBinding<TValue>,
+            IModSettingsUiRefreshPropagation
     {
         /// <inheritdoc />
         public TValue CreateDefaultValue()
         {
             return defaultValueFactory();
         }
+
+        /// <inheritdoc />
+        public IEnumerable<IModSettingsBinding> ExtraBindingsToMarkDirtyForUi => [inner];
 
         /// <inheritdoc />
         public string ModId => inner.ModId;
@@ -248,6 +262,7 @@ namespace STS2RitsuLib.Settings
         public void Write(TValue value)
         {
             inner.Write(value);
+            ModSettingsBindingWriteEvents.NotifyValueWritten(this);
         }
 
         /// <inheritdoc />

@@ -25,6 +25,8 @@ namespace STS2RitsuLib.Settings
         private static readonly StringName PaneSidebarHotkey = MegaInput.viewDeckAndTabLeft;
         private static readonly StringName PaneContentHotkey = MegaInput.viewExhaustPileAndTabRight;
 
+        private readonly Action<IModSettingsBinding> _bindingWriteListener;
+
         private readonly List<Control> _contentFocusChain = [];
 
         private readonly HashSet<IModSettingsBinding> _dirtyBindings = [];
@@ -81,6 +83,7 @@ namespace STS2RitsuLib.Settings
         private AcceptDialog? _pasteErrorDialog;
         private bool _pendingRefreshFlush;
         private Timer? _refreshDebounceTimer;
+        private bool _refreshNextFlushAsFullPass;
         private TextureRect? _rightPaneHotkeyIcon;
         private double _saveTimer = -1;
         private ScrollContainer _scrollContainer = null!;
@@ -101,6 +104,7 @@ namespace STS2RitsuLib.Settings
         /// </summary>
         public RitsuModSettingsSubmenu()
         {
+            _bindingWriteListener = OnBindingValueWrittenForSettingsUi;
             AnchorRight = 1f;
             AnchorBottom = 1f;
             GrowHorizontal = GrowDirection.Both;
@@ -215,6 +219,7 @@ namespace STS2RitsuLib.Settings
 
             TryDisconnectPaneHotkeyStyleSignals();
             PopPaneHotkeys();
+            ModSettingsBindingWriteEvents.ValueWritten -= _bindingWriteListener;
             base._ExitTree();
             FlushDirtyBindings();
             UnsubscribeLocaleChanges();
@@ -223,6 +228,7 @@ namespace STS2RitsuLib.Settings
         /// <inheritdoc />
         public override void OnSubmenuOpened()
         {
+            ModSettingsBindingWriteEvents.ValueWritten += _bindingWriteListener;
             base.OnSubmenuOpened();
             FocusMode = FocusModeEnum.None;
             FocusBehaviorRecursive = FocusBehaviorRecursiveEnum.Enabled;
@@ -233,6 +239,7 @@ namespace STS2RitsuLib.Settings
         /// <inheritdoc />
         public override void OnSubmenuClosed()
         {
+            ModSettingsBindingWriteEvents.ValueWritten -= _bindingWriteListener;
             PopPaneHotkeys();
             FlushDirtyBindings();
             ProcessMode = ProcessModeEnum.Disabled;
@@ -252,6 +259,7 @@ namespace STS2RitsuLib.Settings
         /// <inheritdoc />
         protected override void OnSubmenuHidden()
         {
+            ModSettingsBindingWriteEvents.ValueWritten -= _bindingWriteListener;
             PopPaneHotkeys();
             FlushPendingRefreshActionsImmediate();
             FlushDirtyBindings();
@@ -272,11 +280,30 @@ namespace STS2RitsuLib.Settings
                 FlushDirtyBindings();
         }
 
+        private void OnBindingValueWrittenForSettingsUi(IModSettingsBinding binding)
+        {
+            MarkDirty(binding);
+            RequestRefresh();
+        }
+
         internal void MarkDirty(IModSettingsBinding binding)
         {
+            MarkDirtyRecursive(binding, []);
+            _saveTimer = AutosaveDelaySeconds;
+        }
+
+        private void MarkDirtyRecursive(IModSettingsBinding binding, HashSet<IModSettingsBinding> visited)
+        {
+            if (!visited.Add(binding))
+                return;
+
             _dirtyBindings.Add(binding);
             _refreshBindingTriggers.Add(binding);
-            _saveTimer = AutosaveDelaySeconds;
+            if (binding is not IModSettingsUiRefreshPropagation propagation)
+                return;
+
+            foreach (var extra in propagation.ExtraBindingsToMarkDirtyForUi)
+                MarkDirtyRecursive(extra, visited);
         }
 
         internal void RequestRefresh()
@@ -285,6 +312,12 @@ namespace STS2RitsuLib.Settings
             EnsureRefreshDebounceTimer();
             _refreshDebounceTimer!.Stop();
             _refreshDebounceTimer.Start();
+        }
+
+        internal void RequestRefreshAfterDataModelBatchChange()
+        {
+            _refreshNextFlushAsFullPass = true;
+            RequestRefresh();
         }
 
         internal void RegisterRefreshAction(Action action, ModSettingsUiRefreshSpec spec, string? pageScopeId = null)
@@ -410,7 +443,9 @@ namespace STS2RitsuLib.Settings
 
         private void FlushRefreshActionsImmediate(bool includeAllPages = false)
         {
-            var treatAsFullPass = includeAllPages || _refreshBindingTriggers.Count == 0;
+            var forceFullPass = _refreshNextFlushAsFullPass;
+            _refreshNextFlushAsFullPass = false;
+            var treatAsFullPass = includeAllPages || _refreshBindingTriggers.Count == 0 || forceFullPass;
             var dirtySnapshot = _refreshBindingTriggers.ToHashSet();
 
             RunRegistrations(_globalRefreshRegistrations.ToArray());
