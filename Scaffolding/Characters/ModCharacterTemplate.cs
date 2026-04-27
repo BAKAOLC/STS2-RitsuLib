@@ -5,6 +5,7 @@ using MegaCrit.Sts2.Core.Models;
 using MegaCrit.Sts2.Core.Nodes.Combat;
 using STS2RitsuLib.Scaffolding.Characters.Visuals.Definition;
 using STS2RitsuLib.Scaffolding.Content;
+using STS2RitsuLib.Scaffolding.Content.Patches;
 using STS2RitsuLib.Scaffolding.Visuals.Definition;
 using STS2RitsuLib.Scaffolding.Visuals.StateMachine;
 
@@ -205,6 +206,12 @@ namespace STS2RitsuLib.Scaffolding.Characters
         ///     see <see cref="ModCharacterWorldSceneVisuals" />.
         /// </summary>
         CharacterWorldProceduralVisualSet? WorldProceduralVisuals { get; }
+
+        /// <summary>
+        ///     Optional vanilla character id used with <see cref="CharacterAssetProfiles.Resolve" /> when expanding
+        ///     partial <see cref="AssetProfile" /> data (defaults to <c>null</c>: no placeholder merge).
+        /// </summary>
+        string? CharacterAssetPlaceholderCharacterId => null;
 
         /// <summary>
         ///     When <paramref name="relic" /> is owned by a player using this character, returns icon path overrides
@@ -443,73 +450,22 @@ namespace STS2RitsuLib.Scaffolding.Characters
         /// <inheritdoc />
         public virtual RelicAssetProfile? TryGetVanillaRelicVisualOverrideForOwnedRelic(RelicModel relic)
         {
-            var entries = ResolvedAssetProfile.VanillaRelicVisualOverrides;
-            if (entries is not { Length: > 0 })
-                return null;
-
-            var id = relic.Id.Entry;
-            foreach (var (relicModelIdEntry, a) in entries)
-            {
-                if (!id.Equals(relicModelIdEntry, StringComparison.OrdinalIgnoreCase))
-                    continue;
-
-                if (string.IsNullOrWhiteSpace(a.IconPath) && string.IsNullOrWhiteSpace(a.IconOutlinePath) &&
-                    string.IsNullOrWhiteSpace(a.BigIconPath))
-                    return null;
-
-                return a;
-            }
-
-            return null;
+            return ModCharacterOwnedVisualOverrideHelper.ResolveOwnedRelicVisualOverride(this, relic);
         }
 
         /// <inheritdoc />
         public virtual PotionAssetProfile? TryGetVanillaPotionVisualOverrideForContext(PotionModel potion)
         {
-            var entries = ResolvedAssetProfile.VanillaPotionVisualOverrides;
-            if (entries is not { Length: > 0 })
-                return null;
-
-            var id = potion.Id.Entry;
-            foreach (var (potionModelIdEntry, a) in entries)
-            {
-                if (!id.Equals(potionModelIdEntry, StringComparison.OrdinalIgnoreCase))
-                    continue;
-
-                if (string.IsNullOrWhiteSpace(a.ImagePath) && string.IsNullOrWhiteSpace(a.OutlinePath))
-                    return null;
-
-                return a;
-            }
-
-            return null;
+            return ModCharacterOwnedVisualOverrideHelper.ResolveOwnedPotionVisualOverride(this, potion);
         }
 
         /// <inheritdoc />
         public virtual CardAssetProfile? TryGetVanillaCardVisualOverrideForContext(CardModel card)
         {
-            var entries = ResolvedAssetProfile.VanillaCardVisualOverrides;
-            if (entries is not { Length: > 0 })
-                return null;
-
-            var id = card.Id.Entry;
-            foreach (var (cardModelIdEntry, a) in entries)
-            {
-                if (!id.Equals(cardModelIdEntry, StringComparison.OrdinalIgnoreCase))
-                    continue;
-
-                if (string.IsNullOrWhiteSpace(a.PortraitPath) && string.IsNullOrWhiteSpace(a.BetaPortraitPath) &&
-                    string.IsNullOrWhiteSpace(a.FramePath) && string.IsNullOrWhiteSpace(a.PortraitBorderPath) &&
-                    string.IsNullOrWhiteSpace(a.EnergyIconPath) && string.IsNullOrWhiteSpace(a.FrameMaterialPath) &&
-                    string.IsNullOrWhiteSpace(a.OverlayScenePath) && string.IsNullOrWhiteSpace(a.BannerTexturePath) &&
-                    string.IsNullOrWhiteSpace(a.BannerMaterialPath))
-                    return null;
-
-                return a;
-            }
-
-            return null;
+            return ModCharacterOwnedVisualOverrideHelper.ResolveOwnedCardVisualOverride(this, card);
         }
+
+        string? IModCharacterAssetOverrides.CharacterAssetPlaceholderCharacterId => PlaceholderCharacterId;
 
         /// <inheritdoc />
         public virtual VisualCueSet? VisualCues => ResolvedAssetProfile.VisualCues;
