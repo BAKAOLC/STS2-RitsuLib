@@ -2,8 +2,9 @@
 
 本文介绍一组 mod 可以接入的运行时 Godot 工厂接口（替换原版
 `CreateVisuals` / `GenerateAnimator`），以及后端无关的动画状态机
-`ModAnimStateMachine`。后者让非 Spine 的战斗视觉（`AnimatedSprite2D`、Godot
-`AnimationPlayer`、cue 帧序列）通过和 Spine 生物**相同的**触发协议驱动动画。
+`ModAnimStateMachine`。后者让战斗视觉（含非 Spine 的 `AnimatedSprite2D`、Godot
+`AnimationPlayer`、cue 帧序列，以及可选的 Spine `MegaSprite` 后端）通过和原版 Spine
+`CreatureAnimator` **相同的**触发协议驱动动画。
 
 内容包注册见 [内容包与注册器](ContentPacksAndRegistries.md)。
 角色装配见 [角色与解锁模板](CharacterAndUnlockScaffolding.md)。
@@ -28,15 +29,15 @@ Mod 常见的需求至少包括以下一种：
 - 用 mod 自己写的状态图替换 Spine 状态图；
 - 给 **没有** Spine 骨骼的生物做动画（精灵表、帧序列、Godot `AnimationPlayer`）。
 
-RitsuLib 为这三种需求暴露了三个**彼此正交**的工厂接口，以及一个针对非 Spine
-场景的状态机抽象。四个接口都对生物类型无感（玩家角色与怪物通用），也不要求
-继承任何模板。
+RitsuLib 为这三种需求暴露了三个**彼此正交**的工厂接口，以及一个**战斗**用的
+`ModAnimStateMachine` 工厂（可与 Spine 或非 Spine 后端组合）。四个接口都对生物类型无感
+（玩家角色与怪物通用），也不要求继承任何模板。
 
 | 接口 | 用途 | 对应原版入口 |
 |---|---|---|
 | `IModCreatureVisualsFactory` | 从代码构造 `NCreatureVisuals` | `CharacterModel.CreateVisuals`、`MonsterModel.CreateVisuals` |
 | `IModCreatureAnimatorFactory` | 从代码构造 Spine `CreatureAnimator` | `CharacterModel.GenerateAnimator`、`MonsterModel.GenerateAnimator` |
-| `IModNonSpineAnimationStateMachineFactory` | 为非 Spine 视觉构造 `ModAnimStateMachine` | `NCreature.SetAnimationTrigger`（路由补丁） |
+| `IModCreatureCombatAnimationStateMachineFactory` | 为战斗视觉构造 `ModAnimStateMachine`（任意后端，含 Spine） | `NCreature.SetAnimationTrigger`（`ModCreatureCombatAnimationPlaybackPatch`） |
 | `IModCharacterMerchantAnimationStateMachineFactory` | 为商人 / 休息站中的角色视觉构造 `ModAnimStateMachine` | 商人场景初始化流程 |
 
 商人工厂专属玩家角色，因为怪物从不会出现在商人 / 休息站场景中；其余三个接口对
@@ -110,22 +111,29 @@ public class MySpineCharacter : ModCharacterTemplate<...>
 
 ---
 
-## 非 Spine 状态机
+## 战斗动画状态机
 
-如果生物的战斗视觉**不是** Spine（没有 `MegaSprite` 控制器），实现
-`IModNonSpineAnimationStateMachineFactory` 并返回绑定到视觉根节点的
-`ModAnimStateMachine`。`ModCreatureNonSpineAnimationPlaybackPatch` 把
-`NCreature.SetAnimationTrigger(trigger)` 路由到 `ModAnimStateMachine.SetTrigger`，
-因此非 Spine 生物会接收到与 Spine 生物**完全相同**的触发流。
+当模型实现 `IModCreatureCombatAnimationStateMachineFactory` 且
+`TryCreateCombatAnimationStateMachine` 返回非 null 的 `ModAnimStateMachine` 时，
+`ModCreatureCombatAnimationPlaybackPatch` 会把 `NCreature.SetAnimationTrigger(trigger)`
+**优先**路由到 `ModAnimStateMachine.SetTrigger`（无论该生物是否有 Spine 视觉）。
+返回 `null` 时：有 Spine 则仍走原版 `CreatureAnimator`；无 Spine 则走单次 cue 回退
+（`ModCreatureVisualPlayback`）。
+
+Spine 上希望用 `ModAnimStateMachine` 驱动时，可在工厂内对 `NCreatureVisuals` 上的
+`MegaSprite` 使用 `ModAnimStateMachineBuilder` 的 `BuildSpine`；此时仍应通过
+`GenerateAnimator` 提供 `CreatureAnimator` 以维持碰撞盒等订阅，并尽量让
+`CreatureAnimator` 与状态机对 `Revive` 等触发器的声明与 vanilla 的
+`StartReviveAnim` 门禁一致（详见接口 XML 说明）。
 
 ### 接入方式
 
 ```csharp
 public class MyWolf : ModMonsterTemplate
 {
-    // 模板已经实现了 IModNonSpineAnimationStateMachineFactory，并把调用转发
-    // 到这个 protected virtual；重写它即可：
-    protected override ModAnimStateMachine? SetupCustomNonSpineAnimationStateMachine(
+    // 模板已实现 IModCreatureCombatAnimationStateMachineFactory，转发到
+    // protected virtual SetupCustomCombatAnimationStateMachine：
+    protected override ModAnimStateMachine? SetupCustomCombatAnimationStateMachine(
         Node visualsRoot, MonsterModel monster)
     {
         if (visualsRoot is not MyWolfVisuals wolfVisuals)
@@ -150,22 +158,24 @@ public class MyWolf : ModMonsterTemplate
 不使用模板时同理：
 
 ```csharp
-public class MyRawMonster : MonsterModel, IModNonSpineAnimationStateMachineFactory
+public class MyRawMonster : MonsterModel, IModCreatureCombatAnimationStateMachineFactory
 {
-    public ModAnimStateMachine? TryCreateNonSpineAnimationStateMachine(Node visualsRoot)
+    public ModAnimStateMachine? TryCreateCombatAnimationStateMachine(Node visualsRoot)
         => /* 同上的 builder 代码 */;
 }
 ```
 
 ### 路由行为
 
-`ModCreatureNonSpineAnimationPlaybackPatch` 是 `NCreature.SetAnimationTrigger`
+`ModCreatureCombatAnimationPlaybackPatch` 是 `NCreature.SetAnimationTrigger`
 上的 Prefix 补丁，流程如下：
 
-1. 如果生物已有 Spine animator，直接跳过（原版链路继续执行）。
-2. 定位生物对应的模型（`Entity.Player?.Character` 或 `Entity.Monster`）。
-3. 如果任一侧实现了 `IModNonSpineAnimationStateMachineFactory` 且返回非 null 的
-   状态机，调用 `ModAnimStateMachine.SetTrigger` 派发触发器，然后返回。
+1. 定位生物对应的模型（`Entity.Player?.Character` 或 `Entity.Monster`），按视觉根节点
+   缓存并调用 `TryCreateCombatAnimationStateMachine`（并仍兼容已废弃的
+   `IModNonSpineAnimationStateMachineFactory.TryCreateNonSpineAnimationStateMachine`）。
+2. 若返回非 null 状态机，调用 `ModAnimStateMachine.SetTrigger` 派发触发器并结束
+   （**不再**调用原版 `_spineAnimator.SetTrigger`，含 Spine 场景）。
+3. 否则，若生物有 Spine 视觉，交由原版 `CreatureAnimator`。
 4. 否则退回到单次 cue 播放
    （`ModCreatureVisualPlayback.TryPlayFromCreatureAnimatorTrigger`）。
 
@@ -252,18 +262,14 @@ RitsuLib 通过两个 Postfix 补丁修正这一缺陷：
 
 ### 作用域收敛
 
-这两个补丁是**opt-in**：只有当生物没有 Spine animator 且模型**显式**接入了
-RitsuLib 视觉链路时才会触发。具体而言，`NonSpineAnimationTriggerScope.AppliesTo(NCreature)`
-在以下任一条件成立时返回 `true`：
+`Dead` 的 Postfix 仅在**无 Spine** 且模型接入了战斗状态机工厂或（玩家）
+`IModCharacterAssetOverrides` 时派发，以补齐原版在 `_spineAnimator == null` 时不发
+`Dead` 的问题。
 
-| 模型槽位 | 接口 | 备注 |
-|---|---|---|
-| `Entity.Player?.Character` | `IModNonSpineAnimationStateMachineFactory` | 状态机路径 |
-| `Entity.Monster` | `IModNonSpineAnimationStateMachineFactory` | 状态机路径 |
-| `Entity.Player?.Character` | `IModCharacterAssetOverrides` | cue 播放回退（仅玩家） |
-
-原版生物、以及未接入 RitsuLib 视觉的其他 mod 都不会被影响。`Dead` 与 `Revive`
-两个补丁使用完全相同的 gate。
+`Revive` 的 Postfix：无 Spine 时仍按上述「状态机工厂或 `IModCharacterAssetOverrides`」
+opt-in；**有 Spine** 且战斗状态机声明了 `Revive` 触发器、但 vanilla
+`CreatureAnimator` 未声明 `Revive` 时，也会派发一次 `Revive`（避免仅 tween、不播
+状态机动画）。若 `CreatureAnimator` 已带 `Revive`，则不再重复派发。
 
 ---
 
@@ -275,6 +281,10 @@ RitsuLib 视觉链路时才会触发。具体而言，`NonSpineAnimationTriggerS
 |---|---|
 | `IModCreatureVisualsFactory` | `IModMonsterCreatureVisualsFactory`、`IModCharacterCreatureVisualsFactory` |
 | `IModCreatureAnimatorFactory` | `IModCharacterCreatureAnimatorFactory` |
+| `IModCreatureCombatAnimationStateMachineFactory` | `IModNonSpineAnimationStateMachineFactory`（方法名为 `TryCreateNonSpineAnimationStateMachine`） |
+
+模板子类：将 `SetupCustomNonSpineAnimationStateMachine` 重命名为
+`SetupCustomCombatAnimationStateMachine`；旧方法仍保留为 `[Obsolete]` 转发层。
 
 ### 兼容性保证
 
@@ -292,13 +302,17 @@ RitsuLib 视觉链路时才会触发。具体而言，`NonSpineAnimationTriggerS
    - `IModMonsterCreatureVisualsFactory` → `IModCreatureVisualsFactory`
    - `IModCharacterCreatureVisualsFactory` → `IModCreatureVisualsFactory`
    - `IModCharacterCreatureAnimatorFactory` → `IModCreatureAnimatorFactory`
+   - `IModNonSpineAnimationStateMachineFactory` → `IModCreatureCombatAnimationStateMachineFactory`
 2. 方法签名（`TryCreateCreatureVisuals()`、
    `TryCreateCreatureAnimator(MegaSprite)`）保持不变，变化只在声明接口的名字上。
-3. 重新编译，CS0618 警告消失。
+3. 战斗状态机：将 `TryCreateNonSpineAnimationStateMachine` 改为
+   `TryCreateCombatAnimationStateMachine`；模板子类将
+   `SetupCustomNonSpineAnimationStateMachine` 改为 `SetupCustomCombatAnimationStateMachine`。
+4. 重新编译，CS0618 警告消失。
 
 如果只是继承模板并重写 protected virtual 钩子
-（`TryCreateCreatureVisuals`、`SetupCustomCreatureAnimator`），无需任何迁移；
-这些钩子未变。
+（`TryCreateCreatureVisuals`、`SetupCustomCreatureAnimator`），且未使用战斗状态机，
+则无需迁移；仅在使用状态机钩子时需要按上表改名。
 
 ---
 
@@ -309,7 +323,7 @@ RitsuLib 视觉链路时才会触发。具体而言，`NonSpineAnimationTriggerS
 ---------------------------------------------------------------------------
 替换 CreateVisuals（玩家或怪物）             IModCreatureVisualsFactory
 替换 Spine GenerateAnimator                  IModCreatureAnimatorFactory
-驱动非 Spine 状态机                          IModNonSpineAnimationStateMachineFactory
+驱动战斗状态机（Spine 或非 Spine）            IModCreatureCombatAnimationStateMachineFactory
 驱动商人 / 休息站状态机                       IModCharacterMerchantAnimationStateMachineFactory
 ```
 
