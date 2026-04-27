@@ -1,3 +1,8 @@
+#if STS2_V_0_103_2
+using CombatStateCompat = MegaCrit.Sts2.Core.Combat.CombatState;
+#else
+using CombatStateCompat = MegaCrit.Sts2.Core.Combat.ICombatState;
+#endif
 using MegaCrit.Sts2.Core.Combat;
 using MegaCrit.Sts2.Core.Entities.Cards;
 using MegaCrit.Sts2.Core.Entities.Creatures;
@@ -15,7 +20,7 @@ namespace STS2RitsuLib
     /// <param name="OccurredAtUtc">When the event was raised.</param>
     public readonly record struct CombatStartingEvent(
         IRunState RunState,
-        CombatState? CombatState,
+        CombatStateCompat? CombatState,
         DateTimeOffset OccurredAtUtc
     ) : IFrameworkLifecycleEvent;
 
@@ -28,7 +33,7 @@ namespace STS2RitsuLib
     /// <param name="OccurredAtUtc">When the event was raised.</param>
     public readonly record struct CombatEndedEvent(
         IRunState RunState,
-        CombatState? CombatState,
+        CombatStateCompat? CombatState,
         CombatRoom Room,
         DateTimeOffset OccurredAtUtc
     ) : IFrameworkLifecycleEvent;
@@ -42,7 +47,7 @@ namespace STS2RitsuLib
     /// <param name="OccurredAtUtc">When the event was raised.</param>
     public readonly record struct CombatVictoryEvent(
         IRunState RunState,
-        CombatState? CombatState,
+        CombatStateCompat? CombatState,
         CombatRoom Room,
         DateTimeOffset OccurredAtUtc
     ) : IFrameworkLifecycleEvent;
@@ -54,7 +59,7 @@ namespace STS2RitsuLib
     /// <param name="Side">Side whose turn is starting.</param>
     /// <param name="OccurredAtUtc">When the event was raised.</param>
     public readonly record struct SideTurnStartingEvent(
-        CombatState CombatState,
+        CombatStateCompat CombatState,
         CombatSide Side,
         DateTimeOffset OccurredAtUtc
     ) : IFrameworkLifecycleEvent;
@@ -66,7 +71,7 @@ namespace STS2RitsuLib
     /// <param name="Side">Side that is now active.</param>
     /// <param name="OccurredAtUtc">When the event was raised.</param>
     public readonly record struct SideTurnStartedEvent(
-        CombatState CombatState,
+        CombatStateCompat CombatState,
         CombatSide Side,
         DateTimeOffset OccurredAtUtc
     ) : IFrameworkLifecycleEvent;
@@ -78,7 +83,7 @@ namespace STS2RitsuLib
     /// <param name="CardPlay">Play context.</param>
     /// <param name="OccurredAtUtc">When the event was raised.</param>
     public readonly record struct CardPlayingEvent(
-        CombatState CombatState,
+        CombatStateCompat CombatState,
         CardPlay CardPlay,
         DateTimeOffset OccurredAtUtc
     ) : IFrameworkLifecycleEvent;
@@ -90,7 +95,7 @@ namespace STS2RitsuLib
     /// <param name="CardPlay">Play context.</param>
     /// <param name="OccurredAtUtc">When the event was raised.</param>
     public readonly record struct CardPlayedEvent(
-        CombatState CombatState,
+        CombatStateCompat CombatState,
         CardPlay CardPlay,
         DateTimeOffset OccurredAtUtc
     ) : IFrameworkLifecycleEvent;
@@ -106,7 +111,7 @@ namespace STS2RitsuLib
     /// <param name="OccurredAtUtc">When the event was raised.</param>
     public readonly record struct CardMovedBetweenPilesEvent(
         IRunState RunState,
-        CombatState? CombatState,
+        CombatStateCompat? CombatState,
         CardModel Card,
         PileType PreviousPile,
         AbstractModel? Source,
@@ -121,7 +126,7 @@ namespace STS2RitsuLib
     /// <param name="FromHandDraw">True when drawn via hand-draw rules.</param>
     /// <param name="OccurredAtUtc">When the event was raised.</param>
     public readonly record struct CardDrawnEvent(
-        CombatState CombatState,
+        CombatStateCompat CombatState,
         CardModel Card,
         bool FromHandDraw,
         DateTimeOffset OccurredAtUtc
@@ -134,7 +139,7 @@ namespace STS2RitsuLib
     /// <param name="Card">Discarded card.</param>
     /// <param name="OccurredAtUtc">When the event was raised.</param>
     public readonly record struct CardDiscardedEvent(
-        CombatState CombatState,
+        CombatStateCompat CombatState,
         CardModel Card,
         DateTimeOffset OccurredAtUtc
     ) : IFrameworkLifecycleEvent;
@@ -147,7 +152,7 @@ namespace STS2RitsuLib
     /// <param name="CausedByEthereal">True when ethereal timing caused the exhaust.</param>
     /// <param name="OccurredAtUtc">When the event was raised.</param>
     public readonly record struct CardExhaustedEvent(
-        CombatState CombatState,
+        CombatStateCompat CombatState,
         CardModel Card,
         bool CausedByEthereal,
         DateTimeOffset OccurredAtUtc
@@ -160,7 +165,7 @@ namespace STS2RitsuLib
     /// <param name="Card">Retained card.</param>
     /// <param name="OccurredAtUtc">When the event was raised.</param>
     public readonly record struct CardRetainedEvent(
-        CombatState CombatState,
+        CombatStateCompat CombatState,
         CardModel Card,
         DateTimeOffset OccurredAtUtc
     ) : IFrameworkLifecycleEvent;
@@ -174,7 +179,7 @@ namespace STS2RitsuLib
     /// <param name="OccurredAtUtc">When the event was raised.</param>
     public readonly record struct CreatureDyingEvent(
         IRunState RunState,
-        CombatState? CombatState,
+        CombatStateCompat? CombatState,
         Creature Creature,
         DateTimeOffset OccurredAtUtc
     ) : IFrameworkLifecycleEvent;
@@ -190,7 +195,7 @@ namespace STS2RitsuLib
     /// <param name="OccurredAtUtc">When the event was raised.</param>
     public readonly record struct CreatureDiedEvent(
         IRunState RunState,
-        CombatState? CombatState,
+        CombatStateCompat? CombatState,
         Creature Creature,
         bool WasRemovalPrevented,
         float DeathAnimationDurationSeconds,
