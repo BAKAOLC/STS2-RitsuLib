@@ -236,7 +236,8 @@ namespace STS2RitsuLib.CardPiles
                 spec.OnOpen,
                 spec.HoverTipScreenOffset,
                 spec.HoverTipPlacement,
-                spec.VisibleWhen);
+                spec.VisibleWhen,
+                spec.FlightTargetPositionResolver);
 
             lock (SyncRoot)
             {

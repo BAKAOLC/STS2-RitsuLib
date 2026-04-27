@@ -23,6 +23,17 @@ namespace STS2RitsuLib.CardPiles
         /// <param name="node">The flying card's node, used to offset the target by the card's half-size.</param>
         public static Vector2 GetTargetPosition(ModCardPileDefinition definition, NCard? node)
         {
+            var defaultPosition = GetDefaultTargetPosition(definition, node);
+            var resolver = definition.FlightTargetPositionResolver;
+            if (resolver == null)
+                return defaultPosition;
+
+            var context = new ModCardPileFlightTargetContext(definition, node, defaultPosition);
+            return resolver(context) ?? defaultPosition;
+        }
+
+        private static Vector2 GetDefaultTargetPosition(ModCardPileDefinition definition, NCard? node)
+        {
             var fallback = FallbackPosition();
 
             if (definition.Anchor.Kind == ModCardPileAnchorKind.Custom)
