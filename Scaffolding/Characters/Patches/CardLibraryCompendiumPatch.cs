@@ -19,8 +19,10 @@ namespace STS2RitsuLib.Scaffolding.Characters.Patches
     ///     icons match everywhere).
     ///     Without this patch, mod character cards are not visible in any filter category, and opening
     ///     the card library during a run with a mod character causes a KeyNotFoundException crash.
-    ///     Buttons are inserted before the colorless pool filter when possible (then ancients, misc),
-    ///     so they stay with playable-character filters rather than after misc/token-style pools.
+    ///     Mod-character rows use <see cref="CardLibraryCompendiumPlacementDefaults.DefaultCharacterRowRules" /> unless
+    ///     overridden via <see cref="IModCharacterCardLibraryCompendiumPlacement" /> (or the template virtual). Optional
+    ///     shared-pool filters use end-of-strip placement when no rules are supplied. All rows share one placement pass
+    ///     (vanilla anchor priority list, mod-to-mod constraint relaxation, unified sort, then insertion).
     /// </summary>
     public class CardLibraryCompendiumPatch : IPatchMethod
     {
@@ -51,9 +53,6 @@ namespace STS2RitsuLib.Scaffolding.Characters.Patches
                 Dictionary<CharacterModel, NCardPoolFilter> ____cardPoolFilters)
             // ReSharper restore InconsistentNaming
         {
-            if (____cardPoolFilters.Count == 0)
-                return;
-
             foreach (var (character, filter) in ____cardPoolFilters)
             {
                 if (filter.GetNodeOrNull<TextureRect>("Image") is not { } image)
@@ -67,14 +66,13 @@ namespace STS2RitsuLib.Scaffolding.Characters.Patches
             }
 
             var modCharacters = ModContentRegistry.GetModCharacters().ToArray();
-            if (modCharacters.Length == 0)
+            var sharedPoolFilters = ModContentRegistry.GetCardLibraryCompendiumSharedPoolFilters();
+            if (modCharacters.Length == 0 && sharedPoolFilters.Count == 0)
                 return;
 
-            var referenceFilter = ____cardPoolFilters.Values.First();
-            var filterParent = referenceFilter.GetParent();
-            if (filterParent == null) return;
-
-            var useOrderedInsert = TryGetModFilterInsertIndex(__instance, filterParent, out var insertIndex);
+            if (!TryGetCompendiumTemplateFilter(__instance, ____cardPoolFilters, out var referenceFilter) ||
+                referenceFilter.GetParent() is not { } filterParent)
+                return;
 
             ShaderMaterial? referenceMat = null;
             if (referenceFilter.GetNodeOrNull<Control>("Image") is { Material: ShaderMaterial refMat })
@@ -82,27 +80,45 @@ namespace STS2RitsuLib.Scaffolding.Characters.Patches
 
             var updateCallable = Callable.From<NCardPoolFilter>(__instance.UpdateCardPoolFilter);
 
-            var nextIndex = insertIndex;
-            foreach (var character in modCharacters)
-            {
-                if (character is IModCharacterVanillaSelectionPolicy { HideInCardLibraryCompendium: true })
-                    continue;
+            var planned = CardLibraryCompendiumPlacementResolver.BuildPlannedRows(
+                modCharacters,
+                sharedPoolFilters,
+                RitsuLibFramework.Logger);
+            if (planned.Count == 0)
+                return;
 
-                string? iconTexturePath = null;
-                if (character is IModCharacterAssetOverrides assetOverrides)
-                    iconTexturePath = assetOverrides.CustomIconTexturePath;
+            var strip = CardLibraryCompendiumStripSnapshot.Capture(filterParent);
+            CardLibraryCompendiumPlacementResolver.AssignTargetsAndSort(
+                __instance,
+                filterParent,
+                strip,
+                planned,
+                RitsuLibFramework.Logger);
 
-                var filter = CreateFilter(character, iconTexturePath, referenceMat);
-                filterParent.AddChild(filter, true);
-                if (useOrderedInsert)
+            foreach (var row in planned)
+                if (row.Character is { } ch)
                 {
-                    filterParent.MoveChild(filter, nextIndex);
-                    nextIndex++;
+                    string? iconTexturePath = null;
+                    if (ch is IModCharacterAssetOverrides assetOverrides)
+                        iconTexturePath = assetOverrides.CustomIconTexturePath;
+
+                    row.BuiltFilter = CreateFilter(ch, iconTexturePath, referenceMat);
+                }
+                else if (row.Shared is { } reg)
+                {
+                    row.BuiltFilter = CreateSharedPoolFilter(reg, referenceMat, referenceFilter);
                 }
 
-                var pool = character.CardPool;
+            CardLibraryCompendiumPlacementResolver.InsertRowsInOrder(filterParent, strip, planned);
+
+            foreach (var row in planned)
+            {
+                if (row.BuiltFilter is not { } filter || row.ResolvedPool is not { } pool)
+                    continue;
+
                 ____poolFilters.Add(filter, c => pool.AllCardIds.Contains(c.Id));
-                ____cardPoolFilters.Add(character, filter);
+                if (row.Character is { } ch)
+                    ____cardPoolFilters.Add(ch, filter);
 
                 filter.Connect(NCardPoolFilter.SignalName.Toggled, updateCallable);
                 filter.Connect(Control.SignalName.FocusEntered,
@@ -111,35 +127,56 @@ namespace STS2RitsuLib.Scaffolding.Characters.Patches
         }
 
         /// <summary>
-        ///     Prefer inserting mod character filters immediately before non-character pool toggles: colorless, then
-        ///     ancients, then misc (vanilla has no separate token node; those pools follow). Falls back when no anchor
-        ///     resolves under <paramref name="expectedParent" />.
+        ///     A pool-filter control to clone the Image <see cref="ShaderMaterial" /> from, and the fallback icon
+        ///     source for shared compendium rows. When the base game has already created mod character filters,
+        ///     the leftmost of those in the pool strip; otherwise the first present vanilla
+        ///     <see cref="NCardPoolFilter" /> (strip order) from
+        ///     <see cref="CardLibraryCompendiumVanillaFilterNames.AllInStripOrder" />.
         /// </summary>
-        private static bool TryGetModFilterInsertIndex(
+        private static bool TryGetCompendiumTemplateFilter(
             NCardLibrary library,
-            Node expectedParent,
-            out int insertIndex)
+            Dictionary<CharacterModel, NCardPoolFilter> cardPoolFilters,
+            out NCardPoolFilter referenceFilter)
         {
-            ReadOnlySpan<string> anchorNames =
-            [
-                "%ColorlessPool",
-                "%AncientsPool",
-                "%MiscPool",
-            ];
-
-            foreach (var name in anchorNames)
+            if (cardPoolFilters.Count > 0)
             {
-                if (library.GetNodeOrNull<NCardPoolFilter>(name) is not { } anchor)
-                    continue;
-                if (anchor.GetParent() != expectedParent)
-                    continue;
-
-                insertIndex = anchor.GetIndex();
+                referenceFilter = GetLeftmostPoolFilterInStripModSubset(cardPoolFilters);
                 return true;
             }
 
-            insertIndex = 0;
+            foreach (var name in CardLibraryCompendiumVanillaFilterNames.AllInStripOrder)
+                if (library.GetNodeOrNull<NCardPoolFilter>(name) is { } f)
+                {
+                    referenceFilter = f;
+                    return true;
+                }
+
+            referenceFilter = null!;
             return false;
+        }
+
+        /// <summary>
+        ///     Leftmost <see cref="NCardPoolFilter" /> under the compendium pool strip that is in
+        ///     <paramref name="cardPoolFilters" />, for a stable clone source; otherwise
+        ///     <c>Values.First()</c>.
+        /// </summary>
+        private static NCardPoolFilter GetLeftmostPoolFilterInStripModSubset(
+            Dictionary<CharacterModel, NCardPoolFilter> cardPoolFilters)
+        {
+            var fallback = cardPoolFilters.Values.First();
+            if (fallback.GetParent() is not { } strip)
+                return fallback;
+
+            for (var i = 0; i < strip.GetChildCount(); i++)
+            {
+                if (strip.GetChild(i) is not NCardPoolFilter f)
+                    continue;
+                if (!cardPoolFilters.ContainsValue(f))
+                    continue;
+                return f;
+            }
+
+            return fallback;
         }
 
         private static NCardPoolFilter CreateFilter(
@@ -196,6 +233,69 @@ namespace STS2RitsuLib.Scaffolding.Characters.Patches
                 return iconTexture;
 
             return character.IconTexture;
+        }
+
+        private static NCardPoolFilter CreateSharedPoolFilter(
+            CardLibraryCompendiumSharedPoolFilterRegistration registration,
+            ShaderMaterial? referenceMat,
+            NCardPoolFilter referenceFilter)
+        {
+            const float size = 64f;
+            const float imageSize = 56f;
+            const float imagePos = 4f;
+
+            var filter = new NCardPoolFilter
+            {
+                Name = $"MOD_FILTER_SHARED_{registration.StableId}",
+                CustomMinimumSize = new(size, size),
+                Size = new(size, size),
+            };
+
+            var mat = (ShaderMaterial?)referenceMat?.Duplicate();
+
+            var image = new TextureRect
+            {
+                Name = "Image",
+                ExpandMode = TextureRect.ExpandModeEnum.IgnoreSize,
+                StretchMode = TextureRect.StretchModeEnum.KeepAspectCentered,
+                Size = new(imageSize, imageSize),
+                Position = new(imagePos, imagePos),
+                Scale = new(0.9f, 0.9f),
+                PivotOffset = new(28f, 28f),
+            };
+
+            image.Material = mat ?? MaterialUtils.CreateHsvShaderMaterial(1, 1, 1);
+            image.Texture = ResolveSharedPoolFilterIcon(registration, referenceFilter);
+
+            filter.AddChild(image);
+            image.Owner = filter;
+
+            var reticlePath = SceneHelper.GetScenePath("ui/selection_reticle");
+            var reticle = PreloadManager.Cache.GetScene(reticlePath).Instantiate<NSelectionReticle>();
+            reticle.Name = "SelectionReticle";
+            reticle.UniqueNameInOwner = true;
+            filter.AddChild(reticle);
+            reticle.Owner = filter;
+
+            return filter;
+        }
+
+        private static Texture2D ResolveSharedPoolFilterIcon(
+            CardLibraryCompendiumSharedPoolFilterRegistration registration,
+            NCardPoolFilter referenceFilter)
+        {
+            var path = registration.IconTexturePath;
+            if (!string.IsNullOrWhiteSpace(path) &&
+                AssetPathDiagnostics.Exists(path, registration,
+                    nameof(CardLibraryCompendiumSharedPoolFilterRegistration.IconTexturePath)) &&
+                ResourceLoader.Load<Texture2D>(path) is { } iconTexture)
+                return iconTexture;
+
+            if (referenceFilter.GetNodeOrNull<TextureRect>("Image") is { Texture: { } refTexture })
+                return refTexture;
+
+            throw new InvalidOperationException(
+                "Card library compendium shared pool filter could not resolve an icon texture and the reference filter has no Texture2D.");
         }
     }
 }

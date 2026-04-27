@@ -3,6 +3,7 @@ using MegaCrit.Sts2.Core.Animation;
 using MegaCrit.Sts2.Core.Bindings.MegaSpine;
 using MegaCrit.Sts2.Core.Models;
 using MegaCrit.Sts2.Core.Nodes.Combat;
+using STS2RitsuLib.Content;
 using STS2RitsuLib.Scaffolding.Characters.Visuals.Definition;
 using STS2RitsuLib.Scaffolding.Content;
 using STS2RitsuLib.Scaffolding.Content.Patches;
@@ -249,7 +250,8 @@ namespace STS2RitsuLib.Scaffolding.Characters
         , IModCharacterAssetOverrides, IModCreatureVisualsFactory, IModCharacterCreatureVisualsFactory,
         IModCreatureAnimatorFactory, IModCharacterCreatureAnimatorFactory,
         IModNonSpineAnimationStateMachineFactory, IModCharacterMerchantAnimationStateMachineFactory,
-        IModCharacterEpochTimelineRequirement, IModCharacterVanillaSelectionPolicy
+        IModCharacterEpochTimelineRequirement, IModCharacterVanillaSelectionPolicy,
+        IModCharacterCardLibraryCompendiumPlacement
 #pragma warning restore CS0618
         where TCardPool : CardPoolModel
         where TRelicPool : RelicPoolModel
@@ -473,6 +475,9 @@ namespace STS2RitsuLib.Scaffolding.Characters
         /// <inheritdoc />
         public virtual CharacterWorldProceduralVisualSet? WorldProceduralVisuals =>
             ResolvedAssetProfile.WorldProceduralVisuals;
+
+        /// <inheritdoc cref="IModCharacterCardLibraryCompendiumPlacement.CardLibraryCompendiumPlacementRules" />
+        public virtual IReadOnlyList<CardLibraryCompendiumPlacementRule>? CardLibraryCompendiumPlacementRules => null;
 
 #pragma warning disable CS0618
         CreatureAnimator? IModCharacterCreatureAnimatorFactory.TryCreateCreatureAnimator(MegaSprite controller)
