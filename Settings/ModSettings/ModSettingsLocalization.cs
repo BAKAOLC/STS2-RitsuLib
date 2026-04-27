@@ -1,4 +1,5 @@
 using System.Reflection;
+using MegaCrit.Sts2.Core.Modding;
 using STS2RitsuLib.Compat;
 using STS2RitsuLib.Utils;
 
@@ -27,9 +28,13 @@ namespace STS2RitsuLib.Settings
             if (!string.IsNullOrWhiteSpace(configuredName))
                 return configuredName;
 
-            return Sts2ModManagerCompat.EnumerateModsForManifestLookup().FirstOrDefault(mod =>
-                       string.Equals(mod.manifest?.id, modId, StringComparison.OrdinalIgnoreCase))?.manifest?.name
-                   ?? fallback;
+            var match = Sts2ModManagerCompat.EnumerateModsForManifestLookup()
+                .FirstOrDefault(mod =>
+                    string.Equals(mod.manifest?.id, modId, StringComparison.OrdinalIgnoreCase));
+            if (match?.manifest is ModManifest mm && !string.IsNullOrWhiteSpace(mm.name))
+                return mm.name;
+
+            return fallback;
         }
 
 

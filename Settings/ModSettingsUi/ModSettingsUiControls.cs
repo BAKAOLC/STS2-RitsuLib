@@ -3736,13 +3736,28 @@ namespace STS2RitsuLib.Settings
         Utility,
     }
 
-    internal sealed partial class ModSettingsSidebarButton : ModSettingsGamepadCompatibleButton
+    /// <summary>
+    ///     Sidebar row: matches BaseLib <c>NModListButton</c> — child <see cref="Panel" /> + one
+    ///     <see cref="StyleBoxFlat" />, updated from <see cref="NButton" /> press/focus hooks. Avoids Godot
+    ///     <see cref="Button" /> multi-state theme styleboxes stacking on hold / repeat click.
+    /// </summary>
+    internal sealed partial class ModSettingsSidebarButton : NButton
     {
+        private readonly Panel _backgroundPanel;
+        private readonly StyleBoxFlat _styleBox;
+        private readonly Label _label;
+        private readonly LabelSettings _labelSettings;
         private readonly int _indentLevel;
         private readonly ModSettingsSidebarItemKind _kind;
         private readonly string? _prefix;
         private readonly string? _rawText;
+        private readonly Action? _action;
+        private readonly Callable _releasedCallable;
+
         private bool _selected;
+        private bool _isButtonDown;
+        private bool _hovering;
+        private bool _releasedHooked;
 
         public ModSettingsSidebarButton(string text, Action? action,
             ModSettingsSidebarItemKind kind = ModSettingsSidebarItemKind.Page,
@@ -3753,7 +3768,44 @@ namespace STS2RitsuLib.Settings
             _indentLevel = Math.Max(0, indentLevel);
             _kind = kind;
             _prefix = prefix;
-            Text = text;
+            _action = action;
+            _releasedCallable = Callable.From<NButton>(OnReleased);
+
+            _styleBox = new StyleBoxFlat();
+            _backgroundPanel = new Panel
+            {
+                MouseFilter = MouseFilterEnum.Ignore,
+            };
+            _backgroundPanel.SetAnchorsPreset(LayoutPreset.FullRect);
+            _backgroundPanel.AddThemeStyleboxOverride("panel", _styleBox);
+            AddChild(_backgroundPanel);
+
+            _labelSettings = new LabelSettings
+            {
+                Font = kind == ModSettingsSidebarItemKind.ModGroup
+                    ? ModSettingsUiResources.KreonBold
+                    : ModSettingsUiResources.KreonRegular,
+                FontSize = kind switch
+                {
+                    ModSettingsSidebarItemKind.ModGroup => 22,
+                    ModSettingsSidebarItemKind.Page => 19,
+                    ModSettingsSidebarItemKind.Section => 16,
+                    _ => 17,
+                },
+            };
+
+            _label = new Label
+            {
+                MouseFilter = MouseFilterEnum.Ignore,
+                TextOverrunBehavior = TextServer.OverrunBehavior.TrimEllipsis,
+                HorizontalAlignment = HorizontalAlignment.Left,
+                VerticalAlignment = VerticalAlignment.Center,
+                LabelSettings = _labelSettings,
+            };
+            _label.SetAnchorsPreset(LayoutPreset.FullRect);
+            ApplyLabelOffsets();
+            AddChild(_label);
+
             TooltipText = text;
             CustomMinimumSize = new(0f, kind switch
             {
@@ -3765,67 +3817,198 @@ namespace STS2RitsuLib.Settings
             SizeFlagsHorizontal = SizeFlags.ExpandFill;
             FocusMode = FocusModeEnum.All;
             MouseFilter = MouseFilterEnum.Stop;
-            Flat = false;
-            TextOverrunBehavior = TextServer.OverrunBehavior.TrimEllipsis;
-            Alignment = HorizontalAlignment.Left;
-            IconAlignment = HorizontalAlignment.Left;
+            ClipContents = false;
 
-            AddThemeFontOverride("font", kind == ModSettingsSidebarItemKind.ModGroup
-                ? ModSettingsUiResources.KreonBold
-                : ModSettingsUiResources.KreonRegular);
-            AddThemeFontSizeOverride("font_size", kind switch
-            {
-                ModSettingsSidebarItemKind.ModGroup => 22,
-                ModSettingsSidebarItemKind.Page => 19,
-                ModSettingsSidebarItemKind.Section => 16,
-                _ => 17,
-            });
-            AddThemeColorOverride("font_color", kind == ModSettingsSidebarItemKind.Section
-                ? ModSettingsUiPalette.SidebarSection
-                : ModSettingsUiPalette.LabelPrimary);
-            AddThemeColorOverride("font_hover_color", new(0.98f, 1f, 1f));
-            AddThemeColorOverride("font_pressed_color", new(1f, 1f, 1f));
-            AddThemeColorOverride("font_focus_color", new(1f, 1f, 1f));
+            MouseEntered += OnMouseEntered;
+            MouseExited += OnMouseExited;
 
-            AddThemeStyleboxOverride("normal", CreateStyle(false, false, _kind, _indentLevel));
-            AddThemeStyleboxOverride("hover", CreateStyle(false, true, _kind, _indentLevel));
-            AddThemeStyleboxOverride("pressed", CreateStyle(true, true, _kind, _indentLevel));
-            AddThemeStyleboxOverride("focus", CreateStyle(false, true, _kind, _indentLevel));
-            AddThemeStyleboxOverride("disabled", CreateDisabledStyle());
-
-            Pressed += () => action?.Invoke();
+            UpdateVisualState();
         }
 
         public ModSettingsSidebarButton()
         {
+            _backgroundPanel = null!;
+            _styleBox = null!;
+            _label = null!;
+            _labelSettings = null!;
+            _indentLevel = 0;
+            _kind = ModSettingsSidebarItemKind.Page;
+            _prefix = null;
+            _rawText = null;
+            _action = null;
+            _releasedCallable = default;
         }
 
         public override void _Ready()
         {
-            Text = string.IsNullOrWhiteSpace(_prefix) ? _rawText ?? string.Empty : $"{_prefix}  {_rawText}";
+            if (_styleBox == null || _label == null)
+                return;
+
+            ConnectSignals();
+            ModSettingsFocusChrome.AttachControllerSelectionReticle(this);
+            Connect(NClickableControl.SignalName.Released, _releasedCallable);
+            _releasedHooked = true;
+
+            _label.Text = string.IsNullOrWhiteSpace(_prefix) ? _rawText ?? string.Empty : $"{_prefix}  {_rawText}";
+            TooltipText = _label.Text;
             SetSelected(_selected);
+            base._Ready();
+        }
+
+        public override void _ExitTree()
+        {
+            if (_releasedHooked && IsConnected(NClickableControl.SignalName.Released, _releasedCallable))
+                Disconnect(NClickableControl.SignalName.Released, _releasedCallable);
+            base._ExitTree();
+        }
+
+        private void OnReleased(NButton _) => _action?.Invoke();
+
+        private void OnMouseEntered()
+        {
+            _hovering = true;
+            UpdateVisualState();
+        }
+
+        private void OnMouseExited()
+        {
+            _hovering = false;
+            UpdateVisualState();
         }
 
         public void SetSelected(bool selected)
         {
             _selected = selected;
-            AddThemeStyleboxOverride("normal", CreateStyle(_selected, false, _kind, _indentLevel));
-            AddThemeStyleboxOverride("hover", CreateStyle(_selected, true, _kind, _indentLevel));
-            AddThemeStyleboxOverride("pressed", CreateStyle(true, true, _kind, _indentLevel));
-            AddThemeStyleboxOverride("focus", CreateStyle(_selected, true, _kind, _indentLevel));
+            UpdateVisualState();
         }
 
-        internal static StyleBoxFlat CreateStyle(bool selected, bool hovered,
-            ModSettingsSidebarItemKind kind = ModSettingsSidebarItemKind.Page,
-            int indentLevel = 0)
+        protected override void OnFocus()
         {
+            base.OnFocus();
+            UpdateVisualState();
+        }
+
+        protected override void OnUnfocus()
+        {
+            base.OnUnfocus();
+            UpdateVisualState();
+        }
+
+        protected override void OnPress()
+        {
+            base.OnPress();
+            _isButtonDown = true;
+            UpdateVisualState();
+        }
+
+        protected override void OnRelease()
+        {
+            base.OnRelease();
+            _isButtonDown = false;
+            UpdateVisualState();
+        }
+
+        private void ApplyLabelOffsets()
+        {
+            if (_label == null)
+                return;
+            var left = (_kind == ModSettingsSidebarItemKind.Section ? 14 : 18) + _indentLevel * 14;
+            if (_kind == ModSettingsSidebarItemKind.ModGroup)
+                left += (int)ModSettingsUiMetrics.SidebarModAccentBarWidth + ModSettingsUiMetrics.SidebarModAccentTextGutter;
+            var right = _kind == ModSettingsSidebarItemKind.Section ? 14 : 18;
+            var top = _kind == ModSettingsSidebarItemKind.Section ? 8 : 10;
+            var bottom = _kind == ModSettingsSidebarItemKind.Section ? 8 : 10;
+            _label.OffsetLeft = left;
+            _label.OffsetRight = -right;
+            _label.OffsetTop = top;
+            _label.OffsetBottom = -bottom;
+        }
+
+        private void UpdateVisualState()
+        {
+            if (_styleBox == null)
+                return;
+
+            var hoveredEffective = _hovering || IsFocused;
+            if (_isButtonDown)
+                hoveredEffective = true;
+
+            ApplySidebarPanelStyle(_styleBox, _selected, hoveredEffective, _kind, _indentLevel, _isButtonDown);
+
+            if (_kind == ModSettingsSidebarItemKind.ModGroup)
+            {
+                _labelSettings.FontColor = ModSettingsUiPalette.LabelPrimary;
+                ApplyLabelOffsets();
+            }
+            else if (_kind == ModSettingsSidebarItemKind.Section)
+            {
+                _labelSettings.FontColor = hoveredEffective ? Colors.White : ModSettingsUiPalette.SidebarSection;
+            }
+            else
+            {
+                _labelSettings.FontColor = hoveredEffective ? new Color(0.98f, 1f, 1f) : ModSettingsUiPalette.LabelPrimary;
+            }
+        }
+
+        private static void ApplySidebarPanelStyle(StyleBoxFlat box, bool selected, bool hovered,
+            ModSettingsSidebarItemKind kind, int indentLevel, bool pressed)
+        {
+            if (kind == ModSettingsSidebarItemKind.ModGroup)
+            {
+                var a = ModSettingsUiMetrics.SidebarModListSubtleAlpha;
+                var stripWhite = new Color(1f, 1f, 1f, a);
+                if (pressed && selected)
+                    stripWhite = new Color(1f, 1f, 1f, a * 0.75f);
+                var dimLine = new Color(1f, 1f, 1f, a);
+
+                Color modGroupBg;
+                Color bottomColor;
+                int bottomBorderW;
+                if (selected)
+                {
+                    modGroupBg = stripWhite;
+                    bottomColor = Colors.Transparent;
+                    bottomBorderW = 0;
+                }
+                else
+                {
+                    modGroupBg = Colors.Transparent;
+                    bottomColor = dimLine;
+                    bottomBorderW = ModSettingsUiMetrics.SidebarModListBottomBorderWidth;
+                }
+
+                box.BgColor = modGroupBg;
+                if (selected)
+                {
+                    box.BorderColor = ModSettingsUiPalette.SidebarModActiveAccent;
+                    box.BorderWidthLeft = (int)ModSettingsUiMetrics.SidebarModAccentBarWidth;
+                    box.BorderWidthTop = 0;
+                    box.BorderWidthRight = 0;
+                    box.BorderWidthBottom = 0;
+                }
+                else
+                {
+                    box.BorderColor = bottomColor;
+                    box.BorderWidthLeft = 0;
+                    box.BorderWidthTop = 0;
+                    box.BorderWidthRight = 0;
+                    box.BorderWidthBottom = bottomBorderW;
+                }
+                box.CornerRadiusTopLeft = 0;
+                box.CornerRadiusTopRight = 0;
+                box.CornerRadiusBottomRight = 0;
+                box.CornerRadiusBottomLeft = 0;
+                box.ShadowSize = 0;
+                box.ContentMarginLeft = 18 + indentLevel * 14 + (int)ModSettingsUiMetrics.SidebarModAccentBarWidth +
+                                        ModSettingsUiMetrics.SidebarModAccentTextGutter;
+                box.ContentMarginTop = 10;
+                box.ContentMarginRight = 18;
+                box.ContentMarginBottom = 10;
+                return;
+            }
+
             var bg = kind switch
             {
-                ModSettingsSidebarItemKind.ModGroup => selected
-                    ? new(0.17f, 0.28f, 0.36f, 0.99f)
-                    : hovered
-                        ? new(0.14f, 0.23f, 0.30f, 0.98f)
-                        : new Color(0.11f, 0.18f, 0.24f, 0.97f),
                 ModSettingsSidebarItemKind.Section => selected
                     ? new(0.12f, 0.22f, 0.29f, 0.98f)
                     : hovered
@@ -3845,9 +4028,6 @@ namespace STS2RitsuLib.Settings
 
             var border = kind switch
             {
-                ModSettingsSidebarItemKind.ModGroup => selected
-                    ? new(0.72f, 0.88f, 0.95f, 0.90f)
-                    : new Color(0.47f, 0.63f, 0.73f, 0.62f),
                 ModSettingsSidebarItemKind.Section => selected
                     ? new(0.56f, 0.80f, 0.90f, 0.84f)
                     : new Color(0.27f, 0.42f, 0.52f, 0.45f),
@@ -3858,29 +4038,24 @@ namespace STS2RitsuLib.Settings
 
             var leftBorder = selected
                 ? kind == ModSettingsSidebarItemKind.Section ? 3 : 4
-                : kind == ModSettingsSidebarItemKind.ModGroup
-                    ? 2
-                    : 1;
+                : 1;
 
-            return new()
-            {
-                BgColor = bg,
-                BorderColor = border,
-                BorderWidthLeft = leftBorder,
-                BorderWidthTop = 1,
-                BorderWidthRight = 1,
-                BorderWidthBottom = 1,
-                CornerRadiusTopLeft = ModSettingsUiMetrics.CornerRadius,
-                CornerRadiusTopRight = ModSettingsUiMetrics.CornerRadius,
-                CornerRadiusBottomRight = ModSettingsUiMetrics.CornerRadius,
-                CornerRadiusBottomLeft = ModSettingsUiMetrics.CornerRadius,
-                ShadowColor = new(0f, 0f, 0f, 0.18f),
-                ShadowSize = kind == ModSettingsSidebarItemKind.ModGroup ? 4 : 2,
-                ContentMarginLeft = (kind == ModSettingsSidebarItemKind.Section ? 14 : 18) + indentLevel * 14,
-                ContentMarginTop = kind == ModSettingsSidebarItemKind.Section ? 8 : 10,
-                ContentMarginRight = kind == ModSettingsSidebarItemKind.Section ? 14 : 18,
-                ContentMarginBottom = kind == ModSettingsSidebarItemKind.Section ? 8 : 10,
-            };
+            box.BgColor = bg;
+            box.BorderColor = border;
+            box.BorderWidthLeft = leftBorder;
+            box.BorderWidthTop = 1;
+            box.BorderWidthRight = 1;
+            box.BorderWidthBottom = 1;
+            box.CornerRadiusTopLeft = ModSettingsUiMetrics.CornerRadius;
+            box.CornerRadiusTopRight = ModSettingsUiMetrics.CornerRadius;
+            box.CornerRadiusBottomRight = ModSettingsUiMetrics.CornerRadius;
+            box.CornerRadiusBottomLeft = ModSettingsUiMetrics.CornerRadius;
+            box.ShadowColor = new(0f, 0f, 0f, 0.18f);
+            box.ShadowSize = 2;
+            box.ContentMarginLeft = (kind == ModSettingsSidebarItemKind.Section ? 14 : 18) + indentLevel * 14;
+            box.ContentMarginTop = kind == ModSettingsSidebarItemKind.Section ? 8 : 10;
+            box.ContentMarginRight = kind == ModSettingsSidebarItemKind.Section ? 14 : 18;
+            box.ContentMarginBottom = kind == ModSettingsSidebarItemKind.Section ? 8 : 10;
         }
 
         internal static StyleBoxFlat CreateDisabledStyle()
