@@ -9,11 +9,12 @@ namespace STS2RitsuLib.Settings
 
         private const string ContextMenuAttachedMetaKey = "_ritsulib_context_menu_attached";
 
-        internal static void RegisterRefreshWhenAlive(ModSettingsUiContext context, GodotObject? node, Action action)
+        internal static void RegisterRefreshWhenAlive(ModSettingsUiContext context, GodotObject? node, Action action,
+            ModSettingsUiRefreshSpec spec)
         {
             if (node == null)
             {
-                context.RegisterRefresh(action);
+                context.RegisterRefresh(action, spec);
                 return;
             }
 
@@ -22,7 +23,7 @@ namespace STS2RitsuLib.Settings
                 if (!GodotObject.IsInstanceValid(node))
                     return;
                 action();
-            });
+            }, spec);
         }
 
         public static Control CreatePageContent(ModSettingsUiContext context, ModSettingsPage page)
@@ -84,7 +85,8 @@ namespace STS2RitsuLib.Settings
                     context.MarkDirty(entry.Binding);
                     context.RequestRefresh();
                 });
-            RegisterRefreshWhenAlive(context, control, () => control.SetValue(entry.Binding.Read()));
+            RegisterRefreshWhenAlive(context, control, () => control.SetValue(entry.Binding.Read()),
+                ModSettingsUiRefreshSpec.ForBinding(entry.Binding));
 
             return CreateSettingLine(
                 context,
@@ -92,7 +94,9 @@ namespace STS2RitsuLib.Settings
                 () => ModSettingsUiContext.ResolveBindingDescriptionBody(entry.Description),
                 control,
                 entry.Binding,
-                entry.MenuCapabilities);
+                entry.MenuCapabilities,
+                entry.Label,
+                entry.Description);
         }
 
         public static Control CreateSliderEntry(ModSettingsUiContext context, SliderModSettingsEntryDefinition entry)
@@ -109,7 +113,8 @@ namespace STS2RitsuLib.Settings
                     context.MarkDirty(entry.Binding);
                     context.RequestRefresh();
                 });
-            RegisterRefreshWhenAlive(context, control, () => control.SetValue(entry.Binding.Read()));
+            RegisterRefreshWhenAlive(context, control, () => control.SetValue(entry.Binding.Read()),
+                ModSettingsUiRefreshSpec.ForBinding(entry.Binding));
 
             return CreateSettingLine(
                 context,
@@ -117,7 +122,9 @@ namespace STS2RitsuLib.Settings
                 () => ModSettingsUiContext.ResolveBindingDescriptionBody(entry.Description),
                 control,
                 entry.Binding,
-                entry.MenuCapabilities);
+                entry.MenuCapabilities,
+                entry.Label,
+                entry.Description);
 
             string FormatValue(double value)
             {
@@ -140,7 +147,8 @@ namespace STS2RitsuLib.Settings
                     context.MarkDirty(entry.Binding);
                     context.RequestRefresh();
                 });
-            RegisterRefreshWhenAlive(context, control, () => control.SetValue(entry.Binding.Read()));
+            RegisterRefreshWhenAlive(context, control, () => control.SetValue(entry.Binding.Read()),
+                ModSettingsUiRefreshSpec.ForBinding(entry.Binding));
 
             return CreateSettingLine(
                 context,
@@ -148,7 +156,9 @@ namespace STS2RitsuLib.Settings
                 () => ModSettingsUiContext.ResolveBindingDescriptionBody(entry.Description),
                 control,
                 entry.Binding,
-                entry.MenuCapabilities);
+                entry.MenuCapabilities,
+                entry.Label,
+                entry.Description);
 
             string FormatValue(float value)
             {
@@ -195,7 +205,8 @@ namespace STS2RitsuLib.Settings
                 refreshRegistration = () => stepper.SetValue(entry.Binding.Read());
             }
 
-            RegisterRefreshWhenAlive(context, control, refreshRegistration);
+            RegisterRefreshWhenAlive(context, control, refreshRegistration,
+                ModSettingsUiRefreshSpec.ForBinding(entry.Binding));
 
             return CreateSettingLine(
                 context,
@@ -203,7 +214,9 @@ namespace STS2RitsuLib.Settings
                 () => ModSettingsUiContext.ResolveBindingDescriptionBody(entry.Description),
                 control,
                 entry.Binding,
-                entry.MenuCapabilities);
+                entry.MenuCapabilities,
+                entry.Label,
+                entry.Description);
         }
 
         public static Control CreateColorEntry(ModSettingsUiContext context, ColorModSettingsEntryDefinition entry)
@@ -218,7 +231,8 @@ namespace STS2RitsuLib.Settings
                 },
                 entry.EditAlpha,
                 entry.EditIntensity);
-            RegisterRefreshWhenAlive(context, control, () => control.SetValue(entry.Binding.Read()));
+            RegisterRefreshWhenAlive(context, control, () => control.SetValue(entry.Binding.Read()),
+                ModSettingsUiRefreshSpec.ForBinding(entry.Binding));
 
             return CreateSettingLine(
                 context,
@@ -226,7 +240,9 @@ namespace STS2RitsuLib.Settings
                 () => ModSettingsUiContext.ResolveBindingDescriptionBody(entry.Description),
                 control,
                 entry.Binding,
-                entry.MenuCapabilities);
+                entry.MenuCapabilities,
+                entry.Label,
+                entry.Description);
         }
 
         public static Control CreateStringLineEntry(ModSettingsUiContext context,
@@ -239,7 +255,8 @@ namespace STS2RitsuLib.Settings
                 entry.MaxLength,
                 CreateStringFieldCommitHandler(context, entry),
                 entry.ValueValidationVisual);
-            RegisterRefreshWhenAlive(context, control, () => control.SetValue(entry.Binding.Read()));
+            RegisterRefreshWhenAlive(context, control, () => control.SetValue(entry.Binding.Read()),
+                ModSettingsUiRefreshSpec.ForBinding(entry.Binding));
 
             return CreateSettingLine(
                 context,
@@ -247,7 +264,9 @@ namespace STS2RitsuLib.Settings
                 () => ModSettingsUiContext.ResolveBindingDescriptionBody(entry.Description),
                 control,
                 entry.Binding,
-                entry.MenuCapabilities);
+                entry.MenuCapabilities,
+                entry.Label,
+                entry.Description);
         }
 
         public static Control CreateStringMultilineEntry(ModSettingsUiContext context,
@@ -259,7 +278,8 @@ namespace STS2RitsuLib.Settings
                 placeholder,
                 entry.MaxLength,
                 CreateStringFieldCommitHandler(context, entry));
-            RegisterRefreshWhenAlive(context, control, () => control.SetValue(entry.Binding.Read()));
+            RegisterRefreshWhenAlive(context, control, () => control.SetValue(entry.Binding.Read()),
+                ModSettingsUiRefreshSpec.ForBinding(entry.Binding));
 
             return CreateSettingLine(
                 context,
@@ -267,7 +287,9 @@ namespace STS2RitsuLib.Settings
                 () => ModSettingsUiContext.ResolveBindingDescriptionBody(entry.Description),
                 control,
                 entry.Binding,
-                entry.MenuCapabilities);
+                entry.MenuCapabilities,
+                entry.Label,
+                entry.Description);
         }
 
         private static string? ResolveStringFieldPlaceholder(StringFieldModSettingsEntryDefinition entry)
@@ -300,7 +322,8 @@ namespace STS2RitsuLib.Settings
                     context.MarkDirty(entry.Binding);
                     context.RequestRefresh();
                 });
-            RegisterRefreshWhenAlive(context, control, () => control.SetValue(entry.Binding.Read()));
+            RegisterRefreshWhenAlive(context, control, () => control.SetValue(entry.Binding.Read()),
+                ModSettingsUiRefreshSpec.ForBinding(entry.Binding));
 
             return CreateSettingLine(
                 context,
@@ -308,7 +331,9 @@ namespace STS2RitsuLib.Settings
                 () => ModSettingsUiContext.ResolveBindingDescriptionBody(entry.Description),
                 control,
                 entry.Binding,
-                entry.MenuCapabilities);
+                entry.MenuCapabilities,
+                entry.Label,
+                entry.Description);
         }
 
         public static Control CreateMultiKeyBindingEntry(ModSettingsUiContext context,
@@ -324,7 +349,8 @@ namespace STS2RitsuLib.Settings
                     entry.Binding.Write(value);
                     context.MarkDirty(entry.Binding);
                 });
-            RegisterRefreshWhenAlive(context, control, () => control.SetValue(entry.Binding.Read()));
+            RegisterRefreshWhenAlive(context, control, () => control.SetValue(entry.Binding.Read()),
+                ModSettingsUiRefreshSpec.ForBinding(entry.Binding));
 
             return CreateSettingLine(
                 context,
@@ -332,7 +358,9 @@ namespace STS2RitsuLib.Settings
                 () => ModSettingsUiContext.ResolveBindingDescriptionBody(entry.Description),
                 control,
                 entry.Binding,
-                entry.MenuCapabilities);
+                entry.MenuCapabilities,
+                entry.Label,
+                entry.Description);
         }
 
         public static Control CreateButtonEntry(ModSettingsUiContext context, ButtonModSettingsEntryDefinition entry)
@@ -350,7 +378,11 @@ namespace STS2RitsuLib.Settings
                 context,
                 () => ModSettingsUiContext.Resolve(entry.Label),
                 () => ModSettingsUiContext.Resolve(entry.Description),
-                control);
+                control,
+                null,
+                null,
+                entry.Label,
+                entry.Description);
         }
 
         public static Control CreateHostContextButtonEntry(ModSettingsUiContext context,
@@ -369,7 +401,11 @@ namespace STS2RitsuLib.Settings
                 context,
                 () => ModSettingsUiContext.Resolve(entry.Label),
                 () => ModSettingsUiContext.Resolve(entry.Description),
-                control);
+                control,
+                null,
+                null,
+                entry.Label,
+                entry.Description);
         }
 
         public static Control CreateHeaderEntry(ModSettingsUiContext context, HeaderModSettingsEntryDefinition entry)
@@ -380,10 +416,10 @@ namespace STS2RitsuLib.Settings
                 MouseFilter = Control.MouseFilterEnum.Ignore,
             };
             container.AddThemeConstantOverride("separation", 6);
-            container.AddChild(CreateRefreshableSectionTitle(context,
+            container.AddChild(CreateRefreshableSectionTitle(context, entry.Label,
                 () => ResolveEntryLabelDisplay(entry.Label)));
             if (entry.Description != null)
-                container.AddChild(CreateRefreshableDescriptionLabel(context,
+                container.AddChild(CreateRefreshableDescriptionLabel(context, entry.Description,
                     () => ModSettingsUiContext.Resolve(entry.Description)));
             return container;
         }
@@ -392,7 +428,8 @@ namespace STS2RitsuLib.Settings
             ParagraphModSettingsEntryDefinition entry)
         {
             var cap = entry.MaxBodyHeight ?? ModSettingsUiPresentation.ParagraphMaxBodyHeight;
-            return CreateRefreshableParagraphBlock(context, () => ModSettingsUiContext.Resolve(entry.Label), cap);
+            return CreateRefreshableParagraphBlock(context, entry.Label,
+                () => ModSettingsUiContext.Resolve(entry.Label), cap);
         }
 
         public static Control CreateInfoCardEntry(ModSettingsUiContext context,
@@ -424,14 +461,14 @@ namespace STS2RitsuLib.Settings
             stack.AddThemeConstantOverride("separation", 6);
             surface.AddChild(stack);
 
-            stack.AddChild(CreateRefreshableSectionTitle(context,
+            stack.AddChild(CreateRefreshableSectionTitle(context, entry.Label,
                 () => ResolveEntryLabelDisplay(entry.Label)));
 
             if (entry.Description != null)
-                stack.AddChild(CreateRefreshableDescriptionLabel(context,
+                stack.AddChild(CreateRefreshableDescriptionLabel(context, entry.Description,
                     () => ModSettingsUiContext.Resolve(entry.Description)));
 
-            stack.AddChild(CreateRefreshableParagraphBlock(context,
+            stack.AddChild(CreateRefreshableParagraphBlock(context, entry.Body,
                 () => ModSettingsUiContext.Resolve(entry.Body),
                 ModSettingsUiPresentation.ParagraphMaxBodyHeight));
             return line;
@@ -487,7 +524,7 @@ namespace STS2RitsuLib.Settings
             titleRow.AddThemeConstantOverride("separation", 8);
             left.AddChild(titleRow);
 
-            var title = CreateRefreshableHeaderLabel(context,
+            var title = CreateRefreshableHeaderLabel(context, entry.Label,
                 () => ResolveEntryLabelDisplay(entry.Label), 24, HorizontalAlignment.Left,
                 ModSettingsUiPalette.RichTextTitle);
             title.SizeFlagsHorizontal = Control.SizeFlags.ExpandFill;
@@ -503,14 +540,15 @@ namespace STS2RitsuLib.Settings
             idLabel.AddThemeFontSizeOverride("font_size", 16);
             idLabel.AddThemeColorOverride("font_color", ModSettingsUiPalette.RichTextMuted);
             titleRow.AddChild(idLabel);
+            var idLabelSpec = entry.Description?.GetUiRefreshSpec() ?? ModSettingsUiRefreshSpec.StaticDisplay;
             RegisterRefreshWhenAlive(context, idLabel, () =>
             {
                 var idText = entry.Description == null ? string.Empty : ModSettingsUiContext.Resolve(entry.Description);
                 idLabel.Text = string.IsNullOrWhiteSpace(idText) ? string.Empty : $"({idText})";
                 idLabel.Visible = !string.IsNullOrWhiteSpace(idText);
-            });
+            }, idLabelSpec);
 
-            left.AddChild(CreateRefreshableDescriptionLabel(context,
+            left.AddChild(CreateRefreshableDescriptionLabel(context, entry.Body,
                 () => ModSettingsUiContext.Resolve(entry.Body)));
 
             var bindingsColumn = new VBoxContainer
@@ -551,7 +589,7 @@ namespace STS2RitsuLib.Settings
                     chip.AddChild(chipLabel);
                     bindingsColumn.AddChild(chip);
                 }
-            });
+            }, ModSettingsUiRefreshSpec.AnyBindingDirty);
 
             return line;
         }
@@ -564,11 +602,11 @@ namespace STS2RitsuLib.Settings
                 MouseFilter = Control.MouseFilterEnum.Ignore,
             };
             container.AddThemeConstantOverride("separation", 8);
-            container.AddChild(CreateRefreshableSectionTitle(context,
+            container.AddChild(CreateRefreshableSectionTitle(context, entry.Label,
                 () => ResolveEntryLabelDisplay(entry.Label)));
 
             if (entry.Description != null)
-                container.AddChild(CreateRefreshableDescriptionLabel(context,
+                container.AddChild(CreateRefreshableDescriptionLabel(context, entry.Description,
                     () => ModSettingsUiContext.Resolve(entry.Description)));
 
             var surface = new PanelContainer
@@ -588,7 +626,8 @@ namespace STS2RitsuLib.Settings
                 SizeFlagsHorizontal = Control.SizeFlags.ExpandFill,
                 MouseFilter = Control.MouseFilterEnum.Ignore,
             };
-            RegisterRefreshWhenAlive(context, preview, () => preview.Texture = entry.TextureProvider());
+            RegisterRefreshWhenAlive(context, preview, () => preview.Texture = entry.TextureProvider(),
+                ModSettingsUiRefreshSpec.StaticDisplay);
             surface.AddChild(preview);
             container.AddChild(surface);
             return container;
@@ -615,7 +654,8 @@ namespace STS2RitsuLib.Settings
                     context.MarkDirty(entry.Binding);
                     context.RequestRefresh();
                 });
-            RegisterRefreshWhenAlive(context, control, () => control.SetValue(entry.Binding.Read()));
+            RegisterRefreshWhenAlive(context, control, () => control.SetValue(entry.Binding.Read()),
+                ModSettingsUiRefreshSpec.ForBinding(entry.Binding));
 
             return CreateSettingLine(
                 context,
@@ -623,7 +663,9 @@ namespace STS2RitsuLib.Settings
                 () => ModSettingsUiContext.ResolveBindingDescriptionBody(entry.Description),
                 control,
                 entry.Binding,
-                entry.MenuCapabilities);
+                entry.MenuCapabilities,
+                entry.Label,
+                entry.Description);
 
             string FormatValue(double value)
             {
@@ -644,7 +686,11 @@ namespace STS2RitsuLib.Settings
                 context,
                 () => ModSettingsUiContext.Resolve(entry.Label),
                 () => ModSettingsUiContext.Resolve(entry.Description),
-                control);
+                control,
+                null,
+                null,
+                entry.Label,
+                entry.Description);
         }
 
         internal sealed record PageBuildItem(Control Control, bool YieldAfter);

@@ -1,16 +1,14 @@
 using Godot;
-using STS2RitsuLib.Data.Models;
 
 namespace STS2RitsuLib.Settings
 {
     /// <summary>
-    ///     Reusable <see cref="FileDialog" /> in <c>OpenDir</c> mode for persisting a folder path to
-    ///     <see cref="RitsuLibSettings" />.
+    ///     Reusable <see cref="FileDialog" /> in <c>OpenDir</c> mode for writing a folder path to a settings binding.
     /// </summary>
     internal static class ModSettingsOpenFolderDialog
     {
         internal static void Show(
-            ModSettingsValueBinding<RitsuLibSettings, string> outputDirBinding,
+            IModSettingsValueBinding<string> outputDirBinding,
             IModSettingsUiActionHost uiHost,
             string logPrefix,
             string titleLocalizationKey,

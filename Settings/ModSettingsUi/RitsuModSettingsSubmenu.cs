@@ -32,7 +32,7 @@ namespace STS2RitsuLib.Settings
 
         private readonly List<(Control Control, Func<bool> Predicate)> _globalDynamicVisibilityTargets = [];
 
-        private readonly List<Action> _globalRefreshActions = [];
+        private readonly List<ModSettingsRefreshRegistration> _globalRefreshRegistrations = [];
 
         private readonly Dictionary<string, ModSettingsSidebarButton> _modButtons =
             new(StringComparer.OrdinalIgnoreCase);
@@ -46,6 +46,8 @@ namespace STS2RitsuLib.Settings
             _pageContentCaches = new(StringComparer.OrdinalIgnoreCase);
 
         private readonly Dictionary<string, PageSnapshot> _pageSnapshots = new(StringComparer.OrdinalIgnoreCase);
+
+        private readonly HashSet<IModSettingsBinding> _refreshBindingTriggers = [];
 
         private readonly Dictionary<string, ModSettingsSidebarButton> _sectionButtons =
             new(StringComparer.OrdinalIgnoreCase);
@@ -273,6 +275,7 @@ namespace STS2RitsuLib.Settings
         internal void MarkDirty(IModSettingsBinding binding)
         {
             _dirtyBindings.Add(binding);
+            _refreshBindingTriggers.Add(binding);
             _saveTimer = AutosaveDelaySeconds;
         }
 
@@ -284,16 +287,17 @@ namespace STS2RitsuLib.Settings
             _refreshDebounceTimer.Start();
         }
 
-        internal void RegisterRefreshAction(Action action, string? pageScopeId = null)
+        internal void RegisterRefreshAction(Action action, ModSettingsUiRefreshSpec spec, string? pageScopeId = null)
         {
+            var registration = new ModSettingsRefreshRegistration(action, spec);
             if (!string.IsNullOrWhiteSpace(pageScopeId) &&
                 _pageContentCaches.TryGetValue(pageScopeId, out var pageCache))
             {
-                pageCache.RefreshActions.Add(action);
+                pageCache.RefreshRegistrations.Add(registration);
                 return;
             }
 
-            _globalRefreshActions.Add(action);
+            _globalRefreshRegistrations.Add(registration);
         }
 
         internal void RegisterDynamicVisibility(Control control, Func<bool> predicate, string? pageScopeId = null)
@@ -406,18 +410,20 @@ namespace STS2RitsuLib.Settings
 
         private void FlushRefreshActionsImmediate(bool includeAllPages = false)
         {
-            foreach (var action in _globalRefreshActions.ToArray())
-                action();
+            var treatAsFullPass = includeAllPages || _refreshBindingTriggers.Count == 0;
+            var dirtySnapshot = _refreshBindingTriggers.ToHashSet();
+
+            RunRegistrations(_globalRefreshRegistrations.ToArray());
 
             if (includeAllPages)
-                foreach (var action in _pageContentCaches.Values.SelectMany(pageCache =>
-                             pageCache.RefreshActions.ToArray()))
-                    action();
+                foreach (var pageCache in _pageContentCaches.Values)
+                    RunRegistrations(pageCache.RefreshRegistrations.ToArray());
             else if (!string.IsNullOrWhiteSpace(_selectedPageId) && !string.IsNullOrWhiteSpace(_selectedModId) &&
                      _pageContentCaches.TryGetValue(CreatePageCacheKey(_selectedModId, _selectedPageId),
                          out var selectedPageCache))
-                foreach (var action in selectedPageCache.RefreshActions.ToArray())
-                    action();
+                RunRegistrations(selectedPageCache.RefreshRegistrations.ToArray());
+
+            _refreshBindingTriggers.Clear();
 
             ApplyDynamicVisibilityTargets(_globalDynamicVisibilityTargets);
             ApplyDynamicVisibilityTargets(_sidebarDynamicVisibilityTargets);
@@ -428,6 +434,17 @@ namespace STS2RitsuLib.Settings
                      _pageContentCaches.TryGetValue(CreatePageCacheKey(_selectedModId, _selectedPageId),
                          out var selectedVisibilityPage))
                 ApplyDynamicVisibilityTargets(selectedVisibilityPage.VisibilityTargets);
+            return;
+
+            void RunRegistrations(ModSettingsRefreshRegistration[] registrations)
+            {
+                foreach (var registration in registrations)
+                {
+                    if (!ModSettingsUiRefreshSpec.ShouldRun(registration.Spec, treatAsFullPass, dirtySnapshot))
+                        continue;
+                    registration.Action();
+                }
+            }
         }
 
         private void OnModSettingsGuiFocusChanged(Control node)
@@ -1113,7 +1130,7 @@ namespace STS2RitsuLib.Settings
                 }
 
                 _pageTabRow.Visible = false;
-                _globalRefreshActions.Clear();
+                _globalRefreshRegistrations.Clear();
                 HideTransientContentState();
                 _contentStructureDirty = false;
             }
@@ -1184,14 +1201,15 @@ namespace STS2RitsuLib.Settings
             foreach (var pair in _modCaches)
             {
                 var isSelected = string.Equals(pair.Key, _selectedModId, StringComparison.OrdinalIgnoreCase);
-                var isExpanded = _expandedModIds.Contains(pair.Key);
+                var navChromeVisible = ShouldShowExpandedModNav(pair.Key);
                 pair.Value.Card.AddThemeStyleboxOverride("panel", CreateSidebarGroupStyle(isSelected));
                 pair.Value.MetaLabel.SetTextAutoSize(string.Format(
                     ModSettingsLocalization.Get("sidebar.modMeta", "{0} pages"),
                     ModSettingsRegistry.GetPages().Count(page =>
                         string.Equals(page.ModId, pair.Key, StringComparison.OrdinalIgnoreCase))));
-                pair.Value.MetaLabel.Visible = isExpanded;
-                pair.Value.NavStack.Visible = isExpanded;
+                pair.Value.MetaLabel.Visible = navChromeVisible;
+                pair.Value.NavStack.Visible = navChromeVisible;
+                ApplySidebarModButtonChevron(pair.Value, navChromeVisible);
             }
 
             _selectionDirty = false;
@@ -1523,14 +1541,15 @@ namespace STS2RitsuLib.Settings
         private void RefreshSidebarModCache(SidebarModCache cache, IReadOnlyList<ModSettingsPage> rootPages,
             IReadOnlyList<ModSettingsPage> pages)
         {
-            var isExpanded = _expandedModIds.Contains(cache.ModId);
-            cache.Button.Text = $"{(isExpanded ? "▼" : "▶")}  {ResolveSidebarModTitle(rootPages)}";
-            cache.Button.TooltipText = ResolveSidebarModTitle(rootPages);
+            var navChromeVisible = ShouldShowExpandedModNav(cache.ModId);
+            var title = ResolveSidebarModTitle(rootPages);
+            cache.Button.TooltipText = title;
+            cache.Button.Text = $"{(navChromeVisible ? "▼" : "▶")}  {title}";
             cache.MetaLabel.SetTextAutoSize(string.Format(
                 ModSettingsLocalization.Get("sidebar.modMeta", "{0} pages"),
                 pages.Count));
-            cache.MetaLabel.Visible = isExpanded;
-            cache.NavStack.Visible = isExpanded;
+            cache.MetaLabel.Visible = navChromeVisible;
+            cache.NavStack.Visible = navChromeVisible;
 
             var rootChildPages = pages.Where(page => string.IsNullOrWhiteSpace(page.ParentPageId))
                 .OrderBy(ModSettingsRegistry.GetEffectivePageSortOrder)
@@ -1635,6 +1654,7 @@ namespace STS2RitsuLib.Settings
                 {
                     HideContentBuildOverlay();
                     FlushRefreshActionsImmediate();
+                    RefreshSelectionState();
                     RefreshFocusNavigation();
                     Callable.From(ScrollToSelectedAnchor).CallDeferred();
                 }
@@ -1656,7 +1676,11 @@ namespace STS2RitsuLib.Settings
                 ReplaceHostChildren(cache.HeaderHost, nextHeader);
                 ReplaceHostChildren(cache.ContentHost, nextContent);
                 if (string.Equals(_selectedPageId, page.Id, StringComparison.OrdinalIgnoreCase))
+                {
                     HideContentBuildOverlay();
+                    FlushRefreshActionsImmediate();
+                    RefreshSelectionState();
+                }
             }
         }
 
@@ -1987,6 +2011,37 @@ namespace STS2RitsuLib.Settings
                 _expandedModIds.Add(modId);
         }
 
+        private bool SelectedPageContentReady()
+        {
+            if (string.IsNullOrWhiteSpace(_selectedModId) || string.IsNullOrWhiteSpace(_selectedPageId))
+                return true;
+
+            var key = CreatePageCacheKey(_selectedModId, _selectedPageId);
+            if (!_pageContentCaches.TryGetValue(key, out var cache))
+                return true;
+
+            return cache.State is PageBuildState.Ready or PageBuildState.Failed;
+        }
+
+        private bool ShouldShowExpandedModNav(string modId)
+        {
+            return _expandedModIds.Contains(modId) && SelectedPageContentReady();
+        }
+
+        private void ApplySidebarModButtonChevron(SidebarModCache cache, bool navChromeVisible)
+        {
+            var rootPages = ModSettingsRegistry.GetPages()
+                .Where(page => string.Equals(page.ModId, cache.ModId, StringComparison.OrdinalIgnoreCase) &&
+                               string.IsNullOrWhiteSpace(page.ParentPageId))
+                .ToArray();
+            if (rootPages.Length == 0)
+                return;
+
+            var title = ResolveSidebarModTitle(rootPages);
+            cache.Button.TooltipText = title;
+            cache.Button.Text = $"{(navChromeVisible ? "▼" : "▶")}  {title}";
+        }
+
         private void FlushDirtyBindings()
         {
             if (_dirtyBindings.Count == 0)
@@ -2203,7 +2258,7 @@ namespace STS2RitsuLib.Settings
             public required string PageKey { get; init; }
             public required VBoxContainer Root { get; init; }
             public required PageBuildState State { get; set; }
-            public List<Action> RefreshActions { get; } = [];
+            public List<ModSettingsRefreshRegistration> RefreshRegistrations { get; } = [];
             public List<(Control Control, Func<bool> Predicate)> VisibilityTargets { get; } = [];
         }
 
