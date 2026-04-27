@@ -26,14 +26,11 @@ namespace STS2RitsuLib.Content
 
             lock (SyncRoot)
             {
-                if (!CharacterOwnedVisualProgrammaticByCharacterEntry.TryGetValue(key, out var byMod) ||
-                    byMod.Count == 0)
-                {
-                    assetProfile = CharacterAssetProfile.Empty;
-                    return false;
-                }
-
-                return TryMergeCharacterOwnedVisualProgrammaticLayers(byMod.Values, out assetProfile);
+                if (CharacterOwnedVisualProgrammaticByCharacterEntry.TryGetValue(key, out var byMod) &&
+                    byMod.Count != 0)
+                    return TryMergeCharacterOwnedVisualProgrammaticLayers(byMod.Values, out assetProfile);
+                assetProfile = CharacterAssetProfile.Empty;
+                return false;
             }
         }
 

@@ -78,14 +78,10 @@ namespace STS2RitsuLib.Scaffolding.Characters.Patches
         private static IReadOnlyList<CardLibraryCompendiumPlacementRule> GetCharacterPlacementRules(
             CharacterModel character)
         {
-            if (character is IModCharacterCardLibraryCompendiumPlacement placement)
-            {
-                var custom = placement.CardLibraryCompendiumPlacementRules;
-                if (custom is { Count: > 0 })
-                    return custom;
-            }
-
-            return CardLibraryCompendiumPlacementDefaults.DefaultCharacterRowRules;
+            if (character is not IModCharacterCardLibraryCompendiumPlacement placement)
+                return CardLibraryCompendiumPlacementDefaults.DefaultCharacterRowRules;
+            var custom = placement.CardLibraryCompendiumPlacementRules;
+            return custom is { Count: > 0 } ? custom : CardLibraryCompendiumPlacementDefaults.DefaultCharacterRowRules;
         }
 
         /// <summary>
