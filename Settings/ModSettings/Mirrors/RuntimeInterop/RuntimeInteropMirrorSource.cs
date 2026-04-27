@@ -523,10 +523,8 @@ namespace STS2RitsuLib.Settings
 
         private static List<InteropChoiceOption> ResolveChoiceOptions(InteropEntry entry, InteropAccessor access)
         {
-            if (string.IsNullOrWhiteSpace(entry.OptionsMethod))
-                return entry.Options;
-
-            if (!TryResolveInteropMethod(access.ProviderType, entry.OptionsMethod, out var method))
+            if (string.IsNullOrWhiteSpace(entry.OptionsMethod) ||
+                !TryResolveInteropMethod(access.ProviderType, entry.OptionsMethod, out var method))
                 return entry.Options;
 
             object?[] args = method.GetParameters().Length == 0 ? [] : [entry.Key];

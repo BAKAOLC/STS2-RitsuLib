@@ -14,7 +14,6 @@ from release_lib.msbuild_eval import get_csproj_property
 from release_lib.repo_layout import (
     ARTIFACTS_GITHUB,
     ARTIFACTS_NUGET,
-    DEFAULT_GIT_REMOTE,
     GITHUB_PRERELEASE_TAG_NAME,
     GITHUB_ZIP_FILENAME_SUFFIX,
     NUGET_ORG_V3_INDEX_URL,
@@ -90,41 +89,60 @@ def _generate_release_notes(tag: str, repo: str, target_commitish: str) -> str:
 
 
 def _read_tag_annotation(repo_root: Path, tag: str) -> str:
+    """Full annotated tag message via git for-each-ref; lightweight tags -> empty."""
     tag_ref = f"refs/tags/{tag}"
     kind = subprocess.run(
-        ["git", "cat-file", "-t", tag_ref],
+        ["git", "for-each-ref", "--count=1", tag_ref, "--format=%(objecttype)"],
         cwd=repo_root,
         capture_output=True,
         text=True,
+        encoding="utf-8",
+        errors="replace",
     )
-    if kind.returncode != 0:
+    if kind.returncode != 0 or kind.stdout.strip() != "tag":
         return ""
-    obj_type = kind.stdout.strip()
-    if obj_type == "tag":
-        show = subprocess.run(
-            ["git", "cat-file", "-p", tag_ref],
-            cwd=repo_root,
-            check=True,
-            capture_output=True,
-            text=True,
-        )
-        blob = show.stdout
-        if "\n\n" in blob:
-            return blob.split("\n\n", 1)[1].strip()
-        return ""
-    # commit = lightweight tag pointing at commit; do not use commit body as "tag description"
-    return ""
-
-
-def _ensure_tag_points_to_sha(repo_root: Path, tag: str, sha: str) -> None:
-    if not sha:
-        print("GITHUB_SHA is required to move release tag.", file=sys.stderr)
-        raise SystemExit(1)
-    subprocess.run(["git", "tag", "-f", tag, sha], cwd=repo_root, check=True)
-    subprocess.run(
-        ["git", "push", "--force", DEFAULT_GIT_REMOTE, f"refs/tags/{tag}"],
+    body = subprocess.run(
+        ["git", "for-each-ref", "--count=1", tag_ref, "--format=%(contents)"],
         cwd=repo_root,
-        check=True,
+        capture_output=True,
+        text=True,
+        encoding="utf-8",
+        errors="replace",
+    )
+    if body.returncode != 0:
+        return ""
+    text = body.stdout.strip()
+    sig = "-----BEGIN PGP SIGNATURE-----"
+    if sig in text:
+        text = text.split(sig, 1)[0].rstrip()
+    return text
+
+
+def _release_title_from_version_tag(tag: str) -> str:
+    """Release title: X.Y.Z without a leading ``v`` (``v0.2.6`` -> ``0.2.6``)."""
+    t = tag.strip()
+    if len(t) > 1 and t[0] in "vV":
+        return t[1:].strip() or t
+    return t
+
+
+def _delete_dev_prerelease_and_remote_tag(repo: str, repo_root: Path, tag: str) -> None:
+    """Remove the existing GitHub Release and remote tag; the next step recreates both."""
+    subprocess.run(
+        ["gh", "release", "delete", tag, "--yes", "--repo", repo],
+        capture_output=True,
+        text=True,
+    )
+    token = (os.environ.get("GH_TOKEN") or os.environ.get("GITHUB_TOKEN", "")).strip()
+    if not token:
+        return
+    actor = (os.environ.get("GITHUB_ACTOR", "") or "x-access-token").strip()
+    push_url = f"https://{actor}:{token}@github.com/{repo}.git"
+    subprocess.run(
+        ["git", "push", push_url, f":refs/tags/{tag}"],
+        cwd=repo_root,
+        capture_output=True,
+        text=True,
     )
 
 
@@ -163,7 +181,6 @@ def cmd_dev_prerelease(repo_root: Path) -> None:
         f"- Commit: [`{sha[:8]}`]({commit_url})\n"
         + (f"- Workflow Run: [#{run_id}]({run_url})\n" if run_url else "")
     )
-    _ensure_tag_points_to_sha(repo_root, tag, sha)
     zips = sorted((repo_root / ARTIFACTS_GITHUB).glob(f"*{GITHUB_ZIP_FILENAME_SUFFIX}"))
     if not zips:
         print(f"No *{GITHUB_ZIP_FILENAME_SUFFIX} under {ARTIFACTS_GITHUB}/", file=sys.stderr)
@@ -175,28 +192,24 @@ def cmd_dev_prerelease(repo_root: Path) -> None:
         dev_name = p.with_name(f"{p.stem}.sha.{short}{p.suffix}")
         dev_name.write_bytes(p.read_bytes())
         upload_files.append(str(dev_name))
-    if _release_exists(tag, repo):
-        _clear_release_assets(tag, repo)
-        _gh(["release", "upload", tag, *upload_files, "--repo", repo])
-        _gh(["release", "edit", tag, "--notes", notes, "--prerelease", "--repo", repo])
-    else:
-        _gh(
-            [
-                "release",
-                "create",
-                tag,
-                *upload_files,
-                "--repo",
-                repo,
-                "--title",
-                "Development build (dev)",
-                "--notes",
-                notes,
-                "--prerelease",
-                "--target",
-                sha,
-            ]
-        )
+    _delete_dev_prerelease_and_remote_tag(repo, repo_root, tag)
+    _gh(
+        [
+            "release",
+            "create",
+            tag,
+            *upload_files,
+            "--repo",
+            repo,
+            "--title",
+            "Development build (dev)",
+            "--notes",
+            notes,
+            "--prerelease",
+            "--target",
+            sha,
+        ]
+    )
 
 
 def cmd_tag_release(repo_root: Path, tag: str) -> None:
@@ -225,10 +238,24 @@ def cmd_tag_release(repo_root: Path, tag: str) -> None:
         if tag_note_prefix
         else generated_notes
     )
+    release_title = _release_title_from_version_tag(tag)
     if _release_exists(tag, repo):
         _clear_release_assets(tag, repo)
         _gh(["release", "upload", tag, *assets, "--repo", repo])
-        _gh(["release", "edit", tag, "--notes", final_notes, "--latest", "--repo", repo])
+        _gh(
+            [
+                "release",
+                "edit",
+                tag,
+                "--title",
+                release_title,
+                "--notes",
+                final_notes,
+                "--latest",
+                "--repo",
+                repo,
+            ]
+        )
     else:
         _gh(
             [
@@ -238,6 +265,8 @@ def cmd_tag_release(repo_root: Path, tag: str) -> None:
                 *assets,
                 "--repo",
                 repo,
+                "--title",
+                release_title,
                 "--notes",
                 final_notes,
                 "--verify-tag",
@@ -284,7 +313,7 @@ def main(argv: list[str] | None = None) -> int:
 
     sub.add_parser(
         "dev-prerelease",
-        help=f"Upsert fixed prerelease {GITHUB_PRERELEASE_TAG_NAME!r} with GitHub zips.",
+        help=f"Delete and recreate {GITHUB_PRERELEASE_TAG_NAME!r} prerelease with GitHub zips.",
     )
 
     p_tag = sub.add_parser("tag-release", help="Create or update GitHub Release for a version tag.")

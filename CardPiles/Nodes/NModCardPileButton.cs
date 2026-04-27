@@ -5,6 +5,7 @@ using MegaCrit.Sts2.Core.Entities.Players;
 using MegaCrit.Sts2.Core.Helpers;
 using MegaCrit.Sts2.Core.HoverTips;
 using MegaCrit.Sts2.Core.Nodes;
+using MegaCrit.Sts2.Core.Nodes.Combat;
 using MegaCrit.Sts2.Core.Nodes.HoverTips;
 using MegaCrit.Sts2.Core.Nodes.Rooms;
 using MegaCrit.Sts2.Core.Nodes.Screens;
@@ -768,6 +769,13 @@ namespace STS2RitsuLib.CardPiles.Nodes
             MouseFilter = visible ? MouseFilterEnum.Stop : MouseFilterEnum.Ignore;
             if (!visible)
                 NHoverTipSet.Remove(this);
+            TryRelayoutCombatRow();
+        }
+
+        private void TryRelayoutCombatRow()
+        {
+            if (GetParent() is NCombatPilesContainer c)
+                ModCardPileCombatLayout.Relayout(c);
         }
 
         private void DetachPile()

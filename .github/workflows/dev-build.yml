@@ -1,4 +1,4 @@
-# dev: shallow checkouts + scripted CI build + fixed prerelease (dev-build).
+# dev: CI build and publish a rolling dev-build prerelease.
 name: Dev build
 
 on:
@@ -16,12 +16,12 @@ jobs:
   dev-build:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
         with:
           fetch-depth: 1
 
       - name: Checkout API signatures (shallow)
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
         with:
           repository: BAKAOLC/STS2-API-Signatures
           path: sts2-api-signatures

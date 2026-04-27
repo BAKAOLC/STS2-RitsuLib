@@ -32,13 +32,15 @@ namespace STS2RitsuLib.Scaffolding.Characters.Patches
 
         internal static string? ResolveCombatSpineSkeletonDataPath(CharacterModel instance)
         {
+            if (TryResolveRegisteredProfile(instance, out var profile) &&
+                !string.IsNullOrWhiteSpace(profile.Spine?.CombatSkeletonDataPath))
+                return profile.Spine?.CombatSkeletonDataPath;
+
             if (instance is IModCharacterAssetOverrides overrides &&
                 !string.IsNullOrWhiteSpace(overrides.CustomCombatSpineSkeletonDataPath))
                 return overrides.CustomCombatSpineSkeletonDataPath;
 
-            return TryResolveRegisteredProfile(instance, out var profile)
-                ? profile.Spine?.CombatSkeletonDataPath
-                : null;
+            return null;
         }
 
         private static string? ResolveOverride(
@@ -46,46 +48,48 @@ namespace STS2RitsuLib.Scaffolding.Characters.Patches
             Func<IModCharacterAssetOverrides, string?> selector,
             string memberName)
         {
-            if (instance is IModCharacterAssetOverrides overrides)
+            if (TryResolveRegisteredProfile(instance, out var profile))
             {
-                var direct = selector(overrides);
-                if (!string.IsNullOrWhiteSpace(direct))
-                    return direct;
+                var registered = memberName switch
+                {
+                    nameof(IModCharacterAssetOverrides.CustomVisualsPath) => profile.Scenes?.VisualsPath,
+                    nameof(IModCharacterAssetOverrides.CustomEnergyCounterPath) => profile.Scenes?.EnergyCounterPath,
+                    nameof(IModCharacterAssetOverrides.CustomMerchantAnimPath) => profile.Scenes?.MerchantAnimPath,
+                    nameof(IModCharacterAssetOverrides.CustomRestSiteAnimPath) => profile.Scenes?.RestSiteAnimPath,
+                    nameof(IModCharacterAssetOverrides.CustomIconTexturePath) => profile.Ui?.IconTexturePath,
+                    nameof(IModCharacterAssetOverrides.CustomIconOutlineTexturePath) => profile.Ui
+                        ?.IconOutlineTexturePath,
+                    nameof(IModCharacterAssetOverrides.CustomIconPath) => profile.Ui?.IconPath,
+                    nameof(IModCharacterAssetOverrides.CustomCharacterSelectBgPath) =>
+                        profile.Ui?.CharacterSelectBgPath,
+                    nameof(IModCharacterAssetOverrides.CustomCharacterSelectIconPath) =>
+                        profile.Ui?.CharacterSelectIconPath,
+                    nameof(IModCharacterAssetOverrides.CustomCharacterSelectLockedIconPath) =>
+                        profile.Ui?.CharacterSelectLockedIconPath,
+                    nameof(IModCharacterAssetOverrides.CustomCharacterSelectTransitionPath) =>
+                        profile.Ui?.CharacterSelectTransitionPath,
+                    nameof(IModCharacterAssetOverrides.CustomMapMarkerPath) => profile.Ui?.MapMarkerPath,
+                    nameof(IModCharacterAssetOverrides.CustomTrailPath) => profile.Vfx?.TrailPath,
+                    nameof(IModCharacterAssetOverrides.CustomAttackSfx) => profile.Audio?.AttackSfx,
+                    nameof(IModCharacterAssetOverrides.CustomCastSfx) => profile.Audio?.CastSfx,
+                    nameof(IModCharacterAssetOverrides.CustomDeathSfx) => profile.Audio?.DeathSfx,
+                    nameof(IModCharacterAssetOverrides.CustomArmPointingTexturePath) =>
+                        profile.Multiplayer?.ArmPointingTexturePath,
+                    nameof(IModCharacterAssetOverrides.CustomArmRockTexturePath) =>
+                        profile.Multiplayer?.ArmRockTexturePath,
+                    nameof(IModCharacterAssetOverrides.CustomArmPaperTexturePath) =>
+                        profile.Multiplayer?.ArmPaperTexturePath,
+                    nameof(IModCharacterAssetOverrides.CustomArmScissorsTexturePath) =>
+                        profile.Multiplayer?.ArmScissorsTexturePath,
+                    _ => null,
+                };
+                if (!string.IsNullOrWhiteSpace(registered))
+                    return registered;
             }
 
-            if (!TryResolveRegisteredProfile(instance, out var profile))
-                return null;
-
-            return memberName switch
-            {
-                nameof(IModCharacterAssetOverrides.CustomVisualsPath) => profile.Scenes?.VisualsPath,
-                nameof(IModCharacterAssetOverrides.CustomEnergyCounterPath) => profile.Scenes?.EnergyCounterPath,
-                nameof(IModCharacterAssetOverrides.CustomMerchantAnimPath) => profile.Scenes?.MerchantAnimPath,
-                nameof(IModCharacterAssetOverrides.CustomRestSiteAnimPath) => profile.Scenes?.RestSiteAnimPath,
-                nameof(IModCharacterAssetOverrides.CustomIconTexturePath) => profile.Ui?.IconTexturePath,
-                nameof(IModCharacterAssetOverrides.CustomIconOutlineTexturePath) => profile.Ui?.IconOutlineTexturePath,
-                nameof(IModCharacterAssetOverrides.CustomIconPath) => profile.Ui?.IconPath,
-                nameof(IModCharacterAssetOverrides.CustomCharacterSelectBgPath) => profile.Ui?.CharacterSelectBgPath,
-                nameof(IModCharacterAssetOverrides.CustomCharacterSelectIconPath) =>
-                    profile.Ui?.CharacterSelectIconPath,
-                nameof(IModCharacterAssetOverrides.CustomCharacterSelectLockedIconPath) =>
-                    profile.Ui?.CharacterSelectLockedIconPath,
-                nameof(IModCharacterAssetOverrides.CustomCharacterSelectTransitionPath) =>
-                    profile.Ui?.CharacterSelectTransitionPath,
-                nameof(IModCharacterAssetOverrides.CustomMapMarkerPath) => profile.Ui?.MapMarkerPath,
-                nameof(IModCharacterAssetOverrides.CustomTrailPath) => profile.Vfx?.TrailPath,
-                nameof(IModCharacterAssetOverrides.CustomAttackSfx) => profile.Audio?.AttackSfx,
-                nameof(IModCharacterAssetOverrides.CustomCastSfx) => profile.Audio?.CastSfx,
-                nameof(IModCharacterAssetOverrides.CustomDeathSfx) => profile.Audio?.DeathSfx,
-                nameof(IModCharacterAssetOverrides.CustomArmPointingTexturePath) =>
-                    profile.Multiplayer?.ArmPointingTexturePath,
-                nameof(IModCharacterAssetOverrides.CustomArmRockTexturePath) => profile.Multiplayer?.ArmRockTexturePath,
-                nameof(IModCharacterAssetOverrides.CustomArmPaperTexturePath) => profile.Multiplayer
-                    ?.ArmPaperTexturePath,
-                nameof(IModCharacterAssetOverrides.CustomArmScissorsTexturePath) =>
-                    profile.Multiplayer?.ArmScissorsTexturePath,
-                _ => null,
-            };
+            if (instance is not IModCharacterAssetOverrides overrides) return null;
+            var direct = selector(overrides);
+            return !string.IsNullOrWhiteSpace(direct) ? direct : null;
         }
 
         private static bool TryResolveRegisteredProfile(CharacterModel instance, out CharacterAssetProfile profile)

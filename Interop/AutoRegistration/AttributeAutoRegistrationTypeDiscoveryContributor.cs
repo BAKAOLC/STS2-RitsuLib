@@ -3,6 +3,7 @@ using HarmonyLib;
 using MegaCrit.Sts2.Core.Models;
 using MegaCrit.Sts2.Core.Timeline;
 using STS2RitsuLib.CardPiles;
+using STS2RitsuLib.CardTags;
 using STS2RitsuLib.Content;
 using STS2RitsuLib.Keywords;
 using STS2RitsuLib.Scaffolding.Content;
@@ -98,8 +99,14 @@ namespace STS2RitsuLib.Interop.AutoRegistration
             var keywordRegistry = ModKeywordRegistry.For(ownerModId);
             var timelineRegistry = RitsuLibFramework.GetTimelineRegistry(ownerModId);
             var unlockRegistry = RitsuLibFramework.GetUnlockRegistry(ownerModId);
-            var packContext = new ModContentPackContext(ownerModId, contentRegistry, keywordRegistry, timelineRegistry,
-                unlockRegistry);
+            var cardTagRegistry = RitsuLibFramework.GetCardTagRegistry(ownerModId);
+            var packContext = new ModContentPackContext(
+                ownerModId,
+                contentRegistry,
+                keywordRegistry,
+                timelineRegistry,
+                unlockRegistry,
+                cardTagRegistry);
             var operations = new List<AutoRegistrationOperation>();
             var signatures = new HashSet<string>(StringComparer.Ordinal);
 
@@ -454,6 +461,21 @@ namespace STS2RitsuLib.Interop.AutoRegistration
                                             ownedCardKeyword.IncludeInCardHoverTip);
                                     }));
                             });
+                        break;
+                    case RegisterOwnedCardTagAttribute ownedCardTag:
+                        RegisterCase($"RegisterOwnedCardTag:{ownedCardTag.LocalCardTagStem}:{type.FullName}", () =>
+                        {
+                            operations.Add(CreateOperation(ownerModId, type, AutoRegistrationPhase.CardTags,
+                                ownedCardTag.Order,
+                                $"RegisterOwnedCardTag:{ownedCardTag.LocalCardTagStem}:{type.FullName}",
+                                nameof(RegisterOwnedCardTagAttribute),
+                                () =>
+                                {
+                                    var localStem = ValidateNonEmpty(ownedCardTag.LocalCardTagStem,
+                                        nameof(ownedCardTag.LocalCardTagStem));
+                                    ModCardTagRegistry.For(ownerModId).RegisterOwned(localStem);
+                                }));
+                        });
                         break;
                     case RegisterOwnedCardPileAttribute ownedCardPile:
                         RegisterCase($"RegisterOwnedCardPile:{ownedCardPile.LocalPileStem}:{type.FullName}", () =>

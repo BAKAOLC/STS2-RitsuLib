@@ -150,9 +150,10 @@ namespace STS2RitsuLib.Scaffolding.Characters
     public static class CharacterOwnedVanillaRelicModelId
     {
         /// <summary>
-        ///     Entry id for the vanilla <c>YummyCookie</c> relic.
+        ///     Canonical entry id for the vanilla <c>YummyCookie</c> relic (uppercase); live
+        ///     <c>RelicModel.Id.Entry</c> is still matched ordinal-ignore-case.
         /// </summary>
-        public const string YummyCookie = "yummy_cookie";
+        public const string YummyCookie = "YUMMY_COOKIE";
     }
 
     /// <summary>

@@ -1,6 +1,8 @@
+using MegaCrit.Sts2.Core.Entities.Cards;
 using MegaCrit.Sts2.Core.Helpers;
 using MegaCrit.Sts2.Core.Models;
 using MegaCrit.Sts2.Core.Timeline;
+using STS2RitsuLib.CardTags;
 using STS2RitsuLib.Combat.HealthBars;
 using STS2RitsuLib.Content;
 using STS2RitsuLib.Keywords;
@@ -27,7 +29,33 @@ namespace STS2RitsuLib.Scaffolding.Content
         ModContentRegistry Content,
         ModKeywordRegistry Keywords,
         ModTimelineRegistry Timeline,
-        ModUnlockRegistry Unlocks);
+        ModUnlockRegistry Unlocks)
+    {
+        /// <summary>
+        ///     Same as the 5-parameter <see cref="ModContentPackContext" /> primary constructor. The
+        ///     <paramref name="cardTagRegistry" /> argument is accepted so call sites can mirror
+        ///     <see cref="RitsuLibFramework.GetContentRegistry" /> / <see cref="RitsuLibFramework.GetKeywordRegistry" />
+        ///     / … style: pass <c>ModCardTagRegistry.For(<paramref name="modId" />)</c> or
+        ///     <see cref="RitsuLibFramework.GetCardTagRegistry" />. The value is not read; <see cref="CardTags" /> is
+        ///     always the per-mod singleton from <c>ModCardTagRegistry.For</c>.
+        /// </summary>
+        public ModContentPackContext(
+            string modId,
+            ModContentRegistry content,
+            ModKeywordRegistry keywords,
+            ModTimelineRegistry timeline,
+            ModUnlockRegistry unlocks,
+            ModCardTagRegistry cardTagRegistry) : this(modId, content, keywords, timeline, unlocks)
+        {
+            _ = cardTagRegistry;
+        }
+
+        /// <summary>
+        ///     Custom <see cref="CardTag" /> surface for <see cref="ModId" />; same singleton as
+        ///     <c>ModCardTagRegistry.For(ModId)</c> and <c>RitsuLibFramework.GetCardTagRegistry</c>.
+        /// </summary>
+        public ModCardTagRegistry CardTags => ModCardTagRegistry.For(ModId);
+    }
 
     /// <summary>
     ///     Fluent registration helper that batches common mod-author setup into a single readable flow.
@@ -930,6 +958,36 @@ namespace STS2RitsuLib.Scaffolding.Content
         }
 
         /// <summary>
+        ///     Queues <see cref="ModCardTagRegistry.RegisterOwned" /> for a local stem under this pack’s mod id.
+        /// </summary>
+        public ModContentPackBuilder CardTagOwned(string localTagStem)
+        {
+            return AddStep(ctx => ctx.CardTags.RegisterOwned(localTagStem));
+        }
+
+        /// <summary>
+        ///     Appends a <see cref="CardTagRegistrationEntry" /> registration step.
+        /// </summary>
+        public ModContentPackBuilder CardTag(CardTagRegistrationEntry entry)
+        {
+            ArgumentNullException.ThrowIfNull(entry);
+            return AddStep(ctx => entry.Register(ctx.CardTags));
+        }
+
+        /// <summary>
+        ///     Appends each card-tag registration entry in order.
+        /// </summary>
+        public ModContentPackBuilder CardTags(IEnumerable<CardTagRegistrationEntry> entries)
+        {
+            ArgumentNullException.ThrowIfNull(entries);
+
+            foreach (var entry in entries)
+                CardTag(entry);
+
+            return this;
+        }
+
+        /// <summary>
         ///     Registers <see cref="ModContentRegistry" /> entries (character, cards, relics, powers, …).
         /// </summary>
         public ModContentPackBuilder ContentManifest(IEnumerable<IContentRegistrationEntry>? entries)
@@ -943,6 +1001,14 @@ namespace STS2RitsuLib.Scaffolding.Content
         public ModContentPackBuilder KeywordManifest(IEnumerable<KeywordRegistrationEntry>? entries)
         {
             return entries != null ? Keywords(entries) : this;
+        }
+
+        /// <summary>
+        ///     Registers <see cref="ModCardTagRegistry" /> entries (custom <c>CardTag</c> ids separate from ModelDb).
+        /// </summary>
+        public ModContentPackBuilder CardTagManifest(IEnumerable<CardTagRegistrationEntry>? entries)
+        {
+            return entries != null ? CardTags(entries) : this;
         }
 
         /// <summary>
@@ -1087,7 +1153,8 @@ namespace STS2RitsuLib.Scaffolding.Content
                 RitsuLibFramework.GetContentRegistry(_modId),
                 RitsuLibFramework.GetKeywordRegistry(_modId),
                 RitsuLibFramework.GetTimelineRegistry(_modId),
-                RitsuLibFramework.GetUnlockRegistry(_modId));
+                RitsuLibFramework.GetUnlockRegistry(_modId),
+                RitsuLibFramework.GetCardTagRegistry(_modId));
         }
 
         /// <summary>

@@ -67,6 +67,7 @@ namespace STS2RitsuLib.CardPiles.Patches
         {
             foreach (var button in __instance.GetChildren().OfType<NModCardPileButton>())
                 button.Initialize(player);
+            ModCardPileCombatLayout.Relayout(__instance);
         }
         // ReSharper restore InconsistentNaming
     }

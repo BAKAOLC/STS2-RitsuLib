@@ -67,7 +67,7 @@ namespace STS2RitsuLib.Content
         {
             ArgumentException.ThrowIfNullOrWhiteSpace(characterEntry);
             ArgumentNullException.ThrowIfNull(assetProfile);
-            var normalizedEntry = characterEntry.Trim().ToLowerInvariant();
+            var normalizedEntry = NormalizeCharacterAssetEntryKey(characterEntry);
 
             lock (SyncRoot)
             {
@@ -109,25 +109,16 @@ namespace STS2RitsuLib.Content
         public bool RemoveCharacterAssetReplacement(string characterEntry)
         {
             ArgumentException.ThrowIfNullOrWhiteSpace(characterEntry);
-            var normalizedEntry = characterEntry.Trim().ToLowerInvariant();
+            var canonical = NormalizeCharacterAssetEntryKey(characterEntry);
             bool removed;
 
             lock (SyncRoot)
             {
-                if (!RegisteredCharacterAssetReplacementsByEntry.TryGetValue(normalizedEntry, out var perMod))
-                {
-                    removed = false;
-                }
-                else
-                {
-                    removed = perMod.Remove(ModId);
-                    if (perMod.Count == 0)
-                        RegisteredCharacterAssetReplacementsByEntry.Remove(normalizedEntry);
-                }
+                removed = TryRemoveCharacterAssetReplacementForKey(canonical);
             }
 
             if (removed)
-                _logger.Info($"[Content] Removed character asset replacement for '{normalizedEntry}'.");
+                _logger.Info($"[Content] Removed character asset replacement for '{canonical}'.");
 
             return removed;
         }
@@ -140,12 +131,13 @@ namespace STS2RitsuLib.Content
             out CharacterAssetProfile assetProfile)
         {
             ArgumentException.ThrowIfNullOrWhiteSpace(characterEntry);
-            var normalizedEntry = characterEntry.Trim();
+            var canonical = NormalizeCharacterAssetEntryKey(characterEntry);
 
             lock (SyncRoot)
             {
-                if (RegisteredCharacterAssetReplacementsByEntry.TryGetValue(normalizedEntry, out var layersByMod))
+                if (RegisteredCharacterAssetReplacementsByEntry.TryGetValue(canonical, out var layersByMod))
                     return TryMergeCharacterAssetReplacementLayers(layersByMod.Values, out assetProfile);
+
                 assetProfile = CharacterAssetProfile.Empty;
                 return false;
             }
@@ -165,9 +157,10 @@ namespace STS2RitsuLib.Content
         }
 
         /// <summary>
-        ///     Returns effective overrides for a character: global baseline merged with character-specific overrides.
+        ///     Returns registry-only overrides (global + per-character <see cref="RegisterCharacterAssetReplacement" />),
+        ///     without programmatic owned-visual registrations.
         /// </summary>
-        internal static bool TryGetEffectiveCharacterAssetReplacement(
+        internal static bool TryGetRegistryOnlyEffectiveCharacterAssetReplacement(
             string characterEntry,
             out CharacterAssetProfile assetProfile)
         {
@@ -187,6 +180,41 @@ namespace STS2RitsuLib.Content
                 : hasCharacter
                     ? characterProfile
                     : globalProfile;
+            return true;
+        }
+
+        /// <summary>
+        ///     Returns effective overrides for a character: programmatic owned relic / potion / card art merged
+        ///     underneath registry overrides from <see cref="RegisterGlobalCharacterAssetReplacement" /> and
+        ///     <see cref="RegisterCharacterAssetReplacement" /> (registry wins on conflicts). Character
+        ///     <see>
+        ///         <cref>T:STS2RitsuLib.Scaffolding.Characters.ModCharacterTemplate</cref>
+        ///     </see>
+        ///     <c>AssetProfile</c> rows are merged in
+        ///     <c>TryGetVanilla*</c> below
+        ///     both registry and programmatic tiers.
+        /// </summary>
+        internal static bool TryGetEffectiveCharacterAssetReplacement(
+            string characterEntry,
+            out CharacterAssetProfile assetProfile)
+        {
+            ArgumentException.ThrowIfNullOrWhiteSpace(characterEntry);
+
+            var hasRegistry = TryGetRegistryOnlyEffectiveCharacterAssetReplacement(characterEntry, out var registry);
+            var hasProgrammatic =
+                TryBuildProgrammaticCharacterOwnedVisualProfile(characterEntry, out var programmatic);
+
+            if (!hasRegistry && !hasProgrammatic)
+            {
+                assetProfile = CharacterAssetProfile.Empty;
+                return false;
+            }
+
+            assetProfile = hasRegistry && hasProgrammatic
+                ? CharacterAssetProfiles.Merge(programmatic, registry)
+                : hasRegistry
+                    ? registry
+                    : programmatic;
             return true;
         }
 
@@ -230,6 +258,18 @@ namespace STS2RitsuLib.Content
         {
             _characterAssetReplacementWriteOrder++;
             return _characterAssetReplacementWriteOrder;
+        }
+
+        private bool TryRemoveCharacterAssetReplacementForKey(string dictionaryKey)
+        {
+            if (!RegisteredCharacterAssetReplacementsByEntry.TryGetValue(dictionaryKey, out var perMod))
+                return false;
+
+            var removed = perMod.Remove(ModId);
+            if (perMod.Count == 0)
+                RegisteredCharacterAssetReplacementsByEntry.Remove(dictionaryKey);
+
+            return removed;
         }
 
         private static bool TryMergeCharacterAssetReplacementLayers(
@@ -336,19 +376,19 @@ namespace STS2RitsuLib.Content
         public static class VanillaCharacterIds
         {
             /// <summary>Vanilla Ironclad character id.</summary>
-            public const string Ironclad = "ironclad";
+            public const string Ironclad = "IRONCLAD";
 
             /// <summary>Vanilla Silent character id.</summary>
-            public const string Silent = "silent";
+            public const string Silent = "SILENT";
 
             /// <summary>Vanilla Defect character id.</summary>
-            public const string Defect = "defect";
+            public const string Defect = "DEFECT";
 
             /// <summary>Vanilla Regent character id.</summary>
-            public const string Regent = "regent";
+            public const string Regent = "REGENT";
 
             /// <summary>Vanilla Necrobinder character id.</summary>
-            public const string Necrobinder = "necrobinder";
+            public const string Necrobinder = "NECROBINDER";
         }
     }
 }

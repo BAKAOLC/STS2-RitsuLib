@@ -15,7 +15,7 @@ namespace STS2RitsuLib.CardPiles
         StyleDefault = 0,
 
         /// <summary>
-        ///     Near the bottom-left draw-pile button (auto-stacks leftwards on overflow).
+        ///     Near the bottom-left draw-pile button (auto-stacks rightwards toward the discard row).
         /// </summary>
         BottomLeftPrimary = 1,
 
