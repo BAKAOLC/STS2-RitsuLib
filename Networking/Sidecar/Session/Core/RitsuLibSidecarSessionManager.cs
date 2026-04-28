@@ -63,6 +63,7 @@ namespace STS2RitsuLib.Networking.Sidecar
                     return;
 
                 ValidationRoutes.Add(new RitsuLibSidecarManualHintValidationRoute());
+                ValidationRoutes.Add(new RitsuLibSidecarNativeTrailerValidationRoute());
                 ValidationRoutes.Add(new RitsuLibSidecarSteamLobbyValidationRoute());
                 _providerBootstrapped = true;
             }

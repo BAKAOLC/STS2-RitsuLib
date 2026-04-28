@@ -116,7 +116,7 @@ namespace STS2RitsuLib.Networking.Sidecar
                 throw new ArgumentException("Buffer too small", nameof(destination));
 
             BinaryPrimitives.WriteUInt64BigEndian(
-                destination.Slice(0, RitsuLibSidecarBinaryLayout.U64Size),
+                destination[..RitsuLibSidecarBinaryLayout.U64Size],
                 streamId);
         }
 

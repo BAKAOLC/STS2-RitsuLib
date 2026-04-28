@@ -9,6 +9,9 @@ namespace STS2RitsuLib.Networking.Sidecar
     /// </summary>
     public static class RitsuLibSidecarConnectionExchange
     {
+        private static readonly Lock Gate = new();
+        private static readonly Dictionary<ulong, long> HelloSentEpochByPeer = [];
+
         /// <summary>
         ///     Same as <see cref="TrySendClientHelloIfReachable" /> using <see cref="RunManager.Instance" />’s
         ///     <see cref="RunManager.NetService" /> (non-null only after run setup; use lobby ctor patches for
@@ -20,26 +23,32 @@ namespace STS2RitsuLib.Networking.Sidecar
         }
 
         /// <summary>
-        ///     Client-side handshake bootstrap. Host-side proactive broadcast is intentionally disabled to avoid sending
-        ///     sidecar envelopes to unknown peers.
+        ///     Attempts sidecar handshake only for peers already resolved as
+        ///     <see cref="RitsuLibSidecarPeerReachability.Supported" />.
         /// </summary>
         public static void TrySendClientHelloIfReachable(INetGameService? netService)
         {
             if (netService == null || netService.Type == NetGameType.Singleplayer)
                 return;
-            if (netService is not NetClientGameService client)
-                return;
-            if (!RitsuLibSidecarSessionManager.CanSendToPeer(client.HostNetId))
-            {
-                if (!RitsuLibSidecarNetDiagnosticsOptions.TraceSessionState) return;
-                var known = RitsuLibSidecarSessionManager.TryGetReachability(client.HostNetId, out var r)
-                    ? r
-                    : RitsuLibSidecarPeerReachability.Unknown;
-                RitsuLibFramework.Logger.Info(
-                    $"[Sidecar] Skip client handshake to host={client.HostNetId}, reachability={known}");
 
-                return;
+            switch (netService)
+            {
+                case NetClientGameService client:
+                    TrySendHelloToPeerIfReachable(netService, client.HostNetId);
+                    break;
+                case NetHostGameService:
+                    foreach (var peerNetId in RitsuLibSidecarSessionManager.GetSupportedPeersSnapshot())
+                        TrySendHelloToPeerIfReachable(netService, peerNetId);
+                    break;
             }
+        }
+
+        private static void TrySendHelloToPeerIfReachable(INetGameService netService, ulong peerNetId)
+        {
+            if (!RitsuLibSidecarSessionManager.CanSendToPeer(peerNetId))
+                return;
+            if (!TryMarkHelloAsPending(peerNetId))
+                return;
 
             RitsuLibSidecarProtocol.EnsureDefaultHandlers();
             var buf = new byte[RitsuLibSidecarHandshakeBinary.HandshakePayloadSize];
@@ -48,11 +57,49 @@ namespace STS2RitsuLib.Networking.Sidecar
                 RitsuLibSidecarWire.CurrentWireFormatVersion,
                 RitsuLibSidecarWire.SupportedWireFormatVersionMax,
                 RitsuLibSidecarPeerFeatures.ChunkedStreams);
-            RitsuLibSidecarHighLevelSend.TrySendAsClient(
-                netService,
-                RitsuLibSidecarControlOpcodes.Handshake,
-                buf,
-                RitsuLibSidecarDeliverySemantics.StableSync);
+
+            var ok = netService switch
+            {
+                NetClientGameService => RitsuLibSidecarHighLevelSend.TrySendAsClient(
+                    netService,
+                    RitsuLibSidecarControlOpcodes.Handshake,
+                    buf,
+                    RitsuLibSidecarDeliverySemantics.StableSync),
+                NetHostGameService => RitsuLibSidecarHighLevelSend.TrySendAsHostToPeer(
+                    netService,
+                    peerNetId,
+                    RitsuLibSidecarControlOpcodes.Handshake,
+                    buf,
+                    RitsuLibSidecarDeliverySemantics.StableSync),
+                _ => false,
+            };
+
+            if (ok)
+                return;
+
+            UnmarkHelloPending(peerNetId);
+        }
+
+        private static bool TryMarkHelloAsPending(ulong peerNetId)
+        {
+            var epoch = RitsuLibSidecarSessionManager.Epoch;
+            lock (Gate)
+            {
+                if (HelloSentEpochByPeer.TryGetValue(peerNetId, out var sentEpoch) && sentEpoch == epoch)
+                    return false;
+                HelloSentEpochByPeer[peerNetId] = epoch;
+                return true;
+            }
+        }
+
+        private static void UnmarkHelloPending(ulong peerNetId)
+        {
+            var epoch = RitsuLibSidecarSessionManager.Epoch;
+            lock (Gate)
+            {
+                if (HelloSentEpochByPeer.TryGetValue(peerNetId, out var sentEpoch) && sentEpoch == epoch)
+                    HelloSentEpochByPeer.Remove(peerNetId);
+            }
         }
     }
 }

@@ -28,6 +28,7 @@ namespace STS2RitsuLib.Networking.Sidecar.Patches
 
         public static bool Prefix(ulong senderId, byte[] packetBytes, NetTransferMode mode, int channel)
         {
+            RitsuLibSidecarNativeTrailerEvidence.ObserveInbound(senderId, packetBytes);
             return !RitsuLibSidecarReceivePipeline.ShouldSuppressVanillaDeserialize(
                 senderId,
                 packetBytes,
