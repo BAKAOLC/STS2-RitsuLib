@@ -9,13 +9,14 @@ namespace STS2RitsuLib.Networking.Sidecar
     public static class RitsuLibSidecarNetDiagnosticsOptions
     {
         /// <summary>
-        ///     When true, each successfully parsed inbound sidecar envelope logs one <c>Debug</c> line on the sidecar
-        ///     trace logger from <see cref="RitsuLibFramework.CreateLogger(string, LogType)" />.
+        ///     When true, each successfully parsed inbound sidecar envelope logs one <c>Info</c> line on the sidecar
+        ///     trace logger from <see cref="RitsuLibFramework.CreateLogger(string, LogType)" /> (visible in default
+        ///     <c>godot.log</c> alongside other Network lines).
         /// </summary>
         public static bool TraceIncomingPackets { get; set; } = true;
 
         /// <summary>
-        ///     When true, each successful <see cref="RitsuLibSidecarSend" /> logs one <c>Debug</c> line on the same
+        ///     When true, each successful <see cref="RitsuLibSidecarSend" /> logs one <c>Info</c> line on the same
         ///     network logger.
         /// </summary>
         public static bool TraceOutgoingPackets { get; set; } = true;

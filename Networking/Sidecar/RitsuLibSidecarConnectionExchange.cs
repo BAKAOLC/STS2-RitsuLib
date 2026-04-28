@@ -8,15 +8,22 @@ namespace STS2RitsuLib.Networking.Sidecar
     public static class RitsuLibSidecarConnectionExchange
     {
         /// <summary>
-        ///     When <see cref="RunManager.Instance" /> has a non-singleplayer <see cref="RunManager.NetService" />,
-        ///     sends a <see cref="RitsuLibSidecarControlOpcodes.Handshake" /> with the current wire version and
-        ///     <see cref="RitsuLibSidecarPeerFeatures.ChunkedStreams" /> (host broadcast, client to host). No-op if
-        ///     <c>RunManager</c> is missing, <c>NetService</c> is null, or the session is single-player.
+        ///     Same as <see cref="TrySendHelloForNetService" /> using <see cref="RunManager.Instance" />’s
+        ///     <see cref="RunManager.NetService" /> (non-null only after run setup; use lobby ctor patches for
+        ///     <see cref="MegaCrit.Sts2.Core.Multiplayer.Game.Lobby.StartRunLobby" /> phase).
         /// </summary>
         public static void TrySendLocalHello()
         {
-            var rm = RunManager.Instance;
-            if (rm?.NetService is not { Type: not NetGameType.Singleplayer })
+            TrySendHelloForNetService(RunManager.Instance?.NetService);
+        }
+
+        /// <summary>
+        ///     When <paramref name="netService" /> is non-null and not <see cref="NetGameType.Singleplayer" />, sends a
+        ///     <see cref="RitsuLibSidecarControlOpcodes.Handshake" /> (host broadcast, client to host).
+        /// </summary>
+        public static void TrySendHelloForNetService(INetGameService? netService)
+        {
+            if (netService == null || netService.Type == NetGameType.Singleplayer)
                 return;
 
             RitsuLibSidecarProtocol.EnsureDefaultHandlers();
@@ -26,15 +33,15 @@ namespace STS2RitsuLib.Networking.Sidecar
                 RitsuLibSidecarWire.CurrentWireFormatVersion,
                 RitsuLibSidecarWire.SupportedWireFormatVersionMax,
                 RitsuLibSidecarPeerFeatures.ChunkedStreams);
-            if (rm.NetService is NetHostGameService)
+            if (netService is NetHostGameService)
                 RitsuLibSidecarHighLevelSend.TrySendAsHostBroadcast(
-                    rm,
+                    netService,
                     RitsuLibSidecarControlOpcodes.Handshake,
                     buf,
                     RitsuLibSidecarDeliverySemantics.StableSync);
             else
                 RitsuLibSidecarHighLevelSend.TrySendAsClient(
-                    rm,
+                    netService,
                     RitsuLibSidecarControlOpcodes.Handshake,
                     buf,
                     RitsuLibSidecarDeliverySemantics.StableSync);

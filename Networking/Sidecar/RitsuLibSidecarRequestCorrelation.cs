@@ -1,5 +1,6 @@
 using System.Buffers;
 using System.Buffers.Binary;
+using MegaCrit.Sts2.Core.Runs;
 
 namespace STS2RitsuLib.Networking.Sidecar
 {
@@ -34,7 +35,10 @@ namespace STS2RitsuLib.Networking.Sidecar
         }
 
         /// <summary>
-        ///     Builds <c>additionalHeaderExtension</c> for <see cref="RitsuLibSidecarHighLevelSend.TrySendAsClient" />:
+        ///     Builds <c>additionalHeaderExtension</c> for
+        ///     <see
+        ///         cref="RitsuLibSidecarHighLevelSend.TrySendAsClient(RunManager?,ulong,System.ReadOnlySpan{byte},RitsuLibSidecarDeliverySemantics,RitsuLibSidecarWireFlags,bool,System.ReadOnlySpan{byte})" />
+        ///     :
         ///     correlation (8 BE) then <paramref name="tailAfterCorrelation" />.
         /// </summary>
         public static byte[] PackAdditional(ulong correlationId, ReadOnlySpan<byte> tailAfterCorrelation = default)

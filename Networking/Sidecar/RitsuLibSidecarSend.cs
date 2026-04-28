@@ -1,4 +1,5 @@
 using MegaCrit.Sts2.Core.Multiplayer;
+using MegaCrit.Sts2.Core.Multiplayer.Game;
 using MegaCrit.Sts2.Core.Multiplayer.Transport;
 using MegaCrit.Sts2.Core.Runs;
 
@@ -24,38 +25,38 @@ namespace STS2RitsuLib.Networking.Sidecar
             };
         }
 
-        /// <summary>
-        ///     Client sends one envelope to the host.
-        /// </summary>
-        /// <param name="runManager">Current run; needs a connected client service to send.</param>
-        /// <param name="envelope">Full on-wire sidecar bytes (magic through payload).</param>
-        /// <param name="mode">Transfer mode for the vanilla send API.</param>
-        /// <param name="channel">ENet channel for the vanilla send API.</param>
+        /// <summary>Client sends one envelope to the host.</summary>
         public static bool TrySendToHost(
             RunManager? runManager,
             byte[] envelope,
             NetTransferMode mode,
             int channel)
         {
+            return TrySendToHost(runManager?.NetService, envelope, mode, channel);
+        }
+
+        /// <summary>
+        ///     Client sends one envelope to the host using an existing <see cref="INetGameService" /> (e.g. lobby
+        ///     before <see cref="RunManager" /> has <see cref="RunManager.NetService" /> assigned).
+        /// </summary>
+        public static bool TrySendToHost(
+            INetGameService? netService,
+            byte[] envelope,
+            NetTransferMode mode,
+            int channel)
+        {
             ArgumentNullException.ThrowIfNull(envelope);
-            if (runManager?.NetService is not NetClientGameService { IsConnected: true } client ||
+            if (netService is not NetClientGameService { IsConnected: true } client ||
                 client.NetClient == null)
                 return false;
 
             client.NetClient.SendMessageToHost(envelope, envelope.Length, mode, channel);
             RitsuLibSidecarTrafficCounters.AddOutgoing(1, envelope.Length);
-            RitsuLibSidecarNetTrace.DebugOutbound("client->host", envelope, mode, channel);
+            RitsuLibSidecarNetTrace.TraceOutbound("client->host", envelope, mode, channel);
             return true;
         }
 
-        /// <summary>
-        ///     Host sends one envelope to a single peer.
-        /// </summary>
-        /// <param name="runManager">Current run; needs a connected host service to send.</param>
-        /// <param name="peerNetId">Target client id for the vanilla send API.</param>
-        /// <param name="envelope">Full on-wire sidecar bytes (magic through payload).</param>
-        /// <param name="mode">Transfer mode for the vanilla send API.</param>
-        /// <param name="channel">ENet channel for the vanilla send API.</param>
+        /// <summary>Host sends one envelope to a single peer.</summary>
         public static bool TrySendToPeer(
             RunManager? runManager,
             ulong peerNetId,
@@ -63,31 +64,46 @@ namespace STS2RitsuLib.Networking.Sidecar
             NetTransferMode mode,
             int channel)
         {
+            return TrySendToPeer(runManager?.NetService, peerNetId, envelope, mode, channel);
+        }
+
+        /// <inheritdoc cref="TrySendToPeer(RunManager?, ulong, byte[], NetTransferMode, int)" />
+        public static bool TrySendToPeer(
+            INetGameService? netService,
+            ulong peerNetId,
+            byte[] envelope,
+            NetTransferMode mode,
+            int channel)
+        {
             ArgumentNullException.ThrowIfNull(envelope);
-            if (runManager?.NetService is not NetHostGameService { IsConnected: true } host || host.NetHost == null)
+            if (netService is not NetHostGameService { IsConnected: true } host || host.NetHost == null)
                 return false;
 
             host.NetHost.SendMessageToClient(peerNetId, envelope, envelope.Length, mode, channel);
             RitsuLibSidecarTrafficCounters.AddOutgoing(1, envelope.Length);
-            RitsuLibSidecarNetTrace.DebugOutbound("host->peer", envelope, mode, channel, peerNetId);
+            RitsuLibSidecarNetTrace.TraceOutbound("host->peer", envelope, mode, channel, peerNetId);
             return true;
         }
 
-        /// <summary>
-        ///     Host broadcasts to every peer that is ready for vanilla-style broadcast replication.
-        /// </summary>
-        /// <param name="runManager">Current run; needs a connected host service to send.</param>
-        /// <param name="envelope">Full on-wire sidecar bytes (magic through payload).</param>
-        /// <param name="mode">Transfer mode for the vanilla send API.</param>
-        /// <param name="channel">ENet channel for the vanilla send API.</param>
+        /// <summary>Host broadcasts to every peer that is ready for vanilla-style broadcast replication.</summary>
         public static bool TryBroadcastToReadyPeers(
             RunManager? runManager,
             byte[] envelope,
             NetTransferMode mode,
             int channel)
         {
+            return TryBroadcastToReadyPeers(runManager?.NetService, envelope, mode, channel);
+        }
+
+        /// <inheritdoc cref="TryBroadcastToReadyPeers(RunManager?, byte[], NetTransferMode, int)" />
+        public static bool TryBroadcastToReadyPeers(
+            INetGameService? netService,
+            byte[] envelope,
+            NetTransferMode mode,
+            int channel)
+        {
             ArgumentNullException.ThrowIfNull(envelope);
-            if (runManager?.NetService is not NetHostGameService { IsConnected: true } host || host.NetHost == null)
+            if (netService is not NetHostGameService { IsConnected: true } host || host.NetHost == null)
                 return false;
 
             var ops = 0;
@@ -102,9 +118,11 @@ namespace STS2RitsuLib.Networking.Sidecar
                 bytes += envelope.Length;
             }
 
-            if (ops <= 0) return true;
+            if (ops <= 0)
+                return true;
+
             RitsuLibSidecarTrafficCounters.AddOutgoing(ops, bytes);
-            RitsuLibSidecarNetTrace.DebugOutbound(
+            RitsuLibSidecarNetTrace.TraceOutbound(
                 "host->broadcast",
                 envelope,
                 mode,

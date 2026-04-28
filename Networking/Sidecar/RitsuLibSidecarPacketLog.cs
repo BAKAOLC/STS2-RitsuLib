@@ -4,7 +4,7 @@ namespace STS2RitsuLib.Networking.Sidecar
     {
         internal static void IncomingParsed(in RitsuLibSidecarDispatchContext ctx)
         {
-            RitsuLibSidecarNetTrace.DebugInboundParsed(in ctx);
+            RitsuLibSidecarNetTrace.TraceInboundParsed(in ctx);
         }
     }
 }
