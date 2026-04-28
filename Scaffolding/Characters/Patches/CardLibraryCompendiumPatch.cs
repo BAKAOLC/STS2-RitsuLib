@@ -1,4 +1,5 @@
 using Godot;
+using HarmonyLib;
 using MegaCrit.Sts2.Core.Assets;
 using MegaCrit.Sts2.Core.Helpers;
 using MegaCrit.Sts2.Core.Models;
@@ -24,6 +25,8 @@ namespace STS2RitsuLib.Scaffolding.Characters.Patches
     ///     shared-pool filters use end-of-strip placement when no rules are supplied. All rows share one placement pass
     ///     (vanilla anchor priority list, mod-to-mod constraint relaxation, unified sort, then insertion).
     /// </summary>
+    [HarmonyAfter(Const.BaseLibHarmonyId)]
+    [HarmonyPriority(Priority.Last)]
     public class CardLibraryCompendiumPatch : IPatchMethod
     {
         /// <inheritdoc cref="IPatchMethod.PatchId" />

@@ -1,5 +1,6 @@
 using System.Runtime.CompilerServices;
 using Godot;
+using HarmonyLib;
 using MegaCrit.Sts2.addons.mega_text;
 using MegaCrit.Sts2.Core.Helpers;
 using MegaCrit.Sts2.Core.Nodes.CommonUi;
@@ -15,6 +16,8 @@ namespace STS2RitsuLib.Settings.Patches
     ///     Harmony patch that reuses one <see cref="RitsuModSettingsSubmenu" /> per
     ///     <see cref="NMainMenuSubmenuStack" /> instance.
     /// </summary>
+    [HarmonyAfter(Const.BaseLibHarmonyId)]
+    [HarmonyPriority(Priority.Last)]
     public class ModSettingsSubmenuPatch : IPatchMethod
     {
         internal static readonly ConditionalWeakTable<NSubmenuStack, RitsuModSettingsSubmenu> Submenus = new();
@@ -101,6 +104,8 @@ namespace STS2RitsuLib.Settings.Patches
     /// <summary>
     ///     Injects the “Mod Settings (RitsuLib)” row into the vanilla settings screen and keeps general panel height in sync.
     /// </summary>
+    [HarmonyAfter(Const.BaseLibHarmonyId)]
+    [HarmonyPriority(Priority.Last)]
     public class SettingsScreenModSettingsButtonPatch : IPatchMethod
     {
         private const string GeneralSettingsResizeHookMeta = "ritsulib_general_settings_content_resize_hook";
