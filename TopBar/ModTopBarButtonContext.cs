@@ -31,10 +31,14 @@ namespace STS2RitsuLib.TopBar
             Button = button;
         }
 
-        /// <summary>Registry definition that produced the button.</summary>
+        /// <summary>
+        ///     Registry definition that produced the button.
+        /// </summary>
         public ModTopBarButtonDefinition Definition { get; }
 
-        /// <summary>Local player the button is currently bound to (null while the run is still booting).</summary>
+        /// <summary>
+        ///     Local player the button is currently bound to (null while the run is still booting).
+        /// </summary>
         public Player? Player { get; }
 
         /// <summary>

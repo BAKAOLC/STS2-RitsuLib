@@ -1,4 +1,5 @@
 using System.Reflection;
+using HarmonyLib;
 using MegaCrit.Sts2.Core.Helpers;
 using MegaCrit.Sts2.Core.Map;
 using MegaCrit.Sts2.Core.Models;
@@ -19,6 +20,8 @@ namespace STS2RitsuLib.Scaffolding.Content.Patches
     ///     <see cref="IModEncounterAssetOverrides.CustomRunHistoryIconOutlinePath" />
     ///     when those paths exist (same pattern as <see cref="ImageHelperAncientModRunHistoryIconPathPatch" /> for ancients).
     /// </summary>
+    [HarmonyAfter(Const.BaseLibHarmonyId)]
+    [HarmonyPriority(Priority.Last)]
     public sealed class ImageHelperModEncounterRunHistoryIconPathPatch : IPatchMethod
     {
         /// <inheritdoc />

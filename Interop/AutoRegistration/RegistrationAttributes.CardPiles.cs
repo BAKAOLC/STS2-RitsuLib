@@ -35,28 +35,44 @@ namespace STS2RitsuLib.Interop.AutoRegistration
     [AttributeUsage(AttributeTargets.Class, AllowMultiple = true, Inherited = false)]
     public sealed class RegisterOwnedCardPileAttribute(string localPileStem) : AutoRegistrationAttribute
     {
-        /// <summary>Local, mod-scoped pile stem.</summary>
+        /// <summary>
+        ///     Local, mod-scoped pile stem.
+        /// </summary>
         public string LocalPileStem { get; } = localPileStem;
 
-        /// <summary>Lifetime scope (defaults to <see cref="ModCardPileScope.CombatOnly" />).</summary>
+        /// <summary>
+        ///     Lifetime scope (defaults to <see cref="ModCardPileScope.CombatOnly" />).
+        /// </summary>
         public ModCardPileScope Scope { get; set; } = ModCardPileScope.CombatOnly;
 
-        /// <summary>UI chrome family (defaults to <see cref="ModCardPileUiStyle.Headless" />).</summary>
+        /// <summary>
+        ///     UI chrome family (defaults to <see cref="ModCardPileUiStyle.Headless" />).
+        /// </summary>
         public ModCardPileUiStyle Style { get; set; } = ModCardPileUiStyle.Headless;
 
-        /// <summary>Anchor slot hint (defaults to <see cref="ModCardPileAnchorKind.StyleDefault" />).</summary>
+        /// <summary>
+        ///     Anchor slot hint (defaults to <see cref="ModCardPileAnchorKind.StyleDefault" />).
+        /// </summary>
         public ModCardPileAnchorKind AnchorKind { get; set; } = ModCardPileAnchorKind.StyleDefault;
 
-        /// <summary>Extra X pixels added on top of the resolved anchor position.</summary>
+        /// <summary>
+        ///     Extra X pixels added on top of the resolved anchor position.
+        /// </summary>
         public float AnchorOffsetX { get; set; }
 
-        /// <summary>Extra Y pixels added on top of the resolved anchor position.</summary>
+        /// <summary>
+        ///     Extra Y pixels added on top of the resolved anchor position.
+        /// </summary>
         public float AnchorOffsetY { get; set; }
 
-        /// <summary>Absolute X used only when <see cref="AnchorKind" /> is <see cref="ModCardPileAnchorKind.Custom" />.</summary>
+        /// <summary>
+        ///     Absolute X used only when <see cref="AnchorKind" /> is <see cref="ModCardPileAnchorKind.Custom" />.
+        /// </summary>
         public float AnchorCustomX { get; set; }
 
-        /// <summary>Absolute Y used only when <see cref="AnchorKind" /> is <see cref="ModCardPileAnchorKind.Custom" />.</summary>
+        /// <summary>
+        ///     Absolute Y used only when <see cref="AnchorKind" /> is <see cref="ModCardPileAnchorKind.Custom" />.
+        /// </summary>
         public float AnchorCustomY { get; set; }
 
         /// <summary>

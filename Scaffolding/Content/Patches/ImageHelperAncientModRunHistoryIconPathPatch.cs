@@ -1,4 +1,5 @@
 using System.Reflection;
+using HarmonyLib;
 using MegaCrit.Sts2.Core.Helpers;
 using MegaCrit.Sts2.Core.Map;
 using MegaCrit.Sts2.Core.Models;
@@ -15,6 +16,8 @@ namespace STS2RitsuLib.Scaffolding.Content.Patches
     ///     <see cref="IModAncientEventAssetOverrides" /> paths at resolve time so the first load uses the correct textures
     ///     (no post-load replacement on <c>NMapPointHistoryEntry</c>).
     /// </summary>
+    [HarmonyAfter(Const.BaseLibHarmonyId)]
+    [HarmonyPriority(Priority.Last)]
     public class ImageHelperAncientModRunHistoryIconPathPatch : IPatchMethod
     {
         /// <inheritdoc cref="IPatchMethod.PatchId" />

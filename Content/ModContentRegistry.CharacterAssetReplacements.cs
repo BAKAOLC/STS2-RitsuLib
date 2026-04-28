@@ -375,19 +375,29 @@ namespace STS2RitsuLib.Content
         /// </summary>
         public static class VanillaCharacterIds
         {
-            /// <summary>Vanilla Ironclad character id.</summary>
+            /// <summary>
+            ///     Vanilla Ironclad character id.
+            /// </summary>
             public const string Ironclad = "IRONCLAD";
 
-            /// <summary>Vanilla Silent character id.</summary>
+            /// <summary>
+            ///     Vanilla Silent character id.
+            /// </summary>
             public const string Silent = "SILENT";
 
-            /// <summary>Vanilla Defect character id.</summary>
+            /// <summary>
+            ///     Vanilla Defect character id.
+            /// </summary>
             public const string Defect = "DEFECT";
 
-            /// <summary>Vanilla Regent character id.</summary>
+            /// <summary>
+            ///     Vanilla Regent character id.
+            /// </summary>
             public const string Regent = "REGENT";
 
-            /// <summary>Vanilla Necrobinder character id.</summary>
+            /// <summary>
+            ///     Vanilla Necrobinder character id.
+            /// </summary>
             public const string Necrobinder = "NECROBINDER";
         }
     }

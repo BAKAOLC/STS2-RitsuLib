@@ -40,13 +40,19 @@ namespace STS2RitsuLib.CardPiles
             Button = button;
         }
 
-        /// <summary>Definition of the pile whose button was pressed.</summary>
+        /// <summary>
+        ///     Definition of the pile whose button was pressed.
+        /// </summary>
         public ModCardPileDefinition Definition { get; }
 
-        /// <summary>Live <see cref="ModCardPile" /> resolved for <see cref="Player" />.</summary>
+        /// <summary>
+        ///     Live <see cref="ModCardPile" /> resolved for <see cref="Player" />.
+        /// </summary>
         public ModCardPile Pile { get; }
 
-        /// <summary>The local player this button is bound to.</summary>
+        /// <summary>
+        ///     The local player this button is bound to.
+        /// </summary>
         public Player Player { get; }
 
         /// <summary>

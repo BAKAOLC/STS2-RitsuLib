@@ -86,7 +86,9 @@ namespace STS2RitsuLib.TopBar.Patches
         }
 
         // ReSharper disable InconsistentNaming
-        /// <summary>Binds each injected action button to the local <see cref="Player" />.</summary>
+        /// <summary>
+        ///     Binds each injected action button to the local <see cref="Player" />.
+        /// </summary>
         public static void Postfix(NTopBar __instance, IRunState runState)
         {
             var player = LocalContext.GetMe(runState);

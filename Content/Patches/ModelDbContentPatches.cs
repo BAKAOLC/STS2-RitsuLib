@@ -28,6 +28,8 @@ namespace STS2RitsuLib.Content.Patches
         /// <summary>
         ///     Concatenates mod-registered characters onto the vanilla sequence.
         /// </summary>
+        [HarmonyAfter(Const.BaseLibHarmonyId)]
+        [HarmonyPriority(Priority.Last)]
         public static void Postfix(ref IEnumerable<CharacterModel> __result)
         {
             __result = ModContentRegistry.AppendCharacters(__result);
@@ -89,6 +91,8 @@ namespace STS2RitsuLib.Content.Patches
         /// <summary>
         ///     Concatenates mod-registered acts onto the vanilla sequence.
         /// </summary>
+        [HarmonyAfter(Const.BaseLibHarmonyId)]
+        [HarmonyPriority(Priority.Last)]
         public static void Postfix(ref IEnumerable<ActModel> __result)
         {
             __result = ModContentRegistry.AppendActs(__result);
@@ -119,6 +123,8 @@ namespace STS2RitsuLib.Content.Patches
         /// <summary>
         ///     Concatenates mod shared events onto the vanilla sequence.
         /// </summary>
+        [HarmonyAfter(Const.BaseLibHarmonyId)]
+        [HarmonyPriority(Priority.Last)]
         public static void Postfix(ref IEnumerable<EventModel> __result)
         {
             __result = ModContentRegistry.AppendSharedEvents(__result);
@@ -209,6 +215,8 @@ namespace STS2RitsuLib.Content.Patches
         /// <summary>
         ///     Concatenates mod shared card pools onto the vanilla sequence.
         /// </summary>
+        [HarmonyAfter(Const.BaseLibHarmonyId)]
+        [HarmonyPriority(Priority.Last)]
         public static void Postfix(ref IEnumerable<CardPoolModel> __result)
         {
             __result = ModContentRegistry.AppendSharedCardPools(__result);
@@ -269,6 +277,8 @@ namespace STS2RitsuLib.Content.Patches
         /// <summary>
         ///     Concatenates mod shared ancients onto the vanilla sequence.
         /// </summary>
+        [HarmonyAfter(Const.BaseLibHarmonyId)]
+        [HarmonyPriority(Priority.Last)]
         public static void Postfix(ref IEnumerable<AncientEventModel> __result)
         {
             __result = ModContentRegistry.AppendSharedAncients(__result);

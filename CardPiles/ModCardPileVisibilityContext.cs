@@ -25,16 +25,24 @@ namespace STS2RitsuLib.CardPiles
             Pile = pile;
         }
 
-        /// <summary>Registry definition for this pile.</summary>
+        /// <summary>
+        ///     Registry definition for this pile.
+        /// </summary>
         public ModCardPileDefinition Definition { get; }
 
-        /// <summary>Local player the button is bound to, when known.</summary>
+        /// <summary>
+        ///     Local player the button is bound to, when known.
+        /// </summary>
         public Player? Player { get; }
 
-        /// <summary>The pile UI button instance.</summary>
+        /// <summary>
+        ///     The pile UI button instance.
+        /// </summary>
         public NModCardPileButton? Button { get; }
 
-        /// <summary>Runtime pile instance, when <see cref="NModCardPileButton.Initialize" /> has attached it.</summary>
+        /// <summary>
+        ///     Runtime pile instance, when <see cref="NModCardPileButton.Initialize" /> has attached it.
+        /// </summary>
         public ModCardPile? Pile { get; }
     }
 }

@@ -42,7 +42,9 @@ namespace STS2RitsuLib.TopBar
             _logger = RitsuLibFramework.CreateLogger(modId);
         }
 
-        /// <summary>Returns the singleton registry for <paramref name="modId" />, creating it on first use.</summary>
+        /// <summary>
+        ///     Returns the singleton registry for <paramref name="modId" />, creating it on first use.
+        /// </summary>
         public static ModTopBarButtonRegistry For(string modId)
         {
             ArgumentException.ThrowIfNullOrWhiteSpace(modId);
@@ -84,7 +86,9 @@ namespace STS2RitsuLib.TopBar
             return RegisterCore(id, spec);
         }
 
-        /// <summary>Looks up a definition by id; returns false when the id is unknown.</summary>
+        /// <summary>
+        ///     Looks up a definition by id; returns false when the id is unknown.
+        /// </summary>
         public static bool TryGet(string id, out ModTopBarButtonDefinition definition)
         {
             ArgumentException.ThrowIfNullOrWhiteSpace(id);

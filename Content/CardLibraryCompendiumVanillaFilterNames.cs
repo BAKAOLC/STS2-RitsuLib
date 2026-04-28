@@ -12,28 +12,44 @@ namespace STS2RitsuLib.Content
     /// </summary>
     public static class CardLibraryCompendiumVanillaFilterNames
     {
-        /// <summary>Ironclad (red) character pool filter.</summary>
+        /// <summary>
+        ///     Ironclad (red) character pool filter.
+        /// </summary>
         public const string IroncladPool = "%IroncladPool";
 
-        /// <summary>Silent (green) character pool filter.</summary>
+        /// <summary>
+        ///     Silent (green) character pool filter.
+        /// </summary>
         public const string SilentPool = "%SilentPool";
 
-        /// <summary>Defect (blue) character pool filter.</summary>
+        /// <summary>
+        ///     Defect (blue) character pool filter.
+        /// </summary>
         public const string DefectPool = "%DefectPool";
 
-        /// <summary>Regent (purple) character pool filter.</summary>
+        /// <summary>
+        ///     Regent (purple) character pool filter.
+        /// </summary>
         public const string RegentPool = "%RegentPool";
 
-        /// <summary>Necrobinder (orange) character pool filter.</summary>
+        /// <summary>
+        ///     Necrobinder (orange) character pool filter.
+        /// </summary>
         public const string NecrobinderPool = "%NecrobinderPool";
 
-        /// <summary>Colorless pool filter.</summary>
+        /// <summary>
+        ///     Colorless pool filter.
+        /// </summary>
         public const string ColorlessPool = "%ColorlessPool";
 
-        /// <summary>Ancients pool filter.</summary>
+        /// <summary>
+        ///     Ancients pool filter.
+        /// </summary>
         public const string AncientsPool = "%AncientsPool";
 
-        /// <summary>Misc (token) pool filter.</summary>
+        /// <summary>
+        ///     Misc (token) pool filter.
+        /// </summary>
         public const string MiscPool = "%MiscPool";
 
         private static readonly string[] AllInStripOrderArray =

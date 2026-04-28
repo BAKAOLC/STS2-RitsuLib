@@ -1,4 +1,5 @@
 using Godot;
+using HarmonyLib;
 using MegaCrit.Sts2.addons.mega_text;
 using MegaCrit.Sts2.Core.Entities.Creatures;
 using MegaCrit.Sts2.Core.Models.Powers;
@@ -670,6 +671,8 @@ namespace STS2RitsuLib.Combat.HealthBars.Patches
         // ReSharper restore InconsistentNaming
     }
 
+    [HarmonyAfter(Const.BaseLibHarmonyId)]
+    [HarmonyPriority(Priority.Last)]
     internal sealed class NHealthBarReadyForecastPatch : IPatchMethod
     {
         public static string PatchId => "health_bar_forecast_ready";
@@ -689,6 +692,8 @@ namespace STS2RitsuLib.Combat.HealthBars.Patches
         }
     }
 
+    [HarmonyAfter(Const.BaseLibHarmonyId)]
+    [HarmonyPriority(Priority.Last)]
     internal sealed class NHealthBarRefreshForegroundOrderedPatch : IPatchMethod
     {
         public static string PatchId => "health_bar_refresh_foreground_ordered";
@@ -712,6 +717,8 @@ namespace STS2RitsuLib.Combat.HealthBars.Patches
         }
     }
 
+    [HarmonyAfter(Const.BaseLibHarmonyId)]
+    [HarmonyPriority(Priority.Last)]
     internal sealed class NHealthBarRefreshMiddlegroundForecastPatch : IPatchMethod
     {
         public static string PatchId => "health_bar_forecast_refresh_middleground";
@@ -730,6 +737,8 @@ namespace STS2RitsuLib.Combat.HealthBars.Patches
         }
     }
 
+    [HarmonyAfter(Const.BaseLibHarmonyId)]
+    [HarmonyPriority(Priority.Last)]
     internal sealed class NHealthBarRefreshTextForecastPatch : IPatchMethod
     {
         public static string PatchId => "health_bar_forecast_refresh_text";

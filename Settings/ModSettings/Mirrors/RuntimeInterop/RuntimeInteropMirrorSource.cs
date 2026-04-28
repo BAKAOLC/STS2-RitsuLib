@@ -283,6 +283,8 @@ namespace STS2RitsuLib.Settings
                                     AppendEntry(sb, schema.ModId, entry, access, saveAction);
                             });
                     }, pageSchema.PageId);
+                    ModSettingsMirrorSyncPolicyRegistry.RegisterPage(schema.ModId, pageSchema.PageId,
+                        ModSettingsMirrorSource.RuntimeInterop);
 
                     addedAny = true;
                 }

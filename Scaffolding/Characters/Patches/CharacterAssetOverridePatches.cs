@@ -102,6 +102,8 @@ namespace STS2RitsuLib.Scaffolding.Characters.Patches
     ///     Patches <see cref="CharacterModel.IconOutlineTexturePath" /> so <see cref="IModCharacterAssetOverrides" />
     ///     can supply a custom outline texture path.
     /// </summary>
+    [HarmonyAfter(Const.BaseLibHarmonyId)]
+    [HarmonyPriority(Priority.Last)]
     public class CharacterIconOutlineTexturePathPatch : IPatchMethod
     {
         /// <inheritdoc />
@@ -138,6 +140,8 @@ namespace STS2RitsuLib.Scaffolding.Characters.Patches
     /// <summary>
     ///     Patches <see cref="CharacterModel.VisualsPath" /> for custom mod character scene paths.
     /// </summary>
+    [HarmonyAfter(Const.BaseLibHarmonyId)]
+    [HarmonyPriority(Priority.Last)]
     public class CharacterVisualsPathPatch : IPatchMethod
     {
         /// <inheritdoc />
@@ -173,6 +177,8 @@ namespace STS2RitsuLib.Scaffolding.Characters.Patches
     /// <summary>
     ///     Patches <see cref="CharacterModel.EnergyCounterPath" /> for mod character UI assets.
     /// </summary>
+    [HarmonyAfter(Const.BaseLibHarmonyId)]
+    [HarmonyPriority(Priority.Last)]
     public class CharacterEnergyCounterPathPatch : IPatchMethod
     {
         /// <inheritdoc />
@@ -206,6 +212,8 @@ namespace STS2RitsuLib.Scaffolding.Characters.Patches
     /// <summary>
     ///     Patches <see cref="CharacterModel.MerchantAnimPath" /> for merchant-room animations.
     /// </summary>
+    [HarmonyAfter(Const.BaseLibHarmonyId)]
+    [HarmonyPriority(Priority.Last)]
     public class CharacterMerchantAnimPathPatch : IPatchMethod
     {
         /// <inheritdoc />
@@ -239,6 +247,8 @@ namespace STS2RitsuLib.Scaffolding.Characters.Patches
     /// <summary>
     ///     Patches <see cref="CharacterModel.RestSiteAnimPath" /> for rest-site animations.
     /// </summary>
+    [HarmonyAfter(Const.BaseLibHarmonyId)]
+    [HarmonyPriority(Priority.Last)]
     public class CharacterRestSiteAnimPathPatch : IPatchMethod
     {
         /// <inheritdoc />
@@ -272,6 +282,8 @@ namespace STS2RitsuLib.Scaffolding.Characters.Patches
     /// <summary>
     ///     Patches <see cref="CharacterModel.IconTexturePath" /> for mod character UI icon textures.
     /// </summary>
+    [HarmonyAfter(Const.BaseLibHarmonyId)]
+    [HarmonyPriority(Priority.Last)]
     public class CharacterIconTexturePathPatch : IPatchMethod
     {
         /// <inheritdoc />
@@ -305,6 +317,8 @@ namespace STS2RitsuLib.Scaffolding.Characters.Patches
     /// <summary>
     ///     Patches <see cref="CharacterModel.IconPath" /> for compact mod character icons.
     /// </summary>
+    [HarmonyAfter(Const.BaseLibHarmonyId)]
+    [HarmonyPriority(Priority.Last)]
     public class CharacterIconPathPatch : IPatchMethod
     {
         /// <inheritdoc />
@@ -340,6 +354,8 @@ namespace STS2RitsuLib.Scaffolding.Characters.Patches
     /// <summary>
     ///     Patches character-select background path so mods can replace <c>CharacterSelectBg</c>.
     /// </summary>
+    [HarmonyAfter(Const.BaseLibHarmonyId)]
+    [HarmonyPriority(Priority.Last)]
     public class CharacterSelectBgPathPatch : IPatchMethod
     {
         /// <inheritdoc />
@@ -373,6 +389,8 @@ namespace STS2RitsuLib.Scaffolding.Characters.Patches
     /// <summary>
     ///     Patches non-public <see cref="CharacterModel.CharacterSelectIcon" /> path getter.
     /// </summary>
+    [HarmonyAfter(Const.BaseLibHarmonyId)]
+    [HarmonyPriority(Priority.Last)]
     public class CharacterSelectIconPathPatch : IPatchMethod
     {
         /// <inheritdoc />
@@ -408,6 +426,8 @@ namespace STS2RitsuLib.Scaffolding.Characters.Patches
     /// <summary>
     ///     Patches non-public <see cref="CharacterModel.CharacterSelectLockedIcon" /> path getter.
     /// </summary>
+    [HarmonyAfter(Const.BaseLibHarmonyId)]
+    [HarmonyPriority(Priority.Last)]
     public class CharacterSelectLockedIconPathPatch : IPatchMethod
     {
         /// <inheritdoc />
@@ -444,6 +464,8 @@ namespace STS2RitsuLib.Scaffolding.Characters.Patches
     /// <summary>
     ///     Patches non-public <see cref="CharacterModel.MapMarker" /> path getter.
     /// </summary>
+    [HarmonyAfter(Const.BaseLibHarmonyId)]
+    [HarmonyPriority(Priority.Last)]
     public class CharacterMapMarkerPathPatch : IPatchMethod
     {
         /// <inheritdoc />
@@ -479,6 +501,8 @@ namespace STS2RitsuLib.Scaffolding.Characters.Patches
     /// <summary>
     ///     Patches <see cref="CharacterModel.CharacterSelectTransitionPath" /> for custom select-screen transitions.
     /// </summary>
+    [HarmonyAfter(Const.BaseLibHarmonyId)]
+    [HarmonyPriority(Priority.Last)]
     public class CharacterSelectTransitionPathPatch : IPatchMethod
     {
         /// <inheritdoc />
@@ -518,6 +542,8 @@ namespace STS2RitsuLib.Scaffolding.Characters.Patches
     /// <summary>
     ///     Patches <see cref="CharacterModel.TrailPath" /> for card-trail VFX scenes.
     /// </summary>
+    [HarmonyAfter(Const.BaseLibHarmonyId)]
+    [HarmonyPriority(Priority.Last)]
     public class CharacterTrailPathPatch : IPatchMethod
     {
         /// <inheritdoc />
@@ -553,6 +579,8 @@ namespace STS2RitsuLib.Scaffolding.Characters.Patches
     /// <summary>
     ///     Patches <see cref="CharacterModel.AttackSfx" />; does not require the FMOD path to exist as a Godot resource.
     /// </summary>
+    [HarmonyAfter(Const.BaseLibHarmonyId)]
+    [HarmonyPriority(Priority.Last)]
     public class CharacterAttackSfxPatch : IPatchMethod
     {
         /// <inheritdoc />
@@ -589,6 +617,8 @@ namespace STS2RitsuLib.Scaffolding.Characters.Patches
     /// <summary>
     ///     Patches <see cref="CharacterModel.CastSfx" /> for custom cast audio.
     /// </summary>
+    [HarmonyAfter(Const.BaseLibHarmonyId)]
+    [HarmonyPriority(Priority.Last)]
     public class CharacterCastSfxPatch : IPatchMethod
     {
         /// <inheritdoc />
@@ -625,6 +655,8 @@ namespace STS2RitsuLib.Scaffolding.Characters.Patches
     /// <summary>
     ///     Patches <see cref="CharacterModel.DeathSfx" /> for custom death audio.
     /// </summary>
+    [HarmonyAfter(Const.BaseLibHarmonyId)]
+    [HarmonyPriority(Priority.Last)]
     public class CharacterDeathSfxPatch : IPatchMethod
     {
         /// <inheritdoc />
@@ -661,6 +693,8 @@ namespace STS2RitsuLib.Scaffolding.Characters.Patches
     /// <summary>
     ///     Patches multiplayer arm texture path for the pointing pose.
     /// </summary>
+    [HarmonyAfter(Const.BaseLibHarmonyId)]
+    [HarmonyPriority(Priority.Last)]
     public class CharacterArmPointingTexturePathPatch : IPatchMethod
     {
         /// <inheritdoc />
@@ -694,6 +728,8 @@ namespace STS2RitsuLib.Scaffolding.Characters.Patches
     /// <summary>
     ///     Patches multiplayer RPS “rock” arm texture path.
     /// </summary>
+    [HarmonyAfter(Const.BaseLibHarmonyId)]
+    [HarmonyPriority(Priority.Last)]
     public class CharacterArmRockTexturePathPatch : IPatchMethod
     {
         /// <inheritdoc />
@@ -727,6 +763,8 @@ namespace STS2RitsuLib.Scaffolding.Characters.Patches
     /// <summary>
     ///     Patches multiplayer RPS “paper” arm texture path.
     /// </summary>
+    [HarmonyAfter(Const.BaseLibHarmonyId)]
+    [HarmonyPriority(Priority.Last)]
     public class CharacterArmPaperTexturePathPatch : IPatchMethod
     {
         /// <inheritdoc />
@@ -760,6 +798,8 @@ namespace STS2RitsuLib.Scaffolding.Characters.Patches
     /// <summary>
     ///     Patches multiplayer RPS “scissors” arm texture path.
     /// </summary>
+    [HarmonyAfter(Const.BaseLibHarmonyId)]
+    [HarmonyPriority(Priority.Last)]
     public class CharacterArmScissorsTexturePathPatch : IPatchMethod
     {
         /// <inheritdoc />

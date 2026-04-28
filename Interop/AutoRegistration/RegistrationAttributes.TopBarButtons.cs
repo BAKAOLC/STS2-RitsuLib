@@ -29,19 +29,29 @@ namespace STS2RitsuLib.Interop.AutoRegistration
     [AttributeUsage(AttributeTargets.Class, AllowMultiple = true, Inherited = false)]
     public sealed class RegisterOwnedTopBarButtonAttribute(string localButtonStem) : AutoRegistrationAttribute
     {
-        /// <summary>Local, mod-scoped button stem.</summary>
+        /// <summary>
+        ///     Local, mod-scoped button stem.
+        /// </summary>
         public string LocalButtonStem { get; } = localButtonStem;
 
-        /// <summary>Godot resource path for the icon (e.g. <c>res://my_mod/icons/recipes.png</c>).</summary>
+        /// <summary>
+        ///     Godot resource path for the icon (e.g. <c>res://my_mod/icons/recipes.png</c>).
+        /// </summary>
         public string? IconPath { get; set; }
 
-        /// <summary>Sort order within this mod's top-bar buttons.</summary>
+        /// <summary>
+        ///     Sort order within this mod's top-bar buttons.
+        /// </summary>
         public int ButtonOrder { get; set; }
 
-        /// <summary>Extra pixel offset X on top of the auto-stacked slot.</summary>
+        /// <summary>
+        ///     Extra pixel offset X on top of the auto-stacked slot.
+        /// </summary>
         public float OffsetX { get; set; }
 
-        /// <summary>Extra pixel offset Y on top of the auto-stacked slot.</summary>
+        /// <summary>
+        ///     Extra pixel offset Y on top of the auto-stacked slot.
+        /// </summary>
         public float OffsetY { get; set; }
     }
 }

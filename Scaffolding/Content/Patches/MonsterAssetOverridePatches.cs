@@ -24,6 +24,8 @@ namespace STS2RitsuLib.Scaffolding.Content.Patches
     /// <summary>
     ///     Patches <see cref="MonsterModel.VisualsPath" /> for <see cref="IModMonsterAssetOverrides" />.
     /// </summary>
+    [HarmonyAfter(Const.BaseLibHarmonyId)]
+    [HarmonyPriority(Priority.Last)]
     public class MonsterVisualsPathPatch : IPatchMethod
     {
         /// <inheritdoc cref="IPatchMethod.PatchId" />

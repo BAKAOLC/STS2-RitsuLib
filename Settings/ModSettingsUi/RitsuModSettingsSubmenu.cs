@@ -72,6 +72,7 @@ namespace STS2RitsuLib.Settings
         private Action? _hotkeyPaneContent;
         private Action? _hotkeyPaneSidebar;
         private Control? _initialFocusedControl;
+        private string? _lastVisibleMirrorRefreshPageKey;
         private TextureRect? _leftPaneHotkeyIcon;
         private bool _localeSubscribed;
         private VBoxContainer _modButtonList = null!;
@@ -233,6 +234,7 @@ namespace STS2RitsuLib.Settings
             FocusMode = FocusModeEnum.None;
             FocusBehaviorRecursive = FocusBehaviorRecursiveEnum.Enabled;
             ProcessMode = ProcessModeEnum.Inherit;
+            _lastVisibleMirrorRefreshPageKey = null;
             EnsureUiUpToDate(false, true);
         }
 
@@ -243,6 +245,7 @@ namespace STS2RitsuLib.Settings
             PopPaneHotkeys();
             FlushDirtyBindings();
             ProcessMode = ProcessModeEnum.Disabled;
+            _lastVisibleMirrorRefreshPageKey = null;
             Callable.From(this.UpdateControllerNavEnabled).CallDeferred();
             base.OnSubmenuClosed();
         }
@@ -254,6 +257,7 @@ namespace STS2RitsuLib.Settings
             SetProcessInput(true);
             PushPaneHotkeys();
             UpdatePaneHotkeyHintIcons();
+            RequestMirrorVisibilitySyncRefreshIfNeeded();
         }
 
         /// <inheritdoc />
@@ -264,6 +268,7 @@ namespace STS2RitsuLib.Settings
             FlushPendingRefreshActionsImmediate();
             FlushDirtyBindings();
             ProcessMode = ProcessModeEnum.Disabled;
+            _lastVisibleMirrorRefreshPageKey = null;
             Callable.From(this.UpdateControllerNavEnabled).CallDeferred();
             base.OnSubmenuHidden();
         }
@@ -283,7 +288,22 @@ namespace STS2RitsuLib.Settings
         private void OnBindingValueWrittenForSettingsUi(IModSettingsBinding binding)
         {
             MarkDirty(binding);
-            RequestRefresh();
+            if (ShouldRunDeterministicMirrorFullRefresh(binding))
+                RequestRefreshAfterDataModelBatchChange();
+            else
+                RequestRefresh();
+        }
+
+        private bool ShouldRunDeterministicMirrorFullRefresh(IModSettingsBinding binding)
+        {
+            if (string.IsNullOrWhiteSpace(_selectedModId) || string.IsNullOrWhiteSpace(_selectedPageId))
+                return false;
+            if (!string.Equals(binding.ModId, _selectedModId, StringComparison.OrdinalIgnoreCase))
+                return false;
+            if (!TryGetSelectedMirrorSyncPolicy(out var policy))
+                return false;
+
+            return !policy.HasStableExternalSync;
         }
 
         internal void MarkDirty(IModSettingsBinding binding)
@@ -1298,6 +1318,8 @@ namespace STS2RitsuLib.Settings
                 return;
             }
 
+            RequestMirrorVisibilitySyncRefreshIfNeeded(pageKey);
+
             selectedCache.Root.Visible = true;
             switch (selectedCache.State)
             {
@@ -1315,6 +1337,34 @@ namespace STS2RitsuLib.Settings
             _contentOnlyRebuildNeedsContentFocus = false;
             RefreshFocusNavigation();
             Callable.From(ScrollToSelectedAnchor).CallDeferred();
+        }
+
+        private void RequestMirrorVisibilitySyncRefreshIfNeeded(string? selectedPageKey = null)
+        {
+            if (!TryGetSelectedMirrorSyncPolicy(out var policy) || policy.HasStableExternalSync)
+                return;
+
+            var pageKey = selectedPageKey;
+            if (string.IsNullOrWhiteSpace(pageKey))
+            {
+                if (string.IsNullOrWhiteSpace(_selectedModId) || string.IsNullOrWhiteSpace(_selectedPageId))
+                    return;
+                pageKey = CreatePageCacheKey(_selectedModId, _selectedPageId);
+            }
+
+            if (string.Equals(_lastVisibleMirrorRefreshPageKey, pageKey, StringComparison.OrdinalIgnoreCase))
+                return;
+
+            _lastVisibleMirrorRefreshPageKey = pageKey;
+            RequestRefreshAfterDataModelBatchChange();
+        }
+
+        private bool TryGetSelectedMirrorSyncPolicy(out ModSettingsMirrorSyncPolicy policy)
+        {
+            policy = default;
+            return !string.IsNullOrWhiteSpace(_selectedModId) &&
+                   !string.IsNullOrWhiteSpace(_selectedPageId) &&
+                   ModSettingsMirrorSyncPolicyRegistry.TryGetPolicy(_selectedModId, _selectedPageId, out policy);
         }
 
         private void ShowTransientContentState(string text)

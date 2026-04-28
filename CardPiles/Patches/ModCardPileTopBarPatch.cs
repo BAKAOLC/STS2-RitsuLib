@@ -30,7 +30,9 @@ namespace STS2RitsuLib.CardPiles.Patches
         }
 
         // ReSharper disable InconsistentNaming
-        /// <summary>Wires mod top-bar buttons after vanilla resolves its built-in children.</summary>
+        /// <summary>
+        ///     Wires mod top-bar buttons after vanilla resolves its built-in children.
+        /// </summary>
         public static void Postfix(NTopBar __instance)
         {
             ModCardPileInjector.InjectTopBarButtons(__instance);
@@ -64,7 +66,9 @@ namespace STS2RitsuLib.CardPiles.Patches
         }
 
         // ReSharper disable InconsistentNaming
-        /// <summary>Binds each injected TopBar mod button to the local <see cref="Player" />.</summary>
+        /// <summary>
+        ///     Binds each injected TopBar mod button to the local <see cref="Player" />.
+        /// </summary>
         public static void Postfix(NTopBar __instance, IRunState runState)
         {
             var player = LocalContext.GetMe(runState);

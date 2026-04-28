@@ -12,6 +12,7 @@ using STS2RitsuLib.Interop.Patches;
 using STS2RitsuLib.Keywords.Patches;
 using STS2RitsuLib.Lifecycle.Patches;
 using STS2RitsuLib.Localization.Patches;
+using STS2RitsuLib.Networking.Sidecar.Patches;
 using STS2RitsuLib.Patching.Core;
 using STS2RitsuLib.Relics.Patches;
 using STS2RitsuLib.Scaffolding.Cards.HandGlow.Patches;
@@ -82,6 +83,7 @@ namespace STS2RitsuLib
             patcher.RegisterPatch<NContinueRunInfoShowInfoModelNotFoundPatch>();
             patcher.RegisterPatch<NRunHistoryRefreshAndSelectRunSuppressRethrowPatch>();
             patcher.RegisterPatch<RunHistoryMissingModelDbGetByIdTranspilerPatch>();
+            patcher.RegisterPatch<RunHistoryMissingModelDbGetByIdPatch>();
             patcher.RegisterPatch<NMultiplayerLoadGameScreenBeginRunMissingCharacterPatch>();
             patcher.RegisterPatch<NMultiplayerTestCharacterPaginatorAllCharactersPatch>();
             patcher.RegisterPatch<NCustomRunLoadScreenBeginRunMissingCharacterPatch>();
@@ -96,6 +98,14 @@ namespace STS2RitsuLib
             patcher.RegisterPatch<RunLifecyclePatch>();
             patcher.RegisterPatch<ModRunSidecarSaveDeletionPatches.DeleteCurrentRun>();
             patcher.RegisterPatch<ModRunSidecarSaveDeletionPatches.DeleteCurrentMultiplayerRun>();
+            patcher.RegisterPatch<RitsuLibSidecarNetHostReceivePatch>();
+            patcher.RegisterPatch<RitsuLibSidecarNetClientReceivePatch>();
+            patcher.RegisterPatch<RitsuLibSidecarNativeTrailerSendPatch>();
+            patcher.RegisterPatch<RitsuLibSidecarLobbyHelloPatch>();
+            patcher.RegisterPatch<RitsuLibSidecarStartRunLobbyHostClientConnectedPatch>();
+            patcher.RegisterPatch<RitsuLibSidecarStartRunLobbyHostClientDisconnectedPatch>();
+            patcher.RegisterPatch<RitsuLibSidecarPreRunCapabilityGatePatch>();
+            patcher.RegisterPatch<RitsuLibSidecarChecksumDivergenceRelayPatch>();
             patcher.RegisterPatch<RunEndedLifecyclePatch>();
             patcher.RegisterPatch<CombatHookLifecyclePatch>();
             patcher.RegisterPatch<RewardHookLifecyclePatch>();
@@ -145,6 +155,7 @@ namespace STS2RitsuLib
             patcher.RegisterPatch<ModCardPileGetPatch>();
             patcher.RegisterPatch<ModCardPileIsCombatPatch>();
             patcher.RegisterPatch<ModCardPileGetTargetPositionPatch>();
+            patcher.RegisterPatch<ModCardPileShuffleVfxStartPositionPatch>();
             patcher.RegisterPatch<ModCardPileAllPilesPatch>();
             patcher.RegisterPatch<ModCardPileFindOnTablePatch>();
             patcher.RegisterPatch<ModCardPileCombatPilesContainerReadyPatch>();
@@ -283,6 +294,7 @@ namespace STS2RitsuLib
             patcher.RegisterPatch<CharacterCombatSpineOverridePatch>();
             patcher.RegisterPatch<CharacterGameOverScreenCompatibilityPatch>();
             patcher.RegisterPatch<CharacterVanillaSelectionPolicyPatches>();
+            patcher.RegisterPatch<CharacterVanillaSelectionPolicyAllCharactersPatch>();
             patcher.RegisterPatch<ModCreatureCombatAnimationPlaybackPatch>();
             patcher.RegisterPatch<NCreatureCombatAnimationInitialBootstrapPatch>();
             patcher.RegisterPatch<NCreatureNonSpineDeathAnimationTriggerPatch>();

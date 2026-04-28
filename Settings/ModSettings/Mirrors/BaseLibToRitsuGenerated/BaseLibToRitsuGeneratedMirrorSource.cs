@@ -59,12 +59,15 @@ namespace STS2RitsuLib.Settings
                             configType)
                     let host = new BaseLibToRitsuGeneratedMirrorHost(config, changed, save, restore)
                     let propertyNames = ReadPropertyNames(propertiesField, config)
-                    select BaseLibToRitsuGeneratedMirrorMapper.TryCreatePage(modId, pageId, sortOrder, pageTitle,
+                    let page = BaseLibToRitsuGeneratedMirrorMapper.TryCreatePage(modId, pageId, sortOrder, pageTitle,
                         pageDescription, host, propertyNames, context.SectionAttrType, context.HideUiAttrType,
                         context.ButtonAttrType, context.ColorPickerAttrType, context.HoverTipAttrType,
                         context.HoverTipsByDefaultAttrType, context.LegacyHoverTipsByDefaultAttrType,
-                        context.VisibleIfAttrType, configType, context.ModConfigType))
-                .Count(ModSettingsMirrorRegistrar.TryRegister);
+                        context.VisibleIfAttrType, configType, context.ModConfigType)
+                    where page != null
+                    select page)
+                .Count(page => ModSettingsMirrorRegistrar.TryRegister(page,
+                    ModSettingsMirrorSource.BaseLibToRitsuGenerated));
         }
 
         private static IReadOnlySet<string> ReadPropertyNames(FieldInfo propertiesField, object config)
