@@ -192,7 +192,7 @@ namespace STS2RitsuLib.Networking.Sidecar
                     RitsuLibSidecarEnvelopeLayout.ExtensionLengthSize),
                 (uint)headerExtension.Length);
 
-            const int extensionOffset = RitsuLibSidecarEnvelopeLayout.FixedHeaderSize;
+            var extensionOffset = RitsuLibSidecarEnvelopeLayout.FixedHeaderSize;
             headerExtension.CopyTo(span.Slice(extensionOffset, headerExtension.Length));
             var payloadWriteOffset = extensionOffset + headerExtension.Length;
             wirePayload.CopyTo(span[payloadWriteOffset..]);

@@ -20,22 +20,6 @@ namespace STS2RitsuLib.Networking.Sidecar
         public const int RecommendedUnreliableChannel = 49;
 
         /// <summary>
-        ///     Length of <see cref="Magic" />.
-        /// </summary>
-        public const int MagicLength = RitsuLibSidecarBinaryLayout.U64Size + RitsuLibSidecarBinaryLayout.U32Size;
-
-        /// <summary>
-        ///     Minimum on-wire size: magic + wire version + flags + opcode + payload length + extension length (no
-        ///     extension bytes, no payload).
-        /// </summary>
-        public const int MinEnvelopeSize = MagicLength +
-                                           RitsuLibSidecarBinaryLayout.U16Size +
-                                           RitsuLibSidecarBinaryLayout.U32Size +
-                                           RitsuLibSidecarBinaryLayout.U64Size +
-                                           RitsuLibSidecarBinaryLayout.U32Size +
-                                           RitsuLibSidecarBinaryLayout.U32Size;
-
-        /// <summary>
         ///     Wire format version written by <see cref="RitsuLibSidecar.CreateEnvelope" />.
         /// </summary>
         public const ushort CurrentWireFormatVersion = 1;
@@ -54,6 +38,22 @@ namespace STS2RitsuLib.Networking.Sidecar
         ///     Maximum header extension segment length (generous margin for future header TLVs).
         /// </summary>
         public const uint MaxHeaderExtensionBytes = 64 * RitsuLibSidecarBinaryLayout.KiB;
+
+        /// <summary>
+        ///     Length of <see cref="Magic" />.
+        /// </summary>
+        public static int MagicLength => Magic.Length;
+
+        /// <summary>
+        ///     Minimum on-wire size: magic + wire version + flags + opcode + payload length + extension length (no
+        ///     extension bytes, no payload).
+        /// </summary>
+        public static int MinEnvelopeSize => MagicLength +
+                                             RitsuLibSidecarBinaryLayout.U16Size +
+                                             RitsuLibSidecarBinaryLayout.U32Size +
+                                             RitsuLibSidecarBinaryLayout.U64Size +
+                                             RitsuLibSidecarBinaryLayout.U32Size +
+                                             RitsuLibSidecarBinaryLayout.U32Size;
 
         /// <summary>
         ///     Packet prefix; <c>"STS2RitsuLib"u8</c>.

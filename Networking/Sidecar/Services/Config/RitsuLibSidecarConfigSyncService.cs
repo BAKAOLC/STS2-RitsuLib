@@ -84,16 +84,34 @@ namespace STS2RitsuLib.Networking.Sidecar
                     JsonSerializer.Serialize(initialState),
                     (sender, deltaJson) =>
                     {
-                        var delta = JsonSerializer.Deserialize<TDelta>(deltaJson);
-                        return delta != null && canClientRequest(sender, delta);
+                        if (!TryDeserialize(deltaJson, out TDelta delta))
+                            return false;
+                        try
+                        {
+                            return canClientRequest(sender, delta);
+                        }
+                        catch (Exception ex)
+                        {
+                            RitsuLibFramework.Logger.Warn(
+                                $"[Sidecar] Config canClientRequest failed topic={topic}, sender={sender}: {ex.Message}");
+                            return false;
+                        }
                     },
                     (stateJson, deltaJson) =>
                     {
-                        var state = JsonSerializer.Deserialize<TState>(stateJson);
-                        var delta = JsonSerializer.Deserialize<TDelta>(deltaJson);
-                        if (state == null || delta == null)
+                        if (!TryDeserialize(stateJson, out TState state) ||
+                            !TryDeserialize(deltaJson, out TDelta delta))
                             return stateJson;
-                        return JsonSerializer.Serialize(applyDelta(state, delta));
+                        try
+                        {
+                            return JsonSerializer.Serialize(applyDelta(state, delta));
+                        }
+                        catch (Exception ex)
+                        {
+                            RitsuLibFramework.Logger.Warn(
+                                $"[Sidecar] Config applyDelta failed topic={topic}: {ex.Message}");
+                            return stateJson;
+                        }
                     });
             }
         }
@@ -276,6 +294,27 @@ namespace STS2RitsuLib.Networking.Sidecar
                     ctx.SenderNetId,
                     ctx.Message.Reason,
                     ctx.Message.StateJson));
+        }
+
+        private static bool TryDeserialize<T>(string json, out T value)
+        {
+            try
+            {
+                var parsed = JsonSerializer.Deserialize<T>(json);
+                if (parsed is null)
+                {
+                    value = default!;
+                    return false;
+                }
+
+                value = parsed;
+                return true;
+            }
+            catch
+            {
+                value = default!;
+                return false;
+            }
         }
 
         private readonly record struct TopicState(

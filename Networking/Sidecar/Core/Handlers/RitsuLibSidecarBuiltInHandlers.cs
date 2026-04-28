@@ -129,7 +129,8 @@ namespace STS2RitsuLib.Networking.Sidecar
                 ok ? feats : RitsuLibSidecarPeerFeatures.None);
             RitsuLibSidecarSessionManager.NoteHandshakeFromPeer(
                 ctx.SenderNetId,
-                ok ? feats : RitsuLibSidecarPeerFeatures.None);
+                ok ? feats : RitsuLibSidecarPeerFeatures.None,
+                ok);
 
             var buf = new byte[RitsuLibSidecarHandshakeBinary.AckPayloadSize];
             RitsuLibSidecarHandshakeBinary.WriteAck(
@@ -167,7 +168,7 @@ namespace STS2RitsuLib.Networking.Sidecar
                 out var ok,
                 out var ackSenderFeatures);
             RitsuLibSidecarConnectionSession.SetPeerFeatures(ctx.SenderNetId, ackSenderFeatures);
-            RitsuLibSidecarSessionManager.NoteHandshakeFromPeer(ctx.SenderNetId, ackSenderFeatures);
+            RitsuLibSidecarSessionManager.NoteHandshakeFromPeer(ctx.SenderNetId, ackSenderFeatures, ok);
             RitsuLibFramework.Logger.Info(
                 $"[Sidecar] Handshake ack received sender={ctx.SenderNetId}, opcode={ctx.Opcode}, payloadLen={ctx.Payload.Length}, channel={ctx.Channel}, transferMode={ctx.TransferMode}, selectedWire={selectedWire}, ok={ok}, senderFeatures={ackSenderFeatures}");
         }

@@ -126,24 +126,23 @@ namespace STS2RitsuLib.Networking.Sidecar
                 trailer.Slice(
                     RitsuLibSidecarNativeTrailerLayout.PayloadLengthOffset,
                     RitsuLibSidecarNativeTrailerLayout.PayloadLengthSize));
-            var payloadLength = trailerStart;
-            if ((uint)payloadLength != declaredPayloadLength)
+            if ((uint)trailerStart != declaredPayloadLength)
                 return false;
 
             var expectedCrc32 = BinaryPrimitives.ReadUInt32BigEndian(
                 trailer.Slice(
                     RitsuLibSidecarNativeTrailerLayout.PayloadCrc32Offset,
                     RitsuLibSidecarNativeTrailerLayout.PayloadCrc32Size));
-            var payload = packetBytes[..payloadLength];
+            var payload = packetBytes[..trailerStart];
             return Crc32.HashToUInt32(payload) == expectedCrc32;
         }
 
         private static bool TryLocateTrailerStart(ReadOnlySpan<byte> packetBytes, out int trailerStart)
         {
             trailerStart = -1;
-            const int footerSize = RitsuLibSidecarNativeTrailerLayout.FooterSignatureSize;
-            const int footerOffset = RitsuLibSidecarNativeTrailerLayout.FooterSignatureOffset;
-            const int minFooterStart = RitsuLibSidecarNativeTrailerLayout.TrailerSize - footerSize;
+            var footerSize = RitsuLibSidecarNativeTrailerLayout.FooterSignatureSize;
+            var footerOffset = RitsuLibSidecarNativeTrailerLayout.FooterSignatureOffset;
+            var minFooterStart = RitsuLibSidecarNativeTrailerLayout.TrailerSize - footerSize;
             for (var footerStart = packetBytes.Length - footerSize; footerStart >= minFooterStart; footerStart--)
             {
                 if (!packetBytes.Slice(footerStart, footerSize)

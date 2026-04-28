@@ -185,13 +185,20 @@ namespace STS2RitsuLib.Networking.Sidecar
         }
 
         /// <summary>
-        ///     Stores handshake feature result and marks peer as <c>Supported</c>.
+        ///     Stores handshake feature result and updates peer reachability according to handshake result.
         /// </summary>
-        public static void NoteHandshakeFromPeer(ulong peerNetId, RitsuLibSidecarPeerFeatures features)
+        public static void NoteHandshakeFromPeer(ulong peerNetId, RitsuLibSidecarPeerFeatures features, bool accepted)
         {
             lock (Gate)
             {
                 PeerFeatures[peerNetId] = features;
+            }
+
+            if (!accepted)
+            {
+                UpdateReachability(peerNetId, RitsuLibSidecarPeerReachability.Unsupported,
+                    RitsuLibSidecarDiscoveryPolicy.ReasonHandshake);
+                return;
             }
 
             UpdateReachability(peerNetId, RitsuLibSidecarPeerReachability.Supported,

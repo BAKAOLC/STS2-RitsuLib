@@ -68,12 +68,10 @@ namespace STS2RitsuLib.Networking.Sidecar
         /// </summary>
         public static bool ValidatePeers(IEnumerable<ulong> peerNetIds, out SidecarRequiredCapabilityMiss[] misses)
         {
-            Func<ulong, bool>[] checks;
-            string[] names;
+            KeyValuePair<string, Func<ulong, bool>>[] checks;
             lock (Gate)
             {
-                names = [..CapabilityChecks.Keys];
-                checks = [..CapabilityChecks.Values];
+                checks = [..CapabilityChecks];
             }
 
             var missList = new List<SidecarRequiredCapabilityMiss>();
@@ -81,8 +79,8 @@ namespace STS2RitsuLib.Networking.Sidecar
             {
                 var missing = new List<string>();
                 for (var i = 0; i < checks.Length; i++)
-                    if (!checks[i](peerId))
-                        missing.Add(names[i]);
+                    if (!checks[i].Value(peerId))
+                        missing.Add(checks[i].Key);
 
                 if (missing.Count > 0)
                     missList.Add(new(peerId, missing));

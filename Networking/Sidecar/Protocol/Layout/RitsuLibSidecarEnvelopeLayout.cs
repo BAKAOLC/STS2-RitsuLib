@@ -9,15 +9,15 @@ namespace STS2RitsuLib.Networking.Sidecar
         internal const int ExtensionLengthSize = RitsuLibSidecarBinaryLayout.U32Size;
 
         internal const int MagicOffset = 0;
-        internal const int WireVersionOffset = RitsuLibSidecarWire.MagicLength;
-        internal const int FlagsOffset = WireVersionOffset + WireVersionSize;
-        internal const int OpcodeOffset = FlagsOffset + FlagsSize;
-        internal const int PayloadLengthOffset = OpcodeOffset + OpcodeSize;
-        internal const int ExtensionLengthOffset = PayloadLengthOffset + PayloadLengthSize;
-        internal const int FixedHeaderSize = ExtensionLengthOffset + ExtensionLengthSize;
 
         internal const int DeliveryTagSize = RitsuLibSidecarBinaryLayout.ByteSize;
         internal const int DeliveryTagOffsetInExtension = 0;
         internal const int CorrelationOffsetInExtension = DeliveryTagSize;
+        internal static int WireVersionOffset => RitsuLibSidecarWire.MagicLength;
+        internal static int FlagsOffset => WireVersionOffset + WireVersionSize;
+        internal static int OpcodeOffset => FlagsOffset + FlagsSize;
+        internal static int PayloadLengthOffset => OpcodeOffset + OpcodeSize;
+        internal static int ExtensionLengthOffset => PayloadLengthOffset + PayloadLengthSize;
+        internal static int FixedHeaderSize => ExtensionLengthOffset + ExtensionLengthSize;
     }
 }
