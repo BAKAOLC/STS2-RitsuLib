@@ -166,7 +166,7 @@ namespace STS2RitsuLib
 
                 Logger.Info($"Framework ID: {Const.ModId}");
                 Logger.Info($"Framework Name: {Const.Name}");
-                Logger.Info($"Version: {Const.Version}");
+                Logger.Info(BuildVersionLogText());
                 Logger.Info("Initializing shared framework...");
                 ModTypeDiscoveryHub.EnsureBuiltInContributorsRegistered();
                 RitsuLibSettingsStore.Initialize();
@@ -217,6 +217,24 @@ namespace STS2RitsuLib
                     IsActive = false;
                 }
             }
+        }
+
+        private static string BuildVersionLogText()
+        {
+            var compatBranchLabel = GetCompatBranchLabel();
+            if (string.IsNullOrWhiteSpace(compatBranchLabel))
+                return $"Version: {Const.Version}";
+
+            return $"Version: {Const.Version} [兼容分支: {compatBranchLabel}]";
+        }
+
+        private static string? GetCompatBranchLabel()
+        {
+#if STS2_V_0_103_2
+            return "0.103.2";
+#else
+            return null;
+#endif
         }
 
         /// <summary>

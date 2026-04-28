@@ -1,3 +1,6 @@
+using System.Reflection;
+using System.Reflection.Emit;
+using HarmonyLib;
 using MegaCrit.Sts2.Core.Models;
 using MegaCrit.Sts2.Core.Nodes.Screens.RunHistoryScreen;
 using MegaCrit.Sts2.Core.Rooms;
@@ -7,35 +10,26 @@ using STS2RitsuLib.Saves;
 
 namespace STS2RitsuLib.Lifecycle.Patches
 {
-    internal static class RunHistoryMissingModelScope
-    {
-        [ThreadStatic] private static int _depth;
-
-        internal static bool IsActive => _depth > 0;
-
-        internal static void Enter()
-        {
-            _depth++;
-        }
-
-        internal static void Exit()
-        {
-            if (_depth > 0)
-                _depth--;
-        }
-    }
-
     /// <summary>
-    ///     Creates an execution scope for run-history UI methods that may read missing mod models.
+    ///     Replaces <c>ModelDb.GetById&lt;CharacterModel&gt;</c> and <c>GetById&lt;ActModel&gt;</c> in run-history UI with
+    ///     <see cref="RunHistoryMissingModelSupport" /> so missing mod content does not throw.
     /// </summary>
     public class RunHistoryMissingModelDbGetByIdTranspilerPatch : IPatchMethod
     {
+        private static readonly MethodInfo CharacterFallback =
+            AccessTools.DeclaredMethod(typeof(RunHistoryMissingModelSupport),
+                nameof(RunHistoryMissingModelSupport.CharacterForRunHistory));
+
+        private static readonly MethodInfo ActFallback =
+            AccessTools.DeclaredMethod(typeof(RunHistoryMissingModelSupport),
+                nameof(RunHistoryMissingModelSupport.ActForRunHistory));
+
         /// <inheritdoc />
         public static string PatchId => "run_history_missing_model_db_getbyid_transpile";
 
         /// <inheritdoc />
         public static string Description =>
-            "Create run-history scope for missing-model fallbacks";
+            "Transpile run-history methods to use Character/Act fallbacks when ModelDb has no entry";
 
         /// <inheritdoc />
         public static bool IsCritical => false;
@@ -58,61 +52,41 @@ namespace STS2RitsuLib.Lifecycle.Patches
         }
 
         /// <summary>
-        ///     Enters run-history missing-model support scope.
+        ///     Harmony transpiler: redirect ModelDb lookups to RitsuLib fallbacks.
         /// </summary>
-        public static void Prefix()
+        public static IEnumerable<CodeInstruction> Transpiler(IEnumerable<CodeInstruction> instructions)
         {
-            RunHistoryMissingModelScope.Enter();
-        }
-
-        /// <summary>
-        ///     Exits run-history scope even if the target method throws.
-        /// </summary>
-        public static void Finalizer()
-        {
-            RunHistoryMissingModelScope.Exit();
-        }
-    }
-
-    /// <summary>
-    ///     Uses run-history-specific fallbacks for missing character/act lookups.
-    /// </summary>
-    public class RunHistoryMissingModelDbGetByIdPatch : IPatchMethod
-    {
-        /// <inheritdoc />
-        public static string PatchId => "run_history_missing_model_db_getbyid";
-
-        /// <inheritdoc />
-        public static string Description =>
-            "Use Character/Act fallbacks in run-history scope when ModelDb.GetById has no entry";
-
-        /// <inheritdoc />
-        public static bool IsCritical => false;
-
-        /// <inheritdoc />
-        public static ModPatchTarget[] GetTargets()
-        {
-            return [new(typeof(ModelDb), nameof(ModelDb.GetById), [typeof(ModelId)])];
-        }
-
-        /// <summary>
-        ///     Replaces vanilla GetById throws with run-history fallback models.
-        /// </summary>
-        // ReSharper disable once InconsistentNaming
-        public static bool Prefix<T>(ModelId id, ref T __result) where T : AbstractModel
-        {
-            if (!RunHistoryMissingModelScope.IsActive)
-                return true;
-
-            if (typeof(T) == typeof(CharacterModel))
+            foreach (var code in instructions)
             {
-                __result = (T)(AbstractModel)RunHistoryMissingModelSupport.CharacterForRunHistory(id);
-                return false;
-            }
+                if (code.operand is MethodInfo called)
+                {
+                    if (IsModelDbGetByIdFor(called, typeof(CharacterModel)))
+                    {
+                        code.opcode = OpCodes.Call;
+                        code.operand = CharacterFallback;
+                    }
+                    else if (IsModelDbGetByIdFor(called, typeof(ActModel)))
+                    {
+                        code.opcode = OpCodes.Call;
+                        code.operand = ActFallback;
+                    }
+                }
 
-            if (typeof(T) != typeof(ActModel)) return true;
-            __result = (T)(AbstractModel)RunHistoryMissingModelSupport.ActForRunHistory(id);
-            return false;
+                yield return code;
+            }
+        }
+
+        private static bool IsModelDbGetByIdFor(MethodInfo mi, Type typeArg)
+        {
+            if (!mi.IsGenericMethod || mi.DeclaringType != typeof(ModelDb))
+                return false;
+
+            var def = mi.GetGenericMethodDefinition();
+            if (def.Name != nameof(ModelDb.GetById))
+                return false;
+
+            var args = mi.GetGenericArguments();
+            return args.Length == 1 && args[0] == typeArg;
         }
     }
 }
