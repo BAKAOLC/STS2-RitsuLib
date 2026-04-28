@@ -110,6 +110,30 @@ namespace STS2RitsuLib.Scaffolding.Content.Patches
             EncounterRunHistoryIconOutlinePathProviders =
                 new(StringComparer.Ordinal);
 
+        private static readonly Dictionary<string, Func<AncientEventModel, string?>> AncientMapIconPathProviders =
+            new(StringComparer.Ordinal);
+
+        private static readonly Dictionary<string, Func<AncientEventModel, string?>>
+            AncientMapIconOutlinePathProviders =
+                new(StringComparer.Ordinal);
+
+        private static readonly Dictionary<string, Func<AncientEventModel, string?>>
+            AncientRunHistoryIconPathProviders =
+                new(StringComparer.Ordinal);
+
+        private static readonly Dictionary<string, Func<AncientEventModel, string?>>
+            AncientRunHistoryIconOutlinePathProviders =
+                new(StringComparer.Ordinal);
+
+        private static readonly Dictionary<string, Func<AfflictionModel, string?>> AfflictionOverlayPathProviders =
+            new(StringComparer.Ordinal);
+
+        private static readonly Dictionary<string, Func<AfflictionModel, PackedScene?>> AfflictionOverlaySceneProviders =
+            new(StringComparer.Ordinal);
+
+        private static readonly Dictionary<string, Func<EnchantmentModel, string?>> EnchantmentIconPathProviders =
+            new(StringComparer.Ordinal);
+
         /// <summary>
         ///     Registers or replaces an external provider for relic icon paths.
         /// </summary>
@@ -373,6 +397,65 @@ namespace STS2RitsuLib.Scaffolding.Content.Patches
         }
 
         /// <summary>
+        ///     Registers or replaces an external provider for ancient map icon paths.
+        /// </summary>
+        public static void RegisterAncientMapIconPathProvider(string key, Func<AncientEventModel, string?> provider)
+        {
+            Register(AncientMapIconPathProviders, key, provider);
+        }
+
+        /// <summary>
+        ///     Registers or replaces an external provider for ancient map icon outline paths.
+        /// </summary>
+        public static void RegisterAncientMapIconOutlinePathProvider(string key,
+            Func<AncientEventModel, string?> provider)
+        {
+            Register(AncientMapIconOutlinePathProviders, key, provider);
+        }
+
+        /// <summary>
+        ///     Registers or replaces an external provider for ancient run-history icon paths.
+        /// </summary>
+        public static void RegisterAncientRunHistoryIconPathProvider(string key,
+            Func<AncientEventModel, string?> provider)
+        {
+            Register(AncientRunHistoryIconPathProviders, key, provider);
+        }
+
+        /// <summary>
+        ///     Registers or replaces an external provider for ancient run-history icon outline paths.
+        /// </summary>
+        public static void RegisterAncientRunHistoryIconOutlinePathProvider(string key,
+            Func<AncientEventModel, string?> provider)
+        {
+            Register(AncientRunHistoryIconOutlinePathProviders, key, provider);
+        }
+
+        /// <summary>
+        ///     Registers or replaces an external provider for affliction overlay paths.
+        /// </summary>
+        public static void RegisterAfflictionOverlayPathProvider(string key, Func<AfflictionModel, string?> provider)
+        {
+            Register(AfflictionOverlayPathProviders, key, provider);
+        }
+
+        /// <summary>
+        ///     Registers or replaces an external provider for affliction overlay packed scenes.
+        /// </summary>
+        public static void RegisterAfflictionOverlaySceneProvider(string key, Func<AfflictionModel, PackedScene?> provider)
+        {
+            Register(AfflictionOverlaySceneProviders, key, provider);
+        }
+
+        /// <summary>
+        ///     Registers or replaces an external provider for enchantment icon paths.
+        /// </summary>
+        public static void RegisterEnchantmentIconPathProvider(string key, Func<EnchantmentModel, string?> provider)
+        {
+            Register(EnchantmentIconPathProviders, key, provider);
+        }
+
+        /// <summary>
         ///     Removes all providers registered under the specified key.
         /// </summary>
         public static bool Unregister(string key)
@@ -411,7 +494,14 @@ namespace STS2RitsuLib.Scaffolding.Content.Patches
                        EncounterBossNodePathProviders.Remove(key) |
                        EncounterMapNodeAssetPathProviders.Remove(key) |
                        EncounterRunHistoryIconPathProviders.Remove(key) |
-                       EncounterRunHistoryIconOutlinePathProviders.Remove(key);
+                       EncounterRunHistoryIconOutlinePathProviders.Remove(key) |
+                       AncientMapIconPathProviders.Remove(key) |
+                       AncientMapIconOutlinePathProviders.Remove(key) |
+                       AncientRunHistoryIconPathProviders.Remove(key) |
+                       AncientRunHistoryIconOutlinePathProviders.Remove(key) |
+                       AfflictionOverlayPathProviders.Remove(key) |
+                       AfflictionOverlaySceneProviders.Remove(key) |
+                       EnchantmentIconPathProviders.Remove(key);
             }
         }
 
@@ -454,6 +544,13 @@ namespace STS2RitsuLib.Scaffolding.Content.Patches
                 EncounterMapNodeAssetPathProviders.Clear();
                 EncounterRunHistoryIconPathProviders.Clear();
                 EncounterRunHistoryIconOutlinePathProviders.Clear();
+                AncientMapIconPathProviders.Clear();
+                AncientMapIconOutlinePathProviders.Clear();
+                AncientRunHistoryIconPathProviders.Clear();
+                AncientRunHistoryIconOutlinePathProviders.Clear();
+                AfflictionOverlayPathProviders.Clear();
+                AfflictionOverlaySceneProviders.Clear();
+                EnchantmentIconPathProviders.Clear();
             }
         }
 
@@ -622,6 +719,41 @@ namespace STS2RitsuLib.Scaffolding.Content.Patches
         internal static bool TryGetEncounterRunHistoryIconOutlinePath(EncounterModel model, out string value)
         {
             return TryGet(EncounterRunHistoryIconOutlinePathProviders, model, out value);
+        }
+
+        internal static bool TryGetAncientMapIconPath(AncientEventModel model, out string value)
+        {
+            return TryGet(AncientMapIconPathProviders, model, out value);
+        }
+
+        internal static bool TryGetAncientMapIconOutlinePath(AncientEventModel model, out string value)
+        {
+            return TryGet(AncientMapIconOutlinePathProviders, model, out value);
+        }
+
+        internal static bool TryGetAncientRunHistoryIconPath(AncientEventModel model, out string value)
+        {
+            return TryGet(AncientRunHistoryIconPathProviders, model, out value);
+        }
+
+        internal static bool TryGetAncientRunHistoryIconOutlinePath(AncientEventModel model, out string value)
+        {
+            return TryGet(AncientRunHistoryIconOutlinePathProviders, model, out value);
+        }
+
+        internal static bool TryGetAfflictionOverlayPath(AfflictionModel model, out string value)
+        {
+            return TryGet(AfflictionOverlayPathProviders, model, out value);
+        }
+
+        internal static bool TryGetAfflictionOverlayScene(AfflictionModel model, out PackedScene value)
+        {
+            return TryGet(AfflictionOverlaySceneProviders, model, out value);
+        }
+
+        internal static bool TryGetEnchantmentIconPath(EnchantmentModel model, out string value)
+        {
+            return TryGet(EnchantmentIconPathProviders, model, out value);
         }
 
         private static void Register<TModel, TValue>(
