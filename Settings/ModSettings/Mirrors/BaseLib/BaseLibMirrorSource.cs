@@ -113,7 +113,7 @@ namespace STS2RitsuLib.Settings
                     if (page == null)
                         continue;
 
-                    if (!ModSettingsMirrorRegistrar.TryRegister(page))
+                    if (!ModSettingsMirrorRegistrar.TryRegister(page, ModSettingsMirrorSource.BaseLib))
                         continue;
 
                     count++;

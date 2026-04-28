@@ -98,6 +98,7 @@ namespace STS2RitsuLib.Lifecycle.Patches
         /// <summary>
         ///     Replaces vanilla GetById throws with run-history fallback models.
         /// </summary>
+        // ReSharper disable once InconsistentNaming
         public static bool Prefix<T>(ModelId id, ref T __result) where T : AbstractModel
         {
             if (!RunHistoryMissingModelScope.IsActive)
@@ -109,13 +110,9 @@ namespace STS2RitsuLib.Lifecycle.Patches
                 return false;
             }
 
-            if (typeof(T) == typeof(ActModel))
-            {
-                __result = (T)(AbstractModel)RunHistoryMissingModelSupport.ActForRunHistory(id);
-                return false;
-            }
-
-            return true;
+            if (typeof(T) != typeof(ActModel)) return true;
+            __result = (T)(AbstractModel)RunHistoryMissingModelSupport.ActForRunHistory(id);
+            return false;
         }
     }
 }

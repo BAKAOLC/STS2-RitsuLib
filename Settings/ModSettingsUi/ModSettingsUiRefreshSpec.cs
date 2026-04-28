@@ -71,7 +71,7 @@ namespace STS2RitsuLib.Settings
                 ModSettingsRefreshRegistrationKind.SpecificBindings =>
                     spec.Bindings.IsDefaultOrEmpty
                         ? treatAsFullPass
-                        : Overlaps(dirtyBindings, spec.Bindings),
+                        : treatAsFullPass || Overlaps(dirtyBindings, spec.Bindings),
                 _ => true,
             };
         }

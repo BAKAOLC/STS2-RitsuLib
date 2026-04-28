@@ -57,8 +57,8 @@ namespace STS2RitsuLib.Scaffolding.Characters.Patches
                 return SelectionScope.Visible;
 
             if ((originalMethod.DeclaringType == typeof(NCharacterSelectScreen) &&
-                 (originalMethod.Name == nameof(NCharacterSelectScreen.UpdateRandomCharacterVisibility) ||
-                  originalMethod.Name == "RollRandomCharacter")) ||
+                 originalMethod.Name is nameof(NCharacterSelectScreen.UpdateRandomCharacterVisibility)
+                     or "RollRandomCharacter") ||
                 (originalMethod.DeclaringType == typeof(NCharacterSelectButton) &&
                  originalMethod.Name == nameof(NCharacterSelectButton.Init)) ||
                 (originalMethod.DeclaringType == typeof(StartRunLobby) &&

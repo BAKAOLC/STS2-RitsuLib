@@ -276,6 +276,7 @@ namespace STS2RitsuLib.Settings
                             ModSettingsButtonTone.Danger);
                     });
                 }, pageId);
+                ModSettingsMirrorSyncPolicyRegistry.RegisterPage(modId, pageId, ModSettingsMirrorSource.ModConfig);
 
                 return true;
             }
