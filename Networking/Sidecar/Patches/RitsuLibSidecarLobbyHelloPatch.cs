@@ -1,5 +1,6 @@
 using HarmonyLib;
 using MegaCrit.Sts2.Core.Daily;
+using MegaCrit.Sts2.Core.Entities.Multiplayer;
 using MegaCrit.Sts2.Core.Multiplayer.Game;
 using MegaCrit.Sts2.Core.Multiplayer.Game.Lobby;
 using MegaCrit.Sts2.Core.Multiplayer.Messages.Lobby;
@@ -10,8 +11,8 @@ using STS2RitsuLib.Patching.Models;
 namespace STS2RitsuLib.Networking.Sidecar.Patches
 {
     /// <summary>
-    ///     After lobby construction, sends sidecar handshake on that lobby’s <see cref="INetGameService" /> so traffic
-    ///     can run before <see cref="MegaCrit.Sts2.Core.Runs.RunManager.NetService" /> exists.
+    ///     After lobby construction, updates session manager with the active net service so capability providers can
+    ///     decide peer reachability before any sidecar payload is sent.
     /// </summary>
     internal sealed class RitsuLibSidecarLobbyHelloPatch : IPatchMethod
     {
@@ -19,7 +20,7 @@ namespace STS2RitsuLib.Networking.Sidecar.Patches
 
         public static bool IsCritical => false;
 
-        public static string Description => "Sidecar handshake after StartRunLobby / LoadRunLobby construction";
+        public static string Description => "Sidecar session bind after StartRunLobby / LoadRunLobby construction";
 
         public static ModPatchTarget[] GetTargets()
         {
@@ -60,18 +61,19 @@ namespace STS2RitsuLib.Networking.Sidecar.Patches
             switch (__instance)
             {
                 case StartRunLobby start:
-                    RitsuLibSidecarConnectionExchange.TrySendHelloForNetService(start.NetService);
+                    RitsuLibSidecarSessionManager.ObserveNetService(start.NetService);
+                    RitsuLibSidecarConnectionExchange.TrySendClientHelloIfReachable(start.NetService);
                     break;
                 case LoadRunLobby load:
-                    RitsuLibSidecarConnectionExchange.TrySendHelloForNetService(load.NetService);
+                    RitsuLibSidecarSessionManager.ObserveNetService(load.NetService);
+                    RitsuLibSidecarConnectionExchange.TrySendClientHelloIfReachable(load.NetService);
                     break;
             }
         }
     }
 
     /// <summary>
-    ///     When the host’s lobby already existed with zero clients, ctor-time handshake had no peers; send again after the
-    ///     first (or each) remote client connects.
+    ///     Tracks newly connected host peers so reachability providers can evaluate sidecar support.
     /// </summary>
     internal sealed class RitsuLibSidecarStartRunLobbyHostClientConnectedPatch : IPatchMethod
     {
@@ -79,7 +81,7 @@ namespace STS2RitsuLib.Networking.Sidecar.Patches
 
         public static bool IsCritical => false;
 
-        public static string Description => "Sidecar handshake after StartRunLobby host receives a client connection";
+        public static string Description => "Sidecar peer connect tracking in StartRunLobby host path";
 
         public static ModPatchTarget[] GetTargets()
         {
@@ -87,10 +89,28 @@ namespace STS2RitsuLib.Networking.Sidecar.Patches
         }
 
         // ReSharper disable once InconsistentNaming
-        public static void Postfix(StartRunLobby __instance, ulong playerId)
+        public static void Postfix(ulong playerId)
         {
-            _ = playerId;
-            RitsuLibSidecarConnectionExchange.TrySendHelloForNetService(__instance.NetService);
+            RitsuLibSidecarSessionManager.NotePeerConnected(playerId);
+        }
+    }
+
+    internal sealed class RitsuLibSidecarStartRunLobbyHostClientDisconnectedPatch : IPatchMethod
+    {
+        public static string PatchId => "ritsulib_sidecar_lobby_peer_disconnected";
+        public static bool IsCritical => false;
+        public static string Description => "Sidecar peer disconnect tracking in StartRunLobby host path";
+
+        public static ModPatchTarget[] GetTargets()
+        {
+            return
+                [new(typeof(StartRunLobby), "OnDisconnectedFromClientAsHost", [typeof(ulong), typeof(NetErrorInfo)])];
+        }
+
+        // ReSharper disable once InconsistentNaming
+        public static void Prefix(ulong playerId)
+        {
+            RitsuLibSidecarSessionManager.NotePeerDisconnected(playerId);
         }
     }
 }
