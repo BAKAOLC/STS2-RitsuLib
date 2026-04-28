@@ -4,6 +4,7 @@ using MegaCrit.Sts2.Core.Logging;
 using MegaCrit.Sts2.Core.Modding;
 using MegaCrit.Sts2.Core.Models;
 using STS2RitsuLib.Diagnostics;
+using STS2RitsuLib.Scaffolding.Content;
 
 namespace STS2RitsuLib.Content
 {
@@ -55,6 +56,7 @@ namespace STS2RitsuLib.Content
         private static readonly HashSet<Type> RegisteredAfflictions = [];
         private static readonly HashSet<Type> RegisteredAchievements = [];
         private static readonly HashSet<Type> RegisteredSingletons = [];
+        private static readonly HashSet<Type> RegisteredBadges = [];
         private static readonly HashSet<Type> RegisteredSharedRelicPools = [];
         private static readonly HashSet<Type> RegisteredSharedPotionPools = [];
         private static readonly HashSet<Type> RegisteredGoodModifiers = [];
@@ -646,6 +648,36 @@ namespace STS2RitsuLib.Content
         }
 
         /// <summary>
+        ///     Registers a custom badge template type.
+        /// </summary>
+        public void RegisterBadge<TBadge>() where TBadge : ModBadgeTemplate
+        {
+            RegisterBadge(typeof(TBadge));
+        }
+
+        /// <summary>
+        ///     Registers a custom badge template type.
+        /// </summary>
+        public void RegisterBadge(Type badgeType)
+        {
+            EnsureMutable($"register badge '{badgeType.Name}'");
+            EnsureBadgeType(badgeType, nameof(badgeType));
+
+            lock (SyncRoot)
+            {
+                if (!RegisteredBadges.Add(badgeType))
+                {
+                    _logger.Debug($"[Content] Skipping duplicate badge registration: {badgeType.Name}");
+                    return;
+                }
+
+                RememberOwner(badgeType);
+            }
+
+            _logger.Info($"[Content] Registered badge: {badgeType.Name}");
+        }
+
+        /// <summary>
         ///     Registers a mod modifier as a &quot;good&quot; daily modifier for patched <see cref="ModelDb.GoodModifiers" />.
         /// </summary>
         public void RegisterGoodModifier<TModifier>() where TModifier : ModifierModel
@@ -1056,6 +1088,16 @@ namespace STS2RitsuLib.Content
             return AppendResolved(source, ResolveScopedModels<AncientEventModel>(RegisteredActAncients, act.GetType()));
         }
 
+        internal static Type[] GetRegisteredBadgeTypes()
+        {
+            lock (SyncRoot)
+            {
+                return RegisteredBadges
+                    .OrderBy(static t => t.FullName ?? t.Name, StringComparer.Ordinal)
+                    .ToArray();
+            }
+        }
+
         /// <summary>
         ///     Injects RitsuLib-registered types that live in <see cref="Assembly.IsDynamic" /> assemblies into
         ///     <see cref="ModelDb" /> before <c>Init</c> finishes populating <c>_contentById</c>. Static mod DLL types are
@@ -1228,6 +1270,15 @@ namespace STS2RitsuLib.Content
                 );
         }
 
+        private static void EnsureBadgeType(Type type, string paramName)
+        {
+            if (type.IsAbstract || type.IsInterface || !typeof(ModBadgeTemplate).IsAssignableFrom(type))
+                throw new ArgumentException(
+                    $"Type '{type.FullName}' must be a concrete subtype of '{typeof(ModBadgeTemplate).FullName}'.",
+                    paramName
+                );
+        }
+
         private static TModel[] ResolveModels<TModel>(IEnumerable<Type> modelTypes)
             where TModel : AbstractModel
         {
@@ -1289,7 +1340,7 @@ namespace STS2RitsuLib.Content
             IEnumerable<TModel> additional)
             where TModel : AbstractModel
         {
-            return source.Concat(additional).Distinct().ToArray();
+            return source.Concat(additional).DistinctBy(static model => model.Id).ToArray();
         }
 
         private static List<TModel> MergeDistinctByModelId<TModel>(IEnumerable<TModel> first,

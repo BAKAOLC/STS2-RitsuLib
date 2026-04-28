@@ -88,6 +88,14 @@ namespace STS2RitsuLib.Scaffolding.Content
         }
 
         /// <summary>
+        ///     Queues <see cref="ModContentRegistry.RegisterBadge{TBadge}" />.
+        /// </summary>
+        public ModContentPackBuilder Badge<TBadge>() where TBadge : ModBadgeTemplate
+        {
+            return AddStep(ctx => ctx.Content.RegisterBadge<TBadge>());
+        }
+
+        /// <summary>
         ///     Queues character registration plus additive starter content configuration in one place.
         /// </summary>
         public ModContentPackBuilder Character<TCharacter>(Action<CharacterRegistrationEntry<TCharacter>> configure)
