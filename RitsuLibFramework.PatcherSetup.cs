@@ -12,6 +12,7 @@ using STS2RitsuLib.Interop.Patches;
 using STS2RitsuLib.Keywords.Patches;
 using STS2RitsuLib.Lifecycle.Patches;
 using STS2RitsuLib.Localization.Patches;
+using STS2RitsuLib.Networking.Sidecar.Patches;
 using STS2RitsuLib.Patching.Core;
 using STS2RitsuLib.Relics.Patches;
 using STS2RitsuLib.Scaffolding.Cards.HandGlow.Patches;
@@ -96,6 +97,9 @@ namespace STS2RitsuLib
             patcher.RegisterPatch<RunLifecyclePatch>();
             patcher.RegisterPatch<ModRunSidecarSaveDeletionPatches.DeleteCurrentRun>();
             patcher.RegisterPatch<ModRunSidecarSaveDeletionPatches.DeleteCurrentMultiplayerRun>();
+            patcher.RegisterPatch<RitsuLibSidecarNetHostReceivePatch>();
+            patcher.RegisterPatch<RitsuLibSidecarNetClientReceivePatch>();
+            patcher.RegisterPatch<RitsuLibSidecarChecksumDivergenceRelayPatch>();
             patcher.RegisterPatch<RunEndedLifecyclePatch>();
             patcher.RegisterPatch<CombatHookLifecyclePatch>();
             patcher.RegisterPatch<RewardHookLifecyclePatch>();
