@@ -92,7 +92,10 @@ namespace STS2RitsuLib.Networking.Sidecar
             if (packetBytes.Length < RitsuLibSidecarNativeTrailerLayout.TrailerSize)
                 return false;
 
-            var trailer = packetBytes[^RitsuLibSidecarNativeTrailerLayout.TrailerSize..];
+            if (!TryLocateTrailerStart(packetBytes, out var trailerStart))
+                return false;
+
+            var trailer = packetBytes.Slice(trailerStart, RitsuLibSidecarNativeTrailerLayout.TrailerSize);
             if (!trailer
                     .Slice(
                         RitsuLibSidecarNativeTrailerLayout.HeaderSignatureOffset,
@@ -123,7 +126,7 @@ namespace STS2RitsuLib.Networking.Sidecar
                 trailer.Slice(
                     RitsuLibSidecarNativeTrailerLayout.PayloadLengthOffset,
                     RitsuLibSidecarNativeTrailerLayout.PayloadLengthSize));
-            var payloadLength = packetBytes.Length - RitsuLibSidecarNativeTrailerLayout.TrailerSize;
+            var payloadLength = trailerStart;
             if ((uint)payloadLength != declaredPayloadLength)
                 return false;
 
@@ -133,6 +136,31 @@ namespace STS2RitsuLib.Networking.Sidecar
                     RitsuLibSidecarNativeTrailerLayout.PayloadCrc32Size));
             var payload = packetBytes[..payloadLength];
             return Crc32.HashToUInt32(payload) == expectedCrc32;
+        }
+
+        private static bool TryLocateTrailerStart(ReadOnlySpan<byte> packetBytes, out int trailerStart)
+        {
+            trailerStart = -1;
+            const int footerSize = RitsuLibSidecarNativeTrailerLayout.FooterSignatureSize;
+            const int footerOffset = RitsuLibSidecarNativeTrailerLayout.FooterSignatureOffset;
+            const int minFooterStart = RitsuLibSidecarNativeTrailerLayout.TrailerSize - footerSize;
+            for (var footerStart = packetBytes.Length - footerSize; footerStart >= minFooterStart; footerStart--)
+            {
+                if (!packetBytes.Slice(footerStart, footerSize)
+                        .SequenceEqual(RitsuLibSidecarNativeTrailerLayout.FooterSignature))
+                    continue;
+
+                var candidateStart = footerStart - footerOffset;
+                if (candidateStart < 0)
+                    continue;
+                if (candidateStart + RitsuLibSidecarNativeTrailerLayout.TrailerSize > packetBytes.Length)
+                    continue;
+
+                trailerStart = candidateStart;
+                return true;
+            }
+
+            return false;
         }
     }
 }
