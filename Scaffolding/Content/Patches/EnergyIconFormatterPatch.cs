@@ -56,6 +56,8 @@ namespace STS2RitsuLib.Scaffolding.Content.Patches
         ///         stloc  (text3)
         ///     </code>
         /// </summary>
+        [HarmonyAfter(Const.BaseLibHarmonyId)]
+        [HarmonyPriority(Priority.Last)]
         public static IEnumerable<CodeInstruction> Transpiler(IEnumerable<CodeInstruction> instructions)
         {
             var concatMethod = AccessTools.Method(

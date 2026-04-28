@@ -1,5 +1,4 @@
 using System.Reflection;
-using System.Reflection.Emit;
 using HarmonyLib;
 using MegaCrit.Sts2.Core.Models;
 using MegaCrit.Sts2.Core.Multiplayer.Game.Lobby;
@@ -8,22 +7,80 @@ using STS2RitsuLib.Patching.Models;
 
 namespace STS2RitsuLib.Scaffolding.Characters.Patches
 {
+    internal static class CharacterVanillaSelectionPolicyScope
+    {
+        [ThreadStatic] private static SelectionScope _currentScope;
+        [ThreadStatic] private static int _scopeDepth;
+
+        public static void Enter(MethodBase originalMethod)
+        {
+            var scope = ResolveScope(originalMethod);
+            if (scope == SelectionScope.None)
+                return;
+
+            if (_scopeDepth++ == 0)
+                _currentScope = scope;
+        }
+
+        public static void Exit(MethodBase originalMethod)
+        {
+            var scope = ResolveScope(originalMethod);
+            if (scope == SelectionScope.None || _scopeDepth <= 0)
+                return;
+
+            _scopeDepth--;
+            if (_scopeDepth == 0)
+                _currentScope = SelectionScope.None;
+        }
+
+        public static IEnumerable<CharacterModel> Apply(IEnumerable<CharacterModel> source)
+        {
+            return _currentScope switch
+            {
+                SelectionScope.Visible => source.Where(character => character is not IModCharacterVanillaSelectionPolicy
+                {
+                    HideFromVanillaCharacterSelect: true,
+                }),
+                SelectionScope.RandomEligible => source.Where(character =>
+                    character is not IModCharacterVanillaSelectionPolicy
+                    {
+                        AllowInVanillaRandomCharacterSelect: false,
+                    }),
+                _ => source,
+            };
+        }
+
+        private static SelectionScope ResolveScope(MethodBase originalMethod)
+        {
+            if (originalMethod.DeclaringType == typeof(NCharacterSelectScreen) &&
+                originalMethod.Name == nameof(NCharacterSelectScreen.InitCharacterButtons))
+                return SelectionScope.Visible;
+
+            if ((originalMethod.DeclaringType == typeof(NCharacterSelectScreen) &&
+                 (originalMethod.Name == nameof(NCharacterSelectScreen.UpdateRandomCharacterVisibility) ||
+                  originalMethod.Name == "RollRandomCharacter")) ||
+                (originalMethod.DeclaringType == typeof(NCharacterSelectButton) &&
+                 originalMethod.Name == nameof(NCharacterSelectButton.Init)) ||
+                (originalMethod.DeclaringType == typeof(StartRunLobby) &&
+                 originalMethod.Name == "BeginRunLocally"))
+                return SelectionScope.RandomEligible;
+
+            return SelectionScope.None;
+        }
+
+        private enum SelectionScope
+        {
+            None,
+            Visible,
+            RandomEligible,
+        }
+    }
+
     /// <summary>
-    ///     Applies <see cref="IModCharacterVanillaSelectionPolicy" /> when vanilla character-select builds visible and
-    ///     random-eligible character lists.
+    ///     Maintains selection-policy scope for vanilla character-select flows.
     /// </summary>
     public class CharacterVanillaSelectionPolicyPatches : IPatchMethod
     {
-        private static readonly MethodInfo? ModelDbAllCharactersGetter =
-            AccessTools.PropertyGetter(typeof(ModelDb), nameof(ModelDb.AllCharacters));
-
-        private static readonly MethodInfo? VisibleCharactersMethod =
-            AccessTools.DeclaredMethod(typeof(CharacterVanillaSelectionPolicyPatches), nameof(GetVisibleCharacters));
-
-        private static readonly MethodInfo? RandomEligibleCharactersMethod =
-            AccessTools.DeclaredMethod(typeof(CharacterVanillaSelectionPolicyPatches),
-                nameof(GetRandomEligibleCharacters));
-
         /// <inheritdoc />
         public static string PatchId => "character_vanilla_selection_policy";
 
@@ -47,56 +104,54 @@ namespace STS2RitsuLib.Scaffolding.Characters.Patches
             ];
         }
 
-        // ReSharper disable once InconsistentNaming
         /// <summary>
-        ///     Rewrites direct reads of <see cref="ModelDb.AllCharacters" /> in target methods.
+        ///     Enters selection scope for character-list consumers.
         /// </summary>
-        public static IEnumerable<CodeInstruction> Transpiler(IEnumerable<CodeInstruction> instructions,
-            MethodBase __originalMethod)
+        // ReSharper disable once InconsistentNaming
+        public static void Prefix(MethodBase __originalMethod)
         {
-            if (ModelDbAllCharactersGetter == null)
-                return instructions;
-
-            var useVisibleList = __originalMethod.Name == nameof(NCharacterSelectScreen.InitCharacterButtons);
-            var replacement = useVisibleList ? VisibleCharactersMethod : RandomEligibleCharactersMethod;
-            if (replacement == null)
-                return instructions;
-
-            var rewritten = false;
-            var list = instructions.ToList();
-            for (var index = 0; index < list.Count; index++)
-            {
-                var code = list[index];
-                if (!code.Calls(ModelDbAllCharactersGetter))
-                    continue;
-
-                code.opcode = OpCodes.Call;
-                code.operand = replacement;
-                list[index] = code;
-                rewritten = true;
-            }
-
-            if (!rewritten)
-                RitsuLibFramework.Logger.Debug(
-                    $"[CharacterSelection] No ModelDb.AllCharacters call found while patching {__originalMethod.DeclaringType?.Name}.{__originalMethod.Name}.");
-
-            return list;
+            CharacterVanillaSelectionPolicyScope.Enter(__originalMethod);
         }
 
-        private static IEnumerable<CharacterModel> GetVisibleCharacters()
+        /// <summary>
+        ///     Ensures scope cleanup even when target method throws.
+        /// </summary>
+        // ReSharper disable once InconsistentNaming
+        public static void Finalizer(MethodBase __originalMethod)
         {
-            return ModelDb.AllCharacters.Where(character => character is not IModCharacterVanillaSelectionPolicy
-            {
-                HideFromVanillaCharacterSelect: true,
-            });
+            CharacterVanillaSelectionPolicyScope.Exit(__originalMethod);
+        }
+    }
+
+    /// <summary>
+    ///     Applies scoped selection policy to <see cref="ModelDb.AllCharacters" />.
+    /// </summary>
+    public class CharacterVanillaSelectionPolicyAllCharactersPatch : IPatchMethod
+    {
+        /// <inheritdoc />
+        public static string PatchId => "character_vanilla_selection_policy_all_characters";
+
+        /// <inheritdoc />
+        public static string Description => "Filter ModelDb.AllCharacters by current vanilla selection scope";
+
+        /// <inheritdoc />
+        public static bool IsCritical => false;
+
+        /// <inheritdoc />
+        public static ModPatchTarget[] GetTargets()
+        {
+            return [new(typeof(ModelDb), nameof(ModelDb.AllCharacters), MethodType.Getter)];
         }
 
-        private static IEnumerable<CharacterModel> GetRandomEligibleCharacters()
+        /// <summary>
+        ///     Filters getter result according to current selection scope.
+        /// </summary>
+        [HarmonyAfter(Const.BaseLibHarmonyId, Const.FrameworkContentRegistryHarmonyId)]
+        [HarmonyPriority(Priority.Last)]
+        // ReSharper disable once InconsistentNaming
+        public static void Postfix(ref IEnumerable<CharacterModel> __result)
         {
-            return ModelDb.AllCharacters.Where(character => character is not IModCharacterVanillaSelectionPolicy
-            {
-                AllowInVanillaRandomCharacterSelect: false,
-            });
+            __result = CharacterVanillaSelectionPolicyScope.Apply(__result);
         }
     }
 }
