@@ -135,6 +135,58 @@ namespace STS2RitsuLib.Scaffolding.Content.Patches
             return false;
         }
 
+        // ReSharper disable once InconsistentNaming
+        internal static bool TryUseExternalPathOverride(
+            object instance,
+            ref string __result,
+            Func<string?> externalPathFactory,
+            string memberName)
+        {
+            var path = externalPathFactory();
+            if (string.IsNullOrWhiteSpace(path) || !AssetPathDiagnostics.Exists(path, instance, memberName))
+                return true;
+
+            __result = path;
+            return false;
+        }
+
+        // ReSharper disable once InconsistentNaming
+        internal static bool TryUseExternalPackedScenePathOverride(
+            object instance,
+            ref PackedScene __result,
+            Func<string?> externalPathFactory,
+            string memberName)
+        {
+            var path = externalPathFactory();
+            if (string.IsNullOrWhiteSpace(path) || !AssetPathDiagnostics.Exists(path, instance, memberName))
+                return true;
+
+            __result = PreloadManager.Cache.GetScene(path);
+            return false;
+        }
+
+        // ReSharper disable once InconsistentNaming
+        internal static bool TryUseExternalCompressedTexturePathAsTexture2DOverride(
+            object instance,
+            ref Texture2D __result,
+            Func<string?> externalPathFactory,
+            string memberName)
+        {
+            var path = externalPathFactory();
+            if (string.IsNullOrWhiteSpace(path) || !AssetPathDiagnostics.Exists(path, instance, memberName))
+                return true;
+
+            __result = ResourceLoader.Load<CompressedTexture2D>(path);
+            return false;
+        }
+
+        internal static string[] CollectExternalExistingPaths(
+            object instance,
+            params (string? Path, string MemberName)[] candidates)
+        {
+            return AssetPathDiagnostics.CollectExistingPaths(instance, candidates);
+        }
+
         private static bool TryGetPath<TOverrides>(
             object instance,
             Func<TOverrides, string?> selector,
@@ -1805,14 +1857,14 @@ namespace STS2RitsuLib.Scaffolding.Content.Patches
         public static bool Prefix(ActModel __instance, ref string __result)
             // ReSharper restore InconsistentNaming
         {
-            // ReSharper disable once InvertIf
-            if (ExternalAssetOverrideRegistry.TryGetActBackgroundScenePath(__instance, out var externalPath) &&
-                AssetPathDiagnostics.Exists(externalPath, __instance,
+            if (!ContentAssetOverridePatchHelper.TryUseExternalPathOverride(
+                    __instance,
+                    ref __result,
+                    () => ExternalAssetOverrideRegistry.TryGetActBackgroundScenePath(__instance, out var path)
+                        ? path
+                        : null,
                     "ExternalAssetOverrideRegistry.ActBackgroundScenePath"))
-            {
-                __result = externalPath;
                 return false;
-            }
 
             return ContentAssetOverridePatchHelper.TryUseStringOverride<IModActAssetOverrides>(
                 __instance,
@@ -1849,14 +1901,14 @@ namespace STS2RitsuLib.Scaffolding.Content.Patches
         public static bool Prefix(ActModel __instance, ref string __result)
             // ReSharper restore InconsistentNaming
         {
-            // ReSharper disable once InvertIf
-            if (ExternalAssetOverrideRegistry.TryGetActRestSiteBackgroundPath(__instance, out var externalPath) &&
-                AssetPathDiagnostics.Exists(externalPath, __instance,
+            if (!ContentAssetOverridePatchHelper.TryUseExternalPathOverride(
+                    __instance,
+                    ref __result,
+                    () => ExternalAssetOverrideRegistry.TryGetActRestSiteBackgroundPath(__instance, out var path)
+                        ? path
+                        : null,
                     "ExternalAssetOverrideRegistry.ActRestSiteBackgroundPath"))
-            {
-                __result = externalPath;
                 return false;
-            }
 
             return ContentAssetOverridePatchHelper.TryUseStringOverride<IModActAssetOverrides>(
                 __instance,
@@ -1909,13 +1961,12 @@ namespace STS2RitsuLib.Scaffolding.Content.Patches
 
         private static bool TryActMapTopBgPath(ActModel instance, ref string result)
         {
-            // ReSharper disable once InvertIf
-            if (ExternalAssetOverrideRegistry.TryGetActMapTopBgPath(instance, out var externalPath) &&
-                AssetPathDiagnostics.Exists(externalPath, instance, "ExternalAssetOverrideRegistry.ActMapTopBgPath"))
-            {
-                result = externalPath;
+            if (!ContentAssetOverridePatchHelper.TryUseExternalPathOverride(
+                    instance,
+                    ref result,
+                    () => ExternalAssetOverrideRegistry.TryGetActMapTopBgPath(instance, out var path) ? path : null,
+                    "ExternalAssetOverrideRegistry.ActMapTopBgPath"))
                 return false;
-            }
 
             return ContentAssetOverridePatchHelper.TryUseStringOverride<IModActAssetOverrides>(
                 instance,
@@ -1926,13 +1977,12 @@ namespace STS2RitsuLib.Scaffolding.Content.Patches
 
         private static bool TryActMapMidBgPath(ActModel instance, ref string result)
         {
-            // ReSharper disable once InvertIf
-            if (ExternalAssetOverrideRegistry.TryGetActMapMidBgPath(instance, out var externalPath) &&
-                AssetPathDiagnostics.Exists(externalPath, instance, "ExternalAssetOverrideRegistry.ActMapMidBgPath"))
-            {
-                result = externalPath;
+            if (!ContentAssetOverridePatchHelper.TryUseExternalPathOverride(
+                    instance,
+                    ref result,
+                    () => ExternalAssetOverrideRegistry.TryGetActMapMidBgPath(instance, out var path) ? path : null,
+                    "ExternalAssetOverrideRegistry.ActMapMidBgPath"))
                 return false;
-            }
 
             return ContentAssetOverridePatchHelper.TryUseStringOverride<IModActAssetOverrides>(
                 instance,
@@ -1943,13 +1993,12 @@ namespace STS2RitsuLib.Scaffolding.Content.Patches
 
         private static bool TryActMapBotBgPath(ActModel instance, ref string result)
         {
-            // ReSharper disable once InvertIf
-            if (ExternalAssetOverrideRegistry.TryGetActMapBotBgPath(instance, out var externalPath) &&
-                AssetPathDiagnostics.Exists(externalPath, instance, "ExternalAssetOverrideRegistry.ActMapBotBgPath"))
-            {
-                result = externalPath;
+            if (!ContentAssetOverridePatchHelper.TryUseExternalPathOverride(
+                    instance,
+                    ref result,
+                    () => ExternalAssetOverrideRegistry.TryGetActMapBotBgPath(instance, out var path) ? path : null,
+                    "ExternalAssetOverrideRegistry.ActMapBotBgPath"))
                 return false;
-            }
 
             return ContentAssetOverridePatchHelper.TryUseStringOverride<IModActAssetOverrides>(
                 instance,
@@ -1989,14 +2038,14 @@ namespace STS2RitsuLib.Scaffolding.Content.Patches
         public static bool Prefix(EventModel __instance, ref string __result)
             // ReSharper restore InconsistentNaming
         {
-            // ReSharper disable once InvertIf
-            if (ExternalAssetOverrideRegistry.TryGetEventBackgroundScenePath(__instance, out var externalPath) &&
-                AssetPathDiagnostics.Exists(externalPath, __instance,
+            if (!ContentAssetOverridePatchHelper.TryUseExternalPathOverride(
+                    __instance,
+                    ref __result,
+                    () => ExternalAssetOverrideRegistry.TryGetEventBackgroundScenePath(__instance, out var path)
+                        ? path
+                        : null,
                     "ExternalAssetOverrideRegistry.EventBackgroundScenePath"))
-            {
-                __result = externalPath;
                 return false;
-            }
 
             return ContentAssetOverridePatchHelper.TryUseStringOverride<IModEventAssetOverrides>(
                 __instance,
@@ -2033,14 +2082,14 @@ namespace STS2RitsuLib.Scaffolding.Content.Patches
         public static bool Prefix(EventModel __instance, ref PackedScene __result)
             // ReSharper restore InconsistentNaming
         {
-            // ReSharper disable once InvertIf
-            if (ExternalAssetOverrideRegistry.TryGetEventLayoutScenePath(__instance, out var externalPath) &&
-                AssetPathDiagnostics.Exists(externalPath, __instance,
+            if (!ContentAssetOverridePatchHelper.TryUseExternalPackedScenePathOverride(
+                    __instance,
+                    ref __result,
+                    () => ExternalAssetOverrideRegistry.TryGetEventLayoutScenePath(__instance, out var path)
+                        ? path
+                        : null,
                     "ExternalAssetOverrideRegistry.EventLayoutScenePath"))
-            {
-                __result = PreloadManager.Cache.GetScene(externalPath);
                 return false;
-            }
 
             return ContentAssetOverridePatchHelper.TryUsePackedSceneCacheOverride<IModEventAssetOverrides>(
                 __instance,
@@ -2280,16 +2329,10 @@ namespace STS2RitsuLib.Scaffolding.Content.Patches
                 paths = paths.Where(p => p != vanillaBg);
             }
 
+            var externalMerged = CollectExternalEventAssetPaths(__instance);
+
             if (__instance is not IModEventAssetOverrides eventOverrides)
             {
-                var externalMerged = AssetPathDiagnostics.CollectExistingPaths(
-                    __instance,
-                    (ExternalAssetOverrideRegistry.TryGetEventLayoutScenePath(__instance, out var extLayout)
-                        ? extLayout
-                        : null, "ExternalAssetOverrideRegistry.EventLayoutScenePath"),
-                    (ExternalAssetOverrideRegistry.TryGetEventBackgroundScenePath(__instance, out var extBackground)
-                        ? extBackground
-                        : null, "ExternalAssetOverrideRegistry.EventBackgroundScenePath"));
                 __result = externalMerged.Length == 0 ? paths : paths.Concat(externalMerged).Distinct().ToArray();
                 return;
             }
@@ -2300,16 +2343,8 @@ namespace STS2RitsuLib.Scaffolding.Content.Patches
                 (eventOverrides.CustomInitialPortraitPath, nameof(IModEventAssetOverrides.CustomInitialPortraitPath)),
                 (eventOverrides.CustomBackgroundScenePath, nameof(IModEventAssetOverrides.CustomBackgroundScenePath)),
                 (eventOverrides.CustomVfxScenePath, nameof(IModEventAssetOverrides.CustomVfxScenePath)));
-            var externalPaths = AssetPathDiagnostics.CollectExistingPaths(
-                __instance,
-                (ExternalAssetOverrideRegistry.TryGetEventLayoutScenePath(__instance, out var externalLayoutPath)
-                    ? externalLayoutPath
-                    : null, "ExternalAssetOverrideRegistry.EventLayoutScenePath"),
-                (ExternalAssetOverrideRegistry.TryGetEventBackgroundScenePath(__instance, out var externalBgPath)
-                    ? externalBgPath
-                    : null, "ExternalAssetOverrideRegistry.EventBackgroundScenePath"));
-            if (externalPaths.Length > 0)
-                merged = merged.Concat(externalPaths).Distinct().ToArray();
+            if (externalMerged.Length > 0)
+                merged = merged.Concat(externalMerged).Distinct().ToArray();
 
             if (__instance is IModAncientEventAssetOverrides ancientOverrides)
             {
@@ -2333,6 +2368,18 @@ namespace STS2RitsuLib.Scaffolding.Content.Patches
             }
 
             __result = paths.Concat(merged);
+        }
+
+        private static string[] CollectExternalEventAssetPaths(EventModel instance)
+        {
+            return ContentAssetOverridePatchHelper.CollectExternalExistingPaths(
+                instance,
+                (ExternalAssetOverrideRegistry.TryGetEventLayoutScenePath(instance, out var extLayout)
+                    ? extLayout
+                    : null, "ExternalAssetOverrideRegistry.EventLayoutScenePath"),
+                (ExternalAssetOverrideRegistry.TryGetEventBackgroundScenePath(instance, out var extBackground)
+                    ? extBackground
+                    : null, "ExternalAssetOverrideRegistry.EventBackgroundScenePath"));
         }
     }
 
@@ -2378,12 +2425,12 @@ namespace STS2RitsuLib.Scaffolding.Content.Patches
         private static bool TryAncientMapIcon(AncientEventModel instance, ref Texture2D result)
         {
             // ReSharper disable once InvertIf
-            if (ExternalAssetOverrideRegistry.TryGetAncientMapIconPath(instance, out var externalPath) &&
-                AssetPathDiagnostics.Exists(externalPath, instance, "ExternalAssetOverrideRegistry.AncientMapIconPath"))
-            {
-                result = ResourceLoader.Load<CompressedTexture2D>(externalPath);
+            if (!ContentAssetOverridePatchHelper.TryUseExternalCompressedTexturePathAsTexture2DOverride(
+                    instance,
+                    ref result,
+                    () => ExternalAssetOverrideRegistry.TryGetAncientMapIconPath(instance, out var path) ? path : null,
+                    "ExternalAssetOverrideRegistry.AncientMapIconPath"))
                 return false;
-            }
 
             return ContentAssetOverridePatchHelper.TryUseCompressedTextureAsTexture2DOverride<
                 IModAncientEventAssetOverrides>(
@@ -2396,13 +2443,14 @@ namespace STS2RitsuLib.Scaffolding.Content.Patches
         private static bool TryAncientMapIconOutline(AncientEventModel instance, ref Texture2D result)
         {
             // ReSharper disable once InvertIf
-            if (ExternalAssetOverrideRegistry.TryGetAncientMapIconOutlinePath(instance, out var externalPath) &&
-                AssetPathDiagnostics.Exists(externalPath, instance,
+            if (!ContentAssetOverridePatchHelper.TryUseExternalCompressedTexturePathAsTexture2DOverride(
+                    instance,
+                    ref result,
+                    () => ExternalAssetOverrideRegistry.TryGetAncientMapIconOutlinePath(instance, out var path)
+                        ? path
+                        : null,
                     "ExternalAssetOverrideRegistry.AncientMapIconOutlinePath"))
-            {
-                result = ResourceLoader.Load<CompressedTexture2D>(externalPath);
                 return false;
-            }
 
             return ContentAssetOverridePatchHelper.TryUseCompressedTextureAsTexture2DOverride<
                 IModAncientEventAssetOverrides>(
@@ -2454,13 +2502,14 @@ namespace STS2RitsuLib.Scaffolding.Content.Patches
 
         private static bool TryAncientRunHistoryIcon(AncientEventModel instance, ref Texture2D result)
         {
-            if (ExternalAssetOverrideRegistry.TryGetAncientRunHistoryIconPath(instance, out var externalPath) &&
-                AssetPathDiagnostics.Exists(externalPath, instance,
+            if (!ContentAssetOverridePatchHelper.TryUseExternalCompressedTexturePathAsTexture2DOverride(
+                    instance,
+                    ref result,
+                    () => ExternalAssetOverrideRegistry.TryGetAncientRunHistoryIconPath(instance, out var path)
+                        ? path
+                        : null,
                     "ExternalAssetOverrideRegistry.AncientRunHistoryIconPath"))
-            {
-                result = ResourceLoader.Load<CompressedTexture2D>(externalPath);
                 return false;
-            }
 
             return ContentAssetOverridePatchHelper.TryUseCompressedTextureAsTexture2DOverride<
                 IModAncientEventAssetOverrides>(
@@ -2472,13 +2521,14 @@ namespace STS2RitsuLib.Scaffolding.Content.Patches
 
         private static bool TryAncientRunHistoryIconOutline(AncientEventModel instance, ref Texture2D result)
         {
-            if (ExternalAssetOverrideRegistry.TryGetAncientRunHistoryIconOutlinePath(instance, out var externalPath) &&
-                AssetPathDiagnostics.Exists(externalPath, instance,
+            if (!ContentAssetOverridePatchHelper.TryUseExternalCompressedTexturePathAsTexture2DOverride(
+                    instance,
+                    ref result,
+                    () => ExternalAssetOverrideRegistry.TryGetAncientRunHistoryIconOutlinePath(instance, out var path)
+                        ? path
+                        : null,
                     "ExternalAssetOverrideRegistry.AncientRunHistoryIconOutlinePath"))
-            {
-                result = ResourceLoader.Load<CompressedTexture2D>(externalPath);
                 return false;
-            }
 
             return ContentAssetOverridePatchHelper.TryUseCompressedTextureAsTexture2DOverride<
                 IModAncientEventAssetOverrides>(
@@ -2585,13 +2635,14 @@ namespace STS2RitsuLib.Scaffolding.Content.Patches
         public static bool Prefix(AfflictionModel __instance, ref string __result)
             // ReSharper restore InconsistentNaming
         {
-            if (ExternalAssetOverrideRegistry.TryGetAfflictionOverlayPath(__instance, out var externalPath) &&
-                AssetPathDiagnostics.Exists(externalPath, __instance,
+            if (!ContentAssetOverridePatchHelper.TryUseExternalPathOverride(
+                    __instance,
+                    ref __result,
+                    () => ExternalAssetOverrideRegistry.TryGetAfflictionOverlayPath(__instance, out var path)
+                        ? path
+                        : null,
                     "ExternalAssetOverrideRegistry.AfflictionOverlayPath"))
-            {
-                __result = externalPath;
                 return false;
-            }
 
             return ContentAssetOverridePatchHelper.TryUseStringOverride<IModAfflictionAssetOverrides>(
                 __instance, ref __result, o => o.CustomOverlayScenePath,
@@ -2632,8 +2683,13 @@ namespace STS2RitsuLib.Scaffolding.Content.Patches
                 return false;
             }
 
-            if (ExternalAssetOverrideRegistry.TryGetAfflictionOverlayPath(__instance, out var externalPath) &&
-                AssetPathDiagnostics.Exists(externalPath, __instance,
+            var externalOverlayPath = string.Empty;
+            if (!ContentAssetOverridePatchHelper.TryUseExternalPathOverride(
+                    __instance,
+                    ref externalOverlayPath,
+                    () => ExternalAssetOverrideRegistry.TryGetAfflictionOverlayPath(__instance, out var path)
+                        ? path
+                        : null,
                     "ExternalAssetOverrideRegistry.AfflictionOverlayPath"))
             {
                 __result = true;
@@ -2687,11 +2743,16 @@ namespace STS2RitsuLib.Scaffolding.Content.Patches
                 return false;
             }
 
-            if (ExternalAssetOverrideRegistry.TryGetAfflictionOverlayPath(__instance, out var externalPath) &&
-                AssetPathDiagnostics.Exists(externalPath, __instance,
+            var externalOverlayPath = string.Empty;
+            if (!ContentAssetOverridePatchHelper.TryUseExternalPathOverride(
+                    __instance,
+                    ref externalOverlayPath,
+                    () => ExternalAssetOverrideRegistry.TryGetAfflictionOverlayPath(__instance, out var path)
+                        ? path
+                        : null,
                     "ExternalAssetOverrideRegistry.AfflictionOverlayPath"))
             {
-                __result = ResourceLoader.Load<PackedScene>(externalPath).Instantiate<Control>();
+                __result = ResourceLoader.Load<PackedScene>(externalOverlayPath).Instantiate<Control>();
                 return false;
             }
 
@@ -2755,13 +2816,14 @@ namespace STS2RitsuLib.Scaffolding.Content.Patches
         public static bool Prefix(EnchantmentModel __instance, ref string __result)
             // ReSharper restore InconsistentNaming
         {
-            if (ExternalAssetOverrideRegistry.TryGetEnchantmentIconPath(__instance, out var externalPath) &&
-                AssetPathDiagnostics.Exists(externalPath, __instance,
+            if (!ContentAssetOverridePatchHelper.TryUseExternalPathOverride(
+                    __instance,
+                    ref __result,
+                    () => ExternalAssetOverrideRegistry.TryGetEnchantmentIconPath(__instance, out var path)
+                        ? path
+                        : null,
                     "ExternalAssetOverrideRegistry.EnchantmentIconPath"))
-            {
-                __result = externalPath;
                 return false;
-            }
 
             return ContentAssetOverridePatchHelper.TryUseStringOverride<IModEnchantmentAssetOverrides>(
                 __instance, ref __result, o => o.CustomIconPath,
