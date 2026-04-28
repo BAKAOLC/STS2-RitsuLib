@@ -53,24 +53,34 @@ namespace STS2RitsuLib.Settings.RunSidecar.Patches
         /// </summary>
         public sealed class DeleteCurrentRun : IPatchMethod
         {
-            /// <summary>Unique id used by the mod patch registry.</summary>
+            /// <summary>
+            ///     Unique id used by the mod patch registry.
+            /// </summary>
             public static string PatchId => "ritsulib_run_sidecar_delete_current_run_prefix";
 
-            /// <summary>When false, a patch failure does not abort the rest of the mod bootstrap.</summary>
+            /// <summary>
+            ///     When false, a patch failure does not abort the rest of the mod bootstrap.
+            /// </summary>
             public static bool IsCritical => false;
 
-            /// <summary>Short human-readable description for logs and diagnostics.</summary>
+            /// <summary>
+            ///     Short human-readable description for logs and diagnostics.
+            /// </summary>
             public static string Description =>
                 "Delete run sidecar folder before SaveManager.DeleteCurrentRun removes the run save file";
 
-            /// <summary>Returns the Harmony target methods for this patch.</summary>
+            /// <summary>
+            ///     Returns the Harmony target methods for this patch.
+            /// </summary>
             /// <returns>Targets for parameterless <c>SaveManager.DeleteCurrentRun()</c>.</returns>
             public static ModPatchTarget[] GetTargets()
             {
                 return [new(typeof(SaveManager), nameof(SaveManager.DeleteCurrentRun), Type.EmptyTypes)];
             }
 
-            /// <summary>Loads the current run save, then removes its sidecar directory before vanilla deletes the file.</summary>
+            /// <summary>
+            ///     Loads the current run save, then removes its sidecar directory before vanilla deletes the file.
+            /// </summary>
             /// <param name="__instance">The save manager instance.</param>
             // ReSharper disable once InconsistentNaming
             public static void Prefix(SaveManager __instance)
@@ -85,17 +95,25 @@ namespace STS2RitsuLib.Settings.RunSidecar.Patches
         /// </summary>
         public sealed class DeleteCurrentMultiplayerRun : IPatchMethod
         {
-            /// <summary>Unique id used by the mod patch registry.</summary>
+            /// <summary>
+            ///     Unique id used by the mod patch registry.
+            /// </summary>
             public static string PatchId => "ritsulib_run_sidecar_delete_current_mp_run_prefix";
 
-            /// <summary>When false, a patch failure does not abort the rest of the mod bootstrap.</summary>
+            /// <summary>
+            ///     When false, a patch failure does not abort the rest of the mod bootstrap.
+            /// </summary>
             public static bool IsCritical => false;
 
-            /// <summary>Short human-readable description for logs and diagnostics.</summary>
+            /// <summary>
+            ///     Short human-readable description for logs and diagnostics.
+            /// </summary>
             public static string Description =>
                 "Delete run sidecar folder before SaveManager.DeleteCurrentMultiplayerRun removes the mp run save file";
 
-            /// <summary>Returns the Harmony target methods for this patch.</summary>
+            /// <summary>
+            ///     Returns the Harmony target methods for this patch.
+            /// </summary>
             /// <returns>Targets for parameterless <c>SaveManager.DeleteCurrentMultiplayerRun()</c>.</returns>
             public static ModPatchTarget[] GetTargets()
             {
@@ -105,7 +123,9 @@ namespace STS2RitsuLib.Settings.RunSidecar.Patches
                 ];
             }
 
-            /// <summary>Loads the canonical mp run save for the local player, then removes its sidecar directory.</summary>
+            /// <summary>
+            ///     Loads the canonical mp run save for the local player, then removes its sidecar directory.
+            /// </summary>
             /// <param name="__instance">The save manager instance.</param>
             // ReSharper disable once InconsistentNaming
             public static void Prefix(SaveManager __instance)

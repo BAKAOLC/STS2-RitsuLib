@@ -9,7 +9,9 @@ namespace STS2RitsuLib.TopBar
     /// </summary>
     public interface IModTopBarButtonHandler
     {
-        /// <summary>Invoked when the button is released (after the click tween starts).</summary>
+        /// <summary>
+        ///     Invoked when the button is released (after the click tween starts).
+        /// </summary>
         void OnClick(ModTopBarButtonContext context);
 
         /// <summary>

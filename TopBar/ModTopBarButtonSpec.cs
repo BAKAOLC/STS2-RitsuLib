@@ -13,10 +13,14 @@ namespace STS2RitsuLib.TopBar
     /// </remarks>
     public sealed record ModTopBarButtonSpec
     {
-        /// <summary>Vanilla loc table that the button's hover-tip resolves against.</summary>
+        /// <summary>
+        ///     Vanilla loc table that the button's hover-tip resolves against.
+        /// </summary>
         public const string HoverTipLocTable = ModTopBarButtonLocConstants.HoverTipLocTable;
 
-        /// <summary>Godot resource path for the button icon (for example <c>res://my_mod/icon.png</c>).</summary>
+        /// <summary>
+        ///     Godot resource path for the button icon (for example <c>res://my_mod/icon.png</c>).
+        /// </summary>
         public string? IconPath { get; init; }
 
         /// <summary>
@@ -64,7 +68,9 @@ namespace STS2RitsuLib.TopBar
         public Func<ModTopBarButtonContext, int>? CountProvider { get; init; }
     }
 
-    /// <summary>Shared constants for the top-bar-button localization convention.</summary>
+    /// <summary>
+    ///     Shared constants for the top-bar-button localization convention.
+    /// </summary>
     internal static class ModTopBarButtonLocConstants
     {
         public const string HoverTipLocTable = "static_hover_tips";

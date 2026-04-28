@@ -102,7 +102,9 @@ namespace STS2RitsuLib.CardPiles.Nodes
         /// </summary>
         public ModTopBarButtonDefinition? ActionDefinition { get; private set; }
 
-        /// <summary>True when this button is an action-mode instance (has no backing pile).</summary>
+        /// <summary>
+        ///     True when this button is an action-mode instance (has no backing pile).
+        /// </summary>
         public bool IsActionMode => ActionDefinition != null;
 
         private Control CountOffsetTarget => _countContainer ?? _countLabel;

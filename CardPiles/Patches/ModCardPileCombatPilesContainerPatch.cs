@@ -28,7 +28,9 @@ namespace STS2RitsuLib.CardPiles.Patches
         }
 
         // ReSharper disable InconsistentNaming
-        /// <summary>Injects mod bottom-row pile buttons after vanilla wiring completes.</summary>
+        /// <summary>
+        ///     Injects mod bottom-row pile buttons after vanilla wiring completes.
+        /// </summary>
         public static void Postfix(NCombatPilesContainer __instance)
         {
             ModCardPileInjector.InjectCombatButtons(__instance);
@@ -62,7 +64,9 @@ namespace STS2RitsuLib.CardPiles.Patches
         }
 
         // ReSharper disable InconsistentNaming
-        /// <summary>Binds each mod pile button to the current player.</summary>
+        /// <summary>
+        ///     Binds each mod pile button to the current player.
+        /// </summary>
         public static void Postfix(NCombatPilesContainer __instance, Player player)
         {
             foreach (var button in __instance.GetChildren().OfType<NModCardPileButton>())

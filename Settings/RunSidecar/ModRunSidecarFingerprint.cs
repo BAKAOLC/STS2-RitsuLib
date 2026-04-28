@@ -130,27 +130,39 @@ namespace STS2RitsuLib.Settings.RunSidecar
     /// </summary>
     public sealed class ModRunSidecarFingerprintDto
     {
-        /// <summary>Save profile slot id; must match the live fingerprint when reading a sidecar file.</summary>
+        /// <summary>
+        ///     Save profile slot id; must match the live fingerprint when reading a sidecar file.
+        /// </summary>
         [JsonPropertyName("profile_id")]
         public int ProfileId { get; set; }
 
-        /// <summary>Run start instant in Unix seconds.</summary>
+        /// <summary>
+        ///     Run start instant in Unix seconds.
+        /// </summary>
         [JsonPropertyName("run_start_time_unix")]
         public long RunStartTimeUnix { get; set; }
 
-        /// <summary>Ordinal of the run game mode at the time the sidecar was written.</summary>
+        /// <summary>
+        ///     Ordinal of the run game mode at the time the sidecar was written.
+        /// </summary>
         [JsonPropertyName("game_mode_ordinal")]
         public int GameModeOrdinal { get; set; }
 
-        /// <summary>Ascension level for the run.</summary>
+        /// <summary>
+        ///     Ascension level for the run.
+        /// </summary>
         [JsonPropertyName("ascension")]
         public int Ascension { get; set; }
 
-        /// <summary>Local player net id for this client when the sidecar was written.</summary>
+        /// <summary>
+        ///     Local player net id for this client when the sidecar was written.
+        /// </summary>
         [JsonPropertyName("local_net_id")]
         public ulong LocalNetId { get; set; }
 
-        /// <summary>RNG string seed for the run; null in JSON is treated as empty when deserialized.</summary>
+        /// <summary>
+        ///     RNG string seed for the run; null in JSON is treated as empty when deserialized.
+        /// </summary>
         [JsonPropertyName("rng_string_seed")]
         public string? RngStringSeed { get; set; }
     }

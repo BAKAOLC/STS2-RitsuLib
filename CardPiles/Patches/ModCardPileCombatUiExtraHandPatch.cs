@@ -28,7 +28,9 @@ namespace STS2RitsuLib.CardPiles.Patches
         }
 
         // ReSharper disable InconsistentNaming
-        /// <summary>Wires up ExtraHand containers after vanilla resolves its child references.</summary>
+        /// <summary>
+        ///     Wires up ExtraHand containers after vanilla resolves its child references.
+        /// </summary>
         public static void Postfix(NCombatUi __instance)
         {
             ModCardPileInjector.InjectExtraHandContainers(__instance);
@@ -58,7 +60,9 @@ namespace STS2RitsuLib.CardPiles.Patches
         }
 
         // ReSharper disable InconsistentNaming
-        /// <summary>Binds each injected ExtraHand container to the local player.</summary>
+        /// <summary>
+        ///     Binds each injected ExtraHand container to the local player.
+        /// </summary>
         public static void Postfix(NCombatUi __instance, CombatState state)
         {
             var me = LocalContext.GetMe(state);
