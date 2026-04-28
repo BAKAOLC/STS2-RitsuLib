@@ -1,3 +1,4 @@
+using System.Collections;
 using Godot;
 using MegaCrit.Sts2.Core.Models;
 
@@ -128,11 +129,55 @@ namespace STS2RitsuLib.Scaffolding.Content.Patches
         private static readonly Dictionary<string, Func<AfflictionModel, string?>> AfflictionOverlayPathProviders =
             new(StringComparer.Ordinal);
 
-        private static readonly Dictionary<string, Func<AfflictionModel, PackedScene?>> AfflictionOverlaySceneProviders =
-            new(StringComparer.Ordinal);
+        private static readonly Dictionary<string, Func<AfflictionModel, PackedScene?>>
+            AfflictionOverlaySceneProviders =
+                new(StringComparer.Ordinal);
 
         private static readonly Dictionary<string, Func<EnchantmentModel, string?>> EnchantmentIconPathProviders =
             new(StringComparer.Ordinal);
+
+        private static readonly IDictionary[] ProviderMaps =
+        [
+            RelicIconPathProviders,
+            RelicIconOutlinePathProviders,
+            RelicIconTextureProviders,
+            RelicIconOutlineTextureProviders,
+            RelicBigIconTextureProviders,
+            PowerIconPathProviders,
+            PowerIconTextureProviders,
+            PowerBigIconTextureProviders,
+            PotionImagePathProviders,
+            PotionOutlinePathProviders,
+            PotionImageTextureProviders,
+            PotionOutlineTextureProviders,
+            OrbIconPathProviders,
+            OrbIconTextureProviders,
+            OrbVisualsScenePathProviders,
+            ActBackgroundScenePathProviders,
+            ActRestSiteBackgroundPathProviders,
+            ActMapTopBgPathProviders,
+            ActMapMidBgPathProviders,
+            ActMapBotBgPathProviders,
+            EventBackgroundScenePathProviders,
+            EventLayoutScenePathProviders,
+            EventInitialPortraitTextureProviders,
+            EventBackgroundSceneProviders,
+            EventVfxSceneProviders,
+            EncounterScenePathProviders,
+            EncounterBackgroundScenePathProviders,
+            EncounterBackgroundLayersDirProviders,
+            EncounterBossNodePathProviders,
+            EncounterMapNodeAssetPathProviders,
+            EncounterRunHistoryIconPathProviders,
+            EncounterRunHistoryIconOutlinePathProviders,
+            AncientMapIconPathProviders,
+            AncientMapIconOutlinePathProviders,
+            AncientRunHistoryIconPathProviders,
+            AncientRunHistoryIconOutlinePathProviders,
+            AfflictionOverlayPathProviders,
+            AfflictionOverlaySceneProviders,
+            EnchantmentIconPathProviders,
+        ];
 
         /// <summary>
         ///     Registers or replaces an external provider for relic icon paths.
@@ -442,7 +487,8 @@ namespace STS2RitsuLib.Scaffolding.Content.Patches
         /// <summary>
         ///     Registers or replaces an external provider for affliction overlay packed scenes.
         /// </summary>
-        public static void RegisterAfflictionOverlaySceneProvider(string key, Func<AfflictionModel, PackedScene?> provider)
+        public static void RegisterAfflictionOverlaySceneProvider(string key,
+            Func<AfflictionModel, PackedScene?> provider)
         {
             Register(AfflictionOverlaySceneProviders, key, provider);
         }
@@ -463,45 +509,7 @@ namespace STS2RitsuLib.Scaffolding.Content.Patches
             ArgumentException.ThrowIfNullOrWhiteSpace(key);
             lock (SyncRoot)
             {
-                return RelicIconPathProviders.Remove(key) |
-                       RelicIconOutlinePathProviders.Remove(key) |
-                       RelicIconTextureProviders.Remove(key) |
-                       RelicIconOutlineTextureProviders.Remove(key) |
-                       RelicBigIconTextureProviders.Remove(key) |
-                       PowerIconPathProviders.Remove(key) |
-                       PowerIconTextureProviders.Remove(key) |
-                       PowerBigIconTextureProviders.Remove(key) |
-                       PotionImagePathProviders.Remove(key) |
-                       PotionOutlinePathProviders.Remove(key) |
-                       PotionImageTextureProviders.Remove(key) |
-                       PotionOutlineTextureProviders.Remove(key) |
-                       OrbIconPathProviders.Remove(key) |
-                       OrbIconTextureProviders.Remove(key) |
-                       OrbVisualsScenePathProviders.Remove(key) |
-                       ActBackgroundScenePathProviders.Remove(key) |
-                       ActRestSiteBackgroundPathProviders.Remove(key) |
-                       ActMapTopBgPathProviders.Remove(key) |
-                       ActMapMidBgPathProviders.Remove(key) |
-                       ActMapBotBgPathProviders.Remove(key) |
-                       EventBackgroundScenePathProviders.Remove(key) |
-                       EventLayoutScenePathProviders.Remove(key) |
-                       EventInitialPortraitTextureProviders.Remove(key) |
-                       EventBackgroundSceneProviders.Remove(key) |
-                       EventVfxSceneProviders.Remove(key) |
-                       EncounterScenePathProviders.Remove(key) |
-                       EncounterBackgroundScenePathProviders.Remove(key) |
-                       EncounterBackgroundLayersDirProviders.Remove(key) |
-                       EncounterBossNodePathProviders.Remove(key) |
-                       EncounterMapNodeAssetPathProviders.Remove(key) |
-                       EncounterRunHistoryIconPathProviders.Remove(key) |
-                       EncounterRunHistoryIconOutlinePathProviders.Remove(key) |
-                       AncientMapIconPathProviders.Remove(key) |
-                       AncientMapIconOutlinePathProviders.Remove(key) |
-                       AncientRunHistoryIconPathProviders.Remove(key) |
-                       AncientRunHistoryIconOutlinePathProviders.Remove(key) |
-                       AfflictionOverlayPathProviders.Remove(key) |
-                       AfflictionOverlaySceneProviders.Remove(key) |
-                       EnchantmentIconPathProviders.Remove(key);
+                return UnregisterFromAllBuckets(key);
             }
         }
 
@@ -512,46 +520,28 @@ namespace STS2RitsuLib.Scaffolding.Content.Patches
         {
             lock (SyncRoot)
             {
-                RelicIconPathProviders.Clear();
-                RelicIconOutlinePathProviders.Clear();
-                RelicIconTextureProviders.Clear();
-                RelicIconOutlineTextureProviders.Clear();
-                RelicBigIconTextureProviders.Clear();
-                PowerIconPathProviders.Clear();
-                PowerIconTextureProviders.Clear();
-                PowerBigIconTextureProviders.Clear();
-                PotionImagePathProviders.Clear();
-                PotionOutlinePathProviders.Clear();
-                PotionImageTextureProviders.Clear();
-                PotionOutlineTextureProviders.Clear();
-                OrbIconPathProviders.Clear();
-                OrbIconTextureProviders.Clear();
-                OrbVisualsScenePathProviders.Clear();
-                ActBackgroundScenePathProviders.Clear();
-                ActRestSiteBackgroundPathProviders.Clear();
-                ActMapTopBgPathProviders.Clear();
-                ActMapMidBgPathProviders.Clear();
-                ActMapBotBgPathProviders.Clear();
-                EventBackgroundScenePathProviders.Clear();
-                EventLayoutScenePathProviders.Clear();
-                EventInitialPortraitTextureProviders.Clear();
-                EventBackgroundSceneProviders.Clear();
-                EventVfxSceneProviders.Clear();
-                EncounterScenePathProviders.Clear();
-                EncounterBackgroundScenePathProviders.Clear();
-                EncounterBackgroundLayersDirProviders.Clear();
-                EncounterBossNodePathProviders.Clear();
-                EncounterMapNodeAssetPathProviders.Clear();
-                EncounterRunHistoryIconPathProviders.Clear();
-                EncounterRunHistoryIconOutlinePathProviders.Clear();
-                AncientMapIconPathProviders.Clear();
-                AncientMapIconOutlinePathProviders.Clear();
-                AncientRunHistoryIconPathProviders.Clear();
-                AncientRunHistoryIconOutlinePathProviders.Clear();
-                AfflictionOverlayPathProviders.Clear();
-                AfflictionOverlaySceneProviders.Clear();
-                EnchantmentIconPathProviders.Clear();
+                ClearAllBuckets();
             }
+        }
+
+        private static bool UnregisterFromAllBuckets(string key)
+        {
+            var removed = false;
+            foreach (var map in ProviderMaps)
+            {
+                if (!map.Contains(key))
+                    continue;
+                map.Remove(key);
+                removed = true;
+            }
+
+            return removed;
+        }
+
+        private static void ClearAllBuckets()
+        {
+            foreach (var map in ProviderMaps)
+                map.Clear();
         }
 
         internal static bool TryGetRelicIconPath(RelicModel model, out string value)
