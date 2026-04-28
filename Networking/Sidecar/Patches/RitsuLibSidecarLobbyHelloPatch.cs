@@ -68,4 +68,29 @@ namespace STS2RitsuLib.Networking.Sidecar.Patches
             }
         }
     }
+
+    /// <summary>
+    ///     When the host’s lobby already existed with zero clients, ctor-time handshake had no peers; send again after the
+    ///     first (or each) remote client connects.
+    /// </summary>
+    internal sealed class RitsuLibSidecarStartRunLobbyHostClientConnectedPatch : IPatchMethod
+    {
+        public static string PatchId => "ritsulib_sidecar_lobby_hello_host_client_connected";
+
+        public static bool IsCritical => false;
+
+        public static string Description => "Sidecar handshake after StartRunLobby host receives a client connection";
+
+        public static ModPatchTarget[] GetTargets()
+        {
+            return [new(typeof(StartRunLobby), "OnConnectedToClientAsHost", [typeof(ulong)])];
+        }
+
+        // ReSharper disable once InconsistentNaming
+        public static void Postfix(StartRunLobby __instance, ulong playerId)
+        {
+            _ = playerId;
+            RitsuLibSidecarConnectionExchange.TrySendHelloForNetService(__instance.NetService);
+        }
+    }
 }

@@ -131,5 +131,42 @@ namespace STS2RitsuLib.Networking.Sidecar
 
             return true;
         }
+
+        /// <summary>
+        ///     Host sends the same raw envelope to every <see cref="NetHostGameService.ConnectedPeers" /> entry, without
+        ///     requiring <see cref="MegaCrit.Sts2.Core.Entities.Multiplayer.NetClientData.readyForBroadcasting" />. Use in lobby
+        ///     (or any phase before vanilla marks peers ready) when ready-only broadcast would skip every peer.
+        /// </summary>
+        public static bool TryBroadcastToAllConnectedClients(
+            INetGameService? netService,
+            byte[] envelope,
+            NetTransferMode mode,
+            int channel)
+        {
+            ArgumentNullException.ThrowIfNull(envelope);
+            if (netService is not NetHostGameService { IsConnected: true } host || host.NetHost == null)
+                return false;
+
+            var ops = 0;
+            var bytes = 0L;
+            foreach (var peer in host.ConnectedPeers)
+            {
+                host.NetHost.SendMessageToClient(peer.peerId, envelope, envelope.Length, mode, channel);
+                ops++;
+                bytes += envelope.Length;
+            }
+
+            if (ops <= 0)
+                return true;
+
+            RitsuLibSidecarTrafficCounters.AddOutgoing(ops, bytes);
+            RitsuLibSidecarNetTrace.TraceOutbound(
+                "host->all_connected",
+                envelope,
+                mode,
+                channel,
+                broadcastPeerCount: ops);
+            return true;
+        }
     }
 }

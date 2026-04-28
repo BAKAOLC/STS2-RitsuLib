@@ -100,6 +100,7 @@ namespace STS2RitsuLib
             patcher.RegisterPatch<RitsuLibSidecarNetHostReceivePatch>();
             patcher.RegisterPatch<RitsuLibSidecarNetClientReceivePatch>();
             patcher.RegisterPatch<RitsuLibSidecarLobbyHelloPatch>();
+            patcher.RegisterPatch<RitsuLibSidecarStartRunLobbyHostClientConnectedPatch>();
             patcher.RegisterPatch<RitsuLibSidecarChecksumDivergenceRelayPatch>();
             patcher.RegisterPatch<RunEndedLifecyclePatch>();
             patcher.RegisterPatch<CombatHookLifecyclePatch>();

@@ -177,6 +177,28 @@ namespace STS2RitsuLib.Networking.Sidecar
             return RitsuLibSidecarSend.TryBroadcastToReadyPeers(netService, env, mode, ch);
         }
 
+        /// <summary>Host → every connected client, including before vanilla marks peers ready to broadcast (e.g. lobby handshake).</summary>
+        public static bool TrySendAsHostBroadcastToAllConnected(
+            INetGameService? netService,
+            ulong opcode,
+            ReadOnlySpan<byte> payload,
+            RitsuLibSidecarDeliverySemantics deliverySemantics,
+            RitsuLibSidecarWireFlags extraFlags = RitsuLibSidecarWireFlags.None,
+            bool gzip = false,
+            ReadOnlySpan<byte> additionalHeaderExtension = default)
+        {
+            RitsuLibSidecarProtocol.EnsureDefaultHandlers();
+            var env = RitsuLibSidecar.CreateEnvelopeWithDelivery(
+                opcode,
+                payload,
+                deliverySemantics,
+                extraFlags,
+                gzip,
+                additionalHeaderExtension);
+            RitsuLibSidecarNetworkMapping.GetNetworkParameters(Resolve(deliverySemantics), out var mode, out var ch);
+            return RitsuLibSidecarSend.TryBroadcastToAllConnectedClients(netService, env, mode, ch);
+        }
+
         private static RitsuLibSidecarDeliverySemantics Resolve(RitsuLibSidecarDeliverySemantics s)
         {
             return s is RitsuLibSidecarDeliverySemantics.Unspecified

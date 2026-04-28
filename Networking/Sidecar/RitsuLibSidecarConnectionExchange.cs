@@ -34,7 +34,7 @@ namespace STS2RitsuLib.Networking.Sidecar
                 RitsuLibSidecarWire.SupportedWireFormatVersionMax,
                 RitsuLibSidecarPeerFeatures.ChunkedStreams);
             if (netService is NetHostGameService)
-                RitsuLibSidecarHighLevelSend.TrySendAsHostBroadcast(
+                RitsuLibSidecarHighLevelSend.TrySendAsHostBroadcastToAllConnected(
                     netService,
                     RitsuLibSidecarControlOpcodes.Handshake,
                     buf,
