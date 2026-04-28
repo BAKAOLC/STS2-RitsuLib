@@ -237,7 +237,8 @@ namespace STS2RitsuLib.CardPiles
                 spec.HoverTipScreenOffset,
                 spec.HoverTipPlacement,
                 spec.VisibleWhen,
-                spec.FlightTargetPositionResolver);
+                spec.FlightTargetPositionResolver,
+                spec.FlightStartPositionResolver);
 
             lock (SyncRoot)
             {

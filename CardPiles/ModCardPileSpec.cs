@@ -108,5 +108,11 @@ namespace STS2RitsuLib.CardPiles
         ///     target position for the tail/trail endpoint. Return null to use the default layout position.
         /// </summary>
         public Func<ModCardPileFlightTargetContext, Vector2?>? FlightTargetPositionResolver { get; init; }
+
+        /// <summary>
+        ///     Optional resolver called when a shuffle-style fly visual starts from this pile, allowing mods to
+        ///     provide a dynamic source/start position. Return null to use the default layout position.
+        /// </summary>
+        public Func<ModCardPileFlightStartContext, Vector2?>? FlightStartPositionResolver { get; init; }
     }
 }

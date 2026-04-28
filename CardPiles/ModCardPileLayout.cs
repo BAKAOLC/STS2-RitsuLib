@@ -1,5 +1,6 @@
 using Godot;
 using MegaCrit.Sts2.Core.Combat;
+using MegaCrit.Sts2.Core.Entities.Cards;
 using MegaCrit.Sts2.Core.Nodes;
 using MegaCrit.Sts2.Core.Nodes.Cards;
 using MegaCrit.Sts2.Core.Nodes.Rooms;
@@ -29,6 +30,20 @@ namespace STS2RitsuLib.CardPiles
                 return defaultPosition;
 
             var context = new ModCardPileFlightTargetContext(definition, node, defaultPosition);
+            return resolver(context) ?? defaultPosition;
+        }
+
+        public static Vector2 GetShuffleStartPosition(
+            ModCardPileDefinition definition,
+            CardPile startPile,
+            CardPile targetPile)
+        {
+            var defaultPosition = GetDefaultTargetPosition(definition, null);
+            var resolver = definition.FlightStartPositionResolver;
+            if (resolver == null)
+                return defaultPosition;
+
+            var context = new ModCardPileFlightStartContext(definition, startPile, targetPile, defaultPosition);
             return resolver(context) ?? defaultPosition;
         }
 
