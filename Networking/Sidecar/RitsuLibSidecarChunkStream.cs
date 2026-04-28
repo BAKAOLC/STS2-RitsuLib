@@ -26,7 +26,8 @@ namespace STS2RitsuLib.Networking.Sidecar
             ulong userOpcode,
             ReadOnlyMemory<byte> full,
             RitsuLibSidecarDeliverySemantics semantics = RitsuLibSidecarDeliverySemantics.StableSync,
-            int maxSegment = RitsuLibSidecarChunkBinary.DefaultMaxSegmentDataBytes)
+            int maxSegment = RitsuLibSidecarChunkBinary.DefaultMaxSegmentDataBytes,
+            IProgress<RitsuLibSidecarChunkStreamSendProgress>? progress = null)
         {
             SendImpl(
                 runManager,
@@ -35,7 +36,8 @@ namespace STS2RitsuLib.Networking.Sidecar
                 userOpcode,
                 full,
                 semantics,
-                maxSegment);
+                maxSegment,
+                progress);
         }
 
         /// <summary>Sends a chunked stream from host to a single client.</summary>
@@ -45,7 +47,8 @@ namespace STS2RitsuLib.Networking.Sidecar
             ulong userOpcode,
             ReadOnlyMemory<byte> full,
             RitsuLibSidecarDeliverySemantics semantics = RitsuLibSidecarDeliverySemantics.StableSync,
-            int maxSegment = RitsuLibSidecarChunkBinary.DefaultMaxSegmentDataBytes)
+            int maxSegment = RitsuLibSidecarChunkBinary.DefaultMaxSegmentDataBytes,
+            IProgress<RitsuLibSidecarChunkStreamSendProgress>? progress = null)
         {
             SendImpl(
                 runManager,
@@ -54,7 +57,8 @@ namespace STS2RitsuLib.Networking.Sidecar
                 userOpcode,
                 full,
                 semantics,
-                maxSegment);
+                maxSegment,
+                progress);
         }
 
         /// <summary>Host: sends a chunked stream to every ready-to-broadcast peer.</summary>
@@ -63,7 +67,8 @@ namespace STS2RitsuLib.Networking.Sidecar
             ulong userOpcode,
             ReadOnlyMemory<byte> full,
             RitsuLibSidecarDeliverySemantics semantics = RitsuLibSidecarDeliverySemantics.StableSync,
-            int maxSegment = RitsuLibSidecarChunkBinary.DefaultMaxSegmentDataBytes)
+            int maxSegment = RitsuLibSidecarChunkBinary.DefaultMaxSegmentDataBytes,
+            IProgress<RitsuLibSidecarChunkStreamSendProgress>? progress = null)
         {
             SendImpl(
                 runManager,
@@ -72,7 +77,8 @@ namespace STS2RitsuLib.Networking.Sidecar
                 userOpcode,
                 full,
                 semantics,
-                maxSegment);
+                maxSegment,
+                progress);
         }
 
         private static void SendImpl(
@@ -82,7 +88,8 @@ namespace STS2RitsuLib.Networking.Sidecar
             ulong userOpcode,
             ReadOnlyMemory<byte> full,
             RitsuLibSidecarDeliverySemantics semantics,
-            int maxSegment)
+            int maxSegment,
+            IProgress<RitsuLibSidecarChunkStreamSendProgress>? progress)
         {
             RitsuLibSidecarProtocol.EnsureDefaultHandlers();
             ArgumentOutOfRangeException.ThrowIfLessThan(maxSegment, 1);
@@ -98,6 +105,7 @@ namespace STS2RitsuLib.Networking.Sidecar
             var span = full.Span;
             var count = (int)((totalU + (uint)maxSegment - 1) / (uint)maxSegment);
             var frames = new byte[count][];
+            var logicalSent = 0L;
             for (var i = 0; i < count; i++)
             {
                 var off = i * maxSegment;
@@ -139,6 +147,9 @@ namespace STS2RitsuLib.Networking.Sidecar
                             semantics);
                         break;
                 }
+
+                logicalSent += len;
+                progress?.Report(new(i + 1, count, logicalSent, totalU));
             }
 
             RitsuLibSidecarChunkOutboundRegistry.Register(

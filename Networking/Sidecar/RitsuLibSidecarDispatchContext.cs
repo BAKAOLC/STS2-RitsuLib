@@ -4,7 +4,8 @@ namespace STS2RitsuLib.Networking.Sidecar
 {
     /// <summary>
     ///     Arguments for a received sidecar envelope after magic detection, length checks, optional decompression, and
-    ///     opcode dispatch.
+    ///     opcode dispatch. Payload and header extension memory may reference the transient receive buffer until the
+    ///     callback returns; use <see cref="WithOwnedEnvelopeMemory" /> before deferring work.
     /// </summary>
     public readonly struct RitsuLibSidecarDispatchContext
     {
@@ -50,5 +51,26 @@ namespace STS2RitsuLib.Networking.Sidecar
 
         /// <summary>Convenience: logical payload memory.</summary>
         public ReadOnlyMemory<byte> Payload => Envelope.Payload;
+
+        /// <summary>
+        ///     Copies header extension and logical payload into new arrays so the context stays valid after the
+        ///     multiplayer receive callback returns or when work is deferred to the Godot main loop.
+        /// </summary>
+        public RitsuLibSidecarDispatchContext WithOwnedEnvelopeMemory()
+        {
+            var ext = Envelope.HeaderExtension.Length == 0
+                ? ReadOnlyMemory<byte>.Empty
+                : Envelope.HeaderExtension.ToArray();
+            var pay = Envelope.Payload.Length == 0
+                ? ReadOnlyMemory<byte>.Empty
+                : Envelope.Payload.ToArray();
+            var owned = new RitsuLibSidecarEnvelope.ParsedEnvelope(
+                Envelope.WireFormatVersion,
+                Envelope.Flags,
+                Envelope.Opcode,
+                ext,
+                pay);
+            return new(SenderNetId, TransferMode, Channel, IsHostIngest, owned);
+        }
     }
 }

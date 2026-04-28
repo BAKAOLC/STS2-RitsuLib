@@ -1,4 +1,5 @@
 using MegaCrit.Sts2.Core.Multiplayer;
+using MegaCrit.Sts2.Core.Multiplayer.Game;
 using MegaCrit.Sts2.Core.Runs;
 
 namespace STS2RitsuLib.Networking.Sidecar
@@ -7,15 +8,15 @@ namespace STS2RitsuLib.Networking.Sidecar
     public static class RitsuLibSidecarConnectionExchange
     {
         /// <summary>
-        ///     If a <c>RunManager</c> with <c>NetService</c> exists, sends a
-        ///     <see cref="RitsuLibSidecarControlOpcodes.Handshake" /> with the current wire version and
-        ///     <see cref="RitsuLibSidecarPeerFeatures.ChunkedStreams" />; host uses broadcast, client uses
-        ///     <see cref="RitsuLibSidecarHighLevelSend.TrySendAsClient" />. No-op if not in a run.
+        ///     When <see cref="RunManager.Instance" /> has a non-singleplayer <see cref="RunManager.NetService" />,
+        ///     sends a <see cref="RitsuLibSidecarControlOpcodes.Handshake" /> with the current wire version and
+        ///     <see cref="RitsuLibSidecarPeerFeatures.ChunkedStreams" /> (host broadcast, client to host). No-op if
+        ///     <c>RunManager</c> is missing, <c>NetService</c> is null, or the session is single-player.
         /// </summary>
         public static void TrySendLocalHello()
         {
             var rm = RunManager.Instance;
-            if (rm?.NetService == null)
+            if (rm?.NetService is not { Type: not NetGameType.Singleplayer })
                 return;
 
             RitsuLibSidecarProtocol.EnsureDefaultHandlers();

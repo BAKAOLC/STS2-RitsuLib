@@ -2,6 +2,11 @@ using MegaCrit.Sts2.Core.Multiplayer.Transport;
 
 namespace STS2RitsuLib.Networking.Sidecar
 {
+    /// <summary>
+    ///     Sidecar demux runs inside Harmony prefixes on <see cref="MegaCrit.Sts2.Core.Multiplayer.NetHostGameService" />
+    ///     / client receive entry points; <see cref="RitsuLibSidecarBus.Dispatch" /> therefore shares that callback’s
+    ///     threading model (not documented as Godot main thread).
+    /// </summary>
     internal static class RitsuLibSidecarReceivePipeline
     {
         /// <summary>
@@ -21,12 +26,12 @@ namespace STS2RitsuLib.Networking.Sidecar
             var outcome = RitsuLibSidecarEnvelope.TryParse(packetBytes, out var parsed);
             if (outcome != RitsuLibSidecarEnvelope.ParseOutcome.Ok)
             {
-                RitsuLibFramework.Logger.Warn(
-                    $"[Sidecar] magic matched but envelope rejected ({outcome}), len={packetBytes.Length}, ch={channel}");
+                RitsuLibSidecarNetTrace.WarnEnvelopeRejected(outcome, packetBytes.Length, channel);
                 return true;
             }
 
             var ctx = new RitsuLibSidecarDispatchContext(senderId, mode, channel, isHostIngest, parsed);
+            RitsuLibSidecarTrafficCounters.AddIncoming(packetBytes.Length, ctx.Payload.Length);
             RitsuLibSidecarChecksumDiagnostics.EnsureSubscribed();
             RitsuLibSidecarPacketLog.IncomingParsed(in ctx);
             RitsuLibSidecarBus.Dispatch(in ctx);

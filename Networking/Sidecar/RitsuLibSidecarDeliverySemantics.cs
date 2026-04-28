@@ -14,8 +14,9 @@ namespace STS2RitsuLib.Networking.Sidecar
         BestEffort = 0,
 
         /// <summary>
-        ///     Reliable, ordered with respect to other reliable sidecar traffic on the same ENet stream; use for
-        ///     state that must not diverge (same spirit as vanilla game action sync, but for sidecar payloads only).
+        ///     Reliable, ordered with respect to other reliable sidecar traffic on the same ENet stream. This does not
+        ///     by itself marshal handler code to the Godot main thread or merge with vanilla game action serialization;
+        ///     it only selects transport parameters for sidecar envelopes.
         /// </summary>
         StableSync = 1,
 

@@ -20,7 +20,11 @@ namespace STS2RitsuLib.Networking.Sidecar
         void Encode(IBufferWriter<byte> writer, T message);
     }
 
-    /// <summary>Apply a decoded value in a game-style sync path (e.g. mutate state; you own ordering rules).</summary>
+    /// <summary>
+    ///     Apply a decoded value after <see cref="IRitsuLibSidecarMessageCodec{T}.TryDecode" />; thread matches the
+    ///     sidecar receive path unless you register with
+    ///     <see cref="RitsuLibSidecarMessageBinding.RegisterForGodotMainLoop{T}" />.
+    /// </summary>
     public interface IRitsuLibSidecarSyncProcessor<in T>
         where T : notnull
     {

@@ -43,6 +43,8 @@ namespace STS2RitsuLib.Networking.Sidecar
                 return false;
 
             client.NetClient.SendMessageToHost(envelope, envelope.Length, mode, channel);
+            RitsuLibSidecarTrafficCounters.AddOutgoing(1, envelope.Length);
+            RitsuLibSidecarNetTrace.DebugOutbound("client->host", envelope, mode, channel);
             return true;
         }
 
@@ -66,6 +68,8 @@ namespace STS2RitsuLib.Networking.Sidecar
                 return false;
 
             host.NetHost.SendMessageToClient(peerNetId, envelope, envelope.Length, mode, channel);
+            RitsuLibSidecarTrafficCounters.AddOutgoing(1, envelope.Length);
+            RitsuLibSidecarNetTrace.DebugOutbound("host->peer", envelope, mode, channel, peerNetId);
             return true;
         }
 
@@ -86,13 +90,26 @@ namespace STS2RitsuLib.Networking.Sidecar
             if (runManager?.NetService is not NetHostGameService { IsConnected: true } host || host.NetHost == null)
                 return false;
 
+            var ops = 0;
+            var bytes = 0L;
             foreach (var peer in host.ConnectedPeers)
             {
                 if (!peer.readyForBroadcasting)
                     continue;
 
                 host.NetHost.SendMessageToClient(peer.peerId, envelope, envelope.Length, mode, channel);
+                ops++;
+                bytes += envelope.Length;
             }
+
+            if (ops <= 0) return true;
+            RitsuLibSidecarTrafficCounters.AddOutgoing(ops, bytes);
+            RitsuLibSidecarNetTrace.DebugOutbound(
+                "host->broadcast",
+                envelope,
+                mode,
+                channel,
+                broadcastPeerCount: ops);
 
             return true;
         }

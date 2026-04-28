@@ -18,6 +18,7 @@ namespace STS2RitsuLib.Networking.Sidecar
                 return;
 
             RitsuLibSidecarBuiltInHandlers.Register();
+            RitsuLibSidecarNetworkingLifecycle.EnsureHooksInstalled();
         }
     }
 }

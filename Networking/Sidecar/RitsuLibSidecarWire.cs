@@ -1,3 +1,5 @@
+using System.Buffers.Binary;
+
 namespace STS2RitsuLib.Networking.Sidecar
 {
     /// <summary>
@@ -43,6 +45,21 @@ namespace STS2RitsuLib.Networking.Sidecar
         public static bool MatchesMagic(ReadOnlySpan<byte> packet)
         {
             return packet.Length >= MagicLength && packet[..MagicLength].SequenceEqual(Magic);
+        }
+
+        /// <summary>
+        ///     Reads the 64-bit opcode from a sidecar envelope prefix when <see cref="MatchesMagic" /> holds and the
+        ///     span is long enough; does not validate the full envelope.
+        /// </summary>
+        public static bool TryPeekOpcode(ReadOnlySpan<byte> packet, out ulong opcode)
+        {
+            opcode = 0;
+            if (packet.Length < MagicLength + 2 + 4 + 8 || !MatchesMagic(packet))
+                return false;
+
+            var o = MagicLength + 2 + 4;
+            opcode = BinaryPrimitives.ReadUInt64BigEndian(packet.Slice(o, 8));
+            return true;
         }
     }
 }

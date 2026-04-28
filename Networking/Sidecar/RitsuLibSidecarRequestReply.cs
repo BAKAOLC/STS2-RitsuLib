@@ -5,7 +5,9 @@ namespace STS2RitsuLib.Networking.Sidecar
 {
     /// <summary>
     ///     Request/await-reply helpers on top of <see cref="RitsuLibSidecarBus.WaitForNextAsync" /> for precise callback
-    ///     control flow.
+    ///     control flow. Continuations after <c>await</c> often run on the thread pool; use
+    ///     <see cref="RitsuLibSidecarGodotMainLoopScheduling.ContinueOnGodotMainLoopAsync{T}(System.Threading.Tasks.Task{T})" />
+    ///     when the follow-up must touch Godot nodes or scene-tree-only APIs.
     /// </summary>
     public static class RitsuLibSidecarRequestReply
     {

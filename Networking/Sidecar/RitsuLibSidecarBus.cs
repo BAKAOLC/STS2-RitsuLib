@@ -41,13 +41,41 @@ namespace STS2RitsuLib.Networking.Sidecar
             }
         }
 
+        /// <summary>Number of active <see cref="WaitForNextAsync" /> waiters (snapshot under lock).</summary>
+        public static int GetPendingWaiterCount()
+        {
+            lock (Gate)
+            {
+                return Waiters.Count;
+            }
+        }
+
+        /// <summary>
+        ///     Removes every pending <see cref="WaitForNextAsync" /> waiter and completes each task as canceled. Does
+        ///     not remove opcode handlers (including built-in control handlers).
+        /// </summary>
+        public static void CancelAllPendingWaits()
+        {
+            List<PendingWaiter> pending;
+            lock (Gate)
+            {
+                pending = [..Waiters];
+                Waiters.Clear();
+            }
+
+            foreach (var w in pending)
+                w.Tcs.TrySetCanceled();
+        }
+
         /// <summary>
         ///     Waits once for a matching opcode packet, useful for request/reply control flows.
         /// </summary>
         /// <remarks>
         ///     Timeout uses <see cref="CancellationToken.None" /> on <see cref="Task.Delay(TimeSpan, CancellationToken)" />;
         ///     user cancellation is observed through <paramref name="cancellationToken" /> separately so both paths
-        ///     can complete the waiter without linking tokens.
+        ///     can complete the waiter without linking tokens. The completed task’s continuations are not marshaled to
+        ///     the Godot main loop; use
+        ///     <see cref="RitsuLibSidecarGodotMainLoopScheduling.ContinueOnGodotMainLoopAsync{T}(Task{T})" /> when needed.
         /// </remarks>
         public static Task<RitsuLibSidecarDispatchContext> WaitForNextAsync(
             ulong opcode,

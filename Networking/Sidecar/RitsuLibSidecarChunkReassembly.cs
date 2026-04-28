@@ -24,6 +24,8 @@ namespace STS2RitsuLib.Networking.Sidecar
         {
             completed = null;
             var key = (sender, streamId);
+            RitsuLibSidecarChunkReceiveProgress? notify = null;
+            var result = false;
             lock (_gate)
             {
                 SweepStale_NoLock(DateTime.UtcNow);
@@ -66,16 +68,45 @@ namespace STS2RitsuLib.Networking.Sidecar
                     return false;
                 }
 
-                if (st.Parts[index] != null) return TryComplete_NoLock(st, key, ref completed);
+                if (st.Parts[index] != null)
+                {
+                    result = TryComplete_NoLock(st, key, ref completed);
+                    if (result)
+                        notify = new RitsuLibSidecarChunkReceiveProgress(
+                            sender,
+                            streamId,
+                            st.UserOpcode,
+                            st.ReceivedIndices,
+                            st.ExpectedCount,
+                            st.AccumulatedLogicalBytes,
+                            st.TotalLogicalSize,
+                            true);
+                }
+                else
+                {
+                    var owned = GC.AllocateUninitializedArray<byte>(segment.Length);
+                    segment.CopyTo(owned.AsSpan());
+                    st.Parts[index] = owned;
+                    st.ReceivedIndices++;
+                    st.AccumulatedLogicalBytes += owned.Length;
 
-                var owned = GC.AllocateUninitializedArray<byte>(segment.Length);
-                segment.CopyTo(owned.AsSpan());
-                st.Parts[index] = owned;
-                st.ReceivedIndices++;
-                st.AccumulatedLogicalBytes += owned.Length;
-
-                return TryComplete_NoLock(st, key, ref completed);
+                    result = TryComplete_NoLock(st, key, ref completed);
+                    notify = new RitsuLibSidecarChunkReceiveProgress(
+                        sender,
+                        streamId,
+                        st.UserOpcode,
+                        st.ReceivedIndices,
+                        st.ExpectedCount,
+                        st.AccumulatedLogicalBytes,
+                        st.TotalLogicalSize,
+                        result);
+                }
             }
+
+            if (notify.HasValue)
+                RitsuLibSidecarChunkTransferNotifications.RaiseReceive(notify.Value);
+
+            return result;
         }
 
         internal bool TryListMissingIndices(
