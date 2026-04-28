@@ -50,6 +50,9 @@ namespace STS2RitsuLib.Networking.Sidecar
             if (!TryMarkHelloAsPending(peerNetId))
                 return;
 
+            RitsuLibFramework.Logger.Info(
+                $"[Sidecar] Handshake queued peer={peerNetId}, epoch={RitsuLibSidecarSessionManager.Epoch}, netType={netService.Type}");
+
             RitsuLibSidecarProtocol.EnsureDefaultHandlers();
             var buf = new byte[RitsuLibSidecarHandshakeBinary.HandshakePayloadSize];
             RitsuLibSidecarHandshakeBinary.WriteHandshake(
@@ -75,9 +78,15 @@ namespace STS2RitsuLib.Networking.Sidecar
             };
 
             if (ok)
+            {
+                RitsuLibFramework.Logger.Info(
+                    $"[Sidecar] Handshake sent peer={peerNetId}, epoch={RitsuLibSidecarSessionManager.Epoch}, netType={netService.Type}, opcode={RitsuLibSidecarControlOpcodes.Handshake}, payloadLen={buf.Length}");
                 return;
+            }
 
             UnmarkHelloPending(peerNetId);
+            RitsuLibFramework.Logger.Warn(
+                $"[Sidecar] Handshake send failed peer={peerNetId}, epoch={RitsuLibSidecarSessionManager.Epoch}, netType={netService.Type}");
         }
 
         private static bool TryMarkHelloAsPending(ulong peerNetId)

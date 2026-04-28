@@ -13,10 +13,7 @@ namespace STS2RitsuLib.Networking.Sidecar
 
         internal static void TraceInboundParsed(in RitsuLibSidecarDispatchContext ctx)
         {
-            if (!RitsuLibSidecarNetDiagnosticsOptions.TraceIncomingPackets)
-                return;
-
-            Logger.Info(
+            Logger.Debug(
                 $"[Sidecar] Inbound parsed opcode={ctx.Opcode}, sender={ctx.SenderNetId}, payloadLen={ctx.Payload.Length}, transferMode={ctx.TransferMode}, channel={ctx.Channel}, hostIngest={ctx.IsHostIngest}");
         }
 
@@ -34,9 +31,6 @@ namespace STS2RitsuLib.Networking.Sidecar
             ulong? peerNetId = null,
             int? broadcastPeerCount = null)
         {
-            if (!RitsuLibSidecarNetDiagnosticsOptions.TraceOutgoingPackets)
-                return;
-
             var opcodeText = RitsuLibSidecarWire.TryPeekOpcode(envelope, out var op)
                 ? op.ToString()
                 : "?";
@@ -44,7 +38,7 @@ namespace STS2RitsuLib.Networking.Sidecar
             var peerPart = peerNetId is { } id ? $", peer={id}" : string.Empty;
             var bc = broadcastPeerCount is { } n ? $", broadcastPeers={n}" : string.Empty;
 
-            Logger.Info(
+            Logger.Debug(
                 $"[Sidecar] Outbound {path} opcode={opcodeText}, wireLen={envelope.Length}, mode={mode}, ch={channel}{peerPart}{bc}");
         }
 
@@ -53,10 +47,7 @@ namespace STS2RitsuLib.Networking.Sidecar
             ulong peerNetId,
             RitsuLibSidecarPeerReachability reachability)
         {
-            if (!RitsuLibSidecarNetDiagnosticsOptions.TraceSkippedSends)
-                return;
-
-            Logger.Info($"[Sidecar] Skip send path={path}, peer={peerNetId}, reachability={reachability}");
+            Logger.VeryDebug($"[Sidecar] Skip send path={path}, peer={peerNetId}, reachability={reachability}");
         }
     }
 }

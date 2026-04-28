@@ -309,8 +309,6 @@ namespace STS2RitsuLib.Networking.Sidecar
 
         private static void Trace(string text)
         {
-            if (!RitsuLibSidecarNetDiagnosticsOptions.TraceSessionState)
-                return;
             RitsuLibFramework.Logger.Info($"[Sidecar] {text}");
         }
 

@@ -35,6 +35,8 @@ namespace STS2RitsuLib.Networking.Sidecar
                     out var userOpcode,
                     out var count,
                     out var ranges);
+                RitsuLibFramework.Logger.Debug(
+                    $"[Sidecar] SelectiveNack received sender={ctx.SenderNetId}, stream={streamId}, userOpcode={userOpcode}, count={count}, rangeCount={ranges.Length}, payloadLen={ctx.Payload.Length}");
                 if (ranges.Any(r =>
                         r.Length == 0 || r.StartIndex >= count || (ulong)r.StartIndex + r.Length > count)) return;
 
@@ -61,6 +63,8 @@ namespace STS2RitsuLib.Networking.Sidecar
             try
             {
                 RitsuLibSidecarChunkGapBinary.ReadReassemblyDone(ctx.Payload.Span, out var streamId);
+                RitsuLibFramework.Logger.Debug(
+                    $"[Sidecar] ReassemblyDone received sender={ctx.SenderNetId}, stream={streamId}, payloadLen={ctx.Payload.Length}");
                 RitsuLibSidecarChunkOutboundRegistry.TryRemove(streamId);
             }
             catch (Exception ex)
@@ -73,6 +77,8 @@ namespace STS2RitsuLib.Networking.Sidecar
         {
             if (!ctx.IsHostIngest)
                 return;
+            RitsuLibFramework.Logger.Info(
+                $"[Sidecar] Diagnostic relay request sender={ctx.SenderNetId}, opcode={ctx.Opcode}, payloadLen={ctx.Payload.Length}");
 
             RitsuLibSidecarChecksumDiagnostics.TryLogLocalCombatDump(
                 $"Sidecar relay dump (request peer={ctx.SenderNetId})",
@@ -93,6 +99,8 @@ namespace STS2RitsuLib.Networking.Sidecar
         {
             if (!RitsuLibSidecarDiagnosticPayload.TryParseFanout(ctx.Payload.Span, out var origin, out var tag))
                 return;
+            RitsuLibFramework.Logger.Info(
+                $"[Sidecar] Diagnostic relay fanout sender={ctx.SenderNetId}, originPeer={origin}, tag={tag}, payloadLen={ctx.Payload.Length}");
 
             RitsuLibSidecarChecksumDiagnostics.TryLogLocalCombatDump(
                 $"Sidecar coordinated dump via host broadcast (originPeer={origin})",
@@ -111,6 +119,8 @@ namespace STS2RitsuLib.Networking.Sidecar
                 out var feats);
             var ok = wire is >= 1 and <= RitsuLibSidecarWire.SupportedWireFormatVersionMax
                      && wire <= peerMax;
+            RitsuLibFramework.Logger.Info(
+                $"[Sidecar] Handshake received sender={ctx.SenderNetId}, opcode={ctx.Opcode}, payloadLen={ctx.Payload.Length}, channel={ctx.Channel}, transferMode={ctx.TransferMode}, hostIngest={ctx.IsHostIngest}, wire={wire}, peerMax={peerMax}, features={feats}, ok={ok}");
             if (!ok) RitsuLibFramework.Logger.Warn($"[Sidecar] Handshake wire version {wire} not supported.");
 
             var selected = ok ? wire : RitsuLibSidecarWire.CurrentWireFormatVersion;
@@ -141,6 +151,9 @@ namespace STS2RitsuLib.Networking.Sidecar
                     RitsuLibSidecarControlOpcodes.HandshakeAck,
                     buf,
                     RitsuLibSidecarDeliverySemantics.StableSync);
+
+            RitsuLibFramework.Logger.Info(
+                $"[Sidecar] Handshake ack sent target={ctx.SenderNetId}, opcode={RitsuLibSidecarControlOpcodes.HandshakeAck}, payloadLen={buf.Length}, selectedWire={selected}, ok={ok}, senderFeatures={RitsuLibSidecarPeerFeatures.ChunkedStreams}");
         }
 
         private static void OnHandshakeAck(RitsuLibSidecarDispatchContext ctx)
@@ -150,11 +163,13 @@ namespace STS2RitsuLib.Networking.Sidecar
 
             RitsuLibSidecarHandshakeBinary.ReadAck(
                 ctx.Payload.Span,
-                out _,
-                out _,
+                out var selectedWire,
+                out var ok,
                 out var ackSenderFeatures);
             RitsuLibSidecarConnectionSession.SetPeerFeatures(ctx.SenderNetId, ackSenderFeatures);
             RitsuLibSidecarSessionManager.NoteHandshakeFromPeer(ctx.SenderNetId, ackSenderFeatures);
+            RitsuLibFramework.Logger.Info(
+                $"[Sidecar] Handshake ack received sender={ctx.SenderNetId}, opcode={ctx.Opcode}, payloadLen={ctx.Payload.Length}, channel={ctx.Channel}, transferMode={ctx.TransferMode}, selectedWire={selectedWire}, ok={ok}, senderFeatures={ackSenderFeatures}");
         }
 
         private static void OnChunkedFrame(RitsuLibSidecarDispatchContext ctx)
@@ -171,6 +186,8 @@ namespace STS2RitsuLib.Networking.Sidecar
                     out var total,
                     out var expectedCrc,
                     out var seg);
+                RitsuLibFramework.Logger.VeryDebug(
+                    $"[Sidecar] Chunk frame received sender={ctx.SenderNetId}, stream={streamId}, userOpcode={userOpcode}, index={index}/{count}, segmentLen={seg.Length}, totalPayload={total}, payloadLen={ctx.Payload.Length}");
                 if (Crc32.HashToUInt32(seg) != expectedCrc)
                 {
                     RitsuLibFramework.Logger.Warn("[Sidecar] Chunk segment CRC mismatch; drop.");
@@ -195,6 +212,8 @@ namespace STS2RitsuLib.Networking.Sidecar
                         streamId,
                         userOpcode,
                         count);
+                    RitsuLibFramework.Logger.Debug(
+                        $"[Sidecar] Chunk gap report scheduled sender={ctx.SenderNetId}, stream={streamId}, index={index}/{count}");
                     return;
                 }
 
@@ -206,6 +225,8 @@ namespace STS2RitsuLib.Networking.Sidecar
                     ctx.SenderNetId,
                     RitsuLibSidecarControlOpcodes.ChunkStreamReassemblyDone,
                     done);
+                RitsuLibFramework.Logger.Debug(
+                    $"[Sidecar] Chunk reassembled sender={ctx.SenderNetId}, stream={streamId}, userOpcode={userOpcode}, totalPayload={full.Length}");
 
                 var inner = new RitsuLibSidecarEnvelope.ParsedEnvelope(
                     ctx.Envelope.WireFormatVersion,
