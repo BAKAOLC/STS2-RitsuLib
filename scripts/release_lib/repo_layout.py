@@ -41,5 +41,18 @@ def ritsulib_csproj(repo_root: Path) -> Path:
     return (repo_root / RITSULIB_CSPROJ_NAME).resolve()
 
 
+def ritsulib_built_assembly_stem() -> str:
+    return Path(RITSULIB_CSPROJ_NAME).stem
+
+
 def ritsulib_built_dll_name() -> str:
-    return Path(RITSULIB_CSPROJ_NAME).stem + ".dll"
+    return ritsulib_built_assembly_stem() + ".dll"
+
+
+def ritsulib_built_doc_xml_name() -> str:
+    """C# XML documentation file from GenerateDocumentationFile (assembly API comments)."""
+    return ritsulib_built_assembly_stem() + ".xml"
+
+
+def ritsulib_built_pdb_name() -> str:
+    return ritsulib_built_assembly_stem() + ".pdb"

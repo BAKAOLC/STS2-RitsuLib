@@ -19,6 +19,8 @@ from release_lib.repo_layout import (
     RITSULIB_CSPROJ_NAME,
     SNUPKG_SUFFIX,
     ritsulib_built_dll_name,
+    ritsulib_built_doc_xml_name,
+    ritsulib_built_pdb_name,
 )
 
 
@@ -46,6 +48,8 @@ def run_pack(
         "-o",
         str(artifacts_dir),
         "/p:ContinuousIntegrationBuild=false",
+        "/p:IncludeSymbols=true",
+        "/p:SymbolPackageFormat=snupkg",
         f"/p:Sts2ApiCompat={compat_target}",
     ]
     if version_override is not None and version_override.strip():
@@ -167,6 +171,9 @@ def publish_nugets(
             output_dir=github_dir,
         )
         run_push(package, source=source, api_key=key)
+        symbol_package = package.with_suffix(SNUPKG_SUFFIX)
+        if symbol_package.is_file():
+            run_push(symbol_package, source=source, api_key=key)
         published.append(package)
         zips.append(zip_path)
     return published, zips
@@ -277,10 +284,19 @@ def create_github_zip(
     output_dir: Path,
 ) -> Path:
     output_dir.mkdir(parents=True, exist_ok=True)
-    dll_path = ritsulib_root / GODOT_MONO_BIN_PREFIX / configuration / ritsulib_built_dll_name()
+    out_bin = ritsulib_root / GODOT_MONO_BIN_PREFIX / configuration
+    dll_path = out_bin / ritsulib_built_dll_name()
+    doc_xml_path = out_bin / ritsulib_built_doc_xml_name()
+    pdb_path = out_bin / ritsulib_built_pdb_name()
     manifest_path = ritsulib_root / MOD_MANIFEST_NAME
     if not dll_path.is_file():
         msg = f"Could not find built DLL for zip packaging: {dll_path}"
+        raise RuntimeError(msg)
+    if not doc_xml_path.is_file():
+        msg = (
+            f"Could not find C# API documentation XML for zip packaging: {doc_xml_path}. "
+            "Build with GenerateDocumentationFile (see STS2-RitsuLib.csproj)."
+        )
         raise RuntimeError(msg)
     if not manifest_path.is_file():
         msg = f"Could not find mod_manifest.json for zip packaging: {manifest_path}"
@@ -290,6 +306,9 @@ def create_github_zip(
     zip_path = output_dir / zip_name
     with zipfile.ZipFile(zip_path, mode="w", compression=zipfile.ZIP_DEFLATED) as zf:
         zf.write(dll_path, arcname=ritsulib_built_dll_name())
+        zf.write(doc_xml_path, arcname=ritsulib_built_doc_xml_name())
+        if pdb_path.is_file():
+            zf.write(pdb_path, arcname=ritsulib_built_pdb_name())
         zf.write(manifest_path, arcname="mod_manifest.json")
         zf.writestr("compat-target.txt", compat_target + "\n")
     return zip_path
