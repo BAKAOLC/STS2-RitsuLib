@@ -92,10 +92,14 @@ namespace STS2RitsuLib.Scaffolding.Content.Patches
         public static bool Prefix(EncounterModel __instance, ref Control __result)
             // ReSharper restore InconsistentNaming
         {
-            if (__instance is not IModEncounterAssetOverrides overrides)
+            string? path;
+            if (ExternalAssetOverrideRegistry.TryGetEncounterScenePath(__instance, out var externalPath))
+                path = externalPath;
+            else if (__instance is IModEncounterAssetOverrides overrides)
+                path = overrides.CustomEncounterScenePath;
+            else
                 return true;
 
-            var path = overrides.CustomEncounterScenePath;
             if (string.IsNullOrWhiteSpace(path) ||
                 !AssetPathDiagnostics.Exists(path, __instance,
                     nameof(IModEncounterAssetOverrides.CustomEncounterScenePath)))
@@ -140,10 +144,18 @@ namespace STS2RitsuLib.Scaffolding.Content.Patches
         public static bool Prefix(EncounterModel __instance, Rng rng, ref BackgroundAssets __result)
             // ReSharper restore InconsistentNaming
         {
-            if (__instance is IModEncounterAssetOverrides overrides)
+            var overrides = __instance as IModEncounterAssetOverrides;
+            var hasExternalLayers = ExternalAssetOverrideRegistry.TryGetEncounterBackgroundLayersDirectory(__instance,
+                out var externalLayersDirectory);
+            var hasExternalBackground = ExternalAssetOverrideRegistry.TryGetEncounterBackgroundScenePath(__instance,
+                out var externalBackgroundPath);
+
+            if (overrides != null || hasExternalLayers || hasExternalBackground)
             {
-                var customLayers = overrides.CustomBackgroundLayersDirectoryPath;
-                var customMain = overrides.CustomBackgroundScenePath;
+                var customLayers = hasExternalLayers
+                    ? externalLayersDirectory
+                    : overrides?.CustomBackgroundLayersDirectoryPath;
+                var customMain = hasExternalBackground ? externalBackgroundPath : overrides?.CustomBackgroundScenePath;
                 if (!string.IsNullOrWhiteSpace(customLayers) || !string.IsNullOrWhiteSpace(customMain))
                 {
                     var id = __instance.Id.Entry.ToLowerInvariant();
@@ -214,6 +226,15 @@ namespace STS2RitsuLib.Scaffolding.Content.Patches
         public static bool Prefix(EncounterModel __instance, ref string __result)
             // ReSharper restore InconsistentNaming
         {
+            // ReSharper disable once InvertIf
+            if (ExternalAssetOverrideRegistry.TryGetEncounterBossNodePath(__instance, out var externalPath) &&
+                AssetPathDiagnostics.Exists(externalPath, __instance,
+                    "ExternalAssetOverrideRegistry.EncounterBossNodePath"))
+            {
+                __result = externalPath;
+                return false;
+            }
+
             return ContentAssetOverridePatchHelper.TryUseStringOverride<IModEncounterAssetOverrides>(
                 __instance,
                 ref __result,
@@ -250,10 +271,11 @@ namespace STS2RitsuLib.Scaffolding.Content.Patches
         public static bool Prefix(EncounterModel __instance, ref IEnumerable<string> __result)
             // ReSharper restore InconsistentNaming
         {
-            if (__instance is not IModEncounterAssetOverrides overrides)
-                return true;
-
-            var raw = overrides.CustomMapNodeAssetPaths;
+            var hasExternal =
+                ExternalAssetOverrideRegistry.TryGetEncounterMapNodeAssetPaths(__instance, out var externalRaw);
+            var raw = hasExternal
+                ? externalRaw
+                : (__instance as IModEncounterAssetOverrides)?.CustomMapNodeAssetPaths;
             if (raw == null)
                 return true;
 
@@ -302,13 +324,23 @@ namespace STS2RitsuLib.Scaffolding.Content.Patches
             // ReSharper restore InconsistentNaming
         {
             _ = runState;
-
-            if (__instance is not IModEncounterAssetOverrides overrides)
+            var overrides = __instance as IModEncounterAssetOverrides;
+            var externalSceneOk =
+                ExternalAssetOverrideRegistry.TryGetEncounterScenePath(__instance, out var externalScenePath)
+                && ResourceLoader.Exists(externalScenePath);
+            var externalLayersOk = ExternalAssetOverrideRegistry.TryGetEncounterBackgroundLayersDirectory(__instance,
+                out var externalLayersDirectory);
+            var externalBackgroundOk = ExternalAssetOverrideRegistry.TryGetEncounterBackgroundScenePath(__instance,
+                out var externalBackgroundPath) && ResourceLoader.Exists(externalBackgroundPath);
+            if (overrides == null &&
+                !externalSceneOk &&
+                !externalLayersOk &&
+                !externalBackgroundOk)
                 return;
 
             var syntheticEncounterScene =
                 SceneHelper.GetScenePath($"encounters/{__instance.Id.Entry.ToLowerInvariant()}");
-            var customScene = overrides.CustomEncounterScenePath;
+            var customScene = externalSceneOk ? externalScenePath : overrides?.CustomEncounterScenePath;
             var customSceneOk = !string.IsNullOrWhiteSpace(customScene) && ResourceLoader.Exists(customScene);
             var factoryOnly =
                 (__instance as IModEncounterCombatSceneFactory)?.SuppliesEncounterCombatSceneFromFactory == true;
@@ -317,19 +349,19 @@ namespace STS2RitsuLib.Scaffolding.Content.Patches
 
             var extras = new List<string>();
 
-            var scenePath = overrides.CustomEncounterScenePath;
+            var scenePath = externalSceneOk ? externalScenePath : overrides?.CustomEncounterScenePath;
             if (!string.IsNullOrWhiteSpace(scenePath) &&
                 AssetPathDiagnostics.Exists(scenePath, __instance,
                     nameof(IModEncounterAssetOverrides.CustomEncounterScenePath)))
                 extras.Add(scenePath);
 
-            var more = overrides.CustomExtraAssetPaths;
+            var more = overrides?.CustomExtraAssetPaths;
             if (more != null)
                 extras.AddRange(more.Where(p => !string.IsNullOrWhiteSpace(p)).Where(p =>
                     AssetPathDiagnostics.Exists(p, __instance,
                         nameof(IModEncounterAssetOverrides.CustomExtraAssetPaths))));
 
-            var layersDir = overrides.CustomBackgroundLayersDirectoryPath;
+            var layersDir = externalLayersOk ? externalLayersDirectory : overrides?.CustomBackgroundLayersDirectoryPath;
             if (!string.IsNullOrWhiteSpace(layersDir))
             {
                 var normalized = layersDir.TrimEnd('/');
@@ -346,6 +378,12 @@ namespace STS2RitsuLib.Scaffolding.Content.Patches
                     }
                 }
             }
+
+            var backgroundPath = externalBackgroundOk ? externalBackgroundPath : overrides?.CustomBackgroundScenePath;
+            if (!string.IsNullOrWhiteSpace(backgroundPath) &&
+                AssetPathDiagnostics.Exists(backgroundPath, __instance,
+                    nameof(IModEncounterAssetOverrides.CustomBackgroundScenePath)))
+                extras.Add(backgroundPath);
 
             if (extras.Count == 0)
                 return;

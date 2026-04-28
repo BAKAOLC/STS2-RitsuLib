@@ -1,3 +1,4 @@
+using Godot;
 using MegaCrit.Sts2.Core.Entities.Cards;
 using MegaCrit.Sts2.Core.HoverTips;
 using MegaCrit.Sts2.Core.Models;
@@ -24,7 +25,8 @@ namespace STS2RitsuLib.Scaffolding.Content
         CardRarity rarity,
         TargetType target,
         bool showInCardLibrary = true)
-        : CardModel(baseCost, type, rarity, target, showInCardLibrary), IModCardAssetOverrides
+        : CardModel(baseCost, type, rarity, target, showInCardLibrary), IModCardAssetOverrides,
+            IModCardFrameMaterialOverride, IModCardBannerMaterialOverride
     {
         /// <summary>
         ///     Legacy constructor overload; <paramref name="autoAdd" /> is ignored.
@@ -96,6 +98,12 @@ namespace STS2RitsuLib.Scaffolding.Content
 
         /// <inheritdoc />
         public virtual string? CustomBannerMaterialPath => AssetProfile.BannerMaterialPath;
+
+        /// <inheritdoc />
+        public virtual Material? CustomBannerMaterial => AssetProfile.BannerMaterial;
+
+        /// <inheritdoc />
+        public virtual Material? CustomFrameMaterial => AssetProfile.FrameMaterial;
 
         /// <summary>
         ///     Internal accessor for the mod-keyword seeding patch.

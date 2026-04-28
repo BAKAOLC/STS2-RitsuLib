@@ -222,10 +222,9 @@ namespace STS2RitsuLib
         private static string BuildVersionLogText()
         {
             var compatBranchLabel = GetCompatBranchLabel();
-            if (string.IsNullOrWhiteSpace(compatBranchLabel))
-                return $"Version: {Const.Version}";
-
-            return $"Version: {Const.Version} [兼容分支: {compatBranchLabel}]";
+            return string.IsNullOrWhiteSpace(compatBranchLabel)
+                ? $"Version: {Const.Version}"
+                : $"Version: {Const.Version} [兼容分支: {compatBranchLabel}]";
         }
 
         private static string? GetCompatBranchLabel()

@@ -197,7 +197,8 @@ namespace STS2RitsuLib.Scaffolding.Content.Patches
                     string.IsNullOrWhiteSpace(a.FramePath) && string.IsNullOrWhiteSpace(a.PortraitBorderPath) &&
                     string.IsNullOrWhiteSpace(a.EnergyIconPath) && string.IsNullOrWhiteSpace(a.FrameMaterialPath) &&
                     string.IsNullOrWhiteSpace(a.OverlayScenePath) && string.IsNullOrWhiteSpace(a.BannerTexturePath) &&
-                    string.IsNullOrWhiteSpace(a.BannerMaterialPath))
+                    string.IsNullOrWhiteSpace(a.BannerMaterialPath) && a.FrameMaterial == null &&
+                    a.BannerMaterial == null)
                     return null;
 
                 return a;
@@ -442,6 +443,12 @@ namespace STS2RitsuLib.Scaffolding.Content.Patches
             if (profile == null)
                 return true;
 
+            if (profile.FrameMaterial != null)
+            {
+                result = profile.FrameMaterial;
+                return false;
+            }
+
             var path = profile.FrameMaterialPath;
             if (string.IsNullOrWhiteSpace(path) ||
                 !AssetPathDiagnostics.Exists(path, instance, nameof(CardAssetProfile.FrameMaterialPath)))
@@ -521,6 +528,12 @@ namespace STS2RitsuLib.Scaffolding.Content.Patches
             if (profile == null)
                 return true;
 
+            if (profile.BannerMaterial != null)
+            {
+                result = profile.BannerMaterial;
+                return false;
+            }
+
             var path = profile.BannerMaterialPath;
             if (string.IsNullOrWhiteSpace(path) ||
                 !AssetPathDiagnostics.Exists(path, instance, nameof(CardAssetProfile.BannerMaterialPath)))
@@ -528,6 +541,12 @@ namespace STS2RitsuLib.Scaffolding.Content.Patches
 
             result = ResourceLoader.Load<Material>(path);
             return false;
+        }
+
+        internal static bool HasCardVisualOverrideContext(CardModel instance)
+        {
+            var overrides = TryGetOwningCharacterOverrides(instance);
+            return overrides?.TryGetVanillaCardVisualOverrideForContext(instance) != null;
         }
 
         internal static bool TryCardPortraitExists(CardModel instance, ref bool result)

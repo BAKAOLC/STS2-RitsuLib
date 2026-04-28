@@ -62,13 +62,10 @@ namespace STS2RitsuLib.Scaffolding.Content.Patches
             if (ModelDb.GetByIdOrNull<AbstractModel>(modelId) is not EncounterModel encounter)
                 return true;
 
-            if (encounter is not IModEncounterAssetOverrides overrides)
-                return true;
-
             var path = __originalMethod.Name switch
             {
-                nameof(ImageHelper.GetRoomIconPath) => overrides.CustomRunHistoryIconPath,
-                nameof(ImageHelper.GetRoomIconOutlinePath) => overrides.CustomRunHistoryIconOutlinePath,
+                nameof(ImageHelper.GetRoomIconPath) => ResolveMainIconPath(encounter),
+                nameof(ImageHelper.GetRoomIconOutlinePath) => ResolveOutlineIconPath(encounter),
                 _ => null,
             };
 
@@ -82,6 +79,21 @@ namespace STS2RitsuLib.Scaffolding.Content.Patches
 
             __result = path;
             return false;
+        }
+
+        private static string? ResolveMainIconPath(EncounterModel encounter)
+        {
+            return ExternalAssetOverrideRegistry.TryGetEncounterRunHistoryIconPath(encounter, out var externalPath)
+                ? externalPath
+                : (encounter as IModEncounterAssetOverrides)?.CustomRunHistoryIconPath;
+        }
+
+        private static string? ResolveOutlineIconPath(EncounterModel encounter)
+        {
+            return ExternalAssetOverrideRegistry.TryGetEncounterRunHistoryIconOutlinePath(encounter,
+                out var externalPath)
+                ? externalPath
+                : (encounter as IModEncounterAssetOverrides)?.CustomRunHistoryIconOutlinePath;
         }
     }
 }

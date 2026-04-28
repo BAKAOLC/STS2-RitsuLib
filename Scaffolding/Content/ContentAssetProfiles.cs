@@ -1,3 +1,4 @@
+using Godot;
 using MegaCrit.Sts2.Core.Helpers;
 using MegaCrit.Sts2.Core.Models;
 
@@ -15,6 +16,8 @@ namespace STS2RitsuLib.Scaffolding.Content
     /// <param name="OverlayScenePath">Packed scene path for built-in card overlay UI.</param>
     /// <param name="BannerTexturePath">Texture used on run-summary or banner UI.</param>
     /// <param name="BannerMaterialPath">Material path for banner rendering.</param>
+    /// <param name="FrameMaterial">Direct card frame material override.</param>
+    /// <param name="BannerMaterial">Direct banner material override.</param>
     public sealed record CardAssetProfile(
         string? PortraitPath = null,
         string? BetaPortraitPath = null,
@@ -24,8 +27,37 @@ namespace STS2RitsuLib.Scaffolding.Content
         string? FrameMaterialPath = null,
         string? OverlayScenePath = null,
         string? BannerTexturePath = null,
-        string? BannerMaterialPath = null)
+        string? BannerMaterialPath = null,
+        Material? FrameMaterial = null,
+        Material? BannerMaterial = null)
     {
+        /// <summary>
+        ///     Backward-compatible constructor preserving the original parameter list.
+        /// </summary>
+        public CardAssetProfile(
+            string? PortraitPath,
+            string? BetaPortraitPath,
+            string? FramePath,
+            string? PortraitBorderPath,
+            string? EnergyIconPath,
+            string? FrameMaterialPath,
+            string? OverlayScenePath,
+            string? BannerTexturePath,
+            string? BannerMaterialPath)
+            : this(
+                PortraitPath,
+                BetaPortraitPath,
+                FramePath,
+                PortraitBorderPath,
+                EnergyIconPath,
+                FrameMaterialPath,
+                OverlayScenePath,
+                BannerTexturePath,
+                BannerMaterialPath,
+                null)
+        {
+        }
+
         /// <summary>
         ///     Default empty profile (no custom paths).
         /// </summary>
