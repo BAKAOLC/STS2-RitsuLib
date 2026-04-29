@@ -1,5 +1,7 @@
 using Godot;
 using MegaCrit.Sts2.Core.Entities.Cards;
+using MegaCrit.Sts2.Core.Models;
+using MegaCrit.Sts2.Core.Nodes.Cards;
 
 namespace STS2RitsuLib.CardPiles
 {
@@ -7,24 +9,26 @@ namespace STS2RitsuLib.CardPiles
     ///     Context passed to <see cref="ModCardPileSpec.FlightStartPositionResolver" /> when shuffle-style fly
     ///     visuals need a source/start position for a mod pile.
     /// </summary>
-    public sealed class ModCardPileFlightStartContext
+    public sealed class ModCardPileFlightStartContext : IModCardPileFlightContext
     {
         internal ModCardPileFlightStartContext(
             ModCardPileDefinition definition,
             CardPile startPile,
             CardPile targetPile,
-            Vector2 defaultStartPosition)
+            Vector2 defaultStartPosition,
+            NCard? cardNode = null)
         {
             Definition = definition;
             StartPile = startPile;
             TargetPile = targetPile;
             DefaultStartPosition = defaultStartPosition;
+            CardNode = cardNode;
         }
 
         /// <summary>
-        ///     Definition of the source pile.
+        ///     Ritsulib's default start position for this request.
         /// </summary>
-        public ModCardPileDefinition Definition { get; }
+        public Vector2 DefaultStartPosition { get; }
 
         /// <summary>
         ///     Source pile for this shuffle fly visual.
@@ -37,8 +41,17 @@ namespace STS2RitsuLib.CardPiles
         public CardPile TargetPile { get; }
 
         /// <summary>
-        ///     Ritsulib's default start position for this request.
+        ///     Definition of the source pile.
         /// </summary>
-        public Vector2 DefaultStartPosition { get; }
+        public ModCardPileDefinition Definition { get; }
+
+        /// <inheritdoc />
+        public Vector2 DefaultPosition => DefaultStartPosition;
+
+        /// <inheritdoc />
+        public NCard? CardNode { get; }
+
+        /// <inheritdoc />
+        public CardModel? CardModel => CardNode?.Model;
     }
 }

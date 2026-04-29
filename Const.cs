@@ -18,7 +18,7 @@ namespace STS2RitsuLib
         /// <summary>
         ///     Assembly / manifest version string.
         /// </summary>
-        public const string Version = "0.2.13";
+        public const string Version = "0.2.14";
 
         /// <summary>
         ///     Root key for RitsuLib JSON settings under the mod’s user folder.
