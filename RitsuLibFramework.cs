@@ -224,7 +224,7 @@ namespace STS2RitsuLib
             var compatBranchLabel = GetCompatBranchLabel();
             return string.IsNullOrWhiteSpace(compatBranchLabel)
                 ? $"Version: {Const.Version}"
-                : $"Version: {Const.Version} [兼容分支: {compatBranchLabel}]";
+                : $"Version: {Const.Version} [compat branch: {compatBranchLabel}]";
         }
 
         private static string? GetCompatBranchLabel()
