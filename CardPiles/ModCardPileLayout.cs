@@ -52,39 +52,53 @@ namespace STS2RitsuLib.CardPiles
             var fallback = FallbackPosition();
 
             if (definition.Anchor.Kind == ModCardPileAnchorKind.Custom)
-                return definition.Anchor.CustomPosition + definition.Anchor.Offset;
+                return ApplyCardNodeOffset(definition.Anchor.CustomPosition + definition.Anchor.Offset, node);
 
             var button = ModCardPileButtonRegistry.TryGetButton(definition);
             if (button != null && button.IsInsideTree())
-                return button.GlobalPosition + button.Size * 0.5f + definition.Anchor.Offset;
+                return ApplyCardNodeOffset(button.GlobalPosition + button.Size * 0.5f + definition.Anchor.Offset, node);
 
             var extraHand = ModCardPileButtonRegistry.TryGetExtraHand(definition);
             if (extraHand != null && extraHand.IsInsideTree())
-                return extraHand.GlobalPosition + extraHand.Size * 0.5f + definition.Anchor.Offset;
+                return ApplyCardNodeOffset(extraHand.GlobalPosition + extraHand.Size * 0.5f + definition.Anchor.Offset,
+                    node);
 
             if (definition.Style == ModCardPileUiStyle.TopBarDeck)
             {
                 var deck = NRun.Instance?.GlobalUi?.TopBar?.Deck;
                 if (deck != null)
-                    return deck.GlobalPosition + deck.Size * 0.5f + new Vector2(-120f, 0f) + definition.Anchor.Offset;
+                    return ApplyCardNodeOffset(
+                        deck.GlobalPosition + deck.Size * 0.5f + new Vector2(-120f, 0f) + definition.Anchor.Offset,
+                        node);
             }
 
             if (!CombatManager.Instance.IsInProgress || NCombatRoom.Instance?.Ui == null)
-                return fallback + definition.Anchor.Offset;
+                return ApplyCardNodeOffset(fallback + definition.Anchor.Offset, node);
 
             var ui = NCombatRoom.Instance.Ui;
             return definition.Style switch
             {
                 ModCardPileUiStyle.BottomLeft =>
-                    ui.DrawPile.GlobalPosition + ui.DrawPile.Size * 0.5f + new Vector2(0f, -140f) +
-                    definition.Anchor.Offset,
+                    ApplyCardNodeOffset(
+                        ui.DrawPile.GlobalPosition + ui.DrawPile.Size * 0.5f + new Vector2(0f, -140f) +
+                        definition.Anchor.Offset,
+                        node),
                 ModCardPileUiStyle.BottomRight =>
-                    ui.ExhaustPile.GlobalPosition + ui.ExhaustPile.Size * 0.5f + new Vector2(-140f, 0f) +
-                    definition.Anchor.Offset,
+                    ApplyCardNodeOffset(
+                        ui.ExhaustPile.GlobalPosition + ui.ExhaustPile.Size * 0.5f + new Vector2(-140f, 0f) +
+                        definition.Anchor.Offset,
+                        node),
                 ModCardPileUiStyle.ExtraHand =>
-                    new Vector2(fallback.X - (node?.Size.X ?? 0f) * 0.5f, fallback.Y - 260f) + definition.Anchor.Offset,
-                _ => fallback + definition.Anchor.Offset,
+                    ApplyCardNodeOffset(new Vector2(fallback.X, fallback.Y - 260f) + definition.Anchor.Offset, node),
+                _ => ApplyCardNodeOffset(fallback + definition.Anchor.Offset, node),
             };
+        }
+
+        private static Vector2 ApplyCardNodeOffset(Vector2 centerPosition, NCard? node)
+        {
+            if (node == null)
+                return centerPosition;
+            return centerPosition - node.Size * 0.5f;
         }
 
         private static Vector2 FallbackPosition()
