@@ -3,33 +3,36 @@ using MegaCrit.Sts2.Core.Bindings.MegaSpine;
 using MegaCrit.Sts2.Core.Models;
 using MegaCrit.Sts2.Core.Models.Characters;
 using MegaCrit.Sts2.Core.Nodes.Combat;
+using STS2RitsuLib.Data;
 using STS2RitsuLib.Utils;
+using STS2RitsuLib.Utils.Persistence;
 
 namespace STS2RitsuLib.Settings
 {
-    /// <summary>
-    ///     Minimal attribute reflection page example showing vanilla Ironclad spine visuals.
-    /// </summary>
+    /// <summary>Sample settings page: character spine preview.</summary>
     [ModSettingsPage(Const.ModId, "runtime-reflection-spine-example",
-        Title = "Runtime Reflection Spine Example",
+        Title = "Spine preview (sample)",
         TitleKey = "ritsulib.runtimeReflection.spine.page.title",
-        Description = "Minimal attribute-driven example using CustomEntry to preview vanilla character spine visuals.",
+        Description = "Try bindings and a simple spine preview.",
         DescriptionKey = "ritsulib.runtimeReflection.spine.page.description",
         I18NProviderUsing = nameof(GetI18NProvider),
         ParentPageId = Const.ModId, SortOrder = 20_100)]
     [ModSettingsSection("spine",
-        Title = "Spine Preview",
+        Title = "Preview",
         TitleKey = "ritsulib.runtimeReflection.spine.section.title",
-        Description = "Select a vanilla character and browse all available spine animations.",
+        Description = "Pick a character and an animation.",
         DescriptionKey = "ritsulib.runtimeReflection.spine.section.description")]
     internal sealed class RuntimeReflectionSpinePreviewExample
     {
+        private const string ManualSnapshotDataKey = "runtime_reflection_spine_callback_manual_profile_snapshot";
+        private static bool _manualSnapshotStoreRegistered;
         private int _manualBindingSavedValue = 3;
+        private bool _manualSnapshotLoaded;
 
         [ModSettingsToggle("spine_profile_auto_save", "spine",
-            Label = "Profile auto-save demo",
+            Label = "Profile toggle (sample)",
             LabelKey = "ritsulib.runtimeReflection.spine.binding.profileAuto.label",
-            Description = "Profile-scoped binding with default Auto save policy.",
+            Description = "Saved with your profile.",
             DescriptionKey = "ritsulib.runtimeReflection.spine.binding.profileAuto.description",
             Order = -20)]
         [ModSettingsBinding(
@@ -38,14 +41,13 @@ namespace STS2RitsuLib.Settings
         public bool ProfileAutoSaveDemo { get; set; }
 
         [ModSettingsIntSlider("spine_callback_manual", "spine", 0, 10,
-            Label = "Callback manual-save value",
+            Label = "Manual save value (sample)",
             LabelKey = "ritsulib.runtimeReflection.spine.binding.callbackManual.label",
-            Description = "Callback source with manual save policy. Change value, then press Save callback value.",
+            Description = "Change the value, then use Save below to store the snapshot.",
             DescriptionKey = "ritsulib.runtimeReflection.spine.binding.callbackManual.description",
             Order = -19)]
         [ModSettingsBinding(
             Source = ModSettingsReflectionBindingSource.Callback,
-            SavePolicy = ModSettingsReflectionSavePolicy.Manual,
             DataKey = "runtime_reflection_spine_callback_manual",
             ReadUsing = nameof(ReadManualBindingValue),
             WriteUsing = nameof(WriteManualBindingValue),
@@ -53,11 +55,12 @@ namespace STS2RitsuLib.Settings
         public int CallbackManualSaveDemo { get; set; } = 3;
 
         [ModSettingsParagraph("spine_callback_manual_state", "spine",
-            Description = "Current callback value and latest saved snapshot.",
+            Description = "Live value vs last saved snapshot.",
             DescriptionKey = "ritsulib.runtimeReflection.spine.binding.callbackState.description",
             Order = -18)]
         public string BuildManualBindingStateText()
         {
+            EnsureManualSnapshotLoaded();
             return string.Format(
                 L("ritsulib.runtimeReflection.spine.binding.callbackState.text", "Current: {0} | Saved: {1}"),
                 CallbackManualSaveDemo,
@@ -65,22 +68,23 @@ namespace STS2RitsuLib.Settings
         }
 
         [ModSettingsButton("spine_callback_manual_save", "spine",
-            Label = "Persist callback value",
+            Label = "Save snapshot",
             LabelKey = "ritsulib.runtimeReflection.spine.binding.callbackSave.label",
-            ButtonText = "Save callback value",
+            ButtonText = "Save",
             ButtonTextKey = "ritsulib.runtimeReflection.spine.binding.callbackSave.button",
-            Description = "Calls the callback save method once.",
+            Description = "Stores the current value as the saved snapshot.",
             DescriptionKey = "ritsulib.runtimeReflection.spine.binding.callbackSave.description",
             Order = -17)]
         public void SaveManualBindingFromButton()
         {
-            SaveManualBindingValue();
+            EnsureManualSnapshotLoaded();
+            PersistManualSnapshot(CallbackManualSaveDemo);
         }
 
         [ModSettingsCustomEntry("ironclad_spine_preview", "spine",
-            Label = "Vanilla Character Spine Preview",
+            Label = "Character preview",
             LabelKey = "ritsulib.runtimeReflection.spine.entry.label",
-            Description = "This control directly instantiates the selected vanilla character visuals scene.",
+            Description = "Built-in character visuals in a small viewport.",
             DescriptionKey = "ritsulib.runtimeReflection.spine.entry.description",
             Order = 0)]
         // ReSharper disable once UnusedMember.Global
@@ -132,7 +136,7 @@ namespace STS2RitsuLib.Settings
 
             var animationsTitle = new Label
             {
-                Text = L("ritsulib.runtimeReflection.spine.animations.title", "Available Animations"),
+                Text = L("ritsulib.runtimeReflection.spine.animations.title", "Animations"),
                 SizeFlagsHorizontal = Control.SizeFlags.ExpandFill,
             };
             root.AddChild(animationsTitle);
@@ -246,17 +250,75 @@ namespace STS2RitsuLib.Settings
 
         private int ReadManualBindingValue()
         {
+            EnsureManualSnapshotLoaded();
             return CallbackManualSaveDemo;
         }
 
         private void WriteManualBindingValue(int value)
         {
+            EnsureManualSnapshotLoaded();
             CallbackManualSaveDemo = value;
+            if (!ProfileAutoSaveDemo)
+                return;
+
+            PersistManualSnapshot(value);
         }
 
         private void SaveManualBindingValue()
         {
-            _manualBindingSavedValue = CallbackManualSaveDemo;
+            if (!ProfileAutoSaveDemo)
+                return;
+
+            EnsureManualSnapshotLoaded();
+            PersistManualSnapshot(CallbackManualSaveDemo);
+        }
+
+        private void EnsureManualSnapshotLoaded()
+        {
+            if (_manualSnapshotLoaded)
+                return;
+
+            EnsureManualSnapshotStoreRegistered();
+            var store = RitsuLibFramework.GetDataStore(Const.ModId);
+            var snapshot = store.Get<ManualSnapshotBox>(ManualSnapshotDataKey).Value;
+            CallbackManualSaveDemo = snapshot;
+            _manualBindingSavedValue = snapshot;
+            _manualSnapshotLoaded = true;
+        }
+
+        private static void EnsureManualSnapshotStoreRegistered()
+        {
+            if (_manualSnapshotStoreRegistered)
+                return;
+
+            var store = ModDataStore.For(Const.ModId);
+            try
+            {
+                store.Register(
+                    ManualSnapshotDataKey,
+                    ManualSnapshotDataKey,
+                    SaveScope.Profile,
+                    () => new ManualSnapshotBox { Value = 3 });
+            }
+            catch (InvalidOperationException ex) when (
+                ex.Message.Contains("already registered", StringComparison.OrdinalIgnoreCase))
+            {
+            }
+
+            _manualSnapshotStoreRegistered = true;
+        }
+
+        private void PersistManualSnapshot(int value)
+        {
+            var store = RitsuLibFramework.GetDataStore(Const.ModId);
+            store.Modify<ManualSnapshotBox>(ManualSnapshotDataKey, box => box.Value = value);
+            store.Save(ManualSnapshotDataKey);
+            _manualBindingSavedValue = value;
+        }
+
+        private sealed class ManualSnapshotBox
+        {
+            public int Value { get; set; }
         }
     }
 }

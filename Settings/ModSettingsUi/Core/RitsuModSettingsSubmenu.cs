@@ -19,7 +19,16 @@ namespace STS2RitsuLib.Settings
     public partial class RitsuModSettingsSubmenu : NSubmenu
     {
         private const float SidebarWidth = 324f;
+
+        /// <summary>Deferred <see cref="FlushDirtyBindings" /> interval after the last binding write.</summary>
         private const double AutosaveDelaySeconds = 0.35;
+
+        /// <summary>
+        ///     Debounced mirror paragraph / static refresh. Must be greater than <see cref="AutosaveDelaySeconds" /> so the
+        ///     first flush sees persisted and callback <c>Save()</c> effects without an extra refresh pass.
+        /// </summary>
+        private const double RefreshDebounceSeconds = AutosaveDelaySeconds + 0.04;
+
         private const int ScrollContentRightGutter = 12;
 
         private static readonly StringName PaneSidebarHotkey = MegaInput.viewDeckAndTabLeft;
@@ -429,7 +438,7 @@ namespace STS2RitsuLib.Settings
             {
                 Name = "ModSettingsRefreshDebounce",
                 OneShot = true,
-                WaitTime = 0.07,
+                WaitTime = RefreshDebounceSeconds,
                 ProcessCallback = Timer.TimerProcessCallback.Idle,
             };
             AddChild(_refreshDebounceTimer);
@@ -2135,7 +2144,8 @@ namespace STS2RitsuLib.Settings
                 return;
             }
 
-            foreach (var binding in _dirtyBindings.ToArray())
+            var roots = ModSettingsBindingFlushPlanner.SelectEffectiveSaveRoots(_dirtyBindings);
+            foreach (var binding in roots)
                 try
                 {
                     binding.Save();

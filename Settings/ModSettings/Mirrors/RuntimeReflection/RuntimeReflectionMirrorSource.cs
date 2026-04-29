@@ -1,6 +1,7 @@
 using System.Reflection;
 using Godot;
 using MegaCrit.Sts2.Core.Localization;
+using STS2RitsuLib.Data;
 using STS2RitsuLib.Utils;
 using STS2RitsuLib.Utils.Persistence;
 
@@ -678,8 +679,8 @@ namespace STS2RitsuLib.Settings
                     AddEntry(sections, paragraphAttr.SectionId, paragraphAttr.Order, new(
                         paragraphAttr.Id,
                         ModSettingsMirrorEntryKind.Paragraph,
-                        ToText(paragraphAttr, nameof(paragraphAttr.Text), paragraphAttr.Text,
-                            InvokeText(method, instance) ?? method.Name),
+                        BuildMethodBackedMirrorText(paragraphAttr, nameof(paragraphAttr.Text), paragraphAttr.Text,
+                            method, instance),
                         Description: ToTextOrNull(paragraphAttr, nameof(paragraphAttr.Description),
                             paragraphAttr.Description),
                         MaxBodyHeight: paragraphAttr.MaxBodyHeight > 0 ? paragraphAttr.MaxBodyHeight : null,
@@ -692,8 +693,8 @@ namespace STS2RitsuLib.Settings
                         ModSettingsMirrorEntryKind.InfoCard,
                         ToText(infoAttr, nameof(infoAttr.Label), infoAttr.Label, method.Name),
                         Description: ToTextOrNull(infoAttr, nameof(infoAttr.Description), infoAttr.Description),
-                        Body: ToText(infoAttr, nameof(infoAttr.Body), infoAttr.Body,
-                            InvokeText(method, instance) ?? string.Empty),
+                        Body: BuildMethodBackedMirrorText(infoAttr, nameof(infoAttr.Body), infoAttr.Body, method,
+                            instance),
                         VisibleWhen: BuildVisibleWhen(providerType, instance, infoAttr.VisibleWhen)));
 
                 var hotkeyAttr = method.GetCustomAttribute<ModSettingsRuntimeHotkeySummaryAttribute>();
@@ -712,8 +713,8 @@ namespace STS2RitsuLib.Settings
                         hotkeyAttr.Id,
                         ModSettingsMirrorEntryKind.RuntimeHotkeySummary,
                         ToText(hotkeyAttr, nameof(hotkeyAttr.Label), hotkeyAttr.Label, method.Name),
-                        Body: ToText(hotkeyAttr, nameof(hotkeyAttr.Body), hotkeyAttr.Body,
-                            InvokeText(method, instance) ?? string.Empty),
+                        Body: BuildMethodBackedMirrorText(hotkeyAttr, nameof(hotkeyAttr.Body), hotkeyAttr.Body, method,
+                            instance),
                         HotkeyBindings: bindings,
                         HotkeyIdSuffix: ToTextOrNull(hotkeyAttr, nameof(hotkeyAttr.IdSuffix), hotkeyAttr.IdSuffix),
                         VisibleWhen: BuildVisibleWhen(providerType, instance, hotkeyAttr.VisibleWhen)));
@@ -785,6 +786,22 @@ namespace STS2RitsuLib.Settings
             }
         }
 
+        private static ModSettingsText BuildMethodBackedMirrorText(
+            object attribute,
+            string textFieldName,
+            string? configuredRawText,
+            MethodInfo method,
+            object? instance)
+        {
+            if (!string.IsNullOrWhiteSpace(configuredRawText)
+                || TryGetLocStringSource(attribute, textFieldName, out _, out _)
+                || TryGetI18NKey(attribute, textFieldName, out _))
+                return ToText(attribute, textFieldName, configuredRawText,
+                    InvokeText(method, instance) ?? method.Name);
+
+            return ModSettingsText.Dynamic(() => InvokeText(method, instance) ?? string.Empty);
+        }
+
         private static ModSettingsText ToText(string? raw, string fallback)
         {
             if (string.IsNullOrWhiteSpace(raw) && TryResolveDefaultSlugLocString(fallback, false, out var slugLoc))
@@ -797,6 +814,7 @@ namespace STS2RitsuLib.Settings
             if (TryGetLocStringSource(source, textFieldName, out var table, out var key))
                 return ModSettingsText.LocString(table, key, string.IsNullOrWhiteSpace(raw) ? fallback : raw);
 
+            // ReSharper disable once InvertIf
             if (TryGetI18NKey(source, textFieldName, out key))
             {
                 var i18N = ResolveI18NForSource(source, textFieldName, null);
@@ -893,6 +911,7 @@ namespace STS2RitsuLib.Settings
                 return ModSettingsText.LocString(table, key,
                     string.IsNullOrWhiteSpace(raw) ? fallback : raw ?? fallback);
 
+            // ReSharper disable once InvertIf
             if (TryGetIndexedI18NKey(source, fieldBaseName, index, out key))
             {
                 var i18N = ResolveI18NForSource(source, fieldBaseName, index);
@@ -1156,7 +1175,6 @@ namespace STS2RitsuLib.Settings
         {
             var dataKey = string.IsNullOrWhiteSpace(attr?.DataKey) ? defaultDataKey : attr.DataKey.Trim();
             var source = attr?.Source ?? ModSettingsReflectionBindingSource.Auto;
-            var savePolicy = attr?.SavePolicy ?? ModSettingsReflectionSavePolicy.Auto;
             var binding = source switch
             {
                 ModSettingsReflectionBindingSource.Auto or
@@ -1182,6 +1200,7 @@ namespace STS2RitsuLib.Settings
                 binding = ModSettingsBindings.WithDefault(binding, createDefault);
             }
 
+            // ReSharper disable once InvertIf
             if (!string.IsNullOrWhiteSpace(attr?.AdapterUsing))
             {
                 var adapter = ResolveFuncNoArg<IStructuredModSettingsValueAdapter<TValue>>(
@@ -1189,7 +1208,10 @@ namespace STS2RitsuLib.Settings
                 binding = ModSettingsBindings.WithAdapter(binding, adapter);
             }
 
-            return ModSettingsBindingSavePolicy.Apply(binding, savePolicy);
+            if (source != ModSettingsReflectionBindingSource.Callback)
+                binding = new AutoSaveModSettingsValueBinding<TValue>(binding);
+
+            return binding;
         }
 
         private static IModSettingsValueBinding<TValue> BuildScopedBinding<TValue>(
@@ -1199,6 +1221,7 @@ namespace STS2RitsuLib.Settings
             Func<TValue> readMember,
             Action<TValue> writeMember)
         {
+            EnsureScopedStoreRegistration(modId, dataKey, scope, readMember);
             var storeBinding = scope switch
             {
                 SaveScope.Global => ModSettingsBindings.Global<ReflectionBindingBox<TValue>, TValue>(
@@ -1209,6 +1232,27 @@ namespace STS2RitsuLib.Settings
             };
 
             return new MemberSynchronizedModSettingsValueBinding<TValue>(storeBinding, writeMember);
+        }
+
+        private static void EnsureScopedStoreRegistration<TValue>(
+            string modId,
+            string dataKey,
+            SaveScope scope,
+            Func<TValue> readMember)
+        {
+            var store = ModDataStore.For(modId);
+            try
+            {
+                store.Register(
+                    dataKey,
+                    dataKey,
+                    scope,
+                    () => new ReflectionBindingBox<TValue> { Value = readMember() });
+            }
+            catch (InvalidOperationException ex) when (
+                ex.Message.Contains("already registered", StringComparison.OrdinalIgnoreCase))
+            {
+            }
         }
 
         private static IModSettingsValueBinding<TValue> BuildRunSidecarBinding<TValue>(

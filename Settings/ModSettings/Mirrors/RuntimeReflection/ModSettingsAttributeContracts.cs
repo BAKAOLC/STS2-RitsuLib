@@ -42,22 +42,6 @@ namespace STS2RitsuLib.Settings
     }
 
     /// <summary>
-    ///     Save trigger policy after writes.
-    /// </summary>
-    public enum ModSettingsReflectionSavePolicy
-    {
-        /// <summary>
-        ///     Auto-save after each write.
-        /// </summary>
-        Auto = 0,
-
-        /// <summary>
-        ///     Write only; save is external/manual.
-        /// </summary>
-        Manual = 1,
-    }
-
-    /// <summary>
     ///     Declares reflection binding strategy for an annotated field/property.
     /// </summary>
     [AttributeUsage(AttributeTargets.Property | AttributeTargets.Field)]
@@ -67,11 +51,6 @@ namespace STS2RitsuLib.Settings
         ///     Binding source strategy.
         /// </summary>
         public ModSettingsReflectionBindingSource Source { get; init; } = ModSettingsReflectionBindingSource.Auto;
-
-        /// <summary>
-        ///     Save trigger policy after writes.
-        /// </summary>
-        public ModSettingsReflectionSavePolicy SavePolicy { get; init; } = ModSettingsReflectionSavePolicy.Auto;
 
         /// <summary>
         ///     Optional persistent data key override.

@@ -235,6 +235,33 @@ namespace STS2RitsuLib.Settings
                             "showcase_footer",
                             T("ritsulib.showcase.footer",
                                 "Use this page as a reference when implementing settings pages.")))
+                    .AddSection("host_surface_reference", section => section
+                        .WithTitle(T("ritsulib.section.hostSurfaceReference.title", "Where settings appear"))
+                        .WithDescription(T("ritsulib.section.hostSurfaceReference.description",
+                            "Examples: main menu, run pause, or mid-combat pause."))
+                        .Collapsible()
+                        .AddParagraph(
+                            "host_surface_intro",
+                            T("ritsulib.hostSurface.intro",
+                                "Pages and sections can be limited to certain menus, or read-only in some of them."))
+                        .AddParagraph(
+                            "host_surface_tiers",
+                            T("ritsulib.hostSurface.tiers",
+                                "Typical split: global aids everywhere; sensitive values read-only in combat; debug-only rows only in combat pause."))
+                        .AddToggle(
+                            "host_surface_combat_readonly_demo",
+                            T("ritsulib.hostSurface.demoToggle.label", "Read-only in combat pause (demo)"),
+                            ui.HostSurfaceCombatReadOnlyDemo,
+                            T("ritsulib.hostSurface.demoToggle.description",
+                                "Editable on the main menu and run pause; locked while paused in a fight."))
+                        .WithReadOnlyOnHostSurfaces(ModSettingsHostSurface.CombatPause))
+                    .AddSection("host_surface_combat_only_demo", section => section
+                        .WithTitle(T("ritsulib.section.hostSurfaceCombatOnly.title", "Combat pause only (demo)"))
+                        .WithVisibleOnHostSurfaces(ModSettingsHostSurface.CombatPause)
+                        .AddParagraph(
+                            "host_surface_combat_only_body",
+                            T("ritsulib.hostSurface.combatOnly.body",
+                                "Shown only when mod settings are opened from a mid-combat pause.")))
                     .AddSection("list", section => section
                         .WithTitle(T("ritsulib.showcase.list.title", "Structured List"))
                         .WithDescription(T("ritsulib.showcase.list.description",

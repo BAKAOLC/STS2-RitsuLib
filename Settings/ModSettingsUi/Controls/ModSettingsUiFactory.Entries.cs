@@ -101,6 +101,7 @@ namespace STS2RitsuLib.Settings
 
         public static Control CreateSliderEntry(ModSettingsUiContext context, SliderModSettingsEntryDefinition entry)
         {
+            ModSettingsSliderControl? controlSlot = null;
             var control = new ModSettingsSliderControl(
                 entry.Binding.Read(),
                 entry.MinValue,
@@ -111,8 +112,10 @@ namespace STS2RitsuLib.Settings
                 {
                     entry.Binding.Write(value);
                     context.MarkDirty(entry.Binding);
+                    controlSlot!.SetValue(entry.Binding.Read());
                     context.RequestRefresh();
                 });
+            controlSlot = control;
             RegisterRefreshWhenAlive(context, control, () => control.SetValue(entry.Binding.Read()),
                 ModSettingsUiRefreshSpec.ForBinding(entry.Binding));
 
@@ -135,6 +138,7 @@ namespace STS2RitsuLib.Settings
         public static Control CreateFloatSliderEntry(ModSettingsUiContext context,
             FloatSliderModSettingsEntryDefinition entry)
         {
+            ModSettingsFloatSliderControl? controlSlot = null;
             var control = new ModSettingsFloatSliderControl(
                 entry.Binding.Read(),
                 entry.MinValue,
@@ -145,8 +149,10 @@ namespace STS2RitsuLib.Settings
                 {
                     entry.Binding.Write(value);
                     context.MarkDirty(entry.Binding);
+                    controlSlot!.SetValue(entry.Binding.Read());
                     context.RequestRefresh();
                 });
+            controlSlot = control;
             RegisterRefreshWhenAlive(context, control, () => control.SetValue(entry.Binding.Read()),
                 ModSettingsUiRefreshSpec.ForBinding(entry.Binding));
 
@@ -647,6 +653,7 @@ namespace STS2RitsuLib.Settings
         public static Control CreateIntSliderEntry(ModSettingsUiContext context,
             IntSliderModSettingsEntryDefinition entry)
         {
+            ModSettingsSliderControl? controlSlot = null;
             var control = new ModSettingsSliderControl(
                 entry.Binding.Read(),
                 entry.MinValue,
@@ -657,8 +664,10 @@ namespace STS2RitsuLib.Settings
                 {
                     entry.Binding.Write(Mathf.RoundToInt(value));
                     context.MarkDirty(entry.Binding);
+                    controlSlot!.SetValue(entry.Binding.Read());
                     context.RequestRefresh();
                 });
+            controlSlot = control;
             RegisterRefreshWhenAlive(context, control, () => control.SetValue(entry.Binding.Read()),
                 ModSettingsUiRefreshSpec.ForBinding(entry.Binding));
 
