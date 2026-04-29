@@ -31,6 +31,8 @@ namespace STS2RitsuLib.Scaffolding.Content.Patches
             {
                 FrameProviders[key] = provider;
             }
+
+            RuntimeAssetRefreshCoordinator.Request(RuntimeAssetRefreshScope.Cards);
         }
 
         /// <summary>
@@ -44,6 +46,8 @@ namespace STS2RitsuLib.Scaffolding.Content.Patches
             {
                 BannerProviders[key] = provider;
             }
+
+            RuntimeAssetRefreshCoordinator.Request(RuntimeAssetRefreshScope.Cards);
         }
 
         /// <summary>
@@ -52,10 +56,15 @@ namespace STS2RitsuLib.Scaffolding.Content.Patches
         public static bool UnregisterFrameProvider(string key)
         {
             ArgumentException.ThrowIfNullOrWhiteSpace(key);
+            bool removed;
             lock (SyncRoot)
             {
-                return FrameProviders.Remove(key);
+                removed = FrameProviders.Remove(key);
             }
+
+            if (removed)
+                RuntimeAssetRefreshCoordinator.Request(RuntimeAssetRefreshScope.Cards);
+            return removed;
         }
 
         /// <summary>
@@ -64,10 +73,15 @@ namespace STS2RitsuLib.Scaffolding.Content.Patches
         public static bool UnregisterBannerProvider(string key)
         {
             ArgumentException.ThrowIfNullOrWhiteSpace(key);
+            bool removed;
             lock (SyncRoot)
             {
-                return BannerProviders.Remove(key);
+                removed = BannerProviders.Remove(key);
             }
+
+            if (removed)
+                RuntimeAssetRefreshCoordinator.Request(RuntimeAssetRefreshScope.Cards);
+            return removed;
         }
 
         /// <summary>
@@ -81,6 +95,8 @@ namespace STS2RitsuLib.Scaffolding.Content.Patches
             {
                 PoolFrameProviders[key] = provider;
             }
+
+            RuntimeAssetRefreshCoordinator.Request(RuntimeAssetRefreshScope.Cards);
         }
 
         /// <summary>
@@ -89,10 +105,15 @@ namespace STS2RitsuLib.Scaffolding.Content.Patches
         public static bool UnregisterPoolFrameProvider(string key)
         {
             ArgumentException.ThrowIfNullOrWhiteSpace(key);
+            bool removed;
             lock (SyncRoot)
             {
-                return PoolFrameProviders.Remove(key);
+                removed = PoolFrameProviders.Remove(key);
             }
+
+            if (removed)
+                RuntimeAssetRefreshCoordinator.Request(RuntimeAssetRefreshScope.Cards);
+            return removed;
         }
 
         /// <summary>
@@ -106,6 +127,8 @@ namespace STS2RitsuLib.Scaffolding.Content.Patches
                 BannerProviders.Clear();
                 PoolFrameProviders.Clear();
             }
+
+            RuntimeAssetRefreshCoordinator.Request(RuntimeAssetRefreshScope.Cards);
         }
 
         internal static bool TryGetFrameMaterial(CardModel card, out Material material)
@@ -135,9 +158,8 @@ namespace STS2RitsuLib.Scaffolding.Content.Patches
             return false;
         }
 
-        internal static bool TryResolveBannerMaterial(CardModel card, out Material? material, out bool matched)
+        internal static bool TryGetBannerMaterial(CardModel card, out Material material)
         {
-            matched = false;
             foreach (var provider in Snapshot(BannerProviders))
             {
                 Material? value;
@@ -152,7 +174,6 @@ namespace STS2RitsuLib.Scaffolding.Content.Patches
                     continue;
                 }
 
-                matched = true;
                 if (value == null)
                     continue;
 
@@ -160,7 +181,7 @@ namespace STS2RitsuLib.Scaffolding.Content.Patches
                 return true;
             }
 
-            material = null;
+            material = null!;
             return false;
         }
 

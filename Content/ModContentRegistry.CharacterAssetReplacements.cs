@@ -1,4 +1,5 @@
 using STS2RitsuLib.Scaffolding.Characters;
+using STS2RitsuLib.Scaffolding.Content.Patches;
 
 namespace STS2RitsuLib.Content
 {
@@ -56,6 +57,7 @@ namespace STS2RitsuLib.Content
                     NextCharacterAssetReplacementWriteOrder());
             }
 
+            RuntimeAssetRefreshCoordinator.Request();
             _logger.Info("[Content] Registered global character asset replacement.");
         }
 
@@ -80,6 +82,7 @@ namespace STS2RitsuLib.Content
                 perMod[ModId] = new(assetProfile, NextCharacterAssetReplacementWriteOrder());
             }
 
+            RuntimeAssetRefreshCoordinator.Request();
             _logger.Info($"[Content] Registered character asset replacement for '{normalizedEntry}'.");
         }
 
@@ -96,8 +99,9 @@ namespace STS2RitsuLib.Content
                 removed = RegisteredGlobalCharacterAssetReplacementsByMod.Remove(ModId);
             }
 
-            if (removed)
-                _logger.Info("[Content] Cleared global character asset replacement.");
+            if (!removed) return removed;
+            RuntimeAssetRefreshCoordinator.Request();
+            _logger.Info("[Content] Cleared global character asset replacement.");
 
             return removed;
         }
@@ -117,8 +121,9 @@ namespace STS2RitsuLib.Content
                 removed = TryRemoveCharacterAssetReplacementForKey(canonical);
             }
 
-            if (removed)
-                _logger.Info($"[Content] Removed character asset replacement for '{canonical}'.");
+            if (!removed) return removed;
+            RuntimeAssetRefreshCoordinator.Request();
+            _logger.Info($"[Content] Removed character asset replacement for '{canonical}'.");
 
             return removed;
         }

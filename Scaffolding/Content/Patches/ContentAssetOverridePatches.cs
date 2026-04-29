@@ -1781,8 +1781,6 @@ namespace STS2RitsuLib.Scaffolding.Content.Patches
         public static bool Prefix(CardModel __instance, ref Material __result)
             // ReSharper restore InconsistentNaming
         {
-            var shouldFallbackToFrame = false;
-
             if (__instance is IModCardBannerMaterialOverride bannerOverride)
             {
                 var directBannerMaterial = bannerOverride.CustomBannerMaterial;
@@ -1791,42 +1789,21 @@ namespace STS2RitsuLib.Scaffolding.Content.Patches
                     __result = directBannerMaterial;
                     return false;
                 }
-
-                shouldFallbackToFrame = true;
             }
 
-            if (ExternalCardMaterialOverrideRegistry.TryResolveBannerMaterial(__instance,
-                    out var externalBannerMaterial,
-                    out var externalMatched))
+            if (ExternalCardMaterialOverrideRegistry.TryGetBannerMaterial(__instance,
+                    out var externalBannerMaterial))
             {
-                __result = externalBannerMaterial!;
+                __result = externalBannerMaterial;
                 return false;
             }
-
-            if (externalMatched)
-                shouldFallbackToFrame = true;
 
             if (!ModCharacterOwnedVisualOverrideHelper.TryCardBannerMaterial(__instance, ref __result))
                 return false;
 
-            var keepOriginalBannerGetter =
-                ContentAssetOverridePatchHelper.TryUseMaterialOverride<IModCardAssetOverrides>(
-                    __instance, ref __result, o => o.CustomBannerMaterialPath,
-                    nameof(IModCardAssetOverrides.CustomBannerMaterialPath));
-            if (!keepOriginalBannerGetter)
-                return false;
-
-            if (__instance is IModCardAssetOverrides)
-                shouldFallbackToFrame = true;
-
-            if (ModCharacterOwnedVisualOverrideHelper.HasCardVisualOverrideContext(__instance))
-                shouldFallbackToFrame = true;
-
-            if (!shouldFallbackToFrame)
-                return true;
-
-            __result = __instance.FrameMaterial;
-            return false;
+            return ContentAssetOverridePatchHelper.TryUseMaterialOverride<IModCardAssetOverrides>(
+                __instance, ref __result, o => o.CustomBannerMaterialPath,
+                nameof(IModCardAssetOverrides.CustomBannerMaterialPath));
         }
     }
 
