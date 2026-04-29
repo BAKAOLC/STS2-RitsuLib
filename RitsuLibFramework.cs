@@ -463,6 +463,38 @@ namespace STS2RitsuLib
         }
 
         /// <summary>
+        ///     Registers a reflection-based settings provider type for attribute-driven settings pages.
+        /// </summary>
+        public static bool RegisterModSettingsReflectionProvider<TProvider>()
+        {
+            return RuntimeReflectionMirrorSource.RegisterProviderType<TProvider>();
+        }
+
+        /// <summary>
+        ///     Registers a reflection-based settings provider type for attribute-driven settings pages.
+        /// </summary>
+        public static bool RegisterModSettingsReflectionProvider(Type providerType)
+        {
+            return RuntimeReflectionMirrorSource.RegisterProviderType(providerType);
+        }
+
+        /// <summary>
+        ///     Registers a reflection provider and immediately attempts to mirror-register its pages.
+        /// </summary>
+        public static int RegisterModSettingsReflectionProviderAndTryRegister<TProvider>()
+        {
+            return RuntimeReflectionMirrorSource.RegisterProviderTypeAndTryRegister<TProvider>();
+        }
+
+        /// <summary>
+        ///     Registers a reflection provider and immediately attempts to mirror-register its pages.
+        /// </summary>
+        public static int RegisterModSettingsReflectionProviderAndTryRegister(Type providerType)
+        {
+            return RuntimeReflectionMirrorSource.RegisterProviderTypeAndTryRegister(providerType);
+        }
+
+        /// <summary>
         ///     Sets ordering for this mod&apos;s group in the RitsuLib mod settings sidebar (lower first). Mods without a
         ///     value use <c>0</c> and sort by display name. Prefer <see cref="ModSettingsPageBuilder.WithModSidebarOrder" /> when
         ///     registering pages.

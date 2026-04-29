@@ -8,6 +8,7 @@ namespace STS2RitsuLib.Settings
             added += BaseLibMirrorSource.TryRegisterMirroredPages();
             added += ModConfigMirrorSource.TryRegisterMirroredPages();
             added += RuntimeInteropMirrorSource.TryRegisterMirroredPages();
+            added += RuntimeReflectionMirrorSource.TryRegisterMirroredPages();
             added += BaseLibToRitsuGeneratedMirrorSource.TryRegisterMirroredPages();
             return added;
         }

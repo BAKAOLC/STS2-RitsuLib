@@ -633,6 +633,11 @@ namespace STS2RitsuLib.Settings
             return container;
         }
 
+        public static Control CreateCustomEntry(ModSettingsUiContext context, CustomModSettingsEntryDefinition entry)
+        {
+            return entry.ControlFactory(context);
+        }
+
         public static Control CreateListEntry<TItem>(ModSettingsUiContext context,
             ListModSettingsEntryDefinition<TItem> entry)
         {

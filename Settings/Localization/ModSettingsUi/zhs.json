@@ -326,5 +326,22 @@
   "clipboard.pasteErrorOk": "确定",
   "clipboard.pasteFailedEmpty": "剪贴板为空或不可用。",
   "clipboard.pasteFailedBlocked": "粘贴被自定义规则阻止。",
-  "clipboard.pasteFailedIncompatible": "剪贴板内容与当前设置项不兼容。"
+  "clipboard.pasteFailedIncompatible": "剪贴板内容与当前设置项不兼容。",
+  "ritsulib.runtimeReflection.spine.page.title": "运行时反射 Spine 示例",
+  "ritsulib.runtimeReflection.spine.page.description": "使用 CustomEntry 预览原版角色 Spine 视觉的最小注解驱动示例。",
+  "ritsulib.runtimeReflection.spine.section.title": "Spine 预览",
+  "ritsulib.runtimeReflection.spine.section.description": "选择原版角色并浏览对应 Spine 可用动画列表。",
+  "ritsulib.runtimeReflection.spine.entry.label": "原版角色 Spine 预览",
+  "ritsulib.runtimeReflection.spine.entry.description": "该控件会直接实例化当前所选原版角色的视觉场景。",
+  "ritsulib.runtimeReflection.spine.binding.profileAuto.label": "Profile 自动保存示例",
+  "ritsulib.runtimeReflection.spine.binding.profileAuto.description": "使用 Profile 作用域并采用默认 Auto 保存策略。",
+  "ritsulib.runtimeReflection.spine.binding.callbackManual.label": "Callback 手动保存值",
+  "ritsulib.runtimeReflection.spine.binding.callbackManual.description": "Callback 来源且保存策略为 Manual。修改值后点击“保存 callback 值”。",
+  "ritsulib.runtimeReflection.spine.binding.callbackState.description": "当前 callback 值与最近一次保存快照。",
+  "ritsulib.runtimeReflection.spine.binding.callbackState.text": "当前：{0} | 已保存：{1}",
+  "ritsulib.runtimeReflection.spine.binding.callbackSave.label": "持久化 callback 值",
+  "ritsulib.runtimeReflection.spine.binding.callbackSave.button": "保存 callback 值",
+  "ritsulib.runtimeReflection.spine.binding.callbackSave.description": "调用一次 callback 保存方法。",
+  "ritsulib.runtimeReflection.spine.character.label": "角色",
+  "ritsulib.runtimeReflection.spine.animations.title": "可用动画列表"
 }

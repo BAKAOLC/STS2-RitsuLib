@@ -1,3 +1,5 @@
+using Godot;
+
 namespace STS2RitsuLib.Settings
 {
     internal enum ModSettingsMirrorEntryKind
@@ -11,9 +13,16 @@ namespace STS2RitsuLib.Settings
         EnumChoice,
         Color,
         String,
+        MultilineString,
         KeyBinding,
+        MultiKeyBinding,
+        InfoCard,
+        RuntimeHotkeySummary,
+        Image,
         Button,
+        HostContextButton,
         Subpage,
+        Custom,
     }
 
     internal sealed record ModSettingsMirrorPageDefinition(
@@ -66,6 +75,7 @@ namespace STS2RitsuLib.Settings
         IReadOnlyList<ModSettingsMirrorChoiceOption>? ChoiceOptions = null,
         ModSettingsChoicePresentation ChoicePresentation = ModSettingsChoicePresentation.Stepper,
         ModSettingsText? Placeholder = null,
+        ModSettingsText? Body = null,
         int? MaxLength = null,
         Func<string, bool>? ValidationVisual = null,
         bool AllowModifierCombos = true,
@@ -73,11 +83,17 @@ namespace STS2RitsuLib.Settings
         bool DistinguishModifierSides = false,
         ModSettingsText? ButtonLabel = null,
         Action? OnClick = null,
+        Action<IModSettingsUiActionHost>? HostContextOnClick = null,
         ModSettingsButtonTone ButtonTone = ModSettingsButtonTone.Normal,
         string? TargetPageId = null,
         float? MaxBodyHeight = null,
+        IReadOnlyList<ModSettingsText>? HotkeyBindings = null,
+        ModSettingsText? HotkeyIdSuffix = null,
+        Func<Texture2D?>? TextureProvider = null,
+        float PreviewHeight = 160f,
         bool EditAlpha = true,
         bool EditIntensity = false,
         Type? EnumType = null,
+        Func<IModSettingsUiActionHost, Control>? CustomControlFactory = null,
         Func<bool>? VisibleWhen = null);
 }

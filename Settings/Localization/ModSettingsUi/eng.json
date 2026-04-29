@@ -326,5 +326,22 @@
   "clipboard.pasteErrorOk": "OK",
   "clipboard.pasteFailedEmpty": "Clipboard is empty or unavailable.",
   "clipboard.pasteFailedBlocked": "Paste was blocked by a custom rule.",
-  "clipboard.pasteFailedIncompatible": "Clipboard contents are not compatible with this setting."
+  "clipboard.pasteFailedIncompatible": "Clipboard contents are not compatible with this setting.",
+  "ritsulib.runtimeReflection.spine.page.title": "Runtime Reflection Spine Example",
+  "ritsulib.runtimeReflection.spine.page.description": "Minimal attribute-driven example using CustomEntry to preview vanilla character spine visuals.",
+  "ritsulib.runtimeReflection.spine.section.title": "Spine Preview",
+  "ritsulib.runtimeReflection.spine.section.description": "Select a vanilla character and browse all available spine animations.",
+  "ritsulib.runtimeReflection.spine.entry.label": "Vanilla Character Spine Preview",
+  "ritsulib.runtimeReflection.spine.entry.description": "This control directly instantiates the selected vanilla character visuals scene.",
+  "ritsulib.runtimeReflection.spine.binding.profileAuto.label": "Profile auto-save demo",
+  "ritsulib.runtimeReflection.spine.binding.profileAuto.description": "Profile-scoped binding with default Auto save policy.",
+  "ritsulib.runtimeReflection.spine.binding.callbackManual.label": "Callback manual-save value",
+  "ritsulib.runtimeReflection.spine.binding.callbackManual.description": "Callback source with manual save policy. Change value, then press Save callback value.",
+  "ritsulib.runtimeReflection.spine.binding.callbackState.description": "Current callback value and latest saved snapshot.",
+  "ritsulib.runtimeReflection.spine.binding.callbackState.text": "Current: {0} | Saved: {1}",
+  "ritsulib.runtimeReflection.spine.binding.callbackSave.label": "Persist callback value",
+  "ritsulib.runtimeReflection.spine.binding.callbackSave.button": "Save callback value",
+  "ritsulib.runtimeReflection.spine.binding.callbackSave.description": "Calls the callback save method once.",
+  "ritsulib.runtimeReflection.spine.character.label": "Character",
+  "ritsulib.runtimeReflection.spine.animations.title": "Available Animations"
 }

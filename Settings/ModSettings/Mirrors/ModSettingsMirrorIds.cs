@@ -1,22 +1,27 @@
-using MegaCrit.Sts2.Core.Helpers;
+using STS2RitsuLib.Content;
 
 namespace STS2RitsuLib.Settings
 {
     internal static class ModSettingsMirrorIds
     {
+        public static string Slug(string name)
+        {
+            return ModContentRegistry.NormalizePublicStem(name);
+        }
+
         public static string Entry(string prefix, string name)
         {
-            return $"{prefix}_{StringHelper.Slugify(name)}";
+            return $"{prefix}_{Slug(name)}";
         }
 
         public static string Button(string prefix, string name)
         {
-            return $"{prefix}_btn_{StringHelper.Slugify(name)}";
+            return $"{prefix}_btn_{Slug(name)}";
         }
 
         public static string Section(string title, int index)
         {
-            return $"sec_{StringHelper.Slugify(title)}_{index}";
+            return $"sec_{Slug(title)}_{index}";
         }
     }
 }
