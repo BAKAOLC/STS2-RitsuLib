@@ -136,6 +136,7 @@ namespace STS2RitsuLib.Settings
 
             NCreatureVisuals? currentVisuals = null;
             var currentCharacter = availableCharacters[0];
+            var previewBuildVersion = 0;
 
             var animationsPicker = new ModSettingsDropdownChoiceControl<string>(
                 [],
@@ -172,19 +173,68 @@ namespace STS2RitsuLib.Settings
             };
             characterRow.AddChild(characterPicker);
 
-            RefreshPreview();
+            root.TreeEntered += () =>
+            {
+                Callable.From(() =>
+                {
+                    if (!GodotObject.IsInstanceValid(root))
+                        return;
+                    Callable.From(RefreshPreview).CallDeferred();
+                }).CallDeferred();
+            };
             return root;
 
             void RefreshPreview()
             {
+                previewBuildVersion++;
                 foreach (var child in viewport.GetChildren())
                     child.QueueFree();
 
                 currentVisuals = currentCharacter.CreateVisuals();
-                currentVisuals.Position = new(320, 310);
                 viewport.AddChild(currentVisuals);
+                var visualsForDeferred = currentVisuals;
+                var deferredBuildVersion = previewBuildVersion;
+                Callable.From(() => InitializePreviewVisuals(visualsForDeferred, deferredBuildVersion)).CallDeferred();
+            }
 
-                var animationNames = EnumerateAnimations(currentVisuals);
+            void ApplyPreviewTransform()
+            {
+                if (currentVisuals == null)
+                    return;
+
+                var bounds = TryComputeCanvasItemBounds(currentVisuals);
+                if (bounds == null)
+                {
+                    currentVisuals.Scale = Vector2.One;
+                    currentVisuals.Position = new(viewport.Size.X * 0.5f, viewport.Size.Y * 0.86f);
+                    return;
+                }
+
+                var rect = bounds.Value;
+                var targetHeight = viewport.Size.Y * 0.78f;
+                var scale = rect.Size.Y > 0.001f
+                    ? Mathf.Clamp(targetHeight / rect.Size.Y, 0.45f, 1.65f)
+                    : 1f;
+
+                var centerX = rect.Position.X + rect.Size.X * 0.5f;
+                var bottomY = rect.Position.Y + rect.Size.Y;
+                currentVisuals.Scale = new(scale, scale);
+                currentVisuals.Position = new(
+                    viewport.Size.X * 0.5f - centerX * scale,
+                    viewport.Size.Y * 0.90f - bottomY * scale);
+            }
+
+            void InitializePreviewVisuals(NCreatureVisuals visuals, int buildVersion)
+            {
+                if (buildVersion != previewBuildVersion)
+                    return;
+                if (!GodotObject.IsInstanceValid(visuals))
+                    return;
+
+                currentVisuals = visuals;
+                ApplyPreviewTransform();
+
+                var animationNames = EnumerateAnimations(visuals);
                 var animationOptions = animationNames
                     .Select(name => (name, name))
                     .ToArray();
@@ -199,7 +249,59 @@ namespace STS2RitsuLib.Settings
                     string.Equals(name, "idle_loop", StringComparison.OrdinalIgnoreCase));
                 var selected = preferred ?? animationNames[0];
                 animationsPicker.SetOptions(animationOptions, selected);
-                currentVisuals.SpineAnimation.SetAnimation(selected);
+                visuals.SpineAnimation.SetAnimation(selected);
+            }
+        }
+
+        private static Rect2? TryComputeCanvasItemBounds(Node root)
+        {
+            var initialized = false;
+            var min = Vector2.Zero;
+            var max = Vector2.Zero;
+            Traverse(root, Transform2D.Identity);
+            return initialized ? new Rect2(min, max - min) : null;
+
+            void Traverse(Node node, Transform2D parentTransform)
+            {
+                var localTransform = parentTransform;
+                if (node is Node2D n2D)
+                    localTransform = parentTransform * n2D.Transform;
+
+                if (node is CanvasItem canvasItem)
+                {
+                    var getRect = node.GetType().GetMethod("GetRect", Type.EmptyTypes);
+                    if (getRect?.Invoke(node, null) is Rect2 { Size: { X: > 0.001f, Y: > 0.001f } } rect)
+                    {
+                        Include(localTransform * rect.Position);
+                        Include(localTransform * (rect.Position + new Vector2(rect.Size.X, 0f)));
+                        Include(localTransform * (rect.Position + new Vector2(0f, rect.Size.Y)));
+                        Include(localTransform * (rect.Position + rect.Size));
+                    }
+
+                    foreach (var child in canvasItem.GetChildren())
+                        if (child != null)
+                            Traverse(child, localTransform);
+
+                    return;
+                }
+
+                foreach (var child in node.GetChildren())
+                    if (child != null)
+                        Traverse(child, localTransform);
+            }
+
+            void Include(Vector2 point)
+            {
+                if (!initialized)
+                {
+                    min = point;
+                    max = point;
+                    initialized = true;
+                    return;
+                }
+
+                min = new(Mathf.Min(min.X, point.X), Mathf.Min(min.Y, point.Y));
+                max = new(Mathf.Max(max.X, point.X), Mathf.Max(max.Y, point.Y));
             }
         }
 

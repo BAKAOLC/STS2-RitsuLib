@@ -343,5 +343,6 @@
   "ritsulib.runtimeReflection.spine.binding.callbackSave.button": "Save",
   "ritsulib.runtimeReflection.spine.binding.callbackSave.description": "Stores the current value as the saved snapshot.",
   "ritsulib.runtimeReflection.spine.character.label": "Character",
-  "ritsulib.runtimeReflection.spine.animations.title": "Animations"
+  "ritsulib.runtimeReflection.spine.animations.title": "Animations",
+  "ritsulib.runtimeReflection.spine.previewHeightRatio.label": "Height ratio"
 }

@@ -343,5 +343,6 @@
   "ritsulib.runtimeReflection.spine.binding.callbackSave.button": "保存",
   "ritsulib.runtimeReflection.spine.binding.callbackSave.description": "把当前数值记为已保存快照。",
   "ritsulib.runtimeReflection.spine.character.label": "角色",
-  "ritsulib.runtimeReflection.spine.animations.title": "动画"
+  "ritsulib.runtimeReflection.spine.animations.title": "动画",
+  "ritsulib.runtimeReflection.spine.previewHeightRatio.label": "高度比例"
 }
