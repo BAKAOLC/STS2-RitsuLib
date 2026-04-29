@@ -38,5 +38,17 @@ namespace STS2RitsuLib.Cards.DynamicVars
         {
             return new(name, baseValue, currentValueFactory, previewValueFactory);
         }
+
+        /// <summary>
+        ///     Creates a <see cref="ComputedDynamicVar" /> with target-aware computation.
+        /// </summary>
+        public static ComputedDynamicVar Computed(
+            string name,
+            decimal baseValue,
+            Func<CardModel?, Creature?, decimal> currentValueFactory,
+            Func<CardModel?, CardPreviewMode, Creature?, bool, decimal>? previewValueFactory = null)
+        {
+            return new(name, baseValue, currentValueFactory, previewValueFactory);
+        }
     }
 }

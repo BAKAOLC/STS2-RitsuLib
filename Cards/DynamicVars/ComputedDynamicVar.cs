@@ -10,7 +10,7 @@ namespace STS2RitsuLib.Cards.DynamicVars
     /// </summary>
     public sealed class ComputedDynamicVar : DynamicVar
     {
-        private readonly Func<CardModel?, decimal> _currentValueFactory;
+        private readonly Func<CardModel?, Creature?, decimal> _currentValueFactory;
         private readonly Func<CardModel?, CardPreviewMode, Creature?, bool, decimal>? _previewValueFactory;
 
         /// <summary>
@@ -38,8 +38,53 @@ namespace STS2RitsuLib.Cards.DynamicVars
             ArgumentException.ThrowIfNullOrWhiteSpace(name);
             ArgumentNullException.ThrowIfNull(currentValueFactory);
 
+            _currentValueFactory = (card, _) => currentValueFactory(card);
+            _previewValueFactory = previewValueFactory;
+        }
+
+        /// <summary>
+        ///     Creates a computed variable with target-aware evaluation.
+        /// </summary>
+        /// <param name="name">
+        ///     Dynamic var key.
+        /// </param>
+        /// <param name="baseValue">
+        ///     Fallback numeric base when no preview override applies.
+        /// </param>
+        /// <param name="currentValueFactory">
+        ///     Resolves the live value from the owning <see cref="CardModel" /> and current target.
+        /// </param>
+        /// <param name="previewValueFactory">
+        ///     Optional override used during card preview; when null, <paramref name="currentValueFactory" /> is used.
+        /// </param>
+        public ComputedDynamicVar(
+            string name,
+            decimal baseValue,
+            Func<CardModel?, Creature?, decimal> currentValueFactory,
+            Func<CardModel?, CardPreviewMode, Creature?, bool, decimal>? previewValueFactory = null)
+            : base(name, baseValue)
+        {
+            ArgumentException.ThrowIfNullOrWhiteSpace(name);
+            ArgumentNullException.ThrowIfNull(currentValueFactory);
+
             _currentValueFactory = currentValueFactory;
             _previewValueFactory = previewValueFactory;
+        }
+
+        /// <summary>
+        ///     Computes the dynamic value for the current owner and target.
+        /// </summary>
+        public decimal Calculate(Creature? target)
+        {
+            return _currentValueFactory(_owner as CardModel, target);
+        }
+
+        /// <summary>
+        ///     Computes the dynamic value for the current owner.
+        /// </summary>
+        public decimal Calculate()
+        {
+            return Calculate(null);
         }
 
         /// <inheritdoc />
@@ -50,13 +95,21 @@ namespace STS2RitsuLib.Cards.DynamicVars
             bool runGlobalHooks)
         {
             PreviewValue = _previewValueFactory?.Invoke(card, previewMode, target, runGlobalHooks)
-                           ?? _currentValueFactory(card);
+                           ?? _currentValueFactory(card, target);
         }
 
         /// <inheritdoc />
         protected override decimal GetBaseValueForIConvertible()
         {
-            return _currentValueFactory(_owner as CardModel);
+            return Calculate(null);
+        }
+
+        /// <summary>
+        ///     Returns the computed value as a string.
+        /// </summary>
+        public override string ToString()
+        {
+            return Calculate(null).ToString();
         }
     }
 }
