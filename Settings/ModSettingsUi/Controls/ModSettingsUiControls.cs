@@ -661,11 +661,11 @@ namespace STS2RitsuLib.Settings
     /// <typeparam name="TValue">The stored option value type.</typeparam>
     public sealed partial class ModSettingsChoiceControl<TValue> : HBoxContainer
     {
-        private readonly TValue? _currentValue;
         private readonly Action<TValue>? _onChanged;
-        private readonly (TValue Value, string Label)[]? _optionsWithValues;
         private int _currentIndex;
+        private TValue? _currentValue;
         private Label? _label;
+        private (TValue Value, string Label)[] _optionsWithValues = [];
         private bool _suppressCallbacks;
 
         /// <summary>
@@ -742,7 +742,7 @@ namespace STS2RitsuLib.Settings
         /// <inheritdoc />
         public override void _Ready()
         {
-            if (_optionsWithValues == null)
+            if (_optionsWithValues.Length == 0)
                 return;
 
             var startingIndex = Array.FindIndex(_optionsWithValues,
@@ -755,7 +755,7 @@ namespace STS2RitsuLib.Settings
 
         private void Shift(int delta)
         {
-            if (_optionsWithValues == null || _optionsWithValues.Length == 0)
+            if (_optionsWithValues.Length == 0)
                 return;
 
             _currentIndex = (_currentIndex + delta + _optionsWithValues.Length) % _optionsWithValues.Length;
@@ -770,7 +770,7 @@ namespace STS2RitsuLib.Settings
         /// <param name="value">The value to select.</param>
         public void SetValue(TValue value)
         {
-            if (_optionsWithValues == null)
+            if (_optionsWithValues.Length == 0)
                 return;
             var index = Array.FindIndex(_optionsWithValues,
                 option => EqualityComparer<TValue>.Default.Equals(option.Value, value));
@@ -782,9 +782,28 @@ namespace STS2RitsuLib.Settings
             _suppressCallbacks = false;
         }
 
+        /// <summary>
+        ///     Replaces all choices and updates the selected value without invoking callbacks.
+        /// </summary>
+        public void SetOptions(IReadOnlyList<(TValue Value, string Label)> options, TValue selectedValue)
+        {
+            _optionsWithValues = options.ToArray();
+            _currentValue = selectedValue;
+            _currentIndex = 0;
+
+            if (_optionsWithValues.Length > 0)
+            {
+                var matched = Array.FindIndex(_optionsWithValues,
+                    option => EqualityComparer<TValue>.Default.Equals(option.Value, selectedValue));
+                _currentIndex = matched >= 0 ? matched : 0;
+            }
+
+            RefreshCurrentLabel();
+        }
+
         private void RefreshCurrentLabel()
         {
-            if (_optionsWithValues == null || _label == null)
+            if (_optionsWithValues.Length == 0 || _label == null)
                 return;
             _label.Text = _optionsWithValues[_currentIndex].Label;
         }
@@ -800,7 +819,6 @@ namespace STS2RitsuLib.Settings
         private const float RowHeight = 38f;
 
         private readonly Action<TValue>? _onChanged;
-        private readonly (TValue Value, string Label)[]? _optionsWithValues;
         private readonly System.Collections.Generic.Dictionary<int, ModSettingsMiniButton> _rowButtonCache = [];
         private readonly List<ModSettingsMiniButton> _rowButtons = [];
         private Control? _backdrop;
@@ -808,6 +826,7 @@ namespace STS2RitsuLib.Settings
         private bool _dropOpen;
         private PanelContainer? _dropPanel;
         private ModSettingsGamepadCompatibleButton? _faceButton;
+        private (TValue Value, string Label)[] _optionsWithValues = [];
         private int _selectedIndex;
         private bool _suppressCallbacks;
 
@@ -923,7 +942,7 @@ namespace STS2RitsuLib.Settings
         /// <param name="value">The value to select.</param>
         public void SetValue(TValue value)
         {
-            if (_optionsWithValues == null || _faceButton == null)
+            if (_optionsWithValues.Length == 0 || _faceButton == null)
                 return;
 
             var idx = Array.FindIndex(_optionsWithValues,
@@ -937,10 +956,30 @@ namespace STS2RitsuLib.Settings
             _suppressCallbacks = false;
         }
 
+        /// <summary>
+        ///     Replaces all dropdown options and updates the selected value without firing callbacks.
+        /// </summary>
+        public void SetOptions(IReadOnlyList<(TValue Value, string Label)> options, TValue selectedValue)
+        {
+            _optionsWithValues = options.ToArray();
+            _selectedIndex = 0;
+            for (var i = 0; i < _optionsWithValues.Length; i++)
+                if (EqualityComparer<TValue>.Default.Equals(_optionsWithValues[i].Value, selectedValue))
+                {
+                    _selectedIndex = i;
+                    break;
+                }
+
+            if (_faceButton != null)
+                _faceButton.Disabled = _optionsWithValues.Length == 0;
+            RefreshFaceLabel();
+            if (_dropOpen)
+                RebuildListRows();
+        }
+
         private void OnFacePressed()
         {
-            if (_faceButton == null || _faceButton.Disabled || _optionsWithValues == null ||
-                _optionsWithValues.Length == 0)
+            if (_faceButton == null || _faceButton.Disabled || _optionsWithValues.Length == 0)
                 return;
 
             if (_dropOpen)
@@ -992,8 +1031,7 @@ namespace STS2RitsuLib.Settings
 
         private void OpenDropdown()
         {
-            if (_dropPanel == null || _dropList == null || _backdrop == null || _optionsWithValues == null ||
-                _optionsWithValues.Length == 0)
+            if (_dropPanel == null || _dropList == null || _backdrop == null || _optionsWithValues.Length == 0)
                 return;
 
             RebuildListRows();
@@ -1029,7 +1067,7 @@ namespace STS2RitsuLib.Settings
 
         private void RebuildListRows()
         {
-            if (_dropList == null || _optionsWithValues == null)
+            if (_dropList == null)
                 return;
 
             _rowButtons.Clear();
@@ -1096,7 +1134,7 @@ namespace STS2RitsuLib.Settings
 
         private void ActivateRow(int index)
         {
-            if (_suppressCallbacks || _optionsWithValues == null)
+            if (_suppressCallbacks)
                 return;
 
             if (index < 0 || index >= _optionsWithValues.Length)
@@ -1125,8 +1163,15 @@ namespace STS2RitsuLib.Settings
 
         private void RefreshFaceLabel()
         {
-            if (_faceButton == null || _optionsWithValues == null || _optionsWithValues.Length == 0)
+            if (_faceButton == null)
                 return;
+            if (_optionsWithValues.Length == 0)
+            {
+                _faceButton.Text = string.Empty;
+                _faceButton.TooltipText = string.Empty;
+                return;
+            }
+
             var i = Mathf.Clamp(_selectedIndex, 0, _optionsWithValues.Length - 1);
             var label = _optionsWithValues[i].Label;
             _faceButton.Text = _faceButton.Icon != null
@@ -2841,7 +2886,7 @@ namespace STS2RitsuLib.Settings
                 () => ModSettingsUiFactory.ResolveEntryLabelDisplay(_entry.Label)));
 
             var descriptionLabel = ModSettingsUiFactory.CreateRefreshableDescriptionLabel(UiContext, _entry.Description,
-                () => ModSettingsUiContext.ResolveBindingDescriptionBody(_entry.Description));
+                () => ModSettingsUiControlFactoryHelper.ResolveDescription(_entry.Description));
             textColumn.AddChild(descriptionLabel);
 
             textColumn.AddChild(ModSettingsUiFactory.CreatePersistenceScopeTag(_entry.Binding));

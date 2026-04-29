@@ -1,6 +1,5 @@
 using System.Reflection;
 using Godot;
-using MegaCrit.Sts2.Core.Helpers;
 using MegaCrit.Sts2.Core.Localization;
 
 namespace STS2RitsuLib.Settings
@@ -80,7 +79,7 @@ namespace STS2RitsuLib.Settings
                         : ModSettingsText.Dynamic(() => host.ResolveLabel(section.SectionTitle!)),
                     IsCollapsible: !string.IsNullOrWhiteSpace(sourceSection.SectionTitle),
                     StartCollapsed: false,
-                    VisibleWhen: BuildSectionVisibility(entries)));
+                    VisibleWhen: ModSettingsMirrorVisibilityPolicy.BuildSectionVisibility(entries)));
             }
 
             if (mappedSections.Count == 0)
@@ -303,29 +302,6 @@ namespace STS2RitsuLib.Settings
                 VisibleWhen: visibilityPredicate);
         }
 
-        private static Func<bool>? BuildSectionVisibility(IReadOnlyList<ModSettingsMirrorEntryDefinition> entries)
-        {
-            if (entries.Count == 0)
-                return null;
-
-            return () => entries.Any(static entry => EvaluateVisibility(entry.VisibleWhen));
-        }
-
-        private static bool EvaluateVisibility(Func<bool>? predicate)
-        {
-            if (predicate == null)
-                return true;
-
-            try
-            {
-                return predicate();
-            }
-            catch
-            {
-                return true;
-            }
-        }
-
         private static void InvokeConfigButton(MethodInfo method, BaseLibMirrorHost host)
         {
             try
@@ -465,7 +441,7 @@ namespace STS2RitsuLib.Settings
             if (string.IsNullOrEmpty(modPrefix))
                 return null;
 
-            var descriptionKey = modPrefix + StringHelper.Slugify(member.Name) + ".hover.desc";
+            var descriptionKey = modPrefix + ModSettingsMirrorSlugPolicy.Normalize(member.Name) + ".hover.desc";
             if (!LocString.Exists("settings_ui", descriptionKey))
                 return null;
 

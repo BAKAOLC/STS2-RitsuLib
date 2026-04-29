@@ -731,4 +731,29 @@ namespace STS2RitsuLib.Settings
             return ModSettingsUiFactory.CreateImageEntry(context, this);
         }
     }
+
+    /// <summary>
+    ///     Custom settings row built by a caller-provided control factory.
+    /// </summary>
+    public sealed class CustomModSettingsEntryDefinition(
+        string id,
+        ModSettingsText label,
+        Func<IModSettingsUiActionHost, Control> controlFactory,
+        ModSettingsText? description,
+        Func<bool>? visibilityPredicate = null)
+        : ModSettingsEntryDefinition(id, label, description)
+    {
+        /// <summary>
+        ///     Factory that creates the row control.
+        /// </summary>
+        public Func<IModSettingsUiActionHost, Control> ControlFactory { get; } = controlFactory;
+
+        /// <inheritdoc />
+        public override Func<bool>? VisibilityPredicate => visibilityPredicate;
+
+        internal override Control CreateControl(ModSettingsUiContext context)
+        {
+            return ModSettingsUiFactory.CreateCustomEntry(context, this);
+        }
+    }
 }

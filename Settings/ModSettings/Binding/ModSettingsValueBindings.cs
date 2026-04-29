@@ -123,8 +123,15 @@ namespace STS2RitsuLib.Settings
     public sealed class StructuredModSettingsValueBinding<TValue>(
         IModSettingsValueBinding<TValue> inner,
         IStructuredModSettingsValueAdapter<TValue> adapter)
-        : IStructuredModSettingsValueBinding<TValue>, IModSettingsUiRefreshPropagation
+        : IStructuredModSettingsValueBinding<TValue>, IModSettingsUiRefreshPropagation,
+            IModSettingsUiRefreshEquivalence,
+            IModSettingsBindingSaveDispatch
     {
+        IReadOnlyList<IModSettingsBinding> IModSettingsBindingSaveDispatch.ImmediateSaveTargets => [inner];
+
+        /// <inheritdoc />
+        public IReadOnlyList<IModSettingsBinding> UiRefreshAlsoTreatAsDirty => [inner];
+
         /// <inheritdoc />
         public IEnumerable<IModSettingsBinding> ExtraBindingsToMarkDirtyForUi => [inner];
 
@@ -171,8 +178,10 @@ namespace STS2RitsuLib.Settings
         Func<TSource, TValue> getter,
         Func<TSource, TValue, TSource> setter,
         IStructuredModSettingsValueAdapter<TValue>? adapter = null)
-        : IStructuredModSettingsValueBinding<TValue>, IModSettingsUiRefreshPropagation
+        : IStructuredModSettingsValueBinding<TValue>, IModSettingsUiRefreshPropagation, IModSettingsBindingSaveDispatch
     {
+        IReadOnlyList<IModSettingsBinding> IModSettingsBindingSaveDispatch.ImmediateSaveTargets => [parent];
+
         /// <inheritdoc />
         public IEnumerable<IModSettingsBinding> ExtraBindingsToMarkDirtyForUi => [parent];
 
@@ -223,13 +232,18 @@ namespace STS2RitsuLib.Settings
         Func<TValue> defaultValueFactory,
         IStructuredModSettingsValueAdapter<TValue>? adapter = null)
         : IStructuredModSettingsValueBinding<TValue>, IDefaultModSettingsValueBinding<TValue>,
-            IModSettingsUiRefreshPropagation
+            IModSettingsUiRefreshPropagation, IModSettingsUiRefreshEquivalence, IModSettingsBindingSaveDispatch
     {
         /// <inheritdoc />
         public TValue CreateDefaultValue()
         {
             return defaultValueFactory();
         }
+
+        IReadOnlyList<IModSettingsBinding> IModSettingsBindingSaveDispatch.ImmediateSaveTargets => [inner];
+
+        /// <inheritdoc />
+        public IReadOnlyList<IModSettingsBinding> UiRefreshAlsoTreatAsDirty => [inner];
 
         /// <inheritdoc />
         public IEnumerable<IModSettingsBinding> ExtraBindingsToMarkDirtyForUi => [inner];

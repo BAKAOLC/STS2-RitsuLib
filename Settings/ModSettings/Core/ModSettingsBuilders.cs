@@ -813,6 +813,21 @@ namespace STS2RitsuLib.Settings
             return this;
         }
 
+        /// <summary>
+        ///     Adds a custom row built by <paramref name="controlFactory" />.
+        /// </summary>
+        public ModSettingsSectionBuilder AddCustom(
+            string id,
+            ModSettingsText label,
+            Func<IModSettingsUiActionHost, Control> controlFactory,
+            ModSettingsText? description = null,
+            Func<bool>? visibleWhen = null)
+        {
+            ArgumentNullException.ThrowIfNull(controlFactory);
+            AddEntry(id, new CustomModSettingsEntryDefinition(id, label, controlFactory, description, visibleWhen));
+            return this;
+        }
+
         internal ModSettingsSection Build()
         {
             return _entries.Count == 0

@@ -88,6 +88,14 @@ namespace STS2RitsuLib.Scaffolding.Content
         }
 
         /// <summary>
+        ///     Queues <see cref="ModContentRegistry.RegisterBadge{TBadge}" />.
+        /// </summary>
+        public ModContentPackBuilder Badge<TBadge>() where TBadge : ModBadgeTemplate
+        {
+            return AddStep(ctx => ctx.Content.RegisterBadge<TBadge>());
+        }
+
+        /// <summary>
         ///     Queues character registration plus additive starter content configuration in one place.
         /// </summary>
         public ModContentPackBuilder Character<TCharacter>(Action<CharacterRegistrationEntry<TCharacter>> configure)
@@ -101,33 +109,63 @@ namespace STS2RitsuLib.Scaffolding.Content
         }
 
         /// <summary>
-        ///     Queues <see cref="ModContentRegistry.RegisterCharacterStarterCard{TCharacter,TCard}" />.
+        ///     Queues <see cref="ModContentRegistry.RegisterCharacterStarterCard{TCharacter,TCard}(int)" />.
         /// </summary>
         public ModContentPackBuilder CharacterStarterCard<TCharacter, TCard>(int count = 1)
             where TCharacter : CharacterModel
             where TCard : CardModel
         {
-            return AddStep(ctx => ctx.Content.RegisterCharacterStarterCard<TCharacter, TCard>(count));
+            return CharacterStarterCard<TCharacter, TCard>(count, 0);
         }
 
         /// <summary>
-        ///     Queues <see cref="ModContentRegistry.RegisterCharacterStarterRelic{TCharacter,TRelic}" />.
+        ///     Queues <see cref="ModContentRegistry.RegisterCharacterStarterCard{TCharacter,TCard}(int,int)" />.
+        /// </summary>
+        public ModContentPackBuilder CharacterStarterCard<TCharacter, TCard>(int count, int order)
+            where TCharacter : CharacterModel
+            where TCard : CardModel
+        {
+            return AddStep(ctx => ctx.Content.RegisterCharacterStarterCard<TCharacter, TCard>(count, order));
+        }
+
+        /// <summary>
+        ///     Queues <see cref="ModContentRegistry.RegisterCharacterStarterRelic{TCharacter,TRelic}(int)" />.
         /// </summary>
         public ModContentPackBuilder CharacterStarterRelic<TCharacter, TRelic>(int count = 1)
             where TCharacter : CharacterModel
             where TRelic : RelicModel
         {
-            return AddStep(ctx => ctx.Content.RegisterCharacterStarterRelic<TCharacter, TRelic>(count));
+            return CharacterStarterRelic<TCharacter, TRelic>(count, 0);
         }
 
         /// <summary>
-        ///     Queues <see cref="ModContentRegistry.RegisterCharacterStarterPotion{TCharacter,TPotion}" />.
+        ///     Queues <see cref="ModContentRegistry.RegisterCharacterStarterRelic{TCharacter,TRelic}(int,int)" />.
+        /// </summary>
+        public ModContentPackBuilder CharacterStarterRelic<TCharacter, TRelic>(int count, int order)
+            where TCharacter : CharacterModel
+            where TRelic : RelicModel
+        {
+            return AddStep(ctx => ctx.Content.RegisterCharacterStarterRelic<TCharacter, TRelic>(count, order));
+        }
+
+        /// <summary>
+        ///     Queues <see cref="ModContentRegistry.RegisterCharacterStarterPotion{TCharacter,TPotion}(int)" />.
         /// </summary>
         public ModContentPackBuilder CharacterStarterPotion<TCharacter, TPotion>(int count = 1)
             where TCharacter : CharacterModel
             where TPotion : PotionModel
         {
-            return AddStep(ctx => ctx.Content.RegisterCharacterStarterPotion<TCharacter, TPotion>(count));
+            return CharacterStarterPotion<TCharacter, TPotion>(count, 0);
+        }
+
+        /// <summary>
+        ///     Queues <see cref="ModContentRegistry.RegisterCharacterStarterPotion{TCharacter,TPotion}(int,int)" />.
+        /// </summary>
+        public ModContentPackBuilder CharacterStarterPotion<TCharacter, TPotion>(int count, int order)
+            where TCharacter : CharacterModel
+            where TPotion : PotionModel
+        {
+            return AddStep(ctx => ctx.Content.RegisterCharacterStarterPotion<TCharacter, TPotion>(count, order));
         }
 
         /// <summary>

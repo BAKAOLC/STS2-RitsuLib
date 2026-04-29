@@ -83,9 +83,37 @@ namespace STS2RitsuLib.Settings
                         entry.MaxLength, entry.Description, entry.ValidationVisual);
                     ApplyVisibility(section, entry);
                     return;
+                case ModSettingsMirrorEntryKind.MultilineString:
+                    section.AddMultilineString(entry.Id, entry.Label, (IModSettingsValueBinding<string>)entry.Binding!,
+                        entry.Placeholder, entry.MaxLength, entry.Description);
+                    ApplyVisibility(section, entry);
+                    return;
                 case ModSettingsMirrorEntryKind.KeyBinding:
                     section.AddKeyBinding(entry.Id, entry.Label, (IModSettingsValueBinding<string>)entry.Binding!,
                         entry.AllowModifierCombos, entry.AllowModifierOnly, entry.DistinguishModifierSides,
+                        entry.Description);
+                    ApplyVisibility(section, entry);
+                    return;
+                case ModSettingsMirrorEntryKind.MultiKeyBinding:
+                    section.AddKeyBinding(entry.Id, entry.Label, (IModSettingsValueBinding<List<string>>)entry.Binding!,
+                        true, entry.AllowModifierCombos, entry.AllowModifierOnly, entry.DistinguishModifierSides,
+                        entry.Description);
+                    ApplyVisibility(section, entry);
+                    return;
+                case ModSettingsMirrorEntryKind.InfoCard:
+                    section.AddInfoCard(entry.Id, entry.Label, entry.Body ?? ModSettingsText.Literal(string.Empty),
+                        entry.Description);
+                    ApplyVisibility(section, entry);
+                    return;
+                case ModSettingsMirrorEntryKind.RuntimeHotkeySummary:
+                    section.AddRuntimeHotkeySummary(entry.Id, entry.Label,
+                        entry.Body ?? ModSettingsText.Literal(string.Empty),
+                        entry.HotkeyBindings ?? [ModSettingsText.Literal(string.Empty)],
+                        entry.HotkeyIdSuffix);
+                    ApplyVisibility(section, entry);
+                    return;
+                case ModSettingsMirrorEntryKind.Image:
+                    section.AddImage(entry.Id, entry.Label, entry.TextureProvider!, entry.PreviewHeight,
                         entry.Description);
                     ApplyVisibility(section, entry);
                     return;
@@ -95,10 +123,20 @@ namespace STS2RitsuLib.Settings
                         entry.Description);
                     ApplyVisibility(section, entry);
                     return;
+                case ModSettingsMirrorEntryKind.HostContextButton:
+                    section.AddButton(entry.Id, entry.Label, entry.ButtonLabel ?? entry.Label,
+                        entry.HostContextOnClick!, entry.ButtonTone,
+                        entry.Description);
+                    ApplyVisibility(section, entry);
+                    return;
                 case ModSettingsMirrorEntryKind.Subpage:
                     section.AddSubpage(entry.Id, entry.Label, entry.TargetPageId!, entry.ButtonLabel,
                         entry.Description);
                     ApplyVisibility(section, entry);
+                    return;
+                case ModSettingsMirrorEntryKind.Custom:
+                    section.AddCustom(entry.Id, entry.Label, entry.CustomControlFactory!, entry.Description,
+                        entry.VisibleWhen);
                     return;
             }
 

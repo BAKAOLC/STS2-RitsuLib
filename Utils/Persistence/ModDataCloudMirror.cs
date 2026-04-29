@@ -52,7 +52,7 @@ namespace STS2RitsuLib.Utils.Persistence
                 !ModRunSidecarStore.IsActiveRunSidecarRelativeAccountPath(relative, pid))
                 return;
 
-            Callable.From(() => _ = MirrorAfterWriteOneFileAsync(relative)).CallDeferred();
+            Callable.From(() => { _ = MirrorAfterWriteOneFileAsync(relative); }).CallDeferred();
         }
 
         internal static void ScheduleReconcileModDataWithCloud()
@@ -329,7 +329,7 @@ namespace STS2RitsuLib.Utils.Persistence
             if (TryGetCloudSaveStore() == null)
                 return;
 
-            Callable.From(() => _ = DeleteCloudModDataForProfileAsync(profileId)).CallDeferred();
+            Callable.From(() => { _ = DeleteCloudModDataForProfileAsync(profileId); }).CallDeferred();
         }
 
         private static async Task DeleteCloudModDataForProfileAsync(int profileId)

@@ -19,13 +19,19 @@ namespace STS2RitsuLib.CardPiles
             DefaultTargetPosition = defaultTargetPosition;
         }
 
-        /// <summary>Definition of the target pile.</summary>
+        /// <summary>
+        ///     Definition of the target pile.
+        /// </summary>
         public ModCardPileDefinition Definition { get; }
 
-        /// <summary>Live card node that is flying into the pile, when available.</summary>
+        /// <summary>
+        ///     Live card node that is flying into the pile, when available.
+        /// </summary>
         public NCard? CardNode { get; }
 
-        /// <summary>Ritsulib's default target position for this request.</summary>
+        /// <summary>
+        ///     Ritsulib's default target position for this request.
+        /// </summary>
         public Vector2 DefaultTargetPosition { get; }
     }
 }

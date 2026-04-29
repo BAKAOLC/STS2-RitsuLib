@@ -85,8 +85,10 @@ namespace STS2RitsuLib.Settings
             {
                 if (dirty.Contains(b))
                     return true;
-                if (b is not IModSettingsUiRefreshEquivalence eq) continue;
-                if (eq.UiRefreshAlsoTreatAsDirty.Any(dirty.Contains)) return true;
+                if (b is not IModSettingsUiRefreshEquivalence eq)
+                    continue;
+                if (eq.UiRefreshAlsoTreatAsDirty.Any(dirty.Contains))
+                    return true;
             }
 
             foreach (var d in dirty)
@@ -94,12 +96,16 @@ namespace STS2RitsuLib.Settings
                 if (d is not IModSettingsUiRefreshEquivalence eq2)
                     continue;
                 if ((from alias in eq2.UiRefreshAlsoTreatAsDirty
-                        from b in bindings
-                        where ReferenceEquals(b, alias)
-                        select alias).Any()) return true;
+                        from reg in bindings
+                        where ReferenceEquals(reg, alias)
+                        select alias).Any())
+                    return true;
             }
 
-            return false;
+            var dirtyExpanded = ModSettingsBindingInvalidationTopology.ExpandUnion(dirty);
+            return Enumerable.Any(bindings,
+                registered => ModSettingsBindingInvalidationTopology.ExpandClosure(registered)
+                    .Any(dirtyExpanded.Contains));
         }
     }
 

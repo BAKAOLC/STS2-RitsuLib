@@ -222,10 +222,9 @@ namespace STS2RitsuLib
         private static string BuildVersionLogText()
         {
             var compatBranchLabel = GetCompatBranchLabel();
-            if (string.IsNullOrWhiteSpace(compatBranchLabel))
-                return $"Version: {Const.Version}";
-
-            return $"Version: {Const.Version} [兼容分支: {compatBranchLabel}]";
+            return string.IsNullOrWhiteSpace(compatBranchLabel)
+                ? $"Version: {Const.Version}"
+                : $"Version: {Const.Version} [compat branch: {compatBranchLabel}]";
         }
 
         private static string? GetCompatBranchLabel()
@@ -461,6 +460,38 @@ namespace STS2RitsuLib
             string? pageId = null)
         {
             ModSettingsRegistry.Register(modId, configure, pageId);
+        }
+
+        /// <summary>
+        ///     Registers a reflection-based settings provider type for attribute-driven settings pages.
+        /// </summary>
+        public static bool RegisterModSettingsReflectionProvider<TProvider>()
+        {
+            return RuntimeReflectionMirrorSource.RegisterProviderType<TProvider>();
+        }
+
+        /// <summary>
+        ///     Registers a reflection-based settings provider type for attribute-driven settings pages.
+        /// </summary>
+        public static bool RegisterModSettingsReflectionProvider(Type providerType)
+        {
+            return RuntimeReflectionMirrorSource.RegisterProviderType(providerType);
+        }
+
+        /// <summary>
+        ///     Registers a reflection provider and immediately attempts to mirror-register its pages.
+        /// </summary>
+        public static int RegisterModSettingsReflectionProviderAndTryRegister<TProvider>()
+        {
+            return RuntimeReflectionMirrorSource.RegisterProviderTypeAndTryRegister<TProvider>();
+        }
+
+        /// <summary>
+        ///     Registers a reflection provider and immediately attempts to mirror-register its pages.
+        /// </summary>
+        public static int RegisterModSettingsReflectionProviderAndTryRegister(Type providerType)
+        {
+            return RuntimeReflectionMirrorSource.RegisterProviderTypeAndTryRegister(providerType);
         }
 
         /// <summary>

@@ -251,6 +251,10 @@ namespace STS2RitsuLib
             patcher.RegisterPatch<AncientMapNodeAssetPathsPatch>();
             patcher.RegisterPatch<AncientEventProceduralBackgroundScenePatch>();
             patcher.RegisterPatch<NAncientEventLayoutProceduralStagePatch>();
+            patcher.RegisterPatch<BadgePoolCreateAllPatch>();
+            patcher.RegisterPatch<AssetCacheLoadBadgeFallbackPatch>();
+            patcher.RegisterPatch<NBadgeCreateIconPatch>();
+            patcher.RegisterPatch<BadgeIconGetterPatch>();
             RegisterFrameworkPatcher(FrameworkPatcherArea.ContentAssets, patcher);
         }
 

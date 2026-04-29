@@ -56,13 +56,13 @@ namespace STS2RitsuLib.Scaffolding.Content.Patches
                 return true;
 
             var ancient = ModelDb.GetByIdOrNull<AncientEventModel>(modelId);
-            if (ancient is not IModAncientEventAssetOverrides overrides)
+            if (ancient == null)
                 return true;
 
             var path = __originalMethod.Name switch
             {
-                nameof(ImageHelper.GetRoomIconPath) => overrides.CustomRunHistoryIconPath,
-                nameof(ImageHelper.GetRoomIconOutlinePath) => overrides.CustomRunHistoryIconOutlinePath,
+                nameof(ImageHelper.GetRoomIconPath) => ResolveMainIconPath(ancient),
+                nameof(ImageHelper.GetRoomIconOutlinePath) => ResolveOutlineIconPath(ancient),
                 _ => null,
             };
 
@@ -75,6 +75,20 @@ namespace STS2RitsuLib.Scaffolding.Content.Patches
 
             __result = path;
             return false;
+        }
+
+        private static string? ResolveMainIconPath(AncientEventModel ancient)
+        {
+            return ExternalAssetOverrideRegistry.TryGetAncientRunHistoryIconPath(ancient, out var externalPath)
+                ? externalPath
+                : (ancient as IModAncientEventAssetOverrides)?.CustomRunHistoryIconPath;
+        }
+
+        private static string? ResolveOutlineIconPath(AncientEventModel ancient)
+        {
+            return ExternalAssetOverrideRegistry.TryGetAncientRunHistoryIconOutlinePath(ancient, out var externalPath)
+                ? externalPath
+                : (ancient as IModAncientEventAssetOverrides)?.CustomRunHistoryIconOutlinePath;
         }
     }
 }

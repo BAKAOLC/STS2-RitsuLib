@@ -1,5 +1,4 @@
 using System.Reflection;
-using MegaCrit.Sts2.Core.Helpers;
 using MegaCrit.Sts2.Core.Localization;
 using STS2RitsuLib.Compat;
 
@@ -13,7 +12,9 @@ namespace STS2RitsuLib.Settings
     {
         public object Instance { get; } = instance;
 
-        public string ModPrefix => ResolveRootNamespace() is { Length: > 0 } root ? root.ToUpperInvariant() + "-" : "";
+        public string ModPrefix => ResolveRootNamespace() is { Length: > 0 } root
+            ? ModSettingsMirrorSlugPolicy.Normalize(root) + "_"
+            : "";
 
         public void NotifyChanged()
         {
@@ -32,13 +33,13 @@ namespace STS2RitsuLib.Settings
 
         public string ResolveLabel(string name)
         {
-            var key = ModPrefix + StringHelper.Slugify(name) + ".title";
+            var key = ModPrefix + ModSettingsMirrorSlugPolicy.Normalize(name) + ".title";
             return LocString.GetIfExists("settings_ui", key)?.GetFormattedText() ?? name;
         }
 
         public string ResolveBaseLibLabel(string name)
         {
-            var key = "BASELIB-" + StringHelper.Slugify(name) + ".title";
+            var key = "BASELIB_" + ModSettingsMirrorSlugPolicy.Normalize(name) + ".title";
             return LocString.GetIfExists("settings_ui", key)?.GetFormattedText() ?? name;
         }
 

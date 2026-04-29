@@ -784,7 +784,7 @@ namespace STS2RitsuLib.Settings
                 [typeof(string), typeof(string)]);
 
             if (getObject == null || setObject == null)
-                throw new InvalidOperationException(
+                throw ModSettingsMirrorDiagnostics.InvalidConfig(
                     $"Provider {providerType.FullName} requires static {ResolverGetMethodName}(string) and {ResolverSetMethodName}(string, object).");
 
             return new(

@@ -12,8 +12,10 @@ namespace STS2RitsuLib.Settings
     [Obsolete(
         "Prefer double-backed settings and AddSlider(double), or rely on the obsolete AddSlider(float) overload. This adapter can worsen float/double rounding in the slider UI.")]
     public sealed class ModSettingsDoubleFromFloatBinding(IModSettingsValueBinding<float> inner)
-        : IModSettingsValueBinding<double>
+        : IModSettingsValueBinding<double>, IModSettingsBindingSaveDispatch
     {
+        IReadOnlyList<IModSettingsBinding> IModSettingsBindingSaveDispatch.ImmediateSaveTargets => [inner];
+
         /// <inheritdoc />
         public string ModId => inner.ModId;
 
@@ -48,8 +50,10 @@ namespace STS2RitsuLib.Settings
     ///     <see cref="ModSettingsSectionBuilder" /> (writes round to integer).
     /// </summary>
     public sealed class ModSettingsDoubleFromIntBinding(IModSettingsValueBinding<int> inner)
-        : IModSettingsValueBinding<double>
+        : IModSettingsValueBinding<double>, IModSettingsBindingSaveDispatch
     {
+        IReadOnlyList<IModSettingsBinding> IModSettingsBindingSaveDispatch.ImmediateSaveTargets => [inner];
+
         /// <inheritdoc />
         public string ModId => inner.ModId;
 
@@ -83,8 +87,10 @@ namespace STS2RitsuLib.Settings
     ///     Adapts a <see cref="double" /> binding to <see cref="ModSettingsSectionBuilder.AddIntSlider" /> by rounding.
     /// </summary>
     public sealed class ModSettingsIntFromDoubleBinding(IModSettingsValueBinding<double> inner)
-        : IModSettingsValueBinding<int>
+        : IModSettingsValueBinding<int>, IModSettingsBindingSaveDispatch
     {
+        IReadOnlyList<IModSettingsBinding> IModSettingsBindingSaveDispatch.ImmediateSaveTargets => [inner];
+
         /// <inheritdoc />
         public string ModId => inner.ModId;
 

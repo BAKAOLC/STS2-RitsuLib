@@ -328,7 +328,7 @@ namespace STS2RitsuLib.Interop.AutoRegistration
                                     $"RegisterCharacterStarterCard:{starterCard.CharacterType.FullName}->{type.FullName}:x{starterCard.Count}",
                                     nameof(RegisterCharacterStarterCardAttribute),
                                     () => contentRegistry.RegisterCharacterStarterCard(starterCard.CharacterType, type,
-                                        starterCard.Count),
+                                        starterCard.Count, starterCard.Order),
                                     [
                                         $"RegisterCharacter:{starterCard.CharacterType.FullName}",
                                         TypeDependencyKey(type),
@@ -349,7 +349,8 @@ namespace STS2RitsuLib.Interop.AutoRegistration
                                     nameof(RegisterCharacterStarterRelicAttribute),
                                     () => contentRegistry.RegisterCharacterStarterRelic(starterRelic.CharacterType,
                                         type,
-                                        starterRelic.Count),
+                                        starterRelic.Count,
+                                        starterRelic.Order),
                                     [
                                         $"RegisterCharacter:{starterRelic.CharacterType.FullName}",
                                         TypeDependencyKey(type),
@@ -370,7 +371,8 @@ namespace STS2RitsuLib.Interop.AutoRegistration
                                     nameof(RegisterCharacterStarterPotionAttribute),
                                     () => contentRegistry.RegisterCharacterStarterPotion(starterPotion.CharacterType,
                                         type,
-                                        starterPotion.Count),
+                                        starterPotion.Count,
+                                        starterPotion.Order),
                                     [
                                         $"RegisterCharacter:{starterPotion.CharacterType.FullName}",
                                         TypeDependencyKey(type),

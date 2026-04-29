@@ -8,6 +8,7 @@ namespace STS2RitsuLib.Settings
         BaseLibToRitsuGenerated,
         ModConfig,
         RuntimeInterop,
+        RuntimeReflection,
     }
 
     internal static class ModSettingsMirrorInteropPolicy
@@ -128,6 +129,7 @@ namespace STS2RitsuLib.Settings
                     result.Add(ModSettingsMirrorSource.BaseLibToRitsuGenerated);
                     result.Add(ModSettingsMirrorSource.ModConfig);
                     result.Add(ModSettingsMirrorSource.RuntimeInterop);
+                    result.Add(ModSettingsMirrorSource.RuntimeReflection);
                     continue;
                 }
 
@@ -182,14 +184,22 @@ namespace STS2RitsuLib.Settings
                 return true;
             }
 
-            if (!token.Equals("runtimeinterop", StringComparison.OrdinalIgnoreCase) &&
-                !token.Equals("runtime_interop", StringComparison.OrdinalIgnoreCase) &&
-                !token.Equals("runtime-interop", StringComparison.OrdinalIgnoreCase) &&
-                !token.Equals("reflection", StringComparison.OrdinalIgnoreCase) &&
+            if (token.Equals("runtimeinterop", StringComparison.OrdinalIgnoreCase) ||
+                token.Equals("runtime_interop", StringComparison.OrdinalIgnoreCase) ||
+                token.Equals("runtime-interop", StringComparison.OrdinalIgnoreCase))
+            {
+                source = ModSettingsMirrorSource.RuntimeInterop;
+                return true;
+            }
+
+            if (!token.Equals("reflection", StringComparison.OrdinalIgnoreCase) &&
                 !token.Equals("reflectioninterop", StringComparison.OrdinalIgnoreCase) &&
                 !token.Equals("reflection_interop", StringComparison.OrdinalIgnoreCase) &&
-                !token.Equals("reflection-interop", StringComparison.OrdinalIgnoreCase)) return false;
-            source = ModSettingsMirrorSource.RuntimeInterop;
+                !token.Equals("reflection-interop", StringComparison.OrdinalIgnoreCase) &&
+                !token.Equals("runtimereflection", StringComparison.OrdinalIgnoreCase) &&
+                !token.Equals("runtime_reflection", StringComparison.OrdinalIgnoreCase) &&
+                !token.Equals("runtime-reflection", StringComparison.OrdinalIgnoreCase)) return false;
+            source = ModSettingsMirrorSource.RuntimeReflection;
             return true;
         }
 
