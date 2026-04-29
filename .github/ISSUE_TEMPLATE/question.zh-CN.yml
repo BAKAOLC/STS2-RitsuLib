@@ -1,0 +1,32 @@
+name: "[CN] 问题 / 咨询"
+description: 询问 RitsuLib 的使用或贡献方式。
+title: "[Question] "
+labels:
+  - "type/question"
+body:
+  - type: dropdown
+    id: area
+    attributes:
+      label: 范围
+      options:
+        - Usage（使用）
+        - API design（API 设计）
+        - Build/CI（构建/CI）
+        - Docs（文档）
+        - Other（其他）
+    validations:
+      required: true
+  - type: textarea
+    id: question
+    attributes:
+      label: 你的问题
+      description: 你需要哪方面的帮助？
+    validations:
+      required: true
+  - type: textarea
+    id: context
+    attributes:
+      label: 补充上下文
+      description: 代码片段、日志、链接等。
+    validations:
+      required: false

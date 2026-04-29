@@ -1,0 +1,88 @@
+name: Issue auto label
+
+on:
+  issues:
+    types: [opened, edited]
+
+permissions:
+  issues: write
+
+jobs:
+  label:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Parse issue form fields and label
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const issue = context.payload.issue;
+            if (!issue) return;
+
+            const body = issue.body ?? "";
+
+            function pickValue(...heads) {
+              for (const head of heads) {
+                const re = new RegExp(`^###\\s+${head}\\s*\\n([^\\n]+)`, "mi");
+                const m = body.match(re);
+                if (m && m[1]) return m[1].trim();
+              }
+              return null;
+            }
+
+            const areaRaw = pickValue("Area", "模块范围", "范围");
+            const severityRaw = pickValue("Severity", "严重程度");
+
+            const labels = new Set(["status/needs-triage"]);
+
+            function addArea(v) {
+              if (!v) return;
+              const x = v.toLowerCase();
+              if (x.includes("combat") || x.includes("战斗")) return labels.add("area/combat");
+              if (x.includes("cards") || x.includes("卡牌")) return labels.add("area/cards");
+              if (x.includes("powers") || x.includes("能力")) return labels.add("area/powers");
+              if (x.includes("relics") || x.includes("遗物")) return labels.add("area/relics");
+              if (x.includes("localization") || x.includes("本地化")) return labels.add("area/localization");
+              if (x.includes("build") || x.includes("构建")) return labels.add("area/build");
+              if (x.includes("docs") || x.includes("文档")) return labels.add("area/docs");
+              if (x.includes("ui")) return labels.add("area/ui");
+              return labels.add("area/other");
+            }
+
+            function addSeverity(v) {
+              if (!v) return;
+              const x = v.toLowerCase();
+              if (x.includes("crash") || x.includes("崩溃")) {
+                labels.add("severity/crash");
+                labels.add("priority/p0");
+                return;
+              }
+              if (x.includes("broken") || x.includes("不可用")) {
+                labels.add("severity/broken");
+                labels.add("priority/p1");
+                return;
+              }
+              if (x.includes("regression") || x.includes("回归")) {
+                labels.add("severity/regression");
+                labels.add("priority/p1");
+                return;
+              }
+              if (x.includes("minor") || x.includes("轻微")) {
+                labels.add("severity/minor");
+                labels.add("priority/p3");
+                return;
+              }
+            }
+
+            addArea(areaRaw);
+            addSeverity(severityRaw);
+
+            const owner = context.repo.owner;
+            const repo = context.repo.repo;
+            const issue_number = issue.number;
+
+            await github.rest.issues.addLabels({
+              owner,
+              repo,
+              issue_number,
+              labels: [...labels],
+            });
