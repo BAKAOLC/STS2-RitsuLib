@@ -2,16 +2,20 @@
     <PropertyGroup>
         <RitsuLibAutoCopy Condition="'$(RitsuLibAutoCopy)' == ''">true</RitsuLibAutoCopy>
         <RitsuLibPackageAssemblyPath>$(MSBuildThisFileDirectory)..\lib\net9.0\STS2-RitsuLib.dll</RitsuLibPackageAssemblyPath>
+        <RitsuLibPackagePdbPath>$(MSBuildThisFileDirectory)..\lib\net9.0\STS2-RitsuLib.pdb</RitsuLibPackagePdbPath>
+        <RitsuLibPackageXmlPath>$(MSBuildThisFileDirectory)..\lib\net9.0\STS2-RitsuLib.xml</RitsuLibPackageXmlPath>
         <RitsuLibPackageManifestPath>$(MSBuildThisFileDirectory)..\contentFiles\any\any\mod_manifest.json</RitsuLibPackageManifestPath>
-        <RitsuLibDeployDir>$(Sts2Dir)\mods\STS2-RitsuLib\</RitsuLibDeployDir>
+        <RitsuLibDeployDir Condition="'$(RitsuLibDeployDir)' == ''"></RitsuLibDeployDir>
     </PropertyGroup>
 
     <Target
         Name="CopyRitsuLibPackageModFiles"
         AfterTargets="Build"
-        Condition="'$(DesignTimeBuild)' != 'true' and '$(RitsuLibAutoCopy)' == 'true' and '$(Sts2Dir)' != '' and Exists('$(RitsuLibPackageAssemblyPath)') and Exists('$(RitsuLibPackageManifestPath)')">
+        Condition="'$(DesignTimeBuild)' != 'true' and '$(RitsuLibAutoCopy)' == 'true' and '$(RitsuLibDeployDir)' != '' and Exists('$(RitsuLibPackageAssemblyPath)') and Exists('$(RitsuLibPackageManifestPath)')">
         <MakeDir Directories="$(RitsuLibDeployDir)"/>
         <Copy SourceFiles="$(RitsuLibPackageAssemblyPath)" DestinationFolder="$(RitsuLibDeployDir)" SkipUnchangedFiles="true"/>
+        <Copy SourceFiles="$(RitsuLibPackagePdbPath)" DestinationFolder="$(RitsuLibDeployDir)" SkipUnchangedFiles="true" Condition="Exists('$(RitsuLibPackagePdbPath)')"/>
+        <Copy SourceFiles="$(RitsuLibPackageXmlPath)" DestinationFolder="$(RitsuLibDeployDir)" SkipUnchangedFiles="true" Condition="Exists('$(RitsuLibPackageXmlPath)')"/>
         <Copy SourceFiles="$(RitsuLibPackageManifestPath)" DestinationFolder="$(RitsuLibDeployDir)" SkipUnchangedFiles="true"/>
     </Target>
 </Project>
