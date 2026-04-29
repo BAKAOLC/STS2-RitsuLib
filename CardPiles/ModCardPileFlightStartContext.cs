@@ -21,16 +21,24 @@ namespace STS2RitsuLib.CardPiles
             DefaultStartPosition = defaultStartPosition;
         }
 
-        /// <summary>Definition of the source pile.</summary>
+        /// <summary>
+        ///     Definition of the source pile.
+        /// </summary>
         public ModCardPileDefinition Definition { get; }
 
-        /// <summary>Source pile for this shuffle fly visual.</summary>
+        /// <summary>
+        ///     Source pile for this shuffle fly visual.
+        /// </summary>
         public CardPile StartPile { get; }
 
-        /// <summary>Destination pile for this shuffle fly visual.</summary>
+        /// <summary>
+        ///     Destination pile for this shuffle fly visual.
+        /// </summary>
         public CardPile TargetPile { get; }
 
-        /// <summary>Ritsulib's default start position for this request.</summary>
+        /// <summary>
+        ///     Ritsulib's default start position for this request.
+        /// </summary>
         public Vector2 DefaultStartPosition { get; }
     }
 }

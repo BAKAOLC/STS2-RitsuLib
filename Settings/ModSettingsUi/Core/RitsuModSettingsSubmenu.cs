@@ -20,7 +20,9 @@ namespace STS2RitsuLib.Settings
     {
         private const float SidebarWidth = 324f;
 
-        /// <summary>Deferred <see cref="FlushDirtyBindings" /> interval after the last binding write.</summary>
+        /// <summary>
+        ///     Deferred <see cref="FlushDirtyBindings" /> interval after the last binding write.
+        /// </summary>
         private const double AutosaveDelaySeconds = 0.35;
 
         /// <summary>

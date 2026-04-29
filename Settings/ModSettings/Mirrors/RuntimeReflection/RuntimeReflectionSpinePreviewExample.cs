@@ -9,7 +9,9 @@ using STS2RitsuLib.Utils.Persistence;
 
 namespace STS2RitsuLib.Settings
 {
-    /// <summary>Sample settings page: character spine preview.</summary>
+    /// <summary>
+    ///     Sample settings page: character spine preview.
+    /// </summary>
     [ModSettingsPage(Const.ModId, "runtime-reflection-spine-example",
         Title = "Spine preview (sample)",
         TitleKey = "ritsulib.runtimeReflection.spine.page.title",
