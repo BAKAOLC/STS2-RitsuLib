@@ -143,6 +143,15 @@ namespace STS2RitsuLib
             patcher.RegisterPatch<NControllerCardPlayStartAnyPlayerPatch>();
             patcher.RegisterPatch<NControllerCardPlaySingleTargetingAnyPlayerPatch>();
             patcher.RegisterPatch<CardCmdAutoPlayAnyPlayerPatch>();
+            patcher.RegisterPatch<NCardPlayShowMultiCreatureTargetingVisualsEveryonePatch>();
+            patcher.RegisterPatch<ActionTargetExtensionsIsSingleTargetAnyonePatch>();
+            patcher.RegisterPatch<NTargetManagerAllowedToTargetCreatureAnyonePatch>();
+            patcher.RegisterPatch<CardModelCanPlayTargetingAnyonePatch>();
+            patcher.RegisterPatch<CardModelIsValidTargetAnyonePatch>();
+            patcher.RegisterPatch<NCardPlayTryPlayCardAnyonePatch>();
+            patcher.RegisterPatch<NMouseCardPlayTargetSelectionAnyonePatch>();
+            patcher.RegisterPatch<NControllerCardPlayStartAnyonePatch>();
+            patcher.RegisterPatch<NControllerCardPlaySingleTargetingAnyonePatch>();
             patcher.RegisterPatch<HoverTipFactoryFromKeywordPatch>();
             patcher.RegisterPatch<CardModelKeywordsModSeedPatch>();
             patcher.RegisterPatch<CardModelTagsModSeedPatch>();
