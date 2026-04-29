@@ -2841,7 +2841,7 @@ namespace STS2RitsuLib.Settings
                 () => ModSettingsUiFactory.ResolveEntryLabelDisplay(_entry.Label)));
 
             var descriptionLabel = ModSettingsUiFactory.CreateRefreshableDescriptionLabel(UiContext, _entry.Description,
-                () => ModSettingsUiContext.ResolveBindingDescriptionBody(_entry.Description));
+                () => ModSettingsUiControlFactoryHelper.ResolveDescription(_entry.Description));
             textColumn.AddChild(descriptionLabel);
 
             textColumn.AddChild(ModSettingsUiFactory.CreatePersistenceScopeTag(_entry.Binding));

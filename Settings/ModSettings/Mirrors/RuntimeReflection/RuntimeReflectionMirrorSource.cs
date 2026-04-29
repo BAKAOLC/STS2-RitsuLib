@@ -1,7 +1,6 @@
 using System.Reflection;
 using Godot;
 using MegaCrit.Sts2.Core.Localization;
-using STS2RitsuLib.Content;
 using STS2RitsuLib.Utils;
 using STS2RitsuLib.Utils.Persistence;
 
@@ -846,7 +845,7 @@ namespace STS2RitsuLib.Settings
                 return false;
             }
 
-            var prefix = ModContentRegistry.NormalizePublicStem(_currentReflectionModId) + "_";
+            var prefix = ModSettingsMirrorSlugPolicy.PrefixForModId(_currentReflectionModId);
             var slug = ModSettingsMirrorIds.Slug(seed);
             if (string.IsNullOrWhiteSpace(slug))
             {
@@ -1190,13 +1189,7 @@ namespace STS2RitsuLib.Settings
                 binding = ModSettingsBindings.WithAdapter(binding, adapter);
             }
 
-            return savePolicy switch
-            {
-                ModSettingsReflectionSavePolicy.Auto => new AutoSaveBinding<TValue>(binding),
-                ModSettingsReflectionSavePolicy.Manual => binding,
-                _ => throw new InvalidOperationException(
-                    $"Unsupported save policy '{savePolicy}' on '{member.DeclaringType?.FullName}.{member.Name}'."),
-            };
+            return ModSettingsBindingSavePolicy.Apply(binding, savePolicy);
         }
 
         private static IModSettingsValueBinding<TValue> BuildScopedBinding<TValue>(
@@ -1215,7 +1208,7 @@ namespace STS2RitsuLib.Settings
                 _ => throw new InvalidOperationException($"Unsupported scoped source '{scope}'."),
             };
 
-            return new MemberSynchronizedBinding<TValue>(storeBinding, writeMember);
+            return new MemberSynchronizedModSettingsValueBinding<TValue>(storeBinding, writeMember);
         }
 
         private static IModSettingsValueBinding<TValue> BuildRunSidecarBinding<TValue>(
@@ -1229,7 +1222,7 @@ namespace STS2RitsuLib.Settings
                 dataKey,
                 box => box.Value,
                 (box, value) => box.Value = value);
-            return new MemberSynchronizedBinding<TValue>(runSidecar, writeMember);
+            return new MemberSynchronizedModSettingsValueBinding<TValue>(runSidecar, writeMember);
         }
 
         private static IModSettingsValueBinding<TValue> BuildInMemoryBinding<TValue>(
@@ -1239,7 +1232,7 @@ namespace STS2RitsuLib.Settings
             Action<TValue> writeMember)
         {
             var inMemory = ModSettingsBindings.InMemory(modId, dataKey, readMember());
-            return new MemberSynchronizedBinding<TValue>(inMemory, writeMember);
+            return new MemberSynchronizedModSettingsValueBinding<TValue>(inMemory, writeMember);
         }
 
         private static IModSettingsValueBinding<TValue> BuildCallbackBinding<TValue>(
@@ -1286,7 +1279,8 @@ namespace STS2RitsuLib.Settings
                     $"Project source on '{member.DeclaringType?.FullName}.{member.Name}' requires ProjectParentReadUsing, ProjectParentWriteUsing, ProjectGetUsing and ProjectSetUsing.");
 
             var parentReadMethod =
-                ResolveMethod(member, instance, attr.ProjectParentReadUsing!, "ProjectParentReadUsing");
+                RuntimeReflectionMethodBinder.Resolve(member, instance, attr.ProjectParentReadUsing!,
+                    "ProjectParentReadUsing");
             var parentType = parentReadMethod.ReturnType;
             var builder = typeof(RuntimeReflectionMirrorSource)
                 .GetMethod(nameof(BuildProjectedBindingGeneric), BindingFlags.NonPublic | BindingFlags.Static)!
@@ -1332,7 +1326,7 @@ namespace STS2RitsuLib.Settings
             string methodName,
             string propertyName)
         {
-            var method = ResolveMethod(member, instance, methodName, propertyName);
+            var method = RuntimeReflectionMethodBinder.Resolve(member, instance, methodName, propertyName);
             if (method.ReturnType != typeof(T) || method.GetParameters().Length != 0)
                 throw new InvalidOperationException(
                     $"Method '{method.DeclaringType?.FullName}.{method.Name}' configured by '{propertyName}' must be '{typeof(T).Name} ()'.");
@@ -1345,7 +1339,7 @@ namespace STS2RitsuLib.Settings
             string methodName,
             string propertyName)
         {
-            var method = ResolveMethod(member, instance, methodName, propertyName);
+            var method = RuntimeReflectionMethodBinder.Resolve(member, instance, methodName, propertyName);
             var ps = method.GetParameters();
             if (method.ReturnType != typeof(TResult) || ps.Length != 1 || ps[0].ParameterType != typeof(T1))
                 throw new InvalidOperationException(
@@ -1359,7 +1353,7 @@ namespace STS2RitsuLib.Settings
             string methodName,
             string propertyName)
         {
-            var method = ResolveMethod(member, instance, methodName, propertyName);
+            var method = RuntimeReflectionMethodBinder.Resolve(member, instance, methodName, propertyName);
             var ps = method.GetParameters();
             if (method.ReturnType != typeof(TResult) || ps.Length != 2 ||
                 ps[0].ParameterType != typeof(T1) || ps[1].ParameterType != typeof(T2))
@@ -1374,7 +1368,7 @@ namespace STS2RitsuLib.Settings
             string methodName,
             string propertyName)
         {
-            var method = ResolveMethod(member, instance, methodName, propertyName);
+            var method = RuntimeReflectionMethodBinder.Resolve(member, instance, methodName, propertyName);
             var ps = method.GetParameters();
             if (method.ReturnType != typeof(void) || ps.Length != 1 || ps[0].ParameterType != typeof(T))
                 throw new InvalidOperationException(
@@ -1388,29 +1382,11 @@ namespace STS2RitsuLib.Settings
             string methodName,
             string propertyName)
         {
-            var method = ResolveMethod(member, instance, methodName, propertyName);
+            var method = RuntimeReflectionMethodBinder.Resolve(member, instance, methodName, propertyName);
             if (method.ReturnType != typeof(void) || method.GetParameters().Length != 0)
                 throw new InvalidOperationException(
                     $"Method '{method.DeclaringType?.FullName}.{method.Name}' configured by '{propertyName}' must be 'void ()'.");
             return () => method.Invoke(instance, null);
-        }
-
-        private static MethodInfo ResolveMethod(
-            MemberInfo member,
-            object? instance,
-            string methodName,
-            string propertyName)
-        {
-            var owner = member.DeclaringType ?? throw new InvalidOperationException("Member has no declaring type.");
-            var method = owner.GetMethod(methodName.Trim(),
-                BindingFlags.Instance | BindingFlags.Static | BindingFlags.Public | BindingFlags.NonPublic);
-            if (method == null)
-                throw new InvalidOperationException(
-                    $"Method '{methodName}' configured by '{propertyName}' was not found on '{owner.FullName}'.");
-            if (!method.IsStatic && instance == null)
-                throw new InvalidOperationException(
-                    $"Method '{method.DeclaringType?.FullName}.{method.Name}' configured by '{propertyName}' requires instance context.");
-            return method;
         }
 
         private static string? InvokeText(MethodInfo method, object? instance)
@@ -1491,63 +1467,6 @@ namespace STS2RitsuLib.Settings
         private sealed class ReflectionBindingBox<TValue>
         {
             public TValue Value { get; set; } = default!;
-        }
-
-        private sealed class MemberSynchronizedBinding<TValue>(
-            IModSettingsValueBinding<TValue> inner,
-            Action<TValue> writeMember) : IModSettingsValueBinding<TValue>
-        {
-            public string ModId => inner.ModId;
-            public string DataKey => inner.DataKey;
-            public SaveScope Scope => inner.Scope;
-
-            public TValue Read()
-            {
-                var value = inner.Read();
-                writeMember(value);
-                return value;
-            }
-
-            public void Write(TValue value)
-            {
-                writeMember(value);
-                inner.Write(value);
-            }
-
-            public void Save()
-            {
-                if (inner is ITransientModSettingsBinding)
-                    return;
-                inner.Save();
-            }
-        }
-
-        private sealed class AutoSaveBinding<TValue>(IModSettingsValueBinding<TValue> inner)
-            : IModSettingsValueBinding<TValue>
-        {
-            public string ModId => inner.ModId;
-            public string DataKey => inner.DataKey;
-            public SaveScope Scope => inner.Scope;
-
-            public TValue Read()
-            {
-                return inner.Read();
-            }
-
-            public void Write(TValue value)
-            {
-                inner.Write(value);
-                if (inner is ITransientModSettingsBinding)
-                    return;
-                inner.Save();
-            }
-
-            public void Save()
-            {
-                if (inner is ITransientModSettingsBinding)
-                    return;
-                inner.Save();
-            }
         }
 
         private sealed class MutableSection(ModSettingsSectionAttribute source)

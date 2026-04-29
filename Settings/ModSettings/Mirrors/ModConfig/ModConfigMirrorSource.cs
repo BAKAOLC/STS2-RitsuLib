@@ -2,7 +2,6 @@ using System.Collections;
 using System.Globalization;
 using System.Reflection;
 using Godot;
-using MegaCrit.Sts2.Core.Helpers;
 
 namespace STS2RitsuLib.Settings
 {
@@ -370,7 +369,7 @@ namespace STS2RitsuLib.Settings
             if (string.IsNullOrWhiteSpace(key))
                 key = $"entry_{index}";
 
-            var slug = StringHelper.Slugify(key);
+            var slug = ModSettingsMirrorSlugPolicy.Normalize(key);
             var idBase = $"mc_{slug}";
             var labelText = ModSettingsText.Dynamic(() => ResolveEntryLabel(entry, i18NGet));
             var descText = ResolveEntryDescription(entry, i18NGet);
@@ -635,45 +634,12 @@ namespace STS2RitsuLib.Settings
 
         private static string? TryI18N(string? key, string fallback, MethodInfo? i18NGet)
         {
-            if (i18NGet == null || string.IsNullOrWhiteSpace(key))
-                return null;
-
-            try
-            {
-                return i18NGet.Invoke(null, [key, fallback]) as string;
-            }
-            catch
-            {
-                return null;
-            }
+            return ModSettingsMirrorTextPolicy.TryI18N(key, fallback, i18NGet);
         }
 
         private static string ResolveLangMap(IDictionary? map, string fallback)
         {
-            if (map == null || map.Count == 0)
-                return fallback;
-
-            var lang = TryModConfigCurrentLang();
-            if (!string.IsNullOrEmpty(lang) && map.Contains(lang) && map[lang] is string exact)
-                return exact;
-
-            foreach (DictionaryEntry e in map)
-            {
-                if (e.Key is not string k || e.Value is not string v)
-                    continue;
-                if (lang != null && (lang.StartsWith(k, StringComparison.OrdinalIgnoreCase) ||
-                                     k.StartsWith(lang, StringComparison.OrdinalIgnoreCase)))
-                    return v;
-            }
-
-            if (map.Contains("en") && map["en"] is string en)
-                return en;
-
-            foreach (DictionaryEntry e in map)
-                if (e.Value is string v)
-                    return v;
-
-            return fallback;
+            return ModSettingsMirrorTextPolicy.ResolveLangMap(map, fallback, TryModConfigCurrentLang);
         }
 
         private static T InvokeGetValue<T>(MethodInfo getValueOpen, string modId, string key)

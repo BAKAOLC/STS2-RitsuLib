@@ -91,7 +91,7 @@ namespace STS2RitsuLib.Settings
             return CreateSettingLine(
                 context,
                 () => ModSettingsUiContext.Resolve(entry.Label),
-                () => ModSettingsUiContext.ResolveBindingDescriptionBody(entry.Description),
+                () => ModSettingsUiControlFactoryHelper.ResolveDescription(entry.Description),
                 control,
                 entry.Binding,
                 entry.MenuCapabilities,
@@ -119,7 +119,7 @@ namespace STS2RitsuLib.Settings
             return CreateSettingLine(
                 context,
                 () => ModSettingsUiContext.Resolve(entry.Label),
-                () => ModSettingsUiContext.ResolveBindingDescriptionBody(entry.Description),
+                () => ModSettingsUiControlFactoryHelper.ResolveDescription(entry.Description),
                 control,
                 entry.Binding,
                 entry.MenuCapabilities,
@@ -153,7 +153,7 @@ namespace STS2RitsuLib.Settings
             return CreateSettingLine(
                 context,
                 () => ModSettingsUiContext.Resolve(entry.Label),
-                () => ModSettingsUiContext.ResolveBindingDescriptionBody(entry.Description),
+                () => ModSettingsUiControlFactoryHelper.ResolveDescription(entry.Description),
                 control,
                 entry.Binding,
                 entry.MenuCapabilities,
@@ -211,7 +211,7 @@ namespace STS2RitsuLib.Settings
             return CreateSettingLine(
                 context,
                 () => ModSettingsUiContext.Resolve(entry.Label),
-                () => ModSettingsUiContext.ResolveBindingDescriptionBody(entry.Description),
+                () => ModSettingsUiControlFactoryHelper.ResolveDescription(entry.Description),
                 control,
                 entry.Binding,
                 entry.MenuCapabilities,
@@ -237,7 +237,7 @@ namespace STS2RitsuLib.Settings
             return CreateSettingLine(
                 context,
                 () => ModSettingsUiContext.Resolve(entry.Label),
-                () => ModSettingsUiContext.ResolveBindingDescriptionBody(entry.Description),
+                () => ModSettingsUiControlFactoryHelper.ResolveDescription(entry.Description),
                 control,
                 entry.Binding,
                 entry.MenuCapabilities,
@@ -261,7 +261,7 @@ namespace STS2RitsuLib.Settings
             return CreateSettingLine(
                 context,
                 () => ModSettingsUiContext.Resolve(entry.Label),
-                () => ModSettingsUiContext.ResolveBindingDescriptionBody(entry.Description),
+                () => ModSettingsUiControlFactoryHelper.ResolveDescription(entry.Description),
                 control,
                 entry.Binding,
                 entry.MenuCapabilities,
@@ -284,7 +284,7 @@ namespace STS2RitsuLib.Settings
             return CreateSettingLine(
                 context,
                 () => ModSettingsUiContext.Resolve(entry.Label),
-                () => ModSettingsUiContext.ResolveBindingDescriptionBody(entry.Description),
+                () => ModSettingsUiControlFactoryHelper.ResolveDescription(entry.Description),
                 control,
                 entry.Binding,
                 entry.MenuCapabilities,
@@ -328,7 +328,7 @@ namespace STS2RitsuLib.Settings
             return CreateSettingLine(
                 context,
                 () => ModSettingsUiContext.Resolve(entry.Label),
-                () => ModSettingsUiContext.ResolveBindingDescriptionBody(entry.Description),
+                () => ModSettingsUiControlFactoryHelper.ResolveDescription(entry.Description),
                 control,
                 entry.Binding,
                 entry.MenuCapabilities,
@@ -355,7 +355,7 @@ namespace STS2RitsuLib.Settings
             return CreateSettingLine(
                 context,
                 () => ModSettingsUiContext.Resolve(entry.Label),
-                () => ModSettingsUiContext.ResolveBindingDescriptionBody(entry.Description),
+                () => ModSettingsUiControlFactoryHelper.ResolveDescription(entry.Description),
                 control,
                 entry.Binding,
                 entry.MenuCapabilities,
@@ -665,7 +665,7 @@ namespace STS2RitsuLib.Settings
             return CreateSettingLine(
                 context,
                 () => ModSettingsUiContext.Resolve(entry.Label),
-                () => ModSettingsUiContext.ResolveBindingDescriptionBody(entry.Description),
+                () => ModSettingsUiControlFactoryHelper.ResolveDescription(entry.Description),
                 control,
                 entry.Binding,
                 entry.MenuCapabilities,

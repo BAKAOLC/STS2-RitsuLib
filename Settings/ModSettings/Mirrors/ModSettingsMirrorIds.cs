@@ -1,12 +1,10 @@
-using STS2RitsuLib.Content;
-
 namespace STS2RitsuLib.Settings
 {
     internal static class ModSettingsMirrorIds
     {
         public static string Slug(string name)
         {
-            return ModContentRegistry.NormalizePublicStem(name);
+            return ModSettingsMirrorSlugPolicy.Normalize(name);
         }
 
         public static string Entry(string prefix, string name)

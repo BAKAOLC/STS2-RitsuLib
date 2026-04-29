@@ -1,6 +1,5 @@
 using System.Reflection;
 using Godot;
-using MegaCrit.Sts2.Core.Helpers;
 using MegaCrit.Sts2.Core.Localization;
 
 namespace STS2RitsuLib.Settings
@@ -74,7 +73,7 @@ namespace STS2RitsuLib.Settings
                         : ModSettingsText.Dynamic(() => host.ResolveLabel(sourceSection.Title!)),
                     IsCollapsible: !string.IsNullOrWhiteSpace(sourceSection.Title),
                     StartCollapsed: false,
-                    VisibleWhen: BuildSectionVisibility(entries)));
+                    VisibleWhen: ModSettingsMirrorVisibilityPolicy.BuildSectionVisibility(entries)));
             }
 
             if (mappedSections.Count == 0)
@@ -224,29 +223,6 @@ namespace STS2RitsuLib.Settings
                 VisibleWhen: visibilityPredicate);
         }
 
-        private static Func<bool>? BuildSectionVisibility(IReadOnlyList<ModSettingsMirrorEntryDefinition> entries)
-        {
-            if (entries.Count == 0)
-                return null;
-
-            return () => entries.Any(static entry => EvaluateVisibility(entry.VisibleWhen));
-        }
-
-        private static bool EvaluateVisibility(Func<bool>? predicate)
-        {
-            if (predicate == null)
-                return true;
-
-            try
-            {
-                return predicate();
-            }
-            catch
-            {
-                return true;
-            }
-        }
-
         private static void InvokeConfigButton(MethodInfo method, BaseLibToRitsuGeneratedMirrorHost host)
         {
             try
@@ -295,7 +271,7 @@ namespace STS2RitsuLib.Settings
             if (string.IsNullOrWhiteSpace(prefix))
                 return null;
 
-            var key = prefix + StringHelper.Slugify(member.Name) + ".hover.desc";
+            var key = prefix + ModSettingsMirrorSlugPolicy.Normalize(member.Name) + ".hover.desc";
             return !LocString.Exists("settings_ui", key)
                 ? null
                 : ModSettingsText.Dynamic(() => LocString.GetIfExists("settings_ui", key)?.GetFormattedText() ?? "");
