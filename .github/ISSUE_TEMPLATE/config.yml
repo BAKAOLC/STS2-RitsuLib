@@ -1,0 +1,8 @@
+blank_issues_enabled: true
+contact_links:
+  - name: Documentation / 文档
+    url: https://github.com/BAKAOLC/sts-2-opencode
+    about: Project entrypoint (update if you have a dedicated docs site).
+  - name: Discussions / 讨论区
+    url: https://github.com/BAKAOLC/sts-2-opencode/discussions
+    about: Ask questions or propose ideas.
