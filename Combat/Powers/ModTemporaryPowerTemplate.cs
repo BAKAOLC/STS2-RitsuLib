@@ -6,6 +6,7 @@ using MegaCrit.Sts2.Core.Entities.Powers;
 using MegaCrit.Sts2.Core.GameActions.Multiplayer;
 using MegaCrit.Sts2.Core.HoverTips;
 using MegaCrit.Sts2.Core.Localization;
+using MegaCrit.Sts2.Core.Localization.DynamicVars;
 using MegaCrit.Sts2.Core.Models;
 using STS2RitsuLib.Scaffolding.Content;
 
@@ -16,6 +17,12 @@ namespace STS2RitsuLib.Combat.Powers
     /// </summary>
     public abstract class ModTemporaryPowerTemplate : ModPowerTemplate, ITemporaryPower
     {
+        /// <summary>
+        ///     Reserved dynamic var name used by this template to track extra expiry cycles and (optionally) expose the value
+        ///     to localization formatting (e.g. <c>{ExtraTurns}</c>).
+        /// </summary>
+        public const string ExtraTurnCyclesVarName = "ExtraTurns";
+
         private static readonly MethodInfo ApplyInternalPowerGenericMethod =
             typeof(ModTemporaryPowerTemplate).GetMethod(nameof(ApplyInternalPowerGeneric),
                 BindingFlags.NonPublic | BindingFlags.Static)!;
@@ -38,6 +45,16 @@ namespace STS2RitsuLib.Combat.Powers
         /// </summary>
         protected virtual int LastForXExtraTurns => 0;
 
+        /// <summary>
+        ///     Additional dynamic vars for localization display.
+        ///     Use this instead of overriding <see cref="CanonicalVars" />, which is reserved by the template.
+        ///     <para>
+        ///         <see cref="ExtraTurnCyclesVarName" /> is reserved and will always be provided by the template.
+        ///         Do not include it in <see cref="AdditionalCanonicalVars" />.
+        ///     </para>
+        /// </summary>
+        protected virtual IEnumerable<DynamicVar> AdditionalCanonicalVars => [];
+
         /// <inheritdoc />
         public override PowerType Type => IsPositive ? PowerType.Buff : PowerType.Debuff;
 
@@ -50,6 +67,16 @@ namespace STS2RitsuLib.Combat.Powers
         /// <inheritdoc />
         public override bool IsInstanced => LastForXExtraTurns != 0;
 
+        /// <summary>
+        ///     Remaining extra expiry cycles before removal.
+        ///     Stored in <see cref="ExtraTurnCyclesVarName" /> for optional localization display.
+        /// </summary>
+        public int RemainingExtraTurnCycles
+        {
+            get => (int)DynamicVars[ExtraTurnCyclesVarName].BaseValue;
+            set => DynamicVars[ExtraTurnCyclesVarName].BaseValue = Math.Max(value, 0);
+        }
+
         /// <inheritdoc />
         public override LocString Title => ResolveOriginTitle();
 
@@ -57,12 +84,32 @@ namespace STS2RitsuLib.Combat.Powers
         protected override IEnumerable<IHoverTip> AdditionalHoverTips => ResolveExtraHoverTips();
 
         /// <inheritdoc />
+        /// <summary>
+        ///     Canonical dynamic vars reserved by the template.
+        ///     <para>
+        ///         This template always defines <see cref="ExtraTurnCyclesVarName" /> (<c>{ExtraTurns}</c>) for its
+        ///         internal expiry counter and for optional localization display. Do not attempt to override this.
+        ///     </para>
+        ///     <para>
+        ///         To add additional dynamic vars for localization, override <see cref="AdditionalCanonicalVars" /> instead.
+        ///     </para>
+        /// </summary>
+        protected sealed override IEnumerable<DynamicVar> CanonicalVars => BuildCanonicalVars();
+
+        /// <summary>
+        ///     The model that granted this temporary power (card/potion/relic/power/orb/etc.).
+        ///     Used for title and hover-tip resolution.
+        /// </summary>
         public abstract AbstractModel OriginModel { get; }
 
-        /// <inheritdoc />
+        /// <summary>
+        ///     The internal power model that is applied/removed while this temporary wrapper exists.
+        /// </summary>
         public abstract PowerModel InternallyAppliedPower { get; }
 
-        /// <inheritdoc />
+        /// <summary>
+        ///     Suppresses the next application/amount-change instance, matching vanilla temporary power semantics.
+        /// </summary>
         public void IgnoreNextInstance()
         {
             _shouldIgnoreNextInstance = true;
@@ -78,6 +125,8 @@ namespace STS2RitsuLib.Combat.Powers
                 return;
             }
 
+            if (RemainingExtraTurnCycles == 0)
+                RemainingExtraTurnCycles = LastForXExtraTurns;
             await ApplyInternalPower(new ThrowingPlayerChoiceContext(), target, SignedAmount(amount), applier,
                 cardSource, true);
         }
@@ -116,9 +165,9 @@ namespace STS2RitsuLib.Combat.Powers
             if (!expiresOnThisSide)
                 return;
 
-            if (DynamicVars.Repeat.BaseValue > 0)
+            if (RemainingExtraTurnCycles > 0)
             {
-                DynamicVars.Repeat.UpgradeValueBy(-1);
+                RemainingExtraTurnCycles--;
                 return;
             }
 
@@ -133,6 +182,19 @@ namespace STS2RitsuLib.Combat.Powers
         protected virtual decimal SignedAmount(decimal amount)
         {
             return IsPositive ? amount : -amount;
+        }
+
+        private IEnumerable<DynamicVar> BuildCanonicalVars()
+        {
+            if (AdditionalCanonicalVars.Any(dynVar => dynVar.Name == ExtraTurnCyclesVarName))
+                throw new ArgumentException(
+                    $"'{ExtraTurnCyclesVarName}' is reserved by {nameof(ModTemporaryPowerTemplate)}. " +
+                    $"Add a differently-named var via {nameof(AdditionalCanonicalVars)}."
+                );
+
+            yield return new IntVar(ExtraTurnCyclesVarName, 0);
+            foreach (var dynVar in AdditionalCanonicalVars)
+                yield return dynVar;
         }
 
         private LocString ResolveOriginTitle()
