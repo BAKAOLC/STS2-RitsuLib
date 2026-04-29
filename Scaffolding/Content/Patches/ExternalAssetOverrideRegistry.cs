@@ -136,47 +136,47 @@ namespace STS2RitsuLib.Scaffolding.Content.Patches
         private static readonly Dictionary<string, Func<EnchantmentModel, string?>> EnchantmentIconPathProviders =
             new(StringComparer.Ordinal);
 
-        private static readonly IDictionary[] ProviderMaps =
+        private static readonly (IDictionary Map, RuntimeAssetRefreshScope Scope)[] ProviderMaps =
         [
-            RelicIconPathProviders,
-            RelicIconOutlinePathProviders,
-            RelicIconTextureProviders,
-            RelicIconOutlineTextureProviders,
-            RelicBigIconTextureProviders,
-            PowerIconPathProviders,
-            PowerIconTextureProviders,
-            PowerBigIconTextureProviders,
-            PotionImagePathProviders,
-            PotionOutlinePathProviders,
-            PotionImageTextureProviders,
-            PotionOutlineTextureProviders,
-            OrbIconPathProviders,
-            OrbIconTextureProviders,
-            OrbVisualsScenePathProviders,
-            ActBackgroundScenePathProviders,
-            ActRestSiteBackgroundPathProviders,
-            ActMapTopBgPathProviders,
-            ActMapMidBgPathProviders,
-            ActMapBotBgPathProviders,
-            EventBackgroundScenePathProviders,
-            EventLayoutScenePathProviders,
-            EventInitialPortraitTextureProviders,
-            EventBackgroundSceneProviders,
-            EventVfxSceneProviders,
-            EncounterScenePathProviders,
-            EncounterBackgroundScenePathProviders,
-            EncounterBackgroundLayersDirProviders,
-            EncounterBossNodePathProviders,
-            EncounterMapNodeAssetPathProviders,
-            EncounterRunHistoryIconPathProviders,
-            EncounterRunHistoryIconOutlinePathProviders,
-            AncientMapIconPathProviders,
-            AncientMapIconOutlinePathProviders,
-            AncientRunHistoryIconPathProviders,
-            AncientRunHistoryIconOutlinePathProviders,
-            AfflictionOverlayPathProviders,
-            AfflictionOverlaySceneProviders,
-            EnchantmentIconPathProviders,
+            (RelicIconPathProviders, RuntimeAssetRefreshScope.Relics),
+            (RelicIconOutlinePathProviders, RuntimeAssetRefreshScope.Relics),
+            (RelicIconTextureProviders, RuntimeAssetRefreshScope.Relics),
+            (RelicIconOutlineTextureProviders, RuntimeAssetRefreshScope.Relics),
+            (RelicBigIconTextureProviders, RuntimeAssetRefreshScope.Relics),
+            (PowerIconPathProviders, RuntimeAssetRefreshScope.Powers),
+            (PowerIconTextureProviders, RuntimeAssetRefreshScope.Powers),
+            (PowerBigIconTextureProviders, RuntimeAssetRefreshScope.Powers),
+            (PotionImagePathProviders, RuntimeAssetRefreshScope.Potions),
+            (PotionOutlinePathProviders, RuntimeAssetRefreshScope.Potions),
+            (PotionImageTextureProviders, RuntimeAssetRefreshScope.Potions),
+            (PotionOutlineTextureProviders, RuntimeAssetRefreshScope.Potions),
+            (OrbIconPathProviders, RuntimeAssetRefreshScope.Orbs),
+            (OrbIconTextureProviders, RuntimeAssetRefreshScope.Orbs),
+            (OrbVisualsScenePathProviders, RuntimeAssetRefreshScope.Orbs),
+            (ActBackgroundScenePathProviders, RuntimeAssetRefreshScope.None),
+            (ActRestSiteBackgroundPathProviders, RuntimeAssetRefreshScope.None),
+            (ActMapTopBgPathProviders, RuntimeAssetRefreshScope.None),
+            (ActMapMidBgPathProviders, RuntimeAssetRefreshScope.None),
+            (ActMapBotBgPathProviders, RuntimeAssetRefreshScope.None),
+            (EventBackgroundScenePathProviders, RuntimeAssetRefreshScope.None),
+            (EventLayoutScenePathProviders, RuntimeAssetRefreshScope.None),
+            (EventInitialPortraitTextureProviders, RuntimeAssetRefreshScope.None),
+            (EventBackgroundSceneProviders, RuntimeAssetRefreshScope.None),
+            (EventVfxSceneProviders, RuntimeAssetRefreshScope.None),
+            (EncounterScenePathProviders, RuntimeAssetRefreshScope.None),
+            (EncounterBackgroundScenePathProviders, RuntimeAssetRefreshScope.None),
+            (EncounterBackgroundLayersDirProviders, RuntimeAssetRefreshScope.None),
+            (EncounterBossNodePathProviders, RuntimeAssetRefreshScope.None),
+            (EncounterMapNodeAssetPathProviders, RuntimeAssetRefreshScope.None),
+            (EncounterRunHistoryIconPathProviders, RuntimeAssetRefreshScope.None),
+            (EncounterRunHistoryIconOutlinePathProviders, RuntimeAssetRefreshScope.None),
+            (AncientMapIconPathProviders, RuntimeAssetRefreshScope.None),
+            (AncientMapIconOutlinePathProviders, RuntimeAssetRefreshScope.None),
+            (AncientRunHistoryIconPathProviders, RuntimeAssetRefreshScope.None),
+            (AncientRunHistoryIconOutlinePathProviders, RuntimeAssetRefreshScope.None),
+            (AfflictionOverlayPathProviders, RuntimeAssetRefreshScope.None),
+            (AfflictionOverlaySceneProviders, RuntimeAssetRefreshScope.None),
+            (EnchantmentIconPathProviders, RuntimeAssetRefreshScope.None),
         ];
 
         /// <summary>
@@ -507,10 +507,16 @@ namespace STS2RitsuLib.Scaffolding.Content.Patches
         public static bool Unregister(string key)
         {
             ArgumentException.ThrowIfNullOrWhiteSpace(key);
+            bool removed;
+            RuntimeAssetRefreshScope scope;
             lock (SyncRoot)
             {
-                return UnregisterFromAllBuckets(key);
+                removed = UnregisterFromAllBuckets(key, out scope);
             }
+
+            if (removed && scope != RuntimeAssetRefreshScope.None)
+                RuntimeAssetRefreshCoordinator.Request(scope);
+            return removed;
         }
 
         /// <summary>
@@ -518,30 +524,44 @@ namespace STS2RitsuLib.Scaffolding.Content.Patches
         /// </summary>
         public static void Clear()
         {
+            RuntimeAssetRefreshScope scope;
             lock (SyncRoot)
             {
-                ClearAllBuckets();
+                scope = ClearAllBuckets();
             }
+
+            if (scope != RuntimeAssetRefreshScope.None)
+                RuntimeAssetRefreshCoordinator.Request(scope);
         }
 
-        private static bool UnregisterFromAllBuckets(string key)
+        private static bool UnregisterFromAllBuckets(string key, out RuntimeAssetRefreshScope scope)
         {
+            scope = RuntimeAssetRefreshScope.None;
             var removed = false;
-            foreach (var map in ProviderMaps)
+            foreach (var (map, mapScope) in ProviderMaps)
             {
                 if (!map.Contains(key))
                     continue;
                 map.Remove(key);
                 removed = true;
+                scope |= mapScope;
             }
 
             return removed;
         }
 
-        private static void ClearAllBuckets()
+        private static RuntimeAssetRefreshScope ClearAllBuckets()
         {
-            foreach (var map in ProviderMaps)
+            var scope = RuntimeAssetRefreshScope.None;
+            foreach (var (map, mapScope) in ProviderMaps)
+            {
+                if (map.Count == 0)
+                    continue;
                 map.Clear();
+                scope |= mapScope;
+            }
+
+            return scope;
         }
 
         internal static bool TryGetRelicIconPath(RelicModel model, out string value)
@@ -759,6 +779,19 @@ namespace STS2RitsuLib.Scaffolding.Content.Patches
             {
                 map[key] = provider;
             }
+
+            var scope = GetScopeForMap(map);
+            if (scope != RuntimeAssetRefreshScope.None)
+                RuntimeAssetRefreshCoordinator.Request(scope);
+        }
+
+        private static RuntimeAssetRefreshScope GetScopeForMap(IDictionary map)
+        {
+            foreach (var (candidate, scope) in ProviderMaps)
+                if (ReferenceEquals(candidate, map))
+                    return scope;
+
+            return RuntimeAssetRefreshScope.None;
         }
 
         private static bool TryGet<TModel>(

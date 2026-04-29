@@ -188,6 +188,8 @@ namespace STS2RitsuLib.Content
             }
 
             ModCharacterOwnedVisualOverrideHelper.InvalidateCachesForCharacterEntry(key);
+            RuntimeAssetRefreshCoordinator.Request(
+                RuntimeAssetRefreshScope.Cards | RuntimeAssetRefreshScope.Relics | RuntimeAssetRefreshScope.Potions);
             _logger.Info($"[Content] Programmatic owned visual override for character '{key}' ({ModId}).");
         }
 
