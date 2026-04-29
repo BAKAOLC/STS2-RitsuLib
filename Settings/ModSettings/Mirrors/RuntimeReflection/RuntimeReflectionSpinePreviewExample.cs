@@ -112,13 +112,6 @@ namespace STS2RitsuLib.Settings
                 VerticalAlignment = VerticalAlignment.Center,
             };
             characterRow.AddChild(characterLabel);
-            var characterPicker = new OptionButton
-            {
-                SizeFlagsHorizontal = Control.SizeFlags.ExpandFill,
-                CustomMinimumSize = new(260, 44),
-            };
-            AddCharacterOptions(characterPicker, availableCharacters);
-            characterRow.AddChild(characterPicker);
             root.AddChild(characterRow);
 
             var viewportContainer = new SubViewportContainer
@@ -141,33 +134,43 @@ namespace STS2RitsuLib.Settings
             };
             root.AddChild(animationsTitle);
 
-            var animationsList = new ItemList
-            {
-                SizeFlagsHorizontal = Control.SizeFlags.ExpandFill,
-                CustomMinimumSize = new(0, 220),
-                SelectMode = ItemList.SelectModeEnum.Single,
-            };
-            root.AddChild(animationsList);
-
             NCreatureVisuals? currentVisuals = null;
             var currentCharacter = availableCharacters[0];
 
-            characterPicker.ItemSelected += idx =>
-            {
-                var selectedIndex = characterPicker.GetItemId((int)idx);
-                if (selectedIndex < 0 || selectedIndex >= availableCharacters.Count)
-                    return;
-                currentCharacter = availableCharacters[selectedIndex];
-                RefreshPreview();
-            };
+            var animationsPicker = new ModSettingsDropdownChoiceControl<string>(
+                [],
+                string.Empty,
+                animationName =>
+                {
+                    if (currentVisuals?.SpineBody == null)
+                        return;
+                    if (string.IsNullOrWhiteSpace(animationName))
+                        return;
 
-            animationsList.ItemSelected += idx =>
+                    currentVisuals.SpineAnimation.SetAnimation(animationName);
+                })
             {
-                if (currentVisuals?.SpineBody == null)
-                    return;
-                var animationName = animationsList.GetItemText((int)idx);
-                currentVisuals.SpineAnimation.SetAnimation(animationName);
+                SizeFlagsHorizontal = Control.SizeFlags.ExpandFill,
+                CustomMinimumSize = new(0, ModSettingsUiMetrics.EntryValueMinHeight),
             };
+            root.AddChild(animationsPicker);
+            var characterOptions = availableCharacters
+                .Select(character => (character, ResolveCharacterName(character)))
+                .ToArray();
+
+            var characterPicker = new ModSettingsDropdownChoiceControl<CharacterModel>(
+                characterOptions,
+                currentCharacter,
+                character =>
+                {
+                    currentCharacter = character;
+                    RefreshPreview();
+                })
+            {
+                SizeFlagsHorizontal = Control.SizeFlags.ExpandFill,
+                CustomMinimumSize = new(260, ModSettingsUiMetrics.EntryValueMinHeight),
+            };
+            characterRow.AddChild(characterPicker);
 
             RefreshPreview();
             return root;
@@ -182,18 +185,20 @@ namespace STS2RitsuLib.Settings
                 viewport.AddChild(currentVisuals);
 
                 var animationNames = EnumerateAnimations(currentVisuals);
-                animationsList.Clear();
-                foreach (var animationName in animationNames)
-                    animationsList.AddItem(animationName);
+                var animationOptions = animationNames
+                    .Select(name => (name, name))
+                    .ToArray();
 
                 if (animationNames.Count == 0)
+                {
+                    animationsPicker.SetOptions([], string.Empty);
                     return;
+                }
 
                 var preferred = animationNames.FirstOrDefault(name =>
                     string.Equals(name, "idle_loop", StringComparison.OrdinalIgnoreCase));
                 var selected = preferred ?? animationNames[0];
-                var selectedIndex = animationNames.IndexOf(selected);
-                animationsList.Select(selectedIndex);
+                animationsPicker.SetOptions(animationOptions, selected);
                 currentVisuals.SpineAnimation.SetAnimation(selected);
             }
         }
@@ -210,17 +215,6 @@ namespace STS2RitsuLib.Settings
 
             names.Sort(StringComparer.OrdinalIgnoreCase);
             return names;
-        }
-
-        private static void AddCharacterOptions(OptionButton picker, IReadOnlyList<CharacterModel> characters)
-        {
-            for (var i = 0; i < characters.Count; i++)
-            {
-                var character = characters[i];
-                picker.AddItem(ResolveCharacterName(character), i);
-            }
-
-            picker.Select(0);
         }
 
         private static string ResolveCharacterName(CharacterModel character)
