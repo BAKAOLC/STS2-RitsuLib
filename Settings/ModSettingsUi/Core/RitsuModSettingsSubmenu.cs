@@ -88,7 +88,6 @@ namespace STS2RitsuLib.Settings
         private bool _localeSubscribed;
         private VBoxContainer _modButtonList = null!;
         private Callable _modSettingsGuiFocusCallable;
-        private HBoxContainer _pageTabRow = null!;
         private HBoxContainer? _paneHotkeyHintRow;
         private bool _paneHotkeySignalsConnected;
         private bool _paneHotkeysPushed;
@@ -977,14 +976,6 @@ namespace STS2RitsuLib.Settings
             root.AddThemeConstantOverride("separation", 10);
             frame.AddChild(root);
 
-            _pageTabRow = new()
-            {
-                SizeFlagsHorizontal = SizeFlags.ExpandFill,
-                MouseFilter = MouseFilterEnum.Ignore,
-            };
-            _pageTabRow.AddThemeConstantOverride("separation", 8);
-            root.AddChild(_pageTabRow);
-
             _scrollContainer = new()
             {
                 SizeFlagsHorizontal = SizeFlags.ExpandFill,
@@ -1195,7 +1186,6 @@ namespace STS2RitsuLib.Settings
                         cache.Root.Visible = false;
                 }
 
-                _pageTabRow.Visible = false;
                 _globalRefreshRegistrations.Clear();
                 HideTransientContentState();
                 _contentStructureDirty = false;
@@ -1286,7 +1276,6 @@ namespace STS2RitsuLib.Settings
             foreach (var cache in _pageContentCaches.Values)
                 cache.Root.Visible = false;
 
-            _pageTabRow.Visible = false;
             HideContentBuildOverlay();
             HideTransientContentState();
 

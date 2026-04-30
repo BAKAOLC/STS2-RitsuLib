@@ -31,7 +31,7 @@ namespace STS2RitsuLib.Settings
             ModSettingsText? descriptionRefreshSource = null)
         {
             return CreateSettingLine(context, labelProvider, descriptionBodyProvider, valueControl,
-                CreateEntryActionsButton(context, binding), binding,
+                CreateEntryActionsButton(context, binding),
                 labelRefreshSource, descriptionRefreshSource);
         }
 
@@ -43,13 +43,12 @@ namespace STS2RitsuLib.Settings
             ModSettingsText? descriptionRefreshSource = null)
         {
             return CreateSettingLine(context, labelProvider, descriptionBodyProvider, valueControl,
-                CreateEntryActionsButton(context, binding, capabilities), binding,
+                CreateEntryActionsButton(context, binding, capabilities),
                 labelRefreshSource, descriptionRefreshSource);
         }
 
         private static MarginContainer CreateSettingLine(ModSettingsUiContext context, Func<string> labelProvider,
             Func<string> descriptionBodyProvider, Control valueControl, Control? actionControl = null,
-            IModSettingsBinding? scopeBinding = null,
             ModSettingsText? labelRefreshSource = null,
             ModSettingsText? descriptionRefreshSource = null)
         {
@@ -98,9 +97,6 @@ namespace STS2RitsuLib.Settings
                 CreateRefreshableDescriptionLabel(context, descriptionRefreshSource, descriptionBodyProvider);
             descriptionLabel.Visible = !string.IsNullOrWhiteSpace(descriptionText);
             leftColumn.AddChild(descriptionLabel);
-
-            if (scopeBinding != null)
-                leftColumn.AddChild(CreatePersistenceScopeTag(scopeBinding));
 
             row.AddChild(leftColumn);
 
@@ -721,48 +717,6 @@ namespace STS2RitsuLib.Settings
                 label.Visible = !string.IsNullOrWhiteSpace(text);
             }, spec);
             return label;
-        }
-
-        internal static Control CreatePersistenceScopeTag(IModSettingsBinding binding)
-        {
-            var panel = new PanelContainer
-            {
-                MouseFilter = Control.MouseFilterEnum.Ignore,
-                SizeFlagsHorizontal = Control.SizeFlags.ShrinkBegin,
-            };
-            panel.AddThemeStyleboxOverride("panel", CreateScopeTagStyle());
-            var label = new Label
-            {
-                Text = ModSettingsUiContext.GetPersistenceScopeChipText(binding),
-                VerticalAlignment = VerticalAlignment.Center,
-                MouseFilter = Control.MouseFilterEnum.Ignore,
-            };
-            label.AddThemeFontOverride("font", ModSettingsUiResources.KreonRegular);
-            label.AddThemeFontSizeOverride("font_size", 13);
-            label.AddThemeColorOverride("font_color", ModSettingsUiPalette.RichTextMuted);
-            panel.AddChild(label);
-            return panel;
-        }
-
-        private static StyleBoxFlat CreateScopeTagStyle()
-        {
-            return new()
-            {
-                BgColor = new(0.085f, 0.108f, 0.138f, 0.97f),
-                BorderColor = new(0.32f, 0.48f, 0.58f, 0.5f),
-                BorderWidthLeft = 1,
-                BorderWidthTop = 1,
-                BorderWidthRight = 1,
-                BorderWidthBottom = 1,
-                CornerRadiusTopLeft = ModSettingsUiMetrics.CornerRadius,
-                CornerRadiusTopRight = ModSettingsUiMetrics.CornerRadius,
-                CornerRadiusBottomRight = ModSettingsUiMetrics.CornerRadius,
-                CornerRadiusBottomLeft = ModSettingsUiMetrics.CornerRadius,
-                ContentMarginLeft = 8,
-                ContentMarginTop = 3,
-                ContentMarginRight = 8,
-                ContentMarginBottom = 3,
-            };
         }
 
         private static string SanitizeName(string text)

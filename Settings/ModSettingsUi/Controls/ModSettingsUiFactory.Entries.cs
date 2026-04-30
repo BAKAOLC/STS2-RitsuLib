@@ -386,7 +386,6 @@ namespace STS2RitsuLib.Settings
                 () => ModSettingsUiContext.Resolve(entry.Description),
                 control,
                 null,
-                null,
                 entry.Label,
                 entry.Description);
         }
@@ -408,7 +407,6 @@ namespace STS2RitsuLib.Settings
                 () => ModSettingsUiContext.Resolve(entry.Label),
                 () => ModSettingsUiContext.Resolve(entry.Description),
                 control,
-                null,
                 null,
                 entry.Label,
                 entry.Description);
@@ -701,7 +699,6 @@ namespace STS2RitsuLib.Settings
                 () => ModSettingsUiContext.Resolve(entry.Label),
                 () => ModSettingsUiContext.Resolve(entry.Description),
                 control,
-                null,
                 null,
                 entry.Label,
                 entry.Description);

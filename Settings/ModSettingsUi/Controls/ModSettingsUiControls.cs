@@ -2889,8 +2889,6 @@ namespace STS2RitsuLib.Settings
                 () => ModSettingsUiControlFactoryHelper.ResolveDescription(_entry.Description));
             textColumn.AddChild(descriptionLabel);
 
-            textColumn.AddChild(ModSettingsUiFactory.CreatePersistenceScopeTag(_entry.Binding));
-
             var summary = new PanelContainer
             {
                 CustomMinimumSize = new(96f, 32f),
