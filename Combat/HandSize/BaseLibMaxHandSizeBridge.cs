@@ -5,6 +5,7 @@ using MegaCrit.Sts2.Core.Commands;
 using MegaCrit.Sts2.Core.DevConsole.ConsoleCommands;
 using MegaCrit.Sts2.Core.Entities.Players;
 using MegaCrit.Sts2.Core.GameActions.Multiplayer;
+using STS2RitsuLib.Compat;
 using STS2RitsuLib.Patching.Core;
 using STS2RitsuLib.Patching.Models;
 
@@ -22,7 +23,6 @@ namespace STS2RitsuLib.Combat.HandSize
         private static readonly Harmony Harmony = new($"{Const.ModId}.interop.max_hand_size");
 
         private static MethodInfo? _baseLibGetMaxHandSizeMethod;
-        private static bool _resolveAttempted;
         private static bool _postfixPatched;
         private static bool _loggedResolveFailure;
 
@@ -116,13 +116,12 @@ namespace STS2RitsuLib.Combat.HandSize
                     return true;
                 }
 
-                if (_resolveAttempted)
+                if (!ExternalFrameworkRegistry.IsFrameworkPresent(ExternalFrameworkIds.BaseLib))
                 {
                     method = null!;
                     return false;
                 }
 
-                _resolveAttempted = true;
                 var type = ResolveBaseLibMaxHandSizePatchType();
                 var resolved = type?.GetMethod(
                     "GetMaxHandSize",
@@ -152,7 +151,7 @@ namespace STS2RitsuLib.Combat.HandSize
 
         private static Type? ResolveBaseLibMaxHandSizePatchType()
         {
-            var byQualifiedName = Type.GetType("BaseLib.Patches.Hooks.MaxHandSizePatch, BaseLib");
+            var byQualifiedName = ExternalFrameworkRegistry.ResolveType("BaseLib.Patches.Hooks.MaxHandSizePatch");
             if (byQualifiedName != null)
                 return byQualifiedName;
 

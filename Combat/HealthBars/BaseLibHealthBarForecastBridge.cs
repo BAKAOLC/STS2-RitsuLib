@@ -19,8 +19,6 @@ namespace STS2RitsuLib.Combat.HealthBars
         private static bool _baselibSupportsForecastInterop;
         private static bool _loggedMissingInterop;
         private static bool _loggedMissingRegisterForeign;
-        private static bool _primaryAttemptIssued;
-        private static bool _secondaryAttemptIssued;
 
         /// <summary>
         ///     When <see langword="true" />, Ritsu's <c>NHealthBar</c> forecast postfixes should skip drawing because BaseLib
@@ -36,9 +34,8 @@ namespace STS2RitsuLib.Combat.HealthBars
         /// </summary>
         public static void TryRegisterPrimary()
         {
-            if (_primaryAttemptIssued || _registered)
+            if (_registered)
                 return;
-            _primaryAttemptIssued = true;
             TryRegisterCore();
         }
 
@@ -47,9 +44,8 @@ namespace STS2RitsuLib.Combat.HealthBars
         /// </summary>
         public static void TryRegisterSecondary()
         {
-            if (_secondaryAttemptIssued || _registered)
+            if (_registered)
                 return;
-            _secondaryAttemptIssued = true;
             TryRegisterCore();
         }
 
@@ -65,7 +61,7 @@ namespace STS2RitsuLib.Combat.HealthBars
         {
             if (_registered)
                 return;
-            if (!IsBaseLibLoaded())
+            if (!ExternalFrameworkRegistry.IsFrameworkPresent(ExternalFrameworkIds.BaseLib))
                 return;
 
             try
@@ -132,23 +128,9 @@ namespace STS2RitsuLib.Combat.HealthBars
             return registryType;
         }
 
-        private static bool IsBaseLibLoaded()
-        {
-            foreach (var mod in Sts2ModManagerCompat.EnumerateLoadedModsWithAssembly())
-            {
-                var assembly = mod.assembly;
-                if (assembly == null)
-                    continue;
-                if (assembly.GetType("BaseLib.Hooks.HealthBarForecastRegistry") != null)
-                    return true;
-            }
-
-            return false;
-        }
-
         private static Type? ResolveRegistryTypeFromLoadedAssemblies()
         {
-            var byQualifiedName = Type.GetType("BaseLib.Hooks.HealthBarForecastRegistry, BaseLib");
+            var byQualifiedName = ExternalFrameworkRegistry.ResolveType("BaseLib.Hooks.HealthBarForecastRegistry");
             if (byQualifiedName != null)
                 return byQualifiedName;
 

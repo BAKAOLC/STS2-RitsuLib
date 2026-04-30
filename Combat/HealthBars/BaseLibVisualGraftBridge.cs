@@ -15,8 +15,6 @@ namespace STS2RitsuLib.Combat.HealthBars
         private static bool _interopOk;
         private static bool _loggedMissingRegistry;
         private static bool _loggedMissingRegisterForeign;
-        private static bool _primaryAttemptIssued;
-        private static bool _secondaryAttemptIssued;
 
         public static bool ShouldRitsuGraftStandDown()
         {
@@ -25,17 +23,15 @@ namespace STS2RitsuLib.Combat.HealthBars
 
         public static void TryRegisterPrimary()
         {
-            if (_primaryAttemptIssued || _registered)
+            if (_registered)
                 return;
-            _primaryAttemptIssued = true;
             TryRegisterCore();
         }
 
         public static void TryRegisterSecondary()
         {
-            if (_secondaryAttemptIssued || _registered)
+            if (_registered)
                 return;
-            _secondaryAttemptIssued = true;
             TryRegisterCore();
         }
 
@@ -48,7 +44,7 @@ namespace STS2RitsuLib.Combat.HealthBars
         {
             if (_registered)
                 return;
-            if (!IsBaseLibLoaded())
+            if (!ExternalFrameworkRegistry.IsFrameworkPresent(ExternalFrameworkIds.BaseLib))
                 return;
 
             try
@@ -94,7 +90,7 @@ namespace STS2RitsuLib.Combat.HealthBars
 
         private static Type? ResolveBaseLibRegistryType()
         {
-            var byQualifiedName = Type.GetType("BaseLib.Hooks.HealthBarVisualGraftRegistry, BaseLib");
+            var byQualifiedName = ExternalFrameworkRegistry.ResolveType("BaseLib.Hooks.HealthBarVisualGraftRegistry");
             if (byQualifiedName != null)
             {
                 _interopOk = true;
@@ -125,20 +121,6 @@ namespace STS2RitsuLib.Combat.HealthBars
             if (fallback != null)
                 _interopOk = true;
             return fallback;
-        }
-
-        private static bool IsBaseLibLoaded()
-        {
-            foreach (var mod in Sts2ModManagerCompat.EnumerateLoadedModsWithAssembly())
-            {
-                var assembly = mod.assembly;
-                if (assembly == null)
-                    continue;
-                if (assembly.GetType("BaseLib.Hooks.HealthBarVisualGraftRegistry") != null)
-                    return true;
-            }
-
-            return false;
         }
     }
 }

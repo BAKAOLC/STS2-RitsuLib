@@ -1,5 +1,6 @@
 using System.Collections;
 using System.Reflection;
+using STS2RitsuLib.Compat;
 
 namespace STS2RitsuLib.Settings
 {
@@ -105,6 +106,9 @@ namespace STS2RitsuLib.Settings
 
         private static IEnumerable<MirrorContext> EnumerateContexts()
         {
+            if (!ExternalFrameworkRegistry.IsFrameworkPresent(ExternalFrameworkIds.BaseLibToRitsuGenerated))
+                yield break;
+
             foreach (var assembly in AppDomain.CurrentDomain.GetAssemblies())
             {
                 Type? registryType;

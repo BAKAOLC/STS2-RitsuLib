@@ -10,6 +10,7 @@ using STS2RitsuLib.Cards.FreePlay;
 using STS2RitsuLib.CardTags;
 using STS2RitsuLib.Combat.HandSize;
 using STS2RitsuLib.Combat.HealthBars;
+using STS2RitsuLib.Compat;
 using STS2RitsuLib.Content;
 using STS2RitsuLib.Data;
 using STS2RitsuLib.Diagnostics.CardExport;
@@ -38,6 +39,7 @@ namespace STS2RitsuLib
     {
         private static readonly Lock SyncRoot = new();
         private static readonly Dictionary<FrameworkPatcherArea, ModPatcher> FrameworkPatchersByArea = [];
+        private static bool _frameworkInteropBootstrapRegistered;
 
         private static bool _profileServicesInitialized;
         private static ILifecycleObserver[] _lifecycleObservers = [];
@@ -197,10 +199,7 @@ namespace STS2RitsuLib
 
                     IsInitialized = true;
                     IsActive = true;
-                    BaseLibHealthBarForecastBridge.TryRegister();
-                    BaseLibVisualGraftBridge.TryRegister();
-                    BaseLibMaxHandSizeBridge.TryInitialize();
-                    MaxHandSizePatchInstaller.EnsurePatched();
+                    EnsureFrameworkInteropBootstrapRegistered();
                     RuntimeHotkeyService.Initialize();
 
                     var frameworkInitializedEvent = new FrameworkInitializedEvent(
@@ -228,6 +227,24 @@ namespace STS2RitsuLib
             return string.IsNullOrWhiteSpace(compatBranchLabel)
                 ? $"Version: {Const.Version}"
                 : $"Version: {Const.Version} [compat branch: {compatBranchLabel}]";
+        }
+
+        private static void EnsureFrameworkInteropBootstrapRegistered()
+        {
+            if (_frameworkInteropBootstrapRegistered)
+                return;
+
+            _frameworkInteropBootstrapRegistered = true;
+            SubscribeLifecycle<DeferredInitializationCompletedEvent>(_ => ConfirmExternalFrameworkInterop());
+        }
+
+        private static void ConfirmExternalFrameworkInterop()
+        {
+            ExternalFrameworkRegistry.RefreshKnownFrameworkPresence("deferred initialization completed");
+            BaseLibHealthBarForecastBridge.TryRegister();
+            BaseLibVisualGraftBridge.TryRegister();
+            BaseLibMaxHandSizeBridge.TryInitialize();
+            MaxHandSizePatchInstaller.EnsurePatched();
         }
 
         private static string? GetCompatBranchLabel()
