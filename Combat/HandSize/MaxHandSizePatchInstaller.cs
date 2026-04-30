@@ -20,7 +20,7 @@ using STS2RitsuLib.Patching.Core;
 namespace STS2RitsuLib.Combat.HandSize
 {
     /// <summary>
-    ///     Installs RitsuLib max-hand-size patches when BaseLib's equivalent patch set is not active.
+    ///     Installs RitsuLib max-hand-size patches.
     /// </summary>
     internal static class MaxHandSizePatchInstaller
     {
@@ -29,14 +29,20 @@ namespace STS2RitsuLib.Combat.HandSize
         private static bool _patched;
 
         private static readonly MethodInfo GetMaxHandSizeMethod =
-            AccessTools.Method(typeof(MaxHandSizeRegistry), nameof(MaxHandSizeRegistry.GetMaxHandSize))
-            ?? throw new MissingMethodException(typeof(MaxHandSizeRegistry).FullName,
-                nameof(MaxHandSizeRegistry.GetMaxHandSize));
+            AccessTools.Method(typeof(MaxHandSizeCalculator), nameof(MaxHandSizeCalculator.Calculate))
+            ?? throw new MissingMethodException(typeof(MaxHandSizeCalculator).FullName,
+                nameof(MaxHandSizeCalculator.Calculate));
 
         private static readonly MethodInfo GetMaxHandSizeFromCardMethod =
-            AccessTools.Method(typeof(MaxHandSizeRegistry), nameof(MaxHandSizeRegistry.GetMaxHandSizeFromCard))
-            ?? throw new MissingMethodException(typeof(MaxHandSizeRegistry).FullName,
-                nameof(MaxHandSizeRegistry.GetMaxHandSizeFromCard));
+            AccessTools.Method(typeof(MaxHandSizeCalculator), nameof(MaxHandSizeCalculator.CalculateFromCardOwner))
+            ?? throw new MissingMethodException(typeof(MaxHandSizeCalculator).FullName,
+                nameof(MaxHandSizeCalculator.CalculateFromCardOwner));
+
+#if !STS2_V_0_103_2
+        private static readonly MethodInfo MaxCardsInHandGetter =
+            AccessTools.PropertyGetter(typeof(CardPile), nameof(CardPile.MaxCardsInHand))
+            ?? throw new MissingMethodException(typeof(CardPile).FullName, nameof(CardPile.MaxCardsInHand));
+#endif
 
         internal static void EnsurePatched()
         {
@@ -45,36 +51,33 @@ namespace STS2RitsuLib.Combat.HandSize
                 if (_patched)
                     return;
 
-                if (BaseLibMaxHandSizeBridge.IsBaseLibHandSizePatchActive())
-                {
-                    _patched = true;
-                    RitsuLibFramework.Logger.Info(
-                        "[MaxHandSize] BaseLib hand-size patches detected. RitsuLib patch set stands down.");
-                    return;
-                }
-
                 var builder = new DynamicPatchBuilder("max_hand_size");
-                var transpiler = DynamicPatchBuilder.FromMethod(typeof(MaxHandSizePatchInstaller), nameof(Transpiler));
+                var transpilerPlayerArg0 =
+                    DynamicPatchBuilder.FromMethod(typeof(MaxHandSizePatchInstaller), nameof(PlayerArg0Transpiler));
+                var transpilerPlayerArg1 =
+                    DynamicPatchBuilder.FromMethod(typeof(MaxHandSizePatchInstaller), nameof(PlayerArg1Transpiler));
+                var transpilerStateMachine =
+                    DynamicPatchBuilder.FromMethod(typeof(MaxHandSizePatchInstaller), nameof(StateMachineTranspiler));
                 var cardOnPlayTranspiler =
                     DynamicPatchBuilder.FromMethod(typeof(MaxHandSizePatchInstaller), nameof(CardOnPlayTranspiler));
 
                 TryAddMethodPatch(builder, typeof(CardPileCmd),
                     nameof(CardPileCmd.CheckIfDrawIsPossibleAndShowThoughtBubbleIfNot),
-                    [typeof(Player)], transpiler);
+                    [typeof(Player)], transpilerPlayerArg0);
                 TryAddMethodPatch(builder, typeof(CombatManager), nameof(CombatManager.SetupPlayerTurn),
-                    [typeof(Player), typeof(HookPlayerChoiceContext)], transpiler);
+                    [typeof(Player), typeof(HookPlayerChoiceContext)], transpilerPlayerArg1);
                 TryAddMethodPatch(builder, typeof(CardConsoleCmd), nameof(CardConsoleCmd.Process),
-                    [typeof(Player), typeof(string[])], transpiler);
+                    [typeof(Player), typeof(string[])], transpilerPlayerArg1);
 
                 TryAddAsyncMoveNextPatch(builder, AccessTools.Method(typeof(CardPileCmd), nameof(CardPileCmd.Draw),
                         [typeof(PlayerChoiceContext), typeof(decimal), typeof(Player), typeof(bool)]),
-                    transpiler, "Patch CardPileCmd.Draw state machine max-hand-size constants");
+                    transpilerStateMachine, "Patch CardPileCmd.Draw state machine max-hand-size constants");
                 TryAddAsyncMoveNextPatch(builder, AccessTools.Method(typeof(CardPileCmd), nameof(CardPileCmd.Add),
                     [
                         typeof(IEnumerable<CardModel>), typeof(CardPile), typeof(CardPilePosition),
                         typeof(AbstractModel), typeof(bool),
                     ]),
-                    transpiler, "Patch CardPileCmd.Add state machine max-hand-size constants");
+                    transpilerStateMachine, "Patch CardPileCmd.Add state machine max-hand-size constants");
 
                 TryAddAsyncMoveNextPatch(builder, AccessTools.Method(typeof(Scrawl), "OnPlay",
                         [typeof(PlayerChoiceContext), typeof(CardPlay)]),
@@ -114,7 +117,12 @@ namespace STS2RitsuLib.Combat.HandSize
                 }
 
                 _patched = true;
-                RitsuLibFramework.Logger.Info("[MaxHandSize] RitsuLib hand-size patch set installed.");
+#if STS2_V_0_103_2
+                RitsuLibFramework.Logger.Info("[MaxHandSize] RitsuLib hand-size patch set installed (compat 0.103.2 profile).");
+#else
+                RitsuLibFramework.Logger.Info(
+                    "[MaxHandSize] RitsuLib hand-size patch set installed (0.104.0 profile).");
+#endif
             }
         }
 
@@ -182,34 +190,78 @@ namespace STS2RitsuLib.Combat.HandSize
                 description: description);
         }
 
-        private static bool IsDefaultMaxHandSizeConst(CodeInstruction ins)
+        private static bool IsMaxHandSizeToken(CodeInstruction ins)
         {
+#if STS2_V_0_103_2
+            // 0.103.2 compatibility signatures keep most hand-limit checks as hard-coded constants.
+            // Match literal 10 only.
             return (ins.opcode == OpCodes.Ldc_I4_S && ins.operand is sbyte and DefaultMaxHandSize)
                    || (ins.opcode == OpCodes.Ldc_I4 && ins.operand is DefaultMaxHandSize);
+#else
+            // 0.104.0 switched many call sites to CardPile.MaxCardsInHand.
+            // Match both legacy literal 10 and property getter invocations.
+            var isDefaultConst =
+                (ins.opcode == OpCodes.Ldc_I4_S && ins.operand is sbyte and DefaultMaxHandSize)
+                || (ins.opcode == OpCodes.Ldc_I4 && ins.operand is DefaultMaxHandSize);
+
+            var isMaxCardsGetter =
+                (ins.opcode == OpCodes.Call || ins.opcode == OpCodes.Callvirt)
+                && ins.operand is MethodInfo method
+                && method == MaxCardsInHandGetter;
+
+            return isDefaultConst || isMaxCardsGetter;
+#endif
         }
 
-        private static IEnumerable<CodeInstruction> Transpiler(IEnumerable<CodeInstruction> instructions)
+        private static IEnumerable<CodeInstruction> PlayerArg0Transpiler(IEnumerable<CodeInstruction> instructions)
         {
-            if (BaseLibMaxHandSizeBridge.IsBaseLibHandSizePatchActive())
-                return instructions;
-
-            var code = instructions.ToList();
-            var loadPlayer = FindStateMachinePlayerLoad(code);
-            for (var i = 0; i < code.Count; i++)
+            foreach (var ins in instructions)
             {
-                if (!IsDefaultMaxHandSizeConst(code[i]))
-                    continue;
-
-                if (loadPlayer != null)
+                if (IsMaxHandSizeToken(ins))
                 {
-                    code[i] = new(OpCodes.Call, GetMaxHandSizeMethod);
-                    code.InsertRange(i, loadPlayer.Select(ci => ci.Clone()));
-                    i += loadPlayer.Count;
+                    yield return new(OpCodes.Ldarg_0);
+                    yield return new(OpCodes.Call, GetMaxHandSizeMethod);
                     continue;
                 }
 
-                code[i] = new(OpCodes.Ldarg_0);
-                code.Insert(i + 1, new(OpCodes.Call, GetMaxHandSizeMethod));
+                yield return ins;
+            }
+        }
+
+        private static IEnumerable<CodeInstruction> PlayerArg1Transpiler(IEnumerable<CodeInstruction> instructions)
+        {
+            foreach (var ins in instructions)
+            {
+                if (IsMaxHandSizeToken(ins))
+                {
+                    yield return new(OpCodes.Ldarg_1);
+                    yield return new(OpCodes.Call, GetMaxHandSizeMethod);
+                    continue;
+                }
+
+                yield return ins;
+            }
+        }
+
+        private static IEnumerable<CodeInstruction> StateMachineTranspiler(IEnumerable<CodeInstruction> instructions)
+        {
+            var code = instructions.ToList();
+            var loadPlayer = FindStateMachinePlayerLoad(code);
+            if (loadPlayer == null)
+            {
+                RitsuLibFramework.Logger.Warn(
+                    "[MaxHandSize] State-machine transpiler could not resolve Player load pattern; skipped replacements.");
+                return code;
+            }
+
+            for (var i = 0; i < code.Count; i++)
+            {
+                if (!IsMaxHandSizeToken(code[i]))
+                    continue;
+
+                code[i] = new(OpCodes.Call, GetMaxHandSizeMethod);
+                code.InsertRange(i, loadPlayer.Select(ci => ci.Clone()));
+                i += loadPlayer.Count;
             }
 
             return code;
@@ -217,16 +269,18 @@ namespace STS2RitsuLib.Combat.HandSize
 
         private static IEnumerable<CodeInstruction> CardOnPlayTranspiler(IEnumerable<CodeInstruction> instructions)
         {
-            if (BaseLibMaxHandSizeBridge.IsBaseLibHandSizePatchActive())
-                return instructions;
-
             var code = instructions.ToList();
             var loadCard = FindStateMachineCardLoad(code);
+            if (loadCard == null)
+            {
+                RitsuLibFramework.Logger.Warn(
+                    "[MaxHandSize] Card OnPlay transpiler could not resolve Card load pattern; skipped replacements.");
+                return code;
+            }
+
             for (var i = 0; i < code.Count; i++)
             {
-                if (!IsDefaultMaxHandSizeConst(code[i]))
-                    continue;
-                if (loadCard == null)
+                if (!IsMaxHandSizeToken(code[i]))
                     continue;
 
                 code[i] = new(OpCodes.Call, GetMaxHandSizeFromCardMethod);

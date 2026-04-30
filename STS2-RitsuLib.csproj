@@ -23,7 +23,7 @@
 
     <PropertyGroup Label="NuGet package">
         <IsPackable>true</IsPackable>
-        <Version>0.2.16</Version>
+        <Version>0.2.17</Version>
         <Authors>OLC</Authors>
         <Description>Shared framework library for Slay the Spire 2 mods.</Description>
         <PackageReadmeFile>README.md</PackageReadmeFile>
