@@ -21,8 +21,8 @@ namespace STS2RitsuLib.Content.Patches
     /// </summary>
     public class ModelIdSerializationCacheDynamicContentPatch : IPatchMethod
     {
-        private static readonly Lock SettersSync = new();
-        private static readonly Dictionary<string, Action<object>> CachedSetters = [];
+        // Setter invocation happens at init-time only; keep the simple reflection path to
+        // avoid delegate-signature mismatches across different runtime property types.
 
         /// <inheritdoc />
         public static string PatchId => "model_id_serialization_cache_dynamic_content";
@@ -158,27 +158,8 @@ namespace STS2RitsuLib.Content.Patches
 
         private static void SetStaticProperty(Type declaringType, string name, object value)
         {
-            ArgumentNullException.ThrowIfNull(declaringType);
-            ArgumentNullException.ThrowIfNull(name);
-
-            var key = declaringType.FullName + "::" + name;
-            Action<object>? setter;
-            lock (SettersSync)
-            {
-                if (!CachedSetters.TryGetValue(key, out setter))
-                {
-                    var prop = declaringType.GetProperty(name, BindingFlags.Public | BindingFlags.Static);
-                    var setMethod = prop?.GetSetMethod(true);
-                    if (setMethod == null)
-                        return;
-
-                    var rawSetter = setMethod.CreateDelegate<Action<object?>>(null);
-                    setter = rawSetter;
-                    CachedSetters[key] = setter;
-                }
-            }
-
-            setter(value);
+            var prop = declaringType.GetProperty(name, BindingFlags.Public | BindingFlags.Static);
+            prop?.GetSetMethod(true)?.Invoke(null, [value]);
         }
     }
 }
