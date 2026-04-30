@@ -1,5 +1,8 @@
+using MegaCrit.Sts2.Core.Platform.Steam;
 using STS2RitsuLib.Data;
 using STS2RitsuLib.Diagnostics;
+using STS2RitsuLib.Ui.Shell.Theme;
+using STS2RitsuLib.Utils.Persistence;
 
 namespace STS2RitsuLib.Settings
 {
@@ -54,6 +57,8 @@ namespace STS2RitsuLib.Settings
                     .WithTitle(T("ritsulib.section.steamCloudModData.title", "Steam Cloud (mod data)"))
                     .WithDescription(T("ritsulib.section.steamCloudModData.description",
                         "Manage syncing mod data with Steam Cloud here."))
+                    .WithEnabledWhen(() =>
+                        SteamInitializer.Initialized && ModDataCloudMirror.TryGetCloudSaveStore() != null)
                     .Collapsible()
                     .AddToggle(
                         "sync_mod_data_to_steam_cloud",
@@ -85,6 +90,29 @@ namespace STS2RitsuLib.Settings
                         ModSettingsButtonTone.Danger,
                         T("ritsulib.modCloud.clear.description",
                             "Deletes mod data from Steam Cloud for this profile. Local files are not removed. Requires confirmation.")))
+                .AddSection("appearance", section => section
+                    .WithTitle(T("ritsulib.section.appearance.title", "Appearance"))
+                    .WithDescription(T("ritsulib.section.appearance.description",
+                        "Visual theme for the Ritsu mod settings interface."))
+                    .AddChoice(
+                        "ui_shell_theme_id",
+                        T("ritsulib.uiShellTheme.label", "Interface theme"),
+                        ui.UiShellThemeId,
+                        RitsuShellThemeCatalog.RegisteredThemeIds
+                            .Select(id => new ModSettingsChoiceOption<string>(id,
+                                T($"ritsulib.uiShellTheme.option.{id}", id)))
+                            .ToArray(),
+                        T("ritsulib.uiShellTheme.description",
+                            "Applies a built-in color theme to the Ritsu settings UI shell (sidebars, rows, and modals)."),
+                        ModSettingsChoicePresentation.Dropdown)
+                    .AddButton(
+                        "ui_shell_theme_reset_file",
+                        T("ritsulib.uiShellTheme.resetFile.label", "Reset current theme file"),
+                        T("ritsulib.uiShellTheme.resetFile.button", "Reset theme file"),
+                        () => TryResetCurrentThemeFile(ui.UiShellThemeId.Read()),
+                        ModSettingsButtonTone.Normal,
+                        T("ritsulib.uiShellTheme.resetFile.description",
+                            "Overwrite the current released theme file with its embedded default version.")))
                 .AddSection("dev_debug_tools", section => section
                     .WithTitle(T("ritsulib.section.devDebugTools.title", "Developer debug tools"))
                     .Collapsible(true)
@@ -132,6 +160,16 @@ namespace STS2RitsuLib.Settings
                         T("button.open", "Open"),
                         T("ritsulib.reference.runtimeHotkeys.description",
                             "Inspect currently registered runtime hotkeys and their active bindings."))));
+        }
+
+        private static void TryResetCurrentThemeFile(string? selectedThemeId)
+        {
+            var themeId = string.IsNullOrWhiteSpace(selectedThemeId)
+                ? RitsuShellThemeRuntime.ActiveThemeId
+                : selectedThemeId.Trim();
+            if (!RitsuShellThemeCatalog.TryRestoreDiskThemeFromEmbedded(themeId, out _))
+                return;
+            RitsuShellThemeRuntime.ReapplyActiveTheme(true);
         }
     }
 }

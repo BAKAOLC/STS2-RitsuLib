@@ -21,6 +21,9 @@ namespace STS2RitsuLib.Content.Patches
     /// </summary>
     public class ModelIdSerializationCacheDynamicContentPatch : IPatchMethod
     {
+        // Setter invocation happens at init-time only; keep the simple reflection path to
+        // avoid delegate-signature mismatches across different runtime property types.
+
         /// <inheritdoc />
         public static string PatchId => "model_id_serialization_cache_dynamic_content";
 

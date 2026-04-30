@@ -1,4 +1,5 @@
 using Godot;
+using STS2RitsuLib.Ui.Shell.Theme;
 
 namespace STS2RitsuLib.Settings
 {
@@ -147,8 +148,8 @@ namespace STS2RitsuLib.Settings
                 Alignment = HorizontalAlignment.Left,
                 SizeFlagsHorizontal = Control.SizeFlags.ExpandFill,
             };
-            edit.AddThemeFontOverride("font", ModSettingsUiResources.KreonRegular);
-            edit.AddThemeFontSizeOverride("font_size", 18);
+            edit.AddThemeFontOverride("font", RitsuShellTheme.Current.Font.Body);
+            edit.AddThemeFontSizeOverride("font_size", RitsuShellTheme.Current.Metric.FontSize.Button);
             edit.AddThemeColorOverride("font_color", new(1f, 0.964706f, 0.886275f));
             edit.AddThemeStyleboxOverride("normal", ModSettingsUiFactory.CreateInsetSurfaceStyle());
             edit.AddThemeStyleboxOverride("focus", ModSettingsUiFactory.CreateInsetSurfaceStyle());

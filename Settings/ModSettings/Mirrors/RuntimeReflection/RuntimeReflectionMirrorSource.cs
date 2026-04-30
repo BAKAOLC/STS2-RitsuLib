@@ -260,7 +260,7 @@ namespace STS2RitsuLib.Settings
                 throw new InvalidOperationException(
                     $"I18N provider method '{providerType.FullName}.{method.Name}' requires instance context.");
 
-            return (I18N?)method.Invoke(instance, null);
+            return FastMethodInvoker.Invoke0<I18N>(method, instance);
         }
 
         private static bool TryCreateProviderInstance(Type providerType, out object? instance)
@@ -277,7 +277,7 @@ namespace STS2RitsuLib.Settings
                 return false;
             }
 
-            instance = ctor.Invoke(null);
+            instance = FastMethodInvoker.CreateWithDefaultCtor(ctor);
             return true;
         }
 
@@ -1053,7 +1053,7 @@ namespace STS2RitsuLib.Settings
                 throw new InvalidOperationException(
                     $"I18N provider method '{providerType.FullName}.{method.Name}' requires instance context.");
 
-            return (I18N?)method.Invoke(_currentProviderInstance, null);
+            return FastMethodInvoker.Invoke0<I18N>(method, _currentProviderInstance);
         }
 
         private static Func<bool>? BuildVisibleWhen(Type providerType, object? instance, string? methodName)
@@ -1066,7 +1066,7 @@ namespace STS2RitsuLib.Settings
             if (method == null || method.ReturnType != typeof(bool) || method.GetParameters().Length != 0)
                 return null;
 
-            return () => (bool)(method.Invoke(instance, null) ?? true);
+            return () => FastMethodInvoker.Invoke0<bool>(method, instance);
         }
 
         private static Func<string, bool>? BuildStringValidator(Type providerType, object? instance, string? methodName)
@@ -1083,7 +1083,7 @@ namespace STS2RitsuLib.Settings
             if (ps.Length != 1 || ps[0].ParameterType != typeof(string))
                 return null;
 
-            return value => (bool)(method.Invoke(instance, [value]) ?? true);
+            return value => FastMethodInvoker.Invoke1<string, bool>(method, instance, value);
         }
 
         private static IModSettingsValueBinding<TValue> CreateBinding<TValue>(string modId, PropertyInfo property,
@@ -1374,7 +1374,7 @@ namespace STS2RitsuLib.Settings
             if (method.ReturnType != typeof(T) || method.GetParameters().Length != 0)
                 throw new InvalidOperationException(
                     $"Method '{method.DeclaringType?.FullName}.{method.Name}' configured by '{propertyName}' must be '{typeof(T).Name} ()'.");
-            return () => (T)(method.Invoke(instance, null) ?? default(T)!);
+            return () => FastMethodInvoker.Invoke0<T>(method, instance)!;
         }
 
         private static Func<T1, TResult> ResolveFuncOneArg<T1, TResult>(
@@ -1388,7 +1388,7 @@ namespace STS2RitsuLib.Settings
             if (method.ReturnType != typeof(TResult) || ps.Length != 1 || ps[0].ParameterType != typeof(T1))
                 throw new InvalidOperationException(
                     $"Method '{method.DeclaringType?.FullName}.{method.Name}' configured by '{propertyName}' must be '{typeof(TResult).Name} ({typeof(T1).Name})'.");
-            return arg => (TResult)(method.Invoke(instance, [arg]) ?? default(TResult)!);
+            return arg => FastMethodInvoker.Invoke1<T1, TResult>(method, instance, arg)!;
         }
 
         private static Func<T1, T2, TResult> ResolveFuncTwoArgs<T1, T2, TResult>(
@@ -1403,7 +1403,7 @@ namespace STS2RitsuLib.Settings
                 ps[0].ParameterType != typeof(T1) || ps[1].ParameterType != typeof(T2))
                 throw new InvalidOperationException(
                     $"Method '{method.DeclaringType?.FullName}.{method.Name}' configured by '{propertyName}' must be '{typeof(TResult).Name} ({typeof(T1).Name}, {typeof(T2).Name})'.");
-            return (arg1, arg2) => (TResult)(method.Invoke(instance, [arg1, arg2]) ?? default(TResult)!);
+            return (arg1, arg2) => FastMethodInvoker.Invoke2<T1, T2, TResult>(method, instance, arg1, arg2)!;
         }
 
         private static Action<T> ResolveActionOneArg<T>(
@@ -1417,7 +1417,7 @@ namespace STS2RitsuLib.Settings
             if (method.ReturnType != typeof(void) || ps.Length != 1 || ps[0].ParameterType != typeof(T))
                 throw new InvalidOperationException(
                     $"Method '{method.DeclaringType?.FullName}.{method.Name}' configured by '{propertyName}' must be 'void ({typeof(T).Name})'.");
-            return value => method.Invoke(instance, [value]);
+            return value => FastMethodInvoker.Invoke1Void(method, instance, value);
         }
 
         private static Action ResolveActionNoArg(
@@ -1430,7 +1430,7 @@ namespace STS2RitsuLib.Settings
             if (method.ReturnType != typeof(void) || method.GetParameters().Length != 0)
                 throw new InvalidOperationException(
                     $"Method '{method.DeclaringType?.FullName}.{method.Name}' configured by '{propertyName}' must be 'void ()'.");
-            return () => method.Invoke(instance, null);
+            return () => FastMethodInvoker.Invoke0Void(method, instance);
         }
 
         private static string? InvokeText(MethodInfo method, object? instance)
@@ -1440,7 +1440,7 @@ namespace STS2RitsuLib.Settings
 
             try
             {
-                return method.Invoke(instance, null)?.ToString();
+                return FastMethodInvoker.Invoke0(method, instance)?.ToString();
             }
             catch
             {
@@ -1454,7 +1454,7 @@ namespace STS2RitsuLib.Settings
             {
                 if (method.GetParameters().Length != 0)
                     return null;
-                var result = method.Invoke(instance, null);
+                var result = FastMethodInvoker.Invoke0(method, instance);
                 return result as Texture2D;
             };
         }
@@ -1465,10 +1465,10 @@ namespace STS2RitsuLib.Settings
             switch (ps.Length)
             {
                 case 0:
-                    method.Invoke(instance, null);
+                    FastMethodInvoker.Invoke0Void(method, instance);
                     return;
                 case 1 when host != null && ps[0].ParameterType.IsInstanceOfType(host):
-                    method.Invoke(instance, [host]);
+                    FastMethodInvoker.Invoke1Void(method, instance, host);
                     return;
                 default:
                     throw new InvalidOperationException(
@@ -1481,8 +1481,9 @@ namespace STS2RitsuLib.Settings
             var ps = method.GetParameters();
             var result = ps.Length switch
             {
-                0 => method.Invoke(instance, null),
-                1 when ps[0].ParameterType == typeof(IModSettingsUiActionHost) => method.Invoke(instance, [host]),
+                0 => FastMethodInvoker.Invoke0(method, instance),
+                1 when ps[0].ParameterType == typeof(IModSettingsUiActionHost) => FastMethodInvoker.Invoke1(method,
+                    instance, host),
                 _ => throw new InvalidOperationException(
                     $"Unsupported custom entry signature: {method.DeclaringType?.FullName}.{method.Name}"),
             };

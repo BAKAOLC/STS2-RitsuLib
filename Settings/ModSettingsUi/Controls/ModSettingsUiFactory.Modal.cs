@@ -1,12 +1,12 @@
 using Godot;
 using MegaCrit.Sts2.Core.ControllerInput;
+using STS2RitsuLib.Ui.Shell.Theme;
 
 namespace STS2RitsuLib.Settings
 {
     internal static partial class ModSettingsUiFactory
     {
         private const int ModalCanvasLayer = 120;
-        private const float ModalDimAlpha = 0.62f;
 
         /// <summary>
         ///     Full-viewport dim + centered panel, same chrome as mod settings. Blocks input under the layer.
@@ -54,7 +54,7 @@ namespace STS2RitsuLib.Settings
             var dim = new ColorRect
             {
                 Name = "ModalDim",
-                Color = new(0f, 0f, 0f, ModalDimAlpha),
+                Color = RitsuShellTheme.Current.Color.ModalBackdrop,
                 MouseFilter = Control.MouseFilterEnum.Stop,
             };
             dim.SetAnchorsAndOffsetsPreset(Control.LayoutPreset.FullRect);
@@ -78,23 +78,34 @@ namespace STS2RitsuLib.Settings
             {
                 MouseFilter = Control.MouseFilterEnum.Ignore,
             };
-            margin.AddThemeConstantOverride("margin_left", 22);
-            margin.AddThemeConstantOverride("margin_top", 20);
-            margin.AddThemeConstantOverride("margin_right", 22);
-            margin.AddThemeConstantOverride("margin_bottom", 20);
+            var panelMargins = RitsuShellThemeLayoutResolver.ResolveEdges("components.modal.layout.panel.margin", 22);
+            panelMargins = new(
+                RitsuShellThemeLayoutResolver.ResolveInt("components.modal.layout.panel.margin.left",
+                    panelMargins.Left),
+                RitsuShellThemeLayoutResolver.ResolveInt("components.modal.layout.panel.margin.top", 20),
+                RitsuShellThemeLayoutResolver.ResolveInt("components.modal.layout.panel.margin.right",
+                    panelMargins.Right),
+                RitsuShellThemeLayoutResolver.ResolveInt("components.modal.layout.panel.margin.bottom", 20));
+            margin.AddThemeConstantOverride("margin_left", panelMargins.Left);
+            margin.AddThemeConstantOverride("margin_top", panelMargins.Top);
+            margin.AddThemeConstantOverride("margin_right", panelMargins.Right);
+            margin.AddThemeConstantOverride("margin_bottom", panelMargins.Bottom);
             rootPanel.AddChild(margin);
 
             var vbox = new VBoxContainer
             {
                 SizeFlagsHorizontal = Control.SizeFlags.ExpandFill,
                 MouseFilter = Control.MouseFilterEnum.Ignore,
-                CustomMinimumSize = new(400f, 0f),
+                CustomMinimumSize = RitsuShellThemeLayoutResolver.ResolveMinSize(
+                    "components.modal.layout.panel.contentMinSize",
+                    new(400f, 0f)),
             };
-            vbox.AddThemeConstantOverride("separation", 14);
+            vbox.AddThemeConstantOverride("separation",
+                RitsuShellThemeLayoutResolver.ResolveInt("components.modal.layout.panel.separation", 14));
             margin.AddChild(vbox);
 
             var titleLabel = CreateHeaderLabel(title, 22, HorizontalAlignment.Left, null,
-                ModSettingsUiPalette.RichTextTitle);
+                RitsuShellTheme.Current.Text.RichTitle);
             titleLabel.SizeFlagsHorizontal = Control.SizeFlags.ExpandFill;
             vbox.AddChild(titleLabel);
 
@@ -103,7 +114,7 @@ namespace STS2RitsuLib.Settings
                 17,
                 HorizontalAlignment.Left,
                 null,
-                ModSettingsUiPalette.RichTextBody);
+                RitsuShellTheme.Current.Text.RichBody);
             bodyLabel.SizeFlagsHorizontal = Control.SizeFlags.ExpandFill;
             bodyLabel.FitContent = true;
             vbox.AddChild(bodyLabel);
@@ -114,7 +125,8 @@ namespace STS2RitsuLib.Settings
                 Alignment = BoxContainer.AlignmentMode.End,
                 MouseFilter = Control.MouseFilterEnum.Ignore,
             };
-            btnRow.AddThemeConstantOverride("separation", 12);
+            btnRow.AddThemeConstantOverride("separation",
+                RitsuShellThemeLayoutResolver.ResolveInt("components.modal.layout.buttonRow.separation", 12));
             vbox.AddChild(btnRow);
 
             var confirmBtn = new ModSettingsTextButton(
@@ -126,7 +138,9 @@ namespace STS2RitsuLib.Settings
                     CloseDialog();
                 })
             {
-                CustomMinimumSize = new(168f, ModSettingsUiMetrics.EntryValueMinHeight),
+                CustomMinimumSize = RitsuShellThemeLayoutResolver.ResolveMinSize(
+                    "components.modal.layout.buttonRow.confirmMinSize",
+                    new(168f, RitsuShellTheme.Current.Metric.Entry.ValueMinHeight)),
             };
 
             ModSettingsTextButton? cancelBtn = null;
@@ -134,7 +148,9 @@ namespace STS2RitsuLib.Settings
             {
                 cancelBtn = new(cancelText, ModSettingsButtonTone.Normal, CloseDialog)
                 {
-                    CustomMinimumSize = new(132f, ModSettingsUiMetrics.EntryValueMinHeight),
+                    CustomMinimumSize = RitsuShellThemeLayoutResolver.ResolveMinSize(
+                        "components.modal.layout.buttonRow.cancelMinSize",
+                        new(132f, RitsuShellTheme.Current.Metric.Entry.ValueMinHeight)),
                 };
                 btnRow.AddChild(cancelBtn);
             }
@@ -207,8 +223,10 @@ namespace STS2RitsuLib.Settings
                     return;
 
                 var min = rootPanel.GetCombinedMinimumSize();
-                var w = Mathf.CeilToInt(Mathf.Max(min.X, 400f));
-                var h = Mathf.CeilToInt(Mathf.Max(min.Y, 120f));
+                var minW = RitsuShellThemeLayoutResolver.ResolveFloat("components.modal.layout.panel.minWidth", 400f);
+                var minH = RitsuShellThemeLayoutResolver.ResolveFloat("components.modal.layout.panel.minHeight", 120f);
+                var w = Mathf.CeilToInt(Mathf.Max(min.X, minW));
+                var h = Mathf.CeilToInt(Mathf.Max(min.Y, minH));
                 rootPanel.CustomMinimumSize = new(w, h);
                 Callable.From(ApplyPanelSizeFinal).CallDeferred();
             }
@@ -219,8 +237,10 @@ namespace STS2RitsuLib.Settings
                     return;
 
                 var min = rootPanel.GetCombinedMinimumSize();
-                var w = Mathf.CeilToInt(Mathf.Max(min.X, 400f));
-                var h = Mathf.CeilToInt(Mathf.Max(min.Y, 120f));
+                var minW = RitsuShellThemeLayoutResolver.ResolveFloat("components.modal.layout.panel.minWidth", 400f);
+                var minH = RitsuShellThemeLayoutResolver.ResolveFloat("components.modal.layout.panel.minHeight", 120f);
+                var w = Mathf.CeilToInt(Mathf.Max(min.X, minW));
+                var h = Mathf.CeilToInt(Mathf.Max(min.Y, minH));
                 rootPanel.CustomMinimumSize = new(w, h);
                 Callable.From(() =>
                 {

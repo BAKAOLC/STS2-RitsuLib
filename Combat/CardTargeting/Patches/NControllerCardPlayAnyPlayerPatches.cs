@@ -1,4 +1,3 @@
-using System.Reflection;
 using Godot;
 using HarmonyLib;
 using MegaCrit.Sts2.Core.Audio.Debug;
@@ -45,9 +44,10 @@ namespace STS2RitsuLib.Combat.CardTargeting.Patches
             AccessTools.MethodDelegate<Action<NCardPlay, CardModel>>(
                 AccessTools.DeclaredMethod(typeof(NCardPlay), "CannotPlayThisCardFtueCheck", [typeof(CardModel)]));
 
-        private static readonly MethodInfo SingleCreatureTargetingMethod =
-            AccessTools.DeclaredMethod(typeof(NControllerCardPlay), "SingleCreatureTargeting",
-                [typeof(TargetType)]);
+        private static readonly Func<NControllerCardPlay, TargetType, Task> SingleCreatureTargeting =
+            AccessTools.MethodDelegate<Func<NControllerCardPlay, TargetType, Task>>(
+                AccessTools.DeclaredMethod(typeof(NControllerCardPlay), "SingleCreatureTargeting",
+                    [typeof(TargetType)]));
 
         public static string PatchId => "card_any_player_controller_start";
 
@@ -91,7 +91,7 @@ namespace STS2RitsuLib.Combat.CardTargeting.Patches
             cardNode.CardHighlight.AnimFlash();
             CenterCard(__instance);
             TaskHelper.RunSafely(
-                (Task)SingleCreatureTargetingMethod.Invoke(__instance, [TargetType.AnyPlayer])!);
+                SingleCreatureTargeting(__instance, TargetType.AnyPlayer));
 
             return false;
         }

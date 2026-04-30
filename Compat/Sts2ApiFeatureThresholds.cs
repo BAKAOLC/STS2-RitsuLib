@@ -7,7 +7,5 @@ namespace STS2RitsuLib.Compat
     ///     <para />
     ///     Set non-null values when you know the first Steam / <c>release_info.json</c> version that shipped each API.
     /// </summary>
-    internal static class Sts2ApiFeatureThresholds
-    {
-    }
+    internal static class Sts2ApiFeatureThresholds;
 }

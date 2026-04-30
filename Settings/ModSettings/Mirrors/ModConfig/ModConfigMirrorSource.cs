@@ -2,6 +2,7 @@ using System.Collections;
 using System.Globalization;
 using System.Reflection;
 using Godot;
+using STS2RitsuLib.Utils;
 
 namespace STS2RitsuLib.Settings
 {
@@ -647,7 +648,7 @@ namespace STS2RitsuLib.Settings
             try
             {
                 var m = getValueOpen.MakeGenericMethod(typeof(T));
-                var r = m.Invoke(null, [modId, key]);
+                var r = FastMethodInvoker.InvokeStatic2(m, modId, key);
                 return r switch
                 {
                     T ok => ok,
@@ -665,7 +666,7 @@ namespace STS2RitsuLib.Settings
         {
             try
             {
-                setValue.Invoke(null, [modId, key, value]);
+                FastMethodInvoker.InvokeStatic3Void(setValue, modId, key, value);
             }
             catch (Exception ex)
             {
@@ -731,7 +732,7 @@ namespace STS2RitsuLib.Settings
             try
             {
                 var m = getValueOpen.MakeGenericMethod(typeof(object));
-                var r = m.Invoke(null, [modId, key]);
+                var r = FastMethodInvoker.InvokeStatic2(m, modId, key);
                 return r switch
                 {
                     null => false,
@@ -751,7 +752,7 @@ namespace STS2RitsuLib.Settings
             try
             {
                 var m = getValueOpen.MakeGenericMethod(typeof(object));
-                var r = m.Invoke(null, [modId, key]);
+                var r = FastMethodInvoker.InvokeStatic2(m, modId, key);
                 return r switch
                 {
                     null => 0d,
@@ -773,7 +774,7 @@ namespace STS2RitsuLib.Settings
             try
             {
                 var m = getValueOpen.MakeGenericMethod(typeof(object));
-                var r = m.Invoke(null, [modId, key]);
+                var r = FastMethodInvoker.InvokeStatic2(m, modId, key);
                 return r switch
                 {
                     null => 0,
@@ -860,7 +861,7 @@ namespace STS2RitsuLib.Settings
         {
             try
             {
-                _ = resetDefaults.Invoke(null, [modId]);
+                _ = FastMethodInvoker.InvokeStatic1(resetDefaults, modId);
             }
             catch (Exception ex)
             {

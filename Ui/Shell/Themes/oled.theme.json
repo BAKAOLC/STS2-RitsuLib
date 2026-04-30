@@ -1,0 +1,409 @@
+{
+  "$schema": "https://raw.githubusercontent.com/BAKAOLC/STS2-RitsuLib/main/schemas/ui/shell/v1/schema.json",
+  "themeFormatVersion": 1,
+  "id": "oled",
+  "displayName": "OLED",
+  "inherits": "default",
+  "semantic": {
+    "color": {
+      "palette": {
+        "divider": {
+          "$value": "#C8D0DC40",
+          "$type": "color"
+        }
+      },
+      "text": {
+        "richTitle": {
+          "$value": "#F0F4F8",
+          "$type": "color"
+        },
+        "richBody": {
+          "$value": "#C8D0DC",
+          "$type": "color"
+        },
+        "richSecondary": {
+          "$value": "#AAB4C2",
+          "$type": "color"
+        },
+        "richMuted": {
+          "$value": "#808A98",
+          "$type": "color"
+        },
+        "labelPrimary": {
+          "$value": "#F8FAFC",
+          "$type": "color"
+        },
+        "labelSecondary": {
+          "$value": "#C8D0DCFA",
+          "$type": "color"
+        },
+        "sidebarSection": {
+          "$value": "#D6DEE8",
+          "$type": "color"
+        },
+        "hoverHighlight": {
+          "$value": "#F8FAFC",
+          "$type": "color"
+        }
+      },
+      "surface": {
+        "sidebar": {
+          "$value": "#0C0E12F5",
+          "$type": "color"
+        },
+        "content": {
+          "$value": "#080A0DFA",
+          "$type": "color"
+        },
+        "contentBuildOverlay": {
+          "$value": "#000000B8",
+          "$type": "color"
+        },
+        "entry": {
+          "bg": {
+            "$value": "#0E1118F6",
+            "$type": "color"
+          },
+          "border": {
+            "$value": "#4A5C6B6B",
+            "$type": "color"
+          }
+        },
+        "inset": {
+          "bg": {
+            "$value": "#07090EFA",
+            "$type": "color"
+          },
+          "border": {
+            "$value": "#2E394457",
+            "$type": "color"
+          }
+        }
+      }
+    }
+  },
+  "components": {
+    "chromeMenu": {
+      "default": {
+        "bg": {
+          "$value": "#0A0C10DE",
+          "$type": "color"
+        },
+        "border": {
+          "$value": "#2E39446B",
+          "$type": "color"
+        }
+      },
+      "hover": {
+        "bg": {
+          "$value": "#141A22F5",
+          "$type": "color"
+        },
+        "border": {
+          "$value": "#7394ADA6",
+          "$type": "color"
+        }
+      }
+    },
+    "pageToolbarTray": {
+      "bg": {
+        "$value": "#04060BD6",
+        "$type": "color"
+      },
+      "border": {
+        "$value": "#2028315C",
+        "$type": "color"
+      }
+    },
+    "listShell": {
+      "bg": {
+        "$value": "#05070DFA",
+        "$type": "color"
+      },
+      "border": {
+        "$value": "#36455299",
+        "$type": "color"
+      }
+    },
+    "listItem": {
+      "default": {
+        "bg": {
+          "$value": "#080A10FA",
+          "$type": "color"
+        },
+        "border": {
+          "$value": "#2A354057",
+          "$type": "color"
+        }
+      },
+      "accent": {
+        "bg": {
+          "$value": "#0C1018FA",
+          "$type": "color"
+        },
+        "border": {
+          "$value": "#7394ADB8",
+          "$type": "color"
+        }
+      }
+    },
+    "listEditor": {
+      "bg": {
+        "$value": "#04060BFC",
+        "$type": "color"
+      },
+      "border": {
+        "$value": "#2E394499",
+        "$type": "color"
+      }
+    },
+    "pill": {
+      "default": {
+        "bg": {
+          "$value": "#080A10F5",
+          "$type": "color"
+        },
+        "border": {
+          "$value": "#36455299",
+          "$type": "color"
+        }
+      },
+      "hover": {
+        "bg": {
+          "$value": "#141A22FA",
+          "$type": "color"
+        },
+        "border": {
+          "$value": "#7394ADC7",
+          "$type": "color"
+        }
+      }
+    },
+    "toggle": {
+      "on": {
+        "bg": {
+          "$value": "#134336FA",
+          "$type": "color"
+        },
+        "border": {
+          "$value": "#5EE2A7",
+          "$type": "color"
+        }
+      },
+      "off": {
+        "bg": {
+          "$value": "#0A0C10FA",
+          "$type": "color"
+        },
+        "border": {
+          "$value": "#2E394480",
+          "$type": "color"
+        }
+      },
+      "offHover": {
+        "bg": {
+          "$value": "#141A22FA",
+          "$type": "color"
+        }
+      },
+      "disabled": {
+        "bg": {
+          "$value": "#05070DB3",
+          "$type": "color"
+        },
+        "border": {
+          "$value": "#1E263080",
+          "$type": "color"
+        }
+      }
+    },
+    "sidebarBtn": {
+      "default": {
+        "bg": {
+          "$value": "#0A0C10DE",
+          "$type": "color"
+        },
+        "border": {
+          "$value": "#2E394480",
+          "$type": "color"
+        }
+      },
+      "hover": {
+        "bg": {
+          "$value": "#141A22FA",
+          "$type": "color"
+        },
+        "border": {
+          "$value": "#7394ADB8",
+          "$type": "color"
+        }
+      },
+      "selected": {
+        "bg": {
+          "$value": "#0C1018FA",
+          "$type": "color"
+        },
+        "border": {
+          "$value": "#7394AD99",
+          "$type": "color"
+        }
+      },
+      "selectedHover": {
+        "bg": {
+          "$value": "#141A22FA",
+          "$type": "color"
+        },
+        "border": {
+          "$value": "#7394ADC7",
+          "$type": "color"
+        }
+      },
+      "utilitySelected": {
+        "bg": {
+          "$value": "#141A22FA",
+          "$type": "color"
+        }
+      },
+      "idleDeep": {
+        "bg": {
+          "$value": "#080A0DFA",
+          "$type": "color"
+        }
+      },
+      "idleDeepHover": {
+        "bg": {
+          "$value": "#0C1018FA",
+          "$type": "color"
+        }
+      },
+      "idleDeeper": {
+        "bg": {
+          "$value": "#05070DFA",
+          "$type": "color"
+        }
+      },
+      "idleDeeperHover": {
+        "bg": {
+          "$value": "#0C1018FA",
+          "$type": "color"
+        }
+      },
+      "mod": {
+        "bg": {
+          "$value": "#0E1118FA",
+          "$type": "color"
+        }
+      },
+      "modHover": {
+        "bg": {
+          "$value": "#141A22FA",
+          "$type": "color"
+        }
+      },
+      "modDeep": {
+        "bg": {
+          "$value": "#080A0DFA",
+          "$type": "color"
+        }
+      },
+      "deep": {
+        "border": {
+          "$value": "#4A5C6B99",
+          "$type": "color"
+        }
+      },
+      "deepHover": {
+        "border": {
+          "$value": "#7394ADC7",
+          "$type": "color"
+        }
+      }
+    },
+    "sidebarRail": {
+      "bg": {
+        "$value": "#05070DB3",
+        "$type": "color"
+      },
+      "border": {
+        "$value": "#2028315C",
+        "$type": "color"
+      }
+    },
+    "textButton": {
+      "accent": {
+        "fg": {
+          "$value": "#89BFD9DB",
+          "$type": "color"
+        },
+        "bg": {
+          "$value": "#12202EF7",
+          "$type": "color"
+        },
+        "bgHover": {
+          "$value": "#1A2D3EFB",
+          "$type": "color"
+        }
+      },
+      "danger": {
+        "fg": {
+          "$value": "#DD7F7ADB",
+          "$type": "color"
+        },
+        "bg": {
+          "$value": "#331719F7",
+          "$type": "color"
+        },
+        "bgHover": {
+          "$value": "#431F21FB",
+          "$type": "color"
+        }
+      },
+      "neutral": {
+        "fg": {
+          "$value": "#7F9CB5B8",
+          "$type": "color"
+        },
+        "bg": {
+          "$value": "#122233F7",
+          "$type": "color"
+        },
+        "bgHover": {
+          "$value": "#193044FB",
+          "$type": "color"
+        }
+      }
+    },
+    "stringValidation": {
+      "neutral": {
+        "bg": {
+          "$value": "#15181D",
+          "$type": "color"
+        },
+        "border": {
+          "$value": "#3A414A",
+          "$type": "color"
+        }
+      },
+      "invalid": {
+        "bg": {
+          "$value": "#2A1010",
+          "$type": "color"
+        },
+        "border": {
+          "$value": "#C84A4A",
+          "$type": "color"
+        }
+      }
+    },
+    "overlayPanel": {
+      "bg": {
+        "$value": "#1E2630F7",
+        "$type": "color"
+      },
+      "border": {
+        "$value": "#7394ADA6",
+        "$type": "color"
+      }
+    }
+  }
+}

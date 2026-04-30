@@ -4,6 +4,7 @@ using MegaCrit.Sts2.Core.Models;
 using MegaCrit.Sts2.Core.Models.Characters;
 using MegaCrit.Sts2.Core.Nodes.Combat;
 using STS2RitsuLib.Data;
+using STS2RitsuLib.Ui.Shell.Theme;
 using STS2RitsuLib.Utils;
 using STS2RitsuLib.Utils.Persistence;
 
@@ -154,7 +155,7 @@ namespace STS2RitsuLib.Settings
                 })
             {
                 SizeFlagsHorizontal = Control.SizeFlags.ExpandFill,
-                CustomMinimumSize = new(0, ModSettingsUiMetrics.EntryValueMinHeight),
+                CustomMinimumSize = new(0, RitsuShellTheme.Current.Metric.Entry.ValueMinHeight),
             };
             root.AddChild(animationsPicker);
             var characterOptions = availableCharacters
@@ -171,7 +172,7 @@ namespace STS2RitsuLib.Settings
                 })
             {
                 SizeFlagsHorizontal = Control.SizeFlags.ExpandFill,
-                CustomMinimumSize = new(260, ModSettingsUiMetrics.EntryValueMinHeight),
+                CustomMinimumSize = new(260, RitsuShellTheme.Current.Metric.Entry.ValueMinHeight),
             };
             characterRow.AddChild(characterPicker);
 

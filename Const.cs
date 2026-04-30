@@ -18,7 +18,7 @@ namespace STS2RitsuLib
         /// <summary>
         ///     Assembly / manifest version string.
         /// </summary>
-        public const string Version = "0.2.15";
+        public const string Version = "0.2.16";
 
         /// <summary>
         ///     Root key for RitsuLib JSON settings under the mod’s user folder.
@@ -29,6 +29,11 @@ namespace STS2RitsuLib
         ///     On-disk settings file name.
         /// </summary>
         public const string SettingsFileName = "settings.json";
+
+        /// <summary>
+        ///     Subdirectory under global mod data for shell theme JSON (next to <see cref="SettingsFileName" />).
+        /// </summary>
+        public const string ShellThemesDirectoryName = "shell_themes";
 
         /// <summary>
         ///     BaseLib main Harmony instance id.

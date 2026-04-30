@@ -11,7 +11,7 @@ namespace STS2RitsuLib.Data.Models
         /// <summary>
         ///     Current schema version written by the library when creating or normalizing settings.
         /// </summary>
-        public const int CurrentSchemaVersion = 6;
+        public const int CurrentSchemaVersion = 7;
 
         /// <summary>
         ///     Persisted schema version used by the migration pipeline
@@ -164,5 +164,11 @@ namespace STS2RitsuLib.Data.Models
         /// </summary>
         [JsonPropertyName("potion_detail_png_export_id_filter")]
         public string PotionDetailPngExportIdFilter { get; set; } = "";
+
+        /// <summary>
+        ///     Active shell theme id (e.g. <c>default</c>).
+        /// </summary>
+        [JsonPropertyName("ui_shell_theme_id")]
+        public string UiShellThemeId { get; set; } = "default";
     }
 }

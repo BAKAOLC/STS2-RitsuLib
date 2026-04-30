@@ -45,6 +45,12 @@ namespace STS2RitsuLib.Settings
         /// </summary>
         public virtual Func<bool>? VisibilityPredicate => null;
 
+        /// <summary>
+        ///     When non-null, the entry row is disabled (dimmed, non-interactive) while the predicate returns false
+        ///     (re-evaluated on UI refresh).
+        /// </summary>
+        public virtual Func<bool>? EnabledPredicate => null;
+
         internal abstract Control CreateControl(ModSettingsUiContext context);
 
         internal virtual void CollectChromeBindingSnapshots(Dictionary<string, ModSettingsChromeBindingSnapshot> target)

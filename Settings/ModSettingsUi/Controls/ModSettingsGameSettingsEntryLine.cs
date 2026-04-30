@@ -2,6 +2,7 @@ using Godot;
 using MegaCrit.Sts2.addons.mega_text;
 using MegaCrit.Sts2.Core.Nodes.Combat;
 using MegaCrit.Sts2.Core.Nodes.Screens.Settings;
+using STS2RitsuLib.Ui.Shell.Theme;
 
 namespace STS2RitsuLib.Settings
 {
@@ -20,13 +21,24 @@ namespace STS2RitsuLib.Settings
             var line = new MarginContainer
             {
                 Name = "RitsuLibModSettings",
-                CustomMinimumSize = new(0f, 64f),
+                CustomMinimumSize = RitsuShellThemeLayoutResolver.ResolveMinSize(
+                    "components.gameSettingsEntry.layout.lineMinSize",
+                    new(0f, 64f)),
             };
 
-            line.AddThemeConstantOverride("margin_left", 12);
-            line.AddThemeConstantOverride("margin_right", 12);
-            line.AddThemeConstantOverride("margin_top", 0);
-            line.AddThemeConstantOverride("margin_bottom", 0);
+            var lineMargins =
+                RitsuShellThemeLayoutResolver.ResolveEdges("components.gameSettingsEntry.layout.margin", 12);
+            lineMargins = new(
+                RitsuShellThemeLayoutResolver.ResolveInt("components.gameSettingsEntry.layout.margin.left",
+                    lineMargins.Left),
+                RitsuShellThemeLayoutResolver.ResolveInt("components.gameSettingsEntry.layout.margin.top", 0),
+                RitsuShellThemeLayoutResolver.ResolveInt("components.gameSettingsEntry.layout.margin.right",
+                    lineMargins.Right),
+                RitsuShellThemeLayoutResolver.ResolveInt("components.gameSettingsEntry.layout.margin.bottom", 0));
+            line.AddThemeConstantOverride("margin_left", lineMargins.Left);
+            line.AddThemeConstantOverride("margin_right", lineMargins.Right);
+            line.AddThemeConstantOverride("margin_top", lineMargins.Top);
+            line.AddThemeConstantOverride("margin_bottom", lineMargins.Bottom);
 
             var row = new HBoxContainer
             {
@@ -36,7 +48,8 @@ namespace STS2RitsuLib.Settings
                 Alignment = BoxContainer.AlignmentMode.Center,
                 MouseFilter = Control.MouseFilterEnum.Ignore,
             };
-            row.AddThemeConstantOverride("separation", 0);
+            row.AddThemeConstantOverride("separation",
+                RitsuShellThemeLayoutResolver.ResolveInt("components.gameSettingsEntry.layout.rowSeparation", 0));
             line.AddChild(row);
 
             var label = CreateVanillaGeneralSettingsRowLabel(
@@ -50,7 +63,9 @@ namespace STS2RitsuLib.Settings
             {
                 Name = "RitsuLibModSettingsButton",
             };
-            button.CustomMinimumSize = new(320f, 64f);
+            button.CustomMinimumSize = RitsuShellThemeLayoutResolver.ResolveMinSize(
+                "components.gameSettingsEntry.layout.buttonMinSize",
+                new(320f, 64f));
             button.SizeFlagsHorizontal = Control.SizeFlags.ShrinkCenter;
             button.SizeFlagsVertical = Control.SizeFlags.ShrinkBegin;
             row.AddChild(button);
@@ -80,8 +95,8 @@ namespace STS2RitsuLib.Settings
                 Modulate = Colors.White,
             };
 
-            label.AddThemeFontOverride("normal_font", ModSettingsUiResources.KreonRegular);
-            label.AddThemeFontOverride("bold_font", ModSettingsUiResources.KreonBold);
+            label.AddThemeFontOverride("normal_font", RitsuShellTheme.Current.Font.Body);
+            label.AddThemeFontOverride("bold_font", RitsuShellTheme.Current.Font.BodyBold);
             label.AddThemeFontSizeOverride("normal_font_size", fontSize);
             label.AddThemeFontSizeOverride("bold_font_size", fontSize);
             label.AddThemeFontSizeOverride("italics_font_size", fontSize);
@@ -108,7 +123,9 @@ namespace STS2RitsuLib.Settings
             _text = text;
             _action = action;
 
-            CustomMinimumSize = new(320f, 64f);
+            CustomMinimumSize = RitsuShellThemeLayoutResolver.ResolveMinSize(
+                "components.gameSettingsEntry.layout.buttonMinSize",
+                new(320f, 64f));
             SizeFlagsHorizontal = SizeFlags.ShrinkCenter;
             SizeFlagsVertical = SizeFlags.ShrinkBegin;
             FocusMode = FocusModeEnum.All;
@@ -117,7 +134,9 @@ namespace STS2RitsuLib.Settings
             {
                 Name = "Image",
                 Material = ModSettingsUiResources.CreateToneMaterial(ModSettingsButtonTone.Accent),
-                CustomMinimumSize = new(64f, 64f),
+                CustomMinimumSize = RitsuShellThemeLayoutResolver.ResolveMinSize(
+                    "components.gameSettingsEntry.layout.buttonImageMinSize",
+                    new(64f, 64f)),
                 AnchorRight = 1f,
                 AnchorBottom = 1f,
                 GrowHorizontal = GrowDirection.Both,
@@ -149,8 +168,8 @@ namespace STS2RitsuLib.Settings
             label.AddThemeConstantOverride("shadow_offset_y", 3);
             label.AddThemeConstantOverride("outline_size", 12);
             label.AddThemeConstantOverride("shadow_outline_size", 0);
-            label.AddThemeFontOverride("font", ModSettingsUiResources.KreonButton);
-            label.AddThemeFontSizeOverride("font_size", 28);
+            label.AddThemeFontOverride("font", RitsuShellTheme.Current.Font.Button);
+            label.AddThemeFontSizeOverride("font_size", RitsuShellTheme.Current.Metric.FontSize.SettingsEntryButton);
             label.MinFontSize = 16;
             label.MaxFontSize = 28;
             AddChild(label);

@@ -1,5 +1,6 @@
 using STS2RitsuLib.Data.Migrations;
 using STS2RitsuLib.Data.Models;
+using STS2RitsuLib.Ui.Shell.Theme;
 using STS2RitsuLib.Utils.Persistence;
 
 namespace STS2RitsuLib.Data
@@ -36,10 +37,12 @@ namespace STS2RitsuLib.Data
                             new RitsuLibSettingsV2ToV4Migration(),
                             new RitsuLibSettingsV4ToV5Migration(),
                             new RitsuLibSettingsV5ToV6Migration(),
+                            new RitsuLibSettingsV6ToV7Migration(),
                         ]);
                 }
 
                 _initialized = true;
+                RitsuShellThemeRuntime.ApplyThemeId(GetSettings().UiShellThemeId);
                 LogConfigSnapshot();
             }
         }

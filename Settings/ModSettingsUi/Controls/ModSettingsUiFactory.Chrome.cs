@@ -1,11 +1,28 @@
 using Godot;
 using MegaCrit.Sts2.addons.mega_text;
+using STS2RitsuLib.Ui.Shell;
+using STS2RitsuLib.Ui.Shell.Theme;
 using Timer = Godot.Timer;
 
 namespace STS2RitsuLib.Settings
 {
     internal static partial class ModSettingsUiFactory
     {
+        private const string EnabledSyncMetaKey = "__ritsu_enabled_sync_attached";
+        private const string EnabledSyncOriginalMouseFilterMetaKey = "__ritsu_enabled_orig_mouse_filter";
+        private const string EnabledSyncOriginalProcessModeMetaKey = "__ritsu_enabled_orig_process_mode";
+        private const string EnabledSyncOriginalModulateMetaKey = "__ritsu_enabled_orig_modulate";
+        private const string EnabledSyncOriginalDisabledMetaKey = "__ritsu_enabled_orig_disabled";
+        private const string EnabledSyncOriginalLineEditEditableMetaKey = "__ritsu_enabled_orig_line_edit_editable";
+        private const string EnabledSyncOriginalTextEditEditableMetaKey = "__ritsu_enabled_orig_text_edit_editable";
+        private const float DisabledOpacityFactorFallback = 0.78f;
+        private const string DisabledOpacityTokenPath = "semantic.state.disabled.opacity";
+        private const string DisabledTintTokenPath = "semantic.state.disabled.tint";
+        private const string DisabledOverlayTokenPath = "semantic.state.disabled.overlay";
+        private const string DisabledFixedTokenPath = "semantic.state.disabled.fixed";
+
+        private const string DisabledStylePathMetaKey = "__ritsu_disabled_style_path";
+
         public static ModSettingsSidebarButton CreateSidebarButton(string text, Action onPressed,
             ModSettingsSidebarItemKind kind = ModSettingsSidebarItemKind.Page,
             string? prefix = null,
@@ -18,9 +35,11 @@ namespace STS2RitsuLib.Settings
         {
             return new()
             {
-                CustomMinimumSize = new(0f, 2f),
+                CustomMinimumSize = RitsuShellThemeLayoutResolver.ResolveMinSize(
+                    "components.divider.layout.minSize",
+                    new(0f, 2f)),
                 MouseFilter = Control.MouseFilterEnum.Ignore,
-                Color = new(0.909804f, 0.862745f, 0.745098f, 0.25098f),
+                Color = RitsuShellTheme.Current.Color.Divider,
             };
         }
 
@@ -31,7 +50,7 @@ namespace STS2RitsuLib.Settings
             ModSettingsText? descriptionRefreshSource = null)
         {
             return CreateSettingLine(context, labelProvider, descriptionBodyProvider, valueControl,
-                CreateEntryActionsButton(context, binding), binding,
+                CreateEntryActionsButton(context, binding),
                 labelRefreshSource, descriptionRefreshSource);
         }
 
@@ -43,23 +62,28 @@ namespace STS2RitsuLib.Settings
             ModSettingsText? descriptionRefreshSource = null)
         {
             return CreateSettingLine(context, labelProvider, descriptionBodyProvider, valueControl,
-                CreateEntryActionsButton(context, binding, capabilities), binding,
+                CreateEntryActionsButton(context, binding, capabilities),
                 labelRefreshSource, descriptionRefreshSource);
         }
 
         private static MarginContainer CreateSettingLine(ModSettingsUiContext context, Func<string> labelProvider,
             Func<string> descriptionBodyProvider, Control valueControl, Control? actionControl = null,
-            IModSettingsBinding? scopeBinding = null,
             ModSettingsText? labelRefreshSource = null,
             ModSettingsText? descriptionRefreshSource = null)
         {
             var descriptionText = descriptionBodyProvider();
             var line = new MarginContainer();
 
-            line.AddThemeConstantOverride("margin_left", 8);
-            line.AddThemeConstantOverride("margin_right", 8);
-            line.AddThemeConstantOverride("margin_top", 6);
-            line.AddThemeConstantOverride("margin_bottom", 6);
+            var lineMargins = RitsuShellThemeLayoutResolver.ResolveEdges("components.entryLine.layout.margin", 8);
+            lineMargins = new(
+                RitsuShellThemeLayoutResolver.ResolveInt("components.entryLine.layout.margin.left", lineMargins.Left),
+                RitsuShellThemeLayoutResolver.ResolveInt("components.entryLine.layout.margin.top", 4),
+                RitsuShellThemeLayoutResolver.ResolveInt("components.entryLine.layout.margin.right", lineMargins.Right),
+                RitsuShellThemeLayoutResolver.ResolveInt("components.entryLine.layout.margin.bottom", 4));
+            line.AddThemeConstantOverride("margin_left", lineMargins.Left);
+            line.AddThemeConstantOverride("margin_right", lineMargins.Right);
+            line.AddThemeConstantOverride("margin_top", lineMargins.Top);
+            line.AddThemeConstantOverride("margin_bottom", lineMargins.Bottom);
 
             var surface = new PanelContainer
             {
@@ -77,7 +101,8 @@ namespace STS2RitsuLib.Settings
                 MouseFilter = Control.MouseFilterEnum.Ignore,
                 Alignment = BoxContainer.AlignmentMode.Center,
             };
-            row.AddThemeConstantOverride("separation", 20);
+            row.AddThemeConstantOverride("separation",
+                RitsuShellThemeLayoutResolver.ResolveInt("components.entryLine.layout.rowSeparation", 20));
             surface.AddChild(row);
 
             var leftColumn = new VBoxContainer
@@ -86,11 +111,13 @@ namespace STS2RitsuLib.Settings
                 SizeFlagsVertical = Control.SizeFlags.ShrinkCenter,
                 MouseFilter = Control.MouseFilterEnum.Ignore,
             };
-            leftColumn.AddThemeConstantOverride("separation", 5);
+            leftColumn.AddThemeConstantOverride("separation",
+                RitsuShellThemeLayoutResolver.ResolveInt("components.entryLine.layout.leftColumnSeparation", 5));
 
-            var label = CreateRefreshableHeaderLabel(context, labelRefreshSource, ResolveLabelText, 24,
+            var label = CreateRefreshableHeaderLabel(context, labelRefreshSource, ResolveLabelText,
+                RitsuShellTheme.Current.Metric.FontSize.SettingLineTitle,
                 HorizontalAlignment.Left,
-                ModSettingsUiPalette.RichTextTitle);
+                RitsuShellTheme.Current.Text.RichTitle);
             label.SizeFlagsHorizontal = Control.SizeFlags.ExpandFill;
             leftColumn.AddChild(label);
 
@@ -99,13 +126,10 @@ namespace STS2RitsuLib.Settings
             descriptionLabel.Visible = !string.IsNullOrWhiteSpace(descriptionText);
             leftColumn.AddChild(descriptionLabel);
 
-            if (scopeBinding != null)
-                leftColumn.AddChild(CreatePersistenceScopeTag(scopeBinding));
-
             row.AddChild(leftColumn);
 
             valueControl.CustomMinimumSize = new(Math.Max(EntryControlWidth, valueControl.CustomMinimumSize.X),
-                Mathf.Max(valueControl.CustomMinimumSize.Y, ModSettingsUiMetrics.EntryValueMinHeight));
+                Mathf.Max(valueControl.CustomMinimumSize.Y, RitsuShellTheme.Current.Metric.Entry.ValueMinHeight));
             valueControl.SizeFlagsHorizontal = Control.SizeFlags.ShrinkEnd;
             valueControl.SizeFlagsVertical = Control.SizeFlags.ShrinkCenter;
             row.AddChild(valueControl);
@@ -192,7 +216,16 @@ namespace STS2RitsuLib.Settings
             };
             target.AddChild(longPressTimer);
             var pendingTouchPosition = Vector2.Zero;
-            longPressTimer.Timeout += () => button.OpenAt(pendingTouchPosition);
+            longPressTimer.Timeout += () =>
+            {
+                if (!CanOpenContextMenu(target, button))
+                {
+                    button.ForceCloseDropdown();
+                    return;
+                }
+
+                button.OpenAt(pendingTouchPosition);
+            };
 
             target.GuiInput += @event =>
             {
@@ -202,6 +235,13 @@ namespace STS2RitsuLib.Settings
                     {
                         if (touch.Pressed)
                         {
+                            if (!CanOpenContextMenu(target, button))
+                            {
+                                button.ForceCloseDropdown();
+                                longPressTimer.Stop();
+                                return;
+                            }
+
                             pendingTouchPosition = target.GetGlobalTransformWithCanvas().Origin + touch.Position;
                             longPressTimer.Start();
                         }
@@ -224,9 +264,39 @@ namespace STS2RitsuLib.Settings
                     })
                     return;
 
+                if (!CanOpenContextMenu(target, button))
+                {
+                    button.ForceCloseDropdown();
+                    return;
+                }
+
                 button.OpenAt(target.GetGlobalMousePosition());
                 target.GetViewport().SetInputAsHandled();
             };
+        }
+
+        private static bool CanOpenContextMenu(Control target, ModSettingsActionsButton button)
+        {
+            if (!GodotObject.IsInstanceValid(target) || !GodotObject.IsInstanceValid(button))
+                return false;
+            if (!button.IsVisibleInTree() || button.Disabled || button.ProcessMode == Node.ProcessModeEnum.Disabled)
+                return false;
+            return !IsControlEffectivelyDisabled(target);
+        }
+
+        private static bool IsControlEffectivelyDisabled(Control control)
+        {
+            for (Node? n = control; n != null; n = n.GetParent())
+            {
+                if (n is not Control c)
+                    continue;
+                if (c.ProcessMode == Node.ProcessModeEnum.Disabled)
+                    return true;
+                if (c is BaseButton { Disabled: true })
+                    return true;
+            }
+
+            return false;
         }
 
         internal static Control? CreateEntryActionsButton<TValue>(ModSettingsUiContext context,
@@ -464,8 +534,10 @@ namespace STS2RitsuLib.Settings
                 foreach (var entry in section.Entries)
                     try
                     {
-                        wrappedEntries.Add(MaybeWrapDynamicVisibility(context, entry.CreateControl(context),
-                            entry.VisibilityPredicate));
+                        var control = entry.CreateControl(context);
+                        control = MaybeWrapDynamicVisibility(context, control, entry.VisibilityPredicate);
+                        control = MaybeWrapDynamicEnabled(context, control, entry.EnabledPredicate);
+                        wrappedEntries.Add(control);
                     }
                     catch (Exception ex)
                     {
@@ -504,7 +576,8 @@ namespace STS2RitsuLib.Settings
                     Name = $"Section_{section.Id}",
                     MouseFilter = Control.MouseFilterEnum.Ignore,
                 };
-                container.AddThemeConstantOverride("separation", 8);
+                container.AddThemeConstantOverride("separation",
+                    RitsuShellThemeLayoutResolver.ResolveInt("components.section.layout.separation", 8));
 
                 if (section.Title != null || sectionActionsButton != null)
                 {
@@ -514,7 +587,8 @@ namespace STS2RitsuLib.Settings
                         MouseFilter = Control.MouseFilterEnum.Ignore,
                         Alignment = BoxContainer.AlignmentMode.Center,
                     };
-                    headerRow.AddThemeConstantOverride("separation", 10);
+                    headerRow.AddThemeConstantOverride("separation",
+                        RitsuShellThemeLayoutResolver.ResolveInt("components.section.layout.headerSeparation", 10));
                     if (section.Title != null)
                     {
                         var title = CreateRefreshableSectionTitle(context, section.Title,
@@ -548,13 +622,209 @@ namespace STS2RitsuLib.Settings
 
             var hostCombined = ModSettingsHostSurfaceResolver.CombineVisibility(section.VisibleWhen,
                 () => ModSettingsHostSurfaceResolver.IsVisibleOnCurrentHost(section.VisibleOnHostSurfaces));
-            return MaybeWrapDynamicVisibility(context, built, hostCombined);
+            var visibleHost = MaybeWrapDynamicVisibility(context, built, hostCombined);
+
+            // For collapsible sections, keep the collapse toggle operable while disabling the content/actions.
+            if (section.EnabledWhen == null || built is not ModSettingsCollapsibleSection collapsibleHost)
+                return MaybeWrapDynamicEnabled(context, visibleHost, section.EnabledWhen);
+            Apply();
+            RegisterRefreshWhenAlive(context, visibleHost, Apply, ModSettingsUiRefreshSpec.Always);
+            return visibleHost;
+
+            void Apply()
+            {
+                bool enabled;
+                try
+                {
+                    enabled = section.EnabledWhen();
+                }
+                catch
+                {
+                    enabled = true;
+                }
+
+                collapsibleHost.SetContentEnabled(enabled);
+            }
+        }
+
+        internal static Control MaybeWrapDynamicEnabled(ModSettingsUiContext context, Control host,
+            Func<bool>? predicate)
+        {
+            if (predicate == null || host.HasMeta(EnabledSyncMetaKey))
+                return host;
+            host.SetMeta(EnabledSyncMetaKey, true);
+
+            Apply();
+            RegisterRefreshWhenAlive(context, host, Apply, ModSettingsUiRefreshSpec.Always);
+            return host;
+
+            void Apply()
+            {
+                if (!GodotObject.IsInstanceValid(host))
+                    return;
+                bool enabled;
+                try
+                {
+                    enabled = predicate();
+                }
+                catch
+                {
+                    enabled = true;
+                }
+
+                ApplyEnabledRecursive(host, enabled);
+            }
+        }
+
+        internal static void ApplyEnabledRecursive(Node node, bool enabled)
+        {
+            if (node is Control control)
+                ApplyEnabledToControl(control, enabled);
+
+            foreach (var child in node.GetChildren())
+                if (child != null)
+                    ApplyEnabledRecursive(child, enabled);
+        }
+
+        internal static void ApplyEnabledToControl(Control control, bool enabled)
+        {
+            if (!GodotObject.IsInstanceValid(control))
+                return;
+
+            if (!control.HasMeta(EnabledSyncOriginalMouseFilterMetaKey))
+                control.SetMeta(EnabledSyncOriginalMouseFilterMetaKey, (int)control.MouseFilter);
+            if (!control.HasMeta(EnabledSyncOriginalProcessModeMetaKey))
+                control.SetMeta(EnabledSyncOriginalProcessModeMetaKey, (int)control.ProcessMode);
+            if (!control.HasMeta(EnabledSyncOriginalModulateMetaKey))
+                control.SetMeta(EnabledSyncOriginalModulateMetaKey, control.Modulate);
+
+            switch (control)
+            {
+                case BaseButton button when !button.HasMeta(EnabledSyncOriginalDisabledMetaKey):
+                    button.SetMeta(EnabledSyncOriginalDisabledMetaKey, button.Disabled);
+                    break;
+                case LineEdit lineEdit when !lineEdit.HasMeta(EnabledSyncOriginalLineEditEditableMetaKey):
+                    lineEdit.SetMeta(EnabledSyncOriginalLineEditEditableMetaKey, lineEdit.Editable);
+                    break;
+                case TextEdit textEdit when !textEdit.HasMeta(EnabledSyncOriginalTextEditEditableMetaKey):
+                    textEdit.SetMeta(EnabledSyncOriginalTextEditEditableMetaKey, textEdit.Editable);
+                    break;
+            }
+
+            if (enabled)
+            {
+                control.MouseFilter =
+                    (Control.MouseFilterEnum)(int)control.GetMeta(EnabledSyncOriginalMouseFilterMetaKey);
+                control.ProcessMode = (Node.ProcessModeEnum)(int)control.GetMeta(EnabledSyncOriginalProcessModeMetaKey);
+                control.Modulate = (Color)control.GetMeta(EnabledSyncOriginalModulateMetaKey);
+                switch (control)
+                {
+                    case BaseButton btn:
+                        btn.Disabled = btn.HasMeta(EnabledSyncOriginalDisabledMetaKey) &&
+                                       (bool)btn.GetMeta(EnabledSyncOriginalDisabledMetaKey);
+                        break;
+                    case LineEdit line when line.HasMeta(EnabledSyncOriginalLineEditEditableMetaKey):
+                        line.Editable = (bool)line.GetMeta(EnabledSyncOriginalLineEditEditableMetaKey);
+                        break;
+                    case TextEdit text when text.HasMeta(EnabledSyncOriginalTextEditEditableMetaKey):
+                        text.Editable = (bool)text.GetMeta(EnabledSyncOriginalTextEditEditableMetaKey);
+                        break;
+                }
+
+                return;
+            }
+
+            if (control is ModSettingsActionsButton actions)
+                actions.ForceCloseDropdown();
+            if (control is IModSettingsTransientPopupOwner popupOwner)
+                popupOwner.ForceCloseTransientUi();
+
+            control.ProcessMode = Node.ProcessModeEnum.Disabled;
+            control.MouseFilter = Control.MouseFilterEnum.Ignore;
+            var orig = (Color)control.GetMeta(EnabledSyncOriginalModulateMetaKey);
+            control.Modulate = ResolveDisabledModulate(control, orig);
+            switch (control)
+            {
+                case BaseButton b:
+                    b.Disabled = true;
+                    break;
+                case LineEdit lineEditNow:
+                    lineEditNow.Editable = false;
+                    break;
+                case TextEdit textEditNow:
+                    textEditNow.Editable = false;
+                    break;
+            }
+        }
+
+        internal static void SetDisabledStylePath(Control control, string tokenBasePath)
+        {
+            control.SetMeta(DisabledStylePathMetaKey, tokenBasePath);
+        }
+
+        private static Color ResolveDisabledModulate(Control control, Color original)
+        {
+            var basePath = control.HasMeta(DisabledStylePathMetaKey)
+                ? control.GetMeta(DisabledStylePathMetaKey).AsString()
+                : string.Empty;
+
+            var opacity = ResolveDisabledNumber(basePath, ".opacity", DisabledOpacityTokenPath,
+                DisabledOpacityFactorFallback);
+
+            // 1) Fixed ARGB override (explicit, strongest).
+            if (TryResolveDisabledColor(basePath, ".fixed", DisabledFixedTokenPath, out var fixedArgb))
+                return new(fixedArgb.R, fixedArgb.G, fixedArgb.B, fixedArgb.A * opacity);
+
+            // 2) Overlay: lerp original -> overlay by overlay alpha.
+            if (TryResolveDisabledColor(basePath, ".overlay", DisabledOverlayTokenPath, out var overlay) &&
+                overlay.A > 0.001f)
+            {
+                var t = overlay.A;
+                var r = Mathf.Lerp(original.R, overlay.R, t);
+                var g = Mathf.Lerp(original.G, overlay.G, t);
+                var b = Mathf.Lerp(original.B, overlay.B, t);
+                return new(r, g, b, original.A * opacity);
+            }
+
+            // 3) Tint: multiply RGB.
+            if (TryResolveDisabledColor(basePath, ".tint", DisabledTintTokenPath, out var tint))
+                return new(original.R * tint.R, original.G * tint.G, original.B * tint.B, original.A * opacity);
+
+            // 4) Opacity only.
+            return new(original.R, original.G, original.B, original.A * opacity);
+        }
+
+        private static bool TryResolveDisabledColor(string basePath, string suffix, string fallbackPath,
+            out Color color)
+        {
+            var t = RitsuShellTheme.Current;
+            if (!string.IsNullOrWhiteSpace(basePath) &&
+                t.TryGetColor(basePath + suffix, out color))
+                return true;
+            return t.TryGetColor(fallbackPath, out color);
+        }
+
+        private static float ResolveDisabledNumber(string basePath, string suffix, string fallbackPath, float fallback)
+        {
+            var t = RitsuShellTheme.Current;
+            if (!string.IsNullOrWhiteSpace(basePath) &&
+                t.TryGetNumber(basePath + suffix, out var v1) &&
+                v1 is > 0.05 and <= 1.0)
+                return (float)v1;
+
+            if (t.TryGetNumber(fallbackPath, out var v) && v is > 0.05 and <= 1.0)
+                return (float)v;
+
+            return fallback;
         }
 
         internal static MegaRichTextLabel CreateSectionTitle(string text)
         {
-            var label = CreateHeaderLabel(text, 22, HorizontalAlignment.Left, null, ModSettingsUiPalette.RichTextTitle);
-            label.CustomMinimumSize = new(0f, 34f);
+            var label = CreateHeaderLabel(text, 22, HorizontalAlignment.Left, null,
+                RitsuShellTheme.Current.Text.RichTitle);
+            label.CustomMinimumSize = RitsuShellThemeLayoutResolver.ResolveMinSize(
+                "components.section.layout.title.minSize",
+                new(0f, 34f));
             label.SizeFlagsHorizontal = Control.SizeFlags.ExpandFill;
             return label;
         }
@@ -603,8 +873,8 @@ namespace STS2RitsuLib.Settings
             if (boundedScroll)
                 label.CustomMinimumSize = new(0f, scrollViewportHeight!.Value);
 
-            label.AddThemeFontOverride("normal_font", ModSettingsUiResources.KreonRegular);
-            label.AddThemeFontOverride("bold_font", ModSettingsUiResources.KreonBold);
+            label.AddThemeFontOverride("normal_font", RitsuShellTheme.Current.Font.Body);
+            label.AddThemeFontOverride("bold_font", RitsuShellTheme.Current.Font.BodyBold);
             label.AddThemeFontSizeOverride("normal_font_size", fontSize);
             label.AddThemeFontSizeOverride("bold_font_size", fontSize);
             label.AddThemeFontSizeOverride("italics_font_size", fontSize);
@@ -624,9 +894,11 @@ namespace STS2RitsuLib.Settings
                     ? fallbackId
                     : ModSettingsLocalization.Get("page.untitled", "Untitled");
             var label = CreateHeaderLabel(text, 24, HorizontalAlignment.Center, null,
-                ModSettingsUiPalette.RichTextTitle);
+                RitsuShellTheme.Current.Text.RichTitle);
             label.SizeFlagsHorizontal = Control.SizeFlags.ExpandFill;
-            label.CustomMinimumSize = new(0f, 30f);
+            label.CustomMinimumSize = RitsuShellThemeLayoutResolver.ResolveMinSize(
+                "components.pageToolbar.layout.title.minSize",
+                new(0f, 30f));
             return label;
         }
 
@@ -639,8 +911,10 @@ namespace STS2RitsuLib.Settings
                 SizeFlagsHorizontal = Control.SizeFlags.ExpandFill,
                 MouseFilter = Control.MouseFilterEnum.Ignore,
             };
-            wrap.AddThemeConstantOverride("margin_top", 0);
-            wrap.AddThemeConstantOverride("margin_bottom", 0);
+            wrap.AddThemeConstantOverride("margin_top",
+                RitsuShellThemeLayoutResolver.ResolveInt("components.paragraph.layout.margin.top", 0));
+            wrap.AddThemeConstantOverride("margin_bottom",
+                RitsuShellThemeLayoutResolver.ResolveInt("components.paragraph.layout.margin.bottom", 0));
 
             var initial = ResolvedText();
             wrap.Visible = initial.Length > 0;
@@ -651,7 +925,7 @@ namespace STS2RitsuLib.Settings
                 16,
                 HorizontalAlignment.Left,
                 useCap ? maxViewportHeight : null,
-                ModSettingsUiPalette.RichTextBody);
+                RitsuShellTheme.Current.Text.RichBody);
             label.SizeFlagsHorizontal = Control.SizeFlags.ExpandFill;
             wrap.AddChild(label);
 
@@ -674,7 +948,7 @@ namespace STS2RitsuLib.Settings
         internal static MegaRichTextLabel CreateInlineDescription(string text)
         {
             var label = CreateHeaderLabel(text, 16, HorizontalAlignment.Left, null,
-                ModSettingsUiPalette.RichTextSecondary);
+                RitsuShellTheme.Current.Text.RichSecondary);
             label.SizeFlagsHorizontal = Control.SizeFlags.ExpandFill;
             return label;
         }
@@ -693,7 +967,8 @@ namespace STS2RitsuLib.Settings
                 SizeFlagsHorizontal = Control.SizeFlags.ExpandFill,
                 MouseFilter = Control.MouseFilterEnum.Ignore,
             };
-            stack.AddThemeConstantOverride("separation", 4);
+            stack.AddThemeConstantOverride("separation",
+                RitsuShellThemeLayoutResolver.ResolveInt("components.errorPlaceholder.layout.separation", 4));
             panel.AddChild(stack);
 
             stack.AddChild(CreateSectionTitle(title));
@@ -723,48 +998,6 @@ namespace STS2RitsuLib.Settings
             return label;
         }
 
-        internal static Control CreatePersistenceScopeTag(IModSettingsBinding binding)
-        {
-            var panel = new PanelContainer
-            {
-                MouseFilter = Control.MouseFilterEnum.Ignore,
-                SizeFlagsHorizontal = Control.SizeFlags.ShrinkBegin,
-            };
-            panel.AddThemeStyleboxOverride("panel", CreateScopeTagStyle());
-            var label = new Label
-            {
-                Text = ModSettingsUiContext.GetPersistenceScopeChipText(binding),
-                VerticalAlignment = VerticalAlignment.Center,
-                MouseFilter = Control.MouseFilterEnum.Ignore,
-            };
-            label.AddThemeFontOverride("font", ModSettingsUiResources.KreonRegular);
-            label.AddThemeFontSizeOverride("font_size", 13);
-            label.AddThemeColorOverride("font_color", ModSettingsUiPalette.RichTextMuted);
-            panel.AddChild(label);
-            return panel;
-        }
-
-        private static StyleBoxFlat CreateScopeTagStyle()
-        {
-            return new()
-            {
-                BgColor = new(0.085f, 0.108f, 0.138f, 0.97f),
-                BorderColor = new(0.32f, 0.48f, 0.58f, 0.5f),
-                BorderWidthLeft = 1,
-                BorderWidthTop = 1,
-                BorderWidthRight = 1,
-                BorderWidthBottom = 1,
-                CornerRadiusTopLeft = ModSettingsUiMetrics.CornerRadius,
-                CornerRadiusTopRight = ModSettingsUiMetrics.CornerRadius,
-                CornerRadiusBottomRight = ModSettingsUiMetrics.CornerRadius,
-                CornerRadiusBottomLeft = ModSettingsUiMetrics.CornerRadius,
-                ContentMarginLeft = 8,
-                ContentMarginTop = 3,
-                ContentMarginRight = 8,
-                ContentMarginBottom = 3,
-            };
-        }
-
         private static string SanitizeName(string text)
         {
             return string.Join("_", text.Split(Path.GetInvalidFileNameChars(), StringSplitOptions.RemoveEmptyEntries));
@@ -772,52 +1005,12 @@ namespace STS2RitsuLib.Settings
 
         internal static StyleBoxFlat CreateSurfaceStyle()
         {
-            return new()
-            {
-                BgColor = new(0.095f, 0.115f, 0.15f, 0.965f),
-                BorderColor = new(0.38f, 0.58f, 0.70f, 0.42f),
-                BorderWidthLeft = 1,
-                BorderWidthTop = 1,
-                BorderWidthRight = 1,
-                BorderWidthBottom = 1,
-                CornerRadiusTopLeft = ModSettingsUiMetrics.CornerRadius,
-                CornerRadiusTopRight = ModSettingsUiMetrics.CornerRadius,
-                CornerRadiusBottomRight = ModSettingsUiMetrics.CornerRadius,
-                CornerRadiusBottomLeft = ModSettingsUiMetrics.CornerRadius,
-                ShadowColor = new(0f, 0f, 0f, 0.14f),
-                ShadowSize = 2,
-                ContentMarginLeft = 12,
-                ContentMarginTop = 8,
-                ContentMarginRight = 12,
-                ContentMarginBottom = 8,
-            };
+            return RitsuShellChromeStyles.CreateSurfaceStyle();
         }
 
         internal static StyleBoxFlat CreateEntryFieldFrameStyle(bool emphasized)
         {
-            var borderColor = new Color(0.38f, 0.58f, 0.70f, 0.42f);
-            var borderW = emphasized ? 2 : 1;
-            return new()
-            {
-                BgColor = new(0.095f, 0.115f, 0.15f, 0.965f),
-                BorderColor = borderColor,
-                BorderWidthLeft = borderW,
-                BorderWidthTop = borderW,
-                BorderWidthRight = borderW,
-                BorderWidthBottom = borderW,
-                CornerRadiusTopLeft = ModSettingsUiMetrics.CornerRadius,
-                CornerRadiusTopRight = ModSettingsUiMetrics.CornerRadius,
-                CornerRadiusBottomRight = ModSettingsUiMetrics.CornerRadius,
-                CornerRadiusBottomLeft = ModSettingsUiMetrics.CornerRadius,
-                ShadowColor = emphasized
-                    ? new(borderColor.R, borderColor.G, borderColor.B, 0.42f)
-                    : new Color(0f, 0f, 0f, 0.14f),
-                ShadowSize = emphasized ? 7 : 2,
-                ContentMarginLeft = 12,
-                ContentMarginTop = 8,
-                ContentMarginRight = 12,
-                ContentMarginBottom = 8,
-            };
+            return RitsuShellChromeStyles.CreateEntryFieldFrameStyle(emphasized);
         }
 
         /// <summary>
@@ -826,25 +1019,7 @@ namespace STS2RitsuLib.Settings
         /// </summary>
         internal static StyleBoxFlat CreateColorPickerSwatchFrameStyle()
         {
-            const int inset = 5;
-            return new()
-            {
-                BgColor = new(0.095f, 0.115f, 0.15f, 0.965f),
-                BorderColor = new(0.38f, 0.58f, 0.70f, 0.42f),
-                BorderWidthLeft = 1,
-                BorderWidthTop = 1,
-                BorderWidthRight = 1,
-                BorderWidthBottom = 1,
-                CornerRadiusTopLeft = ModSettingsUiMetrics.CornerRadius,
-                CornerRadiusTopRight = ModSettingsUiMetrics.CornerRadius,
-                CornerRadiusBottomRight = ModSettingsUiMetrics.CornerRadius,
-                CornerRadiusBottomLeft = ModSettingsUiMetrics.CornerRadius,
-                ShadowSize = 0,
-                ContentMarginLeft = inset,
-                ContentMarginTop = inset,
-                ContentMarginRight = inset,
-                ContentMarginBottom = inset,
-            };
+            return RitsuShellChromeStyles.CreateColorPickerSwatchFrameStyle();
         }
 
         private static StyleBoxFlat CreateEntrySurfaceStyle()
@@ -854,69 +1029,17 @@ namespace STS2RitsuLib.Settings
 
         internal static StyleBoxFlat CreateInsetSurfaceStyle()
         {
-            return new()
-            {
-                BgColor = new(0.07f, 0.085f, 0.11f, 0.98f),
-                BorderColor = new(0.30f, 0.44f, 0.56f, 0.34f),
-                BorderWidthLeft = 1,
-                BorderWidthTop = 1,
-                BorderWidthRight = 1,
-                BorderWidthBottom = 1,
-                CornerRadiusTopLeft = ModSettingsUiMetrics.CornerRadius,
-                CornerRadiusTopRight = ModSettingsUiMetrics.CornerRadius,
-                CornerRadiusBottomRight = ModSettingsUiMetrics.CornerRadius,
-                CornerRadiusBottomLeft = ModSettingsUiMetrics.CornerRadius,
-                ContentMarginLeft = 10,
-                ContentMarginTop = 8,
-                ContentMarginRight = 10,
-                ContentMarginBottom = 8,
-            };
+            return RitsuShellChromeStyles.CreateInsetSurfaceStyle();
         }
 
         internal static StyleBoxFlat CreateChromeActionsMenuStyle(bool highlighted)
         {
-            return new()
-            {
-                BgColor = highlighted
-                    ? new(0.15f, 0.20f, 0.26f, 0.96f)
-                    : new Color(0.09f, 0.115f, 0.15f, 0.90f),
-                BorderColor = highlighted
-                    ? new(0.50f, 0.70f, 0.84f, 0.62f)
-                    : new Color(0.30f, 0.44f, 0.56f, 0.42f),
-                BorderWidthLeft = 1,
-                BorderWidthTop = 1,
-                BorderWidthRight = 1,
-                BorderWidthBottom = 1,
-                CornerRadiusTopLeft = ModSettingsUiMetrics.CornerRadius,
-                CornerRadiusTopRight = ModSettingsUiMetrics.CornerRadius,
-                CornerRadiusBottomRight = ModSettingsUiMetrics.CornerRadius,
-                CornerRadiusBottomLeft = ModSettingsUiMetrics.CornerRadius,
-                ContentMarginLeft = 10,
-                ContentMarginTop = 6,
-                ContentMarginRight = 10,
-                ContentMarginBottom = 6,
-            };
+            return RitsuShellChromeStyles.CreateChromeActionsMenuStyle(highlighted);
         }
 
         internal static StyleBoxFlat CreatePageToolbarTrayStyle()
         {
-            return new()
-            {
-                BgColor = new(0.055f, 0.068f, 0.09f, 0.88f),
-                BorderColor = new(0.28f, 0.42f, 0.54f, 0.32f),
-                BorderWidthLeft = 1,
-                BorderWidthTop = 1,
-                BorderWidthRight = 1,
-                BorderWidthBottom = 1,
-                CornerRadiusTopLeft = ModSettingsUiMetrics.CornerRadius,
-                CornerRadiusTopRight = ModSettingsUiMetrics.CornerRadius,
-                CornerRadiusBottomRight = ModSettingsUiMetrics.CornerRadius,
-                CornerRadiusBottomLeft = ModSettingsUiMetrics.CornerRadius,
-                ContentMarginLeft = 10,
-                ContentMarginTop = 8,
-                ContentMarginRight = 10,
-                ContentMarginBottom = 8,
-            };
+            return RitsuShellChromeStyles.CreatePageToolbarTrayStyle();
         }
 
         internal static Control CreateModSettingsPageHeaderBar(ModSettingsUiContext context, ModSettingsPage page,
@@ -957,11 +1080,14 @@ namespace STS2RitsuLib.Settings
                 MouseFilter = Control.MouseFilterEnum.Ignore,
                 Alignment = BoxContainer.AlignmentMode.Center,
             };
-            row.AddThemeConstantOverride("separation", 10);
+            row.AddThemeConstantOverride("separation",
+                RitsuShellThemeLayoutResolver.ResolveInt("components.pageToolbar.layout.rowSeparation", 10));
 
             var left = new HBoxContainer
             {
-                CustomMinimumSize = new(sideSlotMin, 44f),
+                CustomMinimumSize = RitsuShellThemeLayoutResolver.ResolveMinSize(
+                    "components.pageToolbar.layout.sideSlot.minSize",
+                    new(sideSlotMin, 44f)),
                 SizeFlagsHorizontal = Control.SizeFlags.ShrinkBegin,
                 MouseFilter = Control.MouseFilterEnum.Ignore,
                 Alignment = BoxContainer.AlignmentMode.Begin,
@@ -971,7 +1097,9 @@ namespace STS2RitsuLib.Settings
                 var back = new ModSettingsMiniButton(ModSettingsLocalization.Get("button.back", "Back"), onBack)
                 {
                     SizeFlagsVertical = Control.SizeFlags.ShrinkCenter,
-                    CustomMinimumSize = new(88f, 38f),
+                    CustomMinimumSize = RitsuShellThemeLayoutResolver.ResolveMinSize(
+                        "components.pageToolbar.layout.backButton.minSize",
+                        new(88f, 38f)),
                 };
                 left.AddChild(back);
             }
@@ -982,7 +1110,8 @@ namespace STS2RitsuLib.Settings
                 MouseFilter = Control.MouseFilterEnum.Ignore,
                 Alignment = BoxContainer.AlignmentMode.Center,
             };
-            center.AddThemeConstantOverride("separation", 5);
+            center.AddThemeConstantOverride("separation",
+                RitsuShellThemeLayoutResolver.ResolveInt("components.pageToolbar.layout.centerSeparation", 5));
 
             var titleLabel = CreatePageToolbarTitleLabel(pageTitle, page.Id);
             center.AddChild(titleLabel);
@@ -990,19 +1119,26 @@ namespace STS2RitsuLib.Settings
             var pageDescription = CreateRefreshableDescriptionLabel(context, page.Description,
                 () => ModSettingsUiContext.ResolvePageDescription(page) ?? string.Empty);
             pageDescription.HorizontalAlignment = HorizontalAlignment.Center;
-            pageDescription.AddThemeFontSizeOverride("normal_font_size", 18);
-            pageDescription.AddThemeFontSizeOverride("bold_font_size", 18);
-            pageDescription.AddThemeFontSizeOverride("italics_font_size", 18);
-            pageDescription.AddThemeFontSizeOverride("bold_italics_font_size", 18);
-            pageDescription.AddThemeFontSizeOverride("mono_font_size", 18);
+            pageDescription.AddThemeFontSizeOverride("normal_font_size",
+                RitsuShellTheme.Current.Metric.FontSize.PageDescription);
+            pageDescription.AddThemeFontSizeOverride("bold_font_size",
+                RitsuShellTheme.Current.Metric.FontSize.PageDescription);
+            pageDescription.AddThemeFontSizeOverride("italics_font_size",
+                RitsuShellTheme.Current.Metric.FontSize.PageDescription);
+            pageDescription.AddThemeFontSizeOverride("bold_italics_font_size",
+                RitsuShellTheme.Current.Metric.FontSize.PageDescription);
+            pageDescription.AddThemeFontSizeOverride("mono_font_size",
+                RitsuShellTheme.Current.Metric.FontSize.PageDescription);
             pageDescription.MinFontSize = 16;
-            pageDescription.MaxFontSize = 18;
-            pageDescription.Modulate = ModSettingsUiPalette.RichTextSecondary;
+            pageDescription.MaxFontSize = RitsuShellTheme.Current.Metric.FontSize.PageDescription;
+            pageDescription.Modulate = RitsuShellTheme.Current.Text.RichSecondary;
             center.AddChild(pageDescription);
 
             var right = new HBoxContainer
             {
-                CustomMinimumSize = new(sideSlotMin, 44f),
+                CustomMinimumSize = RitsuShellThemeLayoutResolver.ResolveMinSize(
+                    "components.pageToolbar.layout.sideSlot.minSize",
+                    new(sideSlotMin, 44f)),
                 SizeFlagsHorizontal = Control.SizeFlags.ShrinkBegin,
                 MouseFilter = Control.MouseFilterEnum.Ignore,
                 Alignment = BoxContainer.AlignmentMode.End,
@@ -1019,100 +1155,22 @@ namespace STS2RitsuLib.Settings
 
         internal static StyleBoxFlat CreateListShellStyle()
         {
-            return new()
-            {
-                BgColor = new(0.06f, 0.075f, 0.098f, 0.98f),
-                BorderColor = new(0.34f, 0.52f, 0.64f, 0.38f),
-                BorderWidthLeft = 1,
-                BorderWidthTop = 1,
-                BorderWidthRight = 1,
-                BorderWidthBottom = 1,
-                CornerRadiusTopLeft = ModSettingsUiMetrics.CornerRadius,
-                CornerRadiusTopRight = ModSettingsUiMetrics.CornerRadius,
-                CornerRadiusBottomRight = ModSettingsUiMetrics.CornerRadius,
-                CornerRadiusBottomLeft = ModSettingsUiMetrics.CornerRadius,
-                ShadowColor = new(0f, 0f, 0f, 0.16f),
-                ShadowSize = 3,
-                ContentMarginLeft = 12,
-                ContentMarginTop = 12,
-                ContentMarginRight = 12,
-                ContentMarginBottom = 12,
-            };
+            return RitsuShellChromeStyles.CreateListShellStyle();
         }
 
         internal static StyleBoxFlat CreateListItemCardStyle(bool accent = false)
         {
-            return new()
-            {
-                BgColor = accent
-                    ? new(0.115f, 0.16f, 0.205f, 0.985f)
-                    : new Color(0.09f, 0.11f, 0.145f, 0.975f),
-                BorderColor = accent
-                    ? new(0.52f, 0.77f, 0.90f, 0.70f)
-                    : new Color(0.33f, 0.50f, 0.62f, 0.34f),
-                BorderWidthLeft = 1,
-                BorderWidthTop = 1,
-                BorderWidthRight = 1,
-                BorderWidthBottom = 1,
-                CornerRadiusTopLeft = ModSettingsUiMetrics.CornerRadius,
-                CornerRadiusTopRight = ModSettingsUiMetrics.CornerRadius,
-                CornerRadiusBottomRight = ModSettingsUiMetrics.CornerRadius,
-                CornerRadiusBottomLeft = ModSettingsUiMetrics.CornerRadius,
-                ShadowColor = new(0f, 0f, 0f, 0.12f),
-                ShadowSize = 2,
-                ContentMarginLeft = 10,
-                ContentMarginTop = 10,
-                ContentMarginRight = 10,
-                ContentMarginBottom = 10,
-            };
+            return RitsuShellChromeStyles.CreateListItemCardStyle(accent);
         }
 
         internal static StyleBoxFlat CreateListEditorSurfaceStyle()
         {
-            return new()
-            {
-                BgColor = new(0.055f, 0.068f, 0.09f, 0.985f),
-                BorderColor = new(0.30f, 0.46f, 0.58f, 0.42f),
-                BorderWidthLeft = 1,
-                BorderWidthTop = 1,
-                BorderWidthRight = 1,
-                BorderWidthBottom = 1,
-                CornerRadiusTopLeft = ModSettingsUiMetrics.CornerRadius,
-                CornerRadiusTopRight = ModSettingsUiMetrics.CornerRadius,
-                CornerRadiusBottomRight = ModSettingsUiMetrics.CornerRadius,
-                CornerRadiusBottomLeft = ModSettingsUiMetrics.CornerRadius,
-                ShadowColor = new(0f, 0f, 0f, 0.12f),
-                ShadowSize = 2,
-                ContentMarginLeft = 10,
-                ContentMarginTop = 8,
-                ContentMarginRight = 10,
-                ContentMarginBottom = 8,
-            };
+            return RitsuShellChromeStyles.CreateListEditorSurfaceStyle();
         }
 
         internal static StyleBoxFlat CreatePillStyle(bool highlighted = false)
         {
-            return new()
-            {
-                BgColor = highlighted
-                    ? new(0.17f, 0.28f, 0.34f, 0.98f)
-                    : new Color(0.12f, 0.16f, 0.21f, 0.96f),
-                BorderColor = highlighted
-                    ? new(0.60f, 0.82f, 0.92f, 0.78f)
-                    : new Color(0.38f, 0.54f, 0.66f, 0.40f),
-                BorderWidthLeft = 1,
-                BorderWidthTop = 1,
-                BorderWidthRight = 1,
-                BorderWidthBottom = 1,
-                CornerRadiusTopLeft = ModSettingsUiMetrics.CornerRadius,
-                CornerRadiusTopRight = ModSettingsUiMetrics.CornerRadius,
-                CornerRadiusBottomRight = ModSettingsUiMetrics.CornerRadius,
-                CornerRadiusBottomLeft = ModSettingsUiMetrics.CornerRadius,
-                ContentMarginLeft = 10,
-                ContentMarginTop = 5,
-                ContentMarginRight = 10,
-                ContentMarginBottom = 5,
-            };
+            return RitsuShellChromeStyles.CreatePillStyle(highlighted);
         }
     }
 }

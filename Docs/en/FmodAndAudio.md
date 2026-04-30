@@ -158,6 +158,7 @@ RitsuLib does not include the following; they are common external workflows:
 | Tool | Role |
 |------|------|
 | [FMOD Studio](https://www.fmod.com/) | Edit banks and events. **Match the game's FMOD Studio major version line** (see the game's `addons/fmod` directory) |
+| [STS2_FModProject_Minimal](https://github.com/BAKAOLC/STS2_FModProject_Minimal) (community) | Minimal project template reconstructed from cleaned reverse-engineered game FMOD assets. Good for a safe "custom content bank + GUIDs.txt" workflow without changing Master bank semantics |
 | Built-in Godot FMOD plugin in the game | Same class of integration as `utopia-rise/fmod-gdextension`; provides the **`FmodServer`** singleton at runtime |
 | [sts2-fmod-tools](https://github.com/elliotttate/sts2-fmod-tools) (community) | Optional: align Studio projects/events from the game-data side |
 | DAW export | Export WAV/OGG, etc.; if mixing with vanilla SFX, watch loudness and dynamic range |

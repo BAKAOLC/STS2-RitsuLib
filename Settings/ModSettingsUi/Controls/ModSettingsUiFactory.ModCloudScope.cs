@@ -1,4 +1,5 @@
 using Godot;
+using STS2RitsuLib.Ui.Shell.Theme;
 using STS2RitsuLib.Utils.Persistence;
 
 namespace STS2RitsuLib.Settings
@@ -51,7 +52,7 @@ namespace STS2RitsuLib.Settings
             var dim = new ColorRect
             {
                 Name = "ModalDim",
-                Color = new(0f, 0f, 0f, ModalDimAlpha),
+                Color = RitsuShellTheme.Current.Color.ModalBackdrop,
                 MouseFilter = Control.MouseFilterEnum.Stop,
             };
             dim.SetAnchorsAndOffsetsPreset(Control.LayoutPreset.FullRect);
@@ -67,7 +68,9 @@ namespace STS2RitsuLib.Settings
             var rootPanel = new PanelContainer
             {
                 MouseFilter = Control.MouseFilterEnum.Stop,
-                CustomMinimumSize = new(440f, 0f),
+                CustomMinimumSize = RitsuShellThemeLayoutResolver.ResolveMinSize(
+                    "components.cloudScopeModal.layout.panel.minSize",
+                    new(440f, 0f)),
             };
             rootPanel.AddThemeStyleboxOverride("panel", CreateSurfaceStyle());
             center.AddChild(rootPanel);
@@ -76,10 +79,19 @@ namespace STS2RitsuLib.Settings
             {
                 MouseFilter = Control.MouseFilterEnum.Ignore,
             };
-            margin.AddThemeConstantOverride("margin_left", 22);
-            margin.AddThemeConstantOverride("margin_top", 20);
-            margin.AddThemeConstantOverride("margin_right", 22);
-            margin.AddThemeConstantOverride("margin_bottom", 20);
+            var panelMargins = RitsuShellThemeLayoutResolver.ResolveEdges(
+                "components.cloudScopeModal.layout.panel.margin", 22);
+            panelMargins = new(
+                RitsuShellThemeLayoutResolver.ResolveInt("components.cloudScopeModal.layout.panel.margin.left",
+                    panelMargins.Left),
+                RitsuShellThemeLayoutResolver.ResolveInt("components.cloudScopeModal.layout.panel.margin.top", 20),
+                RitsuShellThemeLayoutResolver.ResolveInt("components.cloudScopeModal.layout.panel.margin.right",
+                    panelMargins.Right),
+                RitsuShellThemeLayoutResolver.ResolveInt("components.cloudScopeModal.layout.panel.margin.bottom", 20));
+            margin.AddThemeConstantOverride("margin_left", panelMargins.Left);
+            margin.AddThemeConstantOverride("margin_top", panelMargins.Top);
+            margin.AddThemeConstantOverride("margin_right", panelMargins.Right);
+            margin.AddThemeConstantOverride("margin_bottom", panelMargins.Bottom);
             rootPanel.AddChild(margin);
 
             var vbox = new VBoxContainer
@@ -87,11 +99,12 @@ namespace STS2RitsuLib.Settings
                 SizeFlagsHorizontal = Control.SizeFlags.ExpandFill,
                 MouseFilter = Control.MouseFilterEnum.Ignore,
             };
-            vbox.AddThemeConstantOverride("separation", 12);
+            vbox.AddThemeConstantOverride("separation",
+                RitsuShellThemeLayoutResolver.ResolveInt("components.cloudScopeModal.layout.panel.separation", 12));
             margin.AddChild(vbox);
 
             var titleLabel = CreateHeaderLabel(title, 22, HorizontalAlignment.Left, null,
-                ModSettingsUiPalette.RichTextTitle);
+                RitsuShellTheme.Current.Text.RichTitle);
             titleLabel.SizeFlagsHorizontal = Control.SizeFlags.ExpandFill;
             vbox.AddChild(titleLabel);
 
@@ -100,7 +113,7 @@ namespace STS2RitsuLib.Settings
                 17,
                 HorizontalAlignment.Left,
                 null,
-                ModSettingsUiPalette.RichTextBody);
+                RitsuShellTheme.Current.Text.RichBody);
             bodyLabel.SizeFlagsHorizontal = Control.SizeFlags.ExpandFill;
             bodyLabel.FitContent = true;
             vbox.AddChild(bodyLabel);
@@ -115,12 +128,15 @@ namespace STS2RitsuLib.Settings
                 Alignment = BoxContainer.AlignmentMode.End,
                 MouseFilter = Control.MouseFilterEnum.Ignore,
             };
-            btnRow.AddThemeConstantOverride("separation", 12);
+            btnRow.AddThemeConstantOverride("separation",
+                RitsuShellThemeLayoutResolver.ResolveInt("components.cloudScopeModal.layout.buttonRow.separation", 12));
             vbox.AddChild(btnRow);
 
             var cancelBtn = new ModSettingsTextButton(cancelText, ModSettingsButtonTone.Normal, () => Finish(null))
             {
-                CustomMinimumSize = new(132f, ModSettingsUiMetrics.EntryValueMinHeight),
+                CustomMinimumSize = RitsuShellThemeLayoutResolver.ResolveMinSize(
+                    "components.cloudScopeModal.layout.buttonRow.cancelMinSize",
+                    new(132f, RitsuShellTheme.Current.Metric.Entry.ValueMinHeight)),
             };
             btnRow.AddChild(cancelBtn);
 
@@ -140,7 +156,9 @@ namespace STS2RitsuLib.Settings
             {
                 var btn = new ModSettingsTextButton(label, ModSettingsButtonTone.Normal, () => Finish(scope))
                 {
-                    CustomMinimumSize = new(0f, ModSettingsUiMetrics.EntryValueMinHeight),
+                    CustomMinimumSize = RitsuShellThemeLayoutResolver.ResolveMinSize(
+                        "components.cloudScopeModal.layout.scopeButton.minSize",
+                        new(0f, RitsuShellTheme.Current.Metric.Entry.ValueMinHeight)),
                     SizeFlagsHorizontal = Control.SizeFlags.ExpandFill,
                 };
                 vbox.AddChild(btn);

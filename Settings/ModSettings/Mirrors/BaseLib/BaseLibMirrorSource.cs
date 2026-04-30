@@ -1,5 +1,6 @@
 using System.Collections;
 using System.Reflection;
+using STS2RitsuLib.Compat;
 
 namespace STS2RitsuLib.Settings
 {
@@ -23,7 +24,8 @@ namespace STS2RitsuLib.Settings
         private static readonly Lock Gate = new();
         private static bool _pagesRegistered;
 
-        public static bool IsBaseLibPresent => ResolveType(RegistryTypeName) != null;
+        public static bool IsBaseLibPresent =>
+            ExternalFrameworkRegistry.IsFrameworkPresent(ExternalFrameworkIds.BaseLib);
 
         public static int TryRegisterMirroredPages(string pageId = "baselib", int sortOrder = 10_000,
             ModSettingsText? pageTitle = null)
@@ -128,23 +130,7 @@ namespace STS2RitsuLib.Settings
 
         internal static Type? ResolveType(string fullName)
         {
-            foreach (var assembly in AppDomain.CurrentDomain.GetAssemblies())
-            {
-                Type? type = null;
-                try
-                {
-                    type = assembly.GetType(fullName, false);
-                }
-                catch
-                {
-                    // ignored
-                }
-
-                if (type != null)
-                    return type;
-            }
-
-            return null;
+            return ExternalFrameworkRegistry.ResolveType(fullName);
         }
     }
 }

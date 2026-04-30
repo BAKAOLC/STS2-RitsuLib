@@ -8,7 +8,9 @@ using MegaCrit.Sts2.Core.Modding;
 using MegaCrit.Sts2.Core.Models;
 using STS2RitsuLib.Cards.FreePlay;
 using STS2RitsuLib.CardTags;
+using STS2RitsuLib.Combat.HandSize;
 using STS2RitsuLib.Combat.HealthBars;
+using STS2RitsuLib.Compat;
 using STS2RitsuLib.Content;
 using STS2RitsuLib.Data;
 using STS2RitsuLib.Diagnostics.CardExport;
@@ -37,6 +39,7 @@ namespace STS2RitsuLib
     {
         private static readonly Lock SyncRoot = new();
         private static readonly Dictionary<FrameworkPatcherArea, ModPatcher> FrameworkPatchersByArea = [];
+        private static bool _frameworkInteropBootstrapRegistered;
 
         private static bool _profileServicesInitialized;
         private static ILifecycleObserver[] _lifecycleObservers = [];
@@ -196,8 +199,7 @@ namespace STS2RitsuLib
 
                     IsInitialized = true;
                     IsActive = true;
-                    BaseLibHealthBarForecastBridge.TryRegister();
-                    BaseLibVisualGraftBridge.TryRegister();
+                    EnsureFrameworkInteropBootstrapRegistered();
                     RuntimeHotkeyService.Initialize();
 
                     var frameworkInitializedEvent = new FrameworkInitializedEvent(
@@ -225,6 +227,24 @@ namespace STS2RitsuLib
             return string.IsNullOrWhiteSpace(compatBranchLabel)
                 ? $"Version: {Const.Version}"
                 : $"Version: {Const.Version} [compat branch: {compatBranchLabel}]";
+        }
+
+        private static void EnsureFrameworkInteropBootstrapRegistered()
+        {
+            if (_frameworkInteropBootstrapRegistered)
+                return;
+
+            _frameworkInteropBootstrapRegistered = true;
+            SubscribeLifecycle<DeferredInitializationCompletedEvent>(_ => ConfirmExternalFrameworkInterop());
+        }
+
+        private static void ConfirmExternalFrameworkInterop()
+        {
+            ExternalFrameworkRegistry.RefreshKnownFrameworkPresence("deferred initialization completed");
+            BaseLibHealthBarForecastBridge.TryRegister();
+            BaseLibVisualGraftBridge.TryRegister();
+            BaseLibMaxHandSizeBridge.TryInitialize();
+            MaxHandSizePatchInstaller.EnsurePatched();
         }
 
         private static string? GetCompatBranchLabel()
@@ -344,6 +364,32 @@ namespace STS2RitsuLib
             where TSource : IHealthBarVisualGraftSource, new()
         {
             HealthBarVisualGraftRegistry.Register<TSource>(modId, sourceId);
+        }
+
+        /// <summary>
+        ///     Registers a max-hand-size modifier source through the framework.
+        /// </summary>
+        public static void RegisterMaxHandSizeModifier<TModifier>(string modId, string? sourceId = null)
+            where TModifier : IMaxHandSizeModifier, new()
+        {
+            MaxHandSizeRegistry.Register<TModifier>(modId,
+                sourceId ?? typeof(TModifier).FullName ?? typeof(TModifier).Name);
+        }
+
+        /// <summary>
+        ///     Registers a max-hand-size modifier source through the framework.
+        /// </summary>
+        public static void RegisterMaxHandSizeModifier(string modId, string sourceId, IMaxHandSizeModifier modifier)
+        {
+            MaxHandSizeRegistry.Register(modId, sourceId, modifier);
+        }
+
+        /// <summary>
+        ///     Resolves the current max-hand-size value for <paramref name="player" />.
+        /// </summary>
+        public static int GetMaxHandSize(Player player)
+        {
+            return MaxHandSizeRegistry.GetMaxHandSize(player);
         }
 
         /// <summary>
@@ -640,7 +686,8 @@ namespace STS2RitsuLib
                     return;
                 }
 
-                lookupMethod.Invoke(null, [assembly]);
+                var lookup = lookupMethod.CreateDelegate<Action<Assembly>>();
+                lookup(assembly);
                 logger?.Debug($"Registered Godot C# scripts for assembly: {assemblyName}");
             }
             catch (Exception ex)

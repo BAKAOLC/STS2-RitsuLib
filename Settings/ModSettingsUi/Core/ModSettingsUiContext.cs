@@ -61,11 +61,6 @@ namespace STS2RitsuLib.Settings
         [GeneratedRegex("<c>(.*?)</c>", RegexOptions.Singleline)]
         private static partial Regex LegacyCodeTagRegex();
 
-        public static string GetPersistenceScopeChipText(IModSettingsBinding binding)
-        {
-            return ModSettingsUiHostSurfacePolicy.ResolveScopeChipText(binding);
-        }
-
         /// <summary>
         ///     Registers a callback invoked on the next UI refresh. Same as calling
         ///     <see cref="RegisterRefresh(Action, ModSettingsUiRefreshSpec)" /> with a full-pass spec (legacy behavior for

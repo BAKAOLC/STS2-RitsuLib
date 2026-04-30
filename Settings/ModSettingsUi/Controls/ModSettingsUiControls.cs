@@ -5,10 +5,16 @@ using MegaCrit.Sts2.addons.mega_text;
 using MegaCrit.Sts2.Core.ControllerInput;
 using MegaCrit.Sts2.Core.Nodes.CommonUi;
 using STS2RitsuLib.RuntimeInput;
+using STS2RitsuLib.Ui.Shell.Theme;
 using Array = System.Array;
 
 namespace STS2RitsuLib.Settings
 {
+    internal interface IModSettingsTransientPopupOwner
+    {
+        void ForceCloseTransientUi();
+    }
+
     /// <summary>
     ///     Standard On/Off toggle control used by mod settings entries.
     /// </summary>
@@ -28,18 +34,21 @@ namespace STS2RitsuLib.Settings
             _initialValue = initialValue;
             _onChanged = onChanged;
 
-            CustomMinimumSize = new(ModSettingsUiFactory.EntryControlWidth, ModSettingsUiMetrics.EntryValueMinHeight);
+            CustomMinimumSize = RitsuShellThemeLayoutResolver.ResolveMinSize(
+                "components.toggle.layout.entry.minSize",
+                new(ModSettingsUiFactory.EntryControlWidth,
+                    RitsuShellTheme.Current.Metric.Entry.ValueMinHeight));
             SizeFlagsHorizontal = SizeFlags.ShrinkEnd;
             SizeFlagsVertical = SizeFlags.ShrinkCenter;
             FocusMode = FocusModeEnum.All;
             MouseFilter = MouseFilterEnum.Stop;
             Flat = false;
-            AddThemeFontOverride("font", ModSettingsUiResources.KreonBold);
-            AddThemeFontSizeOverride("font_size", 18);
-            AddThemeColorOverride("font_color", ModSettingsUiPalette.LabelPrimary);
-            AddThemeColorOverride("font_hover_color", Colors.White);
-            AddThemeColorOverride("font_pressed_color", Colors.White);
-            AddThemeColorOverride("font_focus_color", Colors.White);
+            AddThemeFontOverride("font", RitsuShellTheme.Current.Font.BodyBold);
+            AddThemeFontSizeOverride("font_size", RitsuShellTheme.Current.Metric.FontSize.Button);
+            AddThemeColorOverride("font_color", RitsuShellTheme.Current.Text.LabelPrimary);
+            AddThemeColorOverride("font_hover_color", RitsuShellTheme.Current.Text.HoverHighlight);
+            AddThemeColorOverride("font_pressed_color", RitsuShellTheme.Current.Text.HoverHighlight);
+            AddThemeColorOverride("font_focus_color", RitsuShellTheme.Current.Text.HoverHighlight);
             Pressed += ToggleValue;
         }
 
@@ -91,54 +100,77 @@ namespace STS2RitsuLib.Settings
         private static StyleBoxFlat CreateStyle(bool on, bool hovered)
         {
             var borderColor = on
-                ? new(0.52f, 0.87f, 0.69f, 0.95f)
-                : new Color(0.34f, 0.46f, 0.58f, 0.45f);
-            var borderW = hovered ? 3 : 2;
+                ? RitsuShellTheme.Current.Component.Toggle.On.Border
+                : RitsuShellTheme.Current.Component.Toggle.Off.Border;
+            var normalBorder = RitsuShellThemeLayoutResolver.ResolveEdges("components.toggle.layout.borderWidth", 2);
+            var hoverBorder =
+                RitsuShellThemeLayoutResolver.ResolveEdges("components.toggle.layout.borderWidthHover", 3);
+            var border = hovered ? hoverBorder : normalBorder;
+            var radius = RitsuShellThemeLayoutResolver.ResolveInt("components.toggle.layout.cornerRadius",
+                RitsuShellTheme.Current.Metric.Radius.Default);
+            var padding = RitsuShellThemeLayoutResolver.ResolveEdges("components.toggle.layout.padding", 14);
+            padding = new(
+                RitsuShellThemeLayoutResolver.ResolveInt("components.toggle.layout.padding.left", padding.Left),
+                RitsuShellThemeLayoutResolver.ResolveInt("components.toggle.layout.padding.top", 8),
+                RitsuShellThemeLayoutResolver.ResolveInt("components.toggle.layout.padding.right", padding.Right),
+                RitsuShellThemeLayoutResolver.ResolveInt("components.toggle.layout.padding.bottom", 8));
+            var shadowSize = hovered
+                ? RitsuShellThemeLayoutResolver.ResolveInt("components.toggle.layout.shadowSizeHover", 7)
+                : RitsuShellThemeLayoutResolver.ResolveInt("components.toggle.layout.shadowSize", 2);
             return new()
             {
                 BgColor = on
-                    ? new(0.18f, 0.42f, 0.31f, 0.98f)
+                    ? RitsuShellTheme.Current.Component.Toggle.On.Bg
                     : hovered
-                        ? new(0.18f, 0.22f, 0.28f, 0.98f)
-                        : new Color(0.12f, 0.15f, 0.19f, 0.98f),
+                        ? RitsuShellTheme.Current.Component.Toggle.OffHover.Bg
+                        : RitsuShellTheme.Current.Component.Toggle.Off.Bg,
                 BorderColor = borderColor,
-                BorderWidthLeft = borderW,
-                BorderWidthTop = borderW,
-                BorderWidthRight = borderW,
-                BorderWidthBottom = borderW,
-                CornerRadiusTopLeft = ModSettingsUiMetrics.CornerRadius,
-                CornerRadiusTopRight = ModSettingsUiMetrics.CornerRadius,
-                CornerRadiusBottomRight = ModSettingsUiMetrics.CornerRadius,
-                CornerRadiusBottomLeft = ModSettingsUiMetrics.CornerRadius,
+                BorderWidthLeft = border.Left,
+                BorderWidthTop = border.Top,
+                BorderWidthRight = border.Right,
+                BorderWidthBottom = border.Bottom,
+                CornerRadiusTopLeft = radius,
+                CornerRadiusTopRight = radius,
+                CornerRadiusBottomRight = radius,
+                CornerRadiusBottomLeft = radius,
                 ShadowColor = hovered
                     ? new(borderColor.R, borderColor.G, borderColor.B, 0.42f)
-                    : new Color(0f, 0f, 0f, 0.12f),
-                ShadowSize = hovered ? 7 : 2,
-                ContentMarginLeft = 14,
-                ContentMarginTop = 8,
-                ContentMarginRight = 14,
-                ContentMarginBottom = 8,
+                    : RitsuShellTheme.Current.Component.Toggle.Shadow,
+                ShadowSize = shadowSize,
+                ContentMarginLeft = padding.Left,
+                ContentMarginTop = padding.Top,
+                ContentMarginRight = padding.Right,
+                ContentMarginBottom = padding.Bottom,
             };
         }
 
         private static StyleBoxFlat CreateDisabledStyle()
         {
+            var border = RitsuShellThemeLayoutResolver.ResolveEdges("components.toggle.layout.borderWidthDisabled", 2);
+            var radius = RitsuShellThemeLayoutResolver.ResolveInt("components.toggle.layout.cornerRadius",
+                RitsuShellTheme.Current.Metric.Radius.Default);
+            var padding = RitsuShellThemeLayoutResolver.ResolveEdges("components.toggle.layout.padding", 14);
+            padding = new(
+                RitsuShellThemeLayoutResolver.ResolveInt("components.toggle.layout.padding.left", padding.Left),
+                RitsuShellThemeLayoutResolver.ResolveInt("components.toggle.layout.padding.top", 8),
+                RitsuShellThemeLayoutResolver.ResolveInt("components.toggle.layout.padding.right", padding.Right),
+                RitsuShellThemeLayoutResolver.ResolveInt("components.toggle.layout.padding.bottom", 8));
             return new()
             {
-                BgColor = new(0.10f, 0.10f, 0.12f, 0.7f),
-                BorderColor = new(0.25f, 0.25f, 0.28f, 0.35f),
-                BorderWidthLeft = 2,
-                BorderWidthTop = 2,
-                BorderWidthRight = 2,
-                BorderWidthBottom = 2,
-                CornerRadiusTopLeft = ModSettingsUiMetrics.CornerRadius,
-                CornerRadiusTopRight = ModSettingsUiMetrics.CornerRadius,
-                CornerRadiusBottomRight = ModSettingsUiMetrics.CornerRadius,
-                CornerRadiusBottomLeft = ModSettingsUiMetrics.CornerRadius,
-                ContentMarginLeft = 14,
-                ContentMarginTop = 8,
-                ContentMarginRight = 14,
-                ContentMarginBottom = 8,
+                BgColor = RitsuShellTheme.Current.Component.Toggle.Disabled.Bg,
+                BorderColor = RitsuShellTheme.Current.Component.Toggle.Disabled.Border,
+                BorderWidthLeft = border.Left,
+                BorderWidthTop = border.Top,
+                BorderWidthRight = border.Right,
+                BorderWidthBottom = border.Bottom,
+                CornerRadiusTopLeft = radius,
+                CornerRadiusTopRight = radius,
+                CornerRadiusBottomRight = radius,
+                CornerRadiusBottomLeft = radius,
+                ContentMarginLeft = padding.Left,
+                ContentMarginTop = padding.Top,
+                ContentMarginRight = padding.Right,
+                ContentMarginBottom = padding.Bottom,
             };
         }
     }
@@ -167,18 +199,24 @@ namespace STS2RitsuLib.Settings
             _onChanged = onChanged;
             _bindingValueAtConstruct = initialValue;
 
-            CustomMinimumSize = new(ModSettingsUiMetrics.SliderRowMinWidth, ModSettingsUiMetrics.EntryValueMinHeight);
+            CustomMinimumSize = RitsuShellThemeLayoutResolver.ResolveMinSize(
+                "components.slider.layout.rowMinSize",
+                new(RitsuShellTheme.Current.Metric.Slider.RowMinWidth,
+                    RitsuShellTheme.Current.Metric.Entry.ValueMinHeight));
             SizeFlagsHorizontal = SizeFlags.ShrinkEnd;
             SizeFlagsVertical = SizeFlags.ShrinkCenter;
             Alignment = AlignmentMode.Center;
             MouseFilter = MouseFilterEnum.Ignore;
-            AddThemeConstantOverride("separation", 8);
+            AddThemeConstantOverride("separation",
+                RitsuShellThemeLayoutResolver.ResolveInt("components.slider.layout.rowSeparation", 8));
 
             var valueEdit = new LineEdit
             {
                 Name = "SliderValue",
-                CustomMinimumSize = new(ModSettingsUiMetrics.SliderValueFieldWidth,
-                    ModSettingsUiMetrics.SliderValueFieldHeight),
+                CustomMinimumSize = RitsuShellThemeLayoutResolver.ResolveMinSize(
+                    "components.slider.layout.valueField.minSize",
+                    new(RitsuShellTheme.Current.Metric.Slider.ValueFieldWidth,
+                        RitsuShellTheme.Current.Metric.Slider.ValueFieldHeight)),
                 SizeFlagsHorizontal = SizeFlags.ShrinkBegin,
                 SizeFlagsVertical = SizeFlags.ShrinkCenter,
                 Alignment = HorizontalAlignment.Center,
@@ -186,7 +224,7 @@ namespace STS2RitsuLib.Settings
                 CaretBlink = true,
             };
             ModSettingsUiControlTheming.ApplyEntryLineEditValueFieldTheme(valueEdit,
-                ModSettingsUiResources.KreonRegular);
+                RitsuShellTheme.Current.Font.Body);
             AddChild(valueEdit);
             _valueEdit = valueEdit;
 
@@ -194,12 +232,16 @@ namespace STS2RitsuLib.Settings
             {
                 SizeFlagsHorizontal = SizeFlags.ExpandFill,
                 SizeFlagsVertical = SizeFlags.ShrinkCenter,
-                CustomMinimumSize = new(ModSettingsUiMetrics.SliderTrackMinWidth,
-                    ModSettingsUiMetrics.SliderValueFieldHeight),
+                CustomMinimumSize = RitsuShellThemeLayoutResolver.ResolveMinSize(
+                    "components.slider.layout.track.minSize",
+                    new(RitsuShellTheme.Current.Metric.Slider.TrackMinWidth,
+                        RitsuShellTheme.Current.Metric.Slider.ValueFieldHeight)),
                 MouseFilter = MouseFilterEnum.Ignore,
             };
-            sliderPanel.AddThemeConstantOverride("margin_top", 4);
-            sliderPanel.AddThemeConstantOverride("margin_bottom", 4);
+            sliderPanel.AddThemeConstantOverride("margin_top",
+                RitsuShellThemeLayoutResolver.ResolveInt("components.slider.layout.track.margin.top", 4));
+            sliderPanel.AddThemeConstantOverride("margin_bottom",
+                RitsuShellThemeLayoutResolver.ResolveInt("components.slider.layout.track.margin.bottom", 4));
             AddChild(sliderPanel);
 
             var normalizedInitial = NormalizeSliderValue(initialValue, minValue, maxValue, step);
@@ -208,7 +250,9 @@ namespace STS2RitsuLib.Settings
                 Name = "Slider",
                 SizeFlagsHorizontal = SizeFlags.ExpandFill,
                 SizeFlagsVertical = SizeFlags.ShrinkCenter,
-                CustomMinimumSize = new(0f, 24f),
+                CustomMinimumSize = RitsuShellThemeLayoutResolver.ResolveMinSize(
+                    "components.slider.layout.track.barMinSize",
+                    new(0f, 24f)),
                 FocusMode = FocusModeEnum.All,
                 MouseFilter = MouseFilterEnum.Pass,
                 MinValue = minValue,
@@ -372,20 +416,36 @@ namespace STS2RitsuLib.Settings
 
         private static StyleBoxFlat CreateSliderStyle(bool highlighted)
         {
+            var radius = RitsuShellThemeLayoutResolver.ResolveInt("components.slider.layout.grabber.cornerRadius",
+                RitsuShellTheme.Current.Metric.Radius.Default);
+            var padding = RitsuShellThemeLayoutResolver.ResolveEdges("components.slider.layout.grabber.padding", 8);
+            padding = new(
+                RitsuShellThemeLayoutResolver.ResolveInt("components.slider.layout.grabber.padding.left", padding.Left),
+                RitsuShellThemeLayoutResolver.ResolveInt("components.slider.layout.grabber.padding.top", 6),
+                RitsuShellThemeLayoutResolver.ResolveInt("components.slider.layout.grabber.padding.right",
+                    padding.Right),
+                RitsuShellThemeLayoutResolver.ResolveInt("components.slider.layout.grabber.padding.bottom", 6));
+            var bg = highlighted
+                ? ResolveSliderColor("components.slider.track.highlight",
+                    RitsuShellTheme.Current.Component.Slider.GrabHighlight)
+                : ResolveSliderColor("components.slider.track.bg", RitsuShellTheme.Current.Component.Slider.GrabShadow);
             return new()
             {
-                BgColor = highlighted
-                    ? new(0.48f, 0.73f, 0.92f, 0.95f)
-                    : new Color(0.26f, 0.34f, 0.43f, 0.98f),
-                CornerRadiusTopLeft = ModSettingsUiMetrics.CornerRadius,
-                CornerRadiusTopRight = ModSettingsUiMetrics.CornerRadius,
-                CornerRadiusBottomRight = ModSettingsUiMetrics.CornerRadius,
-                CornerRadiusBottomLeft = ModSettingsUiMetrics.CornerRadius,
-                ContentMarginLeft = 8,
-                ContentMarginTop = 6,
-                ContentMarginRight = 8,
-                ContentMarginBottom = 6,
+                BgColor = bg,
+                CornerRadiusTopLeft = radius,
+                CornerRadiusTopRight = radius,
+                CornerRadiusBottomRight = radius,
+                CornerRadiusBottomLeft = radius,
+                ContentMarginLeft = padding.Left,
+                ContentMarginTop = padding.Top,
+                ContentMarginRight = padding.Right,
+                ContentMarginBottom = padding.Bottom,
             };
+        }
+
+        private static Color ResolveSliderColor(string path, Color fallback)
+        {
+            return RitsuShellTheme.Current.TryGetColor(path, out var color) ? color : fallback;
         }
     }
 
@@ -425,18 +485,24 @@ namespace STS2RitsuLib.Settings
             _onChanged = onChanged;
             _bindingValueAtConstruct = initialValue;
 
-            CustomMinimumSize = new(ModSettingsUiMetrics.SliderRowMinWidth, ModSettingsUiMetrics.EntryValueMinHeight);
+            CustomMinimumSize = RitsuShellThemeLayoutResolver.ResolveMinSize(
+                "components.slider.layout.rowMinSize",
+                new(RitsuShellTheme.Current.Metric.Slider.RowMinWidth,
+                    RitsuShellTheme.Current.Metric.Entry.ValueMinHeight));
             SizeFlagsHorizontal = SizeFlags.ShrinkEnd;
             SizeFlagsVertical = SizeFlags.ShrinkCenter;
             Alignment = AlignmentMode.Center;
             MouseFilter = MouseFilterEnum.Ignore;
-            AddThemeConstantOverride("separation", 8);
+            AddThemeConstantOverride("separation",
+                RitsuShellThemeLayoutResolver.ResolveInt("components.slider.layout.rowSeparation", 8));
 
             var valueEdit = new LineEdit
             {
                 Name = "SliderValue",
-                CustomMinimumSize = new(ModSettingsUiMetrics.SliderValueFieldWidth,
-                    ModSettingsUiMetrics.SliderValueFieldHeight),
+                CustomMinimumSize = RitsuShellThemeLayoutResolver.ResolveMinSize(
+                    "components.slider.layout.valueField.minSize",
+                    new(RitsuShellTheme.Current.Metric.Slider.ValueFieldWidth,
+                        RitsuShellTheme.Current.Metric.Slider.ValueFieldHeight)),
                 SizeFlagsHorizontal = SizeFlags.ShrinkBegin,
                 SizeFlagsVertical = SizeFlags.ShrinkCenter,
                 Alignment = HorizontalAlignment.Center,
@@ -444,7 +510,7 @@ namespace STS2RitsuLib.Settings
                 CaretBlink = true,
             };
             ModSettingsUiControlTheming.ApplyEntryLineEditValueFieldTheme(valueEdit,
-                ModSettingsUiResources.KreonRegular);
+                RitsuShellTheme.Current.Font.Body);
             AddChild(valueEdit);
             _valueEdit = valueEdit;
 
@@ -452,12 +518,16 @@ namespace STS2RitsuLib.Settings
             {
                 SizeFlagsHorizontal = SizeFlags.ExpandFill,
                 SizeFlagsVertical = SizeFlags.ShrinkCenter,
-                CustomMinimumSize = new(ModSettingsUiMetrics.SliderTrackMinWidth,
-                    ModSettingsUiMetrics.SliderValueFieldHeight),
+                CustomMinimumSize = RitsuShellThemeLayoutResolver.ResolveMinSize(
+                    "components.slider.layout.track.minSize",
+                    new(RitsuShellTheme.Current.Metric.Slider.TrackMinWidth,
+                        RitsuShellTheme.Current.Metric.Slider.ValueFieldHeight)),
                 MouseFilter = MouseFilterEnum.Ignore,
             };
-            sliderPanel.AddThemeConstantOverride("margin_top", 4);
-            sliderPanel.AddThemeConstantOverride("margin_bottom", 4);
+            sliderPanel.AddThemeConstantOverride("margin_top",
+                RitsuShellThemeLayoutResolver.ResolveInt("components.slider.layout.track.margin.top", 4));
+            sliderPanel.AddThemeConstantOverride("margin_bottom",
+                RitsuShellThemeLayoutResolver.ResolveInt("components.slider.layout.track.margin.bottom", 4));
             AddChild(sliderPanel);
 
             var normalizedInitial = NormalizeSliderValue(initialValue, minValue, maxValue, step);
@@ -466,7 +536,9 @@ namespace STS2RitsuLib.Settings
                 Name = "Slider",
                 SizeFlagsHorizontal = SizeFlags.ExpandFill,
                 SizeFlagsVertical = SizeFlags.ShrinkCenter,
-                CustomMinimumSize = new(0f, 24f),
+                CustomMinimumSize = RitsuShellThemeLayoutResolver.ResolveMinSize(
+                    "components.slider.layout.track.barMinSize",
+                    new(0f, 24f)),
                 FocusMode = FocusModeEnum.All,
                 MouseFilter = MouseFilterEnum.Pass,
                 MinValue = minValue,
@@ -638,20 +710,36 @@ namespace STS2RitsuLib.Settings
 
         private static StyleBoxFlat CreateFloatSliderStyle(bool highlighted)
         {
+            var radius = RitsuShellThemeLayoutResolver.ResolveInt("components.slider.layout.grabber.cornerRadius",
+                RitsuShellTheme.Current.Metric.Radius.Default);
+            var padding = RitsuShellThemeLayoutResolver.ResolveEdges("components.slider.layout.grabber.padding", 8);
+            padding = new(
+                RitsuShellThemeLayoutResolver.ResolveInt("components.slider.layout.grabber.padding.left", padding.Left),
+                RitsuShellThemeLayoutResolver.ResolveInt("components.slider.layout.grabber.padding.top", 6),
+                RitsuShellThemeLayoutResolver.ResolveInt("components.slider.layout.grabber.padding.right",
+                    padding.Right),
+                RitsuShellThemeLayoutResolver.ResolveInt("components.slider.layout.grabber.padding.bottom", 6));
+            var bg = highlighted
+                ? ResolveSliderColor("components.slider.track.highlight",
+                    RitsuShellTheme.Current.Component.Slider.GrabHighlight)
+                : ResolveSliderColor("components.slider.track.bg", RitsuShellTheme.Current.Component.Slider.GrabShadow);
             return new()
             {
-                BgColor = highlighted
-                    ? new(0.48f, 0.73f, 0.92f, 0.95f)
-                    : new Color(0.26f, 0.34f, 0.43f, 0.98f),
-                CornerRadiusTopLeft = ModSettingsUiMetrics.CornerRadius,
-                CornerRadiusTopRight = ModSettingsUiMetrics.CornerRadius,
-                CornerRadiusBottomRight = ModSettingsUiMetrics.CornerRadius,
-                CornerRadiusBottomLeft = ModSettingsUiMetrics.CornerRadius,
-                ContentMarginLeft = 8,
-                ContentMarginTop = 6,
-                ContentMarginRight = 8,
-                ContentMarginBottom = 6,
+                BgColor = bg,
+                CornerRadiusTopLeft = radius,
+                CornerRadiusTopRight = radius,
+                CornerRadiusBottomRight = radius,
+                CornerRadiusBottomLeft = radius,
+                ContentMarginLeft = padding.Left,
+                ContentMarginTop = padding.Top,
+                ContentMarginRight = padding.Right,
+                ContentMarginBottom = padding.Bottom,
             };
+        }
+
+        private static Color ResolveSliderColor(string path, Color fallback)
+        {
+            return RitsuShellTheme.Current.TryGetColor(path, out var color) ? color : fallback;
         }
     }
 
@@ -683,24 +771,32 @@ namespace STS2RitsuLib.Settings
             _currentValue = currentValue;
             _onChanged = onChanged;
 
-            CustomMinimumSize = new(ModSettingsUiMetrics.ChoiceRowMinWidth, ModSettingsUiMetrics.EntryValueMinHeight);
+            CustomMinimumSize = RitsuShellThemeLayoutResolver.ResolveMinSize(
+                "components.choice.layout.rowMinSize",
+                new(RitsuShellTheme.Current.Metric.Choice.RowMinWidth,
+                    RitsuShellTheme.Current.Metric.Entry.ValueMinHeight));
             SizeFlagsHorizontal = SizeFlags.ShrinkEnd;
             SizeFlagsVertical = SizeFlags.ShrinkCenter;
             MouseFilter = MouseFilterEnum.Ignore;
             Alignment = AlignmentMode.Center;
-            AddThemeConstantOverride("separation", 6);
+            AddThemeConstantOverride("separation",
+                RitsuShellThemeLayoutResolver.ResolveInt("components.choice.layout.rowSeparation", 6));
 
             AddChild(new ModSettingsMiniButton("<", () => Shift(-1))
             {
-                CustomMinimumSize = new(ModSettingsUiMetrics.MiniStepperButtonSize,
-                    ModSettingsUiMetrics.MiniStepperButtonSize),
+                CustomMinimumSize = RitsuShellThemeLayoutResolver.ResolveMinSize(
+                    "components.choice.layout.stepButton.minSize",
+                    new(RitsuShellTheme.Current.Metric.Entry.MiniStepperButtonSize,
+                        RitsuShellTheme.Current.Metric.Entry.MiniStepperButtonSize)),
                 SizeFlagsVertical = SizeFlags.ShrinkCenter,
             });
 
             var center = new PanelContainer
             {
-                CustomMinimumSize = new(ModSettingsUiMetrics.ChoiceCenterMinWidth,
-                    ModSettingsUiMetrics.SliderValueFieldHeight),
+                CustomMinimumSize = RitsuShellThemeLayoutResolver.ResolveMinSize(
+                    "components.choice.layout.center.minSize",
+                    new(RitsuShellTheme.Current.Metric.Choice.CenterMinWidth,
+                        RitsuShellTheme.Current.Metric.Slider.ValueFieldHeight)),
                 SizeFlagsHorizontal = SizeFlags.ExpandFill,
                 SizeFlagsVertical = SizeFlags.ShrinkCenter,
                 MouseFilter = MouseFilterEnum.Ignore,
@@ -718,16 +814,18 @@ namespace STS2RitsuLib.Settings
                 TextOverrunBehavior = TextServer.OverrunBehavior.TrimEllipsis,
                 ClipText = true,
             };
-            label.AddThemeFontOverride("font", ModSettingsUiResources.KreonBold);
-            label.AddThemeFontSizeOverride("font_size", 17);
-            label.AddThemeColorOverride("font_color", ModSettingsUiPalette.LabelPrimary);
+            label.AddThemeFontOverride("font", RitsuShellTheme.Current.Font.BodyBold);
+            label.AddThemeFontSizeOverride("font_size", RitsuShellTheme.Current.Metric.FontSize.ValueLabel);
+            label.AddThemeColorOverride("font_color", RitsuShellTheme.Current.Text.LabelPrimary);
             center.AddChild(label);
             _label = label;
 
             AddChild(new ModSettingsMiniButton(">", () => Shift(1))
             {
-                CustomMinimumSize = new(ModSettingsUiMetrics.MiniStepperButtonSize,
-                    ModSettingsUiMetrics.MiniStepperButtonSize),
+                CustomMinimumSize = RitsuShellThemeLayoutResolver.ResolveMinSize(
+                    "components.choice.layout.stepButton.minSize",
+                    new(RitsuShellTheme.Current.Metric.Entry.MiniStepperButtonSize,
+                        RitsuShellTheme.Current.Metric.Entry.MiniStepperButtonSize)),
                 SizeFlagsVertical = SizeFlags.ShrinkCenter,
             });
         }
@@ -813,7 +911,8 @@ namespace STS2RitsuLib.Settings
     ///     Dropdown-style choice editor for labeled values.
     /// </summary>
     /// <typeparam name="TValue">The stored option value type.</typeparam>
-    public sealed partial class ModSettingsDropdownChoiceControl<TValue> : HBoxContainer
+    public sealed partial class ModSettingsDropdownChoiceControl<TValue> : HBoxContainer,
+        IModSettingsTransientPopupOwner
     {
         private const float DropListMinWidth = 200f;
         private const float RowHeight = 38f;
@@ -844,7 +943,10 @@ namespace STS2RitsuLib.Settings
             _optionsWithValues = options.ToArray();
             _onChanged = onChanged;
 
-            CustomMinimumSize = new(ModSettingsUiFactory.EntryControlWidth, ModSettingsUiMetrics.EntryValueMinHeight);
+            CustomMinimumSize = RitsuShellThemeLayoutResolver.ResolveMinSize(
+                "components.dropdown.layout.entry.minSize",
+                new(ModSettingsUiFactory.EntryControlWidth,
+                    RitsuShellTheme.Current.Metric.Entry.ValueMinHeight));
             SizeFlagsHorizontal = SizeFlags.ShrinkEnd;
             SizeFlagsVertical = SizeFlags.ShrinkCenter;
             MouseFilter = MouseFilterEnum.Ignore;
@@ -859,8 +961,10 @@ namespace STS2RitsuLib.Settings
 
             var face = new ModSettingsGamepadCompatibleButton
             {
-                CustomMinimumSize = new(ModSettingsUiFactory.EntryControlWidth,
-                    ModSettingsUiMetrics.EntryValueMinHeight),
+                CustomMinimumSize = RitsuShellThemeLayoutResolver.ResolveMinSize(
+                    "components.dropdown.layout.face.minSize",
+                    new(ModSettingsUiFactory.EntryControlWidth,
+                        RitsuShellTheme.Current.Metric.Entry.ValueMinHeight)),
                 SizeFlagsHorizontal = SizeFlags.ExpandFill,
                 SizeFlagsVertical = SizeFlags.ShrinkCenter,
                 FocusMode = FocusModeEnum.All,
@@ -871,12 +975,12 @@ namespace STS2RitsuLib.Settings
                 Alignment = HorizontalAlignment.Left,
                 TextOverrunBehavior = TextServer.OverrunBehavior.TrimEllipsis,
             };
-            face.AddThemeFontOverride("font", ModSettingsUiResources.KreonBold);
-            face.AddThemeFontSizeOverride("font_size", 17);
-            face.AddThemeColorOverride("font_color", ModSettingsUiPalette.LabelPrimary);
-            face.AddThemeColorOverride("font_hover_color", new(1f, 1f, 1f));
-            face.AddThemeColorOverride("font_pressed_color", new(1f, 1f, 1f));
-            face.AddThemeColorOverride("font_focus_color", new(1f, 1f, 1f));
+            face.AddThemeFontOverride("font", RitsuShellTheme.Current.Font.BodyBold);
+            face.AddThemeFontSizeOverride("font_size", RitsuShellTheme.Current.Metric.FontSize.ValueLabel);
+            face.AddThemeColorOverride("font_color", RitsuShellTheme.Current.Text.LabelPrimary);
+            face.AddThemeColorOverride("font_hover_color", RitsuShellTheme.Current.Color.White);
+            face.AddThemeColorOverride("font_pressed_color", RitsuShellTheme.Current.Color.White);
+            face.AddThemeColorOverride("font_focus_color", RitsuShellTheme.Current.Color.White);
             ModSettingsUiControlTheming.ApplyUniformSurfaceButtonStates(face);
             face.Pressed += OnFacePressed;
             AddChild(face);
@@ -890,6 +994,11 @@ namespace STS2RitsuLib.Settings
         /// </summary>
         public ModSettingsDropdownChoiceControl()
         {
+        }
+
+        void IModSettingsTransientPopupOwner.ForceCloseTransientUi()
+        {
+            CloseDropdown();
         }
 
         /// <inheritdoc />
@@ -1019,7 +1128,8 @@ namespace STS2RitsuLib.Settings
                 SizeFlagsHorizontal = SizeFlags.ExpandFill,
                 MouseFilter = MouseFilterEnum.Ignore,
             };
-            _dropList.AddThemeConstantOverride("separation", 8);
+            _dropList.AddThemeConstantOverride("separation",
+                RitsuShellThemeLayoutResolver.ResolveInt("components.dropdown.layout.listSeparation", 8));
             _dropPanel.AddChild(_dropList);
         }
 
@@ -1034,6 +1144,7 @@ namespace STS2RitsuLib.Settings
             if (_dropPanel == null || _dropList == null || _backdrop == null || _optionsWithValues.Length == 0)
                 return;
 
+            _dropPanel.AddThemeStyleboxOverride("panel", ModSettingsUiFactory.CreateListShellStyle());
             RebuildListRows();
             if (_rowButtons.Count == 0)
                 return;
@@ -1094,17 +1205,20 @@ namespace STS2RitsuLib.Settings
                         SizeFlagsHorizontal = SizeFlags.ExpandFill,
                         Alignment = HorizontalAlignment.Left,
                     };
-                    row.AddThemeFontOverride("font", ModSettingsUiResources.KreonRegular);
-                    row.AddThemeFontSizeOverride("font_size", 18);
+                    row.AddThemeFontOverride("font", RitsuShellTheme.Current.Font.Body);
+                    row.AddThemeFontSizeOverride("font_size", RitsuShellTheme.Current.Metric.FontSize.PopupRow);
                     _rowButtonCache[index] = row;
                 }
 
                 row.Text = opt.Label;
-                row.CustomMinimumSize = new(panelMinW - 24f, RowHeight);
+                var rowPadX = RitsuShellThemeLayoutResolver.ResolveFloat("components.dropdown.layout.row.hInset", 24f);
+                row.CustomMinimumSize = RitsuShellThemeLayoutResolver.ResolveMinSize(
+                    "components.dropdown.layout.row.minSize",
+                    new(panelMinW - rowPadX, RowHeight));
                 row.TooltipText = string.Empty;
-                row.AddThemeColorOverride("font_color", ModSettingsUiPalette.LabelPrimary);
-                row.AddThemeColorOverride("font_hover_color", Colors.White);
-                row.AddThemeColorOverride("font_pressed_color", Colors.White);
+                row.AddThemeColorOverride("font_color", RitsuShellTheme.Current.Text.LabelPrimary);
+                row.AddThemeColorOverride("font_hover_color", RitsuShellTheme.Current.Text.HoverHighlight);
+                row.AddThemeColorOverride("font_pressed_color", RitsuShellTheme.Current.Text.HoverHighlight);
                 row.AddThemeStyleboxOverride("normal", ModSettingsMiniButton.CreateStyle(false));
                 row.AddThemeStyleboxOverride("hover", ModSettingsMiniButton.CreateStyle(true));
                 row.AddThemeStyleboxOverride("pressed", ModSettingsMiniButton.CreatePressedStyle());
@@ -1113,9 +1227,9 @@ namespace STS2RitsuLib.Settings
                 {
                     row.TooltipText = ModSettingsLocalization.Get("choice.dropdown.currentRow",
                         "This option is the active setting (shown on the closed control).");
-                    row.AddThemeColorOverride("font_color", new(0.95f, 0.98f, 1f));
-                    row.AddThemeColorOverride("font_hover_color", Colors.White);
-                    row.AddThemeColorOverride("font_pressed_color", Colors.White);
+                    row.AddThemeColorOverride("font_color", RitsuShellTheme.Current.Text.DropdownRow);
+                    row.AddThemeColorOverride("font_hover_color", RitsuShellTheme.Current.Text.HoverHighlight);
+                    row.AddThemeColorOverride("font_pressed_color", RitsuShellTheme.Current.Text.HoverHighlight);
                     row.AddThemeStyleboxOverride("normal", CreateDropdownCurrentRowNormal());
                     row.AddThemeStyleboxOverride("hover", CreateDropdownCurrentRowHover());
                     row.AddThemeStyleboxOverride("pressed", CreateDropdownCurrentRowPressed());
@@ -1129,7 +1243,9 @@ namespace STS2RitsuLib.Settings
             }
 
             if (_dropPanel != null)
-                _dropPanel.CustomMinimumSize = new(panelMinW, 0f);
+                _dropPanel.CustomMinimumSize = RitsuShellThemeLayoutResolver.ResolveMinSize(
+                    "components.dropdown.layout.panel.minSize",
+                    new(panelMinW, 0f));
         }
 
         private void ActivateRow(int index)
@@ -1186,57 +1302,84 @@ namespace STS2RitsuLib.Settings
 
         private static StyleBoxFlat CreateDropdownCurrentRowNormal()
         {
+            var border =
+                RitsuShellThemeLayoutResolver.ResolveEdges("components.dropdown.layout.currentRow.borderWidth", 2);
+            var radius = RitsuShellThemeLayoutResolver.ResolveInt("components.dropdown.layout.currentRow.cornerRadius",
+                RitsuShellTheme.Current.Metric.Radius.Default);
+            var padding =
+                RitsuShellThemeLayoutResolver.ResolveEdges("components.dropdown.layout.currentRow.padding", 10);
+            padding = new(
+                RitsuShellThemeLayoutResolver.ResolveInt("components.dropdown.layout.currentRow.padding.left",
+                    padding.Left),
+                RitsuShellThemeLayoutResolver.ResolveInt("components.dropdown.layout.currentRow.padding.top", 5),
+                RitsuShellThemeLayoutResolver.ResolveInt("components.dropdown.layout.currentRow.padding.right",
+                    padding.Right),
+                RitsuShellThemeLayoutResolver.ResolveInt("components.dropdown.layout.currentRow.padding.bottom", 5));
             return new()
             {
-                BgColor = new(0.14f, 0.26f, 0.32f, 0.98f),
-                BorderColor = new(0.45f, 0.72f, 0.86f, 0.85f),
-                BorderWidthLeft = 2,
-                BorderWidthTop = 2,
-                BorderWidthRight = 2,
-                BorderWidthBottom = 2,
-                CornerRadiusTopLeft = ModSettingsUiMetrics.CornerRadius,
-                CornerRadiusTopRight = ModSettingsUiMetrics.CornerRadius,
-                CornerRadiusBottomRight = ModSettingsUiMetrics.CornerRadius,
-                CornerRadiusBottomLeft = ModSettingsUiMetrics.CornerRadius,
-                ContentMarginLeft = 10,
-                ContentMarginTop = 5,
-                ContentMarginRight = 10,
-                ContentMarginBottom = 5,
+                BgColor = RitsuShellTheme.Current.Component.Dropdown.Open.Bg,
+                BorderColor = RitsuShellTheme.Current.Component.Dropdown.Open.Border,
+                BorderWidthLeft = border.Left,
+                BorderWidthTop = border.Top,
+                BorderWidthRight = border.Right,
+                BorderWidthBottom = border.Bottom,
+                CornerRadiusTopLeft = radius,
+                CornerRadiusTopRight = radius,
+                CornerRadiusBottomRight = radius,
+                CornerRadiusBottomLeft = radius,
+                ContentMarginLeft = padding.Left,
+                ContentMarginTop = padding.Top,
+                ContentMarginRight = padding.Right,
+                ContentMarginBottom = padding.Bottom,
             };
         }
 
         private static StyleBoxFlat CreateDropdownCurrentRowHover()
         {
             var s = CreateDropdownCurrentRowNormal();
-            s.BgColor = new(0.17f, 0.30f, 0.36f, 0.99f);
+            s.BgColor = RitsuShellTheme.Current.Component.Dropdown.Hover.Bg;
             return s;
         }
 
         private static StyleBoxFlat CreateDropdownCurrentRowPressed()
         {
             var s = CreateDropdownCurrentRowNormal();
-            s.BgColor = new(0.19f, 0.34f, 0.40f, 0.99f);
+            s.BgColor = RitsuShellTheme.Current.Component.Dropdown.Pressed.Bg;
             return s;
         }
 
         private static StyleBoxFlat CreateDropdownCurrentRowFocus()
         {
+            var border =
+                RitsuShellThemeLayoutResolver.ResolveEdges("components.dropdown.layout.currentRow.borderWidthFocus", 3);
+            var radius = RitsuShellThemeLayoutResolver.ResolveInt("components.dropdown.layout.currentRow.cornerRadius",
+                RitsuShellTheme.Current.Metric.Radius.Default);
+            var padding =
+                RitsuShellThemeLayoutResolver.ResolveEdges("components.dropdown.layout.currentRow.paddingFocus", 9);
+            padding = new(
+                RitsuShellThemeLayoutResolver.ResolveInt("components.dropdown.layout.currentRow.paddingFocus.left",
+                    padding.Left),
+                RitsuShellThemeLayoutResolver.ResolveInt("components.dropdown.layout.currentRow.paddingFocus.top", 4),
+                RitsuShellThemeLayoutResolver.ResolveInt("components.dropdown.layout.currentRow.paddingFocus.right",
+                    padding.Right),
+                RitsuShellThemeLayoutResolver.ResolveInt("components.dropdown.layout.currentRow.paddingFocus.bottom",
+                    4));
             return new()
             {
-                BgColor = new(0.18f, 0.32f, 0.38f, 0.99f),
-                BorderColor = new(0.85f, 0.94f, 1f, 0.98f),
-                BorderWidthLeft = 3,
-                BorderWidthTop = 3,
-                BorderWidthRight = 3,
-                BorderWidthBottom = 3,
-                CornerRadiusTopLeft = ModSettingsUiMetrics.CornerRadius,
-                CornerRadiusTopRight = ModSettingsUiMetrics.CornerRadius,
-                CornerRadiusBottomRight = ModSettingsUiMetrics.CornerRadius,
-                CornerRadiusBottomLeft = ModSettingsUiMetrics.CornerRadius,
-                ContentMarginLeft = 9,
-                ContentMarginTop = 4,
-                ContentMarginRight = 9,
-                ContentMarginBottom = 4,
+                BgColor = RitsuShellTheme.Current.Component.Dropdown.Focus.Bg,
+                BorderColor = RitsuShellTheme.Current.Component.Dropdown.Focus.Border,
+                BorderWidthLeft = border.Left,
+                BorderWidthTop = border.Top,
+                BorderWidthRight = border.Right,
+                BorderWidthBottom = border.Bottom,
+                CornerRadiusTopLeft = radius,
+                CornerRadiusTopRight = radius,
+                CornerRadiusBottomRight = radius,
+                CornerRadiusBottomLeft = radius,
+                ContentMarginLeft = padding.Left,
+                ContentMarginTop = padding.Top,
+                ContentMarginRight = padding.Right,
+                ContentMarginBottom = padding.Bottom,
             };
         }
 
@@ -1287,7 +1430,7 @@ namespace STS2RitsuLib.Settings
     /// <summary>
     ///     Color editor with a visible swatch picker and editable hex value.
     /// </summary>
-    public sealed partial class ModSettingsColorControl : HBoxContainer
+    public sealed partial class ModSettingsColorControl : HBoxContainer, IModSettingsTransientPopupOwner
     {
         private readonly Action<string?>? _onChanged;
         private LineEdit? _hexEdit;
@@ -1295,7 +1438,7 @@ namespace STS2RitsuLib.Settings
         private ColorPickerButton? _pickerButton;
         private bool _pickerChangedWhileOpen;
         private bool _suppressCallbacks;
-        private Color _unsetPreviewColor = new(1f, 215f / 255f, 64f / 255f);
+        private Color _unsetPreviewColor = RitsuShellTheme.Current.Color.UnsetPreview;
 
         /// <summary>
         ///     Creates a color editor. 保留旧版两参数构造函数以维持 ABI 兼容。
@@ -1319,16 +1462,23 @@ namespace STS2RitsuLib.Settings
         {
             _onChanged = onChanged;
 
-            CustomMinimumSize = new(ModSettingsUiMetrics.ColorRowMinWidth, ModSettingsUiMetrics.EntryValueMinHeight);
+            CustomMinimumSize = RitsuShellThemeLayoutResolver.ResolveMinSize(
+                "components.color.layout.rowMinSize",
+                new(RitsuShellTheme.Current.Metric.Color.RowMinWidth,
+                    RitsuShellTheme.Current.Metric.Entry.ValueMinHeight));
             SizeFlagsHorizontal = SizeFlags.ShrinkEnd;
             SizeFlagsVertical = SizeFlags.ShrinkCenter;
             MouseFilter = MouseFilterEnum.Ignore;
             Alignment = AlignmentMode.Center;
-            AddThemeConstantOverride("separation", 8);
+            AddThemeConstantOverride("separation",
+                RitsuShellThemeLayoutResolver.ResolveInt("components.color.layout.rowSeparation", 8));
 
             var pickerButton = new ColorPickerButton
             {
-                CustomMinimumSize = new(ModSettingsUiMetrics.ColorSwatchSize, ModSettingsUiMetrics.ColorSwatchSize),
+                CustomMinimumSize = RitsuShellThemeLayoutResolver.ResolveMinSize(
+                    "components.color.layout.swatch.minSize",
+                    new(RitsuShellTheme.Current.Metric.Color.SwatchSize,
+                        RitsuShellTheme.Current.Metric.Color.SwatchSize)),
                 SizeFlagsVertical = SizeFlags.ShrinkCenter,
                 MouseFilter = MouseFilterEnum.Stop,
                 FocusMode = FocusModeEnum.All,
@@ -1343,11 +1493,14 @@ namespace STS2RitsuLib.Settings
                 PlaceholderText = editAlpha ? "#RRGGBBAA" : "#RRGGBB",
                 SelectAllOnFocus = true,
                 Alignment = HorizontalAlignment.Center,
-                CustomMinimumSize = new(0f, ModSettingsUiMetrics.SliderValueFieldHeight),
+                CustomMinimumSize = RitsuShellThemeLayoutResolver.ResolveMinSize(
+                    "components.color.layout.valueField.minSize",
+                    new(0f, RitsuShellTheme.Current.Metric.Slider.ValueFieldHeight)),
                 SizeFlagsHorizontal = SizeFlags.ExpandFill,
                 SizeFlagsVertical = SizeFlags.ShrinkCenter,
             };
-            ModSettingsUiControlTheming.ApplyEntryLineEditValueFieldTheme(hexEdit, ModSettingsUiResources.KreonBold);
+            ModSettingsUiControlTheming.ApplyEntryLineEditValueFieldTheme(hexEdit,
+                RitsuShellTheme.Current.Font.BodyBold);
             AddChild(hexEdit);
             _hexEdit = hexEdit;
 
@@ -1374,6 +1527,13 @@ namespace STS2RitsuLib.Settings
         ///     Current hex text shown by the editor, or an empty string when the color is unset.
         /// </summary>
         public string ValueText => _hexEdit?.Text ?? _lastCommitted;
+
+        void IModSettingsTransientPopupOwner.ForceCloseTransientUi()
+        {
+            if (_pickerButton?.GetPopup() is { Visible: true } popup)
+                popup.Hide();
+            _pickerChangedWhileOpen = false;
+        }
 
         /// <summary>
         ///     Serializes <paramref name="color" /> as an 8-digit hex string for settings storage / display.
@@ -1428,6 +1588,8 @@ namespace STS2RitsuLib.Settings
             if (_pickerButton == null) return;
             _pickerButton.PopupClosed += OnPickerPopupClosed;
             _pickerButton.ColorChanged += OnPickerColorChanged;
+            if (_pickerButton.GetPopup() is { } popup)
+                popup.AddThemeStyleboxOverride("panel", ModSettingsUiFactory.CreateInsetSurfaceStyle());
             ModSettingsFocusChrome.AttachControllerSelectionReticle(_pickerButton);
         }
 
@@ -1599,10 +1761,13 @@ namespace STS2RitsuLib.Settings
             _onChanged = onChanged;
             _currentValue = initialValue;
 
-            CustomMinimumSize = new(ModSettingsUiMetrics.KeybindingBlockWidth, 80f);
+            CustomMinimumSize = RitsuShellThemeLayoutResolver.ResolveMinSize(
+                "components.keybinding.layout.block.minSize",
+                new(RitsuShellTheme.Current.Metric.Keybinding.BlockWidth, 80f));
             SizeFlagsHorizontal = SizeFlags.ShrinkEnd;
             MouseFilter = MouseFilterEnum.Ignore;
-            AddThemeConstantOverride("separation", 8);
+            AddThemeConstantOverride("separation",
+                RitsuShellThemeLayoutResolver.ResolveInt("components.keybinding.layout.blockSeparation", 8));
 
             var row = new HBoxContainer
             {
@@ -1610,22 +1775,25 @@ namespace STS2RitsuLib.Settings
                 SizeFlagsHorizontal = SizeFlags.ExpandFill,
                 SizeFlagsVertical = SizeFlags.ShrinkCenter,
             };
-            row.AddThemeConstantOverride("separation", 6);
+            row.AddThemeConstantOverride("separation",
+                RitsuShellThemeLayoutResolver.ResolveInt("components.keybinding.layout.rowSeparation", 6));
             AddChild(row);
 
             var captureButton = new Button
             {
-                CustomMinimumSize = new(ModSettingsUiMetrics.KeybindingCaptureMinWidth,
-                    ModSettingsUiMetrics.EntryValueMinHeight),
+                CustomMinimumSize = RitsuShellThemeLayoutResolver.ResolveMinSize(
+                    "components.keybinding.layout.captureButton.minSize",
+                    new(RitsuShellTheme.Current.Metric.Keybinding.CaptureMinWidth,
+                        RitsuShellTheme.Current.Metric.Entry.ValueMinHeight)),
                 SizeFlagsHorizontal = SizeFlags.ExpandFill,
                 SizeFlagsVertical = SizeFlags.ShrinkCenter,
                 FocusMode = FocusModeEnum.All,
                 MouseFilter = MouseFilterEnum.Stop,
                 ClipText = true,
             };
-            captureButton.AddThemeFontOverride("font", ModSettingsUiResources.KreonBold);
-            captureButton.AddThemeFontSizeOverride("font_size", 17);
-            captureButton.AddThemeColorOverride("font_color", ModSettingsUiPalette.LabelPrimary);
+            captureButton.AddThemeFontOverride("font", RitsuShellTheme.Current.Font.BodyBold);
+            captureButton.AddThemeFontSizeOverride("font_size", RitsuShellTheme.Current.Metric.FontSize.ValueLabel);
+            captureButton.AddThemeColorOverride("font_color", RitsuShellTheme.Current.Text.LabelPrimary);
             ModSettingsUiControlTheming.ApplyUniformSurfaceButtonStates(captureButton);
             row.AddChild(captureButton);
             _captureButton = captureButton;
@@ -1633,7 +1801,9 @@ namespace STS2RitsuLib.Settings
             row.AddChild(new ModSettingsMiniButton(ModSettingsLocalization.Get("button.clear", "Clear"),
                 () => ApplyBinding(string.Empty, true))
             {
-                CustomMinimumSize = new(64f, ModSettingsUiMetrics.EntryValueMinHeight),
+                CustomMinimumSize = RitsuShellThemeLayoutResolver.ResolveMinSize(
+                    "components.keybinding.layout.clearButton.minSize",
+                    new(64f, RitsuShellTheme.Current.Metric.Entry.ValueMinHeight)),
                 SizeFlagsVertical = SizeFlags.ShrinkCenter,
             });
 
@@ -1647,9 +1817,9 @@ namespace STS2RitsuLib.Settings
                         "Click to record. Supports key combinations.")
                     : ModSettingsLocalization.Get("keybinding.hint.single", "Click to record a single key."),
             };
-            hint.AddThemeFontOverride("font", ModSettingsUiResources.KreonRegular);
-            hint.AddThemeFontSizeOverride("font_size", ModSettingsUiMetrics.KeybindingHintFontSize);
-            hint.AddThemeColorOverride("font_color", ModSettingsUiPalette.LabelSecondary);
+            hint.AddThemeFontOverride("font", RitsuShellTheme.Current.Font.Body);
+            hint.AddThemeFontSizeOverride("font_size", RitsuShellTheme.Current.Metric.Keybinding.HintFontSize);
+            hint.AddThemeColorOverride("font_color", RitsuShellTheme.Current.Text.LabelSecondary);
             AddChild(hint);
             _hintLabel = hint;
 
@@ -1837,7 +2007,8 @@ namespace STS2RitsuLib.Settings
         }
     }
 
-    internal sealed partial class ModSettingsActionsButton : ModSettingsGamepadCompatibleButton
+    internal sealed partial class ModSettingsActionsButton : ModSettingsGamepadCompatibleButton,
+        IModSettingsTransientPopupOwner
     {
         private const float DropMinWidth = 260f;
         private const float RowHeight = 38f;
@@ -1861,14 +2032,16 @@ namespace STS2RitsuLib.Settings
             Flat = false;
             Text = ModSettingsLocalization.Get("button.actionsGlyph", "\u22ee");
             TooltipText = ModSettingsLocalization.Get("button.actionsShort", "Actions");
-            CustomMinimumSize = new(36f, 32f);
+            CustomMinimumSize = RitsuShellThemeLayoutResolver.ResolveMinSize(
+                "components.chromeMenu.layout.trigger.minSize",
+                new(36f, 32f));
             SizeFlagsHorizontal = SizeFlags.ShrinkBegin;
             SizeFlagsVertical = SizeFlags.ShrinkCenter;
-            AddThemeFontOverride("font", ModSettingsUiResources.KreonBold);
-            AddThemeFontSizeOverride("font_size", 18);
-            AddThemeColorOverride("font_color", ModSettingsUiPalette.RichTextSecondary);
-            AddThemeColorOverride("font_hover_color", new(0.98f, 1f, 1f));
-            AddThemeColorOverride("font_pressed_color", new(1f, 1f, 1f));
+            AddThemeFontOverride("font", RitsuShellTheme.Current.Font.BodyBold);
+            AddThemeFontSizeOverride("font_size", RitsuShellTheme.Current.Metric.FontSize.Button);
+            AddThemeColorOverride("font_color", RitsuShellTheme.Current.Text.RichSecondary);
+            AddThemeColorOverride("font_hover_color", RitsuShellTheme.Current.Text.HoverHighlight);
+            AddThemeColorOverride("font_pressed_color", RitsuShellTheme.Current.Color.White);
             AddThemeStyleboxOverride("normal", ModSettingsUiFactory.CreateChromeActionsMenuStyle(false));
             AddThemeStyleboxOverride("hover", ModSettingsUiFactory.CreateChromeActionsMenuStyle(true));
             AddThemeStyleboxOverride("pressed", ModSettingsUiFactory.CreateChromeActionsMenuStyle(true));
@@ -1880,6 +2053,11 @@ namespace STS2RitsuLib.Settings
         {
             _actions = [];
             Pressed += OnEllipsisPressed;
+        }
+
+        void IModSettingsTransientPopupOwner.ForceCloseTransientUi()
+        {
+            CloseDropdown();
         }
 
         public override void _Ready()
@@ -1923,6 +2101,8 @@ namespace STS2RitsuLib.Settings
 
         public void OpenAt(Vector2 globalPosition)
         {
+            if (Disabled || ProcessMode == ProcessModeEnum.Disabled)
+                return;
             _preferredPopupPosition = new Vector2I(
                 Mathf.RoundToInt(globalPosition.X),
                 Mathf.RoundToInt(globalPosition.Y));
@@ -1967,7 +2147,9 @@ namespace STS2RitsuLib.Settings
                 MouseFilter = MouseFilterEnum.Stop,
                 TopLevel = true,
                 ZIndex = 901,
-                CustomMinimumSize = new(DropMinWidth, 0f),
+                CustomMinimumSize = RitsuShellThemeLayoutResolver.ResolveMinSize(
+                    "components.dropdown.layout.actionsMenu.minSize",
+                    new(DropMinWidth, 0f)),
             };
             _dropPanel.AddThemeStyleboxOverride("panel", ModSettingsUiFactory.CreateListShellStyle());
             AddChild(_dropPanel);
@@ -1978,7 +2160,8 @@ namespace STS2RitsuLib.Settings
                 SizeFlagsHorizontal = SizeFlags.ExpandFill,
                 MouseFilter = MouseFilterEnum.Ignore,
             };
-            _dropList.AddThemeConstantOverride("separation", 8);
+            _dropList.AddThemeConstantOverride("separation",
+                RitsuShellThemeLayoutResolver.ResolveInt("components.dropdown.layout.actionsMenu.listSeparation", 8));
             _dropPanel.AddChild(_dropList);
         }
 
@@ -1993,6 +2176,7 @@ namespace STS2RitsuLib.Settings
             if (_actions.Count == 0 || _dropPanel == null || _dropList == null || _backdrop == null)
                 return;
 
+            _dropPanel.AddThemeStyleboxOverride("panel", ModSettingsUiFactory.CreateListShellStyle());
             RebuildMenuRows();
             if (_rowButtons.Count == 0)
                 return;
@@ -2050,19 +2234,169 @@ namespace STS2RitsuLib.Settings
                         SizeFlagsHorizontal = SizeFlags.ExpandFill,
                         Alignment = HorizontalAlignment.Left,
                     };
-                    row.AddThemeFontOverride("font", ModSettingsUiResources.KreonRegular);
-                    row.AddThemeFontSizeOverride("font_size", 18);
+                    row.AddThemeFontOverride("font", RitsuShellTheme.Current.Font.Body);
+                    row.AddThemeFontSizeOverride("font_size", RitsuShellTheme.Current.Metric.FontSize.PopupRow);
                     _rowButtonCache[index] = row;
                 }
 
                 row.Text = def.Label;
-                row.CustomMinimumSize = new(DropMinWidth - 24f, RowHeight);
+                var rowPadX = RitsuShellThemeLayoutResolver.ResolveFloat(
+                    "components.dropdown.layout.actionsRow.hInset", 24f);
+                row.CustomMinimumSize = RitsuShellThemeLayoutResolver.ResolveMinSize(
+                    "components.dropdown.layout.actionsRow.minSize",
+                    new(DropMinWidth - rowPadX, RowHeight));
                 row.Disabled = !def.IsEnabled();
+                row.AddThemeColorOverride("font_color", RitsuShellTheme.Current.Text.DropdownRow);
+                row.AddThemeColorOverride("font_hover_color", RitsuShellTheme.Current.Text.HoverHighlight);
+                row.AddThemeColorOverride("font_pressed_color", RitsuShellTheme.Current.Text.HoverHighlight);
+                row.AddThemeColorOverride("font_disabled_color", RitsuShellTheme.Current.Text.LabelSecondary);
+                row.AddThemeStyleboxOverride("normal", CreateActionsRowStyle(false));
+                row.AddThemeStyleboxOverride("hover", CreateActionsRowStyle(true));
+                row.AddThemeStyleboxOverride("pressed", CreateActionsRowPressedStyle());
+                row.AddThemeStyleboxOverride("focus", CreateActionsRowFocusStyle());
+                row.AddThemeStyleboxOverride("disabled", CreateActionsRowDisabledStyle());
                 if (row.GetParent() != _dropList)
                     _dropList.AddChild(row);
                 _dropList.MoveChild(row, i);
                 _rowButtons.Add(row);
             }
+        }
+
+        private static StyleBoxFlat CreateActionsRowStyle(bool highlighted)
+        {
+            var border =
+                RitsuShellThemeLayoutResolver.ResolveEdges("components.dropdown.layout.actionsRow.borderWidth", 1);
+            var padding =
+                RitsuShellThemeLayoutResolver.ResolveEdges("components.dropdown.layout.actionsRow.padding", 10);
+            padding = new(
+                RitsuShellThemeLayoutResolver.ResolveInt("components.dropdown.layout.actionsRow.padding.left",
+                    padding.Left),
+                RitsuShellThemeLayoutResolver.ResolveInt("components.dropdown.layout.actionsRow.padding.top", 5),
+                RitsuShellThemeLayoutResolver.ResolveInt("components.dropdown.layout.actionsRow.padding.right",
+                    padding.Right),
+                RitsuShellThemeLayoutResolver.ResolveInt("components.dropdown.layout.actionsRow.padding.bottom", 5));
+            return new()
+            {
+                BgColor = highlighted
+                    ? RitsuShellTheme.Current.Component.Dropdown.Hover.Bg
+                    : RitsuShellTheme.Current.Component.Dropdown.Open.Bg,
+                BorderColor = highlighted
+                    ? RitsuShellTheme.Current.Component.Dropdown.Hover.Border
+                    : RitsuShellTheme.Current.Component.Dropdown.Open.Border,
+                BorderWidthLeft = border.Left,
+                BorderWidthTop = border.Top,
+                BorderWidthRight = border.Right,
+                BorderWidthBottom = border.Bottom,
+                CornerRadiusTopLeft = RitsuShellTheme.Current.Metric.Radius.Default,
+                CornerRadiusTopRight = RitsuShellTheme.Current.Metric.Radius.Default,
+                CornerRadiusBottomRight = RitsuShellTheme.Current.Metric.Radius.Default,
+                CornerRadiusBottomLeft = RitsuShellTheme.Current.Metric.Radius.Default,
+                ContentMarginLeft = padding.Left,
+                ContentMarginTop = padding.Top,
+                ContentMarginRight = padding.Right,
+                ContentMarginBottom = padding.Bottom,
+            };
+        }
+
+        private static StyleBoxFlat CreateActionsRowPressedStyle()
+        {
+            var border =
+                RitsuShellThemeLayoutResolver.ResolveEdges("components.dropdown.layout.actionsRow.borderWidth", 1);
+            var padding =
+                RitsuShellThemeLayoutResolver.ResolveEdges("components.dropdown.layout.actionsRow.padding", 10);
+            padding = new(
+                RitsuShellThemeLayoutResolver.ResolveInt("components.dropdown.layout.actionsRow.padding.left",
+                    padding.Left),
+                RitsuShellThemeLayoutResolver.ResolveInt("components.dropdown.layout.actionsRow.padding.top", 5),
+                RitsuShellThemeLayoutResolver.ResolveInt("components.dropdown.layout.actionsRow.padding.right",
+                    padding.Right),
+                RitsuShellThemeLayoutResolver.ResolveInt("components.dropdown.layout.actionsRow.padding.bottom", 5));
+            return new()
+            {
+                BgColor = RitsuShellTheme.Current.Component.Dropdown.Pressed.Bg,
+                BorderColor = RitsuShellTheme.Current.Component.Dropdown.Pressed.Border,
+                BorderWidthLeft = border.Left,
+                BorderWidthTop = border.Top,
+                BorderWidthRight = border.Right,
+                BorderWidthBottom = border.Bottom,
+                CornerRadiusTopLeft = RitsuShellTheme.Current.Metric.Radius.Default,
+                CornerRadiusTopRight = RitsuShellTheme.Current.Metric.Radius.Default,
+                CornerRadiusBottomRight = RitsuShellTheme.Current.Metric.Radius.Default,
+                CornerRadiusBottomLeft = RitsuShellTheme.Current.Metric.Radius.Default,
+                ContentMarginLeft = padding.Left,
+                ContentMarginTop = padding.Top,
+                ContentMarginRight = padding.Right,
+                ContentMarginBottom = padding.Bottom,
+            };
+        }
+
+        private static StyleBoxFlat CreateActionsRowFocusStyle()
+        {
+            var border =
+                RitsuShellThemeLayoutResolver.ResolveEdges("components.dropdown.layout.actionsRow.borderWidth", 1);
+            var padding =
+                RitsuShellThemeLayoutResolver.ResolveEdges("components.dropdown.layout.actionsRow.padding", 10);
+            padding = new(
+                RitsuShellThemeLayoutResolver.ResolveInt("components.dropdown.layout.actionsRow.padding.left",
+                    padding.Left),
+                RitsuShellThemeLayoutResolver.ResolveInt("components.dropdown.layout.actionsRow.padding.top", 5),
+                RitsuShellThemeLayoutResolver.ResolveInt("components.dropdown.layout.actionsRow.padding.right",
+                    padding.Right),
+                RitsuShellThemeLayoutResolver.ResolveInt("components.dropdown.layout.actionsRow.padding.bottom", 5));
+            return new()
+            {
+                BgColor = RitsuShellTheme.Current.Component.Dropdown.Focus.Bg,
+                BorderColor = RitsuShellTheme.Current.Component.Dropdown.Focus.Border,
+                BorderWidthLeft = border.Left,
+                BorderWidthTop = border.Top,
+                BorderWidthRight = border.Right,
+                BorderWidthBottom = border.Bottom,
+                CornerRadiusTopLeft = RitsuShellTheme.Current.Metric.Radius.Default,
+                CornerRadiusTopRight = RitsuShellTheme.Current.Metric.Radius.Default,
+                CornerRadiusBottomRight = RitsuShellTheme.Current.Metric.Radius.Default,
+                CornerRadiusBottomLeft = RitsuShellTheme.Current.Metric.Radius.Default,
+                ContentMarginLeft = padding.Left,
+                ContentMarginTop = padding.Top,
+                ContentMarginRight = padding.Right,
+                ContentMarginBottom = padding.Bottom,
+            };
+        }
+
+        private static StyleBoxFlat CreateActionsRowDisabledStyle()
+        {
+            var border =
+                RitsuShellThemeLayoutResolver.ResolveEdges("components.dropdown.layout.actionsRow.borderWidth", 1);
+            var padding =
+                RitsuShellThemeLayoutResolver.ResolveEdges("components.dropdown.layout.actionsRow.padding", 10);
+            padding = new(
+                RitsuShellThemeLayoutResolver.ResolveInt("components.dropdown.layout.actionsRow.padding.left",
+                    padding.Left),
+                RitsuShellThemeLayoutResolver.ResolveInt("components.dropdown.layout.actionsRow.padding.top", 5),
+                RitsuShellThemeLayoutResolver.ResolveInt("components.dropdown.layout.actionsRow.padding.right",
+                    padding.Right),
+                RitsuShellThemeLayoutResolver.ResolveInt("components.dropdown.layout.actionsRow.padding.bottom", 5));
+            return new()
+            {
+                BgColor = RitsuShellTheme.Current.Component.Dropdown.Open.Bg,
+                BorderColor = RitsuShellTheme.Current.Component.Dropdown.Open.Border,
+                BorderWidthLeft = border.Left,
+                BorderWidthTop = border.Top,
+                BorderWidthRight = border.Right,
+                BorderWidthBottom = border.Bottom,
+                CornerRadiusTopLeft = RitsuShellTheme.Current.Metric.Radius.Default,
+                CornerRadiusTopRight = RitsuShellTheme.Current.Metric.Radius.Default,
+                CornerRadiusBottomRight = RitsuShellTheme.Current.Metric.Radius.Default,
+                CornerRadiusBottomLeft = RitsuShellTheme.Current.Metric.Radius.Default,
+                ContentMarginLeft = padding.Left,
+                ContentMarginTop = padding.Top,
+                ContentMarginRight = padding.Right,
+                ContentMarginBottom = padding.Bottom,
+            };
+        }
+
+        internal void ForceCloseDropdown()
+        {
+            CloseDropdown();
         }
 
         private void ActivateRow(int index)
@@ -2168,14 +2502,16 @@ namespace STS2RitsuLib.Settings
 
             SizeFlagsHorizontal = SizeFlags.ShrinkEnd;
             MouseFilter = MouseFilterEnum.Ignore;
-            AddThemeConstantOverride("separation", 8);
+            AddThemeConstantOverride("separation",
+                RitsuShellThemeLayoutResolver.ResolveInt("components.keybinding.layout.multi.blockSeparation", 8));
 
             var bindingsList = new VBoxContainer
             {
                 MouseFilter = MouseFilterEnum.Ignore,
                 SizeFlagsHorizontal = SizeFlags.ExpandFill,
             };
-            bindingsList.AddThemeConstantOverride("separation", 6);
+            bindingsList.AddThemeConstantOverride("separation",
+                RitsuShellThemeLayoutResolver.ResolveInt("components.keybinding.layout.multi.listSeparation", 6));
             AddChild(bindingsList);
             _bindingsList = bindingsList;
 
@@ -2185,9 +2521,9 @@ namespace STS2RitsuLib.Settings
                 SizeFlagsHorizontal = SizeFlags.ExpandFill,
                 AutowrapMode = TextServer.AutowrapMode.WordSmart,
             };
-            hint.AddThemeFontOverride("font", ModSettingsUiResources.KreonRegular);
-            hint.AddThemeFontSizeOverride("font_size", ModSettingsUiMetrics.KeybindingHintFontSize);
-            hint.AddThemeColorOverride("font_color", ModSettingsUiPalette.LabelSecondary);
+            hint.AddThemeFontOverride("font", RitsuShellTheme.Current.Font.Body);
+            hint.AddThemeFontSizeOverride("font_size", RitsuShellTheme.Current.Metric.Keybinding.HintFontSize);
+            hint.AddThemeColorOverride("font_color", RitsuShellTheme.Current.Text.LabelSecondary);
             AddChild(hint);
             _hintLabel = hint;
 
@@ -2422,9 +2758,9 @@ namespace STS2RitsuLib.Settings
                     MouseFilter = MouseFilterEnum.Ignore,
                     AutowrapMode = TextServer.AutowrapMode.WordSmart,
                 };
-                empty.AddThemeFontOverride("font", ModSettingsUiResources.KreonRegular);
-                empty.AddThemeFontSizeOverride("font_size", 15);
-                empty.AddThemeColorOverride("font_color", ModSettingsUiPalette.LabelSecondary);
+                empty.AddThemeFontOverride("font", RitsuShellTheme.Current.Font.Body);
+                empty.AddThemeFontSizeOverride("font_size", RitsuShellTheme.Current.Metric.FontSize.PillCount);
+                empty.AddThemeColorOverride("font_color", RitsuShellTheme.Current.Text.LabelSecondary);
                 _bindingsList.AddChild(empty);
             }
 
@@ -2474,29 +2810,34 @@ namespace STS2RitsuLib.Settings
                 SizeFlagsHorizontal = SizeFlags.ExpandFill,
                 SizeFlagsVertical = SizeFlags.ShrinkCenter,
             };
-            row.AddThemeConstantOverride("separation", 6);
+            row.AddThemeConstantOverride("separation",
+                RitsuShellThemeLayoutResolver.ResolveInt("components.keybinding.layout.multi.rowSeparation", 6));
 
             var primaryButton = new Button
             {
                 Text = primaryText,
-                CustomMinimumSize = new(ModSettingsUiMetrics.KeybindingCaptureMinWidth,
-                    ModSettingsUiMetrics.EntryValueMinHeight),
+                CustomMinimumSize = RitsuShellThemeLayoutResolver.ResolveMinSize(
+                    "components.keybinding.layout.multi.captureButton.minSize",
+                    new(RitsuShellTheme.Current.Metric.Keybinding.CaptureMinWidth,
+                        RitsuShellTheme.Current.Metric.Entry.ValueMinHeight)),
                 SizeFlagsHorizontal = SizeFlags.ExpandFill,
                 SizeFlagsVertical = SizeFlags.ShrinkCenter,
                 FocusMode = FocusModeEnum.All,
                 MouseFilter = MouseFilterEnum.Stop,
                 ClipText = true,
             };
-            primaryButton.AddThemeFontOverride("font", ModSettingsUiResources.KreonBold);
-            primaryButton.AddThemeFontSizeOverride("font_size", 17);
-            primaryButton.AddThemeColorOverride("font_color", ModSettingsUiPalette.LabelPrimary);
+            primaryButton.AddThemeFontOverride("font", RitsuShellTheme.Current.Font.BodyBold);
+            primaryButton.AddThemeFontSizeOverride("font_size", RitsuShellTheme.Current.Metric.FontSize.MiniButton);
+            primaryButton.AddThemeColorOverride("font_color", RitsuShellTheme.Current.Text.LabelPrimary);
             ModSettingsUiControlTheming.ApplyUniformSurfaceButtonStates(primaryButton);
             primaryButton.Pressed += primaryAction;
             row.AddChild(primaryButton);
 
             row.AddChild(new ModSettingsMiniButton(secondaryText, secondaryAction)
             {
-                CustomMinimumSize = new(86f, ModSettingsUiMetrics.EntryValueMinHeight),
+                CustomMinimumSize = RitsuShellThemeLayoutResolver.ResolveMinSize(
+                    "components.keybinding.layout.multi.secondaryButton.minSize",
+                    new(86f, RitsuShellTheme.Current.Metric.Entry.ValueMinHeight)),
                 SizeFlagsVertical = SizeFlags.ShrinkCenter,
             });
 
@@ -2536,11 +2877,11 @@ namespace STS2RitsuLib.Settings
             MouseFilter = MouseFilterEnum.Stop;
             Flat = false;
             ClipText = true;
-            AddThemeFontOverride("font", ModSettingsUiResources.KreonBold);
-            AddThemeFontSizeOverride("font_size", 17);
-            AddThemeColorOverride("font_color", ModSettingsUiPalette.LabelPrimary);
-            AddThemeColorOverride("font_hover_color", Colors.White);
-            AddThemeColorOverride("font_pressed_color", Colors.White);
+            AddThemeFontOverride("font", RitsuShellTheme.Current.Font.BodyBold);
+            AddThemeFontSizeOverride("font_size", RitsuShellTheme.Current.Metric.FontSize.MiniButton);
+            AddThemeColorOverride("font_color", RitsuShellTheme.Current.Text.LabelPrimary);
+            AddThemeColorOverride("font_hover_color", RitsuShellTheme.Current.Text.HoverHighlight);
+            AddThemeColorOverride("font_pressed_color", RitsuShellTheme.Current.Text.HoverHighlight);
             AddThemeStyleboxOverride("normal", CreateStyle(false));
             AddThemeStyleboxOverride("hover", CreateStyle(true));
             AddThemeStyleboxOverride("pressed", CreateStyle(true));
@@ -2561,30 +2902,37 @@ namespace STS2RitsuLib.Settings
         /// </summary>
         public static StyleBoxFlat CreateStyle(bool highlighted, bool disabled = false)
         {
+            var border = RitsuShellThemeLayoutResolver.ResolveEdges("components.stepper.layout.borderWidth", 1);
+            var padding = RitsuShellThemeLayoutResolver.ResolveEdges("components.stepper.layout.padding", 10);
+            padding = new(
+                RitsuShellThemeLayoutResolver.ResolveInt("components.stepper.layout.padding.left", padding.Left),
+                RitsuShellThemeLayoutResolver.ResolveInt("components.stepper.layout.padding.top", 5),
+                RitsuShellThemeLayoutResolver.ResolveInt("components.stepper.layout.padding.right", padding.Right),
+                RitsuShellThemeLayoutResolver.ResolveInt("components.stepper.layout.padding.bottom", 5));
             return new()
             {
                 BgColor = disabled
-                    ? new(0.11f, 0.14f, 0.18f, 0.82f)
+                    ? RitsuShellTheme.Current.Component.Stepper.Neutral.Bg
                     : highlighted
-                        ? new(0.17f, 0.28f, 0.34f, 0.98f)
-                        : new Color(0.12f, 0.16f, 0.21f, 0.96f),
+                        ? RitsuShellTheme.Current.Component.Stepper.Hover.Bg
+                        : RitsuShellTheme.Current.Component.Stepper.Default.Bg,
                 BorderColor = disabled
-                    ? new(0.28f, 0.36f, 0.43f, 0.40f)
+                    ? RitsuShellTheme.Current.Component.Stepper.Neutral.Border
                     : highlighted
-                        ? new(0.60f, 0.82f, 0.92f, 0.78f)
-                        : new Color(0.38f, 0.54f, 0.66f, 0.40f),
-                BorderWidthLeft = 1,
-                BorderWidthTop = 1,
-                BorderWidthRight = 1,
-                BorderWidthBottom = 1,
-                CornerRadiusTopLeft = ModSettingsUiMetrics.CornerRadius,
-                CornerRadiusTopRight = ModSettingsUiMetrics.CornerRadius,
-                CornerRadiusBottomRight = ModSettingsUiMetrics.CornerRadius,
-                CornerRadiusBottomLeft = ModSettingsUiMetrics.CornerRadius,
-                ContentMarginLeft = 10,
-                ContentMarginTop = 5,
-                ContentMarginRight = 10,
-                ContentMarginBottom = 5,
+                        ? RitsuShellTheme.Current.Component.Stepper.Hover.Border
+                        : RitsuShellTheme.Current.Component.Stepper.Default.Border,
+                BorderWidthLeft = border.Left,
+                BorderWidthTop = border.Top,
+                BorderWidthRight = border.Right,
+                BorderWidthBottom = border.Bottom,
+                CornerRadiusTopLeft = RitsuShellTheme.Current.Metric.Radius.Default,
+                CornerRadiusTopRight = RitsuShellTheme.Current.Metric.Radius.Default,
+                CornerRadiusBottomRight = RitsuShellTheme.Current.Metric.Radius.Default,
+                CornerRadiusBottomLeft = RitsuShellTheme.Current.Metric.Radius.Default,
+                ContentMarginLeft = padding.Left,
+                ContentMarginTop = padding.Top,
+                ContentMarginRight = padding.Right,
+                ContentMarginBottom = padding.Bottom,
             };
         }
 
@@ -2620,7 +2968,9 @@ namespace STS2RitsuLib.Settings
             FocusMode = FocusModeEnum.All;
             MouseFilter = MouseFilterEnum.Stop;
             Flat = false;
-            CustomMinimumSize = new(52f, 0f);
+            CustomMinimumSize = RitsuShellThemeLayoutResolver.ResolveMinSize(
+                "components.dragHandle.layout.minSize",
+                new(52f, 0f));
             SizeFlagsVertical = SizeFlags.ExpandFill;
             AddThemeStyleboxOverride("normal", CreateRailStyle(false));
             AddThemeStyleboxOverride("hover", CreateRailStyle(true));
@@ -2635,7 +2985,8 @@ namespace STS2RitsuLib.Settings
                 MouseFilter = MouseFilterEnum.Ignore,
                 Alignment = BoxContainer.AlignmentMode.Center,
             };
-            content.AddThemeConstantOverride("separation", 3);
+            content.AddThemeConstantOverride("separation",
+                RitsuShellThemeLayoutResolver.ResolveInt("components.dragHandle.layout.contentSeparation", 3));
             AddChild(content);
 
             var number = new Label
@@ -2645,9 +2996,9 @@ namespace STS2RitsuLib.Settings
                 VerticalAlignment = VerticalAlignment.Center,
                 MouseFilter = MouseFilterEnum.Ignore,
             };
-            number.AddThemeFontOverride("font", ModSettingsUiResources.KreonBold);
-            number.AddThemeFontSizeOverride("font_size", 17);
-            number.AddThemeColorOverride("font_color", new(0.96f, 0.98f, 1f));
+            number.AddThemeFontOverride("font", RitsuShellTheme.Current.Font.BodyBold);
+            number.AddThemeFontSizeOverride("font_size", RitsuShellTheme.Current.Metric.FontSize.ValueLabel);
+            number.AddThemeColorOverride("font_color", RitsuShellTheme.Current.Text.Number);
             content.AddChild(number);
             _indexNumberLabel = number;
 
@@ -2658,9 +3009,9 @@ namespace STS2RitsuLib.Settings
                 VerticalAlignment = VerticalAlignment.Center,
                 MouseFilter = MouseFilterEnum.Ignore,
             };
-            grip.AddThemeFontOverride("font", ModSettingsUiResources.KreonBold);
-            grip.AddThemeFontSizeOverride("font_size", 14);
-            grip.AddThemeColorOverride("font_color", new(0.78f, 0.88f, 0.94f, 0.95f));
+            grip.AddThemeFontOverride("font", RitsuShellTheme.Current.Font.BodyBold);
+            grip.AddThemeFontSizeOverride("font_size", RitsuShellTheme.Current.Metric.FontSize.Grip);
+            grip.AddThemeColorOverride("font_color", RitsuShellTheme.Current.Text.Grip);
             content.AddChild(grip);
 
             var hint = new Label
@@ -2671,9 +3022,9 @@ namespace STS2RitsuLib.Settings
                 AutowrapMode = TextServer.AutowrapMode.WordSmart,
                 MouseFilter = MouseFilterEnum.Ignore,
             };
-            hint.AddThemeFontOverride("font", ModSettingsUiResources.KreonRegular);
-            hint.AddThemeFontSizeOverride("font_size", 12);
-            hint.AddThemeColorOverride("font_color", new(0.80f, 0.89f, 0.94f, 0.90f));
+            hint.AddThemeFontOverride("font", RitsuShellTheme.Current.Font.Body);
+            hint.AddThemeFontSizeOverride("font_size", RitsuShellTheme.Current.Metric.FontSize.HintSmall);
+            hint.AddThemeColorOverride("font_color", RitsuShellTheme.Current.Text.Hint);
             content.AddChild(hint);
         }
 
@@ -2741,7 +3092,7 @@ namespace STS2RitsuLib.Settings
 
             var preview = new PanelContainer
             {
-                CustomMinimumSize = new(48f, ModSettingsUiMetrics.EntryValueMinHeight),
+                CustomMinimumSize = new(48f, RitsuShellTheme.Current.Metric.Entry.ValueMinHeight),
                 MouseFilter = MouseFilterEnum.Ignore,
             };
             preview.AddThemeStyleboxOverride("panel", ModSettingsUiFactory.CreateListItemCardStyle(true));
@@ -2751,26 +3102,41 @@ namespace STS2RitsuLib.Settings
 
         private static StyleBoxFlat CreateRailStyle(bool highlighted)
         {
+            var border = RitsuShellThemeLayoutResolver.ResolveEdges("components.dragHandle.layout.borderWidth", 0);
+            border = new(
+                RitsuShellThemeLayoutResolver.ResolveInt("components.dragHandle.layout.borderWidth.left", 0),
+                RitsuShellThemeLayoutResolver.ResolveInt("components.dragHandle.layout.borderWidth.top", 0),
+                RitsuShellThemeLayoutResolver.ResolveInt("components.dragHandle.layout.borderWidth.right",
+                    border.Right == 0 ? 1 : border.Right),
+                RitsuShellThemeLayoutResolver.ResolveInt("components.dragHandle.layout.borderWidth.bottom", 0));
+            var radius = RitsuShellThemeLayoutResolver.ResolveInt("components.dragHandle.layout.cornerRadius",
+                RitsuShellTheme.Current.Metric.Radius.Default);
+            var padding = RitsuShellThemeLayoutResolver.ResolveEdges("components.dragHandle.layout.padding", 6);
+            padding = new(
+                RitsuShellThemeLayoutResolver.ResolveInt("components.dragHandle.layout.padding.left", padding.Left),
+                RitsuShellThemeLayoutResolver.ResolveInt("components.dragHandle.layout.padding.top", 8),
+                RitsuShellThemeLayoutResolver.ResolveInt("components.dragHandle.layout.padding.right", padding.Right),
+                RitsuShellThemeLayoutResolver.ResolveInt("components.dragHandle.layout.padding.bottom", 8));
             return new()
             {
                 BgColor = highlighted
-                    ? new(0.16f, 0.28f, 0.36f, 0.98f)
-                    : new Color(0.12f, 0.20f, 0.27f, 0.96f),
+                    ? RitsuShellTheme.Current.Component.DragHandle.Selected.Bg
+                    : RitsuShellTheme.Current.Component.DragHandle.Default.Bg,
                 BorderColor = highlighted
-                    ? new(0.65f, 0.86f, 0.94f, 0.88f)
-                    : new Color(0.40f, 0.60f, 0.71f, 0.58f),
-                BorderWidthLeft = 0,
-                BorderWidthTop = 0,
-                BorderWidthRight = 1,
-                BorderWidthBottom = 0,
-                CornerRadiusTopLeft = ModSettingsUiMetrics.CornerRadius,
-                CornerRadiusTopRight = ModSettingsUiMetrics.CornerRadius,
-                CornerRadiusBottomRight = ModSettingsUiMetrics.CornerRadius,
-                CornerRadiusBottomLeft = ModSettingsUiMetrics.CornerRadius,
-                ContentMarginLeft = 6,
-                ContentMarginTop = 8,
-                ContentMarginRight = 6,
-                ContentMarginBottom = 8,
+                    ? RitsuShellTheme.Current.Component.DragHandle.Selected.Border
+                    : RitsuShellTheme.Current.Component.DragHandle.Default.Border,
+                BorderWidthLeft = border.Left,
+                BorderWidthTop = border.Top,
+                BorderWidthRight = border.Right,
+                BorderWidthBottom = border.Bottom,
+                CornerRadiusTopLeft = radius,
+                CornerRadiusTopRight = radius,
+                CornerRadiusBottomRight = radius,
+                CornerRadiusBottomLeft = radius,
+                ContentMarginLeft = padding.Left,
+                ContentMarginTop = padding.Top,
+                ContentMarginRight = padding.Right,
+                ContentMarginBottom = padding.Bottom,
             };
         }
     }
@@ -2796,7 +3162,8 @@ namespace STS2RitsuLib.Settings
 
             MouseFilter = MouseFilterEnum.Ignore;
             SizeFlagsHorizontal = SizeFlags.ExpandFill;
-            AddThemeConstantOverride("separation", 10);
+            AddThemeConstantOverride("separation",
+                RitsuShellThemeLayoutResolver.ResolveInt("components.list.layout.rootSeparation", 10));
         }
 
         public ModSettingsListControl()
@@ -2862,7 +3229,8 @@ namespace STS2RitsuLib.Settings
                 SizeFlagsHorizontal = SizeFlags.ExpandFill,
                 MouseFilter = MouseFilterEnum.Ignore,
             };
-            root.AddThemeConstantOverride("separation", 10);
+            root.AddThemeConstantOverride("separation",
+                RitsuShellThemeLayoutResolver.ResolveInt("components.list.layout.shellSeparation", 10));
             shell.AddChild(root);
 
             var header = new HBoxContainer
@@ -2871,7 +3239,8 @@ namespace STS2RitsuLib.Settings
                 MouseFilter = MouseFilterEnum.Ignore,
                 Alignment = AlignmentMode.Center,
             };
-            header.AddThemeConstantOverride("separation", 10);
+            header.AddThemeConstantOverride("separation",
+                RitsuShellThemeLayoutResolver.ResolveInt("components.list.layout.headerSeparation", 10));
             root.AddChild(header);
 
             var textColumn = new VBoxContainer
@@ -2879,7 +3248,8 @@ namespace STS2RitsuLib.Settings
                 SizeFlagsHorizontal = SizeFlags.ExpandFill,
                 MouseFilter = MouseFilterEnum.Ignore,
             };
-            textColumn.AddThemeConstantOverride("separation", 3);
+            textColumn.AddThemeConstantOverride("separation",
+                RitsuShellThemeLayoutResolver.ResolveInt("components.list.layout.textColumnSeparation", 3));
             header.AddChild(textColumn);
 
             textColumn.AddChild(ModSettingsUiFactory.CreateRefreshableSectionTitle(UiContext, _entry.Label,
@@ -2889,11 +3259,11 @@ namespace STS2RitsuLib.Settings
                 () => ModSettingsUiControlFactoryHelper.ResolveDescription(_entry.Description));
             textColumn.AddChild(descriptionLabel);
 
-            textColumn.AddChild(ModSettingsUiFactory.CreatePersistenceScopeTag(_entry.Binding));
-
             var summary = new PanelContainer
             {
-                CustomMinimumSize = new(96f, 32f),
+                CustomMinimumSize = RitsuShellThemeLayoutResolver.ResolveMinSize(
+                    "components.list.layout.summaryPill.minSize",
+                    new(96f, 32f)),
                 MouseFilter = MouseFilterEnum.Ignore,
                 SizeFlagsVertical = SizeFlags.ShrinkCenter,
             };
@@ -2906,9 +3276,9 @@ namespace STS2RitsuLib.Settings
                 VerticalAlignment = VerticalAlignment.Center,
                 MouseFilter = MouseFilterEnum.Ignore,
             };
-            countLabel.AddThemeFontOverride("font", ModSettingsUiResources.KreonBold);
-            countLabel.AddThemeFontSizeOverride("font_size", 15);
-            countLabel.AddThemeColorOverride("font_color", ModSettingsUiPalette.LabelPrimary);
+            countLabel.AddThemeFontOverride("font", RitsuShellTheme.Current.Font.BodyBold);
+            countLabel.AddThemeFontSizeOverride("font_size", RitsuShellTheme.Current.Metric.FontSize.PillCount);
+            countLabel.AddThemeColorOverride("font_color", RitsuShellTheme.Current.Text.LabelPrimary);
             summary.AddChild(countLabel);
             _countLabel = countLabel;
 
@@ -2916,7 +3286,9 @@ namespace STS2RitsuLib.Settings
                 ModSettingsButtonTone.Accent,
                 () => Mutate(items => items.Add(_entry.CreateItem())))
             {
-                CustomMinimumSize = new(152f, ModSettingsUiMetrics.EntryValueMinHeight),
+                CustomMinimumSize = RitsuShellThemeLayoutResolver.ResolveMinSize(
+                    "components.list.layout.addButton.minSize",
+                    new(152f, RitsuShellTheme.Current.Metric.Entry.ValueMinHeight)),
                 SizeFlagsHorizontal = SizeFlags.ShrinkEnd,
                 SizeFlagsVertical = SizeFlags.ShrinkCenter,
             };
@@ -2942,7 +3314,8 @@ namespace STS2RitsuLib.Settings
                 SizeFlagsHorizontal = SizeFlags.ExpandFill,
                 MouseFilter = MouseFilterEnum.Ignore,
             };
-            bodyContent.AddThemeConstantOverride("separation", 6);
+            bodyContent.AddThemeConstantOverride("separation",
+                RitsuShellThemeLayoutResolver.ResolveInt("components.list.layout.bodySeparation", 6));
             body.AddChild(bodyContent);
 
             _rows = new()
@@ -2950,7 +3323,8 @@ namespace STS2RitsuLib.Settings
                 SizeFlagsHorizontal = SizeFlags.ExpandFill,
                 MouseFilter = MouseFilterEnum.Ignore,
             };
-            _rows.AddThemeConstantOverride("separation", 6);
+            _rows.AddThemeConstantOverride("separation",
+                RitsuShellThemeLayoutResolver.ResolveInt("components.list.layout.rowsSeparation", 6));
             bodyContent.AddChild(_rows);
 
             var emptyState = new PanelContainer
@@ -2970,9 +3344,9 @@ namespace STS2RitsuLib.Settings
                 AutowrapMode = TextServer.AutowrapMode.WordSmart,
                 MouseFilter = MouseFilterEnum.Ignore,
             };
-            emptyLabel.AddThemeFontOverride("font", ModSettingsUiResources.KreonRegular);
-            emptyLabel.AddThemeFontSizeOverride("font_size", 16);
-            emptyLabel.AddThemeColorOverride("font_color", ModSettingsUiPalette.LabelSecondary);
+            emptyLabel.AddThemeFontOverride("font", RitsuShellTheme.Current.Font.Body);
+            emptyLabel.AddThemeFontSizeOverride("font_size", RitsuShellTheme.Current.Metric.FontSize.Secondary);
+            emptyLabel.AddThemeColorOverride("font_color", RitsuShellTheme.Current.Text.LabelSecondary);
             emptyState.AddChild(emptyLabel);
             _emptyState = emptyState;
 
@@ -3425,7 +3799,9 @@ namespace STS2RitsuLib.Settings
             FocusMode = FocusModeEnum.None;
             SizeFlagsHorizontal = SizeFlags.ExpandFill;
             MouseFilter = MouseFilterEnum.Stop;
-            CustomMinimumSize = new(0f, 8f);
+            CustomMinimumSize = RitsuShellThemeLayoutResolver.ResolveMinSize(
+                "components.list.layout.dropSlot.minSize",
+                new(0f, 8f));
             AddThemeStyleboxOverride("panel", CreateStyle(false));
         }
 
@@ -3492,26 +3868,42 @@ namespace STS2RitsuLib.Settings
 
         private static StyleBoxFlat CreateStyle(bool highlighted)
         {
+            var radius = RitsuShellThemeLayoutResolver.ResolveInt("components.choiceCenter.layout.cornerRadius",
+                RitsuShellTheme.Current.Metric.Radius.Default);
+            BoxEdges border = new(
+                RitsuShellThemeLayoutResolver.ResolveInt("components.choiceCenter.layout.borderWidth.left", 0),
+                RitsuShellThemeLayoutResolver.ResolveInt("components.choiceCenter.layout.borderWidth.top",
+                    highlighted ? 1 : 0),
+                RitsuShellThemeLayoutResolver.ResolveInt("components.choiceCenter.layout.borderWidth.right", 0),
+                RitsuShellThemeLayoutResolver.ResolveInt("components.choiceCenter.layout.borderWidth.bottom",
+                    highlighted ? 1 : 0));
+            BoxEdges padding = new(
+                RitsuShellThemeLayoutResolver.ResolveInt("components.choiceCenter.layout.padding.left", 0),
+                RitsuShellThemeLayoutResolver.ResolveInt("components.choiceCenter.layout.padding.top",
+                    highlighted ? 1 : 0),
+                RitsuShellThemeLayoutResolver.ResolveInt("components.choiceCenter.layout.padding.right", 0),
+                RitsuShellThemeLayoutResolver.ResolveInt("components.choiceCenter.layout.padding.bottom",
+                    highlighted ? 1 : 0));
             return new()
             {
                 BgColor = highlighted
-                    ? new(0.55f, 0.80f, 0.90f, 0.95f)
-                    : new Color(0f, 0f, 0f, 0f),
+                    ? RitsuShellTheme.Current.Component.ChoiceCenter.HighlightTop
+                    : RitsuShellTheme.Current.Color.Transparent,
                 BorderColor = highlighted
-                    ? new(0.75f, 0.90f, 0.96f, 0.98f)
-                    : new Color(0f, 0f, 0f, 0f),
-                BorderWidthTop = highlighted ? 1 : 0,
-                BorderWidthBottom = highlighted ? 1 : 0,
-                BorderWidthLeft = 0,
-                BorderWidthRight = 0,
-                CornerRadiusTopLeft = ModSettingsUiMetrics.CornerRadius,
-                CornerRadiusTopRight = ModSettingsUiMetrics.CornerRadius,
-                CornerRadiusBottomRight = ModSettingsUiMetrics.CornerRadius,
-                CornerRadiusBottomLeft = ModSettingsUiMetrics.CornerRadius,
-                ContentMarginLeft = 0,
-                ContentMarginTop = highlighted ? 1 : 0,
-                ContentMarginRight = 0,
-                ContentMarginBottom = highlighted ? 1 : 0,
+                    ? RitsuShellTheme.Current.Component.ChoiceCenter.HighlightBottom
+                    : RitsuShellTheme.Current.Color.Transparent,
+                BorderWidthLeft = border.Left,
+                BorderWidthTop = border.Top,
+                BorderWidthRight = border.Right,
+                BorderWidthBottom = border.Bottom,
+                CornerRadiusTopLeft = radius,
+                CornerRadiusTopRight = radius,
+                CornerRadiusBottomRight = radius,
+                CornerRadiusBottomLeft = radius,
+                ContentMarginLeft = padding.Left,
+                ContentMarginTop = padding.Top,
+                ContentMarginRight = padding.Right,
+                ContentMarginBottom = padding.Bottom,
             };
         }
     }
@@ -3552,7 +3944,8 @@ namespace STS2RitsuLib.Settings
                 MouseFilter = MouseFilterEnum.Ignore,
                 Alignment = BoxContainer.AlignmentMode.Begin,
             };
-            outer.AddThemeConstantOverride("separation", 8);
+            outer.AddThemeConstantOverride("separation",
+                RitsuShellThemeLayoutResolver.ResolveInt("components.listItem.layout.outerSeparation", 8));
             AddChild(outer);
 
             var drag = new ModSettingsDragHandle(() => itemContext.Index,
@@ -3565,7 +3958,8 @@ namespace STS2RitsuLib.Settings
                 SizeFlagsHorizontal = SizeFlags.ExpandFill,
                 MouseFilter = MouseFilterEnum.Ignore,
             };
-            root.AddThemeConstantOverride("separation", 8);
+            root.AddThemeConstantOverride("separation",
+                RitsuShellThemeLayoutResolver.ResolveInt("components.listItem.layout.rootSeparation", 8));
             outer.AddChild(root);
 
             var headerRow = new HBoxContainer
@@ -3574,7 +3968,8 @@ namespace STS2RitsuLib.Settings
                 MouseFilter = MouseFilterEnum.Ignore,
                 Alignment = BoxContainer.AlignmentMode.Center,
             };
-            headerRow.AddThemeConstantOverride("separation", 8);
+            headerRow.AddThemeConstantOverride("separation",
+                RitsuShellThemeLayoutResolver.ResolveInt("components.listItem.layout.headerSeparation", 8));
             root.AddChild(headerRow);
 
             if (_isCollapsible)
@@ -3593,7 +3988,8 @@ namespace STS2RitsuLib.Settings
                     MouseFilter = MouseFilterEnum.Ignore,
                     Alignment = BoxContainer.AlignmentMode.Center,
                 };
-                header.AddThemeConstantOverride("separation", 8);
+                header.AddThemeConstantOverride("separation",
+                    RitsuShellThemeLayoutResolver.ResolveInt("components.listItem.layout.headerInnerSeparation", 8));
                 headerRow.AddChild(header);
 
                 var textColumn = new VBoxContainer
@@ -3601,7 +3997,8 @@ namespace STS2RitsuLib.Settings
                     SizeFlagsHorizontal = SizeFlags.ExpandFill,
                     MouseFilter = MouseFilterEnum.Ignore,
                 };
-                textColumn.AddThemeConstantOverride("separation", 2);
+                textColumn.AddThemeConstantOverride("separation",
+                    RitsuShellThemeLayoutResolver.ResolveInt("components.listItem.layout.textSeparation", 2));
                 header.AddChild(textColumn);
 
                 var titleLabel = ModSettingsUiFactory.CreateSectionTitle(title);
@@ -3619,7 +4016,8 @@ namespace STS2RitsuLib.Settings
                 MouseFilter = MouseFilterEnum.Ignore,
                 Alignment = BoxContainer.AlignmentMode.Center,
             };
-            actions.AddThemeConstantOverride("separation", 8);
+            actions.AddThemeConstantOverride("separation",
+                RitsuShellThemeLayoutResolver.ResolveInt("components.listItem.layout.actionsSeparation", 8));
             headerRow.AddChild(actions);
 
             if (headerAccessory != null)
@@ -3707,6 +4105,7 @@ namespace STS2RitsuLib.Settings
     {
         private readonly Action? _action;
         private Label? _arrowLabel;
+        private bool _contentEnabled = true;
         private MarginContainer? _measureFrame;
         private bool _selected;
         private string? _subtitle;
@@ -3725,13 +4124,13 @@ namespace STS2RitsuLib.Settings
             Flat = false;
             ClipContents = false;
             Text = string.Empty;
-            CustomMinimumSize = new(0f, string.IsNullOrWhiteSpace(subtitle) ? 56f : 84f);
+            CustomMinimumSize = ResolveHeaderMinSize(subtitle);
             SizeFlagsHorizontal = SizeFlags.ExpandFill;
 
-            AddThemeStyleboxOverride("normal", CreateHeaderStyle(false, false));
-            AddThemeStyleboxOverride("hover", CreateHeaderStyle(false, true));
-            AddThemeStyleboxOverride("pressed", CreateHeaderStyle(true, true));
-            AddThemeStyleboxOverride("focus", CreateHeaderStyle(false, true));
+            AddThemeStyleboxOverride("normal", CreateHeaderStyle(false, false, true));
+            AddThemeStyleboxOverride("hover", CreateHeaderStyle(false, true, true));
+            AddThemeStyleboxOverride("pressed", CreateHeaderStyle(true, true, true));
+            AddThemeStyleboxOverride("focus", CreateHeaderStyle(false, true, true));
 
             var frame = new MarginContainer
             {
@@ -3742,10 +4141,19 @@ namespace STS2RitsuLib.Settings
             frame.OffsetTop = 0;
             frame.OffsetRight = 0;
             frame.OffsetBottom = 0;
-            frame.AddThemeConstantOverride("margin_left", 14);
-            frame.AddThemeConstantOverride("margin_top", 10);
-            frame.AddThemeConstantOverride("margin_right", 14);
-            frame.AddThemeConstantOverride("margin_bottom", 10);
+            var headerPadding = RitsuShellThemeLayoutResolver.ResolveEdges(
+                "components.collapsible.layout.header.padding", 14);
+            headerPadding = new(
+                RitsuShellThemeLayoutResolver.ResolveInt("components.collapsible.layout.header.padding.left",
+                    headerPadding.Left),
+                RitsuShellThemeLayoutResolver.ResolveInt("components.collapsible.layout.header.padding.top", 10),
+                RitsuShellThemeLayoutResolver.ResolveInt("components.collapsible.layout.header.padding.right",
+                    headerPadding.Right),
+                RitsuShellThemeLayoutResolver.ResolveInt("components.collapsible.layout.header.padding.bottom", 10));
+            frame.AddThemeConstantOverride("margin_left", headerPadding.Left);
+            frame.AddThemeConstantOverride("margin_top", headerPadding.Top);
+            frame.AddThemeConstantOverride("margin_right", headerPadding.Right);
+            frame.AddThemeConstantOverride("margin_bottom", headerPadding.Bottom);
             AddChild(frame);
             _measureFrame = frame;
 
@@ -3756,20 +4164,23 @@ namespace STS2RitsuLib.Settings
                 SizeFlagsVertical = SizeFlags.ExpandFill,
                 Alignment = BoxContainer.AlignmentMode.Center,
             };
-            root.AddThemeConstantOverride("separation", 12);
+            root.AddThemeConstantOverride("separation", RitsuShellThemeLayoutResolver.ResolveInt(
+                "components.collapsible.layout.header.separation", 12));
             frame.AddChild(root);
 
             var arrowLabel = new Label
             {
-                CustomMinimumSize = new(28f, 28f),
+                CustomMinimumSize = RitsuShellThemeLayoutResolver.ResolveMinSize(
+                    "components.collapsible.layout.header.arrow.minSize",
+                    new(28f, 28f)),
                 HorizontalAlignment = HorizontalAlignment.Center,
                 VerticalAlignment = VerticalAlignment.Center,
                 MouseFilter = MouseFilterEnum.Ignore,
                 SizeFlagsVertical = SizeFlags.ShrinkCenter,
             };
-            arrowLabel.AddThemeFontOverride("font", ModSettingsUiResources.KreonBold);
-            arrowLabel.AddThemeFontSizeOverride("font_size", 21);
-            arrowLabel.AddThemeColorOverride("font_color", ModSettingsUiPalette.RichTextSecondary);
+            arrowLabel.AddThemeFontOverride("font", RitsuShellTheme.Current.Font.BodyBold);
+            arrowLabel.AddThemeFontSizeOverride("font_size", RitsuShellTheme.Current.Metric.FontSize.HeaderArrow);
+            arrowLabel.AddThemeColorOverride("font_color", RitsuShellTheme.Current.Text.RichSecondary);
             root.AddChild(arrowLabel);
             _arrowLabel = arrowLabel;
 
@@ -3779,7 +4190,8 @@ namespace STS2RitsuLib.Settings
                 SizeFlagsVertical = SizeFlags.ShrinkCenter,
                 MouseFilter = MouseFilterEnum.Ignore,
             };
-            textColumn.AddThemeConstantOverride("separation", 2);
+            textColumn.AddThemeConstantOverride("separation",
+                RitsuShellThemeLayoutResolver.ResolveInt("components.collapsible.layout.header.textSeparation", 2));
             root.AddChild(textColumn);
 
             var titleLabel = new Label
@@ -3791,9 +4203,9 @@ namespace STS2RitsuLib.Settings
                 ClipText = false,
                 SizeFlagsHorizontal = SizeFlags.ExpandFill,
             };
-            titleLabel.AddThemeFontOverride("font", ModSettingsUiResources.KreonBold);
-            titleLabel.AddThemeFontSizeOverride("font_size", 24);
-            titleLabel.AddThemeColorOverride("font_color", ModSettingsUiPalette.LabelPrimary);
+            titleLabel.AddThemeFontOverride("font", RitsuShellTheme.Current.Font.BodyBold);
+            titleLabel.AddThemeFontSizeOverride("font_size", RitsuShellTheme.Current.Metric.FontSize.HeaderTitle);
+            titleLabel.AddThemeColorOverride("font_color", RitsuShellTheme.Current.Text.LabelPrimary);
             textColumn.AddChild(titleLabel);
             _titleLabel = titleLabel;
 
@@ -3808,9 +4220,9 @@ namespace STS2RitsuLib.Settings
                 SizeFlagsHorizontal = SizeFlags.ExpandFill,
                 ClipText = false,
             };
-            subtitleLabel.AddThemeFontOverride("font", ModSettingsUiResources.KreonRegular);
-            subtitleLabel.AddThemeFontSizeOverride("font_size", 17);
-            subtitleLabel.AddThemeColorOverride("font_color", ModSettingsUiPalette.LabelSecondary);
+            subtitleLabel.AddThemeFontOverride("font", RitsuShellTheme.Current.Font.Body);
+            subtitleLabel.AddThemeFontSizeOverride("font_size", RitsuShellTheme.Current.Metric.FontSize.HeaderSubtitle);
+            subtitleLabel.AddThemeColorOverride("font_color", RitsuShellTheme.Current.Text.LabelSecondary);
             textColumn.AddChild(subtitleLabel);
             _subtitleLabel = subtitleLabel;
 
@@ -3833,7 +4245,7 @@ namespace STS2RitsuLib.Settings
                 _subtitleLabel.Visible = !string.IsNullOrWhiteSpace(subtitle);
             }
 
-            CustomMinimumSize = new(0f, string.IsNullOrWhiteSpace(subtitle) ? 56f : 84f);
+            CustomMinimumSize = ResolveHeaderMinSize(subtitle);
             Callable.From(UpdateMinimumSize).CallDeferred();
         }
 
@@ -3862,37 +4274,90 @@ namespace STS2RitsuLib.Settings
             ApplySelectedState();
         }
 
-        private void ApplySelectedState()
+        internal void SetContentEnabled(bool enabled)
         {
-            AddThemeStyleboxOverride("normal", CreateHeaderStyle(_selected, false));
-            AddThemeStyleboxOverride("hover", CreateHeaderStyle(_selected, true));
-            AddThemeStyleboxOverride("pressed", CreateHeaderStyle(true, true));
-            AddThemeStyleboxOverride("focus", CreateHeaderStyle(_selected, true));
-            if (_arrowLabel != null)
-                _arrowLabel.Text = _selected ? "▼" : "▶";
+            _contentEnabled = enabled;
+            ApplySelectedState();
         }
 
-        private static StyleBoxFlat CreateHeaderStyle(bool selected, bool hovered)
+        private void ApplySelectedState()
         {
+            AddThemeStyleboxOverride("normal", CreateHeaderStyle(_selected, false, _contentEnabled));
+            AddThemeStyleboxOverride("hover", CreateHeaderStyle(_selected, true, _contentEnabled));
+            AddThemeStyleboxOverride("pressed", CreateHeaderStyle(true, true, _contentEnabled));
+            AddThemeStyleboxOverride("focus", CreateHeaderStyle(_selected, true, _contentEnabled));
+            if (_arrowLabel != null)
+                _arrowLabel.Text = _selected ? "▼" : "▶";
+
+            var opacity = _contentEnabled ? 1f : ResolveDisabledOpacityFactor();
+            ApplyLabelOpacity(_arrowLabel, opacity);
+            ApplyLabelOpacity(_titleLabel, opacity);
+            ApplyLabelOpacity(_subtitleLabel, opacity);
+        }
+
+        private static StyleBoxFlat CreateHeaderStyle(bool selected, bool hovered, bool contentEnabled)
+        {
+            var border = RitsuShellThemeLayoutResolver.ResolveEdges("components.collapsible.layout.borderWidth", 2);
+            var radius = RitsuShellThemeLayoutResolver.ResolveInt("components.collapsible.layout.cornerRadius",
+                RitsuShellTheme.Current.Metric.Radius.Default);
+
             return new()
             {
-                BgColor = selected
-                    ? new(0.14f, 0.19f, 0.24f, 0.96f)
-                    : hovered
-                        ? new(0.12f, 0.17f, 0.22f, 0.96f)
-                        : new Color(0.10f, 0.14f, 0.19f, 0.94f),
-                BorderColor = selected
-                    ? new(0.55f, 0.70f, 0.80f, 0.72f)
-                    : new Color(0.37f, 0.48f, 0.57f, 0.52f),
-                BorderWidthLeft = 2,
-                BorderWidthTop = 2,
-                BorderWidthRight = 2,
-                BorderWidthBottom = 2,
-                CornerRadiusTopLeft = ModSettingsUiMetrics.CornerRadius,
-                CornerRadiusTopRight = ModSettingsUiMetrics.CornerRadius,
-                CornerRadiusBottomRight = ModSettingsUiMetrics.CornerRadius,
-                CornerRadiusBottomLeft = ModSettingsUiMetrics.CornerRadius,
+                BgColor = !contentEnabled
+                    ? RitsuShellTheme.Current.Component.Collapsible.Disabled.Bg
+                    : selected
+                        ? RitsuShellTheme.Current.Component.Collapsible.Selected.Bg
+                        : hovered
+                            ? RitsuShellTheme.Current.Component.Collapsible.Hover.Bg
+                            : RitsuShellTheme.Current.Component.Collapsible.Default.Bg,
+                BorderColor = !contentEnabled
+                    ? RitsuShellTheme.Current.Component.Collapsible.Disabled.Border
+                    : selected
+                        ? RitsuShellTheme.Current.Component.Collapsible.Selected.Border
+                        : RitsuShellTheme.Current.Component.Collapsible.Default.Border,
+                BorderWidthLeft = border.Left,
+                BorderWidthTop = border.Top,
+                BorderWidthRight = border.Right,
+                BorderWidthBottom = border.Bottom,
+                CornerRadiusTopLeft = radius,
+                CornerRadiusTopRight = radius,
+                CornerRadiusBottomRight = radius,
+                CornerRadiusBottomLeft = radius,
             };
+        }
+
+        private static void ApplyLabelOpacity(Label? label, float opacity)
+        {
+            if (label == null)
+                return;
+            var m = label.Modulate;
+            label.Modulate = new(m.R, m.G, m.B, opacity);
+        }
+
+        private static float ResolveDisabledOpacityFactor()
+        {
+            try
+            {
+                var v = (float)RitsuShellTheme.Current.GetDimensionDouble("semantic.state.disabled.opacity");
+                if (v is > 0.05f and <= 1.0f)
+                    return v;
+            }
+            catch
+            {
+                // ignored
+            }
+
+            return 0.78f;
+        }
+
+        private static Vector2 ResolveHeaderMinSize(string? subtitle)
+        {
+            var hasSubtitle = !string.IsNullOrWhiteSpace(subtitle);
+            var fallback = new Vector2(0f, hasSubtitle ? 84f : 56f);
+            var path = hasSubtitle
+                ? "components.collapsible.layout.header.minSizeWithSubtitle"
+                : "components.collapsible.layout.header.minSize";
+            return RitsuShellThemeLayoutResolver.ResolveMinSize(path, fallback);
         }
     }
 
@@ -3906,6 +4371,7 @@ namespace STS2RitsuLib.Settings
         private readonly string? _title;
         private bool _collapsed;
         private VBoxContainer? _content;
+        private bool _contentEnabled = true;
         private ModSettingsCollapsibleHeaderButton? _toggle;
 
         public ModSettingsCollapsibleSection(string title, string? sectionId, string? description, bool startCollapsed,
@@ -3918,7 +4384,8 @@ namespace STS2RitsuLib.Settings
             _contentControls = contentControls;
             _headerActions = headerActions;
             MouseFilter = MouseFilterEnum.Ignore;
-            AddThemeConstantOverride("separation", 8);
+            AddThemeConstantOverride("separation",
+                RitsuShellThemeLayoutResolver.ResolveInt("components.collapsible.layout.sectionSeparation", 8));
         }
 
         public ModSettingsCollapsibleSection()
@@ -3942,7 +4409,8 @@ namespace STS2RitsuLib.Settings
             {
                 MouseFilter = MouseFilterEnum.Ignore,
             };
-            cardContent.AddThemeConstantOverride("separation", 8);
+            cardContent.AddThemeConstantOverride("separation",
+                RitsuShellThemeLayoutResolver.ResolveInt("components.collapsible.layout.cardSeparation", 8));
             card.AddChild(cardContent);
 
             if (_title != null)
@@ -3959,7 +4427,8 @@ namespace STS2RitsuLib.Settings
                     MouseFilter = MouseFilterEnum.Ignore,
                     Alignment = AlignmentMode.Center,
                 };
-                headerRow.AddThemeConstantOverride("separation", 10);
+                headerRow.AddThemeConstantOverride("separation",
+                    RitsuShellThemeLayoutResolver.ResolveInt("components.collapsible.layout.headerRowSeparation", 10));
                 if (_toggle != null)
                 {
                     _toggle.SizeFlagsHorizontal = SizeFlags.ExpandFill;
@@ -3984,7 +4453,8 @@ namespace STS2RitsuLib.Settings
             }
 
             _content = new() { MouseFilter = MouseFilterEnum.Ignore };
-            _content.AddThemeConstantOverride("separation", 8);
+            _content.AddThemeConstantOverride("separation",
+                RitsuShellThemeLayoutResolver.ResolveInt("components.collapsible.layout.contentSeparation", 8));
             if (_contentControls != null)
                 foreach (var control in _contentControls)
                     _content.AddChild(control);
@@ -3992,6 +4462,7 @@ namespace STS2RitsuLib.Settings
 
             _collapsed = _startCollapsed;
             ApplyCollapsedState();
+            ApplyContentEnabledState();
         }
 
         private void ToggleCollapsed()
@@ -4007,6 +4478,25 @@ namespace STS2RitsuLib.Settings
             if (_content != null)
                 _content.Visible = !_collapsed;
             _toggle?.SetSelected(!_collapsed);
+        }
+
+        internal void SetContentEnabled(bool enabled)
+        {
+            _contentEnabled = enabled;
+            ApplyContentEnabledState();
+        }
+
+        private void ApplyContentEnabledState()
+        {
+            if (_content != null)
+                ModSettingsUiFactory.ApplyEnabledRecursive(_content, _contentEnabled);
+
+            // Actions should follow the content enabled state (disabled when unavailable).
+            if (_headerActions != null)
+                ModSettingsUiFactory.ApplyEnabledRecursive(_headerActions, _contentEnabled);
+
+            // Collapsing stays operable; only the content becomes disabled.
+            _toggle?.SetContentEnabled(_contentEnabled);
         }
 
         private void EnsureExpandedSectionVisible()
@@ -4055,13 +4545,16 @@ namespace STS2RitsuLib.Settings
             _prefix = prefix;
             Text = text;
             TooltipText = text;
-            CustomMinimumSize = new(0f, kind switch
+            var minHeight = kind switch
             {
                 ModSettingsSidebarItemKind.ModGroup => 62f,
                 ModSettingsSidebarItemKind.Page => 48f,
                 ModSettingsSidebarItemKind.Section => 38f,
                 _ => 44f,
-            });
+            };
+            CustomMinimumSize = RitsuShellThemeLayoutResolver.ResolveMinSize(
+                "components.sidebar.layout.button.minSize",
+                new(0f, minHeight));
             SizeFlagsHorizontal = SizeFlags.ExpandFill;
             FocusMode = FocusModeEnum.All;
             MouseFilter = MouseFilterEnum.Stop;
@@ -4071,8 +4564,8 @@ namespace STS2RitsuLib.Settings
             IconAlignment = HorizontalAlignment.Left;
 
             AddThemeFontOverride("font", kind == ModSettingsSidebarItemKind.ModGroup
-                ? ModSettingsUiResources.KreonBold
-                : ModSettingsUiResources.KreonRegular);
+                ? RitsuShellTheme.Current.Font.BodyBold
+                : RitsuShellTheme.Current.Font.Body);
             AddThemeFontSizeOverride("font_size", kind switch
             {
                 ModSettingsSidebarItemKind.ModGroup => 22,
@@ -4081,11 +4574,11 @@ namespace STS2RitsuLib.Settings
                 _ => 17,
             });
             AddThemeColorOverride("font_color", kind == ModSettingsSidebarItemKind.Section
-                ? ModSettingsUiPalette.SidebarSection
-                : ModSettingsUiPalette.LabelPrimary);
-            AddThemeColorOverride("font_hover_color", new(0.98f, 1f, 1f));
-            AddThemeColorOverride("font_pressed_color", new(1f, 1f, 1f));
-            AddThemeColorOverride("font_focus_color", new(1f, 1f, 1f));
+                ? RitsuShellTheme.Current.Text.SidebarSection
+                : RitsuShellTheme.Current.Text.LabelPrimary);
+            AddThemeColorOverride("font_hover_color", RitsuShellTheme.Current.Text.HoverHighlight);
+            AddThemeColorOverride("font_pressed_color", RitsuShellTheme.Current.Color.White);
+            AddThemeColorOverride("font_focus_color", RitsuShellTheme.Current.Color.White);
 
             AddThemeStyleboxOverride("normal", CreateStyle(false, false, _kind, _indentLevel));
             AddThemeStyleboxOverride("hover", CreateStyle(false, true, _kind, _indentLevel));
@@ -4122,38 +4615,38 @@ namespace STS2RitsuLib.Settings
             var bg = kind switch
             {
                 ModSettingsSidebarItemKind.ModGroup => selected
-                    ? new(0.17f, 0.28f, 0.36f, 0.99f)
+                    ? RitsuShellTheme.Current.Component.SidebarBtn.SelectedHover.Bg
                     : hovered
-                        ? new(0.14f, 0.23f, 0.30f, 0.98f)
-                        : new Color(0.11f, 0.18f, 0.24f, 0.97f),
+                        ? RitsuShellTheme.Current.Component.SidebarBtn.Selected.Bg
+                        : RitsuShellTheme.Current.Component.SidebarBtn.Mod.Bg,
                 ModSettingsSidebarItemKind.Section => selected
-                    ? new(0.12f, 0.22f, 0.29f, 0.98f)
+                    ? RitsuShellTheme.Current.Component.SidebarBtn.Hover.Bg
                     : hovered
-                        ? new(0.10f, 0.18f, 0.24f, 0.95f)
-                        : new Color(0.07f, 0.11f, 0.16f, 0.92f),
+                        ? RitsuShellTheme.Current.Component.SidebarBtn.Default.Bg
+                        : RitsuShellTheme.Current.Component.SidebarBtn.IdleDeep.Bg,
                 ModSettingsSidebarItemKind.Utility => selected
-                    ? new(0.16f, 0.24f, 0.31f, 0.98f)
+                    ? RitsuShellTheme.Current.Component.SidebarBtn.UtilitySelected.Bg
                     : hovered
-                        ? new(0.12f, 0.19f, 0.26f, 0.97f)
-                        : new Color(0.09f, 0.14f, 0.20f, 0.95f),
+                        ? RitsuShellTheme.Current.Component.SidebarBtn.IdleDeepHover.Bg
+                        : RitsuShellTheme.Current.Component.SidebarBtn.IdleDeep.Bg,
                 _ => selected
-                    ? new(0.15f, 0.25f, 0.32f, 0.985f)
+                    ? RitsuShellTheme.Current.Component.SidebarBtn.ModHover.Bg
                     : hovered
-                        ? new(0.11f, 0.19f, 0.26f, 0.975f)
-                        : new Color(0.08f, 0.13f, 0.19f, 0.94f),
+                        ? RitsuShellTheme.Current.Component.SidebarBtn.Mod.Bg
+                        : RitsuShellTheme.Current.Component.SidebarBtn.ModDeep.Bg,
             };
 
-            var border = kind switch
+            var borderColor = kind switch
             {
                 ModSettingsSidebarItemKind.ModGroup => selected
-                    ? new(0.72f, 0.88f, 0.95f, 0.90f)
-                    : new Color(0.47f, 0.63f, 0.73f, 0.62f),
+                    ? RitsuShellTheme.Current.Component.SidebarBtn.SelectedHover.Border
+                    : RitsuShellTheme.Current.Component.SidebarBtn.Selected.Border,
                 ModSettingsSidebarItemKind.Section => selected
-                    ? new(0.56f, 0.80f, 0.90f, 0.84f)
-                    : new Color(0.27f, 0.42f, 0.52f, 0.45f),
+                    ? RitsuShellTheme.Current.Component.SidebarBtn.Hover.Border
+                    : RitsuShellTheme.Current.Component.SidebarBtn.Default.Border,
                 _ => selected
-                    ? new(0.63f, 0.82f, 0.92f, 0.86f)
-                    : new Color(0.41f, 0.56f, 0.67f, 0.56f),
+                    ? RitsuShellTheme.Current.Component.SidebarBtn.DeepBorderHover
+                    : RitsuShellTheme.Current.Component.SidebarBtn.DeepBorder,
             };
 
             var leftBorder = selected
@@ -4161,46 +4654,85 @@ namespace STS2RitsuLib.Settings
                 : kind == ModSettingsSidebarItemKind.ModGroup
                     ? 2
                     : 1;
+            var borderWidths =
+                RitsuShellThemeLayoutResolver.ResolveEdges("components.sidebar.layout.button.borderWidth", 1);
+            borderWidths = new(
+                RitsuShellThemeLayoutResolver.ResolveInt("components.sidebar.layout.button.borderWidth.left",
+                    leftBorder),
+                RitsuShellThemeLayoutResolver.ResolveInt("components.sidebar.layout.button.borderWidth.top",
+                    borderWidths.Top),
+                RitsuShellThemeLayoutResolver.ResolveInt("components.sidebar.layout.button.borderWidth.right",
+                    borderWidths.Right),
+                RitsuShellThemeLayoutResolver.ResolveInt("components.sidebar.layout.button.borderWidth.bottom",
+                    borderWidths.Bottom));
+            var radius = RitsuShellThemeLayoutResolver.ResolveInt("components.sidebar.layout.button.cornerRadius",
+                RitsuShellTheme.Current.Metric.Radius.Default);
+            var shadowSize = kind == ModSettingsSidebarItemKind.ModGroup ? 4 : 2;
+            shadowSize = RitsuShellThemeLayoutResolver.ResolveInt("components.sidebar.layout.button.shadowSize",
+                shadowSize);
+            var fallbackTopBottom = kind == ModSettingsSidebarItemKind.Section ? 8 : 10;
+            var fallbackRight = kind == ModSettingsSidebarItemKind.Section ? 14 : 18;
+            var fallbackLeft = (kind == ModSettingsSidebarItemKind.Section ? 14 : 18) + indentLevel * 14;
+            BoxEdges padding = new(
+                RitsuShellThemeLayoutResolver.ResolveInt("components.sidebar.layout.button.padding.left", fallbackLeft),
+                RitsuShellThemeLayoutResolver.ResolveInt("components.sidebar.layout.button.padding.top",
+                    fallbackTopBottom),
+                RitsuShellThemeLayoutResolver.ResolveInt("components.sidebar.layout.button.padding.right",
+                    fallbackRight),
+                RitsuShellThemeLayoutResolver.ResolveInt("components.sidebar.layout.button.padding.bottom",
+                    fallbackTopBottom));
 
             return new()
             {
                 BgColor = bg,
-                BorderColor = border,
-                BorderWidthLeft = leftBorder,
-                BorderWidthTop = 1,
-                BorderWidthRight = 1,
-                BorderWidthBottom = 1,
-                CornerRadiusTopLeft = ModSettingsUiMetrics.CornerRadius,
-                CornerRadiusTopRight = ModSettingsUiMetrics.CornerRadius,
-                CornerRadiusBottomRight = ModSettingsUiMetrics.CornerRadius,
-                CornerRadiusBottomLeft = ModSettingsUiMetrics.CornerRadius,
-                ShadowColor = new(0f, 0f, 0f, 0.18f),
-                ShadowSize = kind == ModSettingsSidebarItemKind.ModGroup ? 4 : 2,
-                ContentMarginLeft = (kind == ModSettingsSidebarItemKind.Section ? 14 : 18) + indentLevel * 14,
-                ContentMarginTop = kind == ModSettingsSidebarItemKind.Section ? 8 : 10,
-                ContentMarginRight = kind == ModSettingsSidebarItemKind.Section ? 14 : 18,
-                ContentMarginBottom = kind == ModSettingsSidebarItemKind.Section ? 8 : 10,
+                BorderColor = borderColor,
+                BorderWidthLeft = borderWidths.Left,
+                BorderWidthTop = borderWidths.Top,
+                BorderWidthRight = borderWidths.Right,
+                BorderWidthBottom = borderWidths.Bottom,
+                CornerRadiusTopLeft = radius,
+                CornerRadiusTopRight = radius,
+                CornerRadiusBottomRight = radius,
+                CornerRadiusBottomLeft = radius,
+                ShadowColor = RitsuShellTheme.Current.Component.SidebarBtn.Shadow,
+                ShadowSize = shadowSize,
+                ContentMarginLeft = padding.Left,
+                ContentMarginTop = padding.Top,
+                ContentMarginRight = padding.Right,
+                ContentMarginBottom = padding.Bottom,
             };
         }
 
         internal static StyleBoxFlat CreateDisabledStyle()
         {
+            var border =
+                RitsuShellThemeLayoutResolver.ResolveEdges("components.sidebar.layout.disabled.borderWidth", 2);
+            var radius = RitsuShellThemeLayoutResolver.ResolveInt("components.sidebar.layout.disabled.cornerRadius",
+                RitsuShellTheme.Current.Metric.Radius.Default);
+            var padding = RitsuShellThemeLayoutResolver.ResolveEdges("components.sidebar.layout.disabled.padding", 14);
+            padding = new(
+                RitsuShellThemeLayoutResolver.ResolveInt("components.sidebar.layout.disabled.padding.left",
+                    padding.Left),
+                RitsuShellThemeLayoutResolver.ResolveInt("components.sidebar.layout.disabled.padding.top", 8),
+                RitsuShellThemeLayoutResolver.ResolveInt("components.sidebar.layout.disabled.padding.right",
+                    padding.Right),
+                RitsuShellThemeLayoutResolver.ResolveInt("components.sidebar.layout.disabled.padding.bottom", 8));
             return new()
             {
-                BgColor = new(0.09f, 0.10f, 0.12f, 0.7f),
-                BorderColor = new(0.24f, 0.27f, 0.30f, 0.4f),
-                BorderWidthLeft = 2,
-                BorderWidthTop = 2,
-                BorderWidthRight = 2,
-                BorderWidthBottom = 2,
-                CornerRadiusTopLeft = ModSettingsUiMetrics.CornerRadius,
-                CornerRadiusTopRight = ModSettingsUiMetrics.CornerRadius,
-                CornerRadiusBottomRight = ModSettingsUiMetrics.CornerRadius,
-                CornerRadiusBottomLeft = ModSettingsUiMetrics.CornerRadius,
-                ContentMarginLeft = 14,
-                ContentMarginTop = 8,
-                ContentMarginRight = 14,
-                ContentMarginBottom = 8,
+                BgColor = RitsuShellTheme.Current.Component.SidebarRail.Bg,
+                BorderColor = RitsuShellTheme.Current.Component.SidebarRail.Border,
+                BorderWidthLeft = border.Left,
+                BorderWidthTop = border.Top,
+                BorderWidthRight = border.Right,
+                BorderWidthBottom = border.Bottom,
+                CornerRadiusTopLeft = radius,
+                CornerRadiusTopRight = radius,
+                CornerRadiusBottomRight = radius,
+                CornerRadiusBottomLeft = radius,
+                ContentMarginLeft = padding.Left,
+                ContentMarginTop = padding.Top,
+                ContentMarginRight = padding.Right,
+                ContentMarginBottom = padding.Bottom,
             };
         }
     }
@@ -4226,19 +4758,23 @@ namespace STS2RitsuLib.Settings
             _tone = tone;
 
             Text = text;
-            CustomMinimumSize = new(ModSettingsUiFactory.EntryControlWidth, ModSettingsUiMetrics.EntryValueMinHeight);
+            CustomMinimumSize = RitsuShellThemeLayoutResolver.ResolveMinSize(
+                "components.textButton.layout.minSize",
+                new(ModSettingsUiFactory.EntryControlWidth,
+                    RitsuShellTheme.Current.Metric.Entry.ValueMinHeight));
             SizeFlagsHorizontal = SizeFlags.ShrinkEnd;
             SizeFlagsVertical = SizeFlags.ShrinkCenter;
             FocusMode = FocusModeEnum.All;
             MouseFilter = MouseFilterEnum.Stop;
             Flat = false;
             ClipText = true;
-            AddThemeFontOverride("font", ModSettingsUiResources.KreonBold);
-            AddThemeFontSizeOverride("font_size", 18);
-            AddThemeColorOverride("font_color", ModSettingsUiPalette.LabelPrimary);
-            AddThemeColorOverride("font_hover_color", Colors.White);
-            AddThemeColorOverride("font_pressed_color", Colors.White);
-            AddThemeColorOverride("font_focus_color", Colors.White);
+            AddThemeFontOverride("font", RitsuShellTheme.Current.Font.BodyBold);
+            AddThemeFontSizeOverride("font_size", RitsuShellTheme.Current.Metric.FontSize.Button);
+            AddThemeColorOverride("font_color", ResolveToneForeground(tone));
+            AddThemeColorOverride("font_hover_color", RitsuShellTheme.Current.Text.HoverHighlight);
+            AddThemeColorOverride("font_pressed_color", RitsuShellTheme.Current.Text.HoverHighlight);
+            AddThemeColorOverride("font_focus_color", RitsuShellTheme.Current.Text.HoverHighlight);
+            AddThemeColorOverride("font_disabled_color", RitsuShellTheme.Current.Text.LabelSecondary);
             ApplyVisualState();
             Pressed += () => action?.Invoke();
         }
@@ -4273,52 +4809,76 @@ namespace STS2RitsuLib.Settings
             AddThemeStyleboxOverride("hover", CreateStyle(_selected, true, _tone));
             AddThemeStyleboxOverride("pressed", CreateStyle(true, true, _tone));
             AddThemeStyleboxOverride("focus", CreateStyle(_selected, true, _tone));
-            AddThemeStyleboxOverride("disabled", ModSettingsSidebarButton.CreateDisabledStyle());
+            AddThemeStyleboxOverride("disabled", CreateStyle(false, false, _tone));
+        }
+
+        private static Color ResolveToneForeground(ModSettingsButtonTone tone)
+        {
+            return tone switch
+            {
+                ModSettingsButtonTone.Accent => RitsuShellTheme.Current.Component.TextButton.Accent.Fg,
+                ModSettingsButtonTone.Danger => RitsuShellTheme.Current.Component.TextButton.Danger.Fg,
+                _ => RitsuShellTheme.Current.Component.TextButton.Neutral.Fg,
+            };
         }
 
         private static StyleBoxFlat CreateStyle(bool selected, bool hovered, ModSettingsButtonTone tone)
         {
             var borderColor = tone switch
             {
-                ModSettingsButtonTone.Accent => new(0.53f, 0.76f, 0.86f, 0.86f),
-                ModSettingsButtonTone.Danger => new(0.87f, 0.48f, 0.46f, 0.84f),
-                _ => new Color(0.45f, 0.60f, 0.70f, 0.60f),
+                ModSettingsButtonTone.Accent => RitsuShellTheme.Current.Component.TextButton.Accent.Fg,
+                ModSettingsButtonTone.Danger => RitsuShellTheme.Current.Component.TextButton.Danger.Fg,
+                _ => RitsuShellTheme.Current.Component.TextButton.Neutral.Fg,
             };
 
             var backgroundColor = tone switch
             {
                 ModSettingsButtonTone.Accent => selected || hovered
-                    ? new(0.14f, 0.27f, 0.33f, 0.985f)
-                    : new Color(0.10f, 0.21f, 0.26f, 0.97f),
+                    ? RitsuShellTheme.Current.Component.TextButton.Accent.BgHover
+                    : RitsuShellTheme.Current.Component.TextButton.Accent.Bg,
                 ModSettingsButtonTone.Danger => selected || hovered
-                    ? new(0.29f, 0.12f, 0.12f, 0.985f)
-                    : new Color(0.23f, 0.095f, 0.10f, 0.97f),
-                _ => selected || hovered ? new(0.13f, 0.21f, 0.28f, 0.985f) : new Color(0.10f, 0.16f, 0.22f, 0.97f),
+                    ? RitsuShellTheme.Current.Component.TextButton.Danger.BgHover
+                    : RitsuShellTheme.Current.Component.TextButton.Danger.Bg,
+                _ => selected || hovered
+                    ? RitsuShellTheme.Current.Component.TextButton.Neutral.BgHover
+                    : RitsuShellTheme.Current.Component.TextButton.Neutral.Bg,
             };
 
             var shadowSize = hovered ? 7 : 2;
             var shadowColor = hovered
                 ? new(borderColor.R, borderColor.G, borderColor.B, 0.42f)
-                : new Color(0f, 0f, 0f, 0.12f);
+                : RitsuShellTheme.Current.Color.Shadow.Ambient;
+            var normalBorder =
+                RitsuShellThemeLayoutResolver.ResolveEdges("components.textButton.layout.borderWidth", 1);
+            var hoverBorder = RitsuShellThemeLayoutResolver.ResolveEdges(
+                "components.textButton.layout.borderWidthHover",
+                normalBorder.Left + 1);
+            var padding = RitsuShellThemeLayoutResolver.ResolveEdges("components.textButton.layout.padding", 14);
+            padding = new(
+                RitsuShellThemeLayoutResolver.ResolveInt("components.textButton.layout.padding.left", padding.Left),
+                RitsuShellThemeLayoutResolver.ResolveInt("components.textButton.layout.padding.top", 8),
+                RitsuShellThemeLayoutResolver.ResolveInt("components.textButton.layout.padding.right", padding.Right),
+                RitsuShellThemeLayoutResolver.ResolveInt("components.textButton.layout.padding.bottom", 8));
+            var border = hovered ? hoverBorder : normalBorder;
 
             return new()
             {
                 BgColor = backgroundColor,
                 BorderColor = borderColor,
-                BorderWidthLeft = hovered ? 2 : 1,
-                BorderWidthTop = hovered ? 2 : 1,
-                BorderWidthRight = hovered ? 2 : 1,
-                BorderWidthBottom = hovered ? 2 : 1,
-                CornerRadiusTopLeft = ModSettingsUiMetrics.CornerRadius,
-                CornerRadiusTopRight = ModSettingsUiMetrics.CornerRadius,
-                CornerRadiusBottomRight = ModSettingsUiMetrics.CornerRadius,
-                CornerRadiusBottomLeft = ModSettingsUiMetrics.CornerRadius,
+                BorderWidthLeft = border.Left,
+                BorderWidthTop = border.Top,
+                BorderWidthRight = border.Right,
+                BorderWidthBottom = border.Bottom,
+                CornerRadiusTopLeft = RitsuShellTheme.Current.Metric.Radius.Default,
+                CornerRadiusTopRight = RitsuShellTheme.Current.Metric.Radius.Default,
+                CornerRadiusBottomRight = RitsuShellTheme.Current.Metric.Radius.Default,
+                CornerRadiusBottomLeft = RitsuShellTheme.Current.Metric.Radius.Default,
                 ShadowColor = shadowColor,
                 ShadowSize = shadowSize,
-                ContentMarginLeft = 14,
-                ContentMarginTop = 8,
-                ContentMarginRight = 14,
-                ContentMarginBottom = 8,
+                ContentMarginLeft = padding.Left,
+                ContentMarginTop = padding.Top,
+                ContentMarginRight = padding.Right,
+                ContentMarginBottom = padding.Bottom,
             };
         }
     }

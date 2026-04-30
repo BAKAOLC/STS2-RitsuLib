@@ -1,4 +1,5 @@
 using Godot;
+using STS2RitsuLib.Ui.Shell.Theme;
 
 namespace STS2RitsuLib.Settings
 {
@@ -16,12 +17,12 @@ namespace STS2RitsuLib.Settings
 
         internal static void ApplyStringLineEditTheme(LineEdit edit)
         {
-            ModSettingsUiControlTheming.ApplyEntryLineEditValueFieldTheme(edit, ModSettingsUiResources.KreonRegular);
+            ModSettingsUiControlTheming.ApplyEntryLineEditValueFieldTheme(edit, RitsuShellTheme.Current.Font.Body);
         }
 
         internal static void ApplyStringTextEditTheme(TextEdit edit)
         {
-            ModSettingsUiControlTheming.ApplyEntryTextEditValueFieldTheme(edit, ModSettingsUiResources.KreonRegular);
+            ModSettingsUiControlTheming.ApplyEntryTextEditValueFieldTheme(edit, RitsuShellTheme.Current.Font.Body);
         }
     }
 }

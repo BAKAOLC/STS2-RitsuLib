@@ -158,6 +158,7 @@ RitsuLib 不包含下列工具，它们是常见的外部工作流：
 | 工具 | 作用 |
 |---|---|
 | [FMOD Studio](https://www.fmod.com/) | 编辑 Bank / Event。务必与游戏所用 FMOD 主版本线一致（可参考游戏目录 `addons/fmod`） |
+| [STS2_FModProject_Minimal](https://github.com/BAKAOLC/STS2_FModProject_Minimal)（社区） | 基于游戏 FMOD 资源逆向清理的最简工程模板。适合快速创建“仅自建内容 Bank + GUIDs.txt”的安全工作流，避免误改 Master 导致混音目标解析异常 |
 | 游戏内置 Godot FMOD 插件 | 与 `utopia-rise/fmod-gdextension` 同类集成，运行时提供 `FmodServer` 单例 |
 | [sts2-fmod-tools](https://github.com/elliotttate/sts2-fmod-tools)（社区） | 可选：从游戏数据侧辅助对齐 Studio 工程/事件 |
 | DAW 导出 | 导出 WAV/OGG 等；若与原版 SFX 混播，注意响度与动态范围 |

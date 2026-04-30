@@ -1,0 +1,807 @@
+{
+  "$schema": "https://raw.githubusercontent.com/BAKAOLC/STS2-RitsuLib/main/schemas/ui/shell/v1/schema.json",
+  "themeFormatVersion": 1,
+  "id": "warm",
+  "displayName": "Warm",
+  "inherits": "default",
+  "semantic": {
+    "color": {
+      "palette": {
+        "divider": {
+          "$value": "#E8D4B840",
+          "$type": "color"
+        }
+      },
+      "text": {
+        "richTitle": {
+          "$value": "#FFDCAE",
+          "$type": "color"
+        },
+        "richBody": {
+          "$value": "#E8D4B8",
+          "$type": "color"
+        },
+        "richSecondary": {
+          "$value": "#D7C2A6",
+          "$type": "color"
+        },
+        "richMuted": {
+          "$value": "#B09B80",
+          "$type": "color"
+        },
+        "labelPrimary": {
+          "$value": "#FFF4E0",
+          "$type": "color"
+        },
+        "labelSecondary": {
+          "$value": "#E8D4B8FA",
+          "$type": "color"
+        },
+        "sidebarSection": {
+          "$value": "#F2DFC6",
+          "$type": "color"
+        },
+        "hoverHighlight": {
+          "$value": "#FFF6E8",
+          "$type": "color"
+        },
+        "dropdownRow": {
+          "$value": "#F6E4CC",
+          "$type": "color"
+        }
+      },
+      "surface": {
+        "sidebar": {
+          "$value": "#18140EF5",
+          "$type": "color"
+        },
+        "content": {
+          "$value": "#1A150EFA",
+          "$type": "color"
+        },
+        "contentBuildOverlay": {
+          "$value": "#0C0A07B8",
+          "$type": "color"
+        },
+        "entry": {
+          "bg": {
+            "$value": "#1C170FF7",
+            "$type": "color"
+          },
+          "border": {
+            "$value": "#8A6B4A6B",
+            "$type": "color"
+          },
+          "shadow": {
+            "$value": "#00000024",
+            "$type": "color"
+          }
+        },
+        "inset": {
+          "bg": {
+            "$value": "#15110BFA",
+            "$type": "color"
+          },
+          "border": {
+            "$value": "#6D553E57",
+            "$type": "color"
+          }
+        },
+        "framed": {
+          "border": {
+            "$value": "#B88850A0",
+            "$type": "color"
+          }
+        }
+      }
+    },
+    "metrics": {
+      "radius": {
+        "default": {
+          "$value": 10,
+          "$type": "dimension"
+        },
+        "validation": {
+          "$value": 10,
+          "$type": "dimension"
+        },
+        "overlay": {
+          "$value": 10,
+          "$type": "dimension"
+        }
+      }
+    },
+    "fontSize": {
+      "settingLineTitle": {
+        "$value": 21,
+        "$type": "dimension"
+      }
+    }
+  },
+  "components": {
+    "chromeMenu": {
+      "default": {
+        "bg": {
+          "$value": "#1A150EDE",
+          "$type": "color"
+        },
+        "border": {
+          "$value": "#6D553E6B",
+          "$type": "color"
+        }
+      },
+      "hover": {
+        "bg": {
+          "$value": "#2A2218F5",
+          "$type": "color"
+        },
+        "border": {
+          "$value": "#B88850A6",
+          "$type": "color"
+        }
+      },
+      "layout": {
+        "cornerRadius": {
+          "$value": 10,
+          "$type": "dimension"
+        }
+      }
+    },
+    "pageToolbarTray": {
+      "bg": {
+        "$value": "#120F0AD6",
+        "$type": "color"
+      },
+      "border": {
+        "$value": "#5C49365C",
+        "$type": "color"
+      },
+      "layout": {
+        "cornerRadius": {
+          "$value": 10,
+          "$type": "dimension"
+        }
+      }
+    },
+    "listShell": {
+      "bg": {
+        "$value": "#120F0AFA",
+        "$type": "color"
+      },
+      "border": {
+        "$value": "#7A5F4399",
+        "$type": "color"
+      },
+      "layout": {
+        "cornerRadius": {
+          "$value": 10,
+          "$type": "dimension"
+        }
+      }
+    },
+    "listItem": {
+      "default": {
+        "bg": {
+          "$value": "#1A150EFA",
+          "$type": "color"
+        },
+        "border": {
+          "$value": "#6D553E57",
+          "$type": "color"
+        }
+      },
+      "accent": {
+        "bg": {
+          "$value": "#231C13FA",
+          "$type": "color"
+        },
+        "border": {
+          "$value": "#B88850B8",
+          "$type": "color"
+        }
+      },
+      "layout": {
+        "cornerRadius": {
+          "$value": 10,
+          "$type": "dimension"
+        }
+      }
+    },
+    "sidebarCard": {
+      "default": {
+        "bg": {
+          "$value": "#1A150EF5",
+          "$type": "color"
+        },
+        "border": {
+          "$value": "#8A6B4A94",
+          "$type": "color"
+        }
+      },
+      "selected": {
+        "bg": {
+          "$value": "#231C13FA",
+          "$type": "color"
+        },
+        "border": {
+          "$value": "#D0A56FBA",
+          "$type": "color"
+        }
+      },
+      "shadow": {
+        "$value": "#0000002E",
+        "$type": "color"
+      },
+      "layout": {
+        "cornerRadius": {
+          "$value": 10,
+          "$type": "dimension"
+        }
+      }
+    },
+    "surface": {
+      "layout": {
+        "cornerRadius": {
+          "$value": 10,
+          "$type": "dimension"
+        }
+      }
+    },
+    "entryField": {
+      "layout": {
+        "cornerRadius": {
+          "$value": 10,
+          "$type": "dimension"
+        }
+      }
+    },
+    "colorSwatch": {
+      "layout": {
+        "cornerRadius": {
+          "$value": 10,
+          "$type": "dimension"
+        }
+      }
+    },
+    "insetSurface": {
+      "layout": {
+        "cornerRadius": {
+          "$value": 10,
+          "$type": "dimension"
+        }
+      }
+    },
+    "framedSurface": {
+      "layout": {
+        "cornerRadius": {
+          "$value": 10,
+          "$type": "dimension"
+        }
+      }
+    },
+    "listEditor": {
+      "bg": {
+        "$value": "#120F0AFC",
+        "$type": "color"
+      },
+      "border": {
+        "$value": "#7A5F4399",
+        "$type": "color"
+      },
+      "layout": {
+        "cornerRadius": {
+          "$value": 10,
+          "$type": "dimension"
+        }
+      }
+    },
+    "pill": {
+      "default": {
+        "bg": {
+          "$value": "#1A150EF5",
+          "$type": "color"
+        },
+        "border": {
+          "$value": "#7A5F4399",
+          "$type": "color"
+        }
+      },
+      "hover": {
+        "bg": {
+          "$value": "#2A2218FA",
+          "$type": "color"
+        },
+        "border": {
+          "$value": "#B88850C7",
+          "$type": "color"
+        }
+      },
+      "layout": {
+        "cornerRadius": {
+          "$value": 10,
+          "$type": "dimension"
+        }
+      }
+    },
+    "toggle": {
+      "on": {
+        "bg": {
+          "$value": "#2E5A45FA",
+          "$type": "color"
+        },
+        "border": {
+          "$value": "#7EDAAE",
+          "$type": "color"
+        }
+      },
+      "off": {
+        "bg": {
+          "$value": "#1A150EFA",
+          "$type": "color"
+        },
+        "border": {
+          "$value": "#6D553E80",
+          "$type": "color"
+        }
+      },
+      "offHover": {
+        "bg": {
+          "$value": "#2A2218FA",
+          "$type": "color"
+        }
+      },
+      "disabled": {
+        "bg": {
+          "$value": "#120F0AB3",
+          "$type": "color"
+        },
+        "border": {
+          "$value": "#3A2E2280",
+          "$type": "color"
+        }
+      },
+      "layout": {
+        "cornerRadius": {
+          "$value": 10,
+          "$type": "dimension"
+        }
+      }
+    },
+    "slider": {
+      "grab": {
+        "highlight": {
+          "$value": "#DCA96AF2",
+          "$type": "color"
+        },
+        "shadow": {
+          "$value": "#684B2EFA",
+          "$type": "color"
+        }
+      },
+      "track": {
+        "bg": {
+          "$value": "#684B2EFA",
+          "$type": "color"
+        },
+        "highlight": {
+          "$value": "#DCA96AF2",
+          "$type": "color"
+        }
+      },
+      "layout": {
+        "grabber": {
+          "cornerRadius": {
+            "$value": 10,
+            "$type": "dimension"
+          }
+        }
+      }
+    },
+    "dropdown": {
+      "open": {
+        "bg": {
+          "$value": "#2A2218FA",
+          "$type": "color"
+        },
+        "border": {
+          "$value": "#C79A63C7",
+          "$type": "color"
+        }
+      },
+      "hover": {
+        "bg": {
+          "$value": "#3A2D1FFA",
+          "$type": "color"
+        },
+        "border": {
+          "$value": "#E0B27DD9",
+          "$type": "color"
+        }
+      },
+      "pressed": {
+        "bg": {
+          "$value": "#4A3522FC",
+          "$type": "color"
+        },
+        "border": {
+          "$value": "#E8BB8AF0",
+          "$type": "color"
+        }
+      },
+      "focus": {
+        "bg": {
+          "$value": "#3D2F21FC",
+          "$type": "color"
+        },
+        "border": {
+          "$value": "#FFE2BFFA",
+          "$type": "color"
+        }
+      },
+      "layout": {
+        "currentRow": {
+          "cornerRadius": {
+            "$value": 10,
+            "$type": "dimension"
+          }
+        }
+      }
+    },
+    "stepper": {
+      "default": {
+        "bg": {
+          "$value": "#2E2419F5",
+          "$type": "color"
+        },
+        "border": {
+          "$value": "#8A6B4A80",
+          "$type": "color"
+        }
+      },
+      "hover": {
+        "bg": {
+          "$value": "#4A3522FA",
+          "$type": "color"
+        },
+        "border": {
+          "$value": "#D6A873DB",
+          "$type": "color"
+        }
+      },
+      "neutral": {
+        "bg": {
+          "$value": "#261D14D9",
+          "$type": "color"
+        },
+        "border": {
+          "$value": "#725A4266",
+          "$type": "color"
+        }
+      }
+    },
+    "dragHandle": {
+      "default": {
+        "bg": {
+          "$value": "#2E2419F5",
+          "$type": "color"
+        },
+        "border": {
+          "$value": "#9E7B56A8",
+          "$type": "color"
+        }
+      },
+      "selected": {
+        "bg": {
+          "$value": "#4A3522FA",
+          "$type": "color"
+        },
+        "border": {
+          "$value": "#E2B884E5",
+          "$type": "color"
+        }
+      },
+      "layout": {
+        "cornerRadius": {
+          "$value": 10,
+          "$type": "dimension"
+        }
+      }
+    },
+    "collapsible": {
+      "selected": {
+        "bg": {
+          "$value": "#2A2218FA",
+          "$type": "color"
+        },
+        "border": {
+          "$value": "#C79A63C7",
+          "$type": "color"
+        }
+      },
+      "layout": {
+        "cornerRadius": {
+          "$value": 10,
+          "$type": "dimension"
+        }
+      }
+    },
+    "sidebarBtn": {
+      "default": {
+        "bg": {
+          "$value": "#1A150EDE",
+          "$type": "color"
+        },
+        "border": {
+          "$value": "#6D553E80",
+          "$type": "color"
+        }
+      },
+      "hover": {
+        "bg": {
+          "$value": "#2A2218FA",
+          "$type": "color"
+        },
+        "border": {
+          "$value": "#B88850B8",
+          "$type": "color"
+        }
+      },
+      "selected": {
+        "bg": {
+          "$value": "#231C13FA",
+          "$type": "color"
+        },
+        "border": {
+          "$value": "#B8885099",
+          "$type": "color"
+        }
+      },
+      "selectedHover": {
+        "bg": {
+          "$value": "#2A2218FA",
+          "$type": "color"
+        },
+        "border": {
+          "$value": "#B88850C7",
+          "$type": "color"
+        }
+      },
+      "utilitySelected": {
+        "bg": {
+          "$value": "#2A2218FA",
+          "$type": "color"
+        }
+      },
+      "idleDeep": {
+        "bg": {
+          "$value": "#18140EF5",
+          "$type": "color"
+        }
+      },
+      "idleDeepHover": {
+        "bg": {
+          "$value": "#231C13FA",
+          "$type": "color"
+        }
+      },
+      "idleDeeper": {
+        "bg": {
+          "$value": "#15110BFA",
+          "$type": "color"
+        }
+      },
+      "idleDeeperHover": {
+        "bg": {
+          "$value": "#231C13FA",
+          "$type": "color"
+        }
+      },
+      "mod": {
+        "bg": {
+          "$value": "#1F190FFE",
+          "$type": "color"
+        }
+      },
+      "modHover": {
+        "bg": {
+          "$value": "#2A2218FA",
+          "$type": "color"
+        }
+      },
+      "modDeep": {
+        "bg": {
+          "$value": "#18140EF5",
+          "$type": "color"
+        }
+      },
+      "deep": {
+        "border": {
+          "$value": "#8A6B4A99",
+          "$type": "color"
+        }
+      },
+      "deepHover": {
+        "border": {
+          "$value": "#B88850C7",
+          "$type": "color"
+        }
+      }
+    },
+    "sidebarRail": {
+      "bg": {
+        "$value": "#120F0AB3",
+        "$type": "color"
+      },
+      "border": {
+        "$value": "#5C49365C",
+        "$type": "color"
+      }
+    },
+    "textButton": {
+      "accent": {
+        "fg": {
+          "$value": "#D4A56ADB",
+          "$type": "color"
+        },
+        "bg": {
+          "$value": "#3A2A1CF7",
+          "$type": "color"
+        },
+        "bgHover": {
+          "$value": "#4A3522FB",
+          "$type": "color"
+        }
+      },
+      "danger": {
+        "fg": {
+          "$value": "#E69486DB",
+          "$type": "color"
+        },
+        "bg": {
+          "$value": "#4A241EF7",
+          "$type": "color"
+        },
+        "bgHover": {
+          "$value": "#5C2C24FB",
+          "$type": "color"
+        }
+      },
+      "neutral": {
+        "fg": {
+          "$value": "#B89973B8",
+          "$type": "color"
+        },
+        "bg": {
+          "$value": "#2E2419F7",
+          "$type": "color"
+        },
+        "bgHover": {
+          "$value": "#3D2F21FB",
+          "$type": "color"
+        }
+      }
+    },
+    "stringValidation": {
+      "neutral": {
+        "bg": {
+          "$value": "#2B231A",
+          "$type": "color"
+        },
+        "border": {
+          "$value": "#6D553E",
+          "$type": "color"
+        }
+      },
+      "invalid": {
+        "bg": {
+          "$value": "#3A1A14",
+          "$type": "color"
+        },
+        "border": {
+          "$value": "#D46A52",
+          "$type": "color"
+        }
+      },
+      "layout": {
+        "cornerRadius": {
+          "$value": 10,
+          "$type": "dimension"
+        }
+      }
+    },
+    "choiceCenter": {
+      "layout": {
+        "cornerRadius": {
+          "$value": 10,
+          "$type": "dimension"
+        }
+      }
+    },
+    "overlayPanel": {
+      "bg": {
+        "$value": "#221B13F7",
+        "$type": "color"
+      },
+      "border": {
+        "$value": "#B88850A6",
+        "$type": "color"
+      }
+    },
+    "scrollbar": {
+      "track": {
+        "bg": {
+          "$value": "#15110BDE",
+          "$type": "color"
+        },
+        "border": {
+          "$value": "#7A5F4394",
+          "$type": "color"
+        }
+      },
+      "grabber": {
+        "bg": {
+          "$value": "#3D2F21EF",
+          "$type": "color"
+        },
+        "border": {
+          "$value": "#C79A63CF",
+          "$type": "color"
+        }
+      },
+      "grabberHover": {
+        "bg": {
+          "$value": "#4A3522FA",
+          "$type": "color"
+        },
+        "border": {
+          "$value": "#E2B884E5",
+          "$type": "color"
+        }
+      },
+      "grabberPressed": {
+        "bg": {
+          "$value": "#5C4029FC",
+          "$type": "color"
+        },
+        "border": {
+          "$value": "#F0CAA0FA",
+          "$type": "color"
+        }
+      },
+      "layout": {
+        "track": {
+          "cornerRadius": {
+            "$value": 10,
+            "$type": "dimension"
+          }
+        },
+        "grabber": {
+          "cornerRadius": {
+            "$value": 10,
+            "$type": "dimension"
+          }
+        }
+      }
+    },
+    "sidebar": {
+      "layout": {
+        "width": {
+          "$value": 292,
+          "$type": "dimension"
+        },
+        "button": {
+          "cornerRadius": {
+            "$value": 10,
+            "$type": "dimension"
+          }
+        },
+        "disabled": {
+          "cornerRadius": {
+            "$value": 10,
+            "$type": "dimension"
+          }
+        }
+      }
+    }
+  }
+}

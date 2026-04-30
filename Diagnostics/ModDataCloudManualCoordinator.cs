@@ -340,7 +340,7 @@ namespace STS2RitsuLib.Diagnostics
             finally
             {
                 if (GodotObject.IsInstanceValid(overlay))
-                    overlay!.Detach();
+                    overlay.Detach();
                 Interlocked.Exchange(ref _manualCloudBusy, 0);
             }
         }
@@ -437,7 +437,7 @@ namespace STS2RitsuLib.Diagnostics
             finally
             {
                 if (GodotObject.IsInstanceValid(overlay))
-                    overlay!.Detach();
+                    overlay.Detach();
                 Interlocked.Exchange(ref _manualCloudBusy, 0);
             }
         }
