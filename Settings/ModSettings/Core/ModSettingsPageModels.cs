@@ -46,6 +46,7 @@ namespace STS2RitsuLib.Settings
             int sortOrder,
             IReadOnlyList<ModSettingsSection> sections,
             Func<bool>? visibleWhen = null,
+            Func<bool>? enabledWhen = null,
             ModSettingsMenuCapabilities menuCapabilities = ModSettingsMenuCapabilities.Copy |
                                                            ModSettingsMenuCapabilities.Paste,
             ModSettingsHostSurface visibleOnHostSurfaces = ModSettingsHostSurface.All,
@@ -59,6 +60,7 @@ namespace STS2RitsuLib.Settings
             SortOrder = sortOrder;
             Sections = sections;
             VisibleWhen = visibleWhen;
+            EnabledWhen = enabledWhen;
             MenuCapabilities = menuCapabilities;
             VisibleOnHostSurfaces = visibleOnHostSurfaces;
             ReadOnlyOnHostSurfaces = readOnlyOnHostSurfaces;
@@ -108,6 +110,11 @@ namespace STS2RitsuLib.Settings
         public Func<bool>? VisibleWhen { get; }
 
         /// <summary>
+        ///     When non-null, all controls on this page are disabled (dimmed, non-interactive) while the predicate returns false.
+        /// </summary>
+        public Func<bool>? EnabledWhen { get; }
+
+        /// <summary>
         ///     Built-in actions enabled for the page-level actions menu.
         /// </summary>
         public ModSettingsMenuCapabilities MenuCapabilities { get; }
@@ -137,6 +144,7 @@ namespace STS2RitsuLib.Settings
             bool startCollapsed,
             IReadOnlyList<ModSettingsEntryDefinition> entries,
             Func<bool>? visibleWhen = null,
+            Func<bool>? enabledWhen = null,
             ModSettingsMenuCapabilities menuCapabilities = ModSettingsMenuCapabilities.Copy |
                                                            ModSettingsMenuCapabilities.Paste,
             ModSettingsHostSurface visibleOnHostSurfaces = ModSettingsHostSurface.All,
@@ -149,6 +157,7 @@ namespace STS2RitsuLib.Settings
             StartCollapsed = startCollapsed;
             Entries = entries;
             VisibleWhen = visibleWhen;
+            EnabledWhen = enabledWhen;
             MenuCapabilities = menuCapabilities;
             VisibleOnHostSurfaces = visibleOnHostSurfaces;
             ReadOnlyOnHostSurfaces = readOnlyOnHostSurfaces;
@@ -188,6 +197,11 @@ namespace STS2RitsuLib.Settings
         ///     When non-null, the section (and its sidebar shortcut) is hidden while the predicate is false.
         /// </summary>
         public Func<bool>? VisibleWhen { get; }
+
+        /// <summary>
+        ///     When non-null, all controls in this section are disabled (dimmed, non-interactive) while the predicate is false.
+        /// </summary>
+        public Func<bool>? EnabledWhen { get; }
 
         /// <summary>
         ///     Built-in actions enabled for the section-level actions menu.

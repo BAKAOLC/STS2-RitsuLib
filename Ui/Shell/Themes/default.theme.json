@@ -1,0 +1,1935 @@
+{
+  "$schema": "https://raw.githubusercontent.com/BAKAOLC/STS2-RitsuLib/main/schemas/ui/shell/v1/schema.json",
+  "themeFormatVersion": 1,
+  "id": "default",
+  "displayName": "Default",
+  "inherits": null,
+  "core": {
+    "color": {
+      "fixed": {
+        "white": {
+          "$value": "#FFFFFF",
+          "$type": "color"
+        },
+        "transparent": {
+          "$value": "#00000000",
+          "$type": "color"
+        }
+      }
+    }
+  },
+  "semantic": {
+    "state": {
+      "disabledOpacity": {
+        "$value": 0.78,
+        "$type": "number",
+        "$description": "Opacity multiplier for disabled controls."
+      },
+      "disabled": {
+        "opacity": {
+          "$value": "{semantic.state.disabledOpacity}",
+          "$type": "number",
+          "$description": "Legacy-compatible alias for disabledOpacity."
+        },
+        "tint": {
+          "$value": "#FFFFFF",
+          "$type": "color",
+          "$description": "Optional tint multiplied into disabled controls. Default: no tint."
+        },
+        "overlay": {
+          "$value": "#00000000",
+          "$type": "color",
+          "$description": "Optional overlay blended over disabled controls. Alpha is blend factor."
+        }
+      }
+    },
+    "color": {
+      "palette": {
+        "white": {
+          "$value": "{core.color.fixed.white}",
+          "$type": "color"
+        },
+        "transparent": {
+          "$value": "{core.color.fixed.transparent}",
+          "$type": "color"
+        },
+        "divider": {
+          "$value": "#E8DCBE40",
+          "$type": "color",
+          "$description": "Hairline divider tint."
+        },
+        "unsetPreview": {
+          "$value": "#FFD740",
+          "$type": "color",
+          "$description": "Highlight for uncommitted values."
+        },
+        "modalBackdrop": {
+          "$value": "#0000009E",
+          "$type": "color"
+        }
+      },
+      "shadow": {
+        "ambient": {
+          "$value": "#0000001F",
+          "$type": "color"
+        }
+      },
+      "text": {
+        "richTitle": {
+          "$value": "#FAF6ED",
+          "$type": "color"
+        },
+        "richBody": {
+          "$value": "#EDE4D1",
+          "$type": "color"
+        },
+        "richSecondary": {
+          "$value": "#D6CDBB",
+          "$type": "color"
+        },
+        "richMuted": {
+          "$value": "#B3AA99",
+          "$type": "color"
+        },
+        "labelPrimary": {
+          "$value": "#FCF9F0",
+          "$type": "color"
+        },
+        "labelSecondary": {
+          "$value": "#DBD2C1FA",
+          "$type": "color"
+        },
+        "sidebarSection": {
+          "$value": "#E0DACB",
+          "$type": "color"
+        },
+        "hoverHighlight": {
+          "$value": "#FAFFFF",
+          "$type": "color"
+        },
+        "number": {
+          "$value": "#F5FAFF",
+          "$type": "color"
+        },
+        "grip": {
+          "$value": "#C7E0F0F2",
+          "$type": "color"
+        },
+        "hint": {
+          "$value": "#CCE3F0E6",
+          "$type": "color"
+        },
+        "dropdownRow": {
+          "$value": "#F2FAFF",
+          "$type": "color"
+        }
+      },
+      "surface": {
+        "sidebar": {
+          "$value": "#1A1D25F5",
+          "$type": "color"
+        },
+        "content": {
+          "$value": "#141820FA",
+          "$type": "color"
+        },
+        "contentBuildOverlay": {
+          "$value": "#080A0FB8",
+          "$type": "color"
+        },
+        "entry": {
+          "bg": {
+            "$value": "#181D26F6",
+            "$type": "color"
+          },
+          "border": {
+            "$value": "#6194B36B",
+            "$type": "color"
+          },
+          "shadow": {
+            "$value": "#00000024",
+            "$type": "color"
+          }
+        },
+        "inset": {
+          "bg": {
+            "$value": "#12161CFA",
+            "$type": "color"
+          },
+          "border": {
+            "$value": "#4D708F57",
+            "$type": "color"
+          }
+        },
+        "framed": {
+          "border": {
+            "$value": "#70ADCC5C",
+            "$type": "color"
+          },
+          "shadow": {
+            "$value": "#00000052",
+            "$type": "color"
+          }
+        }
+      }
+    },
+    "metrics": {
+      "radius": {
+        "default": {
+          "$value": 0,
+          "$type": "dimension"
+        },
+        "validation": {
+          "$value": 0,
+          "$type": "dimension"
+        },
+        "overlay": {
+          "$value": 0,
+          "$type": "dimension"
+        }
+      },
+      "borderWidth": {
+        "thin": {
+          "$value": 1,
+          "$type": "dimension"
+        },
+        "normal": {
+          "$value": 2,
+          "$type": "dimension"
+        },
+        "thick": {
+          "$value": 3,
+          "$type": "dimension"
+        },
+        "overlay": {
+          "$value": 2,
+          "$type": "dimension"
+        }
+      }
+    },
+    "fontSize": {
+      "button": {
+        "$value": 18,
+        "$type": "dimension"
+      },
+      "miniButton": {
+        "$value": 17,
+        "$type": "dimension"
+      },
+      "valueLabel": {
+        "$value": 17,
+        "$type": "dimension"
+      },
+      "popupRow": {
+        "$value": 18,
+        "$type": "dimension"
+      },
+      "hintSmall": {
+        "$value": 12,
+        "$type": "dimension"
+      },
+      "grip": {
+        "$value": 14,
+        "$type": "dimension"
+      },
+      "pillCount": {
+        "$value": 15,
+        "$type": "dimension"
+      },
+      "secondary": {
+        "$value": 16,
+        "$type": "dimension"
+      },
+      "headerArrow": {
+        "$value": 21,
+        "$type": "dimension"
+      },
+      "headerTitle": {
+        "$value": 24,
+        "$type": "dimension"
+      },
+      "headerSubtitle": {
+        "$value": 17,
+        "$type": "dimension"
+      },
+      "pageDescription": {
+        "$value": 18,
+        "$type": "dimension"
+      },
+      "overlayTitle": {
+        "$value": 22,
+        "$type": "dimension"
+      },
+      "overlayBody": {
+        "$value": 16,
+        "$type": "dimension"
+      },
+      "overlayPath": {
+        "$value": 14,
+        "$type": "dimension"
+      },
+      "settingsEntryButton": {
+        "$value": 28,
+        "$type": "dimension"
+      },
+      "settingLineTitle": {
+        "$value": 20,
+        "$type": "dimension"
+      }
+    },
+    "fontFamily": {
+      "body": {
+        "$value": "res://themes/kreon_regular_shared.tres",
+        "$type": "fontFamily"
+      },
+      "bodyBold": {
+        "$value": "res://themes/kreon_bold_shared.tres",
+        "$type": "fontFamily"
+      },
+      "button": {
+        "$value": "res://themes/kreon_bold_glyph_space_two.tres",
+        "$type": "fontFamily"
+      }
+    }
+  },
+  "components": {
+    "sidebarCard": {
+      "default": {
+        "bg": {
+          "$value": "#121821F0",
+          "$type": "color"
+        },
+        "border": {
+          "$value": "#4D708A5C",
+          "$type": "color"
+        }
+      },
+      "selected": {
+        "bg": {
+          "$value": "#16202AF7",
+          "$type": "color"
+        },
+        "border": {
+          "$value": "#94CCE694",
+          "$type": "color"
+        }
+      },
+      "shadow": {
+        "$value": "#00000029",
+        "$type": "color"
+      }
+    },
+    "chromeMenu": {
+      "default": {
+        "bg": {
+          "$value": "#171D26E6",
+          "$type": "color"
+        },
+        "border": {
+          "$value": "#4D708F6B",
+          "$type": "color"
+        }
+      },
+      "hover": {
+        "bg": {
+          "$value": "#263342F5",
+          "$type": "color"
+        },
+        "border": {
+          "$value": "#80B3D69E",
+          "$type": "color"
+        }
+      }
+    },
+    "pageToolbarTray": {
+      "bg": {
+        "$value": "#0E1117E0",
+        "$type": "color"
+      },
+      "border": {
+        "$value": "#476B8A52",
+        "$type": "color"
+      },
+      "layout": {
+        "borderWidth": {
+          "$value": 1,
+          "$type": "dimension"
+        },
+        "cornerRadius": {
+          "$value": 0,
+          "$type": "dimension"
+        },
+        "padding": {
+          "all": {
+            "$value": 10,
+            "$type": "dimension"
+          },
+          "top": {
+            "$value": 8,
+            "$type": "dimension"
+          },
+          "bottom": {
+            "$value": 8,
+            "$type": "dimension"
+          }
+        }
+      }
+    },
+    "listShell": {
+      "bg": {
+        "$value": "#0F1319FA",
+        "$type": "color"
+      },
+      "border": {
+        "$value": "#5785A361",
+        "$type": "color"
+      },
+      "shadow": {
+        "$value": "#00000029",
+        "$type": "color"
+      },
+      "layout": {
+        "borderWidth": {
+          "$value": 1,
+          "$type": "dimension"
+        },
+        "cornerRadius": {
+          "$value": 0,
+          "$type": "dimension"
+        },
+        "shadowSize": {
+          "$value": 3,
+          "$type": "dimension"
+        },
+        "padding": {
+          "$value": 12,
+          "$type": "dimension"
+        }
+      }
+    },
+    "listItem": {
+      "default": {
+        "bg": {
+          "$value": "#171C25F9",
+          "$type": "color"
+        },
+        "border": {
+          "$value": "#54809E57",
+          "$type": "color"
+        }
+      },
+      "accent": {
+        "bg": {
+          "$value": "#1D2934FB",
+          "$type": "color"
+        },
+        "border": {
+          "$value": "#85C4E6B3",
+          "$type": "color"
+        }
+      },
+      "shadow": {
+        "$value": "#0000001F",
+        "$type": "color"
+      },
+      "layout": {
+        "borderWidth": {
+          "$value": 1,
+          "$type": "dimension"
+        },
+        "cornerRadius": {
+          "$value": 0,
+          "$type": "dimension"
+        },
+        "shadowSize": {
+          "$value": 2,
+          "$type": "dimension"
+        },
+        "padding": {
+          "$value": 10,
+          "$type": "dimension"
+        },
+        "outerSeparation": {
+          "$value": 8,
+          "$type": "dimension"
+        },
+        "rootSeparation": {
+          "$value": 8,
+          "$type": "dimension"
+        },
+        "headerSeparation": {
+          "$value": 8,
+          "$type": "dimension"
+        },
+        "headerInnerSeparation": {
+          "$value": 8,
+          "$type": "dimension"
+        },
+        "textSeparation": {
+          "$value": 2,
+          "$type": "dimension"
+        },
+        "actionsSeparation": {
+          "$value": 8,
+          "$type": "dimension"
+        }
+      }
+    },
+    "listEditor": {
+      "bg": {
+        "$value": "#0E1117FB",
+        "$type": "color"
+      },
+      "border": {
+        "$value": "#4D75946B",
+        "$type": "color"
+      },
+      "layout": {
+        "borderWidth": {
+          "$value": 1,
+          "$type": "dimension"
+        },
+        "cornerRadius": {
+          "$value": 0,
+          "$type": "dimension"
+        },
+        "shadowSize": {
+          "$value": 2,
+          "$type": "dimension"
+        },
+        "padding": {
+          "all": {
+            "$value": 10,
+            "$type": "dimension"
+          },
+          "top": {
+            "$value": 8,
+            "$type": "dimension"
+          },
+          "bottom": {
+            "$value": 8,
+            "$type": "dimension"
+          }
+        }
+      }
+    },
+    "pill": {
+      "default": {
+        "bg": {
+          "$value": "#1F2936F5",
+          "$type": "color"
+        },
+        "border": {
+          "$value": "#618AA866",
+          "$type": "color"
+        }
+      },
+      "hover": {
+        "bg": {
+          "$value": "#2B4757FA",
+          "$type": "color"
+        },
+        "border": {
+          "$value": "#99D1EBC7",
+          "$type": "color"
+        }
+      },
+      "layout": {
+        "borderWidth": {
+          "$value": 1,
+          "$type": "dimension"
+        },
+        "cornerRadius": {
+          "$value": 0,
+          "$type": "dimension"
+        },
+        "padding": {
+          "all": {
+            "$value": 10,
+            "$type": "dimension"
+          },
+          "top": {
+            "$value": 5,
+            "$type": "dimension"
+          },
+          "bottom": {
+            "$value": 5,
+            "$type": "dimension"
+          }
+        }
+      }
+    },
+    "toggle": {
+      "on": {
+        "bg": {
+          "$value": "#2E6B4FFA",
+          "$type": "color"
+        },
+        "border": {
+          "$value": "#85DEB0F2",
+          "$type": "color"
+        }
+      },
+      "off": {
+        "bg": {
+          "$value": "#1F2630FA",
+          "$type": "color"
+        },
+        "border": {
+          "$value": "#57759473",
+          "$type": "color"
+        }
+      },
+      "offHover": {
+        "bg": {
+          "$value": "#2E3847FA",
+          "$type": "color"
+        }
+      },
+      "disabled": {
+        "bg": {
+          "$value": "#1A1A1FB3",
+          "$type": "color"
+        },
+        "border": {
+          "$value": "#40404759",
+          "$type": "color"
+        }
+      },
+      "shadow": {
+        "$value": "#0000001F",
+        "$type": "color"
+      },
+      "layout": {
+        "entry": {
+          "minSize": {
+            "height": {
+              "$value": 44,
+              "$type": "dimension"
+            }
+          }
+        },
+        "borderWidth": {
+          "$value": 2,
+          "$type": "dimension"
+        },
+        "borderWidthHover": {
+          "$value": 3,
+          "$type": "dimension"
+        },
+        "borderWidthDisabled": {
+          "$value": 2,
+          "$type": "dimension"
+        },
+        "cornerRadius": {
+          "$value": 0,
+          "$type": "dimension"
+        },
+        "padding": {
+          "all": {
+            "$value": 14,
+            "$type": "dimension"
+          },
+          "top": {
+            "$value": 8,
+            "$type": "dimension"
+          },
+          "bottom": {
+            "$value": 8,
+            "$type": "dimension"
+          }
+        },
+        "shadowSize": {
+          "$value": 2,
+          "$type": "dimension"
+        },
+        "shadowSizeHover": {
+          "$value": 7,
+          "$type": "dimension"
+        }
+      }
+    },
+    "slider": {
+      "grab": {
+        "highlight": {
+          "$value": "#7ABAEBF2",
+          "$type": "color"
+        },
+        "shadow": {
+          "$value": "#42576EFA",
+          "$type": "color"
+        }
+      },
+      "track": {
+        "bg": {
+          "$value": "#42576EFA",
+          "$type": "color"
+        },
+        "highlight": {
+          "$value": "#7ABAEBF2",
+          "$type": "color"
+        }
+      },
+      "layout": {
+        "rowMinWidth": {
+          "$value": 348,
+          "$type": "dimension"
+        },
+        "trackMinWidth": {
+          "$value": 220,
+          "$type": "dimension"
+        },
+        "valueFieldWidth": {
+          "$value": 72,
+          "$type": "dimension"
+        },
+        "valueFieldHeight": {
+          "$value": 40,
+          "$type": "dimension"
+        },
+        "rowSeparation": {
+          "$value": 8,
+          "$type": "dimension"
+        },
+        "rowMinSize": {
+          "height": {
+            "$value": 44,
+            "$type": "dimension"
+          }
+        },
+        "valueField": {
+          "minSize": {
+            "width": {
+              "$value": 72,
+              "$type": "dimension"
+            },
+            "height": {
+              "$value": 40,
+              "$type": "dimension"
+            }
+          }
+        },
+        "track": {
+          "minSize": {
+            "width": {
+              "$value": 220,
+              "$type": "dimension"
+            },
+            "height": {
+              "$value": 40,
+              "$type": "dimension"
+            }
+          },
+          "barMinSize": {
+            "height": {
+              "$value": 24,
+              "$type": "dimension"
+            }
+          },
+          "margin": {
+            "top": {
+              "$value": 4,
+              "$type": "dimension"
+            },
+            "bottom": {
+              "$value": 4,
+              "$type": "dimension"
+            }
+          }
+        },
+        "grabber": {
+          "cornerRadius": {
+            "$value": 0,
+            "$type": "dimension"
+          },
+          "padding": {
+            "all": {
+              "$value": 8,
+              "$type": "dimension"
+            },
+            "top": {
+              "$value": 6,
+              "$type": "dimension"
+            },
+            "bottom": {
+              "$value": 6,
+              "$type": "dimension"
+            }
+          }
+        }
+      }
+    },
+    "dropdown": {
+      "open": {
+        "bg": {
+          "$value": "#244252FA",
+          "$type": "color"
+        },
+        "border": {
+          "$value": "#73B8DBD9",
+          "$type": "color"
+        }
+      },
+      "hover": {
+        "bg": {
+          "$value": "#2B4D5CFC",
+          "$type": "color"
+        }
+      },
+      "pressed": {
+        "bg": {
+          "$value": "#305766FC",
+          "$type": "color"
+        }
+      },
+      "focus": {
+        "bg": {
+          "$value": "#2E5261FC",
+          "$type": "color"
+        },
+        "border": {
+          "$value": "#D9F0FFFA",
+          "$type": "color"
+        }
+      },
+      "layout": {
+        "entry": {
+          "minSize": {
+            "height": {
+              "$value": 44,
+              "$type": "dimension"
+            }
+          }
+        },
+        "face": {
+          "minSize": {
+            "height": {
+              "$value": 44,
+              "$type": "dimension"
+            }
+          }
+        },
+        "listSeparation": {
+          "$value": 8,
+          "$type": "dimension"
+        },
+        "row": {
+          "hInset": {
+            "$value": 24,
+            "$type": "dimension"
+          },
+          "minSize": {
+            "height": {
+              "$value": 38,
+              "$type": "dimension"
+            }
+          }
+        },
+        "panel": {
+          "minSize": {
+            "width": {
+              "$value": 280,
+              "$type": "dimension"
+            }
+          }
+        },
+        "actionsMenu": {
+          "listSeparation": {
+            "$value": 8,
+            "$type": "dimension"
+          }
+        },
+        "actionsRow": {
+          "hInset": {
+            "$value": 24,
+            "$type": "dimension"
+          },
+          "minSize": {
+            "height": {
+              "$value": 38,
+              "$type": "dimension"
+            }
+          },
+          "borderWidth": {
+            "$value": 1,
+            "$type": "dimension"
+          },
+          "padding": {
+            "all": {
+              "$value": 10,
+              "$type": "dimension"
+            },
+            "top": {
+              "$value": 5,
+              "$type": "dimension"
+            },
+            "bottom": {
+              "$value": 5,
+              "$type": "dimension"
+            }
+          }
+        }
+      }
+    },
+    "stepper": {
+      "default": {
+        "bg": {
+          "$value": "#1F2936F5",
+          "$type": "color"
+        },
+        "border": {
+          "$value": "#618AA866",
+          "$type": "color"
+        }
+      },
+      "hover": {
+        "bg": {
+          "$value": "#2B4757FA",
+          "$type": "color"
+        },
+        "border": {
+          "$value": "#99D1EBC7",
+          "$type": "color"
+        }
+      },
+      "neutral": {
+        "bg": {
+          "$value": "#1C242ED1",
+          "$type": "color"
+        },
+        "border": {
+          "$value": "#475C6E66",
+          "$type": "color"
+        }
+      },
+      "layout": {
+        "borderWidth": {
+          "$value": 1,
+          "$type": "dimension"
+        },
+        "padding": {
+          "all": {
+            "$value": 10,
+            "$type": "dimension"
+          },
+          "top": {
+            "$value": 5,
+            "$type": "dimension"
+          },
+          "bottom": {
+            "$value": 5,
+            "$type": "dimension"
+          }
+        }
+      }
+    },
+    "dragHandle": {
+      "default": {
+        "bg": {
+          "$value": "#1F3345F5",
+          "$type": "color"
+        },
+        "border": {
+          "$value": "#6699B594",
+          "$type": "color"
+        }
+      },
+      "selected": {
+        "bg": {
+          "$value": "#29475CFA",
+          "$type": "color"
+        },
+        "border": {
+          "$value": "#A6DBF0E0",
+          "$type": "color"
+        }
+      },
+      "layout": {
+        "minSize": {
+          "width": {
+            "$value": 52,
+            "$type": "dimension"
+          }
+        },
+        "contentSeparation": {
+          "$value": 3,
+          "$type": "dimension"
+        },
+        "cornerRadius": {
+          "$value": 0,
+          "$type": "dimension"
+        },
+        "borderWidth": {
+          "right": {
+            "$value": 1,
+            "$type": "dimension"
+          }
+        },
+        "padding": {
+          "all": {
+            "$value": 6,
+            "$type": "dimension"
+          },
+          "top": {
+            "$value": 8,
+            "$type": "dimension"
+          },
+          "bottom": {
+            "$value": 8,
+            "$type": "dimension"
+          }
+        }
+      }
+    },
+    "collapsible": {
+      "default": {
+        "bg": {
+          "$value": "{semantic.color.surface.entry.bg}",
+          "$type": "color"
+        },
+        "border": {
+          "$value": "{semantic.color.surface.entry.border}",
+          "$type": "color"
+        }
+      },
+      "hover": {
+        "bg": {
+          "$value": "{semantic.color.surface.inset.bg}",
+          "$type": "color"
+        },
+        "border": {
+          "$value": "{semantic.color.surface.entry.border}",
+          "$type": "color"
+        }
+      },
+      "selected": {
+        "bg": {
+          "$value": "{semantic.color.surface.inset.bg}",
+          "$type": "color"
+        },
+        "border": {
+          "$value": "{semantic.color.surface.framed.border}",
+          "$type": "color"
+        }
+      },
+      "disabled": {
+        "bg": {
+          "$value": "{semantic.color.surface.entry.bg}",
+          "$type": "color"
+        },
+        "border": {
+          "$value": "{semantic.color.surface.entry.border}",
+          "$type": "color"
+        }
+      },
+      "layout": {
+        "sectionSeparation": {
+          "$value": 8,
+          "$type": "dimension"
+        },
+        "cardSeparation": {
+          "$value": 8,
+          "$type": "dimension"
+        },
+        "headerRowSeparation": {
+          "$value": 10,
+          "$type": "dimension"
+        },
+        "contentSeparation": {
+          "$value": 8,
+          "$type": "dimension"
+        },
+        "borderWidth": {
+          "$value": 2,
+          "$type": "dimension"
+        },
+        "cornerRadius": {
+          "$value": 0,
+          "$type": "dimension"
+        },
+        "header": {
+          "minSize": {
+            "height": {
+              "$value": 56,
+              "$type": "dimension"
+            }
+          },
+          "minSizeWithSubtitle": {
+            "height": {
+              "$value": 84,
+              "$type": "dimension"
+            }
+          },
+          "separation": {
+            "$value": 12,
+            "$type": "dimension"
+          },
+          "textSeparation": {
+            "$value": 2,
+            "$type": "dimension"
+          },
+          "padding": {
+            "all": {
+              "$value": 14,
+              "$type": "dimension"
+            },
+            "top": {
+              "$value": 10,
+              "$type": "dimension"
+            },
+            "bottom": {
+              "$value": 10,
+              "$type": "dimension"
+            }
+          },
+          "arrow": {
+            "minSize": {
+              "width": {
+                "$value": 28,
+                "$type": "dimension"
+              },
+              "height": {
+                "$value": 28,
+                "$type": "dimension"
+              }
+            }
+          }
+        }
+      }
+    },
+    "sidebarBtn": {
+      "default": {
+        "bg": {
+          "$value": "#1A2E3DF2",
+          "$type": "color"
+        },
+        "border": {
+          "$value": "#456B8573",
+          "$type": "color"
+        }
+      },
+      "hover": {
+        "bg": {
+          "$value": "#1F384AFA",
+          "$type": "color"
+        },
+        "border": {
+          "$value": "#8FCCE6D6",
+          "$type": "color"
+        }
+      },
+      "selected": {
+        "bg": {
+          "$value": "#243B4DFA",
+          "$type": "color"
+        },
+        "border": {
+          "$value": "#78A1BA9E",
+          "$type": "color"
+        }
+      },
+      "selectedHover": {
+        "bg": {
+          "$value": "#2B475CFC",
+          "$type": "color"
+        },
+        "border": {
+          "$value": "#B8E0F2E6",
+          "$type": "color"
+        }
+      },
+      "utilitySelected": {
+        "bg": {
+          "$value": "#293D4FFA",
+          "$type": "color"
+        }
+      },
+      "idleDeep": {
+        "bg": {
+          "$value": "#172433F2",
+          "$type": "color"
+        }
+      },
+      "idleDeepHover": {
+        "bg": {
+          "$value": "#1F3042F7",
+          "$type": "color"
+        }
+      },
+      "idleDeeper": {
+        "bg": {
+          "$value": "#142130F0",
+          "$type": "color"
+        }
+      },
+      "idleDeeperHover": {
+        "bg": {
+          "$value": "#1C3042F9",
+          "$type": "color"
+        }
+      },
+      "mod": {
+        "bg": {
+          "$value": "#1C3042F9",
+          "$type": "color"
+        }
+      },
+      "modHover": {
+        "bg": {
+          "$value": "#264052FB",
+          "$type": "color"
+        }
+      },
+      "modDeep": {
+        "bg": {
+          "$value": "#142130F0",
+          "$type": "color"
+        }
+      },
+      "deep": {
+        "border": {
+          "$value": "#698FAB8F",
+          "$type": "color"
+        }
+      },
+      "deepHover": {
+        "border": {
+          "$value": "#A1D1EBDB",
+          "$type": "color"
+        }
+      },
+      "shadow": {
+        "$value": "#0000002E",
+        "$type": "color"
+      }
+    },
+    "sidebarRail": {
+      "bg": {
+        "$value": "#171A1FB3",
+        "$type": "color"
+      },
+      "border": {
+        "$value": "#3D454D66",
+        "$type": "color"
+      }
+    },
+    "textButton": {
+      "accent": {
+        "fg": {
+          "$value": "#87C2DBDB",
+          "$type": "color"
+        },
+        "bg": {
+          "$value": "#1A3642F7",
+          "$type": "color"
+        },
+        "bgHover": {
+          "$value": "#244554FB",
+          "$type": "color"
+        }
+      },
+      "danger": {
+        "fg": {
+          "$value": "#DE7A75D6",
+          "$type": "color"
+        },
+        "bg": {
+          "$value": "#3B181AF7",
+          "$type": "color"
+        },
+        "bgHover": {
+          "$value": "#4A1F1FFB",
+          "$type": "color"
+        }
+      },
+      "neutral": {
+        "fg": {
+          "$value": "#7399B399",
+          "$type": "color"
+        },
+        "bg": {
+          "$value": "#1A2938F7",
+          "$type": "color"
+        },
+        "bgHover": {
+          "$value": "#213647FB",
+          "$type": "color"
+        }
+      },
+      "layout": {
+        "minSize": {
+          "height": {
+            "$value": 44,
+            "$type": "dimension"
+          }
+        },
+        "borderWidth": {
+          "$value": 1,
+          "$type": "dimension"
+        },
+        "borderWidthHover": {
+          "$value": 2,
+          "$type": "dimension"
+        },
+        "padding": {
+          "all": {
+            "$value": 14,
+            "$type": "dimension"
+          },
+          "top": {
+            "$value": 8,
+            "$type": "dimension"
+          },
+          "bottom": {
+            "$value": 8,
+            "$type": "dimension"
+          }
+        }
+      }
+    },
+    "stringValidation": {
+      "neutral": {
+        "bg": {
+          "$value": "#262626",
+          "$type": "color"
+        },
+        "border": {
+          "$value": "#4D4D4D",
+          "$type": "color"
+        }
+      },
+      "invalid": {
+        "bg": {
+          "$value": "#331A1A",
+          "$type": "color"
+        },
+        "border": {
+          "$value": "#CC4D4D",
+          "$type": "color"
+        }
+      },
+      "layout": {
+        "cornerRadius": {
+          "$value": 0,
+          "$type": "dimension"
+        },
+        "neutral": {
+          "borderWidth": {
+            "$value": 1,
+            "$type": "dimension"
+          }
+        },
+        "invalid": {
+          "borderWidth": {
+            "$value": 2,
+            "$type": "dimension"
+          }
+        }
+      }
+    },
+    "overlayPanel": {
+      "bg": {
+        "$value": "#1F2630F7",
+        "$type": "color"
+      },
+      "border": {
+        "$value": "#7394ADA6",
+        "$type": "color"
+      },
+      "layout": {
+        "paddingH": {
+          "$value": 20,
+          "$type": "dimension"
+        },
+        "paddingV": {
+          "$value": 18,
+          "$type": "dimension"
+        }
+      }
+    },
+    "choiceCenter": {
+      "highlight": {
+        "top": {
+          "$value": "#8CCCE6F2",
+          "$type": "color"
+        },
+        "bottom": {
+          "$value": "#BFE6F5FA",
+          "$type": "color"
+        }
+      },
+      "layout": {
+        "cornerRadius": {
+          "$value": 0,
+          "$type": "dimension"
+        },
+        "borderWidth": {
+          "top": {
+            "$value": 1,
+            "$type": "dimension"
+          },
+          "bottom": {
+            "$value": 1,
+            "$type": "dimension"
+          }
+        },
+        "padding": {
+          "top": {
+            "$value": 1,
+            "$type": "dimension"
+          },
+          "bottom": {
+            "$value": 1,
+            "$type": "dimension"
+          }
+        }
+      }
+    },
+    "entry": {
+      "layout": {
+        "valueMinWidth": {
+          "$value": 200,
+          "$type": "dimension"
+        },
+        "valueMinHeight": {
+          "$value": 44,
+          "$type": "dimension"
+        },
+        "miniStepperButtonSize": {
+          "$value": 40,
+          "$type": "dimension"
+        }
+      }
+    },
+    "choice": {
+      "layout": {
+        "rowMinWidth": {
+          "$value": 292,
+          "$type": "dimension"
+        },
+        "centerMinWidth": {
+          "$value": 180,
+          "$type": "dimension"
+        }
+      }
+    },
+    "color": {
+      "layout": {
+        "rowMinWidth": {
+          "$value": 300,
+          "$type": "dimension"
+        },
+        "swatchSize": {
+          "$value": 40,
+          "$type": "dimension"
+        }
+      }
+    },
+    "stringEntry": {
+      "layout": {
+        "minWidth": {
+          "$value": 320,
+          "$type": "dimension"
+        },
+        "multilineMinHeight": {
+          "$value": 104,
+          "$type": "dimension"
+        }
+      }
+    },
+    "keybinding": {
+      "layout": {
+        "blockWidth": {
+          "$value": 400,
+          "$type": "dimension"
+        },
+        "captureMinWidth": {
+          "$value": 300,
+          "$type": "dimension"
+        },
+        "hintFontSize": {
+          "$value": 16,
+          "$type": "dimension"
+        },
+        "blockSeparation": {
+          "$value": 8,
+          "$type": "dimension"
+        },
+        "rowSeparation": {
+          "$value": 6,
+          "$type": "dimension"
+        },
+        "captureButton": {
+          "minSize": {
+            "width": {
+              "$value": 300,
+              "$type": "dimension"
+            },
+            "height": {
+              "$value": 44,
+              "$type": "dimension"
+            }
+          }
+        },
+        "clearButton": {
+          "minSize": {
+            "width": {
+              "$value": 64,
+              "$type": "dimension"
+            },
+            "height": {
+              "$value": 44,
+              "$type": "dimension"
+            }
+          }
+        },
+        "multi": {
+          "blockSeparation": {
+            "$value": 8,
+            "$type": "dimension"
+          },
+          "listSeparation": {
+            "$value": 6,
+            "$type": "dimension"
+          },
+          "rowSeparation": {
+            "$value": 6,
+            "$type": "dimension"
+          },
+          "captureButton": {
+            "minSize": {
+              "width": {
+                "$value": 300,
+                "$type": "dimension"
+              },
+              "height": {
+                "$value": 44,
+                "$type": "dimension"
+              }
+            }
+          },
+          "secondaryButton": {
+            "minSize": {
+              "width": {
+                "$value": 86,
+                "$type": "dimension"
+              },
+              "height": {
+                "$value": 44,
+                "$type": "dimension"
+              }
+            }
+          }
+        }
+      }
+    },
+    "sidebar": {
+      "layout": {
+        "width": {
+          "$value": 300,
+          "$type": "dimension"
+        },
+        "pageRowMinHeight": {
+          "$value": 38,
+          "$type": "dimension"
+        },
+        "sectionRowMinHeight": {
+          "$value": 32,
+          "$type": "dimension"
+        },
+        "modListSeparation": {
+          "$value": 8,
+          "$type": "dimension"
+        },
+        "modCardInnerSeparation": {
+          "$value": 4,
+          "$type": "dimension"
+        },
+        "pageTreeSeparation": {
+          "$value": 4,
+          "$type": "dimension"
+        },
+        "sectionRailSeparation": {
+          "$value": 2,
+          "$type": "dimension"
+        },
+        "cardInnerMargin": {
+          "$value": 6,
+          "$type": "dimension"
+        },
+        "showInlinePageCount": {
+          "$value": false,
+          "$type": "boolean"
+        },
+        "button": {
+          "minSize": {
+            "height": {
+              "$value": 44,
+              "$type": "dimension"
+            }
+          }
+        },
+        "disabled": {
+          "borderWidth": {
+            "$value": 2,
+            "$type": "dimension"
+          },
+          "cornerRadius": {
+            "$value": 0,
+            "$type": "dimension"
+          },
+          "padding": {
+            "all": {
+              "$value": 14,
+              "$type": "dimension"
+            },
+            "top": {
+              "$value": 8,
+              "$type": "dimension"
+            },
+            "bottom": {
+              "$value": 8,
+              "$type": "dimension"
+            }
+          }
+        }
+      }
+    },
+    "list": {
+      "layout": {
+        "rootSeparation": {
+          "$value": 10,
+          "$type": "dimension"
+        },
+        "shellSeparation": {
+          "$value": 10,
+          "$type": "dimension"
+        },
+        "headerSeparation": {
+          "$value": 10,
+          "$type": "dimension"
+        },
+        "textColumnSeparation": {
+          "$value": 3,
+          "$type": "dimension"
+        },
+        "summaryPill": {
+          "minSize": {
+            "width": {
+              "$value": 96,
+              "$type": "dimension"
+            },
+            "height": {
+              "$value": 32,
+              "$type": "dimension"
+            }
+          }
+        },
+        "addButton": {
+          "minSize": {
+            "width": {
+              "$value": 152,
+              "$type": "dimension"
+            },
+            "height": {
+              "$value": 44,
+              "$type": "dimension"
+            }
+          }
+        },
+        "bodySeparation": {
+          "$value": 6,
+          "$type": "dimension"
+        },
+        "rowsSeparation": {
+          "$value": 6,
+          "$type": "dimension"
+        },
+        "dropSlot": {
+          "minSize": {
+            "height": {
+              "$value": 8,
+              "$type": "dimension"
+            }
+          }
+        }
+      }
+    },
+    "entryLine": {
+      "layout": {
+        "margin": {
+          "left": {
+            "$value": 8,
+            "$type": "dimension"
+          },
+          "right": {
+            "$value": 8,
+            "$type": "dimension"
+          },
+          "top": {
+            "$value": 4,
+            "$type": "dimension"
+          },
+          "bottom": {
+            "$value": 4,
+            "$type": "dimension"
+          }
+        },
+        "rowSeparation": {
+          "$value": 20,
+          "$type": "dimension"
+        },
+        "leftColumnSeparation": {
+          "$value": 5,
+          "$type": "dimension"
+        }
+      }
+    },
+    "modal": {
+      "layout": {
+        "panel": {
+          "minWidth": {
+            "$value": 400,
+            "$type": "dimension"
+          },
+          "minHeight": {
+            "$value": 120,
+            "$type": "dimension"
+          },
+          "separation": {
+            "$value": 14,
+            "$type": "dimension"
+          },
+          "margin": {
+            "left": {
+              "$value": 22,
+              "$type": "dimension"
+            },
+            "right": {
+              "$value": 22,
+              "$type": "dimension"
+            },
+            "top": {
+              "$value": 20,
+              "$type": "dimension"
+            },
+            "bottom": {
+              "$value": 20,
+              "$type": "dimension"
+            }
+          }
+        },
+        "buttonRow": {
+          "separation": {
+            "$value": 12,
+            "$type": "dimension"
+          },
+          "confirmMinSize": {
+            "width": {
+              "$value": 168,
+              "$type": "dimension"
+            },
+            "height": {
+              "$value": 44,
+              "$type": "dimension"
+            }
+          },
+          "cancelMinSize": {
+            "width": {
+              "$value": 132,
+              "$type": "dimension"
+            },
+            "height": {
+              "$value": 44,
+              "$type": "dimension"
+            }
+          }
+        }
+      }
+    },
+    "cloudScopeModal": {
+      "layout": {
+        "panel": {
+          "minSize": {
+            "width": {
+              "$value": 440,
+              "$type": "dimension"
+            }
+          },
+          "separation": {
+            "$value": 12,
+            "$type": "dimension"
+          },
+          "margin": {
+            "left": {
+              "$value": 22,
+              "$type": "dimension"
+            },
+            "right": {
+              "$value": 22,
+              "$type": "dimension"
+            },
+            "top": {
+              "$value": 20,
+              "$type": "dimension"
+            },
+            "bottom": {
+              "$value": 20,
+              "$type": "dimension"
+            }
+          }
+        },
+        "buttonRow": {
+          "separation": {
+            "$value": 12,
+            "$type": "dimension"
+          },
+          "cancelMinSize": {
+            "width": {
+              "$value": 132,
+              "$type": "dimension"
+            },
+            "height": {
+              "$value": 44,
+              "$type": "dimension"
+            }
+          }
+        },
+        "scopeButton": {
+          "minSize": {
+            "height": {
+              "$value": 44,
+              "$type": "dimension"
+            }
+          }
+        }
+      }
+    },
+    "gameSettingsEntry": {
+      "layout": {
+        "lineMinSize": {
+          "height": {
+            "$value": 64,
+            "$type": "dimension"
+          }
+        },
+        "margin": {
+          "left": {
+            "$value": 12,
+            "$type": "dimension"
+          },
+          "right": {
+            "$value": 12,
+            "$type": "dimension"
+          }
+        },
+        "rowSeparation": {
+          "$value": 0,
+          "$type": "dimension"
+        },
+        "buttonMinSize": {
+          "width": {
+            "$value": 320,
+            "$type": "dimension"
+          },
+          "height": {
+            "$value": 64,
+            "$type": "dimension"
+          }
+        },
+        "buttonImageMinSize": {
+          "width": {
+            "$value": 64,
+            "$type": "dimension"
+          },
+          "height": {
+            "$value": 64,
+            "$type": "dimension"
+          }
+        }
+      }
+    },
+    "scrollbar": {
+      "track": {
+        "bg": {
+          "$value": "#101923DE",
+          "$type": "color"
+        },
+        "border": {
+          "$value": "#4162788A",
+          "$type": "color"
+        }
+      },
+      "grabber": {
+        "bg": {
+          "$value": "#2A465AEF",
+          "$type": "color"
+        },
+        "border": {
+          "$value": "#90CBE6D9",
+          "$type": "color"
+        }
+      },
+      "grabberHover": {
+        "bg": {
+          "$value": "#33576EF8",
+          "$type": "color"
+        },
+        "border": {
+          "$value": "#B8E7FAED",
+          "$type": "color"
+        }
+      },
+      "grabberPressed": {
+        "bg": {
+          "$value": "#3A6680FC",
+          "$type": "color"
+        },
+        "border": {
+          "$value": "#D2F2FFFA",
+          "$type": "color"
+        }
+      },
+      "layout": {
+        "track": {
+          "borderWidth": {
+            "$value": 1,
+            "$type": "dimension"
+          },
+          "cornerRadius": {
+            "$value": 0,
+            "$type": "dimension"
+          },
+          "padding": {
+            "$value": 1,
+            "$type": "dimension"
+          }
+        },
+        "grabber": {
+          "borderWidth": {
+            "$value": 1,
+            "$type": "dimension"
+          },
+          "cornerRadius": {
+            "$value": 0,
+            "$type": "dimension"
+          }
+        }
+      }
+    },
+    "paragraph": {
+      "layout": {
+        "margin": {
+          "top": {
+            "$value": 0,
+            "$type": "dimension"
+          },
+          "bottom": {
+            "$value": 0,
+            "$type": "dimension"
+          }
+        }
+      }
+    }
+  }
+}

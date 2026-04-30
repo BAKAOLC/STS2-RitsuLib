@@ -1,13 +1,14 @@
 using Godot;
+using STS2RitsuLib.Ui.Shell.Theme;
 
 namespace STS2RitsuLib.Settings
 {
     internal static partial class ModSettingsUiFactory
     {
-        internal const float EntryControlWidth = ModSettingsUiMetrics.EntryValueMinWidth;
         private const float PageContentWidth = 0f;
 
         private const string ContextMenuAttachedMetaKey = "_ritsulib_context_menu_attached";
+        internal static float EntryControlWidth => RitsuShellTheme.Current.Metric.Entry.ValueMinWidth;
 
         internal static void RegisterRefreshWhenAlive(ModSettingsUiContext context, GodotObject? node, Action action,
             ModSettingsUiRefreshSpec spec)
@@ -42,7 +43,8 @@ namespace STS2RitsuLib.Settings
                 SizeFlagsHorizontal = Control.SizeFlags.ExpandFill,
                 MouseFilter = Control.MouseFilterEnum.Ignore,
             };
-            container.AddThemeConstantOverride("separation", 8);
+            container.AddThemeConstantOverride("separation",
+                RitsuShellThemeLayoutResolver.ResolveInt("components.page.layout.sectionSeparation", 8));
             return container;
         }
 
@@ -419,7 +421,8 @@ namespace STS2RitsuLib.Settings
                 SizeFlagsHorizontal = Control.SizeFlags.ExpandFill,
                 MouseFilter = Control.MouseFilterEnum.Ignore,
             };
-            container.AddThemeConstantOverride("separation", 6);
+            container.AddThemeConstantOverride("separation",
+                RitsuShellThemeLayoutResolver.ResolveInt("components.header.layout.separation", 6));
             container.AddChild(CreateRefreshableSectionTitle(context, entry.Label,
                 () => ResolveEntryLabelDisplay(entry.Label)));
             if (entry.Description != null)
@@ -444,10 +447,16 @@ namespace STS2RitsuLib.Settings
                 SizeFlagsHorizontal = Control.SizeFlags.ExpandFill,
                 MouseFilter = Control.MouseFilterEnum.Ignore,
             };
-            line.AddThemeConstantOverride("margin_left", 8);
-            line.AddThemeConstantOverride("margin_right", 8);
-            line.AddThemeConstantOverride("margin_top", 6);
-            line.AddThemeConstantOverride("margin_bottom", 6);
+            var cardMargins = RitsuShellThemeLayoutResolver.ResolveEdges("components.infoCard.layout.margin", 8);
+            cardMargins = new(
+                RitsuShellThemeLayoutResolver.ResolveInt("components.infoCard.layout.margin.left", cardMargins.Left),
+                RitsuShellThemeLayoutResolver.ResolveInt("components.infoCard.layout.margin.top", 6),
+                RitsuShellThemeLayoutResolver.ResolveInt("components.infoCard.layout.margin.right", cardMargins.Right),
+                RitsuShellThemeLayoutResolver.ResolveInt("components.infoCard.layout.margin.bottom", 6));
+            line.AddThemeConstantOverride("margin_left", cardMargins.Left);
+            line.AddThemeConstantOverride("margin_right", cardMargins.Right);
+            line.AddThemeConstantOverride("margin_top", cardMargins.Top);
+            line.AddThemeConstantOverride("margin_bottom", cardMargins.Bottom);
 
             var surface = new PanelContainer
             {
@@ -462,7 +471,8 @@ namespace STS2RitsuLib.Settings
                 SizeFlagsHorizontal = Control.SizeFlags.ExpandFill,
                 MouseFilter = Control.MouseFilterEnum.Ignore,
             };
-            stack.AddThemeConstantOverride("separation", 6);
+            stack.AddThemeConstantOverride("separation",
+                RitsuShellThemeLayoutResolver.ResolveInt("components.infoCard.layout.separation", 6));
             surface.AddChild(stack);
 
             stack.AddChild(CreateRefreshableSectionTitle(context, entry.Label,
@@ -486,10 +496,19 @@ namespace STS2RitsuLib.Settings
                 SizeFlagsHorizontal = Control.SizeFlags.ExpandFill,
                 MouseFilter = Control.MouseFilterEnum.Ignore,
             };
-            line.AddThemeConstantOverride("margin_left", 8);
-            line.AddThemeConstantOverride("margin_right", 8);
-            line.AddThemeConstantOverride("margin_top", 6);
-            line.AddThemeConstantOverride("margin_bottom", 6);
+            var summaryMargins = RitsuShellThemeLayoutResolver.ResolveEdges(
+                "components.hotkeySummary.layout.margin", 8);
+            summaryMargins = new(
+                RitsuShellThemeLayoutResolver.ResolveInt("components.hotkeySummary.layout.margin.left",
+                    summaryMargins.Left),
+                RitsuShellThemeLayoutResolver.ResolveInt("components.hotkeySummary.layout.margin.top", 6),
+                RitsuShellThemeLayoutResolver.ResolveInt("components.hotkeySummary.layout.margin.right",
+                    summaryMargins.Right),
+                RitsuShellThemeLayoutResolver.ResolveInt("components.hotkeySummary.layout.margin.bottom", 6));
+            line.AddThemeConstantOverride("margin_left", summaryMargins.Left);
+            line.AddThemeConstantOverride("margin_right", summaryMargins.Right);
+            line.AddThemeConstantOverride("margin_top", summaryMargins.Top);
+            line.AddThemeConstantOverride("margin_bottom", summaryMargins.Bottom);
 
             var surface = new PanelContainer
             {
@@ -506,17 +525,21 @@ namespace STS2RitsuLib.Settings
                 MouseFilter = Control.MouseFilterEnum.Ignore,
                 Alignment = BoxContainer.AlignmentMode.Center,
             };
-            row.AddThemeConstantOverride("separation", 20);
+            row.AddThemeConstantOverride("separation",
+                RitsuShellThemeLayoutResolver.ResolveInt("components.hotkeySummary.layout.rowSeparation", 20));
             surface.AddChild(row);
 
             var left = new VBoxContainer
             {
-                CustomMinimumSize = new(220f, 0f),
+                CustomMinimumSize = RitsuShellThemeLayoutResolver.ResolveMinSize(
+                    "components.hotkeySummary.layout.leftMinSize",
+                    new(220f, 0f)),
                 SizeFlagsHorizontal = Control.SizeFlags.ExpandFill,
                 SizeFlagsVertical = Control.SizeFlags.ShrinkCenter,
                 MouseFilter = Control.MouseFilterEnum.Ignore,
             };
-            left.AddThemeConstantOverride("separation", 6);
+            left.AddThemeConstantOverride("separation",
+                RitsuShellThemeLayoutResolver.ResolveInt("components.hotkeySummary.layout.leftSeparation", 6));
             row.AddChild(left);
 
             var titleRow = new HBoxContainer
@@ -525,12 +548,13 @@ namespace STS2RitsuLib.Settings
                 MouseFilter = Control.MouseFilterEnum.Ignore,
                 Alignment = BoxContainer.AlignmentMode.Begin,
             };
-            titleRow.AddThemeConstantOverride("separation", 8);
+            titleRow.AddThemeConstantOverride("separation",
+                RitsuShellThemeLayoutResolver.ResolveInt("components.hotkeySummary.layout.titleRowSeparation", 8));
             left.AddChild(titleRow);
 
             var title = CreateRefreshableHeaderLabel(context, entry.Label,
                 () => ResolveEntryLabelDisplay(entry.Label), 24, HorizontalAlignment.Left,
-                ModSettingsUiPalette.RichTextTitle);
+                RitsuShellTheme.Current.Text.RichTitle);
             title.SizeFlagsHorizontal = Control.SizeFlags.ExpandFill;
             titleRow.AddChild(title);
 
@@ -540,9 +564,9 @@ namespace STS2RitsuLib.Settings
                 VerticalAlignment = VerticalAlignment.Center,
                 Visible = entry.Description != null,
             };
-            idLabel.AddThemeFontOverride("font", ModSettingsUiResources.KreonRegular);
-            idLabel.AddThemeFontSizeOverride("font_size", 16);
-            idLabel.AddThemeColorOverride("font_color", ModSettingsUiPalette.RichTextMuted);
+            idLabel.AddThemeFontOverride("font", RitsuShellTheme.Current.Font.Body);
+            idLabel.AddThemeFontSizeOverride("font_size", RitsuShellTheme.Current.Metric.FontSize.Secondary);
+            idLabel.AddThemeColorOverride("font_color", RitsuShellTheme.Current.Text.RichMuted);
             titleRow.AddChild(idLabel);
             var idLabelSpec = entry.Description?.GetUiRefreshSpec() ?? ModSettingsUiRefreshSpec.StaticDisplay;
             RegisterRefreshWhenAlive(context, idLabel, () =>
@@ -557,12 +581,15 @@ namespace STS2RitsuLib.Settings
 
             var bindingsColumn = new VBoxContainer
             {
-                CustomMinimumSize = new(ModSettingsUiMetrics.KeybindingBlockWidth, 0f),
+                CustomMinimumSize = RitsuShellThemeLayoutResolver.ResolveMinSize(
+                    "components.hotkeySummary.layout.bindingsMinSize",
+                    new(RitsuShellTheme.Current.Metric.Keybinding.BlockWidth, 0f)),
                 SizeFlagsHorizontal = Control.SizeFlags.ShrinkEnd,
                 SizeFlagsVertical = Control.SizeFlags.ShrinkCenter,
                 MouseFilter = Control.MouseFilterEnum.Ignore,
             };
-            bindingsColumn.AddThemeConstantOverride("separation", 6);
+            bindingsColumn.AddThemeConstantOverride("separation",
+                RitsuShellThemeLayoutResolver.ResolveInt("components.hotkeySummary.layout.bindingsSeparation", 6));
             row.AddChild(bindingsColumn);
 
             RegisterRefreshWhenAlive(context, bindingsColumn, () =>
@@ -587,9 +614,9 @@ namespace STS2RitsuLib.Settings
                         AutowrapMode = TextServer.AutowrapMode.Off,
                         ClipText = true,
                     };
-                    chipLabel.AddThemeFontOverride("font", ModSettingsUiResources.KreonBold);
-                    chipLabel.AddThemeFontSizeOverride("font_size", 16);
-                    chipLabel.AddThemeColorOverride("font_color", ModSettingsUiPalette.LabelPrimary);
+                    chipLabel.AddThemeFontOverride("font", RitsuShellTheme.Current.Font.BodyBold);
+                    chipLabel.AddThemeFontSizeOverride("font_size", RitsuShellTheme.Current.Metric.FontSize.Secondary);
+                    chipLabel.AddThemeColorOverride("font_color", RitsuShellTheme.Current.Text.LabelPrimary);
                     chip.AddChild(chipLabel);
                     bindingsColumn.AddChild(chip);
                 }
@@ -605,7 +632,8 @@ namespace STS2RitsuLib.Settings
                 SizeFlagsHorizontal = Control.SizeFlags.ExpandFill,
                 MouseFilter = Control.MouseFilterEnum.Ignore,
             };
-            container.AddThemeConstantOverride("separation", 8);
+            container.AddThemeConstantOverride("separation",
+                RitsuShellThemeLayoutResolver.ResolveInt("components.image.layout.separation", 8));
             container.AddChild(CreateRefreshableSectionTitle(context, entry.Label,
                 () => ResolveEntryLabelDisplay(entry.Label)));
 
@@ -692,7 +720,10 @@ namespace STS2RitsuLib.Settings
                 ModSettingsUiContext.Resolve(entry.ButtonText, ModSettingsLocalization.Get("button.open", "Open")),
                 ModSettingsButtonTone.Accent,
                 () => context.NavigateToPage(entry.TargetPageId));
-            control.CustomMinimumSize = new(EntryControlWidth, ModSettingsUiMetrics.EntryValueMinHeight);
+            control.CustomMinimumSize = new(EntryControlWidth, RitsuShellTheme.Current.Metric.Entry.ValueMinHeight);
+            control.CustomMinimumSize = RitsuShellThemeLayoutResolver.ResolveMinSize(
+                "components.subpageButton.layout.minSize",
+                control.CustomMinimumSize);
 
             return CreateSettingLine(
                 context,

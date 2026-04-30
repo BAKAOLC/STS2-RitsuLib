@@ -1,4 +1,5 @@
 using Godot;
+using STS2RitsuLib.Ui.Shell.Theme;
 
 namespace STS2RitsuLib.Settings
 {
@@ -50,8 +51,10 @@ namespace STS2RitsuLib.Settings
             SizeFlagsHorizontal = SizeFlags.ShrinkEnd;
             SizeFlagsVertical = SizeFlags.ShrinkCenter;
             MouseFilter = MouseFilterEnum.Ignore;
-            CustomMinimumSize = new(ModSettingsUiMetrics.StringEntryMinWidth,
-                ModSettingsUiMetrics.EntryValueMinHeight);
+            CustomMinimumSize = RitsuShellThemeLayoutResolver.ResolveMinSize(
+                "components.stringEntry.layout.singleLine.minSize",
+                new(RitsuShellTheme.Current.Metric.StringEntry.MinWidth,
+                    RitsuShellTheme.Current.Metric.Entry.ValueMinHeight));
 
             var edit = new LineEdit
             {
@@ -59,7 +62,9 @@ namespace STS2RitsuLib.Settings
                 PlaceholderText = placeholder ?? string.Empty,
                 SizeFlagsHorizontal = SizeFlags.ExpandFill,
                 SizeFlagsVertical = SizeFlags.ShrinkCenter,
-                CustomMinimumSize = new(0f, ModSettingsUiMetrics.SliderValueFieldHeight),
+                CustomMinimumSize = RitsuShellThemeLayoutResolver.ResolveMinSize(
+                    "components.stringEntry.layout.singleLine.editorMinSize",
+                    new(0f, RitsuShellTheme.Current.Metric.Slider.ValueFieldHeight)),
                 CaretBlink = true,
                 SelectAllOnFocus = false,
                 Alignment = HorizontalAlignment.Left,
@@ -153,29 +158,61 @@ namespace STS2RitsuLib.Settings
 
             _validationNeutralStyle ??= new()
             {
-                BgColor = new(0.15f, 0.15f, 0.15f),
-                BorderColor = new(0.3f, 0.3f, 0.3f),
-                BorderWidthBottom = 1,
-                BorderWidthTop = 1,
-                BorderWidthLeft = 1,
-                BorderWidthRight = 1,
-                CornerRadiusTopLeft = 3,
-                CornerRadiusTopRight = 3,
-                CornerRadiusBottomLeft = 3,
-                CornerRadiusBottomRight = 3,
+                BgColor = RitsuShellTheme.Current.Component.StringValidation.Neutral.Bg,
+                BorderColor = RitsuShellTheme.Current.Component.StringValidation.Neutral.Border,
+                BorderWidthBottom = RitsuShellThemeLayoutResolver.ResolveEdges(
+                    "components.stringValidation.layout.neutral.borderWidth",
+                    RitsuShellTheme.Current.Metric.BorderWidth.Thin).Bottom,
+                BorderWidthTop = RitsuShellThemeLayoutResolver.ResolveEdges(
+                    "components.stringValidation.layout.neutral.borderWidth",
+                    RitsuShellTheme.Current.Metric.BorderWidth.Thin).Top,
+                BorderWidthLeft = RitsuShellThemeLayoutResolver.ResolveEdges(
+                    "components.stringValidation.layout.neutral.borderWidth",
+                    RitsuShellTheme.Current.Metric.BorderWidth.Thin).Left,
+                BorderWidthRight = RitsuShellThemeLayoutResolver.ResolveEdges(
+                    "components.stringValidation.layout.neutral.borderWidth",
+                    RitsuShellTheme.Current.Metric.BorderWidth.Thin).Right,
+                CornerRadiusTopLeft = RitsuShellThemeLayoutResolver.ResolveInt(
+                    "components.stringValidation.layout.cornerRadius",
+                    RitsuShellTheme.Current.Metric.Radius.Validation),
+                CornerRadiusTopRight = RitsuShellThemeLayoutResolver.ResolveInt(
+                    "components.stringValidation.layout.cornerRadius",
+                    RitsuShellTheme.Current.Metric.Radius.Validation),
+                CornerRadiusBottomLeft = RitsuShellThemeLayoutResolver.ResolveInt(
+                    "components.stringValidation.layout.cornerRadius",
+                    RitsuShellTheme.Current.Metric.Radius.Validation),
+                CornerRadiusBottomRight = RitsuShellThemeLayoutResolver.ResolveInt(
+                    "components.stringValidation.layout.cornerRadius",
+                    RitsuShellTheme.Current.Metric.Radius.Validation),
             };
             _validationInvalidStyle ??= new()
             {
-                BgColor = new(0.2f, 0.1f, 0.1f),
-                BorderColor = new(0.8f, 0.3f, 0.3f),
-                BorderWidthBottom = 2,
-                BorderWidthTop = 2,
-                BorderWidthLeft = 2,
-                BorderWidthRight = 2,
-                CornerRadiusTopLeft = 3,
-                CornerRadiusTopRight = 3,
-                CornerRadiusBottomLeft = 3,
-                CornerRadiusBottomRight = 3,
+                BgColor = RitsuShellTheme.Current.Component.StringValidation.Invalid.Bg,
+                BorderColor = RitsuShellTheme.Current.Component.StringValidation.Invalid.Border,
+                BorderWidthBottom = RitsuShellThemeLayoutResolver.ResolveEdges(
+                    "components.stringValidation.layout.invalid.borderWidth",
+                    RitsuShellTheme.Current.Metric.BorderWidth.Normal).Bottom,
+                BorderWidthTop = RitsuShellThemeLayoutResolver.ResolveEdges(
+                    "components.stringValidation.layout.invalid.borderWidth",
+                    RitsuShellTheme.Current.Metric.BorderWidth.Normal).Top,
+                BorderWidthLeft = RitsuShellThemeLayoutResolver.ResolveEdges(
+                    "components.stringValidation.layout.invalid.borderWidth",
+                    RitsuShellTheme.Current.Metric.BorderWidth.Normal).Left,
+                BorderWidthRight = RitsuShellThemeLayoutResolver.ResolveEdges(
+                    "components.stringValidation.layout.invalid.borderWidth",
+                    RitsuShellTheme.Current.Metric.BorderWidth.Normal).Right,
+                CornerRadiusTopLeft = RitsuShellThemeLayoutResolver.ResolveInt(
+                    "components.stringValidation.layout.cornerRadius",
+                    RitsuShellTheme.Current.Metric.Radius.Validation),
+                CornerRadiusTopRight = RitsuShellThemeLayoutResolver.ResolveInt(
+                    "components.stringValidation.layout.cornerRadius",
+                    RitsuShellTheme.Current.Metric.Radius.Validation),
+                CornerRadiusBottomLeft = RitsuShellThemeLayoutResolver.ResolveInt(
+                    "components.stringValidation.layout.cornerRadius",
+                    RitsuShellTheme.Current.Metric.Radius.Validation),
+                CornerRadiusBottomRight = RitsuShellThemeLayoutResolver.ResolveInt(
+                    "components.stringValidation.layout.cornerRadius",
+                    RitsuShellTheme.Current.Metric.Radius.Validation),
             };
 
             Editor.AddThemeStyleboxOverride("normal", ok ? _validationNeutralStyle : _validationInvalidStyle);
@@ -209,8 +246,10 @@ namespace STS2RitsuLib.Settings
             SizeFlagsHorizontal = SizeFlags.ShrinkEnd;
             SizeFlagsVertical = SizeFlags.ShrinkCenter;
             MouseFilter = MouseFilterEnum.Ignore;
-            CustomMinimumSize = new(ModSettingsUiMetrics.StringEntryMinWidth,
-                ModSettingsUiMetrics.StringEntryMultilineMinHeight);
+            CustomMinimumSize = RitsuShellThemeLayoutResolver.ResolveMinSize(
+                "components.stringEntry.layout.multiline.minSize",
+                new(RitsuShellTheme.Current.Metric.StringEntry.MinWidth,
+                    RitsuShellTheme.Current.Metric.StringEntry.MultilineMinHeight));
 
             var edit = new TextEdit
             {

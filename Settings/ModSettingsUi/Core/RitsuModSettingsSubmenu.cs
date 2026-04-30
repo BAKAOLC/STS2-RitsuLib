@@ -9,6 +9,8 @@ using MegaCrit.Sts2.Core.Nodes.CommonUi;
 using MegaCrit.Sts2.Core.Nodes.GodotExtensions;
 using MegaCrit.Sts2.Core.Nodes.Screens.MainMenu;
 using MegaCrit.Sts2.Core.Nodes.Screens.ScreenContext;
+using STS2RitsuLib.Ui.Shell;
+using STS2RitsuLib.Ui.Shell.Theme;
 using Timer = Godot.Timer;
 
 namespace STS2RitsuLib.Settings
@@ -18,8 +20,6 @@ namespace STS2RitsuLib.Settings
     /// </summary>
     public partial class RitsuModSettingsSubmenu : NSubmenu
     {
-        private const float SidebarWidth = 324f;
-
         /// <summary>
         ///     Deferred <see cref="FlushDirtyBindings" /> interval after the last binding write.
         /// </summary>
@@ -102,6 +102,13 @@ namespace STS2RitsuLib.Settings
         private string? _selectedPageId;
         private string? _selectedSectionId;
         private bool _selectionDirty = true;
+        private Action? _shellThemeChangedHandler;
+
+        private FileSystemWatcher? _shellThemeWatcher;
+        private bool _shellThemeWatcherQueued;
+        private PanelContainer? _sidebarHeaderCard;
+        private MegaRichTextLabel? _sidebarHeaderSubtitleLabel;
+        private MegaRichTextLabel? _sidebarHeaderTitleLabel;
         private Control _sidebarPanelRoot = null!;
         private ScrollContainer _sidebarScrollContainer = null!;
         private bool _sidebarStructureDirty = true;
@@ -131,10 +138,10 @@ namespace STS2RitsuLib.Settings
                 GrowVertical = GrowDirection.Both,
                 MouseFilter = MouseFilterEnum.Ignore,
             };
-            frame.AddThemeConstantOverride("margin_left", 160);
-            frame.AddThemeConstantOverride("margin_top", 72);
-            frame.AddThemeConstantOverride("margin_right", 160);
-            frame.AddThemeConstantOverride("margin_bottom", 72);
+            frame.AddThemeConstantOverride("margin_left", 144);
+            frame.AddThemeConstantOverride("margin_top", 64);
+            frame.AddThemeConstantOverride("margin_right", 144);
+            frame.AddThemeConstantOverride("margin_bottom", 64);
             AddChild(frame);
 
             var root = new VBoxContainer
@@ -146,7 +153,7 @@ namespace STS2RitsuLib.Settings
                 SizeFlagsVertical = SizeFlags.ExpandFill,
                 MouseFilter = MouseFilterEnum.Ignore,
             };
-            root.AddThemeConstantOverride("separation", 18);
+            root.AddThemeConstantOverride("separation", 12);
             frame.AddChild(root);
 
             var header = new VBoxContainer
@@ -157,14 +164,14 @@ namespace STS2RitsuLib.Settings
             header.AddThemeConstantOverride("separation", 6);
             root.AddChild(header);
 
-            _titleLabel = CreateTitleLabel(32, HorizontalAlignment.Left);
-            _titleLabel.CustomMinimumSize = new(0f, 42f);
+            _titleLabel = CreateTitleLabel(28, HorizontalAlignment.Left);
+            _titleLabel.CustomMinimumSize = new(0f, 38f);
             _titleLabel.SizeFlagsHorizontal = SizeFlags.ExpandFill;
             header.AddChild(_titleLabel);
 
-            _subtitleLabel = CreateTitleLabel(16, HorizontalAlignment.Left);
-            _subtitleLabel.CustomMinimumSize = new(0f, 24f);
-            _subtitleLabel.Modulate = new(0.82f, 0.79f, 0.72f, 0.92f);
+            _subtitleLabel = CreateTitleLabel(15, HorizontalAlignment.Left);
+            _subtitleLabel.CustomMinimumSize = new(0f, 22f);
+            _subtitleLabel.Modulate = RitsuShellTheme.Current.Text.LabelSecondary;
             _subtitleLabel.SizeFlagsHorizontal = SizeFlags.ExpandFill;
             header.AddChild(_subtitleLabel);
 
@@ -176,7 +183,7 @@ namespace STS2RitsuLib.Settings
                 SizeFlagsVertical = SizeFlags.ExpandFill,
                 MouseFilter = MouseFilterEnum.Ignore,
             };
-            body.AddThemeConstantOverride("separation", 20);
+            body.AddThemeConstantOverride("separation", 14);
             root.AddChild(body);
 
             body.AddChild(CreateSidebarPanel());
@@ -199,6 +206,9 @@ namespace STS2RitsuLib.Settings
             TryConnectPaneHotkeyStyleSignals();
             _scrollContainer.GetVScrollBar().ValueChanged += OnContentScrollChanged;
             SubscribeLocaleChanges();
+            _shellThemeChangedHandler = OnShellThemeChanged;
+            RitsuShellThemeRuntime.ThemeChanged += _shellThemeChangedHandler;
+            TryStartShellThemeWatcher();
             EnsureUiUpToDate(true, true);
             ProcessMode = ProcessModeEnum.Disabled;
             FocusMode = FocusModeEnum.None;
@@ -230,6 +240,9 @@ namespace STS2RitsuLib.Settings
 
             TryDisconnectPaneHotkeyStyleSignals();
             PopPaneHotkeys();
+            if (_shellThemeChangedHandler != null)
+                RitsuShellThemeRuntime.ThemeChanged -= _shellThemeChangedHandler;
+            StopShellThemeWatcher();
             ModSettingsBindingWriteEvents.ValueWritten -= _bindingWriteListener;
             base._ExitTree();
             FlushDirtyBindings();
@@ -245,6 +258,7 @@ namespace STS2RitsuLib.Settings
             FocusBehaviorRecursive = FocusBehaviorRecursiveEnum.Enabled;
             ProcessMode = ProcessModeEnum.Inherit;
             _lastVisibleMirrorRefreshPageKey = null;
+            TryStartShellThemeWatcher();
             EnsureUiUpToDate(false, true);
         }
 
@@ -256,6 +270,7 @@ namespace STS2RitsuLib.Settings
             FlushDirtyBindings();
             ProcessMode = ProcessModeEnum.Disabled;
             _lastVisibleMirrorRefreshPageKey = null;
+            StopShellThemeWatcher();
             Callable.From(this.UpdateControllerNavEnabled).CallDeferred();
             base.OnSubmenuClosed();
         }
@@ -279,8 +294,86 @@ namespace STS2RitsuLib.Settings
             FlushDirtyBindings();
             ProcessMode = ProcessModeEnum.Disabled;
             _lastVisibleMirrorRefreshPageKey = null;
+            StopShellThemeWatcher();
             Callable.From(this.UpdateControllerNavEnabled).CallDeferred();
             base.OnSubmenuHidden();
+        }
+
+        private void TryStartShellThemeWatcher()
+        {
+            if (_shellThemeWatcher != null)
+                return;
+
+            if (!RitsuShellThemePaths.TryEnsureShellThemesDirectory(out var themesAbs))
+                return;
+
+            try
+            {
+                var watcher = new FileSystemWatcher(themesAbs, "*.theme.json")
+                {
+                    IncludeSubdirectories = false,
+                    NotifyFilter = NotifyFilters.FileName | NotifyFilters.LastWrite | NotifyFilters.Size,
+                    EnableRaisingEvents = true,
+                };
+                watcher.Changed += OnShellThemeFileChanged;
+                watcher.Created += OnShellThemeFileChanged;
+                watcher.Deleted += OnShellThemeFileChanged;
+                watcher.Renamed += OnShellThemeFileRenamed;
+                _shellThemeWatcher = watcher;
+            }
+            catch
+            {
+                // Best-effort: live theme reload is optional.
+                _shellThemeWatcher = null;
+            }
+        }
+
+        private void StopShellThemeWatcher()
+        {
+            if (_shellThemeWatcher == null)
+                return;
+
+            try
+            {
+                _shellThemeWatcher.EnableRaisingEvents = false;
+                _shellThemeWatcher.Changed -= OnShellThemeFileChanged;
+                _shellThemeWatcher.Created -= OnShellThemeFileChanged;
+                _shellThemeWatcher.Deleted -= OnShellThemeFileChanged;
+                _shellThemeWatcher.Renamed -= OnShellThemeFileRenamed;
+                _shellThemeWatcher.Dispose();
+            }
+            catch
+            {
+                // ignored
+            }
+
+            _shellThemeWatcher = null;
+            _shellThemeWatcherQueued = false;
+        }
+
+        private void OnShellThemeFileRenamed(object sender, RenamedEventArgs e)
+        {
+            QueueShellThemeReapplyDeferred();
+        }
+
+        private void OnShellThemeFileChanged(object sender, FileSystemEventArgs e)
+        {
+            QueueShellThemeReapplyDeferred();
+        }
+
+        private void QueueShellThemeReapplyDeferred()
+        {
+            if (_shellThemeWatcherQueued)
+                return;
+
+            _shellThemeWatcherQueued = true;
+            Callable.From(FlushShellThemeWatcherReapply).CallDeferred();
+        }
+
+        private void FlushShellThemeWatcherReapply()
+        {
+            _shellThemeWatcherQueued = false;
+            RitsuShellThemeRuntime.ReapplyActiveTheme(true);
         }
 
         /// <inheritdoc />
@@ -862,12 +955,14 @@ namespace STS2RitsuLib.Settings
             var panel = new Panel
             {
                 Name = "RitsuSidebarPanel",
-                CustomMinimumSize = new(SidebarWidth, 0f),
+                CustomMinimumSize = new(RitsuShellTheme.Current.Metric.Sidebar.Width, 0f),
                 SizeFlagsVertical = SizeFlags.ExpandFill,
                 MouseFilter = MouseFilterEnum.Ignore,
             };
             _sidebarPanelRoot = panel;
-            panel.AddThemeStyleboxOverride("panel", CreatePanelStyle(new(0.10f, 0.115f, 0.145f, 0.96f)));
+            panel.AddThemeStyleboxOverride("panel",
+                RitsuShellPanelStyles.CreateFramedSurface(RitsuShellTheme.Current.Surface.Sidebar,
+                    RitsuShellTheme.Current.Metric.Radius.Default));
 
             var frame = new MarginContainer
             {
@@ -875,10 +970,10 @@ namespace STS2RitsuLib.Settings
                 AnchorBottom = 1f,
                 MouseFilter = MouseFilterEnum.Ignore,
             };
-            frame.AddThemeConstantOverride("margin_left", 16);
-            frame.AddThemeConstantOverride("margin_top", 16);
-            frame.AddThemeConstantOverride("margin_right", 16);
-            frame.AddThemeConstantOverride("margin_bottom", 16);
+            frame.AddThemeConstantOverride("margin_left", 12);
+            frame.AddThemeConstantOverride("margin_top", 12);
+            frame.AddThemeConstantOverride("margin_right", 12);
+            frame.AddThemeConstantOverride("margin_bottom", 12);
             panel.AddChild(frame);
 
             var root = new VBoxContainer
@@ -887,7 +982,7 @@ namespace STS2RitsuLib.Settings
                 AnchorBottom = 1f,
                 MouseFilter = MouseFilterEnum.Ignore,
             };
-            root.AddThemeConstantOverride("separation", 14);
+            root.AddThemeConstantOverride("separation", 10);
             frame.AddChild(root);
 
             var headerCard = new PanelContainer
@@ -896,22 +991,27 @@ namespace STS2RitsuLib.Settings
                 SizeFlagsHorizontal = SizeFlags.ExpandFill,
             };
             headerCard.AddThemeStyleboxOverride("panel", ModSettingsUiFactory.CreateInsetSurfaceStyle());
+            _sidebarHeaderCard = headerCard;
             root.AddChild(headerCard);
 
             var headerBox = new VBoxContainer
             {
                 MouseFilter = MouseFilterEnum.Ignore,
             };
-            headerBox.AddThemeConstantOverride("separation", 4);
+            headerBox.AddThemeConstantOverride("separation", 2);
             headerCard.AddChild(headerBox);
 
             var headerTitle =
                 ModSettingsUiFactory.CreateSectionTitle(ModSettingsLocalization.Get("sidebar.title", "Mods"));
-            headerTitle.CustomMinimumSize = new(0f, 30f);
+            headerTitle.CustomMinimumSize = new(0f, 26f);
+            headerTitle.Modulate = RitsuShellTheme.Current.Text.SidebarSection;
+            _sidebarHeaderTitleLabel = headerTitle;
             headerBox.AddChild(headerTitle);
 
-            headerBox.AddChild(ModSettingsUiFactory.CreateInlineDescription(
-                ModSettingsLocalization.Get("sidebar.subtitle", "Browse mods, pages, and sections.")));
+            var subtitleLabel = ModSettingsUiFactory.CreateInlineDescription(
+                ModSettingsLocalization.Get("sidebar.subtitle", "Browse mods, pages, and sections."));
+            _sidebarHeaderSubtitleLabel = subtitleLabel;
+            headerBox.AddChild(subtitleLabel);
 
             var scroll = new ScrollContainer
             {
@@ -922,6 +1022,7 @@ namespace STS2RitsuLib.Settings
                 FocusMode = FocusModeEnum.None,
             };
             _sidebarScrollContainer = scroll;
+            ApplyScrollContainerTheme(scroll);
             root.AddChild(scroll);
 
             var sidebarScrollFrame = new MarginContainer
@@ -938,7 +1039,8 @@ namespace STS2RitsuLib.Settings
                 SizeFlagsHorizontal = SizeFlags.ExpandFill,
                 MouseFilter = MouseFilterEnum.Ignore,
             };
-            _modButtonList.AddThemeConstantOverride("separation", 12);
+            _modButtonList.AddThemeConstantOverride("separation",
+                RitsuShellTheme.Current.Metric.Sidebar.ModListSeparation);
             sidebarScrollFrame.AddChild(_modButtonList);
             return panel;
         }
@@ -953,7 +1055,9 @@ namespace STS2RitsuLib.Settings
                 MouseFilter = MouseFilterEnum.Ignore,
             };
             _contentPanelRoot = panel;
-            panel.AddThemeStyleboxOverride("panel", CreatePanelStyle(new(0.08f, 0.095f, 0.125f, 0.98f)));
+            panel.AddThemeStyleboxOverride("panel",
+                RitsuShellPanelStyles.CreateFramedSurface(RitsuShellTheme.Current.Surface.Content,
+                    RitsuShellTheme.Current.Metric.Radius.Default));
 
             var frame = new MarginContainer
             {
@@ -961,10 +1065,10 @@ namespace STS2RitsuLib.Settings
                 AnchorBottom = 1f,
                 MouseFilter = MouseFilterEnum.Ignore,
             };
-            frame.AddThemeConstantOverride("margin_left", 18);
-            frame.AddThemeConstantOverride("margin_top", 18);
-            frame.AddThemeConstantOverride("margin_right", 18);
-            frame.AddThemeConstantOverride("margin_bottom", 18);
+            frame.AddThemeConstantOverride("margin_left", 14);
+            frame.AddThemeConstantOverride("margin_top", 14);
+            frame.AddThemeConstantOverride("margin_right", 14);
+            frame.AddThemeConstantOverride("margin_bottom", 14);
             panel.AddChild(frame);
 
             var root = new VBoxContainer
@@ -973,7 +1077,7 @@ namespace STS2RitsuLib.Settings
                 AnchorBottom = 1f,
                 MouseFilter = MouseFilterEnum.Ignore,
             };
-            root.AddThemeConstantOverride("separation", 10);
+            root.AddThemeConstantOverride("separation", 8);
             frame.AddChild(root);
 
             _scrollContainer = new()
@@ -984,6 +1088,7 @@ namespace STS2RitsuLib.Settings
                 FollowFocus = true,
                 FocusMode = FocusModeEnum.None,
             };
+            ApplyScrollContainerTheme(_scrollContainer);
             root.AddChild(_scrollContainer);
 
             var contentStack = new VBoxContainer
@@ -1258,17 +1363,63 @@ namespace STS2RitsuLib.Settings
             {
                 var isSelected = string.Equals(pair.Key, _selectedModId, StringComparison.OrdinalIgnoreCase);
                 var navChromeVisible = ShouldShowExpandedModNav(pair.Key);
-                pair.Value.Card.AddThemeStyleboxOverride("panel", CreateSidebarGroupStyle(isSelected));
-                pair.Value.MetaLabel.SetTextAutoSize(string.Format(
+                pair.Value.Card.AddThemeStyleboxOverride("panel",
+                    RitsuShellPanelStyles.CreateSidebarModCardCompact(RitsuShellTheme.Current.Metric.Radius.Default,
+                        isSelected));
+                var count = ModSettingsRegistry.GetPages().Count(page =>
+                    string.Equals(page.ModId, pair.Key, StringComparison.OrdinalIgnoreCase));
+                var pageCountText = string.Format(
                     ModSettingsLocalization.Get("sidebar.modMeta", "{0} pages"),
-                    ModSettingsRegistry.GetPages().Count(page =>
-                        string.Equals(page.ModId, pair.Key, StringComparison.OrdinalIgnoreCase))));
-                pair.Value.MetaLabel.Visible = navChromeVisible;
+                    count);
+                pair.Value.MetaLabel.SetTextAutoSize(pageCountText);
+                pair.Value.MetaLabel.Visible =
+                    navChromeVisible && RitsuShellTheme.Current.Metric.Sidebar.ShowInlinePageCount;
+                var modTitle = ResolveSidebarModTitle(
+                    ModSettingsRegistry.GetPages()
+                        .Where(p => string.IsNullOrWhiteSpace(p.ParentPageId) &&
+                                    string.Equals(p.ModId, pair.Key, StringComparison.OrdinalIgnoreCase))
+                        .OrderBy(ModSettingsRegistry.GetEffectivePageSortOrder)
+                        .ThenBy(p => p.Id, StringComparer.OrdinalIgnoreCase)
+                        .ToArray());
+                pair.Value.Button.TooltipText =
+                    navChromeVisible && !RitsuShellTheme.Current.Metric.Sidebar.ShowInlinePageCount
+                        ? $"{modTitle}\n{pageCountText}"
+                        : modTitle;
                 pair.Value.NavStack.Visible = navChromeVisible;
+                RefreshSidebarSelectionChromeForCache(pair.Value, selectedPageKey, selectedSectionKey);
                 ApplySidebarModButtonChevron(pair.Value, navChromeVisible);
             }
 
             _selectionDirty = false;
+        }
+
+        private static void RefreshSidebarSelectionChromeForCache(SidebarModCache cache, string? selectedPageKey,
+            string? selectedSectionKey)
+        {
+            foreach (var pageNode in cache.PageNodes.Values)
+                RefreshSidebarSelectionChromeForPageNode(pageNode, selectedPageKey, selectedSectionKey);
+        }
+
+        private static bool RefreshSidebarSelectionChromeForPageNode(SidebarPageNodeCache pageNode, string? selectedPageKey,
+            string? selectedSectionKey)
+        {
+            var isSelectedPage = string.Equals(pageNode.PageKey, selectedPageKey, StringComparison.OrdinalIgnoreCase);
+            pageNode.SectionRail.Visible = isSelectedPage;
+
+            foreach (var sectionPair in pageNode.SectionButtons)
+            {
+                var sectionButton = sectionPair.Value;
+                if (!GodotObject.IsInstanceValid(sectionButton))
+                    continue;
+                sectionButton.Visible = isSelectedPage;
+                sectionButton.SetSelected(string.Equals(sectionPair.Key, selectedSectionKey, StringComparison.OrdinalIgnoreCase));
+            }
+
+            var selectedInSubtree = isSelectedPage;
+            foreach (var childPage in pageNode.ChildPages.Values)
+                selectedInSubtree |= RefreshSidebarSelectionChromeForPageNode(childPage, selectedPageKey, selectedSectionKey);
+            pageNode.ChildHost.Visible = selectedInSubtree;
+            return selectedInSubtree;
         }
 
         private void RefreshVisibleContent(bool includeAllPagesRefresh)
@@ -1410,14 +1561,14 @@ namespace STS2RitsuLib.Settings
                 "◦",
                 Math.Max(0, depth - 1));
             button.Name = $"SidebarPage_{SanitizePageNodeName(pageKey)}";
-            button.CustomMinimumSize = new(0f, 48f);
+            button.CustomMinimumSize = new(0f, RitsuShellTheme.Current.Metric.Sidebar.PageRowMinHeight);
 
             var container = new VBoxContainer
             {
                 SizeFlagsHorizontal = SizeFlags.ExpandFill,
                 MouseFilter = MouseFilterEnum.Ignore,
             };
-            container.AddThemeConstantOverride("separation", 4);
+            container.AddThemeConstantOverride("separation", RitsuShellTheme.Current.Metric.Sidebar.PageTreeSeparation);
             container.AddChild(button);
 
             var sectionRail = new VBoxContainer
@@ -1426,7 +1577,8 @@ namespace STS2RitsuLib.Settings
                 MouseFilter = MouseFilterEnum.Ignore,
                 Visible = false,
             };
-            sectionRail.AddThemeConstantOverride("separation", 4);
+            sectionRail.AddThemeConstantOverride("separation",
+                RitsuShellTheme.Current.Metric.Sidebar.SectionRailSeparation);
             container.AddChild(sectionRail);
 
             var childHost = new VBoxContainer
@@ -1434,7 +1586,7 @@ namespace STS2RitsuLib.Settings
                 SizeFlagsHorizontal = SizeFlags.ExpandFill,
                 MouseFilter = MouseFilterEnum.Ignore,
             };
-            childHost.AddThemeConstantOverride("separation", 4);
+            childHost.AddThemeConstantOverride("separation", RitsuShellTheme.Current.Metric.Sidebar.PageTreeSeparation);
             container.AddChild(childHost);
 
             return new()
@@ -1500,6 +1652,36 @@ namespace STS2RitsuLib.Settings
                 cache.ChildHost.MoveChild(childCache.Container, index);
                 ReconcileSidebarPageNode(childCache, pages, child, depth + 1);
             }
+
+            cache.ChildHost.Visible = IsSelectedPageInNavSubtree(_selectedPageId, page, pages);
+        }
+
+        private static bool IsSelectedPageInNavSubtree(string? selectedPageId, ModSettingsPage subtreeRoot,
+            IReadOnlyList<ModSettingsPage> pages)
+        {
+            if (string.IsNullOrWhiteSpace(selectedPageId))
+                return false;
+
+            var map = new Dictionary<string, ModSettingsPage>(StringComparer.OrdinalIgnoreCase);
+            foreach (var p in pages)
+                map[p.Id] = p;
+
+            if (!map.TryGetValue(selectedPageId, out _))
+                return false;
+
+            if (string.Equals(selectedPageId, subtreeRoot.Id, StringComparison.OrdinalIgnoreCase))
+                return true;
+
+            var cur = map[selectedPageId];
+            while (!string.IsNullOrWhiteSpace(cur.ParentPageId))
+            {
+                if (string.Equals(cur.ParentPageId, subtreeRoot.Id, StringComparison.OrdinalIgnoreCase))
+                    return true;
+                if (!map.TryGetValue(cur.ParentPageId, out cur!))
+                    break;
+            }
+
+            return false;
         }
 
         private void ReconcileSidebarSectionRail(SidebarPageNodeCache cache, ModSettingsPage page, int depth,
@@ -1533,7 +1715,8 @@ namespace STS2RitsuLib.Settings
                         "·",
                         depth + 1);
                     sectionButton.Name = $"SidebarSection_{SanitizePageNodeName(sectionKey)}";
-                    sectionButton.CustomMinimumSize = new(0f, 40f);
+                    sectionButton.CustomMinimumSize =
+                        new(0f, RitsuShellTheme.Current.Metric.Sidebar.SectionRowMinHeight);
                     cache.SectionButtons[sectionKey] = sectionButton;
                 }
 
@@ -1559,7 +1742,7 @@ namespace STS2RitsuLib.Settings
                 SizeFlagsHorizontal = SizeFlags.ExpandFill,
                 MouseFilter = MouseFilterEnum.Ignore,
             };
-            section.AddThemeConstantOverride("separation", 8);
+            section.AddThemeConstantOverride("separation", RitsuShellTheme.Current.Metric.Sidebar.ModListSeparation);
             section.Name = $"SidebarModSection_{SanitizePageNodeName(modId)}";
 
             var card = new PanelContainer
@@ -1574,7 +1757,8 @@ namespace STS2RitsuLib.Settings
                 SizeFlagsHorizontal = SizeFlags.ExpandFill,
                 MouseFilter = MouseFilterEnum.Ignore,
             };
-            cardContent.AddThemeConstantOverride("separation", 8);
+            cardContent.AddThemeConstantOverride("separation",
+                RitsuShellTheme.Current.Metric.Sidebar.ModCardInnerSeparation);
             card.AddChild(cardContent);
 
             var button = ModSettingsUiFactory.CreateSidebarButton(
@@ -1608,7 +1792,7 @@ namespace STS2RitsuLib.Settings
                 SizeFlagsHorizontal = SizeFlags.ExpandFill,
                 MouseFilter = MouseFilterEnum.Ignore,
             };
-            navStack.AddThemeConstantOverride("separation", 6);
+            navStack.AddThemeConstantOverride("separation", RitsuShellTheme.Current.Metric.Sidebar.PageTreeSeparation);
             cardContent.AddChild(navStack);
 
             return new()
@@ -1628,12 +1812,15 @@ namespace STS2RitsuLib.Settings
         {
             var navChromeVisible = ShouldShowExpandedModNav(cache.ModId);
             var title = ResolveSidebarModTitle(rootPages);
-            cache.Button.TooltipText = title;
-            cache.Button.Text = $"{(navChromeVisible ? "▼" : "▶")}  {title}";
-            cache.MetaLabel.SetTextAutoSize(string.Format(
+            var pageCountText = string.Format(
                 ModSettingsLocalization.Get("sidebar.modMeta", "{0} pages"),
-                pages.Count));
-            cache.MetaLabel.Visible = navChromeVisible;
+                pages.Count);
+            cache.Button.TooltipText = navChromeVisible && !RitsuShellTheme.Current.Metric.Sidebar.ShowInlinePageCount
+                ? $"{title}\n{pageCountText}"
+                : title;
+            cache.Button.Text = $"{(navChromeVisible ? "▼" : "▶")}  {title}";
+            cache.MetaLabel.SetTextAutoSize(pageCountText);
+            cache.MetaLabel.Visible = navChromeVisible && RitsuShellTheme.Current.Metric.Sidebar.ShowInlinePageCount;
             cache.NavStack.Visible = navChromeVisible;
 
             var rootChildPages = pages.Where(page => string.IsNullOrWhiteSpace(page.ParentPageId))
@@ -1735,6 +1922,28 @@ namespace STS2RitsuLib.Settings
                 ReplaceHostChildren(cache.HeaderHost, nextHeader);
                 ReplaceHostChildren(cache.ContentHost, nextContent);
                 cache.State = PageBuildState.Ready;
+
+                if (page.EnabledWhen != null)
+                {
+                    ModSettingsUiFactory.ApplyEnabledRecursive(cache.HeaderHost, page.EnabledWhen());
+                    ModSettingsUiFactory.ApplyEnabledRecursive(cache.ContentHost, page.EnabledWhen());
+                    bool enabled;
+                    RegisterRefreshAction(() =>
+                    {
+                        try
+                        {
+                            enabled = page.EnabledWhen();
+                        }
+                        catch
+                        {
+                            enabled = true;
+                        }
+
+                        ModSettingsUiFactory.ApplyEnabledRecursive(cache.HeaderHost, enabled);
+                        ModSettingsUiFactory.ApplyEnabledRecursive(cache.ContentHost, enabled);
+                    }, ModSettingsUiRefreshSpec.Always, cache.PageKey);
+                }
+
                 if (string.Equals(_selectedPageId, page.Id, StringComparison.OrdinalIgnoreCase))
                 {
                     HideContentBuildOverlay();
@@ -1850,7 +2059,9 @@ namespace STS2RitsuLib.Settings
                 FocusMode = FocusModeEnum.None,
                 ZIndex = 10,
             };
-            overlay.AddThemeStyleboxOverride("panel", CreatePanelStyle(new(0.03f, 0.04f, 0.06f, 0.72f)));
+            overlay.AddThemeStyleboxOverride("panel",
+                RitsuShellPanelStyles.CreateFramedSurface(RitsuShellTheme.Current.Surface.ContentBuildOverlay,
+                    RitsuShellTheme.Current.Metric.Radius.Default));
 
             var center = new CenterContainer
             {
@@ -2193,6 +2404,163 @@ namespace STS2RitsuLib.Settings
             Callable.From(() => EnsureUiUpToDate(true, true)).CallDeferred();
         }
 
+        private void OnShellThemeChanged()
+        {
+            Callable.From(() =>
+            {
+                ResetUiCachesForShellThemeChange();
+                ApplyShellThemeToExistingChrome();
+                EnsureUiUpToDate(true, true);
+            }).CallDeferred();
+        }
+
+        private void ApplyShellThemeToExistingChrome()
+        {
+            if (!IsInsideTree())
+                return;
+
+            if (_sidebarPanelRoot != null && IsInstanceValid(_sidebarPanelRoot))
+                _sidebarPanelRoot.AddThemeStyleboxOverride("panel",
+                    RitsuShellPanelStyles.CreateFramedSurface(RitsuShellTheme.Current.Surface.Sidebar,
+                        RitsuShellTheme.Current.Metric.Radius.Default));
+
+            if (_contentPanelRoot != null && IsInstanceValid(_contentPanelRoot))
+                _contentPanelRoot.AddThemeStyleboxOverride("panel",
+                    RitsuShellPanelStyles.CreateFramedSurface(RitsuShellTheme.Current.Surface.Content,
+                        RitsuShellTheme.Current.Metric.Radius.Default));
+
+            if (_contentBuildOverlay != null && IsInstanceValid(_contentBuildOverlay))
+                _contentBuildOverlay.AddThemeStyleboxOverride("panel",
+                    ModSettingsUiFactory.CreateInsetSurfaceStyle());
+
+            if (_subtitleLabel != null && IsInstanceValid(_subtitleLabel))
+                _subtitleLabel.Modulate = RitsuShellTheme.Current.Text.LabelSecondary;
+
+            if (_sidebarHeaderCard != null && IsInstanceValid(_sidebarHeaderCard))
+                _sidebarHeaderCard.AddThemeStyleboxOverride("panel", ModSettingsUiFactory.CreateInsetSurfaceStyle());
+
+            if (_sidebarHeaderTitleLabel != null && IsInstanceValid(_sidebarHeaderTitleLabel))
+                _sidebarHeaderTitleLabel.Modulate = RitsuShellTheme.Current.Text.SidebarSection;
+
+            if (_sidebarHeaderSubtitleLabel != null && IsInstanceValid(_sidebarHeaderSubtitleLabel))
+                _sidebarHeaderSubtitleLabel.Modulate = RitsuShellTheme.Current.Text.RichSecondary;
+
+            if (_sidebarScrollContainer != null && IsInstanceValid(_sidebarScrollContainer))
+                ApplyScrollContainerTheme(_sidebarScrollContainer);
+
+            if (_scrollContainer != null && IsInstanceValid(_scrollContainer))
+                ApplyScrollContainerTheme(_scrollContainer);
+        }
+
+        private static void ApplyScrollContainerTheme(ScrollContainer container)
+        {
+            if (!IsInstanceValid(container))
+                return;
+
+            var vScrollBar = container.GetVScrollBar();
+            if (!IsInstanceValid(vScrollBar))
+                return;
+
+            vScrollBar.AddThemeStyleboxOverride("scroll", CreateScrollTrackStyle());
+            vScrollBar.AddThemeStyleboxOverride("grabber", CreateScrollGrabberStyle("components.scrollbar.grabber"));
+            vScrollBar.AddThemeStyleboxOverride("grabber_highlight",
+                CreateScrollGrabberStyle("components.scrollbar.grabberHover"));
+            vScrollBar.AddThemeStyleboxOverride("grabber_pressed",
+                CreateScrollGrabberStyle("components.scrollbar.grabberPressed"));
+        }
+
+        private static StyleBoxFlat CreateScrollTrackStyle()
+        {
+            var bg = ResolveThemeColor("components.scrollbar.track.bg", "semantic.color.surface.inset.bg",
+                RitsuShellTheme.Current.Surface.Inset.Bg);
+            var border = ResolveThemeColor("components.scrollbar.track.border", "semantic.color.surface.inset.border",
+                RitsuShellTheme.Current.Surface.Inset.Border);
+            var borderWidth =
+                RitsuShellThemeLayoutResolver.ResolveEdges("components.scrollbar.layout.track.borderWidth", 1);
+            var radius = RitsuShellThemeLayoutResolver.ResolveInt("components.scrollbar.layout.track.cornerRadius",
+                RitsuShellTheme.Current.Metric.Radius.Default);
+            var padding = RitsuShellThemeLayoutResolver.ResolveEdges("components.scrollbar.layout.track.padding", 0);
+            return new()
+            {
+                BgColor = bg,
+                BorderColor = border,
+                BorderWidthLeft = borderWidth.Left,
+                BorderWidthTop = borderWidth.Top,
+                BorderWidthRight = borderWidth.Right,
+                BorderWidthBottom = borderWidth.Bottom,
+                CornerRadiusTopLeft = radius,
+                CornerRadiusTopRight = radius,
+                CornerRadiusBottomRight = radius,
+                CornerRadiusBottomLeft = radius,
+                ContentMarginLeft = padding.Left,
+                ContentMarginTop = padding.Top,
+                ContentMarginRight = padding.Right,
+                ContentMarginBottom = padding.Bottom,
+            };
+        }
+
+        private static StyleBoxFlat CreateScrollGrabberStyle(string basePath)
+        {
+            var bg = ResolveThemeColor(basePath + ".bg", "components.chromeMenu.default.bg",
+                RitsuShellTheme.Current.Component.ChromeMenu.Default.Bg);
+            var border = ResolveThemeColor(basePath + ".border", "components.chromeMenu.default.border",
+                RitsuShellTheme.Current.Component.ChromeMenu.Default.Border);
+            var borderWidth =
+                RitsuShellThemeLayoutResolver.ResolveEdges("components.scrollbar.layout.grabber.borderWidth", 1);
+            var radius = RitsuShellThemeLayoutResolver.ResolveInt("components.scrollbar.layout.grabber.cornerRadius",
+                RitsuShellTheme.Current.Metric.Radius.Default);
+            return new()
+            {
+                BgColor = bg,
+                BorderColor = border,
+                BorderWidthLeft = borderWidth.Left,
+                BorderWidthTop = borderWidth.Top,
+                BorderWidthRight = borderWidth.Right,
+                BorderWidthBottom = borderWidth.Bottom,
+                CornerRadiusTopLeft = radius,
+                CornerRadiusTopRight = radius,
+                CornerRadiusBottomRight = radius,
+                CornerRadiusBottomLeft = radius,
+            };
+        }
+
+        private static Color ResolveThemeColor(string path, string fallbackPath, Color fallback)
+        {
+            return RitsuShellTheme.Current.TryGetColor(path, out var color)
+                ? color
+                : RitsuShellTheme.Current.TryGetColor(fallbackPath, out color)
+                    ? color
+                    : fallback;
+        }
+
+        private void ResetUiCachesForShellThemeChange()
+        {
+            _sidebarStructureDirty = true;
+            _contentStructureDirty = true;
+            _selectionDirty = true;
+
+            foreach (var cache in _pageContentCaches.Values)
+            {
+                cache.BuildCancellation?.Cancel();
+                if (IsInstanceValid(cache.Root))
+                    cache.Root.QueueFree();
+            }
+
+            _pageContentCaches.Clear();
+
+            foreach (var cache in _modCaches.Values.Where(cache => IsInstanceValid(cache.Section)))
+                cache.Section.QueueFree();
+
+            _modCaches.Clear();
+            _modButtons.Clear();
+            _pageButtons.Clear();
+            _sectionButtons.Clear();
+            _sidebarDynamicVisibilityTargets.Clear();
+            _globalDynamicVisibilityTargets.Clear();
+            _globalRefreshRegistrations.Clear();
+            HideTransientContentState();
+        }
+
         private static MegaRichTextLabel CreateTitleLabel(int fontSize, HorizontalAlignment alignment)
         {
             var label = new MegaRichTextLabel
@@ -2207,8 +2575,8 @@ namespace STS2RitsuLib.Settings
                 FocusMode = FocusModeEnum.None,
             };
 
-            label.AddThemeFontOverride("normal_font", ModSettingsUiResources.KreonRegular);
-            label.AddThemeFontOverride("bold_font", ModSettingsUiResources.KreonBold);
+            label.AddThemeFontOverride("normal_font", RitsuShellTheme.Current.Font.Body);
+            label.AddThemeFontOverride("bold_font", RitsuShellTheme.Current.Font.BodyBold);
             label.AddThemeFontSizeOverride("normal_font_size", fontSize);
             label.AddThemeFontSizeOverride("bold_font_size", fontSize);
             label.AddThemeFontSizeOverride("italics_font_size", fontSize);
@@ -2226,56 +2594,6 @@ namespace STS2RitsuLib.Settings
             label.SizeFlagsHorizontal = SizeFlags.ExpandFill;
             label.SetTextAutoSize(text);
             return label;
-        }
-
-        private static StyleBoxFlat CreatePanelStyle(Color bg)
-        {
-            return new()
-            {
-                BgColor = bg,
-                BorderColor = new(0.44f, 0.68f, 0.80f, 0.36f),
-                BorderWidthLeft = 1,
-                BorderWidthTop = 1,
-                BorderWidthRight = 1,
-                BorderWidthBottom = 1,
-                CornerRadiusTopLeft = ModSettingsUiMetrics.CornerRadius,
-                CornerRadiusTopRight = ModSettingsUiMetrics.CornerRadius,
-                CornerRadiusBottomRight = ModSettingsUiMetrics.CornerRadius,
-                CornerRadiusBottomLeft = ModSettingsUiMetrics.CornerRadius,
-                ShadowColor = new(0f, 0f, 0f, 0.32f),
-                ShadowSize = 12,
-                ContentMarginLeft = 0,
-                ContentMarginTop = 0,
-                ContentMarginRight = 0,
-                ContentMarginBottom = 0,
-            };
-        }
-
-        private static StyleBoxFlat CreateSidebarGroupStyle(bool selected)
-        {
-            return new()
-            {
-                BgColor = selected
-                    ? new(0.085f, 0.125f, 0.165f, 0.97f)
-                    : new Color(0.07f, 0.095f, 0.13f, 0.94f),
-                BorderColor = selected
-                    ? new(0.58f, 0.80f, 0.90f, 0.58f)
-                    : new Color(0.30f, 0.44f, 0.54f, 0.36f),
-                BorderWidthLeft = 1,
-                BorderWidthTop = 1,
-                BorderWidthRight = 1,
-                BorderWidthBottom = 1,
-                CornerRadiusTopLeft = ModSettingsUiMetrics.CornerRadius,
-                CornerRadiusTopRight = ModSettingsUiMetrics.CornerRadius,
-                CornerRadiusBottomRight = ModSettingsUiMetrics.CornerRadius,
-                CornerRadiusBottomLeft = ModSettingsUiMetrics.CornerRadius,
-                ShadowColor = new(0f, 0f, 0f, 0.16f),
-                ShadowSize = 4,
-                ContentMarginLeft = 10,
-                ContentMarginTop = 10,
-                ContentMarginRight = 10,
-                ContentMarginBottom = 10,
-            };
         }
 
         private static string CreatePageStructureSignature(ModSettingsPage page)

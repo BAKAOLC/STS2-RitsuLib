@@ -14,6 +14,7 @@ namespace STS2RitsuLib.Settings
                                                                 ModSettingsMenuCapabilities.Paste;
 
         private int? _modSidebarOrder;
+        private Func<bool>? _pageEnabledWhen;
         private ModSettingsHostSurface _pageReadOnlyOnHostSurfaces = ModSettingsHostSurface.None;
         private ModSettingsHostSurface _pageVisibleOnHostSurfaces = ModSettingsHostSurface.All;
         private Func<bool>? _pageVisibleWhen;
@@ -132,6 +133,16 @@ namespace STS2RitsuLib.Settings
         }
 
         /// <summary>
+        ///     Disables the page (dimmed, non-interactive) while <paramref name="predicate" /> is false.
+        /// </summary>
+        public ModSettingsPageBuilder WithEnabledWhen(Func<bool> predicate)
+        {
+            ArgumentNullException.ThrowIfNull(predicate);
+            _pageEnabledWhen = predicate;
+            return this;
+        }
+
+        /// <summary>
         ///     Limits where this page appears (main menu vs run pause vs combat pause). Defaults to all surfaces.
         /// </summary>
         public ModSettingsPageBuilder WithVisibleOnHostSurfaces(ModSettingsHostSurface surfaces)
@@ -198,6 +209,7 @@ namespace STS2RitsuLib.Settings
                 SortOrder,
                 _sections.ToArray(),
                 _pageVisibleWhen,
+                _pageEnabledWhen,
                 _menuCapabilities,
                 _pageVisibleOnHostSurfaces,
                 _pageReadOnlyOnHostSurfaces
@@ -211,11 +223,14 @@ namespace STS2RitsuLib.Settings
     public sealed class ModSettingsSectionBuilder
     {
         private readonly List<ModSettingsEntryDefinition> _entries = [];
+        private readonly Dictionary<string, Func<bool>> _entryEnabledWhen = new(StringComparer.OrdinalIgnoreCase);
         private readonly HashSet<string> _entryIds = new(StringComparer.OrdinalIgnoreCase);
         private readonly Dictionary<string, Func<bool>> _entryVisibleWhen = new(StringComparer.OrdinalIgnoreCase);
 
         private ModSettingsMenuCapabilities _menuCapabilities = ModSettingsMenuCapabilities.Copy |
                                                                 ModSettingsMenuCapabilities.Paste;
+
+        private Func<bool>? _sectionEnabledWhen;
 
         private ModSettingsHostSurface _sectionReadOnlyOnHostSurfaces = ModSettingsHostSurface.None;
         private ModSettingsHostSurface _sectionVisibleOnHostSurfaces = ModSettingsHostSurface.All;
@@ -287,6 +302,16 @@ namespace STS2RitsuLib.Settings
         {
             ArgumentNullException.ThrowIfNull(predicate);
             _sectionVisibleWhen = predicate;
+            return this;
+        }
+
+        /// <summary>
+        ///     Disables the section (dimmed, non-interactive) while <paramref name="predicate" /> is false.
+        /// </summary>
+        public ModSettingsSectionBuilder WithEnabledWhen(Func<bool> predicate)
+        {
+            ArgumentNullException.ThrowIfNull(predicate);
+            _sectionEnabledWhen = predicate;
             return this;
         }
 
@@ -833,6 +858,7 @@ namespace STS2RitsuLib.Settings
             return _entries.Count == 0
                 ? throw new InvalidOperationException($"Settings section '{Id}' has no entries.")
                 : new(Id, Title, Description, IsCollapsible, StartCollapsed, BuildEntries(), _sectionVisibleWhen,
+                    _sectionEnabledWhen,
                     _menuCapabilities, _sectionVisibleOnHostSurfaces, _sectionReadOnlyOnHostSurfaces);
         }
 
@@ -861,6 +887,18 @@ namespace STS2RitsuLib.Settings
             return this;
         }
 
+        internal ModSettingsSectionBuilder WithEntryEnabledWhen(string id, Func<bool> predicate)
+        {
+            ArgumentException.ThrowIfNullOrWhiteSpace(id);
+            ArgumentNullException.ThrowIfNull(predicate);
+
+            if (!_entryIds.Contains(id))
+                throw new InvalidOperationException($"Settings entry '{id}' does not exist in section '{Id}'.");
+
+            _entryEnabledWhen[id] = predicate;
+            return this;
+        }
+
         private void AddEntry(string id, ModSettingsEntryDefinition entry)
         {
             ArgumentException.ThrowIfNullOrWhiteSpace(id);
@@ -877,6 +915,11 @@ namespace STS2RitsuLib.Settings
             for (var i = 0; i < _entries.Count; i++)
             {
                 var entry = _entries[i];
+                if (_entryEnabledWhen.TryGetValue(entry.Id, out var enabledPredicate))
+                    entry = new ModSettingsEntryEnabledWrapper(entry, enabledPredicate)
+                    {
+                        MenuCapabilities = entry.MenuCapabilities,
+                    };
                 if (_entryVisibleWhen.TryGetValue(entry.Id, out var visibilityPredicate))
                 {
                     var wrapped = new ModSettingsEntryVisibilityWrapper(entry, visibilityPredicate)

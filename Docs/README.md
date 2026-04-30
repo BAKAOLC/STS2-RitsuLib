@@ -28,6 +28,7 @@
 | [Godot Scene Authoring](en/GodotSceneAuthoring.md) | Scene-script wrappers, editor caveats, and runtime script registration |
 | [Creature Visuals & Animation](en/CreatureVisualsAndAnimation.md) | Creature visuals / animator factories and the non-Spine `ModAnimStateMachine` pipeline |
 | [Mod Settings](en/ModSettings.md) | Settings UI architecture, bindings, supported controls, and page composition |
+| [Shell Theme](en/ShellTheme.md) | DTFM-based settings UI theme system, scopes, and the mod registration API |
 
 ### Localization
 
@@ -72,6 +73,7 @@
 | [Godot 场景编写说明](zh/GodotSceneAuthoring.md) | 场景脚本包装、编辑器问题与运行时脚本注册 |
 | [生物体视觉与动画](zh/CreatureVisualsAndAnimation.md) | 生物视觉 / animator 工厂接口与非 Spine `ModAnimStateMachine` 管线 |
 | [Mod 设置界面](zh/ModSettings.md) | 设置 UI 架构、绑定方式、支持控件与页面组合 |
+| [Shell 主题](zh/ShellTheme.md) | 基于 DTFM 的设置 UI 主题系统、scope 与 mod 注册式 API |
 
 ### 本地化
 

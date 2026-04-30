@@ -1,0 +1,99 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://raw.githubusercontent.com/BAKAOLC/STS2-RitsuLib/main/schemas/ui/shell/v1/schema.json",
+  "title": "RitsuLib shell theme (W3C Design Tokens Format Module)",
+  "description": "Theme document organized as core (primitives), semantic (alias), and components (component tokens with states). Each leaf token is an object with $value and $type per W3C DTFM. Layered overrides live under scopes.{shell|modSettings|mod:<id>}; free-form mod data lives under extensions.<modId>.",
+  "type": "object",
+  "required": ["id"],
+  "properties": {
+    "$schema": {
+      "type": "string",
+      "description": "Optional JSON Schema URL for editors."
+    },
+    "themeFormatVersion": {
+      "type": "integer",
+      "minimum": 1,
+      "description": "Format version (currently 1)."
+    },
+    "id": {
+      "type": "string",
+      "pattern": "^[a-z0-9][a-z0-9_-]*$",
+      "description": "Theme id (lowercase identifier)."
+    },
+    "displayName": {
+      "type": "string",
+      "description": "Human-readable name shown in pickers."
+    },
+    "inherits": {
+      "type": ["string", "null"],
+      "description": "Parent theme id; this theme is layered on top."
+    },
+    "core": { "$ref": "#/$defs/tokenGroup" },
+    "semantic": { "$ref": "#/$defs/tokenGroup" },
+    "components": { "$ref": "#/$defs/tokenGroup" },
+    "scopes": { "$ref": "#/$defs/scopesMap" },
+    "extensions": { "$ref": "#/$defs/extensionsMap" }
+  },
+  "additionalProperties": true,
+  "$defs": {
+    "tokenGroup": {
+      "type": "object",
+      "description": "DTFM token group; child entries are either nested groups or leaf tokens.",
+      "additionalProperties": {
+        "oneOf": [
+          { "$ref": "#/$defs/tokenLeaf" },
+          { "$ref": "#/$defs/tokenGroup" }
+        ]
+      }
+    },
+    "tokenLeaf": {
+      "type": "object",
+      "description": "DTFM leaf token. $value carries the literal or a {ref.path}; $type names the value kind.",
+      "required": ["$value", "$type"],
+      "properties": {
+        "$value": {
+          "description": "Literal value or a reference of the form {path.to.token}.",
+          "type": ["string", "number", "integer", "boolean"]
+        },
+        "$type": {
+          "type": "string",
+          "enum": ["color", "dimension", "fontFamily", "fontWeight", "number", "boolean"],
+          "description": "Value kind; constrains how $value is interpreted."
+        },
+        "$description": {
+          "type": "string",
+          "description": "Optional human-readable description."
+        },
+        "$extensions": {
+          "type": "object",
+          "description": "Optional vendor-specific metadata.",
+          "additionalProperties": true
+        }
+      },
+      "additionalProperties": false
+    },
+    "scopesMap": {
+      "type": "object",
+      "description": "Per-scope overrides. Keys are scope ids: shell, modSettings, or mod:<modId>.",
+      "propertyNames": {
+        "pattern": "^(shell|modSettings|mod:[a-zA-Z0-9_.-]+)$"
+      },
+      "additionalProperties": {
+        "type": "object",
+        "description": "Each scope may contribute its own core/semantic/components subtrees.",
+        "properties": {
+          "core": { "$ref": "#/$defs/tokenGroup" },
+          "semantic": { "$ref": "#/$defs/tokenGroup" },
+          "components": { "$ref": "#/$defs/tokenGroup" },
+          "extensions": { "$ref": "#/$defs/extensionsMap" }
+        },
+        "additionalProperties": true
+      }
+    },
+    "extensionsMap": {
+      "type": "object",
+      "description": "Free-form per-mod extension blobs. Keys are mod ids; values are arbitrary JSON consumed by the owning mod.",
+      "additionalProperties": true
+    }
+  }
+}

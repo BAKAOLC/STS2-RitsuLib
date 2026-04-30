@@ -1,4 +1,5 @@
 using STS2RitsuLib.Data.Models;
+using STS2RitsuLib.Ui.Shell.Theme;
 
 namespace STS2RitsuLib.Settings
 {
@@ -24,6 +25,7 @@ namespace STS2RitsuLib.Settings
 
         public ModSettingsValueBinding<RitsuLibSettings, string> SelfCheckOutputFolder { get; private init; } = null!;
         public ModSettingsValueBinding<RitsuLibSettings, bool> SelfCheckOnFirstMainMenu { get; private init; } = null!;
+        public ModSettingsValueBinding<RitsuLibSettings, string> UiShellThemeId { get; private init; } = null!;
         public ModSettingsValueBinding<RitsuLibSettings, string> CardPngExportOutputPath { get; private init; } = null!;
         public ModSettingsValueBinding<RitsuLibSettings, bool> CardPngExportIncludeHover { get; private init; } = null!;
 
@@ -129,6 +131,18 @@ namespace STS2RitsuLib.Settings
                     Const.SettingsKey,
                     settings => settings.SelfCheckOnFirstMainMenu,
                     (settings, value) => settings.SelfCheckOnFirstMainMenu = value),
+                UiShellThemeId = ModSettingsBindings.Global<RitsuLibSettings, string>(
+                    Const.ModId,
+                    Const.SettingsKey,
+                    settings => string.IsNullOrWhiteSpace(settings.UiShellThemeId)
+                        ? "default"
+                        : settings.UiShellThemeId.Trim().ToLowerInvariant(),
+                    (settings, value) =>
+                    {
+                        var n = string.IsNullOrWhiteSpace(value) ? "default" : value.Trim().ToLowerInvariant();
+                        settings.UiShellThemeId = n;
+                        RitsuShellThemeRuntime.ApplyThemeId(n);
+                    }),
                 CardPngExportOutputPath = ModSettingsBindings.Global<RitsuLibSettings, string>(
                     Const.ModId,
                     Const.SettingsKey,

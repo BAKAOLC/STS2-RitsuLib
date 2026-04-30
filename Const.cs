@@ -31,6 +31,11 @@ namespace STS2RitsuLib
         public const string SettingsFileName = "settings.json";
 
         /// <summary>
+        ///     Subdirectory under global mod data for shell theme JSON (next to <see cref="SettingsFileName" />).
+        /// </summary>
+        public const string ShellThemesDirectoryName = "shell_themes";
+
+        /// <summary>
         ///     BaseLib main Harmony instance id.
         /// </summary>
         public const string BaseLibHarmonyId = "BaseLib";
