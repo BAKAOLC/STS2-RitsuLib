@@ -114,6 +114,7 @@ namespace STS2RitsuLib.Compat
 
         private static bool DetectFrameworkCore(string frameworkId)
         {
+            // ReSharper disable once InvertIf
             if (CustomDetectors.TryGetValue(frameworkId, out var customDetector))
                 try
                 {
@@ -126,10 +127,8 @@ namespace STS2RitsuLib.Compat
                     return false;
                 }
 
-            if (!BuiltInProbes.TryGetValue(frameworkId, out var spec))
-                return false;
-
-            return spec.TypeMarkers.Any(typeName => ResolveType(typeName) != null);
+            return BuiltInProbes.TryGetValue(frameworkId, out var spec) &&
+                   spec.TypeMarkers.Any(typeName => ResolveType(typeName) != null);
         }
 
         private readonly record struct ProbeSpec(

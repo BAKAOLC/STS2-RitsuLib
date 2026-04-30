@@ -184,8 +184,8 @@ namespace STS2RitsuLib.Combat.HandSize
 
         private static bool IsDefaultMaxHandSizeConst(CodeInstruction ins)
         {
-            return (ins.opcode == OpCodes.Ldc_I4_S && ins.operand is sbyte sb && sb == DefaultMaxHandSize)
-                   || (ins.opcode == OpCodes.Ldc_I4 && ins.operand is int i && i == DefaultMaxHandSize);
+            return (ins.opcode == OpCodes.Ldc_I4_S && ins.operand is sbyte and DefaultMaxHandSize)
+                   || (ins.opcode == OpCodes.Ldc_I4 && ins.operand is DefaultMaxHandSize);
         }
 
         private static IEnumerable<CodeInstruction> Transpiler(IEnumerable<CodeInstruction> instructions)

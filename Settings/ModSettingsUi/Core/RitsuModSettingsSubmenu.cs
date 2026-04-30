@@ -1400,24 +1400,24 @@ namespace STS2RitsuLib.Settings
                 RefreshSidebarSelectionChromeForPageNode(pageNode, selectedPageKey, selectedSectionKey);
         }
 
-        private static bool RefreshSidebarSelectionChromeForPageNode(SidebarPageNodeCache pageNode, string? selectedPageKey,
+        private static bool RefreshSidebarSelectionChromeForPageNode(SidebarPageNodeCache pageNode,
+            string? selectedPageKey,
             string? selectedSectionKey)
         {
             var isSelectedPage = string.Equals(pageNode.PageKey, selectedPageKey, StringComparison.OrdinalIgnoreCase);
             pageNode.SectionRail.Visible = isSelectedPage;
 
-            foreach (var sectionPair in pageNode.SectionButtons)
+            foreach (var (key, sectionButton) in pageNode.SectionButtons)
             {
-                var sectionButton = sectionPair.Value;
-                if (!GodotObject.IsInstanceValid(sectionButton))
+                if (!IsInstanceValid(sectionButton))
                     continue;
                 sectionButton.Visible = isSelectedPage;
-                sectionButton.SetSelected(string.Equals(sectionPair.Key, selectedSectionKey, StringComparison.OrdinalIgnoreCase));
+                sectionButton.SetSelected(string.Equals(key, selectedSectionKey, StringComparison.OrdinalIgnoreCase));
             }
 
-            var selectedInSubtree = isSelectedPage;
-            foreach (var childPage in pageNode.ChildPages.Values)
-                selectedInSubtree |= RefreshSidebarSelectionChromeForPageNode(childPage, selectedPageKey, selectedSectionKey);
+            var selectedInSubtree = pageNode.ChildPages.Values.Aggregate(isSelectedPage,
+                (current, childPage) =>
+                    current | RefreshSidebarSelectionChromeForPageNode(childPage, selectedPageKey, selectedSectionKey));
             pageNode.ChildHost.Visible = selectedInSubtree;
             return selectedInSubtree;
         }

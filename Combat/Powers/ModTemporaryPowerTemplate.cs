@@ -27,6 +27,10 @@ namespace STS2RitsuLib.Combat.Powers
             typeof(ModTemporaryPowerTemplate).GetMethod(nameof(ApplyInternalPowerGeneric),
                 BindingFlags.NonPublic | BindingFlags.Static)!;
 
+        private ApplyInternalPowerInvoker? _cachedInternalPowerInvoker;
+
+        private Type? _cachedInternalPowerType;
+
         private bool _shouldIgnoreNextInstance;
 
         /// <summary>
@@ -226,14 +230,22 @@ namespace STS2RitsuLib.Combat.Powers
             return tips;
         }
 
-        private Task ApplyInternalPower(PlayerChoiceContext choiceContext, Creature target, decimal amount,
+        private Task ApplyInternalPower(
+            PlayerChoiceContext choiceContext,
+            Creature target,
+            decimal amount,
             Creature? applier,
-            CardModel? cardSource, bool silent = false)
+            CardModel? cardSource,
+            bool silent = false)
         {
-            var method = ApplyInternalPowerGenericMethod.MakeGenericMethod(InternallyAppliedPower.GetType());
-            if (method.Invoke(null, [choiceContext, target, amount, applier, cardSource, silent]) is Task task)
-                return task;
-            return Task.CompletedTask;
+            var powerType = InternallyAppliedPower.GetType();
+            if (_cachedInternalPowerType == powerType && _cachedInternalPowerInvoker != null)
+                return _cachedInternalPowerInvoker(choiceContext, target, amount, applier, cardSource, silent);
+            var method = ApplyInternalPowerGenericMethod.MakeGenericMethod(powerType);
+            _cachedInternalPowerInvoker = method.CreateDelegate<ApplyInternalPowerInvoker>();
+            _cachedInternalPowerType = powerType;
+
+            return _cachedInternalPowerInvoker(choiceContext, target, amount, applier, cardSource, silent);
         }
 
         private static Task ApplyInternalPowerGeneric<TPower>(PlayerChoiceContext choiceContext, Creature target,
@@ -246,6 +258,14 @@ namespace STS2RitsuLib.Combat.Powers
             return PowerCmd.Apply<TPower>(choiceContext, target, amount, applier, cardSource, silent);
 #endif
         }
+
+        private delegate Task ApplyInternalPowerInvoker(
+            PlayerChoiceContext choiceContext,
+            Creature target,
+            decimal amount,
+            Creature? applier,
+            CardModel? cardSource,
+            bool silent);
     }
 
     /// <summary>

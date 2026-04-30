@@ -650,9 +650,7 @@ namespace STS2RitsuLib.Settings
         internal static Control MaybeWrapDynamicEnabled(ModSettingsUiContext context, Control host,
             Func<bool>? predicate)
         {
-            if (predicate == null)
-                return host;
-            if (host.HasMeta(EnabledSyncMetaKey))
+            if (predicate == null || host.HasMeta(EnabledSyncMetaKey))
                 return host;
             host.SetMeta(EnabledSyncMetaKey, true);
 

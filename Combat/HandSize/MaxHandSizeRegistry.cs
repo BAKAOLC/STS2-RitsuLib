@@ -46,10 +46,9 @@ namespace STS2RitsuLib.Combat.HandSize
         {
             ArgumentNullException.ThrowIfNull(player);
 
-            if (BaseLibMaxHandSizeBridge.TryGetMaxHandSizeFromBaseLib(player, out var amount))
-                return amount;
-
-            return ApplyRegisteredModifiers(player, DefaultMaxHandSize);
+            return BaseLibMaxHandSizeBridge.TryGetMaxHandSizeFromBaseLib(player, out var amount)
+                ? amount
+                : ApplyRegisteredModifiers(player, DefaultMaxHandSize);
         }
 
         /// <summary>
@@ -67,17 +66,16 @@ namespace STS2RitsuLib.Combat.HandSize
                     .ToArray();
             }
 
-            var amount = currentMaxHandSize;
-            foreach (var entry in snapshot)
-                amount = entry.Modifier.ModifyMaxHandSize(player, amount);
-            foreach (var entry in snapshot)
-                amount = entry.Modifier.ModifyMaxHandSizeLate(player, amount);
+            var amount = snapshot.Aggregate(currentMaxHandSize,
+                (current, entry) => entry.Modifier.ModifyMaxHandSize(player, current));
+            amount = snapshot.Aggregate(amount,
+                (current, entry) => entry.Modifier.ModifyMaxHandSizeLate(player, current));
             return Math.Max(0, amount);
         }
 
         internal static int GetMaxHandSizeFromCard(CardModel? card)
         {
-            return card?.Owner is Player player ? GetMaxHandSize(player) : DefaultMaxHandSize;
+            return card?.Owner is { } player ? GetMaxHandSize(player) : DefaultMaxHandSize;
         }
 
         private static string BuildKey(string modId, string sourceId)

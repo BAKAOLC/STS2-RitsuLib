@@ -686,7 +686,8 @@ namespace STS2RitsuLib
                     return;
                 }
 
-                lookupMethod.Invoke(null, [assembly]);
+                var lookup = lookupMethod.CreateDelegate<Action<Assembly>>();
+                lookup(assembly);
                 logger?.Debug($"Registered Godot C# scripts for assembly: {assemblyName}");
             }
             catch (Exception ex)

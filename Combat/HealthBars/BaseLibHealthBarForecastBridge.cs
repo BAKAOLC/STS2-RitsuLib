@@ -19,6 +19,7 @@ namespace STS2RitsuLib.Combat.HealthBars
         private static bool _baselibSupportsForecastInterop;
         private static bool _loggedMissingInterop;
         private static bool _loggedMissingRegisterForeign;
+        private static Action<string, string, Func<Creature, IEnumerable<object>>>? _registerForeign;
 
         /// <summary>
         ///     When <see langword="true" />, Ritsu's <c>NHealthBar</c> forecast postfixes should skip drawing because BaseLib
@@ -90,7 +91,9 @@ namespace STS2RitsuLib.Combat.HealthBars
                 }
 
                 var provider = GetSegmentsForCreature;
-                registerForeign.Invoke(null, [Const.ModId, SourceId, provider]);
+                _registerForeign ??=
+                    registerForeign.CreateDelegate<Action<string, string, Func<Creature, IEnumerable<object>>>>();
+                _registerForeign(Const.ModId, SourceId, provider);
                 _registered = true;
                 _baselibSupportsForecastInterop = true;
                 RitsuLibFramework.Logger.Info("[HealthBarForecast] Registered BaseLib bridge provider.");

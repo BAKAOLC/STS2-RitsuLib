@@ -1,4 +1,3 @@
-using System.Reflection;
 using HarmonyLib;
 using MegaCrit.Sts2.Core.Entities.Cards;
 using MegaCrit.Sts2.Core.Models;
@@ -26,9 +25,10 @@ namespace STS2RitsuLib.Combat.CardTargeting.Patches
             AccessTools.MethodDelegate<Action<NCardPlay>>(
                 AccessTools.DeclaredMethod(typeof(NCardPlay), "TryShowEvokingOrbs"));
 
-        private static readonly MethodInfo SingleCreatureTargetingMethod =
-            AccessTools.DeclaredMethod(typeof(NMouseCardPlay), "SingleCreatureTargeting",
-                [typeof(TargetMode), typeof(TargetType)]);
+        private static readonly Func<NMouseCardPlay, TargetMode, TargetType, Task> SingleCreatureTargeting =
+            AccessTools.MethodDelegate<Func<NMouseCardPlay, TargetMode, TargetType, Task>>(
+                AccessTools.DeclaredMethod(typeof(NMouseCardPlay), "SingleCreatureTargeting",
+                    [typeof(TargetMode), typeof(TargetType)]));
 
         public static string PatchId => "card_anyone_mouse_target_selection";
 
@@ -62,7 +62,7 @@ namespace STS2RitsuLib.Combat.CardTargeting.Patches
 
             TryShowEvokingOrbs(instance);
             cardNode.CardHighlight.AnimFlash();
-            await (Task)SingleCreatureTargetingMethod.Invoke(instance, [targetMode, CustomTargetType.Anyone])!;
+            await SingleCreatureTargeting(instance, targetMode, CustomTargetType.Anyone);
         }
     }
 }

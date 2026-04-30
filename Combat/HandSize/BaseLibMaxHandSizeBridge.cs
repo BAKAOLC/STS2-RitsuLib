@@ -23,6 +23,7 @@ namespace STS2RitsuLib.Combat.HandSize
         private static readonly Harmony Harmony = new($"{Const.ModId}.interop.max_hand_size");
 
         private static MethodInfo? _baseLibGetMaxHandSizeMethod;
+        private static Func<Player, int>? _baseLibGetMaxHandSize;
         private static bool _postfixPatched;
         private static bool _loggedResolveFailure;
 
@@ -54,12 +55,9 @@ namespace STS2RitsuLib.Combat.HandSize
 
             try
             {
-                var raw = method.Invoke(null, [player]);
-                if (raw is int value)
-                {
-                    amount = value;
-                    return true;
-                }
+                _baseLibGetMaxHandSize ??= method.CreateDelegate<Func<Player, int>>();
+                amount = _baseLibGetMaxHandSize(player);
+                return true;
             }
             catch (Exception ex)
             {

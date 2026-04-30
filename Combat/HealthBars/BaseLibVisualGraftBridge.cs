@@ -15,6 +15,7 @@ namespace STS2RitsuLib.Combat.HealthBars
         private static bool _interopOk;
         private static bool _loggedMissingRegistry;
         private static bool _loggedMissingRegisterForeign;
+        private static Action<string, string, Func<Creature, object>>? _registerForeign;
 
         public static bool ShouldRitsuGraftStandDown()
         {
@@ -77,7 +78,8 @@ namespace STS2RitsuLib.Combat.HealthBars
                     return HealthBarVisualGraftRegistry.Aggregate(c);
                 }
 
-                registerForeign.Invoke(null, [Const.ModId, SourceId, (Func<Creature, object>)Handler]);
+                _registerForeign ??= registerForeign.CreateDelegate<Action<string, string, Func<Creature, object>>>();
+                _registerForeign(Const.ModId, SourceId, Handler);
                 _registered = true;
                 _interopOk = true;
                 RitsuLibFramework.Logger.Info("[HealthBarGraft] Registered BaseLib visual graft bridge.");

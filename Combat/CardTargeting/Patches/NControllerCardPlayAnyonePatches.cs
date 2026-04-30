@@ -1,4 +1,3 @@
-using System.Reflection;
 using Godot;
 using HarmonyLib;
 using MegaCrit.Sts2.Core.Audio.Debug;
@@ -43,8 +42,10 @@ namespace STS2RitsuLib.Combat.CardTargeting.Patches
             AccessTools.MethodDelegate<Action<NCardPlay, CardModel>>(
                 AccessTools.DeclaredMethod(typeof(NCardPlay), "CannotPlayThisCardFtueCheck", [typeof(CardModel)]));
 
-        private static readonly MethodInfo SingleCreatureTargetingMethod =
-            AccessTools.DeclaredMethod(typeof(NControllerCardPlay), "SingleCreatureTargeting", [typeof(TargetType)]);
+        private static readonly Func<NControllerCardPlay, TargetType, Task> SingleCreatureTargeting =
+            AccessTools.MethodDelegate<Func<NControllerCardPlay, TargetType, Task>>(
+                AccessTools.DeclaredMethod(typeof(NControllerCardPlay), "SingleCreatureTargeting",
+                    [typeof(TargetType)]));
 
         public static string PatchId => "card_anyone_controller_start";
 
@@ -87,7 +88,7 @@ namespace STS2RitsuLib.Combat.CardTargeting.Patches
             TryShowEvokingOrbs(__instance);
             cardNode.CardHighlight.AnimFlash();
             CenterCard(__instance);
-            TaskHelper.RunSafely((Task)SingleCreatureTargetingMethod.Invoke(__instance, [CustomTargetType.Anyone])!);
+            TaskHelper.RunSafely(SingleCreatureTargeting(__instance, CustomTargetType.Anyone));
             return false;
         }
     }
@@ -173,7 +174,7 @@ namespace STS2RitsuLib.Combat.CardTargeting.Patches
                 null);
 
             var nodes = room.CreatureNodes
-                .Where(n => n is { Entity: { IsAlive: true } })
+                .Where(n => n is { Entity.IsAlive: true })
                 .ToList();
 
             if (nodes.Count == 0)
