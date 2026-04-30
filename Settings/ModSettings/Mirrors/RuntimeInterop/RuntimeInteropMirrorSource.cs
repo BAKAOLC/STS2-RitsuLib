@@ -509,10 +509,11 @@ namespace STS2RitsuLib.Settings
             if (!TryResolveInteropMethod(access.ProviderType, entry.VisibleWhenMethod, out var method))
                 return true;
 
-            object?[] args = method.GetParameters().Length == 0 ? [] : [entry.Key];
             try
             {
-                var result = method.Invoke(null, args);
+                var result = method.GetParameters().Length == 0
+                    ? FastMethodInvoker.InvokeStatic0(method)
+                    : FastMethodInvoker.InvokeStatic1(method, entry.Key);
                 return result is bool visible ? visible : CoerceBool(result);
             }
             catch (Exception ex)
@@ -529,10 +530,11 @@ namespace STS2RitsuLib.Settings
                 !TryResolveInteropMethod(access.ProviderType, entry.OptionsMethod, out var method))
                 return entry.Options;
 
-            object?[] args = method.GetParameters().Length == 0 ? [] : [entry.Key];
             try
             {
-                var raw = method.Invoke(null, args);
+                var raw = method.GetParameters().Length == 0
+                    ? FastMethodInvoker.InvokeStatic0(method)
+                    : FastMethodInvoker.InvokeStatic1(method, entry.Key);
                 var parsed = ParseOptionsFromRaw(raw);
                 if (parsed.Count > 0)
                     return parsed;
