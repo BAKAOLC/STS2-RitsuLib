@@ -8,6 +8,7 @@ using MegaCrit.Sts2.Core.Modding;
 using MegaCrit.Sts2.Core.Models;
 using STS2RitsuLib.Cards.FreePlay;
 using STS2RitsuLib.CardTags;
+using STS2RitsuLib.Combat.HandSize;
 using STS2RitsuLib.Combat.HealthBars;
 using STS2RitsuLib.Content;
 using STS2RitsuLib.Data;
@@ -198,6 +199,8 @@ namespace STS2RitsuLib
                     IsActive = true;
                     BaseLibHealthBarForecastBridge.TryRegister();
                     BaseLibVisualGraftBridge.TryRegister();
+                    BaseLibMaxHandSizeBridge.TryInitialize();
+                    MaxHandSizePatchInstaller.EnsurePatched();
                     RuntimeHotkeyService.Initialize();
 
                     var frameworkInitializedEvent = new FrameworkInitializedEvent(
@@ -344,6 +347,32 @@ namespace STS2RitsuLib
             where TSource : IHealthBarVisualGraftSource, new()
         {
             HealthBarVisualGraftRegistry.Register<TSource>(modId, sourceId);
+        }
+
+        /// <summary>
+        ///     Registers a max-hand-size modifier source through the framework.
+        /// </summary>
+        public static void RegisterMaxHandSizeModifier<TModifier>(string modId, string? sourceId = null)
+            where TModifier : IMaxHandSizeModifier, new()
+        {
+            MaxHandSizeRegistry.Register<TModifier>(modId,
+                sourceId ?? typeof(TModifier).FullName ?? typeof(TModifier).Name);
+        }
+
+        /// <summary>
+        ///     Registers a max-hand-size modifier source through the framework.
+        /// </summary>
+        public static void RegisterMaxHandSizeModifier(string modId, string sourceId, IMaxHandSizeModifier modifier)
+        {
+            MaxHandSizeRegistry.Register(modId, sourceId, modifier);
+        }
+
+        /// <summary>
+        ///     Resolves the current max-hand-size value for <paramref name="player" />.
+        /// </summary>
+        public static int GetMaxHandSize(Player player)
+        {
+            return MaxHandSizeRegistry.GetMaxHandSize(player);
         }
 
         /// <summary>
