@@ -275,6 +275,7 @@ namespace STS2RitsuLib
             patcher.RegisterPatch<ModModelRuntimeGodotFactoryPatches.CharacterCreatureAnimatorRuntimeFactoryPatch>();
             patcher.RegisterPatch<CharacterVisualsPathPatch>();
             patcher.RegisterPatch<CharacterEnergyCounterRuntimeFactoryPatch>();
+            patcher.RegisterPatch<CharacterEnergyCounterStarAnchorPatch>();
             patcher.RegisterPatch<CharacterEnergyCounterPathPatch>();
             patcher.RegisterPatch<CharacterMerchantAnimPathPatch>();
             patcher.RegisterPatch<CharacterRestSiteAnimPathPatch>();
