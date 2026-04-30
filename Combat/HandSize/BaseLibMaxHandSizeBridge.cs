@@ -21,6 +21,7 @@ namespace STS2RitsuLib.Combat.HandSize
     {
         private static readonly Lock Gate = new();
         private static readonly Harmony Harmony = new($"{Const.ModId}.interop.max_hand_size");
+        [ThreadStatic] private static int _suppressPostfixDepth;
 
         private static MethodInfo? _baseLibGetMaxHandSizeMethod;
         private static Func<Player, int>? _baseLibGetMaxHandSize;
@@ -34,7 +35,7 @@ namespace STS2RitsuLib.Combat.HandSize
 
         internal static bool IsBaseLibHandSizePatchActive()
         {
-            if (!TryResolveBaseLibGetMaxHandSize(out _))
+            if (!TryResolveBaseLibGetMaxHandSizeMethod(out _))
                 return false;
 
             return IsPatchedByBaseLib(new(typeof(CardPileCmd),
@@ -48,20 +49,24 @@ namespace STS2RitsuLib.Combat.HandSize
         internal static bool TryGetMaxHandSizeFromBaseLib(Player player, out int amount)
         {
             amount = 0;
-            if (!TryResolveBaseLibGetMaxHandSize(out var method))
+            if (!TryGetBaseLibGetMaxHandSizeDelegate(out var getter))
                 return false;
 
             EnsureBaseLibPostfixPatched();
 
             try
             {
-                _baseLibGetMaxHandSize ??= method.CreateDelegate<Func<Player, int>>();
-                amount = _baseLibGetMaxHandSize(player);
+                _suppressPostfixDepth++;
+                amount = getter(player);
                 return true;
             }
             catch (Exception ex)
             {
                 RitsuLibFramework.Logger.Warn($"[MaxHandSize] BaseLib bridge invocation failed: {ex.Message}");
+            }
+            finally
+            {
+                _suppressPostfixDepth = Math.Max(0, _suppressPostfixDepth - 1);
             }
 
             return false;
@@ -89,7 +94,7 @@ namespace STS2RitsuLib.Combat.HandSize
             {
                 if (_postfixPatched)
                     return;
-                if (!TryResolveBaseLibGetMaxHandSize(out var getMaxMethod))
+                if (!TryResolveBaseLibGetMaxHandSizeMethod(out var getMaxMethod))
                     return;
 
                 var postfix = AccessTools.Method(typeof(BaseLibMaxHandSizeBridge),
@@ -104,7 +109,29 @@ namespace STS2RitsuLib.Combat.HandSize
             }
         }
 
-        private static bool TryResolveBaseLibGetMaxHandSize(out MethodInfo method)
+        private static bool TryGetBaseLibGetMaxHandSizeDelegate(out Func<Player, int> getter)
+        {
+            lock (Gate)
+            {
+                if (_baseLibGetMaxHandSize != null)
+                {
+                    getter = _baseLibGetMaxHandSize;
+                    return true;
+                }
+
+                if (!TryResolveBaseLibGetMaxHandSizeMethod(out var method))
+                {
+                    getter = null!;
+                    return false;
+                }
+
+                _baseLibGetMaxHandSize = method.CreateDelegate<Func<Player, int>>();
+                getter = _baseLibGetMaxHandSize;
+                return true;
+            }
+        }
+
+        private static bool TryResolveBaseLibGetMaxHandSizeMethod(out MethodInfo method)
         {
             lock (Gate)
             {
@@ -114,13 +141,13 @@ namespace STS2RitsuLib.Combat.HandSize
                     return true;
                 }
 
-                if (!ExternalFrameworkRegistry.IsFrameworkPresent(ExternalFrameworkIds.BaseLib))
+                var type = ResolveBaseLibMaxHandSizePatchType();
+                if (type == null && !ExternalFrameworkRegistry.IsFrameworkPresent(ExternalFrameworkIds.BaseLib))
                 {
                     method = null!;
                     return false;
                 }
 
-                var type = ResolveBaseLibMaxHandSizePatchType();
                 var resolved = type?.GetMethod(
                     "GetMaxHandSize",
                     BindingFlags.Public | BindingFlags.Static,
@@ -163,7 +190,10 @@ namespace STS2RitsuLib.Combat.HandSize
         private static void BaseLibGetMaxHandSizePostfix(Player player, ref int __result)
             // ReSharper restore InconsistentNaming
         {
-            __result = MaxHandSizeRegistry.ApplyRegisteredModifiers(player, __result);
+            if (_suppressPostfixDepth > 0)
+                return;
+
+            __result = MaxHandSizeCalculator.ApplyHookListenerModifiers(player, __result);
         }
     }
 }
