@@ -997,7 +997,9 @@ namespace STS2RitsuLib.Interop.AutoRegistration
                 ? new ModCardPileAnchor(
                     ModCardPileAnchorKind.Custom,
                     new(attr.AnchorOffsetX, attr.AnchorOffsetY),
-                    new(attr.AnchorCustomX, attr.AnchorCustomY))
+                    new(attr.AnchorCustomX, attr.AnchorCustomY),
+                    attr.AnchorCustomPivotX,
+                    attr.AnchorCustomPivotY)
                 : new ModCardPileAnchor(attr.AnchorKind, new(attr.AnchorOffsetX, attr.AnchorOffsetY));
 
             return new()

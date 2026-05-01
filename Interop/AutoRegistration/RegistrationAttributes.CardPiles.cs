@@ -66,14 +66,29 @@ namespace STS2RitsuLib.Interop.AutoRegistration
         public float AnchorOffsetY { get; set; }
 
         /// <summary>
-        ///     Absolute X used only when <see cref="AnchorKind" /> is <see cref="ModCardPileAnchorKind.Custom" />.
+        ///     X authoring coordinate in the mount parent's local space when <see cref="AnchorKind" /> is
+        ///     <see cref="ModCardPileAnchorKind.Custom" /> (paired with <see cref="AnchorCustomPivotX" /> /
+        ///     <see cref="AnchorCustomPivotY" /> as chrome landmark fractions — see <see cref="ModCardPileAnchor" />).
         /// </summary>
         public float AnchorCustomX { get; set; }
 
         /// <summary>
-        ///     Absolute Y used only when <see cref="AnchorKind" /> is <see cref="ModCardPileAnchorKind.Custom" />.
+        ///     Y authoring coordinate when <see cref="AnchorKind" /> is <see cref="ModCardPileAnchorKind.Custom" />.
         /// </summary>
         public float AnchorCustomY { get; set; }
+
+        /// <summary>
+        ///     X-axis fraction (typically 0..1) on nominal chrome horizontal extent when
+        ///     <see cref="AnchorKind" /> is <see cref="ModCardPileAnchorKind.Custom" />; default <c>0</c>
+        ///     means upper-left anchored.
+        /// </summary>
+        public float AnchorCustomPivotX { get; set; }
+
+        /// <summary>
+        ///     Y chrome landmark fraction for <see cref="ModCardPileAnchorKind.Custom" />; default <c>0</c>
+        ///     with <see cref="AnchorCustomPivotX" /> behaves like upper-left authoring.
+        /// </summary>
+        public float AnchorCustomPivotY { get; set; }
 
         /// <summary>
         ///     Godot resource path for the pile icon (e.g. <c>res://my_mod/icons/my_pile.png</c>).

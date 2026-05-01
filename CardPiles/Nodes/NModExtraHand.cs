@@ -22,7 +22,13 @@ namespace STS2RitsuLib.CardPiles.Nodes
     /// </remarks>
     public sealed partial class NModExtraHand : Control
     {
+        internal const float DefaultChromeWidth = 600f;
+
+        internal const float DefaultChromeHeight = 280f;
+
         private const float CardSpacing = 120f;
+
+        internal static readonly Vector2 DefaultChromeSize = new(DefaultChromeWidth, DefaultChromeHeight);
         private readonly Dictionary<CardModel, NCard> _cards = [];
 
         private ModCardPile? _pile;
@@ -46,9 +52,9 @@ namespace STS2RitsuLib.CardPiles.Nodes
                 Definition = definition,
                 Name = $"ModExtraHand_{definition.Id}",
                 MouseFilter = MouseFilterEnum.Pass,
-                CustomMinimumSize = new(600f, 280f),
-                Size = new(600f, 280f),
-                PivotOffset = new(300f, 140f),
+                CustomMinimumSize = DefaultChromeSize,
+                Size = DefaultChromeSize,
+                PivotOffset = new(DefaultChromeWidth * 0.5f, DefaultChromeHeight * 0.5f),
             };
         }
 

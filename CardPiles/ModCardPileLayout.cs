@@ -3,6 +3,7 @@ using MegaCrit.Sts2.Core.Combat;
 using MegaCrit.Sts2.Core.Entities.Cards;
 using MegaCrit.Sts2.Core.Nodes;
 using MegaCrit.Sts2.Core.Nodes.Cards;
+using MegaCrit.Sts2.Core.Nodes.Combat;
 using MegaCrit.Sts2.Core.Nodes.Rooms;
 using STS2RitsuLib.CardPiles.Nodes;
 
@@ -51,9 +52,6 @@ namespace STS2RitsuLib.CardPiles
         {
             var fallback = FallbackPosition();
 
-            if (definition.Anchor.Kind == ModCardPileAnchorKind.Custom)
-                return ApplyCardNodeOffset(definition.Anchor.CustomPosition + definition.Anchor.Offset, node);
-
             var button = ModCardPileButtonRegistry.TryGetButton(definition);
             if (button != null && button.IsInsideTree())
                 return ApplyCardNodeOffset(button.GlobalPosition + button.Size * 0.5f + definition.Anchor.Offset, node);
@@ -62,6 +60,12 @@ namespace STS2RitsuLib.CardPiles
             if (extraHand != null && extraHand.IsInsideTree())
                 return ApplyCardNodeOffset(extraHand.GlobalPosition + extraHand.Size * 0.5f + definition.Anchor.Offset,
                     node);
+
+            if (definition.Anchor.Kind == ModCardPileAnchorKind.Custom)
+            {
+                var centerFallback = ResolveCustomAnchorFallbackCenter(definition);
+                return ApplyCardNodeOffset(centerFallback, node);
+            }
 
             if (definition.Style == ModCardPileUiStyle.TopBarDeck)
             {
@@ -92,6 +96,51 @@ namespace STS2RitsuLib.CardPiles
                     ApplyCardNodeOffset(new Vector2(fallback.X, fallback.Y - 260f) + definition.Anchor.Offset, node),
                 _ => ApplyCardNodeOffset(fallback + definition.Anchor.Offset, node),
             };
+        }
+
+        /// <summary>
+        ///     Landing centre (global coords) aligned with <see cref="ModCardPileInjector" /> after resolving
+        ///     authored <see cref="ModCardPileAnchorKind.Custom" /> points through <see cref="ModCardPileCustomMountGeometry" />.
+        /// </summary>
+        private static Vector2 ResolveCustomAnchorFallbackCenter(ModCardPileDefinition definition)
+        {
+            var style = definition.Style;
+            var topLeftParentLocal =
+                ModCardPileCustomMountGeometry.ControlTopLeftFromAuthoring(definition.Anchor, style);
+            var centreParentLocal =
+                ModCardPileCustomMountGeometry.NominalCentreFromTopLeft(topLeftParentLocal, style);
+
+            switch (style)
+            {
+                case ModCardPileUiStyle.BottomLeft:
+                case ModCardPileUiStyle.BottomRight:
+                {
+                    var ui = NCombatRoom.Instance?.Ui;
+                    var container = ui?.GetChildren().OfType<NCombatPilesContainer>().FirstOrDefault();
+                    if (container != null && container.IsInsideTree())
+                        return ControlToGlobalScreenPoint(container, centreParentLocal);
+                    break;
+                }
+                case ModCardPileUiStyle.TopBarDeck:
+                {
+                    if (NRun.Instance?.GlobalUi?.TopBar is Control topBar && topBar.IsInsideTree())
+                        return ControlToGlobalScreenPoint(topBar, centreParentLocal);
+                    break;
+                }
+                case ModCardPileUiStyle.ExtraHand:
+                {
+                    if (NCombatRoom.Instance?.Ui is Control combatUi && combatUi.IsInsideTree())
+                        return ControlToGlobalScreenPoint(combatUi, centreParentLocal);
+                    break;
+                }
+            }
+
+            return centreParentLocal;
+        }
+
+        private static Vector2 ControlToGlobalScreenPoint(Control host, Vector2 localPoint)
+        {
+            return host.GetGlobalTransformWithCanvas() * localPoint;
         }
 
         private static Vector2 ApplyCardNodeOffset(Vector2 centerPosition, NCard? node)

@@ -39,7 +39,7 @@ namespace STS2RitsuLib.Combat.Rewards
         {
             netId = 0;
             index = 0;
-            if (!key.StartsWith(KeyPrefix)) return false;
+            if (!key.StartsWith(KeyPrefix, StringComparison.Ordinal)) return false;
 
             var rest = key.AsSpan(KeyPrefix.Length);
             var sep = rest.IndexOf('_');
@@ -60,8 +60,16 @@ namespace STS2RitsuLib.Combat.Rewards
             {
                 return JsonSerializer.Deserialize(json, RewardExtJsonContext.Default.RewardExtData);
             }
-            catch
+            catch (JsonException ex)
             {
+                RitsuLibFramework.Logger.Debug(
+                    $"[RitsuLib] Reward ext JSON deserialize failed: {ex.Message}");
+                return null;
+            }
+            catch (NotSupportedException ex)
+            {
+                RitsuLibFramework.Logger.Debug(
+                    $"[RitsuLib] Reward ext JSON deserialize not supported: {ex.Message}");
                 return null;
             }
         }

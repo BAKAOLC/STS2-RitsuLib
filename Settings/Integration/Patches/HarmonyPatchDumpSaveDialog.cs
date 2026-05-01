@@ -1,5 +1,4 @@
 using Godot;
-using STS2RitsuLib.Data.Models;
 
 namespace STS2RitsuLib.Settings
 {

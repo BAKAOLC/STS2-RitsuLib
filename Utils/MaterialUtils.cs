@@ -11,6 +11,7 @@ namespace STS2RitsuLib.Utils
         private const string DoomBarShaderPath = "res://scenes/combat/doom_bar.gdshader";
 
         private static NoiseTexture2D? _vanillaDoomBarNoiseTexture;
+        private static ShaderMaterial? _unmodulatedHsvMaterial;
 
         private static Shader? GameHsvShader => (Shader?)GD.Load<Shader>(HsvShaderPath)?.Duplicate();
 
@@ -59,6 +60,20 @@ namespace STS2RitsuLib.Utils
             material.SetShaderParameter("v", v);
 
             return material;
+        }
+
+        /// <summary>
+        ///     Returns a <see cref="ShaderMaterial" /> built from the game's HSV shader configured to preserve the
+        ///     original colors (identity modulation: <c>h=0</c>, <c>s=1</c>, <c>v=1</c>).
+        /// </summary>
+        /// <remarks>
+        ///     This is useful when you want to override a card frame's <c>FrameMaterial</c> without introducing any additional
+        ///     color modulation, while still using the vanilla shader pipeline.
+        /// </remarks>
+        public static ShaderMaterial CreateUnmodulatedHsvShaderMaterial()
+        {
+            _unmodulatedHsvMaterial ??= CreateHsvShaderMaterial(0f, 1f, 1f);
+            return (ShaderMaterial)_unmodulatedHsvMaterial.Duplicate();
         }
 
         /// <summary>

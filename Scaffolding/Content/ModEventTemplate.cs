@@ -98,7 +98,10 @@ namespace STS2RitsuLib.Scaffolding.Content
         /// <summary>
         ///     Gets the localized description for a page.
         /// </summary>
-        protected LocString PageDescription(string pageName) => L10NLookup($"{Id.Entry}.pages.{pageName}.description");
+        protected LocString PageDescription(string pageName)
+        {
+            return L10NLookup($"{Id.Entry}.pages.{pageName}.description");
+        }
 
         /// <summary>
         ///     Creates a relic-grant option for a mutable relic resolved from <typeparamref name="T" />.
