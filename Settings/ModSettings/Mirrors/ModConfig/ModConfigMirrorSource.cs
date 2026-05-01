@@ -231,6 +231,10 @@ namespace STS2RitsuLib.Settings
             if (entriesObj is not Array entries || entries.Length == 0)
                 return false;
 
+            var sectionPlans = BuildMirroredSectionPlans(entries, i18NGet);
+            if (sectionPlans.Count == 0)
+                return false;
+
             var hasRenderable = false;
             for (var i = 0; i < entries.Length; i++)
             {
@@ -255,26 +259,37 @@ namespace STS2RitsuLib.Settings
                         .WithModDisplayName(ModSettingsText.Dynamic(() =>
                             ResolveRegistrationDisplayName(registration, i18NGet)));
 
-                    builder.AddSection("modconfig_main", section =>
+                    for (var sectionIndex = 0; sectionIndex < sectionPlans.Count; sectionIndex++)
                     {
-                        for (var i = 0; i < entries.Length; i++)
+                        var plan = sectionPlans[sectionIndex];
+                        var appendRestoreDefaults = sectionIndex == sectionPlans.Count - 1;
+
+                        builder.AddSection(plan.Id, section =>
                         {
-                            if (entries.GetValue(i) is not { } entry)
-                                continue;
+                            if (plan.Title != null)
+                                section.WithTitle(plan.Title);
 
-                            AppendConfigEntry(section, modId, entry, i, getValueOpen, setValue, i18NGet,
-                                mirrorOptions);
-                        }
+                            for (var entryIndex = 0; entryIndex < plan.Entries.Count; entryIndex++)
+                            {
+                                var mapped = plan.Entries[entryIndex];
+                                AppendConfigEntry(section, modId, mapped.Entry, mapped.SourceIndex, getValueOpen,
+                                    setValue,
+                                    i18NGet, mirrorOptions);
+                            }
 
-                        section.AddButton(
-                            "modconfig_restore_defaults",
-                            ModSettingsText.Literal(ModSettingsLocalization.Get("modconfig.restoreDefaults.row",
-                                "Defaults")),
-                            ModSettingsText.Literal(ModSettingsLocalization.Get("modconfig.restoreDefaults.button",
-                                "Restore defaults")),
-                            () => ConfirmAndResetModConfig(modId, resetDefaults),
-                            ModSettingsButtonTone.Danger);
-                    });
+                            if (!appendRestoreDefaults)
+                                return;
+
+                            section.AddButton(
+                                "modconfig_restore_defaults",
+                                ModSettingsText.Literal(ModSettingsLocalization.Get("modconfig.restoreDefaults.row",
+                                    "Defaults")),
+                                ModSettingsText.Literal(ModSettingsLocalization.Get("modconfig.restoreDefaults.button",
+                                    "Restore defaults")),
+                                () => ConfirmAndResetModConfig(modId, resetDefaults),
+                                ModSettingsButtonTone.Danger);
+                        });
+                    }
                 }, pageId);
                 ModSettingsMirrorSyncPolicyRegistry.RegisterPage(modId, pageId, ModSettingsMirrorSource.ModConfig);
 
@@ -292,6 +307,44 @@ namespace STS2RitsuLib.Settings
         {
             var typeName = ResolveModConfigEntryTypeName(entry);
             return typeName is not ("" or "Header" or "Separator");
+        }
+
+        private static List<ModConfigMirrorSectionPlan> BuildMirroredSectionPlans(Array entries, MethodInfo? i18NGet)
+        {
+            var plans = new List<ModConfigMirrorSectionPlan>();
+            var sectionCounter = 0;
+
+            var current = new ModConfigMirrorSectionPlan(
+                "modconfig_main",
+                ModSettingsText.Literal(ModSettingsLocalization.Get("modconfig.section.main", "General")));
+            plans.Add(current);
+
+            for (var i = 0; i < entries.Length; i++)
+            {
+                if (entries.GetValue(i) is not { } entry)
+                    continue;
+
+                var typeName = ResolveModConfigEntryTypeName(entry);
+                if (typeName == "Header")
+                {
+                    var headerTitle = ModSettingsText.Dynamic(() => ResolveEntryLabel(entry, i18NGet));
+                    if (current.Entries.Count == 0)
+                    {
+                        current.Title = headerTitle;
+                        continue;
+                    }
+
+                    sectionCounter++;
+                    current = new($"modconfig_sec_{sectionCounter}", headerTitle);
+                    plans.Add(current);
+                    continue;
+                }
+
+                current.Entries.Add(new(entry, i));
+            }
+
+            plans.RemoveAll(static plan => plan.Entries.Count == 0);
+            return plans;
         }
 
         private static string ResolveModConfigEntryTypeName(object entry)
@@ -376,170 +429,178 @@ namespace STS2RitsuLib.Settings
             var descText = ResolveEntryDescription(entry, i18NGet);
             var dataKey = $"modconfig::{key}";
 
-            switch (typeName)
+            try
             {
-                case "Toggle":
+                switch (typeName)
                 {
-                    var binding = ModSettingsBindings.Callback(modId, dataKey,
-                        () => CoerceModConfigToggle(getValueOpen, modId, key),
-                        v => InvokeSetValue(setValue, modId, key, v),
-                        () => { });
-                    section.AddToggle(idBase, labelText, binding, descText);
-                    return;
-                }
-                case "Slider":
-                {
-                    var min = Convert.ToDouble(t.GetProperty("Min")?.GetValue(entry) ?? 0d);
-                    var max = Convert.ToDouble(t.GetProperty("Max")?.GetValue(entry) ?? 100d);
-                    var step = Convert.ToDouble(t.GetProperty("Step")?.GetValue(entry) ?? 1d);
-                    if (max < min)
-                        (min, max) = (max, min);
-                    if (step <= 0d)
-                        step = 1d;
-
-                    var format = t.GetProperty("Format")?.GetValue(entry) as string ?? "F0";
-
-                    var binding = ModSettingsBindings.Callback(modId, dataKey,
-                        () => CoerceModConfigSliderDouble(getValueOpen, modId, key),
-                        v => InvokeSetValue(setValue, modId, key, (float)v),
-                        () => { });
-                    section.AddSlider(idBase, labelText, binding, min, max, step, Fmt, descText);
-                    return;
-
-                    string Fmt(double v)
+                    case "Toggle":
                     {
-                        try
-                        {
-                            return ((float)v).ToString(format, CultureInfo.InvariantCulture);
-                        }
-                        catch
-                        {
-                            return v.ToString("F2", CultureInfo.InvariantCulture);
-                        }
+                        var binding = ModSettingsBindings.Callback(modId, dataKey,
+                            () => CoerceModConfigToggle(getValueOpen, modId, key),
+                            v => InvokeSetValue(setValue, modId, key, v),
+                            () => { });
+                        section.AddToggle(idBase, labelText, binding, descText);
+                        return;
                     }
-                }
-                case "Dropdown":
-                {
-                    var optValues = t.GetProperty("Options")?.GetValue(entry) as string[] ?? [];
-                    if (optValues.Length == 0)
+                    case "Slider":
+                    {
+                        var min = Convert.ToDouble(t.GetProperty("Min")?.GetValue(entry) ?? 0d);
+                        var max = Convert.ToDouble(t.GetProperty("Max")?.GetValue(entry) ?? 100d);
+                        var step = Convert.ToDouble(t.GetProperty("Step")?.GetValue(entry) ?? 1d);
+                        if (max < min)
+                            (min, max) = (max, min);
+                        if (step <= 0d)
+                            step = 1d;
+
+                        var format = t.GetProperty("Format")?.GetValue(entry) as string ?? "F0";
+
+                        var binding = ModSettingsBindings.Callback(modId, dataKey,
+                            () => CoerceModConfigSliderDouble(getValueOpen, modId, key),
+                            v => InvokeSetValue(setValue, modId, key, (float)v),
+                            () => { });
+                        section.AddSlider(idBase, labelText, binding, min, max, step, Fmt, descText);
                         return;
 
-                    var rawCurrent = InvokeGetValue<string>(getValueOpen, modId, key);
-                    var orphan = !string.IsNullOrEmpty(rawCurrent) &&
-                                 Array.IndexOf(optValues, rawCurrent) < 0;
-
-                    ModSettingsChoiceOption<string>[] choiceOptions;
-                    if (orphan && rawCurrent != null)
-                    {
-                        choiceOptions = new ModSettingsChoiceOption<string>[optValues.Length + 1];
-                        choiceOptions[0] = new(rawCurrent,
-                            ModSettingsText.Literal(rawCurrent + ModSettingsLocalization.Get(
-                                "modconfig.dropdown.orphanSuffix", " (saved)")));
-                        for (var o = 0; o < optValues.Length; o++)
-                        {
-                            var captured = o;
-                            var optVal = optValues[captured];
-                            choiceOptions[captured + 1] = new(optVal, ModSettingsText.Dynamic(() =>
-                                ResolveOptionLabel(entry, captured, optVal, i18NGet)));
-                        }
-                    }
-                    else
-                    {
-                        choiceOptions = new ModSettingsChoiceOption<string>[optValues.Length];
-                        for (var o = 0; o < optValues.Length; o++)
-                        {
-                            var captured = o;
-                            var optVal = optValues[captured];
-                            choiceOptions[captured] = new(optVal, ModSettingsText.Dynamic(() =>
-                                ResolveOptionLabel(entry, captured, optVal, i18NGet)));
-                        }
-                    }
-
-                    var binding = ModSettingsBindings.Callback(modId, dataKey,
-                        () =>
-                        {
-                            var cur = InvokeGetValue<string>(getValueOpen, modId, key) ?? "";
-                            return string.IsNullOrEmpty(cur) ? optValues[0] : cur;
-                        },
-                        v => InvokeSetValue(setValue, modId, key, v ?? optValues[0]),
-                        () => { });
-
-                    var presentation = choiceOptions.Length > 5
-                        ? ModSettingsChoicePresentation.Dropdown
-                        : ModSettingsChoicePresentation.Stepper;
-
-                    section.AddChoice(idBase, labelText, binding, choiceOptions, descText, presentation);
-                    return;
-                }
-                case "KeyBind":
-                {
-                    var binding = ModSettingsBindings.Callback(modId, dataKey,
-                        () => KeyCodeToBindingString(CoerceModConfigKeyCode(getValueOpen, modId, key)),
-                        v =>
-                        {
-                            var code = ParseBindingStringToKeyCode(v);
-                            InvokeSetValue(setValue, modId, key, code);
-                        },
-                        () => { });
-                    section.AddKeyBinding(idBase, labelText, binding,
-                        mirrorOptions.KeyBindAllowModifierCombos,
-                        mirrorOptions.KeyBindAllowModifierOnly,
-                        mirrorOptions.KeyBindDistinguishModifierSides,
-                        descText);
-                    return;
-                }
-                case "TextInput":
-                {
-                    var maxLen = t.GetProperty("MaxLength")?.GetValue(entry) as int? ?? 64;
-                    var placeholderRaw = t.GetProperty("Placeholder")?.GetValue(entry) as string;
-                    var placeholder = string.IsNullOrEmpty(placeholderRaw)
-                        ? null
-                        : ModSettingsText.Literal(placeholderRaw);
-
-                    var validatorDel = t.GetProperty("Validator")?.GetValue(entry) as Delegate;
-                    Func<string, bool>? validationVisual = null;
-                    if (validatorDel != null)
-                        validationVisual = text =>
+                        string Fmt(double v)
                         {
                             try
                             {
-                                var r = validatorDel.DynamicInvoke(text);
-                                return r is true;
+                                return ((float)v).ToString(format, CultureInfo.InvariantCulture);
                             }
                             catch
                             {
-                                return false;
+                                return v.ToString("F2", CultureInfo.InvariantCulture);
                             }
-                        };
+                        }
+                    }
+                    case "Dropdown":
+                    {
+                        var optValues = t.GetProperty("Options")?.GetValue(entry) as string[] ?? [];
+                        if (optValues.Length == 0)
+                            return;
 
-                    var binding = ModSettingsBindings.Callback(modId, dataKey,
-                        () => InvokeGetValue<string>(getValueOpen, modId, key) ?? "",
-                        v => InvokeSetValue(setValue, modId, key, v ?? ""),
-                        () => { });
-                    section.AddString(idBase, labelText, binding, placeholder,
-                        maxLen > 0 ? maxLen : null, descText, validationVisual);
-                    return;
+                        var rawCurrent = InvokeGetValue<string>(getValueOpen, modId, key);
+                        var orphan = !string.IsNullOrEmpty(rawCurrent) &&
+                                     Array.IndexOf(optValues, rawCurrent) < 0;
+
+                        ModSettingsChoiceOption<string>[] choiceOptions;
+                        if (orphan && rawCurrent != null)
+                        {
+                            choiceOptions = new ModSettingsChoiceOption<string>[optValues.Length + 1];
+                            choiceOptions[0] = new(rawCurrent,
+                                ModSettingsText.Literal(rawCurrent + ModSettingsLocalization.Get(
+                                    "modconfig.dropdown.orphanSuffix", " (saved)")));
+                            for (var o = 0; o < optValues.Length; o++)
+                            {
+                                var captured = o;
+                                var optVal = optValues[captured];
+                                choiceOptions[captured + 1] = new(optVal, ModSettingsText.Dynamic(() =>
+                                    ResolveOptionLabel(entry, captured, optVal, i18NGet)));
+                            }
+                        }
+                        else
+                        {
+                            choiceOptions = new ModSettingsChoiceOption<string>[optValues.Length];
+                            for (var o = 0; o < optValues.Length; o++)
+                            {
+                                var captured = o;
+                                var optVal = optValues[captured];
+                                choiceOptions[captured] = new(optVal, ModSettingsText.Dynamic(() =>
+                                    ResolveOptionLabel(entry, captured, optVal, i18NGet)));
+                            }
+                        }
+
+                        var binding = ModSettingsBindings.Callback(modId, dataKey,
+                            () =>
+                            {
+                                var cur = InvokeGetValue<string>(getValueOpen, modId, key) ?? "";
+                                return string.IsNullOrEmpty(cur) ? optValues[0] : cur;
+                            },
+                            v => InvokeSetValue(setValue, modId, key, v ?? optValues[0]),
+                            () => { });
+
+                        var presentation = choiceOptions.Length > 5
+                            ? ModSettingsChoicePresentation.Dropdown
+                            : ModSettingsChoicePresentation.Stepper;
+
+                        section.AddChoice(idBase, labelText, binding, choiceOptions, descText, presentation);
+                        return;
+                    }
+                    case "KeyBind":
+                    {
+                        var binding = ModSettingsBindings.Callback(modId, dataKey,
+                            () => KeyCodeToBindingString(CoerceModConfigKeyCode(getValueOpen, modId, key)),
+                            v =>
+                            {
+                                var code = ParseBindingStringToKeyCode(v);
+                                InvokeSetValue(setValue, modId, key, code);
+                            },
+                            () => { });
+                        section.AddKeyBinding(idBase, labelText, binding,
+                            mirrorOptions.KeyBindAllowModifierCombos,
+                            mirrorOptions.KeyBindAllowModifierOnly,
+                            mirrorOptions.KeyBindDistinguishModifierSides,
+                            descText);
+                        return;
+                    }
+                    case "TextInput":
+                    {
+                        var maxLen = t.GetProperty("MaxLength")?.GetValue(entry) as int? ?? 64;
+                        var placeholderRaw = t.GetProperty("Placeholder")?.GetValue(entry) as string;
+                        var placeholder = string.IsNullOrEmpty(placeholderRaw)
+                            ? null
+                            : ModSettingsText.Literal(placeholderRaw);
+
+                        var validatorDel = t.GetProperty("Validator")?.GetValue(entry) as Delegate;
+                        Func<string, bool>? validationVisual = null;
+                        if (validatorDel != null)
+                            validationVisual = text =>
+                            {
+                                try
+                                {
+                                    var r = validatorDel.DynamicInvoke(text);
+                                    return r is true;
+                                }
+                                catch
+                                {
+                                    return false;
+                                }
+                            };
+
+                        var binding = ModSettingsBindings.Callback(modId, dataKey,
+                            () => InvokeGetValue<string>(getValueOpen, modId, key) ?? "",
+                            v => InvokeSetValue(setValue, modId, key, v ?? ""),
+                            () => { });
+                        section.AddString(idBase, labelText, binding, placeholder,
+                            maxLen > 0 ? maxLen : null, descText, validationVisual);
+                        return;
+                    }
+                    case "Button":
+                    {
+                        var buttonText = ModSettingsText.Dynamic(() => ResolveButtonText(entry, i18NGet));
+                        section.AddButton(idBase, labelText, buttonText,
+                            () => InvokeConfigButtonCallback(entry),
+                            ModSettingsButtonTone.Normal,
+                            descText);
+                        return;
+                    }
+                    case "ColorPicker":
+                    {
+                        var editAlpha = t.GetProperty("EditAlpha")?.GetValue(entry) as bool? ?? false;
+                        var editIntensity = t.GetProperty("EditIntensity")?.GetValue(entry) as bool? ?? false;
+                        var binding = ModSettingsBindings.Callback(modId, dataKey,
+                            () => InvokeGetValue<string>(getValueOpen, modId, key) ?? "#FFFFFF",
+                            v => InvokeSetValue(setValue, modId, key, v ?? "#FFFFFF"),
+                            () => { });
+                        section.AddColor(idBase, labelText, binding, descText, editAlpha, editIntensity);
+                        return;
+                    }
                 }
-                case "Button":
-                {
-                    var buttonText = ModSettingsText.Dynamic(() => ResolveButtonText(entry, i18NGet));
-                    section.AddButton(idBase, labelText, buttonText,
-                        () => InvokeConfigButtonCallback(entry),
-                        ModSettingsButtonTone.Normal,
-                        descText);
-                    return;
-                }
-                case "ColorPicker":
-                {
-                    var editAlpha = t.GetProperty("EditAlpha")?.GetValue(entry) as bool? ?? true;
-                    var editIntensity = t.GetProperty("EditIntensity")?.GetValue(entry) as bool? ?? false;
-                    var binding = ModSettingsBindings.Callback(modId, dataKey,
-                        () => InvokeGetValue<string>(getValueOpen, modId, key) ?? "#FFFFFF",
-                        v => InvokeSetValue(setValue, modId, key, v ?? "#FFFFFF"),
-                        () => { });
-                    section.AddColor(idBase, labelText, binding, descText, editAlpha, editIntensity);
-                    return;
-                }
+            }
+            catch (Exception ex)
+            {
+                RitsuLibFramework.Logger.Warn(
+                    $"[ModConfigMirrorSource] Failed to append entry '{modId}.{key}' ({typeName}): {ex.Message}");
             }
         }
 
@@ -603,15 +664,14 @@ namespace STS2RitsuLib.Settings
         private static ModSettingsText? ResolveEntryDescription(object entry, MethodInfo? i18NGet)
         {
             var t = entry.GetType();
-            var body = t.GetProperty("Description")?.GetValue(entry) as string;
-            if (string.IsNullOrWhiteSpace(body))
-            {
-                var dk = t.GetProperty("DescriptionKey")?.GetValue(entry) as string;
-                body = TryI18N(dk, "", i18NGet);
-            }
+            var fallback = t.GetProperty("Description")?.GetValue(entry) as string ?? "";
+            var mapResolved = ResolveLangMap(t.GetProperty("Descriptions")?.GetValue(entry) as IDictionary, "");
+            var body = !string.IsNullOrWhiteSpace(mapResolved) ? mapResolved : fallback;
 
-            if (string.IsNullOrWhiteSpace(body))
-                body = ResolveLangMap(t.GetProperty("Descriptions")?.GetValue(entry) as IDictionary, "");
+            if (!string.IsNullOrWhiteSpace(mapResolved))
+                return string.IsNullOrWhiteSpace(body) ? null : ModSettingsText.Literal(body);
+            var dk = t.GetProperty("DescriptionKey")?.GetValue(entry) as string;
+            body = TryI18N(dk, fallback, i18NGet) ?? fallback;
 
             return string.IsNullOrWhiteSpace(body) ? null : ModSettingsText.Literal(body);
         }
@@ -619,8 +679,9 @@ namespace STS2RitsuLib.Settings
         private static string ResolveButtonText(object entry, MethodInfo? i18NGet)
         {
             var t = entry.GetType();
-            var fallback = t.GetProperty("ButtonText")?.GetValue(entry) as string ?? "";
-            return ResolveLangMap(t.GetProperty("ButtonTexts")?.GetValue(entry) as IDictionary, fallback);
+            var buttonFallback = t.GetProperty("ButtonText")?.GetValue(entry) as string ?? "";
+            var resolved = ResolveLangMap(t.GetProperty("ButtonTexts")?.GetValue(entry) as IDictionary, buttonFallback);
+            return !string.IsNullOrWhiteSpace(resolved) ? resolved : ResolveEntryLabel(entry, i18NGet);
         }
 
         private static string ResolveOptionLabel(object entry, int index, string fallback, MethodInfo? i18NGet)
@@ -694,7 +755,7 @@ namespace STS2RitsuLib.Settings
                         var p0 = ps[0].ParameterType;
                         object? arg;
                         if (p0 == typeof(bool) || p0 == typeof(object))
-                            arg = false;
+                            arg = true;
                         else if (!p0.IsValueType)
                             arg = null;
                         else
@@ -709,7 +770,7 @@ namespace STS2RitsuLib.Settings
                         {
                             var pi = ps[i].ParameterType;
                             if (pi == typeof(bool))
-                                args[i] = false;
+                                args[i] = true;
                             else if (!pi.IsValueType)
                                 args[i] = null;
                             else
@@ -890,5 +951,14 @@ namespace STS2RitsuLib.Settings
 
             return null;
         }
+
+        private sealed class ModConfigMirrorSectionPlan(string id, ModSettingsText? title)
+        {
+            public string Id { get; } = id;
+            public ModSettingsText? Title { get; set; } = title;
+            public List<ModConfigMappedEntry> Entries { get; } = [];
+        }
+
+        private readonly record struct ModConfigMappedEntry(object Entry, int SourceIndex);
     }
 }

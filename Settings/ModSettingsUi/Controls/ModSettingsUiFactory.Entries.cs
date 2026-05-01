@@ -133,7 +133,20 @@ namespace STS2RitsuLib.Settings
 
             string FormatValue(double value)
             {
-                return entry.ValueFormatter?.Invoke(value) ?? value.ToString("0.##");
+                var formatter = entry.ValueFormatter;
+                if (formatter == null)
+                    return value.ToString("0.##");
+
+                try
+                {
+                    return formatter(value);
+                }
+                catch (Exception ex)
+                {
+                    RitsuLibFramework.Logger.Warn(
+                        $"[ModSettingsUiFactory] Slider formatter failed for {entry.Binding.ModId}.{entry.Binding.DataKey} ({entry.Id}): {ex.Message}");
+                    return value.ToString("0.##");
+                }
             }
         }
 
@@ -170,7 +183,20 @@ namespace STS2RitsuLib.Settings
 
             string FormatValue(float value)
             {
-                return entry.ValueFormatter?.Invoke(value) ?? value.ToString("0.##");
+                var formatter = entry.ValueFormatter;
+                if (formatter == null)
+                    return value.ToString("0.##");
+
+                try
+                {
+                    return formatter(value);
+                }
+                catch (Exception ex)
+                {
+                    RitsuLibFramework.Logger.Warn(
+                        $"[ModSettingsUiFactory] Float slider formatter failed for {entry.Binding.ModId}.{entry.Binding.DataKey} ({entry.Id}): {ex.Message}");
+                    return value.ToString("0.##");
+                }
             }
         }
 
@@ -710,7 +736,20 @@ namespace STS2RitsuLib.Settings
             string FormatValue(double value)
             {
                 var intValue = Mathf.RoundToInt(value);
-                return entry.ValueFormatter?.Invoke(intValue) ?? intValue.ToString();
+                var formatter = entry.ValueFormatter;
+                if (formatter == null)
+                    return intValue.ToString();
+
+                try
+                {
+                    return formatter(intValue);
+                }
+                catch (Exception ex)
+                {
+                    RitsuLibFramework.Logger.Warn(
+                        $"[ModSettingsUiFactory] Int slider formatter failed for {entry.Binding.ModId}.{entry.Binding.DataKey} ({entry.Id}): {ex.Message}");
+                    return intValue.ToString();
+                }
             }
         }
 
