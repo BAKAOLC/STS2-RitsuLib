@@ -1348,6 +1348,204 @@
         }
       }
     },
+    "toast": {
+      "surface": {
+        "bg": {
+          "$value": "#111720F5",
+          "$type": "color"
+        },
+        "border": {
+          "$value": "#6B90AAA6",
+          "$type": "color"
+        },
+        "shadow": {
+          "$value": "#00000047",
+          "$type": "color"
+        }
+      },
+      "text": {
+        "title": {
+          "$value": "#ECF2F8",
+          "$type": "color"
+        },
+        "body": {
+          "$value": "#C7D6E4",
+          "$type": "color"
+        }
+      },
+      "interactive": {
+        "bg": {
+          "$value": "#2A4A6BBF",
+          "$type": "color"
+        },
+        "fg": {
+          "$value": "#ECF5FF",
+          "$type": "color"
+        },
+        "borderWidth": {
+          "$value": 1,
+          "$type": "dimension"
+        }
+      },
+      "closeButton": {
+        "bg": {
+          "$value": "#2D3E4F7A",
+          "$type": "color"
+        },
+        "bgHover": {
+          "$value": "#3E5F7C9E",
+          "$type": "color"
+        },
+        "border": {
+          "$value": "#6B90AAA6",
+          "$type": "color"
+        },
+        "borderHover": {
+          "$value": "#6DB8E8",
+          "$type": "color"
+        },
+        "layout": {
+          "borderWidth": {
+            "$value": 1,
+            "$type": "dimension"
+          },
+          "paddingH": {
+            "$value": 2,
+            "$type": "dimension"
+          },
+          "paddingV": {
+            "$value": 1,
+            "$type": "dimension"
+          }
+        }
+      },
+      "levels": {
+        "info": {
+          "accent": {
+            "$value": "#6DB8E8",
+            "$type": "color"
+          },
+          "border": {
+            "$value": "#6DB8E8",
+            "$type": "color"
+          }
+        },
+        "warning": {
+          "accent": {
+            "$value": "#E6BD57",
+            "$type": "color"
+          },
+          "border": {
+            "$value": "#E6BD57",
+            "$type": "color"
+          }
+        },
+        "error": {
+          "accent": {
+            "$value": "#E28686",
+            "$type": "color"
+          },
+          "border": {
+            "$value": "#E28686",
+            "$type": "color"
+          }
+        }
+      },
+      "layout": {
+        "width": {
+          "$value": 420,
+          "$type": "dimension"
+        },
+        "minHeight": {
+          "$value": 72,
+          "$type": "dimension"
+        },
+        "borderWidth": {
+          "$value": 1,
+          "$type": "dimension"
+        },
+        "cornerRadius": {
+          "$value": 0,
+          "$type": "dimension"
+        },
+        "shadowSize": {
+          "$value": 8,
+          "$type": "dimension"
+        },
+        "padding": {
+          "horizontal": {
+            "$value": 14,
+            "$type": "dimension"
+          },
+          "vertical": {
+            "$value": 12,
+            "$type": "dimension"
+          }
+        },
+        "textSpacing": {
+          "$value": 4,
+          "$type": "dimension"
+        },
+        "rowSpacing": {
+          "$value": 10,
+          "$type": "dimension"
+        },
+        "imageSize": {
+          "$value": 80,
+          "$type": "dimension"
+        },
+        "closeButtonSize": {
+          "$value": 26,
+          "$type": "dimension"
+        },
+        "interactiveBadgeHeight": {
+          "$value": 24,
+          "$type": "dimension"
+        },
+        "titleFontSize": {
+          "$value": 17,
+          "$type": "dimension"
+        },
+        "bodyFontSize": {
+          "$value": 16,
+          "$type": "dimension"
+        },
+        "badgeFontSize": {
+          "$value": 13,
+          "$type": "dimension"
+        },
+        "screenMargin": {
+          "$value": 16,
+          "$type": "dimension"
+        }
+      },
+      "animation": {
+        "enterDuration": {
+          "$value": 0.22,
+          "$type": "dimension"
+        },
+        "moveDuration": {
+          "$value": 0.18,
+          "$type": "dimension"
+        },
+        "exitDuration": {
+          "$value": 0.18,
+          "$type": "dimension"
+        },
+        "enterSlideDistance": {
+          "$value": 80,
+          "$type": "dimension"
+        },
+        "exitSlideDistance": {
+          "$value": 80,
+          "$type": "dimension"
+        },
+        "enterScale": {
+          "$value": 0.92,
+          "$type": "dimension"
+        }
+      }
+    },
     "choiceCenter": {
       "highlight": {
         "top": {

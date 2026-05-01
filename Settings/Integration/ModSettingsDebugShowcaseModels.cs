@@ -31,6 +31,7 @@ namespace STS2RitsuLib.Settings
         public string StringValue { get; set; } = "Single line";
         public string StringMultiValue { get; set; } = "First line\nSecond line";
         public int ActionCount { get; set; }
+        public int ToastCount { get; set; }
 
         public List<ModSettingsDebugShowcaseListItem> ListItems { get; set; } =
         [

@@ -1,6 +1,7 @@
 using STS2RitsuLib.Data.Migrations;
 using STS2RitsuLib.Data.Models;
 using STS2RitsuLib.Ui.Shell.Theme;
+using STS2RitsuLib.Ui.Toast;
 using STS2RitsuLib.Utils.Persistence;
 
 namespace STS2RitsuLib.Data
@@ -38,6 +39,7 @@ namespace STS2RitsuLib.Data
                             new RitsuLibSettingsV4ToV5Migration(),
                             new RitsuLibSettingsV5ToV6Migration(),
                             new RitsuLibSettingsV6ToV7Migration(),
+                            new RitsuLibSettingsV7ToV8Migration(),
                         ]);
                 }
 
@@ -123,6 +125,49 @@ namespace STS2RitsuLib.Data
         {
             Initialize();
             return GetSettings().SyncModDataToSteamCloud;
+        }
+
+        internal static RitsuToastSettings GetToastSettings()
+        {
+            Initialize();
+            var s = GetSettings();
+            var anchor = ParseAnchor(s.ToastAnchor);
+            var animation = ParseAnimation(s.ToastAnimation);
+            var maxVisible = Math.Clamp(s.ToastMaxVisible, 1, 8);
+            var duration = Math.Clamp(s.ToastDurationSeconds, 0.5d, 30d);
+            return new(
+                s.ToastEnabled,
+                new(anchor, new((float)s.ToastOffsetX, (float)s.ToastOffsetY)),
+                new(maxVisible, 12f),
+                duration,
+                animation);
+        }
+
+        private static RitsuToastAnchor ParseAnchor(string? value)
+        {
+            return value?.Trim().ToLowerInvariant() switch
+            {
+                "topleft" => RitsuToastAnchor.TopLeft,
+                "topcenter" => RitsuToastAnchor.TopCenter,
+                "topright" => RitsuToastAnchor.TopRight,
+                "middleleft" => RitsuToastAnchor.MiddleLeft,
+                "middlecenter" => RitsuToastAnchor.MiddleCenter,
+                "middleright" => RitsuToastAnchor.MiddleRight,
+                "bottomleft" => RitsuToastAnchor.BottomLeft,
+                "bottomcenter" => RitsuToastAnchor.BottomCenter,
+                "bottomright" => RitsuToastAnchor.BottomRight,
+                _ => RitsuToastAnchor.TopRight,
+            };
+        }
+
+        private static RitsuToastAnimationPreset ParseAnimation(string? value)
+        {
+            return value?.Trim().ToLowerInvariant() switch
+            {
+                "fade" => RitsuToastAnimationPreset.Fade,
+                "fadescale" => RitsuToastAnimationPreset.FadeScale,
+                _ => RitsuToastAnimationPreset.FadeSlide,
+            };
         }
     }
 }

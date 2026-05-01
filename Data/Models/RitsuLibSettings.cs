@@ -11,7 +11,7 @@ namespace STS2RitsuLib.Data.Models
         /// <summary>
         ///     Current schema version written by the library when creating or normalizing settings.
         /// </summary>
-        public const int CurrentSchemaVersion = 7;
+        public const int CurrentSchemaVersion = 8;
 
         /// <summary>
         ///     Persisted schema version used by the migration pipeline
@@ -170,5 +170,47 @@ namespace STS2RitsuLib.Data.Models
         /// </summary>
         [JsonPropertyName("ui_shell_theme_id")]
         public string UiShellThemeId { get; set; } = "default";
+
+        /// <summary>
+        ///     Enables global non-blocking toast notifications.
+        /// </summary>
+        [JsonPropertyName("toast_enabled")]
+        public bool ToastEnabled { get; set; } = true;
+
+        /// <summary>
+        ///     3x3 anchor id for toast placement (<c>topright</c>, <c>middlecenter</c>, etc.).
+        /// </summary>
+        [JsonPropertyName("toast_anchor")]
+        public string ToastAnchor { get; set; } = "topright";
+
+        /// <summary>
+        ///     Horizontal offset from the selected anchor in pixels.
+        /// </summary>
+        [JsonPropertyName("toast_offset_x")]
+        public double ToastOffsetX { get; set; } = -24d;
+
+        /// <summary>
+        ///     Vertical offset from the selected anchor in pixels.
+        /// </summary>
+        [JsonPropertyName("toast_offset_y")]
+        public double ToastOffsetY { get; set; } = 24d;
+
+        /// <summary>
+        ///     Maximum number of toasts visible at once; overflow is queued.
+        /// </summary>
+        [JsonPropertyName("toast_max_visible")]
+        public int ToastMaxVisible { get; set; } = 3;
+
+        /// <summary>
+        ///     Default toast display duration (seconds) when requests do not override it.
+        /// </summary>
+        [JsonPropertyName("toast_duration_seconds")]
+        public double ToastDurationSeconds { get; set; } = 3.5d;
+
+        /// <summary>
+        ///     Default animation preset id (<c>fade</c>, <c>fadeslide</c>, <c>fadescale</c>).
+        /// </summary>
+        [JsonPropertyName("toast_animation")]
+        public string ToastAnimation { get; set; } = "fadeslide";
     }
 }

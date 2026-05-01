@@ -1,5 +1,6 @@
 using STS2RitsuLib.Data.Models;
 using STS2RitsuLib.Ui.Shell.Theme;
+using STS2RitsuLib.Ui.Toast;
 
 namespace STS2RitsuLib.Settings
 {
@@ -26,6 +27,13 @@ namespace STS2RitsuLib.Settings
         public ModSettingsValueBinding<RitsuLibSettings, string> SelfCheckOutputFolder { get; private init; } = null!;
         public ModSettingsValueBinding<RitsuLibSettings, bool> SelfCheckOnFirstMainMenu { get; private init; } = null!;
         public ModSettingsValueBinding<RitsuLibSettings, string> UiShellThemeId { get; private init; } = null!;
+        public IModSettingsValueBinding<bool> ToastEnabled { get; private init; } = null!;
+        public IModSettingsValueBinding<string> ToastAnchor { get; private init; } = null!;
+        public IModSettingsValueBinding<double> ToastOffsetX { get; private init; } = null!;
+        public IModSettingsValueBinding<double> ToastOffsetY { get; private init; } = null!;
+        public IModSettingsValueBinding<int> ToastMaxVisible { get; private init; } = null!;
+        public IModSettingsValueBinding<double> ToastDurationSeconds { get; private init; } = null!;
+        public IModSettingsValueBinding<string> ToastAnimation { get; private init; } = null!;
         public ModSettingsValueBinding<RitsuLibSettings, string> CardPngExportOutputPath { get; private init; } = null!;
         public ModSettingsValueBinding<RitsuLibSettings, bool> CardPngExportIncludeHover { get; private init; } = null!;
 
@@ -73,6 +81,7 @@ namespace STS2RitsuLib.Settings
         public IModSettingsValueBinding<ModSettingsDebugShowcaseMode> PreviewMode { get; private init; } = null!;
         public IModSettingsValueBinding<string> PreviewString { get; private init; } = null!;
         public IModSettingsValueBinding<string> PreviewStringMulti { get; private init; } = null!;
+        public IModSettingsValueBinding<int> PreviewActionCount { get; private init; } = null!;
         public IModSettingsValueBinding<string> PreviewHotkey { get; private init; } = null!;
         public IModSettingsValueBinding<List<string>> PreviewHotkeyMulti { get; private init; } = null!;
 
@@ -143,6 +152,83 @@ namespace STS2RitsuLib.Settings
                         settings.UiShellThemeId = n;
                         RitsuShellThemeRuntime.ApplyThemeId(n);
                     }),
+                ToastEnabled = ModSettingsBindings.WithDefault(
+                    ModSettingsBindings.Global<RitsuLibSettings, bool>(
+                        Const.ModId,
+                        Const.SettingsKey,
+                        settings => settings.ToastEnabled,
+                        (settings, value) =>
+                        {
+                            settings.ToastEnabled = value;
+                            RitsuToastService.RefreshSettingsFromStore();
+                        }),
+                    () => true),
+                ToastAnchor = ModSettingsBindings.WithDefault(
+                    ModSettingsBindings.Global<RitsuLibSettings, string>(
+                        Const.ModId,
+                        Const.SettingsKey,
+                        settings => NormalizeToastAnchor(settings.ToastAnchor),
+                        (settings, value) =>
+                        {
+                            settings.ToastAnchor = NormalizeToastAnchor(value);
+                            RitsuToastService.RefreshSettingsFromStore();
+                        }),
+                    () => "topright"),
+                ToastOffsetX = ModSettingsBindings.WithDefault(
+                    ModSettingsBindings.Global<RitsuLibSettings, double>(
+                        Const.ModId,
+                        Const.SettingsKey,
+                        settings => settings.ToastOffsetX,
+                        (settings, value) =>
+                        {
+                            settings.ToastOffsetX = value;
+                            RitsuToastService.RefreshSettingsFromStore();
+                        }),
+                    () => -24d),
+                ToastOffsetY = ModSettingsBindings.WithDefault(
+                    ModSettingsBindings.Global<RitsuLibSettings, double>(
+                        Const.ModId,
+                        Const.SettingsKey,
+                        settings => settings.ToastOffsetY,
+                        (settings, value) =>
+                        {
+                            settings.ToastOffsetY = value;
+                            RitsuToastService.RefreshSettingsFromStore();
+                        }),
+                    () => 24d),
+                ToastMaxVisible = ModSettingsBindings.WithDefault(
+                    ModSettingsBindings.Global<RitsuLibSettings, int>(
+                        Const.ModId,
+                        Const.SettingsKey,
+                        settings => Math.Clamp(settings.ToastMaxVisible, 1, 8),
+                        (settings, value) =>
+                        {
+                            settings.ToastMaxVisible = Math.Clamp(value, 1, 8);
+                            RitsuToastService.RefreshSettingsFromStore();
+                        }),
+                    () => 3),
+                ToastDurationSeconds = ModSettingsBindings.WithDefault(
+                    ModSettingsBindings.Global<RitsuLibSettings, double>(
+                        Const.ModId,
+                        Const.SettingsKey,
+                        settings => Math.Clamp(settings.ToastDurationSeconds, 0.5d, 30d),
+                        (settings, value) =>
+                        {
+                            settings.ToastDurationSeconds = Math.Clamp(value, 0.5d, 30d);
+                            RitsuToastService.RefreshSettingsFromStore();
+                        }),
+                    () => 3.5d),
+                ToastAnimation = ModSettingsBindings.WithDefault(
+                    ModSettingsBindings.Global<RitsuLibSettings, string>(
+                        Const.ModId,
+                        Const.SettingsKey,
+                        settings => NormalizeToastAnimation(settings.ToastAnimation),
+                        (settings, value) =>
+                        {
+                            settings.ToastAnimation = NormalizeToastAnimation(value);
+                            RitsuToastService.RefreshSettingsFromStore();
+                        }),
+                    () => "fadeslide"),
                 CardPngExportOutputPath = ModSettingsBindings.Global<RitsuLibSettings, string>(
                     Const.ModId,
                     Const.SettingsKey,
@@ -227,6 +313,8 @@ namespace STS2RitsuLib.Settings
                     ModSettingsBindings.InMemory(Const.ModId, "preview_string", debugShowcase.StringValue),
                 PreviewStringMulti =
                     ModSettingsBindings.InMemory(Const.ModId, "preview_string_multi", debugShowcase.StringMultiValue),
+                PreviewActionCount =
+                    ModSettingsBindings.InMemory(Const.ModId, "preview_action_count", debugShowcase.ActionCount),
                 PreviewHotkey = ModSettingsBindings.InMemory(Const.ModId, "preview_hotkey", "Ctrl+K"),
                 PreviewHotkeyMulti = ModSettingsBindings.WithAdapter(
                     ModSettingsBindings.InMemory(Const.ModId, "preview_hotkey_multi",
@@ -236,6 +324,33 @@ namespace STS2RitsuLib.Settings
                     ModSettingsBindings.InMemory(Const.ModId, "preview_list", debugShowcase.ListItems.ToList()),
                 HostSurfaceCombatReadOnlyDemo =
                     ModSettingsBindings.InMemory(Const.ModId, "host_surface_ro_demo", false),
+            };
+        }
+
+        private static string NormalizeToastAnchor(string? value)
+        {
+            return value?.Trim().ToLowerInvariant() switch
+            {
+                "topleft" => "topleft",
+                "topcenter" => "topcenter",
+                "topright" => "topright",
+                "middleleft" => "middleleft",
+                "middlecenter" => "middlecenter",
+                "middleright" => "middleright",
+                "bottomleft" => "bottomleft",
+                "bottomcenter" => "bottomcenter",
+                "bottomright" => "bottomright",
+                _ => "topright",
+            };
+        }
+
+        private static string NormalizeToastAnimation(string? value)
+        {
+            return value?.Trim().ToLowerInvariant() switch
+            {
+                "fade" => "fade",
+                "fadescale" => "fadescale",
+                _ => "fadeslide",
             };
         }
     }

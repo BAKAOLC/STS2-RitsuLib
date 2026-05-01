@@ -1,3 +1,6 @@
+using System.Text;
+using STS2RitsuLib.Ui.Toast;
+
 namespace STS2RitsuLib.Settings
 {
     internal static partial class RitsuLibModSettingsBootstrap
@@ -36,7 +39,8 @@ namespace STS2RitsuLib.Settings
                                 ui.PreviewIntSlider,
                                 ui.PreviewChoice,
                                 ui.PreviewChoiceDropdown,
-                                ui.PreviewMode))
+                                ui.PreviewMode,
+                                ui.PreviewActionCount))
                         .AddImage(
                             "showcase_image",
                             T("ritsulib.showcase.image.label", "Reference image"),
@@ -196,12 +200,40 @@ namespace STS2RitsuLib.Settings
                             "preview_action",
                             T("ritsulib.showcase.action.label", "Preview command button"),
                             T("ritsulib.showcase.action.button", "Trigger"),
-                            () => ui.DebugShowcase.ActionCount++,
+                            () =>
+                            {
+                                ui.DebugShowcase.ActionCount++;
+                                ui.PreviewActionCount.Write(ui.DebugShowcase.ActionCount);
+                            },
                             ModSettingsButtonTone.Accent,
-                            ModSettingsText.DynamicFullRefreshOnly(() =>
-                                string.Format(
-                                    L("ritsulib.showcase.action.description", "Command invoked {0} times."),
-                                    ui.DebugShowcase.ActionCount)))
+                            ModSettingsText.Dynamic(() =>
+                                    string.Format(
+                                        L("ritsulib.showcase.action.description", "Command invoked {0} times."),
+                                        ui.DebugShowcase.ActionCount),
+                                ui.PreviewActionCount))
+                        .AddButton(
+                            "preview_toast",
+                            T("ritsulib.showcase.toast.label", "Toast preview"),
+                            T("ritsulib.showcase.toast.button", "Show toast"),
+                            () =>
+                            {
+                                ui.DebugShowcase.ToastCount++;
+                                var includeImage = Random.Shared.Next(0, 2) == 0;
+                                var level = Random.Shared.Next(0, 3) switch
+                                {
+                                    1 => RitsuToastLevel.Warning,
+                                    2 => RitsuToastLevel.Error,
+                                    _ => RitsuToastLevel.Info,
+                                };
+                                RitsuToastService.Show(new(
+                                    BuildRandomToastBody(ui.DebugShowcase.ToastCount),
+                                    L("ritsulib.showcase.toast.title", "Toast preview"),
+                                    includeImage ? ModSettingsUiResources.SettingsButtonTexture : null,
+                                    level));
+                            },
+                            ModSettingsButtonTone.Normal,
+                            T("ritsulib.showcase.toast.description",
+                                "Shows a themed toast with randomized text length and optional image."))
                         .AddButton(
                             "preview_reset",
                             T("ritsulib.showcase.reset.label", "Reset preview bindings"),
@@ -215,6 +247,7 @@ namespace STS2RitsuLib.Settings
                                 ui.DebugShowcase.ChoiceDropdownValue = "wide";
                                 ui.DebugShowcase.ModeValue = ModSettingsDebugShowcaseMode.Balanced;
                                 ui.DebugShowcase.ActionCount = 0;
+                                ui.DebugShowcase.ToastCount = 0;
                                 ui.DebugShowcase.StringValue = "Single line";
                                 ui.DebugShowcase.StringMultiValue = "First line\nSecond line";
                                 ui.DebugShowcase.ListItems =
@@ -232,6 +265,7 @@ namespace STS2RitsuLib.Settings
                                 ui.PreviewMode.Write(ui.DebugShowcase.ModeValue);
                                 ui.PreviewString.Write(ui.DebugShowcase.StringValue);
                                 ui.PreviewStringMulti.Write(ui.DebugShowcase.StringMultiValue);
+                                ui.PreviewActionCount.Write(ui.DebugShowcase.ActionCount);
                                 ui.PreviewList.Write(ui.DebugShowcase.ListItems);
                                 host.RequestRefreshAfterDataModelBatchChange();
                             },
@@ -295,6 +329,28 @@ namespace STS2RitsuLib.Settings
                             false,
                             null)),
                 "debug-showcase");
+        }
+
+        private static string BuildRandomToastBody(int actionCount)
+        {
+            var summary = string.Format(
+                L("ritsulib.showcase.toast.body",
+                    "Queue and layout test entry from the control preview page. Count: {0}."),
+                actionCount);
+            var repeat = Random.Shared.Next(0, 5);
+            if (repeat == 0)
+                return summary;
+            var chunk = L("ritsulib.showcase.toast.bodyChunk",
+                "Overflow probe sentence for wrapping and height checks.");
+            var builder = new StringBuilder(summary.Length + (chunk.Length + 1) * repeat);
+            builder.Append(summary);
+            for (var i = 0; i < repeat; i++)
+            {
+                builder.Append(' ');
+                builder.Append(chunk);
+            }
+
+            return builder.ToString();
         }
     }
 }

@@ -24,6 +24,7 @@ using STS2RitsuLib.Scaffolding.Content;
 using STS2RitsuLib.Settings;
 using STS2RitsuLib.Settings.RunSidecar;
 using STS2RitsuLib.Timeline;
+using STS2RitsuLib.Ui.Toast;
 using STS2RitsuLib.Unlocks;
 using STS2RitsuLib.Utils;
 using STS2RitsuLib.Utils.Persistence;
@@ -201,6 +202,7 @@ namespace STS2RitsuLib
                     IsActive = true;
                     EnsureFrameworkInteropBootstrapRegistered();
                     RuntimeHotkeyService.Initialize();
+                    RitsuToastService.Initialize();
 
                     var frameworkInitializedEvent = new FrameworkInitializedEvent(
                         Const.ModId,
