@@ -15,6 +15,16 @@ namespace STS2RitsuLib.CardPiles
     ///     along the anchor's axis. Called from lifecycle patches that fire after the corresponding vanilla
     ///     <c>_Ready</c> runs.
     /// </summary>
+    /// <remarks>
+    ///     For <see cref="ModCardPileAnchorKind.Custom" />, <see cref="ModCardPileAnchor.CustomAuthoringPivot" />
+    ///     (normalized chrome fractions — see <see cref="ModCardPileAnchor" />) maps
+    ///     <see cref="ModCardPileAnchor.CustomPosition" /> to nominal chrome landmarks before injecting
+    ///     <see cref="Godot.Control.Position" /> (upper-left corner). Coordinate space matches each mount parent:
+    ///     <see cref="NCombatPilesContainer" /> for bottom-row piles,
+    ///     <see cref="MegaCrit.Sts2.Core.Nodes.CommonUi.NTopBar" /> for arbitrary top-bar placements, combat UI
+    ///     for <see cref="ModCardPileUiStyle.ExtraHand" /> — consistent with fly-in fallback resolution in
+    ///     <see cref="ModCardPileLayout" />.
+    /// </remarks>
     internal static class ModCardPileInjector
     {
         /// <summary>
@@ -55,7 +65,9 @@ namespace STS2RitsuLib.CardPiles
                 switch (anchor.Kind)
                 {
                     case ModCardPileAnchorKind.Custom:
-                        button.Position = anchor.CustomPosition + anchor.Offset;
+                        button.Position =
+                            ModCardPileCustomMountGeometry.ControlTopLeftFromAuthoring(anchor,
+                                ModCardPileUiStyle.TopBarDeck);
                         break;
                     case ModCardPileAnchorKind.TopBarAfterDeck:
                         ModTopBarLayout.PlaceAfterDeck(topBar, button, anchor.Offset);
@@ -124,7 +136,9 @@ namespace STS2RitsuLib.CardPiles
             {
                 var button = NModCardPileButton.Create(definition);
                 if (definition.Anchor.Kind == ModCardPileAnchorKind.Custom)
-                    button.Position = definition.Anchor.CustomPosition + definition.Anchor.Offset;
+                    button.Position = ModCardPileCustomMountGeometry.ControlTopLeftFromAuthoring(
+                        definition.Anchor, definition.Style);
+
                 container.AddChildSafely(button);
             }
         }
@@ -137,7 +151,9 @@ namespace STS2RitsuLib.CardPiles
             {
                 var button = NModCardPileButton.Create(definition);
                 if (definition.Anchor.Kind == ModCardPileAnchorKind.Custom)
-                    button.Position = definition.Anchor.CustomPosition + definition.Anchor.Offset;
+                    button.Position = ModCardPileCustomMountGeometry.ControlTopLeftFromAuthoring(
+                        definition.Anchor, definition.Style);
+
                 container.AddChildSafely(button);
             }
         }
@@ -145,7 +161,8 @@ namespace STS2RitsuLib.CardPiles
         private static Vector2 ResolveExtraHandPosition(NCombatUi combatUi, ModCardPileDefinition definition)
         {
             if (definition.Anchor.Kind == ModCardPileAnchorKind.Custom)
-                return definition.Anchor.CustomPosition + definition.Anchor.Offset;
+                return ModCardPileCustomMountGeometry.ControlTopLeftFromAuthoring(definition.Anchor,
+                    definition.Style);
 
             var viewport = combatUi.GetViewportRect().Size;
             var above = definition.Anchor.Kind == ModCardPileAnchorKind.ExtraHandAbove;
