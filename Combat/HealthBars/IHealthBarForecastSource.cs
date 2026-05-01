@@ -1,10 +1,10 @@
-using MegaCrit.Sts2.Core.Combat;
-using MegaCrit.Sts2.Core.Entities.Creatures;
 #if STS2_V_0_103_2
 using CombatStateLike = MegaCrit.Sts2.Core.Combat.CombatState;
 #else
 using CombatStateLike = MegaCrit.Sts2.Core.Combat.ICombatState;
 #endif
+using MegaCrit.Sts2.Core.Combat;
+using MegaCrit.Sts2.Core.Entities.Creatures;
 
 namespace STS2RitsuLib.Combat.HealthBars
 {

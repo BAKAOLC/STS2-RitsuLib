@@ -341,13 +341,12 @@ namespace STS2RitsuLib.Utils
                 using var dir = DirAccess.Open(folder);
                 if (dir == null) return [];
 
-                foreach (var file in dir.GetFiles())
-                {
-                    if (!file.EndsWith(".json", StringComparison.OrdinalIgnoreCase)) continue;
-                    var name = file[..^5];
-                    if (string.IsNullOrWhiteSpace(name)) continue;
-                    list.Add(name);
-                }
+                list.AddRange(from file in dir.GetFiles()
+                    where file.EndsWith(".json", StringComparison.OrdinalIgnoreCase)
+                    select file[..^5]
+                    into name
+                    where !string.IsNullOrWhiteSpace(name)
+                    select name);
             }
             catch
             {

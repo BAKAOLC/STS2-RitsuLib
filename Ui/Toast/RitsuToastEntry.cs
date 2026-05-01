@@ -11,7 +11,7 @@ namespace STS2RitsuLib.Ui.Toast
         private StyleBoxFlat? _panelNormal;
         private RitsuToastRequest _request = new(string.Empty);
         private HBoxContainer? _row;
-        private RitsuToastVisualStyle _style = default!;
+        private RitsuToastVisualStyle _style = null!;
         private VBoxContainer? _textColumn;
         private Label? _titleLabel;
 

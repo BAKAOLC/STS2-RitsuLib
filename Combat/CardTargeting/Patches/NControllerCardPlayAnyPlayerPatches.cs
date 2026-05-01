@@ -152,13 +152,7 @@ namespace STS2RitsuLib.Combat.CardTargeting.Patches
         {
             var card = GetCard(instance);
             var cardNode = GetCardNode(instance);
-            if (card?.CombatState == null)
-            {
-                instance.CancelPlayCard();
-                return;
-            }
-
-            if (cardNode == null)
+            if (card?.CombatState == null || cardNode == null)
             {
                 instance.CancelPlayCard();
                 return;

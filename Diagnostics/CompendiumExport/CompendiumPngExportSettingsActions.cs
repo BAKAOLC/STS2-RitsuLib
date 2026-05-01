@@ -1,4 +1,3 @@
-using STS2RitsuLib.Data.Models;
 using STS2RitsuLib.Diagnostics.CardExport;
 using STS2RitsuLib.Settings;
 

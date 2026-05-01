@@ -102,13 +102,7 @@ namespace STS2RitsuLib.Ui.Toast
         {
             if (!_settings.Enabled)
                 return;
-            if (_root == null)
-            {
-                _pending.Enqueue(request);
-                return;
-            }
-
-            if (GetOccupiedSlotsCount() >= Math.Max(1, _settings.QueuePolicy.MaxVisible))
+            if (_root == null || GetOccupiedSlotsCount() >= Math.Max(1, _settings.QueuePolicy.MaxVisible))
             {
                 _pending.Enqueue(request);
                 return;
