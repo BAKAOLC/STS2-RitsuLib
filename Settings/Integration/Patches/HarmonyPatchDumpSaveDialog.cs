@@ -6,7 +6,7 @@ namespace STS2RitsuLib.Settings
     internal static class HarmonyPatchDumpSaveDialog
     {
         internal static void Show(
-            ModSettingsValueBinding<RitsuLibSettings, string> outputPathBinding,
+            IModSettingsValueBinding<string> outputPathBinding,
             IModSettingsUiActionHost uiHost)
         {
             var tree = Engine.GetMainLoop() as SceneTree;

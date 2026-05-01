@@ -31,7 +31,7 @@ namespace STS2RitsuLib.Settings
         /// </summary>
         private const double RefreshDebounceSeconds = AutosaveDelaySeconds + 0.04;
 
-        private const int ScrollContentRightGutter = 12;
+        private const string ScrollbarContentRightGutterTokenPath = "components.scrollbar.layout.contentRightGutter";
 
         private static readonly StringName PaneSidebarHotkey = MegaInput.viewDeckAndTabLeft;
         private static readonly StringName PaneContentHotkey = MegaInput.viewExhaustPileAndTabRight;
@@ -668,13 +668,29 @@ namespace STS2RitsuLib.Settings
                 RefreshFocusNavigation();
                 Callable.From(() =>
                 {
-                    if (_sectionButtons.TryGetValue(sectionId, out var btn) && btn.IsVisibleInTree())
+                    var sectionKey = CreateSectionCacheKey(_selectedModId!, _selectedPageId!, _selectedSectionId!);
+                    if (_sectionButtons.TryGetValue(sectionKey, out var btn) && btn.IsVisibleInTree())
                         btn.GrabFocus();
                 }).CallDeferred();
                 return;
             }
 
             var pageChanged = !string.Equals(_selectedPageId, pageId, StringComparison.OrdinalIgnoreCase);
+            if (!pageChanged)
+            {
+                _selectedSectionId = sectionId;
+                RefreshSelectionState();
+                Callable.From(ScrollToSelectedAnchor).CallDeferred();
+                RefreshFocusNavigation();
+                Callable.From(() =>
+                {
+                    var sectionKey = CreateSectionCacheKey(_selectedModId!, _selectedPageId!, _selectedSectionId!);
+                    if (_sectionButtons.TryGetValue(sectionKey, out var btn) && btn.IsVisibleInTree())
+                        btn.GrabFocus();
+                }).CallDeferred();
+                return;
+            }
+
             _selectedPageId = pageId;
             _selectedSectionId = sectionId;
             _selectionDirty = true;
@@ -860,7 +876,7 @@ namespace STS2RitsuLib.Settings
                 return null;
 
             if (!string.IsNullOrWhiteSpace(_selectedSectionId))
-                if (_contentList.FindChild($"Section_{_selectedSectionId}", true, false) is Control anchor)
+                if (TryFindSectionAnchorOnSelectedPage(_selectedSectionId, out var anchor))
                     foreach (var c in _contentFocusChain.Where(UnderScrollBody)
                                  .Where(c => anchor == c || anchor.IsAncestorOf(c)))
                         return c;
@@ -1031,7 +1047,7 @@ namespace STS2RitsuLib.Settings
                 SizeFlagsVertical = SizeFlags.ExpandFill,
                 MouseFilter = MouseFilterEnum.Ignore,
             };
-            sidebarScrollFrame.AddThemeConstantOverride("margin_right", ScrollContentRightGutter);
+            sidebarScrollFrame.AddThemeConstantOverride("margin_right", ResolveScrollbarContentRightGutter());
             scroll.AddChild(sidebarScrollFrame);
 
             _modButtonList = new()
@@ -1104,7 +1120,7 @@ namespace STS2RitsuLib.Settings
                 SizeFlagsHorizontal = SizeFlags.ExpandFill,
                 MouseFilter = MouseFilterEnum.Ignore,
             };
-            contentScrollFrame.AddThemeConstantOverride("margin_right", ScrollContentRightGutter);
+            contentScrollFrame.AddThemeConstantOverride("margin_right", ResolveScrollbarContentRightGutter());
             contentStack.AddChild(contentScrollFrame);
 
             _contentList = new()
@@ -1411,7 +1427,6 @@ namespace STS2RitsuLib.Settings
             {
                 if (!IsInstanceValid(sectionButton))
                     continue;
-                sectionButton.Visible = isSelectedPage;
                 sectionButton.SetSelected(string.Equals(key, selectedSectionKey, StringComparison.OrdinalIgnoreCase));
             }
 
@@ -2123,16 +2138,43 @@ namespace STS2RitsuLib.Settings
         {
             _suppressScrollSync = true;
             if (!string.IsNullOrWhiteSpace(_selectedSectionId))
-                if (_contentList.FindChild($"Section_{_selectedSectionId}", true, false) is Control target)
+                if (TryFindSectionAnchorOnSelectedPage(_selectedSectionId, out var target))
                 {
-                    _scrollContainer.ScrollVertical = Mathf.RoundToInt(target.GlobalPosition.Y -
-                        _scrollContainer.GlobalPosition.Y + _scrollContainer.ScrollVertical - 12f);
+                    AlignScrollToAnchor(target);
                     Callable.From(() => _suppressScrollSync = false).CallDeferred();
                     return;
                 }
 
             _scrollContainer.ScrollVertical = 0;
             Callable.From(() => _suppressScrollSync = false).CallDeferred();
+        }
+
+        private void AlignScrollToAnchor(Control target)
+        {
+            var desired = TryComputeTargetOffsetInSelectedContent(target, out var targetTopInContent)
+                ? Mathf.RoundToInt(targetTopInContent - 12f)
+                : Mathf.RoundToInt(target.GlobalPosition.Y -
+                    _scrollContainer.GlobalPosition.Y + _scrollContainer.ScrollVertical - 12f);
+            _scrollContainer.ScrollVertical = Math.Max(0, desired);
+        }
+
+        private bool TryComputeTargetOffsetInSelectedContent(Control target, out float y)
+        {
+            y = 0f;
+            if (!TryGetSelectedPageContentCache(out var cache))
+                return false;
+
+            var cursor = target;
+            while (true)
+            {
+                y += cursor.Position.Y;
+                var parent = cursor.GetParent();
+                if (parent == cache.ContentHost)
+                    return true;
+                if (parent is not Control parentControl || !IsInstanceValid(parentControl))
+                    return false;
+                cursor = parentControl;
+            }
         }
 
         private void OnContentScrollChanged(double value)
@@ -2150,7 +2192,7 @@ namespace STS2RitsuLib.Settings
 
             foreach (var section in page.Sections)
             {
-                if (_contentList.FindChild($"Section_{section.Id}", true, false) is not Control target)
+                if (!TryFindSectionAnchorOnSelectedPage(section.Id, out var target))
                     continue;
 
                 var distance = MathF.Abs(target.GlobalPosition.Y - viewportTop);
@@ -2163,8 +2205,39 @@ namespace STS2RitsuLib.Settings
                 return;
 
             _selectedSectionId = bestSectionId;
+            var selectedSectionKey = GetSelectedSectionKey();
             foreach (var pair in _sectionButtons)
-                pair.Value.SetSelected(string.Equals(pair.Key, _selectedSectionId, StringComparison.OrdinalIgnoreCase));
+                pair.Value.SetSelected(string.Equals(pair.Key, selectedSectionKey, StringComparison.OrdinalIgnoreCase));
+        }
+
+        private bool TryFindSectionAnchorOnSelectedPage(string sectionId, out Control anchor)
+        {
+            anchor = null!;
+            if (!TryGetSelectedPageContentCache(out var cache))
+                return false;
+
+            var node = cache.ContentHost.FindChild($"Section_{sectionId}", true, false);
+            if (node is not Control control || !IsInstanceValid(control))
+                return false;
+
+            anchor = control;
+            return true;
+        }
+
+        private bool TryGetSelectedPageContentCache(out PageContentCache cache)
+        {
+            cache = null!;
+            var modId = _selectedModId;
+            var pageId = _selectedPageId;
+            if (string.IsNullOrWhiteSpace(modId) || string.IsNullOrWhiteSpace(pageId))
+                return false;
+
+            if (!_pageContentCaches.TryGetValue(CreatePageCacheKey(modId, pageId), out var resolved) ||
+                resolved == null)
+                return false;
+
+            cache = resolved;
+            return true;
         }
 
         private void RefreshFocusNavigation()
@@ -2467,6 +2540,13 @@ namespace STS2RitsuLib.Settings
                 CreateScrollGrabberStyle("components.scrollbar.grabberHover"));
             vScrollBar.AddThemeStyleboxOverride("grabber_pressed",
                 CreateScrollGrabberStyle("components.scrollbar.grabberPressed"));
+            var scrollSize = RitsuShellThemeLayoutResolver.ResolveInt("components.scrollbar.layout.size", 8);
+            vScrollBar.CustomMinimumSize = new(scrollSize, vScrollBar.CustomMinimumSize.Y);
+        }
+
+        private static int ResolveScrollbarContentRightGutter()
+        {
+            return RitsuShellThemeLayoutResolver.ResolveInt(ScrollbarContentRightGutterTokenPath, 12);
         }
 
         private static StyleBoxFlat CreateScrollTrackStyle()

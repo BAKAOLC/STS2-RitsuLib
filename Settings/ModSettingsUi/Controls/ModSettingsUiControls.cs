@@ -82,7 +82,22 @@ namespace STS2RitsuLib.Settings
         {
             _isOn = !_isOn;
             ApplyVisualState();
-            _onChanged?.Invoke(_isOn);
+            InvokeOnChangedSafely(_isOn);
+        }
+
+        private void InvokeOnChangedSafely(bool value)
+        {
+            if (_onChanged == null)
+                return;
+
+            try
+            {
+                _onChanged(value);
+            }
+            catch (Exception ex)
+            {
+                RitsuLibFramework.Logger.Warn($"[ModSettingsToggleControl] onChanged failed: {ex.Message}");
+            }
         }
 
         private void ApplyVisualState()
@@ -177,8 +192,6 @@ namespace STS2RitsuLib.Settings
 
     internal sealed partial class ModSettingsSliderControl : HBoxContainer
     {
-        private const double SliderEpsilon = 1e-9;
-
         private readonly double _bindingValueAtConstruct;
         private readonly Func<double, string>? _formatter;
         private readonly Action<double>? _onChanged;
@@ -333,7 +346,7 @@ namespace STS2RitsuLib.Settings
             if (_suppressCallbacks)
                 return;
             RefreshValueLabel(value);
-            _onChanged?.Invoke(value);
+            InvokeOnChangedSafely(value);
         }
 
         public void SetValue(double value)
@@ -350,9 +363,6 @@ namespace STS2RitsuLib.Settings
             var actual = _slider.Value;
             RefreshValueLabel(actual);
             _suppressCallbacks = false;
-
-            if (!IsApproxEqual(value, actual))
-                _onChanged?.Invoke(actual);
         }
 
         private static double NormalizeSliderValue(double value, double minValue, double maxValue, double step)
@@ -363,26 +373,41 @@ namespace STS2RitsuLib.Settings
             return v;
         }
 
-        private static bool IsApproxEqual(double a, double b)
+        private void InvokeOnChangedSafely(double value)
         {
-            return Math.Abs(a - b) <= SliderEpsilon * Math.Max(1d, Math.Max(Math.Abs(a), Math.Abs(b)));
+            if (_onChanged == null)
+                return;
+
+            try
+            {
+                _onChanged(value);
+            }
+            catch (Exception ex)
+            {
+                RitsuLibFramework.Logger.Warn($"[ModSettingsSliderControl] onChanged failed: {ex.Message}");
+            }
         }
 
         private void SyncBindingToCanonicalSliderValue(double bindingClaimed)
         {
             if (_slider == null)
                 return;
-
-            var onSlider = _slider.Value;
-            if (!IsApproxEqual(bindingClaimed, onSlider))
-                _onChanged?.Invoke(onSlider);
+            SetValue(bindingClaimed);
         }
 
         private void RefreshValueLabel(double value)
         {
             if (_valueEdit == null || _formatter == null)
                 return;
-            _valueEdit.Text = _formatter(value);
+
+            try
+            {
+                _valueEdit.Text = _formatter(value);
+            }
+            catch
+            {
+                _valueEdit.Text = value.ToString("0.##", CultureInfo.InvariantCulture);
+            }
         }
 
         private void OnValueSubmitted(string text)
@@ -626,7 +651,7 @@ namespace STS2RitsuLib.Settings
                 return;
             var f = (float)value;
             RefreshValueLabel(f);
-            _onChanged?.Invoke(f);
+            InvokeOnChangedSafely(f);
         }
 
         /// <summary>
@@ -648,9 +673,6 @@ namespace STS2RitsuLib.Settings
             var actual = (float)_slider.Value;
             RefreshValueLabel(actual);
             _suppressCallbacks = false;
-
-            if (!Mathf.IsEqualApprox(value, actual))
-                _onChanged?.Invoke(actual);
         }
 
         private static float NormalizeSliderValue(float value, float minValue, float maxValue, float step)
@@ -661,21 +683,41 @@ namespace STS2RitsuLib.Settings
             return v;
         }
 
+        private void InvokeOnChangedSafely(float value)
+        {
+            if (_onChanged == null)
+                return;
+
+            try
+            {
+                _onChanged(value);
+            }
+            catch (Exception ex)
+            {
+                RitsuLibFramework.Logger.Warn($"[ModSettingsFloatSliderControl] onChanged failed: {ex.Message}");
+            }
+        }
+
         private void SyncBindingToCanonicalSliderValue(float bindingClaimed)
         {
             if (_slider == null)
                 return;
-
-            var onSlider = (float)_slider.Value;
-            if (!Mathf.IsEqualApprox(bindingClaimed, onSlider))
-                _onChanged?.Invoke(onSlider);
+            SetValue(bindingClaimed);
         }
 
         private void RefreshValueLabel(float value)
         {
             if (_valueEdit == null || _formatter == null)
                 return;
-            _valueEdit.Text = _formatter(value);
+
+            try
+            {
+                _valueEdit.Text = _formatter(value);
+            }
+            catch
+            {
+                _valueEdit.Text = value.ToString("0.##", CultureInfo.InvariantCulture);
+            }
         }
 
         private void OnValueSubmitted(string text)
@@ -859,7 +901,22 @@ namespace STS2RitsuLib.Settings
             _currentIndex = (_currentIndex + delta + _optionsWithValues.Length) % _optionsWithValues.Length;
             RefreshCurrentLabel();
             if (!_suppressCallbacks)
-                _onChanged?.Invoke(_optionsWithValues[_currentIndex].Value);
+                InvokeOnChangedSafely(_optionsWithValues[_currentIndex].Value);
+        }
+
+        private void InvokeOnChangedSafely(TValue value)
+        {
+            if (_onChanged == null)
+                return;
+
+            try
+            {
+                _onChanged(value);
+            }
+            catch (Exception ex)
+            {
+                RitsuLibFramework.Logger.Warn($"[ModSettingsChoiceControl] onChanged failed: {ex.Message}");
+            }
         }
 
         /// <summary>
@@ -1258,8 +1315,23 @@ namespace STS2RitsuLib.Settings
 
             _selectedIndex = index;
             RefreshFaceLabel();
-            _onChanged?.Invoke(_optionsWithValues[index].Value);
+            InvokeOnChangedSafely(_optionsWithValues[index].Value);
             CloseDropdown();
+        }
+
+        private void InvokeOnChangedSafely(TValue value)
+        {
+            if (_onChanged == null)
+                return;
+
+            try
+            {
+                _onChanged(value);
+            }
+            catch (Exception ex)
+            {
+                RitsuLibFramework.Logger.Warn($"[ModSettingsDropdownChoiceControl] onChanged failed: {ex.Message}");
+            }
         }
 
         private void ApplyFaceDropdownChrome()
@@ -1632,7 +1704,7 @@ namespace STS2RitsuLib.Settings
             _lastCommitted = string.Empty;
 
             if (notify)
-                _onChanged?.Invoke(null);
+                InvokeOnChangedSafely(null);
         }
 
         private void ApplyColor(Color color, bool notify)
@@ -1649,7 +1721,7 @@ namespace STS2RitsuLib.Settings
             _unsetPreviewColor = color;
 
             if (notify)
-                _onChanged?.Invoke(formatted);
+                InvokeOnChangedSafely(formatted);
         }
 
         private void RestoreCurrentPresentation()
@@ -1661,7 +1733,22 @@ namespace STS2RitsuLib.Settings
         {
             _pickerChangedWhileOpen = true;
             ApplyColor(color, false);
-            _onChanged?.Invoke(FormatColorValue(color));
+            InvokeOnChangedSafely(FormatColorValue(color));
+        }
+
+        private void InvokeOnChangedSafely(string? value)
+        {
+            if (_onChanged == null)
+                return;
+
+            try
+            {
+                _onChanged(value);
+            }
+            catch (Exception ex)
+            {
+                RitsuLibFramework.Logger.Warn($"[ModSettingsColorControl] onChanged failed: {ex.Message}");
+            }
         }
 
         private void OnPickerPopupClosed()
@@ -1921,7 +2008,22 @@ namespace STS2RitsuLib.Settings
             _currentValue = value;
             RefreshText();
             if (notify)
-                _onChanged?.Invoke(value);
+                InvokeOnChangedSafely(value);
+        }
+
+        private void InvokeOnChangedSafely(string value)
+        {
+            if (_onChanged == null)
+                return;
+
+            try
+            {
+                _onChanged(value);
+            }
+            catch (Exception ex)
+            {
+                RitsuLibFramework.Logger.Warn($"[ModSettingsKeyBindingControl] onChanged failed: {ex.Message}");
+            }
         }
 
         private void RefreshText()
@@ -2408,8 +2510,25 @@ namespace STS2RitsuLib.Settings
             if (!def.IsEnabled())
                 return;
 
-            def.Action();
-            _afterAction?.Invoke();
+            try
+            {
+                def.Action();
+            }
+            catch (Exception ex)
+            {
+                RitsuLibFramework.Logger.Warn($"[ModSettingsActionsButton] action failed: {ex.Message}");
+            }
+
+            if (_afterAction != null)
+                try
+                {
+                    _afterAction();
+                }
+                catch (Exception ex)
+                {
+                    RitsuLibFramework.Logger.Warn($"[ModSettingsActionsButton] afterAction failed: {ex.Message}");
+                }
+
             CloseDropdown();
         }
 
@@ -2712,7 +2831,22 @@ namespace STS2RitsuLib.Settings
             _values = NormalizeBindings(values);
             RefreshPresentation();
             if (notify)
-                _onChanged?.Invoke(_values.ToList());
+                InvokeOnChangedSafely(_values.ToList());
+        }
+
+        private void InvokeOnChangedSafely(List<string> values)
+        {
+            if (_onChanged == null)
+                return;
+
+            try
+            {
+                _onChanged(values);
+            }
+            catch (Exception ex)
+            {
+                RitsuLibFramework.Logger.Warn($"[ModSettingsMultiKeyBindingControl] onChanged failed: {ex.Message}");
+            }
         }
 
         private void RefreshPresentation()
@@ -3514,8 +3648,8 @@ namespace STS2RitsuLib.Settings
                 control is not ModSettingsListItemCard<TItem> card) return;
             var item = items[i];
             card.ItemContext.SyncRowListState(i, items.Count, item);
-            var title = ModSettingsUiFactory.ResolveEntryLabelDisplay(_entry.ItemLabel(item));
-            var subtitle = _entry.ItemDescription?.Invoke(item) is { } d
+            var title = ModSettingsUiFactory.ResolveEntryLabelDisplay(SafeResolveItemLabel(item));
+            var subtitle = SafeResolveItemDescription(item) is { } d
                 ? ModSettingsUiContext.Resolve(d)
                 : null;
             card.SyncRowChrome(i, title, subtitle, i == 0);
@@ -3617,15 +3751,80 @@ namespace STS2RitsuLib.Settings
             return new ModSettingsListItemCard<TItem>(
                 this,
                 index,
-                ModSettingsUiFactory.ResolveEntryLabelDisplay(_entry.ItemLabel(item)),
-                _entry.ItemDescription?.Invoke(item) is { } description
+                ModSettingsUiFactory.ResolveEntryLabelDisplay(SafeResolveItemLabel(item)),
+                SafeResolveItemDescription(item) is { } description
                     ? ModSettingsUiContext.Resolve(description)
                     : null,
                 itemContext,
-                _entry.ItemEditorFactory?.Invoke(itemContext),
+                SafeCreateItemEditor(itemContext),
                 _entry.CollapsibleItems,
                 _entry.StartItemsCollapsed,
-                _entry.ItemHeaderAccessoryFactory?.Invoke(itemContext));
+                SafeCreateItemHeaderAccessory(itemContext));
+        }
+
+        private ModSettingsText SafeResolveItemLabel(TItem item)
+        {
+            try
+            {
+                return _entry.ItemLabel(item);
+            }
+            catch (Exception ex)
+            {
+                RitsuLibFramework.Logger.Warn(
+                    $"[ModSettingsListControl] ItemLabel failed for '{_entry.Id}': {ex.Message}");
+                return ModSettingsText.Literal(_entry.Id);
+            }
+        }
+
+        private ModSettingsText? SafeResolveItemDescription(TItem item)
+        {
+            if (_entry.ItemDescription == null)
+                return null;
+
+            try
+            {
+                return _entry.ItemDescription(item);
+            }
+            catch (Exception ex)
+            {
+                RitsuLibFramework.Logger.Warn(
+                    $"[ModSettingsListControl] ItemDescription failed for '{_entry.Id}': {ex.Message}");
+                return null;
+            }
+        }
+
+        private Control? SafeCreateItemEditor(ModSettingsListItemContext<TItem> itemContext)
+        {
+            if (_entry.ItemEditorFactory == null)
+                return null;
+
+            try
+            {
+                return _entry.ItemEditorFactory(itemContext);
+            }
+            catch (Exception ex)
+            {
+                RitsuLibFramework.Logger.Warn(
+                    $"[ModSettingsListControl] ItemEditorFactory failed for '{_entry.Id}': {ex.Message}");
+                return null;
+            }
+        }
+
+        private Control? SafeCreateItemHeaderAccessory(ModSettingsListItemContext<TItem> itemContext)
+        {
+            if (_entry.ItemHeaderAccessoryFactory == null)
+                return null;
+
+            try
+            {
+                return _entry.ItemHeaderAccessoryFactory(itemContext);
+            }
+            catch (Exception ex)
+            {
+                RitsuLibFramework.Logger.Warn(
+                    $"[ModSettingsListControl] ItemHeaderAccessoryFactory failed for '{_entry.Id}': {ex.Message}");
+                return null;
+            }
         }
 
         private void Mutate(Action<List<TItem>> mutate)
@@ -4226,7 +4425,21 @@ namespace STS2RitsuLib.Settings
             textColumn.AddChild(subtitleLabel);
             _subtitleLabel = subtitleLabel;
 
-            Pressed += () => _action?.Invoke();
+            Pressed += () =>
+            {
+                if (_action == null)
+                    return;
+
+                try
+                {
+                    _action();
+                }
+                catch (Exception ex)
+                {
+                    RitsuLibFramework.Logger.Warn(
+                        $"[ModSettingsCollapsibleHeaderButton] action failed: {ex.Message}");
+                }
+            };
         }
 
         public ModSettingsCollapsibleHeaderButton()
@@ -4586,7 +4799,20 @@ namespace STS2RitsuLib.Settings
             AddThemeStyleboxOverride("focus", CreateStyle(false, true, _kind, _indentLevel));
             AddThemeStyleboxOverride("disabled", CreateDisabledStyle());
 
-            Pressed += () => action?.Invoke();
+            Pressed += () =>
+            {
+                if (action == null)
+                    return;
+
+                try
+                {
+                    action();
+                }
+                catch (Exception ex)
+                {
+                    RitsuLibFramework.Logger.Warn($"[ModSettingsSidebarButton] action failed: {ex.Message}");
+                }
+            };
         }
 
         public ModSettingsSidebarButton()
@@ -4776,7 +5002,20 @@ namespace STS2RitsuLib.Settings
             AddThemeColorOverride("font_focus_color", RitsuShellTheme.Current.Text.HoverHighlight);
             AddThemeColorOverride("font_disabled_color", RitsuShellTheme.Current.Text.LabelSecondary);
             ApplyVisualState();
-            Pressed += () => action?.Invoke();
+            Pressed += () =>
+            {
+                if (action == null)
+                    return;
+
+                try
+                {
+                    action();
+                }
+                catch (Exception ex)
+                {
+                    RitsuLibFramework.Logger.Warn($"[ModSettingsTextButton] action failed: {ex.Message}");
+                }
+            };
         }
 
         /// <summary>

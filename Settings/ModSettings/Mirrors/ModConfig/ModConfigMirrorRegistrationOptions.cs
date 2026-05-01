@@ -13,12 +13,12 @@ namespace STS2RitsuLib.Settings
         /// <summary>
         ///     Forwarded to mirrored key binding entries.
         /// </summary>
-        public bool KeyBindAllowModifierCombos { get; init; } = true;
+        public bool KeyBindAllowModifierCombos { get; init; } = false;
 
         /// <summary>
         ///     Forwarded to mirrored key binding entries.
         /// </summary>
-        public bool KeyBindAllowModifierOnly { get; init; } = true;
+        public bool KeyBindAllowModifierOnly { get; init; } = false;
 
         /// <summary>
         ///     Forwarded to mirrored key binding entries.

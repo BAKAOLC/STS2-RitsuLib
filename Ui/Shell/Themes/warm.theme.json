@@ -1,6 +1,7 @@
 {
   "$schema": "https://raw.githubusercontent.com/BAKAOLC/STS2-RitsuLib/main/schemas/ui/shell/v1/schema.json",
   "themeFormatVersion": 1,
+  "themeVersion": 2,
   "id": "warm",
   "displayName": "Warm",
   "inherits": "default",
@@ -725,6 +726,112 @@
       "border": {
         "$value": "#B88850A6",
         "$type": "color"
+      }
+    },
+    "toast": {
+      "surface": {
+        "bg": {
+          "$value": "#221B13F7",
+          "$type": "color"
+        },
+        "border": {
+          "$value": "#B88850A6",
+          "$type": "color"
+        },
+        "shadow": {
+          "$value": "#00000066",
+          "$type": "color"
+        }
+      },
+      "text": {
+        "title": {
+          "$value": "#F6EDE1",
+          "$type": "color"
+        },
+        "body": {
+          "$value": "#E2C9A8",
+          "$type": "color"
+        }
+      },
+      "levels": {
+        "info": {
+          "accent": {
+            "$value": "#DCA96AF2",
+            "$type": "color"
+          },
+          "border": {
+            "$value": "#DCA96AF2",
+            "$type": "color"
+          }
+        },
+        "warning": {
+          "accent": {
+            "$value": "#E0B27DD9",
+            "$type": "color"
+          },
+          "border": {
+            "$value": "#E0B27DD9",
+            "$type": "color"
+          }
+        },
+        "error": {
+          "accent": {
+            "$value": "#E69486DB",
+            "$type": "color"
+          },
+          "border": {
+            "$value": "#E69486DB",
+            "$type": "color"
+          }
+        }
+      },
+      "layout": {
+        "width": {
+          "$value": 420,
+          "$type": "dimension"
+        },
+        "minHeight": {
+          "$value": 72,
+          "$type": "dimension"
+        },
+        "rowSpacing": {
+          "$value": 10,
+          "$type": "dimension"
+        },
+        "imageSize": {
+          "$value": 56,
+          "$type": "dimension"
+        },
+        "screenMargin": {
+          "$value": 16,
+          "$type": "dimension"
+        }
+      },
+      "animation": {
+        "enterDuration": {
+          "$value": 0.22,
+          "$type": "dimension"
+        },
+        "moveDuration": {
+          "$value": 0.18,
+          "$type": "dimension"
+        },
+        "exitDuration": {
+          "$value": 0.18,
+          "$type": "dimension"
+        },
+        "enterSlideDistance": {
+          "$value": 80,
+          "$type": "dimension"
+        },
+        "exitSlideDistance": {
+          "$value": 80,
+          "$type": "dimension"
+        },
+        "enterScale": {
+          "$value": 0.92,
+          "$type": "dimension"
+        }
       }
     },
     "scrollbar": {

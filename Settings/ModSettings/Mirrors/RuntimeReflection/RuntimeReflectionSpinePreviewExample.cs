@@ -19,7 +19,7 @@ namespace STS2RitsuLib.Settings
         Description = "Try bindings and a simple spine preview.",
         DescriptionKey = "ritsulib.runtimeReflection.spine.page.description",
         I18NProviderUsing = nameof(GetI18NProvider),
-        ParentPageId = Const.ModId, SortOrder = 20_100)]
+        ParentPageId = "debug-showcase", SortOrder = 20_100)]
     [ModSettingsSection("spine",
         Title = "Preview",
         TitleKey = "ritsulib.runtimeReflection.spine.section.title",

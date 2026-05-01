@@ -52,7 +52,7 @@ namespace STS2RitsuLib.Ui.Shell.Theme
 
                 var map = new Dictionary<string, RitsuShellThemeDocument>(StringComparer.Ordinal);
                 var asm = typeof(RitsuShellThemeCatalog).Assembly;
-                var extractedPairs = new List<(string Id, byte[] Bytes)>();
+                var extractedPairs = new List<(string Id, byte[] Bytes, int Version)>();
 
                 foreach (var manifestName in asm.GetManifestResourceNames())
                 {
@@ -72,17 +72,26 @@ namespace STS2RitsuLib.Ui.Shell.Theme
 
                     var id = doc.Id.Trim().ToLowerInvariant();
                     map[id] = doc;
-                    extractedPairs.Add((id, bytes));
+                    extractedPairs.Add((id, bytes, NormalizeThemeVersion(doc)));
                 }
 
                 if (RitsuShellThemePaths.TryEnsureShellThemesDirectory(out var themesAbs))
                 {
-                    foreach (var (id, bytes) in extractedPairs)
+                    foreach (var (id, bytes, embeddedVersion) in extractedPairs)
                         try
                         {
                             var targetFile = Path.Combine(themesAbs, $"{id}.theme.json");
                             if (!File.Exists(targetFile))
+                            {
                                 File.WriteAllBytes(targetFile, bytes);
+                                continue;
+                            }
+
+                            if (!ShouldOverwriteDiskTheme(targetFile, embeddedVersion))
+                                continue;
+
+                            TryBackupThemeFile(targetFile);
+                            File.WriteAllBytes(targetFile, bytes);
                         }
                         catch
                         {
@@ -210,6 +219,38 @@ namespace STS2RitsuLib.Ui.Shell.Theme
             }
         }
 
+        /// <summary>
+        ///     Resets all existing disk theme files that have embedded counterparts.
+        /// </summary>
+        /// <param name="restoredCount">How many disk theme files were overwritten.</param>
+        /// <returns><see langword="true" /> if the operation completed without fatal setup failures.</returns>
+        public static bool TryRestoreAllExistingDiskThemesFromEmbedded(out int restoredCount)
+        {
+            restoredCount = 0;
+            if (!RitsuShellThemePaths.TryEnsureShellThemesDirectory(out var themesAbs))
+                return false;
+
+            try
+            {
+                foreach (var (id, bytes) in EnumerateEmbeddedThemeDocuments())
+                {
+                    var targetFile = Path.Combine(themesAbs, $"{id}.theme.json");
+                    if (!File.Exists(targetFile))
+                        continue;
+
+                    File.WriteAllBytes(targetFile, bytes);
+                    restoredCount++;
+                }
+
+                InvalidateCache();
+                return true;
+            }
+            catch
+            {
+                return false;
+            }
+        }
+
         private static void MergeBranch(Dictionary<string, object?> root, string branchName, JsonElement branch)
         {
             if (branch.ValueKind != JsonValueKind.Object)
@@ -315,6 +356,96 @@ namespace STS2RitsuLib.Ui.Shell.Theme
             }
 
             return false;
+        }
+
+        private static IEnumerable<(string Id, byte[] Bytes)> EnumerateEmbeddedThemeDocuments()
+        {
+            var asm = typeof(RitsuShellThemeCatalog).Assembly;
+            foreach (var manifestName in asm.GetManifestResourceNames())
+            {
+                if (!manifestName.EndsWith(".theme.json", StringComparison.OrdinalIgnoreCase))
+                    continue;
+
+                byte[] bytes;
+                RitsuShellThemeDocument? doc;
+                try
+                {
+                    using var stream = asm.GetManifestResourceStream(manifestName);
+                    if (stream == null)
+                        continue;
+                    using var ms = new MemoryStream();
+                    stream.CopyTo(ms);
+                    bytes = ms.ToArray();
+                    doc = RitsuShellThemeDocument.Deserialize(new MemoryStream(bytes));
+                }
+                catch
+                {
+                    continue;
+                }
+
+                if (doc == null || string.IsNullOrWhiteSpace(doc.Id))
+                    continue;
+
+                yield return (doc.Id.Trim().ToLowerInvariant(), bytes);
+            }
+        }
+
+        private static int NormalizeThemeVersion(RitsuShellThemeDocument? doc)
+        {
+            if (doc?.ThemeVersion is > 0 and var explicitVersion)
+                return explicitVersion;
+            return doc?.ThemeFormatVersion is > 0 and var formatVersion ? formatVersion : 0;
+        }
+
+        private static bool ShouldOverwriteDiskTheme(string path, int embeddedVersion)
+        {
+            if (embeddedVersion <= 0)
+                return false;
+            try
+            {
+                using var fs = File.OpenRead(path);
+                var diskDoc = RitsuShellThemeDocument.Deserialize(fs);
+                var diskVersion = NormalizeThemeVersion(diskDoc);
+                return embeddedVersion > diskVersion;
+            }
+            catch
+            {
+                // Invalid disk content should be replaced by a valid embedded release copy.
+                return true;
+            }
+        }
+
+        private static void TryBackupThemeFile(string path)
+        {
+            try
+            {
+                if (!File.Exists(path))
+                    return;
+
+                var backupPath = BuildTimestampedBackupPath(path);
+                File.Copy(path, backupPath, false);
+            }
+            catch
+            {
+                // Best-effort backup: do not block theme recovery if backup fails.
+            }
+        }
+
+        private static string BuildTimestampedBackupPath(string originalPath)
+        {
+            var attempt = 0;
+            while (attempt <= 100)
+            {
+                var candidate = attempt == 0
+                    ? $"{originalPath}.backup.{DateTime.UtcNow:yyyyMMddHHmmssfff}"
+                    : $"{originalPath}.backup.{DateTime.UtcNow:yyyyMMddHHmmssfff}.{attempt}";
+                if (!File.Exists(candidate))
+                    return candidate;
+
+                attempt++;
+            }
+
+            return $"{originalPath}.backup.{DateTime.UtcNow:yyyyMMddHHmmssfff}.fallback";
         }
     }
 }

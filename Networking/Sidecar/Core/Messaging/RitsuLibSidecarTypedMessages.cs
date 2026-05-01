@@ -233,35 +233,23 @@ namespace STS2RitsuLib.Networking.Sidecar
                 new(opcode, registration.ModuleId, registration.MessageKey, context.SenderNetId));
         }
 
-        private abstract class RegistrationBase
+        private abstract class RegistrationBase(string moduleId, string messageKey)
         {
-            protected RegistrationBase(string moduleId, string messageKey)
-            {
-                ModuleId = moduleId;
-                MessageKey = messageKey;
-            }
-
-            public string ModuleId { get; }
-            public string MessageKey { get; }
+            public string ModuleId { get; } = moduleId;
+            public string MessageKey { get; } = messageKey;
         }
 
-        private sealed class Registration<T> : RegistrationBase
+        private sealed class Registration<T>(
+            string moduleId,
+            string messageKey,
+            Func<T, byte[]> serialize,
+            Func<ReadOnlySpan<byte>, T> deserialize,
+            RitsuLibSidecarDeliverySemantics delivery)
+            : RegistrationBase(moduleId, messageKey)
         {
-            public Registration(
-                string moduleId,
-                string messageKey,
-                Func<T, byte[]> serialize,
-                Func<ReadOnlySpan<byte>, T> deserialize,
-                RitsuLibSidecarDeliverySemantics delivery) : base(moduleId, messageKey)
-            {
-                Serialize = serialize;
-                Deserialize = deserialize;
-                Delivery = delivery;
-            }
-
-            public Func<T, byte[]> Serialize { get; }
-            public Func<ReadOnlySpan<byte>, T> Deserialize { get; }
-            public RitsuLibSidecarDeliverySemantics Delivery { get; }
+            public Func<T, byte[]> Serialize { get; } = serialize;
+            public Func<ReadOnlySpan<byte>, T> Deserialize { get; } = deserialize;
+            public RitsuLibSidecarDeliverySemantics Delivery { get; } = delivery;
             public List<Action<RitsuLibSidecarTypedDispatchContext<T>>> Handlers { get; } = [];
         }
 

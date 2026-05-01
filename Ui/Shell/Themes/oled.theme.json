@@ -1,6 +1,7 @@
 {
   "$schema": "https://raw.githubusercontent.com/BAKAOLC/STS2-RitsuLib/main/schemas/ui/shell/v1/schema.json",
   "themeFormatVersion": 1,
+  "themeVersion": 2,
   "id": "oled",
   "displayName": "OLED",
   "inherits": "default",
@@ -403,6 +404,168 @@
       "border": {
         "$value": "#7394ADA6",
         "$type": "color"
+      }
+    },
+    "toast": {
+      "surface": {
+        "bg": {
+          "$value": "#070A0FF7",
+          "$type": "color"
+        },
+        "border": {
+          "$value": "#546D80B8",
+          "$type": "color"
+        },
+        "shadow": {
+          "$value": "#00000066",
+          "$type": "color"
+        }
+      },
+      "text": {
+        "title": {
+          "$value": "#F4F8FC",
+          "$type": "color"
+        },
+        "body": {
+          "$value": "#CDD8E6",
+          "$type": "color"
+        }
+      },
+      "interactive": {
+        "bg": {
+          "$value": "#1F3A56CC",
+          "$type": "color"
+        },
+        "fg": {
+          "$value": "#ECF5FF",
+          "$type": "color"
+        },
+        "borderWidth": {
+          "$value": 1,
+          "$type": "dimension"
+        }
+      },
+      "closeButton": {
+        "bg": {
+          "$value": "#22334699",
+          "$type": "color"
+        },
+        "bgHover": {
+          "$value": "#345170CC",
+          "$type": "color"
+        },
+        "border": {
+          "$value": "#546D80B8",
+          "$type": "color"
+        },
+        "borderHover": {
+          "$value": "#83B8D9DB",
+          "$type": "color"
+        },
+        "layout": {
+          "borderWidth": {
+            "$value": 1,
+            "$type": "dimension"
+          },
+          "paddingH": {
+            "$value": 2,
+            "$type": "dimension"
+          },
+          "paddingV": {
+            "$value": 1,
+            "$type": "dimension"
+          }
+        }
+      },
+      "layout": {
+        "width": {
+          "$value": 420,
+          "$type": "dimension"
+        },
+        "minHeight": {
+          "$value": 72,
+          "$type": "dimension"
+        },
+        "padding": {
+          "horizontal": {
+            "$value": 14,
+            "$type": "dimension"
+          },
+          "vertical": {
+            "$value": 12,
+            "$type": "dimension"
+          }
+        },
+        "rowSpacing": {
+          "$value": 10,
+          "$type": "dimension"
+        },
+        "imageSize": {
+          "$value": 56,
+          "$type": "dimension"
+        },
+        "screenMargin": {
+          "$value": 16,
+          "$type": "dimension"
+        }
+      },
+      "animation": {
+        "enterDuration": {
+          "$value": 0.22,
+          "$type": "dimension"
+        },
+        "moveDuration": {
+          "$value": 0.18,
+          "$type": "dimension"
+        },
+        "exitDuration": {
+          "$value": 0.18,
+          "$type": "dimension"
+        },
+        "enterSlideDistance": {
+          "$value": 80,
+          "$type": "dimension"
+        },
+        "exitSlideDistance": {
+          "$value": 80,
+          "$type": "dimension"
+        },
+        "enterScale": {
+          "$value": 0.92,
+          "$type": "dimension"
+        }
+      },
+      "levels": {
+        "info": {
+          "accent": {
+            "$value": "#83B8D9DB",
+            "$type": "color"
+          },
+          "border": {
+            "$value": "#83B8D9DB",
+            "$type": "color"
+          }
+        },
+        "warning": {
+          "accent": {
+            "$value": "#D8B45FB8",
+            "$type": "color"
+          },
+          "border": {
+            "$value": "#D8B45FB8",
+            "$type": "color"
+          }
+        },
+        "error": {
+          "accent": {
+            "$value": "#D88787C7",
+            "$type": "color"
+          },
+          "border": {
+            "$value": "#D88787C7",
+            "$type": "color"
+          }
+        }
       }
     }
   }

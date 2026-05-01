@@ -56,11 +56,22 @@ def _resolve_release_tag_message_file(repo: Path) -> Path | None:
     return None
 
 
-def _git_tag_command(tag: str, *, force: bool, message_file: Path | None) -> list[str]:
+def _git_tag_command(
+    tag: str,
+    *,
+    force: bool,
+    message_file: Path | None,
+    sign: bool,
+) -> list[str]:
     cmd: list[str] = ["git", "tag"]
     if force:
         cmd.append("-f")
-    if message_file is not None:
+    if sign and message_file is not None:
+        cmd.extend(["-s", "-a", tag, "-F", str(message_file)])
+    elif sign:
+        # Keep this non-interactive when no tag message file is configured.
+        cmd.extend(["-s", "-a", tag, "-m", tag])
+    elif message_file is not None:
         cmd.extend(["-a", tag, "-F", str(message_file)])
     else:
         cmd.append(tag)
@@ -131,6 +142,11 @@ def _parse_args(argv: list[str]) -> argparse.Namespace:
         "--force-tag",
         action="store_true",
         help="Allow overwriting an existing release tag (git tag -f; git push --force for the tag only)",
+    )
+    p.add_argument(
+        "--no-sign-tag",
+        action="store_true",
+        help="Create unsigned tags (default is signed tags).",
     )
     p.add_argument(
         "--plan-fetch",
@@ -284,6 +300,11 @@ def main(argv: list[str] | None = None) -> int:
                 "[release] DRY-RUN: --force-tag -> git tag -f; push uses --force for tag ref only.",
                 file=sys.stderr,
             )
+        if args.no_sign_tag:
+            print(
+                "[release] DRY-RUN: --no-sign-tag -> release tag will be unsigned.",
+                file=sys.stderr,
+            )
         else:
             git_ops.report_tag_collision_hints(repo, args.remote, tag)
         if git_ops.remote_exists(repo, args.remote):
@@ -347,6 +368,7 @@ def main(argv: list[str] | None = None) -> int:
                 and not args.plan_fetch
                 and git_ops.remote_exists(repo, args.remote),
             ),
+            sign_tag=not args.no_sign_tag,
         )
         if args.dry_run_verify_pack:
             print("[release] DRY-RUN: verifying dotnet pack (temp directory)...")
@@ -424,7 +446,12 @@ def main(argv: list[str] | None = None) -> int:
         check=True,
     )
     subprocess.run(
-        _git_tag_command(tag, force=args.force_tag, message_file=tag_msg_file),
+        _git_tag_command(
+            tag,
+            force=args.force_tag,
+            message_file=tag_msg_file,
+            sign=not args.no_sign_tag,
+        ),
         cwd=repo,
         check=True,
     )
@@ -487,6 +514,7 @@ def _print_git_plan(
     tag_message_file: Path | None = None,
     conflict_marks: frozenset[str] | None = None,
     suggest_plan_fetch: bool = False,
+    sign_tag: bool = True,
 ) -> None:
     merge_msg = _commit_message_merge(args.dev_branch, args.main_branch, next_text)
     rel = " ".join(_VERSIONED_FILES)
@@ -533,7 +561,18 @@ def _print_git_plan(
         f'git merge --no-ff {args.dev_branch} -m "{merge_msg}"',
         step_id=plan_analysis.MERGE,
     )
-    if tag_message_file is not None:
+    if sign_tag and tag_message_file is not None:
+        fp = str(tag_message_file).replace('"', '\\"')
+        if args.force_tag:
+            step(f'git tag -f -s -a {tag} -F "{fp}"', step_id="")
+        else:
+            step(f'git tag -s -a {tag} -F "{fp}"', step_id=plan_analysis.TAG)
+    elif sign_tag:
+        if args.force_tag:
+            step(f"git tag -f -s -a {tag} -m {tag}", step_id="")
+        else:
+            step(f"git tag -s -a {tag} -m {tag}", step_id=plan_analysis.TAG)
+    elif tag_message_file is not None:
         fp = str(tag_message_file).replace('"', '\\"')
         if args.force_tag:
             step(f'git tag -f -a {tag} -F "{fp}"', step_id="")

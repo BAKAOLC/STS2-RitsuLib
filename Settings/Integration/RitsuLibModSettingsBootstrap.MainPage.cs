@@ -19,21 +19,120 @@ namespace STS2RitsuLib.Settings
                 .WithSortOrder(-1000)
                 .AddSection("general", section => section
                     .WithTitle(T("ritsulib.section.general.title", "General"))
-                    .WithDescription(T("ritsulib.section.general.description",
-                        "Persisted framework settings exposed to players."))
+                    .AddChoice(
+                        "ui_shell_theme_id",
+                        T("ritsulib.uiShellTheme.label", "Interface theme"),
+                        ui.UiShellThemeId,
+                        RitsuShellThemeCatalog.RegisteredThemeIds
+                            .Select(id => new ModSettingsChoiceOption<string>(id,
+                                T($"ritsulib.uiShellTheme.option.{id}", id)))
+                            .ToArray(),
+                        T("ritsulib.uiShellTheme.description",
+                            "Applies a built-in color theme to the Ritsu settings UI shell (sidebars, rows, and modals)."),
+                        ModSettingsChoicePresentation.Dropdown)
+                    .AddButton(
+                        "ui_shell_theme_reset_file",
+                        T("ritsulib.uiShellTheme.resetFile.label", "Reset existing theme files"),
+                        T("ritsulib.uiShellTheme.resetFile.button", "Reset theme files"),
+                        TryResetExistingThemeFiles,
+                        ModSettingsButtonTone.Normal,
+                        T("ritsulib.uiShellTheme.resetFile.description",
+                            "Overwrite existing built-in theme files on disk with their embedded default versions."))
                     .AddToggle(
                         "debug_compatibility_mode",
                         T("ritsulib.debugCompatibility.label", "Debug compatibility mode"),
                         ui.DebugCompatibility,
                         T("ritsulib.debugCompatibility.description",
                             "Enable compatibility fallbacks for localization, unlock, and ancient-dialogue edge cases. Sub-toggles default to on.")))
+                .AddSection("toast", section => section
+                    .WithTitle(T("ritsulib.section.toast.title", "Toast notifications"))
+                    .WithDescription(T("ritsulib.section.toast.description",
+                        "Configure stack placement, queue limits, and animation for global toast notifications."))
+                    .Collapsible()
+                    .AddParagraph(
+                        "toast_anchor_offset_guide",
+                        T("ritsulib.toast.anchorOffset.guide",
+                            "Anchor picks where the newest toast starts. Offsets shift that anchor in screen pixels before viewport clamping."))
+                    .AddToggle(
+                        "toast_enabled",
+                        T("ritsulib.toast.enabled.label", "Enable toast notifications"),
+                        ui.ToastEnabled,
+                        T("ritsulib.toast.enabled.description",
+                            "Global switch for non-blocking toast notifications."))
+                    .AddChoice(
+                        "toast_anchor",
+                        T("ritsulib.toast.anchor.label", "Toast position"),
+                        ui.ToastAnchor,
+                        [
+                            new("topleft", T("ritsulib.toast.anchor.topleft", "Top Left")),
+                            new("topcenter", T("ritsulib.toast.anchor.topcenter", "Top Center")),
+                            new("topright", T("ritsulib.toast.anchor.topright", "Top Right")),
+                            new("middleleft", T("ritsulib.toast.anchor.middleleft", "Middle Left")),
+                            new("middlecenter", T("ritsulib.toast.anchor.middlecenter", "Middle Center")),
+                            new("middleright", T("ritsulib.toast.anchor.middleright", "Middle Right")),
+                            new("bottomleft", T("ritsulib.toast.anchor.bottomleft", "Bottom Left")),
+                            new("bottomcenter", T("ritsulib.toast.anchor.bottomcenter", "Bottom Center")),
+                            new("bottomright", T("ritsulib.toast.anchor.bottomright", "Bottom Right")),
+                        ],
+                        T("ritsulib.toast.anchor.description",
+                            "Select where the newest toast is anchored before stack expansion."),
+                        ModSettingsChoicePresentation.Dropdown)
+                    .AddSlider(
+                        "toast_offset_x",
+                        T("ritsulib.toast.offsetX.label", "Horizontal offset"),
+                        ui.ToastOffsetX,
+                        -600d,
+                        600d,
+                        1d,
+                        value => value.ToString("0"),
+                        T("ritsulib.toast.offsetX.description",
+                            "Shift the anchor on X before clamping. Negative moves left, positive moves right."))
+                    .AddSlider(
+                        "toast_offset_y",
+                        T("ritsulib.toast.offsetY.label", "Vertical offset"),
+                        ui.ToastOffsetY,
+                        -450d,
+                        450d,
+                        1d,
+                        value => value.ToString("0"),
+                        T("ritsulib.toast.offsetY.description",
+                            "Shift the anchor on Y before clamping. Negative moves up, positive moves down."))
+                    .AddIntSlider(
+                        "toast_max_visible",
+                        T("ritsulib.toast.maxVisible.label", "Max visible toasts"),
+                        ui.ToastMaxVisible,
+                        1,
+                        8,
+                        1,
+                        value => value.ToString(),
+                        T("ritsulib.toast.maxVisible.description",
+                            "Maximum toasts shown at once. Extra items queue and appear in order."))
+                    .AddSlider(
+                        "toast_duration_seconds",
+                        T("ritsulib.toast.duration.label", "Default duration (seconds)"),
+                        ui.ToastDurationSeconds,
+                        0.5d,
+                        30d,
+                        0.25d,
+                        value => value.ToString("0.##"),
+                        T("ritsulib.toast.duration.description",
+                            "Default display duration for toasts without per-request overrides."))
+                    .AddChoice(
+                        "toast_animation",
+                        T("ritsulib.toast.animation.label", "Animation preset"),
+                        ui.ToastAnimation,
+                        [
+                            new("fade", T("ritsulib.toast.animation.fade", "Fade")),
+                            new("fadeslide", T("ritsulib.toast.animation.fadeslide", "Fade + Slide")),
+                            new("fadescale", T("ritsulib.toast.animation.fadescale", "Fade + Scale")),
+                        ],
+                        T("ritsulib.toast.animation.description", "Applies to enter/exit animation of new toasts."),
+                        ModSettingsChoicePresentation.Dropdown))
                 .AddSection(
                     "debug_compat_shims",
                     section => section
                         .WithVisibleWhen(RitsuLibSettingsStore.IsDebugCompatibilityMasterEnabled)
                         .WithTitle(T("ritsulib.section.debugCompatShims.title", "Compatibility fallbacks"))
-                        .WithDescription(T("ritsulib.section.debugCompatShims.description",
-                            "Shown only when debug compatibility mode is enabled. Each toggle controls one fallback."))
                         .Collapsible()
                         .AddToggle(
                             "debug_compat_loc_table",
@@ -55,8 +154,6 @@ namespace STS2RitsuLib.Settings
                                 "Inject empty Lines entries for ModContentRegistry ancients when vanilla provides no dialogue.")))
                 .AddSection("steam_cloud_mod_data", section => section
                     .WithTitle(T("ritsulib.section.steamCloudModData.title", "Steam Cloud (mod data)"))
-                    .WithDescription(T("ritsulib.section.steamCloudModData.description",
-                        "Manage syncing mod data with Steam Cloud here."))
                     .WithEnabledWhen(() =>
                         SteamInitializer.Initialized && ModDataCloudMirror.TryGetCloudSaveStore() != null)
                     .Collapsible()
@@ -90,29 +187,6 @@ namespace STS2RitsuLib.Settings
                         ModSettingsButtonTone.Danger,
                         T("ritsulib.modCloud.clear.description",
                             "Deletes mod data from Steam Cloud for this profile. Local files are not removed. Requires confirmation.")))
-                .AddSection("appearance", section => section
-                    .WithTitle(T("ritsulib.section.appearance.title", "Appearance"))
-                    .WithDescription(T("ritsulib.section.appearance.description",
-                        "Visual theme for the Ritsu mod settings interface."))
-                    .AddChoice(
-                        "ui_shell_theme_id",
-                        T("ritsulib.uiShellTheme.label", "Interface theme"),
-                        ui.UiShellThemeId,
-                        RitsuShellThemeCatalog.RegisteredThemeIds
-                            .Select(id => new ModSettingsChoiceOption<string>(id,
-                                T($"ritsulib.uiShellTheme.option.{id}", id)))
-                            .ToArray(),
-                        T("ritsulib.uiShellTheme.description",
-                            "Applies a built-in color theme to the Ritsu settings UI shell (sidebars, rows, and modals)."),
-                        ModSettingsChoicePresentation.Dropdown)
-                    .AddButton(
-                        "ui_shell_theme_reset_file",
-                        T("ritsulib.uiShellTheme.resetFile.label", "Reset current theme file"),
-                        T("ritsulib.uiShellTheme.resetFile.button", "Reset theme file"),
-                        () => TryResetCurrentThemeFile(ui.UiShellThemeId.Read()),
-                        ModSettingsButtonTone.Normal,
-                        T("ritsulib.uiShellTheme.resetFile.description",
-                            "Overwrite the current released theme file with its embedded default version.")))
                 .AddSection("dev_debug_tools", section => section
                     .WithTitle(T("ritsulib.section.devDebugTools.title", "Developer debug tools"))
                     .Collapsible(true)
@@ -139,8 +213,6 @@ namespace STS2RitsuLib.Settings
                             "Card, relic, and potion image exports.")))
                 .AddSection("reference", section => section
                     .WithTitle(T("ritsulib.section.reference.title", "Reference"))
-                    .WithDescription(T("ritsulib.section.reference.description",
-                        "Reference controls available in the settings UI."))
                     .Collapsible()
                     .AddParagraph(
                         "reference_intro",
@@ -162,12 +234,9 @@ namespace STS2RitsuLib.Settings
                             "Inspect currently registered runtime hotkeys and their active bindings."))));
         }
 
-        private static void TryResetCurrentThemeFile(string? selectedThemeId)
+        private static void TryResetExistingThemeFiles()
         {
-            var themeId = string.IsNullOrWhiteSpace(selectedThemeId)
-                ? RitsuShellThemeRuntime.ActiveThemeId
-                : selectedThemeId.Trim();
-            if (!RitsuShellThemeCatalog.TryRestoreDiskThemeFromEmbedded(themeId, out _))
+            if (!RitsuShellThemeCatalog.TryRestoreAllExistingDiskThemesFromEmbedded(out _))
                 return;
             RitsuShellThemeRuntime.ReapplyActiveTheme(true);
         }
