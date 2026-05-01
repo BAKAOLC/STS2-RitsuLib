@@ -1,3 +1,4 @@
+using System.Collections.ObjectModel;
 using System.Reflection;
 using System.Text.Json;
 using Godot;
@@ -16,6 +17,7 @@ namespace STS2RitsuLib.Utils
         private readonly string[] _pckFolders;
         private readonly Assembly _resourceAssembly;
         private readonly string[] _resourceFolders;
+        private IReadOnlyList<string>? _availableLanguagesCache;
         private bool _disposed;
         private string? _loadedLanguage;
         private bool _subscribed;
@@ -73,6 +75,98 @@ namespace STS2RitsuLib.Utils
         }
 
         /// <summary>
+        ///     Returns true and outputs the translation when <paramref name="key" /> exists.
+        /// </summary>
+        public bool TryGet(string key, out string value)
+        {
+            ObjectDisposedException.ThrowIf(_disposed, this);
+            EnsureLoaded();
+            return _translations.TryGetValue(key, out value!);
+        }
+
+        /// <summary>
+        ///     Returns true when <paramref name="key" /> exists in the current merged dictionary.
+        /// </summary>
+        public bool ContainsKey(string key)
+        {
+            ObjectDisposedException.ThrowIf(_disposed, this);
+            EnsureLoaded();
+            return _translations.ContainsKey(key);
+        }
+
+        /// <summary>
+        ///     Returns a stable snapshot view of the current merged translations.
+        /// </summary>
+        public IReadOnlyDictionary<string, string> Snapshot()
+        {
+            ObjectDisposedException.ThrowIf(_disposed, this);
+            EnsureLoaded();
+            return new ReadOnlyDictionary<string, string>(_translations);
+        }
+
+        /// <summary>
+        ///     Enumerates translation keys in the current merged dictionary.
+        /// </summary>
+        /// <param name="prefix">When non-empty, only keys that start with this prefix (ordinal ignore case).</param>
+        /// <param name="orderByKey">When true, keys are ordered with ordinal ignore case.</param>
+        public IEnumerable<string> EnumerateKeys(string? prefix = null, bool orderByKey = true)
+        {
+            ObjectDisposedException.ThrowIf(_disposed, this);
+            EnsureLoaded();
+
+            IEnumerable<string> keys = _translations.Keys;
+            if (!string.IsNullOrWhiteSpace(prefix))
+                keys = keys.Where(k => k.StartsWith(prefix, StringComparison.OrdinalIgnoreCase));
+
+            return orderByKey
+                ? keys.OrderBy(k => k, StringComparer.OrdinalIgnoreCase)
+                : keys;
+        }
+
+        /// <summary>
+        ///     Returns all keys from the current merged dictionary as a new list, optionally sorted.
+        /// </summary>
+        public IReadOnlyList<string> GetAllKeys(bool orderByKey = true)
+        {
+            return EnumerateKeys(null, orderByKey).ToArray();
+        }
+
+        /// <summary>
+        ///     Returns known language codes discoverable from configured sources.
+        /// </summary>
+        public IReadOnlyList<string> EnumerateAvailableLanguages(bool useCache = true)
+        {
+            ObjectDisposedException.ThrowIf(_disposed, this);
+
+            if (useCache && _availableLanguagesCache != null)
+                return _availableLanguagesCache;
+
+            var set = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+
+            foreach (var folder in _fsFolders)
+            foreach (var lang in EnumerateJsonLanguagesInFolder(folder))
+                set.Add(lang);
+
+            foreach (var folder in _pckFolders)
+            foreach (var lang in EnumerateJsonLanguagesInFolder(folder))
+                set.Add(lang);
+
+            foreach (var res in _resourceFolders)
+            foreach (var lang in EnumerateEmbeddedLanguages(res))
+                set.Add(lang);
+
+            var list = set
+                .Select(NormalizeLanguageCode)
+                .Where(s => !string.IsNullOrWhiteSpace(s))
+                .Distinct(StringComparer.OrdinalIgnoreCase)
+                .OrderBy(s => s, StringComparer.OrdinalIgnoreCase)
+                .ToArray();
+
+            _availableLanguagesCache = list;
+            return list;
+        }
+
+        /// <summary>
         ///     Reloads translations for the current resolved language and raises <see cref="Changed" />.
         /// </summary>
         public void ForceReload()
@@ -80,6 +174,7 @@ namespace STS2RitsuLib.Utils
             var language = ResolveLanguage();
             _translations = LoadTranslations(language);
             _loadedLanguage = language;
+            _availableLanguagesCache = null;
             RitsuLibFramework.Logger.Info(
                 $"[{_instanceName}] Successfully reloaded translations for language '{language}' ({_translations.Count} entries)");
             BroadcastChange();
@@ -215,6 +310,59 @@ namespace STS2RitsuLib.Utils
                     $"[{_instanceName}] Total: {merged.Count} entries from {sourceCount} source(s)");
 
             return merged;
+        }
+
+        private static IReadOnlyList<string> EnumerateJsonLanguagesInFolder(string folder)
+        {
+            if (string.IsNullOrWhiteSpace(folder)) return [];
+
+            var list = new List<string>();
+            try
+            {
+                using var dir = DirAccess.Open(folder);
+                if (dir == null) return [];
+
+                foreach (var file in dir.GetFiles())
+                {
+                    if (!file.EndsWith(".json", StringComparison.OrdinalIgnoreCase)) continue;
+                    var name = file[..^5];
+                    if (string.IsNullOrWhiteSpace(name)) continue;
+                    list.Add(name);
+                }
+            }
+            catch
+            {
+                return [];
+            }
+
+            return list;
+        }
+
+        private IReadOnlyList<string> EnumerateEmbeddedLanguages(string resourceFolder)
+        {
+            if (string.IsNullOrWhiteSpace(resourceFolder)) return [];
+
+            string[]? names;
+            try
+            {
+                names = _resourceAssembly.GetManifestResourceNames();
+            }
+            catch
+            {
+                return [];
+            }
+
+            var prefix = resourceFolder + ".";
+
+            return (from name in names
+                where name.StartsWith(prefix, StringComparison.Ordinal)
+                where name.EndsWith(".json", StringComparison.OrdinalIgnoreCase)
+                select name[prefix.Length..^5]
+                into core
+                let dot = core.IndexOf('.')
+                where dot < 0
+                where !string.IsNullOrWhiteSpace(core)
+                select core).ToList();
         }
 
         private Dictionary<string, string>? TryLoadEmbedded(string resourceFolder, string language)
