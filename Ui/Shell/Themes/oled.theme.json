@@ -1,6 +1,7 @@
 {
   "$schema": "https://raw.githubusercontent.com/BAKAOLC/STS2-RitsuLib/main/schemas/ui/shell/v1/schema.json",
   "themeFormatVersion": 1,
+  "themeVersion": 2,
   "id": "oled",
   "displayName": "OLED",
   "inherits": "default",

@@ -269,13 +269,10 @@ namespace STS2RitsuLib.Settings
                             if (plan.Title != null)
                                 section.WithTitle(plan.Title);
 
-                            for (var entryIndex = 0; entryIndex < plan.Entries.Count; entryIndex++)
-                            {
-                                var mapped = plan.Entries[entryIndex];
+                            foreach (var mapped in plan.Entries)
                                 AppendConfigEntry(section, modId, mapped.Entry, mapped.SourceIndex, getValueOpen,
                                     setValue,
                                     i18NGet, mirrorOptions);
-                            }
 
                             if (!appendRestoreDefaults)
                                 return;

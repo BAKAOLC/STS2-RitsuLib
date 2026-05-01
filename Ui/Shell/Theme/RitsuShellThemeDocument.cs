@@ -27,6 +27,12 @@ namespace STS2RitsuLib.Ui.Shell.Theme
         public int? ThemeFormatVersion { get; set; }
 
         /// <summary>
+        ///     Theme content revision for disk auto-upgrade. Higher values replace older disk copies.
+        /// </summary>
+        [JsonPropertyName("themeVersion")]
+        public int? ThemeVersion { get; set; }
+
+        /// <summary>
         ///     Theme id (lowercase identifier).
         /// </summary>
         [JsonPropertyName("id")]

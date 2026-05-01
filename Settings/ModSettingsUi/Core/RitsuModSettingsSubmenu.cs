@@ -31,7 +31,7 @@ namespace STS2RitsuLib.Settings
         /// </summary>
         private const double RefreshDebounceSeconds = AutosaveDelaySeconds + 0.04;
 
-        private const int ScrollContentRightGutter = 12;
+        private const string ScrollbarContentRightGutterTokenPath = "components.scrollbar.layout.contentRightGutter";
 
         private static readonly StringName PaneSidebarHotkey = MegaInput.viewDeckAndTabLeft;
         private static readonly StringName PaneContentHotkey = MegaInput.viewExhaustPileAndTabRight;
@@ -1047,7 +1047,7 @@ namespace STS2RitsuLib.Settings
                 SizeFlagsVertical = SizeFlags.ExpandFill,
                 MouseFilter = MouseFilterEnum.Ignore,
             };
-            sidebarScrollFrame.AddThemeConstantOverride("margin_right", ScrollContentRightGutter);
+            sidebarScrollFrame.AddThemeConstantOverride("margin_right", ResolveScrollbarContentRightGutter());
             scroll.AddChild(sidebarScrollFrame);
 
             _modButtonList = new()
@@ -1120,7 +1120,7 @@ namespace STS2RitsuLib.Settings
                 SizeFlagsHorizontal = SizeFlags.ExpandFill,
                 MouseFilter = MouseFilterEnum.Ignore,
             };
-            contentScrollFrame.AddThemeConstantOverride("margin_right", ScrollContentRightGutter);
+            contentScrollFrame.AddThemeConstantOverride("margin_right", ResolveScrollbarContentRightGutter());
             contentStack.AddChild(contentScrollFrame);
 
             _contentList = new()
@@ -2540,6 +2540,13 @@ namespace STS2RitsuLib.Settings
                 CreateScrollGrabberStyle("components.scrollbar.grabberHover"));
             vScrollBar.AddThemeStyleboxOverride("grabber_pressed",
                 CreateScrollGrabberStyle("components.scrollbar.grabberPressed"));
+            var scrollSize = RitsuShellThemeLayoutResolver.ResolveInt("components.scrollbar.layout.size", 8);
+            vScrollBar.CustomMinimumSize = new(scrollSize, vScrollBar.CustomMinimumSize.Y);
+        }
+
+        private static int ResolveScrollbarContentRightGutter()
+        {
+            return RitsuShellThemeLayoutResolver.ResolveInt(ScrollbarContentRightGutterTokenPath, 12);
         }
 
         private static StyleBoxFlat CreateScrollTrackStyle()
