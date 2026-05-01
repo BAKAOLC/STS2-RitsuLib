@@ -7,10 +7,10 @@ namespace STS2RitsuLib.Diagnostics.CompendiumExport
     internal static class CompendiumPngExportSettingsActions
     {
         internal static void TryBeginRelicDetailFromSettings(
-            ModSettingsValueBinding<RitsuLibSettings, string> pathBinding,
-            ModSettingsValueBinding<RitsuLibSettings, double> scaleBinding,
-            ModSettingsValueBinding<RitsuLibSettings, string> filterBinding,
-            ModSettingsValueBinding<RitsuLibSettings, bool> includeHoverBinding)
+            IModSettingsValueBinding<string> pathBinding,
+            IModSettingsValueBinding<double> scaleBinding,
+            IModSettingsValueBinding<string> filterBinding,
+            IModSettingsValueBinding<bool> includeHoverBinding)
         {
             if (!TryValidatePathAndEnv(pathBinding, out var path))
                 return;
@@ -28,9 +28,9 @@ namespace STS2RitsuLib.Diagnostics.CompendiumExport
         }
 
         internal static void TryBeginPotionDetailFromSettings(
-            ModSettingsValueBinding<RitsuLibSettings, string> pathBinding,
-            ModSettingsValueBinding<RitsuLibSettings, double> scaleBinding,
-            ModSettingsValueBinding<RitsuLibSettings, string> filterBinding)
+            IModSettingsValueBinding<string> pathBinding,
+            IModSettingsValueBinding<double> scaleBinding,
+            IModSettingsValueBinding<string> filterBinding)
         {
             if (!TryValidatePathAndEnv(pathBinding, out var path))
                 return;
@@ -48,7 +48,7 @@ namespace STS2RitsuLib.Diagnostics.CompendiumExport
         }
 
         private static bool TryValidatePathAndEnv(
-            ModSettingsValueBinding<RitsuLibSettings, string> pathBinding, out string path)
+            IModSettingsValueBinding<string> pathBinding, out string path)
         {
             path = pathBinding.Read().Trim();
             if (string.IsNullOrWhiteSpace(path))

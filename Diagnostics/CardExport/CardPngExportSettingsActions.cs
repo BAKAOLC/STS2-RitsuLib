@@ -9,12 +9,12 @@ namespace STS2RitsuLib.Diagnostics.CardExport
     internal static class CardPngExportSettingsActions
     {
         internal static void TryBeginFromSettings(
-            ModSettingsValueBinding<RitsuLibSettings, string> pathBinding,
-            ModSettingsValueBinding<RitsuLibSettings, bool> includeHoverBinding,
-            ModSettingsValueBinding<RitsuLibSettings, bool> includeUpgradesBinding,
-            ModSettingsValueBinding<RitsuLibSettings, double> scaleBinding,
-            ModSettingsValueBinding<RitsuLibSettings, string> filterBinding,
-            ModSettingsValueBinding<RitsuLibSettings, bool> includeHiddenFromLibraryBinding)
+            IModSettingsValueBinding<string> pathBinding,
+            IModSettingsValueBinding<bool> includeHoverBinding,
+            IModSettingsValueBinding<bool> includeUpgradesBinding,
+            IModSettingsValueBinding<double> scaleBinding,
+            IModSettingsValueBinding<string> filterBinding,
+            IModSettingsValueBinding<bool> includeHiddenFromLibraryBinding)
         {
             var rawPath = pathBinding.Read().Trim();
             if (string.IsNullOrWhiteSpace(rawPath))
