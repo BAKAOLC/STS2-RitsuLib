@@ -1,3 +1,4 @@
+using System.Collections;
 using System.Collections.ObjectModel;
 using System.Reflection;
 using System.Text.Json;
@@ -10,7 +11,7 @@ namespace STS2RitsuLib.Utils
     ///     Loads merged JSON translation dictionaries from the file system, embedded resources, and PCK paths,
     ///     reacting to game locale changes when possible.
     /// </summary>
-    public class I18N : IDisposable
+    public class I18N : IDisposable, IEnumerable<KeyValuePair<string, string>>
     {
         private readonly string[] _fsFolders;
         private readonly string _instanceName;
@@ -57,6 +58,24 @@ namespace STS2RitsuLib.Utils
             Changed = null;
             RitsuLibFramework.Logger.Info($"[{_instanceName}] Instance disposed and resources released");
             GC.SuppressFinalize(this);
+        }
+
+        /// <summary>
+        ///     Enumerates the current merged translations as key-value pairs.
+        /// </summary>
+        /// <remarks>
+        ///     Enumeration uses a snapshot copy to avoid collection-modified exceptions if reload happens during iteration.
+        /// </remarks>
+        public IEnumerator<KeyValuePair<string, string>> GetEnumerator()
+        {
+            ObjectDisposedException.ThrowIf(_disposed, this);
+            EnsureLoaded();
+            return _translations.ToArray().AsEnumerable().GetEnumerator();
+        }
+
+        IEnumerator IEnumerable.GetEnumerator()
+        {
+            return GetEnumerator();
         }
 
         /// <summary>
