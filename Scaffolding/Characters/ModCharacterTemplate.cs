@@ -611,10 +611,12 @@ namespace STS2RitsuLib.Scaffolding.Characters
 
         private IEnumerable<CardModel> ResolveStartingDeck()
         {
-            var localEntries = GetLocalStartingDeckEntries();
+            var localTypes = GetLocalStartingDeckEntries()
+                .SelectMany(static entry => Enumerable.Repeat(entry.CardType, Math.Max(entry.Count, 0)));
+            var registeredTypes = ModContentRegistry.GetRegisteredCharacterStarterCards(GetType());
 
-            return localEntries
-                .SelectMany(static entry => Enumerable.Repeat(entry.CardType, Math.Max(entry.Count, 0)))
+            return localTypes
+                .Concat(registeredTypes)
                 .Select(type => ModelDb.GetById<CardModel>(ModelDb.GetId(type)))
                 .ToArray();
         }
@@ -622,6 +624,7 @@ namespace STS2RitsuLib.Scaffolding.Characters
         private IReadOnlyList<RelicModel> ResolveStartingRelics()
         {
             return GetLocalStartingRelicTypes()
+                .Concat(ModContentRegistry.GetRegisteredCharacterStarterRelics(GetType()))
                 .Select(type => ModelDb.GetById<RelicModel>(ModelDb.GetId(type)))
                 .ToArray();
         }
@@ -629,6 +632,7 @@ namespace STS2RitsuLib.Scaffolding.Characters
         private IReadOnlyList<PotionModel> ResolveStartingPotions()
         {
             return GetLocalStartingPotionTypes()
+                .Concat(ModContentRegistry.GetRegisteredCharacterStarterPotions(GetType()))
                 .Select(type => ModelDb.GetById<PotionModel>(ModelDb.GetId(type)))
                 .ToArray();
         }

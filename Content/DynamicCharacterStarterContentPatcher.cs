@@ -5,6 +5,7 @@ using MegaCrit.Sts2.Core.Logging;
 using MegaCrit.Sts2.Core.Models;
 using STS2RitsuLib.Patching.Builders;
 using STS2RitsuLib.Patching.Core;
+using STS2RitsuLib.Scaffolding.Characters;
 
 namespace STS2RitsuLib.Content
 {
@@ -84,7 +85,7 @@ namespace STS2RitsuLib.Content
             Logger logger)
         {
             var getter = FindDeclaredPropertyGetter(concreteCharacterType, propertyName);
-            if (getter == null || !queuedGetters.Add(getter))
+            if (getter == null || IsModCharacterTemplateGetter(getter) || !queuedGetters.Add(getter))
                 return;
 
             try
@@ -116,6 +117,13 @@ namespace STS2RitsuLib.Content
             }
 
             return null;
+        }
+
+        private static bool IsModCharacterTemplateGetter(MethodInfo getter)
+        {
+            var declaringType = getter.DeclaringType;
+            return declaringType is { IsGenericType: true }
+                   && declaringType.GetGenericTypeDefinition() == typeof(ModCharacterTemplate<,,>);
         }
 
         // ReSharper disable InconsistentNaming
