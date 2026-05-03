@@ -132,6 +132,7 @@ namespace STS2RitsuLib.Ui.Shell.Theme
     /// <param name="ValueLabel">Font size for dropdown faces and stepper center labels.</param>
     /// <param name="PopupRow">Font size for dropdown / popup rows.</param>
     /// <param name="HintSmall">Font size for small inline hints.</param>
+    /// <param name="Tooltip">Font size for native control tooltips (TooltipLabel).</param>
     /// <param name="Grip">Font size for glyph-style grip labels.</param>
     /// <param name="PillCount">Font size for list count badges.</param>
     /// <param name="Secondary">Font size for secondary text.</param>
@@ -150,6 +151,7 @@ namespace STS2RitsuLib.Ui.Shell.Theme
         int ValueLabel,
         int PopupRow,
         int HintSmall,
+        int Tooltip,
         int Grip,
         int PillCount,
         int Secondary,

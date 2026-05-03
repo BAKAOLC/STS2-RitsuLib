@@ -156,6 +156,10 @@ namespace STS2RitsuLib.Settings
                 ok = false;
             }
 
+            var validationCorners = RitsuShellThemeLayoutResolver.ResolveCornerRadii(
+                "components.stringValidation.layout.cornerRadius",
+                RitsuShellTheme.Current.Metric.Radius.Validation);
+
             _validationNeutralStyle ??= new()
             {
                 BgColor = RitsuShellTheme.Current.Component.StringValidation.Neutral.Bg,
@@ -172,18 +176,10 @@ namespace STS2RitsuLib.Settings
                 BorderWidthRight = RitsuShellThemeLayoutResolver.ResolveEdges(
                     "components.stringValidation.layout.neutral.borderWidth",
                     RitsuShellTheme.Current.Metric.BorderWidth.Thin).Right,
-                CornerRadiusTopLeft = RitsuShellThemeLayoutResolver.ResolveInt(
-                    "components.stringValidation.layout.cornerRadius",
-                    RitsuShellTheme.Current.Metric.Radius.Validation),
-                CornerRadiusTopRight = RitsuShellThemeLayoutResolver.ResolveInt(
-                    "components.stringValidation.layout.cornerRadius",
-                    RitsuShellTheme.Current.Metric.Radius.Validation),
-                CornerRadiusBottomLeft = RitsuShellThemeLayoutResolver.ResolveInt(
-                    "components.stringValidation.layout.cornerRadius",
-                    RitsuShellTheme.Current.Metric.Radius.Validation),
-                CornerRadiusBottomRight = RitsuShellThemeLayoutResolver.ResolveInt(
-                    "components.stringValidation.layout.cornerRadius",
-                    RitsuShellTheme.Current.Metric.Radius.Validation),
+                CornerRadiusTopLeft = validationCorners.TopLeft,
+                CornerRadiusTopRight = validationCorners.TopRight,
+                CornerRadiusBottomLeft = validationCorners.BottomLeft,
+                CornerRadiusBottomRight = validationCorners.BottomRight,
             };
             _validationInvalidStyle ??= new()
             {
@@ -201,18 +197,10 @@ namespace STS2RitsuLib.Settings
                 BorderWidthRight = RitsuShellThemeLayoutResolver.ResolveEdges(
                     "components.stringValidation.layout.invalid.borderWidth",
                     RitsuShellTheme.Current.Metric.BorderWidth.Normal).Right,
-                CornerRadiusTopLeft = RitsuShellThemeLayoutResolver.ResolveInt(
-                    "components.stringValidation.layout.cornerRadius",
-                    RitsuShellTheme.Current.Metric.Radius.Validation),
-                CornerRadiusTopRight = RitsuShellThemeLayoutResolver.ResolveInt(
-                    "components.stringValidation.layout.cornerRadius",
-                    RitsuShellTheme.Current.Metric.Radius.Validation),
-                CornerRadiusBottomLeft = RitsuShellThemeLayoutResolver.ResolveInt(
-                    "components.stringValidation.layout.cornerRadius",
-                    RitsuShellTheme.Current.Metric.Radius.Validation),
-                CornerRadiusBottomRight = RitsuShellThemeLayoutResolver.ResolveInt(
-                    "components.stringValidation.layout.cornerRadius",
-                    RitsuShellTheme.Current.Metric.Radius.Validation),
+                CornerRadiusTopLeft = validationCorners.TopLeft,
+                CornerRadiusTopRight = validationCorners.TopRight,
+                CornerRadiusBottomLeft = validationCorners.BottomLeft,
+                CornerRadiusBottomRight = validationCorners.BottomRight,
             };
 
             Editor.AddThemeStyleboxOverride("normal", ok ? _validationNeutralStyle : _validationInvalidStyle);

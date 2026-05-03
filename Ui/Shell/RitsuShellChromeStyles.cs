@@ -14,7 +14,7 @@ namespace STS2RitsuLib.Ui.Shell
         public static StyleBoxFlat CreateSurfaceStyle()
         {
             var t = RitsuShellTheme.Current;
-            var r = RitsuShellThemeLayoutResolver.ResolveInt("components.surface.layout.cornerRadius",
+            var cornerRadii = RitsuShellThemeLayoutResolver.ResolveCornerRadii("components.surface.layout.cornerRadius",
                 t.Metric.Radius.Default);
             var border = RitsuShellThemeLayoutResolver.ResolveEdges("components.surface.layout.borderWidth", 1);
             var padding = RitsuShellThemeLayoutResolver.ResolveEdges("components.surface.layout.padding", 12);
@@ -31,10 +31,10 @@ namespace STS2RitsuLib.Ui.Shell
                 BorderWidthTop = border.Top,
                 BorderWidthRight = border.Right,
                 BorderWidthBottom = border.Bottom,
-                CornerRadiusTopLeft = r,
-                CornerRadiusTopRight = r,
-                CornerRadiusBottomRight = r,
-                CornerRadiusBottomLeft = r,
+                CornerRadiusTopLeft = cornerRadii.TopLeft,
+                CornerRadiusTopRight = cornerRadii.TopRight,
+                CornerRadiusBottomRight = cornerRadii.BottomRight,
+                CornerRadiusBottomLeft = cornerRadii.BottomLeft,
                 ShadowColor = t.Surface.Entry.Shadow,
                 ShadowSize = RitsuShellThemeLayoutResolver.ResolveInt("components.surface.layout.shadowSize", 2),
                 ContentMarginLeft = padding.Left,
@@ -51,7 +51,8 @@ namespace STS2RitsuLib.Ui.Shell
         public static StyleBoxFlat CreateEntryFieldFrameStyle(bool emphasized)
         {
             var t = RitsuShellTheme.Current;
-            var r = RitsuShellThemeLayoutResolver.ResolveInt("components.entryField.layout.cornerRadius",
+            var cornerRadii = RitsuShellThemeLayoutResolver.ResolveCornerRadii(
+                "components.entryField.layout.cornerRadius",
                 t.Metric.Radius.Default);
             var borderColor = t.Surface.Entry.Border;
             var borderW = emphasized ? t.Metric.BorderWidth.Normal : t.Metric.BorderWidth.Thin;
@@ -71,10 +72,10 @@ namespace STS2RitsuLib.Ui.Shell
                 BorderWidthTop = border.Top,
                 BorderWidthRight = border.Right,
                 BorderWidthBottom = border.Bottom,
-                CornerRadiusTopLeft = r,
-                CornerRadiusTopRight = r,
-                CornerRadiusBottomRight = r,
-                CornerRadiusBottomLeft = r,
+                CornerRadiusTopLeft = cornerRadii.TopLeft,
+                CornerRadiusTopRight = cornerRadii.TopRight,
+                CornerRadiusBottomRight = cornerRadii.BottomRight,
+                CornerRadiusBottomLeft = cornerRadii.BottomLeft,
                 ShadowColor = emphasized
                     ? new(borderColor.R, borderColor.G, borderColor.B, 0.42f)
                     : t.Surface.Entry.Shadow,
@@ -94,7 +95,8 @@ namespace STS2RitsuLib.Ui.Shell
         public static StyleBoxFlat CreateColorPickerSwatchFrameStyle()
         {
             var t = RitsuShellTheme.Current;
-            var r = RitsuShellThemeLayoutResolver.ResolveInt("components.colorSwatch.layout.cornerRadius",
+            var cornerRadii = RitsuShellThemeLayoutResolver.ResolveCornerRadii(
+                "components.colorSwatch.layout.cornerRadius",
                 t.Metric.Radius.Default);
             var border = RitsuShellThemeLayoutResolver.ResolveEdges("components.colorSwatch.layout.borderWidth", 1);
             var padding = RitsuShellThemeLayoutResolver.ResolveEdges("components.colorSwatch.layout.padding", 5);
@@ -106,10 +108,10 @@ namespace STS2RitsuLib.Ui.Shell
                 BorderWidthTop = border.Top,
                 BorderWidthRight = border.Right,
                 BorderWidthBottom = border.Bottom,
-                CornerRadiusTopLeft = r,
-                CornerRadiusTopRight = r,
-                CornerRadiusBottomRight = r,
-                CornerRadiusBottomLeft = r,
+                CornerRadiusTopLeft = cornerRadii.TopLeft,
+                CornerRadiusTopRight = cornerRadii.TopRight,
+                CornerRadiusBottomRight = cornerRadii.BottomRight,
+                CornerRadiusBottomLeft = cornerRadii.BottomLeft,
                 ShadowSize = RitsuShellThemeLayoutResolver.ResolveInt("components.colorSwatch.layout.shadowSize", 0),
                 ContentMarginLeft = padding.Left,
                 ContentMarginTop = padding.Top,
@@ -124,7 +126,8 @@ namespace STS2RitsuLib.Ui.Shell
         public static StyleBoxFlat CreateInsetSurfaceStyle()
         {
             var t = RitsuShellTheme.Current;
-            var r = RitsuShellThemeLayoutResolver.ResolveInt("components.insetSurface.layout.cornerRadius",
+            var cornerRadii = RitsuShellThemeLayoutResolver.ResolveCornerRadii(
+                "components.insetSurface.layout.cornerRadius",
                 t.Metric.Radius.Default);
             var border = RitsuShellThemeLayoutResolver.ResolveEdges("components.insetSurface.layout.borderWidth", 1);
             var padding = RitsuShellThemeLayoutResolver.ResolveEdges("components.insetSurface.layout.padding", 10);
@@ -141,10 +144,10 @@ namespace STS2RitsuLib.Ui.Shell
                 BorderWidthTop = border.Top,
                 BorderWidthRight = border.Right,
                 BorderWidthBottom = border.Bottom,
-                CornerRadiusTopLeft = r,
-                CornerRadiusTopRight = r,
-                CornerRadiusBottomRight = r,
-                CornerRadiusBottomLeft = r,
+                CornerRadiusTopLeft = cornerRadii.TopLeft,
+                CornerRadiusTopRight = cornerRadii.TopRight,
+                CornerRadiusBottomRight = cornerRadii.BottomRight,
+                CornerRadiusBottomLeft = cornerRadii.BottomLeft,
                 ContentMarginLeft = padding.Left,
                 ContentMarginTop = padding.Top,
                 ContentMarginRight = padding.Right,
@@ -159,7 +162,8 @@ namespace STS2RitsuLib.Ui.Shell
         public static StyleBoxFlat CreateChromeActionsMenuStyle(bool highlighted)
         {
             var t = RitsuShellTheme.Current;
-            var r = RitsuShellThemeLayoutResolver.ResolveInt("components.chromeMenu.layout.cornerRadius",
+            var cornerRadii = RitsuShellThemeLayoutResolver.ResolveCornerRadii(
+                "components.chromeMenu.layout.cornerRadius",
                 t.Metric.Radius.Default);
             var state = highlighted ? t.Component.ChromeMenu.Hover : t.Component.ChromeMenu.Default;
             var border = RitsuShellThemeLayoutResolver.ResolveEdges("components.chromeMenu.layout.borderWidth", 1);
@@ -177,10 +181,10 @@ namespace STS2RitsuLib.Ui.Shell
                 BorderWidthTop = border.Top,
                 BorderWidthRight = border.Right,
                 BorderWidthBottom = border.Bottom,
-                CornerRadiusTopLeft = r,
-                CornerRadiusTopRight = r,
-                CornerRadiusBottomRight = r,
-                CornerRadiusBottomLeft = r,
+                CornerRadiusTopLeft = cornerRadii.TopLeft,
+                CornerRadiusTopRight = cornerRadii.TopRight,
+                CornerRadiusBottomRight = cornerRadii.BottomRight,
+                CornerRadiusBottomLeft = cornerRadii.BottomLeft,
                 ContentMarginLeft = padding.Left,
                 ContentMarginTop = padding.Top,
                 ContentMarginRight = padding.Right,
@@ -194,7 +198,8 @@ namespace STS2RitsuLib.Ui.Shell
         public static StyleBoxFlat CreatePageToolbarTrayStyle()
         {
             var t = RitsuShellTheme.Current;
-            var r = RitsuShellThemeLayoutResolver.ResolveInt("components.pageToolbarTray.layout.cornerRadius",
+            var cornerRadii = RitsuShellThemeLayoutResolver.ResolveCornerRadii(
+                "components.pageToolbarTray.layout.cornerRadius",
                 t.Metric.Radius.Default);
             var border = RitsuShellThemeLayoutResolver.ResolveEdges("components.pageToolbarTray.layout.borderWidth", 1);
             var padding = RitsuShellThemeLayoutResolver.ResolveEdges("components.pageToolbarTray.layout.padding", 10);
@@ -213,10 +218,10 @@ namespace STS2RitsuLib.Ui.Shell
                 BorderWidthTop = border.Top,
                 BorderWidthRight = border.Right,
                 BorderWidthBottom = border.Bottom,
-                CornerRadiusTopLeft = r,
-                CornerRadiusTopRight = r,
-                CornerRadiusBottomRight = r,
-                CornerRadiusBottomLeft = r,
+                CornerRadiusTopLeft = cornerRadii.TopLeft,
+                CornerRadiusTopRight = cornerRadii.TopRight,
+                CornerRadiusBottomRight = cornerRadii.BottomRight,
+                CornerRadiusBottomLeft = cornerRadii.BottomLeft,
                 ContentMarginLeft = padding.Left,
                 ContentMarginTop = padding.Top,
                 ContentMarginRight = padding.Right,
@@ -230,7 +235,8 @@ namespace STS2RitsuLib.Ui.Shell
         public static StyleBoxFlat CreateListShellStyle()
         {
             var t = RitsuShellTheme.Current;
-            var r = RitsuShellThemeLayoutResolver.ResolveInt("components.listShell.layout.cornerRadius",
+            var cornerRadii = RitsuShellThemeLayoutResolver.ResolveCornerRadii(
+                "components.listShell.layout.cornerRadius",
                 t.Metric.Radius.Default);
             var border = RitsuShellThemeLayoutResolver.ResolveEdges("components.listShell.layout.borderWidth", 1);
             var padding = RitsuShellThemeLayoutResolver.ResolveEdges("components.listShell.layout.padding", 12);
@@ -242,10 +248,10 @@ namespace STS2RitsuLib.Ui.Shell
                 BorderWidthTop = border.Top,
                 BorderWidthRight = border.Right,
                 BorderWidthBottom = border.Bottom,
-                CornerRadiusTopLeft = r,
-                CornerRadiusTopRight = r,
-                CornerRadiusBottomRight = r,
-                CornerRadiusBottomLeft = r,
+                CornerRadiusTopLeft = cornerRadii.TopLeft,
+                CornerRadiusTopRight = cornerRadii.TopRight,
+                CornerRadiusBottomRight = cornerRadii.BottomRight,
+                CornerRadiusBottomLeft = cornerRadii.BottomLeft,
                 ShadowColor = t.Component.ListShell.Shadow,
                 ShadowSize = RitsuShellThemeLayoutResolver.ResolveInt("components.listShell.layout.shadowSize", 3),
                 ContentMarginLeft = padding.Left,
@@ -262,7 +268,8 @@ namespace STS2RitsuLib.Ui.Shell
         public static StyleBoxFlat CreateListItemCardStyle(bool accent = false)
         {
             var t = RitsuShellTheme.Current;
-            var r = RitsuShellThemeLayoutResolver.ResolveInt("components.listItem.layout.cornerRadius",
+            var cornerRadii = RitsuShellThemeLayoutResolver.ResolveCornerRadii(
+                "components.listItem.layout.cornerRadius",
                 t.Metric.Radius.Default);
             var state = accent ? t.Component.ListItem.Accent : t.Component.ListItem.Default;
             var border = RitsuShellThemeLayoutResolver.ResolveEdges("components.listItem.layout.borderWidth", 1);
@@ -275,10 +282,10 @@ namespace STS2RitsuLib.Ui.Shell
                 BorderWidthTop = border.Top,
                 BorderWidthRight = border.Right,
                 BorderWidthBottom = border.Bottom,
-                CornerRadiusTopLeft = r,
-                CornerRadiusTopRight = r,
-                CornerRadiusBottomRight = r,
-                CornerRadiusBottomLeft = r,
+                CornerRadiusTopLeft = cornerRadii.TopLeft,
+                CornerRadiusTopRight = cornerRadii.TopRight,
+                CornerRadiusBottomRight = cornerRadii.BottomRight,
+                CornerRadiusBottomLeft = cornerRadii.BottomLeft,
                 ShadowColor = t.Component.ListItem.Shadow,
                 ShadowSize = RitsuShellThemeLayoutResolver.ResolveInt("components.listItem.layout.shadowSize", 2),
                 ContentMarginLeft = padding.Left,
@@ -294,7 +301,8 @@ namespace STS2RitsuLib.Ui.Shell
         public static StyleBoxFlat CreateListEditorSurfaceStyle()
         {
             var t = RitsuShellTheme.Current;
-            var r = RitsuShellThemeLayoutResolver.ResolveInt("components.listEditor.layout.cornerRadius",
+            var cornerRadii = RitsuShellThemeLayoutResolver.ResolveCornerRadii(
+                "components.listEditor.layout.cornerRadius",
                 t.Metric.Radius.Default);
             var border = RitsuShellThemeLayoutResolver.ResolveEdges("components.listEditor.layout.borderWidth", 1);
             var padding = RitsuShellThemeLayoutResolver.ResolveEdges("components.listEditor.layout.padding", 10);
@@ -311,10 +319,10 @@ namespace STS2RitsuLib.Ui.Shell
                 BorderWidthTop = border.Top,
                 BorderWidthRight = border.Right,
                 BorderWidthBottom = border.Bottom,
-                CornerRadiusTopLeft = r,
-                CornerRadiusTopRight = r,
-                CornerRadiusBottomRight = r,
-                CornerRadiusBottomLeft = r,
+                CornerRadiusTopLeft = cornerRadii.TopLeft,
+                CornerRadiusTopRight = cornerRadii.TopRight,
+                CornerRadiusBottomRight = cornerRadii.BottomRight,
+                CornerRadiusBottomLeft = cornerRadii.BottomLeft,
                 ShadowColor = t.Component.ListItem.Shadow,
                 ShadowSize = RitsuShellThemeLayoutResolver.ResolveInt("components.listEditor.layout.shadowSize", 2),
                 ContentMarginLeft = padding.Left,
@@ -331,7 +339,7 @@ namespace STS2RitsuLib.Ui.Shell
         public static StyleBoxFlat CreatePillStyle(bool highlighted = false)
         {
             var t = RitsuShellTheme.Current;
-            var r = RitsuShellThemeLayoutResolver.ResolveInt("components.pill.layout.cornerRadius",
+            var cornerRadii = RitsuShellThemeLayoutResolver.ResolveCornerRadii("components.pill.layout.cornerRadius",
                 t.Metric.Radius.Default);
             var state = highlighted ? t.Component.Pill.Hover : t.Component.Pill.Default;
             var border = RitsuShellThemeLayoutResolver.ResolveEdges("components.pill.layout.borderWidth", 1);
@@ -349,10 +357,49 @@ namespace STS2RitsuLib.Ui.Shell
                 BorderWidthTop = border.Top,
                 BorderWidthRight = border.Right,
                 BorderWidthBottom = border.Bottom,
-                CornerRadiusTopLeft = r,
-                CornerRadiusTopRight = r,
-                CornerRadiusBottomRight = r,
-                CornerRadiusBottomLeft = r,
+                CornerRadiusTopLeft = cornerRadii.TopLeft,
+                CornerRadiusTopRight = cornerRadii.TopRight,
+                CornerRadiusBottomRight = cornerRadii.BottomRight,
+                CornerRadiusBottomLeft = cornerRadii.BottomLeft,
+                ContentMarginLeft = padding.Left,
+                ContentMarginTop = padding.Top,
+                ContentMarginRight = padding.Right,
+                ContentMarginBottom = padding.Bottom,
+            };
+        }
+
+        /// <summary>
+        ///     Compact panel backing Godot TooltipPanel (<see cref="Control.TooltipText" /> popups), aligned with entry
+        ///     chrome tokens.
+        /// </summary>
+        public static StyleBoxFlat CreateTooltipPanelStyle()
+        {
+            var t = RitsuShellTheme.Current;
+            var cornerRadii =
+                RitsuShellThemeLayoutResolver.ResolveCornerRadii("components.tooltip.layout.cornerRadius", 0);
+            var borderWidth =
+                RitsuShellThemeLayoutResolver.ResolveEdges("components.tooltip.layout.borderWidth",
+                    t.Metric.BorderWidth.Thin);
+            var padding = RitsuShellThemeLayoutResolver.ResolveEdges("components.tooltip.layout.padding", 10);
+            padding = new(
+                RitsuShellThemeLayoutResolver.ResolveInt("components.tooltip.layout.padding.left", padding.Left),
+                RitsuShellThemeLayoutResolver.ResolveInt("components.tooltip.layout.padding.top", 8),
+                RitsuShellThemeLayoutResolver.ResolveInt("components.tooltip.layout.padding.right", padding.Right),
+                RitsuShellThemeLayoutResolver.ResolveInt("components.tooltip.layout.padding.bottom", 8));
+            return new()
+            {
+                BgColor = t.Surface.Entry.Bg,
+                BorderColor = t.Surface.Entry.Border,
+                BorderWidthLeft = borderWidth.Left,
+                BorderWidthTop = borderWidth.Top,
+                BorderWidthRight = borderWidth.Right,
+                BorderWidthBottom = borderWidth.Bottom,
+                CornerRadiusTopLeft = cornerRadii.TopLeft,
+                CornerRadiusTopRight = cornerRadii.TopRight,
+                CornerRadiusBottomRight = cornerRadii.BottomRight,
+                CornerRadiusBottomLeft = cornerRadii.BottomLeft,
+                ShadowColor = t.Surface.Entry.Shadow,
+                ShadowSize = RitsuShellThemeLayoutResolver.ResolveInt("components.tooltip.layout.shadowSize", 4),
                 ContentMarginLeft = padding.Left,
                 ContentMarginTop = padding.Top,
                 ContentMarginRight = padding.Right,

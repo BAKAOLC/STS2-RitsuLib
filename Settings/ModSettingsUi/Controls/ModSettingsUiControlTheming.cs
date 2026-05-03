@@ -317,7 +317,7 @@ namespace STS2RitsuLib.Settings
             var hoverBorder =
                 RitsuShellThemeLayoutResolver.ResolveEdges("components.toggle.layout.borderWidthHover", 3);
             var border = hovered ? hoverBorder : normalBorder;
-            var radius = RitsuShellThemeLayoutResolver.ResolveInt("components.toggle.layout.cornerRadius",
+            var cornerRadii = RitsuShellThemeLayoutResolver.ResolveCornerRadii("components.toggle.layout.cornerRadius",
                 RitsuShellTheme.Current.Metric.Radius.Default);
             var shadowSize = hovered
                 ? RitsuShellThemeLayoutResolver.ResolveInt("components.toggle.layout.shadowSizeHover", 7)
@@ -340,10 +340,10 @@ namespace STS2RitsuLib.Settings
                 BorderWidthTop = border.Top,
                 BorderWidthRight = border.Right,
                 BorderWidthBottom = border.Bottom,
-                CornerRadiusTopLeft = radius,
-                CornerRadiusTopRight = radius,
-                CornerRadiusBottomLeft = radius,
-                CornerRadiusBottomRight = radius,
+                CornerRadiusTopLeft = cornerRadii.TopLeft,
+                CornerRadiusTopRight = cornerRadii.TopRight,
+                CornerRadiusBottomLeft = cornerRadii.BottomLeft,
+                CornerRadiusBottomRight = cornerRadii.BottomRight,
                 ShadowColor = hovered
                     ? new(borderColor.R, borderColor.G, borderColor.B, 0.42f)
                     : RitsuShellTheme.Current.Component.Toggle.Shadow,
