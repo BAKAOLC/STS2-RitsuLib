@@ -100,18 +100,16 @@ namespace STS2RitsuLib
                     : [];
             }
 
-            var observerSubscription = new FrameworkLifecycleSubscription(() =>
+            foreach (var evt in lifecycleSnapshot)
+                SafeNotify(observer, evt, evt.GetType().Name);
+
+            return new FrameworkLifecycleSubscription(() =>
             {
                 lock (SyncRoot)
                 {
                     _lifecycleObservers = RemoveItem(_lifecycleObservers, observer);
                 }
             });
-
-            foreach (var evt in lifecycleSnapshot)
-                SafeNotify(observer, evt, evt.GetType().Name);
-
-            return observerSubscription;
         }
 
         /// <summary>
@@ -143,77 +141,108 @@ namespace STS2RitsuLib
                     ReplayableLifecycleEvents.TryGetValue(LifecycleEventTypeCache<TEvent>.EventType, out replayEvent);
             }
 
-            var subscription = new FrameworkLifecycleSubscription(() =>
+            if (replayEvent is TEvent typedReplayEvent)
+                SafeNotify(handler, typedReplayEvent, LifecycleEventTypeCache<TEvent>.EventName);
+
+            return new FrameworkLifecycleSubscription(() =>
             {
                 lock (SyncRoot)
                 {
                     topic.Remove(handler);
                 }
             });
-
-            if (replayEvent is TEvent typedReplayEvent)
-                SafeNotify(handler, typedReplayEvent, LifecycleEventTypeCache<TEvent>.EventName);
-
-            return subscription;
         }
 
         /// <summary>
-        ///     Registers <paramref name="handler" /> to run once after deferred initialization has completed, replaying
-        ///     immediately if that milestone was already reached.
+        ///     Subscribes a typed callback for a specific <typeparamref name="TEvent" />, passing the same
+        ///     <see cref="IDisposable" /> subscription instance on every invocation (including synchronous replay).
         /// </summary>
-        /// <param name="handler">Work to run exactly once.</param>
-        /// <returns>
-        ///     Subscription token; it is also disposed automatically after <paramref name="handler" /> returns (including when
-        ///     replayed synchronously).
-        /// </returns>
-        /// <remarks>
-        ///     Use when a <see cref="MegaCrit.Sts2.Core.Modding.ModInitializerAttribute" /> entry point must wait for subsystems
-        ///     such as the
-        ///     Godot <c>FmodServer</c> singleton. Handlers that dispose the returned token from inside the callback can rely
-        ///     on the subscription object existing before any synchronous lifecycle replay runs.
-        /// </remarks>
-        public static IDisposable SubscribeDeferredInitializationOneShot(Action handler)
+        /// <typeparam name="TEvent">Concrete lifecycle event type.</typeparam>
+        /// <param name="handler">
+        ///     Invoked for each matching event. The <see cref="IDisposable" /> argument is the subscription; disposing it
+        ///     unsubscribes the handler.
+        /// </param>
+        /// <param name="replayCurrentState">
+        ///     When true, invokes <paramref name="handler" /> with the last replayable event if present.
+        /// </param>
+        /// <returns>Disposing unsubscribes the handler.</returns>
+        public static IDisposable SubscribeLifecycle<TEvent>(
+            Action<TEvent, IDisposable> handler,
+            bool replayCurrentState = true
+        )
+            where TEvent : IFrameworkLifecycleEvent
         {
             ArgumentNullException.ThrowIfNull(handler);
 
-            var topic = GetLifecycleTopic<DeferredInitializationCompletedEvent>();
-            object? replayEvent;
-            FrameworkLifecycleSubscription? subscription = null;
-
-            lock (SyncRoot)
+            if (!LifecycleEventTypeCache<TEvent>.SupportsTypedDispatch)
             {
-                topic.Add(Wrapped);
+                var holder = new LifecycleSubscriptionHolder();
+                var observer = new DelegateLifecycleObserverWithSubscription<TEvent>(handler, holder);
+                IFrameworkLifecycleEvent[] lifecycleSnapshot;
 
-                ReplayableLifecycleEvents.TryGetValue(
-                    LifecycleEventTypeCache<DeferredInitializationCompletedEvent>.EventType,
-                    out replayEvent);
-            }
-
-            subscription = new(() =>
-            {
                 lock (SyncRoot)
                 {
-                    topic.Remove(Wrapped);
+                    _lifecycleObservers = AppendItem(_lifecycleObservers, observer);
+                    holder.Subscription = new FrameworkLifecycleSubscription(() =>
+                    {
+                        lock (SyncRoot)
+                        {
+                            _lifecycleObservers = RemoveItem(_lifecycleObservers, observer);
+                        }
+                    });
+
+                    lifecycleSnapshot = replayCurrentState
+                        ? ReplayableLifecycleEvents.Values
+                            .Cast<IFrameworkLifecycleEvent>()
+                            .OrderBy(evt => evt.OccurredAtUtc)
+                            .ToArray()
+                        : [];
                 }
-            });
 
-            if (replayEvent is DeferredInitializationCompletedEvent typedReplayEvent)
-                SafeNotify(Wrapped, typedReplayEvent,
-                    LifecycleEventTypeCache<DeferredInitializationCompletedEvent>.EventName);
+                foreach (var evt in lifecycleSnapshot)
+                    SafeNotify(observer, evt, evt.GetType().Name);
 
-            return subscription;
+                return holder.Subscription;
+            }
 
-            void Wrapped(DeferredInitializationCompletedEvent _)
+            object? replayEvent = null;
+            var topic = GetLifecycleTopic<TEvent>();
+            FrameworkLifecycleSubscription? subscription = null;
+
+            void Wrapped(TEvent evt)
             {
                 try
                 {
-                    handler();
+                    handler(evt, subscription!);
                 }
-                finally
+                catch (Exception ex)
                 {
-                    subscription?.Dispose();
+                    Logger.Warn(
+                        $"[Lifecycle] Observer callback failed in {LifecycleEventTypeCache<TEvent>.EventName}: {ex.Message}"
+                    );
                 }
             }
+
+            lock (SyncRoot)
+            {
+                subscription = new(() =>
+                {
+                    lock (SyncRoot)
+                    {
+                        topic.Remove(Wrapped);
+                    }
+                });
+
+                topic.Add(Wrapped);
+
+                if (replayCurrentState)
+                    ReplayableLifecycleEvents.TryGetValue(LifecycleEventTypeCache<TEvent>.EventType, out replayEvent);
+            }
+
+            if (replayCurrentState && replayEvent is TEvent typedReplayEvent)
+                SafeNotify(Wrapped, typedReplayEvent, LifecycleEventTypeCache<TEvent>.EventName);
+
+            return subscription!;
         }
 
         /// <summary>

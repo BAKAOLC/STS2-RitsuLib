@@ -42,8 +42,21 @@ namespace STS2RitsuLib.Audio.Internal
         internal static void ParseAndReplace(string text, string? sourceLabel = null)
         {
             var lines = text.Replace("\r\n", "\n").Split('\n');
-            var next = new Dictionary<string, string>(StringComparer.Ordinal);
+            Dictionary<string, string> next;
+            lock (Gate)
+            {
+                next = new(_eventPathToGuid, StringComparer.Ordinal);
+            }
+
             var guidKeyToFirstPath = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
+            foreach (var kv in next)
+            {
+                if (!TryParseStoredGuid(kv.Value, out var parsed))
+                    continue;
+
+                guidKeyToFirstPath.TryAdd(parsed.ToString("N"), kv.Key);
+            }
+
             var prefix = string.IsNullOrEmpty(sourceLabel) ? "[Audio] guids.txt" : $"[Audio] guids.txt ({sourceLabel})";
 
             for (var lineIndex = 0; lineIndex < lines.Length; lineIndex++)
@@ -104,6 +117,15 @@ namespace STS2RitsuLib.Audio.Internal
             {
                 _eventPathToGuid = next;
             }
+        }
+
+        private static bool TryParseStoredGuid(string stored, out Guid parsed)
+        {
+            var s = stored.AsSpan().Trim();
+            if (s.Length >= 3 && s[0] == '{' && s[^1] == '}' && Guid.TryParse(s[1..^1], out parsed))
+                return true;
+
+            return Guid.TryParse(s, out parsed);
         }
 
         internal static IReadOnlyList<KeyValuePair<string, string>> SnapshotEventMappings()

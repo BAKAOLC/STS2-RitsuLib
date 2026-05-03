@@ -1,97 +1,91 @@
 namespace STS2RitsuLib.Audio
 {
     /// <summary>
-    ///     Convenience helpers for loading FMOD Studio banks after the game has finished deferred initialization.
+    ///     Queues FMOD Studio bank and GUID mapping paths until <see cref="DeferredInitializationCompletedEvent" />,
+    ///     then loads them in one batch with a single <see cref="FmodStudioServer.TryWaitForAllLoads" />.
     /// </summary>
     public static class FmodStudioDeferredBankRegistration
     {
-        /// <summary>
-        ///     Schedules loading one FMOD Studio bank and optional GUID path mappings once, after
-        ///     <see cref="STS2RitsuLib.DeferredInitializationCompletedEvent" /> (or immediately if that milestone already
-        ///     occurred).
-        /// </summary>
-        /// <param name="bankResourcePath">
-        ///     Godot resource path to the <c>.bank</c> file (for example <c>res://Mod/audios/x.bank</c>
-        ///     ).
-        /// </param>
-        /// <param name="studioGuidMappingsResourcePath">
-        ///     Optional <c>GUIDs.txt</c>-style resource path; pass <c>null</c> when the bank does not need addon GUID mapping.
-        /// </param>
-        /// <param name="waitForAllLoadsAfterBanks">
-        ///     When true, calls <see cref="FmodStudioServer.TryWaitForAllLoads" /> after all banks in this batch have been
-        ///     submitted.
-        /// </param>
-        /// <returns>
-        ///     Subscription token; it is disposed automatically after the deferred load attempt finishes.
-        /// </returns>
-        public static IDisposable QueueLoadBankAfterDeferredInitialization(
-            string bankResourcePath,
-            string? studioGuidMappingsResourcePath = null,
-            bool waitForAllLoadsAfterBanks = true)
-        {
-            ArgumentException.ThrowIfNullOrWhiteSpace(bankResourcePath);
+        private static readonly Lock Gate = new();
+        private static readonly HashSet<string> PendingBanks = new(StringComparer.Ordinal);
+        private static readonly HashSet<string> PendingGuidFiles = new(StringComparer.Ordinal);
+        private static bool _flushHookRegistered;
 
-            return QueueLoadBanksAfterDeferredInitialization(
-                [bankResourcePath],
-                studioGuidMappingsResourcePath,
-                waitForAllLoadsAfterBanks);
+        /// <summary>
+        ///     Queues a bank path to load after deferred initialization (deduplicated).
+        /// </summary>
+        public static void RegisterBank(string resourcePath)
+        {
+            if (string.IsNullOrWhiteSpace(resourcePath))
+                return;
+
+            lock (Gate)
+            {
+                PendingBanks.Add(resourcePath.Trim());
+                EnsureFlushHookRegisteredLocked();
+            }
         }
 
         /// <summary>
-        ///     Schedules loading multiple FMOD Studio banks (in order) and optional GUID path mappings once, after
-        ///     <see cref="STS2RitsuLib.DeferredInitializationCompletedEvent" /> (or immediately if that milestone already
-        ///     occurred).
+        ///     Queues a GUID mapping file for <see cref="FmodStudioServer.TryLoadStudioGuidMappings" /> after deferred
+        ///     initialization (deduplicated).
         /// </summary>
-        /// <param name="bankResourcePaths">Non-empty sequence of Godot resource paths to <c>.bank</c> files.</param>
-        /// <param name="studioGuidMappingsResourcePath">
-        ///     Optional <c>GUIDs.txt</c>-style resource path; pass <c>null</c> when no GUID table should be applied.
-        /// </param>
-        /// <param name="waitForAllLoadsAfterBanks">
-        ///     When true, calls <see cref="FmodStudioServer.TryWaitForAllLoads" /> after all banks in this batch have been
-        ///     submitted.
-        /// </param>
-        /// <returns>
-        ///     Subscription token; it is disposed automatically after the deferred load attempt finishes.
-        /// </returns>
-        public static IDisposable QueueLoadBanksAfterDeferredInitialization(
-            IEnumerable<string> bankResourcePaths,
-            string? studioGuidMappingsResourcePath = null,
-            bool waitForAllLoadsAfterBanks = true)
+        public static void RegisterStudioGuidMappings(string guidMapResourcePath)
         {
-            ArgumentNullException.ThrowIfNull(bankResourcePaths);
+            if (string.IsNullOrWhiteSpace(guidMapResourcePath))
+                return;
 
-            var banks = bankResourcePaths as string[] ?? bankResourcePaths.ToArray();
-            if (banks.Length == 0)
-                throw new ArgumentException("At least one bank path is required.", nameof(bankResourcePaths));
-
-            return RitsuLibFramework.SubscribeDeferredInitializationOneShot(() =>
+            lock (Gate)
             {
-                if (FmodStudioServer.TryGet() is null)
-                {
-                    RitsuLibFramework.Logger.Warn(
-                        "[Audio] Deferred FMOD bank load skipped: FmodServer singleton is missing.");
-                    return;
-                }
+                PendingGuidFiles.Add(guidMapResourcePath.Trim());
+                EnsureFlushHookRegisteredLocked();
+            }
+        }
 
-                foreach (var path in banks)
-                {
-                    if (string.IsNullOrWhiteSpace(path))
-                        continue;
+        private static void EnsureFlushHookRegisteredLocked()
+        {
+            if (_flushHookRegistered)
+                return;
 
-                    if (!FmodStudioServer.TryLoadBank(path))
-                        RitsuLibFramework.Logger.Warn($"[Audio] Deferred FMOD bank load failed: {path}");
-                }
+            _flushHookRegistered = true;
+            RitsuLibFramework.SubscribeLifecycle<DeferredInitializationCompletedEvent>(_ => FlushPending());
+        }
 
-                if (waitForAllLoadsAfterBanks)
-                    FmodStudioServer.TryWaitForAllLoads();
+        private static void FlushPending()
+        {
+            if (FmodStudioServer.TryGet() is null)
+            {
+                RitsuLibFramework.Logger.Warn(
+                    "[Audio] deferred FMOD: FmodServer singleton missing; pending banks/GUID files kept for a later flush."
+                );
+                return;
+            }
 
-                if (string.IsNullOrWhiteSpace(studioGuidMappingsResourcePath))
-                    return;
+            List<string> banks;
+            List<string> guids;
 
-                if (!FmodStudioServer.TryLoadStudioGuidMappings(studioGuidMappingsResourcePath))
-                    RitsuLibFramework.Logger.Warn(
-                        $"[Audio] Deferred FMOD guid map failed: {studioGuidMappingsResourcePath}");
-            });
+            lock (Gate)
+            {
+                banks = [.. PendingBanks];
+                guids = [.. PendingGuidFiles];
+                PendingBanks.Clear();
+                PendingGuidFiles.Clear();
+            }
+
+            if (banks.Count == 0 && guids.Count == 0)
+                return;
+
+            foreach (var path in banks)
+                FmodStudioServer.TryLoadBank(path);
+
+            foreach (var path in guids)
+                FmodStudioServer.TryLoadStudioGuidMappings(path);
+
+            FmodStudioServer.TryWaitForAllLoads();
+
+            RitsuLibFramework.Logger.Info(
+                $"[Audio] deferred FMOD flush complete (banks={banks.Count}, guid files={guids.Count})."
+            );
         }
     }
 }
