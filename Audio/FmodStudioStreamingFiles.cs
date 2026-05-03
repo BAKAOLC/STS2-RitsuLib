@@ -158,10 +158,8 @@ namespace STS2RitsuLib.Audio
             if (!TryResolveSupportedPath(absolutePath, out var resolvedPath))
                 return false;
 
-            if (!Loaded.TryRemove(resolvedPath, out _))
-                return true;
-
-            return FmodStudioGateway.TryCall(FmodStudioMethodNames.UnloadFile, resolvedPath);
+            return !Loaded.TryRemove(resolvedPath, out _) ||
+                   FmodStudioGateway.TryCall(FmodStudioMethodNames.UnloadFile, resolvedPath);
         }
 
         /// <summary>
@@ -194,7 +192,6 @@ namespace STS2RitsuLib.Audio
                 if (File.Exists(resolvedPath)) return true;
                 RitsuLibFramework.Logger.Error($"[Audio] FMOD file playback file not found: {resolvedPath}");
                 return false;
-
             }
 
             if (path.StartsWith("res://", StringComparison.OrdinalIgnoreCase))
@@ -228,7 +225,6 @@ namespace STS2RitsuLib.Audio
             if (File.Exists(resolvedPath)) return true;
             RitsuLibFramework.Logger.Error($"[Audio] FMOD file playback file not found: {resolvedPath}");
             return false;
-
         }
 
         private enum LoadedKind : byte
