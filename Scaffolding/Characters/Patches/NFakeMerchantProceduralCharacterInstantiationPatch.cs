@@ -87,8 +87,8 @@ namespace STS2RitsuLib.Scaffolding.Characters.Patches
                         ?? RitsuGodotNodeFactories.CreateFromScenePath<NMerchantCharacter>(
                             player.Character.MerchantAnimPath, PackedScene.GenEditState.Disabled);
 
-                    characterContainer.AddChildSafely(nMerchantCharacter);
-                    characterContainer.MoveChildSafely(nMerchantCharacter, 0);
+                    RitsuGodotTreeCompat.AddChildSafely(characterContainer, nMerchantCharacter);
+                    RitsuGodotTreeCompat.MoveChildSafely(characterContainer, nMerchantCharacter, 0);
                     nMerchantCharacter.Position = new(num2, -50f * i);
                     if (i > 0)
                         nMerchantCharacter.Modulate = new(0.5f, 0.5f, 0.5f);
