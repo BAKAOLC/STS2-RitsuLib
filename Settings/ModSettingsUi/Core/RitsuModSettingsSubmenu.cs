@@ -210,6 +210,7 @@ namespace STS2RitsuLib.Settings
             RitsuShellThemeRuntime.ThemeChanged += _shellThemeChangedHandler;
             TryStartShellThemeWatcher();
             EnsureUiUpToDate(true, true);
+            RitsuShellTooltipTheme.ApplyToTreeRoot(this);
             ProcessMode = ProcessModeEnum.Disabled;
             FocusMode = FocusModeEnum.None;
         }
@@ -2523,6 +2524,8 @@ namespace STS2RitsuLib.Settings
 
             if (_scrollContainer != null && IsInstanceValid(_scrollContainer))
                 ApplyScrollContainerTheme(_scrollContainer);
+
+            RitsuShellTooltipTheme.ApplyToTreeRoot(this);
         }
 
         private static void ApplyScrollContainerTheme(ScrollContainer container)
@@ -2557,7 +2560,8 @@ namespace STS2RitsuLib.Settings
                 RitsuShellTheme.Current.Surface.Inset.Border);
             var borderWidth =
                 RitsuShellThemeLayoutResolver.ResolveEdges("components.scrollbar.layout.track.borderWidth", 1);
-            var radius = RitsuShellThemeLayoutResolver.ResolveInt("components.scrollbar.layout.track.cornerRadius",
+            var cornerRadii = RitsuShellThemeLayoutResolver.ResolveCornerRadii(
+                "components.scrollbar.layout.track.cornerRadius",
                 RitsuShellTheme.Current.Metric.Radius.Default);
             var padding = RitsuShellThemeLayoutResolver.ResolveEdges("components.scrollbar.layout.track.padding", 0);
             return new()
@@ -2568,10 +2572,10 @@ namespace STS2RitsuLib.Settings
                 BorderWidthTop = borderWidth.Top,
                 BorderWidthRight = borderWidth.Right,
                 BorderWidthBottom = borderWidth.Bottom,
-                CornerRadiusTopLeft = radius,
-                CornerRadiusTopRight = radius,
-                CornerRadiusBottomRight = radius,
-                CornerRadiusBottomLeft = radius,
+                CornerRadiusTopLeft = cornerRadii.TopLeft,
+                CornerRadiusTopRight = cornerRadii.TopRight,
+                CornerRadiusBottomRight = cornerRadii.BottomRight,
+                CornerRadiusBottomLeft = cornerRadii.BottomLeft,
                 ContentMarginLeft = padding.Left,
                 ContentMarginTop = padding.Top,
                 ContentMarginRight = padding.Right,
@@ -2587,7 +2591,8 @@ namespace STS2RitsuLib.Settings
                 RitsuShellTheme.Current.Component.ChromeMenu.Default.Border);
             var borderWidth =
                 RitsuShellThemeLayoutResolver.ResolveEdges("components.scrollbar.layout.grabber.borderWidth", 1);
-            var radius = RitsuShellThemeLayoutResolver.ResolveInt("components.scrollbar.layout.grabber.cornerRadius",
+            var cornerRadii = RitsuShellThemeLayoutResolver.ResolveCornerRadii(
+                "components.scrollbar.layout.grabber.cornerRadius",
                 RitsuShellTheme.Current.Metric.Radius.Default);
             return new()
             {
@@ -2597,10 +2602,10 @@ namespace STS2RitsuLib.Settings
                 BorderWidthTop = borderWidth.Top,
                 BorderWidthRight = borderWidth.Right,
                 BorderWidthBottom = borderWidth.Bottom,
-                CornerRadiusTopLeft = radius,
-                CornerRadiusTopRight = radius,
-                CornerRadiusBottomRight = radius,
-                CornerRadiusBottomLeft = radius,
+                CornerRadiusTopLeft = cornerRadii.TopLeft,
+                CornerRadiusTopRight = cornerRadii.TopRight,
+                CornerRadiusBottomRight = cornerRadii.BottomRight,
+                CornerRadiusBottomLeft = cornerRadii.BottomLeft,
             };
         }
 

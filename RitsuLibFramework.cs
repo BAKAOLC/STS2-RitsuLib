@@ -100,16 +100,18 @@ namespace STS2RitsuLib
                     : [];
             }
 
-            foreach (var evt in lifecycleSnapshot)
-                SafeNotify(observer, evt, evt.GetType().Name);
-
-            return new FrameworkLifecycleSubscription(() =>
+            var observerSubscription = new FrameworkLifecycleSubscription(() =>
             {
                 lock (SyncRoot)
                 {
                     _lifecycleObservers = RemoveItem(_lifecycleObservers, observer);
                 }
             });
+
+            foreach (var evt in lifecycleSnapshot)
+                SafeNotify(observer, evt, evt.GetType().Name);
+
+            return observerSubscription;
         }
 
         /// <summary>
@@ -141,16 +143,77 @@ namespace STS2RitsuLib
                     ReplayableLifecycleEvents.TryGetValue(LifecycleEventTypeCache<TEvent>.EventType, out replayEvent);
             }
 
-            if (replayEvent is TEvent typedReplayEvent)
-                SafeNotify(handler, typedReplayEvent, LifecycleEventTypeCache<TEvent>.EventName);
-
-            return new FrameworkLifecycleSubscription(() =>
+            var subscription = new FrameworkLifecycleSubscription(() =>
             {
                 lock (SyncRoot)
                 {
                     topic.Remove(handler);
                 }
             });
+
+            if (replayEvent is TEvent typedReplayEvent)
+                SafeNotify(handler, typedReplayEvent, LifecycleEventTypeCache<TEvent>.EventName);
+
+            return subscription;
+        }
+
+        /// <summary>
+        ///     Registers <paramref name="handler" /> to run once after deferred initialization has completed, replaying
+        ///     immediately if that milestone was already reached.
+        /// </summary>
+        /// <param name="handler">Work to run exactly once.</param>
+        /// <returns>
+        ///     Subscription token; it is also disposed automatically after <paramref name="handler" /> returns (including when
+        ///     replayed synchronously).
+        /// </returns>
+        /// <remarks>
+        ///     Use when a <see cref="MegaCrit.Sts2.Core.Modding.ModInitializerAttribute" /> entry point must wait for subsystems
+        ///     such as the
+        ///     Godot <c>FmodServer</c> singleton. Handlers that dispose the returned token from inside the callback can rely
+        ///     on the subscription object existing before any synchronous lifecycle replay runs.
+        /// </remarks>
+        public static IDisposable SubscribeDeferredInitializationOneShot(Action handler)
+        {
+            ArgumentNullException.ThrowIfNull(handler);
+
+            var topic = GetLifecycleTopic<DeferredInitializationCompletedEvent>();
+            object? replayEvent;
+            FrameworkLifecycleSubscription? subscription = null;
+
+            lock (SyncRoot)
+            {
+                topic.Add(Wrapped);
+
+                ReplayableLifecycleEvents.TryGetValue(
+                    LifecycleEventTypeCache<DeferredInitializationCompletedEvent>.EventType,
+                    out replayEvent);
+            }
+
+            subscription = new(() =>
+            {
+                lock (SyncRoot)
+                {
+                    topic.Remove(Wrapped);
+                }
+            });
+
+            if (replayEvent is DeferredInitializationCompletedEvent typedReplayEvent)
+                SafeNotify(Wrapped, typedReplayEvent,
+                    LifecycleEventTypeCache<DeferredInitializationCompletedEvent>.EventName);
+
+            return subscription;
+
+            void Wrapped(DeferredInitializationCompletedEvent _)
+            {
+                try
+                {
+                    handler();
+                }
+                finally
+                {
+                    subscription?.Dispose();
+                }
+            }
         }
 
         /// <summary>

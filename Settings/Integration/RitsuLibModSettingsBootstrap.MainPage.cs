@@ -44,6 +44,31 @@ namespace STS2RitsuLib.Settings
                         ui.DebugCompatibility,
                         T("ritsulib.debugCompatibility.description",
                             "Enable compatibility fallbacks for localization, unlock, and ancient-dialogue edge cases. Sub-toggles default to on.")))
+                // Keep debug_compat_shims immediately after general (master toggle); do not insert sections between them.
+                .AddSection(
+                    "debug_compat_shims",
+                    section => section
+                        .WithVisibleWhen(RitsuLibSettingsStore.IsDebugCompatibilityMasterEnabled)
+                        .WithTitle(T("ritsulib.section.debugCompatShims.title", "Compatibility fallbacks"))
+                        .Collapsible()
+                        .AddToggle(
+                            "debug_compat_loc_table",
+                            T("ritsulib.debugCompatLocTable.label", "LocTable missing keys"),
+                            ui.DebugCompatLocTable,
+                            T("ritsulib.debugCompatLocTable.description",
+                                "Resolve missing keys to placeholder LocString values and log one [Localization][DebugCompat] warning per key."))
+                        .AddToggle(
+                            "debug_compat_unlock_epoch",
+                            T("ritsulib.debugCompatUnlockEpoch.label", "Invalid unlock Epochs"),
+                            ui.DebugCompatUnlockEpoch,
+                            T("ritsulib.debugCompatUnlockEpoch.description",
+                                "Skip invalid epoch grants on RitsuLib-registered unlock paths and log one [Unlocks][DebugCompat] warning per stable key."))
+                        .AddToggle(
+                            "debug_compat_ancient_architect",
+                            T("ritsulib.debugCompatAncientArchitect.label", "THE_ARCHITECT missing dialogue"),
+                            ui.DebugCompatAncientArchitect,
+                            T("ritsulib.debugCompatAncientArchitect.description",
+                                "Inject empty Lines entries for ModContentRegistry ancients when vanilla provides no dialogue.")))
                 .AddSection("toast", section => section
                     .WithTitle(T("ritsulib.section.toast.title", "Toast notifications"))
                     .WithDescription(T("ritsulib.section.toast.description",
@@ -128,30 +153,6 @@ namespace STS2RitsuLib.Settings
                         ],
                         T("ritsulib.toast.animation.description", "Applies to enter/exit animation of new toasts."),
                         ModSettingsChoicePresentation.Dropdown))
-                .AddSection(
-                    "debug_compat_shims",
-                    section => section
-                        .WithVisibleWhen(RitsuLibSettingsStore.IsDebugCompatibilityMasterEnabled)
-                        .WithTitle(T("ritsulib.section.debugCompatShims.title", "Compatibility fallbacks"))
-                        .Collapsible()
-                        .AddToggle(
-                            "debug_compat_loc_table",
-                            T("ritsulib.debugCompatLocTable.label", "LocTable missing keys"),
-                            ui.DebugCompatLocTable,
-                            T("ritsulib.debugCompatLocTable.description",
-                                "Resolve missing keys to placeholder LocString values and log one [Localization][DebugCompat] warning per key."))
-                        .AddToggle(
-                            "debug_compat_unlock_epoch",
-                            T("ritsulib.debugCompatUnlockEpoch.label", "Invalid unlock Epochs"),
-                            ui.DebugCompatUnlockEpoch,
-                            T("ritsulib.debugCompatUnlockEpoch.description",
-                                "Skip invalid epoch grants on RitsuLib-registered unlock paths and log one [Unlocks][DebugCompat] warning per stable key."))
-                        .AddToggle(
-                            "debug_compat_ancient_architect",
-                            T("ritsulib.debugCompatAncientArchitect.label", "THE_ARCHITECT missing dialogue"),
-                            ui.DebugCompatAncientArchitect,
-                            T("ritsulib.debugCompatAncientArchitect.description",
-                                "Inject empty Lines entries for ModContentRegistry ancients when vanilla provides no dialogue.")))
                 .AddSection("steam_cloud_mod_data", section => section
                     .WithTitle(T("ritsulib.section.steamCloudModData.title", "Steam Cloud (mod data)"))
                     .WithEnabledWhen(() =>

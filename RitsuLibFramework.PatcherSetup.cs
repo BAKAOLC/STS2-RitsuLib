@@ -314,6 +314,7 @@ namespace STS2RitsuLib
             patcher.RegisterPatch<NCreatureNonSpineReviveAnimationTriggerPatch>();
             patcher.RegisterPatch<ModMerchantCharacterVisualPlaybackPatch>();
             patcher.RegisterPatch<NMerchantRoomProceduralCharacterInstantiationPatch>();
+            patcher.RegisterPatch<NFakeMerchantProceduralCharacterInstantiationPatch>();
             patcher.RegisterPatch<NRestSiteCharacterCreateProceduralPatch>();
             patcher.RegisterPatch<NRestSiteRoomProceduralVisualPlaybackPatch>();
             patcher.RegisterPatch<CardLibraryCompendiumPatch>();

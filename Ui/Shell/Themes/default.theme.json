@@ -1,7 +1,7 @@
 {
   "$schema": "https://raw.githubusercontent.com/BAKAOLC/STS2-RitsuLib/main/schemas/ui/shell/v1/schema.json",
   "themeFormatVersion": 1,
-  "themeVersion": 2,
+  "themeVersion": 3,
   "id": "default",
   "displayName": "Default",
   "inherits": null,
@@ -226,7 +226,11 @@
         "$type": "dimension"
       },
       "hintSmall": {
-        "$value": 12,
+        "$value": 15,
+        "$type": "dimension"
+      },
+      "tooltip": {
+        "$value": 17,
         "$type": "dimension"
       },
       "grip": {
@@ -318,6 +322,34 @@
       "shadow": {
         "$value": "#00000029",
         "$type": "color"
+      },
+      "layout": {
+        "borderWidth": {
+          "$value": 1,
+          "$type": "dimension"
+        },
+        "cornerRadius": {
+          "$value": 0,
+          "$type": "dimension"
+        },
+        "padding": {
+          "all": {
+            "$value": 10,
+            "$type": "dimension"
+          },
+          "top": {
+            "$value": 10,
+            "$type": "dimension"
+          },
+          "bottom": {
+            "$value": 10,
+            "$type": "dimension"
+          }
+        },
+        "shadowSize": {
+          "$value": 4,
+          "$type": "dimension"
+        }
       }
     },
     "chromeMenu": {
@@ -339,6 +371,30 @@
         "border": {
           "$value": "#80B3D69E",
           "$type": "color"
+        }
+      },
+      "layout": {
+        "borderWidth": {
+          "$value": 1,
+          "$type": "dimension"
+        },
+        "cornerRadius": {
+          "$value": 0,
+          "$type": "dimension"
+        },
+        "padding": {
+          "all": {
+            "$value": 10,
+            "$type": "dimension"
+          },
+          "top": {
+            "$value": 6,
+            "$type": "dimension"
+          },
+          "bottom": {
+            "$value": 6,
+            "$type": "dimension"
+          }
         }
       }
     },
@@ -826,6 +882,48 @@
             }
           }
         },
+        "currentRow": {
+          "borderWidth": {
+            "$value": 2,
+            "$type": "dimension"
+          },
+          "borderWidthFocus": {
+            "$value": 3,
+            "$type": "dimension"
+          },
+          "cornerRadius": {
+            "$value": 0,
+            "$type": "dimension"
+          },
+          "padding": {
+            "all": {
+              "$value": 10,
+              "$type": "dimension"
+            },
+            "top": {
+              "$value": 5,
+              "$type": "dimension"
+            },
+            "bottom": {
+              "$value": 5,
+              "$type": "dimension"
+            }
+          },
+          "paddingFocus": {
+            "all": {
+              "$value": 9,
+              "$type": "dimension"
+            },
+            "top": {
+              "$value": 4,
+              "$type": "dimension"
+            },
+            "bottom": {
+              "$value": 4,
+              "$type": "dimension"
+            }
+          }
+        },
         "panel": {
           "minSize": {
             "width": {
@@ -853,6 +951,10 @@
           },
           "borderWidth": {
             "$value": 1,
+            "$type": "dimension"
+          },
+          "cornerRadius": {
+            "$value": 0,
             "$type": "dimension"
           },
           "padding": {
@@ -906,6 +1008,10 @@
       "layout": {
         "borderWidth": {
           "$value": 1,
+          "$type": "dimension"
+        },
+        "cornerRadius": {
+          "$value": 0,
           "$type": "dimension"
         },
         "padding": {
@@ -1264,6 +1370,10 @@
             "$type": "dimension"
           }
         },
+        "cornerRadius": {
+          "$value": 0,
+          "$type": "dimension"
+        },
         "borderWidth": {
           "$value": 1,
           "$type": "dimension"
@@ -1345,6 +1455,36 @@
         "paddingV": {
           "$value": 18,
           "$type": "dimension"
+        }
+      }
+    },
+    "tooltip": {
+      "layout": {
+        "borderWidth": {
+          "$value": 1,
+          "$type": "dimension"
+        },
+        "cornerRadius": {
+          "$value": 0,
+          "$type": "dimension"
+        },
+        "shadowSize": {
+          "$value": 4,
+          "$type": "dimension"
+        },
+        "padding": {
+          "all": {
+            "$value": 10,
+            "$type": "dimension"
+          },
+          "top": {
+            "$value": 8,
+            "$type": "dimension"
+          },
+          "bottom": {
+            "$value": 8,
+            "$type": "dimension"
+          }
         }
       }
     },
@@ -1766,6 +1906,10 @@
               "$value": 44,
               "$type": "dimension"
             }
+          },
+          "cornerRadius": {
+            "$value": 0,
+            "$type": "dimension"
           }
         },
         "disabled": {

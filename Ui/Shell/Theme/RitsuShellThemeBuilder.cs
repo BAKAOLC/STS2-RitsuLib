@@ -261,6 +261,33 @@ namespace STS2RitsuLib.Ui.Shell.Theme
                 ReadColor(root, "components.choiceCenter.highlight.bottom"));
         }
 
+        private static FontSizeMetrics BuildFontSizeMetrics(Dictionary<string, object?> root)
+        {
+            var tooltipFont = ReadInt(root, "semantic.fontSize.tooltip");
+            if (tooltipFont <= 0)
+                tooltipFont = ReadInt(root, "semantic.fontSize.popupRow");
+
+            return new(
+                ReadInt(root, "semantic.fontSize.button"),
+                ReadInt(root, "semantic.fontSize.miniButton"),
+                ReadInt(root, "semantic.fontSize.valueLabel"),
+                ReadInt(root, "semantic.fontSize.popupRow"),
+                ReadInt(root, "semantic.fontSize.hintSmall"),
+                tooltipFont,
+                ReadInt(root, "semantic.fontSize.grip"),
+                ReadInt(root, "semantic.fontSize.pillCount"),
+                ReadInt(root, "semantic.fontSize.secondary"),
+                ReadInt(root, "semantic.fontSize.headerArrow"),
+                ReadInt(root, "semantic.fontSize.headerTitle"),
+                ReadInt(root, "semantic.fontSize.headerSubtitle"),
+                ReadInt(root, "semantic.fontSize.pageDescription"),
+                ReadInt(root, "semantic.fontSize.overlayTitle"),
+                ReadInt(root, "semantic.fontSize.overlayBody"),
+                ReadInt(root, "semantic.fontSize.overlayPath"),
+                ReadInt(root, "semantic.fontSize.settingsEntryButton"),
+                ReadInt(root, "semantic.fontSize.settingLineTitle"));
+        }
+
         private static MetricTokens BuildMetricTokens(Dictionary<string, object?> root)
         {
             return new(
@@ -298,23 +325,7 @@ namespace STS2RitsuLib.Ui.Shell.Theme
                     ReadInt(root, "components.sidebar.layout.sectionRailSeparation"),
                     ReadInt(root, "components.sidebar.layout.cardInnerMargin"),
                     ReadBool(root, "components.sidebar.layout.showInlinePageCount")),
-                new(ReadInt(root, "semantic.fontSize.button"),
-                    ReadInt(root, "semantic.fontSize.miniButton"),
-                    ReadInt(root, "semantic.fontSize.valueLabel"),
-                    ReadInt(root, "semantic.fontSize.popupRow"),
-                    ReadInt(root, "semantic.fontSize.hintSmall"),
-                    ReadInt(root, "semantic.fontSize.grip"),
-                    ReadInt(root, "semantic.fontSize.pillCount"),
-                    ReadInt(root, "semantic.fontSize.secondary"),
-                    ReadInt(root, "semantic.fontSize.headerArrow"),
-                    ReadInt(root, "semantic.fontSize.headerTitle"),
-                    ReadInt(root, "semantic.fontSize.headerSubtitle"),
-                    ReadInt(root, "semantic.fontSize.pageDescription"),
-                    ReadInt(root, "semantic.fontSize.overlayTitle"),
-                    ReadInt(root, "semantic.fontSize.overlayBody"),
-                    ReadInt(root, "semantic.fontSize.overlayPath"),
-                    ReadInt(root, "semantic.fontSize.settingsEntryButton"),
-                    ReadInt(root, "semantic.fontSize.settingLineTitle")));
+                BuildFontSizeMetrics(root));
         }
 
         private static FontTokens BuildFontTokens(Dictionary<string, object?> root)

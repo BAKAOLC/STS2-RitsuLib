@@ -15,7 +15,7 @@ jobs:
           fetch-depth: 1
 
       - name: Apply labels.yml
-        uses: crazy-max/ghaction-github-labeler@v5
+        uses: crazy-max/ghaction-github-labeler@v6
         with:
           github-token: ${{ secrets.GITHUB_TOKEN }}
           yaml-file: .github/labels.yml

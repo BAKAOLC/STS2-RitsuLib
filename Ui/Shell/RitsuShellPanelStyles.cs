@@ -20,8 +20,9 @@ namespace STS2RitsuLib.Ui.Shell
             var t = RitsuShellTheme.Current;
             var border = RitsuShellThemeLayoutResolver.ResolveEdges("components.framedSurface.layout.borderWidth", 1);
             var padding = RitsuShellThemeLayoutResolver.ResolveEdges("components.framedSurface.layout.padding", 0);
-            var radius = RitsuShellThemeLayoutResolver.ResolveInt("components.framedSurface.layout.cornerRadius",
-                cornerRadius);
+            var cornerRadii =
+                RitsuShellThemeLayoutResolver.ResolveCornerRadii("components.framedSurface.layout.cornerRadius",
+                    cornerRadius);
             return new()
             {
                 BgColor = background,
@@ -30,10 +31,10 @@ namespace STS2RitsuLib.Ui.Shell
                 BorderWidthTop = border.Top,
                 BorderWidthRight = border.Right,
                 BorderWidthBottom = border.Bottom,
-                CornerRadiusTopLeft = radius,
-                CornerRadiusTopRight = radius,
-                CornerRadiusBottomRight = radius,
-                CornerRadiusBottomLeft = radius,
+                CornerRadiusTopLeft = cornerRadii.TopLeft,
+                CornerRadiusTopRight = cornerRadii.TopRight,
+                CornerRadiusBottomRight = cornerRadii.BottomRight,
+                CornerRadiusBottomLeft = cornerRadii.BottomLeft,
                 ShadowColor = t.Surface.Framed.Shadow,
                 ShadowSize = RitsuShellThemeLayoutResolver.ResolveInt("components.framedSurface.layout.shadowSize", 12),
                 ContentMarginLeft = padding.Left,
@@ -55,8 +56,9 @@ namespace STS2RitsuLib.Ui.Shell
             var state = selected ? t.Component.SidebarCard.Selected : t.Component.SidebarCard.Default;
             var border = RitsuShellThemeLayoutResolver.ResolveEdges("components.sidebarCard.layout.borderWidth", 1);
             var padding = RitsuShellThemeLayoutResolver.ResolveEdges("components.sidebarCard.layout.padding", 10);
-            var radius = RitsuShellThemeLayoutResolver.ResolveInt("components.sidebarCard.layout.cornerRadius",
-                cornerRadius);
+            var cornerRadii =
+                RitsuShellThemeLayoutResolver.ResolveCornerRadii("components.sidebarCard.layout.cornerRadius",
+                    cornerRadius);
             return new()
             {
                 BgColor = state.Bg,
@@ -65,10 +67,10 @@ namespace STS2RitsuLib.Ui.Shell
                 BorderWidthTop = border.Top,
                 BorderWidthRight = border.Right,
                 BorderWidthBottom = border.Bottom,
-                CornerRadiusTopLeft = radius,
-                CornerRadiusTopRight = radius,
-                CornerRadiusBottomRight = radius,
-                CornerRadiusBottomLeft = radius,
+                CornerRadiusTopLeft = cornerRadii.TopLeft,
+                CornerRadiusTopRight = cornerRadii.TopRight,
+                CornerRadiusBottomRight = cornerRadii.BottomRight,
+                CornerRadiusBottomLeft = cornerRadii.BottomLeft,
                 ShadowColor = t.Component.SidebarCard.Shadow,
                 ShadowSize = RitsuShellThemeLayoutResolver.ResolveInt("components.sidebarCard.layout.shadowSize", 4),
                 ContentMarginLeft = padding.Left,

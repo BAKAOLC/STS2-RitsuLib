@@ -1,13 +1,15 @@
 using System.Collections.Concurrent;
 using Godot;
 using STS2RitsuLib.Audio.Internal;
+using FileAccess = Godot.FileAccess;
 
 namespace STS2RitsuLib.Audio
 {
     /// <summary>
-    ///     Load loose audio files into the FMOD runtime (wav/ogg/mp3 per addon) from absolute filesystem paths.
-    ///     Rejects <c>res://</c>, but resolves <c>user://</c> to an absolute filesystem path first. Tracks loaded paths so
-    ///     you can unload deterministically.
+    ///     Load loose audio files into the FMOD runtime (wav/ogg/mp3 per addon). For <c>res://</c>, only paths that are
+    ///     still visible as raw files to <see cref="FileAccess" /> are accepted (e.g. Import dock &quot;Keep File (No Import)
+    ///     &quot;).
+    ///     Resolves <c>user://</c> to an absolute filesystem path. Tracks loaded paths so you can unload deterministically.
     /// </summary>
     public static class FmodStudioStreamingFiles
     {
@@ -81,7 +83,8 @@ namespace STS2RitsuLib.Audio
         /// <summary>
         ///     Returns a playable sound instance for the loose audio file at <paramref name="absolutePath" />, preloading as sound
         ///     when needed.
-        ///     Accepts absolute filesystem paths and resolves <c>user://</c> to an absolute filesystem path.
+        ///     Accepts <c>res://</c> only when the path is a raw file for <see cref="FileAccess" />, absolute paths, and
+        ///     <c>user://</c> (globalized).
         /// </summary>
         public static GodotObject? TryCreateSoundInstance(string absolutePath)
         {
@@ -103,7 +106,8 @@ namespace STS2RitsuLib.Audio
 
         /// <summary>
         ///     Returns a streaming music instance, preloading as music when needed.
-        ///     Accepts absolute filesystem paths and resolves <c>user://</c> to an absolute filesystem path.
+        ///     Accepts <c>res://</c> only when the path is a raw file for <see cref="FileAccess" />, absolute paths, and
+        ///     <c>user://</c> (globalized).
         /// </summary>
         public static GodotObject? TryCreateStreamingMusicInstance(string absolutePath)
         {
@@ -151,8 +155,11 @@ namespace STS2RitsuLib.Audio
         /// </summary>
         public static bool TryUnloadFile(string absolutePath)
         {
-            return !Loaded.TryRemove(absolutePath, out _) ||
-                   FmodStudioGateway.TryCall(FmodStudioMethodNames.UnloadFile, absolutePath);
+            if (!TryResolveSupportedPath(absolutePath, out var resolvedPath))
+                return false;
+
+            return !Loaded.TryRemove(resolvedPath, out _) ||
+                   FmodStudioGateway.TryCall(FmodStudioMethodNames.UnloadFile, resolvedPath);
         }
 
         /// <summary>
@@ -173,16 +180,42 @@ namespace STS2RitsuLib.Audio
                 return false;
             }
 
-            if (path.StartsWith("res://", StringComparison.OrdinalIgnoreCase))
+            if (path.StartsWith("user://", StringComparison.OrdinalIgnoreCase))
             {
-                RitsuLibFramework.Logger.Error($"[Audio] FMOD file playback does not accept res:// paths: {path}");
+                resolvedPath = ProjectSettings.GlobalizePath(path);
+                if (!Path.IsPathRooted(resolvedPath))
+                {
+                    RitsuLibFramework.Logger.Error($"[Audio] FMOD file playback requires an absolute path: {path}");
+                    return false;
+                }
+
+                if (File.Exists(resolvedPath)) return true;
+                RitsuLibFramework.Logger.Error($"[Audio] FMOD file playback file not found: {resolvedPath}");
                 return false;
             }
 
-            resolvedPath = path.StartsWith("user://", StringComparison.OrdinalIgnoreCase)
-                ? ProjectSettings.GlobalizePath(path)
-                : path;
+            if (path.StartsWith("res://", StringComparison.OrdinalIgnoreCase))
+            {
+                if (FileAccess.FileExists(path))
+                {
+                    resolvedPath = path;
+                    return true;
+                }
 
+                if (ResourceLoader.Exists(path))
+                {
+                    RitsuLibFramework.Logger.Warn(
+                        "[Audio] FMOD file playback: path resolves only as imported/packed resource, not as a raw file for FileAccess. " +
+                        "Avoid default import for assets you stream through FMOD: use the Import dock \"Keep File (No Import)\" " +
+                        "(or ship a loose file / FMOD Studio bank). Path: " + path);
+                    return false;
+                }
+
+                RitsuLibFramework.Logger.Error($"[Audio] FMOD file playback file not found: {path}");
+                return false;
+            }
+
+            resolvedPath = path;
             if (!Path.IsPathRooted(resolvedPath))
             {
                 RitsuLibFramework.Logger.Error($"[Audio] FMOD file playback requires an absolute path: {path}");
