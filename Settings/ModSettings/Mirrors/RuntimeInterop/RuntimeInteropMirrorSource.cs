@@ -1,6 +1,7 @@
 using System.Collections;
 using System.Reflection;
 using System.Text.Json;
+using STS2RitsuLib.Interop;
 using STS2RitsuLib.Utils;
 using STS2RitsuLib.Utils.Persistence;
 
@@ -767,10 +768,20 @@ namespace STS2RitsuLib.Settings
 
         private static InteropAccessor BuildAccessor(Type providerType)
         {
+            ReflectionStaticChannel channel;
+            try
+            {
+                channel = ReflectionStaticChannelBinder.Bind(providerType,
+                    ReflectionInteropConvention.SettingsRuntimeInterop);
+            }
+            catch (InvalidOperationException ex)
+            {
+                throw ModSettingsMirrorDiagnostics.InvalidConfig(
+                    $"Provider {providerType.FullName} requires static {ResolverGetMethodName}(string) and {ResolverSetMethodName}(string, object). ({ex.Message})");
+            }
+
             const BindingFlags flags = BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Static;
 
-            var getObject = providerType.GetMethod(ResolverGetMethodName, flags, [typeof(string)]);
-            var setObject = providerType.GetMethod(ResolverSetMethodName, flags, [typeof(string), typeof(object)]);
             var save = providerType.GetMethod(ResolverSaveMethodName, flags, Type.EmptyTypes);
             var action = providerType.GetMethod(ActionInvokeMethodName, flags, [typeof(string)]);
 
@@ -785,14 +796,10 @@ namespace STS2RitsuLib.Settings
             var setString = providerType.GetMethod(TypedSetStringMethodName, flags,
                 [typeof(string), typeof(string)]);
 
-            if (getObject == null || setObject == null)
-                throw ModSettingsMirrorDiagnostics.InvalidConfig(
-                    $"Provider {providerType.FullName} requires static {ResolverGetMethodName}(string) and {ResolverSetMethodName}(string, object).");
-
             return new(
-                providerType,
-                key => getObject.Invoke(null, [key]),
-                (key, value) => setObject.Invoke(null, [key, value]),
+                channel.ProviderType,
+                channel.GetObject,
+                channel.SetObject,
                 key =>
                 {
                     if (getBool == null) throw new InvalidOperationException();

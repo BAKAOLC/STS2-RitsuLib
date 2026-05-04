@@ -1,0 +1,125 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://raw.githubusercontent.com/BAKAOLC/STS2-RitsuLib/main/schemas/mod-data/runtime-interop/v1/schema.json",
+  "title": "RitsuLib ModData runtime interop manifest",
+  "description": "Payload shape returned by static CreateRitsuLibModDataSchema() and parsed by RuntimeModDataInteropSource. Property names are matched case-insensitively at runtime; this schema uses camelCase for validation.",
+  "type": "object",
+  "required": ["modId", "entries"],
+  "properties": {
+    "modId": {
+      "type": "string",
+      "minLength": 1,
+      "description": "Target mod id for ModDataStore registration."
+    },
+    "entries": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "$ref": "#/$defs/entry"
+      }
+    }
+  },
+  "$defs": {
+    "entry": {
+      "type": "object",
+      "required": ["key", "fileName"],
+      "properties": {
+        "key": {
+          "type": "string",
+          "minLength": 1
+        },
+        "fileName": {
+          "type": "string",
+          "minLength": 1
+        },
+        "scope": {
+          "type": "string",
+          "enum": ["global", "Global", "profile", "Profile"]
+        },
+        "autoCreateIfMissing": {
+          "type": "boolean"
+        },
+        "dataType": {
+          "type": "string",
+          "minLength": 1,
+          "description": "Assembly-qualified type name for typed JSON persistence; omit for JSON-object channel."
+        },
+        "defaultFactory": {
+          "type": "string",
+          "minLength": 1,
+          "description": "Optional static parameterless factory method name on the provider type."
+        },
+        "migrationConfig": {
+          "$ref": "#/$defs/migrationConfig"
+        },
+        "migrations": {
+          "type": "array",
+          "items": {
+            "oneOf": [
+              {
+                "type": "string",
+                "minLength": 1
+              },
+              {
+                "type": "object",
+                "required": ["type"],
+                "properties": {
+                  "type": {
+                    "type": "string",
+                    "minLength": 1
+                  }
+                },
+                "additionalProperties": true
+              }
+            ]
+          }
+        },
+        "jsonPathPull": {
+          "type": "array",
+          "minItems": 1,
+          "items": {
+            "type": "string",
+            "minLength": 1
+          },
+          "description": "JSON Pointer paths (RFC 6901) for GetRitsuLibModDataNode pull sync; leading slash optional."
+        },
+        "jsonPathPush": {
+          "type": "array",
+          "minItems": 1,
+          "items": {
+            "type": "string",
+            "minLength": 1
+          },
+          "description": "JSON Pointer paths for SetRitsuLibModDataNode push; used when the provider implements path setters."
+        },
+        "jsonPathMergePush": {
+          "type": "array",
+          "minItems": 1,
+          "items": {
+            "type": "string",
+            "minLength": 1
+          },
+          "description": "JSON Pointer object locations for MergeRitsuLibModDataObject push (RFC 7386 merge at each path)."
+        }
+      },
+      "additionalProperties": true
+    },
+    "migrationConfig": {
+      "type": "object",
+      "required": ["currentDataVersion", "minimumSupportedDataVersion"],
+      "properties": {
+        "currentDataVersion": {
+          "type": "integer"
+        },
+        "minimumSupportedDataVersion": {
+          "type": "integer"
+        },
+        "schemaVersionProperty": {
+          "type": "string",
+          "minLength": 1
+        }
+      },
+      "additionalProperties": false
+    }
+  }
+}

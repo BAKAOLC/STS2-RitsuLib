@@ -292,6 +292,11 @@ namespace STS2RitsuLib
 
                     IsInitialized = true;
                     IsActive = true;
+                    var modDataInteropRegistered = ModDataRuntimeInterop.TryRegisterAll();
+                    if (modDataInteropRegistered > 0)
+                        Logger.Debug(
+                            $"ModData runtime interop: mirror-registered {modDataInteropRegistered} provider schema(s).");
+
                     EnsureFrameworkInteropBootstrapRegistered();
                     RuntimeHotkeyService.Initialize();
                     RitsuToastService.Initialize();
@@ -365,8 +370,10 @@ namespace STS2RitsuLib
                     nameof(ProfileServicesInitializingEvent)
                 );
 
+                ModDataRuntimeInterop.EnsureProfileSwitchSyncHook();
                 ProfileManager.Instance.Initialize();
                 ModDataStore.InitializeAllProfileScoped();
+                ModDataRuntimeInterop.PushLoadedDataToAllProviders();
                 ModRunSidecarSession.AttachLifecycleHandlers();
 
                 _profileServicesInitialized = true;
