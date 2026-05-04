@@ -209,20 +209,6 @@ namespace STS2RitsuLib
             var topic = GetLifecycleTopic<TEvent>();
             FrameworkLifecycleSubscription? subscription = null;
 
-            void Wrapped(TEvent evt)
-            {
-                try
-                {
-                    handler(evt, subscription!);
-                }
-                catch (Exception ex)
-                {
-                    Logger.Warn(
-                        $"[Lifecycle] Observer callback failed in {LifecycleEventTypeCache<TEvent>.EventName}: {ex.Message}"
-                    );
-                }
-            }
-
             lock (SyncRoot)
             {
                 subscription = new(() =>
@@ -242,7 +228,21 @@ namespace STS2RitsuLib
             if (replayCurrentState && replayEvent is TEvent typedReplayEvent)
                 SafeNotify(Wrapped, typedReplayEvent, LifecycleEventTypeCache<TEvent>.EventName);
 
-            return subscription!;
+            return subscription;
+
+            void Wrapped(TEvent evt)
+            {
+                try
+                {
+                    handler(evt, subscription!);
+                }
+                catch (Exception ex)
+                {
+                    Logger.Warn(
+                        $"[Lifecycle] Observer callback failed in {LifecycleEventTypeCache<TEvent>.EventName}: {ex.Message}"
+                    );
+                }
+            }
         }
 
         /// <summary>
