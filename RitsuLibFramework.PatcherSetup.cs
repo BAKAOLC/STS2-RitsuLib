@@ -1,3 +1,4 @@
+using STS2RitsuLib.ActSequence.Patches;
 using STS2RitsuLib.Audio.Patches;
 using STS2RitsuLib.CardPiles.Patches;
 using STS2RitsuLib.Cards.FreePlay.Patches;
@@ -6,6 +7,7 @@ using STS2RitsuLib.CardTags.Patches;
 using STS2RitsuLib.Combat.CardTargeting.Patches;
 using STS2RitsuLib.Combat.HealthBars.Patches;
 using STS2RitsuLib.Combat.Rewards.Patches;
+using STS2RitsuLib.Combat.Ui.Patches;
 using STS2RitsuLib.Content.Patches;
 using STS2RitsuLib.Diagnostics.Patches;
 using STS2RitsuLib.Interop.Patches;
@@ -116,6 +118,8 @@ namespace STS2RitsuLib
             patcher.RegisterPatch<RoomExitLifecyclePatch>();
             patcher.RegisterPatch<ActTransitionLifecyclePatch>();
             patcher.RegisterPatch<ActEnterMapSelectionSyncPatch>();
+            patcher.RegisterPatch<ActSequenceRunSetupPatch>();
+            patcher.RegisterPatch<ActSequenceEnterNextActPatch>();
             patcher.RegisterPatch<SaveManagerLifecyclePatch>();
             patcher.RegisterPatch<ModDataCloudSyncPatches.AfterInitProfileId>();
             patcher.RegisterPatch<ModDataCloudSyncPatches.AfterSwitchProfileId>();
@@ -133,6 +137,12 @@ namespace STS2RitsuLib
             patcher.RegisterPatch<NHandCardHolderDynamicOutlineTickPatch>();
             patcher.RegisterPatch<NHealthBarRefreshMiddlegroundForecastPatch>();
             patcher.RegisterPatch<NHealthBarRefreshTextForecastPatch>();
+            patcher.RegisterPatch<NPowerExtraCornerAmountLabelsPatch>();
+            patcher.RegisterPatch<NPowerExtraCornerAmountLabelsExitTreePatch>();
+            patcher.RegisterPatch<NRelicInventoryHolderExtraCornerAmountLabelsPatch>();
+            patcher.RegisterPatch<NRelicInventoryHolderExtraCornerAmountLabelsExitTreePatch>();
+            patcher.RegisterPatch<NIntentExtraCornerAmountLabelsPatch>();
+            patcher.RegisterPatch<NIntentExtraCornerAmountLabelsExitTreePatch>();
             patcher.RegisterPatch<ArchaicToothGetTranscendenceStarterCardPatch>();
             patcher.RegisterPatch<ArchaicToothGetTranscendenceTransformedCardPatch>();
             patcher.RegisterPatch<ArchaicToothTranscendenceCardsPatch>();

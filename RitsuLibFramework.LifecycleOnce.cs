@@ -33,18 +33,6 @@ namespace STS2RitsuLib
             var topic = GetLifecycleTopic<TEvent>();
             FrameworkLifecycleSubscription? subscription = null;
 
-            void Wrapped(TEvent evt)
-            {
-                try
-                {
-                    handler(evt);
-                }
-                finally
-                {
-                    subscription?.Dispose();
-                }
-            }
-
             object? replayEvent = null;
 
             lock (SyncRoot)
@@ -67,6 +55,18 @@ namespace STS2RitsuLib
                 SafeNotify(Wrapped, typedReplayEvent, LifecycleEventTypeCache<TEvent>.EventName);
 
             return subscription;
+
+            void Wrapped(TEvent evt)
+            {
+                try
+                {
+                    handler(evt);
+                }
+                finally
+                {
+                    subscription?.Dispose();
+                }
+            }
         }
     }
 }

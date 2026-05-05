@@ -6,6 +6,7 @@ using MegaCrit.Sts2.Core.Entities.Players;
 using MegaCrit.Sts2.Core.Logging;
 using MegaCrit.Sts2.Core.Modding;
 using MegaCrit.Sts2.Core.Models;
+using STS2RitsuLib.ActSequence;
 using STS2RitsuLib.Cards.FreePlay;
 using STS2RitsuLib.CardTags;
 using STS2RitsuLib.Combat.HandSize;
@@ -209,20 +210,6 @@ namespace STS2RitsuLib
             var topic = GetLifecycleTopic<TEvent>();
             FrameworkLifecycleSubscription? subscription = null;
 
-            void Wrapped(TEvent evt)
-            {
-                try
-                {
-                    handler(evt, subscription!);
-                }
-                catch (Exception ex)
-                {
-                    Logger.Warn(
-                        $"[Lifecycle] Observer callback failed in {LifecycleEventTypeCache<TEvent>.EventName}: {ex.Message}"
-                    );
-                }
-            }
-
             lock (SyncRoot)
             {
                 subscription = new(() =>
@@ -242,7 +229,21 @@ namespace STS2RitsuLib
             if (replayCurrentState && replayEvent is TEvent typedReplayEvent)
                 SafeNotify(Wrapped, typedReplayEvent, LifecycleEventTypeCache<TEvent>.EventName);
 
-            return subscription!;
+            return subscription;
+
+            void Wrapped(TEvent evt)
+            {
+                try
+                {
+                    handler(evt, subscription!);
+                }
+                catch (Exception ex)
+                {
+                    Logger.Warn(
+                        $"[Lifecycle] Observer callback failed in {LifecycleEventTypeCache<TEvent>.EventName}: {ex.Message}"
+                    );
+                }
+            }
         }
 
         /// <summary>
@@ -292,6 +293,11 @@ namespace STS2RitsuLib
 
                     IsInitialized = true;
                     IsActive = true;
+                    var modDataInteropRegistered = ModDataRuntimeInterop.TryRegisterAll();
+                    if (modDataInteropRegistered > 0)
+                        Logger.Debug(
+                            $"ModData runtime interop: mirror-registered {modDataInteropRegistered} provider schema(s).");
+
                     EnsureFrameworkInteropBootstrapRegistered();
                     RuntimeHotkeyService.Initialize();
                     RitsuToastService.Initialize();
@@ -365,8 +371,10 @@ namespace STS2RitsuLib
                     nameof(ProfileServicesInitializingEvent)
                 );
 
+                ModDataRuntimeInterop.EnsureProfileSwitchSyncHook();
                 ProfileManager.Instance.Initialize();
                 ModDataStore.InitializeAllProfileScoped();
+                ModDataRuntimeInterop.PushLoadedDataToAllProviders();
                 ModRunSidecarSession.AttachLifecycleHandlers();
 
                 _profileServicesInitialized = true;
@@ -408,6 +416,14 @@ namespace STS2RitsuLib
         public static ModContentRegistry GetContentRegistry(string modId)
         {
             return ModContentRegistry.For(modId);
+        }
+
+        /// <summary>
+        ///     Returns the act-sequence registry for <paramref name="modId" />.
+        /// </summary>
+        public static ModActSequenceRegistry GetActSequenceRegistry(string modId)
+        {
+            return ModActSequenceRegistry.For(modId);
         }
 
         /// <summary>
