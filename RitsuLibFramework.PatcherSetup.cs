@@ -1,3 +1,4 @@
+using STS2RitsuLib.ActSequence.Patches;
 using STS2RitsuLib.Audio.Patches;
 using STS2RitsuLib.CardPiles.Patches;
 using STS2RitsuLib.Cards.FreePlay.Patches;
@@ -117,6 +118,8 @@ namespace STS2RitsuLib
             patcher.RegisterPatch<RoomExitLifecyclePatch>();
             patcher.RegisterPatch<ActTransitionLifecyclePatch>();
             patcher.RegisterPatch<ActEnterMapSelectionSyncPatch>();
+            patcher.RegisterPatch<ActSequenceRunSetupPatch>();
+            patcher.RegisterPatch<ActSequenceEnterNextActPatch>();
             patcher.RegisterPatch<SaveManagerLifecyclePatch>();
             patcher.RegisterPatch<ModDataCloudSyncPatches.AfterInitProfileId>();
             patcher.RegisterPatch<ModDataCloudSyncPatches.AfterSwitchProfileId>();

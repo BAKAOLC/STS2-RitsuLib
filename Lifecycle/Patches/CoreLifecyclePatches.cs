@@ -6,6 +6,7 @@ using MegaCrit.Sts2.Core.Multiplayer.Serialization;
 using MegaCrit.Sts2.Core.Nodes;
 using MegaCrit.Sts2.Core.Runs;
 using MegaCrit.Sts2.Core.Saves;
+using STS2RitsuLib.ActSequence;
 using STS2RitsuLib.CardPiles;
 using STS2RitsuLib.CardTags;
 using STS2RitsuLib.Content;
@@ -136,6 +137,7 @@ namespace STS2RitsuLib.Lifecycle.Patches
                     ModTimelineRegistry.FreezeRegistrations(nameof(ModelDb.Init));
                     ModEpochGatedContentRegistry.FreezeRegistrations(nameof(ModelDb.Init));
                     ModUnlockRegistry.FreezeRegistrations(nameof(ModelDb.Init));
+                    ModActSequenceRegistry.FreezeRegistrations(nameof(ModelDb.Init));
                     RegistrationConflictDetector.ValidateAndLogModelIdCollisions();
                     RefreshModTypeCache();
                     ModContentRegistry.InjectDynamicRegisteredModels();
