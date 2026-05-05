@@ -303,6 +303,24 @@ var contentEntries = new IContentRegistrationEntry[]
 
 **单例：**本体没有可补丁的「全局单例列表」；注册仍用于归属与动态类型注入，以便 `ModelDb.Singleton<T>()` 能正确解析。
 
+若你希望单例模型在运行时**被动接收** run / combat hooks，可继承 `STS2RitsuLib.Models.HookedSingletonModel` 并在派生类构造函数中**显式传入**订阅开关（避免默认订阅带来额外开销）。
+
+```csharp
+using STS2RitsuLib.Content;
+using STS2RitsuLib.Models;
+
+public sealed class MyPassiveSingleton : HookedSingletonModel
+{
+    public MyPassiveSingleton()
+        : base(receiveCombatHooks: true, receiveRunHooks: true)
+    {
+    }
+}
+
+RitsuLibFramework.CreateContentPack("MyMod")
+    .Custom(ctx => ctx.Content.RegisterSingleton<MyPassiveSingleton>());
+```
+
 ---
 
 ## 生成式占位内容

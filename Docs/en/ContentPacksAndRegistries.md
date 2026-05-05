@@ -303,6 +303,24 @@ Every row below is **one conceptual kind of content**. You can register it in **
 
 **Singletons:** there is no global `ModelDb` list to patch; registration still records ownership and injects dynamic types so `ModelDb.Singleton<T>()` resolves correctly.
 
+If you want a singleton model to **passively receive** run / combat hooks, inherit from `STS2RitsuLib.Models.HookedSingletonModel` and **explicitly** pass subscription switches in the derived constructor (avoids unintended subscriptions and overhead).
+
+```csharp
+using STS2RitsuLib.Content;
+using STS2RitsuLib.Models;
+
+public sealed class MyPassiveSingleton : HookedSingletonModel
+{
+    public MyPassiveSingleton()
+        : base(receiveCombatHooks: true, receiveRunHooks: true)
+    {
+    }
+}
+
+RitsuLibFramework.CreateContentPack("MyMod")
+    .Custom(ctx => ctx.Content.RegisterSingleton<MyPassiveSingleton>());
+```
+
 ---
 
 ## Generated placeholder content
