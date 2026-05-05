@@ -6,7 +6,6 @@ using MegaCrit.Sts2.Core.Entities.Players;
 using MegaCrit.Sts2.Core.Logging;
 using MegaCrit.Sts2.Core.Modding;
 using MegaCrit.Sts2.Core.Models;
-using STS2RitsuLib.ActSequence;
 using STS2RitsuLib.Cards.FreePlay;
 using STS2RitsuLib.CardTags;
 using STS2RitsuLib.Combat.HandSize;
@@ -416,14 +415,6 @@ namespace STS2RitsuLib
         public static ModContentRegistry GetContentRegistry(string modId)
         {
             return ModContentRegistry.For(modId);
-        }
-
-        /// <summary>
-        ///     Returns the act-sequence registry for <paramref name="modId" />.
-        /// </summary>
-        public static ModActSequenceRegistry GetActSequenceRegistry(string modId)
-        {
-            return ModActSequenceRegistry.For(modId);
         }
 
         /// <summary>
