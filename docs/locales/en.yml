@@ -1,0 +1,37 @@
+nova:
+  sidebar:
+    docs: Documentation
+
+nav:
+  home: Home
+  guide: Documentation
+  guide_hub: Index
+  guide_getting_started: Getting started
+  guide_framework_design: Framework design
+  guide_terminology: Terminology
+  guide_content_authoring: Content authoring
+  guide_content_packs: Content packs & registries
+  guide_character_unlock: Character & unlock
+  guide_card_dynamic_var: Card dynamic variables
+  guide_custom_events: Custom events
+  guide_timeline_unlocks: Timeline & unlocks
+  guide_asset_profiles: Asset profiles & fallbacks
+  guide_godot_scene: Godot scene authoring
+  guide_mod_settings: Mod settings
+  guide_localization: Localization & keywords
+  guide_loc_string: LocString placeholders
+  guide_lifecycle: Lifecycle events
+  guide_patching: Patching
+  guide_persistence: Persistence
+  guide_fmod: FMOD & audio
+  guide_diagnostics: Diagnostics & compatibility
+
+category:
+  guide: Documentation
+
+hero:
+  actions:
+    get-started: Read the docs
+
+tooltip:
+  edit_this_page: Edit this page on GitHub
