@@ -1,7 +1,4 @@
 <Project Sdk="Godot.NET.Sdk/4.5.1">
-    <Import Project=".\local.props" Condition="Exists('.\local.props')"/>
-    <Import Project=".\Sts2PathDiscovery.props"/>
-
     <PropertyGroup Label="Compatibility (STS2 API, signatures, defines)">
         <RitsuLibCompatTargets>0.104.0;0.103.2</RitsuLibCompatTargets>
         <RitsuLibLatestApiCompat>0.104.0</RitsuLibLatestApiCompat>
@@ -10,6 +7,15 @@
         <Sts2DataDir Condition="'$(Sts2ApiSignatureRoot)' != ''">$(Sts2ApiSignatureDir)</Sts2DataDir>
         <DefineConstants Condition="'$(Sts2ApiCompat)' == '0.103.2'">$(DefineConstants);STS2_V_0_103_2</DefineConstants>
     </PropertyGroup>
+
+    <PropertyGroup Label="Mod manifest generation">
+        <RitsuLibManifestSource>$(MSBuildProjectDirectory)\mod_manifest.json</RitsuLibManifestSource>
+        <RitsuLibManifestGenerated>$(IntermediateOutputPath)mod_manifest.generated.json</RitsuLibManifestGenerated>
+        <RitsuLibModDisplayName Condition="'$(Sts2ApiCompat)' == '$(RitsuLibLatestApiCompat)'">RitsuLib</RitsuLibModDisplayName>
+        <RitsuLibModDisplayName Condition="'$(Sts2ApiCompat)' != '$(RitsuLibLatestApiCompat)'">RitsuLib (STS2 $(Sts2ApiCompat) compat)</RitsuLibModDisplayName>
+    </PropertyGroup>
+
+    <Import Project="$(MSBuildProjectDirectory)\build\RitsuLib.ModManifest.targets"/>
 
     <PropertyGroup Label="Assembly and build">
         <RootNamespace>STS2RitsuLib</RootNamespace>
@@ -23,7 +29,7 @@
 
     <PropertyGroup Label="NuGet package">
         <IsPackable>true</IsPackable>
-        <Version>0.2.23</Version>
+        <Version>0.2.24</Version>
         <Authors>OLC</Authors>
         <Description>Shared framework library for Slay the Spire 2 mods.</Description>
         <PackageReadmeFile>README.md</PackageReadmeFile>
@@ -68,7 +74,7 @@
         <Reference Include="Steamworks.NET" HintPath="$(Sts2DataDir)\Steamworks.NET.dll" Private="False"/>
     </ItemGroup>
     <ItemGroup>
-        <Content Include="mod_manifest.json"/>
+        <Content Include="$(RitsuLibManifestGenerated)"/>
     </ItemGroup>
     <ItemGroup>
         <EmbeddedResource Include="Settings\Localization\**\*.json"/>
@@ -76,7 +82,7 @@
     </ItemGroup>
     <ItemGroup>
         <None Include="README.md" Pack="true" PackagePath="\"/>
-        <None Include="mod_manifest.json" Pack="true" PackagePath="contentFiles/any/any/"/>
+        <None Include="$(RitsuLibManifestGenerated)" Pack="true" PackagePath="contentFiles/any/any/mod_manifest.json"/>
         <None Include="buildTransitive\STS2.RitsuLib.targets" Pack="true" PackagePath="buildTransitive/$(PackageId).targets"/>
     </ItemGroup>
     <!-- Exclude game source reference folder from compilation -->
@@ -85,11 +91,18 @@
         <None Remove="sts-2-source\**"/>
         <Content Remove="sts-2-source\**"/>
         <EmbeddedResource Remove="sts-2-source\**"/>
+
+        <Compile Remove="build\**\*.cs"/>
+        <!-- Loader is a separate assembly; keep it out of Godot.Sdk default globs. -->
+        <Compile Remove="Loader\**"/>
+        <None Remove="Loader\**"/>
+        <Content Remove="Loader\**"/>
+        <EmbeddedResource Remove="Loader\**"/>
     </ItemGroup>
     <Target Name="Copy Mod" AfterTargets="Build" Condition="'$(Sts2ApiCompat)' == '$(RitsuLibLatestApiCompat)'">
         <Message Text="Copying mod to Slay the Spire 2 mods folder..." Importance="high"/>
         <MakeDir Directories="$(Sts2Dir)\mods\$(MSBuildProjectName)\"/>
         <Copy SourceFiles="$(TargetPath)" DestinationFolder="$(Sts2Dir)\mods\$(MSBuildProjectName)\"/>
-        <Copy SourceFiles="$(MSBuildProjectDirectory)\mod_manifest.json" DestinationFolder="$(Sts2Dir)\mods\$(MSBuildProjectName)\"/>
+        <Copy SourceFiles="$(RitsuLibManifestGenerated)" DestinationFiles="$(Sts2Dir)\mods\$(MSBuildProjectName)\mod_manifest.json"/>
     </Target>
 </Project>

@@ -14,6 +14,7 @@ from release_lib.msbuild_eval import get_csproj_property
 from release_lib.repo_layout import (
     ARTIFACTS_GITHUB,
     ARTIFACTS_NUGET,
+    GITHUB_BUNDLE_ZIP_SUFFIX,
     GITHUB_PRERELEASE_TAG_NAME,
     GITHUB_ZIP_FILENAME_SUFFIX,
     NUGET_ORG_V3_INDEX_URL,
@@ -182,11 +183,15 @@ def cmd_dev_prerelease(repo_root: Path) -> None:
         + (f"- Workflow Run: [#{run_id}]({run_url})\n" if run_url else "")
     )
     zips = sorted((repo_root / ARTIFACTS_GITHUB).glob(f"*{GITHUB_ZIP_FILENAME_SUFFIX}"))
-    if not zips:
-        print(f"No *{GITHUB_ZIP_FILENAME_SUFFIX} under {ARTIFACTS_GITHUB}/", file=sys.stderr)
+    bundle_zips = sorted((repo_root / ARTIFACTS_GITHUB).glob(f"*{GITHUB_BUNDLE_ZIP_SUFFIX}"))
+    if not zips and not bundle_zips:
+        print(
+            f"No *{GITHUB_ZIP_FILENAME_SUFFIX} or *{GITHUB_BUNDLE_ZIP_SUFFIX} under {ARTIFACTS_GITHUB}/",
+            file=sys.stderr,
+        )
         raise SystemExit(1)
     upload_files: list[str] = []
-    for p in zips:
+    for p in (*zips, *bundle_zips):
         # Keep original artifact name (already includes package/version), append only a short build marker.
         short = sha[:8] if sha else "local"
         dev_name = p.with_name(f"{p.stem}.sha.{short}{p.suffix}")
@@ -218,12 +223,13 @@ def cmd_tag_release(repo_root: Path, tag: str) -> None:
         print("Tag is empty; set GITHUB_REF_NAME or pass --tag.", file=sys.stderr)
         raise SystemExit(1)
     zips = sorted((repo_root / ARTIFACTS_GITHUB).glob(f"*{GITHUB_ZIP_FILENAME_SUFFIX}"))
+    bundle_zips = sorted((repo_root / ARTIFACTS_GITHUB).glob(f"*{GITHUB_BUNDLE_ZIP_SUFFIX}"))
     nupkgs = sorted(
         p
         for p in (repo_root / ARTIFACTS_NUGET).glob("*.nupkg")
         if not p.name.endswith(SNUPKG_SUFFIX)
     )
-    assets = [str(p) for p in (*zips, *nupkgs)]
+    assets = [str(p) for p in (*zips, *bundle_zips, *nupkgs)]
     if not assets:
         print(
             f"No release assets under {ARTIFACTS_GITHUB}/ or {ARTIFACTS_NUGET}/.",

@@ -9,7 +9,7 @@ the bundled mods.
 
 The library exists alongside [BaseLib](https://github.com/Alchyr/BaseLib-StS2) and currently does not conflict with it.
 
-Documentation index: [Docs/README.md](Docs/README.md)
+Documentation site (Valaxy, bilingual): [docs/README.md](docs/README.md)
 
 ## Optional analyzers
 
@@ -26,7 +26,7 @@ RitsuLib includes a settings UI layer for player-editable values.
 - source labels and descriptions from `I18N` or game-native `LocString`
 - keep RitsuLib settings registration independent from BaseLib's config-page registry and file paths
 
-Guide: [Docs/en/ModSettings.md](Docs/en/ModSettings.md)
+Mod settings guide: [docs/pages/guide/mod-settings.md](docs/pages/guide/mod-settings.md)
 
 ## Debug Compatibility Mode
 
@@ -46,6 +46,16 @@ Disabling a sub-toggle removes only that fallback.
 Windows settings path:
 
 `%appdata%\SlayTheSpire2\steam\<user_id>\mod_data\com.ritsukage.sts2-RitsuLib\settings.json`
+
+## Runtime bundle (multi-API, interim)
+
+End users who want **one mod folder** that picks the correct RitsuLib build for the running game should install the
+GitHub
+asset `STS2-RitsuLib.<version>.bundle.zip` (not the per-compat `*.github.zip` files). Extract it under
+`mods/STS2-RitsuLib/`: the root `STS2-RitsuLib.dll` is a small loader; real builds live under `lib/<api-version>/` with
+the same assembly name as today. Downstream mods keep declaring `dependencies: ["STS2-RitsuLib"]` and continue to
+reference NuGet (`STS2.RitsuLib` / `STS2.RitsuLib.Compat.*`) unchanged. This path is expected to be temporary until
+first-party workshop / per-branch installs make separate DLLs straightforward.
 
 ## License
 

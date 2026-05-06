@@ -6,6 +6,10 @@
 *.sln.DotSettings.user
 artifacts/nuget/
 artifacts/github/
+artifacts/bundle-staging/
+
+Loader/bin/
+Loader/obj/
 
 .vs/
 

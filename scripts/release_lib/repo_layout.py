@@ -13,7 +13,13 @@ NUGET_ORG_V3_INDEX_URL = "https://api.nuget.org/v3/index.json"
 ARTIFACTS_NUGET = Path("artifacts") / "nuget"
 ARTIFACTS_GITHUB = Path("artifacts") / "github"
 
+ARTIFACTS_BUNDLE_STAGING = Path("artifacts") / "bundle-staging"
+
+RITSULIB_LOADER_CSPROJ_REL = Path("Loader") / "STS2-RitsuLib-Loader.csproj"
+
 GITHUB_ZIP_FILENAME_SUFFIX = ".github.zip"
+
+GITHUB_BUNDLE_ZIP_SUFFIX = ".bundle.zip"
 
 SNUPKG_SUFFIX = ".snupkg"
 
@@ -29,6 +35,7 @@ GIT_DEFAULT_MAIN_BRANCH = "main"
 SIGNATURE_EXPECTED_DLL_NAMES = ("sts2.dll", "0Harmony.dll", "Steamworks.NET.dll")
 
 GODOT_MONO_BIN_PREFIX = Path(".godot") / "mono" / "temp" / "bin"
+GODOT_MONO_OBJ_PREFIX = Path(".godot") / "mono" / "temp" / "obj"
 
 
 def dev_package_version(*, run_id: str, sha: str) -> str:

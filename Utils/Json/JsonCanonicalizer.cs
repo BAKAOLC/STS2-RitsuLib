@@ -57,9 +57,6 @@ namespace STS2RitsuLib.Utils.Json
                         WriteCanonical(writer, e);
                     writer.WriteEndArray();
                     return;
-                case JsonValue:
-                    WritePrimitiveCanonical(writer, node);
-                    return;
                 default:
                     WritePrimitiveCanonical(writer, node);
                     return;

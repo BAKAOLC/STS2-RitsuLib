@@ -10,8 +10,10 @@ from pathlib import Path
 from release_lib import git_ops
 from release_lib import nuget as nuget_ops
 from release_lib import plan_analysis
+from release_lib.bundle import compose_bundle_zip
 from release_lib.msbuild_eval import get_csproj_property
 from release_lib.repo_layout import (
+    ARTIFACTS_BUNDLE_STAGING,
     CONST_CS_NAME,
     DEFAULT_GIT_REMOTE,
     GIT_DEFAULT_DEV_BRANCH,
@@ -263,6 +265,7 @@ def main(argv: list[str] | None = None) -> int:
         if args.version_override:
             print(f"[release] pack version override: {args.version_override}", flush=True)
         print(f"[release] nuget targets: {', '.join(compat_targets)}", flush=True)
+        bundle_root = ritsulib / ARTIFACTS_BUNDLE_STAGING
         packages, zips = nuget_ops.build_artifacts(
             ritsulib,
             configuration=args.configuration,
@@ -271,9 +274,20 @@ def main(argv: list[str] | None = None) -> int:
             version_override=args.version_override,
             sts2_api_signature_root=Path(args.sts2_api_signature_root) if args.sts2_api_signature_root else None,
             sts2_dir=Path(args.sts2_dir) if args.sts2_dir else None,
+            bundle_staging_root=bundle_root,
+        )
+        eff_ver = (args.version_override or "").strip() or current_text
+        bundle_zip = compose_bundle_zip(
+            ritsulib,
+            configuration=args.configuration,
+            effective_version=eff_ver,
+            sts2_api_signature_root=Path(args.sts2_api_signature_root) if args.sts2_api_signature_root else None,
+            sts2_dir=Path(args.sts2_dir) if args.sts2_dir else None,
+            bundle_staging_root=bundle_root,
         )
         print(f"[release] Artifacts packages: {', '.join(pkg.name for pkg in packages)}")
         print(f"[release] Artifacts zips: {', '.join(zip_path.name for zip_path in zips)}")
+        print(f"[release] Bundle zip: {bundle_zip.name}")
         print("[release] done (artifacts-only).")
         return 0
 
@@ -466,6 +480,7 @@ def main(argv: list[str] | None = None) -> int:
     subprocess.run(tag_push, cwd=repo, check=True)
 
     if args.push_nuget:
+        bundle_root = ritsulib / ARTIFACTS_BUNDLE_STAGING
         published, github_zips = nuget_ops.publish_nugets(
             ritsulib,
             configuration=args.configuration,
@@ -476,9 +491,20 @@ def main(argv: list[str] | None = None) -> int:
             version_override=args.version_override,
             sts2_api_signature_root=Path(args.sts2_api_signature_root) if args.sts2_api_signature_root else None,
             sts2_dir=Path(args.sts2_dir) if args.sts2_dir else None,
+            bundle_staging_root=bundle_root,
+        )
+        eff_ver = (args.version_override or "").strip() or str(next_text)
+        bundle_zip = compose_bundle_zip(
+            ritsulib,
+            configuration=args.configuration,
+            effective_version=eff_ver,
+            sts2_api_signature_root=Path(args.sts2_api_signature_root) if args.sts2_api_signature_root else None,
+            sts2_dir=Path(args.sts2_dir) if args.sts2_dir else None,
+            bundle_staging_root=bundle_root,
         )
         print(f"[release] NuGet published: {', '.join(pkg.name for pkg in published)}")
         print(f"[release] GitHub zips: {', '.join(zip_path.name for zip_path in github_zips)}")
+        print(f"[release] Bundle zip: {bundle_zip.name}")
     else:
         print(
             "[release] Skipping local NuGet push (default); packages are published by the tag release workflow.",

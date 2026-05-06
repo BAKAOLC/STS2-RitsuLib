@@ -1,0 +1,21 @@
+<Project>
+  <PropertyGroup>
+    <RitsuLibManifestToolSource>$(MSBuildProjectDirectory)\build\GenerateModManifest.cs</RitsuLibManifestToolSource>
+  </PropertyGroup>
+
+  <Target
+      Name="GenerateRitsuLibModManifest"
+      BeforeTargets="Build;Pack"
+      Condition="'$(RitsuLibSkipManifestGeneration)' != 'true'">
+    <Error
+        Condition="!Exists('$(RitsuLibManifestSource)')"
+        Text="Missing manifest source file: '$(RitsuLibManifestSource)'"/>
+    <Error
+        Condition="!Exists('$(RitsuLibManifestToolSource)')"
+        Text="Missing manifest tool source file: '$(RitsuLibManifestToolSource)'"/>
+
+    <Exec
+        Condition="'$(DesignTimeBuild)' != 'true'"
+        Command="dotnet run --file &quot;$(RitsuLibManifestToolSource)&quot; -c $(Configuration) -v q -- generate &quot;$(RitsuLibManifestSource)&quot; &quot;$(RitsuLibManifestGenerated)&quot; &quot;$(RitsuLibModDisplayName)&quot;"/>
+  </Target>
+</Project>

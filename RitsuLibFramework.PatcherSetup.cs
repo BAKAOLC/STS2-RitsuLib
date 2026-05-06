@@ -88,6 +88,9 @@ namespace STS2RitsuLib
             patcher.RegisterPatch<NMultiplayerTestCharacterPaginatorAllCharactersPatch>();
             patcher.RegisterPatch<NCustomRunLoadScreenBeginRunMissingCharacterPatch>();
             patcher.RegisterPatch<NDailyRunLoadScreenBeginRunMissingCharacterPatch>();
+            patcher.RegisterPatch<LocTableHasEntryI18NBridgePatch>();
+            patcher.RegisterPatch<LocTableGetRawTextI18NBridgePatch>();
+            patcher.RegisterPatch<LocTableGetLocStringI18NBridgePatch>();
             patcher.RegisterPatch<LocTableGetLocStringCompatibilityPatch>();
             patcher.RegisterPatch<LocTableGetRawTextCompatibilityPatch>();
             patcher.RegisterPatch<AncientDialoguePopulateLocKeysPatch>();

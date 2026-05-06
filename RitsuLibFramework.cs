@@ -17,6 +17,7 @@ using STS2RitsuLib.Diagnostics.CardExport;
 using STS2RitsuLib.Diagnostics.CompendiumExport;
 using STS2RitsuLib.Interop;
 using STS2RitsuLib.Keywords;
+using STS2RitsuLib.Localization;
 using STS2RitsuLib.Patching.Core;
 using STS2RitsuLib.RuntimeInput;
 using STS2RitsuLib.Scaffolding.Ancients.Options;
@@ -736,6 +737,34 @@ namespace STS2RitsuLib
 
             var folders = fileSystemFolders?.ToArray() ?? [$"{ProfileManager.GetAccountBasePath(modId)}/localization"];
             return CreateLocalization(instanceName, folders, resourceFolders, pckFolders, resourceAssembly);
+        }
+
+        /// <summary>
+        ///     Returns the virtual <c>LocTable</c> id for an <see cref="I18N" /> bridge table using the framework's
+        ///     standard three-segment id convention: <c>MODID_I18N_STEM</c>.
+        /// </summary>
+        public static string GetI18NLocTableId(string modId, string stem = "DEFAULT")
+        {
+            return I18NLocTableBridge.GetTableId(modId, stem);
+        }
+
+        /// <summary>
+        ///     Registers an <see cref="I18N" /> instance as a virtual <c>LocTable</c> so the game-native
+        ///     <c>LocString</c> pipeline can resolve raw templates from it.
+        /// </summary>
+        public static bool RegisterI18NLocTableBridge(string modId, I18N i18N, string stem = "DEFAULT",
+            bool replaceExisting = false)
+        {
+            return I18NLocTableBridge.TryRegister(modId, i18N, stem, replaceExisting);
+        }
+
+        /// <summary>
+        ///     Unregisters a previously registered virtual <c>LocTable</c> for the given <paramref name="modId" /> and
+        ///     <paramref name="stem" />.
+        /// </summary>
+        public static bool UnregisterI18NLocTableBridge(string modId, string stem = "DEFAULT")
+        {
+            return I18NLocTableBridge.TryUnregister(modId, stem);
         }
 
         /// <summary>
