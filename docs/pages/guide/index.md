@@ -11,13 +11,13 @@ cover: https://wrxinyue.s3.bitiful.net/slay-the-spire-2-wallpaper.webp
 
 ::: en
 
-Use the sidebar or the tables below. Guide pages are Markdown in this repo under [`docs/pages/guide/`](https://github.com/WRXinYue/STS2-RitsuLib/tree/main/docs/pages/guide).
+Use the sidebar or the tables below. Guide pages are Markdown in this repo under [`docs/pages/guide/`](https://github.com/BAKAOLC/STS2-RitsuLib/tree/main/docs/pages/guide).
 
 :::
 
 ::: zh-CN
 
-可通过侧栏或下方表格浏览。正文为仓库内 [`docs/pages/guide/`](https://github.com/WRXinYue/STS2-RitsuLib/tree/main/docs/pages/guide) 下的 Markdown，可直接编辑。
+可通过侧栏或下方表格浏览。正文为仓库内 [`docs/pages/guide/`](https://github.com/BAKAOLC/STS2-RitsuLib/tree/main/docs/pages/guide) 下的 Markdown，可直接编辑。
 
 :::
 
