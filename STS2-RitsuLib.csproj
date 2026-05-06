@@ -11,6 +11,13 @@
         <DefineConstants Condition="'$(Sts2ApiCompat)' == '0.103.2'">$(DefineConstants);STS2_V_0_103_2</DefineConstants>
     </PropertyGroup>
 
+    <PropertyGroup Label="Mod manifest generation">
+        <RitsuLibManifestSource>$(MSBuildProjectDirectory)\mod_manifest.json</RitsuLibManifestSource>
+        <RitsuLibManifestGenerated>$(IntermediateOutputPath)mod_manifest.generated.json</RitsuLibManifestGenerated>
+        <RitsuLibModDisplayName Condition="'$(Sts2ApiCompat)' == '$(RitsuLibLatestApiCompat)'">RitsuLib</RitsuLibModDisplayName>
+        <RitsuLibModDisplayName Condition="'$(Sts2ApiCompat)' != '$(RitsuLibLatestApiCompat)'">RitsuLib (STS2 $(Sts2ApiCompat) compat)</RitsuLibModDisplayName>
+    </PropertyGroup>
+
     <PropertyGroup Label="Assembly and build">
         <RootNamespace>STS2RitsuLib</RootNamespace>
         <TargetFramework>net9.0</TargetFramework>
@@ -34,6 +41,14 @@
         <PackageId Condition="'$(Sts2ApiCompat)' == '$(RitsuLibLatestApiCompat)'">STS2.RitsuLib</PackageId>
         <PackageId Condition="'$(Sts2ApiCompat)' != '$(RitsuLibLatestApiCompat)'">STS2.RitsuLib.Compat.$(Sts2ApiCompat)</PackageId>
     </PropertyGroup>
+
+    <Target Name="GenerateRitsuLibModManifest" BeforeTargets="Build;Pack">
+        <Error
+            Condition="!Exists('$(RitsuLibManifestSource)')"
+            Text="Missing manifest source file: '$(RitsuLibManifestSource)'."/>
+        <Exec
+            Command="powershell -NoProfile -ExecutionPolicy Bypass -Command &quot;&amp; { $ErrorActionPreference = 'Stop'; $src = '$(RitsuLibManifestSource)'; $dst = '$(RitsuLibManifestGenerated)'; $name = '$(RitsuLibModDisplayName)'; New-Item -ItemType Directory -Force -Path (Split-Path -Parent $dst) | Out-Null; $obj = (Get-Content -Raw -LiteralPath $src | ConvertFrom-Json); $obj.name = $name; ($obj | ConvertTo-Json -Depth 64) | Set-Content -NoNewline -Encoding UTF8 -LiteralPath $dst }&quot;"/>
+    </Target>
 
     <Target Name="ValidateSts2ApiSignatures" BeforeTargets="ResolveAssemblyReferences">
         <Error
@@ -68,7 +83,7 @@
         <Reference Include="Steamworks.NET" HintPath="$(Sts2DataDir)\Steamworks.NET.dll" Private="False"/>
     </ItemGroup>
     <ItemGroup>
-        <Content Include="mod_manifest.json"/>
+        <Content Include="$(RitsuLibManifestGenerated)"/>
     </ItemGroup>
     <ItemGroup>
         <EmbeddedResource Include="Settings\Localization\**\*.json"/>
@@ -76,7 +91,7 @@
     </ItemGroup>
     <ItemGroup>
         <None Include="README.md" Pack="true" PackagePath="\"/>
-        <None Include="mod_manifest.json" Pack="true" PackagePath="contentFiles/any/any/"/>
+        <None Include="$(RitsuLibManifestGenerated)" Pack="true" PackagePath="contentFiles/any/any/mod_manifest.json"/>
         <None Include="buildTransitive\STS2.RitsuLib.targets" Pack="true" PackagePath="buildTransitive/$(PackageId).targets"/>
     </ItemGroup>
     <!-- Exclude game source reference folder from compilation -->
@@ -90,6 +105,6 @@
         <Message Text="Copying mod to Slay the Spire 2 mods folder..." Importance="high"/>
         <MakeDir Directories="$(Sts2Dir)\mods\$(MSBuildProjectName)\"/>
         <Copy SourceFiles="$(TargetPath)" DestinationFolder="$(Sts2Dir)\mods\$(MSBuildProjectName)\"/>
-        <Copy SourceFiles="$(MSBuildProjectDirectory)\mod_manifest.json" DestinationFolder="$(Sts2Dir)\mods\$(MSBuildProjectName)\"/>
+        <Copy SourceFiles="$(RitsuLibManifestGenerated)" DestinationFiles="$(Sts2Dir)\mods\$(MSBuildProjectName)\mod_manifest.json"/>
     </Target>
 </Project>

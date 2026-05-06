@@ -29,6 +29,7 @@ GIT_DEFAULT_MAIN_BRANCH = "main"
 SIGNATURE_EXPECTED_DLL_NAMES = ("sts2.dll", "0Harmony.dll", "Steamworks.NET.dll")
 
 GODOT_MONO_BIN_PREFIX = Path(".godot") / "mono" / "temp" / "bin"
+GODOT_MONO_OBJ_PREFIX = Path(".godot") / "mono" / "temp" / "obj"
 
 
 def dev_package_version(*, run_id: str, sha: str) -> str:

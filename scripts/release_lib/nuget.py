@@ -15,6 +15,7 @@ from release_lib.repo_layout import (
     ARTIFACTS_NUGET,
     GITHUB_ZIP_FILENAME_SUFFIX,
     GODOT_MONO_BIN_PREFIX,
+    GODOT_MONO_OBJ_PREFIX,
     MOD_MANIFEST_NAME,
     RITSULIB_CSPROJ_NAME,
     SNUPKG_SUFFIX,
@@ -285,10 +286,12 @@ def create_github_zip(
 ) -> Path:
     output_dir.mkdir(parents=True, exist_ok=True)
     out_bin = ritsulib_root / GODOT_MONO_BIN_PREFIX / configuration
+    out_obj = ritsulib_root / GODOT_MONO_OBJ_PREFIX / configuration
     dll_path = out_bin / ritsulib_built_dll_name()
     doc_xml_path = out_bin / ritsulib_built_doc_xml_name()
     pdb_path = out_bin / ritsulib_built_pdb_name()
-    manifest_path = ritsulib_root / MOD_MANIFEST_NAME
+    manifest_generated = out_obj / "mod_manifest.generated.json"
+    manifest_path = manifest_generated if manifest_generated.is_file() else (ritsulib_root / MOD_MANIFEST_NAME)
     if not dll_path.is_file():
         msg = f"Could not find built DLL for zip packaging: {dll_path}"
         raise RuntimeError(msg)
