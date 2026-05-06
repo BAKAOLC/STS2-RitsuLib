@@ -2,6 +2,13 @@
 # Visual Studio 2012
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "STS2-RitsuLib", "STS2-RitsuLib.csproj", "{61148A8E-0640-46D5-99EC-FD849671762E}"
 EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Properties", "Properties", "{615F28BB-DB76-4ED4-AC07-32D7B3420F59}"
+	ProjectSection(SolutionItems) = preProject
+		.\Directory.Build.props = .\Directory.Build.props
+		.\local.props = .\local.props
+		.\Sts2PathDiscovery.props = .\Sts2PathDiscovery.props
+	EndProjectSection
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 	Debug|Any CPU = Debug|Any CPU
