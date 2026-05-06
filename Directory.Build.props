@@ -1,16 +1,16 @@
 <Project>
-  <!--
-    Local, untracked overrides.
+    <!--
+      Local, untracked overrides.
+  
+      Directory.Build.props is imported by MSBuild before any project evaluation in this directory.
+      This guarantees properties like Sts2ApiCompat are available early enough to affect DefineConstants.
+    -->
+    <Import Project="local.props" Condition="Exists('local.props')"/>
 
-    Directory.Build.props is imported by MSBuild before any project evaluation in this directory.
-    This guarantees properties like Sts2ApiCompat are available early enough to affect DefineConstants.
-  -->
-  <Import Project="local.props" Condition="Exists('local.props')" />
-
-  <!--
-    Auto-discover Sts2Dir/Sts2DataDir early when local.props is absent.
-    (The props file itself only sets values when the properties are empty.)
-  -->
-  <Import Project="Sts2PathDiscovery.props" Condition="Exists('Sts2PathDiscovery.props')" />
+    <!--
+      Auto-discover Sts2Dir/Sts2DataDir early when local.props is absent.
+      (The props file itself only sets values when the properties are empty.)
+    -->
+    <Import Project="Sts2PathDiscovery.props" Condition="Exists('Sts2PathDiscovery.props')"/>
 </Project>
 
