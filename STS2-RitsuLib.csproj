@@ -15,6 +15,8 @@
         <RitsuLibModDisplayName Condition="'$(Sts2ApiCompat)' != '$(RitsuLibLatestApiCompat)'">RitsuLib (STS2 $(Sts2ApiCompat) compat)</RitsuLibModDisplayName>
     </PropertyGroup>
 
+    <Import Project="$(MSBuildProjectDirectory)\build\RitsuLib.ModManifest.targets"/>
+
     <PropertyGroup Label="Assembly and build">
         <RootNamespace>STS2RitsuLib</RootNamespace>
         <TargetFramework>net9.0</TargetFramework>
@@ -38,14 +40,6 @@
         <PackageId Condition="'$(Sts2ApiCompat)' == '$(RitsuLibLatestApiCompat)'">STS2.RitsuLib</PackageId>
         <PackageId Condition="'$(Sts2ApiCompat)' != '$(RitsuLibLatestApiCompat)'">STS2.RitsuLib.Compat.$(Sts2ApiCompat)</PackageId>
     </PropertyGroup>
-
-    <Target Name="GenerateRitsuLibModManifest" BeforeTargets="Build;Pack">
-        <Error
-            Condition="!Exists('$(RitsuLibManifestSource)')"
-            Text="Missing manifest source file: '$(RitsuLibManifestSource)'."/>
-        <Exec
-            Command="powershell -NoProfile -ExecutionPolicy Bypass -Command &quot;&amp; { $ErrorActionPreference = 'Stop'; $src = '$(RitsuLibManifestSource)'; $dst = '$(RitsuLibManifestGenerated)'; $name = '$(RitsuLibModDisplayName)'; New-Item -ItemType Directory -Force -Path (Split-Path -Parent $dst) | Out-Null; $obj = (Get-Content -Raw -LiteralPath $src | ConvertFrom-Json); $obj.name = $name; ($obj | ConvertTo-Json -Depth 64) | Set-Content -NoNewline -Encoding UTF8 -LiteralPath $dst }&quot;"/>
-    </Target>
 
     <Target Name="ValidateSts2ApiSignatures" BeforeTargets="ResolveAssemblyReferences">
         <Error
@@ -97,6 +91,8 @@
         <None Remove="sts-2-source\**"/>
         <Content Remove="sts-2-source\**"/>
         <EmbeddedResource Remove="sts-2-source\**"/>
+
+        <Compile Remove="build\**\*.cs"/>
     </ItemGroup>
     <Target Name="Copy Mod" AfterTargets="Build" Condition="'$(Sts2ApiCompat)' == '$(RitsuLibLatestApiCompat)'">
         <Message Text="Copying mod to Slay the Spire 2 mods folder..." Importance="high"/>
