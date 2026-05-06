@@ -1,0 +1,79 @@
+- name: type/bug
+  color: d73a4a
+  description: Something isn't working.
+- name: type/feature
+  color: a2eeef
+  description: New feature or request.
+- name: type/question
+  color: d876e3
+  description: Further information is requested.
+- name: type/docs
+  color: 0075ca
+  description: Documentation related changes.
+- name: type/chore
+  color: cfd3d7
+  description: Maintenance / refactor / build tooling.
+
+- name: status/needs-triage
+  color: fbca04
+  description: Needs initial review and routing.
+- name: status/needs-info
+  color: fbca04
+  description: Reporter input needed to proceed.
+- name: status/blocked
+  color: b60205
+  description: Blocked by external dependency or upstream changes.
+
+- name: priority/p0
+  color: b60205
+  description: Drop everything.
+- name: priority/p1
+  color: d93f0b
+  description: High priority.
+- name: priority/p2
+  color: fbca04
+  description: Medium priority.
+- name: priority/p3
+  color: 0e8a16
+  description: Low priority.
+
+- name: area/combat
+  color: 1d76db
+  description: Combat-related.
+- name: area/cards
+  color: 1d76db
+  description: Cards-related.
+- name: area/powers
+  color: 1d76db
+  description: Powers-related.
+- name: area/relics
+  color: 1d76db
+  description: Relics-related.
+- name: area/ui
+  color: 1d76db
+  description: UI-related.
+- name: area/localization
+  color: 1d76db
+  description: Localization-related.
+- name: area/build
+  color: 1d76db
+  description: Build/CI tooling.
+- name: area/docs
+  color: 1d76db
+  description: Documentation.
+- name: area/other
+  color: 1d76db
+  description: Other / unclear area.
+
+- name: severity/crash
+  color: b60205
+  description: Crash / hard failure.
+- name: severity/broken
+  color: d93f0b
+  description: Broken feature.
+- name: severity/regression
+  color: fbca04
+  description: Regression from previous behavior.
+- name: severity/minor
+  color: 0e8a16
+  description: Minor issue.

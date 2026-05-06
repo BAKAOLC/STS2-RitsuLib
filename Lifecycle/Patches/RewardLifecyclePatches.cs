@@ -1,5 +1,9 @@
+#if STS2_V_0_103_2
+using CombatStateCompat = MegaCrit.Sts2.Core.Combat.CombatState;
+#else
+using CombatStateCompat = MegaCrit.Sts2.Core.Combat.ICombatState;
+#endif
 using System.Reflection;
-using MegaCrit.Sts2.Core.Combat;
 using MegaCrit.Sts2.Core.Commands;
 using MegaCrit.Sts2.Core.Entities.Gold;
 using MegaCrit.Sts2.Core.Entities.Players;
@@ -32,9 +36,9 @@ namespace STS2RitsuLib.Lifecycle.Patches
             [
                 new(typeof(Hook), nameof(Hook.AfterGoldGained), [typeof(IRunState), typeof(Player)]),
                 new(typeof(Hook), nameof(Hook.AfterPotionProcured),
-                    [typeof(IRunState), typeof(CombatState), typeof(PotionModel)]),
+                    [typeof(IRunState), typeof(CombatStateCompat), typeof(PotionModel)]),
                 new(typeof(Hook), nameof(Hook.AfterPotionDiscarded),
-                    [typeof(IRunState), typeof(CombatState), typeof(PotionModel)]),
+                    [typeof(IRunState), typeof(CombatStateCompat), typeof(PotionModel)]),
                 new(typeof(Hook), nameof(Hook.AfterRewardTaken), [typeof(IRunState), typeof(Player), typeof(Reward)]),
             ];
         }
@@ -55,11 +59,13 @@ namespace STS2RitsuLib.Lifecycle.Patches
                             DateTimeOffset.UtcNow), nameof(GoldGainedEvent))),
                 nameof(Hook.AfterPotionProcured) => LifecyclePatchTaskBridge.After(__result,
                     () => RitsuLibFramework.PublishLifecycleEvent(
-                        new PotionProcuredEvent((IRunState)__args[0], (CombatState?)__args[1], (PotionModel)__args[2],
+                        new PotionProcuredEvent((IRunState)__args[0], (CombatStateCompat?)__args[1],
+                            (PotionModel)__args[2],
                             DateTimeOffset.UtcNow), nameof(PotionProcuredEvent))),
                 nameof(Hook.AfterPotionDiscarded) => LifecyclePatchTaskBridge.After(__result,
                     () => RitsuLibFramework.PublishLifecycleEvent(
-                        new PotionDiscardedEvent((IRunState)__args[0], (CombatState?)__args[1], (PotionModel)__args[2],
+                        new PotionDiscardedEvent((IRunState)__args[0], (CombatStateCompat?)__args[1],
+                            (PotionModel)__args[2],
                             DateTimeOffset.UtcNow), nameof(PotionDiscardedEvent))),
                 nameof(Hook.AfterRewardTaken) => LifecyclePatchTaskBridge.After(__result,
                     () => RitsuLibFramework.PublishLifecycleEvent(

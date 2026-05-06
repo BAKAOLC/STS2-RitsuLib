@@ -2,11 +2,14 @@ using System.Reflection;
 using HarmonyLib;
 using MegaCrit.Sts2.Core.Models;
 using MegaCrit.Sts2.Core.Timeline;
+using STS2RitsuLib.CardPiles;
+using STS2RitsuLib.CardTags;
 using STS2RitsuLib.Content;
 using STS2RitsuLib.Keywords;
 using STS2RitsuLib.Scaffolding.Content;
 using STS2RitsuLib.Timeline;
 using STS2RitsuLib.Timeline.Scaffolding;
+using STS2RitsuLib.TopBar;
 
 namespace STS2RitsuLib.Interop.AutoRegistration
 {
@@ -96,8 +99,14 @@ namespace STS2RitsuLib.Interop.AutoRegistration
             var keywordRegistry = ModKeywordRegistry.For(ownerModId);
             var timelineRegistry = RitsuLibFramework.GetTimelineRegistry(ownerModId);
             var unlockRegistry = RitsuLibFramework.GetUnlockRegistry(ownerModId);
-            var packContext = new ModContentPackContext(ownerModId, contentRegistry, keywordRegistry, timelineRegistry,
-                unlockRegistry);
+            var cardTagRegistry = RitsuLibFramework.GetCardTagRegistry(ownerModId);
+            var packContext = new ModContentPackContext(
+                ownerModId,
+                contentRegistry,
+                keywordRegistry,
+                timelineRegistry,
+                unlockRegistry,
+                cardTagRegistry);
             var operations = new List<AutoRegistrationOperation>();
             var signatures = new HashSet<string>(StringComparer.Ordinal);
 
@@ -319,7 +328,7 @@ namespace STS2RitsuLib.Interop.AutoRegistration
                                     $"RegisterCharacterStarterCard:{starterCard.CharacterType.FullName}->{type.FullName}:x{starterCard.Count}",
                                     nameof(RegisterCharacterStarterCardAttribute),
                                     () => contentRegistry.RegisterCharacterStarterCard(starterCard.CharacterType, type,
-                                        starterCard.Count),
+                                        starterCard.Count, starterCard.Order),
                                     [
                                         $"RegisterCharacter:{starterCard.CharacterType.FullName}",
                                         TypeDependencyKey(type),
@@ -340,7 +349,8 @@ namespace STS2RitsuLib.Interop.AutoRegistration
                                     nameof(RegisterCharacterStarterRelicAttribute),
                                     () => contentRegistry.RegisterCharacterStarterRelic(starterRelic.CharacterType,
                                         type,
-                                        starterRelic.Count),
+                                        starterRelic.Count,
+                                        starterRelic.Order),
                                     [
                                         $"RegisterCharacter:{starterRelic.CharacterType.FullName}",
                                         TypeDependencyKey(type),
@@ -361,7 +371,8 @@ namespace STS2RitsuLib.Interop.AutoRegistration
                                     nameof(RegisterCharacterStarterPotionAttribute),
                                     () => contentRegistry.RegisterCharacterStarterPotion(starterPotion.CharacterType,
                                         type,
-                                        starterPotion.Count),
+                                        starterPotion.Count,
+                                        starterPotion.Order),
                                     [
                                         $"RegisterCharacter:{starterPotion.CharacterType.FullName}",
                                         TypeDependencyKey(type),
@@ -445,39 +456,63 @@ namespace STS2RitsuLib.Interop.AutoRegistration
                                         var localStem = ValidateNonEmpty(ownedCardKeyword.LocalKeywordStem,
                                             nameof(ownedCardKeyword.LocalKeywordStem));
 
-                                        if (!string.IsNullOrWhiteSpace(ownedCardKeyword.LocNamespace))
-                                        {
-                                            keywordRegistry.RegisterCardKeywordOwnedByLocNamespace(
-                                                localStem,
-                                                ownedCardKeyword.LocNamespace,
-                                                ownedCardKeyword.IconPath,
-                                                ownedCardKeyword.CardDescriptionPlacement,
-                                                ownedCardKeyword.IncludeInCardHoverTip);
-                                            return;
-                                        }
-
-#pragma warning disable CS0618
-                                        if (!string.IsNullOrWhiteSpace(ownedCardKeyword.LocKeyPrefix))
-                                        {
-                                            keywordRegistry.RegisterCardKeywordOwned(
-                                                localStem,
-                                                ownedCardKeyword.LocKeyPrefix,
-                                                ownedCardKeyword.IconPath,
-                                                ownedCardKeyword.CardDescriptionPlacement,
-                                                ownedCardKeyword.IncludeInCardHoverTip);
-                                            return;
-                                        }
-#pragma warning restore CS0618
-
-#pragma warning disable CS0618
-                                        keywordRegistry.RegisterCardKeywordOwned(
+                                        keywordRegistry.RegisterCardKeywordOwnedByLocNamespace(
                                             localStem,
-                                            null,
                                             ownedCardKeyword.IconPath,
                                             ownedCardKeyword.CardDescriptionPlacement,
                                             ownedCardKeyword.IncludeInCardHoverTip);
-#pragma warning restore CS0618
                                     }));
+                            });
+                        break;
+                    case RegisterOwnedCardTagAttribute ownedCardTag:
+                        RegisterCase($"RegisterOwnedCardTag:{ownedCardTag.LocalCardTagStem}:{type.FullName}", () =>
+                        {
+                            operations.Add(CreateOperation(ownerModId, type, AutoRegistrationPhase.CardTags,
+                                ownedCardTag.Order,
+                                $"RegisterOwnedCardTag:{ownedCardTag.LocalCardTagStem}:{type.FullName}",
+                                nameof(RegisterOwnedCardTagAttribute),
+                                () =>
+                                {
+                                    var localStem = ValidateNonEmpty(ownedCardTag.LocalCardTagStem,
+                                        nameof(ownedCardTag.LocalCardTagStem));
+                                    ModCardTagRegistry.For(ownerModId).RegisterOwned(localStem);
+                                }));
+                        });
+                        break;
+                    case RegisterOwnedCardPileAttribute ownedCardPile:
+                        RegisterCase($"RegisterOwnedCardPile:{ownedCardPile.LocalPileStem}:{type.FullName}", () =>
+                        {
+                            operations.Add(CreateOperation(ownerModId, type, AutoRegistrationPhase.CardPiles,
+                                ownedCardPile.Order,
+                                $"RegisterOwnedCardPile:{ownedCardPile.LocalPileStem}:{type.FullName}",
+                                nameof(RegisterOwnedCardPileAttribute),
+                                () =>
+                                {
+                                    var localStem = ValidateNonEmpty(ownedCardPile.LocalPileStem,
+                                        nameof(ownedCardPile.LocalPileStem));
+                                    var spec = BuildCardPileSpec(type, ownedCardPile);
+                                    ModCardPileRegistry.For(ownerModId).RegisterOwned(localStem, spec);
+                                },
+                                [TypeDependencyKey(type)]));
+                        });
+                        break;
+                    case RegisterOwnedTopBarButtonAttribute ownedTopBarButton:
+                        RegisterCase(
+                            $"RegisterOwnedTopBarButton:{ownedTopBarButton.LocalButtonStem}:{type.FullName}", () =>
+                            {
+                                operations.Add(CreateOperation(ownerModId, type,
+                                    AutoRegistrationPhase.TopBarButtons,
+                                    ownedTopBarButton.Order,
+                                    $"RegisterOwnedTopBarButton:{ownedTopBarButton.LocalButtonStem}:{type.FullName}",
+                                    nameof(RegisterOwnedTopBarButtonAttribute),
+                                    () =>
+                                    {
+                                        var localStem = ValidateNonEmpty(ownedTopBarButton.LocalButtonStem,
+                                            nameof(ownedTopBarButton.LocalButtonStem));
+                                        var spec = BuildTopBarButtonSpec(type, ownedTopBarButton);
+                                        ModTopBarButtonRegistry.For(ownerModId).RegisterOwned(localStem, spec);
+                                    },
+                                    [TypeDependencyKey(type)]));
                             });
                         break;
                     case AutoTimelineSlotAttribute autoTimelineSlot:
@@ -954,6 +989,106 @@ namespace STS2RitsuLib.Interop.AutoRegistration
         private static string TypeDependencyKey(Type type)
         {
             return $"RegisterType:{type.AssemblyQualifiedName}";
+        }
+
+        private static ModCardPileSpec BuildCardPileSpec(Type declaringType, RegisterOwnedCardPileAttribute attr)
+        {
+            var anchor = attr.AnchorKind == ModCardPileAnchorKind.Custom
+                ? new ModCardPileAnchor(
+                    ModCardPileAnchorKind.Custom,
+                    new(attr.AnchorOffsetX, attr.AnchorOffsetY),
+                    new(attr.AnchorCustomX, attr.AnchorCustomY),
+                    attr.AnchorCustomPivotX,
+                    attr.AnchorCustomPivotY)
+                : new ModCardPileAnchor(attr.AnchorKind, new(attr.AnchorOffsetX, attr.AnchorOffsetY));
+
+            return new()
+            {
+                Scope = attr.Scope,
+                Style = attr.Style,
+                Anchor = anchor,
+                IconPath = attr.IconPath,
+                Hotkeys = attr.Hotkeys,
+                CardShouldBeVisible = attr.CardShouldBeVisible,
+                OnOpen = ResolveCardPileOpenHandler(declaringType),
+                HoverTipScreenOffset = new(attr.HoverTipOffsetX, attr.HoverTipOffsetY),
+                HoverTipPlacement = attr.HoverTipPlacement,
+            };
+        }
+
+        private static Action<ModCardPileOpenContext>? ResolveCardPileOpenHandler(Type declaringType)
+        {
+            if (!typeof(IModCardPileHandler).IsAssignableFrom(declaringType))
+                return null;
+
+            if (declaringType.GetConstructor(Type.EmptyTypes) == null)
+            {
+                RitsuLibFramework.Logger.Warn(
+                    $"[AutoRegister] RegisterOwnedCardPile: type '{declaringType.FullName}' implements "
+                    + $"{nameof(IModCardPileHandler)} but has no parameterless constructor — OnOpen will not be wired.");
+                return null;
+            }
+
+            try
+            {
+                var instance = (IModCardPileHandler)Activator.CreateInstance(declaringType)!;
+                return instance.OnOpen;
+            }
+            catch (Exception ex)
+            {
+                RitsuLibFramework.Logger.Error(
+                    $"[AutoRegister] RegisterOwnedCardPile: failed to instantiate handler '{declaringType.FullName}': {ex.Message}");
+                return null;
+            }
+        }
+
+        private static ModTopBarButtonSpec BuildTopBarButtonSpec(Type declaringType,
+            RegisterOwnedTopBarButtonAttribute attr)
+        {
+            var handler = ResolveTopBarButtonHandler(declaringType);
+            return new()
+            {
+                IconPath = attr.IconPath,
+                Order = attr.ButtonOrder,
+                Offset = new(attr.OffsetX, attr.OffsetY),
+                OnClick = handler is null ? null : handler.OnClick,
+                VisibleWhen = handler is null ? null : handler.IsVisible,
+                IsOpenWhen = handler is null ? null : handler.IsOpen,
+                // IModTopBarButtonHandler.GetCount returns -1 by default, which NModCardPileButton
+                // interprets as "hide the badge". Handlers that want a count simply override GetCount
+                // and return a non-negative value.
+                CountProvider = handler is null ? null : handler.GetCount,
+            };
+        }
+
+        private static IModTopBarButtonHandler? ResolveTopBarButtonHandler(Type declaringType)
+        {
+            if (!typeof(IModTopBarButtonHandler).IsAssignableFrom(declaringType))
+            {
+                RitsuLibFramework.Logger.Warn(
+                    $"[AutoRegister] RegisterOwnedTopBarButton: type '{declaringType.FullName}' must implement "
+                    + $"{nameof(IModTopBarButtonHandler)}; button will be registered without OnClick/VisibleWhen.");
+                return null;
+            }
+
+            if (declaringType.GetConstructor(Type.EmptyTypes) == null)
+            {
+                RitsuLibFramework.Logger.Warn(
+                    $"[AutoRegister] RegisterOwnedTopBarButton: type '{declaringType.FullName}' has no parameterless "
+                    + "constructor — OnClick / VisibleWhen will not be wired.");
+                return null;
+            }
+
+            try
+            {
+                return (IModTopBarButtonHandler)Activator.CreateInstance(declaringType)!;
+            }
+            catch (Exception ex)
+            {
+                RitsuLibFramework.Logger.Error(
+                    $"[AutoRegister] RegisterOwnedTopBarButton: failed to instantiate handler '{declaringType.FullName}': {ex.Message}");
+                return null;
+            }
         }
 
         private static string? ResolveOwnerModId(Type type,

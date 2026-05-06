@@ -1,0 +1,32 @@
+name: "[EN] Question"
+description: Ask a question about using or contributing to RitsuLib.
+title: "[Question] "
+labels:
+  - "type/question"
+body:
+  - type: dropdown
+    id: area
+    attributes:
+      label: Area
+      options:
+        - Usage
+        - API design
+        - Build/CI
+        - Docs
+        - Other
+    validations:
+      required: true
+  - type: textarea
+    id: question
+    attributes:
+      label: Question
+      description: What do you need help with?
+    validations:
+      required: true
+  - type: textarea
+    id: context
+    attributes:
+      label: Context
+      description: Add code snippets, logs, or links if helpful.
+    validations:
+      required: false

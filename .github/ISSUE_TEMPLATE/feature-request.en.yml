@@ -1,0 +1,52 @@
+name: "[EN] Feature request"
+description: Suggest an improvement or new capability.
+title: "[Feature] "
+labels:
+  - "type/feature"
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Please describe the problem you are trying to solve and what a good solution looks like.
+  - type: dropdown
+    id: area
+    attributes:
+      label: Area
+      options:
+        - Combat
+        - Cards
+        - Powers
+        - Relics
+        - UI
+        - Localization
+        - Build/CI
+        - Docs
+        - Other
+    validations:
+      required: true
+  - type: textarea
+    id: motivation
+    attributes:
+      label: Motivation / use case
+      description: What are you trying to achieve?
+    validations:
+      required: true
+  - type: textarea
+    id: proposal
+    attributes:
+      label: Proposed solution
+      description: Describe the API/behavior you want.
+    validations:
+      required: true
+  - type: textarea
+    id: alternatives
+    attributes:
+      label: Alternatives considered
+    validations:
+      required: false
+  - type: textarea
+    id: additional
+    attributes:
+      label: Additional context
+    validations:
+      required: false

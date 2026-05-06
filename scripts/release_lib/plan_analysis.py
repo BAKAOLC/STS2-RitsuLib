@@ -83,14 +83,14 @@ def compute_conflict_marks(
     *,
     force_tag: bool,
     no_pull: bool,
-    skip_nuget: bool,
+    push_nuget: bool,
 ) -> frozenset[str]:
     """
     Decide which plan lines deserve [may conflict] from current refs (no mutating git state).
     Uses refs/heads/* and refs/remotes/<remote>/*; run git fetch first for fresh data.
     """
     marks: set[str] = set()
-    if not skip_nuget:
+    if push_nuget:
         marks.add(NUGET)
 
     ld = f"refs/heads/{dev}"

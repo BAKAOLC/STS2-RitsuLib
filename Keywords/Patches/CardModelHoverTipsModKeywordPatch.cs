@@ -1,3 +1,4 @@
+using HarmonyLib;
 using MegaCrit.Sts2.Core.HoverTips;
 using MegaCrit.Sts2.Core.Models;
 using STS2RitsuLib.Patching.Models;
@@ -27,7 +28,7 @@ namespace STS2RitsuLib.Keywords.Patches
         /// <inheritdoc />
         public static ModPatchTarget[] GetTargets()
         {
-            return [new(typeof(CardModel), "get_HoverTips")];
+            return [new(typeof(CardModel), "HoverTips", MethodType.Getter)];
         }
 
         // ReSharper disable InconsistentNaming

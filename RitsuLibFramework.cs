@@ -5,18 +5,26 @@ using MegaCrit.Sts2.Core.Entities.Cards;
 using MegaCrit.Sts2.Core.Entities.Players;
 using MegaCrit.Sts2.Core.Logging;
 using MegaCrit.Sts2.Core.Modding;
+using MegaCrit.Sts2.Core.Models;
 using STS2RitsuLib.Cards.FreePlay;
+using STS2RitsuLib.CardTags;
+using STS2RitsuLib.Combat.HandSize;
 using STS2RitsuLib.Combat.HealthBars;
+using STS2RitsuLib.Compat;
 using STS2RitsuLib.Content;
 using STS2RitsuLib.Data;
 using STS2RitsuLib.Diagnostics.CardExport;
+using STS2RitsuLib.Diagnostics.CompendiumExport;
 using STS2RitsuLib.Interop;
 using STS2RitsuLib.Keywords;
 using STS2RitsuLib.Patching.Core;
 using STS2RitsuLib.RuntimeInput;
+using STS2RitsuLib.Scaffolding.Ancients.Options;
 using STS2RitsuLib.Scaffolding.Content;
 using STS2RitsuLib.Settings;
+using STS2RitsuLib.Settings.RunSidecar;
 using STS2RitsuLib.Timeline;
+using STS2RitsuLib.Ui.Toast;
 using STS2RitsuLib.Unlocks;
 using STS2RitsuLib.Utils;
 using STS2RitsuLib.Utils.Persistence;
@@ -32,6 +40,7 @@ namespace STS2RitsuLib
     {
         private static readonly Lock SyncRoot = new();
         private static readonly Dictionary<FrameworkPatcherArea, ModPatcher> FrameworkPatchersByArea = [];
+        private static bool _frameworkInteropBootstrapRegistered;
 
         private static bool _profileServicesInitialized;
         private static ILifecycleObserver[] _lifecycleObservers = [];
@@ -145,6 +154,98 @@ namespace STS2RitsuLib
         }
 
         /// <summary>
+        ///     Subscribes a typed callback for a specific <typeparamref name="TEvent" />, passing the same
+        ///     <see cref="IDisposable" /> subscription instance on every invocation (including synchronous replay).
+        /// </summary>
+        /// <typeparam name="TEvent">Concrete lifecycle event type.</typeparam>
+        /// <param name="handler">
+        ///     Invoked for each matching event. The <see cref="IDisposable" /> argument is the subscription; disposing it
+        ///     unsubscribes the handler.
+        /// </param>
+        /// <param name="replayCurrentState">
+        ///     When true, invokes <paramref name="handler" /> with the last replayable event if present.
+        /// </param>
+        /// <returns>Disposing unsubscribes the handler.</returns>
+        public static IDisposable SubscribeLifecycle<TEvent>(
+            Action<TEvent, IDisposable> handler,
+            bool replayCurrentState = true
+        )
+            where TEvent : IFrameworkLifecycleEvent
+        {
+            ArgumentNullException.ThrowIfNull(handler);
+
+            if (!LifecycleEventTypeCache<TEvent>.SupportsTypedDispatch)
+            {
+                var holder = new LifecycleSubscriptionHolder();
+                var observer = new DelegateLifecycleObserverWithSubscription<TEvent>(handler, holder);
+                IFrameworkLifecycleEvent[] lifecycleSnapshot;
+
+                lock (SyncRoot)
+                {
+                    _lifecycleObservers = AppendItem(_lifecycleObservers, observer);
+                    holder.Subscription = new FrameworkLifecycleSubscription(() =>
+                    {
+                        lock (SyncRoot)
+                        {
+                            _lifecycleObservers = RemoveItem(_lifecycleObservers, observer);
+                        }
+                    });
+
+                    lifecycleSnapshot = replayCurrentState
+                        ? ReplayableLifecycleEvents.Values
+                            .Cast<IFrameworkLifecycleEvent>()
+                            .OrderBy(evt => evt.OccurredAtUtc)
+                            .ToArray()
+                        : [];
+                }
+
+                foreach (var evt in lifecycleSnapshot)
+                    SafeNotify(observer, evt, evt.GetType().Name);
+
+                return holder.Subscription;
+            }
+
+            object? replayEvent = null;
+            var topic = GetLifecycleTopic<TEvent>();
+            FrameworkLifecycleSubscription? subscription = null;
+
+            lock (SyncRoot)
+            {
+                subscription = new(() =>
+                {
+                    lock (SyncRoot)
+                    {
+                        topic.Remove(Wrapped);
+                    }
+                });
+
+                topic.Add(Wrapped);
+
+                if (replayCurrentState)
+                    ReplayableLifecycleEvents.TryGetValue(LifecycleEventTypeCache<TEvent>.EventType, out replayEvent);
+            }
+
+            if (replayCurrentState && replayEvent is TEvent typedReplayEvent)
+                SafeNotify(Wrapped, typedReplayEvent, LifecycleEventTypeCache<TEvent>.EventName);
+
+            return subscription;
+
+            void Wrapped(TEvent evt)
+            {
+                try
+                {
+                    handler(evt, subscription!);
+                }
+                catch (Exception ex)
+                {
+                    Logger.Warn(
+                        $"[Lifecycle] Observer callback failed in {LifecycleEventTypeCache<TEvent>.EventName}: {ex.Message}"
+                    );
+                }
+            }
+        }
+
+        /// <summary>
         ///     Initializes the shared framework: settings, patch registration, and lifecycle publication.
         /// </summary>
         public static void Initialize()
@@ -161,7 +262,7 @@ namespace STS2RitsuLib
 
                 Logger.Info($"Framework ID: {Const.ModId}");
                 Logger.Info($"Framework Name: {Const.Name}");
-                Logger.Info($"Version: {Const.Version}");
+                Logger.Info(BuildVersionLogText());
                 Logger.Info("Initializing shared framework...");
                 ModTypeDiscoveryHub.EnsureBuiltInContributorsRegistered();
                 RitsuLibSettingsStore.Initialize();
@@ -191,8 +292,14 @@ namespace STS2RitsuLib
 
                     IsInitialized = true;
                     IsActive = true;
-                    BaseLibHealthBarForecastBridge.TryRegister();
+                    var modDataInteropRegistered = ModDataRuntimeInterop.TryRegisterAll();
+                    if (modDataInteropRegistered > 0)
+                        Logger.Debug(
+                            $"ModData runtime interop: mirror-registered {modDataInteropRegistered} provider schema(s).");
+
+                    EnsureFrameworkInteropBootstrapRegistered();
                     RuntimeHotkeyService.Initialize();
+                    RitsuToastService.Initialize();
 
                     var frameworkInitializedEvent = new FrameworkInitializedEvent(
                         Const.ModId,
@@ -213,6 +320,41 @@ namespace STS2RitsuLib
             }
         }
 
+        private static string BuildVersionLogText()
+        {
+            var compatBranchLabel = GetCompatBranchLabel();
+            return string.IsNullOrWhiteSpace(compatBranchLabel)
+                ? $"Version: {Const.Version}"
+                : $"Version: {Const.Version} [compat branch: {compatBranchLabel}]";
+        }
+
+        private static void EnsureFrameworkInteropBootstrapRegistered()
+        {
+            if (_frameworkInteropBootstrapRegistered)
+                return;
+
+            _frameworkInteropBootstrapRegistered = true;
+            SubscribeLifecycle<DeferredInitializationCompletedEvent>(_ => ConfirmExternalFrameworkInterop());
+        }
+
+        private static void ConfirmExternalFrameworkInterop()
+        {
+            ExternalFrameworkRegistry.RefreshKnownFrameworkPresence("deferred initialization completed");
+            BaseLibHealthBarForecastBridge.TryRegister();
+            BaseLibVisualGraftBridge.TryRegister();
+            BaseLibMaxHandSizeBridge.TryInitialize();
+            MaxHandSizePatchInstaller.EnsurePatched();
+        }
+
+        private static string? GetCompatBranchLabel()
+        {
+#if STS2_V_0_103_2
+            return "0.103.2";
+#else
+            return null;
+#endif
+        }
+
         /// <summary>
         ///     Ensures profile-bound services (<c>ProfileManager</c>, profile-scoped <c>ModDataStore</c>) are initialized once.
         /// </summary>
@@ -228,8 +370,11 @@ namespace STS2RitsuLib
                     nameof(ProfileServicesInitializingEvent)
                 );
 
+                ModDataRuntimeInterop.EnsureProfileSwitchSyncHook();
                 ProfileManager.Instance.Initialize();
                 ModDataStore.InitializeAllProfileScoped();
+                ModDataRuntimeInterop.PushLoadedDataToAllProviders();
+                ModRunSidecarSession.AttachLifecycleHandlers();
 
                 _profileServicesInitialized = true;
 
@@ -281,6 +426,14 @@ namespace STS2RitsuLib
         }
 
         /// <summary>
+        ///     Returns the custom card-tag registry for <paramref name="modId" />.
+        /// </summary>
+        public static ModCardTagRegistry GetCardTagRegistry(string modId)
+        {
+            return ModCardTagRegistry.For(modId);
+        }
+
+        /// <summary>
         ///     Returns the timeline (epoch/story) registry for <paramref name="modId" />.
         /// </summary>
         public static ModTimelineRegistry GetTimelineRegistry(string modId)
@@ -306,11 +459,37 @@ namespace STS2RitsuLib
         }
 
         /// <summary>
+        ///     Registers a non-power health bar visual graft source type through the framework.
+        /// </summary>
+        public static void RegisterHealthBarVisualGraft<TSource>(string modId, string? sourceId = null)
+            where TSource : IHealthBarVisualGraftSource, new()
+        {
+            HealthBarVisualGraftRegistry.Register<TSource>(modId, sourceId);
+        }
+
+        /// <summary>
+        ///     Resolves the current max-hand-size value for <paramref name="player" />.
+        /// </summary>
+        public static int GetMaxHandSize(Player player)
+        {
+            return MaxHandSizeCalculator.Calculate(player);
+        }
+
+        /// <summary>
         ///     Registers an additional free-play detector used by framework consumers (for example material logic).
         /// </summary>
         public static void RegisterFreePlayBinding(string bindingId, Func<CardPlay, bool> detector)
         {
             FreePlayBindingRegistry.Register(bindingId, detector);
+        }
+
+        /// <summary>
+        ///     Registers an initial-option injection rule for <typeparamref name="TAncient" />.
+        /// </summary>
+        public static void RegisterAncientOption<TAncient>(string modId, ModAncientOptionRule rule)
+            where TAncient : AncientEventModel
+        {
+            GetContentRegistry(modId).RegisterAncientOption<TAncient>(rule);
         }
 
         /// <summary>
@@ -361,7 +540,8 @@ namespace STS2RitsuLib
                     GetContentRegistry(registration.ModId),
                     GetKeywordRegistry(registration.ModId),
                     GetTimelineRegistry(registration.ModId),
-                    GetUnlockRegistry(registration.ModId));
+                    GetUnlockRegistry(registration.ModId),
+                    GetCardTagRegistry(registration.ModId));
                 registration.Apply(context);
             }
 
@@ -379,6 +559,29 @@ namespace STS2RitsuLib
         }
 
         /// <summary>
+        ///     Starts a batch PNG export of compendium-style detail panels: relic <c>inspect_relic_screen</c> popup, and
+        ///     potion lab focus (scaled <c>NPotion</c> + hovers). Does not use save / unlock gating; content is the “seen
+        ///     unlocked” form.
+        /// </summary>
+        public static void BeginCompendiumDetailPngExport(CompendiumPngExportRequest request)
+        {
+            CompendiumDetailPngExporter.BeginExport(request, msg => Logger.Info(msg));
+        }
+
+        /// <summary>
+        ///     Declares a <c>mod_data</c> JSON path that may participate in RitsuLib Steam Cloud sync when the player enables
+        ///     it and the session uses Steam Cloud. Prefer <see cref="Data.ModDataStore.Register{T}" /> when you already use
+        ///     <see cref="Data.ModDataStore" />; this call is for custom persistence that still resolves via
+        ///     <see cref="Utils.Persistence.ProfileManager" />.
+        /// </summary>
+        public static void RegisterModCloudPersistedSlot(string modId, string fileName, SaveScope scope)
+        {
+            ArgumentException.ThrowIfNullOrWhiteSpace(modId);
+            ArgumentException.ThrowIfNullOrWhiteSpace(fileName);
+            ModCloudSyncPathRegistry.RegisterModDataSlot(modId, fileName, scope);
+        }
+
+        /// <summary>
         ///     Registers a page in the RitsuLib mod settings submenu.
         /// </summary>
         /// <remarks>Optional layout: <see cref="ModSettingsUiPresentation.ParagraphMaxBodyHeight" />.</remarks>
@@ -386,6 +589,38 @@ namespace STS2RitsuLib
             string? pageId = null)
         {
             ModSettingsRegistry.Register(modId, configure, pageId);
+        }
+
+        /// <summary>
+        ///     Registers a reflection-based settings provider type for attribute-driven settings pages.
+        /// </summary>
+        public static bool RegisterModSettingsReflectionProvider<TProvider>()
+        {
+            return RuntimeReflectionMirrorSource.RegisterProviderType<TProvider>();
+        }
+
+        /// <summary>
+        ///     Registers a reflection-based settings provider type for attribute-driven settings pages.
+        /// </summary>
+        public static bool RegisterModSettingsReflectionProvider(Type providerType)
+        {
+            return RuntimeReflectionMirrorSource.RegisterProviderType(providerType);
+        }
+
+        /// <summary>
+        ///     Registers a reflection provider and immediately attempts to mirror-register its pages.
+        /// </summary>
+        public static int RegisterModSettingsReflectionProviderAndTryRegister<TProvider>()
+        {
+            return RuntimeReflectionMirrorSource.RegisterProviderTypeAndTryRegister<TProvider>();
+        }
+
+        /// <summary>
+        ///     Registers a reflection provider and immediately attempts to mirror-register its pages.
+        /// </summary>
+        public static int RegisterModSettingsReflectionProviderAndTryRegister(Type providerType)
+        {
+            return RuntimeReflectionMirrorSource.RegisterProviderTypeAndTryRegister(providerType);
         }
 
         /// <summary>
@@ -486,7 +721,7 @@ namespace STS2RitsuLib
 
         /// <summary>
         ///     Creates a <see cref="STS2RitsuLib.Utils.I18N" /> instance for a mod, defaulting the file-system folder to
-        ///     <c>user://mod-configs/{modId}/localization</c> when none are supplied.
+        ///     <c>user://&lt;platform&gt;/&lt;userId&gt;/mod_data/{modId}/localization</c> when none are supplied.
         /// </summary>
         public static I18N CreateModLocalization(
             string modId,
@@ -499,7 +734,7 @@ namespace STS2RitsuLib
             ArgumentException.ThrowIfNullOrWhiteSpace(modId);
             ArgumentException.ThrowIfNullOrWhiteSpace(instanceName);
 
-            var folders = fileSystemFolders?.ToArray() ?? [$"user://mod-configs/{modId}/localization"];
+            var folders = fileSystemFolders?.ToArray() ?? [$"{ProfileManager.GetAccountBasePath(modId)}/localization"];
             return CreateLocalization(instanceName, folders, resourceFolders, pckFolders, resourceAssembly);
         }
 
@@ -534,7 +769,8 @@ namespace STS2RitsuLib
                     return;
                 }
 
-                lookupMethod.Invoke(null, [assembly]);
+                var lookup = lookupMethod.CreateDelegate<Action<Assembly>>();
+                lookup(assembly);
                 logger?.Debug($"Registered Godot C# scripts for assembly: {assemblyName}");
             }
             catch (Exception ex)

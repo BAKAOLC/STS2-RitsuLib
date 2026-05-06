@@ -36,14 +36,14 @@ namespace STS2RitsuLib.Scaffolding.Characters.Patches
             // ReSharper restore InconsistentNaming
         {
             var player = __instance.Entity?.Player;
-            if (player?.Character is not IModCharacterAssetOverrides overrides)
+            if (player?.Character is not { } character)
                 return;
 
-            var skeletonPath = overrides.CustomCombatSpineSkeletonDataPath;
+            var skeletonPath = CharacterAssetOverridePatchHelper.ResolveCombatSpineSkeletonDataPath(character);
             if (string.IsNullOrWhiteSpace(skeletonPath))
                 return;
 
-            if (!AssetPathDiagnostics.Exists(skeletonPath, player.Character,
+            if (!AssetPathDiagnostics.Exists(skeletonPath, character,
                     nameof(IModCharacterAssetOverrides.CustomCombatSpineSkeletonDataPath)))
                 return;
 

@@ -1,3 +1,4 @@
+using HarmonyLib;
 using MegaCrit.Sts2.Core.Models;
 using MegaCrit.Sts2.Core.Models.Relics;
 using STS2RitsuLib.Patching.Models;
@@ -18,7 +19,7 @@ namespace STS2RitsuLib.Relics.Patches
         {
             return
             [
-                new(typeof(ArchaicTooth), "get_TranscendenceCards"),
+                new(typeof(ArchaicTooth), "TranscendenceCards", MethodType.Getter),
             ];
         }
 

@@ -1,4 +1,5 @@
 using Godot;
+using HarmonyLib;
 using MegaCrit.Sts2.Core.Entities.RestSite;
 using MegaCrit.Sts2.Core.Localization;
 using STS2RitsuLib.Patching.Models;
@@ -23,7 +24,7 @@ namespace STS2RitsuLib.Scaffolding.Content.Patches
         /// <inheritdoc cref="IPatchMethod.GetTargets" />
         public static ModPatchTarget[] GetTargets()
         {
-            return [new(typeof(RestSiteOption), "get_Icon")];
+            return [new(typeof(RestSiteOption), "Icon", MethodType.Getter)];
         }
 
         // ReSharper disable InconsistentNaming
@@ -59,7 +60,7 @@ namespace STS2RitsuLib.Scaffolding.Content.Patches
         /// <inheritdoc cref="IPatchMethod.GetTargets" />
         public static ModPatchTarget[] GetTargets()
         {
-            return [new(typeof(RestSiteOption), "get_Title")];
+            return [new(typeof(RestSiteOption), "Title", MethodType.Getter)];
         }
 
         // ReSharper disable InconsistentNaming

@@ -6,6 +6,8 @@ using MegaCrit.Sts2.Core.Multiplayer.Serialization;
 using MegaCrit.Sts2.Core.Nodes;
 using MegaCrit.Sts2.Core.Runs;
 using MegaCrit.Sts2.Core.Saves;
+using STS2RitsuLib.CardPiles;
+using STS2RitsuLib.CardTags;
 using STS2RitsuLib.Content;
 using STS2RitsuLib.Diagnostics;
 using STS2RitsuLib.Keywords;
@@ -129,6 +131,8 @@ namespace STS2RitsuLib.Lifecycle.Patches
                 case ({ } declaringType, nameof(ModelDb.Init)) when declaringType == typeof(ModelDb):
                     ModContentRegistry.FreezeRegistrations(nameof(ModelDb.Init));
                     ModKeywordRegistry.FreezeRegistrations(nameof(ModelDb.Init));
+                    ModCardTagRegistry.FreezeRegistrations(nameof(ModelDb.Init));
+                    ModCardPileRegistry.FreezeRegistrations(nameof(ModelDb.Init));
                     ModTimelineRegistry.FreezeRegistrations(nameof(ModelDb.Init));
                     ModEpochGatedContentRegistry.FreezeRegistrations(nameof(ModelDb.Init));
                     ModUnlockRegistry.FreezeRegistrations(nameof(ModelDb.Init));

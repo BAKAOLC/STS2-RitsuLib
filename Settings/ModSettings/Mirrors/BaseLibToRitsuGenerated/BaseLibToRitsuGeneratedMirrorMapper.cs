@@ -1,6 +1,5 @@
 using System.Reflection;
 using Godot;
-using MegaCrit.Sts2.Core.Helpers;
 using MegaCrit.Sts2.Core.Localization;
 
 namespace STS2RitsuLib.Settings
@@ -22,7 +21,9 @@ namespace STS2RitsuLib.Settings
             Type? hoverTipAttrType,
             Type? hoverTipsByDefaultAttrType,
             Type? legacyHoverTipsByDefaultAttrType,
-            Type configType)
+            Type? visibleIfAttrType,
+            Type configType,
+            Type modConfigType)
         {
             var members = configType
                 .GetMembers(BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Static | BindingFlags.Instance)
@@ -46,7 +47,8 @@ namespace STS2RitsuLib.Settings
                         case PropertyInfo property:
                         {
                             var mapped = TryMapProperty(modId, property, host, colorPickerAttrType, hoverTipAttrType,
-                                hoverTipsByDefaultAttrType, legacyHoverTipsByDefaultAttrType, configType);
+                                hoverTipsByDefaultAttrType, legacyHoverTipsByDefaultAttrType, visibleIfAttrType,
+                                configType, modConfigType);
                             if (mapped != null)
                                 entries.Add(mapped);
                             break;
@@ -54,7 +56,8 @@ namespace STS2RitsuLib.Settings
                         case MethodInfo method:
                         {
                             var mapped = TryMapButton(method, host, buttonAttrType, hoverTipAttrType,
-                                hoverTipsByDefaultAttrType, legacyHoverTipsByDefaultAttrType, configType);
+                                hoverTipsByDefaultAttrType, legacyHoverTipsByDefaultAttrType, visibleIfAttrType,
+                                configType, modConfigType);
                             if (mapped != null)
                                 entries.Add(mapped);
                             break;
@@ -67,7 +70,10 @@ namespace STS2RitsuLib.Settings
                 mappedSections.Add(new(sourceSection.Id, entries,
                     string.IsNullOrWhiteSpace(sourceSection.Title)
                         ? null
-                        : ModSettingsText.Dynamic(() => host.ResolveLabel(sourceSection.Title!))));
+                        : ModSettingsText.Dynamic(() => host.ResolveLabel(sourceSection.Title!)),
+                    IsCollapsible: !string.IsNullOrWhiteSpace(sourceSection.Title),
+                    StartCollapsed: false,
+                    VisibleWhen: ModSettingsMirrorVisibilityPolicy.BuildSectionVisibility(entries)));
             }
 
             if (mappedSections.Count == 0)
@@ -114,7 +120,8 @@ namespace STS2RitsuLib.Settings
 
         private static ModSettingsMirrorEntryDefinition? TryMapProperty(string modId, PropertyInfo prop,
             BaseLibToRitsuGeneratedMirrorHost host, Type? colorPickerAttrType, Type? hoverTipAttrType,
-            Type? hoverTipsByDefaultAttrType, Type? legacyHoverTipsByDefaultAttrType, Type configType)
+            Type? hoverTipsByDefaultAttrType, Type? legacyHoverTipsByDefaultAttrType, Type? visibleIfAttrType,
+            Type configType, Type modConfigType)
         {
             var id = ModSettingsMirrorIds.Entry("blg", prop.Name);
             var label = ModSettingsText.Dynamic(() => host.ResolveLabel(prop.Name));
@@ -122,10 +129,13 @@ namespace STS2RitsuLib.Settings
                 legacyHoverTipsByDefaultAttrType);
             var dataKey = $"baselib-generated::{prop.Name}";
             var type = prop.PropertyType;
+            var visibilityPredicate = BaseLibVisibleIfPredicateFactory.TryCreate(prop, host.Instance, configType,
+                modConfigType, visibleIfAttrType);
 
             if (type == typeof(bool))
                 return new(id, ModSettingsMirrorEntryKind.Toggle, label,
-                    CallbackForStaticProperty<bool>(modId, dataKey, prop, host), description);
+                    CallbackForStaticProperty<bool>(modId, dataKey, prop, host), description,
+                    VisibleWhen: visibilityPredicate);
 
             if (type == typeof(Color))
             {
@@ -141,18 +151,19 @@ namespace STS2RitsuLib.Settings
                     },
                     host.Save);
                 return new(id, ModSettingsMirrorEntryKind.Color, label, colorBinding, description, EditAlpha: true,
-                    EditIntensity: false);
+                    EditIntensity: false, VisibleWhen: visibilityPredicate);
             }
 
             var asColor = colorPickerAttrType != null && prop.GetCustomAttribute(colorPickerAttrType, false) != null;
             if (type == typeof(string) && asColor)
                 return new(id, ModSettingsMirrorEntryKind.Color, label,
                     CallbackForStaticProperty<string>(modId, dataKey, prop, host), description, EditAlpha: true,
-                    EditIntensity: false);
+                    EditIntensity: false, VisibleWhen: visibilityPredicate);
 
             if (type == typeof(string))
                 return new(id, ModSettingsMirrorEntryKind.String, label,
-                    CallbackForStaticProperty<string>(modId, dataKey, prop, host), description);
+                    CallbackForStaticProperty<string>(modId, dataKey, prop, host), description,
+                    VisibleWhen: visibilityPredicate);
 
             if (type == typeof(int))
             {
@@ -165,18 +176,18 @@ namespace STS2RitsuLib.Settings
                     },
                     host.Save);
                 return new(id, ModSettingsMirrorEntryKind.IntSlider, label, intBinding, description,
-                    new(0d, 100d, 1d));
+                    new(0d, 100d, 1d), VisibleWhen: visibilityPredicate);
             }
 
             if (type == typeof(float))
                 return new(id, ModSettingsMirrorEntryKind.Slider, label,
                     CallbackForStaticProperty<float>(modId, dataKey, prop, host), description,
-                    new(0d, 100d, 1d, null, value => value.ToString("0.##")));
+                    new(0d, 100d, 1d, null, value => value.ToString("0.##")), VisibleWhen: visibilityPredicate);
 
             if (type == typeof(double))
                 return new(id, ModSettingsMirrorEntryKind.Slider, label,
                     CallbackForStaticProperty<double>(modId, dataKey, prop, host), description,
-                    new(0d, 100d, 1d, value => value.ToString("0.##")));
+                    new(0d, 100d, 1d, value => value.ToString("0.##")), VisibleWhen: visibilityPredicate);
 
             if (!type.IsEnum)
                 return null;
@@ -186,16 +197,20 @@ namespace STS2RitsuLib.Settings
                 .MakeGenericMethod(type)
                 .Invoke(null, [modId, dataKey, prop, host]);
             return new(id, ModSettingsMirrorEntryKind.EnumChoice, label, enumBinding, description,
-                ChoicePresentation: ModSettingsChoicePresentation.Stepper, EnumType: type);
+                ChoicePresentation: ModSettingsChoicePresentation.Stepper, EnumType: type,
+                VisibleWhen: visibilityPredicate);
         }
 
         private static ModSettingsMirrorEntryDefinition? TryMapButton(MethodInfo method,
             BaseLibToRitsuGeneratedMirrorHost host, Type? buttonAttrType, Type? hoverTipAttrType,
-            Type? hoverTipsByDefaultAttrType, Type? legacyHoverTipsByDefaultAttrType, Type configType)
+            Type? hoverTipsByDefaultAttrType, Type? legacyHoverTipsByDefaultAttrType, Type? visibleIfAttrType,
+            Type configType, Type modConfigType)
         {
             if (buttonAttrType == null || method.GetCustomAttribute(buttonAttrType, false) is not { } attribute)
                 return null;
 
+            var visibilityPredicate = BaseLibVisibleIfPredicateFactory.TryCreate(method, host.Instance, configType,
+                modConfigType, visibleIfAttrType);
             var key = buttonAttrType.GetProperty("ButtonLabelKey")?.GetValue(attribute) as string ?? method.Name;
             return new(
                 ModSettingsMirrorIds.Button("blg", method.Name),
@@ -204,7 +219,8 @@ namespace STS2RitsuLib.Settings
                 Description: TryHoverTip(method, configType, host, hoverTipAttrType, hoverTipsByDefaultAttrType,
                     legacyHoverTipsByDefaultAttrType),
                 ButtonLabel: ModSettingsText.Dynamic(() => host.ResolveLabel(key)),
-                OnClick: () => InvokeConfigButton(method, host));
+                OnClick: () => InvokeConfigButton(method, host),
+                VisibleWhen: visibilityPredicate);
         }
 
         private static void InvokeConfigButton(MethodInfo method, BaseLibToRitsuGeneratedMirrorHost host)
@@ -255,7 +271,7 @@ namespace STS2RitsuLib.Settings
             if (string.IsNullOrWhiteSpace(prefix))
                 return null;
 
-            var key = prefix + StringHelper.Slugify(member.Name) + ".hover.desc";
+            var key = prefix + ModSettingsMirrorSlugPolicy.Normalize(member.Name) + ".hover.desc";
             return !LocString.Exists("settings_ui", key)
                 ? null
                 : ModSettingsText.Dynamic(() => LocString.GetIfExists("settings_ui", key)?.GetFormattedText() ?? "");

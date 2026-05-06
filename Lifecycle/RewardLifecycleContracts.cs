@@ -1,4 +1,8 @@
-using MegaCrit.Sts2.Core.Combat;
+#if STS2_V_0_103_2
+using CombatStateCompat = MegaCrit.Sts2.Core.Combat.CombatState;
+#else
+using CombatStateCompat = MegaCrit.Sts2.Core.Combat.ICombatState;
+#endif
 using MegaCrit.Sts2.Core.Entities.Gold;
 using MegaCrit.Sts2.Core.Entities.Players;
 using MegaCrit.Sts2.Core.Models;
@@ -46,7 +50,7 @@ namespace STS2RitsuLib
     /// <param name="OccurredAtUtc">When the event was raised.</param>
     public readonly record struct PotionProcuredEvent(
         IRunState RunState,
-        CombatState? CombatState,
+        CombatStateCompat? CombatState,
         PotionModel Potion,
         DateTimeOffset OccurredAtUtc
     ) : IFrameworkLifecycleEvent;
@@ -60,7 +64,7 @@ namespace STS2RitsuLib
     /// <param name="OccurredAtUtc">When the event was raised.</param>
     public readonly record struct PotionDiscardedEvent(
         IRunState RunState,
-        CombatState? CombatState,
+        CombatStateCompat? CombatState,
         PotionModel Potion,
         DateTimeOffset OccurredAtUtc
     ) : IFrameworkLifecycleEvent;

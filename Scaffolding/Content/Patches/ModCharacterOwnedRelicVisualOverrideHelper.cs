@@ -1,6 +1,9 @@
 using Godot;
 using MegaCrit.Sts2.Core.Models;
+using STS2RitsuLib.Content;
 using STS2RitsuLib.Scaffolding.Characters;
+using STS2RitsuLib.Scaffolding.Characters.Visuals.Definition;
+using STS2RitsuLib.Scaffolding.Visuals.Definition;
 using STS2RitsuLib.Utils;
 
 namespace STS2RitsuLib.Scaffolding.Content.Patches
@@ -12,6 +15,198 @@ namespace STS2RitsuLib.Scaffolding.Content.Patches
     /// </summary>
     internal static class ModCharacterOwnedVisualOverrideHelper
     {
+        private static readonly Lock SyncRoot = new();
+
+        private static readonly Dictionary<string, IModCharacterAssetOverrides> RegisteredProfileAdapters =
+            new(StringComparer.OrdinalIgnoreCase);
+
+        private static IModCharacterAssetOverrides? _cachedGlobalProfileAdapter;
+
+        /// <summary>
+        ///     Drops cached <see cref="RegisteredCharacterAssetOverrideAdapter" /> instances after programmatic owned
+        ///     visual registrations change for <paramref name="normalizedCharacterEntry" /> (canonical uppercase id).
+        /// </summary>
+        internal static void InvalidateCachesForCharacterEntry(string normalizedCharacterEntry)
+        {
+            lock (SyncRoot)
+            {
+                RegisteredProfileAdapters.Remove(normalizedCharacterEntry);
+            }
+        }
+
+        /// <summary>
+        ///     Merge order (lowest → highest): character <see cref="IModCharacterAssetOverrides.AssetProfile" /> rows,
+        ///     programmatic registry, then <see cref="ModContentRegistry.RegisterCharacterAssetReplacement" /> /
+        ///     global replacement.
+        /// </summary>
+        internal static RelicAssetProfile? ResolveOwnedRelicVisualOverride(CharacterModel owner, RelicModel relic)
+        {
+            var programmatic = TryProgrammaticRelic(owner.Id.Entry, relic);
+            var registry = TryRegistryRelic(owner.Id.Entry, relic);
+            var inline = TryInlineRelic(owner, relic);
+            return CharacterAssetProfiles.MergeRelicAssetProfilesPreferSecond(
+                CharacterAssetProfiles.MergeRelicAssetProfilesPreferSecond(inline, programmatic),
+                registry);
+        }
+
+        internal static PotionAssetProfile? ResolveOwnedPotionVisualOverride(CharacterModel owner, PotionModel potion)
+        {
+            var programmatic = TryProgrammaticPotion(owner.Id.Entry, potion);
+            var registry = TryRegistryPotion(owner.Id.Entry, potion);
+            var inline = TryInlinePotion(owner, potion);
+            return CharacterAssetProfiles.MergePotionAssetProfilesPreferSecond(
+                CharacterAssetProfiles.MergePotionAssetProfilesPreferSecond(inline, programmatic),
+                registry);
+        }
+
+        internal static CardAssetProfile? ResolveOwnedCardVisualOverride(CharacterModel owner, CardModel card)
+        {
+            var programmatic = TryProgrammaticCard(owner.Id.Entry, card);
+            var registry = TryRegistryCard(owner.Id.Entry, card);
+            var inline = TryInlineCard(owner, card);
+            return CharacterAssetProfiles.MergeCardAssetProfilesPreferSecond(
+                CharacterAssetProfiles.MergeCardAssetProfilesPreferSecond(inline, programmatic),
+                registry);
+        }
+
+        private static RelicAssetProfile? TryProgrammaticRelic(string characterEntry, RelicModel relic)
+        {
+            return ModContentRegistry.TryBuildProgrammaticCharacterOwnedVisualProfile(characterEntry, out var profile)
+                ? SelectRelic(profile, relic)
+                : null;
+        }
+
+        private static RelicAssetProfile? TryRegistryRelic(string characterEntry, RelicModel relic)
+        {
+            return ModContentRegistry.TryGetRegistryOnlyEffectiveCharacterAssetReplacement(characterEntry, out var p)
+                ? SelectRelic(p, relic)
+                : null;
+        }
+
+        private static RelicAssetProfile? TryInlineRelic(CharacterModel owner, RelicModel relic)
+        {
+            if (owner is not IModCharacterAssetOverrides mo)
+                return null;
+
+            var resolved = CharacterAssetProfiles.Resolve(mo.AssetProfile, mo.CharacterAssetPlaceholderCharacterId);
+            return SelectRelic(resolved, relic);
+        }
+
+        private static PotionAssetProfile? TryProgrammaticPotion(string characterEntry, PotionModel potion)
+        {
+            return ModContentRegistry.TryBuildProgrammaticCharacterOwnedVisualProfile(characterEntry, out var profile)
+                ? SelectPotion(profile, potion)
+                : null;
+        }
+
+        private static PotionAssetProfile? TryRegistryPotion(string characterEntry, PotionModel potion)
+        {
+            return ModContentRegistry.TryGetRegistryOnlyEffectiveCharacterAssetReplacement(characterEntry, out var p)
+                ? SelectPotion(p, potion)
+                : null;
+        }
+
+        private static PotionAssetProfile? TryInlinePotion(CharacterModel owner, PotionModel potion)
+        {
+            if (owner is not IModCharacterAssetOverrides mo)
+                return null;
+
+            var resolved = CharacterAssetProfiles.Resolve(mo.AssetProfile, mo.CharacterAssetPlaceholderCharacterId);
+            return SelectPotion(resolved, potion);
+        }
+
+        private static CardAssetProfile? TryProgrammaticCard(string characterEntry, CardModel card)
+        {
+            return ModContentRegistry.TryBuildProgrammaticCharacterOwnedVisualProfile(characterEntry, out var profile)
+                ? SelectCard(profile, card)
+                : null;
+        }
+
+        private static CardAssetProfile? TryRegistryCard(string characterEntry, CardModel card)
+        {
+            return ModContentRegistry.TryGetRegistryOnlyEffectiveCharacterAssetReplacement(characterEntry, out var p)
+                ? SelectCard(p, card)
+                : null;
+        }
+
+        private static CardAssetProfile? TryInlineCard(CharacterModel owner, CardModel card)
+        {
+            if (owner is not IModCharacterAssetOverrides mo)
+                return null;
+
+            var resolved = CharacterAssetProfiles.Resolve(mo.AssetProfile, mo.CharacterAssetPlaceholderCharacterId);
+            return SelectCard(resolved, card);
+        }
+
+        private static RelicAssetProfile? SelectRelic(CharacterAssetProfile profile, RelicModel relic)
+        {
+            var entries = profile.VanillaRelicVisualOverrides;
+            if (entries is not { Length: > 0 })
+                return null;
+
+            var id = relic.Id.Entry;
+            foreach (var (relicModelIdEntry, a) in entries)
+            {
+                if (!id.Equals(relicModelIdEntry, StringComparison.OrdinalIgnoreCase))
+                    continue;
+
+                if (string.IsNullOrWhiteSpace(a.IconPath) && string.IsNullOrWhiteSpace(a.IconOutlinePath) &&
+                    string.IsNullOrWhiteSpace(a.BigIconPath))
+                    return null;
+
+                return a;
+            }
+
+            return null;
+        }
+
+        private static PotionAssetProfile? SelectPotion(CharacterAssetProfile profile, PotionModel potion)
+        {
+            var entries = profile.VanillaPotionVisualOverrides;
+            if (entries is not { Length: > 0 })
+                return null;
+
+            var id = potion.Id.Entry;
+            foreach (var (potionModelIdEntry, a) in entries)
+            {
+                if (!id.Equals(potionModelIdEntry, StringComparison.OrdinalIgnoreCase))
+                    continue;
+
+                if (string.IsNullOrWhiteSpace(a.ImagePath) && string.IsNullOrWhiteSpace(a.OutlinePath))
+                    return null;
+
+                return a;
+            }
+
+            return null;
+        }
+
+        private static CardAssetProfile? SelectCard(CharacterAssetProfile profile, CardModel card)
+        {
+            var entries = profile.VanillaCardVisualOverrides;
+            if (entries is not { Length: > 0 })
+                return null;
+
+            var id = card.Id.Entry;
+            foreach (var (cardModelIdEntry, a) in entries)
+            {
+                if (!id.Equals(cardModelIdEntry, StringComparison.OrdinalIgnoreCase))
+                    continue;
+
+                if (string.IsNullOrWhiteSpace(a.PortraitPath) && string.IsNullOrWhiteSpace(a.BetaPortraitPath) &&
+                    string.IsNullOrWhiteSpace(a.FramePath) && string.IsNullOrWhiteSpace(a.PortraitBorderPath) &&
+                    string.IsNullOrWhiteSpace(a.EnergyIconPath) && string.IsNullOrWhiteSpace(a.FrameMaterialPath) &&
+                    string.IsNullOrWhiteSpace(a.OverlayScenePath) && string.IsNullOrWhiteSpace(a.BannerTexturePath) &&
+                    string.IsNullOrWhiteSpace(a.BannerMaterialPath) && a.FrameMaterial == null &&
+                    a.BannerMaterial == null)
+                    return null;
+
+                return a;
+            }
+
+            return null;
+        }
+
         internal static bool TryRelicIconPath(RelicModel instance, ref string result)
         {
             var overrides = TryGetOwningCharacterOverrides(instance);
@@ -248,6 +443,12 @@ namespace STS2RitsuLib.Scaffolding.Content.Patches
             if (profile == null)
                 return true;
 
+            if (profile.FrameMaterial != null)
+            {
+                result = profile.FrameMaterial;
+                return false;
+            }
+
             var path = profile.FrameMaterialPath;
             if (string.IsNullOrWhiteSpace(path) ||
                 !AssetPathDiagnostics.Exists(path, instance, nameof(CardAssetProfile.FrameMaterialPath)))
@@ -327,6 +528,12 @@ namespace STS2RitsuLib.Scaffolding.Content.Patches
             if (profile == null)
                 return true;
 
+            if (profile.BannerMaterial != null)
+            {
+                result = profile.BannerMaterial;
+                return false;
+            }
+
             var path = profile.BannerMaterialPath;
             if (string.IsNullOrWhiteSpace(path) ||
                 !AssetPathDiagnostics.Exists(path, instance, nameof(CardAssetProfile.BannerMaterialPath)))
@@ -334,6 +541,12 @@ namespace STS2RitsuLib.Scaffolding.Content.Patches
 
             result = ResourceLoader.Load<Material>(path);
             return false;
+        }
+
+        internal static bool HasCardVisualOverrideContext(CardModel instance)
+        {
+            var overrides = TryGetOwningCharacterOverrides(instance);
+            return overrides?.TryGetVanillaCardVisualOverrideForContext(instance) != null;
         }
 
         internal static bool TryCardPortraitExists(CardModel instance, ref bool result)
@@ -381,26 +594,112 @@ namespace STS2RitsuLib.Scaffolding.Content.Patches
 
         private static IModCharacterAssetOverrides? TryGetOwningCharacterOverrides(RelicModel instance)
         {
-            if (instance.IsCanonical)
-                return null;
-
-            return instance.Owner?.Character as IModCharacterAssetOverrides;
+            return ResolveOwningCharacterOverrides(instance.IsCanonical ? null : instance.Owner?.Character);
         }
 
         private static IModCharacterAssetOverrides? TryGetOwningCharacterOverrides(PotionModel instance)
         {
-            if (instance.IsCanonical)
-                return null;
-
-            return instance.Owner?.Character as IModCharacterAssetOverrides;
+            return ResolveOwningCharacterOverrides(instance.IsCanonical ? null : instance.Owner?.Character);
         }
 
         private static IModCharacterAssetOverrides? TryGetOwningCharacterOverrides(CardModel instance)
         {
-            if (instance.IsCanonical)
-                return null;
+            return ResolveOwningCharacterOverrides(instance.IsCanonical ? null : instance.Owner?.Character);
+        }
 
-            return instance.Owner?.Character as IModCharacterAssetOverrides;
+        private static IModCharacterAssetOverrides? ResolveOwningCharacterOverrides(CharacterModel? owner)
+        {
+            lock (SyncRoot)
+            {
+                switch (owner)
+                {
+                    case IModCharacterAssetOverrides direct:
+                        return direct;
+                    case null:
+                    {
+                        if (!ModContentRegistry.TryGetGlobalCharacterAssetReplacement(out var globalProfile))
+                            return null;
+
+                        return _cachedGlobalProfileAdapter ??=
+                            new RegisteredCharacterAssetOverrideAdapter(globalProfile);
+                    }
+                }
+
+                if (!ModContentRegistry.TryGetEffectiveCharacterAssetReplacement(owner.Id.Entry, out var profile))
+                    return null;
+
+                if (RegisteredProfileAdapters.TryGetValue(owner.Id.Entry, out var cached))
+                    return cached;
+
+                var adapter = new RegisteredCharacterAssetOverrideAdapter(profile);
+                RegisteredProfileAdapters[owner.Id.Entry] = adapter;
+                return adapter;
+            }
+        }
+
+        private sealed class RegisteredCharacterAssetOverrideAdapter(CharacterAssetProfile profile)
+            : IModCharacterAssetOverrides
+        {
+            public CharacterAssetProfile AssetProfile { get; } = profile;
+            public string? CustomVisualsPath => AssetProfile.Scenes?.VisualsPath;
+            public string? CustomEnergyCounterPath => AssetProfile.Scenes?.EnergyCounterPath;
+            public string? CustomMerchantAnimPath => AssetProfile.Scenes?.MerchantAnimPath;
+            public string? CustomRestSiteAnimPath => AssetProfile.Scenes?.RestSiteAnimPath;
+            public string? CustomIconTexturePath => AssetProfile.Ui?.IconTexturePath;
+            public string? CustomIconOutlineTexturePath => AssetProfile.Ui?.IconOutlineTexturePath;
+            public string? CustomIconPath => AssetProfile.Ui?.IconPath;
+            public string? CustomCharacterSelectBgPath => AssetProfile.Ui?.CharacterSelectBgPath;
+            public string? CustomCharacterSelectIconPath => AssetProfile.Ui?.CharacterSelectIconPath;
+            public string? CustomCharacterSelectLockedIconPath => AssetProfile.Ui?.CharacterSelectLockedIconPath;
+            public string? CustomCharacterSelectTransitionPath => AssetProfile.Ui?.CharacterSelectTransitionPath;
+            public string? CustomMapMarkerPath => AssetProfile.Ui?.MapMarkerPath;
+            public string? CustomTrailPath => AssetProfile.Vfx?.TrailPath;
+            public CharacterTrailStyle? CustomTrailStyle => AssetProfile.Vfx?.TrailStyle;
+            public string? CustomCombatSpineSkeletonDataPath => AssetProfile.Spine?.CombatSkeletonDataPath;
+            public string? CustomCharacterSelectSfx => AssetProfile.Audio?.CharacterSelectSfx;
+            public string? CustomCharacterTransitionSfx => AssetProfile.Audio?.CharacterTransitionSfx;
+            public string? CustomAttackSfx => AssetProfile.Audio?.AttackSfx;
+            public string? CustomCastSfx => AssetProfile.Audio?.CastSfx;
+            public string? CustomDeathSfx => AssetProfile.Audio?.DeathSfx;
+            public string? CustomArmPointingTexturePath => AssetProfile.Multiplayer?.ArmPointingTexturePath;
+            public string? CustomArmRockTexturePath => AssetProfile.Multiplayer?.ArmRockTexturePath;
+            public string? CustomArmPaperTexturePath => AssetProfile.Multiplayer?.ArmPaperTexturePath;
+            public string? CustomArmScissorsTexturePath => AssetProfile.Multiplayer?.ArmScissorsTexturePath;
+            public VisualCueSet? VisualCues => AssetProfile.VisualCues;
+            public CharacterWorldProceduralVisualSet? WorldProceduralVisuals => AssetProfile.WorldProceduralVisuals;
+
+            public RelicAssetProfile? TryGetVanillaRelicVisualOverrideForOwnedRelic(RelicModel relic)
+            {
+                var entries = AssetProfile.VanillaRelicVisualOverrides;
+                if (entries is not { Length: > 0 })
+                    return null;
+
+                return (from entry in entries
+                    where relic.Id.Entry.Equals(entry.RelicModelIdEntry, StringComparison.OrdinalIgnoreCase)
+                    select entry.Assets).FirstOrDefault();
+            }
+
+            public PotionAssetProfile? TryGetVanillaPotionVisualOverrideForContext(PotionModel potion)
+            {
+                var entries = AssetProfile.VanillaPotionVisualOverrides;
+                if (entries is not { Length: > 0 })
+                    return null;
+
+                return (from entry in entries
+                    where potion.Id.Entry.Equals(entry.PotionModelIdEntry, StringComparison.OrdinalIgnoreCase)
+                    select entry.Assets).FirstOrDefault();
+            }
+
+            public CardAssetProfile? TryGetVanillaCardVisualOverrideForContext(CardModel card)
+            {
+                var entries = AssetProfile.VanillaCardVisualOverrides;
+                if (entries is not { Length: > 0 })
+                    return null;
+
+                return (from entry in entries
+                    where card.Id.Entry.Equals(entry.CardModelIdEntry, StringComparison.OrdinalIgnoreCase)
+                    select entry.Assets).FirstOrDefault();
+            }
         }
     }
 }

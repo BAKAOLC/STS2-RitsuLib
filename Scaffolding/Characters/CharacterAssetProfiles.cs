@@ -239,12 +239,23 @@ namespace STS2RitsuLib.Scaffolding.Characters
             return merged;
         }
 
-        private static RelicAssetProfile MergeRelicAssetProfiles(RelicAssetProfile fallback, RelicAssetProfile profile)
+        internal static RelicAssetProfile MergeRelicAssetProfiles(RelicAssetProfile fallback, RelicAssetProfile profile)
         {
             return new(
                 profile.IconPath ?? fallback.IconPath,
                 profile.IconOutlinePath ?? fallback.IconOutlinePath,
                 profile.BigIconPath ?? fallback.BigIconPath);
+        }
+
+        /// <summary>
+        ///     Merges two nullable relic icon profiles; <paramref name="preferred" /> fields win when set.
+        /// </summary>
+        internal static RelicAssetProfile? MergeRelicAssetProfilesPreferSecond(RelicAssetProfile? fallback,
+            RelicAssetProfile? preferred)
+        {
+            if (fallback == null)
+                return preferred;
+            return preferred == null ? fallback : MergeRelicAssetProfiles(fallback, preferred);
         }
 
         private static CharacterVanillaPotionVisualOverride[]? MergeVanillaPotionVisualOverrides(
@@ -278,12 +289,20 @@ namespace STS2RitsuLib.Scaffolding.Characters
             return merged;
         }
 
-        private static PotionAssetProfile MergePotionAssetProfiles(PotionAssetProfile fallback,
+        internal static PotionAssetProfile MergePotionAssetProfiles(PotionAssetProfile fallback,
             PotionAssetProfile profile)
         {
             return new(
                 profile.ImagePath ?? fallback.ImagePath,
                 profile.OutlinePath ?? fallback.OutlinePath);
+        }
+
+        internal static PotionAssetProfile? MergePotionAssetProfilesPreferSecond(PotionAssetProfile? fallback,
+            PotionAssetProfile? preferred)
+        {
+            if (fallback == null)
+                return preferred;
+            return preferred == null ? fallback : MergePotionAssetProfiles(fallback, preferred);
         }
 
         private static CharacterVanillaCardVisualOverride[]? MergeVanillaCardVisualOverrides(
@@ -317,7 +336,7 @@ namespace STS2RitsuLib.Scaffolding.Characters
             return merged;
         }
 
-        private static CardAssetProfile MergeCardAssetProfiles(CardAssetProfile fallback, CardAssetProfile profile)
+        internal static CardAssetProfile MergeCardAssetProfiles(CardAssetProfile fallback, CardAssetProfile profile)
         {
             return new(
                 profile.PortraitPath ?? fallback.PortraitPath,
@@ -328,7 +347,17 @@ namespace STS2RitsuLib.Scaffolding.Characters
                 profile.FrameMaterialPath ?? fallback.FrameMaterialPath,
                 profile.OverlayScenePath ?? fallback.OverlayScenePath,
                 profile.BannerTexturePath ?? fallback.BannerTexturePath,
-                profile.BannerMaterialPath ?? fallback.BannerMaterialPath);
+                profile.BannerMaterialPath ?? fallback.BannerMaterialPath,
+                profile.FrameMaterial ?? fallback.FrameMaterial,
+                profile.BannerMaterial ?? fallback.BannerMaterial);
+        }
+
+        internal static CardAssetProfile? MergeCardAssetProfilesPreferSecond(CardAssetProfile? fallback,
+            CardAssetProfile? preferred)
+        {
+            if (fallback == null)
+                return preferred;
+            return preferred == null ? fallback : MergeCardAssetProfiles(fallback, preferred);
         }
 
         private static CharacterWorldProceduralVisualSet? MergeWorldProceduralVisuals(

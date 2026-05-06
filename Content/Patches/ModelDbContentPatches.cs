@@ -1,3 +1,4 @@
+using HarmonyLib;
 using MegaCrit.Sts2.Core.Models;
 using STS2RitsuLib.Patching.Models;
 
@@ -20,13 +21,15 @@ namespace STS2RitsuLib.Content.Patches
         /// <inheritdoc />
         public static ModPatchTarget[] GetTargets()
         {
-            return [new(typeof(ModelDb), "get_AllCharacters")];
+            return [new(typeof(ModelDb), "AllCharacters", MethodType.Getter)];
         }
 
         // ReSharper disable once InconsistentNaming
         /// <summary>
         ///     Concatenates mod-registered characters onto the vanilla sequence.
         /// </summary>
+        [HarmonyAfter(Const.BaseLibHarmonyId)]
+        [HarmonyPriority(Priority.Last)]
         public static void Postfix(ref IEnumerable<CharacterModel> __result)
         {
             __result = ModContentRegistry.AppendCharacters(__result);
@@ -50,7 +53,7 @@ namespace STS2RitsuLib.Content.Patches
         /// <inheritdoc />
         public static ModPatchTarget[] GetTargets()
         {
-            return [new(typeof(ModelDb), "get_Monsters")];
+            return [new(typeof(ModelDb), "Monsters", MethodType.Getter)];
         }
 
         // ReSharper disable once InconsistentNaming
@@ -81,13 +84,15 @@ namespace STS2RitsuLib.Content.Patches
         /// <inheritdoc />
         public static ModPatchTarget[] GetTargets()
         {
-            return [new(typeof(ModelDb), "get_Acts")];
+            return [new(typeof(ModelDb), "Acts", MethodType.Getter)];
         }
 
         // ReSharper disable once InconsistentNaming
         /// <summary>
         ///     Concatenates mod-registered acts onto the vanilla sequence.
         /// </summary>
+        [HarmonyAfter(Const.BaseLibHarmonyId)]
+        [HarmonyPriority(Priority.Last)]
         public static void Postfix(ref IEnumerable<ActModel> __result)
         {
             __result = ModContentRegistry.AppendActs(__result);
@@ -111,13 +116,15 @@ namespace STS2RitsuLib.Content.Patches
         /// <inheritdoc />
         public static ModPatchTarget[] GetTargets()
         {
-            return [new(typeof(ModelDb), "get_AllSharedEvents")];
+            return [new(typeof(ModelDb), "AllSharedEvents", MethodType.Getter)];
         }
 
         // ReSharper disable once InconsistentNaming
         /// <summary>
         ///     Concatenates mod shared events onto the vanilla sequence.
         /// </summary>
+        [HarmonyAfter(Const.BaseLibHarmonyId)]
+        [HarmonyPriority(Priority.Last)]
         public static void Postfix(ref IEnumerable<EventModel> __result)
         {
             __result = ModContentRegistry.AppendSharedEvents(__result);
@@ -141,7 +148,7 @@ namespace STS2RitsuLib.Content.Patches
         /// <inheritdoc />
         public static ModPatchTarget[] GetTargets()
         {
-            return [new(typeof(ModelDb), "get_AllPowers")];
+            return [new(typeof(ModelDb), "AllPowers", MethodType.Getter)];
         }
 
         // ReSharper disable once InconsistentNaming
@@ -171,7 +178,7 @@ namespace STS2RitsuLib.Content.Patches
         /// <inheritdoc />
         public static ModPatchTarget[] GetTargets()
         {
-            return [new(typeof(ModelDb), "get_Orbs")];
+            return [new(typeof(ModelDb), "Orbs", MethodType.Getter)];
         }
 
         // ReSharper disable once InconsistentNaming
@@ -201,13 +208,15 @@ namespace STS2RitsuLib.Content.Patches
         /// <inheritdoc />
         public static ModPatchTarget[] GetTargets()
         {
-            return [new(typeof(ModelDb), "get_AllSharedCardPools")];
+            return [new(typeof(ModelDb), "AllSharedCardPools", MethodType.Getter)];
         }
 
         // ReSharper disable once InconsistentNaming
         /// <summary>
         ///     Concatenates mod shared card pools onto the vanilla sequence.
         /// </summary>
+        [HarmonyAfter(Const.BaseLibHarmonyId)]
+        [HarmonyPriority(Priority.Last)]
         public static void Postfix(ref IEnumerable<CardPoolModel> __result)
         {
             __result = ModContentRegistry.AppendSharedCardPools(__result);
@@ -231,7 +240,7 @@ namespace STS2RitsuLib.Content.Patches
         /// <inheritdoc />
         public static ModPatchTarget[] GetTargets()
         {
-            return [new(typeof(ModelDb), "get_AllEvents")];
+            return [new(typeof(ModelDb), "AllEvents", MethodType.Getter)];
         }
 
         // ReSharper disable once InconsistentNaming
@@ -261,13 +270,15 @@ namespace STS2RitsuLib.Content.Patches
         /// <inheritdoc />
         public static ModPatchTarget[] GetTargets()
         {
-            return [new(typeof(ModelDb), "get_AllSharedAncients")];
+            return [new(typeof(ModelDb), "AllSharedAncients", MethodType.Getter)];
         }
 
         // ReSharper disable once InconsistentNaming
         /// <summary>
         ///     Concatenates mod shared ancients onto the vanilla sequence.
         /// </summary>
+        [HarmonyAfter(Const.BaseLibHarmonyId)]
+        [HarmonyPriority(Priority.Last)]
         public static void Postfix(ref IEnumerable<AncientEventModel> __result)
         {
             __result = ModContentRegistry.AppendSharedAncients(__result);
@@ -291,7 +302,7 @@ namespace STS2RitsuLib.Content.Patches
         /// <inheritdoc />
         public static ModPatchTarget[] GetTargets()
         {
-            return [new(typeof(ModelDb), "get_AllAncients")];
+            return [new(typeof(ModelDb), "AllAncients", MethodType.Getter)];
         }
 
         // ReSharper disable once InconsistentNaming
@@ -322,7 +333,7 @@ namespace STS2RitsuLib.Content.Patches
         /// <inheritdoc />
         public static ModPatchTarget[] GetTargets()
         {
-            return [new(typeof(ModelDb), "get_DebugEnchantments")];
+            return [new(typeof(ModelDb), "DebugEnchantments", MethodType.Getter)];
         }
 
         // ReSharper disable once InconsistentNaming
@@ -352,7 +363,7 @@ namespace STS2RitsuLib.Content.Patches
         /// <inheritdoc />
         public static ModPatchTarget[] GetTargets()
         {
-            return [new(typeof(ModelDb), "get_DebugAfflictions")];
+            return [new(typeof(ModelDb), "DebugAfflictions", MethodType.Getter)];
         }
 
         // ReSharper disable once InconsistentNaming
@@ -382,7 +393,7 @@ namespace STS2RitsuLib.Content.Patches
         /// <inheritdoc />
         public static ModPatchTarget[] GetTargets()
         {
-            return [new(typeof(ModelDb), "get_Achievements")];
+            return [new(typeof(ModelDb), "Achievements", MethodType.Getter)];
         }
 
         // ReSharper disable once InconsistentNaming
@@ -412,7 +423,7 @@ namespace STS2RitsuLib.Content.Patches
         /// <inheritdoc />
         public static ModPatchTarget[] GetTargets()
         {
-            return [new(typeof(ModelDb), "get_GoodModifiers")];
+            return [new(typeof(ModelDb), "GoodModifiers", MethodType.Getter)];
         }
 
         // ReSharper disable once InconsistentNaming
@@ -442,7 +453,7 @@ namespace STS2RitsuLib.Content.Patches
         /// <inheritdoc />
         public static ModPatchTarget[] GetTargets()
         {
-            return [new(typeof(ModelDb), "get_BadModifiers")];
+            return [new(typeof(ModelDb), "BadModifiers", MethodType.Getter)];
         }
 
         // ReSharper disable once InconsistentNaming
@@ -472,7 +483,7 @@ namespace STS2RitsuLib.Content.Patches
         /// <inheritdoc />
         public static ModPatchTarget[] GetTargets()
         {
-            return [new(typeof(ModelDb), "get_AllRelicPools")];
+            return [new(typeof(ModelDb), "AllRelicPools", MethodType.Getter)];
         }
 
         // ReSharper disable once InconsistentNaming
@@ -502,7 +513,7 @@ namespace STS2RitsuLib.Content.Patches
         /// <inheritdoc />
         public static ModPatchTarget[] GetTargets()
         {
-            return [new(typeof(ModelDb), "get_AllPotionPools")];
+            return [new(typeof(ModelDb), "AllPotionPools", MethodType.Getter)];
         }
 
         // ReSharper disable once InconsistentNaming

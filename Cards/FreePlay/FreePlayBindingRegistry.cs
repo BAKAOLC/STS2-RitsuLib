@@ -1,4 +1,8 @@
-using MegaCrit.Sts2.Core.Combat;
+#if STS2_V_0_103_2
+using CombatStateLike = MegaCrit.Sts2.Core.Combat.CombatState;
+#else
+using CombatStateLike = MegaCrit.Sts2.Core.Combat.ICombatState;
+#endif
 using MegaCrit.Sts2.Core.Entities.Cards;
 using MegaCrit.Sts2.Core.Models;
 using STS2RitsuLib.Utils;
@@ -194,7 +198,7 @@ namespace STS2RitsuLib.Cards.FreePlay
             return changedStar && starModified <= 0m;
         }
 
-        private static CombatState? ResolveCombatState(CardModel card)
+        private static CombatStateLike? ResolveCombatState(CardModel card)
         {
             return card.CombatState ?? card.Owner?.Creature?.CombatState;
         }
@@ -202,7 +206,7 @@ namespace STS2RitsuLib.Cards.FreePlay
         private sealed class CardFreeBindingState
         {
             public int NextPlayCharges { get; set; }
-            public CombatState? FreeThisCombatState { get; set; }
+            public CombatStateLike? FreeThisCombatState { get; set; }
         }
 
         private sealed class PlayFreeBindingState

@@ -1,4 +1,5 @@
 using System.Runtime.CompilerServices;
+using HarmonyLib;
 using MegaCrit.Sts2.Core.Entities.Cards;
 using MegaCrit.Sts2.Core.Models;
 using STS2RitsuLib.Patching.Models;
@@ -33,7 +34,7 @@ namespace STS2RitsuLib.Keywords.Patches
         /// <inheritdoc />
         public static ModPatchTarget[] GetTargets()
         {
-            return [new(typeof(CardModel), "get_Keywords")];
+            return [new(typeof(CardModel), "Keywords", MethodType.Getter)];
         }
 
         // ReSharper disable InconsistentNaming

@@ -2,7 +2,6 @@ using System.Runtime.CompilerServices;
 using Godot;
 using MegaCrit.Sts2.Core.Bindings.MegaSpine;
 using MegaCrit.Sts2.Core.Models;
-using MegaCrit.Sts2.Core.Nodes.Rooms;
 using MegaCrit.Sts2.Core.Nodes.Screens.Shops;
 using STS2RitsuLib.Patching.Models;
 using STS2RitsuLib.Scaffolding.Characters.Visuals;
@@ -49,8 +48,7 @@ namespace STS2RitsuLib.Scaffolding.Characters.Patches
             if (children[0].GetType().Name.Equals(MegaSprite.spineClassName))
                 return true;
 
-            ModCreatureVisualPlayback.TryResolveMerchantCharacterModel(NMerchantRoom.Instance, __instance,
-                out var character);
+            ModCreatureVisualPlayback.TryResolveMerchantCharacterModel(__instance, out var character);
 
             if (TryRouteToStateMachine(__instance, character, anim))
                 return false;

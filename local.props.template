@@ -7,6 +7,8 @@
     -->
     <PropertyGroup>
         <Sts2Dir>Path\To\SteamLibrary\steamapps\common\Slay the Spire 2</Sts2Dir>
+        <!-- Optional. If set, build uses $(Sts2ApiSignatureRoot)\$(Sts2ApiCompat)\ for refs instead of the game install. Must contain sts2.dll, 0Harmony.dll, Steamworks.NET.dll for that compat version. -->
+        <Sts2ApiSignatureRoot>Path\To\sts2-api-signatures</Sts2ApiSignatureRoot>
         <!-- Optional: override managed data folder (default is OS-specific under Sts2Dir) -->
         <!-- <Sts2DataDir>$(Sts2Dir)\data_sts2_windows_x86_64</Sts2DataDir> -->
     </PropertyGroup>

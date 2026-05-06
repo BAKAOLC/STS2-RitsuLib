@@ -27,6 +27,8 @@ namespace STS2RitsuLib.Scaffolding.Godot.NodeFactories
                 Texture = img,
                 PivotOffset = imgSize / 2,
                 ExpandMode = TextureRect.ExpandModeEnum.IgnoreSize,
+                StretchMode = TextureRect.StretchModeEnum.KeepAspectCentered,
+                MouseFilter = Control.MouseFilterEnum.Ignore,
             };
         }
 

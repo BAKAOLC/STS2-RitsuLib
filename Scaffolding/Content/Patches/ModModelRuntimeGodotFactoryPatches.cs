@@ -341,7 +341,7 @@ namespace STS2RitsuLib.Scaffolding.Content.Patches
             /// <inheritdoc cref="IPatchMethod.GetTargets" />
             public static ModPatchTarget[] GetTargets()
             {
-                return [new(typeof(EventModel), "get_HasVfx")];
+                return [new(typeof(EventModel), "HasVfx", MethodType.Getter)];
             }
 
             // ReSharper disable InconsistentNaming

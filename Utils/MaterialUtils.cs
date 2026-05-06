@@ -11,6 +11,7 @@ namespace STS2RitsuLib.Utils
         private const string DoomBarShaderPath = "res://scenes/combat/doom_bar.gdshader";
 
         private static NoiseTexture2D? _vanillaDoomBarNoiseTexture;
+        private static ShaderMaterial? _unmodulatedHsvMaterial;
 
         private static Shader? GameHsvShader => (Shader?)GD.Load<Shader>(HsvShaderPath)?.Duplicate();
 
@@ -20,13 +21,34 @@ namespace STS2RitsuLib.Utils
             _vanillaDoomBarNoiseTexture ??= CreateVanillaDoomBarNoiseTexture();
 
         /// <summary>
+        ///     Builds a <c>ShaderMaterial</c> using the game's HSV shader with the given RGB parameters.
+        /// </summary>
+        public static ShaderMaterial CreateRgbShaderMaterial(float r, float g, float b)
+        {
+            var max = Math.Max(r, Math.Max(g, b));
+            var min = Math.Min(r, Math.Min(g, b));
+            var delta = max - min;
+
+            float h = 0;
+            if (delta != 0)
+            {
+                if (Mathf.IsEqualApprox(max, r)) h = (g - b) / delta + (g < b ? 6 : 0);
+                else if (Mathf.IsEqualApprox(max, g)) h = (b - r) / delta + 2;
+                else h = (r - g) / delta + 4;
+                h /= 6;
+            }
+
+            var s = max == 0 ? 0 : delta / max;
+            return CreateHsvShaderMaterial(h, s, max);
+        }
+
+        /// <summary>
         ///     Builds a <c>ShaderMaterial</c> using the game's HSV shader with the given parameters.
         /// </summary>
         public static ShaderMaterial CreateHsvShaderMaterial(float h, float s, float v)
         {
-            var shader = GameHsvShader;
-            if (shader == null)
-                throw new InvalidOperationException($"Failed to load HSV shader ({HsvShaderPath}).");
+            var shader = GameHsvShader ??
+                         throw new InvalidOperationException($"Failed to load HSV shader ({HsvShaderPath}).");
 
             var material = new ShaderMaterial
             {
@@ -38,6 +60,20 @@ namespace STS2RitsuLib.Utils
             material.SetShaderParameter("v", v);
 
             return material;
+        }
+
+        /// <summary>
+        ///     Returns a <see cref="ShaderMaterial" /> built from the game's HSV shader configured to preserve the
+        ///     original colors (identity modulation: <c>h=0</c>, <c>s=1</c>, <c>v=1</c>).
+        /// </summary>
+        /// <remarks>
+        ///     This is useful when you want to override a card frame's <c>FrameMaterial</c> without introducing any additional
+        ///     color modulation, while still using the vanilla shader pipeline.
+        /// </remarks>
+        public static ShaderMaterial CreateUnmodulatedHsvShaderMaterial()
+        {
+            _unmodulatedHsvMaterial ??= CreateHsvShaderMaterial(0f, 1f, 1f);
+            return (ShaderMaterial)_unmodulatedHsvMaterial.Duplicate();
         }
 
         /// <summary>

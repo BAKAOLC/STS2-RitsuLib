@@ -4,6 +4,9 @@ import re
 from dataclasses import dataclass
 from pathlib import Path
 
+from release_lib.msbuild_eval import get_csproj_property
+from release_lib.repo_layout import CONST_CS_NAME, MOD_MANIFEST_NAME, RITSULIB_CSPROJ_NAME
+
 
 @dataclass(frozen=True)
 class VersionTriple:
@@ -28,18 +31,21 @@ class VersionTriple:
 
 
 def read_csproj_version(path: Path) -> str:
-    content = path.read_text(encoding="utf-8")
-    m = re.search(r"<Version>\s*([^<]+?)\s*</Version>", content)
-    if not m:
-        msg = f"Failed to locate <Version> in {path}"
+    try:
+        raw = get_csproj_property(path, "Version")
+    except (OSError, RuntimeError) as e:
+        msg = f"Could not read Version from {path}: {e}"
+        raise ValueError(msg) from e
+    if not raw.strip():
+        msg = f"Version evaluated empty for {path}"
         raise ValueError(msg)
-    return m.group(1).strip()
+    return raw.strip()
 
 
 def read_paths(ritsulib_root: Path) -> tuple[Path, Path, Path]:
-    csproj = ritsulib_root / "STS2-RitsuLib.csproj"
-    manifest = ritsulib_root / "mod_manifest.json"
-    const_cs = ritsulib_root / "Const.cs"
+    csproj = ritsulib_root / RITSULIB_CSPROJ_NAME
+    manifest = ritsulib_root / MOD_MANIFEST_NAME
+    const_cs = ritsulib_root / CONST_CS_NAME
     for p in (csproj, manifest, const_cs):
         if not p.is_file():
             msg = f"Required file not found: {p}"

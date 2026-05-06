@@ -1,4 +1,3 @@
-using System.Reflection;
 using Godot;
 using HarmonyLib;
 using MegaCrit.Sts2.Core.Audio.Debug;
@@ -45,9 +44,10 @@ namespace STS2RitsuLib.Combat.CardTargeting.Patches
             AccessTools.MethodDelegate<Action<NCardPlay, CardModel>>(
                 AccessTools.DeclaredMethod(typeof(NCardPlay), "CannotPlayThisCardFtueCheck", [typeof(CardModel)]));
 
-        private static readonly MethodInfo SingleCreatureTargetingMethod =
-            AccessTools.DeclaredMethod(typeof(NControllerCardPlay), "SingleCreatureTargeting",
-                [typeof(TargetType)]);
+        private static readonly Func<NControllerCardPlay, TargetType, Task> SingleCreatureTargeting =
+            AccessTools.MethodDelegate<Func<NControllerCardPlay, TargetType, Task>>(
+                AccessTools.DeclaredMethod(typeof(NControllerCardPlay), "SingleCreatureTargeting",
+                    [typeof(TargetType)]));
 
         public static string PatchId => "card_any_player_controller_start";
 
@@ -91,7 +91,7 @@ namespace STS2RitsuLib.Combat.CardTargeting.Patches
             cardNode.CardHighlight.AnimFlash();
             CenterCard(__instance);
             TaskHelper.RunSafely(
-                (Task)SingleCreatureTargetingMethod.Invoke(__instance, [TargetType.AnyPlayer])!);
+                SingleCreatureTargeting(__instance, TargetType.AnyPlayer));
 
             return false;
         }
@@ -152,23 +152,13 @@ namespace STS2RitsuLib.Combat.CardTargeting.Patches
         {
             var card = GetCard(instance);
             var cardNode = GetCardNode(instance);
-            if (card?.CombatState == null)
+            if (card?.CombatState == null || cardNode == null)
             {
                 instance.CancelPlayCard();
                 return;
             }
 
             var targetManager = NTargetManager.Instance;
-            var hoverCallable = Callable.From((NCreature c) => OnCreatureHover(instance, c));
-            var unhoverCallable = Callable.From((NCreature c) => OnCreatureUnhover(instance, c));
-
-            targetManager.Connect(NTargetManager.SignalName.CreatureHovered, hoverCallable);
-            targetManager.Connect(NTargetManager.SignalName.CreatureUnhovered, unhoverCallable);
-            targetManager.StartTargeting(
-                TargetType.AnyPlayer, cardNode!, TargetMode.Controller,
-                () => !GodotObject.IsInstanceValid(instance)
-                      || !NControllerManager.Instance!.IsUsingController,
-                null);
 
             var list = card.CombatState!.PlayerCreatures
                 .Where(c => c is { IsAlive: true, IsPlayer: true })
@@ -191,20 +181,39 @@ namespace STS2RitsuLib.Combat.CardTargeting.Patches
                 return;
             }
 
-            NCombatRoom.Instance!.RestrictControllerNavigation(nodes.Select(n => n.Hitbox));
-            nodes.First().Hitbox.TryGrabFocus();
+            var hoverCallable = Callable.From((NCreature c) => OnCreatureHover(instance, c));
+            var unhoverCallable = Callable.From((NCreature c) => OnCreatureUnhover(instance, c));
 
-            var selected = (NCreature?)await targetManager.SelectionFinished();
-
-            if (GodotObject.IsInstanceValid(instance))
+            try
             {
-                targetManager.Disconnect(NTargetManager.SignalName.CreatureHovered, hoverCallable);
-                targetManager.Disconnect(NTargetManager.SignalName.CreatureUnhovered, unhoverCallable);
+                targetManager.Connect(NTargetManager.SignalName.CreatureHovered, hoverCallable);
+                targetManager.Connect(NTargetManager.SignalName.CreatureUnhovered, unhoverCallable);
+                targetManager.StartTargeting(
+                    TargetType.AnyPlayer, cardNode, TargetMode.Controller,
+                    () => !GodotObject.IsInstanceValid(instance)
+                          || !NControllerManager.Instance!.IsUsingController,
+                    null);
+
+                NCombatRoom.Instance!.RestrictControllerNavigation(nodes.Select(n => n.Hitbox));
+                nodes.First().Hitbox.TryGrabFocus();
+
+                var selected = (NCreature?)await targetManager.SelectionFinished();
+
+                if (!GodotObject.IsInstanceValid(instance))
+                    return;
 
                 if (selected != null)
                     TryPlayCard(instance, selected.Entity);
                 else
                     instance.CancelPlayCard();
+            }
+            finally
+            {
+                if (targetManager.IsConnected(NTargetManager.SignalName.CreatureHovered, hoverCallable))
+                    targetManager.Disconnect(NTargetManager.SignalName.CreatureHovered, hoverCallable);
+
+                if (targetManager.IsConnected(NTargetManager.SignalName.CreatureUnhovered, unhoverCallable))
+                    targetManager.Disconnect(NTargetManager.SignalName.CreatureUnhovered, unhoverCallable);
             }
         }
     }

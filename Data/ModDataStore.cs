@@ -213,6 +213,7 @@ namespace STS2RitsuLib.Data
             );
 
             _entries[key] = registration;
+            ModCloudSyncPathRegistry.RegisterModDataSlot(ModId, fileName, scope);
 
             if (_registrationScopeDepth > 0)
                 return;

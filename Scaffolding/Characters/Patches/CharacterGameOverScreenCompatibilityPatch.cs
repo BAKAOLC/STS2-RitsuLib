@@ -2,7 +2,9 @@ using Godot;
 using HarmonyLib;
 using MegaCrit.Sts2.Core.Entities.Players;
 using MegaCrit.Sts2.Core.Helpers;
+using MegaCrit.Sts2.Core.Models.Events;
 using MegaCrit.Sts2.Core.Nodes.Combat;
+using MegaCrit.Sts2.Core.Nodes.Events.Custom;
 using MegaCrit.Sts2.Core.Nodes.Rooms;
 using MegaCrit.Sts2.Core.Nodes.Screens.GameOverScreen;
 using MegaCrit.Sts2.Core.Rooms;
@@ -83,6 +85,22 @@ namespace STS2RitsuLib.Scaffolding.Characters.Patches
             {
                 creatureNodes = [];
                 foreach (var playerVisual in NMerchantRoom.Instance.PlayerVisuals)
+                {
+                    playerVisual.PlayAnimation("die");
+                    playerVisual.Reparent(creatureContainer);
+                }
+            }
+            else if (runState.CurrentRoom is EventRoom
+                     {
+                         CanonicalEvent: FakeMerchant, LocalMutableEvent.Node: NFakeMerchant fakeMerchantUi,
+                     } && ModCreatureVisualPlayback.TryGetFakeMerchantPlayerVisuals(fakeMerchantUi) is
+                         {
+                             Count: > 0,
+                         }
+                         boothVisuals)
+            {
+                creatureNodes = [];
+                foreach (var playerVisual in boothVisuals)
                 {
                     playerVisual.PlayAnimation("die");
                     playerVisual.Reparent(creatureContainer);

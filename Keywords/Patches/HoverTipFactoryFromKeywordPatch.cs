@@ -1,3 +1,4 @@
+using HarmonyLib;
 using MegaCrit.Sts2.Core.Entities.Cards;
 using MegaCrit.Sts2.Core.HoverTips;
 using STS2RitsuLib.Patching.Models;
@@ -11,6 +12,8 @@ namespace STS2RitsuLib.Keywords.Patches
     ///     <c>CardKeywordExtensions.GetLocKeyPrefix</c> for unknown enum values. Vanilla keywords skip the
     ///     prefix entirely and fall through to the original factory.
     /// </summary>
+    [HarmonyBefore(Const.BaseLibHarmonyId)]
+    [HarmonyPriority(Priority.First)]
     public sealed class HoverTipFactoryFromKeywordPatch : IPatchMethod
     {
         private static readonly Dictionary<CardKeyword, IHoverTip> ModKeywordTipCache = [];

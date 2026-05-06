@@ -6,6 +6,7 @@ using MegaCrit.Sts2.Core.Nodes.Combat;
 using STS2RitsuLib.Content;
 using STS2RitsuLib.Scaffolding.Characters.Visuals.Definition;
 using STS2RitsuLib.Scaffolding.Content;
+using STS2RitsuLib.Scaffolding.Content.Patches;
 using STS2RitsuLib.Scaffolding.Visuals.Definition;
 using STS2RitsuLib.Scaffolding.Visuals.StateMachine;
 
@@ -24,7 +25,8 @@ namespace STS2RitsuLib.Scaffolding.Characters
     }
 
     /// <summary>
-    ///     Controls whether a mod character should appear in vanilla character-select and random selection flows.
+    ///     Controls mod-character visibility in vanilla character-select, random selection, and the card library
+    ///     compendium pool-filter row.
     /// </summary>
     public interface IModCharacterVanillaSelectionPolicy
     {
@@ -37,6 +39,13 @@ namespace STS2RitsuLib.Scaffolding.Characters
         ///     When false, excludes the character from vanilla random character selection.
         /// </summary>
         bool AllowInVanillaRandomCharacterSelect { get; }
+
+        /// <summary>
+        ///     When true, <see cref="STS2RitsuLib.Scaffolding.Characters.Patches.CardLibraryCompendiumPatch" /> does not add a
+        ///     card-pool filter toggle for
+        ///     this character (aligned with BaseLib <c>CustomCharacterModel.HideInCompendium</c>).
+        /// </summary>
+        bool HideInCardLibraryCompendium { get; }
     }
 
     /// <summary>
@@ -200,6 +209,12 @@ namespace STS2RitsuLib.Scaffolding.Characters
         CharacterWorldProceduralVisualSet? WorldProceduralVisuals { get; }
 
         /// <summary>
+        ///     Optional vanilla character id used with <see cref="CharacterAssetProfiles.Resolve" /> when expanding
+        ///     partial <see cref="AssetProfile" /> data (defaults to <c>null</c>: no placeholder merge).
+        /// </summary>
+        string? CharacterAssetPlaceholderCharacterId => null;
+
+        /// <summary>
         ///     When <paramref name="relic" /> is owned by a player using this character, returns icon path overrides
         ///     registered for that relic’s <c>ModelId.Entry</c>; otherwise <c>null</c>. Patches resolve this before
         ///     mod-relic <c>IModRelicAssetOverrides</c> so per-owner character art wins over relic-wide defaults.
@@ -234,8 +249,10 @@ namespace STS2RitsuLib.Scaffolding.Characters
     public abstract class ModCharacterTemplate<TCardPool, TRelicPool, TPotionPool> : CharacterModel
         , IModCharacterAssetOverrides, IModCreatureVisualsFactory, IModCharacterCreatureVisualsFactory,
         IModCreatureAnimatorFactory, IModCharacterCreatureAnimatorFactory,
-        IModNonSpineAnimationStateMachineFactory, IModCharacterMerchantAnimationStateMachineFactory,
-        IModCharacterEpochTimelineRequirement, IModCharacterVanillaSelectionPolicy
+        IModCreatureCombatAnimationStateMachineFactory, IModNonSpineAnimationStateMachineFactory,
+        IModCharacterMerchantAnimationStateMachineFactory,
+        IModCharacterEpochTimelineRequirement, IModCharacterVanillaSelectionPolicy,
+        IModCharacterCardLibraryCompendiumPlacement
 #pragma warning restore CS0618
         where TCardPool : CardPoolModel
         where TRelicPool : RelicPoolModel
@@ -436,73 +453,22 @@ namespace STS2RitsuLib.Scaffolding.Characters
         /// <inheritdoc />
         public virtual RelicAssetProfile? TryGetVanillaRelicVisualOverrideForOwnedRelic(RelicModel relic)
         {
-            var entries = ResolvedAssetProfile.VanillaRelicVisualOverrides;
-            if (entries is not { Length: > 0 })
-                return null;
-
-            var id = relic.Id.Entry;
-            foreach (var (relicModelIdEntry, a) in entries)
-            {
-                if (!id.Equals(relicModelIdEntry, StringComparison.OrdinalIgnoreCase))
-                    continue;
-
-                if (string.IsNullOrWhiteSpace(a.IconPath) && string.IsNullOrWhiteSpace(a.IconOutlinePath) &&
-                    string.IsNullOrWhiteSpace(a.BigIconPath))
-                    return null;
-
-                return a;
-            }
-
-            return null;
+            return ModCharacterOwnedVisualOverrideHelper.ResolveOwnedRelicVisualOverride(this, relic);
         }
 
         /// <inheritdoc />
         public virtual PotionAssetProfile? TryGetVanillaPotionVisualOverrideForContext(PotionModel potion)
         {
-            var entries = ResolvedAssetProfile.VanillaPotionVisualOverrides;
-            if (entries is not { Length: > 0 })
-                return null;
-
-            var id = potion.Id.Entry;
-            foreach (var (potionModelIdEntry, a) in entries)
-            {
-                if (!id.Equals(potionModelIdEntry, StringComparison.OrdinalIgnoreCase))
-                    continue;
-
-                if (string.IsNullOrWhiteSpace(a.ImagePath) && string.IsNullOrWhiteSpace(a.OutlinePath))
-                    return null;
-
-                return a;
-            }
-
-            return null;
+            return ModCharacterOwnedVisualOverrideHelper.ResolveOwnedPotionVisualOverride(this, potion);
         }
 
         /// <inheritdoc />
         public virtual CardAssetProfile? TryGetVanillaCardVisualOverrideForContext(CardModel card)
         {
-            var entries = ResolvedAssetProfile.VanillaCardVisualOverrides;
-            if (entries is not { Length: > 0 })
-                return null;
-
-            var id = card.Id.Entry;
-            foreach (var (cardModelIdEntry, a) in entries)
-            {
-                if (!id.Equals(cardModelIdEntry, StringComparison.OrdinalIgnoreCase))
-                    continue;
-
-                if (string.IsNullOrWhiteSpace(a.PortraitPath) && string.IsNullOrWhiteSpace(a.BetaPortraitPath) &&
-                    string.IsNullOrWhiteSpace(a.FramePath) && string.IsNullOrWhiteSpace(a.PortraitBorderPath) &&
-                    string.IsNullOrWhiteSpace(a.EnergyIconPath) && string.IsNullOrWhiteSpace(a.FrameMaterialPath) &&
-                    string.IsNullOrWhiteSpace(a.OverlayScenePath) && string.IsNullOrWhiteSpace(a.BannerTexturePath) &&
-                    string.IsNullOrWhiteSpace(a.BannerMaterialPath))
-                    return null;
-
-                return a;
-            }
-
-            return null;
+            return ModCharacterOwnedVisualOverrideHelper.ResolveOwnedCardVisualOverride(this, card);
         }
+
+        string? IModCharacterAssetOverrides.CharacterAssetPlaceholderCharacterId => PlaceholderCharacterId;
 
         /// <inheritdoc />
         public virtual VisualCueSet? VisualCues => ResolvedAssetProfile.VisualCues;
@@ -510,6 +476,9 @@ namespace STS2RitsuLib.Scaffolding.Characters
         /// <inheritdoc />
         public virtual CharacterWorldProceduralVisualSet? WorldProceduralVisuals =>
             ResolvedAssetProfile.WorldProceduralVisuals;
+
+        /// <inheritdoc cref="IModCharacterCardLibraryCompendiumPlacement.CardLibraryCompendiumPlacementRules" />
+        public virtual IReadOnlyList<CardLibraryCompendiumPlacementRule>? CardLibraryCompendiumPlacementRules => null;
 
 #pragma warning disable CS0618
         CreatureAnimator? IModCharacterCreatureAnimatorFactory.TryCreateCreatureAnimator(MegaSprite controller)
@@ -540,9 +509,18 @@ namespace STS2RitsuLib.Scaffolding.Characters
         /// <inheritdoc />
         public virtual bool AllowInVanillaRandomCharacterSelect => !HideFromVanillaCharacterSelect;
 
+        /// <inheritdoc />
+        public virtual bool HideInCardLibraryCompendium => false;
+
         CreatureAnimator? IModCreatureAnimatorFactory.TryCreateCreatureAnimator(MegaSprite controller)
         {
             return SetupCustomCreatureAnimator(controller);
+        }
+
+        ModAnimStateMachine? IModCreatureCombatAnimationStateMachineFactory.TryCreateCombatAnimationStateMachine(
+            Node visualsRoot)
+        {
+            return ResolveCombatAnimationStateMachine(visualsRoot);
         }
 
         NCreatureVisuals? IModCreatureVisualsFactory.TryCreateCreatureVisuals()
@@ -550,10 +528,18 @@ namespace STS2RitsuLib.Scaffolding.Characters
             return TryCreateCreatureVisuals();
         }
 
-        ModAnimStateMachine? IModNonSpineAnimationStateMachineFactory.
-            TryCreateNonSpineAnimationStateMachine(Node visualsRoot)
+        ModAnimStateMachine? IModNonSpineAnimationStateMachineFactory.TryCreateNonSpineAnimationStateMachine(
+            Node visualsRoot)
         {
-            return SetupCustomNonSpineAnimationStateMachine(visualsRoot, this);
+            return ResolveCombatAnimationStateMachine(visualsRoot);
+        }
+
+        private ModAnimStateMachine? ResolveCombatAnimationStateMachine(Node visualsRoot)
+        {
+            var fromNew = SetupCustomCombatAnimationStateMachine(visualsRoot, this);
+#pragma warning disable CS0618
+            return fromNew ?? SetupCustomNonSpineAnimationStateMachine(visualsRoot, this);
+#pragma warning restore CS0618
         }
 
         /// <summary>
@@ -578,16 +564,26 @@ namespace STS2RitsuLib.Scaffolding.Characters
         }
 
         /// <summary>
-        ///     Optional override producing a non-Spine <see cref="ModAnimStateMachine" /> for the character's combat
-        ///     visuals (cue frame sequences, Godot animation player, animated sprite). Return <see langword="null" />
-        ///     to defer to single-shot playback via <c>ModCreatureVisualPlayback</c>.
+        ///     Optional override producing a <see cref="ModAnimStateMachine" /> for the character's combat visuals
+        ///     (any <see cref="IAnimationBackend" />, including Spine via
+        ///     <see cref="ModAnimStateMachineBuilder.BuildSpine" />). Return <see langword="null" /> to defer to vanilla
+        ///     Spine <see cref="CreatureAnimator" /> triggers or, when there is no Spine animator, to single-shot
+        ///     playback via <c>ModCreatureVisualPlayback</c>.
         /// </summary>
         /// <param name="visualsRoot">Combat visuals root node.</param>
         /// <param name="character">Character model (always <see langword="this" />, exposed for convenience).</param>
-        protected virtual ModAnimStateMachine? SetupCustomNonSpineAnimationStateMachine(Node visualsRoot,
+        protected virtual ModAnimStateMachine? SetupCustomCombatAnimationStateMachine(Node visualsRoot,
             CharacterModel character)
         {
             return null;
+        }
+
+        /// <inheritdoc cref="SetupCustomCombatAnimationStateMachine" />
+        [Obsolete("Override SetupCustomCombatAnimationStateMachine instead.")]
+        protected virtual ModAnimStateMachine? SetupCustomNonSpineAnimationStateMachine(Node visualsRoot,
+            CharacterModel character)
+        {
+            return SetupCustomCombatAnimationStateMachine(visualsRoot, character);
         }
 
         /// <summary>
@@ -615,31 +611,28 @@ namespace STS2RitsuLib.Scaffolding.Characters
 
         private IEnumerable<CardModel> ResolveStartingDeck()
         {
-            var characterType = GetType();
-            var localEntries = GetLocalStartingDeckEntries();
-            var registeredEntries = ModContentRegistry.GetRegisteredCharacterStarterCards(characterType);
+            var localTypes = GetLocalStartingDeckEntries()
+                .SelectMany(static entry => Enumerable.Repeat(entry.CardType, Math.Max(entry.Count, 0)));
+            var registeredTypes = ModContentRegistry.GetRegisteredCharacterStarterCards(GetType());
 
-            return localEntries
-                .SelectMany(static entry => Enumerable.Repeat(entry.CardType, Math.Max(entry.Count, 0)))
-                .Concat(registeredEntries)
+            return localTypes
+                .Concat(registeredTypes)
                 .Select(type => ModelDb.GetById<CardModel>(ModelDb.GetId(type)))
                 .ToArray();
         }
 
         private IReadOnlyList<RelicModel> ResolveStartingRelics()
         {
-            var characterType = GetType();
             return GetLocalStartingRelicTypes()
-                .Concat(ModContentRegistry.GetRegisteredCharacterStarterRelics(characterType))
+                .Concat(ModContentRegistry.GetRegisteredCharacterStarterRelics(GetType()))
                 .Select(type => ModelDb.GetById<RelicModel>(ModelDb.GetId(type)))
                 .ToArray();
         }
 
         private IReadOnlyList<PotionModel> ResolveStartingPotions()
         {
-            var characterType = GetType();
             return GetLocalStartingPotionTypes()
-                .Concat(ModContentRegistry.GetRegisteredCharacterStarterPotions(characterType))
+                .Concat(ModContentRegistry.GetRegisteredCharacterStarterPotions(GetType()))
                 .Select(type => ModelDb.GetById<PotionModel>(ModelDb.GetId(type)))
                 .ToArray();
         }

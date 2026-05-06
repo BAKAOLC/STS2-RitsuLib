@@ -1,4 +1,5 @@
 using Godot;
+using HarmonyLib;
 using MegaCrit.Sts2.Core.Models;
 using MegaCrit.Sts2.Core.Random;
 using MegaCrit.Sts2.Core.Rooms;
@@ -88,7 +89,7 @@ namespace STS2RitsuLib.Scaffolding.Content.Patches
         /// <inheritdoc cref="IPatchMethod.GetTargets" />
         public static ModPatchTarget[] GetTargets()
         {
-            return [new(typeof(ActModel), "get_AssetPaths")];
+            return [new(typeof(ActModel), "AssetPaths", MethodType.Getter)];
         }
 
         // ReSharper disable InconsistentNaming

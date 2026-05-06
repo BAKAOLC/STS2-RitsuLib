@@ -13,10 +13,14 @@ namespace STS2RitsuLib.Timeline
     {
         private const int MaxAutoPositionScan = 128;
 
-        /// <summary>Scan downward when placing a column strictly before an anchor era (horizontal / enum int order).</summary>
+        /// <summary>
+        ///     Scan downward when placing a column strictly before an anchor era (horizontal / enum int order).
+        /// </summary>
         private const int MinEraIntScan = -100_000;
 
-        /// <summary>Scan upward when placing a column strictly after an anchor era.</summary>
+        /// <summary>
+        ///     Scan upward when placing a column strictly after an anchor era.
+        /// </summary>
         private const int MaxEraIntScan = 100_000;
 
         private static readonly Lock Sync = new();

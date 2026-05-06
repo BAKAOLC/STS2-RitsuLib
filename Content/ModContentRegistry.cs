@@ -4,6 +4,7 @@ using MegaCrit.Sts2.Core.Logging;
 using MegaCrit.Sts2.Core.Modding;
 using MegaCrit.Sts2.Core.Models;
 using STS2RitsuLib.Diagnostics;
+using STS2RitsuLib.Scaffolding.Content;
 
 namespace STS2RitsuLib.Content
 {
@@ -55,6 +56,7 @@ namespace STS2RitsuLib.Content
         private static readonly HashSet<Type> RegisteredAfflictions = [];
         private static readonly HashSet<Type> RegisteredAchievements = [];
         private static readonly HashSet<Type> RegisteredSingletons = [];
+        private static readonly HashSet<Type> RegisteredBadges = [];
         private static readonly HashSet<Type> RegisteredSharedRelicPools = [];
         private static readonly HashSet<Type> RegisteredSharedPotionPools = [];
         private static readonly HashSet<Type> RegisteredGoodModifiers = [];
@@ -142,19 +144,85 @@ namespace STS2RitsuLib.Content
         }
 
         /// <summary>
-        ///     Builds a mod-scoped keyword id using the same stem normalization as fixed public model entries, then
-        ///     lowercases the result for keyword registry storage. Other mods can
-        ///     reference a provider’s keyword by passing the same <paramref name="modId" /> and
-        ///     <paramref name="localKeywordStem" />.
+        ///     Builds a stable three-segment compound id: <c>{normalizedModId}_{TYPE}_{normalizedName}</c>
+        ///     (underscore-separated). Mod and name use <see cref="NormalizePublicStem" />; the type segment is only
+        ///     trimmed then uppercased with <c>ToUpperInvariant</c> (no stem normalization).
+        /// </summary>
+        public static string GetCompoundId(string modId, string typeStem, string nameStem)
+        {
+            ArgumentException.ThrowIfNullOrWhiteSpace(modId);
+            ArgumentException.ThrowIfNullOrWhiteSpace(nameStem);
+            ArgumentNullException.ThrowIfNull(typeStem);
+
+            var trimmedType = typeStem.Trim();
+            if (trimmedType.Length == 0)
+                throw new ArgumentException("Type segment cannot be empty or whitespace.", nameof(typeStem));
+
+            var mod = NormalizePublicStem(modId);
+            var type = trimmedType.ToUpperInvariant();
+            var name = NormalizePublicStem(nameStem);
+            return $"{mod}_{type}_{name}";
+        }
+
+        /// <summary>
+        ///     Builds a mod-scoped keyword id: <c>{normalizedModId}_KEYWORD_{normalizedStem}</c>, matching the
+        ///     three-segment convention used by <see cref="GetQualifiedCardPileId" /> and
+        ///     <see cref="GetQualifiedTopBarButtonId" /> (all uppercase). Other mods can reference a provider’s keyword
+        ///     by passing the same <paramref name="modId" /> and <paramref name="localKeywordStem" />.
         /// </summary>
         public static string GetQualifiedKeywordId(string modId, string localKeywordStem)
         {
             ArgumentException.ThrowIfNullOrWhiteSpace(modId);
             ArgumentException.ThrowIfNullOrWhiteSpace(localKeywordStem);
 
-            var modStem = NormalizePublicStem(modId);
-            var keyStem = NormalizePublicStem(localKeywordStem);
-            return $"{modStem}_{keyStem}".ToLowerInvariant();
+            return GetCompoundId(modId, "KEYWORD", localKeywordStem);
+        }
+
+        /// <summary>
+        ///     Builds a mod-scoped card-pile id using the ritsulib <c>MODID_CATEGORY_TYPENAME</c> public-entry
+        ///     convention — three uppercase segments separated by underscores, aligning with
+        ///     <see cref="GetFixedPublicEntry(string, Type)" /> and the vanilla <c>static_hover_tips</c> key
+        ///     style (<c>DRAW_PILE</c>, <c>EXHAUST_PILE</c>, ...).
+        /// </summary>
+        /// <remarks>
+        ///     The returned string is the stem for <c>static_hover_tips.json</c> keys, so a pile registered by
+        ///     mod <c>com.example.my-mod</c> with local stem <c>overflow_pile</c> uses id
+        ///     <c>MYMOD_CARDPILE_OVERFLOW_PILE</c> and loc keys <c>MYMOD_CARDPILE_OVERFLOW_PILE.title</c> /
+        ///     <c>.description</c> / <c>.empty</c>.
+        /// </remarks>
+        public static string GetQualifiedCardPileId(string modId, string localPileStem)
+        {
+            ArgumentException.ThrowIfNullOrWhiteSpace(modId);
+            ArgumentException.ThrowIfNullOrWhiteSpace(localPileStem);
+
+            return GetCompoundId(modId, "CARDPILE", localPileStem);
+        }
+
+        /// <summary>
+        ///     Builds a mod-scoped <see cref="MegaCrit.Sts2.Core.Entities.Cards.CardTag" /> id using the ritsulib
+        ///     <c>MODID_CATEGORY_TYPENAME</c> convention with middle segment <c>CARDTAG</c>, aligned with
+        ///     <see cref="GetQualifiedKeywordId" /> and <see cref="GetQualifiedCardPileId" />.
+        /// </summary>
+        public static string GetQualifiedCardTagId(string modId, string localTagStem)
+        {
+            ArgumentException.ThrowIfNullOrWhiteSpace(modId);
+            ArgumentException.ThrowIfNullOrWhiteSpace(localTagStem);
+
+            return GetCompoundId(modId, "CARDTAG", localTagStem);
+        }
+
+        /// <summary>
+        ///     Builds a mod-scoped top-bar-button id in the ritsulib <c>MODID_CATEGORY_TYPENAME</c> public
+        ///     entry style (uppercase, three segments, underscore-separated, middle segment fixed to
+        ///     <c>TOPBARBUTTON</c>). Used by <see cref="STS2RitsuLib.TopBar.ModTopBarButtonRegistry" />; the
+        ///     returned string is the stem for <c>static_hover_tips.json</c> title / description keys.
+        /// </summary>
+        public static string GetQualifiedTopBarButtonId(string modId, string localButtonStem)
+        {
+            ArgumentException.ThrowIfNullOrWhiteSpace(modId);
+            ArgumentException.ThrowIfNullOrWhiteSpace(localButtonStem);
+
+            return GetCompoundId(modId, "TOPBARBUTTON", localButtonStem);
         }
 
         /// <summary>
@@ -311,13 +379,27 @@ namespace STS2RitsuLib.Content
         /// <summary>
         ///     Registers additional starter-deck copies of <typeparamref name="TCard" /> for <typeparamref name="TCharacter" />.
         ///     The target character may be registered before or after this call; resolution happens when the character model is
-        ///     queried.
+        ///     queried. Matching uses the live instance CLR type; registrations against an assignable ancestor type also apply,
+        ///     except a registration keyed only to <see cref="CharacterModel" /> itself.
         /// </summary>
         public void RegisterCharacterStarterCard<TCharacter, TCard>(int count = 1)
             where TCharacter : CharacterModel
             where TCard : CardModel
         {
-            RegisterCharacterStarterCard(typeof(TCharacter), typeof(TCard), count);
+            RegisterCharacterStarterCard<TCharacter, TCard>(count, 0);
+        }
+
+        /// <summary>
+        ///     Registers additional starter-deck copies of <typeparamref name="TCard" /> for <typeparamref name="TCharacter" />.
+        ///     The target character may be registered before or after this call; resolution happens when the character model is
+        ///     queried. Matching uses the live instance CLR type; registrations against an assignable ancestor type also apply,
+        ///     except a registration keyed only to <see cref="CharacterModel" /> itself.
+        /// </summary>
+        public void RegisterCharacterStarterCard<TCharacter, TCard>(int count, int order)
+            where TCharacter : CharacterModel
+            where TCard : CardModel
+        {
+            RegisterCharacterStarterCard(typeof(TCharacter), typeof(TCard), count, order);
         }
 
         /// <summary>
@@ -325,22 +407,45 @@ namespace STS2RitsuLib.Content
         /// </summary>
         public void RegisterCharacterStarterCard(Type characterType, Type cardType, int count = 1)
         {
+            RegisterCharacterStarterCard(characterType, cardType, count, 0);
+        }
+
+        /// <summary>
+        ///     Registers additional starter-deck copies of <paramref name="cardType" /> for <paramref name="characterType" />.
+        /// </summary>
+        public void RegisterCharacterStarterCard(Type characterType, Type cardType, int count, int order)
+        {
             RegisterCharacterStarterModel(characterType, cardType, typeof(CardModel),
                 CharacterStarterContentKind.Card,
-                count);
+                count, order);
         }
 
         /// <summary>
         ///     Registers additional starting relic copies of <typeparamref name="TRelic" /> for <typeparamref name="TCharacter" />
         ///     .
         ///     The target character may be registered before or after this call; resolution happens when the character model is
-        ///     queried.
+        ///     queried. Matching uses the live instance CLR type; registrations against an assignable ancestor type also apply,
+        ///     except a registration keyed only to <see cref="CharacterModel" /> itself.
         /// </summary>
         public void RegisterCharacterStarterRelic<TCharacter, TRelic>(int count = 1)
             where TCharacter : CharacterModel
             where TRelic : RelicModel
         {
-            RegisterCharacterStarterRelic(typeof(TCharacter), typeof(TRelic), count);
+            RegisterCharacterStarterRelic<TCharacter, TRelic>(count, 0);
+        }
+
+        /// <summary>
+        ///     Registers additional starting relic copies of <typeparamref name="TRelic" /> for <typeparamref name="TCharacter" />
+        ///     .
+        ///     The target character may be registered before or after this call; resolution happens when the character model is
+        ///     queried. Matching uses the live instance CLR type; registrations against an assignable ancestor type also apply,
+        ///     except a registration keyed only to <see cref="CharacterModel" /> itself.
+        /// </summary>
+        public void RegisterCharacterStarterRelic<TCharacter, TRelic>(int count, int order)
+            where TCharacter : CharacterModel
+            where TRelic : RelicModel
+        {
+            RegisterCharacterStarterRelic(typeof(TCharacter), typeof(TRelic), count, order);
         }
 
         /// <summary>
@@ -348,21 +453,44 @@ namespace STS2RitsuLib.Content
         /// </summary>
         public void RegisterCharacterStarterRelic(Type characterType, Type relicType, int count = 1)
         {
+            RegisterCharacterStarterRelic(characterType, relicType, count, 0);
+        }
+
+        /// <summary>
+        ///     Registers additional starting relic copies of <paramref name="relicType" /> for <paramref name="characterType" />.
+        /// </summary>
+        public void RegisterCharacterStarterRelic(Type characterType, Type relicType, int count, int order)
+        {
             RegisterCharacterStarterModel(characterType, relicType, typeof(RelicModel),
-                CharacterStarterContentKind.Relic, count);
+                CharacterStarterContentKind.Relic, count, order);
         }
 
         /// <summary>
         ///     Registers additional starting potion copies of <typeparamref name="TPotion" /> for
         ///     <typeparamref name="TCharacter" />.
         ///     The target character may be registered before or after this call; resolution happens when the character model is
-        ///     queried.
+        ///     queried. Matching uses the live instance CLR type; registrations against an assignable ancestor type also apply,
+        ///     except a registration keyed only to <see cref="CharacterModel" /> itself.
         /// </summary>
         public void RegisterCharacterStarterPotion<TCharacter, TPotion>(int count = 1)
             where TCharacter : CharacterModel
             where TPotion : PotionModel
         {
-            RegisterCharacterStarterPotion(typeof(TCharacter), typeof(TPotion), count);
+            RegisterCharacterStarterPotion<TCharacter, TPotion>(count, 0);
+        }
+
+        /// <summary>
+        ///     Registers additional starting potion copies of <typeparamref name="TPotion" /> for
+        ///     <typeparamref name="TCharacter" />.
+        ///     The target character may be registered before or after this call; resolution happens when the character model is
+        ///     queried. Matching uses the live instance CLR type; registrations against an assignable ancestor type also apply,
+        ///     except a registration keyed only to <see cref="CharacterModel" /> itself.
+        /// </summary>
+        public void RegisterCharacterStarterPotion<TCharacter, TPotion>(int count, int order)
+            where TCharacter : CharacterModel
+            where TPotion : PotionModel
+        {
+            RegisterCharacterStarterPotion(typeof(TCharacter), typeof(TPotion), count, order);
         }
 
         /// <summary>
@@ -371,8 +499,17 @@ namespace STS2RitsuLib.Content
         /// </summary>
         public void RegisterCharacterStarterPotion(Type characterType, Type potionType, int count = 1)
         {
+            RegisterCharacterStarterPotion(characterType, potionType, count, 0);
+        }
+
+        /// <summary>
+        ///     Registers additional starting potion copies of <paramref name="potionType" /> for <paramref name="characterType" />
+        ///     .
+        /// </summary>
+        public void RegisterCharacterStarterPotion(Type characterType, Type potionType, int count, int order)
+        {
             RegisterCharacterStarterModel(characterType, potionType, typeof(PotionModel),
-                CharacterStarterContentKind.Potion, count);
+                CharacterStarterContentKind.Potion, count, order);
         }
 
         /// <summary>
@@ -508,6 +645,36 @@ namespace STS2RitsuLib.Content
         public void RegisterSingleton(Type singletonType)
         {
             RegisterStandaloneModel(RegisteredSingletons, singletonType, typeof(SingletonModel), "singleton");
+        }
+
+        /// <summary>
+        ///     Registers a custom badge template type.
+        /// </summary>
+        public void RegisterBadge<TBadge>() where TBadge : ModBadgeTemplate
+        {
+            RegisterBadge(typeof(TBadge));
+        }
+
+        /// <summary>
+        ///     Registers a custom badge template type.
+        /// </summary>
+        public void RegisterBadge(Type badgeType)
+        {
+            EnsureMutable($"register badge '{badgeType.Name}'");
+            EnsureBadgeType(badgeType, nameof(badgeType));
+
+            lock (SyncRoot)
+            {
+                if (!RegisteredBadges.Add(badgeType))
+                {
+                    _logger.Debug($"[Content] Skipping duplicate badge registration: {badgeType.Name}");
+                    return;
+                }
+
+                RememberOwner(badgeType);
+            }
+
+            _logger.Info($"[Content] Registered badge: {badgeType.Name}");
         }
 
         /// <summary>
@@ -734,7 +901,10 @@ namespace STS2RitsuLib.Content
             return ResolveModels<CharacterModel>(RegisteredCharacters);
         }
 
-        internal static ModContentRegisteredTypeSnapshot[] GetRegisteredTypeSnapshots()
+        /// <summary>
+        ///     Snapshot of registered model types with owner and resolved/public-entry diagnostics.
+        /// </summary>
+        public static ModContentRegisteredTypeSnapshot[] GetRegisteredTypeSnapshots()
         {
             lock (SyncRoot)
             {
@@ -918,6 +1088,16 @@ namespace STS2RitsuLib.Content
             return AppendResolved(source, ResolveScopedModels<AncientEventModel>(RegisteredActAncients, act.GetType()));
         }
 
+        internal static Type[] GetRegisteredBadgeTypes()
+        {
+            lock (SyncRoot)
+            {
+                return RegisteredBadges
+                    .OrderBy(static t => t.FullName ?? t.Name, StringComparer.Ordinal)
+                    .ToArray();
+            }
+        }
+
         /// <summary>
         ///     Injects RitsuLib-registered types that live in <see cref="Assembly.IsDynamic" /> assemblies into
         ///     <see cref="ModelDb" /> before <c>Init</c> finishes populating <c>_contentById</c>. Static mod DLL types are
@@ -953,6 +1133,7 @@ namespace STS2RitsuLib.Content
                     .Concat(RegisteredActAncients.Values.SelectMany(static set => set))
                     .Distinct()
                     .Where(static t => t.Assembly.IsDynamic)
+                    .OrderBy(static t => t.FullName ?? t.Name, StringComparer.Ordinal)
                     .ToArray();
             }
 
@@ -988,7 +1169,7 @@ namespace STS2RitsuLib.Content
         }
 
         private void RegisterCharacterStarterModel(Type characterType, Type modelType, Type expectedModelBaseType,
-            CharacterStarterContentKind kind, int count)
+            CharacterStarterContentKind kind, int count, int order)
         {
             if (count <= 0)
                 throw new ArgumentOutOfRangeException(nameof(count), count, "Starter content count must be positive.");
@@ -1002,7 +1183,7 @@ namespace STS2RitsuLib.Content
 
             lock (SyncRoot)
             {
-                RegisteredCharacterStarterContent.Add(new(characterType, modelType, kind, count));
+                RegisteredCharacterStarterContent.Add(new(characterType, modelType, kind, count, order));
             }
 
             _logger.Info(
@@ -1089,12 +1270,22 @@ namespace STS2RitsuLib.Content
                 );
         }
 
+        private static void EnsureBadgeType(Type type, string paramName)
+        {
+            if (type.IsAbstract || type.IsInterface || !typeof(ModBadgeTemplate).IsAssignableFrom(type))
+                throw new ArgumentException(
+                    $"Type '{type.FullName}' must be a concrete subtype of '{typeof(ModBadgeTemplate).FullName}'.",
+                    paramName
+                );
+        }
+
         private static TModel[] ResolveModels<TModel>(IEnumerable<Type> modelTypes)
             where TModel : AbstractModel
         {
             lock (SyncRoot)
             {
                 return modelTypes
+                    .OrderBy(static t => t.FullName ?? t.Name, StringComparer.Ordinal)
                     .Select(ModelDb.GetId)
                     .Select(ModelDb.GetById<TModel>)
                     .ToArray();
@@ -1110,10 +1301,22 @@ namespace STS2RitsuLib.Content
                 return !registry.TryGetValue(scopeType, out var modelTypes)
                     ? []
                     : modelTypes
+                        .OrderBy(static t => t.FullName ?? t.Name, StringComparer.Ordinal)
                         .Select(ModelDb.GetId)
                         .Select(ModelDb.GetById<TModel>)
                         .ToArray();
             }
+        }
+
+        private static bool MatchesRegisteredStarterCharacter(Type registeredCharacterType, Type runtimeCharacterType)
+        {
+            if (registeredCharacterType == runtimeCharacterType)
+                return true;
+
+            if (!registeredCharacterType.IsAssignableFrom(runtimeCharacterType))
+                return false;
+
+            return registeredCharacterType != typeof(CharacterModel);
         }
 
         private static Type[] GetRegisteredCharacterStarterTypes(Type characterType, CharacterStarterContentKind kind)
@@ -1123,8 +1326,12 @@ namespace STS2RitsuLib.Content
             lock (SyncRoot)
             {
                 return RegisteredCharacterStarterContent
-                    .Where(entry => entry.CharacterType == characterType && entry.Kind == kind)
-                    .SelectMany(static entry => Enumerable.Repeat(entry.ModelType, entry.Count))
+                    .Select(static (entry, index) => new { entry, index })
+                    .OrderBy(static x => x.entry.Order)
+                    .ThenBy(static x => x.index)
+                    .Where(x => x.entry.Kind == kind && MatchesRegisteredStarterCharacter(x.entry.CharacterType,
+                        characterType))
+                    .SelectMany(static x => Enumerable.Repeat(x.entry.ModelType, x.entry.Count))
                     .ToArray();
             }
         }
@@ -1133,7 +1340,7 @@ namespace STS2RitsuLib.Content
             IEnumerable<TModel> additional)
             where TModel : AbstractModel
         {
-            return source.Concat(additional).Distinct().ToArray();
+            return source.Concat(additional).DistinctBy(static model => model.Id).ToArray();
         }
 
         private static List<TModel> MergeDistinctByModelId<TModel>(IEnumerable<TModel> first,
@@ -1143,7 +1350,11 @@ namespace STS2RitsuLib.Content
             return first.Concat(second).DistinctBy(static m => m.Id).ToList();
         }
 
-        private static string NormalizePublicStem(string value)
+        /// <summary>
+        ///     Normalizes a public id segment: non-alphanumeric collapsed to underscores, acronym/camel boundaries
+        ///     split, repeated underscores merged, and final uppercase.
+        /// </summary>
+        public static string NormalizePublicStem(string value)
         {
             ArgumentException.ThrowIfNullOrWhiteSpace(value);
 
@@ -1226,18 +1437,66 @@ namespace STS2RitsuLib.Content
             Potion,
         }
 
-        internal readonly record struct ModContentRegisteredTypeSnapshot(
-            string ModId,
-            Type ModelType,
-            ModelId? ModelDbId,
-            string? ExpectedPublicEntry,
-            bool HasExplicitPublicEntryOverride,
-            string? TypeNamePublicEntry);
+        /// <summary>
+        ///     Immutable snapshot row describing one registered model type and its identity metadata.
+        /// </summary>
+        public readonly record struct ModContentRegisteredTypeSnapshot
+        {
+            /// <summary>
+            ///     Creates a registered-type snapshot row.
+            /// </summary>
+            public ModContentRegisteredTypeSnapshot(
+                string modId,
+                Type modelType,
+                ModelId? modelDbId,
+                string? expectedPublicEntry,
+                bool hasExplicitPublicEntryOverride,
+                string? typeNamePublicEntry)
+            {
+                ModId = modId;
+                ModelType = modelType;
+                ModelDbId = modelDbId;
+                ExpectedPublicEntry = expectedPublicEntry;
+                HasExplicitPublicEntryOverride = hasExplicitPublicEntryOverride;
+                TypeNamePublicEntry = typeNamePublicEntry;
+            }
+
+            /// <summary>
+            ///     Owning mod id recorded at registration time.
+            /// </summary>
+            public string ModId { get; }
+
+            /// <summary>
+            ///     Registered model CLR type.
+            /// </summary>
+            public Type ModelType { get; }
+
+            /// <summary>
+            ///     Resolved runtime <c>ModelDb</c> id, if currently available.
+            /// </summary>
+            public ModelId? ModelDbId { get; }
+
+            /// <summary>
+            ///     Expected fixed public entry for this model under current registry rules.
+            /// </summary>
+            public string? ExpectedPublicEntry { get; }
+
+            /// <summary>
+            ///     Whether the expected entry comes from an explicit override.
+            /// </summary>
+            public bool HasExplicitPublicEntryOverride { get; }
+
+            /// <summary>
+            ///     Type-name-derived public entry (<c>CATEGORY_TYPENAME</c>) when resolvable.
+            /// </summary>
+            public string? TypeNamePublicEntry { get; }
+        }
 
         private readonly record struct CharacterStarterRegistration(
             Type CharacterType,
             Type ModelType,
             CharacterStarterContentKind Kind,
-            int Count);
+            int Count,
+            int Order);
     }
 }

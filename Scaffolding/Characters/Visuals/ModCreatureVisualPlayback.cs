@@ -5,6 +5,7 @@ using MegaCrit.Sts2.Core.Animation;
 using MegaCrit.Sts2.Core.Entities.Players;
 using MegaCrit.Sts2.Core.Models;
 using MegaCrit.Sts2.Core.Nodes.Combat;
+using MegaCrit.Sts2.Core.Nodes.Events.Custom;
 using MegaCrit.Sts2.Core.Nodes.Rooms;
 using MegaCrit.Sts2.Core.Nodes.Screens.Shops;
 using STS2RitsuLib.Scaffolding.Godot;
@@ -27,6 +28,13 @@ namespace STS2RitsuLib.Scaffolding.Characters.Visuals
 
         private static readonly AccessTools.FieldRef<NMerchantRoom, List<Player>> MerchantRoomPlayersRef =
             AccessTools.FieldRefAccess<NMerchantRoom, List<Player>>("_players");
+
+        private static readonly ConditionalWeakTable<NFakeMerchant, FakeMerchantPlayerVisualSlot>
+            FakeMerchantVisualSlots =
+                new();
+
+        private static readonly ConditionalWeakTable<NMerchantCharacter, CharacterModel> FakeMerchantBoothCharacter =
+            new();
 
         private static readonly string[] DieCueNames = ["die", "death", "dead", "Dead"];
 
@@ -131,6 +139,43 @@ namespace STS2RitsuLib.Scaffolding.Characters.Visuals
             }
 
             return false;
+        }
+
+        /// <summary>
+        ///     Resolves the owning <see cref="CharacterModel" /> for a merchant-booth <see cref="NMerchantCharacter" />
+        ///     in either <see cref="NMerchantRoom" /> or the fake-merchant event screen.
+        /// </summary>
+        internal static bool TryResolveMerchantCharacterModel(NMerchantCharacter visual,
+            out CharacterModel? character)
+        {
+            if (TryResolveMerchantCharacterModel(NMerchantRoom.Instance, visual, out character))
+                return true;
+
+            if (!FakeMerchantBoothCharacter.TryGetValue(visual, out var fromFakeBooth))
+            {
+                character = null;
+                return false;
+            }
+
+            character = fromFakeBooth;
+            return true;
+        }
+
+        internal static void RegisterFakeMerchantPlayerVisuals(NFakeMerchant screen, List<NMerchantCharacter> ordered,
+            IReadOnlyList<Player> players)
+        {
+            var slot = FakeMerchantVisualSlots.GetValue(screen, _ => new());
+            slot.Visuals.Clear();
+            slot.Visuals.AddRange(ordered);
+
+            var n = Math.Min(ordered.Count, players.Count);
+            for (var i = 0; i < n; i++)
+                FakeMerchantBoothCharacter.Add(ordered[i], players[i].Character);
+        }
+
+        internal static IReadOnlyList<NMerchantCharacter>? TryGetFakeMerchantPlayerVisuals(NFakeMerchant screen)
+        {
+            return FakeMerchantVisualSlots.TryGetValue(screen, out var slot) ? slot.Visuals : null;
         }
 
         private static string MapAnimatorTriggerToCue(string trigger)
@@ -409,6 +454,11 @@ namespace STS2RitsuLib.Scaffolding.Characters.Visuals
             }
 
             return null;
+        }
+
+        private sealed class FakeMerchantPlayerVisualSlot
+        {
+            internal readonly List<NMerchantCharacter> Visuals = [];
         }
     }
 }

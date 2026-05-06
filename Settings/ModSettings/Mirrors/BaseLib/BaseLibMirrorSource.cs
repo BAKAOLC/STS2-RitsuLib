@@ -1,5 +1,6 @@
 using System.Collections;
 using System.Reflection;
+using STS2RitsuLib.Compat;
 
 namespace STS2RitsuLib.Settings
 {
@@ -18,11 +19,13 @@ namespace STS2RitsuLib.Settings
         private const string ConfigHoverTipAttributeName = "BaseLib.Config.ConfigHoverTipAttribute";
         private const string ConfigHoverTipsByDefaultAttributeName = "BaseLib.Config.ConfigHoverTipsByDefaultAttribute";
         private const string HoverTipsByDefaultAttributeName = "BaseLib.Config.HoverTipsByDefaultAttribute";
+        private const string ConfigVisibleIfAttributeName = "BaseLib.Config.ConfigVisibleIfAttribute";
 
         private static readonly Lock Gate = new();
         private static bool _pagesRegistered;
 
-        public static bool IsBaseLibPresent => ResolveType(RegistryTypeName) != null;
+        public static bool IsBaseLibPresent =>
+            ExternalFrameworkRegistry.IsFrameworkPresent(ExternalFrameworkIds.BaseLib);
 
         public static int TryRegisterMirroredPages(string pageId = "baselib", int sortOrder = 10_000,
             ModSettingsText? pageTitle = null)
@@ -77,6 +80,7 @@ namespace STS2RitsuLib.Settings
                 var hoverTipAttrType = ResolveType(ConfigHoverTipAttributeName);
                 var configHoverTipsByDefaultAttrType = ResolveType(ConfigHoverTipsByDefaultAttributeName);
                 var hoverTipsByDefaultAttrType = ResolveType(HoverTipsByDefaultAttributeName);
+                var visibleIfAttrType = ResolveType(ConfigVisibleIfAttributeName);
 
                 pageTitle ??= ModSettingsText.I18N(ModSettingsLocalization.Instance, "baselib.mirroredPage.title",
                     "Mod config");
@@ -106,11 +110,12 @@ namespace STS2RitsuLib.Settings
                         host,
                         configProps, sectionAttrType, hideUiAttrType, buttonAttrType, configSliderType, sliderRangeType,
                         sliderFormatType, textInputAttrType, colorPickerAttrType, hoverTipAttrType,
-                        configHoverTipsByDefaultAttrType, hoverTipsByDefaultAttrType, configConcreteType);
+                        configHoverTipsByDefaultAttrType, hoverTipsByDefaultAttrType, visibleIfAttrType,
+                        configConcreteType, modConfigType);
                     if (page == null)
                         continue;
 
-                    if (!ModSettingsMirrorRegistrar.TryRegister(page))
+                    if (!ModSettingsMirrorRegistrar.TryRegister(page, ModSettingsMirrorSource.BaseLib))
                         continue;
 
                     count++;
@@ -125,23 +130,7 @@ namespace STS2RitsuLib.Settings
 
         internal static Type? ResolveType(string fullName)
         {
-            foreach (var assembly in AppDomain.CurrentDomain.GetAssemblies())
-            {
-                Type? type = null;
-                try
-                {
-                    type = assembly.GetType(fullName, false);
-                }
-                catch
-                {
-                    // ignored
-                }
-
-                if (type != null)
-                    return type;
-            }
-
-            return null;
+            return ExternalFrameworkRegistry.ResolveType(fullName);
         }
     }
 }

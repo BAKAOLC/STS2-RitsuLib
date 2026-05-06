@@ -309,6 +309,8 @@ namespace STS2RitsuLib.Combat.HealthBars
                    left.Direction == right.Direction &&
                    left.Order == right.Order &&
                    left.OverlaySelfModulate == right.OverlaySelfModulate &&
+                   left.LeftOriginLayout == right.LeftOriginLayout &&
+                   left.LeftExclusiveZGroup == right.LeftExclusiveZGroup &&
                    ReferenceEquals(left.OverlayMaterial, right.OverlayMaterial);
         }
     }

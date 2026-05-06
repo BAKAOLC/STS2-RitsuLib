@@ -30,6 +30,7 @@ namespace STS2RitsuLib.Scaffolding.Godot
         bool UniqueName { get; }
         bool MakeNameUnique { get; }
         Type ExpectedNodeType { get; }
+        bool IsValidName(Node node);
         bool IsValidType(Node node);
         bool IsValidUnique(Node node);
     }
@@ -46,6 +47,11 @@ namespace STS2RitsuLib.Scaffolding.Godot
         public bool IsValidType(Node node)
         {
             return node is TExpected;
+        }
+
+        public bool IsValidName(Node node)
+        {
+            return node.Name.Equals(StringName);
         }
 
         public bool IsValidUnique(Node node)
@@ -169,12 +175,13 @@ namespace STS2RitsuLib.Scaffolding.Godot
                 }
             }
 
-            placeholder.QueueFree();
-
+            Dictionary<IRitsuGodotNodeSlot, Node> backupUniqueNodes = [];
             foreach (var child in target.GetChildrenRecursive<Node>())
                 for (var index = 0; index < uniqueNames.Count; index++)
                 {
                     var unique = uniqueNames[index];
+                    if (unique.IsValidName(child))
+                        backupUniqueNodes[unique] = child;
                     if (!unique.IsValidUnique(child))
                         continue;
 
@@ -185,7 +192,24 @@ namespace STS2RitsuLib.Scaffolding.Godot
                 }
 
             foreach (var missing in uniqueNames)
-                GenerateNode(target, missing);
+                if (backupUniqueNodes.TryGetValue(missing, out var node))
+                {
+                    if (!missing.IsValidType(node))
+                    {
+                        node.ReplaceBy(placeholder);
+                        node = ConvertNodeType(node, missing.ExpectedNodeType);
+                        placeholder.ReplaceBy(node);
+                    }
+
+                    node.UniqueNameInOwner = true;
+                    node.Owner = target;
+                }
+                else
+                {
+                    GenerateNode(target, missing);
+                }
+
+            placeholder.QueueFree();
         }
 
         protected virtual Node ConvertNodeType(Node node, Type targetType)

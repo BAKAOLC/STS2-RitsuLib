@@ -91,6 +91,24 @@ namespace STS2RitsuLib.Scaffolding.Content.Patches
         }
 
         // ReSharper disable once InconsistentNaming
+        internal static bool TryUseDirectMaterialOverride<TOverrides>(
+            object instance,
+            ref Material __result,
+            Func<TOverrides, Material?> selector)
+            where TOverrides : class
+        {
+            if (instance is not TOverrides overrides)
+                return true;
+
+            var material = selector(overrides);
+            if (material == null)
+                return true;
+
+            __result = material;
+            return false;
+        }
+
+        // ReSharper disable once InconsistentNaming
         internal static bool TryUsePortraitPathList(object instance, IModCardAssetOverrides overrides,
             ref IEnumerable<string> __result)
         {
@@ -115,6 +133,58 @@ namespace STS2RitsuLib.Scaffolding.Content.Patches
 
             __result = AssetPathDiagnostics.Exists(path, instance, memberName);
             return false;
+        }
+
+        // ReSharper disable once InconsistentNaming
+        internal static bool TryUseExternalPathOverride(
+            object instance,
+            ref string __result,
+            Func<string?> externalPathFactory,
+            string memberName)
+        {
+            var path = externalPathFactory();
+            if (string.IsNullOrWhiteSpace(path) || !AssetPathDiagnostics.Exists(path, instance, memberName))
+                return true;
+
+            __result = path;
+            return false;
+        }
+
+        // ReSharper disable once InconsistentNaming
+        internal static bool TryUseExternalPackedScenePathOverride(
+            object instance,
+            ref PackedScene __result,
+            Func<string?> externalPathFactory,
+            string memberName)
+        {
+            var path = externalPathFactory();
+            if (string.IsNullOrWhiteSpace(path) || !AssetPathDiagnostics.Exists(path, instance, memberName))
+                return true;
+
+            __result = PreloadManager.Cache.GetScene(path);
+            return false;
+        }
+
+        // ReSharper disable once InconsistentNaming
+        internal static bool TryUseExternalCompressedTexturePathAsTexture2DOverride(
+            object instance,
+            ref Texture2D __result,
+            Func<string?> externalPathFactory,
+            string memberName)
+        {
+            var path = externalPathFactory();
+            if (string.IsNullOrWhiteSpace(path) || !AssetPathDiagnostics.Exists(path, instance, memberName))
+                return true;
+
+            __result = ResourceLoader.Load<CompressedTexture2D>(path);
+            return false;
+        }
+
+        internal static string[] CollectExternalExistingPaths(
+            object instance,
+            params (string? Path, string MemberName)[] candidates)
+        {
+            return AssetPathDiagnostics.CollectExistingPaths(instance, candidates);
         }
 
         private static bool TryGetPath<TOverrides>(
@@ -265,6 +335,34 @@ namespace STS2RitsuLib.Scaffolding.Content.Patches
         ///     Override for banner material path.
         /// </summary>
         string? CustomBannerMaterialPath { get; }
+    }
+
+    /// <summary>
+    ///     Optional direct frame <see cref="Material" /> override for cards.
+    ///     This bypasses resource-path loading and is checked before
+    ///     <see cref="IModCardAssetOverrides.CustomFrameMaterialPath" />.
+    /// </summary>
+    public interface IModCardFrameMaterialOverride
+    {
+        /// <summary>
+        ///     Direct frame material override.
+        ///     Return <c>null</c> to continue with other override layers.
+        /// </summary>
+        Material? CustomFrameMaterial => null;
+    }
+
+    /// <summary>
+    ///     Optional direct banner <see cref="Material" /> override for cards.
+    ///     This bypasses resource-path loading and is checked before
+    ///     <see cref="IModCardAssetOverrides.CustomBannerMaterialPath" />.
+    /// </summary>
+    public interface IModCardBannerMaterialOverride
+    {
+        /// <summary>
+        ///     Direct banner material override.
+        ///     Return <c>null</c> to fall back to frame material semantics.
+        /// </summary>
+        Material? CustomBannerMaterial => null;
     }
 
     /// <summary>
@@ -504,8 +602,8 @@ namespace STS2RitsuLib.Scaffolding.Content.Patches
         {
             return
             [
-                new(typeof(EpochModel), "get_PackedPortraitPath"),
-                new(typeof(EpochModel), "get_BigPortraitPath"),
+                new(typeof(EpochModel), "PackedPortraitPath", MethodType.Getter),
+                new(typeof(EpochModel), "BigPortraitPath", MethodType.Getter),
             ];
         }
 
@@ -553,8 +651,8 @@ namespace STS2RitsuLib.Scaffolding.Content.Patches
         {
             return
             [
-                new(typeof(CardModel), "get_PortraitPath"),
-                new(typeof(CardModel), "get_BetaPortraitPath"),
+                new(typeof(CardModel), "PortraitPath", MethodType.Getter),
+                new(typeof(CardModel), "BetaPortraitPath", MethodType.Getter),
             ];
         }
 
@@ -612,8 +710,8 @@ namespace STS2RitsuLib.Scaffolding.Content.Patches
         {
             return
             [
-                new(typeof(CardModel), "get_HasPortrait"),
-                new(typeof(CardModel), "get_HasBetaPortrait"),
+                new(typeof(CardModel), "HasPortrait", MethodType.Getter),
+                new(typeof(CardModel), "HasBetaPortrait", MethodType.Getter),
             ];
         }
 
@@ -675,9 +773,9 @@ namespace STS2RitsuLib.Scaffolding.Content.Patches
         {
             return
             [
-                new(typeof(CardModel), "get_Frame"),
-                new(typeof(CardModel), "get_PortraitBorder"),
-                new(typeof(CardModel), "get_EnergyIcon"),
+                new(typeof(CardModel), "Frame", MethodType.Getter),
+                new(typeof(CardModel), "PortraitBorder", MethodType.Getter),
+                new(typeof(CardModel), "EnergyIcon", MethodType.Getter),
             ];
         }
 
@@ -745,7 +843,7 @@ namespace STS2RitsuLib.Scaffolding.Content.Patches
         {
             return
             [
-                new(typeof(CardModel), "get_FrameMaterial"),
+                new(typeof(CardModel), "FrameMaterial", MethodType.Getter),
             ];
         }
 
@@ -756,6 +854,16 @@ namespace STS2RitsuLib.Scaffolding.Content.Patches
         public static bool Prefix(CardModel __instance, ref Material __result)
             // ReSharper restore InconsistentNaming
         {
+            if (!ContentAssetOverridePatchHelper.TryUseDirectMaterialOverride<IModCardFrameMaterialOverride>(
+                    __instance, ref __result, static o => o.CustomFrameMaterial))
+                return false;
+
+            if (ExternalCardMaterialOverrideRegistry.TryGetFrameMaterial(__instance, out var externalFrameMaterial))
+            {
+                __result = externalFrameMaterial;
+                return false;
+            }
+
             if (!ModCharacterOwnedVisualOverrideHelper.TryCardFrameMaterial(__instance, ref __result))
                 return false;
 
@@ -787,7 +895,7 @@ namespace STS2RitsuLib.Scaffolding.Content.Patches
         {
             return
             [
-                new(typeof(CardPoolModel), "get_FrameMaterial"),
+                new(typeof(CardPoolModel), "FrameMaterial", MethodType.Getter),
             ];
         }
 
@@ -799,13 +907,26 @@ namespace STS2RitsuLib.Scaffolding.Content.Patches
             // ReSharper restore InconsistentNaming
         {
             if (__instance is not IModCardPoolFrameMaterial pool)
-                return true;
+            {
+                if (!ExternalCardMaterialOverrideRegistry.TryGetPoolFrameMaterial(__instance, out var externalMaterial))
+                    return true;
+
+                __result = externalMaterial;
+                return false;
+            }
 
             var material = pool.PoolFrameMaterial;
-            if (material == null)
+            if (material != null)
+            {
+                __result = material;
+                return false;
+            }
+
+            if (!ExternalCardMaterialOverrideRegistry.TryGetPoolFrameMaterial(__instance,
+                    out var externalFrameMaterial))
                 return true;
 
-            __result = material;
+            __result = externalFrameMaterial;
             return false;
         }
     }
@@ -829,7 +950,7 @@ namespace STS2RitsuLib.Scaffolding.Content.Patches
         {
             return
             [
-                new(typeof(CardModel), "get_AllPortraitPaths"),
+                new(typeof(CardModel), "AllPortraitPaths", MethodType.Getter),
             ];
         }
 
@@ -868,7 +989,7 @@ namespace STS2RitsuLib.Scaffolding.Content.Patches
         {
             return
             [
-                new(typeof(CardModel), "get_OverlayPath"),
+                new(typeof(CardModel), "OverlayPath", MethodType.Getter),
             ];
         }
 
@@ -909,7 +1030,7 @@ namespace STS2RitsuLib.Scaffolding.Content.Patches
         {
             return
             [
-                new(typeof(CardModel), "get_HasBuiltInOverlay"),
+                new(typeof(CardModel), "HasBuiltInOverlay", MethodType.Getter),
             ];
         }
 
@@ -1003,9 +1124,9 @@ namespace STS2RitsuLib.Scaffolding.Content.Patches
         {
             return
             [
-                new(typeof(RelicModel), "get_IconPath"),
-                new(typeof(RelicModel), "get_PackedIconPath", true),
-                new(typeof(RelicModel), "get_PackedIconOutlinePath", true),
+                new(typeof(RelicModel), "IconPath", MethodType.Getter),
+                new(typeof(RelicModel), "PackedIconPath", null, true, MethodType.Getter),
+                new(typeof(RelicModel), "PackedIconOutlinePath", null, true, MethodType.Getter),
             ];
         }
 
@@ -1031,6 +1152,13 @@ namespace STS2RitsuLib.Scaffolding.Content.Patches
             if (!ModCharacterOwnedVisualOverrideHelper.TryRelicIconPath(instance, ref result))
                 return false;
 
+            // ReSharper disable once InvertIf
+            if (ExternalAssetOverrideRegistry.TryGetRelicIconPath(instance, out var externalPath))
+            {
+                result = externalPath;
+                return false;
+            }
+
             return ContentAssetOverridePatchHelper.TryUseStringOverride<IModRelicAssetOverrides>(
                 instance,
                 ref result,
@@ -1042,6 +1170,13 @@ namespace STS2RitsuLib.Scaffolding.Content.Patches
         {
             if (!ModCharacterOwnedVisualOverrideHelper.TryRelicIconOutlinePath(instance, ref result))
                 return false;
+
+            // ReSharper disable once InvertIf
+            if (ExternalAssetOverrideRegistry.TryGetRelicIconOutlinePath(instance, out var externalPath))
+            {
+                result = externalPath;
+                return false;
+            }
 
             return ContentAssetOverridePatchHelper.TryUseStringOverride<IModRelicAssetOverrides>(
                 instance,
@@ -1072,9 +1207,9 @@ namespace STS2RitsuLib.Scaffolding.Content.Patches
         {
             return
             [
-                new(typeof(RelicModel), "get_Icon"),
-                new(typeof(RelicModel), "get_IconOutline"),
-                new(typeof(RelicModel), "get_BigIcon"),
+                new(typeof(RelicModel), "Icon", MethodType.Getter),
+                new(typeof(RelicModel), "IconOutline", MethodType.Getter),
+                new(typeof(RelicModel), "BigIcon", MethodType.Getter),
             ];
         }
 
@@ -1100,6 +1235,13 @@ namespace STS2RitsuLib.Scaffolding.Content.Patches
             if (!ModCharacterOwnedVisualOverrideHelper.TryRelicIconTexture(instance, ref result))
                 return false;
 
+            // ReSharper disable once InvertIf
+            if (ExternalAssetOverrideRegistry.TryGetRelicIconTexture(instance, out var externalTexture))
+            {
+                result = externalTexture;
+                return false;
+            }
+
             return ContentAssetOverridePatchHelper.TryUseTextureOverride<IModRelicAssetOverrides>(instance,
                 ref result, o => o.CustomIconPath, nameof(IModRelicAssetOverrides.CustomIconPath));
         }
@@ -1109,6 +1251,13 @@ namespace STS2RitsuLib.Scaffolding.Content.Patches
             // ReSharper disable once ConvertIfStatementToReturnStatement
             if (!ModCharacterOwnedVisualOverrideHelper.TryRelicIconOutlineTexture(instance, ref result))
                 return false;
+
+            // ReSharper disable once InvertIf
+            if (ExternalAssetOverrideRegistry.TryGetRelicIconOutlineTexture(instance, out var externalTexture))
+            {
+                result = externalTexture;
+                return false;
+            }
 
             return ContentAssetOverridePatchHelper.TryUseTextureOverride<IModRelicAssetOverrides>(instance,
                 ref result, o => o.CustomIconOutlinePath,
@@ -1120,6 +1269,13 @@ namespace STS2RitsuLib.Scaffolding.Content.Patches
             // ReSharper disable once ConvertIfStatementToReturnStatement
             if (!ModCharacterOwnedVisualOverrideHelper.TryRelicBigIconTexture(instance, ref result))
                 return false;
+
+            // ReSharper disable once InvertIf
+            if (ExternalAssetOverrideRegistry.TryGetRelicBigIconTexture(instance, out var externalTexture))
+            {
+                result = externalTexture;
+                return false;
+            }
 
             return ContentAssetOverridePatchHelper.TryUseTextureOverride<IModRelicAssetOverrides>(instance,
                 ref result, o => o.CustomBigIconPath, nameof(IModRelicAssetOverrides.CustomBigIconPath));
@@ -1146,8 +1302,8 @@ namespace STS2RitsuLib.Scaffolding.Content.Patches
         {
             return
             [
-                new(typeof(PowerModel), "get_IconPath"),
-                new(typeof(PowerModel), "get_PackedIconPath", true),
+                new(typeof(PowerModel), "IconPath", MethodType.Getter),
+                new(typeof(PowerModel), "PackedIconPath", null, true, MethodType.Getter),
             ];
         }
 
@@ -1161,14 +1317,25 @@ namespace STS2RitsuLib.Scaffolding.Content.Patches
         {
             return __originalMethod.Name switch
             {
-                "get_IconPath" or "get_PackedIconPath" => ContentAssetOverridePatchHelper
-                    .TryUseStringOverride<IModPowerAssetOverrides>(
-                        __instance,
-                        ref __result,
-                        o => o.CustomIconPath,
-                        nameof(IModPowerAssetOverrides.CustomIconPath)),
+                "get_IconPath" or "get_PackedIconPath" => TryPowerIconPath(__instance, ref __result),
                 _ => true,
             };
+        }
+
+        private static bool TryPowerIconPath(PowerModel instance, ref string result)
+        {
+            // ReSharper disable once InvertIf
+            if (ExternalAssetOverrideRegistry.TryGetPowerIconPath(instance, out var externalPath))
+            {
+                result = externalPath;
+                return false;
+            }
+
+            return ContentAssetOverridePatchHelper.TryUseStringOverride<IModPowerAssetOverrides>(
+                instance,
+                ref result,
+                o => o.CustomIconPath,
+                nameof(IModPowerAssetOverrides.CustomIconPath));
         }
     }
 
@@ -1191,8 +1358,8 @@ namespace STS2RitsuLib.Scaffolding.Content.Patches
         {
             return
             [
-                new(typeof(PowerModel), "get_Icon"),
-                new(typeof(PowerModel), "get_BigIcon"),
+                new(typeof(PowerModel), "Icon", MethodType.Getter),
+                new(typeof(PowerModel), "BigIcon", MethodType.Getter),
             ];
         }
 
@@ -1206,13 +1373,37 @@ namespace STS2RitsuLib.Scaffolding.Content.Patches
         {
             return __originalMethod.Name switch
             {
-                "get_Icon" => ContentAssetOverridePatchHelper.TryUseTextureOverride<IModPowerAssetOverrides>(__instance,
-                    ref __result, o => o.CustomIconPath, nameof(IModPowerAssetOverrides.CustomIconPath)),
-                "get_BigIcon" => ContentAssetOverridePatchHelper.TryUseTextureOverride<IModPowerAssetOverrides>(
-                    __instance, ref __result, o => o.CustomBigIconPath,
-                    nameof(IModPowerAssetOverrides.CustomBigIconPath)),
+                "get_Icon" => TryPowerIconTexture(__instance, ref __result),
+                "get_BigIcon" => TryPowerBigIconTexture(__instance, ref __result),
                 _ => true,
             };
+        }
+
+        private static bool TryPowerIconTexture(PowerModel instance, ref Texture2D result)
+        {
+            // ReSharper disable once InvertIf
+            if (ExternalAssetOverrideRegistry.TryGetPowerIconTexture(instance, out var externalTexture))
+            {
+                result = externalTexture;
+                return false;
+            }
+
+            return ContentAssetOverridePatchHelper.TryUseTextureOverride<IModPowerAssetOverrides>(instance,
+                ref result, o => o.CustomIconPath, nameof(IModPowerAssetOverrides.CustomIconPath));
+        }
+
+        private static bool TryPowerBigIconTexture(PowerModel instance, ref Texture2D result)
+        {
+            // ReSharper disable once InvertIf
+            if (ExternalAssetOverrideRegistry.TryGetPowerBigIconTexture(instance, out var externalTexture))
+            {
+                result = externalTexture;
+                return false;
+            }
+
+            return ContentAssetOverridePatchHelper.TryUseTextureOverride<IModPowerAssetOverrides>(
+                instance, ref result, o => o.CustomBigIconPath,
+                nameof(IModPowerAssetOverrides.CustomBigIconPath));
         }
     }
 
@@ -1235,7 +1426,7 @@ namespace STS2RitsuLib.Scaffolding.Content.Patches
         {
             return
             [
-                new(typeof(OrbModel), "get_Icon"),
+                new(typeof(OrbModel), "Icon", MethodType.Getter),
             ];
         }
 
@@ -1246,6 +1437,20 @@ namespace STS2RitsuLib.Scaffolding.Content.Patches
         public static bool Prefix(OrbModel __instance, ref CompressedTexture2D __result)
             // ReSharper restore InconsistentNaming
         {
+            if (ExternalAssetOverrideRegistry.TryGetOrbIconTexture(__instance, out var externalTexture))
+            {
+                __result = externalTexture;
+                return false;
+            }
+
+            // ReSharper disable once InvertIf
+            if (ExternalAssetOverrideRegistry.TryGetOrbIconPath(__instance, out var externalPath) &&
+                AssetPathDiagnostics.Exists(externalPath, __instance, "ExternalAssetOverrideRegistry.OrbIconPath"))
+            {
+                __result = ResourceLoader.Load<CompressedTexture2D>(externalPath);
+                return false;
+            }
+
             return ContentAssetOverridePatchHelper.TryUseCompressedTextureOverride<IModOrbAssetOverrides>(
                 __instance,
                 ref __result,
@@ -1273,7 +1478,7 @@ namespace STS2RitsuLib.Scaffolding.Content.Patches
         {
             return
             [
-                new(typeof(OrbModel), "get_SpritePath"),
+                new(typeof(OrbModel), "SpritePath", MethodType.Getter),
             ];
         }
 
@@ -1284,6 +1489,15 @@ namespace STS2RitsuLib.Scaffolding.Content.Patches
         public static bool Prefix(OrbModel __instance, ref string __result)
             // ReSharper restore InconsistentNaming
         {
+            // ReSharper disable once InvertIf
+            if (ExternalAssetOverrideRegistry.TryGetOrbVisualsScenePath(__instance, out var externalPath) &&
+                AssetPathDiagnostics.Exists(externalPath, __instance,
+                    "ExternalAssetOverrideRegistry.OrbVisualsScenePath"))
+            {
+                __result = externalPath;
+                return false;
+            }
+
             return ContentAssetOverridePatchHelper.TryUseStringOverride<IModOrbAssetOverrides>(
                 __instance,
                 ref __result,
@@ -1311,7 +1525,7 @@ namespace STS2RitsuLib.Scaffolding.Content.Patches
         {
             return
             [
-                new(typeof(OrbModel), "get_AssetPaths"),
+                new(typeof(OrbModel), "AssetPaths", MethodType.Getter),
             ];
         }
 
@@ -1323,17 +1537,33 @@ namespace STS2RitsuLib.Scaffolding.Content.Patches
             // ReSharper restore InconsistentNaming
         {
             if (__instance is not IModOrbAssetOverrides overrides)
-                return true;
+                return !TryBuildOrbAssetPathsFromExternal(__instance, out __result);
 
             var paths = AssetPathDiagnostics.CollectExistingPaths(
                 __instance,
                 (overrides.CustomIconPath, nameof(IModOrbAssetOverrides.CustomIconPath)),
                 (overrides.CustomVisualsScenePath, nameof(IModOrbAssetOverrides.CustomVisualsScenePath)));
+            if (TryBuildOrbAssetPathsFromExternal(__instance, out var externalPaths))
+                paths = paths.Concat(externalPaths).Distinct(StringComparer.Ordinal).ToArray();
             if (paths.Length == 0)
                 return true;
 
             __result = paths;
             return false;
+        }
+
+        private static bool TryBuildOrbAssetPathsFromExternal(OrbModel instance, out IEnumerable<string> paths)
+        {
+            var collected = new List<string>(2);
+            if (ExternalAssetOverrideRegistry.TryGetOrbIconPath(instance, out var iconPath) &&
+                AssetPathDiagnostics.Exists(iconPath, instance, "ExternalAssetOverrideRegistry.OrbIconPath"))
+                collected.Add(iconPath);
+            if (ExternalAssetOverrideRegistry.TryGetOrbVisualsScenePath(instance, out var visualsPath) &&
+                AssetPathDiagnostics.Exists(visualsPath, instance, "ExternalAssetOverrideRegistry.OrbVisualsScenePath"))
+                collected.Add(visualsPath);
+
+            paths = collected;
+            return collected.Count > 0;
         }
     }
 
@@ -1357,10 +1587,10 @@ namespace STS2RitsuLib.Scaffolding.Content.Patches
         {
             return
             [
-                new(typeof(PotionModel), "get_ImagePath"),
-                new(typeof(PotionModel), "get_OutlinePath"),
-                new(typeof(PotionModel), "get_PackedImagePath", true),
-                new(typeof(PotionModel), "get_PackedOutlinePath", true),
+                new(typeof(PotionModel), "ImagePath", MethodType.Getter),
+                new(typeof(PotionModel), "OutlinePath", MethodType.Getter),
+                new(typeof(PotionModel), "PackedImagePath", null, true, MethodType.Getter),
+                new(typeof(PotionModel), "PackedOutlinePath", null, true, MethodType.Getter),
             ];
         }
 
@@ -1388,6 +1618,13 @@ namespace STS2RitsuLib.Scaffolding.Content.Patches
             if (!ModCharacterOwnedVisualOverrideHelper.TryPotionImagePath(instance, ref result))
                 return false;
 
+            // ReSharper disable once InvertIf
+            if (ExternalAssetOverrideRegistry.TryGetPotionImagePath(instance, out var externalPath))
+            {
+                result = externalPath;
+                return false;
+            }
+
             return ContentAssetOverridePatchHelper.TryUseStringOverride<IModPotionAssetOverrides>(
                 instance, ref result, o => o.CustomImagePath, nameof(IModPotionAssetOverrides.CustomImagePath));
         }
@@ -1396,6 +1633,13 @@ namespace STS2RitsuLib.Scaffolding.Content.Patches
         {
             if (!ModCharacterOwnedVisualOverrideHelper.TryPotionOutlinePath(instance, ref result))
                 return false;
+
+            // ReSharper disable once InvertIf
+            if (ExternalAssetOverrideRegistry.TryGetPotionOutlinePath(instance, out var externalPath))
+            {
+                result = externalPath;
+                return false;
+            }
 
             return ContentAssetOverridePatchHelper.TryUseStringOverride<IModPotionAssetOverrides>(
                 instance, ref result, o => o.CustomOutlinePath, nameof(IModPotionAssetOverrides.CustomOutlinePath));
@@ -1421,8 +1665,8 @@ namespace STS2RitsuLib.Scaffolding.Content.Patches
         {
             return
             [
-                new(typeof(PotionModel), "get_Image"),
-                new(typeof(PotionModel), "get_Outline"),
+                new(typeof(PotionModel), "Image", MethodType.Getter),
+                new(typeof(PotionModel), "Outline", MethodType.Getter),
             ];
         }
 
@@ -1446,6 +1690,13 @@ namespace STS2RitsuLib.Scaffolding.Content.Patches
             if (!ModCharacterOwnedVisualOverrideHelper.TryPotionImageTexture(instance, ref result))
                 return false;
 
+            // ReSharper disable once InvertIf
+            if (ExternalAssetOverrideRegistry.TryGetPotionImageTexture(instance, out var externalTexture))
+            {
+                result = externalTexture;
+                return false;
+            }
+
             return ContentAssetOverridePatchHelper.TryUseTextureOverride<IModPotionAssetOverrides>(
                 instance, ref result, o => o.CustomImagePath, nameof(IModPotionAssetOverrides.CustomImagePath));
         }
@@ -1454,6 +1705,13 @@ namespace STS2RitsuLib.Scaffolding.Content.Patches
         {
             if (!ModCharacterOwnedVisualOverrideHelper.TryPotionOutlineTexture(instance, ref result))
                 return false;
+
+            // ReSharper disable once InvertIf
+            if (ExternalAssetOverrideRegistry.TryGetPotionOutlineTexture(instance, out var externalTexture))
+            {
+                result = externalTexture;
+                return false;
+            }
 
             return ContentAssetOverridePatchHelper.TryUseTextureOverride<IModPotionAssetOverrides>(
                 instance, ref result, o => o.CustomOutlinePath, nameof(IModPotionAssetOverrides.CustomOutlinePath));
@@ -1477,7 +1735,7 @@ namespace STS2RitsuLib.Scaffolding.Content.Patches
         /// <inheritdoc cref="IPatchMethod.GetTargets" />
         public static ModPatchTarget[] GetTargets()
         {
-            return [new(typeof(CardModel), "get_BannerTexture")];
+            return [new(typeof(CardModel), "BannerTexture", MethodType.Getter)];
         }
 
         // ReSharper disable InconsistentNaming
@@ -1513,7 +1771,7 @@ namespace STS2RitsuLib.Scaffolding.Content.Patches
         /// <inheritdoc cref="IPatchMethod.GetTargets" />
         public static ModPatchTarget[] GetTargets()
         {
-            return [new(typeof(CardModel), "get_BannerMaterial")];
+            return [new(typeof(CardModel), "BannerMaterial", MethodType.Getter)];
         }
 
         // ReSharper disable InconsistentNaming
@@ -1523,6 +1781,23 @@ namespace STS2RitsuLib.Scaffolding.Content.Patches
         public static bool Prefix(CardModel __instance, ref Material __result)
             // ReSharper restore InconsistentNaming
         {
+            if (__instance is IModCardBannerMaterialOverride bannerOverride)
+            {
+                var directBannerMaterial = bannerOverride.CustomBannerMaterial;
+                if (directBannerMaterial != null)
+                {
+                    __result = directBannerMaterial;
+                    return false;
+                }
+            }
+
+            if (ExternalCardMaterialOverrideRegistry.TryGetBannerMaterial(__instance,
+                    out var externalBannerMaterial))
+            {
+                __result = externalBannerMaterial;
+                return false;
+            }
+
             if (!ModCharacterOwnedVisualOverrideHelper.TryCardBannerMaterial(__instance, ref __result))
                 return false;
 
@@ -1549,7 +1824,7 @@ namespace STS2RitsuLib.Scaffolding.Content.Patches
         /// <inheritdoc cref="IPatchMethod.GetTargets" />
         public static ModPatchTarget[] GetTargets()
         {
-            return [new(typeof(ActModel), "get_BackgroundScenePath")];
+            return [new(typeof(ActModel), "BackgroundScenePath", MethodType.Getter)];
         }
 
         // ReSharper disable InconsistentNaming
@@ -1559,6 +1834,15 @@ namespace STS2RitsuLib.Scaffolding.Content.Patches
         public static bool Prefix(ActModel __instance, ref string __result)
             // ReSharper restore InconsistentNaming
         {
+            if (!ContentAssetOverridePatchHelper.TryUseExternalPathOverride(
+                    __instance,
+                    ref __result,
+                    () => ExternalAssetOverrideRegistry.TryGetActBackgroundScenePath(__instance, out var path)
+                        ? path
+                        : null,
+                    "ExternalAssetOverrideRegistry.ActBackgroundScenePath"))
+                return false;
+
             return ContentAssetOverridePatchHelper.TryUseStringOverride<IModActAssetOverrides>(
                 __instance,
                 ref __result,
@@ -1584,7 +1868,7 @@ namespace STS2RitsuLib.Scaffolding.Content.Patches
         /// <inheritdoc cref="IPatchMethod.GetTargets" />
         public static ModPatchTarget[] GetTargets()
         {
-            return [new(typeof(ActModel), "get_RestSiteBackgroundPath")];
+            return [new(typeof(ActModel), "RestSiteBackgroundPath", MethodType.Getter)];
         }
 
         // ReSharper disable InconsistentNaming
@@ -1594,6 +1878,15 @@ namespace STS2RitsuLib.Scaffolding.Content.Patches
         public static bool Prefix(ActModel __instance, ref string __result)
             // ReSharper restore InconsistentNaming
         {
+            if (!ContentAssetOverridePatchHelper.TryUseExternalPathOverride(
+                    __instance,
+                    ref __result,
+                    () => ExternalAssetOverrideRegistry.TryGetActRestSiteBackgroundPath(__instance, out var path)
+                        ? path
+                        : null,
+                    "ExternalAssetOverrideRegistry.ActRestSiteBackgroundPath"))
+                return false;
+
             return ContentAssetOverridePatchHelper.TryUseStringOverride<IModActAssetOverrides>(
                 __instance,
                 ref __result,
@@ -1621,9 +1914,9 @@ namespace STS2RitsuLib.Scaffolding.Content.Patches
         {
             return
             [
-                new(typeof(ActModel), "get_MapTopBgPath"),
-                new(typeof(ActModel), "get_MapMidBgPath"),
-                new(typeof(ActModel), "get_MapBotBgPath"),
+                new(typeof(ActModel), "MapTopBgPath", MethodType.Getter),
+                new(typeof(ActModel), "MapMidBgPath", MethodType.Getter),
+                new(typeof(ActModel), "MapBotBgPath", MethodType.Getter),
             ];
         }
 
@@ -1636,23 +1929,59 @@ namespace STS2RitsuLib.Scaffolding.Content.Patches
         {
             return __originalMethod.Name switch
             {
-                "get_MapTopBgPath" => ContentAssetOverridePatchHelper.TryUseStringOverride<IModActAssetOverrides>(
-                    __instance,
-                    ref __result,
-                    o => o.CustomMapTopBgPath,
-                    nameof(IModActAssetOverrides.CustomMapTopBgPath)),
-                "get_MapMidBgPath" => ContentAssetOverridePatchHelper.TryUseStringOverride<IModActAssetOverrides>(
-                    __instance,
-                    ref __result,
-                    o => o.CustomMapMidBgPath,
-                    nameof(IModActAssetOverrides.CustomMapMidBgPath)),
-                "get_MapBotBgPath" => ContentAssetOverridePatchHelper.TryUseStringOverride<IModActAssetOverrides>(
-                    __instance,
-                    ref __result,
-                    o => o.CustomMapBotBgPath,
-                    nameof(IModActAssetOverrides.CustomMapBotBgPath)),
+                "get_MapTopBgPath" => TryActMapTopBgPath(__instance, ref __result),
+                "get_MapMidBgPath" => TryActMapMidBgPath(__instance, ref __result),
+                "get_MapBotBgPath" => TryActMapBotBgPath(__instance, ref __result),
                 _ => true,
             };
+        }
+
+        private static bool TryActMapTopBgPath(ActModel instance, ref string result)
+        {
+            if (!ContentAssetOverridePatchHelper.TryUseExternalPathOverride(
+                    instance,
+                    ref result,
+                    () => ExternalAssetOverrideRegistry.TryGetActMapTopBgPath(instance, out var path) ? path : null,
+                    "ExternalAssetOverrideRegistry.ActMapTopBgPath"))
+                return false;
+
+            return ContentAssetOverridePatchHelper.TryUseStringOverride<IModActAssetOverrides>(
+                instance,
+                ref result,
+                o => o.CustomMapTopBgPath,
+                nameof(IModActAssetOverrides.CustomMapTopBgPath));
+        }
+
+        private static bool TryActMapMidBgPath(ActModel instance, ref string result)
+        {
+            if (!ContentAssetOverridePatchHelper.TryUseExternalPathOverride(
+                    instance,
+                    ref result,
+                    () => ExternalAssetOverrideRegistry.TryGetActMapMidBgPath(instance, out var path) ? path : null,
+                    "ExternalAssetOverrideRegistry.ActMapMidBgPath"))
+                return false;
+
+            return ContentAssetOverridePatchHelper.TryUseStringOverride<IModActAssetOverrides>(
+                instance,
+                ref result,
+                o => o.CustomMapMidBgPath,
+                nameof(IModActAssetOverrides.CustomMapMidBgPath));
+        }
+
+        private static bool TryActMapBotBgPath(ActModel instance, ref string result)
+        {
+            if (!ContentAssetOverridePatchHelper.TryUseExternalPathOverride(
+                    instance,
+                    ref result,
+                    () => ExternalAssetOverrideRegistry.TryGetActMapBotBgPath(instance, out var path) ? path : null,
+                    "ExternalAssetOverrideRegistry.ActMapBotBgPath"))
+                return false;
+
+            return ContentAssetOverridePatchHelper.TryUseStringOverride<IModActAssetOverrides>(
+                instance,
+                ref result,
+                o => o.CustomMapBotBgPath,
+                nameof(IModActAssetOverrides.CustomMapBotBgPath));
         }
     }
 
@@ -1676,7 +2005,7 @@ namespace STS2RitsuLib.Scaffolding.Content.Patches
         /// <inheritdoc cref="IPatchMethod.GetTargets" />
         public static ModPatchTarget[] GetTargets()
         {
-            return [new(typeof(EventModel), "get_BackgroundScenePath")];
+            return [new(typeof(EventModel), "BackgroundScenePath", MethodType.Getter)];
         }
 
         // ReSharper disable InconsistentNaming
@@ -1686,6 +2015,15 @@ namespace STS2RitsuLib.Scaffolding.Content.Patches
         public static bool Prefix(EventModel __instance, ref string __result)
             // ReSharper restore InconsistentNaming
         {
+            if (!ContentAssetOverridePatchHelper.TryUseExternalPathOverride(
+                    __instance,
+                    ref __result,
+                    () => ExternalAssetOverrideRegistry.TryGetEventBackgroundScenePath(__instance, out var path)
+                        ? path
+                        : null,
+                    "ExternalAssetOverrideRegistry.EventBackgroundScenePath"))
+                return false;
+
             return ContentAssetOverridePatchHelper.TryUseStringOverride<IModEventAssetOverrides>(
                 __instance,
                 ref __result,
@@ -1721,6 +2059,15 @@ namespace STS2RitsuLib.Scaffolding.Content.Patches
         public static bool Prefix(EventModel __instance, ref PackedScene __result)
             // ReSharper restore InconsistentNaming
         {
+            if (!ContentAssetOverridePatchHelper.TryUseExternalPackedScenePathOverride(
+                    __instance,
+                    ref __result,
+                    () => ExternalAssetOverrideRegistry.TryGetEventLayoutScenePath(__instance, out var path)
+                        ? path
+                        : null,
+                    "ExternalAssetOverrideRegistry.EventLayoutScenePath"))
+                return false;
+
             return ContentAssetOverridePatchHelper.TryUsePackedSceneCacheOverride<IModEventAssetOverrides>(
                 __instance,
                 ref __result,
@@ -1756,6 +2103,13 @@ namespace STS2RitsuLib.Scaffolding.Content.Patches
         public static bool Prefix(EventModel __instance, ref Texture2D __result)
             // ReSharper restore InconsistentNaming
         {
+            // ReSharper disable once InvertIf
+            if (ExternalAssetOverrideRegistry.TryGetEventInitialPortraitTexture(__instance, out var externalTexture))
+            {
+                __result = externalTexture;
+                return false;
+            }
+
             return ContentAssetOverridePatchHelper.TryUseTexture2DFromCacheOverride<IModEventAssetOverrides>(
                 __instance,
                 ref __result,
@@ -1791,6 +2145,13 @@ namespace STS2RitsuLib.Scaffolding.Content.Patches
         public static bool Prefix(EventModel __instance, ref PackedScene __result)
             // ReSharper restore InconsistentNaming
         {
+            // ReSharper disable once InvertIf
+            if (ExternalAssetOverrideRegistry.TryGetEventBackgroundScene(__instance, out var externalScene))
+            {
+                __result = externalScene;
+                return false;
+            }
+
             return ContentAssetOverridePatchHelper.TryUsePackedSceneCacheOverride<IModEventAssetOverrides>(
                 __instance,
                 ref __result,
@@ -1816,7 +2177,7 @@ namespace STS2RitsuLib.Scaffolding.Content.Patches
         /// <inheritdoc cref="IPatchMethod.GetTargets" />
         public static ModPatchTarget[] GetTargets()
         {
-            return [new(typeof(EventModel), "get_HasVfx")];
+            return [new(typeof(EventModel), "HasVfx", MethodType.Getter)];
         }
 
         // ReSharper disable InconsistentNaming
@@ -1826,6 +2187,12 @@ namespace STS2RitsuLib.Scaffolding.Content.Patches
         public static bool Prefix(EventModel __instance, ref bool __result)
             // ReSharper restore InconsistentNaming
         {
+            if (ExternalAssetOverrideRegistry.TryGetEventVfxScene(__instance, out var externalVfxScene))
+            {
+                __result = externalVfxScene != null;
+                return false;
+            }
+
             if (__instance is not IModEventAssetOverrides overrides)
                 return true;
 
@@ -1868,6 +2235,12 @@ namespace STS2RitsuLib.Scaffolding.Content.Patches
         public static bool Prefix(EventModel __instance, ref Node2D __result)
             // ReSharper restore InconsistentNaming
         {
+            if (ExternalAssetOverrideRegistry.TryGetEventVfxScene(__instance, out var externalVfxScene))
+            {
+                __result = externalVfxScene.Instantiate<Node2D>();
+                return false;
+            }
+
             if (__instance is not IModEventAssetOverrides overrides)
                 return true;
 
@@ -1923,9 +2296,21 @@ namespace STS2RitsuLib.Scaffolding.Content.Patches
                 paths = paths.Where(p => p != vanillaBg);
             }
 
+            if (ExternalAssetOverrideRegistry.TryGetEventBackgroundScenePath(__instance,
+                    out var externalBackgroundPath) &&
+                AssetPathDiagnostics.Exists(externalBackgroundPath, __instance,
+                    "ExternalAssetOverrideRegistry.EventBackgroundScenePath"))
+            {
+                var entry = __instance.Id.Entry.ToLowerInvariant();
+                var vanillaBg = SceneHelper.GetScenePath($"events/background_scenes/{entry}");
+                paths = paths.Where(p => p != vanillaBg);
+            }
+
+            var externalMerged = CollectExternalEventAssetPaths(__instance);
+
             if (__instance is not IModEventAssetOverrides eventOverrides)
             {
-                __result = paths;
+                __result = externalMerged.Length == 0 ? paths : paths.Concat(externalMerged).Distinct().ToArray();
                 return;
             }
 
@@ -1935,6 +2320,8 @@ namespace STS2RitsuLib.Scaffolding.Content.Patches
                 (eventOverrides.CustomInitialPortraitPath, nameof(IModEventAssetOverrides.CustomInitialPortraitPath)),
                 (eventOverrides.CustomBackgroundScenePath, nameof(IModEventAssetOverrides.CustomBackgroundScenePath)),
                 (eventOverrides.CustomVfxScenePath, nameof(IModEventAssetOverrides.CustomVfxScenePath)));
+            if (externalMerged.Length > 0)
+                merged = merged.Concat(externalMerged).Distinct().ToArray();
 
             if (__instance is IModAncientEventAssetOverrides ancientOverrides)
             {
@@ -1959,6 +2346,18 @@ namespace STS2RitsuLib.Scaffolding.Content.Patches
 
             __result = paths.Concat(merged);
         }
+
+        private static string[] CollectExternalEventAssetPaths(EventModel instance)
+        {
+            return ContentAssetOverridePatchHelper.CollectExternalExistingPaths(
+                instance,
+                (ExternalAssetOverrideRegistry.TryGetEventLayoutScenePath(instance, out var extLayout)
+                    ? extLayout
+                    : null, "ExternalAssetOverrideRegistry.EventLayoutScenePath"),
+                (ExternalAssetOverrideRegistry.TryGetEventBackgroundScenePath(instance, out var extBackground)
+                    ? extBackground
+                    : null, "ExternalAssetOverrideRegistry.EventBackgroundScenePath"));
+        }
     }
 
     /// <summary>
@@ -1980,8 +2379,8 @@ namespace STS2RitsuLib.Scaffolding.Content.Patches
         {
             return
             [
-                new(typeof(AncientEventModel), "get_MapIcon"),
-                new(typeof(AncientEventModel), "get_MapIconOutline"),
+                new(typeof(AncientEventModel), "MapIcon", MethodType.Getter),
+                new(typeof(AncientEventModel), "MapIconOutline", MethodType.Getter),
             ];
         }
 
@@ -1994,20 +2393,48 @@ namespace STS2RitsuLib.Scaffolding.Content.Patches
         {
             return __originalMethod.Name switch
             {
-                "get_MapIcon" => ContentAssetOverridePatchHelper.TryUseCompressedTextureAsTexture2DOverride<
-                    IModAncientEventAssetOverrides>(
-                    __instance,
-                    ref __result,
-                    o => o.CustomMapIconPath,
-                    nameof(IModAncientEventAssetOverrides.CustomMapIconPath)),
-                "get_MapIconOutline" => ContentAssetOverridePatchHelper.TryUseCompressedTextureAsTexture2DOverride<
-                    IModAncientEventAssetOverrides>(
-                    __instance,
-                    ref __result,
-                    o => o.CustomMapIconOutlinePath,
-                    nameof(IModAncientEventAssetOverrides.CustomMapIconOutlinePath)),
+                "get_MapIcon" => TryAncientMapIcon(__instance, ref __result),
+                "get_MapIconOutline" => TryAncientMapIconOutline(__instance, ref __result),
                 _ => true,
             };
+        }
+
+        private static bool TryAncientMapIcon(AncientEventModel instance, ref Texture2D result)
+        {
+            // ReSharper disable once InvertIf
+            if (!ContentAssetOverridePatchHelper.TryUseExternalCompressedTexturePathAsTexture2DOverride(
+                    instance,
+                    ref result,
+                    () => ExternalAssetOverrideRegistry.TryGetAncientMapIconPath(instance, out var path) ? path : null,
+                    "ExternalAssetOverrideRegistry.AncientMapIconPath"))
+                return false;
+
+            return ContentAssetOverridePatchHelper.TryUseCompressedTextureAsTexture2DOverride<
+                IModAncientEventAssetOverrides>(
+                instance,
+                ref result,
+                o => o.CustomMapIconPath,
+                nameof(IModAncientEventAssetOverrides.CustomMapIconPath));
+        }
+
+        private static bool TryAncientMapIconOutline(AncientEventModel instance, ref Texture2D result)
+        {
+            // ReSharper disable once InvertIf
+            if (!ContentAssetOverridePatchHelper.TryUseExternalCompressedTexturePathAsTexture2DOverride(
+                    instance,
+                    ref result,
+                    () => ExternalAssetOverrideRegistry.TryGetAncientMapIconOutlinePath(instance, out var path)
+                        ? path
+                        : null,
+                    "ExternalAssetOverrideRegistry.AncientMapIconOutlinePath"))
+                return false;
+
+            return ContentAssetOverridePatchHelper.TryUseCompressedTextureAsTexture2DOverride<
+                IModAncientEventAssetOverrides>(
+                instance,
+                ref result,
+                o => o.CustomMapIconOutlinePath,
+                nameof(IModAncientEventAssetOverrides.CustomMapIconOutlinePath));
         }
     }
 
@@ -2030,8 +2457,8 @@ namespace STS2RitsuLib.Scaffolding.Content.Patches
         {
             return
             [
-                new(typeof(AncientEventModel), "get_RunHistoryIcon"),
-                new(typeof(AncientEventModel), "get_RunHistoryIconOutline"),
+                new(typeof(AncientEventModel), "RunHistoryIcon", MethodType.Getter),
+                new(typeof(AncientEventModel), "RunHistoryIconOutline", MethodType.Getter),
             ];
         }
 
@@ -2044,21 +2471,48 @@ namespace STS2RitsuLib.Scaffolding.Content.Patches
         {
             return __originalMethod.Name switch
             {
-                "get_RunHistoryIcon" => ContentAssetOverridePatchHelper.TryUseCompressedTextureAsTexture2DOverride<
-                    IModAncientEventAssetOverrides>(
-                    __instance,
-                    ref __result,
-                    o => o.CustomRunHistoryIconPath,
-                    nameof(IModAncientEventAssetOverrides.CustomRunHistoryIconPath)),
-                "get_RunHistoryIconOutline" => ContentAssetOverridePatchHelper
-                    .TryUseCompressedTextureAsTexture2DOverride<
-                        IModAncientEventAssetOverrides>(
-                        __instance,
-                        ref __result,
-                        o => o.CustomRunHistoryIconOutlinePath,
-                        nameof(IModAncientEventAssetOverrides.CustomRunHistoryIconOutlinePath)),
+                "get_RunHistoryIcon" => TryAncientRunHistoryIcon(__instance, ref __result),
+                "get_RunHistoryIconOutline" => TryAncientRunHistoryIconOutline(__instance, ref __result),
                 _ => true,
             };
+        }
+
+        private static bool TryAncientRunHistoryIcon(AncientEventModel instance, ref Texture2D result)
+        {
+            if (!ContentAssetOverridePatchHelper.TryUseExternalCompressedTexturePathAsTexture2DOverride(
+                    instance,
+                    ref result,
+                    () => ExternalAssetOverrideRegistry.TryGetAncientRunHistoryIconPath(instance, out var path)
+                        ? path
+                        : null,
+                    "ExternalAssetOverrideRegistry.AncientRunHistoryIconPath"))
+                return false;
+
+            return ContentAssetOverridePatchHelper.TryUseCompressedTextureAsTexture2DOverride<
+                IModAncientEventAssetOverrides>(
+                instance,
+                ref result,
+                o => o.CustomRunHistoryIconPath,
+                nameof(IModAncientEventAssetOverrides.CustomRunHistoryIconPath));
+        }
+
+        private static bool TryAncientRunHistoryIconOutline(AncientEventModel instance, ref Texture2D result)
+        {
+            if (!ContentAssetOverridePatchHelper.TryUseExternalCompressedTexturePathAsTexture2DOverride(
+                    instance,
+                    ref result,
+                    () => ExternalAssetOverrideRegistry.TryGetAncientRunHistoryIconOutlinePath(instance, out var path)
+                        ? path
+                        : null,
+                    "ExternalAssetOverrideRegistry.AncientRunHistoryIconOutlinePath"))
+                return false;
+
+            return ContentAssetOverridePatchHelper.TryUseCompressedTextureAsTexture2DOverride<
+                IModAncientEventAssetOverrides>(
+                instance,
+                ref result,
+                o => o.CustomRunHistoryIconOutlinePath,
+                nameof(IModAncientEventAssetOverrides.CustomRunHistoryIconOutlinePath));
         }
     }
 
@@ -2079,7 +2533,7 @@ namespace STS2RitsuLib.Scaffolding.Content.Patches
         /// <inheritdoc cref="IPatchMethod.GetTargets" />
         public static ModPatchTarget[] GetTargets()
         {
-            return [new(typeof(AncientEventModel), "get_MapNodeAssetPaths")];
+            return [new(typeof(AncientEventModel), "MapNodeAssetPaths", MethodType.Getter)];
         }
 
         // ReSharper disable InconsistentNaming
@@ -2089,7 +2543,15 @@ namespace STS2RitsuLib.Scaffolding.Content.Patches
         public static void Postfix(AncientEventModel __instance, ref IEnumerable<string> __result)
             // ReSharper restore InconsistentNaming
         {
-            if (__instance is not IModAncientEventAssetOverrides overrides)
+            var mapIconPath =
+                ExternalAssetOverrideRegistry.TryGetAncientMapIconPath(__instance, out var externalMapIconPath)
+                    ? externalMapIconPath
+                    : (__instance as IModAncientEventAssetOverrides)?.CustomMapIconPath;
+            var mapIconOutlinePath = ExternalAssetOverrideRegistry.TryGetAncientMapIconOutlinePath(__instance,
+                out var externalMapIconOutlinePath)
+                ? externalMapIconOutlinePath
+                : (__instance as IModAncientEventAssetOverrides)?.CustomMapIconOutlinePath;
+            if (mapIconPath == null && mapIconOutlinePath == null)
                 return;
 
             var entry = __instance.Id.Entry.ToLowerInvariant();
@@ -2098,8 +2560,8 @@ namespace STS2RitsuLib.Scaffolding.Content.Patches
 
             var extra = AssetPathDiagnostics.CollectExistingPaths(
                 __instance,
-                (overrides.CustomMapIconPath, nameof(IModAncientEventAssetOverrides.CustomMapIconPath)),
-                (overrides.CustomMapIconOutlinePath, nameof(IModAncientEventAssetOverrides.CustomMapIconOutlinePath)));
+                (mapIconPath, nameof(IModAncientEventAssetOverrides.CustomMapIconPath)),
+                (mapIconOutlinePath, nameof(IModAncientEventAssetOverrides.CustomMapIconOutlinePath)));
             if (extra.Length == 0)
                 return;
 
@@ -2140,7 +2602,7 @@ namespace STS2RitsuLib.Scaffolding.Content.Patches
         /// <inheritdoc cref="IPatchMethod.GetTargets" />
         public static ModPatchTarget[] GetTargets()
         {
-            return [new(typeof(AfflictionModel), "get_OverlayPath")];
+            return [new(typeof(AfflictionModel), "OverlayPath", MethodType.Getter)];
         }
 
         // ReSharper disable InconsistentNaming
@@ -2150,6 +2612,15 @@ namespace STS2RitsuLib.Scaffolding.Content.Patches
         public static bool Prefix(AfflictionModel __instance, ref string __result)
             // ReSharper restore InconsistentNaming
         {
+            if (!ContentAssetOverridePatchHelper.TryUseExternalPathOverride(
+                    __instance,
+                    ref __result,
+                    () => ExternalAssetOverrideRegistry.TryGetAfflictionOverlayPath(__instance, out var path)
+                        ? path
+                        : null,
+                    "ExternalAssetOverrideRegistry.AfflictionOverlayPath"))
+                return false;
+
             return ContentAssetOverridePatchHelper.TryUseStringOverride<IModAfflictionAssetOverrides>(
                 __instance, ref __result, o => o.CustomOverlayScenePath,
                 nameof(IModAfflictionAssetOverrides.CustomOverlayScenePath));
@@ -2173,7 +2644,7 @@ namespace STS2RitsuLib.Scaffolding.Content.Patches
         /// <inheritdoc cref="IPatchMethod.GetTargets" />
         public static ModPatchTarget[] GetTargets()
         {
-            return [new(typeof(AfflictionModel), "get_HasOverlay")];
+            return [new(typeof(AfflictionModel), "HasOverlay", MethodType.Getter)];
         }
 
         // ReSharper disable InconsistentNaming
@@ -2183,6 +2654,25 @@ namespace STS2RitsuLib.Scaffolding.Content.Patches
         public static bool Prefix(AfflictionModel __instance, ref bool __result)
             // ReSharper restore InconsistentNaming
         {
+            if (ExternalAssetOverrideRegistry.TryGetAfflictionOverlayScene(__instance, out var externalScene))
+            {
+                __result = externalScene != null;
+                return false;
+            }
+
+            var externalOverlayPath = string.Empty;
+            if (!ContentAssetOverridePatchHelper.TryUseExternalPathOverride(
+                    __instance,
+                    ref externalOverlayPath,
+                    () => ExternalAssetOverrideRegistry.TryGetAfflictionOverlayPath(__instance, out var path)
+                        ? path
+                        : null,
+                    "ExternalAssetOverrideRegistry.AfflictionOverlayPath"))
+            {
+                __result = true;
+                return false;
+            }
+
             var path = string.Empty;
             return ContentAssetOverridePatchHelper.TryUseStringOverride<IModAfflictionAssetOverrides>(
                        __instance,
@@ -2224,6 +2714,25 @@ namespace STS2RitsuLib.Scaffolding.Content.Patches
         public static bool Prefix(AfflictionModel __instance, ref Control __result)
             // ReSharper restore InconsistentNaming
         {
+            if (ExternalAssetOverrideRegistry.TryGetAfflictionOverlayScene(__instance, out var externalScene))
+            {
+                __result = externalScene.Instantiate<Control>();
+                return false;
+            }
+
+            var externalOverlayPath = string.Empty;
+            if (!ContentAssetOverridePatchHelper.TryUseExternalPathOverride(
+                    __instance,
+                    ref externalOverlayPath,
+                    () => ExternalAssetOverrideRegistry.TryGetAfflictionOverlayPath(__instance, out var path)
+                        ? path
+                        : null,
+                    "ExternalAssetOverrideRegistry.AfflictionOverlayPath"))
+            {
+                __result = ResourceLoader.Load<PackedScene>(externalOverlayPath).Instantiate<Control>();
+                return false;
+            }
+
             var path = string.Empty;
             if (ContentAssetOverridePatchHelper.TryUseStringOverride<IModAfflictionAssetOverrides>(
                     __instance,
@@ -2274,7 +2783,7 @@ namespace STS2RitsuLib.Scaffolding.Content.Patches
         /// <inheritdoc cref="IPatchMethod.GetTargets" />
         public static ModPatchTarget[] GetTargets()
         {
-            return [new(typeof(EnchantmentModel), "get_IntendedIconPath")];
+            return [new(typeof(EnchantmentModel), "IntendedIconPath", MethodType.Getter)];
         }
 
         // ReSharper disable InconsistentNaming
@@ -2284,6 +2793,15 @@ namespace STS2RitsuLib.Scaffolding.Content.Patches
         public static bool Prefix(EnchantmentModel __instance, ref string __result)
             // ReSharper restore InconsistentNaming
         {
+            if (!ContentAssetOverridePatchHelper.TryUseExternalPathOverride(
+                    __instance,
+                    ref __result,
+                    () => ExternalAssetOverrideRegistry.TryGetEnchantmentIconPath(__instance, out var path)
+                        ? path
+                        : null,
+                    "ExternalAssetOverrideRegistry.EnchantmentIconPath"))
+                return false;
+
             return ContentAssetOverridePatchHelper.TryUseStringOverride<IModEnchantmentAssetOverrides>(
                 __instance, ref __result, o => o.CustomIconPath,
                 nameof(IModEnchantmentAssetOverrides.CustomIconPath));
@@ -2307,7 +2825,7 @@ namespace STS2RitsuLib.Scaffolding.Content.Patches
         /// <inheritdoc cref="IPatchMethod.GetTargets" />
         public static ModPatchTarget[] GetTargets()
         {
-            return [new(typeof(PowerModel), "get_ResolvedBigIconPath")];
+            return [new(typeof(PowerModel), "ResolvedBigIconPath", MethodType.Getter)];
         }
 
         // ReSharper disable InconsistentNaming

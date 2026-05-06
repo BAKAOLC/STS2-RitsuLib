@@ -11,7 +11,7 @@ namespace STS2RitsuLib.Data.Models
         /// <summary>
         ///     Current schema version written by the library when creating or normalizing settings.
         /// </summary>
-        public const int CurrentSchemaVersion = 5;
+        public const int CurrentSchemaVersion = 8;
 
         /// <summary>
         ///     Persisted schema version used by the migration pipeline
@@ -19,6 +19,13 @@ namespace STS2RitsuLib.Data.Models
         /// </summary>
         [JsonPropertyName(ModDataVersion.SchemaVersionProperty)]
         public int SchemaVersion { get; set; } = CurrentSchemaVersion;
+
+        /// <summary>
+        ///     When true and Steam Cloud is active for the session, RitsuLib keeps managed mod data in sync with
+        ///     vanilla’s remote store after saves and on profile init / switch.
+        /// </summary>
+        [JsonPropertyName("sync_mod_data_to_steam_cloud")]
+        public bool SyncModDataToSteamCloud { get; set; }
 
         /// <summary>
         ///     Master switch: when false, sub-flags are ignored and shim logic no-ops so patched targets follow vanilla
@@ -115,5 +122,95 @@ namespace STS2RitsuLib.Data.Models
         /// </summary>
         [JsonPropertyName("card_png_export_include_hidden_from_library")]
         public bool CardPngExportIncludeHiddenFromLibrary { get; set; }
+
+        /// <summary>
+        ///     Output directory for relic inspect detail PNG export.
+        /// </summary>
+        [JsonPropertyName("relic_detail_png_export_output_path")]
+        public string RelicDetailPngExportOutputPath { get; set; } = "";
+
+        /// <summary>
+        ///     Render scale for relic detail export.
+        /// </summary>
+        [JsonPropertyName("relic_detail_png_export_scale")]
+        public double RelicDetailPngExportScale { get; set; } = 1d;
+
+        /// <summary>
+        ///     Optional <c>ModelId.Entry</c> substring for relic detail export; empty = all.
+        /// </summary>
+        [JsonPropertyName("relic_detail_png_export_id_filter")]
+        public string RelicDetailPngExportIdFilter { get; set; } = "";
+
+        /// <summary>
+        ///     When true, relic detail export includes the right-hand hover column.
+        /// </summary>
+        [JsonPropertyName("relic_detail_png_export_include_hover")]
+        public bool RelicDetailPngExportIncludeHover { get; set; } = true;
+
+        /// <summary>
+        ///     Output directory for potion lab focus detail PNG export.
+        /// </summary>
+        [JsonPropertyName("potion_detail_png_export_output_path")]
+        public string PotionDetailPngExportOutputPath { get; set; } = "";
+
+        /// <summary>
+        ///     Render scale for potion detail export.
+        /// </summary>
+        [JsonPropertyName("potion_detail_png_export_scale")]
+        public double PotionDetailPngExportScale { get; set; } = 1d;
+
+        /// <summary>
+        ///     Optional <c>ModelId.Entry</c> substring for potion detail export; empty = all.
+        /// </summary>
+        [JsonPropertyName("potion_detail_png_export_id_filter")]
+        public string PotionDetailPngExportIdFilter { get; set; } = "";
+
+        /// <summary>
+        ///     Active shell theme id (e.g. <c>default</c>).
+        /// </summary>
+        [JsonPropertyName("ui_shell_theme_id")]
+        public string UiShellThemeId { get; set; } = "default";
+
+        /// <summary>
+        ///     Enables global non-blocking toast notifications.
+        /// </summary>
+        [JsonPropertyName("toast_enabled")]
+        public bool ToastEnabled { get; set; } = true;
+
+        /// <summary>
+        ///     3x3 anchor id for toast placement (<c>topright</c>, <c>middlecenter</c>, etc.).
+        /// </summary>
+        [JsonPropertyName("toast_anchor")]
+        public string ToastAnchor { get; set; } = "topright";
+
+        /// <summary>
+        ///     Horizontal offset from the selected anchor in pixels.
+        /// </summary>
+        [JsonPropertyName("toast_offset_x")]
+        public double ToastOffsetX { get; set; } = -24d;
+
+        /// <summary>
+        ///     Vertical offset from the selected anchor in pixels.
+        /// </summary>
+        [JsonPropertyName("toast_offset_y")]
+        public double ToastOffsetY { get; set; } = 24d;
+
+        /// <summary>
+        ///     Maximum number of toasts visible at once; overflow is queued.
+        /// </summary>
+        [JsonPropertyName("toast_max_visible")]
+        public int ToastMaxVisible { get; set; } = 3;
+
+        /// <summary>
+        ///     Default toast display duration (seconds) when requests do not override it.
+        /// </summary>
+        [JsonPropertyName("toast_duration_seconds")]
+        public double ToastDurationSeconds { get; set; } = 3.5d;
+
+        /// <summary>
+        ///     Default animation preset id (<c>fade</c>, <c>fadeslide</c>, <c>fadescale</c>).
+        /// </summary>
+        [JsonPropertyName("toast_animation")]
+        public string ToastAnimation { get; set; } = "fadeslide";
     }
 }

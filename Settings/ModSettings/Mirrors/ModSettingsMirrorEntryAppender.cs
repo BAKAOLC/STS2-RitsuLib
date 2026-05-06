@@ -10,13 +10,16 @@ namespace STS2RitsuLib.Settings
             {
                 case ModSettingsMirrorEntryKind.Header:
                     section.AddHeader(entry.Id, entry.Label, entry.Description);
+                    ApplyVisibility(section, entry);
                     return;
                 case ModSettingsMirrorEntryKind.Paragraph:
                     section.AddParagraph(entry.Id, entry.Label, entry.Description, entry.MaxBodyHeight);
+                    ApplyVisibility(section, entry);
                     return;
                 case ModSettingsMirrorEntryKind.Toggle:
                     section.AddToggle(entry.Id, entry.Label, (IModSettingsValueBinding<bool>)entry.Binding!,
                         entry.Description);
+                    ApplyVisibility(section, entry);
                     return;
                 case ModSettingsMirrorEntryKind.Slider:
                     switch (entry.Binding)
@@ -27,6 +30,7 @@ namespace STS2RitsuLib.Settings
                             section.AddSlider(entry.Id, entry.Label, doubleBinding, numeric.Min, numeric.Max,
                                 numeric.Step,
                                 numeric.FormatDouble, entry.Description);
+                            ApplyVisibility(section, entry);
                             return;
                         }
                         case IModSettingsValueBinding<float> floatBinding:
@@ -37,6 +41,7 @@ namespace STS2RitsuLib.Settings
                                 (float)numeric.Max,
                                 (float)numeric.Step, numeric.FormatFloat, entry.Description);
 #pragma warning restore CS0618
+                            ApplyVisibility(section, entry);
                             return;
                         }
                     }
@@ -51,6 +56,7 @@ namespace STS2RitsuLib.Settings
                         Math.Max(1, (int)Math.Round(numeric.Step)),
                         null,
                         entry.Description);
+                    ApplyVisibility(section, entry);
                     return;
                 }
                 case ModSettingsMirrorEntryKind.Choice:
@@ -59,33 +65,78 @@ namespace STS2RitsuLib.Settings
                             .Select(option => new ModSettingsChoiceOption<string>(option.Value, option.Label))
                             .ToArray(),
                         entry.Description, entry.ChoicePresentation);
+                    ApplyVisibility(section, entry);
                     return;
                 case ModSettingsMirrorEntryKind.EnumChoice:
                     AppendEnumChoice(section, entry);
+                    ApplyVisibility(section, entry);
                     return;
                 case ModSettingsMirrorEntryKind.Color:
                     section.AddColor(entry.Id, entry.Label, (IModSettingsValueBinding<string>)entry.Binding!,
                         entry.Description,
                         entry.EditAlpha, entry.EditIntensity);
+                    ApplyVisibility(section, entry);
                     return;
                 case ModSettingsMirrorEntryKind.String:
                     section.AddString(entry.Id, entry.Label, (IModSettingsValueBinding<string>)entry.Binding!,
                         entry.Placeholder,
                         entry.MaxLength, entry.Description, entry.ValidationVisual);
+                    ApplyVisibility(section, entry);
+                    return;
+                case ModSettingsMirrorEntryKind.MultilineString:
+                    section.AddMultilineString(entry.Id, entry.Label, (IModSettingsValueBinding<string>)entry.Binding!,
+                        entry.Placeholder, entry.MaxLength, entry.Description);
+                    ApplyVisibility(section, entry);
                     return;
                 case ModSettingsMirrorEntryKind.KeyBinding:
                     section.AddKeyBinding(entry.Id, entry.Label, (IModSettingsValueBinding<string>)entry.Binding!,
                         entry.AllowModifierCombos, entry.AllowModifierOnly, entry.DistinguishModifierSides,
                         entry.Description);
+                    ApplyVisibility(section, entry);
+                    return;
+                case ModSettingsMirrorEntryKind.MultiKeyBinding:
+                    section.AddKeyBinding(entry.Id, entry.Label, (IModSettingsValueBinding<List<string>>)entry.Binding!,
+                        true, entry.AllowModifierCombos, entry.AllowModifierOnly, entry.DistinguishModifierSides,
+                        entry.Description);
+                    ApplyVisibility(section, entry);
+                    return;
+                case ModSettingsMirrorEntryKind.InfoCard:
+                    section.AddInfoCard(entry.Id, entry.Label, entry.Body ?? ModSettingsText.Literal(string.Empty),
+                        entry.Description);
+                    ApplyVisibility(section, entry);
+                    return;
+                case ModSettingsMirrorEntryKind.RuntimeHotkeySummary:
+                    section.AddRuntimeHotkeySummary(entry.Id, entry.Label,
+                        entry.Body ?? ModSettingsText.Literal(string.Empty),
+                        entry.HotkeyBindings ?? [ModSettingsText.Literal(string.Empty)],
+                        entry.HotkeyIdSuffix);
+                    ApplyVisibility(section, entry);
+                    return;
+                case ModSettingsMirrorEntryKind.Image:
+                    section.AddImage(entry.Id, entry.Label, entry.TextureProvider!, entry.PreviewHeight,
+                        entry.Description);
+                    ApplyVisibility(section, entry);
                     return;
                 case ModSettingsMirrorEntryKind.Button:
                     section.AddButton(entry.Id, entry.Label, entry.ButtonLabel ?? entry.Label, entry.OnClick!,
                         entry.ButtonTone,
                         entry.Description);
+                    ApplyVisibility(section, entry);
+                    return;
+                case ModSettingsMirrorEntryKind.HostContextButton:
+                    section.AddButton(entry.Id, entry.Label, entry.ButtonLabel ?? entry.Label,
+                        entry.HostContextOnClick!, entry.ButtonTone,
+                        entry.Description);
+                    ApplyVisibility(section, entry);
                     return;
                 case ModSettingsMirrorEntryKind.Subpage:
                     section.AddSubpage(entry.Id, entry.Label, entry.TargetPageId!, entry.ButtonLabel,
                         entry.Description);
+                    ApplyVisibility(section, entry);
+                    return;
+                case ModSettingsMirrorEntryKind.Custom:
+                    section.AddCustom(entry.Id, entry.Label, entry.CustomControlFactory!, entry.Description,
+                        entry.VisibleWhen);
                     return;
             }
 
@@ -116,6 +167,12 @@ namespace STS2RitsuLib.Settings
             section.AddEnumChoice(entry.Id, entry.Label, (IModSettingsValueBinding<TEnum>)entry.Binding!, null,
                 entry.Description,
                 entry.ChoicePresentation);
+        }
+
+        private static void ApplyVisibility(ModSettingsSectionBuilder section, ModSettingsMirrorEntryDefinition entry)
+        {
+            if (entry.VisibleWhen != null)
+                section.WithEntryVisibleWhen(entry.Id, entry.VisibleWhen);
         }
     }
 }

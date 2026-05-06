@@ -2,7 +2,6 @@ using Godot;
 using HarmonyLib;
 using MegaCrit.Sts2.Core.Context;
 using MegaCrit.Sts2.Core.Entities.Players;
-using MegaCrit.Sts2.Core.Helpers;
 using MegaCrit.Sts2.Core.Nodes.Rooms;
 using MegaCrit.Sts2.Core.Nodes.Screens.Shops;
 using STS2RitsuLib.Patching.Models;
@@ -79,8 +78,8 @@ namespace STS2RitsuLib.Scaffolding.Characters.Patches
                         ModWorldSceneVisualNodeFactory.TryInstantiateMerchantCharacter(player.Character)
                         ?? RitsuGodotNodeFactories.CreateFromScenePath<NMerchantCharacter>(
                             player.Character.MerchantAnimPath, PackedScene.GenEditState.Disabled);
-                    characterContainer.AddChildSafely(nMerchantCharacter);
-                    characterContainer.MoveChild(nMerchantCharacter, 0);
+                    RitsuGodotTreeCompat.AddChildSafely(characterContainer, nMerchantCharacter);
+                    RitsuGodotTreeCompat.MoveChildSafely(characterContainer, nMerchantCharacter, 0);
                     nMerchantCharacter.Position = new(num2, -50f * i);
                     if (i > 0)
                         nMerchantCharacter.Modulate = new(0.5f, 0.5f, 0.5f);

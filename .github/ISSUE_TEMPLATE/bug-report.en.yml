@@ -1,0 +1,87 @@
+name: "[EN] Bug report"
+description: Report a problem in RitsuLib.
+title: "[Bug] "
+labels:
+  - "type/bug"
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for taking the time to report a bug.
+
+        Please include logs and minimal reproduction steps. If this is about STS2 API changes, include the game build/version.
+  - type: dropdown
+    id: area
+    attributes:
+      label: Area
+      description: Where does the issue happen?
+      options:
+        - Combat
+        - Cards
+        - Powers
+        - Relics
+        - UI
+        - Localization
+        - Build/CI
+        - Docs
+        - Other
+    validations:
+      required: true
+  - type: dropdown
+    id: severity
+    attributes:
+      label: Severity
+      options:
+        - Crash
+        - Broken feature
+        - Regression
+        - Minor
+    validations:
+      required: true
+  - type: textarea
+    id: what-happened
+    attributes:
+      label: What happened?
+      description: A clear and concise description.
+    validations:
+      required: true
+  - type: textarea
+    id: repro
+    attributes:
+      label: Steps to reproduce
+      description: Minimal steps that reproduce the issue.
+      placeholder: |
+        1. ...
+        2. ...
+        3. ...
+    validations:
+      required: true
+  - type: textarea
+    id: expected
+    attributes:
+      label: Expected behavior
+    validations:
+      required: false
+  - type: textarea
+    id: logs
+    attributes:
+      label: Logs / stack trace
+      description: Paste relevant logs. If available, include `%AppData%\SlayTheSpire2\logs\godot.log`.
+      render: shell
+    validations:
+      required: false
+  - type: input
+    id: version
+    attributes:
+      label: RitsuLib version
+      placeholder: e.g. 0.3.0 / dev-build 9999.0.0-dev...
+    validations:
+      required: false
+  - type: input
+    id: env
+    attributes:
+      label: Environment
+      description: OS / game version / mod loader.
+      placeholder: Windows 11, STS2 build xxxx, etc.
+    validations:
+      required: false

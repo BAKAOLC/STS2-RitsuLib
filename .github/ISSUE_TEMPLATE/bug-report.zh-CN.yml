@@ -1,0 +1,87 @@
+name: "[CN] Bug 反馈"
+description: 反馈 RitsuLib 的问题。
+title: "[Bug] "
+labels:
+  - "type/bug"
+body:
+  - type: markdown
+    attributes:
+      value: |
+        感谢反馈问题。
+
+        请尽量提供日志与最小复现步骤；若与 STS2 API 变更相关，请附带游戏版本/构建号。
+  - type: dropdown
+    id: area
+    attributes:
+      label: 模块范围
+      description: 问题发生在哪个模块？
+      options:
+        - Combat（战斗）
+        - Cards（卡牌）
+        - Powers（能力）
+        - Relics（遗物）
+        - UI
+        - Localization（本地化）
+        - Build/CI（构建/CI）
+        - Docs（文档）
+        - Other（其他）
+    validations:
+      required: true
+  - type: dropdown
+    id: severity
+    attributes:
+      label: 严重程度
+      options:
+        - Crash（崩溃）
+        - Broken feature（功能不可用）
+        - Regression（回归）
+        - Minor（轻微）
+    validations:
+      required: true
+  - type: textarea
+    id: what-happened
+    attributes:
+      label: 发生了什么？
+      description: 清晰描述问题现象。
+    validations:
+      required: true
+  - type: textarea
+    id: repro
+    attributes:
+      label: 复现步骤
+      description: 以“最小复现”为目标。
+      placeholder: |
+        1. ...
+        2. ...
+        3. ...
+    validations:
+      required: true
+  - type: textarea
+    id: expected
+    attributes:
+      label: 期望行为
+    validations:
+      required: false
+  - type: textarea
+    id: logs
+    attributes:
+      label: 日志 / 堆栈
+      description: 粘贴相关日志。若可用，请附 `%AppData%\SlayTheSpire2\logs\godot.log` 片段。
+      render: shell
+    validations:
+      required: false
+  - type: input
+    id: version
+    attributes:
+      label: RitsuLib 版本
+      placeholder: 例如 0.3.0 / dev-build 9999.0.0-dev...
+    validations:
+      required: false
+  - type: input
+    id: env
+    attributes:
+      label: 运行环境
+      description: 系统 / 游戏版本 / 模组加载器等。
+      placeholder: Windows 11，STS2 build xxxx 等
+    validations:
+      required: false

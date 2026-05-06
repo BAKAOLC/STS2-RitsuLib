@@ -21,6 +21,23 @@ namespace STS2RitsuLib.Combat.HealthBars
     }
 
     /// <summary>
+    ///     How <see cref="HealthBarForecastGrowthDirection.FromLeft" /> segments share the empty-edge origin.
+    /// </summary>
+    public enum HealthBarForecastLeftOriginLayout
+    {
+        /// <summary>
+        ///     Segments connect end-to-end from the empty edge (legacy layout).
+        /// </summary>
+        Chained = 0,
+
+        /// <summary>
+        ///     Each segment spans from the empty edge by its own <c>Amount</c> (capped to remaining HP). Larger
+        ///     <c>Amount</c> is drawn behind; smaller in front. Equal widths rotate front/back on a timer.
+        /// </summary>
+        OverlapFromOrigin = 1,
+    }
+
+    /// <summary>
     ///     One forecast overlay segment for a creature health bar.
     /// </summary>
     /// <param name="Amount">HP amount represented by this segment.</param>
@@ -43,13 +60,25 @@ namespace STS2RitsuLib.Combat.HealthBars
     ///     used
     ///     for both overlay tint and lethal HP label; when set, <see cref="Color" /> is still used for lethal label theming.
     /// </param>
+    /// <param name="LeftOriginLayout">
+    ///     For <see cref="HealthBarForecastGrowthDirection.FromLeft" /> only:
+    ///     <see cref="HealthBarForecastLeftOriginLayout.Chained" />
+    ///     or <see cref="HealthBarForecastLeftOriginLayout.OverlapFromOrigin" />. Ignored for
+    ///     <see cref="HealthBarForecastGrowthDirection.FromRight" />.
+    /// </param>
+    /// <param name="LeftExclusiveZGroup">
+    ///     For <see cref="HealthBarForecastLeftOriginLayout.OverlapFromOrigin" />: larger values draw above smaller values.
+    ///     Within the same group, longer strips sit behind shorter strips; equal widths rotate.
+    /// </param>
     public readonly record struct HealthBarForecastSegment(
         int Amount,
         Color Color,
         HealthBarForecastGrowthDirection Direction,
         int Order,
         Material? OverlayMaterial,
-        Color? OverlaySelfModulate = null)
+        Color? OverlaySelfModulate = null,
+        HealthBarForecastLeftOriginLayout LeftOriginLayout = HealthBarForecastLeftOriginLayout.Chained,
+        int LeftExclusiveZGroup = 0)
     {
         /// <summary>
         ///     Initializes a segment without overlay material or separate overlay modulate.

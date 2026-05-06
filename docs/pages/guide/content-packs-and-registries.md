@@ -18,6 +18,7 @@ It covers:
 - when to use builder steps, manifests, direct registry access, or optional CLR attributes
 - how fixed model identity and ModelDb integration relate to registration
 - generated placeholders for cards/relics/potions (API, ordering, and risks)
+- mod-owned card piles and top-bar buttons (`ModCardPileRegistry` / `ModTopBarButtonRegistry`, same mod id)
 
 ---
 
@@ -36,6 +37,7 @@ It covers:
 - 什么时候该用链式构建器、清单条目、直接调用注册器，或可选的 CLR 特性
 - 固定模型身份与 ModelDb 集成是怎样建立在注册之上的
 - 生成式占位（卡牌 / 遗物 / 药水）的 API、顺序与风险说明
+- Mod 自有卡牌堆与顶栏按钮（`ModCardPileRegistry` / `ModTopBarButtonRegistry`，同一 mod id）
 
 ---
 
@@ -51,6 +53,8 @@ RitsuLib keeps registration responsibilities split by concern:
 |---|---|
 | `ModContentRegistry` | Register models: characters, acts, pool-bound cards/relics/potions, powers, orbs, enchantments, afflictions, achievements, singletons, good/bad daily modifiers, shared card/relic/potion pools, events, ancients, monsters, and generated placeholders |
 | `ModKeywordRegistry` | Register reusable keyword definitions |
+| `ModCardPileRegistry` | Register mod-owned card piles (combat/run UI piles, hover tips via `static_hover_tips` keys tied to the qualified pile id) |
+| `ModTopBarButtonRegistry` | Register mod-owned top-bar buttons next to the vanilla deck control (hover tips via `static_hover_tips` keys tied to the qualified button id) |
 | `ModTimelineRegistry` | Register stories and epochs |
 | `ModUnlockRegistry` | Register epoch requirements and progression rules |
 
@@ -70,6 +74,8 @@ RitsuLib 按职责拆分了几类注册器：
 |---|---|
 | `ModContentRegistry` | 注册角色、Act、池内卡牌/遗物/药水、能力、球体、附魔（Enchantment）、苦难（Affliction）、成就、单例、好/坏每日修正、共享卡/遗物/药水池、事件、Ancient、怪物及生成式占位等模型 |
 | `ModKeywordRegistry` | 注册可复用关键词定义 |
+| `ModCardPileRegistry` | 注册 Mod 自有卡牌堆（战斗/跑图 UI 卡牌堆；悬浮提示通过 `static_hover_tips`，key 绑定到该卡牌堆的 qualified id） |
+| `ModTopBarButtonRegistry` | 注册 Mod 自有顶栏按钮（放在原版“牌组按钮”旁；悬浮提示通过 `static_hover_tips`，key 绑定到该按钮的 qualified id） |
 | `ModTimelineRegistry` | 注册 `Story` 与 `Epoch` |
 | `ModUnlockRegistry` | 注册纪元门槛与进度解锁规则 |
 
@@ -150,7 +156,11 @@ RitsuLibFramework.CreateContentPack("MyMod")
 - `Timeline`
 - `Unlocks`
 
-That means the fluent builder can be your main registration path, while still letting you access the raw registries afterward.
+`CreateContentPack(modId)` batches the **four** registries exposed on `ModContentPackContext` (`Content`, `Keywords`, `Timeline`, `Unlocks`). Card piles and top-bar buttons are registered through `ModCardPileRegistry.For(modId)` and `ModTopBarButtonRegistry.For(modId)` (or optional CLR attributes under `STS2RitsuLib.Interop.AutoRegistration`) — same mod id, but not properties on `ModContentPackContext`.
+
+`ModCardPileRegistry` and `ModTopBarButtonRegistry` are **not** on this struct; call `ModCardPileRegistry.For(ctx.ModId)` / `ModTopBarButtonRegistry.For(ctx.ModId)` inside a `Custom(...)` step (or register piles/buttons from your initializer) when you need them.
+
+That means the fluent builder can be your main registration path for model/keyword/timeline/unlock work, while still letting you access every registry afterward.
 
 ---
 
@@ -167,7 +177,11 @@ That means the fluent builder can be your main registration path, while still le
 - `Timeline`
 - `Unlocks`
 
-也就是说，构建器可以作为主要入口，同时你在需要时仍然可以拿到原始注册器继续操作。
+`CreateContentPack(modId)` 本质上只批量协调 `ModContentPackContext` 暴露的 **四个** 注册入口（`Content`、`Keywords`、`Timeline`、`Unlocks`）。卡牌堆与顶栏按钮需要通过 `ModCardPileRegistry.For(modId)` / `ModTopBarButtonRegistry.For(modId)`（或 `STS2RitsuLib.Interop.AutoRegistration` 下的可选 CLR 特性）来注册——同一个 mod id，但不在 `ModContentPackContext` 结构体内。
+
+`ModCardPileRegistry` 与 `ModTopBarButtonRegistry` **不在** 该结构体上；需要时请在 `Custom(...)` 步骤里调用 `ModCardPileRegistry.For(ctx.ModId)` / `ModTopBarButtonRegistry.For(ctx.ModId)`（或在初始化器中直接注册卡牌堆/按钮）。
+
+也就是说，构建器可以作为主要入口，同时你在需要时仍然可以拿到各个注册器继续操作。
 
 ---
 

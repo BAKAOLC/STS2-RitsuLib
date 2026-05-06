@@ -1,3 +1,4 @@
+using HarmonyLib;
 using MegaCrit.Sts2.Core.Models;
 using STS2RitsuLib.Patching.Models;
 
@@ -16,7 +17,7 @@ namespace STS2RitsuLib.Scaffolding.Cards.HandGlow.Patches
 
         public static ModPatchTarget[] GetTargets()
         {
-            return [new(typeof(CardModel), "get_ShouldGlowRed", true)];
+            return [new(typeof(CardModel), "ShouldGlowRed", null, true, MethodType.Getter)];
         }
 
         // ReSharper disable InconsistentNaming

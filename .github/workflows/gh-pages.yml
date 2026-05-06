@@ -4,6 +4,9 @@ on:
   push:
     branches:
       - main
+    paths:
+      - "docs/**"
+      - ".github/workflows/gh-pages.yml"
 
 jobs:
   build:

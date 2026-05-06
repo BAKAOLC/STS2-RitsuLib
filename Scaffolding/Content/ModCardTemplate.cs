@@ -1,6 +1,9 @@
+using Godot;
 using MegaCrit.Sts2.Core.Entities.Cards;
 using MegaCrit.Sts2.Core.HoverTips;
 using MegaCrit.Sts2.Core.Models;
+using STS2RitsuLib.CardTags;
+using STS2RitsuLib.Content;
 using STS2RitsuLib.Keywords;
 using STS2RitsuLib.Scaffolding.Cards.HandGlow;
 using STS2RitsuLib.Scaffolding.Cards.HandOutline;
@@ -22,7 +25,8 @@ namespace STS2RitsuLib.Scaffolding.Content
         CardRarity rarity,
         TargetType target,
         bool showInCardLibrary = true)
-        : CardModel(baseCost, type, rarity, target, showInCardLibrary), IModCardAssetOverrides
+        : CardModel(baseCost, type, rarity, target, showInCardLibrary), IModCardAssetOverrides,
+            IModCardFrameMaterialOverride, IModCardBannerMaterialOverride
     {
         /// <summary>
         ///     Legacy constructor overload; <paramref name="autoAdd" /> is ignored.
@@ -50,9 +54,12 @@ namespace STS2RitsuLib.Scaffolding.Content
         protected virtual IEnumerable<string> RegisteredKeywordIds => [];
 
         /// <summary>
-        ///     Internal accessor for the mod-keyword seeding patch.
+        ///     Mod card tag ids (qualified via <see cref="ModContentRegistry.GetQualifiedCardTagId" /> or any id
+        ///     registered in <see cref="ModCardTagRegistry" />) seeded onto every instance when
+        ///     <see cref="CardModel.Tags" /> is first materialized. Each id resolves to a minted
+        ///     <see cref="CardTag" /> and is unioned into the same backing set as <see cref="CardModel.CanonicalTags" />.
         /// </summary>
-        internal IEnumerable<string> EnumerateRegisteredKeywordIds() => RegisteredKeywordIds;
+        protected virtual IEnumerable<string> RegisteredCardTagIds => [];
 
         /// <summary>
         ///     Extra hover tips appended after keyword-derived tips.
@@ -91,5 +98,27 @@ namespace STS2RitsuLib.Scaffolding.Content
 
         /// <inheritdoc />
         public virtual string? CustomBannerMaterialPath => AssetProfile.BannerMaterialPath;
+
+        /// <inheritdoc />
+        public virtual Material? CustomBannerMaterial => AssetProfile.BannerMaterial;
+
+        /// <inheritdoc />
+        public virtual Material? CustomFrameMaterial => AssetProfile.FrameMaterial;
+
+        /// <summary>
+        ///     Internal accessor for the mod-keyword seeding patch.
+        /// </summary>
+        internal IEnumerable<string> EnumerateRegisteredKeywordIds()
+        {
+            return RegisteredKeywordIds;
+        }
+
+        /// <summary>
+        ///     Internal accessor for the mod card-tag seeding patch.
+        /// </summary>
+        internal IEnumerable<string> EnumerateRegisteredCardTagIds()
+        {
+            return RegisteredCardTagIds;
+        }
     }
 }

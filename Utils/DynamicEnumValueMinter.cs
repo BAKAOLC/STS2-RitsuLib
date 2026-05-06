@@ -7,7 +7,7 @@ namespace STS2RitsuLib.Utils
     /// <summary>
     ///     Deterministically mints 32-bit integer values for string ids and casts them into the target
     ///     <typeparamref name="TEnum" />. Intended for safely extending vanilla enums (such as
-    ///     <c>CardKeyword</c>, a future <c>CardPile</c>, etc.) with mod-defined members without ever colliding
+    ///     <c>CardKeyword</c>, <c>CardPile</c>, <c>CardTag</c>, etc.) with mod-defined members without ever colliding
     ///     with low vanilla enum members: minted values are forced into a reserved high-value band above
     ///     <see cref="ReservedFloor" />, leaving the low range untouched for vanilla.
     /// </summary>

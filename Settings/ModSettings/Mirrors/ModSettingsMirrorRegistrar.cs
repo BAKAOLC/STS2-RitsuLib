@@ -2,7 +2,8 @@ namespace STS2RitsuLib.Settings
 {
     internal static class ModSettingsMirrorRegistrar
     {
-        public static bool TryRegister(ModSettingsMirrorPageDefinition page)
+        public static bool TryRegister(ModSettingsMirrorPageDefinition page, ModSettingsMirrorSource source,
+            bool hasStableExternalSync = false)
         {
             if (ModSettingsRegistry.TryGetPage(page.ModId, page.PageId, out _))
                 return false;
@@ -33,6 +34,10 @@ namespace STS2RitsuLib.Settings
                                 section.WithTitle(sectionDefinition.Title);
                             if (sectionDefinition.Description != null)
                                 section.WithDescription(sectionDefinition.Description);
+                            if (sectionDefinition.IsCollapsible)
+                                section.Collapsible(sectionDefinition.StartCollapsed);
+                            if (sectionDefinition.VisibleWhen != null)
+                                section.WithVisibleWhen(sectionDefinition.VisibleWhen);
 
                             foreach (var entry in sectionDefinition.Entries)
                                 ModSettingsMirrorEntryAppender.Append(section, entry);
@@ -42,6 +47,8 @@ namespace STS2RitsuLib.Settings
                         });
                     }
                 }, page.PageId);
+                ModSettingsMirrorSyncPolicyRegistry.RegisterPage(page.ModId, page.PageId, source,
+                    hasStableExternalSync);
 
                 return true;
             }

@@ -163,12 +163,13 @@ namespace STS2RitsuLib.Scaffolding.Content
     }
 
     /// <summary>
-    ///     Runtime non-Spine <see cref="ModAnimStateMachine" /> factory for any combat creature model (player
-    ///     characters, monsters, or any other <see cref="AbstractModel" />) whose visuals are driven without a
-    ///     Spine skeleton. Implementers bind a state machine to the supplied visuals root using any
-    ///     <see cref="IAnimationBackend" />-backed driver (cue frame sequences, cue textures, Godot
-    ///     <see cref="AnimationPlayer" />, <see cref="AnimatedSprite2D" />, or a
-    ///     <see cref="STS2RitsuLib.Scaffolding.Visuals.StateMachine.Backends.CompositeAnimationBackend" />).
+    ///     Runtime combat <see cref="ModAnimStateMachine" /> factory for any creature model (player characters,
+    ///     monsters, or other <see cref="AbstractModel" />) whose <see cref="NCreature.SetAnimationTrigger" /> flow
+    ///     should be routed through <see cref="ModAnimStateMachine.SetTrigger" /> instead of (or in addition to) the
+    ///     vanilla <see cref="MegaCrit.Sts2.Core.Animation.CreatureAnimator" /> path. Works for non-Spine backends
+    ///     (cue frames, Godot <see cref="AnimationPlayer" />, <see cref="AnimatedSprite2D" />, composite) and for
+    ///     Spine when the machine is built over <see cref="MegaCrit.Sts2.Core.Bindings.MegaSpine.MegaSprite" /> (for
+    ///     example <see cref="STS2RitsuLib.Scaffolding.Visuals.StateMachine.ModAnimStateMachineBuilder.BuildSpine" />).
     /// </summary>
     /// <remarks>
     ///     <para>
@@ -176,7 +177,7 @@ namespace STS2RitsuLib.Scaffolding.Content
     ///         <see cref="STS2RitsuLib.Scaffolding.Characters.ModCharacterTemplate{TCardPool,TRelicPool,TPotionPool}" />
     ///         or <see cref="ModMonsterTemplate" />, but the templates are convenience. The contract is opt-in via the
     ///         interface itself: any model type implementing this interface is routed through
-    ///         <see cref="STS2RitsuLib.Scaffolding.Characters.Patches.ModCreatureNonSpineAnimationPlaybackPatch" /> —
+    ///         <see cref="STS2RitsuLib.Scaffolding.Characters.Patches.ModCreatureCombatAnimationPlaybackPatch" /> —
     ///         template subclassing is <b>not</b> required.
     ///     </para>
     ///     <para>
@@ -184,15 +185,32 @@ namespace STS2RitsuLib.Scaffolding.Content
     ///         dispatch to a Spine animator (<c>Idle</c>, <c>Attack</c>, <c>Cast</c>, <c>Hit</c>, <c>Dead</c>,
     ///         <c>Revive</c>, …).
     ///     </para>
+    ///     <para>
+    ///         When this factory returns non-null for a Spine-backed creature, the routing patch consumes
+    ///         <see cref="NCreature.SetAnimationTrigger" /> before the vanilla <c>_spineAnimator</c> path runs; keep
+    ///         <see cref="MegaCrit.Sts2.Core.Animation.CreatureAnimator.HasTrigger" /> in sync for <c>Revive</c> if you
+    ///         rely on vanilla <see cref="NCreature.StartReviveAnim" /> gating, or rely on the RitsuLib revive postfix
+    ///         when the animator does not declare <c>Revive</c>.
+    ///     </para>
     /// </remarks>
-    public interface IModNonSpineAnimationStateMachineFactory
+    public interface IModCreatureCombatAnimationStateMachineFactory
     {
         /// <summary>
         ///     Builds a state machine bound to <paramref name="visualsRoot" />, or <see langword="null" /> to defer
-        ///     to the single-shot cue playback path. Called at most once per combat visuals lifetime (cached by the
-        ///     routing patch via a <see cref="ConditionalWeakTable{TKey,TValue}" /> keyed on <paramref name="visualsRoot" />).
+        ///     to vanilla Spine <see cref="MegaCrit.Sts2.Core.Animation.CreatureAnimator" /> triggers or, when there is
+        ///     no Spine animator, to the single-shot cue playback path. Called at most once per combat visuals lifetime
+        ///     (cached by the routing patch via a <see cref="ConditionalWeakTable{TKey,TValue}" /> keyed on
+        ///     <paramref name="visualsRoot" />).
         /// </summary>
         /// <param name="visualsRoot">Combat visuals root (typically an <see cref="NCreatureVisuals" />).</param>
+        ModAnimStateMachine? TryCreateCombatAnimationStateMachine(Node visualsRoot);
+    }
+
+    /// <inheritdoc cref="IModCreatureCombatAnimationStateMachineFactory" />
+    [Obsolete("Use IModCreatureCombatAnimationStateMachineFactory and TryCreateCombatAnimationStateMachine.")]
+    public interface IModNonSpineAnimationStateMachineFactory
+    {
+        /// <inheritdoc cref="IModCreatureCombatAnimationStateMachineFactory.TryCreateCombatAnimationStateMachine" />
         ModAnimStateMachine? TryCreateNonSpineAnimationStateMachine(Node visualsRoot);
     }
 

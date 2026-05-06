@@ -75,7 +75,10 @@ namespace STS2RitsuLib.Relics
             Type[] types;
             lock (Sync)
             {
-                types = TranscendenceAncientTypeByStarter.Values.Distinct().ToArray();
+                types = TranscendenceAncientTypeByStarter.Values
+                    .Distinct()
+                    .OrderBy(static t => t.FullName ?? t.Name, StringComparer.Ordinal)
+                    .ToArray();
             }
 
             var seen = new HashSet<ModelId>();

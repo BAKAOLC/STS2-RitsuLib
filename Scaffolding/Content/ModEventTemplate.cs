@@ -1,5 +1,6 @@
 using Godot;
 using MegaCrit.Sts2.Core.Events;
+using MegaCrit.Sts2.Core.Localization;
 using MegaCrit.Sts2.Core.Models;
 using STS2RitsuLib.Scaffolding.Content.Patches;
 
@@ -92,6 +93,14 @@ namespace STS2RitsuLib.Scaffolding.Content
         protected new string InitialOptionKey(string optionName)
         {
             return ModOptionKey("INITIAL", optionName);
+        }
+
+        /// <summary>
+        ///     Gets the localized description for a page.
+        /// </summary>
+        protected LocString PageDescription(string pageName)
+        {
+            return L10NLookup($"{Id.Entry}.pages.{pageName}.description");
         }
 
         /// <summary>

@@ -1,0 +1,52 @@
+name: "[CN] 功能请求 / 提议"
+description: 提议改进或新增能力。
+title: "[Feature] "
+labels:
+  - "type/feature"
+body:
+  - type: markdown
+    attributes:
+      value: |
+        请描述你要解决的实际问题，以及你认为“好用”的解决方案是什么样的（API / 行为 / 约束）。
+  - type: dropdown
+    id: area
+    attributes:
+      label: 模块范围
+      options:
+        - Combat（战斗）
+        - Cards（卡牌）
+        - Powers（能力）
+        - Relics（遗物）
+        - UI
+        - Localization（本地化）
+        - Build/CI（构建/CI）
+        - Docs（文档）
+        - Other（其他）
+    validations:
+      required: true
+  - type: textarea
+    id: motivation
+    attributes:
+      label: 动机 / 使用场景
+      description: 你想达成什么目标？
+    validations:
+      required: true
+  - type: textarea
+    id: proposal
+    attributes:
+      label: 方案设想
+      description: 描述你希望的 API/行为。
+    validations:
+      required: true
+  - type: textarea
+    id: alternatives
+    attributes:
+      label: 替代方案
+    validations:
+      required: false
+  - type: textarea
+    id: additional
+    attributes:
+      label: 其他补充
+    validations:
+      required: false

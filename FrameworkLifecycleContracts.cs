@@ -81,6 +81,24 @@ namespace STS2RitsuLib
         }
     }
 
+    internal sealed class LifecycleSubscriptionHolder
+    {
+        public IDisposable Subscription { get; set; } = null!;
+    }
+
+    internal sealed class DelegateLifecycleObserverWithSubscription<TEvent>(
+        Action<TEvent, IDisposable> handler,
+        LifecycleSubscriptionHolder holder
+    ) : ILifecycleObserver
+        where TEvent : IFrameworkLifecycleEvent
+    {
+        public void OnEvent(IFrameworkLifecycleEvent evt)
+        {
+            if (evt is TEvent typedEvent)
+                handler(typedEvent, holder.Subscription);
+        }
+    }
+
     internal sealed class FrameworkLifecycleSubscription(Action unsubscribe) : IDisposable
     {
         private bool _disposed;

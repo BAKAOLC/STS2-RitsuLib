@@ -2,8 +2,10 @@ using MegaCrit.Sts2.Core.Models;
 using MegaCrit.Sts2.Core.Models.Relics;
 using STS2RitsuLib.Combat.HealthBars;
 using STS2RitsuLib.Content;
+using STS2RitsuLib.Scaffolding.Ancients.Options;
 using STS2RitsuLib.Scaffolding.Cards.HandGlow;
 using STS2RitsuLib.Scaffolding.Cards.HandOutline;
+using STS2RitsuLib.Scaffolding.Characters;
 
 namespace STS2RitsuLib.Scaffolding.Content
 {
@@ -42,7 +44,17 @@ namespace STS2RitsuLib.Scaffolding.Content
         public CharacterRegistrationEntry<TCharacter> AddStartingCard<TCard>(int count = 1)
             where TCard : CardModel
         {
-            _starterRegistrations.Add(registry => registry.RegisterCharacterStarterCard<TCharacter, TCard>(count));
+            return AddStartingCard<TCard>(count, 0);
+        }
+
+        /// <summary>
+        ///     Appends starter-deck copies of <typeparamref name="TCard" /> when this character entry is registered.
+        /// </summary>
+        public CharacterRegistrationEntry<TCharacter> AddStartingCard<TCard>(int count, int order)
+            where TCard : CardModel
+        {
+            _starterRegistrations.Add(registry =>
+                registry.RegisterCharacterStarterCard<TCharacter, TCard>(count, order));
             return this;
         }
 
@@ -52,7 +64,17 @@ namespace STS2RitsuLib.Scaffolding.Content
         public CharacterRegistrationEntry<TCharacter> AddStartingRelic<TRelic>(int count = 1)
             where TRelic : RelicModel
         {
-            _starterRegistrations.Add(registry => registry.RegisterCharacterStarterRelic<TCharacter, TRelic>(count));
+            return AddStartingRelic<TRelic>(count, 0);
+        }
+
+        /// <summary>
+        ///     Appends starting relic copies of <typeparamref name="TRelic" /> when this character entry is registered.
+        /// </summary>
+        public CharacterRegistrationEntry<TCharacter> AddStartingRelic<TRelic>(int count, int order)
+            where TRelic : RelicModel
+        {
+            _starterRegistrations.Add(registry =>
+                registry.RegisterCharacterStarterRelic<TCharacter, TRelic>(count, order));
             return this;
         }
 
@@ -62,7 +84,17 @@ namespace STS2RitsuLib.Scaffolding.Content
         public CharacterRegistrationEntry<TCharacter> AddStartingPotion<TPotion>(int count = 1)
             where TPotion : PotionModel
         {
-            _starterRegistrations.Add(registry => registry.RegisterCharacterStarterPotion<TCharacter, TPotion>(count));
+            return AddStartingPotion<TPotion>(count, 0);
+        }
+
+        /// <summary>
+        ///     Appends starting potion copies of <typeparamref name="TPotion" /> when this character entry is registered.
+        /// </summary>
+        public CharacterRegistrationEntry<TCharacter> AddStartingPotion<TPotion>(int count, int order)
+            where TPotion : PotionModel
+        {
+            _starterRegistrations.Add(registry =>
+                registry.RegisterCharacterStarterPotion<TCharacter, TPotion>(count, order));
             return this;
         }
     }
@@ -70,45 +102,80 @@ namespace STS2RitsuLib.Scaffolding.Content
     /// <summary>
     ///     Registers additional starter-deck copies of a card for an already-known character type.
     /// </summary>
-    public sealed class CharacterStarterCardRegistrationEntry<TCharacter, TCard>(int count = 1)
+    public sealed class CharacterStarterCardRegistrationEntry<TCharacter, TCard>(int count, int order)
         : IContentRegistrationEntry
         where TCharacter : CharacterModel
         where TCard : CardModel
     {
+        /// <summary>
+        ///     Legacy overload for binary compatibility; forwards to the primary constructor with default order <c>0</c>.
+        /// </summary>
+        public CharacterStarterCardRegistrationEntry(int count = 1) : this(count, 0)
+        {
+        }
+
         /// <inheritdoc />
         public void Register(ModContentRegistry registry)
         {
-            registry.RegisterCharacterStarterCard<TCharacter, TCard>(count);
+            registry.RegisterCharacterStarterCard<TCharacter, TCard>(count, order);
         }
     }
 
     /// <summary>
     ///     Registers additional starting relic copies for an already-known character type.
     /// </summary>
-    public sealed class CharacterStarterRelicRegistrationEntry<TCharacter, TRelic>(int count = 1)
+    public sealed class CharacterStarterRelicRegistrationEntry<TCharacter, TRelic>(int count, int order)
         : IContentRegistrationEntry
         where TCharacter : CharacterModel
         where TRelic : RelicModel
     {
+        /// <summary>
+        ///     Legacy overload for binary compatibility; forwards to the primary constructor with default order <c>0</c>.
+        /// </summary>
+        public CharacterStarterRelicRegistrationEntry(int count = 1) : this(count, 0)
+        {
+        }
+
         /// <inheritdoc />
         public void Register(ModContentRegistry registry)
         {
-            registry.RegisterCharacterStarterRelic<TCharacter, TRelic>(count);
+            registry.RegisterCharacterStarterRelic<TCharacter, TRelic>(count, order);
         }
     }
 
     /// <summary>
     ///     Registers additional starting potion copies for an already-known character type.
     /// </summary>
-    public sealed class CharacterStarterPotionRegistrationEntry<TCharacter, TPotion>(int count = 1)
+    public sealed class CharacterStarterPotionRegistrationEntry<TCharacter, TPotion>(int count, int order)
         : IContentRegistrationEntry
         where TCharacter : CharacterModel
         where TPotion : PotionModel
     {
+        /// <summary>
+        ///     Legacy overload for binary compatibility; forwards to the primary constructor with default order <c>0</c>.
+        /// </summary>
+        public CharacterStarterPotionRegistrationEntry(int count = 1) : this(count, 0)
+        {
+        }
+
         /// <inheritdoc />
         public void Register(ModContentRegistry registry)
         {
-            registry.RegisterCharacterStarterPotion<TCharacter, TPotion>(count);
+            registry.RegisterCharacterStarterPotion<TCharacter, TPotion>(count, order);
+        }
+    }
+
+    /// <summary>
+    ///     Registers direct asset replacement for a target character id (vanilla or mod).
+    /// </summary>
+    public sealed class CharacterAssetReplacementRegistrationEntry(
+        string characterEntry,
+        CharacterAssetProfile assetProfile) : IContentRegistrationEntry
+    {
+        /// <inheritdoc />
+        public void Register(ModContentRegistry registry)
+        {
+            registry.RegisterCharacterAssetReplacement(characterEntry, assetProfile);
         }
     }
 
@@ -147,7 +214,7 @@ namespace STS2RitsuLib.Scaffolding.Content
     /// <summary>
     ///     Registers <see cref="ModCardHandGlowRegistry" /> rules for a card type (gold/red hand highlights).
     /// </summary>
-    /// <typeparam name="TCard">Concrete <see cref="CardModel" />.</typeparam>
+    /// <typeparam name="TCard"><see cref="CardModel" /> subtype.</typeparam>
     /// <param name="rules">Predicate rules; merged with <see cref="ModCardHandGlowRules.Or" /> if registered twice.</param>
     public sealed class CardHandGlowRegistrationEntry<TCard>(ModCardHandGlowRules rules) : IContentRegistrationEntry
         where TCard : CardModel
@@ -474,6 +541,19 @@ namespace STS2RitsuLib.Scaffolding.Content
         public void Register(ModContentRegistry registry)
         {
             registry.RegisterActAncient<TAct, TAncient>();
+        }
+    }
+
+    /// <summary>
+    ///     Registers extra initial-option injection rules for a specific ancient model type.
+    /// </summary>
+    public sealed class AncientOptionRegistrationEntry<TAncient>(ModAncientOptionRule rule) : IContentRegistrationEntry
+        where TAncient : AncientEventModel
+    {
+        /// <inheritdoc />
+        public void Register(ModContentRegistry registry)
+        {
+            registry.RegisterAncientOption<TAncient>(rule);
         }
     }
 

@@ -6,15 +6,17 @@ namespace STS2RitsuLib.Scaffolding.Godot.NodeFactories
     /// <summary>
     ///     Builds <see cref="NCreatureVisuals" /> from vanilla-style scenes or a <see cref="Texture2D" /> (Sprite2D body).
     ///     Non-Spine combat playback remains handled by <see cref="Characters.Visuals.ModCreatureVisualPlayback" />.
-    ///     Does not synthesize <c>%OrbPos</c> / <c>%TalkPos</c> when absent: <see cref="NCreatureVisuals" /> uses
-    ///     <c>IntentPos</c> and <c>null</c> for those, matching baselib <c>NCreatureVisualsFactory</c> and vanilla.
+    ///     Named slots match <c>NCreatureVisualsFactory</c>; missing <c>%OrbPos</c> / <c>%TalkPos</c> are not synthesized
+    ///     (same as baselib): <see cref="NCreatureVisuals" /> falls back to <c>IntentPos</c> / <c>null</c>.
     /// </summary>
     internal sealed class RitsuNCreatureVisualsNodeFactory() : RitsuGodotNodeFactory<NCreatureVisuals>([
         new RitsuGodotNodeSlot<Node2D>("%Visuals"),
         new RitsuGodotNodeSlot<Node2D>("%PhobiaModeVisuals"),
-        new RitsuGodotNodeSlot<Control>("Bounds", false),
+        new RitsuGodotNodeSlot<Control>("Bounds"),
         new RitsuGodotNodeSlot<Marker2D>("%CenterPos"),
-        new RitsuGodotNodeSlot<Marker2D>("IntentPos", false),
+        new RitsuGodotNodeSlot<Marker2D>("IntentPos"),
+        new RitsuGodotNodeSlot<Marker2D>("%OrbPos"),
+        new RitsuGodotNodeSlot<Marker2D>("%TalkPos"),
     ])
     {
         protected override NCreatureVisuals CreateBareFromResourceImpl(object resource)
@@ -75,12 +77,6 @@ namespace STS2RitsuLib.Scaffolding.Godot.NodeFactories
                     var center = new Marker2D();
                     target.AddUniqueChild(center, "CenterPos");
                     center.Position = bounds.Position + bounds.Size * new Vector2(0.5f, 0.6f);
-                    break;
-                }
-                case "%PhobiaModeVisuals":
-                {
-                    var phobia = new Node2D { Visible = false };
-                    target.AddUniqueChild(phobia, "PhobiaModeVisuals");
                     break;
                 }
                 case "%Visuals":
