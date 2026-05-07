@@ -191,6 +191,11 @@ namespace STS2RitsuLib.Combat.Ui.ExtraCornerAmountLabels
 
                 var live = entry.Label!;
                 applyHostStyle(live);
+                if (slot.FontColor is { } fontColor)
+                    live.AddThemeColorOverride(ThemeConstants.Label.FontColor, fontColor);
+                if (slot.FontOutlineColor is { } outlineColor)
+                    live.AddThemeColorOverride(ThemeConstants.Label.FontOutlineColor, outlineColor);
+
                 ExtraCornerHostLayout.ApplySlotAlignment(live, hostKind, in slot);
                 ExtraCornerHostLayout.ApplySlotBounds(live, hostKind, in slot);
                 live.SetTextAutoSize(slot.Text.Trim());

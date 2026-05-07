@@ -1,3 +1,4 @@
+using System.Runtime.CompilerServices;
 using MegaCrit.Sts2.Core.Entities.Players;
 using MegaCrit.Sts2.Core.Models;
 
@@ -9,6 +10,9 @@ namespace STS2RitsuLib.Combat.HandSize
     public static class MaxHandSizeCalculator
     {
         private const int DefaultMaxHandSize = 10;
+
+        private static readonly IEqualityComparer<IMaxHandSizeModifier> ModifierReferenceComparer =
+            new MaxHandSizeModifierReferenceComparer();
 
         /// <summary>
         ///     Calculates the effective max hand size for <paramref name="player" />.
@@ -53,7 +57,21 @@ namespace STS2RitsuLib.Combat.HandSize
 
             return combatState.IterateHookListeners()
                 .OfType<IMaxHandSizeModifier>()
+                .Distinct(ModifierReferenceComparer)
                 .ToArray();
+        }
+
+        private sealed class MaxHandSizeModifierReferenceComparer : IEqualityComparer<IMaxHandSizeModifier>
+        {
+            public bool Equals(IMaxHandSizeModifier? x, IMaxHandSizeModifier? y)
+            {
+                return ReferenceEquals(x, y);
+            }
+
+            public int GetHashCode(IMaxHandSizeModifier obj)
+            {
+                return RuntimeHelpers.GetHashCode(obj);
+            }
         }
     }
 }

@@ -116,6 +116,7 @@ Use the sidebar or the tables below. Guide pages are Markdown in this repo under
 | [Persistence guide](/guide/persistence-guide) | Store scopes, save lifecycle, migrations |
 | [FMOD & audio](/guide/fmod-and-audio) | `GameFmod`, banks, buses, streaming files |
 | [Diagnostics & compatibility](/guide/diagnostics-and-compatibility) | Diagnostics policy, fallbacks, bridge patches |
+| [Shell theme](/guide/shell-theme) | Settings UI theme tokens, scopes, and customization |
 
 :::
 
@@ -128,5 +129,6 @@ Use the sidebar or the tables below. Guide pages are Markdown in this repo under
 | [持久化设计](/guide/persistence-guide) | 存储作用域、存档生命周期与迁移 |
 | [FMOD 与音频](/guide/fmod-and-audio) | `GameFmod`、Bank、Bus、流式文件等 |
 | [诊断与兼容层](/guide/diagnostics-and-compatibility) | 诊断策略、兼容回退与桥接补丁 |
+| [Shell 主题](/guide/shell-theme) | 设置 UI 主题 token、scope 合并与自定义 |
 
 :::

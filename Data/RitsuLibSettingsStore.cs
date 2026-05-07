@@ -12,6 +12,7 @@ namespace STS2RitsuLib.Data
 
         private static readonly Lock InitLock = new();
         private static bool _initialized;
+        private static volatile bool _initializing;
 
         internal static void Initialize()
         {
@@ -19,6 +20,11 @@ namespace STS2RitsuLib.Data
             {
                 if (_initialized)
                     return;
+
+                if (_initializing)
+                    return;
+
+                _initializing = true;
 
                 using (RitsuLibFramework.BeginModDataRegistration(Const.ModId, false))
                 {
@@ -43,9 +49,16 @@ namespace STS2RitsuLib.Data
                         ]);
                 }
 
-                _initialized = true;
-                RitsuShellThemeRuntime.ApplyThemeId(GetSettings().UiShellThemeId);
-                LogConfigSnapshot();
+                try
+                {
+                    _initialized = true;
+                    RitsuShellThemeRuntime.ApplyThemeId(GetSettings().UiShellThemeId);
+                    LogConfigSnapshot();
+                }
+                finally
+                {
+                    _initializing = false;
+                }
             }
         }
 
@@ -123,6 +136,9 @@ namespace STS2RitsuLib.Data
 
         internal static bool IsSyncModDataToCloudEnabled()
         {
+            if (_initializing && !_initialized)
+                return false;
+
             Initialize();
             return GetSettings().SyncModDataToSteamCloud;
         }

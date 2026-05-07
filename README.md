@@ -9,7 +9,7 @@ the bundled mods.
 
 The library exists alongside [BaseLib](https://github.com/Alchyr/BaseLib-StS2) and currently does not conflict with it.
 
-Documentation site (Valaxy, bilingual): [docs/README.md](docs/README.md)
+Documentation site (Valaxy, bilingual): https://sts2-ritsulib.ritsukage.com/
 
 ## Optional analyzers
 
@@ -26,7 +26,7 @@ RitsuLib includes a settings UI layer for player-editable values.
 - source labels and descriptions from `I18N` or game-native `LocString`
 - keep RitsuLib settings registration independent from BaseLib's config-page registry and file paths
 
-Mod settings guide: [docs/pages/guide/mod-settings.md](docs/pages/guide/mod-settings.md)
+Mod settings guide: https://sts2-ritsulib.ritsukage.com/guide/mod-settings
 
 ## Debug Compatibility Mode
 
