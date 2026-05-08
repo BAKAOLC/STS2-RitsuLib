@@ -147,12 +147,15 @@ namespace STS2RitsuLib.Patching.Core
 
             foreach (var patch in patches)
             {
+                logger.Debug(
+                    $"{_logPrefix}[{(patch.IsCritical ? "Critical" : "Optional")}] {patch.Id} - Begin");
                 var (success, errorMessage, exception) = ApplyDynamicPatch(patch);
 
                 if (success)
                 {
                     successCount++;
-                    logger.Info($"{_logPrefix}[{(patch.IsCritical ? "Critical" : "Optional")}] {patch.Id} - Success ✓");
+                    logger.Debug(
+                        $"{_logPrefix}[{(patch.IsCritical ? "Critical" : "Optional")}] {patch.Id} - Success ✓");
                     continue;
                 }
 
@@ -169,7 +172,8 @@ namespace STS2RitsuLib.Patching.Core
                 logger.Error(sb.ToString());
             }
 
-            logger.Info($"{_logPrefix}Dynamic patch application complete: {successCount}/{patches.Length} succeeded");
+            logger.Info(
+                $"{_logPrefix}Dynamic patch application complete: {successCount}/{patches.Length} succeeded");
 
             if (failureCount > 0)
                 logger.Warn(
@@ -286,6 +290,8 @@ namespace STS2RitsuLib.Patching.Core
 
         private ModPatchResult ApplyPatch(ModPatchInfo modPatchInfo)
         {
+            logger.Debug(
+                $"{_logPrefix}[{(modPatchInfo.IsCritical ? "Critical" : "Optional")}] {modPatchInfo.Id} - Begin");
             try
             {
                 var originalMethod = GetOriginalMethod(modPatchInfo);
@@ -326,6 +332,8 @@ namespace STS2RitsuLib.Patching.Core
                 );
 
                 _patchedStatus[modPatchInfo.Id] = true;
+                logger.Debug(
+                    $"{_logPrefix}[{(modPatchInfo.IsCritical ? "Critical" : "Optional")}] {modPatchInfo.Id} - Success ✓");
                 return ModPatchResult.CreateSuccess(modPatchInfo);
             }
             catch (Exception ex)
@@ -354,6 +362,8 @@ namespace STS2RitsuLib.Patching.Core
                     dynamicPatchInfo.Finalizer);
 
                 _patchedStatus[dynamicPatchInfo.Id] = true;
+                logger.Debug(
+                    $"{_logPrefix}[{(dynamicPatchInfo.IsCritical ? "Critical" : "Optional")}] {dynamicPatchInfo.Id} - Success ✓");
                 return (true, string.Empty, null);
             }
             catch (Exception ex)
@@ -385,7 +395,7 @@ namespace STS2RitsuLib.Patching.Core
                     if (result.Ignored)
                         ignoredCount++;
 
-                    logger.Info(result.Ignored
+                    logger.Debug(result.Ignored
                         ? $"{_logPrefix}[{importance}] {result.ModPatchInfo.Id} - Ignored (target missing)"
                         : $"{_logPrefix}[{importance}] {result.ModPatchInfo.Id} - Success ✓");
                 }
