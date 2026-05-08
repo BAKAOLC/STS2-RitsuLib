@@ -151,9 +151,7 @@ namespace STS2RitsuLib.Utils.Persistence
             CancellationToken ct = default)
         {
             var set = new HashSet<string>(StringComparer.Ordinal);
-            ModCloudSyncPathRegistry.CollectRegisteredRelativePaths(profileId, set, scope);
-            if (scope != ModCloudSyncScope.GlobalOnly && profileId >= 0)
-                ModRunSidecarStore.AppendActiveRunSidecarSyncRelativePaths(profileId, set);
+            StorageSyncPathEnumerator.CollectWhitelistedRelativePaths(profileId, set, scope);
 
             var list = set.ToList();
             for (var i = 0; i < list.Count; i++)

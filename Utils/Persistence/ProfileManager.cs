@@ -1,5 +1,6 @@
 using MegaCrit.Sts2.Core.Platform;
 using MegaCrit.Sts2.Core.Saves;
+using STS2RitsuLib.Utils.Persistence.Context;
 
 namespace STS2RitsuLib.Utils.Persistence
 {
@@ -124,7 +125,8 @@ namespace STS2RitsuLib.Utils.Persistence
             {
                 SaveScope.Global => accountBase,
                 SaveScope.Profile => $"{accountBase}/{GetProfileDirectory(profileId)}",
-                _ => accountBase,
+                _ => StoragePathResolver.ResolveBasePathUser(modId, scope,
+                    StorageContext.Empty.With(StorageContextKeys.ProfileId, profileId)),
             };
         }
 

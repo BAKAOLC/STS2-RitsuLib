@@ -14,5 +14,18 @@ namespace STS2RitsuLib.Utils.Persistence
         ///     Profile scope - data is specific to the current profile
         /// </summary>
         Profile,
+
+        /// <summary>
+        ///     Per-run sidecar scope under the current profile (client-local).
+        /// </summary>
+        /// <remarks>
+        ///     This scope requires a run fingerprint stem context to resolve a durable path.
+        /// </remarks>
+        RunSidecar,
+
+        /// <summary>
+        ///     In-memory scope (not persisted).
+        /// </summary>
+        InMemory,
     }
 }

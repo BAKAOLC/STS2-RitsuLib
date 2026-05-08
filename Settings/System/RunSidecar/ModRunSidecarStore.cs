@@ -2,6 +2,7 @@ using System.Text.Json;
 using Godot;
 using STS2RitsuLib.Utils;
 using STS2RitsuLib.Utils.Persistence;
+using STS2RitsuLib.Utils.Persistence.Context;
 using FileAccess = Godot.FileAccess;
 
 namespace STS2RitsuLib.Settings.RunSidecar
@@ -227,8 +228,10 @@ namespace STS2RitsuLib.Settings.RunSidecar
             if (string.IsNullOrEmpty(stem))
                 throw new InvalidOperationException("Run sidecar fingerprint stem must not be empty.");
 
-            var profileBase = ProfileManager.GetBasePath(SaveScope.Profile, live.ProfileId);
-            return $"{profileBase}/{RunSidecarSegment}/{stem}";
+            return StoragePathResolver.ResolveBasePathUser(Const.ModId, SaveScope.RunSidecar,
+                StorageContext.Empty
+                    .With(StorageContextKeys.ProfileId, live.ProfileId)
+                    .With(StorageContextKeys.RunFingerprintStem, stem));
         }
 
         private static string ResolvePath(string modId, ModRunSidecarFingerprint live)
