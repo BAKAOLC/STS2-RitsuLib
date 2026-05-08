@@ -22,8 +22,8 @@ namespace STS2RitsuLib.Networking.Sidecar
         private static readonly Lock ExchangeGate = new();
 
         /// <remarks>
-        ///     Cleared when <see cref="RitsuLibSidecarSessionManager.Epoch" /> changes; entries may be dropped on success /
-        ///     terminal negotiation failure.
+        ///     Cleared when <see cref="RitsuLibSidecarSessionManager.Epoch" /> changes; successful negotiation marks the
+        ///     peer completed until disconnect or epoch rollover; negotiation failure removes the peer entry for retry.
         /// </remarks>
         private static readonly Dictionary<ulong, HelloOutboundNegotiationState> NegotiationByPeer = [];
 
@@ -54,11 +54,15 @@ namespace STS2RitsuLib.Networking.Sidecar
                 if (state.SessionEpoch != epochNow || state.Phase != NegotiationOutboundPhase.AwaitingAck)
                     return;
 
-                NegotiationByPeer.Remove(responderNetId);
-            }
+                if (!negotiationOk)
+                {
+                    NegotiationByPeer.Remove(responderNetId);
+                    return;
+                }
 
-            if (!negotiationOk)
-                return;
+                state.Phase = NegotiationOutboundPhase.Completed;
+                NegotiationByPeer[responderNetId] = state;
+            }
 
             RitsuLibFramework.Logger.Debug(
                 $"[Sidecar] Handshake negotiation completed peer={responderNetId}, epoch={RitsuLibSidecarSessionManager.Epoch}");
@@ -193,8 +197,12 @@ namespace STS2RitsuLib.Networking.Sidecar
             {
                 GetOrResetPeerState(epochNow, peerNetId, out var state);
 
-                if (state.Phase == NegotiationOutboundPhase.AwaitingAck)
-                    return;
+                switch (state.Phase)
+                {
+                    case NegotiationOutboundPhase.AwaitingAck:
+                    case NegotiationOutboundPhase.Completed:
+                        return;
+                }
 
                 if (state.PacketsConsumed >= HelloMaxPacketAttempts)
                     return;
@@ -319,6 +327,7 @@ namespace STS2RitsuLib.Networking.Sidecar
         {
             Idle = 0,
             AwaitingAck = 1,
+            Completed = 2,
         }
 
         private struct HelloOutboundNegotiationState
