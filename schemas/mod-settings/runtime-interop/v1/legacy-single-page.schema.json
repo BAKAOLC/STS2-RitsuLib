@@ -11,21 +11,25 @@
       "minLength": 1
     },
     "modDisplayName": {
-      "type": "string"
+      "$ref": "./schema.json#/$defs/text"
     },
     "modSidebarOrder": {
       "type": "integer"
+    },
+    "i18nSource": {
+      "$ref": "./schema.json#/$defs/i18nSource",
+      "description": "Optional explicit I18N sources used by { i18n: { key } } text objects."
     },
     "pageId": {
       "type": "string",
       "description": "Defaults to \"interop\" when empty or omitted."
     },
     "title": {
-      "type": "string",
+      "$ref": "./schema.json#/$defs/text",
       "description": "Defaults to \"Settings\" when empty or omitted."
     },
     "description": {
-      "type": "string"
+      "$ref": "./schema.json#/$defs/text"
     },
     "sortOrder": {
       "type": "integer",

@@ -12,6 +12,125 @@
     }
   ],
   "$defs": {
+    "text": {
+      "title": "Text value (literal or localized)",
+      "description": "UI text source. Accepts a plain string (literal) for backward compatibility, or an object describing a localized source (langMap / i18n / locString).",
+      "oneOf": [
+        {
+          "type": "string"
+        },
+        {
+          "$ref": "#/$defs/textObject"
+        }
+      ]
+    },
+    "textObject": {
+      "type": "object",
+      "oneOf": [
+        {
+          "title": "Language map",
+          "properties": {
+            "langMap": {
+              "type": "object",
+              "minProperties": 1,
+              "additionalProperties": {
+                "type": "string"
+              },
+              "description": "Map from language code to string. The runtime uses best-effort matching (exact, prefix match, then 'en', then any entry)."
+            },
+            "fallback": {
+              "type": "string",
+              "description": "Fallback text when no entry matches."
+            }
+          },
+          "required": ["langMap"],
+          "additionalProperties": true
+        },
+        {
+          "title": "I18N key",
+          "properties": {
+            "i18n": {
+              "type": "object",
+              "properties": {
+                "key": {
+                  "type": "string",
+                  "minLength": 1
+                },
+                "fallback": {
+                  "type": "string"
+                }
+              },
+              "required": ["key"],
+              "additionalProperties": true
+            },
+            "fallback": {
+              "type": "string",
+              "description": "Optional fallback when i18n.fallback is omitted."
+            }
+          },
+          "required": ["i18n"],
+          "additionalProperties": true
+        },
+        {
+          "title": "Game LocString",
+          "properties": {
+            "locString": {
+              "type": "object",
+              "properties": {
+                "table": {
+                  "type": "string",
+                  "minLength": 1,
+                  "description": "Localization table name, e.g. settings_ui."
+                },
+                "key": {
+                  "type": "string",
+                  "minLength": 1
+                },
+                "fallback": {
+                  "type": "string"
+                }
+              },
+              "required": ["table", "key"],
+              "additionalProperties": true
+            }
+          },
+          "required": ["locString"],
+          "additionalProperties": true
+        }
+      ],
+      "additionalProperties": true
+    },
+    "i18nSource": {
+      "title": "I18N sources (explicit)",
+      "description": "Explicit translation sources for resolving i18n keys. If omitted, i18n objects are treated as literal fallback at runtime.",
+      "type": "object",
+      "properties": {
+        "instanceName": {
+          "type": "string",
+          "description": "Optional I18N instance name for logging."
+        },
+        "fsFolders": {
+          "type": "array",
+          "items": { "type": "string", "minLength": 1 },
+          "description": "File-system folders containing <lang>.json (e.g. user://mod-configs/<modId>/localization)."
+        },
+        "resourceFolders": {
+          "type": "array",
+          "items": { "type": "string", "minLength": 1 },
+          "description": "Embedded resource folder prefixes containing <folder>.<lang>.json."
+        },
+        "pckFolders": {
+          "type": "array",
+          "items": { "type": "string", "minLength": 1 },
+          "description": "PCK folders containing <lang>.json (e.g. res://MyMod/localization)."
+        },
+        "resourceAssembly": {
+          "type": "string",
+          "description": "Optional assembly name for embedded resource loading. When omitted, the provider type's assembly is used."
+        }
+      },
+      "additionalProperties": true
+    },
     "multiPageDocument": {
       "title": "Multi-page document",
       "type": "object",
@@ -23,12 +142,16 @@
           "description": "Target mod id for mirrored settings pages."
         },
         "modDisplayName": {
-          "type": "string",
+          "$ref": "#/$defs/text",
           "description": "Optional display name in the mod settings sidebar."
         },
         "modSidebarOrder": {
           "type": "integer",
           "description": "Optional sidebar ordering hint."
+        },
+        "i18nSource": {
+          "$ref": "#/$defs/i18nSource",
+          "description": "Optional explicit I18N sources used by { i18n: { key } } text objects."
         },
         "pages": {
           "type": "array",
@@ -44,6 +167,10 @@
       "type": "object",
       "required": ["sections"],
       "properties": {
+        "i18nSource": {
+          "$ref": "#/$defs/i18nSource",
+          "description": "Optional I18N source override for this page and its children."
+        },
         "pageId": {
           "type": "string",
           "description": "Defaults to \"interop\" when empty or omitted."
@@ -53,11 +180,11 @@
           "description": "Optional parent page id for nested pages."
         },
         "title": {
-          "type": "string",
+          "$ref": "#/$defs/text",
           "description": "Defaults to \"Settings\" when empty or omitted."
         },
         "description": {
-          "type": "string"
+          "$ref": "#/$defs/text"
         },
         "sortOrder": {
           "type": "integer",
@@ -77,15 +204,19 @@
       "type": "object",
       "required": ["id", "entries"],
       "properties": {
+        "i18nSource": {
+          "$ref": "#/$defs/i18nSource",
+          "description": "Optional I18N source override for this section and its children."
+        },
         "id": {
           "type": "string",
           "minLength": 1
         },
         "title": {
-          "type": "string"
+          "$ref": "#/$defs/text"
         },
         "description": {
-          "type": "string"
+          "$ref": "#/$defs/text"
         },
         "entries": {
           "type": "array",
@@ -101,6 +232,10 @@
       "type": "object",
       "required": ["id", "type"],
       "properties": {
+        "i18nSource": {
+          "$ref": "#/$defs/i18nSource",
+          "description": "Optional I18N source override for this entry."
+        },
         "id": {
           "type": "string",
           "minLength": 1
@@ -114,11 +249,11 @@
           "description": "Storage key passed to GetRitsuLibSettingValue / SetRitsuLibSettingValue; defaults to id."
         },
         "label": {
-          "type": "string",
+          "$ref": "#/$defs/text",
           "description": "Defaults to id when empty or omitted."
         },
         "description": {
-          "type": "string"
+          "$ref": "#/$defs/text"
         },
         "scope": {
           "type": "string",
@@ -184,7 +319,7 @@
                   "description": "Required; entries without this are skipped at runtime."
                 },
                 "buttonText": {
-                  "type": "string"
+                  "$ref": "#/$defs/text"
                 }
               },
               "required": ["targetPageId"]
@@ -293,6 +428,10 @@
                             "type": "string",
                             "minLength": 1
                           },
+                          "i18nSource": {
+                            "$ref": "#/$defs/i18nSource",
+                            "description": "Optional I18N source override for resolving this option label."
+                          },
                           "label": {
                             "type": "string"
                           }
@@ -324,7 +463,7 @@
                   "const": "string"
                 },
                 "placeholder": {
-                  "type": "string"
+                  "$ref": "#/$defs/text"
                 },
                 "maxLength": {
                   "type": "integer",
@@ -347,7 +486,7 @@
                   "enum": ["multiline-string", "multiline"]
                 },
                 "placeholder": {
-                  "type": "string"
+                  "$ref": "#/$defs/text"
                 },
                 "maxLength": {
                   "type": "integer",
@@ -419,7 +558,7 @@
                   "enum": ["info-card", "infocard"]
                 },
                 "body": {
-                  "type": "string",
+                  "$ref": "#/$defs/text",
                   "description": "Card body text (rich-text); may be empty."
                 }
               }
@@ -442,20 +581,19 @@
                   ]
                 },
                 "body": {
-                  "type": "string",
+                  "$ref": "#/$defs/text",
                   "description": "Descriptive text under the title."
                 },
                 "bindings": {
                   "type": "array",
                   "minItems": 1,
                   "items": {
-                    "type": "string",
-                    "minLength": 1
+                    "$ref": "#/$defs/text"
                   },
                   "description": "Right-hand binding chip labels; empty list skips registration at runtime."
                 },
                 "idSuffix": {
-                  "type": "string",
+                  "$ref": "#/$defs/text",
                   "description": "Optional ModSettingsText id suffix passed to AddRuntimeHotkeySummary."
                 }
               },
@@ -475,7 +613,7 @@
                   "const": "button"
                 },
                 "buttonText": {
-                  "type": "string",
+                  "$ref": "#/$defs/text",
                   "description": "Defaults to label when omitted for the button caption."
                 },
                 "tone": {

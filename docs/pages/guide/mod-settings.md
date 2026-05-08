@@ -337,6 +337,51 @@ Structure:
   - `string`: `maxLength`
   - `button`: `buttonText`, `tone`
 
+### Localized text fields (runtime-interop schema)
+
+All visible UI text fields (e.g. `modDisplayName`, page/section `title` / `description`, entry `label` / `description`,
+`buttonText`, `placeholder`, `body`, choice `options[].label`, hotkey `bindings[]`) accept either:
+
+- a plain string (literal, backward compatible), or
+- a `text` object describing a localized source:
+  - `langMap`: inline language map
+  - `i18n`: mod-owned I18N key lookup (requires `i18nSource` on the schema root; can be overridden by page/section/entry)
+  - `locString`: game-native LocString lookup
+
+Minimal JSON snippet:
+
+```json
+{
+  "modId": "MyMod",
+  "i18nSource": {
+    "instanceName": "MyMod-Settings",
+    "fsFolders": ["user://mod-configs/MyMod/localization"],
+    "pckFolders": ["res://MyMod/localization"],
+    "resourceFolders": ["MyMod.Localization.Settings"],
+    "resourceAssembly": "MyMod"
+  },
+  "pages": [
+    {
+      "pageId": "interop",
+      "title": { "i18n": { "key": "page.title", "fallback": "Settings" } },
+      "sections": [
+        {
+          "id": "general",
+          "title": { "langMap": { "eng": "General", "zhs": "常规" }, "fallback": "General" },
+          "entries": [
+            {
+              "id": "enable_feature",
+              "type": "toggle",
+              "label": { "locString": { "table": "settings_ui", "key": "my_mod.enable_feature.title", "fallback": "Enable feature" } }
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}
+```
+
 ---
 
 :::
@@ -393,6 +438,52 @@ Provider 约定（全部为 `static` 方法）：
   - `slider/int-slider`：`min`, `max`, `step`
   - `string`：`maxLength`
   - `button`：`buttonText`, `tone`
+
+### 运行时 schema 的多语言文本字段
+
+所有会显示在设置 UI 上的文本字段（例如 `modDisplayName`、page/section 的 `title/description`、entry 的
+`label/description`、`buttonText`、`placeholder`、`body`、choice 的 `options[].label`、hotkey 的 `bindings[]`）
+都支持两种写法：
+
+- 直接写字符串（literal，完全兼容旧协议）
+- 写 `text` 对象，声明文本来源：
+  - `langMap`：内联语言映射
+  - `i18n`：按 I18N key 查表（需要在 schema 根上提供 `i18nSource`；page/section/entry 可覆盖）
+  - `locString`：走游戏原生 LocString 表
+
+最小 JSON 示例（同上）：
+
+```json
+{
+  "modId": "MyMod",
+  "i18nSource": {
+    "instanceName": "MyMod-Settings",
+    "fsFolders": ["user://mod-configs/MyMod/localization"],
+    "pckFolders": ["res://MyMod/localization"],
+    "resourceFolders": ["MyMod.Localization.Settings"],
+    "resourceAssembly": "MyMod"
+  },
+  "pages": [
+    {
+      "pageId": "interop",
+      "title": { "i18n": { "key": "page.title", "fallback": "Settings" } },
+      "sections": [
+        {
+          "id": "general",
+          "title": { "langMap": { "eng": "General", "zhs": "常规" }, "fallback": "General" },
+          "entries": [
+            {
+              "id": "enable_feature",
+              "type": "toggle",
+              "label": { "locString": { "table": "settings_ui", "key": "my_mod.enable_feature.title", "fallback": "Enable feature" } }
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}
+```
 
 ---
 

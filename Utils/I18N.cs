@@ -441,6 +441,29 @@ namespace STS2RitsuLib.Utils
 
         private static string ResolveLanguage()
         {
+            return ResolveCurrentLanguageCode();
+        }
+
+        /// <summary>
+        ///     Resolves the current game locale to a normalized language code.
+        /// </summary>
+        /// <remarks>
+        ///     Resolution tries (in order):
+        ///     <list type="number">
+        ///         <item>
+        ///             <description><c>LocManager.Instance.Language</c> (when available)</description>
+        ///         </item>
+        ///         <item>
+        ///             <description>
+        ///                 <c>Godot.TranslationServer.GetLocale()</c>
+        ///             </description>
+        ///         </item>
+        ///     </list>
+        ///     The returned value is always normalized by <see cref="NormalizeLanguageCode" /> and falls back to
+        ///     <c>eng</c> when unknown.
+        /// </remarks>
+        public static string ResolveCurrentLanguageCode()
+        {
             string? language = null;
             try
             {
@@ -467,7 +490,26 @@ namespace STS2RitsuLib.Utils
             return NormalizeLanguageCode(language);
         }
 
-        private static string NormalizeLanguageCode(string? language)
+        /// <summary>
+        ///     Normalizes a locale / language input to RitsuLib's stable three-letter-ish codes.
+        /// </summary>
+        /// <remarks>
+        ///     Examples:
+        ///     <list type="bullet">
+        ///         <item>
+        ///             <description><c>en</c>, <c>en_us</c>, <c>en-US</c> -&gt; <c>eng</c></description>
+        ///         </item>
+        ///         <item>
+        ///             <description><c>zh</c>, <c>zh_cn</c>, <c>zh-Hans</c> -&gt; <c>zhs</c></description>
+        ///         </item>
+        ///         <item>
+        ///             <description><c>ja</c>, <c>ja_jp</c> -&gt; <c>jpn</c></description>
+        ///         </item>
+        ///     </list>
+        ///     Unrecognized values are lower-cased, with <c>-</c> replaced by <c>_</c>.
+        ///     Null or whitespace inputs fall back to <c>eng</c>.
+        /// </remarks>
+        public static string NormalizeLanguageCode(string? language)
         {
             if (string.IsNullOrWhiteSpace(language)) return "eng";
             var text = language.Trim().Replace('-', '_').ToLowerInvariant();
