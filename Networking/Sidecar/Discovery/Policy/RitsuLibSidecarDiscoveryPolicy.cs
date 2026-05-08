@@ -8,6 +8,7 @@ namespace STS2RitsuLib.Networking.Sidecar
         public const string ReasonHandshake = "handshake";
         public const string ReasonHandshakeTransportBudget = "handshake_transport_budget";
         public const string ReasonHandshakeAckTimeout = "handshake_ack_timeout";
+        public const string ReasonTransportConnectionMissing = "transport_connection_missing";
 
         public const string RouteNameManualHint = "manual_hint";
         public const int RouteOrderManualHint = 0;

@@ -204,6 +204,22 @@ namespace STS2RitsuLib.Networking.Sidecar
         }
 
         /// <summary>
+        ///     Marks the peer as terminal-unreachable for sidecar sends due to a transport-layer failure indicating the
+        ///     peer connection is missing (e.g. host transport no longer has a connection entry for the peer).
+        ///     This prevents per-frame resend loops from repeatedly throwing.
+        /// </summary>
+        public static void NoteTransportConnectionMissing(ulong peerNetId)
+        {
+            lock (Gate)
+            {
+                HandshakeNegotiationTerminalPeers.Add(peerNetId);
+            }
+
+            UpdateReachability(peerNetId, RitsuLibSidecarPeerReachability.Unsupported,
+                RitsuLibSidecarDiscoveryPolicy.ReasonTransportConnectionMissing);
+        }
+
+        /// <summary>
         ///     Stores handshake feature result and updates peer reachability according to handshake result.
         /// </summary>
         public static void NoteHandshakeFromPeer(ulong peerNetId, RitsuLibSidecarPeerFeatures features, bool accepted)

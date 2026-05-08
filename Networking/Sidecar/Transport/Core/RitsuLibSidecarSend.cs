@@ -62,7 +62,16 @@ namespace STS2RitsuLib.Networking.Sidecar
                 return false;
             }
 
-            client.NetClient.SendMessageToHost(envelope, envelope.Length, mode, channel);
+            try
+            {
+                client.NetClient.SendMessageToHost(envelope, envelope.Length, mode, channel);
+            }
+            catch (InvalidOperationException)
+            {
+                RitsuLibSidecarSessionManager.NoteTransportConnectionMissing(client.HostNetId);
+                return false;
+            }
+
             RitsuLibSidecarTrafficCounters.AddOutgoing(1, envelope.Length);
             RitsuLibSidecarNetTrace.TraceOutbound(RitsuLibSidecarTransportTracePaths.ClientToHost, envelope, mode,
                 channel);
@@ -104,7 +113,16 @@ namespace STS2RitsuLib.Networking.Sidecar
                 return false;
             }
 
-            host.NetHost.SendMessageToClient(peerNetId, envelope, envelope.Length, mode, channel);
+            try
+            {
+                host.NetHost.SendMessageToClient(peerNetId, envelope, envelope.Length, mode, channel);
+            }
+            catch (InvalidOperationException)
+            {
+                RitsuLibSidecarSessionManager.NoteTransportConnectionMissing(peerNetId);
+                return false;
+            }
+
             RitsuLibSidecarTrafficCounters.AddOutgoing(1, envelope.Length);
             RitsuLibSidecarNetTrace.TraceOutbound(
                 RitsuLibSidecarTransportTracePaths.HostToPeer,
@@ -155,7 +173,16 @@ namespace STS2RitsuLib.Networking.Sidecar
                     continue;
                 }
 
-                host.NetHost.SendMessageToClient(peer.peerId, envelope, envelope.Length, mode, channel);
+                try
+                {
+                    host.NetHost.SendMessageToClient(peer.peerId, envelope, envelope.Length, mode, channel);
+                }
+                catch (InvalidOperationException)
+                {
+                    RitsuLibSidecarSessionManager.NoteTransportConnectionMissing(peer.peerId);
+                    continue;
+                }
+
                 ops++;
                 bytes += envelope.Length;
             }
@@ -204,7 +231,16 @@ namespace STS2RitsuLib.Networking.Sidecar
                     continue;
                 }
 
-                host.NetHost.SendMessageToClient(peer.peerId, envelope, envelope.Length, mode, channel);
+                try
+                {
+                    host.NetHost.SendMessageToClient(peer.peerId, envelope, envelope.Length, mode, channel);
+                }
+                catch (InvalidOperationException)
+                {
+                    RitsuLibSidecarSessionManager.NoteTransportConnectionMissing(peer.peerId);
+                    continue;
+                }
+
                 ops++;
                 bytes += envelope.Length;
             }
