@@ -349,8 +349,10 @@ namespace STS2RitsuLib
 
         private static string? GetCompatBranchLabel()
         {
-#if STS2_V_0_103_2
+#if !STS2_AT_LEAST_0_104_0
             return "0.103.2";
+#elif !STS2_AT_LEAST_0_105_0
+            return "0.104.0";
 #else
             return null;
 #endif

@@ -119,15 +119,18 @@ namespace STS2RitsuLib.Scaffolding.Content.Patches
         }
     }
 
-#if STS2_V_0_103_2
+#if !STS2_AT_LEAST_0_104_0
     internal sealed class RuntimeTemplateBadge : Badge
     {
-        internal RuntimeTemplateBadge(ModBadgeTemplate template, SerializableRun run, ulong playerId) : base(run, playerId)
+        internal RuntimeTemplateBadge(ModBadgeTemplate template, SerializableRun run, ulong playerId, bool won)
+            : base(run, playerId)
         {
             Template = template;
+            Won = won;
         }
 
         internal ModBadgeTemplate Template { get; }
+        internal bool Won { get; }
 
         public override string Id => Template.Id;
         public override BadgeRarity Rarity => Template.Rarity(_run, _localPlayer);
@@ -139,11 +142,31 @@ namespace STS2RitsuLib.Scaffolding.Content.Patches
             return Template.IsObtained(_run, _localPlayer);
         }
     }
+#elif !STS2_AT_LEAST_0_105_0
+    internal sealed class RuntimeTemplateBadge : Badge
+    {
+        internal RuntimeTemplateBadge(ModBadgeTemplate template, SerializableRun run, ulong playerId, bool won)
+            : base(run, playerId, template.Id, template.RequiresWin, template.MultiplayerOnly)
+        {
+            Template = template;
+            Won = won;
+        }
+
+        internal ModBadgeTemplate Template { get; }
+        internal bool Won { get; }
+
+        public override BadgeRarity Rarity => Template.Rarity(_run, _localPlayer);
+
+        public override bool IsObtained()
+        {
+            return Template.IsObtained(_run, _localPlayer);
+        }
+    }
 #else
     internal sealed class RuntimeTemplateBadge : Badge
     {
-        internal RuntimeTemplateBadge(ModBadgeTemplate template, SerializableRun run, ulong playerId)
-            : base(run, playerId, template.Id, template.RequiresWin, template.MultiplayerOnly)
+        internal RuntimeTemplateBadge(ModBadgeTemplate template, SerializableRun run, ulong playerId, bool won)
+            : base(run, won, playerId, template.Id, template.RequiresWin, template.MultiplayerOnly)
         {
             Template = template;
         }
@@ -170,6 +193,7 @@ namespace STS2RitsuLib.Scaffolding.Content.Patches
             return [new(typeof(BadgePool), nameof(BadgePool.CreateAll))];
         }
 
+#if !STS2_AT_LEAST_0_105_0
         // ReSharper disable once InconsistentNaming
         public static IReadOnlyCollection<Badge> Postfix(IReadOnlyCollection<Badge> __result, SerializableRun run,
             ulong playerId)
@@ -177,10 +201,23 @@ namespace STS2RitsuLib.Scaffolding.Content.Patches
             var list = __result.ToList();
             list.AddRange(ModBadgeRegistry.GetRegisteredBadgeTypes()
                 .Select(ModBadgeRegistry.CreateTemplateInstance).OfType<ModBadgeTemplate>()
-                .Select(template => new RuntimeTemplateBadge(template, run, playerId)));
+                .Select(template => new RuntimeTemplateBadge(template, run, playerId, false)));
 
             return list;
         }
+#else
+        // ReSharper disable once InconsistentNaming
+        public static IReadOnlyCollection<Badge> Postfix(IReadOnlyCollection<Badge> __result, SerializableRun run,
+            ulong playerId, bool won)
+        {
+            var list = __result.ToList();
+            list.AddRange(ModBadgeRegistry.GetRegisteredBadgeTypes()
+                .Select(ModBadgeRegistry.CreateTemplateInstance).OfType<ModBadgeTemplate>()
+                .Select(template => new RuntimeTemplateBadge(template, run, playerId, won)));
+
+            return list;
+        }
+#endif
     }
 
     internal class AssetCacheLoadBadgeFallbackPatch : IPatchMethod

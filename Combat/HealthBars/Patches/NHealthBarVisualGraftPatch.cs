@@ -19,7 +19,7 @@ namespace STS2RitsuLib.Combat.HealthBars.Patches
                 return;
 
             var creature = healthBar._creature;
-            if (creature.CurrentHp <= 0 || creature.ShowsInfiniteHp)
+            if (creature.CurrentHp <= 0 || creature.IsInfiniteHpDisplayed())
             {
                 ResetGraft(healthBar);
                 return;
@@ -60,7 +60,7 @@ namespace STS2RitsuLib.Combat.HealthBars.Patches
                 return;
 
             var creature = healthBar._creature;
-            if (creature.CurrentHp <= 0 || creature.ShowsInfiniteHp)
+            if (creature.CurrentHp <= 0 || creature.IsInfiniteHpDisplayed())
                 return;
 
             var metrics = HealthBarVisualGraftRegistry.Aggregate(creature);

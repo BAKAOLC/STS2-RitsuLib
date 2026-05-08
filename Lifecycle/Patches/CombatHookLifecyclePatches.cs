@@ -1,4 +1,4 @@
-#if STS2_V_0_103_2
+#if !STS2_AT_LEAST_0_104_0
 using CombatStateCompat = MegaCrit.Sts2.Core.Combat.CombatState;
 #else
 using CombatStateCompat = MegaCrit.Sts2.Core.Combat.ICombatState;
@@ -7,6 +7,7 @@ using System.Reflection;
 using MegaCrit.Sts2.Core.Combat;
 using MegaCrit.Sts2.Core.Entities.Cards;
 using MegaCrit.Sts2.Core.Entities.Creatures;
+using MegaCrit.Sts2.Core.Entities.Players;
 using MegaCrit.Sts2.Core.GameActions.Multiplayer;
 using MegaCrit.Sts2.Core.Hooks;
 using MegaCrit.Sts2.Core.Models;
@@ -17,7 +18,7 @@ using STS2RitsuLib.Patching.Models;
 namespace STS2RitsuLib.Lifecycle.Patches
 {
     /// <summary>
-    ///     Publishes fine-grained combat, card, turn, pile, and creature death lifecycle events by patching
+    ///     Publishes fine-grained combat, card, turn, pile, flush, and creature death lifecycle events by patching
     ///     <see cref="Hook" /> before/after callbacks.
     /// </summary>
     public class CombatHookLifecyclePatch : IPatchMethod
@@ -26,7 +27,8 @@ namespace STS2RitsuLib.Lifecycle.Patches
         public static string PatchId => "combat_hook_lifecycle";
 
         /// <inheritdoc />
-        public static string Description => "Publish fine-grained combat, card, turn, and death lifecycle events";
+        public static string Description =>
+            "Publish fine-grained combat, card, turn, flush, and death lifecycle events";
 
         /// <inheritdoc />
         public static bool IsCritical => false;
@@ -57,7 +59,16 @@ namespace STS2RitsuLib.Lifecycle.Patches
                     [typeof(CombatStateCompat), typeof(PlayerChoiceContext), typeof(CardModel)]),
                 new(typeof(Hook), nameof(Hook.AfterCardExhausted),
                     [typeof(CombatStateCompat), typeof(PlayerChoiceContext), typeof(CardModel), typeof(bool)]),
+                new(typeof(Hook), nameof(Hook.BeforeFlush), [typeof(CombatStateCompat), typeof(Player)]),
+#if !STS2_AT_LEAST_0_105_0
                 new(typeof(Hook), nameof(Hook.AfterCardRetained), [typeof(CombatStateCompat), typeof(CardModel)]),
+#else
+                new(typeof(Hook), nameof(Hook.AfterFlush),
+                [
+                    typeof(CombatStateCompat), typeof(Player), typeof(PlayerChoiceContext),
+                    typeof(IReadOnlyCollection<CardModel>), typeof(IReadOnlyCollection<CardModel>),
+                ]),
+#endif
                 new(typeof(Hook), nameof(Hook.BeforeDeath),
                     [typeof(IRunState), typeof(CombatStateCompat), typeof(Creature)]),
                 new(typeof(Hook), nameof(Hook.AfterDeath),
@@ -67,7 +78,7 @@ namespace STS2RitsuLib.Lifecycle.Patches
 
         /// <summary>
         ///     Harmony prefix: publishes synchronous lifecycle events for hook methods that run before combat, side turns,
-        ///     card play, and creature death.
+        ///     card play, flush, and creature death.
         /// </summary>
         // ReSharper disable InconsistentNaming
         public static void Prefix(MethodBase __originalMethod, object[] __args)
@@ -105,6 +116,16 @@ namespace STS2RitsuLib.Lifecycle.Patches
                         nameof(CardPlayingEvent)
                     );
                     break;
+                case nameof(Hook.BeforeFlush):
+                    RitsuLibFramework.PublishLifecycleEvent(
+                        new BeforeFlushEvent(
+                            (CombatStateCompat)__args[0],
+                            (Player)__args[1],
+                            DateTimeOffset.UtcNow
+                        ),
+                        nameof(BeforeFlushEvent)
+                    );
+                    break;
                 case nameof(Hook.BeforeDeath):
                     RitsuLibFramework.PublishLifecycleEvent(
                         new CreatureDyingEvent(
@@ -121,7 +142,7 @@ namespace STS2RitsuLib.Lifecycle.Patches
 
         /// <summary>
         ///     Harmony postfix: chains onto the original async <see cref="Task" /> and publishes lifecycle events after
-        ///     combat end, victory, turns, card pile changes, and death resolution.
+        ///     combat end, victory, turns, card pile changes, flush completion, and death resolution.
         /// </summary>
         // ReSharper disable InconsistentNaming
         public static void Postfix(MethodBase __originalMethod, object[] __args, ref Task __result)
@@ -165,11 +186,17 @@ namespace STS2RitsuLib.Lifecycle.Patches
                     () => RitsuLibFramework.PublishLifecycleEvent(
                         new CardExhaustedEvent((CombatStateCompat)__args[0], (CardModel)__args[2], (bool)__args[3],
                             DateTimeOffset.UtcNow), nameof(CardExhaustedEvent))),
+#if !STS2_AT_LEAST_0_105_0
                 nameof(Hook.AfterCardRetained) => LifecyclePatchTaskBridge.After(__result,
-                    () => RitsuLibFramework.PublishLifecycleEvent(
-                        new CardRetainedEvent((CombatStateCompat)__args[0], (CardModel)__args[1],
-                            DateTimeOffset.UtcNow),
-                        nameof(CardRetainedEvent))),
+                    () => PublishLegacyCardRetained((CombatStateCompat)__args[0], (CardModel)__args[1])),
+#else
+                nameof(Hook.AfterFlush) => LifecyclePatchTaskBridge.After(__result,
+                    () => PublishCardsFlushed(
+                        (CombatStateCompat)__args[0],
+                        (Player)__args[1],
+                        (IReadOnlyCollection<CardModel>)__args[3],
+                        (IReadOnlyCollection<CardModel>)__args[4])),
+#endif
                 nameof(Hook.AfterDeath) => LifecyclePatchTaskBridge.After(__result,
                     () => RitsuLibFramework.PublishLifecycleEvent(
                         new CreatureDiedEvent((IRunState)__args[0], (CombatStateCompat?)__args[1], (Creature)__args[2],
@@ -177,5 +204,34 @@ namespace STS2RitsuLib.Lifecycle.Patches
                 _ => __result,
             };
         }
+
+#if !STS2_AT_LEAST_0_105_0
+        private static void PublishLegacyCardRetained(CombatStateCompat combatState, CardModel card)
+        {
+#pragma warning disable CS0618
+            RitsuLibFramework.PublishLifecycleEvent(
+                new CardRetainedEvent(combatState, card, DateTimeOffset.UtcNow),
+                nameof(CardRetainedEvent));
+#pragma warning restore CS0618
+        }
+#else
+        private static void PublishCardsFlushed(
+            CombatStateCompat combatState,
+            Player player,
+            IReadOnlyCollection<CardModel> flushedCards,
+            IReadOnlyCollection<CardModel> retainedCards)
+        {
+            var occurredAtUtc = DateTimeOffset.UtcNow;
+            RitsuLibFramework.PublishLifecycleEvent(
+                new CardsFlushedEvent(combatState, player, flushedCards, retainedCards, occurredAtUtc),
+                nameof(CardsFlushedEvent));
+#pragma warning disable CS0618
+            foreach (var card in retainedCards)
+                RitsuLibFramework.PublishLifecycleEvent(
+                    new CardRetainedEvent(combatState, card, occurredAtUtc),
+                    nameof(CardRetainedEvent));
+#pragma warning restore CS0618
+        }
+#endif
     }
 }

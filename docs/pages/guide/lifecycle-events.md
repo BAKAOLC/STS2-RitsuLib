@@ -281,8 +281,12 @@ RitsuLibFramework.SubscribeLifecycle<ModelIdsInitializedEvent>(_ =>
 | `CardDrawnEvent` | `CombatState`, `Card`, `FromHandDraw` |
 | `CardDiscardedEvent` | `CombatState`, `Card` |
 | `CardExhaustedEvent` | `CombatState`, `Card`, `CausedByEthereal` |
-| `CardRetainedEvent` | `CombatState`, `Card` |
+| `CardRetainedEvent` | `CombatState`, `Card` (obsolete; replayed from `CardsFlushedEvent` on host API 0.105.0+) |
+| `BeforeFlushEvent` | `CombatState`, `Player` |
+| `CardsFlushedEvent` | `CombatState`, `Player`, `FlushedCards`, `RetainedCards` (host API 0.105.0+) |
 | `CardMovedBetweenPilesEvent` | `RunState`, `CombatState?`, `Card`, `PreviousPile`, `Source` |
+
+> Starting with host API 0.105.0 the upstream `Hook.AfterCardRetained` callback was removed. RitsuLib publishes `CardsFlushedEvent` from the new `Hook.AfterFlush` callback instead, and replays the legacy `CardRetainedEvent` per retained card so existing subscribers keep working without changes. Migrate to `CardsFlushedEvent` to also receive the matching flushed cards and the owning `Player`.
 
 ### Creature Events
 
@@ -319,8 +323,12 @@ RitsuLibFramework.SubscribeLifecycle<CardDrawnEvent>(evt =>
 | `CardDrawnEvent` | `CombatState`、`Card`、`FromHandDraw` |
 | `CardDiscardedEvent` | `CombatState`、`Card` |
 | `CardExhaustedEvent` | `CombatState`、`Card`、`CausedByEthereal` |
-| `CardRetainedEvent` | `CombatState`、`Card` |
+| `CardRetainedEvent` | `CombatState`、`Card`（已过时；在宿主 API 0.105.0+ 上由 `CardsFlushedEvent` 按张回放） |
+| `BeforeFlushEvent` | `CombatState`、`Player` |
+| `CardsFlushedEvent` | `CombatState`、`Player`、`FlushedCards`、`RetainedCards`（仅宿主 API 0.105.0+ 触发） |
 | `CardMovedBetweenPilesEvent` | `RunState`、`CombatState?`、`Card`、`PreviousPile`、`Source` |
+
+> 自宿主 API 0.105.0 起，上游 `Hook.AfterCardRetained` 被移除。RitsuLib 改为在新的 `Hook.AfterFlush` 中发布 `CardsFlushedEvent`，同时按张回放老的 `CardRetainedEvent` 以保持订阅者无侵入兼容。建议迁移到 `CardsFlushedEvent`，可一并获得当前 flush 的全部出列卡牌与归属 `Player`。
 
 ### 生物事件
 

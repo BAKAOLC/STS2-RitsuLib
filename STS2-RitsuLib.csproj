@@ -1,12 +1,13 @@
 <Project Sdk="Godot.NET.Sdk/4.5.1">
     <PropertyGroup Label="Compatibility (STS2 API, signatures, defines)">
-        <RitsuLibCompatTargets>0.104.0;0.103.2</RitsuLibCompatTargets>
-        <RitsuLibLatestApiCompat>0.104.0</RitsuLibLatestApiCompat>
+        <RitsuLibCompatTargets>0.105.0;0.104.0;0.103.2</RitsuLibCompatTargets>
+        <RitsuLibLatestApiCompat>0.105.0</RitsuLibLatestApiCompat>
         <Sts2ApiCompat Condition="'$(Sts2ApiCompat)' == ''">$(RitsuLibLatestApiCompat)</Sts2ApiCompat>
         <Sts2ApiSignatureDir Condition="'$(Sts2ApiSignatureRoot)' != ''">$(Sts2ApiSignatureRoot)\$(Sts2ApiCompat)</Sts2ApiSignatureDir>
         <Sts2DataDir Condition="'$(Sts2ApiSignatureRoot)' != ''">$(Sts2ApiSignatureDir)</Sts2DataDir>
-        <DefineConstants Condition="'$(Sts2ApiCompat)' == '0.103.2'">$(DefineConstants);STS2_V_0_103_2</DefineConstants>
     </PropertyGroup>
+
+    <Import Project="$(MSBuildProjectDirectory)\build\RitsuLib.CompatDefines.targets"/>
 
     <PropertyGroup Label="Mod manifest generation">
         <RitsuLibManifestSource>$(MSBuildProjectDirectory)\mod_manifest.json</RitsuLibManifestSource>

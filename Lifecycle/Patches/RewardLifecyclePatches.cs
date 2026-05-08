@@ -1,4 +1,4 @@
-#if STS2_V_0_103_2
+#if !STS2_AT_LEAST_0_104_0
 using CombatStateCompat = MegaCrit.Sts2.Core.Combat.CombatState;
 #else
 using CombatStateCompat = MegaCrit.Sts2.Core.Combat.ICombatState;

@@ -1,4 +1,4 @@
-#if STS2_V_0_103_2
+#if !STS2_AT_LEAST_0_104_0
 using CombatStateCompat = MegaCrit.Sts2.Core.Combat.CombatState;
 #else
 using CombatStateCompat = MegaCrit.Sts2.Core.Combat.ICombatState;
@@ -6,6 +6,7 @@ using CombatStateCompat = MegaCrit.Sts2.Core.Combat.ICombatState;
 using MegaCrit.Sts2.Core.Combat;
 using MegaCrit.Sts2.Core.Entities.Cards;
 using MegaCrit.Sts2.Core.Entities.Creatures;
+using MegaCrit.Sts2.Core.Entities.Players;
 using MegaCrit.Sts2.Core.Models;
 using MegaCrit.Sts2.Core.Rooms;
 using MegaCrit.Sts2.Core.Runs;
@@ -161,12 +162,51 @@ namespace STS2RitsuLib
     /// <summary>
     ///     A card was retained for the next turn.
     /// </summary>
+    /// <remarks>
+    ///     On host API 0.105.0 and newer the underlying <c>Hook.AfterCardRetained</c> callback no longer exists; this event
+    ///     is replayed per retained card from <c>Hook.AfterFlush</c> for backward compatibility. Subscribe to
+    ///     <see cref="CardsFlushedEvent" /> instead to also observe the matching flushed cards and the player.
+    /// </remarks>
     /// <param name="CombatState">Active combat state.</param>
     /// <param name="Card">Retained card.</param>
     /// <param name="OccurredAtUtc">When the event was raised.</param>
+    [Obsolete(
+        "Use CardsFlushedEvent. CardRetainedEvent is replayed from Hook.AfterFlush on host API 0.105.0 and newer.")]
     public readonly record struct CardRetainedEvent(
         CombatStateCompat CombatState,
         CardModel Card,
+        DateTimeOffset OccurredAtUtc
+    ) : IFrameworkLifecycleEvent;
+
+    /// <summary>
+    ///     A flush sequence is about to run for the given player. Mirrors <c>Hook.BeforeFlush</c>.
+    /// </summary>
+    /// <param name="CombatState">Active combat state.</param>
+    /// <param name="Player">Player whose hand is about to be flushed.</param>
+    /// <param name="OccurredAtUtc">When the event was raised.</param>
+    public readonly record struct BeforeFlushEvent(
+        CombatStateCompat CombatState,
+        Player Player,
+        DateTimeOffset OccurredAtUtc
+    ) : IFrameworkLifecycleEvent;
+
+    /// <summary>
+    ///     Hand flush completed for the given player.
+    /// </summary>
+    /// <remarks>
+    ///     Fired from <c>Hook.AfterFlush</c> on host API 0.105.0 and newer. On older host APIs <c>Hook.AfterFlush</c> does
+    ///     not exist and this event is not raised; use the legacy <see cref="CardRetainedEvent" /> there.
+    /// </remarks>
+    /// <param name="CombatState">Active combat state.</param>
+    /// <param name="Player">Player whose hand was flushed.</param>
+    /// <param name="FlushedCards">Cards that left the hand during flush (non-retained).</param>
+    /// <param name="RetainedCards">Cards that stayed in the hand (retain semantics).</param>
+    /// <param name="OccurredAtUtc">When the event was raised.</param>
+    public readonly record struct CardsFlushedEvent(
+        CombatStateCompat CombatState,
+        Player Player,
+        IReadOnlyCollection<CardModel> FlushedCards,
+        IReadOnlyCollection<CardModel> RetainedCards,
         DateTimeOffset OccurredAtUtc
     ) : IFrameworkLifecycleEvent;
 

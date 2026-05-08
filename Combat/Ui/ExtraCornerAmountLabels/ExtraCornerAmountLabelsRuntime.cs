@@ -224,8 +224,7 @@ namespace STS2RitsuLib.Combat.Ui.ExtraCornerAmountLabels
         {
             return hostKind switch
             {
-                ExtraCornerHostKind.Power => [ExtraIconAmountLabelCorner.BottomRight],
-                ExtraCornerHostKind.Relic => [ExtraIconAmountLabelCorner.BottomRight],
+                ExtraCornerHostKind.Power or ExtraCornerHostKind.Relic => [ExtraIconAmountLabelCorner.BottomRight],
                 ExtraCornerHostKind.Intent => [ExtraIconAmountLabelCorner.BottomLeft],
                 _ => [],
             };

@@ -1,0 +1,41 @@
+<Project>
+    <!--
+        RitsuLib API compatibility defines.
+
+        Generates a cumulative set of `STS2_AT_LEAST_<ver>` symbols based on the active
+        `Sts2ApiCompat` value. Each symbol represents "the host API is at least this version".
+        Source code expresses version-conditional logic as ranges:
+
+            #if !STS2_AT_LEAST_0_104_0          // 0.103.2 only
+            #if STS2_AT_LEAST_0_104_0           // 0.104.0 or newer
+            #if !STS2_AT_LEAST_0_105_0          // 0.103.2 + 0.104.0
+            #if STS2_AT_LEAST_0_104_0 && !STS2_AT_LEAST_0_105_0   // 0.104.0 only
+
+        Adding a new supported API version requires touching this file only:
+        - append the version to `_RitsuLibSupportedApiVersions`
+        - extend every existing `_RitsuLib_AtLeast_*_HostList` to include the new version
+        - add a new property + DefineConstants pair for the new `STS2_AT_LEAST_*` symbol
+        Existing #if branches across the codebase keep working without modification.
+    -->
+
+    <PropertyGroup>
+        <_RitsuLibSupportedApiVersions>0.103.2;0.104.0;0.105.0</_RitsuLibSupportedApiVersions>
+        <_RitsuLibSupportedApiList>|0.103.2|0.104.0|0.105.0|</_RitsuLibSupportedApiList>
+
+        <_RitsuLib_AtLeast_0_103_2_HostList>|0.103.2|0.104.0|0.105.0|</_RitsuLib_AtLeast_0_103_2_HostList>
+        <_RitsuLib_AtLeast_0_104_0_HostList>|0.104.0|0.105.0|</_RitsuLib_AtLeast_0_104_0_HostList>
+        <_RitsuLib_AtLeast_0_105_0_HostList>|0.105.0|</_RitsuLib_AtLeast_0_105_0_HostList>
+    </PropertyGroup>
+
+    <PropertyGroup>
+        <DefineConstants Condition="$(_RitsuLib_AtLeast_0_103_2_HostList.Contains('|$(Sts2ApiCompat)|'))">$(DefineConstants);STS2_AT_LEAST_0_103_2</DefineConstants>
+        <DefineConstants Condition="$(_RitsuLib_AtLeast_0_104_0_HostList.Contains('|$(Sts2ApiCompat)|'))">$(DefineConstants);STS2_AT_LEAST_0_104_0</DefineConstants>
+        <DefineConstants Condition="$(_RitsuLib_AtLeast_0_105_0_HostList.Contains('|$(Sts2ApiCompat)|'))">$(DefineConstants);STS2_AT_LEAST_0_105_0</DefineConstants>
+    </PropertyGroup>
+
+    <Target Name="ValidateRitsuLibCompatTarget" BeforeTargets="CoreCompile">
+        <Error
+            Condition="'$(Sts2ApiCompat)' == '' or !$(_RitsuLibSupportedApiList.Contains('|$(Sts2ApiCompat)|'))"
+            Text="Sts2ApiCompat='$(Sts2ApiCompat)' is not in the supported set ($(_RitsuLibSupportedApiVersions)). Update build\RitsuLib.CompatDefines.targets to add the new version and a corresponding STS2_AT_LEAST_* define."/>
+    </Target>
+</Project>

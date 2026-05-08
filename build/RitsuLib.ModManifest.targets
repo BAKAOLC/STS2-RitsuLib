@@ -14,8 +14,12 @@
         Condition="!Exists('$(RitsuLibManifestToolSource)')"
         Text="Missing manifest tool source file: '$(RitsuLibManifestToolSource)'"/>
 
+    <PropertyGroup>
+      <RitsuLibManifestMinGameVersion Condition="'$(RitsuLibManifestMinGameVersion)' == ''">$(Sts2ApiCompat)</RitsuLibManifestMinGameVersion>
+    </PropertyGroup>
+
     <Exec
         Condition="'$(DesignTimeBuild)' != 'true'"
-        Command="dotnet run --file &quot;$(RitsuLibManifestToolSource)&quot; -c $(Configuration) -v q -- generate &quot;$(RitsuLibManifestSource)&quot; &quot;$(RitsuLibManifestGenerated)&quot; &quot;$(RitsuLibModDisplayName)&quot;"/>
+        Command="dotnet run --file &quot;$(RitsuLibManifestToolSource)&quot; -c $(Configuration) -v q -- generate &quot;$(RitsuLibManifestSource)&quot; &quot;$(RitsuLibManifestGenerated)&quot; &quot;$(RitsuLibModDisplayName)&quot; &quot;$(RitsuLibManifestMinGameVersion)&quot;"/>
   </Target>
 </Project>

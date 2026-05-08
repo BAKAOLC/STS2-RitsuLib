@@ -86,7 +86,7 @@ namespace STS2RitsuLib.Lifecycle.Patches
                 if (game == null)
                     throw new InvalidOperationException("NGame.Instance is null during continue run.");
 
-#if STS2_V_0_103_2
+#if !STS2_AT_LEAST_0_104_0
                 RunManager.Instance.SetUpSavedSinglePlayer(runState, serializableRun);
 #else
                 await RunManager.Instance.SetUpSavedSinglePlayer(runState, serializableRun);

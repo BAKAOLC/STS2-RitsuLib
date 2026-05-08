@@ -32,7 +32,7 @@ namespace STS2RitsuLib.Combat.HealthBars.Patches
                 return;
 
             var creature = healthBar._creature;
-            if (creature.CurrentHp <= 0 || creature.ShowsInfiniteHp)
+            if (creature.CurrentHp <= 0 || creature.IsInfiniteHpDisplayed())
             {
                 HideAllCustomSegments(healthBar);
                 return;
@@ -193,7 +193,7 @@ namespace STS2RitsuLib.Combat.HealthBars.Patches
                 return;
 
             var creature = healthBar._creature;
-            if (creature.CurrentHp <= 0 || creature.ShowsInfiniteHp)
+            if (creature.CurrentHp <= 0 || creature.IsInfiniteHpDisplayed())
                 return;
 
             var hpMiddleground = healthBar._hpMiddleground;
@@ -220,7 +220,7 @@ namespace STS2RitsuLib.Combat.HealthBars.Patches
                 return;
 
             var creature = healthBar._creature;
-            if (creature.CurrentHp <= 0 || creature.ShowsInfiniteHp)
+            if (creature.CurrentHp <= 0 || creature.IsInfiniteHpDisplayed())
                 return;
 
             var lethalColor = state.LastRender.LethalRightColor ?? state.LastRender.LethalLeftColor;

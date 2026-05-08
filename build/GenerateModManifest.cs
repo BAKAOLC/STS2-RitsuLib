@@ -2,15 +2,17 @@ using System.Text;
 using System.Text.Json;
 using System.Text.Json.Nodes;
 
-if (args.Length != 4 || !string.Equals(args[0], "generate", StringComparison.Ordinal))
+if (args.Length is < 4 or > 5 || !string.Equals(args[0], "generate", StringComparison.Ordinal))
 {
-    Console.Error.WriteLine("Usage: dotnet run GenerateModManifest.cs -- generate <source.json> <dest.json> <displayName>");
+    Console.Error.WriteLine(
+        "Usage: dotnet run GenerateModManifest.cs -- generate <source.json> <dest.json> <displayName> [<minGameVersion>]");
     return 2;
 }
 
 var sourcePath = args[1];
 var destPath = args[2];
 var displayName = args[3];
+var minGameVersion = args.Length >= 5 ? args[4] : null;
 
 if (!File.Exists(sourcePath))
 {
@@ -38,6 +40,10 @@ catch (JsonException ex)
 }
 
 root["name"] = displayName;
+if (!string.IsNullOrWhiteSpace(minGameVersion))
+{
+    root["min_game_version"] = minGameVersion;
+}
 
 var opts = new JsonSerializerOptions { WriteIndented = true };
 var updated = root.ToJsonString(opts);

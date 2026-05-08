@@ -69,7 +69,12 @@ namespace STS2RitsuLib.Combat.Powers
         public override bool AllowNegative => true;
 
         /// <inheritdoc />
+#if !STS2_AT_LEAST_0_105_0
         public override bool IsInstanced => LastForXExtraTurns != 0;
+#else
+        public override PowerInstanceType InstanceType =>
+            LastForXExtraTurns != 0 ? PowerInstanceType.Instanced : PowerInstanceType.None;
+#endif
 
         /// <summary>
         ///     Remaining extra expiry cycles before removal.
@@ -136,7 +141,7 @@ namespace STS2RitsuLib.Combat.Powers
         }
 
         /// <inheritdoc />
-#if STS2_V_0_103_2
+#if !STS2_AT_LEAST_0_104_0
         public override async Task AfterPowerAmountChanged(PowerModel power, decimal amount, Creature? applier,
             CardModel? cardSource)
 #else
@@ -154,7 +159,7 @@ namespace STS2RitsuLib.Combat.Powers
                 return;
             }
 
-#if STS2_V_0_103_2
+#if !STS2_AT_LEAST_0_104_0
             await ApplyInternalPower(new ThrowingPlayerChoiceContext(), Owner, SignedAmount(amount), applier,
                 cardSource, true);
 #else
@@ -252,7 +257,7 @@ namespace STS2RitsuLib.Combat.Powers
             decimal amount,
             Creature? applier, CardModel? cardSource, bool silent) where TPower : PowerModel
         {
-#if STS2_V_0_103_2
+#if !STS2_AT_LEAST_0_104_0
             return PowerCmd.Apply<TPower>(target, amount, applier, cardSource, silent);
 #else
             return PowerCmd.Apply<TPower>(choiceContext, target, amount, applier, cardSource, silent);

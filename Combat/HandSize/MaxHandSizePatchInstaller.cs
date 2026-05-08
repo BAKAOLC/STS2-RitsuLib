@@ -38,7 +38,7 @@ namespace STS2RitsuLib.Combat.HandSize
             ?? throw new MissingMethodException(typeof(MaxHandSizeCalculator).FullName,
                 nameof(MaxHandSizeCalculator.CalculateFromCardOwner));
 
-#if !STS2_V_0_103_2
+#if STS2_AT_LEAST_0_104_0
         private static readonly MethodInfo MaxCardsInHandGetter =
             AccessTools.PropertyGetter(typeof(CardPile), nameof(CardPile.MaxCardsInHand))
             ?? throw new MissingMethodException(typeof(CardPile).FullName, nameof(CardPile.MaxCardsInHand));
@@ -117,11 +117,14 @@ namespace STS2RitsuLib.Combat.HandSize
                 }
 
                 _patched = true;
-#if STS2_V_0_103_2
+#if !STS2_AT_LEAST_0_104_0
                 RitsuLibFramework.Logger.Info("[MaxHandSize] RitsuLib hand-size patch set installed (compat 0.103.2 profile).");
+#elif !STS2_AT_LEAST_0_105_0
+                RitsuLibFramework.Logger.Info(
+                    "[MaxHandSize] RitsuLib hand-size patch set installed (compat 0.104.0 profile).");
 #else
                 RitsuLibFramework.Logger.Info(
-                    "[MaxHandSize] RitsuLib hand-size patch set installed (0.104.0 profile).");
+                    "[MaxHandSize] RitsuLib hand-size patch set installed (0.105.0 profile).");
 #endif
             }
         }
@@ -192,14 +195,10 @@ namespace STS2RitsuLib.Combat.HandSize
 
         private static bool IsMaxHandSizeToken(CodeInstruction ins)
         {
-#if STS2_V_0_103_2
-            // 0.103.2 compatibility signatures keep most hand-limit checks as hard-coded constants.
-            // Match literal 10 only.
+#if !STS2_AT_LEAST_0_104_0
             return (ins.opcode == OpCodes.Ldc_I4_S && ins.operand is sbyte and DefaultMaxHandSize)
                    || (ins.opcode == OpCodes.Ldc_I4 && ins.operand is DefaultMaxHandSize);
 #else
-            // 0.104.0 switched many call sites to CardPile.MaxCardsInHand.
-            // Match both legacy literal 10 and property getter invocations.
             var isDefaultConst =
                 (ins.opcode == OpCodes.Ldc_I4_S && ins.operand is sbyte and DefaultMaxHandSize)
                 || (ins.opcode == OpCodes.Ldc_I4 && ins.operand is DefaultMaxHandSize);

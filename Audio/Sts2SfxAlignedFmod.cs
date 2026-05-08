@@ -40,7 +40,10 @@ namespace STS2RitsuLib.Audio
         }
 
         /// <summary>
-        ///     Starts a guarded loop via <see cref="SfxCmd.PlayLoop" />.
+        ///     Starts a guarded loop via <see>
+        ///         <cref>SfxCmd.PlayLoop</cref>
+        ///     </see>
+        ///     .
         /// </summary>
         public static void PlayLoop(string eventPath, bool usesLoopParam = true)
         {
@@ -48,7 +51,10 @@ namespace STS2RitsuLib.Audio
         }
 
         /// <summary>
-        ///     Stops a loop via <see cref="SfxCmd.StopLoop" />.
+        ///     Stops a loop via <see>
+        ///         <cref>SfxCmd.StopLoop</cref>
+        ///     </see>
+        ///     .
         /// </summary>
         public static void StopLoop(string eventPath)
         {
