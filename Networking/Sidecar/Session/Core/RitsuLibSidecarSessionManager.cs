@@ -12,6 +12,7 @@ namespace STS2RitsuLib.Networking.Sidecar
         private static readonly Lock Gate = new();
         private static readonly Dictionary<ulong, RitsuLibSidecarPeerReachability> PeerReachability = [];
         private static readonly Dictionary<ulong, RitsuLibSidecarPeerFeatures> PeerFeatures = [];
+        private static readonly HashSet<ulong> HandshakeNegotiationTerminalPeers = [];
         private static readonly List<IRitsuLibSidecarCapabilityValidationRoute> ValidationRoutes = [];
 
         private static INetGameService? _currentNetService;
@@ -102,6 +103,7 @@ namespace STS2RitsuLib.Networking.Sidecar
                 _epoch++;
                 PeerReachability.Clear();
                 PeerFeatures.Clear();
+                HandshakeNegotiationTerminalPeers.Clear();
                 _currentNetService = netService;
                 if (netService == null || netService.Type == NetGameType.Singleplayer)
                 {
@@ -181,7 +183,24 @@ namespace STS2RitsuLib.Networking.Sidecar
             {
                 PeerReachability.Remove(peerNetId);
                 PeerFeatures.Remove(peerNetId);
+                HandshakeNegotiationTerminalPeers.Remove(peerNetId);
             }
+
+            RitsuLibSidecarConnectionExchange.RemoveNegotiationStateForPeer(peerNetId);
+        }
+
+        /// <summary>
+        ///     Marks the peer as terminal for outbound handshake negotiation (transport budget, ack timeout, etc.) and
+        ///     forces <see cref="RitsuLibSidecarPeerReachability.Unsupported" /> for session stability.
+        /// </summary>
+        public static void NoteHandshakeNegotiationAborted(ulong peerNetId, string reason)
+        {
+            lock (Gate)
+            {
+                HandshakeNegotiationTerminalPeers.Add(peerNetId);
+            }
+
+            UpdateReachability(peerNetId, RitsuLibSidecarPeerReachability.Unsupported, reason);
         }
 
         /// <summary>
@@ -192,6 +211,10 @@ namespace STS2RitsuLib.Networking.Sidecar
             lock (Gate)
             {
                 PeerFeatures[peerNetId] = features;
+                if (accepted)
+                    HandshakeNegotiationTerminalPeers.Remove(peerNetId);
+                else
+                    HandshakeNegotiationTerminalPeers.Add(peerNetId);
             }
 
             if (!accepted)
@@ -252,7 +275,15 @@ namespace STS2RitsuLib.Networking.Sidecar
                 if (verdict == null)
                     continue;
 
-                UpdateReachability(peerNetId, verdict.Value,
+                var resolved = verdict.Value;
+                lock (Gate)
+                {
+                    if (resolved == RitsuLibSidecarPeerReachability.Supported &&
+                        HandshakeNegotiationTerminalPeers.Contains(peerNetId))
+                        resolved = RitsuLibSidecarPeerReachability.Unsupported;
+                }
+
+                UpdateReachability(peerNetId, resolved,
                     $"{RitsuLibSidecarDiscoveryPolicy.RouteReasonPrefix}{route.Name}");
                 return;
             }

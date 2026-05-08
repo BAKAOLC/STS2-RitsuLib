@@ -55,6 +55,7 @@ namespace STS2RitsuLib.Networking.Sidecar
                 return;
 
             RitsuLibSidecarSessionManager.ObserveNetService(net);
+            RitsuLibSidecarConnectionExchange.TickHandshakeNegotiation();
             RitsuLibSidecarSessionManager.RefreshAllReachabilityFromProviders();
             RitsuLibSidecarConnectionExchange.TrySendClientHelloIfReachable(net);
         }
@@ -64,6 +65,7 @@ namespace STS2RitsuLib.Networking.Sidecar
             RitsuLibSidecarBus.CancelAllPendingWaits();
             RitsuLibSidecarConnectionSession.Clear();
             RitsuLibSidecarSessionManager.ObserveNetService(null);
+            RitsuLibSidecarConnectionExchange.DiscardNegotiationStateAfterSessionEnds();
         }
 
         private sealed class SubscriptionGroup : IDisposable

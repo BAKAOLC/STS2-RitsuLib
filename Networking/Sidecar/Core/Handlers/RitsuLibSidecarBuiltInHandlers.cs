@@ -167,6 +167,7 @@ namespace STS2RitsuLib.Networking.Sidecar
                 out var selectedWire,
                 out var ok,
                 out var ackSenderFeatures);
+            RitsuLibSidecarConnectionExchange.NotifyOutboundHandshakeAck(ctx.SenderNetId, ok);
             RitsuLibSidecarConnectionSession.SetPeerFeatures(ctx.SenderNetId, ackSenderFeatures);
             RitsuLibSidecarSessionManager.NoteHandshakeFromPeer(ctx.SenderNetId, ackSenderFeatures, ok);
             RitsuLibFramework.Logger.Info(

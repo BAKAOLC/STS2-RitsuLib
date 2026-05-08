@@ -40,7 +40,8 @@ namespace STS2RitsuLib.Audio
         }
 
         /// <summary>
-        ///     Starts a guarded loop via <see>
+        ///     Starts a guarded loop via
+        ///     <see>
         ///         <cref>SfxCmd.PlayLoop</cref>
         ///     </see>
         ///     .
@@ -51,7 +52,8 @@ namespace STS2RitsuLib.Audio
         }
 
         /// <summary>
-        ///     Stops a loop via <see>
+        ///     Stops a loop via
+        ///     <see>
         ///         <cref>SfxCmd.StopLoop</cref>
         ///     </see>
         ///     .
