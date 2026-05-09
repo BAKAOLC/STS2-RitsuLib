@@ -30,7 +30,10 @@ namespace STS2RitsuLib.Scaffolding.Cards.HandOutline.Patches
             if (CombatManager.Instance is not { IsInProgress: true })
                 return;
 
-            var vanillaShow = model.CanPlay() || model.ShouldGlowRed || model.ShouldGlowGold;
+            var inPlayPhase = model.Owner?.PlayerCombatState?.Phase == PlayerTurnPhase.Play;
+            var shouldGlowRed = inPlayPhase && model.ShouldGlowRed;
+            var shouldGlowGold = inPlayPhase && model.CanPlay() && model.ShouldGlowGold;
+            var vanillaShow = model.CanPlay() || shouldGlowRed || shouldGlowGold;
             var force = rule.VisibleWhenUnplayable && !vanillaShow;
             if (!vanillaShow && !force)
                 return;
@@ -39,7 +42,8 @@ namespace STS2RitsuLib.Scaffolding.Cards.HandOutline.Patches
             if (force)
                 highlight.AnimShow();
 
-            highlight.Modulate = rule.ResolveColor(model);
+            var c = rule.ResolveColor(model);
+            highlight.Modulate = new(c.R, c.G, c.B, highlight.Modulate.A);
         }
 
         internal static void ApplyFlash(NHandCardHolder holder, CardModel model, ModCardHandOutlineRule rule)
@@ -48,7 +52,16 @@ namespace STS2RitsuLib.Scaffolding.Cards.HandOutline.Patches
                 !GodotObject.IsInstanceValid(flash))
                 return;
 
-            flash.Modulate = rule.ResolveColor(model);
+            var inPlayPhase = model.Owner?.PlayerCombatState?.Phase == PlayerTurnPhase.Play;
+            var shouldGlowRed = inPlayPhase && model.ShouldGlowRed;
+            var shouldGlowGold = inPlayPhase && model.CanPlay() && model.ShouldGlowGold;
+            var vanillaShow = model.CanPlay() || shouldGlowRed || shouldGlowGold;
+            var force = rule.VisibleWhenUnplayable && !vanillaShow;
+            if (!vanillaShow && !force)
+                return;
+
+            var c = rule.ResolveColor(model);
+            flash.Modulate = new(c.R, c.G, c.B, flash.Modulate.A);
         }
     }
 }
