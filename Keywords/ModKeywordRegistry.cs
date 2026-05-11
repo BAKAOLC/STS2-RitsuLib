@@ -423,6 +423,24 @@ namespace STS2RitsuLib.Keywords
         }
 
         /// <summary>
+        ///     Tries to resolve the string id that minted <paramref name="value" />.
+        /// </summary>
+        public static bool TryGetId(CardKeyword value, out string id)
+        {
+            lock (SyncRoot)
+            {
+                if (DefinitionsByCardKeyword.TryGetValue(value, out var def))
+                {
+                    id = def.Id;
+                    return true;
+                }
+            }
+
+            id = string.Empty;
+            return false;
+        }
+
+        /// <summary>
         ///     Snapshot of all registered keyword definitions, stable-ordered by id.
         /// </summary>
         public static ModKeywordDefinition[] GetDefinitionsSnapshot()
