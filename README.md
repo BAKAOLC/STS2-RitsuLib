@@ -4,58 +4,96 @@ Shared framework library for Slay the Spire 2 mods.
 
 Chinese README: [README.zh.md](README.zh.md)
 
-RitsuLib is maintained as a practical authoring library. API growth is demand-driven and focused on the patterns used by
-the bundled mods.
+RitsuLib gives mod authors a stable set of APIs for content registration, model identity, lifecycle hooks, persistence,
+settings UI, localization, audio, UI extensions, and compatibility helpers. It is designed to sit beside the base game
+API and other libraries such as [BaseLib](https://github.com/Alchyr/BaseLib-StS2).
 
-The library exists alongside [BaseLib](https://github.com/Alchyr/BaseLib-StS2) and currently does not conflict with it.
+Documentation site: https://sts2-ritsulib.ritsukage.com/
 
-Documentation site (Valaxy, bilingual): https://sts2-ritsulib.ritsukage.com/
+## Install
 
-## Optional analyzers
+Reference the NuGet package in your mod project:
 
-Companion Roslyn package for RitsuLib-style mods (localization keys, `Mod*Template` usage, registration attributes):
-[STS2-ModAnalyzers-RitsuLib](https://github.com/BAKAOLC/STS2-ModAnalyzers-RitsuLib) (NuGet:
-`STS2.ModAnalyzers.RitsuLib`).
+```xml
+<PackageReference Include="STS2.RitsuLib" />
+```
 
-## Mod Settings
+Then declare the runtime dependency in `mod_manifest.json`. For game API 0.105.x and newer, use the object form:
 
-RitsuLib includes a settings UI layer for player-editable values.
+```json
+{
+  "dependencies": [
+    { "id": "STS2-RitsuLib" }
+  ]
+}
+```
 
-- register pages explicitly with `RitsuLibFramework.RegisterModSettings(...)`
-- bind controls to `ModDataStore` instead of introducing a separate configuration backend
-- source labels and descriptions from `I18N` or game-native `LocString`
-- keep RitsuLib settings registration independent from BaseLib's config-page registry and file paths
+For older game API branches, use the legacy string form because older manifest parsers may fail on dependency objects:
 
-Mod settings guide: https://sts2-ritsulib.ritsukage.com/guide/mod-settings
+```json
+{
+  "dependencies": [
+    "STS2-RitsuLib"
+  ]
+}
+```
 
-## Debug Compatibility Mode
+If your project does not use central package management, let your package manager or IDE choose the current compatible
+package version instead of copying a pinned version from this README. Older game API branches use the matching
+`STS2.RitsuLib.Compat.<api-version>` package.
 
-`debug_compatibility_mode` defaults to **off**. In that state, patched systems keep vanilla behavior.
+## Runtime Package Choices
 
-When the master toggle is **on**, the settings page exposes per-feature compatibility fallbacks. Sub-toggles default to
-**on**.
+For normal mod development, reference one NuGet package from your project:
 
-| Sub-setting                    | Effect when enabled                                                                                 |
-|--------------------------------|-----------------------------------------------------------------------------------------------------|
-| LocTable missing keys          | Resolve to placeholder `LocString` values and log one `[Localization][DebugCompat]` warning per key |
-| Invalid unlock epochs          | Skip invalid epoch grants and log one `[Unlocks][DebugCompat]` warning per stable key               |
-| THE_ARCHITECT missing dialogue | Inject empty `Lines` entries for `ModContentRegistry` characters when vanilla provides no dialogue  |
+- `STS2.RitsuLib` for the current supported game API branch.
+- `STS2.RitsuLib.Compat.<api-version>` when your mod intentionally targets an older Slay the Spire 2 API branch.
 
-Disabling a sub-toggle removes only that fallback.
+For players, [GitHub releases](https://github.com/BAKAOLC/STS2-RitsuLib/releases) may also provide
+`STS2-RitsuLib.<version>.variant-pack.zip`. Use this asset, not the per-compat `*.github.zip` files, when you want one
+installed `mods/STS2-RitsuLib/` folder that chooses the matching RitsuLib build for the running game. The root
+`STS2-RitsuLib.dll` is a loader, and the real API-specific builds live under `lib/<api-version>/`.
 
-Windows settings path:
+Downstream mods still declare the runtime dependency by mod id. Match the manifest format to the game API branch you
+target.
 
-`%appdata%\SlayTheSpire2\steam\<user_id>\mod_data\com.ritsukage.sts2-RitsuLib\settings.json`
+For 0.105.x and newer:
 
-## Runtime bundle (multi-API, interim)
+```json
+{
+  "dependencies": [
+    { "id": "STS2-RitsuLib" }
+  ]
+}
+```
 
-End users who want **one mod folder** that picks the correct RitsuLib build for the running game should install the
-GitHub
-asset `STS2-RitsuLib.<version>.variant-pack.zip` (not the per-compat `*.github.zip` files). Extract it under
-`mods/STS2-RitsuLib/`: the root `STS2-RitsuLib.dll` is a small loader; real builds live under `lib/<api-version>/` with
-the same assembly name as today. Downstream mods keep declaring `dependencies: ["STS2-RitsuLib"]` and continue to
-reference NuGet (`STS2.RitsuLib` / `STS2.RitsuLib.Compat.*`) unchanged. This path is expected to be temporary until
-first-party workshop / per-branch installs make separate DLLs straightforward.
+For older branches:
+
+```json
+{
+  "dependencies": [
+    "STS2-RitsuLib"
+  ]
+}
+```
+
+The variant pack does not change your compile-time NuGet reference. It only changes how the runtime RitsuLib mod is
+installed for users who need one folder to support multiple game API branches.
+
+## Main Entry Points
+
+- `RitsuLibFramework.CreateContentPack(modId)` for content, keywords, timeline entries, card piles, and top-bar buttons.
+- `RitsuLibFramework.CreatePatcher(modId, patcherName)` for Harmony patches with RitsuLib diagnostics.
+- `RitsuLibFramework.SubscribeLifecycle<TEvent>(...)` for framework and game lifecycle events.
+- `RitsuLibFramework.GetDataStore(modId)` with `BeginModDataRegistration(modId)` for JSON-backed mod data.
+- `RitsuLibFramework.RegisterModSettings(modId, configure)` for player-editable settings pages.
+
+Start with the getting-started guide, then use the topic pages for the specific feature you are adding.
+
+## Optional Analyzer
+
+RitsuLib-style mods can also use the companion Roslyn analyzer:
+[STS2-ModAnalyzers-RitsuLib](https://github.com/BAKAOLC/STS2-ModAnalyzers-RitsuLib) (`STS2.ModAnalyzers.RitsuLib`).
 
 ## License
 

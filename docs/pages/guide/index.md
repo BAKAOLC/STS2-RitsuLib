@@ -1,134 +1,108 @@
 ---
 title:
-  en: Documentation index
-  zh-CN: 文档目录
+  en: Documentation
+  zh-CN: 文档
 cover: https://wrxinyue.s3.bitiful.net/slay-the-spire-2-wallpaper.webp
 ---
 
-## Overview{lang="en"}
-
-## 概述{lang="zh-CN"}
+## Start{lang="en"}
 
 ::: en
 
-Use the sidebar or the tables below. Guide pages are Markdown in this repo under [`docs/pages/guide/`](https://github.com/BAKAOLC/STS2-RitsuLib/tree/main/docs/pages/guide).
+Read [Getting started](/guide/getting-started) first if the mod does not already reference RitsuLib. Then choose the page that matches the feature you are adding.
+
+| Goal | Page |
+| --- | --- |
+| Add RitsuLib to a mod | [Getting started](/guide/getting-started) |
+| Learn the names used by the docs | [Terminology](/guide/terminology) |
+| Pick the right API surface | [How the framework is organized](/guide/framework-design) |
+| Register models and ids | [Content authoring](/guide/content-authoring-toolkit) |
+| Work with registries directly | [Content packs and registries](/guide/content-packs-and-registries) |
 
 :::
+
+## 起步{lang="zh-CN"}
 
 ::: zh-CN
 
-可通过侧栏或下方表格浏览。正文为仓库内 [`docs/pages/guide/`](https://github.com/BAKAOLC/STS2-RitsuLib/tree/main/docs/pages/guide) 下的 Markdown，可直接编辑。
+如果项目还没有接入 RitsuLib，先读 [快速入门](/guide/getting-started)。之后按正在编写的功能跳到对应页面。
+
+| 目标 | 页面 |
+| --- | --- |
+| 给 Mod 接入 RitsuLib | [快速入门](/guide/getting-started) |
+| 理解文档使用的术语 | [术语](/guide/terminology) |
+| 选择正确 API 入口 | [框架组织方式](/guide/framework-design) |
+| 注册模型和稳定 ID | [内容编写](/guide/content-authoring-toolkit) |
+| 直接使用注册器 | [内容包与注册器](/guide/content-packs-and-registries) |
 
 :::
 
-## Start here{lang="en"}
-
-## 从这里开始{lang="zh-CN"}
+## Authoring Content{lang="en"}
 
 ::: en
 
-| Page | Description |
+| Goal | Page |
 | --- | --- |
-| [Getting started](/guide/getting-started) | Dependency, bootstrap, first registered content |
-| [Framework design](/guide/framework-design) | Architecture and recommended reading order |
-| [Terminology](/guide/terminology) | Canonical terms used across these docs |
+| Build cards, relics, potions, powers, events, acts, and placeholder entries | [Content authoring](/guide/content-authoring-toolkit) |
+| Create a character and starter loadout | [Character and unlock scaffolding](/guide/character-and-unlock-scaffolding) |
+| Add dynamic card numbers and tooltips | [Card dynamic variables](/guide/card-dynamic-var-toolkit) |
+| Add events and ancient options | [Custom events](/guide/custom-events) |
+| Add story / epoch progression | [Timeline and unlocks](/guide/timeline-and-unlocks) |
+| Override art and fallback profiles | [Asset profiles and fallbacks](/guide/asset-profiles-and-fallbacks) |
+| Author Godot scenes safely | [Godot scene authoring](/guide/godot-scene-authoring) |
+| Add creature visual playback | [Creature visuals and animation](/guide/creature-visuals-and-animation) |
 
 :::
+
+## 编写内容{lang="zh-CN"}
 
 ::: zh-CN
 
-| 文档 | 说明 |
+| 目标 | 页面 |
 | --- | --- |
-| [快速入门](/guide/getting-started) | 依赖声明、引导流程与第一个已注册内容 |
-| [框架设计](/guide/framework-design) | 核心架构与推荐阅读顺序 |
-| [术语表](/guide/terminology) | 文档中统一使用的术语 |
+| 编写卡牌、遗物、药水、能力、事件、Act 与占位内容 | [内容编写](/guide/content-authoring-toolkit) |
+| 创建角色和初始牌组 | [角色与解锁脚手架](/guide/character-and-unlock-scaffolding) |
+| 添加卡牌动态数值和 Tooltip | [卡牌动态变量](/guide/card-dynamic-var-toolkit) |
+| 添加事件和 Ancient 选项 | [自定义事件](/guide/custom-events) |
+| 添加 Story / Epoch 进度 | [时间线与解锁](/guide/timeline-and-unlocks) |
+| 覆写美术资源和回退配置 | [资源配置与回退](/guide/asset-profiles-and-fallbacks) |
+| 安全编写 Godot 场景 | [Godot 场景编写](/guide/godot-scene-authoring) |
+| 添加生物动画播放 | [生物视觉与动画](/guide/creature-visuals-and-animation) |
 
 :::
 
-## Content authoring{lang="en"}
-
-## 内容编写{lang="zh-CN"}
+## Runtime APIs{lang="en"}
 
 ::: en
 
-| Page | Description |
+| Goal | Page |
 | --- | --- |
-| [Content authoring toolkit](/guide/content-authoring-toolkit) | Identity rules, localization contracts, asset overrides |
-| [Content packs & registries](/guide/content-packs-and-registries) | Registry model, fixed identity, registration flow |
-| [Character & unlock scaffolding](/guide/character-and-unlock-scaffolding) | Character assembly, registration, unlock integration |
-| [Card dynamic variables](/guide/card-dynamic-var-toolkit) | Custom card vars with tooltip support |
-| [Custom events](/guide/custom-events) | Event registration, localization, custom scenes |
-| [Timeline & unlocks](/guide/timeline-and-unlocks) | Story / epoch registration, progression, compatibility |
-| [Asset profiles & fallbacks](/guide/asset-profiles-and-fallbacks) | Placeholder fallback, profiles, path diagnostics |
-| [Godot scene authoring](/guide/godot-scene-authoring) | Scene-script wrappers, editor notes, runtime registration |
-| [Mod settings](/guide/mod-settings) | Settings UI architecture, bindings, controls, pages |
+| Save mod data and run migrations | [Persistence](/guide/persistence-guide) |
+| Add settings pages | [Mod settings](/guide/mod-settings) |
+| Use localized text, keywords, and SmartFormat | [Localization and keywords](/guide/localization-and-keywords) |
+| Understand LocString placeholders | [LocString placeholders](/guide/loc-string-placeholder-resolution) |
+| Subscribe to game events | [Lifecycle events](/guide/lifecycle-events) |
+| Patch game methods | [Patching](/guide/patching-guide) |
+| Play FMOD events and local audio files | [FMOD and audio](/guide/fmod-and-audio) |
+| Add runtime UI helpers | [Shell theme](/guide/shell-theme) |
+| Check diagnostics and game-source notes | [Diagnostics and compatibility](/guide/diagnostics-and-compatibility) |
 
 :::
+
+## 运行时 API{lang="zh-CN"}
 
 ::: zh-CN
 
-| 文档 | 说明 |
+| 目标 | 页面 |
 | --- | --- |
-| [内容注册规则](/guide/content-authoring-toolkit) | 身份规则、本地化约束与资源覆写基础 |
-| [内容包与注册器](/guide/content-packs-and-registries) | 注册器模型、固定身份与注册流程 |
-| [角色与解锁模板](/guide/character-and-unlock-scaffolding) | 角色装配、注册与解锁集成 |
-| [卡牌动态变量](/guide/card-dynamic-var-toolkit) | 带 Tooltip 支持的自定义卡牌变量 |
-| [自定义事件](/guide/custom-events) | 事件注册、本地化对齐与自定义场景 |
-| [时间线与解锁](/guide/timeline-and-unlocks) | Story / Epoch 注册、进度规则与兼容桥接 |
-| [资源配置与回退](/guide/asset-profiles-and-fallbacks) | Placeholder、Profile 与路径诊断 |
-| [Godot 场景编写](/guide/godot-scene-authoring) | 场景脚本包装、编辑器注意事项与运行时注册 |
-| [Mod 设置界面](/guide/mod-settings) | 设置 UI、绑定、控件与页面组合 |
-
-:::
-
-## Localization{lang="en"}
-
-## 本地化{lang="zh-CN"}
-
-::: en
-
-| Page | Description |
-| --- | --- |
-| [Localization & keywords](/guide/localization-and-keywords) | `I18N`, keyword registration, ancient dialogue |
-| [LocString placeholder resolution](/guide/loc-string-placeholder-resolution) | Placeholder syntax, formatters, extension points |
-
-:::
-
-::: zh-CN
-
-| 文档 | 说明 |
-| --- | --- |
-| [本地化与关键词](/guide/localization-and-keywords) | `I18N`、关键词注册与 Ancient 对话本地化 |
-| [LocString 占位符解析](/guide/loc-string-placeholder-resolution) | 占位符语法、格式化器与扩展点 |
-
-:::
-
-## Runtime & infrastructure{lang="en"}
-
-## 运行时与基础设施{lang="zh-CN"}
-
-::: en
-
-| Page | Description |
-| --- | --- |
-| [Lifecycle events](/guide/lifecycle-events) | Lifecycle reference and timing |
-| [Patching guide](/guide/patching-guide) | `ModPatcher`, `IPatchMethod`, dynamic patches |
-| [Persistence guide](/guide/persistence-guide) | Store scopes, save lifecycle, migrations |
-| [FMOD & audio](/guide/fmod-and-audio) | `GameFmod`, banks, buses, streaming files |
-| [Diagnostics & compatibility](/guide/diagnostics-and-compatibility) | Diagnostics policy, fallbacks, bridge patches |
-| [Shell theme](/guide/shell-theme) | Settings UI theme tokens, scopes, and customization |
-
-:::
-
-::: zh-CN
-
-| 文档 | 说明 |
-| --- | --- |
-| [生命周期事件](/guide/lifecycle-events) | 事件参考与触发时机 |
-| [补丁系统](/guide/patching-guide) | `ModPatcher`、`IPatchMethod` 与动态补丁 |
-| [持久化设计](/guide/persistence-guide) | 存储作用域、存档生命周期与迁移 |
-| [FMOD 与音频](/guide/fmod-and-audio) | `GameFmod`、Bank、Bus、流式文件等 |
-| [诊断与兼容层](/guide/diagnostics-and-compatibility) | 诊断策略、兼容回退与桥接补丁 |
-| [Shell 主题](/guide/shell-theme) | 设置 UI 主题 token、scope 合并与自定义 |
+| 保存 Mod 数据并做迁移 | [持久化](/guide/persistence-guide) |
+| 添加设置页面 | [Mod 设置](/guide/mod-settings) |
+| 使用本地化文本、关键词和 SmartFormat | [本地化与关键词](/guide/localization-and-keywords) |
+| 理解 LocString 占位符 | [LocString 占位符](/guide/loc-string-placeholder-resolution) |
+| 订阅游戏事件 | [生命周期事件](/guide/lifecycle-events) |
+| Patch 游戏方法 | [补丁系统](/guide/patching-guide) |
+| 播放 FMOD 事件和本地音频文件 | [FMOD 与音频](/guide/fmod-and-audio) |
+| 添加运行时 UI 辅助能力 | [Shell 主题](/guide/shell-theme) |
+| 查看诊断和游戏源码注意点 | [诊断与兼容](/guide/diagnostics-and-compatibility) |
 
 :::

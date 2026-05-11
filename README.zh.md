@@ -2,55 +2,92 @@
 
 English README: [README.md](README.md)
 
-面向 Slay the Spire 2 Mod 的共享框架库。
+面向《杀戮尖塔 2》Mod 作者的共享框架库。
 
-RitsuLib 按实际需求演进，主要服务于仓库内 Mod 的内容编写、注册、持久化与设置界面。
+RitsuLib 提供内容注册、模型身份、生命周期、持久化、设置界面、本地化、音频、UI 扩展与兼容辅助 API。它不替代游戏原生 API，也不要求放弃 [BaseLib](https://github.com/Alchyr/BaseLib-StS2)；它更像一层为常见 Mod 编写流程准备好的工具集。
 
-该库可与 [BaseLib](https://github.com/Alchyr/BaseLib-StS2) 并存，当前不存在已知冲突。
+文档站：https://sts2-ritsulib.ritsukage.com/
 
-文档站（Valaxy，中英）: https://sts2-ritsulib.ritsukage.com/
+## 安装
 
-## 可选：配套分析器
+在 Mod 项目中引用 NuGet 包：
 
-面向 RitsuLib 脚手架与本地化的 Roslyn 分析器仓库：
-[STS2-ModAnalyzers-RitsuLib](https://github.com/BAKAOLC/STS2-ModAnalyzers-RitsuLib)（NuGet 包名：`STS2.ModAnalyzers.RitsuLib`）。
+```xml
+<PackageReference Include="STS2.RitsuLib" />
+```
 
-## Mod 设置
+然后在 `mod_manifest.json` 声明运行时依赖。游戏 API 0.105.x 及之后使用对象写法：
 
-RitsuLib 提供一套用于玩家可编辑配置的设置 UI。
+```json
+{
+  "dependencies": [
+    { "id": "STS2-RitsuLib" }
+  ]
+}
+```
 
-- 通过 `RitsuLibFramework.RegisterModSettings(...)` 显式注册设置页
-- 控件绑定直接复用 `ModDataStore`
-- 标签与描述可来自 `I18N` 或游戏原生 `LocString`
-- 设置页注册与 BaseLib 的配置页注册、文件路径彼此独立
+旧游戏 API 分支使用旧的字符串写法；旧版 manifest 解析器可能无法解析 dependency 对象，甚至直接报错：
 
-Mod 设置说明: https://sts2-ritsulib.ritsukage.com/guide/mod-settings
+```json
+{
+  "dependencies": [
+    "STS2-RitsuLib"
+  ]
+}
+```
 
-## Debug 兼容模式
+如果项目没有使用 Central Package Management，请让包管理器或 IDE 选择当前兼容的包版本，不要从 README 复制固定版本号。旧游戏 API 分支使用对应的
+`STS2.RitsuLib.Compat.<api-version>` 包。
 
-`debug_compatibility_mode` 默认**关闭**。关闭时，相关补丁保持原版行为。
+## 运行时包选择
 
-总开关**开启**后，设置页会显示按功能拆分的兼容回退项，且子开关默认**开启**。
+Mod 开发时，项目里只需要引用一个 NuGet 包：
 
-| 子项 | 开启时 |
-|---|---|
-| LocTable 缺键 | 解析为占位 `LocString`，并为每个键记录一次 `[Localization][DebugCompat]` 警告 |
-| 无效解锁 Epoch | 跳过无效的 Epoch 授予，并按稳定键记录一次 `[Unlocks][DebugCompat]` 警告 |
-| 建筑师缺对话 | 当原版未提供对话时，为 `ModContentRegistry` 角色注入空 `Lines` |
+- `STS2.RitsuLib`：用于当前支持的游戏 API 分支。
+- `STS2.RitsuLib.Compat.<api-version>`：用于明确面向旧版《杀戮尖塔 2》API 分支的 Mod。
 
-关闭某一子项时，仅移除该项回退逻辑。
+给玩家安装时，[GitHub Release](https://github.com/BAKAOLC/STS2-RitsuLib/releases) 可能还会提供
+`STS2-RitsuLib.<version>.variant-pack.zip`。如果希望只安装一个 `mods/STS2-RitsuLib/` 文件夹，并让它按当前运行的游戏选择对应 RitsuLib 构建，就使用这个资产，而不是各 compat 分支的
+`*.github.zip`。根目录的 `STS2-RitsuLib.dll` 是加载器，真正按 API 区分的构建在 `lib/<api-version>/` 下。
 
-Windows 下设置文件路径:
+下游 Mod 仍按 Mod id 声明运行时依赖。具体 manifest 格式要匹配目标游戏 API 分支。
 
-`%appdata%\SlayTheSpire2\steam\<user_id>\mod_data\com.ritsukage.sts2-RitsuLib\settings.json`
+0.105.x 及之后：
 
-## 运行时 Bundle（多 API，临时方案）
+```json
+{
+  "dependencies": [
+    { "id": "STS2-RitsuLib" }
+  ]
+}
+```
 
-希望**只装一份** RitsuLib、由运行时按游戏选择对应构建的最终用户，请使用 GitHub Release 中的
-`STS2-RitsuLib.<version>.variant-pack.zip`（不要用各 compat 的 `*.github.zip`）。解压到 `mods/STS2-RitsuLib/`：根目录的
-`STS2-RitsuLib.dll` 为轻量加载器；各版本实际 DLL 在 `lib/<api-version>/` 下，程序集名与现有一致。下游 mod 的
-`dependencies` 仍写 `STS2-RitsuLib`，NuGet 引用方式（`STS2.RitsuLib` / `STS2.RitsuLib.Compat.*`）不变。该形态在创意工坊 /
-按游戏版本分支安装成熟后预计可退役。
+旧分支：
+
+```json
+{
+  "dependencies": [
+    "STS2-RitsuLib"
+  ]
+}
+```
+
+变体包不会改变你的编译期 NuGet 引用；它只影响玩家安装运行时 RitsuLib Mod 的方式。
+
+## 常用入口
+
+- `RitsuLibFramework.CreateContentPack(modId)`：注册内容、关键词、时间线、卡堆和顶栏按钮。
+- `RitsuLibFramework.CreatePatcher(modId, patcherName)`：创建带诊断日志的 Harmony patcher。
+- `RitsuLibFramework.SubscribeLifecycle<TEvent>(...)`：订阅框架和游戏生命周期事件。
+- `RitsuLibFramework.GetDataStore(modId)` 配合 `BeginModDataRegistration(modId)`：注册 JSON 持久化数据。
+- `RitsuLibFramework.RegisterModSettings(modId, configure)`：注册玩家可编辑的设置页面。
+
+建议从快速入门开始，再按正在编写的功能阅读对应专题。
+
+## 可选分析器
+
+RitsuLib 风格项目可以额外引用配套 Roslyn 分析器：
+[STS2-ModAnalyzers-RitsuLib](https://github.com/BAKAOLC/STS2-ModAnalyzers-RitsuLib)（包名：`STS2.ModAnalyzers.RitsuLib`）。
 
 ## 许可证
 

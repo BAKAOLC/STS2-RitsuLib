@@ -1,739 +1,168 @@
 ---
 title:
-  en: Shell theme
-  zh-CN: Shell 主题
+  en: Runtime UI And Shell Theme
+  zh-CN: 运行时 UI 与 Shell 主题
 cover: https://wrxinyue.s3.bitiful.net/slay-the-spire-2-wallpaper.webp
 ---
 
-## Shell Theme (Settings UI Theme System){lang="en"}
+## Settings Shell Theme{lang="en"}
 
-:::: en
+::: en
 
-The settings UI shell (`RitsuModSettingsSubmenu`, sidebars, panels, lists, controls) renders against
-a theme system based on the
-[W3C Design Tokens Format Module](https://www.w3.org/community/design-tokens/) (DTFM).
+RitsuLib settings pages use shell theme tokens for colors, typography, spacing, and component defaults. Most mods should rely on the active theme. Add a custom theme only when your settings UI needs a coherent visual identity across several custom controls.
 
-What it gives you:
+Theme JSON files belong in your mod resources and are registered through the shell theme APIs. Keep token names semantic: describe the role, not the color.
 
-1. **Structured colors / fonts / metrics** — every visual constant is exposed as a named token, no
-   ad-hoc hardcoded values.
-2. **Layered overrides** — snapshots are built by merging in the order
-   `mod-registered defaults → inheritance chain → scopes`, so the same UI can be adjusted globally,
-   per shell, per ModSettings page, or per mod.
-3. **Extensible** — mods can ship additional data via `extensions.<modId>` in theme JSON **and**
-   register their own DTFM defaults at runtime; RitsuLib handles merging, reference resolution and
-   refresh notifications.
+:::
 
----
+## 设置 Shell 主题{lang="zh-CN"}
 
-## File locations
+::: zh-CN
 
-- Built-in themes: `sts-2-ritsulib/Ui/Shell/Themes/{default,warm,oled}.theme.json`, packed as
-  embedded resources into the assembly.
-- User / mod-supplied themes: `user://<global save path>/shell_themes/`. The directory is created
-  on demand by `RitsuShellThemePaths.TryEnsureShellThemesDirectory`. On startup RitsuLib copies the
-  embedded themes into this folder so players can edit them directly.
-- The selected theme id is persisted in the global save (`UiShellThemeId`).
-- JSON Schema: `sts-2-ritsulib/schemas/ui/shell/v1/schema.json`. Reference it from a `$schema`
-  property to get IDE autocomplete and validation.
+RitsuLib 设置页面使用 shell theme token 控制颜色、字体、间距和控件默认样式。大多数 Mod 直接使用当前主题即可。只有当你的设置 UI 有多个自定义控件，并且需要统一视觉身份时，才添加自定义主题。
 
----
+主题 JSON 放在 Mod 资源中，并通过 shell theme API 注册。Token 名称应表达用途，不要只描述颜色。
 
-## Top-level document layout
+:::
 
-```jsonc
-{
-  "$schema": "https://raw.githubusercontent.com/BAKAOLC/STS2-RitsuLib/main/schemas/ui/shell/v1/schema.json",
-  "themeFormatVersion": 1,
-  "id": "warm",                // required, lowercase identifier
-  "displayName": "Warm",       // human-readable label
-  "inherits": "default",       // parent theme id; null = root theme
+## Toasts{lang="en"}
 
-  "core":       { /* primitives */ },
-  "semantic":   { /* aliases, intent-named */ },
-  "components": { /* component tokens */ },
+::: en
 
-  "scopes": {
-    "global":      { /* applied everywhere */ },
-    "shell":       { /* shell-only overlay */ },
-    "modSettings": { /* RitsuModSettingsSubmenu overlay */ },
-    "mod:my_mod":  { /* visible to my_mod only */ }
-  },
-
-  "extensions": {
-    "my_mod": { "anything": { "goes": true } }
-  }
-}
-```
-
-### Three-layer token model
-
-| Layer        | Role                                                            | Examples                                |
-| ------------ | --------------------------------------------------------------- | --------------------------------------- |
-| `core`       | Primitives — palette ramps, scales, font families               | `core.color.amber.500`, `core.size.2`   |
-| `semantic`   | Aliases — intent-named, prefer references into `core`            | `semantic.color.surface.default`        |
-| `components` | Component tokens — `component → variant → state`                | `components.button.primary.hover.bg`    |
-
-Convention: UI consumes only `semantic` and `components`. When you need a new value, add a
-primitive to `core` and reference it from `semantic` / `components`.
-
-### Leaf tokens
-
-Strict DTFM: every leaf is an object with required `$value` / `$type` and optional
-`$description` / `$extensions`:
-
-```jsonc
-{
-  "$value": "#F59E0B",
-  "$type": "color",
-  "$description": "Warm accent base"
-}
-```
-
-Supported `$type` values:
-
-- `color` — hex string, alpha optional (`#RRGGBB` / `#RRGGBBAA`).
-- `dimension` — numeric pixel value (int or float).
-- `fontFamily` — string path; supports `res://`, `user://` and absolute paths.
-- `fontWeight` — integer.
-- `number` — unitless float (line-height multipliers etc.).
-- `boolean` — boolean (used for switches such as `sidebar.showInlinePageCount`).
-
-### Reference syntax
-
-A leaf's `$value` can be a `"{a.b.c}"` path that points at another leaf in
-`core / semantic / components / scopes`. Cycles are forbidden;
-`RitsuShellThemeReferenceResolver` resolves all references after the merge phase.
-
-```jsonc
-"semantic": {
-  "color": {
-    "accent": {
-      "default": { "$value": "{core.color.amber.500}", "$type": "color" }
-    }
-  }
-}
-```
-
----
-
-## Merge order (inheritance + scopes)
-
-`RitsuShellThemeCatalog.TryBuildSnapshot` builds a snapshot by writing into the same token tree in
-this order:
-
-1. All mod defaults registered through `RegisterModTokens`.
-2. The inheritance chain `inherits → ... → leaf theme`. For each document, `core / semantic /
-   components` branches are deep-merged into the tree.
-3. Inside each document, scopes are overlaid in this order: `global → shell → modSettings →
-   mod:<id>`.
-4. Once merging is complete, references are resolved globally; `RitsuShellThemeBuilder` then
-   constructs the immutable `RitsuShellTheme` snapshot.
-
-Merge semantics:
-
-- Group nodes (plain JSON objects) merge recursively by key.
-- Leaf tokens (`$value` / `$type` shape) replace the previous value wholesale; no field-level
-  merging is attempted.
-- Arrays replace wholesale.
-
-> ⚠️ Today RitsuLib itself only consumes the `global / shell / modSettings / mod:<id>` scopes.
-> If a mod needs its own scope, prefer `mod:<modId>` since it already participates in the merge
-> pipeline.
-
----
-
-## C# API overview
-
-### 1. Current snapshot and event
+Use toast messages for short runtime feedback that should not interrupt play.
 
 ```csharp
-using STS2RitsuLib.Ui.Shell.Theme;
-
-var theme = RitsuShellTheme.Current;        // same as RitsuShellThemeRuntime.Current
-RitsuShellThemeRuntime.ThemeChanged += () => ApplyMyChrome(RitsuShellTheme.Current);
-RitsuShellThemeRuntime.ApplyThemeId("warm");
-RitsuShellThemeRuntime.ReapplyActiveTheme(forceReloadCatalog: true); // re-read disk
+RitsuToastService.ShowInfo("Settings saved.", "My Mod");
+RitsuToastService.ShowWarning("Optional bank failed to load.", "My Mod");
+RitsuToastService.ShowError("Required setup failed.", "My Mod");
 ```
 
-`RitsuShellTheme` is immutable — every theme change or mod registration produces a fresh
-instance. Cache tokens only inside a `ThemeChanged` handler so they refresh automatically.
+For custom placement, image, duration, or click behavior, build a `RitsuToastRequest`.
 
-### 2. Typed access (preferred for built-in tokens)
+:::
 
-`RitsuShellTheme` exposes strongly-typed records grouped by intent:
+## Toast{lang="zh-CN"}
+
+::: zh-CN
+
+短运行时反馈可以使用 toast，不打断玩家操作。
 
 ```csharp
-var t = RitsuShellTheme.Current;
-
-// Colors
-t.Color.White
-t.Color.Divider
-t.Color.Shadow.Ambient
-
-// Text
-t.Text.LabelPrimary
-t.Text.HoverHighlight
-
-// Surface
-t.Surface.Sidebar
-t.Surface.Entry.Bg
-t.Surface.Framed.Border
-
-// Components & states
-t.Component.Toggle.On.Bg
-t.Component.SidebarBtn.SelectedHover.Border
-t.Component.TextButton.Accent.Fg
-
-// Metrics
-t.Metric.Radius.Default
-t.Metric.BorderWidth.Overlay
-t.Metric.FontSize.Button
-t.Metric.Sidebar.Width
-t.Metric.Sidebar.ShowInlinePageCount     // bool
-
-// Fonts
-t.Font.Body
-t.Font.BodyBold
-t.Font.Button
+RitsuToastService.ShowInfo("设置已保存。", "My Mod");
+RitsuToastService.ShowWarning("可选 bank 加载失败。", "My Mod");
+RitsuToastService.ShowError("必要初始化失败。", "My Mod");
 ```
 
-The full record definitions live under
-[`Ui/Shell/Theme/Tokens/`](../../Ui/Shell/Theme/Tokens/) — `ColorTokens.cs`, `ComponentTokens.cs`,
-`MetricTokens.cs`, `FontTokens.cs`.
+需要自定义位置、图片、持续时间或点击行为时，构建 `RitsuToastRequest`。
 
-### 3. Path-string access (preferred for mod extensions or rarely-touched tokens)
+:::
 
-When a token comes from a mod-supplied subtree (no typed record exists), use the dynamic API:
+## Runtime Hotkeys{lang="en"}
+
+::: en
+
+Register hotkeys when the action must be available outside a settings page.
 
 ```csharp
-var theme = RitsuShellTheme.Current;
-
-Color  bg     = theme.GetColor("components.relicPicker.selected.bg");
-float  height = theme.GetDimension("semantic.metrics.relicPicker.rowMinHeight");
-int    radius = theme.GetDimensionInt("semantic.metrics.radius.default");
-bool   inline = theme.GetBool("semantic.metrics.sidebar.showInlinePageCount");
-Font   body   = theme.GetFontFamily("semantic.fontFamily.body");
-
-if (theme.TryGetExtension("my_mod", out var json))
-{
-    // json is System.Text.Json.JsonElement, the merged extensions.my_mod subtree
-}
+var handle = RuntimeHotkeyService.Register(
+    "Ctrl+Shift+M",
+    callback: ToggleMyOverlay,
+    id: "my_mod.toggle_overlay",
+    title: "Toggle overlay");
 ```
 
-Lookup rules:
+Expose hotkeys in settings with `AddKeyBinding`, `AddMultiKeyBinding`, or `AddRuntimeHotkeySummary`.
 
-- Paths are case-sensitive and use the merged JSON key names (segments joined with `.`).
-- On miss / type mismatch the API returns a safe default (`Magenta`, `0`, `false`, the shared
-  fallback font).
-- All numeric values flow through `GetDimension*`; only the path string changes.
+:::
 
-### 4. Mod registration API
+## 运行时快捷键{lang="zh-CN"}
 
-`RitsuShellThemeRuntime` exposes a registration surface that lets mods supply defaults without
-shipping their own theme files:
+::: zh-CN
+
+当操作需要在设置页面之外可用时，注册运行时快捷键。
 
 ```csharp
-public static class RitsuShellThemeRuntime
-{
-    public static void RegisterModTokens(string modId,
-        JsonElement? defaults,
-        Action<RitsuShellTheme>? onApply = null);
-
-    public static void UnregisterModTokens(string modId);
-}
+var handle = RuntimeHotkeyService.Register(
+    "Ctrl+Shift+M",
+    callback: ToggleMyOverlay,
+    id: "my_mod.toggle_overlay",
+    title: "Toggle overlay");
 ```
 
-- `defaults` — a DTFM-shaped JSON subtree (object preferred, may contain
-  `core / semantic / components / extensions`). It is merged **before** any theme document, so
-  matching keys in user themes always win.
-- `onApply` — invoked once after every snapshot rebuild with the latest `RitsuShellTheme`.
-  Registration triggers an immediate rebuild internally, so `onApply` fires once on register too.
-- Unregistering rebuilds the snapshot so the defaults disappear.
+在设置页面中展示或编辑快捷键时，使用 `AddKeyBinding`、`AddMultiKeyBinding` 或 `AddRuntimeHotkeySummary`。
 
----
+:::
 
-## End-to-end example: register a relic-picker theme from a mod
+## Top-Bar Buttons{lang="en"}
 
-Imagine a mod `my_mod` that ships a relic picker. It needs:
+::: en
 
-- Its own `components.relicPicker.{default,hover,selected}` tokens.
-- A boolean toggle that players can flip via `extensions.my_mod`.
-
-### Step 1: prepare the DTFM defaults
+Register top-bar buttons through the content pack:
 
 ```csharp
-using System.Text.Json;
-using STS2RitsuLib.Ui.Shell.Theme;
-
-private const string MyDefaults = """
-{
-  "core": {
-    "color": {
-      "myMod": {
-        "indigo": {
-          "500": { "$value": "#5C5CD6", "$type": "color" }
-        }
-      }
-    }
-  },
-  "semantic": {
-    "color": {
-      "myMod": {
-        "accent": { "$value": "{core.color.myMod.indigo.500}", "$type": "color" }
-      }
-    },
-    "metrics": {
-      "relicPicker": {
-        "rowMinHeight": { "$value": 56, "$type": "dimension" }
-      }
-    }
-  },
-  "components": {
-    "relicPicker": {
-      "default":  { "bg": { "$value": "#1B1F2BF5", "$type": "color" } },
-      "hover":    { "bg": { "$value": "#27314AFA", "$type": "color" } },
-      "selected": { "bg": { "$value": "{semantic.color.myMod.accent}", "$type": "color" } }
-    }
-  },
-  "extensions": {
-    "my_mod": {
-      "showHotkeyHint": true
-    }
-  }
-}
-""";
+RitsuLibFramework.CreateContentPack("MyMod")
+    .TopBarButtonOwned("my_panel", new ModTopBarButtonSpec(
+        IconPath: "res://MyMod/images/ui/my_panel.png",
+        Handler: new MyTopBarButtonHandler()))
+    .Apply();
 ```
 
-### Step 2: register at mod init
+Owned button ids use `MY_MOD_TOPBARBUTTON_MY_PANEL` and read hover text from `static_hover_tips`.
+
+:::
+
+## 顶栏按钮{lang="zh-CN"}
+
+::: zh-CN
+
+通过 content pack 注册顶栏按钮：
 
 ```csharp
-public sealed class MyModBootstrap : IModInit
-{
-    public void OnInit()
+RitsuLibFramework.CreateContentPack("MyMod")
+    .TopBarButtonOwned("my_panel", new ModTopBarButtonSpec(
+        IconPath: "res://MyMod/images/ui/my_panel.png",
+        Handler: new MyTopBarButtonHandler()))
+    .Apply();
+```
+
+Owned button id 会是 `MY_MOD_TOPBARBUTTON_MY_PANEL`，hover 文本从 `static_hover_tips` 读取。
+
+:::
+
+## Card Piles{lang="en"}
+
+::: en
+
+Custom piles are useful for extra hand-like or discard-like collections.
+
+```csharp
+RitsuLibFramework.CreateContentPack("MyMod")
+    .CardPileOwned("archive", new ModCardPileSpec
     {
-        using var doc = JsonDocument.Parse(MyDefaults);
-        RitsuShellThemeRuntime.RegisterModTokens(
-            modId: "my_mod",
-            defaults: doc.RootElement.Clone(),
-            onApply: ApplyTheme);
-    }
+        DisplayName = "Archive"
+    })
+    .Apply();
+```
 
-    private static void ApplyTheme(RitsuShellTheme theme)
+Use stable local stems. Pile ids are part of UI text, save-like state, and player expectations.
+
+:::
+
+## 自定义卡堆{lang="zh-CN"}
+
+::: zh-CN
+
+自定义卡堆适合额外的手牌区、弃牌区或类似集合。
+
+```csharp
+RitsuLibFramework.CreateContentPack("MyMod")
+    .CardPileOwned("archive", new ModCardPileSpec
     {
-        // Called once after every snapshot rebuild
-        var bg = theme.GetColor("components.relicPicker.selected.bg");
-        var height = theme.GetDimension("semantic.metrics.relicPicker.rowMinHeight");
-        var showHint = theme.TryGetExtension("my_mod", out var ext) &&
-                       ext.TryGetProperty("showHotkeyHint", out var p) &&
-                       p.ValueKind == JsonValueKind.True;
-        // ... refresh whatever UI depends on these tokens
-    }
-}
+        DisplayName = "Archive"
+    })
+    .Apply();
 ```
 
-### Step 3 (optional): player override
+使用稳定 local stem。卡堆 ID 会影响 UI 文本、类似保存的状态和玩家预期。
 
-A player can drop the same keys into `user://shell_themes/default.theme.json`:
-
-```jsonc
-{
-  "id": "default",
-  "components": {
-    "relicPicker": {
-      "selected": { "bg": { "$value": "#FF8A00", "$type": "color" } }
-    }
-  },
-  "extensions": {
-    "my_mod": { "showHotkeyHint": false }
-  }
-}
-```
-
-Because the merge order is `mod defaults → theme chain → scopes`, the player's value always wins
-over `RegisterModTokens`.
-
----
-
-## Validation and troubleshooting
-
-- If a theme file fails to parse, `RitsuShellThemeCatalog` skips it and keeps the previous
-  snapshot. Force a re-read with
-  `RitsuShellThemeRuntime.ReapplyActiveTheme(forceReloadCatalog: true)`.
-- Reference cycles and missing references are recorded as errors internally; missing values fall
-  back to safe defaults rather than crashing.
-- Always declare `$schema` at the top of theme files so the IDE can validate keys and `$type`.
-- For diagnostics, inspect `RitsuShellTheme.Current.Id` to confirm which theme is active and
-  `ListExtensionModIds()` to see which mod extensions are merged.
-
----
-
-## Style guidelines
-
-- **Extend `semantic` first, reference it from `components`.** Color tweaks should live in one
-  place.
-- **Ship sensible defaults from mods via `RegisterModTokens`.** Players should not have to edit a
-  theme file to get a working initial appearance.
-- **Don't mutate `RitsuShellTheme.Current`.** Snapshots are immutable — request a rebuild via a new
-  theme file, scope, or `RegisterModTokens` and let `ReapplyActiveTheme` notify listeners.
-- **Avoid hardcoded colors / sizes.** When the token you need doesn't exist, add it to `semantic`
-  or `components` instead of inlining a literal.
-
-::::
-
-## Shell 主题（设置 UI 主题系统）{lang="zh-CN"}
-
-:::: zh-CN
-
-RitsuLib 的设置 UI（`RitsuModSettingsSubmenu`、各类侧栏、面板、列表、控件）使用一套基于
-[W3C Design Tokens Format Module](https://www.w3.org/community/design-tokens/) 的主题系统，简称 **DTFM**。
-
-它解决三件事：
-
-1. **结构化色彩 / 字体 / 度量**：所有可视常量都通过 token 命名暴露，避免散落的硬编码值。
-2. **可层叠覆盖**：按 `继承链 → scopes → mod 注册的默认值` 顺序合并；同一份 UI 可以被全局主题、Shell 范围、ModSettings 范围、特定 mod 范围分别微调。
-3. **可扩展**：mod 既可以通过 `extensions.<modId>` 在主题文件中夹带自定义数据，也可以在运行期向 `RitsuShellThemeRuntime` 注册自己的默认 token，由 RitsuLib 负责合并、引用解析与刷新。
-
----
-
-## 文件位置
-
-- 内置主题：`sts-2-ritsulib/Ui/Shell/Themes/{default,warm,oled}.theme.json`，作为嵌入资源打包到程序集。
-- 用户/Mod 提供的主题：写入 `user://<global save path>/shell_themes/` 目录（运行时由
-  `RitsuShellThemePaths.TryEnsureShellThemesDirectory` 创建）；启动时 RitsuLib 会把内置主题
-  导出到该目录方便玩家二次编辑。
-- 启用的主题 id 持久化在玩家全局存档（`UiShellThemeId` 字段）。
-- JSON Schema：`sts-2-ritsulib/schemas/ui/shell/v1/schema.json`，可在 IDE 中通过
-  `$schema` 提示进行校验。
-
----
-
-## 顶层文件结构
-
-```jsonc
-{
-  "$schema": "https://raw.githubusercontent.com/BAKAOLC/STS2-RitsuLib/main/schemas/ui/shell/v1/schema.json",
-  "themeFormatVersion": 1,
-  "id": "warm",                // 必填，小写标识符
-  "displayName": "Warm",       // 选项中的可读名称
-  "inherits": "default",       // 父主题 id；为 null 表示根主题
-
-  "core":       { /* 原语 token */ },
-  "semantic":   { /* 语义/别名 token */ },
-  "components": { /* 组件 token */ },
-
-  "scopes": {
-    "global":      { /* 应用到所有作用域 */ },
-    "shell":       { /* 仅 Shell 内部使用 */ },
-    "modSettings": { /* 仅 RitsuModSettingsSubmenu 使用 */ },
-    "mod:my_mod":  { /* 仅 my_mod 自己消费 */ }
-  },
-
-  "extensions": {
-    "my_mod": { "anything": { "goes": true } }
-  }
-}
-```
-
-### token 三段式
-
-| 层级         | 角色                                                       | 推荐内容                                       |
-| ------------ | ---------------------------------------------------------- | ---------------------------------------------- |
-| `core`       | 原语：调色板、尺度、字体家族                               | `core.color.amber.500`、`core.size.2`          |
-| `semantic`   | 语义别名：以意图命名，引用 `core` 或直接给值               | `semantic.color.surface.default`               |
-| `components` | 组件 token：`组件 → 变体 → 状态`，尽量引用 `semantic`      | `components.button.primary.hover.bg`           |
-
-约定：`core` 不直接被 UI 消费，UI 只消费 `semantic` 与 `components`。当需要扩展时，先在
-`core` 加原语，再让上层引用它。
-
-### 叶子节点
-
-DTFM 严格风格：每个叶子 token 都是一个对象，必须有 `$value` 与 `$type`，可选
-`$description`、`$extensions`：
-
-```jsonc
-{
-  "$value": "#F59E0B",
-  "$type": "color",
-  "$description": "Warm accent base"
-}
-```
-
-支持的 `$type`：
-
-- `color`：十六进制字符串，可带 alpha（`#RRGGBB` / `#RRGGBBAA`）。
-- `dimension`：数值，单位为像素的整数或浮点。
-- `fontFamily`：字符串，支持 `res://`、`user://` 与绝对路径。
-- `fontWeight`：整数。
-- `number`：无单位浮点，例如行高倍率。
-- `boolean`：布尔值（用于诸如 `sidebar.showInlinePageCount` 之类的开关 token）。
-
-### 引用语法
-
-`"$value"` 可以写成 `"{a.b.c}"` 引用其它 token；引用允许跨 `core / semantic / components / scopes`，
-但禁止循环引用。`RitsuShellThemeReferenceResolver` 会在合并完成后统一解析所有引用。
-
-```jsonc
-"semantic": {
-  "color": {
-    "accent": {
-      "default": { "$value": "{core.color.amber.500}", "$type": "color" }
-    }
-  }
-}
-```
-
----
-
-## 合并顺序（继承 + scopes）
-
-构建快照时，`RitsuShellThemeCatalog.TryBuildSnapshot` 按以下顺序写入同一个 token 树：
-
-1. 所有 mod 通过 `RegisterModTokens` 注册的默认 DTFM JSON。
-2. 解析继承链 `inherits → ... → 当前主题`，依次合并每份文档的 `core / semantic / components`。
-3. 同一份文档内按以下 scope 顺序覆盖：`global → shell → modSettings → mod:<id>`。
-4. 合并完成后整体执行引用解析，再交给 `RitsuShellThemeBuilder` 构建不可变的
-   `RitsuShellTheme` 快照。
-
-合并规则：
-
-- 组节点是普通 JSON 对象，递归合并键。
-- 叶子 token（`$value` / `$type` 形式）视作整体替换，不做字段级合并。
-- 数组同样整体替换。
-
-> ⚠️ 当下 RitsuLib 自身只消费 `global` / `shell` / `modSettings` / `mod:<id>` 四个 scope。
-> 如果你的 mod 想要自己的 scope 命名，目前推荐使用 `mod:<modId>`，它已经内置在合并管线里。
-
----
-
-## C# API 概览
-
-### 1. 当前快照与事件
-
-```csharp
-using STS2RitsuLib.Ui.Shell.Theme;
-
-var theme = RitsuShellTheme.Current;        // 等价于 RitsuShellThemeRuntime.Current
-RitsuShellThemeRuntime.ThemeChanged += () => ApplyMyChrome(RitsuShellTheme.Current);
-RitsuShellThemeRuntime.ApplyThemeId("warm");
-RitsuShellThemeRuntime.ReapplyActiveTheme(forceReloadCatalog: true); // 重新读盘
-```
-
-`RitsuShellTheme` 是不可变快照，每次切主题或注册 mod token 都会构建一个全新的实例。
-缓存任何 token 时务必随 `ThemeChanged` 一同刷新。
-
-### 2. 类型化访问（推荐用于 RitsuLib 内置 token）
-
-`RitsuShellTheme` 暴露一组按语义分组的强类型记录：
-
-```csharp
-var t = RitsuShellTheme.Current;
-
-// 颜色
-t.Color.White
-t.Color.Divider
-t.Color.Shadow.Ambient
-
-// 文本
-t.Text.LabelPrimary
-t.Text.HoverHighlight
-
-// 表面
-t.Surface.Sidebar
-t.Surface.Entry.Bg
-t.Surface.Framed.Border
-
-// 组件 & 状态
-t.Component.Toggle.On.Bg
-t.Component.SidebarBtn.SelectedHover.Border
-t.Component.TextButton.Accent.Fg
-
-// 度量
-t.Metric.Radius.Default
-t.Metric.BorderWidth.Overlay
-t.Metric.FontSize.Button
-t.Metric.Sidebar.Width
-t.Metric.Sidebar.ShowInlinePageCount     // bool
-
-// 字体
-t.Font.Body
-t.Font.BodyBold
-t.Font.Button
-```
-
-完整字段定义见
-[`Ui/Shell/Theme/Tokens/`](../../Ui/Shell/Theme/Tokens/) 下的 `ColorTokens.cs`、`ComponentTokens.cs`、
-`MetricTokens.cs`、`FontTokens.cs`。
-
-### 3. 路径字符串访问（推荐用于 mod 扩展或低频 token）
-
-当 token 来自 mod 自己注册的 DTFM 子树时，没有强类型字段，使用路径字符串读取：
-
-```csharp
-var theme = RitsuShellTheme.Current;
-
-Color  bg     = theme.GetColor("components.relicPicker.selected.bg");
-float  height = theme.GetDimension("semantic.metrics.relicPicker.rowMinHeight");
-int    radius = theme.GetDimensionInt("semantic.metrics.radius.default");
-bool   inline = theme.GetBool("semantic.metrics.sidebar.showInlinePageCount");
-Font   body   = theme.GetFontFamily("semantic.fontFamily.body");
-
-if (theme.TryGetExtension("my_mod", out var json))
-{
-    // json 是 System.Text.Json.JsonElement，对应 extensions.my_mod 子树
-}
-```
-
-读取策略：
-
-- 路径区分大小写，使用合并后的真实键（多段以 `.` 拼接）。
-- 缺失 / 类型错误时返回安全默认（`Magenta`、`0`、`false`、共享 fallback 字体）。
-- 数值统一通过 `GetDimension*` 系列读取，路径相同。
-
-### 4. mod 注册式 API
-
-`RitsuShellThemeRuntime` 提供注册接口，用来在不修改主题文件的前提下，由 mod 自己提供
-默认 token、订阅刷新事件：
-
-```csharp
-public static class RitsuShellThemeRuntime
-{
-    public static void RegisterModTokens(string modId,
-        JsonElement? defaults,
-        Action<RitsuShellTheme>? onApply = null);
-
-    public static void UnregisterModTokens(string modId);
-}
-```
-
-- `defaults`：一份 DTFM 风格的 JSON 子树（推荐对象类型，包含 `core / semantic / components / extensions`），会在每次构建快照时**先于**主题文件合并，因此用户主题里写的同名 token 永远胜出。
-- `onApply`：每次新快照构建完成后回调一次，参数为最新的 `RitsuShellTheme`。注册时也会触发一次（因为内部会调一次 `ReapplyActiveTheme`）。
-- 取消注册会重新构建一次快照，确保该 mod 的默认值消失。
-
----
-
-## 端到端示例：用 mod 注册式 API 加一个挑选器主题
-
-假设我们有一个 mod `my_mod`，它实现了一个遗物选择器，需要：
-
-- 一组属于自己的 `components.relicPicker.{default,hover,selected}` token；
-- 玩家可以通过修改 `default.theme.json` 的 `extensions.my_mod` 调整一个 boolean 开关。
-
-### 第一步：准备默认 DTFM JSON
-
-```csharp
-using System.Text.Json;
-using STS2RitsuLib.Ui.Shell.Theme;
-
-private const string MyDefaults = """
-{
-  "core": {
-    "color": {
-      "myMod": {
-        "indigo": {
-          "500": { "$value": "#5C5CD6", "$type": "color" }
-        }
-      }
-    }
-  },
-  "semantic": {
-    "color": {
-      "myMod": {
-        "accent": { "$value": "{core.color.myMod.indigo.500}", "$type": "color" }
-      }
-    },
-    "metrics": {
-      "relicPicker": {
-        "rowMinHeight": { "$value": 56, "$type": "dimension" }
-      }
-    }
-  },
-  "components": {
-    "relicPicker": {
-      "default":  { "bg": { "$value": "#1B1F2BF5", "$type": "color" } },
-      "hover":    { "bg": { "$value": "#27314AFA", "$type": "color" } },
-      "selected": { "bg": { "$value": "{semantic.color.myMod.accent}", "$type": "color" } }
-    }
-  },
-  "extensions": {
-    "my_mod": {
-      "showHotkeyHint": true
-    }
-  }
-}
-""";
-```
-
-### 第二步：在 mod 启动时注册
-
-```csharp
-public sealed class MyModBootstrap : IModInit
-{
-    public void OnInit()
-    {
-        using var doc = JsonDocument.Parse(MyDefaults);
-        RitsuShellThemeRuntime.RegisterModTokens(
-            modId: "my_mod",
-            defaults: doc.RootElement.Clone(),
-            onApply: ApplyTheme);
-    }
-
-    private static void ApplyTheme(RitsuShellTheme theme)
-    {
-        // 每次主题变更会被回调一次
-        var bg = theme.GetColor("components.relicPicker.selected.bg");
-        var height = theme.GetDimension("semantic.metrics.relicPicker.rowMinHeight");
-        var showHint = theme.TryGetExtension("my_mod", out var ext) &&
-                       ext.TryGetProperty("showHotkeyHint", out var p) &&
-                       p.ValueKind == JsonValueKind.True;
-        // ... 用得到的 token 重新刷新自己的 UI 节点
-    }
-}
-```
-
-### 第三步（可选）：玩家覆盖
-
-玩家在 `user://shell_themes/default.theme.json` 中追加自己的配置即可覆盖你的默认值：
-
-```jsonc
-{
-  "id": "default",
-  "components": {
-    "relicPicker": {
-      "selected": { "bg": { "$value": "#FF8A00", "$type": "color" } }
-    }
-  },
-  "extensions": {
-    "my_mod": { "showHotkeyHint": false }
-  }
-}
-```
-
-由于合并顺序是 `mod 默认 → 主题继承链 → scopes`，玩家的同名 token 总是会覆盖
-`RegisterModTokens` 提供的默认值。
-
----
-
-## 校验与排错
-
-- 主题文件加载失败时，`RitsuShellThemeCatalog` 会跳过该文件并继续使用之前的快照；可以
-  通过 `RitsuShellThemeRuntime.ReapplyActiveTheme(forceReloadCatalog: true)` 重新尝试。
-- 引用失败、循环引用会被记录为错误（当前在内部列表中），缺失项会回退到安全默认。
-- 推荐在主题文件顶部声明 `$schema` 字段，IDE 会按 schema 进行键名补全与类型校验。
-- 调试时可读取 `RitsuShellTheme.Current.Id` 确认实际生效的主题 id，或 `ListExtensionModIds()`
-  确认哪些 mod 的扩展已经合并进当前快照。
-
----
-
-## 风格建议
-
-- **优先扩展 `semantic`，再让 `components` 引用之**：让色彩调整在一个地方完成。
-- **新增组件 token 时一并记录默认值**：在 mod 中通过 `RegisterModTokens` 提供，玩家无需修改
-  主题文件即可看到合理的初始外观。
-- **不要在运行时修改 `RitsuShellTheme.Current`**：它是不可变快照，需要变化请通过新主题文件、
-  scopes 或 `RegisterModTokens` 重新提供并触发 `ReapplyActiveTheme`。
-- **避免 hardcode 颜色 / 字号**：若发现需要的 token 还不存在，扩展 `semantic` 或 `components`
-  比直接写常量更利于其它主题二次定制。
-
-::::
-
+:::

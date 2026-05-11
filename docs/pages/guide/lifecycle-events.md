@@ -1,534 +1,116 @@
 ---
 title:
   en: Lifecycle Events
-  zh-CN: 生命周期事件参考
+  zh-CN: 生命周期事件
 cover: https://wrxinyue.s3.bitiful.net/slay-the-spire-2-wallpaper.webp
 ---
 
-## Introduction{lang="en"}
+## Subscribe{lang="en"}
 
 ::: en
 
-This document lists all lifecycle events provided by RitsuLib, explains subscription patterns, and details replayable event behavior.
-
----
-
-:::
-
-## 简介{lang="zh-CN"}
-
-::: zh-CN
-
-本文列出 RitsuLib 提供的全部生命周期事件，介绍订阅方式及可重放事件的行为。
-
----
-
-:::
-
-## Subscription Patterns{lang="en"}
-
-::: en
-
-### Subscribe by Event Type (Recommended)
+Use lifecycle events when a mod needs game timing but does not need to own a Harmony patch.
 
 ```csharp
-var sub = RitsuLibFramework.SubscribeLifecycle<GameReadyEvent>(evt =>
+var subscription = RitsuLibFramework.SubscribeLifecycle<GameReadyEvent>(evt =>
 {
-    Logger.Info($"Game ready: {evt.Game}");
-});
-
-// Unsubscribe
-sub.Dispose();
-```
-
-### Subscribe via `ILifecycleObserver`
-
-```csharp
-public class MyObserver : ILifecycleObserver
-{
-    public void OnEvent(IFrameworkLifecycleEvent evt)
-    {
-        if (evt is CombatStartingEvent combat)
-            HandleCombatStart(combat);
-        else if (evt is RunEndedEvent run)
-            HandleRunEnd(run);
-    }
-}
-
-RitsuLibFramework.SubscribeLifecycle(new MyObserver());
-```
-
-> **Replayable events** (`IReplayableFrameworkLifecycleEvent`): if you subscribe after the event has already fired, the framework immediately calls your handler with the stored event instance — no timing concerns.
-
----
-
-:::
-
-## 订阅方式{lang="zh-CN"}
-
-::: zh-CN
-
-### 按类型订阅（推荐）
-
-```csharp
-var sub = RitsuLibFramework.SubscribeLifecycle<GameReadyEvent>(evt =>
-{
-    Logger.Info($"游戏已就绪：{evt.Game}");
-});
-
-// 取消订阅
-sub.Dispose();
-```
-
-### 通过 `ILifecycleObserver` 订阅多种事件
-
-```csharp
-public class MyObserver : ILifecycleObserver
-{
-    public void OnEvent(IFrameworkLifecycleEvent evt)
-    {
-        if (evt is CombatStartingEvent combat)
-            HandleCombatStart(combat);
-        else if (evt is RunEndedEvent run)
-            HandleRunEnd(run);
-    }
-}
-
-RitsuLibFramework.SubscribeLifecycle(new MyObserver());
-```
-
-> **可重放事件（`IReplayableFrameworkLifecycleEvent`）：** 若在事件已发生后才订阅，框架会立即以已存储的事件实例回调，无需关心订阅时机。
-
----
-
-:::
-
-## Framework Events{lang="en"}
-
-::: en
-
-Fired during framework initialization and profile service setup.
-
-| Event | Replayable | Payload |
-|---|---|---|
-| `FrameworkInitializingEvent` | — | `FrameworkModId`, `FrameworkVersion` |
-| `FrameworkInitializedEvent` | ✓ | `FrameworkModId`, `IsActive` |
-| `ProfileServicesInitializingEvent` | — | — |
-| `ProfileServicesInitializedEvent` | ✓ | `ProfileId` |
-
----
-
-:::
-
-## 框架事件{lang="zh-CN"}
-
-::: zh-CN
-
-框架初始化与 Profile 服务初始化阶段触发。
-
-| 事件 | 可重放 | 携带数据 |
-|---|---|---|
-| `FrameworkInitializingEvent` | — | `FrameworkModId`、`FrameworkVersion` |
-| `FrameworkInitializedEvent` | ✓ | `FrameworkModId`、`IsActive` |
-| `ProfileServicesInitializingEvent` | — | — |
-| `ProfileServicesInitializedEvent` | ✓ | `ProfileId` |
-
----
-
-:::
-
-## Game Bootstrap Events{lang="en"}
-
-::: en
-
-Fired in sequence during game startup, from model registration through to game ready.
-
-| Event | Replayable | Payload |
-|---|---|---|
-| `EssentialInitializationStartingEvent` | — | — |
-| `EssentialInitializationCompletedEvent` | ✓ | — |
-| `DeferredInitializationStartingEvent` | — | — |
-| `DeferredInitializationCompletedEvent` | ✓ | — |
-| `ContentRegistrationClosedEvent` | ✓ | `Reason` |
-| `ModelRegistryInitializingEvent` | — | — |
-| `ModelRegistryInitializedEvent` | ✓ | `RegisteredModelTypeCount` |
-| `ModelIdsInitializingEvent` | — | — |
-| `ModelIdsInitializedEvent` | ✓ | — |
-| `ModelPreloadingStartingEvent` | — | — |
-| `ModelPreloadingCompletedEvent` | ✓ | — |
-| `GameTreeEnteredEvent` | ✓ | `Game` |
-| `GameReadyEvent` | ✓ | `Game` |
-
-```csharp
-RitsuLibFramework.SubscribeLifecycle<ModelIdsInitializedEvent>(_ =>
-{
-    var id = ModelDb.GetId<MyCard>();
+    Logger.Info($"Game ready: {evt.Game.Name}");
 });
 ```
 
----
-
-:::
-
-## 游戏引导事件{lang="zh-CN"}
-
-::: zh-CN
-
-游戏启动流程中依次触发，覆盖 Model 注册到游戏就绪全程。
-
-| 事件 | 可重放 | 携带数据 |
-|---|---|---|
-| `EssentialInitializationStartingEvent` | — | — |
-| `EssentialInitializationCompletedEvent` | ✓ | — |
-| `DeferredInitializationStartingEvent` | — | — |
-| `DeferredInitializationCompletedEvent` | ✓ | — |
-| `ContentRegistrationClosedEvent` | ✓ | `Reason` |
-| `ModelRegistryInitializingEvent` | — | — |
-| `ModelRegistryInitializedEvent` | ✓ | `RegisteredModelTypeCount` |
-| `ModelIdsInitializingEvent` | — | — |
-| `ModelIdsInitializedEvent` | ✓ | — |
-| `ModelPreloadingStartingEvent` | — | — |
-| `ModelPreloadingCompletedEvent` | ✓ | — |
-| `GameTreeEnteredEvent` | ✓ | `Game` |
-| `GameReadyEvent` | ✓ | `Game` |
+Dispose the returned subscription when the handler is temporary.
 
 ```csharp
-RitsuLibFramework.SubscribeLifecycle<ModelIdsInitializedEvent>(_ =>
+RitsuLibFramework.SubscribeLifecycle<CombatStartingEvent>((evt, sub) =>
 {
-    var id = ModelDb.GetId<MyCard>();
+    PrepareForCombat(evt.RunState);
+    sub.Dispose();
 });
 ```
 
----
+Replayable events are delivered immediately to late subscribers by default. Pass `replayCurrentState: false` when you only want future events.
 
 :::
 
-## Run Events{lang="en"}
-
-::: en
-
-| Event | Replayable | Payload |
-|---|---|---|
-| `RunStartedEvent` | — | `RunState`, `IsMultiplayer`, `IsDaily` |
-| `RunLoadedEvent` | — | `RunState`, `IsMultiplayer`, `IsDaily` |
-| `RunEndedEvent` | — | `Run`, `IsVictory`, `IsAbandoned` |
-
----
-
-:::
-
-## 跑局事件{lang="zh-CN"}
+## 订阅{lang="zh-CN"}
 
 ::: zh-CN
 
-| 事件 | 可重放 | 携带数据 |
-|---|---|---|
-| `RunStartedEvent` | — | `RunState`、`IsMultiplayer`、`IsDaily` |
-| `RunLoadedEvent` | — | `RunState`、`IsMultiplayer`、`IsDaily` |
-| `RunEndedEvent` | — | `Run`、`IsVictory`、`IsAbandoned` |
-
----
-
-:::
-
-## Room & Act Events{lang="en"}
-
-::: en
-
-| Event | Payload |
-|---|---|
-| `RoomEnteringEvent` | `RunState`, `Room` |
-| `RoomEnteredEvent` | `RunState`, `Room` |
-| `RoomExitedEvent` | `RunManager`, `Room` |
-| `ActEnteringEvent` | `RunManager`, `TargetActIndex`, `DoTransition` |
-| `ActEnteredEvent` | `RunState`, `CurrentActIndex` |
-| `RewardsScreenContinuingEvent` | `RunManager` |
-
----
-
-:::
-
-## 房间与章节事件{lang="zh-CN"}
-
-::: zh-CN
-
-| 事件 | 携带数据 |
-|---|---|
-| `RoomEnteringEvent` | `RunState`、`Room` |
-| `RoomEnteredEvent` | `RunState`、`Room` |
-| `RoomExitedEvent` | `RunManager`、`Room` |
-| `ActEnteringEvent` | `RunManager`、`TargetActIndex`、`DoTransition` |
-| `ActEnteredEvent` | `RunState`、`CurrentActIndex` |
-| `RewardsScreenContinuingEvent` | `RunManager` |
-
----
-
-:::
-
-## Combat Events{lang="en"}
-
-::: en
-
-| Event | Payload |
-|---|---|
-| `CombatStartingEvent` | `RunState`, `CombatState?` |
-| `CombatEndedEvent` | `RunState`, `CombatState?`, `Room` |
-| `CombatVictoryEvent` | `RunState`, `CombatState?`, `Room` |
-| `SideTurnStartingEvent` | `CombatState`, `Side` |
-| `SideTurnStartedEvent` | `CombatState`, `Side` |
-| `CardPlayingEvent` | `CombatState`, `CardPlay` |
-| `CardPlayedEvent` | `CombatState`, `CardPlay` |
-| `CardDrawnEvent` | `CombatState`, `Card`, `FromHandDraw` |
-| `CardDiscardedEvent` | `CombatState`, `Card` |
-| `CardExhaustedEvent` | `CombatState`, `Card`, `CausedByEthereal` |
-| `CardRetainedEvent` | `CombatState`, `Card` (obsolete; replayed from `CardsFlushedEvent` on host API 0.105.0+) |
-| `BeforeFlushEvent` | `CombatState`, `Player` |
-| `CardsFlushedEvent` | `CombatState`, `Player`, `FlushedCards`, `RetainedCards` (host API 0.105.0+) |
-| `CardMovedBetweenPilesEvent` | `RunState`, `CombatState?`, `Card`, `PreviousPile`, `Source` |
-
-> Starting with host API 0.105.0 the upstream `Hook.AfterCardRetained` callback was removed. RitsuLib publishes `CardsFlushedEvent` from the new `Hook.AfterFlush` callback instead, and replays the legacy `CardRetainedEvent` per retained card so existing subscribers keep working without changes. Migrate to `CardsFlushedEvent` to also receive the matching flushed cards and the owning `Player`.
-
-### Creature Events
-
-| Event | Payload |
-|---|---|
-| `CreatureDyingEvent` | `CombatState`, `Creature` |
-| `CreatureDiedEvent` | `CombatState`, `Creature` |
+Mod 需要游戏时机但不需要自己拥有 Harmony patch 时，使用生命周期事件。
 
 ```csharp
-RitsuLibFramework.SubscribeLifecycle<CardDrawnEvent>(evt =>
+var subscription = RitsuLibFramework.SubscribeLifecycle<GameReadyEvent>(evt =>
 {
-    if (evt.Card is MyCard myCard)
-        myCard.OnDrawn(evt.CombatState);
+    Logger.Info($"Game ready: {evt.Game.Name}");
 });
 ```
 
----
-
-:::
-
-## 战斗事件{lang="zh-CN"}
-
-::: zh-CN
-
-| 事件 | 携带数据 |
-|---|---|
-| `CombatStartingEvent` | `RunState`、`CombatState?` |
-| `CombatEndedEvent` | `RunState`、`CombatState?`、`Room` |
-| `CombatVictoryEvent` | `RunState`、`CombatState?`、`Room` |
-| `SideTurnStartingEvent` | `CombatState`、`Side` |
-| `SideTurnStartedEvent` | `CombatState`、`Side` |
-| `CardPlayingEvent` | `CombatState`、`CardPlay` |
-| `CardPlayedEvent` | `CombatState`、`CardPlay` |
-| `CardDrawnEvent` | `CombatState`、`Card`、`FromHandDraw` |
-| `CardDiscardedEvent` | `CombatState`、`Card` |
-| `CardExhaustedEvent` | `CombatState`、`Card`、`CausedByEthereal` |
-| `CardRetainedEvent` | `CombatState`、`Card`（已过时；在宿主 API 0.105.0+ 上由 `CardsFlushedEvent` 按张回放） |
-| `BeforeFlushEvent` | `CombatState`、`Player` |
-| `CardsFlushedEvent` | `CombatState`、`Player`、`FlushedCards`、`RetainedCards`（仅宿主 API 0.105.0+ 触发） |
-| `CardMovedBetweenPilesEvent` | `RunState`、`CombatState?`、`Card`、`PreviousPile`、`Source` |
-
-> 自宿主 API 0.105.0 起，上游 `Hook.AfterCardRetained` 被移除。RitsuLib 改为在新的 `Hook.AfterFlush` 中发布 `CardsFlushedEvent`，同时按张回放老的 `CardRetainedEvent` 以保持订阅者无侵入兼容。建议迁移到 `CardsFlushedEvent`，可一并获得当前 flush 的全部出列卡牌与归属 `Player`。
-
-### 生物事件
-
-| 事件 | 携带数据 |
-|---|---|
-| `CreatureDyingEvent` | `CombatState`、`Creature` |
-| `CreatureDiedEvent` | `CombatState`、`Creature` |
+临时 handler 用完后 dispose 返回的 subscription。
 
 ```csharp
-RitsuLibFramework.SubscribeLifecycle<CardDrawnEvent>(evt =>
+RitsuLibFramework.SubscribeLifecycle<CombatStartingEvent>((evt, sub) =>
 {
-    if (evt.Card is MyCard myCard)
-        myCard.OnDrawn(evt.CombatState);
+    PrepareForCombat(evt.RunState);
+    sub.Dispose();
 });
 ```
 
----
+可重放事件默认会立即补发给后订阅者。只想接收未来事件时，传 `replayCurrentState: false`。
 
 :::
 
-## Reward Events{lang="en"}
+## Common Events{lang="en"}
 
 ::: en
 
-| Event | Payload |
-|---|---|
-| `GoldGainedEvent` | `Amount` |
-| `GoldLostEvent` | `Amount` |
-| `PotionProcuredEvent` | `Potion` |
-| `PotionDiscardedEvent` | `Potion` |
-| `RelicObtainedEvent` | `Relic` |
-| `RelicRemovedEvent` | `Relic` |
-| `RewardTakenEvent` | `Reward` |
-
----
+| Timing | Events |
+| --- | --- |
+| Framework boot | `FrameworkInitializingEvent`, `FrameworkInitializedEvent` |
+| Model setup | `ContentRegistrationClosedEvent`, `ModelRegistryInitializedEvent`, `ModelIdsInitializedEvent`, `ModelPreloadingCompletedEvent` |
+| Game node | `GameTreeEnteredEvent`, `GameReadyEvent` |
+| Profiles and saves | `ProfileIdInitializedEvent`, `ProfileSwitchingEvent`, `ProfileSwitchedEvent`, `RunSavingEvent`, `RunSavedEvent`, `ProgressSavingEvent`, `ProgressSavedEvent`, `ProfileDeletingEvent`, `ProfileDeletedEvent` |
+| Run flow | `RunStartedEvent`, `RunLoadedEvent`, `RunEndedEvent`, `RoomEnteringEvent`, `RoomEnteredEvent`, `RoomExitedEvent`, `ActEnteringEvent`, `ActEnteredEvent` |
+| Combat | `CombatStartingEvent`, `CombatEndedEvent`, `CombatVictoryEvent`, `SideTurnStartingEvent`, `SideTurnStartedEvent`, `CardPlayingEvent`, `CardPlayedEvent` |
+| Cards | `CardMovedBetweenPilesEvent`, `CardDrawnEvent`, `CardDiscardedEvent`, `CardExhaustedEvent`, `BeforeFlushEvent`, `CardsFlushedEvent` |
+| Rewards and inventory | `GoldGainedEvent`, `GoldLostEvent`, `PotionProcuredEvent`, `PotionDiscardedEvent`, `RelicObtainedEvent`, `RelicRemovedEvent`, `RewardTakenEvent` |
+| Unlocks | `EpochObtainedEvent`, `EpochRevealedEvent`, `UnlockIncrementedEvent` |
 
 :::
 
-## 奖励事件{lang="zh-CN"}
+## 常用事件{lang="zh-CN"}
 
 ::: zh-CN
 
-| 事件 | 携带数据 |
-|---|---|
-| `GoldGainedEvent` | `Amount` |
-| `GoldLostEvent` | `Amount` |
-| `PotionProcuredEvent` | `Potion` |
-| `PotionDiscardedEvent` | `Potion` |
-| `RelicObtainedEvent` | `Relic` |
-| `RelicRemovedEvent` | `Relic` |
-| `RewardTakenEvent` | `Reward` |
-
----
+| 时机 | 事件 |
+| --- | --- |
+| 框架启动 | `FrameworkInitializingEvent`、`FrameworkInitializedEvent` |
+| 模型设置 | `ContentRegistrationClosedEvent`、`ModelRegistryInitializedEvent`、`ModelIdsInitializedEvent`、`ModelPreloadingCompletedEvent` |
+| 游戏节点 | `GameTreeEnteredEvent`、`GameReadyEvent` |
+| 档位与存档 | `ProfileIdInitializedEvent`、`ProfileSwitchingEvent`、`ProfileSwitchedEvent`、`RunSavingEvent`、`RunSavedEvent`、`ProgressSavingEvent`、`ProgressSavedEvent`、`ProfileDeletingEvent`、`ProfileDeletedEvent` |
+| Run 流程 | `RunStartedEvent`、`RunLoadedEvent`、`RunEndedEvent`、`RoomEnteringEvent`、`RoomEnteredEvent`、`RoomExitedEvent`、`ActEnteringEvent`、`ActEnteredEvent` |
+| 战斗 | `CombatStartingEvent`、`CombatEndedEvent`、`CombatVictoryEvent`、`SideTurnStartingEvent`、`SideTurnStartedEvent`、`CardPlayingEvent`、`CardPlayedEvent` |
+| 卡牌 | `CardMovedBetweenPilesEvent`、`CardDrawnEvent`、`CardDiscardedEvent`、`CardExhaustedEvent`、`BeforeFlushEvent`、`CardsFlushedEvent` |
+| 奖励与物品栏 | `GoldGainedEvent`、`GoldLostEvent`、`PotionProcuredEvent`、`PotionDiscardedEvent`、`RelicObtainedEvent`、`RelicRemovedEvent`、`RewardTakenEvent` |
+| 解锁 | `EpochObtainedEvent`、`EpochRevealedEvent`、`UnlockIncrementedEvent` |
 
 :::
 
-## Unlock Events{lang="en"}
+## Version Notes{lang="en"}
 
 ::: en
 
-| Event | Payload |
-|---|---|
-| `EpochObtainedEvent` | `Epoch` |
-| `EpochRevealedEvent` | `Epoch` |
-| `UnlockIncrementedEvent` | `UnlockState` |
+`CardRetainedEvent` is obsolete on newer host APIs. Use `CardsFlushedEvent` when you need retained and flushed cards together.
 
----
+For game API differences that affect event availability, check [Diagnostics and compatibility](/guide/diagnostics-and-compatibility).
 
 :::
 
-## 解锁事件{lang="zh-CN"}
+## 版本注意点{lang="zh-CN"}
 
 ::: zh-CN
 
-| 事件 | 携带数据 |
-|---|---|
-| `EpochObtainedEvent` | `Epoch` |
-| `EpochRevealedEvent` | `Epoch` |
-| `UnlockIncrementedEvent` | `UnlockState` |
+`CardRetainedEvent` 在较新 host API 上已过时。需要同时观察 retained 和 flushed cards 时，使用 `CardsFlushedEvent`。
 
----
-
-:::
-
-## Save & Persistence Events{lang="en"}
-
-::: en
-
-### Profile Lifecycle
-
-| Event | Payload |
-|---|---|
-| `ProfileIdInitializedEvent` | `ProfileId` |
-| `ProfileSwitchingEvent` | `OldProfileId`, `NewProfileId` |
-| `ProfileSwitchedEvent` | `ProfileId` |
-| `ProfileDeletingEvent` | `ProfileId` |
-| `ProfileDeletedEvent` | `ProfileId` |
-
-### Save Writing
-
-| Event | Payload |
-|---|---|
-| `RunSavingEvent` | `RunState` |
-| `RunSavedEvent` | `RunState` |
-| `ProgressSavingEvent` | — |
-| `ProgressSavedEvent` | — |
-
-### ModDataStore Data Events
-
-Used internally by `ModDataStore`, also available for mods to react to save state changes.
-
-| Event | Description |
-|---|---|
-| `ProfileDataReadyEvent` | Save data loaded — safe to read/write |
-| `ProfileDataChangedEvent` | Save data changed |
-| `ProfileDataInvalidatedEvent` | Save data invalidated (e.g. profile switch) |
-
----
-
-:::
-
-## 存档与持久化事件{lang="zh-CN"}
-
-::: zh-CN
-
-### Profile 生命周期
-
-| 事件 | 携带数据 |
-|---|---|
-| `ProfileIdInitializedEvent` | `ProfileId` |
-| `ProfileSwitchingEvent` | `OldProfileId`、`NewProfileId` |
-| `ProfileSwitchedEvent` | `ProfileId` |
-| `ProfileDeletingEvent` | `ProfileId` |
-| `ProfileDeletedEvent` | `ProfileId` |
-
-### 存档写入
-
-| 事件 | 携带数据 |
-|---|---|
-| `RunSavingEvent` | `RunState` |
-| `RunSavedEvent` | `RunState` |
-| `ProgressSavingEvent` | — |
-| `ProgressSavedEvent` | — |
-
-### ModDataStore 数据事件
-
-由 `ModDataStore` 内部使用，也可供 Mod 监听存档状态变化。
-
-| 事件 | 说明 |
-|---|---|
-| `ProfileDataReadyEvent` | 存档数据加载完毕，可安全读写 |
-| `ProfileDataChangedEvent` | 存档数据发生变更 |
-| `ProfileDataInvalidatedEvent` | 存档数据失效（如切换档案） |
-
----
-
-:::
-
-## Game Over Events{lang="en"}
-
-::: en
-
-| Event | Payload |
-|---|---|
-| `GameOverScreenCreatedEvent` | `Screen` |
-
----
-
-:::
-
-## 游戏结算事件{lang="zh-CN"}
-
-::: zh-CN
-
-| 事件 | 携带数据 |
-|---|---|
-| `GameOverScreenCreatedEvent` | `Screen` |
-
----
-
-:::
-
-## Related Documents{lang="en"}
-
-::: en
-
-- [Getting Started](/guide/getting-started)
-- [Content Authoring Toolkit](/guide/content-authoring-toolkit)
-- [Persistence Guide](/guide/persistence-guide)
-- [Timeline & Unlocks](/guide/timeline-and-unlocks)
-
-:::
-
-## 相关文档{lang="zh-CN"}
-
-::: zh-CN
-
-- [快速入门](/guide/getting-started)
-- [内容注册规则](/guide/content-authoring-toolkit)
-- [持久化设计](/guide/persistence-guide)
-- [时间线与解锁](/guide/timeline-and-unlocks)
+影响事件可用性的游戏 API 差异见 [诊断与兼容](/guide/diagnostics-and-compatibility)。
 
 :::
