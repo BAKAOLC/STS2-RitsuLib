@@ -73,5 +73,23 @@ namespace STS2RitsuLib.CardTags
         {
             return ModCardTagRegistry.GetCardTag(qualifiedTagId);
         }
+
+        /// <summary>
+        ///     Tries to reverse-map a minted mod <see cref="CardTag" /> value to its registered string id.
+        /// </summary>
+        public static bool TryGetModCardTagId(this CardTag value, out string id)
+        {
+            return ModCardTagRegistry.TryGetId(value, out id);
+        }
+
+        /// <summary>
+        ///     Reverse-maps a minted mod <see cref="CardTag" /> value to its registered string id.
+        /// </summary>
+        public static string GetModCardTagId(this CardTag value)
+        {
+            return ModCardTagRegistry.TryGetId(value, out var id)
+                ? id
+                : throw new KeyNotFoundException($"CardTag '0x{(int)value:X8}' is not a registered mod card tag.");
+        }
     }
 }

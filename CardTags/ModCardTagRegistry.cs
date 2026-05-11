@@ -178,6 +178,17 @@ namespace STS2RitsuLib.CardTags
         }
 
         /// <summary>
+        ///     Resolves either a registered mod card-tag id or a vanilla <see cref="CardTag" /> enum name.
+        ///     Mod ids take precedence when a string could match both.
+        /// </summary>
+        public static bool TryResolveCardTag(string idOrEnumName, out CardTag value)
+        {
+            ArgumentException.ThrowIfNullOrWhiteSpace(idOrEnumName);
+
+            return TryGetCardTag(idOrEnumName, out value) || Enum.TryParse(idOrEnumName.Trim(), true, out value);
+        }
+
+        /// <summary>
         ///     Returns the minted <see cref="CardTag" /> for <paramref name="id" /> or throws.
         /// </summary>
         public static CardTag GetCardTag(string id)

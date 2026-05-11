@@ -59,7 +59,7 @@ namespace STS2RitsuLib.CardTags.Patches
                 if (string.IsNullOrWhiteSpace(id))
                     continue;
 
-                if (ModCardTagRegistry.TryGetCardTag(id, out var value))
+                if (ModCardTagRegistry.TryResolveCardTag(id, out var value))
                     storage.Add(value);
             }
 

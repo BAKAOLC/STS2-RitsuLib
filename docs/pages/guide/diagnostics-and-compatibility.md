@@ -1,143 +1,45 @@
 ---
 title:
-  en: Diagnostics & Compatibility
-  zh-CN: 诊断与兼容层
+  en: Diagnostics And Compatibility
+  zh-CN: 诊断与兼容
 cover: https://wrxinyue.s3.bitiful.net/slay-the-spire-2-wallpaper.webp
 ---
 
-## Introduction{lang="en"}
+## Use Warnings As Release Signals{lang="en"}
 
 ::: en
 
-This document describes the diagnostic policy and compatibility layers that RitsuLib adds on top of the base game.
+RitsuLib tries to log one clear warning for common authoring problems:
 
-It focuses on:
+| Warning area | Usually means |
+| --- | --- |
+| Content registration | A model was registered too late, twice, or with a conflicting id. |
+| Asset paths | A profile points at a missing resource. |
+| Localization | A key is missing from a game table or I18N source. |
+| Unlocks | A rule references an epoch or character that cannot resolve. |
+| Patching | A required target method is missing or a patch class has no Harmony method. |
+| Audio | A bank, event path, GUID mapping, bus, or loose audio file could not be resolved. |
 
-- one-time warnings for recurring authoring errors
-- debug-oriented fallbacks for missing localization and invalid unlock data
-- narrow bridge patches where vanilla systems do not process mod content
-
----
+Treat character asset warnings, required patch failures, and model-id conflicts as release blockers.
 
 :::
 
-## 简介{lang="zh-CN"}
+## 把警告当作发布信号{lang="zh-CN"}
 
 ::: zh-CN
 
-本文说明 RitsuLib 在游戏原版之上提供的诊断策略与兼容层。
+RitsuLib 会尽量为常见作者错误记录一次清楚的警告：
 
-重点包括：
+| 警告区域 | 通常表示 |
+| --- | --- |
+| 内容注册 | 模型注册太晚、重复注册，或 ID 冲突。 |
+| 资源路径 | Profile 指向了不存在的资源。 |
+| 本地化 | 游戏表或 I18N 来源缺 key。 |
+| 解锁 | 规则引用了无法解析的 epoch 或角色。 |
+| 补丁 | 必要目标方法缺失，或 patch 类没有 Harmony 方法。 |
+| 音频 | Bank、事件路径、GUID 映射、bus 或散装音频文件无法解析。 |
 
-- 用于定位重复性数据错误的一次性警告
-- 面向调试的缺失本地化与无效解锁数据回退
-- 原版系统不处理 Mod 内容时使用的窄桥接补丁
-
----
-
-:::
-
-## Design Intent{lang="en"}
-
-::: en
-
-RitsuLib does not try to hide every engine limitation. It follows these rules:
-
-- Surface real errors as early as possible
-- where vanilla offers no safe extension point, the framework may add a bridge
-- if a fallback would conceal too much behavior, keep the system explicit
-
-This layer is deliberately narrow and only handles edge cases.
-
----
-
-:::
-
-## 设计意图{lang="zh-CN"}
-
-::: zh-CN
-
-RitsuLib 不会试图隐藏所有引擎限制。它遵循以下规则：
-
-- 能尽早暴露真实错误，就尽早暴露
-- 原版没有安全扩展点时，框架可以补桥
-- 某个回退会掩盖过多行为时，保持系统显式
-
-这层能力是刻意收敛的，只处理边缘问题。
-
----
-
-:::
-
-## One-Time Warning Policy{lang="en"}
-
-::: en
-
-Some RitsuLib diagnostics warn only once per issue (or once per stable key), including:
-
-- Missing resource paths (`AssetPathDiagnostics`)
-- Missing `LocTable` keys when the master toggle and the **LocTable missing keys** toggle are enabled (`[Localization][DebugCompat]`)
-- `THE_ARCHITECT` empty-`Lines` fallback when the debug compatibility master toggle and the **THE_ARCHITECT missing dialogue** toggle are enabled (`[Ancient]`)
-- Other unlock-related one-shots (for example `ModUnlockMissingRuleWarnings`)
-
-Each stable key or issue class logs at most once so traces stay readable.
-
----
-
-:::
-
-## 一次性警告策略{lang="zh-CN"}
-
-::: zh-CN
-
-RitsuLib 的部分诊断只会对同一个问题（或同一稳定键）警告一次，包括：
-
-- 缺失资源路径（`AssetPathDiagnostics`）
-- **总开关 + LocTable 子项**开启时缺失的 `LocTable` 键（`[Localization][DebugCompat]`）
-- **调试总开关 + 建筑师子项**开启时，`THE_ARCHITECT` 无对话注入占位值（`[Ancient]`）
-- 其他解锁相关的一次性提示（例如 `ModUnlockMissingRuleWarnings`）
-
-同一稳定键或同一类问题至多记录一次，在可读的日志量下保留定位信息。
-
----
-
-:::
-
-## Asset Path Diagnostics{lang="en"}
-
-::: en
-
-Explicit asset override paths are validated by `AssetPathDiagnostics`.
-
-When a path is missing:
-
-- A one-time warning is logged (host type, model id, member name, missing path)
-- Behavior falls back to the original asset path or original behavior
-
-This matters especially for character assets, where vanilla has almost no safe fallback.
-
-See [Asset Profiles & Fallbacks](/guide/asset-profiles-and-fallbacks).
-
----
-
-:::
-
-## 资源路径诊断{lang="zh-CN"}
-
-::: zh-CN
-
-显式资源覆写路径由 `AssetPathDiagnostics` 校验。
-
-当资源路径不存在时：
-
-- 输出一次警告（包含宿主类型、模型标识、配置成员名和缺失路径）
-- 回退到原始资源路径或原始行为
-
-这对角色资源尤其重要，因为游戏原版对缺失角色资源几乎没有安全兜底。
-
-详见 [资源配置与回退规则](/guide/asset-profiles-and-fallbacks)。
-
----
+角色资源警告、必要 patch 失败、模型 ID 冲突都应视为发布阻断问题。
 
 :::
 
@@ -145,31 +47,9 @@ See [Asset Profiles & Fallbacks](/guide/asset-profiles-and-fallbacks).
 
 ::: en
 
-Optional compatibility fallbacks are grouped under `debug_compatibility_mode` and per-area toggles in mod settings.
+RitsuLib's own debug compatibility mode is off by default. When enabled in the RitsuLib settings page, it exposes fallback toggles for development and compatibility testing.
 
-**Default (master toggle off):** vanilla behavior for the patched systems described here.
-
-**Master toggle on:** the settings UI shows a **Compatibility fallbacks** section. Per-feature toggles default to **on**. Turning a toggle **off** removes only that fallback.
-
-| Toggle | Effect when enabled |
-|---|---|
-| **LocTable missing keys** | Placeholder resolution + one-time `[Localization][DebugCompat]` warnings |
-| **Invalid unlock epochs** | Skip the grant + one-time `[Unlocks][DebugCompat]` warnings |
-| **THE_ARCHITECT missing dialogue** | Inject empty `Lines` entries for `ModContentRegistry` characters + one-time `[Ancient]` warning |
-
-Except for LocTable missing-key handling, each toggle typically applies only to content registered through RitsuLib.
-
-**`ModUnlockMissingRuleWarnings`** (e.g. missing boss-win rule registration): separate diagnostic path from the debug compatibility toggles.
-
-**Released content:** ship complete localization, timeline data, and dialogue. Treat the table above as an iteration aid.
-
-Windows settings path:
-
-```text
-%appdata%\SlayTheSpire2\steam\<user_id>\mod_data\com.ritsukage.sts2-RitsuLib\settings.json
-```
-
----
+Use it to investigate missing localization, invalid unlock epochs, and missing Architect dialogue. Do not rely on debug fallbacks as the normal release path for your mod.
 
 :::
 
@@ -177,216 +57,62 @@ Windows settings path:
 
 ::: zh-CN
 
-可选兼容回退由 `debug_compatibility_mode`（总开关）与设置页中的分项子开关控制。
+RitsuLib 自带的 debug compatibility mode 默认关闭。开启后，RitsuLib 设置页会显示用于开发和兼容测试的回退开关。
 
-**默认（总开关关）：** 走原版逻辑。
-
-**总开关开：** 游戏内展开 **兼容回退项**；子项默认**开启**。关闭某一子项时，仅移除对应回退。
-
-| 子项 | 开启时 |
-|---|---|
-| **LocTable 缺键** | 占位解析 + 一次性 `[Localization][DebugCompat]` 警告 |
-| **无效解锁纪元（Epoch）** | 跳过该次授予 + 一次性 `[Unlocks][DebugCompat]` 警告 |
-| **建筑师缺对话** | 对 `ModContentRegistry` 角色注入空 `Lines` 条目 + 一次性 `[Ancient]` 警告 |
-
-除 LocTable 缺键处理外，各子项通常只作用于通过 RitsuLib 注册的内容。
-
-**`ModUnlockMissingRuleWarnings`**（例如未注册 Boss 胜场规则）：独立于调试兼容子开关的诊断路径。
-
-**发布内容：** 应提供完整本地化、时间线与对话数据；上表仅用于迭代阶段排障。
-
-Windows 下设置文件路径：
-
-```text
-%appdata%\SlayTheSpire2\steam\<user_id>\mod_data\com.ritsukage.sts2-RitsuLib\settings.json
-```
-
----
+它适合调查缺失本地化、无效解锁 epoch、建筑师缺少对话等问题。不要把 debug 回退当作 Mod 的正常发布路径。
 
 :::
 
-## Registration Conflict Diagnostics{lang="en"}
+## Game Source Notes{lang="en"}
 
 ::: en
 
-RitsuLib checks these conflicts explicitly:
+When checking decompiled or reference game source, keep these rules in mind:
 
-| Conflict | Typical cause |
-|---|---|
-| Model id collision | Two registered models in the same mod/category share the same CLR type name |
-| Epoch id collision | Two epochs resolve to the same `Id` |
-| Story id collision | Two stories resolve to the same story identity |
-
-When detected, the framework throws or logs errors — it does not accept ambiguous identity silently.
-
----
+- Match the game API branch used by your package (`STS2.RitsuLib` or `STS2.RitsuLib.Compat.<api-version>`).
+- Confirm method overloads before writing a `ModPatchTarget`; use `parameterTypes` when there is any ambiguity.
+- Some lifecycle hooks differ by host API. Prefer RitsuLib events such as `CardsFlushedEvent` when they already bridge those differences.
+- If a behavior depends on a private field or compiler-generated state machine, isolate it behind a small compatibility helper and add diagnostics.
 
 :::
 
-## 注册冲突诊断{lang="zh-CN"}
+## 游戏源码注意点{lang="zh-CN"}
 
 ::: zh-CN
 
-RitsuLib 会显式检查以下冲突：
+查看反编译或引用版游戏源码时，注意这些规则：
 
-| 冲突类型 | 常见触发场景 |
-|---|---|
-| 模型 ID 冲突 | 同 Mod / 同类别下两个已注册模型的 CLR 类型名相同 |
-| 纪元 ID 冲突 | 两个纪元解析出同一个 `Id` |
-| 故事 ID 冲突 | 两个故事解析出同一个故事标识 |
-
-检测到冲突时抛异常或输出错误日志，不会静默接受模糊身份。
-
----
+- 源码版本必须匹配你使用的包分支（`STS2.RitsuLib` 或 `STS2.RitsuLib.Compat.<api-version>`）。
+- 写 `ModPatchTarget` 前确认目标方法重载；只要有歧义就填写 `parameterTypes`。
+- 部分生命周期 hook 会随 host API 变化。RitsuLib 已经提供桥接事件时，优先使用例如 `CardsFlushedEvent` 这样的事件。
+- 行为依赖私有字段或编译器生成状态机时，把它隔离成小兼容 helper，并添加诊断。
 
 :::
 
-## Ancient Dialogue Compatibility Layer{lang="en"}
+## Release Checklist{lang="en"}
 
 ::: en
 
-Before `AncientDialogueSet.PopulateLocKeys`, the framework appends localization-defined ancient dialogue rows for registered mod characters. Authors own the keys; the framework discovers and injects them so mod characters use the same ancient-dialogue pipeline as vanilla.
-
-### `THE_ARCHITECT` dialogue fallback
-
-Gated on the debug compatibility master toggle and the **THE_ARCHITECT missing dialogue** toggle. If vanilla `TheArchitect.LoadDialogue` yields no dialogue, RitsuLib injects empty `Lines` entries for `ModContentRegistry` characters and logs **`[Ancient]`** once.
-
-For key format, see [Localization & Keywords](/guide/localization-and-keywords).
-
----
+- Build against the intended game API branch.
+- Start a new run and load an existing run.
+- Switch profiles if the mod uses `SaveScope.Profile`.
+- Verify both installed languages you ship.
+- Open all settings pages from main menu and pause menu.
+- Check logs for RitsuLib warnings after content registration and after first combat.
+- Test optional compatibility patches with their target feature absent.
 
 :::
 
-## Ancient 对话兼容层{lang="zh-CN"}
+## 发布检查清单{lang="zh-CN"}
 
 ::: zh-CN
 
-框架在 `AncientDialogueSet.PopulateLocKeys` 之前为已注册 Mod 角色追加基于本地化键的 Ancient 对话条目；作者编写键，框架负责发现与注入，使 Mod 角色复用与原版相同的 Ancient 对话管线。
-
-### `THE_ARCHITECT` 对话兜底
-
-受调试兼容 **总开关 + 建筑师子项** 控制。若原版 `TheArchitect.LoadDialogue` 无结果，RitsuLib 对 `ModContentRegistry` 角色注入空 `Lines` 占位值并记录一次 **`[Ancient]`** 警告。
-
-具体键结构见 [本地化与关键词](/guide/localization-and-keywords)。
-
----
-
-:::
-
-## Unlock Compatibility Bridges{lang="en"}
-
-::: en
-
-Several vanilla progression checks only iterate vanilla characters. RitsuLib applies narrow patches so registered unlock rules participate at the same checkpoints for mod characters:
-
-| Bridge | Description |
-|---|---|
-| Elite wins | Elite kill count → epoch checks |
-| Boss wins | Boss kill count → epoch checks |
-| Ascension 1 | Ascension 1 → epoch checks |
-| Post-run character unlock | Post-run character-unlock epochs |
-| Ascension reveal | Ascension reveal unlock checks |
-
-Bridge patches forward RitsuLib-registered rules into vanilla progression checkpoints that otherwise skip mod characters. They do not introduce a separate progression store.
-
-See [Timeline & Unlocks](/guide/timeline-and-unlocks).
-
----
-
-:::
-
-## 解锁兼容桥{lang="zh-CN"}
-
-::: zh-CN
-
-若干原版进度检查仅针对 vanilla 角色遍历。RitsuLib 以窄补丁将已注册解锁规则挂到相同检查点，使 Mod 角色在同一节点上参与判定：
-
-| 桥接类型 | 说明 |
-|---|---|
-| 精英胜场 | 精英击杀计数的纪元判定桥接 |
-| Boss 胜场 | Boss 击杀计数的纪元判定桥接 |
-| 进阶 1 | 进阶 1 的纪元判定桥接 |
-| 局后角色解锁 | 局后角色解锁纪元桥接 |
-| 进阶显示 | 进阶显示解锁判定桥接 |
-
-桥接补丁会把 RitsuLib 已注册规则转发到原版会跳过 Mod 角色的进度检查点；不引入独立的进度存储。
-
-详见 [时间线与解锁](/guide/timeline-and-unlocks)。
-
----
-
-:::
-
-## Freeze Errors{lang="en"}
-
-::: en
-
-If content, timeline, or unlock registration runs after freeze, RitsuLib throws.
-
-That is intentional: late registration often means ModelDb caches are already built, fixed identity rules are in use, and unlock filters are active. Failing fast is the safe choice.
-
----
-
-:::
-
-## Freeze 异常{lang="zh-CN"}
-
-::: zh-CN
-
-当内容、时间线或解锁在冻结之后还被注册时，RitsuLib 会直接抛异常。
-
-这是诊断机制：一旦晚注册，往往意味着 ModelDb 缓存已建立、固定身份规则已被使用、解锁过滤已在运行。此时最安全的做法是尽早失败。
-
----
-
-:::
-
-## Troubleshooting notes{lang="en"}
-
-::: en
-
-1. Warnings usually point to mod data or configuration (paths, keys, rules), not random engine failure.
-2. Fix missing assets and localization in source data rather than relying on placeholders long term.
-3. Debug compatibility fallbacks are for iteration; release builds should ship with the master toggle off, or with per-feature toggles disabled and complete data.
-4. Prefer explicit registration APIs; compatibility fallbacks are not a long-term architecture substitute.
-
----
-
-:::
-
-## 排查要点{lang="zh-CN"}
-
-::: zh-CN
-
-1. 警告多表示 Mod 数据或配置问题（路径、键、规则），而非随机引擎故障。
-2. 资源与本地化应在数据源补全，而不是长期依赖占位值或兼容回退。
-3. 调试兼容回退用于迭代排障；发布构建宜关闭总开关或关闭子项并交付完整数据。
-4. 优先使用显式注册 API；兼容回退不宜作为长期架构依赖。
-
----
-
-:::
-
-## Related Documents{lang="en"}
-
-::: en
-
-- [Asset Profiles & Fallbacks](/guide/asset-profiles-and-fallbacks)
-- [Localization & Keywords](/guide/localization-and-keywords)
-- [Timeline & Unlocks](/guide/timeline-and-unlocks)
-- [Godot Scene Authoring](/guide/godot-scene-authoring)
-- [Framework Design](/guide/framework-design)
-
-:::
-
-## 相关文档{lang="zh-CN"}
-
-::: zh-CN
-
-- [资源配置与回退规则](/guide/asset-profiles-and-fallbacks)
-- [本地化与关键词](/guide/localization-and-keywords)
-- [时间线与解锁](/guide/timeline-and-unlocks)
-- [Godot 场景编写说明](/guide/godot-scene-authoring)
-- [框架设计](/guide/framework-design)
+- 使用目标游戏 API 分支构建。
+- 测试新 run 和读取旧 run。
+- 如果使用 `SaveScope.Profile`，测试切换档位。
+- 验证随 Mod 发布的语言。
+- 从主菜单和暂停菜单打开所有设置页。
+- 内容注册后和第一次战斗后检查 RitsuLib 警告日志。
+- 可选兼容 patch 需要测试目标功能不存在的情况。
 
 :::

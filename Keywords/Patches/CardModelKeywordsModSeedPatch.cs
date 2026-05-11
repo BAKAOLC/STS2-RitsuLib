@@ -62,7 +62,7 @@ namespace STS2RitsuLib.Keywords.Patches
                 if (string.IsNullOrWhiteSpace(id))
                     continue;
 
-                if (ModKeywordRegistry.TryGetCardKeyword(id, out var value))
+                if (ModKeywordRegistry.TryResolveCardKeyword(id, out var value))
                     storage.Add(value);
             }
 

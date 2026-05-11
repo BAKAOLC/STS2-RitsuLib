@@ -1,386 +1,408 @@
 ---
 title:
-  en: Content Authoring Toolkit
-  zh-CN: 内容注册规则
+  en: Content Authoring
+  zh-CN: 内容编写
 cover: https://wrxinyue.s3.bitiful.net/slay-the-spire-2-wallpaper.webp
 ---
 
-## Introduction{lang="en"}
+## Choose A Registration Style{lang="en"}
 
 ::: en
 
-This document is the overview for content authoring: registration entry points, model identity, localization coupling, and asset override basics.
+RitsuLib offers two normal registration styles. Treat them as peers:
 
-Detailed registration mechanics live in [Content Packs & Registries](/guide/content-packs-and-registries). Detailed asset semantics live in [Asset Profiles & Fallbacks](/guide/asset-profiles-and-fallbacks).
+| Style | Best fit |
+| --- | --- |
+| CLR attributes | Content classes owned by your mod. The registration sits next to the model class. |
+| Content pack | Generated content, conditional setup, placeholders, or a reviewable list in one initializer. |
 
----
+Attribute registration requires the mod assembly to be registered once:
+
+```csharp
+ModTypeDiscoveryHub.RegisterModAssembly("MyMod", Assembly.GetExecutingAssembly());
+```
+
+If the annotated class lives in a helper assembly that the game does not map to your manifest id, add
+`[RitsuLibOwnedBy("MyMod")]` to the class or register that assembly with `ModTypeDiscoveryHub.RegisterModAssembly(...)`.
 
 :::
 
-## 简介{lang="zh-CN"}
+## 选择注册风格{lang="zh-CN"}
 
 ::: zh-CN
 
-本文是内容编写的总览文档，聚焦注册入口、模型身份、本地化耦合关系以及资源覆写基础规则。
+RitsuLib 提供两种常规注册风格，它们是平级入口：
 
-更详细的注册机制见 [内容包与注册器](/guide/content-packs-and-registries)，更详细的资源语义见 [资源配置与回退规则](/guide/asset-profiles-and-fallbacks)。
+| 风格 | 适用场景 |
+| --- | --- |
+| CLR 注解 | Mod 自己拥有的内容类。注册点贴近模型类。 |
+| Content pack | 生成内容、条件注册、占位内容，或希望在初始化入口集中审查的一批注册。 |
 
----
+注解注册需要先注册 Mod 程序集：
+
+```csharp
+ModTypeDiscoveryHub.RegisterModAssembly("MyMod", Assembly.GetExecutingAssembly());
+```
+
+如果注解类位于游戏无法映射到你的 manifest id 的辅助程序集，可以给类加 `[RitsuLibOwnedBy("MyMod")]`，或为该程序集调用
+`ModTypeDiscoveryHub.RegisterModAssembly(...)`。
 
 :::
 
-## Registration APIs{lang="en"}
+## Attribute Registration{lang="en"}
 
 ::: en
 
-| API | Purpose |
-|---|---|
-| `RitsuLibFramework.CreateContentPack(modId)` | Recommended entry point — fluent builder |
-| `RitsuLibFramework.GetContentRegistry(modId)` | Low-level content registry |
-| `RitsuLibFramework.GetKeywordRegistry(modId)` | Keyword registry |
-| `RitsuLibFramework.GetTimelineRegistry(modId)` | Timeline (story / epoch) registry |
-| `RitsuLibFramework.GetUnlockRegistry(modId)` | Unlock rule registry |
+Put the attribute on the concrete model type. Abstract classes are skipped.
 
-`CreateContentPack` wraps all of the above in a fluent builder that executes registered steps in insertion order when `Apply()` is called.
+```csharp
+[RegisterCard(typeof(MyCardPool))]
+public sealed class MyStrike
+    : ModCardTemplate(1, CardType.Attack, CardRarity.Common, TargetType.SingleEnemy)
+{
+}
 
-This document keeps the overview short. For builder surface, manifests, fixed-entry ownership, and freeze behavior, see [Content Packs & Registries](/guide/content-packs-and-registries).
+[RegisterRelic(typeof(MyRelicPool))]
+public sealed class MyStarterRelic : ModRelicTemplate
+{
+}
 
----
+[RegisterCharacter]
+public sealed class MyCharacter
+    : ModCharacterTemplate<MyCardPool, MyRelicPool, MyPotionPool>
+{
+}
+```
+
+Pool-backed model attributes support stable entry overrides:
+
+```csharp
+[RegisterCard(typeof(MyCardPool), StableEntryStem = "my_strike")]
+public sealed class RenamedStrike : ModCardTemplate(1, CardType.Attack, CardRarity.Common, TargetType.SingleEnemy)
+{
+}
+```
+
+Use `FullPublicEntry` only for compatibility with an already published full entry. Do not set `StableEntryStem` and
+`FullPublicEntry` together.
+
+Common content attributes:
+
+| Attribute | Registers |
+| --- | --- |
+| `RegisterCard(typeof(pool))` | Card in a card pool |
+| `RegisterRelic(typeof(pool))` | Relic in a relic pool |
+| `RegisterPotion(typeof(pool))` | Potion in a potion pool |
+| `RegisterCharacter` | Character model |
+| `RegisterPower`, `RegisterOrb` | Combat models |
+| `RegisterAct`, `RegisterMonster`, `RegisterGlobalEncounter` | Act, monster, global encounter |
+| `RegisterActEncounter(typeof(act))` | Encounter for an act |
+| `RegisterSharedEvent`, `RegisterActEvent(typeof(act))` | Event content |
+| `RegisterSharedAncient`, `RegisterActAncient(typeof(act))` | Ancient event content |
+| `RegisterAchievement`, `RegisterEnchantment`, `RegisterAffliction` | Metadata or card-state models |
+| `RegisterGoodModifier`, `RegisterBadModifier` | Daily modifiers |
+| `RegisterSharedCardPool`, `RegisterSharedRelicPool`, `RegisterSharedPotionPool` | Shared pools |
+
+Every auto-registration attribute has `Order`. Lower values run earlier within the same phase. For starter cards, relics,
+and potions, the same `Order` is also stored on the starter entry; starter lists are resolved by `Order`, then by
+registration order.
+
+Starter example:
+
+```csharp
+[RegisterCard(typeof(MyCardPool))]
+[RegisterCharacterStarterCard(typeof(MyCharacter), 4, Order = 10)]
+public sealed class MyStrike : ModCardTemplate(1, CardType.Attack, CardRarity.Common, TargetType.SingleEnemy)
+{
+}
+```
+
+Use abstract base class attributes only with `Inherit = true`. The base class itself is not registered; each concrete
+derived type receives the inherited registration unless it declares an equivalent direct attribute.
+
+```csharp
+[RegisterCard(typeof(MyCardPool), Inherit = true)]
+public abstract class MySkillCardBase
+    : ModCardTemplate(1, CardType.Skill, CardRarity.Common, TargetType.Self)
+{
+}
+
+public sealed class MyBlock : MySkillCardBase
+{
+}
+```
+
+Do not put `StableEntryStem` or `FullPublicEntry` on an inherited base attribute unless every derived type is intended to
+share the same public entry. That is almost always wrong. Put stable entry overrides on the concrete class instead.
 
 :::
 
-## 注册接口{lang="zh-CN"}
+## 注解式注册{lang="zh-CN"}
 
 ::: zh-CN
 
-| 接口 | 说明 |
-|---|---|
-| `RitsuLibFramework.CreateContentPack(modId)` | 推荐入口：流式内容包构建器 |
-| `RitsuLibFramework.GetContentRegistry(modId)` | 底层内容注册器 |
-| `RitsuLibFramework.GetKeywordRegistry(modId)` | 关键词注册器 |
-| `RitsuLibFramework.GetTimelineRegistry(modId)` | Timeline（故事/纪元）注册器 |
-| `RitsuLibFramework.GetUnlockRegistry(modId)` | 解锁规则注册器 |
+把注解放在具体模型类型上。抽象类会被跳过。
 
-`CreateContentPack` 是推荐用法，将以上注册器封装为流式 API，调用 `Apply()` 时按添加顺序依次执行。
+```csharp
+[RegisterCard(typeof(MyCardPool))]
+public sealed class MyStrike
+    : ModCardTemplate(1, CardType.Attack, CardRarity.Common, TargetType.SingleEnemy)
+{
+}
 
-本文只保留总览层内容。关于构建器完整表面、清单式注册、固定条目标识归属和冻结机制，请阅读 [内容包与注册器](/guide/content-packs-and-registries)。
+[RegisterRelic(typeof(MyRelicPool))]
+public sealed class MyStarterRelic : ModRelicTemplate
+{
+}
 
----
+[RegisterCharacter]
+public sealed class MyCharacter
+    : ModCharacterTemplate<MyCardPool, MyRelicPool, MyPotionPool>
+{
+}
+```
+
+带池的模型注解支持稳定 Entry 覆写：
+
+```csharp
+[RegisterCard(typeof(MyCardPool), StableEntryStem = "my_strike")]
+public sealed class RenamedStrike : ModCardTemplate(1, CardType.Attack, CardRarity.Common, TargetType.SingleEnemy)
+{
+}
+```
+
+`FullPublicEntry` 只用于兼容已经发布过的完整 Entry。不要同时设置 `StableEntryStem` 和 `FullPublicEntry`。
+
+常用内容注解：
+
+| 注解 | 注册内容 |
+| --- | --- |
+| `RegisterCard(typeof(pool))` | 卡牌进入卡池 |
+| `RegisterRelic(typeof(pool))` | 遗物进入遗物池 |
+| `RegisterPotion(typeof(pool))` | 药水进入药水池 |
+| `RegisterCharacter` | 角色模型 |
+| `RegisterPower`, `RegisterOrb` | 战斗模型 |
+| `RegisterAct`, `RegisterMonster`, `RegisterGlobalEncounter` | Act、怪物、全局遭遇 |
+| `RegisterActEncounter(typeof(act))` | 指定 Act 的遭遇 |
+| `RegisterSharedEvent`, `RegisterActEvent(typeof(act))` | 事件 |
+| `RegisterSharedAncient`, `RegisterActAncient(typeof(act))` | Ancient 事件 |
+| `RegisterAchievement`, `RegisterEnchantment`, `RegisterAffliction` | 元数据或卡牌状态模型 |
+| `RegisterGoodModifier`, `RegisterBadModifier` | Daily modifier |
+| `RegisterSharedCardPool`, `RegisterSharedRelicPool`, `RegisterSharedPotionPool` | 共享池 |
+
+所有自动注册注解都有 `Order`。同一注册阶段内，值越小越早执行。对于初始卡牌、初始遗物和初始药水，同一个 `Order` 也会写入 starter 条目；最终 starter 列表按
+`Order` 排序，再按注册顺序排列。
+
+Starter 示例：
+
+```csharp
+[RegisterCard(typeof(MyCardPool))]
+[RegisterCharacterStarterCard(typeof(MyCharacter), 4, Order = 10)]
+public sealed class MyStrike : ModCardTemplate(1, CardType.Attack, CardRarity.Common, TargetType.SingleEnemy)
+{
+}
+```
+
+抽象基类上的注册注解只有设置 `Inherit = true` 才会传给具体派生类。抽象基类本身不会被注册；每个具体派生类会获得继承来的注册，除非它声明了等价的直接注解。
+
+```csharp
+[RegisterCard(typeof(MyCardPool), Inherit = true)]
+public abstract class MySkillCardBase
+    : ModCardTemplate(1, CardType.Skill, CardRarity.Common, TargetType.Self)
+{
+}
+
+public sealed class MyBlock : MySkillCardBase
+{
+}
+```
+
+不要在继承型基类注解上设置 `StableEntryStem` 或 `FullPublicEntry`，除非你真的希望每个派生类型共享同一个公开 Entry。这几乎总是错误的。稳定 Entry 覆写应写在具体类上。
 
 :::
 
-## Content Pack Builder{lang="en"}
+## Content Packs{lang="en"}
 
 ::: en
 
-All builder methods are chainable. A representative example:
+Use a content pack when a batch is more readable than scattered attributes.
 
 ```csharp
 RitsuLibFramework.CreateContentPack("MyMod")
-    .Character<MyCharacter>()
-    .Card<MyCardPool, MyCard>()
-    .Relic<MyRelicPool, MyRelic>()
-    .CardKeywordOwnedByLocNamespace("my_keyword", iconPath: "res://MyMod/art/kw.png")
-    .Story<MyStory>()
-    .Epoch<MyEpoch>()
-    .RequireEpoch<MyCard, MyEpoch>()
-    .Custom(ctx => { /* ... */ })
+    .Card<MyCardPool, MyStrike>()
+    .Relic<MyRelicPool, MyStarterRelic>()
+    .Potion<MyPotionPool, MyPotion>()
+    .Power<MyPower>()
+    .ActEvent<MyAct, MyEvent>()
+    .CardKeywordOwnedByLocNamespace("bleeding")
     .Apply();
 ```
 
-`Apply()` returns `ModContentPackContext` for further access to individual registries.
+Important pack methods:
 
----
+| Area | Methods |
+| --- | --- |
+| Pool content | `.Card<TPool,TCard>()`, `.Relic<TPool,TRelic>()`, `.Potion<TPool,TPotion>()` |
+| Stable entries | overloads taking `ModelPublicEntryOptions.FromStem(...)` or `FromFullPublicEntry(...)` |
+| Placeholders | `.PlaceholderCard<TPool>(stem)`, `.PlaceholderRelic<TPool>(stem)`, `.PlaceholderPotion<TPool>(stem)` |
+| Characters | `.Character<T>()`, `.Character<T>(entry => ...)`, `.CharacterStarterCard<TCharacter,TCard>()`, starter relic / potion helpers |
+| World content | `.Act<T>()`, `.Monster<T>()`, `.ActEncounter<TAct,TEncounter>()`, `.SharedEvent<T>()`, `.ActEvent<TAct,TEvent>()` |
+| Ancients | `.SharedAncient<T>()`, `.ActAncient<TAct,TAncient>()`, `.AncientOption<TAncient>(rule)` |
+| Keywords and ids | `.CardKeywordOwnedByLocNamespace(...)`, `.KeywordOwned(...)`, `.CardTagOwned(...)` |
+| UI | `.CardPileOwned(...)`, `.TopBarButtonOwned(...)` |
+| Timeline and unlocks | `.Story<T>()`, `.Epoch<T>()`, `.StoryEpoch<TStory,TEpoch>()`, `.RequireEpoch<TModel,TEpoch>()`, unlock helpers |
+| Batch input | `.ContentManifest(...)`, `.KeywordManifest(...)`, `.PackManifest(...)`, `.Manifest(...)` |
+| Custom logic | `.Custom(ctx => ...)` |
+
+Do not register the same model through attributes and a content pack unless you intentionally want idempotent duplicate
+handling. Pick one source of truth for each content family.
 
 :::
 
-## 内容包构建器{lang="zh-CN"}
+## Content Pack{lang="zh-CN"}
 
 ::: zh-CN
 
-所有方法都支持链式调用，下面给出一个代表性示例：
+当集中批次比散落注解更易读时，使用 content pack。
 
 ```csharp
 RitsuLibFramework.CreateContentPack("MyMod")
-    .Character<MyCharacter>()
-    .Card<MyCardPool, MyCard>()
-    .Relic<MyRelicPool, MyRelic>()
-    .CardKeywordOwnedByLocNamespace("my_keyword", iconPath: "res://MyMod/art/kw.png")
-    .Story<MyStory>()
-    .Epoch<MyEpoch>()
-    .RequireEpoch<MyCard, MyEpoch>()
-    .Custom(ctx => { /* 任意注册逻辑 */ })
+    .Card<MyCardPool, MyStrike>()
+    .Relic<MyRelicPool, MyStarterRelic>()
+    .Potion<MyPotionPool, MyPotion>()
+    .Power<MyPower>()
+    .ActEvent<MyAct, MyEvent>()
+    .CardKeywordOwnedByLocNamespace("bleeding")
     .Apply();
 ```
 
-`Apply()` 返回 `ModContentPackContext`，可用于进一步访问各注册器。
+重要 pack 方法：
 
----
+| 区域 | 方法 |
+| --- | --- |
+| 池内容 | `.Card<TPool,TCard>()`、`.Relic<TPool,TRelic>()`、`.Potion<TPool,TPotion>()` |
+| 稳定 Entry | 接收 `ModelPublicEntryOptions.FromStem(...)` 或 `FromFullPublicEntry(...)` 的重载 |
+| 占位内容 | `.PlaceholderCard<TPool>(stem)`、`.PlaceholderRelic<TPool>(stem)`、`.PlaceholderPotion<TPool>(stem)` |
+| 角色 | `.Character<T>()`、`.Character<T>(entry => ...)`、`.CharacterStarterCard<TCharacter,TCard>()`、初始遗物 / 药水辅助方法 |
+| 世界内容 | `.Act<T>()`、`.Monster<T>()`、`.ActEncounter<TAct,TEncounter>()`、`.SharedEvent<T>()`、`.ActEvent<TAct,TEvent>()` |
+| Ancient | `.SharedAncient<T>()`、`.ActAncient<TAct,TAncient>()`、`.AncientOption<TAncient>(rule)` |
+| 关键词与 ID | `.CardKeywordOwnedByLocNamespace(...)`、`.KeywordOwned(...)`、`.CardTagOwned(...)` |
+| UI | `.CardPileOwned(...)`、`.TopBarButtonOwned(...)` |
+| 时间线与解锁 | `.Story<T>()`、`.Epoch<T>()`、`.StoryEpoch<TStory,TEpoch>()`、`.RequireEpoch<TModel,TEpoch>()`、解锁辅助方法 |
+| 批量输入 | `.ContentManifest(...)`、`.KeywordManifest(...)`、`.PackManifest(...)`、`.Manifest(...)` |
+| 自定义逻辑 | `.Custom(ctx => ...)` |
+
+不要让同一个模型同时由注解和 content pack 注册，除非你明确接受重复注册被跳过。每类内容最好有一个清晰的来源。
 
 :::
 
-## Model ID Rule{lang="en"}
+## Model Templates{lang="en"}
 
 ::: en
 
-For any model registered through the RitsuLib content registry, `ModelId.Entry` uses:
+Templates are optional base classes that provide RitsuLib conventions and hooks:
 
-```
+| Model | Template |
+| --- | --- |
+| Card | `ModCardTemplate` |
+| Relic | `ModRelicTemplate` |
+| Potion | `ModPotionTemplate` |
+| Power | `ModPowerTemplate` |
+| Character | `ModCharacterTemplate<TCardPool, TRelicPool, TPotionPool>` |
+| Event | `ModEventTemplate` |
+| Ancient event | `ModAncientEventTemplate` |
+| Encounter / monster / act | `ModEncounterTemplate`, `ModMonsterTemplate`, `ModActTemplate` |
+| Story / epoch | `ModStoryTemplate`, `ModEpochTemplate` |
+
+Most display text still belongs in localization JSON. Do not add fake `Title` or `Description` overrides to models whose
+base game class already reads `LocString` from its table.
+
+:::
+
+## 模型模板{lang="zh-CN"}
+
+::: zh-CN
+
+模板是可选基类，用来提供 RitsuLib 约定和钩子：
+
+| 模型 | 模板 |
+| --- | --- |
+| 卡牌 | `ModCardTemplate` |
+| 遗物 | `ModRelicTemplate` |
+| 药水 | `ModPotionTemplate` |
+| 能力 | `ModPowerTemplate` |
+| 角色 | `ModCharacterTemplate<TCardPool, TRelicPool, TPotionPool>` |
+| 事件 | `ModEventTemplate` |
+| Ancient 事件 | `ModAncientEventTemplate` |
+| Encounter / Monster / Act | `ModEncounterTemplate`、`ModMonsterTemplate`、`ModActTemplate` |
+| Story / Epoch | `ModStoryTemplate`、`ModEpochTemplate` |
+
+大多数显示文本仍然应写在本地化 JSON 里。游戏基类已经从 `LocString` 表读取文本时，不要在模型上编造不存在的 `Title` 或 `Description` 覆写。
+
+:::
+
+## Entry Ids{lang="en"}
+
+::: en
+
+RitsuLib-owned pool content gets a fixed public entry:
+
+```text
 <MODID>_<CATEGORY>_<TYPENAME>
 ```
 
-All segments are normalized to **UPPER_SNAKE_CASE**.
+`MyMod` + card + `MyStrike` becomes:
 
-### Examples (Mod id `MyMod`)
+```text
+MY_MOD_CARD_MY_STRIKE
+```
 
-| C# Type | Category | ModelId.Entry |
-|---|---|---|
-| `MyStrike` | card | `MY_MOD_CARD_MY_STRIKE` |
-| `MyStarterRelic` | relic | `MY_MOD_RELIC_MY_STARTER_RELIC` |
-| `MyCharacter` | character | `MY_MOD_CHARACTER_MY_CHARACTER` |
+The entry is used by saves, model ids, localization keys, asset defaults, unlock rules, and cross-mod references. Treat it
+as stable after release.
 
-> If two types under the same mod id and category share the same CLR name, they resolve to the same entry and must be renamed.
+Use `StableEntryStem` / `ModelPublicEntryOptions.FromStem(...)` when a type was renamed but the published entry must stay
+the same:
 
----
+```csharp
+[RegisterCard(typeof(MyCardPool), StableEntryStem = "my_strike")]
+public sealed class RenamedStrike : ModCardTemplate(1, CardType.Attack, CardRarity.Common, TargetType.SingleEnemy)
+{
+}
+```
+
+Avoid all-uppercase CLR type names such as `TESTCARD`. Vanilla entry parsing can split those names incorrectly; in current
+0.105.x behavior, `TESTCARD` can become `T_ES_TC_AR_D`. Prefer `TestCard`, and prefer `UrlParser` over `URLParser`.
 
 :::
 
-## 模型 ID 规则{lang="zh-CN"}
+## Entry ID{lang="zh-CN"}
 
 ::: zh-CN
 
-通过 RitsuLib 注册的模型，其 `ModelId.Entry` 使用以下固定格式：
+RitsuLib 自有的池内容会得到固定公开 Entry：
 
-```
+```text
 <MODID>_<CATEGORY>_<TYPENAME>
 ```
 
-每个字段规范化为**全大写、以下划线分隔**的标识符。
+`MyMod` 下的卡牌 `MyStrike` 会变成：
 
-### 示例（Mod id `MyMod`）
-
-| C# 类型 | 类别 | ModelId.Entry |
-|---|---|---|
-| `MyStrike` | card | `MY_MOD_CARD_MY_STRIKE` |
-| `MyStarterRelic` | relic | `MY_MOD_RELIC_MY_STARTER_RELIC` |
-| `MyCharacter` | character | `MY_MOD_CHARACTER_MY_CHARACTER` |
-
-> 同一 Mod、同一类别下两个 CLR 类型名相同的模型会产生 Entry 冲突，必须通过重命名解决。
-
----
-
-:::
-
-## Localization Rule{lang="en"}
-
-::: en
-
-Localization keys are written directly against the fixed `ModelId.Entry`:
-
-```json
-{
-  "MY_MOD_CARD_MY_STRIKE.title": "My Strike",
-  "MY_MOD_CARD_MY_STRIKE.description": "Deal {damage} damage.",
-  "MY_MOD_RELIC_MY_STARTER_RELIC.title": "My Starter Relic"
-}
+```text
+MY_MOD_CARD_MY_STRIKE
 ```
 
-`RitsuLibFramework.CreateModLocalization(...)` operates independently from the game's `LocString` pipeline.
+Entry 会用于存档、模型 ID、本地化 key、资源默认路径、解锁规则和跨 Mod 引用。发布后应视为稳定 ID。
 
----
-
-:::
-
-## 本地化规则{lang="zh-CN"}
-
-::: zh-CN
-
-游戏本地化 Key 直接基于固定 `ModelId.Entry` 编写：
-
-```json
-{
-  "MY_MOD_CARD_MY_STRIKE.title": "我的打击",
-  "MY_MOD_CARD_MY_STRIKE.description": "造成 {damage} 点伤害。",
-  "MY_MOD_RELIC_MY_STARTER_RELIC.title": "我的起始遗物"
-}
-```
-
-`RitsuLibFramework.CreateModLocalization(...)` 是独立的本地化工具，与游戏的 `LocString` 模型 Key 管线相互独立。
-
----
-
-:::
-
-## Asset Override Rule{lang="en"}
-
-::: en
-
-RitsuLib applies template-based asset overrides via interface matching at render time.
-
-### Card Overrides
-
-Inherit `ModCardTemplate` and override via `AssetProfile` (recommended) or individual properties:
+类型改名但已发布 Entry 必须保持不变时，使用 `StableEntryStem` / `ModelPublicEntryOptions.FromStem(...)`：
 
 ```csharp
-public class MyCard : ModCardTemplate(1, CardType.Attack, CardRarity.Common, TargetType.SingleEnemy)
+[RegisterCard(typeof(MyCardPool), StableEntryStem = "my_strike")]
+public sealed class RenamedStrike : ModCardTemplate(1, CardType.Attack, CardRarity.Common, TargetType.SingleEnemy)
 {
-    // Unified profile (recommended)
-    public override CardAssetProfile AssetProfile => new()
-    {
-        PortraitPath      = "res://MyMod/art/my_card.png",
-        FramePath         = "res://MyMod/art/frame.png",
-        FrameMaterialPath = "res://MyMod/art/frame.material",
-    };
-
-    // Or override a single property directly
-    public override string? CustomPortraitPath => "res://MyMod/art/my_card.png";
 }
 ```
 
-Supported card fields include portrait, frame, portrait border, energy icon, overlay, and banner-related assets.
-
-### Other Content
-
-| Content type | Supported override fields |
-|---|---|
-| Relic | icon, icon outline, big icon |
-| Power | icon, big icon |
-| Orb | icon, visuals scene |
-| Potion | image, outline |
-
-Override behavior:
-1. The model must implement the matching override interface (directly or via `Mod*Template`)
-2. The override member must return a non-empty path
-3. If the resource path does not exist, RitsuLib emits a one-time warning and falls back to the base asset
-
-This warning behavior is especially important for character assets because the base game has almost no safe fallback for missing paths.
-
-For the full profile records, helper factories, placeholder behavior, and diagnostics policy, see [Asset Profiles & Fallbacks](/guide/asset-profiles-and-fallbacks).
-
----
-
-:::
-
-## 资源覆写规则{lang="zh-CN"}
-
-::: zh-CN
-
-RitsuLib 通过接口匹配，在渲染时将默认资源替换为 Mod 提供的资源。
-
-### 卡牌资源覆写
-
-继承 `ModCardTemplate` 后，通过 `AssetProfile`（推荐）或单独属性覆写：
-
-```csharp
-public class MyCard : ModCardTemplate(1, CardType.Attack, CardRarity.Common, TargetType.SingleEnemy)
-{
-    // 统一通过 AssetProfile 配置（推荐）
-    public override CardAssetProfile AssetProfile => new()
-    {
-        PortraitPath      = "res://MyMod/art/my_card.png",
-        FramePath         = "res://MyMod/art/frame.png",
-        FrameMaterialPath = "res://MyMod/art/frame.material",
-    };
-
-    // 或单独覆写某一项
-    public override string? CustomPortraitPath => "res://MyMod/art/my_card.png";
-}
-```
-
-卡牌支持的覆写大致包括 portrait、frame、portrait border、energy icon、overlay 与 banner 相关资源。
-
-### 其他内容资源覆写
-
-| 内容类型 | 支持字段 |
-|---|---|
-| Relic | icon、icon outline、big icon |
-| Power | icon、big icon |
-| Orb | 图标、视觉场景 |
-| Potion | image、outline |
-
-覆写行为如下：
-1. 模型必须实现对应的 override 接口（直接或通过 `Mod*Template`）
-2. override 成员必须返回非空路径
-3. 如果资源路径不存在，RitsuLib 会输出一次警告，并回退到原始资源
-
-这点对角色资源尤其重要，因为原版游戏对缺失角色资源几乎没有安全兜底。
-
-完整资源配置结构、路径工厂辅助方法、占位角色规则与诊断策略见 [资源配置与回退规则](/guide/asset-profiles-and-fallbacks)。
-
----
-
-:::
-
-## Registration Timing{lang="en"}
-
-::: en
-
-All content registration must be completed before the framework freezes content registration (during early game boot). Additional registration after the freeze is invalid and may throw.
-
-The freeze is signaled by `ContentRegistrationClosedEvent`.
-
----
-
-:::
-
-## 注册时机{lang="zh-CN"}
-
-::: zh-CN
-
-所有内容注册必须在框架冻结内容注册之前完成（游戏早期引导阶段）。冻结后继续注册属于无效操作并可能抛出异常。
-
-冻结时触发的事件：`ContentRegistrationClosedEvent`
-
----
-
-:::
-
-## Compatibility{lang="en"}
-
-::: en
-
-The fixed-entry rule applies only to model types explicitly registered through the RitsuLib content registry, at `ModelDb.GetEntry(Type)`. Models not registered through RitsuLib are unaffected.
-
----
-
-:::
-
-## 兼容规则{lang="zh-CN"}
-
-::: zh-CN
-
-固定 Entry 规则**只作用于**通过 RitsuLib 内容注册器显式注册的模型类型，处理点为 `ModelDb.GetEntry(Type)`。未经 RitsuLib 注册的模型不受影响。
-
----
-
-:::
-
-## Related Documents{lang="en"}
-
-::: en
-
-- [Getting Started](/guide/getting-started)
-- [Content Packs & Registries](/guide/content-packs-and-registries)
-- [Character & Unlock Templates](/guide/character-and-unlock-scaffolding)
-- [Custom Events](/guide/custom-events)
-- [Card Dynamic Variables](/guide/card-dynamic-var-toolkit)
-- [Localization & Keywords](/guide/localization-and-keywords)
-- [Framework Design](/guide/framework-design)
-- [Asset Profiles & Fallbacks](/guide/asset-profiles-and-fallbacks)
-
-:::
-
-## 相关文档{lang="zh-CN"}
-
-::: zh-CN
-
-- [快速入门](/guide/getting-started)
-- [内容包与注册器](/guide/content-packs-and-registries)
-- [角色与解锁模板](/guide/character-and-unlock-scaffolding)
-- [自定义事件](/guide/custom-events)
-- [卡牌动态变量](/guide/card-dynamic-var-toolkit)
-- [本地化与关键词](/guide/localization-and-keywords)
-- [框架设计](/guide/framework-design)
-- [资源配置与回退规则](/guide/asset-profiles-and-fallbacks)
+避免使用 `TESTCARD` 这类全大写 CLR 类型名。游戏原版 Entry 解析会在某些情形下错误拆分这种名称；当前 0.105.x 行为里，`TESTCARD` 可能变成
+`T_ES_TC_AR_D`。请写 `TestCard`；名称中有缩写时，也优先写 `UrlParser` 而不是 `URLParser`。
 
 :::

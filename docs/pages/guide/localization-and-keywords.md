@@ -1,521 +1,507 @@
 ---
 title:
-  en: Localization & Keywords
+  en: Localization And Keywords
   zh-CN: 本地化与关键词
 cover: https://wrxinyue.s3.bitiful.net/slay-the-spire-2-wallpaper.webp
 ---
 
-## Introduction{lang="en"}
+## Two Text Systems{lang="en"}
 
 ::: en
 
-RitsuLib separates localization into two distinct layers:
+Use the game's localization tables for game content. Use `I18N` for your own UI strings.
 
-- **The base game's `LocString` model-key pipeline** — in-game text such as model titles and descriptions
-- **Framework-provided `I18N` helper localization** — auxiliary text for the mod itself
+| Need | Use |
+| --- | --- |
+| Card, relic, potion, power, character, event, ancient, epoch text | Game loc tables such as `cards`, `relics`, `events`, `ancients`, `epochs` |
+| Keyword title / description | `card_keywords` for card keywords, or `static_hover_tips` for general hover tips |
+| Settings UI, debug panels, small mod UI | `I18N` through `CreateModLocalization(...)` |
+| A game API that requires `LocString`, backed by your own JSON | Register an `I18N` virtual loc table |
 
-It also provides a lightweight keyword registry to unify hover tips and keyword text.
-
----
+File names use game language codes such as `eng.json`, `zhs.json`, and `jpn.json`.
 
 :::
 
-## 简介{lang="zh-CN"}
+## 两套文本系统{lang="zh-CN"}
 
 ::: zh-CN
 
-RitsuLib 将本地化明确分为两层：
+游戏内容使用游戏本地化表。你自己的 UI 文本使用 `I18N`。
 
-- **游戏原版的 `LocString` 模型键管线** — 模型标题、描述等游戏内文本
-- **框架自带的 `I18N` 辅助本地化** — Mod 自身的辅助文本
+| 需求 | 使用 |
+| --- | --- |
+| 卡牌、遗物、药水、能力、角色、事件、Ancient、Epoch 文本 | 游戏 loc 表，例如 `cards`、`relics`、`events`、`ancients`、`epochs` |
+| 关键词标题 / 描述 | 卡牌关键词用 `card_keywords`，通用 hover tip 用 `static_hover_tips` |
+| 设置界面、调试面板、小型 Mod UI | 通过 `CreateModLocalization(...)` 创建 `I18N` |
+| 某个游戏 API 要求 `LocString`，但文本来自你的 JSON | 注册 `I18N` 虚拟 loc table |
 
-同时提供轻量关键词注册器，用来统一悬浮提示和关键词文本。
-
----
+文件名使用游戏语言代码，例如 `eng.json`、`zhs.json`、`jpn.json`。
 
 :::
 
-## Game Model Localization{lang="en"}
+## Entry Keys{lang="en"}
 
 ::: en
 
-> The following describes the game engine's own localization mechanism; RitsuLib does not replace this system.
-
-The game reads model text through `LocString` and various localization tables, commonly including:
-
-- `cards`
-- `relics`
-- `powers`
-- `characters`
-- `card_keywords`
-
-Those keys are built on `ModelId.Entry`.
-
-RitsuLib's role is limited to making model identity more stable and predictable so keys are easier to author. For concrete model ID rules, see [Content Authoring Toolkit](/guide/content-authoring-toolkit).
-
----
-
-:::
-
-## 游戏原版模型本地化{lang="zh-CN"}
-
-::: zh-CN
-
-> 以下描述游戏引擎自身的本地化机制，RitsuLib 不替换此系统。
-
-游戏通过 `LocString` 和各本地化表来读取模型文本，常见表包括：
-
-- `cards`、`relics`、`powers`、`characters`、`card_keywords`
-
-这些键建立在 `ModelId.Entry` 之上。
-
-RitsuLib 的作用仅限于让模型身份更稳定、更可预测，从而使键更容易编写。具体的模型 ID 规则见 [内容注册规则](/guide/content-authoring-toolkit)。
-
----
-
-:::
-
-## `CreateLocalization` And `CreateModLocalization`{lang="en"}
-
-::: en
-
-`I18N` is RitsuLib's helper-text localization system, independent of the game's `LocString`:
-
-```csharp
-var i18n = RitsuLibFramework.CreateModLocalization(
-    modId: "MyMod",
-    instanceName: "MyMod-I18N",
-    resourceFolders: ["MyMod.localization"],
-    pckFolders: ["res://MyMod/localization"]);
-```
-
-`CreateModLocalization` is a convenience wrapper over `CreateLocalization`.
-If you do not provide file-system folders, it defaults to:
+For RitsuLib-registered pool content, the public entry is the localization stem:
 
 ```text
-user://mod-configs/<modId>/localization
+MY_MOD_CARD_MY_STRIKE
 ```
 
----
+The key goes into the table used by the model type:
+
+| Model | Table | Common keys |
+| --- | --- | --- |
+| Card | `cards` | `{ENTRY}.title`, `{ENTRY}.description`, `{ENTRY}.selectionScreenPrompt` |
+| Relic | `relics` | `{ENTRY}.title`, `{ENTRY}.description`, `{ENTRY}.flavor`, `{ENTRY}.selectionScreenPrompt` |
+| Potion | `potions` | `{ENTRY}.title`, `{ENTRY}.description`, `{ENTRY}.selectionScreenPrompt` |
+| Power | `powers` | `{ENTRY}.title`, `{ENTRY}.description` |
+| Character | `characters` | `{ENTRY}.title`, pronoun keys, card modifier keys, unlock text |
+| Act | `acts` | `{ENTRY}.title` |
+| Encounter | `encounters` | `{ENTRY}.title`, `{ENTRY}.loss`, `{ENTRY}.customRewardDescription` |
+| Event | `events` | `{ENTRY}.pages.<PAGE>.description`, `{ENTRY}.pages.<PAGE>.options.<OPTION>` |
+| Ancient event | `ancients` | event page keys plus `talk` dialogue keys |
+| Epoch | `epochs` | `{ID}.title`, `{ID}.description`, `{ID}.unlockInfo`, `{ID}.unlockText` |
+| Card pile / top-bar button / shared tooltip | `static_hover_tips` | `{ID}.title`, `{ID}.description`; card piles also use `{ID}.empty` |
+
+Card example in `cards/eng.json`:
+
+```json
+{
+  "MY_MOD_CARD_MY_STRIKE.title": "Measured Strike",
+  "MY_MOD_CARD_MY_STRIKE.description": "Deal {Damage} damage."
+}
+```
+
+The same keys must exist in every language you support:
+
+```json
+{
+  "MY_MOD_CARD_MY_STRIKE.title": "精准打击",
+  "MY_MOD_CARD_MY_STRIKE.description": "造成 {Damage} 点伤害。"
+}
+```
 
 :::
 
-## `CreateLocalization` 与 `CreateModLocalization`{lang="zh-CN"}
+## Entry Key{lang="zh-CN"}
 
 ::: zh-CN
 
-`I18N` 是 RitsuLib 提供的辅助文本本地化系统，独立于游戏的 `LocString`：
-
-```csharp
-var i18n = RitsuLibFramework.CreateModLocalization(
-    modId: "MyMod",
-    instanceName: "MyMod-I18N",
-    resourceFolders: ["MyMod.localization"],
-    pckFolders: ["res://MyMod/localization"]);
-```
-
-`CreateModLocalization` 是 `CreateLocalization` 的便捷包装。如果不传文件系统目录，默认使用：
+对 RitsuLib 注册的池内容来说，公开 Entry 就是本地化 stem：
 
 ```text
-user://mod-configs/<modId>/localization
+MY_MOD_CARD_MY_STRIKE
 ```
 
----
-
-:::
-
-## Source Merge Order{lang="en"}
-
-::: en
-
-`I18N` can merge translations from three source kinds:
-
-1. file system folders
-2. embedded resources
-3. PCK folders
-
-Merge behavior is first-wins:
-
-- file-system entries are loaded first
-- embedded entries only fill missing keys
-- PCK entries only fill keys still missing after that
-
-This lets local overrides take priority over packaged defaults.
-
----
-
-:::
-
-## 资源合并顺序{lang="zh-CN"}
-
-::: zh-CN
-
-`I18N` 支持三类来源：
-
-1. 文件系统目录
-2. 嵌入资源
-3. PCK 目录
-
-合并策略是"先到先得"：
-
-- 先加载文件系统目录
-- 嵌入资源只补缺失键
-- PCK 再补剩余缺失键
-
-这样本地覆写可以自然优先于打包默认值。
-
----
-
-:::
-
-## Language Normalization{lang="en"}
-
-::: en
-
-`I18N` normalizes locale names before loading JSON files:
-
-| Input | Normalized |
-|---|---|
-| `en`, `en_us`, `eng` | `eng` |
-| `zh`, `zh_cn`, `zh_hans` | `zhs` |
-| `ja`, `ja_jp` | `jpn` |
-
-If no language can be resolved, it falls back to `eng`.
-
----
-
-:::
-
-## 语言代码归一化{lang="zh-CN"}
-
-::: zh-CN
-
-`I18N` 在加载 JSON 之前会规范化语言代码：
-
-| 输入 | 归一化结果 |
-|---|---|
-| `en`、`en_us`、`eng` | `eng` |
-| `zh`、`zh_cn`、`zh_hans` | `zhs` |
-| `ja`、`ja_jp` | `jpn` |
-
-无法解析的语言默认回退到 `eng`。
-
----
-
-:::
-
-## Runtime Reload Behavior{lang="en"}
-
-::: en
-
-`I18N` subscribes to locale changes when possible:
-
-- when the game language changes, helper localization reloads automatically
-- `Changed` is raised after reload completes
-- if the game localization manager is unavailable at that moment, `I18N` falls back to lazy detection
-
-This behavior is independent of base-game `LocString` resolution.
-
----
-
-:::
-
-## 运行时重载行为{lang="zh-CN"}
-
-::: zh-CN
-
-`I18N` 会在可能的情况下订阅语言切换事件：
-
-- 游戏语言改变时，辅助本地化自动重载
-- 重载完成后触发 `Changed` 事件
-- 如果当前阶段拿不到游戏本地化管理器，则退回懒检测模式
-
-此行为与游戏原版 `LocString` 的解析相互独立。
-
----
-
-:::
-
-## Debug Compatibility Mode{lang="en"}
-
-::: en
-
-`LocTable` placeholder resolution is part of RitsuLib’s debug compatibility fallbacks. See [Diagnostics & Compatibility](/guide/diagnostics-and-compatibility) for the master toggle, the **LocTable missing keys** toggle, and one-time `[Localization][DebugCompat]` warnings.
-
-Use this for troubleshooting, not as a substitute for authoring real keys.
-
----
-
-:::
-
-## 调试兼容模式{lang="zh-CN"}
-
-::: zh-CN
-
-`LocTable` 占位值解析属于 RitsuLib 调试兼容回退之一：总开关、**LocTable** 子项与一次性 `[Localization][DebugCompat]` 警告见 [诊断与兼容层](/guide/diagnostics-and-compatibility)。
-
-用于排障，不能代替补全真实键。
-
----
-
-:::
-
-## Keyword Registry{lang="en"}
-
-::: en
-
-Use `ModKeywordRegistry` when you want reusable keyword definitions and hover tips:
-
-```csharp
-var keywords = RitsuLibFramework.GetKeywordRegistry("MyMod");
-
-keywords.RegisterCardKeywordOwnedByLocNamespace(
-    localKeywordStem: "brew",
-    iconPath: "res://MyMod/ui/keywords/brew.png");
+它写入模型类型对应的本地化表：
+
+| 模型 | 表 | 常用 key |
+| --- | --- | --- |
+| 卡牌 | `cards` | `{ENTRY}.title`、`{ENTRY}.description`、`{ENTRY}.selectionScreenPrompt` |
+| 遗物 | `relics` | `{ENTRY}.title`、`{ENTRY}.description`、`{ENTRY}.flavor`、`{ENTRY}.selectionScreenPrompt` |
+| 药水 | `potions` | `{ENTRY}.title`、`{ENTRY}.description`、`{ENTRY}.selectionScreenPrompt` |
+| 能力 | `powers` | `{ENTRY}.title`、`{ENTRY}.description` |
+| 角色 | `characters` | `{ENTRY}.title`、代词 key、卡牌修饰文本、解锁文本 |
+| Act | `acts` | `{ENTRY}.title` |
+| Encounter | `encounters` | `{ENTRY}.title`、`{ENTRY}.loss`、`{ENTRY}.customRewardDescription` |
+| 事件 | `events` | `{ENTRY}.pages.<PAGE>.description`、`{ENTRY}.pages.<PAGE>.options.<OPTION>` |
+| Ancient 事件 | `ancients` | 事件页面 key，加上 `talk` 对话 key |
+| Epoch | `epochs` | `{ID}.title`、`{ID}.description`、`{ID}.unlockInfo`、`{ID}.unlockText` |
+| 卡堆 / 顶栏按钮 / 通用 tooltip | `static_hover_tips` | `{ID}.title`、`{ID}.description`；卡堆还使用 `{ID}.empty` |
+
+卡牌英文 `cards/eng.json`：
+
+```json
+{
+  "MY_MOD_CARD_MY_STRIKE.title": "Measured Strike",
+  "MY_MOD_CARD_MY_STRIKE.description": "Deal {Damage} damage."
+}
 ```
 
-This creates a normalized keyword id and binds it to title / description localization keys.
+中文使用同一组 key：
 
----
-
-:::
-
-## 关键词注册器{lang="zh-CN"}
-
-::: zh-CN
-
-`ModKeywordRegistry` 用于统一定义关键词及其悬浮提示：
-
-```csharp
-var keywords = RitsuLibFramework.GetKeywordRegistry("MyMod");
-
-keywords.RegisterCardKeywordOwnedByLocNamespace(
-    localKeywordStem: "brew",
-    iconPath: "res://MyMod/ui/keywords/brew.png");
+```json
+{
+  "MY_MOD_CARD_MY_STRIKE.title": "精准打击",
+  "MY_MOD_CARD_MY_STRIKE.description": "造成 {Damage} 点伤害。"
+}
 ```
 
-注册后会生成规范化标识，并绑定标题/描述的本地化键。
-
----
-
 :::
 
-## Automatic keyword registration (optional: CLR attributes){lang="en"}
+## Event Keys{lang="en"}
 
 ::: en
 
-If you already use `ModTypeDiscoveryHub.RegisterModAssembly(...)` to let RitsuLib scan your assemblies, you can declare keyword registration with CLR attributes:
+`ModEventTemplate` and `ModAncientEventTemplate` build option keys from the event entry, page name, and option name.
 
 ```csharp
-using STS2RitsuLib.Interop.AutoRegistration;
-
-[RegisterOwnedCardKeyword("brew", LocNamespace = "my_mod", IconPath = "res://MyMod/ui/keywords/brew.png")]
-public sealed class BrewKeywordMarker;
+protected string ModOptionKey(string pageName, string optionName);
+protected string InitialOptionKey(string optionName);
+protected LocString PageDescription(string pageName);
 ```
 
-`LocNamespace` only affects the localization namespace (the `modid` portion). The keyword stem (`brew`) participates in the default rule `<namespace>_<keyword>`, producing:
+For event entry `MY_MOD_EVENT_QUIET_DOOR`, this convention uses:
 
-- `<namespace>_<keyword>.title`
-- `<namespace>_<keyword>.description`
+```json
+{
+  "MY_MOD_EVENT_QUIET_DOOR.pages.INITIAL.description": "A quiet door waits in the wall.",
+  "MY_MOD_EVENT_QUIET_DOOR.pages.INITIAL.options.OPEN": "[Open] Step through.",
+  "MY_MOD_EVENT_QUIET_DOOR.pages.DONE.description": "The room is quiet again."
+}
+```
 
-> Compatibility note: the legacy `LocKeyPrefix` / `locKeyPrefix` historically represents the **full stem** and is easy to misread as a prefix + keyword composition, so it is now obsolete. Use `LocNamespace` for new code.
-
----
+Keep page and option names stable after release. They are part of the player's localization and event-choice history.
 
 :::
 
-## 自动注册关键词（可选：CLR 特性）{lang="zh-CN"}
+## 事件 Key{lang="zh-CN"}
 
 ::: zh-CN
 
-如果你已经使用 `ModTypeDiscoveryHub.RegisterModAssembly(...)` 让 RitsuLib 扫描你的程序集，也可以用特性声明关键词注册：
+`ModEventTemplate` 和 `ModAncientEventTemplate` 会用事件 Entry、页面名和选项名构造选项 key。
 
 ```csharp
-using STS2RitsuLib.Interop.AutoRegistration;
-
-[RegisterOwnedCardKeyword("brew", LocNamespace = "my_mod", IconPath = "res://MyMod/ui/keywords/brew.png")]
-public sealed class BrewKeywordMarker;
+protected string ModOptionKey(string pageName, string optionName);
+protected string InitialOptionKey(string optionName);
+protected LocString PageDescription(string pageName);
 ```
 
-这里 `LocNamespace` 只影响本地化键的 namespace（即 `modid` 部分）。关键词 stem（`brew`）会自动参与默认生成规则：`<namespace>_<keyword>`，并形成：
+事件 Entry 为 `MY_MOD_EVENT_QUIET_DOOR` 时，约定如下：
 
-- `<namespace>_<keyword>.title`
-- `<namespace>_<keyword>.description`
+```json
+{
+  "MY_MOD_EVENT_QUIET_DOOR.pages.INITIAL.description": "墙上有一扇安静的门。",
+  "MY_MOD_EVENT_QUIET_DOOR.pages.INITIAL.options.OPEN": "[打开] 走进去。",
+  "MY_MOD_EVENT_QUIET_DOOR.pages.DONE.description": "房间再次安静下来。"
+}
+```
 
-> 兼容性说明：旧字段 `LocKeyPrefix`/`locKeyPrefix` 历史上实际代表“完整 stem”，容易误解为 prefix + keyword，已标记为过时；新代码请使用 `LocNamespace`。
-
----
+发布后保持 page 和 option 名称稳定。它们属于本地化契约，也可能影响事件选择记录。
 
 :::
 
-## Using Keywords In Code{lang="en"}
+## Ancient Dialogue{lang="en"}
 
 ::: en
 
-Common helpers:
+Ancient dialogue lives in the `ancients` table. Keys use:
 
-| Method | Description |
-|---|---|
-| `ModKeywordRegistry.CreateHoverTip(id)` | Create hover tip |
-| `ModKeywordRegistry.GetTitle(id)` | Get title |
-| `ModKeywordRegistry.GetDescription(id)` | Get description |
-| `keywordId.GetModKeywordCardText()` | Get card text |
-| `enumerable.ToHoverTips()` | Batch-convert to hover tips |
+```text
+<ANCIENT_ENTRY>.talk.<CHARACTER_ENTRY>.<DIALOGUE_INDEX>-<LINE_INDEX>.<speaker>
+```
 
-You can also attach runtime keywords to arbitrary objects via `ModKeywordExtensions`:
+`speaker` is `ancient` or `char`. Add `r` after the line index for a repeating dialogue. Every line in the same dialogue
+must either use `r` or not use it.
+
+Example for a mod ancient talking to a mod character:
+
+```json
+{
+  "MY_MOD_ANCIENT_MIRROR.talk.MY_MOD_CHARACTER_SEER.0-0.ancient": "You brought a future with you.",
+  "MY_MOD_ANCIENT_MIRROR.talk.MY_MOD_CHARACTER_SEER.0-0.next": "Continue",
+  "MY_MOD_ANCIENT_MIRROR.talk.MY_MOD_CHARACTER_SEER.0-1.char": "Then I should spend it carefully.",
+
+  "MY_MOD_ANCIENT_MIRROR.talk.ANY.0-0r.ancient": "Again, a face in the glass.",
+  "MY_MOD_ANCIENT_MIRROR.talk.ANY.0-1r.char": "Again, a choice."
+}
+```
+
+`ModAncientEventTemplate` reads:
+
+- `{ancient}.talk.firstVisitEver.*` for the first visit ever
+- `{ancient}.talk.<CHARACTER_ENTRY>.*` for a specific character
+- `{ancient}.talk.ANY.*` for character-agnostic fallback dialogue
+
+The Architect uses the same `ancients` table. To add dialogue for a mod character, write keys under
+`THE_ARCHITECT.talk.<CHARACTER_ENTRY>.*`:
+
+```json
+{
+  "THE_ARCHITECT.talk.MY_MOD_CHARACTER_SEER.0-0.char": "The exit is yours, but the cost is mine.",
+  "THE_ARCHITECT.talk.MY_MOD_CHARACTER_SEER.0-1.ancient": "Then pay precisely.",
+  "THE_ARCHITECT.talk.MY_MOD_CHARACTER_SEER.0-attack": "Both"
+}
+```
+
+For Architect dialogue, optional `-attack` values are `None`, `Player`, `Architect`, or `Both`. Optional `-visit` keys
+can override the visit index:
+
+```json
+{
+  "THE_ARCHITECT.talk.MY_MOD_CHARACTER_SEER.1-visit": "3"
+}
+```
+
+Use `.sfx` beside a line key when a line should play a specific FMOD event:
+
+```json
+{
+  "MY_MOD_ANCIENT_MIRROR.talk.ANY.0-0r.ancient.sfx": "event:/sfx/ui/enchant_simple"
+}
+```
+
+:::
+
+## Ancient / 先古之民对话{lang="zh-CN"}
+
+::: zh-CN
+
+Ancient / 先古之民对话写在 `ancients` 表中。Key 格式为：
+
+```text
+<ANCIENT_ENTRY>.talk.<CHARACTER_ENTRY>.<DIALOGUE_INDEX>-<LINE_INDEX>.<speaker>
+```
+
+`speaker` 是 `ancient` 或 `char`。在行号后加 `r` 表示重复对话。同一段 dialogue 的所有行必须统一使用 `r`，或统一不使用。
+
+一个 Mod Ancient 与 Mod 角色的对话示例：
+
+```json
+{
+  "MY_MOD_ANCIENT_MIRROR.talk.MY_MOD_CHARACTER_SEER.0-0.ancient": "你带来了一份未来。",
+  "MY_MOD_ANCIENT_MIRROR.talk.MY_MOD_CHARACTER_SEER.0-0.next": "继续",
+  "MY_MOD_ANCIENT_MIRROR.talk.MY_MOD_CHARACTER_SEER.0-1.char": "那我应该谨慎地使用它。",
+
+  "MY_MOD_ANCIENT_MIRROR.talk.ANY.0-0r.ancient": "又一次，镜中映出一张脸。",
+  "MY_MOD_ANCIENT_MIRROR.talk.ANY.0-1r.char": "又一次，一个选择。"
+}
+```
+
+`ModAncientEventTemplate` 会读取：
+
+- `{ancient}.talk.firstVisitEver.*`：首次遭遇
+- `{ancient}.talk.<CHARACTER_ENTRY>.*`：指定角色
+- `{ancient}.talk.ANY.*`：不区分角色的回退对话
+
+建筑师也使用同一个 `ancients` 表。给 Mod 角色添加建筑师对话时，写在 `THE_ARCHITECT.talk.<CHARACTER_ENTRY>.*` 下：
+
+```json
+{
+  "THE_ARCHITECT.talk.MY_MOD_CHARACTER_SEER.0-0.char": "出口属于你，但代价由我承担。",
+  "THE_ARCHITECT.talk.MY_MOD_CHARACTER_SEER.0-1.ancient": "那就精确地支付。",
+  "THE_ARCHITECT.talk.MY_MOD_CHARACTER_SEER.0-attack": "Both"
+}
+```
+
+建筑师对话可选的 `-attack` 值为 `None`、`Player`、`Architect` 或 `Both`。可选的 `-visit` key 可以覆写访问序号：
+
+```json
+{
+  "THE_ARCHITECT.talk.MY_MOD_CHARACTER_SEER.1-visit": "3"
+}
+```
+
+某一行需要指定 FMOD 事件时，在行 key 后加 `.sfx`：
+
+```json
+{
+  "MY_MOD_ANCIENT_MIRROR.talk.ANY.0-0r.ancient.sfx": "event:/sfx/ui/enchant_simple"
+}
+```
+
+:::
+
+## Keywords{lang="en"}
+
+::: en
+
+Prefer owned keyword ids. Attribute style:
 
 ```csharp
-card.AddModKeyword("brew");
+[RegisterOwnedCardKeyword(
+    "bleeding",
+    IconPath = "res://MyMod/images/keywords/bleeding.png")]
+public sealed class MyKeywordRegistrations
+{
+}
+```
 
-if (card.HasModKeyword("brew"))
+Content pack style:
+
+```csharp
+RitsuLibFramework.CreateContentPack("MyMod")
+    .CardKeywordOwnedByLocNamespace(
+        localKeywordStem: "bleeding",
+        iconPath: "res://MyMod/images/keywords/bleeding.png")
+    .Apply();
+```
+
+Both create:
+
+```text
+MY_MOD_KEYWORD_BLEEDING
+```
+
+Card keyword text goes in `card_keywords`:
+
+```json
+{
+  "MY_MOD_KEYWORD_BLEEDING.title": "Bleeding",
+  "MY_MOD_KEYWORD_BLEEDING.description": "Loses HP at the end of turn."
+}
+```
+
+Use the keyword on a `ModCardTemplate`:
+
+```csharp
+protected override IEnumerable<string> RegisteredKeywordIds =>
+[
+    "MY_MOD_KEYWORD_BLEEDING"
+];
+```
+
+At runtime:
+
+```csharp
+card.AddModKeyword("MY_MOD_KEYWORD_BLEEDING");
+if (card.HasModKeyword("MY_MOD_KEYWORD_BLEEDING"))
 {
     // ...
 }
 ```
 
-This is useful when keyword presence is driven by runtime state rather than static card text.
-
----
+Relic, potion, and power template keyword lists are display-only hover tips. Implement gameplay behavior in the model
+logic.
 
 :::
 
-## 在代码里使用关键词{lang="zh-CN"}
+## 关键词{lang="zh-CN"}
 
 ::: zh-CN
 
-常用辅助方法：
-
-| 方法 | 说明 |
-|---|---|
-| `ModKeywordRegistry.CreateHoverTip(id)` | 创建悬浮提示 |
-| `ModKeywordRegistry.GetTitle(id)` | 获取标题 |
-| `ModKeywordRegistry.GetDescription(id)` | 获取描述 |
-| `keywordId.GetModKeywordCardText()` | 获取卡牌文本 |
-| `enumerable.ToHoverTips()` | 批量转换为悬浮提示 |
-
-也可以通过 `ModKeywordExtensions` 把运行时关键词挂在任意对象上：
+优先使用 owned keyword id。注解写法：
 
 ```csharp
-card.AddModKeyword("brew");
+[RegisterOwnedCardKeyword(
+    "bleeding",
+    IconPath = "res://MyMod/images/keywords/bleeding.png")]
+public sealed class MyKeywordRegistrations
+{
+}
+```
 
-if (card.HasModKeyword("brew"))
+Content pack 写法：
+
+```csharp
+RitsuLibFramework.CreateContentPack("MyMod")
+    .CardKeywordOwnedByLocNamespace(
+        localKeywordStem: "bleeding",
+        iconPath: "res://MyMod/images/keywords/bleeding.png")
+    .Apply();
+```
+
+两种写法都会生成：
+
+```text
+MY_MOD_KEYWORD_BLEEDING
+```
+
+卡牌关键词文本写入 `card_keywords`：
+
+```json
+{
+  "MY_MOD_KEYWORD_BLEEDING.title": "流血",
+  "MY_MOD_KEYWORD_BLEEDING.description": "回合结束时失去生命。"
+}
+```
+
+在 `ModCardTemplate` 中使用关键词：
+
+```csharp
+protected override IEnumerable<string> RegisteredKeywordIds =>
+[
+    "MY_MOD_KEYWORD_BLEEDING"
+];
+```
+
+运行时：
+
+```csharp
+card.AddModKeyword("MY_MOD_KEYWORD_BLEEDING");
+if (card.HasModKeyword("MY_MOD_KEYWORD_BLEEDING"))
 {
     // ...
 }
 ```
 
-适合"关键词是否存在由运行时状态决定"的场景。
-
----
+遗物、药水和能力模板中的关键词列表只用于显示 hover tip。玩法行为需要写在模型自己的逻辑里。
 
 :::
 
-## Ancient Dialogue Localization{lang="en"}
+## I18N{lang="en"}
 
 ::: en
 
-RitsuLib includes `AncientDialogueLocalization`. It serves two roles:
+Create an `I18N` instance when you want simple key-value JSON files outside the game's model tables.
 
-- helper API for scanning dialogue from localization keys
-- automatic append of localization-defined mod-character ancient dialogues before `AncientDialogueSet.PopulateLocKeys` runs
+```csharp
+var i18n = RitsuLibFramework.CreateModLocalization(
+    modId: "MyMod",
+    instanceName: "settings",
+    pckFolders: ["res://MyMod/localization/settings"]);
 
-The key format matches the base game:
+var label = i18n.Get("settings.enabled", "Enabled");
+```
 
-| Key component | Description |
-|---|---|
-| `<ancientEntry>.talk.<characterEntry>.<dialogueIndex>-<lineIndex>.ancient` | Ancient line |
-| `<ancientEntry>.talk.<characterEntry>.<dialogueIndex>-<lineIndex>.char` | Character line |
-| Optional suffix `r` | Repeated dialogue |
-| Optional suffix `.sfx` | Sound effect |
-| Optional suffix `-visit` | Visit override |
-| Optional suffix `-attack` | Architect-only attacker override |
+Example `eng.json`:
 
-Authors only need to write localization entries to add ancient dialogue for custom characters, without manually patching each `AncientDialogueSet`.
+```json
+{
+  "settings.enabled": "Enabled"
+}
+```
 
-If **no** keys exist for an ancient, vanilla may still show `PROCEED` for `THE_ARCHITECT` while `WinRun` assumes `Dialogue` is non-null. RitsuLib adds a narrow compatibility fallback (empty `Lines`, safe attackers) for `ModContentRegistry` characters **only** when the debug compatibility master toggle and the **THE_ARCHITECT missing dialogue** toggle are enabled, with a one-time `[Ancient]` warning.
+When an API requires `LocString`, register the instance as a virtual table:
 
----
+```csharp
+var loc = RitsuLibFramework.CreateModLocalization("MyMod", "ui");
+RitsuLibFramework.RegisterI18NLocTableBridge("MyMod", loc);
+
+var tableId = RitsuLibFramework.GetI18NLocTableId("MyMod");
+var title = new LocString(tableId, "settings.enabled");
+```
+
+Pass a custom stem to `RegisterI18NLocTableBridge(...)` and `GetI18NLocTableId(...)` when you need multiple virtual
+tables.
 
 :::
 
-## Ancient 对话本地化{lang="zh-CN"}
+## I18N{lang="zh-CN"}
 
 ::: zh-CN
 
-RitsuLib 内置了 `AncientDialogueLocalization`，它有两个作用：
+当你需要游戏模型表之外的简单 key-value JSON 文本时，创建 `I18N` 实例。
 
-- 提供从本地化键扫描对话的辅助 API
-- 在游戏原版 `AncientDialogueSet.PopulateLocKeys` 之前，自动为已注册的 Mod 角色追加基于本地化定义的 Ancient 对话
+```csharp
+var i18n = RitsuLibFramework.CreateModLocalization(
+    modId: "MyMod",
+    instanceName: "settings",
+    pckFolders: ["res://MyMod/localization/settings"]);
 
-键格式与原版保持一致：
+var label = i18n.Get("settings.enabled", "启用");
+```
 
-| 键组件 | 说明 |
-|---|---|
-| `<ancientEntry>.talk.<characterEntry>.<dialogueIndex>-<lineIndex>.ancient` | Ancient 台词 |
-| `<ancientEntry>.talk.<characterEntry>.<dialogueIndex>-<lineIndex>.char` | 角色台词 |
-| 可选后缀 `r` | 重复对话 |
-| 可选后缀 `.sfx` | 音效 |
-| 可选后缀 `-visit` | 访问覆盖 |
-| 可选后缀 `-attack` | Architect 专用攻击者覆盖 |
+示例 `zhs.json`：
 
-作者只需编写本地化条目，即可为自定义角色补充 Ancient 对话，无需手动为每个 `AncientDialogueSet` 添加补丁。
+```json
+{
+  "settings.enabled": "启用"
+}
+```
 
-若某个 Ancient **完全没有**对应键，原版仍可能在 `THE_ARCHITECT` 显示 `PROCEED`，但 `WinRun` 会假定 `Dialogue` 非空。RitsuLib 仅在调试**总开关 + 建筑师子项**开启时，对 `ModContentRegistry` 角色注入窄范围兼容回退（空 `Lines`、安全的攻击方枚举），并记录一次 `[Ancient]` 警告。
+当某个 API 要求 `LocString` 时，可以把该实例注册为虚拟表：
 
----
+```csharp
+var loc = RitsuLibFramework.CreateModLocalization("MyMod", "ui");
+RitsuLibFramework.RegisterI18NLocTableBridge("MyMod", loc);
 
-:::
+var tableId = RitsuLibFramework.GetI18NLocTableId("MyMod");
+var title = new LocString(tableId, "settings.enabled");
+```
 
-## Recommended Split{lang="en"}
-
-::: en
-
-| Use case | Tool |
-|---|---|
-| Game model text (titles, descriptions) | Base game `LocString` tables |
-| Mod-owned auxiliary text (settings, explanations) | `I18N` |
-| Reusable keyword definitions | `ModKeywordRegistry` |
-| Ancient dialogue | Localization keys + `AncientDialogueLocalization` |
-
----
-
-:::
-
-## 推荐分工{lang="zh-CN"}
-
-::: zh-CN
-
-| 用途 | 工具 |
-|---|---|
-| 游戏模型的文本（标题、描述） | 游戏原版 `LocString` 表 |
-| Mod 自有辅助文本（设置页、说明） | `I18N` |
-| 可复用关键词定义 | `ModKeywordRegistry` |
-| Ancient 对话 | 本地化键 + `AncientDialogueLocalization` |
-
----
-
-:::
-
-## Related Documents{lang="en"}
-
-::: en
-
-- [Content Authoring Toolkit](/guide/content-authoring-toolkit)
-- [Character & Unlock Templates](/guide/character-and-unlock-scaffolding)
-- [Diagnostics & Compatibility](/guide/diagnostics-and-compatibility)
-- [LocString Placeholder Resolution](/guide/loc-string-placeholder-resolution)
-- [Mod Settings UI](/guide/mod-settings)
-
-:::
-
-## 相关文档{lang="zh-CN"}
-
-::: zh-CN
-
-- [内容注册规则](/guide/content-authoring-toolkit)
-- [角色与解锁模板](/guide/character-and-unlock-scaffolding)
-- [诊断与兼容层](/guide/diagnostics-and-compatibility)
-- [LocString 占位符解析](/guide/loc-string-placeholder-resolution)
-- [Mod 设置界面](/guide/mod-settings)
+需要多个虚拟表时，在 `RegisterI18NLocTableBridge(...)` 和 `GetI18NLocTableId(...)` 里传入自定义 stem。
 
 :::

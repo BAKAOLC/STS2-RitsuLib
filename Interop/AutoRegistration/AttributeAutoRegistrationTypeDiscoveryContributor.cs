@@ -2,10 +2,12 @@ using System.Reflection;
 using HarmonyLib;
 using MegaCrit.Sts2.Core.Models;
 using MegaCrit.Sts2.Core.Timeline;
+using SmartFormat.Core.Extensions;
 using STS2RitsuLib.CardPiles;
 using STS2RitsuLib.CardTags;
 using STS2RitsuLib.Content;
 using STS2RitsuLib.Keywords;
+using STS2RitsuLib.Localization.SmartFormat;
 using STS2RitsuLib.Scaffolding.Content;
 using STS2RitsuLib.Timeline;
 using STS2RitsuLib.Timeline.Scaffolding;
@@ -313,6 +315,34 @@ namespace STS2RitsuLib.Interop.AutoRegistration
                                 registerGlobalEncounter.Order,
                                 $"RegisterGlobalEncounter:{type.FullName}", nameof(RegisterGlobalEncounterAttribute),
                                 () => contentRegistry.RegisterGlobalEncounter(type)));
+                        });
+                        break;
+                    case RegisterSmartFormatterAttribute registerSmartFormatter:
+                        RegisterCase($"RegisterSmartFormatter:{type.FullName}", () =>
+                        {
+                            EnsureConcreteAssignable(type, typeof(IFormatter),
+                                nameof(type));
+                            operations.Add(CreateOperation(ownerModId, type, AutoRegistrationPhase.Localization,
+                                registerSmartFormatter.Order,
+                                $"RegisterSmartFormatter:{type.FullName}",
+                                nameof(RegisterSmartFormatterAttribute),
+                                () => ModSmartFormatExtensionRegistry.For(ownerModId)
+                                    .RegisterFormatterType(type, registerSmartFormatter.Order),
+                                [TypeDependencyKey(type)]));
+                        });
+                        break;
+                    case RegisterSmartFormatSourceAttribute registerSmartFormatSource:
+                        RegisterCase($"RegisterSmartFormatSource:{type.FullName}", () =>
+                        {
+                            EnsureConcreteAssignable(type, typeof(ISource),
+                                nameof(type));
+                            operations.Add(CreateOperation(ownerModId, type, AutoRegistrationPhase.Localization,
+                                registerSmartFormatSource.Order,
+                                $"RegisterSmartFormatSource:{type.FullName}",
+                                nameof(RegisterSmartFormatSourceAttribute),
+                                () => ModSmartFormatExtensionRegistry.For(ownerModId)
+                                    .RegisterSourceType(type, registerSmartFormatSource.Order),
+                                [TypeDependencyKey(type)]));
                         });
                         break;
                     case RegisterCharacterStarterCardAttribute starterCard:
@@ -1138,6 +1168,20 @@ namespace STS2RitsuLib.Interop.AutoRegistration
             if (type.IsAbstract || type.IsInterface || !expectedBaseType.IsAssignableFrom(type))
                 throw new ArgumentException(
                     $"Type '{type.FullName}' must be a concrete subtype of '{expectedBaseType.FullName}'.",
+                    paramName);
+        }
+
+        private static void EnsureConcreteAssignable(Type type, Type expectedType, string paramName)
+        {
+            ArgumentNullException.ThrowIfNull(type);
+            ArgumentNullException.ThrowIfNull(expectedType);
+
+            if (type.ContainsGenericParameters)
+                throw new ArgumentException($"Type '{type.FullName}' must be closed.", paramName);
+
+            if (type.IsAbstract || type.IsInterface || !expectedType.IsAssignableFrom(type))
+                throw new ArgumentException(
+                    $"Type '{type.FullName}' must be a concrete implementation of '{expectedType.FullName}'.",
                     paramName);
         }
 

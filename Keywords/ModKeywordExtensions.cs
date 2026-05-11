@@ -177,14 +177,26 @@ namespace STS2RitsuLib.Keywords
         {
             ArgumentNullException.ThrowIfNull(keywords);
 
-            return keywords
-                .Where(static id => !string.IsNullOrWhiteSpace(id))
-                .Select(static id => id.Trim())
-                .Distinct(StringComparer.OrdinalIgnoreCase)
-                .Where(static id =>
-                    ModKeywordRegistry.TryGet(id, out var def) && def.IncludeInCardHoverTip)
-                .Select(ModKeywordRegistry.CreateHoverTip)
-                .ToArray();
+            var tips = new List<IHoverTip>();
+            foreach (var id in keywords
+                         .Where(static id => !string.IsNullOrWhiteSpace(id))
+                         .Select(static id => id.Trim())
+                         .Distinct(StringComparer.OrdinalIgnoreCase))
+            {
+                if (!ModKeywordRegistry.TryResolveCardKeyword(id, out var value) || value == CardKeyword.None)
+                    continue;
+
+                if (ModKeywordRegistry.TryGetByCardKeyword(value, out var def))
+                {
+                    if (def.IncludeInCardHoverTip)
+                        tips.Add(ModKeywordRegistry.CreateHoverTip(def.Id));
+                    continue;
+                }
+
+                tips.Add(HoverTipFactory.FromKeyword(value));
+            }
+
+            return tips;
         }
 
         /// <summary>
@@ -199,12 +211,38 @@ namespace STS2RitsuLib.Keywords
         /// <summary>
         ///     Convenience: minted <see cref="CardKeyword" /> value for <paramref name="keywordId" />, intended
         ///     for call sites that want to use the native vanilla keyword API directly
-        ///     (<c>card.AddKeyword(id.GetModKeywordCardKeyword())</c>).
+        ///     (<c>card.AddKeyword(id.GetModCardKeyword())</c>).
         /// </summary>
-        public static CardKeyword GetModKeywordCardKeyword(this string keywordId)
+        public static CardKeyword GetModCardKeyword(this string keywordId)
         {
             ArgumentException.ThrowIfNullOrWhiteSpace(keywordId);
             return ModKeywordRegistry.GetCardKeyword(keywordId);
+        }
+
+        /// <summary>
+        ///     Compatibility alias for <see cref="GetModCardKeyword" />.
+        /// </summary>
+        public static CardKeyword GetModKeywordCardKeyword(this string keywordId)
+        {
+            return keywordId.GetModCardKeyword();
+        }
+
+        /// <summary>
+        ///     Tries to reverse-map a minted mod <see cref="CardKeyword" /> value to its registered string id.
+        /// </summary>
+        public static bool TryGetModKeywordId(this CardKeyword value, out string id)
+        {
+            return ModKeywordRegistry.TryGetId(value, out id);
+        }
+
+        /// <summary>
+        ///     Reverse-maps a minted mod <see cref="CardKeyword" /> value to its registered string id.
+        /// </summary>
+        public static string GetModKeywordId(this CardKeyword value)
+        {
+            return ModKeywordRegistry.TryGetId(value, out var id)
+                ? id
+                : throw new KeyNotFoundException($"CardKeyword '0x{(int)value:X8}' is not a registered mod keyword.");
         }
     }
 }

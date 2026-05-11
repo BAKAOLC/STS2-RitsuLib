@@ -21,10 +21,7 @@ namespace STS2RitsuLib.CardTags.Serialization
                     if (string.IsNullOrWhiteSpace(s))
                         return CardTag.None;
 
-                    if (ModCardTagRegistry.TryGetCardTag(s, out var minted))
-                        return minted;
-
-                    return Enum.TryParse(s, true, out CardTag parsed)
+                    return ModCardTagRegistry.TryResolveCardTag(s, out var parsed)
                         ? parsed
                         : throw new JsonException($"Unknown CardTag id or name: '{s}'.");
                 }

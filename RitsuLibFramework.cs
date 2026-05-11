@@ -6,6 +6,7 @@ using MegaCrit.Sts2.Core.Entities.Players;
 using MegaCrit.Sts2.Core.Logging;
 using MegaCrit.Sts2.Core.Modding;
 using MegaCrit.Sts2.Core.Models;
+using STS2RitsuLib.CardPiles;
 using STS2RitsuLib.Cards.FreePlay;
 using STS2RitsuLib.CardTags;
 using STS2RitsuLib.Combat.HandSize;
@@ -18,6 +19,7 @@ using STS2RitsuLib.Diagnostics.CompendiumExport;
 using STS2RitsuLib.Interop;
 using STS2RitsuLib.Keywords;
 using STS2RitsuLib.Localization;
+using STS2RitsuLib.Localization.SmartFormat;
 using STS2RitsuLib.Patching.Core;
 using STS2RitsuLib.RuntimeInput;
 using STS2RitsuLib.Scaffolding.Ancients.Options;
@@ -25,6 +27,7 @@ using STS2RitsuLib.Scaffolding.Content;
 using STS2RitsuLib.Settings;
 using STS2RitsuLib.Settings.RunSidecar;
 using STS2RitsuLib.Timeline;
+using STS2RitsuLib.TopBar;
 using STS2RitsuLib.Ui.Toast;
 using STS2RitsuLib.Unlocks;
 using STS2RitsuLib.Utils;
@@ -429,11 +432,35 @@ namespace STS2RitsuLib
         }
 
         /// <summary>
+        ///     Returns the SmartFormat extension registry for <paramref name="modId" />.
+        /// </summary>
+        public static ModSmartFormatExtensionRegistry GetSmartFormatRegistry(string modId)
+        {
+            return ModSmartFormatExtensionRegistry.For(modId);
+        }
+
+        /// <summary>
         ///     Returns the custom card-tag registry for <paramref name="modId" />.
         /// </summary>
         public static ModCardTagRegistry GetCardTagRegistry(string modId)
         {
             return ModCardTagRegistry.For(modId);
+        }
+
+        /// <summary>
+        ///     Returns the custom card-pile registry for <paramref name="modId" />.
+        /// </summary>
+        public static ModCardPileRegistry GetCardPileRegistry(string modId)
+        {
+            return ModCardPileRegistry.For(modId);
+        }
+
+        /// <summary>
+        ///     Returns the top-bar button registry for <paramref name="modId" />.
+        /// </summary>
+        public static ModTopBarButtonRegistry GetTopBarButtonRegistry(string modId)
+        {
+            return ModTopBarButtonRegistry.For(modId);
         }
 
         /// <summary>
@@ -544,7 +571,8 @@ namespace STS2RitsuLib
                     GetKeywordRegistry(registration.ModId),
                     GetTimelineRegistry(registration.ModId),
                     GetUnlockRegistry(registration.ModId),
-                    GetCardTagRegistry(registration.ModId));
+                    GetCardTagRegistry(registration.ModId),
+                    GetCardPileRegistry(registration.ModId));
                 registration.Apply(context);
             }
 

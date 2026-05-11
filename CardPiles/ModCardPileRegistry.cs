@@ -144,6 +144,36 @@ namespace STS2RitsuLib.CardPiles
         }
 
         /// <summary>
+        ///     Returns the definition for <paramref name="id" /> or throws <see cref="KeyNotFoundException" />.
+        /// </summary>
+        public static ModCardPileDefinition Get(string id)
+        {
+            return TryGet(id, out var definition)
+                ? definition
+                : throw new KeyNotFoundException($"Card pile '{NormalizeId(id)}' is not registered.");
+        }
+
+        /// <summary>
+        ///     Resolves which mod registered <paramref name="pileId" />, if any.
+        /// </summary>
+        public static bool TryGetOwnerModId(string pileId, out string modId)
+        {
+            ArgumentException.ThrowIfNullOrWhiteSpace(pileId);
+
+            lock (SyncRoot)
+            {
+                if (Definitions.TryGetValue(NormalizeId(pileId), out var def))
+                {
+                    modId = def.ModId;
+                    return true;
+                }
+            }
+
+            modId = string.Empty;
+            return false;
+        }
+
+        /// <summary>
         ///     Resolves the definition for an already minted <see cref="PileType" /> value, returning false for
         ///     vanilla enum members and for values never produced by this registry.
         /// </summary>
@@ -171,9 +201,51 @@ namespace STS2RitsuLib.CardPiles
         /// </summary>
         public static PileType GetPileType(string id)
         {
-            return TryGet(id, out var definition)
-                ? definition.PileType
-                : throw new KeyNotFoundException($"Card pile '{NormalizeId(id)}' is not registered.");
+            return Get(id).PileType;
+        }
+
+        /// <summary>
+        ///     Resolves the minted <see cref="PileType" /> for <paramref name="id" />.
+        /// </summary>
+        public static bool TryGetPileType(string id, out PileType value)
+        {
+            if (TryGet(id, out var definition))
+            {
+                value = definition.PileType;
+                return true;
+            }
+
+            value = default;
+            return false;
+        }
+
+        /// <summary>
+        ///     Resolves either a registered mod card-pile id or a vanilla <see cref="PileType" /> enum name.
+        ///     Mod ids take precedence when a string could match both.
+        /// </summary>
+        public static bool TryResolvePileType(string idOrEnumName, out PileType value)
+        {
+            ArgumentException.ThrowIfNullOrWhiteSpace(idOrEnumName);
+
+            return TryGetPileType(idOrEnumName, out value) || Enum.TryParse(idOrEnumName.Trim(), true, out value);
+        }
+
+        /// <summary>
+        ///     Tries to resolve the string id that minted <paramref name="value" />.
+        /// </summary>
+        public static bool TryGetId(PileType value, out string id)
+        {
+            lock (SyncRoot)
+            {
+                if (DefinitionsByPileType.TryGetValue(value, out var def))
+                {
+                    id = def.Id;
+                    return true;
+                }
+            }
+
+            id = string.Empty;
+            return false;
         }
 
         /// <summary>

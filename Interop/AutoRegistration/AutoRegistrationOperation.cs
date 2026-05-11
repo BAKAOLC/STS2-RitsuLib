@@ -14,6 +14,7 @@ namespace STS2RitsuLib.Interop.AutoRegistration
         TimelineLayout = 7,
         Timeline = 8,
         Unlocks = 9,
+        Localization = 10,
     }
 
     internal sealed record AutoRegistrationOperation(

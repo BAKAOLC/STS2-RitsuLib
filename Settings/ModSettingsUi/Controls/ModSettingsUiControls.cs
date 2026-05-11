@@ -975,18 +975,29 @@ namespace STS2RitsuLib.Settings
     {
         private const float DropListMinWidth = 200f;
         private const float RowHeight = 38f;
+        private const int DropdownVirtualOverscanRows = 2;
+        private const float DropdownViewportEdgeMargin = 16f;
 
         private readonly Action<TValue>? _onChanged;
-        private readonly System.Collections.Generic.Dictionary<int, ModSettingsMiniButton> _rowButtonCache = [];
         private readonly List<ModSettingsMiniButton> _rowButtons = [];
+        private readonly List<ModSettingsMiniButton> _virtualRowPool = [];
+        private int _activePoolCount;
         private Control? _backdrop;
-        private VBoxContainer? _dropList;
+        private float _cachedDropdownBodyH;
+        private float _dropdownListSeparation;
+        private float _dropdownPanelMinWidth;
+        private float _dropdownRowStride;
+        private bool _dropdownScrollWired;
+        private float _dropdownUniformRowLayoutWidth;
         private bool _dropOpen;
         private PanelContainer? _dropPanel;
+        private ScrollContainer? _dropScroll;
         private ModSettingsGamepadCompatibleButton? _faceButton;
         private (TValue Value, string Label)[] _optionsWithValues = [];
         private int _selectedIndex;
+        private int[] _slotOptionIndex = [];
         private bool _suppressCallbacks;
+        private Control? _virtualContent;
 
         /// <summary>
         ///     Creates a dropdown-style choice editor.
@@ -1077,14 +1088,52 @@ namespace STS2RitsuLib.Settings
         }
 
         /// <inheritdoc />
+        public override void _Notification(int what)
+        {
+            base._Notification(what);
+            if (what != NotificationThemeChanged)
+                return;
+
+            if (_dropScroll != null && IsInstanceValid(_dropScroll))
+                ModSettingsUiControlTheming.ApplySettingsScrollContainerThemeForDropdownList(_dropScroll);
+            if (_dropPanel != null && IsInstanceValid(_dropPanel))
+                _dropPanel.AddThemeStyleboxOverride("panel", ModSettingsUiFactory.CreateListShellStyle());
+            if (!_dropOpen || _optionsWithValues.Length == 0)
+                return;
+
+            SyncDropdownVirtualContentWidthToShelf();
+            SyncVirtualDropdownRows();
+            WireRowFocusNeighbors();
+        }
+
+        /// <inheritdoc />
         public override void _Input(InputEvent @event)
         {
-            if (_dropOpen && !@event.IsEcho() &&
-                (@event.IsActionPressed(MegaInput.cancel) || @event.IsActionPressed(MegaInput.pauseAndBack)))
+            if (_dropOpen && !@event.IsEcho())
             {
-                CloseDropdown();
-                GetViewport()?.SetInputAsHandled();
-                return;
+                if (@event.IsActionPressed(MegaInput.cancel) || @event.IsActionPressed(MegaInput.pauseAndBack))
+                {
+                    CloseDropdown();
+                    GetViewport()?.SetInputAsHandled();
+                    return;
+                }
+
+                if (@event.IsActionPressed("ui_up"))
+                {
+                    if (TryNavigateVirtualDropdownByDirection(-1))
+                    {
+                        GetViewport()?.SetInputAsHandled();
+                        return;
+                    }
+                }
+                else if (@event.IsActionPressed("ui_down"))
+                {
+                    if (TryNavigateVirtualDropdownByDirection(1))
+                    {
+                        GetViewport()?.SetInputAsHandled();
+                        return;
+                    }
+                }
             }
 
             base._Input(@event);
@@ -1093,12 +1142,31 @@ namespace STS2RitsuLib.Settings
         /// <inheritdoc />
         public override void _UnhandledInput(InputEvent @event)
         {
-            if (_dropOpen && !@event.IsEcho() &&
-                (@event.IsActionPressed(MegaInput.cancel) || @event.IsActionPressed(MegaInput.pauseAndBack)))
+            if (_dropOpen && !@event.IsEcho())
             {
-                CloseDropdown();
-                GetViewport()?.SetInputAsHandled();
-                return;
+                if (@event.IsActionPressed(MegaInput.cancel) || @event.IsActionPressed(MegaInput.pauseAndBack))
+                {
+                    CloseDropdown();
+                    GetViewport()?.SetInputAsHandled();
+                    return;
+                }
+
+                if (@event.IsActionPressed("ui_up"))
+                {
+                    if (TryNavigateVirtualDropdownByDirection(-1))
+                    {
+                        GetViewport()?.SetInputAsHandled();
+                        return;
+                    }
+                }
+                else if (@event.IsActionPressed("ui_down"))
+                {
+                    if (TryNavigateVirtualDropdownByDirection(1))
+                    {
+                        GetViewport()?.SetInputAsHandled();
+                        return;
+                    }
+                }
             }
 
             base._UnhandledInput(@event);
@@ -1121,6 +1189,12 @@ namespace STS2RitsuLib.Settings
             _suppressCallbacks = true;
             _selectedIndex = idx;
             RefreshFaceLabel();
+            if (_dropOpen)
+            {
+                SyncVirtualDropdownRows();
+                WireRowFocusNeighbors();
+            }
+
             _suppressCallbacks = false;
         }
 
@@ -1181,15 +1255,27 @@ namespace STS2RitsuLib.Settings
             _dropPanel.AddThemeStyleboxOverride("panel", ModSettingsUiFactory.CreateListShellStyle());
             AddChild(_dropPanel);
 
-            _dropList = new()
+            _dropScroll = new()
             {
-                Name = "ChoiceDropdownList",
-                SizeFlagsHorizontal = SizeFlags.ExpandFill,
-                MouseFilter = MouseFilterEnum.Ignore,
+                Name = "ChoiceDropdownScroll",
+                HorizontalScrollMode = ScrollContainer.ScrollMode.Disabled,
+                VerticalScrollMode = ScrollContainer.ScrollMode.Auto,
+                // Dropdown width should follow content, not the viewport.
+                SizeFlagsHorizontal = SizeFlags.ShrinkBegin,
+                SizeFlagsVertical = SizeFlags.ExpandFill,
+                MouseFilter = MouseFilterEnum.Stop,
+                ClipContents = true,
             };
-            _dropList.AddThemeConstantOverride("separation",
-                RitsuShellThemeLayoutResolver.ResolveInt("components.dropdown.layout.listSeparation", 8));
-            _dropPanel.AddChild(_dropList);
+            _dropPanel.AddChild(_dropScroll);
+
+            _virtualContent = new()
+            {
+                Name = "ChoiceDropdownVirtualContent",
+                MouseFilter = MouseFilterEnum.Ignore,
+                SizeFlagsHorizontal = SizeFlags.ShrinkBegin,
+            };
+            _dropScroll.AddChild(_virtualContent);
+            ModSettingsUiControlTheming.ApplySettingsScrollContainerThemeForDropdownList(_dropScroll);
         }
 
         private void OnBackdropGuiInput(InputEvent @event)
@@ -1200,22 +1286,25 @@ namespace STS2RitsuLib.Settings
 
         private void OpenDropdown()
         {
-            if (_dropPanel == null || _dropList == null || _backdrop == null || _optionsWithValues.Length == 0)
+            if (_dropPanel == null || _virtualContent == null || _backdrop == null || _optionsWithValues.Length == 0)
                 return;
 
             _dropPanel.AddThemeStyleboxOverride("panel", ModSettingsUiFactory.CreateListShellStyle());
             RebuildListRows();
-            if (_rowButtons.Count == 0)
+            if (_activePoolCount == 0 || _dropScroll == null)
                 return;
 
+            TryWireDropdownScroll();
             _dropOpen = true;
             SetProcessInput(true);
             SetProcessUnhandledInput(true);
+            SyncVirtualDropdownRows();
             LayoutDropdownInViewport();
             _backdrop.Visible = true;
             _dropPanel.Visible = true;
             WireRowFocusNeighbors();
             Callable.From(GrabSelectedRowFocus).CallDeferred();
+            Callable.From(TryFinalizeDropdownLayoutAfterScrollResolved).CallDeferred();
         }
 
         private void CloseDropdown()
@@ -1226,6 +1315,10 @@ namespace STS2RitsuLib.Settings
             _dropOpen = false;
             SetProcessInput(false);
             SetProcessUnhandledInput(false);
+            TryUnwireDropdownScroll();
+            if (_faceButton != null && IsInstanceValid(_faceButton))
+                _faceButton.FocusNeighborBottom = null;
+
             if (_backdrop != null)
                 _backdrop.Visible = false;
             if (_dropPanel != null)
@@ -1237,52 +1330,372 @@ namespace STS2RitsuLib.Settings
 
         private void RebuildListRows()
         {
-            if (_dropList == null)
+            if (_virtualContent == null || _dropScroll == null)
                 return;
 
             _rowButtons.Clear();
-            var liveIndexes = Enumerable.Range(0, _optionsWithValues.Length).ToHashSet();
-            foreach (var staleIndex in _rowButtonCache.Keys.Where(index => !liveIndexes.Contains(index)).ToArray())
+            _dropdownListSeparation =
+                RitsuShellThemeLayoutResolver.ResolveInt("components.dropdown.layout.listSeparation", 8);
+            _dropdownRowStride = RowHeight + _dropdownListSeparation;
+
+            var vr = GetViewport().GetVisibleRect();
+            var shell = GetDropdownListShellHorizontalInset();
+            var faceOuter = ComputeDropdownOuterMinWidthProvisional();
+
+            var n = _optionsWithValues.Length;
+            var totalContentH = GetTotalDropdownVirtualContentHeight(n);
+            _cachedDropdownBodyH =
+                Mathf.Min(totalContentH, EstimateMaxDropdownViewportListHeight(vr));
+
+            if (n == 0)
             {
-                if (_rowButtonCache.TryGetValue(staleIndex, out var staleRow) && IsInstanceValid(staleRow))
-                    staleRow.QueueFree();
-                _rowButtonCache.Remove(staleIndex);
+                _dropdownUniformRowLayoutWidth = 0f;
+                _dropdownPanelMinWidth = faceOuter;
+                var shelfEmpty = GetDropdownInnerScrollMinWidth(_dropdownPanelMinWidth);
+                _virtualContent.CustomMinimumSize = new(shelfEmpty, Mathf.Max(totalContentH, RowHeight));
+                _activePoolCount = 0;
+                _slotOptionIndex = [];
+                HideExtraVirtualRows(0);
+                if (_dropPanel != null)
+                    _dropPanel.CustomMinimumSize = RitsuShellThemeLayoutResolver.ResolveMinSize(
+                        "components.dropdown.layout.panel.minSize",
+                        new(_dropdownPanelMinWidth, 0f));
+
+                _dropScroll!.CustomMinimumSize = new(shelfEmpty, RowHeight);
+                return;
             }
 
-            var panelMinW = DropListMinWidth;
-            if (_faceButton != null)
-                panelMinW = Mathf.Max(panelMinW, _faceButton.CustomMinimumSize.X);
-
-            for (var i = 0; i < _optionsWithValues.Length; i++)
+            _dropdownUniformRowLayoutWidth = ComputeUniformDropdownListRowLayoutWidth(vr, n);
+            _dropdownPanelMinWidth = Mathf.Max(faceOuter, _dropdownUniformRowLayoutWidth + shell);
+            var shelfW = GetDropdownInnerScrollMinWidth(_dropdownPanelMinWidth);
+            if (_dropdownUniformRowLayoutWidth > shelfW + 0.5f)
             {
-                var index = i;
-                var opt = _optionsWithValues[i];
-                if (!_rowButtonCache.TryGetValue(index, out var row) || !IsInstanceValid(row))
+                _dropdownPanelMinWidth = _dropdownUniformRowLayoutWidth + shell;
+                shelfW = GetDropdownInnerScrollMinWidth(_dropdownPanelMinWidth);
+            }
+
+            _virtualContent.CustomMinimumSize = new(shelfW, Mathf.Max(totalContentH, RowHeight));
+
+            var poolSlots = Mathf.Min(n,
+                Mathf.Max(
+                    DropdownVirtualOverscanRows * 2 + 1,
+                    Mathf.CeilToInt(_cachedDropdownBodyH / Mathf.Max(_dropdownRowStride, 0.001f))
+                    + 1 + DropdownVirtualOverscanRows * 2));
+
+            EnsureVirtualDropdownRows(poolSlots);
+            _slotOptionIndex = new int[_virtualRowPool.Count];
+            Array.Fill(_slotOptionIndex, -1);
+
+            ApplyDropdownScrollViewportSizing(_cachedDropdownBodyH);
+
+            if (_dropPanel != null)
+                _dropPanel.CustomMinimumSize = RitsuShellThemeLayoutResolver.ResolveMinSize(
+                    "components.dropdown.layout.panel.minSize",
+                    new(_dropdownPanelMinWidth, 0f));
+
+            _activePoolCount = poolSlots;
+
+            HideExtraVirtualRows(poolSlots);
+            ScrollDropdownContentToShowIndex(_selectedIndex);
+        }
+
+        private float ComputeDropdownOuterMinWidthProvisional()
+        {
+            return _faceButton == null
+                ? DropListMinWidth
+                : Mathf.Max(Mathf.Max(DropListMinWidth, _faceButton.Size.X), _faceButton.CustomMinimumSize.X);
+        }
+
+        private float GetDropdownListShellHorizontalInset()
+        {
+            if (_dropPanel?.GetThemeStylebox("panel") is StyleBoxFlat sb)
+                return sb.ContentMarginLeft + sb.ContentMarginRight;
+
+            var pad = RitsuShellThemeLayoutResolver.ResolveEdges("components.listShell.layout.padding", 12);
+            return pad.Left + pad.Right;
+        }
+
+        private float GetDropdownInnerScrollMinWidth(float outerMinWidth)
+        {
+            var inset = GetDropdownListShellHorizontalInset();
+            return Mathf.Max(1f, outerMinWidth - inset);
+        }
+
+        private void ApplyDropdownOuterWidthFromViewport(Rect2 vr)
+        {
+            if (_faceButton == null || _dropPanel == null || _dropScroll == null || _virtualContent == null)
+                return;
+
+            var gr = _faceButton.GetGlobalRect();
+            var faceW = gr.Size.X > 2f ? gr.Size.X : Mathf.Max(_faceButton.Size.X, _faceButton.CustomMinimumSize.X);
+            var maxOuter = Mathf.Max(DropListMinWidth, vr.Size.X - DropdownViewportEdgeMargin * 2f);
+            var faceBased = Mathf.Clamp(Mathf.Max(DropListMinWidth, faceW), DropListMinWidth, maxOuter);
+            var newOuter = Mathf.Min(maxOuter, Mathf.Max(faceBased, _dropdownPanelMinWidth));
+
+            if (Mathf.IsEqualApprox(newOuter, _dropdownPanelMinWidth))
+                return;
+
+            _dropdownPanelMinWidth = newOuter;
+            var shelf = GetDropdownInnerScrollMinWidth(newOuter);
+            var hContent = _virtualContent.CustomMinimumSize.Y;
+            _virtualContent.CustomMinimumSize = new(shelf, hContent);
+            _dropScroll.CustomMinimumSize = new(shelf, _dropScroll.CustomMinimumSize.Y);
+            _dropPanel.CustomMinimumSize = new(newOuter, 0f);
+            if (_dropOpen)
+                SyncVirtualDropdownRows();
+        }
+
+        private void SyncDropdownVirtualContentWidthToShelf()
+        {
+            if (_virtualContent == null)
+                return;
+
+            var shelfW = GetDropdownInnerScrollMinWidth(_dropdownPanelMinWidth);
+            _virtualContent.CustomMinimumSize = new(shelfW, _virtualContent.CustomMinimumSize.Y);
+        }
+
+        private float GetDropdownRowHorizontalChromeWidth()
+        {
+            var pad = RitsuShellThemeLayoutResolver.ResolveEdges("components.stepper.layout.padding", 10);
+            var border = RitsuShellThemeLayoutResolver.ResolveEdges("components.stepper.layout.borderWidth", 1);
+            return pad.Left + pad.Right + border.Left + border.Right;
+        }
+
+        private static float MeasureDropdownLabelDrawableWidth(string label, Font font, int fontSize,
+            float horizontalChrome)
+        {
+            if (string.IsNullOrEmpty(label))
+                return horizontalChrome;
+
+            if (font is null)
+                return horizontalChrome + label.Length * 8f;
+
+            return horizontalChrome + font.GetStringSize(label, HorizontalAlignment.Left, -1f, fontSize).X;
+        }
+
+        private float ComputeMaxDropdownOptionDrawableWidth(int optionCount)
+        {
+            if (optionCount <= 0)
+                return DropListMinWidth;
+
+            var font = RitsuShellTheme.Current.Font.Body;
+            var fontSize = RitsuShellTheme.Current.Metric.FontSize.PopupRow;
+            var chrome = GetDropdownRowHorizontalChromeWidth();
+            var maxW = 0f;
+            for (var i = 0; i < optionCount; i++)
+            {
+                var label = _optionsWithValues[i].Label ?? string.Empty;
+                maxW = Mathf.Max(maxW, MeasureDropdownLabelDrawableWidth(label, font, fontSize, chrome));
+            }
+
+            return Mathf.Max(maxW, DropListMinWidth);
+        }
+
+        private float ResolveDropdownListInnerMaxUniformWidth(Rect2 vr)
+        {
+            const float edge = DropdownViewportEdgeMargin * 2f;
+            var frac = RitsuShellThemeLayoutResolver.ResolveFloat(
+                "components.dropdown.layout.list.maxUniformContentWidthFraction", 0.92f);
+            var shell = GetDropdownListShellHorizontalInset();
+            var fromViewport = Mathf.Max(DropListMinWidth, vr.Size.X * frac - edge - shell);
+            var hard = RitsuShellThemeLayoutResolver.ResolveFloat(
+                "components.dropdown.layout.list.maxUniformContentWidth", 0f);
+            return hard > 1f ? Mathf.Max(DropListMinWidth, Mathf.Min(fromViewport, hard)) : fromViewport;
+        }
+
+        private float ComputeUniformDropdownListRowLayoutWidth(Rect2 vr, int optionCount)
+        {
+            var raw = ComputeMaxDropdownOptionDrawableWidth(optionCount);
+            var cap = ResolveDropdownListInnerMaxUniformWidth(vr);
+            return Mathf.Max(DropListMinWidth, Mathf.Min(raw, cap));
+        }
+
+        private void TryFinalizeDropdownLayoutAfterScrollResolved()
+        {
+            if (!_dropOpen || _dropScroll == null || _virtualContent == null)
+                return;
+
+            _dropScroll.QueueSort();
+            var inner = _dropScroll.Size.X;
+            if (inner < 2f && _dropScroll.GetGlobalRect().Size.X > 2f)
+                inner = _dropScroll.GetGlobalRect().Size.X;
+
+            if (inner < 2f || _dropdownUniformRowLayoutWidth <= 0f)
+                return;
+
+            if (_dropdownUniformRowLayoutWidth <= inner + 0.5f)
+                return;
+
+            _dropdownUniformRowLayoutWidth = inner;
+            SyncVirtualDropdownRows();
+            WireRowFocusNeighbors();
+        }
+
+        private static float RowTopOffset(int rowIndex, float rowStride)
+        {
+            return rowIndex * rowStride;
+        }
+
+        private float GetTotalDropdownVirtualContentHeight(int optionCount)
+        {
+            return optionCount == 0 ? 0f : optionCount * RowHeight + (optionCount - 1) * _dropdownListSeparation;
+        }
+
+        private static float EstimateMaxDropdownViewportListHeight(Rect2 visibleRect)
+        {
+            const float edge = DropdownViewportEdgeMargin * 2f;
+            return Mathf.Max(RowHeight, visibleRect.Size.Y * 0.5f - edge);
+        }
+
+        private static float ClampToOrderedRange(float value, float a, float b)
+        {
+            var min = Mathf.Min(a, b);
+            var max = Mathf.Max(a, b);
+            return Mathf.Clamp(value, min, max);
+        }
+
+        private void ApplyDropdownScrollViewportSizing(float bodyH)
+        {
+            if (_dropScroll == null)
+                return;
+
+            var h = Mathf.Max(RowHeight, bodyH);
+            var shelf = GetDropdownInnerScrollMinWidth(_dropdownPanelMinWidth);
+            _dropScroll.CustomMinimumSize = new(shelf, h);
+            _cachedDropdownBodyH = h;
+            SyncDropdownVirtualContentWidthToShelf();
+        }
+
+        private void EnsureVirtualDropdownRows(int poolSlots)
+        {
+            if (_virtualContent == null)
+                return;
+
+            while (_virtualRowPool.Count < poolSlots)
+            {
+                var slotIndex = _virtualRowPool.Count;
+                var row = new ModSettingsMiniButton(string.Empty, () => OnVirtualPoolRowActivated(slotIndex))
                 {
-                    row = new(opt.Label, () => ActivateRow(index))
-                    {
-                        SizeFlagsHorizontal = SizeFlags.ExpandFill,
-                        Alignment = HorizontalAlignment.Left,
-                    };
-                    row.AddThemeFontOverride("font", RitsuShellTheme.Current.Font.Body);
-                    row.AddThemeFontSizeOverride("font_size", RitsuShellTheme.Current.Metric.FontSize.PopupRow);
-                    _rowButtonCache[index] = row;
+                    Alignment = HorizontalAlignment.Left,
+                };
+                row.AddThemeFontOverride("font", RitsuShellTheme.Current.Font.Body);
+                row.AddThemeFontSizeOverride("font_size", RitsuShellTheme.Current.Metric.FontSize.PopupRow);
+                row.SetAnchorsPreset(LayoutPreset.TopLeft);
+                row.FocusEntered += () => _dropScroll?.EnsureControlVisible(row);
+                _virtualContent.AddChild(row);
+                _virtualRowPool.Add(row);
+            }
+        }
+
+        private void HideExtraVirtualRows(int firstHiddenIndex)
+        {
+            for (var i = firstHiddenIndex; i < _virtualRowPool.Count; i++)
+            {
+                var row = _virtualRowPool[i];
+                row.Visible = false;
+                row.FocusMode = FocusModeEnum.None;
+            }
+        }
+
+        private void OnVirtualPoolRowActivated(int slotIndex)
+        {
+            if (slotIndex < 0 || slotIndex >= _slotOptionIndex.Length)
+                return;
+
+            var optIndex = _slotOptionIndex[slotIndex];
+            if (optIndex < 0)
+                return;
+
+            ActivateRow(optIndex);
+        }
+
+        private void TryWireDropdownScroll()
+        {
+            if (_dropdownScrollWired || _dropScroll == null)
+                return;
+
+            _dropScroll.GetVScrollBar().ValueChanged += OnDropdownScrollValueChanged;
+            _dropdownScrollWired = true;
+        }
+
+        private void TryUnwireDropdownScroll()
+        {
+            if (!_dropdownScrollWired || _dropScroll == null)
+                return;
+
+            _dropScroll.GetVScrollBar().ValueChanged -= OnDropdownScrollValueChanged;
+            _dropdownScrollWired = false;
+        }
+
+        private void OnDropdownScrollValueChanged(double _)
+        {
+            SyncVirtualDropdownRows();
+        }
+
+        private void SyncVirtualDropdownRows()
+        {
+            if (_virtualContent == null || _dropScroll == null || _activePoolCount == 0)
+                return;
+
+            var n = _optionsWithValues.Length;
+            if (n == 0)
+                return;
+
+            var totalH = GetTotalDropdownVirtualContentHeight(n);
+            var viewH = Mathf.Max(RowHeight, _cachedDropdownBodyH);
+            var maxScroll = Mathf.Max(0f, totalH - viewH);
+            var scrollFloat = (float)_dropScroll.ScrollVertical;
+            var clampedScroll = ClampToOrderedRange(scrollFloat, 0f, maxScroll);
+            if (!Mathf.IsEqualApprox(scrollFloat, clampedScroll))
+                _dropScroll.ScrollVertical = (int)Mathf.Round(clampedScroll);
+
+            var scrollY = (float)_dropScroll.ScrollVertical;
+
+            var maxAnchor = Mathf.Max(0, n - _activePoolCount);
+            var anchor = Mathf.Clamp(Mathf.FloorToInt(scrollY / Mathf.Max(_dropdownRowStride, 0.001f)), 0, maxAnchor);
+
+            // Reserve scrollbar width (and separation) when visible; otherwise rows will extend under it and get clipped.
+            var shelfW = _dropScroll.Size.X > 2f ? _dropScroll.Size.X : _dropScroll.GetGlobalRect().Size.X;
+            var reserve = 0f;
+            var bar = _dropScroll.GetVScrollBar();
+            if (bar != null && IsInstanceValid(bar) && bar.Visible)
+            {
+                var sep = RitsuShellThemeLayoutResolver.ResolveInt(
+                    "components.dropdown.layout.scroll.scrollbarVSeparation",
+                    RitsuShellThemeLayoutResolver.ResolveInt("components.scrollbar.layout.scrollbarVSeparation", 0));
+                reserve = Mathf.Max(0f, bar.Size.X + sep);
+            }
+
+            var usableW = Mathf.Max(0f, shelfW - reserve);
+            var rowW = _dropdownUniformRowLayoutWidth > 0f
+                ? Mathf.Min(_dropdownUniformRowLayoutWidth, usableW)
+                : usableW;
+
+            _rowButtons.Clear();
+
+            for (var slot = 0; slot < _activePoolCount; slot++)
+            {
+                var optIndex = anchor + slot;
+                if (optIndex >= n)
+                {
+                    _slotOptionIndex[slot] = -1;
+                    var hidden = _virtualRowPool[slot];
+                    hidden.Visible = false;
+                    hidden.FocusMode = FocusModeEnum.None;
+                    continue;
                 }
 
-                row.Text = opt.Label;
-                var rowPadX = RitsuShellThemeLayoutResolver.ResolveFloat("components.dropdown.layout.row.hInset", 24f);
-                row.CustomMinimumSize = RitsuShellThemeLayoutResolver.ResolveMinSize(
-                    "components.dropdown.layout.row.minSize",
-                    new(panelMinW - rowPadX, RowHeight));
+                _slotOptionIndex[slot] = optIndex;
+                var row = _virtualRowPool[slot];
+                row.Visible = true;
+                row.FocusMode = FocusModeEnum.All;
+                ResetDropdownVirtualRowState(row);
+                ApplyDropdownVirtualRowPresentation(row, optIndex, rowW);
+                var yTop = RowTopOffset(optIndex, _dropdownRowStride);
+                row.Position = new(0f, yTop);
                 row.TooltipText = string.Empty;
-                row.AddThemeColorOverride("font_color", RitsuShellTheme.Current.Text.LabelPrimary);
-                row.AddThemeColorOverride("font_hover_color", RitsuShellTheme.Current.Text.HoverHighlight);
-                row.AddThemeColorOverride("font_pressed_color", RitsuShellTheme.Current.Text.HoverHighlight);
-                row.AddThemeStyleboxOverride("normal", ModSettingsMiniButton.CreateStyle(false));
-                row.AddThemeStyleboxOverride("hover", ModSettingsMiniButton.CreateStyle(true));
-                row.AddThemeStyleboxOverride("pressed", ModSettingsMiniButton.CreatePressedStyle());
-                row.AddThemeStyleboxOverride("focus", ModSettingsMiniButton.CreateFocusStyle());
-                if (index == _selectedIndex)
+
+                if (optIndex == _selectedIndex)
                 {
                     row.TooltipText = ModSettingsLocalization.Get("choice.dropdown.currentRow",
                         "This option is the active setting (shown on the closed control).");
@@ -1294,17 +1707,72 @@ namespace STS2RitsuLib.Settings
                     row.AddThemeStyleboxOverride("pressed", CreateDropdownCurrentRowPressed());
                     row.AddThemeStyleboxOverride("focus", CreateDropdownCurrentRowFocus());
                 }
+                else
+                {
+                    row.AddThemeColorOverride("font_color", RitsuShellTheme.Current.Text.LabelPrimary);
+                    row.AddThemeColorOverride("font_hover_color", RitsuShellTheme.Current.Text.HoverHighlight);
+                    row.AddThemeColorOverride("font_pressed_color", RitsuShellTheme.Current.Text.HoverHighlight);
+                    row.AddThemeStyleboxOverride("normal", ModSettingsMiniButton.CreateStyle(false));
+                    row.AddThemeStyleboxOverride("hover", ModSettingsMiniButton.CreateStyle(true));
+                    row.AddThemeStyleboxOverride("pressed", ModSettingsMiniButton.CreatePressedStyle());
+                    row.AddThemeStyleboxOverride("focus", ModSettingsMiniButton.CreateFocusStyle());
+                }
 
-                if (row.GetParent() != _dropList)
-                    _dropList.AddChild(row);
-                _dropList.MoveChild(row, i);
                 _rowButtons.Add(row);
             }
 
-            if (_dropPanel != null)
-                _dropPanel.CustomMinimumSize = RitsuShellThemeLayoutResolver.ResolveMinSize(
-                    "components.dropdown.layout.panel.minSize",
-                    new(panelMinW, 0f));
+            HideExtraVirtualRows(_activePoolCount);
+        }
+
+        private static void ResetDropdownVirtualRowState(ModSettingsMiniButton row)
+        {
+            // Virtual rows are recycled; clear any leftover toggle/pressed state and theme overrides
+            // so slot appearance always reflects the current bound option index.
+            row.ToggleMode = false;
+            row.ButtonPressed = false;
+
+            row.RemoveThemeColorOverride("font_color");
+            row.RemoveThemeColorOverride("font_hover_color");
+            row.RemoveThemeColorOverride("font_pressed_color");
+
+            row.RemoveThemeStyleboxOverride("normal");
+            row.RemoveThemeStyleboxOverride("hover");
+            row.RemoveThemeStyleboxOverride("pressed");
+            row.RemoveThemeStyleboxOverride("focus");
+        }
+
+        private void ApplyDropdownVirtualRowPresentation(ModSettingsMiniButton row, int optIndex, float rowW)
+        {
+            var opt = _optionsWithValues[optIndex];
+            // Make the actual selected option unambiguous vs hover/focus on recycled rows.
+            row.Text = optIndex == _selectedIndex ? $"\u2713 {opt.Label}" : opt.Label;
+            row.CustomMinimumSize = RitsuShellThemeLayoutResolver.ResolveMinSize(
+                "components.dropdown.layout.row.minSize",
+                new(rowW, RowHeight));
+            row.Size = row.CustomMinimumSize;
+        }
+
+        private void ScrollDropdownContentToShowIndex(int index)
+        {
+            if (_dropScroll == null)
+                return;
+
+            var n = _optionsWithValues.Length;
+            if (n == 0)
+                return;
+
+            index = Mathf.Clamp(index, 0, n - 1);
+            var y = RowTopOffset(index, _dropdownRowStride);
+            var viewH = Mathf.Max(RowHeight, _cachedDropdownBodyH);
+            var totalH = GetTotalDropdownVirtualContentHeight(n);
+            var maxScroll = Mathf.Max(0f, totalH - viewH);
+            var scroll = (float)_dropScroll.ScrollVertical;
+            if (y < scroll)
+                scroll = y;
+            else if (y + RowHeight > scroll + viewH)
+                scroll = y + RowHeight - viewH;
+
+            _dropScroll.ScrollVertical = (int)Mathf.Round(ClampToOrderedRange(scroll, 0f, maxScroll));
         }
 
         private void ActivateRow(int index)
@@ -1461,23 +1929,101 @@ namespace STS2RitsuLib.Settings
 
         private void WireRowFocusNeighbors()
         {
+            if (_faceButton != null)
+                _faceButton.FocusNeighborBottom =
+                    _rowButtons.Count > 0 ? _rowButtons[0].GetPath() : null;
+
             for (var i = 0; i < _rowButtons.Count; i++)
             {
                 var row = _rowButtons[i];
-                var selfPath = row.GetPath();
-                row.FocusNeighborLeft = selfPath;
-                row.FocusNeighborRight = selfPath;
-                row.FocusNeighborTop = i > 0 ? _rowButtons[i - 1].GetPath() : null;
-                row.FocusNeighborBottom = i < _rowButtons.Count - 1 ? _rowButtons[i + 1].GetPath() : null;
+                row.FocusNeighborLeft = row.GetPath();
+                row.FocusNeighborRight = row.GetPath();
+
+                var optIdx = LookupVirtualPoolOptionIndex(row);
+                row.FocusNeighborTop = i > 0
+                    ? _rowButtons[i - 1].GetPath()
+                    : optIdx == 0
+                        ? _faceButton?.GetPath()
+                        : null;
+
+                row.FocusNeighborBottom =
+                    i < _rowButtons.Count - 1 ? _rowButtons[i + 1].GetPath() : null;
+            }
+        }
+
+        private int LookupVirtualPoolOptionIndex(ModSettingsMiniButton row)
+        {
+            if (_virtualRowPool.Count == 0 || _slotOptionIndex.Length == 0)
+                return -1;
+
+            var limit = Mathf.Min(Mathf.Min(_activePoolCount, _slotOptionIndex.Length), _virtualRowPool.Count);
+            for (var s = 0; s < limit; s++)
+                if (_virtualRowPool[s] == row)
+                    return _slotOptionIndex[s];
+
+            return -1;
+        }
+
+        private bool TryNavigateVirtualDropdownByDirection(int delta)
+        {
+            if (!_dropOpen || GetViewport()?.GuiGetFocusOwner() is not ModSettingsMiniButton focus)
+                return false;
+
+            var optIdx = LookupVirtualPoolOptionIndex(focus);
+            if (optIdx < 0)
+                return false;
+
+            var target = optIdx + delta;
+            if (target < 0 || target >= _optionsWithValues.Length)
+                return false;
+
+            // Always navigate by option index. Scroll only when needed, rather than waiting for focus to
+            // reach the last visible pooled row (which makes scrolling feel "late").
+            if (_dropScroll != null)
+            {
+                var scrollY = (float)_dropScroll.ScrollVertical;
+                var viewH = Mathf.Max(RowHeight, _cachedDropdownBodyH);
+                var y = RowTopOffset(target, _dropdownRowStride);
+                var outOfView = y < scrollY || y + RowHeight > scrollY + viewH;
+                if (outOfView)
+                    ScrollDropdownContentToShowIndex(target);
+            }
+
+            SyncVirtualDropdownRows();
+            WireRowFocusNeighbors();
+            Callable.From(() => TryGrabVirtualRowForOption(target)).CallDeferred();
+            return true;
+        }
+
+        private void TryGrabVirtualRowForOption(int optionIndex)
+        {
+            for (var s = 0; s < _activePoolCount; s++)
+            {
+                if (!IsInstanceValid(_virtualRowPool[s]) ||
+                    !_virtualRowPool[s].Visible ||
+                    s >= _slotOptionIndex.Length)
+                    continue;
+                if (_slotOptionIndex[s] != optionIndex)
+                    continue;
+                _virtualRowPool[s].GrabFocus();
+                return;
             }
         }
 
         private void GrabSelectedRowFocus()
         {
-            if (_rowButtons.Count == 0)
+            if (_virtualRowPool.Count == 0)
                 return;
-            var idx = Mathf.Clamp(_selectedIndex, 0, _rowButtons.Count - 1);
-            _rowButtons[idx].GrabFocus();
+
+            ScrollDropdownContentToShowIndex(_selectedIndex);
+            SyncVirtualDropdownRows();
+            WireRowFocusNeighbors();
+            Callable.From(TryGrabVirtualRowForOptionDelegate).CallDeferred();
+        }
+
+        private void TryGrabVirtualRowForOptionDelegate()
+        {
+            TryGrabVirtualRowForOption(_selectedIndex);
         }
 
         private void LayoutDropdownInViewport()
@@ -1489,17 +2035,30 @@ namespace STS2RitsuLib.Settings
             _backdrop.GlobalPosition = vr.Position;
             _backdrop.Size = vr.Size;
 
+            ApplyDropdownOuterWidthFromViewport(vr);
+
+            var scrollBodyH =
+                Mathf.Max(RowHeight, _dropScroll?.CustomMinimumSize.Y ?? _cachedDropdownBodyH);
+
+            ApplyDropdownScrollViewportSizing(scrollBodyH);
+
             _dropPanel.ResetSize();
-            var panelSize = _dropPanel.GetCombinedMinimumSize();
+            _dropPanel.QueueSort();
+            var measured = _dropPanel.GetCombinedMinimumSize();
+            var panelW = Mathf.Max(_dropdownPanelMinWidth, measured.X);
+            var panelSize = new Vector2(panelW, measured.Y);
+
             var gr = _faceButton.GetGlobalRect();
             var desiredTopLeft = new Vector2(gr.Position.X, gr.End.Y);
 
-            var maxX = vr.End.X - panelSize.X;
-            var maxY = vr.End.Y - panelSize.Y;
+            var maxX = Mathf.Max(vr.Position.X, vr.End.X - panelSize.X);
+            var maxY = Mathf.Max(vr.Position.Y, vr.End.Y - panelSize.Y);
+
             desiredTopLeft = new(
-                Mathf.Clamp(desiredTopLeft.X, vr.Position.X, maxX),
-                Mathf.Clamp(desiredTopLeft.Y, vr.Position.Y, maxY));
+                ClampToOrderedRange(desiredTopLeft.X, vr.Position.X, maxX),
+                ClampToOrderedRange(desiredTopLeft.Y, vr.Position.Y, maxY));
             _dropPanel.GlobalPosition = desiredTopLeft;
+            Callable.From(TryFinalizeDropdownLayoutAfterScrollResolved).CallDeferred();
         }
     }
 
@@ -2592,8 +3151,8 @@ namespace STS2RitsuLib.Settings
                 desiredTopLeft = new(gr.End.X - panelSize.X, gr.End.Y);
             }
 
-            var maxX = vr.End.X - panelSize.X;
-            var maxY = vr.End.Y - panelSize.Y;
+            var maxX = Mathf.Max(vr.Position.X, vr.End.X - panelSize.X);
+            var maxY = Mathf.Max(vr.Position.Y, vr.End.Y - panelSize.Y);
             desiredTopLeft = new(
                 Mathf.Clamp(desiredTopLeft.X, vr.Position.X, maxX),
                 Mathf.Clamp(desiredTopLeft.Y, vr.Position.Y, maxY));

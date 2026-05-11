@@ -1,59 +1,72 @@
 using System.Reflection;
+using Godot;
+using HarmonyLib;
+using MegaCrit.Sts2.Core.Localization;
+using MegaCrit.Sts2.Core.Modding;
 using MegaCrit.Sts2.Core.Models;
 using MegaCrit.Sts2.Core.Saves.Runs;
+using STS2RitsuLib.Interop.AutoRegistration;
 using STS2RitsuLib.Patching.Models;
 
 namespace STS2RitsuLib.Interop.Patches
 {
     /// <summary>
-    ///     Injects model types that declare <see cref="SavedPropertyAttribute" /> before
-    ///     <see cref="SavedProperties.FromInternal" /> executes so modded save properties are recognized by
-    ///     <see cref="SavedPropertiesTypeCache" />.
+    ///     Injects all loaded mod model types that declare <see cref="SavedPropertyAttribute" /> at a deterministic
+    ///     initialization point so multiplayer peers build the same <see cref="SavedPropertiesTypeCache" /> net-id table.
     /// </summary>
     public sealed class SavedPropertiesTypeCacheInjectionPatch : IPatchMethod
     {
         private static readonly Lock Gate = new();
-        private static readonly HashSet<Type> ProcessedTypes = [];
+        private static bool _completed;
 
         /// <inheritdoc />
         public static string PatchId => "ritsulib_saved_properties_type_cache_injection";
 
         /// <inheritdoc />
         public static string Description =>
-            "On-demand SavedPropertiesTypeCache injection for modded models with SavedProperty";
+            "Deterministic SavedPropertiesTypeCache injection for modded models with SavedProperty";
 
         /// <inheritdoc />
-        public static bool IsCritical => false;
+        public static bool IsCritical => true;
 
         /// <inheritdoc />
         public static ModPatchTarget[] GetTargets()
         {
-            return [new(typeof(SavedProperties), nameof(SavedProperties.FromInternal))];
+            return [new(typeof(LocManager), nameof(LocManager.Initialize))];
         }
 
         /// <summary>
-        ///     Injects cache entries for model types with <see cref="SavedPropertyAttribute" /> before serialization.
+        ///     Injects cache entries after mod type-discovery contributors have had a chance to register content.
         /// </summary>
-        /// <param name="model">Current model instance being serialized.</param>
-        public static void Prefix(object model)
+        [HarmonyAfter(Const.BaseLibHarmonyId)]
+        [HarmonyPriority(Priority.Last)]
+        public static void Prefix()
         {
-            if (model is not AbstractModel abstractModel)
-                return;
-
-            var modelType = abstractModel.GetType();
             lock (Gate)
             {
-                if (!ProcessedTypes.Add(modelType))
+                if (_completed)
                     return;
+                _completed = true;
             }
 
-            if (!HasSavedProperty(modelType))
-                return;
+            var beforeCount = GetPropertyNameCount();
+            var injectedTypes = 0;
 
-            if (SavedPropertiesTypeCache.GetJsonPropertiesForType(modelType) != null)
-                return;
+            foreach (var modelType in GetModModelTypesWithSavedProperties())
+            {
+                if (SavedPropertiesTypeCache.GetJsonPropertiesForType(modelType) != null)
+                    continue;
 
-            SavedPropertiesTypeCache.InjectTypeIntoCache(modelType);
+                SavedPropertiesTypeCache.InjectTypeIntoCache(modelType);
+                injectedTypes++;
+            }
+
+            RefreshNetIdBitSize();
+
+            var afterCount = GetPropertyNameCount();
+            if (injectedTypes > 0 || afterCount != beforeCount)
+                RitsuLibFramework.Logger.Info(
+                    $"[SavedProperties] Injected {injectedTypes} mod model type(s); property net IDs: {beforeCount} -> {afterCount}, bit size {SavedPropertiesTypeCache.NetIdBitSize}.");
         }
 
         private static bool HasSavedProperty(Type modelType)
@@ -61,6 +74,51 @@ namespace STS2RitsuLib.Interop.Patches
             return modelType
                 .GetProperties(BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic)
                 .Any(property => property.GetCustomAttribute<SavedPropertyAttribute>() != null);
+        }
+
+        private static IEnumerable<Type> GetModModelTypesWithSavedProperties()
+        {
+            return ModManager.GetLoadedMods()
+                .Select(static mod => new
+                {
+                    ModId = mod.manifest?.id ?? mod.assembly?.GetName().Name ?? mod.path,
+                    mod.assembly,
+                })
+                .Where(static mod => mod.assembly != null)
+                .OrderBy(static mod => mod.ModId, StringComparer.Ordinal)
+                .ThenBy(static mod => mod.assembly!.FullName, StringComparer.Ordinal)
+                .SelectMany(static mod =>
+                    AssemblyTypeScanHelper.GetLoadableTypes(mod.assembly!, RitsuLibFramework.Logger))
+                .Where(static type =>
+                    type is { IsAbstract: false, IsInterface: false } &&
+                    typeof(AbstractModel).IsAssignableFrom(type) &&
+                    HasSavedProperty(type))
+                .Distinct()
+                .OrderBy(static type => type.Assembly.GetName().Name, StringComparer.Ordinal)
+                .ThenBy(static type => type.Assembly.FullName, StringComparer.Ordinal)
+                .ThenBy(static type => type.FullName ?? type.Name, StringComparer.Ordinal);
+        }
+
+        private static int GetPropertyNameCount()
+        {
+            return GetNetIdToPropertyNameMap()?.Count ?? 0;
+        }
+
+        private static void RefreshNetIdBitSize()
+        {
+            var count = GetPropertyNameCount();
+            if (count <= 0)
+                return;
+
+            var newBitSize = Mathf.CeilToInt(Mathf.Log(count) / Mathf.Log(2));
+            AccessTools.Property(typeof(SavedPropertiesTypeCache), nameof(SavedPropertiesTypeCache.NetIdBitSize))
+                ?.SetValue(null, newBitSize);
+        }
+
+        private static List<string>? GetNetIdToPropertyNameMap()
+        {
+            return AccessTools.DeclaredField(typeof(SavedPropertiesTypeCache), "_netIdToPropertyNameMap")
+                ?.GetValue(null) as List<string>;
         }
     }
 }

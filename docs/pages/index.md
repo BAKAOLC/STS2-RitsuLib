@@ -5,67 +5,49 @@ title:
 
 features:
   title:
-    en: Overview
-    zh-CN: 概览
+    en: Mod authoring for Slay the Spire 2
+    zh-CN: 《杀戮尖塔 2》Mod 编写工具集
   subtitle:
-    en: Slay the Spire 2
-    zh-CN: 杀戮尖塔 2
+    en: Registry-first content, lifecycle hooks, persistence, settings UI, localization, audio, and UI helpers.
+    zh-CN: 以注册器为核心，覆盖内容、生命周期、持久化、设置界面、本地化、音频与 UI 扩展。
   text:
     en: >-
-      A shared mod framework for Slay the Spire 2: registry-driven content, Harmony patching helpers, persistence stores,
-      lifecycle events, localization (`I18N` / keywords), Godot scene registration, FMOD helpers, and diagnostics that
-      align with vanilla progression checks.
+      RitsuLib keeps common mod tasks explicit: register the content you own, give it stable ids, bind player-facing
+      settings to persistent data, and subscribe to lifecycle events instead of scattering compatibility patches through
+      every mod.
     zh-CN: >-
-      面向《杀戮尖塔 2》的共享模组框架：注册器驱动的内容、Harmony 补丁封装、持久化存储与迁移、生命周期事件、
-      本地化（`I18N` / 关键词）、Godot 场景注册、FMOD 辅助接口以及与原版进度节点对齐的诊断与兼容层。
+      RitsuLib 让常见 Mod 流程保持清晰：注册自己拥有的内容、生成稳定 ID、把玩家设置直接绑定到持久化数据，
+      并通过生命周期事件复用游戏时机，而不是在每个 Mod 里重复写兼容补丁。
 
   cards:
     - title:
-        en: Content & registries
-        zh-CN: 内容与注册器
+        en: Start building
+        zh-CN: 开始编写
       details:
-        en: >-
-          Fixed identity, content packs, character/unlock scaffolding, custom events, timelines, and placeholder content rules.
-        zh-CN: >-
-          固定身份、内容包、角色与解锁装配、自定义事件、时间线以及占位内容等注册与约束
+        en: Add the NuGet package, declare the runtime dependency, and create your first content pack.
+        zh-CN: 添加 NuGet 包，声明运行时依赖，并创建第一个内容包。
     - title:
-        en: Patching & lifecycle
-        zh-CN: 补丁与生命周期
+        en: Register content
+        zh-CN: 注册内容
       details:
-        en: >-
-          `ModPatcher`, `IPatchMethod`, grouped targets, plus lifecycle subscriptions and replay semantics for engine events.
-        zh-CN: >-
-          `ModPatcher`、`IPatchMethod`、分组目标，以及针对引擎事件的订阅与可重放语义
+        en: Cards, relics, potions, characters, events, epochs, keywords, card tags, and custom piles share one flow.
+        zh-CN: 卡牌、遗物、药水、角色、事件、Epoch、关键词、卡牌标签与自定义卡堆共享同一套注册习惯。
     - title:
-        en: Persistence & settings
-        zh-CN: 持久化与设置
+        en: Keep state safely
+        zh-CN: 安全保存状态
       details:
-        en: >-
-          Scoped mod data stores with migrations and profile switching; optional settings UI bound to `ModDataStore`.
-        zh-CN: >-
-          带迁移与档位切换的作用域存储；可选的设置界面并与 `ModDataStore` 绑定
+        en: Use scoped JSON stores, migrations, profile switching support, and settings bindings.
+        zh-CN: 使用带作用域的 JSON 存储、迁移、档位切换支持与设置绑定。
     - title:
-        en: Localization & audio
-        zh-CN: 本地化与音频
+        en: Work with the game
+        zh-CN: 连接游戏流程
       details:
-        en: >-
-          `I18N`, keyword registry, LocString tooling, and FMOD Studio path → GUID mapping helpers on top of the vanilla audio pipeline.
-        zh-CN: >-
-          `I18N`、关键词注册、LocString 工具，以及在原版音频管线之上提供 FMOD Studio 路径映射等能力
+        en: Lifecycle events, Harmony patch helpers, Godot script registration, and compatibility notes.
+        zh-CN: 生命周期事件、Harmony 补丁辅助、Godot 脚本注册与兼容注意事项。
     - title:
-        en: Godot & diagnostics
-        zh-CN: Godot 与诊断
+        en: Add polish
+        zh-CN: 增加表现层能力
       details:
-        en: >-
-          Scene script registration, asset profile fallbacks, narrow compatibility patches, and one-time diagnostic warnings.
-        zh-CN: >-
-          场景脚本注册、资源配置回退、窄兼容补丁以及一次性诊断警告策略
-    - title:
-        en: Documentation
-        zh-CN: 文档
-      details:
-        en: >-
-          Guides are maintained as Markdown under `docs/pages/guide/` in this repository and built with Valaxy.
-        zh-CN: >-
-          指南文档在仓库 `docs/pages/guide/` 中维护，并由 Valaxy 构建为站点
+        en: FMOD helpers, top-bar buttons, card piles, toast messages, runtime hotkeys, and shell themes.
+        zh-CN: FMOD 辅助、顶栏按钮、卡堆、Toast、运行时快捷键与 Shell 主题。
 ---

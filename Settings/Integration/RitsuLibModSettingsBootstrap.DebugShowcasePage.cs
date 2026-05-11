@@ -5,6 +5,21 @@ namespace STS2RitsuLib.Settings
 {
     internal static partial class RitsuLibModSettingsBootstrap
     {
+        private static readonly ModSettingsChoiceOption<string>[] ShowcaseThousandItemDropdownOptions =
+            CreateShowcaseThousandItemDropdownOptions();
+
+        private static ModSettingsChoiceOption<string>[] CreateShowcaseThousandItemDropdownOptions()
+        {
+            var arr = new ModSettingsChoiceOption<string>[1000];
+            for (var i = 0; i < arr.Length; i++)
+            {
+                var n = i + 1;
+                arr[i] = new($"preview_dd_{i}", ModSettingsText.Literal($"Large list item {n}"));
+            }
+
+            return arr;
+        }
+
         private static void RegisterDebugShowcasePage(RitsuLibModSettingsUiBindings ui)
         {
             RitsuLibFramework.RegisterModSettings(
@@ -120,15 +135,11 @@ namespace STS2RitsuLib.Settings
                             T("ritsulib.showcase.choiceDropdown.label", "Preview choice (dropdown)"),
                             new ModSettingsDebugShowcaseBinding<string>(ui.PreviewChoiceDropdown,
                                 value => ui.DebugShowcase.ChoiceDropdownValue = value),
-                            [
-                                new("compact", T("ritsulib.showcase.choice.compact", "Compact")),
-                                new("balanced", T("ritsulib.showcase.choice.balanced", "Balanced")),
-                                new("wide", T("ritsulib.showcase.choice.wide", "Wide")),
-                            ],
+                            ShowcaseThousandItemDropdownOptions,
                             ModSettingsText.Dynamic(() =>
                                     string.Format(
                                         L("ritsulib.showcase.choiceDropdown.description",
-                                            "Same options as the stepper control, rendered as a dropdown. Current: {0}"),
+                                            "Stress-test dropdown with 1000 dynamically generated options (virtualized). Current: {0}"),
                                         ui.DebugShowcase.ChoiceDropdownValue),
                                 ui.PreviewChoiceDropdown),
                             ModSettingsChoicePresentation.Dropdown)
@@ -244,7 +255,7 @@ namespace STS2RitsuLib.Settings
                                 ui.DebugShowcase.SliderValue = 35d;
                                 ui.DebugShowcase.IntSliderValue = 2;
                                 ui.DebugShowcase.ChoiceValue = "balanced";
-                                ui.DebugShowcase.ChoiceDropdownValue = "wide";
+                                ui.DebugShowcase.ChoiceDropdownValue = "preview_dd_0";
                                 ui.DebugShowcase.ModeValue = ModSettingsDebugShowcaseMode.Balanced;
                                 ui.DebugShowcase.ActionCount = 0;
                                 ui.DebugShowcase.ToastCount = 0;

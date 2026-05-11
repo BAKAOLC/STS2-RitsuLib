@@ -147,6 +147,19 @@ namespace STS2RitsuLib.Scaffolding.Content
     }
 
     /// <summary>
+    ///     Registers an <see cref="EpochModel" /> type into vanilla epoch discovery.
+    /// </summary>
+    public sealed class EpochPackEntry<TEpoch> : IModContentPackEntry
+        where TEpoch : EpochModel, new()
+    {
+        /// <inheritdoc />
+        public void Apply(ModContentPackContext context)
+        {
+            context.Timeline.RegisterEpoch<TEpoch>();
+        }
+    }
+
+    /// <summary>
     ///     Registers a <see cref="StoryModel" /> type into vanilla story discovery.
     /// </summary>
     public sealed class StoryPackEntry<TStory> : IModContentPackEntry
@@ -156,6 +169,20 @@ namespace STS2RitsuLib.Scaffolding.Content
         public void Apply(ModContentPackContext context)
         {
             context.Timeline.RegisterStory<TStory>();
+        }
+    }
+
+    /// <summary>
+    ///     Registers an epoch and appends it to a story column.
+    /// </summary>
+    public sealed class StoryEpochPackEntry<TStory, TEpoch> : IModContentPackEntry
+        where TStory : StoryModel, new()
+        where TEpoch : EpochModel, new()
+    {
+        /// <inheritdoc />
+        public void Apply(ModContentPackContext context)
+        {
+            context.Timeline.RegisterStoryEpoch<TStory, TEpoch>();
         }
     }
 
@@ -242,6 +269,55 @@ namespace STS2RitsuLib.Scaffolding.Content
     }
 
     /// <summary>
+    ///     <see cref="ModUnlockRegistry.UnlockEpochAfterAscensionWin{TCharacter, TEpoch}" />.
+    /// </summary>
+    public sealed class UnlockEpochAfterAscensionWinPackEntry<TCharacter, TEpoch> : IModContentPackEntry
+        where TCharacter : CharacterModel
+        where TEpoch : EpochModel, new()
+    {
+        private readonly int _ascensionLevel;
+
+        /// <summary>
+        ///     Creates a rule with the given minimum ascension level.
+        /// </summary>
+        public UnlockEpochAfterAscensionWinPackEntry(int ascensionLevel)
+        {
+            _ascensionLevel = ascensionLevel;
+        }
+
+        /// <inheritdoc />
+        public void Apply(ModContentPackContext context)
+        {
+            context.Unlocks.UnlockEpochAfterAscensionWin<TCharacter, TEpoch>(_ascensionLevel);
+        }
+    }
+
+    /// <summary>
+    ///     <see cref="ModUnlockRegistry.UnlockEpochAfterRunCount{TEpoch}" />.
+    /// </summary>
+    public sealed class UnlockEpochAfterRunCountPackEntry<TEpoch> : IModContentPackEntry
+        where TEpoch : EpochModel, new()
+    {
+        private readonly int _requiredRuns;
+        private readonly bool _requireVictory;
+
+        /// <summary>
+        ///     Creates a rule with the given run threshold.
+        /// </summary>
+        public UnlockEpochAfterRunCountPackEntry(int requiredRuns, bool requireVictory = false)
+        {
+            _requiredRuns = requiredRuns;
+            _requireVictory = requireVictory;
+        }
+
+        /// <inheritdoc />
+        public void Apply(ModContentPackContext context)
+        {
+            context.Unlocks.UnlockEpochAfterRunCount<TEpoch>(_requiredRuns, _requireVictory);
+        }
+    }
+
+    /// <summary>
     ///     <see cref="ModUnlockRegistry.UnlockEpochAfterEliteVictories{TCharacter, TEpoch}" />.
     /// </summary>
     public sealed class UnlockEpochAfterEliteVictoriesPackEntry<TCharacter, TEpoch> : IModContentPackEntry
@@ -314,6 +390,20 @@ namespace STS2RitsuLib.Scaffolding.Content
         public void Apply(ModContentPackContext context)
         {
             context.Unlocks.RevealAscensionAfterEpoch<TCharacter, TEpoch>();
+        }
+    }
+
+    /// <summary>
+    ///     <see cref="ModUnlockRegistry.UnlockCharacterAfterRunAs{TCharacter, TEpoch}" />.
+    /// </summary>
+    public sealed class UnlockCharacterAfterRunAsPackEntry<TCharacter, TEpoch> : IModContentPackEntry
+        where TCharacter : CharacterModel
+        where TEpoch : EpochModel, new()
+    {
+        /// <inheritdoc />
+        public void Apply(ModContentPackContext context)
+        {
+            context.Unlocks.UnlockCharacterAfterRunAs<TCharacter, TEpoch>();
         }
     }
 }

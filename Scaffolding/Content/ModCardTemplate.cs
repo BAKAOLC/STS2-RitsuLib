@@ -2,9 +2,6 @@ using Godot;
 using MegaCrit.Sts2.Core.Entities.Cards;
 using MegaCrit.Sts2.Core.HoverTips;
 using MegaCrit.Sts2.Core.Models;
-using STS2RitsuLib.CardTags;
-using STS2RitsuLib.Content;
-using STS2RitsuLib.Keywords;
 using STS2RitsuLib.Scaffolding.Cards.HandGlow;
 using STS2RitsuLib.Scaffolding.Cards.HandOutline;
 using STS2RitsuLib.Scaffolding.Content.Patches;
@@ -43,21 +40,21 @@ namespace STS2RitsuLib.Scaffolding.Content
         }
 
         /// <summary>
-        ///     Mod keyword ids seeded onto every instance of this card on first <see cref="CardModel.Keywords" />
+        ///     Keyword declarations seeded onto every instance of this card on first <see cref="CardModel.Keywords" />
         ///     access. Intentionally kept as a separate channel from vanilla
         ///     <see cref="CardModel.CanonicalKeywords" /> so derived mods can still override
         ///     <c>CanonicalKeywords</c> for vanilla keywords without accidentally dropping their mod keyword
-        ///     declarations. Each id is resolved to its pre-minted <see cref="CardKeyword" /> via
-        ///     <see cref="ModKeywordRegistry" /> and unioned into <c>CardModel.Keywords</c> right after the vanilla
-        ///     canonical seed runs, so runtime additions/removals and <c>DeepCloneFields</c> preserve them.
+        ///     declarations. Each string resolves as a registered mod keyword id first, then as a vanilla
+        ///     <see cref="CardKeyword" /> enum name, and is unioned into <c>CardModel.Keywords</c> right after the
+        ///     vanilla canonical seed runs, so runtime additions/removals and <c>DeepCloneFields</c> preserve them.
         /// </summary>
         protected virtual IEnumerable<string> RegisteredKeywordIds => [];
 
         /// <summary>
-        ///     Mod card tag ids (qualified via <see cref="ModContentRegistry.GetQualifiedCardTagId" /> or any id
-        ///     registered in <see cref="ModCardTagRegistry" />) seeded onto every instance when
-        ///     <see cref="CardModel.Tags" /> is first materialized. Each id resolves to a minted
-        ///     <see cref="CardTag" /> and is unioned into the same backing set as <see cref="CardModel.CanonicalTags" />.
+        ///     Card tag declarations seeded onto every instance when <see cref="CardModel.Tags" /> is first
+        ///     materialized. Each string resolves as a registered mod card-tag id first, then as a vanilla
+        ///     <see cref="CardTag" /> enum name, and is unioned into the same backing set as
+        ///     <see cref="CardModel.CanonicalTags" />.
         /// </summary>
         protected virtual IEnumerable<string> RegisteredCardTagIds => [];
 
