@@ -1039,7 +1039,7 @@ namespace STS2RitsuLib.Settings
                 FocusMode = FocusModeEnum.None,
             };
             _sidebarScrollContainer = scroll;
-            ApplyScrollContainerTheme(scroll);
+            ModSettingsUiControlTheming.ApplySettingsScrollContainerTheme(scroll);
             root.AddChild(scroll);
 
             var sidebarScrollFrame = new MarginContainer
@@ -1105,7 +1105,7 @@ namespace STS2RitsuLib.Settings
                 FollowFocus = true,
                 FocusMode = FocusModeEnum.None,
             };
-            ApplyScrollContainerTheme(_scrollContainer);
+            ModSettingsUiControlTheming.ApplySettingsScrollContainerTheme(_scrollContainer);
             root.AddChild(_scrollContainer);
 
             var contentStack = new VBoxContainer
@@ -2520,102 +2520,17 @@ namespace STS2RitsuLib.Settings
                 _sidebarHeaderSubtitleLabel.Modulate = RitsuShellTheme.Current.Text.RichSecondary;
 
             if (_sidebarScrollContainer != null && IsInstanceValid(_sidebarScrollContainer))
-                ApplyScrollContainerTheme(_sidebarScrollContainer);
+                ModSettingsUiControlTheming.ApplySettingsScrollContainerTheme(_sidebarScrollContainer);
 
             if (_scrollContainer != null && IsInstanceValid(_scrollContainer))
-                ApplyScrollContainerTheme(_scrollContainer);
+                ModSettingsUiControlTheming.ApplySettingsScrollContainerTheme(_scrollContainer);
 
             RitsuShellTooltipTheme.ApplyToTreeRoot(this);
-        }
-
-        private static void ApplyScrollContainerTheme(ScrollContainer container)
-        {
-            if (!IsInstanceValid(container))
-                return;
-
-            var vScrollBar = container.GetVScrollBar();
-            if (!IsInstanceValid(vScrollBar))
-                return;
-
-            vScrollBar.AddThemeStyleboxOverride("scroll", CreateScrollTrackStyle());
-            vScrollBar.AddThemeStyleboxOverride("grabber", CreateScrollGrabberStyle("components.scrollbar.grabber"));
-            vScrollBar.AddThemeStyleboxOverride("grabber_highlight",
-                CreateScrollGrabberStyle("components.scrollbar.grabberHover"));
-            vScrollBar.AddThemeStyleboxOverride("grabber_pressed",
-                CreateScrollGrabberStyle("components.scrollbar.grabberPressed"));
-            var scrollSize = RitsuShellThemeLayoutResolver.ResolveInt("components.scrollbar.layout.size", 8);
-            vScrollBar.CustomMinimumSize = new(scrollSize, vScrollBar.CustomMinimumSize.Y);
         }
 
         private static int ResolveScrollbarContentRightGutter()
         {
             return RitsuShellThemeLayoutResolver.ResolveInt(ScrollbarContentRightGutterTokenPath, 12);
-        }
-
-        private static StyleBoxFlat CreateScrollTrackStyle()
-        {
-            var bg = ResolveThemeColor("components.scrollbar.track.bg", "semantic.color.surface.inset.bg",
-                RitsuShellTheme.Current.Surface.Inset.Bg);
-            var border = ResolveThemeColor("components.scrollbar.track.border", "semantic.color.surface.inset.border",
-                RitsuShellTheme.Current.Surface.Inset.Border);
-            var borderWidth =
-                RitsuShellThemeLayoutResolver.ResolveEdges("components.scrollbar.layout.track.borderWidth", 1);
-            var cornerRadii = RitsuShellThemeLayoutResolver.ResolveCornerRadii(
-                "components.scrollbar.layout.track.cornerRadius",
-                RitsuShellTheme.Current.Metric.Radius.Default);
-            var padding = RitsuShellThemeLayoutResolver.ResolveEdges("components.scrollbar.layout.track.padding", 0);
-            return new()
-            {
-                BgColor = bg,
-                BorderColor = border,
-                BorderWidthLeft = borderWidth.Left,
-                BorderWidthTop = borderWidth.Top,
-                BorderWidthRight = borderWidth.Right,
-                BorderWidthBottom = borderWidth.Bottom,
-                CornerRadiusTopLeft = cornerRadii.TopLeft,
-                CornerRadiusTopRight = cornerRadii.TopRight,
-                CornerRadiusBottomRight = cornerRadii.BottomRight,
-                CornerRadiusBottomLeft = cornerRadii.BottomLeft,
-                ContentMarginLeft = padding.Left,
-                ContentMarginTop = padding.Top,
-                ContentMarginRight = padding.Right,
-                ContentMarginBottom = padding.Bottom,
-            };
-        }
-
-        private static StyleBoxFlat CreateScrollGrabberStyle(string basePath)
-        {
-            var bg = ResolveThemeColor(basePath + ".bg", "components.chromeMenu.default.bg",
-                RitsuShellTheme.Current.Component.ChromeMenu.Default.Bg);
-            var border = ResolveThemeColor(basePath + ".border", "components.chromeMenu.default.border",
-                RitsuShellTheme.Current.Component.ChromeMenu.Default.Border);
-            var borderWidth =
-                RitsuShellThemeLayoutResolver.ResolveEdges("components.scrollbar.layout.grabber.borderWidth", 1);
-            var cornerRadii = RitsuShellThemeLayoutResolver.ResolveCornerRadii(
-                "components.scrollbar.layout.grabber.cornerRadius",
-                RitsuShellTheme.Current.Metric.Radius.Default);
-            return new()
-            {
-                BgColor = bg,
-                BorderColor = border,
-                BorderWidthLeft = borderWidth.Left,
-                BorderWidthTop = borderWidth.Top,
-                BorderWidthRight = borderWidth.Right,
-                BorderWidthBottom = borderWidth.Bottom,
-                CornerRadiusTopLeft = cornerRadii.TopLeft,
-                CornerRadiusTopRight = cornerRadii.TopRight,
-                CornerRadiusBottomRight = cornerRadii.BottomRight,
-                CornerRadiusBottomLeft = cornerRadii.BottomLeft,
-            };
-        }
-
-        private static Color ResolveThemeColor(string path, string fallbackPath, Color fallback)
-        {
-            return RitsuShellTheme.Current.TryGetColor(path, out var color)
-                ? color
-                : RitsuShellTheme.Current.TryGetColor(fallbackPath, out color)
-                    ? color
-                    : fallback;
         }
 
         private void ResetUiCachesForShellThemeChange()

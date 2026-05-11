@@ -1,7 +1,7 @@
 {
   "$schema": "https://raw.githubusercontent.com/BAKAOLC/STS2-RitsuLib/main/schemas/ui/shell/v1/schema.json",
   "themeFormatVersion": 1,
-  "themeVersion": 3,
+  "themeVersion": 4,
   "id": "default",
   "displayName": "Default",
   "inherits": null,
@@ -866,9 +866,33 @@
             }
           }
         },
+        "scroll": {
+          "barWidth": {
+            "$value": 8,
+            "$type": "dimension",
+            "$description": "Dropdown list vertical scrollbar width; fallback is components.scrollbar.layout.size."
+          },
+          "scrollbarVSeparation": {
+            "$value": 6,
+            "$type": "dimension",
+            "$description": "Pixels between dropdown list content and vertical scrollbar (ScrollContainer scrollbar_v_separation; also used when sizing rows)."
+          }
+        },
         "listSeparation": {
           "$value": 8,
           "$type": "dimension"
+        },
+        "list": {
+          "maxUniformContentWidth": {
+            "$value": 0,
+            "$type": "dimension",
+            "$description": "Hard pixel cap on uniform dropdown row width (label + row chrome). 0: derive from maxUniformContentWidthFraction only."
+          },
+          "maxUniformContentWidthFraction": {
+            "$value": 0.88,
+            "$type": "number",
+            "$description": "Upper bound as a fraction of viewport width (minus margins) for uniform row width before shell inset."
+          }
         },
         "row": {
           "hInset": {
@@ -927,7 +951,7 @@
         "panel": {
           "minSize": {
             "width": {
-              "$value": 280,
+              "$value": 200,
               "$type": "dimension"
             }
           }
@@ -2238,6 +2262,11 @@
           "$value": 12,
           "$type": "dimension"
         },
+        "scrollbarVSeparation": {
+          "$value": 0,
+          "$type": "dimension",
+          "$description": "ScrollContainer scrollbar_v_separation for settings scroll areas (0 keeps legacy layout)."
+        },
         "size": {
           "$value": 8,
           "$type": "dimension"
@@ -2257,6 +2286,11 @@
           }
         },
         "grabber": {
+          "minLength": {
+            "$value": 28,
+            "$type": "dimension",
+            "$description": "Minimum scrollbar grabber length (applied via VScrollBar theme constant overrides)."
+          },
           "borderWidth": {
             "$value": 1,
             "$type": "dimension"

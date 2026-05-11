@@ -227,7 +227,7 @@
   "ritsulib.showcase.choice.balanced": "Balanced",
   "ritsulib.showcase.choice.wide": "Wide",
   "ritsulib.showcase.choiceDropdown.label": "Preview choice (dropdown)",
-  "ritsulib.showcase.choiceDropdown.description": "Same options as the stepper control, rendered as a dropdown. Current: {0}",
+  "ritsulib.showcase.choiceDropdown.description": "Stress-test dropdown with 1000 dynamically generated options (virtualized list). Current: {0}",
   "ritsulib.showcase.mode.label": "Preview enum choice",
   "ritsulib.showcase.mode.description": "Current mode: {0}",
   "ritsulib.showcase.string.label": "Preview string field",

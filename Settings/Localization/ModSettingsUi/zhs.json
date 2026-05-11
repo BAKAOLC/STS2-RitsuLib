@@ -227,7 +227,7 @@
   "ritsulib.showcase.choice.balanced": "平衡",
   "ritsulib.showcase.choice.wide": "宽",
   "ritsulib.showcase.choiceDropdown.label": "预览选项（下拉）",
-  "ritsulib.showcase.choiceDropdown.description": "与步进控件使用相同选项，但以下拉方式呈现。当前：{0}",
+  "ritsulib.showcase.choiceDropdown.description": "含 1000 条动态生成选项的压力测试下拉（虚拟列表）。当前：{0}",
   "ritsulib.showcase.mode.label": "预览枚举选择",
   "ritsulib.showcase.mode.description": "当前模式：{0}",
   "ritsulib.showcase.string.label": "预览字符串输入",

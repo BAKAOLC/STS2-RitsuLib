@@ -377,5 +377,150 @@ namespace STS2RitsuLib.Settings
             ApplyEntryLineEditValueFieldTheme(edit, RitsuShellTheme.Current.Font.Body, fontSize);
             return edit;
         }
+
+        /// <summary>
+        ///     Applies themed scrollbar track and grabber colors to a settings
+        ///     <see cref="ScrollContainer" />, sets vertical bar width from
+        ///     <c>components.scrollbar.layout.size</c>, and applies
+        ///     <c>components.scrollbar.layout.scrollbarVSeparation</c> when supported.
+        /// </summary>
+        public static void ApplySettingsScrollContainerTheme(ScrollContainer container)
+        {
+            ApplySettingsScrollContainerThemeCore(
+                container,
+                "components.scrollbar.layout.size",
+                8,
+                "components.scrollbar.layout.scrollbarVSeparation",
+                0);
+        }
+
+        /// <summary>
+        ///     Applies the same scrollbar chrome as <see cref="ApplySettingsScrollContainerTheme" />, using
+        ///     <c>components.dropdown.layout.scroll.barWidth</c> (fallback: global scrollbar width) and
+        ///     <c>components.dropdown.layout.scroll.scrollbarVSeparation</c> (fallback: global separation).
+        /// </summary>
+        public static void ApplySettingsScrollContainerThemeForDropdownList(ScrollContainer container)
+        {
+            var globalBar = RitsuShellThemeLayoutResolver.ResolveInt("components.scrollbar.layout.size", 8);
+            var globalSep =
+                RitsuShellThemeLayoutResolver.ResolveInt("components.scrollbar.layout.scrollbarVSeparation", 0);
+            ApplySettingsScrollContainerThemeCore(
+                container,
+                "components.dropdown.layout.scroll.barWidth",
+                globalBar,
+                "components.dropdown.layout.scroll.scrollbarVSeparation",
+                globalSep);
+        }
+
+        private static void ApplySettingsScrollContainerThemeCore(ScrollContainer container,
+            string scrollBarWidthToken, int scrollBarWidthIfMissing, string scrollbarVSeparationToken,
+            int scrollbarVSeparationIfMissing)
+        {
+            if (!GodotObject.IsInstanceValid(container))
+                return;
+
+            var vScrollBar = container.GetVScrollBar();
+            if (!GodotObject.IsInstanceValid(vScrollBar))
+                return;
+
+            vScrollBar.AddThemeStyleboxOverride("scroll", CreateSettingsScrollTrackStyle());
+            vScrollBar.AddThemeStyleboxOverride("grabber",
+                CreateSettingsScrollGrabberStyle("components.scrollbar.grabber"));
+            vScrollBar.AddThemeStyleboxOverride("grabber_highlight",
+                CreateSettingsScrollGrabberStyle("components.scrollbar.grabberHover"));
+            vScrollBar.AddThemeStyleboxOverride("grabber_pressed",
+                CreateSettingsScrollGrabberStyle("components.scrollbar.grabberPressed"));
+
+            var scrollSize = RitsuShellThemeLayoutResolver.ResolveInt(scrollBarWidthToken, scrollBarWidthIfMissing);
+            vScrollBar.CustomMinimumSize = new(scrollSize, vScrollBar.CustomMinimumSize.Y);
+
+            var sep = RitsuShellThemeLayoutResolver.ResolveInt(scrollbarVSeparationToken,
+                scrollbarVSeparationIfMissing);
+            container.AddThemeConstantOverride("scrollbar_v_separation", sep);
+
+            if (!TryResolveThemeConstantInt("components.scrollbar.layout.grabber.minLength", out var minGrabberLen) ||
+                minGrabberLen <= 0) return;
+            // Some Godot versions use different constant names; set both when present.
+            vScrollBar.AddThemeConstantOverride("grabber_min_size", minGrabberLen);
+            vScrollBar.AddThemeConstantOverride("minimum_grabber_size", minGrabberLen);
+        }
+
+        private static bool TryResolveThemeConstantInt(string path, out int value)
+        {
+            if (!RitsuShellTheme.Current.TryGetNumber(path, out var n))
+            {
+                value = 0;
+                return false;
+            }
+
+            value = (int)Math.Round(n);
+            return true;
+        }
+
+        private static Color ResolveSettingsScrollThemeColor(string path, string fallbackPath, Color fallback)
+        {
+            return RitsuShellTheme.Current.TryGetColor(path, out var color)
+                ? color
+                : RitsuShellTheme.Current.TryGetColor(fallbackPath, out color)
+                    ? color
+                    : fallback;
+        }
+
+        private static StyleBoxFlat CreateSettingsScrollTrackStyle()
+        {
+            var bg = ResolveSettingsScrollThemeColor("components.scrollbar.track.bg",
+                "semantic.color.surface.inset.bg", RitsuShellTheme.Current.Surface.Inset.Bg);
+            var border = ResolveSettingsScrollThemeColor("components.scrollbar.track.border",
+                "semantic.color.surface.inset.border", RitsuShellTheme.Current.Surface.Inset.Border);
+            var borderWidth =
+                RitsuShellThemeLayoutResolver.ResolveEdges("components.scrollbar.layout.track.borderWidth", 1);
+            var cornerRadii = RitsuShellThemeLayoutResolver.ResolveCornerRadii(
+                "components.scrollbar.layout.track.cornerRadius",
+                RitsuShellTheme.Current.Metric.Radius.Default);
+            var padding = RitsuShellThemeLayoutResolver.ResolveEdges("components.scrollbar.layout.track.padding", 0);
+            return new()
+            {
+                BgColor = bg,
+                BorderColor = border,
+                BorderWidthLeft = borderWidth.Left,
+                BorderWidthTop = borderWidth.Top,
+                BorderWidthRight = borderWidth.Right,
+                BorderWidthBottom = borderWidth.Bottom,
+                CornerRadiusTopLeft = cornerRadii.TopLeft,
+                CornerRadiusTopRight = cornerRadii.TopRight,
+                CornerRadiusBottomRight = cornerRadii.BottomRight,
+                CornerRadiusBottomLeft = cornerRadii.BottomLeft,
+                ContentMarginLeft = padding.Left,
+                ContentMarginTop = padding.Top,
+                ContentMarginRight = padding.Right,
+                ContentMarginBottom = padding.Bottom,
+            };
+        }
+
+        private static StyleBoxFlat CreateSettingsScrollGrabberStyle(string basePath)
+        {
+            var bg = ResolveSettingsScrollThemeColor(basePath + ".bg", "components.chromeMenu.default.bg",
+                RitsuShellTheme.Current.Component.ChromeMenu.Default.Bg);
+            var border = ResolveSettingsScrollThemeColor(basePath + ".border", "components.chromeMenu.default.border",
+                RitsuShellTheme.Current.Component.ChromeMenu.Default.Border);
+            var borderWidth =
+                RitsuShellThemeLayoutResolver.ResolveEdges("components.scrollbar.layout.grabber.borderWidth", 1);
+            var cornerRadii = RitsuShellThemeLayoutResolver.ResolveCornerRadii(
+                "components.scrollbar.layout.grabber.cornerRadius",
+                RitsuShellTheme.Current.Metric.Radius.Default);
+            return new()
+            {
+                BgColor = bg,
+                BorderColor = border,
+                BorderWidthLeft = borderWidth.Left,
+                BorderWidthTop = borderWidth.Top,
+                BorderWidthRight = borderWidth.Right,
+                BorderWidthBottom = borderWidth.Bottom,
+                CornerRadiusTopLeft = cornerRadii.TopLeft,
+                CornerRadiusTopRight = cornerRadii.TopRight,
+                CornerRadiusBottomRight = cornerRadii.BottomRight,
+                CornerRadiusBottomLeft = cornerRadii.BottomLeft,
+            };
+        }
     }
 }

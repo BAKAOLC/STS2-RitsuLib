@@ -26,7 +26,7 @@ namespace STS2RitsuLib.Settings
         public double SliderValue { get; set; } = 35d;
         public int IntSliderValue { get; set; } = 2;
         public string ChoiceValue { get; set; } = "balanced";
-        public string ChoiceDropdownValue { get; set; } = "wide";
+        public string ChoiceDropdownValue { get; set; } = "preview_dd_0";
         public ModSettingsDebugShowcaseMode ModeValue { get; set; } = ModSettingsDebugShowcaseMode.Balanced;
         public string StringValue { get; set; } = "Single line";
         public string StringMultiValue { get; set; } = "First line\nSecond line";
