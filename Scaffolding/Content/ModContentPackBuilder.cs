@@ -2,17 +2,20 @@ using MegaCrit.Sts2.Core.Entities.Cards;
 using MegaCrit.Sts2.Core.Helpers;
 using MegaCrit.Sts2.Core.Models;
 using MegaCrit.Sts2.Core.Timeline;
+using SmartFormat.Core.Extensions;
 using STS2RitsuLib.CardPiles;
 using STS2RitsuLib.CardTags;
 using STS2RitsuLib.Combat.HealthBars;
 using STS2RitsuLib.Content;
 using STS2RitsuLib.Keywords;
+using STS2RitsuLib.Localization.SmartFormat;
 using STS2RitsuLib.Scaffolding.Ancients.Options;
 using STS2RitsuLib.Scaffolding.Cards.HandGlow;
 using STS2RitsuLib.Scaffolding.Cards.HandOutline;
 using STS2RitsuLib.Scaffolding.Characters;
 using STS2RitsuLib.Timeline;
 using STS2RitsuLib.Timeline.Scaffolding;
+using STS2RitsuLib.TopBar;
 using STS2RitsuLib.Unlocks;
 
 namespace STS2RitsuLib.Scaffolding.Content
@@ -80,6 +83,18 @@ namespace STS2RitsuLib.Scaffolding.Content
         ///     <c>ModCardPileRegistry.For(ModId)</c> and <c>RitsuLibFramework.GetCardPileRegistry</c>.
         /// </summary>
         public ModCardPileRegistry CardPiles => ModCardPileRegistry.For(ModId);
+
+        /// <summary>
+        ///     SmartFormat extension surface for <see cref="ModId" />; same singleton as
+        ///     <c>ModSmartFormatExtensionRegistry.For(ModId)</c> and <c>RitsuLibFramework.GetSmartFormatRegistry</c>.
+        /// </summary>
+        public ModSmartFormatExtensionRegistry SmartFormat => ModSmartFormatExtensionRegistry.For(ModId);
+
+        /// <summary>
+        ///     Top-bar button surface for <see cref="ModId" />; same singleton as
+        ///     <c>ModTopBarButtonRegistry.For(ModId)</c> and <c>RitsuLibFramework.GetTopBarButtonRegistry</c>.
+        /// </summary>
+        public ModTopBarButtonRegistry TopBarButtons => ModTopBarButtonRegistry.For(ModId);
     }
 
     /// <summary>
@@ -603,6 +618,40 @@ namespace STS2RitsuLib.Scaffolding.Content
         }
 
         /// <summary>
+        ///     Queues <see cref="ModSmartFormatExtensionRegistry.Register{TFormatter}" />.
+        /// </summary>
+        public ModContentPackBuilder SmartFormatter<TFormatter>(int order = 0)
+            where TFormatter : IFormatter, new()
+        {
+            return AddStep(ctx => ctx.SmartFormat.Register<TFormatter>(order));
+        }
+
+        /// <summary>
+        ///     Queues <see cref="ModSmartFormatExtensionRegistry.RegisterFormatterType" />.
+        /// </summary>
+        public ModContentPackBuilder SmartFormatter(Type formatterType, int order = 0)
+        {
+            return AddStep(ctx => ctx.SmartFormat.RegisterFormatterType(formatterType, order));
+        }
+
+        /// <summary>
+        ///     Queues <see cref="ModSmartFormatExtensionRegistry.RegisterSource{TSource}" />.
+        /// </summary>
+        public ModContentPackBuilder SmartFormatSource<TSource>(int order = 0)
+            where TSource : ISource, new()
+        {
+            return AddStep(ctx => ctx.SmartFormat.RegisterSource<TSource>(order));
+        }
+
+        /// <summary>
+        ///     Queues <see cref="ModSmartFormatExtensionRegistry.RegisterSourceType" />.
+        /// </summary>
+        public ModContentPackBuilder SmartFormatSource(Type sourceType, int order = 0)
+        {
+            return AddStep(ctx => ctx.SmartFormat.RegisterSourceType(sourceType, order));
+        }
+
+        /// <summary>
         ///     Queues <c>ModKeywordRegistry.RegisterCardKeywordOwnedByLocNamespace</c> (qualified id for both
         ///     keyword id and <c>card_keywords</c> <c>{id}.title</c> / <c>.description</c> keys).
         /// </summary>
@@ -1117,6 +1166,44 @@ namespace STS2RitsuLib.Scaffolding.Content
         }
 
         /// <summary>
+        ///     Queues <see cref="ModTopBarButtonRegistry.RegisterOwned" /> for a local stem under this pack’s mod id.
+        /// </summary>
+        public ModContentPackBuilder TopBarButtonOwned(string localButtonStem, ModTopBarButtonSpec spec)
+        {
+            return AddStep(ctx => ctx.TopBarButtons.RegisterOwned(localButtonStem, spec));
+        }
+
+        /// <summary>
+        ///     Appends a <see cref="TopBarButtonRegistrationEntry" /> registration step.
+        /// </summary>
+        public ModContentPackBuilder TopBarButton(TopBarButtonRegistrationEntry entry)
+        {
+            ArgumentNullException.ThrowIfNull(entry);
+            return AddStep(ctx => entry.Register(ctx.TopBarButtons));
+        }
+
+        /// <summary>
+        ///     Queues <see cref="ModTopBarButtonRegistry.Register" /> for a raw global id.
+        /// </summary>
+        public ModContentPackBuilder TopBarButton(string id, ModTopBarButtonSpec spec)
+        {
+            return AddStep(ctx => ctx.TopBarButtons.Register(id, spec));
+        }
+
+        /// <summary>
+        ///     Appends each top-bar-button registration entry in order.
+        /// </summary>
+        public ModContentPackBuilder TopBarButtons(IEnumerable<TopBarButtonRegistrationEntry> entries)
+        {
+            ArgumentNullException.ThrowIfNull(entries);
+
+            foreach (var entry in entries)
+                TopBarButton(entry);
+
+            return this;
+        }
+
+        /// <summary>
         ///     Registers <see cref="ModContentRegistry" /> entries (character, cards, relics, powers, …).
         /// </summary>
         public ModContentPackBuilder ContentManifest(IEnumerable<IContentRegistrationEntry>? entries)
@@ -1146,6 +1233,14 @@ namespace STS2RitsuLib.Scaffolding.Content
         public ModContentPackBuilder CardPileManifest(IEnumerable<CardPileRegistrationEntry>? entries)
         {
             return entries != null ? CardPiles(entries) : this;
+        }
+
+        /// <summary>
+        ///     Registers <see cref="ModTopBarButtonRegistry" /> entries.
+        /// </summary>
+        public ModContentPackBuilder TopBarButtonManifest(IEnumerable<TopBarButtonRegistrationEntry>? entries)
+        {
+            return entries != null ? TopBarButtons(entries) : this;
         }
 
         /// <summary>

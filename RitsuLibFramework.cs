@@ -27,6 +27,7 @@ using STS2RitsuLib.Scaffolding.Content;
 using STS2RitsuLib.Settings;
 using STS2RitsuLib.Settings.RunSidecar;
 using STS2RitsuLib.Timeline;
+using STS2RitsuLib.TopBar;
 using STS2RitsuLib.Ui.Toast;
 using STS2RitsuLib.Unlocks;
 using STS2RitsuLib.Utils;
@@ -452,6 +453,14 @@ namespace STS2RitsuLib
         public static ModCardPileRegistry GetCardPileRegistry(string modId)
         {
             return ModCardPileRegistry.For(modId);
+        }
+
+        /// <summary>
+        ///     Returns the top-bar button registry for <paramref name="modId" />.
+        /// </summary>
+        public static ModTopBarButtonRegistry GetTopBarButtonRegistry(string modId)
+        {
+            return ModTopBarButtonRegistry.For(modId);
         }
 
         /// <summary>
