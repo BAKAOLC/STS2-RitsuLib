@@ -15,6 +15,7 @@ using STS2RitsuLib.Lifecycle.Patches;
 using STS2RitsuLib.Localization.Patches;
 using STS2RitsuLib.Networking.Sidecar.Patches;
 using STS2RitsuLib.Patching.Core;
+using STS2RitsuLib.Platform;
 using STS2RitsuLib.Relics.Patches;
 using STS2RitsuLib.Scaffolding.Cards.HandGlow.Patches;
 using STS2RitsuLib.Scaffolding.Cards.HandOutline.Patches;
@@ -105,6 +106,8 @@ namespace STS2RitsuLib
             patcher.RegisterPatch<RitsuLibSidecarNetHostReceivePatch>();
             patcher.RegisterPatch<RitsuLibSidecarNetClientReceivePatch>();
             patcher.RegisterPatch<RitsuLibSidecarNativeTrailerSendPatch>();
+            if (!RitsuLibMobileSteamRuntime.SuppressNativeSteamIntegration)
+                patcher.RegisterPatch<RitsuLibSidecarNativeTrailerSteamSendPatch>();
             patcher.RegisterPatch<RitsuLibSidecarLobbyHelloPatch>();
             patcher.RegisterPatch<RitsuLibSidecarStartRunLobbyHostClientConnectedPatch>();
             patcher.RegisterPatch<RitsuLibSidecarStartRunLobbyHostClientDisconnectedPatch>();

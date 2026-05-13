@@ -4,6 +4,7 @@ using MegaCrit.Sts2.Core.Platform.Steam;
 using MegaCrit.Sts2.Core.Saves;
 using Steamworks;
 using STS2RitsuLib.Data;
+using STS2RitsuLib.Platform;
 using STS2RitsuLib.Settings.RunSidecar;
 
 namespace STS2RitsuLib.Utils.Persistence
@@ -14,6 +15,9 @@ namespace STS2RitsuLib.Utils.Persistence
         private const int SteamRemoteScanYieldEvery = 32;
         private const int LocalPathCollectYieldEvery = 64;
         private static FieldInfo? _saveStoreField;
+
+        private static bool MayEnumerateSteamRemoteStorage =>
+            !RitsuLibMobileSteamRuntime.SuppressNativeSteamIntegration && SteamInitializer.Initialized;
 
         internal static CloudSaveStore? TryGetCloudSaveStore()
         {
@@ -33,6 +37,8 @@ namespace STS2RitsuLib.Utils.Persistence
         internal static bool ShouldRunCloudMirror()
         {
             if (!RitsuLibSettingsStore.IsSyncModDataToCloudEnabled())
+                return false;
+            if (RitsuLibMobileSteamRuntime.SuppressNativeSteamIntegration)
                 return false;
             if (!SteamInitializer.Initialized)
                 return false;
@@ -321,10 +327,16 @@ namespace STS2RitsuLib.Utils.Persistence
 
         internal static void ScheduleDeleteCloudModDataForProfile(int profileId)
         {
-            if (!SteamInitializer.Initialized)
+            if (TryGetCloudSaveStore() == null)
                 return;
 
-            if (TryGetCloudSaveStore() == null)
+            if (RitsuLibMobileSteamRuntime.SuppressNativeSteamIntegration)
+            {
+                Callable.From(() => { _ = DeleteCloudModDataForProfileAsync(profileId); }).CallDeferred();
+                return;
+            }
+
+            if (!SteamInitializer.Initialized)
                 return;
 
             Callable.From(() => { _ = DeleteCloudModDataForProfileAsync(profileId); }).CallDeferred();
@@ -339,11 +351,29 @@ namespace STS2RitsuLib.Utils.Persistence
             if (cloud == null)
                 return;
 
-            if (!SteamInitializer.Initialized)
-                return;
-
             var exact = new HashSet<string>(StringComparer.Ordinal);
             ModCloudSyncPathRegistry.CollectProfileScopedRegisteredRelativePaths(profileId, exact);
+
+            if (RitsuLibMobileSteamRuntime.SuppressNativeSteamIntegration)
+            {
+                foreach (var path in exact)
+                    try
+                    {
+                        if (!cloud.CloudStore.FileExists(path))
+                            continue;
+                        cloud.CloudStore.DeleteFile(path);
+                    }
+                    catch (Exception ex)
+                    {
+                        RitsuLibFramework.Logger.Warn(
+                            $"[ModCloud] delete cloud '{path}' (registered paths only): {ex.Message}");
+                    }
+
+                return;
+            }
+
+            if (!SteamInitializer.Initialized)
+                return;
 
             string? sidecarPrefix = null;
             var profileBase = ProfileManager.GetBasePath(SaveScope.Profile, profileId);
@@ -390,7 +420,7 @@ namespace STS2RitsuLib.Utils.Persistence
             CancellationToken ct = default)
         {
             var set = new HashSet<string>(StringComparer.Ordinal);
-            if (!SteamInitializer.Initialized)
+            if (!MayEnumerateSteamRemoteStorage)
                 return [];
 
             var n = SteamRemoteStorage.GetFileCount();

@@ -1,6 +1,7 @@
 using MegaCrit.Sts2.Core.Platform.Steam;
 using STS2RitsuLib.Data;
 using STS2RitsuLib.Diagnostics;
+using STS2RitsuLib.Platform;
 using STS2RitsuLib.Ui.Shell.Theme;
 using STS2RitsuLib.Utils.Persistence;
 
@@ -156,7 +157,9 @@ namespace STS2RitsuLib.Settings
                 .AddSection("steam_cloud_mod_data", section => section
                     .WithTitle(T("ritsulib.section.steamCloudModData.title", "Steam Cloud (mod data)"))
                     .WithEnabledWhen(() =>
-                        SteamInitializer.Initialized && ModDataCloudMirror.TryGetCloudSaveStore() != null)
+                        !RitsuLibMobileSteamRuntime.SuppressNativeSteamIntegration &&
+                        SteamInitializer.Initialized &&
+                        ModDataCloudMirror.TryGetCloudSaveStore() != null)
                     .Collapsible()
                     .AddToggle(
                         "sync_mod_data_to_steam_cloud",

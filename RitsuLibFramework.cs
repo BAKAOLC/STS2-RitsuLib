@@ -21,6 +21,7 @@ using STS2RitsuLib.Keywords;
 using STS2RitsuLib.Localization;
 using STS2RitsuLib.Localization.SmartFormat;
 using STS2RitsuLib.Patching.Core;
+using STS2RitsuLib.Platform;
 using STS2RitsuLib.RuntimeInput;
 using STS2RitsuLib.Scaffolding.Ancients.Options;
 using STS2RitsuLib.Scaffolding.Content;
@@ -305,6 +306,7 @@ namespace STS2RitsuLib
                 Logger.Info($"Framework Name: {Const.Name}");
                 Logger.Info(BuildVersionLogText());
                 Logger.Info("Initializing shared framework...");
+                RitsuLibMobileSteamRuntime.LogSuppressedSteamFeaturesAtStartup();
                 ModTypeDiscoveryHub.EnsureBuiltInContributorsRegistered();
                 RitsuLibSettingsStore.Initialize();
                 RitsuLibModSettingsBootstrap.Initialize();

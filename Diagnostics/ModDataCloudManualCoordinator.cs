@@ -1,6 +1,7 @@
 using Godot;
 using MegaCrit.Sts2.Core.Nodes;
 using MegaCrit.Sts2.Core.Platform.Steam;
+using STS2RitsuLib.Platform;
 using STS2RitsuLib.Settings;
 using STS2RitsuLib.Utils.Persistence;
 
@@ -10,13 +11,16 @@ namespace STS2RitsuLib.Diagnostics
     {
         private static int _manualCloudBusy;
 
+        private static bool IsSteamBackedModCloudSession =>
+            !RitsuLibMobileSteamRuntime.SuppressNativeSteamIntegration && SteamInitializer.Initialized;
+
         internal static void TryManualPushFromSettings()
         {
             var title = ModSettingsLocalization.Get(
                 "ritsulib.modCloud.prompt.title",
                 "Mod data (Steam Cloud)");
 
-            if (!SteamInitializer.Initialized)
+            if (!IsSteamBackedModCloudSession)
             {
                 ShowPrompt(title,
                     ModSettingsLocalization.Get(
@@ -62,7 +66,7 @@ namespace STS2RitsuLib.Diagnostics
                 "ritsulib.modCloud.prompt.title",
                 "Mod data (Steam Cloud)");
 
-            if (!SteamInitializer.Initialized)
+            if (!IsSteamBackedModCloudSession)
             {
                 ShowPrompt(title,
                     ModSettingsLocalization.Get(
@@ -112,7 +116,7 @@ namespace STS2RitsuLib.Diagnostics
                 "ritsulib.modCloud.prompt.title",
                 "Mod data (Steam Cloud)");
 
-            if (!SteamInitializer.Initialized)
+            if (!IsSteamBackedModCloudSession)
             {
                 ShowPrompt(title,
                     ModSettingsLocalization.Get(
@@ -195,7 +199,7 @@ namespace STS2RitsuLib.Diagnostics
                     return;
                 }
 
-                if (!SteamInitializer.Initialized)
+                if (!IsSteamBackedModCloudSession)
                 {
                     ShowPrompt(title,
                         ModSettingsLocalization.Get(
@@ -290,6 +294,15 @@ namespace STS2RitsuLib.Diagnostics
                     return;
                 }
 
+                if (!IsSteamBackedModCloudSession)
+                {
+                    ShowPrompt(title,
+                        ModSettingsLocalization.Get(
+                            "ritsulib.modCloud.unavailableSteam",
+                            "Steam is not active. Run the game through Steam with cloud saves enabled."));
+                    return;
+                }
+
                 try
                 {
                     ProfileManager.Instance.RefreshCurrentProfile();
@@ -380,6 +393,15 @@ namespace STS2RitsuLib.Diagnostics
                         ModSettingsLocalization.Get(
                             "ritsulib.modCloud.unavailableStore",
                             "Steam Cloud is not active for this session (same requirement as vanilla cloud saves)."));
+                    return;
+                }
+
+                if (!IsSteamBackedModCloudSession)
+                {
+                    ShowPrompt(title,
+                        ModSettingsLocalization.Get(
+                            "ritsulib.modCloud.unavailableSteam",
+                            "Steam is not active. Run the game through Steam with cloud saves enabled."));
                     return;
                 }
 

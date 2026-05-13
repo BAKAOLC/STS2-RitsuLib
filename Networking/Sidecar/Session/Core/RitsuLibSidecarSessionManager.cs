@@ -1,5 +1,6 @@
 using MegaCrit.Sts2.Core.Multiplayer;
 using MegaCrit.Sts2.Core.Multiplayer.Game;
+using STS2RitsuLib.Platform;
 
 namespace STS2RitsuLib.Networking.Sidecar
 {
@@ -65,7 +66,8 @@ namespace STS2RitsuLib.Networking.Sidecar
 
                 ValidationRoutes.Add(new RitsuLibSidecarManualHintValidationRoute());
                 ValidationRoutes.Add(new RitsuLibSidecarNativeTrailerValidationRoute());
-                ValidationRoutes.Add(new RitsuLibSidecarSteamLobbyValidationRoute());
+                if (!RitsuLibMobileSteamRuntime.SuppressNativeSteamIntegration)
+                    ValidationRoutes.Add(new RitsuLibSidecarSteamLobbyValidationRoute());
                 _providerBootstrapped = true;
             }
         }
