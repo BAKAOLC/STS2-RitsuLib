@@ -1,0 +1,52 @@
+# Controlled CI build: manual ref builds and maintainer-approved PR builds.
+name: Build
+
+on:
+  workflow_dispatch:
+    inputs:
+      ref:
+        description: "Branch, tag, or commit SHA to build. Empty uses the selected workflow ref."
+        required: false
+        default: ""
+      use-dev-version:
+        description: "Use unique dev package version 9999.0.0-dev.<run>+<sha>."
+        required: false
+        type: boolean
+        default: true
+  pull_request:
+    branches: [main, dev]
+    types: [labeled]
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ritsulib-build-${{ github.event_name }}-${{ github.event.pull_request.number || inputs.ref || github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  build:
+    name: Build artifacts
+    if: ${{ github.event_name == 'workflow_dispatch' || github.event.label.name == 'ci/build' }}
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          fetch-depth: 1
+          persist-credentials: false
+          repository: ${{ github.event_name == 'pull_request' && github.event.pull_request.head.repo.full_name || github.repository }}
+          ref: ${{ github.event_name == 'pull_request' && github.event.pull_request.head.sha || inputs.ref || github.ref }}
+
+      - name: Checkout API signatures (shallow)
+        uses: actions/checkout@v6
+        with:
+          repository: BAKAOLC/STS2-API-Signatures
+          path: sts2-api-signatures
+          fetch-depth: 1
+          persist-credentials: false
+          token: ${{ github.token }}
+
+      - uses: ./.github/actions/ritsulib-build
+        with:
+          signatures-root: ${{ github.workspace }}/sts2-api-signatures
+          use-dev-version: ${{ github.event_name == 'pull_request' || inputs.use-dev-version }}
