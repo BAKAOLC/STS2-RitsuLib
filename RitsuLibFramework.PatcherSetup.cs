@@ -186,6 +186,7 @@ namespace STS2RitsuLib
             patcher.RegisterPatch<ModCardPileGetTargetPositionPatch>();
             patcher.RegisterPatch<ModCardPileShuffleVfxStartPositionPatch>();
             patcher.RegisterPatch<ModCardPileAllPilesPatch>();
+            patcher.RegisterPatch<ModCardPilePlayerPilesPatch>();
             patcher.RegisterPatch<ModCardPileFindOnTablePatch>();
             patcher.RegisterPatch<ModCardPileCombatPilesContainerReadyPatch>();
             patcher.RegisterPatch<ModCardPileCombatPilesContainerInitializePatch>();

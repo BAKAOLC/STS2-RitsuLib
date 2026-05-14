@@ -13,12 +13,11 @@ namespace STS2RitsuLib.CardPiles
     ///     </para>
     ///     <para>
     ///         <see cref="RunPersistent" /> piles live on <c>Player</c> and persist across combats (much like
-    ///         <c>Player.Deck</c>). The first release stores them identically to combat piles but does not yet
-    ///         participate in <c>AllPiles</c>; treat persistence as best-effort until explicit serialization
-    ///         support is added.
+    ///         <c>Player.Deck</c>). They participate in <c>Player.Piles</c> after they have been resolved, but
+    ///         persistence remains best-effort until explicit serialization support is added.
     ///         <c>RunPersistent</c> pile 存在于 <c>Player</c> 上并跨战斗保留（很像 <c>Player.Deck</c>）。
-    ///         第一版会以与 combat pile 相同的方式存储它们，但尚未参与 <c>AllPiles</c>；在显式序列化支持加入前，
-    ///         请将 persistence 视为 best-effort。
+    ///         它们在解析后会参与 <c>Player.Piles</c>；在显式序列化支持加入前，
+    ///         persistence 仍视为 best-effort。
     ///     </para>
     /// </remarks>
     public enum ModCardPileScope

@@ -680,10 +680,10 @@ namespace STS2RitsuLib.CardPiles.Nodes
             if (_pile == null || Definition == null)
                 return;
 
+            _pile.ContentsChanged += OnPileContentsChanged;
             _pile.CardAddFinished += OnCardAddFinished;
             _pile.CardRemoveFinished += OnCardRemoveFinished;
-            _currentCount = _pile.Cards.Count;
-            _countLabel.SetTextAutoSize(_currentCount.ToString());
+            RefreshPileCount();
             _hoverTip = ModCardPileHoverTipFactory.Create(Definition);
         }
 
@@ -823,12 +823,18 @@ namespace STS2RitsuLib.CardPiles.Nodes
             if (_pile == null)
                 return;
 
+            _pile.ContentsChanged -= OnPileContentsChanged;
             _pile.CardAddFinished -= OnCardAddFinished;
             _pile.CardRemoveFinished -= OnCardRemoveFinished;
             _pile = null;
         }
 
-        private void OnCardAddFinished()
+        private void OnPileContentsChanged()
+        {
+            RefreshPileCount();
+        }
+
+        private void RefreshPileCount()
         {
             if (_pile == null)
                 return;
@@ -836,6 +842,14 @@ namespace STS2RitsuLib.CardPiles.Nodes
             _currentCount = _pile.Cards.Count;
             _countLabel.SetTextAutoSize(_currentCount.ToString());
             _countLabel.PivotOffset = _countLabel.Size * 0.5f;
+        }
+
+        private void OnCardAddFinished()
+        {
+            if (_pile == null)
+                return;
+
+            RefreshPileCount();
             _bumpTween?.Kill();
             _bumpTween = CreateTween().SetParallel();
             _icon.Scale = _pileHoverScale;
@@ -852,9 +866,8 @@ namespace STS2RitsuLib.CardPiles.Nodes
         {
             if (_pile == null)
                 return;
-            _currentCount = _pile.Cards.Count;
-            _countLabel.SetTextAutoSize(_currentCount.ToString());
-            _countLabel.PivotOffset = _countLabel.Size * 0.5f;
+
+            RefreshPileCount();
         }
 
         private void OnMouseEntered()
