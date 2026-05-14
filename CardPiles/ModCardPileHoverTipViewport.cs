@@ -9,6 +9,10 @@ namespace STS2RitsuLib.CardPiles
     ///     <c>HoverTipAlignment.None</c> set <see cref="Control.GlobalPosition" /> manually and never run
     ///     <c>NHoverTipSet.SetAlignment</c>, so they do not get <c>CorrectVerticalOverflow</c> /
     ///     <c>CorrectHorizontalOverflow</c>; this helper reproduces that containment for mod pile buttons.
+    ///     将 <see cref="NHoverTipSet" /> 左上角 clamp 到可见 viewport 内。使用
+    ///     <c>HoverTipAlignment.None</c> 的原版牌堆 tip 会手动设置 <see cref="Control.GlobalPosition" />，
+    ///     不会运行 <c>NHoverTipSet.SetAlignment</c>，因此也不会得到 <c>CorrectVerticalOverflow</c> /
+    ///     <c>CorrectHorizontalOverflow</c>；此 helper 为 mod 牌堆按钮复现该 containment。
     /// </summary>
     public static class ModCardPileHoverTipViewport
     {
@@ -17,6 +21,8 @@ namespace STS2RitsuLib.CardPiles
         /// <summary>
         ///     Returns <paramref name="globalTopLeft" /> nudged so the tip rect stays inside
         ///     <see cref="NGame.Instance" />'s viewport with a small margin.
+        ///     返回经过微调的 <paramref name="globalTopLeft" />，让 tip rect 以小 margin 保持在
+        ///     <see cref="NGame.Instance" /> 的 viewport 内。
         /// </summary>
         public static Vector2 ClampTipTopLeft(NHoverTipSet tipSet, Vector2 globalTopLeft)
         {

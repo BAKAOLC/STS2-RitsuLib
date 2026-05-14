@@ -6,6 +6,8 @@ namespace STS2RitsuLib.Scaffolding.Visuals.StateMachine.Backends
     /// <summary>
     ///     <see cref="IAnimationBackend" /> driver for cue-based visuals backed by
     ///     <see cref="VisualCueSet" /> (static textures and/or <see cref="VisualFrameSequence" />).
+    ///     用于 cue 视觉的 <see cref="IAnimationBackend" /> 驱动器，底层由
+    ///     <see cref="VisualCueSet" /> 支持（静态纹理和/或 <see cref="VisualFrameSequence" />）。
     /// </summary>
     /// <remarks>
     ///     <para>
@@ -17,6 +19,16 @@ namespace STS2RitsuLib.Scaffolding.Visuals.StateMachine.Backends
     ///     <para>
     ///         Non-looping static cues raise <see cref="Completed" /> on the next idle frame so the state machine
     ///         can advance without re-entering the caller synchronously.
+    ///     </para>
+    ///     <para>
+    ///         动画 id 映射到 <see cref="VisualCueSet.FrameSequenceByCue" /> 中的 cue 键（优先）或
+    ///         <see cref="VisualCueSet.TexturePathByCue" />（回退静态纹理）。帧序列通过
+    ///         <see cref="CueFrameSequencePlayer" /> 播放；其 <c>Finished</c> 信号会转换为
+    ///         <see cref="Completed" />。
+    ///     </para>
+    ///     <para>
+    ///         非循环静态 cue 会在下一次 idle 帧触发 <see cref="Completed" />，使状态机
+    ///         可以继续推进，而不会同步重入调用方。
     ///     </para>
     /// </remarks>
     public sealed class CueAnimationBackend : IAnimationBackend
@@ -32,6 +44,7 @@ namespace STS2RitsuLib.Scaffolding.Visuals.StateMachine.Backends
 
         /// <summary>
         ///     Binds cues <paramref name="cues" /> to sprite <paramref name="sprite" /> rooted at <paramref name="root" />.
+        ///     将 cue <paramref name="cues" /> 绑定到以 <paramref name="root" /> 为根的精灵 <paramref name="sprite" />。
         /// </summary>
         public CueAnimationBackend(Node root, Sprite2D sprite, VisualCueSet cues)
         {
@@ -108,6 +121,10 @@ namespace STS2RitsuLib.Scaffolding.Visuals.StateMachine.Backends
                 return;
 
             _sprite.Texture = tex;
+            if (_cues.TextureStyleByCue is { Count: > 0 } styles &&
+                TryGetOrdinalIgnoreCase(styles, id, out var style))
+                style.ApplyTo(_sprite);
+
             Started?.Invoke(id);
 
             if (!loop)
@@ -141,6 +158,7 @@ namespace STS2RitsuLib.Scaffolding.Visuals.StateMachine.Backends
 
         /// <summary>
         ///     Stops active playback and detaches the frame-sequence signal, if any.
+        ///     停止当前播放，并在存在时断开帧序列信号。
         /// </summary>
         public void Dispose()
         {

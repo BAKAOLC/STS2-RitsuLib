@@ -8,11 +8,14 @@ namespace STS2RitsuLib.Interop
     /// <summary>
     ///     Keyed JSON DOM synchronization between a <see cref="ReflectionStaticChannel" /> and an in-memory
     ///     <see cref="JsonObject" /> document root (ModData, RPC payloads, replicas, …).
+    ///     <see cref="ReflectionStaticChannel" /> 与内存中的
+    ///     <see cref="JsonObject" /> document root 之间的 keyed JSON DOM 同步（ModData、RPC 载荷、replica 等）。
     /// </summary>
     public static class KeyedJsonDomTransport
     {
         /// <summary>
         ///     Default serializer options aligned with ModData interop (compact JSON).
+        ///     与 ModData interop 对齐的默认 serializer options（紧凑 JSON）。
         /// </summary>
         public static JsonSerializerOptions DefaultJsonSerializerOptions { get; } = new()
         {
@@ -23,16 +26,31 @@ namespace STS2RitsuLib.Interop
 
         /// <summary>
         ///     Applies provider → document pull semantics and returns the updated root node.
+        ///     应用提供方到文档的拉取语义，并返回更新后的根节点。
         /// </summary>
-        /// <param name="key">Interop key passed to provider static methods.</param>
-        /// <param name="channel">Bound reflection channel for the provider.</param>
-        /// <param name="documentRoot">In-memory document root to update.</param>
+        /// <param name="key">
+        ///     Interop key passed to provider static methods.
+        ///     传给提供方静态方法的互操作键。
+        /// </param>
+        /// <param name="channel">
+        ///     Bound reflection channel for the provider.
+        ///     提供方的已绑定反射通道。
+        /// </param>
+        /// <param name="documentRoot">
+        ///     In-memory document root to update.
+        ///     要更新的内存 document root。
+        /// </param>
         /// <param name="pathRouting">
         ///     Optional pull/push/merge pointer lists; required when using node getters with partial paths.
+        ///     可选的拉取/推送/合并 pointer 列表；使用带部分路径的节点 getter 时必需。
         /// </param>
         /// <param name="jsonOptions">
         ///     Serializer options when falling back to object round-trip; defaults to
         ///     <see cref="DefaultJsonSerializerOptions" />.
+        ///     <see cref="DefaultJsonSerializerOptions" />。
+        ///     回退到 object round-trip 时使用的 serializer options；默认使用
+        ///     <see cref="DefaultJsonSerializerOptions" />。
+        ///     <see cref="DefaultJsonSerializerOptions" />。
         /// </param>
         public static JsonNode? PullFromProviderIntoRoot(
             string key,
@@ -90,16 +108,31 @@ namespace STS2RitsuLib.Interop
 
         /// <summary>
         ///     Applies document → provider push semantics from <paramref name="documentRoot" />.
+        ///     从 <paramref name="documentRoot" /> 应用文档到提供方的推送语义。
         /// </summary>
-        /// <param name="key">Interop key passed to provider static methods.</param>
-        /// <param name="channel">Bound reflection channel for the provider.</param>
-        /// <param name="documentRoot">In-memory document root to read from.</param>
+        /// <param name="key">
+        ///     Interop key passed to provider static methods.
+        ///     传给提供方静态方法的互操作键。
+        /// </param>
+        /// <param name="channel">
+        ///     Bound reflection channel for the provider.
+        ///     提供方的已绑定反射通道。
+        /// </param>
+        /// <param name="documentRoot">
+        ///     In-memory document root to read from.
+        ///     要读取的内存 document root。
+        /// </param>
         /// <param name="pathRouting">
         ///     Optional pull/push/merge pointer lists; required when using node or merge-at setters with partial paths.
+        ///     可选的拉取/推送/合并 pointer 列表；使用带部分路径的节点 setter 或 merge-at setter 时必需。
         /// </param>
         /// <param name="jsonOptions">
         ///     Serializer options when using the JSON text setter tier; defaults to
         ///     <see cref="DefaultJsonSerializerOptions" />.
+        ///     <see cref="DefaultJsonSerializerOptions" />。
+        ///     使用 JSON text setter tier 时的 serializer options；默认使用
+        ///     <see cref="DefaultJsonSerializerOptions" />。
+        ///     <see cref="DefaultJsonSerializerOptions" />。
         /// </param>
         public static void PushRootToProvider(
             string key,

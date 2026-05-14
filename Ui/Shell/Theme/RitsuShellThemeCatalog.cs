@@ -5,6 +5,8 @@ namespace STS2RitsuLib.Ui.Shell.Theme
     /// <summary>
     ///     Loads built-in (embedded) and disk-side <c>.theme.json</c> documents into a per-id cache, then
     ///     resolves inheritance, scope overlays, and references when asked to build a snapshot.
+    ///     将内置（嵌入式）和磁盘侧 <c>.theme.json</c> 文档加载到按 id 划分的缓存，然后
+    ///     在请求构建快照时解析继承、作用域覆盖和引用。
     /// </summary>
     public static class RitsuShellThemeCatalog
     {
@@ -16,6 +18,7 @@ namespace STS2RitsuLib.Ui.Shell.Theme
 
         /// <summary>
         ///     Sorted list of theme ids currently in the catalog (lowercase).
+        ///     排序列表 of theme ids 当前在目录中 (小写)。
         /// </summary>
         public static IReadOnlyList<string> RegisteredThemeIds
         {
@@ -30,6 +33,7 @@ namespace STS2RitsuLib.Ui.Shell.Theme
 
         /// <summary>
         ///     Drops the in-memory cache so the next call to <see cref="EnsureLoaded" /> reloads all themes.
+        ///     丢弃内存缓存，使下一次调用 <see cref="EnsureLoaded" /> 时重新加载所有主题。
         /// </summary>
         public static void InvalidateCache()
         {
@@ -42,6 +46,8 @@ namespace STS2RitsuLib.Ui.Shell.Theme
         /// <summary>
         ///     Loads themes from the assembly manifest and the on-disk themes directory; extracts missing
         ///     embedded themes to disk so they show up next to user-authored themes.
+        ///     从程序集清单和磁盘主题目录加载主题；将缺失的
+        ///     嵌入式主题提取到磁盘，使它们显示在用户编写的主题旁边。
         /// </summary>
         public static void EnsureLoaded()
         {
@@ -130,12 +136,29 @@ namespace STS2RitsuLib.Ui.Shell.Theme
         /// <summary>
         ///     Builds a fully-merged, reference-resolved <see cref="RitsuShellTheme" /> snapshot for
         ///     <paramref name="themeId" />, merging mod-registered defaults along the way.
+        ///     为 <paramref name="themeId" /> 构建完全合并、已解析引用的 <see cref="RitsuShellTheme" /> 快照，
+        ///     并在过程中合并 mod 注册的默认值。
         /// </summary>
-        /// <param name="themeId">Target theme id (case-insensitive). Empty falls back to <c>default</c>.</param>
-        /// <param name="modRegistrations">Registered mod token contributions (default trees and extension blobs).</param>
-        /// <param name="resolvedId">Resolved id used for <see cref="RitsuShellTheme.Id" />.</param>
-        /// <param name="theme">Built snapshot when successful.</param>
-        /// <returns><see langword="true" /> if both target and <c>default</c> chain are loadable.</returns>
+        /// <param name="themeId">
+        ///     Target theme id (case-insensitive). Empty falls back to <c>default</c>.
+        ///     目标主题 id (不区分大小写). 为空时回退到 <c>default</c>。
+        /// </param>
+        /// <param name="modRegistrations">
+        ///     Registered mod token contributions (default trees and extension blobs).
+        ///     已注册的 mod 令牌贡献（默认树和扩展 blob）。
+        /// </param>
+        /// <param name="resolvedId">
+        ///     Resolved id used for <see cref="RitsuShellTheme.Id" />.
+        ///     用于 <see cref="RitsuShellTheme.Id" /> 的解析后 id。
+        /// </param>
+        /// <param name="theme">
+        ///     Built snapshot when successful.
+        ///     构建出的快照 成功时。
+        /// </param>
+        /// <returns>
+        ///     <see langword="true" /> if both target and <c>default</c> chain are loadable.
+        ///     <see langword="true" /> if 目标和 <c>default</c> 链都可加载。
+        /// </returns>
         public static bool TryBuildSnapshot(string themeId,
             IReadOnlyList<RitsuShellThemeModRegistration> modRegistrations,
             out string resolvedId, out RitsuShellTheme? theme)
@@ -191,10 +214,20 @@ namespace STS2RitsuLib.Ui.Shell.Theme
 
         /// <summary>
         ///     Overwrites one disk theme file with its embedded built-in counterpart.
+        ///     用对应的嵌入式内置主题覆盖一个磁盘主题文件。
         /// </summary>
-        /// <param name="themeId">Theme id to restore (case-insensitive, empty falls back to default).</param>
-        /// <param name="restoredPath">Absolute path of the restored file when successful.</param>
-        /// <returns><see langword="true" /> when the embedded source exists and was written to disk.</returns>
+        /// <param name="themeId">
+        ///     Theme id to restore (case-insensitive, empty falls back to default).
+        ///     要恢复的主题 id (不区分大小写, empty 回退到 default)。
+        /// </param>
+        /// <param name="restoredPath">
+        ///     Absolute path of the restored file when successful.
+        ///     成功时恢复文件的绝对路径。
+        /// </param>
+        /// <returns>
+        ///     <see langword="true" /> when the embedded source exists and was written to disk.
+        ///     当嵌入式源存在并已写入磁盘时，为 <see langword="true" />。
+        /// </returns>
         public static bool TryRestoreDiskThemeFromEmbedded(string themeId, out string restoredPath)
         {
             restoredPath = "";
@@ -221,9 +254,16 @@ namespace STS2RitsuLib.Ui.Shell.Theme
 
         /// <summary>
         ///     Resets all existing disk theme files that have embedded counterparts.
+        ///     重置 all 现有磁盘主题文件 that have 嵌入式对应项。
         /// </summary>
-        /// <param name="restoredCount">How many disk theme files were overwritten.</param>
-        /// <returns><see langword="true" /> if the operation completed without fatal setup failures.</returns>
+        /// <param name="restoredCount">
+        ///     How many disk theme files were overwritten.
+        ///     数量： 磁盘主题文件s 被覆盖。
+        /// </param>
+        /// <returns>
+        ///     <see langword="true" /> if the operation completed without fatal setup failures.
+        ///     如果操作完成且没有致命设置失败，则为 <see langword="true" />。
+        /// </returns>
         public static bool TryRestoreAllExistingDiskThemesFromEmbedded(out int restoredCount)
         {
             restoredCount = 0;

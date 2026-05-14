@@ -45,6 +45,9 @@ namespace STS2RitsuLib.Content
         /// <summary>
         ///     Registers global asset overrides applied to all characters for the current <see cref="ModId" />.
         ///     Character-specific overrides still win.
+        ///     注册应用于当前 <see cref="ModId" /> 的所有角色的全局资源覆盖。
+        ///     角色专用覆盖仍然优先。
+        ///     角色专用覆盖仍然优先。
         /// </summary>
         public void RegisterGlobalCharacterAssetReplacement(CharacterAssetProfile assetProfile)
         {
@@ -64,6 +67,8 @@ namespace STS2RitsuLib.Content
         /// <summary>
         ///     Registers asset overrides for any character id (vanilla or mod), merged field-by-field with existing
         ///     registrations. Later calls win for non-null fields.
+        ///     为任意角色 id（原版或 mod）注册资源覆盖，并与现有
+        ///     注册按字段合并。非 null 字段以后续调用为准。
         /// </summary>
         public void RegisterCharacterAssetReplacement(string characterEntry, CharacterAssetProfile assetProfile)
         {
@@ -88,8 +93,12 @@ namespace STS2RitsuLib.Content
 
         /// <summary>
         ///     Removes global character asset overrides registered by the current <see cref="ModId" />.
+        ///     移除当前 <see cref="ModId" /> 注册的全局角色资源覆盖。
         /// </summary>
-        /// <returns><c>true</c> when this mod had a global override and it was removed.</returns>
+        /// <returns>
+        ///     <c>true</c> when this mod had a global override and it was removed.
+        ///     当此 mod 曾有全局覆盖且已移除时为 <c>true</c>。
+        /// </returns>
         public bool ClearGlobalCharacterAssetReplacement()
         {
             bool removed;
@@ -108,8 +117,12 @@ namespace STS2RitsuLib.Content
 
         /// <summary>
         ///     Removes this mod's registered asset overrides for the specified character id.
+        ///     移除此 mod 为指定角色 id 注册的资源覆盖。
         /// </summary>
-        /// <returns><c>true</c> when this mod had an override and it was removed.</returns>
+        /// <returns>
+        ///     <c>true</c> when this mod had an override and it was removed.
+        ///     当此 mod 曾有覆盖且已移除时为 <c>true</c>。
+        /// </returns>
         public bool RemoveCharacterAssetReplacement(string characterEntry)
         {
             ArgumentException.ThrowIfNullOrWhiteSpace(characterEntry);
@@ -130,6 +143,7 @@ namespace STS2RitsuLib.Content
 
         /// <summary>
         ///     Returns merged registered asset overrides for <paramref name="characterEntry" />, if any.
+        ///     返回 <paramref name="characterEntry" /> 的已注册合并资源覆盖（如果有）。
         /// </summary>
         internal static bool TryGetRegisteredCharacterAssetReplacement(
             string characterEntry,
@@ -150,6 +164,7 @@ namespace STS2RitsuLib.Content
 
         /// <summary>
         ///     Returns global asset overrides, if any.
+        ///     返回全局资源覆盖（如果有）。
         /// </summary>
         internal static bool TryGetGlobalCharacterAssetReplacement(out CharacterAssetProfile assetProfile)
         {
@@ -164,6 +179,8 @@ namespace STS2RitsuLib.Content
         /// <summary>
         ///     Returns registry-only overrides (global + per-character <see cref="RegisterCharacterAssetReplacement" />),
         ///     without programmatic owned-visual registrations.
+        ///     返回仅来自注册表的覆盖（全局 + 每角色 <see cref="RegisterCharacterAssetReplacement" />），
+        ///     不包括程序化所属视觉注册。
         /// </summary>
         internal static bool TryGetRegistryOnlyEffectiveCharacterAssetReplacement(
             string characterEntry,
@@ -198,6 +215,14 @@ namespace STS2RitsuLib.Content
         ///     <c>AssetProfile</c> rows are merged in
         ///     <c>TryGetVanilla*</c> below
         ///     both registry and programmatic tiers.
+        ///     返回某个角色的有效覆盖：程序化所属遗物/药水/卡牌美术会合并在
+        ///     <see cref="RegisterGlobalCharacterAssetReplacement" /> 和
+        ///     <see cref="RegisterCharacterAssetReplacement" /> 的注册表覆盖之下（冲突时注册表胜出）。角色
+        ///     <see>
+        ///     </see>
+        ///     <c>AssetProfile</c> 行会在下面的
+        ///     <c>TryGetVanilla*</c> 中合并，
+        ///     低于注册表和程序化两层。
         /// </summary>
         internal static bool TryGetEffectiveCharacterAssetReplacement(
             string characterEntry,
@@ -377,31 +402,38 @@ namespace STS2RitsuLib.Content
         /// <summary>
         ///     Well-known base-game character ids for
         ///     <see cref="RegisterCharacterAssetReplacement(string,CharacterAssetProfile)" />.
+        ///     用于 <see cref="RegisterCharacterAssetReplacement(string,CharacterAssetProfile)" /> 的
+        ///     知名基础游戏角色 id。
         /// </summary>
         public static class VanillaCharacterIds
         {
             /// <summary>
             ///     Vanilla Ironclad character id.
+            ///     原版 Ironclad 角色 id。
             /// </summary>
             public const string Ironclad = "IRONCLAD";
 
             /// <summary>
             ///     Vanilla Silent character id.
+            ///     原版 Silent 角色 id。
             /// </summary>
             public const string Silent = "SILENT";
 
             /// <summary>
             ///     Vanilla Defect character id.
+            ///     原版 Defect 角色 id。
             /// </summary>
             public const string Defect = "DEFECT";
 
             /// <summary>
             ///     Vanilla Regent character id.
+            ///     原版 Regent 角色 id。
             /// </summary>
             public const string Regent = "REGENT";
 
             /// <summary>
             ///     Vanilla Necrobinder character id.
+            ///     原版 Necrobinder 角色 id。
             /// </summary>
             public const string Necrobinder = "NECROBINDER";
         }

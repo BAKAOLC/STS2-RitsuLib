@@ -283,56 +283,67 @@ namespace STS2RitsuLib.Scaffolding.Content.Patches
 
     /// <summary>
     ///     Optional card art paths consumed by content asset Harmony patches on <see cref="CardModel" />.
+    ///     由 <see cref="CardModel" /> 上的 content asset Harmony 补丁使用的可选卡牌美术路径。
     /// </summary>
     public interface IModCardAssetOverrides
     {
         /// <summary>
         ///     Path bundle; individual properties usually mirror these fields unless overridden.
+        ///     路径包；除非被重写，各个属性通常会映射这些字段。
         /// </summary>
         CardAssetProfile AssetProfile { get; }
 
         /// <summary>
         ///     Override for main portrait image path.
+        ///     主肖像图像路径覆盖。
         /// </summary>
         string? CustomPortraitPath { get; }
 
         /// <summary>
         ///     Override for beta/alternate portrait path.
+        ///     beta/备用肖像路径覆盖。
         /// </summary>
         string? CustomBetaPortraitPath { get; }
 
         /// <summary>
         ///     Override for card frame texture path.
+        ///     卡牌边框纹理路径覆盖。
         /// </summary>
         string? CustomFramePath { get; }
 
         /// <summary>
         ///     Override for portrait border texture path.
+        ///     肖像边框纹理路径覆盖。
         /// </summary>
         string? CustomPortraitBorderPath { get; }
 
         /// <summary>
         ///     Override for small energy icon texture path.
+        ///     小型能量图标纹理路径覆盖。
         /// </summary>
         string? CustomEnergyIconPath { get; }
 
         /// <summary>
         ///     Override for frame <see cref="Material" /> resource path.
+        ///     边框 <see cref="Material" /> 资源路径覆盖。
         /// </summary>
         string? CustomFrameMaterialPath { get; }
 
         /// <summary>
         ///     Override for built-in overlay packed scene path.
+        ///     内置覆盖层 packed scene路径覆盖。
         /// </summary>
         string? CustomOverlayScenePath { get; }
 
         /// <summary>
         ///     Override for banner texture path.
+        ///     横幅纹理路径覆盖。
         /// </summary>
         string? CustomBannerTexturePath { get; }
 
         /// <summary>
         ///     Override for banner material path.
+        ///     横幅材质路径覆盖。
         /// </summary>
         string? CustomBannerMaterialPath { get; }
     }
@@ -341,12 +352,17 @@ namespace STS2RitsuLib.Scaffolding.Content.Patches
     ///     Optional direct frame <see cref="Material" /> override for cards.
     ///     This bypasses resource-path loading and is checked before
     ///     <see cref="IModCardAssetOverrides.CustomFrameMaterialPath" />.
+    ///     用于卡牌的可选直接frame <see cref="Material" /> 覆盖。
+    ///     这会绕过资源路径加载，并优先于
+    ///     <see cref="IModCardAssetOverrides.CustomFrameMaterialPath" /> 检查。
     /// </summary>
     public interface IModCardFrameMaterialOverride
     {
         /// <summary>
         ///     Direct frame material override.
         ///     Return <c>null</c> to continue with other override layers.
+        ///     直接的边框材质覆盖。
+        ///     返回 <c>null</c> 以继续使用其它覆盖层。
         /// </summary>
         Material? CustomFrameMaterial => null;
     }
@@ -355,12 +371,17 @@ namespace STS2RitsuLib.Scaffolding.Content.Patches
     ///     Optional direct banner <see cref="Material" /> override for cards.
     ///     This bypasses resource-path loading and is checked before
     ///     <see cref="IModCardAssetOverrides.CustomBannerMaterialPath" />.
+    ///     用于卡牌的可选直接banner <see cref="Material" /> 覆盖。
+    ///     这会绕过资源路径加载，并优先于
+    ///     <see cref="IModCardAssetOverrides.CustomBannerMaterialPath" /> 检查。
     /// </summary>
     public interface IModCardBannerMaterialOverride
     {
         /// <summary>
         ///     Direct banner material override.
         ///     Return <c>null</c> to fall back to frame material semantics.
+        ///     直接的横幅材质覆盖。
+        ///     返回 <c>null</c> 以回退到边框材质语义。
         /// </summary>
         Material? CustomBannerMaterial => null;
     }
@@ -369,80 +390,98 @@ namespace STS2RitsuLib.Scaffolding.Content.Patches
     ///     Implement this interface on a <see cref="MegaCrit.Sts2.Core.Models.CardPoolModel" /> to directly supply
     ///     a <see cref="Material" /> for card frames in the pool.
     ///     When <see cref="PoolFrameMaterial" /> is non-null, <c>CardFrameMaterialPath</c> is ignored entirely.
+    ///     在 <see cref="MegaCrit.Sts2.Core.Models.CardPoolModel" /> 上实现此接口，以直接提供
+    ///     牌池中卡牌边框使用的 <see cref="Material" />。
+    ///     当 <see cref="PoolFrameMaterial" /> 非 null 时，<c>CardFrameMaterialPath</c> 会被完全忽略。
     /// </summary>
     public interface IModCardPoolFrameMaterial
     {
         /// <summary>
         ///     The material to use for card frames in this pool.
         ///     Return <c>null</c> to fall back to the path-based default.
+        ///     此牌池中卡牌边框使用的材质。
+        ///     返回 <c>null</c> 以回退到基于路径的默认值。
         /// </summary>
         Material? PoolFrameMaterial { get; }
     }
 
     /// <summary>
     ///     Optional relic icon paths for Harmony patches on <see cref="RelicModel" />.
+    ///     用于 <see cref="RelicModel" /> 的 Harmony 补丁的可选遗物 图标路径。
     /// </summary>
     public interface IModRelicAssetOverrides
     {
         /// <summary>
         ///     Path bundle for relic presentation assets.
+        ///     遗物表现资源的路径包。
         /// </summary>
         RelicAssetProfile AssetProfile { get; }
 
         /// <summary>
         ///     Primary relic icon path override.
+        ///     主 遗物 图标路径覆盖。
         /// </summary>
         string? CustomIconPath { get; }
 
         /// <summary>
         ///     Outline icon path override.
+        ///     轮廓 图标路径覆盖。
         /// </summary>
         string? CustomIconOutlinePath { get; }
 
         /// <summary>
         ///     Large relic art path override.
+        ///     大型 遗物 art路径覆盖。
         /// </summary>
         string? CustomBigIconPath { get; }
     }
 
     /// <summary>
     ///     Optional power icon paths for Harmony patches on <see cref="PowerModel" />.
+    ///     用于 <see cref="PowerModel" /> 的 Harmony 补丁的可选能力 图标路径。
     /// </summary>
     public interface IModPowerAssetOverrides
     {
         /// <summary>
         ///     Path bundle for power icons.
+        ///     能力图标的路径包。
         /// </summary>
         PowerAssetProfile AssetProfile { get; }
 
         /// <summary>
         ///     Standard icon path override.
+        ///     标准 图标路径覆盖。
         /// </summary>
         string? CustomIconPath { get; }
 
         /// <summary>
         ///     Large icon path override.
+        ///     大型 图标路径覆盖。
         /// </summary>
         string? CustomBigIconPath { get; }
     }
 
     /// <summary>
     ///     Optional orb icon and visuals scene paths for Harmony patches on <see cref="OrbModel" />.
+    ///     用于 <see cref="OrbModel" /> 上 Harmony 补丁的可选充能球图标和视觉场景路径。
     /// </summary>
     public interface IModOrbAssetOverrides
     {
         /// <summary>
         ///     Path bundle for orb HUD and combat visuals.
+        ///     充能球 HUD 和战斗视觉的路径包。
         /// </summary>
         OrbAssetProfile AssetProfile { get; }
 
         /// <summary>
         ///     Orb icon texture path override.
+        ///     充能球 图标 纹理路径覆盖。
         /// </summary>
         string? CustomIconPath { get; }
 
         /// <summary>
         ///     Orb combat visuals scene path override.
+        ///     充能球 combat 视觉场景路径覆盖。
         /// </summary>
         string? CustomVisualsScenePath { get; }
     }
@@ -450,41 +489,50 @@ namespace STS2RitsuLib.Scaffolding.Content.Patches
     /// <summary>
     ///     Default act asset override surface; concrete mods typically use <see cref="ModActTemplate" /> instead of
     ///     implementing this directly.
+    ///     默认章节资源覆盖接口；具体 mod 通常使用 <see cref="ModActTemplate" />，而不是
+    ///     直接实现此接口。
     /// </summary>
     public interface IModActAssetOverrides
     {
         /// <summary>
         ///     Path bundle; default is empty.
+        ///     路径包；默认为空。
         /// </summary>
         ActAssetProfile AssetProfile => ActAssetProfile.Empty;
 
         /// <summary>
         ///     Main act background scene path override.
+        ///     Main 章节 背景场景路径覆盖。
         /// </summary>
         string? CustomBackgroundScenePath => AssetProfile.BackgroundScenePath;
 
         /// <summary>
         ///     Rest site background scene path override.
+        ///     休息处 背景场景路径覆盖。
         /// </summary>
         string? CustomRestSiteBackgroundPath => AssetProfile.RestSiteBackgroundPath;
 
         /// <summary>
         ///     Map top-layer background image path override.
+        ///     地图顶层背景图像路径覆盖。
         /// </summary>
         string? CustomMapTopBgPath => AssetProfile.MapTopBgPath;
 
         /// <summary>
         ///     Map middle-layer background image path override.
+        ///     地图中层背景图像路径覆盖。
         /// </summary>
         string? CustomMapMidBgPath => AssetProfile.MapMidBgPath;
 
         /// <summary>
         ///     Map bottom-layer background image path override.
+        ///     地图底层背景图像路径覆盖。
         /// </summary>
         string? CustomMapBotBgPath => AssetProfile.MapBotBgPath;
 
         /// <summary>
         ///     Treasure chest Spine resource path override.
+        ///     宝箱 Spine 资源路径覆盖。
         /// </summary>
         string? CustomChestSpineResourcePath => AssetProfile.ChestSpineResourcePath;
 
@@ -492,6 +540,8 @@ namespace STS2RitsuLib.Scaffolding.Content.Patches
         ///     Optional <c>res://</c> directory for combat background parallax layers (same <c>_bg_</c> / <c>_fg_</c> naming as
         ///     vanilla). When set, <see cref="ActModel.GenerateBackgroundAssets" /> scans this folder instead of
         ///     <c>scenes/backgrounds/&lt;act&gt;/layers</c>.
+        ///     战斗背景视差图层的可选 <c>res://</c> 目录（命名方式与原版相同，使用 <c>_bg_</c> / <c>_fg_</c>）。
+        ///     设置后，<see cref="ActModel.GenerateBackgroundAssets" /> 会扫描此文件夹，而不是
         /// </summary>
         string? CustomBackgroundLayersDirectoryPath => AssetProfile.BackgroundLayersDirectoryPath;
     }
@@ -499,31 +549,40 @@ namespace STS2RitsuLib.Scaffolding.Content.Patches
     /// <summary>
     ///     Optional event layout, portrait, background, and VFX scene paths; use <see cref="ModEventTemplate" /> or implement
     ///     on a mod <see cref="EventModel" />.
+    ///     on a mod <c>EventModel</c>.
+    ///     可选事件布局、肖像、背景和 VFX 场景路径；使用 <see cref="ModEventTemplate" />，或在 mod
+    ///     <see cref="EventModel" /> 上实现。
+    ///     在 mod <c>EventModel</c> 上实现。
     /// </summary>
     public interface IModEventAssetOverrides
     {
         /// <summary>
         ///     Path bundle; <c>Custom*</c> properties mirror these fields unless overridden.
+        ///     路径包；除非被覆盖，否则 <c>Custom*</c> 属性会映射这些字段。
         /// </summary>
         EventAssetProfile AssetProfile => EventAssetProfile.Empty;
 
         /// <summary>
         ///     Override packed scene for <c>EventModel.CreateScene</c> (full layout root).
+        ///     <c>EventModel.CreateScene</c> 的 packed scene 覆盖（完整布局根节点）。
         /// </summary>
         string? CustomLayoutScenePath => AssetProfile.LayoutScenePath;
 
         /// <summary>
         ///     Override texture path for <c>EventModel.CreateInitialPortrait</c>.
+        ///     <c>EventModel.CreateInitialPortrait</c> 的纹理路径覆盖。
         /// </summary>
         string? CustomInitialPortraitPath => AssetProfile.InitialPortraitPath;
 
         /// <summary>
         ///     Override packed scene path for <c>EventModel.CreateBackgroundScene</c>.
+        ///     <c>EventModel.CreateBackgroundScene</c> 的 packed scene 路径覆盖。
         /// </summary>
         string? CustomBackgroundScenePath => AssetProfile.BackgroundScenePath;
 
         /// <summary>
         ///     Override packed scene path for <c>EventModel.CreateVfx</c> / <c>HasVfx</c>.
+        ///     <c>EventModel.CreateVfx</c> / <c>HasVfx</c> 的 packed scene 路径覆盖。
         /// </summary>
         string? CustomVfxScenePath => AssetProfile.VfxScenePath;
     }
@@ -531,60 +590,72 @@ namespace STS2RitsuLib.Scaffolding.Content.Patches
     /// <summary>
     ///     Extends <see cref="IModEventAssetOverrides" /> with ancient map and run-history icon paths; use
     ///     <see cref="ModAncientEventTemplate" /> or implement on a mod <see cref="AncientEventModel" />.
+    ///     扩展 <see cref="IModEventAssetOverrides" />，增加远古地图和跑局历史图标路径；使用
+    ///     <see cref="ModAncientEventTemplate" />，或在 mod <see cref="AncientEventModel" />.
     /// </summary>
     public interface IModAncientEventAssetOverrides : IModEventAssetOverrides
     {
         /// <summary>
         ///     Ancient-only presentation paths (map node + run history).
+        ///     仅远古事件使用的表现资源路径（地图节点 + 运行历史）。
         /// </summary>
         AncientEventPresentationAssetProfile AncientPresentationAssetProfile =>
             AncientEventPresentationAssetProfile.Empty;
 
         /// <summary>
         ///     Override for <c>AncientEventModel.MapIcon</c>.
+        ///     <c>AncientEventModel.MapIcon</c> 的覆盖。
         /// </summary>
-        string? CustomMapIconPath => AncientPresentationAssetProfile.MapIconPath;
+        string? CustomMapIconPath => AncientPresentationAssetProfile?.MapIconPath;
 
         /// <summary>
         ///     Override for <c>AncientEventModel.MapIconOutline</c>.
+        ///     <c>AncientEventModel.MapIconOutline</c> 的覆盖。
         /// </summary>
-        string? CustomMapIconOutlinePath => AncientPresentationAssetProfile.MapIconOutlinePath;
+        string? CustomMapIconOutlinePath => AncientPresentationAssetProfile?.MapIconOutlinePath;
 
         /// <summary>
         ///     Override for <c>AncientEventModel.RunHistoryIcon</c>.
+        ///     <c>AncientEventModel.RunHistoryIcon</c> 的覆盖。
         /// </summary>
-        string? CustomRunHistoryIconPath => AncientPresentationAssetProfile.RunHistoryIconPath;
+        string? CustomRunHistoryIconPath => AncientPresentationAssetProfile?.RunHistoryIconPath;
 
         /// <summary>
         ///     Override for <c>AncientEventModel.RunHistoryIconOutline</c>.
+        ///     <c>AncientEventModel.RunHistoryIconOutline</c> 的覆盖。
         /// </summary>
-        string? CustomRunHistoryIconOutlinePath => AncientPresentationAssetProfile.RunHistoryIconOutlinePath;
+        string? CustomRunHistoryIconOutlinePath => AncientPresentationAssetProfile?.RunHistoryIconOutlinePath;
     }
 
     /// <summary>
     ///     Optional epoch timeline portrait paths; use <see cref="STS2RitsuLib.Timeline.Scaffolding.ModEpochTemplate" /> or
     ///     implement on a mod <see cref="MegaCrit.Sts2.Core.Timeline.EpochModel" />.
+    ///     可选纪元时间线肖像路径；使用 <see cref="STS2RitsuLib.Timeline.Scaffolding.ModEpochTemplate" /> or
     /// </summary>
     public interface IModEpochAssetOverrides
     {
         /// <summary>
         ///     Path bundle; <c>Custom*</c> properties mirror these fields unless overridden.
+        ///     路径包；除非被覆盖，否则 <c>Custom*</c> 属性会映射这些字段。
         /// </summary>
         EpochAssetProfile AssetProfile => EpochAssetProfile.Empty;
 
         /// <summary>
         ///     Override for <c>EpochModel.PackedPortraitPath</c> (atlas sprite entry).
+        ///     <c>EpochModel.PackedPortraitPath</c> 的覆盖（图集 sprite 条目）。
         /// </summary>
         string? CustomPackedPortraitPath => AssetProfile.PackedPortraitPath;
 
         /// <summary>
         ///     Override for <c>EpochModel.BigPortraitPath</c> (large portrait texture).
+        ///     <c>EpochModel.BigPortraitPath</c> 的覆盖（大型肖像纹理）。
         /// </summary>
         string? CustomBigPortraitPath => AssetProfile.BigPortraitPath;
     }
 
     /// <summary>
     ///     Patches <see cref="EpochModel" /> portrait path getters for <see cref="IModEpochAssetOverrides" />.
+    ///     为 <see cref="IModEpochAssetOverrides" /> 修补<see cref="EpochModel" /> portrait 路径 getter。
     /// </summary>
     public class EpochPortraitPathPatch : IPatchMethod
     {
@@ -610,6 +681,7 @@ namespace STS2RitsuLib.Scaffolding.Content.Patches
         // ReSharper disable InconsistentNaming
         /// <summary>
         ///     Dispatches string overrides for packed atlas vs large portrait paths.
+        ///     按 packed atlas 与大型肖像路径分派字符串覆盖。
         /// </summary>
         public static bool Prefix(MethodBase __originalMethod, EpochModel __instance, ref string __result)
             // ReSharper restore InconsistentNaming
@@ -634,6 +706,7 @@ namespace STS2RitsuLib.Scaffolding.Content.Patches
 
     /// <summary>
     ///     Patches <see cref="CardModel" /> portrait path getters for <see cref="IModCardAssetOverrides" />.
+    ///     为 <see cref="IModCardAssetOverrides" /> 修补<see cref="CardModel" /> portrait 路径 getter。
     /// </summary>
     public class CardPortraitPathPatch : IPatchMethod
     {
@@ -659,6 +732,7 @@ namespace STS2RitsuLib.Scaffolding.Content.Patches
         // ReSharper disable InconsistentNaming
         /// <summary>
         ///     Dispatches to portrait or beta portrait override based on the patched getter.
+        ///     根据被修补的 getter 分派到肖像或 beta 肖像覆盖。
         /// </summary>
         public static bool Prefix(MethodBase __originalMethod, CardModel __instance, ref string __result)
             // ReSharper restore InconsistentNaming
@@ -693,6 +767,7 @@ namespace STS2RitsuLib.Scaffolding.Content.Patches
 
     /// <summary>
     ///     Patches portrait availability flags so custom paths from <see cref="IModCardAssetOverrides" /> are honored.
+    ///     修补肖像可用性标志，使来自 <see cref="IModCardAssetOverrides" /> 的自定义路径生效。
     /// </summary>
     public class CardPortraitAvailabilityPatch : IPatchMethod
     {
@@ -718,6 +793,7 @@ namespace STS2RitsuLib.Scaffolding.Content.Patches
         // ReSharper disable InconsistentNaming
         /// <summary>
         ///     Sets boolean availability from whether the corresponding custom portrait path exists on disk.
+        ///     根据对应自定义肖像路径是否存在于磁盘上来设置布尔可用性。
         /// </summary>
         public static bool Prefix(MethodBase __originalMethod, CardModel __instance, ref bool __result)
             // ReSharper restore InconsistentNaming
@@ -755,6 +831,7 @@ namespace STS2RitsuLib.Scaffolding.Content.Patches
 
     /// <summary>
     ///     Patches card frame, portrait border, and energy icon texture getters for mod path overrides.
+    ///     为 mod 路径覆盖修补卡牌框、肖像边框和能量图标纹理 getter。
     /// </summary>
     public class CardTextureOverridePatch : IPatchMethod
     {
@@ -782,6 +859,7 @@ namespace STS2RitsuLib.Scaffolding.Content.Patches
         // ReSharper disable InconsistentNaming
         /// <summary>
         ///     Loads textures from the matching <see cref="IModCardAssetOverrides" /> path when present.
+        ///     存在时从匹配的 <see cref="IModCardAssetOverrides" /> 路径加载纹理。
         /// </summary>
         public static bool Prefix(MethodBase __originalMethod, CardModel __instance, ref Texture2D __result)
             // ReSharper restore InconsistentNaming
@@ -826,6 +904,7 @@ namespace STS2RitsuLib.Scaffolding.Content.Patches
 
     /// <summary>
     ///     Patches <see cref="CardModel" /> frame material resolution for custom <c>.tres</c> paths.
+    ///     修补 <see cref="CardModel" /> 边框材质解析，以支持自定义 <c>.tres</c> 路径。
     /// </summary>
     public class CardFrameMaterialPatch : IPatchMethod
     {
@@ -850,6 +929,7 @@ namespace STS2RitsuLib.Scaffolding.Content.Patches
         // ReSharper disable InconsistentNaming
         /// <summary>
         ///     Loads <see cref="Material" /> from <see cref="IModCardAssetOverrides.CustomFrameMaterialPath" /> when valid.
+        ///     有效时从 <see cref="IModCardAssetOverrides.CustomFrameMaterialPath" /> 加载<see cref="Material" />。
         /// </summary>
         public static bool Prefix(CardModel __instance, ref Material __result)
             // ReSharper restore InconsistentNaming
@@ -878,6 +958,8 @@ namespace STS2RitsuLib.Scaffolding.Content.Patches
     /// <summary>
     ///     Patches pool-level frame material so <see cref="IModCardPoolFrameMaterial.PoolFrameMaterial" /> can replace path
     ///     lookup.
+    ///     修补池级边框材质，使 <see cref="IModCardPoolFrameMaterial.PoolFrameMaterial" /> 可以替换路径
+    ///     查找。
     /// </summary>
     public class CardPoolFrameMaterialPatch : IPatchMethod
     {
@@ -902,6 +984,7 @@ namespace STS2RitsuLib.Scaffolding.Content.Patches
         // ReSharper disable InconsistentNaming
         /// <summary>
         ///     Returns the pool’s inline material when the pool implements <see cref="IModCardPoolFrameMaterial" />.
+        ///     当池实现 <see cref="IModCardPoolFrameMaterial" /> 时，返回池的内联材质。
         /// </summary>
         public static bool Prefix(CardPoolModel __instance, ref Material __result)
             // ReSharper restore InconsistentNaming
@@ -933,6 +1016,7 @@ namespace STS2RitsuLib.Scaffolding.Content.Patches
 
     /// <summary>
     ///     Patches <see cref="CardModel.AllPortraitPaths" /> so custom portrait/beta paths participate in preload lists.
+    ///     修补<see cref="CardModel.AllPortraitPaths" />，使自定义 portrait/beta 路径 participate in 预加载 列表。
     /// </summary>
     public class CardAllPortraitPathsPatch : IPatchMethod
     {
@@ -957,6 +1041,7 @@ namespace STS2RitsuLib.Scaffolding.Content.Patches
         // ReSharper disable InconsistentNaming
         /// <summary>
         ///     Replaces the enumerable with verified custom portrait paths when the card implements overrides.
+        ///     当卡牌实现覆盖时，用已验证的自定义肖像路径替换可枚举集合。
         /// </summary>
         public static bool Prefix(CardModel __instance, ref IEnumerable<string> __result)
             // ReSharper restore InconsistentNaming
@@ -972,6 +1057,7 @@ namespace STS2RitsuLib.Scaffolding.Content.Patches
 
     /// <summary>
     ///     Patches built-in overlay scene path for cards implementing <see cref="IModCardAssetOverrides" />.
+    ///     为实现 <see cref="IModCardAssetOverrides" /> 的卡牌修补内置覆盖层场景路径。
     /// </summary>
     public class CardOverlayPathPatch : IPatchMethod
     {
@@ -996,6 +1082,7 @@ namespace STS2RitsuLib.Scaffolding.Content.Patches
         // ReSharper disable InconsistentNaming
         /// <summary>
         ///     Supplies <see cref="IModCardAssetOverrides.CustomOverlayScenePath" /> when the resource exists.
+        ///     当资源存在时提供 <see cref="IModCardAssetOverrides.CustomOverlayScenePath" />。
         /// </summary>
         public static bool Prefix(CardModel __instance, ref string __result)
             // ReSharper restore InconsistentNaming
@@ -1013,6 +1100,7 @@ namespace STS2RitsuLib.Scaffolding.Content.Patches
 
     /// <summary>
     ///     Patches <see cref="CardModel.HasBuiltInOverlay" /> using existence checks on custom overlay scene paths.
+    ///     使用自定义覆盖层场景路径的存在性检查来修补 <see cref="CardModel.HasBuiltInOverlay" />。
     /// </summary>
     public class CardOverlayAvailabilityPatch : IPatchMethod
     {
@@ -1038,6 +1126,8 @@ namespace STS2RitsuLib.Scaffolding.Content.Patches
         /// <summary>
         ///     Sets <c>true</c> when <see cref="IModCardAssetOverrides.CustomOverlayScenePath" /> resolves to an existing
         ///     resource.
+        ///     当 <see cref="IModCardAssetOverrides.CustomOverlayScenePath" /> 解析到现有
+        ///     资源时设置为 <c>true</c>。
         /// </summary>
         public static bool Prefix(CardModel __instance, ref bool __result)
             // ReSharper restore InconsistentNaming
@@ -1058,6 +1148,7 @@ namespace STS2RitsuLib.Scaffolding.Content.Patches
 
     /// <summary>
     ///     Patches <see cref="CardModel.CreateOverlay" /> to instantiate mod overlay scenes when configured.
+    ///     修补 <see cref="CardModel.CreateOverlay" />，在配置后实例化 mod 覆盖层场景。
     /// </summary>
     public class CardOverlayCreatePatch : IPatchMethod
     {
@@ -1082,6 +1173,7 @@ namespace STS2RitsuLib.Scaffolding.Content.Patches
         // ReSharper disable InconsistentNaming
         /// <summary>
         ///     Instantiates <see cref="IModCardAssetOverrides.CustomOverlayScenePath" /> when the packed scene exists.
+        ///     当 packed scene 存在时实例化 <see cref="IModCardAssetOverrides.CustomOverlayScenePath" />。
         /// </summary>
         public static bool Prefix(CardModel __instance, ref Control __result)
             // ReSharper restore InconsistentNaming
@@ -1106,6 +1198,9 @@ namespace STS2RitsuLib.Scaffolding.Content.Patches
     ///     Patches <see cref="RelicModel.IconPath" /> and packed atlas icon/outline path getters (used by vanilla
     ///     <c>Icon</c> / <c>IconOutline</c> loaders) for mod-character per–relic-id paths (owner match) first, then
     ///     <see cref="IModRelicAssetOverrides" />.
+    ///     修补 <see cref="RelicModel.IconPath" /> 和 packed atlas 图标/轮廓路径 getter（原版
+    ///     <c>Icon</c> / <c>IconOutline</c> 加载器使用）：优先使用 mod 角色按遗物 id 的路径（所有者匹配），然后使用
+    ///     <see cref="IModRelicAssetOverrides" />。
     /// </summary>
     public class RelicIconPathPatch : IPatchMethod
     {
@@ -1134,6 +1229,8 @@ namespace STS2RitsuLib.Scaffolding.Content.Patches
         /// <summary>
         ///     Supplies <see cref="IModCharacterAssetOverrides.TryGetVanillaRelicVisualOverrideForOwnedRelic" /> when
         ///     applicable, then <see cref="IModRelicAssetOverrides" /> custom paths.
+        ///     当条件满足时提供 <see cref="IModCharacterAssetOverrides.TryGetVanillaRelicVisualOverrideForOwnedRelic" />
+        ///     applicable, then <see cref="IModRelicAssetOverrides" /> 自定义 路径。
         /// </summary>
         [HarmonyPriority(410)]
         public static bool Prefix(MethodBase __originalMethod, RelicModel __instance, ref string __result)
@@ -1189,6 +1286,8 @@ namespace STS2RitsuLib.Scaffolding.Content.Patches
     /// <summary>
     ///     Patches relic icon texture getters (main, outline, big): mod-character owned-relic overrides first, then
     ///     <see cref="IModRelicAssetOverrides" />.
+    ///     修补遗物图标纹理 getter（主图、轮廓、大图）：优先使用 mod 角色拥有的遗物覆盖，然后使用
+    ///     <see cref="IModRelicAssetOverrides" />。
     /// </summary>
     public class RelicTexturePatch : IPatchMethod
     {
@@ -1216,6 +1315,7 @@ namespace STS2RitsuLib.Scaffolding.Content.Patches
         // ReSharper disable InconsistentNaming
         /// <summary>
         ///     Dispatches texture loading to mod-character overrides first, then mod relic overrides.
+        ///     优先将纹理加载分派到 mod 角色覆盖，然后使用 mod 遗物覆盖。
         /// </summary>
         public static bool Prefix(MethodBase __originalMethod, RelicModel __instance, ref Texture2D __result)
             // ReSharper restore InconsistentNaming
@@ -1285,6 +1385,9 @@ namespace STS2RitsuLib.Scaffolding.Content.Patches
     /// <summary>
     ///     Patches <see cref="PowerModel.IconPath" /> and <see cref="PowerModel.PackedIconPath" /> (used by vanilla
     ///     <c>Icon</c> loader) for <see cref="IModPowerAssetOverrides" />.
+    ///     为 <see cref="IModPowerAssetOverrides" /> 修补 <see cref="PowerModel.IconPath" /> 和
+    ///     <see cref="PowerModel.PackedIconPath" />（原版
+    ///     <c>Icon</c> 加载器使用）。
     /// </summary>
     public class PowerIconPathPatch : IPatchMethod
     {
@@ -1310,6 +1413,7 @@ namespace STS2RitsuLib.Scaffolding.Content.Patches
         // ReSharper disable InconsistentNaming
         /// <summary>
         ///     Supplies <see cref="IModPowerAssetOverrides.CustomIconPath" /> when the resource exists.
+        ///     当资源存在时提供 <see cref="IModPowerAssetOverrides.CustomIconPath" />。
         /// </summary>
         [HarmonyPriority(410)]
         public static bool Prefix(MethodBase __originalMethod, PowerModel __instance, ref string __result)
@@ -1341,6 +1445,7 @@ namespace STS2RitsuLib.Scaffolding.Content.Patches
 
     /// <summary>
     ///     Patches power standard and big icon textures for mod path overrides.
+    ///     为 mod 路径覆盖修补能力标准图标和大图标纹理。
     /// </summary>
     public class PowerTexturePatch : IPatchMethod
     {
@@ -1367,6 +1472,8 @@ namespace STS2RitsuLib.Scaffolding.Content.Patches
         /// <summary>
         ///     Dispatches to <see cref="IModPowerAssetOverrides.CustomIconPath" /> or
         ///     <see cref="IModPowerAssetOverrides.CustomBigIconPath" />.
+        ///     分派到 <see cref="IModPowerAssetOverrides.CustomIconPath" /> 或
+        ///     <see cref="IModPowerAssetOverrides.CustomBigIconPath" />。
         /// </summary>
         public static bool Prefix(MethodBase __originalMethod, PowerModel __instance, ref Texture2D __result)
             // ReSharper restore InconsistentNaming
@@ -1409,6 +1516,7 @@ namespace STS2RitsuLib.Scaffolding.Content.Patches
 
     /// <summary>
     ///     Patches orb HUD icon (<see cref="CompressedTexture2D" />) for <see cref="IModOrbAssetOverrides" />.
+    ///     为 <see cref="IModOrbAssetOverrides" /> 修补充能球 HUD 图标 (<see cref="CompressedTexture2D" />)。
     /// </summary>
     public class OrbIconPatch : IPatchMethod
     {
@@ -1433,6 +1541,7 @@ namespace STS2RitsuLib.Scaffolding.Content.Patches
         // ReSharper disable InconsistentNaming
         /// <summary>
         ///     Loads compressed icon texture from <see cref="IModOrbAssetOverrides.CustomIconPath" /> when valid.
+        ///     有效时从 <see cref="IModOrbAssetOverrides.CustomIconPath" /> 加载compressed 图标 纹理。
         /// </summary>
         public static bool Prefix(OrbModel __instance, ref CompressedTexture2D __result)
             // ReSharper restore InconsistentNaming
@@ -1461,6 +1570,7 @@ namespace STS2RitsuLib.Scaffolding.Content.Patches
 
     /// <summary>
     ///     Patches orb visuals scene path for combat presentation overrides.
+    ///     为战斗表现覆盖修补充能球视觉场景路径。
     /// </summary>
     public class OrbSpritePathPatch : IPatchMethod
     {
@@ -1485,6 +1595,7 @@ namespace STS2RitsuLib.Scaffolding.Content.Patches
         // ReSharper disable InconsistentNaming
         /// <summary>
         ///     Supplies <see cref="IModOrbAssetOverrides.CustomVisualsScenePath" /> when the resource exists.
+        ///     当资源存在时提供 <see cref="IModOrbAssetOverrides.CustomVisualsScenePath" />。
         /// </summary>
         public static bool Prefix(OrbModel __instance, ref string __result)
             // ReSharper restore InconsistentNaming
@@ -1508,6 +1619,7 @@ namespace STS2RitsuLib.Scaffolding.Content.Patches
 
     /// <summary>
     ///     Patches <see cref="OrbModel.AssetPaths" /> so custom icon and visuals paths appear in preload enumeration.
+    ///     修补 <see cref="OrbModel.AssetPaths" />，使自定义图标和视觉路径出现在预加载枚举中。
     /// </summary>
     public class OrbAssetPathsPatch : IPatchMethod
     {
@@ -1532,6 +1644,7 @@ namespace STS2RitsuLib.Scaffolding.Content.Patches
         // ReSharper disable InconsistentNaming
         /// <summary>
         ///     Collects existing paths from <see cref="IModOrbAssetOverrides" /> for icon and visuals scenes.
+        ///     从 <see cref="IModOrbAssetOverrides" /> 收集现有的图标和视觉场景路径。
         /// </summary>
         public static bool Prefix(OrbModel __instance, ref IEnumerable<string> __result)
             // ReSharper restore InconsistentNaming
@@ -1570,6 +1683,8 @@ namespace STS2RitsuLib.Scaffolding.Content.Patches
     /// <summary>
     ///     Patches potion image and outline path getters (including packed atlas path getters used by vanilla
     ///     <c>Image</c> / preload) for <see cref="IModPotionAssetOverrides" />.
+    ///     为 <see cref="IModPotionAssetOverrides" /> 修补药水图像和轮廓路径 getter（包括原版
+    ///     <c>Image</c> / 预加载使用的 packed atlas 路径 getter）。
     /// </summary>
     public class PotionImagePathPatch : IPatchMethod
     {
@@ -1598,6 +1713,8 @@ namespace STS2RitsuLib.Scaffolding.Content.Patches
         /// <summary>
         ///     Dispatches to <see cref="IModPotionAssetOverrides.CustomImagePath" /> or
         ///     <see cref="IModPotionAssetOverrides.CustomOutlinePath" />.
+        ///     分派到 <see cref="IModPotionAssetOverrides.CustomImagePath" /> 或
+        ///     <see cref="IModPotionAssetOverrides.CustomOutlinePath" />。
         /// </summary>
         [HarmonyPriority(410)]
         public static bool Prefix(MethodBase __originalMethod, PotionModel __instance, ref string __result)
@@ -1648,6 +1765,7 @@ namespace STS2RitsuLib.Scaffolding.Content.Patches
 
     /// <summary>
     ///     Patches potion image and outline textures for mod path overrides.
+    ///     为 mod 路径覆盖修补药水图像和轮廓纹理。
     /// </summary>
     public class PotionTexturePatch : IPatchMethod
     {
@@ -1673,6 +1791,7 @@ namespace STS2RitsuLib.Scaffolding.Content.Patches
         // ReSharper disable InconsistentNaming
         /// <summary>
         ///     Loads textures from the matching <see cref="IModPotionAssetOverrides" /> path property.
+        ///     从匹配的 <see cref="IModPotionAssetOverrides" /> 路径属性加载纹理。
         /// </summary>
         public static bool Prefix(MethodBase __originalMethod, PotionModel __instance, ref Texture2D __result)
             // ReSharper restore InconsistentNaming
@@ -1720,6 +1839,7 @@ namespace STS2RitsuLib.Scaffolding.Content.Patches
 
     /// <summary>
     ///     Patches run-summary banner texture for cards implementing <see cref="IModCardAssetOverrides" />.
+    ///     为实现 <see cref="IModCardAssetOverrides" /> 的卡牌修补跑局摘要横幅纹理。
     /// </summary>
     public class CardBannerTexturePatch : IPatchMethod
     {
@@ -1741,6 +1861,7 @@ namespace STS2RitsuLib.Scaffolding.Content.Patches
         // ReSharper disable InconsistentNaming
         /// <summary>
         ///     Loads banner texture from <see cref="IModCardAssetOverrides.CustomBannerTexturePath" /> when valid.
+        ///     有效时从 <see cref="IModCardAssetOverrides.CustomBannerTexturePath" /> 加载横幅纹理。
         /// </summary>
         public static bool Prefix(CardModel __instance, ref Texture2D __result)
             // ReSharper restore InconsistentNaming
@@ -1756,6 +1877,7 @@ namespace STS2RitsuLib.Scaffolding.Content.Patches
 
     /// <summary>
     ///     Patches banner <see cref="Material" /> resolution for mod cards.
+    ///     为 mod 卡牌修补横幅 <see cref="Material" /> 解析。
     /// </summary>
     public class CardBannerMaterialPatch : IPatchMethod
     {
@@ -1777,6 +1899,7 @@ namespace STS2RitsuLib.Scaffolding.Content.Patches
         // ReSharper disable InconsistentNaming
         /// <summary>
         ///     Loads material from <see cref="IModCardAssetOverrides.CustomBannerMaterialPath" /> when valid.
+        ///     有效时从 <see cref="IModCardAssetOverrides.CustomBannerMaterialPath" /> 加载材质。
         /// </summary>
         public static bool Prefix(CardModel __instance, ref Material __result)
             // ReSharper restore InconsistentNaming
@@ -1809,6 +1932,7 @@ namespace STS2RitsuLib.Scaffolding.Content.Patches
 
     /// <summary>
     ///     Patches act main background scene path for <see cref="IModActAssetOverrides" />.
+    ///     为 <see cref="IModActAssetOverrides" /> 修补章节 主背景场景 路径。
     /// </summary>
     public class ActBackgroundScenePathPatch : IPatchMethod
     {
@@ -1830,6 +1954,7 @@ namespace STS2RitsuLib.Scaffolding.Content.Patches
         // ReSharper disable InconsistentNaming
         /// <summary>
         ///     Supplies <see cref="IModActAssetOverrides.CustomBackgroundScenePath" /> when the resource exists.
+        ///     当资源存在时提供 <see cref="IModActAssetOverrides.CustomBackgroundScenePath" />。
         /// </summary>
         public static bool Prefix(ActModel __instance, ref string __result)
             // ReSharper restore InconsistentNaming
@@ -1853,6 +1978,7 @@ namespace STS2RitsuLib.Scaffolding.Content.Patches
 
     /// <summary>
     ///     Patches rest-site background scene path for mod acts.
+    ///     为 mod 章节修补休息处背景场景路径。
     /// </summary>
     public class ActRestSiteBackgroundPathPatch : IPatchMethod
     {
@@ -1874,6 +2000,7 @@ namespace STS2RitsuLib.Scaffolding.Content.Patches
         // ReSharper disable InconsistentNaming
         /// <summary>
         ///     Supplies <see cref="IModActAssetOverrides.CustomRestSiteBackgroundPath" /> when the resource exists.
+        ///     当资源存在时提供 <see cref="IModActAssetOverrides.CustomRestSiteBackgroundPath" />。
         /// </summary>
         public static bool Prefix(ActModel __instance, ref string __result)
             // ReSharper restore InconsistentNaming
@@ -1897,6 +2024,7 @@ namespace STS2RitsuLib.Scaffolding.Content.Patches
 
     /// <summary>
     ///     Patches act map layer background image paths (top/mid/bottom) for mod acts.
+    ///     为 mod 章节修补章节地图图层背景图像路径（top/mid/bottom）。
     /// </summary>
     public class ActMapBackgroundPathPatch : IPatchMethod
     {
@@ -1923,6 +2051,7 @@ namespace STS2RitsuLib.Scaffolding.Content.Patches
         // ReSharper disable InconsistentNaming
         /// <summary>
         ///     Dispatches to the matching <see cref="IModActAssetOverrides" /> map layer path property.
+        ///     分派到匹配的 <see cref="IModActAssetOverrides" /> map layer 路径属性。
         /// </summary>
         public static bool Prefix(MethodBase __originalMethod, ActModel __instance, ref string __result)
             // ReSharper restore InconsistentNaming
@@ -1989,6 +2118,10 @@ namespace STS2RitsuLib.Scaffolding.Content.Patches
     ///     Patches <c>EventModel.BackgroundScenePath</c> so preloads and <see cref="EventModel.CreateBackgroundScene" /> use
     ///     <see cref="IModEventAssetOverrides.CustomBackgroundScenePath" /> instead of the synthetic
     ///     <c>events/background_scenes/&lt;id&gt;.tscn</c> path (which mod packs usually do not ship).
+    ///     <c>events/background_scenes/&lt;id&gt;.tscn</c>。
+    ///     修补 <c>EventModel.BackgroundScenePath</c>，使预加载和 <see cref="EventModel.CreateBackgroundScene" /> 使用
+    ///     <see cref="IModEventAssetOverrides.CustomBackgroundScenePath" />，而不是合成的
+    ///     <c>events/background_scenes/&lt;id&gt;.tscn</c> 路径（mod 包通常不会提供该路径）。
     /// </summary>
     public class EventBackgroundScenePathGetterPatch : IPatchMethod
     {
@@ -2011,6 +2144,7 @@ namespace STS2RitsuLib.Scaffolding.Content.Patches
         // ReSharper disable InconsistentNaming
         /// <summary>
         ///     Supplies <see cref="IModEventAssetOverrides.CustomBackgroundScenePath" /> when the resource exists.
+        ///     当资源存在时提供 <see cref="IModEventAssetOverrides.CustomBackgroundScenePath" />。
         /// </summary>
         public static bool Prefix(EventModel __instance, ref string __result)
             // ReSharper restore InconsistentNaming
@@ -2034,6 +2168,7 @@ namespace STS2RitsuLib.Scaffolding.Content.Patches
 
     /// <summary>
     ///     Patches <see cref="EventModel.CreateScene" /> for <see cref="IModEventAssetOverrides" />.
+    ///     为 <see cref="IModEventAssetOverrides" /> 修补<see cref="EventModel.CreateScene" />。
     /// </summary>
     public class EventLayoutScenePatch : IPatchMethod
     {
@@ -2055,6 +2190,7 @@ namespace STS2RitsuLib.Scaffolding.Content.Patches
         // ReSharper disable InconsistentNaming
         /// <summary>
         ///     Supplies <see cref="IModEventAssetOverrides.CustomLayoutScenePath" /> when the resource exists.
+        ///     当资源存在时提供 <see cref="IModEventAssetOverrides.CustomLayoutScenePath" />。
         /// </summary>
         public static bool Prefix(EventModel __instance, ref PackedScene __result)
             // ReSharper restore InconsistentNaming
@@ -2078,6 +2214,7 @@ namespace STS2RitsuLib.Scaffolding.Content.Patches
 
     /// <summary>
     ///     Patches <see cref="EventModel.CreateInitialPortrait" /> for <see cref="IModEventAssetOverrides" />.
+    ///     为 <see cref="IModEventAssetOverrides" /> 修补<see cref="EventModel.CreateInitialPortrait" />。
     /// </summary>
     public class EventInitialPortraitPatch : IPatchMethod
     {
@@ -2099,6 +2236,7 @@ namespace STS2RitsuLib.Scaffolding.Content.Patches
         // ReSharper disable InconsistentNaming
         /// <summary>
         ///     Loads portrait from <see cref="IModEventAssetOverrides.CustomInitialPortraitPath" /> when valid.
+        ///     有效时从 <see cref="IModEventAssetOverrides.CustomInitialPortraitPath" /> 加载portrait。
         /// </summary>
         public static bool Prefix(EventModel __instance, ref Texture2D __result)
             // ReSharper restore InconsistentNaming
@@ -2120,6 +2258,7 @@ namespace STS2RitsuLib.Scaffolding.Content.Patches
 
     /// <summary>
     ///     Patches <see cref="EventModel.CreateBackgroundScene" /> for <see cref="IModEventAssetOverrides" />.
+    ///     为 <see cref="IModEventAssetOverrides" /> 修补<see cref="EventModel.CreateBackgroundScene" />。
     /// </summary>
     public class EventBackgroundScenePatch : IPatchMethod
     {
@@ -2141,10 +2280,17 @@ namespace STS2RitsuLib.Scaffolding.Content.Patches
         // ReSharper disable InconsistentNaming
         /// <summary>
         ///     Supplies <see cref="IModEventAssetOverrides.CustomBackgroundScenePath" /> when the resource exists.
+        ///     当资源存在时提供 <see cref="IModEventAssetOverrides.CustomBackgroundScenePath" />。
         /// </summary>
         public static bool Prefix(EventModel __instance, ref PackedScene __result)
             // ReSharper restore InconsistentNaming
         {
+            if (__instance is IModAncientEventAssetOverrides
+                {
+                    AncientPresentationAssetProfile.StageProcedural: not null,
+                })
+                return true;
+
             // ReSharper disable once InvertIf
             if (ExternalAssetOverrideRegistry.TryGetEventBackgroundScene(__instance, out var externalScene))
             {
@@ -2162,6 +2308,7 @@ namespace STS2RitsuLib.Scaffolding.Content.Patches
 
     /// <summary>
     ///     Patches <see cref="EventModel.HasVfx" /> for mod VFX scene overrides.
+    ///     为 mod VFX 场景覆盖修补 <see cref="EventModel.HasVfx" />。
     /// </summary>
     public class EventHasVfxPatch : IPatchMethod
     {
@@ -2183,6 +2330,7 @@ namespace STS2RitsuLib.Scaffolding.Content.Patches
         // ReSharper disable InconsistentNaming
         /// <summary>
         ///     Returns true when <see cref="IModEventAssetOverrides.CustomVfxScenePath" /> resolves to an existing resource.
+        ///     当 <see cref="IModEventAssetOverrides.CustomVfxScenePath" /> 解析到现有资源时返回 true。
         /// </summary>
         public static bool Prefix(EventModel __instance, ref bool __result)
             // ReSharper restore InconsistentNaming
@@ -2210,6 +2358,7 @@ namespace STS2RitsuLib.Scaffolding.Content.Patches
 
     /// <summary>
     ///     Patches <see cref="EventModel.CreateVfx" /> for <see cref="IModEventAssetOverrides" />.
+    ///     为 <see cref="IModEventAssetOverrides" /> 修补<see cref="EventModel.CreateVfx" />。
     /// </summary>
     public class EventCreateVfxPatch : IPatchMethod
     {
@@ -2231,6 +2380,7 @@ namespace STS2RitsuLib.Scaffolding.Content.Patches
         // ReSharper disable InconsistentNaming
         /// <summary>
         ///     Instantiates <see cref="IModEventAssetOverrides.CustomVfxScenePath" /> when the packed scene exists.
+        ///     当 packed scene 存在时实例化 <see cref="IModEventAssetOverrides.CustomVfxScenePath" />。
         /// </summary>
         public static bool Prefix(EventModel __instance, ref Node2D __result)
             // ReSharper restore InconsistentNaming
@@ -2256,6 +2406,7 @@ namespace STS2RitsuLib.Scaffolding.Content.Patches
 
     /// <summary>
     ///     Appends custom event asset paths to <see cref="EventModel.GetAssetPaths" /> for preloading.
+    ///     将自定义事件资源路径追加到 <see cref="EventModel.GetAssetPaths" />，用于预加载。
     /// </summary>
     public class EventGetAssetPathsPatch : IPatchMethod
     {
@@ -2277,6 +2428,7 @@ namespace STS2RitsuLib.Scaffolding.Content.Patches
         // ReSharper disable InconsistentNaming
         /// <summary>
         ///     Concatenates resolved override paths after the vanilla enumeration.
+        ///     将已解析的覆盖资源路径追加到原版枚举结果之后。
         /// </summary>
         public static void Postfix(EventModel __instance, IRunState runState, ref IEnumerable<string> __result)
             // ReSharper restore InconsistentNaming
@@ -2284,19 +2436,43 @@ namespace STS2RitsuLib.Scaffolding.Content.Patches
             _ = runState;
 
             var paths = __result;
+            var proceduralAncientStage =
+                (__instance as IModAncientEventAssetOverrides)?.AncientPresentationAssetProfile?.StageProcedural;
+            var suppressAncientBackgroundScene = __instance.LayoutType == EventLayoutType.Ancient &&
+                                                 proceduralAncientStage != null;
 
-            if (__instance is IModEventAssetOverrides evo
-                && __instance.LayoutType == EventLayoutType.Ancient
-                && !string.IsNullOrWhiteSpace(evo.CustomBackgroundScenePath)
-                && AssetPathDiagnostics.Exists(evo.CustomBackgroundScenePath, __instance,
-                    nameof(IModEventAssetOverrides.CustomBackgroundScenePath)))
+            switch (suppressAncientBackgroundScene)
             {
-                var entry = __instance.Id.Entry.ToLowerInvariant();
-                var vanillaBg = SceneHelper.GetScenePath($"events/background_scenes/{entry}");
-                paths = paths.Where(p => p != vanillaBg);
+                case true:
+                {
+                    var entry = __instance.Id.Entry.ToLowerInvariant();
+                    var vanillaBg = SceneHelper.GetScenePath($"events/background_scenes/{entry}");
+                    paths = RemovePath(paths, vanillaBg);
+
+                    if (__instance is IModEventAssetOverrides proceduralEventOverrides)
+                        paths = RemovePath(paths, proceduralEventOverrides.CustomBackgroundScenePath);
+
+                    if (ExternalAssetOverrideRegistry.TryGetEventBackgroundScenePath(__instance,
+                            out var proceduralExternalBackgroundPath))
+                        paths = RemovePath(paths, proceduralExternalBackgroundPath);
+                    break;
+                }
+                case false
+                    when __instance is IModEventAssetOverrides evo
+                         && __instance.LayoutType == EventLayoutType.Ancient
+                         && !string.IsNullOrWhiteSpace(evo.CustomBackgroundScenePath)
+                         && AssetPathDiagnostics.Exists(evo.CustomBackgroundScenePath, __instance,
+                             nameof(IModEventAssetOverrides.CustomBackgroundScenePath)):
+                {
+                    var entry = __instance.Id.Entry.ToLowerInvariant();
+                    var vanillaBg = SceneHelper.GetScenePath($"events/background_scenes/{entry}");
+                    paths = paths.Where(p => p != vanillaBg);
+                    break;
+                }
             }
 
-            if (ExternalAssetOverrideRegistry.TryGetEventBackgroundScenePath(__instance,
+            if (!suppressAncientBackgroundScene
+                && ExternalAssetOverrideRegistry.TryGetEventBackgroundScenePath(__instance,
                     out var externalBackgroundPath) &&
                 AssetPathDiagnostics.Exists(externalBackgroundPath, __instance,
                     "ExternalAssetOverrideRegistry.EventBackgroundScenePath"))
@@ -2306,7 +2482,7 @@ namespace STS2RitsuLib.Scaffolding.Content.Patches
                 paths = paths.Where(p => p != vanillaBg);
             }
 
-            var externalMerged = CollectExternalEventAssetPaths(__instance);
+            var externalMerged = CollectExternalEventAssetPaths(__instance, suppressAncientBackgroundScene);
 
             if (__instance is not IModEventAssetOverrides eventOverrides)
             {
@@ -2318,7 +2494,8 @@ namespace STS2RitsuLib.Scaffolding.Content.Patches
                 __instance,
                 (eventOverrides.CustomLayoutScenePath, nameof(IModEventAssetOverrides.CustomLayoutScenePath)),
                 (eventOverrides.CustomInitialPortraitPath, nameof(IModEventAssetOverrides.CustomInitialPortraitPath)),
-                (eventOverrides.CustomBackgroundScenePath, nameof(IModEventAssetOverrides.CustomBackgroundScenePath)),
+                (suppressAncientBackgroundScene ? null : eventOverrides.CustomBackgroundScenePath,
+                    nameof(IModEventAssetOverrides.CustomBackgroundScenePath)),
                 (eventOverrides.CustomVfxScenePath, nameof(IModEventAssetOverrides.CustomVfxScenePath)));
             if (externalMerged.Length > 0)
                 merged = merged.Concat(externalMerged).Distinct().ToArray();
@@ -2338,30 +2515,60 @@ namespace STS2RitsuLib.Scaffolding.Content.Patches
                     merged = [.. merged, .. ancientMerged];
             }
 
+            var proceduralStageAssetPaths =
+                CollectExistingProceduralStageAssetPaths(__instance, proceduralAncientStage);
+            if (proceduralStageAssetPaths.Length > 0)
+                merged = [.. merged, .. proceduralStageAssetPaths];
+
             if (merged.Length == 0)
             {
                 __result = paths;
                 return;
             }
 
-            __result = paths.Concat(merged);
+            __result = paths.Concat(merged).Distinct();
         }
 
-        private static string[] CollectExternalEventAssetPaths(EventModel instance)
+        private static string[] CollectExternalEventAssetPaths(EventModel instance, bool suppressBackgroundScene)
         {
             return ContentAssetOverridePatchHelper.CollectExternalExistingPaths(
                 instance,
                 (ExternalAssetOverrideRegistry.TryGetEventLayoutScenePath(instance, out var extLayout)
                     ? extLayout
                     : null, "ExternalAssetOverrideRegistry.EventLayoutScenePath"),
-                (ExternalAssetOverrideRegistry.TryGetEventBackgroundScenePath(instance, out var extBackground)
+                (!suppressBackgroundScene &&
+                 ExternalAssetOverrideRegistry.TryGetEventBackgroundScenePath(instance, out var extBackground)
                     ? extBackground
                     : null, "ExternalAssetOverrideRegistry.EventBackgroundScenePath"));
+        }
+
+        private static string[] CollectExistingProceduralStageAssetPaths(
+            EventModel instance,
+            AncientEventStageProceduralVisualSet? stage)
+        {
+            var paths = AncientEventStageProceduralAssetPaths.Collect(stage);
+            if (paths.Length == 0)
+                return [];
+
+            return paths
+                .Where(path => AssetPathDiagnostics.Exists(
+                    path,
+                    instance,
+                    nameof(AncientEventPresentationAssetProfile.StageProcedural)))
+                .ToArray();
+        }
+
+        private static IEnumerable<string> RemovePath(IEnumerable<string> paths, string? pathToRemove)
+        {
+            return string.IsNullOrWhiteSpace(pathToRemove)
+                ? paths
+                : paths.Where(path => !string.Equals(path, pathToRemove, StringComparison.Ordinal));
         }
     }
 
     /// <summary>
     ///     Patches ancient map icon textures for <see cref="IModAncientEventAssetOverrides" />.
+    ///     为 <see cref="IModAncientEventAssetOverrides" /> 修补远古事件地图图标纹理。
     /// </summary>
     public class AncientMapIconTexturePatch : IPatchMethod
     {
@@ -2387,6 +2594,7 @@ namespace STS2RitsuLib.Scaffolding.Content.Patches
         // ReSharper disable InconsistentNaming
         /// <summary>
         ///     Dispatches compressed texture loading to the matching ancient override path.
+        ///     将压缩纹理加载分派到匹配的远古事件覆盖路径。
         /// </summary>
         public static bool Prefix(MethodBase __originalMethod, AncientEventModel __instance, ref Texture2D __result)
             // ReSharper restore InconsistentNaming
@@ -2440,6 +2648,7 @@ namespace STS2RitsuLib.Scaffolding.Content.Patches
 
     /// <summary>
     ///     Patches ancient run-history icon textures for <see cref="IModAncientEventAssetOverrides" />.
+    ///     为 <see cref="IModAncientEventAssetOverrides" /> 修补远古事件跑局历史图标纹理。
     /// </summary>
     public class AncientRunHistoryIconTexturePatch : IPatchMethod
     {
@@ -2465,6 +2674,7 @@ namespace STS2RitsuLib.Scaffolding.Content.Patches
         // ReSharper disable InconsistentNaming
         /// <summary>
         ///     Dispatches compressed texture loading to the matching ancient override path.
+        ///     将压缩纹理加载分派到匹配的远古事件覆盖路径。
         /// </summary>
         public static bool Prefix(MethodBase __originalMethod, AncientEventModel __instance, ref Texture2D __result)
             // ReSharper restore InconsistentNaming
@@ -2518,6 +2728,7 @@ namespace STS2RitsuLib.Scaffolding.Content.Patches
 
     /// <summary>
     ///     Merges custom map node asset paths into <see cref="AncientEventModel.MapNodeAssetPaths" />.
+    ///     将自定义地图节点资源路径合并到 <see cref="AncientEventModel.MapNodeAssetPaths" />。
     /// </summary>
     public class AncientMapNodeAssetPathsPatch : IPatchMethod
     {
@@ -2539,6 +2750,7 @@ namespace STS2RitsuLib.Scaffolding.Content.Patches
         // ReSharper disable InconsistentNaming
         /// <summary>
         ///     Appends resolved custom map icon paths after the vanilla pair.
+        ///     在原版路径对之后追加已解析的自定义地图图标路径。
         /// </summary>
         public static void Postfix(AncientEventModel __instance, ref IEnumerable<string> __result)
             // ReSharper restore InconsistentNaming
@@ -2571,22 +2783,26 @@ namespace STS2RitsuLib.Scaffolding.Content.Patches
 
     /// <summary>
     ///     Optional affliction overlay scene path for patches on <see cref="AfflictionModel" />.
+    ///     用于 <see cref="AfflictionModel" /> 补丁的可选苦痛 overlay 场景路径。
     /// </summary>
     public interface IModAfflictionAssetOverrides
     {
         /// <summary>
         ///     Path bundle; default is empty.
+        ///     路径包；默认为空。
         /// </summary>
         AfflictionAssetProfile AssetProfile => AfflictionAssetProfile.Empty;
 
         /// <summary>
         ///     Overlay packed scene path override.
+        ///     Overlay packed 场景路径覆盖。
         /// </summary>
         string? CustomOverlayScenePath => AssetProfile.OverlayScenePath;
     }
 
     /// <summary>
     ///     Patches <see cref="AfflictionModel" /> overlay scene path for <see cref="IModAfflictionAssetOverrides" />.
+    ///     为 <see cref="IModAfflictionAssetOverrides" /> 修补<see cref="AfflictionModel" /> overlay 场景 路径。
     /// </summary>
     public class AfflictionOverlayPathPatch : IPatchMethod
     {
@@ -2608,6 +2824,7 @@ namespace STS2RitsuLib.Scaffolding.Content.Patches
         // ReSharper disable InconsistentNaming
         /// <summary>
         ///     Supplies <see cref="IModAfflictionAssetOverrides.CustomOverlayScenePath" /> when the resource exists.
+        ///     当资源存在时提供 <see cref="IModAfflictionAssetOverrides.CustomOverlayScenePath" />。
         /// </summary>
         public static bool Prefix(AfflictionModel __instance, ref string __result)
             // ReSharper restore InconsistentNaming
@@ -2629,6 +2846,7 @@ namespace STS2RitsuLib.Scaffolding.Content.Patches
 
     /// <summary>
     ///     Patches <see cref="AfflictionModel.HasOverlay" /> from custom overlay path existence.
+    ///     根据自定义 overlay 路径 existence修补<see cref="AfflictionModel.HasOverlay" />。
     /// </summary>
     public class AfflictionHasOverlayPatch : IPatchMethod
     {
@@ -2650,6 +2868,7 @@ namespace STS2RitsuLib.Scaffolding.Content.Patches
         // ReSharper disable InconsistentNaming
         /// <summary>
         ///     Resolves the custom overlay path then sets boolean availability from resource existence.
+        ///     解析自定义覆盖层路径，然后根据资源是否存在来设置布尔可用性。
         /// </summary>
         public static bool Prefix(AfflictionModel __instance, ref bool __result)
             // ReSharper restore InconsistentNaming
@@ -2689,6 +2908,7 @@ namespace STS2RitsuLib.Scaffolding.Content.Patches
 
     /// <summary>
     ///     Patches <see cref="AfflictionModel.CreateOverlay" /> to instantiate mod overlay scenes when configured.
+    ///     修补 <see cref="AfflictionModel.CreateOverlay" />，在配置后实例化 mod 覆盖层场景。
     /// </summary>
     public class AfflictionCreateOverlayPatch : IPatchMethod
     {
@@ -2710,6 +2930,7 @@ namespace STS2RitsuLib.Scaffolding.Content.Patches
         // ReSharper disable InconsistentNaming
         /// <summary>
         ///     Instantiates <see cref="IModAfflictionAssetOverrides.CustomOverlayScenePath" /> when the packed scene exists.
+        ///     当 packed scene 存在时实例化 <see cref="IModAfflictionAssetOverrides.CustomOverlayScenePath" />。
         /// </summary>
         public static bool Prefix(AfflictionModel __instance, ref Control __result)
             // ReSharper restore InconsistentNaming
@@ -2752,22 +2973,26 @@ namespace STS2RitsuLib.Scaffolding.Content.Patches
 
     /// <summary>
     ///     Optional enchantment icon path for patches on <see cref="EnchantmentModel" />.
+    ///     用于 <see cref="EnchantmentModel" /> 补丁的可选附魔 图标路径。
     /// </summary>
     public interface IModEnchantmentAssetOverrides
     {
         /// <summary>
         ///     Path bundle; default is empty.
+        ///     路径包；默认为空。
         /// </summary>
         EnchantmentAssetProfile AssetProfile => EnchantmentAssetProfile.Empty;
 
         /// <summary>
         ///     Intended icon path override.
+        ///     Intended 图标路径覆盖。
         /// </summary>
         string? CustomIconPath => AssetProfile.IconPath;
     }
 
     /// <summary>
     ///     Patches <see cref="EnchantmentModel" /> intended icon path for <see cref="IModEnchantmentAssetOverrides" />.
+    ///     为 <see cref="IModEnchantmentAssetOverrides" /> 修补<see cref="EnchantmentModel" /> intended 图标 路径。
     /// </summary>
     public class EnchantmentIntendedIconPathPatch : IPatchMethod
     {
@@ -2789,6 +3014,7 @@ namespace STS2RitsuLib.Scaffolding.Content.Patches
         // ReSharper disable InconsistentNaming
         /// <summary>
         ///     Supplies <see cref="IModEnchantmentAssetOverrides.CustomIconPath" /> when the resource exists.
+        ///     当资源存在时提供 <see cref="IModEnchantmentAssetOverrides.CustomIconPath" />。
         /// </summary>
         public static bool Prefix(EnchantmentModel __instance, ref string __result)
             // ReSharper restore InconsistentNaming
@@ -2810,6 +3036,7 @@ namespace STS2RitsuLib.Scaffolding.Content.Patches
 
     /// <summary>
     ///     Patches <see cref="PowerModel.ResolvedBigIconPath" /> so preload lists include mod big-icon paths.
+    ///     修补<see cref="PowerModel.ResolvedBigIconPath" />，使预加载 列表 include mod big-图标 路径。
     /// </summary>
     public class PowerResolvedBigIconPathPatch : IPatchMethod
     {
@@ -2831,6 +3058,7 @@ namespace STS2RitsuLib.Scaffolding.Content.Patches
         // ReSharper disable InconsistentNaming
         /// <summary>
         ///     Supplies <see cref="IModPowerAssetOverrides.CustomBigIconPath" /> when the resource exists.
+        ///     当资源存在时提供 <see cref="IModPowerAssetOverrides.CustomBigIconPath" />。
         /// </summary>
         public static bool Prefix(PowerModel __instance, ref string __result)
             // ReSharper restore InconsistentNaming
@@ -2849,11 +3077,18 @@ namespace STS2RitsuLib.Scaffolding.Content.Patches
     ///     The default game path pattern is:
     ///     <c>res://images/packed/sprite_fonts/{EnergyColorName}_energy_icon.png</c>.
     ///     Use this interface only when you need a different path.
+    ///     在 <see cref="CardPoolModel" /> 子类上实现此接口，以提供自定义图像路径，用于
+    ///     富文本卡牌描述中渲染的小型能量图标
+    ///     （例如 <c>[img]…/winefox_energy_icon.png[/img]</c>）。
+    ///     <para />
+    ///     游戏默认路径模式为：
+    ///     仅在需要不同路径时使用此接口。
     /// </summary>
     public interface IModTextEnergyIconPool
     {
         /// <summary>
         ///     Custom image path for the small energy icon embedded in rich-text card descriptions.
+        ///     嵌入富文本卡牌描述的小型能量图标的自定义图像路径。
         /// </summary>
         string? TextEnergyIconPath { get; }
     }

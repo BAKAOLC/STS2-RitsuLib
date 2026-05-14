@@ -6,6 +6,7 @@ namespace STS2RitsuLib.Scaffolding.Ancients.Options
 {
     /// <summary>
     ///     Global registration surface for ancient initial-option injection rules.
+    ///     古代初始选项注入规则的全局注册入口。
     /// </summary>
     public static class ModAncientOptionRegistry
     {
@@ -15,6 +16,7 @@ namespace STS2RitsuLib.Scaffolding.Ancients.Options
 
         /// <summary>
         ///     Registers an option rule for <typeparamref name="TAncient" />.
+        ///     为 <typeparamref name="TAncient" /> 注册选项规则。
         /// </summary>
         public static void Register<TAncient>(string ownerModId, ModAncientOptionRule rule)
             where TAncient : AncientEventModel
@@ -24,6 +26,7 @@ namespace STS2RitsuLib.Scaffolding.Ancients.Options
 
         /// <summary>
         ///     Registers an option rule for <paramref name="ancientType" />.
+        ///     为 <paramref name="ancientType" /> 注册选项规则。
         /// </summary>
         public static void Register(Type ancientType, string ownerModId, ModAncientOptionRule rule)
         {
@@ -60,6 +63,7 @@ namespace STS2RitsuLib.Scaffolding.Ancients.Options
 
         /// <summary>
         ///     Clears all registered rules (for tests/hot reload tooling).
+        ///     清除所有已注册规则（用于测试 / 热重载工具）。
         /// </summary>
         public static void ClearForTests()
         {

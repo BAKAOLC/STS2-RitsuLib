@@ -15,6 +15,9 @@ namespace STS2RitsuLib.Scaffolding.Characters.Patches
     ///     <see cref="IModCharacterAssetOverrides.WorldProceduralVisuals" /><c>.Merchant</c> can use in-memory shells
     ///     (mirrors vanilla layout; otherwise loads <c>MerchantAnimPath</c> through
     ///     <see cref="RitsuGodotNodeFactories" /> for baselib-style scenes).
+    ///     重新实现 <c>NMerchantRoom.AfterRoomIsLoaded</c>，让带有 <see cref="IModCharacterAssetOverrides.WorldProceduralVisuals" />
+    ///     <c>.Merchant</c> 的角色可以使用内存外壳（镜像原版布局；否则通过 <see cref="RitsuGodotNodeFactories" /> 加载 <c>MerchantAnimPath</c> 以支持
+    ///     baselib 风格场景）。
     /// </summary>
     public class NMerchantRoomProceduralCharacterInstantiationPatch : IPatchMethod
     {
@@ -46,6 +49,7 @@ namespace STS2RitsuLib.Scaffolding.Characters.Patches
         // ReSharper disable once InconsistentNaming
         /// <summary>
         ///     Replaces vanilla layout; returns <see langword="false" /> so the original <c>AfterRoomIsLoaded</c> is skipped.
+        ///     替换原版布局；返回 <see langword="false" />，使原始 <c>AfterRoomIsLoaded</c> 被跳过。
         /// </summary>
         public static bool Prefix(NMerchantRoom __instance)
         {

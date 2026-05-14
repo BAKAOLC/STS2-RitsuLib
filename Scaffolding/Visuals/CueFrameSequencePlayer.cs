@@ -14,12 +14,21 @@ namespace STS2RitsuLib.Scaffolding.Visuals
     ///         <c>CueAnimationBackend</c> so <see cref="StateMachine.ModAnimStateMachine" /> can advance
     ///         <see cref="StateMachine.ModAnimState.NextState" />.
     ///     </para>
+    ///     <para>
+    ///         当非循环序列到达最后一帧时，发出 <see cref="SignalName.Finished" />；
+    ///         当 <see cref="TryStart" /> 短路进入单帧非循环状态（即序列
+    ///         在启动期间已到达终止帧）时也会发出。该信号由
+    ///         <c>CueAnimationBackend</c> 消费，使 <see cref="StateMachine.ModAnimStateMachine" /> 可以推进
+    ///         <see cref="StateMachine.ModAnimState.NextState" />。
+    ///     </para>
     /// </remarks>
     internal partial class CueFrameSequencePlayer : Node
     {
         /// <summary>
         ///     Raised when the sequence completes (non-loop) or is an already-terminal single frame.
         ///     Not raised for looping sequences.
+        ///     当序列完成（非循环）或已是终止单帧时触发。
+        ///     循环序列不会触发。
         /// </summary>
         [Signal]
         public delegate void FinishedEventHandler();
@@ -28,8 +37,10 @@ namespace STS2RitsuLib.Scaffolding.Visuals
         private bool _active;
         private Texture2D?[] _cache = [];
         private double _carry;
+        private VisualNodeStyle? _defaultStyle;
         private double _frameDurationSeconds;
         private VisualFrame[] _frames = [];
+        private VisualNodeStyle?[] _frameStyles = [];
         private int _index;
         private bool[] _loadFailed = [];
         private bool _loop;
@@ -59,6 +70,8 @@ namespace STS2RitsuLib.Scaffolding.Visuals
             _active = false;
             _sprite = null;
             _frames = [];
+            _defaultStyle = null;
+            _frameStyles = [];
             _cache = [];
             _loadFailed = [];
             _index = 0;
@@ -84,6 +97,8 @@ namespace STS2RitsuLib.Scaffolding.Visuals
             StopAndReset();
             _sprite = sprite;
             _frames = frames;
+            _defaultStyle = sequence.DefaultStyle;
+            _frameStyles = BuildFrameStyleArray(sequence, frames.Length);
             _cache = new Texture2D?[frames.Length];
             _loadFailed = new bool[frames.Length];
             _loop = sequence.Loop;
@@ -155,6 +170,25 @@ namespace STS2RitsuLib.Scaffolding.Visuals
             }
 
             _sprite.Texture = tex;
+            var style = _frameStyles.Length > i ? _frameStyles[i] : null;
+            (style ?? _defaultStyle).ApplyTo(_sprite);
+        }
+
+        private static VisualNodeStyle?[] BuildFrameStyleArray(VisualFrameSequence sequence, int frameCount)
+        {
+            if (frameCount == 0)
+                return [];
+
+            var source = sequence.FrameStyles;
+            if (source == null || source.Count == 0)
+                return new VisualNodeStyle?[frameCount];
+
+            var styles = new VisualNodeStyle?[frameCount];
+            var n = Math.Min(frameCount, source.Count);
+            for (var i = 0; i < n; i++)
+                styles[i] = source[i];
+
+            return styles;
         }
 
         internal static CueFrameSequencePlayer EnsureUnder(Node parent)

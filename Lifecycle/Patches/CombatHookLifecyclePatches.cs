@@ -20,6 +20,7 @@ namespace STS2RitsuLib.Lifecycle.Patches
     /// <summary>
     ///     Publishes fine-grained combat, card, turn, pile, flush, and creature death lifecycle events by patching
     ///     <see cref="Hook" /> before/after callbacks.
+    ///     通过 patch <see cref="Hook" /> 的 before/after callback，发布细粒度的战斗、卡牌、回合、牌堆、flush 和生物死亡生命周期事件。
     /// </summary>
     public class CombatHookLifecyclePatch : IPatchMethod
     {
@@ -79,6 +80,8 @@ namespace STS2RitsuLib.Lifecycle.Patches
         /// <summary>
         ///     Harmony prefix: publishes synchronous lifecycle events for hook methods that run before combat, side turns,
         ///     card play, flush, and creature death.
+        ///     Harmony prefix：为在战斗、side turn、
+        ///     卡牌打出、flush 和生物死亡之前运行的 hook 方法发布同步生命周期事件。
         /// </summary>
         // ReSharper disable InconsistentNaming
         public static void Prefix(MethodBase __originalMethod, object[] __args)
@@ -143,6 +146,8 @@ namespace STS2RitsuLib.Lifecycle.Patches
         /// <summary>
         ///     Harmony postfix: chains onto the original async <see cref="Task" /> and publishes lifecycle events after
         ///     combat end, victory, turns, card pile changes, flush completion, and death resolution.
+        ///     Harmony postfix：链接到原始异步 <see cref="Task" />，并在
+        ///     战斗结束、胜利、回合、卡牌牌堆变化、flush 完成和死亡解析后发布生命周期事件。
         /// </summary>
         // ReSharper disable InconsistentNaming
         public static void Postfix(MethodBase __originalMethod, object[] __args, ref Task __result)

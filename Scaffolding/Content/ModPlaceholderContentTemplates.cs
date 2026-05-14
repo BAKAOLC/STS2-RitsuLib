@@ -12,6 +12,9 @@ namespace STS2RitsuLib.Scaffolding.Content
     ///     Base implementation for generated placeholder cards (see
     ///     <see cref="ModContentRegistry.RegisterPlaceholderCard{TPool}(string, PlaceholderCardDescriptor)" />). Mods
     ///     normally do not subclass this; only subclass if you need a hand-written type with the same no-op behavior.
+    ///     生成式占位卡牌的基础实现（见
+    ///     <see cref="ModContentRegistry.RegisterPlaceholderCard{TPool}(string, PlaceholderCardDescriptor)" />）。
+    ///     Mod 通常不需要继承此类型；仅当你需要一个手写类型并保持相同空操作行为时才继承。
     /// </summary>
     public abstract class ModPlaceholderCardTemplate(
         int baseCost,
@@ -23,6 +26,7 @@ namespace STS2RitsuLib.Scaffolding.Content
     {
         /// <summary>
         ///     No-op play handler for placeholder cards.
+        ///     占位卡牌的空操作打出处理器。
         /// </summary>
         protected override Task OnPlay(PlayerChoiceContext choiceContext, CardPlay cardPlay)
         {
@@ -34,6 +38,9 @@ namespace STS2RitsuLib.Scaffolding.Content
     ///     Base for emitted placeholder relics; prefer
     ///     <see cref="ModContentRegistry.RegisterPlaceholderRelic{TPool}(string, PlaceholderRelicDescriptor)" /> instead of
     ///     subclassing.
+    ///     生成式占位遗物的基类；优先使用
+    ///     <see cref="ModContentRegistry.RegisterPlaceholderRelic{TPool}(string, PlaceholderRelicDescriptor)" />，
+    ///     而不是手动继承。
     /// </summary>
     public abstract class ModPlaceholderRelicTemplate(
         RelicRarity rarity,
@@ -98,6 +105,9 @@ namespace STS2RitsuLib.Scaffolding.Content
     ///     Base for emitted placeholder potions; prefer
     ///     <see cref="ModContentRegistry.RegisterPlaceholderPotion{TPool}(string, PlaceholderPotionDescriptor)" /> instead of
     ///     subclassing.
+    ///     生成式占位药水的基类；优先使用
+    ///     <see cref="ModContentRegistry.RegisterPlaceholderPotion{TPool}(string, PlaceholderPotionDescriptor)" />，
+    ///     而不是手动继承。
     /// </summary>
     public abstract class ModPlaceholderPotionTemplate(
         PotionRarity rarity,
@@ -124,6 +134,7 @@ namespace STS2RitsuLib.Scaffolding.Content
 
         /// <summary>
         ///     No-op use handler for placeholder potions.
+        ///     占位药水的空操作使用处理器。
         /// </summary>
         protected override Task OnUse(PlayerChoiceContext choiceContext, Creature? target)
         {

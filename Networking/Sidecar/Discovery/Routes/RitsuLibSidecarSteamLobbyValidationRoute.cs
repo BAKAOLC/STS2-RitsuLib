@@ -1,6 +1,6 @@
 using MegaCrit.Sts2.Core.Multiplayer.Game;
 using MegaCrit.Sts2.Core.Platform;
-using Steamworks;
+using STS2RitsuLib.Platform.Steam;
 
 namespace STS2RitsuLib.Networking.Sidecar
 {
@@ -16,24 +16,20 @@ namespace STS2RitsuLib.Networking.Sidecar
             if (!ulong.TryParse(netService.GetRawLobbyIdentifier(), out var lobbyIdRaw))
                 return false;
 
-            var lobbyId = new CSteamID(lobbyIdRaw);
-            var memberCount = SteamMatchmaking.GetNumLobbyMembers(lobbyId);
+            if (!RitsuLibSteamworks.TryGetNumLobbyMembers(lobbyIdRaw, out var memberCount))
+                return false;
             if (memberCount <= 0)
                 return false;
 
-            var localPeer = new CSteamID(netService.NetId);
-            for (var i = 0; i < memberCount; i++)
-                if (SteamMatchmaking.GetLobbyMemberByIndex(lobbyId, i) == localPeer)
-                    return true;
-
-            return false;
+            return RitsuLibSteamworks.TryLobbyContainsMember(lobbyIdRaw, netService.NetId, out var contains) &&
+                   contains;
         }
 
         public void PublishLocalEvidence(INetGameService netService)
         {
             if (!TryGetLobbyId(netService, out var lobbyId))
                 return;
-            SteamMatchmaking.SetLobbyMemberData(
+            RitsuLibSteamworks.TrySetLobbyMemberData(
                 lobbyId,
                 RitsuLibSidecarCapabilityMarkers.SteamLobbyMemberKey,
                 RitsuLibSidecarCapabilityMarkers.SteamLobbyMemberValueSupported);
@@ -44,11 +40,12 @@ namespace STS2RitsuLib.Networking.Sidecar
             if (!TryGetLobbyId(netService, out var lobbyId))
                 return null;
 
-            var peerId = new CSteamID(peerNetId);
-            var value = SteamMatchmaking.GetLobbyMemberData(
-                lobbyId,
-                peerId,
-                RitsuLibSidecarCapabilityMarkers.SteamLobbyMemberKey);
+            if (!RitsuLibSteamworks.TryGetLobbyMemberData(
+                    lobbyId,
+                    peerNetId,
+                    RitsuLibSidecarCapabilityMarkers.SteamLobbyMemberKey,
+                    out var value))
+                return null;
             if (string.IsNullOrEmpty(value))
                 return null;
 
@@ -57,13 +54,13 @@ namespace STS2RitsuLib.Networking.Sidecar
                 : RitsuLibSidecarPeerReachability.Unsupported;
         }
 
-        private static bool TryGetLobbyId(INetGameService netService, out CSteamID lobbyId)
+        private static bool TryGetLobbyId(INetGameService netService, out ulong lobbyId)
         {
-            lobbyId = CSteamID.Nil;
+            lobbyId = 0;
             if (!TryReadSteamLobbyId(netService, out var raw))
                 return false;
 
-            lobbyId = new(raw);
+            lobbyId = raw;
             return true;
         }
 
@@ -74,8 +71,7 @@ namespace STS2RitsuLib.Networking.Sidecar
                 return false;
             if (!ulong.TryParse(netService.GetRawLobbyIdentifier(), out lobbyIdRaw))
                 return false;
-            var lobbyId = new CSteamID(lobbyIdRaw);
-            return SteamMatchmaking.GetNumLobbyMembers(lobbyId) > 0;
+            return RitsuLibSteamworks.TryGetNumLobbyMembers(lobbyIdRaw, out var memberCount) && memberCount > 0;
         }
     }
 }

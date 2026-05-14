@@ -17,6 +17,7 @@ namespace STS2RitsuLib.Lifecycle.Patches
 {
     /// <summary>
     ///     Publishes gold gain, potion procure/discard, and reward-taken lifecycle events via <see cref="Hook" />.
+    ///     通过 <see cref="Hook" /> 发布金币获得、药水获取/丢弃以及奖励领取生命周期事件。
     /// </summary>
     public class RewardHookLifecyclePatch : IPatchMethod
     {
@@ -46,6 +47,7 @@ namespace STS2RitsuLib.Lifecycle.Patches
         /// <summary>
         ///     Harmony postfix: after matching hook methods complete, publishes the corresponding reward/economy lifecycle
         ///     event on the continuation of the original task.
+        ///     Harmony postfix：在匹配的 hook 方法完成后，在原始任务的延续中发布对应的奖励/经济生命周期事件。
         /// </summary>
         // ReSharper disable InconsistentNaming
         public static void Postfix(MethodBase __originalMethod, object[] __args, ref Task __result)
@@ -78,6 +80,7 @@ namespace STS2RitsuLib.Lifecycle.Patches
 
     /// <summary>
     ///     Publishes a lifecycle event when the player loses gold through <see cref="PlayerCmd.LoseGold" />.
+    ///     当玩家通过 <see cref="PlayerCmd.LoseGold" /> 失去金币时发布生命周期事件。
     /// </summary>
     public class GoldLossLifecyclePatch : IPatchMethod
     {
@@ -102,6 +105,7 @@ namespace STS2RitsuLib.Lifecycle.Patches
 
         /// <summary>
         ///     Harmony postfix: publishes <see cref="GoldLostEvent" /> with the updated gold total.
+        ///     Harmony postfix：发布带有更新后金币总数的 <see cref="GoldLostEvent" />。
         /// </summary>
         public static void Postfix(decimal amount, Player player, GoldLossType goldLossType)
         {
@@ -114,6 +118,7 @@ namespace STS2RitsuLib.Lifecycle.Patches
 
     /// <summary>
     ///     Publishes a lifecycle event when a relic is obtained via <see cref="RelicCmd.Obtain" />.
+    ///     当通过 <see cref="RelicCmd.Obtain" /> 获得遗物时发布生命周期事件。
     /// </summary>
     public class RelicObtainedLifecyclePatch : IPatchMethod
     {
@@ -137,6 +142,7 @@ namespace STS2RitsuLib.Lifecycle.Patches
 
         /// <summary>
         ///     Harmony postfix: when obtain completes, publishes <see cref="RelicObtainedEvent" /> for the resolved relic.
+        ///     Harmony postfix：获得流程完成后，为解析出的遗物发布 <see cref="RelicObtainedEvent" />。
         /// </summary>
         // ReSharper disable once InconsistentNaming
         public static void Postfix(Player player, ref Task<RelicModel> __result)
@@ -151,6 +157,7 @@ namespace STS2RitsuLib.Lifecycle.Patches
 
     /// <summary>
     ///     Publishes a lifecycle event when a relic is removed via <see cref="RelicCmd.Remove" />.
+    ///     当通过 <see cref="RelicCmd.Remove" /> 移除遗物时发布生命周期事件。
     /// </summary>
     public class RelicRemovedLifecyclePatch : IPatchMethod
     {
@@ -174,6 +181,7 @@ namespace STS2RitsuLib.Lifecycle.Patches
 
         /// <summary>
         ///     Harmony postfix: after removal completes, publishes <see cref="RelicRemovedEvent" /> using the relic owner.
+        ///     Harmony postfix：移除完成后，使用遗物拥有者发布 <see cref="RelicRemovedEvent" />。
         /// </summary>
         // ReSharper disable once InconsistentNaming
         public static void Postfix(RelicModel relic, ref Task __result)

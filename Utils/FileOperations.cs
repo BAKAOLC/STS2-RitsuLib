@@ -7,6 +7,8 @@ namespace STS2RitsuLib.Utils
     /// <summary>
     ///     Unified file operations wrapper for Godot's FileAccess with consistent error handling and logging.
     ///     Supports atomic writes with backup rotation (mirrors STS2's GodotFileIo pattern).
+    ///     Godot FileAccess 的统一文件操作包装器，提供一致的错误处理和日志记录。
+    ///     支持带备份轮换的原子写入（镜像 STS2 的 GodotFileIo 模式）。
     /// </summary>
     public static class FileOperations
     {
@@ -15,6 +17,7 @@ namespace STS2RitsuLib.Utils
 
         /// <summary>
         ///     Reads text content from a file with detailed error handling.
+        ///     从文件读取文本内容，并提供详细错误处理。
         /// </summary>
         public static ReadResult ReadText(string filePath, string? logContext = null)
         {
@@ -82,6 +85,10 @@ namespace STS2RitsuLib.Utils
         ///     1. Rotate existing file to .backup
         ///     2. Write to .tmp file
         ///     3. Rename .tmp to target path
+        ///     使用原子写入模式将文本内容写入文件：
+        ///     1. 将现有文件轮换为 .backup
+        ///     2. 写入 .tmp 文件
+        ///     3. 将 .tmp 重命名为目标路径
         /// </summary>
         public static WriteResult WriteText(string filePath, string content, string? logContext = null,
             bool atomic = true)
@@ -136,6 +143,7 @@ namespace STS2RitsuLib.Utils
 
         /// <summary>
         ///     Direct write without atomic pattern (internal use)
+        ///     Direct write 使用out atomic pattern (internal use)
         /// </summary>
         private static WriteResult WriteTextDirect(string filePath, string content, string context)
         {
@@ -176,6 +184,7 @@ namespace STS2RitsuLib.Utils
 
         /// <summary>
         ///     Rotate backup: delete old .backup, rename current file to .backup
+        ///     轮换备份：删除旧 .backup，将当前文件重命名为 .backup。
         /// </summary>
         private static void RotateBackup(string filePath, string backupPath, string context)
         {
@@ -197,6 +206,7 @@ namespace STS2RitsuLib.Utils
 
         /// <summary>
         ///     Restore file from backup
+        ///     从备份还原文件。
         /// </summary>
         private static void RestoreFromBackup(string filePath, string backupPath, string context)
         {
@@ -216,6 +226,7 @@ namespace STS2RitsuLib.Utils
 
         /// <summary>
         ///     Rename a file
+        ///     重命名文件。
         /// </summary>
         public static WriteResult RenameFile(string fromPath, string toPath, string? logContext = null)
         {
@@ -254,6 +265,7 @@ namespace STS2RitsuLib.Utils
 
         /// <summary>
         ///     Try to load from backup file if main file fails
+        ///     如果主文件失败，则尝试从备份文件加载。
         /// </summary>
         public static ReadResult ReadTextWithBackupFallback(string filePath, string? logContext = null)
         {
@@ -300,6 +312,7 @@ namespace STS2RitsuLib.Utils
 
         /// <summary>
         ///     Ensures the directory for a file path exists.
+        ///     确保文件路径对应的目录存在。
         /// </summary>
         private static void EnsureDirectoryExists(string filePath)
         {
@@ -317,6 +330,7 @@ namespace STS2RitsuLib.Utils
 
         /// <summary>
         ///     Reads and deserializes JSON content from a file.
+        ///     从文件读取并反序列化 JSON 内容。
         /// </summary>
         public static JsonResult<T> ReadJson<T>(string filePath, JsonSerializerOptions? options = null,
             string? logContext = null)
@@ -376,6 +390,7 @@ namespace STS2RitsuLib.Utils
 
         /// <summary>
         ///     Serializes and writes JSON content to a file.
+        ///     序列化并写入 JSON 内容到文件。
         /// </summary>
         public static WriteResult WriteJson<T>(string filePath, T data, JsonSerializerOptions? options = null,
             string? logContext = null)
@@ -409,6 +424,7 @@ namespace STS2RitsuLib.Utils
 
         /// <summary>
         ///     Checks if a file exists.
+        ///     检查文件是否存在。
         /// </summary>
         public static bool FileExists(string filePath)
         {
@@ -417,6 +433,7 @@ namespace STS2RitsuLib.Utils
 
         /// <summary>
         ///     Deletes a file with detailed error handling.
+        ///     删除文件，并提供详细错误处理。
         /// </summary>
         public static WriteResult DeleteFile(string filePath, string? logContext = null)
         {
@@ -474,6 +491,7 @@ namespace STS2RitsuLib.Utils
 
         /// <summary>
         ///     Recursively deletes a directory and all its contents.
+        ///     递归删除目录及其全部内容。
         /// </summary>
         public static WriteResult DeleteDirectoryRecursive(string directoryPath, string? logContext = null)
         {
@@ -549,73 +567,87 @@ namespace STS2RitsuLib.Utils
 
         /// <summary>
         ///     Result of a file read operation.
+        ///     文件读取操作的结果。
         /// </summary>
         public record ReadResult
         {
             /// <summary>
             ///     True when the file was read successfully with non-empty content.
+            ///     当文件成功读取且内容非空时为 true。
             /// </summary>
             public bool Success { get; init; }
 
             /// <summary>
             ///     File text when <see cref="Success" /> is true.
+            ///     <see cref="Success" /> 为 true 时的文件文本。
             /// </summary>
             public string? Content { get; init; }
 
             /// <summary>
             ///     Godot error code when a low-level open/read failure occurred.
+            ///     发生底层打开 / 读取失败时的 Godot 错误码。
             /// </summary>
             public Error? ErrorCode { get; init; }
 
             /// <summary>
             ///     Human-readable failure reason when <see cref="Success" /> is false.
+            ///     <see cref="Success" /> 为 false 时的人类可读失败原因。
             /// </summary>
             public string? ErrorMessage { get; init; }
 
             /// <summary>
             ///     True when content was recovered from the <c>.backup</c> sibling file.
+            ///     当内容从同级 <c>.backup</c> 文件恢复时为 true。
             /// </summary>
             public bool LoadedFromBackup { get; init; }
         }
 
         /// <summary>
         ///     Result of a file write operation.
+        ///     文件写入操作的结果。
         /// </summary>
         public class WriteResult
         {
             /// <summary>
             ///     True when the write (or no-op delete) completed successfully.
+            ///     当写入（或空操作删除）成功完成时为 true。
             /// </summary>
             public bool Success { get; init; }
 
             /// <summary>
             ///     Godot error code when a low-level operation failed.
+            ///     底层操作失败时的 Godot 错误码。
             /// </summary>
             public Error? ErrorCode { get; init; }
 
             /// <summary>
             ///     Human-readable failure reason when <see cref="Success" /> is false.
+            ///     <see cref="Success" /> 为 false 时的人类可读失败原因。
             /// </summary>
             public string? ErrorMessage { get; init; }
         }
 
         /// <summary>
         ///     Result of a JSON deserialization operation.
+        ///     结果： a JSON deserialization operation.
         /// </summary>
         public class JsonResult<T>
         {
             /// <summary>
             ///     True when JSON was parsed into a non-null instance.
+            ///     当 JSON 被解析为非 null 实例时为 true。
             /// </summary>
             public bool Success { get; init; }
 
             /// <summary>
             ///     Deserialized object when <see cref="Success" /> is true.
+            ///     <see cref="Success" /> 为 true 时的反序列化对象。
             /// </summary>
             public T? Data { get; init; }
 
             /// <summary>
             ///     Human-readable failure reason when <see cref="Success" /> is false.
+            ///     <see cref="Success" /> 为 false 时的人类可读失败原因。
             /// </summary>
             public string? ErrorMessage { get; init; }
         }

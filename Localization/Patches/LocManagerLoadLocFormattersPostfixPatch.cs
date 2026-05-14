@@ -7,6 +7,7 @@ namespace STS2RitsuLib.Localization.Patches
 {
     /// <summary>
     ///     Injects mod-registered SmartFormat extensions after the game creates its localization formatter.
+    ///     游戏创建其本地化 formatter 后，注入 mod 注册的 SmartFormat extension。
     /// </summary>
     public sealed class LocManagerLoadLocFormattersPostfixPatch : IPatchMethod
     {
@@ -29,6 +30,7 @@ namespace STS2RitsuLib.Localization.Patches
         // ReSharper disable once InconsistentNaming
         /// <summary>
         ///     Adds all registered mod SmartFormat extensions to the freshly created localization formatter.
+        ///     将所有已注册的 mod SmartFormat extension 添加到刚创建的本地化 formatter。
         /// </summary>
         public static void Postfix(SmartFormatter ____smartFormatter)
         {

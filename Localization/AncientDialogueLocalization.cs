@@ -8,6 +8,8 @@ namespace STS2RitsuLib.Localization
     /// <summary>
     ///     Loads ancient dialogue lines from localization tables and merges them into <c>AncientDialogueSet</c>
     ///     instances for mod characters.
+    ///     从本地化表加载古代对话行，并将它们合并进 mod 角色的 <c>AncientDialogueSet</c>
+    ///     实例。
     /// </summary>
     public static class AncientDialogueLocalization
     {
@@ -19,6 +21,8 @@ namespace STS2RitsuLib.Localization
         /// <summary>
         ///     Builds the localization key prefix for a given ancient and character entry id
         ///     (e.g. <c>{ancient}.talk.{character}.</c>).
+        ///     为给定 ancient 和 character 条目 id 构建本地化 key 前缀
+        ///     （例如 <c>{ancient}.talk.{character}.</c>）。
         /// </summary>
         public static string BaseLocKey(string ancientEntry, string characterEntry)
         {
@@ -29,6 +33,7 @@ namespace STS2RitsuLib.Localization
 
         /// <summary>
         ///     Reads all dialogue sequences for an ancient and character from the <c>ancients</c> localization table.
+        ///     从 <c>ancients</c> 本地化表读取某个 ancient 和 character 的所有对话序列。
         /// </summary>
         public static List<AncientDialogue> GetDialoguesForCharacter(string ancientEntry, CharacterModel character)
         {
@@ -40,6 +45,7 @@ namespace STS2RitsuLib.Localization
         /// <summary>
         ///     Reads all dialogue sequences under <paramref name="baseKey" /> from the specified
         ///     <paramref name="locTable" />.
+        ///     从指定的 <paramref name="locTable" /> 中读取 <paramref name="baseKey" /> 下的所有对话序列。
         /// </summary>
         public static List<AncientDialogue> GetDialoguesForKey(string locTable, string baseKey)
         {
@@ -83,12 +89,20 @@ namespace STS2RitsuLib.Localization
         ///     table (<c>{id}.talk.firstVisitEver.*</c>, <c>{id}.talk.ANY.*</c>, and per-vanilla-character
         ///     <c>{id}.talk.&lt;Character&gt;.*</c>). Lines and SFX keys follow the same rules as
         ///     <see cref="GetDialoguesForKey" />.
+        ///     通过扫描 <c>ancients</c> 本地化
+        ///     表（<c>{id}.talk.firstVisitEver.*</c>、<c>{id}.talk.ANY.*</c>，以及每个原版角色的
+        ///     <c>{id}.talk.&lt;Character&gt;.*</c>），为 mod 远古事件构建完整的 <see cref="AncientDialogueSet" />。台词和 SFX key 遵循与
+        ///     <see cref="GetDialoguesForKey" /> 相同的规则。
         /// </summary>
         /// <remarks>
         ///     Dialogue entries for characters registered in <see cref="ModContentRegistry" /> are omitted here so
         ///     The <c>PopulateLocKeys</c> prefix patch in this library can append them once via
         ///     <see cref="AppendCharacterDialogues" />
         ///     without duplicating lines.
+        ///     这里会省略 <see cref="ModContentRegistry" /> 中已注册角色的 dialogue 条目，以便
+        ///     此库中的 <c>PopulateLocKeys</c> prefix patch 可以通过
+        ///     <see cref="AppendCharacterDialogues" />
+        ///     追加一次，且不会重复台词。
         /// </remarks>
         public static AncientDialogueSet BuildDialogueSetForModAncient(string ancientEntry)
         {
@@ -125,8 +139,13 @@ namespace STS2RitsuLib.Localization
         /// <summary>
         ///     Appends localization-defined dialogues for each <paramref name="characters" /> entry to
         ///     <paramref name="dialogueSet" /> for <paramref name="ancientEntry" />.
+        ///     将每个 <paramref name="characters" /> 条目中由本地化定义的对话追加到
+        ///     <paramref name="ancientEntry" /> 的 <paramref name="dialogueSet" />。
         /// </summary>
-        /// <returns>The number of <c>AncientDialogue</c> instances added.</returns>
+        /// <returns>
+        ///     The number of <c>AncientDialogue</c> instances added.
+        ///     已添加的 <c>AncientDialogue</c> 实例数量。
+        /// </returns>
         public static int AppendCharacterDialogues(
             AncientDialogueSet dialogueSet,
             string ancientEntry,

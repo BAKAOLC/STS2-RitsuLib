@@ -8,6 +8,8 @@ namespace STS2RitsuLib.Combat.CardTargeting.Patches
     /// <summary>
     ///     Ensures cards with <see cref="CustomTargetType.Everyone" /> display multi-target visuals (reticles on every
     ///     creature) similar to vanilla multi-target selection types.
+    ///     确保带 <see cref="CustomTargetType.Everyone" /> 的卡牌显示多目标视觉效果（在每个
+    ///     生物上显示准星），类似原版多目标选择类型。
     /// </summary>
     internal sealed class NCardPlayShowMultiCreatureTargetingVisualsEveryonePatch : IPatchMethod
     {

@@ -5,6 +5,7 @@ namespace STS2RitsuLib.Combat.CardTargeting.Patches
 {
     /// <summary>
     ///     Ensures the game recognizes <see cref="CustomTargetType.Anyone" /> as a single-target type.
+    ///     确保游戏将 <see cref="CustomTargetType.Anyone" /> 识别为单体目标类型。
     /// </summary>
     internal sealed class ActionTargetExtensionsIsSingleTargetAnyonePatch : IPatchMethod
     {

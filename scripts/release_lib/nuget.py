@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import json
 import os
 import shutil
 import subprocess
@@ -47,11 +48,53 @@ def snapshot_bundle_variant_after_pack(
         if src.is_file():
             shutil.copy2(src, lib_dest / name)
 
-    if compat_target == latest_compat:
+    manifest_dest = bundle_staging_root / MOD_MANIFEST_NAME
+    if compat_target == latest_compat or not manifest_dest.is_file():
         obj_dir = ritsulib_root / GODOT_MONO_OBJ_PREFIX / configuration
         gen = obj_dir / "mod_manifest.generated.json"
         if gen.is_file():
-            shutil.copy2(gen, bundle_staging_root / MOD_MANIFEST_NAME)
+            shutil.copy2(gen, manifest_dest)
+
+
+def finalize_bundle_manifest(
+    bundle_staging_root: Path,
+    *,
+    min_game_version: str,
+) -> None:
+    manifest_path = bundle_staging_root / MOD_MANIFEST_NAME
+    if not manifest_path.is_file():
+        msg = f"bundle staging missing {MOD_MANIFEST_NAME}: {manifest_path}"
+        raise RuntimeError(msg)
+    try:
+        manifest = json.loads(manifest_path.read_text(encoding="utf-8"))
+    except json.JSONDecodeError as e:
+        msg = f"Invalid bundle manifest JSON: {manifest_path}: {e}"
+        raise RuntimeError(msg) from e
+    if not isinstance(manifest, dict):
+        msg = f"Bundle manifest root must be a JSON object: {manifest_path}"
+        raise RuntimeError(msg)
+    manifest["name"] = "RitsuLib"
+    manifest["min_game_version"] = min_game_version
+    manifest_path.write_text(
+        json.dumps(manifest, ensure_ascii=False, indent=2) + "\n",
+        encoding="utf-8",
+        newline="\n",
+    )
+
+
+def lowest_compat_target(compat_targets: list[str]) -> str:
+    if not compat_targets:
+        msg = "compat_targets must not be empty."
+        raise RuntimeError(msg)
+    return min(compat_targets, key=_compat_version_key)
+
+
+def _compat_version_key(value: str) -> tuple[int, ...]:
+    try:
+        return tuple(int(part) for part in value.split("."))
+    except ValueError as e:
+        msg = f"Invalid compat target version: {value!r}"
+        raise RuntimeError(msg) from e
 
 
 def run_pack(
@@ -227,6 +270,11 @@ def publish_nugets(
             run_push(symbol_package, source=source, api_key=key)
         published.append(package)
         zips.append(zip_path)
+    if bundle_staging_root is not None:
+        finalize_bundle_manifest(
+            bundle_staging_root,
+            min_game_version=lowest_compat_target(compat_targets),
+        )
     return published, zips
 
 
@@ -285,6 +333,11 @@ def build_artifacts(
             )
         packages.append(package)
         zips.append(zip_path)
+    if bundle_staging_root is not None:
+        finalize_bundle_manifest(
+            bundle_staging_root,
+            min_game_version=lowest_compat_target(compat_targets),
+        )
     return packages, zips
 
 
@@ -405,5 +458,3 @@ def run_push(package: Path, *, source: str, api_key: str) -> None:
         cwd=package.parent,
         check=True,
     )
-
-

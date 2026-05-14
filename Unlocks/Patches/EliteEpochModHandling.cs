@@ -13,6 +13,9 @@ namespace STS2RitsuLib.Unlocks.Patches
     ///     Shared elite-epoch unlock logic and build detection. Beta builds expose
     ///     <c>CheckFifteenElitesDefeatedEpoch</c>; older/stable builds may only run the check inline from
     ///     <see cref="ProgressSaveManager.UpdateAfterCombatWon" />.
+    ///     共享的精英纪元解锁逻辑和构建检测。Beta 构建会公开
+    ///     <c>CheckFifteenElitesDefeatedEpoch</c>；较旧 / 稳定构建可能只会从
+    ///     <see cref="ProgressSaveManager.UpdateAfterCombatWon" /> 内联运行该检查。
     /// </summary>
     internal static class EliteEpochModHandling
     {
@@ -28,6 +31,9 @@ namespace STS2RitsuLib.Unlocks.Patches
         ///     Mirrors <see cref="ProgressSaveManager" /> mid-run epoch gating (same as
         ///     <c>TryObtainEpochMidRun</c> / <c>AreAchievementsAndEpochsLocked</c>: non-standard modes do not
         ///     grant epochs) without depending on the extension method existing on every game build.
+        ///     镜像 <see cref="ProgressSaveManager" /> 的跑局中纪元门控（与
+        ///     <c>TryObtainEpochMidRun</c> / <c>AreAchievementsAndEpochsLocked</c> 相同：非标准模式不会
+        ///     授予纪元），且不依赖每个游戏构建都存在该扩展方法。
         /// </summary>
         internal static bool AreMidRunEpochsLockedFor(Player localPlayer)
         {
@@ -38,6 +44,8 @@ namespace STS2RitsuLib.Unlocks.Patches
         /// <summary>
         ///     Mod-character elite epoch path: suppress vanilla (which throws on unknown <see cref="CharacterModel" />
         ///     types) and apply registered rules when applicable.
+        ///     mod 角色的精英纪元路径：抑制会因未知 <see cref="CharacterModel" />
+        ///     类型而抛错的原版逻辑，并在适用时应用已注册规则。
         /// </summary>
         internal static void TryHandleModEliteEpoch(ProgressSaveManager progressSaveManager, Player localPlayer)
         {

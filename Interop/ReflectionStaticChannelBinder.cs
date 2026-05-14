@@ -6,16 +6,30 @@ namespace STS2RitsuLib.Interop
 {
     /// <summary>
     ///     Builds <see cref="ReflectionStaticChannel" /> instances from static method naming conventions.
+    ///     根据静态方法命名约定构建 <see cref="ReflectionStaticChannel" /> 实例。
     /// </summary>
     public static class ReflectionStaticChannelBinder
     {
         /// <summary>
         ///     Binds optional JSON tiers and required object resolvers described by <paramref name="convention" />.
+        ///     绑定 <paramref name="convention" /> 描述的可选 JSON tier 和必需 object resolver。
         /// </summary>
-        /// <param name="providerType">Static-method provider type to reflect against.</param>
-        /// <param name="convention">Method names for object resolvers and optional JSON DOM hooks.</param>
-        /// <returns>A channel with compiled delegates.</returns>
-        /// <exception cref="InvalidOperationException">Required object resolver methods are missing.</exception>
+        /// <param name="providerType">
+        ///     Static-method provider type to reflect against.
+        ///     要反射的静态方法提供方类型。
+        /// </param>
+        /// <param name="convention">
+        ///     Method names for object resolvers and optional JSON DOM hooks.
+        ///     object resolver 和可选 JSON DOM hook 的方法名。
+        /// </param>
+        /// <returns>
+        ///     A channel with compiled delegates.
+        ///     带已编译 delegate 的 channel。
+        /// </returns>
+        /// <exception cref="InvalidOperationException">
+        ///     Required object resolver methods are missing.
+        ///     缺少必需的 object resolver 方法。
+        /// </exception>
         public static ReflectionStaticChannel Bind(Type providerType, ReflectionInteropConvention convention)
         {
             ArgumentNullException.ThrowIfNull(providerType);

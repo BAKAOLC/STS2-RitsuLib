@@ -7,6 +7,7 @@ namespace STS2RitsuLib.Interop.Internal
 {
     /// <summary>
     ///     Emits Harmony transpilers so annotated stub types forward to another mod's CLR surface.
+    ///     发出 Harmony transpiler，使带注解的 stub 类型转发到另一个 mod 的 CLR surface。
     /// </summary>
     internal static class ModInteropEmitter
     {

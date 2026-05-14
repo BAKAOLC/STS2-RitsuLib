@@ -4,6 +4,7 @@ namespace STS2RitsuLib.Settings
 {
     /// <summary>
     ///     Per-row API when building a custom list editor: mutate the item, clipboard, nested entries, and list chrome.
+    ///     构建自定义列表编辑器时的逐行 API：可修改条目、访问剪贴板、创建嵌套条目并操作列表 chrome。
     /// </summary>
     public sealed class ModSettingsListItemContext<TItem>
     {
@@ -46,41 +47,49 @@ namespace STS2RitsuLib.Settings
 
         /// <summary>
         ///     Stable state key for transient per-row UI state.
+        ///     临时逐行 UI 状态使用的稳定状态键。
         /// </summary>
         public string RowStateKey { get; }
 
         /// <summary>
         ///     Zero-based index of this row in the list.
+        ///     此行在列表中的从零开始索引。
         /// </summary>
         public int Index => _liveIndex.Value;
 
         /// <summary>
         ///     Total number of rows in the list.
+        ///     列表中的总行数。
         /// </summary>
         public int ItemCount { get; private set; }
 
         /// <summary>
         ///     Current item snapshot for this row.
+        ///     此行当前条目的快照。
         /// </summary>
         public TItem Item { get; private set; }
 
         /// <summary>
         ///     True when the row can move toward the start.
+        ///     当此行可以向列表开头移动时为 true。
         /// </summary>
         public bool CanMoveUp => Index > 0;
 
         /// <summary>
         ///     True when the row can move toward the end.
+        ///     当此行可以向列表末尾移动时为 true。
         /// </summary>
         public bool CanMoveDown => Index < ItemCount - 1;
 
         /// <summary>
         ///     Binding scoped to this row’s value (structured clipboard when implemented).
+        ///     作用域限定到此行值的绑定（实现时支持结构化剪贴板）。
         /// </summary>
         public IModSettingsValueBinding<TItem> Binding { get; }
 
         /// <summary>
         ///     True when <see cref="Binding" /> exposes structured copy/paste.
+        ///     当 <see cref="Binding" /> 公开结构化复制 / 粘贴时为 true。
         /// </summary>
         public bool SupportsStructuredClipboard => Binding is IStructuredModSettingsValueBinding<TItem>;
 
@@ -93,6 +102,7 @@ namespace STS2RitsuLib.Settings
 
         /// <summary>
         ///     Writes <paramref name="item" /> back into the list at <see cref="Index" />.
+        ///     将 <paramref name="item" /> 写回列表的 <see cref="Index" /> 位置。
         /// </summary>
         public void Update(TItem item)
         {
@@ -101,6 +111,7 @@ namespace STS2RitsuLib.Settings
 
         /// <summary>
         ///     Removes this row from the list.
+        ///     从列表中移除此行。
         /// </summary>
         public void Remove()
         {
@@ -109,6 +120,7 @@ namespace STS2RitsuLib.Settings
 
         /// <summary>
         ///     Moves the row up when <see cref="CanMoveUp" />.
+        ///     当 <see cref="CanMoveUp" /> 时将该行上移。
         /// </summary>
         public void MoveUp()
         {
@@ -117,6 +129,7 @@ namespace STS2RitsuLib.Settings
 
         /// <summary>
         ///     Moves the row down when <see cref="CanMoveDown" />.
+        ///     当 <see cref="CanMoveDown" /> 时将该行下移。
         /// </summary>
         public void MoveDown()
         {
@@ -125,6 +138,7 @@ namespace STS2RitsuLib.Settings
 
         /// <summary>
         ///     Duplicates the row when supported by the list host.
+        ///     当列表宿主支持时复制此行。
         /// </summary>
         public void Duplicate()
         {
@@ -133,6 +147,7 @@ namespace STS2RitsuLib.Settings
 
         /// <summary>
         ///     Requests a deferred rebuild of the list UI.
+        ///     请求延迟重建列表 UI。
         /// </summary>
         public void RequestRefresh()
         {
@@ -141,6 +156,7 @@ namespace STS2RitsuLib.Settings
 
         /// <summary>
         ///     Reads transient row UI state for the current settings session.
+        ///     读取当前设置会话中的临时行 UI 状态。
         /// </summary>
         public TValue GetRowState<TValue>(string key, TValue fallback = default!)
         {
@@ -151,6 +167,7 @@ namespace STS2RitsuLib.Settings
 
         /// <summary>
         ///     Stores transient row UI state for the current settings session.
+        ///     存储当前设置会话中的临时行 UI 状态。
         /// </summary>
         public void SetRowState<TValue>(string key, TValue value)
         {
@@ -159,6 +176,7 @@ namespace STS2RitsuLib.Settings
 
         /// <summary>
         ///     Copies <see cref="Item" /> using structured clipboard when available.
+        ///     在可用时使用结构化剪贴板复制 <see cref="Item" />。
         /// </summary>
         public bool TryCopyToClipboard(ModSettingsClipboardScope scope = ModSettingsClipboardScope.Self)
         {
@@ -171,6 +189,7 @@ namespace STS2RitsuLib.Settings
 
         /// <summary>
         ///     Returns whether paste from clipboard is valid for this row’s type and adapter.
+        ///     返回当前剪贴板内容对该行类型和适配器是否可粘贴。
         /// </summary>
         public bool CanPasteFromClipboard()
         {
@@ -180,6 +199,7 @@ namespace STS2RitsuLib.Settings
 
         /// <summary>
         ///     Pastes into this row and calls <see cref="Update" /> on success; shows UI feedback on failure.
+        ///     粘贴到此行，并在成功时调用 <see cref="Update" />；失败时显示 UI 反馈。
         /// </summary>
         public bool TryPasteFromClipboard()
         {
@@ -199,6 +219,7 @@ namespace STS2RitsuLib.Settings
 
         /// <summary>
         ///     Projects a child field of <typeparamref name="TItem" /> as its own binding (nested editors).
+        ///     将 <typeparamref name="TItem" /> 的子字段投影为自己的绑定（嵌套编辑器）。
         /// </summary>
         public IModSettingsValueBinding<TValue> Project<TValue>(
             string dataKey,
@@ -211,6 +232,7 @@ namespace STS2RitsuLib.Settings
 
         /// <summary>
         ///     Instantiates any <see cref="ModSettingsEntryDefinition" /> under this row’s UI context.
+        ///     在此行的 UI 上下文下实例化任意 <see cref="ModSettingsEntryDefinition" />。
         /// </summary>
         public Control CreateEntry(ModSettingsEntryDefinition entry)
         {
@@ -219,6 +241,7 @@ namespace STS2RitsuLib.Settings
 
         /// <summary>
         ///     Convenience wrapper that builds a nested list entry for <typeparamref name="TChild" />.
+        ///     用于为 <typeparamref name="TChild" /> 构建嵌套列表条目的便捷 wrapper。
         /// </summary>
         public Control CreateListEditor<TChild>(
             string id,

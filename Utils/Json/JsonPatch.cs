@@ -5,12 +5,16 @@ namespace STS2RitsuLib.Utils.Json
     /// <summary>
     ///     JSON Patch (RFC 6902) implementation for <see cref="JsonNode" /> DOM.
     ///     https://www.rfc-editor.org/rfc/rfc6902
+    ///     JSON Patch (RFC 6902) implementation 用于 <see cref="JsonNode" /> DOM.
+    ///     https://www.rfc-edit或.或g/rfc/rfc6902
     /// </summary>
     public static class JsonPatch
     {
         /// <summary>
         ///     Applies a JSON Patch (RFC 6902) document to <paramref name="target" /> and returns the patched result.
         ///     The patch document must be a JSON array of operation objects.
+        ///     将 JSON Patch（RFC 6902）文档应用到 <paramref name="target" /> 并返回打补丁后的结果。
+        ///     patch 文档必须是由操作对象组成的 JSON 数组。
         /// </summary>
         /// <exception cref="JsonPatchException">Thrown when the patch document is malformed or cannot be applied.</exception>
         public static JsonNode? Apply(JsonNode? target, JsonNode? patchDocument)
@@ -25,6 +29,7 @@ namespace STS2RitsuLib.Utils.Json
 
         /// <summary>
         ///     Applies a JSON Patch document to <paramref name="target" /> and returns the patched result.
+        ///     将 JSON Patch 文档应用到 <paramref name="target" /> 并返回打补丁后的结果。
         /// </summary>
         /// <exception cref="JsonPatchException">Thrown when an operation cannot be applied.</exception>
         public static JsonNode? Apply(JsonNode? target, IEnumerable<JsonPatchOperation> operations)
@@ -297,17 +302,20 @@ namespace STS2RitsuLib.Utils.Json
     /// <summary>
     ///     JSON Patch operation object (RFC 6902).
     ///     https://www.rfc-editor.org/rfc/rfc6902
+    ///     JSON Patch 操作对象（RFC 6902）。
     /// </summary>
     public sealed record JsonPatchOperation(string Op, string Path, string? From = null, JsonNode? Value = null);
 
     /// <summary>
     ///     Error raised when a JSON Patch cannot be applied.
     ///     https://www.rfc-editor.org/rfc/rfc6902
+    ///     无法应用 JSON Patch 时引发的错误。
     /// </summary>
     public sealed class JsonPatchException : Exception
     {
         /// <summary>
         ///     Creates a JSON Patch exception.
+        ///     创建 JSON Patch 异常。
         /// </summary>
         public JsonPatchException(string message) : base(message)
         {

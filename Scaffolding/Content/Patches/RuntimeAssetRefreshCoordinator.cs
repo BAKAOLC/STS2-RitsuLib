@@ -11,37 +11,44 @@ namespace STS2RitsuLib.Scaffolding.Content.Patches
 {
     /// <summary>
     ///     Runtime refresh categories for safe node-level visual reloads.
+    ///     用于安全节点级视觉重载的运行时刷新类别。
     /// </summary>
     [Flags]
     public enum RuntimeAssetRefreshScope
     {
         /// <summary>
         ///     No refresh requested.
+        ///     未请求刷新。
         /// </summary>
         None = 0,
 
         /// <summary>
         ///     Reload card visuals.
+        ///     重新加载卡牌视觉。
         /// </summary>
         Cards = 1 << 0,
 
         /// <summary>
         ///     Reload relic visuals.
+        ///     重新加载遗物视觉。
         /// </summary>
         Relics = 1 << 1,
 
         /// <summary>
         ///     Reload potion visuals.
+        ///     重新加载药水视觉。
         /// </summary>
         Potions = 1 << 2,
 
         /// <summary>
         ///     Reload power visuals.
+        ///     重新加载能力视觉。
         /// </summary>
         Powers = 1 << 3,
 
         /// <summary>
         ///     Reload orb visuals.
+        ///     重新加载充能球视觉。
         /// </summary>
         Orbs = 1 << 4,
 
@@ -53,6 +60,7 @@ namespace STS2RitsuLib.Scaffolding.Content.Patches
 
     /// <summary>
     ///     Coalesces runtime visual refresh requests for commonly safe node types.
+    ///     合并常见安全节点类型的运行时视觉刷新请求。
     /// </summary>
     public static class RuntimeAssetRefreshCoordinator
     {
@@ -71,6 +79,7 @@ namespace STS2RitsuLib.Scaffolding.Content.Patches
 
         /// <summary>
         ///     Requests a deferred refresh pass for the supplied <paramref name="scope" />.
+        ///     为提供的 <paramref name="scope" /> 请求一次延迟刷新。
         /// </summary>
         public static void Request(RuntimeAssetRefreshScope scope = RuntimeAssetRefreshScope.AllSafe)
         {
@@ -95,6 +104,7 @@ namespace STS2RitsuLib.Scaffolding.Content.Patches
 
         /// <summary>
         ///     Requests card-node reloads for cards matched by <paramref name="rule" />.
+        ///     为 <paramref name="rule" /> 匹配的卡牌请求卡牌节点重载。
         /// </summary>
         public static void RequestCardsWhere(Predicate<CardModel> rule)
         {
@@ -104,6 +114,7 @@ namespace STS2RitsuLib.Scaffolding.Content.Patches
 
         /// <summary>
         ///     Requests relic-node reloads for relics matched by <paramref name="rule" />.
+        ///     为 <paramref name="rule" /> 匹配的遗物请求遗物节点重载。
         /// </summary>
         public static void RequestRelicsWhere(Predicate<RelicModel> rule)
         {
@@ -113,6 +124,7 @@ namespace STS2RitsuLib.Scaffolding.Content.Patches
 
         /// <summary>
         ///     Requests potion-node reloads for potions matched by <paramref name="rule" />.
+        ///     为 <paramref name="rule" /> 匹配的药水请求药水节点重载。
         /// </summary>
         public static void RequestPotionsWhere(Predicate<PotionModel> rule)
         {
@@ -122,6 +134,7 @@ namespace STS2RitsuLib.Scaffolding.Content.Patches
 
         /// <summary>
         ///     Requests power-node reloads for powers matched by <paramref name="rule" />.
+        ///     为 <paramref name="rule" /> 匹配的能力请求能力节点重载。
         /// </summary>
         public static void RequestPowersWhere(Predicate<PowerModel> rule)
         {
@@ -131,6 +144,7 @@ namespace STS2RitsuLib.Scaffolding.Content.Patches
 
         /// <summary>
         ///     Requests orb-node visual updates for orbs matched by <paramref name="rule" />.
+        ///     为 <paramref name="rule" /> 匹配的充能球请求充能球节点视觉更新。
         /// </summary>
         public static void RequestOrbsWhere(Predicate<OrbModel> rule)
         {

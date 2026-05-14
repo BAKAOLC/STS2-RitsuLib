@@ -5,6 +5,8 @@ namespace STS2RitsuLib.Ui.Shell.Theme
     /// <summary>
     ///     Resolves W3C Design Tokens <c>{path.to.token}</c> references inside a merged token tree, in place.
     ///     A reference must denote a single leaf; the resolver replaces it with the leaf's resolved value.
+    ///     在合并后的令牌树中原地解析 W3C Design Tokens <c>{path.to.token}</c> 引用。
+    ///     引用必须指向单个叶节点；解析器会将其替换为该叶节点的解析值。
     /// </summary>
     internal static partial class RitsuShellThemeReferenceResolver
     {
@@ -13,9 +15,17 @@ namespace STS2RitsuLib.Ui.Shell.Theme
         /// <summary>
         ///     Resolves all <c>{ref}</c> references in <paramref name="root" />. Loops produce an exception in
         ///     <paramref name="errors" /> and the offending leaf is left with its raw string.
+        ///     解析 <c>{ref}</c> 引用，范围为 <paramref name="root" />。循环引用会在
+        ///     <paramref name="errors" /> 中产生异常，出错的叶节点会保留其原始字符串。
         /// </summary>
-        /// <param name="root">Merged token root.</param>
-        /// <param name="errors">Diagnostics accumulator.</param>
+        /// <param name="root">
+        ///     Merged token root.
+        ///     合并后的令牌根节点。
+        /// </param>
+        /// <param name="errors">
+        ///     Diagnostics accumulator.
+        ///     诊断累加器。
+        /// </param>
         public static void ResolveAll(Dictionary<string, object?> root, IList<string> errors)
         {
             var visiting = new HashSet<string>(StringComparer.Ordinal);
@@ -81,6 +91,7 @@ namespace STS2RitsuLib.Ui.Shell.Theme
 
         /// <summary>
         ///     Looks up a leaf token by dotted path (e.g. <c>core.color.amber.500</c>).
+        ///     按点分隔路径查找叶令牌（例如 <c>core.color.amber.500</c>）。
         /// </summary>
         public static bool TryFindLeaf(Dictionary<string, object?> root, string path, out LeafToken? leaf)
         {

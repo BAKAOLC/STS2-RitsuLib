@@ -12,6 +12,12 @@ namespace STS2RitsuLib.Combat.CardTargeting.Patches
     ///     and discarding the selected target.
     ///     Direct field/method access where the publicized STS2 reference exposes them; <c>Cleanup(bool)</c> remains
     ///     <c>protected</c> in the reference build, so invocation uses Harmony <see cref="AccessTools" />.
+    ///     修复多人模式下 <see cref="NCardPlay.TryPlayCard" /> 对 <see cref="TargetType.AnyPlayer" /> 的处理。
+    ///     原版会把 AnyPlayer 视为非目标类型，调用 <c>TryManualPlay(null)</c>
+    ///     并丢弃选中的目标。
+    ///     并丢弃选中的目标。
+    ///     在 publicized STS2 引用暴露字段/方法时直接访问；<c>Cleanup(bool)</c> 在引用构建中仍为
+    ///     <c>protected</c>，因此调用使用 Harmony <see cref="AccessTools" />。
     /// </summary>
     internal sealed class NCardPlayTryPlayCardAnyPlayerPatch : IPatchMethod
     {

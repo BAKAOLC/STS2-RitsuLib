@@ -7,6 +7,8 @@ namespace STS2RitsuLib.Ui.Shell.Theme
     /// <summary>
     ///     Per-corner radii for <see cref="StyleBoxFlat" />, resolved like <see cref="BoxEdges" /> with
     ///     <c>all</c> plus optional <c>topLeft</c> / <c>topRight</c> / <c>bottomRight</c> / <c>bottomLeft</c> leaves.
+    ///     <see cref="StyleBoxFlat" /> 的逐角半径，解析方式类似 <see cref="BoxEdges" />，包含
+    ///     <c>all</c> 以及可选的 <c>topLeft</c> / <c>topRight</c> / <c>bottomRight</c> / <c>bottomLeft</c> 叶节点。
     /// </summary>
     internal readonly record struct BoxCorners(int TopLeft, int TopRight, int BottomRight, int BottomLeft);
 
@@ -40,6 +42,8 @@ namespace STS2RitsuLib.Ui.Shell.Theme
         /// <summary>
         ///     Resolves corner radii at <paramref name="basePath" /> using the same <c>all</c> + per-side pattern as
         ///     <see cref="ResolveEdges" />.
+        ///     解析 <paramref name="basePath" /> 处的圆角半径，使用相同的 <c>all</c> + 单边模式，
+        ///     与 <see cref="ResolveEdges" /> 一致。
         /// </summary>
         internal static BoxCorners ResolveCornerRadii(string basePath, int fallbackUniform)
         {

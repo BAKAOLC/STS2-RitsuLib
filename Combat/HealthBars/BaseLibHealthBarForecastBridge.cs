@@ -7,10 +7,13 @@ namespace STS2RitsuLib.Combat.HealthBars
     /// <summary>
     ///     When BaseLib is loaded, registers <see cref="HealthBarForecastRegistry.GetSegments" /> with BaseLib's
     ///     <c>HealthBarForecastRegistry.RegisterForeign</c> so a single renderer can consume Ritsu-typed segments.
+    ///     加载 BaseLib 时，将 <see cref="HealthBarForecastRegistry.GetSegments" /> 注册到 BaseLib 的
+    ///     <c>HealthBarForecastRegistry.RegisterForeign</c>，使单个渲染器可以消费 Ritsu 类型的片段。
     /// </summary>
     /// <remarks>
     ///     <see cref="ShouldRitsuRendererStandDown" /> becomes true after a successful bridge so duplicate overlays are
     ///     not drawn.
+    ///     成功桥接后，<see cref="ShouldRitsuRendererStandDown" /> 变为 true，从而不绘制重复覆盖层。
     /// </remarks>
     internal static class BaseLibHealthBarForecastBridge
     {
@@ -24,6 +27,8 @@ namespace STS2RitsuLib.Combat.HealthBars
         /// <summary>
         ///     When <see langword="true" />, Ritsu's <c>NHealthBar</c> forecast postfixes should skip drawing because BaseLib
         ///     already merged this mod's segments.
+        ///     为 <see langword="true" /> 时，Ritsu 的 <c>NHealthBar</c> forecast postfix 应跳过绘制，因为 BaseLib
+        ///     已经合并了此 mod 的片段。
         /// </summary>
         public static bool ShouldRitsuRendererStandDown()
         {
@@ -32,6 +37,7 @@ namespace STS2RitsuLib.Combat.HealthBars
 
         /// <summary>
         ///     Attempts foreign registration from <c>NHealthBar._Ready</c> (early load path).
+        ///     从 <c>NHealthBar._Ready</c> 尝试 foreign 注册（早期加载路径）。
         /// </summary>
         public static void TryRegisterPrimary()
         {
@@ -42,6 +48,7 @@ namespace STS2RitsuLib.Combat.HealthBars
 
         /// <summary>
         ///     Attempts foreign registration from forecast render path if <see cref="TryRegisterPrimary" /> did not run yet.
+        ///     如果 <see cref="TryRegisterPrimary" /> 尚未运行，则从 forecast 渲染路径尝试 foreign 注册。
         /// </summary>
         public static void TryRegisterSecondary()
         {
@@ -52,6 +59,7 @@ namespace STS2RitsuLib.Combat.HealthBars
 
         /// <summary>
         ///     Alias for <see cref="TryRegisterPrimary" />.
+        ///     <see cref="TryRegisterPrimary" /> 的别名。
         /// </summary>
         public static void TryRegister()
         {

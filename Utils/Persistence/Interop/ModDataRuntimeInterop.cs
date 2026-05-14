@@ -6,6 +6,9 @@ namespace STS2RitsuLib
     ///     Public entry points for registering runtime ModData interop providers (types that expose
     ///     <c>CreateRitsuLibModDataSchema</c> and value synchronizers without a compile-time dependency from RitsuLib on the
     ///     provider assembly).
+    ///     用于注册运行时 ModData interop 提供方的公共入口点（这些类型公开
+    ///     <c>CreateRitsuLibModDataSchema</c> 和值同步器，且 RitsuLib 对
+    ///     提供方程序集没有编译期依赖）。
     /// </summary>
     public static class ModDataRuntimeInterop
     {
@@ -66,6 +69,8 @@ namespace STS2RitsuLib
         /// <summary>
         ///     Ensures provider snapshots are written into <see cref="STS2RitsuLib.Data.ModDataStore" /> before the game
         ///     persists profile mod data on profile switches (subscribe once).
+        ///     确保在游戏因档案切换持久化档案 mod 数据前，将提供方快照写入
+        ///     <see cref="STS2RitsuLib.Data.ModDataStore" />（只订阅一次）。
         /// </summary>
         public static void EnsureProfileSwitchSyncHook()
         {

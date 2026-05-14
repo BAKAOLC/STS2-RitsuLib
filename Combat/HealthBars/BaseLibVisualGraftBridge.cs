@@ -7,6 +7,8 @@ namespace STS2RitsuLib.Combat.HealthBars
     /// <summary>
     ///     When BaseLib is loaded, registers <see cref="HealthBarVisualGraftRegistry.Aggregate" /> with BaseLib's
     ///     <c>HealthBarVisualGraftRegistry.RegisterForeign</c> so a single consumer can merge Ritsu graft metrics.
+    ///     加载 BaseLib 时，将 <see cref="HealthBarVisualGraftRegistry.Aggregate" /> 注册到 BaseLib 的
+    ///     <c>HealthBarVisualGraftRegistry.RegisterForeign</c>，使单个消费者可以合并 Ritsu graft 指标。
     /// </summary>
     internal static class BaseLibVisualGraftBridge
     {

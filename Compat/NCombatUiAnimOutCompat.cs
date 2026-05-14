@@ -7,6 +7,10 @@ namespace STS2RitsuLib.Compat
     /// <summary>
     ///     <see cref="NCombatUi.AnimOut" /> gained a parameterless overload in newer builds; older builds used
     ///     <c>AnimOut(CombatRoom)</c>.
+    ///     <c>AnimOut(CombatRoom)</c>。
+    ///     较新构建中的 <see cref="NCombatUi.AnimOut" /> 增加了无参数重载；较旧构建使用
+    ///     <c>AnimOut(CombatRoom)</c>。
+    ///     <c>AnimOut(CombatRoom)</c>。
     /// </summary>
     internal static class NCombatUiAnimOutCompat
     {

@@ -75,6 +75,7 @@ namespace STS2RitsuLib.Data
 
         /// <summary>
         ///     Master debug-compatibility switch. When false, no RitsuLib soft-fail shims run.
+        ///     调试兼容性总开关。为 false 时，不运行任何 RitsuLib 软失败 shim。
         /// </summary>
         internal static bool IsDebugCompatibilityMasterEnabled()
         {
@@ -84,6 +85,7 @@ namespace STS2RitsuLib.Data
 
         /// <summary>
         ///     <c>LocTable</c> missing-key placeholders + warnings.
+        ///     <c>LocTable</c> 缺失键占位符与警告。
         /// </summary>
         internal static bool IsLocTableCompatEnabled()
         {
@@ -94,6 +96,7 @@ namespace STS2RitsuLib.Data
 
         /// <summary>
         ///     Skip invalid epoch grants with warnings instead of throwing.
+        ///     跳过无效 epoch 授予并输出警告，而不是抛出异常。
         /// </summary>
         internal static bool IsUnlockEpochCompatEnabled()
         {
@@ -104,6 +107,7 @@ namespace STS2RitsuLib.Data
 
         /// <summary>
         ///     <c>THE_ARCHITECT</c> empty dialogue stub for registry characters.
+        ///     注册表角色使用的 <c>THE_ARCHITECT</c> 空对话桩。
         /// </summary>
         internal static bool IsAncientArchitectCompatEnabled()
         {
@@ -119,6 +123,7 @@ namespace STS2RitsuLib.Data
 
         /// <summary>
         ///     Harmony patch dump UI / lifecycle reads paths and flags without exposing the store surface publicly.
+        ///     Harmony 补丁转储 UI/生命周期读取路径和标志，同时不公开暴露存储接口。
         /// </summary>
         internal static (string OutputPath, bool DumpOnFirstMainMenu) GetHarmonyPatchDumpOptions()
         {

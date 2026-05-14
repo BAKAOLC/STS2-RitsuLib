@@ -5,11 +5,14 @@ namespace STS2RitsuLib.Utils.Json
     /// <summary>
     ///     RFC 6901 JSON Pointer helpers for <see cref="JsonNode" /> DOM navigation and mutation.
     ///     https://www.rfc-editor.org/rfc/rfc6901
+    ///     RFC 6901 JSON Pointer helpers 用于 <see cref="JsonNode" /> DOM navigation 和 mutation.
+    ///     https://www.rfc-edit或.或g/rfc/rfc6901
     /// </summary>
     public static class JsonPointer
     {
         /// <summary>
         ///     Checks whether the pointer selects the document root.
+        ///     检查指针是否选择文档根。
         /// </summary>
         public static bool IsRoot(string? pointer)
         {
@@ -22,6 +25,7 @@ namespace STS2RitsuLib.Utils.Json
 
         /// <summary>
         ///     Normalizes a JSON Pointer fragment for DOM navigation (leading slash optional when authoring).
+        ///     规范化用于 DOM 导航的 JSON Pointer 片段（编写时可省略前导斜杠）。
         /// </summary>
         public static string Normalize(string rawPointer)
         {
@@ -34,6 +38,7 @@ namespace STS2RitsuLib.Utils.Json
 
         /// <summary>
         ///     Resolves a node under <paramref name="root" /> by JSON Pointer, or <c>null</c> when not found.
+        ///     通过 JSON Pointer 解析 <paramref name="root" /> 下的节点；未找到时为 <c>null</c>。
         /// </summary>
         public static JsonNode? Get(JsonNode root, string jsonPointer)
         {
@@ -63,6 +68,8 @@ namespace STS2RitsuLib.Utils.Json
         /// <summary>
         ///     Sets <paramref name="value" /> at <paramref name="jsonPointer" /> under an object root.
         ///     Null removes the property when targeting an object.
+        ///     在对象根下的 <paramref name="jsonPointer" /> 位置设置 <paramref name="value" />。
+        ///     目标为对象时，null 会移除该属性。
         /// </summary>
         public static void Set(JsonObject documentRoot, string jsonPointer, JsonNode? value)
         {
@@ -120,6 +127,7 @@ namespace STS2RitsuLib.Utils.Json
 
         /// <summary>
         ///     Enumerates decoded JSON Pointer segments.
+        ///     枚举已解码的 JSON Pointer 段。
         /// </summary>
         public static IEnumerable<string> EnumerateSegments(string jsonPointer)
         {
@@ -139,6 +147,7 @@ namespace STS2RitsuLib.Utils.Json
 
         /// <summary>
         ///     Decodes a JSON Pointer segment (~0 and ~1).
+        ///     Decodes a JSON Pointer segment (~0 和 ~1).
         /// </summary>
         public static string DecodeSegment(string segment)
         {

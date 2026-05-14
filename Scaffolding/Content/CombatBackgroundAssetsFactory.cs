@@ -9,12 +9,16 @@ namespace STS2RitsuLib.Scaffolding.Content
     ///     <c>res://scenes/backgrounds/&lt;id&gt;/layers</c> tree. Use with
     ///     <see cref="ModEncounterTemplate.UseProgrammaticCombatBackground" /> /
     ///     <see cref="ModEncounterTemplate.BuildProgrammaticCombatBackground" />.
+    ///     构建 <see cref="BackgroundAssets" />，不使用会读取固定 <c>res://scenes/backgrounds/&lt;id&gt;/layers</c> 树的原版构造函数。与
+    ///     <see cref="ModEncounterTemplate.UseProgrammaticCombatBackground" /> /
+    ///     <see cref="ModEncounterTemplate.BuildProgrammaticCombatBackground" /> 配合使用。
     /// </summary>
     public static class CombatBackgroundAssetsFactory
     {
         /// <summary>
         ///     Creates combat background assets from explicit scene and layer paths (same semantics as vanilla
         ///     <see cref="BackgroundAssets" />: main scene, parallax <c>_bg_</c> layers, optional <c>_fg_</c>).
+        ///     从显式场景和图层路径创建战斗背景资源（语义与原版 <see cref="BackgroundAssets" /> 相同：主场景、视差 <c>_bg_</c> 图层、可选 <c>_fg_</c>）。
         /// </summary>
         public static BackgroundAssets Create(string backgroundScenePath, IReadOnlyList<string> bgLayers,
             string? fgLayer = null)

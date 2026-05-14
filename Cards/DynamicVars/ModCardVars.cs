@@ -7,12 +7,14 @@ namespace STS2RitsuLib.Cards.DynamicVars
 {
     /// <summary>
     ///     Factory helpers for common mod card <see cref="DynamicVar" /> shapes.
+    ///     常见 mod 卡牌 <see cref="DynamicVar" /> 形态的工厂辅助方法。
     /// </summary>
     public static class ModCardVars
     {
         /// <summary>
         ///     Creates an integer-backed dynamic var named <paramref name="name" /> with amount
         ///     <paramref name="amount" />.
+        ///     创建名为 <paramref name="name" />、数值为 <paramref name="amount" /> 的整数型动态变量。
         /// </summary>
         public static IntVar Int(string name, decimal amount)
         {
@@ -21,6 +23,7 @@ namespace STS2RitsuLib.Cards.DynamicVars
 
         /// <summary>
         ///     Creates a string dynamic var named <paramref name="name" />.
+        ///     创建名为 <paramref name="name" /> 的字符串动态变量。
         /// </summary>
         public static StringVar String(string name, string value = "")
         {
@@ -29,6 +32,7 @@ namespace STS2RitsuLib.Cards.DynamicVars
 
         /// <summary>
         ///     Creates a <see cref="ComputedDynamicVar" /> with optional preview-specific computation.
+        ///     创建带可选预览专用计算的 <see cref="ComputedDynamicVar" />。
         /// </summary>
         public static ComputedDynamicVar Computed(
             string name,
@@ -41,6 +45,7 @@ namespace STS2RitsuLib.Cards.DynamicVars
 
         /// <summary>
         ///     Creates a <see cref="ComputedDynamicVar" /> with target-aware computation.
+        ///     创建支持目标感知计算的 <see cref="ComputedDynamicVar" />。
         /// </summary>
         public static ComputedDynamicVar Computed(
             string name,

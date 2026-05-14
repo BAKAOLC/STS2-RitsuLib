@@ -5,6 +5,7 @@ namespace STS2RitsuLib.Scaffolding.Content
 {
     /// <summary>
     ///     Relic pool base that builds relics from declared CLR types and can override energy icon paths on pools.
+    ///     遗物池基类：从声明的 CLR 类型构建遗物，并可覆盖池上的能量图标路径。
     /// </summary>
     public abstract class TypeListRelicPoolModel : RelicPoolModel, IModBigEnergyIconPool, IModTextEnergyIconPool
     {
@@ -15,6 +16,11 @@ namespace STS2RitsuLib.Scaffolding.Content
         ///     or a manifest <c>RelicRegistrationEntry</c> so <c>ModHelper.AddModelToPool</c> injects them without
         ///     duplicating the same <see cref="RelicModel" /> instances when this property also lists those types.
         ///     Defaults to an empty sequence.
+        ///     旧式钩子：枚举池类上的遗物类型。建议改为通过以下方式逐个注册遗物：
+        ///     <c>ModContentRegistry.RegisterRelic&lt;TPool, TRelic&gt;()</c>、
+        ///     或 manifest <c>RelicRegistrationEntry</c>，让 <c>ModHelper.AddModelToPool</c> 注入它们，避免
+        ///     当此属性也列出这些类型时重复生成同一批 <see cref="RelicModel" /> 实例。
+        ///     默认为空序列。
         /// </summary>
         [Obsolete(
             "Prefer ModContentRegistry / CreateContentPack .Relic<TPool, TRelic>() or manifest RelicRegistrationEntry. "

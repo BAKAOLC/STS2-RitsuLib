@@ -4,6 +4,7 @@ namespace STS2RitsuLib.Audio.Internal
 {
     /// <summary>
     ///     Centralized FmodServer lookup and guarded <see cref="GodotObject.Call(StringName, Variant[])" /> calls.
+    ///     集中式 FmodServer 查找和受保护的 <see cref="GodotObject.Call(StringName, Variant[])" /> 调用。
     /// </summary>
     internal static class FmodStudioGateway
     {

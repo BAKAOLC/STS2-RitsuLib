@@ -7,6 +7,8 @@ namespace STS2RitsuLib.Localization
     /// <summary>
     ///     Bridges the framework-provided <see cref="I18N" /> helper localization into the game-native
     ///     <c>LocString</c>/<c>LocTable</c> pipeline by registering virtual table ids.
+    ///     通过注册虚拟 table id，将 framework 提供的 <see cref="I18N" /> helper 本地化桥接到游戏原生的
+    ///     <c>LocString</c>/<c>LocTable</c> 管线。
     /// </summary>
     public static class I18NLocTableBridge
     {
@@ -16,6 +18,8 @@ namespace STS2RitsuLib.Localization
         /// <summary>
         ///     Builds a virtual localization table id using the framework's standard three-segment convention:
         ///     <c>MODID_I18N_STEM</c>.
+        ///     使用 framework 标准三段约定构建虚拟本地化 table id：
+        ///     <c>MODID_I18N_STEM</c>。
         /// </summary>
         public static string GetTableId(string modId, string stem = "DEFAULT")
         {
@@ -25,6 +29,7 @@ namespace STS2RitsuLib.Localization
         /// <summary>
         ///     Registers <paramref name="i18N" /> as the backing translation source for the virtual table id
         ///     <c>MODID_I18N_STEM</c>.
+        ///     将 <paramref name="i18N" /> 注册为虚拟 table id <c>MODID_I18N_STEM</c> 的背后翻译源。
         /// </summary>
         public static bool TryRegister(string modId, I18N i18N, string stem = "DEFAULT", bool replaceExisting = false)
         {
@@ -43,6 +48,7 @@ namespace STS2RitsuLib.Localization
 
         /// <summary>
         ///     Unregisters the virtual table id <c>MODID_I18N_STEM</c> previously registered via <see cref="TryRegister" />.
+        ///     注销先前通过 <see cref="TryRegister" /> 注册的虚拟 table id <c>MODID_I18N_STEM</c>。
         /// </summary>
         public static bool TryUnregister(string modId, string stem = "DEFAULT")
         {

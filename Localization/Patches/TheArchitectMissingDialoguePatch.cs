@@ -20,6 +20,16 @@ namespace STS2RitsuLib.Localization.Patches
     ///     Scope: only when debug compatibility <b>master</b> and the <b>Ancient / THE_ARCHITECT</b> sub-setting are
     ///     enabled, and the character type is registered through <see cref="ModContentRegistry" />. Otherwise vanilla
     ///     behavior (possible NRE on PROCEED) applies.
+    ///     当 THE_ARCHITECT 未解析出任何 <see cref="AncientDialogue" /> 时，原版会让 <c>Dialogue</c> 保持 null，
+    ///     但仍显示 PROCEED；然而 <c>WinRun</c> 会解引用 <c>Dialogue</c>。带 <b>non-empty</b>
+    ///     <see cref="AncientDialogue.Lines" /> 的 stub 并不安全：<c>OnRoomEnter</c> 会调用 <c>ClearCurrentOptions</c> 和
+    ///     <c>PlayCurrentLine</c>，随后因 <c>LineText</c> 从未填充而提前退出，导致没有按钮。此
+    ///     patch 会注入一个 lines 为 <b>empty</b> 的 <see cref="AncientDialogue" />，使原版在 options/UI 上走与
+    ///     <c>Dialogue == null</c> 相同的路径，同时 <c>WinRun</c> 可读取 <c>EndAttackers</c>。
+    ///     <para />
+    ///     作用域：仅当 debug compatibility <b>master</b> 和 <b>Ancient / THE_ARCHITECT</b> 子设置
+    ///     启用，且角色类型通过 <see cref="ModContentRegistry" /> 注册时生效。否则使用原版
+    ///     行为（PROCEED 上可能发生 NRE）。
     /// </summary>
     public class TheArchitectLoadDialogueMissingFallbackPatch : IPatchMethod
     {
@@ -45,6 +55,7 @@ namespace STS2RitsuLib.Localization.Patches
         // ReSharper disable InconsistentNaming
         /// <summary>
         ///     After vanilla <c>LoadDialogue</c>, assign a no-op dialogue when none matched so PROCEED / <c>WinRun</c> is safe.
+        ///     原版 <c>LoadDialogue</c> 后，如果没有匹配项，则分配一个 no-op dialogue，使 PROCEED / <c>WinRun</c> 安全。
         /// </summary>
         public static void Postfix(TheArchitect __instance)
             // ReSharper restore InconsistentNaming
@@ -84,6 +95,8 @@ namespace STS2RitsuLib.Localization.Patches
         /// <summary>
         ///     Builds an <see cref="AncientDialogue" /> without running its constructor (which requires ≥1 line), with
         ///     <see cref="AncientDialogue.Lines" /> empty and attackers set to <see cref="ArchitectAttackers.None" />.
+        ///     构建一个不运行其构造函数（该构造函数要求 >=1 行）的 <see cref="AncientDialogue" />，其中
+        ///     <see cref="AncientDialogue.Lines" /> 为空，attackers 设置为 <see cref="ArchitectAttackers.None" />。
         /// </summary>
         private static AncientDialogue? TryCreateEmptyLinesArchitectDialogueStub()
         {

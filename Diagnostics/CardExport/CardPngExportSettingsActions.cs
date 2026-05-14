@@ -4,6 +4,7 @@ namespace STS2RitsuLib.Diagnostics.CardExport
 {
     /// <summary>
     ///     Starts card PNG export from persisted RitsuLib settings (Mod Settings UI).
+    ///     从持久化的 RitsuLib 设置启动卡牌 PNG 导出（Mod 设置 UI）。
     /// </summary>
     internal static class CardPngExportSettingsActions
     {

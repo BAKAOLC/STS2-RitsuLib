@@ -7,6 +7,8 @@ namespace STS2RitsuLib.CardTags.Serialization
     /// <summary>
     ///     JSON array converter for <see cref="HashSet{T}" /> of <see cref="CardTag" /> using
     ///     <see cref="CardTagJsonConverter" /> rules per element.
+    ///     面向 <see cref="CardTag" /> 的 <see cref="HashSet{T}" /> JSON 数组转换器，
+    ///     每个元素使用 <see cref="CardTagJsonConverter" /> 规则。
     /// </summary>
     public sealed class CardTagHashSetJsonConverter : JsonConverter<HashSet<CardTag>>
     {

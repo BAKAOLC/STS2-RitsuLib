@@ -10,16 +10,19 @@ namespace STS2RitsuLib.Content
 {
     /// <summary>
     ///     Whether <see cref="ModContentRegistry" /> still accepts new registrations from mods.
+    ///     <see cref="ModContentRegistry" /> 是否仍接受来自 mod 的新注册。
     /// </summary>
     public enum ContentRegistrationState
     {
         /// <summary>
         ///     Registrations are allowed until the framework freezes them.
+        ///     在框架冻结注册之前允许继续注册。
         /// </summary>
         Open = 0,
 
         /// <summary>
         ///     Further registration throws; game content lists are considered sealed.
+        ///     继续注册会抛出异常；游戏内容列表视为已封闭。
         /// </summary>
         Frozen = 1,
     }
@@ -27,6 +30,8 @@ namespace STS2RitsuLib.Content
     /// <summary>
     ///     Per-mod content registration surface: pool models, standalone models, act-scoped content, and stable public
     ///     entry overrides used by patched <see cref="ModelDb" /> identity.
+    ///     每个 mod 的内容注册表面：池模型、独立模型、章节作用域内容，以及已修补 <see cref="ModelDb" />
+    ///     身份使用的稳定公共条目覆盖。
     /// </summary>
     public sealed partial class ModContentRegistry
     {
@@ -74,16 +79,19 @@ namespace STS2RitsuLib.Content
 
         /// <summary>
         ///     Mod identifier this registry instance was created for (<see cref="For" />).
+        ///     创建此注册表实例时使用的 mod 标识符（<see cref="For" />）。
         /// </summary>
         public string ModId { get; }
 
         /// <summary>
         ///     True after <c>FreezeRegistrations</c> has run globally.
+        ///     <c>FreezeRegistrations</c> 全局运行后为 true。
         /// </summary>
         public static bool IsFrozen { get; private set; }
 
         /// <summary>
         ///     Convenience view of <see cref="IsFrozen" /> as <see cref="ContentRegistrationState" />.
+        ///     将 <see cref="IsFrozen" /> 以 <see cref="ContentRegistrationState" /> 形式查看的便捷视图。
         /// </summary>
         public static ContentRegistrationState State => IsFrozen
             ? ContentRegistrationState.Frozen
@@ -91,6 +99,7 @@ namespace STS2RitsuLib.Content
 
         /// <summary>
         ///     Resolves which mod registered <paramref name="modelType" />, if any.
+        ///     解析注册 <paramref name="modelType" /> 的 mod（如果有）。
         /// </summary>
         public static bool TryGetOwnerModId(Type modelType, out string modId)
         {
@@ -104,6 +113,7 @@ namespace STS2RitsuLib.Content
 
         /// <summary>
         ///     Returns the stable public entry string for a RitsuLib-registered model type (override or generated).
+        ///     返回 RitsuLib 注册模型类型的稳定公共条目字符串（覆盖或生成值）。
         /// </summary>
         public static bool TryGetFixedPublicEntry(Type modelType, out string entry)
         {
@@ -131,6 +141,8 @@ namespace STS2RitsuLib.Content
         /// <summary>
         ///     Builds the default normalized entry <c>MOD_CATEGORY_TYPENAME</c> for a type owned by
         ///     <paramref name="modId" />.
+        ///     为 <paramref name="modId" /> 拥有的类型构建默认规范化条目
+        ///     <c>MOD_CATEGORY_TYPENAME</c>。
         /// </summary>
         public static string GetFixedPublicEntry(string modId, Type modelType)
         {
@@ -147,6 +159,9 @@ namespace STS2RitsuLib.Content
         ///     Builds a stable three-segment compound id: <c>{normalizedModId}_{TYPE}_{normalizedName}</c>
         ///     (underscore-separated). Mod and name use <see cref="NormalizePublicStem" />; the type segment is only
         ///     trimmed then uppercased with <c>ToUpperInvariant</c> (no stem normalization).
+        ///     构建稳定的三段复合 id：<c>{normalizedModId}_{TYPE}_{normalizedName}</c>
+        ///     （以下划线分隔）。mod 和 name 使用 <see cref="NormalizePublicStem" />；type 段只
+        ///     去除首尾空白后用 <c>ToUpperInvariant</c> 转大写（不做词干规范化）。
         /// </summary>
         public static string GetCompoundId(string modId, string typeStem, string nameStem)
         {
@@ -169,6 +184,10 @@ namespace STS2RitsuLib.Content
         ///     three-segment convention used by <see cref="GetQualifiedCardPileId" /> and
         ///     <see cref="GetQualifiedTopBarButtonId" /> (all uppercase). Other mods can reference a provider’s keyword
         ///     by passing the same <paramref name="modId" /> and <paramref name="localKeywordStem" />.
+        ///     构建 mod 作用域的关键词 id：<c>{normalizedModId}_KEYWORD_{normalizedStem}</c>，匹配
+        ///     <see cref="GetQualifiedCardPileId" /> 和
+        ///     <see cref="GetQualifiedTopBarButtonId" /> 使用的三段约定（全部大写）。其他 mod 可通过传入相同的
+        ///     <paramref name="modId" /> 和 <paramref name="localKeywordStem" /> 引用提供者的关键词。
         /// </summary>
         public static string GetQualifiedKeywordId(string modId, string localKeywordStem)
         {
@@ -183,12 +202,22 @@ namespace STS2RitsuLib.Content
         ///     convention — three uppercase segments separated by underscores, aligning with
         ///     <see cref="GetFixedPublicEntry(string, Type)" /> and the vanilla <c>static_hover_tips</c> key
         ///     style (<c>DRAW_PILE</c>, <c>EXHAUST_PILE</c>, ...).
+        ///     使用 ritsulib <c>MODID_CATEGORY_TYPENAME</c> 公共条目约定构建 mod 作用域的牌堆 id
+        ///     -- 三个大写段以下划线分隔，与
+        ///     <see cref="GetFixedPublicEntry(string, Type)" /> 和原版 <c>static_hover_tips</c> 键
+        ///     风格（<c>DRAW_PILE</c>、<c>EXHAUST_PILE</c> 等）对齐。
         /// </summary>
         /// <remarks>
         ///     The returned string is the stem for <c>static_hover_tips.json</c> keys, so a pile registered by
         ///     mod <c>com.example.my-mod</c> with local stem <c>overflow_pile</c> uses id
         ///     <c>MYMOD_CARDPILE_OVERFLOW_PILE</c> and loc keys <c>MYMOD_CARDPILE_OVERFLOW_PILE.title</c> /
         ///     <c>.description</c> / <c>.empty</c>.
+        ///     <c>.description</c> / <c>.empty</c>。
+        ///     返回的字符串是 <c>static_hover_tips.json</c> 键的词干，因此由
+        ///     mod <c>com.example.my-mod</c> 以本地词干 <c>overflow_pile</c> 注册的牌堆会使用 id
+        ///     <c>MYMOD_CARDPILE_OVERFLOW_PILE</c>，并使用本地化键 <c>MYMOD_CARDPILE_OVERFLOW_PILE.title</c>、
+        ///     <c>.description</c>、<c>.empty</c>。
+        ///     <c>.description</c>、<c>.empty</c>。
         /// </remarks>
         public static string GetQualifiedCardPileId(string modId, string localPileStem)
         {
@@ -202,6 +231,10 @@ namespace STS2RitsuLib.Content
         ///     Builds a mod-scoped <see cref="MegaCrit.Sts2.Core.Entities.Cards.CardTag" /> id using the ritsulib
         ///     <c>MODID_CATEGORY_TYPENAME</c> convention with middle segment <c>CARDTAG</c>, aligned with
         ///     <see cref="GetQualifiedKeywordId" /> and <see cref="GetQualifiedCardPileId" />.
+        ///     使用 ritsulib <c>MODID_CATEGORY_TYPENAME</c> 约定构建 mod 作用域的 <see cref="MegaCrit.Sts2.Core.Entities.Cards.CardTag" />
+        ///     id，
+        ///     中间段为 <c>CARDTAG</c>，并与
+        ///     <see cref="GetQualifiedKeywordId" /> 和 <see cref="GetQualifiedCardPileId" /> 对齐。
         /// </summary>
         public static string GetQualifiedCardTagId(string modId, string localTagStem)
         {
@@ -212,10 +245,28 @@ namespace STS2RitsuLib.Content
         }
 
         /// <summary>
+        ///     Builds a mod-scoped reward id using the ritsulib <c>MODID_CATEGORY_TYPENAME</c> convention
+        ///     with middle segment <c>REWARD</c>.
+        ///     使用 ritsulib <c>MODID_CATEGORY_TYPENAME</c> 约定构建 mod 作用域奖励 id，
+        ///     中间段为 <c>REWARD</c>。
+        /// </summary>
+        public static string GetQualifiedRewardId(string modId, string localRewardStem)
+        {
+            ArgumentException.ThrowIfNullOrWhiteSpace(modId);
+            ArgumentException.ThrowIfNullOrWhiteSpace(localRewardStem);
+
+            return GetCompoundId(modId, "REWARD", localRewardStem);
+        }
+
+        /// <summary>
         ///     Builds a mod-scoped top-bar-button id in the ritsulib <c>MODID_CATEGORY_TYPENAME</c> public
         ///     entry style (uppercase, three segments, underscore-separated, middle segment fixed to
         ///     <c>TOPBARBUTTON</c>). Used by <see cref="STS2RitsuLib.TopBar.ModTopBarButtonRegistry" />; the
         ///     returned string is the stem for <c>static_hover_tips.json</c> title / description keys.
+        ///     以 ritsulib <c>MODID_CATEGORY_TYPENAME</c> 公共条目风格构建 mod 作用域的顶部栏按钮 id
+        ///     （大写、三段、以下划线分隔，中间段固定为
+        ///     <c>TOPBARBUTTON</c>）。由 <see cref="STS2RitsuLib.TopBar.ModTopBarButtonRegistry" /> 使用；
+        ///     返回的字符串是 <c>static_hover_tips.json</c> 标题/描述键的词干。
         /// </summary>
         public static string GetQualifiedTopBarButtonId(string modId, string localButtonStem)
         {
@@ -227,6 +278,7 @@ namespace STS2RitsuLib.Content
 
         /// <summary>
         ///     Returns the singleton registry for <paramref name="modId" /> (created on first use).
+        ///     返回 <paramref name="modId" /> 的单例注册表（首次使用时创建）。
         /// </summary>
         public static ModContentRegistry For(string modId)
         {
@@ -246,6 +298,7 @@ namespace STS2RitsuLib.Content
         /// <summary>
         ///     Registers <typeparamref name="TCard" /> into <typeparamref name="TPool" /> with default public entry
         ///     naming.
+        ///     使用默认公共条目命名，将 <typeparamref name="TCard" /> 注册到 <typeparamref name="TPool" />。
         /// </summary>
         public void RegisterCard<TPool, TCard>()
             where TPool : CardPoolModel
@@ -256,6 +309,7 @@ namespace STS2RitsuLib.Content
 
         /// <summary>
         ///     Registers <paramref name="cardType" /> into <paramref name="poolType" /> with default public entry naming.
+        ///     使用默认公共条目命名，将 <paramref name="cardType" /> 注册到 <paramref name="poolType" />。
         /// </summary>
         public void RegisterCard(Type poolType, Type cardType)
         {
@@ -265,6 +319,7 @@ namespace STS2RitsuLib.Content
         /// <summary>
         ///     Registers <typeparamref name="TCard" /> into <typeparamref name="TPool" /> using
         ///     <paramref name="publicEntry" /> rules.
+        ///     使用 <paramref name="publicEntry" /> 规则，将 <typeparamref name="TCard" /> 注册到 <typeparamref name="TPool" />。
         /// </summary>
         public void RegisterCard<TPool, TCard>(ModelPublicEntryOptions publicEntry)
             where TPool : CardPoolModel
@@ -276,6 +331,7 @@ namespace STS2RitsuLib.Content
         /// <summary>
         ///     Registers <paramref name="cardType" /> into <paramref name="poolType" /> using
         ///     <paramref name="publicEntry" /> rules.
+        ///     使用 <paramref name="publicEntry" /> 规则，将 <paramref name="cardType" /> 注册到 <paramref name="poolType" />。
         /// </summary>
         public void RegisterCard(Type poolType, Type cardType, ModelPublicEntryOptions publicEntry)
         {
@@ -285,6 +341,7 @@ namespace STS2RitsuLib.Content
         /// <summary>
         ///     Registers <typeparamref name="TRelic" /> into <typeparamref name="TPool" /> with default public entry
         ///     naming.
+        ///     使用默认公共条目命名，将 <typeparamref name="TRelic" /> 注册到 <typeparamref name="TPool" />。
         /// </summary>
         public void RegisterRelic<TPool, TRelic>()
             where TPool : RelicPoolModel
@@ -295,6 +352,7 @@ namespace STS2RitsuLib.Content
 
         /// <summary>
         ///     Registers <paramref name="relicType" /> into <paramref name="poolType" /> with default public entry naming.
+        ///     使用默认公共条目命名，将 <paramref name="relicType" /> 注册到 <paramref name="poolType" />。
         /// </summary>
         public void RegisterRelic(Type poolType, Type relicType)
         {
@@ -304,6 +362,7 @@ namespace STS2RitsuLib.Content
         /// <summary>
         ///     Registers <typeparamref name="TRelic" /> into <typeparamref name="TPool" /> using
         ///     <paramref name="publicEntry" /> rules.
+        ///     使用 <paramref name="publicEntry" /> 规则，将 <typeparamref name="TRelic" /> 注册到 <typeparamref name="TPool" />。
         /// </summary>
         public void RegisterRelic<TPool, TRelic>(ModelPublicEntryOptions publicEntry)
             where TPool : RelicPoolModel
@@ -315,6 +374,7 @@ namespace STS2RitsuLib.Content
         /// <summary>
         ///     Registers <paramref name="relicType" /> into <paramref name="poolType" /> using
         ///     <paramref name="publicEntry" /> rules.
+        ///     使用 <paramref name="publicEntry" /> 规则，将 <paramref name="relicType" /> 注册到 <paramref name="poolType" />。
         /// </summary>
         public void RegisterRelic(Type poolType, Type relicType, ModelPublicEntryOptions publicEntry)
         {
@@ -324,6 +384,7 @@ namespace STS2RitsuLib.Content
         /// <summary>
         ///     Registers <typeparamref name="TPotion" /> into <typeparamref name="TPool" /> with default public entry
         ///     naming.
+        ///     使用默认公共条目命名，将 <typeparamref name="TPotion" /> 注册到 <typeparamref name="TPool" />。
         /// </summary>
         public void RegisterPotion<TPool, TPotion>()
             where TPool : PotionPoolModel
@@ -334,6 +395,7 @@ namespace STS2RitsuLib.Content
 
         /// <summary>
         ///     Registers <paramref name="potionType" /> into <paramref name="poolType" /> with default public entry naming.
+        ///     使用默认公共条目命名，将 <paramref name="potionType" /> 注册到 <paramref name="poolType" />。
         /// </summary>
         public void RegisterPotion(Type poolType, Type potionType)
         {
@@ -343,6 +405,7 @@ namespace STS2RitsuLib.Content
         /// <summary>
         ///     Registers <typeparamref name="TPotion" /> into <typeparamref name="TPool" /> using
         ///     <paramref name="publicEntry" /> rules.
+        ///     使用 <paramref name="publicEntry" /> 规则，将 <typeparamref name="TPotion" /> 注册到 <typeparamref name="TPool" />。
         /// </summary>
         public void RegisterPotion<TPool, TPotion>(ModelPublicEntryOptions publicEntry)
             where TPool : PotionPoolModel
@@ -354,6 +417,7 @@ namespace STS2RitsuLib.Content
         /// <summary>
         ///     Registers <paramref name="potionType" /> into <paramref name="poolType" /> using
         ///     <paramref name="publicEntry" /> rules.
+        ///     使用 <paramref name="publicEntry" /> 规则，将 <paramref name="potionType" /> 注册到 <paramref name="poolType" />。
         /// </summary>
         public void RegisterPotion(Type poolType, Type potionType, ModelPublicEntryOptions publicEntry)
         {
@@ -362,6 +426,7 @@ namespace STS2RitsuLib.Content
 
         /// <summary>
         ///     Registers a mod character model for inclusion in <see cref="ModelDb.AllCharacters" />.
+        ///     注册 mod 角色模型，以纳入 <see cref="ModelDb.AllCharacters" />。
         /// </summary>
         public void RegisterCharacter<TCharacter>() where TCharacter : CharacterModel
         {
@@ -370,6 +435,7 @@ namespace STS2RitsuLib.Content
 
         /// <summary>
         ///     Registers <paramref name="characterType" /> for inclusion in <see cref="ModelDb.AllCharacters" />.
+        ///     注册 <paramref name="characterType" />，以纳入 <see cref="ModelDb.AllCharacters" />。
         /// </summary>
         public void RegisterCharacter(Type characterType)
         {
@@ -381,6 +447,10 @@ namespace STS2RitsuLib.Content
         ///     The target character may be registered before or after this call; resolution happens when the character model is
         ///     queried. Matching uses the live instance CLR type; registrations against an assignable ancestor type also apply,
         ///     except a registration keyed only to <see cref="CharacterModel" /> itself.
+        ///     为 <typeparamref name="TCharacter" /> 注册额外的 <typeparamref name="TCard" /> 初始牌组副本。
+        ///     目标角色可以在此调用之前或之后注册；解析会在查询角色模型时发生。
+        ///     匹配使用实时实例 CLR 类型；针对可赋值祖先类型的注册也会应用，
+        ///     但仅以 <see cref="CharacterModel" /> 本身为键的注册除外。
         /// </summary>
         public void RegisterCharacterStarterCard<TCharacter, TCard>(int count = 1)
             where TCharacter : CharacterModel
@@ -394,6 +464,10 @@ namespace STS2RitsuLib.Content
         ///     The target character may be registered before or after this call; resolution happens when the character model is
         ///     queried. Matching uses the live instance CLR type; registrations against an assignable ancestor type also apply,
         ///     except a registration keyed only to <see cref="CharacterModel" /> itself.
+        ///     为 <typeparamref name="TCharacter" /> 注册额外的 <typeparamref name="TCard" /> 初始牌组副本。
+        ///     目标角色可以在此调用之前或之后注册；解析会在查询角色模型时发生。
+        ///     匹配使用实时实例 CLR 类型；针对可赋值祖先类型的注册也会应用，
+        ///     但仅以 <see cref="CharacterModel" /> 本身为键的注册除外。
         /// </summary>
         public void RegisterCharacterStarterCard<TCharacter, TCard>(int count, int order)
             where TCharacter : CharacterModel
@@ -404,6 +478,7 @@ namespace STS2RitsuLib.Content
 
         /// <summary>
         ///     Registers additional starter-deck copies of <paramref name="cardType" /> for <paramref name="characterType" />.
+        ///     为 <paramref name="characterType" /> 注册额外的 <paramref name="cardType" /> 初始牌组副本。
         /// </summary>
         public void RegisterCharacterStarterCard(Type characterType, Type cardType, int count = 1)
         {
@@ -412,6 +487,7 @@ namespace STS2RitsuLib.Content
 
         /// <summary>
         ///     Registers additional starter-deck copies of <paramref name="cardType" /> for <paramref name="characterType" />.
+        ///     为 <paramref name="characterType" /> 注册额外的 <paramref name="cardType" /> 初始牌组副本。
         /// </summary>
         public void RegisterCharacterStarterCard(Type characterType, Type cardType, int count, int order)
         {
@@ -426,6 +502,11 @@ namespace STS2RitsuLib.Content
         ///     The target character may be registered before or after this call; resolution happens when the character model is
         ///     queried. Matching uses the live instance CLR type; registrations against an assignable ancestor type also apply,
         ///     except a registration keyed only to <see cref="CharacterModel" /> itself.
+        ///     为 <typeparamref name="TCharacter" /> 注册额外的 <typeparamref name="TRelic" /> 初始遗物副本
+        ///     。
+        ///     目标角色可以在此调用之前或之后注册；解析会在查询角色模型时发生。
+        ///     匹配使用实时实例 CLR 类型；针对可赋值祖先类型的注册也会应用，
+        ///     但仅以 <see cref="CharacterModel" /> 本身为键的注册除外。
         /// </summary>
         public void RegisterCharacterStarterRelic<TCharacter, TRelic>(int count = 1)
             where TCharacter : CharacterModel
@@ -440,6 +521,11 @@ namespace STS2RitsuLib.Content
         ///     The target character may be registered before or after this call; resolution happens when the character model is
         ///     queried. Matching uses the live instance CLR type; registrations against an assignable ancestor type also apply,
         ///     except a registration keyed only to <see cref="CharacterModel" /> itself.
+        ///     为 <typeparamref name="TCharacter" /> 注册额外的 <typeparamref name="TRelic" /> 初始遗物副本
+        ///     。
+        ///     目标角色可以在此调用之前或之后注册；解析会在查询角色模型时发生。
+        ///     匹配使用实时实例 CLR 类型；针对可赋值祖先类型的注册也会应用，
+        ///     但仅以 <see cref="CharacterModel" /> 本身为键的注册除外。
         /// </summary>
         public void RegisterCharacterStarterRelic<TCharacter, TRelic>(int count, int order)
             where TCharacter : CharacterModel
@@ -450,6 +536,8 @@ namespace STS2RitsuLib.Content
 
         /// <summary>
         ///     Registers additional starting relic copies of <paramref name="relicType" /> for <paramref name="characterType" />.
+        ///     为 <paramref name="characterType" /> 注册额外的 <paramref name="relicType" /> 初始遗物副本
+        ///     。
         /// </summary>
         public void RegisterCharacterStarterRelic(Type characterType, Type relicType, int count = 1)
         {
@@ -458,6 +546,8 @@ namespace STS2RitsuLib.Content
 
         /// <summary>
         ///     Registers additional starting relic copies of <paramref name="relicType" /> for <paramref name="characterType" />.
+        ///     为 <paramref name="characterType" /> 注册额外的 <paramref name="relicType" /> 初始遗物副本
+        ///     。
         /// </summary>
         public void RegisterCharacterStarterRelic(Type characterType, Type relicType, int count, int order)
         {
@@ -471,6 +561,10 @@ namespace STS2RitsuLib.Content
         ///     The target character may be registered before or after this call; resolution happens when the character model is
         ///     queried. Matching uses the live instance CLR type; registrations against an assignable ancestor type also apply,
         ///     except a registration keyed only to <see cref="CharacterModel" /> itself.
+        ///     为 <typeparamref name="TCharacter" /> 注册额外的 <typeparamref name="TPotion" /> 初始药水副本。
+        ///     目标角色可以在此调用之前或之后注册；解析会在查询角色模型时发生。
+        ///     匹配使用实时实例 CLR 类型；针对可赋值祖先类型的注册也会应用，
+        ///     但仅以 <see cref="CharacterModel" /> 本身为键的注册除外。
         /// </summary>
         public void RegisterCharacterStarterPotion<TCharacter, TPotion>(int count = 1)
             where TCharacter : CharacterModel
@@ -485,6 +579,10 @@ namespace STS2RitsuLib.Content
         ///     The target character may be registered before or after this call; resolution happens when the character model is
         ///     queried. Matching uses the live instance CLR type; registrations against an assignable ancestor type also apply,
         ///     except a registration keyed only to <see cref="CharacterModel" /> itself.
+        ///     为 <typeparamref name="TCharacter" /> 注册额外的 <typeparamref name="TPotion" /> 初始药水副本。
+        ///     目标角色可以在此调用之前或之后注册；解析会在查询角色模型时发生。
+        ///     匹配使用实时实例 CLR 类型；针对可赋值祖先类型的注册也会应用，
+        ///     但仅以 <see cref="CharacterModel" /> 本身为键的注册除外。
         /// </summary>
         public void RegisterCharacterStarterPotion<TCharacter, TPotion>(int count, int order)
             where TCharacter : CharacterModel
@@ -496,6 +594,8 @@ namespace STS2RitsuLib.Content
         /// <summary>
         ///     Registers additional starting potion copies of <paramref name="potionType" /> for <paramref name="characterType" />
         ///     .
+        ///     为 <paramref name="characterType" /> 注册额外的 <paramref name="potionType" /> 初始药水副本
+        ///     。
         /// </summary>
         public void RegisterCharacterStarterPotion(Type characterType, Type potionType, int count = 1)
         {
@@ -505,6 +605,8 @@ namespace STS2RitsuLib.Content
         /// <summary>
         ///     Registers additional starting potion copies of <paramref name="potionType" /> for <paramref name="characterType" />
         ///     .
+        ///     为 <paramref name="characterType" /> 注册额外的 <paramref name="potionType" /> 初始药水副本
+        ///     。
         /// </summary>
         public void RegisterCharacterStarterPotion(Type characterType, Type potionType, int count, int order)
         {
@@ -514,6 +616,7 @@ namespace STS2RitsuLib.Content
 
         /// <summary>
         ///     Registers a mod act model for inclusion in <see cref="ModelDb.Acts" />.
+        ///     注册 mod 章节模型，以纳入 <see cref="ModelDb.Acts" />。
         /// </summary>
         public void RegisterAct<TAct>() where TAct : ActModel
         {
@@ -522,6 +625,7 @@ namespace STS2RitsuLib.Content
 
         /// <summary>
         ///     Registers <paramref name="actType" /> for inclusion in <see cref="ModelDb.Acts" />.
+        ///     注册 <paramref name="actType" />，以纳入 <see cref="ModelDb.Acts" />。
         /// </summary>
         public void RegisterAct(Type actType)
         {
@@ -531,6 +635,9 @@ namespace STS2RitsuLib.Content
         /// <summary>
         ///     Registers a mod monster model type for RitsuLib tracking, <see cref="ModelDb" /> identity, dynamic injection, and
         ///     patched merge into <c>ModelDb.Monsters</c>.
+        ///     注册 mod 怪物模型类型，用于 RitsuLib 跟踪、<see cref="ModelDb" /> 身份、动态注入，以及
+        ///     修补后合并到 <c>ModelDb.Monsters</c>。
+        ///     修补后合并到 <c>ModelDb.Monsters</c>。
         /// </summary>
         public void RegisterMonster<TMonster>() where TMonster : MonsterModel
         {
@@ -539,6 +646,7 @@ namespace STS2RitsuLib.Content
 
         /// <summary>
         ///     Registers <paramref name="monsterType" /> for RitsuLib tracking and patched monster injection.
+        ///     注册 <paramref name="monsterType" />，用于 RitsuLib 跟踪和修补后的怪物注入。
         /// </summary>
         public void RegisterMonster(Type monsterType)
         {
@@ -547,6 +655,7 @@ namespace STS2RitsuLib.Content
 
         /// <summary>
         ///     Registers a mod power model for inclusion in <see cref="ModelDb.AllPowers" />.
+        ///     注册 mod 能力模型，以纳入 <see cref="ModelDb.AllPowers" />。
         /// </summary>
         public void RegisterPower<TPower>() where TPower : PowerModel
         {
@@ -555,6 +664,7 @@ namespace STS2RitsuLib.Content
 
         /// <summary>
         ///     Registers <paramref name="powerType" /> for inclusion in <see cref="ModelDb.AllPowers" />.
+        ///     注册 <paramref name="powerType" />，以纳入 <see cref="ModelDb.AllPowers" />。
         /// </summary>
         public void RegisterPower(Type powerType)
         {
@@ -563,6 +673,7 @@ namespace STS2RitsuLib.Content
 
         /// <summary>
         ///     Registers a mod orb model for inclusion in <see cref="ModelDb.Orbs" />.
+        ///     注册 mod 充能球模型，以纳入 <see cref="ModelDb.Orbs" />。
         /// </summary>
         public void RegisterOrb<TOrb>() where TOrb : OrbModel
         {
@@ -571,6 +682,7 @@ namespace STS2RitsuLib.Content
 
         /// <summary>
         ///     Registers <paramref name="orbType" /> for inclusion in <see cref="ModelDb.Orbs" />.
+        ///     注册 <paramref name="orbType" />，以纳入 <see cref="ModelDb.Orbs" />。
         /// </summary>
         public void RegisterOrb(Type orbType)
         {
@@ -580,6 +692,8 @@ namespace STS2RitsuLib.Content
         /// <summary>
         ///     Registers a mod enchantment model for RitsuLib tracking, fixed <see cref="ModelDb" /> entry identity, dynamic
         ///     injection, and inclusion in patched <see cref="ModelDb.DebugEnchantments" />.
+        ///     注册 mod 附魔模型，用于 RitsuLib 跟踪、固定 <see cref="ModelDb" /> 条目身份、动态
+        ///     注入，并纳入修补后的 <see cref="ModelDb.DebugEnchantments" />。
         /// </summary>
         public void RegisterEnchantment<TEnchantment>() where TEnchantment : EnchantmentModel
         {
@@ -588,6 +702,7 @@ namespace STS2RitsuLib.Content
 
         /// <summary>
         ///     Registers <paramref name="enchantmentType" /> for patched enchantment injection.
+        ///     注册 <paramref name="enchantmentType" />，用于修补后的附魔注入。
         /// </summary>
         public void RegisterEnchantment(Type enchantmentType)
         {
@@ -598,6 +713,8 @@ namespace STS2RitsuLib.Content
         /// <summary>
         ///     Registers a mod affliction model for RitsuLib tracking, fixed entry identity, dynamic injection, and patched
         ///     <see cref="ModelDb.DebugAfflictions" />.
+        ///     注册 mod 苦痛模型，用于 RitsuLib 跟踪、固定条目身份、动态注入，以及修补后的
+        ///     <see cref="ModelDb.DebugAfflictions" />。
         /// </summary>
         public void RegisterAffliction<TAffliction>() where TAffliction : AfflictionModel
         {
@@ -606,6 +723,7 @@ namespace STS2RitsuLib.Content
 
         /// <summary>
         ///     Registers <paramref name="afflictionType" /> for patched affliction injection.
+        ///     注册 <paramref name="afflictionType" />，用于修补后的苦痛注入。
         /// </summary>
         public void RegisterAffliction(Type afflictionType)
         {
@@ -615,6 +733,8 @@ namespace STS2RitsuLib.Content
         /// <summary>
         ///     Registers a mod achievement model for fixed entry identity, dynamic injection, and patched
         ///     <see cref="ModelDb.Achievements" />.
+        ///     注册 mod 成就模型，用于固定条目身份、动态注入，以及修补后的
+        ///     <see cref="ModelDb.Achievements" />。
         /// </summary>
         public void RegisterAchievement<TAchievement>() where TAchievement : AchievementModel
         {
@@ -623,6 +743,7 @@ namespace STS2RitsuLib.Content
 
         /// <summary>
         ///     Registers <paramref name="achievementType" /> for patched achievement injection.
+        ///     注册 <paramref name="achievementType" />，用于修补后的成就注入。
         /// </summary>
         public void RegisterAchievement(Type achievementType)
         {
@@ -633,6 +754,8 @@ namespace STS2RitsuLib.Content
         /// <summary>
         ///     Registers a mod singleton model for fixed entry identity and dynamic injection (resolved via
         ///     <see cref="ModelDb.Singleton{T}" />).
+        ///     注册 mod 单例模型，用于固定条目身份和动态注入（通过
+        ///     <see cref="ModelDb.Singleton{T}" /> 解析）。
         /// </summary>
         public void RegisterSingleton<TSingleton>() where TSingleton : SingletonModel
         {
@@ -641,6 +764,7 @@ namespace STS2RitsuLib.Content
 
         /// <summary>
         ///     Registers <paramref name="singletonType" /> for dynamic singleton injection.
+        ///     注册 <paramref name="singletonType" />，用于动态单例注入。
         /// </summary>
         public void RegisterSingleton(Type singletonType)
         {
@@ -649,6 +773,7 @@ namespace STS2RitsuLib.Content
 
         /// <summary>
         ///     Registers a custom badge template type.
+        ///     注册自定义徽章模板类型。
         /// </summary>
         public void RegisterBadge<TBadge>() where TBadge : ModBadgeTemplate
         {
@@ -657,6 +782,7 @@ namespace STS2RitsuLib.Content
 
         /// <summary>
         ///     Registers a custom badge template type.
+        ///     注册自定义徽章模板类型。
         /// </summary>
         public void RegisterBadge(Type badgeType)
         {
@@ -679,6 +805,7 @@ namespace STS2RitsuLib.Content
 
         /// <summary>
         ///     Registers a mod modifier as a &quot;good&quot; daily modifier for patched <see cref="ModelDb.GoodModifiers" />.
+        ///     将 mod 修饰符注册为已修补 <see cref="ModelDb.GoodModifiers" /> 的正面每日修饰符。
         /// </summary>
         public void RegisterGoodModifier<TModifier>() where TModifier : ModifierModel
         {
@@ -687,6 +814,7 @@ namespace STS2RitsuLib.Content
 
         /// <summary>
         ///     Registers <paramref name="modifierType" /> as a good daily modifier.
+        ///     将 <paramref name="modifierType" /> 注册为正面每日修饰符。
         /// </summary>
         public void RegisterGoodModifier(Type modifierType)
         {
@@ -695,6 +823,7 @@ namespace STS2RitsuLib.Content
 
         /// <summary>
         ///     Registers a mod modifier as a &quot;bad&quot; daily modifier for patched <see cref="ModelDb.BadModifiers" />.
+        ///     将 mod 修饰符注册为已修补 <see cref="ModelDb.BadModifiers" /> 的负面每日修饰符。
         /// </summary>
         public void RegisterBadModifier<TModifier>() where TModifier : ModifierModel
         {
@@ -703,6 +832,7 @@ namespace STS2RitsuLib.Content
 
         /// <summary>
         ///     Registers <paramref name="modifierType" /> as a bad daily modifier.
+        ///     将 <paramref name="modifierType" /> 注册为负面每日修饰符。
         /// </summary>
         public void RegisterBadModifier(Type modifierType)
         {
@@ -711,6 +841,7 @@ namespace STS2RitsuLib.Content
 
         /// <summary>
         ///     Registers a shared card pool model for inclusion in <see cref="ModelDb.AllSharedCardPools" />.
+        ///     注册共享卡牌池模型，以纳入 <see cref="ModelDb.AllSharedCardPools" />。
         /// </summary>
         public void RegisterSharedCardPool<TPool>() where TPool : CardPoolModel
         {
@@ -719,6 +850,7 @@ namespace STS2RitsuLib.Content
 
         /// <summary>
         ///     Registers <paramref name="poolType" /> for inclusion in <see cref="ModelDb.AllSharedCardPools" />.
+        ///     注册 <paramref name="poolType" />，以纳入 <see cref="ModelDb.AllSharedCardPools" />。
         /// </summary>
         public void RegisterSharedCardPool(Type poolType)
         {
@@ -728,6 +860,7 @@ namespace STS2RitsuLib.Content
 
         /// <summary>
         ///     Registers a shared relic pool model for inclusion in patched <see cref="ModelDb.AllRelicPools" />.
+        ///     注册共享遗物池模型，以纳入修补后的 <see cref="ModelDb.AllRelicPools" />。
         /// </summary>
         public void RegisterSharedRelicPool<TPool>() where TPool : RelicPoolModel
         {
@@ -736,6 +869,7 @@ namespace STS2RitsuLib.Content
 
         /// <summary>
         ///     Registers <paramref name="poolType" /> for inclusion in patched <see cref="ModelDb.AllRelicPools" />.
+        ///     注册 <paramref name="poolType" />，以纳入修补后的 <see cref="ModelDb.AllRelicPools" />。
         /// </summary>
         public void RegisterSharedRelicPool(Type poolType)
         {
@@ -745,6 +879,7 @@ namespace STS2RitsuLib.Content
 
         /// <summary>
         ///     Registers a shared potion pool model for inclusion in patched <see cref="ModelDb.AllPotionPools" />.
+        ///     注册共享药水池模型，以纳入修补后的 <see cref="ModelDb.AllPotionPools" />。
         /// </summary>
         public void RegisterSharedPotionPool<TPool>() where TPool : PotionPoolModel
         {
@@ -753,6 +888,7 @@ namespace STS2RitsuLib.Content
 
         /// <summary>
         ///     Registers <paramref name="poolType" /> for inclusion in patched <see cref="ModelDb.AllPotionPools" />.
+        ///     注册 <paramref name="poolType" />，以纳入修补后的 <see cref="ModelDb.AllPotionPools" />。
         /// </summary>
         public void RegisterSharedPotionPool(Type poolType)
         {
@@ -762,6 +898,7 @@ namespace STS2RitsuLib.Content
 
         /// <summary>
         ///     Registers a shared event model for inclusion in shared event enumerations.
+        ///     注册一个共享事件模型，使其纳入共享事件枚举。
         /// </summary>
         public void RegisterSharedEvent<TEvent>() where TEvent : EventModel
         {
@@ -770,6 +907,7 @@ namespace STS2RitsuLib.Content
 
         /// <summary>
         ///     Registers <paramref name="eventType" /> for inclusion in shared event enumerations.
+        ///     注册 <paramref name="eventType" />，以纳入共享事件枚举。
         /// </summary>
         public void RegisterSharedEvent(Type eventType)
         {
@@ -778,6 +916,7 @@ namespace STS2RitsuLib.Content
 
         /// <summary>
         ///     Registers an encounter model scoped to <typeparamref name="TAct" />.
+        ///     注册作用域限定为 <typeparamref name="TAct" /> 的遭遇模型。
         /// </summary>
         public void RegisterActEncounter<TAct, TEncounter>()
             where TAct : ActModel
@@ -788,6 +927,7 @@ namespace STS2RitsuLib.Content
 
         /// <summary>
         ///     Registers <paramref name="encounterType" /> scoped to <paramref name="actType" />.
+        ///     注册作用域限定为 <paramref name="actType" /> 的 <paramref name="encounterType" />。
         /// </summary>
         public void RegisterActEncounter(Type actType, Type encounterType)
         {
@@ -800,6 +940,10 @@ namespace STS2RitsuLib.Content
         ///     <see cref="ActModel.GenerateAllEncounters" /> result (after vanilla and act-scoped mod encounters).
         ///     Use for elites / monsters / bosses that should appear in multiple acts; use
         ///     <see cref="RegisterActEncounter{TAct,TEncounter}" /> when the encounter belongs to one act only.
+        ///     注册会追加到 <strong>每个</strong>章节的
+        ///     <see cref="ActModel.GenerateAllEncounters" /> 结果中的遭遇模型（位于原版和章节作用域 mod 遭遇之后）。
+        ///     用于应出现在多个章节中的精英/怪物/首领；当遭遇只属于一个章节时，请使用
+        ///     <see cref="RegisterActEncounter{TAct,TEncounter}" />。
         /// </summary>
         public void RegisterGlobalEncounter<TEncounter>() where TEncounter : EncounterModel
         {
@@ -808,6 +952,7 @@ namespace STS2RitsuLib.Content
 
         /// <summary>
         ///     Registers <paramref name="encounterType" /> as a global encounter.
+        ///     将 <paramref name="encounterType" /> 注册为全局遭遇。
         /// </summary>
         public void RegisterGlobalEncounter(Type encounterType)
         {
@@ -817,6 +962,7 @@ namespace STS2RitsuLib.Content
 
         /// <summary>
         ///     Registers an event model scoped to <typeparamref name="TAct" />.
+        ///     注册作用域限定为 <typeparamref name="TAct" /> 的事件模型。
         /// </summary>
         public void RegisterActEvent<TAct, TEvent>()
             where TAct : ActModel
@@ -827,6 +973,7 @@ namespace STS2RitsuLib.Content
 
         /// <summary>
         ///     Registers <paramref name="eventType" /> scoped to <paramref name="actType" />.
+        ///     注册作用域限定为 <paramref name="actType" /> 的 <paramref name="eventType" />。
         /// </summary>
         public void RegisterActEvent(Type actType, Type eventType)
         {
@@ -836,6 +983,7 @@ namespace STS2RitsuLib.Content
 
         /// <summary>
         ///     Registers a shared ancient event model for inclusion in ancient enumerations.
+        ///     注册一个共享远古事件模型，使其纳入远古事件枚举。
         /// </summary>
         public void RegisterSharedAncient<TAncient>() where TAncient : AncientEventModel
         {
@@ -844,6 +992,7 @@ namespace STS2RitsuLib.Content
 
         /// <summary>
         ///     Registers <paramref name="ancientType" /> for inclusion in ancient enumerations.
+        ///     注册 <paramref name="ancientType" />，以纳入 ancient 枚举。
         /// </summary>
         public void RegisterSharedAncient(Type ancientType)
         {
@@ -853,6 +1002,7 @@ namespace STS2RitsuLib.Content
 
         /// <summary>
         ///     Registers an ancient event model scoped to <typeparamref name="TAct" />.
+        ///     注册作用域限定为 <typeparamref name="TAct" /> 的 ancient 事件模型。
         /// </summary>
         public void RegisterActAncient<TAct, TAncient>()
             where TAct : ActModel
@@ -863,6 +1013,7 @@ namespace STS2RitsuLib.Content
 
         /// <summary>
         ///     Registers <paramref name="ancientType" /> scoped to <paramref name="actType" />.
+        ///     注册作用域限定为 <paramref name="actType" /> 的 <paramref name="ancientType" />。
         /// </summary>
         public void RegisterActAncient(Type actType, Type ancientType)
         {
@@ -903,6 +1054,7 @@ namespace STS2RitsuLib.Content
 
         /// <summary>
         ///     Snapshot of registered model types with owner and resolved/public-entry diagnostics.
+        ///     已注册模型类型的快照，包含所有者和已解析/公共条目诊断信息。
         /// </summary>
         public static ModContentRegisteredTypeSnapshot[] GetRegisteredTypeSnapshots()
         {
@@ -1102,6 +1254,9 @@ namespace STS2RitsuLib.Content
         ///     Injects RitsuLib-registered types that live in <see cref="Assembly.IsDynamic" /> assemblies into
         ///     <see cref="ModelDb" /> before <c>Init</c> finishes populating <c>_contentById</c>. Static mod DLL types are
         ///     picked up by the game's subtype scan; Reflection.Emit placeholder types are not, so they must be injected here.
+        ///     将位于 <see cref="Assembly.IsDynamic" /> 程序集中的 RitsuLib 注册类型注入
+        ///     <see cref="ModelDb" />，时机是在 <c>Init</c> 完成填充 <c>_contentById</c> 之前。静态 mod DLL 类型会
+        ///     被游戏的子类型扫描拾取；Reflection.Emit 占位类型不会，因此必须在此处注入。
         /// </summary>
         internal static void InjectDynamicRegisteredModels()
         {
@@ -1353,6 +1508,7 @@ namespace STS2RitsuLib.Content
         /// <summary>
         ///     Normalizes a public id segment: non-alphanumeric collapsed to underscores, acronym/camel boundaries
         ///     split, repeated underscores merged, and final uppercase.
+        ///     split, repeated underscores merged, 和 final uppercase.
         /// </summary>
         public static string NormalizePublicStem(string value)
         {
@@ -1439,11 +1595,13 @@ namespace STS2RitsuLib.Content
 
         /// <summary>
         ///     Immutable snapshot row describing one registered model type and its identity metadata.
+        ///     描述一个已注册模型类型及其身份元数据的不可变快照行。
         /// </summary>
         public readonly record struct ModContentRegisteredTypeSnapshot
         {
             /// <summary>
             ///     Creates a registered-type snapshot row.
+            ///     创建已注册类型快照行。
             /// </summary>
             public ModContentRegisteredTypeSnapshot(
                 string modId,
@@ -1463,31 +1621,37 @@ namespace STS2RitsuLib.Content
 
             /// <summary>
             ///     Owning mod id recorded at registration time.
+            ///     Owning mod id recorded at 注册 time.
             /// </summary>
             public string ModId { get; }
 
             /// <summary>
             ///     Registered model CLR type.
+            ///     已注册模型的 CLR 类型。
             /// </summary>
             public Type ModelType { get; }
 
             /// <summary>
             ///     Resolved runtime <c>ModelDb</c> id, if currently available.
+            ///     resolved runtime <c>ModelDb</c> id, 如果 currently 可用.
             /// </summary>
             public ModelId? ModelDbId { get; }
 
             /// <summary>
             ///     Expected fixed public entry for this model under current registry rules.
+            ///     在当前注册表规则下，此模型预期使用的固定公共条目。
             /// </summary>
             public string? ExpectedPublicEntry { get; }
 
             /// <summary>
             ///     Whether the expected entry comes from an explicit override.
+            ///     表示预期条目是否来自显式覆盖。
             /// </summary>
             public bool HasExplicitPublicEntryOverride { get; }
 
             /// <summary>
             ///     Type-name-derived public entry (<c>CATEGORY_TYPENAME</c>) when resolvable.
+            ///     可解析时，由类型名派生的公共条目（<c>CATEGORY_TYPENAME</c>）。
             /// </summary>
             public string? TypeNamePublicEntry { get; }
         }

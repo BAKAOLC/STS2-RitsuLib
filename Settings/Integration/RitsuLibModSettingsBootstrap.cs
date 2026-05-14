@@ -32,6 +32,26 @@ namespace STS2RitsuLib.Settings
             }
         }
 
+        internal static void EnsureFrameworkPagesRegistered()
+        {
+            if (ModSettingsRegistry.TryGetPage(Const.ModId, Const.ModId, out _))
+                return;
+
+            lock (InitLock)
+            {
+                if (ModSettingsRegistry.TryGetPage(Const.ModId, Const.ModId, out _))
+                    return;
+
+                var ui = RitsuLibModSettingsUiBindings.Create();
+                RegisterMainSettingsPage(ui);
+                RegisterHarmonySelfCheckAndCompendiumPages(ui);
+                RegisterImagePngExportPage(ui);
+                RefreshDynamicPages();
+                RegisterDebugShowcasePage(ui);
+                _initialized = true;
+            }
+        }
+
         internal static void RefreshDynamicPages()
         {
             RitsuLibFramework.RegisterModSettings(

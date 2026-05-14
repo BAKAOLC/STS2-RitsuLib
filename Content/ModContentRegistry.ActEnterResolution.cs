@@ -22,6 +22,7 @@ namespace STS2RitsuLib.Content
 
         /// <summary>
         ///     True when any act-enter force or pool registration exists (cheap check before <see cref="RunManager" /> work).
+        ///     当存在任意章节进入强制或池注册时为 true（在 <see cref="RunManager" /> 工作前进行廉价检查）。
         /// </summary>
         public static bool HasAnyActEnterRegistration => Volatile.Read(ref _actEnterRegistrationCount) > 0;
 
@@ -29,6 +30,9 @@ namespace STS2RitsuLib.Content
         ///     When true, <see cref="MegaCrit.Sts2.Core.Nodes.Screens.Map.NMapScreen.SetMap" /> postfix should call
         ///     <see cref="MapSelectionSynchronizer.BeforeMapGenerated" /> once so multiplayer map votes match the layout after
         ///     act-enter replacement (same idea as custom-act transitions in community mods).
+        ///     为 true 时，<see cref="MegaCrit.Sts2.Core.Nodes.Screens.Map.NMapScreen.SetMap" /> 后置补丁应调用一次
+        ///     <see cref="MapSelectionSynchronizer.BeforeMapGenerated" />，使多人地图投票与
+        ///     章节进入替换后的布局匹配（思路与社区 mod 的自定义章节转换相同）。
         /// </summary>
         internal static void RequestActEnterPostMapUiMapSyncBump()
         {
@@ -53,6 +57,10 @@ namespace STS2RitsuLib.Content
         ///     When <paramref name="eligibility" /> is true, forces <see cref="MegaCrit.Sts2.Core.Runs.RunState.Acts" />[
         ///     <paramref name="slotIndex" />] to <typeparamref name="TAct" /> on <see cref="RunManager.EnterAct" />. Higher
         ///     <paramref name="priority" /> wins; ties break by earlier registration.
+        ///     当 <paramref name="eligibility" /> 为 true 时，在 <see cref="RunManager.EnterAct" /> 时强制将
+        ///     <see cref="MegaCrit.Sts2.Core.Runs.RunState.Acts" />[
+        ///     <paramref name="slotIndex" />] 设为 <typeparamref name="TAct" />。较高
+        ///     <paramref name="priority" /> 胜出；并列时较早注册胜出。
         /// </summary>
         public void RegisterActEnterForce<TAct>(int slotIndex, int priority,
             Func<ActEnterResolveContext, bool> eligibility)
@@ -77,6 +85,9 @@ namespace STS2RitsuLib.Content
         ///     Declares a uniform pool for <paramref name="slotIndex" /> (required before uniform candidates). Baseline is the
         ///     act already in that slot when entering; eligible <see cref="RegisterActEnterUniformPoolCandidate{TAct}" /> rows
         ///     are unioned and deduped by id, then one act is drawn uniformly.
+        ///     为 <paramref name="slotIndex" /> 声明均匀池（必须先于均匀候选项）。基线是在进入时
+        ///     该槽位中已有的章节；合格的 <see cref="RegisterActEnterUniformPoolCandidate{TAct}" /> 行
+        ///     会按 id 取并集并去重，然后均匀抽取一个章节。
         /// </summary>
         public void RegisterActEnterUniformPool(int slotIndex)
         {
@@ -98,6 +109,7 @@ namespace STS2RitsuLib.Content
 
         /// <summary>
         ///     Adds a uniform-pool candidate for <paramref name="slotIndex" /> when <paramref name="eligibility" /> is true.
+        ///     当 <paramref name="eligibility" /> 为 true 时，为 <paramref name="slotIndex" /> 添加一个均匀池候选项。
         /// </summary>
         public void RegisterActEnterUniformPoolCandidate<TAct>(int slotIndex,
             Func<ActEnterResolveContext, bool> eligibility)
@@ -122,6 +134,9 @@ namespace STS2RitsuLib.Content
         ///     Declares a weighted pool for <paramref name="slotIndex" />. Use
         ///     <see cref="RegisterActEnterWeightedPoolCandidate{TAct}" /> and optionally
         ///     <see cref="RegisterActEnterWeightedPoolBaseline" /> so the act already in the slot participates with a weight.
+        ///     为 <paramref name="slotIndex" /> 声明加权池。使用
+        ///     <see cref="RegisterActEnterWeightedPoolCandidate{TAct}" />，并可选使用
+        ///     <see cref="RegisterActEnterWeightedPoolBaseline" />，使槽位中已有的章节以某个权重参与。
         /// </summary>
         public void RegisterActEnterWeightedPool(int slotIndex)
         {
@@ -143,6 +158,7 @@ namespace STS2RitsuLib.Content
 
         /// <summary>
         ///     Adds a weighted-pool candidate; weight must be &gt; 0 when eligible for the row to participate.
+        ///     添加一个加权池候选；当该行符合条件时，权重必须 &gt; 0 才会参与。
         /// </summary>
         public void RegisterActEnterWeightedPoolCandidate<TAct>(int slotIndex,
             Func<ActEnterResolveContext, bool> eligibility, Func<ActEnterResolveContext, double> weight)
@@ -167,6 +183,8 @@ namespace STS2RitsuLib.Content
         /// <summary>
         ///     Gives the act currently in <paramref name="slotIndex" /> a weight in the weighted pool (explicit; no implicit
         ///     baseline in weighted mode).
+        ///     为 <paramref name="slotIndex" /> 中当前的章节赋予加权池权重（显式设置；加权模式下没有隐式
+        ///     基线）。
         /// </summary>
         public void RegisterActEnterWeightedPoolBaseline(int slotIndex,
             Func<ActEnterResolveContext, double> weight)

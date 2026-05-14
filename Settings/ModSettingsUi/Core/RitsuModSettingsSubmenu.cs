@@ -17,17 +17,20 @@ namespace STS2RitsuLib.Settings
 {
     /// <summary>
     ///     Full-screen mod settings browser: sidebar (mods, pages, sections) and content pane.
+    ///     全屏 mod 设置浏览器：侧边栏（mod、页面、section）和内容窗格。
     /// </summary>
     public partial class RitsuModSettingsSubmenu : NSubmenu
     {
         /// <summary>
         ///     Deferred <see cref="FlushDirtyBindings" /> interval after the last binding write.
+        ///     最后一次 binding 写入后的延迟 <see cref="FlushDirtyBindings" /> 间隔。
         /// </summary>
         private const double AutosaveDelaySeconds = 0.35;
 
         /// <summary>
         ///     Debounced mirror paragraph / static refresh. Must be greater than <see cref="AutosaveDelaySeconds" /> so the
         ///     first flush sees persisted and callback <c>Save()</c> effects without an extra refresh pass.
+        ///     防抖的镜像段落 / 静态刷新。必须大于 <see cref="AutosaveDelaySeconds" />，使第一次 flush 能看到持久化和回调 <c>Save()</c> 效果，而不需要额外刷新遍历。
         /// </summary>
         private const double RefreshDebounceSeconds = AutosaveDelaySeconds + 0.04;
 
@@ -119,6 +122,7 @@ namespace STS2RitsuLib.Settings
 
         /// <summary>
         ///     Builds layout (header, sidebar, scrollable content) and wires initial structure.
+        ///     构建布局（标题、侧边栏、可滚动内容）并连接初始结构。
         /// </summary>
         public RitsuModSettingsSubmenu()
         {
@@ -628,6 +632,7 @@ namespace STS2RitsuLib.Settings
 
         /// <summary>
         ///     Selects a mod in the sidebar, optionally opening <paramref name="pageId" />, and rebuilds the UI.
+        ///     在侧边栏中选择一个 mod，可选打开 <paramref name="pageId" />，并重建 UI。
         /// </summary>
         public void SelectMod(string modId, string? pageId = null)
         {
@@ -642,6 +647,7 @@ namespace STS2RitsuLib.Settings
 
         /// <summary>
         ///     Switches to <paramref name="pageId" /> within the currently selected mod.
+        ///     在当前选中的 mod 内切换到 <paramref name="pageId" />。
         /// </summary>
         public void NavigateToPage(string pageId)
         {
@@ -656,6 +662,7 @@ namespace STS2RitsuLib.Settings
 
         /// <summary>
         ///     Opens <paramref name="pageId" /> and scrolls/focuses <paramref name="sectionId" />.
+        ///     打开 <paramref name="pageId" /> 并滚动/聚焦 <paramref name="sectionId" />。
         /// </summary>
         public void NavigateToSection(string pageId, string sectionId)
         {
@@ -1141,6 +1148,7 @@ namespace STS2RitsuLib.Settings
 
         private void EnsureUiUpToDate(bool forceStructure = false, bool includeAllPagesRefresh = false)
         {
+            RitsuLibModSettingsBootstrap.EnsureFrameworkPagesRegistered();
             ModSettingsMirrorRegistrarBootstrap.TryRegisterMirroredPages();
             RitsuLibModSettingsBootstrap.RefreshDynamicPages();
             ApplyStaticTexts();

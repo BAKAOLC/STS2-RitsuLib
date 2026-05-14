@@ -18,6 +18,9 @@ namespace STS2RitsuLib.Lifecycle.Patches
     ///     Before <see cref="RunState.FromSerializable" />, reject saves that reference unregistered characters so the
     ///     vanilla <c>catch { DisplayLoadSaveError(); throw; }</c> path never runs (avoids TaskHelper rethrow freeze).
     ///     Run files are not deleted.
+    ///     在 <see cref="RunState.FromSerializable" /> 前拒绝引用未注册角色的存档，使
+    ///     原版 <c>catch { DisplayLoadSaveError(); throw; }</c> 路径不会运行（避免 TaskHelper 重新抛出导致卡死）。
+    ///     跑局文件不会被删除。
     /// </summary>
     public class NMainMenuContinueRunMissingCharacterPatch : IPatchMethod
     {
@@ -50,6 +53,7 @@ namespace STS2RitsuLib.Lifecycle.Patches
         /// <summary>
         ///     Harmony prefix: replaces Continue handling with safe read validation and async continue; returns false to
         ///     skip vanilla.
+        ///     Harmony prefix：用安全读取验证和异步继续流程替换 Continue 处理；返回 false 以跳过原版逻辑。
         /// </summary>
         // ReSharper disable once InconsistentNaming
         public static bool Prefix(NMainMenu __instance, NButton _)

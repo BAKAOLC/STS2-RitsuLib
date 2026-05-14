@@ -6,6 +6,8 @@ namespace STS2RitsuLib.Combat.Ui.ExtraCornerAmountLabels
     /// <summary>
     ///     Visuals for extra badges on <see cref="MegaCrit.Sts2.Core.Nodes.Combat.NPower" />, matched to
     ///     <c>%AmountLabel</c> (see sts-2-source <c>scenes/combat/power.tscn</c>).
+    ///     <see cref="MegaCrit.Sts2.Core.Nodes.Combat.NPower" /> 上额外徽标的视觉样式，匹配
+    ///     <c>%AmountLabel</c>（见 sts-2-source <c>scenes/combat/power.tscn</c>）。
     /// </summary>
     internal static class ExtraCornerPowerAmountStyle
     {

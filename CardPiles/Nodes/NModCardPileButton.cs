@@ -38,12 +38,41 @@ namespace STS2RitsuLib.CardPiles.Nodes
     ///     </list>
     ///     Sharing one node type here is deliberate — the user-facing request was to stop "splitting the
     ///     layout" for pile-backed vs. action-backed buttons, so both kinds look/animate/space identically.
+    ///     <see cref="ModCardPileUiStyle.BottomLeft" /> / <see cref="ModCardPileUiStyle.BottomRight" />
+    ///     procedural 构建的牌堆按钮：<see cref="ModCardPileUiStyle.TopBarDeck" /> 和 action mode
+    ///     对应原版 top-bar deck chrome（72×72 图标、deck count label）；战斗
+    ///     <see cref="ModCardPileUiStyle.BottomLeft" />
+    ///     <see cref="ModCardPileUiStyle.BottomRight" />
+    ///     对应 <c>NCombatCardPile</c>（全 slot 图标、克隆的 <c>CountContainer</c>、1.25 hover scale）。
+    ///     <list type="bullet">
+    ///         <item>
+    ///             <see cref="ModCardPileUiStyle.BottomLeft" />
+    ///             <see cref="ModCardPileUiStyle.BottomRight" />
+    ///             <see cref="ModCardPileUiStyle.TopBarDeck" /> 按钮由
+    ///             <see cref="ModCardPileRegistry" /> 生成，即“pile mode”；其 backing data 是真实的
+    ///             <see cref="ModCardPile" />，count 会通过事件追踪其卡牌集合。
+    ///         </item>
+    ///         <item>
+    ///             非牌堆 top-bar action button 由 <see cref="ModTopBarButtonRegistry" /> 生成，即
+    ///             “action mode”；其 count 来自 <see cref="ModTopBarButtonSpec.CountProvider" />，
+    ///             click 会运行 <see cref="ModTopBarButtonSpec.OnClick" />。action-mode 按钮在
+    ///             <see cref="ModTopBarButtonSpec.IconPath" /> 未设置时会回退到原版 <c>%Deck</c> 的图标贴图，
+    ///             这样用户不必只为得到样式还算合理的按钮而附带自定义 PNG。
+    ///         </item>
+    ///     </list>
+    ///     这里共用同一种 node type 是有意为之；用户面对的请求是停止为 pile-backed 与 action-backed 按钮“拆分
+    ///     布局”，因此两类按钮在外观、动画和间距上保持一致。
+    ///     <see cref="ModCardPileUiStyle.BottomLeft" />
+    ///     <see cref="ModCardPileUiStyle.BottomRight" />
     /// </summary>
     /// <remarks>
     ///     The button reacts to pointer hover / click via Godot's control signals, shows a
     ///     <see cref="HoverTip" /> built from the registered metadata, and on release either opens
     ///     <see cref="NCardPileScreen" /> (pile mode, mirroring the vanilla Draw / Discard / Exhaust buttons)
     ///     or dispatches <see cref="ModTopBarButtonDefinition.OnClick" /> (action mode).
+    ///     按钮通过 Godot control signal 响应指针 hover / click，显示由已注册元数据构建的 <see cref="HoverTip" />，
+    ///     并在 release 时打开 <see cref="NCardPileScreen" />（pile mode，对应原版 Draw / Discard / Exhaust 按钮），
+    ///     或分发 <see cref="ModTopBarButtonDefinition.OnClick" />（action mode）。
     /// </remarks>
     public sealed partial class NModCardPileButton : Control
     {
@@ -92,6 +121,8 @@ namespace STS2RitsuLib.CardPiles.Nodes
         /// <summary>
         ///     Pile-mode registry entry. Non-null when the button is bound to a real
         ///     <see cref="ModCardPile" />; null while the button is running in action mode.
+        ///     pile-mode registry entry。当按钮绑定到真实 <see cref="ModCardPile" /> 时非 null；
+        ///     按钮以 action mode 运行时为 null。
         /// </summary>
         public ModCardPileDefinition? Definition { get; private set; }
 
@@ -99,11 +130,14 @@ namespace STS2RitsuLib.CardPiles.Nodes
         ///     Action-mode registry entry. Non-null when the button was produced by
         ///     <see cref="ModTopBarButtonRegistry" /> rather than <see cref="ModCardPileRegistry" />; null in
         ///     pile mode.
+        ///     action-mode registry entry。当按钮由 <see cref="ModTopBarButtonRegistry" /> 而非
+        ///     <see cref="ModCardPileRegistry" /> 生成时非 null；pile mode 中为 null。
         /// </summary>
         public ModTopBarButtonDefinition? ActionDefinition { get; private set; }
 
         /// <summary>
         ///     True when this button is an action-mode instance (has no backing pile).
+        ///     当此按钮是 action-mode 实例（没有 backing 牌堆）时为 true。
         /// </summary>
         public bool IsActionMode => ActionDefinition != null;
 
@@ -111,6 +145,7 @@ namespace STS2RitsuLib.CardPiles.Nodes
 
         /// <summary>
         ///     Builds a new pile-mode button bound to <paramref name="definition" />.
+        ///     构建绑定到 <paramref name="definition" /> 的新 pile-mode 按钮。
         /// </summary>
         public static NModCardPileButton Create(ModCardPileDefinition definition)
         {
@@ -137,6 +172,11 @@ namespace STS2RitsuLib.CardPiles.Nodes
         ///     <see cref="NCardPileScreen" />, and polls
         ///     <see cref="ModTopBarButtonDefinition.CountProvider" /> on <see cref="Node._Process" /> for the
         ///     count display.
+        ///     构建绑定到 <paramref name="actionDefinition" /> 的新 action-mode 按钮。返回的节点在视觉上与
+        ///     pile-mode 按钮一致（相同图标框、相同 count label、相同 hover / press 动画），但 click 会分发到
+        ///     <see cref="ModTopBarButtonDefinition.OnClick" />，而不是打开 <see cref="NCardPileScreen" />；
+        ///     它还会在 <see cref="Node._Process" /> 中轮询
+        ///     <see cref="ModTopBarButtonDefinition.CountProvider" /> 来显示 count。
         /// </summary>
         public static NModCardPileButton CreateAction(ModTopBarButtonDefinition actionDefinition)
         {
@@ -160,6 +200,10 @@ namespace STS2RitsuLib.CardPiles.Nodes
         ///     <see cref="ModCardPile" /> and starts tracking card add / remove events; in action mode it
         ///     just remembers the player (used for <see cref="ModTopBarButtonContext" /> construction) and
         ///     primes the count label from the spec's <see cref="ModTopBarButtonSpec.CountProvider" />.
+        ///     将按钮绑定到 <paramref name="player" />。pile mode 中会解析底层 <see cref="ModCardPile" />，
+        ///     并开始追踪卡牌添加/移除事件；action mode 中只记住 player（用于构建
+        ///     <see cref="ModTopBarButtonContext" />），并用 spec 的
+        ///     <see cref="ModTopBarButtonSpec.CountProvider" /> 初始化 count label。
         /// </summary>
         public void Initialize(Player player)
         {
@@ -447,6 +491,11 @@ namespace STS2RitsuLib.CardPiles.Nodes
         ///     action-mode buttons look <i>indistinguishable</i> from the deck button's icon. Safely no-ops
         ///     (leaving our TextureRect in place) if the top bar isn't ready yet or the deck hasn't been
         ///     constructed — e.g. when registration fires from the main menu.
+        ///     将 procedural 创建的 <see cref="TextureRect" /> 图标替换为原版 <c>%Deck</c> 按钮
+        ///     <c>Control/Icon</c> 子树的 deep clone。这是旧版“只复制 texture”回退的高保真版本：
+        ///     它保留场景设计者为 deck 图标设置的精确节点层级、shader material 和子 sprite，使裸 action-mode
+        ///     按钮的图标与 deck 按钮图标<i>无法区分</i>。如果 top bar 尚未就绪或 deck 尚未构建（例如从主菜单注册时），
+        ///     会安全 no-op 并保留 TextureRect。
         /// </summary>
         private void TryReplaceIconWithVanillaDeckClone()
         {
@@ -496,6 +545,11 @@ namespace STS2RitsuLib.CardPiles.Nodes
         ///     old count label looked flat next to the deck's chiselled-looking digits. Silently leaves
         ///     the placeholder in place if the deck isn't constructed yet (e.g. we're bound before the
         ///     top bar exists) so we degrade gracefully rather than crashing.
+        ///     将 procedural <see cref="MegaLabel" /> count 替换为原版 <c>%Deck</c> 的
+        ///     <c>DeckCardCount</c> label 的 deep clone。场景设计者为它配置了特定 <see cref="FontVariation" />、
+        ///     outline 颜色、outline_size=12、shadow offset 和 font_size=28；procedural label 默认没有这些，
+        ///     因此旧 count label 在 deck 的数字旁会显得平。deck 尚未构建时（例如绑定早于 top bar 存在时）
+        ///     会静默保留 placeholder，以优雅降级而不是崩溃。
         /// </summary>
         private void TryReplaceCountLabelWithVanillaDeckClone()
         {
@@ -646,10 +700,10 @@ namespace STS2RitsuLib.CardPiles.Nodes
             if (_pile == null || Definition == null)
                 return;
 
+            _pile.ContentsChanged += OnPileContentsChanged;
             _pile.CardAddFinished += OnCardAddFinished;
             _pile.CardRemoveFinished += OnCardRemoveFinished;
-            _currentCount = _pile.Cards.Count;
-            _countLabel.SetTextAutoSize(_currentCount.ToString());
+            RefreshPileCount();
             _hoverTip = ModCardPileHoverTipFactory.Create(Definition);
         }
 
@@ -659,6 +713,10 @@ namespace STS2RitsuLib.CardPiles.Nodes
         ///     buttons that don't track a count then look like a plain icon button, matching the vanilla
         ///     <c>%Map</c> / <c>%Pause</c> feel while keeping the card-pile click hit-box. A non-negative
         ///     return value shows the badge and triggers the bump animation on increase.
+        ///     从 <see cref="ModTopBarButtonDefinition.CountProvider" /> 刷新 count label。当 provider 为 null
+        ///     或返回负数时，label 会完全隐藏；不追踪 count 的 action button 会看起来像普通图标按钮，
+        ///     对齐原版 <c>%Map</c> / <c>%Pause</c> 的观感，同时保留 card-pile 点击 hit-box。非负返回值会显示 badge，
+        ///     并在数值增加时触发 bump 动画。
         /// </summary>
         private void PollActionCount(bool force)
         {
@@ -785,12 +843,18 @@ namespace STS2RitsuLib.CardPiles.Nodes
             if (_pile == null)
                 return;
 
+            _pile.ContentsChanged -= OnPileContentsChanged;
             _pile.CardAddFinished -= OnCardAddFinished;
             _pile.CardRemoveFinished -= OnCardRemoveFinished;
             _pile = null;
         }
 
-        private void OnCardAddFinished()
+        private void OnPileContentsChanged()
+        {
+            RefreshPileCount();
+        }
+
+        private void RefreshPileCount()
         {
             if (_pile == null)
                 return;
@@ -798,6 +862,14 @@ namespace STS2RitsuLib.CardPiles.Nodes
             _currentCount = _pile.Cards.Count;
             _countLabel.SetTextAutoSize(_currentCount.ToString());
             _countLabel.PivotOffset = _countLabel.Size * 0.5f;
+        }
+
+        private void OnCardAddFinished()
+        {
+            if (_pile == null)
+                return;
+
+            RefreshPileCount();
             _bumpTween?.Kill();
             _bumpTween = CreateTween().SetParallel();
             _icon.Scale = _pileHoverScale;
@@ -814,9 +886,8 @@ namespace STS2RitsuLib.CardPiles.Nodes
         {
             if (_pile == null)
                 return;
-            _currentCount = _pile.Cards.Count;
-            _countLabel.SetTextAutoSize(_currentCount.ToString());
-            _countLabel.PivotOffset = _countLabel.Size * 0.5f;
+
+            RefreshPileCount();
         }
 
         private void OnMouseEntered()
@@ -835,6 +906,10 @@ namespace STS2RitsuLib.CardPiles.Nodes
         ///     <c>NCombatCardPile.OnFocus</c>, which uses pile-specific offsets — the old single formula
         ///     placed tips below the 80×80 control like the deck button, which reads wrong at the bottom
         ///     of the screen next to vanilla draw / discard / exhaust.
+        ///     放置 hover tip。top-bar 和 action 按钮对应 <c>NTopBarDeckButton.OnFocus</c>
+        ///     （在 hit target 下方右对齐）。战斗底部 row 的牌堆则对应 <c>NCombatCardPile.OnFocus</c>，
+        ///     使用 pile-specific offset；旧的单一公式会像 deck 按钮一样把 tip 放到 80×80 control 下方，
+        ///     在屏幕底部、原版 draw / discard / exhaust 旁看起来不对。
         /// </summary>
         private void ShowHoverTipAnchored()
         {
@@ -1017,6 +1092,9 @@ namespace STS2RitsuLib.CardPiles.Nodes
         ///     Programmatically triggers the same open logic the button runs on pointer release (runs
         ///     <see cref="ModCardPileDefinition.OnOpen" /> if set, otherwise the default
         ///     <see cref="NCardPileScreen" />). Intended for hotkey bindings or scripted flows.
+        ///     以程序方式触发与按钮 pointer release 相同的 open 逻辑（设置时运行
+        ///     <see cref="ModCardPileDefinition.OnOpen" />，否则运行默认 <see cref="NCardPileScreen" />）。
+        ///     用于 hotkey binding 或 scripted flow。
         /// </summary>
         public void TriggerOpen()
         {

@@ -5,6 +5,7 @@ namespace STS2RitsuLib.Audio
 {
     /// <summary>
     ///     Direct bus objects from FMOD Studio (parallel to strings in <see cref="FmodStudioRouting" />).
+    ///     来自 FMOD Studio 的直接 bus 对象（与 <see cref="FmodStudioRouting" /> 中的字符串对应）。
     /// </summary>
     public static class FmodStudioBusAccess
     {
@@ -18,6 +19,7 @@ namespace STS2RitsuLib.Audio
 
         /// <summary>
         ///     Resolves a Studio bus object for <paramref name="busPath" />; null when the addon call fails.
+        ///     为 <paramref name="busPath" /> 解析 Studio bus 对象；addon 调用失败时为 null。
         /// </summary>
         public static GodotObject? TryGetBus(string busPath)
         {
@@ -28,6 +30,7 @@ namespace STS2RitsuLib.Audio
 
         /// <summary>
         ///     Reads linear volume for <paramref name="busPath" />; 0 when missing or on error.
+        ///     读取 <paramref name="busPath" /> 的线性音量；缺失或出错时为 0。
         /// </summary>
         public static float TryGetVolume(string busPath)
         {
@@ -48,6 +51,7 @@ namespace STS2RitsuLib.Audio
 
         /// <summary>
         ///     Sets linear volume on the resolved bus.
+        ///     在解析出的 bus 上设置线性音量。
         /// </summary>
         public static bool TrySetVolume(string busPath, float linearVolume)
         {
@@ -69,6 +73,7 @@ namespace STS2RitsuLib.Audio
 
         /// <summary>
         ///     Mutes or unmutes the bus.
+        ///     静音或取消静音 bus。
         /// </summary>
         public static bool TrySetMute(string busPath, bool muted)
         {
@@ -90,6 +95,7 @@ namespace STS2RitsuLib.Audio
 
         /// <summary>
         ///     Pauses or resumes the bus.
+        ///     暂停或恢复 bus。
         /// </summary>
         public static bool TrySetPaused(string busPath, bool paused)
         {
@@ -111,6 +117,7 @@ namespace STS2RitsuLib.Audio
 
         /// <summary>
         ///     Reads the Studio bus GUID for <paramref name="busPath" /> (stable across renames); null when unavailable.
+        ///     读取 <paramref name="busPath" /> 的 Studio bus GUID（重命名后保持稳定）；不可用时为 null。
         /// </summary>
         public static string? TryGetStudioGuid(string busPath)
         {
@@ -131,6 +138,7 @@ namespace STS2RitsuLib.Audio
 
         /// <summary>
         ///     Reads FMOD Studio's numeric bus id when the addon exposes <c>get_id</c>; null when missing or unsupported.
+        ///     当 addon 暴露 <c>get_id</c> 时读取 FMOD Studio 的数字 bus id；缺失或不支持时为 null。
         /// </summary>
         public static long? TryGetNumericId(string busPath)
         {
@@ -160,6 +168,7 @@ namespace STS2RitsuLib.Audio
 
         /// <summary>
         ///     Finds a bus path whose Studio GUID matches <paramref name="studioBusGuid" />.
+        ///     查找 Studio GUID 与 <paramref name="studioBusGuid" /> 匹配的 bus 路径。
         /// </summary>
         public static string? TryFindBusPathByStudioGuid(string studioBusGuid)
         {

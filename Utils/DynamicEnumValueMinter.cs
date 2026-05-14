@@ -10,6 +10,11 @@ namespace STS2RitsuLib.Utils
     ///     <c>CardKeyword</c>, <c>CardPile</c>, <c>CardTag</c>, etc.) with mod-defined members without ever colliding
     ///     with low vanilla enum members: minted values are forced into a reserved high-value band above
     ///     <see cref="ReservedFloor" />, leaving the low range untouched for vanilla.
+    ///     为字符串 id 确定性地铸造 32 位整数值，并将其转换为目标
+    ///     <typeparamref name="TEnum" />。用于安全扩展原版枚举（例如
+    ///     <c>CardKeyword</c>、<c>CardPile</c>、<c>CardTag</c> 等）的 mod 定义成员，且不会与
+    ///     低位原版枚举成员冲突：铸造值会被强制放入高于
+    ///     <see cref="ReservedFloor" /> 的保留高值区间，低值范围保留给原版。
     /// </summary>
     /// <remarks>
     ///     <para>
@@ -23,12 +28,25 @@ namespace STS2RitsuLib.Utils
     ///         smaller backings are rejected in the constructor. This matches how the vanilla multiplayer writer
     ///         treats enums (<c>PacketWriter.WriteEnum</c> passes them through <c>Convert.ToInt32</c>).
     ///     </para>
+    ///     <para>
+    ///         值按 <c>ReservedFloor + (XxHash32(utf8(id)) mod (int.MaxValue - ReservedFloor + 1))</c> 计算，
+    ///         因此同一输入 id 会得到跨进程、跨跑局稳定相同的值。哈希本身
+    ///         分布良好，但根据项目约定，不同 mod id 之间的碰撞保护不在范围内；
+    ///         重复 id 注册会被显式拒绝。
+    ///     </para>
+    ///     <para>
+    ///         仅支持底层存储为 32 位（<c>int</c> 或 <c>uint</c>）的枚举；更大或
+    ///         更小的底层类型会在构造函数中被拒绝。这与原版多人写入器处理
+    ///         枚举的方式一致（<c>PacketWriter.WriteEnum</c> 会通过 <c>Convert.ToInt32</c> 传递它们）。
+    ///     </para>
     /// </remarks>
     public sealed class DynamicEnumValueMinter<TEnum> where TEnum : struct, Enum
     {
         /// <summary>
         ///     Default reserved floor. Minted values land in <c>[0x4000_0000, 0x7FFF_FFFF]</c>, which is safely
         ///     above any plausible future vanilla enum growth while remaining positive <see cref="int" />.
+        ///     默认保留下界。铸造值落在 <c>[0x4000_0000, 0x7FFF_FFFF]</c>，该范围安全地
+        ///     高于未来原版枚举可能增长到的值，同时仍保持为正 <see cref="int" />。
         /// </summary>
         public const int DefaultReservedFloor = 0x4000_0000;
 
@@ -38,6 +56,7 @@ namespace STS2RitsuLib.Utils
 
         /// <summary>
         ///     Creates a minter using <see cref="DefaultReservedFloor" />.
+        ///     使用 <see cref="DefaultReservedFloor" /> 创建铸造器。
         /// </summary>
         public DynamicEnumValueMinter() : this(DefaultReservedFloor)
         {
@@ -46,10 +65,14 @@ namespace STS2RitsuLib.Utils
         /// <summary>
         ///     Creates a minter whose produced integer values are always <c>&gt;= <paramref name="reservedFloor" /></c>,
         ///     so every minted value sits strictly above any low vanilla enum member.
+        ///     创建一个铸造器，其生成的整数值始终 <c>&gt;= <paramref name="reservedFloor" /></c>，
+        ///     因此每个铸造值都严格位于任何低位原版枚举成员之上。
         /// </summary>
         /// <param name="reservedFloor">
         ///     Lower bound (inclusive) for minted values. Must be <c>&gt;= 0</c>. Values in <c>[0, reservedFloor)</c>
         ///     are left for vanilla enum members.
+        ///     铸造值的下界（含）。必须为 <c>&gt;= 0</c>。<c>[0, reservedFloor)</c> 中的值
+        ///     保留给原版枚举成员。
         /// </param>
         public DynamicEnumValueMinter(int reservedFloor)
         {
@@ -67,17 +90,22 @@ namespace STS2RitsuLib.Utils
 
         /// <summary>
         ///     Lower bound (inclusive) for all minted values; vanilla enum members below this value never collide.
+        ///     所有铸造值的下界（含）；低于此值的原版枚举成员永不碰撞。
         /// </summary>
         public int ReservedFloor { get; }
 
         /// <summary>
         ///     Returns the <typeparamref name="TEnum" /> value for <paramref name="id" />, registering it on first
         ///     call. Subsequent calls with the same id return the same value; ids are compared case-insensitively.
+        ///     返回 <paramref name="id" /> 对应的 <typeparamref name="TEnum" /> 值，并在首次
+        ///     调用时注册它。之后使用同一 id 调用会返回相同值；id 比较不区分大小写。
         /// </summary>
         /// <exception cref="ArgumentException">When <paramref name="id" /> is null or whitespace.</exception>
         /// <exception cref="InvalidOperationException">
         ///     When two distinct ids hash to the same <typeparamref name="TEnum" /> value (registration-time
+        ///     当 two distinct ids hash to the same <c>TEnum</c> value (注册-time
         ///     collision detection; callers are expected to pick non-colliding ids).
+        ///     中文说明：collision detection; callers are expected to pick non-colliding ids).
         /// </exception>
         public TEnum Mint(string id)
         {
@@ -105,8 +133,12 @@ namespace STS2RitsuLib.Utils
 
         /// <summary>
         ///     Attempts to resolve the string id that minted <paramref name="value" />.
+        ///     尝试解析铸造出 <paramref name="value" /> 的字符串 id。
         /// </summary>
-        /// <returns><c>true</c> when <paramref name="value" /> was produced by an earlier <see cref="Mint" /> call.</returns>
+        /// <returns>
+        ///     <c>true</c> when <paramref name="value" /> was produced by an earlier <see cref="Mint" /> call.
+        ///     当 <paramref name="value" /> 由先前的 <see cref="Mint" /> 调用生成时为 <c>true</c>。
+        /// </returns>
         public bool TryGetId(TEnum value, out string id)
         {
             lock (_sync)
@@ -125,6 +157,8 @@ namespace STS2RitsuLib.Utils
         /// <summary>
         ///     Returns the <typeparamref name="TEnum" /> value currently bound to <paramref name="id" /> without
         ///     registering a new one.
+        ///     返回当前绑定到 <paramref name="id" /> 的 <typeparamref name="TEnum" /> 值，不会
+        ///     注册新值。
         /// </summary>
         public bool TryGetValue(string id, out TEnum value)
         {
@@ -140,6 +174,8 @@ namespace STS2RitsuLib.Utils
         /// <summary>
         ///     Whether <paramref name="value" /> was minted by this registry (i.e. represents a registered dynamic
         ///     member rather than a vanilla enum literal).
+        ///     <paramref name="value" /> 是否由此注册表铸造（即表示已注册的动态
+        ///     成员，而不是原版枚举字面值）。
         /// </summary>
         public bool IsDynamic(TEnum value)
         {

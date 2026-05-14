@@ -10,6 +10,7 @@ namespace STS2RitsuLib.Settings
 
         /// <summary>
         ///     Full-viewport dim + centered panel, same chrome as mod settings. Blocks input under the layer.
+        ///     全视口变暗 + 居中面板，外观与 mod 设置相同。阻止该层下方的输入。
         /// </summary>
         internal static void ShowStyledConfirm(
             Node attachParent,

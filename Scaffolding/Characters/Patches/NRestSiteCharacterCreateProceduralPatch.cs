@@ -12,6 +12,8 @@ namespace STS2RitsuLib.Scaffolding.Characters.Patches
     /// <summary>
     ///     When <see cref="IModCharacterAssetOverrides.WorldProceduralVisuals" /><c>.RestSite</c> is set, builds the
     ///     rest-site character node in memory instead of loading <c>RestSiteAnimPath</c>.
+    ///     当 <see cref="IModCharacterAssetOverrides.WorldProceduralVisuals" /><c>.RestSite</c> 已设置时，在内存中构建休息点角色节点，而不是加载
+    ///     <c>RestSiteAnimPath</c>。
     /// </summary>
     public class NRestSiteCharacterCreateProceduralPatch : IPatchMethod
     {
@@ -39,6 +41,8 @@ namespace STS2RitsuLib.Scaffolding.Characters.Patches
         ///     Supplies a procedural instance when applicable; otherwise builds from
         ///     <see cref="MegaCrit.Sts2.Core.Models.CharacterModel.RestSiteAnimPath" /> via
         ///     <see cref="RitsuGodotNodeFactories" /> so baselib-style Godot scenes convert like combat visuals.
+        ///     适用时提供程序化实例；否则通过 <see cref="RitsuGodotNodeFactories" /> 从
+        ///     <see cref="MegaCrit.Sts2.Core.Models.CharacterModel.RestSiteAnimPath" /> 构建，让 baselib 风格 Godot 场景像战斗视觉一样转换。
         /// </summary>
         public static bool Prefix(Player player, int characterIndex, ref NRestSiteCharacter __result)
         {

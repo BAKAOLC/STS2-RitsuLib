@@ -1,28 +1,46 @@
 using Godot;
 using MegaCrit.Sts2.Core.Nodes.GodotExtensions;
+using STS2RitsuLib.Scaffolding.Visuals.Definition;
 
 namespace STS2RitsuLib.Scaffolding.Godot
 {
     /// <summary>
     ///     Non-generic factory entry point used by <see cref="RitsuGodotNodeFactoryRegistry" />.
+    ///     Non-generic 工厂 条目 point used by <see cref="RitsuGodotNodeFactoryRegistry" />。
     /// </summary>
     internal abstract class RitsuGodotNodeFactory
     {
         public abstract Node CreateFromNode(Node source);
 
+        public virtual Node CreateFromNode(Node source, VisualNodeStyle? style)
+        {
+            var node = CreateFromNode(source);
+            style.ApplyTo(node);
+            return node;
+        }
+
         /// <summary>
-        ///     Builds a root node without running <see cref="CompleteBareRoot" /> (used for <c>Texture2D</c> → visuals).
+        ///     Builds a root node without running <c>CompleteBareRoot</c> (used for <c>Texture2D</c> → visuals).
+        ///     构建一个根节点，而不运行 <c>CompleteBareRoot</c>（用于 <c>Texture2D</c> → 视觉）。
         /// </summary>
         public abstract Node CreateBareFromResource(object resource);
 
         /// <summary>
         ///     Fills unique slots / children for a bare root (same as <c>ConvertScene(target, null)</c>).
+        ///     为裸根节点填充唯一槽位 / 子节点（与 <c>ConvertScene(target, null)</c> 相同）。
         /// </summary>
         public abstract void CompleteBareRoot(Node bare);
+
+        public virtual void CompleteBareRoot(Node bare, VisualNodeStyle? style)
+        {
+            CompleteBareRoot(bare);
+            style.ApplyTo(bare);
+        }
     }
 
     /// <summary>
     ///     Describes a named child expected under a converted Godot scene root (unique <c>%Name</c> or path lookup).
+    ///     Describes a named child expected under a converted Godot 场景 根节点 (unique <c>%Name</c> or 路径 lookup)。
     /// </summary>
     internal interface IRitsuGodotNodeSlot
     {
@@ -37,6 +55,7 @@ namespace STS2RitsuLib.Scaffolding.Godot
 
     /// <summary>
     ///     Slot metadata for <see cref="RitsuGodotNodeFactory{T}" /> (mirrors baselib <c>NodeInfo&lt;T&gt;</c>).
+    ///     <see cref="RitsuGodotNodeFactory{T}" /> 的槽位元数据（对应 baselib 的 <c>NodeInfo&lt;T&gt;</c>）。
     /// </summary>
     internal sealed record RitsuGodotNodeSlot<TExpected>(string Path, bool MakeNameUnique = true) : IRitsuGodotNodeSlot
         where TExpected : Node
@@ -64,6 +83,7 @@ namespace STS2RitsuLib.Scaffolding.Godot
 
     /// <summary>
     ///     Base class for typed procedural / scene conversion factories.
+    ///     强类型程序化 / 场景转换工厂的基类。
     /// </summary>
     internal abstract class RitsuGodotNodeFactory<T> : RitsuGodotNodeFactory where T : Node, new()
     {
@@ -87,6 +107,20 @@ namespace STS2RitsuLib.Scaffolding.Godot
             return target;
         }
 
+        public override Node CreateFromNode(Node source, VisualNodeStyle? style)
+        {
+            if (source is T typed)
+            {
+                ApplyStyle(typed, false, style);
+                return typed;
+            }
+
+            var target = new T();
+            ConvertScene(target, source);
+            ApplyStyle(target, false, style);
+            return target;
+        }
+
         public override Node CreateBareFromResource(object resource)
         {
             return CreateBareFromResourceImpl(resource);
@@ -97,10 +131,27 @@ namespace STS2RitsuLib.Scaffolding.Godot
             ConvertScene((T)bare, null);
         }
 
+        public override void CompleteBareRoot(Node bare, VisualNodeStyle? style)
+        {
+            CompleteBareRoot(bare);
+            ApplyStyle((T)bare, true, style);
+        }
+
         /// <summary>
         ///     When <paramref name="resource" /> is unsupported, throw with a clear message.
+        ///     当 <paramref name="resource" /> 不受支持时，抛出清晰的消息。
         /// </summary>
         protected abstract T CreateBareFromResourceImpl(object resource);
+
+        protected virtual Node? ResolveDefaultStyleTarget(T root, bool fromResource)
+        {
+            return root;
+        }
+
+        private void ApplyStyle(T root, bool fromResource, VisualNodeStyle? style)
+        {
+            style?.ApplyTo(ResolveDefaultStyleTarget(root, fromResource) ?? root);
+        }
 
         protected virtual void ConvertScene(T target, Node? source)
         {
@@ -225,6 +276,9 @@ namespace STS2RitsuLib.Scaffolding.Godot
         ///     Packed-scene children often still reference the old root as <see cref="Node.Owner" /> after
         ///     <c>RemoveChild</c>. Godot warns and can break unique-name resolution if reparenting under a new root with
         ///     the same scene name without clearing first (matches Godot log: inconsistent owner).
+        ///     packed scene 子节点在 <c>RemoveChild</c> 后通常仍以旧根节点作为 <see cref="Node.Owner" />。
+        ///     如果在未先清理的情况下重挂到具有相同场景名称的新根节点下，Godot 会警告并可能破坏唯一名称解析
+        ///     （匹配 Godot 日志：所有者不一致）。
         /// </summary>
         private static void ClearSubtreeOwnersForReparent(Node node)
         {

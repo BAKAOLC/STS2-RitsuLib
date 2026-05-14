@@ -7,6 +7,8 @@ namespace STS2RitsuLib.CardTags.Serialization
     /// <summary>
     ///     Serializes <see cref="CardTag" /> as the qualified string id for ritsulib-minted values, otherwise as the
     ///     vanilla enum name. Accepts string ids, enum names, or raw 32-bit integers on deserialize.
+    ///     将 ritsulib 生成的 <see cref="CardTag" /> 序列化为限定字符串 ID，其他值则序列化为原版枚举名。
+    ///     反序列化时接受字符串 ID、枚举名或原始 32 位整数。
     /// </summary>
     public sealed class CardTagJsonConverter : JsonConverter<CardTag>
     {

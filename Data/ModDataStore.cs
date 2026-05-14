@@ -11,6 +11,8 @@ namespace STS2RitsuLib.Data
     /// <summary>
     ///     Unified data store for all mod persistent data.
     ///     Uses key-based registration to avoid hardcoded per-data properties and methods.
+    ///     所有 mod 持久化数据的统一数据存储。
+    ///     使用基于键的注册，避免为每种数据硬编码属性和方法。
     /// </summary>
     public class ModDataStore
     {
@@ -45,6 +47,7 @@ namespace STS2RitsuLib.Data
 
         /// <summary>
         ///     Owning mod id for this store instance.
+        ///     此存储实例所属的 mod ID。
         /// </summary>
         public string ModId { get; }
 
@@ -55,29 +58,35 @@ namespace STS2RitsuLib.Data
 
         /// <summary>
         ///     True after every global-scoped entry has completed initialization and load.
+        ///     所有全局作用域条目完成初始化和加载后为 true。
         /// </summary>
         public bool IsGlobalInitialized { get; private set; }
 
         /// <summary>
         ///     True after profile-scoped entries for the active profile are initialized.
+        ///     当前活动档案的档案作用域条目初始化后为 true。
         /// </summary>
         public bool IsProfileInitialized { get; private set; }
 
         /// <summary>
         ///     Whether this store has at least one <see cref="SaveScope.Profile" /> registration.
+        ///     此存储是否至少有一个 <see cref="SaveScope.Profile" /> 注册。
         /// </summary>
         public bool HasProfileScopedEntries => _entries.Values.Any(e => e.Scope == SaveScope.Profile);
 
         /// <summary>
         ///     Whether this store has at least one <see cref="SaveScope.RunSidecar" /> registration.
+        ///     此存储是否至少有一个 <see cref="SaveScope.RunSidecar" /> 注册。
         /// </summary>
         public bool HasRunSidecarScopedEntries => _entries.Values.Any(e => e.Scope == SaveScope.RunSidecar);
 
         /// <summary>
         ///     Defers eager initialization of newly registered entries until the scope is disposed.
+        ///     将新注册条目的急切初始化延迟到作用域释放时执行。
         /// </summary>
         /// <param name="initializeProfileIfReady">
         ///     When true and profile data is already initialized, profile-scoped registrations initialize on scope end.
+        ///     为 true 且档案数据已初始化时，档案作用域注册会在作用域结束时初始化。
         /// </param>
         public IDisposable BeginRegistrationScope(bool initializeProfileIfReady = true)
         {
@@ -88,6 +97,7 @@ namespace STS2RitsuLib.Data
 
         /// <summary>
         ///     Returns the process-wide store for <paramref name="modId" />.
+        ///     返回 <paramref name="modId" /> 对应的进程级存储。
         /// </summary>
         public static ModDataStore For(string modId)
         {
@@ -131,6 +141,7 @@ namespace STS2RitsuLib.Data
 
         /// <summary>
         ///     Initializes and loads every global-scoped entry that is not yet initialized (safe during early startup).
+        ///     初始化并加载所有尚未初始化的全局作用域条目（可安全用于早期启动阶段）。
         /// </summary>
         public void InitializeGlobal()
         {
@@ -145,6 +156,7 @@ namespace STS2RitsuLib.Data
 
         /// <summary>
         ///     Initializes and loads profile-scoped entries once the profile path is valid (subscribes to profile changes).
+        ///     在档案路径有效后初始化并加载档案作用域条目（同时订阅档案变更）。
         /// </summary>
         public void InitializeProfileScoped()
         {
@@ -172,27 +184,35 @@ namespace STS2RitsuLib.Data
 
         /// <summary>
         ///     Registers a JSON-backed persistence slot identified by <paramref name="key" />.
+        ///     注册一个由 JSON 支持、以 <c>key</c> 标识的持久化槽。
         /// </summary>
         /// <param name="key">
         ///     Logical key used with <see cref="Get{T}" />, <see cref="Modify{T}" />, and <see cref="Save" />.
+        ///     与 <see cref="Get{T}" />、<see cref="Modify{T}" /> 和 <see cref="Save" /> 一起使用的逻辑键。
         /// </param>
         /// <param name="fileName">
         ///     File name segment passed to <see cref="ProfileManager" /> path resolution.
+        ///     传递给 <see cref="ProfileManager" /> 路径解析的文件名片段。
         /// </param>
         /// <param name="scope">
         ///     Global or profile persistence scope.
+        ///     全局或档案持久化作用域。
         /// </param>
         /// <param name="defaultFactory">
         ///     Factory for the in-memory default when no file exists.
+        ///     文件不存在时用于创建内存默认值的工厂。
         /// </param>
         /// <param name="autoCreateIfMissing">
         ///     When true, creates the on-disk file if absent after first save.
+        ///     为 true 时，首次保存后如果磁盘文件不存在则创建它。
         /// </param>
         /// <param name="migrationConfig">
         ///     Optional schema versioning configuration for migrations.
+        ///     用于迁移的可选 schema 版本配置。
         /// </param>
         /// <param name="migrations">
         ///     Optional migration steps; requires <paramref name="migrationConfig" />.
+        ///     可选迁移步骤；需要 <paramref name="migrationConfig" />。
         /// </param>
         public void Register<T>(
             string key,
@@ -248,6 +268,8 @@ namespace STS2RitsuLib.Data
         ///     Registers a JSON-backed persistence slot identified by <paramref name="key" /> using an explicit
         ///     <see cref="StorageContext" /> provider for path resolution (e.g. run fingerprint stem for
         ///     <see cref="SaveScope.RunSidecar" />).
+        ///     注册一个由 JSON 支持、以 <paramref name="key" /> 标识的持久化槽，并使用显式
+        ///     <see cref="StorageContext" /> 提供器解析路径（例如 <see cref="SaveScope.RunSidecar" /> 的跑局指纹 stem）。
         /// </summary>
         public void Register<T>(
             string key,
@@ -318,6 +340,7 @@ namespace STS2RitsuLib.Data
 
         /// <summary>
         ///     Returns the live instance for <paramref name="key" />.
+        ///     返回 <c>key</c> 对应的实时实例。
         /// </summary>
         public T Get<T>(string key) where T : class, new()
         {
@@ -333,6 +356,7 @@ namespace STS2RitsuLib.Data
 
         /// <summary>
         ///     Mutates the instance for <paramref name="key" /> in place (persists via <see cref="Save" />).
+        ///     原地修改 <paramref name="key" /> 对应的实例（通过 <see cref="Save" /> 持久化）。
         /// </summary>
         public void Modify<T>(string key, Action<T> modifier) where T : class, new()
         {
@@ -353,6 +377,7 @@ namespace STS2RitsuLib.Data
 
         /// <summary>
         ///     Writes the entry for <paramref name="key" /> to disk.
+        ///     将 <c>key</c> 对应的条目写入磁盘。
         /// </summary>
         public void Save(string key)
         {
@@ -364,6 +389,7 @@ namespace STS2RitsuLib.Data
 
         /// <summary>
         ///     Whether a file already existed when the entry was first loaded.
+        ///     条目首次加载时文件是否已经存在。
         /// </summary>
         public bool HasExistingData(string key)
         {
@@ -372,9 +398,11 @@ namespace STS2RitsuLib.Data
 
         /// <summary>
         ///     Reloads entries whose resolved path changed (e.g. after profile switch).
+        ///     重新加载解析路径发生变化的条目（例如档案切换后）。
         /// </summary>
         /// <returns>
         ///     True if any entry reloaded.
+        ///     如果有任何条目被重新加载，则为 true。
         /// </returns>
         public bool ReloadIfPathChanged()
         {
@@ -391,6 +419,7 @@ namespace STS2RitsuLib.Data
 
         /// <summary>
         ///     Persists every registered entry.
+        ///     持久化所有已注册条目。
         /// </summary>
         public void SaveAll()
         {

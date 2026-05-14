@@ -12,6 +12,7 @@ namespace STS2RitsuLib.Settings
 {
     /// <summary>
     ///     Sample settings page: character spine preview.
+    ///     示例设置页面：角色 spine 预览。
     /// </summary>
     [ModSettingsPage(Const.ModId, "runtime-reflection-spine-example",
         Title = "Spine preview (sample)",

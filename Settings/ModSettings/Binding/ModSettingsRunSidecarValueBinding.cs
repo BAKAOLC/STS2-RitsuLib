@@ -6,6 +6,8 @@ namespace STS2RitsuLib.Settings
     /// <summary>
     ///     Binds a settings field to JSON stored under <see cref="ModRunSidecarStore" />, validated against the active
     ///     run fingerprint. Safe for mod reload; does not alter vanilla synchronized save payloads.
+    ///     将设置字段绑定到存储在 <see cref="ModRunSidecarStore" /> 下的 JSON，并根据活动
+    ///     跑局指纹验证。对 mod 重载安全；不会改变原版同步存档载荷。
     /// </summary>
     public sealed class ModSettingsRunSidecarValueBinding<TModel, TValue>(
         string modId,

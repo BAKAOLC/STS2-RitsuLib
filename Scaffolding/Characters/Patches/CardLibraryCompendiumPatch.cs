@@ -18,13 +18,28 @@ namespace STS2RitsuLib.Scaffolding.Characters.Patches
     ///     re-applies pool-filter art from <see cref="CharacterModel.IconTexture" /> (so
     ///     <see
     ///         cref="ModContentRegistry.RegisterCharacterAssetReplacement(string, Scaffolding.Characters.CharacterAssetProfile)" />
+    ///     cref="ModContentRegistry.RegisterCharacterAssetReplacement(string, Scaffolding.Characters.CharacterAssetProfile)"
+    ///     />
     ///     icons match everywhere).
+    ///     Icons match everywhere).
     ///     Without this patch, mod character cards are not visible in any filter category, and opening
     ///     the card library during a run with a mod character causes a KeyNotFoundException crash.
     ///     Mod-character rows use <see cref="CardLibraryCompendiumPlacementDefaults.DefaultCharacterRowRules" /> unless
     ///     overridden via <see cref="IModCharacterCardLibraryCompendiumPlacement" /> (or the template virtual). Optional
     ///     shared-pool filters use end-of-strip placement when no rules are supplied. All rows share one placement pass
     ///     (vanilla anchor priority list, mod-to-mod constraint relaxation, unified sort, then insertion).
+    ///     为卡牌库 compendium 中每个已注册 mod 角色添加牌池过滤按钮（跳过
+    ///     带 <see cref="IModCharacterVanillaSelectionPolicy.HideInCardLibraryCompendium" /> 的角色），并
+    ///     从 <see cref="CharacterModel.IconTexture" /> 重新应用牌池过滤美术（因此
+    ///     <see />
+    ///     图标在各处保持一致）。
+    ///     图标在各处保持一致）。
+    ///     没有此 patch 时，mod 角色卡牌不会在任何过滤类别中可见，并且在使用 mod 角色的跑局中打开
+    ///     卡牌库会导致 KeyNotFoundException 崩溃。
+    ///     mod 角色行使用 <see cref="CardLibraryCompendiumPlacementDefaults.DefaultCharacterRowRules" />，除非
+    ///     通过 <see cref="IModCharacterCardLibraryCompendiumPlacement" />（或模板 virtual）覆盖。没有提供规则时，可选
+    ///     共享池过滤器使用条带末尾放置。所有行共享一次放置流程
+    ///     （原版锚点优先级列表、mod 到 mod 约束放宽、统一排序，然后插入）。
     /// </summary>
     [HarmonyAfter(Const.BaseLibHarmonyId)]
     [HarmonyPriority(Priority.Last)]
@@ -50,6 +65,8 @@ namespace STS2RitsuLib.Scaffolding.Characters.Patches
         /// <summary>
         ///     Clones vanilla pool-filter UI for each mod character and wires pool predicates so compendium filtering
         ///     works without <c>KeyNotFoundException</c>.
+        ///     为每个 mod 角色克隆原版牌池过滤 UI，并接线牌池谓词，使 compendium 过滤
+        ///     无需 <c>KeyNotFoundException</c> 即可工作。
         /// </summary>
         public static void Postfix(
                 NCardLibrary __instance,
@@ -136,6 +153,11 @@ namespace STS2RitsuLib.Scaffolding.Characters.Patches
         ///     the leftmost of those in the pool strip; otherwise the first present vanilla
         ///     <see cref="NCardPoolFilter" /> (strip order) from
         ///     <see cref="CardLibraryCompendiumVanillaFilterNames.AllInStripOrder" />.
+        ///     用于克隆 Image <see cref="ShaderMaterial" /> 的牌池过滤控件，以及共享 compendium 行的 fallback 图标
+        ///     来源。当基础游戏已经创建 mod 角色过滤器时，使用
+        ///     牌池条带中这些过滤器最左侧的一个；否则使用
+        ///     <see cref="CardLibraryCompendiumVanillaFilterNames.AllInStripOrder" /> 中第一个存在的原版
+        ///     <see cref="NCardPoolFilter" />（条带顺序）。
         /// </summary>
         private static bool TryGetCompendiumTemplateFilter(
             NCardLibrary library,
@@ -163,6 +185,9 @@ namespace STS2RitsuLib.Scaffolding.Characters.Patches
         ///     Leftmost <see cref="NCardPoolFilter" /> under the compendium pool strip that is in
         ///     <paramref name="cardPoolFilters" />, for a stable clone source; otherwise
         ///     <c>Values.First()</c>.
+        ///     compendium 牌池条带下、存在于
+        ///     <paramref name="cardPoolFilters" /> 中的最左侧 <see cref="NCardPoolFilter" />，用作稳定克隆来源；否则使用
+        ///     <c>Values.First()</c>。
         /// </summary>
         private static NCardPoolFilter GetLeftmostPoolFilterInStripModSubset(
             Dictionary<CharacterModel, NCardPoolFilter> cardPoolFilters)

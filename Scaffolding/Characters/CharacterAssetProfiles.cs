@@ -6,16 +6,19 @@ namespace STS2RitsuLib.Scaffolding.Characters
 {
     /// <summary>
     ///     Factory and merge helpers for <see cref="CharacterAssetProfile" /> using vanilla path conventions.
+    ///     使用原版路径约定的 <see cref="CharacterAssetProfile" /> 工厂和合并辅助工具。
     /// </summary>
     public static class CharacterAssetProfiles
     {
         /// <summary>
         ///     Default character id used when no placeholder is specified (<c>ironclad</c>).
+        ///     未指定占位符时使用的默认角色 id（<c>ironclad</c>）。
         /// </summary>
         public const string DefaultPlaceholderCharacterId = "ironclad";
 
         /// <summary>
         ///     Builds a profile with <c>res://</c> paths matching base-game layout for <paramref name="characterId" />.
+        ///     为 <paramref name="characterId" /> 构建带 <c>res://</c> 路径、匹配基础游戏布局的 profile。
         /// </summary>
         public static CharacterAssetProfile FromCharacterId(string characterId)
         {
@@ -56,6 +59,8 @@ namespace STS2RitsuLib.Scaffolding.Characters
         /// <summary>
         ///     Returns <paramref name="profile" /> or empty; if <paramref name="placeholderCharacterId" /> is set, merges
         ///     missing fields from that vanilla character.
+        ///     返回 <paramref name="profile" /> 或 empty；如果设置了 <paramref name="placeholderCharacterId" />，则从该原版角色合并
+        ///     缺失字段。
         /// </summary>
         public static CharacterAssetProfile Resolve(CharacterAssetProfile? profile, string? placeholderCharacterId)
         {
@@ -68,6 +73,7 @@ namespace STS2RitsuLib.Scaffolding.Characters
 
         /// <summary>
         ///     Per-field prefer-<paramref name="profile" /> / fallback-<paramref name="fallback" /> merge.
+        ///     逐字段合并：优先 <paramref name="profile" />，回退为 <paramref name="fallback" />。
         /// </summary>
         public static CharacterAssetProfile Merge(CharacterAssetProfile? fallback, CharacterAssetProfile? profile)
         {
@@ -93,6 +99,7 @@ namespace STS2RitsuLib.Scaffolding.Characters
 
         /// <summary>
         ///     Shortcut for <see cref="FromCharacterId" /> with id <c>ironclad</c>.
+        ///     id 为 <c>ironclad</c> 的 <see cref="FromCharacterId" /> 快捷方式。
         /// </summary>
         public static CharacterAssetProfile Ironclad()
         {
@@ -101,6 +108,7 @@ namespace STS2RitsuLib.Scaffolding.Characters
 
         /// <summary>
         ///     Shortcut for <see cref="FromCharacterId" /> with id <c>silent</c>.
+        ///     id 为 <c>silent</c> 的 <see cref="FromCharacterId" /> 快捷方式。
         /// </summary>
         public static CharacterAssetProfile Silent()
         {
@@ -109,6 +117,7 @@ namespace STS2RitsuLib.Scaffolding.Characters
 
         /// <summary>
         ///     Shortcut for <see cref="FromCharacterId" /> with id <c>defect</c>.
+        ///     id 为 <c>defect</c> 的 <see cref="FromCharacterId" /> 快捷方式。
         /// </summary>
         public static CharacterAssetProfile Defect()
         {
@@ -117,6 +126,7 @@ namespace STS2RitsuLib.Scaffolding.Characters
 
         /// <summary>
         ///     Shortcut for <see cref="FromCharacterId" /> with id <c>regent</c>.
+        ///     id 为 <c>regent</c> 的 <see cref="FromCharacterId" /> 快捷方式。
         /// </summary>
         public static CharacterAssetProfile Regent()
         {
@@ -125,6 +135,7 @@ namespace STS2RitsuLib.Scaffolding.Characters
 
         /// <summary>
         ///     Shortcut for <see cref="FromCharacterId" /> with id <c>necrobinder</c>.
+        ///     id 为 <c>necrobinder</c> 的 <see cref="FromCharacterId" /> 快捷方式。
         /// </summary>
         public static CharacterAssetProfile Necrobinder()
         {
@@ -249,6 +260,7 @@ namespace STS2RitsuLib.Scaffolding.Characters
 
         /// <summary>
         ///     Merges two nullable relic icon profiles; <paramref name="preferred" /> fields win when set.
+        ///     合并两个可为 null 的遗物图标 profile；设置了 <paramref name="preferred" /> 的字段时优先使用。
         /// </summary>
         internal static RelicAssetProfile? MergeRelicAssetProfilesPreferSecond(RelicAssetProfile? fallback,
             RelicAssetProfile? preferred)
@@ -431,6 +443,7 @@ namespace STS2RitsuLib.Scaffolding.Characters
 
         /// <summary>
         ///     Merges <paramref name="fallback" /> into <paramref name="profile" /> for any null component or field.
+        ///     将 <paramref name="fallback" /> 合并到 <paramref name="profile" /> 中任何为 null 的组件或字段。
         /// </summary>
         public static CharacterAssetProfile FillMissingFrom(this CharacterAssetProfile profile,
             CharacterAssetProfile fallback)
@@ -442,6 +455,7 @@ namespace STS2RitsuLib.Scaffolding.Characters
 
         /// <summary>
         ///     Fills missing entries using <see cref="FromCharacterId" />.
+        ///     使用 <see cref="FromCharacterId" /> 填充缺失条目。
         /// </summary>
         public static CharacterAssetProfile WithPlaceholder(this CharacterAssetProfile profile, string characterId)
         {
@@ -451,6 +465,7 @@ namespace STS2RitsuLib.Scaffolding.Characters
 
         /// <summary>
         ///     Returns a copy with <see cref="CharacterAssetProfile.Scenes" /> replaced.
+        ///     返回一个替换了 <see cref="CharacterAssetProfile.Scenes" /> 的副本。
         /// </summary>
         public static CharacterAssetProfile WithScenes(this CharacterAssetProfile profile,
             CharacterSceneAssetSet scenes)
@@ -462,6 +477,7 @@ namespace STS2RitsuLib.Scaffolding.Characters
 
         /// <summary>
         ///     Returns a copy with <see cref="CharacterAssetProfile.Ui" /> replaced.
+        ///     返回一个替换了 <see cref="CharacterAssetProfile.Ui" /> 的副本。
         /// </summary>
         public static CharacterAssetProfile WithUi(this CharacterAssetProfile profile, CharacterUiAssetSet ui)
         {
@@ -472,6 +488,7 @@ namespace STS2RitsuLib.Scaffolding.Characters
 
         /// <summary>
         ///     Returns a copy with <see cref="CharacterAssetProfile.Vfx" /> replaced.
+        ///     返回一个替换了 <see cref="CharacterAssetProfile.Vfx" /> 的副本。
         /// </summary>
         public static CharacterAssetProfile WithVfx(this CharacterAssetProfile profile, CharacterVfxAssetSet vfx)
         {
@@ -482,6 +499,7 @@ namespace STS2RitsuLib.Scaffolding.Characters
 
         /// <summary>
         ///     Returns a copy with <see cref="CharacterAssetProfile.Spine" /> replaced.
+        ///     返回一个替换了 <see cref="CharacterAssetProfile.Spine" /> 的副本。
         /// </summary>
         public static CharacterAssetProfile WithSpine(this CharacterAssetProfile profile, CharacterSpineAssetSet spine)
         {
@@ -492,6 +510,7 @@ namespace STS2RitsuLib.Scaffolding.Characters
 
         /// <summary>
         ///     Returns a copy with <see cref="CharacterAssetProfile.Audio" /> replaced.
+        ///     返回一个替换了 <see cref="CharacterAssetProfile.Audio" /> 的副本。
         /// </summary>
         public static CharacterAssetProfile WithAudio(this CharacterAssetProfile profile, CharacterAudioAssetSet audio)
         {
@@ -502,6 +521,7 @@ namespace STS2RitsuLib.Scaffolding.Characters
 
         /// <summary>
         ///     Returns a copy with <see cref="CharacterAssetProfile.Multiplayer" /> replaced.
+        ///     返回一个替换了 <see cref="CharacterAssetProfile.Multiplayer" /> 的副本。
         /// </summary>
         public static CharacterAssetProfile WithMultiplayer(this CharacterAssetProfile profile,
             CharacterMultiplayerAssetSet multiplayer)
@@ -513,6 +533,7 @@ namespace STS2RitsuLib.Scaffolding.Characters
 
         /// <summary>
         ///     Returns a copy with <see cref="CharacterAssetProfile.VisualCues" /> replaced.
+        ///     返回一个替换了 <see cref="CharacterAssetProfile.VisualCues" /> 的副本。
         /// </summary>
         public static CharacterAssetProfile WithVisualCues(this CharacterAssetProfile profile, VisualCueSet visualCues)
         {
@@ -523,6 +544,7 @@ namespace STS2RitsuLib.Scaffolding.Characters
 
         /// <summary>
         ///     Returns a copy with <see cref="CharacterAssetProfile.WorldProceduralVisuals" /> replaced.
+        ///     返回一个替换了 <see cref="CharacterAssetProfile.WorldProceduralVisuals" /> 的副本。
         /// </summary>
         public static CharacterAssetProfile WithWorldProceduralVisuals(this CharacterAssetProfile profile,
             CharacterWorldProceduralVisualSet worldVisuals)
@@ -534,6 +556,7 @@ namespace STS2RitsuLib.Scaffolding.Characters
 
         /// <summary>
         ///     Returns a copy with <see cref="CharacterAssetProfile.VanillaRelicVisualOverrides" /> replaced.
+        ///     返回一个替换了 <see cref="CharacterAssetProfile.VanillaRelicVisualOverrides" /> 的副本。
         /// </summary>
         public static CharacterAssetProfile WithVanillaRelicVisualOverrides(this CharacterAssetProfile profile,
             CharacterVanillaRelicVisualOverride[] vanillaRelicVisualOverrides)
@@ -545,6 +568,7 @@ namespace STS2RitsuLib.Scaffolding.Characters
 
         /// <summary>
         ///     Returns a copy with <see cref="CharacterAssetProfile.VanillaPotionVisualOverrides" /> replaced.
+        ///     返回一个替换了 <see cref="CharacterAssetProfile.VanillaPotionVisualOverrides" /> 的副本。
         /// </summary>
         public static CharacterAssetProfile WithVanillaPotionVisualOverrides(this CharacterAssetProfile profile,
             CharacterVanillaPotionVisualOverride[] vanillaPotionVisualOverrides)
@@ -556,6 +580,7 @@ namespace STS2RitsuLib.Scaffolding.Characters
 
         /// <summary>
         ///     Returns a copy with <see cref="CharacterAssetProfile.VanillaCardVisualOverrides" /> replaced.
+        ///     返回一个替换了 <see cref="CharacterAssetProfile.VanillaCardVisualOverrides" /> 的副本。
         /// </summary>
         public static CharacterAssetProfile WithVanillaCardVisualOverrides(this CharacterAssetProfile profile,
             CharacterVanillaCardVisualOverride[] vanillaCardVisualOverrides)

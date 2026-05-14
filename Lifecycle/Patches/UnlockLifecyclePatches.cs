@@ -6,6 +6,7 @@ namespace STS2RitsuLib.Lifecycle.Patches
 {
     /// <summary>
     ///     Publishes epoch obtain and reveal lifecycle events from <see cref="SaveManager" />.
+    ///     从 <see cref="SaveManager" /> 发布 epoch 取得和揭示生命周期事件。
     /// </summary>
     public class EpochLifecyclePatch : IPatchMethod
     {
@@ -31,6 +32,9 @@ namespace STS2RitsuLib.Lifecycle.Patches
         /// <summary>
         ///     Harmony postfix: publishes <see cref="EpochObtainedEvent" /> or <see cref="EpochRevealedEvent" /> after the
         ///     matching method runs.
+        ///     <see cref="EpochRevealedEvent" />。
+        ///     Harmony postfix：匹配的方法运行后发布 <see cref="EpochObtainedEvent" /> 或 <see cref="EpochRevealedEvent" />。
+        ///     <see cref="EpochRevealedEvent" />。
         /// </summary>
         // ReSharper disable InconsistentNaming
         public static void Postfix(MethodBase __originalMethod, SaveManager __instance, object[] __args)
@@ -56,6 +60,7 @@ namespace STS2RitsuLib.Lifecycle.Patches
 
     /// <summary>
     ///     Publishes a lifecycle event when <see cref="SaveManager.IncrementUnlock" /> completes and returns a key.
+    ///     当 <see cref="SaveManager.IncrementUnlock" /> 完成并返回键时发布生命周期事件。
     /// </summary>
     public class UnlockIncrementLifecyclePatch : IPatchMethod
     {
@@ -79,6 +84,7 @@ namespace STS2RitsuLib.Lifecycle.Patches
 
         /// <summary>
         ///     Harmony postfix: publishes <see cref="UnlockIncrementedEvent" /> with total unlocks and optional result key.
+        ///     Harmony postfix：发布包含总解锁数和可选结果键的 <see cref="UnlockIncrementedEvent" />。
         /// </summary>
         // ReSharper disable InconsistentNaming
         public static void Postfix(SaveManager __instance, string? __result)

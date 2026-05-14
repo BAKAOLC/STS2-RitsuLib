@@ -5,6 +5,7 @@ namespace STS2RitsuLib.Audio
 {
     /// <summary>
     ///     Tracks named channels and tagged playback groups for higher-level replacement and bulk stop semantics.
+    ///     跟踪命名通道和带标签的播放组，用于更高层的替换和批量停止语义。
     /// </summary>
     public sealed class AudioChannelRegistry
     {
@@ -19,11 +20,13 @@ namespace STS2RitsuLib.Audio
 
         /// <summary>
         ///     Shared singleton registry.
+        ///     共享的单例注册表。
         /// </summary>
         public static AudioChannelRegistry Shared { get; } = new();
 
         /// <summary>
         ///     Claims a named channel for a handle, optionally replacing the currently attached playback.
+        ///     为句柄占用命名通道，并可选择替换当前附加的播放。
         /// </summary>
         public bool TryClaimChannel(string channel, IAudioHandle handle, AudioChannelMode mode, bool allowFadeOut)
         {
@@ -52,6 +55,7 @@ namespace STS2RitsuLib.Audio
 
         /// <summary>
         ///     Removes a handle from any named channel it currently owns.
+        ///     从句柄当前拥有的任何命名通道中移除该句柄。
         /// </summary>
         public void ReleaseChannel(IAudioHandle handle)
         {
@@ -62,6 +66,7 @@ namespace STS2RitsuLib.Audio
 
         /// <summary>
         ///     Attaches a handle to a tag group for later bulk stop operations.
+        ///     将句柄附加到标签组，以便稍后执行批量停止操作。
         /// </summary>
         public void AttachTag(string tag, IAudioHandle handle)
         {
@@ -71,6 +76,7 @@ namespace STS2RitsuLib.Audio
 
         /// <summary>
         ///     Removes a handle from all tracked channels and tag groups.
+        ///     从所有已跟踪通道和标签组中移除句柄。
         /// </summary>
         public void Detach(IAudioHandle handle)
         {
@@ -81,6 +87,7 @@ namespace STS2RitsuLib.Audio
 
         /// <summary>
         ///     Stops and releases every handle attached to a tag group.
+        ///     停止并释放附加到标签组的每个句柄。
         /// </summary>
         public bool StopTag(string tag, bool allowFadeOut = true)
         {
@@ -101,6 +108,7 @@ namespace STS2RitsuLib.Audio
 
         /// <summary>
         ///     Stops and releases the handle currently attached to a named channel.
+        ///     停止并释放当前附加到命名通道的句柄。
         /// </summary>
         public bool StopChannel(string channel, bool allowFadeOut = true)
         {

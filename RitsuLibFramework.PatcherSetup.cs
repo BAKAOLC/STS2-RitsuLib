@@ -15,6 +15,8 @@ using STS2RitsuLib.Lifecycle.Patches;
 using STS2RitsuLib.Localization.Patches;
 using STS2RitsuLib.Networking.Sidecar.Patches;
 using STS2RitsuLib.Patching.Core;
+using STS2RitsuLib.Platform;
+using STS2RitsuLib.Platform.Patches;
 using STS2RitsuLib.Relics.Patches;
 using STS2RitsuLib.Scaffolding.Cards.HandGlow.Patches;
 using STS2RitsuLib.Scaffolding.Cards.HandOutline.Patches;
@@ -87,7 +89,10 @@ namespace STS2RitsuLib
             patcher.RegisterPatch<NMultiplayerLoadGameScreenBeginRunMissingCharacterPatch>();
             patcher.RegisterPatch<NMultiplayerTestCharacterPaginatorAllCharactersPatch>();
             patcher.RegisterPatch<NCustomRunLoadScreenBeginRunMissingCharacterPatch>();
-            patcher.RegisterPatch<NDailyRunLoadScreenBeginRunMissingCharacterPatch>();
+            if (RitsuLibMobileSteamRuntime.SuppressNativeSteamIntegration)
+                patcher.RegisterPatch<RitsuLibMobileModelDbInitPostfixPatch>();
+            else
+                patcher.RegisterPatch<NDailyRunLoadScreenBeginRunMissingCharacterPatch>();
             patcher.RegisterPatch<LocTableHasEntryI18NBridgePatch>();
             patcher.RegisterPatch<LocTableGetRawTextI18NBridgePatch>();
             patcher.RegisterPatch<LocTableGetLocStringI18NBridgePatch>();
@@ -105,6 +110,8 @@ namespace STS2RitsuLib
             patcher.RegisterPatch<RitsuLibSidecarNetHostReceivePatch>();
             patcher.RegisterPatch<RitsuLibSidecarNetClientReceivePatch>();
             patcher.RegisterPatch<RitsuLibSidecarNativeTrailerSendPatch>();
+            if (!RitsuLibMobileSteamRuntime.SuppressNativeSteamIntegration)
+                patcher.RegisterPatch<RitsuLibSidecarNativeTrailerSteamSendPatch>();
             patcher.RegisterPatch<RitsuLibSidecarLobbyHelloPatch>();
             patcher.RegisterPatch<RitsuLibSidecarStartRunLobbyHostClientConnectedPatch>();
             patcher.RegisterPatch<RitsuLibSidecarStartRunLobbyHostClientDisconnectedPatch>();
@@ -154,28 +161,32 @@ namespace STS2RitsuLib
             patcher.RegisterPatch<NControllerCardPlayStartAnyPlayerPatch>();
             patcher.RegisterPatch<NControllerCardPlaySingleTargetingAnyPlayerPatch>();
             patcher.RegisterPatch<CardCmdAutoPlayAnyPlayerPatch>();
-            patcher.RegisterPatch<NCardPlayShowMultiCreatureTargetingVisualsEveryonePatch>();
-            patcher.RegisterPatch<ActionTargetExtensionsIsSingleTargetAnyonePatch>();
-            patcher.RegisterPatch<NTargetManagerAllowedToTargetCreatureAnyonePatch>();
-            patcher.RegisterPatch<CardModelCanPlayTargetingAnyonePatch>();
-            patcher.RegisterPatch<CardModelIsValidTargetAnyonePatch>();
-            patcher.RegisterPatch<NCardPlayTryPlayCardAnyonePatch>();
-            patcher.RegisterPatch<NMouseCardPlayTargetSelectionAnyonePatch>();
-            patcher.RegisterPatch<NControllerCardPlayStartAnyonePatch>();
-            patcher.RegisterPatch<NControllerCardPlaySingleTargetingAnyonePatch>();
+            patcher.RegisterPatch<ModelDbInitCustomTargetTypeRegistrationPatch>();
+            patcher.RegisterPatch<AttackCommandGetPossibleTargetsCustomTargetTypePatch>();
+            patcher.RegisterPatch<NCardPlayShowMultiCreatureTargetingVisualsCustomTargetTypePatch>();
+            patcher.RegisterPatch<ActionTargetExtensionsIsSingleTargetCustomTargetTypePatch>();
+            patcher.RegisterPatch<NTargetManagerAllowedToTargetCreatureCustomTargetTypePatch>();
+            patcher.RegisterPatch<CardModelCanPlayTargetingCustomTargetTypePatch>();
+            patcher.RegisterPatch<CardModelIsValidTargetCustomTargetTypePatch>();
+            patcher.RegisterPatch<NCardPlayTryPlayCardCustomTargetTypePatch>();
+            patcher.RegisterPatch<NMouseCardPlayTargetSelectionCustomTargetTypePatch>();
+            patcher.RegisterPatch<NControllerCardPlayStartCustomTargetTypePatch>();
+            patcher.RegisterPatch<NControllerCardPlaySingleTargetingCustomTargetTypePatch>();
             patcher.RegisterPatch<HoverTipFactoryFromKeywordPatch>();
             patcher.RegisterPatch<CardModelKeywordsModSeedPatch>();
             patcher.RegisterPatch<CardModelTagsModSeedPatch>();
             patcher.RegisterPatch<CardModelHoverTipsModKeywordPatch>();
             patcher.RegisterPatch<CardRewardToSerializablePatch>();
             patcher.RegisterPatch<CombatRoomToSerializableRewardExtPatch>();
-            patcher.RegisterPatch<CombatRoomFromSerializableRewardExtPatch>();
+            if (!RitsuLibMobileSteamRuntime.SuppressNativeSteamIntegration)
+                patcher.RegisterPatch<CombatRoomFromSerializableRewardExtPatch>();
             patcher.RegisterPatch<RewardFromSerializableExtPatch>();
             patcher.RegisterPatch<ModCardPileGetPatch>();
             patcher.RegisterPatch<ModCardPileIsCombatPatch>();
             patcher.RegisterPatch<ModCardPileGetTargetPositionPatch>();
             patcher.RegisterPatch<ModCardPileShuffleVfxStartPositionPatch>();
             patcher.RegisterPatch<ModCardPileAllPilesPatch>();
+            patcher.RegisterPatch<ModCardPilePlayerPilesPatch>();
             patcher.RegisterPatch<ModCardPileFindOnTablePatch>();
             patcher.RegisterPatch<ModCardPileCombatPilesContainerReadyPatch>();
             patcher.RegisterPatch<ModCardPileCombatPilesContainerInitializePatch>();
@@ -371,15 +382,19 @@ namespace STS2RitsuLib
         private static void RegisterUnlockPatches()
         {
             var patcher = CreatePatcher(Const.ModId, "framework-unlocks", "unlocks");
-            patcher.RegisterPatch<CharacterUnlockFilterPatch>();
+            if (!RitsuLibMobileSteamRuntime.SuppressNativeSteamIntegration)
+            {
+                patcher.RegisterPatch<CharacterUnlockFilterPatch>();
+                patcher.RegisterPatch<SharedAncientUnlockFilterPatch>();
+                patcher.RegisterPatch<EliteEpochAfterCombatFallbackPatch>();
+            }
+
             patcher.RegisterPatch<CharacterUnlockEpochRuntimeCompatibilityPatch>();
-            patcher.RegisterPatch<SharedAncientUnlockFilterPatch>();
             patcher.RegisterPatch<CardUnlockFilterPatch>();
             patcher.RegisterPatch<RelicUnlockFilterPatch>();
             patcher.RegisterPatch<PotionUnlockFilterPatch>();
             patcher.RegisterPatch<GeneratedRoomEventUnlockFilterPatch>();
             patcher.RegisterPatch<EliteEpochCompatibilityPatch>();
-            patcher.RegisterPatch<EliteEpochAfterCombatFallbackPatch>();
             patcher.RegisterPatch<BossEpochCompatibilityPatch>();
             patcher.RegisterPatch<AscensionOneEpochCompatibilityPatch>();
             patcher.RegisterPatch<PostRunCharacterUnlockEpochCompatibilityPatch>();

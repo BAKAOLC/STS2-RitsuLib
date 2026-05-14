@@ -12,6 +12,7 @@ namespace STS2RitsuLib.Combat.HealthBars.Patches
     /// <summary>
     ///     Standalone forecast overlay logic for <see cref="NHealthBar" /> when BaseLib interop is unavailable or has not
     ///     taken over rendering.
+    ///     当 BaseLib interop 不可用或尚未接管渲染时，提供 <see cref="NHealthBar" /> 的独立 forecast 覆盖逻辑。
     /// </summary>
     internal static class NHealthBarForecastPatchHelper
     {
@@ -502,6 +503,8 @@ namespace STS2RitsuLib.Combat.HealthBars.Patches
         /// <summary>
         ///     Applies segment material and <see cref="CanvasItem.SelfModulate" />; overlay uses
         ///     <paramref name="overlaySelfModulate" /> when set, otherwise <paramref name="color" />.
+        ///     应用片段 material 和 <see cref="CanvasItem.SelfModulate" />；设置后覆盖层使用
+        ///     <paramref name="overlaySelfModulate" />，否则使用 <paramref name="color" />。
         /// </summary>
         private static void ApplyForecastSegmentAppearance(
             NinePatchRect node,
@@ -647,6 +650,7 @@ namespace STS2RitsuLib.Combat.HealthBars.Patches
 
         /// <summary>
         ///     Snapshot of one registry segment plus render order for layout and lethal text resolution.
+        ///     一个注册表片段加渲染顺序的快照，用于布局和致命文本解析。
         /// </summary>
         private readonly record struct CustomSegment(
             int Amount,

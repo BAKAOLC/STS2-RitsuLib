@@ -90,6 +90,11 @@ namespace STS2RitsuLib.Scaffolding.Characters.Patches
         ///     (append-end last, else by <see cref="PlannedRow.EffectiveTarget" />, then registration order).
         ///     Physical <see cref="InsertRowsInOrder" /> reuses the same <paramref name="strip" /> to seed the
         ///     working sibling list.
+        ///     在 <paramref name="strip" /> 的坐标空间中解析逻辑插入索引，应用 mod 到 mod
+        ///     约束，为共享行分类“追加到条带末尾”，然后对 mod 行进行 <b>稳定排序</b>
+        ///     （append-end 最后，否则按 <see cref="PlannedRow.EffectiveTarget" />，再按注册顺序）。
+        ///     物理 <see cref="InsertRowsInOrder" /> 复用同一个 <paramref name="strip" /> 来初始化
+        ///     工作 sibling 列表。
         /// </summary>
         internal static void AssignTargetsAndSort(
             NCardLibrary library,
@@ -311,6 +316,8 @@ namespace STS2RitsuLib.Scaffolding.Characters.Patches
         ///     Inserts built mod pool-filter nodes using the working list seeded from
         ///     <paramref name="strip" />.<see cref="CardLibraryCompendiumStripSnapshot.OriginalSiblingsInOrder" />,
         ///     in the order established by <see cref="SortPlannedRowsForStableInsertion" />.
+        ///     使用从 <paramref name="strip" />.<see cref="CardLibraryCompendiumStripSnapshot.OriginalSiblingsInOrder" />
+        ///     初始化的工作列表，按 <see cref="SortPlannedRowsForStableInsertion" /> 确定的顺序插入构建好的 mod 牌池过滤节点。
         /// </summary>
         internal static void InsertRowsInOrder(
             Node filterParent,

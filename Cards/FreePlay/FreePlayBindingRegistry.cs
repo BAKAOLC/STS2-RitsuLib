@@ -11,6 +11,7 @@ namespace STS2RitsuLib.Cards.FreePlay
 {
     /// <summary>
     ///     Detailed free-play resolution result split by detection source.
+    ///     按检测来源拆分的详细 free-play 解析结果。
     /// </summary>
     public sealed record FreePlayResolution(
         bool IsAutoPlayNoSpend,
@@ -20,6 +21,7 @@ namespace STS2RitsuLib.Cards.FreePlay
     {
         /// <summary>
         ///     True when any detection source marks this play as free.
+        ///     任一检测来源将本次出牌标记为免费时为 true。
         /// </summary>
         public bool IsFree => IsAutoPlayNoSpend || IsCardBindingFree || IsDualResourceModelFree ||
                               IsRegisteredDetectorFree;
@@ -27,6 +29,7 @@ namespace STS2RitsuLib.Cards.FreePlay
 
     /// <summary>
     ///     Extensible binding registry for "this play is free" semantics.
+    ///     用于“本次出牌免费”语义的可扩展绑定注册表。
     /// </summary>
     public static class FreePlayBindingRegistry
     {
@@ -38,9 +41,16 @@ namespace STS2RitsuLib.Cards.FreePlay
         /// <summary>
         ///     Registers an additional free-play detector. The detector should return true when the specified
         ///     <see cref="CardPlay" /> is considered free by mod-defined rules.
+        ///     注册额外的 free-play 检测器。当指定 <see cref="CardPlay" /> 按 mod 定义规则视为免费时，检测器应返回 true。
         /// </summary>
-        /// <param name="bindingId">Stable unique identifier for replacement/debugging.</param>
-        /// <param name="detector">Predicate that evaluates whether a play is free.</param>
+        /// <param name="bindingId">
+        ///     Stable unique identifier for replacement/debugging.
+        ///     用于替换和调试的稳定唯一标识符。
+        /// </param>
+        /// <param name="detector">
+        ///     Predicate that evaluates whether a play is free.
+        ///     判断一次出牌是否免费的谓词。
+        /// </param>
         public static void Register(string bindingId, Func<CardPlay, bool> detector)
         {
             ArgumentException.ThrowIfNullOrWhiteSpace(bindingId);
@@ -54,8 +64,12 @@ namespace STS2RitsuLib.Cards.FreePlay
 
         /// <summary>
         ///     Marks that the given card's next play should be treated as free.
+        ///     标记给定卡牌的下一次出牌应视为免费。
         /// </summary>
-        /// <param name="card">Card receiving a single-use free-play charge.</param>
+        /// <param name="card">
+        ///     Card receiving a single-use free-play charge.
+        ///     获得一次性 free-play 层数的卡牌。
+        /// </param>
         public static void MarkCardFreeNextPlay(CardModel card)
         {
             ArgumentNullException.ThrowIfNull(card);
@@ -68,8 +82,12 @@ namespace STS2RitsuLib.Cards.FreePlay
 
         /// <summary>
         ///     Marks that the given card should be treated as free for the current combat.
+        ///     标记给定卡牌在当前战斗中应视为免费。
         /// </summary>
-        /// <param name="card">Card receiving combat-duration free-play state.</param>
+        /// <param name="card">
+        ///     Card receiving combat-duration free-play state.
+        ///     获得持续整场战斗 free-play 状态的卡牌。
+        /// </param>
         public static void MarkCardFreeThisCombat(CardModel card)
         {
             ArgumentNullException.ThrowIfNull(card);
@@ -83,7 +101,10 @@ namespace STS2RitsuLib.Cards.FreePlay
         /// <summary>
         ///     Marks the current <see cref="CardPlay" /> as free immediately.
         /// </summary>
-        /// <param name="play">Play instance to mark.</param>
+        /// <param name="play">
+        ///     Play instance to mark.
+        ///     要标记的出牌实例。
+        /// </param>
         public static void MarkCurrentPlayFree(CardPlay play)
         {
             ArgumentNullException.ThrowIfNull(play);
@@ -96,9 +117,16 @@ namespace STS2RitsuLib.Cards.FreePlay
 
         /// <summary>
         ///     Resolves detailed free-play sources for this <see cref="CardPlay" />.
+        ///     解析此 <see cref="CardPlay" /> 的详细 free-play 来源。
         /// </summary>
-        /// <param name="play">Play instance to evaluate.</param>
-        /// <returns>A split resolution indicating which source marked the play as free.</returns>
+        /// <param name="play">
+        ///     Play instance to evaluate.
+        ///     要求值的出牌实例。
+        /// </param>
+        /// <returns>
+        ///     A split resolution indicating which source marked the play as free.
+        ///     指示由哪个来源将本次出牌标记为免费的拆分解析结果。
+        /// </returns>
         public static FreePlayResolution Resolve(CardPlay play)
         {
             ArgumentNullException.ThrowIfNull(play);
@@ -118,9 +146,16 @@ namespace STS2RitsuLib.Cards.FreePlay
 
         /// <summary>
         ///     Convenience helper returning whether the play is free by any source.
+        ///     返回本次出牌是否因任一来源而免费的便捷辅助方法。
         /// </summary>
-        /// <param name="play">Play instance to evaluate.</param>
-        /// <returns>True when any free-play source applies.</returns>
+        /// <param name="play">
+        ///     Play instance to evaluate.
+        ///     要求值的出牌实例。
+        /// </param>
+        /// <returns>
+        ///     True when any free-play source applies.
+        ///     任一 free-play 来源适用时为 true。
+        /// </returns>
         public static bool IsFreeForPlay(CardPlay play)
         {
             return Resolve(play).IsFree;

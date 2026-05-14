@@ -4,6 +4,7 @@ namespace STS2RitsuLib.Utils
 {
     /// <summary>
     ///     Factory helpers for Godot materials that mirror vanilla game shaders.
+    ///     用于镜像原版游戏着色器的 Godot 材质工厂辅助方法。
     /// </summary>
     public static class MaterialUtils
     {
@@ -22,6 +23,7 @@ namespace STS2RitsuLib.Utils
 
         /// <summary>
         ///     Builds a <c>ShaderMaterial</c> using the game's HSV shader with the given RGB parameters.
+        ///     使用游戏的 HSV 着色器和给定 RGB 参数构建 <c>ShaderMaterial</c>。
         /// </summary>
         public static ShaderMaterial CreateRgbShaderMaterial(float r, float g, float b)
         {
@@ -44,6 +46,7 @@ namespace STS2RitsuLib.Utils
 
         /// <summary>
         ///     Builds a <c>ShaderMaterial</c> using the game's HSV shader with the given parameters.
+        ///     使用游戏的 HSV 着色器和给定参数构建 <c>ShaderMaterial</c>。
         /// </summary>
         public static ShaderMaterial CreateHsvShaderMaterial(float h, float s, float v)
         {
@@ -65,10 +68,14 @@ namespace STS2RitsuLib.Utils
         /// <summary>
         ///     Returns a <see cref="ShaderMaterial" /> built from the game's HSV shader configured to preserve the
         ///     original colors (identity modulation: <c>h=0</c>, <c>s=1</c>, <c>v=1</c>).
+        ///     返回由游戏 HSV 着色器构建的 <see cref="ShaderMaterial" />，配置为保留
+        ///     原始颜色（恒等调制：<c>h=0</c>、<c>s=1</c>、<c>v=1</c>）。
         /// </summary>
         /// <remarks>
         ///     This is useful when you want to override a card frame's <c>FrameMaterial</c> without introducing any additional
         ///     color modulation, while still using the vanilla shader pipeline.
+        ///     当你想覆盖卡牌框的 <c>FrameMaterial</c>，但不引入任何额外
+        ///     颜色调制，同时仍使用原版着色器管线时，这很有用。
         /// </remarks>
         public static ShaderMaterial CreateUnmodulatedHsvShaderMaterial()
         {
@@ -79,10 +86,15 @@ namespace STS2RitsuLib.Utils
         /// <summary>
         ///     Builds a <c>ShaderMaterial</c> using the game's doom health bar shader (<c>doom_bar.gdshader</c>) with the same
         ///     noise settings as <c>health_bar.tscn</c> and a caller-supplied gradient.
+        ///     使用游戏的 doom 血条着色器（<c>doom_bar.gdshader</c>）构建 <c>ShaderMaterial</c>，并采用与
+        ///     <c>health_bar.tscn</c> 相同的噪声设置以及调用方提供的渐变。
         /// </summary>
         /// <remarks>
         ///     Typical use: <see cref="Combat.HealthBars.HealthBarForecastSegment.OverlayMaterial" /> on custom forecast
         ///     overlays so they read like the vanilla doom strip (see also <c>CreateVanillaDoomBarGradientTexture</c>).
+        ///     典型用法：在自定义预测
+        ///     叠加层上设置 <see cref="Combat.HealthBars.HealthBarForecastSegment.OverlayMaterial" />，使其呈现为原版 doom 条（另见
+        ///     <c>CreateVanillaDoomBarGradientTexture</c>）。
         /// </remarks>
         public static ShaderMaterial CreateDoomBarShaderMaterial(GradientTexture1D gradientTexture)
         {
@@ -100,6 +112,7 @@ namespace STS2RitsuLib.Utils
 
         /// <summary>
         ///     Gradient texture matching the vanilla doom bar segment in <c>health_bar.tscn</c>.
+        ///     与 <c>health_bar.tscn</c> 中原版 doom 条片段匹配的渐变纹理。
         /// </summary>
         public static GradientTexture1D CreateVanillaDoomBarGradientTexture()
         {
@@ -112,6 +125,7 @@ namespace STS2RitsuLib.Utils
 
         /// <summary>
         ///     Noise texture matching <c>health_bar.tscn</c> (Perlin, frequency 0.0383).
+        ///     与 <c>health_bar.tscn</c> 匹配的噪声纹理（Perlin，频率 0.0383）。
         /// </summary>
         public static NoiseTexture2D CreateVanillaDoomBarNoiseTexture()
         {

@@ -65,6 +65,8 @@ namespace STS2RitsuLib.Settings
         ///     Registers a callback invoked on the next UI refresh. Same as calling
         ///     <see cref="RegisterRefresh(Action, ModSettingsUiRefreshSpec)" /> with a full-pass spec (legacy behavior for
         ///     extensions compiled against older RitsuLib).
+        ///     注册在下一次 UI 刷新时调用的回调。等同于使用完整遍历 spec 调用 <see cref="RegisterRefresh(Action, ModSettingsUiRefreshSpec)" />（为针对旧版
+        ///     RitsuLib 编译的扩展保留的旧行为）。
         /// </summary>
         public void RegisterRefresh(Action action)
         {
@@ -74,6 +76,8 @@ namespace STS2RitsuLib.Settings
         /// <summary>
         ///     Registers a callback invoked on the next UI refresh when its <paramref name="spec" /> matches the
         ///     bindings that were marked dirty since the last flush.
+        ///     注册一个回调；当其 <paramref name="spec" /> 与上次 flush 后被标记为脏的
+        ///     binding 匹配时，在下一次 UI 刷新时调用。
         /// </summary>
         public void RegisterRefresh(Action action, ModSettingsUiRefreshSpec spec)
         {
@@ -100,6 +104,7 @@ namespace STS2RitsuLib.Settings
         /// <summary>
         ///     Re-evaluates Godot <c>Control.Visible</c> on each debounced refresh (sidebar targets that are not part of
         ///     the main content refresh graph).
+        ///     在每次防抖刷新时重新评估 Godot <c>Control.Visible</c>（用于不属于主内容刷新图的侧边栏目标）。
         /// </summary>
         public void RegisterDynamicVisibility(Control control, Func<bool> predicate)
         {

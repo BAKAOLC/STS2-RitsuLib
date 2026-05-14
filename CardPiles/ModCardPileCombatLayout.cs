@@ -8,6 +8,9 @@ namespace STS2RitsuLib.CardPiles
     ///     Re-packs mod combat bottom-row pile buttons when <see cref="NModCardPileButton" /> visibility
     ///     changes so <see cref="ModCardPileSpec.VisibleWhen" /> does not leave empty gaps. Manual
     ///     <see cref="ModCardPileAnchorKind.Custom" /> anchors are left untouched.
+    ///     当 <see cref="NModCardPileButton" /> 可见性变化时，重新打包 mod 战斗底部 row 的牌堆按钮，
+    ///     使 <see cref="ModCardPileSpec.VisibleWhen" /> 不会留下空洞。手动
+    ///     <see cref="ModCardPileAnchorKind.Custom" /> anchor 保持不变。
     /// </summary>
     internal static class ModCardPileCombatLayout
     {

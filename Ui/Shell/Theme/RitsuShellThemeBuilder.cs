@@ -6,11 +6,14 @@ namespace STS2RitsuLib.Ui.Shell.Theme
     /// <summary>
     ///     Builds a <see cref="RitsuShellTheme" /> snapshot from a merged + reference-resolved DTFM token tree.
     ///     Reads concrete values at canonical paths to populate typed records.
+    ///     从合并并完成引用解析的 DTFM 令牌树构建 <see cref="RitsuShellTheme" /> 快照。
+    ///     读取规范路径处的具体值，以填充类型化记录。
     /// </summary>
     internal static class RitsuShellThemeBuilder
     {
         /// <summary>
         ///     Builds a snapshot for <paramref name="resolvedId" /> from the merged tree.
+        ///     从合并后的树为 <paramref name="resolvedId" /> 构建快照。
         /// </summary>
         public static RitsuShellTheme Build(string resolvedId,
             Dictionary<string, object?> root,

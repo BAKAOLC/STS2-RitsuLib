@@ -18,6 +18,13 @@ namespace STS2RitsuLib.Scaffolding.Content.Patches
     ///     <c>[img]res://images/packed/sprite_fonts/{prefix}_energy_icon.png[/img]</c>.
     ///     Implementing <see cref="IModTextEnergyIconPool.TextEnergyIconPath" /> on the
     ///     <see cref="MegaCrit.Sts2.Core.Models.CardPoolModel" /> lets you use any resource path.
+    ///     拦截 <c>EnergyIconsFormatter.TryEvaluateFormat</c>：在它组装用于卡牌描述中小型能量图标的
+    ///     硬编码富文本 img 标签后，
+    ///     如果所属卡牌池实现 <see cref="IModTextEnergyIconPool" />，则替换为自定义路径。
+    ///     <para />
+    ///     游戏默认路径模式为：
+    ///     在 <see cref="MegaCrit.Sts2.Core.Models.CardPoolModel" /> 上实现
+    ///     <see cref="IModTextEnergyIconPool.TextEnergyIconPath" /> 后即可使用任意资源路径。
     /// </summary>
     public class EnergyIconFormatterPatch : IPatchMethod
     {
@@ -53,8 +60,23 @@ namespace STS2RitsuLib.Scaffolding.Content.Patches
         ///         ldloc  (text)
         ///         ldloc  (text3)
         ///         call   ModTextEnergyIconHelper.OverrideTextIconTag
+        ///         call   ModTextEnergyIconHelper.OverrideTextIconTag
         ///         stloc  (text3)
         ///     </code>
+        ///     格式化器将组装好的 <c>text3</c> img 标签存入局部变量后，
+        ///     插入一次调用，让 <see cref="ModTextEnergyIconHelper" /> 重定向到自定义路径。
+        ///     匹配的 IL 模式（位于 TryEvaluateFormat 内）：
+        ///     <code>
+        /// ldloc  (text / prefix)
+        /// </code>
+        ///     在 stloc 后插入：
+        ///     <code>
+        /// ldloc  (text)
+        /// ldloc  (text3)
+        /// call   ModTextEnergyIconHelper.OverrideTextIconTag
+        /// call   ModTextEnergyIconHelper.OverrideTextIconTag
+        /// stloc  (text3)
+        /// </code>
         /// </summary>
         [HarmonyAfter(Const.BaseLibHarmonyId)]
         [HarmonyPriority(Priority.Last)]
@@ -110,6 +132,11 @@ namespace STS2RitsuLib.Scaffolding.Content.Patches
     ///     Runtime helper called by the patched formatter.
     ///     On first use it builds a lookup table from all registered mod characters' card pools
     ///     that implement <see cref="IModTextEnergyIconPool" />.
+    ///     that implement <c>IModTextEnergyIconPool</c>.
+    ///     由已修补格式化器调用的运行时辅助方法。
+    ///     首次使用时，它会从所有已注册 mod 角色中实现 <see cref="IModTextEnergyIconPool" /> 的卡牌池
+    ///     构建查找表。
+    ///     实现 <c>IModTextEnergyIconPool</c> 的卡牌池。
     /// </summary>
     internal static class ModTextEnergyIconHelper
     {

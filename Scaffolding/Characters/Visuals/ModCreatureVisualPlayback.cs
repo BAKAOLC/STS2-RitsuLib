@@ -21,6 +21,12 @@ namespace STS2RitsuLib.Scaffolding.Characters.Visuals
     ///     <see cref="RitsuGodotNodeFactories" /> (explicit <c>CreateFromResource</c> / <c>CreateFromScenePath</c>, e.g.
     ///     <c>Texture2D</c> → <see cref="NCreatureVisuals" />) use the same cue names and trigger mapping as patched
     ///     <see cref="NCreature.SetAnimationTrigger" />.
+    ///     Mod 生物视觉的集中播放入口：优先使用 <see cref="IModCharacterAssetOverrides.VisualCues" /> 中可选的逐 cue 贴图和
+    ///     纯数据帧序列；存在 Spine 时使用 Spine track；否则使用视觉子树下的 Godot <see cref="AnimationPlayer" />
+    ///     <see cref="AnimatedSprite2D" />。来自 <see cref="RitsuGodotNodeFactories" /> 的程序化根节点（显式
+    ///     <c>CreateFromResource</c> / <c>CreateFromScenePath</c>，例如 <c>Texture2D</c> →
+    ///     <see cref="NCreatureVisuals" />）使用与已 patch 的 <see cref="NCreature.SetAnimationTrigger" /> 相同的 cue
+    ///     名称和 trigger 映射。
     /// </summary>
     public static class ModCreatureVisualPlayback
     {
@@ -52,13 +58,32 @@ namespace STS2RitsuLib.Scaffolding.Characters.Visuals
 
         /// <summary>
         ///     Attempts to play a logical cue (idle, die, hurt, …) on combat-style <see cref="NCreatureVisuals" />.
+        ///     尝试在战斗风格 <see cref="NCreatureVisuals" /> 上播放逻辑 cue（idle、die、hurt、…）。
         /// </summary>
-        /// <param name="visuals">Creature visuals root.</param>
-        /// <param name="character">Owning character model, for cue texture lookup.</param>
-        /// <param name="primaryCue">Primary name (e.g. <c>die</c>).</param>
-        /// <param name="alternateCueNames">Extra names to try for textures / Spine / Godot nodes.</param>
-        /// <param name="loop">Spine loop flag when a Spine body is used.</param>
-        /// <returns><see langword="true" /> when some layer applied the cue.</returns>
+        /// <param name="visuals">
+        ///     Creature visuals root.
+        ///     生物视觉根节点。
+        /// </param>
+        /// <param name="character">
+        ///     Owning character model, for cue texture lookup.
+        ///     拥有者角色模型，用于 cue 贴图查找。
+        /// </param>
+        /// <param name="primaryCue">
+        ///     Primary name (e.g. <c>die</c>).
+        ///     主名称（例如 <c>die</c>）。
+        /// </param>
+        /// <param name="alternateCueNames">
+        ///     Extra names to try for textures / Spine / Godot nodes.
+        ///     为贴图 / Spine / Godot 节点额外尝试的名称。
+        /// </param>
+        /// <param name="loop">
+        ///     Spine loop flag when a Spine body is used.
+        ///     使用 Spine body 时的 Spine 循环标记。
+        /// </param>
+        /// <returns>
+        ///     <see langword="true" /> when some layer applied the cue.
+        ///     当某一层成功应用 cue 时返回 <see langword="true" />。
+        /// </returns>
         public static bool TryPlayCue(NCreatureVisuals visuals, CharacterModel? character, string primaryCue,
             ReadOnlySpan<string> alternateCueNames = default, bool loop = false)
         {
@@ -80,14 +105,29 @@ namespace STS2RitsuLib.Scaffolding.Characters.Visuals
         /// <summary>
         ///     Plays a merchant-room style animation or static cue on an arbitrary root (typically
         ///     <see cref="MegaCrit.Sts2.Core.Nodes.Screens.Shops.NMerchantCharacter" />).
+        ///     在任意根节点上播放商人房间风格动画或静态 cue（通常是
         /// </summary>
-        /// <param name="root">Visual root (merchant, rest-site character, …).</param>
-        /// <param name="character">Owner for cue lookup.</param>
-        /// <param name="animName">Logical animation / cue name.</param>
-        /// <param name="loop">Loop hint for Spine (non-Spine paths ignore where not applicable).</param>
+        /// <param name="root">
+        ///     Visual root (merchant, rest-site character, …).
+        ///     视觉根节点（商人、休息点角色、…）。
+        /// </param>
+        /// <param name="character">
+        ///     Owner for cue lookup.
+        ///     用于 cue 查找的拥有者。
+        /// </param>
+        /// <param name="animName">
+        ///     Logical animation / cue name.
+        ///     逻辑动画 / cue 名称。
+        /// </param>
+        /// <param name="loop">
+        ///     Loop hint for Spine (non-Spine paths ignore where not applicable).
+        ///     Spine 循环提示（非 Spine 路径在不适用时忽略）。
+        /// </param>
         /// <param name="cueSetOverride">
         ///     When set (e.g. <see cref="IModCharacterAssetOverrides.WorldProceduralVisuals" /> merchant / rest cues),
         ///     used instead of <see cref="IModCharacterAssetOverrides.VisualCues" /> for texture / frame lookup.
+        ///     设置时（例如 <see cref="IModCharacterAssetOverrides.WorldProceduralVisuals" /> 的商人 / 休息点 cue），
+        ///     用它替代 <see cref="IModCharacterAssetOverrides.VisualCues" /> 进行贴图 / 帧查找。
         /// </param>
         public static bool TryPlayOnVisualRoot(Node root, CharacterModel? character, string animName, bool loop = false,
             VisualCueSet? cueSetOverride = null)
@@ -105,8 +145,12 @@ namespace STS2RitsuLib.Scaffolding.Characters.Visuals
 
         /// <summary>
         ///     When the creature has no Spine animator, plays the mapped cue on <see cref="NCreature.Visuals" />.
+        ///     当生物没有 Spine animator 时，在 <see cref="NCreature.Visuals" /> 上播放映射后的 cue。
         /// </summary>
-        /// <returns><see langword="false" /> when Spine is active (caller should run vanilla).</returns>
+        /// <returns>
+        ///     <see langword="false" /> when Spine is active (caller should run vanilla).
+        ///     Spine 激活时返回 <see langword="false" />（调用方应继续运行原版逻辑）。
+        /// </returns>
         public static bool TryPlayFromCreatureAnimatorTrigger(NCreature creature, string trigger)
         {
             if (creature.HasSpineAnimation)
@@ -144,6 +188,8 @@ namespace STS2RitsuLib.Scaffolding.Characters.Visuals
         /// <summary>
         ///     Resolves the owning <see cref="CharacterModel" /> for a merchant-booth <see cref="NMerchantCharacter" />
         ///     in either <see cref="NMerchantRoom" /> or the fake-merchant event screen.
+        ///     为 <see cref="CharacterModel" /> 或 fake-merchant 事件界面中的商人摊位 <see cref="NMerchantCharacter" />
+        ///     解析所属 <see cref="NMerchantRoom" />。
         /// </summary>
         internal static bool TryResolveMerchantCharacterModel(NMerchantCharacter visual,
             out CharacterModel? character)
@@ -227,7 +273,7 @@ namespace STS2RitsuLib.Scaffolding.Characters.Visuals
                 return false;
 
             return TryApplyFrameSequences(visualsRoot, cues, names)
-                   || TryApplySingleTextureCues(visualsRoot, cues.TexturePathByCue, names);
+                   || TryApplySingleTextureCues(visualsRoot, cues, names);
         }
 
         private static bool TryApplyFrameSequences(Node visualsRoot, VisualCueSet cues,
@@ -260,8 +306,9 @@ namespace STS2RitsuLib.Scaffolding.Characters.Visuals
         }
 
         private static bool TryApplySingleTextureCues(Node visualsRoot,
-            IReadOnlyDictionary<string, string>? map, ReadOnlySpan<string> names)
+            VisualCueSet cues, ReadOnlySpan<string> names)
         {
+            var map = cues.TexturePathByCue;
             if (map == null || map.Count == 0)
                 return false;
 
@@ -282,6 +329,10 @@ namespace STS2RitsuLib.Scaffolding.Characters.Visuals
                     continue;
 
                 sprite.Texture = tex;
+                if (cues.TextureStyleByCue is { Count: > 0 } styles &&
+                    TryGetCueStyle(styles, name, out var style))
+                    style.ApplyTo(sprite);
+
                 return true;
             }
 
@@ -323,6 +374,26 @@ namespace STS2RitsuLib.Scaffolding.Characters.Visuals
                 }
 
             path = null;
+            return false;
+        }
+
+        private static bool TryGetCueStyle(IReadOnlyDictionary<string, VisualNodeStyle> map, string key,
+            out VisualNodeStyle? style)
+        {
+            if (map.TryGetValue(key, out var found))
+            {
+                style = found;
+                return true;
+            }
+
+            foreach (var kv in map)
+                if (string.Equals(kv.Key, key, StringComparison.OrdinalIgnoreCase))
+                {
+                    style = kv.Value;
+                    return true;
+                }
+
+            style = null;
             return false;
         }
 

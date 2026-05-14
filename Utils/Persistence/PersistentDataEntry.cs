@@ -6,6 +6,7 @@ namespace STS2RitsuLib.Utils.Persistence
 {
     /// <summary>
     ///     Typed JSON persistence wrapper with optional migrations, backup recovery, and change notifications.
+    ///     带可选迁移、备份恢复和变更通知的类型化 JSON 持久化包装器。
     /// </summary>
     public class PersistentDataEntry<T> where T : class, new()
     {
@@ -19,6 +20,7 @@ namespace STS2RitsuLib.Utils.Persistence
 
         /// <summary>
         ///     Initializes in-memory data from <paramref name="defaultValues" /> and captures persistence settings.
+        ///     从 <paramref name="defaultValues" /> 初始化内存数据，并捕获持久化设置。
         /// </summary>
         public PersistentDataEntry(
             string modId,
@@ -43,29 +45,37 @@ namespace STS2RitsuLib.Utils.Persistence
 
         /// <summary>
         ///     Current deserialized data object (mutate via <see cref="Modify" /> for change notifications).
+        ///     当前 deserialized 数据 object (mutate via <see cref="Modify" /> 用于 change notifications).
         /// </summary>
         public T Data { get; private set; }
 
         /// <summary>
         ///     Resolved absolute path for this entry using the active profile.
+        ///     使用活动档案解析出的此条目绝对路径。
         /// </summary>
         public string FilePath =>
             StoragePathResolver.ResolveFilePathUser(_modId, _fileName, Scope, _contextProvider?.Invoke());
 
         /// <summary>
         ///     Whether this file lives under global account storage or a profile subdirectory.
+        ///     此文件位于全局账户存储还是档案子目录下。
         /// </summary>
         public SaveScope Scope { get; }
 
         /// <summary>
         ///     Raised after load/save cycles and in-memory modifications.
+        ///     在加载 / 保存周期和内存修改后触发。
         /// </summary>
         public event Action? Changed;
 
         /// <summary>
         ///     Reads JSON from disk (with backup fallback), applies migrations, and updates <see cref="Data" />.
+        ///     从磁盘读取 JSON（带备份回退），应用迁移，并更新 <see cref="Data" />。
         /// </summary>
-        /// <returns>False when defaults were used due to missing or invalid files.</returns>
+        /// <returns>
+        ///     False when defaults were used due to missing or invalid files.
+        ///     当因文件缺失或无效而使用默认值时为 false。
+        /// </returns>
         public bool Load()
         {
             var currentPath = FilePath;
@@ -119,6 +129,7 @@ namespace STS2RitsuLib.Utils.Persistence
 
         /// <summary>
         ///     Serializes <see cref="Data" /> to <see cref="FilePath" />.
+        ///     将 <see cref="Data" /> 序列化到 <see cref="FilePath" />。
         /// </summary>
         public bool Save()
         {
@@ -127,6 +138,7 @@ namespace STS2RitsuLib.Utils.Persistence
 
         /// <summary>
         ///     Serializes <see cref="Data" /> to an explicit path (for exports or tests).
+        ///     将 <see cref="Data" /> 序列化到显式路径（用于导出或测试）。
         /// </summary>
         public bool SaveTo(string path)
         {
@@ -149,6 +161,7 @@ namespace STS2RitsuLib.Utils.Persistence
 
         /// <summary>
         ///     Applies an in-place mutation to <see cref="Data" /> and raises <see cref="Changed" />.
+        ///     对 <see cref="Data" /> 应用原地修改，并触发 <see cref="Changed" />。
         /// </summary>
         public void Modify(Action<T> modifier)
         {

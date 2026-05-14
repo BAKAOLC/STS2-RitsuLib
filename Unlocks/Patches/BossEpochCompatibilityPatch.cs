@@ -10,6 +10,7 @@ namespace STS2RitsuLib.Unlocks.Patches
 {
     /// <summary>
     ///     Applies mod-specific boss-win epoch rules instead of vanilla fifteen-boss logic for mod characters.
+    ///     对 mod 角色应用 mod 专属 Boss 胜利纪元规则，而非原版十五次 Boss 逻辑。
     /// </summary>
     public class BossEpochCompatibilityPatch : IPatchMethod
     {
@@ -32,6 +33,7 @@ namespace STS2RitsuLib.Unlocks.Patches
         // ReSharper disable once InconsistentNaming
         /// <summary>
         ///     Counts boss wins and obtains the registered epoch, or suppresses vanilla when no rule exists.
+        ///     统计 Boss 胜利并获得已注册纪元；没有规则时抑制原版逻辑。
         /// </summary>
         public static bool Prefix(ProgressSaveManager __instance, Player localPlayer)
         {

@@ -9,6 +9,8 @@ namespace STS2RitsuLib.Scaffolding.Cards.HandOutline
     /// <summary>
     ///     Per–card-type custom outline colors for the in-hand <see cref="MegaCrit.Sts2.Core.Nodes.Cards.NCardHighlight" />.
     ///     Applied after vanilla <see cref="MegaCrit.Sts2.Core.Nodes.Cards.Holders.NHandCardHolder.UpdateCard" /> via Harmony.
+    ///     手牌中 <see cref="MegaCrit.Sts2.Core.Nodes.Cards.NCardHighlight" /> 的逐卡牌类型自定义描边颜色。
+    ///     在原版 <see cref="MegaCrit.Sts2.Core.Nodes.Cards.Holders.NHandCardHolder.UpdateCard" /> 之后通过 Harmony 应用。
     /// </summary>
     public static class ModCardHandOutlineRegistry
     {
@@ -18,6 +20,7 @@ namespace STS2RitsuLib.Scaffolding.Cards.HandOutline
 
         /// <summary>
         ///     Registers a rule for <typeparamref name="TCard" />. Throws if <see cref="ModContentRegistry.IsFrozen" />.
+        ///     为 <typeparamref name="TCard" /> 注册规则。如果 <see cref="ModContentRegistry.IsFrozen" /> 则抛出。
         /// </summary>
         public static void Register<TCard>(ModCardHandOutlineRule rule) where TCard : CardModel
         {
@@ -26,6 +29,7 @@ namespace STS2RitsuLib.Scaffolding.Cards.HandOutline
 
         /// <summary>
         ///     Registers a rule for <paramref name="cardType" /> (<see cref="CardModel" /> subtype).
+        ///     为 <paramref name="cardType" />（<see cref="CardModel" /> 子类型）注册规则。
         /// </summary>
         public static void Register(Type cardType, ModCardHandOutlineRule rule)
         {
@@ -57,6 +61,7 @@ namespace STS2RitsuLib.Scaffolding.Cards.HandOutline
 
         /// <summary>
         ///     Clears all rules (tests / tooling).
+        ///     清除所有规则（测试 / 工具使用）。
         /// </summary>
         public static void ClearForTests()
         {
@@ -65,8 +70,12 @@ namespace STS2RitsuLib.Scaffolding.Cards.HandOutline
 
         /// <summary>
         ///     Applies the best matching registered outline for this holder
+        ///     为此 holder 应用最佳匹配的已注册描边。
         /// </summary>
-        /// <returns><see langword="true" /> if a rule was applied.</returns>
+        /// <returns>
+        ///     <see langword="true" /> if a rule was applied.
+        ///     应用了规则时返回 <see langword="true" />。
+        /// </returns>
         public static bool TryRefreshOutlineForHolder(NHandCardHolder? holder)
         {
             if (holder == null || !holder.IsNodeReady() || holder.CardNode?.Model is not { } model)
@@ -82,6 +91,7 @@ namespace STS2RitsuLib.Scaffolding.Cards.HandOutline
 
         /// <summary>
         ///     Applies outline only when the matching rule uses <see cref="ModCardHandOutlineRule.DynamicColor" />.
+        ///     仅当匹配规则使用 <see cref="ModCardHandOutlineRule.DynamicColor" /> 时应用描边。
         /// </summary>
         public static bool TryRefreshDynamicOutlineForHolder(NHandCardHolder? holder)
         {

@@ -8,6 +8,10 @@ namespace STS2RitsuLib.Scaffolding.Godot.NodeFactories
     ///     Non-Spine combat playback remains handled by <see cref="Characters.Visuals.ModCreatureVisualPlayback" />.
     ///     Named slots match <c>NCreatureVisualsFactory</c>; missing <c>%OrbPos</c> / <c>%TalkPos</c> are not synthesized
     ///     (same as baselib): <see cref="NCreatureVisuals" /> falls back to <c>IntentPos</c> / <c>null</c>.
+    ///     从原版风格场景或 <see cref="Texture2D" />（Sprite2D 主体）构建 <see cref="NCreatureVisuals" />。
+    ///     非 Spine 战斗播放仍由 <see cref="Characters.Visuals.ModCreatureVisualPlayback" /> 处理。
+    ///     命名槽位与 <c>NCreatureVisualsFactory</c> 匹配；缺失的 <c>%OrbPos</c> / <c>%TalkPos</c> 不会被合成
+    ///     （与 baselib 相同）：<see cref="NCreatureVisuals" /> 会回退到 <c>IntentPos</c> / <c>null</c>。
     /// </summary>
     internal sealed class RitsuNCreatureVisualsNodeFactory() : RitsuGodotNodeFactory<NCreatureVisuals>([
         new RitsuGodotNodeSlot<Node2D>("%Visuals"),
@@ -47,6 +51,12 @@ namespace STS2RitsuLib.Scaffolding.Godot.NodeFactories
             visuals.Position = new(0, -imgSize.Y * 0.5f);
 
             return root;
+        }
+
+        protected override Node? ResolveDefaultStyleTarget(NCreatureVisuals root, bool fromResource)
+        {
+            return root.GetNodeOrNull("%Visuals") ??
+                   root.GetNodeOrNull("Visuals") ?? base.ResolveDefaultStyleTarget(root, fromResource);
         }
 
         protected override void GenerateNode(NCreatureVisuals target, IRitsuGodotNodeSlot required)

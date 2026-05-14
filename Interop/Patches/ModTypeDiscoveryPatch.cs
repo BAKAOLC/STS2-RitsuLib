@@ -7,6 +7,8 @@ namespace STS2RitsuLib.Interop.Patches
     /// <summary>
     ///     Runs the <see cref="ModTypeDiscoveryHub" /> pipeline once, at the same lifecycle point BaseLib uses
     ///     (before heavy game systems consume localization).
+    ///     在 BaseLib 使用的同一生命周期点运行一次 <see cref="ModTypeDiscoveryHub" /> 管线
+    ///     （重型游戏系统消费本地化之前）。
     /// </summary>
     public sealed class ModTypeDiscoveryPatch : IPatchMethod
     {
@@ -31,6 +33,7 @@ namespace STS2RitsuLib.Interop.Patches
 
         /// <summary>
         ///     Runs <see cref="ModTypeDiscoveryHub.RunOnce" /> once before localization initialization proceeds.
+        ///     在本地化初始化继续前运行一次 <see cref="ModTypeDiscoveryHub.RunOnce" />。
         /// </summary>
         public static void Prefix()
         {

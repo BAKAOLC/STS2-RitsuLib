@@ -16,6 +16,8 @@ namespace STS2RitsuLib.Scaffolding.Characters.Patches
     ///     Reimplements <c>NFakeMerchant.AfterRoomIsLoaded</c> so player booth visuals use the same
     ///     <see cref="NMerchantCharacter" /> path as <see cref="NMerchantRoomProceduralCharacterInstantiationPatch" />
     ///     (including procedural merchant shells and world cue playback).
+    ///     重新实现 <c>NFakeMerchant.AfterRoomIsLoaded</c>，让玩家摊位视觉使用与 <see cref="NMerchantCharacter" /> 相同的路径，和
+    ///     <see cref="NMerchantRoomProceduralCharacterInstantiationPatch" /> 一致（包括程序化商人外壳和世界 cue 播放）。
     /// </summary>
     public class NFakeMerchantProceduralCharacterInstantiationPatch : IPatchMethod
     {
@@ -52,6 +54,7 @@ namespace STS2RitsuLib.Scaffolding.Characters.Patches
         /// <summary>
         ///     Replaces vanilla player combat-style visuals layout; returns <see langword="false" /> so the
         ///     original <c>AfterRoomIsLoaded</c> is skipped.
+        ///     替换原版玩家战斗风格的视觉布局；返回 <see langword="false" />，使原始 <c>AfterRoomIsLoaded</c> 被跳过。
         /// </summary>
         public static bool Prefix(NFakeMerchant __instance)
         {

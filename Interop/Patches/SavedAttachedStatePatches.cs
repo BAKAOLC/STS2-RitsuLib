@@ -8,6 +8,8 @@ namespace STS2RitsuLib.Interop.Patches
     /// <summary>
     ///     Bridges <see cref="SavedAttachedState{TKey,TValue}" /> instances into <see cref="SavedProperties" />
     ///     serialization and deserialization.
+    ///     将 <see cref="SavedAttachedState{TKey,TValue}" /> 实例桥接到 <see cref="SavedProperties" />
+    ///     序列化和反序列化。
     /// </summary>
     public static class SavedAttachedStatePatches
     {
@@ -37,6 +39,7 @@ namespace STS2RitsuLib.Interop.Patches
 
         /// <summary>
         ///     Exports registered saved attached states after vanilla model properties are serialized.
+        ///     在原版模型属性序列化后导出已注册的已保存附加状态。
         /// </summary>
         public sealed class SavedPropertiesFromInternalPatch : IPatchMethod
         {
@@ -62,6 +65,7 @@ namespace STS2RitsuLib.Interop.Patches
 
             /// <summary>
             ///     Exports registered saved attached states after vanilla model properties are serialized.
+            ///     在原版模型属性序列化后导出已注册的已保存附加状态。
             /// </summary>
             // ReSharper disable once InconsistentNaming
             // ReSharper disable once UnusedParameter
@@ -73,6 +77,7 @@ namespace STS2RitsuLib.Interop.Patches
 
         /// <summary>
         ///     Imports registered saved attached states after vanilla model properties are deserialized.
+        ///     在原版模型属性反序列化后导入已注册的已保存附加状态。
         /// </summary>
         public sealed class SavedPropertiesFillInternalPatch : IPatchMethod
         {
@@ -97,6 +102,7 @@ namespace STS2RitsuLib.Interop.Patches
 
             /// <summary>
             ///     Imports registered saved attached states after vanilla model properties are deserialized.
+            ///     在原版模型属性反序列化后导入已注册的已保存附加状态。
             /// </summary>
             // ReSharper disable once InconsistentNaming
             public static void Postfix(SavedProperties __instance, object model)

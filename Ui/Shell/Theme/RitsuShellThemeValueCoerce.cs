@@ -6,11 +6,13 @@ namespace STS2RitsuLib.Ui.Shell.Theme
     /// <summary>
     ///     Coerces resolved <see cref="LeafToken" /> values to typed CLR values used by the snapshot
     ///     (<see cref="Color" />, <see cref="float" />, <see cref="int" />, <see cref="bool" />, <see cref="Font" />).
+    ///     强制转换 解析后的 <see cref="LeafToken" /> 值为类型化 CLR 值 由快照使用
     /// </summary>
     internal static class RitsuShellThemeValueCoerce
     {
         /// <summary>
         ///     Default font fallback path used when a font token cannot be loaded.
+        ///     字体令牌无法加载时使用的默认字体回退路径。
         /// </summary>
         public const string DefaultFontFallbackPath = "res://themes/kreon_regular_shared.tres";
 
@@ -20,6 +22,7 @@ namespace STS2RitsuLib.Ui.Shell.Theme
 
         /// <summary>
         ///     Coerces a leaf token to <see cref="Color" />.
+        ///     将叶令牌强制转换为 <see cref="Color" />。
         /// </summary>
         public static bool TryAsColor(LeafToken? leaf, out Color color)
         {
@@ -29,6 +32,7 @@ namespace STS2RitsuLib.Ui.Shell.Theme
 
         /// <summary>
         ///     Coerces a leaf token to a <see cref="double" /> dimension.
+        ///     将叶令牌强制转换为 <see cref="double" /> 尺寸值。
         /// </summary>
         public static bool TryAsDouble(LeafToken? leaf, out double value)
         {
@@ -58,6 +62,7 @@ namespace STS2RitsuLib.Ui.Shell.Theme
 
         /// <summary>
         ///     Coerces a leaf token to <see cref="bool" />.
+        ///     将叶令牌强制转换为 <see cref="bool" />。
         /// </summary>
         public static bool TryAsBool(LeafToken? leaf, out bool value)
         {
@@ -84,6 +89,8 @@ namespace STS2RitsuLib.Ui.Shell.Theme
         /// <summary>
         ///     Loads a font from a leaf token (Godot resource path or theme-relative file). Falls back to the shared
         ///     Kreon Regular font when the path cannot be resolved.
+        ///     从叶令牌加载字体（Godot 资源路径或主题相对文件）。路径无法解析时，回退到共享的
+        ///     Kreon Regular 字体。
         /// </summary>
         public static Font AsFont(LeafToken? leaf)
         {
@@ -93,6 +100,7 @@ namespace STS2RitsuLib.Ui.Shell.Theme
 
         /// <summary>
         ///     Parses <c>#RRGGBB</c> or <c>#RRGGBBAA</c>.
+        ///     解析 <c>#RRGGBB</c> or <c>#RRGGBBAA</c>。
         /// </summary>
         public static bool TryParseHexColor(string raw, out Color color)
         {

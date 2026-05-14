@@ -7,6 +7,8 @@ namespace STS2RitsuLib.Content.Patches
     /// <summary>
     ///     Force RitsuLib-registered content to use one fixed public entry format.
     ///     This keeps game localization keys and default asset paths predictable without extra rewrite patches.
+    ///     强制 RitsuLib 注册内容使用一种固定公共条目格式。
+    ///     这让游戏本地化键和默认资源路径保持可预测，而无需额外的重写补丁。
     /// </summary>
     public class ModelDbModdedEntryPatch : IPatchMethod
     {
@@ -30,6 +32,8 @@ namespace STS2RitsuLib.Content.Patches
         /// <summary>
         ///     Replaces <paramref name="__result" /> with the RitsuLib fixed entry when <paramref name="type" /> is owned by a
         ///     mod.
+        ///     当 <paramref name="type" /> 由某个 mod 拥有时，将 <paramref name="__result" /> 替换为
+        ///     RitsuLib 固定条目。
         /// </summary>
         [HarmonyPriority(Priority.Last)]
         public static void Postfix(Type type, ref string __result)

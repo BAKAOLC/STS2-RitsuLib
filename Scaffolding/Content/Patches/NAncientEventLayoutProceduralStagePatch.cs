@@ -1,3 +1,4 @@
+using Godot;
 using HarmonyLib;
 using MegaCrit.Sts2.Core.Helpers;
 using MegaCrit.Sts2.Core.Models;
@@ -9,8 +10,11 @@ using STS2RitsuLib.Scaffolding.Content.Visuals;
 namespace STS2RitsuLib.Scaffolding.Content.Patches
 {
     /// <summary>
-    ///     After <see cref="NAncientEventLayout.InitializeVisuals" />, replaces the background subtree with procedural
-    ///     layered sprites when <see cref="AncientEventPresentationAssetProfile.StageProcedural" /> is set.
+    ///     After <see cref="NAncientEventLayout.InitializeVisuals" />, replaces the instantiated background subtree with
+    ///     procedural stage layers when <see cref="AncientEventPresentationAssetProfile.StageProcedural" /> is set.
+    ///     在 <see cref="NAncientEventLayout.InitializeVisuals" /> 之后，当设置了
+    ///     <see cref="AncientEventPresentationAssetProfile.StageProcedural" /> 时，
+    ///     用程序化舞台图层替换已实例化的背景子树。
     /// </summary>
     public class NAncientEventLayoutProceduralStagePatch : IPatchMethod
     {
@@ -39,6 +43,7 @@ namespace STS2RitsuLib.Scaffolding.Content.Patches
         // ReSharper disable once InconsistentNaming
         /// <summary>
         ///     Replaces the instantiated background subtree with procedural sprites when <c>StageProcedural</c> is set.
+        ///     当设置了 <c>StageProcedural</c> 时，用程序化 sprite 替换已实例化的背景子树。
         /// </summary>
         public static void Postfix(NAncientEventLayout __instance)
         {
@@ -46,11 +51,18 @@ namespace STS2RitsuLib.Scaffolding.Content.Patches
             if (ancient is not IModAncientEventAssetOverrides mod)
                 return;
 
-            var stage = mod.AncientPresentationAssetProfile.StageProcedural;
+            var stage = mod.AncientPresentationAssetProfile?.StageProcedural;
             if (stage == null)
                 return;
 
             var container = BgContainerRef(__instance);
+            if (container == null || !GodotObject.IsInstanceValid(container))
+            {
+                RitsuLibFramework.Logger.Warn(
+                    "[AncientStage] Could not mount StageProcedural because NAncientEventLayout._ancientBgContainer is not available.");
+                return;
+            }
+
             foreach (var child in container.GetChildren().ToList())
             {
                 container.RemoveChildSafely(child);

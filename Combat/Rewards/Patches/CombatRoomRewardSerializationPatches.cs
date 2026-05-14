@@ -7,9 +7,12 @@ using STS2RitsuLib.Patching.Models;
 namespace STS2RitsuLib.Combat.Rewards.Patches
 {
     /// <summary>
-    ///     After <see cref="CombatRoom.ToSerializable" />, flushes any
-    ///     <see cref="RewardExtData" /> attached to <see cref="SerializableReward" /> instances
-    ///     into <see cref="SerializableRoom.EncounterState" /> as JSON strings.
+    ///     Flushes reward sideband data into <see cref="SerializableRoom.EncounterState" /> after
+    ///     <see cref="CombatRoom.ToSerializable" /> creates serializable rewards.
+    ///     <c>EncounterState</c>。
+    ///     在 <see cref="CombatRoom.ToSerializable" /> 创建可序列化 reward 后，将 reward sideband 数据写入
+    ///     <see cref="SerializableRoom.EncounterState" />。
+    ///     <c>EncounterState</c>。
     /// </summary>
     internal sealed class CombatRoomToSerializableRewardExtPatch : IPatchMethod
     {
@@ -29,13 +32,16 @@ namespace STS2RitsuLib.Combat.Rewards.Patches
         public static void Postfix(ref SerializableRoom __result)
             // ReSharper restore InconsistentNaming
         {
-            if (RewardSerializationExt.IsBaselibRewardPatchLoaded())
-                return;
+            var baselibRewardPatchLoaded = RewardSerializationExt.IsBaselibRewardPatchLoaded();
 
             foreach (var (netId, rewards) in __result.ExtraRewards)
                 for (var i = 0; i < rewards.Count; i++)
                 {
                     if (!RewardSerializationExt.TryGetExtData(rewards[i], out var ext) || ext == null)
+                        continue;
+                    // BaseLib owns CardReward sideband serialization when present. RitsuLib still persists
+                    // custom reward payloads because BaseLib does not know about RitsuLib reward ids.
+                    if (baselibRewardPatchLoaded && !ext.HasCustomRewardData)
                         continue;
 
                     var key = RewardSerializationExt.MakeKey(netId, i);
@@ -46,10 +52,10 @@ namespace STS2RitsuLib.Combat.Rewards.Patches
     }
 
     /// <summary>
-    ///     Before <see cref="CombatRoom.FromSerializable" /> processes rewards, extracts
-    ///     sideband data from <see cref="SerializableRoom.EncounterState" /> and attaches it
-    ///     to the corresponding <see cref="SerializableReward" /> instances so that
-    ///     <see cref="RewardFromSerializableExtPatch" /> can consume them.
+    ///     Restores reward sideband data from <see cref="SerializableRoom.EncounterState" /> before
+    ///     <see cref="CombatRoom.FromSerializable" /> rebuilds rewards.
+    ///     在 <see cref="CombatRoom.FromSerializable" /> 重建 reward 前，从 <see cref="SerializableRoom.EncounterState" /> 还原 reward
+    ///     sideband 数据。
     /// </summary>
     internal sealed class CombatRoomFromSerializableRewardExtPatch : IPatchMethod
     {
@@ -69,11 +75,10 @@ namespace STS2RitsuLib.Combat.Rewards.Patches
         public static void Prefix(SerializableRoom serializableRoom)
             // ReSharper restore InconsistentNaming
         {
-            if (RewardSerializationExt.IsBaselibRewardPatchLoaded())
-                return;
-
             if (serializableRoom.EncounterState == null)
                 return;
+
+            var baselibRewardPatchLoaded = RewardSerializationExt.IsBaselibRewardPatchLoaded();
 
             foreach (var (key, json) in serializableRoom.EncounterState)
             {
@@ -87,8 +92,13 @@ namespace STS2RitsuLib.Combat.Rewards.Patches
                     continue;
 
                 var ext = RewardSerializationExt.FromJson(json);
-                if (ext != null)
-                    RewardSerializationExt.SetExtData(rewards[index], ext);
+                if (ext == null)
+                    continue;
+                // Match the ToSerializable side: keep custom reward payloads, leave CardReward data to BaseLib.
+                if (baselibRewardPatchLoaded && !ext.HasCustomRewardData)
+                    continue;
+
+                RewardSerializationExt.SetExtData(rewards[index], ext);
             }
 
             foreach (var (_, rewards) in serializableRoom.ExtraRewards)

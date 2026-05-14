@@ -7,10 +7,11 @@ using STS2RitsuLib.Patching.Models;
 namespace STS2RitsuLib.Combat.Rewards.Patches
 {
     /// <summary>
-    ///     Replaces <see cref="CardReward.ToSerializable" /> to handle Flags, CustomCardPool,
-    ///     and CardPoolFilter without throwing <see cref="NotImplementedException" />.
-    ///     Extended data is stored via <see cref="RewardSerializationExt" /> sideband and later
-    ///     written to <c>EncounterState</c> by the room serialization postfix.
+    ///     Replaces <see cref="CardReward.ToSerializable" /> when vanilla cannot serialize Flags,
+    ///     CustomCardPool, or CardPoolFilter.
+    ///     <c>CardReward.ToSerializable</c>。
+    ///     当原版无法序列化 Flags、CustomCardPool 或 CardPoolFilter 时，替换 <see cref="CardReward.ToSerializable" />。
+    ///     <c>CardReward.ToSerializable</c>。
     /// </summary>
     internal sealed class CardRewardToSerializablePatch : IPatchMethod
     {
@@ -38,6 +39,7 @@ namespace STS2RitsuLib.Combat.Rewards.Patches
         public static bool Prefix(CardReward __instance, ref SerializableReward __result)
             // ReSharper restore InconsistentNaming
         {
+            // BaseLib has its own CardReward serializer; avoid competing with it.
             if (RewardSerializationExt.IsBaselibRewardPatchLoaded())
                 return true;
 

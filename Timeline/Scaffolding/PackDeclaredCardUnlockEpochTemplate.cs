@@ -10,11 +10,16 @@ namespace STS2RitsuLib.Timeline.Scaffolding
     ///     <see cref="TimelineColumnPackEntry{TStory}" /> (not on the epoch subclass). Keeps <see cref="QueueUnlocks" />,
     ///     <see cref="EpochModel.UnlockText" />, and <see cref="Unlocks.ModUnlockRegistry" /> in sync from one manifest
     ///     registration.
+    ///     卡牌解锁纪元，其受门控的卡牌类型通过内容包中的
+    ///     <see cref="TimelineColumnPackEntry{TStory}" /> 声明（而不是在纪元子类上声明）。它让 <see cref="QueueUnlocks" />、
+    ///     <see cref="EpochModel.UnlockText" /> 和 <see cref="Unlocks.ModUnlockRegistry" /> 从同一份 manifest
+    ///     注册保持同步。
     /// </summary>
     public abstract class PackDeclaredCardUnlockEpochTemplate : ModEpochTemplate
     {
         /// <summary>
         ///     Cards resolved from <see cref="ModEpochGatedContentRegistry" /> for this epoch’s <see cref="EpochModel.Id" />.
+        ///     解析出的卡牌，来源： <see cref="ModEpochGatedContentRegistry" /> 用于此纪元的 <see cref="EpochModel.Id" />。
         /// </summary>
         public IReadOnlyList<CardModel> Cards => ModEpochGatedContentRegistry.ResolveCards(Id);
 
@@ -23,6 +28,7 @@ namespace STS2RitsuLib.Timeline.Scaffolding
 
         /// <summary>
         ///     Additional epoch types to append when this epoch unlocks.
+        ///     要追加的额外纪元类型 当此纪元解锁时。
         /// </summary>
         protected virtual IEnumerable<Type> ExpansionEpochTypes => [];
 

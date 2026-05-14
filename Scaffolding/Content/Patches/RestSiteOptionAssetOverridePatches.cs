@@ -9,6 +9,8 @@ namespace STS2RitsuLib.Scaffolding.Content.Patches
     /// <summary>
     ///     Patches <see cref="RestSiteOption.Icon" /> to load a custom texture when the option implements
     ///     <see cref="IModRestSiteOptionAssetOverrides" />.
+    ///     修补 <see cref="RestSiteOption.Icon" />，当选项实现
+    ///     <see cref="IModRestSiteOptionAssetOverrides" /> 时加载自定义纹理。
     /// </summary>
     public class RestSiteOptionIconPatch : IPatchMethod
     {
@@ -30,6 +32,7 @@ namespace STS2RitsuLib.Scaffolding.Content.Patches
         // ReSharper disable InconsistentNaming
         /// <summary>
         ///     Loads the texture from <see cref="IModRestSiteOptionAssetOverrides.CustomIconPath" /> when present.
+        ///     存在时从 <see cref="IModRestSiteOptionAssetOverrides.CustomIconPath" /> 加载纹理。
         /// </summary>
         public static bool Prefix(RestSiteOption __instance, ref Texture2D __result)
             // ReSharper restore InconsistentNaming
@@ -45,6 +48,10 @@ namespace STS2RitsuLib.Scaffolding.Content.Patches
     /// <summary>
     ///     Patches <see cref="RestSiteOption.Title" /> to return a custom <see cref="LocString" /> when the option
     ///     implements <see cref="IModRestSiteOptionCustomTitle" />.
+    ///     implements <c>IModRestSiteOptionCustomTitle</c>.
+    ///     修补 <see cref="RestSiteOption.Title" />，当选项
+    ///     实现 <see cref="IModRestSiteOptionCustomTitle" /> 时返回自定义 <see cref="LocString" />。
+    ///     实现 <c>IModRestSiteOptionCustomTitle</c>。
     /// </summary>
     public class RestSiteOptionTitlePatch : IPatchMethod
     {
@@ -66,6 +73,7 @@ namespace STS2RitsuLib.Scaffolding.Content.Patches
         // ReSharper disable InconsistentNaming
         /// <summary>
         ///     Returns <see cref="IModRestSiteOptionCustomTitle.CustomTitle" /> when non-null.
+        ///     当non-null时返回 <see cref="IModRestSiteOptionCustomTitle.CustomTitle" />。
         /// </summary>
         public static bool Prefix(RestSiteOption __instance, ref LocString __result)
             // ReSharper restore InconsistentNaming

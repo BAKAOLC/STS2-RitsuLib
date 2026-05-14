@@ -19,6 +19,8 @@ namespace STS2RitsuLib.Lifecycle.Patches
     /// <summary>
     ///     Compatibility: replaces multiplayer load-screen <c>BeginRun</c> so starting a run is blocked when any player
     ///     references an unregistered character, without deleting saves; otherwise mirrors vanilla load flow.
+    ///     兼容性：替换多人加载界面的 <c>BeginRun</c>，当任意玩家引用未注册角色时阻止开始跑局且不删除存档；
+    ///     其他情况下镜像原版加载流程。
     /// </summary>
     public class NMultiplayerLoadGameScreenBeginRunMissingCharacterPatch : IPatchMethod
     {
@@ -49,6 +51,7 @@ namespace STS2RitsuLib.Lifecycle.Patches
 
         /// <summary>
         ///     Harmony prefix: skips vanilla <c>BeginRun</c>, disables confirm/back, and runs async validation and load.
+        ///     Harmony prefix：跳过原版 <c>BeginRun</c>，禁用确认/返回按钮，并运行异步验证和加载。
         /// </summary>
         // ReSharper disable once InconsistentNaming
         public static bool Prefix(NMultiplayerLoadGameScreen __instance)
@@ -112,6 +115,8 @@ namespace STS2RitsuLib.Lifecycle.Patches
     /// <summary>
     ///     Compatibility: replaces custom-run load-screen <c>BeginRun</c> so starting a run is blocked when any player
     ///     references an unregistered character, without deleting saves; otherwise mirrors vanilla load flow.
+    ///     兼容性：替换自定义跑局加载界面的 <c>BeginRun</c>，当任意玩家引用未注册角色时阻止开始跑局且不删除存档；
+    ///     其他情况下镜像原版加载流程。
     /// </summary>
     public class NCustomRunLoadScreenBeginRunMissingCharacterPatch : IPatchMethod
     {
@@ -142,6 +147,7 @@ namespace STS2RitsuLib.Lifecycle.Patches
 
         /// <summary>
         ///     Harmony prefix: skips vanilla <c>BeginRun</c>, disables confirm/back, and runs async validation and load.
+        ///     Harmony prefix：跳过原版 <c>BeginRun</c>，禁用确认/返回按钮，并运行异步验证和加载。
         /// </summary>
         // ReSharper disable once InconsistentNaming
         public static bool Prefix(NCustomRunLoadScreen __instance)
@@ -205,17 +211,19 @@ namespace STS2RitsuLib.Lifecycle.Patches
     /// <summary>
     ///     Compatibility: replaces daily-run load-screen <c>BeginRun</c> so starting a run is blocked when any player
     ///     references an unregistered character, without deleting saves; otherwise mirrors vanilla load flow.
+    ///     兼容性：替换每日跑局加载界面的 <c>BeginRun</c>，当任意玩家引用未注册角色时阻止开始跑局且不删除存档；
+    ///     其他情况下镜像原版加载流程。
     /// </summary>
     public class NDailyRunLoadScreenBeginRunMissingCharacterPatch : IPatchMethod
     {
-        private static readonly AccessTools.FieldRef<NDailyRunLoadScreen, LoadRunLobby?> LobbyRef =
-            AccessTools.FieldRefAccess<NDailyRunLoadScreen, LoadRunLobby?>("_lobby");
+        private static readonly Lazy<AccessTools.FieldRef<NDailyRunLoadScreen, LoadRunLobby?>> LobbyRefLazy =
+            new(() => AccessTools.FieldRefAccess<NDailyRunLoadScreen, LoadRunLobby?>("_lobby"));
 
-        private static readonly AccessTools.FieldRef<NDailyRunLoadScreen, NConfirmButton> EmbarkRef =
-            AccessTools.FieldRefAccess<NDailyRunLoadScreen, NConfirmButton>("_embarkButton");
+        private static readonly Lazy<AccessTools.FieldRef<NDailyRunLoadScreen, NConfirmButton>> EmbarkRefLazy =
+            new(() => AccessTools.FieldRefAccess<NDailyRunLoadScreen, NConfirmButton>("_embarkButton"));
 
-        private static readonly AccessTools.FieldRef<NDailyRunLoadScreen, NBackButton> UnreadyRef =
-            AccessTools.FieldRefAccess<NDailyRunLoadScreen, NBackButton>("_unreadyButton");
+        private static readonly Lazy<AccessTools.FieldRef<NDailyRunLoadScreen, NBackButton>> UnreadyRefLazy =
+            new(() => AccessTools.FieldRefAccess<NDailyRunLoadScreen, NBackButton>("_unreadyButton"));
 
         /// <inheritdoc />
         public static string PatchId => "ndaily_run_load_begin_run_missing_character";
@@ -235,20 +243,21 @@ namespace STS2RitsuLib.Lifecycle.Patches
 
         /// <summary>
         ///     Harmony prefix: skips vanilla <c>BeginRun</c>, disables embark/back, and runs async validation and load.
+        ///     Harmony prefix：跳过原版 <c>BeginRun</c>，禁用出发/返回按钮，并运行异步验证和加载。
         /// </summary>
         // ReSharper disable once InconsistentNaming
         public static bool Prefix(NDailyRunLoadScreen __instance)
         {
             NAudioManager.Instance?.StopMusic();
-            EmbarkRef(__instance).Disable();
-            UnreadyRef(__instance).Disable();
+            EmbarkRefLazy.Value(__instance).Disable();
+            UnreadyRefLazy.Value(__instance).Disable();
             TaskHelper.RunSafely(StartRunAsync(__instance));
             return false;
         }
 
         private static async Task StartRunAsync(NDailyRunLoadScreen screen)
         {
-            var lobby = LobbyRef(screen);
+            var lobby = LobbyRefLazy.Value(screen);
             if (lobby == null)
                 return;
 
@@ -258,8 +267,8 @@ namespace STS2RitsuLib.Lifecycle.Patches
                 RitsuLibFramework.Logger.Warn(
                     "[Saves] Daily run load blocked: missing CharacterModel; run save not deleted.");
                 RunResumeMissingCharacterSupport.TryShowInvalidRunSaveModal();
-                EmbarkRef(screen).Enable();
-                UnreadyRef(screen).Enable();
+                EmbarkRefLazy.Value(screen).Enable();
+                UnreadyRefLazy.Value(screen).Enable();
                 return;
             }
 
@@ -268,8 +277,8 @@ namespace STS2RitsuLib.Lifecycle.Patches
             if (cid == null)
             {
                 RunResumeMissingCharacterSupport.TryShowInvalidRunSaveModal();
-                EmbarkRef(screen).Enable();
-                UnreadyRef(screen).Enable();
+                EmbarkRefLazy.Value(screen).Enable();
+                UnreadyRefLazy.Value(screen).Enable();
                 return;
             }
 

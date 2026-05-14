@@ -21,6 +21,7 @@ namespace STS2RitsuLib.Combat.HandSize
 {
     /// <summary>
     ///     Installs RitsuLib max-hand-size patches.
+    ///     安装 RitsuLib 最大手牌数补丁。
     /// </summary>
     internal static class MaxHandSizePatchInstaller
     {

@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import json
 import re
 from dataclasses import dataclass
 from pathlib import Path
@@ -101,14 +102,22 @@ def _patch_csproj(path: Path, new_version: str) -> None:
 
 
 def _patch_manifest(path: Path, new_version: str) -> None:
-    content = path.read_text(encoding="utf-8")
-    pattern = r'"version"\s*:\s*"[^"]+"'
-    if not re.search(pattern, content):
+    try:
+        manifest = json.loads(path.read_text(encoding="utf-8"))
+    except json.JSONDecodeError as e:
+        msg = f"Invalid JSON in {path}: {e}"
+        raise ValueError(msg) from e
+    if not isinstance(manifest, dict):
+        msg = f"Manifest root must be a JSON object in {path}"
+        raise ValueError(msg)
+    if "version" not in manifest:
         msg = f'Failed to locate "version" field in {path}'
         raise ValueError(msg)
-    updated = re.sub(pattern, f'"version": "{new_version}"', content, count=1)
-    if updated != content:
-        path.write_text(updated, encoding="utf-8", newline="\n")
+    if manifest["version"] == new_version:
+        return
+    manifest["version"] = new_version
+    updated = json.dumps(manifest, ensure_ascii=False, indent=2) + "\n"
+    path.write_text(updated, encoding="utf-8", newline="\n")
 
 
 def _patch_const(path: Path, new_version: str) -> None:

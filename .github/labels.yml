@@ -132,3 +132,7 @@
 - name: area/other
   color: ededed
   description: Area is unclear or does not fit existing categories.
+
+- name: ci/build
+  color: 5319e7
+  description: Maintainer-approved one-shot PR build that uploads Actions artifacts.

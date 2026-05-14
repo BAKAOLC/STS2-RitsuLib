@@ -25,6 +25,8 @@ namespace STS2RitsuLib.Diagnostics.CompendiumExport
         /// <summary>
         ///     Relic inspect <c>Popup</c> is often anchor-stretched; off-tree that yields 0×0 min size. Reset to
         ///     top-left with margin 0 so <see cref="Control.GetCombinedMinimumSize" /> reflects child content.
+        ///     遗物查看 <c>Popup</c> 经常是锚点拉伸的；离树时这会得到 0×0 最小尺寸。重置为
+        ///     左上角且边距为 0，使 <see cref="Control.GetCombinedMinimumSize" /> 反映子内容。
         /// </summary>
         internal static void StripToTopLeftUnstretched(Control? c)
         {

@@ -2,22 +2,26 @@ namespace STS2RitsuLib.Networking.Sidecar
 {
     /// <summary>
     ///     Required capability validation policy.
+    ///     所需能力验证策略。
     /// </summary>
     public enum RitsuLibSidecarRequiredCapabilityPolicy
     {
         /// <summary>
         ///     Emit warnings but allow begin-run flow to continue.
+        ///     发出警告，但允许 begin-run 流程继续。
         /// </summary>
         Warn = 0,
 
         /// <summary>
         ///     Block begin-run when validation fails.
+        ///     验证失败时阻止 begin-run。
         /// </summary>
         Fail = 1,
     }
 
     /// <summary>
     ///     Event payload produced after required capability validation.
+    ///     所需能力验证后生成的事件载荷。
     /// </summary>
     public readonly record struct SidecarRequiredCapabilityCheckCompletedEvent(
         bool Passed,
@@ -26,6 +30,7 @@ namespace STS2RitsuLib.Networking.Sidecar
 
     /// <summary>
     ///     Missing required capabilities for one peer.
+    ///     某个对等端缺失的所需能力。
     /// </summary>
     public readonly record struct SidecarRequiredCapabilityMiss(
         ulong PeerNetId,
@@ -33,6 +38,7 @@ namespace STS2RitsuLib.Networking.Sidecar
 
     /// <summary>
     ///     Registry and validator for required sidecar capabilities.
+    ///     所需 sidecar 能力的注册表和验证器。
     /// </summary>
     public static class RitsuLibSidecarRequiredCapabilities
     {
@@ -41,17 +47,20 @@ namespace STS2RitsuLib.Networking.Sidecar
 
         /// <summary>
         ///     Validation policy used during pre-run checks.
+        ///     预跑局检查期间使用的验证策略。
         /// </summary>
         public static RitsuLibSidecarRequiredCapabilityPolicy Policy { get; set; } =
             RitsuLibSidecarRequiredCapabilityPolicy.Warn;
 
         /// <summary>
         ///     Raised after each validation run.
+        ///     每次验证运行后引发。
         /// </summary>
         public static event Action<SidecarRequiredCapabilityCheckCompletedEvent>? CheckCompleted;
 
         /// <summary>
         ///     Registers one required capability evaluator.
+        ///     注册一个所需能力求值器。
         /// </summary>
         public static void RegisterRequiredCapability(string capabilityKey, Func<ulong, bool> evaluator)
         {
@@ -65,6 +74,7 @@ namespace STS2RitsuLib.Networking.Sidecar
 
         /// <summary>
         ///     Validates required capabilities for the specified peer set.
+        ///     验证指定对等端集合的所需能力。
         /// </summary>
         public static bool ValidatePeers(IEnumerable<ulong> peerNetIds, out SidecarRequiredCapabilityMiss[] misses)
         {

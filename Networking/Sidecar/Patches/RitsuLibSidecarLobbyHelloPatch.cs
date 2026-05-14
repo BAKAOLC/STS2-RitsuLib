@@ -13,6 +13,8 @@ namespace STS2RitsuLib.Networking.Sidecar.Patches
     /// <summary>
     ///     After lobby construction, updates session manager with the active net service so capability providers can
     ///     decide peer reachability before any sidecar payload is sent.
+    ///     大厅构造后，用活动 net service 更新 session manager，使能力提供方能够
+    ///     在发送任何 sidecar 载荷前判断 peer 可达性。
     /// </summary>
     internal sealed class RitsuLibSidecarLobbyHelloPatch : IPatchMethod
     {
@@ -74,6 +76,7 @@ namespace STS2RitsuLib.Networking.Sidecar.Patches
 
     /// <summary>
     ///     Tracks newly connected host peers so reachability providers can evaluate sidecar support.
+    ///     跟踪新连接的主机 peer，使可达性提供方能评估 sidecar 支持。
     /// </summary>
     internal sealed class RitsuLibSidecarStartRunLobbyHostClientConnectedPatch : IPatchMethod
     {

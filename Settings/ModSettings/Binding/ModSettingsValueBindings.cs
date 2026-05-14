@@ -5,6 +5,7 @@ namespace STS2RitsuLib.Settings
 {
     /// <summary>
     ///     Value binding that reads/writes a field of persisted model <typeparamref name="TModel" /> via the mod data store.
+    ///     通过 mod data store 读写持久化模型 <typeparamref name="TModel" /> 字段的值绑定。
     /// </summary>
     public sealed class ModSettingsValueBinding<TModel, TValue>(
         string modId,
@@ -17,21 +18,25 @@ namespace STS2RitsuLib.Settings
     {
         /// <summary>
         ///     Mod id used to resolve <see cref="RitsuLibFramework.GetDataStore" />.
+        ///     用于解析 <see cref="RitsuLibFramework.GetDataStore" /> 的 mod id。
         /// </summary>
         public string ModId { get; } = modId;
 
         /// <summary>
         ///     Key of the persisted model blob.
+        ///     持久化模型 blob 的键。
         /// </summary>
         public string DataKey { get; } = dataKey;
 
         /// <summary>
         ///     Persistence scope for the backing store entry.
+        ///     后备存储条目的持久化作用域。
         /// </summary>
         public SaveScope Scope { get; } = scope;
 
         /// <summary>
         ///     Reads the current value from the model in the store.
+        ///     从存储中的模型读取当前值。
         /// </summary>
         public TValue Read()
         {
@@ -41,6 +46,7 @@ namespace STS2RitsuLib.Settings
 
         /// <summary>
         ///     Mutates the model in memory (call <see cref="Save" /> to flush).
+        ///     在内存中修改模型（调用 <see cref="Save" /> 以 flush）。
         /// </summary>
         public void Write(TValue value)
         {
@@ -51,6 +57,7 @@ namespace STS2RitsuLib.Settings
 
         /// <summary>
         ///     Persists the data key for this mod.
+        ///     持久化此 mod 的数据键。
         /// </summary>
         public void Save()
         {
@@ -60,6 +67,7 @@ namespace STS2RitsuLib.Settings
 
     /// <summary>
     ///     In-memory binding for previews, tests, or non-persisted UI; uses JSON adapter for structured clipboard.
+    ///     In-memory binding 用于 previews, tests, 或 non-persisted UI; 使用 JSON adapter 用于 structured clipboard.
     /// </summary>
     public sealed class InMemoryModSettingsValueBinding<TValue>(string modId, string dataKey, TValue initialValue)
         : IStructuredModSettingsValueBinding<TValue>, ITransientModSettingsBinding,
@@ -76,26 +84,31 @@ namespace STS2RitsuLib.Settings
 
         /// <summary>
         ///     Logical mod id (for UI identity; not persisted by this type).
+        ///     Logical mod id (用于 UI identity; not persisted 通过 this type).
         /// </summary>
         public string ModId { get; } = modId;
 
         /// <summary>
         ///     Logical data key segment.
+        ///     逻辑 data key 片段。
         /// </summary>
         public string DataKey { get; } = dataKey;
 
         /// <summary>
         ///     Always <see cref="SaveScope.Global" />; <see cref="Save" /> is a no-op.
+        ///     始终为 <see cref="SaveScope.Global" />；<see cref="Save" /> 不执行任何操作。
         /// </summary>
         public SaveScope Scope => SaveScope.Global;
 
         /// <summary>
         ///     JSON round-trip adapter for clone and clipboard.
+        ///     JSON round-trip adapter 用于 clone 和 clipboard.
         /// </summary>
         public IStructuredModSettingsValueAdapter<TValue> Adapter { get; } = ModSettingsStructuredData.Json<TValue>();
 
         /// <summary>
         ///     Returns the current in-memory value.
+        ///     返回当前内存值。
         /// </summary>
         public TValue Read()
         {
@@ -104,6 +117,7 @@ namespace STS2RitsuLib.Settings
 
         /// <summary>
         ///     Sets the in-memory value.
+        ///     设置内存值。
         /// </summary>
         public void Write(TValue value)
         {
@@ -119,6 +133,7 @@ namespace STS2RitsuLib.Settings
 
     /// <summary>
     ///     Wraps an inner binding and attaches a structured adapter without changing persistence behavior.
+    ///     包装内部绑定并附加结构化适配器，同时不改变持久化行为。
     /// </summary>
     public sealed class StructuredModSettingsValueBinding<TValue>(
         IModSettingsValueBinding<TValue> inner,
@@ -146,6 +161,7 @@ namespace STS2RitsuLib.Settings
 
         /// <summary>
         ///     Adapter used for serialization and clipboard.
+        ///     用于序列化和剪贴板的适配器。
         /// </summary>
         public IStructuredModSettingsValueAdapter<TValue> Adapter { get; } = adapter;
 
@@ -171,6 +187,7 @@ namespace STS2RitsuLib.Settings
 
     /// <summary>
     ///     Binding that projects a child value out of a parent binding (e.g. one field of a settings record).
+    ///     从父绑定投影出子值的绑定（例如设置记录的某个字段）。
     /// </summary>
     public sealed class ProjectedModSettingsValueBinding<TSource, TValue>(
         IModSettingsValueBinding<TSource> parent,
@@ -191,6 +208,8 @@ namespace STS2RitsuLib.Settings
         /// <summary>
         ///     Composite key <c>parent.DataKey.{segment}</c> when the constructor segment is non-empty; otherwise the parent
         ///     data key.
+        ///     当构造函数 segment 非空时为复合 key <c>parent.DataKey.{segment}</c>；否则为父级
+        ///     data key。
         /// </summary>
         public string DataKey => string.IsNullOrWhiteSpace(dataKey) ? parent.DataKey : $"{parent.DataKey}.{dataKey}";
 
@@ -199,6 +218,7 @@ namespace STS2RitsuLib.Settings
 
         /// <summary>
         ///     Adapter for the projected type; defaults to JSON when the parent is not structured.
+        ///     投影类型的适配器；当父级不是结构化绑定时默认为 JSON。
         /// </summary>
         public IStructuredModSettingsValueAdapter<TValue> Adapter { get; } =
             adapter ?? ModSettingsStructuredData.Json<TValue>();
@@ -226,6 +246,7 @@ namespace STS2RitsuLib.Settings
 
     /// <summary>
     ///     Decorates a binding with default-value factory and structured adapter resolution for reset and clipboard.
+    ///     Decorates a binding 带有 default-value factory 和 structured adapter resolution 用于 re设置 和 clipboard.
     /// </summary>
     public sealed class DefaultModSettingsValueBinding<TValue>(
         IModSettingsValueBinding<TValue> inner,
@@ -260,6 +281,8 @@ namespace STS2RitsuLib.Settings
         /// <summary>
         ///     Adapter from the inner structured binding when present; otherwise the optional constructor adapter or JSON
         ///     default.
+        ///     存在内部结构化绑定时取其适配器；否则使用可选构造函数适配器或 JSON
+        ///     默认适配器。
         /// </summary>
         public IStructuredModSettingsValueAdapter<TValue> Adapter { get; } =
             inner is IStructuredModSettingsValueBinding<TValue> structured

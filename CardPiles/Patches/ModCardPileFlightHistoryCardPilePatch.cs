@@ -7,6 +7,7 @@ namespace STS2RitsuLib.CardPiles.Patches
     /// <summary>
     ///     Records the last pile a card was removed from, to help flight/VFX patches recover "old pile"
     ///     information when the call-site does not provide it.
+    ///     记录 card 最后被移出的 pile，帮助 flight/VFX patch 在调用点未提供信息时恢复“old pile”信息。
     /// </summary>
     public sealed class ModCardPileFlightHistoryCardPilePatch : IPatchMethod
     {
@@ -32,6 +33,7 @@ namespace STS2RitsuLib.CardPiles.Patches
         /// <summary>
         ///     Records the pile a card was removed from so later VFX patches can recover the "old pile"
         ///     context when it is not provided by the call-site.
+        ///     记录 card 被移出的 pile，使后续 VFX patch 在调用点未提供时能够恢复“old pile”上下文。
         /// </summary>
         public static void Prefix(CardPile __instance, CardModel card, bool silent)
         {

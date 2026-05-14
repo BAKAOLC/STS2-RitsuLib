@@ -6,6 +6,8 @@ namespace STS2RitsuLib.CardPiles
     /// <summary>
     ///     Shared math for interpreting <see cref="ModCardPileAnchorKind.Custom" /> authoring points versus
     ///     injected control positions and nominal fly-target centres.
+    ///     解释 <see cref="ModCardPileAnchorKind.Custom" /> 创作点、注入 control 位置、
+    ///     以及名义飞行目标中心之间关系的共享数学逻辑。
     /// </summary>
     internal static class ModCardPileCustomMountGeometry
     {

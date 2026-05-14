@@ -1,6 +1,5 @@
 using Godot;
 using MegaCrit.Sts2.Core.Nodes;
-using MegaCrit.Sts2.Core.Platform.Steam;
 using STS2RitsuLib.Settings;
 using STS2RitsuLib.Utils.Persistence;
 
@@ -10,22 +9,15 @@ namespace STS2RitsuLib.Diagnostics
     {
         private static int _manualCloudBusy;
 
+        private static bool IsModDataCloudSession => ModDataCloudHost.CanUseModDataCloud();
+
         internal static void TryManualPushFromSettings()
         {
             var title = ModSettingsLocalization.Get(
                 "ritsulib.modCloud.prompt.title",
                 "Mod data (Steam Cloud)");
 
-            if (!SteamInitializer.Initialized)
-            {
-                ShowPrompt(title,
-                    ModSettingsLocalization.Get(
-                        "ritsulib.modCloud.unavailableSteam",
-                        "Steam is not active. Run the game through Steam with cloud saves enabled."));
-                return;
-            }
-
-            if (ModDataCloudMirror.TryGetCloudSaveStore() == null)
+            if (!IsModDataCloudSession)
             {
                 ShowPrompt(title,
                     ModSettingsLocalization.Get(
@@ -62,16 +54,7 @@ namespace STS2RitsuLib.Diagnostics
                 "ritsulib.modCloud.prompt.title",
                 "Mod data (Steam Cloud)");
 
-            if (!SteamInitializer.Initialized)
-            {
-                ShowPrompt(title,
-                    ModSettingsLocalization.Get(
-                        "ritsulib.modCloud.unavailableSteam",
-                        "Steam is not active. Run the game through Steam with cloud saves enabled."));
-                return;
-            }
-
-            if (ModDataCloudMirror.TryGetCloudSaveStore() == null)
+            if (!IsModDataCloudSession)
             {
                 ShowPrompt(title,
                     ModSettingsLocalization.Get(
@@ -112,16 +95,7 @@ namespace STS2RitsuLib.Diagnostics
                 "ritsulib.modCloud.prompt.title",
                 "Mod data (Steam Cloud)");
 
-            if (!SteamInitializer.Initialized)
-            {
-                ShowPrompt(title,
-                    ModSettingsLocalization.Get(
-                        "ritsulib.modCloud.unavailableSteam",
-                        "Steam is not active. Run the game through Steam with cloud saves enabled."));
-                return;
-            }
-
-            if (ModDataCloudMirror.TryGetCloudSaveStore() == null)
+            if (!IsModDataCloudSession)
             {
                 ShowPrompt(title,
                     ModSettingsLocalization.Get(
@@ -192,15 +166,6 @@ namespace STS2RitsuLib.Diagnostics
                         ModSettingsLocalization.Get(
                             "ritsulib.modCloud.noSceneTree",
                             "Cannot start: game scene tree is not available."));
-                    return;
-                }
-
-                if (!SteamInitializer.Initialized)
-                {
-                    ShowPrompt(title,
-                        ModSettingsLocalization.Get(
-                            "ritsulib.modCloud.unavailableSteam",
-                            "Steam is not active. Run the game through Steam with cloud saves enabled."));
                     return;
                 }
 
@@ -309,7 +274,7 @@ namespace STS2RitsuLib.Diagnostics
                 overlay.SetProgress(0, Math.Max(1, paths.Count), paths.Count > 0 ? paths[0] : null);
                 await tree.ToSignal(tree, SceneTree.SignalName.ProcessFrame);
 
-                var (uploaded, skipped, failed) = await ModDataCloudMirror.PushPathsAsync(
+                var (queued, skipped, failed) = await ModDataCloudMirror.PushPathsAsync(
                     cloud,
                     paths,
                     tree,
@@ -318,13 +283,13 @@ namespace STS2RitsuLib.Diagnostics
                 var body = string.Format(
                     ModSettingsLocalization.Get(
                         "ritsulib.modCloud.pushSummary",
-                        "Uploaded: {0}. Skipped (no local file): {1}. Failed: {2}."),
-                    uploaded,
+                        "Queued for upload: {0}. Skipped (no local file): {1}. Failed: {2}."),
+                    queued,
                     skipped,
                     failed);
 
                 RitsuLibFramework.Logger.Info(
-                    $"[ModCloud][ManualPush] uploaded={uploaded} skipped={skipped} failed={failed} scope={scope}");
+                    $"[ModCloud][ManualPush] queued={queued} skipped={skipped} failed={failed} scope={scope}");
                 ShowPrompt(title, body);
             }
             catch (Exception ex)

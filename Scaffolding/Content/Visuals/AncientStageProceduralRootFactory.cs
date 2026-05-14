@@ -2,20 +2,25 @@ using Godot;
 using MegaCrit.Sts2.Core.Helpers;
 using MegaCrit.Sts2.Core.Nodes.Screens;
 using STS2RitsuLib.Scaffolding.Characters.Visuals;
+using STS2RitsuLib.Scaffolding.Visuals.Definition;
 
 namespace STS2RitsuLib.Scaffolding.Content.Visuals
 {
     /// <summary>
-    ///     Builds a minimal Control tree for <see cref="AncientEventStageProceduralVisualSet" />: optional
-    ///     <see cref="VideoStreamPlayer" /> and/or cue-driven <see cref="Sprite2D" /> layers.
+    ///     Builds the runtime <see cref="Control" /> tree for an <see cref="AncientEventStageProceduralVisualSet" />:
+    ///     an optional looping <see cref="VideoStreamPlayer" /> background and cue-driven <see cref="Sprite2D" /> layers.
+    ///     为 <see cref="AncientEventStageProceduralVisualSet" /> 构建运行时 <see cref="Control" /> 树：
+    ///     可选的循环 <see cref="VideoStreamPlayer" /> 背景，以及由 cue 驱动的 <see cref="Sprite2D" /> 图层。
     /// </summary>
     public static class AncientStageProceduralRootFactory
     {
         private static PackedScene? _placeholderBackgroundPackedScene;
 
         /// <summary>
-        ///     Empty control packed once so <c>EventModel.CreateBackgroundScene</c> can succeed when only procedural layers
-        ///     are used (replaced in layout postfix).
+        ///     Empty scene used as a placeholder so <c>EventModel.CreateBackgroundScene</c> can complete before the
+        ///     layout patch mounts the procedural layers.
+        ///     空场景占位符，使 <c>EventModel.CreateBackgroundScene</c> 可以在
+        ///     布局补丁挂载程序化图层之前完成。
         /// </summary>
         public static PackedScene PlaceholderBackgroundPackedScene
         {
@@ -32,8 +37,8 @@ namespace STS2RitsuLib.Scaffolding.Content.Visuals
         }
 
         /// <summary>
-        ///     Creates the layered root, parents it under <paramref name="host" />, and starts background / foreground
-        ///     playback.
+        ///     Creates the procedural layer root, attaches it to <paramref name="host" />, and starts configured playback.
+        ///     创建程序化图层根节点，将其附加到 <paramref name="host" />，并启动已配置的播放。
         /// </summary>
         public static Control BuildAndMount(NAncientBgContainer host, AncientEventStageProceduralVisualSet stage)
         {
@@ -59,13 +64,11 @@ namespace STS2RitsuLib.Scaffolding.Content.Visuals
             Control? fgLayer = null;
             if (stage.ForegroundCueSet != null)
             {
-                fgLayer = CreateSpriteLayer("RitsuAncientStageFg", outer);
+                fgLayer = CreateSpriteLayer("RitsuAncientStageFg", stage.ForegroundLayerStyle);
                 outer.AddChild(fgLayer);
-                fgLayer.Owner = outer;
             }
 
             host.AddChildSafely(outer);
-            outer.Owner = host;
 
             if (stage.ForegroundCueSet == null || fgLayer == null)
                 return outer;
@@ -92,7 +95,6 @@ namespace STS2RitsuLib.Scaffolding.Content.Visuals
             {
                 RitsuLibFramework.Logger.Error($"[AncientStage] Background video not found: '{path}'");
                 outer.AddChild(video);
-                video.Owner = outer;
                 return;
             }
 
@@ -101,27 +103,24 @@ namespace STS2RitsuLib.Scaffolding.Content.Visuals
             {
                 RitsuLibFramework.Logger.Error($"[AncientStage] Could not load VideoStream: '{path}'");
                 outer.AddChild(video);
-                video.Owner = outer;
                 return;
             }
 
             video.Stream = stream;
             video.Autoplay = true;
             outer.AddChild(video);
-            video.Owner = outer;
         }
 
         private static void MountBackgroundCues(Control outer, AncientEventStageProceduralVisualSet stage)
         {
-            var bgLayer = CreateSpriteLayer("RitsuAncientStageBg", outer);
+            var bgLayer = CreateSpriteLayer("RitsuAncientStageBg", stage.BackgroundLayerStyle);
             outer.AddChild(bgLayer);
-            bgLayer.Owner = outer;
 
             var bgCue = string.IsNullOrWhiteSpace(stage.BackgroundLoopCueName) ? "loop" : stage.BackgroundLoopCueName!;
             ModCreatureVisualPlayback.TryPlayOnVisualRoot(bgLayer, null, bgCue, true, stage.BackgroundCueSet);
         }
 
-        private static Control CreateSpriteLayer(string layerName, Control outer)
+        private static Control CreateSpriteLayer(string layerName, VisualNodeStyle? style = null)
         {
             var layer = new Control { Name = layerName };
             layer.SetAnchorsPreset(Control.LayoutPreset.FullRect);
@@ -133,12 +132,23 @@ namespace STS2RitsuLib.Scaffolding.Content.Visuals
 
             var sprite = new Sprite2D { Name = "Visuals", Centered = true };
             layer.AddChild(sprite);
-            sprite.Owner = outer;
 
-            layer.Resized += () => sprite.Position = layer.Size * 0.5f;
-            Callable.From(() => sprite.Position = layer.Size * 0.5f).CallDeferred();
+            layer.Resized += () => CenterSprite(layer, sprite, style);
+            Callable.From(() => CenterSprite(layer, sprite, style)).CallDeferred();
 
             return layer;
+        }
+
+        private static void CenterSprite(Control layer, Sprite2D sprite, VisualNodeStyle? style)
+        {
+            if (!GodotObject.IsInstanceValid(layer) || !GodotObject.IsInstanceValid(sprite))
+                return;
+
+            var center = layer.Size * 0.5f;
+            if (style == null)
+                sprite.Position = center;
+            else
+                style.ApplyTo(sprite, center);
         }
     }
 }

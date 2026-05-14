@@ -6,6 +6,7 @@ namespace STS2RitsuLib.Localization.SmartFormat
 {
     /// <summary>
     ///     Per-mod registration surface for SmartFormat sources and formatters used by the game localization formatter.
+    ///     按 mod 提供的注册入口，用于游戏本地化格式化器使用的 SmartFormat source 和 formatter。
     /// </summary>
     public sealed class ModSmartFormatExtensionRegistry
     {
@@ -30,11 +31,13 @@ namespace STS2RitsuLib.Localization.SmartFormat
 
         /// <summary>
         ///     Owning mod id for this registry facade.
+        ///     此注册表 facade 所属的 mod id。
         /// </summary>
         public string ModId { get; }
 
         /// <summary>
         ///     Returns the singleton registry for <paramref name="modId" />, creating it on first use.
+        ///     返回 <paramref name="modId" /> 对应的单例注册表，首次使用时创建。
         /// </summary>
         public static ModSmartFormatExtensionRegistry For(string modId)
         {
@@ -53,6 +56,7 @@ namespace STS2RitsuLib.Localization.SmartFormat
 
         /// <summary>
         ///     Registers an already-created SmartFormat formatter instance.
+        ///     注册已创建的 SmartFormat formatter 实例。
         /// </summary>
         public void Register(IFormatter formatter, int order = 0)
         {
@@ -62,6 +66,7 @@ namespace STS2RitsuLib.Localization.SmartFormat
 
         /// <summary>
         ///     Creates and registers a SmartFormat formatter type.
+        ///     创建并注册 SmartFormat formatter 类型。
         /// </summary>
         public void Register<TFormatter>(int order = 0)
             where TFormatter : IFormatter, new()
@@ -71,6 +76,7 @@ namespace STS2RitsuLib.Localization.SmartFormat
 
         /// <summary>
         ///     Creates and registers a SmartFormat formatter type.
+        ///     创建并注册 SmartFormat formatter 类型。
         /// </summary>
         public void RegisterFormatterType(Type formatterType, int order = 0)
         {
@@ -80,6 +86,7 @@ namespace STS2RitsuLib.Localization.SmartFormat
 
         /// <summary>
         ///     Registers an already-created SmartFormat source instance.
+        ///     注册已创建的 SmartFormat source 实例。
         /// </summary>
         public void RegisterSource(ISource source, int order = 0)
         {
@@ -89,6 +96,7 @@ namespace STS2RitsuLib.Localization.SmartFormat
 
         /// <summary>
         ///     Creates and registers a SmartFormat source type.
+        ///     创建并注册 SmartFormat source 类型。
         /// </summary>
         public void RegisterSource<TSource>(int order = 0)
             where TSource : ISource, new()
@@ -98,6 +106,7 @@ namespace STS2RitsuLib.Localization.SmartFormat
 
         /// <summary>
         ///     Creates and registers a SmartFormat source type.
+        ///     创建并注册 SmartFormat source 类型。
         /// </summary>
         public void RegisterSourceType(Type sourceType, int order = 0)
         {
@@ -107,6 +116,7 @@ namespace STS2RitsuLib.Localization.SmartFormat
 
         /// <summary>
         ///     Snapshot of all registered formatter definitions in deterministic injection order.
+        ///     按确定性注入顺序排列的所有已注册 formatter 定义快照。
         /// </summary>
         public static IReadOnlyList<ModSmartFormatExtensionDefinition> GetFormattersSnapshot()
         {
@@ -118,6 +128,7 @@ namespace STS2RitsuLib.Localization.SmartFormat
 
         /// <summary>
         ///     Snapshot of all registered source definitions in deterministic injection order.
+        ///     按确定性注入顺序排列的所有已注册 source 定义快照。
         /// </summary>
         public static IReadOnlyList<ModSmartFormatExtensionDefinition> GetSourcesSnapshot()
         {
@@ -129,6 +140,7 @@ namespace STS2RitsuLib.Localization.SmartFormat
 
         /// <summary>
         ///     Resolves which mod registered a formatter name, if any.
+        ///     解析哪个 mod 注册了 formatter 名称；没有则返回空结果。
         /// </summary>
         public static bool TryGetFormatterOwnerModId(string formatterName, out string modId)
         {

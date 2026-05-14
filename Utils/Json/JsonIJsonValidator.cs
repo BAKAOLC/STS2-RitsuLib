@@ -7,11 +7,15 @@ namespace STS2RitsuLib.Utils.Json
     ///     I-JSON (RFC 7493) validator for <see cref="JsonNode" /> DOM.
     ///     I-JSON is a restricted profile of JSON for interoperable exchanges.
     ///     https://www.rfc-editor.org/rfc/rfc7493
+    ///     面向 <see cref="JsonNode" /> DOM 的 I-JSON（RFC 7493）验证器。
+    ///     I-JSON 是用于互操作交换的受限 JSON 配置文件。
     /// </summary>
     public static class JsonIJsonValidator
     {
         /// <summary>
         ///     Validates that the DOM node conforms to I-JSON constraints.
+        ///     验证 DOM 节点是否符合 I-JSON 约束。
+        ///     验证 DOM 节点是否符合 I-JSON 约束。
         /// </summary>
         public static bool TryValidate(JsonNode? node, out string? error)
         {

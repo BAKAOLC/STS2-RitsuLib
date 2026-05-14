@@ -8,6 +8,9 @@ namespace STS2RitsuLib.Interop.Internal
     ///     Harmony transpiler entry for ModInterop. Uses <see cref="ThreadLocal{T}" /> so prefix IL is passed to
     ///     <see cref="Transpile" /> without locking across <see cref="Harmony.Patch" /> (avoids deadlock if Harmony
     ///     invokes the transpiler synchronously while still inside user code).
+    ///     ModInterop 的 Harmony transpiler 入口。使用 <see cref="ThreadLocal{T}" /> 将 prefix IL 传给
+    ///     <see cref="Transpile" />，避免在 <see cref="Harmony.Patch" /> 期间跨调用加锁（如果 Harmony
+    ///     仍在用户代码内同步调用 transpiler，可避免死锁）。
     /// </summary>
     internal static class HarmonyInsertBeforeRetTranspiler
     {

@@ -7,6 +7,7 @@ namespace STS2RitsuLib.Networking.Sidecar
 {
     /// <summary>
     ///     Event payload for one topic state change.
+    ///     单个 topic 状态变更的事件载荷。
     /// </summary>
     public readonly record struct SidecarConfigTopicChangedEvent(
         string Topic,
@@ -33,6 +34,7 @@ namespace STS2RitsuLib.Networking.Sidecar
 
     /// <summary>
     ///     Host-authoritative sidecar config synchronization service.
+    ///     主机权威的 sidecar 配置同步服务。
     /// </summary>
     public static class RitsuLibSidecarConfigSyncService
     {
@@ -61,11 +63,13 @@ namespace STS2RitsuLib.Networking.Sidecar
 
         /// <summary>
         ///     Raised when a topic state is updated locally or from remote snapshot/decision.
+        ///     当 topic 状态在本地更新，或从远程 snapshot/decision 更新时引发。
         /// </summary>
         public static event Action<SidecarConfigTopicChangedEvent>? TopicChanged;
 
         /// <summary>
         ///     Registers a synchronized config topic with request policy and delta apply logic.
+        ///     使用请求策略和 delta 应用逻辑注册同步配置 topic。
         /// </summary>
         public static void RegisterTopic<TState, TDelta>(
             string topic,
@@ -118,6 +122,7 @@ namespace STS2RitsuLib.Networking.Sidecar
 
         /// <summary>
         ///     Sends a client-side config change request using a direct net service reference.
+        ///     使用直接 net service 引用发送客户端侧配置变更请求。
         /// </summary>
         public static bool TryRequestClientChange<TDelta>(INetGameService? netService, string topic, TDelta delta,
             string reason = "")
@@ -131,6 +136,7 @@ namespace STS2RitsuLib.Networking.Sidecar
 
         /// <summary>
         ///     Sends a client-side config change request using <see cref="RunManager" />.
+        ///     使用 <see cref="RunManager" /> 发送客户端侧配置变更请求。
         /// </summary>
         public static bool TryRequestClientChange<TDelta>(RunManager? runManager, string topic, TDelta delta,
             string reason = "")
@@ -144,6 +150,7 @@ namespace STS2RitsuLib.Networking.Sidecar
 
         /// <summary>
         ///     Reads cached topic state and revision.
+        ///     读取缓存的 topic 状态和 revision。
         /// </summary>
         public static bool TryGetTopicState<TState>(string topic, out TState? state, out long revision)
         {
@@ -164,6 +171,7 @@ namespace STS2RitsuLib.Networking.Sidecar
 
         /// <summary>
         ///     Host publishes current topic snapshot and raises the local topic-change event.
+        ///     主机发布当前 topic snapshot，并引发本地 topic-change 事件。
         /// </summary>
         public static void PublishHostState(INetGameService? netService, string topic, ulong changedBy, string reason)
         {

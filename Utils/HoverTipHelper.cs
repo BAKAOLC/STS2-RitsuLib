@@ -10,7 +10,8 @@ using MegaCrit.Sts2.Core.Nodes.HoverTips;
 namespace STS2RitsuLib
 {
     /// <summary>
-    ///     Helper class for adding hover tips
+    ///     Helper class for adding hover tips.
+    ///     用于追加悬停提示的辅助类。
     /// </summary>
     public static class HoverTipHelper
     {
@@ -19,8 +20,12 @@ namespace STS2RitsuLib
 
         /// <summary>
         ///     Appends a text hover tip to <paramref name="owner" />'s active hover tip set.
+        ///     向 <paramref name="owner" /> 的活动悬停提示集合追加文本悬停提示。
         /// </summary>
-        /// <returns>False when no hover tip set is bound to the control.</returns>
+        /// <returns>
+        ///     False when no hover tip set is bound to the control.
+        ///     当该控件未绑定悬停提示集合时返回 false。
+        /// </returns>
         public static bool AddTipToOwner(Control owner, string title, string description)
         {
             return NHoverTipSet._activeHoverTips.TryGetValue(owner, out var hoverTipSet) &&
@@ -29,8 +34,12 @@ namespace STS2RitsuLib
 
         /// <summary>
         ///     Appends card preview hover tips for <paramref name="cards" /> to <paramref name="owner" />.
+        ///     向 <paramref name="owner" /> 追加 <paramref name="cards" /> 的卡牌预览悬停提示。
         /// </summary>
-        /// <returns>False when no hover tip set is bound or no tips were added.</returns>
+        /// <returns>
+        ///     False when no hover tip set is bound or no tips were added.
+        ///     未绑定悬停提示集合或没有追加任何提示时返回 false。
+        /// </returns>
         public static bool AddCardTipsToOwner(Control owner, IEnumerable<CardModel> cards)
         {
             return NHoverTipSet._activeHoverTips.TryGetValue(owner, out var hoverTipSet) &&

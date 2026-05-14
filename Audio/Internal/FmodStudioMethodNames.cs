@@ -4,6 +4,7 @@ namespace STS2RitsuLib.Audio.Internal
 {
     /// <summary>
     ///     GDExtension method names on <c>FmodServer</c> (Godot FMOD addon).
+    ///     <c>FmodServer</c> 上的 GDExtension 方法名（Godot FMOD addon）。
     /// </summary>
     internal static class FmodStudioMethodNames
     {

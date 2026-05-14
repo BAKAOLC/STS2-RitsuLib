@@ -5,6 +5,8 @@ namespace STS2RitsuLib.Keywords
     /// <summary>
     ///     Injects registered keyword BBCode into <see cref="CardModel" /> description strings based on
     ///     <see cref="ModKeywordDefinition.CardDescriptionPlacement" />.
+    ///     根据 <see cref="ModKeywordDefinition.CardDescriptionPlacement" /> 将已注册 keyword BBCode 注入
+    ///     <see cref="CardModel" /> description 字符串。
     /// </summary>
     internal static class ModKeywordCardDescriptionInjector
     {

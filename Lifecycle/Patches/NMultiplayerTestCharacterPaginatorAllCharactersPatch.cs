@@ -11,6 +11,8 @@ namespace STS2RitsuLib.Lifecycle.Patches
     /// <summary>
     ///     Multiplayer debug test uses a hard-coded array of five vanilla characters. Replace it with
     ///     <see cref="ModelDb.AllCharacters" /> so mod-registered characters appear in the paginator.
+    ///     多人调试测试使用硬编码的五个原版角色数组。这里将其替换为
+    ///     <see cref="ModelDb.AllCharacters" />，使 mod 注册角色出现在分页器中。
     /// </summary>
     public class NMultiplayerTestCharacterPaginatorAllCharactersPatch : IPatchMethod
     {
@@ -46,6 +48,7 @@ namespace STS2RitsuLib.Lifecycle.Patches
         /// <summary>
         ///     Harmony postfix: repopulates paginator options and label from <see cref="ModelDb.AllCharacters" /> after
         ///     <c>_Ready</c>.
+        ///     Harmony postfix：在 <c>_Ready</c> 后用 <see cref="ModelDb.AllCharacters" /> 重新填充分页器选项和标签。
         /// </summary>
         // ReSharper disable once InconsistentNaming
         public static void Postfix(NMultiplayerTestCharacterPaginator __instance)

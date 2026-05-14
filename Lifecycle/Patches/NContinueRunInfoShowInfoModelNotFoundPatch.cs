@@ -10,6 +10,9 @@ namespace STS2RitsuLib.Lifecycle.Patches
     ///     <see cref="NContinueRunInfo.ShowInfo" /> uses <c>ModelDb.GetById</c> for act and character; missing mod
     ///     content throws during <see cref="NMainMenu._Ready" /> / <c>RefreshButtons</c> before the player presses Continue.
     ///     Fall back to the same error UI as a bad read result.
+    ///     <see cref="NContinueRunInfo.ShowInfo" /> 会对 act 和 character 使用 <c>ModelDb.GetById</c>；缺失 mod
+    ///     内容会在玩家按 Continue 之前，于 <see cref="NMainMenu._Ready" /> / <c>RefreshButtons</c> 期间抛出。
+    ///     回退到与读取结果错误相同的错误 UI。
     /// </summary>
     public class NContinueRunInfoShowInfoModelNotFoundPatch : IPatchMethod
     {
@@ -36,6 +39,8 @@ namespace STS2RitsuLib.Lifecycle.Patches
         /// <summary>
         ///     Harmony finalizer: swallows <see cref="ModelNotFoundException" /> from preview and shows the panel error
         ///     state.
+        ///     Harmony finalizer：吞掉预览中的 <see cref="ModelNotFoundException" /> 并显示面板错误
+        ///     状态。
         /// </summary>
         // ReSharper disable InconsistentNaming
         public static Exception? Finalizer(Exception? __exception, NContinueRunInfo __instance)

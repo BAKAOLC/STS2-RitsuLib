@@ -5,6 +5,7 @@ namespace STS2RitsuLib.Scaffolding.Characters.Visuals.Definition
 {
     /// <summary>
     ///     Fluent builder for <see cref="CharacterWorldProceduralVisualSet" />.
+    ///     <see cref="CharacterWorldProceduralVisualSet" /> 的流式构建器。
     /// </summary>
     public sealed class CharacterWorldProceduralVisualSetBuilder
     {
@@ -17,6 +18,7 @@ namespace STS2RitsuLib.Scaffolding.Characters.Visuals.Definition
 
         /// <summary>
         ///     Starts a world procedural visual set.
+        ///     开始一个世界场景程序化视觉集合。
         /// </summary>
         public static CharacterWorldProceduralVisualSetBuilder Create()
         {
@@ -25,6 +27,7 @@ namespace STS2RitsuLib.Scaffolding.Characters.Visuals.Definition
 
         /// <summary>
         ///     Uses a programmatic merchant-room character (no merchant <c>tscn</c>) with the given cue set.
+        ///     使用给定的 cue set 创建程序化商人房间角色（不需要商人 <c>tscn</c>）。
         /// </summary>
         public CharacterWorldProceduralVisualSetBuilder Merchant(VisualCueSet cueSet)
         {
@@ -35,6 +38,7 @@ namespace STS2RitsuLib.Scaffolding.Characters.Visuals.Definition
 
         /// <summary>
         ///     Uses <see cref="ModVisualCues.CueSet" /> output for the merchant room.
+        ///     为商人房间使用 <see cref="ModVisualCues.CueSet" /> 的输出。
         /// </summary>
         public CharacterWorldProceduralVisualSetBuilder Merchant(Action<VisualCueSetBuilder> configure)
         {
@@ -47,6 +51,7 @@ namespace STS2RitsuLib.Scaffolding.Characters.Visuals.Definition
         /// <summary>
         ///     Uses a programmatic rest-site character shell (no rest-site character <c>tscn</c>) with the given cue
         ///     set.
+        ///     使用给定的 cue set 创建程序化休息点角色外壳（不需要休息点角色 <c>tscn</c>）。
         /// </summary>
         public CharacterWorldProceduralVisualSetBuilder RestSite(VisualCueSet cueSet)
         {
@@ -57,6 +62,7 @@ namespace STS2RitsuLib.Scaffolding.Characters.Visuals.Definition
 
         /// <summary>
         ///     Uses <see cref="ModVisualCues.CueSet" /> output for the rest site.
+        ///     为休息点使用 <see cref="ModVisualCues.CueSet" /> 的输出。
         /// </summary>
         public CharacterWorldProceduralVisualSetBuilder RestSite(Action<VisualCueSetBuilder> configure)
         {
@@ -68,6 +74,7 @@ namespace STS2RitsuLib.Scaffolding.Characters.Visuals.Definition
 
         /// <summary>
         ///     Materializes the set (components may be null).
+        ///     实体化该集合（组件可以为 null）。
         /// </summary>
         public CharacterWorldProceduralVisualSet Build()
         {

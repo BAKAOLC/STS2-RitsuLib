@@ -6,6 +6,7 @@ namespace STS2RitsuLib.Compat
 {
     /// <summary>
     ///     Epoch-related game-mode checks on <see cref="SerializableRun" /> and the active <see cref="IRunState" />.
+    ///     <see cref="SerializableRun" /> 和活动 <see cref="IRunState" /> 上与纪元相关的游戏模式检查。
     /// </summary>
     internal static class Sts2RunGameModeCompat
     {

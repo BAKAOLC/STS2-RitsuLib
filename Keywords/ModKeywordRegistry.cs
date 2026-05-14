@@ -14,6 +14,10 @@ namespace STS2RitsuLib.Keywords
     ///     normalized id; prefer <c>RegisterOwned</c> / <c>RegisterCardKeywordOwnedByLocNamespace</c> so ids stay mod-scoped
     ///     like fixed
     ///     model public entries.
+    ///     悬停提示关键词的按 mod 注册入口。定义存储在按
+    ///     规范化 id 索引的单一全局映射中；优先使用 <c>RegisterOwned</c>
+    ///     <c>RegisterCardKeywordOwnedByLocNamespace</c>，使 id 像固定
+    ///     模型公共条目一样保持在 mod 作用域内。
     /// </summary>
     public sealed class ModKeywordRegistry
     {
@@ -42,11 +46,13 @@ namespace STS2RitsuLib.Keywords
 
         /// <summary>
         ///     True after the framework freezes keyword registration (with content/timeline at model init).
+        ///     框架在模型初始化时与 content/timeline 一起冻结关键词注册后为 true。
         /// </summary>
         public static bool IsFrozen { get; private set; }
 
         /// <summary>
         ///     Convenience view of <see cref="IsFrozen" /> as <see cref="KeywordRegistrationState" />.
+        ///     将 <see cref="IsFrozen" /> 作为 <see cref="KeywordRegistrationState" /> 查看时的便捷视图。
         /// </summary>
         public static KeywordRegistrationState State => IsFrozen
             ? KeywordRegistrationState.Frozen
@@ -54,6 +60,7 @@ namespace STS2RitsuLib.Keywords
 
         /// <summary>
         ///     Returns the singleton registry for <paramref name="modId" />, creating it on first use.
+        ///     返回 <paramref name="modId" /> 对应的单例注册表，首次使用时创建。
         /// </summary>
         public static ModKeywordRegistry For(string modId)
         {
@@ -91,6 +98,7 @@ namespace STS2RitsuLib.Keywords
 
         /// <summary>
         ///     Resolves which mod registered <paramref name="keywordId" />, if any.
+        ///     解析哪个 mod 注册了 <paramref name="keywordId" />，如果存在的话。
         /// </summary>
         public static bool TryGetOwnerModId(string keywordId, out string modId)
         {
@@ -112,6 +120,8 @@ namespace STS2RitsuLib.Keywords
         /// <summary>
         ///     Registers a keyword with an id derived from <see cref="ModContentRegistry.GetQualifiedKeywordId" /> using
         ///     this registry’s mod id and <paramref name="localKeywordStem" />.
+        ///     使用此注册表的 mod id 与 <paramref name="localKeywordStem" />，通过
+        ///     <see cref="ModContentRegistry.GetQualifiedKeywordId" /> 派生出的 id 注册关键词。
         /// </summary>
         public ModKeywordDefinition RegisterOwned(
             string localKeywordStem,
@@ -139,6 +149,8 @@ namespace STS2RitsuLib.Keywords
         /// <summary>
         ///     <c>RegisterOwned</c> with default title/description key rules (same as legacy
         ///     <c>Register(string, titleTable, ...)</c>).
+        ///     使用默认标题/描述 key 规则的 <c>RegisterOwned</c>（与旧版
+        ///     <c>Register(string, titleTable, ...)</c> 相同）。
         /// </summary>
         public ModKeywordDefinition RegisterOwned(
             string localKeywordStem,
@@ -163,6 +175,11 @@ namespace STS2RitsuLib.Keywords
         ///     Registers a <c>card_keywords</c> entry whose id and loc stem both come from
         ///     <see cref="ModContentRegistry.GetQualifiedKeywordId" />(<paramref name="localKeywordStem" />): keys are
         ///     <c>{id}.title</c> and <c>{id}.description</c> on <c>card_keywords</c> (uppercase id).
+        ///     <see cref="ModContentRegistry.GetQualifiedKeywordId" />(<paramref name="localKeywordStem" />)：
+        ///     注册一个 <c>card_keywords</c> 条目，其 id 和本地化词干都来自
+        ///     <see cref="ModContentRegistry.GetQualifiedKeywordId" />(<paramref name="localKeywordStem" />)：key 是
+        ///     <c>card_keywords</c> 上的 <c>{id}.title</c> 和 <c>{id}.description</c>（大写 id）。
+        ///     <see cref="ModContentRegistry.GetQualifiedKeywordId" />(<paramref name="localKeywordStem" />)：
         /// </summary>
         public ModKeywordDefinition RegisterCardKeywordOwnedByLocNamespace(
             string localKeywordStem,
@@ -187,6 +204,7 @@ namespace STS2RitsuLib.Keywords
 
         /// <summary>
         ///     <c>RegisterCardKeywordOwnedByLocNamespace</c> with legacy hover defaults.
+        ///     使用 legacy hover 默认值的 <c>RegisterCardKeywordOwnedByLocNamespace</c>。
         /// </summary>
         public ModKeywordDefinition RegisterCardKeywordOwnedByLocNamespace(
             string localKeywordStem,
@@ -201,6 +219,7 @@ namespace STS2RitsuLib.Keywords
 
         /// <summary>
         ///     Registers a keyword with a raw global id. Prefer <c>RegisterOwned</c> to avoid cross-mod collisions.
+        ///     使用 raw global id 注册 keyword。优先使用 <c>RegisterOwned</c> 以避免跨 mod 冲突。
         /// </summary>
         [Obsolete(
             "Flat keyword ids are global: they collide across mods and do not follow fixed public entry naming. Use RegisterOwned / RegisterCardKeywordOwnedByLocNamespace, or ModContentRegistry.GetQualifiedKeywordId for cross-mod references.")]
@@ -227,6 +246,7 @@ namespace STS2RitsuLib.Keywords
 
         /// <summary>
         ///     Legacy <c>Register</c> signature preserved for older mods; forwards with prior hover-tip behavior.
+        ///     为旧 mod 保留的 legacy <c>Register</c> 签名；以旧 hover-tip 行为转发。
         /// </summary>
         [Obsolete(
             "Flat keyword ids are global: they collide across mods and do not follow fixed public entry naming. Use RegisterOwned / RegisterCardKeywordOwnedByLocNamespace, or ModContentRegistry.GetQualifiedKeywordId for cross-mod references.")]
@@ -251,6 +271,7 @@ namespace STS2RitsuLib.Keywords
 
         /// <summary>
         ///     Registers a card keyword with a raw global id. Prefer <c>RegisterCardKeywordOwnedByLocNamespace</c>.
+        ///     使用原始全局 id 注册卡牌关键词。优先使用 <c>RegisterCardKeywordOwnedByLocNamespace</c>。
         /// </summary>
         [Obsolete(
             "Flat keyword ids are global: they collide across mods and do not follow fixed public entry naming. Use RegisterCardKeywordOwnedByLocNamespace, or ModContentRegistry.GetQualifiedKeywordId for cross-mod references.")]
@@ -280,6 +301,7 @@ namespace STS2RitsuLib.Keywords
 
         /// <summary>
         ///     Legacy <c>RegisterCardKeyword</c> signature preserved for older mods; forwards with prior hover-tip behavior.
+        ///     为旧 mod 保留的 legacy <c>RegisterCardKeyword</c> 签名；以旧 hover-tip 行为转发。
         /// </summary>
         [Obsolete(
             "Flat keyword ids are global: they collide across mods and do not follow fixed public entry naming. Use RegisterCardKeywordOwnedByLocNamespace, or ModContentRegistry.GetQualifiedKeywordId for cross-mod references.")]
@@ -296,6 +318,7 @@ namespace STS2RitsuLib.Keywords
         /// <summary>
         ///     Same as obsolete <c>Register</c> (full signature) without triggering obsolete warnings; for in-library
         ///     forwarding from manifests.
+        ///     与 obsolete <c>Register</c>（完整签名）相同，但不会触发 obsolete warning；用于库内从 manifest 转发。
         /// </summary>
         internal ModKeywordDefinition RegisterCore(
             string id,
@@ -350,6 +373,7 @@ namespace STS2RitsuLib.Keywords
 
         /// <summary>
         ///     Tries to resolve a global definition by keyword id.
+        ///     尝试按 keyword id 解析全局 definition。
         /// </summary>
         public static bool TryGet(string id, out ModKeywordDefinition definition)
         {
@@ -363,6 +387,7 @@ namespace STS2RitsuLib.Keywords
 
         /// <summary>
         ///     Returns the definition for <paramref name="id" /> or throws <see cref="KeyNotFoundException" />.
+        ///     返回 <paramref name="id" /> 的 definition，或抛出 <see cref="KeyNotFoundException" />。
         /// </summary>
         public static ModKeywordDefinition Get(string id)
         {
@@ -375,6 +400,11 @@ namespace STS2RitsuLib.Keywords
         ///     Reverse lookup: resolves the mod keyword <see cref="ModKeywordDefinition" /> that minted
         ///     <paramref name="value" />. Returns <c>false</c> for vanilla <see cref="CardKeyword" /> literals and
         ///     for any value that was never registered.
+        ///     <c>false</c>。
+        ///     反向查找：解析 minted <paramref name="value" /> 的 mod keyword
+        ///     <see cref="ModKeywordDefinition" />。对原版 <see cref="CardKeyword" /> literal 和
+        ///     任何从未注册的值返回 <c>false</c>。
+        ///     <c>false</c>。
         /// </summary>
         public static bool TryGetByCardKeyword(CardKeyword value, out ModKeywordDefinition definition)
         {
@@ -387,6 +417,8 @@ namespace STS2RitsuLib.Keywords
         /// <summary>
         ///     Whether <paramref name="value" /> is a registered mod keyword (as opposed to a vanilla
         ///     <see cref="CardKeyword" /> literal or an unknown integer cast).
+        ///     <paramref name="value" /> 是否为已注册的 mod keyword（而不是原版
+        ///     <see cref="CardKeyword" /> literal 或未知整数转换）。
         /// </summary>
         public static bool IsModCardKeyword(CardKeyword value)
         {
@@ -400,6 +432,9 @@ namespace STS2RitsuLib.Keywords
         ///     Resolves the <see cref="CardKeyword" /> value minted for <paramref name="id" />. Prefer this over
         ///     passing a string when interacting with vanilla keyword APIs (<c>CardModel.AddKeyword</c> /
         ///     <c>Keywords.Contains</c>).
+        ///     解析为 <paramref name="id" /> minted 的 <see cref="CardKeyword" /> 值。与原版 keyword API 交互时，
+        ///     优先使用此方法而不是传递字符串（<c>CardModel.AddKeyword</c> /
+        ///     <c>Keywords.Contains</c>）。
         /// </summary>
         public static bool TryGetCardKeyword(string id, out CardKeyword value)
         {
@@ -416,6 +451,8 @@ namespace STS2RitsuLib.Keywords
         /// <summary>
         ///     Resolves either a registered mod keyword id or a vanilla <see cref="CardKeyword" /> enum name.
         ///     Mod ids take precedence when a string could match both.
+        ///     解析已注册的 mod keyword id 或原版 <see cref="CardKeyword" /> enum 名称。
+        ///     当字符串可能同时匹配两者时，mod id 优先。
         /// </summary>
         public static bool TryResolveCardKeyword(string idOrEnumName, out CardKeyword value)
         {
@@ -427,6 +464,10 @@ namespace STS2RitsuLib.Keywords
         /// <summary>
         ///     Returns the <see cref="CardKeyword" /> minted for <paramref name="id" /> or throws
         ///     <see cref="KeyNotFoundException" /> when unregistered.
+        ///     <see cref="KeyNotFoundException" />。
+        ///     返回为 <paramref name="id" /> minted 的 <see cref="CardKeyword" />，未注册时抛出
+        ///     <see cref="KeyNotFoundException" />。
+        ///     <see cref="KeyNotFoundException" />。
         /// </summary>
         public static CardKeyword GetCardKeyword(string id)
         {
@@ -435,6 +476,7 @@ namespace STS2RitsuLib.Keywords
 
         /// <summary>
         ///     Tries to resolve the string id that minted <paramref name="value" />.
+        ///     尝试解析 minted <paramref name="value" /> 的字符串 id。
         /// </summary>
         public static bool TryGetId(CardKeyword value, out string id)
         {
@@ -453,6 +495,7 @@ namespace STS2RitsuLib.Keywords
 
         /// <summary>
         ///     Snapshot of all registered keyword definitions, stable-ordered by id.
+        ///     所有已注册 keyword definition 的快照，按 id 稳定排序。
         /// </summary>
         public static ModKeywordDefinition[] GetDefinitionsSnapshot()
         {
@@ -467,6 +510,8 @@ namespace STS2RitsuLib.Keywords
         /// <summary>
         ///     Builds a vanilla <see cref="IHoverTip" /> for <paramref name="id" /> using registered title, description, and
         ///     icon.
+        ///     使用已注册的 title、description 和
+        ///     icon 为 <paramref name="id" /> 构建原版 <see cref="IHoverTip" />。
         /// </summary>
         public static IHoverTip CreateHoverTip(string id)
         {
@@ -481,6 +526,7 @@ namespace STS2RitsuLib.Keywords
 
         /// <summary>
         ///     Title <see cref="LocString" /> for the keyword.
+        ///     keyword 的 title <see cref="LocString" />。
         /// </summary>
         public static LocString GetTitle(string id)
         {
@@ -490,6 +536,7 @@ namespace STS2RitsuLib.Keywords
 
         /// <summary>
         ///     Description <see cref="LocString" /> for the keyword.
+        ///     keyword 的 description <see cref="LocString" />。
         /// </summary>
         public static LocString GetDescription(string id)
         {
@@ -499,6 +546,7 @@ namespace STS2RitsuLib.Keywords
 
         /// <summary>
         ///     BBCode snippet suitable for inline card text (gold title + period).
+        ///     适合内联卡牌文本的 BBCode 片段（金色标题 + 句点）。
         /// </summary>
         public static string GetCardText(string id)
         {

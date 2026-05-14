@@ -4,11 +4,13 @@ namespace STS2RitsuLib.Scaffolding.Characters
 {
     /// <summary>
     ///     Resolves vanilla-style resource paths for character UI, combat, and VFX from a character entry id.
+    ///     根据角色条目 id 解析原版风格的角色 UI、战斗和 VFX 资源路径。
     /// </summary>
     public static class CharacterAssetPathHelper
     {
         /// <summary>
         ///     Energy icon path for <paramref name="energyColorName" /> via <see cref="EnergyIconHelper" />.
+        ///     通过 <see cref="EnergyIconHelper" /> 获取 <paramref name="energyColorName" /> 的能量图标路径。
         /// </summary>
         public static string GetEnergyIconPath(string energyColorName)
         {
@@ -17,6 +19,7 @@ namespace STS2RitsuLib.Scaffolding.Characters
 
         /// <summary>
         ///     Scene path for the combat energy counter widget.
+        ///     战斗能量计数器控件的场景路径。
         /// </summary>
         public static string GetEnergyCounterPath(string characterEntry)
         {
@@ -25,6 +28,7 @@ namespace STS2RitsuLib.Scaffolding.Characters
 
         /// <summary>
         ///     Scene path for in-combat creature visuals.
+        ///     战斗中生物视觉的场景路径。
         /// </summary>
         public static string GetVisualsPath(string characterEntry)
         {
@@ -33,6 +37,7 @@ namespace STS2RitsuLib.Scaffolding.Characters
 
         /// <summary>
         ///     Character select background scene path.
+        ///     角色选择背景场景路径。
         /// </summary>
         public static string GetCharacterSelectBackgroundPath(string characterEntry)
         {
@@ -41,6 +46,7 @@ namespace STS2RitsuLib.Scaffolding.Characters
 
         /// <summary>
         ///     Unlocked character select portrait texture path.
+        ///     已解锁角色选择肖像贴图路径。
         /// </summary>
         public static string GetCharacterSelectIconPath(string characterEntry)
         {
@@ -49,6 +55,7 @@ namespace STS2RitsuLib.Scaffolding.Characters
 
         /// <summary>
         ///     Locked character select portrait texture path.
+        ///     未解锁角色选择肖像贴图路径。
         /// </summary>
         public static string GetCharacterSelectLockedIconPath(string characterEntry)
         {
@@ -58,6 +65,7 @@ namespace STS2RitsuLib.Scaffolding.Characters
 
         /// <summary>
         ///     Run map marker icon path for the character.
+        ///     此角色的 run 地图标记图标路径。
         /// </summary>
         public static string GetMapMarkerPath(string characterEntry)
         {
@@ -66,6 +74,7 @@ namespace STS2RitsuLib.Scaffolding.Characters
 
         /// <summary>
         ///     Card trail VFX scene path.
+        ///     卡牌轨迹 VFX 场景路径。
         /// </summary>
         public static string GetTrailPath(string characterEntry)
         {
@@ -74,6 +83,7 @@ namespace STS2RitsuLib.Scaffolding.Characters
 
         /// <summary>
         ///     Default asset paths used when validating or copying a vanilla-style character layout.
+        ///     验证或复制原版风格角色布局时使用的默认资产路径。
         /// </summary>
         public static IEnumerable<string> EnumerateDefaultCharacterAssets(string characterEntry)
         {

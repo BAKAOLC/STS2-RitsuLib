@@ -7,6 +7,7 @@ namespace STS2RitsuLib.Lifecycle.Patches
 {
     /// <summary>
     ///     After the main menu node is ready, optionally dumps Harmony patch info once per session (deferred).
+    ///     主菜单节点就绪后，可选地每个会话延迟转储一次 Harmony 补丁信息。
     /// </summary>
     public class NMainMenuHarmonyPatchDumpPatch : IPatchMethod
     {
@@ -28,6 +29,7 @@ namespace STS2RitsuLib.Lifecycle.Patches
 
         /// <summary>
         ///     Harmony postfix: schedule auto-dump after the menu finishes its ready work.
+        ///     Harmony postfix：在菜单完成 ready 工作后调度自动转储。
         /// </summary>
         public static void Postfix()
         {

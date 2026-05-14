@@ -19,6 +19,8 @@ namespace STS2RitsuLib.Combat.CardTargeting.Patches
     /// <summary>
     ///     Implements controller targeting support for <see cref="CustomTargetType.Anyone" /> by routing Start into a
     ///     single-creature targeting flow and providing a candidate list consisting of all living creature nodes in the room.
+    ///     通过将 Start 路由到单生物目标流程，并提供房间内所有存活生物节点组成的候选列表，
+    ///     为 <see cref="CustomTargetType.Anyone" /> 实现控制器目标选择支持。
     /// </summary>
     internal sealed class NControllerCardPlayStartAnyonePatch : IPatchMethod
     {
@@ -96,6 +98,8 @@ namespace STS2RitsuLib.Combat.CardTargeting.Patches
     /// <summary>
     ///     Provides the controller single-creature targeting flow for <see cref="CustomTargetType.Anyone" />.
     ///     Vanilla logic typically hardcodes candidate lists by known target enums; custom values would yield an empty list.
+    ///     为 <see cref="CustomTargetType.Anyone" /> 提供控制器单生物目标流程。
+    ///     原版逻辑通常按已知目标枚举硬编码候选列表；自定义值会得到空列表。
     /// </summary>
     internal sealed class NControllerCardPlaySingleTargetingAnyonePatch : IPatchMethod
     {

@@ -9,11 +9,14 @@ namespace STS2RitsuLib.Scaffolding.Content.Patches
     /// <summary>
     ///     Implement on a pool model to override the large energy icon path resolved from
     ///     <see cref="EnergyIconHelper.GetPath(string)" />.
+    ///     在池模型上实现，用于覆盖从
+    ///     <see cref="EnergyIconHelper.GetPath(string)" /> 解析到的大型能量图标路径。
     /// </summary>
     public interface IModBigEnergyIconPool
     {
         /// <summary>
         ///     Custom large energy icon path for this pool’s <see cref="MegaCrit.Sts2.Core.Models.IPoolModel.EnergyColorName" />.
+        ///     此池的 <see cref="MegaCrit.Sts2.Core.Models.IPoolModel.EnergyColorName" /> 对应的自定义大型能量图标路径。
         /// </summary>
         string? BigEnergyIconPath { get; }
     }
@@ -21,6 +24,8 @@ namespace STS2RitsuLib.Scaffolding.Content.Patches
     /// <summary>
     ///     Prefixes <see cref="EnergyIconHelper.GetPath(string)" /> so pools implementing <see cref="IModBigEnergyIconPool" />
     ///     can replace the resolved big icon path.
+    ///     为 <see cref="EnergyIconHelper.GetPath(string)" /> 添加前缀，使实现 <see cref="IModBigEnergyIconPool" /> 的池
+    ///     可以替换解析出的大图标路径。
     /// </summary>
     public class EnergyIconHelperPathPatch : IPatchMethod
     {
@@ -46,6 +51,7 @@ namespace STS2RitsuLib.Scaffolding.Content.Patches
         // ReSharper disable InconsistentNaming
         /// <summary>
         ///     Delegates to <see cref="ModBigEnergyIconHelper.TryOverridePath" /> to substitute a cached pool override.
+        ///     委托给 <see cref="ModBigEnergyIconHelper.TryOverridePath" />，以替换为缓存的池覆盖。
         /// </summary>
         public static bool Prefix(string prefix, ref string __result)
             // ReSharper restore InconsistentNaming

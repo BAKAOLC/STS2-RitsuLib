@@ -30,7 +30,7 @@
 
     <PropertyGroup Label="NuGet package">
         <IsPackable>true</IsPackable>
-        <Version>0.2.30</Version>
+        <Version>0.2.31</Version>
         <Authors>OLC</Authors>
         <Description>Shared framework library for Slay the Spire 2 mods.</Description>
         <PackageReadmeFile>README.md</PackageReadmeFile>
@@ -53,9 +53,6 @@
             Condition="'$(Sts2ApiSignatureRoot)' != '' and Exists('$(Sts2ApiSignatureRoot)') and !Exists('$(Sts2ApiSignatureDir)\0Harmony.dll')"
             Text="Sts2ApiSignatureRoot is set but missing expected file: '$(Sts2ApiSignatureDir)\0Harmony.dll'."/>
         <Error
-            Condition="'$(Sts2ApiSignatureRoot)' != '' and Exists('$(Sts2ApiSignatureRoot)') and !Exists('$(Sts2ApiSignatureDir)\Steamworks.NET.dll')"
-            Text="Sts2ApiSignatureRoot is set but missing expected file: '$(Sts2ApiSignatureDir)\Steamworks.NET.dll'."/>
-        <Error
             Condition="'$(Sts2ApiSignatureRoot)' != '' and Exists('$(Sts2ApiSignatureRoot)') and !Exists('$(Sts2ApiSignatureDir)\SmartFormat.dll')"
             Text="Sts2ApiSignatureRoot is set but missing expected file: '$(Sts2ApiSignatureDir)\SmartFormat.dll'."/>
     </Target>
@@ -75,7 +72,6 @@
     <ItemGroup>
         <Reference Include="sts2" HintPath="$(Sts2DataDir)\sts2.dll" Private="False"/>
         <Reference Include="0Harmony" HintPath="$(Sts2DataDir)\0Harmony.dll" Private="False"/>
-        <Reference Include="Steamworks.NET" HintPath="$(Sts2DataDir)\Steamworks.NET.dll" Private="False"/>
         <Reference Include="SmartFormat" HintPath="$(Sts2DataDir)\SmartFormat.dll" Private="False"/>
     </ItemGroup>
     <ItemGroup>

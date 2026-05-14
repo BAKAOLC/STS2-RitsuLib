@@ -19,6 +19,8 @@ namespace STS2RitsuLib.Interop.AutoRegistration
     ///     Built-in contributor: scans assemblies once for ritsulib auto-registration attributes, sorts them
     ///     deterministically,
     ///     and dispatches through the existing explicit registry APIs.
+    ///     内置贡献器：对程序集扫描一次以查找 ritsulib 自动注册特性，按确定性顺序排序，
+    ///     并通过现有显式注册表 API 分发。
     /// </summary>
     public sealed class AttributeAutoRegistrationTypeDiscoveryContributor : IModTypeDiscoveryContributor
     {

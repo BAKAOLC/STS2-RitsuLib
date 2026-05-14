@@ -9,6 +9,8 @@ namespace STS2RitsuLib.Loader
     /// <summary>
     ///     Entry assembly for the multi-variant RitsuLib bundle: loads the matching <c>STS2-RitsuLib.dll</c> from
     ///     <c>lib/&lt;compat&gt;/</c> into the default ALC, then forwards to the real framework initializer.
+    ///     多变体 RitsuLib bundle 的入口程序集：从
+    ///     <c>lib/&lt;compat&gt;/</c> 将匹配的 <c>STS2-RitsuLib.dll</c> 加载到默认 ALC，然后转发到真正的框架初始化器。
     /// </summary>
     [ModInitializer(nameof(Initialize))]
     public static class Bootstrap

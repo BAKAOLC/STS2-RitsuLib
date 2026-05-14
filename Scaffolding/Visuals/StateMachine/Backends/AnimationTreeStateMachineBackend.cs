@@ -5,10 +5,14 @@ namespace STS2RitsuLib.Scaffolding.Visuals.StateMachine.Backends
     /// <summary>
     ///     <see cref="IAnimationBackend" /> driver for Godot <see cref="AnimationTree" /> with an
     ///     <see cref="AnimationNodeStateMachine" /> root.
+    ///     带有以下根节点的 Godot <see cref="AnimationTree" /> 的 <see cref="IAnimationBackend" /> 驱动：
+    ///     <see cref="AnimationNodeStateMachine" />。
     /// </summary>
     /// <remarks>
     ///     State ids map to state-machine node names, and <see cref="Play" /> dispatches through
     ///     <see cref="AnimationNodeStateMachinePlayback.Travel" />.
+    ///     状态 id 映射到状态机节点名，<see cref="Play" /> 通过
+    ///     <see cref="AnimationNodeStateMachinePlayback.Travel" /> 分派。
     /// </remarks>
     public sealed class AnimationTreeStateMachineBackend : IAnimationBackend
     {
@@ -24,9 +28,11 @@ namespace STS2RitsuLib.Scaffolding.Visuals.StateMachine.Backends
 
         /// <summary>
         ///     Wraps <paramref name="tree" /> and binds to its state-machine playback.
+        ///     包装 <paramref name="tree" /> 并绑定到它的状态机 playback。
         /// </summary>
         /// <exception cref="ArgumentException">
         ///     Thrown when <paramref name="tree" /> is not configured as a state-machine tree.
+        ///     当 <c>tree</c> 未配置为状态机 tree 时抛出。
         /// </exception>
         public AnimationTreeStateMachineBackend(AnimationTree tree)
         {
@@ -112,6 +118,7 @@ namespace STS2RitsuLib.Scaffolding.Visuals.StateMachine.Backends
 
         /// <summary>
         ///     Detaches the optional player signal connections. Safe to call more than once.
+        ///     断开可选的播放器信号连接。可安全多次调用。
         /// </summary>
         public void Dispose()
         {

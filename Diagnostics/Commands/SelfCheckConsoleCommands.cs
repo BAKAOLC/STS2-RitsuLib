@@ -6,6 +6,7 @@ namespace STS2RitsuLib.Diagnostics.Commands
 {
     /// <summary>
     ///     RitsuLib diagnostic console command entry.
+    ///     RitsuLib 诊断控制台命令入口。
     /// </summary>
     public sealed class RitsuLibConsoleCmd : AbstractConsoleCmd
     {

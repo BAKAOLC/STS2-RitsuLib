@@ -10,6 +10,7 @@ namespace STS2RitsuLib.Utils
     /// <summary>
     ///     Loads merged JSON translation dictionaries from the file system, embedded resources, and PCK paths,
     ///     reacting to game locale changes when possible.
+    ///     从文件系统、嵌入资源和 PCK 路径加载并合并 JSON 翻译字典，并在可行时响应游戏语言切换。
     /// </summary>
     public class I18N : IDisposable, IEnumerable<KeyValuePair<string, string>>
     {
@@ -26,6 +27,7 @@ namespace STS2RitsuLib.Utils
 
         /// <summary>
         ///     Creates an instance, optionally wiring locale change subscription when sources are configured.
+        ///     创建实例；当配置了翻译来源时，可自动接入语言切换订阅。
         /// </summary>
         public I18N(string? instanceName = null,
             string[]? fsFolders = null,
@@ -47,6 +49,7 @@ namespace STS2RitsuLib.Utils
 
         /// <summary>
         ///     Releases subscriptions and clears loaded translations.
+        ///     释放订阅并清空已经加载的翻译。
         /// </summary>
         public void Dispose()
         {
@@ -62,9 +65,11 @@ namespace STS2RitsuLib.Utils
 
         /// <summary>
         ///     Enumerates the current merged translations as key-value pairs.
+        ///     以键值对形式枚举当前已合并的翻译。
         /// </summary>
         /// <remarks>
         ///     Enumeration uses a snapshot copy to avoid collection-modified exceptions if reload happens during iteration.
+        ///     枚举会使用快照副本，避免迭代期间重载翻译导致集合被修改异常。
         /// </remarks>
         public IEnumerator<KeyValuePair<string, string>> GetEnumerator()
         {
@@ -80,11 +85,13 @@ namespace STS2RitsuLib.Utils
 
         /// <summary>
         ///     Raised after translations are reloaded (locale change or <see cref="ForceReload" />).
+        ///     在翻译重新加载后触发（区域设置变化或 <see cref="ForceReload" />）。
         /// </summary>
         public event Action? Changed;
 
         /// <summary>
         ///     Returns the translation for <paramref name="key" /> or <paramref name="fallback" /> if missing.
+        ///     返回 <paramref name="key" /> 的翻译；缺失时返回 <paramref name="fallback" />。
         /// </summary>
         public string Get(string key, string fallback)
         {
@@ -95,6 +102,7 @@ namespace STS2RitsuLib.Utils
 
         /// <summary>
         ///     Returns true and outputs the translation when <paramref name="key" /> exists.
+        ///     当 <paramref name="key" /> 存在时返回 true 并输出翻译。
         /// </summary>
         public bool TryGet(string key, out string value)
         {
@@ -105,6 +113,7 @@ namespace STS2RitsuLib.Utils
 
         /// <summary>
         ///     Returns true when <paramref name="key" /> exists in the current merged dictionary.
+        ///     当 <paramref name="key" /> 存在于当前合并字典中时返回 true。
         /// </summary>
         public bool ContainsKey(string key)
         {
@@ -115,6 +124,7 @@ namespace STS2RitsuLib.Utils
 
         /// <summary>
         ///     Returns a stable snapshot view of the current merged translations.
+        ///     返回当前合并翻译的稳定快照视图。
         /// </summary>
         public IReadOnlyDictionary<string, string> Snapshot()
         {
@@ -125,9 +135,16 @@ namespace STS2RitsuLib.Utils
 
         /// <summary>
         ///     Enumerates translation keys in the current merged dictionary.
+        ///     枚举当前合并字典中的翻译键。
         /// </summary>
-        /// <param name="prefix">When non-empty, only keys that start with this prefix (ordinal ignore case).</param>
-        /// <param name="orderByKey">When true, keys are ordered with ordinal ignore case.</param>
+        /// <param name="prefix">
+        ///     When non-empty, only keys that start with this prefix (ordinal ignore case).
+        ///     非空时，仅返回以该前缀开头的键（序号忽略大小写）。
+        /// </param>
+        /// <param name="orderByKey">
+        ///     When true, keys are ordered with ordinal ignore case.
+        ///     为 true 时，按键名以序号忽略大小写排序。
+        /// </param>
         public IEnumerable<string> EnumerateKeys(string? prefix = null, bool orderByKey = true)
         {
             ObjectDisposedException.ThrowIf(_disposed, this);
@@ -144,6 +161,7 @@ namespace STS2RitsuLib.Utils
 
         /// <summary>
         ///     Returns all keys from the current merged dictionary as a new list, optionally sorted.
+        ///     将当前合并字典中的全部键作为新列表返回，并可选择排序。
         /// </summary>
         public IReadOnlyList<string> GetAllKeys(bool orderByKey = true)
         {
@@ -152,6 +170,7 @@ namespace STS2RitsuLib.Utils
 
         /// <summary>
         ///     Returns known language codes discoverable from configured sources.
+        ///     返回可从已配置来源中发现的已知语言代码。
         /// </summary>
         public IReadOnlyList<string> EnumerateAvailableLanguages(bool useCache = true)
         {
@@ -187,6 +206,7 @@ namespace STS2RitsuLib.Utils
 
         /// <summary>
         ///     Reloads translations for the current resolved language and raises <see cref="Changed" />.
+        ///     重新加载当前解析语言的翻译，并触发 <see cref="Changed" />。
         /// </summary>
         public void ForceReload()
         {
@@ -446,21 +466,32 @@ namespace STS2RitsuLib.Utils
 
         /// <summary>
         ///     Resolves the current game locale to a normalized language code.
+        ///     将当前游戏区域语言解析为规范化语言代码。
         /// </summary>
         /// <remarks>
         ///     Resolution tries (in order):
         ///     <list type="number">
         ///         <item>
-        ///             <description><c>LocManager.Instance.Language</c> (when available)</description>
         ///         </item>
         ///         <item>
         ///             <description>
-        ///                 <c>Godot.TranslationServer.GetLocale()</c>
+        ///                 <c>Godot.TranslationServer.GetLocale()</c>；<c>Godot.TranslationServer.GetLocale()</c>
         ///             </description>
         ///         </item>
         ///     </list>
         ///     The returned value is always normalized by <see cref="NormalizeLanguageCode" /> and falls back to
         ///     <c>eng</c> when unknown.
+        ///     解析会按顺序尝试：
+        ///     <list type="number">
+        ///         <item>
+        ///         </item>
+        ///         <item>
+        ///             <description>
+        ///             </description>
+        ///         </item>
+        ///     </list>
+        ///     返回值始终由 <see cref="NormalizeLanguageCode" /> 规范化，并在未知时回退到
+        ///     <c>eng</c>。
         /// </remarks>
         public static string ResolveCurrentLanguageCode()
         {
@@ -492,22 +523,31 @@ namespace STS2RitsuLib.Utils
 
         /// <summary>
         ///     Normalizes a locale / language input to RitsuLib's stable three-letter-ish codes.
+        ///     将区域/语言输入规范化为 RitsuLib 稳定使用的近似三字母代码。
         /// </summary>
         /// <remarks>
         ///     Examples:
         ///     <list type="bullet">
         ///         <item>
-        ///             <description><c>en</c>, <c>en_us</c>, <c>en-US</c> -&gt; <c>eng</c></description>
         ///         </item>
         ///         <item>
-        ///             <description><c>zh</c>, <c>zh_cn</c>, <c>zh-Hans</c> -&gt; <c>zhs</c></description>
         ///         </item>
         ///         <item>
-        ///             <description><c>ja</c>, <c>ja_jp</c> -&gt; <c>jpn</c></description>
         ///         </item>
         ///     </list>
         ///     Unrecognized values are lower-cased, with <c>-</c> replaced by <c>_</c>.
         ///     Null or whitespace inputs fall back to <c>eng</c>.
+        ///     示例：
+        ///     <list type="bullet">
+        ///         <item>
+        ///         </item>
+        ///         <item>
+        ///         </item>
+        ///         <item>
+        ///         </item>
+        ///     </list>
+        ///     无法识别的值会转为小写，并将 <c>-</c> 替换为 <c>_</c>。
+        ///     null 或空白输入会回退到 <c>eng</c>。
         /// </remarks>
         public static string NormalizeLanguageCode(string? language)
         {

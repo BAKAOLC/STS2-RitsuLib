@@ -24,9 +24,6 @@
         <Error
             Condition="'$(Sts2ApiSignatureRoot)' != '' and Exists('$(Sts2ApiSignatureRoot)') and !Exists('$(Sts2ApiSignatureDir)\0Harmony.dll')"
             Text="Sts2ApiSignatureRoot is set but missing expected file: '$(Sts2ApiSignatureDir)\0Harmony.dll'."/>
-        <Error
-            Condition="'$(Sts2ApiSignatureRoot)' != '' and Exists('$(Sts2ApiSignatureRoot)') and !Exists('$(Sts2ApiSignatureDir)\Steamworks.NET.dll')"
-            Text="Sts2ApiSignatureRoot is set but missing expected file: '$(Sts2ApiSignatureDir)\Steamworks.NET.dll'."/>
     </Target>
     <Target Name="ValidateSts2GameInstall" BeforeTargets="ResolveAssemblyReferences">
         <Error
@@ -37,7 +34,6 @@
     <ItemGroup>
         <Reference Include="sts2" HintPath="$(Sts2DataDir)\sts2.dll" Private="False"/>
         <Reference Include="0Harmony" HintPath="$(Sts2DataDir)\0Harmony.dll" Private="False"/>
-        <Reference Include="Steamworks.NET" HintPath="$(Sts2DataDir)\Steamworks.NET.dll" Private="False"/>
     </ItemGroup>
 
     <ItemGroup>

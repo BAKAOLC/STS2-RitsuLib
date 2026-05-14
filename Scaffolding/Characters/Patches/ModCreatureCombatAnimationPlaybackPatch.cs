@@ -16,11 +16,20 @@ namespace STS2RitsuLib.Scaffolding.Characters.Patches
     ///     returns a non-null machine (for example via <see cref="ModAnimStateMachineBuilder.BuildSpine" />). When no
     ///     state machine is registered and the creature has no Spine animator, falls back to
     ///     <see cref="ModCreatureVisualPlayback.TryPlayFromCreatureAnimatorTrigger" />.
+    ///     当生物模型通过 <see cref="IModCreatureCombatAnimationStateMachineFactory" />（或旧版
+    ///     <see cref="IModNonSpineAnimationStateMachineFactory" />）选择加入时，将 <see cref="NCreature.SetAnimationTrigger" /> 路由到
+    ///     <see cref="ModAnimStateMachine" />；
+    ///     如果工厂返回非 null 机器（例如通过 <see cref="ModAnimStateMachineBuilder.BuildSpine" />），也包括 Spine 支持的视觉。
+    ///     未注册状态机且生物没有 Spine animator 时，回退到
+    ///     <see cref="ModCreatureVisualPlayback.TryPlayFromCreatureAnimatorTrigger" />。
     /// </summary>
     /// <remarks>
     ///     <para>
     ///         State machines are cached per visuals root via a
     ///         <see cref="ConditionalWeakTable{TKey,TValue}" /> so factories run at most once per combat lifetime.
+    ///     </para>
+    ///     <para>
+    ///         状态机会通过 <see cref="ConditionalWeakTable{TKey,TValue}" /> 按视觉根缓存，因此工厂在每个战斗生命周期中最多运行一次。
     ///     </para>
     /// </remarks>
     public class ModCreatureCombatAnimationPlaybackPatch : IPatchMethod
@@ -47,6 +56,8 @@ namespace STS2RitsuLib.Scaffolding.Characters.Patches
         /// <summary>
         ///     Returns the cached combat <see cref="ModAnimStateMachine" /> for <paramref name="creature" /> when the
         ///     owning model's factory produced one; otherwise <see langword="null" />.
+        ///     当所属模型的工厂生成了状态机时，返回 <paramref name="creature" /> 的缓存战斗 <see cref="ModAnimStateMachine" />；
+        ///     否则返回 <see langword="null" />。
         /// </summary>
         internal static ModAnimStateMachine? TryGetCombatAnimationStateMachine(NCreature creature)
         {
@@ -67,6 +78,8 @@ namespace STS2RitsuLib.Scaffolding.Characters.Patches
         /// <summary>
         ///     Returns <see langword="false" /> when the trigger was consumed (skip vanilla
         ///     <see cref="NCreature.SetAnimationTrigger" /> body).
+        ///     触发器已被消费时返回 <see langword="false" />（跳过原版
+        ///     <see cref="NCreature.SetAnimationTrigger" /> 方法体）。
         /// </summary>
         public static bool Prefix(NCreature __instance, string trigger)
         {

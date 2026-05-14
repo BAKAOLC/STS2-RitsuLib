@@ -21,6 +21,7 @@ using STS2RitsuLib.Keywords;
 using STS2RitsuLib.Localization;
 using STS2RitsuLib.Localization.SmartFormat;
 using STS2RitsuLib.Patching.Core;
+using STS2RitsuLib.Platform;
 using STS2RitsuLib.RuntimeInput;
 using STS2RitsuLib.Scaffolding.Ancients.Options;
 using STS2RitsuLib.Scaffolding.Content;
@@ -38,6 +39,7 @@ namespace STS2RitsuLib
 {
     /// <summary>
     ///     Shared runtime bootstrap for the framework itself and for mods that reference it.
+    ///     框架自身以及引用该框架的 Mod 共用的运行时启动入口。
     /// </summary>
     [ModInitializer(nameof(Initialize))]
     public static partial class RitsuLibFramework
@@ -63,30 +65,44 @@ namespace STS2RitsuLib
 
         /// <summary>
         ///     Framework logger instance (typed as <c>MegaCrit.Sts2.Core.Logging.Logger</c>).
+        ///     框架 logger 实例（类型为 <c>MegaCrit.Sts2.Core.Logging.Logger</c>）。
         /// </summary>
         public static Logger Logger { get; private set; }
 
         /// <summary>
         ///     True after <see cref="Initialize" /> completes without a fatal patch failure.
+        ///     <see cref="Initialize" /> 在没有致命 patch 失败的情况下完成后为 True。
         /// </summary>
         public static bool IsInitialized { get; private set; }
 
         /// <summary>
         ///     True when the framework finished initialization and critical patches succeeded.
+        ///     当框架完成初始化且关键补丁成功应用时为 true。
         /// </summary>
         public static bool IsActive { get; private set; }
 
         /// <summary>
         ///     True when at least one mod has registered a settings page via <see cref="RegisterModSettings" />.
+        ///     至少一个 mod 已通过 <see cref="RegisterModSettings" /> 注册设置页时为 True。
         /// </summary>
         public static bool HasRegisteredModSettings => ModSettingsRegistry.HasPages;
 
         /// <summary>
         ///     Subscribes an observer to framework lifecycle events, optionally replaying the current replayable state.
+        ///     订阅框架生命周期事件观察者，并可选择回放当前可回放状态。
         /// </summary>
-        /// <param name="observer">Receives lifecycle notifications via <c>OnEvent</c>.</param>
-        /// <param name="replayCurrentState">When true, dispatches replayable events that already occurred.</param>
-        /// <returns>Disposing unsubscribes the observer.</returns>
+        /// <param name="observer">
+        ///     Receives lifecycle notifications via <c>OnEvent</c>.
+        ///     通过 <c>OnEvent</c> 接收生命周期通知。
+        /// </param>
+        /// <param name="replayCurrentState">
+        ///     When true, dispatches replayable events that already occurred.
+        ///     为 true 时，派发已经发生过的可回放事件。
+        /// </param>
+        /// <returns>
+        ///     Disposing unsubscribes the observer.
+        ///     释放返回值会取消订阅该观察者。
+        /// </returns>
         public static IDisposable SubscribeLifecycle(ILifecycleObserver observer, bool replayCurrentState = true)
         {
             ArgumentNullException.ThrowIfNull(observer);
@@ -118,14 +134,25 @@ namespace STS2RitsuLib
 
         /// <summary>
         ///     Subscribes a typed callback for a specific <typeparamref name="TEvent" /> lifecycle event.
+        ///     为特定 <typeparamref name="TEvent" /> 生命周期事件订阅类型化回调。
         /// </summary>
-        /// <typeparam name="TEvent">Concrete lifecycle event type.</typeparam>
-        /// <param name="handler">Invoked for each matching event.</param>
+        /// <typeparam name="TEvent">
+        ///     Concrete lifecycle event type.
+        ///     具体的生命周期事件类型。
+        /// </typeparam>
+        /// <param name="handler">
+        ///     Invoked for each matching event.
+        ///     每次匹配事件到达时调用。
+        /// </param>
         /// <param name="replayCurrentState">
         ///     When true, invokes <paramref name="handler" /> with the last replayable event if
         ///     present.
+        ///     为 true 时，如果存在最后一个可重放事件，则用它调用 <paramref name="handler" />。
         /// </param>
-        /// <returns>Disposing unsubscribes the handler.</returns>
+        /// <returns>
+        ///     Disposing unsubscribes the handler.
+        ///     释放返回值会取消订阅该回调。
+        /// </returns>
         public static IDisposable SubscribeLifecycle<TEvent>(Action<TEvent> handler, bool replayCurrentState = true)
             where TEvent : IFrameworkLifecycleEvent
         {
@@ -160,16 +187,27 @@ namespace STS2RitsuLib
         /// <summary>
         ///     Subscribes a typed callback for a specific <typeparamref name="TEvent" />, passing the same
         ///     <see cref="IDisposable" /> subscription instance on every invocation (including synchronous replay).
+        ///     为特定 <typeparamref name="TEvent" /> 订阅类型化回调，并在每次调用时传入同一个
+        ///     <see cref="IDisposable" /> 订阅实例（包括同步重放）。
         /// </summary>
-        /// <typeparam name="TEvent">Concrete lifecycle event type.</typeparam>
+        /// <typeparam name="TEvent">
+        ///     Concrete lifecycle event type.
+        ///     具体的生命周期事件类型。
+        /// </typeparam>
         /// <param name="handler">
         ///     Invoked for each matching event. The <see cref="IDisposable" /> argument is the subscription; disposing it
         ///     unsubscribes the handler.
+        ///     对每个匹配事件调用。<see cref="IDisposable" /> 参数是订阅；释放它会
+        ///     取消订阅该 handler。
         /// </param>
         /// <param name="replayCurrentState">
         ///     When true, invokes <paramref name="handler" /> with the last replayable event if present.
+        ///     为 true 时，如果存在最后一个可重放事件，则用它调用 <paramref name="handler" />。
         /// </param>
-        /// <returns>Disposing unsubscribes the handler.</returns>
+        /// <returns>
+        ///     Disposing unsubscribes the handler.
+        ///     释放返回值会取消订阅该回调。
+        /// </returns>
         public static IDisposable SubscribeLifecycle<TEvent>(
             Action<TEvent, IDisposable> handler,
             bool replayCurrentState = true
@@ -251,6 +289,7 @@ namespace STS2RitsuLib
 
         /// <summary>
         ///     Initializes the shared framework: settings, patch registration, and lifecycle publication.
+        ///     初始化共享框架，包括设置、补丁注册和生命周期事件发布。
         /// </summary>
         public static void Initialize()
         {
@@ -268,6 +307,7 @@ namespace STS2RitsuLib
                 Logger.Info($"Framework Name: {Const.Name}");
                 Logger.Info(BuildVersionLogText());
                 Logger.Info("Initializing shared framework...");
+                RitsuLibMobileSteamRuntime.LogSuppressedSteamFeaturesAtStartup();
                 ModTypeDiscoveryHub.EnsureBuiltInContributorsRegistered();
                 RitsuLibSettingsStore.Initialize();
                 RitsuLibModSettingsBootstrap.Initialize();
@@ -363,6 +403,7 @@ namespace STS2RitsuLib
 
         /// <summary>
         ///     Ensures profile-bound services (<c>ProfileManager</c>, profile-scoped <c>ModDataStore</c>) are initialized once.
+        ///     确保与配置档绑定的服务（<c>ProfileManager</c>、配置档作用域的 <c>ModDataStore</c>）只初始化一次。
         /// </summary>
         public static void EnsureProfileServicesInitialized()
         {
@@ -397,10 +438,20 @@ namespace STS2RitsuLib
 
         /// <summary>
         ///     Begins a registration scope for the given mod's <c>ModDataStore</c> entries.
+        ///     为给定 mod 的 <c>ModDataStore</c> 条目开始注册作用域。
         /// </summary>
-        /// <param name="modId">Owning mod identifier.</param>
-        /// <param name="initializeProfileIfReady">When true, initializes profile services if the profile is already ready.</param>
-        /// <returns>Disposing ends the registration scope.</returns>
+        /// <param name="modId">
+        ///     Owning mod identifier.
+        ///     所属 Mod 标识符。
+        /// </param>
+        /// <param name="initializeProfileIfReady">
+        ///     When true, initializes profile services if the profile is already ready.
+        ///     为 true 时，如果档案已经就绪，则初始化档案服务。
+        /// </param>
+        /// <returns>
+        ///     Disposing ends the registration scope.
+        ///     释放返回值会结束该注册作用域。
+        /// </returns>
         public static IDisposable BeginModDataRegistration(string modId, bool initializeProfileIfReady = true)
         {
             ArgumentException.ThrowIfNullOrWhiteSpace(modId);
@@ -409,6 +460,7 @@ namespace STS2RitsuLib
 
         /// <summary>
         ///     Returns the persistent data store facade for <paramref name="modId" />.
+        ///     返回 <paramref name="modId" /> 的持久数据存储 facade。
         /// </summary>
         public static ModDataStore GetDataStore(string modId)
         {
@@ -417,6 +469,7 @@ namespace STS2RitsuLib
 
         /// <summary>
         ///     Returns the content registry for <paramref name="modId" />.
+        ///     返回 <paramref name="modId" /> 的内容注册表。
         /// </summary>
         public static ModContentRegistry GetContentRegistry(string modId)
         {
@@ -425,6 +478,7 @@ namespace STS2RitsuLib
 
         /// <summary>
         ///     Returns the keyword registry for <paramref name="modId" />.
+        ///     返回 <paramref name="modId" /> 的关键字注册表。
         /// </summary>
         public static ModKeywordRegistry GetKeywordRegistry(string modId)
         {
@@ -433,6 +487,7 @@ namespace STS2RitsuLib
 
         /// <summary>
         ///     Returns the SmartFormat extension registry for <paramref name="modId" />.
+        ///     返回 <paramref name="modId" /> 的 SmartFormat 扩展注册表。
         /// </summary>
         public static ModSmartFormatExtensionRegistry GetSmartFormatRegistry(string modId)
         {
@@ -441,6 +496,7 @@ namespace STS2RitsuLib
 
         /// <summary>
         ///     Returns the custom card-tag registry for <paramref name="modId" />.
+        ///     返回 <paramref name="modId" /> 的自定义卡牌标签注册表。
         /// </summary>
         public static ModCardTagRegistry GetCardTagRegistry(string modId)
         {
@@ -449,6 +505,7 @@ namespace STS2RitsuLib
 
         /// <summary>
         ///     Returns the custom card-pile registry for <paramref name="modId" />.
+        ///     返回 <paramref name="modId" /> 的自定义卡牌牌堆注册表。
         /// </summary>
         public static ModCardPileRegistry GetCardPileRegistry(string modId)
         {
@@ -457,6 +514,7 @@ namespace STS2RitsuLib
 
         /// <summary>
         ///     Returns the top-bar button registry for <paramref name="modId" />.
+        ///     返回 <paramref name="modId" /> 的顶部栏按钮注册表。
         /// </summary>
         public static ModTopBarButtonRegistry GetTopBarButtonRegistry(string modId)
         {
@@ -465,6 +523,7 @@ namespace STS2RitsuLib
 
         /// <summary>
         ///     Returns the timeline (epoch/story) registry for <paramref name="modId" />.
+        ///     返回 <paramref name="modId" /> 的时间线（纪元/故事）注册表。
         /// </summary>
         public static ModTimelineRegistry GetTimelineRegistry(string modId)
         {
@@ -473,6 +532,7 @@ namespace STS2RitsuLib
 
         /// <summary>
         ///     Returns the unlock rules registry for <paramref name="modId" />.
+        ///     返回 <paramref name="modId" /> 的解锁规则注册表。
         /// </summary>
         public static ModUnlockRegistry GetUnlockRegistry(string modId)
         {
@@ -481,6 +541,7 @@ namespace STS2RitsuLib
 
         /// <summary>
         ///     Registers a non-power health bar forecast source type through the framework.
+        ///     通过框架注册非能力生命条预测来源类型。
         /// </summary>
         public static void RegisterHealthBarForecast<TSource>(string modId, string? sourceId = null)
             where TSource : IHealthBarForecastSource, new()
@@ -490,6 +551,7 @@ namespace STS2RitsuLib
 
         /// <summary>
         ///     Registers a non-power health bar visual graft source type through the framework.
+        ///     通过框架注册非能力生命条视觉 graft 来源类型。
         /// </summary>
         public static void RegisterHealthBarVisualGraft<TSource>(string modId, string? sourceId = null)
             where TSource : IHealthBarVisualGraftSource, new()
@@ -499,6 +561,7 @@ namespace STS2RitsuLib
 
         /// <summary>
         ///     Resolves the current max-hand-size value for <paramref name="player" />.
+        ///     解析 <paramref name="player" /> 当前的最大手牌数值。
         /// </summary>
         public static int GetMaxHandSize(Player player)
         {
@@ -507,6 +570,7 @@ namespace STS2RitsuLib
 
         /// <summary>
         ///     Registers an additional free-play detector used by framework consumers (for example material logic).
+        ///     注册一个额外的免费打出检测器，供框架消费者使用（例如材质逻辑）。
         /// </summary>
         public static void RegisterFreePlayBinding(string bindingId, Func<CardPlay, bool> detector)
         {
@@ -515,6 +579,7 @@ namespace STS2RitsuLib
 
         /// <summary>
         ///     Registers an initial-option injection rule for <typeparamref name="TAncient" />.
+        ///     为 <typeparamref name="TAncient" /> 注册初始选项注入规则。
         /// </summary>
         public static void RegisterAncientOption<TAncient>(string modId, ModAncientOptionRule rule)
             where TAncient : AncientEventModel
@@ -524,6 +589,7 @@ namespace STS2RitsuLib
 
         /// <summary>
         ///     Creates a content pack builder for <paramref name="modId" />.
+        ///     为 <paramref name="modId" /> 创建内容包构建器。
         /// </summary>
         public static ModContentPackBuilder CreateContentPack(string modId)
         {
@@ -581,9 +647,16 @@ namespace STS2RitsuLib
 
         /// <summary>
         ///     Starts a batch PNG export of registered cards (see <see cref="CardPngExporter" />).
+        ///     开始批量导出已注册卡牌的 PNG（见 <see cref="CardPngExporter" />）。
         /// </summary>
-        /// <param name="request">Output directory, scale, hover panel, filters, etc.</param>
-        /// <param name="issuingPlayer">Optional; export does not require a run or player.</param>
+        /// <param name="request">
+        ///     Output directory, scale, hover panel, filters, etc.
+        ///     输出目录、缩放、悬停面板、过滤器等导出参数。
+        /// </param>
+        /// <param name="issuingPlayer">
+        ///     Optional; export does not require a run or player.
+        ///     可选参数；导出不要求存在当前 run 或玩家。
+        /// </param>
         public static void BeginCardPngExport(CardPngExportRequest request, Player? issuingPlayer = null)
         {
             CardPngExporter.BeginExport(request, issuingPlayer, msg => Logger.Info(msg));
@@ -593,6 +666,9 @@ namespace STS2RitsuLib
         ///     Starts a batch PNG export of compendium-style detail panels: relic <c>inspect_relic_screen</c> popup, and
         ///     potion lab focus (scaled <c>NPotion</c> + hovers). Does not use save / unlock gating; content is the “seen
         ///     unlocked” form.
+        ///     开始批量导出 compendium 风格的详情面板 PNG：遗物 <c>inspect_relic_screen</c> 弹窗，以及
+        ///     药水实验室焦点（缩放后的 <c>NPotion</c> + 悬停）。不使用存档/解锁门控；内容为“已见
+        ///     已解锁”形态。
         /// </summary>
         public static void BeginCompendiumDetailPngExport(CompendiumPngExportRequest request)
         {
@@ -604,6 +680,9 @@ namespace STS2RitsuLib
         ///     it and the session uses Steam Cloud. Prefer ModDataStore.Register when you already use
         ///     <see cref="Data.ModDataStore" />; this call is for custom persistence that still resolves via
         ///     <see cref="Utils.Persistence.ProfileManager" />.
+        ///     声明一个 <c>mod_data</c> JSON 路径；当玩家启用 Steam Cloud 且会话使用 Steam Cloud 时，该路径可以参与 RitsuLib Steam Cloud 同步。
+        ///     当你已经使用 <see cref="Data.ModDataStore" /> 时，优先使用 ModDataStore.Register；此调用用于仍通过
+        ///     <see cref="Utils.Persistence.ProfileManager" /> 解析的自定义持久化。
         /// </summary>
         public static void RegisterModCloudPersistedSlot(string modId, string fileName, SaveScope scope)
         {
@@ -614,8 +693,12 @@ namespace STS2RitsuLib
 
         /// <summary>
         ///     Registers a page in the RitsuLib mod settings submenu.
+        ///     在 RitsuLib Mod 设置子菜单中注册一个页面。
         /// </summary>
-        /// <remarks>Optional layout: <see cref="ModSettingsUiPresentation.ParagraphMaxBodyHeight" />.</remarks>
+        /// <remarks>
+        ///     Optional layout: <see cref="ModSettingsUiPresentation.ParagraphMaxBodyHeight" />.
+        ///     可选布局：<see cref="ModSettingsUiPresentation.ParagraphMaxBodyHeight" />。
+        /// </remarks>
         public static void RegisterModSettings(string modId, Action<ModSettingsPageBuilder> configure,
             string? pageId = null)
         {
@@ -624,6 +707,7 @@ namespace STS2RitsuLib
 
         /// <summary>
         ///     Registers a reflection-based settings provider type for attribute-driven settings pages.
+        ///     注册一个基于反射的设置提供器类型，用于属性驱动的设置页。
         /// </summary>
         public static bool RegisterModSettingsReflectionProvider<TProvider>()
         {
@@ -632,6 +716,7 @@ namespace STS2RitsuLib
 
         /// <summary>
         ///     Registers a reflection-based settings provider type for attribute-driven settings pages.
+        ///     注册一个基于反射的设置提供器类型，用于属性驱动的设置页。
         /// </summary>
         public static bool RegisterModSettingsReflectionProvider(Type providerType)
         {
@@ -640,6 +725,7 @@ namespace STS2RitsuLib
 
         /// <summary>
         ///     Registers a reflection provider and immediately attempts to mirror-register its pages.
+        ///     注册一个反射提供器，并立即尝试镜像注册其页面。
         /// </summary>
         public static int RegisterModSettingsReflectionProviderAndTryRegister<TProvider>()
         {
@@ -648,6 +734,7 @@ namespace STS2RitsuLib
 
         /// <summary>
         ///     Registers a reflection provider and immediately attempts to mirror-register its pages.
+        ///     注册一个反射提供器，并立即尝试镜像注册其页面。
         /// </summary>
         public static int RegisterModSettingsReflectionProviderAndTryRegister(Type providerType)
         {
@@ -658,6 +745,8 @@ namespace STS2RitsuLib
         ///     Sets ordering for this mod&apos;s group in the RitsuLib mod settings sidebar (lower first). Mods without a
         ///     value use <c>0</c> and sort by display name. Prefer <see cref="ModSettingsPageBuilder.WithModSidebarOrder" /> when
         ///     registering pages.
+        ///     设置此 mod 分组在 RitsuLib mod 设置侧边栏中的排序（较小者在前）。没有
+        ///     值的 mod 使用 <c>0</c> 并按显示名排序。注册页面时优先使用 <see cref="ModSettingsPageBuilder.WithModSidebarOrder" />。
         /// </summary>
         public static void RegisterModSettingsSidebarOrder(string modId, int order)
         {
@@ -666,6 +755,7 @@ namespace STS2RitsuLib
 
         /// <summary>
         ///     Overrides sort order for a registered page among siblings (same mod and parent page).
+        ///     覆盖已注册页面在同级页面中的排序（同一 Mod 且同一父页面）。
         /// </summary>
         public static void RegisterModSettingsPageOrder(string modId, string pageId, int sortOrder)
         {
@@ -674,6 +764,7 @@ namespace STS2RitsuLib
 
         /// <summary>
         ///     Places <paramref name="pageId" /> after <paramref name="afterPageId" /> in the sidebar for this mod.
+        ///     将 <paramref name="pageId" /> 放在此 mod 侧边栏中 <paramref name="afterPageId" /> 之后。
         /// </summary>
         public static bool TryRegisterModSettingsPageOrderAfter(string modId, string pageId, string afterPageId,
             int gap = 1)
@@ -683,6 +774,7 @@ namespace STS2RitsuLib
 
         /// <summary>
         ///     Places <paramref name="pageId" /> before <paramref name="beforePageId" /> in the sidebar for this mod.
+        ///     将 <paramref name="pageId" /> 放在此 mod 侧边栏中 <paramref name="beforePageId" /> 之前。
         /// </summary>
         public static bool TryRegisterModSettingsPageOrderBefore(string modId, string pageId, string beforePageId,
             int gap = 1)
@@ -692,6 +784,7 @@ namespace STS2RitsuLib
 
         /// <summary>
         ///     Returns all registered mod settings pages (same snapshot as <see cref="ModSettingsRegistry.GetPages" />).
+        ///     返回所有已注册的 mod 设置页（与 <see cref="ModSettingsRegistry.GetPages" /> 相同的快照）。
         /// </summary>
         public static IReadOnlyList<ModSettingsPage> GetRegisteredModSettings()
         {
@@ -700,6 +793,7 @@ namespace STS2RitsuLib
 
         /// <summary>
         ///     Creates a <c>MegaCrit.Sts2.Core.Logging.Logger</c> for <paramref name="modId" />.
+        ///     为 <paramref name="modId" /> 创建 <c>MegaCrit.Sts2.Core.Logging.Logger</c>。
         /// </summary>
         public static Logger CreateLogger(string modId, LogType logType = LogType.Generic)
         {
@@ -709,6 +803,7 @@ namespace STS2RitsuLib
 
         /// <summary>
         ///     Creates a <see cref="STS2RitsuLib.Patching.Core.ModPatcher" /> with a dedicated logger for the owning mod.
+        ///     使用所属 mod 的专用 logger 创建 <see cref="STS2RitsuLib.Patching.Core.ModPatcher" />。
         /// </summary>
         public static ModPatcher CreatePatcher(
             string ownerModId,
@@ -731,6 +826,8 @@ namespace STS2RitsuLib
         /// <summary>
         ///     Creates a <see cref="STS2RitsuLib.Utils.I18N" /> instance with optional file, embedded resource, and PCK
         ///     translation roots.
+        ///     创建 <see cref="STS2RitsuLib.Utils.I18N" /> 实例，可带可选的文件、嵌入资源和 PCK
+        ///     翻译根。
         /// </summary>
         public static I18N CreateLocalization(
             string instanceName,
@@ -753,6 +850,8 @@ namespace STS2RitsuLib
         /// <summary>
         ///     Creates a <see cref="STS2RitsuLib.Utils.I18N" /> instance for a mod, defaulting the file-system folder to
         ///     <c>user://&lt;platform&gt;/&lt;userId&gt;/mod_data/{modId}/localization</c> when none are supplied.
+        ///     <c>user://&lt;platform&gt;/&lt;userId&gt;/mod_data/{modId}/localization</c>。
+        ///     为 mod 创建 <see cref="STS2RitsuLib.Utils.I18N" /> 实例；未提供时，文件系统文件夹默认使用
         /// </summary>
         public static I18N CreateModLocalization(
             string modId,
@@ -772,6 +871,10 @@ namespace STS2RitsuLib
         /// <summary>
         ///     Returns the virtual <c>LocTable</c> id for an <see cref="I18N" /> bridge table using the framework's
         ///     standard three-segment id convention: <c>MODID_I18N_STEM</c>.
+        ///     <c>MODID_I18N_STEM</c>。
+        ///     返回使用框架标准三段式 id 约定的 <see cref="I18N" /> 桥接表的虚拟 <c>LocTable</c> id：
+        ///     <c>MODID_I18N_STEM</c>。
+        ///     <c>MODID_I18N_STEM</c>。
         /// </summary>
         public static string GetI18NLocTableId(string modId, string stem = "DEFAULT")
         {
@@ -781,6 +884,8 @@ namespace STS2RitsuLib
         /// <summary>
         ///     Registers an <see cref="I18N" /> instance as a virtual <c>LocTable</c> so the game-native
         ///     <c>LocString</c> pipeline can resolve raw templates from it.
+        ///     将 <see cref="I18N" /> 实例注册为虚拟 <c>LocTable</c>，使游戏原生
+        ///     <c>LocString</c> 管线可以从中解析原始模板。
         /// </summary>
         public static bool RegisterI18NLocTableBridge(string modId, I18N i18N, string stem = "DEFAULT",
             bool replaceExisting = false)
@@ -791,6 +896,8 @@ namespace STS2RitsuLib
         /// <summary>
         ///     Unregisters a previously registered virtual <c>LocTable</c> for the given <paramref name="modId" /> and
         ///     <paramref name="stem" />.
+        ///     注销此前为给定 <paramref name="modId" /> 和
+        ///     <paramref name="stem" /> 注册的虚拟 <c>LocTable</c>。
         /// </summary>
         public static bool UnregisterI18NLocTableBridge(string modId, string stem = "DEFAULT")
         {
@@ -799,6 +906,7 @@ namespace STS2RitsuLib
 
         /// <summary>
         ///     Registers C# scripts from <paramref name="assembly" /> with Godot (once per assembly).
+        ///     将 <paramref name="assembly" /> 中的 C# 脚本注册到 Godot（每个程序集一次）。
         /// </summary>
         public static void EnsureGodotScriptsRegistered(Assembly assembly, Logger? logger = null)
         {
@@ -842,6 +950,8 @@ namespace STS2RitsuLib
         /// <summary>
         ///     Applies all patches on <paramref name="patcher" />; on failure logs, invokes <paramref name="disableMod" />, and
         ///     returns false.
+        ///     应用 <paramref name="patcher" /> 上的所有 patch；失败时记录日志，调用 <paramref name="disableMod" />，并
+        ///     返回 false。
         /// </summary>
         public static bool ApplyRequiredPatcher(ModPatcher patcher, Action disableMod, string? failureMessage = null)
         {

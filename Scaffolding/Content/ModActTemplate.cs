@@ -8,6 +8,10 @@ namespace STS2RitsuLib.Scaffolding.Content
     ///     paths, and optional custom combat background layers directory (<c>_bg_</c> / <c>_fg_</c> scenes). To reuse a
     ///     vanilla act’s shipped art, set <see cref="AssetProfile" /> from
     ///     <see cref="ContentAssetProfiles.FromVanillaActId" /> (vanilla folder name, not this act’s model id).
+    ///     Mod 章节的基础 <see cref="ActModel" />：提供宝箱 Spine 路径覆盖、<see cref="IModActAssetOverrides" />
+    ///     场景/地图路径，以及可选的自定义战斗背景图层目录（<c>_bg_</c> / <c>_fg_</c> 场景）。
+    ///     若要复用原版章节随游戏发布的美术，请从 <see cref="AssetProfile" /> 设置
+    ///     <see cref="ContentAssetProfiles.FromVanillaActId" />（使用原版文件夹名，而不是此章节的模型 id）。
     /// </summary>
     public abstract class ModActTemplate : ActModel, IModActAssetOverrides
     {

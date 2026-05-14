@@ -11,6 +11,14 @@ inputs:
     description: Build artifacts with dev-only package version (9999.0.0-dev.<run>+<sha>).
     required: false
     default: "false"
+  upload-artifact:
+    description: Upload artifacts/github and artifacts/nuget as a GitHub Actions artifact.
+    required: false
+    default: "true"
+  artifact-retention-days:
+    description: Number of days to retain the uploaded Actions artifact.
+    required: false
+    default: "30"
 
 runs:
   using: composite
@@ -41,3 +49,23 @@ runs:
         --repo-root "${{ github.workspace }}"
         --signature-root "${{ inputs.signatures-root }}"
         $extra
+
+    - name: Resolve artifact name
+      if: ${{ inputs.upload-artifact == 'true' }}
+      id: artifact
+      shell: bash
+      working-directory: ${{ github.workspace }}
+      run: |
+        short_sha="$(git rev-parse --short=12 HEAD)"
+        echo "name=ritsulib-${short_sha}-${GITHUB_RUN_ID}-${GITHUB_RUN_ATTEMPT}" >> "$GITHUB_OUTPUT"
+
+    - name: Upload build artifacts
+      if: ${{ inputs.upload-artifact == 'true' }}
+      uses: actions/upload-artifact@v7
+      with:
+        name: ${{ steps.artifact.outputs.name }}
+        path: |
+          artifacts/github/**
+          artifacts/nuget/**
+        if-no-files-found: error
+        retention-days: ${{ inputs.artifact-retention-days }}

@@ -5,6 +5,8 @@ namespace STS2RitsuLib.Audio.Internal
     /// <summary>
     ///     Mirrors <c>audio_manager_proxy.gd</c> bookkeeping for <c>event:/…</c> paths that exist only via guids.txt + mod
     ///     banks (no strings.bank path table).
+    ///     复现 <c>audio_manager_proxy.gd</c> 对仅通过 guids.txt + mod
+    ///     bank 存在的 <c>event:/…</c> 路径的簿记（没有 strings.bank 路径表）。
     /// </summary>
     internal static class GuidMappedNaudioStudioProxy
     {
@@ -22,13 +24,15 @@ namespace STS2RitsuLib.Audio.Internal
 
         internal static void StopAllMappedLoops()
         {
+            LoopSlot[] slots;
             lock (Gate)
             {
-                foreach (var path in LoopQueues.Keys)
-                    StopMappedLoopCore(path);
-
+                slots = LoopQueues.Values.SelectMany(static list => list).ToArray();
                 LoopQueues.Clear();
             }
+
+            foreach (var slot in slots)
+                StopSlot(slot);
         }
 
         internal static bool TryEnqueueMappedLoop(string path, bool usesLoopParam)
@@ -80,6 +84,13 @@ namespace STS2RitsuLib.Audio.Internal
             if (list.Count == 0)
                 LoopQueues.Remove(path);
 
+            StopSlot(slot);
+
+            return true;
+        }
+
+        private static void StopSlot(LoopSlot slot)
+        {
             try
             {
                 if (slot.UsesLoopParam)
@@ -91,8 +102,6 @@ namespace STS2RitsuLib.Audio.Internal
             {
                 RitsuLibFramework.Logger.Error($"[Audio] mapped StopLoop: {ex.Message}");
             }
-
-            return true;
         }
 
         internal static bool TrySetParamOnFirstMappedLoop(string path, string param, float value)

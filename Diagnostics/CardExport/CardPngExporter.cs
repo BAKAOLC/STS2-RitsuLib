@@ -17,6 +17,7 @@ namespace STS2RitsuLib.Diagnostics.CardExport
 {
     /// <summary>
     ///     Batch-exports registered cards to PNG via <see cref="NCard" /> (library models; no run required).
+    ///     通过 <see cref="NCard" /> 批量导出已注册卡牌为 PNG（库模型；无需跑局）。
     /// </summary>
     public static class CardPngExporter
     {
@@ -54,6 +55,7 @@ namespace STS2RitsuLib.Diagnostics.CardExport
 
         /// <summary>
         ///     Starts batch PNG export for <paramref name="request" />.
+        ///     为 <paramref name="request" /> 启动批量 PNG 导出。
         /// </summary>
         public static void BeginExport(CardPngExportRequest request, Player? issuingPlayer, Action<string>? log = null)
         {
@@ -85,6 +87,7 @@ namespace STS2RitsuLib.Diagnostics.CardExport
 
         /// <summary>
         ///     Whether export can start (game loaded and cards can be instantiated).
+        ///     导出是否可以开始（游戏已加载且可实例化卡牌）。
         /// </summary>
         public static bool TryValidateExportEnvironment(out string error)
         {
@@ -107,6 +110,8 @@ namespace STS2RitsuLib.Diagnostics.CardExport
         /// <summary>
         ///     Back-compat shim: always sets <paramref name="runState" /> and <paramref name="player" /> to null; use
         ///     <see cref="TryValidateExportEnvironment" /> for new code.
+        ///     向后兼容 shim：始终将 <paramref name="runState" /> 和 <paramref name="player" /> 设为 null；新代码请使用
+        ///     <see cref="TryValidateExportEnvironment" />。
         /// </summary>
         public static bool TryResolveContext(Player? _, out RunState? runState, out Player? player, out string error)
         {
@@ -373,6 +378,9 @@ namespace STS2RitsuLib.Diagnostics.CardExport
         /// <summary>
         ///     Frees the capture subtree. Export uses non-pooled <see cref="NCard" /> instances only — never
         ///     <see cref="NCard.Create" /> / <c>NodePool</c> — so teardown does not race the in-game card pool.
+        ///     释放捕获子树。导出只使用非池化的 <see cref="NCard" /> 实例，绝不使用
+        ///     <see cref="NCard.Create" />
+        ///     <c>NodePool</c>，因此拆卸不会与游戏内卡牌池竞争。
         /// </summary>
         private static void DisposeExportHost(Control host)
         {
@@ -555,6 +563,8 @@ namespace STS2RitsuLib.Diagnostics.CardExport
         /// <summary>
         ///     Instantiates <c>card.tscn</c> without <see cref="NCard.Create" /> so export never competes with the shared
         ///     <c>NodePool</c>.
+        ///     不通过 <see cref="NCard.Create" /> 实例化 <c>card.tscn</c>，因此导出绝不会与共享
+        ///     <c>NodePool</c> 竞争。
         /// </summary>
         private static NCard InstantiateExportNCard(CardModel card)
         {
@@ -571,6 +581,7 @@ namespace STS2RitsuLib.Diagnostics.CardExport
 
         /// <summary>
         ///     Refreshes card visuals (requires the <see cref="NCard" /> to be in the scene tree).
+        ///     刷新卡牌视觉（要求 <see cref="NCard" /> 已在场景树中）。
         /// </summary>
         private static void RefreshMainExportCardVisuals(NCard nCard)
         {
@@ -628,6 +639,7 @@ namespace STS2RitsuLib.Diagnostics.CardExport
 
         /// <summary>
         ///     Adds a referenced-card hover column like the in-game card tooltip.
+        ///     添加类似游戏内卡牌工具提示的引用卡牌悬停列。
         /// </summary>
         private static void AddGameCardHoverTip(VBoxContainer refCardsColumn, CardHoverTip refTip,
             List<NCard> refHoverTipCardNodes)

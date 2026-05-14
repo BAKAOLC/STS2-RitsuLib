@@ -6,12 +6,18 @@ namespace STS2RitsuLib.Scaffolding.Visuals.StateMachine.Backends
 {
     /// <summary>
     ///     <see cref="IAnimationBackend" /> driver for Spine via <see cref="MegaSprite" />.
+    ///     通过 <see cref="MegaSprite" /> 驱动 Spine 的 <see cref="IAnimationBackend" />。
     /// </summary>
     /// <remarks>
     ///     <para>
     ///         Connects to <c>animation_started</c>, <c>animation_completed</c>, and <c>animation_interrupted</c>
     ///         signals; behaviour mirrors <see cref="MegaCrit.Sts2.Core.Animation.CreatureAnimator" /> (including
     ///         looping-state random time-scale and start offset for natural idle variation).
+    ///     </para>
+    ///     <para>
+    ///         连接到 <c>animation_started</c>、<c>animation_completed</c> 和 <c>animation_interrupted</c>
+    ///         信号；行为对应 <see cref="MegaCrit.Sts2.Core.Animation.CreatureAnimator" />（包括
+    ///         循环状态的随机时间缩放和起始偏移，用于自然的 idle 变化）。
     ///     </para>
     /// </remarks>
     public sealed class SpineAnimationBackend : IAnimationBackend
@@ -25,6 +31,7 @@ namespace STS2RitsuLib.Scaffolding.Visuals.StateMachine.Backends
 
         /// <summary>
         ///     Wraps the given <paramref name="controller" /> and hooks its lifecycle signals.
+        ///     包装给定的 <paramref name="controller" /> 并挂接其生命周期信号。
         /// </summary>
         public SpineAnimationBackend(MegaSprite controller)
         {
@@ -98,6 +105,11 @@ namespace STS2RitsuLib.Scaffolding.Visuals.StateMachine.Backends
         ///     until <see cref="Play" /> is called again (which restores the time scale). This keeps
         ///     <see cref="Interrupted" /> / <see cref="Completed" /> silent as required by
         ///     <see cref="IAnimationBackend.Stop" />.
+        ///     Spine 没有通过 MegaSpine 绑定暴露干净的“停止轨道”API；此后端通过将动画状态时间缩放设为
+        ///     <c>0</c> 来暂停播放。角色会冻结在当前姿势，
+        ///     直到再次调用 <see cref="Play" />（这会恢复时间缩放）。这样会按要求保持
+        ///     <see cref="Interrupted" /> / <see cref="Completed" /> 静默，即
+        ///     <see cref="IAnimationBackend.Stop" /> 的要求。
         /// </remarks>
         public void Stop()
         {
@@ -111,6 +123,7 @@ namespace STS2RitsuLib.Scaffolding.Visuals.StateMachine.Backends
 
         /// <summary>
         ///     Detaches signal connections. Safe to call more than once.
+        ///     断开信号连接。可安全多次调用。
         /// </summary>
         public void Dispose()
         {

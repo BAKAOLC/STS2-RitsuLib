@@ -6,6 +6,7 @@ namespace STS2RitsuLib.Settings
 {
     /// <summary>
     ///     Embedded JSON i18n for mod settings UI plus mod/page name resolution helpers.
+    ///     mod 设置 UI 的嵌入式 JSON i18n，以及 mod / 页面名称解析 helper。
     /// </summary>
     internal static class ModSettingsLocalization
     {

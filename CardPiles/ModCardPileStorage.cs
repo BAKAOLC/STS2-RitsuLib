@@ -8,6 +8,8 @@ namespace STS2RitsuLib.CardPiles
     ///     Weak per-state storage for <see cref="ModCardPile" /> instances. Piles are created lazily the first
     ///     time vanilla code asks for them via <see cref="Resolve" /> so state objects pay nothing for mods they
     ///     do not interact with.
+    ///     <see cref="ModCardPile" /> 实例的弱 per-state 存储。牌堆会在原版代码第一次通过
+    ///     <see cref="Resolve" /> 请求时懒创建，因此 state object 不会为未交互的 mod 付出成本。
     /// </summary>
     /// <remarks>
     ///     <para>
@@ -19,6 +21,14 @@ namespace STS2RitsuLib.CardPiles
     ///         <see cref="ModCardPileScope.RunPersistent" /> piles are keyed by <see cref="Player" /> and
     ///         persist across combats for the lifetime of the player instance. Serialization is a follow-up;
     ///         for now the piles refill from empty at run load.
+    ///     </para>
+    ///     <para>
+    ///         <see cref="ModCardPileScope.CombatOnly" /> 牌堆按 <see cref="PlayerCombatState" /> 索引，
+    ///         并随战斗隐式释放（<c>AllPiles</c> postfix 会把它们加入原版 cleanup sweep）。
+    ///     </para>
+    ///     <para>
+    ///         <see cref="ModCardPileScope.RunPersistent" /> 牌堆按 <see cref="Player" /> 索引，并在 player
+    ///         实例生命周期内跨战斗保留。序列化是后续工作；目前 run load 时这些牌堆会从空状态重新开始。
     ///     </para>
     /// </remarks>
     internal static class ModCardPileStorage
@@ -33,6 +43,9 @@ namespace STS2RitsuLib.CardPiles
         ///     Looks up or lazily creates the <see cref="ModCardPile" /> bound to <paramref name="player" /> for
         ///     <paramref name="type" />. Returns null when the minted type has no registered definition or when
         ///     the requested state (combat / player) is not yet available.
+        ///     查找或懒创建绑定到 <paramref name="player" />、对应 <paramref name="type" /> 的
+        ///     <see cref="ModCardPile" />。当 minted type 没有已注册定义，或请求的状态（combat / player）
+        ///     尚不可用时返回 null。
         /// </summary>
         public static ModCardPile? Resolve(PileType type, Player? player)
         {
@@ -52,6 +65,8 @@ namespace STS2RitsuLib.CardPiles
         /// <summary>
         ///     Returns the mod piles that currently belong to <paramref name="state" /> without creating new
         ///     ones. The returned collection is a snapshot and safe to enumerate while vanilla mutates piles.
+        ///     返回当前属于 <paramref name="state" /> 的 mod 牌堆，但不创建新的牌堆。返回集合是快照，
+        ///     在原版变更牌堆时也可安全枚举。
         /// </summary>
         public static IReadOnlyCollection<ModCardPile> GetCombatPiles(PlayerCombatState state)
         {
@@ -68,6 +83,7 @@ namespace STS2RitsuLib.CardPiles
 
         /// <summary>
         ///     Snapshot of persistent piles owned by <paramref name="player" />.
+        ///     <paramref name="player" /> 拥有的 persistent 牌堆快照。
         /// </summary>
         public static IReadOnlyCollection<ModCardPile> GetRunPiles(Player player)
         {

@@ -32,7 +32,7 @@ DEFAULT_GIT_REMOTE = "origin"
 GIT_DEFAULT_DEV_BRANCH = "dev"
 GIT_DEFAULT_MAIN_BRANCH = "main"
 
-SIGNATURE_EXPECTED_DLL_NAMES = ("sts2.dll", "0Harmony.dll", "Steamworks.NET.dll")
+SIGNATURE_EXPECTED_DLL_NAMES = ("sts2.dll", "0Harmony.dll", "SmartFormat.dll")
 
 GODOT_MONO_BIN_PREFIX = Path(".godot") / "mono" / "temp" / "bin"
 GODOT_MONO_OBJ_PREFIX = Path(".godot") / "mono" / "temp" / "obj"

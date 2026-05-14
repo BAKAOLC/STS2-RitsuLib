@@ -5,6 +5,8 @@ namespace STS2RitsuLib.Audio.Internal
         /// <summary>
         ///     Godot FMOD GDExtension parses GUIDs with <c>sscanf("{%8x-...}")</c> (see
         ///     <c>sts-2-source/fmod-gdextension/src/helpers/common.h</c>); the string must include braces.
+        ///     Godot FMOD GDExtension 使用 <c>sscanf("{%8x-...}")</c> 解析 GUID（见
+        ///     <c>sts-2-source/fmod-gdextension/src/helpers/common.h</c>）；字符串必须包含花括号。
         /// </summary>
         internal static bool TryNormalizeForAddon(string raw, out string bracedLowercase)
         {

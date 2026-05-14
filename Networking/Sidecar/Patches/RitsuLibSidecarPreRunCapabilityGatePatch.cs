@@ -8,6 +8,8 @@ namespace STS2RitsuLib.Networking.Sidecar.Patches
     /// <summary>
     ///     Runs required sidecar capability validation before begin-run. With <c>Fail</c> policy the patch blocks
     ///     begin-run; with <c>Warn</c> policy it only logs warnings.
+    ///     在 begin-run 前运行所需 sidecar 能力验证。使用 <c>Fail</c> 策略时，该补丁会阻止
+    ///     begin-run；使用 <c>Warn</c> 策略时只记录警告。
     /// </summary>
     internal sealed class RitsuLibSidecarPreRunCapabilityGatePatch : IPatchMethod
     {

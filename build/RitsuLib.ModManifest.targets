@@ -1,25 +1,91 @@
 <Project>
-  <PropertyGroup>
-    <RitsuLibManifestToolSource>$(MSBuildProjectDirectory)\build\GenerateModManifest.cs</RitsuLibManifestToolSource>
-  </PropertyGroup>
+  <UsingTask
+      TaskName="RitsuLibGenerateModManifestJson"
+      TaskFactory="RoslynCodeTaskFactory"
+      AssemblyFile="$(MSBuildToolsPath)\Microsoft.Build.Tasks.Core.dll">
+    <ParameterGroup>
+      <SourcePath ParameterType="System.String" Required="true" />
+      <DestinationPath ParameterType="System.String" Required="true" />
+      <DisplayName ParameterType="System.String" Required="true" />
+      <MinGameVersion ParameterType="System.String" Required="false" />
+    </ParameterGroup>
+    <Task>
+      <Reference Include="$(MSBuildToolsPath)/Sdks/Microsoft.NET.Sdk/tools/net472/System.Text.Json.dll" />
+      <Reference Include="$(MSBuildToolsPath)/Sdks/Microsoft.NET.Sdk/tools/net472/System.Memory.dll" />
+      <Reference Include="$(MSBuildToolsPath)/Sdks/Microsoft.NET.Sdk/tools/net472/System.Text.Encodings.Web.dll" />
+      <Reference Include="$(MSBuildToolsPath)/Sdks/Microsoft.NET.Sdk/tools/net472/System.Buffers.dll" />
+      <Reference Include="$(MSBuildToolsPath)/Sdks/Microsoft.NET.Sdk/tools/net472/System.Runtime.CompilerServices.Unsafe.dll" />
+      <Using Namespace="System" />
+      <Using Namespace="System.IO" />
+      <Using Namespace="System.Text" />
+      <Using Namespace="System.Text.Json" />
+      <Using Namespace="System.Text.Json.Nodes" />
+      <Code Type="Fragment" Language="cs"><![CDATA[
+        try
+        {
+            if (!File.Exists(SourcePath))
+            {
+                Log.LogError("Missing manifest source file: '{0}'", SourcePath);
+                return false;
+            }
+
+            var destinationDirectory = Path.GetDirectoryName(DestinationPath);
+            if (!string.IsNullOrEmpty(destinationDirectory))
+            {
+                Directory.CreateDirectory(destinationDirectory);
+            }
+
+            var jsonText = File.ReadAllText(SourcePath, Encoding.UTF8);
+            var root = JsonNode.Parse(jsonText) as JsonObject;
+            if (root is null)
+            {
+                Log.LogError("Manifest JSON root must be an object: '{0}'", SourcePath);
+                return false;
+            }
+
+            root["name"] = DisplayName;
+            if (!string.IsNullOrWhiteSpace(MinGameVersion))
+            {
+                root["min_game_version"] = MinGameVersion;
+            }
+
+            var opts = new JsonSerializerOptions { WriteIndented = true };
+            var updated = root.ToJsonString(opts) + Environment.NewLine;
+            File.WriteAllText(
+                DestinationPath,
+                updated,
+                new UTF8Encoding(encoderShouldEmitUTF8Identifier: false));
+        }
+        catch (JsonException ex)
+        {
+            Log.LogError("Invalid JSON in source manifest '{0}': {1}", SourcePath, ex.Message);
+            return false;
+        }
+        catch (Exception ex)
+        {
+            Log.LogErrorFromException(ex, showStackTrace: true);
+            return false;
+        }
+      ]]></Code>
+    </Task>
+  </UsingTask>
 
   <Target
       Name="GenerateRitsuLibModManifest"
       BeforeTargets="Build;Pack"
-      Condition="'$(RitsuLibSkipManifestGeneration)' != 'true'">
+      Condition="'$(RitsuLibSkipManifestGeneration)' != 'true' and '$(DesignTimeBuild)' != 'true'">
     <Error
         Condition="!Exists('$(RitsuLibManifestSource)')"
         Text="Missing manifest source file: '$(RitsuLibManifestSource)'"/>
-    <Error
-        Condition="!Exists('$(RitsuLibManifestToolSource)')"
-        Text="Missing manifest tool source file: '$(RitsuLibManifestToolSource)'"/>
 
     <PropertyGroup>
       <RitsuLibManifestMinGameVersion Condition="'$(RitsuLibManifestMinGameVersion)' == ''">$(Sts2ApiCompat)</RitsuLibManifestMinGameVersion>
     </PropertyGroup>
 
-    <Exec
-        Condition="'$(DesignTimeBuild)' != 'true'"
-        Command="dotnet run --file &quot;$(RitsuLibManifestToolSource)&quot; -c $(Configuration) -v q -- generate &quot;$(RitsuLibManifestSource)&quot; &quot;$(RitsuLibManifestGenerated)&quot; &quot;$(RitsuLibModDisplayName)&quot; &quot;$(RitsuLibManifestMinGameVersion)&quot;"/>
+    <RitsuLibGenerateModManifestJson
+        SourcePath="$(RitsuLibManifestSource)"
+        DestinationPath="$(RitsuLibManifestGenerated)"
+        DisplayName="$(RitsuLibModDisplayName)"
+        MinGameVersion="$(RitsuLibManifestMinGameVersion)" />
   </Target>
 </Project>

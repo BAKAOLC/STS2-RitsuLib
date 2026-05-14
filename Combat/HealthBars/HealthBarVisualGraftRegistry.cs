@@ -5,16 +5,30 @@ namespace STS2RitsuLib.Combat.HealthBars
 {
     /// <summary>
     ///     Runtime context for resolving visual graft metrics on a creature health bar.
+    ///     用于解析生物生命条上 visual graft 指标的运行时上下文。
     /// </summary>
-    /// <param name="Creature">Creature whose bar is being evaluated.</param>
+    /// <param name="Creature">
+    ///     Creature whose bar is being evaluated.
+    ///     正在评估生命条的生物。
+    /// </param>
     public readonly record struct HealthBarVisualGraftContext(Creature Creature);
 
     /// <summary>
     ///     Extra HP-length grafted onto the right end of the current HP fill for bar geometry and right-side forecasts.
+    ///     嫁接到当前 HP 填充右端的额外 HP 长度，用于生命条几何和右侧 forecast。
     /// </summary>
-    /// <param name="GraftHp">Additional HP units drawn past the current HP edge along the bar.</param>
-    /// <param name="GraftSelfModulate">Optional tint for the graft strip; null uses a default extension color.</param>
-    /// <param name="GraftMaterial">Optional material for the graft strip.</param>
+    /// <param name="GraftHp">
+    ///     Additional HP units drawn past the current HP edge along the bar.
+    ///     沿生命条绘制到当前 HP 边缘之外的额外 HP 单位。
+    /// </param>
+    /// <param name="GraftSelfModulate">
+    ///     Optional tint for the graft strip; null uses a default extension color.
+    ///     graft 条的可选染色；null 使用默认扩展颜色。
+    /// </param>
+    /// <param name="GraftMaterial">
+    ///     Optional material for the graft strip.
+    ///     graft 条的可选 material。
+    /// </param>
     public readonly record struct HealthBarVisualGraftMetrics(
         int GraftHp,
         Color? GraftSelfModulate,
@@ -22,6 +36,7 @@ namespace STS2RitsuLib.Combat.HealthBars
     {
         /// <summary>
         ///     Initializes metrics with no custom appearance.
+        ///     初始化没有自定义外观的指标。
         /// </summary>
         public HealthBarVisualGraftMetrics(int graftHp)
             : this(graftHp, null, null)
@@ -31,6 +46,7 @@ namespace STS2RitsuLib.Combat.HealthBars
 
     /// <summary>
     ///     Supplies visual graft metrics for a creature (temporary HP bar extension, etc.).
+    ///     为生物提供 visual graft 指标（临时 HP 条扩展等）。
     /// </summary>
     public interface IHealthBarVisualGraftSource
     {
@@ -38,12 +54,15 @@ namespace STS2RitsuLib.Combat.HealthBars
         ///     Returns graft metrics for <paramref name="context" />; yield zero
         ///     <see cref="HealthBarVisualGraftMetrics.GraftHp" />
         ///     when none apply.
+        ///     返回 <paramref name="context" /> 的 graft 指标；不适用时产生零
+        ///     <see cref="HealthBarVisualGraftMetrics.GraftHp" />。
         /// </summary>
         HealthBarVisualGraftMetrics GetHealthBarVisualGraft(HealthBarVisualGraftContext context);
     }
 
     /// <summary>
     ///     Aggregates graft metrics from creature powers and registered providers.
+    ///     汇总来自生物能力和已注册 provider 的 graft 指标。
     /// </summary>
     public static class HealthBarVisualGraftRegistry
     {
@@ -53,6 +72,7 @@ namespace STS2RitsuLib.Combat.HealthBars
 
         /// <summary>
         ///     Registers or replaces a graft source implemented by <typeparamref name="TSource" />.
+        ///     注册或替换由 <typeparamref name="TSource" /> 实现的 graft source。
         /// </summary>
         public static void Register<TSource>(string modId, string? sourceId = null)
             where TSource : IHealthBarVisualGraftSource, new()
@@ -62,6 +82,7 @@ namespace STS2RitsuLib.Combat.HealthBars
 
         /// <summary>
         ///     Registers or replaces a graft source instance.
+        ///     注册或替换 graft source 实例。
         /// </summary>
         public static void Register(string modId, string sourceId, IHealthBarVisualGraftSource source)
         {
@@ -82,6 +103,7 @@ namespace STS2RitsuLib.Combat.HealthBars
 
         /// <summary>
         ///     Removes a previously registered graft source.
+        ///     移除先前注册的 graft source。
         /// </summary>
         public static bool Unregister(string modId, string sourceId)
         {
@@ -96,6 +118,7 @@ namespace STS2RitsuLib.Combat.HealthBars
 
         /// <summary>
         ///     Sums graft HP from powers and registered providers; first non-null appearance wins for tint/material.
+        ///     汇总来自能力和已注册 provider 的 graft HP；第一个非 null 外观决定 tint/material。
         /// </summary>
         internal static HealthBarVisualGraftMetrics Aggregate(Creature creature)
         {

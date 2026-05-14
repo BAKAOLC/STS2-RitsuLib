@@ -13,11 +13,24 @@ namespace STS2RitsuLib
 {
     /// <summary>
     ///     Player gold increased.
+    ///     玩家金币增加。
     /// </summary>
-    /// <param name="RunState">Current run state.</param>
-    /// <param name="Player">Player that gained gold.</param>
-    /// <param name="GoldTotal">New gold total after the change.</param>
-    /// <param name="OccurredAtUtc">When the event was raised.</param>
+    /// <param name="RunState">
+    ///     Current run state.
+    ///     当前跑局状态。
+    /// </param>
+    /// <param name="Player">
+    ///     Player that gained gold.
+    ///     获得金币的玩家。
+    /// </param>
+    /// <param name="GoldTotal">
+    ///     New gold total after the change.
+    ///     变更后的新金币总数。
+    /// </param>
+    /// <param name="OccurredAtUtc">
+    ///     When the event was raised.
+    ///     事件触发的时间。
+    /// </param>
     public readonly record struct GoldGainedEvent(
         IRunState RunState,
         Player Player,
@@ -27,12 +40,28 @@ namespace STS2RitsuLib
 
     /// <summary>
     ///     Player gold decreased.
+    ///     玩家金币减少。
     /// </summary>
-    /// <param name="Player">Player that lost gold.</param>
-    /// <param name="Amount">Amount lost.</param>
-    /// <param name="LossType">Reason category.</param>
-    /// <param name="GoldTotal">New gold total after the change.</param>
-    /// <param name="OccurredAtUtc">When the event was raised.</param>
+    /// <param name="Player">
+    ///     Player that lost gold.
+    ///     失去金币的玩家。
+    /// </param>
+    /// <param name="Amount">
+    ///     Amount lost.
+    ///     失去的数量。
+    /// </param>
+    /// <param name="LossType">
+    ///     Reason category.
+    ///     原因类别。
+    /// </param>
+    /// <param name="GoldTotal">
+    ///     New gold total after the change.
+    ///     变更后的新金币总数。
+    /// </param>
+    /// <param name="OccurredAtUtc">
+    ///     When the event was raised.
+    ///     事件触发的时间。
+    /// </param>
     public readonly record struct GoldLostEvent(
         Player Player,
         decimal Amount,
@@ -43,11 +72,24 @@ namespace STS2RitsuLib
 
     /// <summary>
     ///     Potion added to inventory.
+    ///     药水已加入库存。
     /// </summary>
-    /// <param name="RunState">Current run state.</param>
-    /// <param name="CombatState">Combat state when in combat.</param>
-    /// <param name="Potion">Potion model.</param>
-    /// <param name="OccurredAtUtc">When the event was raised.</param>
+    /// <param name="RunState">
+    ///     Current run state.
+    ///     当前跑局状态。
+    /// </param>
+    /// <param name="CombatState">
+    ///     Combat state when in combat.
+    ///     处于战斗中时的战斗状态。
+    /// </param>
+    /// <param name="Potion">
+    ///     Potion model.
+    ///     药水模型。
+    /// </param>
+    /// <param name="OccurredAtUtc">
+    ///     When the event was raised.
+    ///     事件触发的时间。
+    /// </param>
     public readonly record struct PotionProcuredEvent(
         IRunState RunState,
         CombatStateCompat? CombatState,
@@ -57,11 +99,24 @@ namespace STS2RitsuLib
 
     /// <summary>
     ///     Potion removed from inventory.
+    ///     药水已从库存移除。
     /// </summary>
-    /// <param name="RunState">Current run state.</param>
-    /// <param name="CombatState">Combat state when in combat.</param>
-    /// <param name="Potion">Potion model.</param>
-    /// <param name="OccurredAtUtc">When the event was raised.</param>
+    /// <param name="RunState">
+    ///     Current run state.
+    ///     当前跑局状态。
+    /// </param>
+    /// <param name="CombatState">
+    ///     Combat state when in combat.
+    ///     处于战斗中时的战斗状态。
+    /// </param>
+    /// <param name="Potion">
+    ///     Potion model.
+    ///     药水模型。
+    /// </param>
+    /// <param name="OccurredAtUtc">
+    ///     When the event was raised.
+    ///     事件触发的时间。
+    /// </param>
     public readonly record struct PotionDiscardedEvent(
         IRunState RunState,
         CombatStateCompat? CombatState,
@@ -71,10 +126,20 @@ namespace STS2RitsuLib
 
     /// <summary>
     ///     Relic added to the player.
+    ///     遗物已添加到玩家。
     /// </summary>
-    /// <param name="Player">Receiving player.</param>
-    /// <param name="Relic">Relic model.</param>
-    /// <param name="OccurredAtUtc">When the event was raised.</param>
+    /// <param name="Player">
+    ///     Receiving player.
+    ///     接收遗物的玩家。
+    /// </param>
+    /// <param name="Relic">
+    ///     Relic model.
+    ///     RelicModel。
+    /// </param>
+    /// <param name="OccurredAtUtc">
+    ///     When the event was raised.
+    ///     事件触发的时间。
+    /// </param>
     public readonly record struct RelicObtainedEvent(
         Player Player,
         RelicModel Relic,
@@ -83,10 +148,20 @@ namespace STS2RitsuLib
 
     /// <summary>
     ///     Relic removed from the player.
+    ///     遗物已从玩家移除。
     /// </summary>
-    /// <param name="Player">Affected player.</param>
-    /// <param name="Relic">Relic model.</param>
-    /// <param name="OccurredAtUtc">When the event was raised.</param>
+    /// <param name="Player">
+    ///     Affected player.
+    ///     受影响的玩家。
+    /// </param>
+    /// <param name="Relic">
+    ///     Relic model.
+    ///     RelicModel。
+    /// </param>
+    /// <param name="OccurredAtUtc">
+    ///     When the event was raised.
+    ///     事件触发的时间。
+    /// </param>
     public readonly record struct RelicRemovedEvent(
         Player Player,
         RelicModel Relic,
@@ -95,11 +170,24 @@ namespace STS2RitsuLib
 
     /// <summary>
     ///     A reward option was taken.
+    ///     一个奖励选项已被领取。
     /// </summary>
-    /// <param name="RunState">Current run state.</param>
-    /// <param name="Player">Player taking the reward.</param>
-    /// <param name="Reward">Reward that was selected.</param>
-    /// <param name="OccurredAtUtc">When the event was raised.</param>
+    /// <param name="RunState">
+    ///     Current run state.
+    ///     当前跑局状态。
+    /// </param>
+    /// <param name="Player">
+    ///     Player taking the reward.
+    ///     领取奖励的玩家。
+    /// </param>
+    /// <param name="Reward">
+    ///     Reward that was selected.
+    ///     被选择的奖励。
+    /// </param>
+    /// <param name="OccurredAtUtc">
+    ///     When the event was raised.
+    ///     事件触发的时间。
+    /// </param>
     public readonly record struct RewardTakenEvent(
         IRunState RunState,
         Player Player,

@@ -6,6 +6,7 @@ namespace STS2RitsuLib.Diagnostics
 {
     /// <summary>
     ///     Orchestrates manual and first-main-menu Harmony patch dumps using persisted RitsuLib settings.
+    ///     编排手动和首次主菜单 Harmony 补丁转储，使用持久化的 RitsuLib 设置。
     /// </summary>
     internal static class HarmonyPatchDumpCoordinator
     {
@@ -14,6 +15,8 @@ namespace STS2RitsuLib.Diagnostics
         /// <summary>
         ///     Invoked deferred from <see cref="MegaCrit.Sts2.Core.Nodes.Screens.MainMenu.NMainMenu" /> readiness; runs at
         ///     most once per process when the setting is enabled.
+        ///     从 <see cref="MegaCrit.Sts2.Core.Nodes.Screens.MainMenu.NMainMenu" /> readiness 延迟调用；启用该设置时，
+        ///     每个进程最多运行一次。
         /// </summary>
         internal static void TryAutoDumpOnFirstMainMenu()
         {
