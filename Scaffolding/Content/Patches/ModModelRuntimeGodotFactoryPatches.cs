@@ -12,9 +12,9 @@ namespace STS2RitsuLib.Scaffolding.Content.Patches
 {
     /// <summary>
     ///     Harmony patches that call mod runtime Godot factory interfaces from vanilla model entry points. Prefixes use
-    ///     Harmony patches that call mod runtime Godot factory interfaces 从 原版 模型 entry points. Prefixes 使用
     ///     Harmony <c>Priority.First</c> so path-based overrides still run when factories return <c>null</c>.
-    ///     Harmony <c>Priority.First</c> so 路径-based overrides still 跑局 当 factories 返回 <c>null</c>.
+    ///     从原版模型入口点调用 mod 运行时 Godot 工厂接口的 Harmony 补丁。前缀使用
+    ///     Harmony <c>Priority.First</c>，因此当工厂返回 <c>null</c> 时，基于路径的覆盖仍会继续运行。
     /// </summary>
     public static class ModModelRuntimeGodotFactoryPatches
     {
@@ -300,8 +300,8 @@ namespace STS2RitsuLib.Scaffolding.Content.Patches
 
         /// <summary>
         ///     Patches <see cref="EventModel.CreateBackgroundScene" /> for
-        ///     Patches <c>EventModel.CreateBackground场景</c> 用于
         ///     <see cref="IModEventBackgroundPackedSceneFactory" />.
+        ///     为 <c>IModEventBackgroundPackedSceneFactory</c> 修补 <c>EventModel.CreateBackgroundScene</c>。
         /// </summary>
         public class EventBackgroundPackedSceneRuntimeFactoryPatch : IPatchMethod
         {
@@ -324,14 +324,19 @@ namespace STS2RitsuLib.Scaffolding.Content.Patches
             // ReSharper disable InconsistentNaming
             /// <summary>
             ///     Uses <see cref="IModEventBackgroundPackedSceneFactory.TryCreateBackgroundPackedScene" /> when it returns
-            ///     使用 <c>IModEventBackgroundPacked场景Factory.TryCreateBackgroundPacked场景</c> 当 it 返回
             ///     non-null.
-            ///     中文说明：non-null.
+            ///     当 <c>IModEventBackgroundPackedSceneFactory.TryCreateBackgroundPackedScene</c> 返回非 null 时使用该结果。
             /// </summary>
             [HarmonyPriority(Priority.First)]
             public static bool Prefix(EventModel __instance, ref PackedScene __result)
                 // ReSharper restore InconsistentNaming
             {
+                if (__instance is IModAncientEventAssetOverrides
+                    {
+                        AncientPresentationAssetProfile: { StageProcedural: not null },
+                    })
+                    return true;
+
                 if (__instance is not IModEventBackgroundPackedSceneFactory factory)
                     return true;
 

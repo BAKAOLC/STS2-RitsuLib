@@ -11,7 +11,7 @@ namespace STS2RitsuLib.Scaffolding.Content
     ///     Base <see cref="AncientEventModel" /> with helpers for option keys, relic rewards that complete the ancient flow,
     ///     optional <see cref="IModAncientEventAssetOverrides" /> presentation paths, and dialogue loaded from the
     ///     <c>ancients</c> localization table (<see cref="AncientDialogueLocalization.BuildDialogueSetForModAncient" />).
-    ///     <c>AncientEventModel</c> 的 mod 基类：提供选项键辅助、会完成 ancient 流程的遗物奖励、
+    ///     <c>AncientEventModel</c> 的 mod 基类：提供选项键辅助、会完成远古事件流程的遗物奖励、
     ///     可选 <c>IModAncientEventAssetOverrides</c> 表现路径，以及从 <c>ancients</c> 本地化表加载的对话
     ///     （<see cref="AncientDialogueLocalization.BuildDialogueSetForModAncient" />）。
     /// </summary>
@@ -37,23 +37,23 @@ namespace STS2RitsuLib.Scaffolding.Content
             AncientEventPresentationAssetProfile.Empty;
 
         /// <inheritdoc />
-        public virtual string? CustomMapIconPath => AncientPresentationAssetProfile.MapIconPath;
+        public virtual string? CustomMapIconPath => AncientPresentationAssetProfile?.MapIconPath;
 
         /// <inheritdoc />
-        public virtual string? CustomMapIconOutlinePath => AncientPresentationAssetProfile.MapIconOutlinePath;
+        public virtual string? CustomMapIconOutlinePath => AncientPresentationAssetProfile?.MapIconOutlinePath;
 
         /// <inheritdoc />
-        public virtual string? CustomRunHistoryIconPath => AncientPresentationAssetProfile.RunHistoryIconPath;
+        public virtual string? CustomRunHistoryIconPath => AncientPresentationAssetProfile?.RunHistoryIconPath;
 
         /// <inheritdoc />
         public virtual string? CustomRunHistoryIconOutlinePath =>
-            AncientPresentationAssetProfile.RunHistoryIconOutlinePath;
+            AncientPresentationAssetProfile?.RunHistoryIconOutlinePath;
 
         /// <inheritdoc />
         /// <remarks>
         ///     Default implementation scans <c>ancients</c> JSON (and other loaded loc) for this ancient&apos;s
         ///     <c>talk</c> keys. Override if you need a non-localized or custom dialogue structure.
-        ///     默认实现会扫描 <c>ancients</c> JSON（以及其它已加载本地化）中该 ancient 的 <c>talk</c> 键。
+        ///     默认实现会扫描 <c>ancients</c> JSON（以及其它已加载本地化）中该远古事件的 <c>talk</c> 键。
         ///     如果需要非本地化或自定义对话结构，请重写此方法。
         /// </remarks>
         protected override AncientDialogueSet DefineDialogues()
@@ -64,7 +64,7 @@ namespace STS2RitsuLib.Scaffolding.Content
         /// <summary>
         ///     Builds a namespaced option key for <paramref name="pageName" /> / <paramref name="optionName" /> under this ancient
         ///     id.
-        ///     在此 ancient id 下为 <c>pageName</c> / <c>optionName</c> 构建带命名空间的选项键。
+        ///     在此远古事件 id 下为 <c>pageName</c> / <c>optionName</c> 构建带命名空间的选项键。
         /// </summary>
         protected string ModOptionKey(string pageName, string optionName)
         {
@@ -93,7 +93,7 @@ namespace STS2RitsuLib.Scaffolding.Content
 
         /// <summary>
         ///     Creates a relic option that obtains <paramref name="relic" /> for the owner and completes the ancient.
-        ///     创建一个遗物选项：为拥有者获得 <c>relic</c> 并完成该 ancient。
+        ///     创建一个遗物选项：为拥有者获得 <c>relic</c> 并完成该远古事件。
         /// </summary>
         protected EventOption CreateModRelicOption(RelicModel relic, string pageName = "INITIAL")
         {

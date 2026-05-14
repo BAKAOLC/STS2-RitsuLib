@@ -396,8 +396,8 @@ namespace STS2RitsuLib.Scaffolding.Content
 
     /// <summary>
     ///     Optional ancient map node and run-history icon paths (vanilla <c>AncientEventModel</c> presentation), plus
-    ///     optional procedural stage layers (background / foreground cues) for the ancient encounter backdrop.
-    ///     可选 ancient 地图节点和运行历史图标路径（原版 <c>AncientEventModel</c> 表现），以及用于 ancient 遭遇背景的
+    ///     optional procedural stage layers (background / foreground cues) for the ancient event backdrop.
+    ///     可选远古事件地图节点和运行历史图标路径（原版 <c>AncientEventModel</c> 表现），以及用于远古事件背景的
     ///     可选程序化舞台图层（背景 / 前景 cue）。
     /// </summary>
     /// <param name="MapIconPath">
@@ -419,7 +419,7 @@ namespace STS2RitsuLib.Scaffolding.Content
     /// <param name="StageProcedural">
     ///     When set, replaces the packed background scene in <c>NAncientEventLayout</c> with in-memory layered sprites and
     ///     cue playback (see <see cref="AncientEventStageProceduralVisualSet" />).
-    ///     设置后，用内存中的分层 sprite 和 cue 播放替换 <c>NAncientEventLayout</c> 里的 packed 背景场景
+    ///     设置后，用内存中的分层 sprite 和 cue 播放替换 <c>NAncientEventLayout</c> 中的 packed 背景场景
     ///     （见 <c>AncientEventStageProceduralVisualSet</c>）。
     /// </param>
     public sealed record AncientEventPresentationAssetProfile(

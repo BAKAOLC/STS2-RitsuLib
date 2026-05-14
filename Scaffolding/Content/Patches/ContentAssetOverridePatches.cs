@@ -585,41 +585,42 @@ namespace STS2RitsuLib.Scaffolding.Content.Patches
 
     /// <summary>
     ///     Extends <see cref="IModEventAssetOverrides" /> with ancient map and run-history icon paths; use
-    ///     Extends <c>IModEventAssetOverrides</c> 带有 ancient map 和 跑局-history 图标 路径; 使用
     ///     <see cref="ModAncientEventTemplate" /> or implement on a mod <see cref="AncientEventModel" />.
+    ///     为 <c>IModEventAssetOverrides</c> 增加远古事件地图节点和运行历史图标路径；可使用
+    ///     <c>ModAncientEventTemplate</c>，或在 mod 的 <c>AncientEventModel</c> 上直接实现。
     /// </summary>
     public interface IModAncientEventAssetOverrides : IModEventAssetOverrides
     {
         /// <summary>
         ///     Ancient-only presentation paths (map node + run history).
-        ///     Ancient-only presentation 路径 (map node + 跑局 history).
+        ///     仅远古事件使用的表现资源路径（地图节点 + 运行历史）。
         /// </summary>
         AncientEventPresentationAssetProfile AncientPresentationAssetProfile =>
             AncientEventPresentationAssetProfile.Empty;
 
         /// <summary>
         ///     Override for <c>AncientEventModel.MapIcon</c>.
-        ///     Override 用于 <c>AncientEventModel.Map图标</c>.
+        ///     <c>AncientEventModel.MapIcon</c> 的覆盖路径。
         /// </summary>
-        string? CustomMapIconPath => AncientPresentationAssetProfile.MapIconPath;
+        string? CustomMapIconPath => AncientPresentationAssetProfile?.MapIconPath;
 
         /// <summary>
         ///     Override for <c>AncientEventModel.MapIconOutline</c>.
-        ///     Override 用于 <c>AncientEventModel.MapIconOutline</c>.
+        ///     <c>AncientEventModel.MapIconOutline</c> 的覆盖路径。
         /// </summary>
-        string? CustomMapIconOutlinePath => AncientPresentationAssetProfile.MapIconOutlinePath;
+        string? CustomMapIconOutlinePath => AncientPresentationAssetProfile?.MapIconOutlinePath;
 
         /// <summary>
         ///     Override for <c>AncientEventModel.RunHistoryIcon</c>.
-        ///     Override 用于 <c>AncientEventModel.RunHistoryIcon</c>.
+        ///     <c>AncientEventModel.RunHistoryIcon</c> 的覆盖路径。
         /// </summary>
-        string? CustomRunHistoryIconPath => AncientPresentationAssetProfile.RunHistoryIconPath;
+        string? CustomRunHistoryIconPath => AncientPresentationAssetProfile?.RunHistoryIconPath;
 
         /// <summary>
         ///     Override for <c>AncientEventModel.RunHistoryIconOutline</c>.
-        ///     Override 用于 <c>AncientEventModel.RunHistoryIconOutline</c>.
+        ///     <c>AncientEventModel.RunHistoryIconOutline</c> 的覆盖路径。
         /// </summary>
-        string? CustomRunHistoryIconOutlinePath => AncientPresentationAssetProfile.RunHistoryIconOutlinePath;
+        string? CustomRunHistoryIconOutlinePath => AncientPresentationAssetProfile?.RunHistoryIconOutlinePath;
     }
 
     /// <summary>
@@ -2108,9 +2109,11 @@ namespace STS2RitsuLib.Scaffolding.Content.Patches
 
     /// <summary>
     ///     Patches <c>EventModel.BackgroundScenePath</c> so preloads and <see cref="EventModel.CreateBackgroundScene" /> use
-    ///     Patches <c>EventModel.背景场景路径</c> so pre加载 和 <c>EventModel.CreateBackground场景</c> 使用
     ///     <see cref="IModEventAssetOverrides.CustomBackgroundScenePath" /> instead of the synthetic
     ///     <c>events/background_scenes/&lt;id&gt;.tscn</c> path (which mod packs usually do not ship).
+    ///     修补 <c>EventModel.BackgroundScenePath</c>，让预加载和 <c>EventModel.CreateBackgroundScene</c> 使用
+    ///     <c>IModEventAssetOverrides.CustomBackgroundScenePath</c>，而不是通常不会随 mod 打包的合成路径
+    ///     <c>events/background_scenes/&lt;id&gt;.tscn</c>。
     /// </summary>
     public class EventBackgroundScenePathGetterPatch : IPatchMethod
     {
@@ -2133,7 +2136,7 @@ namespace STS2RitsuLib.Scaffolding.Content.Patches
         // ReSharper disable InconsistentNaming
         /// <summary>
         ///     Supplies <see cref="IModEventAssetOverrides.CustomBackgroundScenePath" /> when the resource exists.
-        ///     当 the resource exists 时提供 <c>IModEventAssetOverrides.CustomBackgroundScenePath</c>。
+        ///     当资源存在时，提供 <c>IModEventAssetOverrides.CustomBackgroundScenePath</c>。
         /// </summary>
         public static bool Prefix(EventModel __instance, ref string __result)
             // ReSharper restore InconsistentNaming
@@ -2269,11 +2272,17 @@ namespace STS2RitsuLib.Scaffolding.Content.Patches
         // ReSharper disable InconsistentNaming
         /// <summary>
         ///     Supplies <see cref="IModEventAssetOverrides.CustomBackgroundScenePath" /> when the resource exists.
-        ///     当 the resource exists 时提供 <c>IModEventAssetOverrides.CustomBackgroundScenePath</c>。
+        ///     当资源存在时，提供 <c>IModEventAssetOverrides.CustomBackgroundScenePath</c>。
         /// </summary>
         public static bool Prefix(EventModel __instance, ref PackedScene __result)
             // ReSharper restore InconsistentNaming
         {
+            if (__instance is IModAncientEventAssetOverrides
+                {
+                    AncientPresentationAssetProfile: { StageProcedural: not null },
+                })
+                return true;
+
             // ReSharper disable once InvertIf
             if (ExternalAssetOverrideRegistry.TryGetEventBackgroundScene(__instance, out var externalScene))
             {
@@ -2389,7 +2398,7 @@ namespace STS2RitsuLib.Scaffolding.Content.Patches
 
     /// <summary>
     ///     Appends custom event asset paths to <see cref="EventModel.GetAssetPaths" /> for preloading.
-    ///     Appends 自定义 事件 资源 路径 to <c>EventModel.GetResourcePaths</c> 用于 preloading.
+    ///     将自定义事件资源路径追加到 <c>EventModel.GetAssetPaths</c>，用于预加载。
     /// </summary>
     public class EventGetAssetPathsPatch : IPatchMethod
     {
@@ -2411,7 +2420,7 @@ namespace STS2RitsuLib.Scaffolding.Content.Patches
         // ReSharper disable InconsistentNaming
         /// <summary>
         ///     Concatenates resolved override paths after the vanilla enumeration.
-        ///     Concatenates resolved override 路径 之后 the 原版 enumeration.
+        ///     将已解析的覆盖资源路径追加到原版枚举结果之后。
         /// </summary>
         public static void Postfix(EventModel __instance, IRunState runState, ref IEnumerable<string> __result)
             // ReSharper restore InconsistentNaming
@@ -2419,8 +2428,27 @@ namespace STS2RitsuLib.Scaffolding.Content.Patches
             _ = runState;
 
             var paths = __result;
+            var proceduralAncientStage =
+                (__instance as IModAncientEventAssetOverrides)?.AncientPresentationAssetProfile?.StageProcedural;
+            var suppressAncientBackgroundScene = __instance.LayoutType == EventLayoutType.Ancient &&
+                                                 proceduralAncientStage != null;
 
-            if (__instance is IModEventAssetOverrides evo
+            if (suppressAncientBackgroundScene)
+            {
+                var entry = __instance.Id.Entry.ToLowerInvariant();
+                var vanillaBg = SceneHelper.GetScenePath($"events/background_scenes/{entry}");
+                paths = RemovePath(paths, vanillaBg);
+
+                if (__instance is IModEventAssetOverrides proceduralEventOverrides)
+                    paths = RemovePath(paths, proceduralEventOverrides.CustomBackgroundScenePath);
+
+                if (ExternalAssetOverrideRegistry.TryGetEventBackgroundScenePath(__instance,
+                        out var proceduralExternalBackgroundPath))
+                    paths = RemovePath(paths, proceduralExternalBackgroundPath);
+            }
+
+            if (!suppressAncientBackgroundScene
+                && __instance is IModEventAssetOverrides evo
                 && __instance.LayoutType == EventLayoutType.Ancient
                 && !string.IsNullOrWhiteSpace(evo.CustomBackgroundScenePath)
                 && AssetPathDiagnostics.Exists(evo.CustomBackgroundScenePath, __instance,
@@ -2431,7 +2459,8 @@ namespace STS2RitsuLib.Scaffolding.Content.Patches
                 paths = paths.Where(p => p != vanillaBg);
             }
 
-            if (ExternalAssetOverrideRegistry.TryGetEventBackgroundScenePath(__instance,
+            if (!suppressAncientBackgroundScene
+                && ExternalAssetOverrideRegistry.TryGetEventBackgroundScenePath(__instance,
                     out var externalBackgroundPath) &&
                 AssetPathDiagnostics.Exists(externalBackgroundPath, __instance,
                     "ExternalAssetOverrideRegistry.EventBackgroundScenePath"))
@@ -2441,7 +2470,7 @@ namespace STS2RitsuLib.Scaffolding.Content.Patches
                 paths = paths.Where(p => p != vanillaBg);
             }
 
-            var externalMerged = CollectExternalEventAssetPaths(__instance);
+            var externalMerged = CollectExternalEventAssetPaths(__instance, suppressAncientBackgroundScene);
 
             if (__instance is not IModEventAssetOverrides eventOverrides)
             {
@@ -2453,7 +2482,8 @@ namespace STS2RitsuLib.Scaffolding.Content.Patches
                 __instance,
                 (eventOverrides.CustomLayoutScenePath, nameof(IModEventAssetOverrides.CustomLayoutScenePath)),
                 (eventOverrides.CustomInitialPortraitPath, nameof(IModEventAssetOverrides.CustomInitialPortraitPath)),
-                (eventOverrides.CustomBackgroundScenePath, nameof(IModEventAssetOverrides.CustomBackgroundScenePath)),
+                (suppressAncientBackgroundScene ? null : eventOverrides.CustomBackgroundScenePath,
+                    nameof(IModEventAssetOverrides.CustomBackgroundScenePath)),
                 (eventOverrides.CustomVfxScenePath, nameof(IModEventAssetOverrides.CustomVfxScenePath)));
             if (externalMerged.Length > 0)
                 merged = merged.Concat(externalMerged).Distinct().ToArray();
@@ -2473,25 +2503,55 @@ namespace STS2RitsuLib.Scaffolding.Content.Patches
                     merged = [.. merged, .. ancientMerged];
             }
 
+            var proceduralStageAssetPaths =
+                CollectExistingProceduralStageAssetPaths(__instance, proceduralAncientStage);
+            if (proceduralStageAssetPaths.Length > 0)
+                merged = [.. merged, .. proceduralStageAssetPaths];
+
             if (merged.Length == 0)
             {
                 __result = paths;
                 return;
             }
 
-            __result = paths.Concat(merged);
+            __result = paths.Concat(merged).Distinct();
         }
 
-        private static string[] CollectExternalEventAssetPaths(EventModel instance)
+        private static string[] CollectExternalEventAssetPaths(EventModel instance, bool suppressBackgroundScene)
         {
             return ContentAssetOverridePatchHelper.CollectExternalExistingPaths(
                 instance,
                 (ExternalAssetOverrideRegistry.TryGetEventLayoutScenePath(instance, out var extLayout)
                     ? extLayout
                     : null, "ExternalAssetOverrideRegistry.EventLayoutScenePath"),
-                (ExternalAssetOverrideRegistry.TryGetEventBackgroundScenePath(instance, out var extBackground)
+                (!suppressBackgroundScene &&
+                 ExternalAssetOverrideRegistry.TryGetEventBackgroundScenePath(instance, out var extBackground)
                     ? extBackground
                     : null, "ExternalAssetOverrideRegistry.EventBackgroundScenePath"));
+        }
+
+        private static string[] CollectExistingProceduralStageAssetPaths(
+            EventModel instance,
+            AncientEventStageProceduralVisualSet? stage)
+        {
+            var paths = AncientEventStageProceduralAssetPaths.Collect(stage);
+            if (paths.Length == 0)
+                return [];
+
+            return paths
+                .Where(path => AssetPathDiagnostics.Exists(
+                    path,
+                    instance,
+                    nameof(AncientEventPresentationAssetProfile.StageProcedural)))
+                .ToArray();
+        }
+
+        private static IEnumerable<string> RemovePath(IEnumerable<string> paths, string? pathToRemove)
+        {
+            if (string.IsNullOrWhiteSpace(pathToRemove))
+                return paths;
+
+            return paths.Where(path => !string.Equals(path, pathToRemove, StringComparison.Ordinal));
         }
     }
 

@@ -1,4 +1,5 @@
 using Godot;
+using HarmonyLib;
 using MegaCrit.Sts2.Core.Models;
 using STS2RitsuLib.Patching.Models;
 using STS2RitsuLib.Scaffolding.Content.Visuals;
@@ -6,10 +7,11 @@ using STS2RitsuLib.Scaffolding.Content.Visuals;
 namespace STS2RitsuLib.Scaffolding.Content.Patches
 {
     /// <summary>
-    ///     When an ancient uses <see cref="AncientEventPresentationAssetProfile.StageProcedural" />, supplies a tiny packed
-    ///     当 an ancient 使用 <c>AncientEventPresentationAssetProfile.StageProcedural</c>, supplies a tiny packed
-    ///     placeholder so <see cref="EventModel.CreateBackgroundScene" /> does not require a real background <c>tscn</c> path.
-    ///     placeholder so <c>EventModel.CreateBackground场景</c> does not require a real 背景 <c>tscn</c> 路径.
+    ///     Supplies a tiny packed placeholder scene for ancient events that use
+    ///     <see cref="AncientEventPresentationAssetProfile.StageProcedural" />, so
+    ///     <see cref="EventModel.CreateBackgroundScene" /> does not require a real background <c>.tscn</c>.
+    ///     对使用 <c>AncientEventPresentationAssetProfile.StageProcedural</c> 的远古事件提供一个极小的 packed scene
+    ///     占位符，使 <c>EventModel.CreateBackgroundScene</c> 不再需要真实的背景 <c>.tscn</c>。
     /// </summary>
     public class AncientEventProceduralBackgroundScenePatch : IPatchMethod
     {
@@ -32,8 +34,9 @@ namespace STS2RitsuLib.Scaffolding.Content.Patches
         // ReSharper disable InconsistentNaming
         /// <summary>
         ///     Short-circuits background scene load when the ancient uses procedural stage layers.
-        ///     Short-circuits 背景 场景 加载 当 the ancient 使用 procedural stage layers.
+        ///     当远古事件使用程序化舞台图层时，跳过真实背景场景加载。
         /// </summary>
+        [HarmonyPriority(Priority.First)]
         public static bool Prefix(EventModel __instance, ref PackedScene __result)
             // ReSharper restore InconsistentNaming
         {
@@ -43,7 +46,7 @@ namespace STS2RitsuLib.Scaffolding.Content.Patches
             if (__instance is not IModAncientEventAssetOverrides mod)
                 return true;
 
-            if (mod.AncientPresentationAssetProfile.StageProcedural == null)
+            if (mod.AncientPresentationAssetProfile?.StageProcedural == null)
                 return true;
 
             __result = AncientStageProceduralRootFactory.PlaceholderBackgroundPackedScene;

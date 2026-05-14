@@ -5,8 +5,8 @@ namespace STS2RitsuLib.Scaffolding.Content
     /// <summary>
     ///     Data-only ancient encounter stage: rear layer is either a looping video (<c>VideoStreamPlayer</c>) or
     ///     <see cref="VisualCueSet" /> sprites / frame sequences; optional foreground uses cue sets only (no video).
-    ///     仅数据的 ancient 遭遇舞台：后层可以是循环视频（<c>VideoStreamPlayer</c>），也可以是
-    ///     <c>VisualCueSet</c> sprite / 帧序列；可选前景仅使用 cue set（不支持视频）。
+    ///     仅数据的远古事件舞台定义：后层可以是循环视频（<c>VideoStreamPlayer</c>），也可以是
+    ///     <c>VisualCueSet</c> sprite / 帧序列；可选前景层仅支持 cue set（不支持视频）。
     /// </summary>
     /// <param name="BackgroundCueSet">
     ///     When <paramref name="BackgroundVideoPath" /> is <see langword="null" />, drives the background layer (required
@@ -152,7 +152,7 @@ namespace STS2RitsuLib.Scaffolding.Content
 
     /// <summary>
     ///     Entry point for ancient stage procedural layers on <see cref="AncientEventPresentationAssetProfile" />.
-    ///     <c>AncientEventPresentationAssetProfile</c> 上 ancient 程序化舞台图层的入口点。
+    ///     <c>AncientEventPresentationAssetProfile</c> 上远古事件程序化舞台图层的入口点。
     /// </summary>
     public static class ModAncientStageVisuals
     {
