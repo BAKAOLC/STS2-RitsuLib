@@ -20,9 +20,6 @@ namespace STS2RitsuLib.Combat.CardTargeting
             ArgumentNullException.ThrowIfNull(targets);
 
             var list = targets.ToList();
-            if (list.Count == 0)
-                return command;
-
             if (AttackCommandGetPossibleTargetsCustomTargetTypePatch.CustomTargets.TryGetValue(command, out var box))
                 box.Value = list;
             else
@@ -30,7 +27,7 @@ namespace STS2RitsuLib.Combat.CardTargeting
                     command,
                     new(list));
 
-            command._combatState = list[0].CombatState;
+            command._combatState = command.Attacker?.CombatState;
             return command;
         }
     }
