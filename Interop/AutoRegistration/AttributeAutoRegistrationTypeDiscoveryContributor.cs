@@ -6,6 +6,7 @@ using SmartFormat.Core.Extensions;
 using STS2RitsuLib.CardPiles;
 using STS2RitsuLib.CardTags;
 using STS2RitsuLib.Content;
+using STS2RitsuLib.Diagnostics;
 using STS2RitsuLib.Keywords;
 using STS2RitsuLib.Localization.SmartFormat;
 using STS2RitsuLib.Scaffolding.Content;
@@ -84,6 +85,11 @@ namespace STS2RitsuLib.Interop.AutoRegistration
                 catch (Exception ex)
                 {
                     failed++;
+                    RegistrationFreezeDiagnostics.RecordFailure(
+                        "AutoRegister",
+                        operation.OwnerModId,
+                        $"{operation.AttributeName} for '{operation.SourceType.FullName}' (signature '{operation.Signature}')",
+                        ex);
                     logger.Error(
                         $"[AutoRegister] {operation.AttributeName} failed for '{operation.SourceType.FullName}' (mod '{operation.OwnerModId}', signature '{operation.Signature}'): {ex.Message}");
                 }
@@ -663,7 +669,7 @@ namespace STS2RitsuLib.Interop.AutoRegistration
                                     $"RegisterArchaicToothTranscendence:{type.FullName}->{archaicTooth.AncientCardType.FullName}",
                                     nameof(RegisterArchaicToothTranscendenceAttribute),
                                     () => RitsuLibFramework.RegisterArchaicToothTranscendenceMapping(
-                                        ModelDb.GetId(type),
+                                        type,
                                         archaicTooth.AncientCardType,
                                         ownerModId),
                                     [TypeDependencyKey(type), TypeDependencyKey(archaicTooth.AncientCardType)]));
@@ -682,7 +688,7 @@ namespace STS2RitsuLib.Interop.AutoRegistration
                                     $"RegisterTouchOfOrobasRefinement:{type.FullName}->{touchOfOrobas.UpgradedRelicType.FullName}",
                                     nameof(RegisterTouchOfOrobasRefinementAttribute),
                                     () => RitsuLibFramework.RegisterTouchOfOrobasRefinementMapping(
-                                        ModelDb.GetId(type),
+                                        type,
                                         touchOfOrobas.UpgradedRelicType,
                                         ownerModId),
                                     [TypeDependencyKey(type), TypeDependencyKey(touchOfOrobas.UpgradedRelicType)]));

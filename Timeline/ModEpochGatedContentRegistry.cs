@@ -1,4 +1,5 @@
 using MegaCrit.Sts2.Core.Models;
+using STS2RitsuLib.Diagnostics;
 using STS2RitsuLib.Scaffolding.Content;
 
 namespace STS2RitsuLib.Timeline
@@ -48,6 +49,34 @@ namespace STS2RitsuLib.Timeline
                     return;
 
                 _isFrozen = true;
+            }
+        }
+
+        internal static void ValidateFrozenModelReferences()
+        {
+            EpochGatedContentEntry[] entries;
+            lock (SyncRoot)
+            {
+                entries = [.. ByEpochId.Values];
+            }
+
+            foreach (var entry in entries)
+            {
+                foreach (var type in entry.CardTypes)
+                    RegistrationFreezeDiagnostics.WarnMissingModelType(
+                        "EpochGatedContent",
+                        entry.ModId,
+                        "epoch-gated card",
+                        type,
+                        typeof(CardModel));
+
+                foreach (var type in entry.RelicTypes)
+                    RegistrationFreezeDiagnostics.WarnMissingModelType(
+                        "EpochGatedContent",
+                        entry.ModId,
+                        "epoch-gated relic",
+                        type,
+                        typeof(RelicModel));
             }
         }
 

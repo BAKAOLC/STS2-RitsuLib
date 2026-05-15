@@ -12,6 +12,7 @@ using STS2RitsuLib.Content;
 using STS2RitsuLib.Diagnostics;
 using STS2RitsuLib.Keywords;
 using STS2RitsuLib.Patching.Models;
+using STS2RitsuLib.Relics;
 using STS2RitsuLib.Timeline;
 using STS2RitsuLib.Unlocks;
 
@@ -181,6 +182,7 @@ namespace STS2RitsuLib.Lifecycle.Patches
             switch (__originalMethod.Name)
             {
                 case nameof(ModelDb.Init):
+                    ValidateFrozenRegistrations(nameof(ModelDb.Init));
                     RitsuLibFramework.PublishLifecycleEvent(
                         new ModelRegistryInitializedEvent(ModelDb.AllAbstractModelSubtypes.Length,
                             DateTimeOffset.UtcNow),
@@ -205,6 +207,15 @@ namespace STS2RitsuLib.Lifecycle.Patches
         private static void RefreshModTypeCache()
         {
             ReflectionHelperModTypesField?.SetValue(null, null);
+        }
+
+        private static void ValidateFrozenRegistrations(string reason)
+        {
+            RegistrationFreezeDiagnostics.WarnRecordedFailures(reason);
+            ModContentRegistry.ValidateFrozenModelReferences();
+            ModEpochGatedContentRegistry.ValidateFrozenModelReferences();
+            ModUnlockRegistry.ValidateFrozenModelReferences();
+            OrobasAncientUpgradeRegistry.ValidateFrozenRegistrations();
         }
     }
 

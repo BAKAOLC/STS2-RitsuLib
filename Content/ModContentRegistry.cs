@@ -1042,6 +1042,101 @@ namespace STS2RitsuLib.Content
             );
         }
 
+        internal static void ValidateFrozenModelReferences()
+        {
+            ContentModelReference[] references;
+            lock (SyncRoot)
+            {
+                var list = new List<ContentModelReference>();
+                AddMany(list, RegisteredPoolContent.SelectMany(static entry => new[]
+                {
+                    new ContentModelReference(entry.PoolType, typeof(AbstractModel), "registered pool"),
+                    new ContentModelReference(entry.ModelType, typeof(AbstractModel), "registered pool content"),
+                }));
+                AddMany(list, RegisteredCharacterStarterContent.SelectMany(static entry => new[]
+                {
+                    new ContentModelReference(entry.CharacterType, typeof(CharacterModel),
+                        "registered starter character"),
+                    new ContentModelReference(entry.ModelType, typeof(AbstractModel),
+                        $"registered starter {entry.Kind}"),
+                }));
+                AddMany(list, RegisteredCharacters.Select(static type =>
+                    new ContentModelReference(type, typeof(CharacterModel), "registered character")));
+                AddMany(list, RegisteredActs.Select(static type =>
+                    new ContentModelReference(type, typeof(ActModel), "registered act")));
+                AddMany(list, RegisteredMonsters.Select(static type =>
+                    new ContentModelReference(type, typeof(MonsterModel), "registered monster")));
+                AddMany(list, RegisteredPowers.Select(static type =>
+                    new ContentModelReference(type, typeof(PowerModel), "registered power")));
+                AddMany(list, RegisteredOrbs.Select(static type =>
+                    new ContentModelReference(type, typeof(OrbModel), "registered orb")));
+                AddMany(list, RegisteredEnchantments.Select(static type =>
+                    new ContentModelReference(type, typeof(EnchantmentModel), "registered enchantment")));
+                AddMany(list, RegisteredAfflictions.Select(static type =>
+                    new ContentModelReference(type, typeof(AfflictionModel), "registered affliction")));
+                AddMany(list, RegisteredAchievements.Select(static type =>
+                    new ContentModelReference(type, typeof(AchievementModel), "registered achievement")));
+                AddMany(list, RegisteredSingletons.Select(static type =>
+                    new ContentModelReference(type, typeof(SingletonModel), "registered singleton")));
+                AddMany(list, RegisteredSharedCardPools.Select(static type =>
+                    new ContentModelReference(type, typeof(CardPoolModel), "registered shared card pool")));
+                AddMany(list, RegisteredSharedRelicPools.Select(static type =>
+                    new ContentModelReference(type, typeof(RelicPoolModel), "registered shared relic pool")));
+                AddMany(list, RegisteredSharedPotionPools.Select(static type =>
+                    new ContentModelReference(type, typeof(PotionPoolModel), "registered shared potion pool")));
+                AddMany(list, RegisteredGoodModifiers.Select(static type =>
+                    new ContentModelReference(type, typeof(ModifierModel), "registered good modifier")));
+                AddMany(list, RegisteredBadModifiers.Select(static type =>
+                    new ContentModelReference(type, typeof(ModifierModel), "registered bad modifier")));
+                AddMany(list, RegisteredSharedEvents.Select(static type =>
+                    new ContentModelReference(type, typeof(EventModel), "registered shared event")));
+                AddMany(list, RegisteredSharedAncients.Select(static type =>
+                    new ContentModelReference(type, typeof(AncientEventModel), "registered shared ancient")));
+                AddScoped(list, RegisteredActEncounters, typeof(ActModel), typeof(EncounterModel),
+                    "registered act encounter");
+                AddMany(list, RegisteredGlobalEncounters.Select(static type =>
+                    new ContentModelReference(type, typeof(EncounterModel), "registered global encounter")));
+                AddScoped(list, RegisteredActEvents, typeof(ActModel), typeof(EventModel),
+                    "registered act event");
+                AddScoped(list, RegisteredActAncients, typeof(ActModel), typeof(AncientEventModel),
+                    "registered act ancient");
+
+                references = list
+                    .DistinctBy(static reference => (reference.ModelType, reference.ExpectedBaseType,
+                        reference.Description))
+                    .ToArray();
+            }
+
+            foreach (var reference in references)
+            {
+                TryGetOwnerModId(reference.ModelType, out var owner);
+                RegistrationFreezeDiagnostics.WarnMissingModelType(
+                    "Content",
+                    owner,
+                    reference.Description,
+                    reference.ModelType,
+                    reference.ExpectedBaseType);
+            }
+
+            return;
+
+            static void AddMany(List<ContentModelReference> list, IEnumerable<ContentModelReference> values)
+            {
+                list.AddRange(values);
+            }
+
+            static void AddScoped(List<ContentModelReference> list, Dictionary<Type, HashSet<Type>> registry,
+                Type expectedScopeType, Type expectedModelType, string description)
+            {
+                foreach (var (scopeType, modelTypes) in registry)
+                {
+                    list.Add(new(scopeType, expectedScopeType, $"{description} scope"));
+                    list.AddRange(modelTypes.Select(modelType =>
+                        new ContentModelReference(modelType, expectedModelType, description)));
+                }
+            }
+        }
+
         internal static IEnumerable<CharacterModel> AppendCharacters(IEnumerable<CharacterModel> source)
         {
             return AppendResolved(source, ResolveModels<CharacterModel>(RegisteredCharacters));
@@ -1592,6 +1687,11 @@ namespace STS2RitsuLib.Content
             Relic,
             Potion,
         }
+
+        private readonly record struct ContentModelReference(
+            Type ModelType,
+            Type ExpectedBaseType,
+            string Description);
 
         /// <summary>
         ///     Immutable snapshot row describing one registered model type and its identity metadata.

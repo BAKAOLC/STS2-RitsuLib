@@ -30,9 +30,22 @@ namespace STS2RitsuLib
             where TAncientCard : CardModel
         {
             RegisterArchaicToothTranscendenceMapping(
-                ModelDb.GetId<TStarterCard>(),
+                typeof(TStarterCard),
                 typeof(TAncientCard),
                 registeringModId);
+        }
+
+        /// <summary>
+        ///     Registers an <see cref="ArchaicTooth" /> transcendence mapping using CLR types for both sides.
+        ///     The starter id is resolved lazily so explicit registration can run before content registration assigns
+        ///     RitsuLib's fixed ModelDb public entry.
+        ///     使用两端 CLR 类型注册 <see cref="ArchaicTooth" /> 超越映射。初始牌 id 会延迟解析，因此显式注册可以早于内容注册为
+        ///     类型分配 RitsuLib 固定 ModelDb public entry。
+        /// </summary>
+        public static void RegisterArchaicToothTranscendenceMapping(Type starterCardType, Type ancientCardType,
+            string? registeringModId = null)
+        {
+            OrobasAncientUpgradeRegistry.RegisterTranscendence(starterCardType, ancientCardType, registeringModId);
         }
 
         /// <summary>
@@ -80,9 +93,22 @@ namespace STS2RitsuLib
             where TUpgradedRelic : RelicModel
         {
             RegisterTouchOfOrobasRefinementMapping(
-                ModelDb.GetId<TStarterRelic>(),
+                typeof(TStarterRelic),
                 typeof(TUpgradedRelic),
                 registeringModId);
+        }
+
+        /// <summary>
+        ///     Registers a <see cref="TouchOfOrobas" /> refinement mapping using CLR types for both sides.
+        ///     The starter id is resolved lazily so explicit registration can run before content registration assigns
+        ///     RitsuLib's fixed ModelDb public entry.
+        ///     使用两端 CLR 类型注册 <see cref="TouchOfOrobas" /> 精炼映射。初始遗物 id 会延迟解析，因此显式注册可以早于内容注册为
+        ///     类型分配 RitsuLib 固定 ModelDb public entry。
+        /// </summary>
+        public static void RegisterTouchOfOrobasRefinementMapping(Type starterRelicType, Type upgradedRelicType,
+            string? registeringModId = null)
+        {
+            OrobasAncientUpgradeRegistry.RegisterRefinement(starterRelicType, upgradedRelicType, registeringModId);
         }
 
         /// <summary>

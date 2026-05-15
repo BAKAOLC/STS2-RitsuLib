@@ -492,6 +492,59 @@ namespace STS2RitsuLib.Unlocks
             }
         }
 
+        internal static void ValidateFrozenModelReferences()
+        {
+            ModelId[] requiredModelIds;
+            ModelId[] eliteCharacterIds;
+            ModelId[] bossCharacterIds;
+            ModelId[] ascensionOneCharacterIds;
+            ModelId[] ascensionRevealCharacterIds;
+            ModelId[] postRunCharacterUnlockIds;
+            lock (SyncRoot)
+            {
+                requiredModelIds = [.. RequiredEpochsByModelId.Keys];
+                eliteCharacterIds = [.. EliteEpochRulesByCharacterId.Keys];
+                bossCharacterIds = [.. BossEpochRulesByCharacterId.Keys];
+                ascensionOneCharacterIds = [.. AscensionOneEpochsByCharacterId.Keys];
+                ascensionRevealCharacterIds = [.. AscensionRevealEpochsByCharacterId.Keys];
+                postRunCharacterUnlockIds = [.. PostRunCharacterUnlockEpochsByCharacterId.Keys];
+            }
+
+            foreach (var modelId in requiredModelIds)
+                RegistrationFreezeDiagnostics.WarnMissingModelId(
+                    "Unlocks",
+                    null,
+                    "RequireEpoch model",
+                    modelId,
+                    typeof(AbstractModel));
+
+            foreach (var characterId in eliteCharacterIds)
+                WarnMissingCharacterId("elite epoch rule character", characterId);
+
+            foreach (var characterId in bossCharacterIds)
+                WarnMissingCharacterId("boss epoch rule character", characterId);
+
+            foreach (var characterId in ascensionOneCharacterIds)
+                WarnMissingCharacterId("ascension-one epoch character", characterId);
+
+            foreach (var characterId in ascensionRevealCharacterIds)
+                WarnMissingCharacterId("ascension reveal character", characterId);
+
+            foreach (var characterId in postRunCharacterUnlockIds)
+                WarnMissingCharacterId("post-run character unlock character", characterId);
+            return;
+
+            static void WarnMissingCharacterId(string description, ModelId characterId)
+            {
+                RegistrationFreezeDiagnostics.WarnMissingModelId(
+                    "Unlocks",
+                    null,
+                    description,
+                    characterId,
+                    typeof(CharacterModel));
+            }
+        }
+
         /// <summary>
         ///     Whether <paramref name="model" /> passes epoch gating for <paramref name="unlockState" />.
         ///     Vanilla <see cref="UnlockState" /> built from progress only lists <see cref="EpochState.Revealed" /> epochs in

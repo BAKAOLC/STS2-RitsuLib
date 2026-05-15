@@ -1,6 +1,7 @@
 using System.Diagnostics.CodeAnalysis;
 using MegaCrit.Sts2.Core.Models;
 using MegaCrit.Sts2.Core.Models.Relics;
+using STS2RitsuLib.Diagnostics;
 
 namespace STS2RitsuLib.Relics
 {
@@ -22,45 +23,44 @@ namespace STS2RitsuLib.Relics
     {
         private static readonly Lock Sync = new();
 
-        private static readonly Dictionary<ModelId, Type> TranscendenceAncientTypeByStarter = [];
+        private static readonly List<OrobasUpgradeMapping> TranscendenceMappings = [];
 
-        private static readonly Dictionary<ModelId, Type> RefinementUpgradedTypeByStarter = [];
+        private static readonly List<OrobasUpgradeMapping> RefinementMappings = [];
+        private static long _nextRegistrationOrder;
 
         internal static bool TryGetTranscendenceAncient(ModelId starterCardId,
             [NotNullWhen(true)] out CardModel? ancientTemplate)
         {
-            Type ancientType;
+            OrobasUpgradeMapping? mapping;
             lock (Sync)
             {
-                if (!TranscendenceAncientTypeByStarter.TryGetValue(starterCardId, out var t))
+                mapping = FindLatestMappingLocked(TranscendenceMappings, starterCardId);
+                if (mapping == null)
                 {
                     ancientTemplate = null;
                     return false;
                 }
-
-                ancientType = t;
             }
 
-            ancientTemplate = ModelDb.GetByIdOrNull<CardModel>(ModelDb.GetId(ancientType));
+            ancientTemplate = ModelDb.GetByIdOrNull<CardModel>(ModelDb.GetId(mapping.TargetType));
             return ancientTemplate != null;
         }
 
         internal static bool TryGetRefinementUpgrade(ModelId starterRelicId,
             [NotNullWhen(true)] out RelicModel? upgradedTemplate)
         {
-            Type upgradedType;
+            OrobasUpgradeMapping? mapping;
             lock (Sync)
             {
-                if (!RefinementUpgradedTypeByStarter.TryGetValue(starterRelicId, out var t))
+                mapping = FindLatestMappingLocked(RefinementMappings, starterRelicId);
+                if (mapping == null)
                 {
                     upgradedTemplate = null;
                     return false;
                 }
-
-                upgradedType = t;
             }
 
-            upgradedTemplate = ModelDb.GetByIdOrNull<RelicModel>(ModelDb.GetId(upgradedType));
+            upgradedTemplate = ModelDb.GetByIdOrNull<RelicModel>(ModelDb.GetId(mapping.TargetType));
             return upgradedTemplate != null;
         }
 
@@ -68,7 +68,7 @@ namespace STS2RitsuLib.Relics
         {
             lock (Sync)
             {
-                return TranscendenceAncientTypeByStarter.ContainsKey(starterCardId);
+                return FindLatestMappingLocked(TranscendenceMappings, starterCardId) != null;
             }
         }
 
@@ -81,7 +81,8 @@ namespace STS2RitsuLib.Relics
             Type[] types;
             lock (Sync)
             {
-                types = TranscendenceAncientTypeByStarter.Values
+                types = TranscendenceMappings
+                    .Select(static mapping => mapping.TargetType)
                     .Distinct()
                     .OrderBy(static t => t.FullName ?? t.Name, StringComparer.Ordinal)
                     .ToArray();
@@ -101,13 +102,34 @@ namespace STS2RitsuLib.Relics
 
             lock (Sync)
             {
-                if (TranscendenceAncientTypeByStarter.TryGetValue(starterCardId, out var previous) &&
-                    previous != ancientCardType)
+                var previous = FindLatestExactMappingLocked(TranscendenceMappings, starterCardId, null);
+                if (previous != null && previous.TargetType != ancientCardType)
                     RitsuLibFramework.Logger.Warn(
                         $"[OrobasAncientUpgrades] Transcendence mapping for starter card {starterCardId} " +
                         $"was replaced{(string.IsNullOrEmpty(modIdForLog) ? "" : $" (mod {modIdForLog})")}.");
 
-                TranscendenceAncientTypeByStarter[starterCardId] = ancientCardType;
+                RemoveExactMappingsLocked(TranscendenceMappings, starterCardId, null);
+                TranscendenceMappings.Add(new(starterCardId, null, ancientCardType, modIdForLog,
+                    _nextRegistrationOrder++));
+            }
+        }
+
+        internal static void RegisterTranscendence(Type starterCardType, Type ancientCardType, string? modIdForLog)
+        {
+            EnsureModelType(starterCardType, typeof(CardModel), nameof(starterCardType));
+            EnsureModelType(ancientCardType, typeof(CardModel), nameof(ancientCardType));
+
+            lock (Sync)
+            {
+                var previous = FindLatestExactMappingLocked(TranscendenceMappings, null, starterCardType);
+                if (previous != null && previous.TargetType != ancientCardType)
+                    RitsuLibFramework.Logger.Warn(
+                        $"[OrobasAncientUpgrades] Transcendence mapping for starter card type {starterCardType.FullName} " +
+                        $"was replaced{(string.IsNullOrEmpty(modIdForLog) ? "" : $" (mod {modIdForLog})")}.");
+
+                RemoveExactMappingsLocked(TranscendenceMappings, null, starterCardType);
+                TranscendenceMappings.Add(new(null, starterCardType, ancientCardType, modIdForLog,
+                    _nextRegistrationOrder++));
             }
         }
 
@@ -117,14 +139,107 @@ namespace STS2RitsuLib.Relics
 
             lock (Sync)
             {
-                if (RefinementUpgradedTypeByStarter.TryGetValue(starterRelicId, out var previous) &&
-                    previous != upgradedRelicType)
+                var previous = FindLatestExactMappingLocked(RefinementMappings, starterRelicId, null);
+                if (previous != null && previous.TargetType != upgradedRelicType)
                     RitsuLibFramework.Logger.Warn(
                         $"[OrobasAncientUpgrades] Refinement mapping for starter relic {starterRelicId} " +
                         $"was replaced{(string.IsNullOrEmpty(modIdForLog) ? "" : $" (mod {modIdForLog})")}.");
 
-                RefinementUpgradedTypeByStarter[starterRelicId] = upgradedRelicType;
+                RemoveExactMappingsLocked(RefinementMappings, starterRelicId, null);
+                RefinementMappings.Add(new(starterRelicId, null, upgradedRelicType, modIdForLog,
+                    _nextRegistrationOrder++));
             }
+        }
+
+        internal static void RegisterRefinement(Type starterRelicType, Type upgradedRelicType, string? modIdForLog)
+        {
+            EnsureModelType(starterRelicType, typeof(RelicModel), nameof(starterRelicType));
+            EnsureModelType(upgradedRelicType, typeof(RelicModel), nameof(upgradedRelicType));
+
+            lock (Sync)
+            {
+                var previous = FindLatestExactMappingLocked(RefinementMappings, null, starterRelicType);
+                if (previous != null && previous.TargetType != upgradedRelicType)
+                    RitsuLibFramework.Logger.Warn(
+                        $"[OrobasAncientUpgrades] Refinement mapping for starter relic type {starterRelicType.FullName} " +
+                        $"was replaced{(string.IsNullOrEmpty(modIdForLog) ? "" : $" (mod {modIdForLog})")}.");
+
+                RemoveExactMappingsLocked(RefinementMappings, null, starterRelicType);
+                RefinementMappings.Add(new(null, starterRelicType, upgradedRelicType, modIdForLog,
+                    _nextRegistrationOrder++));
+            }
+        }
+
+        internal static void ValidateFrozenRegistrations()
+        {
+            OrobasUpgradeMapping[] transcendence;
+            OrobasUpgradeMapping[] refinement;
+            lock (Sync)
+            {
+                transcendence = [.. TranscendenceMappings];
+                refinement = [.. RefinementMappings];
+            }
+
+            foreach (var mapping in transcendence)
+                ValidateMapping(mapping, "Transcendence", typeof(CardModel), typeof(CardModel));
+
+            foreach (var mapping in refinement)
+                ValidateMapping(mapping, "Refinement", typeof(RelicModel), typeof(RelicModel));
+        }
+
+        private static void ValidateMapping(OrobasUpgradeMapping mapping, string kind, Type starterBaseType,
+            Type targetBaseType)
+        {
+            if (mapping.StarterType != null)
+                RegistrationFreezeDiagnostics.WarnMissingModelType(
+                    "OrobasAncientUpgrades",
+                    mapping.ModId,
+                    $"{kind} starter",
+                    mapping.StarterType,
+                    starterBaseType);
+            else if (mapping.StarterId is { } starterId)
+                RegistrationFreezeDiagnostics.WarnMissingModelId(
+                    "OrobasAncientUpgrades",
+                    mapping.ModId,
+                    $"{kind} starter",
+                    starterId,
+                    starterBaseType);
+
+            RegistrationFreezeDiagnostics.WarnMissingModelType(
+                "OrobasAncientUpgrades",
+                mapping.ModId,
+                $"{kind} target for {mapping.StarterDescription}",
+                mapping.TargetType,
+                targetBaseType);
+        }
+
+        private static OrobasUpgradeMapping? FindLatestMappingLocked(
+            IEnumerable<OrobasUpgradeMapping> mappings,
+            ModelId starterId)
+        {
+            return mappings
+                .Where(mapping => mapping.ResolveStarterId() == starterId)
+                .OrderByDescending(static mapping => mapping.RegistrationOrder)
+                .FirstOrDefault();
+        }
+
+        private static OrobasUpgradeMapping? FindLatestExactMappingLocked(
+            IEnumerable<OrobasUpgradeMapping> mappings,
+            ModelId? starterId,
+            Type? starterType)
+        {
+            return mappings
+                .Where(mapping => mapping.StarterId == starterId && mapping.StarterType == starterType)
+                .OrderByDescending(static mapping => mapping.RegistrationOrder)
+                .FirstOrDefault();
+        }
+
+        private static void RemoveExactMappingsLocked(
+            List<OrobasUpgradeMapping> mappings,
+            ModelId? starterId,
+            Type? starterType)
+        {
+            mappings.RemoveAll(mapping => mapping.StarterId == starterId && mapping.StarterType == starterType);
         }
 
         private static void EnsureModelType(Type modelType, Type requiredBase, string paramName)
@@ -132,6 +247,21 @@ namespace STS2RitsuLib.Relics
             ArgumentNullException.ThrowIfNull(modelType);
             if (!requiredBase.IsAssignableFrom(modelType))
                 throw new ArgumentException($"{modelType.Name} must derive from {requiredBase.Name}.", paramName);
+        }
+
+        private sealed record OrobasUpgradeMapping(
+            ModelId? StarterId,
+            Type? StarterType,
+            Type TargetType,
+            string? ModId,
+            long RegistrationOrder)
+        {
+            public string StarterDescription => StarterType?.FullName ?? StarterId?.ToString() ?? "<unknown>";
+
+            public ModelId ResolveStarterId()
+            {
+                return StarterId ?? ModelDb.GetId(StarterType!);
+            }
         }
     }
 }

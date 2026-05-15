@@ -14,6 +14,7 @@ using STS2RitsuLib.Combat.HealthBars;
 using STS2RitsuLib.Compat;
 using STS2RitsuLib.Content;
 using STS2RitsuLib.Data;
+using STS2RitsuLib.Diagnostics;
 using STS2RitsuLib.Diagnostics.CardExport;
 using STS2RitsuLib.Diagnostics.CompendiumExport;
 using STS2RitsuLib.Interop;
@@ -639,7 +640,21 @@ namespace STS2RitsuLib
                     GetUnlockRegistry(registration.ModId),
                     GetCardTagRegistry(registration.ModId),
                     GetCardPileRegistry(registration.ModId));
-                registration.Apply(context);
+                try
+                {
+                    registration.Apply(context);
+                }
+                catch (Exception ex)
+                {
+                    RegistrationFreezeDiagnostics.RecordFailure(
+                        "ContentPack",
+                        registration.ModId,
+                        registration.Description ?? "deferred content pack",
+                        ex);
+                    Logger.Error(
+                        $"[ContentPack] Failed to apply deferred content pack for mod '{registration.ModId}'" +
+                        $"{(string.IsNullOrWhiteSpace(registration.Description) ? "" : $" ({registration.Description})")}: {ex.Message}");
+                }
             }
 
             Logger.Info($"[ContentPack] Flushed {pending.Count} deferred content pack(s).");
