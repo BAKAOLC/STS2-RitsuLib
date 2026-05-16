@@ -1,4 +1,5 @@
 using System.Text.Json;
+using Godot;
 
 namespace STS2RitsuLib.Ui.Shell.Theme
 {
@@ -36,6 +37,7 @@ namespace STS2RitsuLib.Ui.Shell.Theme
             get
             {
                 EnsureBaseline();
+                EnsureCurrentSnapshotResourcesValid();
                 return _current!;
             }
         }
@@ -163,6 +165,35 @@ namespace STS2RitsuLib.Ui.Shell.Theme
         {
             var snapshot = ModRegistrations.Values.ToArray();
             return RitsuShellThemeCatalog.TryBuildSnapshot(themeId, snapshot, out resolvedId, out theme);
+        }
+
+        private static void EnsureCurrentSnapshotResourcesValid()
+        {
+            lock (Gate)
+            {
+                if (_current == null || AreThemeFontsValid(_current.Font))
+                    return;
+
+                if (TryBuildSnapshotLocked(ActiveThemeId, out var resolvedId, out var snapshot) && snapshot != null)
+                {
+                    _current = snapshot;
+                    ActiveThemeId = resolvedId;
+                    return;
+                }
+
+                if (TryBuildSnapshotLocked(DefaultThemeId, out resolvedId, out snapshot) && snapshot != null)
+                {
+                    _current = snapshot;
+                    ActiveThemeId = resolvedId;
+                }
+            }
+        }
+
+        private static bool AreThemeFontsValid(FontTokens fonts)
+        {
+            return GodotObject.IsInstanceValid(fonts.Body) &&
+                   GodotObject.IsInstanceValid(fonts.BodyBold) &&
+                   GodotObject.IsInstanceValid(fonts.Button);
         }
 
         private static void NotifyChanged(RitsuShellTheme snapshot)
