@@ -1,5 +1,6 @@
 using MegaCrit.Sts2.Core.Multiplayer.Game;
 using MegaCrit.Sts2.Core.Platform;
+using MegaCrit.Sts2.Core.Platform.Steam;
 using STS2RitsuLib.Platform.Steam;
 
 namespace STS2RitsuLib.Networking.Sidecar
@@ -29,6 +30,9 @@ namespace STS2RitsuLib.Networking.Sidecar
         {
             if (!TryGetLobbyId(netService, out var lobbyId))
                 return;
+            if (!RitsuLibSteamworks.CanPublishLobbyMemberData(lobbyId, netService.NetId))
+                return;
+
             RitsuLibSteamworks.TrySetLobbyMemberData(
                 lobbyId,
                 RitsuLibSidecarCapabilityMarkers.SteamLobbyMemberKey,
@@ -69,7 +73,11 @@ namespace STS2RitsuLib.Networking.Sidecar
             lobbyIdRaw = 0;
             if (netService.Platform != PlatformType.Steam)
                 return false;
+            if (!SteamInitializer.Initialized)
+                return false;
             if (!ulong.TryParse(netService.GetRawLobbyIdentifier(), out lobbyIdRaw))
+                return false;
+            if (lobbyIdRaw == 0)
                 return false;
             return RitsuLibSteamworks.TryGetNumLobbyMembers(lobbyIdRaw, out var memberCount) && memberCount > 0;
         }
