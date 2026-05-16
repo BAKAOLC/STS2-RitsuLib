@@ -16,6 +16,9 @@ namespace STS2RitsuLib.Audio.Patches
     /// </summary>
     public static class NAudioManagerGuidMappedStudioEventsPatches
     {
+        private static readonly Lock MissingStudioPathDebugGate = new();
+        private static readonly HashSet<string> MissingStudioPathDebugLoggedKeys = new(StringComparer.Ordinal);
+
         /// <summary>
         ///     Intercepts mapped <see cref="NAudioManager.PlayOneShot(string, Dictionary{string, float}, float)" /> calls.
         ///     拦截已映射的 <see cref="NAudioManager.PlayOneShot(string, Dictionary{string, float}, float)" /> 调用。
@@ -55,9 +58,14 @@ namespace STS2RitsuLib.Audio.Patches
                 if (TestMode.IsOn)
                     return true;
 
-                if (string.IsNullOrEmpty(path) ||
-                    !FmodStudioGuidPathTable.TryGetStudioGuidForEventPath(path, out var mappedGuid))
+                if (string.IsNullOrEmpty(path))
                     return true;
+
+                if (!FmodStudioGuidPathTable.TryGetStudioGuidForEventPath(path, out var mappedGuid))
+                {
+                    LogMissingStudioPathOnce("PlayOneShot", path);
+                    return true;
+                }
 
                 if (FmodStudioDirectOneShots.TryFireOneShotForMappedEventPath(path, volume, parameters))
                     return false;
@@ -68,6 +76,30 @@ namespace STS2RitsuLib.Audio.Patches
 
                 return false;
             }
+        }
+
+        private static void LogMissingStudioPathOnce(string operation, string path)
+        {
+            if (!path.StartsWith("event:/", StringComparison.Ordinal))
+                return;
+
+            var pathExistsInRuntime = FmodStudioServer.TryCheckEventPath(path);
+            if (pathExistsInRuntime != false)
+                return;
+
+            var key = operation + "\0" + path;
+            lock (MissingStudioPathDebugGate)
+            {
+                if (!MissingStudioPathDebugLoggedKeys.Add(key))
+                    return;
+            }
+
+            RitsuLibFramework.Logger.Debug(
+                $"[Audio] {operation} event path was not found in GUID mappings or loaded FMOD Studio paths. " +
+                $"path={path}; guidMapEventCount={FmodStudioGuidPathTable.EventMappingCount}; " +
+                $"loadedBankCount={FmodStudioServer.TryGetLoadedBankCount()}; " +
+                $"loadedEventDescriptionCount={FmodStudioServer.TryGetLoadedEventDescriptionCount()}; " +
+                $"banksStillLoading={FmodStudioServer.TryBanksStillLoading()?.ToString() ?? "?"}");
         }
 
         /// <summary>
@@ -104,8 +136,14 @@ namespace STS2RitsuLib.Audio.Patches
                 if (TestMode.IsOn)
                     return true;
 
-                if (string.IsNullOrEmpty(path) || !GuidMappedNaudioStudioProxy.IsMappedPath(path))
+                if (string.IsNullOrEmpty(path))
                     return true;
+
+                if (!GuidMappedNaudioStudioProxy.IsMappedPath(path))
+                {
+                    LogMissingStudioPathOnce("PlayLoop", path);
+                    return true;
+                }
 
                 if (GuidMappedNaudioStudioProxy.TryEnqueueMappedLoop(path, usesLoopParam))
                     return false;
@@ -275,8 +313,14 @@ namespace STS2RitsuLib.Audio.Patches
                 if (TestMode.IsOn)
                     return true;
 
-                if (string.IsNullOrEmpty(music) || !GuidMappedNaudioStudioProxy.IsMappedPath(music))
+                if (string.IsNullOrEmpty(music))
                     return true;
+
+                if (!GuidMappedNaudioStudioProxy.IsMappedPath(music))
+                {
+                    LogMissingStudioPathOnce("PlayMusic", music);
+                    return true;
+                }
 
                 __instance.StopMusic();
 
