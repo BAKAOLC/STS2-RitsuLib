@@ -16,8 +16,33 @@ namespace STS2RitsuLib.Audio.Patches
     /// </summary>
     public static class NAudioManagerGuidMappedStudioEventsPatches
     {
-        private static readonly Lock MissingStudioPathDebugGate = new();
-        private static readonly HashSet<string> MissingStudioPathDebugLoggedKeys = new(StringComparer.Ordinal);
+        private static readonly Lock MissingStudioPathWarningGate = new();
+        private static readonly HashSet<string> MissingStudioPathWarningLoggedKeys = new(StringComparer.Ordinal);
+
+        private static void LogMissingStudioPathOnce(string operation, string path)
+        {
+            if (!path.StartsWith("event:/", StringComparison.Ordinal))
+                return;
+
+            var pathExistsInRuntime = FmodStudioServer.TryCheckEventPath(path);
+            if (pathExistsInRuntime != false)
+                return;
+
+            var key = operation + "\0" + path;
+            lock (MissingStudioPathWarningGate)
+            {
+                if (!MissingStudioPathWarningLoggedKeys.Add(key))
+                    return;
+            }
+
+            RitsuLibFramework.Logger.Warn(
+                $"[Audio] FMOD event was not found in GUID mappings or loaded Studio events. " +
+                $"operation={operation}; " +
+                $"path={path}; guidMapEventCount={FmodStudioGuidPathTable.EventMappingCount}; " +
+                $"loadedBankCount={FmodStudioServer.TryGetLoadedBankCount()}; " +
+                $"loadedEventDescriptionCount={FmodStudioServer.TryGetLoadedEventDescriptionCount()}; " +
+                $"banksStillLoading={FmodStudioServer.TryBanksStillLoading()?.ToString() ?? "?"}");
+        }
 
         /// <summary>
         ///     Intercepts mapped <see cref="NAudioManager.PlayOneShot(string, Dictionary{string, float}, float)" /> calls.
@@ -76,30 +101,6 @@ namespace STS2RitsuLib.Audio.Patches
 
                 return false;
             }
-        }
-
-        private static void LogMissingStudioPathOnce(string operation, string path)
-        {
-            if (!path.StartsWith("event:/", StringComparison.Ordinal))
-                return;
-
-            var pathExistsInRuntime = FmodStudioServer.TryCheckEventPath(path);
-            if (pathExistsInRuntime != false)
-                return;
-
-            var key = operation + "\0" + path;
-            lock (MissingStudioPathDebugGate)
-            {
-                if (!MissingStudioPathDebugLoggedKeys.Add(key))
-                    return;
-            }
-
-            RitsuLibFramework.Logger.Debug(
-                $"[Audio] {operation} event path was not found in GUID mappings or loaded FMOD Studio paths. " +
-                $"path={path}; guidMapEventCount={FmodStudioGuidPathTable.EventMappingCount}; " +
-                $"loadedBankCount={FmodStudioServer.TryGetLoadedBankCount()}; " +
-                $"loadedEventDescriptionCount={FmodStudioServer.TryGetLoadedEventDescriptionCount()}; " +
-                $"banksStillLoading={FmodStudioServer.TryBanksStillLoading()?.ToString() ?? "?"}");
         }
 
         /// <summary>
