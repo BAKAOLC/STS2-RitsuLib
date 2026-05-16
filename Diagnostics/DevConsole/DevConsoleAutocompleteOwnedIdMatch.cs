@@ -1,72 +1,33 @@
-using MegaCrit.Sts2.Core.DevConsole;
-using MegaCrit.Sts2.Core.DevConsole.ConsoleCommands;
 using STS2RitsuLib.CardPiles;
 using STS2RitsuLib.CardTags;
 using STS2RitsuLib.Content;
 using STS2RitsuLib.Keywords;
-using STS2RitsuLib.Patching.Models;
 using STS2RitsuLib.TopBar;
 
-namespace STS2RitsuLib.Diagnostics.Patches
+namespace STS2RitsuLib.Diagnostics.DevConsole
 {
     /// <summary>
-    ///     Enables shorthand autocomplete only for IDs owned by ritsulib-registered content.
-    ///     仅为 ritsulib 注册内容拥有的 ID 启用简写自动补全。
+    ///     Tail-aware autocomplete matching for ritsulib-registered public entry ids.
     /// </summary>
-    public sealed class DevConsoleAutocompleteQualifiedIdPatch : IPatchMethod
+    public static class DevConsoleAutocompleteOwnedIdMatch
     {
         private static readonly Lazy<OwnedIdCatalog> OwnedCatalog = new(BuildOwnedIdCatalog);
 
-        /// <inheritdoc />
-        public static string PatchId => "dev_console_autocomplete_qualified_id";
-
-        /// <inheritdoc />
-        public static bool IsCritical => false;
-
-        /// <inheritdoc />
-        public static string Description =>
-            "DevConsole autocomplete: shorthand match for ritsulib-owned ids only";
-
-        /// <inheritdoc />
-        public static ModPatchTarget[] GetTargets()
-        {
-            return [new(typeof(AbstractConsoleCmd), nameof(AbstractConsoleCmd.CompleteArgument), true)];
-        }
-
         /// <summary>
-        ///     Installs a matcher only when no other patch already provided one.
-        ///     仅当没有其它补丁已提供匹配器时安装匹配器。
+        ///     Matches full id prefix or the mod-stem tail segment for owned ids.
         /// </summary>
-        public static void Prefix(ref Func<string, string, bool>? matchPredicate)
-        {
-            if (matchPredicate != null)
-                return;
-
-            matchPredicate = TailAwareOwnedIdMatch;
-        }
-
-        /// <summary>
-        ///     De-duplicates completion candidates while preserving existing order from upstream patches.
-        ///     在保留上游补丁现有顺序的同时，对补全候选项去重。
-        /// </summary>
-        // ReSharper disable once InconsistentNaming
-        public static void Postfix(ref CompletionResult __result, string partialArg)
-        {
-            __result.Candidates = __result.Candidates
-                .Distinct(StringComparer.OrdinalIgnoreCase)
-                .ToList();
-        }
-
-        private static bool TailAwareOwnedIdMatch(string candidate, string partial)
+        public static bool Match(string candidate, string partial)
         {
             if (string.IsNullOrWhiteSpace(partial))
                 return true;
 
             var token = partial.Trim();
-            if (candidate.StartsWith(token, StringComparison.OrdinalIgnoreCase))
+            var entryId = DevConsoleAutocompleteDisplay.StripLocalizedSuffix(candidate);
+
+            if (entryId.StartsWith(token, StringComparison.OrdinalIgnoreCase))
                 return true;
 
-            if (!TryGetOwnedTail(candidate, out var tail))
+            if (!TryGetOwnedTail(entryId, out var tail))
                 return false;
 
             return tail.StartsWith(token, StringComparison.OrdinalIgnoreCase) ||
@@ -83,7 +44,7 @@ namespace STS2RitsuLib.Diagnostics.Patches
             if (!ownership.TryGetValue(candidate.Trim(), out var ownerModId))
                 return false;
 
-            var modPrefix = GetNormalizedModStem(ownerModId) + "_";
+            var modPrefix = ModContentRegistry.NormalizePublicStem(ownerModId) + "_";
             if (!candidate.StartsWith(modPrefix, StringComparison.OrdinalIgnoreCase))
                 return false;
 
@@ -127,13 +88,7 @@ namespace STS2RitsuLib.Diagnostics.Patches
             if (string.IsNullOrWhiteSpace(id) || string.IsNullOrWhiteSpace(modId))
                 return;
 
-            var normalizedId = id.Trim();
-            owned.TryAdd(normalizedId, modId);
-        }
-
-        private static string GetNormalizedModStem(string modId)
-        {
-            return ModContentRegistry.NormalizePublicStem(modId);
+            owned.TryAdd(id.Trim(), modId);
         }
 
         private sealed record OwnedIdCatalog(Dictionary<string, string> IdOwnerMap);

@@ -97,7 +97,8 @@ namespace STS2RitsuLib
             patcher.RegisterPatch<RunSavedDataCombatReplaySerializePatch>();
             patcher.RegisterPatch<RunSavedDataCombatReplayDeserializePatch>();
             patcher.RegisterPatch<CoreInitializationLifecyclePatch>();
-            patcher.RegisterPatch<DevConsoleAutocompleteQualifiedIdPatch>();
+            patcher.RegisterPatch<DevConsoleAutocompleteEnhancementPatch>();
+            patcher.RegisterPatch<DevConsoleAutocompleteApplyCandidatePatch>();
             patcher.RegisterPatch<NMainMenuContinueRunMissingCharacterPatch>();
             patcher.RegisterPatch<NMainMenuHarmonyPatchDumpPatch>();
             patcher.RegisterPatch<NContinueRunInfoShowInfoModelNotFoundPatch>();
