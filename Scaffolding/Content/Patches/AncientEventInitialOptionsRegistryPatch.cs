@@ -1,4 +1,4 @@
-using HarmonyLib;
+using System.Runtime.CompilerServices;
 using MegaCrit.Sts2.Core.Events;
 using MegaCrit.Sts2.Core.Models;
 using STS2RitsuLib.Patching.Models;
@@ -12,9 +12,6 @@ namespace STS2RitsuLib.Scaffolding.Content.Patches
     /// </summary>
     public class AncientEventInitialOptionsRegistryPatch : IPatchMethod
     {
-        private static readonly AccessTools.FieldRef<AncientEventModel, List<EventOption>?> GeneratedOptionsRef =
-            AccessTools.FieldRefAccess<AncientEventModel, List<EventOption>?>("_generatedOptions");
-
         /// <inheritdoc cref="IPatchMethod.PatchId" />
         public static string PatchId => "ancient_event_initial_options_registry";
 
@@ -49,7 +46,7 @@ namespace STS2RitsuLib.Scaffolding.Content.Patches
             if (mutable.Count == countBefore)
                 return;
 
-            GeneratedOptionsRef(__instance) = mutable;
+            GeneratedOptions(__instance) = mutable;
             __result = mutable;
         }
 
@@ -61,5 +58,8 @@ namespace STS2RitsuLib.Scaffolding.Content.Patches
             var only = options[0];
             return only.IsProceed && string.Equals(only.TextKey, "PROCEED", StringComparison.OrdinalIgnoreCase);
         }
+
+        [UnsafeAccessor(UnsafeAccessorKind.Field, Name = "_generatedOptions")]
+        private static extern ref List<EventOption>? GeneratedOptions(AncientEventModel instance);
     }
 }

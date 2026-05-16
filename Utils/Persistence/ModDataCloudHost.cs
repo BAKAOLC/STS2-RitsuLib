@@ -1,4 +1,4 @@
-using System.Reflection;
+using System.Runtime.CompilerServices;
 using MegaCrit.Sts2.Core.Platform.Steam;
 using MegaCrit.Sts2.Core.Saves;
 using STS2RitsuLib.Platform;
@@ -16,8 +16,6 @@ namespace STS2RitsuLib.Utils.Persistence
     /// </summary>
     internal static class ModDataCloudHost
     {
-        private static FieldInfo? _saveStoreField;
-
         internal static bool MayEnumerateNativeSteamRemoteStorage =>
             !RitsuLibMobileSteamRuntime.SuppressNativeSteamIntegration &&
             SteamInitializer.Initialized &&
@@ -27,10 +25,7 @@ namespace STS2RitsuLib.Utils.Persistence
         {
             try
             {
-                _saveStoreField ??= typeof(SaveManager).GetField("_saveStore",
-                    BindingFlags.Instance | BindingFlags.NonPublic);
-                var store = _saveStoreField?.GetValue(SaveManager.Instance);
-                return store as CloudSaveStore;
+                return SaveStore(SaveManager.Instance) as CloudSaveStore;
             }
             catch
             {
@@ -47,5 +42,8 @@ namespace STS2RitsuLib.Utils.Persistence
         {
             return HasCloudSaveStore();
         }
+
+        [UnsafeAccessor(UnsafeAccessorKind.Field, Name = "_saveStore")]
+        private static extern ref readonly ISaveStore SaveStore(SaveManager manager);
     }
 }

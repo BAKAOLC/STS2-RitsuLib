@@ -1,4 +1,4 @@
-using System.Reflection;
+using System.Runtime.CompilerServices;
 using HarmonyLib;
 using MegaCrit.Sts2.Core.Entities.Cards;
 using MegaCrit.Sts2.Core.Models;
@@ -206,9 +206,7 @@ namespace STS2RitsuLib.Unlocks.Patches
         /// </summary>
         public static void Postfix(ActModel __instance, UnlockState unlockState)
         {
-            var roomsField = typeof(ActModel).GetField("_rooms", BindingFlags.Instance | BindingFlags.NonPublic)
-                             ?? throw new MissingFieldException(typeof(ActModel).FullName, "_rooms");
-            var roomSet = (RoomSet)roomsField.GetValue(__instance)!;
+            var roomSet = Rooms(__instance);
             var originalEvents = roomSet.events.ToArray();
             var filteredEvents = originalEvents
                 .Where(eventModel => ModUnlockRegistry.IsUnlocked(eventModel, unlockState))
@@ -228,5 +226,8 @@ namespace STS2RitsuLib.Unlocks.Patches
             roomSet.events.Clear();
             roomSet.events.AddRange(filteredEvents);
         }
+
+        [UnsafeAccessor(UnsafeAccessorKind.Field, Name = "_rooms")]
+        private static extern ref RoomSet Rooms(ActModel instance);
     }
 }

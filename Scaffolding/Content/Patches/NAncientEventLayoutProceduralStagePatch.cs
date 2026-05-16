@@ -1,5 +1,5 @@
+using System.Runtime.CompilerServices;
 using Godot;
-using HarmonyLib;
 using MegaCrit.Sts2.Core.Helpers;
 using MegaCrit.Sts2.Core.Models;
 using MegaCrit.Sts2.Core.Nodes.Events;
@@ -18,12 +18,6 @@ namespace STS2RitsuLib.Scaffolding.Content.Patches
     /// </summary>
     public class NAncientEventLayoutProceduralStagePatch : IPatchMethod
     {
-        private static readonly AccessTools.FieldRef<NAncientEventLayout, AncientEventModel> AncientEventRef =
-            AccessTools.FieldRefAccess<NAncientEventLayout, AncientEventModel>("_ancientEvent");
-
-        private static readonly AccessTools.FieldRef<NAncientEventLayout, NAncientBgContainer> BgContainerRef =
-            AccessTools.FieldRefAccess<NAncientEventLayout, NAncientBgContainer>("_ancientBgContainer");
-
         /// <inheritdoc cref="IPatchMethod.PatchId" />
         public static string PatchId => "n_ancient_event_layout_procedural_stage";
 
@@ -47,7 +41,7 @@ namespace STS2RitsuLib.Scaffolding.Content.Patches
         /// </summary>
         public static void Postfix(NAncientEventLayout __instance)
         {
-            var ancient = AncientEventRef(__instance);
+            var ancient = AncientEvent(__instance);
             if (ancient is not IModAncientEventAssetOverrides mod)
                 return;
 
@@ -55,7 +49,7 @@ namespace STS2RitsuLib.Scaffolding.Content.Patches
             if (stage == null)
                 return;
 
-            var container = BgContainerRef(__instance);
+            var container = AncientBgContainer(__instance);
             if (container == null || !GodotObject.IsInstanceValid(container))
             {
                 RitsuLibFramework.Logger.Warn(
@@ -71,5 +65,11 @@ namespace STS2RitsuLib.Scaffolding.Content.Patches
 
             AncientStageProceduralRootFactory.BuildAndMount(container, stage);
         }
+
+        [UnsafeAccessor(UnsafeAccessorKind.Field, Name = "_ancientEvent")]
+        private static extern ref AncientEventModel AncientEvent(NAncientEventLayout instance);
+
+        [UnsafeAccessor(UnsafeAccessorKind.Field, Name = "_ancientBgContainer")]
+        private static extern ref NAncientBgContainer AncientBgContainer(NAncientEventLayout instance);
     }
 }

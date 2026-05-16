@@ -1,4 +1,4 @@
-using HarmonyLib;
+using System.Runtime.CompilerServices;
 using MegaCrit.Sts2.Core.Models;
 using MegaCrit.Sts2.Core.Random;
 using MegaCrit.Sts2.Core.Rooms;
@@ -16,9 +16,6 @@ namespace STS2RitsuLib.Scaffolding.Content.Patches
     /// </summary>
     public class EncounterGetBackgroundAssetsProgrammaticPrepPatch : IPatchMethod
     {
-        private static readonly AccessTools.FieldRef<EncounterModel, BackgroundAssets?> CachedBackgroundAssetsField =
-            AccessTools.FieldRefAccess<EncounterModel, BackgroundAssets?>("_backgroundAssets");
-
         /// <inheritdoc cref="IPatchMethod.PatchId" />
         public static string PatchId => "content_encounter_programmatic_background_prep";
 
@@ -47,10 +44,13 @@ namespace STS2RitsuLib.Scaffolding.Content.Patches
             if (__instance is not ModEncounterTemplate { UsesProgrammaticCombatBackground: true } template)
                 return;
 
-            if (CachedBackgroundAssetsField(__instance) != null)
+            if (CachedBackgroundAssets(__instance) != null)
                 return;
 
             template.PrepareProgrammaticCombatBackground(parentAct, rng);
         }
+
+        [UnsafeAccessor(UnsafeAccessorKind.Field, Name = "_backgroundAssets")]
+        private static extern ref BackgroundAssets? CachedBackgroundAssets(EncounterModel instance);
     }
 }
