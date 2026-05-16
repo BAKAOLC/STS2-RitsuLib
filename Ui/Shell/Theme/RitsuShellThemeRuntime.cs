@@ -181,11 +181,9 @@ namespace STS2RitsuLib.Ui.Shell.Theme
                     return;
                 }
 
-                if (TryBuildSnapshotLocked(DefaultThemeId, out resolvedId, out snapshot) && snapshot != null)
-                {
-                    _current = snapshot;
-                    ActiveThemeId = resolvedId;
-                }
+                if (!TryBuildSnapshotLocked(DefaultThemeId, out resolvedId, out snapshot) || snapshot == null) return;
+                _current = snapshot;
+                ActiveThemeId = resolvedId;
             }
         }
 
