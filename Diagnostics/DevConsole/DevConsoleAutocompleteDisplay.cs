@@ -15,9 +15,37 @@ namespace STS2RitsuLib.Diagnostics.DevConsole
             ArgumentException.ThrowIfNullOrWhiteSpace(entryId);
 
             var title = DevConsoleModelIdAutocompleteCatalog.TryGetLocalizedTitle(entryId);
+            return FormatWithTitle(entryId, title);
+        }
+
+        /// <summary>
+        ///     Appends <c> (localized-title)</c> to an ancient choice token when a title exists.
+        /// </summary>
+        public static string FormatAncientChoiceCandidate(string ancientEntryId, string choiceToken)
+        {
+            ArgumentException.ThrowIfNullOrWhiteSpace(ancientEntryId);
+            ArgumentException.ThrowIfNullOrWhiteSpace(choiceToken);
+
+            var title = DevConsoleAncientChoiceAutocompleteCatalog.TryGetDisplayTitle(ancientEntryId, choiceToken);
+            return FormatWithTitle(choiceToken, title);
+        }
+
+        /// <summary>
+        ///     Appends <c> (localized-title)</c> to a pile token when a localized pile title exists.
+        /// </summary>
+        public static string FormatPileCandidate(string token)
+        {
+            ArgumentException.ThrowIfNullOrWhiteSpace(token);
+
+            var title = DevConsolePileNameAutocompleteCatalog.TryGetLocalizedTitle(token);
+            return FormatWithTitle(token, title);
+        }
+
+        private static string FormatWithTitle(string token, string? title)
+        {
             return string.IsNullOrWhiteSpace(title)
-                ? entryId
-                : $"{entryId}{SuffixOpener}{SanitizeSuffix(title)})";
+                ? token
+                : $"{token}{SuffixOpener}{SanitizeSuffix(title)})";
         }
 
         /// <summary>

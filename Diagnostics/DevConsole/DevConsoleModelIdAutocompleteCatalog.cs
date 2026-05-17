@@ -1,5 +1,4 @@
 using MegaCrit.Sts2.Core.Localization;
-using MegaCrit.Sts2.Core.Models;
 using STS2RitsuLib.Utils;
 
 namespace STS2RitsuLib.Diagnostics.DevConsole
@@ -58,29 +57,9 @@ namespace STS2RitsuLib.Diagnostics.DevConsole
 
             try
             {
-                foreach (var card in ModelDb.AllCards)
-                    TryAddTitle(titles, card.Id.Entry, card.TitleLocString);
-
-                foreach (var potion in ModelDb.AllPotions)
-                    TryAddTitle(titles, potion.Id.Entry, potion.Title);
-
-                foreach (var relic in ModelDb.AllRelics)
-                    TryAddTitle(titles, relic.Id.Entry, relic.Title);
-
-                foreach (var encounter in ModelDb.AllEncounters)
-                    TryAddTitle(titles, encounter.Id.Entry, encounter.Title);
-
-                foreach (var affliction in ModelDb.DebugAfflictions)
-                    TryAddTitle(titles, affliction.Id.Entry, affliction.Title);
-
-                foreach (var enchantment in ModelDb.DebugEnchantments)
-                    TryAddTitle(titles, enchantment.Id.Entry, enchantment.Title);
-
-                foreach (var ancient in ModelDb.AllAncients)
-                    TryAddTitle(titles, ancient.Id.Entry, ancient.Title);
-
-                foreach (var evt in ModelDb.AllEvents)
-                    TryAddTitle(titles, evt.Id.Entry, evt.Title);
+                foreach (var (entryId, locString) in DevConsoleAutocompleteCandidateSources
+                             .EnumerateLocalizedModelTitles())
+                    TryAddTitle(titles, entryId, locString);
             }
             catch
             {
@@ -92,31 +71,17 @@ namespace STS2RitsuLib.Diagnostics.DevConsole
 
         private static void TryAddTitle(Dictionary<string, string> titles, string entryId, LocString locString)
         {
-            var formatted = TryFormatLocString(locString);
-            if (formatted == null)
-                return;
-
-            titles.TryAdd(entryId, formatted);
-        }
-
-        private static void TryAddTitle(Dictionary<string, string> titles, string entryId, string title)
-        {
-            if (string.IsNullOrWhiteSpace(title))
-                return;
-
-            titles.TryAdd(entryId, title.Trim());
-        }
-
-        private static string? TryFormatLocString(LocString locString)
-        {
             try
             {
                 var text = locString.GetFormattedText()?.Trim();
-                return string.IsNullOrWhiteSpace(text) ? null : text;
+                if (string.IsNullOrWhiteSpace(text))
+                    return;
+
+                titles.TryAdd(entryId, text);
             }
             catch
             {
-                return null;
+                // Loc tables may be unavailable before content init.
             }
         }
     }

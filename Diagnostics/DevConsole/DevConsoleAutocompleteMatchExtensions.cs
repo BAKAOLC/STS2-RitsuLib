@@ -46,6 +46,87 @@ namespace STS2RitsuLib.Diagnostics.DevConsole
             result.CommonPrefix = DevConsoleAutocompleteDisplay.ComputeCommonPrefix(entryIds, result.CommandPrefix);
         }
 
+        /// <summary>
+        ///     Chains <paramref name="inner" /> with localized pile-title matching.
+        /// </summary>
+        public static Func<string, string, bool> WithLocalizedPileTitleMatch(
+            Func<string, string, bool>? inner = null)
+        {
+            var baseMatch = inner ?? DefaultPrefixMatch;
+            return (candidate, partial) =>
+            {
+                if (baseMatch(candidate, partial))
+                    return true;
+
+                var token = DevConsoleAutocompleteDisplay.StripLocalizedSuffix(candidate);
+                return DevConsolePileNameAutocompleteCatalog.MatchesLocalizedTitle(token, partial);
+            };
+        }
+
+        /// <summary>
+        ///     Chains <paramref name="inner" /> with localized ancient-choice matching for a resolved ancient id.
+        /// </summary>
+        public static Func<string, string, bool> WithAncientChoiceLocalizedMatch(
+            Func<string, string, bool>? inner,
+            string? ancientEntryId)
+        {
+            var baseMatch = inner ?? DefaultPrefixMatch;
+            return (candidate, partial) =>
+            {
+                if (baseMatch(candidate, partial))
+                    return true;
+
+                if (string.IsNullOrWhiteSpace(ancientEntryId))
+                    return false;
+
+                var token = DevConsoleAutocompleteDisplay.StripLocalizedSuffix(candidate);
+                return DevConsoleAncientChoiceAutocompleteCatalog.MatchesLocalizedTitle(
+                    ancientEntryId,
+                    token,
+                    partial);
+            };
+        }
+
+        /// <summary>
+        ///     Decorates <c>ancient</c> choice candidates with localized option/relic titles.
+        /// </summary>
+        public static void ApplyAncientChoiceDisplayLabels(
+            ref CompletionResult result,
+            string ancientEntryId)
+        {
+            if (result.Candidates.Count == 0)
+                return;
+
+            var tokens = result.Candidates
+                .Select(DevConsoleAutocompleteDisplay.StripLocalizedSuffix)
+                .ToList();
+
+            result.Candidates = tokens
+                .Select(token => DevConsoleAutocompleteDisplay.FormatAncientChoiceCandidate(ancientEntryId, token))
+                .ToList();
+
+            result.CommonPrefix = DevConsoleAutocompleteDisplay.ComputeCommonPrefix(tokens, result.CommandPrefix);
+        }
+
+        /// <summary>
+        ///     Decorates pile-argument candidates with localized suffix labels.
+        /// </summary>
+        public static void ApplyPileDisplayLabels(ref CompletionResult result)
+        {
+            if (result.Candidates.Count == 0)
+                return;
+
+            var tokens = result.Candidates
+                .Select(DevConsoleAutocompleteDisplay.StripLocalizedSuffix)
+                .ToList();
+
+            result.Candidates = tokens
+                .Select(DevConsoleAutocompleteDisplay.FormatPileCandidate)
+                .ToList();
+
+            result.CommonPrefix = DevConsoleAutocompleteDisplay.ComputeCommonPrefix(tokens, result.CommandPrefix);
+        }
+
         private static bool DefaultPrefixMatch(string candidate, string partial)
         {
             return candidate.StartsWith(partial, StringComparison.OrdinalIgnoreCase);

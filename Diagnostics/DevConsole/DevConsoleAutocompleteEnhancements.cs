@@ -33,6 +33,21 @@ namespace STS2RitsuLib.Diagnostics.DevConsole
         DeduplicateCandidates = 1 << 3,
 
         /// <summary>
+        ///     Appends registered mod pile ids to pile-argument candidate lists.
+        /// </summary>
+        IncludeModPileCandidates = 1 << 4,
+
+        /// <summary>
+        ///     Allows matching pile tokens by localized title text.
+        /// </summary>
+        PileNameLocalizedTitleMatch = 1 << 5,
+
+        /// <summary>
+        ///     Appends localized pile titles in parentheses for pile-argument candidates.
+        /// </summary>
+        PileNameDisplayLabels = 1 << 6,
+
+        /// <summary>
         ///     Localized title matching and display labels for model entry ids.
         /// </summary>
         ModelEntryId = LocalizedTitleMatch | LocalizedDisplayLabels | DeduplicateCandidates,
@@ -41,5 +56,31 @@ namespace STS2RitsuLib.Diagnostics.DevConsole
         ///     <see cref="ModelEntryId" /> plus ritsulib-owned id shorthand matching.
         /// </summary>
         RitsuLibModEntryId = ModelEntryId | RitsuLibOwnedIdShorthandMatch,
+
+        /// <summary>
+        ///     Full pile-name autocomplete: mod pile ids, localized match/display, owned-id shorthand, de-dupe.
+        /// </summary>
+        PileName = IncludeModPileCandidates |
+                   PileNameLocalizedTitleMatch |
+                   PileNameDisplayLabels |
+                   DeduplicateCandidates |
+                   RitsuLibOwnedIdShorthandMatch,
+
+        /// <summary>
+        ///     Allows matching ancient choice tokens by option or relic localized title (and relic entry id).
+        /// </summary>
+        AncientChoiceLocalizedTitleMatch = 1 << 7,
+
+        /// <summary>
+        ///     Appends localized option/relic titles for <c>ancient</c> second-argument candidates.
+        /// </summary>
+        AncientChoiceDisplayLabels = 1 << 8,
+
+        /// <summary>
+        ///     <c>ancient</c> choice argument: localized match/display on event options (often relic rewards).
+        /// </summary>
+        AncientChoice = AncientChoiceLocalizedTitleMatch |
+                        AncientChoiceDisplayLabels |
+                        DeduplicateCandidates,
     }
 }

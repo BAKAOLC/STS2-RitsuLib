@@ -43,7 +43,10 @@ namespace STS2RitsuLib.Diagnostics.Patches
             if (enhancements == DevConsoleAutocompleteEnhancements.None)
                 return;
 
-            matchPredicate = DevConsoleAutocompleteEnhancer.BuildMatchPredicate(enhancements, matchPredicate);
+            matchPredicate = DevConsoleAutocompleteEnhancer.BuildMatchPredicate(
+                enhancements,
+                matchPredicate,
+                completedArgs);
         }
 
         // ReSharper disable InconsistentNaming
@@ -61,7 +64,7 @@ namespace STS2RitsuLib.Diagnostics.Patches
                 completedArgs,
                 __result.ArgumentIndex);
 
-            DevConsoleAutocompleteEnhancer.ApplyToResult(ref __result, enhancements);
+            DevConsoleAutocompleteEnhancer.ApplyToResult(ref __result, enhancements, completedArgs);
         }
     }
 }

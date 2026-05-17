@@ -12,7 +12,8 @@ namespace STS2RitsuLib.Diagnostics.DevConsole
         /// </summary>
         public static Func<string, string, bool>? BuildMatchPredicate(
             DevConsoleAutocompleteEnhancements enhancements,
-            Func<string, string, bool>? inner = null)
+            Func<string, string, bool>? inner = null,
+            IReadOnlyList<string>? completedArgs = null)
         {
             if (enhancements == DevConsoleAutocompleteEnhancements.None)
                 return inner;
@@ -26,6 +27,16 @@ namespace STS2RitsuLib.Diagnostics.DevConsole
             if (enhancements.HasFlag(DevConsoleAutocompleteEnhancements.LocalizedTitleMatch))
                 predicate = DevConsoleAutocompleteMatchExtensions.WithLocalizedModelTitleMatch(predicate);
 
+            if (enhancements.HasFlag(DevConsoleAutocompleteEnhancements.PileNameLocalizedTitleMatch))
+                predicate = DevConsoleAutocompleteMatchExtensions.WithLocalizedPileTitleMatch(predicate);
+
+            if (!enhancements.HasFlag(DevConsoleAutocompleteEnhancements.AncientChoiceLocalizedTitleMatch))
+                return predicate;
+            var ancientEntryId = completedArgs is { Count: > 0 } ? completedArgs[0] : null;
+            predicate = DevConsoleAutocompleteMatchExtensions.WithAncientChoiceLocalizedMatch(
+                predicate,
+                ancientEntryId);
+
             return predicate;
         }
 
@@ -34,13 +45,27 @@ namespace STS2RitsuLib.Diagnostics.DevConsole
         /// </summary>
         public static void ApplyToResult(
             ref CompletionResult result,
-            DevConsoleAutocompleteEnhancements enhancements)
+            DevConsoleAutocompleteEnhancements enhancements,
+            IReadOnlyList<string>? completedArgs = null)
         {
-            if (enhancements == DevConsoleAutocompleteEnhancements.None || result.Candidates.Count == 0)
+            if (enhancements == DevConsoleAutocompleteEnhancements.None)
+                return;
+
+            if (enhancements.HasFlag(DevConsoleAutocompleteEnhancements.IncludeModPileCandidates))
+                DevConsolePileNameAutocompleteCatalog.AppendModPileCandidates(result.Candidates);
+
+            if (result.Candidates.Count == 0)
                 return;
 
             if (enhancements.HasFlag(DevConsoleAutocompleteEnhancements.LocalizedDisplayLabels))
                 DevConsoleAutocompleteMatchExtensions.ApplyLocalizedDisplayLabels(ref result);
+
+            if (enhancements.HasFlag(DevConsoleAutocompleteEnhancements.AncientChoiceDisplayLabels) &&
+                completedArgs is { Count: > 0 })
+                DevConsoleAutocompleteMatchExtensions.ApplyAncientChoiceDisplayLabels(ref result, completedArgs[0]);
+
+            if (enhancements.HasFlag(DevConsoleAutocompleteEnhancements.PileNameDisplayLabels))
+                DevConsoleAutocompleteMatchExtensions.ApplyPileDisplayLabels(ref result);
 
             if (enhancements.HasFlag(DevConsoleAutocompleteEnhancements.DeduplicateCandidates))
                 result.Candidates = result.Candidates

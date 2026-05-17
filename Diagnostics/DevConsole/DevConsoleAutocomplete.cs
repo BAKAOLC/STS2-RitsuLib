@@ -60,7 +60,8 @@ namespace STS2RitsuLib.Diagnostics.DevConsole
         {
             return DevConsoleAutocompleteEnhancer.BuildMatchPredicate(
                 Resolve(command, completedArgs, completedArgs.Length),
-                inner);
+                inner,
+                completedArgs);
         }
 
         /// <summary>
@@ -73,7 +74,8 @@ namespace STS2RitsuLib.Diagnostics.DevConsole
         {
             DevConsoleAutocompleteEnhancer.ApplyToResult(
                 ref result,
-                Resolve(command, completedArgs, result.ArgumentIndex));
+                Resolve(command, completedArgs, result.ArgumentIndex),
+                completedArgs);
         }
     }
 }

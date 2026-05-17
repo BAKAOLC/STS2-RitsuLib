@@ -1,58 +1,67 @@
 namespace STS2RitsuLib.Diagnostics.DevConsole
 {
     /// <summary>
-    ///     Built-in dev-console autocomplete bindings for vanilla model-entry-id arguments.
+    ///     Built-in dev-console autocomplete bindings aligned with vanilla command completion slots.
     /// </summary>
+    /// <remarks>
+    ///     Vanilla commands with completions but no model-id enhancement:
+    ///     <c>act</c> (no vanilla autocomplete; accepts run act index or act model id),
+    ///     <c>art</c> (content-type names),
+    ///     <c>room</c> (<see cref="MegaCrit.Sts2.Core.Rooms.RoomType" />),
+    ///     <c>kill</c> / <c>upgrade</c> (numeric indices),
+    ///     <c>achievement</c> / <c>open</c> / <c>leaderboard</c> (fixed option lists),
+    ///     <c>relic</c> arg 0 when choosing <c>add</c>/<c>remove</c> subcommands,
+    ///     <c>unlock</c> arg 0 (discovery type names).
+    /// </remarks>
     internal static class DevConsoleAutocompleteDefaults
     {
         public static void Register()
         {
-            RegisterFirstModelEntryId("card");
-            RegisterFirstModelEntryId("potion");
-            RegisterFirstModelEntryId("event");
-            RegisterFirstModelEntryId("ancient");
-            RegisterFirstModelEntryId("fight");
-            RegisterFirstModelEntryId("afflict");
-            RegisterFirstModelEntryId("enchant");
-            RegisterFirstModelEntryId("remove_card");
+            RegisterModelEntryIdFirstArgument(
+                "power",
+                "afflict",
+                "ancient",
+                "card",
+                "enchant",
+                "event",
+                "fight",
+                "potion",
+                "remove_card");
+
+            RegisterPileNameSecondArgument("card", "remove_card");
+
+            DevConsoleAutocompleteRegistry.Register(
+                "ancient",
+                DevConsoleAutocompleteEnhancements.AncientChoice,
+                DevConsoleAutocompleteContextPredicates.IsAncientChoiceArgument);
 
             DevConsoleAutocompleteRegistry.Register(
                 "relic",
                 DevConsoleAutocompleteEnhancements.RitsuLibModEntryId,
-                IsDirectRelicIdArgument);
+                DevConsoleAutocompleteContextPredicates.IsRelicIdArgument);
 
             DevConsoleAutocompleteRegistry.Register(
-                "relic",
+                "unlock",
                 DevConsoleAutocompleteEnhancements.RitsuLibModEntryId,
-                IsRelicIdAfterSubcommand);
+                DevConsoleAutocompleteContextPredicates.IsUnlockDiscoveryIdArgument);
         }
 
-        private static void RegisterFirstModelEntryId(string commandName)
+        private static void RegisterModelEntryIdFirstArgument(params string[] commandNames)
         {
-            DevConsoleAutocompleteRegistry.Register(
-                commandName,
-                DevConsoleAutocompleteEnhancements.RitsuLibModEntryId,
-                IsFirstModelEntryIdArgument);
+            foreach (var commandName in commandNames)
+                DevConsoleAutocompleteRegistry.Register(
+                    commandName,
+                    DevConsoleAutocompleteEnhancements.RitsuLibModEntryId,
+                    DevConsoleAutocompleteContextPredicates.IsFirstArgument);
         }
 
-        private static bool IsFirstModelEntryIdArgument(DevConsoleAutocompleteContext context)
+        private static void RegisterPileNameSecondArgument(params string[] commandNames)
         {
-            return context is { ArgumentIndex: 0, CompletedArgs.Count: 0 };
-        }
-
-        private static bool IsDirectRelicIdArgument(DevConsoleAutocompleteContext context)
-        {
-            return context is { ArgumentIndex: 0, CompletedArgs.Count: 0 };
-        }
-
-        private static bool IsRelicIdAfterSubcommand(DevConsoleAutocompleteContext context)
-        {
-            if (context.ArgumentIndex != 1 || context.CompletedArgs.Count != 1)
-                return false;
-
-            var subcommand = context.CompletedArgs[0];
-            return subcommand.Equals("add", StringComparison.OrdinalIgnoreCase) ||
-                   subcommand.Equals("remove", StringComparison.OrdinalIgnoreCase);
+            foreach (var commandName in commandNames)
+                DevConsoleAutocompleteRegistry.Register(
+                    commandName,
+                    DevConsoleAutocompleteEnhancements.PileName,
+                    DevConsoleAutocompleteContextPredicates.IsSecondArgument);
         }
     }
 }
