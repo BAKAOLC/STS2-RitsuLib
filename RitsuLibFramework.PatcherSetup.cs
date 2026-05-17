@@ -261,6 +261,7 @@ namespace STS2RitsuLib
             patcher.RegisterPatch<AfflictionCreateOverlayPatch>();
 
             patcher.RegisterPatch<EnchantmentIntendedIconPathPatch>();
+            patcher.RegisterPatch<ModifierIconPathPatch>();
 
             patcher.RegisterPatch<ActBackgroundScenePathPatch>();
             patcher.RegisterPatch<ActRestSiteBackgroundPathPatch>();
@@ -383,6 +384,7 @@ namespace STS2RitsuLib
             patcher.RegisterPatch<AchievementsPatch>();
             patcher.RegisterPatch<GoodModifiersPatch>();
             patcher.RegisterPatch<BadModifiersPatch>();
+            patcher.RegisterPatch<MutuallyExclusiveModifiersPatch>();
             patcher.RegisterPatch<AllRelicPoolsPatch>();
             patcher.RegisterPatch<AllPotionPoolsPatch>();
             patcher.RegisterPatch<ModelDbModdedEntryPatch>();

@@ -455,9 +455,11 @@ namespace STS2RitsuLib.Content.Patches
 
         // ReSharper disable once InconsistentNaming
         /// <summary>
-        ///     Merges mod good modifiers into the vanilla list by <see cref="AbstractModel.Id" />.
-        ///     按 <see cref="AbstractModel.Id" /> 将 mod 正面修饰符合并到原版列表中。
+        ///     Merges mod good modifiers into the current list using <see cref="ModifierRegistration.ModifierListSortOrder" />.
+        ///     按 <see cref="ModifierRegistration.ModifierListSortOrder" /> 将 mod 正面修饰符合并到当前列表中。
         /// </summary>
+        [HarmonyAfter(Const.BaseLibHarmonyId)]
+        [HarmonyPriority(Priority.Last)]
         public static void Postfix(ref IReadOnlyList<ModifierModel> __result)
         {
             __result = ModContentRegistry.AppendGoodModifiers(__result);
@@ -487,12 +489,49 @@ namespace STS2RitsuLib.Content.Patches
 
         // ReSharper disable once InconsistentNaming
         /// <summary>
-        ///     Merges mod bad modifiers into the vanilla list by <see cref="AbstractModel.Id" />.
-        ///     按 <see cref="AbstractModel.Id" /> 将 mod 负面修饰符合并到原版列表中。
+        ///     Merges mod bad modifiers into the current list using <see cref="ModifierRegistration.ModifierListSortOrder" />.
+        ///     按 <see cref="ModifierRegistration.ModifierListSortOrder" /> 将 mod 负面修饰符合并到当前列表中。
         /// </summary>
+        [HarmonyAfter(Const.BaseLibHarmonyId)]
+        [HarmonyPriority(Priority.Last)]
         public static void Postfix(ref IReadOnlyList<ModifierModel> __result)
         {
             __result = ModContentRegistry.AppendBadModifiers(__result);
+        }
+    }
+
+    /// <summary>
+    ///     Merges RitsuLib-registered modifier exclusivity groups into <see cref="ModelDb.MutuallyExclusiveModifiers" />.
+    ///     将 RitsuLib 注册的修饰符互斥组合并到 <see cref="ModelDb.MutuallyExclusiveModifiers" />。
+    /// </summary>
+    public class MutuallyExclusiveModifiersPatch : IPatchMethod
+    {
+        /// <inheritdoc />
+        public static string PatchId => "modeldb_mutually_exclusive_modifiers";
+
+        /// <inheritdoc />
+        public static string Description =>
+            "Merge registered mutually exclusive modifier groups into ModelDb.MutuallyExclusiveModifiers";
+
+        /// <inheritdoc />
+        public static bool IsCritical => true;
+
+        /// <inheritdoc />
+        public static ModPatchTarget[] GetTargets()
+        {
+            return [new(typeof(ModelDb), "MutuallyExclusiveModifiers", MethodType.Getter)];
+        }
+
+        // ReSharper disable once InconsistentNaming
+        /// <summary>
+        ///     Merges mod exclusivity groups into the current list, including overlapping vanilla sets.
+        ///     将 mod 互斥组合并到当前列表，并与存在交集的原版集合合并。
+        /// </summary>
+        [HarmonyAfter(Const.BaseLibHarmonyId)]
+        [HarmonyPriority(Priority.Last)]
+        public static void Postfix(ref IReadOnlyList<IReadOnlySet<ModifierModel>> __result)
+        {
+            __result = ModContentRegistry.AppendMutuallyExclusiveModifiers(__result);
         }
     }
 

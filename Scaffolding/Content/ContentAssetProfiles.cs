@@ -234,6 +234,24 @@ namespace STS2RitsuLib.Scaffolding.Content
     }
 
     /// <summary>
+    ///     Optional run modifier icon texture path.
+    ///     可选运行修饰符图标贴图路径。
+    /// </summary>
+    /// <param name="IconPath">
+    ///     Modifier icon image path.
+    ///     修饰符图标图片路径。
+    /// </param>
+    public sealed record ModifierAssetProfile(
+        string? IconPath = null)
+    {
+        /// <summary>
+        ///     Default empty profile (no custom paths).
+        ///     默认空 profile（无自定义路径）。
+        /// </summary>
+        public static ModifierAssetProfile Empty { get; } = new();
+    }
+
+    /// <summary>
     ///     Optional act-level background, map layer, rest site, and treasure chest Spine resource paths.
     ///     可选章节级背景、地图图层、休息点和宝箱 Spine 资源路径。
     /// </summary>
@@ -588,6 +606,19 @@ namespace STS2RitsuLib.Scaffolding.Content
             var normalized = Normalize(enchantmentEntry);
             return new(
                 ImageHelper.GetImagePath($"enchantments/{normalized}.png"));
+        }
+
+        /// <summary>
+        ///     Builds default modifier icon path for <paramref name="modifierEntry" />.
+        ///     为 <paramref name="modifierEntry" /> 构建默认修饰符图标路径。
+        /// </summary>
+        public static ModifierAssetProfile Modifier(string modifierEntry)
+        {
+            ArgumentException.ThrowIfNullOrWhiteSpace(modifierEntry);
+
+            var normalized = Normalize(modifierEntry);
+            return new(
+                ImageHelper.GetImagePath($"packed/modifiers/{normalized}.png"));
         }
 
         /// <summary>

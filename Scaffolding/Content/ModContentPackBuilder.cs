@@ -593,9 +593,8 @@ namespace STS2RitsuLib.Scaffolding.Content
         }
 
         /// <summary>
-        ///     Queues <see cref="ModContentRegistry.RegisterGoodModifier{TModifier}" />.
-        ///     Queues <c>ModContentRegistry.RegisterGoodModifier{TModifier}</c>.
-        ///     将 <see cref="ModContentRegistry.RegisterGoodModifier{TModifier}" /> 加入队列。
+        ///     Queues good-modifier registration with default list placement.
+        ///     将默认列表位置的正面修饰符注册加入队列。
         /// </summary>
         public ModContentPackBuilder GoodModifier<TModifier>() where TModifier : ModifierModel
         {
@@ -603,13 +602,39 @@ namespace STS2RitsuLib.Scaffolding.Content
         }
 
         /// <summary>
-        ///     Queues <see cref="ModContentRegistry.RegisterBadModifier{TModifier}" />.
-        ///     Queues <c>ModContentRegistry.RegisterBadModifier{TModifier}</c>.
-        ///     将 <see cref="ModContentRegistry.RegisterBadModifier{TModifier}" /> 加入队列。
+        ///     Queues <see cref="ModContentRegistry.RegisterGoodModifier(Type, int)" />.
+        ///     将 <see cref="ModContentRegistry.RegisterGoodModifier(Type, int)" /> 加入队列。
+        /// </summary>
+        public ModContentPackBuilder GoodModifier<TModifier>(int modifierListSortOrder) where TModifier : ModifierModel
+        {
+            return AddStep(ctx => ctx.Content.RegisterGoodModifier<TModifier>(modifierListSortOrder));
+        }
+
+        /// <summary>
+        ///     Queues bad-modifier registration with default list placement.
+        ///     将默认列表位置的负面修饰符注册加入队列。
         /// </summary>
         public ModContentPackBuilder BadModifier<TModifier>() where TModifier : ModifierModel
         {
             return AddStep(ctx => ctx.Content.RegisterBadModifier<TModifier>());
+        }
+
+        /// <summary>
+        ///     Queues <see cref="ModContentRegistry.RegisterBadModifier(Type, int)" />.
+        ///     将 <see cref="ModContentRegistry.RegisterBadModifier(Type, int)" /> 加入队列。
+        /// </summary>
+        public ModContentPackBuilder BadModifier<TModifier>(int modifierListSortOrder) where TModifier : ModifierModel
+        {
+            return AddStep(ctx => ctx.Content.RegisterBadModifier<TModifier>(modifierListSortOrder));
+        }
+
+        /// <summary>
+        ///     Queues <see cref="ModContentRegistry.RegisterMutuallyExclusiveModifierGroup(Type[])" />.
+        ///     将 <see cref="ModContentRegistry.RegisterMutuallyExclusiveModifierGroup(Type[])" /> 加入队列。
+        /// </summary>
+        public ModContentPackBuilder MutuallyExclusiveModifierGroup(params Type[] modifierTypes)
+        {
+            return AddStep(ctx => ctx.Content.RegisterMutuallyExclusiveModifierGroup(modifierTypes));
         }
 
         /// <summary>

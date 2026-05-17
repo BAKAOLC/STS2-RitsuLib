@@ -64,8 +64,9 @@ namespace STS2RitsuLib.Content
         private static readonly HashSet<Type> RegisteredBadges = [];
         private static readonly HashSet<Type> RegisteredSharedRelicPools = [];
         private static readonly HashSet<Type> RegisteredSharedPotionPools = [];
-        private static readonly HashSet<Type> RegisteredGoodModifiers = [];
-        private static readonly HashSet<Type> RegisteredBadModifiers = [];
+        private static readonly List<ModifierRegistration> RegisteredGoodModifiers = [];
+        private static readonly List<ModifierRegistration> RegisteredBadModifiers = [];
+        private static readonly List<HashSet<Type>> RegisteredMutuallyExclusiveModifierGroups = [];
         private static readonly Dictionary<Type, string> RegisteredTypeOwners = [];
 
         private readonly Logger _logger;
@@ -818,7 +819,25 @@ namespace STS2RitsuLib.Content
         /// </summary>
         public void RegisterGoodModifier(Type modifierType)
         {
-            RegisterStandaloneModel(RegisteredGoodModifiers, modifierType, typeof(ModifierModel), "good modifier");
+            RegisterGoodModifier(modifierType, 0);
+        }
+
+        /// <summary>
+        ///     Registers a mod modifier as a good daily modifier with list placement relative to the current segment.
+        ///     将 mod 修饰符注册为正面每日修饰符，并指定相对于当前列表段的插入位置。
+        /// </summary>
+        public void RegisterGoodModifier<TModifier>(int modifierListSortOrder) where TModifier : ModifierModel
+        {
+            RegisterGoodModifier(typeof(TModifier), modifierListSortOrder);
+        }
+
+        /// <summary>
+        ///     Registers <paramref name="modifierType" /> as a good daily modifier with list placement.
+        ///     将 <paramref name="modifierType" /> 注册为正面每日修饰符，并指定列表插入位置。
+        /// </summary>
+        public void RegisterGoodModifier(Type modifierType, int modifierListSortOrder)
+        {
+            RegisterModifier(RegisteredGoodModifiers, modifierType, modifierListSortOrder, "good modifier");
         }
 
         /// <summary>
@@ -836,7 +855,68 @@ namespace STS2RitsuLib.Content
         /// </summary>
         public void RegisterBadModifier(Type modifierType)
         {
-            RegisterStandaloneModel(RegisteredBadModifiers, modifierType, typeof(ModifierModel), "bad modifier");
+            RegisterBadModifier(modifierType, 0);
+        }
+
+        /// <summary>
+        ///     Registers a mod modifier as a bad daily modifier with list placement relative to the current segment.
+        ///     将 mod 修饰符注册为负面每日修饰符，并指定相对于当前列表段的插入位置。
+        /// </summary>
+        public void RegisterBadModifier<TModifier>(int modifierListSortOrder) where TModifier : ModifierModel
+        {
+            RegisterBadModifier(typeof(TModifier), modifierListSortOrder);
+        }
+
+        /// <summary>
+        ///     Registers <paramref name="modifierType" /> as a bad daily modifier with list placement.
+        ///     将 <paramref name="modifierType" /> 注册为负面每日修饰符，并指定列表插入位置。
+        /// </summary>
+        public void RegisterBadModifier(Type modifierType, int modifierListSortOrder)
+        {
+            RegisterModifier(RegisteredBadModifiers, modifierType, modifierListSortOrder, "bad modifier");
+        }
+
+        /// <summary>
+        ///     Registers a mutually exclusive modifier group for patched <see cref="ModelDb.MutuallyExclusiveModifiers" />.
+        ///     注册互斥修饰符组，用于修补后的 <see cref="ModelDb.MutuallyExclusiveModifiers" />。
+        /// </summary>
+        public void RegisterMutuallyExclusiveModifierGroup(params Type[] modifierTypes)
+        {
+            RegisterMutuallyExclusiveModifierGroup((IReadOnlyList<Type>)modifierTypes);
+        }
+
+        /// <summary>
+        ///     Registers a mutually exclusive modifier group for patched <see cref="ModelDb.MutuallyExclusiveModifiers" />.
+        ///     注册互斥修饰符组，用于修补后的 <see cref="ModelDb.MutuallyExclusiveModifiers" />。
+        /// </summary>
+        public void RegisterMutuallyExclusiveModifierGroup(IReadOnlyList<Type> modifierTypes)
+        {
+            ArgumentNullException.ThrowIfNull(modifierTypes);
+
+            EnsureMutable("register mutually exclusive modifier group");
+            if (modifierTypes.Count < 2)
+                throw new ArgumentException(
+                    "At least two modifier types are required for a mutually exclusive group.",
+                    nameof(modifierTypes));
+
+            var members = new HashSet<Type>();
+            foreach (var modifierType in modifierTypes)
+            {
+                EnsureModelType(modifierType, typeof(ModifierModel), nameof(modifierTypes));
+                if (!members.Add(modifierType))
+                    continue;
+
+                PrimeOwnedType(modifierType);
+                RegistrationConflictDetector.ThrowIfModelIdConflicts(modifierType);
+            }
+
+            lock (SyncRoot)
+            {
+                RegisteredMutuallyExclusiveModifierGroups.Add(members);
+            }
+
+            _logger.Info(
+                $"[Content] Registered mutually exclusive modifier group: {string.Join(", ", members.Select(static t => t.Name))}");
         }
 
         /// <summary>
@@ -1084,10 +1164,12 @@ namespace STS2RitsuLib.Content
                     new ContentModelReference(type, typeof(RelicPoolModel), "registered shared relic pool")));
                 AddMany(list, RegisteredSharedPotionPools.Select(static type =>
                     new ContentModelReference(type, typeof(PotionPoolModel), "registered shared potion pool")));
-                AddMany(list, RegisteredGoodModifiers.Select(static type =>
-                    new ContentModelReference(type, typeof(ModifierModel), "registered good modifier")));
-                AddMany(list, RegisteredBadModifiers.Select(static type =>
-                    new ContentModelReference(type, typeof(ModifierModel), "registered bad modifier")));
+                AddMany(list, RegisteredGoodModifiers.Select(static registration =>
+                    new ContentModelReference(registration.ModifierType, typeof(ModifierModel),
+                        "registered good modifier")));
+                AddMany(list, RegisteredBadModifiers.Select(static registration =>
+                    new ContentModelReference(registration.ModifierType, typeof(ModifierModel),
+                        "registered bad modifier")));
                 AddMany(list, RegisteredSharedEvents.Select(static type =>
                     new ContentModelReference(type, typeof(EventModel), "registered shared event")));
                 AddMany(list, RegisteredSharedAncients.Select(static type =>
@@ -1277,14 +1359,28 @@ namespace STS2RitsuLib.Content
 
         internal static IReadOnlyList<ModifierModel> AppendGoodModifiers(IReadOnlyList<ModifierModel> source)
         {
-            var additional = ResolveModels<ModifierModel>(RegisteredGoodModifiers);
-            return additional.Length == 0 ? source : MergeDistinctByModelId(source, additional);
+            lock (SyncRoot)
+            {
+                return ModifierContentMerge.InsertModifiers(source, RegisteredGoodModifiers);
+            }
         }
 
         internal static IReadOnlyList<ModifierModel> AppendBadModifiers(IReadOnlyList<ModifierModel> source)
         {
-            var additional = ResolveModels<ModifierModel>(RegisteredBadModifiers);
-            return additional.Length == 0 ? source : MergeDistinctByModelId(source, additional);
+            lock (SyncRoot)
+            {
+                return ModifierContentMerge.InsertModifiers(source, RegisteredBadModifiers);
+            }
+        }
+
+        internal static IReadOnlyList<IReadOnlySet<ModifierModel>> AppendMutuallyExclusiveModifiers(
+            IReadOnlyList<IReadOnlySet<ModifierModel>> source)
+        {
+            lock (SyncRoot)
+            {
+                return ModifierContentMerge.MergeMutuallyExclusiveModifiers(source,
+                    RegisteredMutuallyExclusiveModifierGroups);
+            }
         }
 
         internal static IEnumerable<RelicPoolModel> AppendSharedRelicPools(IEnumerable<RelicPoolModel> source)
@@ -1373,8 +1469,9 @@ namespace STS2RitsuLib.Content
                     .Concat(RegisteredSharedCardPools)
                     .Concat(RegisteredSharedRelicPools)
                     .Concat(RegisteredSharedPotionPools)
-                    .Concat(RegisteredGoodModifiers)
-                    .Concat(RegisteredBadModifiers)
+                    .Concat(RegisteredGoodModifiers.Select(static registration => registration.ModifierType))
+                    .Concat(RegisteredBadModifiers.Select(static registration => registration.ModifierType))
+                    .Concat(RegisteredMutuallyExclusiveModifierGroups.SelectMany(static group => group))
                     .Concat(RegisteredSharedEvents)
                     .Concat(RegisteredSharedAncients)
                     .Concat(RegisteredActEncounters.Values.SelectMany(static set => set))
@@ -1463,6 +1560,32 @@ namespace STS2RitsuLib.Content
             }
 
             _logger.Info($"[Content] Registered {contentKind}: {modelType.Name}");
+        }
+
+        private void RegisterModifier(
+            List<ModifierRegistration> registry,
+            Type modifierType,
+            int modifierListSortOrder,
+            string contentKind)
+        {
+            EnsureMutable($"register {contentKind} '{modifierType.Name}'");
+            EnsureModelType(modifierType, typeof(ModifierModel), nameof(modifierType));
+            PrimeOwnedType(modifierType);
+            RegistrationConflictDetector.ThrowIfModelIdConflicts(modifierType);
+
+            lock (SyncRoot)
+            {
+                if (registry.Any(entry => entry.ModifierType == modifierType))
+                {
+                    _logger.Debug($"[Content] Skipping duplicate {contentKind} registration: {modifierType.Name}");
+                    return;
+                }
+
+                registry.Add(new(modifierType, modifierListSortOrder));
+                RememberOwner(modifierType);
+            }
+
+            _logger.Info($"[Content] Registered {contentKind}: {modifierType.Name}");
         }
 
         private void RegisterScopedModel(

@@ -137,6 +137,9 @@ namespace STS2RitsuLib.Scaffolding.Content.Patches
         private static readonly Dictionary<string, Func<EnchantmentModel, string?>> EnchantmentIconPathProviders =
             new(StringComparer.Ordinal);
 
+        private static readonly Dictionary<string, Func<ModifierModel, string?>> ModifierIconPathProviders =
+            new(StringComparer.Ordinal);
+
         private static readonly (IDictionary Map, RuntimeAssetRefreshScope Scope)[] ProviderMaps =
         [
             (RelicIconPathProviders, RuntimeAssetRefreshScope.Relics),
@@ -178,6 +181,7 @@ namespace STS2RitsuLib.Scaffolding.Content.Patches
             (AfflictionOverlayPathProviders, RuntimeAssetRefreshScope.None),
             (AfflictionOverlaySceneProviders, RuntimeAssetRefreshScope.None),
             (EnchantmentIconPathProviders, RuntimeAssetRefreshScope.None),
+            (ModifierIconPathProviders, RuntimeAssetRefreshScope.None),
         ];
 
         /// <summary>
@@ -542,6 +546,15 @@ namespace STS2RitsuLib.Scaffolding.Content.Patches
         }
 
         /// <summary>
+        ///     Registers or replaces an external provider for modifier icon paths.
+        ///     注册或替换修饰符图标路径的外部提供器。
+        /// </summary>
+        public static void RegisterModifierIconPathProvider(string key, Func<ModifierModel, string?> provider)
+        {
+            Register(ModifierIconPathProviders, key, provider);
+        }
+
+        /// <summary>
         ///     Removes all providers registered under the specified key.
         ///     移除在指定键下注册的所有提供器。
         /// </summary>
@@ -806,6 +819,11 @@ namespace STS2RitsuLib.Scaffolding.Content.Patches
         internal static bool TryGetEnchantmentIconPath(EnchantmentModel model, out string value)
         {
             return TryGet(EnchantmentIconPathProviders, model, out value);
+        }
+
+        internal static bool TryGetModifierIconPath(ModifierModel model, out string value)
+        {
+            return TryGet(ModifierIconPathProviders, model, out value);
         }
 
         private static void Register<TModel, TValue>(

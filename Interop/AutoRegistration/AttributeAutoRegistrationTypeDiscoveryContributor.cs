@@ -257,7 +257,8 @@ namespace STS2RitsuLib.Interop.AutoRegistration
                             operations.Add(CreateOperation(ownerModId, type, AutoRegistrationPhase.ContentPrimary,
                                 registerGoodModifier.Order,
                                 $"RegisterGoodModifier:{type.FullName}", nameof(RegisterGoodModifierAttribute),
-                                () => contentRegistry.RegisterGoodModifier(type)));
+                                () => contentRegistry.RegisterGoodModifier(type,
+                                    registerGoodModifier.ModifierListSortOrder)));
                         });
                         break;
                     case RegisterBadModifierAttribute registerBadModifier:
@@ -266,9 +267,34 @@ namespace STS2RitsuLib.Interop.AutoRegistration
                             operations.Add(CreateOperation(ownerModId, type, AutoRegistrationPhase.ContentPrimary,
                                 registerBadModifier.Order,
                                 $"RegisterBadModifier:{type.FullName}", nameof(RegisterBadModifierAttribute),
-                                () => contentRegistry.RegisterBadModifier(type)));
+                                () => contentRegistry.RegisterBadModifier(type,
+                                    registerBadModifier.ModifierListSortOrder)));
                         });
                         break;
+                    case RegisterMutuallyExclusiveModifierGroupAttribute exclusiveGroup:
+                    {
+                        var memberTypes = ValidateTypeList(exclusiveGroup.MemberTypes,
+                            nameof(exclusiveGroup.MemberTypes), typeof(ModifierModel));
+                        var groupTypes = typeof(ModifierModel).IsAssignableFrom(type) && !type.IsAbstract
+                            ? memberTypes.Prepend(type).Distinct().ToArray()
+                            : memberTypes;
+                        if (groupTypes.Length < 2)
+                            throw new InvalidOperationException(
+                                $"Type '{type.FullName}' declares {nameof(RegisterMutuallyExclusiveModifierGroupAttribute)} " +
+                                "with fewer than two modifier types.");
+
+                        var signature =
+                            $"RegisterMutuallyExclusiveModifierGroup:{string.Join(",", groupTypes.Select(static t => t.FullName))}";
+                        RegisterCase(signature, () =>
+                        {
+                            operations.Add(CreateOperation(ownerModId, type, AutoRegistrationPhase.ContentPrimary,
+                                exclusiveGroup.Order,
+                                signature,
+                                nameof(RegisterMutuallyExclusiveModifierGroupAttribute),
+                                () => contentRegistry.RegisterMutuallyExclusiveModifierGroup(groupTypes)));
+                        });
+                        break;
+                    }
                     case RegisterSharedCardPoolAttribute registerSharedCardPool:
                         RegisterCase($"RegisterSharedCardPool:{type.FullName}", () =>
                         {

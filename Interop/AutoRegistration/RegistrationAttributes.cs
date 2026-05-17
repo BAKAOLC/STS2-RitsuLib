@@ -98,14 +98,51 @@ namespace STS2RitsuLib.Interop.AutoRegistration
     ///     将带注解的类型注册为正面每日修饰符。
     /// </summary>
     [AttributeUsage(AttributeTargets.Class, AllowMultiple = true, Inherited = false)]
-    public sealed class RegisterGoodModifierAttribute : ContentRegistrationAttribute;
+    public sealed class RegisterGoodModifierAttribute : ContentRegistrationAttribute
+    {
+        /// <summary>
+        ///     Negative values insert before the current good-modifier list segment; non-negative values insert after.
+        ///     负值插入当前正面修饰符列表段之前；非负值插入之后。
+        /// </summary>
+        public int ModifierListSortOrder { get; set; }
+    }
 
     /// <summary>
     ///     Registers the annotated type as a bad daily modifier.
     ///     将带注解的类型注册为负面每日修饰符。
     /// </summary>
     [AttributeUsage(AttributeTargets.Class, AllowMultiple = true, Inherited = false)]
-    public sealed class RegisterBadModifierAttribute : ContentRegistrationAttribute;
+    public sealed class RegisterBadModifierAttribute : ContentRegistrationAttribute
+    {
+        /// <summary>
+        ///     Negative values insert before the current bad-modifier list segment; non-negative values insert after.
+        ///     负值插入当前负面修饰符列表段之前；非负值插入之后。
+        /// </summary>
+        public int ModifierListSortOrder { get; set; }
+    }
+
+    /// <summary>
+    ///     Registers a mutually exclusive modifier group for the custom run and daily-run roller.
+    ///     为自定义 run 与每日挑战 roll 注册互斥修饰符组。
+    /// </summary>
+    [AttributeUsage(AttributeTargets.Class, AllowMultiple = true, Inherited = false)]
+    public sealed class RegisterMutuallyExclusiveModifierGroupAttribute : ContentRegistrationAttribute
+    {
+        /// <summary>
+        ///     Creates an exclusivity group from the annotated modifier type plus <paramref name="memberTypes" />.
+        ///     从带注解的修饰符类型与 <paramref name="memberTypes" /> 创建互斥组。
+        /// </summary>
+        public RegisterMutuallyExclusiveModifierGroupAttribute(params Type[] memberTypes)
+        {
+            MemberTypes = memberTypes ?? throw new ArgumentNullException(nameof(memberTypes));
+        }
+
+        /// <summary>
+        ///     Additional modifier types in the same exclusivity group.
+        ///     同一互斥组中的其它修饰符类型。
+        /// </summary>
+        public Type[] MemberTypes { get; }
+    }
 
     /// <summary>
     ///     Registers the annotated type as a shared card pool.
