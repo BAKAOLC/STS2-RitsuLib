@@ -212,12 +212,12 @@ namespace STS2RitsuLib.Settings.Patches
         private static void RemoveStaleEntryNodes(VBoxContainer content)
         {
             var divider = content.GetNodeOrNull<Control>(EntryDividerNodeName);
-            if (divider is { } d && GodotObject.IsInstanceValid(d))
-                d.QueueFree();
+            if (divider != null && GodotObject.IsInstanceValid(divider))
+                divider.QueueFree();
 
             var line = content.GetNodeOrNull<Control>(EntryLineNodeName);
-            if (line is { } l && GodotObject.IsInstanceValid(l))
-                l.QueueFree();
+            if (line != null && GodotObject.IsInstanceValid(line))
+                line.QueueFree();
         }
 
         private static void EnsureGeneralSettingsContentTracksChildAdds(VBoxContainer content)

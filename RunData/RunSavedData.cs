@@ -14,7 +14,14 @@ namespace STS2RitsuLib.RunData
         internal RunSavedData(RunSavedDataRunSlot<T> slot)
         {
             _slot = slot;
+            Lobby = new(slot);
         }
+
+        /// <summary>
+        ///     Lobby staging accessor for this slot before the run snapshot is committed.
+        ///     跑局快照提交前，此槽位的大厅暂存访问器。
+        /// </summary>
+        public RunSavedDataLobbyScope<T> Lobby { get; }
 
         /// <summary>
         ///     Gets the current value, creating it from the default factory if necessary.
@@ -75,10 +82,17 @@ namespace STS2RitsuLib.RunData
     {
         private readonly RunSavedDataPlayerSlot<T> _slot;
 
-        internal PlayerRunSavedData(RunSavedDataPlayerSlot<T> slot)
+        internal PlayerRunSavedData(RunSavedDataPlayerSlot<T> slot, Func<T>? defaultFactory)
         {
             _slot = slot;
+            Lobby = new(slot, defaultFactory);
         }
+
+        /// <summary>
+        ///     Lobby staging accessor for this slot before the run snapshot is committed.
+        ///     跑局快照提交前，此槽位的大厅暂存访问器。
+        /// </summary>
+        public PlayerRunSavedDataLobbyScope<T> Lobby { get; }
 
         /// <summary>
         ///     Gets a player's value, creating it if necessary.

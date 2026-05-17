@@ -1,3 +1,4 @@
+using MegaCrit.Sts2.Core.Multiplayer.Game.Lobby;
 using MegaCrit.Sts2.Core.Runs;
 using MegaCrit.Sts2.Core.Saves;
 
@@ -128,6 +129,52 @@ namespace STS2RitsuLib.RunData
                 payload.SetRaw(modId, key, entry.DeepClone().AsObject());
 
             return payload.IsEmpty ? null : payload.ToRootObject().ToJsonString(new() { WriteIndented = false });
+        }
+
+        public static string? BuildLobbyContributionPayload(StartRunLobby lobby, ulong contributorNetId)
+        {
+            if (!RunSavedDataLobbyRuntime.TryGetSession(lobby, out var session))
+                return null;
+
+            var isHostNetId = contributorNetId == lobby.NetService.NetId;
+            var document = new RunSavedDataDocument();
+            foreach (var slot in GetSlotsSnapshot())
+                slot.TryExportLobbyContribution(session, contributorNetId, isHostNetId, document);
+
+            return document.IsEmpty ? null : document.ToRootObject().ToJsonString(new() { WriteIndented = false });
+        }
+
+        public static void MergeLobbyContribution(StartRunLobby lobby, ulong contributorNetId, string? payload)
+        {
+            if (string.IsNullOrWhiteSpace(payload))
+                return;
+
+            var document = RunSavedDataDocument.FromJson(payload);
+            if (document == null)
+                return;
+
+            var session = RunSavedDataLobbyRuntime.GetSession(lobby);
+            var isHostNetId = contributorNetId == lobby.NetService.NetId;
+            foreach (var (modId, key, entry) in document.Entries())
+            {
+                var slot = TryGetSlot(modId, key);
+                slot?.ImportLobbyContribution(session, contributorNetId, isHostNetId, entry);
+            }
+
+            RunSavedDataLobby.PublishStagingEvent(lobby, RunSavedDataLobbyStagingReason.ContributionMerged);
+        }
+
+        private static IRunSavedDataSlot? TryGetSlot(string modId, string key)
+        {
+            lock (SyncRoot)
+            {
+                return Slots.GetValueOrDefault(GetSlotId(modId, key));
+            }
+        }
+
+        internal static IRunSavedDataSlot[] GetRegisteredSlots()
+        {
+            return GetSlotsSnapshot();
         }
 
         private static IRunSavedDataSlot[] GetSlotsSnapshot()

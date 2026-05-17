@@ -86,6 +86,15 @@ namespace STS2RitsuLib
             patcher.RegisterPatch<RunSavedDataFromSerializablePatch>();
             patcher.RegisterPatch<RunSavedDataToSavePatch>();
             patcher.RegisterPatch<RunSavedDataSaveRunPatch>();
+            patcher.RegisterPatch<RunSavedDataStartRunLobbyCtorPatch>();
+            patcher.RegisterPatch<RunSavedDataStartRunLobbyCleanUpPatch>();
+            patcher.RegisterPatch<RunSavedDataLobbyPlayerSetReadySerializePatch>();
+            patcher.RegisterPatch<RunSavedDataLobbyPlayerSetReadyDeserializePatch>();
+            patcher.RegisterPatch<RunSavedDataLobbyPlayerSetReadyHandlerPatch>();
+            patcher.RegisterPatch<RunSavedDataLobbyPlayerChangedCharacterSerializePatch>();
+            patcher.RegisterPatch<RunSavedDataLobbyPlayerChangedCharacterDeserializePatch>();
+            patcher.RegisterPatch<RunSavedDataLobbyPlayerChangedCharacterHandlerPatch>();
+            patcher.RegisterPatch<RunSavedDataLobbyPlayerJoinedPatch>();
             patcher.RegisterPatch<RunSavedDataPrepareNewRunPayloadPatch>();
             patcher.RegisterPatch<RunSavedDataLobbyBeginRunMessageSerializePatch>();
             patcher.RegisterPatch<RunSavedDataLobbyBeginRunMessageDeserializePatch>();

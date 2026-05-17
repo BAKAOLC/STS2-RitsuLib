@@ -1,6 +1,9 @@
 using System.Runtime.CompilerServices;
 using System.Text;
 using System.Text.Json;
+using HarmonyLib;
+using MegaCrit.Sts2.Core.Daily;
+using MegaCrit.Sts2.Core.Entities.Multiplayer;
 using MegaCrit.Sts2.Core.Entities.Players;
 using MegaCrit.Sts2.Core.Helpers;
 using MegaCrit.Sts2.Core.Models;
@@ -17,6 +20,7 @@ using MegaCrit.Sts2.Core.Saves;
 using MegaCrit.Sts2.Core.Saves.Managers;
 using MegaCrit.Sts2.Core.Unlocks;
 using STS2RitsuLib.Patching.Models;
+using GameMode = MegaCrit.Sts2.Core.Runs.GameMode;
 
 namespace STS2RitsuLib.RunData.Patches
 {
@@ -102,6 +106,8 @@ namespace STS2RitsuLib.RunData.Patches
                         lobbyPlayer.id));
                 }
 
+                RunSavedDataLobby.PublishStagingEvent(lobby, RunSavedDataLobbyStagingReason.Committing);
+
                 var runState = RunState.CreateForNewRun(
                     players,
                     acts.Select(act => act.ToMutable()).ToList(),
@@ -109,6 +115,8 @@ namespace STS2RitsuLib.RunData.Patches
                     lobby.GameMode,
                     lobby.Ascension,
                     seed);
+
+                RunSavedDataLobby.CommitSession(lobby, runState);
 
                 RitsuLibFramework.PublishLifecycleEvent(
                     new RunSavedDataPreparingEvent(runState, lobby.NetService.Type.IsMultiplayer(),
@@ -176,11 +184,88 @@ namespace STS2RitsuLib.RunData.Patches
 
     internal static class RunSavedDataStartRunLobbyAccess
     {
+        private static readonly ConditionalWeakTable<INetGameService, StartRunLobby> LobbyByNetService = [];
+
+        internal static void Track(StartRunLobby lobby)
+        {
+            LobbyByNetService.Remove(lobby.NetService);
+            LobbyByNetService.Add(lobby.NetService, lobby);
+        }
+
+        internal static void Untrack(StartRunLobby lobby)
+        {
+            LobbyByNetService.Remove(lobby.NetService);
+            RunSavedDataLobbyRuntime.RemoveSession(lobby);
+        }
+
+        internal static StartRunLobby? TryGetCurrentLobby()
+        {
+            var netService = RunManager.Instance.NetService;
+            return netService != null && LobbyByNetService.TryGetValue(netService, out var lobby)
+                ? lobby
+                : null;
+        }
+
         [UnsafeAccessor(UnsafeAccessorKind.Method, Name = "GetUnlockState")]
         internal static extern UnlockState GetUnlockState(StartRunLobby lobby);
 
         [UnsafeAccessor(UnsafeAccessorKind.StaticMethod, Name = "GetAct")]
         internal static extern ActModel? GetAct(string act1Key);
+    }
+
+    internal sealed class RunSavedDataStartRunLobbyCtorPatch : IPatchMethod
+    {
+        public static string PatchId => "ritsulib_run_saved_data_start_run_lobby_ctor";
+        public static string Description => "Track active start-run lobby sessions for RunSavedData staging";
+        public static bool IsCritical => false;
+
+        public static ModPatchTarget[] GetTargets()
+        {
+            return
+            [
+                new(
+                    typeof(StartRunLobby),
+                    ".ctor",
+                    [typeof(GameMode), typeof(INetGameService), typeof(IStartRunLobbyListener), typeof(int)],
+                    MethodType.Constructor),
+                new(
+                    typeof(StartRunLobby),
+                    ".ctor",
+                    [
+                        typeof(GameMode),
+                        typeof(INetGameService),
+                        typeof(IStartRunLobbyListener),
+                        typeof(TimeServerResult),
+                        typeof(int),
+                    ],
+                    MethodType.Constructor),
+            ];
+        }
+
+        // ReSharper disable once InconsistentNaming
+        public static void Postfix(object __instance)
+        {
+            if (__instance is StartRunLobby lobby)
+                RunSavedDataStartRunLobbyAccess.Track(lobby);
+        }
+    }
+
+    internal sealed class RunSavedDataStartRunLobbyCleanUpPatch : IPatchMethod
+    {
+        public static string PatchId => "ritsulib_run_saved_data_start_run_lobby_cleanup";
+        public static string Description => "Release start-run lobby RunSavedData staging sessions";
+        public static bool IsCritical => false;
+
+        public static ModPatchTarget[] GetTargets()
+        {
+            return [new(typeof(StartRunLobby), nameof(StartRunLobby.CleanUp), [typeof(bool)])];
+        }
+
+        // ReSharper disable once InconsistentNaming
+        public static void Postfix(StartRunLobby __instance)
+        {
+            RunSavedDataStartRunLobbyAccess.Untrack(__instance);
+        }
     }
 
     internal sealed class RunSavedDataLoadRunSavePatch : IPatchMethod
@@ -313,6 +398,23 @@ namespace STS2RitsuLib.RunData.Patches
         }
     }
 
+    internal static class RunSavedDataLobbyContributionState
+    {
+        internal static string? PendingPayload { get; private set; }
+
+        internal static void SetPending(string? payload)
+        {
+            PendingPayload = payload;
+        }
+
+        internal static bool TryConsume(out string? payload)
+        {
+            payload = PendingPayload;
+            PendingPayload = null;
+            return !string.IsNullOrWhiteSpace(payload);
+        }
+    }
+
     internal static class RunSavedDataLobbyBeginRunMessageState
     {
         internal static string? PendingNewRunPayload { get; private set; }
@@ -368,6 +470,164 @@ namespace STS2RitsuLib.RunData.Patches
         }
     }
 
+    internal sealed class RunSavedDataLobbyPlayerSetReadySerializePatch : IPatchMethod
+    {
+        public static string PatchId => "ritsulib_run_saved_data_lobby_player_set_ready_serialize";
+        public static string Description => "Attach lobby RunSavedData contributions to ready messages";
+        public static bool IsCritical => false;
+
+        public static ModPatchTarget[] GetTargets()
+        {
+            return
+            [
+                new(typeof(LobbyPlayerSetReadyMessage), nameof(LobbyPlayerSetReadyMessage.Serialize),
+                    [typeof(PacketWriter)]),
+            ];
+        }
+
+        // ReSharper disable once InconsistentNaming
+        public static void Postfix(PacketWriter writer)
+        {
+            RunSavedDataLobbySync.AppendVanillaTrailer(RunSavedDataStartRunLobbyAccess.TryGetCurrentLobby(), writer);
+        }
+    }
+
+    internal sealed class RunSavedDataLobbyPlayerSetReadyDeserializePatch : IPatchMethod
+    {
+        public static string PatchId => "ritsulib_run_saved_data_lobby_player_set_ready_deserialize";
+        public static string Description => "Read lobby RunSavedData contributions from ready messages";
+        public static bool IsCritical => false;
+
+        public static ModPatchTarget[] GetTargets()
+        {
+            return
+            [
+                new(typeof(LobbyPlayerSetReadyMessage), nameof(LobbyPlayerSetReadyMessage.Deserialize),
+                    [typeof(PacketReader)]),
+            ];
+        }
+
+        // ReSharper disable once InconsistentNaming
+        public static void Postfix(PacketReader reader)
+        {
+            RunSavedDataLobbyContributionState.SetPending(RunSavedDataPatchHelpers.TryReadPayload(reader));
+        }
+    }
+
+    internal sealed class RunSavedDataLobbyPlayerSetReadyHandlerPatch : IPatchMethod
+    {
+        public static string PatchId => "ritsulib_run_saved_data_lobby_player_set_ready_handler";
+        public static string Description => "Merge lobby RunSavedData contributions on the host";
+        public static bool IsCritical => false;
+
+        public static ModPatchTarget[] GetTargets()
+        {
+            return
+            [
+                new(typeof(StartRunLobby), "HandlePlayerReadyMessage",
+                    [typeof(LobbyPlayerSetReadyMessage), typeof(ulong)]),
+            ];
+        }
+
+        // ReSharper disable once InconsistentNaming
+        public static void Postfix(StartRunLobby __instance, ulong senderId)
+        {
+            RunSavedDataLobbySync.TryMergeVanillaTrailer(__instance, senderId);
+        }
+    }
+
+    internal sealed class RunSavedDataLobbyPlayerChangedCharacterSerializePatch : IPatchMethod
+    {
+        public static string PatchId => "ritsulib_run_saved_data_lobby_player_changed_character_serialize";
+        public static string Description => "Attach lobby RunSavedData contributions to character change messages";
+        public static bool IsCritical => false;
+
+        public static ModPatchTarget[] GetTargets()
+        {
+            return
+            [
+                new(typeof(LobbyPlayerChangedCharacterMessage), nameof(LobbyPlayerChangedCharacterMessage.Serialize),
+                    [typeof(PacketWriter)]),
+            ];
+        }
+
+        // ReSharper disable once InconsistentNaming
+        public static void Postfix(PacketWriter writer)
+        {
+            RunSavedDataLobbySync.AppendVanillaTrailer(RunSavedDataStartRunLobbyAccess.TryGetCurrentLobby(), writer);
+        }
+    }
+
+    internal sealed class RunSavedDataLobbyPlayerChangedCharacterDeserializePatch : IPatchMethod
+    {
+        public static string PatchId => "ritsulib_run_saved_data_lobby_player_changed_character_deserialize";
+        public static string Description => "Read lobby RunSavedData contributions from character change messages";
+        public static bool IsCritical => false;
+
+        public static ModPatchTarget[] GetTargets()
+        {
+            return
+            [
+                new(typeof(LobbyPlayerChangedCharacterMessage), nameof(LobbyPlayerChangedCharacterMessage.Deserialize),
+                    [typeof(PacketReader)]),
+            ];
+        }
+
+        // ReSharper disable once InconsistentNaming
+        public static void Postfix(PacketReader reader)
+        {
+            RunSavedDataLobbyContributionState.SetPending(RunSavedDataPatchHelpers.TryReadPayload(reader));
+        }
+    }
+
+    internal sealed class RunSavedDataLobbyPlayerChangedCharacterHandlerPatch : IPatchMethod
+    {
+        public static string PatchId => "ritsulib_run_saved_data_lobby_player_changed_character_handler";
+        public static string Description => "Merge lobby RunSavedData contributions after character changes";
+        public static bool IsCritical => false;
+
+        public static ModPatchTarget[] GetTargets()
+        {
+            return
+            [
+                new(typeof(StartRunLobby), "HandleLobbyPlayerChangedCharacterMessage",
+                    [typeof(LobbyPlayerChangedCharacterMessage), typeof(ulong)]),
+            ];
+        }
+
+        // ReSharper disable once InconsistentNaming
+        public static void Postfix(StartRunLobby __instance, ulong senderId)
+        {
+            RunSavedDataLobbySync.TryMergeVanillaTrailer(__instance, senderId);
+        }
+    }
+
+    internal sealed class RunSavedDataLobbyPlayerJoinedPatch : IPatchMethod
+    {
+        public static string PatchId => "ritsulib_run_saved_data_lobby_player_joined";
+        public static string Description => "Publish lobby staging events when players join";
+        public static bool IsCritical => false;
+
+        public static ModPatchTarget[] GetTargets()
+        {
+            return
+            [
+                new(typeof(StartRunLobby), "TryAddPlayerInFirstAvailableSlot",
+                    [typeof(SerializableUnlockState), typeof(int), typeof(ulong)]),
+            ];
+        }
+
+        // ReSharper disable InconsistentNaming
+        public static void Postfix(StartRunLobby __instance, LobbyPlayer? __result)
+            // ReSharper restore InconsistentNaming
+        {
+            if (__result == null || __instance.NetService.Type != NetGameType.Host)
+                return;
+
+            RunSavedDataLobby.PublishStagingEvent(__instance, RunSavedDataLobbyStagingReason.PlayerJoined);
+        }
+    }
+
     internal sealed class RunSavedDataPrepareNewRunPayloadPatch : IPatchMethod
     {
         public static string PatchId => "ritsulib_run_saved_data_prepare_new_run_payload";
@@ -406,6 +666,11 @@ namespace STS2RitsuLib.RunData.Patches
             if (!string.IsNullOrWhiteSpace(payload) && __instance.State != null)
             {
                 RunSavedDataRegistry.ImportPayloadIntoRun(__instance.State, payload);
+                if (__instance.NetService?.Type.IsMultiplayer() == true)
+                    RitsuLibFramework.PublishLifecycleEvent(
+                        new RunSavedDataPreparingEvent(__instance.State, true, DateTimeOffset.UtcNow),
+                        nameof(RunSavedDataPreparingEvent));
+
                 return;
             }
 

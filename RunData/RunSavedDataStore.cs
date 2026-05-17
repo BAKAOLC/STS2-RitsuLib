@@ -70,7 +70,7 @@ namespace STS2RitsuLib.RunData
         {
             var slot = new RunSavedDataPlayerSlot<T>(ModId, key, defaultFactory, options);
             RegisterSlot(slot);
-            return new(slot);
+            return new(slot, defaultFactory);
         }
 
         private void RegisterSlot(IRunSavedDataSlot slot)

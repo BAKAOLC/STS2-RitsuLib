@@ -14,6 +14,15 @@ namespace STS2RitsuLib.RunData
         RunSavedDataSlotKey SlotKey { get; }
         void Import(RunState runState, RunSavedDataDocument document);
         void Export(RunState runState, RunSavedDataDocument document);
+
+        bool TryExportLobbyContribution(
+            RunSavedDataLobbySession session,
+            ulong netId,
+            bool isHostNetId,
+            RunSavedDataDocument document);
+
+        void ImportLobbyContribution(RunSavedDataLobbySession session, ulong netId, bool isHostNetId, JsonObject entry);
+        void CommitLobbyStaging(RunSavedDataLobbySession session, RunState runState);
     }
 
     internal abstract class RunSavedDataSlot<T>(
@@ -51,6 +60,27 @@ namespace STS2RitsuLib.RunData
                 RitsuLibFramework.Logger.Warn(
                     $"[RunSavedData] Failed to import '{ModId}'::{Key}: {ex.Message}");
             }
+        }
+
+        public virtual bool TryExportLobbyContribution(
+            RunSavedDataLobbySession session,
+            ulong netId,
+            bool isHostNetId,
+            RunSavedDataDocument document)
+        {
+            return false;
+        }
+
+        public virtual void ImportLobbyContribution(
+            RunSavedDataLobbySession session,
+            ulong netId,
+            bool isHostNetId,
+            JsonObject entry)
+        {
+        }
+
+        public virtual void CommitLobbyStaging(RunSavedDataLobbySession session, RunState runState)
+        {
         }
 
         public void Export(RunState runState, RunSavedDataDocument document)
@@ -243,6 +273,39 @@ namespace STS2RitsuLib.RunData
 
             RitsuLibFramework.Logger.Warn($"[RunSavedData] Failed to read run data '{ModId}'::{Key}.");
         }
+
+        public override bool TryExportLobbyContribution(
+            RunSavedDataLobbySession session,
+            ulong netId,
+            bool isHostNetId,
+            RunSavedDataDocument document)
+        {
+            if (!isHostNetId || !session.TryGetRun(SlotKey, out var raw) || raw is not T typed)
+                return false;
+
+            document.SetRaw(ModId, Key, CreateRunEntry(typed));
+            return true;
+        }
+
+        public override void ImportLobbyContribution(
+            RunSavedDataLobbySession session,
+            ulong netId,
+            bool isHostNetId,
+            JsonObject entry)
+        {
+            if (!isHostNetId || !TryReadData(entry, out var value))
+                return;
+
+            session.SetRun(SlotKey, value);
+        }
+
+        public override void CommitLobbyStaging(RunSavedDataLobbySession session, RunState runState)
+        {
+            if (!session.TryGetRun(SlotKey, out var raw) || raw is not T typed)
+                return;
+
+            RunSavedDataRuntime.GetBag(runState).Set(SlotKey, typed, false);
+        }
     }
 
     internal sealed class RunSavedDataPlayerSlot<T>(
@@ -333,6 +396,55 @@ namespace STS2RitsuLib.RunData
             foreach (var (key, node) in players)
                 if (ulong.TryParse(key, out var netId) && TryReadPlayerValue(node, out var value))
                     values[netId] = value;
+
+            if (values.Count > 0)
+                RunSavedDataRuntime.GetBag(runState).Set(SlotKey, values, false);
+        }
+
+        public override bool TryExportLobbyContribution(
+            RunSavedDataLobbySession session,
+            ulong netId,
+            bool isHostNetId,
+            RunSavedDataDocument document)
+        {
+            if (!session.TryGetPlayer(SlotKey, netId, out var raw) || raw is not T typed)
+                return false;
+
+            var players = new JsonObject
+                { [PlayerKey(netId)] = JsonSerializer.SerializeToNode(typed, RunSavedDataJson.Options)! };
+            document.SetRaw(ModId, Key, CreatePlayerEntry(players));
+            return true;
+        }
+
+        public override void ImportLobbyContribution(
+            RunSavedDataLobbySession session,
+            ulong netId,
+            bool isHostNetId,
+            JsonObject entry)
+        {
+            if (entry["players"] is not JsonObject players ||
+                !players.TryGetPropertyValue(PlayerKey(netId), out var node) ||
+                !TryReadPlayerValue(node, out var value))
+                return;
+
+            session.SetPlayer(SlotKey, netId, value);
+        }
+
+        public override void CommitLobbyStaging(RunSavedDataLobbySession session, RunState runState)
+        {
+            if (!session.HasPlayers(SlotKey))
+                return;
+
+            var values = new Dictionary<ulong, T>();
+            foreach (var (key, players) in session.PlayerEntries())
+            {
+                if (key != SlotKey)
+                    continue;
+
+                foreach (var (netId, raw) in players)
+                    if (raw is T typed)
+                        values[netId] = typed;
+            }
 
             if (values.Count > 0)
                 RunSavedDataRuntime.GetBag(runState).Set(SlotKey, values, false);
