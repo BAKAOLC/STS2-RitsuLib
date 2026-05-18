@@ -85,6 +85,7 @@ Read [Getting started](/guide/getting-started) first if the mod does not already
 | Patch game methods | [Patching](/guide/patching-guide) |
 | Play FMOD events and local audio files | [FMOD and audio](/guide/fmod-and-audio) |
 | Add runtime UI helpers | [Shell theme](/guide/shell-theme) |
+| Build a telemetry backend | [Telemetry backend](/guide/telemetry-backend) |
 | Check diagnostics and game-source notes | [Diagnostics and compatibility](/guide/diagnostics-and-compatibility) |
 
 :::
@@ -103,6 +104,7 @@ Read [Getting started](/guide/getting-started) first if the mod does not already
 | Patch 游戏方法 | [补丁系统](/guide/patching-guide) |
 | 播放 FMOD 事件和本地音频文件 | [FMOD 与音频](/guide/fmod-and-audio) |
 | 添加运行时 UI 辅助能力 | [Shell 主题](/guide/shell-theme) |
+| 编写遥测后端 | [遥测后端](/guide/telemetry-backend) |
 | 查看诊断和游戏源码注意点 | [诊断与兼容](/guide/diagnostics-and-compatibility) |
 
 :::

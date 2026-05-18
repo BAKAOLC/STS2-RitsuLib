@@ -1,0 +1,90 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://sts2-ritsulib.ritsukage.com/schemas/telemetry/v1/telemetry-event.schema.json",
+  "title": "RitsuLib telemetry event",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema",
+    "applicantId",
+    "eventName",
+    "requestId",
+    "category",
+    "timestampUtc",
+    "properties"
+  ],
+  "properties": {
+    "schema": {
+      "type": "string",
+      "const": "ritsulib.telemetry.v1"
+    },
+    "applicantId": {
+      "type": "string",
+      "minLength": 1,
+      "description": "Applicant id that owns the destination endpoint."
+    },
+    "eventName": {
+      "type": "string",
+      "minLength": 1,
+      "examples": [
+        "session_start",
+        "mod_inventory",
+        "run_history.completed",
+        "exception"
+      ]
+    },
+    "requestId": {
+      "type": "string",
+      "minLength": 1,
+      "examples": [
+        "basic_usage",
+        "mod_inventory",
+        "run_history",
+        "diagnostics"
+      ]
+    },
+    "category": {
+      "type": "string",
+      "minLength": 1,
+      "examples": [
+        "BasicUsage",
+        "ModInventory",
+        "RunHistory",
+        "Diagnostics"
+      ]
+    },
+    "timestampUtc": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "properties": {
+      "type": "object",
+      "additionalProperties": true,
+      "description": "Flat event metadata. Backends should index these fields first."
+    },
+    "payload": {
+      "description": "Structured event data. Keep full payloads here and promote query-critical fields into properties.",
+      "oneOf": [
+        {
+          "type": "object",
+          "additionalProperties": true
+        },
+        {
+          "type": "array"
+        },
+        {
+          "type": "string"
+        },
+        {
+          "type": "number"
+        },
+        {
+          "type": "boolean"
+        },
+        {
+          "type": "null"
+        }
+      ]
+    }
+  }
+}
