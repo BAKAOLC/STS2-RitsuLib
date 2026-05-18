@@ -61,14 +61,16 @@ namespace STS2RitsuLib.Scaffolding.Content
         protected virtual IEnumerable<string> RegisteredKeywordIds => [];
 
         /// <summary>
-        ///     Card tag declarations seeded onto every instance when <see cref="CardModel.Tags" /> is first
-        ///     materialized. Each string resolves as a registered mod card-tag id first, then as a vanilla
-        ///     <see cref="CardTag" /> enum name, and is unioned into the same backing set as
-        ///     <see cref="CardModel.CanonicalTags" />.
-        ///     首次实体化 <see cref="CardModel.Tags" /> 时种入每个卡牌实例的卡牌标签声明。每个字符串会先按已注册的
-        ///     mod 卡牌标签 id 解析，再按原版 <see cref="CardTag" /> 枚举名解析，并合并到与
-        ///     <see cref="CardModel.CanonicalTags" /> 相同的后备集合。
+        ///     Legacy string card-tag declarations seeded onto every instance when <see cref="CardModel.Tags" />
+        ///     is first materialized. Prefer overriding <see cref="CardModel.CanonicalTags" /> and returning
+        ///     <see cref="CardTag" /> values directly, using <c>ModCardTagRegistry.GetCardTag(id)</c> or
+        ///     <c>id.GetModCardTag()</c> for registered mod card tags.
+        ///     旧版字符串卡牌标签声明，会在首次实体化 <see cref="CardModel.Tags" /> 时种入每个卡牌实例。请优先重写
+        ///     <see cref="CardModel.CanonicalTags" /> 并直接返回 <see cref="CardTag" /> 值；注册过的 mod
+        ///     卡牌标签可使用 <c>ModCardTagRegistry.GetCardTag(id)</c> 或 <c>id.GetModCardTag()</c> 转换。
         /// </summary>
+        [Obsolete(
+            "Use CardModel.CanonicalTags with CardTag values instead. Registered mod card tag ids can be converted with ModCardTagRegistry.GetCardTag(id) or id.GetModCardTag().")]
         protected virtual IEnumerable<string> RegisteredCardTagIds => [];
 
         /// <summary>
@@ -133,7 +135,9 @@ namespace STS2RitsuLib.Scaffolding.Content
         /// </summary>
         internal IEnumerable<string> EnumerateRegisteredCardTagIds()
         {
+#pragma warning disable CS0618
             return RegisteredCardTagIds;
+#pragma warning restore CS0618
         }
     }
 }
