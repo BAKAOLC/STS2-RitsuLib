@@ -15,6 +15,10 @@ namespace STS2RitsuLib.Audio.Internal
         private static readonly Dictionary<string, List<LoopSlot>> LoopQueues = new(StringComparer.Ordinal);
 
         private static GodotObject? _musicInstance;
+        private static GodotObject? _runMusicInstance;
+        private static GodotObject? _runAmbienceInstance;
+        private static string? _runMusicPath;
+        private static string? _runAmbiencePath;
 
         internal static bool IsMappedPath(string? path)
         {
@@ -129,22 +133,7 @@ namespace STS2RitsuLib.Audio.Internal
         {
             lock (Gate)
             {
-                if (_musicInstance is null)
-                    return;
-
-                try
-                {
-                    _musicInstance.Call("stop", 0);
-                    _musicInstance.Call("release");
-                }
-                catch (Exception ex)
-                {
-                    RitsuLibFramework.Logger.Error($"[Audio] mapped StopMusic: {ex.Message}");
-                }
-                finally
-                {
-                    _musicInstance = null;
-                }
+                ReleaseMappedInstance(ref _musicInstance, "StopMusic");
             }
         }
 
@@ -170,6 +159,46 @@ namespace STS2RitsuLib.Audio.Internal
             }
 
             return true;
+        }
+
+        internal static void ReleaseMappedRunMusic()
+        {
+            lock (Gate)
+            {
+                ReleaseMappedInstance(ref _runMusicInstance, "StopRunMusic");
+                _runMusicPath = null;
+            }
+        }
+
+        internal static bool TryStartMappedRunMusic(string path)
+        {
+            return TryStartMappedSingleInstance(path, ref _runMusicInstance, ref _runMusicPath, "PlayRunMusic");
+        }
+
+        internal static void ReleaseMappedRunAmbience()
+        {
+            lock (Gate)
+            {
+                ReleaseMappedInstance(ref _runAmbienceInstance, "StopRunAmbience");
+                _runAmbiencePath = null;
+            }
+        }
+
+        internal static bool TryStartMappedRunAmbience(string path)
+        {
+            return TryStartMappedSingleInstance(path, ref _runAmbienceInstance, ref _runAmbiencePath,
+                "PlayRunAmbience");
+        }
+
+        internal static bool TrySetParameterOnMappedRunMusic(string parameter, float value)
+        {
+            return TrySetParameterOnMappedInstance(_runMusicInstance, parameter, value, "UpdateRunMusicParameter");
+        }
+
+        internal static bool TrySetParameterOnMappedRunAmbience(string parameter, float value)
+        {
+            return TrySetParameterOnMappedInstance(_runAmbienceInstance, parameter, value,
+                "UpdateRunAmbienceParameter");
         }
 
         internal static bool TryUpdateMappedMusicParameter(string parameter, string labelValue)
@@ -198,6 +227,94 @@ namespace STS2RitsuLib.Audio.Internal
             lock (Gate)
             {
                 return _musicInstance is not null && GodotObject.IsInstanceValid(_musicInstance);
+            }
+        }
+
+        internal static bool HasActiveMappedRunMusic(string path)
+        {
+            lock (Gate)
+            {
+                return string.Equals(_runMusicPath, path, StringComparison.Ordinal) &&
+                       _runMusicInstance is not null &&
+                       GodotObject.IsInstanceValid(_runMusicInstance);
+            }
+        }
+
+        internal static bool HasActiveMappedRunAmbience(string path)
+        {
+            lock (Gate)
+            {
+                return string.Equals(_runAmbiencePath, path, StringComparison.Ordinal) &&
+                       _runAmbienceInstance is not null &&
+                       GodotObject.IsInstanceValid(_runAmbienceInstance);
+            }
+        }
+
+        private static bool TryStartMappedSingleInstance(string path, ref GodotObject? slot, ref string? slotPath,
+            string operation)
+        {
+            var inst = FmodStudioEventInstances.TryCreate(path);
+            if (inst is null)
+                return false;
+
+            try
+            {
+                inst.Call("start");
+            }
+            catch (Exception ex)
+            {
+                RitsuLibFramework.Logger.Error($"[Audio] mapped {operation} start: {ex.Message}");
+                return false;
+            }
+
+            lock (Gate)
+            {
+                slot = inst;
+                slotPath = path;
+            }
+
+            return true;
+        }
+
+        private static bool TrySetParameterOnMappedInstance(GodotObject? instance, string parameter, float value,
+            string operation)
+        {
+            lock (Gate)
+            {
+                if (instance is null || !GodotObject.IsInstanceValid(instance))
+                    return false;
+
+                try
+                {
+                    instance.Call("set_parameter_by_name", parameter, value);
+                }
+                catch (Exception ex)
+                {
+                    RitsuLibFramework.Logger.Error($"[Audio] mapped {operation}: {ex.Message}");
+                    return false;
+                }
+
+                return true;
+            }
+        }
+
+        private static void ReleaseMappedInstance(ref GodotObject? instance, string operation)
+        {
+            if (instance is null)
+                return;
+
+            try
+            {
+                instance.Call("stop", 0);
+                instance.Call("release");
+            }
+            catch (Exception ex)
+            {
+                RitsuLibFramework.Logger.Error($"[Audio] mapped {operation}: {ex.Message}");
+            }
+            finally
+            {
+                instance = null;
             }
         }
 

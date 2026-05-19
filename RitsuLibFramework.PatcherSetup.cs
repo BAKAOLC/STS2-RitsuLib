@@ -77,6 +77,13 @@ namespace STS2RitsuLib
             patcher.RegisterPatch<NAudioManagerGuidMappedStudioEventsPatches.PlayMusic>();
             patcher.RegisterPatch<NAudioManagerGuidMappedStudioEventsPatches.StopMusic>();
             patcher.RegisterPatch<NAudioManagerGuidMappedStudioEventsPatches.UpdateMusicParameter>();
+            patcher.RegisterPatch<NRunMusicControllerGuidMappedStudioEventsPatches.UpdateMusic>();
+            patcher.RegisterPatch<NRunMusicControllerGuidMappedStudioEventsPatches.PlayCustomMusic>();
+            patcher.RegisterPatch<NRunMusicControllerGuidMappedStudioEventsPatches.StopCustomMusic>();
+            patcher.RegisterPatch<NRunMusicControllerGuidMappedStudioEventsPatches.StopMusic>();
+            patcher.RegisterPatch<NRunMusicControllerGuidMappedStudioEventsPatches.UpdateMusicParameter>();
+            patcher.RegisterPatch<NRunMusicControllerGuidMappedStudioEventsPatches.UpdateAmbience>();
+            patcher.RegisterPatch<NRunMusicControllerGuidMappedStudioEventsPatches.TriggerCampfireGoingOut>();
             patcher.RegisterPatch<SavedPropertiesTypeCacheInjectionPatch>();
             patcher.RegisterPatch<SavedAttachedStatePatches.SavedPropertiesFromInternalPatch>();
             patcher.RegisterPatch<SavedAttachedStatePatches.SavedPropertiesFillInternalPatch>();
