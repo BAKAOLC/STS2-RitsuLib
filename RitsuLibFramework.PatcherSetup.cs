@@ -13,6 +13,7 @@ using STS2RitsuLib.Interop.Patches;
 using STS2RitsuLib.Keywords.Patches;
 using STS2RitsuLib.Lifecycle.Patches;
 using STS2RitsuLib.Localization.Patches;
+using STS2RitsuLib.Models.Patches;
 using STS2RitsuLib.Networking.Sidecar.Patches;
 using STS2RitsuLib.Patching.Core;
 using STS2RitsuLib.Platform;
@@ -112,6 +113,7 @@ namespace STS2RitsuLib
             patcher.RegisterPatch<RunSavedDataClientRejoinResponseMessageDeserializePatch>();
             patcher.RegisterPatch<RunSavedDataCombatReplaySerializePatch>();
             patcher.RegisterPatch<RunSavedDataCombatReplayDeserializePatch>();
+            patcher.RegisterPatch<ModelCloneRegistryPatch>();
             patcher.RegisterPatch<CoreInitializationLifecyclePatch>();
             patcher.RegisterPatch<DevConsoleAutocompleteEnhancementPatch>();
             patcher.RegisterPatch<DevConsoleAutocompleteUnlockArgumentPatch>();
