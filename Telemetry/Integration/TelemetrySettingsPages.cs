@@ -316,7 +316,7 @@ namespace STS2RitsuLib.Telemetry.Integration
 
         private static ModSettingsText T(string key, string fallback)
         {
-            return ModSettingsText.I18N(ModSettingsLocalization.Instance, key, fallback);
+            return ModSettingsLocalization.Text(key, fallback);
         }
 
         private static string L(string key, string fallback)

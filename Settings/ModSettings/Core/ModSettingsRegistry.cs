@@ -248,7 +248,7 @@ namespace STS2RitsuLib.Settings
             {
                 return PagesById.Values
                     .OrderBy(page => ModSidebarOrders.GetValueOrDefault(page.ModId, 0))
-                    .ThenBy(page => ModSettingsLocalization.ResolveModName(page.ModId, page.ModId),
+                    .ThenBy(page => ModSettingsLocalization.ResolveModNameFallback(page.ModId, page.ModId),
                         StringComparer.OrdinalIgnoreCase)
                     .ThenBy(page => page.ModId, StringComparer.OrdinalIgnoreCase)
                     .ThenBy(page => PageSortOverrides.GetValueOrDefault(CreateCompositeId(page.ModId, page.Id),

@@ -26,9 +26,8 @@ namespace STS2RitsuLib.Settings
 
             lock (Gate)
             {
-                pageTitle ??= ModSettingsText.I18N(ModSettingsLocalization.Instance, "baselib.mirroredPage.title",
-                    "Mod config");
-                var pageDescription = ModSettingsText.I18N(ModSettingsLocalization.Instance,
+                pageTitle ??= ModSettingsLocalization.Text("baselib.mirroredPage.title", "Mod config");
+                var pageDescription = ModSettingsLocalization.Text(
                     "baselib.mirroredPage.description",
                     "This page mirrors BaseLib-generated mod configuration entries.");
 

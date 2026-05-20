@@ -22,9 +22,25 @@ namespace STS2RitsuLib.Settings
             return Instance.Get(key, fallback);
         }
 
+        public static ModSettingsText Text(string key, string fallback)
+        {
+            return ModSettingsText.DeferredI18N(() => Instance, key, fallback);
+        }
+
         public static string ResolveModName(string modId, string fallback)
         {
             var configuredName = ModSettingsRegistry.GetModDisplayName(modId)?.Resolve();
+            if (!string.IsNullOrWhiteSpace(configuredName))
+                return configuredName;
+
+            return Sts2ModManagerCompat.EnumerateModsForManifestLookup().FirstOrDefault(mod =>
+                       string.Equals(mod.manifest?.id, modId, StringComparison.OrdinalIgnoreCase))?.manifest?.name
+                   ?? fallback;
+        }
+
+        public static string ResolveModNameFallback(string modId, string fallback)
+        {
+            var configuredName = ModSettingsRegistry.GetModDisplayName(modId)?.FallbackText;
             if (!string.IsNullOrWhiteSpace(configuredName))
                 return configuredName;
 

@@ -51,9 +51,8 @@ namespace STS2RitsuLib.Settings
                 if (registrations is not IEnumerable enumerable)
                     return 0;
 
-                pageTitle ??= ModSettingsText.I18N(ModSettingsLocalization.Instance, "modconfig.mirroredPage.title",
-                    "Mod config (ModConfig)");
-                var pageDescription = ModSettingsText.I18N(ModSettingsLocalization.Instance,
+                pageTitle ??= ModSettingsLocalization.Text("modconfig.mirroredPage.title", "Mod config (ModConfig)");
+                var pageDescription = ModSettingsLocalization.Text(
                     "modconfig.mirroredPage.description",
                     "Proxy page for a mod registered with the ModConfig library. Values are stored by ModConfig.");
 

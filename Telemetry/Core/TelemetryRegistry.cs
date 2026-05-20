@@ -66,7 +66,7 @@ namespace STS2RitsuLib.Telemetry
             lock (Sync)
             {
                 return Applicants.Values
-                    .OrderBy(x => x.ResolveDisplayName(), StringComparer.OrdinalIgnoreCase)
+                    .OrderBy(x => x.DisplayName, StringComparer.OrdinalIgnoreCase)
                     .ThenBy(x => x.ApplicantId, StringComparer.OrdinalIgnoreCase)
                     .ToArray();
             }

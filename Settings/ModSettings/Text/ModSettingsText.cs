@@ -10,6 +10,8 @@ namespace STS2RitsuLib.Settings
     /// </summary>
     public abstract class ModSettingsText
     {
+        internal virtual string? FallbackText => null;
+
         /// <summary>
         ///     Resolves to the final string for the current locale / state.
         ///     解析为当前语言环境 / 状态下的最终字符串。
@@ -108,8 +110,17 @@ namespace STS2RitsuLib.Settings
             return new I18NModSettingsText(localization, key, fallback);
         }
 
+        internal static ModSettingsText DeferredI18N(Func<I18N> localizationFactory, string key, string fallback)
+        {
+            ArgumentNullException.ThrowIfNull(localizationFactory);
+            ArgumentException.ThrowIfNullOrWhiteSpace(key);
+            return new DeferredI18NModSettingsText(localizationFactory, key, fallback);
+        }
+
         private sealed class LiteralModSettingsText(string text) : ModSettingsText
         {
+            internal override string? FallbackText => text;
+
             public override string Resolve()
             {
                 return text;
@@ -149,6 +160,8 @@ namespace STS2RitsuLib.Settings
 
         private sealed class LocStringModSettingsText(string table, string key, string fallback) : ModSettingsText
         {
+            internal override string? FallbackText => fallback;
+
             public override string Resolve()
             {
                 try
@@ -166,6 +179,8 @@ namespace STS2RitsuLib.Settings
 
         private sealed class ExistingLocStringModSettingsText(LocString locString, string fallback) : ModSettingsText
         {
+            internal override string? FallbackText => fallback;
+
             public override string Resolve()
             {
                 try
@@ -182,11 +197,32 @@ namespace STS2RitsuLib.Settings
 
         private sealed class I18NModSettingsText(I18N localization, string key, string fallback) : ModSettingsText
         {
+            internal override string? FallbackText => fallback;
+
             public override string Resolve()
             {
                 try
                 {
                     return localization.Get(key, fallback);
+                }
+                catch
+                {
+                    // ignored
+                    return fallback;
+                }
+            }
+        }
+
+        private sealed class DeferredI18NModSettingsText(Func<I18N> localizationFactory, string key, string fallback)
+            : ModSettingsText
+        {
+            internal override string? FallbackText => fallback;
+
+            public override string Resolve()
+            {
+                try
+                {
+                    return localizationFactory().Get(key, fallback);
                 }
                 catch
                 {

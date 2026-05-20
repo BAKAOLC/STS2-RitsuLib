@@ -65,15 +65,15 @@ namespace STS2RitsuLib.Settings
 
             content.AddChild(itemContext.CreateListEditor(
                 "details",
-                ModSettingsText.I18N(ModSettingsLocalization.Instance, "ritsulib.showcase.details.title",
-                    "Detail Notes"),
+                ModSettingsLocalization.Text("ritsulib.showcase.details.title", "Detail Notes"),
                 nestedListBinding,
                 () => new(ModSettingsLocalization.Get("ritsulib.showcase.details.defaultLabel", "New note"), "value"),
                 detail => ModSettingsText.Literal(detail.Label),
                 detail => ModSettingsText.Literal(detail.Value),
                 CreateShowcaseDetailEditor,
-                ModSettingsText.I18N(ModSettingsLocalization.Instance, "ritsulib.showcase.details.add", "Add Detail"),
-                ModSettingsText.I18N(ModSettingsLocalization.Instance, "ritsulib.showcase.details.description",
+                ModSettingsLocalization.Text("ritsulib.showcase.details.add", "Add Detail"),
+                ModSettingsLocalization.Text(
+                    "ritsulib.showcase.details.description",
                     "Nested structured list editor for each item.")));
 
             return content;
