@@ -86,8 +86,14 @@ Mod 开发时，项目里只需要引用一个 NuGet 包：
 
 ## 可选分析器
 
-RitsuLib 风格项目可以额外引用配套 Roslyn 分析器：
-[STS2-ModAnalyzers-RitsuLib](https://github.com/BAKAOLC/STS2-ModAnalyzers-RitsuLib)（包名：`STS2.ModAnalyzers.RitsuLib`）。
+旧的配套分析器
+[STS2-ModAnalyzers-RitsuLib](https://github.com/BAKAOLC/STS2-ModAnalyzers-RitsuLib)
+（包名：`STS2.ModAnalyzers.RitsuLib`）已经归档，不再维护。
+
+RitsuLib 风格项目请改用
+[STS2RitsuLibModAnalyzers](https://github.com/alkaid616/STS2RitsuLibModAnalyzers)
+（包名：`Nothing.STS2RitsuLib.ModAnalyzers`）。它提供 RitsuLib 本地化与资源路径相关的 Roslyn 诊断，并且包内
+`buildTransitive` 会自动把常见项目文件传给 analyzer。
 
 ## 许可证
 

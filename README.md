@@ -92,8 +92,14 @@ Start with the getting-started guide, then use the topic pages for the specific 
 
 ## Optional Analyzer
 
-RitsuLib-style mods can also use the companion Roslyn analyzer:
-[STS2-ModAnalyzers-RitsuLib](https://github.com/BAKAOLC/STS2-ModAnalyzers-RitsuLib) (`STS2.ModAnalyzers.RitsuLib`).
+The old companion analyzer
+[STS2-ModAnalyzers-RitsuLib](https://github.com/BAKAOLC/STS2-ModAnalyzers-RitsuLib)
+(`STS2.ModAnalyzers.RitsuLib`) is archived and no longer maintained.
+
+For RitsuLib-style mods, use
+[STS2RitsuLibModAnalyzers](https://github.com/alkaid616/STS2RitsuLibModAnalyzers)
+(`Nothing.STS2RitsuLib.ModAnalyzers`) instead. It provides Roslyn diagnostics for RitsuLib localization and resource
+paths, and its package can automatically pass common project files to the analyzer through `buildTransitive`.
 
 ## License
 
