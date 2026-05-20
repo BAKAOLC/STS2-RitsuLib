@@ -35,7 +35,7 @@ namespace STS2RitsuLib.Telemetry.Integration
             {
                 RitsuLibFramework.Logger.Info(
                     "[Telemetry] No pending first-run consent prompt; flushing authorized startup telemetry.");
-                _ = TelemetryQueue.FlushAllAsync();
+                TelemetryTaskRunner.Forget(TelemetryQueue.FlushAllAsync(), "flush_all_after_startup");
                 return;
             }
 

@@ -9,7 +9,10 @@ namespace STS2RitsuLib.Telemetry
     /// </summary>
     public sealed class PostHogTelemetryAdapter : ITelemetryAdapter
     {
-        private static readonly HttpClient Client = new();
+        private static readonly HttpClient Client = new()
+        {
+            Timeout = TimeSpan.FromSeconds(60),
+        };
 
         /// <summary>
         ///     Creates a PostHog adapter for a fixed host and project API key.
@@ -63,14 +66,25 @@ namespace STS2RitsuLib.Telemetry
                 batch,
             }, TelemetryJson.Options);
 
-            using var response = await Client.PostAsync(
-                new Uri(Host, "/batch/"),
-                new StringContent(body, Encoding.UTF8, "application/json"),
-                cancellationToken);
+            try
+            {
+                using var response = await Client.PostAsync(
+                    new Uri(Host, "/batch/"),
+                    new StringContent(body, Encoding.UTF8, "application/json"),
+                    cancellationToken);
 
-            return response.IsSuccessStatusCode
-                ? TelemetrySendResult.Ok()
-                : TelemetrySendResult.Fail($"{(int)response.StatusCode} {response.ReasonPhrase}");
+                return response.IsSuccessStatusCode
+                    ? TelemetrySendResult.Ok()
+                    : TelemetrySendResult.Fail($"{(int)response.StatusCode} {response.ReasonPhrase}");
+            }
+            catch (OperationCanceledException) when (!cancellationToken.IsCancellationRequested)
+            {
+                return TelemetrySendResult.Fail($"Timed out posting telemetry to {Host}.");
+            }
+            catch (Exception ex)
+            {
+                return TelemetrySendResult.Fail(ex.Message);
+            }
         }
 
         private static Dictionary<string, object?> BuildProperties(TelemetryEnvelope evt)

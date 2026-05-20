@@ -1,3 +1,4 @@
+using STS2RitsuLib.Telemetry.Diagnostics;
 using STS2RitsuLib.Telemetry.Integration;
 
 namespace STS2RitsuLib.Telemetry
@@ -23,8 +24,6 @@ namespace STS2RitsuLib.Telemetry
         public static void RegisterApplicant(TelemetryApplicant applicant)
         {
             ArgumentNullException.ThrowIfNull(applicant);
-            if (TelemetryRuntimeGate.TryNoOpForDisabledMobile())
-                return;
 
             ArgumentException.ThrowIfNullOrWhiteSpace(applicant.ApplicantId);
             ArgumentException.ThrowIfNullOrWhiteSpace(applicant.OwnerModId);
@@ -38,7 +37,18 @@ namespace STS2RitsuLib.Telemetry
 
             RitsuLibFramework.Logger.Info(
                 $"[Telemetry] Registered applicant '{applicant.ApplicantId}' -> {applicant.Adapter.EndpointDescription} ({applicant.Requests.Count} request(s)).");
-            TelemetrySettingsPages.RegisterApplicantPage(applicant);
+            try
+            {
+                TelemetrySettingsPages.RegisterApplicantPage(applicant);
+            }
+            catch (Exception ex)
+            {
+                RitsuLibFramework.Logger.Warn(
+                    $"[Telemetry] Failed to refresh settings page for applicant '{applicant.ApplicantId}': {ex.Message}");
+                DiagnosticsTelemetryCollector.CaptureExceptionForAuthorizedApplicants(
+                    ex,
+                    "telemetry_settings_page_refresh");
+            }
         }
 
         /// <summary>
@@ -48,8 +58,6 @@ namespace STS2RitsuLib.Telemetry
         public static void RegisterContributionProvider(ITelemetryContributionProvider provider)
         {
             ArgumentNullException.ThrowIfNull(provider);
-            if (TelemetryRuntimeGate.TryNoOpForDisabledMobile())
-                return;
 
             ArgumentException.ThrowIfNullOrWhiteSpace(provider.ContributorModId);
             ArgumentException.ThrowIfNullOrWhiteSpace(provider.ContributionId);

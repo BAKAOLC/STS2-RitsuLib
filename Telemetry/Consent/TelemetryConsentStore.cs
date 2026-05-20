@@ -10,9 +10,6 @@ namespace STS2RitsuLib.Telemetry
 
         internal static TelemetryConsentDocument Snapshot()
         {
-            if (TelemetryRuntimeGate.IsDisabled)
-                return new();
-
             lock (Sync)
             {
                 EnsureLoaded();
@@ -22,9 +19,6 @@ namespace STS2RitsuLib.Telemetry
 
         internal static TelemetryApplicantConsent GetApplicantConsent(string applicantId)
         {
-            if (TelemetryRuntimeGate.IsDisabled)
-                return new() { Consent = TelemetryConsentState.Denied };
-
             lock (Sync)
             {
                 EnsureLoaded();
@@ -34,9 +28,6 @@ namespace STS2RitsuLib.Telemetry
 
         internal static bool IsRequestGranted(TelemetryApplicant applicant, TelemetryRequest request)
         {
-            if (TelemetryRuntimeGate.IsDisabled)
-                return false;
-
             lock (Sync)
             {
                 EnsureLoaded();
@@ -51,9 +42,6 @@ namespace STS2RitsuLib.Telemetry
             string contributorModId,
             string contributionId)
         {
-            if (TelemetryRuntimeGate.IsDisabled)
-                return false;
-
             lock (Sync)
             {
                 EnsureLoaded();
@@ -69,9 +57,6 @@ namespace STS2RitsuLib.Telemetry
             TelemetryConsentState state,
             IEnumerable<string>? grantedRequests = null)
         {
-            if (TelemetryRuntimeGate.TryNoOpForDisabledMobile())
-                return;
-
             lock (Sync)
             {
                 EnsureLoaded();
@@ -91,7 +76,9 @@ namespace STS2RitsuLib.Telemetry
                 return;
 
             TelemetryRuntime.ReplayStartupSnapshotToApplicant(applicantId);
-            _ = TelemetryQueue.FlushApplicantAsync(applicantId);
+            TelemetryTaskRunner.Forget(
+                TelemetryQueue.FlushApplicantAsync(applicantId),
+                "flush_applicant_after_consent");
         }
 
         public static void SetSharedContributionConsent(
@@ -100,9 +87,6 @@ namespace STS2RitsuLib.Telemetry
             string contributionId,
             bool granted)
         {
-            if (TelemetryRuntimeGate.TryNoOpForDisabledMobile())
-                return;
-
             lock (Sync)
             {
                 EnsureLoaded();

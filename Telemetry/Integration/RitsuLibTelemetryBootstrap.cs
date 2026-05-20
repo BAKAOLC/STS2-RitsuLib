@@ -24,9 +24,6 @@ namespace STS2RitsuLib.Telemetry
                 return;
 
             _initialized = true;
-            if (TelemetryRuntimeGate.TryNoOpForDisabledMobile())
-                return;
-
             DiagnosticsTelemetryCollector.InitializeGlobalExceptionHandlers();
             RitsuLibFramework.SubscribeLifecycle<RunEndedEvent>(RunHistoryTelemetryCollector.CaptureEndedRun);
             RitsuLibFramework.SubscribeLifecycleOnce<MainMenuReadyEvent>(_ => InitializeMainMenuTelemetry());
@@ -38,10 +35,26 @@ namespace STS2RitsuLib.Telemetry
                 return;
 
             _mainMenuInitialized = true;
-            RegisterRitsuLibApplicant();
-            TelemetrySettingsPages.EnsureRootPage();
-            TelemetryRuntime.CaptureStartupSnapshot();
-            TelemetryConsentPromptCoordinator.TryRunFirstMainMenuFlow();
+            RunMainMenuStep("register_applicant", RegisterRitsuLibApplicant);
+            RunMainMenuStep("ensure_settings_page", TelemetrySettingsPages.EnsureRootPage);
+            RunMainMenuStep("capture_startup_snapshot", TelemetryRuntime.CaptureStartupSnapshot);
+            RunMainMenuStep("first_main_menu_flow", TelemetryConsentPromptCoordinator.TryRunFirstMainMenuFlow);
+        }
+
+        private static void RunMainMenuStep(string operation, Action action)
+        {
+            try
+            {
+                action();
+            }
+            catch (Exception ex)
+            {
+                RitsuLibFramework.Logger.Warn(
+                    $"[Telemetry] Main menu step '{operation}' failed: {ex.Message}");
+                DiagnosticsTelemetryCollector.CaptureExceptionForAuthorizedApplicants(
+                    ex,
+                    $"telemetry_{operation}");
+            }
         }
 
         private static void RegisterRitsuLibApplicant()

@@ -16,9 +16,6 @@ namespace STS2RitsuLib.Telemetry
         public static ITelemetryClient GetClient(string applicantId)
         {
             ArgumentException.ThrowIfNullOrWhiteSpace(applicantId);
-            if (TelemetryRuntimeGate.TryNoOpForDisabledMobile())
-                return new NoOpTelemetryClient(applicantId);
-
             return new TelemetryClient(applicantId);
         }
 
@@ -32,9 +29,6 @@ namespace STS2RitsuLib.Telemetry
             JsonNode? applicantPayload = null,
             IReadOnlyDictionary<string, object?>? properties = null)
         {
-            if (TelemetryRuntimeGate.TryNoOpForDisabledMobile())
-                return;
-
             RunHistoryTelemetryCollector.CaptureVanillaRunHistory(
                 applicantId,
                 runHistory,

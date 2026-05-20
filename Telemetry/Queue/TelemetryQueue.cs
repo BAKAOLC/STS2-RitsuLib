@@ -11,9 +11,6 @@ namespace STS2RitsuLib.Telemetry
 
         internal static void Enqueue(TelemetryEnvelope envelope)
         {
-            if (TelemetryRuntimeGate.TryNoOpForDisabledMobile())
-                return;
-
             lock (Sync)
             {
                 var doc = ReadQueue(envelope.ApplicantId);
@@ -28,9 +25,6 @@ namespace STS2RitsuLib.Telemetry
 
         public static async Task FlushApplicantAsync(string applicantId, CancellationToken cancellationToken = default)
         {
-            if (TelemetryRuntimeGate.TryNoOpForDisabledMobile())
-                return;
-
             TelemetryApplicant applicant;
 
             lock (Sync)
@@ -53,28 +47,11 @@ namespace STS2RitsuLib.Telemetry
             {
                 while (true)
                 {
-                    TelemetryEnvelope[] batch;
-                    lock (Sync)
-                    {
-                        var doc = ReadQueue(applicantId);
-                        var dropped = DropUnauthorizedEvents(applicant, doc);
-                        if (dropped.Count > 0)
-                        {
-                            TelemetryRuntime.ResetStartupDeliveryForDiscardedEvents(dropped);
-                            WriteQueue(applicantId, doc);
-                            RitsuLibFramework.Logger.Info(
-                                $"[Telemetry] Dropped {dropped.Count} unauthorized queued event(s) for applicant '{applicantId}'.");
-                        }
-
-                        if (doc.Events.Count == 0)
-                        {
-                            RitsuLibFramework.Logger.Info(
-                                $"[Telemetry] Flush skipped for '{applicantId}': queue is empty.");
-                            return;
-                        }
-
-                        batch = [.. doc.Events.Take(MaxEventsPerFlush)];
-                    }
+                    var batch = await RitsuMainThread.InvokeAsync(
+                        () => PrepareBatch(applicantId, applicant),
+                        cancellationToken);
+                    if (batch.Length == 0)
+                        return;
 
                     RitsuLibFramework.Logger.Info(
                         $"[Telemetry] Sending {batch.Length} queued event(s) for applicant '{applicantId}' via {applicant.Adapter.AdapterId}.");
@@ -89,44 +66,18 @@ namespace STS2RitsuLib.Telemetry
                         result = TelemetrySendResult.Fail(ex.Message);
                     }
 
-                    lock (Sync)
-                    {
-                        var state = ReadState(applicantId);
-                        state.LastSendUtc = DateTimeOffset.UtcNow;
-
-                        if (result.Success)
-                        {
-                            TelemetryRuntime.MarkStartupDeliveryConfirmed(batch);
-                            var queue = ReadQueue(applicantId);
-                            var remainingCount = queue.Events.Count;
-                            if (TryRemoveSentPrefix(queue, batch))
-                            {
-                                WriteQueue(applicantId, queue);
-                                remainingCount = queue.Events.Count;
-                            }
-                            else
-                            {
-                                RitsuLibFramework.Logger.Warn(
-                                    $"[Telemetry] Sent {batch.Length} event(s) for applicant '{applicantId}', but queue changed unexpectedly. Keeping queued events to avoid data loss.");
-                            }
-
-                            state.LastError = null;
-                            state.FailureCount = 0;
-                            RitsuLibFramework.Logger.Info(
-                                $"[Telemetry] Sent {batch.Length} event(s) for applicant '{applicantId}'. Remaining queue size: {remainingCount}.");
-                            WriteState(applicantId, state);
-                        }
-                        else
-                        {
-                            state.LastError = result.ErrorMessage;
-                            state.FailureCount++;
-                            WriteState(applicantId, state);
-                            RitsuLibFramework.Logger.Warn(
-                                $"[Telemetry] Send failed for applicant '{applicantId}': {result.ErrorMessage}");
-                            return;
-                        }
-                    }
+                    var shouldContinue = await RitsuMainThread.InvokeAsync(
+                        () => CommitBatchResult(applicantId, batch, result),
+                        cancellationToken);
+                    if (!shouldContinue)
+                        return;
                 }
+            }
+            catch (Exception ex)
+            {
+                await RitsuMainThread.InvokeAsync(
+                    () => RecordFlushFailure(applicantId, ex),
+                    CancellationToken.None);
             }
             finally
             {
@@ -139,18 +90,12 @@ namespace STS2RitsuLib.Telemetry
 
         public static async Task FlushAllAsync(CancellationToken cancellationToken = default)
         {
-            if (TelemetryRuntimeGate.TryNoOpForDisabledMobile())
-                return;
-
             foreach (var applicant in TelemetryRegistry.GetApplicants())
                 await FlushApplicantAsync(applicant.ApplicantId, cancellationToken);
         }
 
         public static void ClearApplicant(string applicantId)
         {
-            if (TelemetryRuntimeGate.TryNoOpForDisabledMobile())
-                return;
-
             lock (Sync)
             {
                 var doc = ReadQueue(applicantId);
@@ -162,12 +107,73 @@ namespace STS2RitsuLib.Telemetry
 
         public static int GetQueuedEventCount(string applicantId)
         {
-            if (TelemetryRuntimeGate.IsDisabled)
-                return 0;
-
             lock (Sync)
             {
                 return ReadQueue(applicantId).Events.Count;
+            }
+        }
+
+        private static TelemetryEnvelope[] PrepareBatch(string applicantId, TelemetryApplicant applicant)
+        {
+            lock (Sync)
+            {
+                var doc = ReadQueue(applicantId);
+                var dropped = DropUnauthorizedEvents(applicant, doc);
+                if (dropped.Count > 0)
+                {
+                    TelemetryRuntime.ResetStartupDeliveryForDiscardedEvents(dropped);
+                    WriteQueue(applicantId, doc);
+                    RitsuLibFramework.Logger.Info(
+                        $"[Telemetry] Dropped {dropped.Count} unauthorized queued event(s) for applicant '{applicantId}'.");
+                }
+
+                if (doc.Events.Count != 0) return [.. doc.Events.Take(MaxEventsPerFlush)];
+                RitsuLibFramework.Logger.Info(
+                    $"[Telemetry] Flush skipped for '{applicantId}': queue is empty.");
+                return [];
+            }
+        }
+
+        private static bool CommitBatchResult(
+            string applicantId,
+            IReadOnlyList<TelemetryEnvelope> batch,
+            TelemetrySendResult result)
+        {
+            lock (Sync)
+            {
+                var state = ReadState(applicantId);
+                state.LastSendUtc = DateTimeOffset.UtcNow;
+
+                if (result.Success)
+                {
+                    TelemetryRuntime.MarkStartupDeliveryConfirmed(batch);
+                    var queue = ReadQueue(applicantId);
+                    var remainingCount = queue.Events.Count;
+                    if (TryRemoveSentPrefix(queue, batch))
+                    {
+                        WriteQueue(applicantId, queue);
+                        remainingCount = queue.Events.Count;
+                    }
+                    else
+                    {
+                        RitsuLibFramework.Logger.Warn(
+                            $"[Telemetry] Sent {batch.Count} event(s) for applicant '{applicantId}', but queue changed unexpectedly. Keeping queued events to avoid data loss.");
+                    }
+
+                    state.LastError = null;
+                    state.FailureCount = 0;
+                    RitsuLibFramework.Logger.Info(
+                        $"[Telemetry] Sent {batch.Count} event(s) for applicant '{applicantId}'. Remaining queue size: {remainingCount}.");
+                    WriteState(applicantId, state);
+                    return true;
+                }
+
+                state.LastError = result.ErrorMessage;
+                state.FailureCount++;
+                WriteState(applicantId, state);
+                RitsuLibFramework.Logger.Warn(
+                    $"[Telemetry] Send failed for applicant '{applicantId}': {result.ErrorMessage}");
+                return false;
             }
         }
 
@@ -199,6 +205,29 @@ namespace STS2RitsuLib.Telemetry
         {
             FileOperations.WriteJson(TelemetryPaths.StatePath(applicantId), state, TelemetryJson.Options,
                 "TelemetryQueueState");
+        }
+
+        private static void RecordFlushFailure(string applicantId, Exception exception)
+        {
+            RitsuLibFramework.Logger.Warn(
+                $"[Telemetry] Flush failed for applicant '{applicantId}': {exception.Message}");
+
+            try
+            {
+                lock (Sync)
+                {
+                    var state = ReadState(applicantId);
+                    state.LastSendUtc = DateTimeOffset.UtcNow;
+                    state.LastError = exception.Message;
+                    state.FailureCount++;
+                    WriteState(applicantId, state);
+                }
+            }
+            catch (Exception stateException)
+            {
+                RitsuLibFramework.Logger.Warn(
+                    $"[Telemetry] Failed to record flush failure for applicant '{applicantId}': {stateException.Message}");
+            }
         }
 
         private static List<TelemetryEnvelope> DropUnauthorizedEvents(

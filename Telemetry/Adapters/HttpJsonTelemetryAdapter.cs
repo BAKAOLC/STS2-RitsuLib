@@ -9,7 +9,11 @@ namespace STS2RitsuLib.Telemetry
     /// </summary>
     public sealed class HttpJsonTelemetryAdapter : ITelemetryAdapter
     {
-        private static readonly HttpClient Client = new();
+        private static readonly HttpClient Client = new()
+        {
+            Timeout = TimeSpan.FromSeconds(60),
+        };
+
         private readonly IReadOnlyDictionary<string, string> _headers;
 
         /// <summary>
@@ -48,21 +52,32 @@ namespace STS2RitsuLib.Telemetry
                 events,
             }, TelemetryJson.Options);
 
-            using var request = new HttpRequestMessage(HttpMethod.Post, Endpoint);
-            request.Content = new StringContent(body, Encoding.UTF8, "application/json");
+            try
+            {
+                using var request = new HttpRequestMessage(HttpMethod.Post, Endpoint);
+                request.Content = new StringContent(body, Encoding.UTF8, "application/json");
 
-            foreach (var header in _headers)
-                request.Headers.TryAddWithoutValidation(header.Key, header.Value);
+                foreach (var header in _headers)
+                    request.Headers.TryAddWithoutValidation(header.Key, header.Value);
 
-            using var response = await Client.SendAsync(request, cancellationToken);
-            if (response.IsSuccessStatusCode)
-                return TelemetrySendResult.Ok();
+                using var response = await Client.SendAsync(request, cancellationToken);
+                if (response.IsSuccessStatusCode)
+                    return TelemetrySendResult.Ok();
 
-            var responseBody = await response.Content.ReadAsStringAsync(cancellationToken);
-            var reason = string.IsNullOrWhiteSpace(responseBody)
-                ? $"{(int)response.StatusCode} {response.ReasonPhrase}"
-                : $"{(int)response.StatusCode} {response.ReasonPhrase}: {responseBody}";
-            return TelemetrySendResult.Fail(reason);
+                var responseBody = await response.Content.ReadAsStringAsync(cancellationToken);
+                var reason = string.IsNullOrWhiteSpace(responseBody)
+                    ? $"{(int)response.StatusCode} {response.ReasonPhrase}"
+                    : $"{(int)response.StatusCode} {response.ReasonPhrase}: {responseBody}";
+                return TelemetrySendResult.Fail(reason);
+            }
+            catch (OperationCanceledException) when (!cancellationToken.IsCancellationRequested)
+            {
+                return TelemetrySendResult.Fail($"Timed out posting telemetry to {Endpoint}.");
+            }
+            catch (Exception ex)
+            {
+                return TelemetrySendResult.Fail(ex.Message);
+            }
         }
     }
 }

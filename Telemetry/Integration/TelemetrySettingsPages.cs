@@ -135,7 +135,9 @@ namespace STS2RitsuLib.Telemetry.Integration
                     ModSettingsButtonTone.Normal,
                     () =>
                     {
-                        _ = TelemetryQueue.FlushApplicantAsync(applicantId);
+                        TelemetryTaskRunner.Forget(
+                            TelemetryQueue.FlushApplicantAsync(applicantId),
+                            "flush_applicant_from_settings");
                         RefreshActionRow();
                         host.RequestRefresh();
                     });

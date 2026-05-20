@@ -13,26 +13,20 @@ namespace STS2RitsuLib.Telemetry.RunHistory
         internal static JsonArray BuildModInventoryList()
         {
             var mods = new JsonArray();
-            foreach (var mod in Sts2ModManagerCompat.EnumerateModsForManifestLookup()
-                         .OrderBy(m => m.manifest?.id ?? m.assembly?.GetName().Name ?? "<unknown>",
-                             StringComparer.OrdinalIgnoreCase))
-            {
-                var assemblyName = mod.assembly?.GetName();
-
+            foreach (var mod in Sts2ModManagerCompat.BuildModInventoryEntries())
                 mods.Add(new JsonObject
                 {
-                    ["id"] = mod.manifest?.id ?? assemblyName?.Name ?? "<unknown>",
-                    ["name"] = mod.manifest?.name ?? assemblyName?.Name ?? "<unknown>",
-                    ["version"] = mod.manifest?.version,
-                    ["state"] = mod.state.ToString(),
-                    ["source"] = mod.modSource.ToString(),
-                    ["affects_gameplay"] = mod.manifest?.affectsGameplay ?? true,
-                    ["assembly"] = assemblyName?.Name,
-                    ["assembly_version"] = assemblyName?.Version?.ToString(),
-                    ["error_count"] = mod.errors?.Count ?? 0,
-                    ["errors"] = BuildModErrors(mod.errors),
+                    ["id"] = mod.Id,
+                    ["name"] = mod.Name,
+                    ["version"] = mod.Version,
+                    ["state"] = mod.State,
+                    ["source"] = mod.Source,
+                    ["affects_gameplay"] = mod.AffectsGameplay,
+                    ["assembly"] = mod.AssemblyName,
+                    ["assembly_version"] = mod.AssemblyVersion,
+                    ["error_count"] = mod.Errors.Count,
+                    ["errors"] = BuildModErrors(mod.Errors),
                 });
-            }
 
             return mods;
         }
@@ -164,9 +158,6 @@ namespace STS2RitsuLib.Telemetry.RunHistory
             JsonNode? applicantPayload = null,
             IReadOnlyDictionary<string, object?>? properties = null)
         {
-            if (TelemetryRuntimeGate.TryNoOpForDisabledMobile())
-                return;
-
             ArgumentException.ThrowIfNullOrWhiteSpace(applicantId);
             ArgumentNullException.ThrowIfNull(runHistory);
 
@@ -193,9 +184,6 @@ namespace STS2RitsuLib.Telemetry.RunHistory
 
         internal static void CaptureEndedRun(RunEndedEvent evt)
         {
-            if (TelemetryRuntimeGate.IsDisabled)
-                return;
-
             JsonNode? runHistory;
             try
             {
@@ -250,7 +238,9 @@ namespace STS2RitsuLib.Telemetry.RunHistory
             RitsuLibFramework.Logger.Info(
                 $"[Telemetry] Captured ended run history for {capturedApplicants.Count} authorized applicant(s); abandoned={evt.IsAbandoned}, victory={evt.IsVictory}.");
             foreach (var applicantId in capturedApplicants)
-                _ = TelemetryQueue.FlushApplicantAsync(applicantId);
+                TelemetryTaskRunner.Forget(
+                    TelemetryQueue.FlushApplicantAsync(applicantId),
+                    "flush_applicant_after_run_history");
         }
 
         private static bool ShouldCaptureForRequest(
