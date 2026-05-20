@@ -42,6 +42,9 @@ namespace STS2RitsuLib.Compat
                 // ReleaseInfoManager or file IO may fail in unusual environments
             }
 
+            if (TryResolvePublishedReleaseInfo(ref fallbackLabel, out var publishedSnapshot))
+                return publishedSnapshot;
+
             if (TryResolveLauncherDownloadedReleaseInfo(ref fallbackLabel, out var fileSnapshot))
                 return fileSnapshot;
 
@@ -90,6 +93,34 @@ namespace STS2RitsuLib.Compat
                 "version",
                 ref fallbackLabel,
                 out snapshot);
+        }
+
+        private static bool TryResolvePublishedReleaseInfo(
+            ref string? fallbackLabel,
+            out HostVersionSnapshot snapshot)
+        {
+            snapshot = default;
+            foreach (var path in GetPublishedReleaseInfoPaths())
+                if (TryReadJsonVersion(path, "version", ref fallbackLabel, out snapshot))
+                    return true;
+
+            return false;
+        }
+
+        private static IEnumerable<string> GetPublishedReleaseInfoPaths()
+        {
+            var executablePath = TryCallGodotOsString("GetExecutablePath");
+            if (string.IsNullOrWhiteSpace(executablePath))
+                yield break;
+
+            var executableDir = Path.GetDirectoryName(executablePath);
+            if (string.IsNullOrWhiteSpace(executableDir))
+                yield break;
+
+            if (string.Equals(TryCallGodotOsString("GetName"), "macOS", StringComparison.Ordinal))
+                yield return Path.Combine(executableDir, "..", "Resources", "release_info.json");
+
+            yield return Path.Combine(executableDir, "release_info.json");
         }
 
         private static bool TryResolveLauncherCacheStamp(
@@ -152,6 +183,11 @@ namespace STS2RitsuLib.Compat
 
         private static string? TryGetGodotDataDir()
         {
+            return TryCallGodotOsString("GetDataDir");
+        }
+
+        private static string? TryCallGodotOsString(string methodName)
+        {
             try
             {
                 var osType =
@@ -162,7 +198,7 @@ namespace STS2RitsuLib.Compat
                         .Select(static asm => asm.GetType("Godot.OS", false))
                         .FirstOrDefault(static type => type != null);
 
-                var method = osType?.GetMethod("GetDataDir", BindingFlags.Public | BindingFlags.Static);
+                var method = osType?.GetMethod(methodName, BindingFlags.Public | BindingFlags.Static);
                 return method?.Invoke(null, null) as string;
             }
             catch
