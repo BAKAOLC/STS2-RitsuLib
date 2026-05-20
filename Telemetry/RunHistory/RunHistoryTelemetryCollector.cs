@@ -1,3 +1,5 @@
+using System.Collections;
+using System.Reflection;
 using System.Text.Json;
 using System.Text.Json.Nodes;
 using MegaCrit.Sts2.Core.Localization;
@@ -19,11 +21,11 @@ namespace STS2RitsuLib.Telemetry.RunHistory
             {
                 var assemblyName = mod.assembly?.GetName();
                 var dependencies = new JsonArray();
-                foreach (var dependency in mod.manifest?.dependencies ?? [])
+                foreach (var dependency in EnumerateDependencies(mod.manifest?.dependencies))
                     dependencies.Add(new JsonObject
                     {
-                        ["id"] = dependency.id,
-                        ["min_version"] = dependency.minVersion,
+                        ["id"] = ReadStringMember(dependency, "id") ?? dependency.ToString(),
+                        ["min_version"] = ReadStringMember(dependency, "minVersion"),
                     });
 
                 mods.Add(new JsonObject
@@ -39,7 +41,7 @@ namespace STS2RitsuLib.Telemetry.RunHistory
                     ["affects_gameplay"] = mod.manifest?.affectsGameplay ?? true,
                     ["has_dll"] = mod.manifest?.hasDll,
                     ["has_pck"] = mod.manifest?.hasPck,
-                    ["min_game_version"] = mod.manifest?.minGameVersion,
+                    ["min_game_version"] = ReadStringMember(mod.manifest, "minGameVersion"),
                     ["dependencies"] = dependencies,
                     ["assembly"] = assemblyName?.Name,
                     ["assembly_version"] = assemblyName?.Version?.ToString(),
@@ -49,6 +51,50 @@ namespace STS2RitsuLib.Telemetry.RunHistory
             }
 
             return mods;
+        }
+
+        private static IEnumerable<object> EnumerateDependencies(object? dependencies)
+        {
+            if (dependencies is string dependency)
+            {
+                yield return dependency;
+                yield break;
+            }
+
+            if (dependencies is not IEnumerable enumerable)
+                yield break;
+
+            foreach (var item in enumerable)
+                if (item != null)
+                    yield return item;
+        }
+
+        private static string? ReadStringMember(object? source, string name)
+        {
+            if (source == null)
+                return null;
+            if (source is string text)
+                return string.Equals(name, "id", StringComparison.Ordinal) ? text : null;
+
+            return ReadMemberValue(source, name)?.ToString();
+        }
+
+        private static object? ReadMemberValue(object? source, string name)
+        {
+            if (source == null)
+                return null;
+
+            const BindingFlags flags =
+                BindingFlags.Instance |
+                BindingFlags.Public |
+                BindingFlags.NonPublic;
+            var type = source.GetType();
+            var field = type.GetField(name, flags);
+            if (field != null)
+                return field.GetValue(source);
+
+            var property = type.GetProperty(name, flags);
+            return property?.GetValue(source);
         }
 
         internal static JsonArray BuildLoadedModList()
@@ -213,11 +259,11 @@ namespace STS2RitsuLib.Telemetry.RunHistory
                 ["run_game_mode"] = evt.Run.GameMode.ToString(),
                 ["run_is_daily"] = evt.Run.GameMode == GameMode.Daily || evt.Run.DailyTime.HasValue,
                 ["run_player_count"] = evt.Run.Players.Count,
-                ["run_floor_reached"] = evt.Run.FloorReached,
+                ["run_floor_reached"] = ReadMemberValue(evt.Run, "FloorReached"),
                 ["run_ascension"] = evt.Run.Ascension,
                 ["run_time_seconds"] = evt.Run.RunTime,
                 ["run_win_time_seconds"] = evt.Run.WinTime,
-                ["run_reload_count"] = evt.Run.NumReloads,
+                ["run_reload_count"] = ReadMemberValue(evt.Run, "NumReloads"),
                 ["run_character_ids"] = evt.Run.Players
                     .Select(player => player.CharacterId?.ToString() ?? "<unknown>")
                     .ToArray(),
