@@ -5,6 +5,10 @@ nova:
 nav:
   home: Home
   guide: Documentation
+  releases: Releases
+  group_getting_started: Getting Started
+  group_content_authoring: Content Authoring
+  group_runtime_apis: Runtime APIs
   guide_hub: Index
   guide_getting_started: Getting started
   guide_framework_design: Framework design
@@ -17,6 +21,7 @@ nav:
   guide_timeline_unlocks: Timeline & unlocks
   guide_asset_profiles: Asset profiles & fallbacks
   guide_godot_scene: Godot scene authoring
+  guide_creature_visuals: Creature visuals and animation
   guide_mod_settings: Mod settings
   guide_localization: Localization & keywords
   guide_loc_string: LocString placeholders
@@ -24,6 +29,8 @@ nav:
   guide_patching: Patching
   guide_persistence: Persistence
   guide_fmod: FMOD & audio
+  guide_shell_theme: Shell theme
+  guide_telemetry: Telemetry backend
   guide_diagnostics: Diagnostics & compatibility
 
 category:
