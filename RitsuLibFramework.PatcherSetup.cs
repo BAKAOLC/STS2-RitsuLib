@@ -93,7 +93,12 @@ namespace STS2RitsuLib
             patcher.RegisterPatch<RunSavedDataCanonicalizeSavePatch>();
             patcher.RegisterPatch<RunSavedDataFromSerializablePatch>();
             patcher.RegisterPatch<RunSavedDataToSavePatch>();
+            patcher.RegisterPatch<RunSavedDataSaveStoreWritePatch>();
+#if STS2_AT_LEAST_0_104_0
             patcher.RegisterPatch<RunSavedDataSaveRunPatch>();
+#else
+            patcher.RegisterPatch<RunSavedDataLegacySaveRunPatch>();
+#endif
             patcher.RegisterPatch<RunSavedDataStartRunLobbyCtorPatch>();
             patcher.RegisterPatch<RunSavedDataStartRunLobbyCleanUpPatch>();
             patcher.RegisterPatch<RunSavedDataLobbyPlayerSetReadySerializePatch>();
