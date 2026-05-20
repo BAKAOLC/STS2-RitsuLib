@@ -186,6 +186,10 @@ namespace STS2RitsuLib.RunData.Patches
     {
         private static readonly ConditionalWeakTable<INetGameService, StartRunLobby> LobbyByNetService = [];
 
+        private static readonly Func<string, ActModel?> GetActAccessor =
+            AccessTools.MethodDelegate<Func<string, ActModel?>>(
+                AccessTools.DeclaredMethod(typeof(StartRunLobby), "GetAct", [typeof(string)]));
+
         internal static void Track(StartRunLobby lobby)
         {
             LobbyByNetService.Remove(lobby.NetService);
@@ -209,8 +213,10 @@ namespace STS2RitsuLib.RunData.Patches
         [UnsafeAccessor(UnsafeAccessorKind.Method, Name = "GetUnlockState")]
         internal static extern UnlockState GetUnlockState(StartRunLobby lobby);
 
-        [UnsafeAccessor(UnsafeAccessorKind.StaticMethod, Name = "GetAct")]
-        internal static extern ActModel? GetAct(string act1Key);
+        internal static ActModel? GetAct(string act1Key)
+        {
+            return GetActAccessor(act1Key);
+        }
     }
 
     internal sealed class RunSavedDataStartRunLobbyCtorPatch : IPatchMethod
