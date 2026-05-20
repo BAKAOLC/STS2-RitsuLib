@@ -90,7 +90,7 @@
   "ritsulib.uiShellTheme.resetFile.button": "重置主题文件",
   "ritsulib.uiShellTheme.resetFile.description": "将磁盘中已存在的内置主题文件覆盖为内嵌默认版本。",
   "ritsulib.updateCheck.enabled.label": "检查 RitsuLib 更新",
-  "ritsulib.updateCheck.enabled.description": "首次进入主菜单后检查一次 RitsuLib 的镜像更新 manifest。不会访问 GitHub API 端点。",
+  "ritsulib.updateCheck.enabled.description": "首次进入主菜单后检查一次 RitsuLib 更新。",
   "ritsulib.updateCheck.now.label": "立即检查",
   "ritsulib.updateCheck.now.button": "检查更新",
   "ritsulib.updateCheck.now.description": "立即检查 RitsuLib 内置更新源，并用 Toast 显示结果。",

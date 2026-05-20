@@ -43,7 +43,7 @@ namespace STS2RitsuLib.Settings
                         T("ritsulib.updateCheck.enabled.label", "Check for RitsuLib updates"),
                         ui.UpdateCheckEnabled,
                         T("ritsulib.updateCheck.enabled.description",
-                            "Checks RitsuLib's mirrored update manifest once after the first main menu load. No GitHub API endpoint is contacted."))
+                            "Checks for RitsuLib updates once after the first main menu load."))
                     .AddButton(
                         "update_check_now",
                         T("ritsulib.updateCheck.now.label", "Check now"),
