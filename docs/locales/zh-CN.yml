@@ -1,10 +1,14 @@
-nova:
+press:
   sidebar:
     docs: 文档
 
 nav:
   home: 首页
   guide: 文档
+  releases: Releases
+  group_getting_started: 入门
+  group_content_authoring: 内容编写
+  group_runtime_apis: 运行时 API
   guide_hub: 目录
   guide_getting_started: 快速入门
   guide_framework_design: 框架设计
@@ -17,6 +21,7 @@ nav:
   guide_timeline_unlocks: 时间线与解锁
   guide_asset_profiles: 资源配置与回退
   guide_godot_scene: Godot 场景编写
+  guide_creature_visuals: 生物视觉与动画
   guide_mod_settings: Mod 设置
   guide_localization: 本地化与关键词
   guide_loc_string: LocString 占位符
@@ -24,6 +29,8 @@ nav:
   guide_patching: 补丁系统
   guide_persistence: 持久化
   guide_fmod: FMOD 与音频
+  guide_shell_theme: Shell 主题
+  guide_telemetry: 遥测后端
   guide_diagnostics: 诊断与兼容
 
 category:

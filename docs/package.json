@@ -4,16 +4,16 @@
   "private": true,
   "packageManager": "pnpm@10.24.0",
   "scripts": {
-    "build": "pnpm run generate:update-manifest && pnpm run build:ssg",
-    "build:spa": "pnpm run generate:update-manifest && valaxy build",
-    "build:ssg": "valaxy build --ssg",
-    "dev": "pnpm run generate:update-manifest && valaxy",
-    "generate:update-manifest": "node scripts/generate-update-manifest.mjs",
+    "build": "pnpm run build:ssg",
+    "build:spa": "valaxy build",
+    "build:fuse": "valaxy fuse && node ./scripts/enrich-fuse-content.mjs",
+    "build:ssg": "valaxy fuse && valaxy build --ssg && node ./scripts/enrich-fuse-content.mjs",
+    "dev": "pnpm run build:fuse && valaxy",
     "serve": "vite preview"
   },
   "dependencies": {
-    "valaxy": "^0.28.4",
-    "valaxy-theme-nova": "^0.3.1"
+    "valaxy": "^0.28.7",
+    "valaxy-theme-press": "^0.28.7"
   },
   "devDependencies": {
     "typescript": "^6.0.2"
