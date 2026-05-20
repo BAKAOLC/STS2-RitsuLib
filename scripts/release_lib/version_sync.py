@@ -6,7 +6,11 @@ from dataclasses import dataclass
 from pathlib import Path
 
 from release_lib.msbuild_eval import get_csproj_property
-from release_lib.repo_layout import CONST_CS_NAME, MOD_MANIFEST_NAME, RITSULIB_CSPROJ_NAME
+from release_lib.repo_layout import (
+    CONST_CS_NAME,
+    MOD_MANIFEST_NAME,
+    RITSULIB_CSPROJ_NAME,
+)
 
 
 @dataclass(frozen=True)

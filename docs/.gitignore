@@ -18,6 +18,7 @@ components.d.ts
 public/feed.xml
 public/feed.json
 public/atom.xml
+public/ritsulib-update.json
 
 # valaxy fuse
 public/valaxy-fuse-list.json

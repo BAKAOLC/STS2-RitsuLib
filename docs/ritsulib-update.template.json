@@ -1,0 +1,16 @@
+{
+  "$schema": "https://sts2-ritsulib.ritsukage.com/ritsulib-update.schema.json",
+  "schema": "ritsulib.update.v1",
+  "latest_version": "",
+  "release_page_url": "https://github.com/BAKAOLC/STS2-RitsuLib/releases",
+  "localized": {
+    "eng": {
+      "title": "RitsuLib update available",
+      "message": "RitsuLib {latest_version} is available. Current version: {current_version}. Click to open the release page."
+    },
+    "zhs": {
+      "title": "RitsuLib 有可用更新",
+      "message": "RitsuLib {latest_version} 已发布。当前版本：{current_version}。点击打开发布页。"
+    }
+  }
+}

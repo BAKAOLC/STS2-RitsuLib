@@ -1,6 +1,7 @@
 using STS2RitsuLib.Data;
 using STS2RitsuLib.Diagnostics;
 using STS2RitsuLib.Ui.Shell.Theme;
+using STS2RitsuLib.Updates;
 using STS2RitsuLib.Utils.Persistence;
 
 namespace STS2RitsuLib.Settings
@@ -37,6 +38,20 @@ namespace STS2RitsuLib.Settings
                         ModSettingsButtonTone.Normal,
                         T("ritsulib.uiShellTheme.resetFile.description",
                             "Overwrite existing built-in theme files on disk with their embedded default versions."))
+                    .AddToggle(
+                        "update_check_enabled",
+                        T("ritsulib.updateCheck.enabled.label", "Check for RitsuLib updates"),
+                        ui.UpdateCheckEnabled,
+                        T("ritsulib.updateCheck.enabled.description",
+                            "Checks RitsuLib's mirrored update manifest once after the first main menu load. No GitHub API endpoint is contacted."))
+                    .AddButton(
+                        "update_check_now",
+                        T("ritsulib.updateCheck.now.label", "Check now"),
+                        T("ritsulib.updateCheck.now.button", "Check for updates"),
+                        RitsuLibUpdateCheckService.CheckNowFromSettings,
+                        ModSettingsButtonTone.Normal,
+                        T("ritsulib.updateCheck.now.description",
+                            "Checks the bundled RitsuLib update source immediately and shows a toast with the result."))
                     .AddToggle(
                         "debug_compatibility_mode",
                         T("ritsulib.debugCompatibility.label", "Debug compatibility mode"),

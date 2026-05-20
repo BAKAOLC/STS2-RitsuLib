@@ -1,0 +1,49 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://sts2-ritsulib.ritsukage.com/ritsulib-update.schema.json",
+  "title": "RitsuLib update manifest",
+  "type": "object",
+  "properties": {
+    "$schema": {
+      "type": "string",
+      "format": "uri"
+    },
+    "schema": {
+      "type": "string",
+      "const": "ritsulib.update.v1"
+    },
+    "latest_version": {
+      "type": "string",
+      "minLength": 1
+    },
+    "release_page_url": {
+      "type": "string",
+      "format": "uri"
+    },
+    "title": {
+      "type": "string"
+    },
+    "message": {
+      "type": "string"
+    },
+    "localized": {
+      "type": "object",
+      "additionalProperties": {
+        "type": "object",
+        "properties": {
+          "title": {
+            "type": "string"
+          },
+          "message": {
+            "type": "string"
+          }
+        },
+        "additionalProperties": false
+      }
+    }
+  },
+  "required": [
+    "latest_version"
+  ],
+  "additionalProperties": true
+}

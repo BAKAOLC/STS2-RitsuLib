@@ -204,6 +204,13 @@ namespace STS2RitsuLib.Data.Models
         public string UiShellThemeId { get; set; } = "default";
 
         /// <summary>
+        ///     When true, RitsuLib checks its mirrored update manifest once after the first main menu load.
+        ///     为 true 时，RitsuLib 会在首次进入主菜单后检查一次镜像更新 manifest。
+        /// </summary>
+        [JsonPropertyName("update_check_enabled")]
+        public bool UpdateCheckEnabled { get; set; } = true;
+
+        /// <summary>
         ///     Enables global non-blocking toast notifications.
         ///     启用全局非阻塞 toast 通知。
         /// </summary>

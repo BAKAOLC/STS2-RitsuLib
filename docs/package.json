@@ -4,10 +4,11 @@
   "private": true,
   "packageManager": "pnpm@10.24.0",
   "scripts": {
-    "build": "pnpm run build:ssg",
-    "build:spa": "valaxy build",
+    "build": "pnpm run generate:update-manifest && pnpm run build:ssg",
+    "build:spa": "pnpm run generate:update-manifest && valaxy build",
     "build:ssg": "valaxy build --ssg",
-    "dev": "valaxy",
+    "dev": "pnpm run generate:update-manifest && valaxy",
+    "generate:update-manifest": "node scripts/generate-update-manifest.mjs",
     "serve": "vite preview"
   },
   "dependencies": {

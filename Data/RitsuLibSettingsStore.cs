@@ -148,6 +148,12 @@ namespace STS2RitsuLib.Data
             return GetSettings().SyncModDataToSteamCloud;
         }
 
+        internal static bool IsUpdateCheckEnabled()
+        {
+            Initialize();
+            return GetSettings().UpdateCheckEnabled;
+        }
+
         internal static RitsuToastSettings GetToastSettings()
         {
             Initialize();

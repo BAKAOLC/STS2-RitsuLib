@@ -36,6 +36,7 @@ using STS2RitsuLib.Timeline;
 using STS2RitsuLib.TopBar;
 using STS2RitsuLib.Ui.Toast;
 using STS2RitsuLib.Unlocks;
+using STS2RitsuLib.Updates;
 using STS2RitsuLib.Utils;
 using STS2RitsuLib.Utils.Persistence;
 using Logger = MegaCrit.Sts2.Core.Logging.Logger;
@@ -353,6 +354,7 @@ namespace STS2RitsuLib
                     EnsureFrameworkInteropBootstrapRegistered();
                     RuntimeHotkeyService.Initialize();
                     RitsuToastService.Initialize();
+                    RitsuLibUpdateCheckService.Initialize();
                     SubscribeLifecycleOnce<MainMenuReadyEvent>(_ =>
                     {
                         HarmonyPatchDumpCoordinator.TryAutoDumpOnFirstMainMenu();
