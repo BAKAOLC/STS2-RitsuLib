@@ -1,9 +1,13 @@
 using HarmonyLib;
+using MegaCrit.Sts2.Core.Helpers;
 using MegaCrit.Sts2.Core.Models;
 using MegaCrit.Sts2.Core.Multiplayer.Game.Lobby;
+using MegaCrit.Sts2.Core.Nodes;
+using MegaCrit.Sts2.Core.Nodes.Vfx;
 using MegaCrit.Sts2.Core.Saves;
 using MegaCrit.Sts2.Core.Saves.Managers;
 using MegaCrit.Sts2.Core.Saves.Runs;
+using MegaCrit.Sts2.Core.Timeline;
 using STS2RitsuLib.Compat;
 using STS2RitsuLib.Content;
 using STS2RitsuLib.Patching.Models;
@@ -80,6 +84,7 @@ namespace STS2RitsuLib.Unlocks.Patches
                 return false;
 
             SaveManager.Instance.ObtainEpoch(epochId);
+            NGame.Instance?.AddChildSafely(NGainEpochVfx.Create(EpochModel.Get(epochId)));
             if (!serializablePlayer.DiscoveredEpochs.Contains(epochId, StringComparer.Ordinal))
                 serializablePlayer.DiscoveredEpochs.Add(epochId);
 
@@ -155,6 +160,7 @@ namespace STS2RitsuLib.Unlocks.Patches
                 return false;
 
             SaveManager.Instance.ObtainEpoch(epochId);
+            NGame.Instance?.AddChildSafely(NGainEpochVfx.Create(EpochModel.Get(epochId)));
             if (!serializablePlayer.DiscoveredEpochs.Contains(epochId, StringComparer.Ordinal))
                 serializablePlayer.DiscoveredEpochs.Add(epochId);
 

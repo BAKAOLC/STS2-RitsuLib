@@ -1,5 +1,8 @@
 using MegaCrit.Sts2.Core.Context;
+using MegaCrit.Sts2.Core.Helpers;
 using MegaCrit.Sts2.Core.Models;
+using MegaCrit.Sts2.Core.Nodes;
+using MegaCrit.Sts2.Core.Nodes.Vfx;
 using MegaCrit.Sts2.Core.Runs;
 using MegaCrit.Sts2.Core.Saves;
 using MegaCrit.Sts2.Core.Saves.Runs;
@@ -671,6 +674,7 @@ namespace STS2RitsuLib.Unlocks
                     continue;
 
                 SaveManager.Instance.ObtainEpoch(rule.EpochId);
+                NGame.Instance?.AddChildSafely(NGainEpochVfx.Create(EpochModel.Get(rule.EpochId)));
                 if (!localPlayer.DiscoveredEpochs.Contains(rule.EpochId, StringComparer.Ordinal))
                     localPlayer.DiscoveredEpochs.Add(rule.EpochId);
 
