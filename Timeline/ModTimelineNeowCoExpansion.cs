@@ -62,6 +62,37 @@ namespace STS2RitsuLib.Timeline
                    && ids.Contains(EpochModel.GetId<Silent1Epoch>());
         }
 
+        internal static IReadOnlyList<string> GetModCharacterRootEpochIdsUnlockedAfterRunAs(
+            ModelId prerequisiteCharacterId)
+        {
+            var result = new List<string>();
+            var ironcladId = ModelDb.GetId<Ironclad>();
+
+            foreach (var id in EpochModel.AllEpochIds)
+            {
+                EpochModel model;
+                try
+                {
+                    model = EpochModel.Get(id);
+                }
+                catch
+                {
+                    continue;
+                }
+
+                if (!TryGetCharacterRootUnlockPrerequisite(model, out var registeredPrerequisiteId))
+                    continue;
+                if (registeredPrerequisiteId == ironcladId)
+                    continue;
+                if (registeredPrerequisiteId != prerequisiteCharacterId)
+                    continue;
+
+                result.Add(model.Id);
+            }
+
+            return result;
+        }
+
         internal static void MergeModEpochTemplateSlotsInto(List<EpochSlotData> slotsToAdd, ProgressState? progress)
         {
             PromoteNeowCharacterRootUnlocks(progress);
@@ -233,6 +264,14 @@ namespace STS2RitsuLib.Timeline
 
         private static bool ShouldObtainWithNeow(EpochModel model)
         {
+            return TryGetCharacterRootUnlockPrerequisite(model, out var prerequisiteId) &&
+                   prerequisiteId == ModelDb.GetId<Ironclad>();
+        }
+
+        private static bool TryGetCharacterRootUnlockPrerequisite(EpochModel model, out ModelId prerequisiteId)
+        {
+            prerequisiteId = null!;
+
             if (model is not ModEpochTemplate)
                 return false;
             if (!IsModTimelineRootSlot(model.Id))
@@ -250,16 +289,20 @@ namespace STS2RitsuLib.Timeline
                 return false;
             }
 
-            if (character == null)
-                return false;
-            if (character is IModCharacterEpochTimelineRequirement { RequiresEpochAndTimeline: false })
-                return false;
+            switch (character)
+            {
+                case null:
+                case IModCharacterEpochTimelineRequirement { RequiresEpochAndTimeline: false }:
+                    return false;
+            }
+
             if (character is not IModCharacterUnlockPrerequisite { UnlocksAfterRunAsType: { } prerequisiteType })
                 return false;
 
             try
             {
-                return ModelDb.GetId(prerequisiteType) == ModelDb.GetId<Ironclad>();
+                prerequisiteId = ModelDb.GetId(prerequisiteType);
+                return true;
             }
             catch
             {

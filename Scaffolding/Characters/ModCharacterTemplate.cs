@@ -450,19 +450,18 @@ namespace STS2RitsuLib.Scaffolding.Characters
 
         /// <summary>
         ///     Optional prerequisite character type for vanilla <see cref="CharacterModel.GetUnlockText" /> (the
-        ///     <c>{Prerequisite}</c> placeholder). When set to <see cref="MegaCrit.Sts2.Core.Models.Characters.Ironclad" />,
-        ///     root <see cref="Timeline.Scaffolding.CharacterUnlockEpochTemplate{TCharacter}" /> slots are obtained with
-        ///     Neow's initial expansion so they match the Silent unlock path. Other unlock rules should still be aligned
-        ///     with <see cref="Unlocks.ModUnlockRegistry" />.
+        ///     <c>{Prerequisite}</c> placeholder). Root
+        ///     <see cref="Timeline.Scaffolding.CharacterUnlockEpochTemplate{TCharacter}" /> slots whose character declares
+        ///     this property are obtained with Neow's initial expansion for
+        ///     <see cref="MegaCrit.Sts2.Core.Models.Characters.Ironclad" /> prerequisites, or after a completed run as any
+        ///     other prerequisite character.
         ///     用于原版 <see cref="CharacterModel.GetUnlockText" /> 的可选前置角色类型（
-        ///     <c>{Prerequisite}</c> 占位符）。当设置为
-        ///     <see cref="MegaCrit.Sts2.Core.Models.Characters.Ironclad" /> 时，根
-        ///     <see cref="Timeline.Scaffolding.CharacterUnlockEpochTemplate{TCharacter}" /> 槽位会随 Neow 初始扩展获得，
-        ///     以匹配 Silent 解锁路径。其他解锁规则仍应与 <see cref="Unlocks.ModUnlockRegistry" /> 对齐。
+        ///     <c>{Prerequisite}</c> 占位符）。角色声明此属性时，其根
+        ///     <see cref="Timeline.Scaffolding.CharacterUnlockEpochTemplate{TCharacter}" /> 槽位会在前置为
+        ///     <see cref="MegaCrit.Sts2.Core.Models.Characters.Ironclad" /> 时随 Neow 初始扩展获得；其他前置角色则在完成该角色 run
+        ///     后获得。
         /// </summary>
         protected virtual Type? UnlocksAfterRunAsType => null;
-
-        Type? IModCharacterUnlockPrerequisite.UnlocksAfterRunAsType => UnlocksAfterRunAsType;
 
         /// <summary>
         ///     Placeholder vanilla character id used when merging partial <see cref="CharacterAssetProfile" /> data
@@ -609,6 +608,8 @@ namespace STS2RitsuLib.Scaffolding.Characters
         {
             return SetupCustomMerchantAnimationStateMachine(merchantRoot, character);
         }
+
+        Type? IModCharacterUnlockPrerequisite.UnlocksAfterRunAsType => UnlocksAfterRunAsType;
 
         /// <inheritdoc />
         public virtual bool HideFromVanillaCharacterSelect => false;

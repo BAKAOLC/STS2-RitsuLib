@@ -33,7 +33,7 @@ namespace STS2RitsuLib.Unlocks
         private static readonly Dictionary<ModelId, CountedEpochUnlockRule> BossEpochRulesByCharacterId = [];
         private static readonly Dictionary<ModelId, string> AscensionOneEpochsByCharacterId = [];
         private static readonly Dictionary<ModelId, string> AscensionRevealEpochsByCharacterId = [];
-        private static readonly Dictionary<ModelId, string> PostRunCharacterUnlockEpochsByCharacterId = [];
+        private static readonly Dictionary<ModelId, List<string>> PostRunCharacterUnlockEpochsByCharacterId = [];
 
         private static readonly HashSet<string> ModIdsIgnoringEpochRequirements =
             new(StringComparer.OrdinalIgnoreCase);
@@ -478,7 +478,14 @@ namespace STS2RitsuLib.Unlocks
 
             lock (SyncRoot)
             {
-                PostRunCharacterUnlockEpochsByCharacterId[characterId] = epochId;
+                if (!PostRunCharacterUnlockEpochsByCharacterId.TryGetValue(characterId, out var epochIds))
+                {
+                    epochIds = [];
+                    PostRunCharacterUnlockEpochsByCharacterId[characterId] = epochIds;
+                }
+
+                if (!epochIds.Contains(epochId, StringComparer.Ordinal))
+                    epochIds.Add(epochId);
             }
         }
 
@@ -626,7 +633,25 @@ namespace STS2RitsuLib.Unlocks
         {
             lock (SyncRoot)
             {
-                return PostRunCharacterUnlockEpochsByCharacterId.TryGetValue(characterId, out epochId!);
+                if (PostRunCharacterUnlockEpochsByCharacterId.TryGetValue(characterId, out var epochIds) &&
+                    epochIds.Count > 0)
+                {
+                    epochId = epochIds[0];
+                    return true;
+                }
+            }
+
+            epochId = string.Empty;
+            return false;
+        }
+
+        internal static string[] GetPostRunCharacterUnlockEpochs(ModelId characterId)
+        {
+            lock (SyncRoot)
+            {
+                return PostRunCharacterUnlockEpochsByCharacterId.TryGetValue(characterId, out var epochIds)
+                    ? [.. epochIds]
+                    : [];
             }
         }
 
