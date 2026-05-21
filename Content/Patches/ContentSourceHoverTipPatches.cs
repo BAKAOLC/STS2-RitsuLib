@@ -50,6 +50,9 @@ namespace STS2RitsuLib.Content.Patches
                 return;
 
             var info = ContentSourceHoverTipFactory.ResolveKeyword(keyword);
+            if (info.IsVanilla)
+                return;
+
             if (__result is not HoverTip tip) return;
             ContentSourceHoverTipPatchHelper.Append(info, ref tip);
             __result = tip;
@@ -88,11 +91,17 @@ namespace STS2RitsuLib.Content.Patches
             if (__instance is IContentSourceSupplier supplier)
             {
                 var source = ContentSourceHoverTipFactory.Resolve(supplier);
+                if (source.IsVanilla)
+                    return;
+
                 ContentSourceHoverTipPatchHelper.Append(source, ref __result);
                 return;
             }
 
             var info = ContentSourceHoverTipFactory.Resolve(__instance.GetType());
+            if (info.IsVanilla)
+                return;
+
             ContentSourceHoverTipPatchHelper.Append(info, ref __result);
         }
     }

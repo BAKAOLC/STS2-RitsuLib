@@ -38,6 +38,12 @@ namespace STS2RitsuLib.Content
             var source = model is IContentSourceSupplier supplier
                 ? Resolve(supplier)
                 : Resolve(model.GetType());
+            if (source.IsVanilla)
+            {
+                tip = null!;
+                return false;
+            }
+
             tip = CreateTip(source);
             return true;
         }
@@ -161,9 +167,13 @@ namespace STS2RitsuLib.Content
         {
             public static ContentSourceInfo Vanilla { get; } = new("Vanilla", "Slay The Spire2");
 
+            public bool IsVanilla => string.Equals(Id, Vanilla.Id, StringComparison.OrdinalIgnoreCase);
+
             public string Format()
             {
-                return $"{DisplayName} ({Id})";
+                return string.Equals(DisplayName, Id, StringComparison.OrdinalIgnoreCase)
+                    ? DisplayName
+                    : $"{DisplayName} ({Id})";
             }
         }
     }
