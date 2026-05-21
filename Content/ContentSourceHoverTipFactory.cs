@@ -35,7 +35,9 @@ namespace STS2RitsuLib.Content
                 return false;
             }
 
-            var source = Resolve(model.GetType());
+            var source = model is IContentSourceSupplier supplier
+                ? Resolve(supplier)
+                : Resolve(model.GetType());
             tip = CreateTip(source);
             return true;
         }
@@ -74,12 +76,22 @@ namespace STS2RitsuLib.Content
 
         internal static ContentSourceInfo ResolveKeyword(CardKeyword keyword)
         {
-            if (ModKeywordRegistry.TryGetByCardKeyword(keyword, out var def))
-            {
-                return ResolveMod(def.ModId);
-            }
+            return ModKeywordRegistry.TryGetByCardKeyword(keyword, out var def)
+                ? ResolveMod(def.ModId)
+                : ContentSourceInfo.Vanilla;
+        }
 
-            return ContentSourceInfo.Vanilla;
+        internal static ContentSourceInfo Resolve(IContentSourceSupplier supplier)
+        {
+            var source = supplier.ContentSource;
+            var modId = NormalizeModId(source.ModId);
+            if (string.Equals(modId, ContentSourceInfo.Vanilla.Id, StringComparison.OrdinalIgnoreCase))
+                return ContentSourceInfo.Vanilla;
+
+            var displayName = string.IsNullOrWhiteSpace(source.DisplayName)
+                ? ModSettingsLocalization.ResolveModName(modId, modId)
+                : source.DisplayName;
+            return CacheModSource(new(modId, NormalizeDisplayName(displayName, modId)));
         }
 
         private static ContentSourceInfo ResolveUncached(Type modelType)
@@ -130,9 +142,14 @@ namespace STS2RitsuLib.Content
         private static string NormalizeModId(string? modId, Assembly assembly)
         {
             if (!string.IsNullOrWhiteSpace(modId))
-                return modId.Trim();
+                return NormalizeModId(modId);
 
             return assembly.GetName().Name ?? "<unknown>";
+        }
+
+        private static string NormalizeModId(string? modId)
+        {
+            return string.IsNullOrWhiteSpace(modId) ? "<unknown>" : modId.Trim();
         }
 
         private static string NormalizeDisplayName(string? displayName, string fallback)
