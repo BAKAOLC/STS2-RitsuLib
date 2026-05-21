@@ -70,6 +70,13 @@ namespace STS2RitsuLib.Data.Models
         public bool DebugCompatAncientArchitect { get; set; } = true;
 
         /// <summary>
+        ///     When true, cards, relics, and potions append a hover tip showing their source mod.
+        ///     为 true 时，卡牌、遗物和药水会追加显示其来源 mod 的悬停提示。
+        /// </summary>
+        [JsonPropertyName("mod_source_hover_tips_enabled")]
+        public bool ModSourceHoverTipsEnabled { get; set; } = true;
+
+        /// <summary>
         ///     Absolute path or Godot <c>user://</c> path for Harmony patch dump output (text log).
         ///     Harmony 补丁转储输出（文本日志）的绝对路径或 Godot <c>user://</c> 路径。
         /// </summary>

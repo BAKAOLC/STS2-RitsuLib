@@ -18,6 +18,8 @@ namespace STS2RitsuLib.Settings
         public IModSettingsValueBinding<bool> DebugCompatAncientArchitect { get; private init; } =
             null!;
 
+        public IModSettingsValueBinding<bool> ModSourceHoverTipsEnabled { get; private init; } = null!;
+
         public IModSettingsValueBinding<string> HarmonyPatchDumpOutputPath { get; private init; } =
             null!;
 
@@ -128,6 +130,13 @@ namespace STS2RitsuLib.Settings
                         settings => settings.DebugCompatAncientArchitect,
                         (settings, value) => settings.DebugCompatAncientArchitect = value),
                     () => defaults.DebugCompatAncientArchitect),
+                ModSourceHoverTipsEnabled = ModSettingsBindings.WithDefault(
+                    ModSettingsBindings.Global<RitsuLibSettings, bool>(
+                        Const.ModId,
+                        Const.SettingsKey,
+                        settings => settings.ModSourceHoverTipsEnabled,
+                        (settings, value) => settings.ModSourceHoverTipsEnabled = value),
+                    () => defaults.ModSourceHoverTipsEnabled),
                 HarmonyPatchDumpOutputPath = ModSettingsBindings.WithDefault(
                     ModSettingsBindings.Global<RitsuLibSettings, string>(
                         Const.ModId,

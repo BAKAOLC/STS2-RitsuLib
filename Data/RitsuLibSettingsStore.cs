@@ -116,6 +116,12 @@ namespace STS2RitsuLib.Data
             return s is { DebugCompatibilityMode: true, DebugCompatAncientArchitect: true };
         }
 
+        internal static bool IsModSourceHoverTipsEnabled()
+        {
+            Initialize();
+            return GetSettings().ModSourceHoverTipsEnabled;
+        }
+
         private static RitsuLibSettings GetSettings()
         {
             return Store.Get<RitsuLibSettings>(Const.SettingsKey);
