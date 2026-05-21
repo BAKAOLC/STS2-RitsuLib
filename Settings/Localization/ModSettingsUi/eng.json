@@ -93,7 +93,7 @@
   "ritsulib.updateCheck.enabled.description": "Checks for RitsuLib updates once after the first main menu load.",
   "ritsulib.modSourceHoverTips.enabled.label": "Show content source hover tips",
   "ritsulib.modSourceHoverTips.enabled.description": "Adds a hover tip to cards, relics, and potions showing which mod provides them.",
-  "ritsulib.modSourceHoverTip.title": "what mod is this from",
+  "ritsulib.modSourceHoverTip.title": "what mod is this from?",
   "ritsulib.updateCheck.now.label": "Check now",
   "ritsulib.updateCheck.now.button": "Check for updates",
   "ritsulib.updateCheck.now.description": "Checks the bundled RitsuLib update source immediately and shows a toast with the result.",

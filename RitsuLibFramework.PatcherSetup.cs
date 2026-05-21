@@ -264,10 +264,9 @@ namespace STS2RitsuLib
             patcher.RegisterPatch<CardBannerMaterialPatch>();
             patcher.RegisterPatch<CardDynamicVarTooltipPatch>();
             patcher.RegisterPatch<DynamicVarTooltipClonePatch>();
-            patcher.RegisterPatch<CardModelSourceHoverTipPatch>();
-            patcher.RegisterPatch<RelicModelSourceHoverTipPatch>();
-            patcher.RegisterPatch<RelicModelSourceHoverTipExcludingRelicPatch>();
-            patcher.RegisterPatch<PotionModelSourceHoverTipPatch>();
+            patcher.RegisterPatch<ContentSourceKeywordHoverTipPatch>();
+            patcher.RegisterPatch<ContentSourceModelHoverTipPatch>();
+            patcher.RegisterPatch<ContentSourceNHoverTipSetShowPatch>();
             patcher.RegisterPatch<ModKeywordCardDescriptionPatches>();
             patcher.RegisterPatch<EnergyIconHelperPathPatch>();
             patcher.RegisterPatch<EnergyIconFormatterPatch>();

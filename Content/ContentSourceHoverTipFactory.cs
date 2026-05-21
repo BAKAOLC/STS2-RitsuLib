@@ -1,9 +1,11 @@
 using System.Reflection;
+using MegaCrit.Sts2.Core.Entities.Cards;
 using MegaCrit.Sts2.Core.HoverTips;
 using MegaCrit.Sts2.Core.Localization;
 using MegaCrit.Sts2.Core.Models;
 using STS2RitsuLib.Compat;
 using STS2RitsuLib.Data;
+using STS2RitsuLib.Keywords;
 using STS2RitsuLib.Localization;
 using STS2RitsuLib.Settings;
 
@@ -46,14 +48,14 @@ namespace STS2RitsuLib.Content
             };
         }
 
-        private static LocString GetTitle()
+        internal static LocString GetTitle()
         {
             I18NLocTableBridge.TryRegister(Const.ModId, ModSettingsLocalization.Instance, LocTableStem);
             var tableId = I18NLocTableBridge.GetTableId(Const.ModId, LocTableStem);
             return new(tableId, TitleKey);
         }
 
-        private static ContentSourceInfo Resolve(Type modelType)
+        internal static ContentSourceInfo Resolve(Type modelType)
         {
             lock (SyncRoot)
             {
@@ -68,6 +70,16 @@ namespace STS2RitsuLib.Content
             }
 
             return resolved;
+        }
+
+        internal static ContentSourceInfo ResolveKeyword(CardKeyword keyword)
+        {
+            if (ModKeywordRegistry.TryGetByCardKeyword(keyword, out var def))
+            {
+                return ResolveMod(def.ModId);
+            }
+
+            return ContentSourceInfo.Vanilla;
         }
 
         private static ContentSourceInfo ResolveUncached(Type modelType)
@@ -128,7 +140,7 @@ namespace STS2RitsuLib.Content
             return string.IsNullOrWhiteSpace(displayName) ? fallback : displayName.Trim();
         }
 
-        private readonly record struct ContentSourceInfo(string Id, string DisplayName)
+        internal readonly record struct ContentSourceInfo(string Id, string DisplayName)
         {
             public static ContentSourceInfo Vanilla { get; } = new("Vanilla", "Slay The Spire2");
 
