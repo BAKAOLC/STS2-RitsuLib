@@ -473,8 +473,8 @@ namespace STS2RitsuLib.Scaffolding.Content
     }
 
     /// <summary>
-    ///     Optional timeline epoch portrait paths (vanilla <c>EpochModel.PackedPortraitPath</c> / <c>BigPortraitPath</c>).
-    ///     可选时间线纪元肖像路径（原版 <c>EpochModel.PackedPortraitPath</c> / <c>BigPortraitPath</c>）。
+    ///     Optional timeline epoch portrait paths.
+    ///     可选时间线纪元肖像路径。
     /// </summary>
     /// <param name="PackedPortraitPath">
     ///     Atlas sprite resource path for the small timeline portrait.

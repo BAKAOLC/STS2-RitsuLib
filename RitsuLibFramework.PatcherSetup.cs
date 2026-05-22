@@ -248,6 +248,9 @@ namespace STS2RitsuLib
 
             var patcher = CreatePatcher(Const.ModId, "framework-content-assets", "content assets");
             patcher.RegisterPatch<EpochPortraitPathPatch>();
+#if STS2_AT_LEAST_0_106_0
+            patcher.RegisterPatch<EpochArtPlaceholderPatch>();
+#endif
             patcher.RegisterPatch<CardPortraitPathPatch>();
             patcher.RegisterPatch<CardPortraitAvailabilityPatch>();
             patcher.RegisterPatch<CardTextureOverridePatch>();

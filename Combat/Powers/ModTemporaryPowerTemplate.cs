@@ -195,7 +195,12 @@ namespace STS2RitsuLib.Combat.Powers
         }
 
         /// <inheritdoc />
+#if STS2_AT_LEAST_0_106_0
+        public override async Task AfterSideTurnEnd(PlayerChoiceContext choiceContext, CombatSide side,
+            IEnumerable<Creature> participants)
+#else
         public override async Task AfterTurnEnd(PlayerChoiceContext choiceContext, CombatSide side)
+#endif
         {
             var expiresOnThisSide = UntilEndOfOtherSideTurn ? side != Owner.Side : side == Owner.Side;
             if (!expiresOnThisSide)
