@@ -6,7 +6,7 @@ namespace STS2RitsuLib.Utils
     ///     Factory helpers for Godot materials that mirror vanilla game shaders.
     ///     用于镜像原版游戏着色器的 Godot 材质工厂辅助方法。
     /// </summary>
-    public static class MaterialUtils
+    public static partial class MaterialUtils
     {
         private const string HsvShaderPath = "res://shaders/hsv.gdshader";
         private const string DoomBarShaderPath = "res://scenes/combat/doom_bar.gdshader";
@@ -14,34 +14,45 @@ namespace STS2RitsuLib.Utils
         private static NoiseTexture2D? _vanillaDoomBarNoiseTexture;
         private static ShaderMaterial? _unmodulatedHsvMaterial;
 
-        private static Shader? GameHsvShader => (Shader?)GD.Load<Shader>(HsvShaderPath)?.Duplicate();
+        private static Shader? _gameHsvShader;
+        private static Shader GameHsvShader => _gameHsvShader ??= GD.Load<Shader>(HsvShaderPath) ?? throw new InvalidOperationException($"Failed to load HSV shader ({HsvShaderPath}).");
 
-        private static Shader? GameDoomBarShader => (Shader?)GD.Load<Shader>(DoomBarShaderPath)?.Duplicate();
+        private static Shader? _gameDoomBarShader;
+        private static Shader? GameDoomBarShader => _gameDoomBarShader ??= GD.Load<Shader>(DoomBarShaderPath) ?? throw new InvalidOperationException($"Failed to load doom bar shader ({DoomBarShaderPath}).");
+
+        private static Shader? _replaceHueShader;
+        private static Shader ReplaceHueShader => _replaceHueShader ??= new Shader
+        {
+            Code = ReplaceHueShaderSource,
+        };
 
         private static NoiseTexture2D VanillaDoomBarNoiseTexture =>
             _vanillaDoomBarNoiseTexture ??= CreateVanillaDoomBarNoiseTexture();
 
         /// <summary>
+        ///     Builds a <c>ShaderMaterial</c> using a custom shader that replaces the hue of the input texture
+        ///     with a caller-specified RGB color, while preserving the original brightness and saturation.
+        ///     Suitable for replacing hues when using vanilla card frames. A brightness parameter can be used 
+        ///     to adjust output brightness (range 0-2, default is 1).
+        ///     使用一个自定义着色器构建 <c>ShaderMaterial</c>，该着色器将输入纹理的色调替换为调用方指定的 RGB 颜色，
+        ///     同时保留原始亮度和饱和度。适用于使用原版卡框时替换色调。可传入亮度参数以调整输出亮度（范围 0-2，默认值为 1）。
+        /// </summary>
+        public static ShaderMaterial CreateReplaceHueShaderMaterial(float r, float g, float b, float brightness = 1f)
+        {
+            var material = new ShaderMaterial { Shader = ReplaceHueShader };
+            material.SetShaderParameter("target_color", new Vector3(r, g, b));
+            material.SetShaderParameter("brightness", brightness);
+            return material;
+        }
+
+        /// <summary>
         ///     Builds a <c>ShaderMaterial</c> using the game's HSV shader with the given RGB parameters.
         ///     使用游戏的 HSV 着色器和给定 RGB 参数构建 <c>ShaderMaterial</c>。
         /// </summary>
+        [Obsolete("Prefer MaterialUtils.CreateReplaceHueShaderMaterial instead.")]
         public static ShaderMaterial CreateRgbShaderMaterial(float r, float g, float b)
         {
-            var max = Math.Max(r, Math.Max(g, b));
-            var min = Math.Min(r, Math.Min(g, b));
-            var delta = max - min;
-
-            float h = 0;
-            if (delta != 0)
-            {
-                if (Mathf.IsEqualApprox(max, r)) h = (g - b) / delta + (g < b ? 6 : 0);
-                else if (Mathf.IsEqualApprox(max, g)) h = (b - r) / delta + 2;
-                else h = (r - g) / delta + 4;
-                h /= 6;
-            }
-
-            var s = max == 0 ? 0 : delta / max;
-            return CreateHsvShaderMaterial(h, s, max);
+            return CreateReplaceHueShaderMaterial(r, g, b);
         }
 
         /// <summary>
@@ -50,18 +61,10 @@ namespace STS2RitsuLib.Utils
         /// </summary>
         public static ShaderMaterial CreateHsvShaderMaterial(float h, float s, float v)
         {
-            var shader = GameHsvShader ??
-                         throw new InvalidOperationException($"Failed to load HSV shader ({HsvShaderPath}).");
-
-            var material = new ShaderMaterial
-            {
-                Shader = shader,
-            };
-
+            var material = new ShaderMaterial { Shader = GameHsvShader };
             material.SetShaderParameter("h", h);
             material.SetShaderParameter("s", s);
             material.SetShaderParameter("v", v);
-
             return material;
         }
 
@@ -100,11 +103,7 @@ namespace STS2RitsuLib.Utils
         {
             ArgumentNullException.ThrowIfNull(gradientTexture);
 
-            var shader = GameDoomBarShader;
-            if (shader == null)
-                throw new InvalidOperationException($"Failed to load doom bar shader ({DoomBarShaderPath}).");
-
-            var material = new ShaderMaterial { Shader = shader };
+            var material = new ShaderMaterial { Shader = GameDoomBarShader };
             material.SetShaderParameter("noise_tex", VanillaDoomBarNoiseTexture);
             material.SetShaderParameter("gradient_tex", gradientTexture);
             return material;
