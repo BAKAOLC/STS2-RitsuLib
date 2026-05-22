@@ -95,6 +95,14 @@ namespace STS2RitsuLib.Models.Capabilities
 
         private static void Import(AbstractModel model, ModelComponentSaveDocument? document)
         {
+            if (ModelComponentUpgradeReplayContext.TryDeferCardComponentImport(model, document))
+                return;
+
+            ImportImmediate(model, document);
+        }
+
+        internal static void ImportImmediate(AbstractModel model, ModelComponentSaveDocument? document)
+        {
             var collection = Get(model);
             collection.Load(document);
         }
@@ -158,6 +166,30 @@ namespace STS2RitsuLib.Models.Capabilities
             where TComponent : class, IModelComponent
         {
             return ModelComponents.Get(model).GetOrCreateRegistered<TComponent>(options);
+        }
+
+        /// <summary>
+        ///     Gets an existing registered component, or creates it as part of this model's upgrade.
+        ///     获取已有已注册组件；不存在时作为此模型升级的一部分创建。
+        /// </summary>
+        public static TComponent GetOrCreateRegisteredUpgradeComponent<TComponent>(
+            this AbstractModel model,
+            bool allowMerge = true)
+            where TComponent : class, IModelComponent
+        {
+            return ModelComponents.Get(model).GetOrCreateRegisteredForUpgrade<TComponent>(allowMerge);
+        }
+
+        /// <summary>
+        ///     Creates a registered component and applies it as part of this model's upgrade.
+        ///     创建已注册组件，并作为此模型升级的一部分应用。
+        /// </summary>
+        public static TComponent? AddRegisteredUpgradeComponent<TComponent>(
+            this AbstractModel model,
+            bool allowMerge = true)
+            where TComponent : class, IModelComponent
+        {
+            return ModelComponents.Get(model).AddRegisteredForUpgrade<TComponent>(allowMerge);
         }
 
         /// <summary>

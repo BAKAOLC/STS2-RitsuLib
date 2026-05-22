@@ -9,6 +9,7 @@ using MegaCrit.Sts2.Core.Localization.DynamicVars;
 using MegaCrit.Sts2.Core.Models;
 using MegaCrit.Sts2.Core.Nodes.CommonUi;
 using MegaCrit.Sts2.Core.Random;
+using MegaCrit.Sts2.Core.Saves.Runs;
 using STS2RitsuLib.Patching.Models;
 
 namespace STS2RitsuLib.Models.Capabilities.Patches
@@ -71,6 +72,44 @@ namespace STS2RitsuLib.Models.Capabilities.Patches
             {
                 if (ReferenceEquals(dynamicVarSet, __instance.DynamicVars))
                     CardModelComponentCapabilityHost.UpdateDynamicVarPreviews(__instance, previewMode, target);
+            }
+        }
+
+        internal sealed class FromSerializableUpgradeReplayPatch : IPatchMethod
+        {
+            public static string PatchId => "ritsulib_card_component_from_serializable_upgrade_replay";
+
+            public static string Description =>
+                "Defer saved card component imports until CardModel.FromSerializable upgrade replay completes";
+
+            public static bool IsCritical => false;
+
+            public static ModPatchTarget[] GetTargets()
+            {
+                return [new(typeof(CardModel), nameof(CardModel.FromSerializable), [typeof(SerializableCard)])];
+            }
+
+            // ReSharper disable once InconsistentNaming
+            public static void Prefix(out IDisposable __state)
+            {
+                __state = ModelComponentUpgradeReplayContext.BeginCardDeserializeReplay();
+            }
+
+            // ReSharper disable InconsistentNaming
+            public static Exception? Finalizer(Exception? __exception, CardModel? __result, IDisposable? __state)
+                // ReSharper restore InconsistentNaming
+            {
+                try
+                {
+                    if (__exception == null)
+                        ModelComponentUpgradeReplayContext.FlushDeferredCardComponentImport(__result);
+                }
+                finally
+                {
+                    __state?.Dispose();
+                }
+
+                return __exception;
             }
         }
 

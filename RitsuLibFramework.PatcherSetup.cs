@@ -229,6 +229,7 @@ namespace STS2RitsuLib
             patcher.RegisterPatch<ModelComponentHookListenerPatches.RunStateHookListenersPatch>();
             patcher.RegisterPatch<ModelComponentHookListenerPatches.CombatStateHookListenersPatch>();
             patcher.RegisterPatch<CardModelComponentCapabilityPatches.UpdateDynamicVarPreviewPatch>();
+            patcher.RegisterPatch<CardModelComponentCapabilityPatches.FromSerializableUpgradeReplayPatch>();
             patcher.RegisterPatch<CardModelComponentCapabilityPatches.UpgradeInternalPatch>();
             patcher.RegisterPatch<CardModelComponentCapabilityPatches.FinalizeUpgradeInternalPatch>();
             patcher.RegisterPatch<CardModelComponentCapabilityPatches.DowngradeInternalPatch>();

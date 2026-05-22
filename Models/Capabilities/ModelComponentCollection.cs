@@ -130,6 +130,15 @@ namespace STS2RitsuLib.Models.Capabilities
         }
 
         /// <summary>
+        ///     Adds a component as part of an owner upgrade.
+        ///     作为 owner 升级的一部分添加组件。
+        /// </summary>
+        public IModelComponent? AddForUpgrade(IModelComponent component, bool allowMerge = true)
+        {
+            return Apply(component, ApplyModelComponentOptions.Upgrade(allowMerge));
+        }
+
+        /// <summary>
         ///     Adds a component and returns the typed result.
         ///     添加组件并返回类型化结果。
         /// </summary>
@@ -137,6 +146,32 @@ namespace STS2RitsuLib.Models.Capabilities
             where TComponent : class, IModelComponent
         {
             return Add((IModelComponent)component, allowMerge, isUpgrade) as TComponent;
+        }
+
+        /// <summary>
+        ///     Adds a component as part of an owner upgrade and returns the typed result.
+        ///     作为 owner 升级的一部分添加组件并返回类型化结果。
+        /// </summary>
+        public TComponent? AddForUpgrade<TComponent>(TComponent component, bool allowMerge = true)
+            where TComponent : class, IModelComponent
+        {
+            return AddForUpgrade((IModelComponent)component, allowMerge) as TComponent;
+        }
+
+        /// <summary>
+        ///     Creates a registered component and applies it as part of an owner upgrade.
+        ///     创建已注册组件，并作为 owner 升级的一部分应用。
+        /// </summary>
+        public TComponent? AddRegisteredForUpgrade<TComponent>(bool allowMerge = true)
+            where TComponent : class, IModelComponent
+        {
+            var componentId = ModelComponentRegistry.GetComponentId<TComponent>();
+            if (componentId == null)
+                throw new InvalidOperationException(
+                    $"Model component type is not registered: {typeof(TComponent).FullName}");
+
+            return Apply(ModelComponentRegistry.Create(componentId),
+                ApplyModelComponentOptions.Upgrade(allowMerge)) as TComponent;
         }
 
         /// <summary>
@@ -420,6 +455,16 @@ namespace STS2RitsuLib.Models.Capabilities
             var component = Apply(ModelComponentRegistry.Create(componentId), options) as TComponent;
             return component ?? throw new InvalidOperationException(
                 $"Registered component '{componentId}' is not a '{typeof(TComponent).FullName}'.");
+        }
+
+        /// <summary>
+        ///     Gets an existing registered component, or creates it as part of an owner upgrade.
+        ///     获取已有已注册组件；不存在时作为 owner 升级的一部分创建。
+        /// </summary>
+        public TComponent GetOrCreateRegisteredForUpgrade<TComponent>(bool allowMerge = true)
+            where TComponent : class, IModelComponent
+        {
+            return GetOrCreateRegistered<TComponent>(ApplyModelComponentOptions.Upgrade(allowMerge));
         }
 
         /// <summary>

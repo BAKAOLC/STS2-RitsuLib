@@ -146,7 +146,19 @@ namespace STS2RitsuLib.Models.Capabilities
         bool AllowMerge = true,
         bool UseSubtractiveMerge = false,
         bool IsUpgrade = false,
-        IReadOnlyDictionary<string, object?>? Extra = null);
+        IReadOnlyDictionary<string, object?>? Extra = null)
+    {
+        /// <summary>
+        ///     Creates options for applying a component as part of an owner upgrade.
+        ///     创建用于在 owner 升级期间应用组件的选项。
+        /// </summary>
+        public static ApplyModelComponentOptions Upgrade(
+            bool allowMerge = true,
+            IReadOnlyDictionary<string, object?>? extra = null)
+        {
+            return new(allowMerge, false, true, extra);
+        }
+    }
 
     /// <summary>
     ///     Controls how unknown saved component entries are handled by bulk collection operations.
