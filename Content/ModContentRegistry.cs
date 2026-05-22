@@ -260,6 +260,20 @@ namespace STS2RitsuLib.Content
         }
 
         /// <summary>
+        ///     Builds a mod-scoped <see cref="MegaCrit.Sts2.Core.Entities.Cards.TargetType" /> id using the ritsulib
+        ///     three-segment convention with middle segment <c>TARGETTYPE</c>.
+        ///     使用 ritsulib 三段式约定构建 mod 作用域的
+        ///     <see cref="MegaCrit.Sts2.Core.Entities.Cards.TargetType" /> ID，中间段为 <c>TARGETTYPE</c>。
+        /// </summary>
+        public static string GetQualifiedTargetTypeId(string modId, string localTargetTypeStem)
+        {
+            ArgumentException.ThrowIfNullOrWhiteSpace(modId);
+            ArgumentException.ThrowIfNullOrWhiteSpace(localTargetTypeStem);
+
+            return GetCompoundId(modId, "TARGETTYPE", localTargetTypeStem);
+        }
+
+        /// <summary>
         ///     Builds a mod-scoped top-bar-button id in the ritsulib <c>MODID_CATEGORY_TYPENAME</c> public
         ///     entry style (uppercase, three segments, underscore-separated, middle segment fixed to
         ///     <c>TOPBARBUTTON</c>). Used by <see cref="STS2RitsuLib.TopBar.ModTopBarButtonRegistry" />; the

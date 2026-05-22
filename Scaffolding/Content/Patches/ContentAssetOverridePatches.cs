@@ -647,8 +647,8 @@ namespace STS2RitsuLib.Scaffolding.Content.Patches
         string? CustomPackedPortraitPath => AssetProfile.PackedPortraitPath;
 
         /// <summary>
-        ///     Override for <c>EpochModel.BigPortraitPath</c> (large portrait texture).
-        ///     <c>EpochModel.BigPortraitPath</c> 的覆盖（大型肖像纹理）。
+        ///     Override for the large portrait texture path.
+        ///     大型肖像纹理路径覆盖。
         /// </summary>
         string? CustomBigPortraitPath => AssetProfile.BigPortraitPath;
     }
@@ -663,7 +663,7 @@ namespace STS2RitsuLib.Scaffolding.Content.Patches
         public static string PatchId => "content_asset_override_epoch_portrait_path";
 
         /// <inheritdoc cref="IPatchMethod.Description" />
-        public static string Description => "Allow mod epochs to override PackedPortraitPath and BigPortraitPath";
+        public static string Description => "Allow mod epochs to override packed and large portrait paths";
 
         /// <inheritdoc cref="IPatchMethod.IsCritical" />
         public static bool IsCritical => false;
@@ -674,7 +674,11 @@ namespace STS2RitsuLib.Scaffolding.Content.Patches
             return
             [
                 new(typeof(EpochModel), "PackedPortraitPath", MethodType.Getter),
+#if STS2_AT_LEAST_0_106_0
+                new(typeof(EpochModel), "ResolvedPortraitPath", MethodType.Getter),
+#else
                 new(typeof(EpochModel), "BigPortraitPath", MethodType.Getter),
+#endif
             ];
         }
 
@@ -694,15 +698,76 @@ namespace STS2RitsuLib.Scaffolding.Content.Patches
                         ref __result,
                         o => o.CustomPackedPortraitPath,
                         nameof(IModEpochAssetOverrides.CustomPackedPortraitPath)),
-                "get_BigPortraitPath" => ContentAssetOverridePatchHelper.TryUseStringOverride<IModEpochAssetOverrides>(
-                    __instance,
-                    ref __result,
-                    o => o.CustomBigPortraitPath,
-                    nameof(IModEpochAssetOverrides.CustomBigPortraitPath)),
+                "get_BigPortraitPath" or "get_ResolvedPortraitPath" => ContentAssetOverridePatchHelper
+                    .TryUseStringOverride<IModEpochAssetOverrides>(
+                        __instance,
+                        ref __result,
+                        o => o.CustomBigPortraitPath,
+                        nameof(IModEpochAssetOverrides.CustomBigPortraitPath)),
                 _ => true,
             };
         }
     }
+
+#if STS2_AT_LEAST_0_106_0
+    /// <summary>
+    ///     Allows mod epoch art overrides to control the placeholder label.
+    /// </summary>
+    public class EpochArtPlaceholderPatch : IPatchMethod
+    {
+        /// <inheritdoc cref="IPatchMethod.PatchId" />
+        public static string PatchId => "content_asset_override_epoch_art_placeholder";
+
+        /// <inheritdoc cref="IPatchMethod.Description" />
+        public static string Description => "Allow mod epochs to suppress the timeline placeholder label";
+
+        /// <inheritdoc cref="IPatchMethod.IsCritical" />
+        public static bool IsCritical => false;
+
+        /// <inheritdoc cref="IPatchMethod.GetTargets" />
+        public static ModPatchTarget[] GetTargets()
+        {
+            return [new(typeof(EpochModel), "IsArtPlaceholder", MethodType.Getter)];
+        }
+
+        /// <summary>
+        ///     Suppresses the vanilla placeholder label for mod epochs with custom artwork.
+        /// </summary>
+        // ReSharper disable once InconsistentNaming
+        public static bool Prefix(EpochModel __instance, ref bool __result)
+        {
+            if (__instance is IModEpochAssetOverrides overrides &&
+                !string.IsNullOrWhiteSpace(overrides.CustomBigPortraitPath) &&
+                AssetPathDiagnostics.Exists(
+                    overrides.CustomBigPortraitPath,
+                    __instance,
+                    nameof(IModEpochAssetOverrides.CustomBigPortraitPath)))
+            {
+                __result = false;
+                return false;
+            }
+
+            if (!IsCharacterUnlockEpochTemplate(__instance.GetType()))
+                return true;
+
+            __result = false;
+            return false;
+        }
+
+        private static bool IsCharacterUnlockEpochTemplate(Type type)
+        {
+            for (var current = type; current != null; current = current.BaseType)
+            {
+                if (current.IsGenericType &&
+                    current.GetGenericTypeDefinition() ==
+                    typeof(STS2RitsuLib.Timeline.Scaffolding.CharacterUnlockEpochTemplate<>))
+                    return true;
+            }
+
+            return false;
+        }
+    }
+#endif
 
     /// <summary>
     ///     Patches <see cref="CardModel" /> portrait path getters for <see cref="IModCardAssetOverrides" />.

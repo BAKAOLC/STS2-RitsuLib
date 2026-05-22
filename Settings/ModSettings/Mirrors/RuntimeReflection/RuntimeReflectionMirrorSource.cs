@@ -1182,8 +1182,6 @@ namespace STS2RitsuLib.Settings
                         modId, dataKey, SaveScope.Global, readMember, writeMember),
                 ModSettingsReflectionBindingSource.Profile => BuildScopedBinding(
                     modId, dataKey, SaveScope.Profile, readMember, writeMember),
-                ModSettingsReflectionBindingSource.RunSidecar => BuildRunSidecarBinding(
-                    modId, dataKey, readMember, writeMember),
                 ModSettingsReflectionBindingSource.InMemory => BuildInMemoryBinding(
                     modId, dataKey, readMember, writeMember),
                 ModSettingsReflectionBindingSource.Callback => BuildCallbackBinding(
@@ -1254,20 +1252,6 @@ namespace STS2RitsuLib.Settings
                 ex.Message.Contains("already registered", StringComparison.OrdinalIgnoreCase))
             {
             }
-        }
-
-        private static IModSettingsValueBinding<TValue> BuildRunSidecarBinding<TValue>(
-            string modId,
-            string dataKey,
-            Func<TValue> readMember,
-            Action<TValue> writeMember)
-        {
-            var runSidecar = ModSettingsBindings.RunSidecar<ReflectionBindingBox<TValue>, TValue>(
-                modId,
-                dataKey,
-                box => box.Value,
-                (box, value) => box.Value = value);
-            return new MemberSynchronizedModSettingsValueBinding<TValue>(runSidecar, writeMember);
         }
 
         private static IModSettingsValueBinding<TValue> BuildInMemoryBinding<TValue>(

@@ -25,7 +25,8 @@ namespace STS2RitsuLib.Audio
         /// </summary>
         public static bool TryPlay(string eventPath)
         {
-            return FmodStudioGateway.TryCall(FmodStudioMethodNames.PlayOneShot, eventPath);
+            return !string.IsNullOrWhiteSpace(eventPath) &&
+                   FmodStudioGateway.TryCall(FmodStudioMethodNames.PlayOneShot, eventPath);
         }
 
         /// <summary>
@@ -34,6 +35,9 @@ namespace STS2RitsuLib.Audio
         /// </summary>
         public static bool TryPlay(string eventPath, IReadOnlyDictionary<string, float> parameters)
         {
+            if (string.IsNullOrWhiteSpace(eventPath))
+                return false;
+
             var server = FmodStudioGateway.TryGetServer();
             if (server is null)
                 return false;

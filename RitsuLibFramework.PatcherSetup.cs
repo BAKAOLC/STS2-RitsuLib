@@ -26,7 +26,6 @@ using STS2RitsuLib.Scaffolding.Characters.Patches;
 using STS2RitsuLib.Scaffolding.Content.Patches;
 using STS2RitsuLib.Scaffolding.Godot;
 using STS2RitsuLib.Settings.Patches;
-using STS2RitsuLib.Settings.RunSidecar.Patches;
 using STS2RitsuLib.Timeline.Patches;
 using STS2RitsuLib.TopBar.Patches;
 using STS2RitsuLib.Unlocks.Patches;
@@ -151,8 +150,6 @@ namespace STS2RitsuLib
             patcher.RegisterPatch<ModelRegistryLifecyclePatch>();
             patcher.RegisterPatch<GameNodeLifecyclePatch>();
             patcher.RegisterPatch<RunLifecyclePatch>();
-            patcher.RegisterPatch<ModRunSidecarSaveDeletionPatches.DeleteCurrentRun>();
-            patcher.RegisterPatch<ModRunSidecarSaveDeletionPatches.DeleteCurrentMultiplayerRun>();
             patcher.RegisterPatch<RitsuLibSidecarNetHostReceivePatch>();
             patcher.RegisterPatch<RitsuLibSidecarNetClientReceivePatch>();
             patcher.RegisterPatch<RitsuLibSidecarNativeTrailerSendPatch>();
@@ -251,6 +248,9 @@ namespace STS2RitsuLib
 
             var patcher = CreatePatcher(Const.ModId, "framework-content-assets", "content assets");
             patcher.RegisterPatch<EpochPortraitPathPatch>();
+#if STS2_AT_LEAST_0_106_0
+            patcher.RegisterPatch<EpochArtPlaceholderPatch>();
+#endif
             patcher.RegisterPatch<CardPortraitPathPatch>();
             patcher.RegisterPatch<CardPortraitAvailabilityPatch>();
             patcher.RegisterPatch<CardTextureOverridePatch>();

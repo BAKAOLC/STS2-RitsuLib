@@ -72,9 +72,8 @@ using (RitsuLibFramework.BeginModDataRegistration("MyMod"))
 | `SaveScope.Global` | Mod settings, account-wide preferences, caches shared by all game profiles. |
 | `SaveScope.Profile` | Progression, unlock-like data, and anything tied to the current game profile. |
 | `SaveScope.InMemory` | Temporary process-local data that should use the same store API but never writes to disk. |
-| `SaveScope.RunSidecar` | Per-run sidecar data with an explicit `StorageContext`; use only when you are working with run-scoped files. |
 
-`RunSidecar` cannot use the simple `Register<T>(key, fileName, scope, ...)` overload. It needs the overload with `contextProvider`, or higher-level run-sidecar helpers.
+Use `RitsuLibFramework.GetRunSavedDataStore(modId)` for data that belongs inside a run save. Run saved data is embedded into the run snapshot and follows the run through save/load and multiplayer synchronization.
 
 :::
 
@@ -87,9 +86,8 @@ using (RitsuLibFramework.BeginModDataRegistration("MyMod"))
 | `SaveScope.Global` | Mod 设置、账号级偏好、所有游戏档位共享的缓存。 |
 | `SaveScope.Profile` | 进度、类似解锁的数据、和当前游戏档位绑定的内容。 |
 | `SaveScope.InMemory` | 临时进程内数据：复用 store API，但不写盘。 |
-| `SaveScope.RunSidecar` | 带显式 `StorageContext` 的单 run sidecar 数据；只在处理 run 级文件时使用。 |
 
-`RunSidecar` 不能使用简单的 `Register<T>(key, fileName, scope, ...)` 重载。它需要带 `contextProvider` 的重载，或更高层的 run-sidecar 辅助接口。
+属于一次跑局存档的数据请使用 `RitsuLibFramework.GetRunSavedDataStore(modId)`。Run saved data 会嵌入跑局快照，并随存档读取、写入和多人同步一起流转。
 
 :::
 

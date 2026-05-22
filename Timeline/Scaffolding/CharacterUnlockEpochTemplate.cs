@@ -15,8 +15,10 @@ namespace STS2RitsuLib.Timeline.Scaffolding
     public abstract class CharacterUnlockEpochTemplate<TCharacter> : ModEpochTemplate
         where TCharacter : CharacterModel
     {
+#if !STS2_AT_LEAST_0_106_0
         /// <inheritdoc />
         public override bool IsArtPlaceholder => false;
+#endif
 
         /// <summary>
         ///     Additional epoch types to append when this unlock fires; default none.

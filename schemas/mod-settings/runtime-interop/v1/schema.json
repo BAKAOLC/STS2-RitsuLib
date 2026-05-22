@@ -268,7 +268,7 @@
         },
         "scope": {
           "type": "string",
-          "description": "Optional persistence scope hint. Recognized values (case-insensitive): \"global\", \"profile\", \"runSidecar\" (aliases: run_sidecar/run-sidecar), \"inMemory\" (aliases: in_memory/in-memory). Any other value is treated as \"global\"."
+          "description": "Optional persistence scope hint. Recognized values (case-insensitive): \"global\", \"profile\", \"inMemory\" (aliases: in_memory/in-memory). Any other value is treated as \"global\"."
         },
         "visibleWhenMethod": {
           "type": "string",

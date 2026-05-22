@@ -11,14 +11,5 @@ namespace STS2RitsuLib.Utils.Persistence.Context
         ///     覆盖持久化操作的活动游戏档案 id。
         /// </summary>
         public static StorageContextKey<int> ProfileId { get; } = new("sts2ritsulib.profileId");
-
-        /// <summary>
-        ///     Stable per-run fingerprint stem used by run sidecar storage.
-        ///     稳定 per-跑局 fingerprint stem used by 跑局 sidecar 存储.
-        /// </summary>
-        /// <remarks>
-        ///     This is expected to match <c>ModRunSidecarFingerprint.ComputeFileStem()</c> output.
-        /// </remarks>
-        public static StorageContextKey<string> RunFingerprintStem { get; } = new("sts2ritsulib.runFingerprintStem");
     }
 }

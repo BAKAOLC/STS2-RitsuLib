@@ -2,13 +2,11 @@ using Godot;
 using MegaCrit.Sts2.Core.Saves;
 using STS2RitsuLib.Data;
 using STS2RitsuLib.Platform.Steam;
-using STS2RitsuLib.Settings.RunSidecar;
 
 namespace STS2RitsuLib.Utils.Persistence
 {
     internal static class ModDataCloudMirror
     {
-        private const string RunSidecarSegment = "run_sidecar/v1";
         private const int SteamRemoteScanYieldEvery = 32;
         private const int LocalPathCollectYieldEvery = 64;
 
@@ -34,8 +32,7 @@ namespace STS2RitsuLib.Utils.Persistence
                 return;
 
             var pid = ProfileManager.Instance.CurrentProfileId;
-            if (!ModCloudSyncPathRegistry.IsRegisteredRelativePath(relative, pid) &&
-                !ModRunSidecarStore.IsActiveRunSidecarRelativeAccountPath(relative, pid))
+            if (!ModCloudSyncPathRegistry.IsRegisteredRelativePath(relative, pid))
                 return;
 
             Callable.From(() => { _ = MirrorAfterWriteOneFileAsync(relative); }).CallDeferred();
@@ -343,12 +340,6 @@ namespace STS2RitsuLib.Utils.Persistence
                 return;
             }
 
-            string? sidecarPrefix = null;
-            var profileBase = ProfileManager.GetBasePath(SaveScope.Profile, profileId);
-            var sidecarRootUser = $"{profileBase}/{RunSidecarSegment}";
-            if (ModAccountRelativePath.TryGetRelativeAccountPath(sidecarRootUser, out var sidecarRootRel))
-                sidecarPrefix = sidecarRootRel + "/";
-
             if (!RitsuLibSteamworks.TryGetRemoteFileCount(out var n))
                 return;
 
@@ -367,11 +358,7 @@ namespace STS2RitsuLib.Utils.Persistence
                 if (!path.StartsWith("mod_data/", StringComparison.Ordinal))
                     continue;
 
-                var match = exact.Contains(path);
-                if (!match && sidecarPrefix != null && path.StartsWith(sidecarPrefix, StringComparison.Ordinal))
-                    match = true;
-
-                if (!match)
+                if (!exact.Contains(path))
                     continue;
 
                 try

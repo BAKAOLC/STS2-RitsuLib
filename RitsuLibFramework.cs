@@ -2,6 +2,7 @@ using System.Collections.Concurrent;
 using System.Reflection;
 using Godot;
 using MegaCrit.Sts2.Core.Entities.Cards;
+using MegaCrit.Sts2.Core.Entities.Creatures;
 using MegaCrit.Sts2.Core.Entities.Players;
 using MegaCrit.Sts2.Core.Logging;
 using MegaCrit.Sts2.Core.Modding;
@@ -9,6 +10,7 @@ using MegaCrit.Sts2.Core.Models;
 using STS2RitsuLib.CardPiles;
 using STS2RitsuLib.Cards.FreePlay;
 using STS2RitsuLib.CardTags;
+using STS2RitsuLib.Combat.CardTargeting;
 using STS2RitsuLib.Combat.HandSize;
 using STS2RitsuLib.Combat.HealthBars;
 using STS2RitsuLib.Compat;
@@ -29,7 +31,6 @@ using STS2RitsuLib.RuntimeInput;
 using STS2RitsuLib.Scaffolding.Ancients.Options;
 using STS2RitsuLib.Scaffolding.Content;
 using STS2RitsuLib.Settings;
-using STS2RitsuLib.Settings.RunSidecar;
 using STS2RitsuLib.Telemetry;
 using STS2RitsuLib.Telemetry.Diagnostics;
 using STS2RitsuLib.Timeline;
@@ -440,8 +441,6 @@ namespace STS2RitsuLib
                 ProfileManager.Instance.Initialize();
                 ModDataStore.InitializeAllProfileScoped();
                 ModDataRuntimeInterop.PushLoadedDataToAllProviders();
-                ModRunSidecarSession.AttachLifecycleHandlers();
-
                 _profileServicesInitialized = true;
 
                 var profileInitializedEvent = new ProfileServicesInitializedEvent(
@@ -538,6 +537,30 @@ namespace STS2RitsuLib
         public static ModCardPileRegistry GetCardPileRegistry(string modId)
         {
             return ModCardPileRegistry.For(modId);
+        }
+
+        /// <summary>
+        ///     Registers a mod-scoped single-target <see cref="TargetType" /> and returns its deterministic enum value.
+        ///     注册一个 mod 作用域的单体目标 <see cref="TargetType" />，并返回其确定性的枚举值。
+        /// </summary>
+        public static TargetType RegisterSingleTargetType(
+            string modId,
+            string localStem,
+            Func<Creature, bool> canTarget)
+        {
+            return CustomTargetType.RegisterSingleTargetType(modId, localStem, canTarget);
+        }
+
+        /// <summary>
+        ///     Registers a mod-scoped multi-target <see cref="TargetType" /> and returns its deterministic enum value.
+        ///     注册一个 mod 作用域的群体目标 <see cref="TargetType" />，并返回其确定性的枚举值。
+        /// </summary>
+        public static TargetType RegisterMultiTargetType(
+            string modId,
+            string localStem,
+            Func<Creature, bool> includeTarget)
+        {
+            return CustomTargetType.RegisterMultiTargetType(modId, localStem, includeTarget);
         }
 
         /// <summary>

@@ -25,12 +25,6 @@ namespace STS2RitsuLib.Settings
         Profile = 2,
 
         /// <summary>
-        ///     Persist under run-sidecar scope.
-        ///     持久化到 run-sidecar 作用域。
-        /// </summary>
-        RunSidecar = 3,
-
-        /// <summary>
         ///     In-memory only.
         ///     仅保存在内存中。
         /// </summary>

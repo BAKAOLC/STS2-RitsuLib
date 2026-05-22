@@ -75,12 +75,6 @@ namespace STS2RitsuLib.Data
         public bool HasProfileScopedEntries => _entries.Values.Any(e => e.Scope == SaveScope.Profile);
 
         /// <summary>
-        ///     Whether this store has at least one <see cref="SaveScope.RunSidecar" /> registration.
-        ///     此存储是否至少有一个 <see cref="SaveScope.RunSidecar" /> 注册。
-        /// </summary>
-        public bool HasRunSidecarScopedEntries => _entries.Values.Any(e => e.Scope == SaveScope.RunSidecar);
-
-        /// <summary>
         ///     Defers eager initialization of newly registered entries until the scope is disposed.
         ///     将新注册条目的急切初始化延迟到作用域释放时执行。
         /// </summary>
@@ -171,14 +165,14 @@ namespace STS2RitsuLib.Data
             }
 
             foreach (var entry in _entries.Values.Where(e =>
-                         e is { IsInitialized: false, Scope: SaveScope.Profile or SaveScope.RunSidecar }))
+                         e is { IsInitialized: false, Scope: SaveScope.Profile }))
             {
                 entry.Initialize(_jsonOptions, _migrationManager);
                 entry.Load();
             }
 
             IsProfileInitialized = _entries.Values
-                .Where(e => e.Scope is SaveScope.Profile or SaveScope.RunSidecar)
+                .Where(e => e.Scope == SaveScope.Profile)
                 .All(e => e.IsInitialized);
         }
 
@@ -229,17 +223,11 @@ namespace STS2RitsuLib.Data
 
             ConfigureMigration<T>(migrationConfig, migrations);
 
-            switch (scope)
+            if (scope == SaveScope.InMemory)
             {
-                case SaveScope.InMemory:
-                {
-                    var memory = new InMemoryDataEntry<T>(key, scope, defaultFactory ?? (() => new()));
-                    _entries[key] = memory;
-                    return;
-                }
-                case SaveScope.RunSidecar:
-                    throw new InvalidOperationException(
-                        "SaveScope.RunSidecar requires a run fingerprint stem context. Use ModRunSidecarStore or a future ModDataStore overload that supplies StorageContext.");
+                var memory = new InMemoryDataEntry<T>(key, scope, defaultFactory ?? (() => new()));
+                _entries[key] = memory;
+                return;
             }
 
             var registration = new RegisteredDataEntry<T>(
@@ -266,10 +254,9 @@ namespace STS2RitsuLib.Data
 
         /// <summary>
         ///     Registers a JSON-backed persistence slot identified by <paramref name="key" /> using an explicit
-        ///     <see cref="StorageContext" /> provider for path resolution (e.g. run fingerprint stem for
-        ///     <see cref="SaveScope.RunSidecar" />).
+        ///     <see cref="StorageContext" /> provider for path resolution.
         ///     注册一个由 JSON 支持、以 <paramref name="key" /> 标识的持久化槽，并使用显式
-        ///     <see cref="StorageContext" /> 提供器解析路径（例如 <see cref="SaveScope.RunSidecar" /> 的跑局指纹 stem）。
+        ///     <see cref="StorageContext" /> 提供器解析路径。
         /// </summary>
         public void Register<T>(
             string key,
@@ -310,7 +297,7 @@ namespace STS2RitsuLib.Data
                 return;
 
             if (!IsGlobalInitialized && scope == SaveScope.Global) return;
-            if (!IsProfileInitialized && scope is SaveScope.Profile or SaveScope.RunSidecar) return;
+            if (!IsProfileInitialized && scope == SaveScope.Profile) return;
             registration.Initialize(_jsonOptions, _migrationManager);
             registration.Load();
         }
@@ -434,7 +421,7 @@ namespace STS2RitsuLib.Data
             _logger.Info(
                 $"[{ModId}] Profile changed from {oldProfileId} to {newProfileId}, handling data transition...");
 
-            foreach (var entry in _entries.Values.Where(e => e.Scope is SaveScope.Profile or SaveScope.RunSidecar))
+            foreach (var entry in _entries.Values.Where(e => e.Scope == SaveScope.Profile))
             {
                 entry.SaveToProfilePath(oldProfileId);
                 entry.Load();

@@ -223,6 +223,9 @@ namespace STS2RitsuLib.Audio
         /// </summary>
         public static bool? TryCheckEventPath(string eventPath)
         {
+            if (string.IsNullOrWhiteSpace(eventPath))
+                return false;
+
             if (FmodStudioGuidPathTable.TryGetStudioGuidForEventPath(eventPath, out _))
                 return true;
 

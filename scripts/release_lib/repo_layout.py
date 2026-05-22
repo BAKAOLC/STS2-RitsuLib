@@ -4,6 +4,8 @@ from pathlib import Path
 
 RITSULIB_CSPROJ_NAME = "STS2-RitsuLib.csproj"
 MOD_MANIFEST_NAME = "mod_manifest.json"
+VARIANT_MANIFEST_NAME = "ritsulib-variants.json"
+COMPAT_TARGET_MARKER_NAME = "compat-target.txt"
 CONST_CS_NAME = "Const.cs"
 
 DEV_PACKAGE_VERSION_PREFIX = "9999.0.0-dev"

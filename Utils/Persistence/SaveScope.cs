@@ -19,16 +19,6 @@ namespace STS2RitsuLib.Utils.Persistence
         Profile,
 
         /// <summary>
-        ///     Per-run sidecar scope under the current profile (client-local).
-        ///     当前档案下的单跑局 sidecar 作用域（客户端本地）。
-        /// </summary>
-        /// <remarks>
-        ///     This scope requires a run fingerprint stem context to resolve a durable path.
-        ///     此作用域需要跑局指纹 stem 上下文来解析持久路径。
-        /// </remarks>
-        RunSidecar,
-
-        /// <summary>
         ///     In-memory scope (not persisted).
         ///     内存作用域（不持久化）。
         /// </summary>

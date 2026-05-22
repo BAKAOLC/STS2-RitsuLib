@@ -34,6 +34,9 @@ namespace STS2RitsuLib.Audio
         /// </summary>
         public static GodotObject? TryCreate(string eventOrSnapshotPath)
         {
+            if (string.IsNullOrWhiteSpace(eventOrSnapshotPath))
+                return null;
+
             if (!FmodStudioGuidPathTable.TryGetStudioGuidForEventPath(eventOrSnapshotPath, out var mappedGuid))
                 return TryCreateByPathOnly(eventOrSnapshotPath);
 
@@ -56,6 +59,9 @@ namespace STS2RitsuLib.Audio
         /// </summary>
         private static bool? ProbeStudioHasEventPath(string eventPath)
         {
+            if (string.IsNullOrWhiteSpace(eventPath))
+                return false;
+
             if (!FmodStudioGateway.TryCall(out var v, FmodStudioMethodNames.CheckEventPath, eventPath))
                 return null;
 
@@ -89,6 +95,9 @@ namespace STS2RitsuLib.Audio
 
         private static GodotObject? TryCreateByPathOnly(string eventOrSnapshotPath)
         {
+            if (string.IsNullOrWhiteSpace(eventOrSnapshotPath))
+                return null;
+
             return !FmodStudioGateway.TryCall(out var v, FmodStudioMethodNames.CreateEventInstance, eventOrSnapshotPath)
                 ? null
                 : v.AsGodotObject();

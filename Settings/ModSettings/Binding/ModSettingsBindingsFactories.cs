@@ -53,26 +53,6 @@ namespace STS2RitsuLib.Settings
         }
 
         /// <summary>
-        ///     Binds to per-run JSON under the framework profile tree (<c>run_sidecar/v1/{fingerprintStem}/</c> under
-        ///     <see cref="Utils.Persistence.ProfileManager" /> for <see cref="Const.ModId" />), one file per consumer
-        ///     mod in that folder, keyed by the vanilla run fingerprint. Client-local only; does not modify
-        ///     <see cref="MegaCrit.Sts2.Core.Saves.SerializableRun" /> network payloads.
-        ///     绑定到框架 profile 树下的逐跑局 JSON（<see cref="Const.ModId" /> 在
-        ///     <see cref="Utils.Persistence.ProfileManager" /> 下的 <c>run_sidecar/v1/{fingerprintStem}/</c>），
-        ///     该文件夹中每个消费方 mod 一个文件，并按原版跑局指纹作为 key。仅客户端本地；不会修改
-        ///     <see cref="MegaCrit.Sts2.Core.Saves.SerializableRun" /> 网络载荷。
-        /// </summary>
-        public static ModSettingsRunSidecarValueBinding<TModel, TValue> RunSidecar<TModel, TValue>(
-            string modId,
-            string dataKey,
-            Func<TModel, TValue> getter,
-            Action<TModel, TValue> setter)
-            where TModel : class, new()
-        {
-            return new(modId, dataKey, getter, setter);
-        }
-
-        /// <summary>
         ///     Non-persisted binding for previews and debug UI.
         ///     用于预览和调试 UI 的非持久化绑定。
         /// </summary>

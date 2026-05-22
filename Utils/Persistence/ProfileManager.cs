@@ -144,9 +144,8 @@ namespace STS2RitsuLib.Utils.Persistence
 
         /// <summary>
         ///     Resolves the base storage path for <paramref name="scope" /> using a supplied
-        ///     <paramref name="context" /> (e.g. run fingerprint stem for <see cref="SaveScope.RunSidecar" />).
-        ///     使用提供的 <paramref name="context" /> 解析 <paramref name="scope" /> 的基础存储路径
-        ///     （例如 <see cref="SaveScope.RunSidecar" /> 的跑局指纹 stem）。
+        ///     <paramref name="context" />.
+        ///     使用提供的 <paramref name="context" /> 解析 <paramref name="scope" /> 的基础存储路径。
         /// </summary>
         public static string GetBasePath(SaveScope scope, StorageContext context, string modId = Const.ModId)
         {
@@ -206,9 +205,8 @@ namespace STS2RitsuLib.Utils.Persistence
 
         /// <summary>
         ///     Returns the full path for <paramref name="fileName" /> using a supplied
-        ///     <paramref name="context" /> (e.g. run fingerprint stem for <see cref="SaveScope.RunSidecar" />).
-        ///     使用提供的 <paramref name="context" /> 返回 <paramref name="fileName" /> 的完整路径
-        ///     （例如 <see cref="SaveScope.RunSidecar" /> 的跑局指纹 stem）。
+        ///     <paramref name="context" />.
+        ///     使用提供的 <paramref name="context" /> 返回 <paramref name="fileName" /> 的完整路径。
         /// </summary>
         public static string GetFilePath(string fileName, SaveScope scope, StorageContext context,
             string modId = Const.ModId)

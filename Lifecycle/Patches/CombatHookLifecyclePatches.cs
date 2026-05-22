@@ -44,8 +44,15 @@ namespace STS2RitsuLib.Lifecycle.Patches
                     [typeof(IRunState), typeof(CombatStateCompat), typeof(CombatRoom)]),
                 new(typeof(Hook), nameof(Hook.AfterCombatVictory),
                     [typeof(IRunState), typeof(CombatStateCompat), typeof(CombatRoom)]),
+#if STS2_AT_LEAST_0_106_0
+                new(typeof(Hook), nameof(Hook.BeforeSideTurnStart),
+                    [typeof(CombatStateCompat), typeof(CombatSide), typeof(IReadOnlyList<Creature>)]),
+                new(typeof(Hook), nameof(Hook.AfterSideTurnStart),
+                    [typeof(CombatStateCompat), typeof(CombatSide), typeof(IReadOnlyList<Creature>)]),
+#else
                 new(typeof(Hook), nameof(Hook.BeforeSideTurnStart), [typeof(CombatStateCompat), typeof(CombatSide)]),
                 new(typeof(Hook), nameof(Hook.AfterSideTurnStart), [typeof(CombatStateCompat), typeof(CombatSide)]),
+#endif
                 new(typeof(Hook), nameof(Hook.BeforeCardPlayed), [typeof(CombatStateCompat), typeof(CardPlay)]),
                 new(typeof(Hook), nameof(Hook.AfterCardPlayed),
                     [typeof(CombatStateCompat), typeof(PlayerChoiceContext), typeof(CardPlay)]),

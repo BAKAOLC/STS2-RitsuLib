@@ -362,7 +362,6 @@
   "scope.profile": "Stored per profile",
   "scope.runSnapshot": "Run snapshot",
   "scope.sessionCombat": "Combat/session only",
-  "scope.runSidecar": "Run sidecar",
   "section.default": "Section",
   "empty.none": "No mod settings pages are currently registered.",
   "empty.mod": "This mod has no registered settings page.",

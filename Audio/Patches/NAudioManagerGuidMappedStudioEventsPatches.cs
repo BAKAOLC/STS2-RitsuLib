@@ -83,8 +83,8 @@ namespace STS2RitsuLib.Audio.Patches
                 if (TestMode.IsOn)
                     return true;
 
-                if (string.IsNullOrEmpty(path))
-                    return true;
+                if (string.IsNullOrWhiteSpace(path))
+                    return false;
 
                 if (!FmodStudioGuidPathTable.TryGetStudioGuidForEventPath(path, out var mappedGuid))
                 {
@@ -137,8 +137,8 @@ namespace STS2RitsuLib.Audio.Patches
                 if (TestMode.IsOn)
                     return true;
 
-                if (string.IsNullOrEmpty(path))
-                    return true;
+                if (string.IsNullOrWhiteSpace(path))
+                    return false;
 
                 if (!GuidMappedNaudioStudioProxy.IsMappedPath(path))
                 {
@@ -314,8 +314,8 @@ namespace STS2RitsuLib.Audio.Patches
                 if (TestMode.IsOn)
                     return true;
 
-                if (string.IsNullOrEmpty(music))
-                    return true;
+                if (string.IsNullOrWhiteSpace(music))
+                    return false;
 
                 if (!GuidMappedNaudioStudioProxy.IsMappedPath(music))
                 {
