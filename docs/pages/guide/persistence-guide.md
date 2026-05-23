@@ -91,6 +91,212 @@ Use `RitsuLibFramework.GetRunSavedDataStore(modId)` for data that belongs inside
 
 :::
 
+## Run Saved Data{lang="en"}
+
+::: en
+
+Use `RunSavedData` for values that are part of a specific run: challenge settings chosen in the start-run lobby, run counters, draft state, or per-player state that must survive save/load and multiplayer rejoin. Register slots early and keep their keys stable after release.
+
+```csharp
+using MegaCrit.Sts2.Core.Runs;
+using MegaCrit.Sts2.Core.Multiplayer.Game.Lobby;
+using STS2RitsuLib.RunData;
+
+public sealed class ChallengeRunState
+{
+    public string? ChallengeId { get; set; }
+    public int ElitesKilled { get; set; }
+}
+
+public sealed class PlayerRunState
+{
+    public string? LoadoutId { get; set; }
+}
+
+private static RunSavedData<ChallengeRunState> ChallengeData = null!;
+private static PlayerRunSavedData<PlayerRunState> PlayerData = null!;
+
+using (RitsuLibFramework.BeginModDataRegistration("MyMod"))
+{
+    var runStore = RitsuLibFramework.GetRunSavedDataStore("MyMod");
+
+    ChallengeData = runStore.Register(
+        key: "challenge",
+        defaultFactory: () => new ChallengeRunState(),
+        options: new RunSavedDataOptions
+        {
+            WritePolicy = RunSavedDataWritePolicy.WhenNonDefault,
+            SyncLobbyOnChange = true,
+        });
+
+    PlayerData = runStore.RegisterPerPlayer(
+        key: "player",
+        defaultFactory: () => new PlayerRunState(),
+        options: new RunSavedDataOptions
+        {
+            SyncLobbyOnChange = true,
+        });
+}
+```
+
+The registered handles are what you keep and use later. `RunSavedData<T>` stores one shared value for the run; `PlayerRunSavedData<T>` stores one value per player net id.
+
+```csharp
+public static void RecordEliteKilled(RunState runState)
+{
+    ChallengeData.Modify(runState, data =>
+    {
+        data.ElitesKilled++;
+    });
+}
+
+public static string? GetPlayerLoadout(RunState runState, ulong netId)
+{
+    return PlayerData.TryGet(runState, netId, out var data)
+        ? data.LoadoutId
+        : null;
+}
+```
+
+For values chosen before the run starts, write through the slot's `Lobby` accessor. Lobby values are committed into the run snapshot when the new run begins. If `SyncLobbyOnChange` is enabled, `Set` and `Modify` also push the local contribution in multiplayer.
+
+```csharp
+public static void SetLobbyChallenge(StartRunLobby lobby, string challengeId)
+{
+    ChallengeData.Lobby.Modify(lobby, data =>
+    {
+        data.ChallengeId = challengeId;
+    });
+}
+
+public static void SetLocalLoadout(StartRunLobby lobby, string loadoutId)
+{
+    PlayerData.Lobby.Modify(lobby, lobby.NetService.NetId, data =>
+    {
+        data.LoadoutId = loadoutId;
+    });
+}
+```
+
+Use `RunSavedDataPreparingEvent` when data should be finalized just before a new run snapshot is exported.
+
+```csharp
+RitsuLibFramework.SubscribeLifecycle<RunSavedDataPreparingEvent>(evt =>
+{
+    ChallengeData.Modify(evt.RunState, data =>
+    {
+        data.ChallengeId ??= "standard";
+    });
+});
+```
+
+Keep the payload types as plain JSON-serializable classes with public properties. Prefer adding nullable or defaulted properties over changing a slot key.
+
+:::
+
+## 跑局保存数据{lang="zh-CN"}
+
+::: zh-CN
+
+`RunSavedData` 用于属于某一次跑局的值：开局大厅选择的挑战参数、跑局计数器、草稿状态，或者需要随存档读取、多人重连一起保留的玩家数据。槽位应尽早注册，并且发布后保持 key 稳定。
+
+```csharp
+using MegaCrit.Sts2.Core.Runs;
+using MegaCrit.Sts2.Core.Multiplayer.Game.Lobby;
+using STS2RitsuLib.RunData;
+
+public sealed class ChallengeRunState
+{
+    public string? ChallengeId { get; set; }
+    public int ElitesKilled { get; set; }
+}
+
+public sealed class PlayerRunState
+{
+    public string? LoadoutId { get; set; }
+}
+
+private static RunSavedData<ChallengeRunState> ChallengeData = null!;
+private static PlayerRunSavedData<PlayerRunState> PlayerData = null!;
+
+using (RitsuLibFramework.BeginModDataRegistration("MyMod"))
+{
+    var runStore = RitsuLibFramework.GetRunSavedDataStore("MyMod");
+
+    ChallengeData = runStore.Register(
+        key: "challenge",
+        defaultFactory: () => new ChallengeRunState(),
+        options: new RunSavedDataOptions
+        {
+            WritePolicy = RunSavedDataWritePolicy.WhenNonDefault,
+            SyncLobbyOnChange = true,
+        });
+
+    PlayerData = runStore.RegisterPerPlayer(
+        key: "player",
+        defaultFactory: () => new PlayerRunState(),
+        options: new RunSavedDataOptions
+        {
+            SyncLobbyOnChange = true,
+        });
+}
+```
+
+保存好注册返回的句柄，后续通过它读写。`RunSavedData<T>` 为整局保存一个共享值；`PlayerRunSavedData<T>` 按玩家 net id 分别保存值。
+
+```csharp
+public static void RecordEliteKilled(RunState runState)
+{
+    ChallengeData.Modify(runState, data =>
+    {
+        data.ElitesKilled++;
+    });
+}
+
+public static string? GetPlayerLoadout(RunState runState, ulong netId)
+{
+    return PlayerData.TryGet(runState, netId, out var data)
+        ? data.LoadoutId
+        : null;
+}
+```
+
+跑局开始前已经确定的值，通过槽位的 `Lobby` 访问器写入。大厅暂存值会在新跑局开始时提交进跑局快照。启用 `SyncLobbyOnChange` 后，`Set` 和 `Modify` 还会在多人模式下推送本机贡献。
+
+```csharp
+public static void SetLobbyChallenge(StartRunLobby lobby, string challengeId)
+{
+    ChallengeData.Lobby.Modify(lobby, data =>
+    {
+        data.ChallengeId = challengeId;
+    });
+}
+
+public static void SetLocalLoadout(StartRunLobby lobby, string loadoutId)
+{
+    PlayerData.Lobby.Modify(lobby, lobby.NetService.NetId, data =>
+    {
+        data.LoadoutId = loadoutId;
+    });
+}
+```
+
+如果需要在新跑局快照导出前补齐默认值或最终值，可以订阅 `RunSavedDataPreparingEvent`。
+
+```csharp
+RitsuLibFramework.SubscribeLifecycle<RunSavedDataPreparingEvent>(evt =>
+{
+    ChallengeData.Modify(evt.RunState, data =>
+    {
+        data.ChallengeId ??= "standard";
+    });
+});
+```
+
+载荷类型建议保持为普通 JSON 可序列化 class，并使用 public property。数据结构演进时优先新增可空或带默认值的属性，不要轻易更换槽位 key。
+
+:::
+
 ## Read And Write{lang="en"}
 
 ::: en
