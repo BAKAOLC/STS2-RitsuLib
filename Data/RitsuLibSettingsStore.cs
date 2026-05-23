@@ -46,6 +46,7 @@ namespace STS2RitsuLib.Data
                             new RitsuLibSettingsV5ToV6Migration(),
                             new RitsuLibSettingsV6ToV7Migration(),
                             new RitsuLibSettingsV7ToV8Migration(),
+                            new RitsuLibSettingsV8ToV9Migration(),
                         ]);
                 }
 
@@ -120,6 +121,12 @@ namespace STS2RitsuLib.Data
         {
             Initialize();
             return GetSettings().ModSourceHoverTipsEnabled;
+        }
+
+        internal static bool ShouldIncludeVanillaModSourceHoverTips()
+        {
+            Initialize();
+            return GetSettings().ModSourceHoverTipsIncludeVanilla;
         }
 
         private static RitsuLibSettings GetSettings()

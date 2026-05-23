@@ -6,6 +6,7 @@ using MegaCrit.Sts2.Core.Assets;
 using MegaCrit.Sts2.Core.Entities.Cards;
 using MegaCrit.Sts2.Core.Helpers;
 using MegaCrit.Sts2.Core.HoverTips;
+using MegaCrit.Sts2.Core.Localization.DynamicVars;
 using MegaCrit.Sts2.Core.Models;
 using MegaCrit.Sts2.Core.Nodes;
 using MegaCrit.Sts2.Core.Nodes.Events;
@@ -42,6 +43,34 @@ namespace STS2RitsuLib.Content.Patches
             result = [tip, .. result];
         }
 
+        internal static void AppendToFirstHoverTip(AbstractModel model, ref IEnumerable<IHoverTip> result)
+        {
+            if (!ContentSourceHoverTipFactory.TryResolve(model, out var source))
+                return;
+
+            var tips = result.ToList();
+            for (var i = 0; i < tips.Count; i++)
+            {
+                if (tips[i] is not HoverTip tip)
+                    continue;
+
+                Append(source, ref tip);
+                tips[i] = tip;
+                result = tips;
+                return;
+            }
+
+            result = [CreateSourceTip(source), .. tips];
+        }
+
+        private static HoverTip CreateSourceTip(ContentSourceHoverTipFactory.ContentSourceInfo source)
+        {
+            return new(ContentSourceHoverTipFactory.GetTitle(), source.Format())
+            {
+                Id = "ritsulib:content_source:" + source.Id,
+            };
+        }
+
         internal static void UpdateEventSourceBadge(NEventLayout layout, EventModel eventModel)
         {
             var existing = layout.GetNodeOrNull<NHoverTipSet>(EventBadgeNodeName);
@@ -54,7 +83,7 @@ namespace STS2RitsuLib.Content.Patches
             }
 
             var source = ContentSourceHoverTipFactory.Resolve(eventModel.GetType());
-            if (source.IsVanilla)
+            if (!ContentSourceHoverTipFactory.ShouldShow(source))
             {
                 RemoveBadge(layout, existing);
                 RemoveBadge(layout, existingHotZone);
@@ -161,8 +190,7 @@ namespace STS2RitsuLib.Content.Patches
                 }));
             hotZone.GuiInput += inputEvent =>
             {
-                if (inputEvent is not InputEventMouseButton { Pressed: true } mouse ||
-                    mouse.ButtonIndex != MouseButton.Left)
+                if (inputEvent is not InputEventMouseButton { Pressed: true, ButtonIndex: MouseButton.Left })
                     return;
 
                 isExpanded = !isExpanded;
@@ -237,7 +265,69 @@ namespace STS2RitsuLib.Content.Patches
                 return;
 
             var info = ContentSourceHoverTipFactory.ResolveKeyword(keyword);
-            if (info.IsVanilla)
+            if (!ContentSourceHoverTipFactory.ShouldShow(info))
+                return;
+
+            if (__result is not HoverTip tip) return;
+            ContentSourceHoverTipPatchHelper.Append(info, ref tip);
+            __result = tip;
+        }
+    }
+
+    internal sealed class ContentSourceStaticHoverTipPatch : IPatchMethod
+    {
+        public static string PatchId => "content_source_static_hover_tip";
+
+        public static string Description =>
+            "Add vanilla content source to static hover tips such as block and fatal when enabled";
+
+        public static bool IsCritical => false;
+
+        public static ModPatchTarget[] GetTargets()
+        {
+            return [new(typeof(HoverTipFactory), "Static", [typeof(StaticHoverTip), typeof(DynamicVar[])])];
+        }
+
+        // ReSharper disable once InconsistentNaming
+        public static void Postfix(ref IHoverTip __result)
+            // ReSharper restore once InconsistentNaming
+        {
+            if (!RitsuLibSettingsStore.IsModSourceHoverTipsEnabled())
+                return;
+
+            var info = ContentSourceHoverTipFactory.ContentSourceInfo.Vanilla;
+            if (!ContentSourceHoverTipFactory.ShouldShow(info))
+                return;
+
+            if (__result is not HoverTip tip) return;
+            ContentSourceHoverTipPatchHelper.Append(info, ref tip);
+            __result = tip;
+        }
+    }
+
+    internal sealed class ContentSourceEnergyHoverTipPatch : IPatchMethod
+    {
+        public static string PatchId => "content_source_energy_hover_tip";
+
+        public static string Description =>
+            "Add vanilla content source to energy hover tips when enabled";
+
+        public static bool IsCritical => false;
+
+        public static ModPatchTarget[] GetTargets()
+        {
+            return [new(typeof(HoverTipFactory), "ForEnergyWithIconPath", [typeof(string)])];
+        }
+
+        // ReSharper disable once InconsistentNaming
+        public static void Postfix(ref IHoverTip __result)
+            // ReSharper restore once InconsistentNaming
+        {
+            if (!RitsuLibSettingsStore.IsModSourceHoverTipsEnabled())
+                return;
+
+            var info = ContentSourceHoverTipFactory.ContentSourceInfo.Vanilla;
+            if (!ContentSourceHoverTipFactory.ShouldShow(info))
                 return;
 
             if (__result is not HoverTip tip) return;
@@ -260,7 +350,7 @@ namespace STS2RitsuLib.Content.Patches
             return
             [
                 new(typeof(PotionModel), "HoverTip", MethodType.Getter),
-                new(typeof(PowerModel), "DumbHoverTip", MethodType.Getter),
+                new(typeof(PowerModel), "GetDumbHoverTip", [typeof(int?)]),
                 new(typeof(RelicModel), "HoverTip", MethodType.Getter),
                 new(typeof(OrbModel), "DumbHoverTip", MethodType.Getter),
                 new(typeof(EnchantmentModel), "HoverTip", MethodType.Getter),
@@ -278,7 +368,7 @@ namespace STS2RitsuLib.Content.Patches
             if (__instance is IContentSourceSupplier supplier)
             {
                 var source = ContentSourceHoverTipFactory.Resolve(supplier);
-                if (source.IsVanilla)
+                if (!ContentSourceHoverTipFactory.ShouldShow(source))
                     return;
 
                 ContentSourceHoverTipPatchHelper.Append(source, ref __result);
@@ -286,10 +376,32 @@ namespace STS2RitsuLib.Content.Patches
             }
 
             var info = ContentSourceHoverTipFactory.Resolve(__instance.GetType());
-            if (info.IsVanilla)
+            if (!ContentSourceHoverTipFactory.ShouldShow(info))
                 return;
 
             ContentSourceHoverTipPatchHelper.Append(info, ref __result);
+        }
+    }
+
+    internal sealed class ContentSourcePowerHoverTipsPatch : IPatchMethod
+    {
+        public static string PatchId => "content_source_power_hover_tips";
+
+        public static string Description =>
+            "Add content source hover tip to power hover tip collections shown by combat power icons";
+
+        public static bool IsCritical => false;
+
+        public static ModPatchTarget[] GetTargets()
+        {
+            return [new(typeof(PowerModel), "HoverTips", MethodType.Getter)];
+        }
+
+        // ReSharper disable InconsistentNaming
+        public static void Postfix(PowerModel __instance, ref IEnumerable<IHoverTip> __result)
+            // ReSharper restore InconsistentNaming
+        {
+            ContentSourceHoverTipPatchHelper.AppendToFirstHoverTip(__instance, ref __result);
         }
     }
 

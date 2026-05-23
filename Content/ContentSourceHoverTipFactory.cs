@@ -27,18 +27,7 @@ namespace STS2RitsuLib.Content
 
         internal static bool TryCreate(AbstractModel model, out IHoverTip tip)
         {
-            ArgumentNullException.ThrowIfNull(model);
-
-            if (!RitsuLibSettingsStore.IsModSourceHoverTipsEnabled())
-            {
-                tip = null!;
-                return false;
-            }
-
-            var source = model is IContentSourceSupplier supplier
-                ? Resolve(supplier)
-                : Resolve(model.GetType());
-            if (source.IsVanilla)
+            if (!TryResolve(model, out var source))
             {
                 tip = null!;
                 return false;
@@ -46,6 +35,27 @@ namespace STS2RitsuLib.Content
 
             tip = CreateTip(source);
             return true;
+        }
+
+        internal static bool TryResolve(AbstractModel model, out ContentSourceInfo source)
+        {
+            ArgumentNullException.ThrowIfNull(model);
+
+            if (!RitsuLibSettingsStore.IsModSourceHoverTipsEnabled())
+            {
+                source = default;
+                return false;
+            }
+
+            source = model is IContentSourceSupplier supplier
+                ? Resolve(supplier)
+                : Resolve(model.GetType());
+            return ShouldShow(source);
+        }
+
+        internal static bool ShouldShow(ContentSourceInfo source)
+        {
+            return !source.IsVanilla || RitsuLibSettingsStore.ShouldIncludeVanillaModSourceHoverTips();
         }
 
         private static HoverTip CreateTip(ContentSourceInfo source)

@@ -19,6 +19,18 @@ namespace STS2RitsuLib.Settings
                 .WithSortOrder(-1000)
                 .AddSection("general", section => section
                     .WithTitle(T("ritsulib.section.general.title", "General"))
+                    .AddToggle(
+                        "mod_source_hover_tips_enabled",
+                        T("ritsulib.modSourceHoverTips.enabled.label", "Show content source hover tips"),
+                        ui.ModSourceHoverTipsEnabled,
+                        T("ritsulib.modSourceHoverTips.enabled.description",
+                            "Adds a hover tip to cards, relics, and potions showing which mod provides them."))
+                    .AddToggle(
+                        "mod_source_hover_tips_include_vanilla",
+                        T("ritsulib.modSourceHoverTips.includeVanilla.label", "Include vanilla content source"),
+                        ui.ModSourceHoverTipsIncludeVanilla,
+                        T("ritsulib.modSourceHoverTips.includeVanilla.description",
+                            "Also shows source hover tips for base-game cards, relics, potions, keywords, and events."))
                     .AddChoice(
                         "ui_shell_theme_id",
                         T("ritsulib.uiShellTheme.label", "Interface theme"),
@@ -44,12 +56,6 @@ namespace STS2RitsuLib.Settings
                         ui.UpdateCheckEnabled,
                         T("ritsulib.updateCheck.enabled.description",
                             "Checks for RitsuLib updates once after the first main menu load."))
-                    .AddToggle(
-                        "mod_source_hover_tips_enabled",
-                        T("ritsulib.modSourceHoverTips.enabled.label", "Show content source hover tips"),
-                        ui.ModSourceHoverTipsEnabled,
-                        T("ritsulib.modSourceHoverTips.enabled.description",
-                            "Adds a hover tip to cards, relics, and potions showing which mod provides them."))
                     .AddButton(
                         "update_check_now",
                         T("ritsulib.updateCheck.now.label", "Check now"),

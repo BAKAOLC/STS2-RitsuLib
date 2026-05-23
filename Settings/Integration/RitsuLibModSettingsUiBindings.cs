@@ -19,6 +19,7 @@ namespace STS2RitsuLib.Settings
             null!;
 
         public IModSettingsValueBinding<bool> ModSourceHoverTipsEnabled { get; private init; } = null!;
+        public IModSettingsValueBinding<bool> ModSourceHoverTipsIncludeVanilla { get; private init; } = null!;
 
         public IModSettingsValueBinding<string> HarmonyPatchDumpOutputPath { get; private init; } =
             null!;
@@ -137,6 +138,13 @@ namespace STS2RitsuLib.Settings
                         settings => settings.ModSourceHoverTipsEnabled,
                         (settings, value) => settings.ModSourceHoverTipsEnabled = value),
                     () => defaults.ModSourceHoverTipsEnabled),
+                ModSourceHoverTipsIncludeVanilla = ModSettingsBindings.WithDefault(
+                    ModSettingsBindings.Global<RitsuLibSettings, bool>(
+                        Const.ModId,
+                        Const.SettingsKey,
+                        settings => settings.ModSourceHoverTipsIncludeVanilla,
+                        (settings, value) => settings.ModSourceHoverTipsIncludeVanilla = value),
+                    () => defaults.ModSourceHoverTipsIncludeVanilla),
                 HarmonyPatchDumpOutputPath = ModSettingsBindings.WithDefault(
                     ModSettingsBindings.Global<RitsuLibSettings, string>(
                         Const.ModId,

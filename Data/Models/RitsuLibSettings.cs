@@ -13,7 +13,7 @@ namespace STS2RitsuLib.Data.Models
         ///     Current schema version written by the library when creating or normalizing settings.
         ///     库在创建或规范化设置时写入的当前 schema 版本。
         /// </summary>
-        public const int CurrentSchemaVersion = 8;
+        public const int CurrentSchemaVersion = 9;
 
         /// <summary>
         ///     Persisted schema version used by the migration pipeline
@@ -74,7 +74,14 @@ namespace STS2RitsuLib.Data.Models
         ///     为 true 时，卡牌、遗物和药水会追加显示其来源 mod 的悬停提示。
         /// </summary>
         [JsonPropertyName("mod_source_hover_tips_enabled")]
-        public bool ModSourceHoverTipsEnabled { get; set; } = true;
+        public bool ModSourceHoverTipsEnabled { get; set; }
+
+        /// <summary>
+        ///     When true, vanilla cards, relics, and potions also show source hover tips.
+        ///     为 true 时，原版卡牌、遗物和药水也会显示来源悬停提示。
+        /// </summary>
+        [JsonPropertyName("mod_source_hover_tips_include_vanilla")]
+        public bool ModSourceHoverTipsIncludeVanilla { get; set; }
 
         /// <summary>
         ///     Absolute path or Godot <c>user://</c> path for Harmony patch dump output (text log).

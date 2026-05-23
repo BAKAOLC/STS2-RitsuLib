@@ -93,6 +93,8 @@
   "ritsulib.updateCheck.enabled.description": "首次进入主菜单后检查一次 RitsuLib 更新。",
   "ritsulib.modSourceHoverTips.enabled.label": "显示内容来源悬停提示",
   "ritsulib.modSourceHoverTips.enabled.description": "为卡牌、遗物、药水、事件、关键词和其他模型悬停提示显示内容来源模组。",
+  "ritsulib.modSourceHoverTips.includeVanilla.label": "包含原版内容来源",
+  "ritsulib.modSourceHoverTips.includeVanilla.description": "也为原版卡牌、遗物、药水、关键词、事件和静态提示显示来源悬停提示。",
   "ritsulib.modSourceHoverTip.title": "来自哪个Mod？",
   "ritsulib.updateCheck.now.label": "立即检查",
   "ritsulib.updateCheck.now.button": "检查更新",
