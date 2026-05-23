@@ -32,10 +32,11 @@ namespace STS2RitsuLib.Utils
         /// <summary>
         ///     Builds a <c>ShaderMaterial</c> using a custom shader that replaces the hue of the input texture
         ///     with a caller-specified RGB color, while preserving the original brightness and saturation.
-        ///     Suitable for replacing hues when using vanilla card frames. A brightness parameter can be used 
-        ///     to adjust output brightness (range 0-2, default is 1).
+        ///     Suitable for replacing hues when using vanilla card frames.
+        ///     parameters r, g, b are in the range 0-1, brightness is in the range 0-2 with a default of 1.
         ///     使用一个自定义着色器构建 <c>ShaderMaterial</c>，该着色器将输入纹理的色调替换为调用方指定的 RGB 颜色，
-        ///     同时保留原始亮度和饱和度。适用于使用原版卡框时替换色调。可传入亮度参数以调整输出亮度（范围 0-2，默认值为 1）。
+        ///     同时保留原始亮度和饱和度。适用于替换色调，例如给原版卡框换色。
+        ///     参数r，g，b的范围是0-1，brightness的范围是0-2，默认值为1。
         /// </summary>
         public static ShaderMaterial CreateReplaceHueShaderMaterial(float r, float g, float b, float brightness = 1f)
         {
@@ -83,7 +84,7 @@ namespace STS2RitsuLib.Utils
         public static ShaderMaterial CreateUnmodulatedHsvShaderMaterial()
         {
             _unmodulatedHsvMaterial ??= CreateHsvShaderMaterial(0f, 1f, 1f);
-            return (ShaderMaterial)_unmodulatedHsvMaterial.Duplicate();
+            return _unmodulatedHsvMaterial;
         }
 
         /// <summary>
