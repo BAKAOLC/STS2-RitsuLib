@@ -39,5 +39,33 @@ namespace STS2RitsuLib.Combat.Ui.ExtraCornerAmountLabels
             target.AddThemeFontSizeOverride(ThemeConstants.Label.FontSize, 22);
             target.AutoSizeEnabled = true;
         }
+
+        internal static void Apply(MegaRichTextLabel target)
+        {
+            var vanilla = NCombatRoom.Instance?.Ui?.DrawPile?.GetNodeOrNull<MegaLabel>("CountContainer/Count");
+            var font = vanilla?.GetThemeFont(ThemeConstants.Label.Font, MegaLabelThemeType);
+            if (font != null)
+            {
+                target.AddThemeFontOverride(ThemeConstants.RichTextLabel.NormalFont, font);
+                if (vanilla != null)
+                    target.AddThemeFontSizeOverride(ThemeConstants.RichTextLabel.NormalFontSize,
+                        vanilla.GetThemeFontSize(ThemeConstants.Label.FontSize, MegaLabelThemeType));
+                target.AutoSizeEnabled = true;
+                return;
+            }
+
+            var fallback = ThemeDB.FallbackFont;
+            if (fallback != null)
+            {
+                target.AddThemeFontOverride(ThemeConstants.RichTextLabel.NormalFont, fallback);
+                target.AddThemeFontSizeOverride(ThemeConstants.RichTextLabel.NormalFontSize, 22);
+                target.AutoSizeEnabled = true;
+                return;
+            }
+
+            target.AddThemeFontOverride(ThemeConstants.RichTextLabel.NormalFont, new SystemFont());
+            target.AddThemeFontSizeOverride(ThemeConstants.RichTextLabel.NormalFontSize, 22);
+            target.AutoSizeEnabled = true;
+        }
     }
 }

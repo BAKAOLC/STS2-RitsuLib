@@ -17,6 +17,19 @@ namespace STS2RitsuLib.Combat.Ui.ExtraCornerAmountLabels
         private static readonly StringName ShadowOffsetY = new("shadow_offset_y");
         private static readonly StringName ShadowOutlineSize = new("shadow_outline_size");
 
+        internal static void Apply(Control target, MegaLabel? amountOnPower)
+        {
+            switch (target)
+            {
+                case MegaLabel label:
+                    Apply(label, amountOnPower);
+                    break;
+                case MegaRichTextLabel rich:
+                    Apply(rich, amountOnPower);
+                    break;
+            }
+        }
+
         internal static void Apply(MegaLabel target, MegaLabel? amountOnPower)
         {
             if (amountOnPower == null)
@@ -49,6 +62,38 @@ namespace STS2RitsuLib.Combat.Ui.ExtraCornerAmountLabels
             target.AutoSizeEnabled = true;
         }
 
+        internal static void Apply(MegaRichTextLabel target, MegaLabel? amountOnPower)
+        {
+            if (amountOnPower == null)
+            {
+                ExtraCornerCombatFallbackFonts.Apply(target);
+                return;
+            }
+
+            target.MinFontSize = amountOnPower.MinFontSize;
+            target.MaxFontSize = amountOnPower.MaxFontSize;
+
+            var font = amountOnPower.GetThemeFont(ThemeConstants.Label.Font, LabelThemeType)
+                       ?? amountOnPower.GetThemeFont(ThemeConstants.Label.Font, MegaLabelThemeType);
+            if (font != null)
+                target.AddThemeFontOverride(ThemeConstants.RichTextLabel.NormalFont, font);
+
+            var size = amountOnPower.GetThemeFontSize(ThemeConstants.Label.FontSize, LabelThemeType);
+            if (size <= 0)
+                size = amountOnPower.GetThemeFontSize(ThemeConstants.Label.FontSize, MegaLabelThemeType);
+            if (size > 0)
+                target.AddThemeFontSizeOverride(ThemeConstants.RichTextLabel.NormalFontSize, size);
+
+            var color = amountOnPower.GetThemeColor(ThemeConstants.Label.FontColor, LabelThemeType);
+            if (color.A <= 0f)
+                color = amountOnPower.GetThemeColor(ThemeConstants.Label.FontColor, MegaLabelThemeType);
+            if (color.A > 0f)
+                target.AddThemeColorOverride(ThemeConstants.RichTextLabel.DefaultColor, color);
+
+            CopyOutlineAndShadowFromLabelTheme(target, amountOnPower);
+            target.AutoSizeEnabled = true;
+        }
+
         private static void CopyOutlineAndShadowFromLabelTheme(MegaLabel target, MegaLabel source)
         {
             var outlineColor = source.GetThemeColor(ThemeConstants.Label.FontOutlineColor, LabelThemeType);
@@ -74,6 +119,21 @@ namespace STS2RitsuLib.Combat.Ui.ExtraCornerAmountLabels
             var sos = source.GetThemeConstant(ShadowOutlineSize, LabelThemeType);
             if (sos != 0)
                 target.AddThemeConstantOverride(ShadowOutlineSize, sos);
+        }
+
+        private static void CopyOutlineAndShadowFromLabelTheme(MegaRichTextLabel target, MegaLabel source)
+        {
+            var outlineColor = source.GetThemeColor(ThemeConstants.Label.FontOutlineColor, LabelThemeType);
+            if (outlineColor.A > 0f)
+                target.AddThemeColorOverride(ThemeConstants.RichTextLabel.FontOutlineColor, outlineColor);
+
+            var shadowColor = source.GetThemeColor(ThemeConstants.Label.FontShadowColor, LabelThemeType);
+            if (shadowColor.A > 0f)
+                target.AddThemeColorOverride(ThemeConstants.RichTextLabel.FontShadowColor, shadowColor);
+
+            var outlineSize = source.GetThemeConstant(ThemeConstants.Label.OutlineSize, LabelThemeType);
+            if (outlineSize > 0)
+                target.AddThemeConstantOverride(ThemeConstants.Label.OutlineSize, outlineSize);
         }
     }
 }

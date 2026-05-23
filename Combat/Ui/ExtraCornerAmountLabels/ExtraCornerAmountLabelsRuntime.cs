@@ -33,7 +33,8 @@ namespace STS2RitsuLib.Combat.Ui.ExtraCornerAmountLabels
         internal static void SyncPower(NPower node)
         {
             var model = SafeReadModel(node);
-            if (model is not IPowerExtraIconAmountLabelsProvider provider)
+            if (model is not IPowerExtraIconAmountLabelsProvider &&
+                model is not IPowerExtraIconAmountLabelSpecsProvider)
             {
                 ClearPower(node);
                 return;
@@ -41,14 +42,14 @@ namespace STS2RitsuLib.Combat.Ui.ExtraCornerAmountLabels
 
             MegaLabel? amountRef;
             PowerHostState state;
-            ExtraIconAmountLabelSlot[] snapshot;
+            ExtraIconAmountLabelSpec[] snapshot;
             lock (SyncRoot)
             {
                 state = GetOrCreatePowerState(node.GetInstanceId());
                 state.OwnerInstanceId = node.GetInstanceId();
-                ResubscribePower(state, node, model, provider);
+                ResubscribePower(state, node, model, model);
                 amountRef = PowerAmountField?.GetValue(node) as MegaLabel;
-                snapshot = SnapshotSlots(provider.GetPowerExtraIconAmountLabelSlots());
+                snapshot = SnapshotPowerSpecs(model);
             }
 
             SyncAnchoredSlotHosts(node, state.Slots, PowerSlotPrefix, snapshot, ExtraCornerHostKind.Power,
@@ -70,7 +71,8 @@ namespace STS2RitsuLib.Combat.Ui.ExtraCornerAmountLabels
         internal static void SyncRelic(NRelicInventoryHolder node)
         {
             var model = node.Relic.Model;
-            if (model is not IRelicExtraIconAmountLabelsProvider provider)
+            if (model is not IRelicExtraIconAmountLabelsProvider &&
+                model is not IRelicExtraIconAmountLabelSpecsProvider)
             {
                 ClearRelic(node);
                 return;
@@ -78,14 +80,14 @@ namespace STS2RitsuLib.Combat.Ui.ExtraCornerAmountLabels
 
             MegaLabel? amountRef;
             RelicHostState state;
-            ExtraIconAmountLabelSlot[] snapshot;
+            ExtraIconAmountLabelSpec[] snapshot;
             lock (SyncRoot)
             {
                 state = GetOrCreateRelicState(node.GetInstanceId());
                 state.OwnerInstanceId = node.GetInstanceId();
-                ResubscribeRelic(state, node, model, provider);
+                ResubscribeRelic(state, node, model, model);
                 amountRef = RelicAmountField?.GetValue(node) as MegaLabel;
-                snapshot = SnapshotSlots(provider.GetRelicExtraIconAmountLabelSlots());
+                snapshot = SnapshotRelicSpecs(model);
             }
 
             SyncAnchoredSlotHosts(node, state.Slots, RelicSlotPrefix, snapshot, ExtraCornerHostKind.Relic,
@@ -107,7 +109,8 @@ namespace STS2RitsuLib.Combat.Ui.ExtraCornerAmountLabels
         internal static void SyncIntent(NIntent node)
         {
             var intent = IntentIntentField?.GetValue(node) as AbstractIntent;
-            if (intent is not IIntentExtraCornerAmountLabelsProvider provider)
+            if (intent is not IIntentExtraCornerAmountLabelsProvider &&
+                intent is not IIntentExtraCornerAmountLabelSpecsProvider)
             {
                 ClearIntent(node);
                 return;
@@ -115,14 +118,14 @@ namespace STS2RitsuLib.Combat.Ui.ExtraCornerAmountLabels
 
             RichTextLabel? valueRef;
             IntentHostState state;
-            ExtraIconAmountLabelSlot[] snapshot;
+            ExtraIconAmountLabelSpec[] snapshot;
             lock (SyncRoot)
             {
                 state = GetOrCreateIntentState(node.GetInstanceId());
                 state.OwnerInstanceId = node.GetInstanceId();
-                ResubscribeIntent(state, node, intent, provider);
+                ResubscribeIntent(state, node, intent, intent);
                 valueRef = IntentValueField?.GetValue(node) as RichTextLabel;
-                snapshot = SnapshotSlots(provider.GetIntentExtraCornerAmountLabelSlots());
+                snapshot = SnapshotIntentSpecs(intent);
             }
 
             SyncAnchoredSlotHosts(node, state.Slots, IntentSlotPrefix, snapshot, ExtraCornerHostKind.Intent,
@@ -141,17 +144,59 @@ namespace STS2RitsuLib.Combat.Ui.ExtraCornerAmountLabels
             }
         }
 
-        private static ExtraIconAmountLabelSlot[] SnapshotSlots(IReadOnlyList<ExtraIconAmountLabelSlot> slots)
+        private static ExtraIconAmountLabelSpec[] SnapshotPowerSpecs(PowerModel model)
+        {
+            if (model is IPowerExtraIconAmountLabelSpecsProvider specsProvider)
+                return SnapshotSpecs(specsProvider.GetPowerExtraIconAmountLabelSpecs());
+
+            return model is IPowerExtraIconAmountLabelsProvider slotsProvider
+                ? SnapshotSlotsAsSpecs(slotsProvider.GetPowerExtraIconAmountLabelSlots())
+                : [];
+        }
+
+        private static ExtraIconAmountLabelSpec[] SnapshotRelicSpecs(RelicModel model)
+        {
+            if (model is IRelicExtraIconAmountLabelSpecsProvider specsProvider)
+                return SnapshotSpecs(specsProvider.GetRelicExtraIconAmountLabelSpecs());
+
+            return model is IRelicExtraIconAmountLabelsProvider slotsProvider
+                ? SnapshotSlotsAsSpecs(slotsProvider.GetRelicExtraIconAmountLabelSlots())
+                : [];
+        }
+
+        private static ExtraIconAmountLabelSpec[] SnapshotIntentSpecs(AbstractIntent intent)
+        {
+            if (intent is IIntentExtraCornerAmountLabelSpecsProvider specsProvider)
+                return SnapshotSpecs(specsProvider.GetIntentExtraCornerAmountLabelSpecs());
+
+            return intent is IIntentExtraCornerAmountLabelsProvider slotsProvider
+                ? SnapshotSlotsAsSpecs(slotsProvider.GetIntentExtraCornerAmountLabelSlots())
+                : [];
+        }
+
+        private static ExtraIconAmountLabelSpec[] SnapshotSpecs(IReadOnlyList<ExtraIconAmountLabelSpec> specs)
+        {
+            if (specs.Count == 0)
+                return [];
+
+            if (specs is ExtraIconAmountLabelSpec[] existing)
+                return (ExtraIconAmountLabelSpec[])existing.Clone();
+
+            var copy = new ExtraIconAmountLabelSpec[specs.Count];
+            for (var i = 0; i < specs.Count; i++)
+                copy[i] = specs[i];
+
+            return copy;
+        }
+
+        private static ExtraIconAmountLabelSpec[] SnapshotSlotsAsSpecs(IReadOnlyList<ExtraIconAmountLabelSlot> slots)
         {
             if (slots.Count == 0)
                 return [];
 
-            if (slots is ExtraIconAmountLabelSlot[] existing)
-                return (ExtraIconAmountLabelSlot[])existing.Clone();
-
-            var copy = new ExtraIconAmountLabelSlot[slots.Count];
+            var copy = new ExtraIconAmountLabelSpec[slots.Count];
             for (var i = 0; i < slots.Count; i++)
-                copy[i] = slots[i];
+                copy[i] = new(slots[i]);
 
             return copy;
         }
@@ -160,9 +205,9 @@ namespace STS2RitsuLib.Combat.Ui.ExtraCornerAmountLabels
             Control host,
             List<AnchoredSlotHost> pool,
             string slotNamePrefix,
-            ExtraIconAmountLabelSlot[] specs,
+            ExtraIconAmountLabelSpec[] specs,
             ExtraCornerHostKind hostKind,
-            Action<MegaLabel> applyHostStyle)
+            Action<Control> applyHostStyle)
         {
             var reserved = GetReservedCorners(hostKind);
             var occupied = reserved.Count == 0 ? [] : new HashSet<ExtraIconAmountLabelCorner>(reserved);
@@ -188,29 +233,13 @@ namespace STS2RitsuLib.Combat.Ui.ExtraCornerAmountLabels
                     pool.Add(new());
 
                 var entry = pool[writeIndex];
-                if (!GodotObject.IsInstanceValid(entry.Label))
-                {
-                    var label = new MegaLabel
-                    {
-                        Name = $"{slotNamePrefix}{writeIndex}",
-                        MouseFilter = Control.MouseFilterEnum.Ignore,
-                        ClipContents = true,
-                    };
-                    host.AddChild(label);
-                    host.MoveChild(label, host.GetChildCount() - 1);
-                    entry.Label = label;
-                }
-
-                var live = entry.Label!;
+                var live = GetOrCreateSlotLabel(host, entry, slotNamePrefix, writeIndex, slot.TextMode);
                 applyHostStyle(live);
-                if (slot.FontColor is { } fontColor)
-                    live.AddThemeColorOverride(ThemeConstants.Label.FontColor, fontColor);
-                if (slot.FontOutlineColor is { } outlineColor)
-                    live.AddThemeColorOverride(ThemeConstants.Label.FontOutlineColor, outlineColor);
+                ApplySlotColorOverrides(live, in slot);
 
                 ExtraCornerHostLayout.ApplySlotAlignment(live, hostKind, in slot);
                 ExtraCornerHostLayout.ApplySlotBounds(live, hostKind, in slot);
-                live.SetTextAutoSize(slot.Text.Trim());
+                SetSlotText(live, in slot);
                 live.Visible = true;
                 writeIndex++;
             }
@@ -218,6 +247,102 @@ namespace STS2RitsuLib.Combat.Ui.ExtraCornerAmountLabels
             for (var j = writeIndex; j < pool.Count; j++)
                 if (GodotObject.IsInstanceValid(pool[j].Label))
                     pool[j].Label!.Visible = false;
+        }
+
+        private static Control GetOrCreateSlotLabel(
+            Control host,
+            AnchoredSlotHost entry,
+            string slotNamePrefix,
+            int slotIndex,
+            ExtraIconAmountLabelTextMode textMode)
+        {
+            if (GodotObject.IsInstanceValid(entry.Label) && entry.TextMode == textMode &&
+                LabelMatchesTextMode(entry.Label, textMode))
+                return entry.Label!;
+
+            if (GodotObject.IsInstanceValid(entry.Label))
+                entry.Label!.QueueFree();
+
+            var label = CreateSlotLabel($"{slotNamePrefix}{slotIndex}", textMode);
+            host.AddChild(label);
+            host.MoveChild(label, host.GetChildCount() - 1);
+            entry.Label = label;
+            entry.TextMode = textMode;
+            return label;
+        }
+
+        private static Control CreateSlotLabel(string name, ExtraIconAmountLabelTextMode textMode)
+        {
+            return textMode switch
+            {
+                ExtraIconAmountLabelTextMode.RichText => new MegaRichTextLabel
+                {
+                    Name = name,
+                    MouseFilter = Control.MouseFilterEnum.Ignore,
+                    ClipContents = true,
+                    BbcodeEnabled = true,
+                    ScrollActive = false,
+                    AutowrapMode = TextServer.AutowrapMode.Off,
+                    FitContent = false,
+                },
+                _ => new MegaLabel
+                {
+                    Name = name,
+                    MouseFilter = Control.MouseFilterEnum.Ignore,
+                    ClipContents = true,
+                },
+            };
+        }
+
+        private static bool LabelMatchesTextMode(Control? label, ExtraIconAmountLabelTextMode textMode)
+        {
+            return textMode switch
+            {
+                ExtraIconAmountLabelTextMode.RichText => label is MegaRichTextLabel,
+                _ => label is MegaLabel,
+            };
+        }
+
+        private static void ApplySlotColorOverrides(Control label, in ExtraIconAmountLabelSpec slot)
+        {
+            if (slot.FontColor is { } fontColor)
+                label.AddThemeColorOverride(
+                    slot.TextMode == ExtraIconAmountLabelTextMode.RichText
+                        ? ThemeConstants.RichTextLabel.DefaultColor
+                        : ThemeConstants.Label.FontColor,
+                    fontColor);
+
+            if (slot.FontOutlineColor is { } outlineColor)
+                label.AddThemeColorOverride(
+                    slot.TextMode == ExtraIconAmountLabelTextMode.RichText
+                        ? ThemeConstants.RichTextLabel.FontOutlineColor
+                        : ThemeConstants.Label.FontOutlineColor,
+                    outlineColor);
+        }
+
+        private static void SetSlotText(Control label, in ExtraIconAmountLabelSpec slot)
+        {
+            var text = slot.Text.Trim();
+            switch (label)
+            {
+                case MegaRichTextLabel rich:
+                    rich.SetTextAutoSize(AlignRichText(text, slot.Corner));
+                    break;
+                case MegaLabel plain:
+                    plain.SetTextAutoSize(text);
+                    break;
+            }
+        }
+
+        private static string AlignRichText(string text, ExtraIconAmountLabelCorner corner)
+        {
+            return corner switch
+            {
+                ExtraIconAmountLabelCorner.TopRight or ExtraIconAmountLabelCorner.BottomRight =>
+                    $"[right]{text}[/right]",
+                ExtraIconAmountLabelCorner.Custom => $"[center]{text}[/center]",
+                _ => text,
+            };
         }
 
         private static IReadOnlyList<ExtraIconAmountLabelCorner> GetReservedCorners(ExtraCornerHostKind hostKind)
@@ -233,7 +358,7 @@ namespace STS2RitsuLib.Combat.Ui.ExtraCornerAmountLabels
         private static void ReportCornerRejectedOnce(
             Control host,
             ExtraCornerHostKind hostKind,
-            in ExtraIconAmountLabelSlot slot,
+            in ExtraIconAmountLabelSpec slot,
             IReadOnlyList<ExtraIconAmountLabelCorner> reservedCorners)
         {
             var hostId = host.GetInstanceId();
@@ -241,16 +366,32 @@ namespace STS2RitsuLib.Combat.Ui.ExtraCornerAmountLabels
             var reason = reservedCorners.Contains(slot.Corner)
                 ? "requested corner is reserved by vanilla UI"
                 : "requested corner is already occupied by another extra badge";
+            var hostKey = GetHostLogKey(host, hostKind);
 
-            var key = $"{hostId}:{hostKind}:{slot.Corner}:{text}";
+            var key = $"{hostKind}:{hostKey}:{slot.Corner}:{reason}";
             lock (CornerErrorSync)
             {
                 if (!CornerErrorOnceKeys.Add(key))
                     return;
             }
 
-            RitsuLibFramework.Logger.Error(
-                $"[ExtraCornerAmountLabels] Rejected badge slot on {hostKind} host (id={hostId}): corner={slot.Corner}, text='{text}', reason={reason}.");
+            RitsuLibFramework.Logger.Warn(
+                $"[ExtraCornerAmountLabels] Rejected badge slot on {hostKind} host ({hostKey}, nodeId={hostId}): corner={slot.Corner}, text='{text}', reason={reason}.");
+        }
+
+        private static string GetHostLogKey(Control host, ExtraCornerHostKind hostKind)
+        {
+            return hostKind switch
+            {
+                ExtraCornerHostKind.Power when host is NPower power =>
+                    SafeReadModel(power)?.Id.ToString() ?? power.GetType().FullName ?? power.Name,
+                ExtraCornerHostKind.Relic when host is NRelicInventoryHolder relic =>
+                    relic.Relic.Model.Id.ToString(),
+                ExtraCornerHostKind.Intent =>
+                    (IntentIntentField?.GetValue(host) as AbstractIntent)?.GetType().FullName ??
+                    host.GetType().FullName ?? host.Name,
+                _ => host.GetType().FullName ?? host.Name,
+            };
         }
 
         private static void FreeAnchoredSlotHosts(List<AnchoredSlotHost> pool)
@@ -304,7 +445,7 @@ namespace STS2RitsuLib.Combat.Ui.ExtraCornerAmountLabels
         }
 
         private static void ResubscribePower(PowerHostState state, NPower node, PowerModel model,
-            IPowerExtraIconAmountLabelsProvider provider)
+            object provider)
         {
             if (ReferenceEquals(state.SubscribedModel, model))
                 return;
@@ -331,7 +472,7 @@ namespace STS2RitsuLib.Combat.Ui.ExtraCornerAmountLabels
         }
 
         private static void ResubscribeRelic(RelicHostState state, NRelicInventoryHolder node, RelicModel model,
-            IRelicExtraIconAmountLabelsProvider provider)
+            object provider)
         {
             if (ReferenceEquals(state.SubscribedModel, model))
                 return;
@@ -358,7 +499,7 @@ namespace STS2RitsuLib.Combat.Ui.ExtraCornerAmountLabels
         }
 
         private static void ResubscribeIntent(IntentHostState state, NIntent node, AbstractIntent intent,
-            IIntentExtraCornerAmountLabelsProvider provider)
+            object provider)
         {
             if (ReferenceEquals(state.SubscribedIntent, intent))
                 return;
@@ -386,7 +527,8 @@ namespace STS2RitsuLib.Combat.Ui.ExtraCornerAmountLabels
 
         private sealed class AnchoredSlotHost
         {
-            public MegaLabel? Label;
+            public Control? Label;
+            public ExtraIconAmountLabelTextMode TextMode;
         }
 
         private sealed class PowerHostState
