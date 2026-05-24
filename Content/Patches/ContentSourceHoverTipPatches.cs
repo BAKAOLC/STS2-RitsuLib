@@ -383,6 +383,32 @@ namespace STS2RitsuLib.Content.Patches
         }
     }
 
+    internal sealed class ContentSourceCardHoverTipsPatch : IPatchMethod
+    {
+        public static string PatchId => "content_source_card_hover_tips";
+
+        public static string Description =>
+            "Add content source hover tip to card hover tip collections outside inspect/detail screens when enabled";
+
+        public static bool IsCritical => false;
+
+        public static ModPatchTarget[] GetTargets()
+        {
+            return [new(typeof(CardModel), "HoverTips", MethodType.Getter)];
+        }
+
+        // ReSharper disable InconsistentNaming
+        public static void Postfix(CardModel __instance, ref IEnumerable<IHoverTip> __result)
+            // ReSharper restore InconsistentNaming
+        {
+            if (!RitsuLibSettingsStore.IsModSourceHoverTipsEnabled() ||
+                !RitsuLibSettingsStore.ShouldIncludeNonDetailModSourceHoverTips())
+                return;
+
+            ContentSourceHoverTipPatchHelper.Append(__instance, ref __result);
+        }
+    }
+
     internal sealed class ContentSourcePowerHoverTipsPatch : IPatchMethod
     {
         public static string PatchId => "content_source_power_hover_tips";
@@ -410,7 +436,7 @@ namespace STS2RitsuLib.Content.Patches
         public static string PatchId => "nhover_tip_set_inspect_screen_show_source";
 
         public static string Description =>
-            "Show content source in NInspectCardScreen and NInspectRelicScreen, if available from ContentSourceHoverTipFactory";
+            "Show content source in inspect screens, card preview hovers, and relic option hovers";
 
         public static bool IsCritical => false;
 
@@ -427,6 +453,49 @@ namespace STS2RitsuLib.Content.Patches
         private static readonly FieldInfo? CardsIndexField = AccessTools.Field(typeof(NInspectCardScreen), "_index");
         private static readonly FieldInfo? RelicsField = AccessTools.Field(typeof(NInspectRelicScreen), "_relics");
         private static readonly FieldInfo? RelicsIndexField = AccessTools.Field(typeof(NInspectRelicScreen), "_index");
+
+        private static void AppendModelSourceTipIfModelTipMissing(
+            AbstractModel model,
+            ref IEnumerable<IHoverTip> hoverTips)
+        {
+            var tips = hoverTips.ToArray();
+            if (tips.Any(tip => tip.CanonicalModel?.GetType() == model.GetType() &&
+                                tip.CanonicalModel.Id == model.Id))
+            {
+                hoverTips = tips;
+                return;
+            }
+
+            if (!ContentSourceHoverTipFactory.TryCreate(model, out var sourceTip))
+                return;
+
+            hoverTips = [sourceTip, .. tips];
+        }
+
+        private static void AppendCardHoverTipSources(ref IEnumerable<IHoverTip> hoverTips)
+        {
+            var tips = hoverTips.ToArray();
+            List<IHoverTip>? sourceTips = null;
+            HashSet<string>? seenSourceTipIds = null;
+
+            foreach (var cardTip in tips.OfType<CardHoverTip>())
+            {
+                if (!ContentSourceHoverTipFactory.TryCreate(cardTip.Card, out var sourceTip))
+                    continue;
+
+                seenSourceTipIds ??= [];
+                if (!seenSourceTipIds.Add(sourceTip.Id))
+                    continue;
+
+                sourceTips ??= [];
+                sourceTips.Add(sourceTip);
+            }
+
+            if (sourceTips is null)
+                return;
+
+            hoverTips = [.. sourceTips, .. tips];
+        }
 
         private static void AppendTip<T>(FieldInfo? listField, FieldInfo? indexField, Control screen,
             ref IEnumerable<IHoverTip> hoverTips) where T : AbstractModel
@@ -460,6 +529,14 @@ namespace STS2RitsuLib.Content.Patches
                     AppendTip<RelicModel>(RelicsField, RelicsIndexField, relicScreen, ref hoverTips);
                     break;
             }
+
+            if (!RitsuLibSettingsStore.ShouldIncludeNonDetailModSourceHoverTips())
+                return;
+
+            if (owner is NEventOptionButton { Option.Relic: { } relic })
+                AppendModelSourceTipIfModelTipMissing(relic, ref hoverTips);
+
+            AppendCardHoverTipSources(ref hoverTips);
         }
     }
 

@@ -30,7 +30,15 @@ namespace STS2RitsuLib.Settings
                         T("ritsulib.modSourceHoverTips.includeVanilla.label", "Include vanilla content source"),
                         ui.ModSourceHoverTipsIncludeVanilla,
                         T("ritsulib.modSourceHoverTips.includeVanilla.description",
-                            "Also shows source hover tips for base-game cards, relics, potions, keywords, and events."))
+                            "Also shows source hover tips for base-game cards, relics, potions, keywords, and events."),
+                        RitsuLibSettingsStore.IsModSourceHoverTipsEnabled)
+                    .AddToggle(
+                        "mod_source_hover_tips_include_non_details",
+                        T("ritsulib.modSourceHoverTips.includeNonDetails.label", "Show sources outside details"),
+                        ui.ModSourceHoverTipsIncludeNonDetails,
+                        T("ritsulib.modSourceHoverTips.includeNonDetails.description",
+                            "Also adds source tips to card hovers, card-preview hovers, and relic-option hovers outside inspect/detail screens."),
+                        RitsuLibSettingsStore.IsModSourceHoverTipsEnabled)
                     .AddChoice(
                         "ui_shell_theme_id",
                         T("ritsulib.uiShellTheme.label", "Interface theme"),
