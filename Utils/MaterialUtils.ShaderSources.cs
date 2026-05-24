@@ -2,7 +2,8 @@ namespace STS2RitsuLib.Utils
 {
     public static partial class MaterialUtils
     {
-        private const string ReplaceHueShaderSource = """
+        private const string ReplaceHueShaderSource =
+            """
             shader_type canvas_item;
 
             const vec3 LUMA_WEIGHTS = vec3(0.2126, 0.7152, 0.0722);

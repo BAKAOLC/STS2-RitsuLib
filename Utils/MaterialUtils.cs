@@ -14,12 +14,13 @@ namespace STS2RitsuLib.Utils
         private static NoiseTexture2D? _vanillaDoomBarNoiseTexture;
         private static ShaderMaterial? _unmodulatedHsvMaterial;
 
+        private static Shader? _replaceHueShader;
+
         private static Shader? GameHsvShader => (Shader?)GD.Load<Shader>(HsvShaderPath)?.Duplicate();
 
         private static Shader? GameDoomBarShader => (Shader?)GD.Load<Shader>(DoomBarShaderPath)?.Duplicate();
 
-        private static Shader? _replaceHueShader;
-        private static Shader ReplaceHueShader => _replaceHueShader ??= new Shader
+        private static Shader ReplaceHueShader => _replaceHueShader ??= new()
         {
             Code = ReplaceHueShaderSource,
         };
