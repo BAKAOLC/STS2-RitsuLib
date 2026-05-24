@@ -617,20 +617,20 @@ namespace STS2RitsuLib.Interop.AutoRegistration
                             });
                         break;
                     }
-                    case RegisterNodeAttachmentFromRitsuSceneAttribute nodeAttachmentRitsuScene:
+                    case RegisterNodeAttachmentFromConvertedSceneAttribute nodeAttachmentConvertedScene:
                     {
-                        var nodeType = ResolveNodeAttachmentNodeType(type, nodeAttachmentRitsuScene.NodeType);
+                        var nodeType = ResolveNodeAttachmentNodeType(type, nodeAttachmentConvertedScene.NodeType);
                         RegisterCase(
-                            $"RegisterNodeAttachmentFromRitsuScene:{nodeAttachmentRitsuScene.ParentType.FullName}->{nodeType.FullName}:{nodeAttachmentRitsuScene.LocalId}:{nodeAttachmentRitsuScene.ScenePath}",
+                            $"RegisterNodeAttachmentFromConvertedScene:{nodeAttachmentConvertedScene.ParentType.FullName}->{nodeType.FullName}:{nodeAttachmentConvertedScene.LocalId}:{nodeAttachmentConvertedScene.ScenePath}",
                             () =>
                             {
                                 operations.Add(CreateOperation(ownerModId, type,
                                     AutoRegistrationPhase.NodeAttachments,
-                                    nodeAttachmentRitsuScene.Order,
-                                    $"RegisterNodeAttachmentFromRitsuScene:{nodeAttachmentRitsuScene.ParentType.FullName}->{nodeType.FullName}:{nodeAttachmentRitsuScene.LocalId}:{nodeAttachmentRitsuScene.ScenePath}",
-                                    nameof(RegisterNodeAttachmentFromRitsuSceneAttribute),
+                                    nodeAttachmentConvertedScene.Order,
+                                    $"RegisterNodeAttachmentFromConvertedScene:{nodeAttachmentConvertedScene.ParentType.FullName}->{nodeType.FullName}:{nodeAttachmentConvertedScene.LocalId}:{nodeAttachmentConvertedScene.ScenePath}",
+                                    nameof(RegisterNodeAttachmentFromConvertedSceneAttribute),
                                     () => RegisterSceneNodeAttachment(ownerModId, type, nodeType,
-                                        nodeAttachmentRitsuScene,
+                                        nodeAttachmentConvertedScene,
                                         true),
                                     [TypeDependencyKey(type)]));
                             });
@@ -1246,14 +1246,14 @@ namespace STS2RitsuLib.Interop.AutoRegistration
         }
 
         private static void RegisterSceneNodeAttachment(string ownerModId, Type declaringType, Type nodeType,
-            RegisterNodeAttachmentAttributeBase attr, bool ritsuFactory)
+            RegisterNodeAttachmentAttributeBase attr, bool convertedScene)
         {
             EnsureConcreteSubtype(attr.ParentType, typeof(Node), nameof(attr.ParentType));
             var scenePath = attr switch
             {
                 RegisterNodeAttachmentFromSceneAttribute scene => ValidateNonEmpty(scene.ScenePath,
                     nameof(scene.ScenePath)),
-                RegisterNodeAttachmentFromRitsuSceneAttribute scene => ValidateNonEmpty(scene.ScenePath,
+                RegisterNodeAttachmentFromConvertedSceneAttribute scene => ValidateNonEmpty(scene.ScenePath,
                     nameof(scene.ScenePath)),
                 _ => throw new ArgumentException("Unsupported node attachment scene attribute.", nameof(attr)),
             };
@@ -1264,12 +1264,12 @@ namespace STS2RitsuLib.Interop.AutoRegistration
                 ValidateNonEmpty(attr.LocalId, nameof(attr.LocalId)),
                 attr.ParentType,
                 nodeType,
-                _ => ritsuFactory
-                    ? CreateNodeViaRitsuFactory(nodeType, scenePath)
+                _ => convertedScene
+                    ? CreateNodeViaConvertedSceneFactory(nodeType, scenePath)
                     : InstantiateSceneNode(nodeType, scenePath),
                 ComposeNodeAttachmentSetup(setup),
                 options,
-                ritsuFactory ? "attribute-ritsulib-scene-factory" : "attribute-scene",
+                convertedScene ? "attribute-converted-scene" : "attribute-scene",
                 scenePath);
         }
 
@@ -1359,7 +1359,7 @@ namespace STS2RitsuLib.Interop.AutoRegistration
                 $"Scene '{scenePath}' instantiated {node.GetType().FullName}, expected {nodeType.FullName}.");
         }
 
-        private static Node CreateNodeViaRitsuFactory(Type nodeType, string scenePath)
+        private static Node CreateNodeViaConvertedSceneFactory(Type nodeType, string scenePath)
         {
             var method = typeof(RitsuGodotNodeFactories).GetMethods(BindingFlags.Public | BindingFlags.Static)
                 .Single(method => method is

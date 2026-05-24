@@ -64,7 +64,7 @@ namespace STS2RitsuLib.Scaffolding.Godot.NodeAttachments
         public NodeAttachmentOptions Options { get; }
 
         /// <summary>
-        ///     Creation source label such as factory, scene, or ritsulib-scene-factory.
+        ///     Creation source label such as factory, scene, or converted-scene.
         /// </summary>
         public string SourceKind { get; }
 

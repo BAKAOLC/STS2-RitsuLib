@@ -278,7 +278,7 @@ namespace STS2RitsuLib.Diagnostics
                     cloud,
                     paths,
                     tree,
-                    (done, total, cur) => overlay?.SetProgress(done, total, cur));
+                    (done, total, cur) => overlay.SetProgress(done, total, cur));
 
                 var body = string.Format(
                     ModSettingsLocalization.Get(
@@ -371,7 +371,7 @@ namespace STS2RitsuLib.Diagnostics
                     cloud,
                     paths,
                     tree,
-                    (done, total, cur) => overlay?.SetProgress(done, total, cur));
+                    (done, total, cur) => overlay.SetProgress(done, total, cur));
 
                 var body = failed == 0
                     ? string.Format(

@@ -98,9 +98,10 @@ namespace STS2RitsuLib.Scaffolding.Godot.NodeAttachments
         }
 
         /// <summary>
-        ///     Registers a child created by <see cref="RitsuGodotNodeFactories.CreateFromScenePath{TNode}(string)" />.
+        ///     Registers a child created from a scene converted by
+        ///     <see cref="RitsuGodotNodeFactories.CreateFromScenePath{TNode}(string)" />.
         /// </summary>
-        public NodeAttachmentDefinition RegisterReadyChildFromRitsuScene<TParent, TNode>(
+        public NodeAttachmentDefinition RegisterReadyChildFromConvertedScene<TParent, TNode>(
             string localId,
             string scenePath,
             Action<TParent, TNode>? setup = null,
@@ -114,7 +115,7 @@ namespace STS2RitsuLib.Scaffolding.Godot.NodeAttachments
                 _ => RitsuGodotNodeFactories.CreateFromScenePath<TNode>(scenePath),
                 setup,
                 options,
-                "ritsulib-scene-factory",
+                "converted-scene",
                 scenePath);
         }
 
@@ -274,7 +275,7 @@ namespace STS2RitsuLib.Scaffolding.Godot.NodeAttachments
 
             throw new InvalidOperationException(
                 $"Scene '{scenePath}' instantiated {node.GetType().FullName}, expected {typeof(TNode).FullName}. " +
-                $"Use {nameof(RegisterReadyChildFromRitsuScene)} when the scene root must be converted by RitsuLib factories.");
+                $"Use {nameof(RegisterReadyChildFromConvertedScene)} when the scene root must be converted by RitsuLib factories.");
         }
     }
 }

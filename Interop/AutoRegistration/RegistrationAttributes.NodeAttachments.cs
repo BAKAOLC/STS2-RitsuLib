@@ -102,10 +102,13 @@ namespace STS2RitsuLib.Interop.AutoRegistration
     }
 
     /// <summary>
-    ///     Declaratively registers a ready-time node attachment created by RitsuLib scene factories.
+    ///     Declaratively registers a ready-time node attachment created from a scene converted by RitsuLib node factories.
     /// </summary>
     [AttributeUsage(AttributeTargets.Class, AllowMultiple = true, Inherited = false)]
-    public sealed class RegisterNodeAttachmentFromRitsuSceneAttribute(Type parentType, string localId, string scenePath)
+    public sealed class RegisterNodeAttachmentFromConvertedSceneAttribute(
+        Type parentType,
+        string localId,
+        string scenePath)
         : RegisterNodeAttachmentAttributeBase(parentType, localId)
     {
         /// <summary>
@@ -114,7 +117,7 @@ namespace STS2RitsuLib.Interop.AutoRegistration
         public Type? NodeType { get; set; }
 
         /// <summary>
-        ///     Godot scene path loaded through RitsuLib factories.
+        ///     Godot scene path loaded and converted through RitsuLib node factories.
         /// </summary>
         public string ScenePath { get; } = scenePath;
     }

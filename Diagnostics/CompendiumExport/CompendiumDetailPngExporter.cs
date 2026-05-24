@@ -247,7 +247,7 @@ namespace STS2RitsuLib.Diagnostics.CompendiumExport
         {
             for (var attempt = 1; attempt <= MaxCaptureAttemptsPerFile; attempt++)
             {
-                var prefix = MaxCaptureAttemptsPerFile > 1 ? $"[{attempt}/{MaxCaptureAttemptsPerFile}] " : null;
+                var prefix = $"[{attempt}/{MaxCaptureAttemptsPerFile}] ";
                 if (await TryCaptureRelicAsync(tree, relic, path, scale, includeRelicHover, log, prefix, fileLabel))
                     return true;
                 if (attempt >= MaxCaptureAttemptsPerFile)
@@ -266,7 +266,7 @@ namespace STS2RitsuLib.Diagnostics.CompendiumExport
         {
             for (var attempt = 1; attempt <= MaxCaptureAttemptsPerFile; attempt++)
             {
-                var prefix = MaxCaptureAttemptsPerFile > 1 ? $"[{attempt}/{MaxCaptureAttemptsPerFile}] " : null;
+                var prefix = $"[{attempt}/{MaxCaptureAttemptsPerFile}] ";
                 if (await TryCapturePotionAsync(tree, potion, path, scale, log, prefix, fileLabel))
                     return true;
                 if (attempt >= MaxCaptureAttemptsPerFile)
