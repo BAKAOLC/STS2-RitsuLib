@@ -14,11 +14,9 @@ namespace STS2RitsuLib.Utils
         private static NoiseTexture2D? _vanillaDoomBarNoiseTexture;
         private static ShaderMaterial? _unmodulatedHsvMaterial;
 
-        private static Shader? _gameHsvShader;
-        private static Shader GameHsvShader => _gameHsvShader ??= GD.Load<Shader>(HsvShaderPath) ?? throw new InvalidOperationException($"Failed to load HSV shader ({HsvShaderPath}).");
+        private static Shader? GameHsvShader => (Shader?)GD.Load<Shader>(HsvShaderPath)?.Duplicate();
 
-        private static Shader? _gameDoomBarShader;
-        private static Shader? GameDoomBarShader => _gameDoomBarShader ??= GD.Load<Shader>(DoomBarShaderPath) ?? throw new InvalidOperationException($"Failed to load doom bar shader ({DoomBarShaderPath}).");
+        private static Shader? GameDoomBarShader => (Shader?)GD.Load<Shader>(DoomBarShaderPath)?.Duplicate();
 
         private static Shader? _replaceHueShader;
         private static Shader ReplaceHueShader => _replaceHueShader ??= new Shader
@@ -53,7 +51,21 @@ namespace STS2RitsuLib.Utils
         [Obsolete("Prefer MaterialUtils.CreateReplaceHueShaderMaterial instead.")]
         public static ShaderMaterial CreateRgbShaderMaterial(float r, float g, float b)
         {
-            return CreateReplaceHueShaderMaterial(r, g, b);
+            var max = Math.Max(r, Math.Max(g, b));
+            var min = Math.Min(r, Math.Min(g, b));
+            var delta = max - min;
+
+            float h = 0;
+            if (delta != 0)
+            {
+                if (Mathf.IsEqualApprox(max, r)) h = (g - b) / delta + (g < b ? 6 : 0);
+                else if (Mathf.IsEqualApprox(max, g)) h = (b - r) / delta + 2;
+                else h = (r - g) / delta + 4;
+                h /= 6;
+            }
+
+            var s = max == 0 ? 0 : delta / max;
+            return CreateHsvShaderMaterial(h, s, max);
         }
 
         /// <summary>
@@ -62,10 +74,18 @@ namespace STS2RitsuLib.Utils
         /// </summary>
         public static ShaderMaterial CreateHsvShaderMaterial(float h, float s, float v)
         {
-            var material = new ShaderMaterial { Shader = GameHsvShader };
+            var shader = GameHsvShader ??
+                         throw new InvalidOperationException($"Failed to load HSV shader ({HsvShaderPath}).");
+
+            var material = new ShaderMaterial
+            {
+                Shader = shader,
+            };
+
             material.SetShaderParameter("h", h);
             material.SetShaderParameter("s", s);
             material.SetShaderParameter("v", v);
+
             return material;
         }
 
@@ -84,7 +104,7 @@ namespace STS2RitsuLib.Utils
         public static ShaderMaterial CreateUnmodulatedHsvShaderMaterial()
         {
             _unmodulatedHsvMaterial ??= CreateHsvShaderMaterial(0f, 1f, 1f);
-            return _unmodulatedHsvMaterial;
+            return (ShaderMaterial)_unmodulatedHsvMaterial.Duplicate();
         }
 
         /// <summary>
@@ -104,7 +124,11 @@ namespace STS2RitsuLib.Utils
         {
             ArgumentNullException.ThrowIfNull(gradientTexture);
 
-            var material = new ShaderMaterial { Shader = GameDoomBarShader };
+            var shader = GameDoomBarShader;
+            if (shader == null)
+                throw new InvalidOperationException($"Failed to load doom bar shader ({DoomBarShaderPath}).");
+
+            var material = new ShaderMaterial { Shader = shader };
             material.SetShaderParameter("noise_tex", VanillaDoomBarNoiseTexture);
             material.SetShaderParameter("gradient_tex", gradientTexture);
             return material;
