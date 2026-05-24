@@ -1,3 +1,4 @@
+using MegaCrit.Sts2.Core.Entities.Ancients;
 using MegaCrit.Sts2.Core.Localization;
 using MegaCrit.Sts2.Core.Models;
 using MegaCrit.Sts2.Core.Timeline;
@@ -146,6 +147,7 @@ namespace STS2RitsuLib.Diagnostics.DevConsole
                 EncounterModel => new("encounters", model.Id.Entry + ".title"),
                 AfflictionModel => new("afflictions", model.Id.Entry + ".title"),
                 EnchantmentModel => new("enchantments", model.Id.Entry + ".title"),
+                AncientEventModel => new("ancients", model.Id.Entry + ".title"),
                 EventModel => new("events", model.Id.Entry + ".title"),
                 ActModel => new("acts", model.Id.Entry + ".title"),
                 PowerModel => new("powers", model.Id.Entry + ".title"),
