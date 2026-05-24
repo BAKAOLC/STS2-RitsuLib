@@ -172,15 +172,9 @@ namespace STS2RitsuLib.Loader
             }
 
             var libRootFull = Path.GetFullPath(libRoot);
-            var variants = new List<VariantCandidate>();
-            foreach (var entry in manifest.Variants)
-            {
-                var candidate = TryCreateVariantCandidate(loaderDir, libRootFull, entry);
-                if (candidate is not null)
-                    variants.Add(candidate);
-            }
 
-            return variants;
+            return manifest.Variants.Select(entry => TryCreateVariantCandidate(loaderDir, libRootFull, entry))
+                .OfType<VariantCandidate>().ToList();
         }
 
         private static VariantCandidate? TryCreateVariantCandidate(
@@ -234,13 +228,9 @@ namespace STS2RitsuLib.Loader
                 return null;
             }
 
-            if (!MatchesExpectedHash(dllPath, entry.Sha256))
-            {
-                Log.Error($"[RitsuLib.Loader] Ignoring variant with mismatched hash: {dllPath}");
-                return null;
-            }
-
-            return new(compatTarget, version, dllPath);
+            if (MatchesExpectedHash(dllPath, entry.Sha256)) return new(compatTarget, version, dllPath);
+            Log.Error($"[RitsuLib.Loader] Ignoring variant with mismatched hash: {dllPath}");
+            return null;
         }
 
         private static bool IsUnderDirectory(string path, string root)
@@ -269,6 +259,7 @@ namespace STS2RitsuLib.Loader
             public List<BundleVariantEntry>? Variants { get; set; }
         }
 
+        // ReSharper disable once ClassNeverInstantiated.Local
         private sealed class BundleVariantEntry
         {
             public string? CompatTarget { get; set; }

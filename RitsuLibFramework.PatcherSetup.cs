@@ -256,6 +256,7 @@ namespace STS2RitsuLib
             patcher.RegisterPatch<CardTextureOverridePatch>();
             patcher.RegisterPatch<CardFrameMaterialPatch>();
             patcher.RegisterPatch<CardPoolFrameMaterialPatch>();
+            patcher.RegisterPatch<CardPortraitMaterialPatch>();
             patcher.RegisterPatch<CardAllPortraitPathsPatch>();
             patcher.RegisterPatch<CardOverlayPathPatch>();
             patcher.RegisterPatch<CardOverlayAvailabilityPatch>();
@@ -264,6 +265,14 @@ namespace STS2RitsuLib
             patcher.RegisterPatch<CardBannerMaterialPatch>();
             patcher.RegisterPatch<CardDynamicVarTooltipPatch>();
             patcher.RegisterPatch<DynamicVarTooltipClonePatch>();
+            patcher.RegisterPatch<ContentSourceKeywordHoverTipPatch>();
+            patcher.RegisterPatch<ContentSourceStaticHoverTipPatch>();
+            patcher.RegisterPatch<ContentSourceEnergyHoverTipPatch>();
+            patcher.RegisterPatch<ContentSourceCardHoverTipsPatch>();
+            patcher.RegisterPatch<ContentSourceModelHoverTipPatch>();
+            patcher.RegisterPatch<ContentSourcePowerHoverTipsPatch>();
+            patcher.RegisterPatch<ContentSourceNHoverTipSetShowPatch>();
+            patcher.RegisterPatch<ContentSourceEventLayoutBadgePatch>();
             patcher.RegisterPatch<ModKeywordCardDescriptionPatches>();
             patcher.RegisterPatch<EnergyIconHelperPathPatch>();
             patcher.RegisterPatch<EnergyIconFormatterPatch>();
@@ -278,6 +287,7 @@ namespace STS2RitsuLib
             patcher.RegisterPatch<OrbIconPatch>();
             patcher.RegisterPatch<OrbSpritePathPatch>();
             patcher.RegisterPatch<OrbAssetPathsPatch>();
+            patcher.RegisterPatch<NOrbValueDisplayPolicyPatch>();
 
             patcher.RegisterPatch<PotionImagePathPatch>();
             patcher.RegisterPatch<PotionTexturePatch>();
@@ -401,6 +411,7 @@ namespace STS2RitsuLib
             patcher.RegisterPatch<RelicCollectionActListPatch>();
             patcher.RegisterPatch<AllPowersPatch>();
             patcher.RegisterPatch<AllOrbsPatch>();
+            patcher.RegisterPatch<OrbModelRandomPoolPolicyPatch>();
             patcher.RegisterPatch<AllSharedCardPoolsPatch>();
             patcher.RegisterPatch<AllSharedEventsPatch>();
             patcher.RegisterPatch<AllEventsPatch>();

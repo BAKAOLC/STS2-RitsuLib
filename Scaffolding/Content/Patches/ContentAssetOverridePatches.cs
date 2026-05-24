@@ -2,13 +2,17 @@ using System.Reflection;
 using Godot;
 using HarmonyLib;
 using MegaCrit.Sts2.Core.Assets;
+using MegaCrit.Sts2.Core.Entities.Cards;
+using MegaCrit.Sts2.Core.Entities.UI;
 using MegaCrit.Sts2.Core.Events;
 using MegaCrit.Sts2.Core.Helpers;
 using MegaCrit.Sts2.Core.Models;
+using MegaCrit.Sts2.Core.Nodes.Cards;
 using MegaCrit.Sts2.Core.Runs;
 using MegaCrit.Sts2.Core.Timeline;
 using STS2RitsuLib.Patching.Models;
 using STS2RitsuLib.Scaffolding.Characters;
+using STS2RitsuLib.Timeline.Scaffolding;
 using STS2RitsuLib.Utils;
 
 namespace STS2RitsuLib.Scaffolding.Content.Patches
@@ -282,8 +286,8 @@ namespace STS2RitsuLib.Scaffolding.Content.Patches
     }
 
     /// <summary>
-    ///     Optional card art paths consumed by content asset Harmony patches on <see cref="CardModel" />.
-    ///     由 <see cref="CardModel" /> 上的 content asset Harmony 补丁使用的可选卡牌美术路径。
+    ///     Optional card art paths and materials consumed by content asset Harmony patches.
+    ///     由 content asset Harmony 补丁使用的可选卡牌美术路径和材质。
     /// </summary>
     public interface IModCardAssetOverrides
     {
@@ -304,6 +308,12 @@ namespace STS2RitsuLib.Scaffolding.Content.Patches
         ///     beta/备用肖像路径覆盖。
         /// </summary>
         string? CustomBetaPortraitPath { get; }
+
+        /// <summary>
+        ///     Override for card portrait <see cref="Material" /> resource path.
+        ///     卡图 <see cref="Material" /> 资源路径覆盖。
+        /// </summary>
+        string? CustomPortraitMaterialPath => AssetProfile.PortraitMaterialPath;
 
         /// <summary>
         ///     Override for card frame texture path.
@@ -346,6 +356,23 @@ namespace STS2RitsuLib.Scaffolding.Content.Patches
         ///     横幅材质路径覆盖。
         /// </summary>
         string? CustomBannerMaterialPath { get; }
+    }
+
+    /// <summary>
+    ///     Optional direct portrait <see cref="Material" /> override for cards.
+    ///     This is applied to the portrait TextureRect after <see cref="NCard" /> reloads its vanilla visuals.
+    ///     用于卡牌的可选直接卡图 <see cref="Material" /> 覆盖。
+    ///     会在 <see cref="NCard" /> 重载原版视觉后应用到卡图 TextureRect。
+    /// </summary>
+    public interface IModCardPortraitMaterialOverride
+    {
+        /// <summary>
+        ///     Direct portrait material override.
+        ///     Return <c>null</c> to continue with other override layers.
+        ///     直接的卡图材质覆盖。
+        ///     返回 <c>null</c> 以继续使用其它覆盖层。
+        /// </summary>
+        Material? CustomPortraitMaterial => null;
     }
 
     /// <summary>
@@ -733,8 +760,9 @@ namespace STS2RitsuLib.Scaffolding.Content.Patches
         /// <summary>
         ///     Suppresses the vanilla placeholder label for mod epochs with custom artwork.
         /// </summary>
-        // ReSharper disable once InconsistentNaming
+        // ReSharper disable InconsistentNaming
         public static bool Prefix(EpochModel __instance, ref bool __result)
+            // ReSharper restore InconsistentNaming
         {
             if (__instance is IModEpochAssetOverrides overrides &&
                 !string.IsNullOrWhiteSpace(overrides.CustomBigPortraitPath) &&
@@ -757,12 +785,10 @@ namespace STS2RitsuLib.Scaffolding.Content.Patches
         private static bool IsCharacterUnlockEpochTemplate(Type type)
         {
             for (var current = type; current != null; current = current.BaseType)
-            {
                 if (current.IsGenericType &&
                     current.GetGenericTypeDefinition() ==
-                    typeof(STS2RitsuLib.Timeline.Scaffolding.CharacterUnlockEpochTemplate<>))
+                    typeof(CharacterUnlockEpochTemplate<>))
                     return true;
-            }
 
             return false;
         }
@@ -1076,6 +1102,76 @@ namespace STS2RitsuLib.Scaffolding.Content.Patches
 
             __result = externalFrameMaterial;
             return false;
+        }
+    }
+
+    /// <summary>
+    ///     Applies custom portrait <see cref="Material" /> overrides after <see cref="NCard" /> reloads vanilla visuals.
+    ///     在 <see cref="NCard" /> 重载原版视觉后应用自定义卡图 <see cref="Material" /> 覆盖。
+    /// </summary>
+    public class CardPortraitMaterialPatch : IPatchMethod
+    {
+        /// <inheritdoc cref="IPatchMethod.PatchId" />
+        public static string PatchId => "content_asset_override_card_portrait_material";
+
+        /// <inheritdoc cref="IPatchMethod.Description" />
+        public static string Description => "Allow mod cards to override the NCard portrait material";
+
+        /// <inheritdoc cref="IPatchMethod.IsCritical" />
+        public static bool IsCritical => false;
+
+        /// <inheritdoc cref="IPatchMethod.GetTargets" />
+        public static ModPatchTarget[] GetTargets()
+        {
+            return [new(typeof(NCard), "Reload")];
+        }
+
+        // ReSharper disable InconsistentNaming
+        /// <summary>
+        ///     Reapplies the custom material because vanilla <c>Reload</c> clears portrait materials for visible cards.
+        ///     重新应用自定义材质，因为原版 <c>Reload</c> 会清空可见卡牌的卡图材质。
+        /// </summary>
+        public static void Postfix(NCard __instance)
+            // ReSharper restore InconsistentNaming
+        {
+            var model = __instance.Model;
+            if (model == null || __instance.Visibility != ModelVisibility.Visible)
+                return;
+
+            if (!TryGetPortraitMaterial(model, out var material))
+                return;
+
+            var portrait = GetPortraitNode(__instance, model);
+            if (portrait == null)
+                return;
+
+            portrait.Material = material;
+        }
+
+        private static TextureRect? GetPortraitNode(NCard card, CardModel model)
+        {
+            var path = model.Rarity == CardRarity.Ancient ? "%AncientPortrait" : "%Portrait";
+            return card.GetNodeOrNull<TextureRect>(path);
+        }
+
+        private static bool TryGetPortraitMaterial(CardModel card, out Material material)
+        {
+            material = null!;
+            if (!ContentAssetOverridePatchHelper.TryUseDirectMaterialOverride<IModCardPortraitMaterialOverride>(
+                    card, ref material, static o => o.CustomPortraitMaterial))
+                return true;
+
+            if (ExternalCardMaterialOverrideRegistry.TryGetPortraitMaterial(card, out material))
+                return true;
+
+            if (!ModCharacterOwnedVisualOverrideHelper.TryCardPortraitMaterial(card, ref material))
+                return true;
+
+            return !ContentAssetOverridePatchHelper.TryUseMaterialOverride<IModCardAssetOverrides>(
+                card,
+                ref material,
+                static o => o.CustomPortraitMaterialPath,
+                nameof(IModCardAssetOverrides.CustomPortraitMaterialPath));
         }
     }
 

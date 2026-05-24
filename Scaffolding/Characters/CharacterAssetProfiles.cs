@@ -361,7 +361,9 @@ namespace STS2RitsuLib.Scaffolding.Characters
                 profile.BannerTexturePath ?? fallback.BannerTexturePath,
                 profile.BannerMaterialPath ?? fallback.BannerMaterialPath,
                 profile.FrameMaterial ?? fallback.FrameMaterial,
-                profile.BannerMaterial ?? fallback.BannerMaterial);
+                profile.BannerMaterial ?? fallback.BannerMaterial,
+                profile.PortraitMaterialPath ?? fallback.PortraitMaterialPath,
+                profile.PortraitMaterial ?? fallback.PortraitMaterial);
         }
 
         internal static CardAssetProfile? MergeCardAssetProfilesPreferSecond(CardAssetProfile? fallback,

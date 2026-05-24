@@ -30,6 +30,7 @@ using STS2RitsuLib.RunData;
 using STS2RitsuLib.RuntimeInput;
 using STS2RitsuLib.Scaffolding.Ancients.Options;
 using STS2RitsuLib.Scaffolding.Content;
+using STS2RitsuLib.Scaffolding.Godot.NodeAttachments;
 using STS2RitsuLib.Settings;
 using STS2RitsuLib.Telemetry;
 using STS2RitsuLib.Telemetry.Diagnostics;
@@ -501,6 +502,14 @@ namespace STS2RitsuLib
         public static ModContentRegistry GetContentRegistry(string modId)
         {
             return ModContentRegistry.For(modId);
+        }
+
+        /// <summary>
+        ///     Returns the ready-time Godot node attachment registry for <paramref name="modId" />.
+        /// </summary>
+        public static ModNodeAttachmentRegistry GetNodeAttachmentRegistry(string modId)
+        {
+            return ModNodeAttachmentRegistry.For(modId);
         }
 
         /// <summary>

@@ -29,7 +29,7 @@ namespace STS2RitsuLib.Scaffolding.Content
         TargetType target,
         bool showInCardLibrary = true)
         : CardModel(baseCost, type, rarity, target, showInCardLibrary), IModCardAssetOverrides,
-            IModCardFrameMaterialOverride, IModCardBannerMaterialOverride
+            IModCardPortraitMaterialOverride, IModCardFrameMaterialOverride, IModCardBannerMaterialOverride
     {
         /// <summary>
         ///     Legacy constructor overload; <paramref name="autoAdd" /> is ignored.
@@ -92,6 +92,9 @@ namespace STS2RitsuLib.Scaffolding.Content
         public virtual string? CustomBetaPortraitPath => AssetProfile.BetaPortraitPath;
 
         /// <inheritdoc />
+        public virtual string? CustomPortraitMaterialPath => AssetProfile.PortraitMaterialPath;
+
+        /// <inheritdoc />
         public virtual string? CustomFramePath => AssetProfile.FramePath;
 
         /// <inheritdoc />
@@ -117,6 +120,9 @@ namespace STS2RitsuLib.Scaffolding.Content
 
         /// <inheritdoc />
         public virtual Material? CustomFrameMaterial => AssetProfile.FrameMaterial;
+
+        /// <inheritdoc />
+        public virtual Material? CustomPortraitMaterial => AssetProfile.PortraitMaterial;
 
         /// <summary>
         ///     Internal accessor for the mod-keyword seeding patch.
