@@ -6,7 +6,7 @@ namespace STS2RitsuLib.Utils
     ///     Factory helpers for Godot materials that mirror vanilla game shaders.
     ///     用于镜像原版游戏着色器的 Godot 材质工厂辅助方法。
     /// </summary>
-    public static class MaterialUtils
+    public static partial class MaterialUtils
     {
         private const string HsvShaderPath = "res://shaders/hsv.gdshader";
         private const string DoomBarShaderPath = "res://scenes/combat/doom_bar.gdshader";
@@ -18,13 +18,37 @@ namespace STS2RitsuLib.Utils
 
         private static Shader? GameDoomBarShader => (Shader?)GD.Load<Shader>(DoomBarShaderPath)?.Duplicate();
 
+        private static Shader? _replaceHueShader;
+        private static Shader ReplaceHueShader => _replaceHueShader ??= new Shader
+        {
+            Code = ReplaceHueShaderSource,
+        };
+
         private static NoiseTexture2D VanillaDoomBarNoiseTexture =>
             _vanillaDoomBarNoiseTexture ??= CreateVanillaDoomBarNoiseTexture();
+
+        /// <summary>
+        ///     Builds a <c>ShaderMaterial</c> using a custom shader that replaces the hue of the input texture
+        ///     with a caller-specified RGB color, while preserving the original brightness and saturation.
+        ///     Suitable for replacing hues when using vanilla card frames.
+        ///     parameters r, g, b are in the range 0-1, brightness is in the range 0-2 with a default of 1.
+        ///     使用一个自定义着色器构建 <c>ShaderMaterial</c>，该着色器将输入纹理的色调替换为调用方指定的 RGB 颜色，
+        ///     同时保留原始亮度和饱和度。适用于替换色调，例如给原版卡框换色。
+        ///     参数r，g，b的范围是0-1，brightness的范围是0-2，默认值为1。
+        /// </summary>
+        public static ShaderMaterial CreateReplaceHueShaderMaterial(float r, float g, float b, float brightness = 1f)
+        {
+            var material = new ShaderMaterial { Shader = ReplaceHueShader };
+            material.SetShaderParameter("target_color", new Vector3(r, g, b));
+            material.SetShaderParameter("brightness", brightness);
+            return material;
+        }
 
         /// <summary>
         ///     Builds a <c>ShaderMaterial</c> using the game's HSV shader with the given RGB parameters.
         ///     使用游戏的 HSV 着色器和给定 RGB 参数构建 <c>ShaderMaterial</c>。
         /// </summary>
+        [Obsolete("Prefer MaterialUtils.CreateReplaceHueShaderMaterial instead.")]
         public static ShaderMaterial CreateRgbShaderMaterial(float r, float g, float b)
         {
             var max = Math.Max(r, Math.Max(g, b));
