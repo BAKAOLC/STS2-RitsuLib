@@ -13,7 +13,7 @@ namespace STS2RitsuLib.Data.Models
         ///     Current schema version written by the library when creating or normalizing settings.
         ///     库在创建或规范化设置时写入的当前 schema 版本。
         /// </summary>
-        public const int CurrentSchemaVersion = 8;
+        public const int CurrentSchemaVersion = 10;
 
         /// <summary>
         ///     Persisted schema version used by the migration pipeline
@@ -68,6 +68,27 @@ namespace STS2RitsuLib.Data.Models
         /// </summary>
         [JsonPropertyName("debug_compat_ancient_architect")]
         public bool DebugCompatAncientArchitect { get; set; } = true;
+
+        /// <summary>
+        ///     When true, cards, relics, and potions append a hover tip showing their source mod.
+        ///     为 true 时，卡牌、遗物和药水会追加显示其来源 mod 的悬停提示。
+        /// </summary>
+        [JsonPropertyName("mod_source_hover_tips_enabled")]
+        public bool ModSourceHoverTipsEnabled { get; set; }
+
+        /// <summary>
+        ///     When true, vanilla cards, relics, and potions also show source hover tips.
+        ///     为 true 时，原版卡牌、遗物和药水也会显示来源悬停提示。
+        /// </summary>
+        [JsonPropertyName("mod_source_hover_tips_include_vanilla")]
+        public bool ModSourceHoverTipsIncludeVanilla { get; set; }
+
+        /// <summary>
+        ///     When true, selected hover tips outside inspect/detail screens also include source tips.
+        ///     为 true 时，详情/检查界面以外的部分悬停提示也会显示来源。
+        /// </summary>
+        [JsonPropertyName("mod_source_hover_tips_include_non_details")]
+        public bool ModSourceHoverTipsIncludeNonDetails { get; set; }
 
         /// <summary>
         ///     Absolute path or Godot <c>user://</c> path for Harmony patch dump output (text log).
