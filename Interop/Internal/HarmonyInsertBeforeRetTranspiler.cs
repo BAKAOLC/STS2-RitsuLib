@@ -47,7 +47,17 @@ namespace STS2RitsuLib.Interop.Internal
                     "ModInterop transpiler ran without a pending prefix on this thread.");
 
             PendingPrefix.Value = null;
-            return HarmonyVerifiedIl.InsertBeforeFirstRet(instructions, p);
+            var rewriter = HarmonyIlRewriter.From(instructions);
+            var report = rewriter.InsertBeforeFirstRet("[ModInterop] Insert generated wrapper IL before ret", p);
+            // ReSharper disable once InvertIf
+            if (report.Succeeded)
+            {
+                report.RequireExactly(1);
+                return rewriter.InstructionsChecked("[ModInterop] Insert generated wrapper IL before ret");
+            }
+
+            throw new InvalidOperationException(
+                "No ret opcode found in method body; ModInterop insert-before-ret transpiler only supports bodies with at least one ret.");
         }
     }
 }

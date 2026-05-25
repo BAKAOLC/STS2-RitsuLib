@@ -1,10 +1,10 @@
-using System.Reflection.Emit;
 using HarmonyLib;
 using MegaCrit.Sts2.Core.Localization.Formatters;
 using MegaCrit.Sts2.Core.Models;
 using STS2RitsuLib.Content;
 using STS2RitsuLib.Patching.Models;
 using STS2RitsuLib.Utils;
+using STS2RitsuLib.Utils.HarmonyIl;
 
 namespace STS2RitsuLib.Scaffolding.Content.Patches
 {
@@ -60,7 +60,6 @@ namespace STS2RitsuLib.Scaffolding.Content.Patches
         ///         ldloc  (text)
         ///         ldloc  (text3)
         ///         call   ModTextEnergyIconHelper.OverrideTextIconTag
-        ///         call   ModTextEnergyIconHelper.OverrideTextIconTag
         ///         stloc  (text3)
         ///     </code>
         ///     格式化器将组装好的 <c>text3</c> img 标签存入局部变量后，
@@ -73,7 +72,6 @@ namespace STS2RitsuLib.Scaffolding.Content.Patches
         ///     <code>
         /// ldloc  (text)
         /// ldloc  (text3)
-        /// call   ModTextEnergyIconHelper.OverrideTextIconTag
         /// call   ModTextEnergyIconHelper.OverrideTextIconTag
         /// stloc  (text3)
         /// </code>
@@ -90,41 +88,42 @@ namespace STS2RitsuLib.Scaffolding.Content.Patches
                 typeof(ModTextEnergyIconHelper),
                 nameof(ModTextEnergyIconHelper.OverrideTextIconTag));
 
-            var codeInstructions = instructions as CodeInstruction[] ?? instructions.ToArray();
-            var matcher = new CodeMatcher(codeInstructions)
-                .MatchStartForward(
-                    new CodeMatch(OpCodes.Ldstr, "[img]res://images/packed/sprite_fonts/"),
-                    new CodeMatch(i => i.IsLdloc()),
-                    new CodeMatch(OpCodes.Ldstr),
-                    new CodeMatch(OpCodes.Call, concatMethod));
+            var rewriter = HarmonyIlRewriter.From(instructions);
+            var pattern = HarmonyIlPattern.Sequence(
+                HarmonyIl.IsLdstr("[img]res://images/packed/sprite_fonts/"),
+                HarmonyIl.IsLdloc(),
+                HarmonyIl.IsLdstr(),
+                HarmonyIl.IsCall(concatMethod),
+                HarmonyIl.IsStloc());
 
-            if (matcher.IsInvalid)
-                return codeInstructions;
+            if (!rewriter.TryFind(pattern, out var match))
+            {
+                if (!rewriter.Contains(instruction => HarmonyIl.IsCallTo(instruction, overrideMethod)))
+                    RitsuLibFramework.Logger.Warn(
+                        "[EnergyIconFormatter] Could not find text energy icon concat pattern; override patch skipped.");
 
-            var ldlocText = matcher.InstructionAt(1).Clone();
+                return rewriter.Instructions();
+            }
 
-            matcher.Advance(4);
+            var ldlocText = match.InstructionAt(rewriter.Code, 1).Clone();
+            var stlocText3 = match.InstructionAt(rewriter.Code, 4);
+            var ldlocText3 = HarmonyIl.LoadLocalFromStore(stlocText3);
 
-            if (!matcher.Instruction.IsStloc())
-                return codeInstructions;
+            var report = rewriter.TryInsertAfterFirst(
+                "[EnergyIconFormatter] Insert text energy icon override",
+                pattern,
+                [
+                    ldlocText,
+                    ldlocText3,
+                    HarmonyIl.Call(overrideMethod),
+                    stlocText3.Clone(),
+                ],
+                code => code.Any(instruction => HarmonyIl.IsCallTo(instruction, overrideMethod)));
+            report.RequireSucceeded();
+            if (report.Applied > 0)
+                report.RequireExactly(1);
 
-            var stlocText3 = matcher.Instruction;
-            var ldlocText3 = StlocToLdloc(stlocText3);
-
-            matcher.Advance().Insert(ldlocText, ldlocText3, new CodeInstruction(OpCodes.Call, overrideMethod),
-                stlocText3.Clone());
-
-            return matcher.InstructionEnumeration();
-        }
-
-        private static CodeInstruction StlocToLdloc(CodeInstruction stloc)
-        {
-            if (stloc.opcode == OpCodes.Stloc_0) return new(OpCodes.Ldloc_0);
-            if (stloc.opcode == OpCodes.Stloc_1) return new(OpCodes.Ldloc_1);
-            if (stloc.opcode == OpCodes.Stloc_2) return new(OpCodes.Ldloc_2);
-            if (stloc.opcode == OpCodes.Stloc_3) return new(OpCodes.Ldloc_3);
-            if (stloc.opcode == OpCodes.Stloc_S) return new(OpCodes.Ldloc_S, stloc.operand);
-            return new(OpCodes.Ldloc, stloc.operand);
+            return rewriter.InstructionsChecked("[EnergyIconFormatter] Insert text energy icon override");
         }
     }
 
@@ -132,11 +131,9 @@ namespace STS2RitsuLib.Scaffolding.Content.Patches
     ///     Runtime helper called by the patched formatter.
     ///     On first use it builds a lookup table from all registered mod characters' card pools
     ///     that implement <see cref="IModTextEnergyIconPool" />.
-    ///     that implement <c>IModTextEnergyIconPool</c>.
     ///     由已修补格式化器调用的运行时辅助方法。
     ///     首次使用时，它会从所有已注册 mod 角色中实现 <see cref="IModTextEnergyIconPool" /> 的卡牌池
     ///     构建查找表。
-    ///     实现 <c>IModTextEnergyIconPool</c> 的卡牌池。
     /// </summary>
     internal static class ModTextEnergyIconHelper
     {

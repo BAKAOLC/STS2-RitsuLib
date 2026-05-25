@@ -16,6 +16,7 @@ using MegaCrit.Sts2.Core.Nodes.Cards.Holders;
 using MegaCrit.Sts2.Core.Nodes.Combat;
 using STS2RitsuLib.Patching.Builders;
 using STS2RitsuLib.Patching.Core;
+using STS2RitsuLib.Utils.HarmonyIl;
 
 namespace STS2RitsuLib.Combat.HandSize
 {
@@ -204,19 +205,10 @@ namespace STS2RitsuLib.Combat.HandSize
         private static bool IsMaxHandSizeToken(CodeInstruction ins)
         {
 #if !STS2_AT_LEAST_0_104_0
-            return (ins.opcode == OpCodes.Ldc_I4_S && ins.operand is sbyte and DefaultMaxHandSize)
-                   || (ins.opcode == OpCodes.Ldc_I4 && ins.operand is DefaultMaxHandSize);
+            return HarmonyIl.LoadsInt32(ins, DefaultMaxHandSize);
 #else
-            var isDefaultConst =
-                (ins.opcode == OpCodes.Ldc_I4_S && ins.operand is sbyte and DefaultMaxHandSize)
-                || (ins.opcode == OpCodes.Ldc_I4 && ins.operand is DefaultMaxHandSize);
-
-            var isMaxCardsGetter =
-                (ins.opcode == OpCodes.Call || ins.opcode == OpCodes.Callvirt)
-                && ins.operand is MethodInfo method
-                && method == MaxCardsInHandGetter;
-
-            return isDefaultConst || isMaxCardsGetter;
+            return HarmonyIl.LoadsInt32(ins, DefaultMaxHandSize)
+                   || HarmonyIl.IsCallTo(ins, MaxCardsInHandGetter);
 #endif
         }
 
@@ -227,114 +219,93 @@ namespace STS2RitsuLib.Combat.HandSize
                    && BaseLibMaxHandSizeBridge.IsBaseLibBaseAmountConsumer(code[index + 1]);
         }
 
+        private static bool IsRitsuMaxHandSizeReplacementSite(IReadOnlyList<CodeInstruction> code, int index)
+        {
+            return IsMaxHandSizeToken(code[index]) && !IsBaseLibBaseAmountToken(code, index);
+        }
+
+        private static List<CodeInstruction> RewriteMaxHandSizeLoads(
+            IEnumerable<CodeInstruction> instructions,
+            Func<IReadOnlyList<CodeInstruction>, int, IReadOnlyList<CodeInstruction>> buildReplacement,
+            string operation,
+            MethodInfo alreadyInstalledCall)
+        {
+            var rewriter = HarmonyIlRewriter.From(instructions);
+            var report = rewriter.ReplaceEach(
+                operation,
+                IsRitsuMaxHandSizeReplacementSite,
+                buildReplacement,
+                code => ContainsCall(code, alreadyInstalledCall));
+            WarnIfRewriteUnsatisfied(report);
+            return rewriter.InstructionsChecked(operation);
+        }
+
         private static IEnumerable<CodeInstruction> PlayerArg0Transpiler(IEnumerable<CodeInstruction> instructions)
         {
-            var code = instructions.ToList();
-            for (var i = 0; i < code.Count; i++)
-            {
-                if (IsBaseLibBaseAmountToken(code, i))
-                {
-                    yield return code[i];
-                    continue;
-                }
-
-                if (IsMaxHandSizeToken(code[i]))
-                {
-                    yield return new(OpCodes.Ldarg_0);
-                    yield return new(OpCodes.Call, GetMaxHandSizeMethod);
-                    continue;
-                }
-
-                yield return code[i];
-            }
+            return RewriteMaxHandSizeLoads(instructions,
+                static (_, _) => [HarmonyIl.Ldarg(0), HarmonyIl.Call(GetMaxHandSizeMethod)],
+                "[MaxHandSize] PlayerArg0 max-hand-size replacement",
+                GetMaxHandSizeMethod);
         }
 
         private static IEnumerable<CodeInstruction> PlayerArg1Transpiler(IEnumerable<CodeInstruction> instructions)
         {
-            var code = instructions.ToList();
-            for (var i = 0; i < code.Count; i++)
-            {
-                if (IsBaseLibBaseAmountToken(code, i))
-                {
-                    yield return code[i];
-                    continue;
-                }
-
-                if (IsMaxHandSizeToken(code[i]))
-                {
-                    yield return new(OpCodes.Ldarg_1);
-                    yield return new(OpCodes.Call, GetMaxHandSizeMethod);
-                    continue;
-                }
-
-                yield return code[i];
-            }
+            return RewriteMaxHandSizeLoads(instructions,
+                static (_, _) => [HarmonyIl.Ldarg(1), HarmonyIl.Call(GetMaxHandSizeMethod)],
+                "[MaxHandSize] PlayerArg1 max-hand-size replacement",
+                GetMaxHandSizeMethod);
         }
 
         private static IEnumerable<CodeInstruction> StateMachineTranspiler(IEnumerable<CodeInstruction> instructions)
         {
-            var code = instructions.ToList();
-            var loadPlayer = FindStateMachinePlayerLoad(code);
+            var rewriter = HarmonyIlRewriter.From(instructions);
+            var loadPlayer = FindStateMachinePlayerLoad(rewriter.Code);
             if (loadPlayer == null)
             {
                 RitsuLibFramework.Logger.Warn(
                     "[MaxHandSize] State-machine transpiler could not resolve Player load pattern; skipped replacements.");
-                return code;
+                return rewriter.Instructions();
             }
 
-            for (var i = 0; i < code.Count; i++)
-            {
-                if (!IsMaxHandSizeToken(code[i]))
-                    continue;
-                if (IsBaseLibBaseAmountToken(code, i))
-                    continue;
-
-                code[i] = new(OpCodes.Call, GetMaxHandSizeMethod);
-                code.InsertRange(i, loadPlayer.Select(ci => ci.Clone()));
-                i += loadPlayer.Count;
-            }
-
-            return code;
+            var report = rewriter.ReplaceEach(
+                "[MaxHandSize] State-machine max-hand-size replacement",
+                IsRitsuMaxHandSizeReplacementSite,
+                (_, _) => [.. HarmonyIl.CloneAll(loadPlayer), HarmonyIl.Call(GetMaxHandSizeMethod)],
+                code => ContainsCall(code, GetMaxHandSizeMethod));
+            WarnIfRewriteUnsatisfied(report);
+            return rewriter.InstructionsChecked("[MaxHandSize] State-machine max-hand-size replacement");
         }
 
         private static IEnumerable<CodeInstruction> CardOnPlayTranspiler(IEnumerable<CodeInstruction> instructions)
         {
-            var code = instructions.ToList();
-            var loadCard = FindStateMachineCardLoad(code);
+            var rewriter = HarmonyIlRewriter.From(instructions);
+            var loadCard = FindStateMachineCardLoad(rewriter.Code);
             if (loadCard == null)
             {
                 RitsuLibFramework.Logger.Warn(
                     "[MaxHandSize] Card OnPlay transpiler could not resolve Card load pattern; skipped replacements.");
-                return code;
+                return rewriter.Instructions();
             }
 
-            for (var i = 0; i < code.Count; i++)
-            {
-                if (!IsMaxHandSizeToken(code[i]))
-                    continue;
-                if (IsBaseLibBaseAmountToken(code, i))
-                    continue;
-
-                code[i] = new(OpCodes.Call, GetMaxHandSizeFromCardMethod);
-                code.InsertRange(i, loadCard.Select(ci => ci.Clone()));
-                i += loadCard.Count;
-            }
-
-            return code;
+            var report = rewriter.ReplaceEach(
+                "[MaxHandSize] Card OnPlay max-hand-size replacement",
+                IsRitsuMaxHandSizeReplacementSite,
+                (_, _) => [.. HarmonyIl.CloneAll(loadCard), HarmonyIl.Call(GetMaxHandSizeFromCardMethod)],
+                code => ContainsCall(code, GetMaxHandSizeFromCardMethod));
+            WarnIfRewriteUnsatisfied(report);
+            return rewriter.InstructionsChecked("[MaxHandSize] Card OnPlay max-hand-size replacement");
         }
 
         private static IReadOnlyList<CodeInstruction>? FindStateMachinePlayerLoad(IReadOnlyList<CodeInstruction> code)
         {
-            for (var i = 0; i < code.Count - 1; i++)
+            var pattern = HarmonyIlPattern.Sequence(HarmonyIl.IsLdarg(0), HarmonyIl.IsLdfld());
+            foreach (var match in pattern.FindAll(code))
             {
-                if (code[i].opcode != OpCodes.Ldarg_0)
-                    continue;
-                if (code[i + 1].opcode != OpCodes.Ldfld)
-                    continue;
-                if (code[i + 1].operand is not FieldInfo field || field.FieldType != typeof(Player))
+                var fieldInstruction = match.InstructionAt(code, 1);
+                if (fieldInstruction.operand is not FieldInfo field || field.FieldType != typeof(Player))
                     continue;
 
-                return [code[i].Clone(), code[i + 1].Clone()];
+                return [match.InstructionAt(code, 0).Clone(), fieldInstruction.Clone()];
             }
 
             return null;
@@ -342,16 +313,15 @@ namespace STS2RitsuLib.Combat.HandSize
 
         private static IReadOnlyList<CodeInstruction>? FindStateMachineCardLoad(IReadOnlyList<CodeInstruction> code)
         {
-            for (var i = 0; i < code.Count - 1; i++)
+            var pattern = HarmonyIlPattern.Sequence(HarmonyIl.IsLdarg(0), HarmonyIl.IsLdfld());
+            foreach (var match in pattern.FindAll(code))
             {
-                if (code[i].opcode != OpCodes.Ldarg_0)
-                    continue;
-                if (code[i + 1].opcode != OpCodes.Ldfld)
-                    continue;
-                if (code[i + 1].operand is not FieldInfo field || !typeof(CardModel).IsAssignableFrom(field.FieldType))
+                var fieldInstruction = match.InstructionAt(code, 1);
+                if (fieldInstruction.operand is not FieldInfo field ||
+                    !typeof(CardModel).IsAssignableFrom(field.FieldType))
                     continue;
 
-                return [code[i].Clone(), code[i + 1].Clone()];
+                return [match.InstructionAt(code, 0).Clone(), fieldInstruction.Clone()];
             }
 
             return null;
@@ -372,35 +342,53 @@ namespace STS2RitsuLib.Combat.HandSize
             var selectCardShortcutsField = AccessTools.Field(typeof(NPlayerHand), "_selectCardShortcuts");
             var draggedHolderIndexField = AccessTools.Field(typeof(NPlayerHand), "_draggedHolderIndex");
             var getShortcutMethod = AccessTools.Method(typeof(MaxHandSizePatchInstaller), nameof(GetShortcutOrDefault));
+            var rewriter = HarmonyIlRewriter.From(instructions);
             if (selectCardShortcutsField == null || draggedHolderIndexField == null || getShortcutMethod == null)
-                return instructions;
+                return rewriter.Instructions();
 
-            var list = instructions.ToList();
-            for (var i = 0; i < list.Count - 4; i++)
-            {
-                if (list[i].opcode != OpCodes.Ldarg_0)
-                    continue;
-                if (list[i + 1].opcode != OpCodes.Ldfld || !Equals(list[i + 1].operand, selectCardShortcutsField))
-                    continue;
-                if (list[i + 2].opcode != OpCodes.Ldarg_0)
-                    continue;
-                if (list[i + 3].opcode != OpCodes.Ldfld || !Equals(list[i + 3].operand, draggedHolderIndexField))
-                    continue;
-                if (list[i + 4].opcode != OpCodes.Ldelem_Ref)
-                    continue;
+            var pattern = HarmonyIlPattern.Sequence(
+                HarmonyIl.IsLdarg(0),
+                HarmonyIl.IsLdfld(selectCardShortcutsField),
+                HarmonyIl.IsLdarg(0),
+                HarmonyIl.IsLdfld(draggedHolderIndexField),
+                HarmonyIl.Is(OpCodes.Ldelem_Ref));
 
-                list.RemoveRange(i, 5);
-                list.InsertRange(i,
+            var report = rewriter.TryReplaceFirst(
+                "[MaxHandSize] StartCardPlay shortcut bounds replacement",
+                pattern,
                 [
-                    new(OpCodes.Ldarg_0),
-                    new(OpCodes.Ldarg_0),
-                    new(OpCodes.Ldfld, draggedHolderIndexField),
-                    new(OpCodes.Call, getShortcutMethod),
-                ]);
-                break;
-            }
+                    HarmonyIl.Ldarg(0),
+                    HarmonyIl.Ldarg(0),
+                    HarmonyIl.Ldfld(draggedHolderIndexField),
+                    HarmonyIl.Call(getShortcutMethod),
+                ],
+                code => ContainsCall(code, getShortcutMethod));
+            WarnIfRewriteUnsatisfied(report);
+            WarnIfFirstMatchWasAmbiguous(report);
 
-            return list;
+            return rewriter.InstructionsChecked("[MaxHandSize] StartCardPlay shortcut bounds replacement");
+        }
+
+        private static bool ContainsCall(IReadOnlyList<CodeInstruction> code, MethodInfo method)
+        {
+            return code.Any(instruction => HarmonyIl.IsCallTo(instruction, method));
+        }
+
+        private static void WarnIfRewriteUnsatisfied(HarmonyIlRewriteReport report)
+        {
+            if (report.Succeeded || report.Matches == 0)
+                return;
+
+            RitsuLibFramework.Logger.Warn(report.Describe());
+        }
+
+        private static void WarnIfFirstMatchWasAmbiguous(HarmonyIlRewriteReport report)
+        {
+            if (report.Matches <= 1 || report.Applied != 1)
+                return;
+
+            RitsuLibFramework.Logger.Warn(
+                $"{report.Operation} found {report.Matches} matches; only the first was rewritten.");
         }
 
         private static float GetInferredHalfSpread(int handSize)

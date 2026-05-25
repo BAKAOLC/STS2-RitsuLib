@@ -5,6 +5,7 @@ using MegaCrit.Sts2.Core.Models;
 using MegaCrit.Sts2.Core.Models.Acts;
 using MegaCrit.Sts2.Core.Nodes.Screens.RelicCollection;
 using STS2RitsuLib.Patching.Models;
+using STS2RitsuLib.Utils.HarmonyIl;
 
 namespace STS2RitsuLib.Scaffolding.Content.Patches
 {
@@ -42,38 +43,36 @@ namespace STS2RitsuLib.Scaffolding.Content.Patches
         [HarmonyPriority(Priority.Last)]
         public static IEnumerable<CodeInstruction> Transpiler(IEnumerable<CodeInstruction> instructions)
         {
-            var code = instructions.ToList();
+            var rewriter = HarmonyIlRewriter.From(instructions);
+            var pattern = HarmonyIlPattern.Sequence(
+                HarmonyIl.IsStloc(),
+                IsModelDbActsCall,
+                HarmonyIl.IsLdloc(),
+                instruction => IsLinqCall(instruction, nameof(Enumerable.Except)),
+                instruction => IsLinqCall(instruction, nameof(Enumerable.Any)),
+                HarmonyIl.IsBranch(),
+                IsActListErrorString);
 
-            for (var i = 0; i <= code.Count - 7; i++)
-            {
-                if (!code[i].IsStloc())
-                    continue;
-                if (!IsModelDbActsCall(code[i + 1]))
-                    continue;
-                if (!code[i + 2].IsLdloc())
-                    continue;
-                if (!IsLinqCall(code[i + 3], nameof(Enumerable.Except)))
-                    continue;
-                if (!IsLinqCall(code[i + 4], nameof(Enumerable.Any)))
-                    continue;
-                if (!code[i + 5].Branches(out _))
-                    continue;
-                if (!IsActListErrorString(code[i + 6]))
-                    continue;
-
-                code.InsertRange(i,
+            var report = rewriter.TryInsertBeforeFirst(
+                "[RelicCollection] Replace hard-coded ancient act list",
+                pattern,
                 [
-                    new(OpCodes.Pop),
-                    new(OpCodes.Call, RuntimeActListMethod),
-                ]);
-                return code;
+                    HarmonyIl.Pop(),
+                    HarmonyIl.Call(RuntimeActListMethod),
+                ],
+                code => code.Any(instruction => HarmonyIl.IsCallTo(instruction, RuntimeActListMethod)));
+
+            if (report.Succeeded)
+            {
+                if (report.Applied > 0)
+                    report.RequireExactly(1);
+                return rewriter.InstructionsChecked("[RelicCollection] Replace hard-coded ancient act list");
             }
 
-            if (code.Any(IsActListErrorString))
-                RitsuLibFramework.Logger.Warn(
-                    "[RelicCollection] Could not find vanilla act-list validation pattern; runtime act list patch skipped.");
+            RitsuLibFramework.Logger.Warn(
+                "[RelicCollection] Could not find vanilla act-list validation pattern; runtime act list patch skipped.");
 
-            return code;
+            return rewriter.Instructions();
         }
 
         private static List<ActModel> GetRuntimeActList()
@@ -101,8 +100,7 @@ namespace STS2RitsuLib.Scaffolding.Content.Patches
 
         private static bool IsModelDbActsCall(CodeInstruction instruction)
         {
-            return instruction.opcode == OpCodes.Call && instruction.operand is MethodInfo method &&
-                   method == ModelDbActsGetter;
+            return HarmonyIl.IsCallTo(instruction, ModelDbActsGetter);
         }
 
         private static bool IsLinqCall(CodeInstruction instruction, string methodName)

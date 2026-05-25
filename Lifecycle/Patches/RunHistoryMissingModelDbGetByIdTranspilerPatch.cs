@@ -1,5 +1,4 @@
 using System.Reflection;
-using System.Reflection.Emit;
 using HarmonyLib;
 using MegaCrit.Sts2.Core.Models;
 using MegaCrit.Sts2.Core.Nodes.Screens.RunHistoryScreen;
@@ -7,6 +6,7 @@ using MegaCrit.Sts2.Core.Rooms;
 using MegaCrit.Sts2.Core.Runs;
 using STS2RitsuLib.Patching.Models;
 using STS2RitsuLib.Saves;
+using STS2RitsuLib.Utils.HarmonyIl;
 
 namespace STS2RitsuLib.Lifecycle.Patches
 {
@@ -59,24 +59,22 @@ namespace STS2RitsuLib.Lifecycle.Patches
         /// </summary>
         public static IEnumerable<CodeInstruction> Transpiler(IEnumerable<CodeInstruction> instructions)
         {
-            foreach (var code in instructions)
-            {
-                if (code.operand is MethodInfo called)
+            var rewriter = HarmonyIlRewriter.From(instructions);
+            _ = rewriter.RedirectCalls(
+                "[RunHistory] Redirect ModelDb.GetById calls",
+                static called =>
                 {
                     if (IsModelDbGetByIdFor(called, typeof(CharacterModel)))
-                    {
-                        code.opcode = OpCodes.Call;
-                        code.operand = CharacterFallback;
-                    }
-                    else if (IsModelDbGetByIdFor(called, typeof(ActModel)))
-                    {
-                        code.opcode = OpCodes.Call;
-                        code.operand = ActFallback;
-                    }
-                }
+                        return CharacterFallback;
+                    if (IsModelDbGetByIdFor(called, typeof(ActModel)))
+                        return ActFallback;
+                    return null;
+                },
+                static code => code.Any(instruction =>
+                    HarmonyIl.IsCallTo(instruction, CharacterFallback) ||
+                    HarmonyIl.IsCallTo(instruction, ActFallback)));
 
-                yield return code;
-            }
+            return rewriter.InstructionsChecked("[RunHistory] Redirect ModelDb.GetById calls");
         }
 
         private static bool IsModelDbGetByIdFor(MethodInfo mi, Type typeArg)
