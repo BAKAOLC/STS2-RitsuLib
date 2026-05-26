@@ -6,7 +6,7 @@ namespace STS2RitsuLib.Ui.Toast
     {
         private readonly List<VisibleToast> _closing = [];
         private readonly Stack<RitsuToastEntry> _entryPool = [];
-        private readonly Queue<RitsuToastRequest> _pending = [];
+        private readonly Queue<PendingToast> _pending = [];
         private readonly List<VisibleToast> _pendingEnter = [];
         private readonly List<VisibleToast> _prewarming = [];
         private readonly List<VisibleToast> _visible = [];
@@ -66,11 +66,17 @@ namespace STS2RitsuLib.Ui.Toast
             for (var i = _visible.Count - 1; i >= 0; i--)
             {
                 var item = _visible[i];
-                if (item.IsClosing || item.Entering || item.Request.IsPersistent || item.RemainingSeconds <= 0d)
+                if (item.IsClosing || item.Entering || item.Request.IsPersistent || item.TotalSeconds <= 0d)
                     continue;
                 item.RemainingSeconds -= delta;
                 if (item.RemainingSeconds > 0d)
+                {
+                    UpdateProgress(item);
                     continue;
+                }
+
+                item.RemainingSeconds = 0d;
+                UpdateProgress(item);
                 RequestClose(item, false);
             }
         }
@@ -98,17 +104,117 @@ namespace STS2RitsuLib.Ui.Toast
             TryDequeue();
         }
 
-        public void Enqueue(RitsuToastRequest request)
+        public void Enqueue(Guid id, RitsuToastRequest request)
         {
             if (!_settings.Enabled)
                 return;
             if (_root == null || GetOccupiedSlotsCount() >= Math.Max(1, _settings.QueuePolicy.MaxVisible))
             {
-                _pending.Enqueue(request);
+                _pending.Enqueue(new(id, request));
                 return;
             }
 
-            ShowNow(request);
+            ShowNow(id, request);
+        }
+
+        public bool IsAlive(Guid id)
+        {
+            return _pending.Any(item => item.Id == id)
+                   || _prewarming.Any(item => item.Id == id && !item.IsClosing)
+                   || _visible.Any(item => item.Id == id && !item.IsClosing);
+        }
+
+        public bool Close(Guid id, bool immediate)
+        {
+            if (RemovePending(id))
+                return true;
+
+            var item = FindLiveToast(id);
+            if (item == null)
+            {
+                var closing = _closing.FirstOrDefault(item => item.Id == id);
+                if (closing == null)
+                    return false;
+                if (immediate)
+                    FinalizeClose(closing);
+                return true;
+            }
+
+            RequestClose(item, immediate || !item.HasEntered);
+            return true;
+        }
+
+        public int CloseAll(bool immediate)
+        {
+            var closed = _pending.Count;
+            _pending.Clear();
+
+            var active = _prewarming
+                .Concat(_visible)
+                .Where(item => !item.IsClosing)
+                .Distinct()
+                .ToList();
+            closed += active.Count + _closing.Count;
+            foreach (var item in active)
+                RequestClose(item, immediate || !item.HasEntered);
+
+            if (!immediate)
+                return closed;
+
+            foreach (var item in _closing.ToList())
+                FinalizeClose(item);
+
+            return closed;
+        }
+
+        public bool Update(Guid id, RitsuToastRequest request, bool resetDuration)
+        {
+            return Update(id, _ => request, resetDuration);
+        }
+
+        public bool Update(Guid id, Func<RitsuToastRequest, RitsuToastRequest> update, bool resetDuration)
+        {
+            var pending = FindPending(id);
+            if (pending != null)
+            {
+                pending.Request = update(pending.Request);
+                return true;
+            }
+
+            var item = FindLiveToast(id);
+            if (item == null)
+                return false;
+
+            ApplyRequestUpdate(item, update(item.Request), resetDuration);
+            return true;
+        }
+
+        public bool ResetDuration(Guid id, double? durationSeconds)
+        {
+            var pending = FindPending(id);
+            if (pending != null)
+            {
+                if (durationSeconds.HasValue)
+                    pending.Request = pending.Request.WithDuration(durationSeconds);
+                return true;
+            }
+
+            var item = FindLiveToast(id);
+            if (item == null)
+                return false;
+
+            if (durationSeconds.HasValue)
+            {
+                ApplyRequestUpdate(item, item.Request.WithDuration(durationSeconds), true);
+            }
+            else
+            {
+                item.TotalSeconds = ResolveDuration(item.Request);
+                item.RemainingSeconds = item.TotalSeconds;
+                UpdateProgress(item);
+            }
+
+            return true;
         }
 
         public void RefreshTheme()
@@ -118,12 +224,73 @@ namespace STS2RitsuLib.Ui.Toast
                 var style = toast.Request.StyleOverride ?? RitsuToastThemeResolver.Resolve(toast.Request.Level);
                 toast.Style = style;
                 toast.Entry.ApplyStyle(style);
+                UpdateProgress(toast);
             }
 
             Reflow(false);
         }
 
-        private void ShowNow(RitsuToastRequest request)
+        private PendingToast? FindPending(Guid id)
+        {
+            return _pending.FirstOrDefault(item => item.Id == id);
+        }
+
+        private VisibleToast? FindLiveToast(Guid id)
+        {
+            return _prewarming.FirstOrDefault(item => item.Id == id && !item.IsClosing)
+                   ?? _visible.FirstOrDefault(item => item.Id == id && !item.IsClosing);
+        }
+
+        private bool RemovePending(Guid id)
+        {
+            var removed = false;
+            var count = _pending.Count;
+            for (var i = 0; i < count; i++)
+            {
+                var pending = _pending.Dequeue();
+                if (pending.Id == id)
+                {
+                    removed = true;
+                    continue;
+                }
+
+                _pending.Enqueue(pending);
+            }
+
+            return removed;
+        }
+
+        private void ApplyRequestUpdate(VisibleToast item, RitsuToastRequest request, bool resetDuration)
+        {
+            item.Request = request;
+            item.Style = request.StyleOverride ?? RitsuToastThemeResolver.Resolve(request.Level);
+            item.Entry.UpdateRequest(request, item.Style);
+            item.HasMeasuredSize = false;
+            if (resetDuration)
+            {
+                item.TotalSeconds = ResolveDuration(request);
+                item.RemainingSeconds = item.TotalSeconds;
+            }
+
+            UpdateProgress(item);
+
+            Reflow(false);
+            QueueDeferredReflow();
+        }
+
+        private double ResolveDuration(RitsuToastRequest request)
+        {
+            return Math.Max(0d, request.DurationSeconds ?? _settings.DurationSeconds);
+        }
+
+        private static void UpdateProgress(VisibleToast item)
+        {
+            var show = !item.Request.IsPersistent && item.TotalSeconds > 0d;
+            var fraction = show ? (float)(item.RemainingSeconds / item.TotalSeconds) : 1f;
+            item.Entry.SetProgress(show, fraction);
+        }
+
+        private void ShowNow(Guid id, RitsuToastRequest request)
         {
             if (_root == null || _warmupRoot == null)
                 return;
@@ -134,8 +301,9 @@ namespace STS2RitsuLib.Ui.Toast
             entry.Clicked += OnEntryClicked;
             entry.HoverStateChanged += OnEntryHoverStateChanged;
             _warmupRoot.AddChild(entry);
-            var duration = request.DurationSeconds ?? _settings.DurationSeconds;
-            var visibleToast = new VisibleToast(entry, request, style, Math.Max(0d, duration));
+            var duration = ResolveDuration(request);
+            var visibleToast = new VisibleToast(id, entry, request, style, duration, duration);
+            UpdateProgress(visibleToast);
             _prewarming.Add(visibleToast);
             QueuePrewarmCommit();
         }
@@ -199,7 +367,8 @@ namespace STS2RitsuLib.Ui.Toast
                    _pending.Count > 0 &&
                    GetOccupiedSlotsCount() < Math.Max(1, _settings.QueuePolicy.MaxVisible))
             {
-                ShowNow(_pending.Dequeue());
+                var pending = _pending.Dequeue();
+                ShowNow(pending.Id, pending.Request);
                 enqueuedAny = true;
             }
 
@@ -709,14 +878,24 @@ namespace STS2RitsuLib.Ui.Toast
             return 1f + c3 * u * u * u + c1 * u * u;
         }
 
+        private sealed class PendingToast(Guid id, RitsuToastRequest request)
+        {
+            public Guid Id { get; } = id;
+            public RitsuToastRequest Request { get; set; } = request;
+        }
+
         private sealed class VisibleToast(
+            Guid id,
             RitsuToastEntry entry,
             RitsuToastRequest request,
             RitsuToastVisualStyle style,
+            double totalSeconds,
             double remainingSeconds)
         {
+            public Guid Id { get; } = id;
             public RitsuToastEntry Entry { get; } = entry;
-            public RitsuToastRequest Request { get; } = request;
+            public RitsuToastRequest Request { get; set; } = request;
+            public double TotalSeconds { get; set; } = totalSeconds;
             public double RemainingSeconds { get; set; } = remainingSeconds;
             public Vector2 TargetPosition { get; set; }
             public Vector2 MeasuredSize { get; set; }

@@ -1,7 +1,7 @@
 {
   "$schema": "https://raw.githubusercontent.com/BAKAOLC/STS2-RitsuLib/main/schemas/ui/shell/v1/schema.json",
   "themeFormatVersion": 1,
-  "themeVersion": 4,
+  "themeVersion": 5,
   "id": "default",
   "displayName": "Default",
   "inherits": null,
@@ -1551,6 +1551,20 @@
           "$type": "dimension"
         }
       },
+      "progress": {
+        "track": {
+          "$value": "#6B90AA33",
+          "$type": "color"
+        },
+        "height": {
+          "$value": 3,
+          "$type": "dimension"
+        },
+        "spacing": {
+          "$value": 8,
+          "$type": "dimension"
+        }
+      },
       "closeButton": {
         "bg": {
           "$value": "#2D3E4F7A",
@@ -1589,6 +1603,10 @@
             "$value": "#6DB8E8",
             "$type": "color"
           },
+          "progress": {
+            "$value": "#6DB8E8",
+            "$type": "color"
+          },
           "border": {
             "$value": "#6DB8E8",
             "$type": "color"
@@ -1599,6 +1617,10 @@
             "$value": "#E6BD57",
             "$type": "color"
           },
+          "progress": {
+            "$value": "#E6BD57",
+            "$type": "color"
+          },
           "border": {
             "$value": "#E6BD57",
             "$type": "color"
@@ -1606,6 +1628,10 @@
         },
         "error": {
           "accent": {
+            "$value": "#E28686",
+            "$type": "color"
+          },
+          "progress": {
             "$value": "#E28686",
             "$type": "color"
           },
