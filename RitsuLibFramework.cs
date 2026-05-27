@@ -318,6 +318,7 @@ namespace STS2RitsuLib
                 Logger.Info($"Framework Name: {Const.Name}");
                 Logger.Info(BuildVersionLogText());
                 Logger.Info("Initializing shared framework...");
+                RitsuLibModImageResourceLoader.EnsureRegistered();
                 RitsuLibMobileSteamRuntime.LogSuppressedSteamFeaturesAtStartup();
                 ModTypeDiscoveryHub.EnsureBuiltInContributorsRegistered();
                 RitsuLibSettingsStore.Initialize();

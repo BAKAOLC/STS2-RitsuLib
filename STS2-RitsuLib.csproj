@@ -89,6 +89,7 @@
         <Content Include="$(RitsuLibManifestGenerated)"/>
     </ItemGroup>
     <ItemGroup>
+        <EmbeddedResource Include="Assets\mod_image.png" LogicalName="STS2RitsuLib.Assets.mod_image.png"/>
         <EmbeddedResource Include="Settings\Localization\**\*.json"/>
         <EmbeddedResource Include="Ui\Shell\Themes\*.theme.json"/>
     </ItemGroup>
