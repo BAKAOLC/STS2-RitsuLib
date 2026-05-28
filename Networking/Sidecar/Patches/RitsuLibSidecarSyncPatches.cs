@@ -13,6 +13,8 @@ namespace STS2RitsuLib.Networking.Sidecar.Patches
     /// </summary>
     internal sealed class RitsuLibSidecarSyncNetBufferPatch : IPatchMethod
     {
+        private const string SetBufferMessagesMethodName = "SetBufferMessages";
+
         public static string PatchId => "ritsulib_sidecar_sync_net_buffer";
         public static bool IsCritical => false;
 
@@ -23,7 +25,7 @@ namespace STS2RitsuLib.Networking.Sidecar.Patches
         {
             return
             [
-                new(typeof(NetMessageBus), nameof(NetMessageBus.SetBufferMessages), [typeof(bool)], true),
+                new(typeof(NetMessageBus), SetBufferMessagesMethodName, [typeof(bool)], true),
             ];
         }
 
