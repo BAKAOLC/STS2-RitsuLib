@@ -1,3 +1,4 @@
+using MegaCrit.Sts2.Core.Multiplayer.Game;
 using MegaCrit.Sts2.Core.Multiplayer.Transport;
 
 namespace STS2RitsuLib.Networking.Sidecar
@@ -18,6 +19,7 @@ namespace STS2RitsuLib.Networking.Sidecar
         ///     为 true 时，原版 <see cref="MegaCrit.Sts2.Core.Multiplayer.NetMessageBus" /> 不应看到此数据包。
         /// </summary>
         internal static bool ShouldSuppressVanillaDeserialize(
+            INetGameService netService,
             ulong senderId,
             byte[] packetBytes,
             NetTransferMode mode,
@@ -39,6 +41,9 @@ namespace STS2RitsuLib.Networking.Sidecar
             RitsuLibSidecarTrafficCounters.AddIncoming(packetBytes.Length, ctx.Payload.Length);
             RitsuLibSidecarChecksumDiagnostics.EnsureSubscribed();
             RitsuLibSidecarPacketLog.IncomingParsed(in ctx);
+            if (RitsuLibSidecarSync.TryBufferIncoming(netService, in ctx))
+                return true;
+
             RitsuLibSidecarBus.Dispatch(in ctx);
             return true;
         }

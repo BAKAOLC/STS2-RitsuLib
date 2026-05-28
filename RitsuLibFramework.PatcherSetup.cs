@@ -155,6 +155,9 @@ namespace STS2RitsuLib
             patcher.RegisterPatch<RitsuLibSidecarNativeTrailerSendPatch>();
             if (!RitsuLibMobileSteamRuntime.SuppressNativeSteamIntegration)
                 patcher.RegisterPatch<RitsuLibSidecarNativeTrailerSteamSendPatch>();
+            patcher.RegisterPatch<RitsuLibSidecarSyncNetBufferPatch>();
+            patcher.RegisterPatch<RitsuLibSidecarSyncLocationChangedPatch>();
+            patcher.RegisterPatch<RitsuLibSidecarSyncHookActionEnqueuedPatch>();
             patcher.RegisterPatch<RitsuLibSidecarLobbyHelloPatch>();
             patcher.RegisterPatch<RitsuLibSidecarStartRunLobbyHostClientConnectedPatch>();
             patcher.RegisterPatch<RitsuLibSidecarStartRunLobbyHostClientDisconnectedPatch>();

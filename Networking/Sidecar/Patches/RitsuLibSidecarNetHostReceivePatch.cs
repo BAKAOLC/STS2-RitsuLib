@@ -27,10 +27,17 @@ namespace STS2RitsuLib.Networking.Sidecar.Patches
             ];
         }
 
-        public static bool Prefix(ulong senderId, byte[] packetBytes, NetTransferMode mode, int channel)
+        // ReSharper disable once InconsistentNaming
+        public static bool Prefix(
+            NetHostGameService __instance,
+            ulong senderId,
+            byte[] packetBytes,
+            NetTransferMode mode,
+            int channel)
         {
             RitsuLibSidecarNativeTrailerEvidence.ObserveInbound(senderId, packetBytes);
             return !RitsuLibSidecarReceivePipeline.ShouldSuppressVanillaDeserialize(
+                __instance,
                 senderId,
                 packetBytes,
                 mode,

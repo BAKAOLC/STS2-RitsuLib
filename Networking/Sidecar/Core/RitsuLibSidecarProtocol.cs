@@ -23,6 +23,8 @@ namespace STS2RitsuLib.Networking.Sidecar
 
             RitsuLibSidecarSessionManager.EnsureProvidersBootstrapped();
             RitsuLibSidecarBuiltInHandlers.Register();
+            RitsuLibSidecarSyncMessages.RegisterBuiltInHandler();
+            RitsuLibSidecarSyncActions.RegisterBuiltInHandlers();
             RitsuLibSidecarNetworkingLifecycle.EnsureHooksInstalled();
             RitsuLibSidecarRequiredCapabilities.RegisterRequiredCapability(
                 "ritsulib:sidecar_core_supported",
