@@ -272,6 +272,8 @@ namespace STS2RitsuLib.Interactions.RightClick
             var isController = reader.ReadBool();
             var metadata = reader.ReadBool() ? reader.ReadString() : null;
             var bindingIds = DeserializeBindingIds(reader);
+            if (bindingIds.Count == 0)
+                bindingIds = [InterfaceBindingId];
             return new(
                 ownerNetId,
                 kind,
