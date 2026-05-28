@@ -1,5 +1,6 @@
 using System.Reflection;
 using HarmonyLib;
+using STS2RitsuLib.Compat;
 using STS2RitsuLib.Interop.AutoRegistration;
 using STS2RitsuLib.Interop.Patches;
 
@@ -67,15 +68,16 @@ namespace STS2RitsuLib.Interop
 
         internal static void RunOnce(Harmony harmony)
         {
-            Dictionary<string, Assembly> map;
+            Dictionary<string, Assembly> scanMap;
             IModTypeDiscoveryContributor[] snapshot;
             lock (Gate)
             {
-                map = new(RegisteredAssembliesByModId, StringComparer.Ordinal);
+                scanMap = new(RegisteredAssembliesByModId, StringComparer.Ordinal);
                 snapshot = Contributors.ToArray();
             }
 
-            var orderedAssemblies = map
+            var targetMap = BuildTargetAssemblyMap(scanMap);
+            var orderedAssemblies = scanMap
                 .OrderBy(static kv => kv.Key, StringComparer.Ordinal)
                 .Select(static kv => kv.Value)
                 .Distinct()
@@ -89,8 +91,21 @@ namespace STS2RitsuLib.Interop
 
                 foreach (var modType in modTypes)
                 foreach (var contributor in snapshot)
-                    contributor.Contribute(harmony, map, modType);
+                    contributor.Contribute(harmony, targetMap, modType);
             }
+        }
+
+        private static IReadOnlyDictionary<string, Assembly> BuildTargetAssemblyMap(
+            IReadOnlyDictionary<string, Assembly> registeredAssembliesByModId)
+        {
+            var result = new Dictionary<string, Assembly>(
+                Sts2ModManagerCompat.BuildLoadedModAssembliesByManifestId(),
+                StringComparer.Ordinal);
+
+            foreach (var (modId, assembly) in registeredAssembliesByModId)
+                result[modId] = assembly;
+
+            return result;
         }
     }
 }

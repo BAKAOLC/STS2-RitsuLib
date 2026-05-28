@@ -23,22 +23,39 @@ namespace STS2RitsuLib.Interop.Internal
             Type t)
         {
             var modInterop = t.GetCustomAttribute<ModInteropAttribute>();
-            if (modInterop is null)
+            var assemblyInterop = t.GetCustomAttribute<AssemblyInteropAttribute>();
+            if (modInterop != null && assemblyInterop != null)
+            {
+                RitsuLibFramework.Logger.Warn(
+                    $"[Interop] Type {t.FullName} declares both ModInterop and AssemblyInterop; skipping.");
+                return;
+            }
+
+            if (modInterop != null)
+            {
+                if (!loadedAssembliesByModId.TryGetValue(modInterop.ModId, out var assembly))
+                    return;
+
+                RitsuLibFramework.Logger.Info($"[ModInterop] Processing type {t.FullName} -> mod {modInterop.ModId}");
+
+                var members = t.GetMembers(ValidMemberFlags);
+                GenInteropMembers(members, harmony, TargetResolutionContext.ForModAssembly(assembly),
+                    modInterop.Type, true);
+                return;
+            }
+
+            if (assemblyInterop == null)
                 return;
 
-            if (!loadedAssembliesByModId.TryGetValue(modInterop.ModId, out var assembly))
-                return;
-
-            RitsuLibFramework.Logger.Info($"[ModInterop] Processing type {t.FullName} -> mod {modInterop.ModId}");
-
-            var members = t.GetMembers(ValidMemberFlags);
-            GenInteropMembers(members, harmony, assembly, modInterop.Type, true);
+            RitsuLibFramework.Logger.Info($"[AssemblyInterop] Processing type {t.FullName}");
+            GenInteropMembers(t.GetMembers(ValidMemberFlags), harmony,
+                TargetResolutionContext.ForAssemblyQualifiedTypes(), assemblyInterop.Type, true);
         }
 
         private static bool GenInteropMembers(
             MemberInfo[] members,
             Harmony harmony,
-            Assembly assembly,
+            TargetResolutionContext targetContext,
             string? contextTargetType,
             bool requireStatic)
         {
@@ -48,7 +65,7 @@ namespace STS2RitsuLib.Interop.Internal
                     case PropertyInfo property:
                         if (requireStatic && !(property.SetMethod?.IsStatic ?? true))
                             continue;
-                        if (!GenInteropPropertyOrField(harmony, assembly, contextTargetType, property))
+                        if (!GenInteropPropertyOrField(harmony, targetContext, contextTargetType, property))
                             return false;
                         break;
                     case MethodInfo method:
@@ -56,13 +73,13 @@ namespace STS2RitsuLib.Interop.Internal
                             continue;
                         if (method.IsConstructor || method.GetCustomAttribute<CompilerGeneratedAttribute>() != null)
                             continue;
-                        if (!GenInteropMethod(harmony, assembly, contextTargetType, method))
+                        if (!GenInteropMethod(harmony, targetContext, contextTargetType, method))
                             return false;
                         break;
                     case TypeInfo nested:
                         if (!nested.IsAssignableTo(typeof(InteropClassWrapper)))
                             continue;
-                        if (!GenInteropType(harmony, assembly, contextTargetType, nested))
+                        if (!GenInteropType(harmony, targetContext, contextTargetType, nested))
                             return false;
                         break;
                 }
@@ -72,7 +89,7 @@ namespace STS2RitsuLib.Interop.Internal
 
         private static bool GenInteropType(
             Harmony harmony,
-            Assembly targetAssembly,
+            TargetResolutionContext targetContext,
             string? contextTargetType,
             TypeInfo type)
         {
@@ -86,9 +103,7 @@ namespace STS2RitsuLib.Interop.Internal
 
             try
             {
-                var targetType = Type.GetType($"{targetName}, {targetAssembly}")
-                                 ?? throw new InvalidOperationException(
-                                     $"Type {targetName} not found in assembly {targetAssembly}");
+                var targetType = ResolveTargetType(targetName, targetContext);
 
                 foreach (var constructor in constructors)
                 {
@@ -111,7 +126,7 @@ namespace STS2RitsuLib.Interop.Internal
                 }
 
                 RitsuLibFramework.Logger.Info($"[ModInterop] Generated interop type {type.FullName}");
-                return GenInteropMembers(type.GetMembers(ValidMemberFlags), harmony, targetAssembly, targetName, false);
+                return GenInteropMembers(type.GetMembers(ValidMemberFlags), harmony, targetContext, targetName, false);
             }
             catch (Exception e)
             {
@@ -122,7 +137,7 @@ namespace STS2RitsuLib.Interop.Internal
 
         private static bool GenInteropMethod(
             Harmony harmony,
-            Assembly targetAssembly,
+            TargetResolutionContext targetContext,
             string? contextTargetType,
             MethodInfo method)
         {
@@ -134,9 +149,7 @@ namespace STS2RitsuLib.Interop.Internal
 
             try
             {
-                var targetType = Type.GetType($"{typeName}, {targetAssembly}")
-                                 ?? throw new InvalidOperationException(
-                                     $"Type {typeName} not found in assembly {targetAssembly}");
+                var targetType = ResolveTargetType(typeName, targetContext);
 
                 var methodParams = method.GetParameters().Select(p => p.ParameterType).ToArray();
                 var nonStaticParams = method.IsStatic ? methodParams.Skip(1).ToArray() : methodParams;
@@ -210,7 +223,7 @@ namespace STS2RitsuLib.Interop.Internal
 
         private static bool GenInteropPropertyOrField(
             Harmony harmony,
-            Assembly targetAssembly,
+            TargetResolutionContext targetContext,
             string? contextTargetType,
             PropertyInfo property)
         {
@@ -221,9 +234,7 @@ namespace STS2RitsuLib.Interop.Internal
 
             try
             {
-                var targetType = Type.GetType($"{typeName}, {targetAssembly}")
-                                 ?? throw new InvalidOperationException(
-                                     $"Type {typeName} not found in assembly {targetAssembly}");
+                var targetType = ResolveTargetType(typeName, targetContext);
 
                 var targetProperty = AccessTools.DeclaredProperty(targetType, name);
                 if (targetProperty is not null && targetProperty.PropertyType == property.PropertyType)
@@ -357,6 +368,40 @@ namespace STS2RitsuLib.Interop.Internal
             }
         }
 
+        private static Type ResolveTargetType(string targetName, TargetResolutionContext targetContext)
+        {
+            if (targetContext.AssemblyQualifiedOnly)
+            {
+                _ = TryResolveAssemblyQualifiedType(targetName, out var resolved);
+                return resolved ?? throw new InvalidOperationException(
+                    $"AssemblyInterop target type '{targetName}' must be an assembly-qualified CLR type name that can be resolved.");
+            }
+
+            if (IsAssemblyQualifiedTypeName(targetName))
+                throw new InvalidOperationException(
+                    $"ModInterop target type '{targetName}' must be a full type name inside the target mod assembly. Use AssemblyInterop for assembly-qualified CLR type names.");
+
+            return targetContext.ModAssembly!.GetType(targetName, false)
+                   ?? Type.GetType($"{targetName}, {targetContext.ModAssembly.FullName}", false)
+                   ?? throw new InvalidOperationException(
+                       $"Type {targetName} not found in assembly {targetContext.ModAssembly.FullName}");
+        }
+
+        private static bool IsAssemblyQualifiedTypeName(string? targetName)
+        {
+            return !string.IsNullOrWhiteSpace(targetName) && targetName.Contains(',', StringComparison.Ordinal);
+        }
+
+        private static bool TryResolveAssemblyQualifiedType(string? targetName, out Type? type)
+        {
+            type = null;
+            if (!IsAssemblyQualifiedTypeName(targetName))
+                return false;
+
+            type = Type.GetType(targetName!, false);
+            return type != null;
+        }
+
         private static bool CheckParamMatch(ParameterInfo[] targetParams, Type[] checkParams)
         {
             if (targetParams.Length != checkParams.Length)
@@ -374,6 +419,19 @@ namespace STS2RitsuLib.Interop.Internal
         {
             return
                 $"{c.DeclaringType?.FullName}.ctor({string.Join(", ", c.GetParameters().Select(p => p.ParameterType.Name))})";
+        }
+
+        private readonly record struct TargetResolutionContext(Assembly? ModAssembly, bool AssemblyQualifiedOnly)
+        {
+            public static TargetResolutionContext ForModAssembly(Assembly assembly)
+            {
+                return new(assembly, false);
+            }
+
+            public static TargetResolutionContext ForAssemblyQualifiedTypes()
+            {
+                return new(null, true);
+            }
         }
     }
 }
