@@ -1,3 +1,4 @@
+using MegaCrit.Sts2.Core.Entities.Cards;
 using MegaCrit.Sts2.Core.Models;
 
 namespace STS2RitsuLib.Cards.Transforms
@@ -141,12 +142,17 @@ namespace STS2RitsuLib.Cards.Transforms
             }
         }
 
-        internal static void NotifyTransformed(CardModel original, CardModel replacement)
+        internal static void NotifyTransformed(
+            CardModel original,
+            CardModel replacement,
+            CardPile originalPile,
+            int originalPileIndex)
         {
             ArgumentNullException.ThrowIfNull(original);
             ArgumentNullException.ThrowIfNull(replacement);
+            ArgumentNullException.ThrowIfNull(originalPile);
 
-            var context = new ModCardTransformContext(original, replacement);
+            var context = new ModCardTransformContext(original, replacement, originalPile, originalPileIndex);
             ListenerEntry[] listeners;
             lock (SyncRoot)
             {

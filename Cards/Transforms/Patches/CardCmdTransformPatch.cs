@@ -26,7 +26,7 @@ namespace STS2RitsuLib.Cards.Transforms.Patches
         // ReSharper disable once InconsistentNaming
         public static void Prefix(
             ref IEnumerable<CardTransformation> transformations,
-            out CardModel[] __state)
+            out TransformSnapshot[] __state)
         {
             var snapshot = transformations.ToArray();
             transformations = snapshot;
@@ -35,14 +35,14 @@ namespace STS2RitsuLib.Cards.Transforms.Patches
 
         // ReSharper disable InconsistentNaming
         public static void Postfix(
-                CardModel[] __state,
+                TransformSnapshot[] __state,
                 ref Task<IEnumerable<CardPileAddResult>> __result)
             // ReSharper restore InconsistentNaming
         {
             __result = LifecyclePatchTaskBridge.After(__result, result => Notify(__state, result));
         }
 
-        private static void Notify(CardModel[] originals, IEnumerable<CardPileAddResult> results)
+        private static void Notify(TransformSnapshot[] originals, IEnumerable<CardPileAddResult> results)
         {
             var resultsArray = results.ToArray();
             var count = Math.Min(originals.Length, resultsArray.Length);
@@ -53,11 +53,19 @@ namespace STS2RitsuLib.Cards.Transforms.Patches
                 if (!result.success || result.cardAdded == null)
                     continue;
 
-                ModCardTransformRegistry.NotifyTransformed(originals[i], result.cardAdded);
+                var original = originals[i];
+                if (original.Pile == null)
+                    continue;
+
+                ModCardTransformRegistry.NotifyTransformed(
+                    original.Original,
+                    result.cardAdded,
+                    original.Pile,
+                    original.PileIndex);
             }
         }
 
-        private static CardModel[] CaptureSortedOriginals(IReadOnlyList<CardTransformation> transformations)
+        private static TransformSnapshot[] CaptureSortedOriginals(IReadOnlyList<CardTransformation> transformations)
         {
             var snapshots = new TransformSnapshot[transformations.Count];
             for (var i = 0; i < transformations.Count; i++)
@@ -69,7 +77,7 @@ namespace STS2RitsuLib.Cards.Transforms.Patches
             }
 
             Array.Sort(snapshots, Compare);
-            return snapshots.Select(static snapshot => snapshot.Original).ToArray();
+            return snapshots;
         }
 
         private static int Compare(TransformSnapshot x, TransformSnapshot y)
@@ -90,7 +98,7 @@ namespace STS2RitsuLib.Cards.Transforms.Patches
             return -1;
         }
 
-        private readonly record struct TransformSnapshot(
+        internal readonly record struct TransformSnapshot(
             CardModel Original,
             CardPile? Pile,
             int PileIndex,
