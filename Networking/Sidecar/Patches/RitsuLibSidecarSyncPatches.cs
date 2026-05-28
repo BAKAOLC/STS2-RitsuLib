@@ -23,7 +23,7 @@ namespace STS2RitsuLib.Networking.Sidecar.Patches
         {
             return
             [
-                new(typeof(NetMessageBus), nameof(NetMessageBus.SetBufferMessages), [typeof(bool)]),
+                new(typeof(NetMessageBus), nameof(NetMessageBus.SetBufferMessages), [typeof(bool)], true),
             ];
         }
 

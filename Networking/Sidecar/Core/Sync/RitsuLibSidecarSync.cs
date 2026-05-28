@@ -1,7 +1,6 @@
 using System.Buffers.Binary;
 using System.Collections;
-using System.Reflection;
-using System.Runtime.ExceptionServices;
+using System.Linq.Expressions;
 using HarmonyLib;
 using MegaCrit.Sts2.Core.Multiplayer;
 using MegaCrit.Sts2.Core.Multiplayer.Game;
@@ -59,29 +58,35 @@ namespace STS2RitsuLib.Networking.Sidecar
         private static readonly List<LocationBufferedSyncContext> WaitingForLocation = [];
         private static readonly HashSet<RunLocation> VisitedLocations = [];
 
-        private static readonly AccessTools.FieldRef<NetHostGameService, NetMessageBus> HostMessageBus =
-            AccessTools.FieldRefAccess<NetHostGameService, NetMessageBus>("_messageBus");
+        private static readonly Lock BlockedLocationAccessorGate = new();
+        private static readonly Dictionary<Type, BlockedLocationAccessors?> BlockedLocationAccessorCache = [];
 
-        private static readonly AccessTools.FieldRef<NetClientGameService, NetMessageBus> ClientMessageBus =
-            AccessTools.FieldRefAccess<NetClientGameService, NetMessageBus>("_messageBus");
+        private static readonly AccessTools.FieldRef<NetHostGameService, NetMessageBus>? HostMessageBusRef =
+            TryCreateFieldRef<NetHostGameService, NetMessageBus>("_messageBus");
 
-        private static readonly AccessTools.FieldRef<NetMessageBus, bool> NetBusIsBuffering =
-            AccessTools.FieldRefAccess<NetMessageBus, bool>("_isBufferingMessages");
+        private static readonly AccessTools.FieldRef<NetClientGameService, NetMessageBus>? ClientMessageBusRef =
+            TryCreateFieldRef<NetClientGameService, NetMessageBus>("_messageBus");
 
-        private static readonly AccessTools.FieldRef<NetMessageBus, List<(INetMessage, ulong)>> NetBusBufferedMessages =
-            AccessTools.FieldRefAccess<NetMessageBus, List<(INetMessage, ulong)>>("_bufferedMessages");
+        private static readonly AccessTools.FieldRef<NetMessageBus, bool>? NetBusIsBufferingRef =
+            TryCreateFieldRef<NetMessageBus, bool>("_isBufferingMessages");
 
-        private static readonly FieldInfo? LocationWaitingMessagesField =
-            AccessTools.Field(typeof(RunLocationTargetedMessageBuffer), "_messagesWaitingOnLocationChange");
+        private static readonly AccessTools.FieldRef<NetMessageBus, List<(INetMessage, ulong)>>?
+            NetBusBufferedMessagesRef =
+                TryCreateFieldRef<NetMessageBus, List<(INetMessage, ulong)>>("_bufferedMessages");
 
-        private static readonly FieldInfo? LocationVisitedLocationsField =
-            AccessTools.Field(typeof(RunLocationTargetedMessageBuffer), "_visitedLocations");
+        private static readonly Func<RunLocationTargetedMessageBuffer, IList>? LocationWaitingMessages =
+            TryCreateFieldGetter<RunLocationTargetedMessageBuffer, IList>("_messagesWaitingOnLocationChange");
 
-        private static readonly FieldInfo? LocationCurrentLocationField =
-            AccessTools.Field(typeof(RunLocationTargetedMessageBuffer), "<CurrentLocation>k__BackingField");
+        private static readonly AccessTools.FieldRef<RunLocationTargetedMessageBuffer, HashSet<RunLocation>>?
+            LocationVisitedLocationsRef =
+                TryCreateFieldRef<RunLocationTargetedMessageBuffer, HashSet<RunLocation>>("_visitedLocations");
 
-        private static readonly MethodInfo? LocationCallHandlersOfTypeMethod =
-            AccessTools.Method(typeof(RunLocationTargetedMessageBuffer), "CallHandlersOfType");
+        private static readonly AccessTools.FieldRef<RunLocationTargetedMessageBuffer, RunLocation>?
+            LocationCurrentLocationRef =
+                TryCreateFieldRef<RunLocationTargetedMessageBuffer, RunLocation>("<CurrentLocation>k__BackingField");
+
+        private static readonly LocationCallHandlersDelegate? LocationCallHandlers =
+            TryCreateLocationCallHandlersDelegate();
 
         public static bool TrySendToHost(NetClientGameService client, ulong opcode, ReadOnlySpan<byte> payload)
         {
@@ -228,7 +233,10 @@ namespace STS2RitsuLib.Networking.Sidecar
 
         public static bool TryBufferIncoming(INetGameService netService, in RitsuLibSidecarDispatchContext context)
         {
-            if (!IsSyncOpcode(context.Opcode) || !TryGetMessageBus(netService, out var bus) || !NetBusIsBuffering(bus))
+            if (!IsSyncOpcode(context.Opcode) ||
+                !TryGetMessageBus(netService, out var bus) ||
+                !TryGetNetBusBufferState(bus, out var isBuffering, out var vanillaMessages) ||
+                !isBuffering)
                 return false;
 
             var bufferedContext = context.WithOwnedEnvelopeMemory();
@@ -244,7 +252,7 @@ namespace STS2RitsuLib.Networking.Sidecar
                     WaitingForNetBus[bus] = waiting;
                 }
 
-                waiting.Add(new(NetBusBufferedMessages(bus).Count, bufferedContext));
+                waiting.Add(new(vanillaMessages.Count, bufferedContext));
             }
 
             return true;
@@ -252,7 +260,9 @@ namespace STS2RitsuLib.Networking.Sidecar
 
         public static bool ReleaseNetBusBuffer(NetMessageBus bus, bool bufferMessages)
         {
-            if (bufferMessages || !NetBusIsBuffering(bus))
+            if (!TryGetNetBusBufferState(bus, out var isBuffering, out var vanilla) ||
+                bufferMessages ||
+                !isBuffering)
                 return true;
 
             List<BufferedSyncContext>? sidecar;
@@ -262,10 +272,9 @@ namespace STS2RitsuLib.Networking.Sidecar
                     return true;
             }
 
-            var vanilla = NetBusBufferedMessages(bus);
             var vanillaMessages = vanilla.ToArray();
             vanilla.Clear();
-            NetBusIsBuffering(bus) = false;
+            SetNetBusBuffering(bus, false);
 
             var sidecarIndex = InitialIndex;
             sidecar.Sort((a, b) => a.VanillaCountBefore.CompareTo(b.VanillaCountBefore));
@@ -300,6 +309,8 @@ namespace STS2RitsuLib.Networking.Sidecar
             {
                 if (!locationTargeted)
                     return false;
+                if (!CanAlignLocationBuffer())
+                    return false;
                 if (VisitedLocations.Contains(location))
                     return false;
                 if (RunManager.Instance?.RunLocationTargetedBuffer?.CurrentLocation == location)
@@ -319,7 +330,6 @@ namespace STS2RitsuLib.Networking.Sidecar
                     buffer,
                     out var vanillaWaiting,
                     out var visitedLocations,
-                    out var currentLocationField,
                     out var callHandlers))
                 return true;
 
@@ -334,7 +344,7 @@ namespace STS2RitsuLib.Networking.Sidecar
                 WaitingForLocation.Clear();
             }
 
-            currentLocationField.SetValue(buffer, location);
+            LocationCurrentLocationRef!(buffer) = location;
             visitedLocations.Add(location);
             sidecar.Sort((a, b) => a.VanillaCountBefore.CompareTo(b.VanillaCountBefore));
 
@@ -461,22 +471,46 @@ namespace STS2RitsuLib.Networking.Sidecar
         {
             switch (netService)
             {
-                case NetHostGameService host:
-                    bus = HostMessageBus(host);
-                    return true;
-                case NetClientGameService client:
-                    bus = ClientMessageBus(client);
-                    return true;
+                case NetHostGameService host when HostMessageBusRef != null:
+                    bus = HostMessageBusRef(host);
+                    return bus != null;
+                case NetClientGameService client when ClientMessageBusRef != null:
+                    bus = ClientMessageBusRef(client);
+                    return bus != null;
                 default:
                     bus = null!;
                     return false;
             }
         }
 
+        private static bool TryGetNetBusBufferState(
+            NetMessageBus bus,
+            out bool isBuffering,
+            out List<(INetMessage, ulong)> bufferedMessages)
+        {
+            isBuffering = false;
+            bufferedMessages = null!;
+            if (NetBusIsBufferingRef == null ||
+                NetBusBufferedMessagesRef == null)
+                return false;
+
+            isBuffering = NetBusIsBufferingRef(bus);
+            bufferedMessages = NetBusBufferedMessagesRef(bus);
+            return true;
+        }
+
+        private static void SetNetBusBuffering(NetMessageBus bus, bool isBuffering)
+        {
+            if (NetBusIsBufferingRef == null)
+                return;
+
+            NetBusIsBufferingRef(bus) = isBuffering;
+        }
+
         private static int GetLocationWaitingCount()
         {
             return RunManager.Instance?.RunLocationTargetedBuffer is { } buffer &&
-                   LocationWaitingMessagesField?.GetValue(buffer) is ICollection collection
+                   LocationWaitingMessages?.Invoke(buffer) is ICollection collection
                 ? collection.Count
                 : NoVanillaMessagesWaiting;
         }
@@ -485,24 +519,29 @@ namespace STS2RitsuLib.Networking.Sidecar
             RunLocationTargetedMessageBuffer buffer,
             out IList waitingMessages,
             out HashSet<RunLocation> visitedLocations,
-            out FieldInfo currentLocationField,
-            out MethodInfo callHandlers)
+            out LocationCallHandlersDelegate callHandlers)
         {
             waitingMessages = null!;
             visitedLocations = null!;
-            currentLocationField = null!;
             callHandlers = null!;
-            if (LocationWaitingMessagesField?.GetValue(buffer) is not IList waiting ||
-                LocationVisitedLocationsField?.GetValue(buffer) is not HashSet<RunLocation> visited ||
-                LocationCurrentLocationField == null ||
-                LocationCallHandlersOfTypeMethod == null)
+            if (LocationWaitingMessages == null ||
+                LocationVisitedLocationsRef == null ||
+                LocationCurrentLocationRef == null ||
+                LocationCallHandlers == null)
                 return false;
 
-            waitingMessages = waiting;
-            visitedLocations = visited;
-            currentLocationField = LocationCurrentLocationField;
-            callHandlers = LocationCallHandlersOfTypeMethod;
+            waitingMessages = LocationWaitingMessages(buffer);
+            visitedLocations = LocationVisitedLocationsRef(buffer);
+            callHandlers = LocationCallHandlers;
             return true;
+        }
+
+        private static bool CanAlignLocationBuffer()
+        {
+            return LocationWaitingMessages != null &&
+                   LocationVisitedLocationsRef != null &&
+                   LocationCurrentLocationRef != null &&
+                   LocationCallHandlers != null;
         }
 
         private static void ReleaseLocationSidecar(LocationBufferedSyncContext pending, RunLocation releasedLocation)
@@ -531,41 +570,131 @@ namespace STS2RitsuLib.Networking.Sidecar
         }
 
         private static void InvokeLocationHandlers(
-            MethodInfo callHandlers,
+            LocationCallHandlersDelegate callHandlers,
             RunLocationTargetedMessageBuffer buffer,
             Type messageType,
             INetMessage message,
             ulong senderId)
         {
-            try
-            {
-                callHandlers.Invoke(buffer, [messageType, message, senderId]);
-            }
-            catch (TargetInvocationException ex) when (ex.InnerException != null)
-            {
-                ExceptionDispatchInfo.Capture(ex.InnerException).Throw();
-            }
+            callHandlers(buffer, messageType, message, senderId);
         }
 
         private static bool TryReadBlockedLocationMessage(object blocked, out BlockedLocationMessage message)
         {
             message = default;
-            var type = blocked.GetType();
-            var locationField = AccessTools.Field(type, "location");
-            var messageField = AccessTools.Field(type, "message");
-            var senderIdField = AccessTools.Field(type, "senderId");
-            var messageTypeField = AccessTools.Field(type, "messageType");
-            if (locationField == null || messageField == null || senderIdField == null || messageTypeField == null)
+            if (!TryGetBlockedLocationAccessors(blocked.GetType(), out var accessors))
                 return false;
 
-            if (locationField.GetValue(blocked) is not RunLocation location ||
-                messageField.GetValue(blocked) is not INetMessage netMessage ||
-                senderIdField.GetValue(blocked) is not ulong senderId ||
-                messageTypeField.GetValue(blocked) is not Type messageType)
-                return false;
-
-            message = new(location, netMessage, senderId, messageType);
+            message = new(
+                accessors.Location(blocked),
+                accessors.Message(blocked),
+                accessors.SenderId(blocked),
+                accessors.MessageType(blocked));
             return true;
+        }
+
+        private static bool TryGetBlockedLocationAccessors(
+            Type blockedType,
+            out BlockedLocationAccessors accessors)
+        {
+            lock (BlockedLocationAccessorGate)
+            {
+                if (!BlockedLocationAccessorCache.TryGetValue(blockedType, out var cached))
+                {
+                    cached = CreateBlockedLocationAccessors(blockedType);
+                    BlockedLocationAccessorCache[blockedType] = cached;
+                }
+
+                accessors = cached!;
+                return cached != null;
+            }
+        }
+
+        private static BlockedLocationAccessors? CreateBlockedLocationAccessors(Type blockedType)
+        {
+            var location = TryCreateObjectFieldGetter<RunLocation>(blockedType, "location");
+            var message = TryCreateObjectFieldGetter<INetMessage>(blockedType, "message");
+            var senderId = TryCreateObjectFieldGetter<ulong>(blockedType, "senderId");
+            var messageType = TryCreateObjectFieldGetter<Type>(blockedType, "messageType");
+            if (location == null || message == null || senderId == null || messageType == null)
+                return null;
+
+            return new(location, message, senderId, messageType);
+        }
+
+        private static AccessTools.FieldRef<TInstance, TField>? TryCreateFieldRef<TInstance, TField>(
+            string fieldName)
+            where TInstance : class
+        {
+            if (AccessTools.Field(typeof(TInstance), fieldName) == null)
+                return null;
+
+            try
+            {
+                return AccessTools.FieldRefAccess<TInstance, TField>(fieldName);
+            }
+            catch
+            {
+                return null;
+            }
+        }
+
+        private static Func<TInstance, TField>? TryCreateFieldGetter<TInstance, TField>(string fieldName)
+            where TInstance : class
+        {
+            var field = AccessTools.Field(typeof(TInstance), fieldName);
+            if (field == null)
+                return null;
+
+            try
+            {
+                var instance = Expression.Parameter(typeof(TInstance), "instance");
+                var fieldAccess = Expression.Field(instance, field);
+                var body = Expression.Convert(fieldAccess, typeof(TField));
+                return Expression.Lambda<Func<TInstance, TField>>(body, instance).Compile();
+            }
+            catch
+            {
+                return null;
+            }
+        }
+
+        private static Func<object, TField>? TryCreateObjectFieldGetter<TField>(Type ownerType, string fieldName)
+        {
+            var field = AccessTools.Field(ownerType, fieldName);
+            if (field == null)
+                return null;
+
+            try
+            {
+                var instance = Expression.Parameter(typeof(object), "instance");
+                var typedInstance = ownerType.IsValueType
+                    ? Expression.Unbox(instance, ownerType)
+                    : Expression.Convert(instance, ownerType);
+                var fieldAccess = Expression.Field(typedInstance, field);
+                var body = Expression.Convert(fieldAccess, typeof(TField));
+                return Expression.Lambda<Func<object, TField>>(body, instance).Compile();
+            }
+            catch
+            {
+                return null;
+            }
+        }
+
+        private static LocationCallHandlersDelegate? TryCreateLocationCallHandlersDelegate()
+        {
+            var method = AccessTools.Method(typeof(RunLocationTargetedMessageBuffer), "CallHandlersOfType");
+            if (method == null)
+                return null;
+
+            try
+            {
+                return AccessTools.MethodDelegate<LocationCallHandlersDelegate>(method);
+            }
+            catch
+            {
+                return null;
+            }
         }
 
         private static bool TryGetLocation(RitsuLibSidecarDispatchContext context, out RunLocation location)
@@ -681,6 +810,18 @@ namespace STS2RitsuLib.Networking.Sidecar
             INetMessage Message,
             ulong SenderId,
             Type MessageType);
+
+        private delegate void LocationCallHandlersDelegate(
+            RunLocationTargetedMessageBuffer buffer,
+            Type messageType,
+            INetMessage message,
+            ulong senderId);
+
+        private sealed record BlockedLocationAccessors(
+            Func<object, RunLocation> Location,
+            Func<object, INetMessage> Message,
+            Func<object, ulong> SenderId,
+            Func<object, Type> MessageType);
     }
 
     internal readonly record struct RitsuLibSidecarSyncMessagePacket(
