@@ -457,9 +457,11 @@ namespace STS2RitsuLib.Patching.Core
                     if (result.Ignored)
                         ignoredCount++;
 
-                    logger.Debug(result.Ignored
-                        ? $"{_logPrefix}[{importance}] {result.ModPatchInfo.Id} - Ignored (target missing)"
-                        : $"{_logPrefix}[{importance}] {result.ModPatchInfo.Id} - Success ✓");
+                    if (result.Ignored)
+                        logger.Info(
+                            $"{_logPrefix}[{importance}] {result.ModPatchInfo.Id} - Ignored: {result.ErrorMessage}");
+                    else
+                        logger.Debug($"{_logPrefix}[{importance}] {result.ModPatchInfo.Id} - Success ✓");
                 }
                 else
                 {
