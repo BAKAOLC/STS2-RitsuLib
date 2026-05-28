@@ -9,6 +9,7 @@ using MegaCrit.Sts2.Core.Modding;
 using MegaCrit.Sts2.Core.Models;
 using STS2RitsuLib.CardPiles;
 using STS2RitsuLib.Cards.FreePlay;
+using STS2RitsuLib.Cards.Transforms;
 using STS2RitsuLib.CardTags;
 using STS2RitsuLib.Combat.CardTargeting;
 using STS2RitsuLib.Combat.HandSize;
@@ -617,6 +618,15 @@ namespace STS2RitsuLib
         public static ModelCloneRegistry GetModelCloneRegistry(string modId)
         {
             return ModelCloneRegistry.For(modId);
+        }
+
+        /// <summary>
+        ///     Returns the card-transform listener registry for <paramref name="modId" />.
+        ///     返回 <paramref name="modId" /> 的卡牌转换监听器注册表。
+        /// </summary>
+        public static ModCardTransformRegistry GetCardTransformRegistry(string modId)
+        {
+            return ModCardTransformRegistry.For(modId);
         }
 
         /// <summary>

@@ -2,6 +2,7 @@ using STS2RitsuLib.Audio.Patches;
 using STS2RitsuLib.CardPiles.Patches;
 using STS2RitsuLib.Cards.FreePlay.Patches;
 using STS2RitsuLib.Cards.Patches;
+using STS2RitsuLib.Cards.Transforms.Patches;
 using STS2RitsuLib.CardTags.Patches;
 using STS2RitsuLib.Combat.CardTargeting.Patches;
 using STS2RitsuLib.Combat.HealthBars.Patches;
@@ -165,6 +166,7 @@ namespace STS2RitsuLib
             patcher.RegisterPatch<ModModelIdentityPlayerRunStatePatch>();
             patcher.RegisterPatch<ModModelIdentityRunStateAddCardPatch>();
             patcher.RegisterPatch<ModModelIdentityCombatStateAddCardPatch>();
+            patcher.RegisterPatch<CardCmdTransformPatch>();
             patcher.RegisterPatch<ModModelIdentityPlayerAddRelicPatch>();
             patcher.RegisterPatch<ModModelIdentityPlayerRemoveRelicPatch>();
             patcher.RegisterPatch<ModModelIdentityPlayerAddPotionPatch>();
