@@ -567,8 +567,6 @@ namespace STS2RitsuLib.Utils.HarmonyIl
             ArgumentNullException.ThrowIfNull(buildReplacement);
 
             var before = _code.Count;
-            var matches = 0;
-            var applied = 0;
             var matchedIndexes = new List<int>();
             var appliedIndexes = new List<int>();
             for (var i = 0; i < _code.Count; i++)
@@ -576,7 +574,6 @@ namespace STS2RitsuLib.Utils.HarmonyIl
                 if (!isMatch(_code, i))
                     continue;
 
-                matches++;
                 matchedIndexes.Add(i);
                 var replacement = buildReplacement(_code, i).ToList();
                 if (replacement.Count == 0)
@@ -587,7 +584,6 @@ namespace STS2RitsuLib.Utils.HarmonyIl
                 _code.RemoveAt(i);
                 _code.InsertRange(i, replacement);
                 i += replacement.Count - 1;
-                applied++;
             }
 
             return NewReport(operation, matchedIndexes, appliedIndexes, before, alreadySatisfied);

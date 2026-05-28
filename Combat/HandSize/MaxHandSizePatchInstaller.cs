@@ -314,15 +314,11 @@ namespace STS2RitsuLib.Combat.HandSize
             string description)
         {
             var pattern = HarmonyIlPattern.Sequence(HarmonyIl.IsLdarg(0), HarmonyIl.IsLdfld());
-            foreach (var match in rewriter.FindMatches(pattern, description).Items)
-            {
-                if (!fieldPredicate(match.GetFieldOperand(rewriter.Code, 1)))
-                    continue;
-
-                return [match.InstructionAt(rewriter.Code, 0).Clone(), match.InstructionAt(rewriter.Code, 1).Clone()];
-            }
-
-            return null;
+            return (from match in rewriter.FindMatches(pattern, description).Items
+                    where fieldPredicate(match.GetFieldOperand(rewriter.Code, 1))
+                    select (IReadOnlyList<CodeInstruction>?)
+                        [match.InstructionAt(rewriter.Code, 0).Clone(), match.InstructionAt(rewriter.Code, 1).Clone()])
+                .FirstOrDefault();
         }
 
         // ReSharper disable InconsistentNaming

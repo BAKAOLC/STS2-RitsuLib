@@ -195,10 +195,7 @@ namespace STS2RitsuLib.Utils.HarmonyIl
         /// </summary>
         public HarmonyIlMatch First()
         {
-            if (Items.Count > 0)
-                return Items[0];
-
-            throw NewCountException("at least 1");
+            return Items.Count > 0 ? Items[0] : throw NewCountException("at least 1");
         }
 
         /// <summary>
@@ -207,10 +204,7 @@ namespace STS2RitsuLib.Utils.HarmonyIl
         /// </summary>
         public HarmonyIlMatch Last()
         {
-            if (Items.Count > 0)
-                return Items[^1];
-
-            throw NewCountException("at least 1");
+            return Items.Count > 0 ? Items[^1] : throw NewCountException("at least 1");
         }
 
         /// <summary>
@@ -219,10 +213,7 @@ namespace STS2RitsuLib.Utils.HarmonyIl
         /// </summary>
         public HarmonyIlMatch RequireSingle()
         {
-            if (Items.Count == 1)
-                return Items[0];
-
-            throw NewCountException("exactly 1");
+            return Items.Count == 1 ? Items[0] : throw NewCountException("exactly 1");
         }
 
         /// <summary>
@@ -231,10 +222,7 @@ namespace STS2RitsuLib.Utils.HarmonyIl
         /// </summary>
         public HarmonyIlMatches RequireExactly(int count)
         {
-            if (Items.Count == count)
-                return this;
-
-            throw NewCountException($"exactly {count}");
+            return Items.Count == count ? this : throw NewCountException($"exactly {count}");
         }
 
         /// <summary>
@@ -243,10 +231,7 @@ namespace STS2RitsuLib.Utils.HarmonyIl
         /// </summary>
         public HarmonyIlMatches RequireAtLeast(int count)
         {
-            if (Items.Count >= count)
-                return this;
-
-            throw NewCountException($"at least {count}");
+            return Items.Count >= count ? this : throw NewCountException($"at least {count}");
         }
 
         /// <summary>

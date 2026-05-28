@@ -60,7 +60,7 @@ namespace STS2RitsuLib.Lifecycle.Patches
         public static IEnumerable<CodeInstruction> Transpiler(IEnumerable<CodeInstruction> instructions)
         {
             var rewriter = HarmonyIlRewriter.From(instructions);
-            var operation = "[RunHistory] Redirect ModelDb.GetById calls";
+            const string operation = "[RunHistory] Redirect ModelDb.GetById calls";
             var targets = rewriter.FindCalls(IsSupportedModelDbGetById, operation);
 
             if (!targets.Any && !rewriter.FindAll(IsFallbackCall, "[RunHistory] existing fallback calls").Any)
@@ -81,6 +81,7 @@ namespace STS2RitsuLib.Lifecycle.Patches
             if (IsModelDbGetByIdFor(called, typeof(CharacterModel)))
                 return CharacterFallback;
 
+            // ReSharper disable once ConvertIfStatementToReturnStatement
             if (IsModelDbGetByIdFor(called, typeof(ActModel)))
                 return ActFallback;
 
