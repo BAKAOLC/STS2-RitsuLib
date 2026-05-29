@@ -50,13 +50,12 @@ namespace STS2RitsuLib.Scaffolding.Content.Patches
             string memberName)
             where TOverrides : class
         {
-            if (!TryGetPath(instance, selector, memberName, out var path))
+            if (!TryGetDefinedPath(instance, selector, out var path))
                 return true;
 
-            var texture = ResourceLoader.Load<Texture2D>(path);
-            if (texture == null)
+            if (!GodotResourcePath.TryLoad<Texture2D>(path, out var texture))
             {
-                LogLoadFailure(instance, memberName, path, nameof(Texture2D));
+                WarnOverrideUnavailable(instance, memberName, path, nameof(Texture2D));
                 return true;
             }
 
@@ -72,10 +71,16 @@ namespace STS2RitsuLib.Scaffolding.Content.Patches
             string memberName)
             where TOverrides : class
         {
-            if (!TryGetPath(instance, selector, memberName, out var path))
+            if (!TryGetDefinedPath(instance, selector, out var path))
                 return true;
 
-            __result = ResourceLoader.Load<CompressedTexture2D>(path);
+            if (!GodotResourcePath.TryLoad<CompressedTexture2D>(path, out var texture))
+            {
+                WarnOverrideUnavailable(instance, memberName, path, nameof(CompressedTexture2D));
+                return true;
+            }
+
+            __result = texture;
             return false;
         }
 
@@ -87,10 +92,16 @@ namespace STS2RitsuLib.Scaffolding.Content.Patches
             string memberName)
             where TOverrides : class
         {
-            if (!TryGetPath(instance, selector, memberName, out var path))
+            if (!TryGetDefinedPath(instance, selector, out var path))
                 return true;
 
-            __result = ResourceLoader.Load<Material>(path);
+            if (!GodotResourcePath.TryLoad<Material>(path, out var material))
+            {
+                WarnOverrideUnavailable(instance, memberName, path, nameof(Material));
+                return true;
+            }
+
+            __result = material;
             return false;
         }
 
@@ -162,10 +173,17 @@ namespace STS2RitsuLib.Scaffolding.Content.Patches
             string memberName)
         {
             var path = externalPathFactory();
-            if (string.IsNullOrWhiteSpace(path) || !AssetPathDiagnostics.Exists(path, instance, memberName))
+            if (string.IsNullOrWhiteSpace(path))
                 return true;
 
-            __result = PreloadManager.Cache.GetScene(path);
+            var scene = ResolveScene(path);
+            if (scene == null)
+            {
+                WarnOverrideUnavailable(instance, memberName, path, nameof(PackedScene));
+                return true;
+            }
+
+            __result = scene;
             return false;
         }
 
@@ -177,10 +195,16 @@ namespace STS2RitsuLib.Scaffolding.Content.Patches
             string memberName)
         {
             var path = externalPathFactory();
-            if (string.IsNullOrWhiteSpace(path) || !AssetPathDiagnostics.Exists(path, instance, memberName))
+            if (string.IsNullOrWhiteSpace(path))
                 return true;
 
-            __result = ResourceLoader.Load<CompressedTexture2D>(path);
+            if (!GodotResourcePath.TryLoad<Texture2D>(path, out var texture))
+            {
+                WarnOverrideUnavailable(instance, memberName, path, nameof(Texture2D));
+                return true;
+            }
+
+            __result = texture;
             return false;
         }
 
@@ -191,10 +215,9 @@ namespace STS2RitsuLib.Scaffolding.Content.Patches
             return AssetPathDiagnostics.CollectExistingPaths(instance, candidates);
         }
 
-        private static bool TryGetPath<TOverrides>(
+        private static bool TryGetDefinedPath<TOverrides>(
             object instance,
             Func<TOverrides, string?> selector,
-            string memberName,
             out string path)
             where TOverrides : class
         {
@@ -204,14 +227,80 @@ namespace STS2RitsuLib.Scaffolding.Content.Patches
                 return false;
 
             var candidate = selector(overrides);
-            if (string.IsNullOrWhiteSpace(candidate) || !AssetPathDiagnostics.Exists(candidate, instance, memberName))
+            if (string.IsNullOrWhiteSpace(candidate))
                 return false;
 
             path = candidate;
             return true;
         }
 
-        private static void LogLoadFailure(object instance, string memberName, string path, string expectedType)
+        /// <summary>
+        ///     Resolves a <see cref="PackedScene" /> for an already-defined path, preferring the preload cache and
+        ///     falling back to <see cref="ResourceLoader" /> for paths that were never preloaded. Iterates the same
+        ///     candidate set as <see cref="GodotResourcePath.TryLoad{T}" /> so <c>uid://</c> / remapped inputs resolve.
+        ///     为已定义的路径解析 <see cref="PackedScene" />，优先使用预加载缓存，未预加载的路径回退到
+        ///     <see cref="ResourceLoader" />。与 <see cref="GodotResourcePath.TryLoad{T}" /> 使用相同的候选集合，
+        ///     以便 <c>uid://</c> / 重映射输入也能解析。
+        /// </summary>
+        internal static PackedScene? ResolveScene(string definedPath)
+        {
+            foreach (var candidate in GodotResourcePath.EnumerateCandidatePaths(definedPath))
+            {
+                if (!ResourceLoader.Exists(candidate))
+                    continue;
+
+                var cached = PreloadManager.Cache.GetScene(candidate);
+                if (cached != null)
+                    return cached;
+
+                if (ResourceLoader.Load(candidate) is PackedScene scene)
+                    return scene;
+            }
+
+            return null;
+        }
+
+        /// <summary>
+        ///     Resolves a <see cref="Texture2D" /> for an already-defined path, preferring the preload cache and
+        ///     falling back to <see cref="ResourceLoader" /> for paths that were never preloaded.
+        ///     为已定义的路径解析 <see cref="Texture2D" />，优先使用预加载缓存，未预加载的路径回退到
+        ///     <see cref="ResourceLoader" />。
+        /// </summary>
+        internal static Texture2D? ResolveTexture2D(string definedPath)
+        {
+            foreach (var candidate in GodotResourcePath.EnumerateCandidatePaths(definedPath))
+            {
+                if (!ResourceLoader.Exists(candidate))
+                    continue;
+
+                var cached = PreloadManager.Cache.GetTexture2D(candidate);
+                if (cached != null)
+                    return cached;
+
+                if (ResourceLoader.Load(candidate) is Texture2D texture)
+                    return texture;
+            }
+
+            return null;
+        }
+
+        /// <summary>
+        ///     Warns about a <em>defined</em> override path that could not be used: either it does not resolve at all
+        ///     (logged as a missing path by <see cref="AssetPathDiagnostics.Exists" />) or it resolves but cannot be
+        ///     loaded as the expected type. Callers must only reach this after confirming the author defined a path,
+        ///     so an undefined override never produces a warning.
+        ///     对一个<em>已定义</em>但无法使用的覆盖路径发出警告：要么完全无法解析（由
+        ///     <see cref="AssetPathDiagnostics.Exists" /> 记为缺失），要么能解析但无法按期望类型加载。调用方必须在
+        ///     确认作者已定义路径之后才会到达此处，因此未定义的覆盖永远不会产生警告。
+        /// </summary>
+        internal static void WarnOverrideUnavailable(object instance, string memberName, string path,
+            string expectedType)
+        {
+            if (AssetPathDiagnostics.Exists(path, instance, memberName))
+                LogLoadFailure(instance, memberName, path, expectedType);
+        }
+
+        internal static void LogLoadFailure(object instance, string memberName, string path, string expectedType)
         {
             RitsuLibFramework.Logger.Warn(
                 $"[Assets] Resource exists but failed to load as {expectedType} for {DescribeOwner(instance)}.{memberName}: '{path}'. Falling back to the base asset.");
@@ -240,10 +329,17 @@ namespace STS2RitsuLib.Scaffolding.Content.Patches
             string memberName)
             where TOverrides : class
         {
-            if (!TryGetPath(instance, selector, memberName, out var path))
+            if (!TryGetDefinedPath(instance, selector, out var path))
                 return true;
 
-            __result = PreloadManager.Cache.GetScene(path);
+            var scene = ResolveScene(path);
+            if (scene == null)
+            {
+                WarnOverrideUnavailable(instance, memberName, path, nameof(PackedScene));
+                return true;
+            }
+
+            __result = scene;
             return false;
         }
 
@@ -255,10 +351,17 @@ namespace STS2RitsuLib.Scaffolding.Content.Patches
             string memberName)
             where TOverrides : class
         {
-            if (!TryGetPath(instance, selector, memberName, out var path))
+            if (!TryGetDefinedPath(instance, selector, out var path))
                 return true;
 
-            __result = PreloadManager.Cache.GetTexture2D(path);
+            var texture = ResolveTexture2D(path);
+            if (texture == null)
+            {
+                WarnOverrideUnavailable(instance, memberName, path, nameof(Texture2D));
+                return true;
+            }
+
+            __result = texture;
             return false;
         }
 
@@ -270,13 +373,12 @@ namespace STS2RitsuLib.Scaffolding.Content.Patches
             string memberName)
             where TOverrides : class
         {
-            if (!TryGetPath(instance, selector, memberName, out var path))
+            if (!TryGetDefinedPath(instance, selector, out var path))
                 return true;
 
-            var texture = ResourceLoader.Load<Texture2D>(path);
-            if (texture == null)
+            if (!GodotResourcePath.TryLoad<Texture2D>(path, out var texture))
             {
-                LogLoadFailure(instance, memberName, path, nameof(Texture2D));
+                WarnOverrideUnavailable(instance, memberName, path, nameof(Texture2D));
                 return true;
             }
 
@@ -2556,11 +2658,18 @@ namespace STS2RitsuLib.Scaffolding.Content.Patches
                 return true;
 
             var path = overrides.CustomVfxScenePath;
-            if (string.IsNullOrWhiteSpace(path) ||
-                !AssetPathDiagnostics.Exists(path, __instance, nameof(IModEventAssetOverrides.CustomVfxScenePath)))
+            if (string.IsNullOrWhiteSpace(path))
                 return true;
 
-            __result = PreloadManager.Cache.GetScene(path).Instantiate<Node2D>();
+            var scene = ContentAssetOverridePatchHelper.ResolveScene(path);
+            if (scene == null)
+            {
+                ContentAssetOverridePatchHelper.WarnOverrideUnavailable(__instance,
+                    nameof(IModEventAssetOverrides.CustomVfxScenePath), path, nameof(PackedScene));
+                return true;
+            }
+
+            __result = scene.Instantiate<Node2D>();
             return false;
         }
     }

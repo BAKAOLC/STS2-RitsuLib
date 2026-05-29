@@ -4,34 +4,24 @@ namespace STS2RitsuLib.Utils
 {
     internal static class AssetPathDiagnostics
     {
-        private static readonly Lock SyncRoot = new();
-        private static readonly HashSet<string> WarnedMissingPaths = [];
-
         internal static bool Exists(string path, object owner, string memberName)
         {
             if (GodotResourcePath.ResourceExists(path))
                 return true;
 
-            WarnMissingPathOnce(owner, memberName, path);
+            WarnMissingPath(owner, memberName, path);
             return false;
         }
 
         /// <summary>
-        ///     Logs once when a mod character asset profile supplies a non-empty path that does not resolve
+        ///     Logs every time a mod character asset profile supplies a non-empty path that does not resolve
         ///     (empty overrides are ignored by callers).
-        ///     当 mod 角色资源档案提供了无法解析的非空路径时记录一次日志
+        ///     每当 mod 角色资源档案提供了无法解析的非空路径时都记录日志
         ///     （空覆盖值会被调用方忽略）。
         /// </summary>
         internal static void WarnModCharacterAssetOverrideMissing(object owner, string memberName, string path)
         {
             var ownerLabel = DescribeOwner(owner);
-            var warnKey = $"mod_char_override|{ownerLabel}|{memberName}|{path}";
-
-            lock (SyncRoot)
-            {
-                if (!WarnedMissingPaths.Add(warnKey))
-                    return;
-            }
 
             RitsuLibFramework.Logger.Warn(
                 $"[Assets] Mod character asset override path not found for {ownerLabel}.{memberName}: '{path}'. " +
@@ -55,16 +45,9 @@ namespace STS2RitsuLib.Utils
             return [.. results];
         }
 
-        private static void WarnMissingPathOnce(object owner, string memberName, string path)
+        private static void WarnMissingPath(object owner, string memberName, string path)
         {
             var ownerLabel = DescribeOwner(owner);
-            var warnKey = $"{ownerLabel}|{memberName}|{path}";
-
-            lock (SyncRoot)
-            {
-                if (!WarnedMissingPaths.Add(warnKey))
-                    return;
-            }
 
             RitsuLibFramework.Logger.Warn(
                 $"[Assets] Missing resource path for {ownerLabel}.{memberName}: '{path}'. Falling back to the base asset.");

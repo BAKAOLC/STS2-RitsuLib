@@ -11,16 +11,6 @@ namespace STS2RitsuLib.Utils
     /// </summary>
     public static class GodotResourcePath
     {
-        private static readonly string[] ResourceExistenceTypeHints =
-        [
-            nameof(Texture2D),
-            nameof(CompressedTexture2D),
-            nameof(Image),
-            nameof(PackedScene),
-            nameof(Material),
-            nameof(Resource),
-        ];
-
         /// <summary>
         ///     Yields paths the engine may use for the same logical asset: the trimmed input, <c>uid://</c> →
         ///     <c>res://</c> (when applicable), and <see cref="ResourceUid.EnsurePath" /> alternatives.
@@ -58,26 +48,56 @@ namespace STS2RitsuLib.Utils
 
         /// <summary>
         ///     Whether the running game’s <see cref="ResourceLoader" /> recognizes the path, using the same
-        ///     remapping as <see cref="EnumerateCandidatePaths" />, optional <c>type_hint</c> checks, and the
-        ///     cache (e.g. <see cref="Resource.TakeOverPath" /> scenarios).
+        ///     remapping as <see cref="EnumerateCandidatePaths" />. Relies solely on
+        ///     <see cref="ResourceLoader.Exists(string, string)" />, which already consults the resource cache
+        ///     (covering <see cref="Resource.TakeOverPath" /> / in-memory resources) before checking the file
+        ///     system, so an unresolved path is reported as missing instead of being masked by looser type-hint or
+        ///     cache probes.
         ///     运行中游戏的 <see cref="ResourceLoader" /> 是否识别该路径，使用与
-        ///     <see cref="EnumerateCandidatePaths" /> 相同的重映射、可选 <c>type_hint</c> 检查以及
-        ///     缓存（例如 <see cref="Resource.TakeOverPath" /> 场景）。
+        ///     <see cref="EnumerateCandidatePaths" /> 相同的重映射。仅依赖
+        ///     <see cref="ResourceLoader.Exists(string, string)" />——它在检查文件系统前已先查资源缓存
+        ///     （覆盖 <see cref="Resource.TakeOverPath" /> / 内存资源），因此无法解析的路径会被如实判定为缺失，
+        ///     而不会被更宽松的 type_hint 或缓存探测掩盖。
         /// </summary>
         public static bool ResourceExists(string? rawPath)
         {
+            return !string.IsNullOrWhiteSpace(rawPath) &&
+                   EnumerateCandidatePaths(rawPath).Any(candidate => ResourceLoader.Exists(candidate));
+        }
+
+        /// <summary>
+        ///     Loads the first <see cref="EnumerateCandidatePaths" /> candidate that both resolves and yields a
+        ///     resource assignable to <typeparamref name="T" />. Loading is untyped and then cast, so a resource
+        ///     whose concrete class differs from a narrow request (e.g. an <c>AtlasTexture</c> where
+        ///     <c>CompressedTexture2D</c> was requested) is matched against <typeparamref name="T" /> directly rather
+        ///     than failing inside <see cref="ResourceLoader.Load{T}(string, string, ResourceLoader.CacheMode)" />.
+        ///     The candidate that is loaded is the one that actually resolves, avoiding the "checked one path, loaded
+        ///     another" mismatch with the raw input. Returns <see langword="false" /> without loading when
+        ///     <paramref name="rawPath" /> is null or blank (i.e. nothing was defined).
+        ///     加载第一个既能解析、又能转换为 <typeparamref name="T" /> 的 <see cref="EnumerateCandidatePaths" /> 候选。
+        ///     采用 untyped 加载再转型，因此具体类与较窄请求不同的资源（例如请求 <c>CompressedTexture2D</c> 实际是
+        ///     <c>AtlasTexture</c>）会直接按 <typeparamref name="T" /> 匹配，而不是在
+        ///     <see cref="ResourceLoader.Load{T}(string, string, ResourceLoader.CacheMode)" /> 内部失败。实际加载的是
+        ///     真正解析成功的那个候选，避免「检查的是一个路径、加载的是另一个」的错位。当
+        ///     <paramref name="rawPath" /> 为 null 或空白（即未定义）时不加载并返回 <see langword="false" />。
+        /// </summary>
+        public static bool TryLoad<T>(string? rawPath, [NotNullWhen(true)] out T? resource)
+            where T : class
+        {
+            resource = null;
             if (string.IsNullOrWhiteSpace(rawPath))
                 return false;
 
             foreach (var candidate in EnumerateCandidatePaths(rawPath))
             {
-                if (ResourceLoader.Exists(candidate))
-                    return true;
+                if (!ResourceLoader.Exists(candidate))
+                    continue;
 
-                if (ResourceExistenceTypeHints.Any(hint => ResourceLoader.Exists(candidate, hint))) return true;
-
-                if (ResourceLoader.HasCached(candidate))
+                if (ResourceLoader.Load(candidate) is T typed)
+                {
+                    resource = typed;
                     return true;
+                }
             }
 
             return false;

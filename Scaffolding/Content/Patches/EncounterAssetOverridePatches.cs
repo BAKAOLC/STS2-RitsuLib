@@ -1,6 +1,5 @@
 using Godot;
 using HarmonyLib;
-using MegaCrit.Sts2.Core.Assets;
 using MegaCrit.Sts2.Core.Helpers;
 using MegaCrit.Sts2.Core.Models;
 using MegaCrit.Sts2.Core.Random;
@@ -115,12 +114,18 @@ namespace STS2RitsuLib.Scaffolding.Content.Patches
             else
                 return true;
 
-            if (string.IsNullOrWhiteSpace(path) ||
-                !AssetPathDiagnostics.Exists(path, __instance,
-                    nameof(IModEncounterAssetOverrides.CustomEncounterScenePath)))
+            if (string.IsNullOrWhiteSpace(path))
                 return true;
 
-            __result = PreloadManager.Cache.GetScene(path).Instantiate<Control>();
+            var scene = ContentAssetOverridePatchHelper.ResolveScene(path);
+            if (scene == null)
+            {
+                ContentAssetOverridePatchHelper.WarnOverrideUnavailable(__instance,
+                    nameof(IModEncounterAssetOverrides.CustomEncounterScenePath), path, nameof(PackedScene));
+                return true;
+            }
+
+            __result = scene.Instantiate<Control>();
             return false;
         }
     }
