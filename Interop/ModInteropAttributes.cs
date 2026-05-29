@@ -51,6 +51,17 @@ namespace STS2RitsuLib.Interop
     }
 
     /// <summary>
+    ///     Marks a method parameter as a wildcard — it matches any target parameter type regardless of assignability.
+    ///     Use this instead of relying on <c>object</c> to make wildcard intent explicit.
+    ///     将方法参数标记为通配符——无论可赋值性如何，都匹配任意目标参数类型。
+    ///     相较于隐式使用 <c>object</c>，请优先使用此属性以明确通配符意图。
+    /// </summary>
+    [AttributeUsage(AttributeTargets.Parameter)]
+    public sealed class InteropAnyParamAttribute : Attribute
+    {
+    }
+
+    /// <summary>
     ///     Optional per-member override for the target type or member name.
     ///     With <see cref="ModInteropAttribute" />, type is resolved inside the target mod assembly.
     ///     With <see cref="AssemblyInteropAttribute" />, type must be an assembly-qualified CLR type name.

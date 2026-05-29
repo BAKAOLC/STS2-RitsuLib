@@ -54,6 +54,29 @@ namespace STS2RitsuLib.Interop
             }
         }
 
+        /// <summary>
+        ///     Logs the current contributor list and registered mod assembly map to the RitsuLib logger.
+        ///     将当前 contributor 列表及已注册 mod assembly 映射输出到 RitsuLib logger。
+        /// </summary>
+        public static void LogDiagnostics()
+        {
+            Dictionary<string, Assembly> assemblySnapshot;
+            IModTypeDiscoveryContributor[] contributorSnapshot;
+            lock (Gate)
+            {
+                assemblySnapshot = new(RegisteredAssembliesByModId, StringComparer.Ordinal);
+                contributorSnapshot = Contributors.ToArray();
+            }
+
+            RitsuLibFramework.Logger.Info("[ModTypeDiscoveryHub] Diagnostics:");
+            RitsuLibFramework.Logger.Info($"  Contributors ({contributorSnapshot.Length}):");
+            foreach (var c in contributorSnapshot)
+                RitsuLibFramework.Logger.Info($"    - {c.GetType().FullName}");
+            RitsuLibFramework.Logger.Info($"  Registered assemblies ({assemblySnapshot.Count}):");
+            foreach (var (modId, assembly) in assemblySnapshot.OrderBy(kv => kv.Key, StringComparer.Ordinal))
+                RitsuLibFramework.Logger.Info($"    - {modId} → {assembly.GetName().Name}");
+        }
+
         internal static void EnsureBuiltInContributorsRegistered()
         {
             lock (Gate)

@@ -18,6 +18,8 @@ namespace STS2RitsuLib.Interop.Internal
         private static readonly FieldInfo WrappedValueField =
             AccessTools.DeclaredField(typeof(InteropClassWrapper), nameof(InteropClassWrapper.Value))!;
 
+        private static readonly Dictionary<(string, Assembly?), Type> TypeResolutionCache = new();
+
         internal static void TryProcessType(
             Harmony harmony,
             IReadOnlyDictionary<string, Assembly> loadedAssembliesByModId,
@@ -96,34 +98,35 @@ namespace STS2RitsuLib.Interop.Internal
         {
             var constructors = type.GetConstructors();
             if (constructors.Length < 1)
-                throw new InvalidOperationException($"{type} must have at least one public constructor");
+                throw new InvalidOperationException($"{type.FullName} must have at least one public constructor");
 
             var targetAttr = type.GetCustomAttribute<InteropTargetAttribute>();
             var targetName = targetAttr?.Type ?? targetAttr?.Name ?? contextTargetType
-                ?? throw new InvalidOperationException($"No target type provided for interop type {type}");
+                ?? throw new InvalidOperationException($"No target type provided for interop type {type.FullName}");
 
             try
             {
                 var targetType = ResolveTargetType(targetName, targetContext);
 
-                foreach (var constructor in constructors)
+                // Validate all constructors before patching any to avoid partial application.
+                var ctorPairs = constructors.Select(ctor =>
                 {
-                    var constructorParams = constructor.GetParameters().Select(p => p.ParameterType).ToArray();
-                    var constructorMatch = targetType.GetConstructor(constructorParams);
-                    if (constructorMatch is null)
+                    var paramTypes = ctor.GetParameters().Select(p => p.ParameterType).ToArray();
+                    var match = targetType.GetConstructor(paramTypes);
+                    if (match is null)
                         throw new InvalidOperationException(
-                            $"Failed to find matching constructor for {FormatConstructor(constructor)}");
+                            $"No matching constructor in {targetType.FullName} for {FormatConstructor(ctor)}");
+                    return (ctor, match, paramTypes);
+                }).ToList();
 
-                    var ctorLoadArgs = new List<CodeInstruction>
-                    {
-                        CodeInstruction.LoadArgument(0),
-                    };
-                    for (var i = 0; i < constructorParams.Length; i++)
+                foreach (var (ctor, match, paramTypes) in ctorPairs)
+                {
+                    var ctorLoadArgs = new List<CodeInstruction> { CodeInstruction.LoadArgument(0) };
+                    for (var i = 0; i < paramTypes.Length; i++)
                         ctorLoadArgs.Add(CodeInstruction.LoadArgument(i + 1));
-                    ctorLoadArgs.Add(new(OpCodes.Newobj, constructorMatch));
+                    ctorLoadArgs.Add(new(OpCodes.Newobj, match));
                     ctorLoadArgs.Add(new(OpCodes.Stfld, WrappedValueField));
-
-                    PatchReturnInsertion(harmony, constructor, ctorLoadArgs);
+                    PatchReturnInsertion(harmony, ctor, ctorLoadArgs);
                 }
 
                 RitsuLibFramework.Logger.Info($"[ModInterop] Generated interop type {type.FullName}");
@@ -152,8 +155,9 @@ namespace STS2RitsuLib.Interop.Internal
             {
                 var targetType = ResolveTargetType(typeName, targetContext);
 
-                var methodParams = method.GetParameters().Select(p => p.ParameterType).ToArray();
-                var nonStaticParams = method.IsStatic ? methodParams.Skip(1).ToArray() : methodParams;
+                var methodParamInfos = method.GetParameters();
+                var methodParams = methodParamInfos.Select(p => p.ParameterType).ToArray();
+                var nonStaticParamInfos = method.IsStatic ? methodParamInfos.Skip(1).ToArray() : methodParamInfos;
 
                 MethodInfo? targetMethod = null;
                 var loadParams = new List<CodeInstruction>();
@@ -162,8 +166,8 @@ namespace STS2RitsuLib.Interop.Internal
                     if (possibleTarget.Name != methodName)
                         continue;
                     var targetParams = possibleTarget.GetParameters();
-                    var checkParams = possibleTarget.IsStatic ? methodParams : nonStaticParams;
-                    if (!CheckParamMatch(targetParams, checkParams))
+                    var checkParamInfos = possibleTarget.IsStatic ? methodParamInfos : nonStaticParamInfos;
+                    if (!CheckParamMatch(targetParams, checkParamInfos))
                         continue;
                     targetMethod = possibleTarget;
 
@@ -175,7 +179,7 @@ namespace STS2RitsuLib.Interop.Internal
                     {
                         if (method.IsStatic)
                         {
-                            ValidateStaticShimReceiver(method, methodParams, targetType, targetMethod);
+                            ValidateStaticShimReceiver(method, methodParamInfos, targetType, targetMethod);
                             loadParams.Add(CodeInstruction.LoadArgument(0));
                             if (methodParams[0] != targetType)
                                 loadParams.Add(new(OpCodes.Castclass, targetType));
@@ -199,11 +203,12 @@ namespace STS2RitsuLib.Interop.Internal
 
                 if (targetMethod is null)
                     throw new InvalidOperationException(
-                        $"Method {methodName} with matching parameters not found in type {targetType}");
+                        $"{FormatMethod(method)} → {targetType.FullName}.{methodName}: no overload with matching parameters");
 
                 if (targetMethod.ReturnType != method.ReturnType)
                     throw new InvalidOperationException(
-                        $"Method {methodName} return type {method.ReturnType} does not match target return type {targetMethod.ReturnType}");
+                        $"{FormatMethod(method)} → {targetType.FullName}.{methodName}: " +
+                        $"return type mismatch (stub: {method.ReturnType.Name}, target: {targetMethod.ReturnType.Name})");
 
                 loadParams.Add(new(OpCodes.Call, targetMethod));
                 PatchReturnInsertion(harmony, method, loadParams);
@@ -377,12 +382,12 @@ namespace STS2RitsuLib.Interop.Internal
 
         private static void ValidateStaticShimReceiver(
             MethodInfo sourceMethod,
-            IReadOnlyList<Type> sourceParameterTypes,
+            ParameterInfo[] sourceParameters,
             Type targetType,
             MethodInfo targetMethod)
         {
-            if (sourceParameterTypes.Count > 0 &&
-                (sourceParameterTypes[0] == typeof(object) || targetType.IsAssignableTo(sourceParameterTypes[0])))
+            if (sourceParameters.Length > 0 &&
+                (IsWildcardParam(sourceParameters[0]) || targetType.IsAssignableTo(sourceParameters[0].ParameterType)))
                 return;
 
             throw new InvalidOperationException(
@@ -395,6 +400,16 @@ namespace STS2RitsuLib.Interop.Internal
         }
 
         private static Type ResolveTargetType(string targetName, TargetResolutionContext targetContext)
+        {
+            var key = (targetName, targetContext.ModAssembly);
+            if (TypeResolutionCache.TryGetValue(key, out var cached))
+                return cached;
+            var resolved = ResolveTargetTypeCore(targetName, targetContext);
+            TypeResolutionCache[key] = resolved;
+            return resolved;
+        }
+
+        private static Type ResolveTargetTypeCore(string targetName, TargetResolutionContext targetContext)
         {
             if (targetContext.AssemblyQualifiedOnly)
             {
@@ -428,12 +443,19 @@ namespace STS2RitsuLib.Interop.Internal
             return type != null;
         }
 
-        private static bool CheckParamMatch(ParameterInfo[] targetParams, Type[] checkParams)
+        private static bool CheckParamMatch(ParameterInfo[] targetParams, ParameterInfo[] checkParams)
         {
             if (targetParams.Length != checkParams.Length)
                 return false;
-            return !checkParams.Where((t, i) => t != typeof(object) && !t.IsAssignableTo(targetParams[i].ParameterType))
+            return !checkParams.Where((p, i) =>
+                    !IsWildcardParam(p) &&
+                    !p.ParameterType.IsAssignableTo(targetParams[i].ParameterType))
                 .Any();
+        }
+
+        private static bool IsWildcardParam(ParameterInfo p)
+        {
+            return p.ParameterType == typeof(object) || p.GetCustomAttribute<InteropAnyParamAttribute>() != null;
         }
 
         private static string FormatMethod(MethodInfo m)
