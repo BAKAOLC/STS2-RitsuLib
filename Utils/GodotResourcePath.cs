@@ -93,11 +93,9 @@ namespace STS2RitsuLib.Utils
                 if (!ResourceLoader.Exists(candidate))
                     continue;
 
-                if (ResourceLoader.Load(candidate) is T typed)
-                {
-                    resource = typed;
-                    return true;
-                }
+                if (ResourceLoader.Load(candidate) is not T typed) continue;
+                resource = typed;
+                return true;
             }
 
             return false;

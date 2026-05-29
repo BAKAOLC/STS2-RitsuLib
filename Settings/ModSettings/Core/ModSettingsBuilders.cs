@@ -19,6 +19,7 @@ namespace STS2RitsuLib.Settings
         private ModSettingsHostSurface _pageReadOnlyOnHostSurfaces = ModSettingsHostSurface.None;
         private ModSettingsHostSurface _pageVisibleOnHostSurfaces = ModSettingsHostSurface.All;
         private Func<bool>? _pageVisibleWhen;
+        private bool _sidebarVisibleOnlyWhenActive;
 
         /// <summary>
         ///     Initializes a builder for mod <paramref name="modId" />; <paramref name="pageId" /> defaults to the mod id when
@@ -174,6 +175,16 @@ namespace STS2RitsuLib.Settings
         }
 
         /// <summary>
+        ///     Shows this page in the sidebar only after the user navigates to this page (or one of its child pages).
+        ///     仅在用户进入此页面（或它的子页面）后，才在侧边栏显示此页面。
+        /// </summary>
+        public ModSettingsPageBuilder WithSidebarVisibleOnlyWhenActive()
+        {
+            _sidebarVisibleOnlyWhenActive = true;
+            return this;
+        }
+
+        /// <summary>
         ///     Host surfaces where controls on this page are read-only (combined with per-section masks).
         ///     此页面控件只读的宿主 surface（会与每个 section 的掩码组合）。
         /// </summary>
@@ -238,7 +249,8 @@ namespace STS2RitsuLib.Settings
                 _pageEnabledWhen,
                 _menuCapabilities,
                 _pageVisibleOnHostSurfaces,
-                _pageReadOnlyOnHostSurfaces
+                _pageReadOnlyOnHostSurfaces,
+                _sidebarVisibleOnlyWhenActive
             );
         }
     }

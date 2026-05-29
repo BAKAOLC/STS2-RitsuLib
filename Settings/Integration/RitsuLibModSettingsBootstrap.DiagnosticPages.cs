@@ -10,6 +10,7 @@ namespace STS2RitsuLib.Settings
                 Const.ModId,
                 page => page
                     .AsChildOf(Const.ModId)
+                    .WithSidebarVisibleOnlyWhenActive()
                     .WithSortOrder(-250)
                     .WithTitle(T("ritsulib.page.harmonyDump.title", "Harmony patch dump"))
                     .WithDescription(T("ritsulib.page.harmonyDump.description",

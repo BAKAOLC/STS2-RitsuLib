@@ -13,7 +13,7 @@ namespace STS2RitsuLib.Data.Models
         ///     Current schema version written by the library when creating or normalizing settings.
         ///     库在创建或规范化设置时写入的当前 schema 版本。
         /// </summary>
-        public const int CurrentSchemaVersion = 10;
+        public const int CurrentSchemaVersion = 11;
 
         /// <summary>
         ///     Persisted schema version used by the migration pipeline
@@ -89,6 +89,83 @@ namespace STS2RitsuLib.Data.Models
         /// </summary>
         [JsonPropertyName("mod_source_hover_tips_include_non_details")]
         public bool ModSourceHoverTipsIncludeNonDetails { get; set; }
+
+        /// <summary>
+        ///     Shows source hover tips for cards.
+        ///     为卡牌显示来源悬停提示。
+        /// </summary>
+        [JsonPropertyName("mod_source_hover_tips_cards")]
+        public bool ModSourceHoverTipsCards { get; set; } = true;
+
+        /// <summary>
+        ///     Shows source hover tips for relics.
+        ///     为遗物显示来源悬停提示。
+        /// </summary>
+        [JsonPropertyName("mod_source_hover_tips_relics")]
+        public bool ModSourceHoverTipsRelics { get; set; } = true;
+
+        /// <summary>
+        ///     Shows source hover tips for potions.
+        ///     为药水显示来源悬停提示。
+        /// </summary>
+        [JsonPropertyName("mod_source_hover_tips_potions")]
+        public bool ModSourceHoverTipsPotions { get; set; } = true;
+
+        /// <summary>
+        ///     Shows source hover tips for powers.
+        ///     为能力显示来源悬停提示。
+        /// </summary>
+        [JsonPropertyName("mod_source_hover_tips_powers")]
+        public bool ModSourceHoverTipsPowers { get; set; } = true;
+
+        /// <summary>
+        ///     Shows source hover tips for orbs.
+        ///     为充能球显示来源悬停提示。
+        /// </summary>
+        [JsonPropertyName("mod_source_hover_tips_orbs")]
+        public bool ModSourceHoverTipsOrbs { get; set; } = true;
+
+        /// <summary>
+        ///     Shows source hover tips for enchantments.
+        ///     为附魔显示来源悬停提示。
+        /// </summary>
+        [JsonPropertyName("mod_source_hover_tips_enchantments")]
+        public bool ModSourceHoverTipsEnchantments { get; set; } = true;
+
+        /// <summary>
+        ///     Shows source hover tips for afflictions.
+        ///     为苦痛显示来源悬停提示。
+        /// </summary>
+        [JsonPropertyName("mod_source_hover_tips_afflictions")]
+        public bool ModSourceHoverTipsAfflictions { get; set; } = true;
+
+        /// <summary>
+        ///     Shows source hover tips for keyword tooltips.
+        ///     为关键词悬停提示显示来源。
+        /// </summary>
+        [JsonPropertyName("mod_source_hover_tips_keywords")]
+        public bool ModSourceHoverTipsKeywords { get; set; } = true;
+
+        /// <summary>
+        ///     Shows source hover tips for event layouts.
+        ///     为事件界面显示来源提示。
+        /// </summary>
+        [JsonPropertyName("mod_source_hover_tips_events")]
+        public bool ModSourceHoverTipsEvents { get; set; } = true;
+
+        /// <summary>
+        ///     Shows source hover tips for creature hover tips.
+        ///     为生物悬停提示显示来源。
+        /// </summary>
+        [JsonPropertyName("mod_source_hover_tips_creatures")]
+        public bool ModSourceHoverTipsCreatures { get; set; } = true;
+
+        /// <summary>
+        ///     Shows source hover tips for base game term tooltips such as block and energy.
+        ///     为格挡、能量等基础游戏术语悬停提示显示来源。
+        /// </summary>
+        [JsonPropertyName("mod_source_hover_tips_game_terms")]
+        public bool ModSourceHoverTipsGameTerms { get; set; } = true;
 
         /// <summary>
         ///     Absolute path or Godot <c>user://</c> path for Harmony patch dump output (text log).

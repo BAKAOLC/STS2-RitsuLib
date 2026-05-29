@@ -76,7 +76,8 @@ namespace STS2RitsuLib.Content.Patches
         {
             var existing = layout.GetNodeOrNull<NHoverTipSet>(EventBadgeNodeName);
             var existingHotZone = layout.GetNodeOrNull<Control>(EventDrawerHotZoneName);
-            if (!RitsuLibSettingsStore.IsModSourceHoverTipsEnabled())
+            if (!RitsuLibSettingsStore.IsModSourceHoverTipsEnabled() ||
+                !RitsuLibSettingsStore.ShouldShowEventModSourceHoverTips())
             {
                 RemoveBadge(layout, existing);
                 RemoveBadge(layout, existingHotZone);
@@ -262,7 +263,8 @@ namespace STS2RitsuLib.Content.Patches
         public static void Postfix(CardKeyword keyword, ref IHoverTip __result)
             // ReSharper restore once InconsistentNaming
         {
-            if (!RitsuLibSettingsStore.IsModSourceHoverTipsEnabled())
+            if (!RitsuLibSettingsStore.IsModSourceHoverTipsEnabled() ||
+                !RitsuLibSettingsStore.ShouldShowKeywordModSourceHoverTips())
                 return;
 
             var info = ContentSourceHoverTipFactory.ResolveKeyword(keyword);
@@ -293,7 +295,8 @@ namespace STS2RitsuLib.Content.Patches
         public static void Postfix(ref IHoverTip __result)
             // ReSharper restore once InconsistentNaming
         {
-            if (!RitsuLibSettingsStore.IsModSourceHoverTipsEnabled())
+            if (!RitsuLibSettingsStore.IsModSourceHoverTipsEnabled() ||
+                !RitsuLibSettingsStore.ShouldShowGameTermModSourceHoverTips())
                 return;
 
             var info = ContentSourceHoverTipFactory.ContentSourceInfo.Vanilla;
@@ -324,7 +327,8 @@ namespace STS2RitsuLib.Content.Patches
         public static void Postfix(ref IHoverTip __result)
             // ReSharper restore once InconsistentNaming
         {
-            if (!RitsuLibSettingsStore.IsModSourceHoverTipsEnabled())
+            if (!RitsuLibSettingsStore.IsModSourceHoverTipsEnabled() ||
+                !RitsuLibSettingsStore.ShouldShowGameTermModSourceHoverTips())
                 return;
 
             var info = ContentSourceHoverTipFactory.ContentSourceInfo.Vanilla;
@@ -370,18 +374,7 @@ namespace STS2RitsuLib.Content.Patches
             if (!RitsuLibSettingsStore.IsModSourceHoverTipsEnabled())
                 return;
 
-            if (__instance is IContentSourceSupplier supplier)
-            {
-                var source = ContentSourceHoverTipFactory.Resolve(supplier);
-                if (!ContentSourceHoverTipFactory.ShouldShow(source))
-                    return;
-
-                ContentSourceHoverTipPatchHelper.Append(source, ref __result);
-                return;
-            }
-
-            var info = ContentSourceHoverTipFactory.Resolve(__instance.GetType());
-            if (!ContentSourceHoverTipFactory.ShouldShow(info))
+            if (!ContentSourceHoverTipFactory.TryResolve(__instance, out var info))
                 return;
 
             ContentSourceHoverTipPatchHelper.Append(info, ref __result);
@@ -522,7 +515,8 @@ namespace STS2RitsuLib.Content.Patches
         public static void Prefix(Control owner, ref IEnumerable<IHoverTip> hoverTips)
             // ReSharper restore once InconsistentNaming
         {
-            if (!RitsuLibSettingsStore.IsModSourceHoverTipsEnabled())
+            if (!RitsuLibSettingsStore.IsModSourceHoverTipsEnabled() ||
+                !RitsuLibSettingsStore.ShouldShowCreatureModSourceHoverTips())
                 return;
 
             switch (owner)

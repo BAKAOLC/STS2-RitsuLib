@@ -19,26 +19,13 @@ namespace STS2RitsuLib.Settings
                 .WithSortOrder(-1000)
                 .AddSection("general", section => section
                     .WithTitle(T("ritsulib.section.general.title", "General"))
-                    .AddToggle(
-                        "mod_source_hover_tips_enabled",
-                        T("ritsulib.modSourceHoverTips.enabled.label", "Show content source hover tips"),
-                        ui.ModSourceHoverTipsEnabled,
-                        T("ritsulib.modSourceHoverTips.enabled.description",
-                            "Adds a hover tip to cards, relics, and potions showing which mod provides them."))
-                    .AddToggle(
-                        "mod_source_hover_tips_include_vanilla",
-                        T("ritsulib.modSourceHoverTips.includeVanilla.label", "Include vanilla content source"),
-                        ui.ModSourceHoverTipsIncludeVanilla,
-                        T("ritsulib.modSourceHoverTips.includeVanilla.description",
-                            "Also shows source hover tips for base-game cards, relics, potions, keywords, and events."),
-                        RitsuLibSettingsStore.IsModSourceHoverTipsEnabled)
-                    .AddToggle(
-                        "mod_source_hover_tips_include_non_details",
-                        T("ritsulib.modSourceHoverTips.includeNonDetails.label", "Show sources outside details"),
-                        ui.ModSourceHoverTipsIncludeNonDetails,
-                        T("ritsulib.modSourceHoverTips.includeNonDetails.description",
-                            "Also adds source tips to card hovers, card-preview hovers, and relic-option hovers outside inspect/detail screens."),
-                        RitsuLibSettingsStore.IsModSourceHoverTipsEnabled)
+                    .AddSubpage(
+                        "content_source_hover_tips_open",
+                        T("ritsulib.modSourceHoverTips.pageLink.label", "Content source display"),
+                        "content-source-hover-tips",
+                        T("button.open", "Open"),
+                        T("ritsulib.modSourceHoverTips.pageLink.description",
+                            "Choose which content groups show source hover tips."))
                     .AddChoice(
                         "ui_shell_theme_id",
                         T("ritsulib.uiShellTheme.label", "Interface theme"),
@@ -223,7 +210,7 @@ namespace STS2RitsuLib.Settings
                             "Deletes mod data from Steam Cloud for this profile. Local files are not removed. Requires confirmation.")))
                 .AddSection("dev_debug_tools", section => section
                     .WithTitle(T("ritsulib.section.devDebugTools.title", "Developer debug tools"))
-                    .Collapsible(true)
+                    .Collapsible()
                     .AddSubpage(
                         "harmony_patch_dump_open",
                         T("ritsulib.section.harmonyDump.title", "Harmony patch dump"),

@@ -1415,6 +1415,7 @@ namespace STS2RitsuLib.Settings
                 ApplySidebarModButtonChevron(pair.Value, navChromeVisible);
             }
 
+            ApplyDynamicVisibilityTargets(_sidebarDynamicVisibilityTargets);
             _selectionDirty = false;
         }
 
@@ -1636,8 +1637,9 @@ namespace STS2RitsuLib.Settings
             cache.Button.SetSelected(string.Equals(page.Id, _selectedPageId, StringComparison.OrdinalIgnoreCase));
             _pageButtons[cache.PageKey] = cache.Button;
             var pageVisibility = ModSettingsHostSurfaceResolver.CombineVisibility(page.VisibleWhen,
-                () => ModSettingsHostSurfaceResolver.IsVisibleOnCurrentHost(page.VisibleOnHostSurfaces));
-            _sidebarDynamicVisibilityTargets.Add((cache.Button, pageVisibility));
+                () => ModSettingsHostSurfaceResolver.IsVisibleOnCurrentHost(page.VisibleOnHostSurfaces) &&
+                      (!page.SidebarVisibleOnlyWhenActive || IsSelectedPageInNavSubtree(_selectedPageId, page, pages)));
+            _sidebarDynamicVisibilityTargets.Add((cache.Container, pageVisibility));
 
             var showSections = string.Equals(page.Id, _selectedPageId, StringComparison.OrdinalIgnoreCase);
             cache.SectionRail.Visible = showSections;
@@ -2610,6 +2612,7 @@ namespace STS2RitsuLib.Settings
             builder.Append(page.Id).Append('|')
                 .Append(page.ModId).Append('|')
                 .Append(page.ParentPageId ?? string.Empty).Append('|')
+                .Append(page.SidebarVisibleOnlyWhenActive ? '1' : '0').Append('|')
                 .Append(page.Sections.Count);
 
             foreach (var section in page.Sections)

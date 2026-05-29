@@ -47,6 +47,12 @@ namespace STS2RitsuLib.Content
                 return false;
             }
 
+            if (!IsModelSectionEnabled(model))
+            {
+                source = default;
+                return false;
+            }
+
             source = model is IContentSourceSupplier supplier
                 ? Resolve(supplier)
                 : Resolve(model.GetType());
@@ -56,6 +62,21 @@ namespace STS2RitsuLib.Content
         internal static bool ShouldShow(ContentSourceInfo source)
         {
             return !source.IsVanilla || RitsuLibSettingsStore.ShouldIncludeVanillaModSourceHoverTips();
+        }
+
+        private static bool IsModelSectionEnabled(AbstractModel model)
+        {
+            return model switch
+            {
+                CardModel => RitsuLibSettingsStore.ShouldShowCardModSourceHoverTips(),
+                RelicModel => RitsuLibSettingsStore.ShouldShowRelicModSourceHoverTips(),
+                PotionModel => RitsuLibSettingsStore.ShouldShowPotionModSourceHoverTips(),
+                PowerModel => RitsuLibSettingsStore.ShouldShowPowerModSourceHoverTips(),
+                OrbModel => RitsuLibSettingsStore.ShouldShowOrbModSourceHoverTips(),
+                EnchantmentModel => RitsuLibSettingsStore.ShouldShowEnchantmentModSourceHoverTips(),
+                AfflictionModel => RitsuLibSettingsStore.ShouldShowAfflictionModSourceHoverTips(),
+                _ => true,
+            };
         }
 
         private static HoverTip CreateTip(ContentSourceInfo source)
