@@ -49,6 +49,21 @@ namespace STS2RitsuLib.Cards.Transforms
         /// </summary>
         public void Register(string listenerId, Action<ModCardTransformContext> listener)
         {
+            ArgumentNullException.ThrowIfNull(listener);
+            Register(listenerId, _ => true, context =>
+            {
+                listener(context);
+                return Task.CompletedTask;
+            });
+        }
+
+        /// <summary>
+        ///     Registers or replaces an async listener that receives every completed vanilla card transform.
+        ///     注册或替换一个异步监听器，以接收每次完成的原版卡牌转换。
+        /// </summary>
+        public void Register(string listenerId, Func<ModCardTransformContext, Task> listener)
+        {
+            ArgumentNullException.ThrowIfNull(listener);
             Register(listenerId, _ => true, listener);
         }
 
@@ -60,6 +75,23 @@ namespace STS2RitsuLib.Cards.Transforms
             string listenerId,
             Func<ModCardTransformContext, bool> predicate,
             Action<ModCardTransformContext> listener)
+        {
+            ArgumentNullException.ThrowIfNull(listener);
+            Register(listenerId, predicate, context =>
+            {
+                listener(context);
+                return Task.CompletedTask;
+            });
+        }
+
+        /// <summary>
+        ///     Registers or replaces an async listener with a custom predicate.
+        ///     注册或替换一个带自定义谓词的异步监听器。
+        /// </summary>
+        public void Register(
+            string listenerId,
+            Func<ModCardTransformContext, bool> predicate,
+            Func<ModCardTransformContext, Task> listener)
         {
             ArgumentException.ThrowIfNullOrWhiteSpace(listenerId);
             ArgumentNullException.ThrowIfNull(predicate);
@@ -91,6 +123,28 @@ namespace STS2RitsuLib.Cards.Transforms
             Register(
                 listenerId,
                 context => context is { Original: TOriginal, Replacement: TReplacement },
+                context =>
+                {
+                    listener((TOriginal)context.Original, (TReplacement)context.Replacement);
+                    return Task.CompletedTask;
+                });
+        }
+
+        /// <summary>
+        ///     Registers or replaces a typed async listener for a card transform pair.
+        ///     注册或替换一个针对卡牌转换类型对的类型化异步监听器。
+        /// </summary>
+        public void Register<TOriginal, TReplacement>(
+            string listenerId,
+            Func<TOriginal, TReplacement, Task> listener)
+            where TOriginal : CardModel
+            where TReplacement : CardModel
+        {
+            ArgumentNullException.ThrowIfNull(listener);
+
+            Register(
+                listenerId,
+                context => context is { Original: TOriginal, Replacement: TReplacement },
                 context => listener((TOriginal)context.Original, (TReplacement)context.Replacement));
         }
 
@@ -101,6 +155,27 @@ namespace STS2RitsuLib.Cards.Transforms
         public void RegisterFrom<TOriginal>(
             string listenerId,
             Action<TOriginal, CardModel> listener)
+            where TOriginal : CardModel
+        {
+            ArgumentNullException.ThrowIfNull(listener);
+
+            Register(
+                listenerId,
+                context => context.Original is TOriginal,
+                context =>
+                {
+                    listener((TOriginal)context.Original, context.Replacement);
+                    return Task.CompletedTask;
+                });
+        }
+
+        /// <summary>
+        ///     Registers or replaces a typed async listener for cards transformed away from <typeparamref name="TOriginal" />.
+        ///     注册或替换一个异步监听器，用于处理从 <typeparamref name="TOriginal" /> 转换出去的卡牌。
+        /// </summary>
+        public void RegisterFrom<TOriginal>(
+            string listenerId,
+            Func<TOriginal, CardModel, Task> listener)
             where TOriginal : CardModel
         {
             ArgumentNullException.ThrowIfNull(listener);
@@ -125,6 +200,27 @@ namespace STS2RitsuLib.Cards.Transforms
             Register(
                 listenerId,
                 context => context.Replacement is TReplacement,
+                context =>
+                {
+                    listener(context.Original, (TReplacement)context.Replacement);
+                    return Task.CompletedTask;
+                });
+        }
+
+        /// <summary>
+        ///     Registers or replaces a typed async listener for cards transformed into <typeparamref name="TReplacement" />.
+        ///     注册或替换一个异步监听器，用于处理转换成 <typeparamref name="TReplacement" /> 的卡牌。
+        /// </summary>
+        public void RegisterTo<TReplacement>(
+            string listenerId,
+            Func<CardModel, TReplacement, Task> listener)
+            where TReplacement : CardModel
+        {
+            ArgumentNullException.ThrowIfNull(listener);
+
+            Register(
+                listenerId,
+                context => context.Replacement is TReplacement,
                 context => listener(context.Original, (TReplacement)context.Replacement));
         }
 
@@ -142,7 +238,7 @@ namespace STS2RitsuLib.Cards.Transforms
             }
         }
 
-        internal static void NotifyTransformed(
+        internal static async Task NotifyTransformedAsync(
             CardModel original,
             CardModel replacement,
             CardPile originalPile,
@@ -163,7 +259,7 @@ namespace STS2RitsuLib.Cards.Transforms
                 try
                 {
                     if (entry.Predicate(context))
-                        entry.Listener(context);
+                        await entry.Listener(context);
                 }
                 catch (Exception ex)
                 {
@@ -176,7 +272,7 @@ namespace STS2RitsuLib.Cards.Transforms
             string ModId,
             string ListenerId,
             Func<ModCardTransformContext, bool> Predicate,
-            Action<ModCardTransformContext> Listener,
+            Func<ModCardTransformContext, Task> Listener,
             long RegistrationOrder);
     }
 }

@@ -39,10 +39,10 @@ namespace STS2RitsuLib.Cards.Transforms.Patches
                 ref Task<IEnumerable<CardPileAddResult>> __result)
             // ReSharper restore InconsistentNaming
         {
-            __result = LifecyclePatchTaskBridge.After(__result, result => Notify(__state, result));
+            __result = LifecyclePatchTaskBridge.After(__result, results => NotifyAsync(__state, results));
         }
 
-        private static void Notify(TransformSnapshot[] originals, IEnumerable<CardPileAddResult> results)
+        private static async Task NotifyAsync(TransformSnapshot[] originals, IEnumerable<CardPileAddResult> results)
         {
             var resultsArray = results.ToArray();
             var count = Math.Min(originals.Length, resultsArray.Length);
@@ -57,7 +57,7 @@ namespace STS2RitsuLib.Cards.Transforms.Patches
                 if (original.Pile == null)
                     continue;
 
-                ModCardTransformRegistry.NotifyTransformed(
+                await ModCardTransformRegistry.NotifyTransformedAsync(
                     original.Original,
                     result.cardAdded,
                     original.Pile,
