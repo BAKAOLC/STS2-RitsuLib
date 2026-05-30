@@ -2355,16 +2355,139 @@ namespace STS2RitsuLib.Settings
 
         private static void WireVerticalOnlyChain(IReadOnlyList<Control> chain)
         {
-            for (var index = 0; index < chain.Count; index++)
+            // Pin every neighbor to self so Godot's native focus traversal never moves on its own. Up/down are
+            // driven live by TryHandleDirectionalFocusInput (which recomputes the focusable order each press),
+            // and left/right stay blocked so vertical navigation cannot escape sideways into the other pane.
+            // The previous design wired absolute NodePaths to the prev/next chain entry; those dangle the moment
+            // the content tree mutates (refresh frees/recreates controls, list add/remove, host swaps,
+            // expand/collapse), which made focus jump to a freed node and disappear on complex/dynamic pages.
+            // 把每个 neighbor 都钉到自身,使 Godot 原生焦点遍历不会自行移动。上/下由 TryHandleDirectionalFocusInput 实时驱动
+            // (每次按键重新计算可聚焦顺序),左/右保持封锁,使纵向导航不会横向逃逸到另一个窗格。旧设计把绝对 NodePath 接到
+            // 链中前/后一项;一旦内容树变动(刷新释放/重建控件、列表增删、host 替换、展开/折叠),这些路径就悬空,导致焦点跳到已
+            // 释放的节点并在复杂/动态页面上消失。
+            foreach (var current in chain)
             {
-                var current = chain[index];
                 var selfPath = current.GetPath();
                 current.FocusNeighborLeft = selfPath;
                 current.FocusNeighborRight = selfPath;
-                current.FocusNeighborTop = index > 0 ? chain[index - 1].GetPath() : null;
-                current.FocusNeighborBottom =
-                    index < chain.Count - 1 ? chain[index + 1].GetPath() : null;
+                current.FocusNeighborTop = selfPath;
+                current.FocusNeighborBottom = selfPath;
             }
+        }
+
+        /// <inheritdoc />
+        public override void _Input(InputEvent @event)
+        {
+            if (TryHandleDirectionalFocusInput(@event))
+                return;
+            base._Input(@event);
+        }
+
+        /// <summary>
+        ///     Live up/down focus navigation for the active pane. Instead of relying on pre-wired
+        ///     <see cref="Control.FocusNeighborTop" /> / <see cref="Control.FocusNeighborBottom" /> paths (which go
+        ///     stale and drop focus the moment the content tree mutates), the focusable order is recomputed from
+        ///     the live tree on every press, so navigation stays correct through refreshes, list edits, host swaps
+        ///     and expand/collapse. Order matches the previous preorder chain, so secondary controls (e.g. the
+        ///     per-entry actions button) remain reachable. Text editors, popups and the open dropdown keep their
+        ///     own up/down handling.
+        ///     当前窗格的实时上/下焦点导航。不再依赖预先连好的 <see cref="Control.FocusNeighborTop" /> /
+        ///     <see cref="Control.FocusNeighborBottom" /> 路径(它们在内容树变动时会悬空并丢失焦点),而是每次按键都从实时树重新
+        ///     计算可聚焦顺序,因此在刷新、列表编辑、host 替换、展开/折叠期间导航始终正确。顺序与旧的前序链一致,故次级控件(如每
+        ///     条目的 actions 按钮)仍可到达。文本编辑器、弹窗与展开的下拉框保留各自的上/下处理。
+        /// </summary>
+        private bool TryHandleDirectionalFocusInput(InputEvent @event)
+        {
+            if (!Visible || !IsInstanceValid(this))
+                return false;
+            if (!ActiveScreenContext.Instance.IsCurrent(this))
+                return false;
+
+            // Echo is allowed so holding the key keeps moving the focus, matching the previous behavior.
+            int delta;
+            if (@event.IsActionPressed("ui_up"))
+                delta = -1;
+            else if (@event.IsActionPressed("ui_down"))
+                delta = 1;
+            else
+                return false;
+
+            var owner = GetViewport()?.GuiGetFocusOwner();
+            if (owner == null || !IsInstanceValid(owner))
+                return false;
+
+            // Multiline editors use up/down to move the caret; native popups handle their own vertical
+            // navigation. Leave those to their own input handling.
+            if (owner is TextEdit || IsFocusUnderPopupOrTransientWindow(owner))
+                return false;
+
+            // An open dropdown / actions menu, or a key-binding control recording input, owns directional input
+            // while active (its overlay lives inside the content pane, so the pane check above does not exclude
+            // it). Defer to the control's own handling in that case.
+            for (Node? n = owner; n != null && !ReferenceEquals(n, this); n = n.GetParent())
+                if (n is IModSettingsDirectionalInputClaimant { ClaimsDirectionalInput: true })
+                    return false;
+
+            Control paneRoot;
+            ScrollContainer paneScroll;
+            if (_contentPanelRoot.IsAncestorOf(owner))
+            {
+                paneRoot = _contentPanelRoot;
+                paneScroll = _scrollContainer;
+            }
+            else if (_sidebarPanelRoot.IsAncestorOf(owner))
+            {
+                paneRoot = _sidebarPanelRoot;
+                paneScroll = _sidebarScrollContainer;
+            }
+            else
+            {
+                return false;
+            }
+
+            var focusables = new List<Control>();
+            CollectSettingsFocusChainPreorder(paneRoot, focusables);
+            if (focusables.Count == 0)
+                return false;
+
+            var currentIndex = focusables.IndexOf(owner);
+            if (currentIndex < 0)
+                currentIndex = ResolveNearestFocusIndex(focusables, owner);
+            if (currentIndex < 0)
+                return false;
+
+            var nextIndex = currentIndex + delta;
+            // At either end, consume the event so focus stays put rather than escaping the pane or being lost.
+            if (nextIndex >= 0 && nextIndex < focusables.Count)
+            {
+                var target = focusables[nextIndex];
+                target.GrabFocus();
+                if (!IsInstanceValid(paneScroll))
+                {
+                    GetViewport()?.SetInputAsHandled();
+                    return true;
+                }
+
+                if (ReferenceEquals(paneScroll, _scrollContainer))
+                    Callable.From(() => paneScroll.EnsureControlVisible(target)).CallDeferred();
+                else
+                    paneScroll.EnsureControlVisible(target);
+            }
+
+            GetViewport()?.SetInputAsHandled();
+            return true;
+        }
+
+        private static int ResolveNearestFocusIndex(IReadOnlyList<Control> focusables, Control owner)
+        {
+            for (var i = 0; i < focusables.Count; i++)
+            {
+                var candidate = focusables[i];
+                if (candidate == owner || candidate.IsAncestorOf(owner) || owner.IsAncestorOf(candidate))
+                    return i;
+            }
+
+            return -1;
         }
 
         private static void CollectSettingsFocusChainPreorder(Control parent, List<Control> controls)

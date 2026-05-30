@@ -16,6 +16,18 @@ namespace STS2RitsuLib.Settings
     }
 
     /// <summary>
+    ///     Implemented by entry controls that consume directional (up/down) input while in an active mode — an
+    ///     open dropdown/actions menu, or a key-binding control recording input. The submenu's live focus
+    ///     navigator skips controls whose ancestor claims directional input so the control's own handling wins.
+    ///     由那些在激活模式下消费方向(上/下)输入的条目控件实现——展开的下拉/操作菜单,或正在录制输入的按键绑定控件。子菜单的
+    ///     实时焦点导航器会跳过其祖先声明占用方向输入的控件,让该控件自身的处理生效。
+    /// </summary>
+    internal interface IModSettingsDirectionalInputClaimant
+    {
+        bool ClaimsDirectionalInput { get; }
+    }
+
+    /// <summary>
     ///     Standard On/Off toggle control used by mod settings entries.
     ///     mod 设置条目使用的标准 On/Off 切换控件。
     /// </summary>
@@ -1036,7 +1048,7 @@ namespace STS2RitsuLib.Settings
     ///     存储的选项值类型。
     /// </typeparam>
     public sealed partial class ModSettingsDropdownChoiceControl<TValue> : HBoxContainer,
-        IModSettingsTransientPopupOwner
+        IModSettingsTransientPopupOwner, IModSettingsDirectionalInputClaimant
     {
         private const float DropListMinWidth = 200f;
         private const float RowHeight = 38f;
@@ -1141,6 +1153,8 @@ namespace STS2RitsuLib.Settings
         public ModSettingsDropdownChoiceControl()
         {
         }
+
+        bool IModSettingsDirectionalInputClaimant.ClaimsDirectionalInput => _dropOpen;
 
         void IModSettingsTransientPopupOwner.ForceCloseTransientUi()
         {
@@ -2487,7 +2501,7 @@ namespace STS2RitsuLib.Settings
     ///     Keybinding capture editor used by settings pages and custom editors.
     ///     设置页面和自定义编辑器使用的按键绑定捕获编辑器。
     /// </summary>
-    public sealed partial class ModSettingsKeyBindingControl : VBoxContainer
+    public sealed partial class ModSettingsKeyBindingControl : VBoxContainer, IModSettingsDirectionalInputClaimant
     {
         private readonly bool _allowModifierCombos;
         private readonly bool _allowModifierOnly;
@@ -2605,6 +2619,8 @@ namespace STS2RitsuLib.Settings
         public ModSettingsKeyBindingControl()
         {
         }
+
+        bool IModSettingsDirectionalInputClaimant.ClaimsDirectionalInput => _capturing;
 
         /// <inheritdoc />
         public override void _Ready()
@@ -2801,7 +2817,7 @@ namespace STS2RitsuLib.Settings
     }
 
     internal sealed partial class ModSettingsActionsButton : ModSettingsGamepadCompatibleButton,
-        IModSettingsTransientPopupOwner
+        IModSettingsTransientPopupOwner, IModSettingsDirectionalInputClaimant
     {
         private const float DropMinWidth = 260f;
         private const float RowHeight = 38f;
@@ -2847,6 +2863,8 @@ namespace STS2RitsuLib.Settings
             _actions = [];
             Pressed += OnEllipsisPressed;
         }
+
+        bool IModSettingsDirectionalInputClaimant.ClaimsDirectionalInput => _dropOpen;
 
         void IModSettingsTransientPopupOwner.ForceCloseTransientUi()
         {
@@ -3292,7 +3310,7 @@ namespace STS2RitsuLib.Settings
     ///     Multi-keybinding capture editor used by native settings pages.
     ///     原生设置页面使用的多按键绑定捕获编辑器。
     /// </summary>
-    public sealed partial class ModSettingsMultiKeyBindingControl : VBoxContainer
+    public sealed partial class ModSettingsMultiKeyBindingControl : VBoxContainer, IModSettingsDirectionalInputClaimant
     {
         private readonly bool _allowModifierCombos;
         private readonly bool _allowModifierOnly;
@@ -3377,6 +3395,8 @@ namespace STS2RitsuLib.Settings
         public ModSettingsMultiKeyBindingControl()
         {
         }
+
+        bool IModSettingsDirectionalInputClaimant.ClaimsDirectionalInput => _capturing;
 
         /// <inheritdoc />
         public override void _Ready()
