@@ -1956,11 +1956,9 @@ namespace STS2RitsuLib.Settings
                         return;
 
                     nextContent.AddChild(item.Control);
-                    if (item.YieldAfter && Time.GetTicksMsec() - lastYieldMsec >= PageBuildFrameBudgetMsec)
-                    {
-                        await this.AwaitRitsuProcessFrame(ct);
-                        lastYieldMsec = Time.GetTicksMsec();
-                    }
+                    if (!item.YieldAfter || Time.GetTicksMsec() - lastYieldMsec < PageBuildFrameBudgetMsec) continue;
+                    await this.AwaitRitsuProcessFrame(ct);
+                    lastYieldMsec = Time.GetTicksMsec();
                 }
 
                 if (buildVersion != cache.BuildVersion || !IsInstanceValid(cache.Root))

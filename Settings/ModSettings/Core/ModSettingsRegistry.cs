@@ -38,7 +38,7 @@ namespace STS2RitsuLib.Settings
         ///     <see cref="InvalidateOrderingCache" />）。重建开销很大（多键排序 + 逐页本地化），而设置 UI 每次刷新
         ///     都会多次调用 <see cref="GetPages" />，因此在真正发生变化前复用该快照。
         /// </summary>
-        private static IReadOnlyList<ModSettingsPage>? SortedPagesCache;
+        private static IReadOnlyList<ModSettingsPage>? _sortedPagesCache;
 
         /// <summary>
         ///     True after at least one page has been registered.
@@ -66,7 +66,7 @@ namespace STS2RitsuLib.Settings
             lock (SyncRoot)
             {
                 PagesById[CreateCompositeId(page.ModId, page.Id)] = page;
-                SortedPagesCache = null;
+                _sortedPagesCache = null;
             }
         }
 
@@ -81,7 +81,7 @@ namespace STS2RitsuLib.Settings
         {
             lock (SyncRoot)
             {
-                SortedPagesCache = null;
+                _sortedPagesCache = null;
             }
         }
 
@@ -97,7 +97,7 @@ namespace STS2RitsuLib.Settings
             lock (SyncRoot)
             {
                 ModDisplayNames[modId] = displayName;
-                SortedPagesCache = null;
+                _sortedPagesCache = null;
             }
         }
 
@@ -128,7 +128,7 @@ namespace STS2RitsuLib.Settings
             lock (SyncRoot)
             {
                 ModSidebarOrders[modId] = order;
-                SortedPagesCache = null;
+                _sortedPagesCache = null;
             }
         }
 
@@ -146,7 +146,7 @@ namespace STS2RitsuLib.Settings
             lock (SyncRoot)
             {
                 PageSortOverrides[CreateCompositeId(modId, pageId)] = sortOrder;
-                SortedPagesCache = null;
+                _sortedPagesCache = null;
             }
         }
 
@@ -176,7 +176,7 @@ namespace STS2RitsuLib.Settings
                 var baseOrder =
                     PageSortOverrides.GetValueOrDefault(CreateCompositeId(modId, afterPageId), after.SortOrder);
                 PageSortOverrides[CreateCompositeId(modId, pageId)] = baseOrder + gap;
-                SortedPagesCache = null;
+                _sortedPagesCache = null;
                 return true;
             }
         }
@@ -207,7 +207,7 @@ namespace STS2RitsuLib.Settings
                 var baseOrder = PageSortOverrides.GetValueOrDefault(CreateCompositeId(modId, beforePageId),
                     before.SortOrder);
                 PageSortOverrides[CreateCompositeId(modId, pageId)] = baseOrder - gap;
-                SortedPagesCache = null;
+                _sortedPagesCache = null;
                 return true;
             }
         }
@@ -278,7 +278,7 @@ namespace STS2RitsuLib.Settings
         {
             lock (SyncRoot)
             {
-                return SortedPagesCache ??= PagesById.Values
+                return _sortedPagesCache ??= PagesById.Values
                     .OrderBy(page => ModSidebarOrders.GetValueOrDefault(page.ModId, 0))
                     .ThenBy(page => ModSettingsLocalization.ResolveModNameFallback(page.ModId, page.ModId),
                         StringComparer.OrdinalIgnoreCase)
