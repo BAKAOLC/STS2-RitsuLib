@@ -9,6 +9,7 @@ using STS2RitsuLib.Combat.HealthBars.Patches;
 using STS2RitsuLib.Combat.Rewards.Patches;
 using STS2RitsuLib.Combat.Ui.Patches;
 using STS2RitsuLib.Content.Patches;
+using STS2RitsuLib.Diagnostics;
 using STS2RitsuLib.Diagnostics.Patches;
 using STS2RitsuLib.Interactions.RightClick.Patches;
 using STS2RitsuLib.Interop.Patches;
@@ -56,7 +57,8 @@ namespace STS2RitsuLib
                 if (!FrameworkPatchersByArea.TryGetValue(area, out var patcher))
                     throw new InvalidOperationException($"Framework patcher for area '{area}' was not initialized.");
 
-                if (!patcher.PatchAll())
+                if (!RitsuLibStartupAudit.Measure(
+                        $"patchAll.{area}({patcher.RegisteredPatchCount})", patcher.PatchAll))
                     return false;
             }
 

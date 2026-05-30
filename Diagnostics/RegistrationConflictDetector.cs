@@ -7,16 +7,51 @@ namespace STS2RitsuLib.Diagnostics
 {
     internal static class RegistrationConflictDetector
     {
+        private static readonly Lock IndexGate = new();
+        private static Dictionary<ModelId, List<Type>>? _gameModelIdIndex;
+
+        private static Dictionary<ModelId, List<Type>> GetGameModelIdIndex()
+        {
+            lock (IndexGate)
+            {
+                if (_gameModelIdIndex != null)
+                    return _gameModelIdIndex;
+
+                var index = new Dictionary<ModelId, List<Type>>();
+                foreach (var type in ReflectionHelper.GetSubtypes<AbstractModel>())
+                {
+                    var id = ModelDb.GetId(type);
+                    if (!index.TryGetValue(id, out var bucket))
+                    {
+                        bucket = [];
+                        index[id] = bucket;
+                    }
+
+                    bucket.Add(type);
+                }
+
+                _gameModelIdIndex = index;
+                return index;
+            }
+        }
+
+        internal static void InvalidateModelIdIndex()
+        {
+            lock (IndexGate)
+            {
+                _gameModelIdIndex = null;
+            }
+        }
+
         internal static void ThrowIfModelIdConflicts(Type candidateType)
         {
             ArgumentNullException.ThrowIfNull(candidateType);
 
             var candidateId = ModelDb.GetId(candidateType);
-            var conflicts = ReflectionHelper.GetSubtypes<AbstractModel>()
-                .Where(type => type != candidateType)
-                .Where(type => ModelDb.GetId(type) == candidateId)
-                .ToArray();
+            if (!GetGameModelIdIndex().TryGetValue(candidateId, out var bucket))
+                return;
 
+            var conflicts = bucket.Where(type => type != candidateType).ToArray();
             if (conflicts.Length == 0)
                 return;
 
@@ -28,19 +63,20 @@ namespace STS2RitsuLib.Diagnostics
 
         internal static void ValidateAndLogModelIdCollisions()
         {
-            var conflicts = ReflectionHelper.GetSubtypes<AbstractModel>()
-                .GroupBy(ModelDb.GetId)
-                .Where(group => group.Count() > 1)
+            var conflicts = GetGameModelIdIndex()
+                .Where(pair => pair.Value.Count > 1)
                 .ToArray();
 
             foreach (var group in conflicts)
                 RitsuLibFramework.Logger.Error(
                     $"[Content] ModelId collision detected for '{group.Key}': " +
-                    string.Join(", ", group.Select(type => type.FullName)));
+                    string.Join(", ", group.Value.Select(type => type.FullName)));
 
             if (conflicts.Length > 0)
                 RitsuLibFramework.Logger.Error(
                     "[Content] Duplicate patched ModelIds are unsafe. RitsuLib formats registered model ids as '<modid>_<category>_<typename>', so this usually indicates two registered models still share the same mod/category/type-name combination.");
+
+            InvalidateModelIdIndex();
         }
 
         internal static void ThrowIfEpochIdConflicts(string epochId, Type candidateType,

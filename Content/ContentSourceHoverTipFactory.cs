@@ -41,13 +41,7 @@ namespace STS2RitsuLib.Content
         {
             ArgumentNullException.ThrowIfNull(model);
 
-            if (!RitsuLibSettingsStore.IsModSourceHoverTipsEnabled())
-            {
-                source = default;
-                return false;
-            }
-
-            if (!IsModelSectionEnabled(model))
+            if (!RitsuLibSettingsStore.IsModSourceHoverTipsEnabled() || !IsModelSectionEnabled(model))
             {
                 source = default;
                 return false;

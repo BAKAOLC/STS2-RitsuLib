@@ -1802,9 +1802,8 @@ namespace STS2RitsuLib.Settings
                 string.Empty,
                 () =>
                 {
-                    if (_expandedModIds.Contains(modId))
+                    if (_expandedModIds.Remove(modId))
                     {
-                        _expandedModIds.Remove(modId);
                         _selectionDirty = true;
                         EnsureUiUpToDate();
                         return;

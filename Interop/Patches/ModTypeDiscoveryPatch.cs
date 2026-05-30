@@ -1,5 +1,6 @@
 using HarmonyLib;
 using MegaCrit.Sts2.Core.Localization;
+using STS2RitsuLib.Diagnostics;
 using STS2RitsuLib.Patching.Models;
 
 namespace STS2RitsuLib.Interop.Patches
@@ -45,8 +46,10 @@ namespace STS2RitsuLib.Interop.Patches
             }
 
             var harmony = new Harmony($"{Const.ModId}.mod_type_discovery");
-            ModTypeDiscoveryHub.RunOnce(harmony);
-            RitsuLibFramework.FlushDeferredContentPacks();
+            RitsuLibStartupAudit.Measure("modTypeDiscovery.runOnce",
+                () => ModTypeDiscoveryHub.RunOnce(harmony));
+            RitsuLibStartupAudit.Measure("flushDeferredContentPacks",
+                RitsuLibFramework.FlushDeferredContentPacks);
         }
     }
 }
