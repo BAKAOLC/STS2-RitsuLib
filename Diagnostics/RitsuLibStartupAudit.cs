@@ -67,9 +67,8 @@ namespace STS2RitsuLib.Diagnostics
         }
 
         /// <summary>
-        ///     Logs the phases recorded since the previous report as one consolidated block, including a running total
-        ///     of all RitsuLib self-time recorded so far.
-        ///     将自上次报告以来记录的阶段作为一个合并块输出，并附带迄今为止记录的 RitsuLib 自身耗时累计值。
+        ///     Logs every RitsuLib self-time phase recorded so far as a single consolidated block with one total line.
+        ///     将迄今为止记录的所有 RitsuLib 自身耗时阶段作为单个合并块输出，并附带一行总计。
         /// </summary>
         internal static void LogReport(string title)
         {
@@ -78,20 +77,16 @@ namespace STS2RitsuLib.Diagnostics
                 if (Phases.Count <= _reportedCount)
                     return;
 
-                var segment = Phases.GetRange(_reportedCount, Phases.Count - _reportedCount);
-                var segmentTotal = segment.Sum(static entry => entry.Milliseconds);
-                var grandTotal = Phases.Sum(static entry => entry.Milliseconds);
-
+                var total = Phases.Sum(static entry => entry.Milliseconds);
                 var text = new StringBuilder()
                     .AppendLine()
                     .AppendLine($"=== RitsuLib Startup Audit: {title} ===");
 
-                foreach (var (phase, milliseconds) in segment)
+                foreach (var (phase, milliseconds) in Phases)
                     text.AppendLine($"  {phase}: {milliseconds:F1} ms");
 
                 text.AppendLine("  ---")
-                    .AppendLine($"  segment total: {segmentTotal:F1} ms")
-                    .Append($"  RitsuLib self-time total so far: {grandTotal:F1} ms");
+                    .Append($"  RitsuLib self-time total: {total:F1} ms");
 
                 _reportedCount = Phases.Count;
                 RitsuLibFramework.Logger.Info(text.ToString());

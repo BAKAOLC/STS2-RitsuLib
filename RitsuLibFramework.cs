@@ -371,7 +371,7 @@ namespace STS2RitsuLib
                     });
                     SubscribeLifecycleOnce<MainMenuReadyEvent>(_ =>
                     {
-                        RitsuLibStartupAudit.LogReport("to main menu");
+                        RitsuLibStartupAudit.LogReport("launch to main menu");
                         HarmonyPatchDumpCoordinator.TryAutoDumpOnFirstMainMenu();
                         SelfCheckBundleCoordinator.TryAutoRunOnFirstMainMenu();
                     });
@@ -385,7 +385,6 @@ namespace STS2RitsuLib
                     PublishLifecycleEvent(frameworkInitializedEvent, nameof(FrameworkInitializedEvent));
 
                     Logger.Info("Shared framework initialization complete.");
-                    RitsuLibStartupAudit.LogReport("initialization (ModInitializer)");
                 }
                 catch (Exception ex)
                 {
