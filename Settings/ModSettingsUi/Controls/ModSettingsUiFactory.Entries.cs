@@ -51,11 +51,30 @@ namespace STS2RitsuLib.Settings
         internal static IEnumerable<PageBuildItem> CreatePageBuildItems(ModSettingsUiContext context,
             ModSettingsPage page)
         {
+            // A divider only separates two *visible* sections. Sections can be hidden dynamically (host surface
+            // or VisibleWhen), so the leading divider must follow the same visibility as its section, and must
+            // also disappear when no earlier section is visible. Otherwise a hidden middle section leaves its two
+            // adjacent dividers stacked with nothing between them (or a stray divider sits above the first visible
+            // section). Each section's predicate is reused so the divider stays in sync on every refresh.
+            // 分割线只在两个“可见”section 之间起分隔作用。section 可被动态隐藏（host surface 或 VisibleWhen），因此其前导分割线
+            // 必须跟随该 section 的可见性，且当其之前没有任何可见 section 时也要隐藏。否则一个被隐藏的中间 section 会让它两侧的
+            // 分割线叠在一起、中间空无一物（或在首个可见 section 之上留下一条孤立分割线）。复用每个 section 的谓词，使分割线在
+            // 每次刷新时保持同步。
+            var sectionVisible = new Func<bool>[page.Sections.Count];
+            for (var index = 0; index < page.Sections.Count; index++)
+                sectionVisible[index] = BuildSectionVisiblePredicate(page.Sections[index]);
+
             for (var index = 0; index < page.Sections.Count; index++)
             {
                 var section = page.Sections[index];
                 if (index > 0)
-                    yield return new(CreateDivider(), false);
+                {
+                    var dividerIndex = index;
+                    yield return new(
+                        MaybeWrapDynamicVisibility(context, CreateDivider(),
+                            () => sectionVisible[dividerIndex]() && AnyVisibleBefore(sectionVisible, dividerIndex)),
+                        false);
+                }
 
                 Control builtSection;
                 try
@@ -75,6 +94,27 @@ namespace STS2RitsuLib.Settings
 
                 yield return new(builtSection, true);
             }
+        }
+
+        /// <summary>
+        ///     Builds the same combined visibility predicate <see cref="CreateSection" /> applies to a section
+        ///     (its <see cref="ModSettingsSection.VisibleWhen" /> plus its host-surface restriction), so a leading
+        ///     divider can be kept in sync with the section it precedes.
+        ///     构建与 <see cref="CreateSection" /> 应用于 section 的相同组合可见性谓词（其
+        ///     <see cref="ModSettingsSection.VisibleWhen" /> 加上 host-surface 限制），以便前导分割线与其后的 section 保持同步。
+        /// </summary>
+        private static Func<bool> BuildSectionVisiblePredicate(ModSettingsSection section)
+        {
+            return ModSettingsHostSurfaceResolver.CombineVisibility(section.VisibleWhen,
+                () => ModSettingsHostSurfaceResolver.IsVisibleOnCurrentHost(section.VisibleOnHostSurfaces));
+        }
+
+        private static bool AnyVisibleBefore(IReadOnlyList<Func<bool>> sectionVisible, int index)
+        {
+            for (var i = 0; i < index; i++)
+                if (sectionVisible[i]())
+                    return true;
+            return false;
         }
 
         public static Control CreateToggleEntry(ModSettingsUiContext context, ToggleModSettingsEntryDefinition entry)
