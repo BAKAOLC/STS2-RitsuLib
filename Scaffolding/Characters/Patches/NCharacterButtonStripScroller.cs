@@ -33,6 +33,7 @@ namespace STS2RitsuLib.Scaffolding.Characters.Patches
         private NGoldArrowButton? _leftArrow;
 
         private CharacterButtonStripScrollOptions _options;
+        private Control? _retainedForeignScroller;
         private NGoldArrowButton? _rightArrow;
         private float _targetX;
 
@@ -61,7 +62,8 @@ namespace STS2RitsuLib.Scaffolding.Characters.Patches
                 visibleButtonCount <= options.VisibleButtons)
                 return false;
 
-            var scroller = root as NCharacterButtonStripScroller ?? ReplaceRoot(root, contents);
+            var scroller = root as NCharacterButtonStripScroller ??
+                           ReplaceRoot(root, contents, replacesForeignScroller);
             if (scroller == null)
                 return false;
 
@@ -164,7 +166,10 @@ namespace STS2RitsuLib.Scaffolding.Characters.Patches
             return root.GetType().FullName == "BaseLib.BaseLibScenes.NHorizontalScrollContainer";
         }
 
-        private static NCharacterButtonStripScroller? ReplaceRoot(Control oldRoot, Control contents)
+        private static NCharacterButtonStripScroller? ReplaceRoot(
+            Control oldRoot,
+            Control contents,
+            bool retainForeignScroller)
         {
             var parent = oldRoot.GetParent();
             if (parent == null)
@@ -180,8 +185,28 @@ namespace STS2RitsuLib.Scaffolding.Characters.Patches
             scroller.Owner = oldRoot.Owner;
             parent.MoveChild(scroller, index);
             scroller.AddChild(contents);
-            oldRoot.QueueFree();
+            if (retainForeignScroller)
+                scroller.RetainForeignScroller(oldRoot);
+            else
+                oldRoot.QueueFree();
+
             return scroller;
+        }
+
+        private void RetainForeignScroller(Control oldRoot)
+        {
+            // BaseLib registers per-button focus lambdas that capture its scroller and cannot be disconnected reliably.
+            _retainedForeignScroller = oldRoot;
+            oldRoot.Name = "RetainedForeignScroller";
+            oldRoot.UniqueNameInOwner = false;
+            oldRoot.Visible = false;
+            oldRoot.MouseFilter = MouseFilterEnum.Ignore;
+            oldRoot.ProcessMode = ProcessModeEnum.Disabled;
+            oldRoot.SetProcess(false);
+            oldRoot.SetProcessInput(false);
+            oldRoot.SetProcessUnhandledInput(false);
+            oldRoot.SetPhysicsProcess(false);
+            AddChild(oldRoot);
         }
 
         private static void CopyLayout(Control source, Control target)
