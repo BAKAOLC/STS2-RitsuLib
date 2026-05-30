@@ -320,12 +320,13 @@ namespace STS2RitsuLib
                 Logger.Info($"Framework Name: {Const.Name}");
                 Logger.Info(BuildVersionLogText());
                 Logger.Info("Initializing shared framework...");
-                RitsuLibModImageResourceLoader.EnsureRegistered();
+                RitsuLibStartupAudit.Measure("imageResourceLoader",
+                    RitsuLibModImageResourceLoader.EnsureRegistered);
                 RitsuLibMobileSteamRuntime.LogSuppressedSteamFeaturesAtStartup();
                 ModTypeDiscoveryHub.EnsureBuiltInContributorsRegistered();
-                RitsuLibSettingsStore.Initialize();
-                RitsuLibModSettingsBootstrap.Initialize();
-                RitsuLibTelemetryBootstrap.Initialize();
+                RitsuLibStartupAudit.Measure("settingsStore", RitsuLibSettingsStore.Initialize);
+                RitsuLibStartupAudit.Measure("modSettingsBootstrap", RitsuLibModSettingsBootstrap.Initialize);
+                RitsuLibStartupAudit.Measure("telemetryBootstrap", RitsuLibTelemetryBootstrap.Initialize);
                 PublishLifecycleEvent(
                     new FrameworkInitializingEvent(Const.ModId, Const.Version, DateTimeOffset.UtcNow),
                     nameof(FrameworkInitializingEvent)
@@ -334,34 +335,43 @@ namespace STS2RitsuLib
                 try
                 {
                     FrameworkPatchersByArea.Clear();
-                    RegisterLifecyclePatches();
-                    RegisterSettingsUiPatches();
-                    RegisterContentAssetPatches();
-                    RegisterCharacterAssetPatches();
-                    RegisterContentRegistryPatches();
-                    RegisterPersistencePatches();
-                    RegisterUnlockPatches();
+                    RitsuLibStartupAudit.Measure("registerPatches", () =>
+                    {
+                        RegisterLifecyclePatches();
+                        RegisterSettingsUiPatches();
+                        RegisterContentAssetPatches();
+                        RegisterCharacterAssetPatches();
+                        RegisterContentRegistryPatches();
+                        RegisterPersistencePatches();
+                        RegisterUnlockPatches();
+                    });
 
-                    if (!PatchAllRequired())
+                    if (!RitsuLibStartupAudit.Measure("patchAll", PatchAllRequired))
                     {
                         Logger.Error("Framework initialization failed: critical framework patches failed.");
                         IsActive = false;
+                        RitsuLibStartupAudit.LogReport("initialization (failed)");
                         return;
                     }
 
                     IsInitialized = true;
                     IsActive = true;
-                    var modDataInteropRegistered = ModDataRuntimeInterop.TryRegisterAll();
+                    var modDataInteropRegistered = RitsuLibStartupAudit.Measure("modDataInterop",
+                        ModDataRuntimeInterop.TryRegisterAll);
                     if (modDataInteropRegistered > 0)
                         Logger.Debug(
                             $"ModData runtime interop: mirror-registered {modDataInteropRegistered} provider schema(s).");
 
-                    EnsureFrameworkInteropBootstrapRegistered();
-                    RuntimeHotkeyService.Initialize();
-                    RitsuToastService.Initialize();
-                    RitsuLibUpdateCheckService.Initialize();
+                    RitsuLibStartupAudit.Measure("runtimeServices", () =>
+                    {
+                        EnsureFrameworkInteropBootstrapRegistered();
+                        RuntimeHotkeyService.Initialize();
+                        RitsuToastService.Initialize();
+                        RitsuLibUpdateCheckService.Initialize();
+                    });
                     SubscribeLifecycleOnce<MainMenuReadyEvent>(_ =>
                     {
+                        RitsuLibStartupAudit.LogReport("to main menu");
                         HarmonyPatchDumpCoordinator.TryAutoDumpOnFirstMainMenu();
                         SelfCheckBundleCoordinator.TryAutoRunOnFirstMainMenu();
                     });
@@ -375,6 +385,7 @@ namespace STS2RitsuLib
                     PublishLifecycleEvent(frameworkInitializedEvent, nameof(FrameworkInitializedEvent));
 
                     Logger.Info("Shared framework initialization complete.");
+                    RitsuLibStartupAudit.LogReport("initialization (ModInitializer)");
                 }
                 catch (Exception ex)
                 {
