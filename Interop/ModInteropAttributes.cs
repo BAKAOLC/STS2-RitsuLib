@@ -57,9 +57,7 @@ namespace STS2RitsuLib.Interop
     ///     相较于隐式使用 <c>object</c>，请优先使用此属性以明确通配符意图。
     /// </summary>
     [AttributeUsage(AttributeTargets.Parameter)]
-    public sealed class InteropAnyParamAttribute : Attribute
-    {
-    }
+    public sealed class InteropAnyParamAttribute : Attribute;
 
     /// <summary>
     ///     Optional per-member override for the target type or member name.

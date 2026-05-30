@@ -205,13 +205,10 @@ namespace STS2RitsuLib.CardTags
         {
             ArgumentException.ThrowIfNullOrWhiteSpace(idOrEnumName);
 
-            if (TryGet(idOrEnumName, out var definition))
-            {
-                value = definition.CardTagValue;
-                return true;
-            }
-
-            return Enum.TryParse(idOrEnumName.Trim(), true, out value) || TryGetCardTag(idOrEnumName, out value);
+            if (!TryGet(idOrEnumName, out var definition))
+                return Enum.TryParse(idOrEnumName.Trim(), true, out value) || TryGetCardTag(idOrEnumName, out value);
+            value = definition.CardTagValue;
+            return true;
         }
 
         /// <summary>

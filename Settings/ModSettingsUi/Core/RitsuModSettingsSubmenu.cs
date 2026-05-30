@@ -36,6 +36,15 @@ namespace STS2RitsuLib.Settings
 
         private const string ScrollbarContentRightGutterTokenPath = "components.scrollbar.layout.contentRightGutter";
 
+        /// <summary>
+        ///     Per-frame build budget (ms) for <see cref="BuildPageAsync" />. Sections accumulate within a frame
+        ///     until this is exceeded, then the build yields one frame. Tuned below a 60 fps frame (~16ms) so the
+        ///     UI stays responsive while light pages still populate in a single frame.
+        ///     <see cref="BuildPageAsync" /> 的每帧构建预算(毫秒)。section 在一帧内累积直到超过该值,然后让出一帧。取值低于
+        ///     60fps 单帧(~16ms),既保持 UI 响应,又让轻量页面在单帧内填满。
+        /// </summary>
+        private const ulong PageBuildFrameBudgetMsec = 6;
+
         private static readonly StringName PaneSidebarHotkey = MegaInput.viewDeckAndTabLeft;
         private static readonly StringName PaneContentHotkey = MegaInput.viewExhaustPileAndTabRight;
 
@@ -288,6 +297,7 @@ namespace STS2RitsuLib.Settings
             PushPaneHotkeys();
             UpdatePaneHotkeyHintIcons();
             RequestMirrorVisibilitySyncRefreshIfNeeded();
+            Callable.From(RefreshContentLayout).CallDeferred();
         }
 
         /// <inheritdoc />
@@ -1211,9 +1221,8 @@ namespace STS2RitsuLib.Settings
             {
                 _selectedModId = rootPages[0].Key;
                 _selectionDirty = true;
+                ExpandOnlyMod(_selectedModId);
             }
-
-            ExpandOnlyMod(_selectedModId);
 
             var modPages = ModSettingsRegistry.GetPages()
                 .Where(page => string.Equals(page.ModId, _selectedModId, StringComparison.OrdinalIgnoreCase))
@@ -1312,6 +1321,8 @@ namespace STS2RitsuLib.Settings
                 foreach (var cache in _pageContentCaches.Values)
                 {
                     cache.BuildCancellation?.Cancel();
+                    if (cache.State == PageBuildState.Building)
+                        cache.State = PageBuildState.NotBuilt;
                     if (IsInstanceValid(cache.Root))
                         cache.Root.Visible = false;
                 }
@@ -1415,6 +1426,7 @@ namespace STS2RitsuLib.Settings
                 ApplySidebarModButtonChevron(pair.Value, navChromeVisible);
             }
 
+            ApplyDynamicVisibilityTargets(_sidebarDynamicVisibilityTargets);
             _selectionDirty = false;
         }
 
@@ -1636,8 +1648,9 @@ namespace STS2RitsuLib.Settings
             cache.Button.SetSelected(string.Equals(page.Id, _selectedPageId, StringComparison.OrdinalIgnoreCase));
             _pageButtons[cache.PageKey] = cache.Button;
             var pageVisibility = ModSettingsHostSurfaceResolver.CombineVisibility(page.VisibleWhen,
-                () => ModSettingsHostSurfaceResolver.IsVisibleOnCurrentHost(page.VisibleOnHostSurfaces));
-            _sidebarDynamicVisibilityTargets.Add((cache.Button, pageVisibility));
+                () => ModSettingsHostSurfaceResolver.IsVisibleOnCurrentHost(page.VisibleOnHostSurfaces) &&
+                      (!page.SidebarVisibleOnlyWhenActive || IsSelectedPageInNavSubtree(_selectedPageId, page, pages)));
+            _sidebarDynamicVisibilityTargets.Add((cache.Container, pageVisibility));
 
             var showSections = string.Equals(page.Id, _selectedPageId, StringComparison.OrdinalIgnoreCase);
             cache.SectionRail.Visible = showSections;
@@ -1789,18 +1802,30 @@ namespace STS2RitsuLib.Settings
                 string.Empty,
                 () =>
                 {
-                    _selectedModId = modId;
-                    _selectedPageId = ModSettingsRegistry.GetPages()
-                        .Where(page => string.Equals(page.ModId, modId, StringComparison.OrdinalIgnoreCase) &&
-                                       string.IsNullOrWhiteSpace(page.ParentPageId))
-                        .OrderBy(ModSettingsRegistry.GetEffectivePageSortOrder)
-                        .ThenBy(page => page.Id, StringComparer.OrdinalIgnoreCase)
-                        .Select(page => page.Id)
-                        .FirstOrDefault();
-                    _selectedSectionId = null;
+                    if (_expandedModIds.Contains(modId))
+                    {
+                        _expandedModIds.Remove(modId);
+                        _selectionDirty = true;
+                        EnsureUiUpToDate();
+                        return;
+                    }
+
+                    if (!string.Equals(_selectedModId, modId, StringComparison.OrdinalIgnoreCase))
+                    {
+                        _selectedModId = modId;
+                        _selectedPageId = ModSettingsRegistry.GetPages()
+                            .Where(page => string.Equals(page.ModId, modId, StringComparison.OrdinalIgnoreCase) &&
+                                           string.IsNullOrWhiteSpace(page.ParentPageId))
+                            .OrderBy(ModSettingsRegistry.GetEffectivePageSortOrder)
+                            .ThenBy(page => page.Id, StringComparer.OrdinalIgnoreCase)
+                            .Select(page => page.Id)
+                            .FirstOrDefault();
+                        _selectedSectionId = null;
+                        _focusSelectedPageButtonOnNextRefresh = true;
+                    }
+
                     ExpandOnlyMod(modId);
                     _selectionDirty = true;
-                    _focusSelectedPageButtonOnNextRefresh = true;
                     EnsureUiUpToDate();
                 },
                 ModSettingsSidebarItemKind.ModGroup,
@@ -1882,13 +1907,14 @@ namespace STS2RitsuLib.Settings
 
         private async Task BuildPageAsync(ModSettingsPage page, PageContentCache cache)
         {
-            if (cache.BuildCancellation != null)
-                await cache.BuildCancellation.CancelAsync();
+            var previousCancellation = cache.BuildCancellation;
             cache.BuildCancellation = new();
             var ct = cache.BuildCancellation.Token;
             var buildVersion = ++cache.BuildVersion;
             cache.State = PageBuildState.Building;
             ShowContentBuildOverlay(ModSettingsLocalization.Get("entry.loading", "Loading settings…"));
+            if (previousCancellation != null)
+                await previousCancellation.CancelAsync();
 
             var nextHeader = new VBoxContainer
             {
@@ -1929,6 +1955,7 @@ namespace STS2RitsuLib.Settings
                             page.Id)));
                 }
 
+                var lastYieldMsec = Time.GetTicksMsec();
                 foreach (var item in ModSettingsUiFactory.CreatePageBuildItems(context, page))
                 {
                     ct.ThrowIfCancellationRequested();
@@ -1936,9 +1963,12 @@ namespace STS2RitsuLib.Settings
                         return;
 
                     nextContent.AddChild(item.Control);
-                    if (item.YieldAfter)
-                        await this.AwaitRitsuProcessFrame(ct);
+                    if (!item.YieldAfter || Time.GetTicksMsec() - lastYieldMsec < PageBuildFrameBudgetMsec) continue;
+                    await this.AwaitRitsuProcessFrame(ct);
+                    lastYieldMsec = Time.GetTicksMsec();
                 }
+
+                await this.AwaitRitsuProcessFrame(ct);
 
                 if (buildVersion != cache.BuildVersion || !IsInstanceValid(cache.Root))
                     return;
@@ -1981,6 +2011,8 @@ namespace STS2RitsuLib.Settings
             {
                 nextHeader.QueueFree();
                 nextContent.QueueFree();
+                if (buildVersion == cache.BuildVersion && cache.State == PageBuildState.Building)
+                    cache.State = PageBuildState.NotBuilt;
             }
             catch (Exception ex)
             {
@@ -2332,16 +2364,109 @@ namespace STS2RitsuLib.Settings
 
         private static void WireVerticalOnlyChain(IReadOnlyList<Control> chain)
         {
-            for (var index = 0; index < chain.Count; index++)
+            foreach (var current in chain)
             {
-                var current = chain[index];
                 var selfPath = current.GetPath();
                 current.FocusNeighborLeft = selfPath;
                 current.FocusNeighborRight = selfPath;
-                current.FocusNeighborTop = index > 0 ? chain[index - 1].GetPath() : null;
-                current.FocusNeighborBottom =
-                    index < chain.Count - 1 ? chain[index + 1].GetPath() : null;
+                current.FocusNeighborTop = selfPath;
+                current.FocusNeighborBottom = selfPath;
             }
+        }
+
+        /// <inheritdoc />
+        public override void _Input(InputEvent @event)
+        {
+            if (TryHandleDirectionalFocusInput(@event))
+                return;
+            base._Input(@event);
+        }
+
+        private bool TryHandleDirectionalFocusInput(InputEvent @event)
+        {
+            if (!Visible || !IsInstanceValid(this))
+                return false;
+            if (!ActiveScreenContext.Instance.IsCurrent(this))
+                return false;
+
+            int delta;
+            if (@event.IsActionPressed("ui_up"))
+                delta = -1;
+            else if (@event.IsActionPressed("ui_down"))
+                delta = 1;
+            else
+                return false;
+
+            var owner = GetViewport()?.GuiGetFocusOwner();
+            if (owner == null || !IsInstanceValid(owner))
+                return false;
+
+            if (owner is TextEdit || IsFocusUnderPopupOrTransientWindow(owner))
+                return false;
+
+            for (Node? n = owner; n != null && !ReferenceEquals(n, this); n = n.GetParent())
+                if (n is IModSettingsDirectionalInputClaimant { ClaimsDirectionalInput: true })
+                    return false;
+
+            Control paneRoot;
+            ScrollContainer paneScroll;
+            if (_contentPanelRoot.IsAncestorOf(owner))
+            {
+                paneRoot = _contentPanelRoot;
+                paneScroll = _scrollContainer;
+            }
+            else if (_sidebarPanelRoot.IsAncestorOf(owner))
+            {
+                paneRoot = _sidebarPanelRoot;
+                paneScroll = _sidebarScrollContainer;
+            }
+            else
+            {
+                return false;
+            }
+
+            var focusables = new List<Control>();
+            CollectSettingsFocusChainPreorder(paneRoot, focusables);
+            if (focusables.Count == 0)
+                return false;
+
+            var currentIndex = focusables.IndexOf(owner);
+            if (currentIndex < 0)
+                currentIndex = ResolveNearestFocusIndex(focusables, owner);
+            if (currentIndex < 0)
+                return false;
+
+            var nextIndex = currentIndex + delta;
+            if (nextIndex >= 0 && nextIndex < focusables.Count)
+            {
+                var target = focusables[nextIndex];
+                target.GrabFocus();
+                if (!IsInstanceValid(paneScroll))
+                {
+                    GetViewport()?.SetInputAsHandled();
+                    return true;
+                }
+
+                if (ReferenceEquals(paneScroll, _scrollContainer))
+                    Callable.From(() => paneScroll.EnsureControlVisible(target)).CallDeferred();
+                else
+                    paneScroll.EnsureControlVisible(target);
+            }
+
+            GetViewport()?.SetInputAsHandled();
+            return true;
+        }
+
+        private static int ResolveNearestFocusIndex(IReadOnlyList<Control> focusables, Control owner)
+        {
+            for (var i = 0; i < focusables.Count; i++)
+            {
+                var candidate = focusables[i];
+                if (candidate == owner || candidate.IsAncestorOf(owner) || owner.IsAncestorOf(candidate))
+                    return i;
+            }
+
+            return -1;
         }
 
         private static void CollectSettingsFocusChainPreorder(Control parent, List<Control> controls)
@@ -2480,6 +2605,7 @@ namespace STS2RitsuLib.Settings
         private void OnLocaleChanged()
         {
             FlushDirtyBindings();
+            ModSettingsRegistry.InvalidateOrderingCache();
             _sidebarStructureDirty = true;
             _contentStructureDirty = true;
             _selectionDirty = true;
@@ -2610,6 +2736,7 @@ namespace STS2RitsuLib.Settings
             builder.Append(page.Id).Append('|')
                 .Append(page.ModId).Append('|')
                 .Append(page.ParentPageId ?? string.Empty).Append('|')
+                .Append(page.SidebarVisibleOnlyWhenActive ? '1' : '0').Append('|')
                 .Append(page.Sections.Count);
 
             foreach (var section in page.Sections)

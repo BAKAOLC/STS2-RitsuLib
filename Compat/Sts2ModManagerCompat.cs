@@ -82,6 +82,15 @@ namespace STS2RitsuLib.Compat
                 .ToArray();
         }
 
+        internal static IReadOnlyList<Sts2ModInventoryEntry> BuildLoadedModInventoryEntries()
+        {
+            return EnumerateLoadedModsWithAssembly()
+                .Select(TryBuildModInventoryEntry)
+                .Where(entry => entry != null)
+                .Select(entry => entry!)
+                .ToArray();
+        }
+
         private static Sts2ModInventoryEntry? TryBuildModInventoryEntry(Mod mod)
         {
             try

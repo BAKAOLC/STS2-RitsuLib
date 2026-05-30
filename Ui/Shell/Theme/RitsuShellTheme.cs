@@ -1,3 +1,4 @@
+using System.Collections.Concurrent;
 using System.Text.Json;
 using Godot;
 
@@ -14,6 +15,19 @@ namespace STS2RitsuLib.Ui.Shell.Theme
     public sealed class RitsuShellTheme
     {
         private readonly Dictionary<string, JsonElement> _extensions;
+
+        /// <summary>
+        ///     Per-path leaf-resolution cache. This snapshot is immutable after construction, so resolving a
+        ///     dotted path is a pure function of <see cref="_root" /> and can be memoized. Each token read
+        ///     (number, color, dimension, …) goes through <see cref="TryFindLeaf" />; without this cache every
+        ///     read re-splits the path and walks the nested token tree, which the settings UI does thousands of
+        ///     times while building a page. A miss is cached as <see langword="null" />.
+        ///     逐路径的叶节点解析缓存。该快照在构造后不可变，因此解析点分路径是 <see cref="_root" /> 的纯函数，可被记忆化。
+        ///     每次令牌读取（数值、颜色、尺寸等）都经过 <see cref="TryFindLeaf" />；没有此缓存时，每次读取都会重新切分路径并
+        ///     遍历嵌套令牌树，而设置 UI 构建一个页面时会执行成千上万次。未命中以 <see langword="null" /> 缓存。
+        /// </summary>
+        private readonly ConcurrentDictionary<string, LeafToken?> _leafCache = new(StringComparer.Ordinal);
+
         private readonly Dictionary<string, object?> _root;
 
         internal RitsuShellTheme(string id,
@@ -257,7 +271,12 @@ namespace STS2RitsuLib.Ui.Shell.Theme
 
         private bool TryFindLeaf(string path, out LeafToken? leaf)
         {
-            return RitsuShellThemeReferenceResolver.TryFindLeaf(_root, path, out leaf);
+            if (_leafCache.TryGetValue(path, out leaf))
+                return leaf is not null;
+
+            var found = RitsuShellThemeReferenceResolver.TryFindLeaf(_root, path, out leaf);
+            _leafCache[path] = found ? leaf : null;
+            return found;
         }
     }
 }

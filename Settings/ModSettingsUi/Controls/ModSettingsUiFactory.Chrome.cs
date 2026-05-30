@@ -2,7 +2,6 @@ using Godot;
 using MegaCrit.Sts2.addons.mega_text;
 using STS2RitsuLib.Ui.Shell;
 using STS2RitsuLib.Ui.Shell.Theme;
-using Timer = Godot.Timer;
 
 namespace STS2RitsuLib.Settings
 {
@@ -22,6 +21,8 @@ namespace STS2RitsuLib.Settings
         private const string DisabledFixedTokenPath = "semantic.state.disabled.fixed";
 
         private const string DisabledStylePathMetaKey = "__ritsu_disabled_style_path";
+
+        private const double ContextMenuLongPressSeconds = 0.55;
 
         public static ModSettingsSidebarButton CreateSidebarButton(string text, Action onPressed,
             ModSettingsSidebarItemKind kind = ModSettingsSidebarItemKind.Page,
@@ -207,25 +208,7 @@ namespace STS2RitsuLib.Settings
             if (target.MouseFilter == Control.MouseFilterEnum.Ignore)
                 target.MouseFilter = Control.MouseFilterEnum.Pass;
 
-            var longPressTimer = new Timer
-            {
-                OneShot = true,
-                WaitTime = 0.55f,
-                Autostart = false,
-                ProcessCallback = Timer.TimerProcessCallback.Idle,
-            };
-            target.AddChild(longPressTimer);
-            var pendingTouchPosition = Vector2.Zero;
-            longPressTimer.Timeout += () =>
-            {
-                if (!CanOpenContextMenu(target, button))
-                {
-                    button.ForceCloseDropdown();
-                    return;
-                }
-
-                button.OpenAt(pendingTouchPosition);
-            };
+            object? activeLongPressToken;
 
             target.GuiInput += @event =>
             {
@@ -238,22 +221,40 @@ namespace STS2RitsuLib.Settings
                             if (!CanOpenContextMenu(target, button))
                             {
                                 button.ForceCloseDropdown();
-                                longPressTimer.Stop();
+                                activeLongPressToken = null;
                                 return;
                             }
 
-                            pendingTouchPosition = target.GetGlobalTransformWithCanvas().Origin + touch.Position;
-                            longPressTimer.Start();
+                            var pendingTouchPosition =
+                                target.GetGlobalTransformWithCanvas().Origin + touch.Position;
+                            var token = new object();
+                            activeLongPressToken = token;
+                            var tree = target.GetTree();
+                            var timer = tree?.CreateTimer(ContextMenuLongPressSeconds);
+                            if (timer != null)
+                                timer.Timeout += () =>
+                                {
+                                    if (!ReferenceEquals(activeLongPressToken, token))
+                                        return;
+                                    activeLongPressToken = null;
+                                    if (!CanOpenContextMenu(target, button))
+                                    {
+                                        button.ForceCloseDropdown();
+                                        return;
+                                    }
+
+                                    button.OpenAt(pendingTouchPosition);
+                                };
                         }
                         else
                         {
-                            longPressTimer.Stop();
+                            activeLongPressToken = null;
                         }
 
                         return;
                     }
                     case InputEventScreenDrag:
-                        longPressTimer.Stop();
+                        activeLongPressToken = null;
                         return;
                 }
 

@@ -4,6 +4,7 @@ using HarmonyLib;
 using MegaCrit.Sts2.addons.mega_text;
 using MegaCrit.Sts2.Core.Assets;
 using MegaCrit.Sts2.Core.Entities.Cards;
+using MegaCrit.Sts2.Core.Entities.Creatures;
 using MegaCrit.Sts2.Core.Helpers;
 using MegaCrit.Sts2.Core.HoverTips;
 using MegaCrit.Sts2.Core.Localization.DynamicVars;
@@ -75,7 +76,8 @@ namespace STS2RitsuLib.Content.Patches
         {
             var existing = layout.GetNodeOrNull<NHoverTipSet>(EventBadgeNodeName);
             var existingHotZone = layout.GetNodeOrNull<Control>(EventDrawerHotZoneName);
-            if (!RitsuLibSettingsStore.IsModSourceHoverTipsEnabled())
+            if (!RitsuLibSettingsStore.IsModSourceHoverTipsEnabled() ||
+                !RitsuLibSettingsStore.ShouldShowEventModSourceHoverTips())
             {
                 RemoveBadge(layout, existing);
                 RemoveBadge(layout, existingHotZone);
@@ -261,7 +263,8 @@ namespace STS2RitsuLib.Content.Patches
         public static void Postfix(CardKeyword keyword, ref IHoverTip __result)
             // ReSharper restore once InconsistentNaming
         {
-            if (!RitsuLibSettingsStore.IsModSourceHoverTipsEnabled())
+            if (!RitsuLibSettingsStore.IsModSourceHoverTipsEnabled() ||
+                !RitsuLibSettingsStore.ShouldShowKeywordModSourceHoverTips())
                 return;
 
             var info = ContentSourceHoverTipFactory.ResolveKeyword(keyword);
@@ -292,7 +295,8 @@ namespace STS2RitsuLib.Content.Patches
         public static void Postfix(ref IHoverTip __result)
             // ReSharper restore once InconsistentNaming
         {
-            if (!RitsuLibSettingsStore.IsModSourceHoverTipsEnabled())
+            if (!RitsuLibSettingsStore.IsModSourceHoverTipsEnabled() ||
+                !RitsuLibSettingsStore.ShouldShowGameTermModSourceHoverTips())
                 return;
 
             var info = ContentSourceHoverTipFactory.ContentSourceInfo.Vanilla;
@@ -323,7 +327,8 @@ namespace STS2RitsuLib.Content.Patches
         public static void Postfix(ref IHoverTip __result)
             // ReSharper restore once InconsistentNaming
         {
-            if (!RitsuLibSettingsStore.IsModSourceHoverTipsEnabled())
+            if (!RitsuLibSettingsStore.IsModSourceHoverTipsEnabled() ||
+                !RitsuLibSettingsStore.ShouldShowGameTermModSourceHoverTips())
                 return;
 
             var info = ContentSourceHoverTipFactory.ContentSourceInfo.Vanilla;
@@ -369,18 +374,7 @@ namespace STS2RitsuLib.Content.Patches
             if (!RitsuLibSettingsStore.IsModSourceHoverTipsEnabled())
                 return;
 
-            if (__instance is IContentSourceSupplier supplier)
-            {
-                var source = ContentSourceHoverTipFactory.Resolve(supplier);
-                if (!ContentSourceHoverTipFactory.ShouldShow(source))
-                    return;
-
-                ContentSourceHoverTipPatchHelper.Append(source, ref __result);
-                return;
-            }
-
-            var info = ContentSourceHoverTipFactory.Resolve(__instance.GetType());
-            if (!ContentSourceHoverTipFactory.ShouldShow(info))
+            if (!ContentSourceHoverTipFactory.TryResolve(__instance, out var info))
                 return;
 
             ContentSourceHoverTipPatchHelper.Append(info, ref __result);
@@ -521,7 +515,8 @@ namespace STS2RitsuLib.Content.Patches
         public static void Prefix(Control owner, ref IEnumerable<IHoverTip> hoverTips)
             // ReSharper restore once InconsistentNaming
         {
-            if (!RitsuLibSettingsStore.IsModSourceHoverTipsEnabled())
+            if (!RitsuLibSettingsStore.IsModSourceHoverTipsEnabled() ||
+                !RitsuLibSettingsStore.ShouldShowCreatureModSourceHoverTips())
                 return;
 
             switch (owner)
@@ -541,6 +536,31 @@ namespace STS2RitsuLib.Content.Patches
                 AppendModelSourceTipIfModelTipMissing(relic, ref hoverTips);
 
             AppendCardHoverTipSources(ref hoverTips);
+        }
+    }
+
+    internal sealed class ContentSourceCreatureHoverTipsPatch : IPatchMethod
+    {
+        public static string PatchId => "content_source_creature_hover_tips";
+
+        public static string Description =>
+            "Add content source hover tip to enemy creature hover tips in combat when enabled";
+
+        public static bool IsCritical => false;
+
+        public static ModPatchTarget[] GetTargets()
+        {
+            return [new(typeof(Creature), "HoverTips", MethodType.Getter)];
+        }
+
+        // ReSharper disable InconsistentNaming
+        public static void Postfix(Creature __instance, ref IEnumerable<IHoverTip> __result)
+            // ReSharper restore InconsistentNaming
+        {
+            if (!__instance.IsMonster)
+                return;
+
+            ContentSourceHoverTipPatchHelper.Append(__instance.Monster!, ref __result);
         }
     }
 

@@ -26,6 +26,7 @@ namespace STS2RitsuLib.Settings
                 Const.ModId,
                 page => page
                     .AsChildOf(Const.ModId)
+                    .WithSidebarVisibleOnlyWhenActive()
                     .WithTitle(T("ritsulib.showcase.title", "Control Preview"))
                     .WithDescription(T("ritsulib.showcase.description",
                         "Demonstrates supported controls and dynamic descriptions without persisting values."))

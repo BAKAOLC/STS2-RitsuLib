@@ -32,7 +32,7 @@ namespace STS2RitsuLib.Settings
             var chosen = false;
             Action? viewportSizedHandler = null;
 
-            CanvasLayer? canvasLayer = new()
+            CanvasLayer canvasLayer = new()
             {
                 Layer = ModalCanvasLayer,
                 Name = "RitsuModSettingsModCloudScopeModal",

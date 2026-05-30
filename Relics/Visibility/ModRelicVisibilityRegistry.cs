@@ -92,6 +92,8 @@ namespace STS2RitsuLib.Relics.Visibility
             private bool _disposed;
 
             public string ModId { get; } = modId;
+
+            // ReSharper disable once MemberHidesStaticFromOuterClass
             public Func<RelicModel, bool> IsVisible { get; } = isVisible;
 
             public void Dispose()

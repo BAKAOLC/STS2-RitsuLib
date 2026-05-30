@@ -463,13 +463,11 @@ namespace STS2RitsuLib.Keywords
         {
             ArgumentException.ThrowIfNullOrWhiteSpace(idOrEnumName);
 
-            if (TryGet(idOrEnumName, out var definition))
-            {
-                value = definition.CardKeywordValue;
-                return true;
-            }
-
-            return Enum.TryParse(idOrEnumName.Trim(), true, out value) || TryGetCardKeyword(idOrEnumName, out value);
+            if (!TryGet(idOrEnumName, out var definition))
+                return Enum.TryParse(idOrEnumName.Trim(), true, out value) ||
+                       TryGetCardKeyword(idOrEnumName, out value);
+            value = definition.CardKeywordValue;
+            return true;
         }
 
         /// <summary>

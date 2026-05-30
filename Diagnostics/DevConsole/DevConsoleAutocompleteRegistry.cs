@@ -105,7 +105,7 @@ namespace STS2RitsuLib.Diagnostics.DevConsole
             if (!binding.CommandName.Equals(context.CommandName, StringComparison.OrdinalIgnoreCase))
                 return false;
 
-            if (binding.ArgumentIndex is int index && index != context.ArgumentIndex)
+            if (binding.ArgumentIndex is { } index && index != context.ArgumentIndex)
                 return false;
 
             return binding.AppliesWhen?.Invoke(context) ?? true;

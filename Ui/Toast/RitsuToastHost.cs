@@ -132,7 +132,7 @@ namespace STS2RitsuLib.Ui.Toast
             var item = FindLiveToast(id);
             if (item == null)
             {
-                var closing = _closing.FirstOrDefault(item => item.Id == id);
+                var closing = _closing.FirstOrDefault(toast => toast.Id == id);
                 if (closing == null)
                     return false;
                 if (immediate)

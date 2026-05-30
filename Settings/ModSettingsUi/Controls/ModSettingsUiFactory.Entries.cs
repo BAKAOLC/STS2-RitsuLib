@@ -51,11 +51,21 @@ namespace STS2RitsuLib.Settings
         internal static IEnumerable<PageBuildItem> CreatePageBuildItems(ModSettingsUiContext context,
             ModSettingsPage page)
         {
+            var sectionVisible = new Func<bool>[page.Sections.Count];
+            for (var index = 0; index < page.Sections.Count; index++)
+                sectionVisible[index] = BuildSectionVisiblePredicate(page.Sections[index]);
+
             for (var index = 0; index < page.Sections.Count; index++)
             {
                 var section = page.Sections[index];
                 if (index > 0)
-                    yield return new(CreateDivider(), false);
+                {
+                    var dividerIndex = index;
+                    yield return new(
+                        MaybeWrapDynamicVisibility(context, CreateDivider(),
+                            () => sectionVisible[dividerIndex]() && AnyVisibleBefore(sectionVisible, dividerIndex)),
+                        false);
+                }
 
                 Control builtSection;
                 try
@@ -75,6 +85,27 @@ namespace STS2RitsuLib.Settings
 
                 yield return new(builtSection, true);
             }
+        }
+
+        /// <summary>
+        ///     Builds the same combined visibility predicate <see cref="CreateSection" /> applies to a section
+        ///     (its <see cref="ModSettingsSection.VisibleWhen" /> plus its host-surface restriction), so a leading
+        ///     divider can be kept in sync with the section it precedes.
+        ///     构建与 <see cref="CreateSection" /> 应用于 section 的相同组合可见性谓词（其
+        ///     <see cref="ModSettingsSection.VisibleWhen" /> 加上 host-surface 限制），以便前导分割线与其后的 section 保持同步。
+        /// </summary>
+        private static Func<bool> BuildSectionVisiblePredicate(ModSettingsSection section)
+        {
+            return ModSettingsHostSurfaceResolver.CombineVisibility(section.VisibleWhen,
+                () => ModSettingsHostSurfaceResolver.IsVisibleOnCurrentHost(section.VisibleOnHostSurfaces));
+        }
+
+        private static bool AnyVisibleBefore(IReadOnlyList<Func<bool>> sectionVisible, int index)
+        {
+            for (var i = 0; i < index; i++)
+                if (sectionVisible[i]())
+                    return true;
+            return false;
         }
 
         public static Control CreateToggleEntry(ModSettingsUiContext context, ToggleModSettingsEntryDefinition entry)

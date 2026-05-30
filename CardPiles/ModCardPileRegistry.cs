@@ -290,13 +290,10 @@ namespace STS2RitsuLib.CardPiles
         {
             ArgumentException.ThrowIfNullOrWhiteSpace(idOrEnumName);
 
-            if (TryGet(idOrEnumName, out var definition))
-            {
-                value = definition.PileType;
-                return true;
-            }
-
-            return Enum.TryParse(idOrEnumName.Trim(), true, out value) || TryGetPileType(idOrEnumName, out value);
+            if (!TryGet(idOrEnumName, out var definition))
+                return Enum.TryParse(idOrEnumName.Trim(), true, out value) || TryGetPileType(idOrEnumName, out value);
+            value = definition.PileType;
+            return true;
         }
 
         /// <summary>

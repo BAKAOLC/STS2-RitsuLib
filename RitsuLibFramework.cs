@@ -314,6 +314,7 @@ namespace STS2RitsuLib
                 }
 
                 Logger = CreateLogger(Const.ModId);
+                StartupModListLogger.Initialize();
 
                 Logger.Info($"Framework ID: {Const.ModId}");
                 Logger.Info($"Framework Name: {Const.Name}");
@@ -387,12 +388,10 @@ namespace STS2RitsuLib
             }
         }
 
-        private static string BuildVersionLogText()
+        internal static string BuildVersionLogText()
         {
             var compatBranchLabel = GetCompatBranchLabel();
-            return string.IsNullOrWhiteSpace(compatBranchLabel)
-                ? $"Version: {Const.Version}"
-                : $"Version: {Const.Version} [compat branch: {compatBranchLabel}]";
+            return $"Version: {Const.Version} [compat branch: {compatBranchLabel}]";
         }
 
         private static void EnsureFrameworkInteropBootstrapRegistered()
@@ -413,14 +412,16 @@ namespace STS2RitsuLib
             MaxHandSizePatchInstaller.EnsurePatched();
         }
 
-        private static string? GetCompatBranchLabel()
+        private static string GetCompatBranchLabel()
         {
-#if !STS2_AT_LEAST_0_104_0
+#if STS2_AT_LEAST_0_106_1
+            return "0.106.1";
+#elif STS2_AT_LEAST_0_105_1
+            return "0.105.1";
+#elif STS2_AT_LEAST_0_103_2
             return "0.103.2";
-#elif !STS2_AT_LEAST_0_105_0
-            return "0.104.0";
 #else
-            return null;
+            return "unknown";
 #endif
         }
 

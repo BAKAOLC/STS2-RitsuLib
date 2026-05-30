@@ -119,6 +119,8 @@ namespace STS2RitsuLib.Settings.Patches
     {
         private const string GeneralSettingsResizeHookMeta = "ritsulib_general_settings_content_resize_hook";
 
+        private const string PrewarmScheduledMeta = "ritsulib_mod_settings_prewarm_scheduled";
+
         private const string EntryLineNodeName = "RitsuLibModSettings";
 
         private const string EntryDividerNodeName = "RitsuLibModSettingsDivider";
@@ -165,6 +167,59 @@ namespace STS2RitsuLib.Settings.Patches
             {
                 RitsuLibFramework.Logger.Warn($"[Settings] Failed to add mod settings entry point: {ex.Message}");
             }
+
+            TrySchedulePrewarm(__instance);
+        }
+
+        /// <summary>
+        ///     Pre-warms the mod settings UI while the user is still on the vanilla settings screen — before they
+        ///     click "Mod Settings (RitsuLib)". The first open otherwise runs a concentrated one-time
+        ///     initialization (reflection-based mirror registration, sidebar build, first page build) all at once,
+        ///     producing a visible stall. The work is spread across idle frames so the vanilla screen does not
+        ///     stall either, and is scheduled once per screen instance.
+        ///     在用户仍处于原版设置界面时(即点击 “Mod Settings (RitsuLib)” 之前)预热 mod 设置 UI。否则首次打开会一次性执行
+        ///     集中的一次性初始化(基于反射的镜像注册、侧边栏构建、首页构建),造成可见卡顿。该工作被分散到多个空闲帧,使原版界面
+        ///     也不卡,并对每个界面实例只调度一次。
+        /// </summary>
+        private static void TrySchedulePrewarm(NSettingsScreen screen)
+        {
+            if (screen.HasMeta(PrewarmScheduledMeta))
+                return;
+            screen.SetMeta(PrewarmScheduledMeta, true);
+            Callable.From(() => PrewarmStep(screen, 0)).CallDeferred();
+        }
+
+        private static void PrewarmStep(NSettingsScreen screen, int step)
+        {
+            if (!GodotObject.IsInstanceValid(screen))
+                return;
+
+            try
+            {
+                switch (step)
+                {
+                    case 0:
+                        RitsuLibModSettingsBootstrap.EnsureFrameworkPagesRegistered();
+                        break;
+                    case 1:
+                        ModSettingsMirrorRegistrarBootstrap.TryRegisterMirroredPages();
+                        RitsuLibModSettingsBootstrap.RefreshDynamicPages();
+                        break;
+                    case 2:
+                    {
+                        var stack = screen.GetAncestorOfType<NSubmenuStack>();
+                        if (stack != null)
+                            ModSettingsSubmenuPatch.Submenus.GetValue(stack, ModSettingsSubmenuPatch.CreateSubmenu);
+                        return;
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                RitsuLibFramework.Logger.Warn($"[Settings] Mod settings prewarm step {step} failed: {ex.Message}");
+            }
+
+            Callable.From(() => PrewarmStep(screen, step + 1)).CallDeferred();
         }
 
         private static MarginContainer EnsureEntryPoint(NSettingsScreen screen)

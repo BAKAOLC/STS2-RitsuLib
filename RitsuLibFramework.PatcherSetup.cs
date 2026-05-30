@@ -310,6 +310,7 @@ namespace STS2RitsuLib
             patcher.RegisterPatch<ContentSourceModelHoverTipPatch>();
             patcher.RegisterPatch<ContentSourcePowerHoverTipsPatch>();
             patcher.RegisterPatch<ContentSourceNHoverTipSetShowPatch>();
+            patcher.RegisterPatch<ContentSourceCreatureHoverTipsPatch>();
             patcher.RegisterPatch<ContentSourceEventLayoutBadgePatch>();
             patcher.RegisterPatch<ModKeywordCardDescriptionPatches>();
             patcher.RegisterPatch<EnergyIconHelperPathPatch>();
@@ -426,6 +427,8 @@ namespace STS2RitsuLib
             patcher.RegisterPatch<CharacterGameOverScreenCompatibilityPatch>();
             patcher.RegisterPatch<CharacterVanillaSelectionPolicyPatches>();
             patcher.RegisterPatch<CharacterVanillaSelectionPolicyAllCharactersPatch>();
+            patcher.RegisterPatch<CharacterSelectButtonScrollPatch>();
+            patcher.RegisterPatch<CustomRunCharacterSelectButtonScrollPatch>();
             patcher.RegisterPatch<ModCreatureCombatAnimationPlaybackPatch>();
             patcher.RegisterPatch<NCreatureCombatAnimationInitialBootstrapPatch>();
             patcher.RegisterPatch<NCreatureNonSpineDeathAnimationTriggerPatch>();

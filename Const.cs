@@ -22,7 +22,7 @@ namespace STS2RitsuLib
         ///     Assembly / manifest version string.
         ///     程序集/清单版本字符串。
         /// </summary>
-        public const string Version = "0.3.6";
+        public const string Version = "0.3.7";
 
         /// <summary>
         ///     Root key for RitsuLib JSON settings under the mod’s user folder.
