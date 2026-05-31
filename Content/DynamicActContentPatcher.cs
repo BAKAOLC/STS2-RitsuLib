@@ -35,6 +35,9 @@ namespace STS2RitsuLib.Content
                     DynamicPatchBuilder.FromMethod(typeof(DynamicActContentPatcher), nameof(AllAncientsPostfix));
                 var encountersPostfix =
                     DynamicPatchBuilder.FromMethod(typeof(DynamicActContentPatcher), nameof(AllEncountersPostfix));
+                var bossDiscoveryOrderPostfix = DynamicPatchBuilder.FromMethod(
+                    typeof(DynamicActContentPatcher),
+                    nameof(BossDiscoveryOrderPostfix));
                 var unlockedAncientsPostfix = DynamicPatchBuilder.FromMethod(
                     typeof(DynamicActContentPatcher),
                     nameof(GetUnlockedAncientsPostfix));
@@ -43,6 +46,12 @@ namespace STS2RitsuLib.Content
                 {
                     TryAddPropertyGetterPatch(builder, actType, nameof(ActModel.AllEvents), eventsPostfix, logger);
                     TryAddPropertyGetterPatch(builder, actType, nameof(ActModel.AllAncients), ancientsPostfix, logger);
+                    TryAddPropertyGetterPatch(
+                        builder,
+                        actType,
+                        nameof(ActModel.BossDiscoveryOrder),
+                        bossDiscoveryOrderPostfix,
+                        logger);
                     TryAddMethodPatch(
                         builder,
                         actType,
@@ -133,8 +142,17 @@ namespace STS2RitsuLib.Content
         private static void AllEncountersPostfix(ActModel __instance, ref IEnumerable<EncounterModel> __result)
             // ReSharper restore InconsistentNaming
         {
-            __result = ModContentRegistry.AppendGlobalEncounters(
-                ModContentRegistry.AppendActEncounters(__instance, __result));
+            __result = ModEncounterActValidityFilter.FilterForAct(
+                __instance,
+                ModContentRegistry.AppendGlobalEncounters(
+                    ModContentRegistry.AppendActEncounters(__instance, __result)));
+        }
+
+        // ReSharper disable InconsistentNaming
+        private static void BossDiscoveryOrderPostfix(ActModel __instance, ref IEnumerable<EncounterModel> __result)
+            // ReSharper restore InconsistentNaming
+        {
+            __result = ModEncounterActValidityFilter.FilterForAct(__instance, __result);
         }
 
         // ReSharper disable InconsistentNaming
