@@ -25,6 +25,7 @@ namespace STS2RitsuLib.Settings
                 var ui = RitsuLibModSettingsUiBindings.Create();
                 RegisterMainSettingsPage(ui);
                 RegisterContentSourceHoverTipsPage(ui);
+                RegisterContentModLoadOrderPage();
                 RegisterHarmonySelfCheckAndCompendiumPages(ui);
                 RegisterImagePngExportPage(ui);
                 RefreshDynamicPages();
@@ -46,6 +47,7 @@ namespace STS2RitsuLib.Settings
                 var ui = RitsuLibModSettingsUiBindings.Create();
                 RegisterMainSettingsPage(ui);
                 RegisterContentSourceHoverTipsPage(ui);
+                RegisterContentModLoadOrderPage();
                 RegisterHarmonySelfCheckAndCompendiumPages(ui);
                 RegisterImagePngExportPage(ui);
                 RefreshDynamicPages();

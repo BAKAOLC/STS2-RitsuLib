@@ -26,6 +26,13 @@ namespace STS2RitsuLib.Settings
                         T("button.open", "Open"),
                         T("ritsulib.modSourceHoverTips.pageLink.description",
                             "Choose which content groups show source hover tips."))
+                    .AddSubpage(
+                        "content_mod_load_order_open",
+                        T("ritsulib.contentModLoadOrder.pageLink.label", "Content mod load order"),
+                        "content-mod-load-order",
+                        T("button.open", "Open"),
+                        T("ritsulib.contentModLoadOrder.pageLink.description",
+                            "Sort, copy, or apply the saved load order for content-affecting mods and their dependencies."))
                     .AddChoice(
                         "ui_shell_theme_id",
                         T("ritsulib.uiShellTheme.label", "Interface theme"),

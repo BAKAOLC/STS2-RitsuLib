@@ -250,7 +250,7 @@ namespace STS2RitsuLib.Settings
             internal void ReleaseForPool()
             {
                 ReuseVersion++;
-                ReleaseFocus();
+                this.ReleaseFocusIfInsideTree();
                 Visible = false;
                 ProcessMode = ProcessModeEnum.Inherit;
                 Modulate = Colors.White;

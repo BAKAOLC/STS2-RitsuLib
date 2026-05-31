@@ -90,7 +90,7 @@ namespace STS2RitsuLib.Settings
         internal void ClearBinding()
         {
             _onChanged = null;
-            ReleaseFocus();
+            this.ReleaseFocusIfInsideTree();
             Disabled = false;
             ProcessMode = ProcessModeEnum.Inherit;
             Modulate = Colors.White;
@@ -358,7 +358,7 @@ namespace STS2RitsuLib.Settings
 
             RefreshValueLabel(_slider.Value);
             _slider.ValueChanged += OnSliderValueChanged;
-            _slider.DragEnded += _ => _slider.ReleaseFocus();
+            _slider.DragEnded += _ => _slider.ReleaseFocusIfInsideTree();
             if (_valueEdit == null) return;
             _valueEdit.TextSubmitted += OnValueSubmitted;
             _valueEdit.FocusExited += OnValueFocusExited;
@@ -455,7 +455,7 @@ namespace STS2RitsuLib.Settings
         private void OnValueSubmitted(string text)
         {
             TryApplyTypedValue(text);
-            _valueEdit?.ReleaseFocus();
+            _valueEdit.ReleaseFocusIfInsideTree();
         }
 
         private void OnValueFocusExited()
@@ -686,7 +686,7 @@ namespace STS2RitsuLib.Settings
 
             RefreshValueLabel((float)_slider.Value);
             _slider.ValueChanged += OnSliderValueChanged;
-            _slider.DragEnded += _ => _slider.ReleaseFocus();
+            _slider.DragEnded += _ => _slider.ReleaseFocusIfInsideTree();
             if (_valueEdit == null) return;
             _valueEdit.TextSubmitted += OnValueSubmitted;
             _valueEdit.FocusExited += OnValueFocusExited;
@@ -793,7 +793,7 @@ namespace STS2RitsuLib.Settings
         private void OnValueSubmitted(string text)
         {
             TryApplyTypedValue(text);
-            _valueEdit?.ReleaseFocus();
+            _valueEdit.ReleaseFocusIfInsideTree();
         }
 
         private void OnValueFocusExited()
@@ -2344,7 +2344,7 @@ namespace STS2RitsuLib.Settings
                 _hexEdit.TextSubmitted += text =>
                 {
                     ApplyFromHex(text, true);
-                    _hexEdit.ReleaseFocus();
+                    _hexEdit.ReleaseFocusIfInsideTree();
                 };
                 _hexEdit.FocusExited += () => ApplyFromHex(_hexEdit.Text, true);
                 ModSettingsFocusChrome.AttachControllerSelectionReticle(_hexEdit);
@@ -2451,7 +2451,7 @@ namespace STS2RitsuLib.Settings
         private void OnPickerPopupClosed()
         {
             _pickerChangedWhileOpen = false;
-            _pickerButton?.ReleaseFocus();
+            _pickerButton.ReleaseFocusIfInsideTree();
         }
 
         private static bool TryParseHexColorString(string text, out Color color)
@@ -5825,7 +5825,7 @@ namespace STS2RitsuLib.Settings
         {
             _action = null;
             _selected = false;
-            ReleaseFocus();
+            this.ReleaseFocusIfInsideTree();
             Disabled = false;
             ProcessMode = ProcessModeEnum.Inherit;
             Modulate = Colors.White;

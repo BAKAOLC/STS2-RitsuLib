@@ -217,7 +217,7 @@ namespace STS2RitsuLib.Settings
         {
             base.OnRelease();
             _action?.Invoke();
-            ReleaseFocus();
+            this.ReleaseFocusIfInsideTree();
         }
     }
 }
