@@ -741,6 +741,86 @@ namespace STS2RitsuLib.Settings
             EnsureUiUpToDate(false, pageChanged);
         }
 
+        internal async Task<ModSettingsOpenResult> OpenToAsync(ModSettingsLocation location,
+            ModSettingsOpenOptions options)
+        {
+            if (!IsInstanceValid(this))
+                return ModSettingsOpenResult.Error("ui-not-available", "The mod settings UI is not available.",
+                    location);
+
+            var resolved = ModSettingsNavigator.ResolveLocation(location);
+            if (!resolved.Success)
+                return resolved;
+
+            var target = new ModSettingsLocation(resolved.ModId, resolved.PageId, resolved.SectionId,
+                resolved.EntryId);
+            SelectMod(target.ModId, target.PageId);
+            await WaitForInitialUiReadyAsync();
+            if (!IsInstanceValid(this))
+                return ModSettingsOpenResult.Error("ui-not-available", "The mod settings UI was closed.", target);
+
+            await WaitForSelectedPageContentReadyAsync();
+            if (!IsInstanceValid(this))
+                return ModSettingsOpenResult.Error("ui-not-available", "The mod settings UI was closed.", target);
+
+            Control? scrollTarget = null;
+            if (!string.IsNullOrWhiteSpace(target.SectionId))
+            {
+                _selectedSectionId = target.SectionId;
+                RefreshSelectionState();
+                if (!TryFindSectionAnchorOnSelectedPage(target.SectionId, out var sectionAnchor))
+                    return ModSettingsOpenResult.Error("section-not-found",
+                        $"Settings section '{target.SectionId}' was not found after the page loaded.", target);
+
+                if (options.ExpandCollapsedSection)
+                    ExpandSectionAnchor(sectionAnchor);
+                scrollTarget = sectionAnchor;
+            }
+
+            if (!string.IsNullOrWhiteSpace(target.EntryId))
+            {
+                if (string.IsNullOrWhiteSpace(target.SectionId))
+                    return ModSettingsOpenResult.Error("section-not-found",
+                        "A resolved section id is required before opening an entry.", target);
+
+                await this.AwaitRitsuProcessFrame(CancellationToken.None);
+                if (!TryFindEntryAnchorOnSelectedPage(target.SectionId, target.EntryId, out var entryAnchor))
+                    return ModSettingsOpenResult.Error("entry-not-found",
+                        $"Settings entry '{target.EntryId}' was not found after the page loaded.", target);
+                if (!entryAnchor.IsVisibleInTree())
+                    return ModSettingsOpenResult.Error("entry-hidden",
+                        $"Settings entry '{target.EntryId}' is currently hidden.", target);
+                scrollTarget = entryAnchor;
+            }
+
+            if (scrollTarget != null)
+            {
+                AlignScrollToAnchor(scrollTarget);
+                if (options.Focus)
+                    FocusTarget(scrollTarget);
+                if (options.Highlight)
+                    PulseTarget(scrollTarget);
+            }
+            else
+            {
+                _scrollContainer.ScrollVertical = 0;
+            }
+
+            return ModSettingsOpenResult.Ok("opened",
+                $"Opened settings location '{ModSettingsNavigator.FormatLocation(target)}'.",
+                target);
+        }
+
+        internal void RegisterEntryAnchor(ModSettingsPage page, ModSettingsSection section,
+            ModSettingsEntryDefinition entry, Control control)
+        {
+            var pageKey = CreatePageCacheKey(page.ModId, page.Id);
+            if (!_pageContentCaches.TryGetValue(pageKey, out var cache))
+                return;
+
+            cache.EntryAnchors[CreateEntryCacheKey(page.ModId, page.Id, section.Id, entry.Id)] = control;
+        }
+
         private Control CreatePaneHotkeyHintRow()
         {
             var row = new HBoxContainer
@@ -1312,6 +1392,20 @@ namespace STS2RitsuLib.Settings
                 return;
 
             await StartBuildPageAsync(page, cache, false, true);
+        }
+
+        private async Task WaitForSelectedPageContentReadyAsync()
+        {
+            EnsureSelectedPageContentStructure();
+            RefreshVisibleContent(true);
+            if (ResolveSelectedPage() is not { } page)
+                return;
+
+            var cache = EnsurePageContentCache(page);
+            if (cache.State is not (PageBuildState.Ready or PageBuildState.Failed))
+                await StartBuildPageAsync(page, cache, true);
+
+            await this.AwaitRitsuProcessFrame(CancellationToken.None);
         }
 
         private void RefreshPageSnapshots()
@@ -2139,6 +2233,7 @@ namespace STS2RitsuLib.Settings
             cache.State = PageBuildState.Building;
             cache.RefreshRegistrations.Clear();
             cache.VisibilityTargets.Clear();
+            cache.EntryAnchors.Clear();
             if (showOverlay)
                 ShowContentBuildOverlay(ModSettingsLocalization.Get("entry.loading", "Loading settings…"));
             if (previousCancellation != null)
@@ -2441,6 +2536,11 @@ namespace STS2RitsuLib.Settings
             return $"{modId}::{pageId}::{sectionId}";
         }
 
+        private static string CreateEntryCacheKey(string modId, string pageId, string sectionId, string entryId)
+        {
+            return $"{modId}::{pageId}::{sectionId}::{entryId}";
+        }
+
         private static string SanitizePageNodeName(string text)
         {
             return text.Replace(':', '_');
@@ -2607,6 +2707,22 @@ namespace STS2RitsuLib.Settings
             return true;
         }
 
+        private bool TryFindEntryAnchorOnSelectedPage(string sectionId, string entryId, out Control anchor)
+        {
+            anchor = null!;
+            if (string.IsNullOrWhiteSpace(_selectedModId) || string.IsNullOrWhiteSpace(_selectedPageId))
+                return false;
+            if (!TryGetSelectedPageContentCache(out var cache))
+                return false;
+
+            var key = CreateEntryCacheKey(_selectedModId, _selectedPageId, sectionId, entryId);
+            if (!cache.EntryAnchors.TryGetValue(key, out var control) || !IsInstanceValid(control))
+                return false;
+
+            anchor = control;
+            return true;
+        }
+
         private bool TryGetSelectedPageContentCache(out PageContentCache cache)
         {
             cache = null!;
@@ -2621,6 +2737,61 @@ namespace STS2RitsuLib.Settings
 
             cache = resolved;
             return true;
+        }
+
+        private static void ExpandSectionAnchor(Control anchor)
+        {
+            if (anchor is ModSettingsCollapsibleSection collapsible)
+            {
+                collapsible.Expand();
+                return;
+            }
+
+            foreach (var child in anchor.GetChildren())
+                if (child is Control control)
+                    ExpandSectionAnchor(control);
+        }
+
+        private void FocusTarget(Control target)
+        {
+            var focusTarget = FindFirstFocusable(target);
+            if (focusTarget != null)
+                GrabControlDeferred(focusTarget);
+        }
+
+        private static Control? FindFirstFocusable(Control root)
+        {
+            if (root.IsVisibleInTree() && root.FocusMode == FocusModeEnum.All)
+                return root;
+
+            foreach (var child in root.GetChildren())
+            {
+                if (child is not Control control || !control.IsVisibleInTree())
+                    continue;
+
+                var candidate = FindFirstFocusable(control);
+                if (candidate != null)
+                    return candidate;
+            }
+
+            return null;
+        }
+
+        private static void PulseTarget(Control target)
+        {
+            if (!IsInstanceValid(target))
+                return;
+
+            var original = target.Modulate;
+            var highlight = new Color(1.35f, 1.18f, 0.65f, original.A);
+            var tween = target.CreateTween();
+            tween.TweenProperty(target, "modulate", highlight, 0.22d);
+            tween.TweenInterval(0.18d);
+            tween.TweenProperty(target, "modulate", original, 0.35d);
+            tween.TweenInterval(0.12d);
+            tween.TweenProperty(target, "modulate", highlight, 0.22d);
+            tween.TweenInterval(0.18d);
+            tween.TweenProperty(target, "modulate", original, 0.45d);
         }
 
         private void RefreshFocusNavigation()
@@ -3144,6 +3315,7 @@ namespace STS2RitsuLib.Settings
             public ulong LastUsedMsec { get; set; }
             public List<ModSettingsRefreshRegistration> RefreshRegistrations { get; } = [];
             public List<(Control Control, Func<bool> Predicate)> VisibilityTargets { get; } = [];
+            public Dictionary<string, Control> EntryAnchors { get; } = new(StringComparer.OrdinalIgnoreCase);
         }
 
         private enum PageBuildState

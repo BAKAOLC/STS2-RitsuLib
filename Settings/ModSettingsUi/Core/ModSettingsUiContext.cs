@@ -108,6 +108,12 @@ namespace STS2RitsuLib.Settings
             _sectionBuildEntry = null;
         }
 
+        internal void RegisterEntryAnchor(ModSettingsPage page, ModSettingsSection section,
+            ModSettingsEntryDefinition entry, Control control)
+        {
+            submenu.RegisterEntryAnchor(page, section, entry, control);
+        }
+
         internal ModSettingsHostSurface GetSectionHostReadOnlyMask()
         {
             return ModSettingsUiHostSurfacePolicy.MergeReadOnlyMask(_sectionBuildPage, _sectionBuildSection,

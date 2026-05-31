@@ -54,8 +54,7 @@ namespace STS2RitsuLib.Settings
             IReadOnlyList<ModSettingsSection> sections,
             Func<bool>? visibleWhen = null,
             Func<bool>? enabledWhen = null,
-            ModSettingsMenuCapabilities menuCapabilities = ModSettingsMenuCapabilities.Copy |
-                                                           ModSettingsMenuCapabilities.Paste,
+            ModSettingsMenuCapabilities menuCapabilities = ModSettingsMenuCapabilities.All,
             ModSettingsHostSurface visibleOnHostSurfaces = ModSettingsHostSurface.All,
             ModSettingsHostSurface readOnlyOnHostSurfaces = ModSettingsHostSurface.None,
             bool sidebarVisibleOnlyWhenActive = false)
@@ -177,8 +176,7 @@ namespace STS2RitsuLib.Settings
             IReadOnlyList<ModSettingsEntryDefinition> entries,
             Func<bool>? visibleWhen = null,
             Func<bool>? enabledWhen = null,
-            ModSettingsMenuCapabilities menuCapabilities = ModSettingsMenuCapabilities.Copy |
-                                                           ModSettingsMenuCapabilities.Paste,
+            ModSettingsMenuCapabilities menuCapabilities = ModSettingsMenuCapabilities.All,
             ModSettingsHostSurface visibleOnHostSurfaces = ModSettingsHostSurface.All,
             ModSettingsHostSurface readOnlyOnHostSurfaces = ModSettingsHostSurface.None)
         {

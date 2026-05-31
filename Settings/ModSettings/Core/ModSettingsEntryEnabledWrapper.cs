@@ -10,6 +10,8 @@ namespace STS2RitsuLib.Settings
         public override Func<bool>? VisibilityPredicate => inner.VisibilityPredicate;
         public override Func<bool>? EnabledPredicate => EvaluateEnabled;
 
+        internal override bool CanResetToDefault => inner.CanResetToDefault;
+
         internal override Control CreateControl(ModSettingsUiContext context)
         {
             return inner.CreateControl(context);
@@ -25,6 +27,11 @@ namespace STS2RitsuLib.Settings
             IModSettingsUiActionHost host)
         {
             return inner.TryPasteChromeBindingSnapshot(snap, host);
+        }
+
+        internal override bool TryResetToDefault(IModSettingsUiActionHost host)
+        {
+            return inner.TryResetToDefault(host);
         }
 
         private bool EvaluateEnabled()

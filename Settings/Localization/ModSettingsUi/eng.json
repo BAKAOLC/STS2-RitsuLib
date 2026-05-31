@@ -430,6 +430,8 @@
   "button.actionsShort": "Actions",
   "button.actionsGlyph": "\u22ee",
   "button.resetDefault": "Reset to default",
+  "button.resetPageDefaults": "Reset page to defaults",
+  "button.resetSectionDefaults": "Reset section to defaults",
   "color.title": "Color Editor",
   "color.mode.rgb": "RGB",
   "color.mode.hsv": "HSV",
