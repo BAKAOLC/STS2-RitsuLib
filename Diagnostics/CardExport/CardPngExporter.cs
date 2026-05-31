@@ -267,7 +267,7 @@ namespace STS2RitsuLib.Diagnostics.CardExport
         {
             for (var attempt = 1; attempt <= MaxCaptureAttemptsPerFile; attempt++)
             {
-                var prefix = MaxCaptureAttemptsPerFile > 1 ? $"[{attempt}/{MaxCaptureAttemptsPerFile}] " : null;
+                var prefix = $"[{attempt}/{MaxCaptureAttemptsPerFile}] ";
                 if (await TryCaptureAsync(tree, card, absolutePath, request, scale, log, prefix, fileLabel))
                     return true;
                 if (attempt >= MaxCaptureAttemptsPerFile)

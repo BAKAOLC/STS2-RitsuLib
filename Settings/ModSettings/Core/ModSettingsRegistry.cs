@@ -30,6 +30,17 @@ namespace STS2RitsuLib.Settings
             new(StringComparer.OrdinalIgnoreCase);
 
         /// <summary>
+        ///     Cached, fully ordered <see cref="GetPages" /> result. Invalidated whenever the page set or any
+        ///     ordering input changes (see <see cref="InvalidateOrderingCache" />). Rebuilding this is expensive
+        ///     (multi-key sort + per-page localization), and the settings UI calls <see cref="GetPages" /> many
+        ///     times per refresh, so the snapshot is reused until something actually changes.
+        ///     已缓存的、完全排序的 <see cref="GetPages" /> 结果。当页面集合或任意排序输入变化时失效（见
+        ///     <see cref="InvalidateOrderingCache" />）。重建开销很大（多键排序 + 逐页本地化），而设置 UI 每次刷新
+        ///     都会多次调用 <see cref="GetPages" />，因此在真正发生变化前复用该快照。
+        /// </summary>
+        private static IReadOnlyList<ModSettingsPage>? _sortedPagesCache;
+
+        /// <summary>
         ///     True after at least one page has been registered.
         ///     至少注册一个页面后为 true。
         /// </summary>
@@ -55,6 +66,22 @@ namespace STS2RitsuLib.Settings
             lock (SyncRoot)
             {
                 PagesById[CreateCompositeId(page.ModId, page.Id)] = page;
+                _sortedPagesCache = null;
+            }
+        }
+
+        /// <summary>
+        ///     Drops the cached <see cref="GetPages" /> ordering so the next call rebuilds it. Call this when an
+        ///     external ordering input changes that the registry cannot observe itself (e.g. the active locale,
+        ///     which participates in the mod display-name tie-break).
+        ///     丢弃缓存的 <see cref="GetPages" /> 排序，使下次调用重建。当注册表自身无法观察到的外部排序输入变化时
+        ///     调用此方法（例如当前语言，它参与 mod 显示名称的同序打破）。
+        /// </summary>
+        public static void InvalidateOrderingCache()
+        {
+            lock (SyncRoot)
+            {
+                _sortedPagesCache = null;
             }
         }
 
@@ -70,6 +97,7 @@ namespace STS2RitsuLib.Settings
             lock (SyncRoot)
             {
                 ModDisplayNames[modId] = displayName;
+                _sortedPagesCache = null;
             }
         }
 
@@ -100,6 +128,7 @@ namespace STS2RitsuLib.Settings
             lock (SyncRoot)
             {
                 ModSidebarOrders[modId] = order;
+                _sortedPagesCache = null;
             }
         }
 
@@ -117,6 +146,7 @@ namespace STS2RitsuLib.Settings
             lock (SyncRoot)
             {
                 PageSortOverrides[CreateCompositeId(modId, pageId)] = sortOrder;
+                _sortedPagesCache = null;
             }
         }
 
@@ -146,6 +176,7 @@ namespace STS2RitsuLib.Settings
                 var baseOrder =
                     PageSortOverrides.GetValueOrDefault(CreateCompositeId(modId, afterPageId), after.SortOrder);
                 PageSortOverrides[CreateCompositeId(modId, pageId)] = baseOrder + gap;
+                _sortedPagesCache = null;
                 return true;
             }
         }
@@ -176,6 +207,7 @@ namespace STS2RitsuLib.Settings
                 var baseOrder = PageSortOverrides.GetValueOrDefault(CreateCompositeId(modId, beforePageId),
                     before.SortOrder);
                 PageSortOverrides[CreateCompositeId(modId, pageId)] = baseOrder - gap;
+                _sortedPagesCache = null;
                 return true;
             }
         }
@@ -246,7 +278,7 @@ namespace STS2RitsuLib.Settings
         {
             lock (SyncRoot)
             {
-                return PagesById.Values
+                return _sortedPagesCache ??= PagesById.Values
                     .OrderBy(page => ModSidebarOrders.GetValueOrDefault(page.ModId, 0))
                     .ThenBy(page => ModSettingsLocalization.ResolveModNameFallback(page.ModId, page.ModId),
                         StringComparer.OrdinalIgnoreCase)

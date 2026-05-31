@@ -141,8 +141,7 @@ namespace STS2RitsuLib.Settings
 
         private static string FormatRuntimeHotkeyBindingChip(string? id, string binding, string? displayName)
         {
-            var hotkey = FindRuntimeHotkey(id, binding, displayName);
-            return hotkey == null ? binding : binding;
+            return binding;
         }
 
         private static string FormatRuntimeHotkeyDetails(string? id, string binding, string? displayName)

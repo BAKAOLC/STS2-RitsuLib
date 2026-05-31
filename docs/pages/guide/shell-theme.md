@@ -38,6 +38,21 @@ RitsuToastService.ShowError("Required setup failed.", "My Mod");
 ```
 
 For custom placement, image, duration, or click behavior, build a `RitsuToastRequest`.
+Non-persistent toasts show a small remaining-time progress bar; persistent toasts omit it.
+
+Use `ShowTracked` when later code needs to update or close the same toast.
+
+```csharp
+var toast = RitsuToastService.ShowTracked(
+    RitsuToastRequest.Info("Loading...", "My Mod")
+        .Persistent());
+
+toast.UpdateBody("Loaded.");
+toast.ResetDuration(2.0d);
+
+// Or close it from a cancellation path:
+toast.Close();
+```
 
 :::
 
@@ -54,6 +69,21 @@ RitsuToastService.ShowError("必要初始化失败。", "My Mod");
 ```
 
 需要自定义位置、图片、持续时间或点击行为时，构建 `RitsuToastRequest`。
+非持久 toast 会显示一条剩余时间进度条；持久 toast 不显示。
+
+后续代码需要更新或关闭同一个 toast 时，使用 `ShowTracked`。
+
+```csharp
+var toast = RitsuToastService.ShowTracked(
+    RitsuToastRequest.Info("加载中...", "My Mod")
+        .Persistent());
+
+toast.UpdateBody("加载完成。");
+toast.ResetDuration(2.0d);
+
+// 或在取消路径中关闭它：
+toast.Close();
+```
 
 :::
 

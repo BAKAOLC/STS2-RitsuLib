@@ -33,6 +33,10 @@ namespace STS2RitsuLib.Settings
         private static readonly Dictionary<string, string?> RuntimeRegisteredProviderTypes =
             new(StringComparer.Ordinal);
 
+        private static List<InteropProvider>? _cachedDiscoveredProviders;
+        private static int _cachedDiscoveryAssemblyCount = -1;
+        private static readonly HashSet<string> ProcessedProviderNames = new(StringComparer.Ordinal);
+
         public static bool RegisterProviderType(string providerTypeFullName, string? assemblyName = null)
         {
             if (string.IsNullOrWhiteSpace(providerTypeFullName))
@@ -42,6 +46,8 @@ namespace STS2RitsuLib.Settings
             {
                 RuntimeRegisteredProviderTypes[providerTypeFullName.Trim()] =
                     string.IsNullOrWhiteSpace(assemblyName) ? null : assemblyName.Trim();
+                _cachedDiscoveredProviders = null;
+                _cachedDiscoveryAssemblyCount = -1;
                 return true;
             }
         }
@@ -78,88 +84,110 @@ namespace STS2RitsuLib.Settings
             lock (Gate)
             {
                 var providers = DiscoverProviders();
-                if (providers.Count == 0)
-                    return 0;
-
-                var added = 0;
-                foreach (var provider in providers)
-                    try
-                    {
-                        if (!TryReadSchema(provider, out var schema))
-                            continue;
-
-                        if (!TryRegisterFromSchema(provider, schema))
-                            continue;
-
-                        added++;
-                    }
-                    catch (Exception ex)
-                    {
-                        RitsuLibFramework.Logger.Warn(
-                            $"[RuntimeInteropMirrorSource] Provider '{provider.ProviderType.FullName}' failed but was isolated: {ex.Message}");
-                    }
-
-                return added;
+                return providers.Count == 0 ? 0 : providers.Sum(TryRegisterProvider);
             }
         }
 
         private static List<InteropProvider> DiscoverProviders()
         {
+            var assemblies = AppDomain.CurrentDomain.GetAssemblies();
+            if (_cachedDiscoveredProviders != null && _cachedDiscoveryAssemblyCount == assemblies.Length)
+                return [.. _cachedDiscoveredProviders];
+
             var providers = new List<InteropProvider>();
             var seen = new HashSet<string>(StringComparer.Ordinal);
-            foreach (var asm in AppDomain.CurrentDomain.GetAssemblies())
-            {
-                var typeNames = ReadProviderTypeNames(asm);
-                if (typeNames.Count == 0)
-                    continue;
-
-                foreach (var typeName in typeNames)
-                {
-                    if (string.IsNullOrWhiteSpace(typeName))
-                        continue;
-
-                    var providerType = asm.GetType(typeName, false);
-                    if (providerType == null)
-                    {
-                        RitsuLibFramework.Logger.Warn(
-                            $"[RuntimeInteropMirrorSource] Provider type not found: {asm.GetName().Name}::{typeName}");
-                        continue;
-                    }
-
-                    var schemaMethod = providerType.GetMethod(SchemaMethodName,
-                        BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Static);
-                    if (schemaMethod == null)
-                    {
-                        RitsuLibFramework.Logger.Warn(
-                            $"[RuntimeInteropMirrorSource] Missing static method '{SchemaMethodName}' on {providerType.FullName}.");
-                        continue;
-                    }
-
-                    var providerName = providerType.FullName ?? providerType.Name;
-                    if (!seen.Add(providerName))
-                        continue;
-                    providers.Add(new(providerType, schemaMethod));
-                }
-            }
+            foreach (var asm in assemblies)
+                DiscoverAssemblyProviders(asm, providers, seen);
 
             foreach (var (providerTypeName, assemblyName) in RuntimeRegisteredProviderTypes)
+                AddRuntimeRegisteredProvider(providerTypeName, assemblyName, providers, seen);
+
+            CacheDiscoveredProviders(providers, assemblies.Length);
+            return providers;
+        }
+
+        private static void DiscoverAssemblyProviders(Assembly asm, List<InteropProvider> providers,
+            HashSet<string> seen)
+        {
+            var typeNames = ReadProviderTypeNames(asm);
+            if (typeNames.Count == 0)
+                return;
+
+            foreach (var typeName in typeNames)
             {
-                var providerType = ResolveProviderType(providerTypeName, assemblyName);
+                if (string.IsNullOrWhiteSpace(typeName))
+                    continue;
+
+                var providerType = asm.GetType(typeName, false);
                 if (providerType == null)
+                {
+                    RitsuLibFramework.Logger.Warn(
+                        $"[RuntimeInteropMirrorSource] Provider type not found: {asm.GetName().Name}::{typeName}");
                     continue;
+                }
 
-                var schemaMethod = providerType.GetMethod(SchemaMethodName,
-                    BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Static);
-                if (schemaMethod == null)
-                    continue;
+                AddProvider(providerType, providers, seen, true);
+            }
+        }
 
-                var providerName = providerType.FullName ?? providerType.Name;
-                if (!seen.Add(providerName))
-                    continue;
-                providers.Add(new(providerType, schemaMethod));
+        private static void AddRuntimeRegisteredProvider(string providerTypeName, string? assemblyName,
+            List<InteropProvider> providers, HashSet<string> seen)
+        {
+            var providerType = ResolveProviderType(providerTypeName, assemblyName);
+            if (providerType == null)
+                return;
+
+            AddProvider(providerType, providers, seen, false);
+        }
+
+        private static void AddProvider(Type providerType, List<InteropProvider> providers, HashSet<string> seen,
+            bool warnMissingSchema)
+        {
+            var schemaMethod = providerType.GetMethod(SchemaMethodName,
+                BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Static);
+            if (schemaMethod == null)
+            {
+                if (warnMissingSchema)
+                    RitsuLibFramework.Logger.Warn(
+                        $"[RuntimeInteropMirrorSource] Missing static method '{SchemaMethodName}' on {providerType.FullName}.");
+                return;
             }
 
-            return providers;
+            var providerName = providerType.FullName ?? providerType.Name;
+            if (!seen.Add(providerName))
+                return;
+            providers.Add(new(providerType, schemaMethod));
+        }
+
+        private static void CacheDiscoveredProviders(List<InteropProvider> providers, int assemblyCount)
+        {
+            _cachedDiscoveredProviders = [.. providers];
+            _cachedDiscoveryAssemblyCount = assemblyCount;
+        }
+
+        private static int TryRegisterProvider(InteropProvider provider)
+        {
+            var providerName = provider.ProviderType.FullName ?? provider.ProviderType.Name;
+            if (ProcessedProviderNames.Contains(providerName))
+                return 0;
+
+            try
+            {
+                if (!TryReadSchema(provider, out var schema))
+                    return 0;
+
+                if (!TryRegisterFromSchema(provider, schema))
+                    return 0;
+
+                ProcessedProviderNames.Add(providerName);
+                return 1;
+            }
+            catch (Exception ex)
+            {
+                RitsuLibFramework.Logger.Warn(
+                    $"[RuntimeInteropMirrorSource] Provider '{provider.ProviderType.FullName}' failed but was isolated: {ex.Message}");
+                return 0;
+            }
         }
 
         private static Type? ResolveProviderType(string providerTypeName, string? assemblyName)

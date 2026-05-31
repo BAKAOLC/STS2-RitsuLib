@@ -202,7 +202,7 @@ namespace STS2RitsuLib.Patching.Core
                 $"{_logPrefix}Dynamic patch application complete: {successCount}/{patches.Length} succeeded");
 
             if (failureCount > 0)
-                logger.Warn(
+                logger.ErrorNoTrace(
                     criticalFailureCount > 0
                         ? $"{_logPrefix}{failureCount} dynamic patch(es) failed, including {criticalFailureCount} critical failure(s)"
                         : $"{_logPrefix}{failureCount} dynamic patch(es) failed, but no critical failures");
@@ -249,7 +249,7 @@ namespace STS2RitsuLib.Patching.Core
                     logger.Info(
                         $"{_logPrefix}All required patches applied; {ignoredCount} optional patch target(s) were ignored");
                 else
-                    logger.Warn(
+                    logger.ErrorNoTrace(
                         $"{_logPrefix}Critical patches succeeded, but some optional patches failed to apply");
             }
             else
@@ -288,7 +288,7 @@ namespace STS2RitsuLib.Patching.Core
                     logger.Error(
                         $"{_logPrefix}[Late][{importance}] {modPatchInfo.Id} failed: {result.ErrorMessage}");
                 else
-                    logger.Warn(
+                    logger.ErrorNoTrace(
                         $"{_logPrefix}[Late][{importance}] {modPatchInfo.Id} failed: {result.ErrorMessage}");
             }
         }
@@ -457,9 +457,11 @@ namespace STS2RitsuLib.Patching.Core
                     if (result.Ignored)
                         ignoredCount++;
 
-                    logger.Debug(result.Ignored
-                        ? $"{_logPrefix}[{importance}] {result.ModPatchInfo.Id} - Ignored (target missing)"
-                        : $"{_logPrefix}[{importance}] {result.ModPatchInfo.Id} - Success ✓");
+                    if (result.Ignored)
+                        logger.Info(
+                            $"{_logPrefix}[{importance}] {result.ModPatchInfo.Id} - Ignored: {result.ErrorMessage}");
+                    else
+                        logger.Debug($"{_logPrefix}[{importance}] {result.ModPatchInfo.Id} - Success ✓");
                 }
                 else
                 {
@@ -480,7 +482,7 @@ namespace STS2RitsuLib.Patching.Core
             logger.Info(
                 $"{_logPrefix}Patch application complete: {successCount - ignoredCount} applied, {ignoredCount} ignored, {failureCount} failed, {results.Length} total");
 
-            if (failureCount > 0) logger.Warn($"{_logPrefix}{failureCount} patch(es) failed");
+            if (failureCount > 0) logger.ErrorNoTrace($"{_logPrefix}{failureCount} patch(es) failed");
 
             if (criticalFailureCount == 0) return true;
             logger.Error($"{_logPrefix}{criticalFailureCount} critical patch(es) failed, mod loading blocked");

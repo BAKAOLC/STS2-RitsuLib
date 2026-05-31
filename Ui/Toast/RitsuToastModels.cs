@@ -3,6 +3,96 @@ using Godot;
 namespace STS2RitsuLib.Ui.Toast
 {
     /// <summary>
+    ///     Handle returned by tracked toast requests for later updates or manual closing.
+    ///     可跟踪 toast 请求返回的句柄，用于后续更新或主动关闭。
+    /// </summary>
+    public sealed class RitsuToastHandle
+    {
+        internal RitsuToastHandle(Guid id)
+        {
+            Id = id;
+        }
+
+        /// <summary>
+        ///     Stable identifier for this toast request.
+        ///     此 toast 请求的稳定标识。
+        /// </summary>
+        public Guid Id { get; }
+
+        /// <summary>
+        ///     Returns whether the toast is still pending or visible.
+        ///     返回 toast 是否仍在等待显示或已经可见。
+        /// </summary>
+        public bool IsAlive()
+        {
+            return RitsuToastService.IsAlive(this);
+        }
+
+        /// <summary>
+        ///     Closes the toast if it is still pending or visible.
+        ///     如果 toast 仍在等待显示或已经可见，则关闭它。
+        /// </summary>
+        public bool Close(bool immediate = false)
+        {
+            return RitsuToastService.Close(this, immediate);
+        }
+
+        /// <summary>
+        ///     Alias for <see cref="Close" />.
+        ///     <see cref="Close" /> 的别名。
+        /// </summary>
+        public bool Dismiss(bool immediate = false)
+        {
+            return Close(immediate);
+        }
+
+        /// <summary>
+        ///     Replaces the toast request while preserving the same handle.
+        ///     在保留同一句柄的同时替换 toast 请求。
+        /// </summary>
+        public bool Update(RitsuToastRequest request, bool resetDuration = true)
+        {
+            return RitsuToastService.Update(this, request, resetDuration);
+        }
+
+        /// <summary>
+        ///     Updates only the body text.
+        ///     仅更新正文文本。
+        /// </summary>
+        public bool UpdateBody(string body, bool resetDuration = true)
+        {
+            return RitsuToastService.UpdateBody(this, body, resetDuration);
+        }
+
+        /// <summary>
+        ///     Updates the body and title text.
+        ///     更新正文和标题文本。
+        /// </summary>
+        public bool UpdateText(string body, string? title, bool resetDuration = true)
+        {
+            return RitsuToastService.UpdateText(this, body, title, resetDuration);
+        }
+
+        /// <summary>
+        ///     Updates the title while preserving the body text.
+        ///     更新标题并保留正文文本。
+        /// </summary>
+        public bool UpdateTitle(string? title, bool resetDuration = false)
+        {
+            return RitsuToastService.UpdateTitle(this, title, resetDuration);
+        }
+
+        /// <summary>
+        ///     Restarts the remaining display time, optionally overriding the toast duration.
+        ///     重新开始剩余显示时间，并可选覆盖 toast 持续时间。
+        /// </summary>
+        public bool ResetDuration(double? durationSeconds = null)
+        {
+            return RitsuToastService.ResetDuration(this, durationSeconds);
+        }
+    }
+
+    /// <summary>
     ///     Semantic toast category used for default styling.
     ///     用于默认样式的语义 toast 类别。
     /// </summary>
@@ -10,8 +100,6 @@ namespace STS2RitsuLib.Ui.Toast
     {
         /// <summary>
         ///     Informational message.
-        ///     Informational message.
-        ///     信息消息。
         ///     信息消息。
         /// </summary>
         Info,
@@ -146,6 +234,8 @@ namespace STS2RitsuLib.Ui.Toast
         Color TitleColor,
         Color BodyColor,
         Color AccentColor,
+        Color ProgressTrackColor,
+        Color ProgressFillColor,
         Color ShadowColor,
         Color InteractiveBadgeBackground,
         Color InteractiveBadgeForeground,
@@ -167,6 +257,8 @@ namespace STS2RitsuLib.Ui.Toast
         float PaddingVertical,
         float TextSpacing,
         float RowSpacing,
+        float ProgressHeight,
+        float ProgressSpacing,
         float ImageSize,
         float CloseButtonSize,
         float CloseButtonPaddingHorizontal,
@@ -278,6 +370,87 @@ namespace STS2RitsuLib.Ui.Toast
         public static RitsuToastRequest Error(string body, string? title = null)
         {
             return new(body, title, null, RitsuToastLevel.Error);
+        }
+
+        /// <summary>
+        ///     Returns a copy with updated body text.
+        ///     返回更新正文文本后的副本。
+        /// </summary>
+        public RitsuToastRequest WithBody(string body)
+        {
+            return this with { Body = body };
+        }
+
+        /// <summary>
+        ///     Returns a copy with an updated title.
+        ///     返回更新标题后的副本。
+        /// </summary>
+        public RitsuToastRequest WithTitle(string? title)
+        {
+            return this with { Title = title };
+        }
+
+        /// <summary>
+        ///     Returns a copy with updated body and title text.
+        ///     返回更新正文和标题文本后的副本。
+        /// </summary>
+        public RitsuToastRequest WithText(string body, string? title)
+        {
+            return this with { Body = body, Title = title };
+        }
+
+        /// <summary>
+        ///     Returns a copy with an updated leading image.
+        ///     返回更新起始侧图像后的副本。
+        /// </summary>
+        public RitsuToastRequest WithImage(Texture2D? image)
+        {
+            return this with { Image = image };
+        }
+
+        /// <summary>
+        ///     Returns a copy with an updated semantic level.
+        ///     返回更新语义级别后的副本。
+        /// </summary>
+        public RitsuToastRequest WithLevel(RitsuToastLevel level)
+        {
+            return this with { Level = level };
+        }
+
+        /// <summary>
+        ///     Returns a copy with an updated per-toast duration override.
+        ///     返回更新单个 toast 持续时间覆盖值后的副本。
+        /// </summary>
+        public RitsuToastRequest WithDuration(double? durationSeconds)
+        {
+            return this with { DurationSeconds = durationSeconds };
+        }
+
+        /// <summary>
+        ///     Returns a copy with an updated click callback.
+        ///     返回更新点击回调后的副本。
+        /// </summary>
+        public RitsuToastRequest WithClick(Action? onClick)
+        {
+            return this with { OnClick = onClick };
+        }
+
+        /// <summary>
+        ///     Returns a copy with an updated animation override.
+        ///     返回更新动画覆盖后的副本。
+        /// </summary>
+        public RitsuToastRequest WithAnimation(RitsuToastAnimationPreset? animationOverride)
+        {
+            return this with { AnimationOverride = animationOverride };
+        }
+
+        /// <summary>
+        ///     Returns a copy that is kept visible until clicked, closed, or disabled by settings.
+        ///     返回会保持显示直到被点击、关闭或被设置禁用的副本。
+        /// </summary>
+        public RitsuToastRequest Persistent(bool isPersistent = true)
+        {
+            return this with { IsPersistent = isPersistent };
         }
     }
 }

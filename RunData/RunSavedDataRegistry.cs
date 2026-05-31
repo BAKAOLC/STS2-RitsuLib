@@ -1,6 +1,7 @@
 using MegaCrit.Sts2.Core.Multiplayer.Game.Lobby;
 using MegaCrit.Sts2.Core.Runs;
 using MegaCrit.Sts2.Core.Saves;
+using STS2RitsuLib.RunRngs;
 
 namespace STS2RitsuLib.RunData
 {
@@ -47,6 +48,8 @@ namespace STS2RitsuLib.RunData
 
         public static RunSavedDataDocument? Export(RunState runState)
         {
+            ModRunRngRegistry.SyncToSavedData(runState);
+
             var document = RunSavedDataRuntime.TryGetBag(runState, out var bag) && bag.PreservedDocument != null
                 ? bag.PreservedDocument.Clone()
                 : new();

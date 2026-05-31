@@ -156,7 +156,7 @@ namespace STS2RitsuLib.Settings
             edit.TextSubmitted += value =>
             {
                 commit(value);
-                edit.ReleaseFocus();
+                edit.ReleaseFocusIfInsideTree();
             };
             edit.FocusExited += () => commit(edit.Text);
             ModSettingsFocusChrome.AttachControllerSelectionReticle(edit);

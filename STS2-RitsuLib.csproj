@@ -1,7 +1,7 @@
 <Project Sdk="Godot.NET.Sdk/4.5.1">
     <PropertyGroup Label="Compatibility (STS2 API, signatures, defines)">
-        <RitsuLibCompatTargets>0.106.0;0.105.1;0.103.2</RitsuLibCompatTargets>
-        <RitsuLibLatestApiCompat>0.106.0</RitsuLibLatestApiCompat>
+        <RitsuLibCompatTargets>0.106.1;0.105.1;0.103.2</RitsuLibCompatTargets>
+        <RitsuLibLatestApiCompat>0.106.1</RitsuLibLatestApiCompat>
         <Sts2ApiCompat Condition="'$(Sts2ApiCompat)' == ''">$(RitsuLibLatestApiCompat)</Sts2ApiCompat>
         <Sts2ApiSignatureDir Condition="'$(Sts2ApiSignatureRoot)' != ''">$(Sts2ApiSignatureRoot)\$(Sts2ApiCompat)</Sts2ApiSignatureDir>
         <Sts2DataDir Condition="'$(Sts2ApiSignatureRoot)' != ''">$(Sts2ApiSignatureDir)</Sts2DataDir>
@@ -33,7 +33,7 @@
 
     <PropertyGroup Label="NuGet package">
         <IsPackable>true</IsPackable>
-        <Version>0.3.0</Version>
+        <Version>0.3.10</Version>
         <Authors>OLC</Authors>
         <Description>Shared framework library for Slay the Spire 2 mods.</Description>
         <PackageReadmeFile>README.md</PackageReadmeFile>
@@ -89,6 +89,7 @@
         <Content Include="$(RitsuLibManifestGenerated)"/>
     </ItemGroup>
     <ItemGroup>
+        <EmbeddedResource Include="Assets\mod_image.png" LogicalName="STS2RitsuLib.Assets.mod_image.png"/>
         <EmbeddedResource Include="Settings\Localization\**\*.json"/>
         <EmbeddedResource Include="Ui\Shell\Themes\*.theme.json"/>
     </ItemGroup>

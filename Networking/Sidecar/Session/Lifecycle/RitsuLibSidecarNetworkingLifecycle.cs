@@ -66,6 +66,7 @@ namespace STS2RitsuLib.Networking.Sidecar
         private static void OnRunEnded()
         {
             RitsuLibSidecarBus.CancelAllPendingWaits();
+            RitsuLibSidecarSync.Clear();
             RitsuLibSidecarConnectionSession.Clear();
             RitsuLibSidecarSessionManager.ObserveNetService(null);
             RitsuLibSidecarConnectionExchange.DiscardNegotiationStateAfterSessionEnds();

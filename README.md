@@ -10,6 +10,16 @@ API and other libraries such as [BaseLib](https://github.com/Alchyr/BaseLib-StS2
 
 Documentation site: https://sts2-ritsulib.ritsukage.com/
 
+Chinese Slay the Spire 2 modding tutorial:
+https://tutorials.sts2modding.com/ ([GitHub](https://github.com/GlitchedReme/SlayTheSpire2ModdingTutorials))
+
+## Related Libraries
+
+For minion, summon, companion-card, or guardian-style mechanics, prefer
+[MinionLib](https://github.com/FuYnAloft/MinionLib). It focuses on creating and summoning minions, minion actions,
+minion-card interactions, guardian behavior, custom targeting, and minion positioning. RitsuLib remains the general
+framework layer and does not try to replace that specialized library.
+
 ## Install
 
 Reference the NuGet package in your mod project:
@@ -96,10 +106,16 @@ The old companion analyzer
 [STS2-ModAnalyzers-RitsuLib](https://github.com/BAKAOLC/STS2-ModAnalyzers-RitsuLib)
 (`STS2.ModAnalyzers.RitsuLib`) is archived and no longer maintained.
 
-For RitsuLib-style mods, use
+For RitsuLib-style mods, the recommended optional analyzer is
 [STS2RitsuLibModAnalyzers](https://github.com/alkaid616/STS2RitsuLibModAnalyzers)
-(`Nothing.STS2RitsuLib.ModAnalyzers`) instead. It provides Roslyn diagnostics for RitsuLib localization and resource
+(`Nothing.STS2RitsuLib.ModAnalyzers`). It provides Roslyn diagnostics for RitsuLib localization and resource
 paths, and its package can automatically pass common project files to the analyzer through `buildTransitive`.
+This analyzer is provided, maintained, and supported by a third party. RitsuLib does not guarantee that it fully
+matches current RitsuLib capabilities or that all analyzer behavior is correct.
+
+## Acknowledgements
+
+See [ACKNOWLEDGEMENTS.md](ACKNOWLEDGEMENTS.md) for the people and users who helped shape RitsuLib.
 
 ## License
 

@@ -16,7 +16,7 @@ namespace STS2RitsuLib.Models.Capabilities.Patches
         private static void AppendHoverTips<TModel>(TModel model, ref IEnumerable<IHoverTip> result)
             where TModel : AbstractModel
         {
-            var tips = ModelComponentCapabilityHost.GetHoverTips(model).ToArray();
+            var tips = ModelCapabilityHost.GetHoverTips(model).ToArray();
             if (tips.Length == 0)
                 return;
 
@@ -29,7 +29,7 @@ namespace STS2RitsuLib.Models.Capabilities.Patches
             ref IEnumerable<string> result)
             where TModel : AbstractModel
         {
-            var paths = ModelComponentCapabilityHost.GetAssetPaths(model, context)
+            var paths = ModelCapabilityHost.GetAssetPaths(model, context)
                 .Where(static path => !string.IsNullOrWhiteSpace(path))
                 .ToArray();
 
@@ -43,14 +43,14 @@ namespace STS2RitsuLib.Models.Capabilities.Patches
             where TModel : AbstractModel
         {
             if (locString != null)
-                ModelComponentCapabilityHost.AddDynamicVarsTo(model, locString);
+                ModelCapabilityHost.AddDynamicVarsTo(model, locString);
         }
 
         internal sealed class RelicDynamicDescriptionPatch : IPatchMethod
         {
-            public static string PatchId => "ritsulib_model_component_relic_dynamic_description";
+            public static string PatchId => "ritsulib_model_capability_relic_dynamic_description";
 
-            public static string Description => "Add model-component dynamic vars to relic dynamic descriptions";
+            public static string Description => "Add model-capability dynamic vars to relic dynamic descriptions";
 
             public static bool IsCritical => false;
 
@@ -69,9 +69,9 @@ namespace STS2RitsuLib.Models.Capabilities.Patches
 
         internal sealed class RelicDynamicEventDescriptionPatch : IPatchMethod
         {
-            public static string PatchId => "ritsulib_model_component_relic_dynamic_event_description";
+            public static string PatchId => "ritsulib_model_capability_relic_dynamic_event_description";
 
-            public static string Description => "Add model-component dynamic vars to relic dynamic event descriptions";
+            public static string Description => "Add model-capability dynamic vars to relic dynamic event descriptions";
 
             public static bool IsCritical => false;
 
@@ -90,9 +90,9 @@ namespace STS2RitsuLib.Models.Capabilities.Patches
 
         internal sealed class PotionDynamicDescriptionPatch : IPatchMethod
         {
-            public static string PatchId => "ritsulib_model_component_potion_dynamic_description";
+            public static string PatchId => "ritsulib_model_capability_potion_dynamic_description";
 
-            public static string Description => "Add model-component dynamic vars to potion dynamic descriptions";
+            public static string Description => "Add model-capability dynamic vars to potion dynamic descriptions";
 
             public static bool IsCritical => false;
 
@@ -111,9 +111,9 @@ namespace STS2RitsuLib.Models.Capabilities.Patches
 
         internal sealed class EnchantmentDynamicDescriptionPatch : IPatchMethod
         {
-            public static string PatchId => "ritsulib_model_component_enchantment_dynamic_description";
+            public static string PatchId => "ritsulib_model_capability_enchantment_dynamic_description";
 
-            public static string Description => "Add model-component dynamic vars to enchantment dynamic descriptions";
+            public static string Description => "Add model-capability dynamic vars to enchantment dynamic descriptions";
 
             public static bool IsCritical => false;
 
@@ -132,9 +132,9 @@ namespace STS2RitsuLib.Models.Capabilities.Patches
 
         internal sealed class EnchantmentDynamicExtraCardTextPatch : IPatchMethod
         {
-            public static string PatchId => "ritsulib_model_component_enchantment_dynamic_extra_card_text";
+            public static string PatchId => "ritsulib_model_capability_enchantment_dynamic_extra_card_text";
 
-            public static string Description => "Add model-component dynamic vars to enchantment extra card text";
+            public static string Description => "Add model-capability dynamic vars to enchantment extra card text";
 
             public static bool IsCritical => false;
 
@@ -153,9 +153,9 @@ namespace STS2RitsuLib.Models.Capabilities.Patches
 
         internal sealed class AfflictionDynamicDescriptionPatch : IPatchMethod
         {
-            public static string PatchId => "ritsulib_model_component_affliction_dynamic_description";
+            public static string PatchId => "ritsulib_model_capability_affliction_dynamic_description";
 
-            public static string Description => "Add model-component dynamic vars to affliction dynamic descriptions";
+            public static string Description => "Add model-capability dynamic vars to affliction dynamic descriptions";
 
             public static bool IsCritical => false;
 
@@ -174,9 +174,9 @@ namespace STS2RitsuLib.Models.Capabilities.Patches
 
         internal sealed class AfflictionDynamicExtraCardTextPatch : IPatchMethod
         {
-            public static string PatchId => "ritsulib_model_component_affliction_dynamic_extra_card_text";
+            public static string PatchId => "ritsulib_model_capability_affliction_dynamic_extra_card_text";
 
-            public static string Description => "Add model-component dynamic vars to affliction extra card text";
+            public static string Description => "Add model-capability dynamic vars to affliction extra card text";
 
             public static bool IsCritical => false;
 
@@ -195,9 +195,9 @@ namespace STS2RitsuLib.Models.Capabilities.Patches
 
         internal sealed class PowerDescriptionPatch : IPatchMethod
         {
-            public static string PatchId => "ritsulib_model_component_power_description";
+            public static string PatchId => "ritsulib_model_capability_power_description";
 
-            public static string Description => "Add model-component dynamic vars to power descriptions";
+            public static string Description => "Add model-capability dynamic vars to power descriptions";
 
             public static bool IsCritical => false;
 
@@ -216,9 +216,9 @@ namespace STS2RitsuLib.Models.Capabilities.Patches
 
         internal sealed class PowerSmartDescriptionPatch : IPatchMethod
         {
-            public static string PatchId => "ritsulib_model_component_power_smart_description";
+            public static string PatchId => "ritsulib_model_capability_power_smart_description";
 
-            public static string Description => "Add model-component dynamic vars to power smart descriptions";
+            public static string Description => "Add model-capability dynamic vars to power smart descriptions";
 
             public static bool IsCritical => false;
 
@@ -237,9 +237,9 @@ namespace STS2RitsuLib.Models.Capabilities.Patches
 
         internal sealed class PowerRemoteDescriptionPatch : IPatchMethod
         {
-            public static string PatchId => "ritsulib_model_component_power_remote_description";
+            public static string PatchId => "ritsulib_model_capability_power_remote_description";
 
-            public static string Description => "Add model-component dynamic vars to power remote descriptions";
+            public static string Description => "Add model-capability dynamic vars to power remote descriptions";
 
             public static bool IsCritical => false;
 
@@ -258,9 +258,9 @@ namespace STS2RitsuLib.Models.Capabilities.Patches
 
         internal sealed class OrbDescriptionPatch : IPatchMethod
         {
-            public static string PatchId => "ritsulib_model_component_orb_description";
+            public static string PatchId => "ritsulib_model_capability_orb_description";
 
-            public static string Description => "Add model-component dynamic vars to orb descriptions";
+            public static string Description => "Add model-capability dynamic vars to orb descriptions";
 
             public static bool IsCritical => false;
 
@@ -279,9 +279,9 @@ namespace STS2RitsuLib.Models.Capabilities.Patches
 
         internal sealed class OrbSmartDescriptionPatch : IPatchMethod
         {
-            public static string PatchId => "ritsulib_model_component_orb_smart_description";
+            public static string PatchId => "ritsulib_model_capability_orb_smart_description";
 
-            public static string Description => "Add model-component dynamic vars to orb smart descriptions";
+            public static string Description => "Add model-capability dynamic vars to orb smart descriptions";
 
             public static bool IsCritical => false;
 
@@ -300,9 +300,9 @@ namespace STS2RitsuLib.Models.Capabilities.Patches
 
         internal sealed class RelicHoverTipsPatch : IPatchMethod
         {
-            public static string PatchId => "ritsulib_model_component_relic_hover_tips";
+            public static string PatchId => "ritsulib_model_capability_relic_hover_tips";
 
-            public static string Description => "Append model-component hover tips to relics";
+            public static string Description => "Append model-capability hover tips to relics";
 
             public static bool IsCritical => false;
 
@@ -321,9 +321,9 @@ namespace STS2RitsuLib.Models.Capabilities.Patches
 
         internal sealed class RelicHoverTipsExcludingRelicPatch : IPatchMethod
         {
-            public static string PatchId => "ritsulib_model_component_relic_hover_tips_excluding_relic";
+            public static string PatchId => "ritsulib_model_capability_relic_hover_tips_excluding_relic";
 
-            public static string Description => "Append model-component hover tips to relic secondary tips";
+            public static string Description => "Append model-capability hover tips to relic secondary tips";
 
             public static bool IsCritical => false;
 
@@ -342,9 +342,9 @@ namespace STS2RitsuLib.Models.Capabilities.Patches
 
         internal sealed class PowerHoverTipsPatch : IPatchMethod
         {
-            public static string PatchId => "ritsulib_model_component_power_hover_tips";
+            public static string PatchId => "ritsulib_model_capability_power_hover_tips";
 
-            public static string Description => "Append model-component hover tips to powers";
+            public static string Description => "Append model-capability hover tips to powers";
 
             public static bool IsCritical => false;
 
@@ -363,9 +363,9 @@ namespace STS2RitsuLib.Models.Capabilities.Patches
 
         internal sealed class OrbHoverTipsPatch : IPatchMethod
         {
-            public static string PatchId => "ritsulib_model_component_orb_hover_tips";
+            public static string PatchId => "ritsulib_model_capability_orb_hover_tips";
 
-            public static string Description => "Append model-component hover tips to orbs";
+            public static string Description => "Append model-capability hover tips to orbs";
 
             public static bool IsCritical => false;
 
@@ -384,9 +384,9 @@ namespace STS2RitsuLib.Models.Capabilities.Patches
 
         internal sealed class PotionHoverTipsPatch : IPatchMethod
         {
-            public static string PatchId => "ritsulib_model_component_potion_hover_tips";
+            public static string PatchId => "ritsulib_model_capability_potion_hover_tips";
 
-            public static string Description => "Append model-component hover tips to potions";
+            public static string Description => "Append model-capability hover tips to potions";
 
             public static bool IsCritical => false;
 
@@ -405,9 +405,9 @@ namespace STS2RitsuLib.Models.Capabilities.Patches
 
         internal sealed class AfflictionHoverTipsPatch : IPatchMethod
         {
-            public static string PatchId => "ritsulib_model_component_affliction_hover_tips";
+            public static string PatchId => "ritsulib_model_capability_affliction_hover_tips";
 
-            public static string Description => "Append model-component hover tips to afflictions";
+            public static string Description => "Append model-capability hover tips to afflictions";
 
             public static bool IsCritical => false;
 
@@ -426,9 +426,9 @@ namespace STS2RitsuLib.Models.Capabilities.Patches
 
         internal sealed class EnchantmentHoverTipsPatch : IPatchMethod
         {
-            public static string PatchId => "ritsulib_model_component_enchantment_hover_tips";
+            public static string PatchId => "ritsulib_model_capability_enchantment_hover_tips";
 
-            public static string Description => "Append model-component hover tips to enchantments";
+            public static string Description => "Append model-capability hover tips to enchantments";
 
             public static bool IsCritical => false;
 
@@ -447,9 +447,9 @@ namespace STS2RitsuLib.Models.Capabilities.Patches
 
         internal sealed class CardRunAssetPathsPatch : IPatchMethod
         {
-            public static string PatchId => "ritsulib_model_component_card_run_asset_paths";
+            public static string PatchId => "ritsulib_model_capability_card_run_asset_paths";
 
-            public static string Description => "Append model-component run asset paths to cards";
+            public static string Description => "Append model-capability run asset paths to cards";
 
             public static bool IsCritical => false;
 
@@ -468,9 +468,9 @@ namespace STS2RitsuLib.Models.Capabilities.Patches
 
         internal sealed class CharacterAssetPathsPatch : IPatchMethod
         {
-            public static string PatchId => "ritsulib_model_component_character_asset_paths";
+            public static string PatchId => "ritsulib_model_capability_character_asset_paths";
 
-            public static string Description => "Append model-component asset paths to characters";
+            public static string Description => "Append model-capability asset paths to characters";
 
             public static bool IsCritical => false;
 
@@ -489,9 +489,9 @@ namespace STS2RitsuLib.Models.Capabilities.Patches
 
         internal sealed class CharacterSelectAssetPathsPatch : IPatchMethod
         {
-            public static string PatchId => "ritsulib_model_component_character_select_asset_paths";
+            public static string PatchId => "ritsulib_model_capability_character_select_asset_paths";
 
-            public static string Description => "Append model-component character-select asset paths to characters";
+            public static string Description => "Append model-capability character-select asset paths to characters";
 
             public static bool IsCritical => false;
 
@@ -510,9 +510,9 @@ namespace STS2RitsuLib.Models.Capabilities.Patches
 
         internal sealed class OrbAssetPathsPatch : IPatchMethod
         {
-            public static string PatchId => "ritsulib_model_component_orb_asset_paths";
+            public static string PatchId => "ritsulib_model_capability_orb_asset_paths";
 
-            public static string Description => "Append model-component asset paths to orbs";
+            public static string Description => "Append model-capability asset paths to orbs";
 
             public static bool IsCritical => false;
 
@@ -531,9 +531,9 @@ namespace STS2RitsuLib.Models.Capabilities.Patches
 
         internal sealed class MonsterAssetPathsPatch : IPatchMethod
         {
-            public static string PatchId => "ritsulib_model_component_monster_asset_paths";
+            public static string PatchId => "ritsulib_model_capability_monster_asset_paths";
 
-            public static string Description => "Append model-component asset paths to monsters";
+            public static string Description => "Append model-capability asset paths to monsters";
 
             public static bool IsCritical => false;
 
@@ -552,9 +552,9 @@ namespace STS2RitsuLib.Models.Capabilities.Patches
 
         internal sealed class ActAssetPathsPatch : IPatchMethod
         {
-            public static string PatchId => "ritsulib_model_component_act_asset_paths";
+            public static string PatchId => "ritsulib_model_capability_act_asset_paths";
 
-            public static string Description => "Append model-component asset paths to acts";
+            public static string Description => "Append model-capability asset paths to acts";
 
             public static bool IsCritical => false;
 
@@ -573,9 +573,9 @@ namespace STS2RitsuLib.Models.Capabilities.Patches
 
         internal sealed class EncounterAssetPathsPatch : IPatchMethod
         {
-            public static string PatchId => "ritsulib_model_component_encounter_asset_paths";
+            public static string PatchId => "ritsulib_model_capability_encounter_asset_paths";
 
-            public static string Description => "Append model-component asset paths to encounters";
+            public static string Description => "Append model-capability asset paths to encounters";
 
             public static bool IsCritical => false;
 
@@ -597,9 +597,9 @@ namespace STS2RitsuLib.Models.Capabilities.Patches
 
         internal sealed class EventAssetPathsPatch : IPatchMethod
         {
-            public static string PatchId => "ritsulib_model_component_event_asset_paths";
+            public static string PatchId => "ritsulib_model_capability_event_asset_paths";
 
-            public static string Description => "Append model-component asset paths to events";
+            public static string Description => "Append model-capability asset paths to events";
 
             public static bool IsCritical => false;
 

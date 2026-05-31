@@ -8,16 +8,13 @@ namespace STS2RitsuLib.Scaffolding.Visuals
     /// </summary>
     /// <remarks>
     ///     <para>
-    ///         Emits <see cref="SignalName.Finished" /> when a non-looping sequence reaches the last frame,
-    ///         and when <see cref="TryStart" /> short-circuits into a one-frame-non-loop state (i.e. the sequence
-    ///         has already reached its terminal frame during start). The signal is consumed by
-    ///         <c>CueAnimationBackend</c> so <see cref="StateMachine.ModAnimStateMachine" /> can advance
+    ///         Emits <see cref="SignalName.Finished" /> when a non-looping sequence reaches the end of its final
+    ///         frame. The signal is consumed by <c>CueAnimationBackend</c> so
+    ///         <see cref="StateMachine.ModAnimStateMachine" /> can advance
     ///         <see cref="StateMachine.ModAnimState.NextState" />.
     ///     </para>
     ///     <para>
-    ///         当非循环序列到达最后一帧时，发出 <see cref="SignalName.Finished" />；
-    ///         当 <see cref="TryStart" /> 短路进入单帧非循环状态（即序列
-    ///         在启动期间已到达终止帧）时也会发出。该信号由
+    ///         当非循环序列播放完最后一帧时，发出 <see cref="SignalName.Finished" />。该信号由
     ///         <c>CueAnimationBackend</c> 消费，使 <see cref="StateMachine.ModAnimStateMachine" /> 可以推进
     ///         <see cref="StateMachine.ModAnimState.NextState" />。
     ///     </para>
@@ -25,9 +22,9 @@ namespace STS2RitsuLib.Scaffolding.Visuals
     internal partial class CueFrameSequencePlayer : Node
     {
         /// <summary>
-        ///     Raised when the sequence completes (non-loop) or is an already-terminal single frame.
+        ///     Raised when the sequence completes (non-loop).
         ///     Not raised for looping sequences.
-        ///     当序列完成（非循环）或已是终止单帧时触发。
+        ///     当序列完成（非循环）时触发。
         ///     循环序列不会触发。
         /// </summary>
         [Signal]
@@ -106,14 +103,6 @@ namespace STS2RitsuLib.Scaffolding.Visuals
             _carry = 0;
             _frameDurationSeconds = ClampFrameDuration(frames[0].DurationSeconds);
             ApplyFrame(0);
-
-            if (frames.Length == 1 && !sequence.Loop)
-            {
-                _active = false;
-                SetProcess(false);
-                CallDeferred(GodotObject.MethodName.EmitSignal, SignalName.Finished);
-                return true;
-            }
 
             _active = true;
             SetProcess(true);

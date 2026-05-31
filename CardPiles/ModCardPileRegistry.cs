@@ -248,28 +248,36 @@ namespace STS2RitsuLib.CardPiles
         }
 
         /// <summary>
-        ///     Returns the minted <see cref="PileType" /> for <paramref name="id" /> or throws.
-        ///     返回 <paramref name="id" /> 的 minted <see cref="PileType" />，或抛出异常。
+        ///     Returns the deterministic <see cref="PileType" /> minted for <paramref name="id" />.
+        ///     The id does not need to be registered.
+        ///     返回为 <paramref name="id" /> 确定性 minted 的 <see cref="PileType" />。
+        ///     该 id 不需要已注册。
         /// </summary>
         public static PileType GetPileType(string id)
         {
-            return Get(id).PileType;
+            ArgumentException.ThrowIfNullOrWhiteSpace(id);
+            return PileTypeMinter.Mint(id);
         }
 
         /// <summary>
-        ///     Resolves the minted <see cref="PileType" /> for <paramref name="id" />.
-        ///     解析 <paramref name="id" /> 的 minted <see cref="PileType" />。
+        ///     Resolves the deterministic <see cref="PileType" /> minted for <paramref name="id" />.
+        ///     The id does not need to be registered.
+        ///     解析为 <paramref name="id" /> 确定性 minted 的 <see cref="PileType" />。
+        ///     该 id 不需要已注册。
         /// </summary>
         public static bool TryGetPileType(string id, out PileType value)
         {
-            if (TryGet(id, out var definition))
+            ArgumentException.ThrowIfNullOrWhiteSpace(id);
+            try
             {
-                value = definition.PileType;
+                value = PileTypeMinter.Mint(id);
                 return true;
             }
-
-            value = default;
-            return false;
+            catch (InvalidOperationException)
+            {
+                value = default;
+                return false;
+            }
         }
 
         /// <summary>
@@ -282,7 +290,10 @@ namespace STS2RitsuLib.CardPiles
         {
             ArgumentException.ThrowIfNullOrWhiteSpace(idOrEnumName);
 
-            return TryGetPileType(idOrEnumName, out value) || Enum.TryParse(idOrEnumName.Trim(), true, out value);
+            if (!TryGet(idOrEnumName, out var definition))
+                return Enum.TryParse(idOrEnumName.Trim(), true, out value) || TryGetPileType(idOrEnumName, out value);
+            value = definition.PileType;
+            return true;
         }
 
         /// <summary>

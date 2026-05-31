@@ -5,8 +5,10 @@ using STS2RitsuLib.Interop.Internal;
 namespace STS2RitsuLib.Interop
 {
     /// <summary>
-    ///     Built-in contributor: processes <see cref="ModInteropAttribute" /> stubs.
-    ///     内置 contributor：处理 <see cref="ModInteropAttribute" /> stub。
+    ///     Built-in contributor: processes <see cref="ModInteropAttribute" /> and
+    ///     <see cref="AssemblyInteropAttribute" /> stubs.
+    ///     内置 contributor：处理 <see cref="ModInteropAttribute" /> 和
+    ///     <see cref="AssemblyInteropAttribute" /> stub。
     /// </summary>
     public sealed class ModInteropTypeDiscoveryContributor : IModTypeDiscoveryContributor
     {

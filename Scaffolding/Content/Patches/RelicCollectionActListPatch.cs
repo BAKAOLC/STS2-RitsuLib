@@ -1,10 +1,10 @@
 using System.Reflection;
-using System.Reflection.Emit;
 using HarmonyLib;
 using MegaCrit.Sts2.Core.Models;
 using MegaCrit.Sts2.Core.Models.Acts;
 using MegaCrit.Sts2.Core.Nodes.Screens.RelicCollection;
 using STS2RitsuLib.Patching.Models;
+using STS2RitsuLib.Utils.HarmonyIl;
 
 namespace STS2RitsuLib.Scaffolding.Content.Patches
 {
@@ -42,38 +42,26 @@ namespace STS2RitsuLib.Scaffolding.Content.Patches
         [HarmonyPriority(Priority.Last)]
         public static IEnumerable<CodeInstruction> Transpiler(IEnumerable<CodeInstruction> instructions)
         {
-            var code = instructions.ToList();
+            var rewriter = HarmonyIlRewriter.From(instructions);
+            const string operation = "[RelicCollection] Replace hard-coded ancient act list";
 
-            for (var i = 0; i <= code.Count - 7; i++)
+            if (rewriter.Contains(instruction => HarmonyIl.IsCallTo(instruction, RuntimeActListMethod)))
+                return rewriter.InstructionsChecked(operation);
+
+            if (TryFindVanillaActListStore(rewriter, out var match))
             {
-                if (!code[i].IsStloc())
-                    continue;
-                if (!IsModelDbActsCall(code[i + 1]))
-                    continue;
-                if (!code[i + 2].IsLdloc())
-                    continue;
-                if (!IsLinqCall(code[i + 3], nameof(Enumerable.Except)))
-                    continue;
-                if (!IsLinqCall(code[i + 4], nameof(Enumerable.Any)))
-                    continue;
-                if (!code[i + 5].Branches(out _))
-                    continue;
-                if (!IsActListErrorString(code[i + 6]))
-                    continue;
-
-                code.InsertRange(i,
+                rewriter.InsertBefore(match,
                 [
-                    new(OpCodes.Pop),
-                    new(OpCodes.Call, RuntimeActListMethod),
+                    HarmonyIl.Pop(),
+                    HarmonyIl.Call(RuntimeActListMethod),
                 ]);
-                return code;
+                return rewriter.InstructionsChecked(operation);
             }
 
-            if (code.Any(IsActListErrorString))
-                RitsuLibFramework.Logger.Warn(
-                    "[RelicCollection] Could not find vanilla act-list validation pattern; runtime act list patch skipped.");
+            RitsuLibFramework.Logger.Warn(
+                "[RelicCollection] Could not find vanilla act-list validation pattern; runtime act list patch skipped.");
 
-            return code;
+            return rewriter.Instructions();
         }
 
         private static List<ActModel> GetRuntimeActList()
@@ -101,25 +89,47 @@ namespace STS2RitsuLib.Scaffolding.Content.Patches
 
         private static bool IsModelDbActsCall(CodeInstruction instruction)
         {
-            return instruction.opcode == OpCodes.Call && instruction.operand is MethodInfo method &&
-                   method == ModelDbActsGetter;
+            return HarmonyIl.IsCall(ModelDbActsGetter)(instruction);
         }
 
         private static bool IsLinqCall(CodeInstruction instruction, string methodName)
         {
-            if (instruction.opcode != OpCodes.Call || instruction.operand is not MethodInfo method)
-                return false;
-
-            if (method.DeclaringType != typeof(Enumerable) || method.Name != methodName)
-                return false;
-
-            return !method.IsGenericMethod || method.GetGenericArguments().Contains(typeof(ActModel));
+            return HarmonyIl.IsCall(method =>
+                method.DeclaringType == typeof(Enumerable) &&
+                method.Name == methodName &&
+                (!method.IsGenericMethod || method.GetGenericArguments().Contains(typeof(ActModel))))(instruction);
         }
 
         private static bool IsActListErrorString(CodeInstruction instruction)
         {
-            return instruction.opcode == OpCodes.Ldstr && instruction.operand is string value &&
-                   value.Contains("act list", StringComparison.OrdinalIgnoreCase);
+            return HarmonyIl.OperandMatches<string>(instruction,
+                value => value.Contains("act list", StringComparison.OrdinalIgnoreCase));
+        }
+
+        private static bool TryFindVanillaActListStore(HarmonyIlRewriter rewriter, out HarmonyIlMatch match)
+        {
+            foreach (var errorMatch in rewriter.FindAll(IsActListErrorString, "relic collection act-list error string")
+                         .Items)
+            {
+                if (!rewriter.TryFindBefore(errorMatch,
+                        instruction => IsLinqCall(instruction, nameof(Enumerable.Any)), out var anyMatch))
+                    continue;
+
+                if (!rewriter.TryFindBefore(anyMatch,
+                        instruction => IsLinqCall(instruction, nameof(Enumerable.Except)), out var exceptMatch))
+                    continue;
+
+                if (!rewriter.TryFindBefore(exceptMatch, IsModelDbActsCall, out var actsMatch))
+                    continue;
+
+                if (!rewriter.TryFindBefore(actsMatch, instruction => instruction.IsStloc(), out match))
+                    continue;
+
+                return true;
+            }
+
+            match = default;
+            return false;
         }
     }
 }

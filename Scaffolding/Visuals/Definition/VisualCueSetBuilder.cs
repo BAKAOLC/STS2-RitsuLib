@@ -60,6 +60,29 @@ namespace STS2RitsuLib.Scaffolding.Visuals.Definition
         }
 
         /// <summary>
+        ///     Binds one texture to a non-looping timed cue. Completion occurs after <paramref name="durationSeconds" />,
+        ///     allowing state machines to advance to their next state.
+        ///     将一个贴图绑定到非循环的定时 cue。经过 <paramref name="durationSeconds" /> 后完成，
+        ///     使状态机可以进入下一状态。
+        /// </summary>
+        public VisualCueSetBuilder Single(string cueKey, string texturePath, float durationSeconds)
+        {
+            return Single(cueKey, texturePath, durationSeconds, null);
+        }
+
+        /// <summary>
+        ///     Binds one texture to a non-looping timed cue with optional style overrides.
+        ///     将一个贴图绑定到非循环的定时 cue，并可选应用样式覆盖。
+        /// </summary>
+        public VisualCueSetBuilder Single(string cueKey, string texturePath, float durationSeconds,
+            VisualNodeStyle? style)
+        {
+            return Sequence(cueKey, VisualFrameSequenceBuilder.Create()
+                .Frame(texturePath, durationSeconds, style)
+                .Build());
+        }
+
+        /// <summary>
         ///     Binds a built frame sequence to a cue. Removes a single-texture entry for the same cue key if present.
         ///     将已构建的帧序列绑定到 cue。如果同一 cue key 已有单贴图条目，则移除该条目。
         /// </summary>

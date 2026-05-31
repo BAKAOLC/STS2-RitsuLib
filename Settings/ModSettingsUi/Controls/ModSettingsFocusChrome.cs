@@ -13,6 +13,12 @@ namespace STS2RitsuLib.Settings
     {
         private const string ReticleMetaKey = "ritsu_mod_settings_reticle";
 
+        internal static void ReleaseFocusIfInsideTree(this Control? control)
+        {
+            if (control?.IsInsideTree() == true)
+                control.ReleaseFocus();
+        }
+
         internal static void AttachControllerSelectionReticle(Control host)
         {
             if (host.HasMeta(ReticleMetaKey))

@@ -40,6 +40,10 @@ namespace STS2RitsuLib.Ui.Toast
             var border = ColorOr($"components.toast.levels.{levelKey}.border", surfaceBorder);
             var levelTitle = ColorOr($"components.toast.levels.{levelKey}.title", titleColor);
             var levelBody = ColorOr($"components.toast.levels.{levelKey}.body", bodyColor);
+            var progressTrack = ColorOr("components.toast.progress.track",
+                new(accent.R, accent.G, accent.B, 0.18f));
+            var progressFill = ColorOr($"components.toast.levels.{levelKey}.progress",
+                ColorOr("components.toast.progress.fill", accent));
 
             return new(
                 background,
@@ -47,6 +51,8 @@ namespace STS2RitsuLib.Ui.Toast
                 levelTitle,
                 levelBody,
                 accent,
+                progressTrack,
+                progressFill,
                 ColorOr("components.toast.surface.shadow", new(0f, 0f, 0f, 0.28f)),
                 interactiveBadgeBackground,
                 interactiveBadgeForeground,
@@ -68,6 +74,8 @@ namespace STS2RitsuLib.Ui.Toast
                 FloatOr("components.toast.layout.padding.vertical", 12f),
                 FloatOr("components.toast.layout.textSpacing", 4f),
                 FloatOr("components.toast.layout.rowSpacing", 10f),
+                FloatOr("components.toast.progress.height", 3f),
+                FloatOr("components.toast.progress.spacing", 8f),
                 FloatOr("components.toast.layout.imageSize", 44f),
                 FloatOr("components.toast.layout.closeButtonSize", 26f),
                 FloatOr("components.toast.closeButton.layout.paddingH", 2f),

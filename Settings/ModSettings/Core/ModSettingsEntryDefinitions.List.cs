@@ -87,6 +87,8 @@ namespace STS2RitsuLib.Settings
         public Func<ModSettingsListItemContext<TItem>, Control?>? ItemHeaderAccessoryFactory { get; } =
             itemHeaderAccessoryFactory;
 
+        internal override bool CanResetToDefault => BindingCanResetToDefault(Binding);
+
         internal override void CollectChromeBindingSnapshots(
             Dictionary<string, ModSettingsChromeBindingSnapshot> target)
         {
@@ -107,6 +109,11 @@ namespace STS2RitsuLib.Settings
         internal override Control CreateControl(ModSettingsUiContext context)
         {
             return ModSettingsUiFactory.CreateListEntry(context, this);
+        }
+
+        internal override bool TryResetToDefault(IModSettingsUiActionHost host)
+        {
+            return TryResetBindingToDefault(Binding, host);
         }
     }
 
@@ -155,6 +162,8 @@ namespace STS2RitsuLib.Settings
         /// </summary>
         public Func<int, string>? ValueFormatter { get; } = valueFormatter;
 
+        internal override bool CanResetToDefault => BindingCanResetToDefault(Binding);
+
         internal override void CollectChromeBindingSnapshots(
             Dictionary<string, ModSettingsChromeBindingSnapshot> target)
         {
@@ -175,6 +184,11 @@ namespace STS2RitsuLib.Settings
         internal override Control CreateControl(ModSettingsUiContext context)
         {
             return ModSettingsUiFactory.CreateIntSliderEntry(context, this);
+        }
+
+        internal override bool TryResetToDefault(IModSettingsUiActionHost host)
+        {
+            return TryResetBindingToDefault(Binding, host);
         }
     }
 

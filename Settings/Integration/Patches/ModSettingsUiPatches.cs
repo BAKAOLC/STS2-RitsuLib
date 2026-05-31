@@ -119,9 +119,16 @@ namespace STS2RitsuLib.Settings.Patches
     {
         private const string GeneralSettingsResizeHookMeta = "ritsulib_general_settings_content_resize_hook";
 
+        private const string PrewarmScheduledMeta = "ritsulib_mod_settings_prewarm_scheduled";
+        private const double PrewarmInitialDelaySeconds = 3.0d;
+        private const int PrewarmFrameDelay = 1;
+
         private const string EntryLineNodeName = "RitsuLibModSettings";
 
         private const string EntryDividerNodeName = "RitsuLibModSettingsDivider";
+
+        private static readonly ConditionalWeakTable<NSettingsScreen, ModSettingsMirrorPrewarmSession> PrewarmSessions =
+            new();
 
         /// <inheritdoc />
         public static string PatchId => "ritsulib_mod_settings_button";
@@ -155,7 +162,7 @@ namespace STS2RitsuLib.Settings.Patches
             try
             {
                 var line = EnsureEntryPoint(__instance);
-                RefreshState(line);
+                RefreshState(line, __instance);
                 var generalPanel = __instance.GetNode<NSettingsPanel>("%GeneralSettings");
                 ScheduleRefreshGeneralSettingsPanelSize(generalPanel);
                 if (generalPanel.Content is { } generalVBox)
@@ -165,6 +172,108 @@ namespace STS2RitsuLib.Settings.Patches
             {
                 RitsuLibFramework.Logger.Warn($"[Settings] Failed to add mod settings entry point: {ex.Message}");
             }
+
+            TrySchedulePrewarm(__instance);
+        }
+
+        /// <summary>
+        ///     Pre-warms the mod settings UI while the user is still on the vanilla settings screen — before they
+        ///     click "Mod Settings (RitsuLib)". The first open otherwise runs a concentrated one-time
+        ///     initialization (reflection-based mirror registration, sidebar build, first page build) all at once,
+        ///     producing a visible stall. Reflection and data registration run on a background worker; only Godot node
+        ///     creation and UI refresh stay on the main thread.
+        ///     在用户仍处于原版设置界面时(即点击 “Mod Settings (RitsuLib)” 之前)预热 mod 设置 UI。否则首次打开会一次性执行
+        ///     集中的一次性初始化(基于反射的镜像注册、侧边栏构建、首页构建),造成可见卡顿。反射和数据注册在后台线程执行；
+        ///     只有 Godot 节点创建和 UI 刷新留在主线程。
+        /// </summary>
+        private static void TrySchedulePrewarm(NSettingsScreen screen)
+        {
+            if (screen.HasMeta(PrewarmScheduledMeta))
+                return;
+            screen.SetMeta(PrewarmScheduledMeta, true);
+            ScheduleInitialPrewarmStep(screen);
+        }
+
+        private static void PrewarmStep(NSettingsScreen screen)
+        {
+            if (!GodotObject.IsInstanceValid(screen))
+                return;
+
+            try
+            {
+                var session = PrewarmSessions.GetValue(screen, CreatePrewarmSession);
+
+                if (!session.Resume())
+                {
+                    SchedulePrewarmStep(screen, PrewarmFrameDelay);
+                    return;
+                }
+
+                RitsuLibModSettingsBootstrap.RefreshDynamicPages();
+                ScheduleSubmenuPrewarm(screen);
+                PrewarmSessions.Remove(screen);
+            }
+            catch (Exception ex)
+            {
+                PrewarmSessions.Remove(screen);
+                RitsuLibFramework.Logger.Warn($"[Settings] Mod settings prewarm failed: {ex.Message}");
+            }
+        }
+
+        private static void SchedulePrewarmStep(NSettingsScreen screen, int delayFrames)
+        {
+            if (delayFrames <= 0)
+            {
+                Callable.From(() => PrewarmStep(screen)).CallDeferred();
+                return;
+            }
+
+            Callable.From(() => SchedulePrewarmStep(screen, delayFrames - 1)).CallDeferred();
+        }
+
+        private static void ScheduleSubmenuPrewarm(NSettingsScreen screen)
+        {
+            if (!GodotObject.IsInstanceValid(screen))
+                return;
+
+            Callable.From(() => TryCreateSubmenuForPrewarm(screen)).CallDeferred();
+        }
+
+        private static void TryCreateSubmenuForPrewarm(NSettingsScreen screen)
+        {
+            if (!GodotObject.IsInstanceValid(screen))
+                return;
+
+            try
+            {
+                var stack = screen.GetAncestorOfType<NSubmenuStack>();
+                if (stack == null)
+                    return;
+
+                var submenu = ModSettingsSubmenuPatch.Submenus.GetValue(stack, ModSettingsSubmenuPatch.CreateSubmenu);
+                _ = submenu.WaitForFirstPageContentPrewarmedAsync();
+            }
+            catch (Exception ex)
+            {
+                RitsuLibFramework.Logger.Warn($"[Settings] Mod settings submenu prewarm failed: {ex.Message}");
+            }
+        }
+
+        private static void ScheduleInitialPrewarmStep(NSettingsScreen screen)
+        {
+            if (screen.GetTree() is not { } tree)
+            {
+                SchedulePrewarmStep(screen, PrewarmFrameDelay);
+                return;
+            }
+
+            var timer = tree.CreateTimer(PrewarmInitialDelaySeconds);
+            timer.Timeout += () => SchedulePrewarmStep(screen, 0);
+        }
+
+        private static ModSettingsMirrorPrewarmSession CreatePrewarmSession(NSettingsScreen _)
+        {
+            return ModSettingsMirrorRegistrarBootstrap.CreatePrewarmSession();
         }
 
         private static MarginContainer EnsureEntryPoint(NSettingsScreen screen)
@@ -196,6 +305,7 @@ namespace STS2RitsuLib.Settings.Patches
 
             void OpenSubmenu()
             {
+                SchedulePrewarmStep(screen, 0);
                 screen.GetAncestorOfType<NSubmenuStack>()?.PushSubmenuType(typeof(RitsuModSettingsSubmenu));
             }
         }
@@ -250,7 +360,7 @@ namespace STS2RitsuLib.Settings.Patches
             Callable.From(() => RefreshPanelSize(panel)).CallDeferred();
         }
 
-        private static void RefreshState(MarginContainer line)
+        private static void RefreshState(MarginContainer line, NSettingsScreen screen)
         {
             line.Visible = true;
 

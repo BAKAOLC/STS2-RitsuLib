@@ -46,6 +46,9 @@ namespace STS2RitsuLib.Data
                             new RitsuLibSettingsV5ToV6Migration(),
                             new RitsuLibSettingsV6ToV7Migration(),
                             new RitsuLibSettingsV7ToV8Migration(),
+                            new RitsuLibSettingsV8ToV9Migration(),
+                            new RitsuLibSettingsV9ToV10Migration(),
+                            new RitsuLibSettingsV10ToV11Migration(),
                         ]);
                 }
 
@@ -114,6 +117,90 @@ namespace STS2RitsuLib.Data
             Initialize();
             var s = GetSettings();
             return s is { DebugCompatibilityMode: true, DebugCompatAncientArchitect: true };
+        }
+
+        internal static bool IsModSourceHoverTipsEnabled()
+        {
+            Initialize();
+            return GetSettings().ModSourceHoverTipsEnabled;
+        }
+
+        internal static bool ShouldIncludeVanillaModSourceHoverTips()
+        {
+            Initialize();
+            return GetSettings().ModSourceHoverTipsIncludeVanilla;
+        }
+
+        internal static bool ShouldIncludeNonDetailModSourceHoverTips()
+        {
+            Initialize();
+            return GetSettings().ModSourceHoverTipsIncludeNonDetails;
+        }
+
+        internal static bool ShouldShowCardModSourceHoverTips()
+        {
+            Initialize();
+            return GetSettings().ModSourceHoverTipsCards;
+        }
+
+        internal static bool ShouldShowRelicModSourceHoverTips()
+        {
+            Initialize();
+            return GetSettings().ModSourceHoverTipsRelics;
+        }
+
+        internal static bool ShouldShowPotionModSourceHoverTips()
+        {
+            Initialize();
+            return GetSettings().ModSourceHoverTipsPotions;
+        }
+
+        internal static bool ShouldShowPowerModSourceHoverTips()
+        {
+            Initialize();
+            return GetSettings().ModSourceHoverTipsPowers;
+        }
+
+        internal static bool ShouldShowOrbModSourceHoverTips()
+        {
+            Initialize();
+            return GetSettings().ModSourceHoverTipsOrbs;
+        }
+
+        internal static bool ShouldShowEnchantmentModSourceHoverTips()
+        {
+            Initialize();
+            return GetSettings().ModSourceHoverTipsEnchantments;
+        }
+
+        internal static bool ShouldShowAfflictionModSourceHoverTips()
+        {
+            Initialize();
+            return GetSettings().ModSourceHoverTipsAfflictions;
+        }
+
+        internal static bool ShouldShowKeywordModSourceHoverTips()
+        {
+            Initialize();
+            return GetSettings().ModSourceHoverTipsKeywords;
+        }
+
+        internal static bool ShouldShowEventModSourceHoverTips()
+        {
+            Initialize();
+            return GetSettings().ModSourceHoverTipsEvents;
+        }
+
+        internal static bool ShouldShowCreatureModSourceHoverTips()
+        {
+            Initialize();
+            return GetSettings().ModSourceHoverTipsCreatures;
+        }
+
+        internal static bool ShouldShowGameTermModSourceHoverTips()
+        {
+            Initialize();
+            return GetSettings().ModSourceHoverTipsGameTerms;
         }
 
         private static RitsuLibSettings GetSettings()

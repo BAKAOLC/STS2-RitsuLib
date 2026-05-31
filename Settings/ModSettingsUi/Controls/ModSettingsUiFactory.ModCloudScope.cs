@@ -32,7 +32,7 @@ namespace STS2RitsuLib.Settings
             var chosen = false;
             Action? viewportSizedHandler = null;
 
-            CanvasLayer? canvasLayer = new()
+            CanvasLayer canvasLayer = new()
             {
                 Layer = ModalCanvasLayer,
                 Name = "RitsuModSettingsModCloudScopeModal",
@@ -183,7 +183,7 @@ namespace STS2RitsuLib.Settings
 
             void FitModalShieldToViewport()
             {
-                if (canvasLayer == null || canvasLayer.GetChildCount() == 0)
+                if (canvasLayer.GetChildCount() == 0)
                     return;
                 var shield = canvasLayer.GetChild(0) as Control;
                 if (!GodotObject.IsInstanceValid(shield))

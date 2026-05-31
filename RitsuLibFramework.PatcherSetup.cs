@@ -2,25 +2,30 @@ using STS2RitsuLib.Audio.Patches;
 using STS2RitsuLib.CardPiles.Patches;
 using STS2RitsuLib.Cards.FreePlay.Patches;
 using STS2RitsuLib.Cards.Patches;
+using STS2RitsuLib.Cards.Transforms.Patches;
 using STS2RitsuLib.CardTags.Patches;
 using STS2RitsuLib.Combat.CardTargeting.Patches;
 using STS2RitsuLib.Combat.HealthBars.Patches;
 using STS2RitsuLib.Combat.Rewards.Patches;
 using STS2RitsuLib.Combat.Ui.Patches;
 using STS2RitsuLib.Content.Patches;
+using STS2RitsuLib.Diagnostics;
 using STS2RitsuLib.Diagnostics.Patches;
+using STS2RitsuLib.Interactions.RightClick.Patches;
 using STS2RitsuLib.Interop.Patches;
 using STS2RitsuLib.Keywords.Patches;
 using STS2RitsuLib.Lifecycle.Patches;
 using STS2RitsuLib.Localization.Patches;
 using STS2RitsuLib.Models.Capabilities;
 using STS2RitsuLib.Models.Capabilities.Patches;
+using STS2RitsuLib.Models.Identity.Patches;
 using STS2RitsuLib.Models.Patches;
 using STS2RitsuLib.Networking.Sidecar.Patches;
 using STS2RitsuLib.Patching.Core;
 using STS2RitsuLib.Platform;
 using STS2RitsuLib.Platform.Patches;
 using STS2RitsuLib.Relics.Patches;
+using STS2RitsuLib.Relics.Visibility.Patches;
 using STS2RitsuLib.RunData.Patches;
 using STS2RitsuLib.Scaffolding.Cards.HandGlow.Patches;
 using STS2RitsuLib.Scaffolding.Cards.HandOutline.Patches;
@@ -54,7 +59,8 @@ namespace STS2RitsuLib
                 if (!FrameworkPatchersByArea.TryGetValue(area, out var patcher))
                     throw new InvalidOperationException($"Framework patcher for area '{area}' was not initialized.");
 
-                if (!patcher.PatchAll())
+                if (!RitsuLibStartupAudit.Measure(
+                        $"patchAll.{area}({patcher.RegisteredPatchCount})", patcher.PatchAll))
                     return false;
             }
 
@@ -70,7 +76,7 @@ namespace STS2RitsuLib
         private static void RegisterLifecyclePatches()
         {
             ModelSavedDataRegistry.EnsureInitialized();
-            ModelComponents.EnsureInitialized();
+            ModelCapabilities.EnsureInitialized();
 
             var patcher = CreatePatcher(Const.ModId, "framework-core", "framework core");
             patcher.RegisterPatch<ModTypeDiscoveryPatch>();
@@ -162,6 +168,25 @@ namespace STS2RitsuLib
             patcher.RegisterPatch<RitsuLibSidecarNativeTrailerSendPatch>();
             if (!RitsuLibMobileSteamRuntime.SuppressNativeSteamIntegration)
                 patcher.RegisterPatch<RitsuLibSidecarNativeTrailerSteamSendPatch>();
+            patcher.RegisterPatch<RitsuLibSidecarSyncNetBufferPatch>();
+            patcher.RegisterPatch<RitsuLibSidecarSyncLocationChangedPatch>();
+            patcher.RegisterPatch<RitsuLibSidecarSyncHookActionEnqueuedPatch>();
+            patcher.RegisterPatch<ModModelIdentityRunStateCreatePatch>();
+            patcher.RegisterPatch<ModModelIdentityPlayerRunStatePatch>();
+            patcher.RegisterPatch<ModModelIdentityRunStateAddCardPatch>();
+            patcher.RegisterPatch<ModModelIdentityCombatStateAddCardPatch>();
+            patcher.RegisterPatch<CardCmdTransformPatch>();
+            patcher.RegisterPatch<ModModelIdentityPlayerAddRelicPatch>();
+            patcher.RegisterPatch<ModModelIdentityPlayerRemoveRelicPatch>();
+            patcher.RegisterPatch<ModModelIdentityPlayerAddPotionPatch>();
+            patcher.RegisterPatch<ModModelIdentityPlayerRemovePotionPatch>();
+            patcher.RegisterPatch<ModModelIdentityPowerApplyPatch>();
+            patcher.RegisterPatch<ModModelIdentityPowerRemovePatch>();
+            patcher.RegisterPatch<ModModelIdentityEnchantmentPatch>();
+            patcher.RegisterPatch<ModModelIdentityAfflictionPatch>();
+            patcher.RegisterPatch<ModModelIdentityCombatStateAddCreaturePatch>();
+            patcher.RegisterPatch<ModModelIdentityCombatStateRemoveCreaturePatch>();
+            patcher.RegisterPatch<ModModelIdentityPlayerSyncPatch>();
             patcher.RegisterPatch<RitsuLibSidecarLobbyHelloPatch>();
             patcher.RegisterPatch<RitsuLibSidecarStartRunLobbyHostClientConnectedPatch>();
             patcher.RegisterPatch<RitsuLibSidecarStartRunLobbyHostClientDisconnectedPatch>();
@@ -199,8 +224,23 @@ namespace STS2RitsuLib
             patcher.RegisterPatch<NPowerExtraCornerAmountLabelsExitTreePatch>();
             patcher.RegisterPatch<NRelicInventoryHolderExtraCornerAmountLabelsPatch>();
             patcher.RegisterPatch<NRelicInventoryHolderExtraCornerAmountLabelsExitTreePatch>();
+            patcher.RegisterPatch<NRelicInventoryAddVisibilityPatch>();
+            patcher.RegisterPatch<NRelicInventoryRemoveVisibilityPatch>();
+            patcher.RegisterPatch<NRelicInventoryAnimateVisibilityPatch>();
+            patcher.RegisterPatch<RelicModelHoverTipsVisibilityPatch>();
+            patcher.RegisterPatch<RelicModelHoverTipsExcludingRelicVisibilityPatch>();
+            patcher.RegisterPatch<NRelicBasicHolderVisibilityPatch>();
+            patcher.RegisterPatch<NMultiplayerPlayerStateRelicObtainedVisibilityPatch>();
+            patcher.RegisterPatch<NMultiplayerPlayerStateRelicRemovedVisibilityPatch>();
+            patcher.RegisterPatch<NMultiplayerPlayerExpandedStateRelicClickVisibilityPatch>();
+            patcher.RegisterPatch<NMultiplayerPlayerExpandedStateReadyVisibilityPatch>();
+            patcher.RegisterPatch<HoveredModelTrackerRelicVisibilityPatch>();
             patcher.RegisterPatch<NIntentExtraCornerAmountLabelsPatch>();
             patcher.RegisterPatch<NIntentExtraCornerAmountLabelsExitTreePatch>();
+            patcher.RegisterPatch<ModRightClickCardHolderPatch>();
+            patcher.RegisterPatch<ModRightClickRelicPatch>();
+            patcher.RegisterPatch<ModRightClickPowerPatch>();
+            patcher.RegisterPatch<ModRightClickPotionPatch>();
             patcher.RegisterPatch<ArchaicToothGetTranscendenceStarterCardPatch>();
             patcher.RegisterPatch<ArchaicToothGetTranscendenceTransformedCardPatch>();
             patcher.RegisterPatch<ArchaicToothTranscendenceCardsPatch>();
@@ -226,19 +266,19 @@ namespace STS2RitsuLib
             patcher.RegisterPatch<CardModelKeywordsModSeedPatch>();
             patcher.RegisterPatch<CardModelTagsModSeedPatch>();
             patcher.RegisterPatch<CardModelHoverTipsModKeywordPatch>();
-            patcher.RegisterPatch<ModelComponentHookListenerPatches.RunStateHookListenersPatch>();
-            patcher.RegisterPatch<ModelComponentHookListenerPatches.CombatStateHookListenersPatch>();
-            patcher.RegisterPatch<CardModelComponentCapabilityPatches.UpdateDynamicVarPreviewPatch>();
-            patcher.RegisterPatch<CardModelComponentCapabilityPatches.FromSerializableUpgradeReplayPatch>();
-            patcher.RegisterPatch<CardModelComponentCapabilityPatches.UpgradeInternalPatch>();
-            patcher.RegisterPatch<CardModelComponentCapabilityPatches.FinalizeUpgradeInternalPatch>();
-            patcher.RegisterPatch<CardModelComponentCapabilityPatches.DowngradeInternalPatch>();
-            patcher.RegisterPatch<CardModelComponentCapabilityPatches.TransformPatch>();
-            patcher.RegisterPatch<CardModelComponentCapabilityPatches.DescriptionForPilePatch>();
-            patcher.RegisterPatch<CardModelComponentCapabilityPatches.DescriptionForUpgradePreviewPatch>();
-            patcher.RegisterPatch<CardModelComponentCapabilityPatches.HoverTipsPatch>();
-            patcher.RegisterPatch<CardModelComponentCapabilityPatches.ShouldGlowGoldPatch>();
-            patcher.RegisterPatch<CardModelComponentCapabilityPatches.ShouldGlowRedPatch>();
+            patcher.RegisterPatch<ModelCapabilityHookListenerPatches.RunStateHookListenersPatch>();
+            patcher.RegisterPatch<ModelCapabilityHookListenerPatches.CombatStateHookListenersPatch>();
+            patcher.RegisterPatch<CardModelCapabilityPatches.UpdateDynamicVarPreviewPatch>();
+            patcher.RegisterPatch<CardModelCapabilityPatches.FromSerializableUpgradeReplayPatch>();
+            patcher.RegisterPatch<CardModelCapabilityPatches.UpgradeInternalPatch>();
+            patcher.RegisterPatch<CardModelCapabilityPatches.FinalizeUpgradeInternalPatch>();
+            patcher.RegisterPatch<CardModelCapabilityPatches.DowngradeInternalPatch>();
+            patcher.RegisterPatch<CardModelCapabilityPatches.TransformPatch>();
+            patcher.RegisterPatch<CardModelCapabilityPatches.DescriptionForPilePatch>();
+            patcher.RegisterPatch<CardModelCapabilityPatches.DescriptionForUpgradePreviewPatch>();
+            patcher.RegisterPatch<CardModelCapabilityPatches.HoverTipsPatch>();
+            patcher.RegisterPatch<CardModelCapabilityPatches.ShouldGlowGoldPatch>();
+            patcher.RegisterPatch<CardModelCapabilityPatches.ShouldGlowRedPatch>();
             patcher.RegisterPatch<ModelDisplayCapabilityPatches.RelicDynamicDescriptionPatch>();
             patcher.RegisterPatch<ModelDisplayCapabilityPatches.RelicDynamicEventDescriptionPatch>();
             patcher.RegisterPatch<ModelDisplayCapabilityPatches.PotionDynamicDescriptionPatch>();
@@ -303,6 +343,7 @@ namespace STS2RitsuLib
             patcher.RegisterPatch<CardTextureOverridePatch>();
             patcher.RegisterPatch<CardFrameMaterialPatch>();
             patcher.RegisterPatch<CardPoolFrameMaterialPatch>();
+            patcher.RegisterPatch<CardPortraitMaterialPatch>();
             patcher.RegisterPatch<CardAllPortraitPathsPatch>();
             patcher.RegisterPatch<CardOverlayPathPatch>();
             patcher.RegisterPatch<CardOverlayAvailabilityPatch>();
@@ -311,6 +352,15 @@ namespace STS2RitsuLib
             patcher.RegisterPatch<CardBannerMaterialPatch>();
             patcher.RegisterPatch<CardDynamicVarTooltipPatch>();
             patcher.RegisterPatch<DynamicVarTooltipClonePatch>();
+            patcher.RegisterPatch<ContentSourceKeywordHoverTipPatch>();
+            patcher.RegisterPatch<ContentSourceStaticHoverTipPatch>();
+            patcher.RegisterPatch<ContentSourceEnergyHoverTipPatch>();
+            patcher.RegisterPatch<ContentSourceCardHoverTipsPatch>();
+            patcher.RegisterPatch<ContentSourceModelHoverTipPatch>();
+            patcher.RegisterPatch<ContentSourcePowerHoverTipsPatch>();
+            patcher.RegisterPatch<ContentSourceNHoverTipSetShowPatch>();
+            patcher.RegisterPatch<ContentSourceCreatureHoverTipsPatch>();
+            patcher.RegisterPatch<ContentSourceEventLayoutBadgePatch>();
             patcher.RegisterPatch<ModKeywordCardDescriptionPatches>();
             patcher.RegisterPatch<EnergyIconHelperPathPatch>();
             patcher.RegisterPatch<EnergyIconFormatterPatch>();
@@ -325,6 +375,7 @@ namespace STS2RitsuLib
             patcher.RegisterPatch<OrbIconPatch>();
             patcher.RegisterPatch<OrbSpritePathPatch>();
             patcher.RegisterPatch<OrbAssetPathsPatch>();
+            patcher.RegisterPatch<NOrbValueDisplayPolicyPatch>();
 
             patcher.RegisterPatch<PotionImagePathPatch>();
             patcher.RegisterPatch<PotionTexturePatch>();
@@ -425,6 +476,8 @@ namespace STS2RitsuLib
             patcher.RegisterPatch<CharacterGameOverScreenCompatibilityPatch>();
             patcher.RegisterPatch<CharacterVanillaSelectionPolicyPatches>();
             patcher.RegisterPatch<CharacterVanillaSelectionPolicyAllCharactersPatch>();
+            patcher.RegisterPatch<CharacterSelectButtonScrollPatch>();
+            patcher.RegisterPatch<CustomRunCharacterSelectButtonScrollPatch>();
             patcher.RegisterPatch<ModCreatureCombatAnimationPlaybackPatch>();
             patcher.RegisterPatch<NCreatureCombatAnimationInitialBootstrapPatch>();
             patcher.RegisterPatch<NCreatureNonSpineDeathAnimationTriggerPatch>();
@@ -448,6 +501,7 @@ namespace STS2RitsuLib
             patcher.RegisterPatch<RelicCollectionActListPatch>();
             patcher.RegisterPatch<AllPowersPatch>();
             patcher.RegisterPatch<AllOrbsPatch>();
+            patcher.RegisterPatch<OrbModelRandomPoolPolicyPatch>();
             patcher.RegisterPatch<AllSharedCardPoolsPatch>();
             patcher.RegisterPatch<AllSharedEventsPatch>();
             patcher.RegisterPatch<AllEventsPatch>();

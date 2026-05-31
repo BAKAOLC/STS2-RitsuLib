@@ -33,12 +33,15 @@ namespace STS2RitsuLib.Keywords
         ///     Adds a runtime keyword id to the extended target (deduplicated, case-insensitive).
         ///     For every <see cref="CardModel" /> (vanilla or modded) the minted
         ///     <see cref="ModKeywordDefinition.CardKeywordValue" /> is pushed into vanilla
-        ///     <c>CardModel.Keywords</c>; the id must already be registered via <see cref="ModKeywordRegistry" />.
+        ///     <c>CardModel.Keywords</c>; the id does not need to be registered, but registered ids can provide
+        ///     hover-tip metadata.
         ///     向扩展目标添加 runtime keyword id（去重、大小写不敏感）。
         ///     对每个 <see cref="CardModel" />（原版或 modded），minted 的
         ///     <see cref="ModKeywordDefinition.CardKeywordValue" /> 会被推入原版
-        ///     <c>CardModel.Keywords</c>；id 必须已通过 <see cref="ModKeywordRegistry" /> 注册。
+        ///     <c>CardModel.Keywords</c>；id 不需要已注册，但已注册 id 可提供 hover-tip 元数据。
         /// </summary>
+        [Obsolete(
+            "Resolve the id once with ModKeywordRegistry.GetCardKeyword or string.GetModCardKeyword(), then use AddModKeyword(CardKeyword).")]
         public static void AddModKeyword(this object target, string keywordId)
         {
             ArgumentNullException.ThrowIfNull(target);
@@ -88,6 +91,8 @@ namespace STS2RitsuLib.Keywords
         ///     True when the id was present and removed.
         ///     id 曾存在并已移除时为 true。
         /// </returns>
+        [Obsolete(
+            "Resolve the id once with ModKeywordRegistry.GetCardKeyword or string.GetModCardKeyword(), then use RemoveModKeyword(CardKeyword).")]
         public static bool RemoveModKeyword(this object target, string keywordId)
         {
             ArgumentNullException.ThrowIfNull(target);
@@ -124,6 +129,8 @@ namespace STS2RitsuLib.Keywords
         ///     Returns whether the target has the given runtime keyword id currently in effect.
         ///     返回目标当前是否具有给定 runtime keyword id。
         /// </summary>
+        [Obsolete(
+            "Resolve the id once with ModKeywordRegistry.GetCardKeyword or string.GetModCardKeyword(), then use HasModKeyword(CardKeyword).")]
         public static bool HasModKeyword(this object target, string keywordId)
         {
             ArgumentNullException.ThrowIfNull(target);

@@ -95,5 +95,6 @@ namespace STS2RitsuLib.Settings
         bool EditIntensity = false,
         Type? EnumType = null,
         Func<IModSettingsUiActionHost, Control>? CustomControlFactory = null,
+        ModSettingsHostSurface ReadOnlyOnHostSurfaces = ModSettingsHostSurface.None,
         Func<bool>? VisibleWhen = null);
 }

@@ -17,6 +17,19 @@ namespace STS2RitsuLib.Combat.Ui.ExtraCornerAmountLabels
         private static readonly StringName ShadowOffsetY = new("shadow_offset_y");
         private static readonly StringName ShadowOutlineSize = new("shadow_outline_size");
 
+        internal static void Apply(Control target, MegaLabel? amountOnRelic)
+        {
+            switch (target)
+            {
+                case MegaLabel label:
+                    Apply(label, amountOnRelic);
+                    break;
+                case MegaRichTextLabel rich:
+                    Apply(rich, amountOnRelic);
+                    break;
+            }
+        }
+
         internal static void Apply(MegaLabel target, MegaLabel? amountOnRelic)
         {
             if (amountOnRelic == null)
@@ -49,6 +62,38 @@ namespace STS2RitsuLib.Combat.Ui.ExtraCornerAmountLabels
             target.AutoSizeEnabled = true;
         }
 
+        internal static void Apply(MegaRichTextLabel target, MegaLabel? amountOnRelic)
+        {
+            if (amountOnRelic == null)
+            {
+                ExtraCornerCombatFallbackFonts.Apply(target);
+                return;
+            }
+
+            target.MinFontSize = amountOnRelic.MinFontSize;
+            target.MaxFontSize = amountOnRelic.MaxFontSize;
+
+            var font = amountOnRelic.GetThemeFont(ThemeConstants.Label.Font, LabelThemeType)
+                       ?? amountOnRelic.GetThemeFont(ThemeConstants.Label.Font, MegaLabelThemeType);
+            if (font != null)
+                target.AddThemeFontOverride(ThemeConstants.RichTextLabel.NormalFont, font);
+
+            var size = amountOnRelic.GetThemeFontSize(ThemeConstants.Label.FontSize, LabelThemeType);
+            if (size <= 0)
+                size = amountOnRelic.GetThemeFontSize(ThemeConstants.Label.FontSize, MegaLabelThemeType);
+            if (size > 0)
+                target.AddThemeFontSizeOverride(ThemeConstants.RichTextLabel.NormalFontSize, size);
+
+            var color = amountOnRelic.GetThemeColor(ThemeConstants.Label.FontColor, LabelThemeType);
+            if (color.A <= 0f)
+                color = amountOnRelic.GetThemeColor(ThemeConstants.Label.FontColor, MegaLabelThemeType);
+            if (color.A > 0f)
+                target.AddThemeColorOverride(ThemeConstants.RichTextLabel.DefaultColor, color);
+
+            CopyRelicAmountOutlineAndShadow(target, amountOnRelic);
+            target.AutoSizeEnabled = true;
+        }
+
         private static void CopyRelicAmountOutlineAndShadow(MegaLabel target, MegaLabel source)
         {
             var outlineColor = source.GetThemeColor(ThemeConstants.Label.FontOutlineColor, LabelThemeType);
@@ -74,6 +119,21 @@ namespace STS2RitsuLib.Combat.Ui.ExtraCornerAmountLabels
             var sos = source.GetThemeConstant(ShadowOutlineSize, LabelThemeType);
             if (sos != 0)
                 target.AddThemeConstantOverride(ShadowOutlineSize, sos);
+        }
+
+        private static void CopyRelicAmountOutlineAndShadow(MegaRichTextLabel target, MegaLabel source)
+        {
+            var outlineColor = source.GetThemeColor(ThemeConstants.Label.FontOutlineColor, LabelThemeType);
+            if (outlineColor.A > 0f)
+                target.AddThemeColorOverride(ThemeConstants.RichTextLabel.FontOutlineColor, outlineColor);
+
+            var shadowColor = source.GetThemeColor(ThemeConstants.Label.FontShadowColor, LabelThemeType);
+            if (shadowColor.A > 0f)
+                target.AddThemeColorOverride(ThemeConstants.RichTextLabel.FontShadowColor, shadowColor);
+
+            var outlineSize = source.GetThemeConstant(ThemeConstants.Label.OutlineSize, LabelThemeType);
+            if (outlineSize > 0)
+                target.AddThemeConstantOverride(ThemeConstants.Label.OutlineSize, outlineSize);
         }
     }
 }

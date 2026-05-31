@@ -19,6 +19,20 @@ namespace STS2RitsuLib.Settings
                 .WithSortOrder(-1000)
                 .AddSection("general", section => section
                     .WithTitle(T("ritsulib.section.general.title", "General"))
+                    .AddSubpage(
+                        "content_source_hover_tips_open",
+                        T("ritsulib.modSourceHoverTips.pageLink.label", "Content source display"),
+                        "content-source-hover-tips",
+                        T("button.open", "Open"),
+                        T("ritsulib.modSourceHoverTips.pageLink.description",
+                            "Choose which content groups show source hover tips."))
+                    .AddSubpage(
+                        "content_mod_load_order_open",
+                        T("ritsulib.contentModLoadOrder.pageLink.label", "Content mod load order"),
+                        "content-mod-load-order",
+                        T("button.open", "Open"),
+                        T("ritsulib.contentModLoadOrder.pageLink.description",
+                            "Sort, copy, or apply the saved load order for content-affecting mods and their dependencies."))
                     .AddChoice(
                         "ui_shell_theme_id",
                         T("ritsulib.uiShellTheme.label", "Interface theme"),
@@ -203,7 +217,7 @@ namespace STS2RitsuLib.Settings
                             "Deletes mod data from Steam Cloud for this profile. Local files are not removed. Requires confirmation.")))
                 .AddSection("dev_debug_tools", section => section
                     .WithTitle(T("ritsulib.section.devDebugTools.title", "Developer debug tools"))
-                    .Collapsible(true)
+                    .Collapsible()
                     .AddSubpage(
                         "harmony_patch_dump_open",
                         T("ritsulib.section.harmonyDump.title", "Harmony patch dump"),

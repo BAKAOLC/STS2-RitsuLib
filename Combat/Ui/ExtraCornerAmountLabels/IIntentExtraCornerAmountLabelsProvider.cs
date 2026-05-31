@@ -18,6 +18,22 @@ namespace STS2RitsuLib.Combat.Ui.ExtraCornerAmountLabels
     }
 
     /// <summary>
+    ///     Implemented by <see cref="MegaCrit.Sts2.Core.MonsterMoves.Intents.AbstractIntent" /> subclasses to render
+    ///     additional corner labels with per-slot plain/rich text mode. Takes precedence over
+    ///     <see cref="IIntentExtraCornerAmountLabelsProvider" /> when both are implemented.
+    ///     由 <see cref="MegaCrit.Sts2.Core.MonsterMoves.Intents.AbstractIntent" /> 子类实现，用于渲染带有逐槽位
+    ///     普通/富文本模式的额外角落标签。当同时实现 <see cref="IIntentExtraCornerAmountLabelsProvider" /> 时优先使用此接口。
+    /// </summary>
+    public interface IIntentExtraCornerAmountLabelSpecsProvider
+    {
+        /// <summary>
+        ///     Each entry with non-whitespace <see cref="ExtraIconAmountLabelSpec.Text" /> becomes one badge.
+        ///     每个带有非空白 <see cref="ExtraIconAmountLabelSpec.Text" /> 的条目都会生成一个徽标。
+        /// </summary>
+        IReadOnlyList<ExtraIconAmountLabelSpec> GetIntentExtraCornerAmountLabelSpecs();
+    }
+
+    /// <summary>
     ///     Optional invalidation when only intent extra slots change without
     ///     <see cref="MegaCrit.Sts2.Core.Nodes.Combat.NIntent.UpdateVisuals" /> being driven by combat ticks.
     ///     可选的失效通知：仅意图额外槽位发生变化，且没有由战斗 tick 驱动

@@ -206,7 +206,8 @@ namespace STS2RitsuLib.Scaffolding.Content.Patches
                     string.IsNullOrWhiteSpace(a.EnergyIconPath) && string.IsNullOrWhiteSpace(a.FrameMaterialPath) &&
                     string.IsNullOrWhiteSpace(a.OverlayScenePath) && string.IsNullOrWhiteSpace(a.BannerTexturePath) &&
                     string.IsNullOrWhiteSpace(a.BannerMaterialPath) && a.FrameMaterial == null &&
-                    a.BannerMaterial == null)
+                    a.BannerMaterial == null && string.IsNullOrWhiteSpace(a.PortraitMaterialPath) &&
+                    a.PortraitMaterial == null)
                     return null;
 
                 return a;
@@ -460,6 +461,28 @@ namespace STS2RitsuLib.Scaffolding.Content.Patches
             var path = profile.FrameMaterialPath;
             if (string.IsNullOrWhiteSpace(path) ||
                 !AssetPathDiagnostics.Exists(path, instance, nameof(CardAssetProfile.FrameMaterialPath)))
+                return true;
+
+            result = ResourceLoader.Load<Material>(path);
+            return false;
+        }
+
+        internal static bool TryCardPortraitMaterial(CardModel instance, ref Material result)
+        {
+            var overrides = TryGetOwningCharacterOverrides(instance);
+            var profile = overrides?.TryGetVanillaCardVisualOverrideForContext(instance);
+            if (profile == null)
+                return true;
+
+            if (profile.PortraitMaterial != null)
+            {
+                result = profile.PortraitMaterial;
+                return false;
+            }
+
+            var path = profile.PortraitMaterialPath;
+            if (string.IsNullOrWhiteSpace(path) ||
+                !AssetPathDiagnostics.Exists(path, instance, nameof(CardAssetProfile.PortraitMaterialPath)))
                 return true;
 
             result = ResourceLoader.Load<Material>(path);

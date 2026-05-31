@@ -59,6 +59,18 @@ public override CharacterAssetProfile AssetProfile => new()
 };
 ```
 
+For a still frame that should hold briefly and then let the state machine return to idle, use the builder:
+
+```csharp
+public override CharacterAssetProfile AssetProfile => new()
+{
+    VisualCues = VisualCueSetBuilder.Create()
+        .Single("idle", "res://MyMod/images/character/idle.png")
+        .Single("attack", "res://MyMod/images/character/attack.png", 0.5f)
+        .Build()
+};
+```
+
 Keep cue names aligned with the animation states your model or state machine will request.
 
 :::
@@ -78,6 +90,18 @@ public override CharacterAssetProfile AssetProfile => new()
             ["idle"] = "res://MyMod/images/character/idle.png",
             ["hit"] = "res://MyMod/images/character/hit.png",
         })
+};
+```
+
+如果某个静态帧需要短暂停留，然后让状态机回到 idle，可以用 builder：
+
+```csharp
+public override CharacterAssetProfile AssetProfile => new()
+{
+    VisualCues = VisualCueSetBuilder.Create()
+        .Single("idle", "res://MyMod/images/character/idle.png")
+        .Single("attack", "res://MyMod/images/character/attack.png", 0.5f)
+        .Build()
 };
 ```
 

@@ -15,6 +15,11 @@ namespace STS2RitsuLib.Ui.Shell
         /// </summary>
         public static StyleBoxFlat CreateSurfaceStyle()
         {
+            return RitsuShellStyleCache.GetOrBuild("chrome.surface", BuildSurfaceStyle);
+        }
+
+        private static StyleBoxFlat BuildSurfaceStyle()
+        {
             var t = RitsuShellTheme.Current;
             var cornerRadii = RitsuShellThemeLayoutResolver.ResolveCornerRadii("components.surface.layout.cornerRadius",
                 t.Metric.Radius.Default);
@@ -55,6 +60,12 @@ namespace STS2RitsuLib.Ui.Shell
         ///     当 <see langword="true" /> 时，使用更粗的边框和更强的阴影。
         /// </param>
         public static StyleBoxFlat CreateEntryFieldFrameStyle(bool emphasized)
+        {
+            return RitsuShellStyleCache.GetOrBuild(emphasized ? "chrome.entryField.emph" : "chrome.entryField",
+                () => BuildEntryFieldFrameStyle(emphasized));
+        }
+
+        private static StyleBoxFlat BuildEntryFieldFrameStyle(bool emphasized)
         {
             var t = RitsuShellTheme.Current;
             var cornerRadii = RitsuShellThemeLayoutResolver.ResolveCornerRadii(
@@ -101,6 +112,11 @@ namespace STS2RitsuLib.Ui.Shell
         /// </summary>
         public static StyleBoxFlat CreateColorPickerSwatchFrameStyle()
         {
+            return RitsuShellStyleCache.GetOrBuild("chrome.colorSwatch", BuildColorPickerSwatchFrameStyle);
+        }
+
+        private static StyleBoxFlat BuildColorPickerSwatchFrameStyle()
+        {
             var t = RitsuShellTheme.Current;
             var cornerRadii = RitsuShellThemeLayoutResolver.ResolveCornerRadii(
                 "components.colorSwatch.layout.cornerRadius",
@@ -132,6 +148,11 @@ namespace STS2RitsuLib.Ui.Shell
         ///     为次级内容块构建凹陷面板（内嵌背景）。
         /// </summary>
         public static StyleBoxFlat CreateInsetSurfaceStyle()
+        {
+            return RitsuShellStyleCache.GetOrBuild("chrome.inset", BuildInsetSurfaceStyle);
+        }
+
+        private static StyleBoxFlat BuildInsetSurfaceStyle()
         {
             var t = RitsuShellTheme.Current;
             var cornerRadii = RitsuShellThemeLayoutResolver.ResolveCornerRadii(
@@ -173,6 +194,12 @@ namespace STS2RitsuLib.Ui.Shell
         /// </param>
         public static StyleBoxFlat CreateChromeActionsMenuStyle(bool highlighted)
         {
+            return RitsuShellStyleCache.GetOrBuild(highlighted ? "chrome.actionsMenu.hl" : "chrome.actionsMenu",
+                () => BuildChromeActionsMenuStyle(highlighted));
+        }
+
+        private static StyleBoxFlat BuildChromeActionsMenuStyle(bool highlighted)
+        {
             var t = RitsuShellTheme.Current;
             var cornerRadii = RitsuShellThemeLayoutResolver.ResolveCornerRadii(
                 "components.chromeMenu.layout.cornerRadius",
@@ -210,6 +237,11 @@ namespace STS2RitsuLib.Ui.Shell
         ///     构建每页工具栏控件（搜索、动作）后方的托盘。
         /// </summary>
         public static StyleBoxFlat CreatePageToolbarTrayStyle()
+        {
+            return RitsuShellStyleCache.GetOrBuild("chrome.toolbarTray", BuildPageToolbarTrayStyle);
+        }
+
+        private static StyleBoxFlat BuildPageToolbarTrayStyle()
         {
             var t = RitsuShellTheme.Current;
             var cornerRadii = RitsuShellThemeLayoutResolver.ResolveCornerRadii(
@@ -249,6 +281,11 @@ namespace STS2RitsuLib.Ui.Shell
         /// </summary>
         public static StyleBoxFlat CreateListShellStyle()
         {
+            return RitsuShellStyleCache.GetOrBuild("chrome.listShell", BuildListShellStyle);
+        }
+
+        private static StyleBoxFlat BuildListShellStyle()
+        {
             var t = RitsuShellTheme.Current;
             var cornerRadii = RitsuShellThemeLayoutResolver.ResolveCornerRadii(
                 "components.listShell.layout.cornerRadius",
@@ -286,6 +323,12 @@ namespace STS2RitsuLib.Ui.Shell
         /// </param>
         public static StyleBoxFlat CreateListItemCardStyle(bool accent = false)
         {
+            return RitsuShellStyleCache.GetOrBuild(accent ? "chrome.listItem.accent" : "chrome.listItem",
+                () => BuildListItemCardStyle(accent));
+        }
+
+        private static StyleBoxFlat BuildListItemCardStyle(bool accent)
+        {
             var t = RitsuShellTheme.Current;
             var cornerRadii = RitsuShellThemeLayoutResolver.ResolveCornerRadii(
                 "components.listItem.layout.cornerRadius",
@@ -319,6 +362,11 @@ namespace STS2RitsuLib.Ui.Shell
         ///     为内联列表编辑构建内部编辑器表面（例如路径或文本行）。
         /// </summary>
         public static StyleBoxFlat CreateListEditorSurfaceStyle()
+        {
+            return RitsuShellStyleCache.GetOrBuild("chrome.listEditor", BuildListEditorSurfaceStyle);
+        }
+
+        private static StyleBoxFlat BuildListEditorSurfaceStyle()
         {
             var t = RitsuShellTheme.Current;
             var cornerRadii = RitsuShellThemeLayoutResolver.ResolveCornerRadii(
@@ -362,6 +410,12 @@ namespace STS2RitsuLib.Ui.Shell
         /// </param>
         public static StyleBoxFlat CreatePillStyle(bool highlighted = false)
         {
+            return RitsuShellStyleCache.GetOrBuild(highlighted ? "chrome.pill.hl" : "chrome.pill",
+                () => BuildPillStyle(highlighted));
+        }
+
+        private static StyleBoxFlat BuildPillStyle(bool highlighted)
+        {
             var t = RitsuShellTheme.Current;
             var cornerRadii = RitsuShellThemeLayoutResolver.ResolveCornerRadii("components.pill.layout.cornerRadius",
                 t.Metric.Radius.Default);
@@ -399,6 +453,11 @@ namespace STS2RitsuLib.Ui.Shell
         ///     chrome 令牌对齐。
         /// </summary>
         public static StyleBoxFlat CreateTooltipPanelStyle()
+        {
+            return RitsuShellStyleCache.GetOrBuild("chrome.tooltip", BuildTooltipPanelStyle);
+        }
+
+        private static StyleBoxFlat BuildTooltipPanelStyle()
         {
             var t = RitsuShellTheme.Current;
             var cornerRadii =

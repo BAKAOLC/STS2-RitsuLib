@@ -52,7 +52,18 @@ namespace STS2RitsuLib.Combat.HealthBars
             Color color,
             Color? overlaySelfModulate)
         {
-            return new(For(context), color, HealthBarForecastGrowthDirection.FromRight, overlaySelfModulate);
+            return FromRight(context, color, overlaySelfModulate, true);
+        }
+
+        /// <inheritdoc cref="FromRight(HealthBarForecastContext, Color, Color?)" />
+        public static HealthBarForecastLaneBuilder FromRight(
+            HealthBarForecastContext context,
+            Color color,
+            Color? overlaySelfModulate,
+            bool affectsHpLabel)
+        {
+            return new(For(context), color, HealthBarForecastGrowthDirection.FromRight, overlaySelfModulate,
+                affectsHpLabel);
         }
 
         /// <summary>
@@ -70,7 +81,18 @@ namespace STS2RitsuLib.Combat.HealthBars
             Color color,
             Color? overlaySelfModulate)
         {
-            return new(For(context), color, HealthBarForecastGrowthDirection.FromLeft, overlaySelfModulate);
+            return FromLeft(context, color, overlaySelfModulate, true);
+        }
+
+        /// <inheritdoc cref="FromRight(HealthBarForecastContext, Color, Color?)" />
+        public static HealthBarForecastLaneBuilder FromLeft(
+            HealthBarForecastContext context,
+            Color color,
+            Color? overlaySelfModulate,
+            bool affectsHpLabel)
+        {
+            return new(For(context), color, HealthBarForecastGrowthDirection.FromLeft, overlaySelfModulate,
+                affectsHpLabel);
         }
 
         /// <summary>
@@ -125,10 +147,27 @@ namespace STS2RitsuLib.Combat.HealthBars
             Material? overlayMaterial,
             Color? overlaySelfModulate)
         {
+            return Single(amount, color, direction, order, overlayMaterial, overlaySelfModulate, true);
+        }
+
+        /// <inheritdoc cref="Single(int, Color, HealthBarForecastGrowthDirection, int, Material?, Color?)" />
+        public static IEnumerable<HealthBarForecastSegment> Single(
+            int amount,
+            Color color,
+            HealthBarForecastGrowthDirection direction,
+            int order,
+            Material? overlayMaterial,
+            Color? overlaySelfModulate,
+            bool affectsHpLabel)
+        {
             if (amount <= 0)
                 return [];
 
-            return [new(amount, color, direction, order, overlayMaterial, overlaySelfModulate)];
+            return
+            [
+                new(amount, color, direction, order, overlayMaterial, overlaySelfModulate,
+                    AffectsHpLabel: affectsHpLabel),
+            ];
         }
 
         /// <summary>
@@ -211,11 +250,25 @@ namespace STS2RitsuLib.Combat.HealthBars
             Material? overlayMaterial,
             Color? overlaySelfModulate)
         {
+            return Add(amount, color, direction, order, overlayMaterial, overlaySelfModulate, true);
+        }
+
+        /// <inheritdoc cref="Add(int, Color, HealthBarForecastGrowthDirection, int, Material?, Color?)" />
+        public HealthBarForecastSequenceBuilder Add(
+            int amount,
+            Color color,
+            HealthBarForecastGrowthDirection direction,
+            int order,
+            Material? overlayMaterial,
+            Color? overlaySelfModulate,
+            bool affectsHpLabel)
+        {
             if (amount <= 0)
                 return this;
 
             var segment =
-                new HealthBarForecastSegment(amount, color, direction, order, overlayMaterial, overlaySelfModulate);
+                new HealthBarForecastSegment(amount, color, direction, order, overlayMaterial, overlaySelfModulate,
+                    AffectsHpLabel: affectsHpLabel);
             if (_segments.Count > 0)
             {
                 var last = _segments[^1];
@@ -293,10 +346,23 @@ namespace STS2RitsuLib.Combat.HealthBars
             Material? overlayMaterial,
             Color? overlaySelfModulate)
         {
+            return AddRange(amounts, color, direction, order, overlayMaterial, overlaySelfModulate, true);
+        }
+
+        /// <inheritdoc cref="AddRange(IEnumerable{int}, Color, HealthBarForecastGrowthDirection, int, Material?, Color?)" />
+        public HealthBarForecastSequenceBuilder AddRange(
+            IEnumerable<int> amounts,
+            Color color,
+            HealthBarForecastGrowthDirection direction,
+            int order,
+            Material? overlayMaterial,
+            Color? overlaySelfModulate,
+            bool affectsHpLabel)
+        {
             ArgumentNullException.ThrowIfNull(amounts);
 
             foreach (var amount in amounts)
-                Add(amount, color, direction, order, overlayMaterial, overlaySelfModulate);
+                Add(amount, color, direction, order, overlayMaterial, overlaySelfModulate, affectsHpLabel);
 
             return this;
         }
@@ -360,7 +426,13 @@ namespace STS2RitsuLib.Combat.HealthBars
         /// <inheritdoc cref="HealthBarForecasts.FromRight(HealthBarForecastContext, Color, Color?)" />
         public HealthBarForecastLaneBuilder FromRight(Color color, Color? overlaySelfModulate)
         {
-            return new(this, color, HealthBarForecastGrowthDirection.FromRight, overlaySelfModulate);
+            return FromRight(color, overlaySelfModulate, true);
+        }
+
+        /// <inheritdoc cref="FromRight(Color, Color?)" />
+        public HealthBarForecastLaneBuilder FromRight(Color color, Color? overlaySelfModulate, bool affectsHpLabel)
+        {
+            return new(this, color, HealthBarForecastGrowthDirection.FromRight, overlaySelfModulate, affectsHpLabel);
         }
 
         /// <summary>
@@ -375,7 +447,13 @@ namespace STS2RitsuLib.Combat.HealthBars
         /// <inheritdoc cref="FromRight(Color, Color?)" />
         public HealthBarForecastLaneBuilder FromLeft(Color color, Color? overlaySelfModulate)
         {
-            return new(this, color, HealthBarForecastGrowthDirection.FromLeft, overlaySelfModulate);
+            return FromLeft(color, overlaySelfModulate, true);
+        }
+
+        /// <inheritdoc cref="FromRight(Color, Color?)" />
+        public HealthBarForecastLaneBuilder FromLeft(Color color, Color? overlaySelfModulate, bool affectsHpLabel)
+        {
+            return new(this, color, HealthBarForecastGrowthDirection.FromLeft, overlaySelfModulate, affectsHpLabel);
         }
 
         /// <summary>
@@ -395,6 +473,7 @@ namespace STS2RitsuLib.Combat.HealthBars
                    left.OverlaySelfModulate == right.OverlaySelfModulate &&
                    left.LeftOriginLayout == right.LeftOriginLayout &&
                    left.LeftExclusiveZGroup == right.LeftExclusiveZGroup &&
+                   left.AffectsHpLabel == right.AffectsHpLabel &&
                    ReferenceEquals(left.OverlayMaterial, right.OverlayMaterial);
         }
     }
@@ -419,11 +498,16 @@ namespace STS2RitsuLib.Combat.HealthBars
     ///     When set, used as <see cref="CanvasItem.SelfModulate" /> for segments in this lane.
     ///     设置后，用作此轨道中片段的 <see cref="CanvasItem.SelfModulate" />。
     /// </param>
+    /// <param name="affectsHpLabel">
+    ///     Whether this lane's segments can recolor the HP label at lethal threshold.
+    ///     此轨道中的片段达到致命阈值时是否可以重染 HP 标签。
+    /// </param>
     public sealed class HealthBarForecastLaneBuilder(
         HealthBarForecastSequenceBuilder sequence,
         Color color,
         HealthBarForecastGrowthDirection direction,
-        Color? overlaySelfModulate = null)
+        Color? overlaySelfModulate = null,
+        bool affectsHpLabel = true)
     {
         /// <summary>
         ///     Parent sequence builder.
@@ -437,7 +521,7 @@ namespace STS2RitsuLib.Combat.HealthBars
         /// </summary>
         public HealthBarForecastLaneBuilder Add(int amount, int order, Material? overlayMaterial)
         {
-            Sequence.Add(amount, color, direction, order, overlayMaterial, overlaySelfModulate);
+            Sequence.Add(amount, color, direction, order, overlayMaterial, overlaySelfModulate, affectsHpLabel);
             return this;
         }
 
@@ -456,7 +540,7 @@ namespace STS2RitsuLib.Combat.HealthBars
         /// </summary>
         public HealthBarForecastLaneBuilder AddRange(IEnumerable<int> amounts, int order, Material? overlayMaterial)
         {
-            Sequence.AddRange(amounts, color, direction, order, overlayMaterial, overlaySelfModulate);
+            Sequence.AddRange(amounts, color, direction, order, overlayMaterial, overlaySelfModulate, affectsHpLabel);
             return this;
         }
 
@@ -476,7 +560,7 @@ namespace STS2RitsuLib.Combat.HealthBars
         public HealthBarForecastLaneBuilder AtSideTurnStart(CombatSide triggerSide, params int[] amounts)
         {
             var order = HealthBarForecastOrder.ForSideTurnStart(Sequence.Context.Creature, triggerSide);
-            Sequence.AddRange(amounts, color, direction, order, null, overlaySelfModulate);
+            Sequence.AddRange(amounts, color, direction, order, null, overlaySelfModulate, affectsHpLabel);
             return this;
         }
 
@@ -487,7 +571,7 @@ namespace STS2RitsuLib.Combat.HealthBars
         public HealthBarForecastLaneBuilder AtSideTurnEnd(CombatSide triggerSide, params int[] amounts)
         {
             var order = HealthBarForecastOrder.ForSideTurnEnd(Sequence.Context.Creature, triggerSide);
-            Sequence.AddRange(amounts, color, direction, order, null, overlaySelfModulate);
+            Sequence.AddRange(amounts, color, direction, order, null, overlaySelfModulate, affectsHpLabel);
             return this;
         }
 

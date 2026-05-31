@@ -1,3 +1,5 @@
+using System.Collections.Concurrent;
+using System.Runtime.CompilerServices;
 using Godot;
 
 namespace STS2RitsuLib.Ui.Shell.Theme
@@ -14,6 +16,25 @@ namespace STS2RitsuLib.Ui.Shell.Theme
 
     internal static class RitsuShellThemeLayoutResolver
     {
+        /// <summary>
+        ///     Per-theme memo of resolved <see cref="BoxEdges" /> / <see cref="BoxCorners" />, keyed by
+        ///     <c>(basePath, fallback)</c>. Both <see cref="ResolveEdges" /> and <see cref="ResolveCornerRadii" />
+        ///     issue up to six token reads plus six path concatenations per call, and are invoked many times per
+        ///     <see cref="StyleBoxFlat" /> while building a settings page. The table is keyed by the immutable
+        ///     theme snapshot, so it is dropped automatically (via <see cref="ConditionalWeakTable{TKey,TValue}" />)
+        ///     when <see cref="RitsuShellTheme.Current" /> is replaced on a theme change.
+        ///     逐主题缓存已解析的 <see cref="BoxEdges" /> / <see cref="BoxCorners" />，键为 <c>(basePath, fallback)</c>。
+        ///     <see cref="ResolveEdges" /> 与 <see cref="ResolveCornerRadii" /> 每次调用都会做多达六次令牌读取加六次路径拼接，
+        ///     并在构建设置页面时为每个 <see cref="StyleBoxFlat" /> 多次调用。该表以不可变主题快照为键，故在主题变化导致
+        ///     <see cref="RitsuShellTheme.Current" /> 被替换时通过 <see cref="ConditionalWeakTable{TKey,TValue}" /> 自动失效。
+        /// </summary>
+        private static readonly ConditionalWeakTable<RitsuShellTheme, ThemeBoxMemo> BoxMemos = new();
+
+        private static ThemeBoxMemo MemoFor(RitsuShellTheme theme)
+        {
+            return BoxMemos.GetValue(theme, static _ => new());
+        }
+
         internal static int ResolveInt(string path, int fallback)
         {
             return RitsuShellTheme.Current.TryGetNumber(path, out var value)
@@ -29,6 +50,12 @@ namespace STS2RitsuLib.Ui.Shell.Theme
         }
 
         internal static BoxEdges ResolveEdges(string basePath, int fallbackAll)
+        {
+            return MemoFor(RitsuShellTheme.Current).Edges
+                .GetOrAdd(new(basePath, fallbackAll), static key => ComputeEdges(key.BasePath, key.Fallback));
+        }
+
+        private static BoxEdges ComputeEdges(string basePath, int fallbackAll)
         {
             var all = ResolveInt(basePath, fallbackAll);
             all = ResolveInt(basePath + ".all", all);
@@ -46,6 +73,13 @@ namespace STS2RitsuLib.Ui.Shell.Theme
         ///     与 <see cref="ResolveEdges" /> 一致。
         /// </summary>
         internal static BoxCorners ResolveCornerRadii(string basePath, int fallbackUniform)
+        {
+            return MemoFor(RitsuShellTheme.Current).Corners
+                .GetOrAdd(new(basePath, fallbackUniform),
+                    static key => ComputeCornerRadii(key.BasePath, key.Fallback));
+        }
+
+        private static BoxCorners ComputeCornerRadii(string basePath, int fallbackUniform)
         {
             var all = ResolveInt(basePath, fallbackUniform);
             all = ResolveInt(basePath + ".all", all);
@@ -66,6 +100,14 @@ namespace STS2RitsuLib.Ui.Shell.Theme
             var height = ResolveFloat(basePath + ".height", fallback.Y);
             height = ResolveFloat(basePath + ".minHeight", height);
             return new(width, height);
+        }
+
+        private readonly record struct BoxMemoKey(string BasePath, int Fallback);
+
+        private sealed class ThemeBoxMemo
+        {
+            public readonly ConcurrentDictionary<BoxMemoKey, BoxCorners> Corners = new();
+            public readonly ConcurrentDictionary<BoxMemoKey, BoxEdges> Edges = new();
         }
     }
 }

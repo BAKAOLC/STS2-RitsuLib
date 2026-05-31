@@ -18,6 +18,21 @@ namespace STS2RitsuLib.Settings
         public IModSettingsValueBinding<bool> DebugCompatAncientArchitect { get; private init; } =
             null!;
 
+        public IModSettingsValueBinding<bool> ModSourceHoverTipsEnabled { get; private init; } = null!;
+        public IModSettingsValueBinding<bool> ModSourceHoverTipsIncludeVanilla { get; private init; } = null!;
+        public IModSettingsValueBinding<bool> ModSourceHoverTipsIncludeNonDetails { get; private init; } = null!;
+        public IModSettingsValueBinding<bool> ModSourceHoverTipsCards { get; private init; } = null!;
+        public IModSettingsValueBinding<bool> ModSourceHoverTipsRelics { get; private init; } = null!;
+        public IModSettingsValueBinding<bool> ModSourceHoverTipsPotions { get; private init; } = null!;
+        public IModSettingsValueBinding<bool> ModSourceHoverTipsPowers { get; private init; } = null!;
+        public IModSettingsValueBinding<bool> ModSourceHoverTipsOrbs { get; private init; } = null!;
+        public IModSettingsValueBinding<bool> ModSourceHoverTipsEnchantments { get; private init; } = null!;
+        public IModSettingsValueBinding<bool> ModSourceHoverTipsAfflictions { get; private init; } = null!;
+        public IModSettingsValueBinding<bool> ModSourceHoverTipsKeywords { get; private init; } = null!;
+        public IModSettingsValueBinding<bool> ModSourceHoverTipsEvents { get; private init; } = null!;
+        public IModSettingsValueBinding<bool> ModSourceHoverTipsCreatures { get; private init; } = null!;
+        public IModSettingsValueBinding<bool> ModSourceHoverTipsGameTerms { get; private init; } = null!;
+
         public IModSettingsValueBinding<string> HarmonyPatchDumpOutputPath { get; private init; } =
             null!;
 
@@ -128,6 +143,71 @@ namespace STS2RitsuLib.Settings
                         settings => settings.DebugCompatAncientArchitect,
                         (settings, value) => settings.DebugCompatAncientArchitect = value),
                     () => defaults.DebugCompatAncientArchitect),
+                ModSourceHoverTipsEnabled = ModSettingsBindings.WithDefault(
+                    ModSettingsBindings.Global<RitsuLibSettings, bool>(
+                        Const.ModId,
+                        Const.SettingsKey,
+                        settings => settings.ModSourceHoverTipsEnabled,
+                        (settings, value) => settings.ModSourceHoverTipsEnabled = value),
+                    () => defaults.ModSourceHoverTipsEnabled),
+                ModSourceHoverTipsIncludeVanilla = ModSettingsBindings.WithDefault(
+                    ModSettingsBindings.Global<RitsuLibSettings, bool>(
+                        Const.ModId,
+                        Const.SettingsKey,
+                        settings => settings.ModSourceHoverTipsIncludeVanilla,
+                        (settings, value) => settings.ModSourceHoverTipsIncludeVanilla = value),
+                    () => defaults.ModSourceHoverTipsIncludeVanilla),
+                ModSourceHoverTipsIncludeNonDetails = ModSettingsBindings.WithDefault(
+                    ModSettingsBindings.Global<RitsuLibSettings, bool>(
+                        Const.ModId,
+                        Const.SettingsKey,
+                        settings => settings.ModSourceHoverTipsIncludeNonDetails,
+                        (settings, value) => settings.ModSourceHoverTipsIncludeNonDetails = value),
+                    () => defaults.ModSourceHoverTipsIncludeNonDetails),
+                ModSourceHoverTipsCards = CreateModSourceHoverTipsBinding(
+                    settings => settings.ModSourceHoverTipsCards,
+                    (settings, value) => settings.ModSourceHoverTipsCards = value,
+                    () => defaults.ModSourceHoverTipsCards),
+                ModSourceHoverTipsRelics = CreateModSourceHoverTipsBinding(
+                    settings => settings.ModSourceHoverTipsRelics,
+                    (settings, value) => settings.ModSourceHoverTipsRelics = value,
+                    () => defaults.ModSourceHoverTipsRelics),
+                ModSourceHoverTipsPotions = CreateModSourceHoverTipsBinding(
+                    settings => settings.ModSourceHoverTipsPotions,
+                    (settings, value) => settings.ModSourceHoverTipsPotions = value,
+                    () => defaults.ModSourceHoverTipsPotions),
+                ModSourceHoverTipsPowers = CreateModSourceHoverTipsBinding(
+                    settings => settings.ModSourceHoverTipsPowers,
+                    (settings, value) => settings.ModSourceHoverTipsPowers = value,
+                    () => defaults.ModSourceHoverTipsPowers),
+                ModSourceHoverTipsOrbs = CreateModSourceHoverTipsBinding(
+                    settings => settings.ModSourceHoverTipsOrbs,
+                    (settings, value) => settings.ModSourceHoverTipsOrbs = value,
+                    () => defaults.ModSourceHoverTipsOrbs),
+                ModSourceHoverTipsEnchantments = CreateModSourceHoverTipsBinding(
+                    settings => settings.ModSourceHoverTipsEnchantments,
+                    (settings, value) => settings.ModSourceHoverTipsEnchantments = value,
+                    () => defaults.ModSourceHoverTipsEnchantments),
+                ModSourceHoverTipsAfflictions = CreateModSourceHoverTipsBinding(
+                    settings => settings.ModSourceHoverTipsAfflictions,
+                    (settings, value) => settings.ModSourceHoverTipsAfflictions = value,
+                    () => defaults.ModSourceHoverTipsAfflictions),
+                ModSourceHoverTipsKeywords = CreateModSourceHoverTipsBinding(
+                    settings => settings.ModSourceHoverTipsKeywords,
+                    (settings, value) => settings.ModSourceHoverTipsKeywords = value,
+                    () => defaults.ModSourceHoverTipsKeywords),
+                ModSourceHoverTipsEvents = CreateModSourceHoverTipsBinding(
+                    settings => settings.ModSourceHoverTipsEvents,
+                    (settings, value) => settings.ModSourceHoverTipsEvents = value,
+                    () => defaults.ModSourceHoverTipsEvents),
+                ModSourceHoverTipsCreatures = CreateModSourceHoverTipsBinding(
+                    settings => settings.ModSourceHoverTipsCreatures,
+                    (settings, value) => settings.ModSourceHoverTipsCreatures = value,
+                    () => defaults.ModSourceHoverTipsCreatures),
+                ModSourceHoverTipsGameTerms = CreateModSourceHoverTipsBinding(
+                    settings => settings.ModSourceHoverTipsGameTerms,
+                    (settings, value) => settings.ModSourceHoverTipsGameTerms = value,
+                    () => defaults.ModSourceHoverTipsGameTerms),
                 HarmonyPatchDumpOutputPath = ModSettingsBindings.WithDefault(
                     ModSettingsBindings.Global<RitsuLibSettings, string>(
                         Const.ModId,
@@ -376,6 +456,16 @@ namespace STS2RitsuLib.Settings
                 HostSurfaceCombatReadOnlyDemo =
                     ModSettingsBindings.InMemory(Const.ModId, "host_surface_ro_demo", false),
             };
+        }
+
+        private static IModSettingsValueBinding<bool> CreateModSourceHoverTipsBinding(
+            Func<RitsuLibSettings, bool> getter,
+            Action<RitsuLibSettings, bool> setter,
+            Func<bool> defaultValue)
+        {
+            return ModSettingsBindings.WithDefault(
+                ModSettingsBindings.Global(Const.ModId, Const.SettingsKey, getter, setter),
+                defaultValue);
         }
 
         private static string NormalizeToastAnchor(string? value)

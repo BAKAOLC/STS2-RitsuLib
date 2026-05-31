@@ -16,14 +16,26 @@ namespace STS2RitsuLib.Settings
     }
 
     /// <summary>
+    ///     Implemented by entry controls that consume directional (up/down) input while in an active mode — an
+    ///     open dropdown/actions menu, or a key-binding control recording input. The submenu's live focus
+    ///     navigator skips controls whose ancestor claims directional input so the control's own handling wins.
+    ///     由那些在激活模式下消费方向(上/下)输入的条目控件实现——展开的下拉/操作菜单,或正在录制输入的按键绑定控件。子菜单的
+    ///     实时焦点导航器会跳过其祖先声明占用方向输入的控件,让该控件自身的处理生效。
+    /// </summary>
+    internal interface IModSettingsDirectionalInputClaimant
+    {
+        bool ClaimsDirectionalInput { get; }
+    }
+
+    /// <summary>
     ///     Standard On/Off toggle control used by mod settings entries.
     ///     mod 设置条目使用的标准 On/Off 切换控件。
     /// </summary>
     public sealed partial class ModSettingsToggleControl : ModSettingsGamepadCompatibleButton
     {
-        private readonly bool _initialValue;
-        private readonly Action<bool>? _onChanged;
+        private bool _initialValue;
         private bool _isOn;
+        private Action<bool>? _onChanged;
 
         /// <summary>
         ///     Creates a toggle control with an initial value and change callback.
@@ -37,7 +49,7 @@ namespace STS2RitsuLib.Settings
         ///     Callback invoked after the value changes.
         ///     值变化后调用的回调。
         /// </param>
-        public ModSettingsToggleControl(bool initialValue, Action<bool> onChanged)
+        public ModSettingsToggleControl(bool initialValue, Action<bool>? onChanged)
         {
             _initialValue = initialValue;
             _onChanged = onChanged;
@@ -66,6 +78,22 @@ namespace STS2RitsuLib.Settings
         /// </summary>
         public ModSettingsToggleControl()
         {
+        }
+
+        internal void BindValue(bool value, Action<bool>? onChanged)
+        {
+            _initialValue = value;
+            _onChanged = onChanged;
+            SetValue(value);
+        }
+
+        internal void ClearBinding()
+        {
+            _onChanged = null;
+            this.ReleaseFocusIfInsideTree();
+            Disabled = false;
+            ProcessMode = ProcessModeEnum.Inherit;
+            Modulate = Colors.White;
         }
 
         /// <summary>
@@ -330,7 +358,7 @@ namespace STS2RitsuLib.Settings
 
             RefreshValueLabel(_slider.Value);
             _slider.ValueChanged += OnSliderValueChanged;
-            _slider.DragEnded += _ => _slider.ReleaseFocus();
+            _slider.DragEnded += _ => _slider.ReleaseFocusIfInsideTree();
             if (_valueEdit == null) return;
             _valueEdit.TextSubmitted += OnValueSubmitted;
             _valueEdit.FocusExited += OnValueFocusExited;
@@ -427,7 +455,7 @@ namespace STS2RitsuLib.Settings
         private void OnValueSubmitted(string text)
         {
             TryApplyTypedValue(text);
-            _valueEdit?.ReleaseFocus();
+            _valueEdit.ReleaseFocusIfInsideTree();
         }
 
         private void OnValueFocusExited()
@@ -658,7 +686,7 @@ namespace STS2RitsuLib.Settings
 
             RefreshValueLabel((float)_slider.Value);
             _slider.ValueChanged += OnSliderValueChanged;
-            _slider.DragEnded += _ => _slider.ReleaseFocus();
+            _slider.DragEnded += _ => _slider.ReleaseFocusIfInsideTree();
             if (_valueEdit == null) return;
             _valueEdit.TextSubmitted += OnValueSubmitted;
             _valueEdit.FocusExited += OnValueFocusExited;
@@ -765,7 +793,7 @@ namespace STS2RitsuLib.Settings
         private void OnValueSubmitted(string text)
         {
             TryApplyTypedValue(text);
-            _valueEdit?.ReleaseFocus();
+            _valueEdit.ReleaseFocusIfInsideTree();
         }
 
         private void OnValueFocusExited()
@@ -1036,7 +1064,7 @@ namespace STS2RitsuLib.Settings
     ///     存储的选项值类型。
     /// </typeparam>
     public sealed partial class ModSettingsDropdownChoiceControl<TValue> : HBoxContainer,
-        IModSettingsTransientPopupOwner
+        IModSettingsTransientPopupOwner, IModSettingsDirectionalInputClaimant
     {
         private const float DropListMinWidth = 200f;
         private const float RowHeight = 38f;
@@ -1141,6 +1169,8 @@ namespace STS2RitsuLib.Settings
         public ModSettingsDropdownChoiceControl()
         {
         }
+
+        bool IModSettingsDirectionalInputClaimant.ClaimsDirectionalInput => _dropOpen;
 
         void IModSettingsTransientPopupOwner.ForceCloseTransientUi()
         {
@@ -2314,7 +2344,7 @@ namespace STS2RitsuLib.Settings
                 _hexEdit.TextSubmitted += text =>
                 {
                     ApplyFromHex(text, true);
-                    _hexEdit.ReleaseFocus();
+                    _hexEdit.ReleaseFocusIfInsideTree();
                 };
                 _hexEdit.FocusExited += () => ApplyFromHex(_hexEdit.Text, true);
                 ModSettingsFocusChrome.AttachControllerSelectionReticle(_hexEdit);
@@ -2421,7 +2451,7 @@ namespace STS2RitsuLib.Settings
         private void OnPickerPopupClosed()
         {
             _pickerChangedWhileOpen = false;
-            _pickerButton?.ReleaseFocus();
+            _pickerButton.ReleaseFocusIfInsideTree();
         }
 
         private static bool TryParseHexColorString(string text, out Color color)
@@ -2487,7 +2517,7 @@ namespace STS2RitsuLib.Settings
     ///     Keybinding capture editor used by settings pages and custom editors.
     ///     设置页面和自定义编辑器使用的按键绑定捕获编辑器。
     /// </summary>
-    public sealed partial class ModSettingsKeyBindingControl : VBoxContainer
+    public sealed partial class ModSettingsKeyBindingControl : VBoxContainer, IModSettingsDirectionalInputClaimant
     {
         private readonly bool _allowModifierCombos;
         private readonly bool _allowModifierOnly;
@@ -2605,6 +2635,8 @@ namespace STS2RitsuLib.Settings
         public ModSettingsKeyBindingControl()
         {
         }
+
+        bool IModSettingsDirectionalInputClaimant.ClaimsDirectionalInput => _capturing;
 
         /// <inheritdoc />
         public override void _Ready()
@@ -2801,7 +2833,7 @@ namespace STS2RitsuLib.Settings
     }
 
     internal sealed partial class ModSettingsActionsButton : ModSettingsGamepadCompatibleButton,
-        IModSettingsTransientPopupOwner
+        IModSettingsTransientPopupOwner, IModSettingsDirectionalInputClaimant
     {
         private const float DropMinWidth = 260f;
         private const float RowHeight = 38f;
@@ -2847,6 +2879,8 @@ namespace STS2RitsuLib.Settings
             _actions = [];
             Pressed += OnEllipsisPressed;
         }
+
+        bool IModSettingsDirectionalInputClaimant.ClaimsDirectionalInput => _dropOpen;
 
         void IModSettingsTransientPopupOwner.ForceCloseTransientUi()
         {
@@ -3292,7 +3326,7 @@ namespace STS2RitsuLib.Settings
     ///     Multi-keybinding capture editor used by native settings pages.
     ///     原生设置页面使用的多按键绑定捕获编辑器。
     /// </summary>
-    public sealed partial class ModSettingsMultiKeyBindingControl : VBoxContainer
+    public sealed partial class ModSettingsMultiKeyBindingControl : VBoxContainer, IModSettingsDirectionalInputClaimant
     {
         private readonly bool _allowModifierCombos;
         private readonly bool _allowModifierOnly;
@@ -3377,6 +3411,8 @@ namespace STS2RitsuLib.Settings
         public ModSettingsMultiKeyBindingControl()
         {
         }
+
+        bool IModSettingsDirectionalInputClaimant.ClaimsDirectionalInput => _capturing;
 
         /// <inheritdoc />
         public override void _Ready()
@@ -5347,6 +5383,8 @@ namespace STS2RitsuLib.Settings
         {
         }
 
+        internal VBoxContainer ContentHost => _content ??= CreateContentHost();
+
         public override void _Ready()
         {
             if (!string.IsNullOrWhiteSpace(_sectionId))
@@ -5407,10 +5445,8 @@ namespace STS2RitsuLib.Settings
                 cardContent.AddChild(headerRow);
             }
 
-            _content = new() { MouseFilter = MouseFilterEnum.Ignore };
-            _content.AddThemeConstantOverride("separation",
-                RitsuShellThemeLayoutResolver.ResolveInt("components.collapsible.layout.contentSeparation", 8));
-            if (_contentControls != null)
+            _content ??= CreateContentHost();
+            if (_contentControls != null && _content.GetChildCount() == 0)
                 foreach (var control in _contentControls)
                     _content.AddChild(control);
             cardContent.AddChild(_content);
@@ -5426,6 +5462,15 @@ namespace STS2RitsuLib.Settings
             ApplyCollapsedState();
             if (!_collapsed)
                 Callable.From(EnsureExpandedSectionVisible).CallDeferred();
+        }
+
+        internal void Expand()
+        {
+            if (!_collapsed)
+                return;
+
+            _collapsed = false;
+            ApplyCollapsedState();
         }
 
         private void ApplyCollapsedState()
@@ -5452,6 +5497,14 @@ namespace STS2RitsuLib.Settings
 
             // Collapsing stays operable; only the content becomes disabled.
             _toggle?.SetContentEnabled(_contentEnabled);
+        }
+
+        private static VBoxContainer CreateContentHost()
+        {
+            var content = new VBoxContainer { MouseFilter = MouseFilterEnum.Ignore };
+            content.AddThemeConstantOverride("separation",
+                RitsuShellThemeLayoutResolver.ResolveInt("components.collapsible.layout.contentSeparation", 8));
+            return content;
         }
 
         private void EnsureExpandedSectionVisible()
@@ -5713,9 +5766,11 @@ namespace STS2RitsuLib.Settings
     /// </summary>
     public partial class ModSettingsTextButton : ModSettingsGamepadCompatibleButton
     {
-        private readonly string? _text;
-        private readonly ModSettingsButtonTone _tone;
+        private Action? _action;
+        private bool _pressedHandlerAttached;
         private bool _selected;
+        private string? _text;
+        private ModSettingsButtonTone _tone;
 
         /// <summary>
         ///     Creates a standard settings action button.
@@ -5735,9 +5790,24 @@ namespace STS2RitsuLib.Settings
         /// </param>
         public ModSettingsTextButton(string text, ModSettingsButtonTone tone, Action? action)
         {
+            Configure(text, tone, action);
+            EnsurePressedHandlerAttached();
+        }
+
+        /// <summary>
+        ///     Godot serialization constructor.
+        ///     Godot 序列化构造函数。
+        /// </summary>
+        public ModSettingsTextButton()
+        {
+            EnsurePressedHandlerAttached();
+        }
+
+        internal void Configure(string text, ModSettingsButtonTone tone, Action? action)
+        {
             _text = text;
             _tone = tone;
-
+            _action = action;
             Text = text;
             Alignment = HorizontalAlignment.Center;
             CustomMinimumSize = RitsuShellThemeLayoutResolver.ResolveMinSize(
@@ -5758,28 +5828,17 @@ namespace STS2RitsuLib.Settings
             AddThemeColorOverride("font_focus_color", RitsuShellTheme.Current.Text.HoverHighlight);
             AddThemeColorOverride("font_disabled_color", RitsuShellTheme.Current.Text.LabelSecondary);
             ApplyVisualState();
-            Pressed += () =>
-            {
-                if (action == null)
-                    return;
-
-                try
-                {
-                    action();
-                }
-                catch (Exception ex)
-                {
-                    RitsuLibFramework.Logger.Warn($"[ModSettingsTextButton] action failed: {ex.Message}");
-                }
-            };
         }
 
-        /// <summary>
-        ///     Godot serialization constructor.
-        ///     Godot 序列化构造函数。
-        /// </summary>
-        public ModSettingsTextButton()
+        internal void ClearAction()
         {
+            _action = null;
+            _selected = false;
+            this.ReleaseFocusIfInsideTree();
+            Disabled = false;
+            ProcessMode = ProcessModeEnum.Inherit;
+            Modulate = Colors.White;
+            ApplyVisualState();
         }
 
         /// <inheritdoc />
@@ -5802,6 +5861,29 @@ namespace STS2RitsuLib.Settings
         {
             _selected = selected;
             ApplyVisualState();
+        }
+
+        private void EnsurePressedHandlerAttached()
+        {
+            if (_pressedHandlerAttached)
+                return;
+            Pressed += InvokeActionSafely;
+            _pressedHandlerAttached = true;
+        }
+
+        private void InvokeActionSafely()
+        {
+            if (_action == null)
+                return;
+
+            try
+            {
+                _action();
+            }
+            catch (Exception ex)
+            {
+                RitsuLibFramework.Logger.Warn($"[ModSettingsTextButton] action failed: {ex.Message}");
+            }
         }
 
         private void ApplyVisualState()

@@ -31,8 +31,41 @@ namespace STS2RitsuLib.Interop
     }
 
     /// <summary>
-    ///     Optional per-member override for the target type or member name in the remote mod.
-    ///     针对远端 mod 中目标类型或成员名的可选逐成员覆盖。
+    ///     Marks a class whose public members forward to a CLR type resolved by an assembly-qualified type name
+    ///     such as <c>Namespace.Type, AssemblyName</c>.
+    ///     标记一个类：其 public 成员会转发到用 assembly-qualified type name
+    ///     （如 <c>Namespace.Type, AssemblyName</c>）解析的 CLR 类型。
+    /// </summary>
+    /// <param name="type">
+    ///     Default assembly-qualified CLR type name for members without <see cref="InteropTargetAttribute" />.
+    ///     没有 <see cref="InteropTargetAttribute" /> 的成员所使用的默认 assembly-qualified CLR 类型名。
+    /// </param>
+    [AttributeUsage(AttributeTargets.Class, Inherited = false)]
+    public sealed class AssemblyInteropAttribute(string? type = null) : Attribute
+    {
+        /// <summary>
+        ///     Default assembly-qualified CLR type name for members without <see cref="InteropTargetAttribute" />.
+        ///     没有 <see cref="InteropTargetAttribute" /> 的成员所使用的默认 assembly-qualified CLR 类型名。
+        /// </summary>
+        public string? Type { get; } = type;
+    }
+
+    /// <summary>
+    ///     Marks a method parameter as a wildcard — it matches any target parameter type regardless of assignability.
+    ///     Use this instead of relying on <c>object</c> to make wildcard intent explicit.
+    ///     将方法参数标记为通配符——无论可赋值性如何，都匹配任意目标参数类型。
+    ///     相较于隐式使用 <c>object</c>，请优先使用此属性以明确通配符意图。
+    /// </summary>
+    [AttributeUsage(AttributeTargets.Parameter)]
+    public sealed class InteropAnyParamAttribute : Attribute;
+
+    /// <summary>
+    ///     Optional per-member override for the target type or member name.
+    ///     With <see cref="ModInteropAttribute" />, type is resolved inside the target mod assembly.
+    ///     With <see cref="AssemblyInteropAttribute" />, type must be an assembly-qualified CLR type name.
+    ///     针对目标类型或成员名的可选逐成员覆盖。
+    ///     配合 <see cref="ModInteropAttribute" /> 时，type 在目标 mod assembly 内解析。
+    ///     配合 <see cref="AssemblyInteropAttribute" /> 时，type 必须是 assembly-qualified CLR type name。
     /// </summary>
     [AttributeUsage(
         AttributeTargets.Property | AttributeTargets.Field | AttributeTargets.Class | AttributeTargets.Method,
@@ -44,8 +77,10 @@ namespace STS2RitsuLib.Interop
         ///     覆盖远端类型，并可选覆盖成员名。
         /// </summary>
         /// <param name="type">
-        ///     Fully qualified or assembly-qualified type name in the remote mod.
-        ///     远端 mod 中的完全限定或 assembly-qualified 类型名。
+        ///     Target type name. Use a full type name for <see cref="ModInteropAttribute" />, or an assembly-qualified
+        ///     type name for <see cref="AssemblyInteropAttribute" />.
+        ///     目标类型名。配合 <see cref="ModInteropAttribute" /> 使用完整类型名；配合
+        ///     <see cref="AssemblyInteropAttribute" /> 使用 assembly-qualified 类型名。
         /// </param>
         /// <param name="name">
         ///     Remote member name when different from the stub.
@@ -58,10 +93,8 @@ namespace STS2RitsuLib.Interop
         }
 
         /// <summary>
-        ///     Overrides only the remote member name (type comes from <see cref="ModInteropAttribute.Type" /> or enclosing
-        ///     context).
-        ///     仅覆盖远端成员名（类型来自 <see cref="ModInteropAttribute.Type" /> 或外层
-        ///     上下文）。
+        ///     Overrides only the remote member name (type comes from the enclosing interop attribute or context).
+        ///     仅覆盖远端成员名（类型来自外层 interop attribute 或上下文）。
         /// </summary>
         /// <param name="name">
         ///     Remote member name when different from the stub.
@@ -73,8 +106,8 @@ namespace STS2RitsuLib.Interop
         }
 
         /// <summary>
-        ///     Remote type name when specified; otherwise inferred from <see cref="ModInteropAttribute" />.
-        ///     显式指定时的远端类型名；否则从 <see cref="ModInteropAttribute" /> 推断。
+        ///     Target type name when specified; otherwise inferred from the enclosing interop attribute.
+        ///     显式指定时的目标类型名；否则从外层 interop attribute 推断。
         /// </summary>
         public string? Type { get; }
 

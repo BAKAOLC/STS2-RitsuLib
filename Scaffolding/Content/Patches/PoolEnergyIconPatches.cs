@@ -62,6 +62,8 @@ namespace STS2RitsuLib.Scaffolding.Content.Patches
 
     internal static class ModBigEnergyIconHelper
     {
+        private static readonly Lock UnmappedContentWarningGate = new();
+        private static readonly HashSet<string> UnmappedContentWarningLoggedKeys = new(StringComparer.Ordinal);
         private static Dictionary<string, string>? _cache;
 
         public static bool TryOverridePath(string prefix, ref string result)
@@ -82,16 +84,69 @@ namespace STS2RitsuLib.Scaffolding.Content.Patches
             foreach (var character in ModContentRegistry.GetModCharacters())
                 AddPoolIfMapped(dict, character.CardPool);
 
-            foreach (var pool in ModelDb.AllCards.Select(c => c.Pool).Distinct())
+            var cardPools = ModelDb.AllCardPools.ToArray();
+            foreach (var pool in cardPools)
                 AddPoolIfMapped(dict, pool);
+            WarnUnmappedCards(cardPools);
 
-            foreach (var pool in ModelDb.AllRelics.Select(r => r.Pool).Distinct())
+            var relicPools = ModelDb.AllRelicPools.ToArray();
+            foreach (var pool in relicPools)
                 AddPoolIfMapped(dict, pool);
+            WarnUnmappedRelics(relicPools);
 
-            foreach (var pool in ModelDb.AllPotions.Select(p => p.Pool).Distinct())
+            var potionPools = ModelDb.AllPotionPools.ToArray();
+            foreach (var pool in potionPools)
                 AddPoolIfMapped(dict, pool);
+            WarnUnmappedPotions(potionPools);
 
             return dict;
+        }
+
+        private static void WarnUnmappedCards(CardPoolModel[] pools)
+        {
+            foreach (var card in ModelDb.AllCards)
+            {
+                if (pools.Any(pool => pool.AllCardIds.Contains(card.Id)))
+                    continue;
+
+                WarnUnmappedContentOnce("card", card.Id);
+            }
+        }
+
+        private static void WarnUnmappedRelics(RelicPoolModel[] pools)
+        {
+            foreach (var relic in ModelDb.AllRelics)
+            {
+                if (pools.Any(pool => pool.AllRelicIds.Contains(relic.Id)))
+                    continue;
+
+                WarnUnmappedContentOnce("relic", relic.Id);
+            }
+        }
+
+        private static void WarnUnmappedPotions(PotionPoolModel[] pools)
+        {
+            foreach (var potion in ModelDb.AllPotions)
+            {
+                if (pools.Any(pool => pool.AllPotionIds.Contains(potion.Id)))
+                    continue;
+
+                WarnUnmappedContentOnce("potion", potion.Id);
+            }
+        }
+
+        private static void WarnUnmappedContentOnce(string contentType, ModelId id)
+        {
+            var key = contentType + "\0" + id;
+            lock (UnmappedContentWarningGate)
+            {
+                if (!UnmappedContentWarningLoggedKeys.Add(key))
+                    return;
+            }
+
+            RitsuLibFramework.Logger.Warn(
+                $"[Content] {contentType} '{id}' is registered in ModelDb but is not contained in any {contentType} pool. " +
+                "Skipping it while building energy icon overrides.");
         }
 
         private static void AddPoolIfMapped(Dictionary<string, string> dict, IPoolModel pool)

@@ -102,6 +102,11 @@ namespace STS2RitsuLib.Combat.HealthBars
     ///     对 <see cref="HealthBarForecastLeftOriginLayout.OverlapFromOrigin" />：较大值绘制在较小值上方。
     ///     同一组内，较长条位于较短条后方；宽度相等时轮换。
     /// </param>
+    /// <param name="AffectsHpLabel">
+    ///     Whether this segment can recolor the HP label when it reaches lethal threshold. Defaults to true to preserve
+    ///     existing forecast behavior.
+    ///     此片段达到致命阈值时是否可以重染 HP 标签。默认为 true，以保留现有 forecast 行为。
+    /// </param>
     public readonly record struct HealthBarForecastSegment(
         int Amount,
         Color Color,
@@ -110,7 +115,8 @@ namespace STS2RitsuLib.Combat.HealthBars
         Material? OverlayMaterial,
         Color? OverlaySelfModulate = null,
         HealthBarForecastLeftOriginLayout LeftOriginLayout = HealthBarForecastLeftOriginLayout.Chained,
-        int LeftExclusiveZGroup = 0)
+        int LeftExclusiveZGroup = 0,
+        bool AffectsHpLabel = true)
     {
         /// <summary>
         ///     Initializes a segment without overlay material or separate overlay modulate.
@@ -134,6 +140,56 @@ namespace STS2RitsuLib.Combat.HealthBars
             int order,
             Material? overlayMaterial)
             : this(amount, color, direction, order, overlayMaterial, null)
+        {
+        }
+
+        /// <summary>
+        ///     Initializes a segment with an optional overlay modulate and default left-origin layout.
+        ///     初始化一个带可选覆盖 modulate 和默认左源布局的片段。
+        /// </summary>
+        public HealthBarForecastSegment(
+            int amount,
+            Color color,
+            HealthBarForecastGrowthDirection direction,
+            int order,
+            Material? overlayMaterial,
+            Color? overlaySelfModulate)
+            : this(amount, color, direction, order, overlayMaterial, overlaySelfModulate,
+                HealthBarForecastLeftOriginLayout.Chained)
+        {
+        }
+
+        /// <summary>
+        ///     Initializes a segment with a left-origin layout and default exclusive z group.
+        ///     初始化一个带左源布局和默认独占 z 组的片段。
+        /// </summary>
+        public HealthBarForecastSegment(
+            int amount,
+            Color color,
+            HealthBarForecastGrowthDirection direction,
+            int order,
+            Material? overlayMaterial,
+            Color? overlaySelfModulate,
+            HealthBarForecastLeftOriginLayout leftOriginLayout)
+            : this(amount, color, direction, order, overlayMaterial, overlaySelfModulate, leftOriginLayout, 0)
+        {
+        }
+
+        /// <summary>
+        ///     Initializes a segment with explicit left-origin layout and exclusive z group.
+        ///     初始化一个带显式左源布局和独占 z 组的片段。
+        /// </summary>
+        public HealthBarForecastSegment(
+            int amount,
+            Color color,
+            HealthBarForecastGrowthDirection direction,
+            int order,
+            Material? overlayMaterial,
+            Color? overlaySelfModulate,
+            HealthBarForecastLeftOriginLayout leftOriginLayout,
+            int leftExclusiveZGroup)
+            : this(amount, color, direction, order, overlayMaterial, overlaySelfModulate, leftOriginLayout,
+                leftExclusiveZGroup, true)
         {
         }
     }

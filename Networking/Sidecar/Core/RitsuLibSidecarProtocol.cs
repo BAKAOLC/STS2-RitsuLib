@@ -1,3 +1,5 @@
+using STS2RitsuLib.Interactions.RightClick;
+
 namespace STS2RitsuLib.Networking.Sidecar
 {
     /// <summary>
@@ -23,6 +25,9 @@ namespace STS2RitsuLib.Networking.Sidecar
 
             RitsuLibSidecarSessionManager.EnsureProvidersBootstrapped();
             RitsuLibSidecarBuiltInHandlers.Register();
+            RitsuLibSidecarSyncMessages.RegisterBuiltInHandler();
+            RitsuLibSidecarSyncActions.RegisterBuiltInHandlers();
+            ModRightClickRegistry.RegisterBuiltInSyncDescriptors();
             RitsuLibSidecarNetworkingLifecycle.EnsureHooksInstalled();
             RitsuLibSidecarRequiredCapabilities.RegisterRequiredCapability(
                 "ritsulib:sidecar_core_supported",

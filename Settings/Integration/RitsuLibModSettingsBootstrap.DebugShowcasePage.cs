@@ -26,6 +26,7 @@ namespace STS2RitsuLib.Settings
                 Const.ModId,
                 page => page
                     .AsChildOf(Const.ModId)
+                    .WithSidebarVisibleOnlyWhenActive()
                     .WithTitle(T("ritsulib.showcase.title", "Control Preview"))
                     .WithDescription(T("ritsulib.showcase.description",
                         "Demonstrates supported controls and dynamic descriptions without persisting values."))
@@ -306,7 +307,9 @@ namespace STS2RitsuLib.Settings
                             ui.HostSurfaceCombatReadOnlyDemo,
                             T("ritsulib.hostSurface.demoToggle.description",
                                 "Editable on the main menu and run pause; locked while paused in a fight."))
-                        .WithReadOnlyOnHostSurfaces(ModSettingsHostSurface.CombatPause))
+                        .WithEntryReadOnlyOnHostSurfaces(
+                            "host_surface_combat_readonly_demo",
+                            ModSettingsHostSurface.CombatPause))
                     .AddSection("host_surface_combat_only_demo", section => section
                         .WithTitle(T("ritsulib.section.hostSurfaceCombatOnly.title", "Combat pause only (demo)"))
                         .WithVisibleOnHostSurfaces(ModSettingsHostSurface.CombatPause)

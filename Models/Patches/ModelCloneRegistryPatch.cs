@@ -42,7 +42,7 @@ namespace STS2RitsuLib.Models.Patches
             // ReSharper restore InconsistentNaming
         {
             ModelSavedDataRegistry.NotifyCloned(__instance, __result);
-            ModelComponents.NotifyCloned(__instance, __result);
+            ModelCapabilities.NotifyCloned(__instance, __result);
             ModelCloneRegistry.NotifyCloned(__instance, __result);
         }
     }

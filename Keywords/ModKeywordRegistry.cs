@@ -429,23 +429,28 @@ namespace STS2RitsuLib.Keywords
         }
 
         /// <summary>
-        ///     Resolves the <see cref="CardKeyword" /> value minted for <paramref name="id" />. Prefer this over
-        ///     passing a string when interacting with vanilla keyword APIs (<c>CardModel.AddKeyword</c> /
-        ///     <c>Keywords.Contains</c>).
-        ///     解析为 <paramref name="id" /> minted 的 <see cref="CardKeyword" /> 值。与原版 keyword API 交互时，
+        ///     Resolves the deterministic <see cref="CardKeyword" /> value minted for <paramref name="id" />.
+        ///     The id does not need to be registered, but registered ids can still provide hover-tip metadata.
+        ///     Prefer this over passing a string when interacting with vanilla keyword APIs
+        ///     (<c>CardModel.AddKeyword</c> / <c>Keywords.Contains</c>).
+        ///     解析为 <paramref name="id" /> 确定性 minted 的 <see cref="CardKeyword" /> 值。该 id 不需要已注册，
+        ///     但已注册 id 仍可提供 hover-tip 元数据。与原版 keyword API 交互时，
         ///     优先使用此方法而不是传递字符串（<c>CardModel.AddKeyword</c> /
         ///     <c>Keywords.Contains</c>）。
         /// </summary>
         public static bool TryGetCardKeyword(string id, out CardKeyword value)
         {
-            if (TryGet(id, out var definition))
+            ArgumentException.ThrowIfNullOrWhiteSpace(id);
+            try
             {
-                value = definition.CardKeywordValue;
+                value = CardKeywordMinter.Mint(id);
                 return true;
             }
-
-            value = CardKeyword.None;
-            return false;
+            catch (InvalidOperationException)
+            {
+                value = CardKeyword.None;
+                return false;
+            }
         }
 
         /// <summary>
@@ -458,20 +463,23 @@ namespace STS2RitsuLib.Keywords
         {
             ArgumentException.ThrowIfNullOrWhiteSpace(idOrEnumName);
 
-            return TryGetCardKeyword(idOrEnumName, out value) || Enum.TryParse(idOrEnumName.Trim(), true, out value);
+            if (!TryGet(idOrEnumName, out var definition))
+                return Enum.TryParse(idOrEnumName.Trim(), true, out value) ||
+                       TryGetCardKeyword(idOrEnumName, out value);
+            value = definition.CardKeywordValue;
+            return true;
         }
 
         /// <summary>
-        ///     Returns the <see cref="CardKeyword" /> minted for <paramref name="id" /> or throws
-        ///     <see cref="KeyNotFoundException" /> when unregistered.
-        ///     <see cref="KeyNotFoundException" />。
-        ///     返回为 <paramref name="id" /> minted 的 <see cref="CardKeyword" />，未注册时抛出
-        ///     <see cref="KeyNotFoundException" />。
-        ///     <see cref="KeyNotFoundException" />。
+        ///     Returns the deterministic <see cref="CardKeyword" /> minted for <paramref name="id" />.
+        ///     The id does not need to be registered.
+        ///     返回为 <paramref name="id" /> 确定性 minted 的 <see cref="CardKeyword" />。
+        ///     该 id 不需要已注册。
         /// </summary>
         public static CardKeyword GetCardKeyword(string id)
         {
-            return Get(id).CardKeywordValue;
+            ArgumentException.ThrowIfNullOrWhiteSpace(id);
+            return CardKeywordMinter.Mint(id);
         }
 
         /// <summary>

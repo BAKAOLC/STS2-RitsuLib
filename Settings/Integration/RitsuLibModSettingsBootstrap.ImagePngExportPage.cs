@@ -12,6 +12,7 @@ namespace STS2RitsuLib.Settings
                 Const.ModId,
                 page => page
                     .AsChildOf(Const.ModId)
+                    .WithSidebarVisibleOnlyWhenActive()
                     .WithSortOrder(-200)
                     .WithTitle(T("ritsulib.page.imagePngExport.title", "Image PNG export (dev)"))
                     .WithDescription(T("ritsulib.page.imagePngExport.description",

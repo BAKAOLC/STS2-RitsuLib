@@ -9,6 +9,7 @@ using MegaCrit.Sts2.Core.Modding;
 using MegaCrit.Sts2.Core.Models;
 using STS2RitsuLib.CardPiles;
 using STS2RitsuLib.Cards.FreePlay;
+using STS2RitsuLib.Cards.Transforms;
 using STS2RitsuLib.CardTags;
 using STS2RitsuLib.Combat.CardTargeting;
 using STS2RitsuLib.Combat.HandSize;
@@ -31,6 +32,7 @@ using STS2RitsuLib.RunData;
 using STS2RitsuLib.RuntimeInput;
 using STS2RitsuLib.Scaffolding.Ancients.Options;
 using STS2RitsuLib.Scaffolding.Content;
+using STS2RitsuLib.Scaffolding.Godot.NodeAttachments;
 using STS2RitsuLib.Settings;
 using STS2RitsuLib.Telemetry;
 using STS2RitsuLib.Telemetry.Diagnostics;
@@ -313,16 +315,19 @@ namespace STS2RitsuLib
                 }
 
                 Logger = CreateLogger(Const.ModId);
+                StartupModListLogger.Initialize();
 
                 Logger.Info($"Framework ID: {Const.ModId}");
                 Logger.Info($"Framework Name: {Const.Name}");
                 Logger.Info(BuildVersionLogText());
                 Logger.Info("Initializing shared framework...");
+                RitsuLibStartupAudit.Measure("imageResourceLoader",
+                    RitsuLibModImageResourceLoader.EnsureRegistered);
                 RitsuLibMobileSteamRuntime.LogSuppressedSteamFeaturesAtStartup();
                 ModTypeDiscoveryHub.EnsureBuiltInContributorsRegistered();
-                RitsuLibSettingsStore.Initialize();
-                RitsuLibModSettingsBootstrap.Initialize();
-                RitsuLibTelemetryBootstrap.Initialize();
+                RitsuLibStartupAudit.Measure("settingsStore", RitsuLibSettingsStore.Initialize);
+                RitsuLibStartupAudit.Measure("modSettingsBootstrap", RitsuLibModSettingsBootstrap.Initialize);
+                RitsuLibStartupAudit.Measure("telemetryBootstrap", RitsuLibTelemetryBootstrap.Initialize);
                 PublishLifecycleEvent(
                     new FrameworkInitializingEvent(Const.ModId, Const.Version, DateTimeOffset.UtcNow),
                     nameof(FrameworkInitializingEvent)
@@ -331,34 +336,43 @@ namespace STS2RitsuLib
                 try
                 {
                     FrameworkPatchersByArea.Clear();
-                    RegisterLifecyclePatches();
-                    RegisterSettingsUiPatches();
-                    RegisterContentAssetPatches();
-                    RegisterCharacterAssetPatches();
-                    RegisterContentRegistryPatches();
-                    RegisterPersistencePatches();
-                    RegisterUnlockPatches();
+                    RitsuLibStartupAudit.Measure("registerPatches", () =>
+                    {
+                        RegisterLifecyclePatches();
+                        RegisterSettingsUiPatches();
+                        RegisterContentAssetPatches();
+                        RegisterCharacterAssetPatches();
+                        RegisterContentRegistryPatches();
+                        RegisterPersistencePatches();
+                        RegisterUnlockPatches();
+                    });
 
-                    if (!PatchAllRequired())
+                    if (!RitsuLibStartupAudit.Measure("patchAll", PatchAllRequired))
                     {
                         Logger.Error("Framework initialization failed: critical framework patches failed.");
                         IsActive = false;
+                        RitsuLibStartupAudit.LogReport("initialization (failed)");
                         return;
                     }
 
                     IsInitialized = true;
                     IsActive = true;
-                    var modDataInteropRegistered = ModDataRuntimeInterop.TryRegisterAll();
+                    var modDataInteropRegistered = RitsuLibStartupAudit.Measure("modDataInterop",
+                        ModDataRuntimeInterop.TryRegisterAll);
                     if (modDataInteropRegistered > 0)
                         Logger.Debug(
                             $"ModData runtime interop: mirror-registered {modDataInteropRegistered} provider schema(s).");
 
-                    EnsureFrameworkInteropBootstrapRegistered();
-                    RuntimeHotkeyService.Initialize();
-                    RitsuToastService.Initialize();
-                    RitsuLibUpdateCheckService.Initialize();
+                    RitsuLibStartupAudit.Measure("runtimeServices", () =>
+                    {
+                        EnsureFrameworkInteropBootstrapRegistered();
+                        RuntimeHotkeyService.Initialize();
+                        RitsuToastService.Initialize();
+                        RitsuLibUpdateCheckService.Initialize();
+                    });
                     SubscribeLifecycleOnce<MainMenuReadyEvent>(_ =>
                     {
+                        RitsuLibStartupAudit.LogReport("launch to main menu");
                         HarmonyPatchDumpCoordinator.TryAutoDumpOnFirstMainMenu();
                         SelfCheckBundleCoordinator.TryAutoRunOnFirstMainMenu();
                     });
@@ -385,12 +399,10 @@ namespace STS2RitsuLib
             }
         }
 
-        private static string BuildVersionLogText()
+        internal static string BuildVersionLogText()
         {
             var compatBranchLabel = GetCompatBranchLabel();
-            return string.IsNullOrWhiteSpace(compatBranchLabel)
-                ? $"Version: {Const.Version}"
-                : $"Version: {Const.Version} [compat branch: {compatBranchLabel}]";
+            return $"Version: {Const.Version} [compat branch: {compatBranchLabel}]";
         }
 
         private static void EnsureFrameworkInteropBootstrapRegistered()
@@ -411,14 +423,16 @@ namespace STS2RitsuLib
             MaxHandSizePatchInstaller.EnsurePatched();
         }
 
-        private static string? GetCompatBranchLabel()
+        private static string GetCompatBranchLabel()
         {
-#if !STS2_AT_LEAST_0_104_0
+#if STS2_AT_LEAST_0_106_1
+            return "0.106.1";
+#elif STS2_AT_LEAST_0_105_1
+            return "0.105.1";
+#elif STS2_AT_LEAST_0_103_2
             return "0.103.2";
-#elif !STS2_AT_LEAST_0_105_0
-            return "0.104.0";
 #else
-            return null;
+            return "unknown";
 #endif
         }
 
@@ -502,6 +516,24 @@ namespace STS2RitsuLib
         public static ModContentRegistry GetContentRegistry(string modId)
         {
             return ModContentRegistry.For(modId);
+        }
+
+        /// <summary>
+        ///     Returns the ready-time Godot node attachment registry for <paramref name="modId" />.
+        ///     返回 <paramref name="modId" /> 的 ready 阶段 Godot 节点挂载注册表。
+        /// </summary>
+        public static ModNodeAttachmentRegistry GetNodeAttachmentRegistry(string modId)
+        {
+            return ModNodeAttachmentRegistry.For(modId);
+        }
+
+        /// <summary>
+        ///     Ensures all ready-time node attachments registered for <paramref name="parent" /> have been applied.
+        ///     确保已应用为 <paramref name="parent" /> 注册的所有 ready 阶段节点挂载项。
+        /// </summary>
+        public static void EnsureReadyNodeAttachments(Node parent)
+        {
+            ModNodeAttachmentRegistry.EnsureReadyAttachments(parent);
         }
 
         /// <summary>
@@ -610,61 +642,70 @@ namespace STS2RitsuLib
         }
 
         /// <summary>
-        ///     Gets the component collection attached to <paramref name="model" />.
-        ///     获取附加到 <paramref name="model" /> 的组件集合。
+        ///     Gets the capability set attached to <paramref name="model" />.
+        ///     获取附加到 <paramref name="model" /> 的能力集合。
         /// </summary>
-        public static ModelComponentCollection GetModelComponents(AbstractModel model)
+        public static ModelCapabilitySet GetModelCapabilities(AbstractModel model)
         {
-            return ModelComponents.Get(model);
+            return ModelCapabilities.Get(model);
         }
 
         /// <summary>
-        ///     Registers a model-backed component in this mod's content registry.
-        ///     在此 mod 的内容注册表中注册一个基于模型的组件。
+        ///     Registers a model-backed capability in this mod's content registry.
+        ///     在此 mod 的内容注册表中注册一个基于模型的能力。
         /// </summary>
-        public static void RegisterModelComponent<TComponent>(string modId)
-            where TComponent : ModelComponent
+        public static void RegisterModelCapability<TCapability>(string modId)
+            where TCapability : ModelCapability
         {
-            GetContentRegistry(modId).RegisterModelComponent<TComponent>();
+            GetContentRegistry(modId).RegisterModelCapability<TCapability>();
         }
 
         /// <summary>
-        ///     Registers a model-backed component in this mod's content registry using
+        ///     Registers a model-backed capability in this mod's content registry using
         ///     <paramref name="publicEntry" /> rules.
-        ///     使用 <paramref name="publicEntry" /> 规则在此 mod 的内容注册表中注册一个基于模型的组件。
+        ///     使用 <paramref name="publicEntry" /> 规则在此 mod 的内容注册表中注册一个基于模型的能力。
         /// </summary>
-        public static void RegisterModelComponent<TComponent>(string modId, ModelPublicEntryOptions publicEntry)
-            where TComponent : ModelComponent
+        public static void RegisterModelCapability<TCapability>(string modId, ModelPublicEntryOptions publicEntry)
+            where TCapability : ModelCapability
         {
-            GetContentRegistry(modId).RegisterModelComponent<TComponent>(publicEntry);
+            GetContentRegistry(modId).RegisterModelCapability<TCapability>(publicEntry);
         }
 
         /// <summary>
-        ///     Registers a modifier for the default component list of matching <typeparamref name="TModel" /> instances.
-        ///     为匹配的 <typeparamref name="TModel" /> 实例默认组件列表注册修改器。
+        ///     Configures the default capability set for matching <typeparamref name="TModel" /> instances.
+        ///     配置匹配的 <typeparamref name="TModel" /> 实例的默认能力集合。
         /// </summary>
-        public static void ModifyDefaultModelComponents<TModel>(
+        public static void ConfigureDefaultModelCapabilities<TModel>(
             string modId,
             string modifierId,
-            Action<TModel, ModelDefaultComponentList> modifier,
+            Action<TModel, ModelCapabilityList> modifier,
             int order = 0)
             where TModel : AbstractModel
         {
-            GetContentRegistry(modId).ModifyDefaultModelComponents(modifierId, modifier, order);
+            GetContentRegistry(modId).ConfigureDefaultModelCapabilities(modifierId, modifier, order);
         }
 
         /// <summary>
-        ///     Registers a modifier for the default component list of matching <paramref name="modelType" /> instances.
-        ///     为匹配的 <paramref name="modelType" /> 实例默认组件列表注册修改器。
+        ///     Configures the default capability set for matching <paramref name="modelType" /> instances.
+        ///     配置匹配的 <paramref name="modelType" /> 实例的默认能力集合。
         /// </summary>
-        public static void ModifyDefaultModelComponents(
+        public static void ConfigureDefaultModelCapabilities(
             string modId,
             Type modelType,
             string modifierId,
-            Action<AbstractModel, ModelDefaultComponentList> modifier,
+            Action<AbstractModel, ModelCapabilityList> modifier,
             int order = 0)
         {
-            GetContentRegistry(modId).ModifyDefaultModelComponents(modelType, modifierId, modifier, order);
+            GetContentRegistry(modId).ConfigureDefaultModelCapabilities(modelType, modifierId, modifier, order);
+        }
+
+        /// <summary>
+        ///     Returns the card-transform listener registry for <paramref name="modId" />.
+        ///     返回 <paramref name="modId" /> 的卡牌转换监听器注册表。
+        /// </summary>
+        public static ModCardTransformRegistry GetCardTransformRegistry(string modId)
+        {
+            return ModCardTransformRegistry.For(modId);
         }
 
         /// <summary>
@@ -1015,6 +1056,25 @@ namespace STS2RitsuLib
         {
             ArgumentException.ThrowIfNullOrWhiteSpace(modId);
             return new(modId, logType);
+        }
+
+        /// <summary>
+        ///     Logs an error message without the stack trace appended by the game logger.
+        ///     记录 Error 级日志，但不附加游戏 logger 自动生成的 stack trace。
+        /// </summary>
+        /// <remarks>
+        ///     Include an explicit stack trace in <paramref name="text" /> if one is needed.
+        ///     如需堆栈信息，请由调用方将堆栈内容放入 <paramref name="text" />。
+        /// </remarks>
+        public static void ErrorNoTrace(this Logger logger, string text)
+        {
+            ArgumentNullException.ThrowIfNull(logger);
+
+            if (!logger.WillLog(LogLevel.Error))
+                return;
+
+            var formattedText = logger.Context != null ? $"[{logger.Context}] {text}" : text;
+            GD.PrintErr($"[ERROR] {formattedText}");
         }
 
         /// <summary>

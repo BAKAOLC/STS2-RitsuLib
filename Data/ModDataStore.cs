@@ -74,6 +74,8 @@ namespace STS2RitsuLib.Data
         /// </summary>
         public bool HasProfileScopedEntries => _entries.Values.Any(e => e.Scope == SaveScope.Profile);
 
+        internal event Action<string>? EntryReloaded;
+
         /// <summary>
         ///     Defers eager initialization of newly registered entries until the scope is disposed.
         ///     将新注册条目的急切初始化延迟到作用域释放时执行。
@@ -327,7 +329,9 @@ namespace STS2RitsuLib.Data
 
         /// <summary>
         ///     Returns the live instance for <paramref name="key" />.
+        ///     Profile reloads may replace this root instance; use <see cref="CreateCache{T}" /> for cached access.
         ///     返回 <c>key</c> 对应的实时实例。
+        ///     档案重新加载可能替换此根实例；缓存访问请使用 <see cref="CreateCache{T}" />。
         /// </summary>
         public T Get<T>(string key) where T : class, new()
         {
@@ -339,6 +343,15 @@ namespace STS2RitsuLib.Data
                 _ => throw new InvalidOperationException(
                     $"Data key '{key}' is registered as '{entry.DataType.Name}', not '{typeof(T).Name}'."),
             };
+        }
+
+        /// <summary>
+        ///     Creates a small cache wrapper that invalidates itself when this store reloads <paramref name="key" />.
+        ///     创建一个小型缓存包装器，在此存储重新加载 <paramref name="key" /> 时自动失效。
+        /// </summary>
+        public ModDataStoreCache<T> CreateCache<T>(string key) where T : class, new()
+        {
+            return new(this, key);
         }
 
         /// <summary>
@@ -396,10 +409,12 @@ namespace STS2RitsuLib.Data
             if (!IsGlobalInitialized) return false;
 
             var reloaded = false;
-            var result = _entries.Values
-                .Where(entry => entry.IsInitialized)
-                .Where(entry => entry.ReloadIfPathChanged());
-            if (result.Any()) reloaded = true;
+            foreach (var (key, entry) in _entries.Where(pair => pair.Value.IsInitialized))
+                if (entry.ReloadIfPathChanged())
+                {
+                    reloaded = true;
+                    OnEntryReloaded(key);
+                }
 
             return reloaded;
         }
@@ -421,11 +436,17 @@ namespace STS2RitsuLib.Data
             _logger.Info(
                 $"[{ModId}] Profile changed from {oldProfileId} to {newProfileId}, handling data transition...");
 
-            foreach (var entry in _entries.Values.Where(e => e.Scope == SaveScope.Profile))
+            foreach (var (key, entry) in _entries.Where(pair => pair.Value.Scope == SaveScope.Profile))
             {
                 entry.SaveToProfilePath(oldProfileId);
                 entry.Load();
+                OnEntryReloaded(key);
             }
+        }
+
+        private void OnEntryReloaded(string key)
+        {
+            EntryReloaded?.Invoke(key);
         }
 
         private IRegisteredDataEntry GetEntry(string key)

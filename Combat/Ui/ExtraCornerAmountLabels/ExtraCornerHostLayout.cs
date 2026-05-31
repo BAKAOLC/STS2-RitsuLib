@@ -1,5 +1,4 @@
 using Godot;
-using MegaCrit.Sts2.addons.mega_text;
 
 namespace STS2RitsuLib.Combat.Ui.ExtraCornerAmountLabels
 {
@@ -12,8 +11,30 @@ namespace STS2RitsuLib.Combat.Ui.ExtraCornerAmountLabels
 
     internal static class ExtraCornerHostLayout
     {
-        internal static void ApplySlotBounds(MegaLabel label, ExtraCornerHostKind host,
-            in ExtraIconAmountLabelSlot slot)
+        private const float PowerAmountLabelLeft = -56f;
+        private const float PowerAmountLabelRight = 44f;
+        private const float PowerAmountLabelWidth = PowerAmountLabelRight - PowerAmountLabelLeft;
+        private const float PowerAmountLabelBottomRowTop = 21f;
+        private const float PowerAmountLabelBottomRowBottom = 44f;
+        private const float PowerAmountLabelTopRowTop = 0f;
+        private const float PowerAmountLabelTopRowBottom = 23f;
+        private const float RelicAmountLabelLeft = 32f;
+        private const float RelicAmountLabelTop = 35f;
+        private const float RelicAmountLabelRight = 64f;
+        private const float RelicAmountLabelBottom = 67f;
+        private const float RelicAmountLabelWidth = RelicAmountLabelRight - RelicAmountLabelLeft;
+        private const float RelicAmountLabelHeight = RelicAmountLabelBottom - RelicAmountLabelTop;
+        private const float RelicAmountLabelMirrorLeft = 4f;
+        private const float RelicAmountLabelMirrorTop = 4f;
+        private const float IntentValueLabelLeft = 2f;
+        private const float IntentValueLabelTop = 40f;
+        private const float IntentValueLabelRight = 64f;
+        private const float IntentValueLabelBottom = 63f;
+        private const float IntentValueLabelHeight = IntentValueLabelBottom - IntentValueLabelTop;
+        private const float IntentValueLabelMirrorTop = 1f;
+
+        internal static void ApplySlotBounds(Control label, ExtraCornerHostKind host,
+            in ExtraIconAmountLabelSpec slot)
         {
             label.SetAnchorsPreset(Control.LayoutPreset.TopLeft);
             var (l, t, r, b) = ResolveRect(host, in slot);
@@ -23,17 +44,20 @@ namespace STS2RitsuLib.Combat.Ui.ExtraCornerAmountLabels
             label.OffsetBottom = b;
         }
 
-        internal static void ApplySlotAlignment(MegaLabel label, ExtraCornerHostKind host,
-            in ExtraIconAmountLabelSlot slot)
+        internal static void ApplySlotAlignment(Control label, ExtraCornerHostKind host,
+            in ExtraIconAmountLabelSpec slot)
         {
+            if (label is not Label plainLabel)
+                return;
+
             if (slot.Corner == ExtraIconAmountLabelCorner.Custom)
             {
-                label.HorizontalAlignment = HorizontalAlignment.Center;
-                label.VerticalAlignment = VerticalAlignment.Center;
+                plainLabel.HorizontalAlignment = HorizontalAlignment.Center;
+                plainLabel.VerticalAlignment = VerticalAlignment.Center;
                 return;
             }
 
-            label.HorizontalAlignment = slot.Corner switch
+            plainLabel.HorizontalAlignment = slot.Corner switch
             {
                 ExtraIconAmountLabelCorner.TopLeft or ExtraIconAmountLabelCorner.BottomLeft => HorizontalAlignment.Left,
                 ExtraIconAmountLabelCorner.TopRight or ExtraIconAmountLabelCorner.BottomRight => HorizontalAlignment
@@ -41,30 +65,67 @@ namespace STS2RitsuLib.Combat.Ui.ExtraCornerAmountLabels
                 _ => HorizontalAlignment.Center,
             };
 
-            label.VerticalAlignment = host == ExtraCornerHostKind.Relic &&
-                                      slot.Corner == ExtraIconAmountLabelCorner.BottomLeft
-                ? VerticalAlignment.Bottom
-                : VerticalAlignment.Center;
+            plainLabel.VerticalAlignment = host switch
+            {
+                ExtraCornerHostKind.Relic => slot.Corner switch
+                {
+                    ExtraIconAmountLabelCorner.TopLeft or ExtraIconAmountLabelCorner.TopRight =>
+                        VerticalAlignment.Top,
+                    ExtraIconAmountLabelCorner.BottomLeft or ExtraIconAmountLabelCorner.BottomRight =>
+                        VerticalAlignment.Bottom,
+                    _ => VerticalAlignment.Center,
+                },
+                ExtraCornerHostKind.Intent => slot.Corner switch
+                {
+                    ExtraIconAmountLabelCorner.TopLeft or ExtraIconAmountLabelCorner.TopRight =>
+                        VerticalAlignment.Top,
+                    ExtraIconAmountLabelCorner.BottomLeft or ExtraIconAmountLabelCorner.BottomRight =>
+                        VerticalAlignment.Top,
+                    _ => VerticalAlignment.Center,
+                },
+                _ => VerticalAlignment.Center,
+            };
         }
 
         private static (float L, float T, float R, float B) ResolveRect(ExtraCornerHostKind host,
-            in ExtraIconAmountLabelSlot slot)
+            in ExtraIconAmountLabelSpec slot)
         {
             if (slot.Corner != ExtraIconAmountLabelCorner.Custom)
                 return (host, slot.Corner) switch
                 {
-                    (ExtraCornerHostKind.Power, ExtraIconAmountLabelCorner.TopLeft) => (0f, 0f, 22f, 24f),
-                    (ExtraCornerHostKind.Power, ExtraIconAmountLabelCorner.TopRight) => (18f, 0f, 44f, 24f),
-                    (ExtraCornerHostKind.Power, ExtraIconAmountLabelCorner.BottomLeft) => (0f, 21f, 22f, 40f),
-                    (ExtraCornerHostKind.Power, ExtraIconAmountLabelCorner.BottomRight) => (18f, 21f, 44f, 40f),
-                    (ExtraCornerHostKind.Relic, ExtraIconAmountLabelCorner.TopLeft) => (4f, 4f, 34f, 32f),
-                    (ExtraCornerHostKind.Relic, ExtraIconAmountLabelCorner.TopRight) => (34f, 4f, 64f, 32f),
-                    (ExtraCornerHostKind.Relic, ExtraIconAmountLabelCorner.BottomLeft) => (4f, 36f, 32f, 67f),
-                    (ExtraCornerHostKind.Relic, ExtraIconAmountLabelCorner.BottomRight) => (36f, 36f, 64f, 67f),
-                    (ExtraCornerHostKind.Intent, ExtraIconAmountLabelCorner.TopLeft) => (2f, 2f, 32f, 36f),
-                    (ExtraCornerHostKind.Intent, ExtraIconAmountLabelCorner.TopRight) => (32f, 2f, 64f, 36f),
-                    (ExtraCornerHostKind.Intent, ExtraIconAmountLabelCorner.BottomLeft) => (2f, 40f, 32f, 63f),
-                    (ExtraCornerHostKind.Intent, ExtraIconAmountLabelCorner.BottomRight) => (32f, 40f, 64f, 63f),
+                    (ExtraCornerHostKind.Power, ExtraIconAmountLabelCorner.TopLeft) =>
+                        (0f, PowerAmountLabelTopRowTop, PowerAmountLabelWidth, PowerAmountLabelTopRowBottom),
+                    (ExtraCornerHostKind.Power, ExtraIconAmountLabelCorner.TopRight) =>
+                        (PowerAmountLabelLeft, PowerAmountLabelTopRowTop, PowerAmountLabelRight,
+                            PowerAmountLabelTopRowBottom),
+                    (ExtraCornerHostKind.Power, ExtraIconAmountLabelCorner.BottomLeft) =>
+                        (0f, PowerAmountLabelBottomRowTop, PowerAmountLabelWidth, PowerAmountLabelBottomRowBottom),
+                    (ExtraCornerHostKind.Power, ExtraIconAmountLabelCorner.BottomRight) =>
+                        (PowerAmountLabelLeft, PowerAmountLabelBottomRowTop, PowerAmountLabelRight,
+                            PowerAmountLabelBottomRowBottom),
+                    (ExtraCornerHostKind.Relic, ExtraIconAmountLabelCorner.TopLeft) =>
+                        (RelicAmountLabelMirrorLeft, RelicAmountLabelMirrorTop,
+                            RelicAmountLabelMirrorLeft + RelicAmountLabelWidth,
+                            RelicAmountLabelMirrorTop + RelicAmountLabelHeight),
+                    (ExtraCornerHostKind.Relic, ExtraIconAmountLabelCorner.TopRight) =>
+                        (RelicAmountLabelLeft, RelicAmountLabelMirrorTop, RelicAmountLabelRight,
+                            RelicAmountLabelMirrorTop + RelicAmountLabelHeight),
+                    (ExtraCornerHostKind.Relic, ExtraIconAmountLabelCorner.BottomLeft) =>
+                        (RelicAmountLabelMirrorLeft, RelicAmountLabelTop,
+                            RelicAmountLabelMirrorLeft + RelicAmountLabelWidth, RelicAmountLabelBottom),
+                    (ExtraCornerHostKind.Relic, ExtraIconAmountLabelCorner.BottomRight) =>
+                        (RelicAmountLabelLeft, RelicAmountLabelTop, RelicAmountLabelRight,
+                            RelicAmountLabelBottom),
+                    (ExtraCornerHostKind.Intent, ExtraIconAmountLabelCorner.TopLeft) =>
+                        (IntentValueLabelLeft, IntentValueLabelMirrorTop, IntentValueLabelRight,
+                            IntentValueLabelMirrorTop + IntentValueLabelHeight),
+                    (ExtraCornerHostKind.Intent, ExtraIconAmountLabelCorner.TopRight) =>
+                        (IntentValueLabelLeft, IntentValueLabelMirrorTop, IntentValueLabelRight,
+                            IntentValueLabelMirrorTop + IntentValueLabelHeight),
+                    (ExtraCornerHostKind.Intent, ExtraIconAmountLabelCorner.BottomLeft) =>
+                        (IntentValueLabelLeft, IntentValueLabelTop, IntentValueLabelRight, IntentValueLabelBottom),
+                    (ExtraCornerHostKind.Intent, ExtraIconAmountLabelCorner.BottomRight) =>
+                        (IntentValueLabelLeft, IntentValueLabelTop, IntentValueLabelRight, IntentValueLabelBottom),
                     _ => throw new ArgumentOutOfRangeException(nameof(slot), slot.Corner,
                         "Unexpected corner for host."),
                 };

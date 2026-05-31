@@ -36,7 +36,23 @@ namespace STS2RitsuLib.Scaffolding.Godot
         /// </summary>
         public static void RegisterFactory<TNode>(RitsuGodotNodeFactory factory) where TNode : Node
         {
-            Factories[typeof(TNode)] = factory;
+            RegisterFactory<TNode>(factory, true);
+        }
+
+        internal static void RegisterFactory<TNode>(RitsuGodotNodeFactory factory, bool replaceExisting)
+            where TNode : Node
+        {
+            ArgumentNullException.ThrowIfNull(factory);
+
+            if (replaceExisting)
+            {
+                Factories[typeof(TNode)] = factory;
+                return;
+            }
+
+            if (!Factories.TryAdd(typeof(TNode), factory))
+                throw new InvalidOperationException(
+                    $"A node factory is already registered for {typeof(TNode).FullName}. Pass replaceExisting: true to replace it.");
         }
 
         internal static TNode CreateFromScene<TNode>(PackedScene scene) where TNode : Node, new()
@@ -121,9 +137,7 @@ namespace STS2RitsuLib.Scaffolding.Godot
             }
 
             RitsuLibFramework.Logger.Info($"[Godot] Creating {typeof(TNode).Name} from {resource.GetType().Name}");
-            var bare = factory.CreateBareFromResource(resource);
-            factory.CompleteBareRoot(bare, style);
-            return (TNode)bare;
+            return (TNode)factory.CreateFromResource(resource, style);
         }
 
         private static void RequireMainThread(string operation)

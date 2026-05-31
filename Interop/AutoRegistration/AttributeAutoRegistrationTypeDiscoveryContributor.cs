@@ -1,4 +1,5 @@
 using System.Reflection;
+using Godot;
 using HarmonyLib;
 using MegaCrit.Sts2.Core.Models;
 using MegaCrit.Sts2.Core.Timeline;
@@ -11,6 +12,8 @@ using STS2RitsuLib.Keywords;
 using STS2RitsuLib.Localization.SmartFormat;
 using STS2RitsuLib.Models.Capabilities;
 using STS2RitsuLib.Scaffolding.Content;
+using STS2RitsuLib.Scaffolding.Godot;
+using STS2RitsuLib.Scaffolding.Godot.NodeAttachments;
 using STS2RitsuLib.Timeline;
 using STS2RitsuLib.Timeline.Scaffolding;
 using STS2RitsuLib.TopBar;
@@ -252,48 +255,48 @@ namespace STS2RitsuLib.Interop.AutoRegistration
                                 () => contentRegistry.RegisterSingleton(type)));
                         });
                         break;
-                    case RegisterModelComponentAttribute registerModelComponent:
-                        RegisterCase($"RegisterModelComponent:{type.FullName}", () =>
+                    case RegisterModelCapabilityAttribute registerModelCapability:
+                        RegisterCase($"RegisterModelCapability:{type.FullName}", () =>
                         {
                             operations.Add(CreateOperation(ownerModId, type, AutoRegistrationPhase.ContentPrimary,
-                                registerModelComponent.Order,
-                                $"RegisterModelComponent:{type.FullName}", nameof(RegisterModelComponentAttribute),
-                                () => contentRegistry.RegisterModelComponent(
+                                registerModelCapability.Order,
+                                $"RegisterModelCapability:{type.FullName}", nameof(RegisterModelCapabilityAttribute),
+                                () => contentRegistry.RegisterModelCapability(
                                     type,
-                                    ResolvePublicEntryOptions(registerModelComponent)),
+                                    ResolvePublicEntryOptions(registerModelCapability)),
                                 providedKeys: [TypeDependencyKey(type)]));
                         });
                         break;
-                    case RegisterDefaultModelComponentAttribute defaultModelComponent:
+                    case RegisterDefaultModelCapabilityAttribute defaultModelCapability:
                         RegisterCase(
-                            $"RegisterDefaultModelComponent:{defaultModelComponent.TargetModelType.FullName}->{type.FullName}:{defaultModelComponent.ModifierId}",
+                            $"RegisterDefaultModelCapability:{defaultModelCapability.TargetModelType.FullName}->{type.FullName}:{defaultModelCapability.ModifierId}",
                             () =>
                             {
-                                EnsureConcreteAssignable(type, typeof(IModelComponent), nameof(type));
+                                EnsureConcreteAssignable(type, typeof(IModelCapability), nameof(type));
                                 EnsureModelFamilyType(
-                                    defaultModelComponent.TargetModelType,
-                                    nameof(defaultModelComponent.TargetModelType));
+                                    defaultModelCapability.TargetModelType,
+                                    nameof(defaultModelCapability.TargetModelType));
 
-                                var dependencies = typeof(ModelComponent).IsAssignableFrom(type)
+                                var dependencies = typeof(ModelCapability).IsAssignableFrom(type)
                                     ? new[] { TypeDependencyKey(type) }
                                     : [];
 
                                 operations.Add(CreateOperation(ownerModId, type, AutoRegistrationPhase.ContentSecondary,
-                                    defaultModelComponent.Order,
-                                    $"RegisterDefaultModelComponent:{defaultModelComponent.TargetModelType.FullName}->{type.FullName}:{defaultModelComponent.ModifierId}",
-                                    nameof(RegisterDefaultModelComponentAttribute),
+                                    defaultModelCapability.Order,
+                                    $"RegisterDefaultModelCapability:{defaultModelCapability.TargetModelType.FullName}->{type.FullName}:{defaultModelCapability.ModifierId}",
+                                    nameof(RegisterDefaultModelCapabilityAttribute),
                                     () =>
                                     {
-                                        var modifierId = ResolveDefaultModelComponentModifierId(
+                                        var modifierId = ResolveDefaultModelCapabilityModifierId(
                                             ownerModId,
                                             type,
-                                            defaultModelComponent.TargetModelType,
-                                            defaultModelComponent.ModifierId);
-                                        contentRegistry.ModifyDefaultModelComponents(
-                                            defaultModelComponent.TargetModelType,
+                                            defaultModelCapability.TargetModelType,
+                                            defaultModelCapability.ModifierId);
+                                        contentRegistry.ConfigureDefaultModelCapabilities(
+                                            defaultModelCapability.TargetModelType,
                                             modifierId,
                                             (_, components) => components.Add(type),
-                                            defaultModelComponent.Order);
+                                            defaultModelCapability.Order);
                                     },
                                     dependencies));
                             });
@@ -626,6 +629,60 @@ namespace STS2RitsuLib.Interop.AutoRegistration
                                     [TypeDependencyKey(type)]));
                             });
                         break;
+                    case RegisterNodeAttachmentAttribute nodeAttachment:
+                    {
+                        var nodeType = ResolveNodeAttachmentNodeType(type, nodeAttachment.NodeType);
+                        RegisterCase(
+                            $"RegisterNodeAttachment:{nodeAttachment.ParentType.FullName}->{nodeType.FullName}:{nodeAttachment.LocalId}",
+                            () =>
+                            {
+                                operations.Add(CreateOperation(ownerModId, type,
+                                    AutoRegistrationPhase.NodeAttachments,
+                                    nodeAttachment.Order,
+                                    $"RegisterNodeAttachment:{nodeAttachment.ParentType.FullName}->{nodeType.FullName}:{nodeAttachment.LocalId}",
+                                    nameof(RegisterNodeAttachmentAttribute),
+                                    () => RegisterFactoryNodeAttachment(ownerModId, type, nodeType, nodeAttachment),
+                                    [TypeDependencyKey(type)]));
+                            });
+                        break;
+                    }
+                    case RegisterNodeAttachmentFromSceneAttribute nodeAttachmentScene:
+                    {
+                        var nodeType = ResolveNodeAttachmentNodeType(type, nodeAttachmentScene.NodeType);
+                        RegisterCase(
+                            $"RegisterNodeAttachmentFromScene:{nodeAttachmentScene.ParentType.FullName}->{nodeType.FullName}:{nodeAttachmentScene.LocalId}:{nodeAttachmentScene.ScenePath}",
+                            () =>
+                            {
+                                operations.Add(CreateOperation(ownerModId, type,
+                                    AutoRegistrationPhase.NodeAttachments,
+                                    nodeAttachmentScene.Order,
+                                    $"RegisterNodeAttachmentFromScene:{nodeAttachmentScene.ParentType.FullName}->{nodeType.FullName}:{nodeAttachmentScene.LocalId}:{nodeAttachmentScene.ScenePath}",
+                                    nameof(RegisterNodeAttachmentFromSceneAttribute),
+                                    () => RegisterSceneNodeAttachment(ownerModId, type, nodeType, nodeAttachmentScene,
+                                        false),
+                                    [TypeDependencyKey(type)]));
+                            });
+                        break;
+                    }
+                    case RegisterNodeAttachmentFromConvertedSceneAttribute nodeAttachmentConvertedScene:
+                    {
+                        var nodeType = ResolveNodeAttachmentNodeType(type, nodeAttachmentConvertedScene.NodeType);
+                        RegisterCase(
+                            $"RegisterNodeAttachmentFromConvertedScene:{nodeAttachmentConvertedScene.ParentType.FullName}->{nodeType.FullName}:{nodeAttachmentConvertedScene.LocalId}:{nodeAttachmentConvertedScene.ScenePath}",
+                            () =>
+                            {
+                                operations.Add(CreateOperation(ownerModId, type,
+                                    AutoRegistrationPhase.NodeAttachments,
+                                    nodeAttachmentConvertedScene.Order,
+                                    $"RegisterNodeAttachmentFromConvertedScene:{nodeAttachmentConvertedScene.ParentType.FullName}->{nodeType.FullName}:{nodeAttachmentConvertedScene.LocalId}:{nodeAttachmentConvertedScene.ScenePath}",
+                                    nameof(RegisterNodeAttachmentFromConvertedSceneAttribute),
+                                    () => RegisterSceneNodeAttachment(ownerModId, type, nodeType,
+                                        nodeAttachmentConvertedScene,
+                                        true),
+                                    [TypeDependencyKey(type)]));
+                            });
+                        break;
+                    }
                     case AutoTimelineSlotAttribute autoTimelineSlot:
                         RegisterCase($"AutoTimelineSlot:{type.FullName}@{autoTimelineSlot.Era}", () =>
                         {
@@ -1202,6 +1259,166 @@ namespace STS2RitsuLib.Interop.AutoRegistration
             }
         }
 
+        private static Type ResolveNodeAttachmentNodeType(Type declaringType, Type? explicitNodeType)
+        {
+            var nodeType = explicitNodeType ?? declaringType;
+            EnsureConcreteSubtype(nodeType, typeof(Node), nameof(RegisterNodeAttachmentAttribute.NodeType));
+            return nodeType;
+        }
+
+        private static void RegisterFactoryNodeAttachment(string ownerModId, Type declaringType, Type nodeType,
+            RegisterNodeAttachmentAttribute attr)
+        {
+            EnsureConcreteSubtype(attr.ParentType, typeof(Node), nameof(attr.ParentType));
+            var factoryProvider = ResolveNodeAttachmentFactoryProvider(declaringType, nodeType, attr);
+            var setup = ResolveNodeAttachmentSetup(declaringType, nodeType);
+            var options = BuildNodeAttachmentOptions(attr);
+
+            ModNodeAttachmentRegistry.For(ownerModId).RegisterReadyChildUntyped(
+                ValidateNonEmpty(attr.LocalId, nameof(attr.LocalId)),
+                attr.ParentType,
+                nodeType,
+                parent =>
+                {
+                    var node = factoryProvider?.CreateNode(parent) ?? CreateNodeByDefaultConstructor(nodeType);
+                    if (!nodeType.IsInstanceOfType(node))
+                        throw new InvalidOperationException(
+                            $"Node attachment factory '{declaringType.FullName}' returned {node.GetType().FullName}, expected {nodeType.FullName}.");
+                    return node;
+                },
+                ComposeNodeAttachmentSetup(setup),
+                options,
+                "attribute-factory",
+                null);
+        }
+
+        private static void RegisterSceneNodeAttachment(string ownerModId, Type declaringType, Type nodeType,
+            RegisterNodeAttachmentAttributeBase attr, bool convertedScene)
+        {
+            EnsureConcreteSubtype(attr.ParentType, typeof(Node), nameof(attr.ParentType));
+            var scenePath = attr switch
+            {
+                RegisterNodeAttachmentFromSceneAttribute scene => ValidateNonEmpty(scene.ScenePath,
+                    nameof(scene.ScenePath)),
+                RegisterNodeAttachmentFromConvertedSceneAttribute scene => ValidateNonEmpty(scene.ScenePath,
+                    nameof(scene.ScenePath)),
+                _ => throw new ArgumentException("Unsupported node attachment scene attribute.", nameof(attr)),
+            };
+            var setup = ResolveNodeAttachmentSetup(declaringType, nodeType);
+            var options = BuildNodeAttachmentOptions(attr);
+
+            ModNodeAttachmentRegistry.For(ownerModId).RegisterReadyChildUntyped(
+                ValidateNonEmpty(attr.LocalId, nameof(attr.LocalId)),
+                attr.ParentType,
+                nodeType,
+                _ => convertedScene
+                    ? CreateNodeViaConvertedSceneFactory(nodeType, scenePath)
+                    : InstantiateSceneNode(nodeType, scenePath),
+                ComposeNodeAttachmentSetup(setup),
+                options,
+                convertedScene ? "attribute-converted-scene" : "attribute-scene",
+                scenePath);
+        }
+
+        private static NodeAttachmentOptions BuildNodeAttachmentOptions(RegisterNodeAttachmentAttributeBase attr)
+        {
+            return new()
+            {
+                Name = attr.NodeName,
+                Order = attr.Order,
+                UniqueNameInOwner = attr.UniqueNameInOwner,
+                IncludeDerivedParentTypes = attr.IncludeDerivedParentTypes,
+                DuplicatePolicy = attr.DuplicatePolicy,
+                AddMode = attr.AddMode,
+                SetupTiming = attr.SetupTiming,
+                ChildIndex = attr.ChildIndex >= 0 ? attr.ChildIndex : null,
+                InsertBeforeName = attr.InsertBeforeName,
+                InsertAfterName = attr.InsertAfterName,
+                QueueFreeReplacedNode = attr.QueueFreeReplacedNode,
+            };
+        }
+
+        private static INodeAttachmentFactory? ResolveNodeAttachmentFactoryProvider(Type declaringType, Type nodeType,
+            RegisterNodeAttachmentAttribute attr)
+        {
+            if (!typeof(INodeAttachmentFactory).IsAssignableFrom(declaringType))
+                return null;
+
+            if (typeof(Node).IsAssignableFrom(declaringType) && attr.NodeType == null)
+                return null;
+
+            return CreateParameterless<INodeAttachmentFactory>(declaringType, nameof(INodeAttachmentFactory));
+        }
+
+        private static INodeAttachmentSetup? ResolveNodeAttachmentSetup(Type declaringType, Type nodeType)
+        {
+            if (!typeof(INodeAttachmentSetup).IsAssignableFrom(declaringType) || declaringType == nodeType)
+                return null;
+
+            return CreateParameterless<INodeAttachmentSetup>(declaringType, nameof(INodeAttachmentSetup));
+        }
+
+        private static Action<Node, Node> ComposeNodeAttachmentSetup(INodeAttachmentSetup? setupProvider)
+        {
+            return setupProvider == null
+                ? (parent, node) =>
+                {
+                    if (node is INodeAttachmentSetup nodeSetup)
+                        nodeSetup.Setup(parent, node);
+                }
+                : (parent, node) =>
+                {
+                    setupProvider.Setup(parent, node);
+                    if (!ReferenceEquals(setupProvider, node) && node is INodeAttachmentSetup nodeSetup)
+                        nodeSetup.Setup(parent, node);
+                };
+        }
+
+        private static T CreateParameterless<T>(Type type, string role)
+        {
+            if (type.GetConstructor(Type.EmptyTypes) == null)
+                throw new InvalidOperationException(
+                    $"Node attachment {role} type '{type.FullName}' must have a public parameterless constructor.");
+
+            return (T)Activator.CreateInstance(type)!;
+        }
+
+        private static Node CreateNodeByDefaultConstructor(Type nodeType)
+        {
+            if (nodeType.GetConstructor(Type.EmptyTypes) == null)
+                throw new InvalidOperationException(
+                    $"Node attachment node type '{nodeType.FullName}' must have a public parameterless constructor or use {nameof(INodeAttachmentFactory)}.");
+
+            return (Node)Activator.CreateInstance(nodeType)!;
+        }
+
+        private static Node InstantiateSceneNode(Type nodeType, string scenePath)
+        {
+            var scene = ResourceLoader.Load<PackedScene>(scenePath)
+                        ?? throw new InvalidOperationException($"Failed to load PackedScene: {scenePath}");
+            var node = scene.Instantiate()
+                       ?? throw new InvalidOperationException($"PackedScene.Instantiate returned null: {scenePath}");
+
+            if (nodeType.IsInstanceOfType(node))
+                return node;
+
+            throw new InvalidOperationException(
+                $"Scene '{scenePath}' instantiated {node.GetType().FullName}, expected {nodeType.FullName}.");
+        }
+
+        private static Node CreateNodeViaConvertedSceneFactory(Type nodeType, string scenePath)
+        {
+            var method = typeof(RitsuGodotNodeFactories).GetMethods(BindingFlags.Public | BindingFlags.Static)
+                .Single(method => method is
+                                  {
+                                      Name: nameof(RitsuGodotNodeFactories.CreateFromScenePath),
+                                      IsGenericMethodDefinition: true,
+                                  } &&
+                                  method.GetParameters() is [{ ParameterType: var parameterType }] &&
+                                  parameterType == typeof(string));
+            return (Node)method.MakeGenericMethod(nodeType).Invoke(null, [scenePath])!;
+        }
+
         private static string? ResolveOwnerModId(Type type,
             IReadOnlyDictionary<string, Assembly> modAssembliesByManifestId)
         {
@@ -1238,7 +1455,7 @@ namespace STS2RitsuLib.Interop.AutoRegistration
             };
         }
 
-        private static ModelPublicEntryOptions ResolvePublicEntryOptions(RegisterModelComponentAttribute attribute)
+        private static ModelPublicEntryOptions ResolvePublicEntryOptions(RegisterModelCapabilityAttribute attribute)
         {
             ArgumentNullException.ThrowIfNull(attribute);
 
@@ -1256,17 +1473,17 @@ namespace STS2RitsuLib.Interop.AutoRegistration
             };
         }
 
-        private static string ResolveDefaultModelComponentModifierId(
+        private static string ResolveDefaultModelCapabilityModifierId(
             string ownerModId,
-            Type componentType,
+            Type capabilityType,
             Type targetModelType,
             string? explicitModifierId)
         {
             if (!string.IsNullOrWhiteSpace(explicitModifierId))
                 return explicitModifierId;
 
-            var stem = $"{targetModelType.Name}_{componentType.Name}";
-            return ModContentRegistry.GetQualifiedModelComponentId(ownerModId, stem);
+            var stem = $"{targetModelType.Name}_{capabilityType.Name}";
+            return ModContentRegistry.GetQualifiedModelCapabilityId(ownerModId, stem);
         }
 
         private static void EnsureConcreteSubtype(Type type, Type expectedBaseType, string paramName)

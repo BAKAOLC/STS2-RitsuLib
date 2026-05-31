@@ -11,10 +11,11 @@ namespace STS2RitsuLib.Interop.AutoRegistration
         CardTags = 4,
         CardPiles = 5,
         TopBarButtons = 6,
-        TimelineLayout = 7,
-        Timeline = 8,
-        Unlocks = 9,
-        Localization = 10,
+        NodeAttachments = 7,
+        TimelineLayout = 8,
+        Timeline = 9,
+        Unlocks = 10,
+        Localization = 11,
     }
 
     internal sealed record AutoRegistrationOperation(

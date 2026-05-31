@@ -175,19 +175,24 @@ namespace STS2RitsuLib.CardTags
         }
 
         /// <summary>
-        ///     Resolves the minted <see cref="CardTag" /> for <paramref name="id" />.
-        ///     解析 <paramref name="id" /> 对应的已生成 <see cref="CardTag" />。
+        ///     Resolves the deterministic <see cref="CardTag" /> value minted for <paramref name="id" />.
+        ///     The id does not need to be registered.
+        ///     解析为 <paramref name="id" /> 确定性 minted 的 <see cref="CardTag" /> 值。
+        ///     该 id 不需要已注册。
         /// </summary>
         public static bool TryGetCardTag(string id, out CardTag value)
         {
-            if (TryGet(id, out var definition))
+            ArgumentException.ThrowIfNullOrWhiteSpace(id);
+            try
             {
-                value = definition.CardTagValue;
+                value = CardTagMinter.Mint(id);
                 return true;
             }
-
-            value = CardTag.None;
-            return false;
+            catch (InvalidOperationException)
+            {
+                value = CardTag.None;
+                return false;
+            }
         }
 
         /// <summary>
@@ -200,16 +205,22 @@ namespace STS2RitsuLib.CardTags
         {
             ArgumentException.ThrowIfNullOrWhiteSpace(idOrEnumName);
 
-            return TryGetCardTag(idOrEnumName, out value) || Enum.TryParse(idOrEnumName.Trim(), true, out value);
+            if (!TryGet(idOrEnumName, out var definition))
+                return Enum.TryParse(idOrEnumName.Trim(), true, out value) || TryGetCardTag(idOrEnumName, out value);
+            value = definition.CardTagValue;
+            return true;
         }
 
         /// <summary>
-        ///     Returns the minted <see cref="CardTag" /> for <paramref name="id" /> or throws.
-        ///     返回 <paramref name="id" /> 对应的已生成 <see cref="CardTag" />；不存在时抛出异常。
+        ///     Returns the deterministic <see cref="CardTag" /> minted for <paramref name="id" />.
+        ///     The id does not need to be registered.
+        ///     返回为 <paramref name="id" /> 确定性 minted 的 <see cref="CardTag" />。
+        ///     该 id 不需要已注册。
         /// </summary>
         public static CardTag GetCardTag(string id)
         {
-            return Get(id).CardTagValue;
+            ArgumentException.ThrowIfNullOrWhiteSpace(id);
+            return CardTagMinter.Mint(id);
         }
 
         /// <summary>

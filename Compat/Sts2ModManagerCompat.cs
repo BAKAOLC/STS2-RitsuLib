@@ -38,6 +38,30 @@ namespace STS2RitsuLib.Compat
             return ModManager.GetLoadedMods();
         }
 
+        internal static IReadOnlyDictionary<string, Assembly> BuildLoadedModAssembliesByManifestId()
+        {
+            var result = new Dictionary<string, Assembly>(StringComparer.Ordinal);
+
+            foreach (var mod in EnumerateLoadedModsWithAssembly())
+                try
+                {
+                    var manifest = ReadManifest(mod);
+                    var modId = manifest == null ? null : ReadManifestId(manifest);
+                    var assembly = ReadAssembly(mod);
+                    if (string.IsNullOrWhiteSpace(modId) || assembly == null)
+                        continue;
+
+                    result[modId] = assembly;
+                }
+                catch (Exception ex)
+                {
+                    RitsuLibFramework.Logger.Warn(
+                        $"[Compat] Failed to inspect a loaded mod assembly for discovery interop: {ex.Message}");
+                }
+
+            return result;
+        }
+
         /// <summary>
         ///     All registered mods (including disabled / not loaded), for manifest name/description lookup.
         ///     所有已注册 mod（包括禁用/未加载的 mod），用于清单名称/描述查找。
@@ -55,6 +79,15 @@ namespace STS2RitsuLib.Compat
                 .Select(entry => entry!)
                 .OrderBy(entry => entry.Id, StringComparer.OrdinalIgnoreCase)
                 .ThenBy(entry => entry.AssemblyName ?? "", StringComparer.OrdinalIgnoreCase)
+                .ToArray();
+        }
+
+        internal static IReadOnlyList<Sts2ModInventoryEntry> BuildLoadedModInventoryEntries()
+        {
+            return EnumerateLoadedModsWithAssembly()
+                .Select(TryBuildModInventoryEntry)
+                .Where(entry => entry != null)
+                .Select(entry => entry!)
                 .ToArray();
         }
 

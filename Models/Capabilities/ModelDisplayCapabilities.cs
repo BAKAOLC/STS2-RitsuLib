@@ -52,10 +52,10 @@ namespace STS2RitsuLib.Models.Capabilities
         object? RuntimeContext = null);
 
     /// <summary>
-    ///     Optional component capability that contributes dynamic vars for any model text surface.
+    ///     Optional model capability that contributes dynamic vars for any model text surface.
     ///     可选组件能力：为任意模型文本 surface 贡献动态变量。
     /// </summary>
-    public interface IModelDynamicVarComponent
+    public interface IModelDynamicVarContributor
     {
         /// <summary>
         ///     Returns the component-owned dynamic-var set for <paramref name="model" />.
@@ -65,10 +65,10 @@ namespace STS2RitsuLib.Models.Capabilities
     }
 
     /// <summary>
-    ///     Optional component capability that contributes hover tips for any model.
+    ///     Optional model capability that contributes hover tips for any model.
     ///     可选组件能力：为任意模型贡献悬停提示。
     /// </summary>
-    public interface IModelHoverTipComponent
+    public interface IModelHoverTipContributor
     {
         /// <summary>
         ///     Returns additional hover tips for <paramref name="model" />.
@@ -78,10 +78,10 @@ namespace STS2RitsuLib.Models.Capabilities
     }
 
     /// <summary>
-    ///     Optional typed component capability that contributes hover tips for <typeparamref name="TModel" />.
+    ///     Optional typed model capability that contributes hover tips for <typeparamref name="TModel" />.
     ///     可选类型化组件能力：为 <typeparamref name="TModel" /> 贡献悬停提示。
     /// </summary>
-    public interface IModelHoverTipComponent<in TModel> where TModel : AbstractModel
+    public interface IModelHoverTipContributor<in TModel> where TModel : AbstractModel
     {
         /// <summary>
         ///     Returns additional hover tips for <paramref name="model" />.
@@ -91,10 +91,10 @@ namespace STS2RitsuLib.Models.Capabilities
     }
 
     /// <summary>
-    ///     Optional component capability that contributes asset paths for any model.
+    ///     Optional model capability that contributes asset paths for any model.
     ///     可选组件能力：为任意模型贡献资源路径。
     /// </summary>
-    public interface IModelAssetPathComponent
+    public interface IModelAssetPathContributor
     {
         /// <summary>
         ///     Returns additional asset paths.
@@ -104,10 +104,10 @@ namespace STS2RitsuLib.Models.Capabilities
     }
 
     /// <summary>
-    ///     Optional typed component capability that contributes asset paths for <typeparamref name="TModel" />.
+    ///     Optional typed model capability that contributes asset paths for <typeparamref name="TModel" />.
     ///     可选类型化组件能力：为 <typeparamref name="TModel" /> 贡献资源路径。
     /// </summary>
-    public interface IModelAssetPathComponent<in TModel> where TModel : AbstractModel
+    public interface IModelAssetPathContributor<in TModel> where TModel : AbstractModel
     {
         /// <summary>
         ///     Returns additional asset paths.
@@ -116,7 +116,7 @@ namespace STS2RitsuLib.Models.Capabilities
         IEnumerable<string> GetAssetPaths(TModel model, ModelAssetPathContext context);
     }
 
-    internal static partial class ModelComponentCapabilityHost
+    internal static partial class ModelCapabilityHost
     {
         internal static IEnumerable<IHoverTip> GetHoverTips<TModel>(TModel model)
             where TModel : AbstractModel
@@ -124,7 +124,7 @@ namespace STS2RitsuLib.Models.Capabilities
             foreach (var component in GetComponentSnapshot(model))
                 switch (component)
                 {
-                    case IModelHoverTipComponent general:
+                    case IModelHoverTipContributor general:
                     {
                         IEnumerable<IHoverTip> tips = [];
                         TryRun(component, model, () => tips = general.GetHoverTips(model));
@@ -132,7 +132,7 @@ namespace STS2RitsuLib.Models.Capabilities
                             yield return tip;
                         break;
                     }
-                    case IModelHoverTipComponent<TModel> typed:
+                    case IModelHoverTipContributor<TModel> typed:
                     {
                         IEnumerable<IHoverTip> tips = [];
                         TryRun(component, model, () => tips = typed.GetHoverTips(model));
@@ -149,7 +149,7 @@ namespace STS2RitsuLib.Models.Capabilities
             foreach (var component in GetComponentSnapshot(model))
                 switch (component)
                 {
-                    case IModelAssetPathComponent general:
+                    case IModelAssetPathContributor general:
                     {
                         IEnumerable<string> paths = [];
                         TryRun(component, model, () => paths = general.GetAssetPaths(context));
@@ -157,7 +157,7 @@ namespace STS2RitsuLib.Models.Capabilities
                             yield return path;
                         break;
                     }
-                    case IModelAssetPathComponent<TModel> typed:
+                    case IModelAssetPathContributor<TModel> typed:
                     {
                         IEnumerable<string> paths = [];
                         TryRun(component, model, () => paths = typed.GetAssetPaths(model, context));
@@ -181,7 +181,7 @@ namespace STS2RitsuLib.Models.Capabilities
 
             foreach (var component in GetComponentSnapshot(model))
             {
-                if (component is not IModelDynamicVarComponent dynamicVarComponent)
+                if (component is not IModelDynamicVarContributor dynamicVarComponent)
                     continue;
 
                 DynamicVarSet? dynamicVars = null;
@@ -190,7 +190,7 @@ namespace STS2RitsuLib.Models.Capabilities
             }
         }
 
-        internal static void TryRun(IModelComponent component, AbstractModel model, Action action)
+        internal static void TryRun(IModelCapability component, AbstractModel model, Action action)
         {
             try
             {
@@ -199,19 +199,19 @@ namespace STS2RitsuLib.Models.Capabilities
             catch (Exception ex)
             {
                 RitsuLibFramework.Logger.Warn(
-                    $"[ModelComponents] Component capability '{component.GetType().FullName}' failed for {model.Id}: {ex.Message}");
+                    $"[ModelCapabilities] Model capability '{component.GetType().FullName}' failed for {model.Id}: {ex.Message}");
             }
         }
 
-        private static IReadOnlyList<IModelComponent> GetComponentSnapshot(AbstractModel model)
+        private static IReadOnlyList<IModelCapability> GetComponentSnapshot(AbstractModel model)
         {
-            if (ModelComponents.TryGet(model, out var collection)) return collection.Components.ToArray();
-            if (!ModelDefaultComponents.HasDefaultComponentSource(model))
+            if (ModelCapabilities.TryGet(model, out var collection)) return collection.Items.ToArray();
+            if (!ModelCapabilityDefaults.HasDefaultCapabilitySource(model))
                 return [];
 
-            collection = ModelComponents.Get(model);
+            collection = ModelCapabilities.Get(model);
 
-            return collection.Components.ToArray();
+            return collection.Items.ToArray();
         }
     }
 }

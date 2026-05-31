@@ -50,7 +50,7 @@ namespace STS2RitsuLib.Content
         private static readonly HashSet<Type> RegisteredMonsters = [];
         private static readonly HashSet<Type> RegisteredPowers = [];
         private static readonly HashSet<Type> RegisteredOrbs = [];
-        private static readonly HashSet<Type> RegisteredModelComponents = [];
+        private static readonly HashSet<Type> RegisteredModelCapabilities = [];
         private static readonly HashSet<Type> RegisteredSharedCardPools = [];
         private static readonly HashSet<Type> RegisteredSharedEvents = [];
         private static readonly HashSet<Type> RegisteredSharedAncients = [];
@@ -276,16 +276,16 @@ namespace STS2RitsuLib.Content
         }
 
         /// <summary>
-        ///     Builds a mod-scoped model-component id using the ritsulib three-segment convention with middle segment
-        ///     <c>MODELCOMPONENT</c>.
-        ///     使用 ritsulib 三段式约定构建 mod 作用域的模型组件 ID，中间段为 <c>MODELCOMPONENT</c>。
+        ///     Builds a mod-scoped model-capability id using the ritsulib three-segment convention with middle segment
+        ///     <c>MODELCAPABILITY</c>.
+        ///     使用 ritsulib 三段式约定构建 mod 作用域的模型能力 ID，中间段为 <c>MODELCAPABILITY</c>。
         /// </summary>
-        public static string GetQualifiedModelComponentId(string modId, string localComponentStem)
+        public static string GetQualifiedModelCapabilityId(string modId, string localCapabilityStem)
         {
             ArgumentException.ThrowIfNullOrWhiteSpace(modId);
-            ArgumentException.ThrowIfNullOrWhiteSpace(localComponentStem);
+            ArgumentException.ThrowIfNullOrWhiteSpace(localCapabilityStem);
 
-            return GetCompoundId(modId, "MODELCOMPONENT", localComponentStem);
+            return GetCompoundId(modId, "MODELCAPABILITY", localCapabilityStem);
         }
 
         /// <summary>
@@ -304,6 +304,20 @@ namespace STS2RitsuLib.Content
             ArgumentException.ThrowIfNullOrWhiteSpace(localButtonStem);
 
             return GetCompoundId(modId, "TOPBARBUTTON", localButtonStem);
+        }
+
+        /// <summary>
+        ///     Builds a mod-scoped right-click binding id using the ritsulib <c>MODID_CATEGORY_TYPENAME</c>
+        ///     convention with middle segment <c>RIGHTCLICK</c>.
+        ///     使用 ritsulib <c>MODID_CATEGORY_TYPENAME</c> 约定构建 mod 作用域右键绑定 id，
+        ///     中间段为 <c>RIGHTCLICK</c>。
+        /// </summary>
+        public static string GetQualifiedRightClickId(string modId, string localRightClickStem)
+        {
+            ArgumentException.ThrowIfNullOrWhiteSpace(modId);
+            ArgumentException.ThrowIfNullOrWhiteSpace(localRightClickStem);
+
+            return GetCompoundId(modId, "RIGHTCLICK", localRightClickStem);
         }
 
         /// <summary>
@@ -720,92 +734,92 @@ namespace STS2RitsuLib.Content
         }
 
         /// <summary>
-        ///     Registers a model-backed component for use with <see cref="ModelComponents" />.
-        ///     注册一个基于模型的组件，供 <see cref="ModelComponents" /> 使用。
+        ///     Registers a model-backed component for use with <see cref="ModelCapabilities" />.
+        ///     注册一个基于模型的组件，供 <see cref="ModelCapabilities" /> 使用。
         /// </summary>
-        public void RegisterModelComponent<TComponent>() where TComponent : ModelComponent
+        public void RegisterModelCapability<TCapability>() where TCapability : ModelCapability
         {
-            RegisterModelComponent<TComponent>(default);
+            RegisterModelCapability<TCapability>(default);
         }
 
         /// <summary>
         ///     Registers a model-backed component using <paramref name="publicEntry" /> rules.
         ///     使用 <paramref name="publicEntry" /> 规则注册一个基于模型的组件。
         /// </summary>
-        public void RegisterModelComponent<TComponent>(ModelPublicEntryOptions publicEntry)
-            where TComponent : ModelComponent
+        public void RegisterModelCapability<TCapability>(ModelPublicEntryOptions publicEntry)
+            where TCapability : ModelCapability
         {
-            RegisterModelComponent(typeof(TComponent), publicEntry);
+            RegisterModelCapability(typeof(TCapability), publicEntry);
         }
 
         /// <summary>
-        ///     Registers <paramref name="componentType" /> as a model-backed component.
-        ///     将 <paramref name="componentType" /> 注册为基于模型的组件。
+        ///     Registers <paramref name="capabilityType" /> as a model-backed component.
+        ///     将 <paramref name="capabilityType" /> 注册为基于模型的组件。
         /// </summary>
-        public void RegisterModelComponent(Type componentType)
+        public void RegisterModelCapability(Type capabilityType)
         {
-            RegisterModelComponent(componentType, default);
+            RegisterModelCapability(capabilityType, default);
         }
 
         /// <summary>
-        ///     Registers <paramref name="componentType" /> as a model-backed component using
+        ///     Registers <paramref name="capabilityType" /> as a model-backed component using
         ///     <paramref name="publicEntry" /> rules.
-        ///     使用 <paramref name="publicEntry" /> 规则将 <paramref name="componentType" /> 注册为基于模型的组件。
+        ///     使用 <paramref name="publicEntry" /> 规则将 <paramref name="capabilityType" /> 注册为基于模型的组件。
         /// </summary>
-        public void RegisterModelComponent(Type componentType, ModelPublicEntryOptions publicEntry)
+        public void RegisterModelCapability(Type capabilityType, ModelPublicEntryOptions publicEntry)
         {
-            EnsureMutable($"register model component '{componentType.Name}'");
-            EnsureModelType(componentType, typeof(ModelComponent), nameof(componentType));
-            PrimeOwnedType(componentType);
-            ApplyFixedPublicEntryForModel(componentType, publicEntry);
-            RegistrationConflictDetector.ThrowIfModelIdConflicts(componentType);
+            EnsureMutable($"register model capability '{capabilityType.Name}'");
+            EnsureModelType(capabilityType, typeof(ModelCapability), nameof(capabilityType));
+            PrimeOwnedType(capabilityType);
+            ApplyFixedPublicEntryForModel(capabilityType, publicEntry);
+            RegistrationConflictDetector.ThrowIfModelIdConflicts(capabilityType);
 
             lock (SyncRoot)
             {
-                if (!RegisteredModelComponents.Add(componentType))
+                if (!RegisteredModelCapabilities.Add(capabilityType))
                 {
-                    _logger.Debug($"[Content] Skipping duplicate model component registration: {componentType.Name}");
+                    _logger.Debug($"[Content] Skipping duplicate model capability registration: {capabilityType.Name}");
                     return;
                 }
 
-                RememberOwner(componentType);
+                RememberOwner(capabilityType);
             }
 
-            var componentId = ResolveModelComponentId(componentType, publicEntry);
-            ModelComponentRegistry.RegisterModelComponent(componentType, componentId);
-            _logger.Info($"[Content] Registered model component: {componentType.Name} ({componentId})");
+            var capabilityId = ResolveModelCapabilityId(capabilityType, publicEntry);
+            ModelCapabilityRegistry.RegisterModelCapability(capabilityType, capabilityId);
+            _logger.Info($"[Content] Registered model capability: {capabilityType.Name} ({capabilityId})");
         }
 
         /// <summary>
-        ///     Registers a modifier for the default component list of matching <paramref name="modelType" /> instances.
-        ///     为匹配的 <paramref name="modelType" /> 实例默认组件列表注册修改器。
+        ///     Configures the default capability set for matching <paramref name="modelType" /> instances.
+        ///     配置匹配的 <paramref name="modelType" /> 实例的默认能力集合。
         /// </summary>
-        public void ModifyDefaultModelComponents(
+        public void ConfigureDefaultModelCapabilities(
             Type modelType,
             string modifierId,
-            Action<AbstractModel, ModelDefaultComponentList> modifier,
+            Action<AbstractModel, ModelCapabilityList> modifier,
             int order = 0)
         {
-            EnsureMutable($"modify default model components '{modelType.Name}/{modifierId}'");
+            EnsureMutable($"configure default model capabilities '{modelType.Name}/{modifierId}'");
             EnsureModelFamilyType(modelType, nameof(modelType));
-            ModelDefaultComponents.Modify(ModId, modifierId, modelType, modifier, order);
-            _logger.Info($"[Content] Registered default model component modifier: {modelType.Name}/{modifierId}");
+            ModelCapabilityDefaults.Modify(ModId, modifierId, modelType, modifier, order);
+            _logger.Info($"[Content] Registered default model capability modifier: {modelType.Name}/{modifierId}");
         }
 
         /// <summary>
-        ///     Registers a modifier for the default component list of matching <typeparamref name="TModel" /> instances.
-        ///     为匹配的 <typeparamref name="TModel" /> 实例默认组件列表注册修改器。
+        ///     Configures the default capability set for matching <typeparamref name="TModel" /> instances.
+        ///     配置匹配的 <typeparamref name="TModel" /> 实例的默认能力集合。
         /// </summary>
-        public void ModifyDefaultModelComponents<TModel>(
+        public void ConfigureDefaultModelCapabilities<TModel>(
             string modifierId,
-            Action<TModel, ModelDefaultComponentList> modifier,
+            Action<TModel, ModelCapabilityList> modifier,
             int order = 0)
             where TModel : AbstractModel
         {
-            EnsureMutable($"modify default model components '{typeof(TModel).Name}/{modifierId}'");
-            ModelDefaultComponents.Modify(ModId, modifierId, modifier, order);
+            EnsureMutable($"configure default model capabilities '{typeof(TModel).Name}/{modifierId}'");
+            ModelCapabilityDefaults.Modify(ModId, modifierId, modifier, order);
             _logger.Info(
-                $"[Content] Registered default model component modifier: {typeof(TModel).Name}/{modifierId}");
+                $"[Content] Registered default model capability modifier: {typeof(TModel).Name}/{modifierId}");
         }
 
         /// <summary>
@@ -1268,8 +1282,8 @@ namespace STS2RitsuLib.Content
                     new ContentModelReference(type, typeof(PowerModel), "registered power")));
                 AddMany(list, RegisteredOrbs.Select(static type =>
                     new ContentModelReference(type, typeof(OrbModel), "registered orb")));
-                AddMany(list, RegisteredModelComponents.Select(static type =>
-                    new ContentModelReference(type, typeof(ModelComponent), "registered model component")));
+                AddMany(list, RegisteredModelCapabilities.Select(static type =>
+                    new ContentModelReference(type, typeof(ModelCapability), "registered model capability")));
                 AddMany(list, RegisteredEnchantments.Select(static type =>
                     new ContentModelReference(type, typeof(EnchantmentModel), "registered enchantment")));
                 AddMany(list, RegisteredAfflictions.Select(static type =>
@@ -1582,7 +1596,7 @@ namespace STS2RitsuLib.Content
                     .Concat(RegisteredMonsters)
                     .Concat(RegisteredPowers)
                     .Concat(RegisteredOrbs)
-                    .Concat(RegisteredModelComponents)
+                    .Concat(RegisteredModelCapabilities)
                     .Concat(RegisteredEnchantments)
                     .Concat(RegisteredAfflictions)
                     .Concat(RegisteredAchievements)
@@ -1909,12 +1923,12 @@ namespace STS2RitsuLib.Content
             }
         }
 
-        private string ResolveModelComponentId(Type componentType, ModelPublicEntryOptions options)
+        private string ResolveModelCapabilityId(Type capabilityType, ModelPublicEntryOptions options)
         {
             return options.Kind switch
             {
-                ModelPublicEntryKind.FromTypeName => GetQualifiedModelComponentId(ModId, componentType.Name),
-                ModelPublicEntryKind.Stem => GetQualifiedModelComponentId(ModId, options.Value!),
+                ModelPublicEntryKind.FromTypeName => GetQualifiedModelCapabilityId(ModId, capabilityType.Name),
+                ModelPublicEntryKind.Stem => GetQualifiedModelCapabilityId(ModId, options.Value!),
                 ModelPublicEntryKind.FullEntry => NormalizeFullPublicEntry(options.Value!),
                 _ => throw new ArgumentOutOfRangeException(nameof(options), options.Kind, null),
             };
