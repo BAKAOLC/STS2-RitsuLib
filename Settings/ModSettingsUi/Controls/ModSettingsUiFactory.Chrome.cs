@@ -402,6 +402,12 @@ namespace STS2RitsuLib.Settings
                         ModSettingsUiChromeClipboard.TryPastePage(pageContext);
                         context.RequestRefresh();
                     }));
+            if (pageContext.Page.MenuCapabilities.HasFlag(ModSettingsMenuCapabilities.ResetToDefault) &&
+                PageCanResetToDefault(pageContext.Page))
+                actions.Add(new(ModSettingsStandardActionIds.PageResetToDefault,
+                    ModSettingsLocalization.Get("button.resetPageDefaults", "Reset page to defaults"),
+                    () => PageCanResetToDefault(pageContext.Page),
+                    () => { ResetPageToDefaults(pageContext); }));
             ModSettingsUiActionRegistry.AppendPageActions(context, pageContext, actions);
             return actions;
         }
@@ -428,8 +434,44 @@ namespace STS2RitsuLib.Settings
                         ModSettingsUiChromeClipboard.TryPasteSection(sectionContext);
                         context.RequestRefresh();
                     }));
+            if (sectionContext.Section.MenuCapabilities.HasFlag(ModSettingsMenuCapabilities.ResetToDefault) &&
+                SectionCanResetToDefault(sectionContext.Section))
+                actions.Add(new(ModSettingsStandardActionIds.SectionResetToDefault,
+                    ModSettingsLocalization.Get("button.resetSectionDefaults", "Reset section to defaults"),
+                    () => SectionCanResetToDefault(sectionContext.Section),
+                    () => { ResetSectionToDefaults(sectionContext); }));
             ModSettingsUiActionRegistry.AppendSectionActions(context, sectionContext, actions);
             return actions;
+        }
+
+        private static bool PageCanResetToDefault(ModSettingsPage page)
+        {
+            return page.Sections.Any(SectionCanResetToDefault);
+        }
+
+        private static bool SectionCanResetToDefault(ModSettingsSection section)
+        {
+            return section.Entries.Any(entry => entry.CanResetToDefault);
+        }
+
+        private static void ResetPageToDefaults(ModSettingsPageUiContext pageContext)
+        {
+            var count = pageContext.Page.Sections.Sum(section =>
+                ResetSectionEntriesToDefaults(pageContext.Host, section));
+
+            if (count > 0)
+                pageContext.Host.RequestRefreshAfterDataModelBatchChange();
+        }
+
+        private static void ResetSectionToDefaults(ModSettingsSectionUiContext sectionContext)
+        {
+            if (ResetSectionEntriesToDefaults(sectionContext.Host, sectionContext.Section) > 0)
+                sectionContext.Host.RequestRefreshAfterDataModelBatchChange();
+        }
+
+        private static int ResetSectionEntriesToDefaults(IModSettingsUiActionHost host, ModSettingsSection section)
+        {
+            return section.Entries.Count(entry => entry.TryResetToDefault(host));
         }
 
         private static void CopyBindingValueToClipboard<TValue>(IModSettingsValueBinding<TValue> binding)
@@ -654,9 +696,12 @@ namespace STS2RitsuLib.Settings
                 context.EndSectionSurfaceScope();
             }
 
-            return new(control, true, sectionPlan.EntryHost, sectionPlan.SectionActionsButton == null
-                ? null
-                : added => AttachContextMenuTargets(added, added, sectionPlan.SectionActionsButton));
+            return new(control, true, sectionPlan.EntryHost, added =>
+            {
+                context.RegisterEntryAnchor(page, section, entry, added);
+                if (sectionPlan.SectionActionsButton != null)
+                    AttachContextMenuTargets(added, added, sectionPlan.SectionActionsButton);
+            });
         }
 
         internal static Control MaybeWrapDynamicEnabled(ModSettingsUiContext context, Control host,

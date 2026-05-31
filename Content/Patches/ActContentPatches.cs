@@ -16,7 +16,7 @@ namespace STS2RitsuLib.Content.Patches
 
         /// <inheritdoc />
         public static string Description =>
-            "Dynamically patch all loaded ActModel implementations for registered events and ancients";
+            "Dynamically patch all loaded ActModel implementations for registered events, ancients, and encounters";
 
         /// <inheritdoc />
         public static bool IsCritical => true;

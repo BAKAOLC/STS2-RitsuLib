@@ -98,6 +98,12 @@ namespace STS2RitsuLib.Settings
         public const string PagePaste = "ritsulib.settings.page.paste";
 
         /// <summary>
+        ///     Reset every default-capable binding on a settings page.
+        ///     重置设置页面中每个支持默认值的 binding。
+        /// </summary>
+        public const string PageResetToDefault = "ritsulib.settings.page.resetDefault";
+
+        /// <summary>
         ///     Copy a single section (chrome clipboard).
         ///     Copy a single section (chrome 剪贴板).
         /// </summary>
@@ -108,6 +114,12 @@ namespace STS2RitsuLib.Settings
         ///     粘贴到单个 section（chrome 剪贴板）。
         /// </summary>
         public const string SectionPaste = "ritsulib.settings.section.paste";
+
+        /// <summary>
+        ///     Reset every default-capable binding in a settings section.
+        ///     重置设置分组中每个支持默认值的 binding。
+        /// </summary>
+        public const string SectionResetToDefault = "ritsulib.settings.section.resetDefault";
     }
 
     /// <summary>

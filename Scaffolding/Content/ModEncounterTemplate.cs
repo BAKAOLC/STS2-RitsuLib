@@ -8,7 +8,8 @@ namespace STS2RitsuLib.Scaffolding.Content
 {
     /// <summary>
     ///     Base <see cref="EncounterModel" /> for mods: <see cref="IModEncounterAssetOverrides" /> (combat scene path,
-    ///     backgrounds, boss node, map-node preload, extra paths), optional <see cref="TryCreateEncounterCombatScene" />.
+    ///     backgrounds, boss node, map-node preload, extra paths), optional <see cref="TryCreateEncounterCombatScene" />,
+    ///     and <see cref="IModEncounterActValidity" /> for act-specific spawn gating.
     ///     The background pipeline matches vanilla <c>EncounterModel.HasCustomBackground</c> semantics, with an explicit
     ///     switch to keep using the act’s combat
     ///     background when desired. For disk-free backgrounds, set <see cref="UseProgrammaticCombatBackground" /> and
@@ -37,7 +38,7 @@ namespace STS2RitsuLib.Scaffolding.Content
     ///     <para />
     /// </summary>
     public abstract class ModEncounterTemplate : EncounterModel, IModEncounterAssetOverrides,
-        IModEncounterCombatSceneFactory
+        IModEncounterCombatSceneFactory, IModEncounterActValidity
     {
         private BackgroundAssets? _programmaticCombatBackgroundSlot;
 
@@ -90,6 +91,12 @@ namespace STS2RitsuLib.Scaffolding.Content
         ///     当没有 <see cref="CustomEncounterScenePath" /> 也应让 <see cref="HasScene" /> 为 true 时返回 <c>true</c>。
         /// </summary>
         protected virtual bool SuppliesEncounterCombatSceneFromFactory => false;
+
+        /// <inheritdoc />
+        public virtual bool IsValidForAct(ActModel act)
+        {
+            return true;
+        }
 
         /// <inheritdoc />
         public virtual EncounterAssetProfile AssetProfile => EncounterAssetProfile.Empty;

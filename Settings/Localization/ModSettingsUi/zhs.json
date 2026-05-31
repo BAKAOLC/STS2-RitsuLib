@@ -430,6 +430,8 @@
   "button.actionsShort": "操作",
   "button.actionsGlyph": "\u22ee",
   "button.resetDefault": "还原默认值",
+  "button.resetPageDefaults": "还原本页默认值",
+  "button.resetSectionDefaults": "还原本分组默认值",
   "color.title": "颜色编辑器",
   "color.mode.rgb": "RGB",
   "color.mode.hsv": "HSV",

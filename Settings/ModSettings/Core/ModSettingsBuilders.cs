@@ -11,8 +11,7 @@ namespace STS2RitsuLib.Settings
         private readonly HashSet<string> _sectionIds = new(StringComparer.OrdinalIgnoreCase);
         private readonly List<ModSettingsSection> _sections = [];
 
-        private ModSettingsMenuCapabilities _menuCapabilities = ModSettingsMenuCapabilities.Copy |
-                                                                ModSettingsMenuCapabilities.Paste;
+        private ModSettingsMenuCapabilities _menuCapabilities = ModSettingsMenuCapabilities.All;
 
         private int? _modSidebarOrder;
         private Func<bool>? _pageEnabledWhen;
@@ -266,8 +265,7 @@ namespace STS2RitsuLib.Settings
         private readonly HashSet<string> _entryIds = new(StringComparer.OrdinalIgnoreCase);
         private readonly Dictionary<string, Func<bool>> _entryVisibleWhen = new(StringComparer.OrdinalIgnoreCase);
 
-        private ModSettingsMenuCapabilities _menuCapabilities = ModSettingsMenuCapabilities.Copy |
-                                                                ModSettingsMenuCapabilities.Paste;
+        private ModSettingsMenuCapabilities _menuCapabilities = ModSettingsMenuCapabilities.All;
 
         private Func<bool>? _sectionEnabledWhen;
 

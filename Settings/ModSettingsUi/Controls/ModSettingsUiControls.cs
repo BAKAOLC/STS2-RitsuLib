@@ -5464,6 +5464,15 @@ namespace STS2RitsuLib.Settings
                 Callable.From(EnsureExpandedSectionVisible).CallDeferred();
         }
 
+        internal void Expand()
+        {
+            if (!_collapsed)
+                return;
+
+            _collapsed = false;
+            ApplyCollapsedState();
+        }
+
         private void ApplyCollapsedState()
         {
             if (_content != null)
