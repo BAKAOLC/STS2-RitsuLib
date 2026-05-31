@@ -1336,7 +1336,8 @@ namespace STS2RitsuLib.Settings
         private void EnsureSelectionIsValid()
         {
             var rootPages = ModSettingsRegistry.GetPages()
-                .Where(page => string.IsNullOrWhiteSpace(page.ParentPageId))
+                .Where(page => string.IsNullOrWhiteSpace(page.ParentPageId) &&
+                               IsPageVisibleOnCurrentHost(page))
                 .GroupBy(page => page.ModId, StringComparer.OrdinalIgnoreCase)
                 .OrderBy(group => ModSettingsRegistry.GetModSidebarOrder(group.Key))
                 .ThenBy(group => ModSettingsLocalization.ResolveModName(group.Key, group.Key),
@@ -1361,7 +1362,8 @@ namespace STS2RitsuLib.Settings
             }
 
             var modPages = ModSettingsRegistry.GetPages()
-                .Where(page => string.Equals(page.ModId, _selectedModId, StringComparison.OrdinalIgnoreCase))
+                .Where(page => string.Equals(page.ModId, _selectedModId, StringComparison.OrdinalIgnoreCase) &&
+                               IsPageVisibleOnCurrentHost(page))
                 .OrderBy(ModSettingsRegistry.GetEffectivePageSortOrder)
                 .ThenBy(page => page.Id, StringComparer.OrdinalIgnoreCase)
                 .ToArray();
@@ -1388,7 +1390,8 @@ namespace STS2RitsuLib.Settings
             _sectionButtons.Clear();
 
             var rootPages = ModSettingsRegistry.GetPages()
-                .Where(page => string.IsNullOrWhiteSpace(page.ParentPageId))
+                .Where(page => string.IsNullOrWhiteSpace(page.ParentPageId) &&
+                               IsPageVisibleOnCurrentHost(page))
                 .GroupBy(page => page.ModId, StringComparer.OrdinalIgnoreCase)
                 .OrderBy(group => ModSettingsRegistry.GetModSidebarOrder(group.Key))
                 .ThenBy(group => ModSettingsLocalization.ResolveModName(group.Key, group.Key),
@@ -1411,7 +1414,8 @@ namespace STS2RitsuLib.Settings
                 var group = rootPages[index];
                 var modId = group.Key;
                 var pages = ModSettingsRegistry.GetPages()
-                    .Where(page => string.Equals(page.ModId, modId, StringComparison.OrdinalIgnoreCase))
+                    .Where(page => string.Equals(page.ModId, modId, StringComparison.OrdinalIgnoreCase) &&
+                                   IsPageVisibleOnCurrentHost(page))
                     .OrderBy(ModSettingsRegistry.GetEffectivePageSortOrder)
                     .ThenBy(page => page.Id, StringComparer.OrdinalIgnoreCase)
                     .ToArray();
@@ -1544,7 +1548,8 @@ namespace STS2RitsuLib.Settings
                     RitsuShellPanelStyles.CreateSidebarModCardCompact(RitsuShellTheme.Current.Metric.Radius.Default,
                         isSelected));
                 var count = ModSettingsRegistry.GetPages().Count(page =>
-                    string.Equals(page.ModId, pair.Key, StringComparison.OrdinalIgnoreCase));
+                    string.Equals(page.ModId, pair.Key, StringComparison.OrdinalIgnoreCase) &&
+                    IsPageVisibleOnCurrentHost(page));
                 var pageCountText = string.Format(
                     ModSettingsLocalization.Get("sidebar.modMeta", "{0} pages"),
                     count);
@@ -1554,7 +1559,8 @@ namespace STS2RitsuLib.Settings
                 var modTitle = ResolveSidebarModTitle(
                     ModSettingsRegistry.GetPages()
                         .Where(p => string.IsNullOrWhiteSpace(p.ParentPageId) &&
-                                    string.Equals(p.ModId, pair.Key, StringComparison.OrdinalIgnoreCase))
+                                    string.Equals(p.ModId, pair.Key, StringComparison.OrdinalIgnoreCase) &&
+                                    IsPageVisibleOnCurrentHost(p))
                         .OrderBy(ModSettingsRegistry.GetEffectivePageSortOrder)
                         .ThenBy(p => p.Id, StringComparer.OrdinalIgnoreCase)
                         .ToArray());
@@ -1617,7 +1623,8 @@ namespace STS2RitsuLib.Settings
 
             var rootPages = ModSettingsRegistry.GetPages()
                 .Where(page => string.Equals(page.ModId, _selectedModId, StringComparison.OrdinalIgnoreCase) &&
-                               string.IsNullOrWhiteSpace(page.ParentPageId))
+                               string.IsNullOrWhiteSpace(page.ParentPageId) &&
+                               IsPageVisibleOnCurrentHost(page))
                 .OrderBy(ModSettingsRegistry.GetEffectivePageSortOrder)
                 .ThenBy(page => page.Id, StringComparer.OrdinalIgnoreCase)
                 .ToArray();
@@ -2351,7 +2358,13 @@ namespace STS2RitsuLib.Settings
         {
             return ModSettingsRegistry.GetPages().FirstOrDefault(page =>
                 string.Equals(page.ModId, _selectedModId, StringComparison.OrdinalIgnoreCase) &&
-                string.Equals(page.Id, _selectedPageId, StringComparison.OrdinalIgnoreCase));
+                string.Equals(page.Id, _selectedPageId, StringComparison.OrdinalIgnoreCase) &&
+                IsPageVisibleOnCurrentHost(page));
+        }
+
+        private static bool IsPageVisibleOnCurrentHost(ModSettingsPage page)
+        {
+            return ModSettingsHostSurfaceResolver.IsVisibleOnCurrentHost(page.VisibleOnHostSurfaces);
         }
 
         private void ReplaceHostChildren(Control host, Control stagedContent)
@@ -2864,7 +2877,8 @@ namespace STS2RitsuLib.Settings
         {
             var rootPages = ModSettingsRegistry.GetPages()
                 .Where(page => string.Equals(page.ModId, cache.ModId, StringComparison.OrdinalIgnoreCase) &&
-                               string.IsNullOrWhiteSpace(page.ParentPageId))
+                               string.IsNullOrWhiteSpace(page.ParentPageId) &&
+                               IsPageVisibleOnCurrentHost(page))
                 .ToArray();
             if (rootPages.Length == 0)
                 return;
