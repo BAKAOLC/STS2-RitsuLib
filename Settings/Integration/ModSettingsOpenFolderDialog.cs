@@ -37,10 +37,8 @@ namespace STS2RitsuLib.Settings
                 uiHost.RequestRefresh();
                 dialog.QueueFree();
             };
-            dialog.Canceled += dialog.QueueFree;
 
-            tree.Root.AddChild(dialog);
-            dialog.PopupCenteredRatio(0.55f);
+            ModSettingsNativeFileDialogChrome.Popup(dialog);
         }
     }
 }
