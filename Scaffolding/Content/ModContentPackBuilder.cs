@@ -1208,6 +1208,133 @@ namespace STS2RitsuLib.Scaffolding.Content
         }
 
         /// <summary>
+        ///     Queues explicit card unlock content for <typeparamref name="TEpoch" /> and gates those cards behind it.
+        ///     为 <typeparamref name="TEpoch" /> 加入显式卡牌解锁内容，并将这些卡牌 gate 在该纪元之后。
+        /// </summary>
+        public ModContentPackBuilder EpochCards<TEpoch>(IReadOnlyList<Type> cardTypes)
+            where TEpoch : EpochModel
+        {
+            ArgumentNullException.ThrowIfNull(cardTypes);
+            return AddStep(ctx =>
+                ModEpochGatedContentPackHelper.ApplyExplicitTypes(typeof(TEpoch), ctx, cardTypes, []));
+        }
+
+        /// <summary>
+        ///     Queues explicit card unlock content for <typeparamref name="TEpoch" /> and gates those cards behind it.
+        ///     为 <typeparamref name="TEpoch" /> 加入显式卡牌解锁内容，并将这些卡牌 gate 在该纪元之后。
+        /// </summary>
+        public ModContentPackBuilder EpochCards<TEpoch>(params Type[] cardTypes)
+            where TEpoch : EpochModel
+        {
+            return EpochCards<TEpoch>((IReadOnlyList<Type>)cardTypes);
+        }
+
+        /// <summary>
+        ///     Queues all cards registered in <typeparamref name="TPool" /> as unlock content for <typeparamref name="TEpoch" />.
+        ///     将 <typeparamref name="TPool" /> 中已注册的所有卡牌作为 <typeparamref name="TEpoch" /> 的解锁内容加入队列。
+        /// </summary>
+        public ModContentPackBuilder EpochCardsFromPool<TEpoch, TPool>()
+            where TEpoch : EpochModel
+            where TPool : CardPoolModel
+        {
+            return AddStep(ctx =>
+                ModEpochGatedContentPackHelper.ApplyCardsFromPool(typeof(TEpoch), typeof(TPool), ctx));
+        }
+
+        /// <summary>
+        ///     Queues explicit relic unlock content for <typeparamref name="TEpoch" /> and gates those relics behind it.
+        ///     为 <typeparamref name="TEpoch" /> 加入显式遗物解锁内容，并将这些遗物 gate 在该纪元之后。
+        /// </summary>
+        public ModContentPackBuilder EpochRelics<TEpoch>(IReadOnlyList<Type> relicTypes)
+            where TEpoch : EpochModel
+        {
+            ArgumentNullException.ThrowIfNull(relicTypes);
+            return AddStep(ctx =>
+                ModEpochGatedContentPackHelper.ApplyExplicitTypes(typeof(TEpoch), ctx, [], relicTypes));
+        }
+
+        /// <summary>
+        ///     Queues explicit relic unlock content for <typeparamref name="TEpoch" /> and gates those relics behind it.
+        ///     为 <typeparamref name="TEpoch" /> 加入显式遗物解锁内容，并将这些遗物 gate 在该纪元之后。
+        /// </summary>
+        public ModContentPackBuilder EpochRelics<TEpoch>(params Type[] relicTypes)
+            where TEpoch : EpochModel
+        {
+            return EpochRelics<TEpoch>((IReadOnlyList<Type>)relicTypes);
+        }
+
+        /// <summary>
+        ///     Queues explicit potion gates for <typeparamref name="TEpoch" />.
+        ///     为 <typeparamref name="TEpoch" /> 加入显式药水 gate。
+        /// </summary>
+        public ModContentPackBuilder EpochPotions<TEpoch>(IReadOnlyList<Type> potionTypes)
+            where TEpoch : EpochModel
+        {
+            ArgumentNullException.ThrowIfNull(potionTypes);
+            return AddStep(ctx =>
+                ModEpochGatedContentPackHelper.ApplyExplicitPotions(typeof(TEpoch), ctx, potionTypes));
+        }
+
+        /// <summary>
+        ///     Queues explicit potion gates for <typeparamref name="TEpoch" />.
+        ///     为 <typeparamref name="TEpoch" /> 加入显式药水 gate。
+        /// </summary>
+        public ModContentPackBuilder EpochPotions<TEpoch>(params Type[] potionTypes)
+            where TEpoch : EpochModel
+        {
+            return EpochPotions<TEpoch>((IReadOnlyList<Type>)potionTypes);
+        }
+
+        /// <summary>
+        ///     Queues gating for every registered card in <typeparamref name="TPool" /> behind <typeparamref name="TEpoch" />.
+        ///     将 <typeparamref name="TPool" /> 中已注册的所有卡牌 gate 在 <typeparamref name="TEpoch" /> 之后。
+        /// </summary>
+        public ModContentPackBuilder RequireAllCardsInPool<TEpoch, TPool>()
+            where TEpoch : EpochModel
+            where TPool : CardPoolModel
+        {
+            return AddStep(ctx =>
+                ModEpochGatedContentPackHelper.ApplyRequireAllPoolCards(typeof(TEpoch), typeof(TPool), ctx));
+        }
+
+        /// <summary>
+        ///     Queues gating for every registered relic in <typeparamref name="TPool" /> behind <typeparamref name="TEpoch" />.
+        ///     将 <typeparamref name="TPool" /> 中已注册的所有遗物 gate 在 <typeparamref name="TEpoch" /> 之后。
+        /// </summary>
+        public ModContentPackBuilder RequireAllRelicsInPool<TEpoch, TPool>()
+            where TEpoch : EpochModel
+            where TPool : RelicPoolModel
+        {
+            return AddStep(ctx =>
+                ModEpochGatedContentPackHelper.ApplyRequireAllPoolRelics(typeof(TEpoch), typeof(TPool), ctx));
+        }
+
+        /// <summary>
+        ///     Queues gating for every registered potion in <typeparamref name="TPool" /> behind <typeparamref name="TEpoch" />.
+        ///     将 <typeparamref name="TPool" /> 中已注册的所有药水 gate 在 <typeparamref name="TEpoch" /> 之后。
+        /// </summary>
+        public ModContentPackBuilder RequireAllPotionsInPool<TEpoch, TPool>()
+            where TEpoch : EpochModel
+            where TPool : PotionPoolModel
+        {
+            return AddStep(ctx =>
+                ModEpochGatedContentPackHelper.ApplyRequireAllPoolPotions(typeof(TEpoch), typeof(TPool), ctx));
+        }
+
+        /// <summary>
+        ///     Queues every relic registered in <typeparamref name="TPool" /> as unlock content for <typeparamref name="TEpoch" />
+        ///     .
+        ///     将 <typeparamref name="TPool" /> 中已注册的所有遗物作为 <typeparamref name="TEpoch" /> 的解锁内容加入队列。
+        /// </summary>
+        public ModContentPackBuilder EpochRelicsFromPool<TEpoch, TPool>()
+            where TEpoch : EpochModel
+            where TPool : RelicPoolModel
+        {
+            return AddStep(ctx =>
+                ModEpochGatedContentPackHelper.ApplyRelicsFromPool(typeof(TEpoch), typeof(TPool), ctx));
+        }
+
+        /// <summary>
         ///     Queues <see cref="ModUnlockRegistry.UnlockEpochAfterRunAs{TCharacter,TEpoch}" />.
         ///     将 <see cref="ModUnlockRegistry.UnlockEpochAfterRunAs{TCharacter,TEpoch}" /> 加入队列。
         /// </summary>
