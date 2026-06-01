@@ -1,7 +1,5 @@
-using MegaCrit.Sts2.Core.GameActions.Multiplayer;
 using MegaCrit.Sts2.Core.Multiplayer;
 using MegaCrit.Sts2.Core.Multiplayer.Game;
-using MegaCrit.Sts2.Core.Multiplayer.Messages.Game;
 using MegaCrit.Sts2.Core.Runs;
 using STS2RitsuLib.Patching.Models;
 
@@ -60,36 +58,6 @@ namespace STS2RitsuLib.Networking.Sidecar.Patches
         public static bool Prefix(RunLocationTargetedMessageBuffer __instance, RunLocation location)
         {
             return RitsuLibSidecarSync.ReleaseLocationBuffer(__instance, location);
-        }
-    }
-
-    /// <summary>
-    ///     Binds sidecar sync action payloads after vanilla hook actions are enqueued.
-    ///     在原版 hook action 入队后绑定 sidecar 同步动作载荷。
-    /// </summary>
-    internal sealed class RitsuLibSidecarSyncHookActionEnqueuedPatch : IPatchMethod
-    {
-        public static string PatchId => "ritsulib_sidecar_sync_hook_action_enqueued";
-        public static bool IsCritical => false;
-        public static string Description => "Bind sidecar sync action payloads to vanilla hook actions after enqueue";
-
-        public static ModPatchTarget[] GetTargets()
-        {
-            return
-            [
-                new(
-                    typeof(ActionQueueSynchronizer),
-                    "HandleHookActionEnqueuedMessage",
-                    [typeof(HookActionEnqueuedMessage), typeof(ulong)]),
-            ];
-        }
-
-        public static void Postfix(HookActionEnqueuedMessage message)
-        {
-            RitsuLibSidecarSyncActions.TryBindEnqueuedHookAction(
-                message.hookActionId,
-                message.ownerId,
-                message.gameActionType);
         }
     }
 }

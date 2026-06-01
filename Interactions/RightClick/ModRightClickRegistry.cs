@@ -5,13 +5,11 @@ using MegaCrit.Sts2.Core.Entities.Players;
 using MegaCrit.Sts2.Core.GameActions;
 using MegaCrit.Sts2.Core.GameActions.Multiplayer;
 using MegaCrit.Sts2.Core.Models;
-using MegaCrit.Sts2.Core.Multiplayer;
-using MegaCrit.Sts2.Core.Multiplayer.Game;
 using MegaCrit.Sts2.Core.Multiplayer.Serialization;
 using MegaCrit.Sts2.Core.Runs;
 using STS2RitsuLib.Content;
 using STS2RitsuLib.Models.Identity;
-using STS2RitsuLib.Networking.Sidecar;
+using STS2RitsuLib.Networking.ManagedActions;
 
 namespace STS2RitsuLib.Interactions.RightClick
 {
@@ -21,10 +19,9 @@ namespace STS2RitsuLib.Interactions.RightClick
     /// </summary>
     public static class ModRightClickRegistry
     {
-        private const string SidecarModuleId = "ritsulib";
-        private const string SidecarActionKey = "model_right_click";
-        private const string SidecarNonCombatRequestKey = "model_right_click_noncombat_request";
-        private const string SidecarNonCombatApplyKey = "model_right_click_noncombat_apply";
+        private const string ActionModuleId = "ritsulib";
+        private const string CombatActionKey = "model_right_click_combat";
+        private const string NonCombatActionKey = "model_right_click_noncombat";
         private const int InitialOffset = 0;
         private const int InterfaceBindingPriority = int.MinValue;
 
@@ -41,34 +38,23 @@ namespace STS2RitsuLib.Interactions.RightClick
         private static readonly ModRightClickBindingId InterfaceBindingId =
             new(ModContentRegistry.GetQualifiedRightClickId(Const.ModId, "model_interface"));
 
-        private static readonly RitsuLibSidecarSyncActionDescriptor<ModRightClickSyncPayload> SyncActionDescriptor =
+        private static readonly RitsuLibManagedNetActionDescriptor<ModRightClickSyncPayload> CombatActionDescriptor =
             new(
-                SidecarModuleId,
-                SidecarActionKey,
+                ActionModuleId,
+                CombatActionKey,
                 SerializePayload,
                 DeserializePayload,
-                ExecuteSynced,
+                ExecuteManaged,
                 GameActionType.CombatPlayPhaseOnly);
 
-        private static readonly RitsuLibSidecarSyncMessageDescriptor<ModRightClickSyncPayload>
-            NonCombatRequestDescriptor =
-                new(
-                    SidecarModuleId,
-                    SidecarNonCombatRequestKey,
-                    SerializePayload,
-                    DeserializePayload,
-                    HandleNonCombatRequest,
-                    true);
-
-        private static readonly RitsuLibSidecarSyncMessageDescriptor<ModRightClickSyncPayload>
-            NonCombatApplyDescriptor =
-                new(
-                    SidecarModuleId,
-                    SidecarNonCombatApplyKey,
-                    SerializePayload,
-                    DeserializePayload,
-                    HandleNonCombatApply,
-                    true);
+        private static readonly RitsuLibManagedNetActionDescriptor<ModRightClickSyncPayload> NonCombatActionDescriptor =
+            new(
+                ActionModuleId,
+                NonCombatActionKey,
+                SerializePayload,
+                DeserializePayload,
+                ExecuteManaged,
+                GameActionType.NonCombat);
 
         /// <summary>
         ///     Registers a custom right-click handler. Higher priority handlers run first.
@@ -146,9 +132,8 @@ namespace STS2RitsuLib.Interactions.RightClick
 
         internal static void RegisterBuiltInSyncDescriptors()
         {
-            RitsuLibSidecarSyncActions.Register(SyncActionDescriptor);
-            RitsuLibSidecarSyncMessages.Register(NonCombatRequestDescriptor);
-            RitsuLibSidecarSyncMessages.Register(NonCombatApplyDescriptor);
+            RitsuLibManagedNetActions.Register(CombatActionDescriptor);
+            RitsuLibManagedNetActions.Register(NonCombatActionDescriptor);
         }
 
         private static bool TryRequestSyncedModelAction(
@@ -158,13 +143,14 @@ namespace STS2RitsuLib.Interactions.RightClick
             if (!TryCreatePayload(context, out var payload))
                 return false;
 
+            RegisterBuiltInSyncDescriptors();
             payload = payload with { BindingIds = [.. bindingIds] };
-            if (!CombatManager.Instance.IsInProgress)
-                return TryRequestNonCombatAction(payload);
-
-            return RitsuLibSidecarSyncActions.RequestCombatPlayPhaseAction(
+            var descriptor = CombatManager.Instance.IsInProgress
+                ? CombatActionDescriptor
+                : NonCombatActionDescriptor;
+            return RitsuLibManagedNetActions.Request(
                 RunManager.Instance,
-                SyncActionDescriptor,
+                descriptor,
                 payload,
                 context.Player.NetId);
         }
@@ -215,26 +201,6 @@ namespace STS2RitsuLib.Interactions.RightClick
             }
         }
 
-        private static bool TryRequestNonCombatAction(ModRightClickSyncPayload payload)
-        {
-            var runManager = RunManager.Instance;
-            var netService = runManager?.NetService;
-            if (runManager == null || netService == null)
-                return false;
-
-            return netService.Type switch
-            {
-                NetGameType.Client => RitsuLibSidecarSyncMessages.SendToHost(
-                    runManager,
-                    NonCombatRequestDescriptor,
-                    payload),
-                _ => RitsuLibSidecarSyncMessages.Broadcast(
-                    runManager,
-                    NonCombatApplyDescriptor,
-                    payload),
-            };
-        }
-
         private static bool IsPowerReachableForPlayer(PowerModel power, Player player)
         {
             return power.Owner.Player == player ||
@@ -282,43 +248,19 @@ namespace STS2RitsuLib.Interactions.RightClick
                 bindingIds);
         }
 
-        private static async Task ExecuteSynced(
-            RitsuLibSidecarSyncActionContext<ModRightClickSyncPayload> context)
+        private static async Task ExecuteManaged(
+            RitsuLibManagedNetActionContext<ModRightClickSyncPayload> context)
         {
-            if (context.Message.OwnerNetId != context.OwnerNetId)
+            if (context.Message.OwnerNetId != context.Player.NetId)
                 return;
 
             await ExecutePayload(context.Message, context.PlayerChoiceContext, context.Action);
         }
 
-        private static Task HandleNonCombatRequest(
-            RitsuLibSidecarSyncMessageContext<ModRightClickSyncPayload> context)
-        {
-            if (!context.IsHostIngest ||
-                RunManager.Instance?.NetService is not NetHostGameService ||
-                context.Message.OwnerNetId != context.SenderNetId ||
-                !TryGetPlayer(context.Message.OwnerNetId, out var player) ||
-                !TryResolveModel(player, context.Message, out _) ||
-                context.Message.BindingIds.Count == 0)
-                return Task.CompletedTask;
-
-            _ = RitsuLibSidecarSyncMessages.Broadcast(
-                RunManager.Instance,
-                NonCombatApplyDescriptor,
-                context.Message);
-            return Task.CompletedTask;
-        }
-
-        private static Task HandleNonCombatApply(
-            RitsuLibSidecarSyncMessageContext<ModRightClickSyncPayload> context)
-        {
-            return ExecutePayload(context.Message, null, null);
-        }
-
         private static async Task ExecutePayload(
             ModRightClickSyncPayload payload,
             GameActionPlayerChoiceContext? playerChoiceContext,
-            GenericHookGameAction? action)
+            GameAction? action)
         {
             if (!TryGetPlayer(payload.OwnerNetId, out var player))
                 return;

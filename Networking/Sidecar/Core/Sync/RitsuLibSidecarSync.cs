@@ -13,10 +13,7 @@ namespace STS2RitsuLib.Networking.Sidecar
     internal static class RitsuLibSidecarSync
     {
         public const ulong MessageOpcode = 0x20;
-        public const ulong ActionRequestOpcode = 0x21;
-        public const ulong ActionAnnouncementOpcode = 0x22;
 
-        private const int VanillaReliableChannel = 0;
         private const int InitialOffset = 0;
         private const int InitialIndex = 0;
         private const int EmptyLength = 0;
@@ -29,11 +26,9 @@ namespace STS2RitsuLib.Networking.Sidecar
         private const int VersionSize = RitsuLibSidecarBinaryLayout.ByteSize;
         private const int RouteSize = RitsuLibSidecarBinaryLayout.ByteSize;
         private const int BooleanSize = RitsuLibSidecarBinaryLayout.ByteSize;
-        private const int GameActionTypeSize = RitsuLibSidecarBinaryLayout.ByteSize;
         private const int LengthPrefixSize = RitsuLibSidecarBinaryLayout.U32Size;
         private const int DescriptorOpcodeSize = RitsuLibSidecarBinaryLayout.U64Size;
         private const int NetIdSize = RitsuLibSidecarBinaryLayout.U64Size;
-        private const int HookActionIdSize = RitsuLibSidecarBinaryLayout.U32Size;
 
         private const int MessagePacketFixedSize =
             VersionSize +
@@ -41,15 +36,6 @@ namespace STS2RitsuLib.Networking.Sidecar
             NetIdSize +
             RouteSize +
             BooleanSize +
-            LengthPrefixSize +
-            LengthPrefixSize;
-
-        private const int ActionPacketFixedSize =
-            VersionSize +
-            DescriptorOpcodeSize +
-            NetIdSize +
-            HookActionIdSize +
-            GameActionTypeSize +
             LengthPrefixSize +
             LengthPrefixSize;
 
@@ -88,39 +74,61 @@ namespace STS2RitsuLib.Networking.Sidecar
         private static readonly LocationCallHandlersDelegate? LocationCallHandlers =
             TryCreateLocationCallHandlersDelegate();
 
-        public static bool TrySendToHost(NetClientGameService client, ulong opcode, ReadOnlySpan<byte> payload)
+        public static bool TrySendToHost(
+            NetClientGameService client,
+            ulong opcode,
+            ReadOnlySpan<byte> payload,
+            NetTransferMode mode,
+            int channel)
         {
             return RitsuLibSidecarSend.TrySendToHost(
                 client,
-                CreateEnvelope(opcode, payload),
-                NetTransferMode.Reliable,
-                VanillaReliableChannel);
+                CreateEnvelope(opcode, payload, mode),
+                mode,
+                channel);
         }
 
         public static bool TrySendToPeer(
             NetHostGameService host,
             ulong peerNetId,
             ulong opcode,
-            ReadOnlySpan<byte> payload)
+            ReadOnlySpan<byte> payload,
+            NetTransferMode mode,
+            int channel)
         {
             return RitsuLibSidecarSend.TrySendToPeer(
                 host,
                 peerNetId,
-                CreateEnvelope(opcode, payload),
-                NetTransferMode.Reliable,
-                VanillaReliableChannel);
+                CreateEnvelope(opcode, payload, mode),
+                mode,
+                channel);
         }
 
-        public static bool TryBroadcastToReadyPeers(
+        public static bool TryBroadcastToPeers(
             NetHostGameService host,
             ulong opcode,
             ReadOnlySpan<byte> payload,
-            ulong? excludePeerId)
+            ulong? excludePeerId,
+            RitsuLibSidecarSyncBroadcastScope scope,
+            NetTransferMode mode,
+            int channel,
+            RitsuLibSidecarSyncFailurePolicy failurePolicy)
         {
-            var envelope = CreateEnvelope(opcode, payload);
-            return host.ConnectedPeers.Where(peer => peer.readyForBroadcasting && peer.peerId != excludePeerId)
-                .All(peer => RitsuLibSidecarSend.TrySendToPeer(host, peer.peerId, envelope, NetTransferMode.Reliable,
-                    VanillaReliableChannel));
+            if (failurePolicy == RitsuLibSidecarSyncFailurePolicy.Required &&
+                !RitsuLibSidecarSyncMessages.CanSendToAllTargetPeers(host, excludePeerId, scope))
+            {
+                RitsuLibFramework.Logger.Error(
+                    $"[SidecarSync] Required broadcast opcode {opcode} cannot reach every target peer; send suppressed.");
+                return false;
+            }
+
+            var envelope = CreateEnvelope(opcode, payload, mode);
+
+            return (from peer in RitsuLibSidecarSyncMessages.TargetPeers(host, excludePeerId, scope)
+                where failurePolicy != RitsuLibSidecarSyncFailurePolicy.BestEffort ||
+                      RitsuLibSidecarSessionManager.CanSendToPeer(peer.peerId)
+                select RitsuLibSidecarSend.TrySendToPeer(host, peer.peerId, envelope, mode, channel)).Aggregate(true,
+                (current, sent) => current & (sent || failurePolicy == RitsuLibSidecarSyncFailurePolicy.BestEffort));
         }
 
         public static byte[] WriteMessagePacket(
@@ -172,77 +180,28 @@ namespace STS2RitsuLib.Networking.Sidecar
             return true;
         }
 
-        public static byte[] WriteActionPacket(
-            ulong descriptorOpcode,
-            ulong ownerNetId,
-            uint hookActionId,
-            byte gameActionType,
-            RunLocation location,
-            ReadOnlySpan<byte> payload)
-        {
-            var locationBytes = WriteLocation(location);
-            var buffer = new byte[
-                ActionPacketFixedSize +
-                locationBytes.Length +
-                payload.Length];
-            var span = buffer.AsSpan();
-            var offset = InitialOffset;
-            span[offset++] = Version;
-            BinaryPrimitives.WriteUInt64LittleEndian(span.Slice(offset, DescriptorOpcodeSize), descriptorOpcode);
-            offset += DescriptorOpcodeSize;
-            BinaryPrimitives.WriteUInt64LittleEndian(span.Slice(offset, NetIdSize), ownerNetId);
-            offset += NetIdSize;
-            BinaryPrimitives.WriteUInt32LittleEndian(span.Slice(offset, HookActionIdSize), hookActionId);
-            offset += HookActionIdSize;
-            span[offset++] = gameActionType;
-            WriteBytes(span, ref offset, locationBytes);
-            WriteBytes(span, ref offset, payload);
-            return buffer;
-        }
-
-        public static bool TryReadActionPacket(
-            ReadOnlySpan<byte> span,
-            out RitsuLibSidecarSyncActionPacket packet)
-        {
-            packet = default;
-            var offset = InitialOffset;
-            if (span.Length < ActionPacketFixedSize || span[offset++] != Version)
-                return false;
-
-            var descriptorOpcode = BinaryPrimitives.ReadUInt64LittleEndian(span.Slice(offset, DescriptorOpcodeSize));
-            offset += DescriptorOpcodeSize;
-            var ownerNetId = BinaryPrimitives.ReadUInt64LittleEndian(span.Slice(offset, NetIdSize));
-            offset += NetIdSize;
-            var hookActionId = BinaryPrimitives.ReadUInt32LittleEndian(span.Slice(offset, HookActionIdSize));
-            offset += HookActionIdSize;
-            var gameActionType = span[offset++];
-            if (!TryReadLocation(span, ref offset, out var location))
-                return false;
-            if (!TryReadBytes(span, ref offset, out var payload) || offset != span.Length)
-                return false;
-
-            packet = new(
-                descriptorOpcode,
-                ownerNetId,
-                hookActionId,
-                gameActionType,
-                location,
-                payload.ToArray());
-            return true;
-        }
-
         public static bool TryBufferIncoming(INetGameService netService, in RitsuLibSidecarDispatchContext context)
         {
             if (!IsSyncOpcode(context.Opcode) ||
                 !TryGetMessageBus(netService, out var bus) ||
                 !TryGetNetBusBufferState(bus, out var isBuffering, out var vanillaMessages) ||
-                !isBuffering)
+                !isBuffering ||
+                !RitsuLibSidecarSyncMessages.ShouldBufferIncoming(context.Payload.Span))
                 return false;
 
             var bufferedContext = context.WithOwnedEnvelopeMemory();
             if (netService is NetHostGameService host &&
-                TryRelayHostBroadcastBeforeBuffer(host, in bufferedContext, out var localOnlyContext))
+                TryRelayHostBroadcastBeforeBuffer(
+                    host,
+                    in bufferedContext,
+                    out var localOnlyContext,
+                    out var suppressAfterRequiredFailure))
+            {
+                if (suppressAfterRequiredFailure)
+                    return true;
+
                 bufferedContext = localOnlyContext;
+            }
 
             lock (Gate)
             {
@@ -396,48 +355,78 @@ namespace STS2RitsuLib.Networking.Sidecar
             }
         }
 
-        private static byte[] CreateEnvelope(ulong opcode, ReadOnlySpan<byte> payload)
+        private static byte[] CreateEnvelope(ulong opcode, ReadOnlySpan<byte> payload, NetTransferMode mode)
         {
             return RitsuLibSidecar.CreateEnvelopeWithDelivery(
                 opcode,
                 payload,
-                RitsuLibSidecarDeliverySemantics.StableSync);
+                DeliveryFor(mode));
+        }
+
+        private static RitsuLibSidecarDeliverySemantics DeliveryFor(NetTransferMode mode)
+        {
+            return mode == NetTransferMode.Unreliable
+                ? RitsuLibSidecarDeliverySemantics.BestEffort
+                : RitsuLibSidecarDeliverySemantics.StableSync;
         }
 
         private static void DispatchReleased(RitsuLibSidecarDispatchContext context)
         {
-            switch (context.Opcode)
-            {
-                case MessageOpcode:
-                    RitsuLibSidecarSyncMessages.HandleBuffered(in context);
-                    break;
-                case ActionRequestOpcode:
-                    RitsuLibSidecarSyncActions.HandleBufferedRequest(in context);
-                    break;
-            }
+            if (context.Opcode == MessageOpcode)
+                RitsuLibSidecarSyncMessages.HandleBuffered(in context);
         }
 
         private static bool IsSyncOpcode(ulong opcode)
         {
-            return opcode is MessageOpcode or ActionRequestOpcode or ActionAnnouncementOpcode;
+            return opcode == MessageOpcode;
         }
 
         private static bool TryRelayHostBroadcastBeforeBuffer(
             NetHostGameService host,
             in RitsuLibSidecarDispatchContext context,
-            out RitsuLibSidecarDispatchContext localOnlyContext)
+            out RitsuLibSidecarDispatchContext localOnlyContext,
+            out bool suppressAfterRequiredFailure)
         {
             localOnlyContext = context;
+            suppressAfterRequiredFailure = false;
             if (context.Opcode != MessageOpcode ||
-                !TryReadMessagePacket(context.Payload.Span, out var packet) ||
-                packet.Route != RitsuLibSidecarSyncMessageRoute.ClientToHostAndBroadcast)
+                !TryReadMessagePacket(context.Payload.Span, out var packet))
                 return false;
 
-            if (!CanSendToAllReadyPeers(host, context.SenderNetId))
+            if (!RitsuLibSidecarSyncMessages.TryGetRelayPolicy(
+                    context.Payload.Span,
+                    out var shouldRelay,
+                    out var scope,
+                    out var failurePolicy))
+                return false;
+            if (!shouldRelay)
                 return false;
 
-            if (!TryBroadcastToReadyPeers(host, MessageOpcode, context.Payload.Span, context.SenderNetId))
-                return false;
+            if (failurePolicy == RitsuLibSidecarSyncFailurePolicy.Required &&
+                !RitsuLibSidecarSyncMessages.CanSendToAllTargetPeers(host, context.SenderNetId, scope))
+            {
+                RitsuLibFramework.Logger.Error(
+                    $"[SidecarSync] Required relay opcode {packet.DescriptorOpcode} cannot reach every target peer; local handler suppressed.");
+                suppressAfterRequiredFailure = true;
+                return true;
+            }
+
+            if (!TryBroadcastToPeers(
+                    host,
+                    MessageOpcode,
+                    context.Payload.Span,
+                    context.SenderNetId,
+                    scope,
+                    context.TransferMode,
+                    context.Channel,
+                    failurePolicy))
+            {
+                if (failurePolicy == RitsuLibSidecarSyncFailurePolicy.Required)
+                    RitsuLibFramework.Logger.Error(
+                        $"[SidecarSync] Required relay opcode {packet.DescriptorOpcode} send failed; local handler suppressed.");
+                suppressAfterRequiredFailure = failurePolicy == RitsuLibSidecarSyncFailurePolicy.Required;
+                return suppressAfterRequiredFailure;
+            }
 
             var localPayload = WriteMessagePacket(
                 packet.DescriptorOpcode,
@@ -459,12 +448,6 @@ namespace STS2RitsuLib.Networking.Sidecar
                 context.IsHostIngest,
                 localEnvelope);
             return true;
-        }
-
-        private static bool CanSendToAllReadyPeers(NetHostGameService host, ulong? excludePeerId)
-        {
-            return host.ConnectedPeers.Where(peer => peer.readyForBroadcasting && peer.peerId != excludePeerId)
-                .All(peer => RitsuLibSidecarSessionManager.CanSendToPeer(peer.peerId));
         }
 
         private static bool TryGetMessageBus(INetGameService netService, out NetMessageBus bus)
@@ -697,25 +680,6 @@ namespace STS2RitsuLib.Networking.Sidecar
             }
         }
 
-        private static bool TryGetLocation(RitsuLibSidecarDispatchContext context, out RunLocation location)
-        {
-            location = default;
-            switch (context.Opcode)
-            {
-                case MessageOpcode when
-                    TryReadMessagePacket(context.Payload.Span, out var message) &&
-                    message.LocationTargeted:
-                    location = message.Location;
-                    return true;
-                case ActionRequestOpcode when
-                    TryReadActionPacket(context.Payload.Span, out var action):
-                    location = action.Location;
-                    return true;
-                default:
-                    return false;
-            }
-        }
-
         private static bool TryReadMessageHeader(
             ReadOnlySpan<byte> span,
             ref int offset,
@@ -829,14 +793,6 @@ namespace STS2RitsuLib.Networking.Sidecar
         ulong OriginalSenderNetId,
         RitsuLibSidecarSyncMessageRoute Route,
         bool LocationTargeted,
-        RunLocation Location,
-        byte[] Payload);
-
-    internal readonly record struct RitsuLibSidecarSyncActionPacket(
-        ulong DescriptorOpcode,
-        ulong OwnerNetId,
-        uint HookActionId,
-        byte GameActionType,
         RunLocation Location,
         byte[] Payload);
 }

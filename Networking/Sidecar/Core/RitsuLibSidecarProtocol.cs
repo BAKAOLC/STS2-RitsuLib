@@ -26,12 +26,15 @@ namespace STS2RitsuLib.Networking.Sidecar
             RitsuLibSidecarSessionManager.EnsureProvidersBootstrapped();
             RitsuLibSidecarBuiltInHandlers.Register();
             RitsuLibSidecarSyncMessages.RegisterBuiltInHandler();
-            RitsuLibSidecarSyncActions.RegisterBuiltInHandlers();
             ModRightClickRegistry.RegisterBuiltInSyncDescriptors();
             RitsuLibSidecarNetworkingLifecycle.EnsureHooksInstalled();
             RitsuLibSidecarRequiredCapabilities.RegisterRequiredCapability(
                 "ritsulib:sidecar_core_supported",
                 RitsuLibSidecarSessionManager.CanSendToPeer);
+            RitsuLibSidecarRequiredCapabilities.RegisterRequiredCapability(
+                "ritsulib:managed_net_actions",
+                peerNetId => RitsuLibSidecarSessionManager.TryGetPeerFeatures(peerNetId, out var features) &&
+                             (features & RitsuLibSidecarPeerFeatures.ManagedNetActions) != 0);
         }
     }
 }

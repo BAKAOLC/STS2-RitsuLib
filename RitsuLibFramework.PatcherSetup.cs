@@ -18,6 +18,7 @@ using STS2RitsuLib.Lifecycle.Patches;
 using STS2RitsuLib.Localization.Patches;
 using STS2RitsuLib.Models.Identity.Patches;
 using STS2RitsuLib.Models.Patches;
+using STS2RitsuLib.Networking.ManagedActions.Patches;
 using STS2RitsuLib.Networking.Sidecar.Patches;
 using STS2RitsuLib.Patching.Core;
 using STS2RitsuLib.Platform;
@@ -156,14 +157,16 @@ namespace STS2RitsuLib
             patcher.RegisterPatch<ModelRegistryLifecyclePatch>();
             patcher.RegisterPatch<GameNodeLifecyclePatch>();
             patcher.RegisterPatch<RunLifecyclePatch>();
-            patcher.RegisterPatch<RitsuLibSidecarNetHostReceivePatch>();
-            patcher.RegisterPatch<RitsuLibSidecarNetClientReceivePatch>();
+            patcher.RegisterPatch<RitsuLibSidecarNetReceivePatch>();
             patcher.RegisterPatch<RitsuLibSidecarNativeTrailerSendPatch>();
             if (!RitsuLibMobileSteamRuntime.SuppressNativeSteamIntegration)
                 patcher.RegisterPatch<RitsuLibSidecarNativeTrailerSteamSendPatch>();
             patcher.RegisterPatch<RitsuLibSidecarSyncNetBufferPatch>();
             patcher.RegisterPatch<RitsuLibSidecarSyncLocationChangedPatch>();
-            patcher.RegisterPatch<RitsuLibSidecarSyncHookActionEnqueuedPatch>();
+            patcher.RegisterPatch<RitsuLibManagedNetActionMessagePatches.RequestSerialize>();
+            patcher.RegisterPatch<RitsuLibManagedNetActionMessagePatches.RequestDeserialize>();
+            patcher.RegisterPatch<RitsuLibManagedNetActionMessagePatches.AnnouncementSerialize>();
+            patcher.RegisterPatch<RitsuLibManagedNetActionMessagePatches.AnnouncementDeserialize>();
             patcher.RegisterPatch<ModModelIdentityRunStateCreatePatch>();
             patcher.RegisterPatch<ModModelIdentityPlayerRunStatePatch>();
             patcher.RegisterPatch<ModModelIdentityRunStateAddCardPatch>();
