@@ -206,6 +206,23 @@ namespace STS2RitsuLib.Utils
             return GetValueWithMintKey(id, NormalizeId(id));
         }
 
+        /// <summary>
+        ///     Returns the deterministic enum value for <paramref name="id" /> without failing on hash collisions.
+        ///     The value is computed but not registered when the id is unknown.
+        ///     返回 <paramref name="id" /> 对应的确定性枚举值，且不会因哈希碰撞失败。ID 未知时只计算值，
+        ///     不会注册。
+        /// </summary>
+        /// <remarks>
+        ///     This is an explicit escape hatch for diagnostics and compatibility code that must recover the raw value
+        ///     an id would have produced even after another id has already minted the same numeric value.
+        ///     这是供诊断与兼容代码使用的显式旁路：即使已有其它 ID 生成了相同数值，也能取回该 ID 本应生成的原始值。
+        /// </remarks>
+        public static TEnum GetValueIgnoringCollisions(string id)
+        {
+            ArgumentException.ThrowIfNullOrWhiteSpace(id);
+            return GetValueWithMintKeyIgnoringCollisions(id, NormalizeId(id));
+        }
+
         internal static TEnum GetValueWithMintKey(string id, string mintKey)
         {
             ArgumentException.ThrowIfNullOrWhiteSpace(id);
@@ -219,6 +236,21 @@ namespace STS2RitsuLib.Utils
             }
 
             return Minter.Mint(mintKey);
+        }
+
+        internal static TEnum GetValueWithMintKeyIgnoringCollisions(string id, string mintKey)
+        {
+            ArgumentException.ThrowIfNullOrWhiteSpace(id);
+            ArgumentException.ThrowIfNullOrWhiteSpace(mintKey);
+
+            var normalizedId = NormalizeId(id);
+            lock (SyncRoot)
+            {
+                if (Definitions.TryGetValue(normalizedId, out var definition))
+                    return definition.Value;
+            }
+
+            return Minter.ComputeValue(mintKey);
         }
 
         /// <summary>

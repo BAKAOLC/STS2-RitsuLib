@@ -167,6 +167,27 @@ namespace STS2RitsuLib.Combat.Rewards
         }
 
         /// <summary>
+        ///     Returns the deterministic dynamic <see cref="RewardType" /> for a registered or raw reward id without
+        ///     failing on hash collisions. Unknown ids are computed but not registered.
+        ///     返回已注册或原始 reward id 对应的确定性动态 <see cref="RewardType" />，且不会因哈希碰撞失败。
+        ///     未知 ID 只计算值，不会注册。
+        /// </summary>
+        public static RewardType GetRewardTypeIgnoringCollisions(string id)
+        {
+            ArgumentException.ThrowIfNullOrWhiteSpace(id);
+
+            var normalized = NormalizeId(id);
+            lock (SyncRoot)
+            {
+                if (Definitions.TryGetValue(normalized, out var definition))
+                    return definition.RewardType;
+            }
+
+            return DynamicEnumValueRegistry<RewardType>
+                .GetValueWithMintKeyIgnoringCollisions(normalized, GetMintKey(normalized));
+        }
+
+        /// <summary>
         ///     Resolves the reward id that minted <paramref name="rewardType" />, if any.
         ///     解析生成 <paramref name="rewardType" /> 的 reward id，如果存在。
         /// </summary>

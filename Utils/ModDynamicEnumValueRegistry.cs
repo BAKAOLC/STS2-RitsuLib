@@ -43,5 +43,14 @@ namespace STS2RitsuLib.Utils
         {
             return DynamicEnumValueRegistry<TEnum>.GetValue(GetOwnedId(localStem));
         }
+
+        /// <summary>
+        ///     Returns the deterministic value for the canonical owned id without failing on hash collisions.
+        ///     返回规范 owned ID 对应的确定性值，且不会因哈希碰撞失败。
+        /// </summary>
+        public TEnum GetOwnedValueIgnoringCollisions(string localStem)
+        {
+            return DynamicEnumValueRegistry<TEnum>.GetValueIgnoringCollisions(GetOwnedId(localStem));
+        }
     }
 }

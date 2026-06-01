@@ -593,6 +593,17 @@ namespace STS2RitsuLib
         }
 
         /// <summary>
+        ///     Returns the deterministic dynamic enum value for <paramref name="id" /> without failing on hash
+        ///     collisions. Unknown ids are computed but not registered.
+        ///     返回 <paramref name="id" /> 对应的确定性动态枚举值，且不会因哈希碰撞失败。未知 ID 只计算值，不会注册。
+        /// </summary>
+        public static TEnum GetDynamicEnumValueIgnoringCollisions<TEnum>(string id)
+            where TEnum : struct, Enum
+        {
+            return DynamicEnumValueRegistry<TEnum>.GetValueIgnoringCollisions(id);
+        }
+
+        /// <summary>
         ///     Registers a mod-scoped single-target <see cref="TargetType" /> and returns its deterministic enum value.
         ///     注册一个 mod 作用域的单体目标 <see cref="TargetType" />，并返回其确定性的枚举值。
         /// </summary>

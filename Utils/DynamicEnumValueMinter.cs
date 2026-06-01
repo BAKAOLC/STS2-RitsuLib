@@ -132,6 +132,26 @@ namespace STS2RitsuLib.Utils
         }
 
         /// <summary>
+        ///     Computes the deterministic <typeparamref name="TEnum" /> value for <paramref name="id" /> without
+        ///     registering it or checking whether another id already owns the same numeric value.
+        ///     计算 <paramref name="id" /> 对应的确定性 <typeparamref name="TEnum" /> 值，但不注册，
+        ///     也不检查是否已有其它 ID 占用了相同数值。
+        /// </summary>
+        /// <remarks>
+        ///     Use this only when a caller explicitly needs the raw value that <see cref="Mint" /> would have
+        ///     produced before collision validation. Values returned by this method are not visible to
+        ///     <see cref="TryGetId" /> or <see cref="IsDynamic" /> unless they were minted through <see cref="Mint" />.
+        ///     仅当调用方明确需要 <see cref="Mint" /> 在碰撞校验前本应生成的原始值时使用。此方法返回的值
+        ///     不会出现在 <see cref="TryGetId" /> 或 <see cref="IsDynamic" /> 中，除非它们也通过
+        ///     <see cref="Mint" /> 生成过。
+        /// </remarks>
+        public TEnum ComputeValue(string id)
+        {
+            ArgumentException.ThrowIfNullOrWhiteSpace(id);
+            return Compute(Normalize(id));
+        }
+
+        /// <summary>
         ///     Attempts to resolve the string id that minted <paramref name="value" />.
         ///     尝试解析铸造出 <paramref name="value" /> 的字符串 id。
         /// </summary>
