@@ -49,7 +49,7 @@ namespace STS2RitsuLib.Localization.Patches
             }
             catch (Exception ex)
             {
-                RitsuLibFramework.Logger.Error(
+                RitsuLibFramework.Logger.ErrorNoTrace(
                     $"[SmartFormat] Failed to inject registered localization extensions: {ex.Message}");
             }
         }

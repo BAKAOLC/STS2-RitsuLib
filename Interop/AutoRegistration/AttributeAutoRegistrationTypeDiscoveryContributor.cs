@@ -68,7 +68,7 @@ namespace STS2RitsuLib.Interop.AutoRegistration
                 }
                 catch (Exception ex)
                 {
-                    logger.Error(
+                    logger.ErrorNoTrace(
                         $"[AutoRegister] Failed to inspect type '{type.FullName}' in assembly '{assembly.FullName}': {ex.Message}");
                 }
             }
@@ -94,7 +94,7 @@ namespace STS2RitsuLib.Interop.AutoRegistration
                         operation.OwnerModId,
                         $"{operation.AttributeName} for '{operation.SourceType.FullName}' (signature '{operation.Signature}')",
                         ex);
-                    logger.Error(
+                    logger.ErrorNoTrace(
                         $"[AutoRegister] {operation.AttributeName} failed for '{operation.SourceType.FullName}' (mod '{operation.OwnerModId}', signature '{operation.Signature}'): {ex.Message}");
                 }
 
@@ -1204,7 +1204,7 @@ namespace STS2RitsuLib.Interop.AutoRegistration
             }
             catch (Exception ex)
             {
-                RitsuLibFramework.Logger.Error(
+                RitsuLibFramework.Logger.ErrorNoTrace(
                     $"[AutoRegister] RegisterOwnedCardPile: failed to instantiate handler '{declaringType.FullName}': {ex.Message}");
                 return null;
             }
@@ -1253,7 +1253,7 @@ namespace STS2RitsuLib.Interop.AutoRegistration
             }
             catch (Exception ex)
             {
-                RitsuLibFramework.Logger.Error(
+                RitsuLibFramework.Logger.ErrorNoTrace(
                     $"[AutoRegister] RegisterOwnedTopBarButton: failed to instantiate handler '{declaringType.FullName}': {ex.Message}");
                 return null;
             }

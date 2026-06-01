@@ -70,7 +70,7 @@ namespace STS2RitsuLib.Scaffolding.Characters.Patches
             }
             catch (Exception ex)
             {
-                RitsuLibFramework.Logger.Error(
+                RitsuLibFramework.Logger.ErrorNoTrace(
                     $"[Visuals] Failed to apply combat spine override '{skeletonPath}': {ex.Message}");
             }
         }

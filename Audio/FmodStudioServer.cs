@@ -476,7 +476,7 @@ namespace STS2RitsuLib.Audio
                 }
                 catch (Exception ex)
                 {
-                    RitsuLibFramework.Logger.Error($"[Audio] FMOD guid inject {method}: {ex.Message}");
+                    RitsuLibFramework.Logger.ErrorNoTrace($"[Audio] FMOD guid inject {method}: {ex.Message}");
                 }
             }
 

@@ -89,7 +89,7 @@ namespace STS2RitsuLib.Patching.Core
         {
             if (IsApplied)
             {
-                logger.Error(
+                logger.ErrorNoTrace(
                     $"{_logPrefix}Cannot register patch '{modPatchInfo.Id}': Patches have already been applied");
                 throw new InvalidOperationException("Cannot register patches after they have been applied");
             }

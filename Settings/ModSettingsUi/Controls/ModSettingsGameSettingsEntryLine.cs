@@ -179,8 +179,6 @@ namespace STS2RitsuLib.Settings
             label.MaxFontSize = 28;
             AddChild(label);
 
-            // selection_reticle.tscn root ships with large default offsets for other UIs; must match
-            // settings_screen FeedbackButton / NConfigButton: full rect with zero margins.
             var reticle = ModSettingsUiResources.SelectionReticleScene.Instantiate<NSelectionReticle>();
             reticle.Name = "SelectionReticle";
             reticle.SetAnchorsAndOffsetsPreset(LayoutPreset.FullRect);

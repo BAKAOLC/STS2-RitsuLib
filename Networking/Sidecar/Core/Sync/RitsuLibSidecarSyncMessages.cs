@@ -518,7 +518,7 @@ namespace STS2RitsuLib.Networking.Sidecar
                         context.Channel,
                         registration.FailurePolicy))
                 {
-                    RitsuLibFramework.Logger.Error(
+                    RitsuLibFramework.Logger.ErrorNoTrace(
                         $"[SidecarSync] Required relay failed for sync message {registration.ModuleId}/{registration.MessageKey}; local handler suppressed.");
                     return;
                 }
@@ -536,7 +536,7 @@ namespace STS2RitsuLib.Networking.Sidecar
             RitsuLibSidecarSyncMessageDescriptor<T> descriptor)
         {
             if (descriptor.FailurePolicy == RitsuLibSidecarSyncFailurePolicy.Required)
-                RitsuLibFramework.Logger.Error(
+                RitsuLibFramework.Logger.ErrorNoTrace(
                     $"[SidecarSync] Required sync message {descriptor.ModuleId}/{descriptor.MessageKey} cannot reach peer {peerNetId}; send suppressed.");
 
             return false;
@@ -593,7 +593,7 @@ namespace STS2RitsuLib.Networking.Sidecar
             }
             catch (Exception ex)
             {
-                RitsuLibFramework.Logger.Error($"[SidecarSync] Sync message handler failed: {ex}");
+                RitsuLibFramework.Logger.ErrorNoTrace($"[SidecarSync] Sync message handler failed: {ex}");
             }
         }
 

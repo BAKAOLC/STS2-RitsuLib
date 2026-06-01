@@ -48,7 +48,7 @@ namespace STS2RitsuLib.Audio.Patches
             }
             catch (Exception ex)
             {
-                RitsuLibFramework.Logger.Error($"[Audio] run music proxy {method}: {ex.Message}");
+                RitsuLibFramework.Logger.ErrorNoTrace($"[Audio] run music proxy {method}: {ex.Message}");
             }
         }
 

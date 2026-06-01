@@ -387,7 +387,7 @@ namespace STS2RitsuLib.Networking.ManagedActions
         {
             if (!RitsuLibManagedNetActions.TryGetRegistration(DescriptorOpcode, ActionType, out var registration))
             {
-                RitsuLibFramework.Logger.Error(
+                RitsuLibFramework.Logger.ErrorNoTrace(
                     $"[ManagedNetAction] Missing descriptor opcode {DescriptorOpcode} for action type {ActionType}.");
                 return;
             }
@@ -399,7 +399,7 @@ namespace STS2RitsuLib.Networking.ManagedActions
             }
             catch (Exception ex)
             {
-                RitsuLibFramework.Logger.Error(
+                RitsuLibFramework.Logger.ErrorNoTrace(
                     $"[ManagedNetAction] Action opcode {DescriptorOpcode} type {ActionType} failed: {ex}");
             }
         }

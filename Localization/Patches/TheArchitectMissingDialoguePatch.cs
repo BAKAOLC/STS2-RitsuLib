@@ -84,7 +84,7 @@ namespace STS2RitsuLib.Localization.Patches
             var stub = TryCreateEmptyLinesArchitectDialogueStub();
             if (stub == null)
             {
-                RitsuLibFramework.Logger.Error(
+                RitsuLibFramework.Logger.ErrorNoTrace(
                     "[Ancient] THE_ARCHITECT fallback dialogue could not be constructed (reflection); WinRun may still fail.");
                 return;
             }

@@ -68,12 +68,12 @@ namespace STS2RitsuLib.Diagnostics
                 .ToArray();
 
             foreach (var group in conflicts)
-                RitsuLibFramework.Logger.Error(
+                RitsuLibFramework.Logger.ErrorNoTrace(
                     $"[Content] ModelId collision detected for '{group.Key}': " +
                     string.Join(", ", group.Value.Select(type => type.FullName)));
 
             if (conflicts.Length > 0)
-                RitsuLibFramework.Logger.Error(
+                RitsuLibFramework.Logger.ErrorNoTrace(
                     "[Content] Duplicate patched ModelIds are unsafe. RitsuLib formats registered model ids as '<modid>_<category>_<typename>', so this usually indicates two registered models still share the same mod/category/type-name combination.");
 
             InvalidateModelIdIndex();

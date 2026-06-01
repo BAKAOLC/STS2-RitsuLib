@@ -160,10 +160,13 @@ namespace STS2RitsuLib.Content
         // ReSharper disable InconsistentNaming
         private static void GetUnlockedAncientsPostfix(
                 ActModel __instance,
-                UnlockState unlockState,
+                object[] __args,
                 ref IEnumerable<AncientEventModel> __result)
             // ReSharper restore InconsistentNaming
         {
+            if (__args.Length == 0 || __args[0] is not UnlockState unlockState)
+                return;
+
             __result = ModAncientActValidityFilter.FilterForAct(
                 __instance,
                 ModUnlockRegistry.FilterUnlocked(

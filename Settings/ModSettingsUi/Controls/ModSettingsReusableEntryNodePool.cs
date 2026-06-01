@@ -18,15 +18,6 @@ namespace STS2RitsuLib.Settings
         private readonly Dictionary<ModSettingsReusableEntryKind, Queue<ModSettingsUiFactory.ReusableSettingLine>>
             _buckets = new();
 
-        internal bool IsWarm
-        {
-            get
-            {
-                return Enum.GetValues<ModSettingsReusableEntryKind>()
-                    .All(kind => CountRetained(kind) >= WarmRetainedPerKind);
-            }
-        }
-
         internal ModSettingsUiFactory.ReusableSettingLine Rent(ModSettingsReusableEntryKind kind)
         {
             Sweep();
@@ -59,21 +50,6 @@ namespace STS2RitsuLib.Settings
             line.LastUsedMsec = Time.GetTicksMsec();
             bucket.Enqueue(line);
             Sweep();
-        }
-
-        internal bool TryPrewarmOne()
-        {
-            Sweep();
-            foreach (var kind in Enum.GetValues<ModSettingsReusableEntryKind>())
-            {
-                if (CountRetained(kind) >= WarmRetainedPerKind)
-                    continue;
-
-                Return(new(kind));
-                return true;
-            }
-
-            return false;
         }
 
         internal void Sweep()
@@ -109,11 +85,6 @@ namespace STS2RitsuLib.Settings
 
                 _buckets[pair.Key] = kept;
             }
-        }
-
-        private int CountRetained(ModSettingsReusableEntryKind kind)
-        {
-            return !_buckets.TryGetValue(kind, out var bucket) ? 0 : bucket.Count(GodotObject.IsInstanceValid);
         }
     }
 
@@ -226,6 +197,8 @@ namespace STS2RitsuLib.Settings
 
                 ReplaceActionControl(actionControl);
                 PrepareValueControl();
+                if (actionControl is ModSettingsActionsButton actionsButton)
+                    AttachContextMenuTargets(this, _valueControl!, actionsButton);
 
                 var version = ReuseVersion;
                 var labelSpec = labelRefreshSource?.GetUiRefreshSpec() ?? ModSettingsUiRefreshSpec.StaticDisplay;

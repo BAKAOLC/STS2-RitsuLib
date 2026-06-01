@@ -389,8 +389,8 @@ namespace STS2RitsuLib
                 }
                 catch (Exception ex)
                 {
-                    Logger.Error($"Framework initialization failed: {ex.Message}");
-                    Logger.Error($"Stack trace: {ex.StackTrace}");
+                    Logger.ErrorNoTrace($"Framework initialization failed: {ex.Message}");
+                    Logger.ErrorNoTrace($"Stack trace: {ex.StackTrace}");
                     DiagnosticsTelemetryCollector.CaptureExceptionForAuthorizedApplicants(
                         ex,
                         "ritsulib_framework_initialize");
@@ -819,7 +819,7 @@ namespace STS2RitsuLib
                         registration.ModId,
                         registration.Description ?? "deferred content pack",
                         ex);
-                    Logger.Error(
+                    Logger.ErrorNoTrace(
                         $"[ContentPack] Failed to apply deferred content pack for mod '{registration.ModId}'" +
                         $"{(string.IsNullOrWhiteSpace(registration.Description) ? "" : $" ({registration.Description})")}: {ex.Message}");
                 }
@@ -1218,8 +1218,8 @@ namespace STS2RitsuLib
             }
             catch (Exception ex)
             {
-                logger?.Error($"Failed to register Godot C# scripts for assembly {assemblyName}: {ex.Message}");
-                logger?.Error($"Stack trace: {ex.StackTrace}");
+                logger?.ErrorNoTrace($"Failed to register Godot C# scripts for assembly {assemblyName}: {ex.Message}");
+                logger?.ErrorNoTrace($"Stack trace: {ex.StackTrace}");
                 DiagnosticsTelemetryCollector.CaptureExceptionForAuthorizedApplicants(
                     ex,
                     "ritsulib_godot_script_registration");
@@ -1241,7 +1241,7 @@ namespace STS2RitsuLib
             if (success)
                 return true;
 
-            patcher.Logger.Error(
+            patcher.Logger.ErrorNoTrace(
                 failureMessage ?? $"Required patcher '{patcher.PatcherName}' failed. The mod will be disabled.");
             disableMod();
             return false;

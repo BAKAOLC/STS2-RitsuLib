@@ -41,7 +41,7 @@ namespace STS2RitsuLib.Networking.Sidecar
                     return;
 
                 var snapshot = NetFullCombatState.FromRun(rm.State, null);
-                Log.Error($"[Sidecar diagnostic dump tag={tag}] {reason}\n{snapshot}");
+                RitsuLibFramework.Logger.ErrorNoTrace($"[Sidecar diagnostic dump tag={tag}] {reason}\n{snapshot}");
             }
             catch (Exception ex)
             {

@@ -117,7 +117,7 @@ namespace STS2RitsuLib.Networking.Sidecar
             if (failurePolicy == RitsuLibSidecarSyncFailurePolicy.Required &&
                 !RitsuLibSidecarSyncMessages.CanSendToAllTargetPeers(host, excludePeerId, scope))
             {
-                RitsuLibFramework.Logger.Error(
+                RitsuLibFramework.Logger.ErrorNoTrace(
                     $"[SidecarSync] Required broadcast opcode {opcode} cannot reach every target peer; send suppressed.");
                 return false;
             }
@@ -405,7 +405,7 @@ namespace STS2RitsuLib.Networking.Sidecar
             if (failurePolicy == RitsuLibSidecarSyncFailurePolicy.Required &&
                 !RitsuLibSidecarSyncMessages.CanSendToAllTargetPeers(host, context.SenderNetId, scope))
             {
-                RitsuLibFramework.Logger.Error(
+                RitsuLibFramework.Logger.ErrorNoTrace(
                     $"[SidecarSync] Required relay opcode {packet.DescriptorOpcode} cannot reach every target peer; local handler suppressed.");
                 suppressAfterRequiredFailure = true;
                 return true;
@@ -422,7 +422,7 @@ namespace STS2RitsuLib.Networking.Sidecar
                     failurePolicy))
             {
                 if (failurePolicy == RitsuLibSidecarSyncFailurePolicy.Required)
-                    RitsuLibFramework.Logger.Error(
+                    RitsuLibFramework.Logger.ErrorNoTrace(
                         $"[SidecarSync] Required relay opcode {packet.DescriptorOpcode} send failed; local handler suppressed.");
                 suppressAfterRequiredFailure = failurePolicy == RitsuLibSidecarSyncFailurePolicy.Required;
                 return suppressAfterRequiredFailure;

@@ -272,6 +272,7 @@ namespace STS2RitsuLib
             patcher.RegisterPatch<CardModelHoverTipsModKeywordPatch>();
             patcher.RegisterPatch<ModelCapabilityHookListenerPatches.RunStateHookListenersPatch>();
             patcher.RegisterPatch<ModelCapabilityHookListenerPatches.CombatStateHookListenersPatch>();
+            patcher.RegisterPatch<ModelCapabilityHookListenerPatches.HookPlayerChoiceContextConstructorPatch>();
             patcher.RegisterPatch<CardModelCapabilityPatches.UpdateDynamicVarPreviewPatch>();
             patcher.RegisterPatch<CardModelCapabilityPatches.CardTypePatch>();
             patcher.RegisterPatch<CardModelCapabilityPatches.CardRarityPatch>();

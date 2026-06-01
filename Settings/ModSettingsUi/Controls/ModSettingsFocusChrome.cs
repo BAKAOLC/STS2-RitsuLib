@@ -12,6 +12,8 @@ namespace STS2RitsuLib.Settings
     internal static class ModSettingsFocusChrome
     {
         private const string ReticleMetaKey = "ritsu_mod_settings_reticle";
+        private static NSelectionReticle? _sharedReticle;
+        private static Control? _sharedReticleOwner;
 
         internal static void ReleaseFocusIfInsideTree(this Control? control)
         {
@@ -26,23 +28,56 @@ namespace STS2RitsuLib.Settings
             host.SetMeta(ReticleMetaKey, true);
             host.ClipContents = false;
 
-            var reticle = ModSettingsUiResources.SelectionReticleScene.Instantiate<NSelectionReticle>();
+            host.FocusEntered += () => OnSharedReticleHostFocusEntered(host);
+            host.FocusExited += () => OnSharedReticleHostFocusExited(host);
+            host.TreeExiting += () => OnSharedReticleHostTreeExiting(host);
+        }
+
+        private static void OnSharedReticleHostFocusEntered(Control host)
+        {
+            if (NControllerManager.Instance?.IsUsingController != true || !host.IsInsideTree())
+                return;
+
+            var reticle = EnsureSharedReticle();
+            if (reticle.GetParent() != host)
+            {
+                reticle.GetParent()?.RemoveChild(reticle);
+                host.AddChild(reticle);
+            }
+
             reticle.Name = "SelectionReticle";
             reticle.SetAnchorsAndOffsetsPreset(Control.LayoutPreset.FullRect);
             reticle.MouseFilter = Control.MouseFilterEnum.Ignore;
-            host.AddChild(reticle);
-            Callable.From(() =>
-            {
-                if (reticle.IsInsideTree() && host.IsInsideTree())
-                    host.MoveChild(reticle, host.GetChildCount() - 1);
-            }).CallDeferred();
+            host.MoveChild(reticle, host.GetChildCount() - 1);
+            _sharedReticleOwner = host;
+            reticle.OnSelect();
+        }
 
-            host.FocusEntered += () =>
-            {
-                if (NControllerManager.Instance?.IsUsingController == true)
-                    reticle.OnSelect();
-            };
-            host.FocusExited += reticle.OnDeselect;
+        private static void OnSharedReticleHostFocusExited(Control host)
+        {
+            if (!ReferenceEquals(_sharedReticleOwner, host) || !GodotObject.IsInstanceValid(_sharedReticle))
+                return;
+
+            _sharedReticle.OnDeselect();
+            _sharedReticleOwner = null;
+        }
+
+        private static void OnSharedReticleHostTreeExiting(Control host)
+        {
+            if (ReferenceEquals(_sharedReticleOwner, host))
+                _sharedReticleOwner = null;
+        }
+
+        private static NSelectionReticle EnsureSharedReticle()
+        {
+            if (GodotObject.IsInstanceValid(_sharedReticle))
+                return _sharedReticle!;
+
+            _sharedReticle = ModSettingsUiResources.SelectionReticleScene.Instantiate<NSelectionReticle>();
+            _sharedReticle.Name = "SelectionReticle";
+            _sharedReticle.MouseFilter = Control.MouseFilterEnum.Ignore;
+            _sharedReticleOwner = null;
+            return _sharedReticle;
         }
     }
 }

@@ -55,7 +55,7 @@ namespace STS2RitsuLib.Settings
         internal static IEnumerable<PageBuildItem> CreatePageBuildItems(ModSettingsUiContext context,
             ModSettingsPage page, ModSettingsReusableEntryNodePool? entryNodePool = null)
         {
-            var sectionVisible = new Func<bool>[page.Sections.Count];
+            var sectionVisible = new Func<bool>?[page.Sections.Count];
             for (var index = 0; index < page.Sections.Count; index++)
                 sectionVisible[index] = BuildSectionVisiblePredicate(page.Sections[index]);
 
@@ -65,9 +65,9 @@ namespace STS2RitsuLib.Settings
                 if (index > 0)
                 {
                     var dividerIndex = index;
+                    var dividerVisibility = CreateDividerVisibilityPredicate(sectionVisible, dividerIndex);
                     yield return new(
-                        MaybeWrapDynamicVisibility(context, CreateDivider(),
-                            () => sectionVisible[dividerIndex]() && AnyVisibleBefore(sectionVisible, dividerIndex)),
+                        MaybeWrapDynamicVisibility(context, CreateDivider(), dividerVisibility),
                         false);
                 }
 
@@ -96,6 +96,24 @@ namespace STS2RitsuLib.Settings
 
                 yield return new(builtSection!.Control, true);
 
+                if (builtSection.LazyContentSection != null)
+                {
+                    var sectionPlan = builtSection;
+                    builtSection.LazyContentSection.SetLazyContentBuilder(() =>
+                    {
+                        foreach (var entry in section.Entries)
+                        {
+                            var item = CreateEntryBuildItem(context, page, section, entry, sectionPlan, entryNodePool);
+                            (item.Parent ?? sectionPlan.EntryHost).AddChild(item.Control);
+                            item.AfterAdded?.Invoke(item.Control);
+                        }
+
+                        if (page.EnabledWhen != null)
+                            ApplyEnabledRecursive(sectionPlan.EntryHost, page.EnabledWhen());
+                    });
+                    continue;
+                }
+
                 foreach (var entry in section.Entries)
                     yield return CreateEntryBuildItem(context, page, section, entry, builtSection, entryNodePool);
             }
@@ -108,18 +126,46 @@ namespace STS2RitsuLib.Settings
         ///     构建与 section shell 应用于 section 的相同组合可见性谓词（其
         ///     <see cref="ModSettingsSection.VisibleWhen" /> 加上 host-surface 限制），以便前导分割线与其后的 section 保持同步。
         /// </summary>
-        private static Func<bool> BuildSectionVisiblePredicate(ModSettingsSection section)
+        private static Func<bool>? BuildSectionVisiblePredicate(ModSettingsSection section)
         {
+            if (section.VisibleWhen == null && section.VisibleOnHostSurfaces == ModSettingsHostSurface.All)
+                return null;
+
+            if (section.VisibleOnHostSurfaces == ModSettingsHostSurface.All)
+                return section.VisibleWhen;
+
             return ModSettingsHostSurfaceResolver.CombineVisibility(section.VisibleWhen,
                 () => ModSettingsHostSurfaceResolver.IsVisibleOnCurrentHost(section.VisibleOnHostSurfaces));
         }
 
-        private static bool AnyVisibleBefore(IReadOnlyList<Func<bool>> sectionVisible, int index)
+        private static Func<bool>? CreateDividerVisibilityPredicate(IReadOnlyList<Func<bool>?> sectionVisible,
+            int index)
+        {
+            if (sectionVisible[index] == null && AllBeforeAlwaysVisible(sectionVisible, index))
+                return null;
+
+            return () => IsSectionVisible(sectionVisible[index]) && AnyVisibleBefore(sectionVisible, index);
+        }
+
+        private static bool AllBeforeAlwaysVisible(IReadOnlyList<Func<bool>?> sectionVisible, int index)
         {
             for (var i = 0; i < index; i++)
-                if (sectionVisible[i]())
+                if (sectionVisible[i] != null)
+                    return false;
+            return true;
+        }
+
+        private static bool AnyVisibleBefore(IReadOnlyList<Func<bool>?> sectionVisible, int index)
+        {
+            for (var i = 0; i < index; i++)
+                if (IsSectionVisible(sectionVisible[i]))
                     return true;
             return false;
+        }
+
+        private static bool IsSectionVisible(Func<bool>? predicate)
+        {
+            return predicate?.Invoke() ?? true;
         }
 
         public static Control CreateToggleEntry(ModSettingsUiContext context, ToggleModSettingsEntryDefinition entry)

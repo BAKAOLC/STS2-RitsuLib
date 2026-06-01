@@ -233,7 +233,7 @@ namespace STS2RitsuLib.Utils.Persistence
             }
             catch (Exception ex)
             {
-                RitsuLibFramework.Logger.Error(
+                RitsuLibFramework.Logger.ErrorNoTrace(
                     $"[Persistence] Failed to delete mod data for profile {profileId}: {ex.Message}");
             }
         }

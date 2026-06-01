@@ -18,7 +18,7 @@ namespace STS2RitsuLib.Audio.Internal
             }
             catch (Exception ex)
             {
-                RitsuLibFramework.Logger.Error($"[Audio] FmodServer singleton: {ex.Message}");
+                RitsuLibFramework.Logger.ErrorNoTrace($"[Audio] FmodServer singleton: {ex.Message}");
                 return null;
             }
         }
@@ -37,7 +37,7 @@ namespace STS2RitsuLib.Audio.Internal
             }
             catch (Exception ex)
             {
-                RitsuLibFramework.Logger.Error($"[Audio] FMOD {method}: {ex.Message}");
+                RitsuLibFramework.Logger.ErrorNoTrace($"[Audio] FMOD {method}: {ex.Message}");
                 return false;
             }
         }

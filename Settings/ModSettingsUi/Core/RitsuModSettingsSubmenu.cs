@@ -37,7 +37,6 @@ namespace STS2RitsuLib.Settings
         private const string ScrollbarContentRightGutterTokenPath = "components.scrollbar.layout.contentRightGutter";
         private const int RetainedPageContentCacheLimit = 2;
         private const ulong RetainedPageContentIdleReleaseMsec = 5_000;
-        private const int EntryNodePoolPrewarmFrameDelay = 1;
 
         /// <summary>
         ///     Per-frame build budget (ms) for <see cref="BuildPageAsync" />. Sections accumulate within a frame
@@ -94,8 +93,6 @@ namespace STS2RitsuLib.Settings
         private bool _contentOnlyRebuildNeedsContentFocus;
         private Control _contentPanelRoot = null!;
         private bool _contentStructureDirty = true;
-        private bool _entryNodePoolPrewarmStarted;
-        private Task? _firstPageContentPrewarmTask;
         private bool _focusNavigationRefreshScheduled;
         private bool _focusSelectedPageButtonOnNextRefresh;
         private bool _guiFocusSignalConnected;
@@ -219,11 +216,6 @@ namespace STS2RitsuLib.Settings
         internal Task WaitForInitialUiReadyAsync()
         {
             return _initialUiTask ??= EnsureUiUpToDateDeferred(true, false, false);
-        }
-
-        internal Task WaitForFirstPageContentPrewarmedAsync()
-        {
-            return _firstPageContentPrewarmTask ??= EnsureFirstPageContentPrewarmedAsync();
         }
 
         /// <inheritdoc />
@@ -774,6 +766,8 @@ namespace STS2RitsuLib.Settings
 
                 if (options.ExpandCollapsedSection)
                     ExpandSectionAnchor(sectionAnchor);
+                else if (!string.IsNullOrWhiteSpace(target.EntryId))
+                    EnsureSectionContentBuilt(sectionAnchor);
                 scrollTarget = sectionAnchor;
             }
 
@@ -1284,7 +1278,6 @@ namespace STS2RitsuLib.Settings
             RefreshSelectionState();
             RefreshVisibleContent(includeAllPagesRefresh);
             IsInitialUiReady = true;
-            StartReusableEntryNodePoolPrewarm();
         }
 
         private async Task EnsureUiUpToDateDeferred(bool forceStructure = false, bool includeAllPagesRefresh = false,
@@ -1337,33 +1330,6 @@ namespace STS2RitsuLib.Settings
             else
                 ShowContentBuildOverlay(ModSettingsLocalization.Get("entry.loading", "Loading settings…"));
             IsInitialUiReady = true;
-            StartReusableEntryNodePoolPrewarm();
-        }
-
-        private void StartReusableEntryNodePoolPrewarm()
-        {
-            if (_entryNodePoolPrewarmStarted || _reusableEntryNodePool.IsWarm)
-                return;
-
-            _entryNodePoolPrewarmStarted = true;
-            _ = PrewarmReusableEntryNodePoolAsync();
-        }
-
-        private async Task PrewarmReusableEntryNodePoolAsync()
-        {
-            try
-            {
-                while (IsInstanceValid(this) && !_reusableEntryNodePool.IsWarm)
-                {
-                    _reusableEntryNodePool.TryPrewarmOne();
-                    for (var i = 0; i < EntryNodePoolPrewarmFrameDelay; i++)
-                        await this.AwaitRitsuProcessFrame(CancellationToken.None);
-                }
-            }
-            finally
-            {
-                _entryNodePoolPrewarmStarted = false;
-            }
         }
 
         private async Task EnsureOpenContentReadyAsync()
@@ -1375,23 +1341,6 @@ namespace STS2RitsuLib.Settings
             EnsureSelectedPageContentStructure();
             RefreshSelectionState();
             RefreshVisibleContent(true);
-        }
-
-        private async Task EnsureFirstPageContentPrewarmedAsync()
-        {
-            await WaitForInitialUiReadyAsync();
-            if (!IsInstanceValid(this))
-                return;
-
-            EnsureSelectedPageContentStructure();
-            if (ResolveSelectedPage() is not { } page)
-                return;
-
-            var cache = EnsurePageContentCache(page);
-            if (cache.State is PageBuildState.Ready or PageBuildState.Failed)
-                return;
-
-            await StartBuildPageAsync(page, cache, false, true);
         }
 
         private async Task WaitForSelectedPageContentReadyAsync()
@@ -1419,7 +1368,6 @@ namespace STS2RitsuLib.Settings
             {
                 _sidebarStructureDirty = true;
                 _contentStructureDirty = true;
-                _firstPageContentPrewarmTask = null;
             }
 
             _pageSnapshots.Clear();
@@ -1663,6 +1611,19 @@ namespace STS2RitsuLib.Settings
                         ? $"{modTitle}\n{pageCountText}"
                         : modTitle;
                 pair.Value.NavStack.Visible = navChromeVisible;
+                if (navChromeVisible && pair.Value.PageNodes.Count == 0)
+                {
+                    var pages = ModSettingsRegistry.GetPages()
+                        .Where(page => string.Equals(page.ModId, pair.Key, StringComparison.OrdinalIgnoreCase) &&
+                                       IsPageVisibleOnCurrentHost(page))
+                        .OrderBy(ModSettingsRegistry.GetEffectivePageSortOrder)
+                        .ThenBy(page => page.Id, StringComparer.OrdinalIgnoreCase)
+                        .ToArray();
+                    var rootPages = pages.Where(page => string.IsNullOrWhiteSpace(page.ParentPageId)).ToArray();
+                    if (rootPages.Length > 0)
+                        RefreshSidebarModCache(pair.Value, rootPages, pages);
+                }
+
                 RefreshSidebarSelectionChromeForCache(pair.Value, selectedPageKey, selectedSectionKey);
                 ApplySidebarModButtonChevron(pair.Value, navChromeVisible);
             }
@@ -1931,10 +1892,11 @@ namespace STS2RitsuLib.Settings
             cache.Button.TooltipText = ResolvePageTabTitle(page);
             cache.Button.SetSelected(string.Equals(page.Id, _selectedPageId, StringComparison.OrdinalIgnoreCase));
             _pageButtons[cache.PageKey] = cache.Button;
-            var pageVisibility = ModSettingsHostSurfaceResolver.CombineVisibility(page.VisibleWhen,
-                () => ModSettingsHostSurfaceResolver.IsVisibleOnCurrentHost(page.VisibleOnHostSurfaces) &&
-                      (!page.SidebarVisibleOnlyWhenActive || IsSelectedPageInNavSubtree(_selectedPageId, page, pages)));
-            _sidebarDynamicVisibilityTargets.Add((cache.Container, pageVisibility));
+            var pageVisibility = CreateSidebarPageVisibilityPredicate(page, pages);
+            if (pageVisibility != null)
+                _sidebarDynamicVisibilityTargets.Add((cache.Container, pageVisibility));
+            else
+                cache.Container.Visible = true;
 
             var showSections = string.Equals(page.Id, _selectedPageId, StringComparison.OrdinalIgnoreCase);
             cache.SectionRail.Visible = showSections;
@@ -2052,13 +2014,36 @@ namespace STS2RitsuLib.Settings
                 sectionButton.SetSelected(string.Equals(section.Id, _selectedSectionId,
                     StringComparison.OrdinalIgnoreCase));
                 _sectionButtons[sectionKey] = sectionButton;
-                var sectionVisibility = ModSettingsHostSurfaceResolver.CombineVisibility(section.VisibleWhen,
-                    () => ModSettingsHostSurfaceResolver.IsVisibleOnCurrentHost(section.VisibleOnHostSurfaces));
-                _sidebarDynamicVisibilityTargets.Add((sectionButton, sectionVisibility));
+                var sectionVisibility = CreateSidebarSectionVisibilityPredicate(section);
+                if (sectionVisibility != null)
+                    _sidebarDynamicVisibilityTargets.Add((sectionButton, sectionVisibility));
                 if (sectionButton.GetParent() != cache.SectionRail)
                     cache.SectionRail.AddChild(sectionButton);
                 cache.SectionRail.MoveChild(sectionButton, index);
             }
+        }
+
+        private Func<bool>? CreateSidebarPageVisibilityPredicate(ModSettingsPage page,
+            IReadOnlyList<ModSettingsPage> pages)
+        {
+            if (page.VisibleWhen == null &&
+                page.VisibleOnHostSurfaces == ModSettingsHostSurface.All &&
+                !page.SidebarVisibleOnlyWhenActive)
+                return null;
+
+            return () => (page.VisibleWhen?.Invoke() ?? true) &&
+                         ModSettingsHostSurfaceResolver.IsVisibleOnCurrentHost(page.VisibleOnHostSurfaces) &&
+                         (!page.SidebarVisibleOnlyWhenActive ||
+                          IsSelectedPageInNavSubtree(_selectedPageId, page, pages));
+        }
+
+        private static Func<bool>? CreateSidebarSectionVisibilityPredicate(ModSettingsSection section)
+        {
+            if (section.VisibleWhen == null && section.VisibleOnHostSurfaces == ModSettingsHostSurface.All)
+                return null;
+
+            return () => (section.VisibleWhen?.Invoke() ?? true) &&
+                         ModSettingsHostSurfaceResolver.IsVisibleOnCurrentHost(section.VisibleOnHostSurfaces);
         }
 
         private void HideSidebarSectionRail(SidebarPageNodeCache cache)
@@ -2170,6 +2155,8 @@ namespace STS2RitsuLib.Settings
             cache.MetaLabel.SetTextAutoSize(pageCountText);
             cache.MetaLabel.Visible = navChromeVisible && RitsuShellTheme.Current.Metric.Sidebar.ShowInlinePageCount;
             cache.NavStack.Visible = navChromeVisible;
+            if (!navChromeVisible)
+                return;
 
             var rootChildPages = pages.Where(page => string.IsNullOrWhiteSpace(page.ParentPageId))
                 .OrderBy(ModSettingsRegistry.GetEffectivePageSortOrder)
@@ -2204,8 +2191,7 @@ namespace STS2RitsuLib.Settings
             }
         }
 
-        private Task StartBuildPageAsync(ModSettingsPage page, PageContentCache cache, bool showOverlay,
-            bool hiddenPrewarm = false)
+        private Task StartBuildPageAsync(ModSettingsPage page, PageContentCache cache, bool showOverlay)
         {
             switch (cache.State)
             {
@@ -2218,13 +2204,12 @@ namespace STS2RitsuLib.Settings
                     return cache.BuildTask;
                 }
                 default:
-                    cache.BuildTask = BuildPageAsync(page, cache, showOverlay, hiddenPrewarm);
+                    cache.BuildTask = BuildPageAsync(page, cache, showOverlay);
                     return cache.BuildTask;
             }
         }
 
-        private async Task BuildPageAsync(ModSettingsPage page, PageContentCache cache, bool showOverlay,
-            bool hiddenPrewarm)
+        private async Task BuildPageAsync(ModSettingsPage page, PageContentCache cache, bool showOverlay)
         {
             var previousCancellation = cache.BuildCancellation;
             cache.BuildCancellation = new();
@@ -2250,12 +2235,6 @@ namespace STS2RitsuLib.Settings
 
             try
             {
-                if (hiddenPrewarm)
-                {
-                    await BuildPageHiddenPrewarmAsync(page, cache, buildVersion, ct);
-                    return;
-                }
-
                 var context = new ModSettingsUiContext(this, cache.PageKey);
                 var isChildPage = !string.IsNullOrWhiteSpace(page.ParentPageId);
                 Action onBack = isChildPage
@@ -2309,14 +2288,6 @@ namespace STS2RitsuLib.Settings
             }
             catch (OperationCanceledException)
             {
-                if (hiddenPrewarm)
-                {
-                    RecycleReusableEntryNodes(cache.HeaderHost);
-                    RecycleReusableEntryNodes(cache.ContentHost);
-                    foreach (var child in cache.HeaderHost.GetChildren()) child?.QueueFree();
-                    foreach (var child in cache.ContentHost.GetChildren()) child?.QueueFree();
-                }
-
                 RecycleReusableEntryNodes(nextContent);
                 nextHeader.QueueFree();
                 nextContent.QueueFree();
@@ -2349,69 +2320,6 @@ namespace STS2RitsuLib.Settings
                     cache.BuildCancellation = null;
                 }
             }
-        }
-
-        private async Task BuildPageHiddenPrewarmAsync(ModSettingsPage page, PageContentCache cache,
-            int buildVersion, CancellationToken ct)
-        {
-            RecycleReusableEntryNodes(cache.HeaderHost);
-            RecycleReusableEntryNodes(cache.ContentHost);
-            foreach (var child in cache.HeaderHost.GetChildren()) child?.QueueFree();
-            foreach (var child in cache.ContentHost.GetChildren()) child?.QueueFree();
-            await this.AwaitRitsuProcessFrame(ct);
-
-            if (buildVersion != cache.BuildVersion || !IsInstanceValid(cache.Root))
-                return;
-
-            var context = new ModSettingsUiContext(this, cache.PageKey);
-            var isChildPage = !string.IsNullOrWhiteSpace(page.ParentPageId);
-            Action onBack = isChildPage
-                ? () =>
-                {
-                    _selectedPageId = page.ParentPageId!;
-                    _selectionDirty = true;
-                    EnsureUiUpToDate();
-                }
-                : static () => { };
-
-            try
-            {
-                var pageHeader =
-                    ModSettingsUiFactory.CreateModSettingsPageHeaderBar(context, page, isChildPage, onBack);
-                pageHeader.SizeFlagsHorizontal = SizeFlags.ExpandFill;
-                cache.HeaderHost.AddChild(pageHeader);
-            }
-            catch (Exception ex)
-            {
-                RitsuLibFramework.Logger.Warn(
-                    $"[Settings] Failed to build page header '{page.ModId}:{page.Id}': {ex.Message}");
-                cache.HeaderHost.AddChild(ModSettingsUiFactory.CreateBuildErrorPlaceholder(
-                    ModSettingsLocalization.Get("page.failed.title", "Page failed to load"),
-                    string.Format(ModSettingsLocalization.Get("page.failed.body", "Failed to build page '{0}'."),
-                        page.Id)));
-            }
-
-            await this.AwaitRitsuProcessFrame(ct);
-            foreach (var item in ModSettingsUiFactory.CreatePageBuildItems(context, page, _reusableEntryNodePool))
-            {
-                ct.ThrowIfCancellationRequested();
-                if (buildVersion != cache.BuildVersion || !IsInstanceValid(cache.Root))
-                    return;
-
-                (item.Parent ?? cache.ContentHost).AddChild(item.Control);
-                item.AfterAdded?.Invoke(item.Control);
-                await this.AwaitRitsuProcessFrame(ct);
-            }
-
-            if (buildVersion != cache.BuildVersion || !IsInstanceValid(cache.Root))
-                return;
-
-            cache.HeaderHost.ResetSize();
-            cache.ContentHost.ResetSize();
-            _contentList.ResetSize();
-            _scrollContainer.QueueSort();
-            Callable.From(RefreshContentLayout).CallDeferred();
-            CompletePageBuild(page, cache);
         }
 
         private void CompletePageBuild(ModSettingsPage page, PageContentCache cache)
@@ -2750,6 +2658,19 @@ namespace STS2RitsuLib.Settings
             foreach (var child in anchor.GetChildren())
                 if (child is Control control)
                     ExpandSectionAnchor(control);
+        }
+
+        private static void EnsureSectionContentBuilt(Control anchor)
+        {
+            if (anchor is ModSettingsCollapsibleSection collapsible)
+            {
+                collapsible.EnsureContentBuilt();
+                return;
+            }
+
+            foreach (var child in anchor.GetChildren())
+                if (child is Control control)
+                    EnsureSectionContentBuilt(control);
         }
 
         private void FocusTarget(Control target)

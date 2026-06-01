@@ -74,7 +74,7 @@ namespace STS2RitsuLib.Audio
                 }
                 catch (Exception ex)
                 {
-                    RitsuLibFramework.Logger.Error($"[Audio] handle play: {ex.Message}");
+                    RitsuLibFramework.Logger.ErrorNoTrace($"[Audio] handle play: {ex.Message}");
                     return false;
                 }
             }
@@ -103,7 +103,7 @@ namespace STS2RitsuLib.Audio
                 }
                 catch (Exception ex)
                 {
-                    RitsuLibFramework.Logger.Error($"[Audio] handle stop: {ex.Message}");
+                    RitsuLibFramework.Logger.ErrorNoTrace($"[Audio] handle stop: {ex.Message}");
                     return false;
                 }
             }
@@ -175,7 +175,7 @@ namespace STS2RitsuLib.Audio
             }
             catch (Exception ex)
             {
-                RitsuLibFramework.Logger.Error($"[Audio] handle release: {ex.Message}");
+                RitsuLibFramework.Logger.ErrorNoTrace($"[Audio] handle release: {ex.Message}");
                 return false;
             }
 
@@ -227,7 +227,7 @@ namespace STS2RitsuLib.Audio
             }
             catch (Exception ex)
             {
-                RitsuLibFramework.Logger.Error($"[Audio] handle {method}: {ex.Message}");
+                RitsuLibFramework.Logger.ErrorNoTrace($"[Audio] handle {method}: {ex.Message}");
                 return false;
             }
         }

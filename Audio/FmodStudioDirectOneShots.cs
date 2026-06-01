@@ -53,7 +53,7 @@ namespace STS2RitsuLib.Audio
             }
             catch (Exception ex)
             {
-                RitsuLibFramework.Logger.Error($"[Audio] FMOD play_one_shot_with_params: {ex.Message}");
+                RitsuLibFramework.Logger.ErrorNoTrace($"[Audio] FMOD play_one_shot_with_params: {ex.Message}");
                 return false;
             }
         }
@@ -102,7 +102,8 @@ namespace STS2RitsuLib.Audio
             }
             catch (Exception ex)
             {
-                RitsuLibFramework.Logger.Error($"[Audio] FMOD play_one_shot_using_guid_with_params: {ex.Message}");
+                RitsuLibFramework.Logger.ErrorNoTrace(
+                    $"[Audio] FMOD play_one_shot_using_guid_with_params: {ex.Message}");
                 return false;
             }
         }
@@ -132,7 +133,7 @@ namespace STS2RitsuLib.Audio
             }
             catch (Exception ex)
             {
-                RitsuLibFramework.Logger.Error($"[Audio] FMOD mapped path one-shot: {ex.Message}");
+                RitsuLibFramework.Logger.ErrorNoTrace($"[Audio] FMOD mapped path one-shot: {ex.Message}");
                 return false;
             }
         }

@@ -119,7 +119,7 @@ namespace STS2RitsuLib.Audio
             }
             catch (Exception ex)
             {
-                RitsuLibFramework.Logger.Error($"[Audio] FMOD event start: {ex.Message}");
+                RitsuLibFramework.Logger.ErrorNoTrace($"[Audio] FMOD event start: {ex.Message}");
                 return false;
             }
         }
@@ -140,7 +140,7 @@ namespace STS2RitsuLib.Audio
             }
             catch (Exception ex)
             {
-                RitsuLibFramework.Logger.Error($"[Audio] FMOD event stop: {ex.Message}");
+                RitsuLibFramework.Logger.ErrorNoTrace($"[Audio] FMOD event stop: {ex.Message}");
                 return false;
             }
         }
@@ -160,7 +160,7 @@ namespace STS2RitsuLib.Audio
             }
             catch (Exception ex)
             {
-                RitsuLibFramework.Logger.Error($"[Audio] FMOD event release: {ex.Message}");
+                RitsuLibFramework.Logger.ErrorNoTrace($"[Audio] FMOD event release: {ex.Message}");
             }
         }
     }

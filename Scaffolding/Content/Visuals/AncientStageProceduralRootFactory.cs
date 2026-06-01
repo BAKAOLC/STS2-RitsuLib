@@ -58,7 +58,7 @@ namespace STS2RitsuLib.Scaffolding.Content.Visuals
             else if (stage.BackgroundCueSet != null)
                 MountBackgroundCues(outer, stage);
             else
-                RitsuLibFramework.Logger.Error(
+                RitsuLibFramework.Logger.ErrorNoTrace(
                     "[AncientStage] StageProcedural has neither BackgroundVideoPath nor BackgroundCueSet.");
 
             Control? fgLayer = null;
@@ -93,7 +93,7 @@ namespace STS2RitsuLib.Scaffolding.Content.Visuals
 
             if (!ResourceLoader.Exists(path))
             {
-                RitsuLibFramework.Logger.Error($"[AncientStage] Background video not found: '{path}'");
+                RitsuLibFramework.Logger.ErrorNoTrace($"[AncientStage] Background video not found: '{path}'");
                 outer.AddChild(video);
                 return;
             }
@@ -101,7 +101,7 @@ namespace STS2RitsuLib.Scaffolding.Content.Visuals
             var stream = ResourceLoader.Load<VideoStream>(path);
             if (stream == null)
             {
-                RitsuLibFramework.Logger.Error($"[AncientStage] Could not load VideoStream: '{path}'");
+                RitsuLibFramework.Logger.ErrorNoTrace($"[AncientStage] Could not load VideoStream: '{path}'");
                 outer.AddChild(video);
                 return;
             }

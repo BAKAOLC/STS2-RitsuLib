@@ -39,7 +39,7 @@ namespace STS2RitsuLib.Scaffolding.Godot.NodeAttachments
                 }
                 catch (Exception ex)
                 {
-                    RitsuLibFramework.Logger.Error(
+                    RitsuLibFramework.Logger.ErrorNoTrace(
                         $"[NodeAttachment] Failed to attach '{definition.Id}' to {parent.GetType().FullName}: {ex.Message}");
                     RitsuLibFramework.Logger.Debug(ex.ToString());
                 }

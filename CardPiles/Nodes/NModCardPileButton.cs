@@ -1041,7 +1041,7 @@ namespace STS2RitsuLib.CardPiles.Nodes
                 }
                 catch (Exception ex)
                 {
-                    RitsuLibFramework.Logger.Error(
+                    RitsuLibFramework.Logger.ErrorNoTrace(
                         $"[TopBar] OnClick handler for '{actionDef.Id}' threw: {ex}");
                 }
 

@@ -34,7 +34,7 @@ namespace STS2RitsuLib.Saves
             }
             catch (Exception ex)
             {
-                RitsuLibFramework.Logger.Error($"[Saves] Failed to show invalid-run modal: {ex.Message}");
+                RitsuLibFramework.Logger.ErrorNoTrace($"[Saves] Failed to show invalid-run modal: {ex.Message}");
             }
         }
     }
