@@ -177,14 +177,10 @@ namespace STS2RitsuLib.Settings.Patches
         }
 
         /// <summary>
-        ///     Pre-warms the mod settings UI while the user is still on the vanilla settings screen — before they
-        ///     click "Mod Settings (RitsuLib)". The first open otherwise runs a concentrated one-time
-        ///     initialization (reflection-based mirror registration, sidebar build, first page build) all at once,
-        ///     producing a visible stall. Reflection and data registration run on a background worker; only Godot node
-        ///     creation and UI refresh stay on the main thread.
-        ///     在用户仍处于原版设置界面时(即点击 “Mod Settings (RitsuLib)” 之前)预热 mod 设置 UI。否则首次打开会一次性执行
-        ///     集中的一次性初始化(基于反射的镜像注册、侧边栏构建、首页构建),造成可见卡顿。反射和数据注册在后台线程执行；
-        ///     只有 Godot 节点创建和 UI 刷新留在主线程。
+        ///     Pre-warms reflection and data registration while the user is still on the vanilla settings screen.
+        ///     Godot node creation stays lazy; reusable entry nodes are collected only from real page releases.
+        ///     在用户仍处于原版设置界面时预热反射和数据注册。Godot 节点创建保持懒加载；
+        ///     可复用 entry 节点只从实际页面释放中回收。
         /// </summary>
         private static void TrySchedulePrewarm(NSettingsScreen screen)
         {
@@ -210,7 +206,6 @@ namespace STS2RitsuLib.Settings.Patches
                 }
 
                 RitsuLibModSettingsBootstrap.RefreshDynamicPages();
-                ScheduleSubmenuPrewarm(screen);
                 PrewarmSessions.Remove(screen);
             }
             catch (Exception ex)
@@ -229,34 +224,6 @@ namespace STS2RitsuLib.Settings.Patches
             }
 
             Callable.From(() => SchedulePrewarmStep(screen, delayFrames - 1)).CallDeferred();
-        }
-
-        private static void ScheduleSubmenuPrewarm(NSettingsScreen screen)
-        {
-            if (!GodotObject.IsInstanceValid(screen))
-                return;
-
-            Callable.From(() => TryCreateSubmenuForPrewarm(screen)).CallDeferred();
-        }
-
-        private static void TryCreateSubmenuForPrewarm(NSettingsScreen screen)
-        {
-            if (!GodotObject.IsInstanceValid(screen))
-                return;
-
-            try
-            {
-                var stack = screen.GetAncestorOfType<NSubmenuStack>();
-                if (stack == null)
-                    return;
-
-                var submenu = ModSettingsSubmenuPatch.Submenus.GetValue(stack, ModSettingsSubmenuPatch.CreateSubmenu);
-                _ = submenu.WaitForFirstPageContentPrewarmedAsync();
-            }
-            catch (Exception ex)
-            {
-                RitsuLibFramework.Logger.Warn($"[Settings] Mod settings submenu prewarm failed: {ex.Message}");
-            }
         }
 
         private static void ScheduleInitialPrewarmStep(NSettingsScreen screen)
