@@ -195,7 +195,7 @@ namespace STS2RitsuLib.Patching.Core
                     sb.Append($"Exception: {exception}");
                 else
                     sb.Append($"Error: {errorMessage}");
-                logger.Error(sb.ToString());
+                logger.ErrorNoTrace(sb.ToString());
             }
 
             logger.Info(
@@ -254,7 +254,7 @@ namespace STS2RitsuLib.Patching.Core
             }
             else
             {
-                logger.Error($"{_logPrefix}Critical patch(es) failed, rolling back all patches...");
+                logger.ErrorNoTrace($"{_logPrefix}Critical patch(es) failed, rolling back all patches...");
                 UnpatchAll();
                 IsApplied = false;
             }
@@ -285,7 +285,7 @@ namespace STS2RitsuLib.Patching.Core
 
                 var importance = modPatchInfo.IsCritical ? "Critical" : "Optional";
                 if (modPatchInfo.IsCritical)
-                    logger.Error(
+                    logger.ErrorNoTrace(
                         $"{_logPrefix}[Late][{importance}] {modPatchInfo.Id} failed: {result.ErrorMessage}");
                 else
                     logger.ErrorNoTrace(
@@ -475,7 +475,7 @@ namespace STS2RitsuLib.Patching.Core
                     failureLog.AppendLine($"{_logPrefix}  Error: {result.ErrorMessage}");
                     if (result.Exception != null)
                         failureLog.Append($"{_logPrefix}  Exception: {result.Exception}");
-                    logger.Error(failureLog.ToString());
+                    logger.ErrorNoTrace(failureLog.ToString());
                 }
             }
 
@@ -485,7 +485,7 @@ namespace STS2RitsuLib.Patching.Core
             if (failureCount > 0) logger.ErrorNoTrace($"{_logPrefix}{failureCount} patch(es) failed");
 
             if (criticalFailureCount == 0) return true;
-            logger.Error($"{_logPrefix}{criticalFailureCount} critical patch(es) failed, mod loading blocked");
+            logger.ErrorNoTrace($"{_logPrefix}{criticalFailureCount} critical patch(es) failed, mod loading blocked");
             return false;
         }
 

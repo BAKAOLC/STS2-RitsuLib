@@ -212,7 +212,11 @@ namespace STS2RitsuLib.Models.Capabilities.Patches
 
             public static ModPatchTarget[] GetTargets()
             {
+#if STS2_AT_LEAST_0_105_0
                 return [new(typeof(CardModel), "GetResultPileTypeForCardPlay", Type.EmptyTypes)];
+#else
+                return [new(typeof(CardModel), "GetResultPileType", Type.EmptyTypes)];
+#endif
             }
 
             // ReSharper disable InconsistentNaming
