@@ -14,8 +14,6 @@ namespace STS2RitsuLib.Combat.CardTargeting
     /// </summary>
     public static class CustomTargetType
     {
-        private static readonly DynamicEnumValueMinter<TargetType> TargetTypeMinter = new();
-
         /// <summary>
         ///     Multi-target selection that displays reticles over all living creatures in the combat room.
         ///     This is a visual-only targeting mode: the card's play action still runs once with <c>null</c> target
@@ -145,8 +143,7 @@ namespace STS2RitsuLib.Combat.CardTargeting
             ArgumentException.ThrowIfNullOrWhiteSpace(localStem);
             ArgumentNullException.ThrowIfNull(canTarget);
 
-            var id = ModContentRegistry.GetQualifiedTargetTypeId(modId, localStem);
-            var type = TargetTypeMinter.Mint(id);
+            var (_, id, type) = DynamicEnumValueRegistry<TargetType>.RegisterOwned(modId, localStem);
             CustomTargetTypeRegistry.RegisterSingleTargetType(type, id, canTarget);
             return type;
         }
@@ -180,8 +177,7 @@ namespace STS2RitsuLib.Combat.CardTargeting
             ArgumentException.ThrowIfNullOrWhiteSpace(localStem);
             ArgumentNullException.ThrowIfNull(includeTarget);
 
-            var id = ModContentRegistry.GetQualifiedTargetTypeId(modId, localStem);
-            var type = TargetTypeMinter.Mint(id);
+            var (_, id, type) = DynamicEnumValueRegistry<TargetType>.RegisterOwned(modId, localStem);
             CustomTargetTypeRegistry.RegisterMultiTargetType(type, id, includeTarget);
             return type;
         }
@@ -189,7 +185,7 @@ namespace STS2RitsuLib.Combat.CardTargeting
         private static TargetType Mint(string localStem)
         {
             var id = ModContentRegistry.GetQualifiedTargetTypeId(Const.ModId, localStem);
-            return TargetTypeMinter.Mint(id);
+            return DynamicEnumValueRegistry<TargetType>.GetValue(id);
         }
     }
 }

@@ -353,7 +353,7 @@ namespace STS2RitsuLib.Settings
             var game = NGame.Instance;
             if (game?.MainMenu?.SubmenuStack is { } mainMenuStack)
             {
-                submenu = (RitsuModSettingsSubmenu)mainMenuStack.PushSubmenuType(typeof(RitsuModSettingsSubmenu));
+                submenu = mainMenuStack.PushSubmenuType<RitsuModSettingsSubmenu>();
                 error = "";
                 return true;
             }
@@ -361,8 +361,7 @@ namespace STS2RitsuLib.Settings
             if (game?.CurrentRunNode?.GlobalUi?.SubmenuStack is { } runCapstoneStack)
             {
                 runCapstoneStack.ShowScreen(CapstoneSubmenuType.Settings);
-                submenu = (RitsuModSettingsSubmenu)runCapstoneStack.Stack.PushSubmenuType(
-                    typeof(RitsuModSettingsSubmenu));
+                submenu = runCapstoneStack.Stack.PushSubmenuType<RitsuModSettingsSubmenu>();
                 error = "";
                 return true;
             }

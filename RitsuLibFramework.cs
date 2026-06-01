@@ -573,6 +573,26 @@ namespace STS2RitsuLib
         }
 
         /// <summary>
+        ///     Returns the generic dynamic enum value registry for <paramref name="modId" />.
+        ///     返回 <paramref name="modId" /> 的通用动态枚举值注册表。
+        /// </summary>
+        public static ModDynamicEnumValueRegistry<TEnum> GetDynamicEnumValueRegistry<TEnum>(string modId)
+            where TEnum : struct, Enum
+        {
+            return DynamicEnumValueRegistry<TEnum>.For(modId);
+        }
+
+        /// <summary>
+        ///     Registers a mod-scoped dynamic enum value and returns its deterministic value.
+        ///     注册一个 mod 作用域的动态枚举值，并返回其确定性值。
+        /// </summary>
+        public static TEnum RegisterDynamicEnumValue<TEnum>(string modId, string localStem)
+            where TEnum : struct, Enum
+        {
+            return DynamicEnumValueRegistry<TEnum>.RegisterOwned(modId, localStem).Value;
+        }
+
+        /// <summary>
         ///     Registers a mod-scoped single-target <see cref="TargetType" /> and returns its deterministic enum value.
         ///     注册一个 mod 作用域的单体目标 <see cref="TargetType" />，并返回其确定性的枚举值。
         /// </summary>

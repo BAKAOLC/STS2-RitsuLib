@@ -18,6 +18,7 @@ using STS2RitsuLib.Timeline;
 using STS2RitsuLib.Timeline.Scaffolding;
 using STS2RitsuLib.TopBar;
 using STS2RitsuLib.Unlocks;
+using STS2RitsuLib.Utils;
 
 namespace STS2RitsuLib.Scaffolding.Content
 {
@@ -131,6 +132,15 @@ namespace STS2RitsuLib.Scaffolding.Content
         ///     <c>RitsuLibFramework.GetTopBarButtonRegistry</c> 是同一个单例。
         /// </summary>
         public ModTopBarButtonRegistry TopBarButtons => ModTopBarButtonRegistry.For(ModId);
+
+        /// <summary>
+        ///     Generic dynamic enum value surface for <see cref="ModId" />.
+        ///     <see cref="ModId" /> 的通用动态枚举值入口。
+        /// </summary>
+        public ModDynamicEnumValueRegistry<TEnum> DynamicEnumValues<TEnum>() where TEnum : struct, Enum
+        {
+            return DynamicEnumValueRegistry<TEnum>.For(ModId);
+        }
     }
 
     /// <summary>
@@ -493,7 +503,7 @@ namespace STS2RitsuLib.Scaffolding.Content
             "Use CardHandOutline<TCard>(ModCardHandOutlineRules<TCard>), CardHandOutline<TCard>(ModCardHandOutlineSwitchRule<TCard>), or CardHandOutline<TCard>(Func<TCard, Color?>).")]
         public ModContentPackBuilder CardHandOutline<TCard>(ModCardHandOutlineRule rule) where TCard : CardModel
         {
-            return AddStep(_ => ModCardHandOutlineRegistry.Register(typeof(TCard), rule.ToSwitchRule()));
+            return AddStep(_ => ModCardHandOutlineRegistry.Register<TCard>(rule.ToSwitchRule()));
         }
 
         /// <summary>
@@ -1511,6 +1521,15 @@ namespace STS2RitsuLib.Scaffolding.Content
                 CardTag(entry);
 
             return this;
+        }
+
+        /// <summary>
+        ///     Queues a generic dynamic enum value registration for a local stem under this pack's mod id.
+        ///     将通用动态枚举值注册加入队列，用于此包 mod id 下的本地 stem。
+        /// </summary>
+        public ModContentPackBuilder DynamicEnumValue<TEnum>(string localStem) where TEnum : struct, Enum
+        {
+            return AddStep(ctx => ctx.DynamicEnumValues<TEnum>().RegisterOwned(localStem));
         }
 
         /// <summary>

@@ -31,8 +31,6 @@ namespace STS2RitsuLib.Keywords
 
         private static readonly Dictionary<CardKeyword, ModKeywordDefinition> DefinitionsByCardKeyword = [];
 
-        private static readonly DynamicEnumValueMinter<CardKeyword> CardKeywordMinter = new();
-
         private readonly Logger _logger;
 
         private readonly string _modId;
@@ -336,7 +334,7 @@ namespace STS2RitsuLib.Keywords
             EnsureMutable("register keywords");
 
             var normalizedId = NormalizeId(id);
-            var cardKeywordValue = CardKeywordMinter.Mint(normalizedId);
+            var cardKeywordValue = DynamicEnumValueRegistry<CardKeyword>.Register(_modId, normalizedId).Value;
             var definition = new ModKeywordDefinition(
                 _modId,
                 normalizedId,
@@ -443,7 +441,7 @@ namespace STS2RitsuLib.Keywords
             ArgumentException.ThrowIfNullOrWhiteSpace(id);
             try
             {
-                value = CardKeywordMinter.Mint(id);
+                value = DynamicEnumValueRegistry<CardKeyword>.GetValue(id);
                 return true;
             }
             catch (InvalidOperationException)
@@ -479,7 +477,7 @@ namespace STS2RitsuLib.Keywords
         public static CardKeyword GetCardKeyword(string id)
         {
             ArgumentException.ThrowIfNullOrWhiteSpace(id);
-            return CardKeywordMinter.Mint(id);
+            return DynamicEnumValueRegistry<CardKeyword>.GetValue(id);
         }
 
         /// <summary>

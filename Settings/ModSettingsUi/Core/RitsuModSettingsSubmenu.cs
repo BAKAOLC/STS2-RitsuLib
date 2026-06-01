@@ -2027,8 +2027,7 @@ namespace STS2RitsuLib.Settings
             IReadOnlyList<ModSettingsPage> pages)
         {
             if (page.VisibleWhen == null &&
-                page.VisibleOnHostSurfaces == ModSettingsHostSurface.All &&
-                !page.SidebarVisibleOnlyWhenActive)
+                page is { VisibleOnHostSurfaces: ModSettingsHostSurface.All, SidebarVisibleOnlyWhenActive: false })
                 return null;
 
             return () => (page.VisibleWhen?.Invoke() ?? true) &&

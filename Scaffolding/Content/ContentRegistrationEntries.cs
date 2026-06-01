@@ -331,7 +331,7 @@ namespace STS2RitsuLib.Scaffolding.Content
         /// <inheritdoc />
         public void Register(ModContentRegistry registry)
         {
-            ModCardHandOutlineRegistry.Register(typeof(TCard), _rules);
+            ModCardHandOutlineRegistry.Register<TCard>(_rules);
         }
     }
 

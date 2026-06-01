@@ -98,7 +98,7 @@ namespace STS2RitsuLib.Models.Capabilities
                 throw new InvalidOperationException(
                     $"Model capability type is not registered: {typeof(TCapability).FullName}");
 
-            var capability = Activator.CreateInstance(typeof(TCapability)) as TCapability;
+            var capability = Activator.CreateInstance<TCapability>();
             return capability ?? throw new InvalidOperationException(
                 $"Capability type must have a public parameterless constructor: {typeof(TCapability).FullName}");
         }

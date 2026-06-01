@@ -42,8 +42,6 @@ namespace STS2RitsuLib.Combat.Rewards
 
         private static readonly Dictionary<RewardType, ModRewardDefinition> DefinitionsByRewardType = [];
         private static readonly Dictionary<RewardType, RewardRegistration> RegistrationsByType = [];
-        private static readonly DynamicEnumValueMinter<RewardType> RewardTypeMinter = new();
-
         private readonly Logger _logger;
         private readonly string _modId;
 
@@ -165,7 +163,7 @@ namespace STS2RitsuLib.Combat.Rewards
                     return definition.RewardType;
             }
 
-            return RewardTypeMinter.Mint($"reward:{normalized}");
+            return DynamicEnumValueRegistry<RewardType>.GetValueWithMintKey(normalized, GetMintKey(normalized));
         }
 
         /// <summary>
@@ -235,7 +233,9 @@ namespace STS2RitsuLib.Combat.Rewards
         private static ModRewardDefinition RegisterCore(string modId, string id, ModRewardFactory factory)
         {
             var normalized = NormalizeId(id);
-            var rewardType = RewardTypeMinter.Mint($"reward:{normalized}");
+            var rewardType = DynamicEnumValueRegistry<RewardType>
+                .RegisterWithMintKey(modId, normalized, GetMintKey(normalized))
+                .Value;
             var definition = new ModRewardDefinition(modId, normalized, rewardType);
             ModRewardRegistry? registry;
 
@@ -267,6 +267,11 @@ namespace STS2RitsuLib.Combat.Rewards
         private static string NormalizeId(string id)
         {
             return id.Trim();
+        }
+
+        private static string GetMintKey(string normalizedId)
+        {
+            return $"reward:{normalizedId}";
         }
 
         private static TPayload? DeserializePayload<TPayload>(

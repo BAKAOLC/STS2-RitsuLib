@@ -64,8 +64,7 @@ namespace STS2RitsuLib.Settings
                 var section = page.Sections[index];
                 if (index > 0)
                 {
-                    var dividerIndex = index;
-                    var dividerVisibility = CreateDividerVisibilityPredicate(sectionVisible, dividerIndex);
+                    var dividerVisibility = CreateDividerVisibilityPredicate(sectionVisible, index);
                     yield return new(
                         MaybeWrapDynamicVisibility(context, CreateDivider(), dividerVisibility),
                         false);
