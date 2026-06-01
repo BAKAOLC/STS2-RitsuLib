@@ -349,7 +349,7 @@ namespace STS2RitsuLib
 
                     if (!RitsuLibStartupAudit.Measure("patchAll", PatchAllRequired))
                     {
-                        Logger.Error("Framework initialization failed: critical framework patches failed.");
+                        Logger.ErrorNoTrace("Framework initialization failed: critical framework patches failed.");
                         IsActive = false;
                         RitsuLibStartupAudit.LogReport("initialization (failed)");
                         return;
