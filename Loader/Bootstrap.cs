@@ -2,6 +2,8 @@ using System.Reflection;
 using System.Runtime.Loader;
 using System.Security.Cryptography;
 using System.Text.Json;
+using HarmonyLib;
+using MegaCrit.Sts2.Core.Helpers;
 using MegaCrit.Sts2.Core.Logging;
 using MegaCrit.Sts2.Core.Modding;
 using STS2RitsuLib.Compat;
@@ -20,6 +22,9 @@ namespace STS2RitsuLib.Loader
         private const string RealDllName = "STS2-RitsuLib.dll";
         private const string VariantManifestName = "ritsulib-variants.json";
         private const string CompatTargetMarkerName = "compat-target.txt";
+        private static readonly Lock VariantAssembliesLock = new();
+        private static readonly List<Assembly> VariantAssemblies = [];
+        private static bool _reflectionBridgePatched;
 
         public static void Initialize()
         {
@@ -62,6 +67,7 @@ namespace STS2RitsuLib.Loader
             try
             {
                 realAsm = alc.LoadFromAssemblyPath(realDll);
+                RegisterVariantAssembly(realAsm);
             }
             catch (Exception ex)
             {
@@ -76,6 +82,55 @@ namespace STS2RitsuLib.Loader
             catch (Exception ex)
             {
                 Log.Error($"[RitsuLib.Loader] Failed to initialize real RitsuLib: {ex}");
+            }
+        }
+
+        internal static Type[] GetVariantModTypes()
+        {
+            Assembly[] assemblies;
+            lock (VariantAssembliesLock)
+            {
+                assemblies = [.. VariantAssemblies];
+            }
+
+            return assemblies.SelectMany(GetLoadableTypes).Distinct().ToArray();
+        }
+
+        private static void RegisterVariantAssembly(Assembly realAsm)
+        {
+            EnsureReflectionBridgePatch();
+            lock (VariantAssembliesLock)
+            {
+                if (VariantAssemblies.Any(assembly => string.Equals(
+                        assembly.Location,
+                        realAsm.Location,
+                        StringComparison.OrdinalIgnoreCase)))
+                    return;
+
+                VariantAssemblies.Add(realAsm);
+            }
+        }
+
+        private static void EnsureReflectionBridgePatch()
+        {
+            if (_reflectionBridgePatched)
+                return;
+
+            var harmony = new Harmony("OLC.STS2-RitsuLib.Loader.ReflectionBridge");
+            harmony.PatchAll(typeof(Bootstrap).Assembly);
+            _reflectionBridgePatched = true;
+        }
+
+        private static IEnumerable<Type> GetLoadableTypes(Assembly assembly)
+        {
+            try
+            {
+                return assembly.GetTypes();
+            }
+            catch (ReflectionTypeLoadException ex)
+            {
+                Log.Warn($"[RitsuLib.Loader] Partial type load for {assembly.FullName}: {ex.Message}");
+                return ex.Types.OfType<Type>();
             }
         }
 
