@@ -44,10 +44,12 @@ namespace STS2RitsuLib.Saves.Patches
         ///     Attaches the snapshot to the parsed progress instance.
         /// </summary>
         // ReSharper disable InconsistentNaming
-        public static void Postfix(ProgressState __result, PreservedProgressRecords? __state)
+        public static void Postfix(ProgressState __result, DeserializationContext ctx,
+                PreservedProgressRecords? __state)
             // ReSharper restore InconsistentNaming
         {
             PreservedProgressRecords.Attach(__result, __state);
+            __state?.SuppressExpectedWarnings(ctx);
         }
     }
 

@@ -1,8 +1,10 @@
+using System.Reflection;
 using System.Runtime.CompilerServices;
 using System.Text.Json;
 using MegaCrit.Sts2.Core.Achievements;
 using MegaCrit.Sts2.Core.Models;
 using MegaCrit.Sts2.Core.Saves;
+using MegaCrit.Sts2.Core.Saves.Validation;
 using MegaCrit.Sts2.Core.Timeline;
 
 namespace STS2RitsuLib.Saves
@@ -15,6 +17,10 @@ namespace STS2RitsuLib.Saves
     {
         private static readonly ConditionalWeakTable<ProgressState, PreservedProgressRecords> RecordsByProgress = new();
         private static readonly HashSet<string> KnownAchievementNames = BuildKnownAchievementNames();
+
+        private static readonly FieldInfo? ValidationErrorsField =
+            typeof(DeserializationContext).GetField("_errors", BindingFlags.Instance | BindingFlags.NonPublic);
+
         private readonly List<AncientStats> _ancientStats = [];
         private readonly List<CardStats> _cardStats = [];
 
@@ -78,6 +84,19 @@ namespace STS2RitsuLib.Saves
             RecordsByProgress.Remove(progress);
             RecordsByProgress.Add(progress, records);
             RitsuLibFramework.Logger.Info($"[Saves] Preserving unavailable progress records: {records.FormatCounts()}");
+        }
+
+        internal int SuppressExpectedWarnings(DeserializationContext ctx)
+        {
+            if (ValidationErrorsField?.GetValue(ctx) is not List<ValidationError> errors)
+                return 0;
+
+            var removed = errors.RemoveAll(IsExpectedPreservedWarning);
+            if (removed > 0)
+                RitsuLibFramework.Logger.Info(
+                    $"[Saves] Suppressed {removed} expected progress validation warning(s) for unavailable preserved records");
+
+            return removed;
         }
 
         internal static void MergeInto(ProgressState? progress, SerializableProgress? save)
@@ -304,6 +323,61 @@ namespace STS2RitsuLib.Saves
         private static string FormatCount(string label, int count)
         {
             return count > 0 ? $"{label}={count}" : "";
+        }
+
+        private bool IsExpectedPreservedWarning(ValidationError error)
+        {
+            if (error.IsFatal || !error.Message.StartsWith("Unknown ", StringComparison.Ordinal))
+                return false;
+
+            var modelIds = GetPreservedModelIdStrings();
+            foreach (var id in modelIds)
+                if (error.Message.Contains(id, StringComparison.Ordinal))
+                    return true;
+
+            foreach (var epochId in _epochs.Select(static epoch => epoch.Id))
+                if (error.Message.Contains(epochId, StringComparison.Ordinal))
+                    return true;
+
+            foreach (var achievement in _unlockedAchievements.Select(static item => item.Achievement))
+                if (error.Message.Contains('"' + achievement + '"', StringComparison.Ordinal))
+                    return true;
+
+            return false;
+        }
+
+        private HashSet<string> GetPreservedModelIdStrings()
+        {
+            var ids = new HashSet<string>(StringComparer.Ordinal);
+            AddIds(ids, _characterStats.Select(static stats => stats.Id));
+            AddIds(ids, _cardStats.Select(static stats => stats.Id));
+            AddIds(ids, _encounterStats.Select(static stats => stats.Id));
+            AddIds(ids, _enemyStats.Select(static stats => stats.Id));
+            AddIds(ids, _ancientStats.Select(static stats => stats.Id));
+            AddIds(ids, _encounterStats.SelectMany(static stats =>
+                stats.FightStats.Select(static fight => fight.Character)));
+            AddIds(ids,
+                _enemyStats.SelectMany(static stats => stats.FightStats.Select(static fight => fight.Character)));
+            AddIds(ids, _ancientStats.SelectMany(static stats =>
+                stats.CharStats.Select(static charStats => charStats.Character)));
+            AddIds(ids, _discoveredCards);
+            AddIds(ids, _discoveredRelics);
+            AddIds(ids, _discoveredPotions);
+            AddIds(ids, _discoveredEvents);
+            AddIds(ids, _discoveredActs);
+
+            if (_pendingCharacterUnlock is { } pendingCharacterUnlock &&
+                pendingCharacterUnlock != ModelId.none)
+                ids.Add(pendingCharacterUnlock.ToString());
+
+            return ids;
+        }
+
+        private static void AddIds(HashSet<string> target, IEnumerable<ModelId?> source)
+        {
+            foreach (var id in source)
+                if (id is { } modelId && modelId != ModelId.none)
+                    target.Add(modelId.ToString());
         }
 
         private static bool IsUnknownModel<TModel>(ModelId? id)
