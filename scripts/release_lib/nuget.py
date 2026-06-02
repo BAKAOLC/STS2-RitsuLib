@@ -22,6 +22,8 @@ from release_lib.repo_layout import (
     MOD_MANIFEST_NAME,
     RITSULIB_CSPROJ_NAME,
     SNUPKG_SUFFIX,
+    VIEWER_DIST_REL,
+    VIEWER_OUTPUT_DIR_NAME,
     VARIANT_MANIFEST_NAME,
     ritsulib_built_dll_name,
     ritsulib_built_doc_xml_name,
@@ -62,6 +64,7 @@ def snapshot_bundle_variant_after_pack(
         gen = obj_dir / "mod_manifest.generated.json"
         if gen.is_file():
             shutil.copy2(gen, manifest_dest)
+        copy_viewer_dist_to(bundle_staging_root, ritsulib_root=ritsulib_root)
 
 
 def finalize_bundle_manifest(
@@ -138,6 +141,28 @@ def _sha256_file(path: Path) -> str:
         for chunk in iter(lambda: f.read(1024 * 1024), b""):
             digest.update(chunk)
     return digest.hexdigest()
+
+
+def copy_viewer_dist_to(dest_root: Path, *, ritsulib_root: Path) -> None:
+    viewer_dist = ritsulib_root / VIEWER_DIST_REL
+    if not (viewer_dist / "index.html").is_file():
+        return
+
+    dest = dest_root / VIEWER_OUTPUT_DIR_NAME
+    if dest.exists():
+        shutil.rmtree(dest)
+    shutil.copytree(viewer_dist, dest)
+
+
+def write_viewer_dist_to_zip(zf: zipfile.ZipFile, *, ritsulib_root: Path) -> None:
+    viewer_dist = ritsulib_root / VIEWER_DIST_REL
+    if not (viewer_dist / "index.html").is_file():
+        return
+
+    for path in viewer_dist.rglob("*"):
+        if path.is_file():
+            arc = Path(VIEWER_OUTPUT_DIR_NAME) / path.relative_to(viewer_dist)
+            zf.write(path, arcname=arc.as_posix())
 
 
 def lowest_compat_target(compat_targets: list[str]) -> str:
@@ -500,6 +525,7 @@ def create_github_zip(
             zf.write(pdb_path, arcname=ritsulib_built_pdb_name())
         zf.write(manifest_path, arcname="mod_manifest.json")
         zf.writestr("compat-target.txt", compat_target + "\n")
+        write_viewer_dist_to_zip(zf, ritsulib_root=ritsulib_root)
     return zip_path
 
 

@@ -20,6 +20,7 @@ using STS2RitsuLib.Data;
 using STS2RitsuLib.Diagnostics;
 using STS2RitsuLib.Diagnostics.CardExport;
 using STS2RitsuLib.Diagnostics.CompendiumExport;
+using STS2RitsuLib.Diagnostics.Logging;
 using STS2RitsuLib.Interop;
 using STS2RitsuLib.Keywords;
 using STS2RitsuLib.Localization;
@@ -326,6 +327,8 @@ namespace STS2RitsuLib
                 RitsuLibMobileSteamRuntime.LogSuppressedSteamFeaturesAtStartup();
                 ModTypeDiscoveryHub.EnsureBuiltInContributorsRegistered();
                 RitsuLibStartupAudit.Measure("settingsStore", RitsuLibSettingsStore.Initialize);
+                RitsuLibStartupAudit.Measure("debugLogViewer",
+                    () => RitsuDebugLogPipeline.Initialize(RitsuLibSettingsStore.GetDebugLogViewerOptions()));
                 RitsuLibStartupAudit.Measure("modSettingsBootstrap", RitsuLibModSettingsBootstrap.Initialize);
                 RitsuLibStartupAudit.Measure("telemetryBootstrap", RitsuLibTelemetryBootstrap.Initialize);
                 PublishLifecycleEvent(

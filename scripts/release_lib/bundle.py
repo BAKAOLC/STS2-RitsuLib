@@ -11,6 +11,7 @@ from release_lib.repo_layout import (
     MOD_MANIFEST_NAME,
     RITSULIB_LOADER_CSPROJ_REL,
 )
+from release_lib.nuget import copy_viewer_dist_to
 
 
 def compose_bundle_zip(
@@ -64,6 +65,8 @@ def compose_bundle_zip(
     shutil.copy2(loader_dll, bundle_staging_root / "STS2-RitsuLib.dll")
     if loader_pdb.is_file():
         shutil.copy2(loader_pdb, bundle_staging_root / "STS2-RitsuLib.Loader.pdb")
+
+    copy_viewer_dist_to(bundle_staging_root, ritsulib_root=ritsulib_root)
 
     safe_ver = (
         effective_version.strip().replace("+", "-").replace("/", "-").replace("\\", "-")

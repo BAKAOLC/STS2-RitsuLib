@@ -19,6 +19,9 @@ ARTIFACTS_BUNDLE_STAGING = Path("artifacts") / "bundle-staging"
 
 RITSULIB_LOADER_CSPROJ_REL = Path("Loader") / "STS2-RitsuLib-Loader.csproj"
 
+VIEWER_DIST_REL = Path("Viewer") / "dist"
+VIEWER_OUTPUT_DIR_NAME = "viewer"
+
 GITHUB_ZIP_FILENAME_SUFFIX = ".github.zip"
 
 GITHUB_BUNDLE_ZIP_SUFFIX = ".variant-pack.zip"

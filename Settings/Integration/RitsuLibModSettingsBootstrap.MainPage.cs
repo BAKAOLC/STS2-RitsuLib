@@ -219,6 +219,13 @@ namespace STS2RitsuLib.Settings
                     .WithTitle(T("ritsulib.section.devDebugTools.title", "Developer debug tools"))
                     .Collapsible()
                     .AddSubpage(
+                        "debug_log_viewer_open",
+                        T("ritsulib.debugLogViewer.pageLink.label", "Debug log viewer"),
+                        "debug-log-viewer",
+                        T("button.open", "Open"),
+                        T("ritsulib.debugLogViewer.pageLink.description",
+                            "Configure and open the browser-based live debug log viewer."))
+                    .AddSubpage(
                         "harmony_patch_dump_open",
                         T("ritsulib.section.harmonyDump.title", "Harmony patch dump"),
                         "harmony-patch-dump",

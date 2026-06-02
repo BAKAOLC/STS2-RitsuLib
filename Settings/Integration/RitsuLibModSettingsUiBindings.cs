@@ -14,6 +14,8 @@ namespace STS2RitsuLib.Settings
         public IModSettingsValueBinding<bool> DebugCompatibility { get; private init; } = null!;
         public IModSettingsValueBinding<bool> DebugCompatLocTable { get; private init; } = null!;
         public IModSettingsValueBinding<bool> DebugCompatUnlockEpoch { get; private init; } = null!;
+        public IModSettingsValueBinding<bool> DebugLogViewerAutoOpen { get; private init; } = null!;
+        public IModSettingsValueBinding<string> DebugLogViewerPort { get; private init; } = null!;
 
         public IModSettingsValueBinding<bool> DebugCompatAncientArchitect { get; private init; } =
             null!;
@@ -143,6 +145,24 @@ namespace STS2RitsuLib.Settings
                         settings => settings.DebugCompatAncientArchitect,
                         (settings, value) => settings.DebugCompatAncientArchitect = value),
                     () => defaults.DebugCompatAncientArchitect),
+                DebugLogViewerAutoOpen = ModSettingsBindings.WithDefault(
+                    ModSettingsBindings.Global<RitsuLibSettings, bool>(
+                        Const.ModId,
+                        Const.SettingsKey,
+                        settings => settings.DebugLogViewerAutoOpen,
+                        (settings, value) => settings.DebugLogViewerAutoOpen = value),
+                    () => defaults.DebugLogViewerAutoOpen),
+                DebugLogViewerPort = ModSettingsBindings.WithDefault(
+                    ModSettingsBindings.Global<RitsuLibSettings, string>(
+                        Const.ModId,
+                        Const.SettingsKey,
+                        settings => Math.Clamp(settings.DebugLogViewerPort, 1, 65535).ToString(),
+                        (settings, value) =>
+                        {
+                            if (TryParsePort(value, out var port))
+                                settings.DebugLogViewerPort = port;
+                        }),
+                    () => defaults.DebugLogViewerPort.ToString()),
                 ModSourceHoverTipsEnabled = ModSettingsBindings.WithDefault(
                     ModSettingsBindings.Global<RitsuLibSettings, bool>(
                         Const.ModId,
@@ -493,6 +513,11 @@ namespace STS2RitsuLib.Settings
                 "fadescale" => "fadescale",
                 _ => "fadeslide",
             };
+        }
+
+        internal static bool TryParsePort(string? value, out int port)
+        {
+            return int.TryParse(value?.Trim(), out port) && port is >= 1 and <= 65535;
         }
     }
 }
