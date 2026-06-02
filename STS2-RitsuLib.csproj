@@ -29,11 +29,15 @@
         <RitsuLibTelemetryBuildChannel Condition="'$(RitsuLibTelemetryBuildChannel)' == '' and '$(Configuration)' == 'Debug'">local_debug</RitsuLibTelemetryBuildChannel>
         <RitsuLibTelemetryBuildChannel Condition="'$(RitsuLibTelemetryBuildChannel)' == ''">local_release</RitsuLibTelemetryBuildChannel>
         <RitsuLibTelemetryBuildConfiguration Condition="'$(RitsuLibTelemetryBuildConfiguration)' == ''">$(Configuration)</RitsuLibTelemetryBuildConfiguration>
+        <RitsuLibViewerProjectDir>$(MSBuildProjectDirectory)\Viewer</RitsuLibViewerProjectDir>
+        <RitsuLibViewerDistDir>$(RitsuLibViewerProjectDir)\dist</RitsuLibViewerDistDir>
+        <RitsuLibBuildViewer Condition="'$(RitsuLibBuildViewer)' == '' and Exists('$(RitsuLibViewerProjectDir)\package.json')">true</RitsuLibBuildViewer>
+        <RitsuLibBuildViewer Condition="'$(RitsuLibBuildViewer)' == ''">false</RitsuLibBuildViewer>
     </PropertyGroup>
 
     <PropertyGroup Label="NuGet package">
         <IsPackable>true</IsPackable>
-        <Version>0.4.3</Version>
+        <Version>0.4.4</Version>
         <Authors>OLC</Authors>
         <Description>Shared framework library for Slay the Spire 2 mods.</Description>
         <PackageReadmeFile>README.md</PackageReadmeFile>
@@ -43,6 +47,7 @@
         <RepositoryType>git</RepositoryType>
         <PackageId Condition="'$(Sts2ApiCompat)' == '$(RitsuLibLatestApiCompat)'">STS2.RitsuLib</PackageId>
         <PackageId Condition="'$(Sts2ApiCompat)' != '$(RitsuLibLatestApiCompat)'">STS2.RitsuLib.Compat.$(Sts2ApiCompat)</PackageId>
+        <TargetsForTfmSpecificContentInPackage>$(TargetsForTfmSpecificContentInPackage);PackRitsuDebugLogViewerAssets</TargetsForTfmSpecificContentInPackage>
     </PropertyGroup>
 
     <Target Name="ValidateSts2ApiSignatures" BeforeTargets="ResolveAssemblyReferences">
@@ -89,6 +94,14 @@
         <Content Include="$(RitsuLibManifestGenerated)"/>
     </ItemGroup>
     <ItemGroup>
+        <RitsuLibViewerBuildInputs Include="$(RitsuLibViewerProjectDir)\package.json"/>
+        <RitsuLibViewerBuildInputs Include="$(RitsuLibViewerProjectDir)\package-lock.json" Condition="Exists('$(RitsuLibViewerProjectDir)\package-lock.json')"/>
+        <RitsuLibViewerBuildInputs Include="$(RitsuLibViewerProjectDir)\index.html"/>
+        <RitsuLibViewerBuildInputs Include="$(RitsuLibViewerProjectDir)\vite.config.ts"/>
+        <RitsuLibViewerBuildInputs Include="$(RitsuLibViewerProjectDir)\tsconfig.json"/>
+        <RitsuLibViewerBuildInputs Include="$(RitsuLibViewerProjectDir)\src\**\*"/>
+    </ItemGroup>
+    <ItemGroup>
         <EmbeddedResource Include="Assets\mod_image.png" LogicalName="STS2RitsuLib.Assets.mod_image.png"/>
         <EmbeddedResource Include="Settings\Localization\**\*.json"/>
         <EmbeddedResource Include="Ui\Shell\Themes\*.theme.json"/>
@@ -111,11 +124,53 @@
         <None Remove="Loader\**"/>
         <Content Remove="Loader\**"/>
         <EmbeddedResource Remove="Loader\**"/>
+
+        <!-- The browser log viewer is built and copied as sidecar static assets, not Godot resources. -->
+        <Compile Remove="Viewer\**"/>
+        <None Remove="Viewer\node_modules\**"/>
+        <Content Remove="Viewer\node_modules\**"/>
+        <EmbeddedResource Remove="Viewer\**"/>
     </ItemGroup>
+    <Target Name="BuildRitsuDebugLogViewer"
+            BeforeTargets="Build"
+            Condition="'$(RitsuLibBuildViewer)' == 'true'"
+            Inputs="@(RitsuLibViewerBuildInputs)"
+            Outputs="$(RitsuLibViewerDistDir)\index.html">
+        <Message Text="Building RitsuLib debug log viewer..." Importance="high"/>
+        <Exec WorkingDirectory="$(RitsuLibViewerProjectDir)" Command="npm install" Condition="!Exists('$(RitsuLibViewerProjectDir)\node_modules')"/>
+        <Exec WorkingDirectory="$(RitsuLibViewerProjectDir)" Command="npm run build"/>
+    </Target>
+    <Target Name="CopyRitsuDebugLogViewerAssets"
+            AfterTargets="Build"
+            BeforeTargets="Copy Mod"
+            Condition="Exists('$(RitsuLibViewerDistDir)\index.html')">
+        <ItemGroup>
+            <RitsuDebugViewerDistFiles Include="$(RitsuLibViewerDistDir)\**\*"/>
+        </ItemGroup>
+        <Copy SourceFiles="@(RitsuDebugViewerDistFiles)"
+              DestinationFiles="@(RitsuDebugViewerDistFiles->'$(TargetDir)viewer\%(RecursiveDir)%(Filename)%(Extension)')"
+              SkipUnchangedFiles="true"/>
+    </Target>
+    <Target Name="PackRitsuDebugLogViewerAssets"
+            DependsOnTargets="BuildRitsuDebugLogViewer"
+            Condition="Exists('$(RitsuLibViewerDistDir)\index.html')">
+        <ItemGroup>
+            <TfmSpecificPackageFile Include="$(RitsuLibViewerDistDir)\**\*">
+                <PackagePath>contentFiles/any/any/viewer/%(RecursiveDir)%(Filename)%(Extension)</PackagePath>
+                <BuildAction>None</BuildAction>
+            </TfmSpecificPackageFile>
+        </ItemGroup>
+    </Target>
     <Target Name="Copy Mod" AfterTargets="Build" Condition="'$(Sts2ApiCompat)' == '$(RitsuLibLatestApiCompat)'">
         <Message Text="Copying mod to Slay the Spire 2 mods folder..." Importance="high"/>
         <MakeDir Directories="$(Sts2Dir)\mods\$(MSBuildProjectName)\"/>
         <Copy SourceFiles="$(TargetPath)" DestinationFolder="$(Sts2Dir)\mods\$(MSBuildProjectName)\"/>
         <Copy SourceFiles="$(RitsuLibManifestGenerated)" DestinationFiles="$(Sts2Dir)\mods\$(MSBuildProjectName)\mod_manifest.json"/>
+        <ItemGroup>
+            <RitsuDebugViewerOutputFiles Include="$(TargetDir)viewer\**\*" Condition="Exists('$(TargetDir)viewer\index.html')"/>
+        </ItemGroup>
+        <Copy SourceFiles="@(RitsuDebugViewerOutputFiles)"
+              DestinationFiles="@(RitsuDebugViewerOutputFiles->'$(Sts2Dir)\mods\$(MSBuildProjectName)\viewer\%(RecursiveDir)%(Filename)%(Extension)')"
+              SkipUnchangedFiles="true"/>
     </Target>
 </Project>

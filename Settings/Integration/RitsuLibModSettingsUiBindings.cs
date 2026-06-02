@@ -14,6 +14,8 @@ namespace STS2RitsuLib.Settings
         public IModSettingsValueBinding<bool> DebugCompatibility { get; private init; } = null!;
         public IModSettingsValueBinding<bool> DebugCompatLocTable { get; private init; } = null!;
         public IModSettingsValueBinding<bool> DebugCompatUnlockEpoch { get; private init; } = null!;
+        public IModSettingsValueBinding<bool> DebugLogViewerAutoOpen { get; private init; } = null!;
+        public IModSettingsValueBinding<int> DebugLogViewerPort { get; private init; } = null!;
 
         public IModSettingsValueBinding<bool> DebugCompatAncientArchitect { get; private init; } =
             null!;
@@ -143,6 +145,20 @@ namespace STS2RitsuLib.Settings
                         settings => settings.DebugCompatAncientArchitect,
                         (settings, value) => settings.DebugCompatAncientArchitect = value),
                     () => defaults.DebugCompatAncientArchitect),
+                DebugLogViewerAutoOpen = ModSettingsBindings.WithDefault(
+                    ModSettingsBindings.Global<RitsuLibSettings, bool>(
+                        Const.ModId,
+                        Const.SettingsKey,
+                        settings => settings.DebugLogViewerAutoOpen,
+                        (settings, value) => settings.DebugLogViewerAutoOpen = value),
+                    () => defaults.DebugLogViewerAutoOpen),
+                DebugLogViewerPort = ModSettingsBindings.WithDefault(
+                    ModSettingsBindings.Global<RitsuLibSettings, int>(
+                        Const.ModId,
+                        Const.SettingsKey,
+                        settings => Math.Clamp(settings.DebugLogViewerPort, 1, 65535),
+                        (settings, value) => settings.DebugLogViewerPort = Math.Clamp(value, 1, 65535)),
+                    () => defaults.DebugLogViewerPort),
                 ModSourceHoverTipsEnabled = ModSettingsBindings.WithDefault(
                     ModSettingsBindings.Global<RitsuLibSettings, bool>(
                         Const.ModId,
@@ -494,5 +510,6 @@ namespace STS2RitsuLib.Settings
                 _ => "fadeslide",
             };
         }
+
     }
 }

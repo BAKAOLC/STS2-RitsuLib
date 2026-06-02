@@ -1,5 +1,7 @@
+using System.Security.Cryptography;
 using STS2RitsuLib.Data.Migrations;
 using STS2RitsuLib.Data.Models;
+using STS2RitsuLib.Diagnostics.Logging;
 using STS2RitsuLib.Ui.Shell.Theme;
 using STS2RitsuLib.Ui.Toast;
 using STS2RitsuLib.Utils.Persistence;
@@ -201,6 +203,32 @@ namespace STS2RitsuLib.Data
         {
             Initialize();
             return GetSettings().ModSourceHoverTipsGameTerms;
+        }
+
+        internal static RitsuDebugLogViewerOptions GetDebugLogViewerOptions()
+        {
+            Initialize();
+            var s = GetSettings();
+            var changed = false;
+            if (string.IsNullOrWhiteSpace(s.DebugLogViewerAccessToken))
+            {
+                s.DebugLogViewerAccessToken =
+                    Convert.ToHexString(RandomNumberGenerator.GetBytes(16)).ToLowerInvariant();
+                changed = true;
+            }
+
+            if (changed)
+                Store.Save(Const.SettingsKey);
+
+            return new(
+                s.DebugLogViewerEnabled,
+                s.DebugLogViewerMirrorGameLogs,
+                s.DebugLogViewerAutoOpen,
+                Math.Clamp(s.DebugLogViewerPort, 1, 65535),
+                Math.Clamp(s.DebugLogViewerPortFallbackCount, 0, 100),
+                s.DebugLogViewerAccessToken,
+                s.DebugLogViewerRingBufferCapacity,
+                s.DebugLogViewerQueueCapacity);
         }
 
         private static RitsuLibSettings GetSettings()

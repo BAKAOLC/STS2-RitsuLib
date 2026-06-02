@@ -32,6 +32,12 @@ runs:
         path: ~/.nuget/packages
         key: ${{ runner.os }}-nuget-${{ hashFiles('STS2-RitsuLib.csproj') }}
 
+    - uses: actions/setup-node@v4
+      with:
+        node-version: "22"
+        cache: npm
+        cache-dependency-path: Viewer/package-lock.json
+
     - uses: astral-sh/setup-uv@v8.1.0
       with:
         enable-cache: true
