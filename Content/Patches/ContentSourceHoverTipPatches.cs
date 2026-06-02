@@ -23,6 +23,8 @@ namespace STS2RitsuLib.Content.Patches
     {
         private const string EventBadgeNodeName = "RitsuLibContentSourceBadge";
         private const string EventDrawerHotZoneName = "RitsuLibContentSourceHotZone";
+        private const string HoverTipScenePath = "res://scenes/ui/hover_tip.tscn";
+        private const string HoverTipSetScenePath = "res://scenes/ui/hover_tip_set.tscn";
         private const float EventTipWidth = 360f;
         private const float EventTipRightMargin = 42f;
         private const float EventTipBottomMargin = 38f;
@@ -74,6 +76,9 @@ namespace STS2RitsuLib.Content.Patches
 
         internal static void UpdateEventSourceBadge(NEventLayout layout, EventModel eventModel)
         {
+            if (!IsNodeUsable(layout))
+                return;
+
             var existing = layout.GetNodeOrNull<NHoverTipSet>(EventBadgeNodeName);
             var existingHotZone = layout.GetNodeOrNull<Control>(EventDrawerHotZoneName);
             if (!RitsuLibSettingsStore.IsModSourceHoverTipsEnabled() ||
@@ -96,8 +101,8 @@ namespace STS2RitsuLib.Content.Patches
             RemoveBadge(layout, existingHotZone);
             var tipSet = CreateEventSourceTipSet(layout, source);
             var hotZone = CreateEventSourceHotZone();
-            layout.AddChild(tipSet);
-            layout.AddChild(hotZone);
+            layout.AddChildSafely(tipSet);
+            layout.AddChildSafely(hotZone);
             tipSet.Visible = true;
             Callable.From(() => PopulateAndPositionEventSourceTipSet(layout, tipSet, hotZone, source)).CallDeferred();
         }
@@ -106,7 +111,7 @@ namespace STS2RitsuLib.Content.Patches
             ContentSourceHoverTipFactory.ContentSourceInfo source)
         {
             var tipSet = PreloadManager.Cache
-                .GetScene("res://scenes/ui/hover_tip_set.tscn")
+                .GetScene(HoverTipSetScenePath)
                 .Instantiate<NHoverTipSet>();
             tipSet.Name = EventBadgeNodeName;
             tipSet.MouseFilter = Control.MouseFilterEnum.Ignore;
@@ -121,7 +126,7 @@ namespace STS2RitsuLib.Content.Patches
             Control hotZone,
             ContentSourceHoverTipFactory.ContentSourceInfo source)
         {
-            if (!GodotObject.IsInstanceValid(tipSet) || !GodotObject.IsInstanceValid(hotZone))
+            if (!IsEventSourceBadgeUsable(layout, tipSet, hotZone))
                 return;
 
             if (tipSet._textHoverTipContainer == null)
@@ -130,6 +135,9 @@ namespace STS2RitsuLib.Content.Patches
                     .CallDeferred();
                 return;
             }
+
+            if (!IsNodeUsable(tipSet._textHoverTipContainer))
+                return;
 
             AddHoverTipControl(tipSet, new(ContentSourceHoverTipFactory.GetTitle(), source.Format())
             {
@@ -142,8 +150,11 @@ namespace STS2RitsuLib.Content.Patches
 
         private static void AddHoverTipControl(NHoverTipSet tipSet, HoverTip hoverTip)
         {
+            if (!IsNodeUsable(tipSet) || !IsNodeUsable(tipSet._textHoverTipContainer))
+                return;
+
             var tipControl = PreloadManager.Cache
-                .GetScene("res://scenes/ui/hover_tip.tscn")
+                .GetScene(HoverTipScenePath)
                 .Instantiate<Control>();
             tipSet._textHoverTipContainer.AddChildSafely(tipControl);
 
@@ -172,6 +183,10 @@ namespace STS2RitsuLib.Content.Patches
 
         private static void ConfigureEventSourceTipDrawer(Control layout, NHoverTipSet tipSet, Control hotZone)
         {
+            if (!IsEventSourceBadgeUsable(layout, tipSet, hotZone) ||
+                !IsNodeUsable(tipSet._textHoverTipContainer))
+                return;
+
             var textContainer = tipSet._textHoverTipContainer;
             textContainer.MouseFilter = Control.MouseFilterEnum.Ignore;
             var isExpanded = false;
@@ -179,6 +194,9 @@ namespace STS2RitsuLib.Content.Patches
                 Control.SignalName.MouseEntered,
                 Callable.From(() =>
                 {
+                    if (!IsEventSourceBadgeUsable(layout, tipSet, hotZone))
+                        return;
+
                     isExpanded = true;
                     PositionEventSourceTipSet(layout, tipSet, true, true);
                 }));
@@ -186,6 +204,9 @@ namespace STS2RitsuLib.Content.Patches
                 Control.SignalName.MouseExited,
                 Callable.From(() =>
                 {
+                    if (!IsEventSourceBadgeUsable(layout, tipSet, hotZone))
+                        return;
+
                     if (isExpanded)
                         PositionEventSourceTipSet(layout, tipSet, false, true);
                     isExpanded = false;
@@ -195,6 +216,9 @@ namespace STS2RitsuLib.Content.Patches
                 if (inputEvent is not InputEventMouseButton { Pressed: true, ButtonIndex: MouseButton.Left })
                     return;
 
+                if (!IsEventSourceBadgeUsable(layout, tipSet, hotZone))
+                    return;
+
                 isExpanded = !isExpanded;
                 PositionEventSourceTipSet(layout, tipSet, isExpanded, true);
             };
@@ -202,6 +226,10 @@ namespace STS2RitsuLib.Content.Patches
 
         private static void PositionEventSourceHotZone(Control layout, NHoverTipSet tipSet, Control hotZone)
         {
+            if (!IsEventSourceBadgeUsable(layout, tipSet, hotZone) ||
+                !IsNodeUsable(tipSet._textHoverTipContainer))
+                return;
+
             var viewportSize = NGame.Instance?.GetViewportRect().Size ?? layout.GetViewportRect().Size;
             var textContainer = tipSet._textHoverTipContainer;
             var height = Math.Max(EventTipHotZoneMinHeight,
@@ -213,7 +241,7 @@ namespace STS2RitsuLib.Content.Patches
 
         private static void PositionEventSourceTipSet(Control layout, NHoverTipSet tipSet, bool expanded, bool animate)
         {
-            if (!GodotObject.IsInstanceValid(tipSet))
+            if (!IsNodeUsable(layout) || !IsNodeUsable(tipSet) || !IsNodeUsable(tipSet._textHoverTipContainer))
                 return;
 
             var viewportSize = NGame.Instance?.GetViewportRect().Size ?? layout.GetViewportRect().Size;
@@ -237,11 +265,28 @@ namespace STS2RitsuLib.Content.Patches
 
         private static void RemoveBadge(Node owner, Node? badge)
         {
-            if (badge == null)
+            if (!IsNodeUsable(owner) || badge == null || !IsNodeUsable(badge))
                 return;
 
-            owner.RemoveChild(badge);
-            badge.QueueFree();
+            if (badge.GetParent() == owner)
+                owner.RemoveChildSafely(badge);
+            badge.QueueFreeSafely();
+        }
+
+        private static bool IsEventSourceBadgeUsable(Control layout, NHoverTipSet tipSet, Control hotZone)
+        {
+            return IsNodeUsable(layout) &&
+                   IsNodeUsable(tipSet) &&
+                   IsNodeUsable(hotZone) &&
+                   tipSet.GetParent() == layout &&
+                   hotZone.GetParent() == layout;
+        }
+
+        private static bool IsNodeUsable(Node? node)
+        {
+            return node != null &&
+                   GodotObject.IsInstanceValid(node) &&
+                   !node.IsQueuedForDeletion();
         }
     }
 
