@@ -107,6 +107,27 @@ namespace STS2RitsuLib.Scaffolding.Visuals.StateMachine
         }
 
         /// <summary>
+        ///     Returns the total duration of the current state's animation when the backend can report it.
+        /// </summary>
+        public bool TryGetCurrentAnimationDuration(out float seconds)
+        {
+            seconds = 0f;
+            return Current is { } state &&
+                   Backend is IAnimationTimingProvider timing &&
+                   timing.TryGetAnimationDuration(state.Id, out seconds);
+        }
+
+        /// <summary>
+        ///     Returns the remaining duration of the current state's animation when the backend can report it.
+        /// </summary>
+        public bool TryGetCurrentAnimationRemaining(out float seconds)
+        {
+            seconds = 0f;
+            return Backend is IAnimationTimingProvider timing &&
+                   timing.TryGetCurrentAnimationRemaining(out seconds);
+        }
+
+        /// <summary>
         ///     Resolves <paramref name="trigger" /> against any-state first, then the current state; when matched,
         ///     transitions to the resolved target.
         ///     先用 <paramref name="trigger" /> 匹配任意状态，再匹配当前状态；匹配成功时，

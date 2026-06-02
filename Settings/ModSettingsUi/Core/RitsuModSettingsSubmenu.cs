@@ -299,6 +299,7 @@ namespace STS2RitsuLib.Settings
         {
             ModSettingsBindingWriteEvents.ValueWritten -= _bindingWriteListener;
             PopPaneHotkeys();
+            ModSettingsFocusChrome.HideControllerSelectionReticle();
             FlushDirtyBindings();
             ProcessMode = ProcessModeEnum.Disabled;
             _lastVisibleMirrorRefreshPageKey = null;
@@ -323,6 +324,7 @@ namespace STS2RitsuLib.Settings
         {
             ModSettingsBindingWriteEvents.ValueWritten -= _bindingWriteListener;
             PopPaneHotkeys();
+            ModSettingsFocusChrome.HideControllerSelectionReticle();
             FlushPendingRefreshActionsImmediate();
             FlushDirtyBindings();
             ProcessMode = ProcessModeEnum.Disabled;
@@ -646,8 +648,14 @@ namespace STS2RitsuLib.Settings
             if (!ActiveScreenContext.Instance.IsCurrent(this))
                 return;
 
-            if (NControllerManager.Instance?.IsUsingController != true)
+            if ((!ReferenceEquals(node, this) && !IsAncestorOf(node)) ||
+                NControllerManager.Instance?.IsUsingController != true)
+            {
+                ModSettingsFocusChrome.HideControllerSelectionReticle();
                 return;
+            }
+
+            ModSettingsFocusChrome.ShowControllerSelectionReticle(node);
 
             if (_suppressScrollSync)
                 return;
@@ -685,6 +693,7 @@ namespace STS2RitsuLib.Settings
             _selectedPageId = pageId;
             _selectedSectionId = null;
             _selectionDirty = true;
+            _contentOnlyRebuildNeedsContentFocus = true;
             EnsureUiUpToDate();
         }
 
@@ -718,18 +727,13 @@ namespace STS2RitsuLib.Settings
                 RefreshSelectionState();
                 Callable.From(ScrollToSelectedAnchor).CallDeferred();
                 RefreshFocusNavigation();
-                Callable.From(() =>
-                {
-                    var sectionKey = CreateSectionCacheKey(_selectedModId!, _selectedPageId!, _selectedSectionId!);
-                    if (_sectionButtons.TryGetValue(sectionKey, out var btn) && btn.IsVisibleInTree())
-                        btn.GrabFocus();
-                }).CallDeferred();
                 return;
             }
 
             _selectedPageId = pageId;
             _selectedSectionId = sectionId;
             _selectionDirty = true;
+            _contentOnlyRebuildNeedsContentFocus = true;
             EnsureUiUpToDate(false, pageChanged);
         }
 
@@ -900,7 +904,14 @@ namespace STS2RitsuLib.Settings
             var usingController = NControllerManager.Instance?.IsUsingController ?? false;
             _paneHotkeyHintRow.Visible = usingController && Visible;
             if (!usingController)
+            {
+                ModSettingsFocusChrome.HideControllerSelectionReticle();
                 return;
+            }
+
+            var focusOwner = GetViewport()?.GuiGetFocusOwner();
+            if (focusOwner != null && IsInstanceValid(focusOwner) && IsAncestorOf(focusOwner))
+                ModSettingsFocusChrome.ShowControllerSelectionReticle(focusOwner);
 
             if (NInputManager.Instance == null)
                 return;
@@ -942,6 +953,8 @@ namespace STS2RitsuLib.Settings
         {
             if (!Visible || !IsInstanceValid(this) || !ActiveScreenContext.Instance.IsCurrent(this))
                 return;
+            if (IsFocusNavigationBlocked())
+                return;
 
             FocusSidebarPaneFromInput();
         }
@@ -949,6 +962,8 @@ namespace STS2RitsuLib.Settings
         private void OnHotkeyPressedFocusContent()
         {
             if (!Visible || !IsInstanceValid(this) || !ActiveScreenContext.Instance.IsCurrent(this))
+                return;
+            if (IsFocusNavigationBlocked())
                 return;
 
             FocusContentPaneFromInput();
@@ -980,12 +995,7 @@ namespace STS2RitsuLib.Settings
                 return;
 
             RebuildFocusChainsOnly();
-            GrabControlDeferred(ResolveContentFocusFirstInContentPanel());
-        }
-
-        private Control? ResolveContentFocusFirstInContentPanel()
-        {
-            return _contentFocusChain.FirstOrDefault();
+            GrabControlDeferred(ResolveContentFocusTargetForSection());
         }
 
         private Control? ResolveContentFocusTargetForSection()
@@ -1725,7 +1735,6 @@ namespace STS2RitsuLib.Settings
                     break;
             }
 
-            _contentOnlyRebuildNeedsContentFocus = false;
             RefreshFocusNavigation();
             Callable.From(ScrollToSelectedAnchor).CallDeferred();
             SweepPageContentCachePool(pageKey);
@@ -2027,8 +2036,7 @@ namespace STS2RitsuLib.Settings
             IReadOnlyList<ModSettingsPage> pages)
         {
             if (page.VisibleWhen == null &&
-                page.VisibleOnHostSurfaces == ModSettingsHostSurface.All &&
-                !page.SidebarVisibleOnlyWhenActive)
+                page is { VisibleOnHostSurfaces: ModSettingsHostSurface.All, SidebarVisibleOnlyWhenActive: false })
                 return null;
 
             return () => (page.VisibleWhen?.Invoke() ?? true) &&
@@ -2682,7 +2690,7 @@ namespace STS2RitsuLib.Settings
 
         private static Control? FindFirstFocusable(Control root)
         {
-            if (root.IsVisibleInTree() && root.FocusMode == FocusModeEnum.All)
+            if (root.IsVisibleInTree() && root.FocusMode == FocusModeEnum.All && IsSettingsFocusTerminal(root))
                 return root;
 
             foreach (var child in root.GetChildren())
@@ -2811,6 +2819,13 @@ namespace STS2RitsuLib.Settings
         /// <inheritdoc />
         public override void _Input(InputEvent @event)
         {
+            var focusOwner = GetViewport()?.GuiGetFocusOwner();
+            if (IsFocusNavigationBlocked() && !IsFocusUnderBlockingOverlay(focusOwner) && IsBlockedFocusInput(@event))
+            {
+                GetViewport()?.SetInputAsHandled();
+                return;
+            }
+
             if (TryHandleDirectionalFocusInput(@event))
                 return;
             base._Input(@event);
@@ -2821,6 +2836,8 @@ namespace STS2RitsuLib.Settings
             if (!Visible || !IsInstanceValid(this))
                 return false;
             if (!ActiveScreenContext.Instance.IsCurrent(this))
+                return false;
+            if (IsFocusNavigationBlocked())
                 return false;
 
             int delta;
@@ -2835,7 +2852,7 @@ namespace STS2RitsuLib.Settings
             if (owner == null || !IsInstanceValid(owner))
                 return false;
 
-            if (owner is TextEdit || IsFocusUnderPopupOrTransientWindow(owner))
+            if (IsFocusUnderPopupOrTransientWindow(owner))
                 return false;
 
             for (Node? n = owner; n != null && !ReferenceEquals(n, this); n = n.GetParent())
@@ -2866,7 +2883,7 @@ namespace STS2RitsuLib.Settings
 
             var currentIndex = focusables.IndexOf(owner);
             if (currentIndex < 0)
-                currentIndex = ResolveNearestFocusIndex(focusables, owner);
+                currentIndex = ResolveNearestFocusIndex(focusables, owner, delta);
             if (currentIndex < 0)
                 return false;
 
@@ -2891,7 +2908,7 @@ namespace STS2RitsuLib.Settings
             return true;
         }
 
-        private static int ResolveNearestFocusIndex(IReadOnlyList<Control> focusables, Control owner)
+        private static int ResolveNearestFocusIndex(IReadOnlyList<Control> focusables, Control owner, int delta)
         {
             for (var i = 0; i < focusables.Count; i++)
             {
@@ -2899,6 +2916,19 @@ namespace STS2RitsuLib.Settings
                 if (candidate == owner || candidate.IsAncestorOf(owner) || owner.IsAncestorOf(candidate))
                     return i;
             }
+
+            var ownerCenterY = owner.GetGlobalRect().GetCenter().Y;
+            if (delta > 0)
+            {
+                for (var i = focusables.Count - 1; i >= 0; i--)
+                    if (focusables[i].GetGlobalRect().GetCenter().Y <= ownerCenterY)
+                        return i;
+                return -1;
+            }
+
+            for (var i = 0; i < focusables.Count; i++)
+                if (focusables[i].GetGlobalRect().GetCenter().Y >= ownerCenterY)
+                    return i;
 
             return -1;
         }
@@ -2929,9 +2959,76 @@ namespace STS2RitsuLib.Settings
                     or ModSettingsToggleControl or ModSettingsMiniButton or ModSettingsDragHandle
                     or ModSettingsActionsButton or NButton
                     or HSlider or OptionButton or ColorPickerButton or MenuButton => true,
-                LineEdit or TextEdit => c.FocusMode == FocusModeEnum.All,
+                LineEdit or TextEdit => false,
                 _ => c is Button,
             };
+        }
+
+        private bool IsFocusNavigationBlocked()
+        {
+            if (_contentBuildOverlay is { Visible: true })
+                return true;
+
+            if (IsBlockingOverlayVisible(GetTree()?.Root))
+                return true;
+
+            var focusOwner = GetViewport()?.GuiGetFocusOwner();
+            return IsFocusUnderPopupOrTransientWindow(focusOwner);
+        }
+
+        private static bool IsFocusUnderBlockingOverlay(Control? c)
+        {
+            for (Node? n = c; n != null; n = n.GetParent())
+                if (n is CanvasLayer layer && IsBlockingOverlayLayer(layer))
+                    return true;
+
+            return false;
+        }
+
+        private static bool IsBlockingOverlayVisible(Node? root)
+        {
+            if (root == null)
+                return false;
+
+            foreach (var child in root.GetChildren())
+            {
+                if (child is CanvasLayer layer && IsBlockingOverlayLayer(layer) && layer.Visible)
+                    return true;
+                if (IsBlockingOverlayVisible(child))
+                    return true;
+            }
+
+            return false;
+        }
+
+        private static bool IsBlockingOverlayLayer(CanvasLayer layer)
+        {
+            var name = layer.Name.ToString();
+            return name.StartsWith("RitsuModSettings", StringComparison.Ordinal) ||
+                   (name.StartsWith("Ritsu", StringComparison.Ordinal) &&
+                    (name.Contains("Progress", StringComparison.Ordinal) ||
+                     name.Contains("Modal", StringComparison.Ordinal)));
+        }
+
+        private static bool IsBlockedFocusInput(InputEvent @event)
+        {
+            if (@event.IsEcho())
+                return false;
+
+            return @event.IsActionPressed("ui_up") ||
+                   @event.IsActionPressed("ui_down") ||
+                   @event.IsActionPressed("ui_left") ||
+                   @event.IsActionPressed("ui_right") ||
+                   @event.IsActionPressed("ui_accept") ||
+                   @event.IsActionPressed("ui_cancel") ||
+                   @event.IsActionPressed(MegaInput.left) ||
+                   @event.IsActionPressed(MegaInput.right) ||
+                   @event.IsActionPressed(MegaInput.select) ||
+                   @event.IsActionPressed(MegaInput.accept) ||
+                   @event.IsActionPressed(MegaInput.cancel) ||
+                   @event.IsActionPressed(MegaInput.pauseAndBack) ||
+                   @event.IsActionPressed(PaneSidebarHotkey) ||
+                   @event.IsActionPressed(PaneContentHotkey);
         }
 
         private void ApplyStaticTexts()

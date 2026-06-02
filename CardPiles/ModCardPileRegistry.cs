@@ -54,8 +54,6 @@ namespace STS2RitsuLib.CardPiles
 
         private static readonly Dictionary<PileType, ModCardPileDefinition> DefinitionsByPileType = [];
 
-        private static readonly DynamicEnumValueMinter<PileType> PileTypeMinter = new();
-
         private readonly Logger _logger;
         private readonly string _modId;
         private string? _freezeReason;
@@ -256,7 +254,7 @@ namespace STS2RitsuLib.CardPiles
         public static PileType GetPileType(string id)
         {
             ArgumentException.ThrowIfNullOrWhiteSpace(id);
-            return PileTypeMinter.Mint(id);
+            return DynamicEnumValueRegistry<PileType>.GetValue(id);
         }
 
         /// <summary>
@@ -270,7 +268,7 @@ namespace STS2RitsuLib.CardPiles
             ArgumentException.ThrowIfNullOrWhiteSpace(id);
             try
             {
-                value = PileTypeMinter.Mint(id);
+                value = DynamicEnumValueRegistry<PileType>.GetValue(id);
                 return true;
             }
             catch (InvalidOperationException)
@@ -368,7 +366,7 @@ namespace STS2RitsuLib.CardPiles
             EnsureMutable("register card piles");
 
             var normalizedId = NormalizeId(id);
-            var pileType = PileTypeMinter.Mint(normalizedId);
+            var pileType = DynamicEnumValueRegistry<PileType>.Register(_modId, normalizedId).Value;
 
             var definition = new ModCardPileDefinition(
                 _modId,

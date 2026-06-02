@@ -34,7 +34,7 @@ namespace STS2RitsuLib.Scaffolding.Cards.HandOutline
         /// </summary>
         public static void Register<TCard>(ModCardHandOutlineRules<TCard> rules) where TCard : CardModel
         {
-            Register(typeof(TCard), rules.ToUntyped());
+            Register<TCard>(rules.ToUntyped());
         }
 
         /// <summary>
@@ -43,7 +43,9 @@ namespace STS2RitsuLib.Scaffolding.Cards.HandOutline
         /// </summary>
         public static void Register<TCard>(ModCardHandOutlineSwitchRule<TCard> rule) where TCard : CardModel
         {
-            Register(typeof(TCard), rule.ToUntyped());
+#pragma warning disable CS0618 // 类型或成员已过时
+            Register<TCard>(rule.ToUntyped());
+#pragma warning restore CS0618 // 类型或成员已过时
         }
 
         /// <summary>

@@ -380,7 +380,7 @@ namespace STS2RitsuLib.Networking.ManagedActions
         public override GameActionType ActionType { get; } = actionType;
 
         /// <inheritdoc />
-        public override bool RecordableToReplay => false;
+        public override bool RecordableToReplay => true;
 
         /// <inheritdoc />
         protected override async Task ExecuteAction()

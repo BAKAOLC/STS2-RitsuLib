@@ -1375,7 +1375,7 @@ namespace STS2RitsuLib.Settings
                 SizeFlagsHorizontal = SizeFlags.ShrinkBegin,
                 SizeFlagsVertical = SizeFlags.ExpandFill,
                 MouseFilter = MouseFilterEnum.Stop,
-                ClipContents = true,
+                ClipContents = false,
             };
             _dropPanel.AddChild(_dropScroll);
 
@@ -1384,6 +1384,7 @@ namespace STS2RitsuLib.Settings
                 Name = "ChoiceDropdownVirtualContent",
                 MouseFilter = MouseFilterEnum.Ignore,
                 SizeFlagsHorizontal = SizeFlags.ShrinkBegin,
+                ClipContents = false,
             };
             _dropScroll.AddChild(_virtualContent);
             ModSettingsUiControlTheming.ApplySettingsScrollContainerThemeForDropdownList(_dropScroll);
@@ -2451,7 +2452,8 @@ namespace STS2RitsuLib.Settings
         private void OnPickerPopupClosed()
         {
             _pickerChangedWhileOpen = false;
-            _pickerButton.ReleaseFocusIfInsideTree();
+            if (_pickerButton != null && IsInstanceValid(_pickerButton) && _pickerButton.IsVisibleInTree())
+                _pickerButton.GrabFocus();
         }
 
         private static bool TryParseHexColorString(string text, out Color color)
@@ -2882,11 +2884,6 @@ namespace STS2RitsuLib.Settings
         void IModSettingsTransientPopupOwner.ForceCloseTransientUi()
         {
             CloseDropdown();
-        }
-
-        public override void _Ready()
-        {
-            base._Ready();
         }
 
         public override void _ExitTree()

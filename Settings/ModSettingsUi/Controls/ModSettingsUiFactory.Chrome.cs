@@ -262,14 +262,15 @@ namespace STS2RitsuLib.Settings
                                     if (!ReferenceEquals(activeLongPressToken, token))
                                         return;
                                     activeLongPressToken = null;
-                                    var currentButton = ResolveContextMenuButton(target);
-                                    if (currentButton == null || !CanOpenContextMenu(target, currentButton))
+                                    var resolveContextMenuButton = ResolveContextMenuButton(target);
+                                    if (resolveContextMenuButton == null ||
+                                        !CanOpenContextMenu(target, resolveContextMenuButton))
                                     {
-                                        currentButton?.ForceCloseDropdown();
+                                        resolveContextMenuButton?.ForceCloseDropdown();
                                         return;
                                     }
 
-                                    currentButton.OpenAt(pendingTouchPosition);
+                                    resolveContextMenuButton.OpenAt(pendingTouchPosition);
                                 };
                         }
                         else

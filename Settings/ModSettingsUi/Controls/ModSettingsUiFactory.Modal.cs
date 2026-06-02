@@ -38,6 +38,7 @@ namespace STS2RitsuLib.Settings
             if (viewport == null)
                 return;
 
+            var previousFocus = viewport.GuiGetFocusOwner();
             var canvasLayer = new CanvasLayer
             {
                 Layer = ModalCanvasLayer,
@@ -219,6 +220,20 @@ namespace STS2RitsuLib.Settings
                     onCancel?.Invoke();
                 else if (dismissed)
                     onDismiss?.Invoke();
+                RestorePreviousFocus();
+            }
+
+            void RestorePreviousFocus()
+            {
+                var target = previousFocus;
+                if (target == null || !GodotObject.IsInstanceValid(target) || !target.IsVisibleInTree())
+                    return;
+
+                Callable.From(() =>
+                {
+                    if (GodotObject.IsInstanceValid(target) && target.IsVisibleInTree())
+                        target.GrabFocus();
+                }).CallDeferred();
             }
 
             void OnViewportSized()
@@ -317,7 +332,32 @@ namespace STS2RitsuLib.Settings
                     return;
                 }
 
+                if (ShouldConsumeModalInput(@event))
+                {
+                    GetViewport()?.SetInputAsHandled();
+                    return;
+                }
+
                 base._UnhandledInput(@event);
+            }
+
+            private static bool ShouldConsumeModalInput(InputEvent @event)
+            {
+                if (@event.IsEcho())
+                    return false;
+
+                return @event.IsActionPressed("ui_up") ||
+                       @event.IsActionPressed("ui_down") ||
+                       @event.IsActionPressed("ui_left") ||
+                       @event.IsActionPressed("ui_right") ||
+                       @event.IsActionPressed("ui_accept") ||
+                       @event.IsActionPressed("ui_cancel") ||
+                       @event.IsActionPressed(MegaInput.left) ||
+                       @event.IsActionPressed(MegaInput.right) ||
+                       @event.IsActionPressed(MegaInput.select) ||
+                       @event.IsActionPressed(MegaInput.accept) ||
+                       @event.IsActionPressed(MegaInput.cancel) ||
+                       @event.IsActionPressed(MegaInput.pauseAndBack);
             }
         }
     }

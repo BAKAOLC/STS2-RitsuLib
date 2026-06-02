@@ -31,7 +31,7 @@ namespace STS2RitsuLib.Scaffolding.Visuals.StateMachine.Backends
     ///         可以继续推进，而不会同步重入调用方。
     ///     </para>
     /// </remarks>
-    public sealed class CueAnimationBackend : IAnimationBackend
+    public sealed class CueAnimationBackend : IAnimationBackend, IAnimationTimingProvider
     {
         private readonly VisualCueSet _cues;
         private readonly Callable _finishedCallable;
@@ -156,6 +156,29 @@ namespace STS2RitsuLib.Scaffolding.Visuals.StateMachine.Backends
             CueFrameSequencePlayer.StopUnder(_root);
         }
 
+        /// <inheritdoc />
+        public bool TryGetAnimationDuration(string id, out float seconds)
+        {
+            seconds = 0f;
+            if (string.IsNullOrWhiteSpace(id))
+                return false;
+
+            if (_cues.FrameSequenceByCue is not { Count: > 0 } sequences ||
+                !TryGetOrdinalIgnoreCase(sequences, id, out var sequence) ||
+                sequence is not { Frames.Count: > 0 })
+                return false;
+
+            seconds = GetSequenceDuration(sequence);
+            return seconds > 0f;
+        }
+
+        /// <inheritdoc />
+        public bool TryGetCurrentAnimationRemaining(out float seconds)
+        {
+            seconds = 0f;
+            return _currentId != null && TryGetAnimationDuration(_currentId, out seconds);
+        }
+
         /// <summary>
         ///     Stops active playback and detaches the frame-sequence signal, if any.
         ///     停止当前播放，并在存在时断开帧序列信号。
@@ -249,6 +272,12 @@ namespace STS2RitsuLib.Scaffolding.Visuals.StateMachine.Backends
 
             value = default;
             return false;
+        }
+
+        private static float GetSequenceDuration(VisualFrameSequence sequence)
+        {
+            return sequence.Frames.Select(frame => frame.DurationSeconds)
+                .Select(seconds => !float.IsFinite(seconds) || seconds <= 0f ? 1f / 60f : seconds).Sum();
         }
     }
 }

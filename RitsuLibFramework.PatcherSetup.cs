@@ -175,6 +175,8 @@ namespace STS2RitsuLib
             patcher.RegisterPatch<RitsuLibManagedNetActionMessagePatches.RequestDeserialize>();
             patcher.RegisterPatch<RitsuLibManagedNetActionMessagePatches.AnnouncementSerialize>();
             patcher.RegisterPatch<RitsuLibManagedNetActionMessagePatches.AnnouncementDeserialize>();
+            patcher.RegisterPatch<RitsuLibManagedNetActionMessagePatches.ReplayEventSerialize>();
+            patcher.RegisterPatch<RitsuLibManagedNetActionMessagePatches.ReplayEventDeserialize>();
             patcher.RegisterPatch<ModModelIdentityRunStateCreatePatch>();
             patcher.RegisterPatch<ModModelIdentityPlayerRunStatePatch>();
             patcher.RegisterPatch<ModModelIdentityRunStateAddCardPatch>();
@@ -494,6 +496,7 @@ namespace STS2RitsuLib
             patcher.RegisterPatch<ModCreatureCombatAnimationPlaybackPatch>();
             patcher.RegisterPatch<NCreatureCombatAnimationInitialBootstrapPatch>();
             patcher.RegisterPatch<NCreatureNonSpineDeathAnimationTriggerPatch>();
+            patcher.RegisterPatch<NCombatUiNonSpineDeathAnimationRewardDelayPatch>();
             patcher.RegisterPatch<NCreatureNonSpineReviveAnimationTriggerPatch>();
             patcher.RegisterPatch<ModMerchantCharacterVisualPlaybackPatch>();
             patcher.RegisterPatch<NMerchantRoomProceduralCharacterInstantiationPatch>();

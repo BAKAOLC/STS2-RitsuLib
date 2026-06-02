@@ -25,8 +25,6 @@ namespace STS2RitsuLib.CardTags
 
         private static readonly Dictionary<CardTag, ModCardTagDefinition> DefinitionsByCardTag = [];
 
-        private static readonly DynamicEnumValueMinter<CardTag> CardTagMinter = new();
-
         private readonly Logger _logger;
         private readonly string _modId;
         private string? _freezeReason;
@@ -185,7 +183,7 @@ namespace STS2RitsuLib.CardTags
             ArgumentException.ThrowIfNullOrWhiteSpace(id);
             try
             {
-                value = CardTagMinter.Mint(id);
+                value = DynamicEnumValueRegistry<CardTag>.GetValue(id);
                 return true;
             }
             catch (InvalidOperationException)
@@ -220,7 +218,7 @@ namespace STS2RitsuLib.CardTags
         public static CardTag GetCardTag(string id)
         {
             ArgumentException.ThrowIfNullOrWhiteSpace(id);
-            return CardTagMinter.Mint(id);
+            return DynamicEnumValueRegistry<CardTag>.GetValue(id);
         }
 
         /// <summary>
@@ -261,7 +259,7 @@ namespace STS2RitsuLib.CardTags
             EnsureMutable("register card tags");
 
             var normalizedId = NormalizeId(id);
-            var cardTagValue = CardTagMinter.Mint(normalizedId);
+            var cardTagValue = DynamicEnumValueRegistry<CardTag>.Register(_modId, normalizedId).Value;
             var definition = new ModCardTagDefinition(_modId, normalizedId, cardTagValue);
 
             lock (SyncRoot)

@@ -29,6 +29,7 @@ namespace STS2RitsuLib.Settings
             if (viewport == null)
                 return;
 
+            var previousFocus = viewport.GuiGetFocusOwner();
             var chosen = false;
             Action? viewportSizedHandler = null;
 
@@ -170,6 +171,7 @@ namespace STS2RitsuLib.Settings
                     viewport.SizeChanged -= viewportSizedHandler;
                 if (GodotObject.IsInstanceValid(canvasLayer))
                     canvasLayer.QueueFree();
+                RestorePreviousFocus();
             }
 
             void Finish(ModCloudSyncScope? scope)
@@ -179,6 +181,19 @@ namespace STS2RitsuLib.Settings
                 chosen = true;
                 onChosen(scope);
                 CloseDialog();
+            }
+
+            void RestorePreviousFocus()
+            {
+                var target = previousFocus;
+                if (target == null || !GodotObject.IsInstanceValid(target) || !target.IsVisibleInTree())
+                    return;
+
+                Callable.From(() =>
+                {
+                    if (GodotObject.IsInstanceValid(target) && target.IsVisibleInTree())
+                        target.GrabFocus();
+                }).CallDeferred();
             }
 
             void FitModalShieldToViewport()

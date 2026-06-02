@@ -59,11 +59,11 @@ namespace STS2RitsuLib.Combat.CardTargeting
                     return [card.Owner.Creature];
                 default:
                 {
-                    if (CustomTargetTypeRegistry.IsCustomSingleTargetType(card.TargetType))
+                    if (CustomTargetTypeResolver.IsCustomSingleTargetType(card.TargetType))
                     {
                         if (selectedTarget == null)
                             return [];
-                        return CustomTargetTypeRegistry.TryIsAllowedSingleTarget(
+                        return CustomTargetTypeResolver.TryIsAllowedSingleTarget(
                                    card.TargetType,
                                    selectedTarget,
                                    out var allowed) &&
@@ -72,12 +72,12 @@ namespace STS2RitsuLib.Combat.CardTargeting
                             : [];
                     }
 
-                    if (!CustomTargetTypeRegistry.IsCustomMultiTargetType(card.TargetType))
+                    if (!CustomTargetTypeResolver.IsCustomMultiTargetType(card.TargetType))
                         return [];
 
                     return state?.Creatures
                                .Where(c =>
-                                   CustomTargetTypeRegistry.TryShouldIncludeMultiTarget(card.TargetType, c,
+                                   CustomTargetTypeResolver.TryShouldIncludeMultiTarget(card.TargetType, c,
                                        out var include) && include)
                                .ToList() ??
                            [];

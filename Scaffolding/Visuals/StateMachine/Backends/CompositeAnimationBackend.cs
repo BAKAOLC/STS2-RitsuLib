@@ -38,7 +38,7 @@ namespace STS2RitsuLib.Scaffolding.Visuals.StateMachine.Backends
     ///         <c>(backend, id, loop)</c> 三元组。
     ///     </para>
     /// </remarks>
-    public sealed class CompositeAnimationBackend : IAnimationBackend
+    public sealed class CompositeAnimationBackend : IAnimationBackend, IAnimationTimingProvider
     {
         private readonly IReadOnlyList<IAnimationBackend> _backends;
         private IAnimationBackend? _active;
@@ -140,6 +140,22 @@ namespace STS2RitsuLib.Scaffolding.Visuals.StateMachine.Backends
             _active = null;
             _currentId = null;
             previous?.Stop();
+        }
+
+        /// <inheritdoc />
+        public bool TryGetAnimationDuration(string id, out float seconds)
+        {
+            seconds = 0f;
+            return Resolve(id) is IAnimationTimingProvider timing &&
+                   timing.TryGetAnimationDuration(id, out seconds);
+        }
+
+        /// <inheritdoc />
+        public bool TryGetCurrentAnimationRemaining(out float seconds)
+        {
+            seconds = 0f;
+            return _active is IAnimationTimingProvider timing &&
+                   timing.TryGetCurrentAnimationRemaining(out seconds);
         }
 
         private IAnimationBackend? Resolve(string id)

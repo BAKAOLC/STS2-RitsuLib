@@ -1,4 +1,5 @@
 using MegaCrit.Sts2.Core.Models;
+using STS2RitsuLib.Diagnostics;
 using STS2RitsuLib.Patching.Models;
 
 namespace STS2RitsuLib.Combat.CardTargeting.Patches
@@ -31,6 +32,8 @@ namespace STS2RitsuLib.Combat.CardTargeting.Patches
         public static void Postfix()
         {
             CustomTargetTypeRegistry.RegisterBuiltIns();
+            RitsuLibStartupAudit.Measure("modelDb.validateBaseLibDynamicEnums",
+                RegistrationConflictDetector.ValidateAndLogBaseLibDynamicEnumValueCollisions);
         }
     }
 }

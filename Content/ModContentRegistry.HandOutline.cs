@@ -59,7 +59,7 @@ namespace STS2RitsuLib.Content
         public void RegisterCardHandOutline<TCard>(ModCardHandOutlineSwitchRule rule) where TCard : CardModel
         {
             EnsureMutable("register card hand outline rule");
-            ModCardHandOutlineRegistry.Register(typeof(TCard), rule);
+            ModCardHandOutlineRegistry.Register<TCard>(rule);
         }
 
         /// <summary>
@@ -70,7 +70,7 @@ namespace STS2RitsuLib.Content
         public void RegisterCardHandOutline<TCard>(params ModCardHandOutlineSwitchRule[] rules) where TCard : CardModel
         {
             EnsureMutable("register card hand outline rules");
-            ModCardHandOutlineRegistry.Register(typeof(TCard), ModCardHandOutlineRules.Of(rules));
+            ModCardHandOutlineRegistry.Register<TCard>(ModCardHandOutlineRules.Of(rules));
         }
 
         /// <summary>
@@ -100,7 +100,7 @@ namespace STS2RitsuLib.Content
         public void RegisterCardHandOutline<TCard>(ModCardHandOutlineRule rule) where TCard : CardModel
         {
             EnsureMutable("register card hand outline rule");
-            ModCardHandOutlineRegistry.Register(typeof(TCard), rule.ToSwitchRule());
+            ModCardHandOutlineRegistry.Register<TCard>(rule.ToSwitchRule());
         }
 
         /// <summary>
@@ -115,8 +115,7 @@ namespace STS2RitsuLib.Content
         {
             ArgumentNullException.ThrowIfNull(rules);
             EnsureMutable("register card hand outline rules");
-            ModCardHandOutlineRegistry.Register(
-                typeof(TCard),
+            ModCardHandOutlineRegistry.Register<TCard>(
                 ModCardHandOutlineRules.Of(rules.Select(static rule => rule.ToSwitchRule()).ToArray()));
         }
     }

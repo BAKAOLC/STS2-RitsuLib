@@ -284,12 +284,8 @@ namespace STS2RitsuLib.Patching.Core
                     continue;
 
                 var importance = modPatchInfo.IsCritical ? "Critical" : "Optional";
-                if (modPatchInfo.IsCritical)
-                    logger.ErrorNoTrace(
-                        $"{_logPrefix}[Late][{importance}] {modPatchInfo.Id} failed: {result.ErrorMessage}");
-                else
-                    logger.ErrorNoTrace(
-                        $"{_logPrefix}[Late][{importance}] {modPatchInfo.Id} failed: {result.ErrorMessage}");
+                logger.ErrorNoTrace(
+                    $"{_logPrefix}[Late][{importance}] {modPatchInfo.Id} failed: {result.ErrorMessage}");
             }
         }
 

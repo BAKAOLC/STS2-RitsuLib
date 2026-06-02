@@ -105,6 +105,7 @@ namespace STS2RitsuLib.Models.Capabilities.Patches
                 ];
             }
 
+            // ReSharper disable once InconsistentNaming
             public static bool Prefix(
                 HookPlayerChoiceContext __instance,
                 AbstractModel source,
