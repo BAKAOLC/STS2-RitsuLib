@@ -2886,11 +2886,6 @@ namespace STS2RitsuLib.Settings
             CloseDropdown();
         }
 
-        public override void _Ready()
-        {
-            base._Ready();
-        }
-
         public override void _ExitTree()
         {
             if (_dropOpen)

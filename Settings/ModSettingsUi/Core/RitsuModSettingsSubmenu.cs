@@ -648,13 +648,8 @@ namespace STS2RitsuLib.Settings
             if (!ActiveScreenContext.Instance.IsCurrent(this))
                 return;
 
-            if (!ReferenceEquals(node, this) && !IsAncestorOf(node))
-            {
-                ModSettingsFocusChrome.HideControllerSelectionReticle();
-                return;
-            }
-
-            if (NControllerManager.Instance?.IsUsingController != true)
+            if ((!ReferenceEquals(node, this) && !IsAncestorOf(node)) ||
+                NControllerManager.Instance?.IsUsingController != true)
             {
                 ModSettingsFocusChrome.HideControllerSelectionReticle();
                 return;
