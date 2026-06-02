@@ -28,6 +28,7 @@ using STS2RitsuLib.Platform.Patches;
 using STS2RitsuLib.Relics.Patches;
 using STS2RitsuLib.Relics.Visibility.Patches;
 using STS2RitsuLib.RunData.Patches;
+using STS2RitsuLib.Saves.Patches;
 using STS2RitsuLib.Scaffolding.Cards.HandGlow.Patches;
 using STS2RitsuLib.Scaffolding.Cards.HandOutline.Patches;
 using STS2RitsuLib.Scaffolding.Characters.Patches;
@@ -131,6 +132,9 @@ namespace STS2RitsuLib
             patcher.RegisterPatch<RunSavedDataClientRejoinResponseMessageDeserializePatch>();
             patcher.RegisterPatch<RunSavedDataCombatReplaySerializePatch>();
             patcher.RegisterPatch<RunSavedDataCombatReplayDeserializePatch>();
+            patcher.RegisterPatch<ProgressStatePreserveUnknownRecordsFromSerializablePatch>();
+            patcher.RegisterPatch<ProgressStatePreserveUnknownRecordsToSerializablePatch>();
+            patcher.RegisterPatch<ProgressStatePreserveUnknownRecordsLoadProgressPatch>();
             patcher.RegisterPatch<ModelCloneRegistryPatch>();
             patcher.RegisterPatch<CoreInitializationLifecyclePatch>();
             patcher.RegisterPatch<DevConsoleAutocompleteEnhancementPatch>();
