@@ -26,6 +26,7 @@ namespace STS2RitsuLib.Settings
                 RegisterMainSettingsPage(ui);
                 RegisterContentSourceHoverTipsPage(ui);
                 RegisterContentModLoadOrderPage();
+                RegisterToastSettingsPage(ui);
                 RegisterDebugLogViewerPage(ui);
                 RegisterHarmonySelfCheckAndCompendiumPages(ui);
                 RegisterImagePngExportPage(ui);
@@ -49,6 +50,7 @@ namespace STS2RitsuLib.Settings
                 RegisterMainSettingsPage(ui);
                 RegisterContentSourceHoverTipsPage(ui);
                 RegisterContentModLoadOrderPage();
+                RegisterToastSettingsPage(ui);
                 RegisterDebugLogViewerPage(ui);
                 RegisterHarmonySelfCheckAndCompendiumPages(ui);
                 RegisterImagePngExportPage(ui);
