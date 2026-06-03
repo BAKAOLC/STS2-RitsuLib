@@ -137,6 +137,9 @@ namespace STS2RitsuLib.RuntimeInput
 
         private static bool IsModifierPressed(ModifierKind kind, InputEventKey keyEvent)
         {
+            if (GetModifierKindForKeyEvent(keyEvent) == kind)
+                return true;
+
             return kind switch
             {
                 ModifierKind.Ctrl => keyEvent.CtrlPressed,
@@ -294,17 +297,25 @@ namespace STS2RitsuLib.RuntimeInput
         {
             return (kind, requirement) switch
             {
-                (ModifierKind.Ctrl, ModifierRequirement.LeftOnly) => ParseKnownKey("Ctrl") ?? Key.Ctrl,
-                (ModifierKind.Ctrl, ModifierRequirement.RightOnly) => ParseKnownKey("Ctrl") ?? Key.Ctrl,
+                (ModifierKind.Ctrl, ModifierRequirement.LeftOnly) =>
+                    ParseKnownKey("LeftCtrl") ?? ParseKnownKey("Ctrl") ?? Key.Ctrl,
+                (ModifierKind.Ctrl, ModifierRequirement.RightOnly) =>
+                    ParseKnownKey("RightCtrl") ?? ParseKnownKey("Ctrl") ?? Key.Ctrl,
                 (ModifierKind.Ctrl, _) => Key.Ctrl,
-                (ModifierKind.Alt, ModifierRequirement.LeftOnly) => ParseKnownKey("Alt") ?? Key.Alt,
-                (ModifierKind.Alt, ModifierRequirement.RightOnly) => ParseKnownKey("Alt") ?? Key.Alt,
+                (ModifierKind.Alt, ModifierRequirement.LeftOnly) =>
+                    ParseKnownKey("LeftAlt") ?? ParseKnownKey("Alt") ?? Key.Alt,
+                (ModifierKind.Alt, ModifierRequirement.RightOnly) =>
+                    ParseKnownKey("RightAlt") ?? ParseKnownKey("Alt") ?? Key.Alt,
                 (ModifierKind.Alt, _) => Key.Alt,
-                (ModifierKind.Shift, ModifierRequirement.LeftOnly) => ParseKnownKey("Shift") ?? Key.Shift,
-                (ModifierKind.Shift, ModifierRequirement.RightOnly) => ParseKnownKey("Shift") ?? Key.Shift,
+                (ModifierKind.Shift, ModifierRequirement.LeftOnly) =>
+                    ParseKnownKey("LeftShift") ?? ParseKnownKey("Shift") ?? Key.Shift,
+                (ModifierKind.Shift, ModifierRequirement.RightOnly) =>
+                    ParseKnownKey("RightShift") ?? ParseKnownKey("Shift") ?? Key.Shift,
                 (ModifierKind.Shift, _) => Key.Shift,
-                (ModifierKind.Meta, ModifierRequirement.LeftOnly) => ParseKnownKey("Meta") ?? Key.Meta,
-                (ModifierKind.Meta, ModifierRequirement.RightOnly) => ParseKnownKey("Meta") ?? Key.Meta,
+                (ModifierKind.Meta, ModifierRequirement.LeftOnly) =>
+                    ParseKnownKey("LeftMeta") ?? ParseKnownKey("Meta") ?? Key.Meta,
+                (ModifierKind.Meta, ModifierRequirement.RightOnly) =>
+                    ParseKnownKey("RightMeta") ?? ParseKnownKey("Meta") ?? Key.Meta,
                 (ModifierKind.Meta, _) => Key.Meta,
                 _ => Key.None,
             };
