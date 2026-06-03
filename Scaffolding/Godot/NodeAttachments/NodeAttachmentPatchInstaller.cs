@@ -69,7 +69,7 @@ namespace STS2RitsuLib.Scaffolding.Godot.NodeAttachments
                     null,
                     Type.EmptyTypes,
                     null);
-                if (method != null)
+                if (method is { IsAbstract: false })
                     return method;
             }
 
