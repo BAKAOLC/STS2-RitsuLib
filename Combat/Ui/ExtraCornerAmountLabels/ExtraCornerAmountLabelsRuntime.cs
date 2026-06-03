@@ -232,7 +232,13 @@ namespace STS2RitsuLib.Combat.Ui.ExtraCornerAmountLabels
                     pool.Add(new());
 
                 var entry = pool[writeIndex];
-                var live = GetOrCreateSlotLabel(host, entry, slotNamePrefix, writeIndex, slot.TextMode);
+                var live = GetOrCreateSlotLabel(
+                    host,
+                    entry,
+                    slotNamePrefix,
+                    writeIndex,
+                    slot.TextMode,
+                    applyHostStyle);
                 applyHostStyle(live);
                 ApplySlotColorOverrides(live, in slot);
 
@@ -253,7 +259,8 @@ namespace STS2RitsuLib.Combat.Ui.ExtraCornerAmountLabels
             AnchoredSlotHost entry,
             string slotNamePrefix,
             int slotIndex,
-            ExtraIconAmountLabelTextMode textMode)
+            ExtraIconAmountLabelTextMode textMode,
+            Action<Control> applyHostStyle)
         {
             if (GodotObject.IsInstanceValid(entry.Label) && entry.TextMode == textMode &&
                 LabelMatchesTextMode(entry.Label, textMode))
@@ -263,6 +270,7 @@ namespace STS2RitsuLib.Combat.Ui.ExtraCornerAmountLabels
                 entry.Label!.QueueFree();
 
             var label = CreateSlotLabel($"{slotNamePrefix}{slotIndex}", textMode);
+            applyHostStyle(label);
             host.AddChild(label);
             host.MoveChild(label, host.GetChildCount() - 1);
             entry.Label = label;

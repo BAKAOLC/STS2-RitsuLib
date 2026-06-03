@@ -224,6 +224,7 @@ namespace STS2RitsuLib.Data
                 s.DebugLogViewerEnabled,
                 s.DebugLogViewerMirrorGameLogs,
                 s.DebugLogViewerAutoOpen,
+                s.DebugLogViewerLanAccessEnabled,
                 Math.Clamp(s.DebugLogViewerPort, 1, 65535),
                 Math.Clamp(s.DebugLogViewerPortFallbackCount, 0, 100),
                 s.DebugLogViewerAccessToken,

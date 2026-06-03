@@ -25,11 +25,13 @@ namespace STS2RitsuLib.Diagnostics.Logging
 
         public RitsuDebugLogViewerServer(
             string token,
+            bool lanAccessEnabled,
             Func<int, RitsuDebugLogRecord[]> historyProvider,
             Func<object> statusProvider,
             string? assetRoot)
         {
             _token = token;
+            LanAccessEnabled = lanAccessEnabled;
             _historyProvider = historyProvider;
             _statusProvider = statusProvider;
             _assetRoot = string.IsNullOrWhiteSpace(assetRoot) ? null : assetRoot;
@@ -39,7 +41,13 @@ namespace STS2RitsuLib.Diagnostics.Logging
 
         public int ClientCount => _clients.Count;
 
-        public string Url => $"http://127.0.0.1:{Port}/?token={Uri.EscapeDataString(_token)}";
+        public bool LanAccessEnabled { get; }
+
+        public string AccessMode => LanAccessEnabled ? "lan" : "loopback";
+
+        public string Url => BuildUrl("127.0.0.1");
+
+        public IReadOnlyList<string> LanUrls => LanAccessEnabled ? GetLanUrls() : [];
 
         public void Dispose()
         {
@@ -59,7 +67,7 @@ namespace STS2RitsuLib.Diagnostics.Logging
                 var port = firstPort + i;
                 try
                 {
-                    _listener = new(IPAddress.Loopback, port);
+                    _listener = new(LanAccessEnabled ? IPAddress.Any : IPAddress.Loopback, port);
                     _listener.Start();
                     break;
                 }
@@ -73,7 +81,7 @@ namespace STS2RitsuLib.Diagnostics.Logging
 
             if (_listener == null)
                 throw new InvalidOperationException(
-                    $"Could not bind local debug viewer port range {firstPort}-{firstPort + maxAttempts - 1}.",
+                    $"Could not bind debug viewer port range {firstPort}-{firstPort + maxAttempts - 1}.",
                     lastException);
 
             Port = ((IPEndPoint)_listener.LocalEndpoint).Port;
@@ -172,7 +180,11 @@ namespace STS2RitsuLib.Diagnostics.Logging
                     {
                         case "/":
                             if (!await TryWriteIndexAsync(stream).ConfigureAwait(false))
-                                await WriteHtmlResponseAsync(stream, RitsuDebugLogViewerStaticAssets.IndexHtml)
+                                await WriteTextResponseAsync(
+                                        stream,
+                                        503,
+                                        "Service Unavailable",
+                                        "RitsuLib debug log viewer assets are unavailable. Build and package Viewer/index.html.")
                                     .ConfigureAwait(false);
                             return;
                         case "/api/status":
@@ -218,20 +230,17 @@ namespace STS2RitsuLib.Diagnostics.Logging
                     "Connection: keep-alive\r\n" +
                     "X-Accel-Buffering: no\r\n\r\n").ConfigureAwait(false);
 
+                await WriteSseEventAsync(stream, "session", JsonSerializer.Serialize(_statusProvider(), JsonOptions))
+                    .ConfigureAwait(false);
+                await stream.FlushAsync(_cts.Token).ConfigureAwait(false);
+
                 while (!_cts.IsCancellationRequested)
                 {
                     var json = await client.DequeueAsync(TimeSpan.FromSeconds(15), _cts.Token).ConfigureAwait(false);
                     if (json == null)
-                    {
                         await WriteUtf8Async(stream, ": keepalive\n\n").ConfigureAwait(false);
-                    }
                     else
-                    {
-                        await WriteUtf8Async(stream, "event: log\n").ConfigureAwait(false);
-                        await WriteUtf8Async(stream, "data: ").ConfigureAwait(false);
-                        await WriteUtf8Async(stream, json).ConfigureAwait(false);
-                        await WriteUtf8Async(stream, "\n\n").ConfigureAwait(false);
-                    }
+                        await WriteSseEventAsync(stream, "log", json).ConfigureAwait(false);
 
                     await stream.FlushAsync(_cts.Token).ConfigureAwait(false);
                 }
@@ -290,6 +299,40 @@ namespace STS2RitsuLib.Diagnostics.Logging
             return int.TryParse(GetQueryValue(query, "limit"), out var limit) ? Math.Clamp(limit, 1, 20000) : 5000;
         }
 
+        private string BuildUrl(string host)
+        {
+            return $"http://{host}:{Port}/?token={Uri.EscapeDataString(_token)}";
+        }
+
+        private IReadOnlyList<string> GetLanUrls()
+        {
+            if (Port <= 0)
+                return [];
+
+            try
+            {
+                return Dns.GetHostAddresses(Dns.GetHostName())
+                    .Where(IsUsableLanAddress)
+                    .Select(address => BuildUrl(address.ToString()))
+                    .Distinct(StringComparer.OrdinalIgnoreCase)
+                    .ToArray();
+            }
+            catch (Exception ex) when (ex is SocketException or InvalidOperationException)
+            {
+                RitsuDebugLogPipeline.ReportInternalWarning($"Could not enumerate LAN addresses: {ex.Message}");
+                return [];
+            }
+        }
+
+        private static bool IsUsableLanAddress(IPAddress address)
+        {
+            if (address.AddressFamily != AddressFamily.InterNetwork || IPAddress.IsLoopback(address))
+                return false;
+
+            var bytes = address.GetAddressBytes();
+            return bytes is not [0, 0, 0, 0] and not [169, 254, _, _];
+        }
+
         private static string? GetQueryValue(string query, string key)
         {
             return (from pair in query.Split('&', StringSplitOptions.RemoveEmptyEntries)
@@ -299,11 +342,6 @@ namespace STS2RitsuLib.Diagnostics.Logging
                 select eq >= 0 ? pair[(eq + 1)..] : ""
                 into rawValue
                 select Uri.UnescapeDataString(rawValue.Replace("+", "%20", StringComparison.Ordinal))).FirstOrDefault();
-        }
-
-        private static Task WriteHtmlResponseAsync(Stream stream, string html)
-        {
-            return WriteResponseAsync(stream, 200, "OK", "text/html; charset=utf-8", html);
         }
 
         private static Task WriteJsonResponseAsync(Stream stream, object payload)
@@ -377,6 +415,16 @@ namespace STS2RitsuLib.Diagnostics.Logging
         private static Task WriteUtf8Async(Stream stream, string text)
         {
             return stream.WriteAsync(Encoding.UTF8.GetBytes(text)).AsTask();
+        }
+
+        private static async Task WriteSseEventAsync(Stream stream, string eventName, string json)
+        {
+            await WriteUtf8Async(stream, "event: ").ConfigureAwait(false);
+            await WriteUtf8Async(stream, eventName).ConfigureAwait(false);
+            await WriteUtf8Async(stream, "\n").ConfigureAwait(false);
+            await WriteUtf8Async(stream, "data: ").ConfigureAwait(false);
+            await WriteUtf8Async(stream, json).ConfigureAwait(false);
+            await WriteUtf8Async(stream, "\n\n").ConfigureAwait(false);
         }
 
         private static bool IsClientDisconnect(Exception ex)

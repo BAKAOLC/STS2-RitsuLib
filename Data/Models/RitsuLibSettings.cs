@@ -70,8 +70,8 @@ namespace STS2RitsuLib.Data.Models
         public bool DebugCompatAncientArchitect { get; set; } = true;
 
         /// <summary>
-        ///     Starts the loopback-only browser debug log viewer for this session.
-        ///     为本会话启动仅监听 loopback 的浏览器调试日志查看器。
+        ///     Starts the browser debug log viewer for this session. It listens on loopback unless LAN access is enabled.
+        ///     为本会话启动浏览器调试日志查看器；除非启用局域网访问，否则仅监听 loopback。
         /// </summary>
         [JsonPropertyName("debug_log_viewer_enabled")]
         public bool DebugLogViewerEnabled { get; set; } = true;
@@ -91,8 +91,15 @@ namespace STS2RitsuLib.Data.Models
         public bool DebugLogViewerAutoOpen { get; set; }
 
         /// <summary>
-        ///     Loopback HTTP port for the debug log viewer.
-        ///     调试日志查看器的 loopback HTTP 端口。
+        ///     When true, binds the debug log viewer to all network interfaces so devices on the same LAN can connect.
+        ///     为 true 时，调试日志查看器会监听所有网络接口，使同一局域网设备可以连接。
+        /// </summary>
+        [JsonPropertyName("debug_log_viewer_lan_access_enabled")]
+        public bool DebugLogViewerLanAccessEnabled { get; set; }
+
+        /// <summary>
+        ///     HTTP port for the debug log viewer.
+        ///     调试日志查看器的 HTTP 端口。
         /// </summary>
         [JsonPropertyName("debug_log_viewer_port")]
         public int DebugLogViewerPort { get; set; } = 18742;
@@ -105,8 +112,8 @@ namespace STS2RitsuLib.Data.Models
         public int DebugLogViewerPortFallbackCount { get; set; } = 20;
 
         /// <summary>
-        ///     Stable browser access token for the loopback debug log viewer.
-        ///     本机调试日志查看器使用的稳定浏览器访问 token。
+        ///     Stable browser access token for the debug log viewer.
+        ///     调试日志查看器使用的稳定浏览器访问 token。
         /// </summary>
         [JsonPropertyName("debug_log_viewer_access_token")]
         public string DebugLogViewerAccessToken { get; set; } = "";

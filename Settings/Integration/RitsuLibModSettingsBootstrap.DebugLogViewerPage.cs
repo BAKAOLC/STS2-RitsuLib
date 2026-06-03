@@ -21,6 +21,12 @@ namespace STS2RitsuLib.Settings
                             ui.DebugLogViewerAutoOpen,
                             T("ritsulib.debugLogViewer.autoOpen.description",
                                 "When enabled, RitsuLib waits 3 seconds after starting the viewer. If no browser page is listening, it opens one."))
+                        .AddToggle(
+                            "debug_log_viewer_lan_access",
+                            T("ritsulib.debugLogViewer.lanAccess.label", "Allow LAN access"),
+                            ui.DebugLogViewerLanAccessEnabled,
+                            T("ritsulib.debugLogViewer.lanAccess.description",
+                                "When enabled, the debug log viewer listens on all network interfaces so other devices on the same LAN can open it with the tokenized URL. Changes apply on next launch."))
                         .AddIntSlider(
                             "debug_log_viewer_port",
                             T("ritsulib.debugLogViewer.port.label", "Viewer port"),
@@ -30,7 +36,7 @@ namespace STS2RitsuLib.Settings
                             1,
                             value => value.ToString(),
                             T("ritsulib.debugLogViewer.port.description",
-                                "Loopback HTTP port. If the port is busy, RitsuLib tries the following ports in order. Changes apply on next launch."))
+                                "HTTP port. If the port is busy, RitsuLib tries the following ports in order. Changes apply on next launch."))
                         .AddButton(
                             "debug_log_viewer_open_now",
                             T("ritsulib.debugLogViewer.openNow.label", "Open viewer"),
@@ -38,7 +44,7 @@ namespace STS2RitsuLib.Settings
                             OpenDebugLogViewerFromSettings,
                             ModSettingsButtonTone.Accent,
                             T("ritsulib.debugLogViewer.openNow.description",
-                                "Opens the currently running local log viewer in your system browser."))),
+                                "Opens the currently running log viewer in your system browser."))),
                 "debug-log-viewer");
         }
 

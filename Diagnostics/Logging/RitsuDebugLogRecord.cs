@@ -1,4 +1,5 @@
 using System.Text.Json.Serialization;
+using STS2RitsuLib.Utils;
 
 namespace STS2RitsuLib.Diagnostics.Logging
 {
@@ -19,6 +20,8 @@ namespace STS2RitsuLib.Diagnostics.Logging
         [JsonPropertyName("severityNumber")] public int SeverityNumber { get; init; }
 
         [JsonPropertyName("body")] public string Body { get; init; } = "";
+
+        [JsonPropertyName("bodySegments")] public IReadOnlyList<RitsuTextSegment>? BodySegments { get; init; }
 
         [JsonPropertyName("source")] public string? Source { get; init; }
 
