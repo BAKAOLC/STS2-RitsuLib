@@ -1,5 +1,6 @@
 using MegaCrit.Sts2.Core.Entities.Multiplayer;
 using MegaCrit.Sts2.Core.GameActions.Multiplayer;
+using MegaCrit.Sts2.Core.Multiplayer;
 using MegaCrit.Sts2.Core.Multiplayer.Messages.Game;
 using MegaCrit.Sts2.Core.Multiplayer.Replay;
 using MegaCrit.Sts2.Core.Multiplayer.Serialization;
@@ -10,6 +11,68 @@ namespace STS2RitsuLib.Networking.ManagedActions.Patches
 {
     internal static class RitsuLibManagedNetActionMessagePatches
     {
+        internal sealed class MessageBusSerialize : IPatchMethod
+        {
+            public static string PatchId => "ritsulib_managed_net_action_message_bus_serialize";
+            public static bool IsCritical => true;
+
+            public static string Description =>
+                "Serialize RitsuLib-managed action messages before vanilla action id lookup";
+
+            public static ModPatchTarget[] GetTargets()
+            {
+                return
+                [
+                    new(typeof(NetMessageBus), nameof(NetMessageBus.SerializeMessage)),
+                ];
+            }
+
+            public static bool Prefix<T>(
+                ulong senderId,
+                T message,
+                ref byte[] __result,
+                ref int length)
+                where T : INetMessage
+            {
+                if (!TrySerializeManagedActionMessage(senderId, message, out var bytes, out var writtenLength))
+                    return true;
+
+                __result = bytes;
+                length = writtenLength;
+                return false;
+            }
+        }
+
+        internal sealed class MessageBusDeserialize : IPatchMethod
+        {
+            public static string PatchId => "ritsulib_managed_net_action_message_bus_deserialize";
+            public static bool IsCritical => true;
+
+            public static string Description =>
+                "Deserialize action queue messages through RitsuLib-managed action reader";
+
+            public static ModPatchTarget[] GetTargets()
+            {
+                return
+                [
+                    new(typeof(NetMessageBus), nameof(NetMessageBus.TryDeserializeMessage)),
+                ];
+            }
+
+            public static bool Prefix(
+                byte[] packetBytes,
+                ref bool __result,
+                out INetMessage? message,
+                out ulong? overrideSenderId)
+            {
+                if (!TryDeserializeManagedActionMessage(packetBytes, out message, out overrideSenderId))
+                    return true;
+
+                __result = true;
+                return false;
+            }
+        }
+
         internal sealed class RequestSerialize : IPatchMethod
         {
             public static string PatchId => "ritsulib_managed_net_action_request_serialize";
@@ -223,6 +286,83 @@ namespace STS2RitsuLib.Networking.ManagedActions.Patches
 
                 return false;
             }
+        }
+
+        private static bool TrySerializeManagedActionMessage<T>(
+            ulong senderId,
+            T message,
+            out byte[] bytes,
+            out int length)
+            where T : INetMessage
+        {
+            bytes = [];
+            length = 0;
+
+            var writer = new PacketWriter();
+            switch (message)
+            {
+                case RequestEnqueueActionMessage request
+                    when request.action is RitsuLibManagedNetAction:
+                    writer.WriteByte((byte)request.ToId());
+                    writer.WriteULong(senderId);
+                    writer.Write(request.location);
+                    RitsuLibManagedNetActions.TryWriteNetAction(writer, request.action);
+                    break;
+
+                case ActionEnqueuedMessage announcement
+                    when announcement.action is RitsuLibManagedNetAction:
+                    writer.WriteByte((byte)announcement.ToId());
+                    writer.WriteULong(senderId);
+                    writer.WriteULong(announcement.playerId);
+                    writer.Write(announcement.location);
+                    RitsuLibManagedNetActions.TryWriteNetAction(writer, announcement.action);
+                    break;
+
+                default:
+                    return false;
+            }
+
+            length = (int)Math.Ceiling(writer.BitPosition / 8f);
+            bytes = writer.Buffer;
+            return true;
+        }
+
+        private static bool TryDeserializeManagedActionMessage(
+            byte[] packetBytes,
+            out INetMessage? message,
+            out ulong? overrideSenderId)
+        {
+            message = null;
+            overrideSenderId = null;
+
+            var reader = new PacketReader();
+            reader.Reset(packetBytes);
+            var messageId = reader.ReadByte();
+            if (!MessageTypes.TryGetMessageType(messageId, out var messageType))
+                return false;
+
+            if (messageType != typeof(RequestEnqueueActionMessage) &&
+                messageType != typeof(ActionEnqueuedMessage))
+                return false;
+
+            overrideSenderId = reader.ReadULong();
+            if (messageType == typeof(RequestEnqueueActionMessage))
+            {
+                message = new RequestEnqueueActionMessage
+                {
+                    location = reader.Read<RunLocation>(),
+                    action = RitsuLibManagedNetActions.ReadNetAction(reader),
+                };
+                return true;
+            }
+
+            message = new ActionEnqueuedMessage
+            {
+                playerId = reader.ReadULong(),
+                location = reader.Read<RunLocation>(),
+                action = RitsuLibManagedNetActions.ReadNetAction(reader),
+            };
+            return true;
         }
     }
 }

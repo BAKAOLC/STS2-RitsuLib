@@ -175,6 +175,8 @@ namespace STS2RitsuLib
                 patcher.RegisterPatch<RitsuLibSidecarNativeTrailerSteamSendPatch>();
             patcher.RegisterPatch<RitsuLibSidecarSyncNetBufferPatch>();
             patcher.RegisterPatch<RitsuLibSidecarSyncLocationChangedPatch>();
+            patcher.RegisterPatch<RitsuLibManagedNetActionMessagePatches.MessageBusSerialize>();
+            patcher.RegisterPatch<RitsuLibManagedNetActionMessagePatches.MessageBusDeserialize>();
             patcher.RegisterPatch<RitsuLibManagedNetActionMessagePatches.RequestSerialize>();
             patcher.RegisterPatch<RitsuLibManagedNetActionMessagePatches.RequestDeserialize>();
             patcher.RegisterPatch<RitsuLibManagedNetActionMessagePatches.AnnouncementSerialize>();
