@@ -19,6 +19,7 @@ using MegaCrit.Sts2.Core.Saves;
 using MegaCrit.Sts2.Core.Saves.Managers;
 using MegaCrit.Sts2.Core.Saves.Test;
 using MegaCrit.Sts2.Core.Unlocks;
+using STS2RitsuLib.Networking.MessageExtensions;
 using STS2RitsuLib.Patching.Models;
 using GameMode = MegaCrit.Sts2.Core.Runs.GameMode;
 
@@ -26,6 +27,7 @@ namespace STS2RitsuLib.RunData.Patches
 {
     internal static class RunSavedDataPatchHelpers
     {
+        private const string TailExtensionId = "ritsulib.runSavedData";
         private const int PayloadVersion = 1;
         private static readonly AsyncLocal<Stack<RunSavedDataSaveRunCapture>?> ActiveSaveRunCaptures = new();
 
@@ -150,12 +152,7 @@ namespace STS2RitsuLib.RunData.Patches
 
         public static void WritePayload(PacketWriter writer, string? payload)
         {
-            if (string.IsNullOrWhiteSpace(payload))
-                return;
-
-            writer.WriteBool(true);
-            writer.WriteInt(PayloadVersion, 8);
-            writer.WriteString(payload);
+            RitsuNetMessageTailExtensions.WriteLegacySingle(writer, TailExtensionId, PayloadVersion, payload);
         }
 
         public static string? PrepareNewRunPayload(StartRunLobby lobby, string seed,
@@ -210,24 +207,7 @@ namespace STS2RitsuLib.RunData.Patches
 
         public static string? TryReadPayload(PacketReader reader)
         {
-            if (reader.BitPosition >= reader.Buffer.Length * 8)
-                return null;
-
-            try
-            {
-                if (!reader.ReadBool())
-                    return null;
-
-                var version = reader.ReadInt(8);
-                if (version == PayloadVersion) return reader.ReadString();
-                RitsuLibFramework.Logger.Warn($"[RunSavedData] Unsupported packet payload version: {version}");
-                return null;
-            }
-            catch (Exception ex)
-            {
-                RitsuLibFramework.Logger.Warn($"[RunSavedData] Failed to read packet payload: {ex.Message}");
-                return null;
-            }
+            return RitsuNetMessageTailExtensions.TryReadLegacySingle(reader, TailExtensionId, PayloadVersion);
         }
     }
 
