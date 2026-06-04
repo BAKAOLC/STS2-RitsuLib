@@ -13,8 +13,8 @@ namespace STS2RitsuLib.Scaffolding.Godot
         private static int _initialized;
 
         /// <summary>
-        ///     Idempotent; invoked during content-asset patch registration so factories exist before mods run.
-        ///     幂等；在 content-asset 补丁注册期间调用，确保工厂在 mod 运行前存在。
+        ///     Idempotent; invoked during framework bootstrap so factories exist before runtime asset hooks run.
+        ///     幂等；在框架 bootstrap 期间调用，确保工厂在运行时资源 hook 执行前存在。
         /// </summary>
         internal static void EnsureRegistered()
         {

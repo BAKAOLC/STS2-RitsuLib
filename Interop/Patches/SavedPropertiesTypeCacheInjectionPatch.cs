@@ -52,10 +52,14 @@ namespace STS2RitsuLib.Interop.Patches
                 _completed = true;
             }
 
+            var modelTypes = GetModModelTypesWithSavedProperties().ToArray();
+            if (modelTypes.Length == 0)
+                return;
+
             var beforeCount = GetPropertyNameCount();
             var injectedTypes = 0;
 
-            foreach (var modelType in GetModModelTypesWithSavedProperties())
+            foreach (var modelType in modelTypes)
             {
                 if (SavedPropertiesTypeCache.GetJsonPropertiesForType(modelType) != null)
                     continue;

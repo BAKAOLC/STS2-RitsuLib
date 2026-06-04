@@ -33,6 +33,7 @@ using STS2RitsuLib.RunData;
 using STS2RitsuLib.RuntimeInput;
 using STS2RitsuLib.Scaffolding.Ancients.Options;
 using STS2RitsuLib.Scaffolding.Content;
+using STS2RitsuLib.Scaffolding.Godot;
 using STS2RitsuLib.Scaffolding.Godot.NodeAttachments;
 using STS2RitsuLib.Settings;
 using STS2RitsuLib.Telemetry;
@@ -322,15 +323,23 @@ namespace STS2RitsuLib
                 Logger.Info($"Framework Name: {Const.Name}");
                 Logger.Info(BuildVersionLogText());
                 Logger.Info("Initializing shared framework...");
-                RitsuLibStartupAudit.Measure("imageResourceLoader",
-                    RitsuLibModImageResourceLoader.EnsureRegistered);
-                RitsuLibMobileSteamRuntime.LogSuppressedSteamFeaturesAtStartup();
-                ModTypeDiscoveryHub.EnsureBuiltInContributorsRegistered();
+
                 RitsuLibStartupAudit.Measure("settingsStore", RitsuLibSettingsStore.Initialize);
                 RitsuLibStartupAudit.Measure("debugLogViewer",
                     () => RitsuDebugLogPipeline.Initialize(RitsuLibSettingsStore.GetDebugLogViewerOptions()));
                 RitsuLibStartupAudit.Measure("modSettingsBootstrap", RitsuLibModSettingsBootstrap.Initialize);
                 RitsuLibStartupAudit.Measure("telemetryBootstrap", RitsuLibTelemetryBootstrap.Initialize);
+                RitsuLibStartupAudit.Measure("frameworkBuiltIns", () =>
+                {
+                    RitsuLibStartupAudit.Measure("mobileSteamRuntime",
+                        RitsuLibMobileSteamRuntime.LogSuppressedSteamFeaturesAtStartup);
+                    RitsuLibStartupAudit.Measure("imageResourceLoader",
+                        RitsuLibModImageResourceLoader.EnsureRegistered);
+                    RitsuLibStartupAudit.Measure("godotNodeFactories", RitsuGodotNodeFactoryBootstrap.EnsureRegistered);
+                    RitsuLibStartupAudit.Measure("modTypeDiscoveryBuiltIns",
+                        ModTypeDiscoveryHub.EnsureBuiltInContributorsRegistered);
+                });
+
                 PublishLifecycleEvent(
                     new FrameworkInitializingEvent(Const.ModId, Const.Version, DateTimeOffset.UtcNow),
                     nameof(FrameworkInitializingEvent)
