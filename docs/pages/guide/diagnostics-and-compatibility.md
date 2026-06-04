@@ -63,6 +63,30 @@ RitsuLib 自带的 debug compatibility mode 默认关闭。开启后，RitsuLib 
 
 :::
 
+## Browser Debug Log Viewer{lang="en"}
+
+::: en
+
+For interactive debugging, RitsuLib can also host a browser-based live log viewer for the current session. It is useful when a tester needs a URL, when you want a second-screen log view, or when you need to inspect fresh warnings without leaving the running game.
+
+Use loopback mode for normal development. Enable LAN access only when another device on the same network needs the viewer, and treat the tokenized URL as session-local access data.
+
+See [Debug log viewer](/guide/debug-log-viewer) for setup and usage details.
+
+:::
+
+## 浏览器调试日志查看器{lang="zh-CN"}
+
+::: zh-CN
+
+在交互式排查阶段，RitsuLib 还可以为当前会话启动一个基于浏览器的实时日志查看器。它适合给测试人员提供一个 URL、在副屏上盯日志，或者在不离开运行中游戏的情况下查看最新警告。
+
+普通开发优先使用 loopback 模式。只有同一局域网中的另一台设备确实需要查看时，才启用 LAN 访问，并把带 token 的 URL 当作本次会话的本地访问凭据。
+
+具体配置和使用方式见 [调试日志查看器](/guide/debug-log-viewer)。
+
+:::
+
 ## Game Source Notes{lang="en"}
 
 ::: en

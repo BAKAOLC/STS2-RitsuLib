@@ -30,6 +30,8 @@ nav:
   guide_persistence: Persistence
   guide_fmod: FMOD & audio
   guide_shell_theme: Shell theme
+  guide_debug_log_viewer: Debug log viewer
+  guide_update_checks: Update checks
   guide_telemetry: Telemetry backend
   guide_diagnostics: Diagnostics & compatibility
 

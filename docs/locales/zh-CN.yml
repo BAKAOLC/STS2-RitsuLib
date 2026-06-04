@@ -30,6 +30,8 @@ nav:
   guide_persistence: 持久化
   guide_fmod: FMOD 与音频
   guide_shell_theme: Shell 主题
+  guide_debug_log_viewer: 调试日志查看器
+  guide_update_checks: 更新检查
   guide_telemetry: 遥测后端
   guide_diagnostics: 诊断与兼容
 
