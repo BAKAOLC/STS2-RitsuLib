@@ -22,6 +22,7 @@ using STS2RitsuLib.Models.Patches;
 using STS2RitsuLib.Networking.JoinDiagnostics.Patches;
 using STS2RitsuLib.Networking.ManagedActions.Patches;
 using STS2RitsuLib.Networking.Sidecar.Patches;
+using STS2RitsuLib.Networking.StateDivergence.Patches;
 using STS2RitsuLib.Patching.Core;
 using STS2RitsuLib.Platform;
 using STS2RitsuLib.Platform.Patches;
@@ -206,6 +207,9 @@ namespace STS2RitsuLib
             patcher.RegisterPatch<JoinFailureDiagnosticsInitialInfoPatch>();
             patcher.RegisterPatch<JoinFailureDiagnosticsPopupCreatePatch>();
             patcher.RegisterPatch<JoinFailureDiagnosticsPopupReadyPatch>();
+            patcher.RegisterPatch<StateDivergenceDiagnosticsLogPatch>();
+            patcher.RegisterPatch<StateDivergenceDiagnosticsPopupCreatePatch>();
+            patcher.RegisterPatch<StateDivergenceDiagnosticsPopupReadyPatch>();
             patcher.RegisterPatch<RunEndedLifecyclePatch>();
             patcher.RegisterPatch<CombatHookLifecyclePatch>();
             patcher.RegisterPatch<RewardHookLifecyclePatch>();

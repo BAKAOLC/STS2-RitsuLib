@@ -29,9 +29,12 @@
   "checksum.context": "上下文: {0}",
   "footer.context": "角色: {0}  远端 peer: {1}",
   "detail.context": "本地上下文由当前 peer 记录；原版状态分歧消息不会携带远端上下文。",
+  "detail.pileSummary": "本地: {0}; 远端: {1}; 首个不同位置: {2}。",
   "value.remoteContext": "远端状态分歧消息",
   "value.noDifferences": "这个区域没有可见差异。",
   "value.missing": "缺失",
   "value.empty": "<空>",
-  "value.none": "<无>"
+  "value.none": "<无>",
+  "value.cardCount": "{0} 张牌",
+  "value.cardIndex": "索引 {0}"
 }

@@ -1,6 +1,7 @@
 using MegaCrit.Sts2.Core.Entities.Multiplayer;
 using MegaCrit.Sts2.Core.Entities.Relics;
 using MegaCrit.Sts2.Core.Entities.Rngs;
+using MegaCrit.Sts2.Core.Localization;
 using MegaCrit.Sts2.Core.Models;
 using MegaCrit.Sts2.Core.Multiplayer.Messages.Game.Checksums;
 
@@ -186,10 +187,19 @@ namespace STS2RitsuLib.Networking.StateDivergence
             {
                 var l = local.FirstOrDefault(p => EqualityComparer<object>.Default.Equals(p.pileType, pileType));
                 var r = remote.FirstOrDefault(p => EqualityComparer<object>.Default.Equals(p.pileType, pileType));
-                var lCards = l.cards ?? [];
-                var rCards = r.cards ?? [];
-                AddIfDifferent(rows, $"{playerPath}.piles.{pileType}.cards", Join(lCards.Select(FormatCard)),
-                    Join(rCards.Select(FormatCard)));
+                var lCards = (l.cards ?? []).Select(FormatCard).ToList();
+                var rCards = (r.cards ?? []).Select(FormatCard).ToList();
+                if (lCards.SequenceEqual(rCards))
+                    continue;
+
+                rows.Add(new(
+                    $"{playerPath}.piles.{pileType}",
+                    FormatPileCards(lCards),
+                    FormatPileCards(rCards),
+                    F("detail.pileSummary", "Local: {0}; remote: {1}; first mismatch: {2}.",
+                        FormatCardCount(lCards.Count),
+                        FormatCardCount(rCards.Count),
+                        FormatFirstMismatch(lCards, rCards))));
             }
         }
 
@@ -307,6 +317,32 @@ namespace STS2RitsuLib.Networking.StateDivergence
             return string.Join(" ", pieces);
         }
 
+        private static string FormatPileCards(IReadOnlyList<string> cards)
+        {
+            return cards.Count == 0
+                ? L("value.empty", "<empty>")
+                : string.Join(Environment.NewLine, cards.Select((card, i) => $"{i:00}  {card}"));
+        }
+
+        private static string FormatCardCount(int count)
+        {
+            return F("value.cardCount", "{0} card(s)", count);
+        }
+
+        private static string FormatFirstMismatch(IReadOnlyList<string> local, IReadOnlyList<string> remote)
+        {
+            var count = Math.Max(local.Count, remote.Count);
+            for (var i = 0; i < count; i++)
+            {
+                var l = i < local.Count ? local[i] : null;
+                var r = i < remote.Count ? remote[i] : null;
+                if (!string.Equals(l, r, StringComparison.Ordinal))
+                    return F("value.cardIndex", "index {0}", i);
+            }
+
+            return L("value.none", "<none>");
+        }
+
         private static string FormatRelic(NetFullCombatState.RelicState state)
         {
             var pieces = new List<string> { Format(state.relic.Id) };
@@ -341,12 +377,43 @@ namespace STS2RitsuLib.Networking.StateDivergence
             return value switch
             {
                 null => L("value.none", "<none>"),
-                ModelId id => id.ToString(),
+                ModelId id => FormatModelId(id),
                 RelicRarity rarity => rarity.ToString(),
                 RunRngType rng => rng.ToString(),
                 PlayerRngType rng => rng.ToString(),
                 _ => value.ToString() ?? "",
             };
+        }
+
+        private static string FormatModelId(ModelId id)
+        {
+            var idText = id.ToString();
+            var name = TryGetLocalModelTitle(id);
+            return string.IsNullOrWhiteSpace(name) ? idText : $"{idText} ({name})";
+        }
+
+        private static string? TryGetLocalModelTitle(ModelId id)
+        {
+            try
+            {
+                var model = ModelDb.GetByIdOrNull<AbstractModel>(id);
+                if (model == null)
+                    return null;
+
+                var title = model.GetType().GetProperty("Title")?.GetValue(model);
+                var text = title switch
+                {
+                    string s => s,
+                    LocString loc => loc.GetFormattedText(),
+                    _ => null,
+                };
+
+                return string.IsNullOrWhiteSpace(text) ? null : text;
+            }
+            catch
+            {
+                return null;
+            }
         }
 
         private static string L(string key, string fallback)

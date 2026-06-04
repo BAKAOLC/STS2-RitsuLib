@@ -175,7 +175,7 @@ namespace STS2RitsuLib.Networking.StateDivergence
             scrollMargin.AddChild(box);
 
             box.AddChild(BuildSummarySection());
-            foreach (var section in _report.Sections)
+            foreach (var section in _report.Sections.Where(section => section.Rows.Count > 0))
                 box.AddChild(BuildSection(section));
 
             return scroll;
@@ -284,10 +284,29 @@ namespace STS2RitsuLib.Networking.StateDivergence
 
         private Control BuildDetailRow(StateDivergenceDiagnosticRow detail)
         {
+            if (IsPileDetail(detail))
+                return BuildPileDetailRow(detail);
+            return IsExpandedDetail(detail) ? BuildExpandedDetailRow(detail) : BuildCompactDetailRow(detail);
+        }
+
+        private static bool IsExpandedDetail(StateDivergenceDiagnosticRow detail)
+        {
+            return !string.IsNullOrEmpty(detail.Detail) ||
+                   detail.LocalValue.Contains('\n') ||
+                   detail.RemoteValue.Contains('\n');
+        }
+
+        private static bool IsPileDetail(StateDivergenceDiagnosticRow detail)
+        {
+            return detail.Path.Contains(".piles.", StringComparison.Ordinal);
+        }
+
+        private Control BuildCompactDetailRow(StateDivergenceDiagnosticRow detail)
+        {
             var panel = new PanelContainer
             {
                 SizeFlagsHorizontal = SizeFlags.ExpandFill,
-                CustomMinimumSize = new(0f, 44f),
+                CustomMinimumSize = new(0f, 50f),
                 MouseFilter = MouseFilterEnum.Ignore,
             };
             panel.AddThemeStyleboxOverride("panel", ModSettingsUiFactory.CreateListItemCardStyle(true));
@@ -306,6 +325,141 @@ namespace STS2RitsuLib.Networking.StateDivergence
             row.AddChild(CreateValueLabel(detail.LocalValue, RitsuShellTheme.Current.Text.RichBody));
             row.AddChild(CreateValueLabel(detail.RemoteValue, RitsuShellTheme.Current.Text.HoverHighlight));
             return panel;
+        }
+
+        private Control BuildExpandedDetailRow(StateDivergenceDiagnosticRow detail)
+        {
+            var panel = new PanelContainer
+            {
+                SizeFlagsHorizontal = SizeFlags.ExpandFill,
+                MouseFilter = MouseFilterEnum.Ignore,
+            };
+            panel.AddThemeStyleboxOverride("panel", ModSettingsUiFactory.CreateListItemCardStyle(true));
+
+            var box = CreateInsetVBox(panel, 10, 8, 10, 8, 8);
+            box.AddChild(CreateLabel(detail.Path, 15, RitsuShellTheme.Current.Text.RichTitle, true));
+            if (!string.IsNullOrWhiteSpace(detail.Detail))
+                box.AddChild(CreateLabel(detail.Detail, 13, RitsuShellTheme.Current.Text.RichMuted));
+
+            var values = new HBoxContainer
+            {
+                SizeFlagsHorizontal = SizeFlags.ExpandFill,
+                MouseFilter = MouseFilterEnum.Ignore,
+            };
+            values.AddThemeConstantOverride("separation", 14);
+            values.AddChild(BuildExpandedValueColumn(T("column.local", "Local"), detail.LocalValue,
+                RitsuShellTheme.Current.Text.RichBody));
+            values.AddChild(BuildExpandedValueColumn(T("column.remote", "Remote"), detail.RemoteValue,
+                RitsuShellTheme.Current.Text.HoverHighlight));
+            box.AddChild(values);
+            return panel;
+        }
+
+        private Control BuildPileDetailRow(StateDivergenceDiagnosticRow detail)
+        {
+            var panel = new PanelContainer
+            {
+                SizeFlagsHorizontal = SizeFlags.ExpandFill,
+                MouseFilter = MouseFilterEnum.Ignore,
+            };
+            panel.AddThemeStyleboxOverride("panel", ModSettingsUiFactory.CreateListItemCardStyle(true));
+
+            var box = CreateInsetVBox(panel, 10, 8, 10, 8, 8);
+            box.AddChild(CreateLabel(detail.Path, 18, RitsuShellTheme.Current.Text.RichTitle, true));
+            if (!string.IsNullOrWhiteSpace(detail.Detail))
+                box.AddChild(CreateLabel(detail.Detail, 15, RitsuShellTheme.Current.Text.RichMuted));
+
+            var values = new HBoxContainer
+            {
+                SizeFlagsHorizontal = SizeFlags.ExpandFill,
+                MouseFilter = MouseFilterEnum.Ignore,
+            };
+            values.AddThemeConstantOverride("separation", 14);
+            values.AddChild(BuildPileValueColumn(T("column.local", "Local"), detail.LocalValue, detail.RemoteValue,
+                RitsuShellTheme.Current.Text.RichBody));
+            values.AddChild(BuildPileValueColumn(T("column.remote", "Remote"), detail.RemoteValue, detail.LocalValue,
+                RitsuShellTheme.Current.Text.HoverHighlight));
+            box.AddChild(values);
+            return panel;
+        }
+
+        private Control BuildPileValueColumn(string title, string value, string counterpart, Color valueColor)
+        {
+            var box = new VBoxContainer
+            {
+                SizeFlagsHorizontal = SizeFlags.ExpandFill,
+                MouseFilter = MouseFilterEnum.Ignore,
+            };
+            box.AddThemeConstantOverride("separation", 6);
+            box.AddChild(CreateLabel(title, 16, RitsuShellTheme.Current.Text.RichTitle, true));
+
+            var list = new PanelContainer
+            {
+                SizeFlagsHorizontal = SizeFlags.ExpandFill,
+                MouseFilter = MouseFilterEnum.Ignore,
+            };
+            list.AddThemeStyleboxOverride("panel", ModSettingsUiFactory.CreateListShellStyle());
+            var listBox = CreateInsetVBox(list, 6, 6, 6, 6, 4);
+            box.AddChild(list);
+
+            var entries = ParseIndexedLines(value);
+            var otherEntries = ParseIndexedLines(counterpart);
+            var count = Math.Max(entries.Count, otherEntries.Count);
+            if (count == 0)
+            {
+                listBox.AddChild(BuildPileEntryRow("", value, false, valueColor));
+                return box;
+            }
+
+            for (var i = 0; i < count; i++)
+            {
+                var entry = i < entries.Count ? entries[i] : new(i.ToString("00"), T("value.missing", "Missing"));
+                var other = i < otherEntries.Count
+                    ? otherEntries[i]
+                    : new(i.ToString("00"), T("value.missing", "Missing"));
+                var differs = !string.Equals(entry.Value, other.Value, StringComparison.Ordinal);
+                listBox.AddChild(BuildPileEntryRow(entry.Index, entry.Value, differs, valueColor));
+            }
+
+            return box;
+        }
+
+        private Control BuildPileEntryRow(string index, string value, bool differs, Color valueColor)
+        {
+            var panel = new PanelContainer
+            {
+                SizeFlagsHorizontal = SizeFlags.ExpandFill,
+                CustomMinimumSize = new(0f, 36f),
+                MouseFilter = MouseFilterEnum.Ignore,
+            };
+            panel.AddThemeStyleboxOverride("panel", ModSettingsUiFactory.CreateListItemCardStyle(differs));
+
+            var row = new HBoxContainer
+            {
+                SizeFlagsHorizontal = SizeFlags.ExpandFill,
+                SizeFlagsVertical = SizeFlags.ExpandFill,
+                MouseFilter = MouseFilterEnum.Ignore,
+                Alignment = BoxContainer.AlignmentMode.Center,
+            };
+            row.AddThemeConstantOverride("separation", 8);
+            panel.AddChild(row);
+
+            row.AddChild(CreateFixedValueLabel(index, 42, RitsuShellTheme.Current.Text.Number, false));
+            row.AddChild(CreateValueLabel(value, differs ? RitsuShellTheme.Current.Text.HoverHighlight : valueColor));
+            return panel;
+        }
+
+        private Control BuildExpandedValueColumn(string title, string value, Color valueColor)
+        {
+            var box = new VBoxContainer
+            {
+                SizeFlagsHorizontal = SizeFlags.ExpandFill,
+                MouseFilter = MouseFilterEnum.Ignore,
+            };
+            box.AddThemeConstantOverride("separation", 4);
+            box.AddChild(CreateLabel(title, 14, RitsuShellTheme.Current.Text.RichTitle, true));
+            box.AddChild(CreateMultilineValueLabel(value, valueColor));
+            return box;
         }
 
         private Control BuildFooter()
@@ -344,7 +498,7 @@ namespace STS2RitsuLib.Networking.StateDivergence
 
         private Label CreateHeaderLabel(string text)
         {
-            var label = CreateLabel(text, 15, RitsuShellTheme.Current.Text.RichTitle, true);
+            var label = CreateLabel(text, 17, RitsuShellTheme.Current.Text.RichTitle, true);
             label.SizeFlagsHorizontal = SizeFlags.ExpandFill;
             return label;
         }
@@ -359,8 +513,8 @@ namespace STS2RitsuLib.Networking.StateDivergence
 
         private Label CreateValueLabel(string text, Color color, bool bold = false)
         {
-            var label = CreateLabel(text, 14, color, bold);
-            label.CustomMinimumSize = new(0f, 28f);
+            var label = CreateLabel(text, 16, color, bold);
+            label.CustomMinimumSize = new(0f, 30f);
             label.SizeFlagsHorizontal = SizeFlags.ExpandFill;
             label.VerticalAlignment = VerticalAlignment.Center;
             label.TextOverrunBehavior = TextServer.OverrunBehavior.TrimEllipsis;
@@ -373,6 +527,44 @@ namespace STS2RitsuLib.Networking.StateDivergence
             label.CustomMinimumSize = new(width, 28f);
             label.SizeFlagsHorizontal = SizeFlags.ShrinkBegin;
             return label;
+        }
+
+        private Label CreateMultilineValueLabel(string text, Color color)
+        {
+            return new Label
+            {
+                Text = text,
+                AutowrapMode = TextServer.AutowrapMode.WordSmart,
+                SizeFlagsHorizontal = SizeFlags.ExpandFill,
+                MouseFilter = MouseFilterEnum.Ignore,
+            }.Also(label =>
+            {
+                label.AddThemeFontOverride("font", RitsuShellTheme.Current.Font.Body);
+                label.AddThemeFontSizeOverride("font_size", 16);
+                label.AddThemeColorOverride("font_color", color);
+            });
+        }
+
+        private static IReadOnlyList<IndexedLine> ParseIndexedLines(string text)
+        {
+            if (string.IsNullOrWhiteSpace(text) ||
+                (!text.Contains('\n') && text.StartsWith("<", StringComparison.Ordinal)))
+                return [];
+
+            return text.Replace("\r\n", "\n")
+                .Split('\n', StringSplitOptions.RemoveEmptyEntries)
+                .Select(ParseIndexedLine)
+                .ToList();
+        }
+
+        private static IndexedLine ParseIndexedLine(string line)
+        {
+            var trimmed = line.Trim();
+            var split = trimmed.IndexOf("  ", StringComparison.Ordinal);
+            if (split <= 0)
+                return new("", trimmed);
+
+            return new(trimmed[..split], trimmed[(split + 2)..].TrimStart());
         }
 
         private Control CreateInfoCard(string text, Color color)
@@ -447,7 +639,7 @@ namespace STS2RitsuLib.Networking.StateDivergence
                 builder.AppendLine(new('-', section.Title.Length));
                 builder.AppendLine(section.Description);
                 foreach (var row in section.Rows)
-                    builder.AppendLine($"{row.Path}: local={row.LocalValue}; remote={row.RemoteValue}");
+                    AppendReportRow(builder, row);
             }
 
             builder.AppendLine();
@@ -464,6 +656,29 @@ namespace STS2RitsuLib.Networking.StateDivergence
             builder.AppendLine("  " + F("checksum.id", "ID: {0}", info.Id));
             builder.AppendLine("  " + F("checksum.value", "Checksum: {0}", info.Checksum));
             builder.AppendLine("  " + F("checksum.context", "Context: {0}", info.Context));
+        }
+
+        private static void AppendReportRow(StringBuilder builder, StateDivergenceDiagnosticRow row)
+        {
+            if (!IsExpandedDetail(row))
+            {
+                builder.AppendLine($"{row.Path}: local={row.LocalValue}; remote={row.RemoteValue}");
+                return;
+            }
+
+            builder.AppendLine(row.Path);
+            if (!string.IsNullOrWhiteSpace(row.Detail))
+                builder.AppendLine("  " + row.Detail);
+            builder.AppendLine("  local:");
+            AppendIndentedLines(builder, row.LocalValue, "    ");
+            builder.AppendLine("  remote:");
+            AppendIndentedLines(builder, row.RemoteValue, "    ");
+        }
+
+        private static void AppendIndentedLines(StringBuilder builder, string text, string indent)
+        {
+            foreach (var line in text.Replace("\r\n", "\n").Split('\n'))
+                builder.AppendLine(indent + line);
         }
 
         private bool TryScrollFromInput(InputEvent @event)
@@ -567,6 +782,8 @@ namespace STS2RitsuLib.Networking.StateDivergence
         {
             return StateDivergenceDiagnosticsLocalization.Format(key, fallback, args);
         }
+
+        private readonly record struct IndexedLine(string Index, string Value);
     }
 
     internal static class StateDivergenceDiagnosticsPanelExtensions
