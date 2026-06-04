@@ -234,7 +234,7 @@ namespace STS2RitsuLib.Settings
             _shellThemeChangedHandler = OnShellThemeChanged;
             RitsuShellThemeRuntime.ThemeChanged += _shellThemeChangedHandler;
             TryStartShellThemeWatcher();
-            _ = WaitForInitialUiReadyAsync();
+            ObserveBackgroundUiTask(WaitForInitialUiReadyAsync(), "initial_ui_ready");
             RitsuShellTooltipTheme.ApplyToTreeRoot(this);
             ProcessMode = ProcessModeEnum.Disabled;
             FocusMode = FocusModeEnum.None;
@@ -289,7 +289,7 @@ namespace STS2RitsuLib.Settings
             TryStartShellThemeWatcher();
             if (!IsInitialUiReady)
             {
-                _ = EnsureOpenContentReadyAsync();
+                ObserveBackgroundUiTask(EnsureOpenContentReadyAsync(), "open_content_ready");
                 return;
             }
 
@@ -602,6 +602,27 @@ namespace STS2RitsuLib.Settings
 
             foreach (var cache in _pageContentCaches.Values)
                 cache.BuildCancellation?.Cancel();
+        }
+
+        private void ObserveBackgroundUiTask(Task task, string operation)
+        {
+            _ = ObserveBackgroundUiTaskAsync(task, operation);
+        }
+
+        private static async Task ObserveBackgroundUiTaskAsync(Task task, string operation)
+        {
+            try
+            {
+                await task;
+            }
+            catch (OperationCanceledException)
+            {
+                // Normal when the submenu is closed or freed between deferred frame waits.
+            }
+            catch (Exception ex)
+            {
+                RitsuLibFramework.Logger.Warn($"[Settings] Background UI task '{operation}' failed: {ex.Message}");
+            }
         }
 
         private void CallDeferredIfAlive(Action action)
