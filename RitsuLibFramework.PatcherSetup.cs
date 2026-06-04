@@ -208,6 +208,8 @@ namespace STS2RitsuLib
             patcher.RegisterPatch<JoinFailureDiagnosticsPopupCreatePatch>();
             patcher.RegisterPatch<JoinFailureDiagnosticsPopupReadyPatch>();
             patcher.RegisterPatch<StateDivergenceDiagnosticsLogPatch>();
+            patcher.RegisterPatch<StateDivergenceSupplementSerializePatch>();
+            patcher.RegisterPatch<StateDivergenceSupplementDeserializePatch>();
             patcher.RegisterPatch<StateDivergenceDiagnosticsPopupCreatePatch>();
             patcher.RegisterPatch<StateDivergenceDiagnosticsPopupReadyPatch>();
             patcher.RegisterPatch<RunEndedLifecyclePatch>();

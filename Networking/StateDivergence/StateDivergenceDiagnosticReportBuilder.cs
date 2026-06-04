@@ -29,6 +29,7 @@ namespace STS2RitsuLib.Networking.StateDivergence
             var sections = new List<StateDivergenceDiagnosticSection>
             {
                 BuildOverview(local, remote, remotePeerId, role),
+                BuildProtocolMaps(local.Checksum, remote.Checksum),
                 BuildSynchronizers(local.FullState, remote.FullState),
                 BuildCreatures(local.FullState, remote.FullState),
                 BuildPlayers(local.FullState, remote.FullState),
@@ -55,6 +56,73 @@ namespace STS2RitsuLib.Networking.StateDivergence
                 sections,
                 local.FullState.ToString(),
                 remote.FullState.ToString());
+        }
+
+        private static StateDivergenceDiagnosticSection BuildProtocolMaps(
+            NetChecksumData localChecksum,
+            NetChecksumData remoteChecksum)
+        {
+            var local = StateDivergenceSupplementPayloadCodec.CreateLocalSnapshot(localChecksum);
+            var hasRemote = StateDivergenceSupplementStore.TryTake(remoteChecksum, out var remote);
+            var rows = new List<StateDivergenceDiagnosticRow>();
+
+            if (!hasRemote)
+            {
+                rows.Add(new(
+                    "savedProperties.supplement",
+                    L("value.present", "Present"),
+                    L("value.missing", "Missing"),
+                    L("detail.missingSupplement",
+                        "The remote peer did not include a RitsuLib state-divergence supplement payload.")));
+            }
+            else
+            {
+                AddIfDifferent(rows, "savedProperties.netIdBitSize",
+                    local.SavedPropertyNetIdBitSize, remote.SavedPropertyNetIdBitSize);
+                AddIfDifferent(rows, "savedProperties.count",
+                    local.SavedPropertyNames.Count, remote.SavedPropertyNames.Count);
+                AddIfDifferent(rows, "savedProperties.mapHash",
+                    FormatHash(local.SavedPropertyMapHash), FormatHash(remote.SavedPropertyMapHash));
+                AddSavedPropertyMapRows(rows, local.SavedPropertyNames, remote.SavedPropertyNames);
+            }
+
+            return new(
+                L("section.protocolMaps.title", "Protocol maps"),
+                L("section.protocolMaps.description",
+                    "RitsuLib divergence supplement data that affects packet decoding, including SavedProperty net-id maps."),
+                rows.Count == 0,
+                rows);
+        }
+
+        private static void AddSavedPropertyMapRows(
+            ICollection<StateDivergenceDiagnosticRow> rows,
+            IReadOnlyList<string> local,
+            IReadOnlyList<string> remote)
+        {
+            var count = Math.Max(local.Count, remote.Count);
+            var localLines = new List<string>();
+            var remoteLines = new List<string>();
+
+            for (var i = 0; i < count; i++)
+            {
+                var l = i < local.Count ? local[i] : L("value.missing", "Missing");
+                var r = i < remote.Count ? remote[i] : L("value.missing", "Missing");
+                if (string.Equals(l, r, StringComparison.Ordinal))
+                    continue;
+
+                localLines.Add($"{i:0000}  {l}");
+                remoteLines.Add($"{i:0000}  {r}");
+            }
+
+            if (localLines.Count == 0)
+                return;
+
+            rows.Add(new(
+                "savedProperties.netIdMap",
+                string.Join(Environment.NewLine, localLines),
+                string.Join(Environment.NewLine, remoteLines),
+                F("detail.savedPropertyMapMismatch", "{0} SavedProperty net-id slot(s) differ.",
+                    localLines.Count)));
         }
 
         private static StateDivergenceDiagnosticSection BuildOverview(
@@ -680,6 +748,11 @@ namespace STS2RitsuLib.Networking.StateDivergence
         private static string FormatNullableInt(int? value)
         {
             return value.HasValue ? value.Value.ToString() : L("value.none", "<none>");
+        }
+
+        private static string FormatHash(uint value)
+        {
+            return "0x" + value.ToString("X8");
         }
 
         private static string FormatIntArrayProperty(int[]? value)

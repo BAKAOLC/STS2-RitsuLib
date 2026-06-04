@@ -3,6 +3,7 @@ using System.Runtime.CompilerServices;
 using MegaCrit.Sts2.Core.Entities.Multiplayer;
 using MegaCrit.Sts2.Core.Multiplayer.Game;
 using MegaCrit.Sts2.Core.Multiplayer.Messages.Game.Checksums;
+using MegaCrit.Sts2.Core.Multiplayer.Serialization;
 using MegaCrit.Sts2.Core.Nodes.CommonUi;
 using STS2RitsuLib.Patching.Models;
 
@@ -22,6 +23,53 @@ namespace STS2RitsuLib.Networking.StateDivergence.Patches
         {
             report = _latestReport!;
             return report != null;
+        }
+    }
+
+    internal sealed class StateDivergenceSupplementSerializePatch : IPatchMethod
+    {
+        public static string PatchId => "state_divergence_supplement_serialize";
+        public static bool IsCritical => false;
+
+        public static string Description =>
+            "Append compressed RitsuLib divergence diagnostics to state divergence messages.";
+
+        public static ModPatchTarget[] GetTargets()
+        {
+            StateDivergenceSupplementPayloadCodec.EnsureRegistered();
+            return
+            [
+                new(typeof(StateDivergenceMessage), nameof(StateDivergenceMessage.Serialize), [typeof(PacketWriter)]),
+            ];
+        }
+
+        // ReSharper disable once InconsistentNaming
+        public static void Postfix(StateDivergenceMessage __instance, PacketWriter writer)
+        {
+            StateDivergenceSupplementPayloadCodec.Write(writer, __instance);
+        }
+    }
+
+    internal sealed class StateDivergenceSupplementDeserializePatch : IPatchMethod
+    {
+        public static string PatchId => "state_divergence_supplement_deserialize";
+        public static bool IsCritical => false;
+
+        public static string Description =>
+            "Read compressed RitsuLib divergence diagnostics from state divergence messages.";
+
+        public static ModPatchTarget[] GetTargets()
+        {
+            StateDivergenceSupplementPayloadCodec.EnsureRegistered();
+            return
+            [
+                new(typeof(StateDivergenceMessage), nameof(StateDivergenceMessage.Deserialize), [typeof(PacketReader)]),
+            ];
+        }
+
+        public static void Postfix(PacketReader reader)
+        {
+            StateDivergenceSupplementPayloadCodec.Read(reader);
         }
     }
 
