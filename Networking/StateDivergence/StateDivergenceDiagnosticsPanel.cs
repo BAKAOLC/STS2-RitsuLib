@@ -261,25 +261,10 @@ namespace STS2RitsuLib.Networking.StateDivergence
             panel.AddThemeStyleboxOverride("panel", ModSettingsUiFactory.CreateListShellStyle());
 
             var box = CreateInsetVBox(panel, 10, 8, 10, 8, 6);
-            box.AddChild(BuildDetailHeaderRow());
             foreach (var row in section.Rows)
                 box.AddChild(BuildDetailRow(row));
 
             return panel;
-        }
-
-        private Control BuildDetailHeaderRow()
-        {
-            var row = new HBoxContainer
-            {
-                SizeFlagsHorizontal = SizeFlags.ExpandFill,
-                MouseFilter = MouseFilterEnum.Ignore,
-            };
-            row.AddThemeConstantOverride("separation", 10);
-            row.AddChild(CreateFixedHeaderLabel(T("column.path", "Path"), 310));
-            row.AddChild(CreateHeaderLabel(T("column.local", "Local")));
-            row.AddChild(CreateHeaderLabel(T("column.remote", "Remote")));
-            return row;
         }
 
         private Control BuildDetailRow(StateDivergenceDiagnosticRow detail)
@@ -306,25 +291,42 @@ namespace STS2RitsuLib.Networking.StateDivergence
             var panel = new PanelContainer
             {
                 SizeFlagsHorizontal = SizeFlags.ExpandFill,
-                CustomMinimumSize = new(0f, 50f),
                 MouseFilter = MouseFilterEnum.Ignore,
             };
             panel.AddThemeStyleboxOverride("panel", ModSettingsUiFactory.CreateListItemCardStyle(true));
 
-            var row = new HBoxContainer
+            var box = CreateInsetVBox(panel, 10, 7, 10, 7, 6);
+            box.AddChild(CreateLabel(detail.Path, 17, RitsuShellTheme.Current.Text.RichTitle, true));
+            box.AddChild(BuildComparisonValues(detail.LocalValue, detail.RemoteValue));
+            return panel;
+        }
+
+        private Control BuildComparisonValues(string localValue, string remoteValue)
+        {
+            var values = new HBoxContainer
             {
                 SizeFlagsHorizontal = SizeFlags.ExpandFill,
-                SizeFlagsVertical = SizeFlags.ExpandFill,
                 MouseFilter = MouseFilterEnum.Ignore,
-                Alignment = BoxContainer.AlignmentMode.Center,
             };
-            row.AddThemeConstantOverride("separation", 10);
-            panel.AddChild(row);
+            values.AddThemeConstantOverride("separation", 12);
+            values.AddChild(BuildInlineValueColumn(T("column.local", "Local"), localValue,
+                RitsuShellTheme.Current.Text.RichBody));
+            values.AddChild(BuildInlineValueColumn(T("column.remote", "Remote"), remoteValue,
+                RitsuShellTheme.Current.Text.HoverHighlight));
+            return values;
+        }
 
-            row.AddChild(CreateFixedValueLabel(detail.Path, 310, RitsuShellTheme.Current.Text.RichTitle, true));
-            row.AddChild(CreateValueLabel(detail.LocalValue, RitsuShellTheme.Current.Text.RichBody));
-            row.AddChild(CreateValueLabel(detail.RemoteValue, RitsuShellTheme.Current.Text.HoverHighlight));
-            return panel;
+        private Control BuildInlineValueColumn(string title, string value, Color valueColor)
+        {
+            var box = new VBoxContainer
+            {
+                SizeFlagsHorizontal = SizeFlags.ExpandFill,
+                MouseFilter = MouseFilterEnum.Ignore,
+            };
+            box.AddThemeConstantOverride("separation", 2);
+            box.AddChild(CreateLabel(title, 14, RitsuShellTheme.Current.Text.RichMuted, true));
+            box.AddChild(CreateValueLabel(value, valueColor));
+            return box;
         }
 
         private Control BuildExpandedDetailRow(StateDivergenceDiagnosticRow detail)
@@ -337,9 +339,9 @@ namespace STS2RitsuLib.Networking.StateDivergence
             panel.AddThemeStyleboxOverride("panel", ModSettingsUiFactory.CreateListItemCardStyle(true));
 
             var box = CreateInsetVBox(panel, 10, 8, 10, 8, 8);
-            box.AddChild(CreateLabel(detail.Path, 15, RitsuShellTheme.Current.Text.RichTitle, true));
+            box.AddChild(CreateLabel(detail.Path, 17, RitsuShellTheme.Current.Text.RichTitle, true));
             if (!string.IsNullOrWhiteSpace(detail.Detail))
-                box.AddChild(CreateLabel(detail.Detail, 13, RitsuShellTheme.Current.Text.RichMuted));
+                box.AddChild(CreateLabel(detail.Detail, 15, RitsuShellTheme.Current.Text.RichMuted));
 
             var values = new HBoxContainer
             {
@@ -357,79 +359,94 @@ namespace STS2RitsuLib.Networking.StateDivergence
 
         private Control BuildPileDetailRow(StateDivergenceDiagnosticRow detail)
         {
-            var panel = new PanelContainer
+            var body = new VBoxContainer
             {
                 SizeFlagsHorizontal = SizeFlags.ExpandFill,
                 MouseFilter = MouseFilterEnum.Ignore,
             };
-            panel.AddThemeStyleboxOverride("panel", ModSettingsUiFactory.CreateListItemCardStyle(true));
+            body.AddThemeConstantOverride("separation", 8);
+            body.AddChild(BuildPileComparisonList(detail.LocalValue, detail.RemoteValue));
 
-            var box = CreateInsetVBox(panel, 10, 8, 10, 8, 8);
-            box.AddChild(CreateLabel(detail.Path, 18, RitsuShellTheme.Current.Text.RichTitle, true));
-            if (!string.IsNullOrWhiteSpace(detail.Detail))
-                box.AddChild(CreateLabel(detail.Detail, 15, RitsuShellTheme.Current.Text.RichMuted));
-
-            var values = new HBoxContainer
-            {
-                SizeFlagsHorizontal = SizeFlags.ExpandFill,
-                MouseFilter = MouseFilterEnum.Ignore,
-            };
-            values.AddThemeConstantOverride("separation", 14);
-            values.AddChild(BuildPileValueColumn(T("column.local", "Local"), detail.LocalValue, detail.RemoteValue,
-                RitsuShellTheme.Current.Text.RichBody));
-            values.AddChild(BuildPileValueColumn(T("column.remote", "Remote"), detail.RemoteValue, detail.LocalValue,
-                RitsuShellTheme.Current.Text.HoverHighlight));
-            box.AddChild(values);
-            return panel;
+            return new ModSettingsCollapsibleSection(
+                detail.Path,
+                "state_divergence_pile_" + detail.Path.GetHashCode(),
+                detail.Detail,
+                true,
+                [body]);
         }
 
-        private Control BuildPileValueColumn(string title, string value, string counterpart, Color valueColor)
+        private Control BuildPileComparisonList(string localValue, string remoteValue)
         {
-            var box = new VBoxContainer
-            {
-                SizeFlagsHorizontal = SizeFlags.ExpandFill,
-                MouseFilter = MouseFilterEnum.Ignore,
-            };
-            box.AddThemeConstantOverride("separation", 6);
-            box.AddChild(CreateLabel(title, 16, RitsuShellTheme.Current.Text.RichTitle, true));
-
-            var list = new PanelContainer
-            {
-                SizeFlagsHorizontal = SizeFlags.ExpandFill,
-                MouseFilter = MouseFilterEnum.Ignore,
-            };
-            list.AddThemeStyleboxOverride("panel", ModSettingsUiFactory.CreateListShellStyle());
-            var listBox = CreateInsetVBox(list, 6, 6, 6, 6, 4);
-            box.AddChild(list);
-
-            var entries = ParseIndexedLines(value);
-            var otherEntries = ParseIndexedLines(counterpart);
-            var count = Math.Max(entries.Count, otherEntries.Count);
+            var localEntries = ParseIndexedLines(localValue);
+            var remoteEntries = ParseIndexedLines(remoteValue);
+            var count = Math.Max(localEntries.Count, remoteEntries.Count);
             if (count == 0)
+                return BuildComparisonValues(localValue, remoteValue);
+
+            var scroll = new ScrollContainer
             {
-                listBox.AddChild(BuildPileEntryRow("", value, false, valueColor));
-                return box;
-            }
+                SizeFlagsHorizontal = SizeFlags.ExpandFill,
+                HorizontalScrollMode = ScrollContainer.ScrollMode.Disabled,
+                VerticalScrollMode = ScrollContainer.ScrollMode.Auto,
+                CustomMinimumSize = new(0f, Math.Min(312f, Math.Max(96f, 40f + count * 40f))),
+                MouseFilter = MouseFilterEnum.Stop,
+            };
+            ModSettingsUiControlTheming.ApplySettingsScrollContainerTheme(scroll);
+
+            var margin = new MarginContainer
+            {
+                SizeFlagsHorizontal = SizeFlags.ExpandFill,
+                MouseFilter = MouseFilterEnum.Ignore,
+            };
+            margin.AddThemeConstantOverride("margin_right",
+                ModSettingsUiControlTheming.ResolveSettingsScrollContentRightGutter(scroll));
+            scroll.AddChild(margin);
+
+            var table = new VBoxContainer
+            {
+                SizeFlagsHorizontal = SizeFlags.ExpandFill,
+                MouseFilter = MouseFilterEnum.Ignore,
+            };
+            table.AddThemeConstantOverride("separation", 4);
+            margin.AddChild(table);
+
+            table.AddChild(BuildPileHeaderRow());
 
             for (var i = 0; i < count; i++)
             {
-                var entry = i < entries.Count ? entries[i] : new(i.ToString("00"), T("value.missing", "Missing"));
-                var other = i < otherEntries.Count
-                    ? otherEntries[i]
+                var local = i < localEntries.Count
+                    ? localEntries[i]
                     : new(i.ToString("00"), T("value.missing", "Missing"));
-                var differs = !string.Equals(entry.Value, other.Value, StringComparison.Ordinal);
-                listBox.AddChild(BuildPileEntryRow(entry.Index, entry.Value, differs, valueColor));
+                var remote = i < remoteEntries.Count
+                    ? remoteEntries[i]
+                    : new(i.ToString("00"), T("value.missing", "Missing"));
+                table.AddChild(BuildPileEntryRow(local, remote));
             }
 
-            return box;
+            return scroll;
         }
 
-        private Control BuildPileEntryRow(string index, string value, bool differs, Color valueColor)
+        private Control BuildPileHeaderRow()
         {
+            var row = new HBoxContainer
+            {
+                SizeFlagsHorizontal = SizeFlags.ExpandFill,
+                MouseFilter = MouseFilterEnum.Ignore,
+            };
+            row.AddThemeConstantOverride("separation", 8);
+            row.AddChild(CreateFixedHeaderLabel("#", 42));
+            row.AddChild(CreateHeaderLabel(T("column.local", "Local")));
+            row.AddChild(CreateHeaderLabel(T("column.remote", "Remote")));
+            return row;
+        }
+
+        private Control BuildPileEntryRow(IndexedLine local, IndexedLine remote)
+        {
+            var differs = !string.Equals(local.Value, remote.Value, StringComparison.Ordinal);
             var panel = new PanelContainer
             {
                 SizeFlagsHorizontal = SizeFlags.ExpandFill,
-                CustomMinimumSize = new(0f, 36f),
+                CustomMinimumSize = new(0f, 38f),
                 MouseFilter = MouseFilterEnum.Ignore,
             };
             panel.AddThemeStyleboxOverride("panel", ModSettingsUiFactory.CreateListItemCardStyle(differs));
@@ -444,8 +461,11 @@ namespace STS2RitsuLib.Networking.StateDivergence
             row.AddThemeConstantOverride("separation", 8);
             panel.AddChild(row);
 
-            row.AddChild(CreateFixedValueLabel(index, 42, RitsuShellTheme.Current.Text.Number, false));
-            row.AddChild(CreateValueLabel(value, differs ? RitsuShellTheme.Current.Text.HoverHighlight : valueColor));
+            row.AddChild(CreateFixedValueLabel(local.Index, 42, RitsuShellTheme.Current.Text.Number, false));
+            row.AddChild(CreateValueLabel(local.Value,
+                differs ? RitsuShellTheme.Current.Text.HoverHighlight : RitsuShellTheme.Current.Text.RichBody));
+            row.AddChild(CreateValueLabel(remote.Value,
+                differs ? RitsuShellTheme.Current.Text.HoverHighlight : RitsuShellTheme.Current.Text.RichBody));
             return panel;
         }
 
