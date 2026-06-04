@@ -83,6 +83,15 @@ namespace STS2RitsuLib.Interactions.RightClick
         ///     Registers a synced right-click binding for models of type <typeparamref name="TModel" />.
         ///     为 <typeparamref name="TModel" /> 类型的模型注册同步右键绑定。
         /// </summary>
+        /// <param name="modId">Owning mod id. 所属 mod id。</param>
+        /// <param name="localStem">Local binding id stem. 本地 binding id stem。</param>
+        /// <param name="canHandle">
+        ///     Execution-time guard. It runs after the synced action resolves the model on each peer. Do not use this
+        ///     delegate for local-only UI filtering.
+        ///     执行期判定：同步动作在各端解析模型后调用。不要将它用于仅本地 UI 过滤。
+        /// </param>
+        /// <param name="execute">Synced right-click behavior. 同步右键行为。</param>
+        /// <param name="priority">Binding priority; higher values run first. 优先级越高越先运行。</param>
         /// <returns>
         ///     A disposable registration handle.
         ///     可释放的注册句柄。
@@ -95,16 +104,58 @@ namespace STS2RitsuLib.Interactions.RightClick
             int priority = 0)
             where TModel : AbstractModel
         {
+            ArgumentNullException.ThrowIfNull(canHandle);
+
+            return Register<TModel>(
+                modId,
+                localStem,
+                execute,
+                priority,
+                null,
+                context => canHandle(new(context.Player, context.Model, context.Trigger)));
+        }
+
+        /// <summary>
+        ///     Registers a synced right-click binding for models of type <typeparamref name="TModel" />.
+        ///     为 <typeparamref name="TModel" /> 类型的模型注册同步右键绑定。
+        /// </summary>
+        /// <param name="modId">Owning mod id. 所属 mod id。</param>
+        /// <param name="localStem">Local binding id stem. 本地 binding id stem。</param>
+        /// <param name="execute">Synced right-click behavior. 同步右键行为。</param>
+        /// <param name="priority">Binding priority; higher values run first. 优先级越高越先运行。</param>
+        /// <param name="canHandleLocal">
+        ///     Optional local-only fast filter. Use only stable, local UI facts here; mutable gameplay state should be
+        ///     checked in <paramref name="canExecute" /> or <paramref name="execute" />.
+        ///     可选的仅本地快速过滤。这里只应使用稳定的本地 UI 信息；可变游戏状态应在
+        ///     <paramref name="canExecute" /> 或 <paramref name="execute" /> 中检查。
+        /// </param>
+        /// <param name="canExecute">
+        ///     Optional execution-time guard. It runs after the synced action resolves the model on each peer.
+        ///     可选执行期判定：同步动作在各端解析模型后调用。
+        /// </param>
+        /// <returns>
+        ///     A disposable registration handle.
+        ///     可释放的注册句柄。
+        /// </returns>
+        public static IDisposable Register<TModel>(
+            string modId,
+            string localStem,
+            Func<ModRightClickExecutionContext, Task> execute,
+            int priority = 0,
+            Func<ModRightClickContext, bool>? canHandleLocal = null,
+            Func<ModRightClickExecutionContext, bool>? canExecute = null)
+            where TModel : AbstractModel
+        {
             ArgumentException.ThrowIfNullOrWhiteSpace(modId);
             ArgumentException.ThrowIfNullOrWhiteSpace(localStem);
-            ArgumentNullException.ThrowIfNull(canHandle);
             ArgumentNullException.ThrowIfNull(execute);
 
             var id = new ModRightClickBindingId(ModContentRegistry.GetQualifiedRightClickId(modId, localStem));
             var binding = new RegisteredRightClickBinding(
                 id,
                 typeof(TModel),
-                canHandle,
+                canHandleLocal,
+                canExecute,
                 execute,
                 priority,
                 Interlocked.Increment(ref _nextBindingSequence));
@@ -359,6 +410,8 @@ namespace STS2RitsuLib.Interactions.RightClick
             {
                 if (model is not IModRightClickableModel rightClickable)
                     return false;
+                if (!TryCanExecuteRightClickable(rightClickable, context))
+                    return false;
 
                 await rightClickable.OnRightClick(context);
                 return true;
@@ -370,9 +423,50 @@ namespace STS2RitsuLib.Interactions.RightClick
             var binding = TryGetBinding(bindingId);
             if (binding == null || !binding.ModelType.IsInstanceOfType(model))
                 return false;
+            if (!TryCanExecute(binding, context))
+                return false;
 
             await binding.Execute(context);
             return true;
+        }
+
+        private static bool TryCanExecuteRightClickable(
+            IModRightClickableModel rightClickable,
+            ModRightClickExecutionContext context)
+        {
+            try
+            {
+                return rightClickable.CanExecuteRightClick(context);
+            }
+            catch (Exception ex)
+            {
+                RitsuLibFramework.Logger.Warn(
+                    $"[RightClick] Interface execute guard failed. " +
+                    $"ModelId='{context.Model.Id}' OwnerType='{context.Model.GetType().FullName}' " +
+                    $"SourceType='{rightClickable.GetType().FullName}' Error='{ex.Message}'");
+                return false;
+            }
+        }
+
+        private static bool TryCanExecute(
+            RegisteredRightClickBinding binding,
+            ModRightClickExecutionContext context)
+        {
+            if (binding.CanExecute == null)
+                return true;
+
+            try
+            {
+                return binding.CanExecute(context);
+            }
+            catch (Exception ex)
+            {
+                RitsuLibFramework.Logger.Warn(
+                    $"[RightClick] Binding execute guard failed. BindingId='{binding.Id}' " +
+                    $"ModelId='{context.Model.Id}' OwnerType='{context.Model.GetType().FullName}' " +
+                    $"Error='{ex.Message}'");
+                return false;
+            }
         }
 
         private static async Task<bool> TryExecuteCapabilityRightClick(
@@ -384,6 +478,8 @@ namespace STS2RitsuLib.Interactions.RightClick
             foreach (var capability in GetRightClickCapabilities(model))
             {
                 if (!TryCanHandleCapability(capability, localContext))
+                    continue;
+                if (!TryCanExecuteCapability(capability, context))
                     continue;
 
                 try
@@ -427,6 +523,21 @@ namespace STS2RitsuLib.Interactions.RightClick
             catch (Exception ex)
             {
                 ModelCapabilityDiagnostics.WarnFailure(RightClickPreflightSurface, context.Model, capability, ex);
+                return false;
+            }
+        }
+
+        private static bool TryCanExecuteCapability(
+            IModelRightClickCapability capability,
+            ModRightClickExecutionContext context)
+        {
+            try
+            {
+                return capability.CanExecuteRightClick(context);
+            }
+            catch (Exception ex)
+            {
+                ModelCapabilityDiagnostics.WarnFailure(RightClickExecuteSurface, context.Model, capability, ex);
                 return false;
             }
         }
@@ -512,7 +623,7 @@ namespace STS2RitsuLib.Interactions.RightClick
                 var bindings = GetBindingsSnapshot();
                 var ids = (from binding in bindings
                     where binding.ModelType.IsInstanceOfType(context.Model)
-                    where TryCanHandle(binding, context)
+                    where TryCanHandleLocal(binding, context)
                     select binding.Id).ToList();
 
                 if (context.Model is IModRightClickableModel rightClickable &&
@@ -569,11 +680,14 @@ namespace STS2RitsuLib.Interactions.RightClick
                 }
             }
 
-            private static bool TryCanHandle(RegisteredRightClickBinding binding, ModRightClickContext context)
+            private static bool TryCanHandleLocal(RegisteredRightClickBinding binding, ModRightClickContext context)
             {
+                if (binding.CanHandleLocal == null)
+                    return true;
+
                 try
                 {
-                    return binding.CanHandle(context);
+                    return binding.CanHandleLocal(context);
                 }
                 catch (Exception ex)
                 {
@@ -589,7 +703,8 @@ namespace STS2RitsuLib.Interactions.RightClick
         private sealed class RegisteredRightClickBinding(
             ModRightClickBindingId id,
             Type modelType,
-            Func<ModRightClickContext, bool> canHandle,
+            Func<ModRightClickContext, bool>? canHandleLocal,
+            Func<ModRightClickExecutionContext, bool>? canExecute,
             Func<ModRightClickExecutionContext, Task> execute,
             int priority,
             long sequence) : IDisposable
@@ -598,7 +713,8 @@ namespace STS2RitsuLib.Interactions.RightClick
 
             public ModRightClickBindingId Id { get; } = id;
             public Type ModelType { get; } = modelType;
-            public Func<ModRightClickContext, bool> CanHandle { get; } = canHandle;
+            public Func<ModRightClickContext, bool>? CanHandleLocal { get; } = canHandleLocal;
+            public Func<ModRightClickExecutionContext, bool>? CanExecute { get; } = canExecute;
             public Func<ModRightClickExecutionContext, Task> Execute { get; } = execute;
             public int Priority { get; } = priority;
             public long Sequence { get; } = sequence;

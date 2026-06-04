@@ -40,10 +40,21 @@ namespace STS2RitsuLib.Models.Capabilities
         ModelRightClickCapabilityRunMode RightClickRunMode => ModelRightClickCapabilityRunMode.Exclusive;
 
         /// <summary>
-        ///     Returns true when the local input should be accepted and synchronized.
-        ///     返回 true 时，本地输入会被接受并同步。
+        ///     Optional local-only fast filter. Use only stable, local UI facts here; mutable gameplay state should be
+        ///     checked in <see cref="CanExecuteRightClick" /> or <see cref="OnRightClick" />.
+        ///     可选的仅本地快速过滤。这里只应使用稳定的本地 UI 信息；可变游戏状态应在
+        ///     <see cref="CanExecuteRightClick" /> 或 <see cref="OnRightClick" /> 中检查。
         /// </summary>
         bool CanHandleRightClickLocal(ModRightClickContext context)
+        {
+            return true;
+        }
+
+        /// <summary>
+        ///     Execution-time guard. It runs after the synced action resolves the model on each peer.
+        ///     执行期判定：同步动作在各端解析模型后调用。
+        /// </summary>
+        bool CanExecuteRightClick(ModRightClickExecutionContext context)
         {
             return true;
         }

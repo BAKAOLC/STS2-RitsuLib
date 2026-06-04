@@ -7,10 +7,21 @@ namespace STS2RitsuLib.Interactions.RightClick
     public interface IModRightClickableModel
     {
         /// <summary>
-        ///     Local preflight check. Returning false leaves the input unhandled.
-        ///     本地预检；返回 false 时不会消耗输入。
+        ///     Optional local-only fast filter. Use only stable, local UI facts here; mutable gameplay state should be
+        ///     checked in <see cref="CanExecuteRightClick" /> or <see cref="OnRightClick" />.
+        ///     可选的仅本地快速过滤。这里只应使用稳定的本地 UI 信息；可变游戏状态应在
+        ///     <see cref="CanExecuteRightClick" /> 或 <see cref="OnRightClick" /> 中检查。
         /// </summary>
         bool CanHandleRightClickLocal(ModRightClickContext context)
+        {
+            return true;
+        }
+
+        /// <summary>
+        ///     Execution-time guard. It runs after the synced action resolves the model on each peer.
+        ///     执行期判定：同步动作在各端解析模型后调用。
+        /// </summary>
+        bool CanExecuteRightClick(ModRightClickExecutionContext context)
         {
             return true;
         }
