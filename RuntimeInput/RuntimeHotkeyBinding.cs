@@ -55,7 +55,7 @@ namespace STS2RitsuLib.RuntimeInput
         private bool PrimaryKeyMatches(InputEventKey keyEvent)
         {
             if (!IsModifierOnly)
-                return keyEvent.Keycode == PrimaryKey;
+                return keyEvent.Keycode == PrimaryKey || keyEvent.PhysicalKeycode == PrimaryKey;
 
             return RuntimeHotkeyParser.ModifierKeyMatches(PrimaryKey, keyEvent);
         }

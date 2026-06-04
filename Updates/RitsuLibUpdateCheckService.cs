@@ -7,6 +7,7 @@ namespace STS2RitsuLib.Updates
 {
     internal static class RitsuLibUpdateCheckService
     {
+        private const double UpdateCheckToastDurationSeconds = 8.0d;
         private static readonly Uri ManifestUri = new("https://sts2-ritsulib.ritsukage.com/ritsulib-update.json");
         private static readonly Uri ReleasePageFallbackUri = new("https://sts2-ritsulib.ritsukage.com/");
         private static readonly Lock SyncRoot = new();
@@ -47,9 +48,10 @@ namespace STS2RitsuLib.Updates
             {
                 RitsuLibFramework.Logger.Warn($"[UpdateCheck] RitsuLib update check failed: {ex.Message}");
                 if (showCompletionToast)
-                    PostToMainLoop(() => RitsuToastService.ShowWarning(
+                    PostToMainLoop(() => ShowUpdateCheckToast(
                         Format("ritsulib.updateCheck.toast.failed", "Update check failed: {0}", ex.Message),
-                        L("ritsulib.updateCheck.toast.title", "RitsuLib update check")));
+                        L("ritsulib.updateCheck.toast.title", "RitsuLib update check"),
+                        RitsuToastLevel.Warning));
             }
         }
 
@@ -77,12 +79,13 @@ namespace STS2RitsuLib.Updates
                     break;
 
                 case ModUpdateCheckStatus.UpToDate when showCompletionToast:
-                    RitsuToastService.ShowInfo(
+                    ShowUpdateCheckToast(
                         Format(
                             "ritsulib.updateCheck.toast.upToDateBody",
                             "RitsuLib is up to date ({0}).",
                             result.CurrentVersion),
-                        L("ritsulib.updateCheck.toast.title", "RitsuLib update check"));
+                        L("ritsulib.updateCheck.toast.title", "RitsuLib update check"),
+                        RitsuToastLevel.Info);
                     break;
 
                 case ModUpdateCheckStatus.InvalidData:
@@ -90,14 +93,25 @@ namespace STS2RitsuLib.Updates
                     RitsuLibFramework.Logger.Warn(
                         $"[UpdateCheck] RitsuLib check skipped: {result.Message ?? result.Status.ToString()}");
                     if (showCompletionToast)
-                        RitsuToastService.ShowWarning(
+                        ShowUpdateCheckToast(
                             Format(
                                 "ritsulib.updateCheck.toast.failed",
                                 "Update check failed: {0}",
                                 result.Message ?? result.Status.ToString()),
-                            L("ritsulib.updateCheck.toast.title", "RitsuLib update check"));
+                            L("ritsulib.updateCheck.toast.title", "RitsuLib update check"),
+                            RitsuToastLevel.Warning);
                     break;
             }
+        }
+
+        private static void ShowUpdateCheckToast(string body, string title, RitsuToastLevel level)
+        {
+            RitsuToastService.Show(new(
+                body,
+                title,
+                null,
+                level,
+                UpdateCheckToastDurationSeconds));
         }
 
         private static void OpenReleasePage(Uri releasePageUri)
@@ -128,7 +142,7 @@ namespace STS2RitsuLib.Updates
                 CurrentVersion = Const.Version,
                 ManifestUri = ManifestUri,
                 ReleasePageUri = ReleasePageFallbackUri,
-                ToastDurationSeconds = 4.5d,
+                ToastDurationSeconds = UpdateCheckToastDurationSeconds,
             };
         }
 

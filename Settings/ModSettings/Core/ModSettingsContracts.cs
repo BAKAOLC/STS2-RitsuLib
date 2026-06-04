@@ -124,12 +124,4 @@ namespace STS2RitsuLib.Settings
         /// </summary>
         IStructuredModSettingsValueAdapter<TValue> Adapter { get; }
     }
-
-    /// <summary>
-    ///     Marker for bindings backed by <see cref="T:STS2RitsuLib.Settings.RunSidecar.ModRunSidecarStore" />
-    ///     (client-local JSON, never written into vanilla multiplayer packets).
-    ///     由 <see cref="T:STS2RitsuLib.Settings.RunSidecar.ModRunSidecarStore" /> 支持的绑定标记
-    ///     （客户端本地 JSON，永不写入原版多人数据包）。
-    /// </summary>
-    public interface IRunSidecarModSettingsBinding : IModSettingsBinding;
 }

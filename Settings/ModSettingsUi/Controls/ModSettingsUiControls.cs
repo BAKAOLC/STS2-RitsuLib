@@ -16,14 +16,26 @@ namespace STS2RitsuLib.Settings
     }
 
     /// <summary>
+    ///     Implemented by entry controls that consume directional (up/down) input while in an active mode — an
+    ///     open dropdown/actions menu, or a key-binding control recording input. The submenu's live focus
+    ///     navigator skips controls whose ancestor claims directional input so the control's own handling wins.
+    ///     由那些在激活模式下消费方向(上/下)输入的条目控件实现——展开的下拉/操作菜单,或正在录制输入的按键绑定控件。子菜单的
+    ///     实时焦点导航器会跳过其祖先声明占用方向输入的控件,让该控件自身的处理生效。
+    /// </summary>
+    internal interface IModSettingsDirectionalInputClaimant
+    {
+        bool ClaimsDirectionalInput { get; }
+    }
+
+    /// <summary>
     ///     Standard On/Off toggle control used by mod settings entries.
     ///     mod 设置条目使用的标准 On/Off 切换控件。
     /// </summary>
     public sealed partial class ModSettingsToggleControl : ModSettingsGamepadCompatibleButton
     {
-        private readonly bool _initialValue;
-        private readonly Action<bool>? _onChanged;
+        private bool _initialValue;
         private bool _isOn;
+        private Action<bool>? _onChanged;
 
         /// <summary>
         ///     Creates a toggle control with an initial value and change callback.
@@ -37,7 +49,7 @@ namespace STS2RitsuLib.Settings
         ///     Callback invoked after the value changes.
         ///     值变化后调用的回调。
         /// </param>
-        public ModSettingsToggleControl(bool initialValue, Action<bool> onChanged)
+        public ModSettingsToggleControl(bool initialValue, Action<bool>? onChanged)
         {
             _initialValue = initialValue;
             _onChanged = onChanged;
@@ -66,6 +78,22 @@ namespace STS2RitsuLib.Settings
         /// </summary>
         public ModSettingsToggleControl()
         {
+        }
+
+        internal void BindValue(bool value, Action<bool>? onChanged)
+        {
+            _initialValue = value;
+            _onChanged = onChanged;
+            SetValue(value);
+        }
+
+        internal void ClearBinding()
+        {
+            _onChanged = null;
+            this.ReleaseFocusIfInsideTree();
+            Disabled = false;
+            ProcessMode = ProcessModeEnum.Inherit;
+            Modulate = Colors.White;
         }
 
         /// <summary>
@@ -330,7 +358,7 @@ namespace STS2RitsuLib.Settings
 
             RefreshValueLabel(_slider.Value);
             _slider.ValueChanged += OnSliderValueChanged;
-            _slider.DragEnded += _ => _slider.ReleaseFocus();
+            _slider.DragEnded += _ => _slider.ReleaseFocusIfInsideTree();
             if (_valueEdit == null) return;
             _valueEdit.TextSubmitted += OnValueSubmitted;
             _valueEdit.FocusExited += OnValueFocusExited;
@@ -427,7 +455,7 @@ namespace STS2RitsuLib.Settings
         private void OnValueSubmitted(string text)
         {
             TryApplyTypedValue(text);
-            _valueEdit?.ReleaseFocus();
+            _valueEdit.ReleaseFocusIfInsideTree();
         }
 
         private void OnValueFocusExited()
@@ -658,7 +686,7 @@ namespace STS2RitsuLib.Settings
 
             RefreshValueLabel((float)_slider.Value);
             _slider.ValueChanged += OnSliderValueChanged;
-            _slider.DragEnded += _ => _slider.ReleaseFocus();
+            _slider.DragEnded += _ => _slider.ReleaseFocusIfInsideTree();
             if (_valueEdit == null) return;
             _valueEdit.TextSubmitted += OnValueSubmitted;
             _valueEdit.FocusExited += OnValueFocusExited;
@@ -765,7 +793,7 @@ namespace STS2RitsuLib.Settings
         private void OnValueSubmitted(string text)
         {
             TryApplyTypedValue(text);
-            _valueEdit?.ReleaseFocus();
+            _valueEdit.ReleaseFocusIfInsideTree();
         }
 
         private void OnValueFocusExited()
@@ -1036,7 +1064,7 @@ namespace STS2RitsuLib.Settings
     ///     存储的选项值类型。
     /// </typeparam>
     public sealed partial class ModSettingsDropdownChoiceControl<TValue> : HBoxContainer,
-        IModSettingsTransientPopupOwner
+        IModSettingsTransientPopupOwner, IModSettingsDirectionalInputClaimant
     {
         private const float DropListMinWidth = 200f;
         private const float RowHeight = 38f;
@@ -1141,6 +1169,8 @@ namespace STS2RitsuLib.Settings
         public ModSettingsDropdownChoiceControl()
         {
         }
+
+        bool IModSettingsDirectionalInputClaimant.ClaimsDirectionalInput => _dropOpen;
 
         void IModSettingsTransientPopupOwner.ForceCloseTransientUi()
         {
@@ -1345,7 +1375,7 @@ namespace STS2RitsuLib.Settings
                 SizeFlagsHorizontal = SizeFlags.ShrinkBegin,
                 SizeFlagsVertical = SizeFlags.ExpandFill,
                 MouseFilter = MouseFilterEnum.Stop,
-                ClipContents = true,
+                ClipContents = false,
             };
             _dropPanel.AddChild(_dropScroll);
 
@@ -1354,6 +1384,7 @@ namespace STS2RitsuLib.Settings
                 Name = "ChoiceDropdownVirtualContent",
                 MouseFilter = MouseFilterEnum.Ignore,
                 SizeFlagsHorizontal = SizeFlags.ShrinkBegin,
+                ClipContents = false,
             };
             _dropScroll.AddChild(_virtualContent);
             ModSettingsUiControlTheming.ApplySettingsScrollContainerThemeForDropdownList(_dropScroll);
@@ -2314,7 +2345,7 @@ namespace STS2RitsuLib.Settings
                 _hexEdit.TextSubmitted += text =>
                 {
                     ApplyFromHex(text, true);
-                    _hexEdit.ReleaseFocus();
+                    _hexEdit.ReleaseFocusIfInsideTree();
                 };
                 _hexEdit.FocusExited += () => ApplyFromHex(_hexEdit.Text, true);
                 ModSettingsFocusChrome.AttachControllerSelectionReticle(_hexEdit);
@@ -2421,7 +2452,8 @@ namespace STS2RitsuLib.Settings
         private void OnPickerPopupClosed()
         {
             _pickerChangedWhileOpen = false;
-            _pickerButton?.ReleaseFocus();
+            if (_pickerButton != null && IsInstanceValid(_pickerButton) && _pickerButton.IsVisibleInTree())
+                _pickerButton.GrabFocus();
         }
 
         private static bool TryParseHexColorString(string text, out Color color)
@@ -2487,7 +2519,7 @@ namespace STS2RitsuLib.Settings
     ///     Keybinding capture editor used by settings pages and custom editors.
     ///     设置页面和自定义编辑器使用的按键绑定捕获编辑器。
     /// </summary>
-    public sealed partial class ModSettingsKeyBindingControl : VBoxContainer
+    public sealed partial class ModSettingsKeyBindingControl : VBoxContainer, IModSettingsDirectionalInputClaimant
     {
         private readonly bool _allowModifierCombos;
         private readonly bool _allowModifierOnly;
@@ -2605,6 +2637,8 @@ namespace STS2RitsuLib.Settings
         public ModSettingsKeyBindingControl()
         {
         }
+
+        bool IModSettingsDirectionalInputClaimant.ClaimsDirectionalInput => _capturing;
 
         /// <inheritdoc />
         public override void _Ready()
@@ -2801,19 +2835,16 @@ namespace STS2RitsuLib.Settings
     }
 
     internal sealed partial class ModSettingsActionsButton : ModSettingsGamepadCompatibleButton,
-        IModSettingsTransientPopupOwner
+        IModSettingsTransientPopupOwner, IModSettingsDirectionalInputClaimant
     {
         private const float DropMinWidth = 260f;
         private const float RowHeight = 38f;
 
+        private static readonly SharedActionsDropdown SharedDropdown = new();
+
         private readonly IReadOnlyList<ModSettingsMenuAction> _actions;
         private readonly Action? _afterAction;
-        private readonly System.Collections.Generic.Dictionary<int, ModSettingsMiniButton> _rowButtonCache = [];
-        private readonly List<ModSettingsMiniButton> _rowButtons = [];
-        private Control? _backdrop;
-        private VBoxContainer? _dropList;
         private bool _dropOpen;
-        private PanelContainer? _dropPanel;
         private Vector2I? _preferredPopupPosition;
 
         public ModSettingsActionsButton(IReadOnlyList<ModSettingsMenuAction> actions, Action? afterAction = null)
@@ -2848,15 +2879,11 @@ namespace STS2RitsuLib.Settings
             Pressed += OnEllipsisPressed;
         }
 
+        bool IModSettingsDirectionalInputClaimant.ClaimsDirectionalInput => _dropOpen;
+
         void IModSettingsTransientPopupOwner.ForceCloseTransientUi()
         {
             CloseDropdown();
-        }
-
-        public override void _Ready()
-        {
-            base._Ready();
-            BuildDropdownShell();
         }
 
         public override void _ExitTree()
@@ -2901,7 +2928,7 @@ namespace STS2RitsuLib.Settings
                 Mathf.RoundToInt(globalPosition.Y));
             if (_dropOpen)
             {
-                LayoutDropdownInViewport();
+                SharedDropdown.LayoutInViewport(this);
                 return;
             }
 
@@ -2919,69 +2946,12 @@ namespace STS2RitsuLib.Settings
                 OpenDropdown();
         }
 
-        private void BuildDropdownShell()
-        {
-            _backdrop = new()
-            {
-                Name = "ActionsMenuBackdrop",
-                Visible = false,
-                MouseFilter = MouseFilterEnum.Stop,
-                TopLevel = true,
-                ZIndex = 900,
-            };
-            _backdrop.SetAnchorsPreset(LayoutPreset.TopLeft);
-            _backdrop.GuiInput += OnBackdropGuiInput;
-            AddChild(_backdrop);
-
-            _dropPanel = new()
-            {
-                Name = "ActionsMenuPanel",
-                Visible = false,
-                MouseFilter = MouseFilterEnum.Stop,
-                TopLevel = true,
-                ZIndex = 901,
-                CustomMinimumSize = RitsuShellThemeLayoutResolver.ResolveMinSize(
-                    "components.dropdown.layout.actionsMenu.minSize",
-                    new(DropMinWidth, 0f)),
-            };
-            _dropPanel.AddThemeStyleboxOverride("panel", ModSettingsUiFactory.CreateListShellStyle());
-            AddChild(_dropPanel);
-
-            _dropList = new()
-            {
-                Name = "ActionsMenuList",
-                SizeFlagsHorizontal = SizeFlags.ExpandFill,
-                MouseFilter = MouseFilterEnum.Ignore,
-            };
-            _dropList.AddThemeConstantOverride("separation",
-                RitsuShellThemeLayoutResolver.ResolveInt("components.dropdown.layout.actionsMenu.listSeparation", 8));
-            _dropPanel.AddChild(_dropList);
-        }
-
-        private void OnBackdropGuiInput(InputEvent @event)
-        {
-            if (@event is InputEventMouseButton { Pressed: true, ButtonIndex: MouseButton.Left })
-                CloseDropdown();
-        }
-
         private void OpenDropdown()
         {
-            if (_actions.Count == 0 || _dropPanel == null || _dropList == null || _backdrop == null)
+            if (_actions.Count == 0)
                 return;
 
-            _dropPanel.AddThemeStyleboxOverride("panel", ModSettingsUiFactory.CreateListShellStyle());
-            RebuildMenuRows();
-            if (_rowButtons.Count == 0)
-                return;
-
-            _dropOpen = true;
-            SetProcessInput(true);
-            SetProcessUnhandledInput(true);
-            LayoutDropdownInViewport();
-            _backdrop.Visible = true;
-            _dropPanel.Visible = true;
-            WireRowFocusNeighbors();
-            Callable.From(GrabFirstEnabledRow).CallDeferred();
+            SharedDropdown.Open(this);
         }
 
         private void CloseDropdown()
@@ -2989,70 +2959,25 @@ namespace STS2RitsuLib.Settings
             if (!_dropOpen)
                 return;
 
+            SharedDropdown.Close(this, true);
+        }
+
+        private void OnSharedDropdownOpened()
+        {
+            _dropOpen = true;
+            SetProcessInput(true);
+            SetProcessUnhandledInput(true);
+        }
+
+        private void OnSharedDropdownClosed(bool restoreFocus)
+        {
             _dropOpen = false;
             SetProcessInput(false);
             SetProcessUnhandledInput(false);
             _preferredPopupPosition = null;
-            if (_backdrop != null)
-                _backdrop.Visible = false;
-            if (_dropPanel != null)
-                _dropPanel.Visible = false;
 
-            if (IsInstanceValid(this) && IsVisibleInTree())
+            if (restoreFocus && IsInstanceValid(this) && IsVisibleInTree())
                 GrabFocus();
-        }
-
-        private void RebuildMenuRows()
-        {
-            if (_dropList == null)
-                return;
-
-            _rowButtons.Clear();
-            var liveIndexes = Enumerable.Range(0, _actions.Count).ToHashSet();
-            foreach (var staleIndex in _rowButtonCache.Keys.Where(index => !liveIndexes.Contains(index)).ToArray())
-            {
-                if (_rowButtonCache.TryGetValue(staleIndex, out var staleRow) && IsInstanceValid(staleRow))
-                    staleRow.QueueFree();
-                _rowButtonCache.Remove(staleIndex);
-            }
-
-            for (var i = 0; i < _actions.Count; i++)
-            {
-                var index = i;
-                var def = _actions[i];
-                if (!_rowButtonCache.TryGetValue(index, out var row) || !IsInstanceValid(row))
-                {
-                    row = new(def.Label, () => ActivateRow(index))
-                    {
-                        SizeFlagsHorizontal = SizeFlags.ExpandFill,
-                        Alignment = HorizontalAlignment.Left,
-                    };
-                    row.AddThemeFontOverride("font", RitsuShellTheme.Current.Font.Body);
-                    row.AddThemeFontSizeOverride("font_size", RitsuShellTheme.Current.Metric.FontSize.PopupRow);
-                    _rowButtonCache[index] = row;
-                }
-
-                row.Text = def.Label;
-                var rowPadX = RitsuShellThemeLayoutResolver.ResolveFloat(
-                    "components.dropdown.layout.actionsRow.hInset", 24f);
-                row.CustomMinimumSize = RitsuShellThemeLayoutResolver.ResolveMinSize(
-                    "components.dropdown.layout.actionsRow.minSize",
-                    new(DropMinWidth - rowPadX, RowHeight));
-                row.Disabled = !def.IsEnabled();
-                row.AddThemeColorOverride("font_color", RitsuShellTheme.Current.Text.DropdownRow);
-                row.AddThemeColorOverride("font_hover_color", RitsuShellTheme.Current.Text.HoverHighlight);
-                row.AddThemeColorOverride("font_pressed_color", RitsuShellTheme.Current.Text.HoverHighlight);
-                row.AddThemeColorOverride("font_disabled_color", RitsuShellTheme.Current.Text.LabelSecondary);
-                row.AddThemeStyleboxOverride("normal", CreateActionsRowStyle(false));
-                row.AddThemeStyleboxOverride("hover", CreateActionsRowStyle(true));
-                row.AddThemeStyleboxOverride("pressed", CreateActionsRowPressedStyle());
-                row.AddThemeStyleboxOverride("focus", CreateActionsRowFocusStyle());
-                row.AddThemeStyleboxOverride("disabled", CreateActionsRowDisabledStyle());
-                if (row.GetParent() != _dropList)
-                    _dropList.AddChild(row);
-                _dropList.MoveChild(row, i);
-                _rowButtons.Add(row);
-            }
         }
 
         private static StyleBoxFlat CreateActionsRowStyle(bool highlighted)
@@ -3235,56 +3160,247 @@ namespace STS2RitsuLib.Settings
             CloseDropdown();
         }
 
-        private void WireRowFocusNeighbors()
+        private sealed class SharedActionsDropdown
         {
-            for (var i = 0; i < _rowButtons.Count; i++)
-            {
-                var row = _rowButtons[i];
-                var selfPath = row.GetPath();
-                row.FocusNeighborLeft = selfPath;
-                row.FocusNeighborRight = selfPath;
-                row.FocusNeighborTop = i > 0 ? _rowButtons[i - 1].GetPath() : null;
-                row.FocusNeighborBottom = i < _rowButtons.Count - 1 ? _rowButtons[i + 1].GetPath() : null;
-            }
-        }
+            private readonly System.Collections.Generic.Dictionary<int, ModSettingsMiniButton> _rowButtonCache = [];
+            private readonly List<ModSettingsMiniButton> _rowButtons = [];
+            private Control? _backdrop;
+            private VBoxContainer? _dropList;
+            private PanelContainer? _dropPanel;
+            private ModSettingsActionsButton? _owner;
 
-        private void GrabFirstEnabledRow()
-        {
-            foreach (var row in _rowButtons.Where(row => !row.Disabled && row.IsVisibleInTree()))
+            internal void Open(ModSettingsActionsButton owner)
             {
-                row.GrabFocus();
-                return;
-            }
-        }
+                if (!IsInstanceValid(owner))
+                    return;
 
-        private void LayoutDropdownInViewport()
-        {
-            if (_backdrop == null || _dropPanel == null)
-                return;
+                if (_owner != null && !IsInstanceValid(_owner))
+                    _owner = null;
+                else if (_owner != null && !ReferenceEquals(_owner, owner))
+                    Close(_owner, false);
 
-            var vr = GetViewport().GetVisibleRect();
-            _backdrop.GlobalPosition = vr.Position;
-            _backdrop.Size = vr.Size;
+                EnsureShell(owner);
+                if (_dropPanel == null || _dropList == null || _backdrop == null)
+                    return;
 
-            _dropPanel.ResetSize();
-            var panelSize = _dropPanel.GetCombinedMinimumSize();
-            Vector2 desiredTopLeft;
-            if (_preferredPopupPosition.HasValue)
-            {
-                desiredTopLeft = new(_preferredPopupPosition.Value.X, _preferredPopupPosition.Value.Y);
-            }
-            else
-            {
-                var gr = GetGlobalRect();
-                desiredTopLeft = new(gr.End.X - panelSize.X, gr.End.Y);
+                _dropPanel.AddThemeStyleboxOverride("panel", ModSettingsUiFactory.CreateListShellStyle());
+                RebuildRows(owner);
+                if (_rowButtons.Count == 0)
+                    return;
+
+                _owner = owner;
+                owner.OnSharedDropdownOpened();
+                LayoutInViewport(owner);
+                _backdrop.Visible = true;
+                _dropPanel.Visible = true;
+                WireRowFocusNeighbors();
+                Callable.From(GrabFirstEnabledRow).CallDeferred();
             }
 
-            var maxX = Mathf.Max(vr.Position.X, vr.End.X - panelSize.X);
-            var maxY = Mathf.Max(vr.Position.Y, vr.End.Y - panelSize.Y);
-            desiredTopLeft = new(
-                Mathf.Clamp(desiredTopLeft.X, vr.Position.X, maxX),
-                Mathf.Clamp(desiredTopLeft.Y, vr.Position.Y, maxY));
-            _dropPanel.GlobalPosition = desiredTopLeft;
+            internal void Close(ModSettingsActionsButton owner, bool restoreFocus)
+            {
+                if (_owner == null || !ReferenceEquals(_owner, owner))
+                    return;
+
+                _owner = null;
+                if (_backdrop != null && IsInstanceValid(_backdrop))
+                    _backdrop.Visible = false;
+                if (_dropPanel != null && IsInstanceValid(_dropPanel))
+                    _dropPanel.Visible = false;
+
+                if (IsInstanceValid(owner))
+                    owner.OnSharedDropdownClosed(restoreFocus);
+            }
+
+            internal void LayoutInViewport(ModSettingsActionsButton owner)
+            {
+                if (_backdrop == null || _dropPanel == null || !IsInstanceValid(owner))
+                    return;
+
+                var vr = owner.GetViewport().GetVisibleRect();
+                _backdrop.GlobalPosition = vr.Position;
+                _backdrop.Size = vr.Size;
+
+                _dropPanel.Size = Vector2.Zero;
+                _dropPanel.ResetSize();
+                var panelSize = _dropPanel.GetCombinedMinimumSize();
+                Vector2 desiredTopLeft;
+                if (owner._preferredPopupPosition.HasValue)
+                {
+                    desiredTopLeft = new(
+                        owner._preferredPopupPosition.Value.X,
+                        owner._preferredPopupPosition.Value.Y);
+                }
+                else
+                {
+                    var gr = owner.GetGlobalRect();
+                    desiredTopLeft = new(gr.End.X - panelSize.X, gr.End.Y);
+                }
+
+                var maxX = Mathf.Max(vr.Position.X, vr.End.X - panelSize.X);
+                var maxY = Mathf.Max(vr.Position.Y, vr.End.Y - panelSize.Y);
+                desiredTopLeft = new(
+                    Mathf.Clamp(desiredTopLeft.X, vr.Position.X, maxX),
+                    Mathf.Clamp(desiredTopLeft.Y, vr.Position.Y, maxY));
+                _dropPanel.GlobalPosition = desiredTopLeft;
+            }
+
+            private void EnsureShell(ModSettingsActionsButton owner)
+            {
+                if (_backdrop == null || !IsInstanceValid(_backdrop) ||
+                    _dropPanel == null || !IsInstanceValid(_dropPanel) ||
+                    _dropList == null || !IsInstanceValid(_dropList))
+                {
+                    BuildShell(owner);
+                    return;
+                }
+
+                EnsureParent(_backdrop, owner);
+                EnsureParent(_dropPanel, owner);
+            }
+
+            private void BuildShell(ModSettingsActionsButton owner)
+            {
+                _backdrop = new()
+                {
+                    Name = "SharedActionsMenuBackdrop",
+                    Visible = false,
+                    MouseFilter = MouseFilterEnum.Stop,
+                    TopLevel = true,
+                    ZIndex = 900,
+                };
+                _backdrop.SetAnchorsPreset(LayoutPreset.TopLeft);
+                _backdrop.GuiInput += OnBackdropGuiInput;
+                owner.AddChild(_backdrop);
+
+                _dropPanel = new()
+                {
+                    Name = "SharedActionsMenuPanel",
+                    Visible = false,
+                    MouseFilter = MouseFilterEnum.Stop,
+                    TopLevel = true,
+                    ZIndex = 901,
+                    CustomMinimumSize = RitsuShellThemeLayoutResolver.ResolveMinSize(
+                        "components.dropdown.layout.actionsMenu.minSize",
+                        new(DropMinWidth, 0f)),
+                };
+                _dropPanel.AddThemeStyleboxOverride("panel", ModSettingsUiFactory.CreateListShellStyle());
+                owner.AddChild(_dropPanel);
+
+                _dropList = new()
+                {
+                    Name = "SharedActionsMenuList",
+                    SizeFlagsHorizontal = SizeFlags.ExpandFill,
+                    MouseFilter = MouseFilterEnum.Ignore,
+                };
+                _dropList.AddThemeConstantOverride("separation",
+                    RitsuShellThemeLayoutResolver.ResolveInt(
+                        "components.dropdown.layout.actionsMenu.listSeparation",
+                        8));
+                _dropPanel.AddChild(_dropList);
+                _rowButtonCache.Clear();
+                _rowButtons.Clear();
+            }
+
+            private static void EnsureParent(Node node, Node parent)
+            {
+                if (node.GetParent() == parent)
+                    return;
+
+                node.GetParent()?.RemoveChild(node);
+                parent.AddChild(node);
+            }
+
+            private void OnBackdropGuiInput(InputEvent @event)
+            {
+                if (@event is InputEventMouseButton { Pressed: true, ButtonIndex: MouseButton.Left } &&
+                    _owner != null)
+                    Close(_owner, true);
+            }
+
+            private void RebuildRows(ModSettingsActionsButton owner)
+            {
+                if (_dropList == null)
+                    return;
+
+                _rowButtons.Clear();
+                var liveIndexes = Enumerable.Range(0, owner._actions.Count).ToHashSet();
+                foreach (var staleIndex in _rowButtonCache.Keys.Where(index => !liveIndexes.Contains(index)).ToArray())
+                {
+                    if (_rowButtonCache.TryGetValue(staleIndex, out var staleRow) &&
+                        IsInstanceValid(staleRow))
+                    {
+                        if (staleRow.GetParent() == _dropList)
+                            _dropList.RemoveChild(staleRow);
+                        staleRow.QueueFree();
+                    }
+
+                    _rowButtonCache.Remove(staleIndex);
+                }
+
+                for (var i = 0; i < owner._actions.Count; i++)
+                {
+                    var index = i;
+                    var def = owner._actions[i];
+                    if (!_rowButtonCache.TryGetValue(index, out var row) || !IsInstanceValid(row))
+                    {
+                        row = new(def.Label, () => _owner?.ActivateRow(index))
+                        {
+                            SizeFlagsHorizontal = SizeFlags.ExpandFill,
+                            Alignment = HorizontalAlignment.Left,
+                        };
+                        row.AddThemeFontOverride("font", RitsuShellTheme.Current.Font.Body);
+                        row.AddThemeFontSizeOverride("font_size", RitsuShellTheme.Current.Metric.FontSize.PopupRow);
+                        _rowButtonCache[index] = row;
+                    }
+
+                    row.Text = def.Label;
+                    var rowPadX = RitsuShellThemeLayoutResolver.ResolveFloat(
+                        "components.dropdown.layout.actionsRow.hInset", 24f);
+                    row.CustomMinimumSize = RitsuShellThemeLayoutResolver.ResolveMinSize(
+                        "components.dropdown.layout.actionsRow.minSize",
+                        new(DropMinWidth - rowPadX, RowHeight));
+                    row.Disabled = !def.IsEnabled();
+                    row.AddThemeColorOverride("font_color", RitsuShellTheme.Current.Text.DropdownRow);
+                    row.AddThemeColorOverride("font_hover_color", RitsuShellTheme.Current.Text.HoverHighlight);
+                    row.AddThemeColorOverride("font_pressed_color", RitsuShellTheme.Current.Text.HoverHighlight);
+                    row.AddThemeColorOverride("font_disabled_color", RitsuShellTheme.Current.Text.LabelSecondary);
+                    row.AddThemeStyleboxOverride("normal", CreateActionsRowStyle(false));
+                    row.AddThemeStyleboxOverride("hover", CreateActionsRowStyle(true));
+                    row.AddThemeStyleboxOverride("pressed", CreateActionsRowPressedStyle());
+                    row.AddThemeStyleboxOverride("focus", CreateActionsRowFocusStyle());
+                    row.AddThemeStyleboxOverride("disabled", CreateActionsRowDisabledStyle());
+                    if (row.GetParent() != _dropList)
+                        _dropList.AddChild(row);
+                    _dropList.MoveChild(row, i);
+                    _rowButtons.Add(row);
+                }
+
+                _dropList.ResetSize();
+                _dropPanel?.ResetSize();
+            }
+
+            private void WireRowFocusNeighbors()
+            {
+                for (var i = 0; i < _rowButtons.Count; i++)
+                {
+                    var row = _rowButtons[i];
+                    var selfPath = row.GetPath();
+                    row.FocusNeighborLeft = selfPath;
+                    row.FocusNeighborRight = selfPath;
+                    row.FocusNeighborTop = i > 0 ? _rowButtons[i - 1].GetPath() : null;
+                    row.FocusNeighborBottom = i < _rowButtons.Count - 1 ? _rowButtons[i + 1].GetPath() : null;
+                }
+            }
+
+            private void GrabFirstEnabledRow()
+            {
+                foreach (var row in _rowButtons.Where(row => !row.Disabled && row.IsVisibleInTree()))
+                {
+                    row.GrabFocus();
+                    return;
+                }
+            }
         }
     }
 
@@ -3292,7 +3408,7 @@ namespace STS2RitsuLib.Settings
     ///     Multi-keybinding capture editor used by native settings pages.
     ///     原生设置页面使用的多按键绑定捕获编辑器。
     /// </summary>
-    public sealed partial class ModSettingsMultiKeyBindingControl : VBoxContainer
+    public sealed partial class ModSettingsMultiKeyBindingControl : VBoxContainer, IModSettingsDirectionalInputClaimant
     {
         private readonly bool _allowModifierCombos;
         private readonly bool _allowModifierOnly;
@@ -3377,6 +3493,8 @@ namespace STS2RitsuLib.Settings
         public ModSettingsMultiKeyBindingControl()
         {
         }
+
+        bool IModSettingsDirectionalInputClaimant.ClaimsDirectionalInput => _capturing;
 
         /// <inheritdoc />
         public override void _Ready()
@@ -5327,6 +5445,8 @@ namespace STS2RitsuLib.Settings
         private bool _collapsed;
         private VBoxContainer? _content;
         private bool _contentEnabled = true;
+        private Action? _lazyContentBuilder;
+        private bool _lazyContentBuilt;
         private ModSettingsCollapsibleHeaderButton? _toggle;
 
         public ModSettingsCollapsibleSection(string title, string? sectionId, string? description, bool startCollapsed,
@@ -5346,6 +5466,8 @@ namespace STS2RitsuLib.Settings
         public ModSettingsCollapsibleSection()
         {
         }
+
+        internal VBoxContainer ContentHost => _content ??= CreateContentHost();
 
         public override void _Ready()
         {
@@ -5407,10 +5529,8 @@ namespace STS2RitsuLib.Settings
                 cardContent.AddChild(headerRow);
             }
 
-            _content = new() { MouseFilter = MouseFilterEnum.Ignore };
-            _content.AddThemeConstantOverride("separation",
-                RitsuShellThemeLayoutResolver.ResolveInt("components.collapsible.layout.contentSeparation", 8));
-            if (_contentControls != null)
+            _content ??= CreateContentHost();
+            if (_contentControls != null && _content.GetChildCount() == 0)
                 foreach (var control in _contentControls)
                     _content.AddChild(control);
             cardContent.AddChild(_content);
@@ -5423,9 +5543,44 @@ namespace STS2RitsuLib.Settings
         private void ToggleCollapsed()
         {
             _collapsed = !_collapsed;
+            if (!_collapsed)
+                EnsureLazyContentBuilt();
             ApplyCollapsedState();
             if (!_collapsed)
                 Callable.From(EnsureExpandedSectionVisible).CallDeferred();
+        }
+
+        internal void Expand()
+        {
+            if (!_collapsed)
+                return;
+
+            _collapsed = false;
+            EnsureLazyContentBuilt();
+            ApplyCollapsedState();
+        }
+
+        internal void EnsureContentBuilt()
+        {
+            EnsureLazyContentBuilt();
+        }
+
+        internal void SetLazyContentBuilder(Action builder)
+        {
+            _lazyContentBuilder = builder;
+            if (!_collapsed)
+                EnsureLazyContentBuilt();
+        }
+
+        private void EnsureLazyContentBuilt()
+        {
+            if (_lazyContentBuilt || _lazyContentBuilder == null)
+                return;
+
+            _lazyContentBuilt = true;
+            _lazyContentBuilder();
+            _lazyContentBuilder = null;
+            ApplyContentEnabledState();
         }
 
         private void ApplyCollapsedState()
@@ -5452,6 +5607,14 @@ namespace STS2RitsuLib.Settings
 
             // Collapsing stays operable; only the content becomes disabled.
             _toggle?.SetContentEnabled(_contentEnabled);
+        }
+
+        private static VBoxContainer CreateContentHost()
+        {
+            var content = new VBoxContainer { MouseFilter = MouseFilterEnum.Ignore };
+            content.AddThemeConstantOverride("separation",
+                RitsuShellThemeLayoutResolver.ResolveInt("components.collapsible.layout.contentSeparation", 8));
+            return content;
         }
 
         private void EnsureExpandedSectionVisible()
@@ -5713,9 +5876,11 @@ namespace STS2RitsuLib.Settings
     /// </summary>
     public partial class ModSettingsTextButton : ModSettingsGamepadCompatibleButton
     {
-        private readonly string? _text;
-        private readonly ModSettingsButtonTone _tone;
+        private Action? _action;
+        private bool _pressedHandlerAttached;
         private bool _selected;
+        private string? _text;
+        private ModSettingsButtonTone _tone;
 
         /// <summary>
         ///     Creates a standard settings action button.
@@ -5735,9 +5900,24 @@ namespace STS2RitsuLib.Settings
         /// </param>
         public ModSettingsTextButton(string text, ModSettingsButtonTone tone, Action? action)
         {
+            Configure(text, tone, action);
+            EnsurePressedHandlerAttached();
+        }
+
+        /// <summary>
+        ///     Godot serialization constructor.
+        ///     Godot 序列化构造函数。
+        /// </summary>
+        public ModSettingsTextButton()
+        {
+            EnsurePressedHandlerAttached();
+        }
+
+        internal void Configure(string text, ModSettingsButtonTone tone, Action? action)
+        {
             _text = text;
             _tone = tone;
-
+            _action = action;
             Text = text;
             Alignment = HorizontalAlignment.Center;
             CustomMinimumSize = RitsuShellThemeLayoutResolver.ResolveMinSize(
@@ -5758,28 +5938,17 @@ namespace STS2RitsuLib.Settings
             AddThemeColorOverride("font_focus_color", RitsuShellTheme.Current.Text.HoverHighlight);
             AddThemeColorOverride("font_disabled_color", RitsuShellTheme.Current.Text.LabelSecondary);
             ApplyVisualState();
-            Pressed += () =>
-            {
-                if (action == null)
-                    return;
-
-                try
-                {
-                    action();
-                }
-                catch (Exception ex)
-                {
-                    RitsuLibFramework.Logger.Warn($"[ModSettingsTextButton] action failed: {ex.Message}");
-                }
-            };
         }
 
-        /// <summary>
-        ///     Godot serialization constructor.
-        ///     Godot 序列化构造函数。
-        /// </summary>
-        public ModSettingsTextButton()
+        internal void ClearAction()
         {
+            _action = null;
+            _selected = false;
+            this.ReleaseFocusIfInsideTree();
+            Disabled = false;
+            ProcessMode = ProcessModeEnum.Inherit;
+            Modulate = Colors.White;
+            ApplyVisualState();
         }
 
         /// <inheritdoc />
@@ -5802,6 +5971,29 @@ namespace STS2RitsuLib.Settings
         {
             _selected = selected;
             ApplyVisualState();
+        }
+
+        private void EnsurePressedHandlerAttached()
+        {
+            if (_pressedHandlerAttached)
+                return;
+            Pressed += InvokeActionSafely;
+            _pressedHandlerAttached = true;
+        }
+
+        private void InvokeActionSafely()
+        {
+            if (_action == null)
+                return;
+
+            try
+            {
+                _action();
+            }
+            catch (Exception ex)
+            {
+                RitsuLibFramework.Logger.Warn($"[ModSettingsTextButton] action failed: {ex.Message}");
+            }
         }
 
         private void ApplyVisualState()

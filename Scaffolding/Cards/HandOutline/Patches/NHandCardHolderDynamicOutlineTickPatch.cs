@@ -3,6 +3,7 @@ using Godot;
 using MegaCrit.Sts2.Core.Helpers;
 using MegaCrit.Sts2.Core.Nodes.Cards.Holders;
 using STS2RitsuLib.Patching.Models;
+using STS2RitsuLib.Utils;
 
 namespace STS2RitsuLib.Scaffolding.Cards.HandOutline.Patches
 {
@@ -65,8 +66,12 @@ namespace STS2RitsuLib.Scaffolding.Cards.HandOutline.Patches
                     if (tree == null || !GodotObject.IsInstanceValid(tree))
                         break;
 
-                    await tree.ToSignal(tree, SceneTree.SignalName.ProcessFrame);
+                    await RitsuGodotAwaitSafety.AwaitProcessFrameAsync(tree, holder, token);
                 }
+            }
+            catch (OperationCanceledException)
+            {
+                // Holder/tree lifetime ended; the loop is cleaned up in finally.
             }
             finally
             {

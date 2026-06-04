@@ -4,6 +4,7 @@ using MegaCrit.Sts2.Core.Logging;
 using MegaCrit.Sts2.Core.Modding;
 using MegaCrit.Sts2.Core.Models;
 using STS2RitsuLib.Diagnostics;
+using STS2RitsuLib.Models.Capabilities;
 using STS2RitsuLib.Scaffolding.Content;
 
 namespace STS2RitsuLib.Content
@@ -49,6 +50,7 @@ namespace STS2RitsuLib.Content
         private static readonly HashSet<Type> RegisteredMonsters = [];
         private static readonly HashSet<Type> RegisteredPowers = [];
         private static readonly HashSet<Type> RegisteredOrbs = [];
+        private static readonly HashSet<Type> RegisteredModelCapabilities = [];
         private static readonly HashSet<Type> RegisteredSharedCardPools = [];
         private static readonly HashSet<Type> RegisteredSharedEvents = [];
         private static readonly HashSet<Type> RegisteredSharedAncients = [];
@@ -260,6 +262,33 @@ namespace STS2RitsuLib.Content
         }
 
         /// <summary>
+        ///     Builds a mod-scoped <see cref="MegaCrit.Sts2.Core.Entities.Cards.TargetType" /> id using the ritsulib
+        ///     three-segment convention with middle segment <c>TARGETTYPE</c>.
+        ///     使用 ritsulib 三段式约定构建 mod 作用域的
+        ///     <see cref="MegaCrit.Sts2.Core.Entities.Cards.TargetType" /> ID，中间段为 <c>TARGETTYPE</c>。
+        /// </summary>
+        public static string GetQualifiedTargetTypeId(string modId, string localTargetTypeStem)
+        {
+            ArgumentException.ThrowIfNullOrWhiteSpace(modId);
+            ArgumentException.ThrowIfNullOrWhiteSpace(localTargetTypeStem);
+
+            return GetCompoundId(modId, "TARGETTYPE", localTargetTypeStem);
+        }
+
+        /// <summary>
+        ///     Builds a mod-scoped model-capability id using the ritsulib three-segment convention with middle segment
+        ///     <c>MODELCAPABILITY</c>.
+        ///     使用 ritsulib 三段式约定构建 mod 作用域的模型能力 ID，中间段为 <c>MODELCAPABILITY</c>。
+        /// </summary>
+        public static string GetQualifiedModelCapabilityId(string modId, string localCapabilityStem)
+        {
+            ArgumentException.ThrowIfNullOrWhiteSpace(modId);
+            ArgumentException.ThrowIfNullOrWhiteSpace(localCapabilityStem);
+
+            return GetCompoundId(modId, "MODELCAPABILITY", localCapabilityStem);
+        }
+
+        /// <summary>
         ///     Builds a mod-scoped top-bar-button id in the ritsulib <c>MODID_CATEGORY_TYPENAME</c> public
         ///     entry style (uppercase, three segments, underscore-separated, middle segment fixed to
         ///     <c>TOPBARBUTTON</c>). Used by <see cref="STS2RitsuLib.TopBar.ModTopBarButtonRegistry" />; the
@@ -275,6 +304,20 @@ namespace STS2RitsuLib.Content
             ArgumentException.ThrowIfNullOrWhiteSpace(localButtonStem);
 
             return GetCompoundId(modId, "TOPBARBUTTON", localButtonStem);
+        }
+
+        /// <summary>
+        ///     Builds a mod-scoped right-click binding id using the ritsulib <c>MODID_CATEGORY_TYPENAME</c>
+        ///     convention with middle segment <c>RIGHTCLICK</c>.
+        ///     使用 ritsulib <c>MODID_CATEGORY_TYPENAME</c> 约定构建 mod 作用域右键绑定 id，
+        ///     中间段为 <c>RIGHTCLICK</c>。
+        /// </summary>
+        public static string GetQualifiedRightClickId(string modId, string localRightClickStem)
+        {
+            ArgumentException.ThrowIfNullOrWhiteSpace(modId);
+            ArgumentException.ThrowIfNullOrWhiteSpace(localRightClickStem);
+
+            return GetCompoundId(modId, "RIGHTCLICK", localRightClickStem);
         }
 
         /// <summary>
@@ -688,6 +731,95 @@ namespace STS2RitsuLib.Content
         public void RegisterOrb(Type orbType)
         {
             RegisterStandaloneModel(RegisteredOrbs, orbType, typeof(OrbModel), "orb");
+        }
+
+        /// <summary>
+        ///     Registers a model-backed component for use with <see cref="ModelCapabilities" />.
+        ///     注册一个基于模型的组件，供 <see cref="ModelCapabilities" /> 使用。
+        /// </summary>
+        public void RegisterModelCapability<TCapability>() where TCapability : ModelCapability
+        {
+            RegisterModelCapability<TCapability>(default);
+        }
+
+        /// <summary>
+        ///     Registers a model-backed component using <paramref name="publicEntry" /> rules.
+        ///     使用 <paramref name="publicEntry" /> 规则注册一个基于模型的组件。
+        /// </summary>
+        public void RegisterModelCapability<TCapability>(ModelPublicEntryOptions publicEntry)
+            where TCapability : ModelCapability
+        {
+            RegisterModelCapability(typeof(TCapability), publicEntry);
+        }
+
+        /// <summary>
+        ///     Registers <paramref name="capabilityType" /> as a model-backed component.
+        ///     将 <paramref name="capabilityType" /> 注册为基于模型的组件。
+        /// </summary>
+        public void RegisterModelCapability(Type capabilityType)
+        {
+            RegisterModelCapability(capabilityType, default);
+        }
+
+        /// <summary>
+        ///     Registers <paramref name="capabilityType" /> as a model-backed component using
+        ///     <paramref name="publicEntry" /> rules.
+        ///     使用 <paramref name="publicEntry" /> 规则将 <paramref name="capabilityType" /> 注册为基于模型的组件。
+        /// </summary>
+        public void RegisterModelCapability(Type capabilityType, ModelPublicEntryOptions publicEntry)
+        {
+            EnsureMutable($"register model capability '{capabilityType.Name}'");
+            EnsureModelType(capabilityType, typeof(ModelCapability), nameof(capabilityType));
+            PrimeOwnedType(capabilityType);
+            ApplyFixedPublicEntryForModel(capabilityType, publicEntry);
+            RegistrationConflictDetector.ThrowIfModelIdConflicts(capabilityType);
+
+            lock (SyncRoot)
+            {
+                if (!RegisteredModelCapabilities.Add(capabilityType))
+                {
+                    _logger.Debug($"[Content] Skipping duplicate model capability registration: {capabilityType.Name}");
+                    return;
+                }
+
+                RememberOwner(capabilityType);
+            }
+
+            var capabilityId = ResolveModelCapabilityId(capabilityType, publicEntry);
+            ModelCapabilityRegistry.RegisterModelCapability(capabilityType, capabilityId);
+            _logger.Info($"[Content] Registered model capability: {capabilityType.Name} ({capabilityId})");
+        }
+
+        /// <summary>
+        ///     Configures the default capability set for matching <paramref name="modelType" /> instances.
+        ///     配置匹配的 <paramref name="modelType" /> 实例的默认能力集合。
+        /// </summary>
+        public void ConfigureDefaultModelCapabilities(
+            Type modelType,
+            string modifierId,
+            Action<AbstractModel, ModelCapabilityList> modifier,
+            int order = 0)
+        {
+            EnsureMutable($"configure default model capabilities '{modelType.Name}/{modifierId}'");
+            EnsureModelFamilyType(modelType, nameof(modelType));
+            ModelCapabilityDefaults.Modify(ModId, modifierId, modelType, modifier, order);
+            _logger.Info($"[Content] Registered default model capability modifier: {modelType.Name}/{modifierId}");
+        }
+
+        /// <summary>
+        ///     Configures the default capability set for matching <typeparamref name="TModel" /> instances.
+        ///     配置匹配的 <typeparamref name="TModel" /> 实例的默认能力集合。
+        /// </summary>
+        public void ConfigureDefaultModelCapabilities<TModel>(
+            string modifierId,
+            Action<TModel, ModelCapabilityList> modifier,
+            int order = 0)
+            where TModel : AbstractModel
+        {
+            EnsureMutable($"configure default model capabilities '{typeof(TModel).Name}/{modifierId}'");
+            ModelCapabilityDefaults.Modify(ModId, modifierId, modifier, order);
+            _logger.Info(
+                $"[Content] Registered default model capability modifier: {typeof(TModel).Name}/{modifierId}");
         }
 
         /// <summary>
@@ -1150,6 +1282,8 @@ namespace STS2RitsuLib.Content
                     new ContentModelReference(type, typeof(PowerModel), "registered power")));
                 AddMany(list, RegisteredOrbs.Select(static type =>
                     new ContentModelReference(type, typeof(OrbModel), "registered orb")));
+                AddMany(list, RegisteredModelCapabilities.Select(static type =>
+                    new ContentModelReference(type, typeof(ModelCapability), "registered model capability")));
                 AddMany(list, RegisteredEnchantments.Select(static type =>
                     new ContentModelReference(type, typeof(EnchantmentModel), "registered enchantment")));
                 AddMany(list, RegisteredAfflictions.Select(static type =>
@@ -1331,6 +1465,14 @@ namespace STS2RitsuLib.Content
             return AppendResolved(source, ResolveModels<ActModel>(RegisteredActs));
         }
 
+        internal static Type[] GetRegisteredActTypes()
+        {
+            lock (SyncRoot)
+            {
+                return RegisteredActs.ToArray();
+            }
+        }
+
         internal static IEnumerable<PowerModel> AppendPowers(IEnumerable<PowerModel> source)
         {
             return AppendResolved(source, ResolveModels<PowerModel>(RegisteredPowers));
@@ -1462,6 +1604,7 @@ namespace STS2RitsuLib.Content
                     .Concat(RegisteredMonsters)
                     .Concat(RegisteredPowers)
                     .Concat(RegisteredOrbs)
+                    .Concat(RegisteredModelCapabilities)
                     .Concat(RegisteredEnchantments)
                     .Concat(RegisteredAfflictions)
                     .Concat(RegisteredAchievements)
@@ -1643,6 +1786,15 @@ namespace STS2RitsuLib.Content
                 );
         }
 
+        private static void EnsureModelFamilyType(Type type, string paramName)
+        {
+            if (type.IsInterface || type.ContainsGenericParameters || !typeof(AbstractModel).IsAssignableFrom(type))
+                throw new ArgumentException(
+                    $"Type '{type.FullName}' must be an abstract model type or a concrete model type.",
+                    paramName
+                );
+        }
+
         private static void EnsureBadgeType(Type type, string paramName)
         {
             if (type.IsAbstract || type.IsInterface || !typeof(ModBadgeTemplate).IsAssignableFrom(type))
@@ -1777,6 +1929,17 @@ namespace STS2RitsuLib.Content
 
                 FixedPublicEntryOverrides[modelType] = resolved;
             }
+        }
+
+        private string ResolveModelCapabilityId(Type capabilityType, ModelPublicEntryOptions options)
+        {
+            return options.Kind switch
+            {
+                ModelPublicEntryKind.FromTypeName => GetQualifiedModelCapabilityId(ModId, capabilityType.Name),
+                ModelPublicEntryKind.Stem => GetQualifiedModelCapabilityId(ModId, options.Value!),
+                ModelPublicEntryKind.FullEntry => NormalizeFullPublicEntry(options.Value!),
+                _ => throw new ArgumentOutOfRangeException(nameof(options), options.Kind, null),
+            };
         }
 
         [GeneratedRegex("[^A-Za-z0-9]+")]

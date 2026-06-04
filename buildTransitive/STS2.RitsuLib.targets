@@ -5,6 +5,7 @@
         <RitsuLibPackagePdbPath>$(MSBuildThisFileDirectory)..\lib\net9.0\STS2-RitsuLib.pdb</RitsuLibPackagePdbPath>
         <RitsuLibPackageXmlPath>$(MSBuildThisFileDirectory)..\lib\net9.0\STS2-RitsuLib.xml</RitsuLibPackageXmlPath>
         <RitsuLibPackageManifestPath>$(MSBuildThisFileDirectory)..\contentFiles\any\any\mod_manifest.json</RitsuLibPackageManifestPath>
+        <RitsuLibPackageViewerRoot>$(MSBuildThisFileDirectory)..\contentFiles\any\any\viewer</RitsuLibPackageViewerRoot>
         <RitsuLibDeployDir Condition="'$(RitsuLibDeployDir)' == ''"></RitsuLibDeployDir>
     </PropertyGroup>
 
@@ -17,5 +18,12 @@
         <Copy SourceFiles="$(RitsuLibPackagePdbPath)" DestinationFolder="$(RitsuLibDeployDir)" SkipUnchangedFiles="true" Condition="Exists('$(RitsuLibPackagePdbPath)')"/>
         <Copy SourceFiles="$(RitsuLibPackageXmlPath)" DestinationFolder="$(RitsuLibDeployDir)" SkipUnchangedFiles="true" Condition="Exists('$(RitsuLibPackageXmlPath)')"/>
         <Copy SourceFiles="$(RitsuLibPackageManifestPath)" DestinationFolder="$(RitsuLibDeployDir)" SkipUnchangedFiles="true"/>
+        <ItemGroup>
+            <RitsuLibPackageViewerFiles Include="$(RitsuLibPackageViewerRoot)\**\*" Condition="Exists('$(RitsuLibPackageViewerRoot)\index.html')"/>
+        </ItemGroup>
+        <Copy SourceFiles="@(RitsuLibPackageViewerFiles)"
+              DestinationFiles="@(RitsuLibPackageViewerFiles->'$(RitsuLibDeployDir)\viewer\%(RecursiveDir)%(Filename)%(Extension)')"
+              SkipUnchangedFiles="true"
+              Condition="'@(RitsuLibPackageViewerFiles)' != ''"/>
     </Target>
 </Project>

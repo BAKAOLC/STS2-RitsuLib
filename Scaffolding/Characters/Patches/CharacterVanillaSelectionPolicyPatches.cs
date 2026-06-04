@@ -57,8 +57,7 @@ namespace STS2RitsuLib.Scaffolding.Characters.Patches
                 return SelectionScope.Visible;
 
             if ((originalMethod.DeclaringType == typeof(NCharacterSelectScreen) &&
-                 originalMethod.Name is nameof(NCharacterSelectScreen.UpdateRandomCharacterVisibility)
-                     or "RollRandomCharacter") ||
+                 originalMethod.Name == nameof(NCharacterSelectScreen.UpdateRandomCharacterVisibility)) ||
                 (originalMethod.DeclaringType == typeof(NCharacterSelectButton) &&
                  originalMethod.Name == nameof(NCharacterSelectButton.Init)) ||
                 (originalMethod.DeclaringType == typeof(StartRunLobby) &&
@@ -100,7 +99,6 @@ namespace STS2RitsuLib.Scaffolding.Characters.Patches
                 new(typeof(NCharacterSelectScreen), nameof(NCharacterSelectScreen.InitCharacterButtons)),
                 new(typeof(NCharacterSelectScreen), nameof(NCharacterSelectScreen.UpdateRandomCharacterVisibility)),
                 new(typeof(NCharacterSelectButton), nameof(NCharacterSelectButton.Init), true),
-                new(typeof(NCharacterSelectScreen), "RollRandomCharacter", true),
                 new(typeof(StartRunLobby), "BeginRunLocally", true),
             ];
         }

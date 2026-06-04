@@ -2,7 +2,6 @@ using Godot;
 using MegaCrit.Sts2.addons.mega_text;
 using STS2RitsuLib.Ui.Shell;
 using STS2RitsuLib.Ui.Shell.Theme;
-using Timer = Godot.Timer;
 
 namespace STS2RitsuLib.Settings
 {
@@ -22,6 +21,9 @@ namespace STS2RitsuLib.Settings
         private const string DisabledFixedTokenPath = "semantic.state.disabled.fixed";
 
         private const string DisabledStylePathMetaKey = "__ritsu_disabled_style_path";
+
+        private const double ContextMenuLongPressSeconds = 0.55;
+        private const string ContextMenuButtonMetaKey = "_ritsulib_context_menu_button";
 
         public static ModSettingsSidebarButton CreateSidebarButton(string text, Action onPressed,
             ModSettingsSidebarItemKind kind = ModSettingsSidebarItemKind.Page,
@@ -158,9 +160,11 @@ namespace STS2RitsuLib.Settings
         }
 
         private static void AttachHostSurfaceReadOnlySync(ModSettingsUiContext context, Control valueControl,
-            Control? actionControl)
+            Control? actionControl, Func<bool>? canApply = null)
         {
             var readOnlyMask = context.GetSectionHostReadOnlyMask();
+            if (readOnlyMask == ModSettingsHostSurface.None)
+                return;
 
             Sync();
             RegisterRefreshWhenAlive(context, valueControl, Sync, ModSettingsUiRefreshSpec.Always);
@@ -170,6 +174,8 @@ namespace STS2RitsuLib.Settings
 
             void Sync()
             {
+                if (canApply != null && !canApply())
+                    return;
                 if (!GodotObject.IsInstanceValid(valueControl))
                     return;
 
@@ -183,22 +189,41 @@ namespace STS2RitsuLib.Settings
         }
 
         internal static void AttachContextMenuTargets(Control line, Control valueControl,
-            ModSettingsActionsButton button)
+            ModSettingsActionsButton button, bool overwriteExisting = true)
         {
-            AttachContextMenuRecursively(line, button);
-            AttachContextMenuRecursively(valueControl, button);
+            AttachContextMenuSurface(line, button, true, overwriteExisting);
+            if (!ReferenceEquals(line, valueControl) && !line.IsAncestorOf(valueControl))
+                AttachContextMenuSurface(valueControl, button, true, overwriteExisting);
         }
 
-        private static void AttachContextMenuRecursively(Control target, ModSettingsActionsButton button)
+        private static void AttachContextMenuSurface(Control target, ModSettingsActionsButton button,
+            bool attachRoot = false, bool overwriteExisting = true)
         {
-            AttachContextMenu(target, button);
+            if (attachRoot || ShouldAttachContextMenuDescendant(target))
+                AttachContextMenu(target, button, overwriteExisting);
+
             foreach (var child in target.GetChildren())
                 if (child is Control childControl)
-                    AttachContextMenuRecursively(childControl, button);
+                    AttachContextMenuSurface(childControl, button, false, overwriteExisting);
         }
 
-        internal static void AttachContextMenu(Control target, ModSettingsActionsButton button)
+        private static bool ShouldAttachContextMenuDescendant(Control control)
         {
+            if (control.MouseFilter != Control.MouseFilterEnum.Ignore)
+                return true;
+
+            return control is BaseButton or LineEdit or TextEdit or HSlider or OptionButton or ColorPickerButton
+                or MenuButton;
+        }
+
+        internal static void AttachContextMenu(Control target, ModSettingsActionsButton button,
+            bool overwriteExisting = true)
+        {
+            if (!overwriteExisting && target.HasMeta(ContextMenuButtonMetaKey))
+                return;
+
+            target.SetMeta(ContextMenuButtonMetaKey, button);
+
             if (target.HasMeta(ContextMenuAttachedMetaKey))
                 return;
 
@@ -207,25 +232,7 @@ namespace STS2RitsuLib.Settings
             if (target.MouseFilter == Control.MouseFilterEnum.Ignore)
                 target.MouseFilter = Control.MouseFilterEnum.Pass;
 
-            var longPressTimer = new Timer
-            {
-                OneShot = true,
-                WaitTime = 0.55f,
-                Autostart = false,
-                ProcessCallback = Timer.TimerProcessCallback.Idle,
-            };
-            target.AddChild(longPressTimer);
-            var pendingTouchPosition = Vector2.Zero;
-            longPressTimer.Timeout += () =>
-            {
-                if (!CanOpenContextMenu(target, button))
-                {
-                    button.ForceCloseDropdown();
-                    return;
-                }
-
-                button.OpenAt(pendingTouchPosition);
-            };
+            object? activeLongPressToken;
 
             target.GuiInput += @event =>
             {
@@ -235,25 +242,52 @@ namespace STS2RitsuLib.Settings
                     {
                         if (touch.Pressed)
                         {
-                            if (!CanOpenContextMenu(target, button))
+                            var currentButton = ResolveContextMenuButton(target);
+                            if (currentButton == null || !CanOpenContextMenu(target, currentButton))
                             {
-                                button.ForceCloseDropdown();
-                                longPressTimer.Stop();
+                                ResolveContextMenuButton(target)?.ForceCloseDropdown();
+                                activeLongPressToken = null;
                                 return;
                             }
 
-                            pendingTouchPosition = target.GetGlobalTransformWithCanvas().Origin + touch.Position;
-                            longPressTimer.Start();
+                            var pendingTouchPosition =
+                                target.GetGlobalTransformWithCanvas().Origin + touch.Position;
+                            var token = new object();
+                            activeLongPressToken = token;
+                            var tree = target.GetTree();
+                            var timer = tree?.CreateTimer(ContextMenuLongPressSeconds);
+                            if (timer != null)
+                                timer.Timeout += () =>
+                                {
+                                    if (!GodotObject.IsInstanceValid(target))
+                                    {
+                                        activeLongPressToken = null;
+                                        return;
+                                    }
+
+                                    if (!ReferenceEquals(activeLongPressToken, token))
+                                        return;
+                                    activeLongPressToken = null;
+                                    var resolveContextMenuButton = ResolveContextMenuButton(target);
+                                    if (resolveContextMenuButton == null ||
+                                        !CanOpenContextMenu(target, resolveContextMenuButton))
+                                    {
+                                        resolveContextMenuButton?.ForceCloseDropdown();
+                                        return;
+                                    }
+
+                                    resolveContextMenuButton.OpenAt(pendingTouchPosition);
+                                };
                         }
                         else
                         {
-                            longPressTimer.Stop();
+                            activeLongPressToken = null;
                         }
 
                         return;
                     }
                     case InputEventScreenDrag:
-                        longPressTimer.Stop();
+                        activeLongPressToken = null;
                         return;
                 }
 
@@ -264,15 +298,24 @@ namespace STS2RitsuLib.Settings
                     })
                     return;
 
-                if (!CanOpenContextMenu(target, button))
+                var menuButton = ResolveContextMenuButton(target);
+                if (menuButton == null || !CanOpenContextMenu(target, menuButton))
                 {
-                    button.ForceCloseDropdown();
+                    menuButton?.ForceCloseDropdown();
                     return;
                 }
 
-                button.OpenAt(target.GetGlobalMousePosition());
+                menuButton.OpenAt(target.GetGlobalMousePosition());
                 target.GetViewport().SetInputAsHandled();
             };
+        }
+
+        private static ModSettingsActionsButton? ResolveContextMenuButton(Control target)
+        {
+            if (!target.HasMeta(ContextMenuButtonMetaKey))
+                return null;
+
+            return target.GetMeta(ContextMenuButtonMetaKey).AsGodotObject() as ModSettingsActionsButton;
         }
 
         private static bool CanOpenContextMenu(Control target, ModSettingsActionsButton button)
@@ -399,6 +442,12 @@ namespace STS2RitsuLib.Settings
                         ModSettingsUiChromeClipboard.TryPastePage(pageContext);
                         context.RequestRefresh();
                     }));
+            if (pageContext.Page.MenuCapabilities.HasFlag(ModSettingsMenuCapabilities.ResetToDefault) &&
+                PageCanResetToDefault(pageContext.Page))
+                actions.Add(new(ModSettingsStandardActionIds.PageResetToDefault,
+                    ModSettingsLocalization.Get("button.resetPageDefaults", "Reset page to defaults"),
+                    () => PageCanResetToDefault(pageContext.Page),
+                    () => { ResetPageToDefaults(pageContext); }));
             ModSettingsUiActionRegistry.AppendPageActions(context, pageContext, actions);
             return actions;
         }
@@ -425,8 +474,44 @@ namespace STS2RitsuLib.Settings
                         ModSettingsUiChromeClipboard.TryPasteSection(sectionContext);
                         context.RequestRefresh();
                     }));
+            if (sectionContext.Section.MenuCapabilities.HasFlag(ModSettingsMenuCapabilities.ResetToDefault) &&
+                SectionCanResetToDefault(sectionContext.Section))
+                actions.Add(new(ModSettingsStandardActionIds.SectionResetToDefault,
+                    ModSettingsLocalization.Get("button.resetSectionDefaults", "Reset section to defaults"),
+                    () => SectionCanResetToDefault(sectionContext.Section),
+                    () => { ResetSectionToDefaults(sectionContext); }));
             ModSettingsUiActionRegistry.AppendSectionActions(context, sectionContext, actions);
             return actions;
+        }
+
+        private static bool PageCanResetToDefault(ModSettingsPage page)
+        {
+            return page.Sections.Any(SectionCanResetToDefault);
+        }
+
+        private static bool SectionCanResetToDefault(ModSettingsSection section)
+        {
+            return section.Entries.Any(entry => entry.CanResetToDefault);
+        }
+
+        private static void ResetPageToDefaults(ModSettingsPageUiContext pageContext)
+        {
+            var count = pageContext.Page.Sections.Sum(section =>
+                ResetSectionEntriesToDefaults(pageContext.Host, section));
+
+            if (count > 0)
+                pageContext.Host.RequestRefreshAfterDataModelBatchChange();
+        }
+
+        private static void ResetSectionToDefaults(ModSettingsSectionUiContext sectionContext)
+        {
+            if (ResetSectionEntriesToDefaults(sectionContext.Host, sectionContext.Section) > 0)
+                sectionContext.Host.RequestRefreshAfterDataModelBatchChange();
+        }
+
+        private static int ResetSectionEntriesToDefaults(IModSettingsUiActionHost host, ModSettingsSection section)
+        {
+            return section.Entries.Count(entry => entry.TryResetToDefault(host));
         }
 
         private static void CopyBindingValueToClipboard<TValue>(IModSettingsValueBinding<TValue> binding)
@@ -517,7 +602,7 @@ namespace STS2RitsuLib.Settings
             }
         }
 
-        private static Control CreateSection(ModSettingsUiContext context, ModSettingsPage page,
+        private static SectionBuildPlan CreateSectionShell(ModSettingsUiContext context, ModSettingsPage page,
             ModSettingsSection section)
         {
             var sectionUiContext = new ModSettingsSectionUiContext(page, section, context);
@@ -528,35 +613,8 @@ namespace STS2RitsuLib.Settings
             if (sectionActionsButton != null)
                 sectionActionsButton.SizeFlagsVertical = Control.SizeFlags.ShrinkCenter;
 
-            var wrappedEntries = new List<Control>(section.Entries.Count);
-            context.BeginSectionSurfaceScope(page, section);
-            try
-            {
-                foreach (var entry in section.Entries)
-                    try
-                    {
-                        var control = entry.CreateControl(context);
-                        control = MaybeWrapDynamicVisibility(context, control, entry.VisibilityPredicate);
-                        control = MaybeWrapDynamicEnabled(context, control, entry.EnabledPredicate);
-                        wrappedEntries.Add(control);
-                    }
-                    catch (Exception ex)
-                    {
-                        RitsuLibFramework.Logger.Warn(
-                            $"[Settings] Failed to build entry '{page.ModId}:{page.Id}:{section.Id}:{entry.Id}': {ex.Message}");
-                        wrappedEntries.Add(CreateBuildErrorPlaceholder(
-                            ModSettingsLocalization.Get("entry.failed.title", "Setting failed to load"),
-                            string.Format(
-                                ModSettingsLocalization.Get("entry.failed.body", "Failed to build setting '{0}'."),
-                                entry.Id)));
-                    }
-            }
-            finally
-            {
-                context.EndSectionSurfaceScope();
-            }
-
             Control built;
+            Control entryHost;
             if (section.IsCollapsible)
             {
                 var collapsible = new ModSettingsCollapsibleSection(
@@ -564,11 +622,12 @@ namespace STS2RitsuLib.Settings
                     section.Id,
                     section.Description != null ? ModSettingsUiContext.Resolve(section.Description) : null,
                     section.StartCollapsed,
-                    wrappedEntries.ToArray(),
+                    [],
                     sectionActionsButton);
                 if (sectionActionsButton != null)
                     AttachContextMenuTargets(collapsible, collapsible, sectionActionsButton);
                 built = collapsible;
+                entryHost = collapsible.ContentHost;
             }
             else
             {
@@ -614,23 +673,24 @@ namespace STS2RitsuLib.Settings
                 if (section.Description != null)
                     container.AddChild(CreateRefreshableDescriptionLabel(context, section.Description,
                         () => ModSettingsUiContext.Resolve(section.Description)));
-                foreach (var wrapped in wrappedEntries)
-                    container.AddChild(wrapped);
                 if (sectionActionsButton != null)
                     AttachContextMenuTargets(container, container, sectionActionsButton);
                 built = container;
+                entryHost = container;
             }
 
-            var hostCombined = ModSettingsHostSurfaceResolver.CombineVisibility(section.VisibleWhen,
-                () => ModSettingsHostSurfaceResolver.IsVisibleOnCurrentHost(section.VisibleOnHostSurfaces));
-            var visibleHost = MaybeWrapDynamicVisibility(context, built, hostCombined);
+            var visibleHost = MaybeWrapDynamicVisibility(context, built, CreateSectionVisibilityPredicate(section));
 
             // For collapsible sections, keep the collapse toggle operable while disabling the content/actions.
             if (section.EnabledWhen == null || built is not ModSettingsCollapsibleSection collapsibleHost)
-                return MaybeWrapDynamicEnabled(context, visibleHost, section.EnabledWhen);
+                return new(visibleHost, entryHost, sectionActionsButton,
+                    built is ModSettingsCollapsibleSection lazyCollapsible && section.StartCollapsed
+                        ? lazyCollapsible
+                        : null);
             Apply();
             RegisterRefreshWhenAlive(context, visibleHost, Apply, ModSettingsUiRefreshSpec.Always);
-            return visibleHost;
+            return new(visibleHost, entryHost, sectionActionsButton,
+                section.StartCollapsed ? collapsibleHost : null);
 
             void Apply()
             {
@@ -646,6 +706,56 @@ namespace STS2RitsuLib.Settings
 
                 collapsibleHost.SetContentEnabled(enabled);
             }
+        }
+
+        private static Func<bool>? CreateSectionVisibilityPredicate(ModSettingsSection section)
+        {
+            if (section.VisibleWhen == null && section.VisibleOnHostSurfaces == ModSettingsHostSurface.All)
+                return null;
+
+            if (section.VisibleOnHostSurfaces == ModSettingsHostSurface.All)
+                return section.VisibleWhen;
+
+            return ModSettingsHostSurfaceResolver.CombineVisibility(section.VisibleWhen,
+                () => ModSettingsHostSurfaceResolver.IsVisibleOnCurrentHost(section.VisibleOnHostSurfaces));
+        }
+
+        private static PageBuildItem CreateEntryBuildItem(ModSettingsUiContext context, ModSettingsPage page,
+            ModSettingsSection section, ModSettingsEntryDefinition entry, SectionBuildPlan sectionPlan,
+            ModSettingsReusableEntryNodePool? entryNodePool)
+        {
+            Control control;
+            context.BeginSectionSurfaceScope(page, section);
+            context.BeginEntrySurfaceScope(entry);
+            try
+            {
+                control = TryCreatePooledStandardEntry(context, entry, entryNodePool, out var pooled)
+                    ? pooled
+                    : entry.CreateControl(context);
+                control = MaybeWrapDynamicVisibility(context, control, entry.VisibilityPredicate);
+                control = MaybeWrapDynamicEnabled(context, control, entry.EnabledPredicate);
+            }
+            catch (Exception ex)
+            {
+                RitsuLibFramework.Logger.Warn(
+                    $"[Settings] Failed to build entry '{page.ModId}:{page.Id}:{section.Id}:{entry.Id}': {ex.Message}");
+                control = CreateBuildErrorPlaceholder(
+                    ModSettingsLocalization.Get("entry.failed.title", "Setting failed to load"),
+                    string.Format(ModSettingsLocalization.Get("entry.failed.body", "Failed to build setting '{0}'."),
+                        entry.Id));
+            }
+            finally
+            {
+                context.EndEntrySurfaceScope();
+                context.EndSectionSurfaceScope();
+            }
+
+            return new(control, true, sectionPlan.EntryHost, added =>
+            {
+                context.RegisterEntryAnchor(page, section, entry, added);
+                if (sectionPlan.SectionActionsButton != null)
+                    AttachContextMenuTargets(added, added, sectionPlan.SectionActionsButton, false);
+            });
         }
 
         internal static Control MaybeWrapDynamicEnabled(ModSettingsUiContext context, Control host,
@@ -1175,5 +1285,11 @@ namespace STS2RitsuLib.Settings
         {
             return RitsuShellChromeStyles.CreatePillStyle(highlighted);
         }
+
+        private sealed record SectionBuildPlan(
+            Control Control,
+            Control EntryHost,
+            ModSettingsActionsButton? SectionActionsButton,
+            ModSettingsCollapsibleSection? LazyContentSection);
     }
 }

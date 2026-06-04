@@ -4,9 +4,9 @@ using MegaCrit.Sts2.Core.Models;
 namespace STS2RitsuLib.Scaffolding.Content.Patches
 {
     /// <summary>
-    ///     External override registry for card frame/banner materials.
+    ///     External override registry for card frame/portrait/banner materials.
     ///     Intended for models that cannot implement RitsuLib interfaces directly (for example, vanilla cards).
-    ///     卡牌 frame/banner materials的外部覆盖注册表。
+    ///     卡牌 frame/portrait/banner materials的外部覆盖注册表。
     ///     用于无法直接实现 RitsuLib 接口的模型（例如原版卡牌）。
     /// </summary>
     public static class ExternalCardMaterialOverrideRegistry
@@ -14,6 +14,9 @@ namespace STS2RitsuLib.Scaffolding.Content.Patches
         private static readonly Lock SyncRoot = new();
 
         private static readonly Dictionary<string, Func<CardModel, Material?>> FrameProviders =
+            new(StringComparer.Ordinal);
+
+        private static readonly Dictionary<string, Func<CardModel, Material?>> PortraitProviders =
             new(StringComparer.Ordinal);
 
         private static readonly Dictionary<string, Func<CardModel, Material?>> BannerProviders =
@@ -33,6 +36,22 @@ namespace STS2RitsuLib.Scaffolding.Content.Patches
             lock (SyncRoot)
             {
                 FrameProviders[key] = provider;
+            }
+
+            RuntimeAssetRefreshCoordinator.Request(RuntimeAssetRefreshScope.Cards);
+        }
+
+        /// <summary>
+        ///     Registers or replaces a portrait material provider.
+        ///     注册或替换卡图材质提供器。
+        /// </summary>
+        public static void RegisterPortraitProvider(string key, Func<CardModel, Material?> provider)
+        {
+            ArgumentException.ThrowIfNullOrWhiteSpace(key);
+            ArgumentNullException.ThrowIfNull(provider);
+            lock (SyncRoot)
+            {
+                PortraitProviders[key] = provider;
             }
 
             RuntimeAssetRefreshCoordinator.Request(RuntimeAssetRefreshScope.Cards);
@@ -65,6 +84,24 @@ namespace STS2RitsuLib.Scaffolding.Content.Patches
             lock (SyncRoot)
             {
                 removed = FrameProviders.Remove(key);
+            }
+
+            if (removed)
+                RuntimeAssetRefreshCoordinator.Request(RuntimeAssetRefreshScope.Cards);
+            return removed;
+        }
+
+        /// <summary>
+        ///     Removes a portrait material provider by key.
+        ///     按键移除卡图材质提供器。
+        /// </summary>
+        public static bool UnregisterPortraitProvider(string key)
+        {
+            ArgumentException.ThrowIfNullOrWhiteSpace(key);
+            bool removed;
+            lock (SyncRoot)
+            {
+                removed = PortraitProviders.Remove(key);
             }
 
             if (removed)
@@ -125,14 +162,15 @@ namespace STS2RitsuLib.Scaffolding.Content.Patches
         }
 
         /// <summary>
-        ///     Clears all frame and banner providers.
-        ///     清除所有框架和横幅提供器。
+        ///     Clears all frame, portrait, and banner providers.
+        ///     清除所有边框、卡图和横幅提供器。
         /// </summary>
         public static void Clear()
         {
             lock (SyncRoot)
             {
                 FrameProviders.Clear();
+                PortraitProviders.Clear();
                 BannerProviders.Clear();
                 PoolFrameProviders.Clear();
             }
@@ -153,6 +191,33 @@ namespace STS2RitsuLib.Scaffolding.Content.Patches
                 {
                     RitsuLibFramework.Logger.Warn(
                         $"[Assets] External frame material provider failed for '{card.GetType().Name}': {ex.Message}");
+                    continue;
+                }
+
+                if (value == null)
+                    continue;
+
+                material = value;
+                return true;
+            }
+
+            material = null!;
+            return false;
+        }
+
+        internal static bool TryGetPortraitMaterial(CardModel card, out Material material)
+        {
+            foreach (var provider in Snapshot(PortraitProviders))
+            {
+                Material? value;
+                try
+                {
+                    value = provider(card);
+                }
+                catch (Exception ex)
+                {
+                    RitsuLibFramework.Logger.Warn(
+                        $"[Assets] External portrait material provider failed for '{card.GetType().Name}': {ex.Message}");
                     continue;
                 }
 

@@ -23,14 +23,20 @@ inputs:
 runs:
   using: composite
   steps:
-    - uses: actions/setup-dotnet@v5
+    - uses: actions/setup-dotnet@v5.3.0
       with:
         dotnet-version: "9.x"
 
-    - uses: actions/cache@v5
+    - uses: actions/cache@v5.0.5
       with:
         path: ~/.nuget/packages
         key: ${{ runner.os }}-nuget-${{ hashFiles('STS2-RitsuLib.csproj') }}
+
+    - uses: actions/setup-node@v4
+      with:
+        node-version: "22"
+        cache: npm
+        cache-dependency-path: Viewer/package-lock.json
 
     - uses: astral-sh/setup-uv@v8.1.0
       with:
@@ -61,7 +67,7 @@ runs:
 
     - name: Upload build artifacts
       if: ${{ inputs.upload-artifact == 'true' }}
-      uses: actions/upload-artifact@v7
+      uses: actions/upload-artifact@v7.0.1
       with:
         name: ${{ steps.artifact.outputs.name }}
         path: |

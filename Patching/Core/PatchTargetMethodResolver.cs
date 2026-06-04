@@ -13,6 +13,10 @@ namespace STS2RitsuLib.Patching.Core
     /// </summary>
     public static class PatchTargetMethodResolver
     {
+        private const BindingFlags AnyDeclaredMethod =
+            BindingFlags.Instance | BindingFlags.Static | BindingFlags.Public | BindingFlags.NonPublic |
+            BindingFlags.DeclaredOnly;
+
         /// <summary>
         ///     Resolves using fields from <see cref="ModPatchInfo" />.
         ///     使用 <see cref="ModPatchInfo" /> 中的字段解析。
@@ -76,8 +80,10 @@ namespace STS2RitsuLib.Patching.Core
             {
                 MethodType.Normal => ResolveNormal(targetType, methodName, parameterTypes),
                 MethodType.Async => GetAsyncStateMachineMoveNext(targetType, methodName, parameterTypes),
-                MethodType.Getter => AccessTools.DeclaredProperty(targetType, methodName)?.GetGetMethod(true),
-                MethodType.Setter => AccessTools.DeclaredProperty(targetType, methodName)?.GetSetMethod(true),
+                MethodType.Getter => GetDeclaredImplementation(
+                    AccessTools.DeclaredProperty(targetType, methodName)?.GetGetMethod(true)),
+                MethodType.Setter => GetDeclaredImplementation(
+                    AccessTools.DeclaredProperty(targetType, methodName)?.GetSetMethod(true)),
                 MethodType.Constructor => AccessTools.DeclaredConstructor(targetType, parameterTypes),
                 MethodType.Enumerator => GetEnumeratorMoveNext(targetType, methodName, parameterTypes),
                 _ => ResolveNormal(targetType, methodName, parameterTypes),
@@ -86,17 +92,20 @@ namespace STS2RitsuLib.Patching.Core
 
         private static MethodInfo? ResolveNormal(Type targetType, string methodName, Type[]? parameterTypes)
         {
+            MethodInfo? method;
             if (parameterTypes != null)
-                return targetType.GetMethod(
+                method = targetType.GetMethod(
                     methodName,
                     BindingFlags.Instance | BindingFlags.Static | BindingFlags.Public | BindingFlags.NonPublic,
                     null,
                     parameterTypes,
                     null);
+            else
+                method = targetType.GetMethod(
+                    methodName,
+                    BindingFlags.Instance | BindingFlags.Static | BindingFlags.Public | BindingFlags.NonPublic);
 
-            return targetType.GetMethod(
-                methodName,
-                BindingFlags.Instance | BindingFlags.Static | BindingFlags.Public | BindingFlags.NonPublic);
+            return GetDeclaredImplementation(method);
         }
 
         private static MethodInfo? GetAsyncStateMachineMoveNext(Type targetType, string methodName,
@@ -110,6 +119,21 @@ namespace STS2RitsuLib.Patching.Core
         {
             var outer = ResolveNormal(targetType, methodName, parameterTypes);
             return outer is null ? null : AccessTools.EnumeratorMoveNext(outer);
+        }
+
+        private static MethodInfo? GetDeclaredImplementation(MethodInfo? method)
+        {
+            if (method is not { IsAbstract: false })
+                return null;
+
+            var declaringType = method.DeclaringType;
+            if (declaringType == null || method.ReflectedType == declaringType)
+                return method;
+
+            var parameterTypes = method.GetParameters()
+                .Select(static parameter => parameter.ParameterType)
+                .ToArray();
+            return declaringType.GetMethod(method.Name, AnyDeclaredMethod, null, parameterTypes, null) ?? method;
         }
     }
 }

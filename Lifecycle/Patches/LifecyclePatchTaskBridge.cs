@@ -43,5 +43,26 @@ namespace STS2RitsuLib.Lifecycle.Patches
 
             return result;
         }
+
+        public static async Task<T> After<T>(Task<T> originalTask, Func<T, Task> continuation)
+        {
+            ArgumentNullException.ThrowIfNull(originalTask);
+            ArgumentNullException.ThrowIfNull(continuation);
+
+            var result = await originalTask;
+            try
+            {
+                await continuation(result);
+            }
+            catch (Exception ex)
+            {
+                DiagnosticsTelemetryCollector.CaptureExceptionForAuthorizedApplicants(
+                    ex,
+                    "ritsulib_lifecycle_patch_task_bridge");
+                throw;
+            }
+
+            return result;
+        }
     }
 }

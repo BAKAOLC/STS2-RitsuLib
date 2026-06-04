@@ -15,6 +15,43 @@ namespace STS2RitsuLib.Scaffolding.Godot
     public static class RitsuGodotNodeFactories
     {
         /// <summary>
+        ///     Registers a typed factory for explicit <see cref="CreateFromScene{TNode}(PackedScene)" /> and
+        ///     <see cref="CreateFromResource{TNode}(object)" /> calls.
+        ///     为显式 <see cref="CreateFromScene{TNode}(PackedScene)" /> 和
+        ///     <see cref="CreateFromResource{TNode}(object)" /> 调用注册强类型工厂。
+        /// </summary>
+        public static void RegisterFactory<TNode>(
+            IRitsuGodotNodeFactory<TNode> factory,
+            bool replaceExisting = false)
+            where TNode : Node, new()
+        {
+            ArgumentNullException.ThrowIfNull(factory);
+            RitsuGodotNodeFactoryRegistry.RegisterFactory<TNode>(
+                new PublicRitsuGodotNodeFactoryAdapter<TNode>(factory),
+                replaceExisting);
+        }
+
+        /// <summary>
+        ///     Registers delegate-based conversion for <typeparamref name="TNode" />. When
+        ///     <paramref name="createFromResource" /> is omitted, <see cref="CreateFromResource{TNode}(object)" /> throws
+        ///     <see cref="NotSupportedException" /> for this node type.
+        ///     为 <typeparamref name="TNode" /> 注册基于委托的转换。当省略 <paramref name="createFromResource" /> 时，
+        ///     此节点类型的 <see cref="CreateFromResource{TNode}(object)" /> 会抛出
+        ///     <see cref="NotSupportedException" />。
+        /// </summary>
+        public static void RegisterFactory<TNode>(
+            Func<Node, VisualNodeStyle?, TNode> createFromNode,
+            Func<object, VisualNodeStyle?, TNode>? createFromResource = null,
+            bool replaceExisting = false)
+            where TNode : Node, new()
+        {
+            ArgumentNullException.ThrowIfNull(createFromNode);
+            RitsuGodotNodeFactoryRegistry.RegisterFactory<TNode>(
+                new DelegateRitsuGodotNodeFactory<TNode>(createFromNode, createFromResource),
+                replaceExisting);
+        }
+
+        /// <summary>
         ///     Creates <typeparamref name="TNode" /> from a loaded resource (e.g. <see cref="Texture2D" /> for creature /
         ///     merchant factories).
         ///     <see cref="Texture2D" />）。
@@ -125,6 +162,79 @@ namespace STS2RitsuLib.Scaffolding.Godot
             where TNode : Node, new()
         {
             return RitsuGodotNodeFactoryRegistry.CreateFromScenePath<TNode>(scenePath, editState, style);
+        }
+
+        private static TNode RequireCreatedNode<TNode>(TNode? node, string factoryMember) where TNode : Node
+        {
+            return node ?? throw new InvalidOperationException(
+                $"Registered Godot node factory member '{factoryMember}' returned null for {typeof(TNode).FullName}.");
+        }
+
+        private sealed class PublicRitsuGodotNodeFactoryAdapter<TNode>(IRitsuGodotNodeFactory<TNode> factory)
+            : RitsuGodotNodeFactory
+            where TNode : Node
+        {
+            public override Node CreateFromNode(Node source)
+            {
+                return CreateFromNode(source, null);
+            }
+
+            public override Node CreateFromNode(Node source, VisualNodeStyle? style)
+            {
+                return RequireCreatedNode(factory.CreateFromNode(source, style),
+                    nameof(IRitsuGodotNodeFactory<TNode>.CreateFromNode));
+            }
+
+            public override Node CreateBareFromResource(object resource)
+            {
+                return CreateFromResource(resource, null);
+            }
+
+            public override Node CreateFromResource(object resource, VisualNodeStyle? style)
+            {
+                return RequireCreatedNode(
+                    factory.CreateFromResource(resource, style),
+                    nameof(IRitsuGodotNodeFactory<TNode>.CreateFromResource));
+            }
+
+            public override void CompleteBareRoot(Node bare)
+            {
+            }
+        }
+
+        private sealed class DelegateRitsuGodotNodeFactory<TNode>(
+            Func<Node, VisualNodeStyle?, TNode> createFromNode,
+            Func<object, VisualNodeStyle?, TNode>? createFromResource)
+            : RitsuGodotNodeFactory
+            where TNode : Node
+        {
+            public override Node CreateFromNode(Node source)
+            {
+                return CreateFromNode(source, null);
+            }
+
+            public override Node CreateFromNode(Node source, VisualNodeStyle? style)
+            {
+                return RequireCreatedNode(createFromNode(source, style), nameof(createFromNode));
+            }
+
+            public override Node CreateBareFromResource(object resource)
+            {
+                return CreateFromResource(resource, null);
+            }
+
+            public override Node CreateFromResource(object resource, VisualNodeStyle? style)
+            {
+                if (createFromResource == null)
+                    throw new NotSupportedException(
+                        $"No resource factory was registered for {typeof(TNode).FullName}.");
+
+                return RequireCreatedNode(createFromResource(resource, style), nameof(createFromResource));
+            }
+
+            public override void CompleteBareRoot(Node bare)
+            {
+            }
         }
     }
 }

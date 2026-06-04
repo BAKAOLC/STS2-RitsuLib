@@ -20,7 +20,7 @@ cover: https://wrxinyue.s3.bitiful.net/slay-the-spire-2-wallpaper.webp
 | Owned id | An id qualified with the mod id, for example `MY_MOD_KEYWORD_BURNING`. Prefer owned ids over flat global ids. |
 | Lifecycle event | A typed event published through `RitsuLibFramework.SubscribeLifecycle<TEvent>(...)`. |
 | Replayable event | A lifecycle event sent immediately to late subscribers when the event has already happened. |
-| Scope | Persistence location: `Global`, `Profile`, `RunSidecar`, or `InMemory`. |
+| Scope | Persistence location: `Global`, `Profile`, or `InMemory`. Run-scoped save data uses `RunSavedData`. |
 
 :::
 
@@ -39,7 +39,7 @@ cover: https://wrxinyue.s3.bitiful.net/slay-the-spire-2-wallpaper.webp
 | Owned id | 带 Mod 归属的 ID，例如 `MY_MOD_KEYWORD_BURNING`。优先使用 owned id，避免扁平全局 id 冲突。 |
 | Lifecycle event | 通过 `RitsuLibFramework.SubscribeLifecycle<TEvent>(...)` 发布的强类型事件。 |
 | Replayable event | 已经发生后仍会立即补发给新订阅者的生命周期事件。 |
-| Scope | 持久化位置：`Global`、`Profile`、`RunSidecar` 或 `InMemory`。 |
+| Scope | 持久化位置：`Global`、`Profile` 或 `InMemory`。跑局存档数据使用 `RunSavedData`。 |
 
 :::
 

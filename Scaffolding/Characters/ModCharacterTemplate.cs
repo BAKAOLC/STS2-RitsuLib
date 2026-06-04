@@ -30,6 +30,19 @@ namespace STS2RitsuLib.Scaffolding.Characters
     }
 
     /// <summary>
+    ///     Exposes the character whose run path unlocks this mod character.
+    ///     暴露用于解锁该 mod 角色的前置角色。
+    /// </summary>
+    public interface IModCharacterUnlockPrerequisite
+    {
+        /// <summary>
+        ///     CLR type of the prerequisite character, or <c>null</c> when none is declared.
+        ///     前置角色的 CLR 类型；未声明时为 <c>null</c>。
+        /// </summary>
+        Type? UnlocksAfterRunAsType { get; }
+    }
+
+    /// <summary>
     ///     Controls mod-character visibility in vanilla character-select, random selection, and the card library
     ///     compendium pool-filter row.
     ///     控制 mod 角色在原版角色选择、随机选择和卡牌库
@@ -326,7 +339,7 @@ namespace STS2RitsuLib.Scaffolding.Characters
         IModCreatureCombatAnimationStateMachineFactory, IModNonSpineAnimationStateMachineFactory,
         IModCharacterMerchantAnimationStateMachineFactory,
         IModCharacterEpochTimelineRequirement, IModCharacterVanillaSelectionPolicy,
-        IModCharacterCardLibraryCompendiumPlacement
+        IModCharacterCardLibraryCompendiumPlacement, IModCharacterUnlockPrerequisite
 #pragma warning restore CS0618
         where TCardPool : CardPoolModel
         where TRelicPool : RelicPoolModel
@@ -437,13 +450,16 @@ namespace STS2RitsuLib.Scaffolding.Characters
 
         /// <summary>
         ///     Optional prerequisite character type for vanilla <see cref="CharacterModel.GetUnlockText" /> (the
-        ///     <c>{Prerequisite}</c> placeholder). Does not drive mod unlock logic — align with
-        ///     <see cref="Unlocks.ModUnlockRegistry" /> rules (e.g. the same <c>TCharacter</c> in
-        ///     <c>UnlockEpochAfterWinAs&lt;TCharacter, TEpoch&gt;</c>).
+        ///     <c>{Prerequisite}</c> placeholder). Root
+        ///     <see cref="Timeline.Scaffolding.CharacterUnlockEpochTemplate{TCharacter}" /> slots whose character declares
+        ///     this property are obtained with Neow's initial expansion for
+        ///     <see cref="MegaCrit.Sts2.Core.Models.Characters.Ironclad" /> prerequisites, or after a completed run as any
+        ///     other prerequisite character.
         ///     用于原版 <see cref="CharacterModel.GetUnlockText" /> 的可选前置角色类型（
-        ///     <c>{Prerequisite}</c> 占位符）。不驱动 mod 解锁逻辑，应与
-        ///     <see cref="Unlocks.ModUnlockRegistry" /> 规则对齐（例如
-        ///     <c>UnlockEpochAfterWinAs&lt;TCharacter, TEpoch&gt;</c> 中相同的 <c>TCharacter</c>）。
+        ///     <c>{Prerequisite}</c> 占位符）。角色声明此属性时，其根
+        ///     <see cref="Timeline.Scaffolding.CharacterUnlockEpochTemplate{TCharacter}" /> 槽位会在前置为
+        ///     <see cref="MegaCrit.Sts2.Core.Models.Characters.Ironclad" /> 时随 Neow 初始扩展获得；其他前置角色则在完成该角色 run
+        ///     后获得。
         /// </summary>
         protected virtual Type? UnlocksAfterRunAsType => null;
 
@@ -592,6 +608,8 @@ namespace STS2RitsuLib.Scaffolding.Characters
         {
             return SetupCustomMerchantAnimationStateMachine(merchantRoot, character);
         }
+
+        Type? IModCharacterUnlockPrerequisite.UnlocksAfterRunAsType => UnlocksAfterRunAsType;
 
         /// <inheritdoc />
         public virtual bool HideFromVanillaCharacterSelect => false;

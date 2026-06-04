@@ -1,4 +1,5 @@
 using Godot;
+using STS2RitsuLib.Ui.Shell;
 using STS2RitsuLib.Ui.Shell.Theme;
 
 namespace STS2RitsuLib.Settings
@@ -470,6 +471,18 @@ namespace STS2RitsuLib.Settings
         ///     表示所请求视觉状态的 stylebox。
         /// </returns>
         public static StyleBoxFlat CreateSettingsToggleButtonStyle(bool on, bool hovered)
+        {
+            var key = (on, hovered) switch
+            {
+                (true, true) => "toggle.on.hover",
+                (true, false) => "toggle.on",
+                (false, true) => "toggle.off.hover",
+                _ => "toggle.off",
+            };
+            return RitsuShellStyleCache.GetOrBuild(key, () => BuildSettingsToggleButtonStyle(on, hovered));
+        }
+
+        private static StyleBoxFlat BuildSettingsToggleButtonStyle(bool on, bool hovered)
         {
             var borderColor =
                 on

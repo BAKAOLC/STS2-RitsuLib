@@ -76,7 +76,9 @@ namespace STS2RitsuLib.Telemetry
                 return;
 
             TelemetryRuntime.ReplayStartupSnapshotToApplicant(applicantId);
-            _ = TelemetryQueue.FlushApplicantAsync(applicantId);
+            TelemetryTaskRunner.Forget(
+                TelemetryQueue.FlushApplicantAsync(applicantId),
+                "flush_applicant_after_consent");
         }
 
         public static void SetSharedContributionConsent(

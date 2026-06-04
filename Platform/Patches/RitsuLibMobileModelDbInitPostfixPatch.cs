@@ -51,7 +51,7 @@ namespace STS2RitsuLib.Platform.Patches
             }
             catch (Exception ex)
             {
-                RitsuLibFramework.Logger.Error(
+                RitsuLibFramework.Logger.ErrorNoTrace(
                     $"[MobileDefer] Failed to apply deferred patches after ModelDb.Init: {ex}");
             }
         }

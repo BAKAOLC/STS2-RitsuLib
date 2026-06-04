@@ -9,7 +9,12 @@ namespace STS2RitsuLib.Ui.Toast
         private bool _isExiting;
         private StyleBoxFlat? _panelHover;
         private StyleBoxFlat? _panelNormal;
+        private ColorRect? _progressFill;
+        private float _progressFraction = 1f;
+        private ColorRect? _progressTrack;
+        private bool _progressVisible;
         private RitsuToastRequest _request = new(string.Empty);
+        private VBoxContainer? _rootColumn;
         private HBoxContainer? _row;
         private RitsuToastVisualStyle _style = null!;
         private VBoxContainer? _textColumn;
@@ -33,13 +38,28 @@ namespace STS2RitsuLib.Ui.Toast
 
         public void Configure(RitsuToastRequest request, RitsuToastVisualStyle style)
         {
-            _request = request;
             MouseDefaultCursorShape = CursorShape.PointingHand;
-            ApplyContent();
-            ApplyStyle(style);
+            _progressVisible = false;
+            _progressFraction = 1f;
+            UpdateRequest(request, style);
             _isExiting = false;
             Modulate = new(Modulate.R, Modulate.G, Modulate.B, 0f);
             Scale = Vector2.One;
+        }
+
+        public void UpdateRequest(RitsuToastRequest request, RitsuToastVisualStyle style)
+        {
+            _request = request;
+            ApplyContent();
+            ApplyStyle(style);
+            ResetSize();
+        }
+
+        public void SetProgress(bool visible, float fraction)
+        {
+            _progressVisible = visible;
+            _progressFraction = Mathf.Clamp(fraction, 0f, 1f);
+            ApplyProgressVisual();
         }
 
         public void SetPivotCenter(Vector2 measuredSize)
@@ -73,10 +93,21 @@ namespace STS2RitsuLib.Ui.Toast
                 _textColumn.SizeFlagsHorizontal = SizeFlags.ShrinkBegin;
             }
 
+            _rootColumn?.AddThemeConstantOverride("separation",
+                (int)Math.Round(style.ProgressSpacing, MidpointRounding.AwayFromZero));
             _row?.AddThemeConstantOverride("separation",
                 (int)Math.Round(style.RowSpacing, MidpointRounding.AwayFromZero));
             if (_image != null)
                 _image.CustomMinimumSize = new(style.ImageSize, style.ImageSize);
+            if (_progressTrack != null)
+            {
+                _progressTrack.Color = style.ProgressTrackColor;
+                _progressTrack.CustomMinimumSize = new(0f, Math.Max(0f, style.ProgressHeight));
+            }
+
+            if (_progressFill != null)
+                _progressFill.Color = style.ProgressFillColor;
+            ApplyProgressVisual();
         }
 
         public void SetImageOnRight(bool imageOnRight)
@@ -151,6 +182,9 @@ namespace STS2RitsuLib.Ui.Toast
             if (_bodyLabel != null)
                 _bodyLabel.Text = string.Empty;
 
+            _progressVisible = false;
+            _progressFraction = 1f;
+            ApplyProgressVisual();
             if (_image == null) return;
             _image.Texture = null;
             _image.Visible = false;
@@ -158,14 +192,14 @@ namespace STS2RitsuLib.Ui.Toast
 
         private void BuildTree()
         {
-            var root = new VBoxContainer();
-            AddChild(root);
+            _rootColumn = new();
+            AddChild(_rootColumn);
 
             _row = new()
             {
                 SizeFlagsHorizontal = SizeFlags.ExpandFill,
             };
-            root.AddChild(_row);
+            _rootColumn.AddChild(_row);
 
             _image = new()
             {
@@ -197,6 +231,21 @@ namespace STS2RitsuLib.Ui.Toast
                 SizeFlagsHorizontal = SizeFlags.ExpandFill,
             };
             _textColumn.AddChild(_bodyLabel);
+
+            _progressTrack = new()
+            {
+                MouseFilter = MouseFilterEnum.Ignore,
+                SizeFlagsHorizontal = SizeFlags.ExpandFill,
+                Visible = false,
+            };
+            _rootColumn.AddChild(_progressTrack);
+
+            _progressFill = new()
+            {
+                MouseFilter = MouseFilterEnum.Ignore,
+            };
+            _progressTrack.AddChild(_progressFill);
+            _progressTrack.Resized += ApplyProgressVisual;
 
             MouseEntered += () =>
             {
@@ -233,6 +282,25 @@ namespace STS2RitsuLib.Ui.Toast
             if (_image == null) return;
             _image.Texture = _request.Image;
             _image.Visible = _request.Image != null;
+        }
+
+        private void ApplyProgressVisual()
+        {
+            if (_progressTrack == null || _progressFill == null)
+                return;
+
+            _progressTrack.Visible = _progressVisible;
+            if (!_progressVisible)
+            {
+                _progressFill.Visible = false;
+                return;
+            }
+
+            var trackSize = _progressTrack.Size;
+            var height = trackSize.Y > 0f ? trackSize.Y : Math.Max(0f, _style?.ProgressHeight ?? 0f);
+            _progressFill.Visible = _progressFraction > 0f && height > 0f;
+            _progressFill.Position = Vector2.Zero;
+            _progressFill.Size = new(Math.Max(0f, trackSize.X * _progressFraction), height);
         }
 
         private static StyleBoxFlat BuildPanel(RitsuToastVisualStyle style, Color borderColor, bool hovering)

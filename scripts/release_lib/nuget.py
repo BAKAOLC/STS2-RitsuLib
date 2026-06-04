@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import json
+import hashlib
 import os
 import shutil
 import subprocess
@@ -10,16 +11,21 @@ import zipfile
 import xml.etree.ElementTree as ET
 from pathlib import Path
 
+from release_lib.artifact_validation import validate_github_zip_viewer, validate_nuget_viewer
 from release_lib.msbuild_eval import get_csproj_property
 from release_lib.repo_layout import (
     ARTIFACTS_GITHUB,
     ARTIFACTS_NUGET,
+    COMPAT_TARGET_MARKER_NAME,
     GITHUB_ZIP_FILENAME_SUFFIX,
     GODOT_MONO_BIN_PREFIX,
     GODOT_MONO_OBJ_PREFIX,
     MOD_MANIFEST_NAME,
     RITSULIB_CSPROJ_NAME,
     SNUPKG_SUFFIX,
+    VIEWER_DIST_REL,
+    VIEWER_OUTPUT_DIR_NAME,
+    VARIANT_MANIFEST_NAME,
     ritsulib_built_dll_name,
     ritsulib_built_doc_xml_name,
     ritsulib_built_pdb_name,
@@ -47,6 +53,11 @@ def snapshot_bundle_variant_after_pack(
         src = bin_dir / name
         if src.is_file():
             shutil.copy2(src, lib_dest / name)
+    (lib_dest / COMPAT_TARGET_MARKER_NAME).write_text(
+        compat_target + "\n",
+        encoding="utf-8",
+        newline="\n",
+    )
 
     manifest_dest = bundle_staging_root / MOD_MANIFEST_NAME
     if compat_target == latest_compat or not manifest_dest.is_file():
@@ -54,6 +65,7 @@ def snapshot_bundle_variant_after_pack(
         gen = obj_dir / "mod_manifest.generated.json"
         if gen.is_file():
             shutil.copy2(gen, manifest_dest)
+        copy_viewer_dist_to(bundle_staging_root, ritsulib_root=ritsulib_root)
 
 
 def finalize_bundle_manifest(
@@ -80,6 +92,78 @@ def finalize_bundle_manifest(
         encoding="utf-8",
         newline="\n",
     )
+    write_bundle_variant_manifest(bundle_staging_root)
+
+
+def write_bundle_variant_manifest(bundle_staging_root: Path) -> None:
+    lib_root = bundle_staging_root / "lib"
+    if not lib_root.is_dir():
+        msg = f"bundle staging missing lib variants under {lib_root}"
+        raise RuntimeError(msg)
+
+    variants: list[dict[str, str]] = []
+    for lib_dir in sorted((p for p in lib_root.iterdir() if p.is_dir()), key=lambda p: _compat_version_key(p.name)):
+        compat_target = lib_dir.name
+        marker = lib_dir / COMPAT_TARGET_MARKER_NAME
+        dll = lib_dir / ritsulib_built_dll_name()
+        if not marker.is_file():
+            msg = f"bundle variant missing {COMPAT_TARGET_MARKER_NAME}: {marker}"
+            raise RuntimeError(msg)
+        if marker.read_text(encoding="utf-8").strip() != compat_target:
+            msg = f"bundle variant marker does not match directory: {marker}"
+            raise RuntimeError(msg)
+        if not dll.is_file():
+            msg = f"bundle variant missing DLL: {dll}"
+            raise RuntimeError(msg)
+        variants.append(
+            {
+                "compatTarget": compat_target,
+                "directory": f"lib/{compat_target}",
+                "assembly": ritsulib_built_dll_name(),
+                "sha256": _sha256_file(dll),
+            }
+        )
+
+    if not variants:
+        msg = f"bundle staging missing lib variants under {lib_root}"
+        raise RuntimeError(msg)
+
+    manifest = {"schema": 1, "variants": variants}
+    (bundle_staging_root / VARIANT_MANIFEST_NAME).write_text(
+        json.dumps(manifest, ensure_ascii=False, indent=2) + "\n",
+        encoding="utf-8",
+        newline="\n",
+    )
+
+
+def _sha256_file(path: Path) -> str:
+    digest = hashlib.sha256()
+    with path.open("rb") as f:
+        for chunk in iter(lambda: f.read(1024 * 1024), b""):
+            digest.update(chunk)
+    return digest.hexdigest()
+
+
+def copy_viewer_dist_to(dest_root: Path, *, ritsulib_root: Path) -> None:
+    viewer_dist = ritsulib_root / VIEWER_DIST_REL
+    if not (viewer_dist / "index.html").is_file():
+        return
+
+    dest = dest_root / VIEWER_OUTPUT_DIR_NAME
+    if dest.exists():
+        shutil.rmtree(dest)
+    shutil.copytree(viewer_dist, dest)
+
+
+def write_viewer_dist_to_zip(zf: zipfile.ZipFile, *, ritsulib_root: Path) -> None:
+    viewer_dist = ritsulib_root / VIEWER_DIST_REL
+    if not (viewer_dist / "index.html").is_file():
+        return
+
+    for path in viewer_dist.rglob("*"):
+        if path.is_file():
+            arc = Path(VIEWER_OUTPUT_DIR_NAME) / path.relative_to(viewer_dist)
+            zf.write(path, arcname=arc.as_posix())
 
 
 def lowest_compat_target(compat_targets: list[str]) -> str:
@@ -259,6 +343,8 @@ def publish_nugets(
             compat_target=compat_target,
             output_dir=github_dir,
         )
+        validate_nuget_viewer(package)
+        validate_github_zip_viewer(zip_path)
         if bundle_staging_root is not None and latest_compat is not None:
             snapshot_bundle_variant_after_pack(
                 ritsulib_root,
@@ -326,6 +412,8 @@ def build_artifacts(
             compat_target=compat_target,
             output_dir=github_dir,
         )
+        validate_nuget_viewer(package)
+        validate_github_zip_viewer(zip_path)
         if bundle_staging_root is not None and latest_compat is not None:
             snapshot_bundle_variant_after_pack(
                 ritsulib_root,
@@ -442,6 +530,7 @@ def create_github_zip(
             zf.write(pdb_path, arcname=ritsulib_built_pdb_name())
         zf.write(manifest_path, arcname="mod_manifest.json")
         zf.writestr("compat-target.txt", compat_target + "\n")
+        write_viewer_dist_to_zip(zf, ritsulib_root=ritsulib_root)
     return zip_path
 
 

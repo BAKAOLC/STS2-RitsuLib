@@ -25,7 +25,8 @@ namespace STS2RitsuLib.Audio
         /// </summary>
         public static bool TryPlay(string eventPath)
         {
-            return FmodStudioGateway.TryCall(FmodStudioMethodNames.PlayOneShot, eventPath);
+            return !string.IsNullOrWhiteSpace(eventPath) &&
+                   FmodStudioGateway.TryCall(FmodStudioMethodNames.PlayOneShot, eventPath);
         }
 
         /// <summary>
@@ -34,6 +35,9 @@ namespace STS2RitsuLib.Audio
         /// </summary>
         public static bool TryPlay(string eventPath, IReadOnlyDictionary<string, float> parameters)
         {
+            if (string.IsNullOrWhiteSpace(eventPath))
+                return false;
+
             var server = FmodStudioGateway.TryGetServer();
             if (server is null)
                 return false;
@@ -49,7 +53,7 @@ namespace STS2RitsuLib.Audio
             }
             catch (Exception ex)
             {
-                RitsuLibFramework.Logger.Error($"[Audio] FMOD play_one_shot_with_params: {ex.Message}");
+                RitsuLibFramework.Logger.ErrorNoTrace($"[Audio] FMOD play_one_shot_with_params: {ex.Message}");
                 return false;
             }
         }
@@ -98,7 +102,8 @@ namespace STS2RitsuLib.Audio
             }
             catch (Exception ex)
             {
-                RitsuLibFramework.Logger.Error($"[Audio] FMOD play_one_shot_using_guid_with_params: {ex.Message}");
+                RitsuLibFramework.Logger.ErrorNoTrace(
+                    $"[Audio] FMOD play_one_shot_using_guid_with_params: {ex.Message}");
                 return false;
             }
         }
@@ -128,7 +133,7 @@ namespace STS2RitsuLib.Audio
             }
             catch (Exception ex)
             {
-                RitsuLibFramework.Logger.Error($"[Audio] FMOD mapped path one-shot: {ex.Message}");
+                RitsuLibFramework.Logger.ErrorNoTrace($"[Audio] FMOD mapped path one-shot: {ex.Message}");
                 return false;
             }
         }

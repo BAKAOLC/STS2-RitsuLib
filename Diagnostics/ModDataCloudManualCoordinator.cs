@@ -1,6 +1,7 @@
 using Godot;
 using MegaCrit.Sts2.Core.Nodes;
 using STS2RitsuLib.Settings;
+using STS2RitsuLib.Utils;
 using STS2RitsuLib.Utils.Persistence;
 
 namespace STS2RitsuLib.Diagnostics
@@ -272,13 +273,17 @@ namespace STS2RitsuLib.Diagnostics
                 Node host = NGame.Instance != null ? NGame.Instance : tree.Root;
                 overlay = ModDataCloudProgressOverlay.Attach(host, Math.Max(1, paths.Count), progressTitle);
                 overlay.SetProgress(0, Math.Max(1, paths.Count), paths.Count > 0 ? paths[0] : null);
-                await tree.ToSignal(tree, SceneTree.SignalName.ProcessFrame);
+                await RitsuGodotAwaitSafety.AwaitProcessFrameAsync(tree, owner: overlay);
 
                 var (queued, skipped, failed) = await ModDataCloudMirror.PushPathsAsync(
                     cloud,
                     paths,
                     tree,
-                    (done, total, cur) => overlay?.SetProgress(done, total, cur));
+                    (done, total, cur) =>
+                    {
+                        if (GodotObject.IsInstanceValid(overlay))
+                            overlay.SetProgress(done, total, cur);
+                    });
 
                 var body = string.Format(
                     ModSettingsLocalization.Get(
@@ -365,13 +370,17 @@ namespace STS2RitsuLib.Diagnostics
                 Node host = NGame.Instance != null ? NGame.Instance : tree.Root;
                 overlay = ModDataCloudProgressOverlay.Attach(host, Math.Max(1, paths.Count), progressTitle);
                 overlay.SetProgress(0, Math.Max(1, paths.Count), paths.Count > 0 ? paths[0] : null);
-                await tree.ToSignal(tree, SceneTree.SignalName.ProcessFrame);
+                await RitsuGodotAwaitSafety.AwaitProcessFrameAsync(tree, owner: overlay);
 
                 var (downloaded, failed) = await ModDataCloudMirror.PullPathsAsync(
                     cloud,
                     paths,
                     tree,
-                    (done, total, cur) => overlay?.SetProgress(done, total, cur));
+                    (done, total, cur) =>
+                    {
+                        if (GodotObject.IsInstanceValid(overlay))
+                            overlay.SetProgress(done, total, cur);
+                    });
 
                 var body = failed == 0
                     ? string.Format(

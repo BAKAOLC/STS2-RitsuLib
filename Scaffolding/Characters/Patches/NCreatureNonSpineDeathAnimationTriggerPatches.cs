@@ -3,6 +3,7 @@ using MegaCrit.Sts2.Core.Animation;
 using MegaCrit.Sts2.Core.Models;
 using MegaCrit.Sts2.Core.Nodes.Combat;
 using STS2RitsuLib.Patching.Models;
+using STS2RitsuLib.Scaffolding.Characters.Visuals;
 using STS2RitsuLib.Scaffolding.Content;
 
 namespace STS2RitsuLib.Scaffolding.Characters.Patches
@@ -103,13 +104,27 @@ namespace STS2RitsuLib.Scaffolding.Characters.Patches
         ///     仅为 RitsuLib 管理的非 Spine 生物通过 <see cref="NCreature.SetAnimationTrigger" /> 派发
         ///     <c>Dead</c>；否则静默返回。
         /// </summary>
-        // ReSharper disable once InconsistentNaming
-        public static void Postfix(NCreature __instance)
+        // ReSharper disable InconsistentNaming
+        public static void Postfix(NCreature __instance, bool shouldRemove, ref float __result)
+            // ReSharper restore InconsistentNaming
         {
             if (!CombatAnimationStateMachineTriggerScope.AppliesToDeathPostfix(__instance))
                 return;
 
             __instance.SetAnimationTrigger("Dead");
+
+            if (!ModCreatureCombatAnimationPlaybackPatch.TryGetCurrentCombatAnimationDuration(
+                    __instance,
+                    "Dead",
+                    out var seconds))
+                return;
+
+            seconds = Math.Min(seconds, 30f);
+            if (seconds > __result)
+                __result = seconds;
+
+            if (shouldRemove)
+                RitsuNonSpineDeathAnimationDelayer.Install(__instance, seconds);
         }
     }
 

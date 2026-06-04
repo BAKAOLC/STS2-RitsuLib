@@ -12,6 +12,7 @@ using MegaCrit.Sts2.Core.Nodes;
 using MegaCrit.Sts2.Core.Nodes.Cards;
 using MegaCrit.Sts2.Core.Runs;
 using MegaCrit.Sts2.Core.TestSupport;
+using STS2RitsuLib.Utils;
 
 namespace STS2RitsuLib.Diagnostics.CardExport
 {
@@ -161,7 +162,7 @@ namespace STS2RitsuLib.Diagnostics.CardExport
             {
                 progressUi = CardPngExportProgressOverlay.Attach(NGame.Instance, totalSteps);
                 progressUi.SetProgress(0, null);
-                await tree.ToSignal(tree, SceneTree.SignalName.ProcessFrame);
+                await RitsuGodotAwaitSafety.AwaitProcessFrameAsync(tree, owner: progressUi);
 
                 var exportedBase = 0;
                 var savedFiles = 0;
@@ -228,7 +229,7 @@ namespace STS2RitsuLib.Diagnostics.CardExport
                 }
 
                 progressUi.SetProgress(totalSteps, null);
-                await tree.ToSignal(tree, SceneTree.SignalName.ProcessFrame);
+                await RitsuGodotAwaitSafety.AwaitProcessFrameAsync(tree, owner: progressUi);
 
                 log?.Invoke(
                     $"Finished. {savedFiles} file(s) saved, {failures} failed. Base cards: {exportedBase}. Output: {outDir}");
@@ -258,8 +259,7 @@ namespace STS2RitsuLib.Diagnostics.CardExport
 
         private static async Task WaitMainThreadFrames(SceneTree tree, int count)
         {
-            for (var i = 0; i < count; i++)
-                await tree.ToSignal(tree, SceneTree.SignalName.ProcessFrame);
+            await RitsuGodotAwaitSafety.AwaitProcessFramesAsync(tree, count);
         }
 
         private static async Task<bool> TryCaptureWithRetriesAsync(SceneTree tree, CardModel card, string absolutePath,
@@ -267,7 +267,7 @@ namespace STS2RitsuLib.Diagnostics.CardExport
         {
             for (var attempt = 1; attempt <= MaxCaptureAttemptsPerFile; attempt++)
             {
-                var prefix = MaxCaptureAttemptsPerFile > 1 ? $"[{attempt}/{MaxCaptureAttemptsPerFile}] " : null;
+                var prefix = $"[{attempt}/{MaxCaptureAttemptsPerFile}] ";
                 if (await TryCaptureAsync(tree, card, absolutePath, request, scale, log, prefix, fileLabel))
                     return true;
                 if (attempt >= MaxCaptureAttemptsPerFile)

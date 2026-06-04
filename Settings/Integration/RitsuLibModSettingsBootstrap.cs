@@ -24,6 +24,10 @@ namespace STS2RitsuLib.Settings
 
                 var ui = RitsuLibModSettingsUiBindings.Create();
                 RegisterMainSettingsPage(ui);
+                RegisterContentSourceHoverTipsPage(ui);
+                RegisterContentModLoadOrderPage();
+                RegisterToastSettingsPage(ui);
+                RegisterDebugLogViewerPage(ui);
                 RegisterHarmonySelfCheckAndCompendiumPages(ui);
                 RegisterImagePngExportPage(ui);
                 RefreshDynamicPages();
@@ -44,6 +48,10 @@ namespace STS2RitsuLib.Settings
 
                 var ui = RitsuLibModSettingsUiBindings.Create();
                 RegisterMainSettingsPage(ui);
+                RegisterContentSourceHoverTipsPage(ui);
+                RegisterContentModLoadOrderPage();
+                RegisterToastSettingsPage(ui);
+                RegisterDebugLogViewerPage(ui);
                 RegisterHarmonySelfCheckAndCompendiumPages(ui);
                 RegisterImagePngExportPage(ui);
                 RefreshDynamicPages();
@@ -62,7 +70,7 @@ namespace STS2RitsuLib.Settings
 
         private static ModSettingsText T(string key, string fallback)
         {
-            return ModSettingsText.I18N(ModSettingsLocalization.Instance, key, fallback);
+            return ModSettingsLocalization.Text(key, fallback);
         }
 
         private static string L(string key, string fallback)

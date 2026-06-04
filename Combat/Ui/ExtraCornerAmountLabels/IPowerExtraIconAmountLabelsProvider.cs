@@ -22,6 +22,22 @@ namespace STS2RitsuLib.Combat.Ui.ExtraCornerAmountLabels
     }
 
     /// <summary>
+    ///     Implemented by <see cref="MegaCrit.Sts2.Core.Models.PowerModel" /> subclasses to render additional
+    ///     badges with per-slot plain/rich text mode. Takes precedence over
+    ///     <see cref="IPowerExtraIconAmountLabelsProvider" /> when both are implemented.
+    ///     由 <see cref="MegaCrit.Sts2.Core.Models.PowerModel" /> 子类实现，用于渲染带有逐槽位普通/富文本
+    ///     模式的额外徽标。当同时实现 <see cref="IPowerExtraIconAmountLabelsProvider" /> 时优先使用此接口。
+    /// </summary>
+    public interface IPowerExtraIconAmountLabelSpecsProvider
+    {
+        /// <summary>
+        ///     Each entry with non-whitespace <see cref="ExtraIconAmountLabelSpec.Text" /> becomes one badge.
+        ///     每个带有非空白 <see cref="ExtraIconAmountLabelSpec.Text" /> 的条目都会生成一个徽标。
+        /// </summary>
+        IReadOnlyList<ExtraIconAmountLabelSpec> GetPowerExtraIconAmountLabelSpecs();
+    }
+
+    /// <summary>
     ///     Optional invalidation signal when only <see cref="IPowerExtraIconAmountLabelsProvider" /> slots change
     ///     without <see cref="MegaCrit.Sts2.Core.Models.PowerModel.DisplayAmountChanged" /> firing.
     ///     可选的失效信号：仅 <see cref="IPowerExtraIconAmountLabelsProvider" /> 槽位发生变化，

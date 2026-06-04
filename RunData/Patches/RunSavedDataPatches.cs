@@ -1,6 +1,5 @@
 using System.Runtime.CompilerServices;
 using System.Text;
-using System.Text.Json;
 using HarmonyLib;
 using MegaCrit.Sts2.Core.Daily;
 using MegaCrit.Sts2.Core.Entities.Multiplayer;
@@ -18,6 +17,7 @@ using MegaCrit.Sts2.Core.Rooms;
 using MegaCrit.Sts2.Core.Runs;
 using MegaCrit.Sts2.Core.Saves;
 using MegaCrit.Sts2.Core.Saves.Managers;
+using MegaCrit.Sts2.Core.Saves.Test;
 using MegaCrit.Sts2.Core.Unlocks;
 using STS2RitsuLib.Patching.Models;
 using GameMode = MegaCrit.Sts2.Core.Runs.GameMode;
@@ -27,6 +27,7 @@ namespace STS2RitsuLib.RunData.Patches
     internal static class RunSavedDataPatchHelpers
     {
         private const int PayloadVersion = 1;
+        private static readonly AsyncLocal<Stack<RunSavedDataSaveRunCapture>?> ActiveSaveRunCaptures = new();
 
         public static string GetRunSavePath(RunSaveManager manager, bool isMultiplayer)
         {
@@ -56,20 +57,95 @@ namespace STS2RitsuLib.RunData.Patches
             }
         }
 
-        public static async Task SaveRunWithExtensions(RunSaveManager manager, SerializableRun save, bool isMultiplayer)
+        public static RunSavedDataSaveRunCapture BeginSaveRunCapture(
+            RunSaveManager manager,
+            SerializableRun? save = null,
+            bool? isMultiplayer = null)
         {
-            var json = JsonSerializer.Serialize(save, JsonSerializationUtility.GetTypeInfo<SerializableRun>());
-            json = RunSavedDataRegistry.InjectIntoJson(json, save);
-            var savePath = GetRunSavePath(manager, isMultiplayer);
+            var capture = new RunSavedDataSaveRunCapture(
+                manager,
+                isMultiplayer ?? TryGetCurrentRunIsMultiplayerHost())
+            {
+                Save = save,
+            };
+            (ActiveSaveRunCaptures.Value ??= []).Push(capture);
+            return capture;
+        }
 
-            if (RunSavedDataRunSaveManagerAccess.ForceSynchronous(manager))
-                await RunSavedDataRunSaveManagerAccess.SaveStore(manager)
-                    .WriteFileAsync(savePath, Encoding.UTF8.GetBytes(json));
-            else
-                await RunSavedDataRunSaveManagerAccess.SaveStore(manager)
-                    .WriteFileAsync(savePath, Encoding.UTF8.GetBytes(json));
+        public static void CaptureCurrentSave(SerializableRun save)
+        {
+            if (ActiveSaveRunCaptures.Value is { Count: > 0 } captures)
+                captures.Peek().Save = save;
+        }
 
-            InvokeSaved(manager);
+        public static Task EndSaveRunCaptureAfter(Task originalTask, RunSavedDataSaveRunCapture capture)
+        {
+            return EndSaveRunCaptureAfterAsync(originalTask, capture);
+        }
+
+        public static bool TryInjectCurrentSaveBytes(string path, byte[] bytes, out byte[] injectedBytes)
+        {
+            injectedBytes = bytes;
+            var capture = ActiveSaveRunCaptures.Value is { Count: > 0 } captures ? captures.Peek() : null;
+            if (capture is not { Save: { } save } ||
+                !RunSavedDataRegistry.HasDocument(save) ||
+                !string.Equals(path, capture.SavePath, StringComparison.OrdinalIgnoreCase))
+                return false;
+
+            try
+            {
+                var json = Encoding.UTF8.GetString(bytes);
+                var injectedJson = RunSavedDataRegistry.InjectIntoJson(json, save);
+                if (ReferenceEquals(injectedJson, json))
+                    return false;
+
+                injectedBytes = Encoding.UTF8.GetBytes(injectedJson);
+                return true;
+            }
+            catch (Exception ex)
+            {
+                RitsuLibFramework.Logger.Warn($"[RunSavedData] Failed to inject run extension data: {ex.Message}");
+                return false;
+            }
+        }
+
+        private static async Task EndSaveRunCaptureAfterAsync(Task originalTask, RunSavedDataSaveRunCapture capture)
+        {
+            ArgumentNullException.ThrowIfNull(originalTask);
+
+            try
+            {
+                await originalTask;
+            }
+            finally
+            {
+                EndSaveRunCapture(capture);
+            }
+        }
+
+        private static void EndSaveRunCapture(RunSavedDataSaveRunCapture capture)
+        {
+            var captures = ActiveSaveRunCaptures.Value;
+            if (captures is not { Count: > 0 })
+                return;
+
+            if (ReferenceEquals(captures.Peek(), capture))
+                captures.Pop();
+
+            if (captures.Count == 0)
+                ActiveSaveRunCaptures.Value = null;
+        }
+
+        private static bool TryGetCurrentRunIsMultiplayerHost()
+        {
+            try
+            {
+                return RunManager.Instance.ShouldSave && RunManager.Instance.NetService.Type == NetGameType.Host;
+            }
+            catch
+            {
+                return false;
+            }
         }
 
         public static void WritePayload(PacketWriter writer, string? payload)
@@ -153,18 +229,17 @@ namespace STS2RitsuLib.RunData.Patches
                 return null;
             }
         }
+    }
 
-        private static void InvokeSaved(RunSaveManager manager)
-        {
-            try
-            {
-                RunSavedDataRunSaveManagerAccess.Saved(manager)?.Invoke();
-            }
-            catch (Exception ex)
-            {
-                RitsuLibFramework.Logger.Warn($"[RunSavedData] Failed to invoke RunSaveManager.Saved: {ex.Message}");
-            }
-        }
+    internal sealed class RunSavedDataSaveRunCapture(RunSaveManager manager, bool isMultiplayer)
+    {
+        public RunSaveManager Manager { get; } = manager;
+
+        public bool IsMultiplayer { get; } = isMultiplayer;
+
+        public string SavePath => RunSavedDataPatchHelpers.GetRunSavePath(Manager, IsMultiplayer);
+
+        public SerializableRun? Save { get; set; }
     }
 
     internal static class RunSavedDataRunSaveManagerAccess
@@ -177,9 +252,6 @@ namespace STS2RitsuLib.RunData.Patches
 
         [UnsafeAccessor(UnsafeAccessorKind.Field, Name = "_profileIdProvider")]
         internal static extern ref readonly IProfileIdProvider ProfileIdProvider(RunSaveManager manager);
-
-        [UnsafeAccessor(UnsafeAccessorKind.Field, Name = "Saved")]
-        internal static extern Action? Saved(RunSaveManager manager);
     }
 
     internal static class RunSavedDataStartRunLobbyAccess
@@ -371,9 +443,37 @@ namespace STS2RitsuLib.RunData.Patches
             RunSavedDataRegistry.AttachDocument(
                 __result,
                 RunSavedDataRegistry.BuildDocumentFromRun(__instance.State));
+            RunSavedDataPatchHelpers.CaptureCurrentSave(__result);
         }
     }
 
+    internal sealed class RunSavedDataSaveStoreWritePatch : IPatchMethod
+    {
+        public static string PatchId => "ritsulib_run_saved_data_save_store_write";
+        public static string Description => "Inject RunSavedData into run save bytes before save store writes";
+        public static bool IsCritical => false;
+
+        public static ModPatchTarget[] GetTargets()
+        {
+            return
+            [
+                new(typeof(GodotFileIo), nameof(GodotFileIo.WriteFile), [typeof(string), typeof(byte[])]),
+                new(typeof(GodotFileIo), nameof(GodotFileIo.WriteFileAsync), [typeof(string), typeof(byte[])]),
+                new(typeof(CloudSaveStore), nameof(CloudSaveStore.WriteFile), [typeof(string), typeof(byte[])]),
+                new(typeof(CloudSaveStore), nameof(CloudSaveStore.WriteFileAsync), [typeof(string), typeof(byte[])]),
+                new(typeof(MockGodotFileIo), nameof(MockGodotFileIo.WriteFile), [typeof(string), typeof(byte[])]),
+                new(typeof(MockGodotFileIo), nameof(MockGodotFileIo.WriteFileAsync), [typeof(string), typeof(byte[])]),
+            ];
+        }
+
+        public static void Prefix(string path, ref byte[] bytes)
+        {
+            if (RunSavedDataPatchHelpers.TryInjectCurrentSaveBytes(path, bytes, out var injectedBytes))
+                bytes = injectedBytes;
+        }
+    }
+
+#if STS2_AT_LEAST_0_104_0
     internal sealed class RunSavedDataSaveRunPatch : IPatchMethod
     {
         public static string PatchId => "ritsulib_run_saved_data_save_run";
@@ -389,20 +489,49 @@ namespace STS2RitsuLib.RunData.Patches
         }
 
         // ReSharper disable InconsistentNaming
-        public static bool Prefix(
-                RunSaveManager __instance,
-                SerializableRun save,
-                bool isMultiplayer,
-                ref Task __result)
+        public static void Prefix(RunSaveManager __instance, SerializableRun save, bool isMultiplayer,
+                out RunSavedDataSaveRunCapture __state)
             // ReSharper restore InconsistentNaming
         {
-            if (!RunSavedDataRegistry.HasDocument(save))
-                return true;
+            __state = RunSavedDataPatchHelpers.BeginSaveRunCapture(__instance, save, isMultiplayer);
+        }
 
-            __result = RunSavedDataPatchHelpers.SaveRunWithExtensions(__instance, save, isMultiplayer);
-            return false;
+        // ReSharper disable InconsistentNaming
+        public static void Postfix(RunSavedDataSaveRunCapture __state, ref Task __result)
+            // ReSharper restore InconsistentNaming
+        {
+            __result = RunSavedDataPatchHelpers.EndSaveRunCaptureAfter(__result, __state);
         }
     }
+#else
+    internal sealed class RunSavedDataLegacySaveRunPatch : IPatchMethod
+    {
+        public static string PatchId => "ritsulib_run_saved_data_save_run_legacy";
+        public static string Description => "Write RunSavedData into legacy current run JSON saves";
+        public static bool IsCritical => false;
+
+        public static ModPatchTarget[] GetTargets()
+        {
+            return
+            [
+                new(typeof(RunSaveManager), nameof(RunSaveManager.SaveRun), [typeof(AbstractRoom)]),
+            ];
+        }
+
+        // ReSharper disable once InconsistentNaming
+        public static void Prefix(RunSaveManager __instance, out RunSavedDataSaveRunCapture __state)
+        {
+            __state = RunSavedDataPatchHelpers.BeginSaveRunCapture(__instance);
+        }
+
+        // ReSharper disable InconsistentNaming
+        public static void Postfix(RunSavedDataSaveRunCapture __state, ref Task __result)
+            // ReSharper restore InconsistentNaming
+        {
+            __result = RunSavedDataPatchHelpers.EndSaveRunCaptureAfter(__result, __state);
+        }
+    }
+#endif
 
     internal static class RunSavedDataLobbyContributionState
     {

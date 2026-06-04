@@ -68,40 +68,94 @@ namespace STS2RitsuLib.Diagnostics.DevConsole
         public static IEnumerable<(string EntryId, LocString Title)> EnumerateLocalizedModelTitles()
         {
             foreach (var card in ModelDb.AllCards)
-                yield return (card.Id.Entry, card.TitleLocString);
+                yield return GetTitleCandidate(card);
 
             foreach (var potion in ModelDb.AllPotions)
-                yield return (potion.Id.Entry, potion.Title);
+                yield return GetTitleCandidate(potion);
 
             foreach (var relic in ModelDb.AllRelics)
-                yield return (relic.Id.Entry, relic.Title);
+                yield return GetTitleCandidate(relic);
 
             foreach (var encounter in ModelDb.AllEncounters)
-                yield return (encounter.Id.Entry, encounter.Title);
+                yield return GetTitleCandidate(encounter);
 
             foreach (var affliction in ModelDb.DebugAfflictions)
-                yield return (affliction.Id.Entry, affliction.Title);
+                yield return GetTitleCandidate(affliction);
 
             foreach (var enchantment in ModelDb.DebugEnchantments)
-                yield return (enchantment.Id.Entry, enchantment.Title);
+                yield return GetTitleCandidate(enchantment);
 
             foreach (var ancient in ModelDb.AllAncients)
-                yield return (ancient.Id.Entry, ancient.Title);
+                yield return GetTitleCandidate(ancient);
 
             foreach (var evt in ModelDb.AllEvents)
-                yield return (evt.Id.Entry, evt.Title);
+                yield return GetTitleCandidate(evt);
 
             foreach (var act in ModelDb.Acts)
-                yield return (act.Id.Entry, act.Title);
+                yield return GetTitleCandidate(act);
 
-            foreach (var power in ModelDb.AllAbstractModelSubtypes.Where(t => t.IsSubclassOf(typeof(PowerModel))))
-                yield return (ModelDb.DebugPower(power).Id.Entry, ModelDb.DebugPower(power).Title);
+            foreach (var powerType in ModelDb.AllAbstractModelSubtypes.Where(t => t.IsSubclassOf(typeof(PowerModel))))
+            {
+                var power = ModelDb.DebugPower(powerType);
+                yield return GetTitleCandidate(power);
+            }
 
             foreach (var monster in ModelDb.Monsters)
-                yield return (monster.Id.Entry, monster.Title);
+                yield return GetTitleCandidate(monster);
 
             foreach (var epochId in EpochModel.AllEpochIds)
                 yield return (epochId, new("epochs", epochId + ".title"));
+        }
+
+        private static (string EntryId, LocString Title) GetTitleCandidate(AbstractModel model)
+        {
+            return (model.Id.Entry, ResolveTitleForAutocomplete(model));
+        }
+
+        private static LocString ResolveTitleForAutocomplete(
+            AbstractModel model,
+            HashSet<Type>? visitedModelTypes = null)
+        {
+            if (model is not ITemporaryPower temporaryPower)
+                return DefaultTitleForAutocomplete(model);
+
+            visitedModelTypes ??= [];
+            if (!visitedModelTypes.Add(model.GetType()))
+                return DefaultTitleForAutocomplete(model);
+
+            try
+            {
+                var origin = temporaryPower.OriginModel;
+                return ReferenceEquals(origin, model)
+                    ? DefaultTitleForAutocomplete(model)
+                    : ResolveTitleForAutocomplete(origin, visitedModelTypes);
+            }
+            catch
+            {
+                return DefaultTitleForAutocomplete(model);
+            }
+        }
+
+        private static LocString DefaultTitleForAutocomplete(AbstractModel model)
+        {
+            return model switch
+            {
+                CardModel => new("cards", model.Id.Entry + ".title"),
+                PotionModel => new("potions", model.Id.Entry + ".title"),
+                RelicModel => new("relics", model.Id.Entry + ".title"),
+                EncounterModel => new("encounters", model.Id.Entry + ".title"),
+                AfflictionModel => new("afflictions", model.Id.Entry + ".title"),
+                EnchantmentModel => new("enchantments", model.Id.Entry + ".title"),
+                AncientEventModel => new("ancients", model.Id.Entry + ".title"),
+                EventModel => new("events", model.Id.Entry + ".title"),
+                ActModel => new("acts", model.Id.Entry + ".title"),
+                PowerModel => new("powers", model.Id.Entry + ".title"),
+                MonsterModel => new("monsters", model.Id.Entry + ".name"),
+                OrbModel => new("orbs", model.Id.Entry + ".title"),
+                CharacterModel => new("characters", model.Id.Entry + ".title"),
+                ModifierModel => new("modifiers", model.Id.Entry + ".title"),
+                _ => new(model.Id.Category.ToLowerInvariant(), model.Id.Entry + ".title"),
+            };
         }
     }
 }

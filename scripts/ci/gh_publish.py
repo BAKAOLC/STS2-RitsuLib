@@ -10,6 +10,7 @@ _scripts_dir = Path(__file__).resolve().parent.parent
 if str(_scripts_dir) not in sys.path:
     sys.path.insert(0, str(_scripts_dir))
 
+from release_lib.artifact_validation import validate_viewer_artifacts
 from release_lib.msbuild_eval import get_csproj_property
 from release_lib.repo_layout import (
     ARTIFACTS_GITHUB,
@@ -190,6 +191,7 @@ def cmd_dev_prerelease(repo_root: Path) -> None:
             file=sys.stderr,
         )
         raise SystemExit(1)
+    validate_viewer_artifacts(zips=[*zips, *bundle_zips])
     upload_files: list[str] = []
     for p in (*zips, *bundle_zips):
         # Keep original artifact name (already includes package/version), append only a short build marker.
@@ -236,6 +238,7 @@ def cmd_tag_release(repo_root: Path, tag: str) -> None:
             file=sys.stderr,
         )
         raise SystemExit(1)
+    validate_viewer_artifacts(packages=nupkgs, zips=[*zips, *bundle_zips])
     sha = os.environ.get("GITHUB_SHA", "").strip()
     generated_notes = _generate_release_notes(tag, repo, sha)
     tag_note_prefix = _read_tag_annotation(repo_root, tag)
@@ -293,6 +296,7 @@ def cmd_nuget_push(repo_root: Path) -> None:
     if not nupkgs:
         print(f"No .nupkg files under {ARTIFACTS_NUGET}/; skipping push.")
         return
+    validate_viewer_artifacts(packages=nupkgs)
     source = NUGET_ORG_V3_INDEX_URL
     for pkg in nupkgs:
         subprocess.run(

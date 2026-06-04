@@ -122,7 +122,7 @@ namespace STS2RitsuLib.Scaffolding.Godot.NodeFactories
                     var hitbox = target.GetNode<Control>("%Hitbox");
                     if (!ResourceLoader.Exists(SelectionReticleScenePath))
                     {
-                        RitsuLibFramework.Logger.Error(
+                        RitsuLibFramework.Logger.ErrorNoTrace(
                             $"[Godot] Missing selection reticle scene '{SelectionReticleScenePath}'; cannot build NRestSiteCharacter reticle.");
                         break;
                     }

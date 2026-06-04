@@ -102,14 +102,16 @@ namespace STS2RitsuLib.Timeline.Patches
 
     /// <summary>
     ///     When <c>NeowEpoch.QueueUnlocks</c> runs (scoped by <see cref="NeowEpochQueueUnlocksCoExpansionScopePatch" />),
-    ///     after vanilla <see cref="EpochModel.QueueTimelineExpansion" /> unlocks the twelve base rows, also
-    ///     <see cref="MegaCrit.Sts2.Core.Saves.SaveManager.UnlockSlot" /> for every <see cref="ModEpochTemplate" /> not in
-    ///     that batch, and signal the
+    ///     after vanilla <see cref="EpochModel.QueueTimelineExpansion" /> unlocks the twelve base rows, also obtains
+    ///     Ironclad-gated mod character root rows and runs
+    ///     <see cref="MegaCrit.Sts2.Core.Saves.SaveManager.UnlockSlot" /> for already-obtained
+    ///     <see cref="ModEpochTemplate" /> rows and other root mod timeline rows not in that batch, then signals the
     ///     animated <see cref="MegaCrit.Sts2.Core.Nodes.Screens.Timeline.NTimelineScreen.AddEpochSlots" /> prefix to merge the
     ///     same mod slots in-session.
     ///     当 <c>NeowEpoch.QueueUnlocks</c> 运行时（由 <see cref="NeowEpochQueueUnlocksCoExpansionScopePatch" /> 限定作用域），
-    ///     在原版 <see cref="EpochModel.QueueTimelineExpansion" /> 解锁十二个基础行后，还会为该批次之外的每个
-    ///     <see cref="ModEpochTemplate" /> 调用 <see cref="MegaCrit.Sts2.Core.Saves.SaveManager.UnlockSlot" />，并通知
+    ///     在原版 <see cref="EpochModel.QueueTimelineExpansion" /> 解锁十二个基础行后，还会获得以 Ironclad 为前置的
+    ///     mod 角色根行，并为该批次之外已获得的 <see cref="ModEpochTemplate" /> 行和其他 mod 时间线根节点调用
+    ///     <see cref="MegaCrit.Sts2.Core.Saves.SaveManager.UnlockSlot" />，然后通知
     ///     动画版 <see cref="MegaCrit.Sts2.Core.Nodes.Screens.Timeline.NTimelineScreen.AddEpochSlots" /> 前缀在当前会话中合并
     ///     相同的 mod 槽。
     /// </summary>
@@ -120,7 +122,7 @@ namespace STS2RitsuLib.Timeline.Patches
 
         /// <inheritdoc />
         public static string Description =>
-            "After Neow primary timeline expansion, UnlockSlot for ModEpochTemplate ids not in the vanilla batch";
+            "After Neow primary timeline expansion, obtain Ironclad-gated mod character roots and unlock merged mod slots";
 
         /// <inheritdoc />
         public static bool IsCritical => false;

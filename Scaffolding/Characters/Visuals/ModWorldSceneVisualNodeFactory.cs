@@ -81,7 +81,7 @@ namespace STS2RitsuLib.Scaffolding.Characters.Visuals
 
             if (!ResourceLoader.Exists(SelectionReticleScenePath))
             {
-                RitsuLibFramework.Logger.Error(
+                RitsuLibFramework.Logger.ErrorNoTrace(
                     $"[WorldVisuals] Missing selection reticle scene '{SelectionReticleScenePath}'; cannot build rest-site shell.");
                 root.QueueFree();
                 return null;

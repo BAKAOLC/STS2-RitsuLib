@@ -60,7 +60,7 @@ namespace STS2RitsuLib.CardPiles.Patches
         /// </summary>
         public static void Postfix(PlayerCombatState __instance, ref IReadOnlyList<CardPile> __result)
         {
-            var modPiles = ModCardPileStorage.GetCombatPiles(__instance);
+            var modPiles = ModCardPileStorage.GetOrCreateCombatPiles(__instance);
             if (modPiles.Count == 0)
                 return;
 

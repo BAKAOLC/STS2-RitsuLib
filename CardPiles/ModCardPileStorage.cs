@@ -82,6 +82,33 @@ namespace STS2RitsuLib.CardPiles
         }
 
         /// <summary>
+        ///     Returns every registered combat-only pile for <paramref name="state" />, creating missing
+        ///     instances so core combat systems can subscribe to them at the same time as vanilla piles.
+        ///     返回 <paramref name="state" /> 的所有已注册 combat-only 牌堆，并创建缺失实例，使核心战斗系统
+        ///     能与原版牌堆在同一时机订阅它们。
+        /// </summary>
+        public static IReadOnlyCollection<ModCardPile> GetOrCreateCombatPiles(PlayerCombatState state)
+        {
+            ArgumentNullException.ThrowIfNull(state);
+
+            var definitions = ModCardPileRegistry.GetDefinitionsSnapshot()
+                .Where(definition => definition.Scope == ModCardPileScope.CombatOnly)
+                .ToArray();
+            if (definitions.Length == 0)
+                return [];
+
+            var dict = CombatPiles.GetValue(state, static _ => []);
+            lock (dict)
+            {
+                foreach (var definition in definitions)
+                    if (!dict.ContainsKey(definition.PileType))
+                        dict[definition.PileType] = new(definition);
+
+                return [.. dict.Values];
+            }
+        }
+
+        /// <summary>
         ///     Snapshot of persistent piles owned by <paramref name="player" />.
         ///     <paramref name="player" /> 拥有的 persistent 牌堆快照。
         /// </summary>

@@ -1,13 +1,18 @@
 using HarmonyLib;
+using MegaCrit.Sts2.Core.Helpers;
 using MegaCrit.Sts2.Core.Models;
 using MegaCrit.Sts2.Core.Multiplayer.Game.Lobby;
+using MegaCrit.Sts2.Core.Nodes;
+using MegaCrit.Sts2.Core.Nodes.Vfx;
 using MegaCrit.Sts2.Core.Saves;
 using MegaCrit.Sts2.Core.Saves.Managers;
 using MegaCrit.Sts2.Core.Saves.Runs;
+using MegaCrit.Sts2.Core.Timeline;
 using STS2RitsuLib.Compat;
 using STS2RitsuLib.Content;
 using STS2RitsuLib.Patching.Models;
 using STS2RitsuLib.Scaffolding.Characters;
+using STS2RitsuLib.Timeline;
 using SerializableRun = MegaCrit.Sts2.Core.Saves.SerializableRun;
 
 namespace STS2RitsuLib.Unlocks.Patches
@@ -80,6 +85,7 @@ namespace STS2RitsuLib.Unlocks.Patches
                 return false;
 
             SaveManager.Instance.ObtainEpoch(epochId);
+            NGame.Instance?.AddChildSafely(NGainEpochVfx.Create(EpochModel.Get(epochId)));
             if (!serializablePlayer.DiscoveredEpochs.Contains(epochId, StringComparer.Ordinal))
                 serializablePlayer.DiscoveredEpochs.Add(epochId);
 
@@ -91,8 +97,8 @@ namespace STS2RitsuLib.Unlocks.Patches
     }
 
     /// <summary>
-    ///     Replaces vanilla post-run character-unlock epoch checks for mod characters with registry-driven grants.
-    ///     将 mod 角色的原版跑局后角色解锁纪元检查替换为由注册表驱动的授予。
+    ///     Extends vanilla post-run character-unlock epoch checks with registered and template-derived mod grants.
+    ///     用已注册和模板推导出的 mod 授予扩展原版跑局后角色解锁纪元检查。
     /// </summary>
     public class PostRunCharacterUnlockEpochCompatibilityPatch : IPatchMethod
     {
@@ -101,7 +107,7 @@ namespace STS2RitsuLib.Unlocks.Patches
 
         /// <inheritdoc />
         public static string Description =>
-            "Handle post-run character unlock epochs for mod characters via registered RitsuLib unlock rules";
+            "Handle registered or template-derived post-run character unlock epochs without blocking vanilla chains";
 
         /// <inheritdoc />
         public static bool IsCritical => false;
@@ -118,8 +124,8 @@ namespace STS2RitsuLib.Unlocks.Patches
         }
 
         /// <summary>
-        ///     Obtains the registered post-run character-unlock epoch when appropriate; skips vanilla when handled.
-        ///     在适当时获得已注册的跑局后角色解锁纪元；已处理时跳过原版逻辑。
+        ///     Obtains registered or template-derived post-run character-unlock epochs when appropriate.
+        ///     在适当时获得已注册或模板推导出的跑局后角色解锁纪元。
         /// </summary>
         public static bool Prefix(SerializablePlayer serializablePlayer, SerializableRun serializableRun)
         {
@@ -128,40 +134,48 @@ namespace STS2RitsuLib.Unlocks.Patches
 
             ArgumentNullException.ThrowIfNull(serializablePlayer.CharacterId);
             var character = ModelDb.GetById<CharacterModel>(serializablePlayer.CharacterId);
-            if (!ModContentRegistry.TryGetOwnerModId(character.GetType(), out _))
-                return true;
+            var isModCharacter = ModContentRegistry.TryGetOwnerModId(character.GetType(), out _);
 
             if (!Sts2RunGameModeCompat.IsStandardSerializableRunForEpochUnlocks(serializableRun))
                 return true;
 
-            if (!ModUnlockRegistry.TryGetPostRunCharacterUnlockEpoch(character.Id, out var epochId))
+            var epochIds = new HashSet<string>(StringComparer.Ordinal);
+            foreach (var epochId in ModUnlockRegistry.GetPostRunCharacterUnlockEpochs(character.Id))
+                epochIds.Add(epochId);
+            foreach (var epochId in ModTimelineNeowCoExpansion.GetModCharacterRootEpochIdsUnlockedAfterRunAs(
+                         character.Id))
+                epochIds.Add(epochId);
+
+            if (epochIds.Count == 0)
             {
+                if (!isModCharacter)
+                    return true;
+
                 if (character is IModCharacterEpochTimelineRequirement { RequiresEpochAndTimeline: false })
                     return false;
 
                 ModUnlockMissingRuleWarnings.WarnOnce(
                     $"postrun_char_unlock_epoch:{character.Id}",
-                    $"[Unlocks] Mod character '{character.Id}' has no registered post-run character-unlock epoch (UnlockCharacterAfterRunAs / RegisterPostRunCharacterUnlockEpoch). " +
+                    $"[Unlocks] Mod character '{character.Id}' has no registered post-run character-unlock epoch (UnlocksAfterRunAsType / UnlockCharacterAfterRunAs / RegisterPostRunCharacterUnlockEpoch). " +
                     "Leaving vanilla post-run check in place (no-op for this character).");
                 return true;
             }
 
-            if (SaveManager.Instance.Progress.IsEpochObtained(epochId))
-                return false;
+            foreach (var epochId in epochIds.Where(epochId => !SaveManager.Instance.Progress.IsEpochObtained(epochId))
+                         .Where(epochId => EpochRuntimeCompatibility.CanUseEpochId(
+                             epochId,
+                             $"post-run character unlock epoch rule after run as '{character.Id}'")))
+            {
+                SaveManager.Instance.ObtainEpoch(epochId);
+                NGame.Instance?.AddChildSafely(NGainEpochVfx.Create(EpochModel.Get(epochId)));
+                if (!serializablePlayer.DiscoveredEpochs.Contains(epochId, StringComparer.Ordinal))
+                    serializablePlayer.DiscoveredEpochs.Add(epochId);
 
-            if (!EpochRuntimeCompatibility.CanUseEpochId(
-                    epochId,
-                    $"post-run character unlock epoch rule for mod character '{character.Id}'"))
-                return false;
+                RitsuLibFramework.Logger.Info(
+                    $"[Unlocks] Obtained post-run character unlock epoch '{epochId}' after run as '{character.Id}'.");
+            }
 
-            SaveManager.Instance.ObtainEpoch(epochId);
-            if (!serializablePlayer.DiscoveredEpochs.Contains(epochId, StringComparer.Ordinal))
-                serializablePlayer.DiscoveredEpochs.Add(epochId);
-
-            RitsuLibFramework.Logger.Info(
-                $"[Unlocks] Obtained post-run character unlock epoch '{epochId}' for mod character '{character.Id}'.");
-
-            return false;
+            return !isModCharacter;
         }
     }
 

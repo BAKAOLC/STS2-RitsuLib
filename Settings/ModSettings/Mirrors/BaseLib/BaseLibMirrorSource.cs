@@ -82,9 +82,8 @@ namespace STS2RitsuLib.Settings
                 var hoverTipsByDefaultAttrType = ResolveType(HoverTipsByDefaultAttributeName);
                 var visibleIfAttrType = ResolveType(ConfigVisibleIfAttributeName);
 
-                pageTitle ??= ModSettingsText.I18N(ModSettingsLocalization.Instance, "baselib.mirroredPage.title",
-                    "Mod config");
-                var pageDescription = ModSettingsText.I18N(ModSettingsLocalization.Instance,
+                pageTitle ??= ModSettingsLocalization.Text("baselib.mirroredPage.title", "Mod config");
+                var pageDescription = ModSettingsLocalization.Text(
                     "baselib.mirroredPage.description",
                     "This page is an auto-generated proxy settings page for mods built on BaseLib.");
 

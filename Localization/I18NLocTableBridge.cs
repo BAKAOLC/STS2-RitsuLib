@@ -1,4 +1,5 @@
 using System.Collections.Concurrent;
+using MegaCrit.Sts2.Core.Localization;
 using STS2RitsuLib.Content;
 using STS2RitsuLib.Utils;
 
@@ -13,6 +14,9 @@ namespace STS2RitsuLib.Localization
     public static class I18NLocTableBridge
     {
         private static readonly ConcurrentDictionary<string, I18N> Tables =
+            new(StringComparer.OrdinalIgnoreCase);
+
+        private static readonly ConcurrentDictionary<string, I18NLocTable> LocTables =
             new(StringComparer.OrdinalIgnoreCase);
 
         /// <summary>
@@ -40,9 +44,16 @@ namespace STS2RitsuLib.Localization
             var tableId = GetTableId(modId, stem);
 
             if (!replaceExisting)
-                return Tables.TryAdd(tableId, i18N);
+            {
+                var added = Tables.TryAdd(tableId, i18N);
+                if (added)
+                    LocTables.TryAdd(tableId, new(tableId, i18N));
+
+                return added;
+            }
 
             Tables[tableId] = i18N;
+            LocTables[tableId] = new(tableId, i18N);
             return true;
         }
 
@@ -54,13 +65,30 @@ namespace STS2RitsuLib.Localization
         {
             ArgumentException.ThrowIfNullOrWhiteSpace(modId);
             ArgumentException.ThrowIfNullOrWhiteSpace(stem);
-            return Tables.TryRemove(GetTableId(modId, stem), out _);
+
+            var tableId = GetTableId(modId, stem);
+            var removed = Tables.TryRemove(tableId, out _);
+            if (removed)
+                LocTables.TryRemove(tableId, out _);
+
+            return removed;
         }
 
         internal static bool TryGet(string tableId, out I18N i18N)
         {
             ArgumentException.ThrowIfNullOrWhiteSpace(tableId);
             return Tables.TryGetValue(tableId, out i18N!);
+        }
+
+        internal static bool TryGetLocTable(string tableId, out LocTable locTable)
+        {
+            locTable = null!;
+
+            if (!Tables.TryGetValue(tableId, out var i18N))
+                return false;
+
+            locTable = LocTables.GetOrAdd(tableId, static (id, backingI18N) => new(id, backingI18N), i18N);
+            return true;
         }
     }
 }

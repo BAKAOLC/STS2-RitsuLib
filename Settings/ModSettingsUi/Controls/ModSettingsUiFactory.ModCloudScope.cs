@@ -29,10 +29,11 @@ namespace STS2RitsuLib.Settings
             if (viewport == null)
                 return;
 
+            var previousFocus = viewport.GuiGetFocusOwner();
             var chosen = false;
             Action? viewportSizedHandler = null;
 
-            CanvasLayer? canvasLayer = new()
+            CanvasLayer canvasLayer = new()
             {
                 Layer = ModalCanvasLayer,
                 Name = "RitsuModSettingsModCloudScopeModal",
@@ -170,6 +171,7 @@ namespace STS2RitsuLib.Settings
                     viewport.SizeChanged -= viewportSizedHandler;
                 if (GodotObject.IsInstanceValid(canvasLayer))
                     canvasLayer.QueueFree();
+                RestorePreviousFocus();
             }
 
             void Finish(ModCloudSyncScope? scope)
@@ -181,9 +183,25 @@ namespace STS2RitsuLib.Settings
                 CloseDialog();
             }
 
+            void RestorePreviousFocus()
+            {
+                var target = previousFocus;
+                if (target == null || !GodotObject.IsInstanceValid(target) || !target.IsVisibleInTree())
+                    return;
+
+                Callable.From(() =>
+                {
+                    if (GodotObject.IsInstanceValid(target) && target.IsVisibleInTree())
+                        target.GrabFocus();
+                }).CallDeferred();
+            }
+
             void FitModalShieldToViewport()
             {
-                if (canvasLayer == null || canvasLayer.GetChildCount() == 0)
+                if (!GodotObject.IsInstanceValid(canvasLayer) || !GodotObject.IsInstanceValid(viewport))
+                    return;
+
+                if (canvasLayer.GetChildCount() == 0)
                     return;
                 var shield = canvasLayer.GetChild(0) as Control;
                 if (!GodotObject.IsInstanceValid(shield))

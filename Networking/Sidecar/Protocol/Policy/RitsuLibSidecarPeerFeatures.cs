@@ -18,5 +18,11 @@ namespace STS2RitsuLib.Networking.Sidecar
         ///     分块大型载荷重组（opcode <see cref="RitsuLibSidecarControlOpcodes.ChunkedFrame" />）。
         /// </summary>
         ChunkedStreams = 1 << 0,
+
+        /// <summary>
+        ///     RitsuLib-managed actions can be carried inside vanilla action enqueue messages.
+        ///     RitsuLib 管理的 action 可承载在原版 action 入队消息中。
+        /// </summary>
+        ManagedNetActions = 1 << 1,
     }
 }

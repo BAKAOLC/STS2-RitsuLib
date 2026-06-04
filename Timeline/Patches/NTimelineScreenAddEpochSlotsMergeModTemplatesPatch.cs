@@ -35,7 +35,7 @@ namespace STS2RitsuLib.Timeline.Patches
 
         /// <inheritdoc />
         public static string Description =>
-            "Merge ModEpochTemplate slots only after Neow primary expansion (cold) or same-session Neow QueueUnlocks (animated)";
+            "Merge obtained, Neow-unlocked root, or parent-visible ModEpochTemplate slots after Neow expansion";
 
         /// <inheritdoc />
         public static bool IsCritical => false;

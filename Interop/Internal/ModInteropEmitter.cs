@@ -2,6 +2,7 @@ using System.Reflection;
 using System.Reflection.Emit;
 using System.Runtime.CompilerServices;
 using HarmonyLib;
+using STS2RitsuLib.Utils.HarmonyIl;
 
 namespace STS2RitsuLib.Interop.Internal
 {
@@ -17,28 +18,47 @@ namespace STS2RitsuLib.Interop.Internal
         private static readonly FieldInfo WrappedValueField =
             AccessTools.DeclaredField(typeof(InteropClassWrapper), nameof(InteropClassWrapper.Value))!;
 
+        private static readonly Dictionary<(string, Assembly?), Type> TypeResolutionCache = new();
+
         internal static void TryProcessType(
             Harmony harmony,
             IReadOnlyDictionary<string, Assembly> loadedAssembliesByModId,
             Type t)
         {
             var modInterop = t.GetCustomAttribute<ModInteropAttribute>();
-            if (modInterop is null)
+            var assemblyInterop = t.GetCustomAttribute<AssemblyInteropAttribute>();
+            if (modInterop != null && assemblyInterop != null)
+            {
+                RitsuLibFramework.Logger.Warn(
+                    $"[Interop] Type {t.FullName} declares both ModInterop and AssemblyInterop; skipping.");
+                return;
+            }
+
+            if (modInterop != null)
+            {
+                if (!loadedAssembliesByModId.TryGetValue(modInterop.ModId, out var assembly))
+                    return;
+
+                RitsuLibFramework.Logger.Info($"[ModInterop] Processing type {t.FullName} -> mod {modInterop.ModId}");
+
+                var members = t.GetMembers(ValidMemberFlags);
+                GenInteropMembers(members, harmony, TargetResolutionContext.ForModAssembly(assembly),
+                    modInterop.Type, true);
+                return;
+            }
+
+            if (assemblyInterop == null)
                 return;
 
-            if (!loadedAssembliesByModId.TryGetValue(modInterop.ModId, out var assembly))
-                return;
-
-            RitsuLibFramework.Logger.Info($"[ModInterop] Processing type {t.FullName} -> mod {modInterop.ModId}");
-
-            var members = t.GetMembers(ValidMemberFlags);
-            GenInteropMembers(members, harmony, assembly, modInterop.Type, true);
+            RitsuLibFramework.Logger.Info($"[AssemblyInterop] Processing type {t.FullName}");
+            GenInteropMembers(t.GetMembers(ValidMemberFlags), harmony,
+                TargetResolutionContext.ForAssemblyQualifiedTypes(), assemblyInterop.Type, true);
         }
 
         private static bool GenInteropMembers(
             MemberInfo[] members,
             Harmony harmony,
-            Assembly assembly,
+            TargetResolutionContext targetContext,
             string? contextTargetType,
             bool requireStatic)
         {
@@ -46,9 +66,9 @@ namespace STS2RitsuLib.Interop.Internal
                 switch (member)
                 {
                     case PropertyInfo property:
-                        if (requireStatic && !(property.SetMethod?.IsStatic ?? true))
+                        if (requireStatic && !IsStaticProperty(property))
                             continue;
-                        if (!GenInteropPropertyOrField(harmony, assembly, contextTargetType, property))
+                        if (!GenInteropPropertyOrField(harmony, targetContext, contextTargetType, property))
                             return false;
                         break;
                     case MethodInfo method:
@@ -56,13 +76,13 @@ namespace STS2RitsuLib.Interop.Internal
                             continue;
                         if (method.IsConstructor || method.GetCustomAttribute<CompilerGeneratedAttribute>() != null)
                             continue;
-                        if (!GenInteropMethod(harmony, assembly, contextTargetType, method))
+                        if (!GenInteropMethod(harmony, targetContext, contextTargetType, method))
                             return false;
                         break;
                     case TypeInfo nested:
                         if (!nested.IsAssignableTo(typeof(InteropClassWrapper)))
                             continue;
-                        if (!GenInteropType(harmony, assembly, contextTargetType, nested))
+                        if (!GenInteropType(harmony, targetContext, contextTargetType, nested))
                             return false;
                         break;
                 }
@@ -72,46 +92,45 @@ namespace STS2RitsuLib.Interop.Internal
 
         private static bool GenInteropType(
             Harmony harmony,
-            Assembly targetAssembly,
+            TargetResolutionContext targetContext,
             string? contextTargetType,
             TypeInfo type)
         {
             var constructors = type.GetConstructors();
             if (constructors.Length < 1)
-                throw new InvalidOperationException($"{type} must have at least one public constructor");
+                throw new InvalidOperationException($"{type.FullName} must have at least one public constructor");
 
             var targetAttr = type.GetCustomAttribute<InteropTargetAttribute>();
             var targetName = targetAttr?.Type ?? targetAttr?.Name ?? contextTargetType
-                ?? throw new InvalidOperationException($"No target type provided for interop type {type}");
+                ?? throw new InvalidOperationException($"No target type provided for interop type {type.FullName}");
 
             try
             {
-                var targetType = Type.GetType($"{targetName}, {targetAssembly}")
-                                 ?? throw new InvalidOperationException(
-                                     $"Type {targetName} not found in assembly {targetAssembly}");
+                var targetType = ResolveTargetType(targetName, targetContext);
 
-                foreach (var constructor in constructors)
+                // Validate all constructors before patching any to avoid partial application.
+                var ctorPairs = constructors.Select(ctor =>
                 {
-                    var constructorParams = constructor.GetParameters().Select(p => p.ParameterType).ToArray();
-                    var constructorMatch = targetType.GetConstructor(constructorParams);
-                    if (constructorMatch is null)
+                    var paramTypes = ctor.GetParameters().Select(p => p.ParameterType).ToArray();
+                    var match = targetType.GetConstructor(paramTypes);
+                    if (match is null)
                         throw new InvalidOperationException(
-                            $"Failed to find matching constructor for {FormatConstructor(constructor)}");
+                            $"No matching constructor in {targetType.FullName} for {FormatConstructor(ctor)}");
+                    return (ctor, match, paramTypes);
+                }).ToList();
 
-                    var ctorLoadArgs = new List<CodeInstruction>
-                    {
-                        CodeInstruction.LoadArgument(0),
-                    };
-                    for (var i = 0; i < constructorParams.Length; i++)
+                foreach (var (ctor, match, paramTypes) in ctorPairs)
+                {
+                    var ctorLoadArgs = new List<CodeInstruction> { CodeInstruction.LoadArgument(0) };
+                    for (var i = 0; i < paramTypes.Length; i++)
                         ctorLoadArgs.Add(CodeInstruction.LoadArgument(i + 1));
-                    ctorLoadArgs.Add(new(OpCodes.Newobj, constructorMatch));
+                    ctorLoadArgs.Add(new(OpCodes.Newobj, match));
                     ctorLoadArgs.Add(new(OpCodes.Stfld, WrappedValueField));
-
-                    HarmonyInsertBeforeRetTranspiler.SetBufferAndPatch(harmony, constructor, ctorLoadArgs);
+                    PatchReturnInsertion(harmony, ctor, ctorLoadArgs);
                 }
 
                 RitsuLibFramework.Logger.Info($"[ModInterop] Generated interop type {type.FullName}");
-                return GenInteropMembers(type.GetMembers(ValidMemberFlags), harmony, targetAssembly, targetName, false);
+                return GenInteropMembers(type.GetMembers(ValidMemberFlags), harmony, targetContext, targetName, false);
             }
             catch (Exception e)
             {
@@ -122,7 +141,7 @@ namespace STS2RitsuLib.Interop.Internal
 
         private static bool GenInteropMethod(
             Harmony harmony,
-            Assembly targetAssembly,
+            TargetResolutionContext targetContext,
             string? contextTargetType,
             MethodInfo method)
         {
@@ -134,12 +153,11 @@ namespace STS2RitsuLib.Interop.Internal
 
             try
             {
-                var targetType = Type.GetType($"{typeName}, {targetAssembly}")
-                                 ?? throw new InvalidOperationException(
-                                     $"Type {typeName} not found in assembly {targetAssembly}");
+                var targetType = ResolveTargetType(typeName, targetContext);
 
-                var methodParams = method.GetParameters().Select(p => p.ParameterType).ToArray();
-                var nonStaticParams = method.IsStatic ? methodParams.Skip(1).ToArray() : methodParams;
+                var methodParamInfos = method.GetParameters();
+                var methodParams = methodParamInfos.Select(p => p.ParameterType).ToArray();
+                var nonStaticParamInfos = method.IsStatic ? methodParamInfos.Skip(1).ToArray() : methodParamInfos;
 
                 MethodInfo? targetMethod = null;
                 var loadParams = new List<CodeInstruction>();
@@ -148,14 +166,10 @@ namespace STS2RitsuLib.Interop.Internal
                     if (possibleTarget.Name != methodName)
                         continue;
                     var targetParams = possibleTarget.GetParameters();
-                    var checkParams = possibleTarget.IsStatic ? methodParams : nonStaticParams;
-                    if (!CheckParamMatch(targetParams, checkParams))
+                    var checkParamInfos = possibleTarget.IsStatic ? methodParamInfos : nonStaticParamInfos;
+                    if (!CheckParamMatch(targetParams, checkParamInfos))
                         continue;
                     targetMethod = possibleTarget;
-
-                    if (!targetMethod.IsStatic && method.IsStatic)
-                        throw new InvalidOperationException(
-                            $"Method {FormatMethod(method)} should not be static to match target {FormatMethod(targetMethod)}");
 
                     if (targetMethod.ReturnType != typeof(void))
                         loadParams.Add(new(OpCodes.Pop));
@@ -165,6 +179,7 @@ namespace STS2RitsuLib.Interop.Internal
                     {
                         if (method.IsStatic)
                         {
+                            ValidateStaticShimReceiver(method, methodParamInfos, targetType, targetMethod);
                             loadParams.Add(CodeInstruction.LoadArgument(0));
                             if (methodParams[0] != targetType)
                                 loadParams.Add(new(OpCodes.Castclass, targetType));
@@ -172,8 +187,7 @@ namespace STS2RitsuLib.Interop.Internal
                         }
                         else
                         {
-                            loadParams.Add(CodeInstruction.LoadArgument(0));
-                            loadParams.Add(new(OpCodes.Ldfld, WrappedValueField));
+                            loadParams.AddRange(LoadWrappedTarget(targetType));
                         }
                     }
 
@@ -189,14 +203,15 @@ namespace STS2RitsuLib.Interop.Internal
 
                 if (targetMethod is null)
                     throw new InvalidOperationException(
-                        $"Method {methodName} with matching parameters not found in type {targetType}");
+                        $"{FormatMethod(method)} → {targetType.FullName}.{methodName}: no overload with matching parameters");
 
                 if (targetMethod.ReturnType != method.ReturnType)
                     throw new InvalidOperationException(
-                        $"Method {methodName} return type {method.ReturnType} does not match target return type {targetMethod.ReturnType}");
+                        $"{FormatMethod(method)} → {targetType.FullName}.{methodName}: " +
+                        $"return type mismatch (stub: {method.ReturnType.Name}, target: {targetMethod.ReturnType.Name})");
 
                 loadParams.Add(new(OpCodes.Call, targetMethod));
-                HarmonyInsertBeforeRetTranspiler.SetBufferAndPatch(harmony, method, loadParams);
+                PatchReturnInsertion(harmony, method, loadParams);
                 RitsuLibFramework.Logger.Info($"[ModInterop] Generated interop method {method.Name}");
             }
             catch (Exception e)
@@ -210,7 +225,7 @@ namespace STS2RitsuLib.Interop.Internal
 
         private static bool GenInteropPropertyOrField(
             Harmony harmony,
-            Assembly targetAssembly,
+            TargetResolutionContext targetContext,
             string? contextTargetType,
             PropertyInfo property)
         {
@@ -221,9 +236,7 @@ namespace STS2RitsuLib.Interop.Internal
 
             try
             {
-                var targetType = Type.GetType($"{typeName}, {targetAssembly}")
-                                 ?? throw new InvalidOperationException(
-                                     $"Type {typeName} not found in assembly {targetAssembly}");
+                var targetType = ResolveTargetType(typeName, targetContext);
 
                 var targetProperty = AccessTools.DeclaredProperty(targetType, name);
                 if (targetProperty is not null && targetProperty.PropertyType == property.PropertyType)
@@ -248,17 +261,15 @@ namespace STS2RitsuLib.Interop.Internal
                                 $"Property {property} should have a setter to match target property");
 
                         if (targetStatic)
-                            HarmonyInsertBeforeRetTranspiler.SetBufferAndPatch(harmony, property.SetMethod,
+                            PatchReturnInsertion(harmony, property.SetMethod,
                             [
                                 new(OpCodes.Ldarg_0),
                                 new(OpCodes.Call, targetProperty.SetMethod),
                             ]);
                         else
-                            HarmonyInsertBeforeRetTranspiler.SetBufferAndPatch(harmony, property.SetMethod,
+                            PatchReturnInsertion(harmony, property.SetMethod,
                             [
-                                new(OpCodes.Ldarg_0),
-                                new(OpCodes.Ldfld, WrappedValueField),
-                                new(OpCodes.Ldarg_1),
+                                ..LoadWrappedTarget(targetType), new(OpCodes.Ldarg_1),
                                 new(OpCodes.Call, targetProperty.SetMethod),
                             ]);
                     }
@@ -270,17 +281,15 @@ namespace STS2RitsuLib.Interop.Internal
                                 $"Property {property} should have a getter to match target property");
 
                         if (targetStatic)
-                            HarmonyInsertBeforeRetTranspiler.SetBufferAndPatch(harmony, property.GetMethod,
+                            PatchReturnInsertion(harmony, property.GetMethod,
                             [
                                 new(OpCodes.Pop),
                                 new(OpCodes.Call, targetProperty.GetMethod),
                             ]);
                         else
-                            HarmonyInsertBeforeRetTranspiler.SetBufferAndPatch(harmony, property.GetMethod,
+                            PatchReturnInsertion(harmony, property.GetMethod,
                             [
-                                new(OpCodes.Pop),
-                                new(OpCodes.Ldarg_0),
-                                new(OpCodes.Ldfld, WrappedValueField),
+                                new(OpCodes.Pop), ..LoadWrappedTarget(targetType),
                                 new(OpCodes.Call, targetProperty.GetMethod),
                             ]);
                     }
@@ -313,37 +322,29 @@ namespace STS2RitsuLib.Interop.Internal
                     if (property.SetMethod is not null)
                     {
                         if (targetField.IsStatic)
-                            HarmonyInsertBeforeRetTranspiler.SetBufferAndPatch(harmony, property.SetMethod,
+                            PatchReturnInsertion(harmony, property.SetMethod,
                             [
                                 new(OpCodes.Ldarg_0),
-                                new(OpCodes.Stfld, targetField),
+                                new(OpCodes.Stsfld, targetField),
                             ]);
                         else
-                            HarmonyInsertBeforeRetTranspiler.SetBufferAndPatch(harmony, property.SetMethod,
+                            PatchReturnInsertion(harmony, property.SetMethod,
                             [
-                                new(OpCodes.Ldarg_0),
-                                new(OpCodes.Ldfld, WrappedValueField),
-                                new(OpCodes.Ldarg_1),
-                                new(OpCodes.Stfld, targetField),
+                                ..LoadWrappedTarget(targetType), new(OpCodes.Ldarg_1), new(OpCodes.Stfld, targetField),
                             ]);
                     }
 
                     if (property.GetMethod is not null)
                     {
                         if (targetField.IsStatic)
-                            HarmonyInsertBeforeRetTranspiler.SetBufferAndPatch(harmony, property.GetMethod,
+                            PatchReturnInsertion(harmony, property.GetMethod,
                             [
                                 new(OpCodes.Pop),
-                                new(OpCodes.Ldfld, targetField),
+                                new(OpCodes.Ldsfld, targetField),
                             ]);
                         else
-                            HarmonyInsertBeforeRetTranspiler.SetBufferAndPatch(harmony, property.GetMethod,
-                            [
-                                new(OpCodes.Pop),
-                                new(OpCodes.Ldarg_0),
-                                new(OpCodes.Ldfld, WrappedValueField),
-                                new(OpCodes.Ldfld, targetField),
-                            ]);
+                            PatchReturnInsertion(harmony, property.GetMethod,
+                                [new(OpCodes.Pop), ..LoadWrappedTarget(targetType), new(OpCodes.Ldfld, targetField)]);
                     }
 
                     RitsuLibFramework.Logger.Info($"[ModInterop] Generated interop field property {property.Name}");
@@ -357,12 +358,104 @@ namespace STS2RitsuLib.Interop.Internal
             }
         }
 
-        private static bool CheckParamMatch(ParameterInfo[] targetParams, Type[] checkParams)
+        private static void PatchReturnInsertion(
+            Harmony harmony,
+            MethodBase target,
+            IEnumerable<CodeInstruction> payload)
+        {
+            HarmonyIlPayloadTranspiler.PatchReturnInsertion(
+                harmony,
+                target,
+                payload,
+                "[ModInterop] Insert generated wrapper IL before single ret");
+        }
+
+        private static CodeInstruction[] LoadWrappedTarget(Type targetType)
+        {
+            return
+            [
+                CodeInstruction.LoadArgument(0),
+                new(OpCodes.Ldfld, WrappedValueField),
+                new(OpCodes.Castclass, targetType),
+            ];
+        }
+
+        private static void ValidateStaticShimReceiver(
+            MethodInfo sourceMethod,
+            ParameterInfo[] sourceParameters,
+            Type targetType,
+            MethodInfo targetMethod)
+        {
+            if (sourceParameters.Length > 0 &&
+                (IsWildcardParam(sourceParameters[0]) || targetType.IsAssignableTo(sourceParameters[0].ParameterType)))
+                return;
+
+            throw new InvalidOperationException(
+                $"Static shim {FormatMethod(sourceMethod)} must take target receiver {targetType.FullName} as its first parameter to match instance target {FormatMethod(targetMethod)}");
+        }
+
+        private static bool IsStaticProperty(PropertyInfo property)
+        {
+            return property.GetAccessors(true).Any(static accessor => accessor.IsStatic);
+        }
+
+        private static Type ResolveTargetType(string targetName, TargetResolutionContext targetContext)
+        {
+            var key = (targetName, targetContext.ModAssembly);
+            if (TypeResolutionCache.TryGetValue(key, out var cached))
+                return cached;
+            var resolved = ResolveTargetTypeCore(targetName, targetContext);
+            TypeResolutionCache[key] = resolved;
+            return resolved;
+        }
+
+        private static Type ResolveTargetTypeCore(string targetName, TargetResolutionContext targetContext)
+        {
+            if (targetContext.AssemblyQualifiedOnly)
+            {
+                _ = TryResolveAssemblyQualifiedType(targetName, out var resolved);
+                return resolved ?? throw new InvalidOperationException(
+                    $"AssemblyInterop target type '{targetName}' must be an assembly-qualified CLR type name that can be resolved.");
+            }
+
+            if (IsAssemblyQualifiedTypeName(targetName))
+                throw new InvalidOperationException(
+                    $"ModInterop target type '{targetName}' must be a full type name inside the target mod assembly. Use AssemblyInterop for assembly-qualified CLR type names.");
+
+            return targetContext.ModAssembly!.GetType(targetName, false)
+                   ?? Type.GetType($"{targetName}, {targetContext.ModAssembly.FullName}", false)
+                   ?? throw new InvalidOperationException(
+                       $"Type {targetName} not found in assembly {targetContext.ModAssembly.FullName}");
+        }
+
+        private static bool IsAssemblyQualifiedTypeName(string? targetName)
+        {
+            return !string.IsNullOrWhiteSpace(targetName) && targetName.Contains(',', StringComparison.Ordinal);
+        }
+
+        private static bool TryResolveAssemblyQualifiedType(string? targetName, out Type? type)
+        {
+            type = null;
+            if (!IsAssemblyQualifiedTypeName(targetName))
+                return false;
+
+            type = Type.GetType(targetName!, false);
+            return type != null;
+        }
+
+        private static bool CheckParamMatch(ParameterInfo[] targetParams, ParameterInfo[] checkParams)
         {
             if (targetParams.Length != checkParams.Length)
                 return false;
-            return !checkParams.Where((t, i) => t != typeof(object) && !t.IsAssignableTo(targetParams[i].ParameterType))
+            return !checkParams.Where((p, i) =>
+                    !IsWildcardParam(p) &&
+                    !p.ParameterType.IsAssignableTo(targetParams[i].ParameterType))
                 .Any();
+        }
+
+        private static bool IsWildcardParam(ParameterInfo p)
+        {
+            return p.ParameterType == typeof(object) || p.GetCustomAttribute<InteropAnyParamAttribute>() != null;
         }
 
         private static string FormatMethod(MethodInfo m)
@@ -374,6 +467,19 @@ namespace STS2RitsuLib.Interop.Internal
         {
             return
                 $"{c.DeclaringType?.FullName}.ctor({string.Join(", ", c.GetParameters().Select(p => p.ParameterType.Name))})";
+        }
+
+        private readonly record struct TargetResolutionContext(Assembly? ModAssembly, bool AssemblyQualifiedOnly)
+        {
+            public static TargetResolutionContext ForModAssembly(Assembly assembly)
+            {
+                return new(assembly, false);
+            }
+
+            public static TargetResolutionContext ForAssemblyQualifiedTypes()
+            {
+                return new(null, true);
+            }
         }
     }
 }

@@ -31,7 +31,11 @@ namespace STS2RitsuLib.Settings
         {
             var container = CreatePageContentHost(page);
             foreach (var item in CreatePageBuildItems(context, page))
-                container.AddChild(item.Control);
+            {
+                (item.Parent ?? container).AddChild(item.Control);
+                item.AfterAdded?.Invoke(item.Control);
+            }
+
             return MaybeWrapDynamicVisibility(context, container, page.VisibleWhen);
         }
 
@@ -49,32 +53,118 @@ namespace STS2RitsuLib.Settings
         }
 
         internal static IEnumerable<PageBuildItem> CreatePageBuildItems(ModSettingsUiContext context,
-            ModSettingsPage page)
+            ModSettingsPage page, ModSettingsReusableEntryNodePool? entryNodePool = null)
         {
+            var sectionVisible = new Func<bool>?[page.Sections.Count];
+            for (var index = 0; index < page.Sections.Count; index++)
+                sectionVisible[index] = BuildSectionVisiblePredicate(page.Sections[index]);
+
             for (var index = 0; index < page.Sections.Count; index++)
             {
                 var section = page.Sections[index];
                 if (index > 0)
-                    yield return new(CreateDivider(), false);
+                {
+                    var dividerVisibility = CreateDividerVisibilityPredicate(sectionVisible, index);
+                    yield return new(
+                        MaybeWrapDynamicVisibility(context, CreateDivider(), dividerVisibility),
+                        false);
+                }
 
-                Control builtSection;
+                SectionBuildPlan? builtSection = null;
+                PageBuildItem? failedSection = null;
                 try
                 {
-                    builtSection = CreateSection(context, page, section);
+                    builtSection = CreateSectionShell(context, page, section);
                 }
                 catch (Exception ex)
                 {
                     RitsuLibFramework.Logger.Warn(
                         $"[Settings] Failed to build section '{page.ModId}:{page.Id}:{section.Id}': {ex.Message}");
-                    builtSection = CreateBuildErrorPlaceholder(
+                    failedSection = new(CreateBuildErrorPlaceholder(
                         ModSettingsLocalization.Get("section.failed.title", "Section failed to load"),
                         string.Format(
                             ModSettingsLocalization.Get("section.failed.body", "Failed to build section '{0}'."),
-                            section.Id));
+                            section.Id)), true);
                 }
 
-                yield return new(builtSection, true);
+                if (failedSection != null)
+                {
+                    yield return failedSection;
+                    continue;
+                }
+
+                yield return new(builtSection!.Control, true);
+
+                if (builtSection.LazyContentSection != null)
+                {
+                    var sectionPlan = builtSection;
+                    builtSection.LazyContentSection.SetLazyContentBuilder(() =>
+                    {
+                        foreach (var entry in section.Entries)
+                        {
+                            var item = CreateEntryBuildItem(context, page, section, entry, sectionPlan, entryNodePool);
+                            (item.Parent ?? sectionPlan.EntryHost).AddChild(item.Control);
+                            item.AfterAdded?.Invoke(item.Control);
+                        }
+
+                        if (page.EnabledWhen != null)
+                            ApplyEnabledRecursive(sectionPlan.EntryHost, page.EnabledWhen());
+                    });
+                    continue;
+                }
+
+                foreach (var entry in section.Entries)
+                    yield return CreateEntryBuildItem(context, page, section, entry, builtSection, entryNodePool);
             }
+        }
+
+        /// <summary>
+        ///     Builds the same combined visibility predicate the section shell applies to a section
+        ///     (its <see cref="ModSettingsSection.VisibleWhen" /> plus its host-surface restriction), so a leading
+        ///     divider can be kept in sync with the section it precedes.
+        ///     构建与 section shell 应用于 section 的相同组合可见性谓词（其
+        ///     <see cref="ModSettingsSection.VisibleWhen" /> 加上 host-surface 限制），以便前导分割线与其后的 section 保持同步。
+        /// </summary>
+        private static Func<bool>? BuildSectionVisiblePredicate(ModSettingsSection section)
+        {
+            if (section.VisibleWhen == null && section.VisibleOnHostSurfaces == ModSettingsHostSurface.All)
+                return null;
+
+            if (section.VisibleOnHostSurfaces == ModSettingsHostSurface.All)
+                return section.VisibleWhen;
+
+            return ModSettingsHostSurfaceResolver.CombineVisibility(section.VisibleWhen,
+                () => ModSettingsHostSurfaceResolver.IsVisibleOnCurrentHost(section.VisibleOnHostSurfaces));
+        }
+
+        private static Func<bool>? CreateDividerVisibilityPredicate(IReadOnlyList<Func<bool>?> sectionVisible,
+            int index)
+        {
+            if (sectionVisible[index] == null && AllBeforeAlwaysVisible(sectionVisible, index))
+                return null;
+
+            return () => IsSectionVisible(sectionVisible[index]) && AnyVisibleBefore(sectionVisible, index);
+        }
+
+        private static bool AllBeforeAlwaysVisible(IReadOnlyList<Func<bool>?> sectionVisible, int index)
+        {
+            for (var i = 0; i < index; i++)
+                if (sectionVisible[i] != null)
+                    return false;
+            return true;
+        }
+
+        private static bool AnyVisibleBefore(IReadOnlyList<Func<bool>?> sectionVisible, int index)
+        {
+            for (var i = 0; i < index; i++)
+                if (IsSectionVisible(sectionVisible[i]))
+                    return true;
+            return false;
+        }
+
+        private static bool IsSectionVisible(Func<bool>? predicate)
+        {
+            return predicate?.Invoke() ?? true;
         }
 
         public static Control CreateToggleEntry(ModSettingsUiContext context, ToggleModSettingsEntryDefinition entry)
@@ -774,6 +864,165 @@ namespace STS2RitsuLib.Settings
                 entry.Description);
         }
 
-        internal sealed record PageBuildItem(Control Control, bool YieldAfter);
+        internal static bool TryCreatePooledStandardEntry(ModSettingsUiContext context,
+            ModSettingsEntryDefinition entry, ModSettingsReusableEntryNodePool? pool, out Control control)
+        {
+            control = null!;
+            if (pool == null)
+                return false;
+
+            switch (entry)
+            {
+                case ToggleModSettingsEntryDefinition toggle:
+                    control = CreatePooledToggleEntry(context, toggle, pool);
+                    return true;
+                case ButtonModSettingsEntryDefinition button:
+                    control = CreatePooledButtonEntry(context, button, pool);
+                    return true;
+                case HostContextButtonModSettingsEntryDefinition hostButton:
+                    control = CreatePooledHostContextButtonEntry(context, hostButton, pool);
+                    return true;
+                case SubpageModSettingsEntryDefinition subpage:
+                    control = CreatePooledSubpageEntry(context, subpage, pool);
+                    return true;
+                default:
+                    return false;
+            }
+        }
+
+        private static Control CreatePooledToggleEntry(ModSettingsUiContext context,
+            ToggleModSettingsEntryDefinition entry, ModSettingsReusableEntryNodePool pool)
+        {
+            var line = pool.Rent(ModSettingsReusableEntryKind.Toggle);
+            var toggle = line.GetValueControl<ModSettingsToggleControl>();
+            toggle.BindValue(entry.Binding.Read(), value =>
+            {
+                entry.Binding.Write(value);
+                context.MarkDirty(entry.Binding);
+                context.RequestRefresh();
+            });
+
+            var version = line.Bind(
+                context,
+                () => ModSettingsUiContext.Resolve(entry.Label),
+                () => ModSettingsUiControlFactoryHelper.ResolveDescription(entry.Description),
+                CreateEntryActionsButton(context, entry.Binding, entry.MenuCapabilities),
+                entry.Label,
+                entry.Description);
+            RegisterRefreshWhenAlive(context, line, () =>
+            {
+                if (line.ReuseVersion != version)
+                    return;
+                toggle.SetValue(entry.Binding.Read());
+            }, ModSettingsUiRefreshSpec.ForBinding(entry.Binding));
+            return line;
+        }
+
+        private static Control CreatePooledButtonEntry(ModSettingsUiContext context,
+            ButtonModSettingsEntryDefinition entry, ModSettingsReusableEntryNodePool pool)
+        {
+            var line = pool.Rent(ModSettingsReusableEntryKind.TextButton);
+            var button = line.GetValueControl<ModSettingsTextButton>();
+            button.Configure(ModSettingsUiContext.Resolve(entry.ButtonText), entry.Tone, () =>
+            {
+                entry.Action();
+                context.RequestRefresh();
+            });
+
+            var version = line.Bind(
+                context,
+                () => ModSettingsUiContext.Resolve(entry.Label),
+                () => ModSettingsUiContext.Resolve(entry.Description),
+                null,
+                entry.Label,
+                entry.Description);
+            RegisterRefreshWhenAlive(context, line, () =>
+            {
+                if (line.ReuseVersion != version || !GodotObject.IsInstanceValid(button))
+                    return;
+                button.Configure(ModSettingsUiContext.Resolve(entry.ButtonText), entry.Tone, () =>
+                {
+                    entry.Action();
+                    context.RequestRefresh();
+                });
+            }, entry.ButtonText.GetUiRefreshSpec());
+            return line;
+        }
+
+        private static Control CreatePooledHostContextButtonEntry(ModSettingsUiContext context,
+            HostContextButtonModSettingsEntryDefinition entry, ModSettingsReusableEntryNodePool pool)
+        {
+            var line = pool.Rent(ModSettingsReusableEntryKind.TextButton);
+            var button = line.GetValueControl<ModSettingsTextButton>();
+            button.Configure(ModSettingsUiContext.Resolve(entry.ButtonText), entry.Tone, () =>
+            {
+                entry.Action(context);
+                context.RequestRefresh();
+            });
+
+            var version = line.Bind(
+                context,
+                () => ModSettingsUiContext.Resolve(entry.Label),
+                () => ModSettingsUiContext.Resolve(entry.Description),
+                null,
+                entry.Label,
+                entry.Description);
+            RegisterRefreshWhenAlive(context, line, () =>
+            {
+                if (line.ReuseVersion != version || !GodotObject.IsInstanceValid(button))
+                    return;
+                button.Configure(ModSettingsUiContext.Resolve(entry.ButtonText), entry.Tone, () =>
+                {
+                    entry.Action(context);
+                    context.RequestRefresh();
+                });
+            }, entry.ButtonText.GetUiRefreshSpec());
+            return line;
+        }
+
+        private static Control CreatePooledSubpageEntry(ModSettingsUiContext context,
+            SubpageModSettingsEntryDefinition entry, ModSettingsReusableEntryNodePool pool)
+        {
+            var line = pool.Rent(ModSettingsReusableEntryKind.TextButton);
+            var button = line.GetValueControl<ModSettingsTextButton>();
+            button.Configure(
+                ModSettingsUiContext.Resolve(entry.ButtonText, ModSettingsLocalization.Get("button.open", "Open")),
+                ModSettingsButtonTone.Accent,
+                () => context.NavigateToPage(entry.TargetPageId));
+            ApplySubpageButtonMinSize(button);
+
+            var version = line.Bind(
+                context,
+                () => ModSettingsUiContext.Resolve(entry.Label),
+                () => ModSettingsUiContext.Resolve(entry.Description),
+                null,
+                entry.Label,
+                entry.Description);
+            RegisterRefreshWhenAlive(context, line, () =>
+            {
+                if (line.ReuseVersion != version || !GodotObject.IsInstanceValid(button))
+                    return;
+                button.Configure(
+                    ModSettingsUiContext.Resolve(entry.ButtonText,
+                        ModSettingsLocalization.Get("button.open", "Open")),
+                    ModSettingsButtonTone.Accent,
+                    () => context.NavigateToPage(entry.TargetPageId));
+                ApplySubpageButtonMinSize(button);
+            }, entry.ButtonText.GetUiRefreshSpec());
+            return line;
+
+            static void ApplySubpageButtonMinSize(ModSettingsTextButton button)
+            {
+                button.CustomMinimumSize = RitsuShellThemeLayoutResolver.ResolveMinSize(
+                    "components.subpageButton.layout.minSize",
+                    new(EntryControlWidth, RitsuShellTheme.Current.Metric.Entry.ValueMinHeight));
+            }
+        }
+
+        internal sealed record PageBuildItem(
+            Control Control,
+            bool YieldAfter,
+            Control? Parent = null,
+            Action<Control>? AfterAdded = null);
     }
 }

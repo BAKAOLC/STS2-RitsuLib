@@ -11,14 +11,14 @@ namespace STS2RitsuLib.Settings
         private readonly HashSet<string> _sectionIds = new(StringComparer.OrdinalIgnoreCase);
         private readonly List<ModSettingsSection> _sections = [];
 
-        private ModSettingsMenuCapabilities _menuCapabilities = ModSettingsMenuCapabilities.Copy |
-                                                                ModSettingsMenuCapabilities.Paste;
+        private ModSettingsMenuCapabilities _menuCapabilities = ModSettingsMenuCapabilities.All;
 
         private int? _modSidebarOrder;
         private Func<bool>? _pageEnabledWhen;
         private ModSettingsHostSurface _pageReadOnlyOnHostSurfaces = ModSettingsHostSurface.None;
         private ModSettingsHostSurface _pageVisibleOnHostSurfaces = ModSettingsHostSurface.All;
         private Func<bool>? _pageVisibleWhen;
+        private bool _sidebarVisibleOnlyWhenActive;
 
         /// <summary>
         ///     Initializes a builder for mod <paramref name="modId" />; <paramref name="pageId" /> defaults to the mod id when
@@ -174,6 +174,16 @@ namespace STS2RitsuLib.Settings
         }
 
         /// <summary>
+        ///     Shows this page in the sidebar only after the user navigates to this page (or one of its child pages).
+        ///     仅在用户进入此页面（或它的子页面）后，才在侧边栏显示此页面。
+        /// </summary>
+        public ModSettingsPageBuilder WithSidebarVisibleOnlyWhenActive()
+        {
+            _sidebarVisibleOnlyWhenActive = true;
+            return this;
+        }
+
+        /// <summary>
         ///     Host surfaces where controls on this page are read-only (combined with per-section masks).
         ///     此页面控件只读的宿主 surface（会与每个 section 的掩码组合）。
         /// </summary>
@@ -238,7 +248,8 @@ namespace STS2RitsuLib.Settings
                 _pageEnabledWhen,
                 _menuCapabilities,
                 _pageVisibleOnHostSurfaces,
-                _pageReadOnlyOnHostSurfaces
+                _pageReadOnlyOnHostSurfaces,
+                _sidebarVisibleOnlyWhenActive
             );
         }
     }
@@ -254,8 +265,7 @@ namespace STS2RitsuLib.Settings
         private readonly HashSet<string> _entryIds = new(StringComparer.OrdinalIgnoreCase);
         private readonly Dictionary<string, Func<bool>> _entryVisibleWhen = new(StringComparer.OrdinalIgnoreCase);
 
-        private ModSettingsMenuCapabilities _menuCapabilities = ModSettingsMenuCapabilities.Copy |
-                                                                ModSettingsMenuCapabilities.Paste;
+        private ModSettingsMenuCapabilities _menuCapabilities = ModSettingsMenuCapabilities.All;
 
         private Func<bool>? _sectionEnabledWhen;
 
@@ -521,7 +531,7 @@ namespace STS2RitsuLib.Settings
                 itemDescription,
                 itemEditorFactory,
                 itemDataAdapter,
-                addButtonText ?? ModSettingsText.I18N(ModSettingsLocalization.Instance, "button.add", "Add"),
+                addButtonText ?? ModSettingsLocalization.Text("button.add", "Add"),
                 description,
                 collapsibleItems,
                 startItemsCollapsed,
@@ -961,6 +971,21 @@ namespace STS2RitsuLib.Settings
             return this;
         }
 
+        /// <summary>
+        ///     Host surfaces where one entry's interactive controls are read-only.
+        ///     配置某个条目的交互控件在哪些宿主界面中只读。
+        /// </summary>
+        public ModSettingsSectionBuilder WithEntryReadOnlyOnHostSurfaces(string id,
+            ModSettingsHostSurface surfaces)
+        {
+            var entry = _entries.FirstOrDefault(existing =>
+                            string.Equals(existing.Id, id, StringComparison.OrdinalIgnoreCase))
+                        ?? throw new InvalidOperationException(
+                            $"Settings entry '{id}' does not exist in section '{Id}'.");
+            entry.ReadOnlyOnHostSurfaces = surfaces;
+            return this;
+        }
+
         internal ModSettingsSectionBuilder WithEntryVisibleWhen(string id, Func<bool> predicate)
         {
             ArgumentException.ThrowIfNullOrWhiteSpace(id);
@@ -973,7 +998,11 @@ namespace STS2RitsuLib.Settings
             return this;
         }
 
-        internal ModSettingsSectionBuilder WithEntryEnabledWhen(string id, Func<bool> predicate)
+        /// <summary>
+        ///     Disables one entry (dimmed, non-interactive) while <paramref name="predicate" /> is false.
+        ///     当 <paramref name="predicate" /> 为 false 时禁用某个条目（变暗且不可交互）。
+        /// </summary>
+        public ModSettingsSectionBuilder WithEntryEnabledWhen(string id, Func<bool> predicate)
         {
             ArgumentException.ThrowIfNullOrWhiteSpace(id);
             ArgumentNullException.ThrowIfNull(predicate);
@@ -1005,12 +1034,14 @@ namespace STS2RitsuLib.Settings
                     entry = new ModSettingsEntryEnabledWrapper(entry, enabledPredicate)
                     {
                         MenuCapabilities = entry.MenuCapabilities,
+                        ReadOnlyOnHostSurfaces = entry.ReadOnlyOnHostSurfaces,
                     };
                 if (_entryVisibleWhen.TryGetValue(entry.Id, out var visibilityPredicate))
                 {
                     var wrapped = new ModSettingsEntryVisibilityWrapper(entry, visibilityPredicate)
                     {
                         MenuCapabilities = entry.MenuCapabilities,
+                        ReadOnlyOnHostSurfaces = entry.ReadOnlyOnHostSurfaces,
                     };
                     result[i] = wrapped;
                     continue;

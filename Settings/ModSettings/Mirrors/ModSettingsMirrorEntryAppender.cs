@@ -135,8 +135,8 @@ namespace STS2RitsuLib.Settings
                     ApplyVisibility(section, entry);
                     return;
                 case ModSettingsMirrorEntryKind.Custom:
-                    section.AddCustom(entry.Id, entry.Label, entry.CustomControlFactory!, entry.Description,
-                        entry.VisibleWhen);
+                    section.AddCustom(entry.Id, entry.Label, entry.CustomControlFactory!, entry.Description);
+                    ApplyVisibility(section, entry);
                     return;
             }
 
@@ -173,6 +173,8 @@ namespace STS2RitsuLib.Settings
         {
             if (entry.VisibleWhen != null)
                 section.WithEntryVisibleWhen(entry.Id, entry.VisibleWhen);
+            if (entry.ReadOnlyOnHostSurfaces != ModSettingsHostSurface.None)
+                section.WithEntryReadOnlyOnHostSurfaces(entry.Id, entry.ReadOnlyOnHostSurfaces);
         }
     }
 }

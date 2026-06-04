@@ -1,5 +1,8 @@
 using System.Reflection;
 using System.Runtime.Loader;
+using System.Security.Cryptography;
+using System.Text.Json;
+using HarmonyLib;
 using MegaCrit.Sts2.Core.Logging;
 using MegaCrit.Sts2.Core.Modding;
 using STS2RitsuLib.Compat;
@@ -15,6 +18,13 @@ namespace STS2RitsuLib.Loader
     [ModInitializer(nameof(Initialize))]
     public static class Bootstrap
     {
+        private const string RealDllName = "STS2-RitsuLib.dll";
+        private const string VariantManifestName = "ritsulib-variants.json";
+        private const string CompatTargetMarkerName = "compat-target.txt";
+        private static readonly Lock VariantAssembliesLock = new();
+        private static readonly List<Assembly> VariantAssemblies = [];
+        private static bool _reflectionBridgePatched;
+
         public static void Initialize()
         {
             var loaderDir = Path.GetDirectoryName(typeof(Bootstrap).Assembly.Location);
@@ -33,20 +43,18 @@ namespace STS2RitsuLib.Loader
 
             var hostNumeric = Sts2HostVersion.Numeric;
             var hostLabel = Sts2HostVersion.ReleaseLabel;
-            var pickedDir = PickVariantDir(libRoot, hostNumeric);
-            if (pickedDir is null)
+            var picked = PickVariant(loaderDir, libRoot, hostNumeric);
+            if (picked is null)
             {
                 Log.Error(
                     $"[RitsuLib.Loader] No compatible variant under {libRoot} (host={(hostLabel ?? hostNumeric?.ToString()) ?? "unknown"}).");
                 return;
             }
 
-            var pickedName =
-                Path.GetFileName(pickedDir.TrimEnd(Path.DirectorySeparatorChar, Path.AltDirectorySeparatorChar));
             Log.Info(
-                $"[RitsuLib.Loader] Host version label={hostLabel ?? "<none>"} numeric={hostNumeric?.ToString() ?? "<none>"}; picked variant {pickedName}.");
+                $"[RitsuLib.Loader] Host version label={hostLabel ?? "<none>"} numeric={hostNumeric?.ToString() ?? "<none>"}; picked variant {picked.CompatTarget}.");
 
-            var realDll = Path.Combine(pickedDir, "STS2-RitsuLib.dll");
+            var realDll = picked.DllPath;
             if (!File.Exists(realDll))
             {
                 Log.Error($"[RitsuLib.Loader] Variant folder missing STS2-RitsuLib.dll: {realDll}");
@@ -58,6 +66,7 @@ namespace STS2RitsuLib.Loader
             try
             {
                 realAsm = alc.LoadFromAssemblyPath(realDll);
+                RegisterVariantAssembly(realAsm);
             }
             catch (Exception ex)
             {
@@ -72,6 +81,55 @@ namespace STS2RitsuLib.Loader
             catch (Exception ex)
             {
                 Log.Error($"[RitsuLib.Loader] Failed to initialize real RitsuLib: {ex}");
+            }
+        }
+
+        internal static Type[] GetVariantModTypes()
+        {
+            Assembly[] assemblies;
+            lock (VariantAssembliesLock)
+            {
+                assemblies = [.. VariantAssemblies];
+            }
+
+            return assemblies.SelectMany(GetLoadableTypes).Distinct().ToArray();
+        }
+
+        private static void RegisterVariantAssembly(Assembly realAsm)
+        {
+            EnsureReflectionBridgePatch();
+            lock (VariantAssembliesLock)
+            {
+                if (VariantAssemblies.Any(assembly => string.Equals(
+                        assembly.Location,
+                        realAsm.Location,
+                        StringComparison.OrdinalIgnoreCase)))
+                    return;
+
+                VariantAssemblies.Add(realAsm);
+            }
+        }
+
+        private static void EnsureReflectionBridgePatch()
+        {
+            if (_reflectionBridgePatched)
+                return;
+
+            var harmony = new Harmony("OLC.STS2-RitsuLib.Loader.ReflectionBridge");
+            harmony.PatchAll(typeof(Bootstrap).Assembly);
+            _reflectionBridgePatched = true;
+        }
+
+        private static IEnumerable<Type> GetLoadableTypes(Assembly assembly)
+        {
+            try
+            {
+                return assembly.GetTypes();
+            }
+            catch (ReflectionTypeLoadException ex)
+            {
+                Log.Warn($"[RitsuLib.Loader] Partial type load for {assembly.FullName}: {ex.Message}");
+                return ex.Types.OfType<Type>();
             }
         }
 
@@ -116,37 +174,155 @@ namespace STS2RitsuLib.Loader
             return true;
         }
 
-        private static string? PickVariantDir(string libRoot, Version? host)
+        private static VariantCandidate? PickVariant(string loaderDir, string libRoot, Version? host)
         {
-            var dirs = new List<(string Path, Version Ver)>();
-            foreach (var d in Directory.EnumerateDirectories(libRoot))
-            {
-                var name = Path.GetFileName(d.TrimEnd(Path.DirectorySeparatorChar, Path.AltDirectorySeparatorChar));
-                if (string.IsNullOrEmpty(name))
-                    continue;
-                if (!Sts2HostVersion.TryParseVersionCore(name, out var v))
-                    continue;
-                dirs.Add((d, v));
-            }
-
-            if (dirs.Count == 0)
+            var variants = LoadVariantManifest(loaderDir, libRoot);
+            if (variants.Count == 0)
                 return null;
 
-            dirs.Sort(static (a, b) => a.Ver.CompareTo(b.Ver));
+            variants.Sort(static (a, b) => a.Version.CompareTo(b.Version));
 
             if (host is null)
             {
                 Log.Info("[RitsuLib.Loader] Host numeric version unknown; using newest bundled variant.");
-                return dirs[^1].Path;
+                return variants[^1];
             }
 
-            var candidates = dirs.Where(x => x.Ver <= host).ToList();
+            var candidates = variants.Where(x => x.Version <= host).ToList();
             if (candidates.Count > 0)
-                return candidates[^1].Path;
+                return candidates[^1];
 
             Log.Info(
                 $"[RitsuLib.Loader] No bundled variant <= host {host}; using newest bundled variant as best-effort fallback.");
-            return dirs[^1].Path;
+            return variants[^1];
+        }
+
+        private static List<VariantCandidate> LoadVariantManifest(string loaderDir, string libRoot)
+        {
+            var manifestPath = Path.Combine(loaderDir, VariantManifestName);
+            if (!File.Exists(manifestPath))
+            {
+                Log.Error($"[RitsuLib.Loader] Missing variant manifest: {manifestPath}");
+                return [];
+            }
+
+            BundleVariantManifest? manifest;
+            try
+            {
+                manifest = JsonSerializer.Deserialize<BundleVariantManifest>(
+                    File.ReadAllText(manifestPath),
+                    new JsonSerializerOptions { PropertyNameCaseInsensitive = true });
+            }
+            catch (Exception ex)
+            {
+                Log.Error($"[RitsuLib.Loader] Failed to read variant manifest {manifestPath}: {ex}");
+                return [];
+            }
+
+            if (manifest?.Variants is not { Count: > 0 })
+            {
+                Log.Error($"[RitsuLib.Loader] Variant manifest contains no variants: {manifestPath}");
+                return [];
+            }
+
+            var libRootFull = Path.GetFullPath(libRoot);
+
+            return manifest.Variants.Select(entry => TryCreateVariantCandidate(loaderDir, libRootFull, entry))
+                .OfType<VariantCandidate>().ToList();
+        }
+
+        private static VariantCandidate? TryCreateVariantCandidate(
+            string loaderDir,
+            string libRootFull,
+            BundleVariantEntry entry)
+        {
+            var compatTarget = entry.CompatTarget?.Trim();
+            if (string.IsNullOrWhiteSpace(compatTarget) ||
+                !Sts2HostVersion.TryParseVersionCore(compatTarget, out var version))
+            {
+                Log.Error($"[RitsuLib.Loader] Ignoring invalid variant target '{entry.CompatTarget}'.");
+                return null;
+            }
+
+            var relativeDir = string.IsNullOrWhiteSpace(entry.Directory)
+                ? Path.Combine("lib", compatTarget)
+                : entry.Directory.Trim();
+            var variantDir = Path.GetFullPath(Path.Combine(loaderDir, relativeDir));
+            if (!IsUnderDirectory(variantDir, libRootFull))
+            {
+                Log.Error($"[RitsuLib.Loader] Ignoring variant outside lib directory: {relativeDir}");
+                return null;
+            }
+
+            if (!string.Equals(Path.GetFileName(variantDir), compatTarget, StringComparison.OrdinalIgnoreCase))
+            {
+                Log.Error($"[RitsuLib.Loader] Ignoring variant with mismatched directory: {relativeDir}");
+                return null;
+            }
+
+            var marker = Path.Combine(variantDir, CompatTargetMarkerName);
+            if (!File.Exists(marker) ||
+                !string.Equals(File.ReadAllText(marker).Trim(), compatTarget, StringComparison.OrdinalIgnoreCase))
+            {
+                Log.Error($"[RitsuLib.Loader] Ignoring variant with missing or mismatched marker: {marker}");
+                return null;
+            }
+
+            var assemblyName = string.IsNullOrWhiteSpace(entry.Assembly) ? RealDllName : entry.Assembly.Trim();
+            if (!string.Equals(assemblyName, RealDllName, StringComparison.OrdinalIgnoreCase))
+            {
+                Log.Error($"[RitsuLib.Loader] Ignoring variant with unexpected assembly name: {assemblyName}");
+                return null;
+            }
+
+            var dllPath = Path.Combine(variantDir, assemblyName);
+            if (!File.Exists(dllPath))
+            {
+                Log.Error($"[RitsuLib.Loader] Ignoring variant missing {RealDllName}: {dllPath}");
+                return null;
+            }
+
+            if (MatchesExpectedHash(dllPath, entry.Sha256)) return new(compatTarget, version, dllPath);
+            Log.Error($"[RitsuLib.Loader] Ignoring variant with mismatched hash: {dllPath}");
+            return null;
+        }
+
+        private static bool IsUnderDirectory(string path, string root)
+        {
+            var normalizedRoot = root.TrimEnd(Path.DirectorySeparatorChar, Path.AltDirectorySeparatorChar) +
+                                 Path.DirectorySeparatorChar;
+            var normalizedPath = path.TrimEnd(Path.DirectorySeparatorChar, Path.AltDirectorySeparatorChar) +
+                                 Path.DirectorySeparatorChar;
+            return normalizedPath.StartsWith(normalizedRoot, StringComparison.OrdinalIgnoreCase);
+        }
+
+        private static bool MatchesExpectedHash(string path, string? expectedSha256)
+        {
+            if (string.IsNullOrWhiteSpace(expectedSha256))
+                return false;
+
+            using var stream = File.OpenRead(path);
+            var actual = Convert.ToHexString(SHA256.HashData(stream));
+            return string.Equals(actual, expectedSha256.Trim(), StringComparison.OrdinalIgnoreCase);
+        }
+
+        private sealed record VariantCandidate(string CompatTarget, Version Version, string DllPath);
+
+        private sealed class BundleVariantManifest
+        {
+            public List<BundleVariantEntry>? Variants { get; set; }
+        }
+
+        // ReSharper disable once ClassNeverInstantiated.Local
+        private sealed class BundleVariantEntry
+        {
+            public string? CompatTarget { get; set; }
+
+            public string? Directory { get; set; }
+
+            public string? Assembly { get; set; }
+
+            public string? Sha256 { get; set; }
         }
     }
 }

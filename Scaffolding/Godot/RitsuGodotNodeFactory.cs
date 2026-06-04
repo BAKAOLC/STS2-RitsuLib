@@ -25,6 +25,13 @@ namespace STS2RitsuLib.Scaffolding.Godot
         /// </summary>
         public abstract Node CreateBareFromResource(object resource);
 
+        public virtual Node CreateFromResource(object resource, VisualNodeStyle? style)
+        {
+            var bare = CreateBareFromResource(resource);
+            CompleteBareRoot(bare, style);
+            return bare;
+        }
+
         /// <summary>
         ///     Fills unique slots / children for a bare root (same as <c>ConvertScene(target, null)</c>).
         ///     为裸根节点填充唯一槽位 / 子节点（与 <c>ConvertScene(target, null)</c> 相同）。

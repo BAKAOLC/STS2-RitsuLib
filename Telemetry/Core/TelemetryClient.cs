@@ -45,14 +45,24 @@ namespace STS2RitsuLib.Telemetry
                 return;
             }
 
-            var envelope = TelemetryEnvelopeFactory.Create(
-                applicant,
-                request,
-                eventName,
-                payload,
-                properties);
-            TelemetryQueue.Enqueue(envelope);
-            _ = TelemetryQueue.FlushApplicantAsync(applicant.ApplicantId);
+            try
+            {
+                var envelope = TelemetryEnvelopeFactory.Create(
+                    applicant,
+                    request,
+                    eventName,
+                    payload,
+                    properties);
+                TelemetryQueue.Enqueue(envelope);
+                TelemetryTaskRunner.Forget(
+                    TelemetryQueue.FlushApplicantAsync(applicant.ApplicantId),
+                    "flush_applicant");
+            }
+            catch (Exception ex)
+            {
+                RitsuLibFramework.Logger.Warn(
+                    $"[Telemetry] Capture failed for event '{eventName}' and applicant '{ApplicantId}': {ex.Message}");
+            }
         }
 
         public void CaptureException(

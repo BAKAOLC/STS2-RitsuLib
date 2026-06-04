@@ -39,7 +39,8 @@ namespace STS2RitsuLib.Utils
                 if (file == null)
                 {
                     var error = FileAccess.GetOpenError();
-                    RitsuLibFramework.Logger.Error($"[{context}] Failed to open file '{filePath}' (Error: {error})");
+                    RitsuLibFramework.Logger.ErrorNoTrace(
+                        $"[{context}] Failed to open file '{filePath}' (Error: {error})");
                     return new()
                     {
                         Success = false,
@@ -71,7 +72,8 @@ namespace STS2RitsuLib.Utils
             }
             catch (Exception ex)
             {
-                RitsuLibFramework.Logger.Error($"[{context}] Unexpected error reading file '{filePath}': {ex.Message}");
+                RitsuLibFramework.Logger.ErrorNoTrace(
+                    $"[{context}] Unexpected error reading file '{filePath}': {ex.Message}");
                 return new()
                 {
                     Success = false,
@@ -131,7 +133,7 @@ namespace STS2RitsuLib.Utils
             }
             catch (Exception ex)
             {
-                RitsuLibFramework.Logger.Error(
+                RitsuLibFramework.Logger.ErrorNoTrace(
                     $"[{context}] Unexpected error during atomic write to '{filePath}': {ex.Message}");
                 return new()
                 {
@@ -155,7 +157,7 @@ namespace STS2RitsuLib.Utils
                 if (file == null)
                 {
                     var error = FileAccess.GetOpenError();
-                    RitsuLibFramework.Logger.Error(
+                    RitsuLibFramework.Logger.ErrorNoTrace(
                         $"[{context}] Failed to open file '{filePath}' for writing (Error: {error})");
                     return new()
                     {
@@ -172,7 +174,7 @@ namespace STS2RitsuLib.Utils
             }
             catch (Exception ex)
             {
-                RitsuLibFramework.Logger.Error(
+                RitsuLibFramework.Logger.ErrorNoTrace(
                     $"[{context}] Unexpected error writing to file '{filePath}': {ex.Message}");
                 return new()
                 {
@@ -220,7 +222,7 @@ namespace STS2RitsuLib.Utils
             }
             catch (Exception ex)
             {
-                RitsuLibFramework.Logger.Error($"[{context}] Failed to restore from backup: {ex.Message}");
+                RitsuLibFramework.Logger.ErrorNoTrace($"[{context}] Failed to restore from backup: {ex.Message}");
             }
         }
 
@@ -351,7 +353,7 @@ namespace STS2RitsuLib.Utils
 
                 if (data == null)
                 {
-                    RitsuLibFramework.Logger.Error(
+                    RitsuLibFramework.Logger.ErrorNoTrace(
                         $"[{context}] Deserialization resulted in null object for file '{filePath}'");
                     return new()
                     {
@@ -369,7 +371,8 @@ namespace STS2RitsuLib.Utils
             }
             catch (JsonException ex)
             {
-                RitsuLibFramework.Logger.Error($"[{context}] JSON parsing error in file '{filePath}': {ex.Message}");
+                RitsuLibFramework.Logger.ErrorNoTrace(
+                    $"[{context}] JSON parsing error in file '{filePath}': {ex.Message}");
                 return new()
                 {
                     Success = false,
@@ -378,7 +381,7 @@ namespace STS2RitsuLib.Utils
             }
             catch (Exception ex)
             {
-                RitsuLibFramework.Logger.Error(
+                RitsuLibFramework.Logger.ErrorNoTrace(
                     $"[{context}] Unexpected error deserializing file '{filePath}': {ex.Message}");
                 return new()
                 {
@@ -404,7 +407,7 @@ namespace STS2RitsuLib.Utils
             }
             catch (JsonException ex)
             {
-                RitsuLibFramework.Logger.Error($"[{context}] JSON serialization error: {ex.Message}");
+                RitsuLibFramework.Logger.ErrorNoTrace($"[{context}] JSON serialization error: {ex.Message}");
                 return new()
                 {
                     Success = false,
@@ -413,7 +416,7 @@ namespace STS2RitsuLib.Utils
             }
             catch (Exception ex)
             {
-                RitsuLibFramework.Logger.Error($"[{context}] Unexpected error serializing data: {ex.Message}");
+                RitsuLibFramework.Logger.ErrorNoTrace($"[{context}] Unexpected error serializing data: {ex.Message}");
                 return new()
                 {
                     Success = false,
@@ -453,7 +456,7 @@ namespace STS2RitsuLib.Utils
                 var dirAccess = DirAccess.Open(directory);
                 if (dirAccess == null)
                 {
-                    RitsuLibFramework.Logger.Error(
+                    RitsuLibFramework.Logger.ErrorNoTrace(
                         $"[{context}] Failed to access directory '{directory}' for file deletion");
                     return new()
                     {
@@ -465,7 +468,8 @@ namespace STS2RitsuLib.Utils
                 var error = dirAccess.Remove(filePath);
                 if (error != Error.Ok)
                 {
-                    RitsuLibFramework.Logger.Error($"[{context}] Failed to delete file '{filePath}' (Error: {error})");
+                    RitsuLibFramework.Logger.ErrorNoTrace(
+                        $"[{context}] Failed to delete file '{filePath}' (Error: {error})");
                     return new()
                     {
                         Success = false,
@@ -479,7 +483,7 @@ namespace STS2RitsuLib.Utils
             }
             catch (Exception ex)
             {
-                RitsuLibFramework.Logger.Error(
+                RitsuLibFramework.Logger.ErrorNoTrace(
                     $"[{context}] Unexpected error deleting file '{filePath}': {ex.Message}");
                 return new()
                 {
@@ -509,7 +513,7 @@ namespace STS2RitsuLib.Utils
                 using var dirAccess = DirAccess.Open(directoryPath);
                 if (dirAccess == null)
                 {
-                    RitsuLibFramework.Logger.Error($"[{context}] Failed to open directory '{directoryPath}'");
+                    RitsuLibFramework.Logger.ErrorNoTrace($"[{context}] Failed to open directory '{directoryPath}'");
                     return new()
                     {
                         Success = false,
@@ -555,7 +559,7 @@ namespace STS2RitsuLib.Utils
             }
             catch (Exception ex)
             {
-                RitsuLibFramework.Logger.Error(
+                RitsuLibFramework.Logger.ErrorNoTrace(
                     $"[{context}] Unexpected error deleting directory '{directoryPath}': {ex.Message}");
                 return new()
                 {

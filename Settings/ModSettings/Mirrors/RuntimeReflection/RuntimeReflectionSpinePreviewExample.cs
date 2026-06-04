@@ -183,13 +183,20 @@ namespace STS2RitsuLib.Settings
                 {
                     if (!GodotObject.IsInstanceValid(root))
                         return;
-                    Callable.From(RefreshPreview).CallDeferred();
+                    Callable.From(() =>
+                    {
+                        if (GodotObject.IsInstanceValid(root) && GodotObject.IsInstanceValid(viewport))
+                            RefreshPreview();
+                    }).CallDeferred();
                 }).CallDeferred();
             };
             return root;
 
             void RefreshPreview()
             {
+                if (!GodotObject.IsInstanceValid(root) || !GodotObject.IsInstanceValid(viewport))
+                    return;
+
                 previewBuildVersion++;
                 foreach (var child in viewport.GetChildren())
                     child.QueueFree();
@@ -198,7 +205,11 @@ namespace STS2RitsuLib.Settings
                 viewport.AddChild(currentVisuals);
                 var visualsForDeferred = currentVisuals;
                 var deferredBuildVersion = previewBuildVersion;
-                Callable.From(() => InitializePreviewVisuals(visualsForDeferred, deferredBuildVersion)).CallDeferred();
+                Callable.From(() =>
+                {
+                    if (GodotObject.IsInstanceValid(root) && GodotObject.IsInstanceValid(viewport))
+                        InitializePreviewVisuals(visualsForDeferred, deferredBuildVersion);
+                }).CallDeferred();
             }
 
             void ApplyPreviewTransform()
@@ -232,7 +243,8 @@ namespace STS2RitsuLib.Settings
             {
                 if (buildVersion != previewBuildVersion)
                     return;
-                if (!GodotObject.IsInstanceValid(visuals))
+                if (!GodotObject.IsInstanceValid(root) || !GodotObject.IsInstanceValid(viewport) ||
+                    !GodotObject.IsInstanceValid(visuals))
                     return;
 
                 currentVisuals = visuals;

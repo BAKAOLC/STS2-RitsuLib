@@ -2,13 +2,16 @@ using System.Collections.Concurrent;
 using System.Reflection;
 using Godot;
 using MegaCrit.Sts2.Core.Entities.Cards;
+using MegaCrit.Sts2.Core.Entities.Creatures;
 using MegaCrit.Sts2.Core.Entities.Players;
 using MegaCrit.Sts2.Core.Logging;
 using MegaCrit.Sts2.Core.Modding;
 using MegaCrit.Sts2.Core.Models;
 using STS2RitsuLib.CardPiles;
 using STS2RitsuLib.Cards.FreePlay;
+using STS2RitsuLib.Cards.Transforms;
 using STS2RitsuLib.CardTags;
+using STS2RitsuLib.Combat.CardTargeting;
 using STS2RitsuLib.Combat.HandSize;
 using STS2RitsuLib.Combat.HealthBars;
 using STS2RitsuLib.Compat;
@@ -17,19 +20,21 @@ using STS2RitsuLib.Data;
 using STS2RitsuLib.Diagnostics;
 using STS2RitsuLib.Diagnostics.CardExport;
 using STS2RitsuLib.Diagnostics.CompendiumExport;
+using STS2RitsuLib.Diagnostics.Logging;
 using STS2RitsuLib.Interop;
 using STS2RitsuLib.Keywords;
 using STS2RitsuLib.Localization;
 using STS2RitsuLib.Localization.SmartFormat;
 using STS2RitsuLib.Models;
+using STS2RitsuLib.Models.Capabilities;
 using STS2RitsuLib.Patching.Core;
 using STS2RitsuLib.Platform;
 using STS2RitsuLib.RunData;
 using STS2RitsuLib.RuntimeInput;
 using STS2RitsuLib.Scaffolding.Ancients.Options;
 using STS2RitsuLib.Scaffolding.Content;
+using STS2RitsuLib.Scaffolding.Godot.NodeAttachments;
 using STS2RitsuLib.Settings;
-using STS2RitsuLib.Settings.RunSidecar;
 using STS2RitsuLib.Telemetry;
 using STS2RitsuLib.Telemetry.Diagnostics;
 using STS2RitsuLib.Timeline;
@@ -311,16 +316,21 @@ namespace STS2RitsuLib
                 }
 
                 Logger = CreateLogger(Const.ModId);
+                StartupModListLogger.Initialize();
 
                 Logger.Info($"Framework ID: {Const.ModId}");
                 Logger.Info($"Framework Name: {Const.Name}");
                 Logger.Info(BuildVersionLogText());
                 Logger.Info("Initializing shared framework...");
+                RitsuLibStartupAudit.Measure("imageResourceLoader",
+                    RitsuLibModImageResourceLoader.EnsureRegistered);
                 RitsuLibMobileSteamRuntime.LogSuppressedSteamFeaturesAtStartup();
                 ModTypeDiscoveryHub.EnsureBuiltInContributorsRegistered();
-                RitsuLibSettingsStore.Initialize();
-                RitsuLibModSettingsBootstrap.Initialize();
-                RitsuLibTelemetryBootstrap.Initialize();
+                RitsuLibStartupAudit.Measure("settingsStore", RitsuLibSettingsStore.Initialize);
+                RitsuLibStartupAudit.Measure("debugLogViewer",
+                    () => RitsuDebugLogPipeline.Initialize(RitsuLibSettingsStore.GetDebugLogViewerOptions()));
+                RitsuLibStartupAudit.Measure("modSettingsBootstrap", RitsuLibModSettingsBootstrap.Initialize);
+                RitsuLibStartupAudit.Measure("telemetryBootstrap", RitsuLibTelemetryBootstrap.Initialize);
                 PublishLifecycleEvent(
                     new FrameworkInitializingEvent(Const.ModId, Const.Version, DateTimeOffset.UtcNow),
                     nameof(FrameworkInitializingEvent)
@@ -329,34 +339,43 @@ namespace STS2RitsuLib
                 try
                 {
                     FrameworkPatchersByArea.Clear();
-                    RegisterLifecyclePatches();
-                    RegisterSettingsUiPatches();
-                    RegisterContentAssetPatches();
-                    RegisterCharacterAssetPatches();
-                    RegisterContentRegistryPatches();
-                    RegisterPersistencePatches();
-                    RegisterUnlockPatches();
-
-                    if (!PatchAllRequired())
+                    RitsuLibStartupAudit.Measure("registerPatches", () =>
                     {
-                        Logger.Error("Framework initialization failed: critical framework patches failed.");
+                        RegisterLifecyclePatches();
+                        RegisterSettingsUiPatches();
+                        RegisterContentAssetPatches();
+                        RegisterCharacterAssetPatches();
+                        RegisterContentRegistryPatches();
+                        RegisterPersistencePatches();
+                        RegisterUnlockPatches();
+                    });
+
+                    if (!RitsuLibStartupAudit.Measure("patchAll", PatchAllRequired))
+                    {
+                        Logger.ErrorNoTrace("Framework initialization failed: critical framework patches failed.");
                         IsActive = false;
+                        RitsuLibStartupAudit.LogReport("initialization (failed)");
                         return;
                     }
 
                     IsInitialized = true;
                     IsActive = true;
-                    var modDataInteropRegistered = ModDataRuntimeInterop.TryRegisterAll();
+                    var modDataInteropRegistered = RitsuLibStartupAudit.Measure("modDataInterop",
+                        ModDataRuntimeInterop.TryRegisterAll);
                     if (modDataInteropRegistered > 0)
                         Logger.Debug(
                             $"ModData runtime interop: mirror-registered {modDataInteropRegistered} provider schema(s).");
 
-                    EnsureFrameworkInteropBootstrapRegistered();
-                    RuntimeHotkeyService.Initialize();
-                    RitsuToastService.Initialize();
-                    RitsuLibUpdateCheckService.Initialize();
+                    RitsuLibStartupAudit.Measure("runtimeServices", () =>
+                    {
+                        EnsureFrameworkInteropBootstrapRegistered();
+                        RuntimeHotkeyService.Initialize();
+                        RitsuToastService.Initialize();
+                        RitsuLibUpdateCheckService.Initialize();
+                    });
                     SubscribeLifecycleOnce<MainMenuReadyEvent>(_ =>
                     {
+                        RitsuLibStartupAudit.LogReport("launch to main menu");
                         HarmonyPatchDumpCoordinator.TryAutoDumpOnFirstMainMenu();
                         SelfCheckBundleCoordinator.TryAutoRunOnFirstMainMenu();
                     });
@@ -373,8 +392,8 @@ namespace STS2RitsuLib
                 }
                 catch (Exception ex)
                 {
-                    Logger.Error($"Framework initialization failed: {ex.Message}");
-                    Logger.Error($"Stack trace: {ex.StackTrace}");
+                    Logger.ErrorNoTrace($"Framework initialization failed: {ex.Message}");
+                    Logger.ErrorNoTrace($"Stack trace: {ex.StackTrace}");
                     DiagnosticsTelemetryCollector.CaptureExceptionForAuthorizedApplicants(
                         ex,
                         "ritsulib_framework_initialize");
@@ -383,12 +402,10 @@ namespace STS2RitsuLib
             }
         }
 
-        private static string BuildVersionLogText()
+        internal static string BuildVersionLogText()
         {
             var compatBranchLabel = GetCompatBranchLabel();
-            return string.IsNullOrWhiteSpace(compatBranchLabel)
-                ? $"Version: {Const.Version}"
-                : $"Version: {Const.Version} [compat branch: {compatBranchLabel}]";
+            return $"Version: {Const.Version} [compat branch: {compatBranchLabel}]";
         }
 
         private static void EnsureFrameworkInteropBootstrapRegistered()
@@ -409,14 +426,16 @@ namespace STS2RitsuLib
             MaxHandSizePatchInstaller.EnsurePatched();
         }
 
-        private static string? GetCompatBranchLabel()
+        private static string GetCompatBranchLabel()
         {
-#if !STS2_AT_LEAST_0_104_0
+#if STS2_AT_LEAST_0_106_1
+            return "0.106.1";
+#elif STS2_AT_LEAST_0_105_1
+            return "0.105.1";
+#elif STS2_AT_LEAST_0_103_2
             return "0.103.2";
-#elif !STS2_AT_LEAST_0_105_0
-            return "0.104.0";
 #else
-            return null;
+            return "unknown";
 #endif
         }
 
@@ -440,8 +459,6 @@ namespace STS2RitsuLib
                 ProfileManager.Instance.Initialize();
                 ModDataStore.InitializeAllProfileScoped();
                 ModDataRuntimeInterop.PushLoadedDataToAllProviders();
-                ModRunSidecarSession.AttachLifecycleHandlers();
-
                 _profileServicesInitialized = true;
 
                 var profileInitializedEvent = new ProfileServicesInitializedEvent(
@@ -505,6 +522,24 @@ namespace STS2RitsuLib
         }
 
         /// <summary>
+        ///     Returns the ready-time Godot node attachment registry for <paramref name="modId" />.
+        ///     返回 <paramref name="modId" /> 的 ready 阶段 Godot 节点挂载注册表。
+        /// </summary>
+        public static ModNodeAttachmentRegistry GetNodeAttachmentRegistry(string modId)
+        {
+            return ModNodeAttachmentRegistry.For(modId);
+        }
+
+        /// <summary>
+        ///     Ensures all ready-time node attachments registered for <paramref name="parent" /> have been applied.
+        ///     确保已应用为 <paramref name="parent" /> 注册的所有 ready 阶段节点挂载项。
+        /// </summary>
+        public static void EnsureReadyNodeAttachments(Node parent)
+        {
+            ModNodeAttachmentRegistry.EnsureReadyAttachments(parent);
+        }
+
+        /// <summary>
         ///     Returns the keyword registry for <paramref name="modId" />.
         ///     返回 <paramref name="modId" /> 的关键字注册表。
         /// </summary>
@@ -541,6 +576,61 @@ namespace STS2RitsuLib
         }
 
         /// <summary>
+        ///     Returns the generic dynamic enum value registry for <paramref name="modId" />.
+        ///     返回 <paramref name="modId" /> 的通用动态枚举值注册表。
+        /// </summary>
+        public static ModDynamicEnumValueRegistry<TEnum> GetDynamicEnumValueRegistry<TEnum>(string modId)
+            where TEnum : struct, Enum
+        {
+            return DynamicEnumValueRegistry<TEnum>.For(modId);
+        }
+
+        /// <summary>
+        ///     Registers a mod-scoped dynamic enum value and returns its deterministic value.
+        ///     注册一个 mod 作用域的动态枚举值，并返回其确定性值。
+        /// </summary>
+        public static TEnum RegisterDynamicEnumValue<TEnum>(string modId, string localStem)
+            where TEnum : struct, Enum
+        {
+            return DynamicEnumValueRegistry<TEnum>.RegisterOwned(modId, localStem).Value;
+        }
+
+        /// <summary>
+        ///     Returns the deterministic dynamic enum value for <paramref name="id" /> without failing on hash
+        ///     collisions. Unknown ids are computed but not registered.
+        ///     返回 <paramref name="id" /> 对应的确定性动态枚举值，且不会因哈希碰撞失败。未知 ID 只计算值，不会注册。
+        /// </summary>
+        public static TEnum GetDynamicEnumValueIgnoringCollisions<TEnum>(string id)
+            where TEnum : struct, Enum
+        {
+            return DynamicEnumValueRegistry<TEnum>.GetValueIgnoringCollisions(id);
+        }
+
+        /// <summary>
+        ///     Registers a mod-scoped single-target <see cref="TargetType" /> and returns its deterministic enum value.
+        ///     注册一个 mod 作用域的单体目标 <see cref="TargetType" />，并返回其确定性的枚举值。
+        /// </summary>
+        public static TargetType RegisterSingleTargetType(
+            string modId,
+            string localStem,
+            Func<Creature, bool> canTarget)
+        {
+            return CustomTargetType.RegisterSingleTargetType(modId, localStem, canTarget);
+        }
+
+        /// <summary>
+        ///     Registers a mod-scoped multi-target <see cref="TargetType" /> and returns its deterministic enum value.
+        ///     注册一个 mod 作用域的群体目标 <see cref="TargetType" />，并返回其确定性的枚举值。
+        /// </summary>
+        public static TargetType RegisterMultiTargetType(
+            string modId,
+            string localStem,
+            Func<Creature, bool> includeTarget)
+        {
+            return CustomTargetType.RegisterMultiTargetType(modId, localStem, includeTarget);
+        }
+
+        /// <summary>
         ///     Returns the top-bar button registry for <paramref name="modId" />.
         ///     返回 <paramref name="modId" /> 的顶部栏按钮注册表。
         /// </summary>
@@ -574,6 +664,82 @@ namespace STS2RitsuLib
         public static ModelCloneRegistry GetModelCloneRegistry(string modId)
         {
             return ModelCloneRegistry.For(modId);
+        }
+
+        /// <summary>
+        ///     Returns the model-saved data store facade for <paramref name="modId" />.
+        ///     返回 <paramref name="modId" /> 的模型保存数据存储 facade。
+        /// </summary>
+        public static ModelSavedDataStore GetModelSavedDataStore(string modId)
+        {
+            return ModelSavedDataStore.For(modId);
+        }
+
+        /// <summary>
+        ///     Gets the capability set attached to <paramref name="model" />.
+        ///     获取附加到 <paramref name="model" /> 的能力集合。
+        /// </summary>
+        public static ModelCapabilitySet GetModelCapabilities(AbstractModel model)
+        {
+            return ModelCapabilities.Get(model);
+        }
+
+        /// <summary>
+        ///     Registers a model-backed capability in this mod's content registry.
+        ///     在此 mod 的内容注册表中注册一个基于模型的能力。
+        /// </summary>
+        public static void RegisterModelCapability<TCapability>(string modId)
+            where TCapability : ModelCapability
+        {
+            GetContentRegistry(modId).RegisterModelCapability<TCapability>();
+        }
+
+        /// <summary>
+        ///     Registers a model-backed capability in this mod's content registry using
+        ///     <paramref name="publicEntry" /> rules.
+        ///     使用 <paramref name="publicEntry" /> 规则在此 mod 的内容注册表中注册一个基于模型的能力。
+        /// </summary>
+        public static void RegisterModelCapability<TCapability>(string modId, ModelPublicEntryOptions publicEntry)
+            where TCapability : ModelCapability
+        {
+            GetContentRegistry(modId).RegisterModelCapability<TCapability>(publicEntry);
+        }
+
+        /// <summary>
+        ///     Configures the default capability set for matching <typeparamref name="TModel" /> instances.
+        ///     配置匹配的 <typeparamref name="TModel" /> 实例的默认能力集合。
+        /// </summary>
+        public static void ConfigureDefaultModelCapabilities<TModel>(
+            string modId,
+            string modifierId,
+            Action<TModel, ModelCapabilityList> modifier,
+            int order = 0)
+            where TModel : AbstractModel
+        {
+            GetContentRegistry(modId).ConfigureDefaultModelCapabilities(modifierId, modifier, order);
+        }
+
+        /// <summary>
+        ///     Configures the default capability set for matching <paramref name="modelType" /> instances.
+        ///     配置匹配的 <paramref name="modelType" /> 实例的默认能力集合。
+        /// </summary>
+        public static void ConfigureDefaultModelCapabilities(
+            string modId,
+            Type modelType,
+            string modifierId,
+            Action<AbstractModel, ModelCapabilityList> modifier,
+            int order = 0)
+        {
+            GetContentRegistry(modId).ConfigureDefaultModelCapabilities(modelType, modifierId, modifier, order);
+        }
+
+        /// <summary>
+        ///     Returns the card-transform listener registry for <paramref name="modId" />.
+        ///     返回 <paramref name="modId" /> 的卡牌转换监听器注册表。
+        /// </summary>
+        public static ModCardTransformRegistry GetCardTransformRegistry(string modId)
+        {
+            return ModCardTransformRegistry.For(modId);
         }
 
         /// <summary>
@@ -687,7 +853,7 @@ namespace STS2RitsuLib
                         registration.ModId,
                         registration.Description ?? "deferred content pack",
                         ex);
-                    Logger.Error(
+                    Logger.ErrorNoTrace(
                         $"[ContentPack] Failed to apply deferred content pack for mod '{registration.ModId}'" +
                         $"{(string.IsNullOrWhiteSpace(registration.Description) ? "" : $" ({registration.Description})")}: {ex.Message}");
                 }
@@ -927,6 +1093,25 @@ namespace STS2RitsuLib
         }
 
         /// <summary>
+        ///     Logs an error message without the stack trace appended by the game logger.
+        ///     记录 Error 级日志，但不附加游戏 logger 自动生成的 stack trace。
+        /// </summary>
+        /// <remarks>
+        ///     Include an explicit stack trace in <paramref name="text" /> if one is needed.
+        ///     如需堆栈信息，请由调用方将堆栈内容放入 <paramref name="text" />。
+        /// </remarks>
+        public static void ErrorNoTrace(this Logger logger, string text)
+        {
+            ArgumentNullException.ThrowIfNull(logger);
+
+            if (!logger.WillLog(LogLevel.Error))
+                return;
+
+            var formattedText = logger.Context != null ? $"[{logger.Context}] {text}" : text;
+            GD.PrintErr($"[ERROR] {formattedText}");
+        }
+
+        /// <summary>
         ///     Creates a <see cref="STS2RitsuLib.Patching.Core.ModPatcher" /> with a dedicated logger for the owning mod.
         ///     使用所属 mod 的专用 logger 创建 <see cref="STS2RitsuLib.Patching.Core.ModPatcher" />。
         /// </summary>
@@ -1067,8 +1252,8 @@ namespace STS2RitsuLib
             }
             catch (Exception ex)
             {
-                logger?.Error($"Failed to register Godot C# scripts for assembly {assemblyName}: {ex.Message}");
-                logger?.Error($"Stack trace: {ex.StackTrace}");
+                logger?.ErrorNoTrace($"Failed to register Godot C# scripts for assembly {assemblyName}: {ex.Message}");
+                logger?.ErrorNoTrace($"Stack trace: {ex.StackTrace}");
                 DiagnosticsTelemetryCollector.CaptureExceptionForAuthorizedApplicants(
                     ex,
                     "ritsulib_godot_script_registration");
@@ -1090,7 +1275,7 @@ namespace STS2RitsuLib
             if (success)
                 return true;
 
-            patcher.Logger.Error(
+            patcher.Logger.ErrorNoTrace(
                 failureMessage ?? $"Required patcher '{patcher.PatcherName}' failed. The mod will be disabled.");
             disableMod();
             return false;

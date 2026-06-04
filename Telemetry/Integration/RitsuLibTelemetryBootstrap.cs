@@ -12,10 +12,11 @@ namespace STS2RitsuLib.Telemetry
     internal static class RitsuLibTelemetryBootstrap
     {
         private static bool _initialized;
+        private static bool _mainMenuInitialized;
 
         /// <summary>
-        ///     Registers the built-in applicant, captures startup facts once, and hooks first-menu consent handling.
-        ///     注册内置申请方、一次性采样启动事实，并挂接首次主菜单授权处理。
+        ///     Hooks telemetry runtime callbacks; user-facing applicant registration is deferred until the first main menu.
+        ///     挂接 telemetry 运行时回调；面向用户的申请方注册延后到首次主菜单。
         /// </summary>
         internal static void Initialize()
         {
@@ -23,13 +24,37 @@ namespace STS2RitsuLib.Telemetry
                 return;
 
             _initialized = true;
-            RegisterRitsuLibApplicant();
             DiagnosticsTelemetryCollector.InitializeGlobalExceptionHandlers();
-            TelemetrySettingsPages.EnsureRootPage();
-            TelemetryRuntime.CaptureStartupSnapshot();
             RitsuLibFramework.SubscribeLifecycle<RunEndedEvent>(RunHistoryTelemetryCollector.CaptureEndedRun);
-            RitsuLibFramework.SubscribeLifecycleOnce<MainMenuReadyEvent>(_ =>
-                TelemetryConsentPromptCoordinator.TryRunFirstMainMenuFlow());
+            RitsuLibFramework.SubscribeLifecycleOnce<MainMenuReadyEvent>(_ => InitializeMainMenuTelemetry());
+        }
+
+        private static void InitializeMainMenuTelemetry()
+        {
+            if (_mainMenuInitialized)
+                return;
+
+            _mainMenuInitialized = true;
+            RunMainMenuStep("register_applicant", RegisterRitsuLibApplicant);
+            RunMainMenuStep("ensure_settings_page", TelemetrySettingsPages.EnsureRootPage);
+            RunMainMenuStep("capture_startup_snapshot", TelemetryRuntime.CaptureStartupSnapshot);
+            RunMainMenuStep("first_main_menu_flow", TelemetryConsentPromptCoordinator.TryRunFirstMainMenuFlow);
+        }
+
+        private static void RunMainMenuStep(string operation, Action action)
+        {
+            try
+            {
+                action();
+            }
+            catch (Exception ex)
+            {
+                RitsuLibFramework.Logger.Warn(
+                    $"[Telemetry] Main menu step '{operation}' failed: {ex.Message}");
+                DiagnosticsTelemetryCollector.CaptureExceptionForAuthorizedApplicants(
+                    ex,
+                    $"telemetry_{operation}");
+            }
         }
 
         private static void RegisterRitsuLibApplicant()
@@ -58,7 +83,7 @@ namespace STS2RitsuLib.Telemetry
 
         private static ModSettingsText T(string key, string fallback)
         {
-            return ModSettingsText.I18N(ModSettingsLocalization.Instance, key, fallback);
+            return ModSettingsLocalization.Text(key, fallback);
         }
     }
 }

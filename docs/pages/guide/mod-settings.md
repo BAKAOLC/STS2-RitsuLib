@@ -181,9 +181,16 @@ Use visibility and read-only gates for settings that only make sense in certain 
 page
     .WithVisibleOnHostSurfaces(ModSettingsHostSurface.MainMenu | ModSettingsHostSurface.RunPause)
     .WithReadOnlyOnHostSurfaces(ModSettingsHostSurface.CombatPause);
+
+section.WithEntryReadOnlyOnHostSurfaces("dangerous_option", ModSettingsHostSurface.CombatPause);
 ```
 
 Use `WithVisibleWhen` and `WithEnabledWhen` for runtime conditions.
+Use `WithEntryEnabledWhen` for one entry:
+
+```csharp
+section.WithEntryEnabledWhen("dangerous_option", () => MyRuntime.CanEditDangerousOption);
+```
 
 :::
 
@@ -197,8 +204,15 @@ Use `WithVisibleWhen` and `WithEnabledWhen` for runtime conditions.
 page
     .WithVisibleOnHostSurfaces(ModSettingsHostSurface.MainMenu | ModSettingsHostSurface.RunPause)
     .WithReadOnlyOnHostSurfaces(ModSettingsHostSurface.CombatPause);
+
+section.WithEntryReadOnlyOnHostSurfaces("dangerous_option", ModSettingsHostSurface.CombatPause);
 ```
 
 运行时条件使用 `WithVisibleWhen` 和 `WithEnabledWhen`。
+单个条目可使用 `WithEntryEnabledWhen`：
+
+```csharp
+section.WithEntryEnabledWhen("dangerous_option", () => MyRuntime.CanEditDangerousOption);
+```
 
 :::

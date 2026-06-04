@@ -309,6 +309,19 @@ namespace STS2RitsuLib.Utils
             }
         }
 
+        internal static void RegisterPropertyName(string name)
+        {
+            ArgumentException.ThrowIfNullOrWhiteSpace(name);
+
+            lock (SyncRoot)
+            {
+                if (!RegisteredNames.Add(name))
+                    return;
+
+                InjectNameIntoBaseGameCache(name);
+            }
+        }
+
         internal static IReadOnlyList<ISavedAttachedState> GetStatesForModel(object model)
         {
             ArgumentNullException.ThrowIfNull(model);

@@ -1,5 +1,4 @@
 using System.Reflection;
-using System.Reflection.Emit;
 using HarmonyLib;
 using MegaCrit.Sts2.Core.Models;
 using MegaCrit.Sts2.Core.Nodes.Screens.RunHistoryScreen;
@@ -7,6 +6,7 @@ using MegaCrit.Sts2.Core.Rooms;
 using MegaCrit.Sts2.Core.Runs;
 using STS2RitsuLib.Patching.Models;
 using STS2RitsuLib.Saves;
+using STS2RitsuLib.Utils.HarmonyIl;
 
 namespace STS2RitsuLib.Lifecycle.Patches
 {
@@ -59,24 +59,43 @@ namespace STS2RitsuLib.Lifecycle.Patches
         /// </summary>
         public static IEnumerable<CodeInstruction> Transpiler(IEnumerable<CodeInstruction> instructions)
         {
-            foreach (var code in instructions)
-            {
-                if (code.operand is MethodInfo called)
-                {
-                    if (IsModelDbGetByIdFor(called, typeof(CharacterModel)))
-                    {
-                        code.opcode = OpCodes.Call;
-                        code.operand = CharacterFallback;
-                    }
-                    else if (IsModelDbGetByIdFor(called, typeof(ActModel)))
-                    {
-                        code.opcode = OpCodes.Call;
-                        code.operand = ActFallback;
-                    }
-                }
+            var rewriter = HarmonyIlRewriter.From(instructions);
+            const string operation = "[RunHistory] Redirect ModelDb.GetById calls";
+            var targets = rewriter.FindCalls(IsSupportedModelDbGetById, operation);
 
-                yield return code;
-            }
+            if (!targets.Any && !rewriter.FindAll(IsFallbackCall, "[RunHistory] existing fallback calls").Any)
+                return rewriter.InstructionsChecked(operation);
+
+            var report = rewriter.RedirectCalls(
+                operation,
+                ResolveModelDbFallback,
+                static code => code.Any(IsFallbackCall));
+            if (report.Changed)
+                report.RequireApplied();
+
+            return rewriter.InstructionsChecked(operation);
+        }
+
+        private static MethodInfo? ResolveModelDbFallback(MethodInfo called)
+        {
+            if (IsModelDbGetByIdFor(called, typeof(CharacterModel)))
+                return CharacterFallback;
+
+            // ReSharper disable once ConvertIfStatementToReturnStatement
+            if (IsModelDbGetByIdFor(called, typeof(ActModel)))
+                return ActFallback;
+
+            return null;
+        }
+
+        private static bool IsFallbackCall(CodeInstruction instruction)
+        {
+            return HarmonyIl.IsCall(method => method == CharacterFallback || method == ActFallback)(instruction);
+        }
+
+        private static bool IsSupportedModelDbGetById(MethodInfo method)
+        {
+            return IsModelDbGetByIdFor(method, typeof(CharacterModel)) || IsModelDbGetByIdFor(method, typeof(ActModel));
         }
 
         private static bool IsModelDbGetByIdFor(MethodInfo mi, Type typeArg)

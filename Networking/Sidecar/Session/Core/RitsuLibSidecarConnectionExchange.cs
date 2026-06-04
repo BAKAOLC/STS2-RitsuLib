@@ -10,6 +10,10 @@ namespace STS2RitsuLib.Networking.Sidecar
     /// </summary>
     public static class RitsuLibSidecarConnectionExchange
     {
+        private const RitsuLibSidecarPeerFeatures SupportedFeatures =
+            RitsuLibSidecarPeerFeatures.ChunkedStreams |
+            RitsuLibSidecarPeerFeatures.ManagedNetActions;
+
         private const int HelloMaxPacketAttempts = 6;
 
         private const int HelloAckTimeoutMilliseconds = 12000;
@@ -237,7 +241,7 @@ namespace STS2RitsuLib.Networking.Sidecar
                 buf.AsSpan(),
                 RitsuLibSidecarWire.CurrentWireFormatVersion,
                 RitsuLibSidecarWire.SupportedWireFormatVersionMax,
-                RitsuLibSidecarPeerFeatures.ChunkedStreams);
+                SupportedFeatures);
 
             var sent = netService switch
             {

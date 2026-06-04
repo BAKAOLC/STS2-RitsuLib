@@ -32,7 +32,7 @@ namespace STS2RitsuLib.Scaffolding.Visuals.StateMachine.Backends
     ///         一次触发器（例如 <c>SetTrigger("Idle")</c>）。
     ///     </para>
     /// </remarks>
-    public sealed class FormSwitchingAnimationBackend : IAnimationBackend
+    public sealed class FormSwitchingAnimationBackend : IAnimationBackend, IAnimationTimingProvider
     {
         private readonly Dictionary<string, IAnimationBackend> _backendsByForm;
         private readonly Dictionary<string, bool> _loopByAnimationId = new(StringComparer.Ordinal);
@@ -136,6 +136,22 @@ namespace STS2RitsuLib.Scaffolding.Visuals.StateMachine.Backends
         {
             _currentId = null;
             CurrentBackend.Stop();
+        }
+
+        /// <inheritdoc />
+        public bool TryGetAnimationDuration(string id, out float seconds)
+        {
+            seconds = 0f;
+            return CurrentBackend is IAnimationTimingProvider timing &&
+                   timing.TryGetAnimationDuration(id, out seconds);
+        }
+
+        /// <inheritdoc />
+        public bool TryGetCurrentAnimationRemaining(out float seconds)
+        {
+            seconds = 0f;
+            return CurrentBackend is IAnimationTimingProvider timing &&
+                   timing.TryGetCurrentAnimationRemaining(out seconds);
         }
 
         /// <summary>

@@ -20,6 +20,9 @@ namespace STS2RitsuLib.Settings
         private static readonly Dictionary<string, string?>
             RuntimeRegisteredProviderTypes = new(StringComparer.Ordinal);
 
+        private static List<Type>? _cachedDiscoveredProviders;
+        private static int _cachedDiscoveryAssemblyCount = -1;
+
         public static bool RegisterProviderType(string providerTypeFullName, string? assemblyName = null)
         {
             if (string.IsNullOrWhiteSpace(providerTypeFullName))
@@ -29,6 +32,8 @@ namespace STS2RitsuLib.Settings
             {
                 RuntimeRegisteredProviderTypes[providerTypeFullName.Trim()] =
                     string.IsNullOrWhiteSpace(assemblyName) ? null : assemblyName.Trim();
+                _cachedDiscoveredProviders = null;
+                _cachedDiscoveryAssemblyCount = -1;
                 return true;
             }
         }
@@ -60,63 +65,34 @@ namespace STS2RitsuLib.Settings
             lock (Gate)
             {
                 var providers = DiscoverProviders();
-                if (providers.Count == 0)
-                    return 0;
-
-                var added = 0;
-                foreach (var provider in providers)
-                    try
-                    {
-                        if (!TryCreateMirror(provider, out var page))
-                            continue;
-                        if (!ModSettingsMirrorInteropPolicy.ShouldMirror(ModSettingsMirrorSource.RuntimeReflection,
-                                page.ModId, provider))
-                            continue;
-
-                        if (!ModSettingsMirrorRegistrar.TryRegister(page, ModSettingsMirrorSource.RuntimeReflection))
-                            continue;
-                        added++;
-                    }
-                    catch (Exception ex)
-                    {
-                        RitsuLibFramework.Logger.Warn(
-                            $"[RuntimeReflectionMirrorSource] Register failed for '{provider.FullName}': {ex.Message}");
-                    }
-
-                return added;
+                return providers.Count == 0 ? 0 : providers.Sum(TryRegisterProvider);
             }
         }
 
         private static List<Type> DiscoverProviders()
         {
+            var assemblies = AppDomain.CurrentDomain.GetAssemblies();
+            if (_cachedDiscoveredProviders != null && _cachedDiscoveryAssemblyCount == assemblies.Length)
+                return [.. _cachedDiscoveredProviders];
+
             var providers = new List<Type>();
             var seen = new HashSet<string>(StringComparer.Ordinal);
 
-            foreach (var asm in AppDomain.CurrentDomain.GetAssemblies())
-            {
-                foreach (var providerType in ReadProviderTypeNames(asm)
-                             .Select(typeName => asm.GetType(typeName, false)))
-                {
-                    if (providerType?.GetCustomAttribute<ModSettingsPageAttribute>() == null)
-                        continue;
-                    if (!seen.Add(providerType.FullName ?? providerType.Name))
-                        continue;
-                    providers.Add(providerType);
-                }
-
-                foreach (var type in SafeGetTypes(asm))
-                {
-                    if (type.GetCustomAttribute<ModSettingsPageAttribute>() == null)
-                        continue;
-                    if (!seen.Add(type.FullName ?? type.Name))
-                        continue;
-                    providers.Add(type);
-                }
-            }
+            foreach (var asm in assemblies)
+                DiscoverAssemblyProviders(asm, providers, seen);
 
             foreach (var (providerTypeName, assemblyName) in RuntimeRegisteredProviderTypes)
+                AddRuntimeRegisteredProvider(providerTypeName, assemblyName, providers, seen);
+
+            CacheDiscoveredProviders(providers, assemblies.Length);
+            return providers;
+        }
+
+        private static void DiscoverAssemblyProviders(Assembly asm, List<Type> providers, HashSet<string> seen)
+        {
+            foreach (var providerType in ReadProviderTypeNames(asm)
+                         .Select(typeName => asm.GetType(typeName, false)))
             {
-                var providerType = ResolveProviderType(providerTypeName, assemblyName);
                 if (providerType?.GetCustomAttribute<ModSettingsPageAttribute>() == null)
                     continue;
                 if (!seen.Add(providerType.FullName ?? providerType.Name))
@@ -124,7 +100,51 @@ namespace STS2RitsuLib.Settings
                 providers.Add(providerType);
             }
 
-            return providers;
+            foreach (var type in SafeGetTypes(asm))
+            {
+                if (type.GetCustomAttribute<ModSettingsPageAttribute>() == null)
+                    continue;
+                if (!seen.Add(type.FullName ?? type.Name))
+                    continue;
+                providers.Add(type);
+            }
+        }
+
+        private static void AddRuntimeRegisteredProvider(string providerTypeName, string? assemblyName,
+            List<Type> providers, HashSet<string> seen)
+        {
+            var providerType = ResolveProviderType(providerTypeName, assemblyName);
+            if (providerType?.GetCustomAttribute<ModSettingsPageAttribute>() == null)
+                return;
+            if (!seen.Add(providerType.FullName ?? providerType.Name))
+                return;
+            providers.Add(providerType);
+        }
+
+        private static void CacheDiscoveredProviders(List<Type> providers, int assemblyCount)
+        {
+            _cachedDiscoveredProviders = [.. providers];
+            _cachedDiscoveryAssemblyCount = assemblyCount;
+        }
+
+        private static int TryRegisterProvider(Type provider)
+        {
+            try
+            {
+                if (!TryCreateMirror(provider, out var page))
+                    return 0;
+                if (!ModSettingsMirrorInteropPolicy.ShouldMirror(ModSettingsMirrorSource.RuntimeReflection,
+                        page.ModId, provider))
+                    return 0;
+
+                return ModSettingsMirrorRegistrar.TryRegister(page, ModSettingsMirrorSource.RuntimeReflection) ? 1 : 0;
+            }
+            catch (Exception ex)
+            {
+                RitsuLibFramework.Logger.Warn(
+                    $"[RuntimeReflectionMirrorSource] Register failed for '{provider.FullName}': {ex.Message}");
+                return 0;
+            }
         }
 
         private static IEnumerable<Type> SafeGetTypes(Assembly asm)
@@ -1182,8 +1202,6 @@ namespace STS2RitsuLib.Settings
                         modId, dataKey, SaveScope.Global, readMember, writeMember),
                 ModSettingsReflectionBindingSource.Profile => BuildScopedBinding(
                     modId, dataKey, SaveScope.Profile, readMember, writeMember),
-                ModSettingsReflectionBindingSource.RunSidecar => BuildRunSidecarBinding(
-                    modId, dataKey, readMember, writeMember),
                 ModSettingsReflectionBindingSource.InMemory => BuildInMemoryBinding(
                     modId, dataKey, readMember, writeMember),
                 ModSettingsReflectionBindingSource.Callback => BuildCallbackBinding(
@@ -1254,20 +1272,6 @@ namespace STS2RitsuLib.Settings
                 ex.Message.Contains("already registered", StringComparison.OrdinalIgnoreCase))
             {
             }
-        }
-
-        private static IModSettingsValueBinding<TValue> BuildRunSidecarBinding<TValue>(
-            string modId,
-            string dataKey,
-            Func<TValue> readMember,
-            Action<TValue> writeMember)
-        {
-            var runSidecar = ModSettingsBindings.RunSidecar<ReflectionBindingBox<TValue>, TValue>(
-                modId,
-                dataKey,
-                box => box.Value,
-                (box, value) => box.Value = value);
-            return new MemberSynchronizedModSettingsValueBinding<TValue>(runSidecar, writeMember);
         }
 
         private static IModSettingsValueBinding<TValue> BuildInMemoryBinding<TValue>(

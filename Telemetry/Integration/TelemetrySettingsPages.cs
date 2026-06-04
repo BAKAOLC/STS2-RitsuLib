@@ -135,7 +135,9 @@ namespace STS2RitsuLib.Telemetry.Integration
                     ModSettingsButtonTone.Normal,
                     () =>
                     {
-                        _ = TelemetryQueue.FlushApplicantAsync(applicantId);
+                        TelemetryTaskRunner.Forget(
+                            TelemetryQueue.FlushApplicantAsync(applicantId),
+                            "flush_applicant_from_settings");
                         RefreshActionRow();
                         host.RequestRefresh();
                     });
@@ -316,7 +318,7 @@ namespace STS2RitsuLib.Telemetry.Integration
 
         private static ModSettingsText T(string key, string fallback)
         {
-            return ModSettingsText.I18N(ModSettingsLocalization.Instance, key, fallback);
+            return ModSettingsLocalization.Text(key, fallback);
         }
 
         private static string L(string key, string fallback)

@@ -5,8 +5,9 @@ using MegaCrit.Sts2.Core.Models;
 namespace STS2RitsuLib.Scaffolding.Content
 {
     /// <summary>
-    ///     Bundle of optional resource paths for mod card portraits, frames, energy icon, overlay scene, and banner.
-    ///     Mod 卡牌肖像、边框、能量图标、覆盖场景和横幅的可选ResourcePath集合。
+    ///     Bundle of optional resource paths and materials for mod card portraits, frames, energy icon, overlay scene,
+    ///     and banner.
+    ///     Mod 卡牌肖像、边框、能量图标、覆盖场景和横幅的可选ResourcePath和材质集合。
     /// </summary>
     /// <param name="PortraitPath">
     ///     Main card portrait image path.
@@ -52,6 +53,14 @@ namespace STS2RitsuLib.Scaffolding.Content
     ///     Direct banner material override.
     ///     直接覆盖横幅材质。
     /// </param>
+    /// <param name="PortraitMaterialPath">
+    ///     Material path for portrait rendering.
+    ///     卡图渲染使用的材质路径。
+    /// </param>
+    /// <param name="PortraitMaterial">
+    ///     Direct portrait material override.
+    ///     直接覆盖卡图材质。
+    /// </param>
     public sealed record CardAssetProfile(
         string? PortraitPath = null,
         string? BetaPortraitPath = null,
@@ -63,7 +72,9 @@ namespace STS2RitsuLib.Scaffolding.Content
         string? BannerTexturePath = null,
         string? BannerMaterialPath = null,
         Material? FrameMaterial = null,
-        Material? BannerMaterial = null)
+        Material? BannerMaterial = null,
+        string? PortraitMaterialPath = null,
+        Material? PortraitMaterial = null)
     {
         /// <summary>
         ///     Backward-compatible constructor preserving the original parameter list.
@@ -94,8 +105,40 @@ namespace STS2RitsuLib.Scaffolding.Content
         }
 
         /// <summary>
-        ///     Default empty profile (no custom paths).
-        ///     默认空 profile（无自定义路径）。
+        ///     Backward-compatible constructor preserving the direct material parameter list.
+        ///     保留直接材质参数列表的向后兼容构造函数。
+        /// </summary>
+        public CardAssetProfile(
+            string? PortraitPath,
+            string? BetaPortraitPath,
+            string? FramePath,
+            string? PortraitBorderPath,
+            string? EnergyIconPath,
+            string? FrameMaterialPath,
+            string? OverlayScenePath,
+            string? BannerTexturePath,
+            string? BannerMaterialPath,
+            Material? FrameMaterial,
+            Material? BannerMaterial)
+            : this(
+                PortraitPath,
+                BetaPortraitPath,
+                FramePath,
+                PortraitBorderPath,
+                EnergyIconPath,
+                FrameMaterialPath,
+                OverlayScenePath,
+                BannerTexturePath,
+                BannerMaterialPath,
+                FrameMaterial,
+                BannerMaterial,
+                null)
+        {
+        }
+
+        /// <summary>
+        ///     Default empty profile (no custom paths or materials).
+        ///     默认空 profile（无自定义路径或材质）。
         /// </summary>
         public static CardAssetProfile Empty { get; } = new();
     }
@@ -473,8 +516,8 @@ namespace STS2RitsuLib.Scaffolding.Content
     }
 
     /// <summary>
-    ///     Optional timeline epoch portrait paths (vanilla <c>EpochModel.PackedPortraitPath</c> / <c>BigPortraitPath</c>).
-    ///     可选时间线纪元肖像路径（原版 <c>EpochModel.PackedPortraitPath</c> / <c>BigPortraitPath</c>）。
+    ///     Optional timeline epoch portrait paths.
+    ///     可选时间线纪元肖像路径。
     /// </summary>
     /// <param name="PackedPortraitPath">
     ///     Atlas sprite resource path for the small timeline portrait.

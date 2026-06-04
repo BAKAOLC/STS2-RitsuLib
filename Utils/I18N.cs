@@ -269,7 +269,7 @@ namespace STS2RitsuLib.Utils
             }
             catch (Exception ex)
             {
-                RitsuLibFramework.Logger.Error(
+                RitsuLibFramework.Logger.ErrorNoTrace(
                     $"[{_instanceName}] Error during locale change unsubscription: {ex.Message}");
             }
         }
@@ -420,19 +420,19 @@ namespace STS2RitsuLib.Utils
                 var translations = JsonSerializer.Deserialize<Dictionary<string, string>>(stream);
 
                 if (translations != null) return translations;
-                RitsuLibFramework.Logger.Error(
+                RitsuLibFramework.Logger.ErrorNoTrace(
                     $"[{_instanceName}] Deserialization resulted in null object for embedded resource '{resourceName}'");
                 return null;
             }
             catch (JsonException ex)
             {
-                RitsuLibFramework.Logger.Error(
+                RitsuLibFramework.Logger.ErrorNoTrace(
                     $"[{_instanceName}] JSON parsing error in embedded resource '{resourceName}': {ex.Message}");
                 return null;
             }
             catch (Exception ex)
             {
-                RitsuLibFramework.Logger.Error(
+                RitsuLibFramework.Logger.ErrorNoTrace(
                     $"[{_instanceName}] Unexpected error loading embedded resource '{resourceName}': {ex.Message}");
                 return null;
             }

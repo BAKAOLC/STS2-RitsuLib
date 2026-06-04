@@ -1,4 +1,5 @@
 using MegaCrit.Sts2.Core.Models;
+using STS2RitsuLib.Models.Capabilities;
 using STS2RitsuLib.Patching.Models;
 
 namespace STS2RitsuLib.Models.Patches
@@ -40,6 +41,8 @@ namespace STS2RitsuLib.Models.Patches
         public static void Postfix(AbstractModel __instance, AbstractModel __result)
             // ReSharper restore InconsistentNaming
         {
+            ModelSavedDataRegistry.NotifyCloned(__instance, __result);
+            ModelCapabilities.NotifyCloned(__instance, __result);
             ModelCloneRegistry.NotifyCloned(__instance, __result);
         }
     }

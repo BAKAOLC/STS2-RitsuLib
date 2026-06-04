@@ -13,6 +13,8 @@ namespace STS2RitsuLib.CardTags
         ///     Adds a minted mod tag resolved from <paramref name="tagId" /> into the card’s materialized tag set.
         ///     将从 <paramref name="tagId" /> 解析出的已生成 mod 标签加入卡牌的实体化标签集合。
         /// </summary>
+        [Obsolete(
+            "Resolve the id once with ModCardTagRegistry.GetCardTag or string.GetModCardTag(), then use AddModCardTag(CardTag).")]
         public static void AddModCardTag(this CardModel card, string tagId)
         {
             ArgumentNullException.ThrowIfNull(card);
@@ -41,6 +43,8 @@ namespace STS2RitsuLib.CardTags
         ///     Removes a minted mod tag resolved from <paramref name="tagId" /> from the card’s tag set when present.
         ///     如果存在，则从卡牌标签集合中移除从 <paramref name="tagId" /> 解析出的已生成 mod 标签。
         /// </summary>
+        [Obsolete(
+            "Resolve the id once with ModCardTagRegistry.GetCardTag or string.GetModCardTag(), then use RemoveModCardTag(CardTag).")]
         public static bool RemoveModCardTag(this CardModel card, string tagId)
         {
             ArgumentNullException.ThrowIfNull(card);
@@ -64,6 +68,8 @@ namespace STS2RitsuLib.CardTags
         ///     Whether the card’s tag set contains the minted value for <paramref name="tagId" />.
         ///     判断卡牌标签集合是否包含 <paramref name="tagId" /> 对应的已生成值。
         /// </summary>
+        [Obsolete(
+            "Resolve the id once with ModCardTagRegistry.GetCardTag or string.GetModCardTag(), then use HasModCardTag(CardTag).")]
         public static bool HasModCardTag(this CardModel card, string tagId)
         {
             ArgumentNullException.ThrowIfNull(card);

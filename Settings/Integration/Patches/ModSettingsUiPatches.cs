@@ -119,9 +119,16 @@ namespace STS2RitsuLib.Settings.Patches
     {
         private const string GeneralSettingsResizeHookMeta = "ritsulib_general_settings_content_resize_hook";
 
+        private const string PrewarmScheduledMeta = "ritsulib_mod_settings_prewarm_scheduled";
+        private const double PrewarmInitialDelaySeconds = 3.0d;
+        private const int PrewarmFrameDelay = 1;
+
         private const string EntryLineNodeName = "RitsuLibModSettings";
 
         private const string EntryDividerNodeName = "RitsuLibModSettingsDivider";
+
+        private static readonly ConditionalWeakTable<NSettingsScreen, ModSettingsMirrorPrewarmSession> PrewarmSessions =
+            new();
 
         /// <inheritdoc />
         public static string PatchId => "ritsulib_mod_settings_button";
@@ -155,7 +162,7 @@ namespace STS2RitsuLib.Settings.Patches
             try
             {
                 var line = EnsureEntryPoint(__instance);
-                RefreshState(line);
+                RefreshState(line, __instance);
                 var generalPanel = __instance.GetNode<NSettingsPanel>("%GeneralSettings");
                 ScheduleRefreshGeneralSettingsPanelSize(generalPanel);
                 if (generalPanel.Content is { } generalVBox)
@@ -165,6 +172,90 @@ namespace STS2RitsuLib.Settings.Patches
             {
                 RitsuLibFramework.Logger.Warn($"[Settings] Failed to add mod settings entry point: {ex.Message}");
             }
+
+            TrySchedulePrewarm(__instance);
+        }
+
+        /// <summary>
+        ///     Pre-warms reflection and data registration while the user is still on the vanilla settings screen.
+        ///     Godot node creation stays lazy; reusable entry nodes are collected only from real page releases.
+        ///     在用户仍处于原版设置界面时预热反射和数据注册。Godot 节点创建保持懒加载；
+        ///     可复用 entry 节点只从实际页面释放中回收。
+        /// </summary>
+        private static void TrySchedulePrewarm(NSettingsScreen screen)
+        {
+            if (screen.HasMeta(PrewarmScheduledMeta))
+                return;
+            screen.SetMeta(PrewarmScheduledMeta, true);
+            ScheduleInitialPrewarmStep(screen);
+        }
+
+        private static void PrewarmStep(NSettingsScreen screen)
+        {
+            if (!GodotObject.IsInstanceValid(screen))
+                return;
+
+            try
+            {
+                var session = PrewarmSessions.GetValue(screen, CreatePrewarmSession);
+
+                if (!session.Resume())
+                {
+                    SchedulePrewarmStep(screen, PrewarmFrameDelay);
+                    return;
+                }
+
+                RitsuLibModSettingsBootstrap.RefreshDynamicPages();
+                PrewarmSessions.Remove(screen);
+            }
+            catch (Exception ex)
+            {
+                PrewarmSessions.Remove(screen);
+                RitsuLibFramework.Logger.Warn($"[Settings] Mod settings prewarm failed: {ex.Message}");
+            }
+        }
+
+        private static void SchedulePrewarmStep(NSettingsScreen screen, int delayFrames)
+        {
+            if (!GodotObject.IsInstanceValid(screen))
+                return;
+
+            if (delayFrames <= 0)
+            {
+                Callable.From(() =>
+                {
+                    if (GodotObject.IsInstanceValid(screen))
+                        PrewarmStep(screen);
+                }).CallDeferred();
+                return;
+            }
+
+            Callable.From(() =>
+            {
+                if (GodotObject.IsInstanceValid(screen))
+                    SchedulePrewarmStep(screen, delayFrames - 1);
+            }).CallDeferred();
+        }
+
+        private static void ScheduleInitialPrewarmStep(NSettingsScreen screen)
+        {
+            if (screen.GetTree() is not { } tree)
+            {
+                SchedulePrewarmStep(screen, PrewarmFrameDelay);
+                return;
+            }
+
+            var timer = tree.CreateTimer(PrewarmInitialDelaySeconds);
+            timer.Timeout += () =>
+            {
+                if (GodotObject.IsInstanceValid(screen))
+                    SchedulePrewarmStep(screen, 0);
+            };
+        }
+
+        private static ModSettingsMirrorPrewarmSession CreatePrewarmSession(NSettingsScreen _)
+        {
+            return ModSettingsMirrorRegistrarBootstrap.CreatePrewarmSession();
         }
 
         private static MarginContainer EnsureEntryPoint(NSettingsScreen screen)
@@ -196,6 +287,7 @@ namespace STS2RitsuLib.Settings.Patches
 
             void OpenSubmenu()
             {
+                SchedulePrewarmStep(screen, 0);
                 screen.GetAncestorOfType<NSubmenuStack>()?.PushSubmenuType(typeof(RitsuModSettingsSubmenu));
             }
         }
@@ -247,10 +339,14 @@ namespace STS2RitsuLib.Settings.Patches
 
         private static void ScheduleRefreshGeneralSettingsPanelSize(NSettingsPanel panel)
         {
-            Callable.From(() => RefreshPanelSize(panel)).CallDeferred();
+            Callable.From(() =>
+            {
+                if (GodotObject.IsInstanceValid(panel))
+                    RefreshPanelSize(panel);
+            }).CallDeferred();
         }
 
-        private static void RefreshState(MarginContainer line)
+        private static void RefreshState(MarginContainer line, NSettingsScreen screen)
         {
             line.Visible = true;
 
@@ -271,7 +367,13 @@ namespace STS2RitsuLib.Settings.Patches
         {
             try
             {
+                if (!GodotObject.IsInstanceValid(panel))
+                    return;
+
                 var content = panel.Content;
+                if (!GodotObject.IsInstanceValid(content))
+                    return;
+
                 content.QueueSort();
 
                 var parent = panel.GetParent<Control>();
@@ -332,13 +434,23 @@ namespace STS2RitsuLib.Settings.Patches
         {
             Callable.From(() =>
             {
+                if (!GodotObject.IsInstanceValid(content))
+                    return;
+
                 TryRebuildEntireGeneralFocusChain(content);
-                Callable.From(() => TryRebuildEntireGeneralFocusChain(content)).CallDeferred();
+                Callable.From(() =>
+                {
+                    if (GodotObject.IsInstanceValid(content))
+                        TryRebuildEntireGeneralFocusChain(content);
+                }).CallDeferred();
             }).CallDeferred();
         }
 
         internal static void TryRebuildEntireGeneralFocusChain(VBoxContainer content)
         {
+            if (!GodotObject.IsInstanceValid(content))
+                return;
+
             if (SettingsScreenModSettingsButtonPatch.TryGetEntryLine(content) == null)
                 return;
 

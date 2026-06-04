@@ -137,6 +137,80 @@ patcher.PatchAll();
 
 :::
 
+## Transpiler Wrappers{lang="en"}
+
+::: en
+
+Use `HarmonyIl`, `HarmonyIlPattern`, and `HarmonyIlRewriter` for transpilers that must edit IL.
+Do not directly build long ad hoc `CodeInstruction` chains in patch bodies.
+
+```csharp
+var rewriter = HarmonyIlRewriter.From(instructions);
+var pattern = HarmonyIlPattern.Sequence(
+    HarmonyIl.IsLdstr("prefix"),
+    HarmonyIl.IsLdloc(),
+    HarmonyIl.IsCall(concatMethod),
+    HarmonyIl.IsStloc());
+
+var report = rewriter.TryInsertAfterFirst(
+    "MyPatch insert override",
+    pattern,
+    [
+        HarmonyIl.Ldarg(0),
+        HarmonyIl.Call(overrideMethod),
+    ],
+    code => code.Any(instruction => HarmonyIl.IsCallTo(instruction, overrideMethod)));
+
+report.RequireSucceeded();
+if (report.Applied > 0)
+    report.RequireExactly(1);
+
+return rewriter.InstructionsChecked("MyPatch insert override");
+```
+
+Use report expectations to prove the rewrite happened, or that equivalent IL was already present.
+Use `InstructionsChecked` to validate common structural errors such as missing branch labels or invalid reflection operands.
+For methods that another mod may have already modified, pass an `alreadySatisfied` predicate and use anchor searches such as `TryFindAfter` / `TryFindBefore` instead of replacing wide instruction spans.
+
+:::
+
+## Transpiler 包装器{lang="zh-CN"}
+
+::: zh-CN
+
+需要编辑 IL 的 transpiler 使用 `HarmonyIl`、`HarmonyIlPattern` 和 `HarmonyIlRewriter`。
+不要在 patch 方法里直接手写很长的 `CodeInstruction` 链条。
+
+```csharp
+var rewriter = HarmonyIlRewriter.From(instructions);
+var pattern = HarmonyIlPattern.Sequence(
+    HarmonyIl.IsLdstr("prefix"),
+    HarmonyIl.IsLdloc(),
+    HarmonyIl.IsCall(concatMethod),
+    HarmonyIl.IsStloc());
+
+var report = rewriter.TryInsertAfterFirst(
+    "MyPatch insert override",
+    pattern,
+    [
+        HarmonyIl.Ldarg(0),
+        HarmonyIl.Call(overrideMethod),
+    ],
+    code => code.Any(instruction => HarmonyIl.IsCallTo(instruction, overrideMethod)));
+
+report.RequireSucceeded();
+if (report.Applied > 0)
+    report.RequireExactly(1);
+
+return rewriter.InstructionsChecked("MyPatch insert override");
+```
+
+用 report expectation 证明改写已经发生，或证明等价 IL 已经存在。
+用 `InstructionsChecked` 验证常见结构问题，例如 branch label 缺失、反射 operand 类型错误。
+目标方法可能已被其它 mod 修改时，传入 `alreadySatisfied` 谓词，并优先使用 `TryFindAfter` / `TryFindBefore` 这类锚点搜索，避免替换过宽的指令区间。
+
+:::
+
 ## Release Checklist{lang="en"}
 
 ::: en
@@ -144,7 +218,7 @@ patcher.PatchAll();
 - Give every patch a stable `PatchId`.
 - Set `IsCritical = false` for compatibility patches that can safely be skipped.
 - Add `parameterTypes` for overloaded targets.
-- Use `HarmonyVerifiedIl` or tests for fragile transpilers.
+- Use `HarmonyIlRewriter` / `HarmonyIlPattern` wrappers, report expectations, and `InstructionsChecked` for fragile transpilers.
 - Prefer lifecycle events and registries when they cover the use case.
 
 :::
@@ -156,7 +230,7 @@ patcher.PatchAll();
 - 每个 patch 都有稳定 `PatchId`。
 - 可以安全跳过的兼容 patch 设置 `IsCritical = false`。
 - 有重载的目标方法填写 `parameterTypes`。
-- 脆弱 transpiler 使用 `HarmonyVerifiedIl` 或测试覆盖。
+- 脆弱 transpiler 使用 `HarmonyIlRewriter` / `HarmonyIlPattern` 包装器、report expectation 和 `InstructionsChecked`。
 - 生命周期事件和注册器能覆盖的场景，优先使用它们。
 
 :::

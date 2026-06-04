@@ -115,13 +115,7 @@ namespace STS2RitsuLib.Patching.Builders
             ArgumentNullException.ThrowIfNull(targetType);
             ArgumentException.ThrowIfNullOrWhiteSpace(propertyName);
 
-            var property = targetType.GetProperty(
-                               propertyName,
-                               BindingFlags.Instance | BindingFlags.Static | BindingFlags.Public |
-                               BindingFlags.NonPublic)
-                           ?? throw new MissingMemberException(targetType.FullName, propertyName);
-
-            var getter = property.GetMethod
+            var getter = FindDeclaredPropertyGetter(targetType, propertyName)
                          ?? throw new MissingMethodException(targetType.FullName, $"get_{propertyName}");
 
             return Add(
@@ -221,6 +215,21 @@ namespace STS2RitsuLib.Patching.Builders
                          ?? throw new MissingMethodException(patchType.FullName, methodName);
 
             return new(method);
+        }
+
+        private static MethodInfo? FindDeclaredPropertyGetter(Type targetType, string propertyName)
+        {
+            for (var walk = targetType; walk != null; walk = walk.BaseType)
+            {
+                var property = walk.GetProperty(
+                    propertyName,
+                    BindingFlags.Instance | BindingFlags.Static | BindingFlags.Public | BindingFlags.NonPublic |
+                    BindingFlags.DeclaredOnly);
+                if (property?.GetMethod is { IsAbstract: false } getter)
+                    return getter;
+            }
+
+            return null;
         }
     }
 }

@@ -94,6 +94,50 @@ namespace STS2RitsuLib.Interop.AutoRegistration
     public sealed class RegisterSingletonAttribute : ContentRegistrationAttribute;
 
     /// <summary>
+    ///     Registers the annotated type as a model capability.
+    ///     将带注解的类型注册为模型能力。
+    /// </summary>
+    [AttributeUsage(AttributeTargets.Class, AllowMultiple = true, Inherited = false)]
+    public sealed class RegisterModelCapabilityAttribute : ContentRegistrationAttribute
+    {
+        /// <summary>
+        ///     Optional stable author-chosen capability id and public-entry stem.
+        ///     可选的、由作者选择的稳定能力 ID 与 public-entry stem。
+        /// </summary>
+        public string? StableEntryStem { get; set; }
+
+        /// <summary>
+        ///     Optional full fixed public entry and capability id override.
+        ///     可选的完整固定 public-entry 与能力 ID 覆盖。
+        /// </summary>
+        public string? FullPublicEntry { get; set; }
+    }
+
+    /// <summary>
+    ///     Adds the annotated capability type to the default capability set for matching model instances.
+    ///     将带注解的能力类型添加到匹配模型实例的默认能力集合。
+    /// </summary>
+    /// <param name="targetModelType">
+    ///     Target model type.
+    ///     目标模型类型。
+    /// </param>
+    [AttributeUsage(AttributeTargets.Class, AllowMultiple = true, Inherited = false)]
+    public sealed class RegisterDefaultModelCapabilityAttribute(Type targetModelType) : ContentRegistrationAttribute
+    {
+        /// <summary>
+        ///     Target model type.
+        ///     目标模型类型。
+        /// </summary>
+        public Type TargetModelType { get; } = targetModelType;
+
+        /// <summary>
+        ///     Optional stable modifier id. Defaults to a mod-scoped id derived from the capability and target type.
+        ///     可选的稳定 modifier ID。默认根据能力与目标类型派生 mod 作用域 ID。
+        /// </summary>
+        public string? ModifierId { get; set; }
+    }
+
+    /// <summary>
     ///     Registers the annotated type as a good daily modifier.
     ///     将带注解的类型注册为正面每日修饰符。
     /// </summary>

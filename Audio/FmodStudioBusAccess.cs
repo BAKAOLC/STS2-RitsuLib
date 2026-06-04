@@ -44,7 +44,7 @@ namespace STS2RitsuLib.Audio
             }
             catch (Exception ex)
             {
-                RitsuLibFramework.Logger.Error($"[Audio] bus get_volume: {ex.Message}");
+                RitsuLibFramework.Logger.ErrorNoTrace($"[Audio] bus get_volume: {ex.Message}");
                 return 0f;
             }
         }
@@ -66,7 +66,7 @@ namespace STS2RitsuLib.Audio
             }
             catch (Exception ex)
             {
-                RitsuLibFramework.Logger.Error($"[Audio] bus set_volume: {ex.Message}");
+                RitsuLibFramework.Logger.ErrorNoTrace($"[Audio] bus set_volume: {ex.Message}");
                 return false;
             }
         }
@@ -88,7 +88,7 @@ namespace STS2RitsuLib.Audio
             }
             catch (Exception ex)
             {
-                RitsuLibFramework.Logger.Error($"[Audio] bus set_mute: {ex.Message}");
+                RitsuLibFramework.Logger.ErrorNoTrace($"[Audio] bus set_mute: {ex.Message}");
                 return false;
             }
         }
@@ -110,7 +110,7 @@ namespace STS2RitsuLib.Audio
             }
             catch (Exception ex)
             {
-                RitsuLibFramework.Logger.Error($"[Audio] bus set_paused: {ex.Message}");
+                RitsuLibFramework.Logger.ErrorNoTrace($"[Audio] bus set_paused: {ex.Message}");
                 return false;
             }
         }
@@ -131,7 +131,7 @@ namespace STS2RitsuLib.Audio
             }
             catch (Exception ex)
             {
-                RitsuLibFramework.Logger.Error($"[Audio] bus get_guid: {ex.Message}");
+                RitsuLibFramework.Logger.ErrorNoTrace($"[Audio] bus get_guid: {ex.Message}");
                 return null;
             }
         }
@@ -161,7 +161,7 @@ namespace STS2RitsuLib.Audio
             }
             catch (Exception ex)
             {
-                RitsuLibFramework.Logger.Error($"[Audio] bus get_id: {ex.Message}");
+                RitsuLibFramework.Logger.ErrorNoTrace($"[Audio] bus get_id: {ex.Message}");
                 return null;
             }
         }
@@ -194,7 +194,7 @@ namespace STS2RitsuLib.Audio
                 }
                 catch (Exception ex)
                 {
-                    RitsuLibFramework.Logger.Error($"[Audio] bus enumerate match: {ex.Message}");
+                    RitsuLibFramework.Logger.ErrorNoTrace($"[Audio] bus enumerate match: {ex.Message}");
                 }
             }
 

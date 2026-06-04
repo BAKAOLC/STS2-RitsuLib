@@ -74,6 +74,24 @@ namespace STS2RitsuLib.Scaffolding.Characters.Patches
             return slot.StateMachine;
         }
 
+        internal static bool TryGetCurrentCombatAnimationDuration(NCreature creature, string trigger,
+            out float seconds)
+        {
+            seconds = 0f;
+
+            var stateMachine = TryGetCombatAnimationStateMachine(creature);
+            if (stateMachine != null)
+                return (stateMachine.TryGetCurrentAnimationRemaining(out seconds) ||
+                        stateMachine.TryGetCurrentAnimationDuration(out seconds)) &&
+                       seconds > 0f &&
+                       float.IsFinite(seconds);
+
+            return ModCreatureVisualPlayback.TryGetDurationFromCreatureAnimatorTrigger(creature, trigger,
+                       out seconds) &&
+                   seconds > 0f &&
+                   float.IsFinite(seconds);
+        }
+
         // ReSharper disable once InconsistentNaming
         /// <summary>
         ///     Returns <see langword="false" /> when the trigger was consumed (skip vanilla

@@ -1,12 +1,12 @@
 using Godot;
 using HarmonyLib;
 using MegaCrit.Sts2.Core.Animation;
-using MegaCrit.Sts2.Core.Assets;
 using MegaCrit.Sts2.Core.Bindings.MegaSpine;
 using MegaCrit.Sts2.Core.Models;
 using MegaCrit.Sts2.Core.Nodes.Combat;
 using STS2RitsuLib.Patching.Models;
 using STS2RitsuLib.Scaffolding.Godot;
+using STS2RitsuLib.Utils;
 
 namespace STS2RitsuLib.Scaffolding.Content.Patches
 {
@@ -477,10 +477,17 @@ namespace STS2RitsuLib.Scaffolding.Content.Patches
                     return true;
 
                 var path = __instance.SpritePath;
-                if (string.IsNullOrEmpty(path) || !ResourceLoader.Exists(path))
+                if (string.IsNullOrEmpty(path) || !GodotResourcePath.ResourceExists(path))
                     return true;
 
-                var scene = PreloadManager.Cache.GetScene(path);
+                var scene = ContentAssetOverridePatchHelper.ResolveScene(path);
+                if (scene == null)
+                {
+                    ContentAssetOverridePatchHelper.LogLoadFailure(__instance,
+                        nameof(IModOrbAssetOverrides.CustomVisualsScenePath), path, nameof(PackedScene));
+                    return true;
+                }
+
                 var node2D = RitsuGodotNodeFactories.CreateFromScene<Node2D>(scene, PackedScene.GenEditState.Disabled);
                 if (node2D.GetNodeOrNull("SpineSkeleton") is { } spineNode)
                     new MegaSprite(spineNode).GetAnimationState().SetAnimation("idle_loop");

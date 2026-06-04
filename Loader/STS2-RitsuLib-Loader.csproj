@@ -8,6 +8,8 @@
         <EnableDynamicLoading>true</EnableDynamicLoading>
         <IsPackable>false</IsPackable>
         <GenerateDocumentationFile>false</GenerateDocumentationFile>
+        <!-- The loader is intentionally AnyCPU while referenced game assemblies may be platform-specific. -->
+        <ResolveAssemblyWarnOrErrorOnTargetArchitectureMismatch>None</ResolveAssemblyWarnOrErrorOnTargetArchitectureMismatch>
         <!-- Compile against oldest supported API signatures for stable surface. -->
         <Sts2ApiCompat>0.103.2</Sts2ApiCompat>
         <Sts2ApiSignatureDir Condition="'$(Sts2ApiSignatureRoot)' != ''">$(Sts2ApiSignatureRoot)\$(Sts2ApiCompat)</Sts2ApiSignatureDir>

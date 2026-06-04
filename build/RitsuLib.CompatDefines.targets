@@ -6,10 +6,9 @@
         `Sts2ApiCompat` value. Each symbol represents "the host API is at least this version".
         Source code expresses version-conditional logic as ranges:
 
-            #if !STS2_AT_LEAST_0_104_0          // 0.103.2 only
-            #if STS2_AT_LEAST_0_104_0           // 0.104.0 or newer
-            #if !STS2_AT_LEAST_0_105_0          // 0.103.2 + 0.104.0
-            #if STS2_AT_LEAST_0_104_0 && !STS2_AT_LEAST_0_105_0   // 0.104.0 only
+            #if !STS2_AT_LEAST_0_104_0
+            #if STS2_AT_LEAST_0_104_0
+            #if !STS2_AT_LEAST_0_105_0
 
         Adding a new supported API version requires touching this file only:
         - append the version to `_RitsuLibSupportedApiVersions`
@@ -19,13 +18,15 @@
     -->
 
     <PropertyGroup>
-        <_RitsuLibSupportedApiVersions>0.103.2;0.104.0;0.105.1</_RitsuLibSupportedApiVersions>
-        <_RitsuLibSupportedApiList>|0.103.2|0.104.0|0.105.1|</_RitsuLibSupportedApiList>
+        <_RitsuLibSupportedApiVersions>0.103.2;0.105.1;0.106.1</_RitsuLibSupportedApiVersions>
+        <_RitsuLibSupportedApiList>|0.103.2|0.105.1|0.106.1|</_RitsuLibSupportedApiList>
 
-        <_RitsuLib_AtLeast_0_103_2_HostList>|0.103.2|0.104.0|0.105.1|</_RitsuLib_AtLeast_0_103_2_HostList>
-        <_RitsuLib_AtLeast_0_104_0_HostList>|0.104.0|0.105.1|</_RitsuLib_AtLeast_0_104_0_HostList>
-        <_RitsuLib_AtLeast_0_105_0_HostList>|0.105.1|</_RitsuLib_AtLeast_0_105_0_HostList>
-        <_RitsuLib_AtLeast_0_105_1_HostList>|0.105.1|</_RitsuLib_AtLeast_0_105_1_HostList>
+        <_RitsuLib_AtLeast_0_103_2_HostList>|0.103.2|0.105.1|0.106.1|</_RitsuLib_AtLeast_0_103_2_HostList>
+        <_RitsuLib_AtLeast_0_104_0_HostList>|0.105.1|0.106.1|</_RitsuLib_AtLeast_0_104_0_HostList>
+        <_RitsuLib_AtLeast_0_105_0_HostList>|0.105.1|0.106.1|</_RitsuLib_AtLeast_0_105_0_HostList>
+        <_RitsuLib_AtLeast_0_105_1_HostList>|0.105.1|0.106.1|</_RitsuLib_AtLeast_0_105_1_HostList>
+        <_RitsuLib_AtLeast_0_106_0_HostList>|0.106.1|</_RitsuLib_AtLeast_0_106_0_HostList>
+        <_RitsuLib_AtLeast_0_106_1_HostList>|0.106.1|</_RitsuLib_AtLeast_0_106_1_HostList>
     </PropertyGroup>
 
     <PropertyGroup>
@@ -33,6 +34,8 @@
         <DefineConstants Condition="$(_RitsuLib_AtLeast_0_104_0_HostList.Contains('|$(Sts2ApiCompat)|'))">$(DefineConstants);STS2_AT_LEAST_0_104_0</DefineConstants>
         <DefineConstants Condition="$(_RitsuLib_AtLeast_0_105_0_HostList.Contains('|$(Sts2ApiCompat)|'))">$(DefineConstants);STS2_AT_LEAST_0_105_0</DefineConstants>
         <DefineConstants Condition="$(_RitsuLib_AtLeast_0_105_1_HostList.Contains('|$(Sts2ApiCompat)|'))">$(DefineConstants);STS2_AT_LEAST_0_105_1</DefineConstants>
+        <DefineConstants Condition="$(_RitsuLib_AtLeast_0_106_0_HostList.Contains('|$(Sts2ApiCompat)|'))">$(DefineConstants);STS2_AT_LEAST_0_106_0</DefineConstants>
+        <DefineConstants Condition="$(_RitsuLib_AtLeast_0_106_1_HostList.Contains('|$(Sts2ApiCompat)|'))">$(DefineConstants);STS2_AT_LEAST_0_106_1</DefineConstants>
     </PropertyGroup>
 
     <Target Name="ValidateRitsuLibCompatTarget" BeforeTargets="CoreCompile">

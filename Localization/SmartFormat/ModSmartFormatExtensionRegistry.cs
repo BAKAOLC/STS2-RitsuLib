@@ -186,7 +186,7 @@ namespace STS2RitsuLib.Localization.SmartFormat
             }
             catch (Exception ex)
             {
-                _logger.Error(
+                _logger.ErrorNoTrace(
                     $"[SmartFormat] Failed to instantiate {kind} '{extensionType.FullName}': {ex.Message}");
                 return;
             }
@@ -198,13 +198,14 @@ namespace STS2RitsuLib.Localization.SmartFormat
         {
             if (extensionType.ContainsGenericParameters)
             {
-                _logger.Error($"[SmartFormat] Cannot register open generic {kind} type '{extensionType.FullName}'.");
+                _logger.ErrorNoTrace(
+                    $"[SmartFormat] Cannot register open generic {kind} type '{extensionType.FullName}'.");
                 return false;
             }
 
             if (extensionType.IsAbstract || extensionType.IsInterface || !expectedType.IsAssignableFrom(extensionType))
             {
-                _logger.Error(
+                _logger.ErrorNoTrace(
                     $"[SmartFormat] Type '{extensionType.FullName}' must be a concrete implementation of '{expectedType.FullName}'.");
                 return false;
             }
@@ -212,7 +213,7 @@ namespace STS2RitsuLib.Localization.SmartFormat
             if (extensionType.GetConstructor(Type.EmptyTypes) != null)
                 return true;
 
-            _logger.Error(
+            _logger.ErrorNoTrace(
                 $"[SmartFormat] Type '{extensionType.FullName}' must have a parameterless constructor.");
             return false;
         }

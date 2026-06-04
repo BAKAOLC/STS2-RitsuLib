@@ -89,7 +89,7 @@ namespace STS2RitsuLib.Patching.Core
         {
             if (IsApplied)
             {
-                logger.Error(
+                logger.ErrorNoTrace(
                     $"{_logPrefix}Cannot register patch '{modPatchInfo.Id}': Patches have already been applied");
                 throw new InvalidOperationException("Cannot register patches after they have been applied");
             }
@@ -195,14 +195,14 @@ namespace STS2RitsuLib.Patching.Core
                     sb.Append($"Exception: {exception}");
                 else
                     sb.Append($"Error: {errorMessage}");
-                logger.Error(sb.ToString());
+                logger.ErrorNoTrace(sb.ToString());
             }
 
             logger.Info(
                 $"{_logPrefix}Dynamic patch application complete: {successCount}/{patches.Length} succeeded");
 
             if (failureCount > 0)
-                logger.Warn(
+                logger.ErrorNoTrace(
                     criticalFailureCount > 0
                         ? $"{_logPrefix}{failureCount} dynamic patch(es) failed, including {criticalFailureCount} critical failure(s)"
                         : $"{_logPrefix}{failureCount} dynamic patch(es) failed, but no critical failures");
@@ -249,12 +249,12 @@ namespace STS2RitsuLib.Patching.Core
                     logger.Info(
                         $"{_logPrefix}All required patches applied; {ignoredCount} optional patch target(s) were ignored");
                 else
-                    logger.Warn(
+                    logger.ErrorNoTrace(
                         $"{_logPrefix}Critical patches succeeded, but some optional patches failed to apply");
             }
             else
             {
-                logger.Error($"{_logPrefix}Critical patch(es) failed, rolling back all patches...");
+                logger.ErrorNoTrace($"{_logPrefix}Critical patch(es) failed, rolling back all patches...");
                 UnpatchAll();
                 IsApplied = false;
             }
@@ -284,12 +284,8 @@ namespace STS2RitsuLib.Patching.Core
                     continue;
 
                 var importance = modPatchInfo.IsCritical ? "Critical" : "Optional";
-                if (modPatchInfo.IsCritical)
-                    logger.Error(
-                        $"{_logPrefix}[Late][{importance}] {modPatchInfo.Id} failed: {result.ErrorMessage}");
-                else
-                    logger.Warn(
-                        $"{_logPrefix}[Late][{importance}] {modPatchInfo.Id} failed: {result.ErrorMessage}");
+                logger.ErrorNoTrace(
+                    $"{_logPrefix}[Late][{importance}] {modPatchInfo.Id} failed: {result.ErrorMessage}");
             }
         }
 
@@ -326,11 +322,11 @@ namespace STS2RitsuLib.Patching.Core
                     if (originalMethod == null) continue;
                     _harmony.Unpatch(originalMethod, HarmonyPatchType.All, _harmony.Id);
                     _patchedStatus[patchInfo.Id] = false;
-                    logger.Info($"{_logPrefix}✓ Removed patch: {patchInfo.Id}");
+                    logger.Debug($"{_logPrefix}✓ Removed patch: {patchInfo.Id}");
                 }
                 catch (Exception ex)
                 {
-                    logger.Error($"{_logPrefix}✗ Failed to remove patch: {patchInfo.Id} - {ex.Message}");
+                    logger.ErrorNoTrace($"{_logPrefix}✗ Failed to remove patch: {patchInfo.Id} - {ex.Message}");
                 }
 
             foreach (var patchInfo in _registeredDynamicPatches.Where(patchInfo =>
@@ -339,11 +335,11 @@ namespace STS2RitsuLib.Patching.Core
                 {
                     _harmony.Unpatch(patchInfo.OriginalMethod, HarmonyPatchType.All, _harmony.Id);
                     _patchedStatus[patchInfo.Id] = false;
-                    logger.Info($"{_logPrefix}✓ Removed dynamic patch: {patchInfo.Id}");
+                    logger.Debug($"{_logPrefix}✓ Removed dynamic patch: {patchInfo.Id}");
                 }
                 catch (Exception ex)
                 {
-                    logger.Error($"{_logPrefix}✗ Failed to remove dynamic patch: {patchInfo.Id} - {ex.Message}");
+                    logger.ErrorNoTrace($"{_logPrefix}✗ Failed to remove dynamic patch: {patchInfo.Id} - {ex.Message}");
                 }
 
             IsApplied = false;
@@ -457,9 +453,11 @@ namespace STS2RitsuLib.Patching.Core
                     if (result.Ignored)
                         ignoredCount++;
 
-                    logger.Debug(result.Ignored
-                        ? $"{_logPrefix}[{importance}] {result.ModPatchInfo.Id} - Ignored (target missing)"
-                        : $"{_logPrefix}[{importance}] {result.ModPatchInfo.Id} - Success ✓");
+                    if (result.Ignored)
+                        logger.Info(
+                            $"{_logPrefix}[{importance}] {result.ModPatchInfo.Id} - Ignored: {result.ErrorMessage}");
+                    else
+                        logger.Debug($"{_logPrefix}[{importance}] {result.ModPatchInfo.Id} - Success ✓");
                 }
                 else
                 {
@@ -473,17 +471,17 @@ namespace STS2RitsuLib.Patching.Core
                     failureLog.AppendLine($"{_logPrefix}  Error: {result.ErrorMessage}");
                     if (result.Exception != null)
                         failureLog.Append($"{_logPrefix}  Exception: {result.Exception}");
-                    logger.Error(failureLog.ToString());
+                    logger.ErrorNoTrace(failureLog.ToString());
                 }
             }
 
             logger.Info(
                 $"{_logPrefix}Patch application complete: {successCount - ignoredCount} applied, {ignoredCount} ignored, {failureCount} failed, {results.Length} total");
 
-            if (failureCount > 0) logger.Warn($"{_logPrefix}{failureCount} patch(es) failed");
+            if (failureCount > 0) logger.ErrorNoTrace($"{_logPrefix}{failureCount} patch(es) failed");
 
             if (criticalFailureCount == 0) return true;
-            logger.Error($"{_logPrefix}{criticalFailureCount} critical patch(es) failed, mod loading blocked");
+            logger.ErrorNoTrace($"{_logPrefix}{criticalFailureCount} critical patch(es) failed, mod loading blocked");
             return false;
         }
 

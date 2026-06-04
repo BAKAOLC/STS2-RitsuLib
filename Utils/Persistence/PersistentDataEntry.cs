@@ -154,7 +154,8 @@ namespace STS2RitsuLib.Utils.Persistence
             }
             catch (Exception ex)
             {
-                RitsuLibFramework.Logger.Error($"[Persistence] [{_fileName}] Save to '{path}' failed: {ex.Message}");
+                RitsuLibFramework.Logger.ErrorNoTrace(
+                    $"[Persistence] [{_fileName}] Save to '{path}' failed: {ex.Message}");
                 return false;
             }
         }
@@ -179,7 +180,8 @@ namespace STS2RitsuLib.Utils.Persistence
             }
             catch (Exception ex)
             {
-                RitsuLibFramework.Logger.Error($"[Persistence] [{_fileName}] Failed to mark corrupt: {ex.Message}");
+                RitsuLibFramework.Logger.ErrorNoTrace(
+                    $"[Persistence] [{_fileName}] Failed to mark corrupt: {ex.Message}");
             }
         }
 

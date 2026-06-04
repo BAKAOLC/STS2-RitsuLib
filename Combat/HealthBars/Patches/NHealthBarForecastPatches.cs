@@ -105,7 +105,7 @@ namespace STS2RitsuLib.Combat.HealthBars.Patches
                     rightForecastEdgeOffsetRight = node.OffsetRight;
 
                 if (remainingHp <= 0)
-                    lethalRightColor = segment.Color;
+                    lethalRightColor = segment.AffectsHpLabel ? segment.Color : null;
 
                 rightIndex++;
             }
@@ -380,7 +380,8 @@ namespace STS2RitsuLib.Combat.HealthBars.Patches
                     registered.Segment.OverlayMaterial,
                     registered.Segment.OverlaySelfModulate,
                     registered.Segment.LeftOriginLayout,
-                    registered.Segment.LeftExclusiveZGroup))
+                    registered.Segment.LeftExclusiveZGroup,
+                    registered.Segment.AffectsHpLabel))
                 .Where(segment => segment.Amount > 0)
                 .ToArray();
         }
@@ -580,6 +581,7 @@ namespace STS2RitsuLib.Combat.HealthBars.Patches
                 return null;
 
             Color? overlapLethal = null;
+            var hasOverlapLethal = false;
             var bestZ = int.MinValue;
             foreach (var (seg, zKey) in overlapZ)
             {
@@ -588,10 +590,11 @@ namespace STS2RitsuLib.Combat.HealthBars.Patches
                 if (zKey < bestZ)
                     continue;
                 bestZ = zKey;
-                overlapLethal = seg.Color;
+                hasOverlapLethal = true;
+                overlapLethal = seg.AffectsHpLabel ? seg.Color : null;
             }
 
-            if (overlapLethal.HasValue)
+            if (hasOverlapLethal)
                 return overlapLethal;
 
             List<LethalCandidate> candidates = [];
@@ -601,7 +604,8 @@ namespace STS2RitsuLib.Combat.HealthBars.Patches
                     Amount: > 0, Direction: HealthBarForecastGrowthDirection.FromLeft,
                     LeftOriginLayout: HealthBarForecastLeftOriginLayout.Chained,
                 }
-                select new LethalCandidate(segment.Amount, segment.Color, segment.Order, segment.SequenceOrder));
+                select new LethalCandidate(segment.Amount, segment.AffectsHpLabel ? segment.Color : null, segment.Order,
+                    segment.SequenceOrder));
 
             var doomAmount = creature.GetPowerAmount<DoomPower>();
             if (doomAmount > 0)
@@ -627,7 +631,7 @@ namespace STS2RitsuLib.Combat.HealthBars.Patches
 
         private readonly record struct LethalCandidate(
             int Amount,
-            Color Color,
+            Color? Color,
             int Order,
             long SequenceOrder);
 
@@ -661,7 +665,8 @@ namespace STS2RitsuLib.Combat.HealthBars.Patches
             Material? OverlayMaterial,
             Color? OverlaySelfModulate,
             HealthBarForecastLeftOriginLayout LeftOriginLayout,
-            int LeftExclusiveZGroup);
+            int LeftExclusiveZGroup,
+            bool AffectsHpLabel);
 
         private readonly record struct HealthBarForecastRenderResult(
             bool HasRightForecast,

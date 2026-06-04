@@ -263,7 +263,7 @@ namespace STS2RitsuLib.Settings
                 itemDescription,
                 itemEditorFactory,
                 null,
-                addButtonText ?? ModSettingsText.I18N(ModSettingsLocalization.Instance, "button.add", "Add"),
+                addButtonText ?? ModSettingsLocalization.Text("button.add", "Add"),
                 description,
                 false,
                 false,

@@ -83,7 +83,7 @@ namespace STS2RitsuLib.Telemetry
             {
                 RequestId = "basic_usage",
                 Category = TelemetryDataCategory.BasicUsage,
-                Description = description.Resolve(),
+                Description = description.FallbackText ?? string.Empty,
                 DescriptionText = description,
             };
         }
@@ -113,7 +113,7 @@ namespace STS2RitsuLib.Telemetry
             {
                 RequestId = "mod_inventory",
                 Category = TelemetryDataCategory.ModInventory,
-                Description = description.Resolve(),
+                Description = description.FallbackText ?? string.Empty,
                 DescriptionText = description,
             };
         }
@@ -151,7 +151,7 @@ namespace STS2RitsuLib.Telemetry
             {
                 RequestId = "run_history",
                 Category = TelemetryDataCategory.RunHistory,
-                Description = description.Resolve(),
+                Description = description.FallbackText ?? string.Empty,
                 DescriptionText = description,
                 ContributionSubscriptions = sharedContributionSubscriptions ?? [],
                 RunHistoryCaptureFilter = captureFilter,
@@ -188,7 +188,7 @@ namespace STS2RitsuLib.Telemetry
             {
                 RequestId = "diagnostics",
                 Category = TelemetryDataCategory.Diagnostics,
-                Description = description.Resolve(),
+                Description = description.FallbackText ?? string.Empty,
                 DescriptionText = description,
                 ContributionSubscriptions = sharedContributionSubscriptions ?? [],
             };
@@ -221,7 +221,7 @@ namespace STS2RitsuLib.Telemetry
             {
                 RequestId = requestId,
                 Category = TelemetryDataCategory.Custom,
-                Description = description.Resolve(),
+                Description = description.FallbackText ?? string.Empty,
                 DescriptionText = description,
             };
         }

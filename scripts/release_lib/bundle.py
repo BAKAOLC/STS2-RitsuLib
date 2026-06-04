@@ -5,12 +5,14 @@ import subprocess
 import zipfile
 from pathlib import Path
 
+from release_lib.artifact_validation import validate_github_zip_viewer
 from release_lib.repo_layout import (
     ARTIFACTS_GITHUB,
     GITHUB_BUNDLE_ZIP_SUFFIX,
     MOD_MANIFEST_NAME,
     RITSULIB_LOADER_CSPROJ_REL,
 )
+from release_lib.nuget import copy_viewer_dist_to
 
 
 def compose_bundle_zip(
@@ -65,6 +67,8 @@ def compose_bundle_zip(
     if loader_pdb.is_file():
         shutil.copy2(loader_pdb, bundle_staging_root / "STS2-RitsuLib.Loader.pdb")
 
+    copy_viewer_dist_to(bundle_staging_root, ritsulib_root=ritsulib_root)
+
     safe_ver = (
         effective_version.strip().replace("+", "-").replace("/", "-").replace("\\", "-")
     )
@@ -81,4 +85,5 @@ def compose_bundle_zip(
                 arc = path.relative_to(bundle_staging_root).as_posix()
                 zf.write(path, arcname=arc)
 
+    validate_github_zip_viewer(zip_path)
     return zip_path

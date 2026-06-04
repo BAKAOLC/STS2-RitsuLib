@@ -10,12 +10,12 @@ jobs:
   sync:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@v6.0.2
         with:
           fetch-depth: 1
 
       - name: Apply labels.yml
-        uses: crazy-max/ghaction-github-labeler@v6
+        uses: crazy-max/ghaction-github-labeler@v6.0.0
         with:
           github-token: ${{ secrets.GITHUB_TOKEN }}
           yaml-file: .github/labels.yml

@@ -195,11 +195,28 @@ namespace STS2RitsuLib.Combat.Powers
         }
 
         /// <inheritdoc />
+#if STS2_AT_LEAST_0_106_0
+        public override async Task AfterSideTurnEnd(PlayerChoiceContext choiceContext, CombatSide side,
+            IEnumerable<Creature> participants)
+#else
         public override async Task AfterTurnEnd(PlayerChoiceContext choiceContext, CombatSide side)
+#endif
         {
-            var expiresOnThisSide = UntilEndOfOtherSideTurn ? side != Owner.Side : side == Owner.Side;
-            if (!expiresOnThisSide)
-                return;
+            if (UntilEndOfOtherSideTurn)
+            {
+                // Expire on the other side's turn end; Owner is never in the other side's participants.
+                if (side == Owner.Side) return;
+            }
+            else
+            {
+#if STS2_AT_LEAST_0_106_0
+                // Use participants rather than side so extra-turn firings don't prematurely expire
+                // powers belonging to creatures that didn't participate in that extra turn.
+                if (!participants.Contains(Owner)) return;
+#else
+                if (side != Owner.Side) return;
+#endif
+            }
 
             if (RemainingExtraTurnCycles > 0)
             {

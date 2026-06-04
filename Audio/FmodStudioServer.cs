@@ -223,6 +223,9 @@ namespace STS2RitsuLib.Audio
         /// </summary>
         public static bool? TryCheckEventPath(string eventPath)
         {
+            if (string.IsNullOrWhiteSpace(eventPath))
+                return false;
+
             if (FmodStudioGuidPathTable.TryGetStudioGuidForEventPath(eventPath, out _))
                 return true;
 
@@ -473,7 +476,7 @@ namespace STS2RitsuLib.Audio
                 }
                 catch (Exception ex)
                 {
-                    RitsuLibFramework.Logger.Error($"[Audio] FMOD guid inject {method}: {ex.Message}");
+                    RitsuLibFramework.Logger.ErrorNoTrace($"[Audio] FMOD guid inject {method}: {ex.Message}");
                 }
             }
 

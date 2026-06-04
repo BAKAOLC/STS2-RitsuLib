@@ -13,7 +13,7 @@ namespace STS2RitsuLib.Data.Models
         ///     Current schema version written by the library when creating or normalizing settings.
         ///     库在创建或规范化设置时写入的当前 schema 版本。
         /// </summary>
-        public const int CurrentSchemaVersion = 8;
+        public const int CurrentSchemaVersion = 11;
 
         /// <summary>
         ///     Persisted schema version used by the migration pipeline
@@ -68,6 +68,167 @@ namespace STS2RitsuLib.Data.Models
         /// </summary>
         [JsonPropertyName("debug_compat_ancient_architect")]
         public bool DebugCompatAncientArchitect { get; set; } = true;
+
+        /// <summary>
+        ///     Starts the browser debug log viewer for this session. It listens on loopback unless LAN access is enabled.
+        ///     为本会话启动浏览器调试日志查看器；除非启用局域网访问，否则仅监听 loopback。
+        /// </summary>
+        [JsonPropertyName("debug_log_viewer_enabled")]
+        public bool DebugLogViewerEnabled { get; set; } = true;
+
+        /// <summary>
+        ///     Mirrors game logger callbacks into the debug log viewer event stream.
+        ///     将游戏 logger 回调镜像到调试日志查看器事件流。
+        /// </summary>
+        [JsonPropertyName("debug_log_viewer_mirror_game_logs")]
+        public bool DebugLogViewerMirrorGameLogs { get; set; } = true;
+
+        /// <summary>
+        ///     When true, opens the debug log viewer in the system browser if no browser client connects shortly after startup.
+        ///     为 true 时，启动后短时间内若没有浏览器客户端连接，则在系统浏览器中打开调试日志查看器。
+        /// </summary>
+        [JsonPropertyName("debug_log_viewer_auto_open")]
+        public bool DebugLogViewerAutoOpen { get; set; }
+
+        /// <summary>
+        ///     When true, binds the debug log viewer to all network interfaces so devices on the same LAN can connect.
+        ///     为 true 时，调试日志查看器会监听所有网络接口，使同一局域网设备可以连接。
+        /// </summary>
+        [JsonPropertyName("debug_log_viewer_lan_access_enabled")]
+        public bool DebugLogViewerLanAccessEnabled { get; set; }
+
+        /// <summary>
+        ///     HTTP port for the debug log viewer.
+        ///     调试日志查看器的 HTTP 端口。
+        /// </summary>
+        [JsonPropertyName("debug_log_viewer_port")]
+        public int DebugLogViewerPort { get; set; } = 18742;
+
+        /// <summary>
+        ///     Number of consecutive ports to try after <see cref="DebugLogViewerPort" /> when the preferred port is busy.
+        ///     首选端口被占用时，在 <see cref="DebugLogViewerPort" /> 后继续尝试的连续端口数量。
+        /// </summary>
+        [JsonPropertyName("debug_log_viewer_port_fallback_count")]
+        public int DebugLogViewerPortFallbackCount { get; set; } = 20;
+
+        /// <summary>
+        ///     Stable browser access token for the debug log viewer.
+        ///     调试日志查看器使用的稳定浏览器访问 token。
+        /// </summary>
+        [JsonPropertyName("debug_log_viewer_access_token")]
+        public string DebugLogViewerAccessToken { get; set; } = "";
+
+        /// <summary>
+        ///     Number of recent events retained in memory for newly opened browser sessions.
+        ///     为新打开的浏览器会话保留在内存中的最近事件数量。
+        /// </summary>
+        [JsonPropertyName("debug_log_viewer_ring_buffer_capacity")]
+        public int DebugLogViewerRingBufferCapacity { get; set; } = 10000;
+
+        /// <summary>
+        ///     Maximum pending event count before the non-blocking debug pipeline starts dropping new events.
+        ///     非阻塞调试管道开始丢弃新事件前允许排队的最大事件数。
+        /// </summary>
+        [JsonPropertyName("debug_log_viewer_queue_capacity")]
+        public int DebugLogViewerQueueCapacity { get; set; } = 4096;
+
+        /// <summary>
+        ///     When true, cards, relics, and potions append a hover tip showing their source mod.
+        ///     为 true 时，卡牌、遗物和药水会追加显示其来源 mod 的悬停提示。
+        /// </summary>
+        [JsonPropertyName("mod_source_hover_tips_enabled")]
+        public bool ModSourceHoverTipsEnabled { get; set; }
+
+        /// <summary>
+        ///     When true, vanilla cards, relics, and potions also show source hover tips.
+        ///     为 true 时，原版卡牌、遗物和药水也会显示来源悬停提示。
+        /// </summary>
+        [JsonPropertyName("mod_source_hover_tips_include_vanilla")]
+        public bool ModSourceHoverTipsIncludeVanilla { get; set; }
+
+        /// <summary>
+        ///     When true, selected hover tips outside inspect/detail screens also include source tips.
+        ///     为 true 时，详情/检查界面以外的部分悬停提示也会显示来源。
+        /// </summary>
+        [JsonPropertyName("mod_source_hover_tips_include_non_details")]
+        public bool ModSourceHoverTipsIncludeNonDetails { get; set; }
+
+        /// <summary>
+        ///     Shows source hover tips for cards.
+        ///     为卡牌显示来源悬停提示。
+        /// </summary>
+        [JsonPropertyName("mod_source_hover_tips_cards")]
+        public bool ModSourceHoverTipsCards { get; set; } = true;
+
+        /// <summary>
+        ///     Shows source hover tips for relics.
+        ///     为遗物显示来源悬停提示。
+        /// </summary>
+        [JsonPropertyName("mod_source_hover_tips_relics")]
+        public bool ModSourceHoverTipsRelics { get; set; } = true;
+
+        /// <summary>
+        ///     Shows source hover tips for potions.
+        ///     为药水显示来源悬停提示。
+        /// </summary>
+        [JsonPropertyName("mod_source_hover_tips_potions")]
+        public bool ModSourceHoverTipsPotions { get; set; } = true;
+
+        /// <summary>
+        ///     Shows source hover tips for powers.
+        ///     为能力显示来源悬停提示。
+        /// </summary>
+        [JsonPropertyName("mod_source_hover_tips_powers")]
+        public bool ModSourceHoverTipsPowers { get; set; } = true;
+
+        /// <summary>
+        ///     Shows source hover tips for orbs.
+        ///     为充能球显示来源悬停提示。
+        /// </summary>
+        [JsonPropertyName("mod_source_hover_tips_orbs")]
+        public bool ModSourceHoverTipsOrbs { get; set; } = true;
+
+        /// <summary>
+        ///     Shows source hover tips for enchantments.
+        ///     为附魔显示来源悬停提示。
+        /// </summary>
+        [JsonPropertyName("mod_source_hover_tips_enchantments")]
+        public bool ModSourceHoverTipsEnchantments { get; set; } = true;
+
+        /// <summary>
+        ///     Shows source hover tips for afflictions.
+        ///     为苦痛显示来源悬停提示。
+        /// </summary>
+        [JsonPropertyName("mod_source_hover_tips_afflictions")]
+        public bool ModSourceHoverTipsAfflictions { get; set; } = true;
+
+        /// <summary>
+        ///     Shows source hover tips for keyword tooltips.
+        ///     为关键词悬停提示显示来源。
+        /// </summary>
+        [JsonPropertyName("mod_source_hover_tips_keywords")]
+        public bool ModSourceHoverTipsKeywords { get; set; } = true;
+
+        /// <summary>
+        ///     Shows source hover tips for event layouts.
+        ///     为事件界面显示来源提示。
+        /// </summary>
+        [JsonPropertyName("mod_source_hover_tips_events")]
+        public bool ModSourceHoverTipsEvents { get; set; } = true;
+
+        /// <summary>
+        ///     Shows source hover tips for creature hover tips.
+        ///     为生物悬停提示显示来源。
+        /// </summary>
+        [JsonPropertyName("mod_source_hover_tips_creatures")]
+        public bool ModSourceHoverTipsCreatures { get; set; } = true;
+
+        /// <summary>
+        ///     Shows source hover tips for base game term tooltips such as block and energy.
+        ///     为格挡、能量等基础游戏术语悬停提示显示来源。
+        /// </summary>
+        [JsonPropertyName("mod_source_hover_tips_game_terms")]
+        public bool ModSourceHoverTipsGameTerms { get; set; } = true;
 
         /// <summary>
         ///     Absolute path or Godot <c>user://</c> path for Harmony patch dump output (text log).

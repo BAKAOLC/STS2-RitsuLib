@@ -57,7 +57,7 @@ namespace STS2RitsuLib.Localization.SmartFormat
             }
             catch (Exception ex)
             {
-                RitsuLibFramework.Logger.Error(
+                RitsuLibFramework.Logger.ErrorNoTrace(
                     $"[SmartFormat] Failed to inject {definition.Kind} '{definition.ImplementationType.FullName}' "
                     + $"from mod '{definition.OwnerModId}': {ex.Message}");
             }

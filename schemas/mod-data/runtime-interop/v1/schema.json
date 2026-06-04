@@ -34,16 +34,12 @@
         },
         "scope": {
           "type": "string",
-          "description": "Persistence scope hint (case-insensitive). Recognized values: global, profile, runSidecar (aliases: run_sidecar/run-sidecar), inMemory (aliases: in_memory/in-memory).",
+          "description": "Persistence scope hint (case-insensitive). Recognized values: global, profile, inMemory (aliases: in_memory/in-memory).",
           "enum": [
             "global",
             "Global",
             "profile",
             "Profile",
-            "runSidecar",
-            "RunSidecar",
-            "run_sidecar",
-            "run-sidecar",
             "inMemory",
             "InMemory",
             "in_memory",

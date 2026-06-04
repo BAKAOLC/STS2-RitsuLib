@@ -1,3 +1,4 @@
+using System.Reflection;
 using HarmonyLib;
 using MegaCrit.Sts2.Core.Helpers;
 using MegaCrit.Sts2.Core.Logging;
@@ -12,6 +13,9 @@ namespace STS2RitsuLib.Content
 {
     internal static class DynamicActContentPatcher
     {
+        private const BindingFlags DeclaredInstanceFlags =
+            BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.DeclaredOnly;
+
         private static readonly Lock SyncRoot = new();
         private static bool _patched;
 
@@ -24,6 +28,8 @@ namespace STS2RitsuLib.Content
 
                 var logger = RitsuLibFramework.Logger;
                 var actTypes = ReflectionHelper.GetSubtypes<ActModel>()
+                    .Concat(ReflectionHelper.GetSubtypesInMods<ActModel>())
+                    .Concat(ModContentRegistry.GetRegisteredActTypes())
                     .Where(type => type is { IsAbstract: false, IsInterface: false })
                     .Distinct()
                     .ToArray();
@@ -35,20 +41,44 @@ namespace STS2RitsuLib.Content
                     DynamicPatchBuilder.FromMethod(typeof(DynamicActContentPatcher), nameof(AllAncientsPostfix));
                 var encountersPostfix =
                     DynamicPatchBuilder.FromMethod(typeof(DynamicActContentPatcher), nameof(AllEncountersPostfix));
+                var bossDiscoveryOrderPostfix = DynamicPatchBuilder.FromMethod(
+                    typeof(DynamicActContentPatcher),
+                    nameof(BossDiscoveryOrderPostfix));
                 var unlockedAncientsPostfix = DynamicPatchBuilder.FromMethod(
                     typeof(DynamicActContentPatcher),
                     nameof(GetUnlockedAncientsPostfix));
 
+                var queuedMethods = new HashSet<MethodInfo>();
                 foreach (var actType in actTypes)
                 {
-                    TryAddPropertyGetterPatch(builder, actType, nameof(ActModel.AllEvents), eventsPostfix, logger);
-                    TryAddPropertyGetterPatch(builder, actType, nameof(ActModel.AllAncients), ancientsPostfix, logger);
+                    TryAddPropertyGetterPatch(
+                        builder,
+                        actType,
+                        nameof(ActModel.AllEvents),
+                        eventsPostfix,
+                        queuedMethods,
+                        logger);
+                    TryAddPropertyGetterPatch(
+                        builder,
+                        actType,
+                        nameof(ActModel.AllAncients),
+                        ancientsPostfix,
+                        queuedMethods,
+                        logger);
+                    TryAddPropertyGetterPatch(
+                        builder,
+                        actType,
+                        nameof(ActModel.BossDiscoveryOrder),
+                        bossDiscoveryOrderPostfix,
+                        queuedMethods,
+                        logger);
                     TryAddMethodPatch(
                         builder,
                         actType,
                         nameof(ActModel.GenerateAllEncounters),
                         [],
                         encountersPostfix,
+                        queuedMethods,
                         logger);
                     TryAddMethodPatch(
                         builder,
@@ -56,6 +86,7 @@ namespace STS2RitsuLib.Content
                         nameof(ActModel.GetUnlockedAncients),
                         [typeof(UnlockState)],
                         unlockedAncientsPostfix,
+                        queuedMethods,
                         logger);
                 }
 
@@ -74,20 +105,25 @@ namespace STS2RitsuLib.Content
             Type actType,
             string propertyName,
             HarmonyMethod postfix,
+            HashSet<MethodInfo> queuedMethods,
             Logger logger)
         {
+            var getter = FindDeclaredPropertyGetter(actType, propertyName);
+            if (getter == null || !queuedMethods.Add(getter))
+                return;
+
             try
             {
-                builder.AddPropertyGetter(
-                    actType,
-                    propertyName,
+                builder.Add(
+                    getter,
                     postfix: postfix,
-                    description: $"Patch {actType.Name}.{propertyName} for dynamic mod content");
+                    description: $"Patch {getter.DeclaringType?.Name}.{propertyName} for dynamic mod content");
             }
             catch (Exception ex)
             {
+                queuedMethods.Remove(getter);
                 logger.Warn(
-                    $"[Content] Could not queue getter '{actType.Name}.{propertyName}' for dynamic patching: {ex.Message}");
+                    $"[Content] Could not queue getter '{getter.DeclaringType?.Name}.{propertyName}' for dynamic patching: {ex.Message}");
             }
         }
 
@@ -97,22 +133,57 @@ namespace STS2RitsuLib.Content
             string methodName,
             Type[] parameterTypes,
             HarmonyMethod postfix,
+            HashSet<MethodInfo> queuedMethods,
             Logger logger)
         {
+            var method = FindDeclaredMethodImplementation(actType, methodName, parameterTypes);
+            if (method == null || !queuedMethods.Add(method))
+                return;
+
             try
             {
-                builder.AddMethod(
-                    actType,
-                    methodName,
-                    parameterTypes,
+                builder.Add(
+                    method,
                     postfix: postfix,
-                    description: $"Patch {actType.Name}.{methodName} for dynamic mod content");
+                    description: $"Patch {method.DeclaringType?.Name}.{methodName} for dynamic mod content");
             }
             catch (Exception ex)
             {
+                queuedMethods.Remove(method);
                 logger.Warn(
-                    $"[Content] Could not queue method '{actType.Name}.{methodName}' for dynamic patching: {ex.Message}");
+                    $"[Content] Could not queue method '{method.DeclaringType?.Name}.{methodName}' for dynamic patching: {ex.Message}");
             }
+        }
+
+        private static MethodInfo? FindDeclaredPropertyGetter(Type concreteActType, string propertyName)
+        {
+            for (var walk = concreteActType;
+                 walk != null && typeof(ActModel).IsAssignableFrom(walk);
+                 walk = walk.BaseType)
+            {
+                var property = walk.GetProperty(propertyName, DeclaredInstanceFlags);
+                if (property?.GetMethod is { IsAbstract: false } getter)
+                    return getter;
+            }
+
+            return null;
+        }
+
+        private static MethodInfo? FindDeclaredMethodImplementation(
+            Type concreteActType,
+            string methodName,
+            Type[] parameterTypes)
+        {
+            for (var walk = concreteActType;
+                 walk != null && typeof(ActModel).IsAssignableFrom(walk);
+                 walk = walk.BaseType)
+            {
+                var method = walk.GetMethod(methodName, DeclaredInstanceFlags, null, parameterTypes, null);
+                if (method is { IsAbstract: false })
+                    return method;
+            }
+
+            return null;
         }
 
         // ReSharper disable InconsistentNaming
@@ -133,17 +204,29 @@ namespace STS2RitsuLib.Content
         private static void AllEncountersPostfix(ActModel __instance, ref IEnumerable<EncounterModel> __result)
             // ReSharper restore InconsistentNaming
         {
-            __result = ModContentRegistry.AppendGlobalEncounters(
-                ModContentRegistry.AppendActEncounters(__instance, __result));
+            __result = ModEncounterActValidityFilter.FilterForAct(
+                __instance,
+                ModContentRegistry.AppendGlobalEncounters(
+                    ModContentRegistry.AppendActEncounters(__instance, __result)));
+        }
+
+        // ReSharper disable InconsistentNaming
+        private static void BossDiscoveryOrderPostfix(ActModel __instance, ref IEnumerable<EncounterModel> __result)
+            // ReSharper restore InconsistentNaming
+        {
+            __result = ModEncounterActValidityFilter.FilterForAct(__instance, __result);
         }
 
         // ReSharper disable InconsistentNaming
         private static void GetUnlockedAncientsPostfix(
                 ActModel __instance,
-                UnlockState unlockState,
+                object[] __args,
                 ref IEnumerable<AncientEventModel> __result)
             // ReSharper restore InconsistentNaming
         {
+            if (__args.Length == 0 || __args[0] is not UnlockState unlockState)
+                return;
+
             __result = ModAncientActValidityFilter.FilterForAct(
                 __instance,
                 ModUnlockRegistry.FilterUnlocked(

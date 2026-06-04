@@ -52,7 +52,7 @@ namespace STS2RitsuLib.Audio.Internal
             }
             catch (Exception ex)
             {
-                RitsuLibFramework.Logger.Error($"[Audio] mapped PlayLoop start/release: {ex.Message}");
+                RitsuLibFramework.Logger.ErrorNoTrace($"[Audio] mapped PlayLoop start/release: {ex.Message}");
                 return false;
             }
 
@@ -104,7 +104,7 @@ namespace STS2RitsuLib.Audio.Internal
             }
             catch (Exception ex)
             {
-                RitsuLibFramework.Logger.Error($"[Audio] mapped StopLoop: {ex.Message}");
+                RitsuLibFramework.Logger.ErrorNoTrace($"[Audio] mapped StopLoop: {ex.Message}");
             }
         }
 
@@ -121,7 +121,7 @@ namespace STS2RitsuLib.Audio.Internal
                 }
                 catch (Exception ex)
                 {
-                    RitsuLibFramework.Logger.Error($"[Audio] mapped SetParam: {ex.Message}");
+                    RitsuLibFramework.Logger.ErrorNoTrace($"[Audio] mapped SetParam: {ex.Message}");
                     return false;
                 }
 
@@ -149,7 +149,7 @@ namespace STS2RitsuLib.Audio.Internal
             }
             catch (Exception ex)
             {
-                RitsuLibFramework.Logger.Error($"[Audio] mapped PlayMusic start: {ex.Message}");
+                RitsuLibFramework.Logger.ErrorNoTrace($"[Audio] mapped PlayMusic start: {ex.Message}");
                 return false;
             }
 
@@ -214,7 +214,7 @@ namespace STS2RitsuLib.Audio.Internal
                 }
                 catch (Exception ex)
                 {
-                    RitsuLibFramework.Logger.Error($"[Audio] mapped UpdateMusicParameter: {ex.Message}");
+                    RitsuLibFramework.Logger.ErrorNoTrace($"[Audio] mapped UpdateMusicParameter: {ex.Message}");
                     return false;
                 }
 
@@ -263,7 +263,7 @@ namespace STS2RitsuLib.Audio.Internal
             }
             catch (Exception ex)
             {
-                RitsuLibFramework.Logger.Error($"[Audio] mapped {operation} start: {ex.Message}");
+                RitsuLibFramework.Logger.ErrorNoTrace($"[Audio] mapped {operation} start: {ex.Message}");
                 return false;
             }
 
@@ -290,7 +290,7 @@ namespace STS2RitsuLib.Audio.Internal
                 }
                 catch (Exception ex)
                 {
-                    RitsuLibFramework.Logger.Error($"[Audio] mapped {operation}: {ex.Message}");
+                    RitsuLibFramework.Logger.ErrorNoTrace($"[Audio] mapped {operation}: {ex.Message}");
                     return false;
                 }
 
@@ -310,7 +310,7 @@ namespace STS2RitsuLib.Audio.Internal
             }
             catch (Exception ex)
             {
-                RitsuLibFramework.Logger.Error($"[Audio] mapped {operation}: {ex.Message}");
+                RitsuLibFramework.Logger.ErrorNoTrace($"[Audio] mapped {operation}: {ex.Message}");
             }
             finally
             {

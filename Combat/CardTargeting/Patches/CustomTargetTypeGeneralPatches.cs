@@ -47,7 +47,7 @@ namespace STS2RitsuLib.Combat.CardTargeting.Patches
             if (__instance.Card is not { TargetType: var targetType })
                 return;
 
-            if (!CustomTargetTypeRegistry.IsCustomMultiTargetType(targetType))
+            if (!CustomTargetTypeResolver.IsCustomMultiTargetType(targetType))
                 return;
 
             __instance.CardNode?.UpdateVisuals(
@@ -59,7 +59,7 @@ namespace STS2RitsuLib.Combat.CardTargeting.Patches
                 return;
 
             foreach (var creatureNode in room.CreatureNodes)
-                if (CustomTargetTypeRegistry.TryShouldIncludeMultiTarget(targetType, creatureNode.Entity,
+                if (CustomTargetTypeResolver.TryShouldIncludeMultiTarget(targetType, creatureNode.Entity,
                         out var include) &&
                     include)
                     creatureNode.ShowMultiselectReticle();
@@ -97,7 +97,7 @@ namespace STS2RitsuLib.Combat.CardTargeting.Patches
             if (__result)
                 return;
 
-            if (CustomTargetTypeRegistry.IsCustomSingleTargetType(targetType))
+            if (CustomTargetTypeResolver.IsCustomSingleTargetType(targetType))
                 __result = true;
         }
     }
@@ -129,7 +129,7 @@ namespace STS2RitsuLib.Combat.CardTargeting.Patches
         public static bool Prefix(NTargetManager __instance, Creature creature, ref bool __result)
             // ReSharper restore InconsistentNaming
         {
-            if (!CustomTargetTypeRegistry.TryIsAllowedSingleTarget(__instance._validTargetsType, creature,
+            if (!CustomTargetTypeResolver.TryIsAllowedSingleTarget(__instance._validTargetsType, creature,
                     out var allowed))
                 return true;
 
@@ -168,7 +168,7 @@ namespace STS2RitsuLib.Combat.CardTargeting.Patches
             if (target == null)
                 return true;
 
-            if (!CustomTargetTypeRegistry.TryIsAllowedSingleTarget(__instance.TargetType, target, out var allowed))
+            if (!CustomTargetTypeResolver.TryIsAllowedSingleTarget(__instance.TargetType, target, out var allowed))
                 return true;
 
             __result = allowed;
@@ -206,7 +206,7 @@ namespace STS2RitsuLib.Combat.CardTargeting.Patches
             if (target == null)
                 return true;
 
-            if (!CustomTargetTypeRegistry.TryIsAllowedSingleTarget(__instance.TargetType, target, out var allowed))
+            if (!CustomTargetTypeResolver.TryIsAllowedSingleTarget(__instance.TargetType, target, out var allowed))
                 return true;
 
             __result = allowed;
@@ -259,7 +259,7 @@ namespace STS2RitsuLib.Combat.CardTargeting.Patches
             // ReSharper restore InconsistentNaming
         {
             var card = GetCard(__instance);
-            if (card == null || !CustomTargetTypeRegistry.IsCustomSingleTargetType(card.TargetType))
+            if (card == null || !CustomTargetTypeResolver.IsCustomSingleTargetType(card.TargetType))
                 return true;
 
             __result = RunTargeting(__instance, targetMode, card.TargetType);
@@ -336,7 +336,7 @@ namespace STS2RitsuLib.Combat.CardTargeting.Patches
         public static bool Prefix(NControllerCardPlay __instance)
         {
             var card = GetCard(__instance);
-            if (card == null || !CustomTargetTypeRegistry.IsCustomSingleTargetType(card.TargetType))
+            if (card == null || !CustomTargetTypeResolver.IsCustomSingleTargetType(card.TargetType))
                 return true;
 
             var cardNode = GetCardNode(__instance);
@@ -414,7 +414,7 @@ namespace STS2RitsuLib.Combat.CardTargeting.Patches
         public static bool Prefix(NControllerCardPlay __instance, TargetType targetType, ref Task __result)
             // ReSharper restore InconsistentNaming
         {
-            if (!CustomTargetTypeRegistry.IsCustomSingleTargetType(targetType))
+            if (!CustomTargetTypeResolver.IsCustomSingleTargetType(targetType))
                 return true;
 
             __result = RunTargeting(__instance, targetType);
@@ -444,7 +444,7 @@ namespace STS2RitsuLib.Combat.CardTargeting.Patches
 
             var nodes = room.CreatureNodes
                 .Where(n =>
-                    CustomTargetTypeRegistry.TryIsAllowedSingleTarget(targetType, n.Entity, out var allowed) &&
+                    CustomTargetTypeResolver.TryIsAllowedSingleTarget(targetType, n.Entity, out var allowed) &&
                     allowed)
                 .ToList();
 
@@ -526,7 +526,7 @@ namespace STS2RitsuLib.Combat.CardTargeting.Patches
         public static bool Prefix(NCardPlay __instance, Creature? target)
         {
             var card = __instance.Card;
-            if (card == null || !CustomTargetTypeRegistry.IsCustomSingleTargetType(card.TargetType))
+            if (card == null || !CustomTargetTypeResolver.IsCustomSingleTargetType(card.TargetType))
                 return true;
 
             if (target == null || __instance.Holder.CardModel == null)

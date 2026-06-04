@@ -161,6 +161,20 @@ namespace STS2RitsuLib.Scaffolding.Characters.Visuals
             return TryPlayCue(creature.Visuals, character, primary);
         }
 
+        internal static bool TryGetDurationFromCreatureAnimatorTrigger(NCreature creature, string trigger,
+            out float seconds)
+        {
+            seconds = 0f;
+            if (creature.HasSpineAnimation || !GodotObject.IsInstanceValid(creature.Visuals))
+                return false;
+
+            var primary = MapAnimatorTriggerToCue(trigger);
+            var names = BuildDefaultAlternateNames(primary);
+            var character = creature.Entity?.Player?.Character;
+            var cueMatch = TryGetVisualCueDuration(character, names, out seconds, out var visualCueMatched);
+            return visualCueMatched ? cueMatch : TryGetGodotAnimationDuration(creature.Visuals, names, out seconds);
+        }
+
         internal static bool TryResolveMerchantCharacterModel(NMerchantRoom? room, NMerchantCharacter visual,
             out CharacterModel? character)
         {
@@ -300,6 +314,46 @@ namespace STS2RitsuLib.Scaffolding.Characters.Visuals
 
                 var player = CueFrameSequencePlayer.EnsureUnder(visualsRoot);
                 return player.TryStart(sprite, sequence);
+            }
+
+            return false;
+        }
+
+        private static bool TryGetVisualCueDuration(CharacterModel? character, ReadOnlySpan<string> names,
+            out float seconds, out bool matched)
+        {
+            seconds = 0f;
+            matched = false;
+            if (character is not IModCharacterAssetOverrides { VisualCues: { } cues })
+                return false;
+
+            if (cues.FrameSequenceByCue is { Count: > 0 } sequences)
+                foreach (var name in names)
+                {
+                    if (string.IsNullOrWhiteSpace(name))
+                        continue;
+
+                    if (!TryGetFrameSequence(sequences, name, out var sequence) || sequence == null)
+                        continue;
+
+                    matched = true;
+                    seconds = GetSequenceDuration(sequence);
+                    return seconds > 0f;
+                }
+
+            if (cues.TexturePathByCue is not { Count: > 0 } textures)
+                return false;
+
+            foreach (var name in names)
+            {
+                if (string.IsNullOrWhiteSpace(name))
+                    continue;
+
+                if (!TryGetCuePath(textures, name, out var path) || string.IsNullOrWhiteSpace(path))
+                    continue;
+
+                matched = true;
+                return false;
             }
 
             return false;
@@ -449,6 +503,17 @@ namespace STS2RitsuLib.Scaffolding.Characters.Visuals
             return handler(NamesToArray(names));
         }
 
+        private static bool TryGetGodotAnimationDuration(Node root, ReadOnlySpan<string> names, out float seconds)
+        {
+            seconds = 0f;
+            var animationPlayer = FindNode<AnimationPlayer>(root) ?? SearchRecursive<AnimationPlayer>(root);
+            if (animationPlayer != null && TryGetAnimationPlayerDuration(animationPlayer, names, out seconds))
+                return true;
+
+            var animatedSprite = FindNode<AnimatedSprite2D>(root) ?? SearchRecursive<AnimatedSprite2D>(root);
+            return animatedSprite != null && TryGetAnimatedSpriteDuration(animatedSprite, names, out seconds);
+        }
+
         private static string[] NamesToArray(ReadOnlySpan<string> names)
         {
             var arr = new string[names.Length];
@@ -501,6 +566,75 @@ namespace STS2RitsuLib.Scaffolding.Characters.Visuals
 
                 return false;
             };
+        }
+
+        private static bool TryGetAnimationPlayerDuration(AnimationPlayer player, ReadOnlySpan<string> names,
+            out float seconds)
+        {
+            seconds = 0f;
+            foreach (var name in names)
+            {
+                if (string.IsNullOrWhiteSpace(name) || !player.HasAnimation(name))
+                    continue;
+
+                var animation = player.GetAnimation(name);
+                if (animation == null)
+                    continue;
+
+                seconds = ScaleDuration(animation.Length, player.SpeedScale);
+                return seconds > 0f;
+            }
+
+            return false;
+        }
+
+        private static bool TryGetAnimatedSpriteDuration(AnimatedSprite2D sprite, ReadOnlySpan<string> names,
+            out float seconds)
+        {
+            seconds = 0f;
+            var frames = sprite.SpriteFrames;
+            if (frames == null)
+                return false;
+
+            foreach (var name in names)
+            {
+                if (string.IsNullOrWhiteSpace(name) || !frames.HasAnimation(name))
+                    continue;
+
+                seconds = GetAnimatedSpriteDuration(sprite, frames, name);
+                return seconds > 0f;
+            }
+
+            return false;
+        }
+
+        private static float GetSequenceDuration(VisualFrameSequence sequence)
+        {
+            return sequence.Frames.Select(frame => frame.DurationSeconds)
+                .Select(seconds => !float.IsFinite(seconds) || seconds <= 0f ? 1f / 60f : seconds).Sum();
+        }
+
+        private static float GetAnimatedSpriteDuration(AnimatedSprite2D sprite, SpriteFrames frames, string name)
+        {
+            var speed = (float)Math.Abs(frames.GetAnimationSpeed(name) * sprite.SpeedScale);
+            if (speed <= 0f)
+                return 0f;
+
+            var total = 0f;
+            var frameCount = frames.GetFrameCount(name);
+            for (var i = 0; i < frameCount; i++)
+                total += frames.GetFrameDuration(name, i);
+
+            return total / speed;
+        }
+
+        private static float ScaleDuration(float seconds, float speedScale)
+        {
+            if (!float.IsFinite(seconds) || seconds <= 0f)
+                return 0f;
+
+            var speed = Math.Abs(speedScale);
+            return speed <= 0f ? seconds : seconds / speed;
         }
 
         private static T? FindNode<T>(Node root) where T : class

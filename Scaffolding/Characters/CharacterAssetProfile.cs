@@ -257,19 +257,19 @@ namespace STS2RitsuLib.Scaffolding.Characters
     /// <summary>
     ///     One entry in <see cref="CharacterAssetProfile.VanillaCardVisualOverrides" />: when this mod character
     ///     encounters or holds a card whose <c>ModelId.Entry</c> equals <paramref name="CardModelIdEntry" />
-    ///     (ordinal ignore-case), use <paramref name="Assets" /> for portrait/frame/banner/overlay paths.
+    ///     (ordinal ignore-case), use <paramref name="Assets" /> for portrait/frame/banner/overlay paths and materials.
     ///     <see cref="CharacterAssetProfile.VanillaCardVisualOverrides" /> 中的一个条目：当此 mod 角色
     ///     遇到或持有 <c>ModelId.Entry</c> 等于 <paramref name="CardModelIdEntry" />
-    ///     （ordinal ignore-case）的卡牌时，使用 <paramref name="Assets" /> 作为肖像/边框/banner/覆盖层路径。
+    ///     （ordinal ignore-case）的卡牌时，使用 <paramref name="Assets" /> 作为肖像/边框/banner/覆盖层路径和材质。
     /// </summary>
     /// <param name="CardModelIdEntry">
     ///     Stable card id (same string as <c>CardModel.Id.Entry</c>).
     ///     稳定卡牌 id（与 <c>CardModel.Id.Entry</c> 相同的字符串）。
     /// </param>
     /// <param name="Assets">
-    ///     Card portrait and frame/border/material/overlay/banner path bundle (same shape as
+    ///     Card portrait and frame/border/material/overlay/banner path and material bundle (same shape as
     ///     mod card <see cref="CardAssetProfile" />).
-    ///     卡牌肖像和框/边框/材质/覆盖层/banner 路径包（与
+    ///     卡牌肖像和框/边框/材质/覆盖层/banner 路径和材质包（与
     ///     mod 卡牌 <see cref="CardAssetProfile" /> 形态相同）。
     /// </param>
     public sealed record CharacterVanillaCardVisualOverride(string CardModelIdEntry, CardAssetProfile Assets);

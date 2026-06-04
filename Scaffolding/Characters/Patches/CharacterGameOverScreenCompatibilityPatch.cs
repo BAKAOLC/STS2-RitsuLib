@@ -62,7 +62,7 @@ namespace STS2RitsuLib.Scaffolding.Characters.Patches
             }
             catch (Exception ex)
             {
-                RitsuLibFramework.Logger.Error(
+                RitsuLibFramework.Logger.ErrorNoTrace(
                     $"[Visuals] GameOverScreen compatibility patch failed, falling back to base implementation: {ex}");
                 return true;
             }

@@ -104,7 +104,7 @@ namespace STS2RitsuLib.Settings
             edit.TextSubmitted += text =>
             {
                 Commit(text);
-                edit.ReleaseFocus();
+                edit.ReleaseFocusIfInsideTree();
             };
             edit.FocusExited += () => Commit(edit.Text);
             AddChild(edit);

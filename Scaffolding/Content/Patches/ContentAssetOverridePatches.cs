@@ -2,13 +2,17 @@ using System.Reflection;
 using Godot;
 using HarmonyLib;
 using MegaCrit.Sts2.Core.Assets;
+using MegaCrit.Sts2.Core.Entities.Cards;
+using MegaCrit.Sts2.Core.Entities.UI;
 using MegaCrit.Sts2.Core.Events;
 using MegaCrit.Sts2.Core.Helpers;
 using MegaCrit.Sts2.Core.Models;
+using MegaCrit.Sts2.Core.Nodes.Cards;
 using MegaCrit.Sts2.Core.Runs;
 using MegaCrit.Sts2.Core.Timeline;
 using STS2RitsuLib.Patching.Models;
 using STS2RitsuLib.Scaffolding.Characters;
+using STS2RitsuLib.Timeline.Scaffolding;
 using STS2RitsuLib.Utils;
 
 namespace STS2RitsuLib.Scaffolding.Content.Patches
@@ -46,13 +50,12 @@ namespace STS2RitsuLib.Scaffolding.Content.Patches
             string memberName)
             where TOverrides : class
         {
-            if (!TryGetPath(instance, selector, memberName, out var path))
+            if (!TryGetDefinedPath(instance, selector, out var path))
                 return true;
 
-            var texture = ResourceLoader.Load<Texture2D>(path);
-            if (texture == null)
+            if (!GodotResourcePath.TryLoad<Texture2D>(path, out var texture))
             {
-                LogLoadFailure(instance, memberName, path, nameof(Texture2D));
+                WarnOverrideUnavailable(instance, memberName, path, nameof(Texture2D));
                 return true;
             }
 
@@ -68,10 +71,16 @@ namespace STS2RitsuLib.Scaffolding.Content.Patches
             string memberName)
             where TOverrides : class
         {
-            if (!TryGetPath(instance, selector, memberName, out var path))
+            if (!TryGetDefinedPath(instance, selector, out var path))
                 return true;
 
-            __result = ResourceLoader.Load<CompressedTexture2D>(path);
+            if (!GodotResourcePath.TryLoad<CompressedTexture2D>(path, out var texture))
+            {
+                WarnOverrideUnavailable(instance, memberName, path, nameof(CompressedTexture2D));
+                return true;
+            }
+
+            __result = texture;
             return false;
         }
 
@@ -83,10 +92,16 @@ namespace STS2RitsuLib.Scaffolding.Content.Patches
             string memberName)
             where TOverrides : class
         {
-            if (!TryGetPath(instance, selector, memberName, out var path))
+            if (!TryGetDefinedPath(instance, selector, out var path))
                 return true;
 
-            __result = ResourceLoader.Load<Material>(path);
+            if (!GodotResourcePath.TryLoad<Material>(path, out var material))
+            {
+                WarnOverrideUnavailable(instance, memberName, path, nameof(Material));
+                return true;
+            }
+
+            __result = material;
             return false;
         }
 
@@ -158,10 +173,17 @@ namespace STS2RitsuLib.Scaffolding.Content.Patches
             string memberName)
         {
             var path = externalPathFactory();
-            if (string.IsNullOrWhiteSpace(path) || !AssetPathDiagnostics.Exists(path, instance, memberName))
+            if (string.IsNullOrWhiteSpace(path))
                 return true;
 
-            __result = PreloadManager.Cache.GetScene(path);
+            var scene = ResolveScene(path);
+            if (scene == null)
+            {
+                WarnOverrideUnavailable(instance, memberName, path, nameof(PackedScene));
+                return true;
+            }
+
+            __result = scene;
             return false;
         }
 
@@ -173,10 +195,16 @@ namespace STS2RitsuLib.Scaffolding.Content.Patches
             string memberName)
         {
             var path = externalPathFactory();
-            if (string.IsNullOrWhiteSpace(path) || !AssetPathDiagnostics.Exists(path, instance, memberName))
+            if (string.IsNullOrWhiteSpace(path))
                 return true;
 
-            __result = ResourceLoader.Load<CompressedTexture2D>(path);
+            if (!GodotResourcePath.TryLoad<Texture2D>(path, out var texture))
+            {
+                WarnOverrideUnavailable(instance, memberName, path, nameof(Texture2D));
+                return true;
+            }
+
+            __result = texture;
             return false;
         }
 
@@ -187,10 +215,9 @@ namespace STS2RitsuLib.Scaffolding.Content.Patches
             return AssetPathDiagnostics.CollectExistingPaths(instance, candidates);
         }
 
-        private static bool TryGetPath<TOverrides>(
+        private static bool TryGetDefinedPath<TOverrides>(
             object instance,
             Func<TOverrides, string?> selector,
-            string memberName,
             out string path)
             where TOverrides : class
         {
@@ -200,14 +227,80 @@ namespace STS2RitsuLib.Scaffolding.Content.Patches
                 return false;
 
             var candidate = selector(overrides);
-            if (string.IsNullOrWhiteSpace(candidate) || !AssetPathDiagnostics.Exists(candidate, instance, memberName))
+            if (string.IsNullOrWhiteSpace(candidate))
                 return false;
 
             path = candidate;
             return true;
         }
 
-        private static void LogLoadFailure(object instance, string memberName, string path, string expectedType)
+        /// <summary>
+        ///     Resolves a <see cref="PackedScene" /> for an already-defined path, preferring the preload cache and
+        ///     falling back to <see cref="ResourceLoader" /> for paths that were never preloaded. Iterates the same
+        ///     candidate set as <see cref="GodotResourcePath.TryLoad{T}" /> so <c>uid://</c> / remapped inputs resolve.
+        ///     为已定义的路径解析 <see cref="PackedScene" />，优先使用预加载缓存，未预加载的路径回退到
+        ///     <see cref="ResourceLoader" />。与 <see cref="GodotResourcePath.TryLoad{T}" /> 使用相同的候选集合，
+        ///     以便 <c>uid://</c> / 重映射输入也能解析。
+        /// </summary>
+        internal static PackedScene? ResolveScene(string definedPath)
+        {
+            foreach (var candidate in GodotResourcePath.EnumerateCandidatePaths(definedPath))
+            {
+                if (!ResourceLoader.Exists(candidate))
+                    continue;
+
+                var cached = PreloadManager.Cache.GetScene(candidate);
+                if (cached != null)
+                    return cached;
+
+                if (ResourceLoader.Load(candidate) is PackedScene scene)
+                    return scene;
+            }
+
+            return null;
+        }
+
+        /// <summary>
+        ///     Resolves a <see cref="Texture2D" /> for an already-defined path, preferring the preload cache and
+        ///     falling back to <see cref="ResourceLoader" /> for paths that were never preloaded.
+        ///     为已定义的路径解析 <see cref="Texture2D" />，优先使用预加载缓存，未预加载的路径回退到
+        ///     <see cref="ResourceLoader" />。
+        /// </summary>
+        internal static Texture2D? ResolveTexture2D(string definedPath)
+        {
+            foreach (var candidate in GodotResourcePath.EnumerateCandidatePaths(definedPath))
+            {
+                if (!ResourceLoader.Exists(candidate))
+                    continue;
+
+                var cached = PreloadManager.Cache.GetTexture2D(candidate);
+                if (cached != null)
+                    return cached;
+
+                if (ResourceLoader.Load(candidate) is Texture2D texture)
+                    return texture;
+            }
+
+            return null;
+        }
+
+        /// <summary>
+        ///     Warns about a <em>defined</em> override path that could not be used: either it does not resolve at all
+        ///     (logged as a missing path by <see cref="AssetPathDiagnostics.Exists" />) or it resolves but cannot be
+        ///     loaded as the expected type. Callers must only reach this after confirming the author defined a path,
+        ///     so an undefined override never produces a warning.
+        ///     对一个<em>已定义</em>但无法使用的覆盖路径发出警告：要么完全无法解析（由
+        ///     <see cref="AssetPathDiagnostics.Exists" /> 记为缺失），要么能解析但无法按期望类型加载。调用方必须在
+        ///     确认作者已定义路径之后才会到达此处，因此未定义的覆盖永远不会产生警告。
+        /// </summary>
+        internal static void WarnOverrideUnavailable(object instance, string memberName, string path,
+            string expectedType)
+        {
+            if (AssetPathDiagnostics.Exists(path, instance, memberName))
+                LogLoadFailure(instance, memberName, path, expectedType);
+        }
+
+        internal static void LogLoadFailure(object instance, string memberName, string path, string expectedType)
         {
             RitsuLibFramework.Logger.Warn(
                 $"[Assets] Resource exists but failed to load as {expectedType} for {DescribeOwner(instance)}.{memberName}: '{path}'. Falling back to the base asset.");
@@ -236,10 +329,17 @@ namespace STS2RitsuLib.Scaffolding.Content.Patches
             string memberName)
             where TOverrides : class
         {
-            if (!TryGetPath(instance, selector, memberName, out var path))
+            if (!TryGetDefinedPath(instance, selector, out var path))
                 return true;
 
-            __result = PreloadManager.Cache.GetScene(path);
+            var scene = ResolveScene(path);
+            if (scene == null)
+            {
+                WarnOverrideUnavailable(instance, memberName, path, nameof(PackedScene));
+                return true;
+            }
+
+            __result = scene;
             return false;
         }
 
@@ -251,10 +351,17 @@ namespace STS2RitsuLib.Scaffolding.Content.Patches
             string memberName)
             where TOverrides : class
         {
-            if (!TryGetPath(instance, selector, memberName, out var path))
+            if (!TryGetDefinedPath(instance, selector, out var path))
                 return true;
 
-            __result = PreloadManager.Cache.GetTexture2D(path);
+            var texture = ResolveTexture2D(path);
+            if (texture == null)
+            {
+                WarnOverrideUnavailable(instance, memberName, path, nameof(Texture2D));
+                return true;
+            }
+
+            __result = texture;
             return false;
         }
 
@@ -266,13 +373,12 @@ namespace STS2RitsuLib.Scaffolding.Content.Patches
             string memberName)
             where TOverrides : class
         {
-            if (!TryGetPath(instance, selector, memberName, out var path))
+            if (!TryGetDefinedPath(instance, selector, out var path))
                 return true;
 
-            var texture = ResourceLoader.Load<Texture2D>(path);
-            if (texture == null)
+            if (!GodotResourcePath.TryLoad<Texture2D>(path, out var texture))
             {
-                LogLoadFailure(instance, memberName, path, nameof(Texture2D));
+                WarnOverrideUnavailable(instance, memberName, path, nameof(Texture2D));
                 return true;
             }
 
@@ -282,8 +388,8 @@ namespace STS2RitsuLib.Scaffolding.Content.Patches
     }
 
     /// <summary>
-    ///     Optional card art paths consumed by content asset Harmony patches on <see cref="CardModel" />.
-    ///     由 <see cref="CardModel" /> 上的 content asset Harmony 补丁使用的可选卡牌美术路径。
+    ///     Optional card art paths and materials consumed by content asset Harmony patches.
+    ///     由 content asset Harmony 补丁使用的可选卡牌美术路径和材质。
     /// </summary>
     public interface IModCardAssetOverrides
     {
@@ -304,6 +410,12 @@ namespace STS2RitsuLib.Scaffolding.Content.Patches
         ///     beta/备用肖像路径覆盖。
         /// </summary>
         string? CustomBetaPortraitPath { get; }
+
+        /// <summary>
+        ///     Override for card portrait <see cref="Material" /> resource path.
+        ///     卡图 <see cref="Material" /> 资源路径覆盖。
+        /// </summary>
+        string? CustomPortraitMaterialPath => AssetProfile.PortraitMaterialPath;
 
         /// <summary>
         ///     Override for card frame texture path.
@@ -346,6 +458,23 @@ namespace STS2RitsuLib.Scaffolding.Content.Patches
         ///     横幅材质路径覆盖。
         /// </summary>
         string? CustomBannerMaterialPath { get; }
+    }
+
+    /// <summary>
+    ///     Optional direct portrait <see cref="Material" /> override for cards.
+    ///     This is applied to the portrait TextureRect after <see cref="NCard" /> reloads its vanilla visuals.
+    ///     用于卡牌的可选直接卡图 <see cref="Material" /> 覆盖。
+    ///     会在 <see cref="NCard" /> 重载原版视觉后应用到卡图 TextureRect。
+    /// </summary>
+    public interface IModCardPortraitMaterialOverride
+    {
+        /// <summary>
+        ///     Direct portrait material override.
+        ///     Return <c>null</c> to continue with other override layers.
+        ///     直接的卡图材质覆盖。
+        ///     返回 <c>null</c> 以继续使用其它覆盖层。
+        /// </summary>
+        Material? CustomPortraitMaterial => null;
     }
 
     /// <summary>
@@ -647,8 +776,8 @@ namespace STS2RitsuLib.Scaffolding.Content.Patches
         string? CustomPackedPortraitPath => AssetProfile.PackedPortraitPath;
 
         /// <summary>
-        ///     Override for <c>EpochModel.BigPortraitPath</c> (large portrait texture).
-        ///     <c>EpochModel.BigPortraitPath</c> 的覆盖（大型肖像纹理）。
+        ///     Override for the large portrait texture path.
+        ///     大型肖像纹理路径覆盖。
         /// </summary>
         string? CustomBigPortraitPath => AssetProfile.BigPortraitPath;
     }
@@ -663,7 +792,7 @@ namespace STS2RitsuLib.Scaffolding.Content.Patches
         public static string PatchId => "content_asset_override_epoch_portrait_path";
 
         /// <inheritdoc cref="IPatchMethod.Description" />
-        public static string Description => "Allow mod epochs to override PackedPortraitPath and BigPortraitPath";
+        public static string Description => "Allow mod epochs to override packed and large portrait paths";
 
         /// <inheritdoc cref="IPatchMethod.IsCritical" />
         public static bool IsCritical => false;
@@ -674,7 +803,11 @@ namespace STS2RitsuLib.Scaffolding.Content.Patches
             return
             [
                 new(typeof(EpochModel), "PackedPortraitPath", MethodType.Getter),
+#if STS2_AT_LEAST_0_106_0
+                new(typeof(EpochModel), "ResolvedPortraitPath", MethodType.Getter),
+#else
                 new(typeof(EpochModel), "BigPortraitPath", MethodType.Getter),
+#endif
             ];
         }
 
@@ -694,15 +827,75 @@ namespace STS2RitsuLib.Scaffolding.Content.Patches
                         ref __result,
                         o => o.CustomPackedPortraitPath,
                         nameof(IModEpochAssetOverrides.CustomPackedPortraitPath)),
-                "get_BigPortraitPath" => ContentAssetOverridePatchHelper.TryUseStringOverride<IModEpochAssetOverrides>(
-                    __instance,
-                    ref __result,
-                    o => o.CustomBigPortraitPath,
-                    nameof(IModEpochAssetOverrides.CustomBigPortraitPath)),
+                "get_BigPortraitPath" or "get_ResolvedPortraitPath" => ContentAssetOverridePatchHelper
+                    .TryUseStringOverride<IModEpochAssetOverrides>(
+                        __instance,
+                        ref __result,
+                        o => o.CustomBigPortraitPath,
+                        nameof(IModEpochAssetOverrides.CustomBigPortraitPath)),
                 _ => true,
             };
         }
     }
+
+#if STS2_AT_LEAST_0_106_0
+    /// <summary>
+    ///     Allows mod epoch art overrides to control the placeholder label.
+    /// </summary>
+    public class EpochArtPlaceholderPatch : IPatchMethod
+    {
+        /// <inheritdoc cref="IPatchMethod.PatchId" />
+        public static string PatchId => "content_asset_override_epoch_art_placeholder";
+
+        /// <inheritdoc cref="IPatchMethod.Description" />
+        public static string Description => "Allow mod epochs to suppress the timeline placeholder label";
+
+        /// <inheritdoc cref="IPatchMethod.IsCritical" />
+        public static bool IsCritical => false;
+
+        /// <inheritdoc cref="IPatchMethod.GetTargets" />
+        public static ModPatchTarget[] GetTargets()
+        {
+            return [new(typeof(EpochModel), "IsArtPlaceholder", MethodType.Getter)];
+        }
+
+        /// <summary>
+        ///     Suppresses the vanilla placeholder label for mod epochs with custom artwork.
+        /// </summary>
+        // ReSharper disable InconsistentNaming
+        public static bool Prefix(EpochModel __instance, ref bool __result)
+            // ReSharper restore InconsistentNaming
+        {
+            if (__instance is IModEpochAssetOverrides overrides &&
+                !string.IsNullOrWhiteSpace(overrides.CustomBigPortraitPath) &&
+                AssetPathDiagnostics.Exists(
+                    overrides.CustomBigPortraitPath,
+                    __instance,
+                    nameof(IModEpochAssetOverrides.CustomBigPortraitPath)))
+            {
+                __result = false;
+                return false;
+            }
+
+            if (!IsCharacterUnlockEpochTemplate(__instance.GetType()))
+                return true;
+
+            __result = false;
+            return false;
+        }
+
+        private static bool IsCharacterUnlockEpochTemplate(Type type)
+        {
+            for (var current = type; current != null; current = current.BaseType)
+                if (current.IsGenericType &&
+                    current.GetGenericTypeDefinition() ==
+                    typeof(CharacterUnlockEpochTemplate<>))
+                    return true;
+
+            return false;
+        }
+    }
+#endif
 
     /// <summary>
     ///     Patches <see cref="CardModel" /> portrait path getters for <see cref="IModCardAssetOverrides" />.
@@ -1011,6 +1204,76 @@ namespace STS2RitsuLib.Scaffolding.Content.Patches
 
             __result = externalFrameMaterial;
             return false;
+        }
+    }
+
+    /// <summary>
+    ///     Applies custom portrait <see cref="Material" /> overrides after <see cref="NCard" /> reloads vanilla visuals.
+    ///     在 <see cref="NCard" /> 重载原版视觉后应用自定义卡图 <see cref="Material" /> 覆盖。
+    /// </summary>
+    public class CardPortraitMaterialPatch : IPatchMethod
+    {
+        /// <inheritdoc cref="IPatchMethod.PatchId" />
+        public static string PatchId => "content_asset_override_card_portrait_material";
+
+        /// <inheritdoc cref="IPatchMethod.Description" />
+        public static string Description => "Allow mod cards to override the NCard portrait material";
+
+        /// <inheritdoc cref="IPatchMethod.IsCritical" />
+        public static bool IsCritical => false;
+
+        /// <inheritdoc cref="IPatchMethod.GetTargets" />
+        public static ModPatchTarget[] GetTargets()
+        {
+            return [new(typeof(NCard), "Reload")];
+        }
+
+        // ReSharper disable InconsistentNaming
+        /// <summary>
+        ///     Reapplies the custom material because vanilla <c>Reload</c> clears portrait materials for visible cards.
+        ///     重新应用自定义材质，因为原版 <c>Reload</c> 会清空可见卡牌的卡图材质。
+        /// </summary>
+        public static void Postfix(NCard __instance)
+            // ReSharper restore InconsistentNaming
+        {
+            var model = __instance.Model;
+            if (model == null || __instance.Visibility != ModelVisibility.Visible)
+                return;
+
+            if (!TryGetPortraitMaterial(model, out var material))
+                return;
+
+            var portrait = GetPortraitNode(__instance, model);
+            if (portrait == null)
+                return;
+
+            portrait.Material = material;
+        }
+
+        private static TextureRect? GetPortraitNode(NCard card, CardModel model)
+        {
+            var path = model.Rarity == CardRarity.Ancient ? "%AncientPortrait" : "%Portrait";
+            return card.GetNodeOrNull<TextureRect>(path);
+        }
+
+        private static bool TryGetPortraitMaterial(CardModel card, out Material material)
+        {
+            material = null!;
+            if (!ContentAssetOverridePatchHelper.TryUseDirectMaterialOverride<IModCardPortraitMaterialOverride>(
+                    card, ref material, static o => o.CustomPortraitMaterial))
+                return true;
+
+            if (ExternalCardMaterialOverrideRegistry.TryGetPortraitMaterial(card, out material))
+                return true;
+
+            if (!ModCharacterOwnedVisualOverrideHelper.TryCardPortraitMaterial(card, ref material))
+                return true;
+
+            return !ContentAssetOverridePatchHelper.TryUseMaterialOverride<IModCardAssetOverrides>(
+                card,
+                ref material,
+                static o => o.CustomPortraitMaterialPath,
+                nameof(IModCardAssetOverrides.CustomPortraitMaterialPath));
         }
     }
 
@@ -2395,11 +2658,18 @@ namespace STS2RitsuLib.Scaffolding.Content.Patches
                 return true;
 
             var path = overrides.CustomVfxScenePath;
-            if (string.IsNullOrWhiteSpace(path) ||
-                !AssetPathDiagnostics.Exists(path, __instance, nameof(IModEventAssetOverrides.CustomVfxScenePath)))
+            if (string.IsNullOrWhiteSpace(path))
                 return true;
 
-            __result = PreloadManager.Cache.GetScene(path).Instantiate<Node2D>();
+            var scene = ContentAssetOverridePatchHelper.ResolveScene(path);
+            if (scene == null)
+            {
+                ContentAssetOverridePatchHelper.WarnOverrideUnavailable(__instance,
+                    nameof(IModEventAssetOverrides.CustomVfxScenePath), path, nameof(PackedScene));
+                return true;
+            }
+
+            __result = scene.Instantiate<Node2D>();
             return false;
         }
     }

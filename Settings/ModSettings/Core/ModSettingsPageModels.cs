@@ -54,10 +54,10 @@ namespace STS2RitsuLib.Settings
             IReadOnlyList<ModSettingsSection> sections,
             Func<bool>? visibleWhen = null,
             Func<bool>? enabledWhen = null,
-            ModSettingsMenuCapabilities menuCapabilities = ModSettingsMenuCapabilities.Copy |
-                                                           ModSettingsMenuCapabilities.Paste,
+            ModSettingsMenuCapabilities menuCapabilities = ModSettingsMenuCapabilities.All,
             ModSettingsHostSurface visibleOnHostSurfaces = ModSettingsHostSurface.All,
-            ModSettingsHostSurface readOnlyOnHostSurfaces = ModSettingsHostSurface.None)
+            ModSettingsHostSurface readOnlyOnHostSurfaces = ModSettingsHostSurface.None,
+            bool sidebarVisibleOnlyWhenActive = false)
         {
             ModId = modId;
             Id = id;
@@ -71,6 +71,7 @@ namespace STS2RitsuLib.Settings
             MenuCapabilities = menuCapabilities;
             VisibleOnHostSurfaces = visibleOnHostSurfaces;
             ReadOnlyOnHostSurfaces = readOnlyOnHostSurfaces;
+            SidebarVisibleOnlyWhenActive = sidebarVisibleOnlyWhenActive;
         }
 
         /// <summary>
@@ -151,6 +152,13 @@ namespace STS2RitsuLib.Settings
         ///     此页面上的交互控件被强制只读的宿主 surface（变暗且不写入）。
         /// </summary>
         public ModSettingsHostSurface ReadOnlyOnHostSurfaces { get; }
+
+        /// <summary>
+        ///     When true, this page's sidebar row is shown only while the selected page is this page or one of its
+        ///     descendants.
+        ///     为 true 时，仅当当前选中页面是此页面或它的子页面时，才显示此页面的侧边栏行。
+        /// </summary>
+        public bool SidebarVisibleOnlyWhenActive { get; }
     }
 
     /// <summary>
@@ -168,8 +176,7 @@ namespace STS2RitsuLib.Settings
             IReadOnlyList<ModSettingsEntryDefinition> entries,
             Func<bool>? visibleWhen = null,
             Func<bool>? enabledWhen = null,
-            ModSettingsMenuCapabilities menuCapabilities = ModSettingsMenuCapabilities.Copy |
-                                                           ModSettingsMenuCapabilities.Paste,
+            ModSettingsMenuCapabilities menuCapabilities = ModSettingsMenuCapabilities.All,
             ModSettingsHostSurface visibleOnHostSurfaces = ModSettingsHostSurface.All,
             ModSettingsHostSurface readOnlyOnHostSurfaces = ModSettingsHostSurface.None)
         {

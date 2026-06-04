@@ -1,4 +1,5 @@
 using Godot;
+using STS2RitsuLib.Utils;
 
 namespace STS2RitsuLib.Settings
 {
@@ -7,17 +8,7 @@ namespace STS2RitsuLib.Settings
         public static async Task AwaitRitsuProcessFrame(this Node node, CancellationToken ct = default)
         {
             ct.ThrowIfCancellationRequested();
-
-            var tree = node.GetTree();
-            if (tree == null)
-            {
-                await Task.Yield();
-                ct.ThrowIfCancellationRequested();
-                return;
-            }
-
-            await tree.ToSignal(tree, SceneTree.SignalName.ProcessFrame);
-            ct.ThrowIfCancellationRequested();
+            await RitsuGodotAwaitSafety.AwaitProcessFrameAsync(node.GetTree(), node, ct);
         }
     }
 }

@@ -162,7 +162,7 @@ namespace STS2RitsuLib.Audio
             }
             catch (Exception ex)
             {
-                RitsuLibFramework.Logger.Error($"[Audio] FMOD play file: {ex.Message}");
+                RitsuLibFramework.Logger.ErrorNoTrace($"[Audio] FMOD play file: {ex.Message}");
                 return false;
             }
         }
@@ -195,7 +195,7 @@ namespace STS2RitsuLib.Audio
             resolvedPath = string.Empty;
             if (string.IsNullOrWhiteSpace(path))
             {
-                RitsuLibFramework.Logger.Error("[Audio] FMOD file playback requires a non-empty path.");
+                RitsuLibFramework.Logger.ErrorNoTrace("[Audio] FMOD file playback requires a non-empty path.");
                 return false;
             }
 
@@ -204,12 +204,13 @@ namespace STS2RitsuLib.Audio
                 resolvedPath = ProjectSettings.GlobalizePath(path);
                 if (!Path.IsPathRooted(resolvedPath))
                 {
-                    RitsuLibFramework.Logger.Error($"[Audio] FMOD file playback requires an absolute path: {path}");
+                    RitsuLibFramework.Logger.ErrorNoTrace(
+                        $"[Audio] FMOD file playback requires an absolute path: {path}");
                     return false;
                 }
 
                 if (File.Exists(resolvedPath)) return true;
-                RitsuLibFramework.Logger.Error($"[Audio] FMOD file playback file not found: {resolvedPath}");
+                RitsuLibFramework.Logger.ErrorNoTrace($"[Audio] FMOD file playback file not found: {resolvedPath}");
                 return false;
             }
 
@@ -230,19 +231,19 @@ namespace STS2RitsuLib.Audio
                     return false;
                 }
 
-                RitsuLibFramework.Logger.Error($"[Audio] FMOD file playback file not found: {path}");
+                RitsuLibFramework.Logger.ErrorNoTrace($"[Audio] FMOD file playback file not found: {path}");
                 return false;
             }
 
             resolvedPath = path;
             if (!Path.IsPathRooted(resolvedPath))
             {
-                RitsuLibFramework.Logger.Error($"[Audio] FMOD file playback requires an absolute path: {path}");
+                RitsuLibFramework.Logger.ErrorNoTrace($"[Audio] FMOD file playback requires an absolute path: {path}");
                 return false;
             }
 
             if (File.Exists(resolvedPath)) return true;
-            RitsuLibFramework.Logger.Error($"[Audio] FMOD file playback file not found: {resolvedPath}");
+            RitsuLibFramework.Logger.ErrorNoTrace($"[Audio] FMOD file playback file not found: {resolvedPath}");
             return false;
         }
 

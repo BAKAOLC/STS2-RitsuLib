@@ -12,6 +12,7 @@ using MegaCrit.Sts2.Core.Nodes.Potions;
 using MegaCrit.Sts2.Core.TestSupport;
 using STS2RitsuLib.Diagnostics.CardExport;
 using STS2RitsuLib.Settings;
+using STS2RitsuLib.Utils;
 
 namespace STS2RitsuLib.Diagnostics.CompendiumExport
 {
@@ -152,7 +153,7 @@ namespace STS2RitsuLib.Diagnostics.CompendiumExport
             {
                 progressUi = CompendiumPngExportProgressOverlay.Attach(NGame.Instance, Math.Max(1, steps), title);
                 progressUi.SetProgress(0, null);
-                await tree.ToSignal(tree, SceneTree.SignalName.ProcessFrame);
+                await RitsuGodotAwaitSafety.AwaitProcessFrameAsync(tree, owner: progressUi);
 
                 var done = 0;
                 var saved = 0;
@@ -223,7 +224,7 @@ namespace STS2RitsuLib.Diagnostics.CompendiumExport
                 }
 
                 progressUi.SetProgress(Math.Max(1, steps), null);
-                await tree.ToSignal(tree, SceneTree.SignalName.ProcessFrame);
+                await RitsuGodotAwaitSafety.AwaitProcessFrameAsync(tree, owner: progressUi);
                 log?.Invoke(
                     userStopped
                         ? ModSettingsLocalization.Get("ritsulib.compendiumPngExport.stopped", "Export stopped by user.")
@@ -238,8 +239,7 @@ namespace STS2RitsuLib.Diagnostics.CompendiumExport
 
         private static async Task WaitMainThreadFrames(SceneTree tree, int count)
         {
-            for (var i = 0; i < count; i++)
-                await tree.ToSignal(tree, SceneTree.SignalName.ProcessFrame);
+            await RitsuGodotAwaitSafety.AwaitProcessFramesAsync(tree, count);
         }
 
         private static async Task<bool> TryCaptureRelicWithRetriesAsync(SceneTree tree, RelicModel relic, string path,
@@ -247,7 +247,7 @@ namespace STS2RitsuLib.Diagnostics.CompendiumExport
         {
             for (var attempt = 1; attempt <= MaxCaptureAttemptsPerFile; attempt++)
             {
-                var prefix = MaxCaptureAttemptsPerFile > 1 ? $"[{attempt}/{MaxCaptureAttemptsPerFile}] " : null;
+                var prefix = $"[{attempt}/{MaxCaptureAttemptsPerFile}] ";
                 if (await TryCaptureRelicAsync(tree, relic, path, scale, includeRelicHover, log, prefix, fileLabel))
                     return true;
                 if (attempt >= MaxCaptureAttemptsPerFile)
@@ -266,7 +266,7 @@ namespace STS2RitsuLib.Diagnostics.CompendiumExport
         {
             for (var attempt = 1; attempt <= MaxCaptureAttemptsPerFile; attempt++)
             {
-                var prefix = MaxCaptureAttemptsPerFile > 1 ? $"[{attempt}/{MaxCaptureAttemptsPerFile}] " : null;
+                var prefix = $"[{attempt}/{MaxCaptureAttemptsPerFile}] ";
                 if (await TryCapturePotionAsync(tree, potion, path, scale, log, prefix, fileLabel))
                     return true;
                 if (attempt >= MaxCaptureAttemptsPerFile)

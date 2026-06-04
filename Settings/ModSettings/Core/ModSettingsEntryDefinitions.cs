@@ -29,6 +29,12 @@ namespace STS2RitsuLib.Settings
         public ModSettingsMenuCapabilities MenuCapabilities { get; internal set; } = ModSettingsMenuCapabilities.All;
 
         /// <summary>
+        ///     Host surfaces where this entry's interactive controls are forced read-only.
+        ///     此条目的交互控件被强制只读的宿主 surface。
+        /// </summary>
+        public ModSettingsHostSurface ReadOnlyOnHostSurfaces { get; internal set; } = ModSettingsHostSurface.None;
+
+        /// <summary>
         ///     Unique entry id within its section (used for chrome clipboard and anchors).
         ///     section 内唯一的条目 id（用于 chrome 剪贴板和锚点）。
         /// </summary>
@@ -59,6 +65,8 @@ namespace STS2RitsuLib.Settings
         /// </summary>
         public virtual Func<bool>? EnabledPredicate => null;
 
+        internal virtual bool CanResetToDefault => false;
+
         internal abstract Control CreateControl(ModSettingsUiContext context);
 
         internal virtual void CollectChromeBindingSnapshots(Dictionary<string, ModSettingsChromeBindingSnapshot> target)
@@ -69,6 +77,27 @@ namespace STS2RitsuLib.Settings
             IModSettingsUiActionHost host)
         {
             return false;
+        }
+
+        internal virtual bool TryResetToDefault(IModSettingsUiActionHost host)
+        {
+            return false;
+        }
+
+        private protected static bool BindingCanResetToDefault<TValue>(IModSettingsValueBinding<TValue> binding)
+        {
+            return binding is IDefaultModSettingsValueBinding<TValue>;
+        }
+
+        private protected static bool TryResetBindingToDefault<TValue>(IModSettingsValueBinding<TValue> binding,
+            IModSettingsUiActionHost host)
+        {
+            if (binding is not IDefaultModSettingsValueBinding<TValue> defaults)
+                return false;
+
+            binding.Write(defaults.CreateDefaultValue());
+            host.MarkDirty(binding);
+            return true;
         }
     }
 
@@ -93,6 +122,8 @@ namespace STS2RitsuLib.Settings
         /// <inheritdoc />
         public override Func<bool>? VisibilityPredicate => visibilityPredicate;
 
+        internal override bool CanResetToDefault => BindingCanResetToDefault(Binding);
+
         internal override void CollectChromeBindingSnapshots(
             Dictionary<string, ModSettingsChromeBindingSnapshot> target)
         {
@@ -113,6 +144,11 @@ namespace STS2RitsuLib.Settings
         internal override Control CreateControl(ModSettingsUiContext context)
         {
             return ModSettingsUiFactory.CreateToggleEntry(context, this);
+        }
+
+        internal override bool TryResetToDefault(IModSettingsUiActionHost host)
+        {
+            return TryResetBindingToDefault(Binding, host);
         }
     }
 
@@ -161,6 +197,8 @@ namespace STS2RitsuLib.Settings
         /// </summary>
         public Func<double, string>? ValueFormatter { get; } = valueFormatter;
 
+        internal override bool CanResetToDefault => BindingCanResetToDefault(Binding);
+
         internal override void CollectChromeBindingSnapshots(
             Dictionary<string, ModSettingsChromeBindingSnapshot> target)
         {
@@ -181,6 +219,11 @@ namespace STS2RitsuLib.Settings
         internal override Control CreateControl(ModSettingsUiContext context)
         {
             return ModSettingsUiFactory.CreateSliderEntry(context, this);
+        }
+
+        internal override bool TryResetToDefault(IModSettingsUiActionHost host)
+        {
+            return TryResetBindingToDefault(Binding, host);
         }
     }
 
@@ -235,6 +278,8 @@ namespace STS2RitsuLib.Settings
         /// </summary>
         public Func<float, string>? ValueFormatter { get; } = valueFormatter;
 
+        internal override bool CanResetToDefault => BindingCanResetToDefault(Binding);
+
         internal override void CollectChromeBindingSnapshots(
             Dictionary<string, ModSettingsChromeBindingSnapshot> target)
         {
@@ -255,6 +300,11 @@ namespace STS2RitsuLib.Settings
         internal override Control CreateControl(ModSettingsUiContext context)
         {
             return ModSettingsUiFactory.CreateFloatSliderEntry(context, this);
+        }
+
+        internal override bool TryResetToDefault(IModSettingsUiActionHost host)
+        {
+            return TryResetBindingToDefault(Binding, host);
         }
     }
 
@@ -289,6 +339,8 @@ namespace STS2RitsuLib.Settings
         /// </summary>
         public ModSettingsChoicePresentation Presentation { get; } = presentation;
 
+        internal override bool CanResetToDefault => BindingCanResetToDefault(Binding);
+
         internal override void CollectChromeBindingSnapshots(
             Dictionary<string, ModSettingsChromeBindingSnapshot> target)
         {
@@ -309,6 +361,11 @@ namespace STS2RitsuLib.Settings
         internal override Control CreateControl(ModSettingsUiContext context)
         {
             return ModSettingsUiFactory.CreateChoiceEntry(context, this);
+        }
+
+        internal override bool TryResetToDefault(IModSettingsUiActionHost host)
+        {
+            return TryResetBindingToDefault(Binding, host);
         }
     }
 
@@ -370,6 +427,8 @@ namespace STS2RitsuLib.Settings
         /// </summary>
         public bool EditIntensity { get; }
 
+        internal override bool CanResetToDefault => BindingCanResetToDefault(Binding);
+
         internal override void CollectChromeBindingSnapshots(
             Dictionary<string, ModSettingsChromeBindingSnapshot> target)
         {
@@ -390,6 +449,11 @@ namespace STS2RitsuLib.Settings
         internal override Control CreateControl(ModSettingsUiContext context)
         {
             return ModSettingsUiFactory.CreateColorEntry(context, this);
+        }
+
+        internal override bool TryResetToDefault(IModSettingsUiActionHost host)
+        {
+            return TryResetBindingToDefault(Binding, host);
         }
     }
 
@@ -423,6 +487,8 @@ namespace STS2RitsuLib.Settings
         /// </summary>
         public int? MaxLength { get; } = maxLength;
 
+        internal override bool CanResetToDefault => BindingCanResetToDefault(Binding);
+
         internal override void CollectChromeBindingSnapshots(
             Dictionary<string, ModSettingsChromeBindingSnapshot> target)
         {
@@ -438,6 +504,11 @@ namespace STS2RitsuLib.Settings
             Binding.Write(v);
             host.MarkDirty(Binding);
             return true;
+        }
+
+        internal override bool TryResetToDefault(IModSettingsUiActionHost host)
+        {
+            return TryResetBindingToDefault(Binding, host);
         }
     }
 
@@ -525,6 +596,8 @@ namespace STS2RitsuLib.Settings
         /// </summary>
         public bool DistinguishModifierSides { get; } = distinguishModifierSides;
 
+        internal override bool CanResetToDefault => BindingCanResetToDefault(Binding);
+
         internal override void CollectChromeBindingSnapshots(
             Dictionary<string, ModSettingsChromeBindingSnapshot> target)
         {
@@ -545,6 +618,11 @@ namespace STS2RitsuLib.Settings
         internal override Control CreateControl(ModSettingsUiContext context)
         {
             return ModSettingsUiFactory.CreateKeyBindingEntry(context, this);
+        }
+
+        internal override bool TryResetToDefault(IModSettingsUiActionHost host)
+        {
+            return TryResetBindingToDefault(Binding, host);
         }
     }
 
@@ -589,6 +667,8 @@ namespace STS2RitsuLib.Settings
         /// </summary>
         public bool DistinguishModifierSides { get; } = distinguishModifierSides;
 
+        internal override bool CanResetToDefault => BindingCanResetToDefault(Binding);
+
         internal override void CollectChromeBindingSnapshots(
             Dictionary<string, ModSettingsChromeBindingSnapshot> target)
         {
@@ -609,6 +689,11 @@ namespace STS2RitsuLib.Settings
         internal override Control CreateControl(ModSettingsUiContext context)
         {
             return ModSettingsUiFactory.CreateMultiKeyBindingEntry(context, this);
+        }
+
+        internal override bool TryResetToDefault(IModSettingsUiActionHost host)
+        {
+            return TryResetBindingToDefault(Binding, host);
         }
     }
 

@@ -89,7 +89,9 @@ namespace STS2RitsuLib.Telemetry.Diagnostics
                 RitsuLibFramework.Logger.Info(
                     $"[Telemetry] Captured exception diagnostics from '{source}' for {capturedApplicants.Count} authorized applicant(s): {exception.GetType().Name}.");
                 foreach (var applicantId in capturedApplicants)
-                    _ = TelemetryQueue.FlushApplicantAsync(applicantId);
+                    TelemetryTaskRunner.Forget(
+                        TelemetryQueue.FlushApplicantAsync(applicantId),
+                        "flush_applicant_after_diagnostics");
             }
             catch (Exception captureException)
             {
@@ -115,6 +117,7 @@ namespace STS2RitsuLib.Telemetry.Diagnostics
             TaskScheduler.UnobservedTaskException += (_, args) =>
             {
                 CaptureExceptionForAuthorizedApplicants(args.Exception, "dotnet_unobserved_task_exception");
+                args.SetObserved();
             };
         }
 

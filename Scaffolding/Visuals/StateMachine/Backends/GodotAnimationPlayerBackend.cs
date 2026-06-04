@@ -6,7 +6,7 @@ namespace STS2RitsuLib.Scaffolding.Visuals.StateMachine.Backends
     ///     <see cref="IAnimationBackend" /> driver for Godot <see cref="AnimationPlayer" />.
     ///     Godot <see cref="AnimationPlayer" /> 的 <see cref="IAnimationBackend" /> 驱动。
     /// </summary>
-    public sealed class GodotAnimationPlayerBackend : IAnimationBackend
+    public sealed class GodotAnimationPlayerBackend : IAnimationBackend, IAnimationTimingProvider
     {
         private readonly Callable _finishedCallable;
         private readonly AnimationPlayer _player;
@@ -98,6 +98,36 @@ namespace STS2RitsuLib.Scaffolding.Visuals.StateMachine.Backends
             }
         }
 
+        /// <inheritdoc />
+        public bool TryGetAnimationDuration(string id, out float seconds)
+        {
+            seconds = 0f;
+            if (!HasAnimation(id))
+                return false;
+
+            var animation = _player.GetAnimation(id);
+            if (animation == null)
+                return false;
+
+            seconds = ScaleDuration(animation.Length);
+            return seconds > 0f;
+        }
+
+        /// <inheritdoc />
+        public bool TryGetCurrentAnimationRemaining(out float seconds)
+        {
+            seconds = 0f;
+            var id = _currentId;
+            if (string.IsNullOrWhiteSpace(id))
+                id = _player.CurrentAnimation;
+
+            if (string.IsNullOrWhiteSpace(id) || !TryGetAnimationDuration(id, out var duration))
+                return false;
+
+            seconds = Math.Max(0f, duration - ScaleDuration((float)_player.CurrentAnimationPosition));
+            return true;
+        }
+
         /// <summary>
         ///     Detaches the signal connections. Safe to call more than once.
         ///     断开信号连接。可安全多次调用。
@@ -125,6 +155,15 @@ namespace STS2RitsuLib.Scaffolding.Visuals.StateMachine.Backends
                 return;
             var name = animName.ToString();
             Completed?.Invoke(name);
+        }
+
+        private float ScaleDuration(float seconds)
+        {
+            if (!float.IsFinite(seconds) || seconds <= 0f)
+                return 0f;
+
+            var speed = Math.Abs(_player.SpeedScale);
+            return speed <= 0f ? seconds : seconds / speed;
         }
     }
 }

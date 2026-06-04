@@ -4,34 +4,41 @@ namespace STS2RitsuLib.Utils
 {
     internal static class AssetPathDiagnostics
     {
-        private static readonly Lock SyncRoot = new();
-        private static readonly HashSet<string> WarnedMissingPaths = [];
+        private static readonly Lock StartupMissingPathCacheGate = new();
+        private static readonly HashSet<string> StartupMissingPathCache = [];
+        private static bool _startupMissingPathCacheEnabled = true;
+        private static bool _startupMissingPathCacheShutdownRegistered;
 
         internal static bool Exists(string path, object owner, string memberName)
         {
+            var ownerLabel = DescribeOwner(owner);
+            var cacheKey = BuildMissingPathCacheKey(ownerLabel, memberName, path);
+
+            if (IsCachedStartupMissingPath(cacheKey))
+                return false;
+
             if (GodotResourcePath.ResourceExists(path))
                 return true;
 
-            WarnMissingPathOnce(owner, memberName, path);
+            if (ShouldWarnMissingPath(cacheKey))
+                WarnMissingPath(ownerLabel, memberName, path);
+
             return false;
         }
 
         /// <summary>
-        ///     Logs once when a mod character asset profile supplies a non-empty path that does not resolve
+        ///     Logs every time a mod character asset profile supplies a non-empty path that does not resolve
         ///     (empty overrides are ignored by callers).
-        ///     当 mod 角色资源档案提供了无法解析的非空路径时记录一次日志
+        ///     每当 mod 角色资源档案提供了无法解析的非空路径时都记录日志
         ///     （空覆盖值会被调用方忽略）。
         /// </summary>
         internal static void WarnModCharacterAssetOverrideMissing(object owner, string memberName, string path)
         {
             var ownerLabel = DescribeOwner(owner);
-            var warnKey = $"mod_char_override|{ownerLabel}|{memberName}|{path}";
+            var cacheKey = BuildMissingPathCacheKey(ownerLabel, memberName, path);
 
-            lock (SyncRoot)
-            {
-                if (!WarnedMissingPaths.Add(warnKey))
-                    return;
-            }
+            if (!ShouldWarnMissingPath(cacheKey))
+                return;
 
             RitsuLibFramework.Logger.Warn(
                 $"[Assets] Mod character asset override path not found for {ownerLabel}.{memberName}: '{path}'. " +
@@ -55,19 +62,60 @@ namespace STS2RitsuLib.Utils
             return [.. results];
         }
 
-        private static void WarnMissingPathOnce(object owner, string memberName, string path)
+        private static void WarnMissingPath(string ownerLabel, string memberName, string path)
         {
-            var ownerLabel = DescribeOwner(owner);
-            var warnKey = $"{ownerLabel}|{memberName}|{path}";
-
-            lock (SyncRoot)
-            {
-                if (!WarnedMissingPaths.Add(warnKey))
-                    return;
-            }
-
             RitsuLibFramework.Logger.Warn(
                 $"[Assets] Missing resource path for {ownerLabel}.{memberName}: '{path}'. Falling back to the base asset.");
+        }
+
+        private static bool IsCachedStartupMissingPath(string cacheKey)
+        {
+            EnsureStartupMissingPathCacheShutdownRegistered();
+
+            lock (StartupMissingPathCacheGate)
+            {
+                return _startupMissingPathCacheEnabled && StartupMissingPathCache.Contains(cacheKey);
+            }
+        }
+
+        private static bool ShouldWarnMissingPath(string cacheKey)
+        {
+            EnsureStartupMissingPathCacheShutdownRegistered();
+
+            lock (StartupMissingPathCacheGate)
+            {
+                return !_startupMissingPathCacheEnabled || StartupMissingPathCache.Add(cacheKey);
+            }
+        }
+
+        private static void EnsureStartupMissingPathCacheShutdownRegistered()
+        {
+            if (_startupMissingPathCacheShutdownRegistered)
+                return;
+
+            lock (StartupMissingPathCacheGate)
+            {
+                if (_startupMissingPathCacheShutdownRegistered)
+                    return;
+
+                _startupMissingPathCacheShutdownRegistered = true;
+            }
+
+            RitsuLibFramework.SubscribeLifecycleOnce<MainMenuReadyEvent>(_ => DisableStartupMissingPathCache());
+        }
+
+        private static void DisableStartupMissingPathCache()
+        {
+            lock (StartupMissingPathCacheGate)
+            {
+                _startupMissingPathCacheEnabled = false;
+                StartupMissingPathCache.Clear();
+            }
+        }
+
+        private static string BuildMissingPathCacheKey(string ownerLabel, string memberName, string path)
+        {
+            return $"{ownerLabel}\n{memberName}\n{path}";
         }
 
         private static string DescribeOwner(object owner)

@@ -1,4 +1,5 @@
 using MegaCrit.Sts2.Core.Entities.Cards;
+using MegaCrit.Sts2.Core.Entities.Creatures;
 using STS2RitsuLib.Content;
 using STS2RitsuLib.Utils;
 
@@ -13,8 +14,6 @@ namespace STS2RitsuLib.Combat.CardTargeting
     /// </summary>
     public static class CustomTargetType
     {
-        private static readonly DynamicEnumValueMinter<TargetType> TargetTypeMinter = new();
-
         /// <summary>
         ///     Multi-target selection that displays reticles over all living creatures in the combat room.
         ///     This is a visual-only targeting mode: the card's play action still runs once with <c>null</c> target
@@ -105,7 +104,7 @@ namespace STS2RitsuLib.Combat.CardTargeting
         /// </summary>
         public static bool IsCustomSingleTargetType(TargetType type)
         {
-            return CustomTargetTypeRegistry.IsCustomSingleTargetType(type);
+            return CustomTargetTypeResolver.IsCustomSingleTargetType(type);
         }
 
         /// <summary>
@@ -114,13 +113,79 @@ namespace STS2RitsuLib.Combat.CardTargeting
         /// </summary>
         public static bool IsCustomMultiTargetType(TargetType type)
         {
-            return CustomTargetTypeRegistry.IsCustomMultiTargetType(type);
+            return CustomTargetTypeResolver.IsCustomMultiTargetType(type);
+        }
+
+        /// <summary>
+        ///     Registers a mod-scoped single-target <see cref="TargetType" /> and returns the deterministic enum value.
+        ///     The returned value is stable for the same <paramref name="modId" /> and <paramref name="localStem" />.
+        ///     注册一个 mod 作用域的单体目标 <see cref="TargetType" />，并返回确定性的枚举值。
+        ///     相同 <paramref name="modId" /> 与 <paramref name="localStem" /> 会得到稳定相同的返回值。
+        /// </summary>
+        /// <param name="modId">
+        ///     Owning mod id.
+        ///     所属 mod ID。
+        /// </param>
+        /// <param name="localStem">
+        ///     Stable local id stem, normalized into <c>MODID_TARGETTYPE_STEM</c>.
+        ///     稳定的本地 ID 词干，会规范化为 <c>MODID_TARGETTYPE_STEM</c>。
+        /// </param>
+        /// <param name="canTarget">
+        ///     Predicate used by mouse/controller targeting and card validation for candidate creatures.
+        ///     鼠标 / 手柄选目标与卡牌目标校验使用的候选生物谓词。
+        /// </param>
+        public static TargetType RegisterSingleTargetType(
+            string modId,
+            string localStem,
+            Func<Creature, bool> canTarget)
+        {
+            ArgumentException.ThrowIfNullOrWhiteSpace(modId);
+            ArgumentException.ThrowIfNullOrWhiteSpace(localStem);
+            ArgumentNullException.ThrowIfNull(canTarget);
+
+            var (_, id, type) = DynamicEnumValueRegistry<TargetType>.RegisterOwned(modId, localStem);
+            CustomTargetTypeRegistry.RegisterSingleTargetType(type, id, canTarget);
+            return type;
+        }
+
+        /// <summary>
+        ///     Registers a mod-scoped multi-target <see cref="TargetType" /> and returns the deterministic enum value.
+        ///     Cards using this target type play once with a null selected target; use
+        ///     <c>CardModelTargetingExtensions.GetTargets(...)</c> to resolve the affected creatures in card logic.
+        ///     注册一个 mod 作用域的群体目标 <see cref="TargetType" />，并返回确定性的枚举值。
+        ///     使用此目标类型的卡牌会以 null 已选目标打出一次；卡牌逻辑中可用
+        ///     <c>CardModelTargetingExtensions.GetTargets(...)</c> 解析实际影响的生物。
+        /// </summary>
+        /// <param name="modId">
+        ///     Owning mod id.
+        ///     所属 mod ID。
+        /// </param>
+        /// <param name="localStem">
+        ///     Stable local id stem, normalized into <c>MODID_TARGETTYPE_STEM</c>.
+        ///     稳定的本地 ID 词干，会规范化为 <c>MODID_TARGETTYPE_STEM</c>。
+        /// </param>
+        /// <param name="includeTarget">
+        ///     Predicate used for multi-target reticles and target resolution.
+        ///     群体目标指示器与目标解析使用的谓词。
+        /// </param>
+        public static TargetType RegisterMultiTargetType(
+            string modId,
+            string localStem,
+            Func<Creature, bool> includeTarget)
+        {
+            ArgumentException.ThrowIfNullOrWhiteSpace(modId);
+            ArgumentException.ThrowIfNullOrWhiteSpace(localStem);
+            ArgumentNullException.ThrowIfNull(includeTarget);
+
+            var (_, id, type) = DynamicEnumValueRegistry<TargetType>.RegisterOwned(modId, localStem);
+            CustomTargetTypeRegistry.RegisterMultiTargetType(type, id, includeTarget);
+            return type;
         }
 
         private static TargetType Mint(string localStem)
         {
-            var id = ModContentRegistry.GetCompoundId(Const.ModId, "TARGETTYPE", localStem);
-            return TargetTypeMinter.Mint(id);
+            var id = ModContentRegistry.GetQualifiedTargetTypeId(Const.ModId, localStem);
+            return DynamicEnumValueRegistry<TargetType>.GetValue(id);
         }
     }
 }

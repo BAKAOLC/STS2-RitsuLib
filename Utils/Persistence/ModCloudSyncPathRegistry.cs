@@ -31,7 +31,7 @@ namespace STS2RitsuLib.Utils.Persistence
 
                     switch (slot.Scope)
                     {
-                        case SaveScope.RunSidecar or SaveScope.InMemory:
+                        case SaveScope.InMemory:
                             continue;
                         case SaveScope.Global:
                         {
@@ -69,7 +69,7 @@ namespace STS2RitsuLib.Utils.Persistence
                     }
                     else
                     {
-                        if (slot.Scope is SaveScope.RunSidecar or SaveScope.InMemory)
+                        if (slot.Scope == SaveScope.InMemory)
                             continue;
                         if (activeProfileId < 0)
                             continue;
