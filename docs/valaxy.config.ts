@@ -95,6 +95,8 @@ export default defineValaxyConfig<PressTheme.Config>({
           { text: 'nav.guide_patching', link: '/guide/patching-guide' },
           { text: 'nav.guide_fmod', link: '/guide/fmod-and-audio' },
           { text: 'nav.guide_shell_theme', link: '/guide/shell-theme' },
+          { text: 'nav.guide_debug_log_viewer', link: '/guide/debug-log-viewer' },
+          { text: 'nav.guide_update_checks', link: '/guide/update-checks' },
           { text: 'nav.guide_telemetry', link: '/guide/telemetry-backend' },
           { text: 'nav.guide_diagnostics', link: '/guide/diagnostics-and-compatibility' },
         ],
