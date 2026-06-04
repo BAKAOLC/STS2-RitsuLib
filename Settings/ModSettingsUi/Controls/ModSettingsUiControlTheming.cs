@@ -588,6 +588,34 @@ namespace STS2RitsuLib.Settings
         }
 
         /// <summary>
+        ///     Resolves the content gutter needed beside a themed settings scrollbar from the applied style.
+        ///     根据已应用的设置滚动条样式解析内容侧边距。
+        /// </summary>
+        public static int ResolveSettingsScrollContentRightGutter(ScrollContainer? container)
+        {
+            const string gutterToken = "components.scrollbar.layout.contentRightGutter";
+            const string sizeToken = "components.scrollbar.layout.size";
+            const string separationToken = "components.scrollbar.layout.scrollbarVSeparation";
+
+            var themedSize = RitsuShellThemeLayoutResolver.ResolveInt(sizeToken, 8);
+            var themedSeparation = RitsuShellThemeLayoutResolver.ResolveInt(separationToken, 0);
+            var themedGutter = RitsuShellThemeLayoutResolver.ResolveInt(gutterToken,
+                themedSize + themedSeparation);
+            var nonBarGutter = Mathf.Max(0, themedGutter - themedSize - themedSeparation);
+
+            if (container == null || !GodotObject.IsInstanceValid(container))
+                return themedGutter;
+
+            var actualSeparation = Mathf.Max(0, container.GetThemeConstant("scrollbar_v_separation"));
+            var actualSize = (float)themedSize;
+            var vScrollBar = container.GetVScrollBar();
+            if (GodotObject.IsInstanceValid(vScrollBar))
+                actualSize = Mathf.Max(actualSize, Mathf.Max(vScrollBar.CustomMinimumSize.X, vScrollBar.Size.X));
+
+            return Mathf.CeilToInt(Mathf.Max(0f, actualSize + actualSeparation + nonBarGutter));
+        }
+
+        /// <summary>
         ///     Applies the same scrollbar chrome as <see cref="ApplySettingsScrollContainerTheme" />, using
         ///     <c>components.dropdown.layout.scroll.barWidth</c> (fallback: global scrollbar width) and
         ///     <c>components.dropdown.layout.scroll.scrollbarVSeparation</c> (fallback: global separation).
