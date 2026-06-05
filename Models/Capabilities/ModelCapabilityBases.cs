@@ -148,10 +148,101 @@ namespace STS2RitsuLib.Models.Capabilities
     public abstract class PowerCapability : OwnerHookCapability<PowerModel>;
 
     /// <summary>
+    ///     Context passed after the owning orb's passive has triggered.
+    ///     所属充能球被动触发后传入的上下文。
+    /// </summary>
+    public readonly record struct OrbPassiveTriggerContext(
+        OrbModel Orb,
+        PlayerChoiceContext ChoiceContext,
+        Creature? Target);
+
+    /// <summary>
+    ///     Context passed after the owning orb's before-turn-end trigger method has run.
+    ///     所属充能球的回合结束前触发方法运行后传入的上下文。
+    /// </summary>
+    public readonly record struct OrbBeforeTurnEndTriggerContext(
+        OrbModel Orb,
+        PlayerChoiceContext ChoiceContext);
+
+    /// <summary>
+    ///     Context passed after the owning orb's after-turn-start trigger method has run.
+    ///     所属充能球的回合开始后触发方法运行后传入的上下文。
+    /// </summary>
+    public readonly record struct OrbAfterTurnStartTriggerContext(
+        OrbModel Orb,
+        PlayerChoiceContext ChoiceContext);
+
+    /// <summary>
+    ///     Context passed after the owning orb has been evoked.
+    ///     所属充能球被激发后传入的上下文。
+    /// </summary>
+    public readonly record struct OrbEvokeContext(
+        OrbModel Orb,
+        PlayerChoiceContext ChoiceContext,
+        IReadOnlyList<Creature> Targets);
+
+    /// <summary>
     ///     Capability base for orb-owned behavior.
     ///     充能球 owner 行为能力基类。
     /// </summary>
-    public abstract class OrbCapability : OwnerHookCapability<OrbModel>;
+    public abstract class OrbCapability : OwnerHookCapability<OrbModel>
+    {
+        internal Task NotifyOwnerOrbPassiveTriggered(OrbPassiveTriggerContext context)
+        {
+            return OnOwnerOrbPassiveTriggered(context);
+        }
+
+        internal Task NotifyOwnerOrbEvoked(OrbEvokeContext context)
+        {
+            return OnOwnerOrbEvoked(context);
+        }
+
+        internal Task NotifyOwnerOrbBeforeTurnEndTriggered(OrbBeforeTurnEndTriggerContext context)
+        {
+            return OnOwnerOrbBeforeTurnEndTriggered(context);
+        }
+
+        internal Task NotifyOwnerOrbAfterTurnStartTriggered(OrbAfterTurnStartTriggerContext context)
+        {
+            return OnOwnerOrbAfterTurnStartTriggered(context);
+        }
+
+        /// <summary>
+        ///     Called after this capability's owning orb passive has triggered.
+        ///     此能力所属充能球被动触发后调用。
+        /// </summary>
+        protected virtual Task OnOwnerOrbPassiveTriggered(OrbPassiveTriggerContext context)
+        {
+            return Task.CompletedTask;
+        }
+
+        /// <summary>
+        ///     Called after this capability's owning orb has been evoked.
+        ///     此能力所属充能球被激发后调用。
+        /// </summary>
+        protected virtual Task OnOwnerOrbEvoked(OrbEvokeContext context)
+        {
+            return Task.CompletedTask;
+        }
+
+        /// <summary>
+        ///     Called after this capability's owning orb before-turn-end trigger method has run.
+        ///     此能力所属充能球的回合结束前触发方法运行后调用。
+        /// </summary>
+        protected virtual Task OnOwnerOrbBeforeTurnEndTriggered(OrbBeforeTurnEndTriggerContext context)
+        {
+            return Task.CompletedTask;
+        }
+
+        /// <summary>
+        ///     Called after this capability's owning orb after-turn-start trigger method has run.
+        ///     此能力所属充能球的回合开始后触发方法运行后调用。
+        /// </summary>
+        protected virtual Task OnOwnerOrbAfterTurnStartTriggered(OrbAfterTurnStartTriggerContext context)
+        {
+            return Task.CompletedTask;
+        }
+    }
 
     /// <summary>
     ///     Capability base for enchantment-owned behavior.

@@ -100,17 +100,15 @@ namespace STS2RitsuLib.Audio.Patches
                 return [new(typeof(NRunMusicController), nameof(NRunMusicController.UpdateMusic))];
             }
 
-            // ReSharper disable InconsistentNaming
             /// <summary>
             ///     Mirrors vanilla track selection and bank loading, then skips the vanilla proxy for mapped tracks.
             ///     复现原版曲目选择和 bank 加载，然后对映射曲目跳过原版 proxy。
             /// </summary>
             public static bool Prefix(
-                    NRunMusicController __instance,
-                    IRunState ____runState,
-                    ref string ____currentTrack,
-                    Node ____proxy)
-                // ReSharper restore InconsistentNaming
+                NRunMusicController __instance,
+                IRunState ____runState,
+                ref string ____currentTrack,
+                Node ____proxy)
             {
                 if (ShouldUseVanilla())
                     return true;
@@ -160,13 +158,11 @@ namespace STS2RitsuLib.Audio.Patches
                     [new(typeof(NRunMusicController), nameof(NRunMusicController.PlayCustomMusic), [typeof(string)])];
             }
 
-            // ReSharper disable InconsistentNaming
             /// <summary>
             ///     Starts mapped custom BGM and skips the vanilla proxy for guids.txt-only paths.
             ///     播放映射的自定义 BGM，并对仅存在于 guids.txt 的路径跳过原版 proxy。
             /// </summary>
             public static bool Prefix(NRunMusicController __instance, string customMusic, Node ____proxy)
-                // ReSharper restore InconsistentNaming
             {
                 _ = __instance;
 
@@ -205,13 +201,11 @@ namespace STS2RitsuLib.Audio.Patches
                 return [new(typeof(NRunMusicController), nameof(NRunMusicController.StopCustomMusic))];
             }
 
-            // ReSharper disable InconsistentNaming
             /// <summary>
             ///     Restores the selected act track when it only exists in GUID mappings.
             ///     当选中的 act 曲目只存在于 GUID 映射时恢复该曲目。
             /// </summary>
             public static bool Prefix(NRunMusicController __instance, string ____currentTrack, Node ____proxy)
-                // ReSharper restore InconsistentNaming
             {
                 _ = __instance;
 
@@ -252,7 +246,6 @@ namespace STS2RitsuLib.Audio.Patches
                 return [new(typeof(NRunMusicController), nameof(NRunMusicController.StopMusic))];
             }
 
-            // ReSharper disable once InconsistentNaming
             /// <summary>
             ///     Releases mapped run-owned instances before vanilla unloads run audio.
             ///     在原版卸载 run 音频前释放 run 拥有的映射实例。
@@ -295,7 +288,6 @@ namespace STS2RitsuLib.Audio.Patches
                 ];
             }
 
-            // ReSharper disable once InconsistentNaming
             /// <summary>
             ///     Applies boss-progress parameters to the mapped run music instance.
             ///     将 boss 进度参数应用到映射的 run music 实例。
@@ -333,17 +325,15 @@ namespace STS2RitsuLib.Audio.Patches
                 return [new(typeof(NRunMusicController), nameof(NRunMusicController.UpdateAmbience))];
             }
 
-            // ReSharper disable InconsistentNaming
             /// <summary>
             ///     Mirrors vanilla ambience selection, then skips the vanilla proxy for mapped ambience.
             ///     复现原版 ambience 选择，然后对映射 ambience 跳过原版 proxy。
             /// </summary>
             public static bool Prefix(
-                    NRunMusicController __instance,
-                    IRunState ____runState,
-                    ref string ____currentAmbience,
-                    Node ____proxy)
-                // ReSharper restore InconsistentNaming
+                NRunMusicController __instance,
+                IRunState ____runState,
+                ref string ____currentAmbience,
+                Node ____proxy)
             {
                 _ = __instance;
 
@@ -393,7 +383,6 @@ namespace STS2RitsuLib.Audio.Patches
                 return [new(typeof(NRunMusicController), nameof(NRunMusicController.TriggerCampfireGoingOut))];
             }
 
-            // ReSharper disable once InconsistentNaming
             /// <summary>
             ///     Applies the campfire transition parameter to mapped ambience.
             ///     将营火转场参数应用到映射的 ambience。

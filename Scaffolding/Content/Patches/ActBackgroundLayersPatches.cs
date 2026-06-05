@@ -28,7 +28,6 @@ namespace STS2RitsuLib.Scaffolding.Content.Patches
             return [new(typeof(ActModel), nameof(ActModel.GenerateBackgroundAssets))];
         }
 
-        // ReSharper disable InconsistentNaming
         /// <summary>
         ///     When <see cref="IModActAssetOverrides.CustomBackgroundLayersDirectoryPath" /> is set and valid, builds layers
         ///     from that directory; main scene uses <see cref="ActModel.BackgroundScenePath" /> (including existing path patches).
@@ -36,7 +35,6 @@ namespace STS2RitsuLib.Scaffolding.Content.Patches
         ///     主场景使用 <see cref="ActModel.BackgroundScenePath" />（包括既有路径补丁）。
         /// </summary>
         public static bool Prefix(ActModel __instance, Rng rng, ref BackgroundAssets __result)
-            // ReSharper restore InconsistentNaming
         {
             if (__instance is not IModActAssetOverrides overrides)
                 return true;
@@ -96,13 +94,11 @@ namespace STS2RitsuLib.Scaffolding.Content.Patches
             return [new(typeof(ActModel), "AssetPaths", MethodType.Getter)];
         }
 
-        // ReSharper disable InconsistentNaming
         /// <summary>
         ///     Concatenates every layer scene path under the configured directory.
         ///     拼接已配置目录下的每个图层场景路径。
         /// </summary>
         public static void Postfix(ActModel __instance, ref IEnumerable<string> __result)
-            // ReSharper restore InconsistentNaming
         {
             if (__instance is not IModActAssetOverrides overrides)
                 return;

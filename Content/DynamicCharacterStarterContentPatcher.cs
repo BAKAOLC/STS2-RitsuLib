@@ -126,9 +126,7 @@ namespace STS2RitsuLib.Content
                    && declaringType.GetGenericTypeDefinition() == typeof(ModCharacterTemplate<,,>);
         }
 
-        // ReSharper disable InconsistentNaming
         private static void StartingDeckPostfix(CharacterModel __instance, ref IEnumerable<CardModel> __result)
-            // ReSharper restore InconsistentNaming
         {
             var extraTypes = ModContentRegistry.GetRegisteredCharacterStarterCards(__instance.GetType());
             if (extraTypes.Length == 0)
@@ -139,9 +137,7 @@ namespace STS2RitsuLib.Content
                 .ToList();
         }
 
-        // ReSharper disable InconsistentNaming
         private static void StartingRelicsPostfix(CharacterModel __instance, ref IReadOnlyList<RelicModel> __result)
-            // ReSharper restore InconsistentNaming
         {
             var extraTypes = ModContentRegistry.GetRegisteredCharacterStarterRelics(__instance.GetType());
             if (extraTypes.Length == 0)
@@ -152,9 +148,7 @@ namespace STS2RitsuLib.Content
                 .ToList();
         }
 
-        // ReSharper disable InconsistentNaming
         private static void StartingPotionsPostfix(CharacterModel __instance, ref IReadOnlyList<PotionModel> __result)
-            // ReSharper restore InconsistentNaming
         {
             var extraTypes = ModContentRegistry.GetRegisteredCharacterStarterPotions(__instance.GetType());
             if (extraTypes.Length == 0)

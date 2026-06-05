@@ -48,13 +48,11 @@ namespace STS2RitsuLib.Scaffolding.Content.Patches
             ];
         }
 
-        // ReSharper disable InconsistentNaming
         /// <summary>
         ///     Delegates to <see cref="ModBigEnergyIconHelper.TryOverridePath" /> to substitute a cached pool override.
         ///     委托给 <see cref="ModBigEnergyIconHelper.TryOverridePath" />，以替换为缓存的池覆盖。
         /// </summary>
         public static bool Prefix(string prefix, ref string __result)
-            // ReSharper restore InconsistentNaming
         {
             return ModBigEnergyIconHelper.TryOverridePath(prefix, ref __result);
         }

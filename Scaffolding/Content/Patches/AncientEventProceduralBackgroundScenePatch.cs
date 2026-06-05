@@ -31,14 +31,12 @@ namespace STS2RitsuLib.Scaffolding.Content.Patches
             return [new(typeof(EventModel), nameof(EventModel.CreateBackgroundScene))];
         }
 
-        // ReSharper disable InconsistentNaming
         /// <summary>
         ///     Short-circuits background scene load when the ancient uses procedural stage layers.
         ///     当远古事件使用程序化舞台图层时，跳过真实背景场景加载。
         /// </summary>
         [HarmonyPriority(Priority.First)]
         public static bool Prefix(EventModel __instance, ref PackedScene __result)
-            // ReSharper restore InconsistentNaming
         {
             if (__instance is not AncientEventModel)
                 return true;

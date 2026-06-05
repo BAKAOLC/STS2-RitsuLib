@@ -38,7 +38,6 @@ namespace STS2RitsuLib.Unlocks.Patches
             ];
         }
 
-        // ReSharper disable once InconsistentNaming
         /// <summary>
         ///     After an elite combat win, applies mod elite epoch handling when no dedicated check method exists.
         ///     精英战斗胜利后，在不存在专用检查方法时应用 mod 精英纪元处理。
@@ -57,17 +56,15 @@ namespace STS2RitsuLib.Unlocks.Patches
             EliteEpochModHandling.TryHandleModEliteEpoch(__instance, localPlayer);
         }
 
-        // ReSharper disable InconsistentNaming
         /// <summary>
         ///     Swallows expected vanilla argument exceptions after attempting mod elite epoch recovery.
         ///     尝试恢复 mod 精英纪元后，吞掉预期的原版参数异常。
         /// </summary>
         public static Exception? Finalizer(
-                Exception? __exception,
-                ProgressSaveManager __instance,
-                Player localPlayer,
-                CombatRoom room)
-            // ReSharper restore InconsistentNaming
+            Exception? __exception,
+            ProgressSaveManager __instance,
+            Player localPlayer,
+            CombatRoom room)
         {
             if (__exception == null)
                 return null;

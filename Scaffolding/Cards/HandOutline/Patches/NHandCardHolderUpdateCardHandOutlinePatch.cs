@@ -21,7 +21,6 @@ namespace STS2RitsuLib.Scaffolding.Cards.HandOutline.Patches
             return [new(typeof(NHandCardHolder), nameof(NHandCardHolder.UpdateCard), true)];
         }
 
-        // ReSharper disable once InconsistentNaming
         public static void Postfix(NHandCardHolder __instance)
         {
             if (!ModCardHandOutlinePatchHelper.TryGetRule(__instance, out var model, out var rule))

@@ -31,7 +31,6 @@ namespace STS2RitsuLib.Timeline.Patches
             ];
         }
 
-        // ReSharper disable once InconsistentNaming
         /// <summary>
         ///     Uses <see cref="ModTimelineEraIconRegistry" /> when configured; otherwise keeps vanilla icon resolution if
         ///     resources exist and hides icon when they do not.
@@ -109,7 +108,6 @@ namespace STS2RitsuLib.Timeline.Patches
             ];
         }
 
-        // ReSharper disable once InconsistentNaming
         /// <summary>
         ///     Ensures no empty placeholder icon remains visible when texture is absent.
         ///     确保 不会留下可见的空占位图标 当纹理缺失时。

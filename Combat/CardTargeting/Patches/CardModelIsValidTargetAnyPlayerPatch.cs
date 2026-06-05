@@ -27,9 +27,7 @@ namespace STS2RitsuLib.Combat.CardTargeting.Patches
             return [new(typeof(CardModel), nameof(CardModel.IsValidTarget), [typeof(Creature)])];
         }
 
-        // ReSharper disable InconsistentNaming
         public static bool Prefix(CardModel __instance, Creature? target, ref bool __result)
-            // ReSharper restore InconsistentNaming
         {
             if (__instance.TargetType != TargetType.AnyPlayer)
                 return true;

@@ -29,7 +29,6 @@ namespace STS2RitsuLib.CardPiles.Patches
             return [new(typeof(PileTypeExtensions), nameof(PileTypeExtensions.IsCombatPile))];
         }
 
-        // ReSharper disable InconsistentNaming
         /// <summary>
         ///     Promotes mod-pile results to <c>true</c> after vanilla / baselib ran.
         ///     在原版 / baselib 运行后，将 mod-pile 结果提升为 <c>true</c>。
@@ -45,6 +44,5 @@ namespace STS2RitsuLib.CardPiles.Patches
 
             __result = true;
         }
-        // ReSharper restore InconsistentNaming
     }
 }

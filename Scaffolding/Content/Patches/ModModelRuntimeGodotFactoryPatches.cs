@@ -40,7 +40,6 @@ namespace STS2RitsuLib.Scaffolding.Content.Patches
                 return [new(typeof(MonsterModel), nameof(MonsterModel.CreateVisuals))];
             }
 
-            // ReSharper disable InconsistentNaming
             /// <summary>
             ///     Uses <see cref="IModCreatureVisualsFactory.TryCreateCreatureVisuals" /> when it returns non-null,
             ///     falling back to the obsolete <see cref="IModMonsterCreatureVisualsFactory" /> for existing mods.
@@ -49,7 +48,6 @@ namespace STS2RitsuLib.Scaffolding.Content.Patches
             /// </summary>
             [HarmonyPriority(Priority.First)]
             public static bool Prefix(MonsterModel __instance, ref NCreatureVisuals __result)
-                // ReSharper restore InconsistentNaming
             {
                 NCreatureVisuals? created = null;
                 if (__instance is IModCreatureVisualsFactory factory)
@@ -90,7 +88,6 @@ namespace STS2RitsuLib.Scaffolding.Content.Patches
                 return [new(typeof(CharacterModel), nameof(CharacterModel.CreateVisuals))];
             }
 
-            // ReSharper disable InconsistentNaming
             /// <summary>
             ///     Uses <see cref="IModCreatureVisualsFactory.TryCreateCreatureVisuals" /> when it returns non-null,
             ///     falling back to the obsolete <see cref="IModCharacterCreatureVisualsFactory" /> for existing mods.
@@ -99,7 +96,6 @@ namespace STS2RitsuLib.Scaffolding.Content.Patches
             /// </summary>
             [HarmonyPriority(Priority.First)]
             public static bool Prefix(CharacterModel __instance, ref NCreatureVisuals __result)
-                // ReSharper restore InconsistentNaming
             {
                 NCreatureVisuals? created = null;
                 if (__instance is IModCreatureVisualsFactory factory)
@@ -142,7 +138,6 @@ namespace STS2RitsuLib.Scaffolding.Content.Patches
                 return [new(typeof(CharacterModel), nameof(CharacterModel.GenerateAnimator))];
             }
 
-            // ReSharper disable InconsistentNaming
             /// <summary>
             ///     Uses <see cref="IModCreatureAnimatorFactory.TryCreateCreatureAnimator" /> when it returns non-null,
             ///     falling back to the obsolete <see cref="IModCharacterCreatureAnimatorFactory" /> for existing mods.
@@ -151,7 +146,6 @@ namespace STS2RitsuLib.Scaffolding.Content.Patches
             /// </summary>
             [HarmonyPriority(Priority.First)]
             public static bool Prefix(CharacterModel __instance, MegaSprite controller, ref CreatureAnimator __result)
-                // ReSharper restore InconsistentNaming
             {
                 CreatureAnimator? created = null;
                 if (__instance is IModCreatureAnimatorFactory factory)
@@ -192,14 +186,12 @@ namespace STS2RitsuLib.Scaffolding.Content.Patches
                 return [new(typeof(MonsterModel), nameof(MonsterModel.GenerateAnimator))];
             }
 
-            // ReSharper disable InconsistentNaming
             /// <summary>
             ///     Uses <see cref="IModCreatureAnimatorFactory.TryCreateCreatureAnimator" /> when it returns non-null.
             ///     当 <see cref="IModCreatureAnimatorFactory.TryCreateCreatureAnimator" /> 返回非 null 时使用它。
             /// </summary>
             [HarmonyPriority(Priority.First)]
             public static bool Prefix(MonsterModel __instance, MegaSprite controller, ref CreatureAnimator __result)
-                // ReSharper restore InconsistentNaming
             {
                 if (__instance is not IModCreatureAnimatorFactory factory)
                     return true;
@@ -235,14 +227,12 @@ namespace STS2RitsuLib.Scaffolding.Content.Patches
                 return [new(typeof(EncounterModel), nameof(EncounterModel.CreateScene))];
             }
 
-            // ReSharper disable InconsistentNaming
             /// <summary>
             ///     Uses <see cref="IModEncounterCombatSceneFactory.TryCreateEncounterCombatScene" /> when it returns non-null.
             ///     当 <see cref="IModEncounterCombatSceneFactory.TryCreateEncounterCombatScene" /> 返回非 null 时使用它。
             /// </summary>
             [HarmonyPriority(Priority.First)]
             public static bool Prefix(EncounterModel __instance, ref Control __result)
-                // ReSharper restore InconsistentNaming
             {
                 if (__instance is not IModEncounterCombatSceneFactory factory)
                     return true;
@@ -278,14 +268,12 @@ namespace STS2RitsuLib.Scaffolding.Content.Patches
                 return [new(typeof(EventModel), nameof(EventModel.CreateScene))];
             }
 
-            // ReSharper disable InconsistentNaming
             /// <summary>
             ///     Uses <see cref="IModEventLayoutPackedSceneFactory.TryCreateLayoutPackedScene" /> when it returns non-null.
             ///     当 <see cref="IModEventLayoutPackedSceneFactory.TryCreateLayoutPackedScene" /> 返回非 null 时使用它。
             /// </summary>
             [HarmonyPriority(Priority.First)]
             public static bool Prefix(EventModel __instance, ref PackedScene __result)
-                // ReSharper restore InconsistentNaming
             {
                 if (__instance is not IModEventLayoutPackedSceneFactory factory)
                     return true;
@@ -323,7 +311,6 @@ namespace STS2RitsuLib.Scaffolding.Content.Patches
                 return [new(typeof(EventModel), nameof(EventModel.CreateBackgroundScene))];
             }
 
-            // ReSharper disable InconsistentNaming
             /// <summary>
             ///     Uses <see cref="IModEventBackgroundPackedSceneFactory.TryCreateBackgroundPackedScene" /> when it returns
             ///     non-null.
@@ -332,7 +319,6 @@ namespace STS2RitsuLib.Scaffolding.Content.Patches
             /// </summary>
             [HarmonyPriority(Priority.First)]
             public static bool Prefix(EventModel __instance, ref PackedScene __result)
-                // ReSharper restore InconsistentNaming
             {
                 if (__instance is IModAncientEventAssetOverrides
                     {
@@ -373,14 +359,12 @@ namespace STS2RitsuLib.Scaffolding.Content.Patches
                 return [new(typeof(EventModel), "HasVfx", MethodType.Getter)];
             }
 
-            // ReSharper disable InconsistentNaming
             /// <summary>
             ///     Yields <c>true</c> when <see cref="IModEventVfxFactory.SuppliesCustomEventVfx" /> is set.
             ///     当 <see cref="IModEventVfxFactory.SuppliesCustomEventVfx" /> 已设置时生成 <c>true</c>。
             /// </summary>
             [HarmonyPriority(Priority.First)]
             public static bool Prefix(EventModel __instance, ref bool __result)
-                // ReSharper restore InconsistentNaming
             {
                 if (__instance is not IModEventVfxFactory { SuppliesCustomEventVfx: true })
                     return true;
@@ -411,14 +395,12 @@ namespace STS2RitsuLib.Scaffolding.Content.Patches
                 return [new(typeof(EventModel), nameof(EventModel.CreateVfx))];
             }
 
-            // ReSharper disable InconsistentNaming
             /// <summary>
             ///     Uses <see cref="IModEventVfxFactory.TryCreateEventVfx" /> when it returns non-null.
             ///     当 <see cref="IModEventVfxFactory.TryCreateEventVfx" /> 返回非 null 时使用它。
             /// </summary>
             [HarmonyPriority(Priority.First)]
             public static bool Prefix(EventModel __instance, ref Node2D __result)
-                // ReSharper restore InconsistentNaming
             {
                 if (__instance is not IModEventVfxFactory { SuppliesCustomEventVfx: true } factory)
                     return true;
@@ -454,14 +436,12 @@ namespace STS2RitsuLib.Scaffolding.Content.Patches
                 return [new(typeof(OrbModel), nameof(OrbModel.CreateSprite))];
             }
 
-            // ReSharper disable InconsistentNaming
             /// <summary>
             ///     Uses <see cref="IModOrbSpriteFactory.TryCreateOrbSprite" /> when it returns non-null.
             ///     当 <see cref="IModOrbSpriteFactory.TryCreateOrbSprite" /> 返回非 null 时使用它。
             /// </summary>
             [HarmonyPriority(Priority.First)]
             public static bool Prefix(OrbModel __instance, ref Node2D __result)
-                // ReSharper restore InconsistentNaming
             {
                 if (__instance is IModOrbSpriteFactory spriteFactory)
                 {

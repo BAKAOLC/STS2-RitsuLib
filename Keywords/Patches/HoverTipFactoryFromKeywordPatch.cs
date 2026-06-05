@@ -39,7 +39,6 @@ namespace STS2RitsuLib.Keywords.Patches
             return [new(typeof(HoverTipFactory), nameof(HoverTipFactory.FromKeyword))];
         }
 
-        // ReSharper disable InconsistentNaming
         /// <summary>
         ///     Short-circuits mod keyword lookups before vanilla's slug-based <see cref="HoverTip" /> construction
         ///     runs, returning a cached registry-built tip. Non-mod values return <c>true</c> so vanilla executes.
@@ -64,6 +63,5 @@ namespace STS2RitsuLib.Keywords.Patches
 
             return false;
         }
-        // ReSharper restore InconsistentNaming
     }
 }

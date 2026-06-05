@@ -43,7 +43,6 @@ namespace STS2RitsuLib.Networking.StateDivergence.Patches
             ];
         }
 
-        // ReSharper disable once InconsistentNaming
         public static void Postfix(StateDivergenceMessage __instance, PacketWriter writer)
         {
             StateDivergenceSupplementPayloadCodec.Write(writer, __instance);
@@ -89,7 +88,6 @@ namespace STS2RitsuLib.Networking.StateDivergence.Patches
             return [new(typeof(ChecksumTracker), "LogStateDivergence")];
         }
 
-        // ReSharper disable once InconsistentNaming
         public static void Postfix(
             ChecksumTracker __instance,
             object localChecksum,
@@ -149,7 +147,6 @@ namespace STS2RitsuLib.Networking.StateDivergence.Patches
             return [new(typeof(NErrorPopup), nameof(NErrorPopup.Create), [typeof(NetErrorInfo)])];
         }
 
-        // ReSharper disable once InconsistentNaming
         public static void Postfix(NetErrorInfo info, NErrorPopup? __result)
         {
             if (__result == null || info.GetReason() != NetError.StateDivergence)
@@ -173,7 +170,6 @@ namespace STS2RitsuLib.Networking.StateDivergence.Patches
             return [new(typeof(NErrorPopup), "_Ready", [])];
         }
 
-        // ReSharper disable once InconsistentNaming
         public static void Postfix(NErrorPopup __instance)
         {
             if (StateDivergenceDiagnosticsReports.PopupReports.TryGetValue(__instance, out var report))

@@ -25,7 +25,6 @@ namespace STS2RitsuLib.Relics.Patches
             ];
         }
 
-        // ReSharper disable once InconsistentNaming
         public static bool Prefix(CardModel starterCard, ref CardModel __result)
         {
             if (!OrobasAncientUpgradeRegistry.TryGetTranscendenceAncient(starterCard.Id, out var template))

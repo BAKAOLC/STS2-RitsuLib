@@ -24,7 +24,6 @@ namespace STS2RitsuLib.Relics.Patches
             ];
         }
 
-        // ReSharper disable once InconsistentNaming
         public static void Postfix(ref List<CardModel> __result)
         {
             foreach (var card in OrobasAncientUpgradeRegistry.GetRegisteredTranscendenceAncientTemplates())

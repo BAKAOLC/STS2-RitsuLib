@@ -23,7 +23,6 @@ namespace STS2RitsuLib.Cards.Transforms.Patches
             ];
         }
 
-        // ReSharper disable once InconsistentNaming
         public static void Prefix(
             ref IEnumerable<CardTransformation> transformations,
             out TransformSnapshot[] __state)
@@ -33,11 +32,9 @@ namespace STS2RitsuLib.Cards.Transforms.Patches
             __state = CaptureSortedOriginals(snapshot);
         }
 
-        // ReSharper disable InconsistentNaming
         public static void Postfix(
-                TransformSnapshot[] __state,
-                ref Task<IEnumerable<CardPileAddResult>> __result)
-            // ReSharper restore InconsistentNaming
+            TransformSnapshot[] __state,
+            ref Task<IEnumerable<CardPileAddResult>> __result)
         {
             __result = LifecyclePatchTaskBridge.After(__result, results => NotifyAsync(__state, results));
         }

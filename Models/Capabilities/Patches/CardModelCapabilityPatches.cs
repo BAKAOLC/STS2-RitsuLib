@@ -62,13 +62,11 @@ namespace STS2RitsuLib.Models.Capabilities.Patches
                 ];
             }
 
-            // ReSharper disable InconsistentNaming
             public static void Postfix(
-                    CardModel __instance,
-                    CardPreviewMode previewMode,
-                    Creature? target,
-                    DynamicVarSet dynamicVarSet)
-                // ReSharper restore InconsistentNaming
+                CardModel __instance,
+                CardPreviewMode previewMode,
+                Creature? target,
+                DynamicVarSet dynamicVarSet)
             {
                 if (ReferenceEquals(dynamicVarSet, __instance.DynamicVars))
                     CardModelCapabilityHost.UpdateDynamicVarPreviews(__instance, previewMode, target);
@@ -88,9 +86,7 @@ namespace STS2RitsuLib.Models.Capabilities.Patches
                 return [new(typeof(CardModel), "Type", MethodType.Getter)];
             }
 
-            // ReSharper disable InconsistentNaming
             public static void Postfix(CardModel __instance, ref CardType __result)
-                // ReSharper restore InconsistentNaming
             {
                 __result = CardModelCapabilityHost.ApplyCardType(__instance, __result);
             }
@@ -109,9 +105,7 @@ namespace STS2RitsuLib.Models.Capabilities.Patches
                 return [new(typeof(CardModel), "Rarity", MethodType.Getter)];
             }
 
-            // ReSharper disable InconsistentNaming
             public static void Postfix(CardModel __instance, ref CardRarity __result)
-                // ReSharper restore InconsistentNaming
             {
                 __result = CardModelCapabilityHost.ApplyCardRarity(__instance, __result);
             }
@@ -130,9 +124,7 @@ namespace STS2RitsuLib.Models.Capabilities.Patches
                 return [new(typeof(CardModel), "TargetType", MethodType.Getter)];
             }
 
-            // ReSharper disable InconsistentNaming
             public static void Postfix(CardModel __instance, ref TargetType __result)
-                // ReSharper restore InconsistentNaming
             {
                 __result = CardModelCapabilityHost.ApplyTargetType(__instance, __result);
             }
@@ -151,9 +143,7 @@ namespace STS2RitsuLib.Models.Capabilities.Patches
                 return [new(typeof(CardModel), "Tags", MethodType.Getter)];
             }
 
-            // ReSharper disable InconsistentNaming
             public static void Postfix(CardModel __instance, ref IEnumerable<CardTag> __result)
-                // ReSharper restore InconsistentNaming
             {
                 __result = CardModelCapabilityHost.ApplyTags(__instance, __result);
             }
@@ -172,9 +162,7 @@ namespace STS2RitsuLib.Models.Capabilities.Patches
                 return [new(typeof(CardModel), "IsPlayable", MethodType.Getter)];
             }
 
-            // ReSharper disable InconsistentNaming
             public static void Postfix(CardModel __instance, ref bool __result)
-                // ReSharper restore InconsistentNaming
             {
                 __result = CardModelCapabilityHost.ApplyCanPlay(__instance, __result);
             }
@@ -193,9 +181,7 @@ namespace STS2RitsuLib.Models.Capabilities.Patches
                 return [new(typeof(CardModel), "HasTurnEndInHandEffect", MethodType.Getter)];
             }
 
-            // ReSharper disable InconsistentNaming
             public static void Postfix(CardModel __instance, ref bool __result)
-                // ReSharper restore InconsistentNaming
             {
                 if (!__result && CardModelCapabilityHost.HasTurnEndInHandEffect(__instance))
                     __result = true;
@@ -219,9 +205,7 @@ namespace STS2RitsuLib.Models.Capabilities.Patches
 #endif
             }
 
-            // ReSharper disable InconsistentNaming
             public static void Postfix(CardModel __instance, ref PileType __result)
-                // ReSharper restore InconsistentNaming
             {
                 __result = CardModelCapabilityHost.ApplyResultPileTypeForCardPlay(__instance, __result);
             }
@@ -240,9 +224,7 @@ namespace STS2RitsuLib.Models.Capabilities.Patches
                 return [new(typeof(CardTransformation), nameof(CardTransformation.GetReplacement), [typeof(Rng)])];
             }
 
-            // ReSharper disable InconsistentNaming
             public static void Postfix(CardTransformation __instance, CardModel? __result)
-                // ReSharper restore InconsistentNaming
             {
                 CardModelCapabilityHost.CarryOverTransformCapabilities(__instance.Original, __result);
             }
@@ -262,15 +244,12 @@ namespace STS2RitsuLib.Models.Capabilities.Patches
                 return [new(typeof(CardModel), nameof(CardModel.FromSerializable), [typeof(SerializableCard)])];
             }
 
-            // ReSharper disable once InconsistentNaming
             public static void Prefix(out IDisposable __state)
             {
                 __state = ModelCapabilityUpgradeReplayContext.BeginCardDeserializeReplay();
             }
 
-            // ReSharper disable InconsistentNaming
             public static Exception? Finalizer(Exception? __exception, CardModel? __result, IDisposable? __state)
-                // ReSharper restore InconsistentNaming
             {
                 try
                 {
@@ -348,9 +327,7 @@ namespace STS2RitsuLib.Models.Capabilities.Patches
                 return [new(typeof(CardModel), nameof(CardModel.FinalizeUpgradeInternal), Type.EmptyTypes)];
             }
 
-            // ReSharper disable InconsistentNaming
             public static void Postfix(CardModel __instance)
-                // ReSharper restore InconsistentNaming
             {
                 CardModelCapabilityHost.AfterOwnerCardUpgradeFinalized(__instance);
             }
@@ -493,13 +470,11 @@ namespace STS2RitsuLib.Models.Capabilities.Patches
                 ];
             }
 
-            // ReSharper disable InconsistentNaming
             public static void Postfix(
-                    CardModel __instance,
-                    PileType pileType,
-                    Creature? target,
-                    ref string __result)
-                // ReSharper restore InconsistentNaming
+                CardModel __instance,
+                PileType pileType,
+                Creature? target,
+                ref string __result)
             {
                 var context = new CardDescriptionContext(__instance, pileType, target, false);
                 CardModelCapabilityHost.ApplyDescriptionFragments(context, ref __result);
@@ -527,9 +502,7 @@ namespace STS2RitsuLib.Models.Capabilities.Patches
                 return [new(typeof(CardModel), nameof(CardModel.GetDescriptionForUpgradePreview), Type.EmptyTypes)];
             }
 
-            // ReSharper disable InconsistentNaming
             public static void Postfix(CardModel __instance, ref string __result)
-                // ReSharper restore InconsistentNaming
             {
                 var context = new CardDescriptionContext(__instance, PileType.None, null, true);
                 CardModelCapabilityHost.ApplyDescriptionFragments(context, ref __result);
@@ -557,9 +530,7 @@ namespace STS2RitsuLib.Models.Capabilities.Patches
                 return [new(typeof(CardModel), "HoverTips", MethodType.Getter)];
             }
 
-            // ReSharper disable InconsistentNaming
             public static void Postfix(CardModel __instance, ref IEnumerable<IHoverTip> __result)
-                // ReSharper restore InconsistentNaming
             {
                 var tips = CardModelCapabilityHost.GetHoverTips(__instance).ToArray();
                 if (tips.Length == 0)
@@ -590,9 +561,7 @@ namespace STS2RitsuLib.Models.Capabilities.Patches
                 return [new(typeof(CardModel), "ShouldGlowGold", MethodType.Getter)];
             }
 
-            // ReSharper disable InconsistentNaming
             public static void Postfix(CardModel __instance, ref bool __result)
-                // ReSharper restore InconsistentNaming
             {
                 if (!__result && CardModelCapabilityHost.ShouldGlowGold(__instance))
                     __result = true;
@@ -620,9 +589,7 @@ namespace STS2RitsuLib.Models.Capabilities.Patches
                 return [new(typeof(CardModel), "ShouldGlowRed", MethodType.Getter)];
             }
 
-            // ReSharper disable InconsistentNaming
             public static void Postfix(CardModel __instance, ref bool __result)
-                // ReSharper restore InconsistentNaming
             {
                 if (!__result && CardModelCapabilityHost.ShouldGlowRed(__instance))
                     __result = true;

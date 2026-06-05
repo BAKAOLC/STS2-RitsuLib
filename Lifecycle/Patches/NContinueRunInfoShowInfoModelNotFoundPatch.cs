@@ -42,9 +42,7 @@ namespace STS2RitsuLib.Lifecycle.Patches
         ///     Harmony finalizer：吞掉预览中的 <see cref="ModelNotFoundException" /> 并显示面板错误
         ///     状态。
         /// </summary>
-        // ReSharper disable InconsistentNaming
         public static Exception? Finalizer(Exception? __exception, NContinueRunInfo __instance)
-            // ReSharper restore InconsistentNaming
         {
             if (__exception is not ModelNotFoundException modelNotFoundException)
                 return __exception;

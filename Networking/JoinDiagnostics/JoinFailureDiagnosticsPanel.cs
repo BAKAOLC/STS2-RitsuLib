@@ -658,12 +658,24 @@ namespace STS2RitsuLib.Networking.JoinDiagnostics
                 {
                     button.SetMeta(FocusRefreshAttachedMeta, true);
                     button.Pressed += ScheduleFocusRefresh;
-                    button.FocusEntered += () => _mainScroll?.EnsureControlVisible(button);
+                    button.FocusEntered += () => EnsureMainScrollControlVisible(button);
                 }
             }
 
             foreach (var child in node.GetChildren())
                 AttachControllerFocusChromeRecursive(child);
+        }
+
+        private void EnsureMainScrollControlVisible(Control control)
+        {
+            var scroll = _mainScroll;
+            if (scroll == null ||
+                !IsInstanceValid(scroll) ||
+                !IsInstanceValid(control) ||
+                !scroll.IsAncestorOf(control))
+                return;
+
+            scroll.EnsureControlVisible(control);
         }
 
         private void ScheduleFocusRefresh()

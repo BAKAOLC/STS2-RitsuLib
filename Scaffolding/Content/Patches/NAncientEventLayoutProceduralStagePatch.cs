@@ -34,7 +34,6 @@ namespace STS2RitsuLib.Scaffolding.Content.Patches
             return [new(typeof(NAncientEventLayout), "InitializeVisuals")];
         }
 
-        // ReSharper disable once InconsistentNaming
         /// <summary>
         ///     Replaces the instantiated background subtree with procedural sprites when <c>StageProcedural</c> is set.
         ///     当设置了 <c>StageProcedural</c> 时，用程序化 sprite 替换已实例化的背景子树。

@@ -39,7 +39,6 @@ namespace STS2RitsuLib.Timeline.Patches
             ];
         }
 
-        // ReSharper disable once InconsistentNaming
         /// <summary>
         ///     Ensures <see cref="EpochModel.IsValid" /> sees every id present in <see cref="EpochModel.Get" />.
         ///     确保 <see cref="EpochModel.IsValid" /> 看到存在于其中的每个 id <see cref="EpochModel.Get" />。
@@ -83,7 +82,6 @@ namespace STS2RitsuLib.Timeline.Patches
             ];
         }
 
-        // ReSharper disable once InconsistentNaming
         /// <summary>
         ///     Replaces the vanilla <c>_erasToUnlock</c> ordering with era-stable sorting.
         ///     用纪元稳定排序替换原版 <c>_erasToUnlock</c> 顺序。

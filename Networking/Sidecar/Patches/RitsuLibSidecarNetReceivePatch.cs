@@ -30,7 +30,6 @@ namespace STS2RitsuLib.Networking.Sidecar.Patches
             ];
         }
 
-        // ReSharper disable once InconsistentNaming
         public static bool Prefix(
             INetGameService __instance,
             ulong senderId,

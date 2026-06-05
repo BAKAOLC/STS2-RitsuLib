@@ -44,13 +44,11 @@ namespace STS2RitsuLib.Scaffolding.Content.Patches
             return [new(typeof(AncientEventModel), "GenerateInitialOptionsWrapper")];
         }
 
-        // ReSharper disable InconsistentNaming
         /// <summary>
         ///     Appends matching registered options after vanilla generated initial options are materialized.
         ///     在原版生成的初始选项实体化后，追加匹配的已注册选项。
         /// </summary>
         public static void Postfix(AncientEventModel __instance, ref IReadOnlyList<EventOption> __result)
-            // ReSharper restore InconsistentNaming
         {
             ReplaceDebugRelicOptionWithPreparedOption(__instance, ref __result);
 

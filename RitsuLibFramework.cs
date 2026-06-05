@@ -79,7 +79,7 @@ namespace STS2RitsuLib
         ///     Framework logger instance (typed as <c>MegaCrit.Sts2.Core.Logging.Logger</c>).
         ///     框架 logger 实例（类型为 <c>MegaCrit.Sts2.Core.Logging.Logger</c>）。
         /// </summary>
-        public static Logger Logger { get; private set; }
+        public static Logger Logger { get; }
 
         /// <summary>
         ///     True after <see cref="Initialize" /> completes without a fatal patch failure.
@@ -316,7 +316,11 @@ namespace STS2RitsuLib
                     return;
                 }
 
-                Logger = CreateLogger(Const.ModId);
+                LinuxHarmonyNativePreloader.EnsureLoaded(
+                    message => Logger.Info(message),
+                    message => Logger.Warn(message)
+                );
+
                 StartupModListLogger.Initialize();
 
                 Logger.Info($"Framework ID: {Const.ModId}");

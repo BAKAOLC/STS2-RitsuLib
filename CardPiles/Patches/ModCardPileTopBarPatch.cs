@@ -31,7 +31,6 @@ namespace STS2RitsuLib.CardPiles.Patches
             return [new(typeof(NTopBar), nameof(NTopBar._Ready))];
         }
 
-        // ReSharper disable InconsistentNaming
         /// <summary>
         ///     Wires mod top-bar buttons after vanilla resolves its built-in children.
         ///     在原版解析内置子节点后接入 mod top-bar 按钮。
@@ -40,7 +39,6 @@ namespace STS2RitsuLib.CardPiles.Patches
         {
             ModCardPileInjector.InjectTopBarButtons(__instance);
         }
-        // ReSharper restore InconsistentNaming
     }
 
     /// <summary>
@@ -70,7 +68,6 @@ namespace STS2RitsuLib.CardPiles.Patches
             ];
         }
 
-        // ReSharper disable InconsistentNaming
         /// <summary>
         ///     Binds each injected TopBar mod button to the local <see cref="Player" />.
         ///     将每个已注入的 TopBar mod 按钮绑定到本地 <see cref="Player" />。
@@ -87,6 +84,5 @@ namespace STS2RitsuLib.CardPiles.Patches
                 if (!button.IsActionMode)
                     button.Initialize(player);
         }
-        // ReSharper restore InconsistentNaming
     }
 }

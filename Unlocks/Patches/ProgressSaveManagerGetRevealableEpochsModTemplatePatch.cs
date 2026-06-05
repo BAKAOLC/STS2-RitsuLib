@@ -34,7 +34,6 @@ namespace STS2RitsuLib.Unlocks.Patches
             return [new(typeof(ProgressSaveManager), nameof(ProgressSaveManager.GetRevealableEpochs), Type.EmptyTypes)];
         }
 
-        // ReSharper disable InconsistentNaming
         /// <summary>
         ///     Appends mod template epochs that satisfy vanilla's satisfied-state filter but were dropped for lack of
         ///     reachability from Neow.
@@ -42,9 +41,8 @@ namespace STS2RitsuLib.Unlocks.Patches
         ///     从 Neow 的可达性而被丢弃的 mod 模板纪元。
         /// </summary>
         public static IEnumerable<SerializableEpoch> Postfix(
-                IEnumerable<SerializableEpoch> __result,
-                ProgressSaveManager __instance)
-            // ReSharper restore InconsistentNaming
+            IEnumerable<SerializableEpoch> __result,
+            ProgressSaveManager __instance)
         {
             var list = __result.ToList();
             var seen = new HashSet<string>(list.Select(e => e.Id));

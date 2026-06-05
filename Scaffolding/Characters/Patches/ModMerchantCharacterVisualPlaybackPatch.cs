@@ -37,7 +37,6 @@ namespace STS2RitsuLib.Scaffolding.Characters.Patches
             return [new(typeof(NMerchantCharacter), nameof(NMerchantCharacter.PlayAnimation))];
         }
 
-        // ReSharper disable once InconsistentNaming
         /// <summary>
         ///     Returns <see langword="false" /> when playback handled the request (skip vanilla Spine path).
         ///     播放已处理请求时返回 <see langword="false" />（跳过原版 Spine 路径）。

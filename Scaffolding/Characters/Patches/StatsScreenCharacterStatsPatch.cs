@@ -33,14 +33,12 @@ namespace STS2RitsuLib.Scaffolding.Characters.Patches
             return [new(typeof(NGeneralStatsGrid), nameof(NGeneralStatsGrid.LoadStats))];
         }
 
-        // ReSharper disable InconsistentNaming
         /// <summary>
         ///     Invokes private <c>CreateCharacterSection</c> for each entry from
         ///     <see cref="ModContentRegistry.GetModCharacters" />.
         ///     对 <see cref="ModContentRegistry.GetModCharacters" /> 返回的每个条目调用私有 <c>CreateCharacterSection</c>。
         /// </summary>
         public static void Postfix(NGeneralStatsGrid __instance)
-            // ReSharper restore InconsistentNaming
         {
             var progressSave = SaveManager.Instance.Progress;
             var createCharacterSection = AccessTools.Method(typeof(NGeneralStatsGrid), "CreateCharacterSection");

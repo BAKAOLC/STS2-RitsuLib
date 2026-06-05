@@ -12,6 +12,7 @@ namespace STS2RitsuLib.Utils.Persistence.Context
     ///         键具有稳定的字符串标识符，因此可以跨程序集安全记录和比较。
     ///     </para>
     /// </remarks>
+    // ReSharper disable once UnusedTypeParameter
     public sealed class StorageContextKey<TValue>(string id)
     {
         /// <summary>

@@ -37,9 +37,7 @@ namespace STS2RitsuLib.Unlocks.Patches
         /// <summary>
         ///     Runs before unlock state generation so character select sees newly backfilled root epochs.
         /// </summary>
-        // ReSharper disable InconsistentNaming
         public static void Prefix(MethodBase __originalMethod, SaveManager __instance)
-            // ReSharper restore InconsistentNaming
         {
             if (__originalMethod.Name == nameof(SaveManager.GenerateUnlockStateFromProgress))
                 ModCharacterRootEpochBackfill.TryBackfill(__instance);
@@ -48,9 +46,7 @@ namespace STS2RitsuLib.Unlocks.Patches
         /// <summary>
         ///     Runs after progress load so profile data is persisted once when backfill is needed.
         /// </summary>
-        // ReSharper disable InconsistentNaming
         public static void Postfix(MethodBase __originalMethod, SaveManager __instance)
-            // ReSharper restore InconsistentNaming
         {
             if (__originalMethod.Name == nameof(SaveManager.InitProgressData))
                 ModCharacterRootEpochBackfill.TryBackfill(__instance);

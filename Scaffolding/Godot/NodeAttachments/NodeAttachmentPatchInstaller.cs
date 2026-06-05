@@ -85,7 +85,6 @@ namespace STS2RitsuLib.Scaffolding.Godot.NodeAttachments
 
         private static class NodeAttachmentReadyPatch
         {
-            // ReSharper disable once InconsistentNaming
             private static void Postfix(Node __instance)
             {
                 NodeAttachmentRuntime.AttachReadyChildren(__instance);

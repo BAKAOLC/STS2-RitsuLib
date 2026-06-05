@@ -51,7 +51,6 @@ namespace STS2RitsuLib.Models.Identity.Patches
             return [new(typeof(Player), "set_RunState", [typeof(IRunState)], true)];
         }
 
-        // ReSharper disable once InconsistentNaming
         public static void Postfix(Player __instance, IRunState value)
         {
             if (value is not NullRunState)
@@ -116,7 +115,6 @@ namespace STS2RitsuLib.Models.Identity.Patches
             ];
         }
 
-        // ReSharper disable once InconsistentNaming
         public static void Postfix(Player __instance, RelicModel relic)
         {
             if (__instance.RunState is not NullRunState)
@@ -156,9 +154,7 @@ namespace STS2RitsuLib.Models.Identity.Patches
             ];
         }
 
-        // ReSharper disable InconsistentNaming
         public static void Postfix(Player __instance, PotionModel potion, PotionProcureResult __result)
-            // ReSharper restore InconsistentNaming
         {
             if (__result.success && __instance.RunState is not NullRunState)
                 ModModelIdentityRegistry.EnsureRegistered(potion);
@@ -197,7 +193,6 @@ namespace STS2RitsuLib.Models.Identity.Patches
             ];
         }
 
-        // ReSharper disable once InconsistentNaming
         public static void Postfix(PowerModel __instance, decimal amount)
         {
             if (amount != 0)
@@ -216,7 +211,6 @@ namespace STS2RitsuLib.Models.Identity.Patches
             return [new(typeof(PowerModel), nameof(PowerModel.RemoveInternal), [], true)];
         }
 
-        // ReSharper disable once InconsistentNaming
         public static void Prefix(PowerModel __instance)
         {
             ModModelIdentityRegistry.Unregister(__instance);
@@ -238,7 +232,6 @@ namespace STS2RitsuLib.Models.Identity.Patches
             ];
         }
 
-        // ReSharper disable once InconsistentNaming
         public static void Postfix(EnchantmentModel __instance)
         {
             ModModelIdentityRegistry.EnsureRegistered(__instance);
@@ -256,7 +249,6 @@ namespace STS2RitsuLib.Models.Identity.Patches
             return [new(typeof(AfflictionModel), "set_Card", [typeof(CardModel)], true)];
         }
 
-        // ReSharper disable once InconsistentNaming
         public static void Postfix(AfflictionModel __instance)
         {
             ModModelIdentityRegistry.EnsureRegistered(__instance);
@@ -311,18 +303,14 @@ namespace STS2RitsuLib.Models.Identity.Patches
             return [new(typeof(Player), nameof(Player.SyncWithSerializedPlayer), [typeof(SerializablePlayer)], true)];
         }
 
-        // ReSharper disable InconsistentNaming
         public static void Prefix(Player __instance,
-                out ModModelIdentityRegistry.PlayerInventoryIdentitySnapshot __state)
-            // ReSharper restore InconsistentNaming
+            out ModModelIdentityRegistry.PlayerInventoryIdentitySnapshot __state)
         {
             __state = ModModelIdentityRegistry.CapturePlayerInventory(__instance);
         }
 
-        // ReSharper disable InconsistentNaming
         public static void Postfix(Player __instance,
-                ModModelIdentityRegistry.PlayerInventoryIdentitySnapshot __state)
-            // ReSharper restore InconsistentNaming
+            ModModelIdentityRegistry.PlayerInventoryIdentitySnapshot __state)
         {
             ModModelIdentityRegistry.RestorePlayerInventory(__instance, __state);
         }

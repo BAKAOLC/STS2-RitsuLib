@@ -57,7 +57,6 @@ namespace STS2RitsuLib.Networking.Sidecar.Patches
             ];
         }
 
-        // ReSharper disable once InconsistentNaming
         public static void Postfix(object __instance)
         {
             switch (__instance)
@@ -91,7 +90,6 @@ namespace STS2RitsuLib.Networking.Sidecar.Patches
             return [new(typeof(StartRunLobby), "OnConnectedToClientAsHost", [typeof(ulong)])];
         }
 
-        // ReSharper disable once InconsistentNaming
         public static void Postfix(ulong playerId)
         {
             RitsuLibSidecarSessionManager.NotePeerConnected(playerId);
@@ -110,7 +108,6 @@ namespace STS2RitsuLib.Networking.Sidecar.Patches
                 [new(typeof(StartRunLobby), "OnDisconnectedFromClientAsHost", [typeof(ulong), typeof(NetErrorInfo)])];
         }
 
-        // ReSharper disable once InconsistentNaming
         public static void Prefix(ulong playerId)
         {
             RitsuLibSidecarSessionManager.NotePeerDisconnected(playerId);

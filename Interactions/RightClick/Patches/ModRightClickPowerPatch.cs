@@ -21,7 +21,6 @@ namespace STS2RitsuLib.Interactions.RightClick.Patches
             return [new(typeof(NPower), nameof(NPower._Ready))];
         }
 
-        // ReSharper disable once InconsistentNaming
         public static void Postfix(NPower __instance)
         {
             __instance.Connect(Control.SignalName.GuiInput,

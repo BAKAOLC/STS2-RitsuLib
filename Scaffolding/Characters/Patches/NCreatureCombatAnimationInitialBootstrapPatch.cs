@@ -26,7 +26,6 @@ namespace STS2RitsuLib.Scaffolding.Characters.Patches
             return [new(typeof(NCreature), nameof(NCreature._Ready))];
         }
 
-        // ReSharper disable once InconsistentNaming
         /// <summary>
         ///     Builds the state machine early so initialization and initial-state playback happen as part of visuals
         ///     readiness instead of waiting for the first trigger.

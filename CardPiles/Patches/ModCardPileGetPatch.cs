@@ -35,7 +35,6 @@ namespace STS2RitsuLib.CardPiles.Patches
             return [new(typeof(CardPile), nameof(CardPile.Get))];
         }
 
-        // ReSharper disable InconsistentNaming
         /// <summary>
         ///     Resolves mod piles before vanilla's switch throws; returns <c>true</c> to continue vanilla
         ///     execution for unrecognized values.
@@ -49,6 +48,5 @@ namespace STS2RitsuLib.CardPiles.Patches
             __result = ModCardPileStorage.Resolve(type, player);
             return false;
         }
-        // ReSharper restore InconsistentNaming
     }
 }

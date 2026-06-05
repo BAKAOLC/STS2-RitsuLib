@@ -28,9 +28,7 @@ namespace STS2RitsuLib.Combat.Rewards.Patches
             return [new(typeof(CombatRoom), nameof(CombatRoom.ToSerializable), Type.EmptyTypes)];
         }
 
-        // ReSharper disable InconsistentNaming
         public static void Postfix(ref SerializableRoom __result)
-            // ReSharper restore InconsistentNaming
         {
             var baselibRewardPatchLoaded = RewardSerializationExt.IsBaselibRewardPatchLoaded();
 
@@ -71,9 +69,7 @@ namespace STS2RitsuLib.Combat.Rewards.Patches
             return [new(typeof(CombatRoom), nameof(CombatRoom.FromSerializable))];
         }
 
-        // ReSharper disable InconsistentNaming
         public static void Prefix(SerializableRoom serializableRoom)
-            // ReSharper restore InconsistentNaming
         {
             if (serializableRoom.EncounterState == null)
                 return;

@@ -21,7 +21,6 @@ namespace STS2RitsuLib.Relics.Patches
             return [new(typeof(ArchaicTooth), nameof(ArchaicTooth.GetTranscendenceStarterCard), [typeof(Player)])];
         }
 
-        // ReSharper disable once InconsistentNaming
         public static void Postfix(Player player, ref CardModel? __result)
         {
             if (__result != null)

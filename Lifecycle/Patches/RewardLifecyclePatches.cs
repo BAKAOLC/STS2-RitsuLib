@@ -49,9 +49,7 @@ namespace STS2RitsuLib.Lifecycle.Patches
         ///     event on the continuation of the original task.
         ///     Harmony postfix：在匹配的 hook 方法完成后，在原始任务的延续中发布对应的奖励/经济生命周期事件。
         /// </summary>
-        // ReSharper disable InconsistentNaming
         public static void Postfix(MethodBase __originalMethod, object[] __args, ref Task __result)
-            // ReSharper restore InconsistentNaming
         {
             __result = __originalMethod.Name switch
             {
@@ -144,7 +142,6 @@ namespace STS2RitsuLib.Lifecycle.Patches
         ///     Harmony postfix: when obtain completes, publishes <see cref="RelicObtainedEvent" /> for the resolved relic.
         ///     Harmony postfix：获得流程完成后，为解析出的遗物发布 <see cref="RelicObtainedEvent" />。
         /// </summary>
-        // ReSharper disable once InconsistentNaming
         public static void Postfix(Player player, ref Task<RelicModel> __result)
         {
             __result = LifecyclePatchTaskBridge.After(__result, relic =>
@@ -183,7 +180,6 @@ namespace STS2RitsuLib.Lifecycle.Patches
         ///     Harmony postfix: after removal completes, publishes <see cref="RelicRemovedEvent" /> using the relic owner.
         ///     Harmony postfix：移除完成后，使用遗物拥有者发布 <see cref="RelicRemovedEvent" />。
         /// </summary>
-        // ReSharper disable once InconsistentNaming
         public static void Postfix(RelicModel relic, ref Task __result)
         {
             var owner = relic.Owner;

@@ -54,7 +54,6 @@ namespace STS2RitsuLib.Lifecycle.Patches
         ///     Harmony prefix: skips vanilla <c>BeginRun</c>, disables confirm/back, and runs async validation and load.
         ///     Harmony prefix：跳过原版 <c>BeginRun</c>，禁用确认/返回按钮，并运行异步验证和加载。
         /// </summary>
-        // ReSharper disable once InconsistentNaming
         public static bool Prefix(NMultiplayerLoadGameScreen __instance)
         {
             NAudioManager.Instance?.StopMusic();
@@ -158,7 +157,6 @@ namespace STS2RitsuLib.Lifecycle.Patches
         ///     Harmony prefix: skips vanilla <c>BeginRun</c>, disables confirm/back, and runs async validation and load.
         ///     Harmony prefix：跳过原版 <c>BeginRun</c>，禁用确认/返回按钮，并运行异步验证和加载。
         /// </summary>
-        // ReSharper disable once InconsistentNaming
         public static bool Prefix(NCustomRunLoadScreen __instance)
         {
             NAudioManager.Instance?.StopMusic();
@@ -261,7 +259,6 @@ namespace STS2RitsuLib.Lifecycle.Patches
         ///     Harmony prefix: skips vanilla <c>BeginRun</c>, disables embark/back, and runs async validation and load.
         ///     Harmony prefix：跳过原版 <c>BeginRun</c>，禁用出发/返回按钮，并运行异步验证和加载。
         /// </summary>
-        // ReSharper disable once InconsistentNaming
         public static bool Prefix(NDailyRunLoadScreen __instance)
         {
             NAudioManager.Instance?.StopMusic();

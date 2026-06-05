@@ -30,7 +30,6 @@ namespace STS2RitsuLib.Diagnostics.Patches
             return [new(typeof(NDevConsole), "AcceptSelection")];
         }
 
-        // ReSharper disable once InconsistentNaming
         /// <summary>
         ///     Replaces the selected completion candidate with its canonical entry id before the vanilla handler runs.
         /// </summary>

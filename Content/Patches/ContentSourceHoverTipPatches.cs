@@ -304,9 +304,7 @@ namespace STS2RitsuLib.Content.Patches
             return [new(typeof(HoverTipFactory), "FromKeyword")];
         }
 
-        // ReSharper disable once InconsistentNaming
         public static void Postfix(CardKeyword keyword, ref IHoverTip __result)
-            // ReSharper restore once InconsistentNaming
         {
             if (!RitsuLibSettingsStore.IsModSourceHoverTipsEnabled() ||
                 !RitsuLibSettingsStore.ShouldShowKeywordModSourceHoverTips())
@@ -336,9 +334,7 @@ namespace STS2RitsuLib.Content.Patches
             return [new(typeof(HoverTipFactory), "Static", [typeof(StaticHoverTip), typeof(DynamicVar[])])];
         }
 
-        // ReSharper disable once InconsistentNaming
         public static void Postfix(ref IHoverTip __result)
-            // ReSharper restore once InconsistentNaming
         {
             if (!RitsuLibSettingsStore.IsModSourceHoverTipsEnabled() ||
                 !RitsuLibSettingsStore.ShouldShowGameTermModSourceHoverTips())
@@ -368,9 +364,7 @@ namespace STS2RitsuLib.Content.Patches
             return [new(typeof(HoverTipFactory), "ForEnergyWithIconPath", [typeof(string)])];
         }
 
-        // ReSharper disable once InconsistentNaming
         public static void Postfix(ref IHoverTip __result)
-            // ReSharper restore once InconsistentNaming
         {
             if (!RitsuLibSettingsStore.IsModSourceHoverTipsEnabled() ||
                 !RitsuLibSettingsStore.ShouldShowGameTermModSourceHoverTips())
@@ -412,9 +406,7 @@ namespace STS2RitsuLib.Content.Patches
             ];
         }
 
-        // ReSharper disable InconsistentNaming
         public static void Postfix(AbstractModel __instance, ref HoverTip __result)
-            // ReSharper restore InconsistentNaming
         {
             if (!RitsuLibSettingsStore.IsModSourceHoverTipsEnabled())
                 return;
@@ -440,9 +432,7 @@ namespace STS2RitsuLib.Content.Patches
             return [new(typeof(CardModel), "HoverTips", MethodType.Getter)];
         }
 
-        // ReSharper disable InconsistentNaming
         public static void Postfix(CardModel __instance, ref IEnumerable<IHoverTip> __result)
-            // ReSharper restore InconsistentNaming
         {
             if (!RitsuLibSettingsStore.IsModSourceHoverTipsEnabled() ||
                 !RitsuLibSettingsStore.ShouldIncludeNonDetailModSourceHoverTips())
@@ -466,9 +456,7 @@ namespace STS2RitsuLib.Content.Patches
             return [new(typeof(PowerModel), "HoverTips", MethodType.Getter)];
         }
 
-        // ReSharper disable InconsistentNaming
         public static void Postfix(PowerModel __instance, ref IEnumerable<IHoverTip> __result)
-            // ReSharper restore InconsistentNaming
         {
             ContentSourceHoverTipPatchHelper.AppendToFirstHoverTip(__instance, ref __result);
         }
@@ -476,6 +464,10 @@ namespace STS2RitsuLib.Content.Patches
 
     internal sealed class ContentSourceNHoverTipSetShowPatch : IPatchMethod
     {
+        private static readonly FieldInfo? CardsField = AccessTools.Field(typeof(NInspectCardScreen), "_cards");
+        private static readonly FieldInfo? CardsIndexField = AccessTools.Field(typeof(NInspectCardScreen), "_index");
+        private static readonly FieldInfo? RelicsField = AccessTools.Field(typeof(NInspectRelicScreen), "_relics");
+        private static readonly FieldInfo? RelicsIndexField = AccessTools.Field(typeof(NInspectRelicScreen), "_index");
         public static string PatchId => "nhover_tip_set_inspect_screen_show_source";
 
         public static string Description =>
@@ -491,11 +483,6 @@ namespace STS2RitsuLib.Content.Patches
                     [typeof(Control), typeof(IEnumerable<IHoverTip>), typeof(HoverTipAlignment)]),
             ];
         }
-
-        private static readonly FieldInfo? CardsField = AccessTools.Field(typeof(NInspectCardScreen), "_cards");
-        private static readonly FieldInfo? CardsIndexField = AccessTools.Field(typeof(NInspectCardScreen), "_index");
-        private static readonly FieldInfo? RelicsField = AccessTools.Field(typeof(NInspectRelicScreen), "_relics");
-        private static readonly FieldInfo? RelicsIndexField = AccessTools.Field(typeof(NInspectRelicScreen), "_index");
 
         private static void AppendModelSourceTipIfModelTipMissing(
             AbstractModel model,
@@ -556,9 +543,7 @@ namespace STS2RitsuLib.Content.Patches
             ContentSourceHoverTipPatchHelper.Append(model, ref hoverTips);
         }
 
-        // ReSharper disable once InconsistentNaming
         public static void Prefix(Control owner, ref IEnumerable<IHoverTip> hoverTips)
-            // ReSharper restore once InconsistentNaming
         {
             if (!RitsuLibSettingsStore.IsModSourceHoverTipsEnabled() ||
                 !RitsuLibSettingsStore.ShouldShowCreatureModSourceHoverTips())
@@ -598,9 +583,7 @@ namespace STS2RitsuLib.Content.Patches
             return [new(typeof(Creature), "HoverTips", MethodType.Getter)];
         }
 
-        // ReSharper disable InconsistentNaming
         public static void Postfix(Creature __instance, ref IEnumerable<IHoverTip> __result)
-            // ReSharper restore InconsistentNaming
         {
             if (!__instance.IsMonster)
                 return;
@@ -622,9 +605,7 @@ namespace STS2RitsuLib.Content.Patches
             return [new(typeof(NEventLayout), nameof(NEventLayout.SetEvent), [typeof(EventModel)])];
         }
 
-        // ReSharper disable InconsistentNaming
         public static void Postfix(NEventLayout __instance, EventModel eventModel)
-            // ReSharper restore InconsistentNaming
         {
             ContentSourceHoverTipPatchHelper.UpdateEventSourceBadge(__instance, eventModel);
         }

@@ -44,7 +44,6 @@ namespace STS2RitsuLib.Scaffolding.Content.Patches
             return [new(typeof(ModifierModel), "IconPath", MethodType.Getter)];
         }
 
-        // ReSharper disable InconsistentNaming
         /// <summary>
         ///     Supplies <see cref="IModModifierAssetOverrides.CustomIconPath" /> when the resource exists.
         ///     当资源存在时提供 <see cref="IModModifierAssetOverrides.CustomIconPath" />。
@@ -52,7 +51,6 @@ namespace STS2RitsuLib.Scaffolding.Content.Patches
         [HarmonyAfter(Const.BaseLibHarmonyId)]
         [HarmonyPriority(Priority.Last)]
         public static bool Prefix(ModifierModel __instance, ref string __result)
-            //Resharper restore InconsistentNaming
         {
             if (!ContentAssetOverridePatchHelper.TryUseExternalPathOverride(
                     __instance,

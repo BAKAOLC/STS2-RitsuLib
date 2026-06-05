@@ -33,7 +33,6 @@ namespace STS2RitsuLib.Cards.Patches
             ];
         }
 
-        // ReSharper disable InconsistentNaming
         /// <summary>
         ///     Appends or prepends keyword fragments after vanilla description composition.
         ///     在原版描述组合完成后追加或前置关键词片段。
@@ -42,6 +41,5 @@ namespace STS2RitsuLib.Cards.Patches
         {
             ModKeywordCardDescriptionInjector.AppendFragments(__instance, ref __result);
         }
-        // ReSharper restore InconsistentNaming
     }
 }

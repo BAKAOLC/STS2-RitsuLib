@@ -28,7 +28,6 @@ namespace STS2RitsuLib.CardPiles.Patches
             return [new(typeof(Player), nameof(Player.Piles), MethodType.Getter)];
         }
 
-        // ReSharper disable InconsistentNaming
         /// <summary>
         ///     Merges the current run-persistent pile snapshot without creating new piles.
         ///     合并当前 run-persistent pile 快照，不创建新的 pile。
@@ -41,6 +40,5 @@ namespace STS2RitsuLib.CardPiles.Patches
 
             __result = __result.Concat(runPiles);
         }
-        // ReSharper restore InconsistentNaming
     }
 }

@@ -77,13 +77,11 @@ namespace STS2RitsuLib.Localization.Patches
             ];
         }
 
-        // ReSharper disable InconsistentNaming
         /// <summary>
         ///     Short-circuits the target method with a synthesized loc string when a placeholder is required.
         ///     需要 placeholder 时，用合成的 loc string 短路目标方法。
         /// </summary>
         public static bool Prefix(LocTable __instance, string key, ref LocString __result)
-            // ReSharper restore InconsistentNaming
         {
             if (!LocTableCompatibilityPatchHelper.ShouldUsePlaceholder(
                     __instance,
@@ -126,13 +124,11 @@ namespace STS2RitsuLib.Localization.Patches
             ];
         }
 
-        // ReSharper disable InconsistentNaming
         /// <summary>
         ///     Short-circuits the target method with the key as raw text when a placeholder is required.
         ///     需要占位时，以键作为 raw text 短路目标方法。
         /// </summary>
         public static bool Prefix(LocTable __instance, string key, ref string __result)
-            // ReSharper restore InconsistentNaming
         {
             if (!LocTableCompatibilityPatchHelper.ShouldUsePlaceholder(
                     __instance,

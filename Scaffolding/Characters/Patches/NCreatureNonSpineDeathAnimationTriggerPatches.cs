@@ -104,9 +104,7 @@ namespace STS2RitsuLib.Scaffolding.Characters.Patches
         ///     仅为 RitsuLib 管理的非 Spine 生物通过 <see cref="NCreature.SetAnimationTrigger" /> 派发
         ///     <c>Dead</c>；否则静默返回。
         /// </summary>
-        // ReSharper disable InconsistentNaming
         public static void Postfix(NCreature __instance, bool shouldRemove, ref float __result)
-            // ReSharper restore InconsistentNaming
         {
             if (!CombatAnimationStateMachineTriggerScope.AppliesToDeathPostfix(__instance))
                 return;
@@ -182,7 +180,6 @@ namespace STS2RitsuLib.Scaffolding.Characters.Patches
         ///     在作用域内时通过 <see cref="NCreature.SetAnimationTrigger" /> 派发 <c>Revive</c>；当
         ///     原版已在 Spine <see cref="CreatureAnimator" /> 上派发 <c>Revive</c> 时跳过。
         /// </summary>
-        // ReSharper disable once InconsistentNaming
         public static void Postfix(NCreature __instance)
         {
             if (!CombatAnimationStateMachineTriggerScope.AppliesToRevivePostfix(__instance))

@@ -28,7 +28,6 @@ namespace STS2RitsuLib.Content.Patches
             return [new(typeof(ModelDb), nameof(ModelDb.GetEntry), [typeof(Type)])];
         }
 
-        // ReSharper disable once InconsistentNaming
         /// <summary>
         ///     Replaces <paramref name="__result" /> with the RitsuLib fixed entry when <paramref name="type" /> is owned by a
         ///     mod.

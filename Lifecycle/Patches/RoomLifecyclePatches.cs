@@ -54,9 +54,7 @@ namespace STS2RitsuLib.Lifecycle.Patches
         ///     原始任务完成后发布 <see cref="RoomEnteredEvent" />。
         ///     <see cref="RoomEnteredEvent" />。
         /// </summary>
-        // ReSharper disable InconsistentNaming
         public static void Postfix(MethodBase __originalMethod, object[] __args, ref Task __result)
-            // ReSharper restore InconsistentNaming
         {
             __result = __originalMethod.Name switch
             {
@@ -97,9 +95,7 @@ namespace STS2RitsuLib.Lifecycle.Patches
         ///     Harmony postfix: publishes <see cref="ActEnteredEvent" /> after the hook task completes.
         ///     Harmony postfix：在 hook 任务完成后发布 <see cref="ActEnteredEvent" />。
         /// </summary>
-        // ReSharper disable InconsistentNaming
         public static void Postfix(IRunState runState, ref Task __result)
-            // ReSharper restore InconsistentNaming
         {
             __result = LifecyclePatchTaskBridge.After(__result, () =>
                 RitsuLibFramework.PublishLifecycleEvent(
@@ -137,9 +133,7 @@ namespace STS2RitsuLib.Lifecycle.Patches
         ///     Harmony postfix: when exit resolves to a non-null room, publishes <see cref="RoomExitedEvent" />.
         ///     Harmony postfix：当退出结果解析为非 null 房间时发布 <see cref="RoomExitedEvent" />。
         /// </summary>
-        // ReSharper disable InconsistentNaming
         public static void Postfix(RunManager __instance, ref Task<AbstractRoom?> __result)
-            // ReSharper restore InconsistentNaming
         {
             __result = LifecyclePatchTaskBridge.After(__result, room =>
             {
@@ -184,9 +178,7 @@ namespace STS2RitsuLib.Lifecycle.Patches
         ///     Harmony prefix: for <see cref="RunManager.EnterAct" />, publishes <see cref="ActEnteringEvent" />.
         ///     Harmony prefix：对 <see cref="RunManager.EnterAct" /> 发布 <see cref="ActEnteringEvent" />。
         /// </summary>
-        // ReSharper disable InconsistentNaming
         public static void Prefix(MethodBase __originalMethod, RunManager __instance, object[] __args)
-            // ReSharper restore InconsistentNaming
         {
             if (__originalMethod.Name != nameof(RunManager.EnterAct))
                 return;
@@ -209,9 +201,7 @@ namespace STS2RitsuLib.Lifecycle.Patches
         ///     <see cref="RewardsScreenContinuingEvent" />。
         ///     <see cref="RewardsScreenContinuingEvent" />。
         /// </summary>
-        // ReSharper disable InconsistentNaming
         public static void Postfix(MethodBase __originalMethod, RunManager __instance, ref Task __result)
-            // ReSharper restore InconsistentNaming
         {
             if (__originalMethod.Name != nameof(RunManager.ProceedFromTerminalRewardsScreen))
                 return;

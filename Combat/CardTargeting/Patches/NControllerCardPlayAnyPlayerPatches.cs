@@ -65,9 +65,7 @@ namespace STS2RitsuLib.Combat.CardTargeting.Patches
             return [new(typeof(NControllerCardPlay), nameof(NControllerCardPlay.Start), Type.EmptyTypes)];
         }
 
-        // ReSharper disable InconsistentNaming
         public static bool Prefix(NControllerCardPlay __instance)
-            // ReSharper restore InconsistentNaming
         {
             var card = GetCard(__instance);
             if (!AnyPlayerCardTargetingHelper.IsAnyPlayerMultiplayer(card))
@@ -145,9 +143,7 @@ namespace STS2RitsuLib.Combat.CardTargeting.Patches
             return [new(typeof(NControllerCardPlay), "SingleCreatureTargeting", [typeof(TargetType)])];
         }
 
-        // ReSharper disable InconsistentNaming
         public static bool Prefix(NControllerCardPlay __instance, TargetType targetType, ref Task __result)
-            // ReSharper restore InconsistentNaming
         {
             if (targetType != TargetType.AnyPlayer)
                 return true;

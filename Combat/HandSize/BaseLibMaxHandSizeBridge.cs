@@ -248,9 +248,7 @@ namespace STS2RitsuLib.Combat.HandSize
                 .FirstOrDefault();
         }
 
-        // ReSharper disable InconsistentNaming
         private static void BaseLibGetMaxHandSizePostfix(Player player, ref int __result)
-            // ReSharper restore InconsistentNaming
         {
             if (_suppressPostfixDepth > 0)
                 return;

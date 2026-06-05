@@ -22,7 +22,6 @@ namespace STS2RitsuLib.Networking.Sidecar.Patches
             return [new(typeof(StartRunLobby), "BeginRunForAllPlayers", [typeof(string), typeof(List<ModifierModel>)])];
         }
 
-        // ReSharper disable once InconsistentNaming
         public static bool Prefix(StartRunLobby __instance)
         {
             if (__instance.NetService is not NetHostGameService host)

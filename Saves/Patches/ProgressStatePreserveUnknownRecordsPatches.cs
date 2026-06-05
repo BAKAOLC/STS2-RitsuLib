@@ -33,7 +33,6 @@ namespace STS2RitsuLib.Saves.Patches
         /// <summary>
         ///     Snapshots unavailable records before vanilla validation mutates nested lists.
         /// </summary>
-        // ReSharper disable once InconsistentNaming
         public static void Prefix(SerializableProgress save, out PreservedProgressRecords? __state)
         {
             ProgressMirrorStore.MergeMirrorInto(save);
@@ -43,10 +42,8 @@ namespace STS2RitsuLib.Saves.Patches
         /// <summary>
         ///     Attaches the snapshot to the parsed progress instance.
         /// </summary>
-        // ReSharper disable InconsistentNaming
         public static void Postfix(ProgressState __result, DeserializationContext ctx,
-                PreservedProgressRecords? __state)
-            // ReSharper restore InconsistentNaming
+            PreservedProgressRecords? __state)
         {
             PreservedProgressRecords.Attach(__result, __state);
             __state?.SuppressExpectedWarnings(ctx);
@@ -77,9 +74,7 @@ namespace STS2RitsuLib.Saves.Patches
         /// <summary>
         ///     Merges preserved records into the generated save object.
         /// </summary>
-        // ReSharper disable InconsistentNaming
         public static void Postfix(ProgressState __instance, SerializableProgress __result)
-            // ReSharper restore InconsistentNaming
         {
             PreservedProgressRecords.MergeInto(__instance, __result);
             ProgressMirrorStore.SaveMirror(__result);
@@ -109,9 +104,7 @@ namespace STS2RitsuLib.Saves.Patches
         /// <summary>
         ///     Writes a mirror from the parsed progress object after a successful load.
         /// </summary>
-        // ReSharper disable InconsistentNaming
         public static void Postfix(ProgressSaveManager __instance, ReadSaveResult<SerializableProgress> __result)
-            // ReSharper restore InconsistentNaming
         {
             if (__result is { Success: true, SaveData: not null })
                 ProgressMirrorStore.RefreshFromProgress(__instance.Progress);

@@ -47,7 +47,6 @@ namespace STS2RitsuLib.Diagnostics.Patches
         ///     Harmony postfix: when vanilla reports an exception, forward the same exception through RitsuLib telemetry.
         ///     Harmony postfix：当原版上报异常时，通过 RitsuLib 遥测转发同一个异常。
         /// </summary>
-        // ReSharper disable once InconsistentNaming
         public static void Postfix(Exception ex)
         {
             DiagnosticsTelemetryCollector.CaptureExceptionForAuthorizedApplicants(

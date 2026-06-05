@@ -19,7 +19,6 @@ namespace STS2RitsuLib.Scaffolding.Content.Patches
 {
     internal static class ContentAssetOverridePatchHelper
     {
-        // ReSharper disable once InconsistentNaming
         internal static bool TryUseStringOverride<TOverrides>(
             object instance,
             ref string __result,
@@ -42,7 +41,6 @@ namespace STS2RitsuLib.Scaffolding.Content.Patches
             return false;
         }
 
-        // ReSharper disable once InconsistentNaming
         internal static bool TryUseTextureOverride<TOverrides>(
             object instance,
             ref Texture2D __result,
@@ -63,7 +61,6 @@ namespace STS2RitsuLib.Scaffolding.Content.Patches
             return false;
         }
 
-        // ReSharper disable once InconsistentNaming
         internal static bool TryUseCompressedTextureOverride<TOverrides>(
             object instance,
             ref CompressedTexture2D __result,
@@ -84,7 +81,6 @@ namespace STS2RitsuLib.Scaffolding.Content.Patches
             return false;
         }
 
-        // ReSharper disable once InconsistentNaming
         internal static bool TryUseMaterialOverride<TOverrides>(
             object instance,
             ref Material __result,
@@ -105,7 +101,6 @@ namespace STS2RitsuLib.Scaffolding.Content.Patches
             return false;
         }
 
-        // ReSharper disable once InconsistentNaming
         internal static bool TryUseDirectMaterialOverride<TOverrides>(
             object instance,
             ref Material __result,
@@ -123,7 +118,6 @@ namespace STS2RitsuLib.Scaffolding.Content.Patches
             return false;
         }
 
-        // ReSharper disable once InconsistentNaming
         internal static bool TryUsePortraitPathList(object instance, IModCardAssetOverrides overrides,
             ref IEnumerable<string> __result)
         {
@@ -139,7 +133,6 @@ namespace STS2RitsuLib.Scaffolding.Content.Patches
             return false;
         }
 
-        // ReSharper disable once InconsistentNaming
         internal static bool TryUseExistenceOverride(object instance, string? path, string memberName,
             ref bool __result)
         {
@@ -150,7 +143,6 @@ namespace STS2RitsuLib.Scaffolding.Content.Patches
             return false;
         }
 
-        // ReSharper disable once InconsistentNaming
         internal static bool TryUseExternalPathOverride(
             object instance,
             ref string __result,
@@ -165,7 +157,6 @@ namespace STS2RitsuLib.Scaffolding.Content.Patches
             return false;
         }
 
-        // ReSharper disable once InconsistentNaming
         internal static bool TryUseExternalPackedScenePathOverride(
             object instance,
             ref PackedScene __result,
@@ -187,7 +178,6 @@ namespace STS2RitsuLib.Scaffolding.Content.Patches
             return false;
         }
 
-        // ReSharper disable once InconsistentNaming
         internal static bool TryUseExternalCompressedTexturePathAsTexture2DOverride(
             object instance,
             ref Texture2D __result,
@@ -321,7 +311,6 @@ namespace STS2RitsuLib.Scaffolding.Content.Patches
             return owner.GetType().Name;
         }
 
-        // ReSharper disable once InconsistentNaming
         internal static bool TryUsePackedSceneCacheOverride<TOverrides>(
             object instance,
             ref PackedScene __result,
@@ -343,7 +332,6 @@ namespace STS2RitsuLib.Scaffolding.Content.Patches
             return false;
         }
 
-        // ReSharper disable once InconsistentNaming
         internal static bool TryUseTexture2DFromCacheOverride<TOverrides>(
             object instance,
             ref Texture2D __result,
@@ -365,7 +353,6 @@ namespace STS2RitsuLib.Scaffolding.Content.Patches
             return false;
         }
 
-        // ReSharper disable once InconsistentNaming
         internal static bool TryUseCompressedTextureAsTexture2DOverride<TOverrides>(
             object instance,
             ref Texture2D __result,
@@ -811,13 +798,11 @@ namespace STS2RitsuLib.Scaffolding.Content.Patches
             ];
         }
 
-        // ReSharper disable InconsistentNaming
         /// <summary>
         ///     Dispatches string overrides for packed atlas vs large portrait paths.
         ///     按 packed atlas 与大型肖像路径分派字符串覆盖。
         /// </summary>
         public static bool Prefix(MethodBase __originalMethod, EpochModel __instance, ref string __result)
-            // ReSharper restore InconsistentNaming
         {
             return __originalMethod.Name switch
             {
@@ -862,9 +847,7 @@ namespace STS2RitsuLib.Scaffolding.Content.Patches
         /// <summary>
         ///     Suppresses the vanilla placeholder label for mod epochs with custom artwork.
         /// </summary>
-        // ReSharper disable InconsistentNaming
         public static bool Prefix(EpochModel __instance, ref bool __result)
-            // ReSharper restore InconsistentNaming
         {
             if (__instance is IModEpochAssetOverrides overrides &&
                 !string.IsNullOrWhiteSpace(overrides.CustomBigPortraitPath) &&
@@ -922,13 +905,11 @@ namespace STS2RitsuLib.Scaffolding.Content.Patches
             ];
         }
 
-        // ReSharper disable InconsistentNaming
         /// <summary>
         ///     Dispatches to portrait or beta portrait override based on the patched getter.
         ///     根据被修补的 getter 分派到肖像或 beta 肖像覆盖。
         /// </summary>
         public static bool Prefix(MethodBase __originalMethod, CardModel __instance, ref string __result)
-            // ReSharper restore InconsistentNaming
         {
             return __originalMethod.Name switch
             {
@@ -983,13 +964,11 @@ namespace STS2RitsuLib.Scaffolding.Content.Patches
             ];
         }
 
-        // ReSharper disable InconsistentNaming
         /// <summary>
         ///     Sets boolean availability from whether the corresponding custom portrait path exists on disk.
         ///     根据对应自定义肖像路径是否存在于磁盘上来设置布尔可用性。
         /// </summary>
         public static bool Prefix(MethodBase __originalMethod, CardModel __instance, ref bool __result)
-            // ReSharper restore InconsistentNaming
         {
             if (__instance is not IModCardAssetOverrides overrides)
                 return true;
@@ -1049,13 +1028,11 @@ namespace STS2RitsuLib.Scaffolding.Content.Patches
             ];
         }
 
-        // ReSharper disable InconsistentNaming
         /// <summary>
         ///     Loads textures from the matching <see cref="IModCardAssetOverrides" /> path when present.
         ///     存在时从匹配的 <see cref="IModCardAssetOverrides" /> 路径加载纹理。
         /// </summary>
         public static bool Prefix(MethodBase __originalMethod, CardModel __instance, ref Texture2D __result)
-            // ReSharper restore InconsistentNaming
         {
             return __originalMethod.Name switch
             {
@@ -1119,13 +1096,11 @@ namespace STS2RitsuLib.Scaffolding.Content.Patches
             ];
         }
 
-        // ReSharper disable InconsistentNaming
         /// <summary>
         ///     Loads <see cref="Material" /> from <see cref="IModCardAssetOverrides.CustomFrameMaterialPath" /> when valid.
         ///     有效时从 <see cref="IModCardAssetOverrides.CustomFrameMaterialPath" /> 加载<see cref="Material" />。
         /// </summary>
         public static bool Prefix(CardModel __instance, ref Material __result)
-            // ReSharper restore InconsistentNaming
         {
             if (!ContentAssetOverridePatchHelper.TryUseDirectMaterialOverride<IModCardFrameMaterialOverride>(
                     __instance, ref __result, static o => o.CustomFrameMaterial))
@@ -1174,13 +1149,11 @@ namespace STS2RitsuLib.Scaffolding.Content.Patches
             ];
         }
 
-        // ReSharper disable InconsistentNaming
         /// <summary>
         ///     Returns the pool’s inline material when the pool implements <see cref="IModCardPoolFrameMaterial" />.
         ///     当池实现 <see cref="IModCardPoolFrameMaterial" /> 时，返回池的内联材质。
         /// </summary>
         public static bool Prefix(CardPoolModel __instance, ref Material __result)
-            // ReSharper restore InconsistentNaming
         {
             if (__instance is not IModCardPoolFrameMaterial pool)
             {
@@ -1228,13 +1201,11 @@ namespace STS2RitsuLib.Scaffolding.Content.Patches
             return [new(typeof(NCard), "Reload")];
         }
 
-        // ReSharper disable InconsistentNaming
         /// <summary>
         ///     Reapplies the custom material because vanilla <c>Reload</c> clears portrait materials for visible cards.
         ///     重新应用自定义材质，因为原版 <c>Reload</c> 会清空可见卡牌的卡图材质。
         /// </summary>
         public static void Postfix(NCard __instance)
-            // ReSharper restore InconsistentNaming
         {
             var model = __instance.Model;
             if (model == null || __instance.Visibility != ModelVisibility.Visible)
@@ -1301,13 +1272,11 @@ namespace STS2RitsuLib.Scaffolding.Content.Patches
             ];
         }
 
-        // ReSharper disable InconsistentNaming
         /// <summary>
         ///     Replaces the enumerable with verified custom portrait paths when the card implements overrides.
         ///     当卡牌实现覆盖时，用已验证的自定义肖像路径替换可枚举集合。
         /// </summary>
         public static bool Prefix(CardModel __instance, ref IEnumerable<string> __result)
-            // ReSharper restore InconsistentNaming
         {
             var ownedCharacterPaths = ModCharacterOwnedVisualOverrideHelper.GetExistingCardPortraitPaths(__instance);
             if (ownedCharacterPaths.Length <= 0)
@@ -1342,13 +1311,11 @@ namespace STS2RitsuLib.Scaffolding.Content.Patches
             ];
         }
 
-        // ReSharper disable InconsistentNaming
         /// <summary>
         ///     Supplies <see cref="IModCardAssetOverrides.CustomOverlayScenePath" /> when the resource exists.
         ///     当资源存在时提供 <see cref="IModCardAssetOverrides.CustomOverlayScenePath" />。
         /// </summary>
         public static bool Prefix(CardModel __instance, ref string __result)
-            // ReSharper restore InconsistentNaming
         {
             if (!ModCharacterOwnedVisualOverrideHelper.TryCardOverlayPath(__instance, ref __result))
                 return false;
@@ -1385,7 +1352,6 @@ namespace STS2RitsuLib.Scaffolding.Content.Patches
             ];
         }
 
-        // ReSharper disable InconsistentNaming
         /// <summary>
         ///     Sets <c>true</c> when <see cref="IModCardAssetOverrides.CustomOverlayScenePath" /> resolves to an existing
         ///     resource.
@@ -1393,7 +1359,6 @@ namespace STS2RitsuLib.Scaffolding.Content.Patches
         ///     资源时设置为 <c>true</c>。
         /// </summary>
         public static bool Prefix(CardModel __instance, ref bool __result)
-            // ReSharper restore InconsistentNaming
         {
             if (!ModCharacterOwnedVisualOverrideHelper.TryCardOverlayExists(__instance, ref __result))
                 return false;
@@ -1433,13 +1398,11 @@ namespace STS2RitsuLib.Scaffolding.Content.Patches
             ];
         }
 
-        // ReSharper disable InconsistentNaming
         /// <summary>
         ///     Instantiates <see cref="IModCardAssetOverrides.CustomOverlayScenePath" /> when the packed scene exists.
         ///     当 packed scene 存在时实例化 <see cref="IModCardAssetOverrides.CustomOverlayScenePath" />。
         /// </summary>
         public static bool Prefix(CardModel __instance, ref Control __result)
-            // ReSharper restore InconsistentNaming
         {
             if (!ModCharacterOwnedVisualOverrideHelper.TryCardCreateOverlay(__instance, ref __result))
                 return false;
@@ -1488,7 +1451,6 @@ namespace STS2RitsuLib.Scaffolding.Content.Patches
             ];
         }
 
-        // ReSharper disable InconsistentNaming
         /// <summary>
         ///     Supplies <see cref="IModCharacterAssetOverrides.TryGetVanillaRelicVisualOverrideForOwnedRelic" /> when
         ///     applicable, then <see cref="IModRelicAssetOverrides" /> custom paths.
@@ -1497,7 +1459,6 @@ namespace STS2RitsuLib.Scaffolding.Content.Patches
         /// </summary>
         [HarmonyPriority(410)]
         public static bool Prefix(MethodBase __originalMethod, RelicModel __instance, ref string __result)
-            // ReSharper restore InconsistentNaming
         {
             return __originalMethod.Name switch
             {
@@ -1575,13 +1536,11 @@ namespace STS2RitsuLib.Scaffolding.Content.Patches
             ];
         }
 
-        // ReSharper disable InconsistentNaming
         /// <summary>
         ///     Dispatches texture loading to mod-character overrides first, then mod relic overrides.
         ///     优先将纹理加载分派到 mod 角色覆盖，然后使用 mod 遗物覆盖。
         /// </summary>
         public static bool Prefix(MethodBase __originalMethod, RelicModel __instance, ref Texture2D __result)
-            // ReSharper restore InconsistentNaming
         {
             return __originalMethod.Name switch
             {
@@ -1673,14 +1632,12 @@ namespace STS2RitsuLib.Scaffolding.Content.Patches
             ];
         }
 
-        // ReSharper disable InconsistentNaming
         /// <summary>
         ///     Supplies <see cref="IModPowerAssetOverrides.CustomIconPath" /> when the resource exists.
         ///     当资源存在时提供 <see cref="IModPowerAssetOverrides.CustomIconPath" />。
         /// </summary>
         [HarmonyPriority(410)]
         public static bool Prefix(MethodBase __originalMethod, PowerModel __instance, ref string __result)
-            // ReSharper restore InconsistentNaming
         {
             return __originalMethod.Name switch
             {
@@ -1731,7 +1688,6 @@ namespace STS2RitsuLib.Scaffolding.Content.Patches
             ];
         }
 
-        // ReSharper disable InconsistentNaming
         /// <summary>
         ///     Dispatches to <see cref="IModPowerAssetOverrides.CustomIconPath" /> or
         ///     <see cref="IModPowerAssetOverrides.CustomBigIconPath" />.
@@ -1739,7 +1695,6 @@ namespace STS2RitsuLib.Scaffolding.Content.Patches
         ///     <see cref="IModPowerAssetOverrides.CustomBigIconPath" />。
         /// </summary>
         public static bool Prefix(MethodBase __originalMethod, PowerModel __instance, ref Texture2D __result)
-            // ReSharper restore InconsistentNaming
         {
             return __originalMethod.Name switch
             {
@@ -1801,13 +1756,11 @@ namespace STS2RitsuLib.Scaffolding.Content.Patches
             ];
         }
 
-        // ReSharper disable InconsistentNaming
         /// <summary>
         ///     Loads compressed icon texture from <see cref="IModOrbAssetOverrides.CustomIconPath" /> when valid.
         ///     有效时从 <see cref="IModOrbAssetOverrides.CustomIconPath" /> 加载compressed 图标 纹理。
         /// </summary>
         public static bool Prefix(OrbModel __instance, ref CompressedTexture2D __result)
-            // ReSharper restore InconsistentNaming
         {
             if (ExternalAssetOverrideRegistry.TryGetOrbIconTexture(__instance, out var externalTexture))
             {
@@ -1855,13 +1808,11 @@ namespace STS2RitsuLib.Scaffolding.Content.Patches
             ];
         }
 
-        // ReSharper disable InconsistentNaming
         /// <summary>
         ///     Supplies <see cref="IModOrbAssetOverrides.CustomVisualsScenePath" /> when the resource exists.
         ///     当资源存在时提供 <see cref="IModOrbAssetOverrides.CustomVisualsScenePath" />。
         /// </summary>
         public static bool Prefix(OrbModel __instance, ref string __result)
-            // ReSharper restore InconsistentNaming
         {
             // ReSharper disable once InvertIf
             if (ExternalAssetOverrideRegistry.TryGetOrbVisualsScenePath(__instance, out var externalPath) &&
@@ -1904,13 +1855,11 @@ namespace STS2RitsuLib.Scaffolding.Content.Patches
             ];
         }
 
-        // ReSharper disable InconsistentNaming
         /// <summary>
         ///     Collects existing paths from <see cref="IModOrbAssetOverrides" /> for icon and visuals scenes.
         ///     从 <see cref="IModOrbAssetOverrides" /> 收集现有的图标和视觉场景路径。
         /// </summary>
         public static bool Prefix(OrbModel __instance, ref IEnumerable<string> __result)
-            // ReSharper restore InconsistentNaming
         {
             if (__instance is not IModOrbAssetOverrides overrides)
                 return !TryBuildOrbAssetPathsFromExternal(__instance, out __result);
@@ -1972,7 +1921,6 @@ namespace STS2RitsuLib.Scaffolding.Content.Patches
             ];
         }
 
-        // ReSharper disable InconsistentNaming
         /// <summary>
         ///     Dispatches to <see cref="IModPotionAssetOverrides.CustomImagePath" /> or
         ///     <see cref="IModPotionAssetOverrides.CustomOutlinePath" />.
@@ -1981,7 +1929,6 @@ namespace STS2RitsuLib.Scaffolding.Content.Patches
         /// </summary>
         [HarmonyPriority(410)]
         public static bool Prefix(MethodBase __originalMethod, PotionModel __instance, ref string __result)
-            // ReSharper restore InconsistentNaming
         {
             return __originalMethod.Name switch
             {
@@ -2051,13 +1998,11 @@ namespace STS2RitsuLib.Scaffolding.Content.Patches
             ];
         }
 
-        // ReSharper disable InconsistentNaming
         /// <summary>
         ///     Loads textures from the matching <see cref="IModPotionAssetOverrides" /> path property.
         ///     从匹配的 <see cref="IModPotionAssetOverrides" /> 路径属性加载纹理。
         /// </summary>
         public static bool Prefix(MethodBase __originalMethod, PotionModel __instance, ref Texture2D __result)
-            // ReSharper restore InconsistentNaming
         {
             return __originalMethod.Name switch
             {
@@ -2121,13 +2066,11 @@ namespace STS2RitsuLib.Scaffolding.Content.Patches
             return [new(typeof(CardModel), "BannerTexture", MethodType.Getter)];
         }
 
-        // ReSharper disable InconsistentNaming
         /// <summary>
         ///     Loads banner texture from <see cref="IModCardAssetOverrides.CustomBannerTexturePath" /> when valid.
         ///     有效时从 <see cref="IModCardAssetOverrides.CustomBannerTexturePath" /> 加载横幅纹理。
         /// </summary>
         public static bool Prefix(CardModel __instance, ref Texture2D __result)
-            // ReSharper restore InconsistentNaming
         {
             if (!ModCharacterOwnedVisualOverrideHelper.TryCardBannerTexture(__instance, ref __result))
                 return false;
@@ -2159,13 +2102,11 @@ namespace STS2RitsuLib.Scaffolding.Content.Patches
             return [new(typeof(CardModel), "BannerMaterial", MethodType.Getter)];
         }
 
-        // ReSharper disable InconsistentNaming
         /// <summary>
         ///     Loads material from <see cref="IModCardAssetOverrides.CustomBannerMaterialPath" /> when valid.
         ///     有效时从 <see cref="IModCardAssetOverrides.CustomBannerMaterialPath" /> 加载材质。
         /// </summary>
         public static bool Prefix(CardModel __instance, ref Material __result)
-            // ReSharper restore InconsistentNaming
         {
             if (__instance is IModCardBannerMaterialOverride bannerOverride)
             {
@@ -2214,13 +2155,11 @@ namespace STS2RitsuLib.Scaffolding.Content.Patches
             return [new(typeof(ActModel), "BackgroundScenePath", MethodType.Getter)];
         }
 
-        // ReSharper disable InconsistentNaming
         /// <summary>
         ///     Supplies <see cref="IModActAssetOverrides.CustomBackgroundScenePath" /> when the resource exists.
         ///     当资源存在时提供 <see cref="IModActAssetOverrides.CustomBackgroundScenePath" />。
         /// </summary>
         public static bool Prefix(ActModel __instance, ref string __result)
-            // ReSharper restore InconsistentNaming
         {
             if (!ContentAssetOverridePatchHelper.TryUseExternalPathOverride(
                     __instance,
@@ -2260,13 +2199,11 @@ namespace STS2RitsuLib.Scaffolding.Content.Patches
             return [new(typeof(ActModel), "RestSiteBackgroundPath", MethodType.Getter)];
         }
 
-        // ReSharper disable InconsistentNaming
         /// <summary>
         ///     Supplies <see cref="IModActAssetOverrides.CustomRestSiteBackgroundPath" /> when the resource exists.
         ///     当资源存在时提供 <see cref="IModActAssetOverrides.CustomRestSiteBackgroundPath" />。
         /// </summary>
         public static bool Prefix(ActModel __instance, ref string __result)
-            // ReSharper restore InconsistentNaming
         {
             if (!ContentAssetOverridePatchHelper.TryUseExternalPathOverride(
                     __instance,
@@ -2311,13 +2248,11 @@ namespace STS2RitsuLib.Scaffolding.Content.Patches
             ];
         }
 
-        // ReSharper disable InconsistentNaming
         /// <summary>
         ///     Dispatches to the matching <see cref="IModActAssetOverrides" /> map layer path property.
         ///     分派到匹配的 <see cref="IModActAssetOverrides" /> map layer 路径属性。
         /// </summary>
         public static bool Prefix(MethodBase __originalMethod, ActModel __instance, ref string __result)
-            // ReSharper restore InconsistentNaming
         {
             return __originalMethod.Name switch
             {
@@ -2404,13 +2339,11 @@ namespace STS2RitsuLib.Scaffolding.Content.Patches
             return [new(typeof(EventModel), "BackgroundScenePath", MethodType.Getter)];
         }
 
-        // ReSharper disable InconsistentNaming
         /// <summary>
         ///     Supplies <see cref="IModEventAssetOverrides.CustomBackgroundScenePath" /> when the resource exists.
         ///     当资源存在时提供 <see cref="IModEventAssetOverrides.CustomBackgroundScenePath" />。
         /// </summary>
         public static bool Prefix(EventModel __instance, ref string __result)
-            // ReSharper restore InconsistentNaming
         {
             if (!ContentAssetOverridePatchHelper.TryUseExternalPathOverride(
                     __instance,
@@ -2450,13 +2383,11 @@ namespace STS2RitsuLib.Scaffolding.Content.Patches
             return [new(typeof(EventModel), nameof(EventModel.CreateScene))];
         }
 
-        // ReSharper disable InconsistentNaming
         /// <summary>
         ///     Supplies <see cref="IModEventAssetOverrides.CustomLayoutScenePath" /> when the resource exists.
         ///     当资源存在时提供 <see cref="IModEventAssetOverrides.CustomLayoutScenePath" />。
         /// </summary>
         public static bool Prefix(EventModel __instance, ref PackedScene __result)
-            // ReSharper restore InconsistentNaming
         {
             if (!ContentAssetOverridePatchHelper.TryUseExternalPackedScenePathOverride(
                     __instance,
@@ -2496,13 +2427,11 @@ namespace STS2RitsuLib.Scaffolding.Content.Patches
             return [new(typeof(EventModel), nameof(EventModel.CreateInitialPortrait))];
         }
 
-        // ReSharper disable InconsistentNaming
         /// <summary>
         ///     Loads portrait from <see cref="IModEventAssetOverrides.CustomInitialPortraitPath" /> when valid.
         ///     有效时从 <see cref="IModEventAssetOverrides.CustomInitialPortraitPath" /> 加载portrait。
         /// </summary>
         public static bool Prefix(EventModel __instance, ref Texture2D __result)
-            // ReSharper restore InconsistentNaming
         {
             // ReSharper disable once InvertIf
             if (ExternalAssetOverrideRegistry.TryGetEventInitialPortraitTexture(__instance, out var externalTexture))
@@ -2540,13 +2469,11 @@ namespace STS2RitsuLib.Scaffolding.Content.Patches
             return [new(typeof(EventModel), nameof(EventModel.CreateBackgroundScene))];
         }
 
-        // ReSharper disable InconsistentNaming
         /// <summary>
         ///     Supplies <see cref="IModEventAssetOverrides.CustomBackgroundScenePath" /> when the resource exists.
         ///     当资源存在时提供 <see cref="IModEventAssetOverrides.CustomBackgroundScenePath" />。
         /// </summary>
         public static bool Prefix(EventModel __instance, ref PackedScene __result)
-            // ReSharper restore InconsistentNaming
         {
             if (__instance is IModAncientEventAssetOverrides
                 {
@@ -2590,13 +2517,11 @@ namespace STS2RitsuLib.Scaffolding.Content.Patches
             return [new(typeof(EventModel), "HasVfx", MethodType.Getter)];
         }
 
-        // ReSharper disable InconsistentNaming
         /// <summary>
         ///     Returns true when <see cref="IModEventAssetOverrides.CustomVfxScenePath" /> resolves to an existing resource.
         ///     当 <see cref="IModEventAssetOverrides.CustomVfxScenePath" /> 解析到现有资源时返回 true。
         /// </summary>
         public static bool Prefix(EventModel __instance, ref bool __result)
-            // ReSharper restore InconsistentNaming
         {
             if (ExternalAssetOverrideRegistry.TryGetEventVfxScene(__instance, out var externalVfxScene))
             {
@@ -2640,13 +2565,11 @@ namespace STS2RitsuLib.Scaffolding.Content.Patches
             return [new(typeof(EventModel), nameof(EventModel.CreateVfx))];
         }
 
-        // ReSharper disable InconsistentNaming
         /// <summary>
         ///     Instantiates <see cref="IModEventAssetOverrides.CustomVfxScenePath" /> when the packed scene exists.
         ///     当 packed scene 存在时实例化 <see cref="IModEventAssetOverrides.CustomVfxScenePath" />。
         /// </summary>
         public static bool Prefix(EventModel __instance, ref Node2D __result)
-            // ReSharper restore InconsistentNaming
         {
             if (ExternalAssetOverrideRegistry.TryGetEventVfxScene(__instance, out var externalVfxScene))
             {
@@ -2695,13 +2618,11 @@ namespace STS2RitsuLib.Scaffolding.Content.Patches
             return [new(typeof(EventModel), nameof(EventModel.GetAssetPaths))];
         }
 
-        // ReSharper disable InconsistentNaming
         /// <summary>
         ///     Concatenates resolved override paths after the vanilla enumeration.
         ///     将已解析的覆盖资源路径追加到原版枚举结果之后。
         /// </summary>
         public static void Postfix(EventModel __instance, IRunState runState, ref IEnumerable<string> __result)
-            // ReSharper restore InconsistentNaming
         {
             _ = runState;
 
@@ -2861,13 +2782,11 @@ namespace STS2RitsuLib.Scaffolding.Content.Patches
             ];
         }
 
-        // ReSharper disable InconsistentNaming
         /// <summary>
         ///     Dispatches compressed texture loading to the matching ancient override path.
         ///     将压缩纹理加载分派到匹配的远古事件覆盖路径。
         /// </summary>
         public static bool Prefix(MethodBase __originalMethod, AncientEventModel __instance, ref Texture2D __result)
-            // ReSharper restore InconsistentNaming
         {
             return __originalMethod.Name switch
             {
@@ -2941,13 +2860,11 @@ namespace STS2RitsuLib.Scaffolding.Content.Patches
             ];
         }
 
-        // ReSharper disable InconsistentNaming
         /// <summary>
         ///     Dispatches compressed texture loading to the matching ancient override path.
         ///     将压缩纹理加载分派到匹配的远古事件覆盖路径。
         /// </summary>
         public static bool Prefix(MethodBase __originalMethod, AncientEventModel __instance, ref Texture2D __result)
-            // ReSharper restore InconsistentNaming
         {
             return __originalMethod.Name switch
             {
@@ -3017,13 +2934,11 @@ namespace STS2RitsuLib.Scaffolding.Content.Patches
             return [new(typeof(AncientEventModel), "MapNodeAssetPaths", MethodType.Getter)];
         }
 
-        // ReSharper disable InconsistentNaming
         /// <summary>
         ///     Appends resolved custom map icon paths after the vanilla pair.
         ///     在原版路径对之后追加已解析的自定义地图图标路径。
         /// </summary>
         public static void Postfix(AncientEventModel __instance, ref IEnumerable<string> __result)
-            // ReSharper restore InconsistentNaming
         {
             var mapIconPath =
                 ExternalAssetOverrideRegistry.TryGetAncientMapIconPath(__instance, out var externalMapIconPath)
@@ -3091,13 +3006,11 @@ namespace STS2RitsuLib.Scaffolding.Content.Patches
             return [new(typeof(AfflictionModel), "OverlayPath", MethodType.Getter)];
         }
 
-        // ReSharper disable InconsistentNaming
         /// <summary>
         ///     Supplies <see cref="IModAfflictionAssetOverrides.CustomOverlayScenePath" /> when the resource exists.
         ///     当资源存在时提供 <see cref="IModAfflictionAssetOverrides.CustomOverlayScenePath" />。
         /// </summary>
         public static bool Prefix(AfflictionModel __instance, ref string __result)
-            // ReSharper restore InconsistentNaming
         {
             if (!ContentAssetOverridePatchHelper.TryUseExternalPathOverride(
                     __instance,
@@ -3135,13 +3048,11 @@ namespace STS2RitsuLib.Scaffolding.Content.Patches
             return [new(typeof(AfflictionModel), "HasOverlay", MethodType.Getter)];
         }
 
-        // ReSharper disable InconsistentNaming
         /// <summary>
         ///     Resolves the custom overlay path then sets boolean availability from resource existence.
         ///     解析自定义覆盖层路径，然后根据资源是否存在来设置布尔可用性。
         /// </summary>
         public static bool Prefix(AfflictionModel __instance, ref bool __result)
-            // ReSharper restore InconsistentNaming
         {
             if (ExternalAssetOverrideRegistry.TryGetAfflictionOverlayScene(__instance, out var externalScene))
             {
@@ -3197,13 +3108,11 @@ namespace STS2RitsuLib.Scaffolding.Content.Patches
             return [new(typeof(AfflictionModel), nameof(AfflictionModel.CreateOverlay))];
         }
 
-        // ReSharper disable InconsistentNaming
         /// <summary>
         ///     Instantiates <see cref="IModAfflictionAssetOverrides.CustomOverlayScenePath" /> when the packed scene exists.
         ///     当 packed scene 存在时实例化 <see cref="IModAfflictionAssetOverrides.CustomOverlayScenePath" />。
         /// </summary>
         public static bool Prefix(AfflictionModel __instance, ref Control __result)
-            // ReSharper restore InconsistentNaming
         {
             if (ExternalAssetOverrideRegistry.TryGetAfflictionOverlayScene(__instance, out var externalScene))
             {
@@ -3281,13 +3190,11 @@ namespace STS2RitsuLib.Scaffolding.Content.Patches
             return [new(typeof(EnchantmentModel), "IntendedIconPath", MethodType.Getter)];
         }
 
-        // ReSharper disable InconsistentNaming
         /// <summary>
         ///     Supplies <see cref="IModEnchantmentAssetOverrides.CustomIconPath" /> when the resource exists.
         ///     当资源存在时提供 <see cref="IModEnchantmentAssetOverrides.CustomIconPath" />。
         /// </summary>
         public static bool Prefix(EnchantmentModel __instance, ref string __result)
-            // ReSharper restore InconsistentNaming
         {
             if (!ContentAssetOverridePatchHelper.TryUseExternalPathOverride(
                     __instance,
@@ -3325,13 +3232,11 @@ namespace STS2RitsuLib.Scaffolding.Content.Patches
             return [new(typeof(PowerModel), "ResolvedBigIconPath", MethodType.Getter)];
         }
 
-        // ReSharper disable InconsistentNaming
         /// <summary>
         ///     Supplies <see cref="IModPowerAssetOverrides.CustomBigIconPath" /> when the resource exists.
         ///     当资源存在时提供 <see cref="IModPowerAssetOverrides.CustomBigIconPath" />。
         /// </summary>
         public static bool Prefix(PowerModel __instance, ref string __result)
-            // ReSharper restore InconsistentNaming
         {
             return ContentAssetOverridePatchHelper.TryUseStringOverride<IModPowerAssetOverrides>(
                 __instance, ref __result, o => o.CustomBigIconPath,

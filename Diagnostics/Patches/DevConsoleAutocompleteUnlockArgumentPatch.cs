@@ -37,12 +37,10 @@ namespace STS2RitsuLib.Diagnostics.Patches
             return [new(typeof(UnlockConsoleCmd), nameof(UnlockConsoleCmd.GetArgumentCompletions), true)];
         }
 
-        // ReSharper disable InconsistentNaming
         /// <summary>
         ///     Routes <c>unlock cards ID ...</c> completion through <see cref="AbstractConsoleCmd.CompleteArgument" />.
         /// </summary>
         public static bool Prefix(UnlockConsoleCmd __instance, string[] args, ref CompletionResult __result)
-            // ReSharper restore InconsistentNaming
         {
             if (args.Length < 2 || CompleteArgumentMethod == null)
                 return true;

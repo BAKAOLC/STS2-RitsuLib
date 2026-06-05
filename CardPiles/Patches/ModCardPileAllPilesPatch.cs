@@ -53,7 +53,6 @@ namespace STS2RitsuLib.CardPiles.Patches
             return [new(typeof(PlayerCombatState), nameof(PlayerCombatState.AllPiles), MethodType.Getter)];
         }
 
-        // ReSharper disable InconsistentNaming
         /// <summary>
         ///     Merges mod piles into <see cref="PlayerCombatState.AllPiles" />'s return value.
         ///     将 mod 牌堆合并进 <see cref="PlayerCombatState.AllPiles" /> 的返回值。
@@ -77,7 +76,6 @@ namespace STS2RitsuLib.CardPiles.Patches
             __instance._piles = combined;
             __result = combined;
         }
-        // ReSharper restore InconsistentNaming
 
         private static bool ContainsAll(IReadOnlyList<CardPile> haystack, IReadOnlyCollection<ModCardPile> needles)
         {

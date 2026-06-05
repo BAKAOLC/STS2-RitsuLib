@@ -34,7 +34,6 @@ namespace STS2RitsuLib.Lifecycle.Patches
         ///     Harmony postfix: when creation succeeds, publishes <see cref="GameOverScreenCreatedEvent" />.
         ///     Harmony postfix：创建成功时发布 <see cref="GameOverScreenCreatedEvent" />。
         /// </summary>
-        // ReSharper disable once InconsistentNaming
         public static void Postfix(RunState runState, SerializableRun serializableRun, NGameOverScreen? __result)
         {
             if (__result == null)
