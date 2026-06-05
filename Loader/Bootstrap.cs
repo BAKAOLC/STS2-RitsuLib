@@ -6,6 +6,7 @@ using HarmonyLib;
 using MegaCrit.Sts2.Core.Logging;
 using MegaCrit.Sts2.Core.Modding;
 using STS2RitsuLib.Compat;
+using STS2RitsuLib.Platform;
 
 namespace STS2RitsuLib.Loader
 {
@@ -27,6 +28,11 @@ namespace STS2RitsuLib.Loader
 
         public static void Initialize()
         {
+            LinuxHarmonyNativePreloader.EnsureLoaded(
+                message => Log.Info($"[RitsuLib.Loader] {message}"),
+                message => Log.Warn($"[RitsuLib.Loader] {message}")
+            );
+
             var loaderDir = Path.GetDirectoryName(typeof(Bootstrap).Assembly.Location);
             if (string.IsNullOrEmpty(loaderDir))
             {
