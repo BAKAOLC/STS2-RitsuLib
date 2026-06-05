@@ -123,6 +123,7 @@ namespace STS2RitsuLib.Cards.DynamicVars
         /// </summary>
         public override string ToString()
         {
+            // ReSharper disable once SpecifyACultureInStringConversionExplicitly
             return Calculate(null).ToString();
         }
     }
