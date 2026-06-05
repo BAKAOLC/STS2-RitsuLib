@@ -198,7 +198,6 @@ namespace STS2RitsuLib.Scaffolding.Content.Patches
         }
 
 #if !STS2_AT_LEAST_0_105_0
-        // ReSharper disable once InconsistentNaming
         public static IReadOnlyCollection<Badge> Postfix(IReadOnlyCollection<Badge> __result, SerializableRun run,
             ulong playerId)
         {
@@ -210,7 +209,6 @@ namespace STS2RitsuLib.Scaffolding.Content.Patches
             return list;
         }
 #else
-        // ReSharper disable once InconsistentNaming
         public static IReadOnlyCollection<Badge> Postfix(IReadOnlyCollection<Badge> __result, SerializableRun run,
             ulong playerId, bool won)
         {
@@ -235,7 +233,6 @@ namespace STS2RitsuLib.Scaffolding.Content.Patches
             return [new(typeof(AssetCache), "LoadAsset")];
         }
 
-        // ReSharper disable once InconsistentNaming
         public static bool Prefix(string path, ref Resource __result)
         {
             if (ResourceLoader.Exists(path))
@@ -259,7 +256,6 @@ namespace STS2RitsuLib.Scaffolding.Content.Patches
             return [new(typeof(NBadge), nameof(NBadge.Create), [typeof(string), typeof(BadgeRarity)], true)];
         }
 
-        // ReSharper disable once InconsistentNaming
         public static void Postfix(NBadge __result, string id)
         {
             if (__result == null || string.IsNullOrWhiteSpace(id))
@@ -303,9 +299,7 @@ namespace STS2RitsuLib.Scaffolding.Content.Patches
             return [new(typeof(Badge), "BadgeIcon", null, true, MethodType.Getter)];
         }
 
-        // ReSharper disable InconsistentNaming
         public static bool Prefix(Badge __instance, ref Texture2D __result)
-            // ReSharper restore InconsistentNaming
         {
             if (!TryResolveCustomIconPath(__instance, out var iconPath))
                 return true;

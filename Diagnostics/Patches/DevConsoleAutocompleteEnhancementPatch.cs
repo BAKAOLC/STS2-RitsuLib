@@ -26,7 +26,6 @@ namespace STS2RitsuLib.Diagnostics.Patches
             return [new(typeof(AbstractConsoleCmd), nameof(AbstractConsoleCmd.CompleteArgument), true)];
         }
 
-        // ReSharper disable once InconsistentNaming
         /// <summary>
         ///     Installs registered match-predicate enhancements for the active argument slot.
         /// </summary>
@@ -49,15 +48,13 @@ namespace STS2RitsuLib.Diagnostics.Patches
                 completedArgs);
         }
 
-        // ReSharper disable InconsistentNaming
         /// <summary>
         ///     Applies registered result enhancements such as localized labels and de-duplication.
         /// </summary>
         public static void Postfix(
-                AbstractConsoleCmd __instance,
-                string[] completedArgs,
-                ref CompletionResult __result)
-            // ReSharper restore InconsistentNaming
+            AbstractConsoleCmd __instance,
+            string[] completedArgs,
+            ref CompletionResult __result)
         {
             var enhancements = DevConsoleAutocompleteRegistry.Resolve(
                 __instance,

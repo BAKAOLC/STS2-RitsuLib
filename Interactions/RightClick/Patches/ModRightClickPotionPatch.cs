@@ -22,7 +22,6 @@ namespace STS2RitsuLib.Interactions.RightClick.Patches
             return [new(typeof(NPotion), nameof(NPotion._Ready))];
         }
 
-        // ReSharper disable once InconsistentNaming
         public static void Postfix(NPotion __instance)
         {
             __instance.Connect(Control.SignalName.GuiInput,

@@ -26,7 +26,6 @@ namespace STS2RitsuLib.Scaffolding.Characters.Patches
             return [new(typeof(ColorfulPhilosophers), "CardPoolColorOrder", MethodType.Getter)];
         }
 
-        // ReSharper disable once InconsistentNaming
         /// <summary>
         ///     Extends the original candidate order while leaving option generation and reward handling to vanilla code.
         /// </summary>

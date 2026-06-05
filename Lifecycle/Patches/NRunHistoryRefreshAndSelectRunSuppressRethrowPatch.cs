@@ -33,9 +33,7 @@ namespace STS2RitsuLib.Lifecycle.Patches
         ///     Harmony finalizer: swallow exceptions so arrow navigation and menu remain responsive.
         ///     Harmony finalizer：吞掉异常，使方向键导航和菜单保持响应。
         /// </summary>
-        // ReSharper disable once InconsistentNaming
         public static Exception? Finalizer(Exception? __exception)
-            // ReSharper restore InconsistentNaming
         {
             if (__exception == null)
                 return null;

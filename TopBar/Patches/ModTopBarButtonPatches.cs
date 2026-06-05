@@ -44,7 +44,6 @@ namespace STS2RitsuLib.TopBar.Patches
             return [new(typeof(NTopBar), nameof(NTopBar._Ready))];
         }
 
-        // ReSharper disable InconsistentNaming
         /// <summary>
         ///     Wires generic mod top-bar buttons alongside the vanilla deck/map/pause nodes and any
         ///     pile-backed <see cref="STS2RitsuLib.CardPiles.ModCardPileUiStyle.TopBarDeck" /> buttons.
@@ -68,7 +67,6 @@ namespace STS2RitsuLib.TopBar.Patches
                 ModTopBarLayout.Place(__instance, button, definition.Offset);
             }
         }
-        // ReSharper restore InconsistentNaming
     }
 
     /// <summary>
@@ -100,7 +98,6 @@ namespace STS2RitsuLib.TopBar.Patches
             ];
         }
 
-        // ReSharper disable InconsistentNaming
         /// <summary>
         ///     Binds each injected action button to the local <see cref="Player" />.
         ///     将每个注入的动作按钮绑定到本地 <see cref="Player" />。
@@ -119,6 +116,5 @@ namespace STS2RitsuLib.TopBar.Patches
                 if (button.IsActionMode)
                     button.Initialize(player);
         }
-        // ReSharper restore InconsistentNaming
     }
 }

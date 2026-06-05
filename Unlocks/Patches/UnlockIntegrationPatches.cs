@@ -30,13 +30,11 @@ namespace STS2RitsuLib.Unlocks.Patches
             return [new(typeof(UnlockState), "Characters", MethodType.Getter)];
         }
 
-        // ReSharper disable InconsistentNaming
         /// <summary>
         ///     Replaces the character enumeration with unlock-filtered results.
         ///     将角色枚举替换为按解锁状态过滤后的结果。
         /// </summary>
         public static void Postfix(UnlockState __instance, ref IEnumerable<CharacterModel> __result)
-            // ReSharper restore InconsistentNaming
         {
             __result = ModUnlockRegistry.FilterUnlocked(__result, __instance);
         }
@@ -63,13 +61,11 @@ namespace STS2RitsuLib.Unlocks.Patches
             return [new(typeof(UnlockState), "SharedAncients", MethodType.Getter)];
         }
 
-        // ReSharper disable InconsistentNaming
         /// <summary>
         ///     Replaces the shared ancient enumeration with unlock-filtered results.
         ///     将共享远古枚举替换为按解锁状态过滤后的结果。
         /// </summary>
         public static void Postfix(UnlockState __instance, ref IEnumerable<AncientEventModel> __result)
-            // ReSharper restore InconsistentNaming
         {
             __result = ModUnlockRegistry.FilterUnlocked(__result, __instance);
         }
@@ -100,7 +96,6 @@ namespace STS2RitsuLib.Unlocks.Patches
             ];
         }
 
-        // ReSharper disable once InconsistentNaming
         /// <summary>
         ///     Replaces the unlocked card list with unlock-filtered results.
         ///     将已解锁卡牌列表替换为按解锁状态过滤后的结果。
@@ -132,7 +127,6 @@ namespace STS2RitsuLib.Unlocks.Patches
             return [new(typeof(RelicPoolModel), nameof(RelicPoolModel.GetUnlockedRelics), [typeof(UnlockState)])];
         }
 
-        // ReSharper disable once InconsistentNaming
         /// <summary>
         ///     Replaces the unlocked relic list with unlock-filtered results.
         ///     将已解锁遗物列表替换为按解锁状态过滤后的结果。
@@ -164,7 +158,6 @@ namespace STS2RitsuLib.Unlocks.Patches
             return [new(typeof(PotionPoolModel), nameof(PotionPoolModel.GetUnlockedPotions), [typeof(UnlockState)])];
         }
 
-        // ReSharper disable once InconsistentNaming
         /// <summary>
         ///     Replaces the unlocked potion list with unlock-filtered results.
         ///     将已解锁药水列表替换为按解锁状态过滤后的结果。
@@ -199,7 +192,6 @@ namespace STS2RitsuLib.Unlocks.Patches
             ];
         }
 
-        // ReSharper disable once InconsistentNaming
         /// <summary>
         ///     Filters generated events in the act's private room list by unlock state.
         ///     按解锁状态过滤章节私有房间列表中的生成事件。

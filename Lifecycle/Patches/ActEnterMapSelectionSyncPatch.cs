@@ -42,7 +42,6 @@ namespace STS2RitsuLib.Lifecycle.Patches
         ///     Harmony postfix: synchronizer bump after <see cref="RunManager.GenerateMap" /> has completed.
         ///     Harmony postfix：在 <see cref="RunManager.GenerateMap" /> 完成后递增同步器。
         /// </summary>
-        // ReSharper disable once InconsistentNaming
         public static void Postfix(ref Task __result)
         {
             __result = LifecyclePatchTaskBridge.After(__result, BumpMapSelectionSynchronizerIfRequested);

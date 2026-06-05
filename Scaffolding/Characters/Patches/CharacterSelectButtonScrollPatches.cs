@@ -32,7 +32,6 @@ namespace STS2RitsuLib.Scaffolding.Characters.Patches
 
         [HarmonyAfter(Const.BaseLibHarmonyId)]
         [HarmonyPriority(Priority.Last)]
-        // ReSharper disable once InconsistentNaming
         public static void Postfix(NCharacterSelectScreen __instance)
         {
             var root = __instance.GetNodeOrNull<Control>("CharSelectButtons");
@@ -67,7 +66,6 @@ namespace STS2RitsuLib.Scaffolding.Characters.Patches
 
         [HarmonyAfter(Const.BaseLibHarmonyId)]
         [HarmonyPriority(Priority.Last)]
-        // ReSharper disable once InconsistentNaming
         public static void Postfix(NCustomRunScreen __instance)
         {
             var root = __instance.GetNodeOrNull<Control>("LeftContainer/CharSelectButtons/ButtonScrollContainer") ??

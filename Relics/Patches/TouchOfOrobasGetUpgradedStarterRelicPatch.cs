@@ -25,7 +25,6 @@ namespace STS2RitsuLib.Relics.Patches
         }
 
         [HarmonyPriority(Priority.First)]
-        // ReSharper disable once InconsistentNaming
         public static bool Prefix(RelicModel starterRelic, ref RelicModel __result)
         {
             if (!OrobasAncientUpgradeRegistry.TryGetRefinementUpgrade(starterRelic.Id, out var template))

@@ -93,10 +93,7 @@ namespace STS2RitsuLib.Settings
             Description = "Built-in character visuals in a small viewport.",
             DescriptionKey = "ritsulib.runtimeReflection.spine.entry.description",
             Order = 0)]
-        // ReSharper disable once UnusedMember.Global
-#pragma warning disable CA1822
         public Control CreateIroncladSpinePreview()
-#pragma warning restore CA1822
         {
             var availableCharacters = ModelDb.AllCharacters.ToList();
             if (availableCharacters.Count == 0)

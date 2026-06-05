@@ -321,17 +321,13 @@ namespace STS2RitsuLib.Combat.HandSize
                 .FirstOrDefault();
         }
 
-        // ReSharper disable InconsistentNaming
         private static StringName GetShortcutOrDefault(NPlayerHand hand, int idx)
-            // ReSharper restore InconsistentNaming
         {
             var arr = hand._selectCardShortcuts;
             return idx >= 0 && idx < arr.Length ? arr[idx] : MegaInput.releaseCard;
         }
 
-        // ReSharper disable InconsistentNaming
         private static IEnumerable<CodeInstruction> StartCardPlayTranspiler(IEnumerable<CodeInstruction> instructions)
-            // ReSharper restore InconsistentNaming
         {
             var selectCardShortcutsField = AccessTools.Field(typeof(NPlayerHand), "_selectCardShortcuts");
             var draggedHolderIndexField = AccessTools.Field(typeof(NPlayerHand), "_draggedHolderIndex");
@@ -393,9 +389,7 @@ namespace STS2RitsuLib.Combat.HandSize
             return Mathf.Lerp(610f, 690f, t);
         }
 
-        // ReSharper disable InconsistentNaming
         private static bool GetPositionPrefix(int handSize, int cardIndex, ref Vector2 __result)
-            // ReSharper restore InconsistentNaming
         {
             if (handSize <= 10)
                 return true;
@@ -414,9 +408,7 @@ namespace STS2RitsuLib.Combat.HandSize
             return false;
         }
 
-        // ReSharper disable InconsistentNaming
         private static bool GetAnglePrefix(int handSize, int cardIndex, ref float __result)
-            // ReSharper restore InconsistentNaming
         {
             if (handSize <= 10)
                 return true;
@@ -436,9 +428,7 @@ namespace STS2RitsuLib.Combat.HandSize
             return false;
         }
 
-        // ReSharper disable InconsistentNaming
         private static bool GetScalePrefix(int handSize, ref Vector2 __result)
-            // ReSharper restore InconsistentNaming
         {
             if (handSize <= 10)
                 return true;

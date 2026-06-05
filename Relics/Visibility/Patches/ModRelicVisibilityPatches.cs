@@ -50,7 +50,6 @@ namespace STS2RitsuLib.Relics.Visibility.Patches
             return [new(typeof(NRelicInventory), "Remove", [typeof(RelicModel)])];
         }
 
-        // ReSharper disable once InconsistentNaming
         public static bool Prefix(NRelicInventory __instance, RelicModel relic)
         {
             return ModRelicVisibilityRegistry.IsVisible(relic) ||
@@ -92,9 +91,7 @@ namespace STS2RitsuLib.Relics.Visibility.Patches
             return [new(typeof(RelicModel), nameof(RelicModel.HoverTips), null, MethodType.Getter)];
         }
 
-        // ReSharper disable InconsistentNaming
         public static bool Prefix(RelicModel __instance, ref IEnumerable<IHoverTip> __result)
-            // ReSharper restore InconsistentNaming
         {
             if (ModRelicVisibilityRegistry.IsVisible(__instance))
                 return true;
@@ -122,9 +119,7 @@ namespace STS2RitsuLib.Relics.Visibility.Patches
             ];
         }
 
-        // ReSharper disable InconsistentNaming
         public static bool Prefix(RelicModel __instance, ref IEnumerable<IHoverTip> __result)
-            // ReSharper restore InconsistentNaming
         {
             if (ModRelicVisibilityRegistry.IsVisible(__instance))
                 return true;
@@ -145,7 +140,6 @@ namespace STS2RitsuLib.Relics.Visibility.Patches
             return [new(typeof(NRelicBasicHolder), nameof(NRelicBasicHolder.Create))];
         }
 
-        // ReSharper disable once InconsistentNaming
         public static void Postfix(RelicModel relic, NRelicBasicHolder? __result)
         {
             if (__result == null || ModRelicVisibilityRegistry.IsVisible(relic))
@@ -169,7 +163,6 @@ namespace STS2RitsuLib.Relics.Visibility.Patches
             return [new(typeof(NMultiplayerPlayerState), "AnimateRelicObtained", [typeof(RelicModel)])];
         }
 
-        // ReSharper disable once InconsistentNaming
         public static bool Prefix(RelicModel relic, ref Task __result)
         {
             if (ModRelicVisibilityRegistry.IsVisible(relic))
@@ -191,7 +184,6 @@ namespace STS2RitsuLib.Relics.Visibility.Patches
             return [new(typeof(NMultiplayerPlayerState), "AnimateRelicRemoved", [typeof(RelicModel)])];
         }
 
-        // ReSharper disable once InconsistentNaming
         public static bool Prefix(RelicModel relic, ref Task __result)
         {
             if (ModRelicVisibilityRegistry.IsVisible(relic))
@@ -216,9 +208,7 @@ namespace STS2RitsuLib.Relics.Visibility.Patches
             return [new(typeof(NMultiplayerPlayerExpandedState), "OnRelicClicked", [typeof(NRelic)])];
         }
 
-        // ReSharper disable InconsistentNaming
         public static bool Prefix(NMultiplayerPlayerExpandedState __instance, NRelic node)
-            // ReSharper restore InconsistentNaming
         {
             if (!ModRelicVisibilityRegistry.IsVisible(node.Model))
                 return false;
@@ -250,7 +240,6 @@ namespace STS2RitsuLib.Relics.Visibility.Patches
             return [new(typeof(NMultiplayerPlayerExpandedState), nameof(NMultiplayerPlayerExpandedState._Ready))];
         }
 
-        // ReSharper disable once InconsistentNaming
         public static void Postfix(NMultiplayerPlayerExpandedState __instance)
         {
             var container = RelicContainer(__instance);

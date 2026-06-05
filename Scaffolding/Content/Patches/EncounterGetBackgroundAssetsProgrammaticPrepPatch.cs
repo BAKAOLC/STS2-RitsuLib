@@ -32,14 +32,12 @@ namespace STS2RitsuLib.Scaffolding.Content.Patches
             return [new(typeof(EncounterModel), "GetBackgroundAssets", [typeof(ActModel), typeof(Rng)])];
         }
 
-        // ReSharper disable once InconsistentNaming
         /// <summary>
         ///     Invokes <see cref="ModEncounterTemplate.PrepareProgrammaticCombatBackground" /> when the encounter has no cached
         ///     background yet.
         ///     当遭遇还没有缓存的背景时，调用 <see cref="ModEncounterTemplate.PrepareProgrammaticCombatBackground" />。
         /// </summary>
         public static void Prefix(EncounterModel __instance, ActModel parentAct, Rng rng)
-            // ReSharper restore InconsistentNaming
         {
             if (__instance is not ModEncounterTemplate { UsesProgrammaticCombatBackground: true } template)
                 return;

@@ -36,9 +36,7 @@ namespace STS2RitsuLib.Lifecycle.Patches
         ///     Harmony postfix：匹配的方法运行后发布 <see cref="EpochObtainedEvent" /> 或 <see cref="EpochRevealedEvent" />。
         ///     <see cref="EpochRevealedEvent" />。
         /// </summary>
-        // ReSharper disable InconsistentNaming
         public static void Postfix(MethodBase __originalMethod, SaveManager __instance, object[] __args)
-            // ReSharper restore InconsistentNaming
         {
             switch (__originalMethod.Name)
             {
@@ -86,9 +84,7 @@ namespace STS2RitsuLib.Lifecycle.Patches
         ///     Harmony postfix: publishes <see cref="UnlockIncrementedEvent" /> with total unlocks and optional result key.
         ///     Harmony postfix：发布包含总解锁数和可选结果键的 <see cref="UnlockIncrementedEvent" />。
         /// </summary>
-        // ReSharper disable InconsistentNaming
         public static void Postfix(SaveManager __instance, string? __result)
-            // ReSharper restore InconsistentNaming
         {
             RitsuLibFramework.PublishLifecycleEvent(
                 new UnlockIncrementedEvent(__instance, __instance.Progress.TotalUnlocks, __result,

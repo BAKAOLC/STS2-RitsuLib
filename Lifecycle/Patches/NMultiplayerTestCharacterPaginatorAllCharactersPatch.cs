@@ -50,7 +50,6 @@ namespace STS2RitsuLib.Lifecycle.Patches
         ///     <c>_Ready</c>.
         ///     Harmony postfix：在 <c>_Ready</c> 后用 <see cref="ModelDb.AllCharacters" /> 重新填充分页器选项和标签。
         /// </summary>
-        // ReSharper disable once InconsistentNaming
         public static void Postfix(NMultiplayerTestCharacterPaginator __instance)
         {
             var all = ModelDb.AllCharacters.ToArray();

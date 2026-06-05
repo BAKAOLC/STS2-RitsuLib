@@ -33,7 +33,6 @@ namespace STS2RitsuLib.Unlocks.Patches
             ];
         }
 
-        // ReSharper disable once InconsistentNaming
         /// <summary>
         ///     Runs mod elite epoch logic and prevents the original method from executing for mod characters.
         ///     运行 mod 精英纪元逻辑，并阻止原始方法对 mod 角色执行。

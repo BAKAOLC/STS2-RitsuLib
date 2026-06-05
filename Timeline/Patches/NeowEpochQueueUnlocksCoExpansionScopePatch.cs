@@ -38,7 +38,6 @@ namespace STS2RitsuLib.Timeline.Patches
             ModTimelineNeowCoExpansion.EnterNeowQueueUnlocks();
         }
 
-        // ReSharper disable once InconsistentNaming
         /// <summary>
         ///     Always decrements depth, even when <see cref="NeowEpoch.QueueUnlocks" /> throws.
         ///     始终递减深度, 即使 <see cref="NeowEpoch.QueueUnlocks" /> 抛出异常。

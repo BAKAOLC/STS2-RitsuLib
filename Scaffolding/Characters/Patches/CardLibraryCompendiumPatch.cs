@@ -61,7 +61,6 @@ namespace STS2RitsuLib.Scaffolding.Characters.Patches
             return [new(typeof(NCardLibrary), nameof(NCardLibrary._Ready))];
         }
 
-        // ReSharper disable InconsistentNaming
         /// <summary>
         ///     Clones vanilla pool-filter UI for each mod character and wires pool predicates so compendium filtering
         ///     works without <c>KeyNotFoundException</c>.
@@ -69,22 +68,11 @@ namespace STS2RitsuLib.Scaffolding.Characters.Patches
         ///     无需 <c>KeyNotFoundException</c> 即可工作。
         /// </summary>
         public static void Postfix(
-                NCardLibrary __instance,
-                Dictionary<NCardPoolFilter, Func<CardModel, bool>> ____poolFilters,
-                Dictionary<CharacterModel, NCardPoolFilter> ____cardPoolFilters)
-            // ReSharper restore InconsistentNaming
+            NCardLibrary __instance,
+            Dictionary<NCardPoolFilter, Func<CardModel, bool>> ____poolFilters,
+            Dictionary<CharacterModel, NCardPoolFilter> ____cardPoolFilters)
         {
-            foreach (var (character, filter) in ____cardPoolFilters)
-            {
-                if (filter.GetNodeOrNull<TextureRect>("Image") is not { } image)
-                    continue;
-
-                var texture = character.IconTexture;
-                if (texture is null)
-                    continue;
-
-                image.Texture = texture;
-            }
+            SyncExistingFilterIcons(____cardPoolFilters);
 
             var modCharacters = ModContentRegistry.GetModCharacters().ToArray();
             var sharedPoolFilters = ModContentRegistry.GetCardLibraryCompendiumSharedPoolFilters();
@@ -98,6 +86,7 @@ namespace STS2RitsuLib.Scaffolding.Characters.Patches
             ShaderMaterial? referenceMat = null;
             if (referenceFilter.GetNodeOrNull<Control>("Image") is { Material: ShaderMaterial refMat })
                 referenceMat = refMat;
+            var referenceIcon = TryGetReferenceFilterTexture(referenceFilter);
 
             var updateCallable = Callable.From<NCardPoolFilter>(__instance.UpdateCardPoolFilter);
 
@@ -117,18 +106,7 @@ namespace STS2RitsuLib.Scaffolding.Characters.Patches
                 RitsuLibFramework.Logger);
 
             foreach (var row in planned)
-                if (row.Character is { } ch)
-                {
-                    string? iconTexturePath = null;
-                    if (ch is IModCharacterAssetOverrides assetOverrides)
-                        iconTexturePath = assetOverrides.CustomIconTexturePath;
-
-                    row.BuiltFilter = CreateFilter(ch, iconTexturePath, referenceMat);
-                }
-                else if (row.Shared is { } reg)
-                {
-                    row.BuiltFilter = CreateSharedPoolFilter(reg, referenceMat, referenceFilter);
-                }
+                TryBuildFilter(row, referenceMat, referenceIcon, referenceFilter);
 
             CardLibraryCompendiumPlacementResolver.InsertRowsInOrder(filterParent, strip, planned);
 
@@ -137,14 +115,37 @@ namespace STS2RitsuLib.Scaffolding.Characters.Patches
                 if (row.BuiltFilter is not { } filter || row.ResolvedPool is not { } pool)
                     continue;
 
-                ____poolFilters.Add(filter, c => pool.AllCardIds.Contains(c.Id));
-                if (row.Character is { } ch)
-                    ____cardPoolFilters.Add(ch, filter);
-
-                filter.Connect(NCardPoolFilter.SignalName.Toggled, updateCallable);
-                filter.Connect(Control.SignalName.FocusEntered,
-                    Callable.From(delegate { __instance._lastHoveredControl = filter; }));
+                TryRegisterFilter(
+                    __instance,
+                    row,
+                    filter,
+                    pool,
+                    ____poolFilters,
+                    ____cardPoolFilters,
+                    updateCallable);
             }
+        }
+
+        private static void SyncExistingFilterIcons(
+            Dictionary<CharacterModel, NCardPoolFilter> cardPoolFilters)
+        {
+            foreach (var (character, filter) in cardPoolFilters)
+                try
+                {
+                    if (filter.GetNodeOrNull<TextureRect>("Image") is not { } image)
+                        continue;
+
+                    var texture = TryGetCharacterIconTexture(character);
+                    if (texture is null)
+                        continue;
+
+                    image.Texture = texture;
+                }
+                catch (Exception ex)
+                {
+                    RitsuLibFramework.Logger.Warn(
+                        $"[CardLibrary] Failed to sync compendium icon for {DescribeCharacter(character)}: {ex.Message}");
+                }
         }
 
         /// <summary>
@@ -211,7 +212,8 @@ namespace STS2RitsuLib.Scaffolding.Characters.Patches
         private static NCardPoolFilter CreateFilter(
             CharacterModel character,
             string? iconTexturePath,
-            ShaderMaterial? referenceMat)
+            ShaderMaterial? referenceMat,
+            Texture2D? fallbackIcon)
         {
             const float size = 64f;
             const float imageSize = 56f;
@@ -238,7 +240,7 @@ namespace STS2RitsuLib.Scaffolding.Characters.Patches
             };
 
             image.Material = mat ?? MaterialUtils.CreateHsvShaderMaterial(1, 1, 1);
-            image.Texture = ResolveFilterIconTexture(character, iconTexturePath);
+            image.Texture = ResolveFilterIconTexture(character, iconTexturePath, fallbackIcon);
 
             filter.AddChild(image);
             image.Owner = filter;
@@ -253,21 +255,25 @@ namespace STS2RitsuLib.Scaffolding.Characters.Patches
             return filter;
         }
 
-        private static Texture2D ResolveFilterIconTexture(CharacterModel character, string? iconTexturePath)
+        private static Texture2D? ResolveFilterIconTexture(
+            CharacterModel character,
+            string? iconTexturePath,
+            Texture2D? fallbackIcon)
         {
-            if (!string.IsNullOrWhiteSpace(iconTexturePath) &&
-                AssetPathDiagnostics.Exists(iconTexturePath, character,
-                    nameof(IModCharacterAssetOverrides.CustomIconTexturePath)) &&
-                ResourceLoader.Load<Texture2D>(iconTexturePath) is { } iconTexture)
+            if (TryLoadTexture(
+                    iconTexturePath,
+                    character,
+                    nameof(IModCharacterAssetOverrides.CustomIconTexturePath),
+                    $"character {DescribeCharacter(character)}") is { } iconTexture)
                 return iconTexture;
 
-            return character.IconTexture;
+            return TryGetCharacterIconTexture(character) ?? fallbackIcon;
         }
 
         private static NCardPoolFilter CreateSharedPoolFilter(
             CardLibraryCompendiumSharedPoolFilterRegistration registration,
             ShaderMaterial? referenceMat,
-            NCardPoolFilter referenceFilter)
+            Texture2D? fallbackIcon)
         {
             const float size = 64f;
             const float imageSize = 56f;
@@ -294,7 +300,7 @@ namespace STS2RitsuLib.Scaffolding.Characters.Patches
             };
 
             image.Material = mat ?? MaterialUtils.CreateHsvShaderMaterial(1, 1, 1);
-            image.Texture = ResolveSharedPoolFilterIcon(registration, referenceFilter);
+            image.Texture = ResolveSharedPoolFilterIcon(registration, fallbackIcon);
 
             filter.AddChild(image);
             image.Owner = filter;
@@ -313,22 +319,155 @@ namespace STS2RitsuLib.Scaffolding.Characters.Patches
             return filter;
         }
 
-        private static Texture2D ResolveSharedPoolFilterIcon(
+        private static Texture2D? ResolveSharedPoolFilterIcon(
             CardLibraryCompendiumSharedPoolFilterRegistration registration,
-            NCardPoolFilter referenceFilter)
+            Texture2D? fallbackIcon)
         {
             var path = registration.IconTexturePath;
-            if (!string.IsNullOrWhiteSpace(path) &&
-                AssetPathDiagnostics.Exists(path, registration,
-                    nameof(CardLibraryCompendiumSharedPoolFilterRegistration.IconTexturePath)) &&
-                ResourceLoader.Load<Texture2D>(path) is { } iconTexture)
+            if (TryLoadTexture(
+                    path,
+                    registration,
+                    nameof(CardLibraryCompendiumSharedPoolFilterRegistration.IconTexturePath),
+                    $"shared filter '{registration.StableId}'") is { } iconTexture)
                 return iconTexture;
 
-            if (referenceFilter.GetNodeOrNull<TextureRect>("Image") is { Texture: { } refTexture })
-                return refTexture;
+            return fallbackIcon;
+        }
 
-            throw new InvalidOperationException(
-                "Card library compendium shared pool filter could not resolve an icon texture and the reference filter has no Texture2D.");
+        private static void TryBuildFilter(
+            CardLibraryCompendiumPlacementResolver.PlannedRow row,
+            ShaderMaterial? referenceMat,
+            Texture2D? referenceIcon,
+            NCardPoolFilter referenceFilter)
+        {
+            try
+            {
+                if (row.Character is { } ch)
+                {
+                    string? iconTexturePath = null;
+                    if (ch is IModCharacterAssetOverrides assetOverrides)
+                        iconTexturePath = assetOverrides.CustomIconTexturePath;
+
+                    row.BuiltFilter = CreateFilter(ch, iconTexturePath, referenceMat, referenceIcon);
+                }
+                else if (row.Shared is { } reg)
+                {
+                    row.BuiltFilter = CreateSharedPoolFilter(
+                        reg,
+                        referenceMat,
+                        referenceIcon ?? TryGetReferenceFilterTexture(referenceFilter));
+                }
+            }
+            catch (Exception ex)
+            {
+                RitsuLibFramework.Logger.Warn(
+                    $"[CardLibrary] Skipping compendium filter '{row.StableKey}': failed to create button. {ex.Message}");
+                row.BuiltFilter = null;
+            }
+        }
+
+        private static void TryRegisterFilter(
+            NCardLibrary library,
+            CardLibraryCompendiumPlacementResolver.PlannedRow row,
+            NCardPoolFilter filter,
+            CardPoolModel pool,
+            Dictionary<NCardPoolFilter, Func<CardModel, bool>> poolFilters,
+            Dictionary<CharacterModel, NCardPoolFilter> cardPoolFilters,
+            Callable updateCallable)
+        {
+            try
+            {
+                if (!poolFilters.TryAdd(filter, c => pool.AllCardIds.Contains(c.Id)))
+                {
+                    RitsuLibFramework.Logger.Warn(
+                        $"[CardLibrary] Skipping duplicate compendium pool-filter registration for '{row.StableKey}'.");
+                    return;
+                }
+
+                if (row.Character is { } ch && !cardPoolFilters.TryAdd(ch, filter))
+                    RitsuLibFramework.Logger.Warn(
+                        $"[CardLibrary] Character compendium filter already exists for {DescribeCharacter(ch)}.");
+
+                filter.Connect(NCardPoolFilter.SignalName.Toggled, updateCallable);
+                filter.Connect(Control.SignalName.FocusEntered,
+                    Callable.From(delegate { library._lastHoveredControl = filter; }));
+            }
+            catch (Exception ex)
+            {
+                RitsuLibFramework.Logger.Warn(
+                    $"[CardLibrary] Failed to register compendium filter '{row.StableKey}': {ex.Message}");
+            }
+        }
+
+        private static Texture2D? TryGetReferenceFilterTexture(NCardPoolFilter referenceFilter)
+        {
+            try
+            {
+                return referenceFilter.GetNodeOrNull<TextureRect>("Image") is { Texture: { } refTexture }
+                    ? refTexture
+                    : null;
+            }
+            catch (Exception ex)
+            {
+                RitsuLibFramework.Logger.Warn(
+                    $"[CardLibrary] Failed to inspect reference compendium filter icon: {ex.Message}");
+                return null;
+            }
+        }
+
+        private static Texture2D? TryGetCharacterIconTexture(CharacterModel character)
+        {
+            try
+            {
+                return character.IconTexture;
+            }
+            catch (Exception ex)
+            {
+                RitsuLibFramework.Logger.Warn(
+                    $"[CardLibrary] Failed to load compendium icon for {DescribeCharacter(character)}: {ex.Message}");
+                return null;
+            }
+        }
+
+        private static Texture2D? TryLoadTexture(
+            string? path,
+            object owner,
+            string memberName,
+            string ownerLabel)
+        {
+            if (string.IsNullOrWhiteSpace(path))
+                return null;
+
+            try
+            {
+                if (!AssetPathDiagnostics.Exists(path, owner, memberName))
+                    return null;
+
+                if (GodotResourcePath.TryLoad<Texture2D>(path, out var iconTexture))
+                    return iconTexture;
+
+                RitsuLibFramework.Logger.Warn(
+                    $"[CardLibrary] Could not load Texture2D for {ownerLabel}.{memberName}: '{path}'.");
+            }
+            catch (Exception ex)
+            {
+                RitsuLibFramework.Logger.Warn(
+                    $"[CardLibrary] Failed to load Texture2D for {ownerLabel}.{memberName}: '{path}'. {ex.Message}");
+            }
+
+            return null;
+        }
+
+        private static string DescribeCharacter(CharacterModel character)
+        {
+            try
+            {
+                return character.Id.ToString();
+            }
+            catch
+            {
+                return character.GetType().Name;
+            }
         }
     }
 }

@@ -37,9 +37,7 @@ namespace STS2RitsuLib.Combat.CardTargeting.Patches
             return [new(typeof(NCardPlay), "TryPlayCard", [typeof(Creature)])];
         }
 
-        // ReSharper disable InconsistentNaming
         public static bool Prefix(NCardPlay __instance, Creature? target)
-            // ReSharper restore InconsistentNaming
         {
             var card = __instance.Card;
             if (!AnyPlayerCardTargetingHelper.IsAnyPlayerMultiplayer(card))

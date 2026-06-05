@@ -31,7 +31,6 @@ namespace STS2RitsuLib.Cards.Patches
             ];
         }
 
-        // ReSharper disable InconsistentNaming
         /// <summary>
         ///     Appends tooltip instances built from each <see cref="CardModel.DynamicVars" /> entry that has a factory.
         ///     追加由每个带工厂的 <see cref="CardModel.DynamicVars" /> 条目构建的工具提示实例。
@@ -45,7 +44,6 @@ namespace STS2RitsuLib.Cards.Patches
         ///     原始 enumerable；存在额外提示时替换为去重拼接结果。
         /// </param>
         public static void Postfix(CardModel __instance, ref IEnumerable<IHoverTip> __result)
-            // ReSharper restore InconsistentNaming
         {
             var extraTips = __instance.DynamicVars.Values
                 .Select(DynamicVarTooltipRegistry.Create)
@@ -83,7 +81,6 @@ namespace STS2RitsuLib.Cards.Patches
             ];
         }
 
-        // ReSharper disable InconsistentNaming
         /// <summary>
         ///     Copies tooltip factory attachment from the source instance to the clone.
         ///     将工具提示工厂附加项从源实例复制到克隆实例。
@@ -97,7 +94,6 @@ namespace STS2RitsuLib.Cards.Patches
         ///     克隆后的动态变量。
         /// </param>
         public static void Postfix(DynamicVar __instance, DynamicVar __result)
-            // ReSharper restore InconsistentNaming
         {
             DynamicVarTooltipRegistry.CopyTo(__instance, __result);
         }

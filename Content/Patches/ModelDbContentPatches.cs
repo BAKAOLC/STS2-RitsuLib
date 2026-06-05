@@ -25,7 +25,6 @@ namespace STS2RitsuLib.Content.Patches
             return [new(typeof(ModelDb), "AllCharacters", MethodType.Getter)];
         }
 
-        // ReSharper disable once InconsistentNaming
         /// <summary>
         ///     Concatenates mod-registered characters onto the vanilla sequence.
         ///     将 mod 注册的角色拼接到原版序列之后。
@@ -59,13 +58,11 @@ namespace STS2RitsuLib.Content.Patches
             return [new(typeof(ModelDb), "Monsters", MethodType.Getter)];
         }
 
-        // ReSharper disable once InconsistentNaming
         /// <summary>
         ///     Ensures standalone-registered monsters appear in global monster enumeration even before every act lists them.
         ///     确保独立注册的怪物即使在每个章节列出它们之前，也会出现在全局怪物枚举中。
         /// </summary>
         public static void Postfix(ref IEnumerable<MonsterModel> __result)
-            // ReSharper restore InconsistentNaming
         {
             __result = ModContentRegistry.AppendRegisteredMonsters(__result);
         }
@@ -92,7 +89,6 @@ namespace STS2RitsuLib.Content.Patches
             return [new(typeof(ModelDb), "Acts", MethodType.Getter)];
         }
 
-        // ReSharper disable once InconsistentNaming
         /// <summary>
         ///     Concatenates mod-registered acts onto the vanilla sequence.
         ///     将 mod 注册的章节拼接到原版序列之后。
@@ -126,7 +122,6 @@ namespace STS2RitsuLib.Content.Patches
             return [new(typeof(ModelDb), "AllSharedEvents", MethodType.Getter)];
         }
 
-        // ReSharper disable once InconsistentNaming
         /// <summary>
         ///     Concatenates mod shared events onto the vanilla sequence.
         ///     将 mod 共享事件拼接到原版序列之后。
@@ -160,7 +155,6 @@ namespace STS2RitsuLib.Content.Patches
             return [new(typeof(ModelDb), "AllPowers", MethodType.Getter)];
         }
 
-        // ReSharper disable once InconsistentNaming
         /// <summary>
         ///     Concatenates mod powers onto the vanilla sequence.
         ///     将 mod 能力拼接到原版序列之后。
@@ -192,7 +186,6 @@ namespace STS2RitsuLib.Content.Patches
             return [new(typeof(ModelDb), "Orbs", MethodType.Getter)];
         }
 
-        // ReSharper disable once InconsistentNaming
         /// <summary>
         ///     Concatenates mod orbs onto the vanilla sequence.
         ///     将 mod 充能球拼接到原版序列之后。
@@ -224,7 +217,6 @@ namespace STS2RitsuLib.Content.Patches
             return [new(typeof(ModelDb), "AllSharedCardPools", MethodType.Getter)];
         }
 
-        // ReSharper disable once InconsistentNaming
         /// <summary>
         ///     Concatenates mod shared card pools onto the vanilla sequence.
         ///     将 mod 共享卡牌池拼接到原版序列之后。
@@ -258,7 +250,6 @@ namespace STS2RitsuLib.Content.Patches
             return [new(typeof(ModelDb), "AllEvents", MethodType.Getter)];
         }
 
-        // ReSharper disable once InconsistentNaming
         /// <summary>
         ///     Concatenates mod shared events onto the <see cref="ModelDb.AllEvents" /> sequence.
         ///     将 mod 共享事件拼接到 <see cref="ModelDb.AllEvents" /> 序列之后。
@@ -290,7 +281,6 @@ namespace STS2RitsuLib.Content.Patches
             return [new(typeof(ModelDb), "AllSharedAncients", MethodType.Getter)];
         }
 
-        // ReSharper disable once InconsistentNaming
         /// <summary>
         ///     Concatenates mod shared ancients onto the vanilla sequence.
         ///     将 mod 共享ancient拼接到原版序列之后。
@@ -324,7 +314,6 @@ namespace STS2RitsuLib.Content.Patches
             return [new(typeof(ModelDb), "AllAncients", MethodType.Getter)];
         }
 
-        // ReSharper disable once InconsistentNaming
         /// <summary>
         ///     Concatenates mod shared ancients onto the <see cref="ModelDb.AllAncients" /> sequence.
         ///     将 mod 共享远古事件拼接到 <see cref="ModelDb.AllAncients" /> 序列之后。
@@ -357,7 +346,6 @@ namespace STS2RitsuLib.Content.Patches
             return [new(typeof(ModelDb), "DebugEnchantments", MethodType.Getter)];
         }
 
-        // ReSharper disable once InconsistentNaming
         /// <summary>
         ///     Concatenates mod enchantments onto the vanilla sequence.
         ///     将 mod 附魔拼接到原版序列之后。
@@ -389,7 +377,6 @@ namespace STS2RitsuLib.Content.Patches
             return [new(typeof(ModelDb), "DebugAfflictions", MethodType.Getter)];
         }
 
-        // ReSharper disable once InconsistentNaming
         /// <summary>
         ///     Concatenates mod afflictions onto the vanilla sequence.
         ///     将 mod 苦痛拼接到原版序列之后。
@@ -421,7 +408,6 @@ namespace STS2RitsuLib.Content.Patches
             return [new(typeof(ModelDb), "Achievements", MethodType.Getter)];
         }
 
-        // ReSharper disable once InconsistentNaming
         /// <summary>
         ///     Merges mod achievements into the vanilla list by <see cref="AbstractModel.Id" />.
         ///     按 <see cref="AbstractModel.Id" /> 将 mod 成就合并到原版列表中。
@@ -453,7 +439,6 @@ namespace STS2RitsuLib.Content.Patches
             return [new(typeof(ModelDb), "GoodModifiers", MethodType.Getter)];
         }
 
-        // ReSharper disable once InconsistentNaming
         /// <summary>
         ///     Merges mod good modifiers into the current list using <see cref="ModifierRegistration.ModifierListSortOrder" />.
         ///     按 <see cref="ModifierRegistration.ModifierListSortOrder" /> 将 mod 正面修饰符合并到当前列表中。
@@ -487,7 +472,6 @@ namespace STS2RitsuLib.Content.Patches
             return [new(typeof(ModelDb), "BadModifiers", MethodType.Getter)];
         }
 
-        // ReSharper disable once InconsistentNaming
         /// <summary>
         ///     Merges mod bad modifiers into the current list using <see cref="ModifierRegistration.ModifierListSortOrder" />.
         ///     按 <see cref="ModifierRegistration.ModifierListSortOrder" /> 将 mod 负面修饰符合并到当前列表中。
@@ -522,7 +506,6 @@ namespace STS2RitsuLib.Content.Patches
             return [new(typeof(ModelDb), "MutuallyExclusiveModifiers", MethodType.Getter)];
         }
 
-        // ReSharper disable once InconsistentNaming
         /// <summary>
         ///     Merges mod exclusivity groups into the current list, including overlapping vanilla sets.
         ///     将 mod 互斥组合并到当前列表，并与存在交集的原版集合合并。
@@ -556,7 +539,6 @@ namespace STS2RitsuLib.Content.Patches
             return [new(typeof(ModelDb), "AllRelicPools", MethodType.Getter)];
         }
 
-        // ReSharper disable once InconsistentNaming
         /// <summary>
         ///     Concatenates mod shared relic pools onto the vanilla sequence.
         ///     将 mod 共享遗物池拼接到原版序列之后。
@@ -588,7 +570,6 @@ namespace STS2RitsuLib.Content.Patches
             return [new(typeof(ModelDb), "AllPotionPools", MethodType.Getter)];
         }
 
-        // ReSharper disable once InconsistentNaming
         /// <summary>
         ///     Concatenates mod shared potion pools onto the vanilla sequence.
         ///     将 mod 共享药水池拼接到原版序列之后。

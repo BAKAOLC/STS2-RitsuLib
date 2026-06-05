@@ -1,4 +1,3 @@
-using System.Runtime.CompilerServices;
 using HarmonyLib;
 using MegaCrit.Sts2.Core.Entities.Cards;
 using MegaCrit.Sts2.Core.Models;
@@ -9,24 +8,20 @@ namespace STS2RitsuLib.Keywords.Patches
 {
     /// <summary>
     ///     Seeds minted mod <see cref="CardKeyword" /> values onto every <see cref="ModCardTemplate" /> instance
-    ///     after vanilla <c>CardModel.get_Keywords</c> materializes the underlying <c>_keywords</c> set. Keeps
+    ///     after vanilla <c>CardModel.get_Keywords</c> materializes the underlying local keyword set. Keeps
     ///     <see cref="ModCardTemplate.RegisteredKeywordIds" /> as an independent channel from vanilla
     ///     <see cref="CardModel.CanonicalKeywords" /> so downstream mods can still override
-    ///     <c>CanonicalKeywords</c> without dropping their mod keyword declarations. Seeding is tracked per
-    ///     instance with a <see cref="ConditionalWeakTable{TKey,TValue}" /> marker so the postfix executes the
-    ///     resolution loop exactly once per card lifetime (subsequent calls are an O(1) early-out).
-    ///     在原版 <c>CardModel.get_Keywords</c> 实体化底层 <c>_keywords</c> 集合后，将铸造的 mod <see cref="CardKeyword" /> 值种入每个
+    ///     <c>CanonicalKeywords</c> without dropping their mod keyword declarations.
+    ///     在原版 <c>CardModel.get_Keywords</c> 实体化底层本地关键词集合后，将铸造的 mod <see cref="CardKeyword" /> 值种入每个
     ///     <see cref="ModCardTemplate" /> 实例。保持
     ///     <see cref="ModCardTemplate.RegisteredKeywordIds" /> 作为独立于原版
     ///     <see cref="CardModel.CanonicalKeywords" /> 的通道，使下游 mod 仍可覆盖
-    ///     <c>CanonicalKeywords</c> 而不会丢失其 mod 关键词声明。种入过程使用
-    ///     <see cref="ConditionalWeakTable{TKey,TValue}" /> 标记按实例跟踪，使 postfix 在每张卡牌生命周期内
-    ///     只执行一次解析循环（后续调用为 O(1) 早退）。
+    ///     <c>CanonicalKeywords</c> 而不会丢失其 mod 关键词声明。
     /// </summary>
     public sealed class CardModelKeywordsModSeedPatch : IPatchMethod
     {
-        private static readonly ConditionalWeakTable<CardModel, object> SeededCards = new();
-        private static readonly object SeededMarker = new();
+        private static readonly AccessTools.FieldRef<CardModel, HashSet<CardKeyword>?> KeywordsRef =
+            AccessTools.FieldRefAccess<CardModel, HashSet<CardKeyword>?>("_keywords");
 
         /// <inheritdoc />
         public static string PatchId => "ritsulib_card_model_keywords_mod_seed";
@@ -41,30 +36,37 @@ namespace STS2RitsuLib.Keywords.Patches
         /// <inheritdoc />
         public static ModPatchTarget[] GetTargets()
         {
+#if STS2_AT_LEAST_0_107_0
+            return [new(typeof(CardModel), "LocalKeywords", MethodType.Getter)];
+#else
             return [new(typeof(CardModel), "Keywords", MethodType.Getter)];
+#endif
         }
 
-        // ReSharper disable InconsistentNaming
+        /// <summary>
+        ///     Captures whether this getter call is the one that will materialize vanilla's local keyword set.
+        ///     记录本次 getter 调用是否会实体化原版的本地关键词集合。
+        /// </summary>
+        public static void Prefix(CardModel __instance, out bool __state)
+        {
+            __state = KeywordsRef(__instance) == null;
+        }
+
         /// <summary>
         ///     Unions the minted <see cref="CardKeyword" /> values of the card's
-        ///     <see cref="ModCardTemplate.RegisteredKeywordIds" /> into the vanilla keyword set the first time the
-        ///     getter runs. The returned <c>IReadOnlySet&lt;CardKeyword&gt;</c> is physically the private
-        ///     <c>HashSet&lt;CardKeyword&gt;</c> field, so direct casts are safe and the writes flow into the real
-        ///     storage used by subsequent reads, <c>AddKeyword</c>/<c>RemoveKeyword</c>, and
-        ///     <c>DeepCloneFields</c>.
+        ///     <see cref="ModCardTemplate.RegisteredKeywordIds" /> into the vanilla local keyword set the first time
+        ///     the local keyword getter runs. This keeps the legacy string channel bound to the same materialization
+        ///     path where vanilla unions <see cref="CardModel.CanonicalKeywords" /> into the card's base keywords.
         ///     第一次运行 getter 时，将卡牌的
-        ///     <see cref="ModCardTemplate.RegisteredKeywordIds" /> 对应的铸造 <see cref="CardKeyword" /> 值并入原版关键词集合。返回的
-        ///     <c>IReadOnlySet&lt;CardKeyword&gt;</c> 实际上就是 private
-        ///     <c>HashSet&lt;CardKeyword&gt;</c> 字段，因此直接强转是安全的，写入也会流入后续读取、<c>AddKeyword</c>/<c>RemoveKeyword</c> 以及
-        ///     <c>DeepCloneFields</c> 使用的真实
-        ///     存储。
+        ///     <see cref="ModCardTemplate.RegisteredKeywordIds" /> 对应的铸造 <see cref="CardKeyword" /> 值并入原版本地关键词集合。
+        ///     这让旧字符串通道绑定在原版把 <see cref="CardModel.CanonicalKeywords" /> 合入卡牌基础关键词的实体化路径上。
         /// </summary>
-        public static void Postfix(CardModel __instance, IReadOnlySet<CardKeyword> __result)
+        public static void Postfix(CardModel __instance, IReadOnlySet<CardKeyword> __result, bool __state)
         {
-            if (__instance is not ModCardTemplate template)
+            if (!__state)
                 return;
 
-            if (SeededCards.TryGetValue(__instance, out _))
+            if (__instance is not ModCardTemplate template)
                 return;
 
             if (__result is not HashSet<CardKeyword> storage)
@@ -78,9 +80,6 @@ namespace STS2RitsuLib.Keywords.Patches
                 if (ModKeywordRegistry.TryResolveCardKeyword(id, out var value))
                     storage.Add(value);
             }
-
-            SeededCards.Add(__instance, SeededMarker);
         }
-        // ReSharper restore InconsistentNaming
     }
 }

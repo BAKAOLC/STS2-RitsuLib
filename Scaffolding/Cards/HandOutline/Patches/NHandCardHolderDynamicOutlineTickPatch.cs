@@ -30,9 +30,7 @@ namespace STS2RitsuLib.Scaffolding.Cards.HandOutline.Patches
             ];
         }
 
-        // ReSharper disable InconsistentNaming
         public static void Postfix(NHandCardHolder __instance)
-            // ReSharper restore InconsistentNaming
         {
             if (!GodotObject.IsInstanceValid(__instance) || !__instance.IsInsideTree() || __instance.GetTree() == null)
                 return;
@@ -45,9 +43,7 @@ namespace STS2RitsuLib.Scaffolding.Cards.HandOutline.Patches
             TaskHelper.RunSafely(RunDynamicRefreshLoop(__instance, id, cts.Token));
         }
 
-        // ReSharper disable InconsistentNaming
         public static void Prefix(NHandCardHolder __instance)
-            // ReSharper restore InconsistentNaming
         {
             StopLoop(__instance.GetInstanceId());
         }

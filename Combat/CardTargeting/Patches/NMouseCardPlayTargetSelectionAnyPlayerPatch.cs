@@ -48,9 +48,7 @@ namespace STS2RitsuLib.Combat.CardTargeting.Patches
             return [new(typeof(NMouseCardPlay), "TargetSelection", [typeof(TargetMode)])];
         }
 
-        // ReSharper disable InconsistentNaming
         public static bool Prefix(NMouseCardPlay __instance, TargetMode targetMode, ref Task __result)
-            // ReSharper restore InconsistentNaming
         {
             var card = GetCard(__instance);
             if (!AnyPlayerCardTargetingHelper.IsAnyPlayerMultiplayer(card))

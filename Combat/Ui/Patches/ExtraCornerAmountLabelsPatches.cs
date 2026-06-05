@@ -31,7 +31,6 @@ namespace STS2RitsuLib.Combat.Ui.Patches
         ///     Harmony postfix for <c>NPower.RefreshAmount</c>.
         ///     <c>NPower.RefreshAmount</c> 的 Harmony 后置补丁。
         /// </summary>
-        // ReSharper disable once InconsistentNaming
         public static void Postfix(NPower __instance)
         {
             ExtraCornerAmountLabelsRuntime.SyncPower(__instance);
@@ -63,7 +62,6 @@ namespace STS2RitsuLib.Combat.Ui.Patches
         ///     Harmony postfix for <c>NPower._ExitTree</c>.
         ///     <c>NPower._ExitTree</c> 的 Harmony 后置补丁。
         /// </summary>
-        // ReSharper disable once InconsistentNaming
         public static void Postfix(NPower __instance)
         {
             ExtraCornerAmountLabelsRuntime.ClearPower(__instance);
@@ -96,7 +94,6 @@ namespace STS2RitsuLib.Combat.Ui.Patches
         ///     Harmony postfix for <c>NRelicInventoryHolder.RefreshAmount</c>.
         ///     <c>NRelicInventoryHolder.RefreshAmount</c> 的 Harmony 后置补丁。
         /// </summary>
-        // ReSharper disable once InconsistentNaming
         public static void Postfix(NRelicInventoryHolder __instance)
         {
             ExtraCornerAmountLabelsRuntime.SyncRelic(__instance);
@@ -128,7 +125,6 @@ namespace STS2RitsuLib.Combat.Ui.Patches
         ///     Harmony postfix for <c>NRelicInventoryHolder._ExitTree</c>.
         ///     <c>NRelicInventoryHolder._ExitTree</c> 的 Harmony 后置补丁。
         /// </summary>
-        // ReSharper disable once InconsistentNaming
         public static void Postfix(NRelicInventoryHolder __instance)
         {
             ExtraCornerAmountLabelsRuntime.ClearRelic(__instance);
@@ -161,7 +157,6 @@ namespace STS2RitsuLib.Combat.Ui.Patches
         ///     Harmony postfix for <c>NIntent.UpdateVisuals</c>.
         ///     <c>NIntent.UpdateVisuals</c> 的 Harmony 后置补丁。
         /// </summary>
-        // ReSharper disable once InconsistentNaming
         public static void Postfix(NIntent __instance)
         {
             ExtraCornerAmountLabelsRuntime.SyncIntent(__instance);
@@ -193,7 +188,6 @@ namespace STS2RitsuLib.Combat.Ui.Patches
         ///     Harmony postfix for <c>NIntent._ExitTree</c>.
         ///     <c>NIntent._ExitTree</c> 的 Harmony 后置补丁。
         /// </summary>
-        // ReSharper disable once InconsistentNaming
         public static void Postfix(NIntent __instance)
         {
             ExtraCornerAmountLabelsRuntime.ClearIntent(__instance);

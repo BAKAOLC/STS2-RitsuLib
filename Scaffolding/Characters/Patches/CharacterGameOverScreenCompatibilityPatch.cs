@@ -45,7 +45,6 @@ namespace STS2RitsuLib.Scaffolding.Characters.Patches
             return [new(typeof(NGameOverScreen), "MoveCreaturesToDifferentLayerAndDisableUi")];
         }
 
-        // ReSharper disable InconsistentNaming
         /// <summary>
         ///     Runs a safe reimplementation of creature relocation; returns <c>false</c> to skip the original method on
         ///     success, or <c>true</c> to fall back if an unexpected error occurs.
@@ -53,7 +52,6 @@ namespace STS2RitsuLib.Scaffolding.Characters.Patches
         ///     发生意外错误时返回 <c>true</c> 以回退。
         /// </summary>
         public static bool Prefix(NGameOverScreen __instance)
-            // ReSharper restore InconsistentNaming
         {
             try
             {

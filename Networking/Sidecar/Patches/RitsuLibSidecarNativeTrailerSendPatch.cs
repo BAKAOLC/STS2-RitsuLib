@@ -25,7 +25,6 @@ namespace STS2RitsuLib.Networking.Sidecar.Patches
             ];
         }
 
-        // ReSharper disable once InconsistentNaming
         public static void Prefix(ref byte[] bytes, ref int length)
         {
             RitsuLibSidecarNativeTrailerEvidence.TryAppendLocalTrailer(ref bytes, ref length);
@@ -67,7 +66,6 @@ namespace STS2RitsuLib.Networking.Sidecar.Patches
             ];
         }
 
-        // ReSharper disable once InconsistentNaming
         public static void Prefix(ref byte[] bytes, ref int length)
         {
             RitsuLibSidecarNativeTrailerEvidence.TryAppendLocalTrailer(ref bytes, ref length);

@@ -23,9 +23,7 @@ namespace STS2RitsuLib.Cards.FreePlay.Patches
             ];
         }
 
-        // ReSharper disable InconsistentNaming
         public static void Postfix(MethodBase __originalMethod, CardModel __instance)
-            // ReSharper restore InconsistentNaming
         {
             switch (__originalMethod.Name)
             {

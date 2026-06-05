@@ -36,7 +36,6 @@ namespace STS2RitsuLib.Scaffolding.Characters.Patches
             return [new(typeof(NRestSiteCharacter), nameof(NRestSiteCharacter.Create))];
         }
 
-        // ReSharper disable once InconsistentNaming
         /// <summary>
         ///     Supplies a procedural instance when applicable; otherwise builds from
         ///     <see cref="MegaCrit.Sts2.Core.Models.CharacterModel.RestSiteAnimPath" /> via

@@ -29,13 +29,11 @@ namespace STS2RitsuLib.Scaffolding.Characters.Patches
             return [new(typeof(NCardTrailVfx), nameof(NCardTrailVfx.Create), [typeof(Control), typeof(string)])];
         }
 
-        // ReSharper disable InconsistentNaming
         /// <summary>
         ///     Mutates the created trail instance in place when the owning card’s character supplies a trail style.
         ///     当所属卡牌的角色提供 trail style 时，原地修改已创建的 trail 实例。
         /// </summary>
         public static void Postfix(Control card, ref NCardTrailVfx? __result)
-            // ReSharper restore InconsistentNaming
         {
             if (__result == null || card is not NCard nCard)
                 return;

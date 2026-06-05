@@ -68,7 +68,6 @@ namespace STS2RitsuLib.Networking.JoinDiagnostics.Patches
             ];
         }
 
-        // ReSharper disable once InconsistentNaming
         public static void Postfix(InitialGameInfoMessage __instance, PacketWriter writer)
         {
             JoinDiagnosticsPayloadCodec.Write(writer, __instance);
@@ -114,7 +113,6 @@ namespace STS2RitsuLib.Networking.JoinDiagnostics.Patches
             return [new(typeof(NErrorPopup), nameof(NErrorPopup.Create), [typeof(NetErrorInfo)])];
         }
 
-        // ReSharper disable once InconsistentNaming
         public static void Postfix(NetErrorInfo info, NErrorPopup? __result)
         {
             if (__result == null) return;
@@ -136,7 +134,6 @@ namespace STS2RitsuLib.Networking.JoinDiagnostics.Patches
             return [new(typeof(NErrorPopup), "_Ready", [])];
         }
 
-        // ReSharper disable once InconsistentNaming
         public static void Postfix(NErrorPopup __instance)
         {
             if (JoinFailureDiagnosticsPopupReports.Reports.TryGetValue(__instance, out var report))

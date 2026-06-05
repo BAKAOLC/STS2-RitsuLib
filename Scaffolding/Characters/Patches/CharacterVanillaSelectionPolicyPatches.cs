@@ -107,7 +107,6 @@ namespace STS2RitsuLib.Scaffolding.Characters.Patches
         ///     Enters selection scope for character-list consumers.
         ///     为角色列表消费者进入选择作用域。
         /// </summary>
-        // ReSharper disable once InconsistentNaming
         public static void Prefix(MethodBase __originalMethod)
         {
             CharacterVanillaSelectionPolicyScope.Enter(__originalMethod);
@@ -117,7 +116,6 @@ namespace STS2RitsuLib.Scaffolding.Characters.Patches
         ///     Ensures scope cleanup even when target method throws.
         ///     即使目标方法抛出，也确保作用域清理。
         /// </summary>
-        // ReSharper disable once InconsistentNaming
         public static void Finalizer(MethodBase __originalMethod)
         {
             CharacterVanillaSelectionPolicyScope.Exit(__originalMethod);
@@ -151,7 +149,6 @@ namespace STS2RitsuLib.Scaffolding.Characters.Patches
         /// </summary>
         [HarmonyAfter(Const.BaseLibHarmonyId, Const.FrameworkContentRegistryHarmonyId)]
         [HarmonyPriority(Priority.Last)]
-        // ReSharper disable once InconsistentNaming
         public static void Postfix(ref IEnumerable<CharacterModel> __result)
         {
             __result = CharacterVanillaSelectionPolicyScope.Apply(__result);

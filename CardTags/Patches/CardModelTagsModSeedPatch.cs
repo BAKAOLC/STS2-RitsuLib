@@ -39,7 +39,6 @@ namespace STS2RitsuLib.CardTags.Patches
             return [new(typeof(CardModel), "Tags", MethodType.Getter)];
         }
 
-        // ReSharper disable InconsistentNaming
         /// <summary>
         ///     Unions minted <see cref="CardTag" /> values into the physical <see cref="HashSet{T}" /> storage the first
         ///     time the getter runs.
@@ -70,6 +69,5 @@ namespace STS2RitsuLib.CardTags.Patches
 
             SeededCards.Add(__instance, SeededMarker);
         }
-        // ReSharper restore InconsistentNaming
     }
 }

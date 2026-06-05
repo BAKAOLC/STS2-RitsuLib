@@ -132,7 +132,6 @@ namespace STS2RitsuLib.Combat.HealthBars
         ///     Initializes a segment with an optional <see cref="OverlayMaterial" /> and default overlay modulate.
         ///     初始化一个带可选 <see cref="OverlayMaterial" /> 和默认覆盖 modulate 的片段。
         /// </summary>
-        // ReSharper disable once RedundantOverload.Global
         public HealthBarForecastSegment(
             int amount,
             Color color,
@@ -332,7 +331,6 @@ namespace STS2RitsuLib.Combat.HealthBars
             List<RegisteredHealthBarForecastSegment> segments = [];
 
             var powerSequenceOrder = 0L;
-            // ReSharper disable once SuspiciousTypeConversion.Global
             foreach (var source in creature.Powers.OfType<IHealthBarForecastSource>())
                 AppendSegments(
                     source,

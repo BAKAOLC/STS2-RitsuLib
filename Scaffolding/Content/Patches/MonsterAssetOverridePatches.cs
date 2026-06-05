@@ -48,13 +48,11 @@ namespace STS2RitsuLib.Scaffolding.Content.Patches
             return [new(typeof(MonsterModel), "VisualsPath", MethodType.Getter)];
         }
 
-        // ReSharper disable InconsistentNaming
         /// <summary>
         ///     Supplies <see cref="IModMonsterAssetOverrides.CustomVisualsPath" /> when the resource exists.
         ///     当资源存在时提供 <see cref="IModMonsterAssetOverrides.CustomVisualsPath" />。
         /// </summary>
         public static bool Prefix(MonsterModel __instance, ref string __result)
-            // ReSharper restore InconsistentNaming
         {
             return ContentAssetOverridePatchHelper.TryUseStringOverride<IModMonsterAssetOverrides>(
                 __instance,

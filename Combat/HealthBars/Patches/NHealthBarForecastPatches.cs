@@ -16,8 +16,6 @@ namespace STS2RitsuLib.Combat.HealthBars.Patches
     /// </summary>
     internal static class NHealthBarForecastPatchHelper
     {
-        // ReSharper disable InconsistentNaming
-
         private const int OverlapEqualWidthRotatePeriodMs = 1800;
 
         private static readonly AttachedState<NHealthBar, HealthBarForecastUiState?> UiStates = new(() => null);
@@ -676,8 +674,6 @@ namespace STS2RitsuLib.Combat.HealthBars.Patches
         {
             public static HealthBarForecastRenderResult Empty => new(false, 0f, null, null);
         }
-
-        // ReSharper restore InconsistentNaming
     }
 
     [HarmonyAfter(Const.BaseLibHarmonyId)]
@@ -693,7 +689,6 @@ namespace STS2RitsuLib.Combat.HealthBars.Patches
             return [new(typeof(NHealthBar), "_Ready")];
         }
 
-        // ReSharper disable once InconsistentNaming
         public static void Postfix(NHealthBar __instance)
         {
             BaseLibHealthBarForecastBridge.TryRegisterPrimary();
@@ -717,7 +712,6 @@ namespace STS2RitsuLib.Combat.HealthBars.Patches
             return [new(typeof(NHealthBar), "RefreshForeground")];
         }
 
-        // ReSharper disable once InconsistentNaming
         public static void Postfix(NHealthBar __instance)
         {
             NHealthBarGraftUiPatchHelper.RefreshGraftOverlay(__instance);
@@ -739,7 +733,6 @@ namespace STS2RitsuLib.Combat.HealthBars.Patches
             return [new(typeof(NHealthBar), "RefreshMiddleground")];
         }
 
-        // ReSharper disable once InconsistentNaming
         public static void Postfix(NHealthBar __instance)
         {
             NHealthBarForecastPatchHelper.RefreshMiddlegroundOverlay(__instance);
@@ -759,7 +752,6 @@ namespace STS2RitsuLib.Combat.HealthBars.Patches
             return [new(typeof(NHealthBar), "RefreshText")];
         }
 
-        // ReSharper disable once InconsistentNaming
         public static void Postfix(NHealthBar __instance)
         {
             NHealthBarForecastPatchHelper.RefreshTextOverlay(__instance);

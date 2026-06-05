@@ -27,6 +27,7 @@ namespace STS2RitsuLib.Combat.Rewards
         ///     Factory used to rebuild a custom reward from a saved reward and a typed mod-owned payload.
         ///     用保存的 reward 和已解析的 mod 载荷重建自定义 reward 的工厂。
         /// </summary>
+        // ReSharper disable once TypeParameterCanBeVariant
         public delegate Reward ModRewardFactory<TPayload>(
             SerializableReward save,
             Player player,

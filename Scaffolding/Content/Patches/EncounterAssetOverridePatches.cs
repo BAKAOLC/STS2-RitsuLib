@@ -98,13 +98,11 @@ namespace STS2RitsuLib.Scaffolding.Content.Patches
             return [new(typeof(EncounterModel), nameof(EncounterModel.CreateScene))];
         }
 
-        // ReSharper disable InconsistentNaming
         /// <summary>
         ///     Instantiates <see cref="IModEncounterAssetOverrides.CustomEncounterScenePath" /> when the resource exists.
         ///     Instantiates <see cref="IModEncounterAssetOverrides.CustomEncounterScenePath" /> 当资源存在时。
         /// </summary>
         public static bool Prefix(EncounterModel __instance, ref Control __result)
-            // ReSharper restore InconsistentNaming
         {
             string? path;
             if (ExternalAssetOverrideRegistry.TryGetEncounterScenePath(__instance, out var externalPath))
@@ -157,7 +155,6 @@ namespace STS2RitsuLib.Scaffolding.Content.Patches
             ];
         }
 
-        // ReSharper disable InconsistentNaming
         /// <summary>
         ///     Path-based <see cref="ActBackgroundLayersFactory" /> when overrides supply paths; otherwise
         ///     <see cref="ModEncounterTemplate" /> programmatic slot from
@@ -166,7 +163,6 @@ namespace STS2RitsuLib.Scaffolding.Content.Patches
         ///     <see cref="EncounterGetBackgroundAssetsProgrammaticPrepPatch" /> 的 <see cref="ModEncounterTemplate" /> 编程式槽位。
         /// </summary>
         public static bool Prefix(EncounterModel __instance, Rng rng, ref BackgroundAssets __result)
-            // ReSharper restore InconsistentNaming
         {
             var overrides = __instance as IModEncounterAssetOverrides;
             var hasExternalLayers = ExternalAssetOverrideRegistry.TryGetEncounterBackgroundLayersDirectory(__instance,
@@ -244,13 +240,11 @@ namespace STS2RitsuLib.Scaffolding.Content.Patches
             return [new(typeof(EncounterModel), "BossNodePath", MethodType.Getter)];
         }
 
-        // ReSharper disable InconsistentNaming
         /// <summary>
         ///     Supplies <see cref="IModEncounterAssetOverrides.CustomBossNodePath" /> when the resource exists.
         ///     当资源存在时提供 <see cref="IModEncounterAssetOverrides.CustomBossNodePath" />。
         /// </summary>
         public static bool Prefix(EncounterModel __instance, ref string __result)
-            // ReSharper restore InconsistentNaming
         {
             if (!ContentAssetOverridePatchHelper.TryUseExternalPathOverride(
                     __instance,
@@ -290,7 +284,6 @@ namespace STS2RitsuLib.Scaffolding.Content.Patches
             return [new(typeof(EncounterModel), "MapNodeAssetPaths", MethodType.Getter)];
         }
 
-        // ReSharper disable InconsistentNaming
         /// <summary>
         ///     Replaces enumeration with existing resources from
         ///     <see cref="IModEncounterAssetOverrides.CustomMapNodeAssetPaths" />.
@@ -298,7 +291,6 @@ namespace STS2RitsuLib.Scaffolding.Content.Patches
         ///     <see cref="IModEncounterAssetOverrides.CustomMapNodeAssetPaths" /> 的现有资源替换枚举。
         /// </summary>
         public static bool Prefix(EncounterModel __instance, ref IEnumerable<string> __result)
-            // ReSharper restore InconsistentNaming
         {
             var hasExternal =
                 ExternalAssetOverrideRegistry.TryGetEncounterMapNodeAssetPaths(__instance, out var externalRaw);
@@ -346,13 +338,11 @@ namespace STS2RitsuLib.Scaffolding.Content.Patches
             return [new(typeof(EncounterModel), nameof(EncounterModel.GetAssetPaths))];
         }
 
-        // ReSharper disable InconsistentNaming
         /// <summary>
         ///     Appends encounter scene override, extra paths, and all <c>.tscn</c> under the configured layers directory.
         ///     追加遭遇场景覆盖、额外路径，以及配置的图层目录下所有 <c>.tscn</c>。
         /// </summary>
         public static void Postfix(EncounterModel __instance, IRunState runState, ref IEnumerable<string> __result)
-            // ReSharper restore InconsistentNaming
         {
             _ = runState;
             var overrides = __instance as IModEncounterAssetOverrides;

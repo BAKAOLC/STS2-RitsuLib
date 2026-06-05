@@ -29,13 +29,11 @@ namespace STS2RitsuLib.Scaffolding.Content.Patches
             return [new(typeof(RestSiteOption), "Icon", MethodType.Getter)];
         }
 
-        // ReSharper disable InconsistentNaming
         /// <summary>
         ///     Loads the texture from <see cref="IModRestSiteOptionAssetOverrides.CustomIconPath" /> when present.
         ///     存在时从 <see cref="IModRestSiteOptionAssetOverrides.CustomIconPath" /> 加载纹理。
         /// </summary>
         public static bool Prefix(RestSiteOption __instance, ref Texture2D __result)
-            // ReSharper restore InconsistentNaming
         {
             return ContentAssetOverridePatchHelper.TryUseTextureOverride<IModRestSiteOptionAssetOverrides>(
                 __instance,
@@ -70,13 +68,11 @@ namespace STS2RitsuLib.Scaffolding.Content.Patches
             return [new(typeof(RestSiteOption), "Title", MethodType.Getter)];
         }
 
-        // ReSharper disable InconsistentNaming
         /// <summary>
         ///     Returns <see cref="IModRestSiteOptionCustomTitle.CustomTitle" /> when non-null.
         ///     当non-null时返回 <see cref="IModRestSiteOptionCustomTitle.CustomTitle" />。
         /// </summary>
         public static bool Prefix(RestSiteOption __instance, ref LocString __result)
-            // ReSharper restore InconsistentNaming
         {
             if (__instance is not IModRestSiteOptionCustomTitle { CustomTitle: { } customTitle })
                 return true;

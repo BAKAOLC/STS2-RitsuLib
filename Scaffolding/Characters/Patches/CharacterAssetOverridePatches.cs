@@ -10,7 +10,6 @@ namespace STS2RitsuLib.Scaffolding.Characters.Patches
     {
         internal static bool TryUseOverride(
             CharacterModel instance,
-            // ReSharper disable once InconsistentNaming
             ref string __result,
             Func<IModCharacterAssetOverrides, string?> selector,
             string memberName,
@@ -123,7 +122,6 @@ namespace STS2RitsuLib.Scaffolding.Characters.Patches
             return [new(typeof(CharacterModel), nameof(CharacterModel.IconOutlineTexturePath), MethodType.Getter)];
         }
 
-        // ReSharper disable InconsistentNaming
         /// <summary>
         ///     When the instance implements <see cref="IModCharacterAssetOverrides" /> and a valid override path exists,
         ///     replaces the getter result; otherwise runs the original method.
@@ -132,7 +130,6 @@ namespace STS2RitsuLib.Scaffolding.Characters.Patches
         ///     替换 getter 结果；否则运行原始方法。
         /// </summary>
         public static bool Prefix(CharacterModel __instance, ref string __result)
-            // ReSharper restore InconsistentNaming
         {
             return CharacterAssetOverridePatchHelper.TryUseOverride(
                 __instance,
@@ -165,13 +162,11 @@ namespace STS2RitsuLib.Scaffolding.Characters.Patches
             return [new(typeof(CharacterModel), nameof(CharacterModel.VisualsPath), MethodType.Getter)];
         }
 
-        // ReSharper disable InconsistentNaming
         /// <summary>
         ///     Supplies <see cref="IModCharacterAssetOverrides.CustomVisualsPath" /> when the resource exists.
         ///     资源存在时提供 <see cref="IModCharacterAssetOverrides.CustomVisualsPath" />。
         /// </summary>
         public static bool Prefix(CharacterModel __instance, ref string __result)
-            // ReSharper restore InconsistentNaming
         {
             return CharacterAssetOverridePatchHelper.TryUseOverride(
                 __instance,
@@ -204,13 +199,11 @@ namespace STS2RitsuLib.Scaffolding.Characters.Patches
             return [new(typeof(CharacterModel), nameof(CharacterModel.EnergyCounterPath), MethodType.Getter)];
         }
 
-        // ReSharper disable InconsistentNaming
         /// <summary>
         ///     Supplies <see cref="IModCharacterAssetOverrides.CustomEnergyCounterPath" /> when the resource exists.
         ///     资源存在时提供 <see cref="IModCharacterAssetOverrides.CustomEnergyCounterPath" />。
         /// </summary>
         public static bool Prefix(CharacterModel __instance, ref string __result)
-            // ReSharper restore InconsistentNaming
         {
             return CharacterAssetOverridePatchHelper.TryUseOverride(__instance, ref __result,
                 o => o.CustomEnergyCounterPath,
@@ -241,13 +234,11 @@ namespace STS2RitsuLib.Scaffolding.Characters.Patches
             return [new(typeof(CharacterModel), nameof(CharacterModel.MerchantAnimPath), MethodType.Getter)];
         }
 
-        // ReSharper disable InconsistentNaming
         /// <summary>
         ///     Supplies <see cref="IModCharacterAssetOverrides.CustomMerchantAnimPath" /> when the resource exists.
         ///     资源存在时提供 <see cref="IModCharacterAssetOverrides.CustomMerchantAnimPath" />。
         /// </summary>
         public static bool Prefix(CharacterModel __instance, ref string __result)
-            // ReSharper restore InconsistentNaming
         {
             return CharacterAssetOverridePatchHelper.TryUseOverride(__instance, ref __result,
                 o => o.CustomMerchantAnimPath,
@@ -278,13 +269,11 @@ namespace STS2RitsuLib.Scaffolding.Characters.Patches
             return [new(typeof(CharacterModel), nameof(CharacterModel.RestSiteAnimPath), MethodType.Getter)];
         }
 
-        // ReSharper disable InconsistentNaming
         /// <summary>
         ///     Supplies <see cref="IModCharacterAssetOverrides.CustomRestSiteAnimPath" /> when the resource exists.
         ///     资源存在时提供 <see cref="IModCharacterAssetOverrides.CustomRestSiteAnimPath" />。
         /// </summary>
         public static bool Prefix(CharacterModel __instance, ref string __result)
-            // ReSharper restore InconsistentNaming
         {
             return CharacterAssetOverridePatchHelper.TryUseOverride(__instance, ref __result,
                 o => o.CustomRestSiteAnimPath,
@@ -315,13 +304,11 @@ namespace STS2RitsuLib.Scaffolding.Characters.Patches
             return [new(typeof(CharacterModel), nameof(CharacterModel.IconTexturePath), MethodType.Getter)];
         }
 
-        // ReSharper disable InconsistentNaming
         /// <summary>
         ///     Supplies <see cref="IModCharacterAssetOverrides.CustomIconTexturePath" /> when the resource exists.
         ///     资源存在时提供 <see cref="IModCharacterAssetOverrides.CustomIconTexturePath" />。
         /// </summary>
         public static bool Prefix(CharacterModel __instance, ref string __result)
-            // ReSharper restore InconsistentNaming
         {
             return CharacterAssetOverridePatchHelper.TryUseOverride(__instance, ref __result,
                 o => o.CustomIconTexturePath,
@@ -352,13 +339,11 @@ namespace STS2RitsuLib.Scaffolding.Characters.Patches
             return [new(typeof(CharacterModel), "IconPath", MethodType.Getter)];
         }
 
-        // ReSharper disable InconsistentNaming
         /// <summary>
         ///     Supplies <see cref="IModCharacterAssetOverrides.CustomIconPath" /> when the resource exists.
         ///     资源存在时提供 <see cref="IModCharacterAssetOverrides.CustomIconPath" />。
         /// </summary>
         public static bool Prefix(CharacterModel __instance, ref string __result)
-            // ReSharper restore InconsistentNaming
         {
             return CharacterAssetOverridePatchHelper.TryUseOverride(
                 __instance,
@@ -391,13 +376,11 @@ namespace STS2RitsuLib.Scaffolding.Characters.Patches
             return [new(typeof(CharacterModel), nameof(CharacterModel.CharacterSelectBg), MethodType.Getter)];
         }
 
-        // ReSharper disable InconsistentNaming
         /// <summary>
         ///     Supplies <see cref="IModCharacterAssetOverrides.CustomCharacterSelectBgPath" /> when the resource exists.
         ///     资源存在时提供 <see cref="IModCharacterAssetOverrides.CustomCharacterSelectBgPath" />。
         /// </summary>
         public static bool Prefix(CharacterModel __instance, ref string __result)
-            // ReSharper restore InconsistentNaming
         {
             return CharacterAssetOverridePatchHelper.TryUseOverride(__instance, ref __result,
                 o => o.CustomCharacterSelectBgPath,
@@ -428,13 +411,11 @@ namespace STS2RitsuLib.Scaffolding.Characters.Patches
             return [new(typeof(CharacterModel), "CharacterSelectIconPath", null, true, MethodType.Getter)];
         }
 
-        // ReSharper disable InconsistentNaming
         /// <summary>
         ///     Supplies <see cref="IModCharacterAssetOverrides.CustomCharacterSelectIconPath" /> when the resource exists.
         ///     资源存在时提供 <see cref="IModCharacterAssetOverrides.CustomCharacterSelectIconPath" />。
         /// </summary>
         public static bool Prefix(CharacterModel __instance, ref string __result)
-            // ReSharper restore InconsistentNaming
         {
             return CharacterAssetOverridePatchHelper.TryUseOverride(
                 __instance,
@@ -468,13 +449,11 @@ namespace STS2RitsuLib.Scaffolding.Characters.Patches
             return [new(typeof(CharacterModel), "CharacterSelectLockedIconPath", null, true, MethodType.Getter)];
         }
 
-        // ReSharper disable InconsistentNaming
         /// <summary>
         ///     Supplies <see cref="IModCharacterAssetOverrides.CustomCharacterSelectLockedIconPath" /> when valid.
         ///     有效时提供 <see cref="IModCharacterAssetOverrides.CustomCharacterSelectLockedIconPath" />。
         /// </summary>
         public static bool Prefix(CharacterModel __instance, ref string __result)
-            // ReSharper restore InconsistentNaming
         {
             return CharacterAssetOverridePatchHelper.TryUseOverride(
                 __instance,
@@ -507,13 +486,11 @@ namespace STS2RitsuLib.Scaffolding.Characters.Patches
             return [new(typeof(CharacterModel), "MapMarkerPath", null, true, MethodType.Getter)];
         }
 
-        // ReSharper disable InconsistentNaming
         /// <summary>
         ///     Supplies <see cref="IModCharacterAssetOverrides.CustomMapMarkerPath" /> when valid.
         ///     有效时提供 <see cref="IModCharacterAssetOverrides.CustomMapMarkerPath" />。
         /// </summary>
         public static bool Prefix(CharacterModel __instance, ref string __result)
-            // ReSharper restore InconsistentNaming
         {
             return CharacterAssetOverridePatchHelper.TryUseOverride(
                 __instance,
@@ -550,13 +527,11 @@ namespace STS2RitsuLib.Scaffolding.Characters.Patches
             ];
         }
 
-        // ReSharper disable InconsistentNaming
         /// <summary>
         ///     Supplies <see cref="IModCharacterAssetOverrides.CustomCharacterSelectTransitionPath" /> when valid.
         ///     有效时提供 <see cref="IModCharacterAssetOverrides.CustomCharacterSelectTransitionPath" />。
         /// </summary>
         public static bool Prefix(CharacterModel __instance, ref string __result)
-            // ReSharper restore InconsistentNaming
         {
             return CharacterAssetOverridePatchHelper.TryUseOverride(
                 __instance,
@@ -589,13 +564,11 @@ namespace STS2RitsuLib.Scaffolding.Characters.Patches
             return [new(typeof(CharacterModel), nameof(CharacterModel.TrailPath), MethodType.Getter)];
         }
 
-        // ReSharper disable InconsistentNaming
         /// <summary>
         ///     Supplies <see cref="IModCharacterAssetOverrides.CustomTrailPath" /> when the resource exists.
         ///     资源存在时提供 <see cref="IModCharacterAssetOverrides.CustomTrailPath" />。
         /// </summary>
         public static bool Prefix(CharacterModel __instance, ref string __result)
-            // ReSharper restore InconsistentNaming
         {
             return CharacterAssetOverridePatchHelper.TryUseOverride(
                 __instance,
@@ -628,13 +601,11 @@ namespace STS2RitsuLib.Scaffolding.Characters.Patches
             return [new(typeof(CharacterModel), nameof(CharacterModel.AttackSfx), MethodType.Getter)];
         }
 
-        // ReSharper disable InconsistentNaming
         /// <summary>
         ///     Supplies <see cref="IModCharacterAssetOverrides.CustomAttackSfx" /> when non-empty.
         ///     非空时提供 <see cref="IModCharacterAssetOverrides.CustomAttackSfx" />。
         /// </summary>
         public static bool Prefix(CharacterModel __instance, ref string __result)
-            // ReSharper restore InconsistentNaming
         {
             return CharacterAssetOverridePatchHelper.TryUseOverride(
                 __instance,
@@ -668,13 +639,11 @@ namespace STS2RitsuLib.Scaffolding.Characters.Patches
             return [new(typeof(CharacterModel), nameof(CharacterModel.CastSfx), MethodType.Getter)];
         }
 
-        // ReSharper disable InconsistentNaming
         /// <summary>
         ///     Supplies <see cref="IModCharacterAssetOverrides.CustomCastSfx" /> when non-empty.
         ///     非空时提供 <see cref="IModCharacterAssetOverrides.CustomCastSfx" />。
         /// </summary>
         public static bool Prefix(CharacterModel __instance, ref string __result)
-            // ReSharper restore InconsistentNaming
         {
             return CharacterAssetOverridePatchHelper.TryUseOverride(
                 __instance,
@@ -708,13 +677,11 @@ namespace STS2RitsuLib.Scaffolding.Characters.Patches
             return [new(typeof(CharacterModel), nameof(CharacterModel.DeathSfx), MethodType.Getter)];
         }
 
-        // ReSharper disable InconsistentNaming
         /// <summary>
         ///     Supplies <see cref="IModCharacterAssetOverrides.CustomDeathSfx" /> when non-empty.
         ///     非空时提供 <see cref="IModCharacterAssetOverrides.CustomDeathSfx" />。
         /// </summary>
         public static bool Prefix(CharacterModel __instance, ref string __result)
-            // ReSharper restore InconsistentNaming
         {
             return CharacterAssetOverridePatchHelper.TryUseOverride(
                 __instance,
@@ -748,13 +715,11 @@ namespace STS2RitsuLib.Scaffolding.Characters.Patches
             return [new(typeof(CharacterModel), nameof(CharacterModel.ArmPointingTexturePath), MethodType.Getter)];
         }
 
-        // ReSharper disable InconsistentNaming
         /// <summary>
         ///     Supplies <see cref="IModCharacterAssetOverrides.CustomArmPointingTexturePath" /> when the resource exists.
         ///     资源存在时提供 <see cref="IModCharacterAssetOverrides.CustomArmPointingTexturePath" />。
         /// </summary>
         public static bool Prefix(CharacterModel __instance, ref string __result)
-            // ReSharper restore InconsistentNaming
         {
             return CharacterAssetOverridePatchHelper.TryUseOverride(__instance, ref __result,
                 o => o.CustomArmPointingTexturePath,
@@ -785,13 +750,11 @@ namespace STS2RitsuLib.Scaffolding.Characters.Patches
             return [new(typeof(CharacterModel), nameof(CharacterModel.ArmRockTexturePath), MethodType.Getter)];
         }
 
-        // ReSharper disable InconsistentNaming
         /// <summary>
         ///     Supplies <see cref="IModCharacterAssetOverrides.CustomArmRockTexturePath" /> when the resource exists.
         ///     资源存在时提供 <see cref="IModCharacterAssetOverrides.CustomArmRockTexturePath" />。
         /// </summary>
         public static bool Prefix(CharacterModel __instance, ref string __result)
-            // ReSharper restore InconsistentNaming
         {
             return CharacterAssetOverridePatchHelper.TryUseOverride(__instance, ref __result,
                 o => o.CustomArmRockTexturePath,
@@ -822,13 +785,11 @@ namespace STS2RitsuLib.Scaffolding.Characters.Patches
             return [new(typeof(CharacterModel), nameof(CharacterModel.ArmPaperTexturePath), MethodType.Getter)];
         }
 
-        // ReSharper disable InconsistentNaming
         /// <summary>
         ///     Supplies <see cref="IModCharacterAssetOverrides.CustomArmPaperTexturePath" /> when the resource exists.
         ///     资源存在时提供 <see cref="IModCharacterAssetOverrides.CustomArmPaperTexturePath" />。
         /// </summary>
         public static bool Prefix(CharacterModel __instance, ref string __result)
-            // ReSharper restore InconsistentNaming
         {
             return CharacterAssetOverridePatchHelper.TryUseOverride(__instance, ref __result,
                 o => o.CustomArmPaperTexturePath,
@@ -859,13 +820,11 @@ namespace STS2RitsuLib.Scaffolding.Characters.Patches
             return [new(typeof(CharacterModel), nameof(CharacterModel.ArmScissorsTexturePath), MethodType.Getter)];
         }
 
-        // ReSharper disable InconsistentNaming
         /// <summary>
         ///     Supplies <see cref="IModCharacterAssetOverrides.CustomArmScissorsTexturePath" /> when the resource exists.
         ///     资源存在时提供 <see cref="IModCharacterAssetOverrides.CustomArmScissorsTexturePath" />。
         /// </summary>
         public static bool Prefix(CharacterModel __instance, ref string __result)
-            // ReSharper restore InconsistentNaming
         {
             return CharacterAssetOverridePatchHelper.TryUseOverride(__instance, ref __result,
                 o => o.CustomArmScissorsTexturePath,

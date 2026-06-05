@@ -55,7 +55,6 @@ namespace STS2RitsuLib.Lifecycle.Patches
         ///     skip vanilla.
         ///     Harmony prefix：用安全读取验证和异步继续流程替换 Continue 处理；返回 false 以跳过原版逻辑。
         /// </summary>
-        // ReSharper disable once InconsistentNaming
         public static bool Prefix(NMainMenu __instance, NButton _)
         {
             var read = ReadRunSaveResultRef(__instance);

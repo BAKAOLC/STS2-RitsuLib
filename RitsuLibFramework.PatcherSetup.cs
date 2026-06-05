@@ -289,6 +289,10 @@ namespace STS2RitsuLib
             patcher.RegisterPatch<ModelCapabilityHookListenerPatches.RunStateHookListenersPatch>();
             patcher.RegisterPatch<ModelCapabilityHookListenerPatches.CombatStateHookListenersPatch>();
             patcher.RegisterPatch<ModelCapabilityHookListenerPatches.HookPlayerChoiceContextConstructorPatch>();
+            patcher.RegisterPatch<OrbModelCapabilityPatches.OrbQueueBeforeTurnEndPatch>();
+            patcher.RegisterPatch<OrbModelCapabilityPatches.OrbQueueAfterTurnStartPatch>();
+            patcher.RegisterPatch<OrbModelCapabilityPatches.OrbCmdPassivePatch>();
+            patcher.RegisterPatch<OrbModelCapabilityPatches.AfterOrbEvokedHookPatch>();
             patcher.RegisterPatch<CardModelCapabilityPatches.UpdateDynamicVarPreviewPatch>();
             patcher.RegisterPatch<CardModelCapabilityPatches.CardTypePatch>();
             patcher.RegisterPatch<CardModelCapabilityPatches.CardRarityPatch>();

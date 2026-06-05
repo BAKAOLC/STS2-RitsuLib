@@ -35,7 +35,6 @@ namespace STS2RitsuLib.Scaffolding.Characters.Patches
             return [new(typeof(NCombatUi), nameof(NCombatUi.Activate), [typeof(CombatState)])];
         }
 
-        // ReSharper disable InconsistentNaming
         /// <summary>
         ///     Moves the star counter under <c>%StarAnchor</c> and resets anchor/offset fields for predictable layout.
         ///     将星星计数器移动到 <c>%StarAnchor</c> 下，并重置 anchor/offset 字段以获得可预测布局。
@@ -64,6 +63,5 @@ namespace STS2RitsuLib.Scaffolding.Characters.Patches
             starCounter.Position = Vector2.Zero;
             starCounter.Scale = currentScale;
         }
-        // ReSharper restore InconsistentNaming
     }
 }
