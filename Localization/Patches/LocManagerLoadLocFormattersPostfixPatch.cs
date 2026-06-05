@@ -27,7 +27,6 @@ namespace STS2RitsuLib.Localization.Patches
             return [new(typeof(LocManager), "LoadLocFormatters")];
         }
 
-        // ReSharper disable once InconsistentNaming
         /// <summary>
         ///     Adds all registered mod SmartFormat extensions to the freshly created localization formatter.
         ///     将所有已注册的 mod SmartFormat extension 添加到刚创建的本地化 formatter。

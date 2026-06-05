@@ -34,7 +34,6 @@ namespace STS2RitsuLib.CardPiles.Patches
             return [new(typeof(NCombatPilesContainer), nameof(NCombatPilesContainer._Ready))];
         }
 
-        // ReSharper disable InconsistentNaming
         /// <summary>
         ///     Injects mod bottom-row pile buttons after vanilla wiring completes.
         ///     在原版接线完成后注入 mod 底部 row 牌堆按钮。
@@ -43,7 +42,6 @@ namespace STS2RitsuLib.CardPiles.Patches
         {
             ModCardPileInjector.InjectCombatButtons(__instance);
         }
-        // ReSharper restore InconsistentNaming
     }
 
     /// <summary>
@@ -74,7 +72,6 @@ namespace STS2RitsuLib.CardPiles.Patches
             ];
         }
 
-        // ReSharper disable InconsistentNaming
         /// <summary>
         ///     Binds each mod pile button to the current player.
         ///     将每个 mod pile 按钮绑定到当前玩家。
@@ -85,6 +82,5 @@ namespace STS2RitsuLib.CardPiles.Patches
                 button.Initialize(player);
             ModCardPileCombatLayout.Relayout(__instance);
         }
-        // ReSharper restore InconsistentNaming
     }
 }

@@ -70,7 +70,6 @@ namespace STS2RitsuLib.Audio.Patches
                 ];
             }
 
-            // ReSharper disable once InconsistentNaming
             /// <summary>
             ///     Harmony prefix; returns false to skip vanilla after handling mapped paths (or skip with failure diagnostics).
             ///     Harmony prefix；处理已映射路径后返回 false 跳过原版逻辑（或在失败诊断后跳过）。
@@ -125,7 +124,6 @@ namespace STS2RitsuLib.Audio.Patches
                 return [new(typeof(NAudioManager), "PlayLoop", [typeof(string), typeof(bool)])];
             }
 
-            // ReSharper disable once InconsistentNaming
             /// <summary>
             ///     Harmony prefix; skips vanilla when a mapped loop queue entry was created.
             ///     Harmony prefix；创建已映射 loop 队列条目时跳过原版逻辑。
@@ -180,7 +178,6 @@ namespace STS2RitsuLib.Audio.Patches
                 return [new(typeof(NAudioManager), "StopLoop", [typeof(string)])];
             }
 
-            // ReSharper disable once InconsistentNaming
             /// <summary>
             ///     Harmony prefix; returns false when the mapped queue handled the stop (vanilla proxy had no entry).
             ///     Harmony prefix；当已映射队列处理了停止（原版 proxy 没有条目）时返回 false。
@@ -225,7 +222,6 @@ namespace STS2RitsuLib.Audio.Patches
                 ];
             }
 
-            // ReSharper disable once InconsistentNaming
             /// <summary>
             ///     Harmony prefix; returns false when the mapped first loop instance received the parameter.
             ///     Harmony prefix；当已映射的第一个 loop 实例接收了参数时返回 false。
@@ -266,7 +262,6 @@ namespace STS2RitsuLib.Audio.Patches
                 return [new(typeof(NAudioManager), "StopAllLoops")];
             }
 
-            // ReSharper disable once InconsistentNaming
             /// <summary>
             ///     Harmony prefix; runs before vanilla and clears parallel mapped queues.
             ///     Harmony prefix；在原版逻辑之前运行，并清除并行的已映射队列。
@@ -304,7 +299,6 @@ namespace STS2RitsuLib.Audio.Patches
                 return [new(typeof(NAudioManager), "PlayMusic", [typeof(string)])];
             }
 
-            // ReSharper disable once InconsistentNaming
             /// <summary>
             ///     Harmony prefix; stops previous music then starts a mapped Studio instance (mirrors proxy ordering).
             ///     Harmony prefix；停止先前音乐，然后启动已映射的 Studio 实例（复现 proxy 顺序）。
@@ -357,7 +351,6 @@ namespace STS2RitsuLib.Audio.Patches
                 return [new(typeof(NAudioManager), "StopMusic")];
             }
 
-            // ReSharper disable once InconsistentNaming
             /// <summary>
             ///     Harmony prefix; tears down mapped music before the proxy stops vanilla music.
             ///     Harmony prefix；在 proxy 停止原版音乐之前拆除已映射音乐。
@@ -399,7 +392,6 @@ namespace STS2RitsuLib.Audio.Patches
                 ];
             }
 
-            // ReSharper disable once InconsistentNaming
             /// <summary>
             ///     Harmony prefix; returns false when parameters were applied to mapped music (skip vanilla proxy call).
             ///     Harmony prefix；当参数已应用到已映射音乐时返回 false（跳过原版 proxy 调用）。

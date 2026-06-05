@@ -6,7 +6,6 @@ namespace STS2RitsuLib.Loader
     [HarmonyPatch(typeof(ReflectionHelper), nameof(ReflectionHelper.ModTypes), MethodType.Getter)]
     internal static class ReflectionHelperModTypesPatch
     {
-        // ReSharper disable once InconsistentNaming
         private static void Postfix(ref Type[] __result)
         {
             var variantTypes = Bootstrap.GetVariantModTypes();

@@ -186,23 +186,17 @@ namespace STS2RitsuLib.Content
             return null;
         }
 
-        // ReSharper disable InconsistentNaming
         private static void AllEventsPostfix(ActModel __instance, ref IEnumerable<EventModel> __result)
-            // ReSharper restore InconsistentNaming
         {
             __result = ModContentRegistry.AppendActEvents(__instance, __result);
         }
 
-        // ReSharper disable InconsistentNaming
         private static void AllAncientsPostfix(ActModel __instance, ref IEnumerable<AncientEventModel> __result)
-            // ReSharper restore InconsistentNaming
         {
             __result = ModContentRegistry.AppendActAncients(__instance, __result);
         }
 
-        // ReSharper disable InconsistentNaming
         private static void AllEncountersPostfix(ActModel __instance, ref IEnumerable<EncounterModel> __result)
-            // ReSharper restore InconsistentNaming
         {
             __result = ModEncounterActValidityFilter.FilterForAct(
                 __instance,
@@ -210,19 +204,15 @@ namespace STS2RitsuLib.Content
                     ModContentRegistry.AppendActEncounters(__instance, __result)));
         }
 
-        // ReSharper disable InconsistentNaming
         private static void BossDiscoveryOrderPostfix(ActModel __instance, ref IEnumerable<EncounterModel> __result)
-            // ReSharper restore InconsistentNaming
         {
             __result = ModEncounterActValidityFilter.FilterForAct(__instance, __result);
         }
 
-        // ReSharper disable InconsistentNaming
         private static void GetUnlockedAncientsPostfix(
-                ActModel __instance,
-                object[] __args,
-                ref IEnumerable<AncientEventModel> __result)
-            // ReSharper restore InconsistentNaming
+            ActModel __instance,
+            object[] __args,
+            ref IEnumerable<AncientEventModel> __result)
         {
             if (__args.Length == 0 || __args[0] is not UnlockState unlockState)
                 return;

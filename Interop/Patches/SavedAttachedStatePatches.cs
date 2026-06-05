@@ -13,7 +13,6 @@ namespace STS2RitsuLib.Interop.Patches
     /// </summary>
     public static class SavedAttachedStatePatches
     {
-        // ReSharper disable once InconsistentNaming
         private static void ExportAttachedStates(ref SavedProperties? __result, object model)
         {
             var states = SavedAttachedStateRegistry.GetStatesForModel(model);
@@ -30,7 +29,6 @@ namespace STS2RitsuLib.Interop.Patches
                 __result = props;
         }
 
-        // ReSharper disable once InconsistentNaming
         private static void ImportAttachedStates(SavedProperties __instance, object model)
         {
             foreach (var state in SavedAttachedStateRegistry.GetStatesForModel(model))
@@ -67,8 +65,6 @@ namespace STS2RitsuLib.Interop.Patches
             ///     Exports registered saved attached states after vanilla model properties are serialized.
             ///     在原版模型属性序列化后导出已注册的已保存附加状态。
             /// </summary>
-            // ReSharper disable once InconsistentNaming
-            // ReSharper disable once UnusedParameter
             public static void Postfix(ref SavedProperties? __result, object model, ModelId? id)
             {
                 ExportAttachedStates(ref __result, model);
@@ -104,7 +100,6 @@ namespace STS2RitsuLib.Interop.Patches
             ///     Imports registered saved attached states after vanilla model properties are deserialized.
             ///     在原版模型属性反序列化后导入已注册的已保存附加状态。
             /// </summary>
-            // ReSharper disable once InconsistentNaming
             public static void Postfix(SavedProperties __instance, object model)
             {
                 ImportAttachedStates(__instance, model);

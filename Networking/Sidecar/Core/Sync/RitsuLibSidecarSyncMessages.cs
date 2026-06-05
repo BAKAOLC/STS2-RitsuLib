@@ -91,7 +91,6 @@ namespace STS2RitsuLib.Networking.Sidecar
         ///     Preserves the original constructor ABI for mods compiled before transport/failure policy was added.
         ///     为 transport/failure policy 加入前编译的 mod 保留原构造函数 ABI。
         /// </summary>
-        // ReSharper disable once RedundantOverload.Global
         public RitsuLibSidecarSyncMessageDescriptor(
             string moduleId,
             string messageKey,
@@ -618,7 +617,6 @@ namespace STS2RitsuLib.Networking.Sidecar
             public RitsuLibSidecarSyncFailurePolicy FailurePolicy { get; } = failurePolicy;
             public RitsuLibSidecarSyncBroadcastScope BroadcastScope { get; } = broadcastScope;
 
-            // ReSharper disable once MemberCanBeProtected.Local
             public LogLevel LogLevel { get; } = logLevel;
             public bool ShouldBroadcast { get; } = shouldBroadcast;
 

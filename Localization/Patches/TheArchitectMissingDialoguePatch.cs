@@ -52,13 +52,11 @@ namespace STS2RitsuLib.Localization.Patches
             ];
         }
 
-        // ReSharper disable InconsistentNaming
         /// <summary>
         ///     After vanilla <c>LoadDialogue</c>, assign a no-op dialogue when none matched so PROCEED / <c>WinRun</c> is safe.
         ///     原版 <c>LoadDialogue</c> 后，如果没有匹配项，则分配一个 no-op dialogue，使 PROCEED / <c>WinRun</c> 安全。
         /// </summary>
         public static void Postfix(TheArchitect __instance)
-            // ReSharper restore InconsistentNaming
         {
             var dialogueField = AccessTools.Field(typeof(TheArchitect), "_dialogue");
             if (dialogueField == null || dialogueField.GetValue(__instance) != null)

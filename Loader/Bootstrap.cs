@@ -319,7 +319,6 @@ namespace STS2RitsuLib.Loader
             public List<BundleVariantEntry>? Variants { get; set; }
         }
 
-        // ReSharper disable once ClassNeverInstantiated.Local
         private sealed class BundleVariantEntry
         {
             public string? CompatTarget { get; set; }

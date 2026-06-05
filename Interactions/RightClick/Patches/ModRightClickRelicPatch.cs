@@ -22,7 +22,6 @@ namespace STS2RitsuLib.Interactions.RightClick.Patches
             return [new(typeof(NRelic), nameof(NRelic._Ready))];
         }
 
-        // ReSharper disable once InconsistentNaming
         public static void Postfix(NRelic __instance)
         {
             __instance.Connect(Control.SignalName.GuiInput,

@@ -151,7 +151,6 @@ namespace STS2RitsuLib.Networking.ManagedActions.Patches
                 ];
             }
 
-            // ReSharper disable once InconsistentNaming
             public static bool Prefix(ActionQueueSynchronizer __instance, GameAction action)
             {
                 return !TrySendManagedClientRequest(__instance, action);
@@ -176,7 +175,6 @@ namespace STS2RitsuLib.Networking.ManagedActions.Patches
                 ];
             }
 
-            // ReSharper disable once InconsistentNaming
             public static bool Prefix(ActionQueueSynchronizer __instance, GameAction action, ulong actionOwnerId)
             {
                 return !TrySendManagedHostAnnouncement(__instance, action, actionOwnerId);
@@ -199,7 +197,6 @@ namespace STS2RitsuLib.Networking.ManagedActions.Patches
                 ];
             }
 
-            // ReSharper disable once InconsistentNaming
             public static bool Prefix(RequestEnqueueActionMessage __instance, PacketWriter writer)
             {
                 writer.Write(__instance.location);
@@ -227,7 +224,6 @@ namespace STS2RitsuLib.Networking.ManagedActions.Patches
                 ];
             }
 
-            // ReSharper disable once InconsistentNaming
             public static bool Prefix(ref RequestEnqueueActionMessage __instance, PacketReader reader)
             {
                 __instance.location = reader.Read<RunLocation>();
@@ -254,7 +250,6 @@ namespace STS2RitsuLib.Networking.ManagedActions.Patches
                 ];
             }
 
-            // ReSharper disable once InconsistentNaming
             public static bool Prefix(ActionEnqueuedMessage __instance, PacketWriter writer)
             {
                 writer.WriteULong(__instance.playerId);
@@ -285,7 +280,6 @@ namespace STS2RitsuLib.Networking.ManagedActions.Patches
                 ];
             }
 
-            // ReSharper disable once InconsistentNaming
             public static bool Prefix(ref ActionEnqueuedMessage __instance, PacketReader reader)
             {
                 __instance.playerId = reader.ReadULong();
@@ -313,7 +307,6 @@ namespace STS2RitsuLib.Networking.ManagedActions.Patches
                 ];
             }
 
-            // ReSharper disable once InconsistentNaming
             public static bool Prefix(CombatReplayEvent __instance, PacketWriter writer)
             {
                 writer.WriteInt((int)__instance.eventType, 3);
@@ -367,7 +360,6 @@ namespace STS2RitsuLib.Networking.ManagedActions.Patches
                 ];
             }
 
-            // ReSharper disable once InconsistentNaming
             public static bool Prefix(ref CombatReplayEvent __instance, PacketReader reader)
             {
                 __instance.eventType = (CombatReplayEventType)reader.ReadInt(3);

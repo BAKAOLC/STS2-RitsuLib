@@ -300,7 +300,6 @@ namespace STS2RitsuLib.RunData.Patches
             ];
         }
 
-        // ReSharper disable once InconsistentNaming
         public static void Postfix(object __instance)
         {
             if (__instance is StartRunLobby lobby)
@@ -323,7 +322,6 @@ namespace STS2RitsuLib.RunData.Patches
 #endif
         }
 
-        // ReSharper disable once InconsistentNaming
         public static void Postfix(StartRunLobby __instance)
         {
             RunSavedDataStartRunLobbyAccess.Untrack(__instance);
@@ -341,9 +339,7 @@ namespace STS2RitsuLib.RunData.Patches
             return [new(typeof(RunSaveManager), nameof(RunSaveManager.LoadRunSave), Type.EmptyTypes)];
         }
 
-        // ReSharper disable InconsistentNaming
         public static void Postfix(RunSaveManager __instance, ReadSaveResult<SerializableRun> __result)
-            // ReSharper restore InconsistentNaming
         {
             if (__result.Success)
                 RunSavedDataPatchHelpers.AttachDocumentFromCurrentFile(__instance, __result.SaveData, false);
@@ -361,9 +357,7 @@ namespace STS2RitsuLib.RunData.Patches
             return [new(typeof(RunSaveManager), "LoadMultiplayerRunSave", Type.EmptyTypes)];
         }
 
-        // ReSharper disable InconsistentNaming
         public static void Postfix(RunSaveManager __instance, ReadSaveResult<SerializableRun> __result)
-            // ReSharper restore InconsistentNaming
         {
             if (__result.Success)
                 RunSavedDataPatchHelpers.AttachDocumentFromCurrentFile(__instance, __result.SaveData, true);
@@ -384,7 +378,6 @@ namespace STS2RitsuLib.RunData.Patches
             ];
         }
 
-        // ReSharper disable once InconsistentNaming
         public static void Postfix(SerializableRun save, SerializableRun __result)
         {
             RunSavedDataRegistry.MergeDocuments(__result, save);
@@ -402,7 +395,6 @@ namespace STS2RitsuLib.RunData.Patches
             return [new(typeof(RunState), nameof(RunState.FromSerializable), [typeof(SerializableRun)])];
         }
 
-        // ReSharper disable once InconsistentNaming
         public static void Postfix(SerializableRun save, RunState __result)
         {
             RunSavedDataRegistry.Import(save, __result);
@@ -420,9 +412,7 @@ namespace STS2RitsuLib.RunData.Patches
             return [new(typeof(RunManager), nameof(RunManager.ToSave), [typeof(AbstractRoom)])];
         }
 
-        // ReSharper disable InconsistentNaming
         public static void Postfix(RunManager __instance, SerializableRun __result)
-            // ReSharper restore InconsistentNaming
         {
             RunSavedDataRegistry.AttachDocument(
                 __result,
@@ -472,17 +462,13 @@ namespace STS2RitsuLib.RunData.Patches
             ];
         }
 
-        // ReSharper disable InconsistentNaming
         public static void Prefix(RunSaveManager __instance, SerializableRun save, bool isMultiplayer,
-                out RunSavedDataSaveRunCapture __state)
-            // ReSharper restore InconsistentNaming
+            out RunSavedDataSaveRunCapture __state)
         {
             __state = RunSavedDataPatchHelpers.BeginSaveRunCapture(__instance, save, isMultiplayer);
         }
 
-        // ReSharper disable InconsistentNaming
         public static void Postfix(RunSavedDataSaveRunCapture __state, ref Task __result)
-            // ReSharper restore InconsistentNaming
         {
             __result = RunSavedDataPatchHelpers.EndSaveRunCaptureAfter(__result, __state);
         }
@@ -502,15 +488,12 @@ namespace STS2RitsuLib.RunData.Patches
             ];
         }
 
-        // ReSharper disable once InconsistentNaming
         public static void Prefix(RunSaveManager __instance, out RunSavedDataSaveRunCapture __state)
         {
             __state = RunSavedDataPatchHelpers.BeginSaveRunCapture(__instance);
         }
 
-        // ReSharper disable InconsistentNaming
         public static void Postfix(RunSavedDataSaveRunCapture __state, ref Task __result)
-            // ReSharper restore InconsistentNaming
         {
             __result = RunSavedDataPatchHelpers.EndSaveRunCaptureAfter(__result, __state);
         }
@@ -563,7 +546,6 @@ namespace STS2RitsuLib.RunData.Patches
             return [new(typeof(LobbyBeginRunMessage), nameof(LobbyBeginRunMessage.Serialize), [typeof(PacketWriter)])];
         }
 
-        // ReSharper disable once InconsistentNaming
         public static void Postfix(LobbyBeginRunMessage __instance, PacketWriter writer)
         {
             RunSavedDataPatchHelpers.WritePayload(writer, RunSavedDataLobbyBeginRunMessageState.PreparedNewRunPayload);
@@ -582,7 +564,6 @@ namespace STS2RitsuLib.RunData.Patches
                 [new(typeof(LobbyBeginRunMessage), nameof(LobbyBeginRunMessage.Deserialize), [typeof(PacketReader)])];
         }
 
-        // ReSharper disable once InconsistentNaming
         public static void Postfix(PacketReader reader)
         {
             RunSavedDataLobbyBeginRunMessageState.SetPendingPayload(RunSavedDataPatchHelpers.TryReadPayload(reader));
@@ -604,7 +585,6 @@ namespace STS2RitsuLib.RunData.Patches
             ];
         }
 
-        // ReSharper disable once InconsistentNaming
         public static void Postfix(PacketWriter writer)
         {
             RunSavedDataLobbySync.AppendVanillaTrailer(RunSavedDataStartRunLobbyAccess.TryGetCurrentLobby(), writer);
@@ -626,7 +606,6 @@ namespace STS2RitsuLib.RunData.Patches
             ];
         }
 
-        // ReSharper disable once InconsistentNaming
         public static void Postfix(PacketReader reader)
         {
             RunSavedDataLobbyContributionState.SetPending(RunSavedDataPatchHelpers.TryReadPayload(reader));
@@ -648,7 +627,6 @@ namespace STS2RitsuLib.RunData.Patches
             ];
         }
 
-        // ReSharper disable once InconsistentNaming
         public static void Postfix(StartRunLobby __instance, ulong senderId)
         {
             RunSavedDataLobbySync.TryMergeVanillaTrailer(__instance, senderId);
@@ -670,7 +648,6 @@ namespace STS2RitsuLib.RunData.Patches
             ];
         }
 
-        // ReSharper disable once InconsistentNaming
         public static void Postfix(PacketWriter writer)
         {
             RunSavedDataLobbySync.AppendVanillaTrailer(RunSavedDataStartRunLobbyAccess.TryGetCurrentLobby(), writer);
@@ -692,7 +669,6 @@ namespace STS2RitsuLib.RunData.Patches
             ];
         }
 
-        // ReSharper disable once InconsistentNaming
         public static void Postfix(PacketReader reader)
         {
             RunSavedDataLobbyContributionState.SetPending(RunSavedDataPatchHelpers.TryReadPayload(reader));
@@ -714,7 +690,6 @@ namespace STS2RitsuLib.RunData.Patches
             ];
         }
 
-        // ReSharper disable once InconsistentNaming
         public static void Postfix(StartRunLobby __instance, ulong senderId)
         {
             RunSavedDataLobbySync.TryMergeVanillaTrailer(__instance, senderId);
@@ -736,9 +711,7 @@ namespace STS2RitsuLib.RunData.Patches
             ];
         }
 
-        // ReSharper disable InconsistentNaming
         public static void Postfix(StartRunLobby __instance, LobbyPlayer? __result)
-            // ReSharper restore InconsistentNaming
         {
             if (__result == null || __instance.NetService.Type != NetGameType.Host)
                 return;
@@ -758,7 +731,6 @@ namespace STS2RitsuLib.RunData.Patches
             return [new(typeof(StartRunLobby), "BeginRunForAllPlayers", [typeof(string), typeof(List<ModifierModel>)])];
         }
 
-        // ReSharper disable once InconsistentNaming
         public static void Prefix(StartRunLobby __instance, string seed, List<ModifierModel> modifiers)
         {
             RunSavedDataLobbyBeginRunMessageState.PreparedNewRunPayload =
@@ -777,7 +749,6 @@ namespace STS2RitsuLib.RunData.Patches
             return [new(typeof(RunManager), "InitializeNewRun")];
         }
 
-        // ReSharper disable once InconsistentNaming
         public static void Prefix(RunManager __instance)
         {
             var payload = RunSavedDataLobbyBeginRunMessageState.ConsumePendingPayload() ??
@@ -817,7 +788,6 @@ namespace STS2RitsuLib.RunData.Patches
             ];
         }
 
-        // ReSharper disable once InconsistentNaming
         public static void Postfix(ClientLoadJoinResponseMessage __instance, PacketWriter writer)
         {
             var payload = RunSavedDataRegistry.BuildPayloadFromSerializable(__instance.serializableRun);
@@ -840,7 +810,6 @@ namespace STS2RitsuLib.RunData.Patches
             ];
         }
 
-        // ReSharper disable once InconsistentNaming
         public static void Postfix(ClientLoadJoinResponseMessage __instance, PacketReader reader)
         {
             var payload = RunSavedDataPatchHelpers.TryReadPayload(reader);
@@ -864,7 +833,6 @@ namespace STS2RitsuLib.RunData.Patches
             ];
         }
 
-        // ReSharper disable once InconsistentNaming
         public static void Postfix(ClientRejoinResponseMessage __instance, PacketWriter writer)
         {
             var payload = RunSavedDataRegistry.BuildPayloadFromSerializable(__instance.serializableRun);
@@ -887,7 +855,6 @@ namespace STS2RitsuLib.RunData.Patches
             ];
         }
 
-        // ReSharper disable once InconsistentNaming
         public static void Postfix(ClientRejoinResponseMessage __instance, PacketReader reader)
         {
             var payload = RunSavedDataPatchHelpers.TryReadPayload(reader);
@@ -907,7 +874,6 @@ namespace STS2RitsuLib.RunData.Patches
             return [new(typeof(CombatReplay), nameof(CombatReplay.Serialize), [typeof(PacketWriter)])];
         }
 
-        // ReSharper disable once InconsistentNaming
         public static void Postfix(CombatReplay __instance, PacketWriter writer)
         {
             var payload = RunSavedDataRegistry.BuildPayloadFromSerializable(__instance.serializableRun);
@@ -926,7 +892,6 @@ namespace STS2RitsuLib.RunData.Patches
             return [new(typeof(CombatReplay), nameof(CombatReplay.Deserialize), [typeof(PacketReader)])];
         }
 
-        // ReSharper disable once InconsistentNaming
         public static void Postfix(CombatReplay __instance, PacketReader reader)
         {
             var payload = RunSavedDataPatchHelpers.TryReadPayload(reader);

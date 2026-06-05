@@ -90,9 +90,7 @@ namespace STS2RitsuLib.Lifecycle.Patches
         ///     Harmony prefix：为在战斗、side turn、
         ///     卡牌打出、flush 和生物死亡之前运行的 hook 方法发布同步生命周期事件。
         /// </summary>
-        // ReSharper disable InconsistentNaming
         public static void Prefix(MethodBase __originalMethod, object[] __args)
-            // ReSharper restore InconsistentNaming
         {
             switch (__originalMethod.Name)
             {
@@ -156,9 +154,7 @@ namespace STS2RitsuLib.Lifecycle.Patches
         ///     Harmony postfix：链接到原始异步 <see cref="Task" />，并在
         ///     战斗结束、胜利、回合、卡牌牌堆变化、flush 完成和死亡解析后发布生命周期事件。
         /// </summary>
-        // ReSharper disable InconsistentNaming
         public static void Postfix(MethodBase __originalMethod, object[] __args, ref Task __result)
-            // ReSharper restore InconsistentNaming
         {
             __result = __originalMethod.Name switch
             {

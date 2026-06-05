@@ -33,7 +33,6 @@ namespace STS2RitsuLib.Scaffolding.Characters.Patches
             return [new(typeof(NEnergyCounter), nameof(NEnergyCounter.Create))];
         }
 
-        // ReSharper disable InconsistentNaming
         /// <summary>
         ///     Converts a mod energy-counter scene into <see cref="NEnergyCounter" /> and injects the owning player
         ///     before vanilla performs direct scene instantiation.
@@ -56,6 +55,5 @@ namespace STS2RitsuLib.Scaffolding.Characters.Patches
             __result = created;
             return false;
         }
-        // ReSharper restore InconsistentNaming
     }
 }

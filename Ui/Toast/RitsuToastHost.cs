@@ -484,7 +484,6 @@ namespace STS2RitsuLib.Ui.Toast
 
         private void CommitPrewarmedEntries()
         {
-            // ReSharper disable once IntroduceOptionalParameters.Local
             CommitPrewarmedEntries(false);
         }
 

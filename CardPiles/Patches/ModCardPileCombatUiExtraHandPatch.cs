@@ -29,7 +29,6 @@ namespace STS2RitsuLib.CardPiles.Patches
             return [new(typeof(NCombatUi), nameof(NCombatUi._Ready))];
         }
 
-        // ReSharper disable InconsistentNaming
         /// <summary>
         ///     Wires up ExtraHand containers after vanilla resolves its child references.
         ///     在原版解析完子节点引用后接入 ExtraHand 容器。
@@ -38,7 +37,6 @@ namespace STS2RitsuLib.CardPiles.Patches
         {
             ModCardPileInjector.InjectExtraHandContainers(__instance);
         }
-        // ReSharper restore InconsistentNaming
     }
 
     /// <summary>
@@ -68,7 +66,6 @@ namespace STS2RitsuLib.CardPiles.Patches
             return [new(typeof(NCombatUi), nameof(NCombatUi.Activate), [typeof(CombatState)])];
         }
 
-        // ReSharper disable InconsistentNaming
         /// <summary>
         ///     Binds each injected ExtraHand container to the local player.
         ///     将每个已注入的 ExtraHand 容器绑定到本地玩家。
@@ -81,6 +78,5 @@ namespace STS2RitsuLib.CardPiles.Patches
             foreach (var hand in __instance.GetChildren().OfType<NModExtraHand>())
                 hand.Initialize(me);
         }
-        // ReSharper restore InconsistentNaming
     }
 }

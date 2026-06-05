@@ -37,8 +37,6 @@ namespace STS2RitsuLib.Models.Capabilities.Patches
                 ];
             }
 
-            // ReSharper disable once InconsistentNaming
-            // ReSharper disable once UnusedParameter.Global
             public static void Postfix(ref SavedProperties? __result, object model, ModelId? id)
             {
                 if (model is not AbstractModel abstractModel)
@@ -82,7 +80,6 @@ namespace STS2RitsuLib.Models.Capabilities.Patches
                 ];
             }
 
-            // ReSharper disable once InconsistentNaming
             public static void Postfix(SavedProperties __instance, object model)
             {
                 if (model is not AbstractModel abstractModel)

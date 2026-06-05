@@ -28,9 +28,7 @@ namespace STS2RitsuLib.Combat.CardTargeting.Patches
             return [new(typeof(CardCmd), nameof(CardCmd.AutoPlay))];
         }
 
-        // ReSharper disable InconsistentNaming
         public static void Prefix(CardModel card, ref Creature? target)
-            // ReSharper restore InconsistentNaming
         {
             if (!AnyPlayerCardTargetingHelper.IsAnyPlayerMultiplayer(card) || target != null)
                 return;

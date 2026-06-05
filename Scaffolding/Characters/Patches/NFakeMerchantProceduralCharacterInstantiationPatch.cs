@@ -50,7 +50,6 @@ namespace STS2RitsuLib.Scaffolding.Characters.Patches
             return [new(typeof(NFakeMerchant), "AfterRoomIsLoaded")];
         }
 
-        // ReSharper disable once InconsistentNaming
         /// <summary>
         ///     Replaces vanilla player combat-style visuals layout; returns <see langword="false" /> so the
         ///     original <c>AfterRoomIsLoaded</c> is skipped.

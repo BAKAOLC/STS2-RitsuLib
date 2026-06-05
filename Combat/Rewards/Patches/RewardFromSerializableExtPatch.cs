@@ -32,9 +32,7 @@ namespace STS2RitsuLib.Combat.Rewards.Patches
             ];
         }
 
-        // ReSharper disable InconsistentNaming
         public static bool Prefix(SerializableReward save, Player player, ref Reward __result)
-            // ReSharper restore InconsistentNaming
         {
             RewardSerializationExt.TryGetExtData(save, out var ext);
 

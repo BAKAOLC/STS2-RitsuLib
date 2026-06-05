@@ -37,7 +37,6 @@ namespace STS2RitsuLib.Combat.CardTargeting.Patches
             return [new(typeof(NCardPlay), "ShowMultiCreatureTargetingVisuals")];
         }
 
-        // ReSharper disable once InconsistentNaming
         /// <summary>
         ///     Applies custom multi-target reticle filtering after vanilla visual processing.
         ///     在原版可视化处理后应用自定义群体目标的指示器筛选逻辑。
@@ -87,7 +86,6 @@ namespace STS2RitsuLib.Combat.CardTargeting.Patches
             return [new(typeof(ActionTargetExtensions), nameof(ActionTargetExtensions.IsSingleTarget))];
         }
 
-        // ReSharper disable once InconsistentNaming
         /// <summary>
         ///     Marks custom single-target types as valid single-target types.
         ///     将自定义单体目标类型标记为有效的单体目标类型。
@@ -121,13 +119,11 @@ namespace STS2RitsuLib.Combat.CardTargeting.Patches
             return [new(typeof(NTargetManager), nameof(NTargetManager.AllowedToTargetCreature))];
         }
 
-        // ReSharper disable InconsistentNaming
         /// <summary>
         ///     Replaces vanilla target validation when a custom single-target type is active.
         ///     当当前类型为自定义单体目标时，替换原版目标校验逻辑。
         /// </summary>
         public static bool Prefix(NTargetManager __instance, Creature creature, ref bool __result)
-            // ReSharper restore InconsistentNaming
         {
             if (!CustomTargetTypeResolver.TryIsAllowedSingleTarget(__instance._validTargetsType, creature,
                     out var allowed))
@@ -157,13 +153,11 @@ namespace STS2RitsuLib.Combat.CardTargeting.Patches
             return [new(typeof(CardModel), nameof(CardModel.CanPlayTargeting))];
         }
 
-        // ReSharper disable InconsistentNaming
         /// <summary>
         ///     Applies custom predicate-based validation for single-target cards.
         ///     对单体目标卡牌应用基于自定义谓词的可打出校验。
         /// </summary>
         public static bool Prefix(CardModel __instance, Creature? target, ref bool __result)
-            // ReSharper restore InconsistentNaming
         {
             if (target == null)
                 return true;
@@ -195,13 +189,11 @@ namespace STS2RitsuLib.Combat.CardTargeting.Patches
             return [new(typeof(CardModel), nameof(CardModel.IsValidTarget), [typeof(Creature)])];
         }
 
-        // ReSharper disable InconsistentNaming
         /// <summary>
         ///     Applies custom predicate-based target validity checks.
         ///     应用基于自定义谓词的目标有效性校验。
         /// </summary>
         public static bool Prefix(CardModel __instance, Creature? target, ref bool __result)
-            // ReSharper restore InconsistentNaming
         {
             if (target == null)
                 return true;
@@ -250,13 +242,11 @@ namespace STS2RitsuLib.Combat.CardTargeting.Patches
             return [new(typeof(NMouseCardPlay), "TargetSelection", [typeof(TargetMode)])];
         }
 
-        // ReSharper disable InconsistentNaming
         /// <summary>
         ///     Intercepts mouse targeting for custom single-target types.
         ///     拦截自定义单体目标类型的鼠标选目标流程。
         /// </summary>
         public static bool Prefix(NMouseCardPlay __instance, TargetMode targetMode, ref Task __result)
-            // ReSharper restore InconsistentNaming
         {
             var card = GetCard(__instance);
             if (card == null || !CustomTargetTypeResolver.IsCustomSingleTargetType(card.TargetType))
@@ -328,7 +318,6 @@ namespace STS2RitsuLib.Combat.CardTargeting.Patches
             return [new(typeof(NControllerCardPlay), nameof(NControllerCardPlay.Start), Type.EmptyTypes)];
         }
 
-        // ReSharper disable once InconsistentNaming
         /// <summary>
         ///     Replaces controller start logic when card uses a custom single-target type.
         ///     当卡牌使用自定义单体目标类型时，替换手柄起始逻辑。
@@ -406,13 +395,11 @@ namespace STS2RitsuLib.Combat.CardTargeting.Patches
             return [new(typeof(NControllerCardPlay), "SingleCreatureTargeting", [typeof(TargetType)])];
         }
 
-        // ReSharper disable InconsistentNaming
         /// <summary>
         ///     Intercepts controller single-targeting for custom single-target types.
         ///     拦截自定义单体目标类型的手柄单体选目标逻辑。
         /// </summary>
         public static bool Prefix(NControllerCardPlay __instance, TargetType targetType, ref Task __result)
-            // ReSharper restore InconsistentNaming
         {
             if (!CustomTargetTypeResolver.IsCustomSingleTargetType(targetType))
                 return true;
@@ -518,7 +505,6 @@ namespace STS2RitsuLib.Combat.CardTargeting.Patches
             return [new(typeof(NCardPlay), "TryPlayCard", [typeof(Creature)])];
         }
 
-        // ReSharper disable once InconsistentNaming
         /// <summary>
         ///     Reimplements try-play path for custom single-target cards.
         ///     为自定义单体目标卡牌重实现 TryPlay 执行路径。

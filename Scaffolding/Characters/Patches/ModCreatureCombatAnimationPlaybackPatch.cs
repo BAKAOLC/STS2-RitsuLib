@@ -92,7 +92,6 @@ namespace STS2RitsuLib.Scaffolding.Characters.Patches
                    float.IsFinite(seconds);
         }
 
-        // ReSharper disable once InconsistentNaming
         /// <summary>
         ///     Returns <see langword="false" /> when the trigger was consumed (skip vanilla
         ///     <see cref="NCreature.SetAnimationTrigger" /> body).

@@ -22,9 +22,7 @@ namespace STS2RitsuLib.Scaffolding.Cards.HandGlow.Patches
             return [new(typeof(CardModel), "ShouldGlowGold", null, true, MethodType.Getter)];
         }
 
-        // ReSharper disable InconsistentNaming
         public static void Postfix(CardModel __instance, ref bool __result)
-            // ReSharper restore InconsistentNaming
         {
             if (__result)
                 return;

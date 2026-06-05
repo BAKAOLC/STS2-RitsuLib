@@ -30,13 +30,11 @@ namespace STS2RitsuLib.Scaffolding.Characters.Patches
             return [new(typeof(NCreature), nameof(NCreature._Ready))];
         }
 
-        // ReSharper disable InconsistentNaming
         /// <summary>
         ///     Loads and applies the override skeleton resource to the player’s combat visuals when eligible.
         ///     符合条件时，加载覆盖 skeleton 资源并应用到玩家的战斗视觉。
         /// </summary>
         public static void Postfix(NCreature __instance)
-            // ReSharper restore InconsistentNaming
         {
             var player = __instance.Entity?.Player;
             if (player?.Character is not { } character)

@@ -44,7 +44,6 @@ namespace STS2RitsuLib.Keywords.Patches
             return [new(typeof(CardModel), "Keywords", MethodType.Getter)];
         }
 
-        // ReSharper disable InconsistentNaming
         /// <summary>
         ///     Unions the minted <see cref="CardKeyword" /> values of the card's
         ///     <see cref="ModCardTemplate.RegisteredKeywordIds" /> into the vanilla keyword set the first time the
@@ -81,6 +80,5 @@ namespace STS2RitsuLib.Keywords.Patches
 
             SeededCards.Add(__instance, SeededMarker);
         }
-        // ReSharper restore InconsistentNaming
     }
 }

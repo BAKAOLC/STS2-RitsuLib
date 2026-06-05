@@ -45,7 +45,6 @@ namespace STS2RitsuLib.CardPiles.Patches
             return [new(typeof(NCard), nameof(NCard.FindOnTable))];
         }
 
-        // ReSharper disable InconsistentNaming
         /// <summary>
         ///     Short-circuits vanilla for cards whose resolved pile is a mod pile.
         ///     对解析出的 pile 是 mod pile 的 card 短路原版逻辑。
@@ -63,6 +62,5 @@ namespace STS2RitsuLib.CardPiles.Patches
                 : null;
             return false;
         }
-        // ReSharper restore InconsistentNaming
     }
 }

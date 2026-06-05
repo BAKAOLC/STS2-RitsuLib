@@ -47,7 +47,6 @@ namespace STS2RitsuLib.Lifecycle.Patches
             ];
         }
 
-        // ReSharper disable once InconsistentNaming
         /// <summary>
         ///     Emits “starting” lifecycle events before essential or deferred initialization runs.
         ///     在必要或延迟初始化运行前发出“starting”生命周期事件。
@@ -71,7 +70,6 @@ namespace STS2RitsuLib.Lifecycle.Patches
             }
         }
 
-        // ReSharper disable once InconsistentNaming
         /// <summary>
         ///     Emits “completed” lifecycle events after essential or deferred initialization runs.
         ///     在必要或延迟初始化运行后发出“completed”生命周期事件。
@@ -128,7 +126,6 @@ namespace STS2RitsuLib.Lifecycle.Patches
             ];
         }
 
-        // ReSharper disable once InconsistentNaming
         /// <summary>
         ///     Runs registry freezes, validation, and “starting” model lifecycle events before targeted init methods.
         ///     在目标初始化方法前运行注册表冻结、验证和“starting”模型生命周期事件。
@@ -174,7 +171,6 @@ namespace STS2RitsuLib.Lifecycle.Patches
             }
         }
 
-        // ReSharper disable once InconsistentNaming
         /// <summary>
         ///     Publishes “completed” model lifecycle events after <see cref="ModelDb" /> init phases.
         ///     在 <see cref="ModelDb" /> 初始化阶段后发布“completed”模型生命周期事件。
@@ -246,13 +242,11 @@ namespace STS2RitsuLib.Lifecycle.Patches
             ];
         }
 
-        // ReSharper disable InconsistentNaming
         /// <summary>
         ///     Dispatches game tree / ready lifecycle events based on which <see cref="NGame" /> method was patched.
         ///     根据被补丁的 <see cref="NGame" /> 方法分发游戏树/就绪生命周期事件。
         /// </summary>
         public static void Postfix(MethodBase __originalMethod, NGame __instance)
-            // ReSharper restore InconsistentNaming
         {
             switch (__originalMethod.Name)
             {
@@ -297,15 +291,13 @@ namespace STS2RitsuLib.Lifecycle.Patches
             ];
         }
 
-        // ReSharper disable InconsistentNaming
         /// <summary>
         ///     Emits run started/loaded events after new or saved run initialization.
         ///     在新跑局或存档跑局初始化后发出跑局开始/加载事件。
         /// </summary>
         public static void Postfix(
-                MethodBase __originalMethod,
-                RunManager __instance)
-            // ReSharper restore InconsistentNaming
+            MethodBase __originalMethod,
+            RunManager __instance)
         {
             var state = __instance.State;
             var isMultiplayer = __instance.NetService != null && __instance.NetService.Type != NetGameType.Singleplayer;
@@ -356,7 +348,6 @@ namespace STS2RitsuLib.Lifecycle.Patches
             ];
         }
 
-        // ReSharper disable InconsistentNaming
         /// <summary>
         ///     Captures vanilla's own run-end guard before <see cref="RunManager.OnEnded" /> mutates it.
         ///     在 <see cref="RunManager.OnEnded" /> 修改原版跑局结束保护标记前捕获它。
@@ -371,7 +362,6 @@ namespace STS2RitsuLib.Lifecycle.Patches
         ///     当跑局终止时运行解锁记账并发布 <see cref="RunEndedEvent" />。
         /// </summary>
         public static void Postfix(RunManager __instance, bool isVictory, SerializableRun __result, bool __state)
-            // ReSharper restore InconsistentNaming
         {
             if (__state)
                 return;

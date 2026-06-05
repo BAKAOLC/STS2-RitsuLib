@@ -34,7 +34,6 @@ namespace STS2RitsuLib.Unlocks.Patches
             return [new(typeof(ProgressSaveManager), "CheckFifteenBossesDefeatedEpoch", [typeof(Player)])];
         }
 
-        // ReSharper disable once InconsistentNaming
         /// <summary>
         ///     Counts boss wins and obtains the registered epoch, or suppresses vanilla when no rule exists.
         ///     统计 Boss 胜利并获得已注册纪元；没有规则时抑制原版逻辑。

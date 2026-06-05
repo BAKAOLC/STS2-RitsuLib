@@ -201,7 +201,6 @@ namespace STS2RitsuLib.Unlocks.Patches
             return [new(typeof(StartRunLobby), "IsAscensionEpochRevealed", [typeof(ModelId)])];
         }
 
-        // ReSharper disable once InconsistentNaming
         /// <summary>
         ///     Sets the result from save state when a custom ascension reveal epoch is registered.
         ///     注册自定义进阶显示纪元时，根据存档状态设置结果。

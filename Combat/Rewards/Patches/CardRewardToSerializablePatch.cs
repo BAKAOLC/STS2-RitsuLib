@@ -35,9 +35,7 @@ namespace STS2RitsuLib.Combat.Rewards.Patches
             return [new(typeof(CardReward), nameof(CardReward.ToSerializable), Type.EmptyTypes)];
         }
 
-        // ReSharper disable InconsistentNaming
         public static bool Prefix(CardReward __instance, ref SerializableReward __result)
-            // ReSharper restore InconsistentNaming
         {
             // BaseLib has its own CardReward serializer; avoid competing with it.
             if (RewardSerializationExt.IsBaselibRewardPatchLoaded())

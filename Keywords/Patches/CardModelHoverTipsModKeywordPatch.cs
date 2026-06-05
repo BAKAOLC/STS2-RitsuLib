@@ -37,7 +37,6 @@ namespace STS2RitsuLib.Keywords.Patches
             return [new(typeof(CardModel), "HoverTips", MethodType.Getter)];
         }
 
-        // ReSharper disable InconsistentNaming
         /// <summary>
         ///     Removes any mod-keyword hover tip that vanilla produced (via
         ///     <see cref="HoverTipFactory.FromKeyword" />) but is marked non-hoverable in the registry.
@@ -64,6 +63,5 @@ namespace STS2RitsuLib.Keywords.Patches
 
             __result = __result.Where(tip => !toRemove.Contains(tip)).ToArray();
         }
-        // ReSharper restore InconsistentNaming
     }
 }

@@ -40,14 +40,12 @@ namespace STS2RitsuLib.Localization.Patches
             ];
         }
 
-        // ReSharper disable InconsistentNaming
         /// <summary>
         ///     Returns the I18N-backed table instance for registered virtual table ids.
         ///     对已注册的虚拟 table id 返回 I18N-backed table 实例。
         /// </summary>
         [HarmonyPriority(Priority.First)]
         public static bool Prefix(string name, ref LocTable __result)
-            // ReSharper restore InconsistentNaming
         {
             if (!I18NLocTableBridge.TryGetLocTable(name, out var locTable))
                 return true;
@@ -81,7 +79,6 @@ namespace STS2RitsuLib.Localization.Patches
             ];
         }
 
-        // ReSharper disable InconsistentNaming
         /// <summary>
         ///     Resolves the key lookup through <see cref="STS2RitsuLib.Utils.I18N" /> when the table name matches a
         ///     registered virtual I18N table id.
@@ -90,7 +87,6 @@ namespace STS2RitsuLib.Localization.Patches
         /// </summary>
         [HarmonyPriority(Priority.First)]
         public static bool Prefix(LocTable __instance, string key, ref bool __result)
-            // ReSharper restore InconsistentNaming
         {
             if (!I18NLocTablePatchHelper.TryGetBackingI18N(__instance, out var i18N))
                 return true;
@@ -126,14 +122,12 @@ namespace STS2RitsuLib.Localization.Patches
             ];
         }
 
-        // ReSharper disable InconsistentNaming
         /// <summary>
         ///     Reports I18N-backed keys as local keys for SmartFormat culture selection.
         ///     为 SmartFormat culture 选择把 I18N-backed keys 报告为本地 key。
         /// </summary>
         [HarmonyPriority(Priority.First)]
         public static bool Prefix(LocTable __instance, string key, ref bool __result)
-            // ReSharper restore InconsistentNaming
         {
             if (!I18NLocTablePatchHelper.TryGetBackingI18N(__instance, out var i18N))
                 return true;
@@ -167,14 +161,12 @@ namespace STS2RitsuLib.Localization.Patches
             ];
         }
 
-        // ReSharper disable InconsistentNaming
         /// <summary>
         ///     Returns the I18N-backed raw template when the table name matches a registered virtual I18N table id.
         ///     当 table name 匹配已注册的虚拟 I18N table id 时，返回 I18N-backed raw template。
         /// </summary>
         [HarmonyPriority(Priority.First)]
         public static bool Prefix(LocTable __instance, string key, ref string __result)
-            // ReSharper restore InconsistentNaming
         {
             if (!I18NLocTablePatchHelper.TryGetBackingI18N(__instance, out var i18N))
                 return true;
@@ -213,14 +205,12 @@ namespace STS2RitsuLib.Localization.Patches
             ];
         }
 
-        // ReSharper disable InconsistentNaming
         /// <summary>
         ///     Returns a <see cref="LocString" /> pointing at the virtual table id when the I18N dictionary contains the key.
         ///     当 I18N 字典包含该 key 时，返回指向虚拟表 id 的 <see cref="LocString" />。
         /// </summary>
         [HarmonyPriority(Priority.First)]
         public static bool Prefix(LocTable __instance, string key, ref LocString __result)
-            // ReSharper restore InconsistentNaming
         {
             var tableName = __instance is I18NLocTable i18NLocTable
                 ? i18NLocTable.Name

@@ -25,7 +25,6 @@ namespace STS2RitsuLib.Models.Patches
             ];
         }
 
-        // ReSharper disable InconsistentNaming
         /// <summary>
         ///     Dispatches clone context after vanilla clone state has been initialized.
         ///     在原版复制状态初始化完成后分发复制上下文。
@@ -39,7 +38,6 @@ namespace STS2RitsuLib.Models.Patches
         ///     复制出的模型实例。
         /// </param>
         public static void Postfix(AbstractModel __instance, AbstractModel __result)
-            // ReSharper restore InconsistentNaming
         {
             ModelSavedDataRegistry.NotifyCloned(__instance, __result);
             ModelCapabilities.NotifyCloned(__instance, __result);

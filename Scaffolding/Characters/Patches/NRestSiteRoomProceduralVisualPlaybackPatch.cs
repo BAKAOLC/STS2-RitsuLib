@@ -28,7 +28,6 @@ namespace STS2RitsuLib.Scaffolding.Characters.Patches
             return [new(typeof(NRestSiteRoom), nameof(NRestSiteRoom._Ready))];
         }
 
-        // ReSharper disable once InconsistentNaming
         /// <summary>
         ///     Runs after vanilla <c>_Ready</c> so all rest-site character nodes exist.
         ///     在原版 <c>_Ready</c> 之后运行，确保所有休息点角色节点都已存在。

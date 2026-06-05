@@ -33,13 +33,11 @@ namespace STS2RitsuLib.Combat.CardTargeting.Patches
             return [new(typeof(AttackCommand), nameof(AttackCommand.GetPossibleTargets))];
         }
 
-        // ReSharper disable InconsistentNaming
         /// <summary>
         ///     Returns custom targets when present; otherwise falls back to vanilla behavior.
         ///     若存在自定义目标则直接返回；否则回退到原版逻辑。
         /// </summary>
         public static bool Prefix(AttackCommand __instance, ref IReadOnlyList<Creature> __result)
-            // ReSharper restore InconsistentNaming
         {
             if (!CustomTargets.TryGetValue(__instance, out var box) || box.Value == null)
                 return true;

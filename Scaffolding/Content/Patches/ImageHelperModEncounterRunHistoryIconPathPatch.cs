@@ -53,18 +53,16 @@ namespace STS2RitsuLib.Scaffolding.Content.Patches
             ];
         }
 
-        // ReSharper disable InconsistentNaming
         /// <summary>
         ///     Harmony prefix: return the configured <c>res://images/…</c> path when present on disk / in the resource loader.
         ///     Harmony 前缀：当配置的 <c>res://images/…</c> 路径存在于磁盘 / 资源加载器中时返回该路径。
         /// </summary>
         public static bool Prefix(
-                MethodBase __originalMethod,
-                MapPointType mapPointType,
-                RoomType roomType,
-                ModelId? modelId,
-                ref string? __result)
-            // ReSharper restore InconsistentNaming
+            MethodBase __originalMethod,
+            MapPointType mapPointType,
+            RoomType roomType,
+            ModelId? modelId,
+            ref string? __result)
         {
             if (modelId is null)
                 return true;

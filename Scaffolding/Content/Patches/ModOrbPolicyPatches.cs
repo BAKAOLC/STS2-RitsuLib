@@ -88,7 +88,6 @@ namespace STS2RitsuLib.Scaffolding.Content.Patches
         /// </summary>
         [HarmonyAfter(Const.BaseLibHarmonyId, Const.FrameworkContentRegistryHarmonyId)]
         [HarmonyPriority(Priority.Last)]
-        // ReSharper disable once InconsistentNaming
         public static bool Prefix(Rng rng, ref OrbModel __result)
         {
             if (!ModOrbRandomPoolPolicyRuntime.HasModdedCandidates())
@@ -164,7 +163,6 @@ namespace STS2RitsuLib.Scaffolding.Content.Patches
         /// </summary>
         [HarmonyAfter(Const.BaseLibHarmonyId)]
         [HarmonyPriority(Priority.Last)]
-        // ReSharper disable once InconsistentNaming
         public static void Postfix(NOrb __instance, bool isEvoking)
         {
             ModOrbValueDisplayPolicyRuntime.Apply(__instance, isEvoking);

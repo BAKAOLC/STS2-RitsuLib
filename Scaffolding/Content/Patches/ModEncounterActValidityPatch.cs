@@ -29,12 +29,10 @@ namespace STS2RitsuLib.Scaffolding.Content.Patches
             ];
         }
 
-        // ReSharper disable InconsistentNaming
         /// <summary>
         ///     Re-rolls saved boss choices that are no longer valid for this act.
         /// </summary>
         public static void Postfix(ActModel __instance, Rng rng)
-            // ReSharper restore InconsistentNaming
         {
             ArgumentNullException.ThrowIfNull(__instance);
             ArgumentNullException.ThrowIfNull(rng);

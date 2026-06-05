@@ -76,7 +76,6 @@ namespace STS2RitsuLib.Patching.Models
         ///     重载参数类型。
         /// </param>
         public ModPatchTarget(Type targetType, string methodName, Type[]? parameterTypes)
-            // ReSharper disable once IntroduceOptionalParameters.Global
             : this(targetType, methodName, parameterTypes, false)
         {
         }
@@ -161,9 +160,7 @@ namespace STS2RitsuLib.Patching.Models
         ///     方法名。
         /// </param>
         public ModPatchTarget(Type targetType, string methodName)
-            // ReSharper disable IntroduceOptionalParameters.Global
             : this(targetType, methodName, null, false)
-        // ReSharper restore IntroduceOptionalParameters.Global
         {
         }
 

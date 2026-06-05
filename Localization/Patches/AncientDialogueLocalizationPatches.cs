@@ -33,13 +33,11 @@ namespace STS2RitsuLib.Localization.Patches
             ];
         }
 
-        // ReSharper disable InconsistentNaming
         /// <summary>
         ///     Ensures mod-character lines are merged once per ancient before vanilla localization key population.
         ///     确保在原版本地化 key 填充之前，每个远古事件的 mod 角色台词只合并一次。
         /// </summary>
         public static void Prefix(AncientDialogueSet __instance, string ancientEntry)
-            // ReSharper restore InconsistentNaming
         {
             var processedAncients = ProcessedAncients.GetOrCreate(__instance);
             if (!processedAncients.Add(ancientEntry))

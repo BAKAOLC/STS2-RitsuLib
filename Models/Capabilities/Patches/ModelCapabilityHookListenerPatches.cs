@@ -34,9 +34,7 @@ namespace STS2RitsuLib.Models.Capabilities.Patches
                 return [new(typeof(RunState), nameof(RunState.IterateHookListeners), [typeof(CombatStateCompat)])];
             }
 
-            // ReSharper disable InconsistentNaming
             public static void Postfix(ref IEnumerable<AbstractModel> __result)
-                // ReSharper restore InconsistentNaming
             {
                 __result = ModelCapabilityHookListeners.ExpandOwnerHookListeners(__result);
             }
@@ -55,9 +53,7 @@ namespace STS2RitsuLib.Models.Capabilities.Patches
                 return [new(typeof(CombatState), nameof(CombatState.IterateHookListeners), Type.EmptyTypes)];
             }
 
-            // ReSharper disable InconsistentNaming
             public static void Postfix(ref IEnumerable<AbstractModel> __result)
-                // ReSharper restore InconsistentNaming
             {
                 __result = ModelCapabilityHookListeners.ExpandOwnerHookListeners(__result);
             }
@@ -105,7 +101,6 @@ namespace STS2RitsuLib.Models.Capabilities.Patches
                 ];
             }
 
-            // ReSharper disable once InconsistentNaming
             public static bool Prefix(
                 HookPlayerChoiceContext __instance,
                 AbstractModel source,

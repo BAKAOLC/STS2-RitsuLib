@@ -27,7 +27,6 @@ namespace STS2RitsuLib.Networking.Sidecar.Patches
             ];
         }
 
-        // ReSharper disable once InconsistentNaming
         public static bool Prefix(NetMessageBus __instance, bool bufferMessages)
         {
             return RitsuLibSidecarSync.ReleaseNetBusBuffer(__instance, bufferMessages);
@@ -54,7 +53,6 @@ namespace STS2RitsuLib.Networking.Sidecar.Patches
             ];
         }
 
-        // ReSharper disable once InconsistentNaming
         public static bool Prefix(RunLocationTargetedMessageBuffer __instance, RunLocation location)
         {
             return RitsuLibSidecarSync.ReleaseLocationBuffer(__instance, location);

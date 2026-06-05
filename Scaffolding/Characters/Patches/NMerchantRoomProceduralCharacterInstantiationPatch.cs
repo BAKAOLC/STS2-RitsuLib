@@ -46,7 +46,6 @@ namespace STS2RitsuLib.Scaffolding.Characters.Patches
             return [new(typeof(NMerchantRoom), "AfterRoomIsLoaded")];
         }
 
-        // ReSharper disable once InconsistentNaming
         /// <summary>
         ///     Replaces vanilla layout; returns <see langword="false" /> so the original <c>AfterRoomIsLoaded</c> is skipped.
         ///     替换原版布局；返回 <see langword="false" />，使原始 <c>AfterRoomIsLoaded</c> 被跳过。

@@ -50,9 +50,7 @@ namespace STS2RitsuLib.Scaffolding.Characters.Patches
         ///     Replaces vanilla reward timing with equivalent logic that also considers RitsuLib non-Spine death
         ///     delays.
         /// </summary>
-        // ReSharper disable InconsistentNaming
         public static bool Prefix(NCombatUi __instance, CombatRoom room, ref Task __result)
-            // ReSharper restore InconsistentNaming
         {
             __result = ShowRewards(__instance, room);
             return false;

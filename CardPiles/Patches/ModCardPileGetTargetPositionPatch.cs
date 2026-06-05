@@ -34,7 +34,6 @@ namespace STS2RitsuLib.CardPiles.Patches
             return [new(typeof(PileTypeExtensions), nameof(PileTypeExtensions.GetTargetPosition))];
         }
 
-        // ReSharper disable InconsistentNaming
         /// <summary>
         ///     Returns false (skip vanilla) when the pile type was minted by ritsulib.
         ///     当 pile type 由 ritsulib minted 时返回 false（跳过原版）。
@@ -47,6 +46,5 @@ namespace STS2RitsuLib.CardPiles.Patches
             __result = ModCardPileLayout.GetTargetPosition(definition, node);
             return false;
         }
-        // ReSharper restore InconsistentNaming
     }
 }

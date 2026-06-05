@@ -31,12 +31,10 @@ namespace STS2RitsuLib.Scaffolding.Content.Patches
             ];
         }
 
-        // ReSharper disable InconsistentNaming
         /// <summary>
         ///     Drops invalid entries from the shared-ancient subset assigned to this act.
         /// </summary>
         public static void Prefix(ActModel __instance, List<AncientEventModel>? ____sharedAncientSubset)
-            // ReSharper restore InconsistentNaming
         {
             if (____sharedAncientSubset is not { Count: > 0 })
                 return;

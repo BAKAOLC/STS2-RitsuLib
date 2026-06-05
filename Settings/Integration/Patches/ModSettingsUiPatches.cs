@@ -39,13 +39,11 @@ namespace STS2RitsuLib.Settings.Patches
             return [new(typeof(NMainMenuSubmenuStack), nameof(NMainMenuSubmenuStack.GetSubmenuType), [typeof(Type)])];
         }
 
-        // ReSharper disable InconsistentNaming
         /// <summary>
         ///     Returns a cached <see cref="RitsuModSettingsSubmenu" /> for the stack when the requested type matches.
         ///     当请求的类型匹配时，为该 stack 返回缓存的 <see cref="RitsuModSettingsSubmenu" />。
         /// </summary>
         public static bool Prefix(NMainMenuSubmenuStack __instance, Type type, ref NSubmenu __result)
-            // ReSharper restore InconsistentNaming
         {
             if (type != typeof(RitsuModSettingsSubmenu))
                 return true;
@@ -91,13 +89,11 @@ namespace STS2RitsuLib.Settings.Patches
             return [new(typeof(NRunSubmenuStack), nameof(NRunSubmenuStack.GetSubmenuType), [typeof(Type)])];
         }
 
-        // ReSharper disable InconsistentNaming
         /// <summary>
         ///     Returns a cached <see cref="RitsuModSettingsSubmenu" /> for the run stack when the requested type matches.
         ///     当请求的类型匹配时，为跑局 stack 返回缓存的 <see cref="RitsuModSettingsSubmenu" />。
         /// </summary>
         public static bool Prefix(NRunSubmenuStack __instance, Type type, ref NSubmenu __result)
-            // ReSharper restore InconsistentNaming
         {
             if (type != typeof(RitsuModSettingsSubmenu))
                 return true;
@@ -150,7 +146,6 @@ namespace STS2RitsuLib.Settings.Patches
             ];
         }
 
-        // ReSharper disable once InconsistentNaming
         /// <summary>
         ///     Ensures the entry line exists and refreshes chrome on ready, open, and show.
         ///     在 ready、open、show 时确保入口行存在并刷新外观。

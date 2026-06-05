@@ -45,18 +45,16 @@ namespace STS2RitsuLib.Scaffolding.Content.Patches
             ];
         }
 
-        // ReSharper disable InconsistentNaming
         /// <summary>
         ///     Supplies mod run-history texture paths before vanilla builds <c>ui/run_history/&lt;entry&gt;.png</c> paths.
         ///     在原版构建 <c>ui/run_history/&lt;entry&gt;.png</c> 路径之前，提供 mod 跑局历史纹理路径。
         /// </summary>
         public static bool Prefix(
-                MethodBase __originalMethod,
-                MapPointType mapPointType,
-                RoomType roomType,
-                ModelId? modelId,
-                ref string? __result)
-            // ReSharper restore InconsistentNaming
+            MethodBase __originalMethod,
+            MapPointType mapPointType,
+            RoomType roomType,
+            ModelId? modelId,
+            ref string? __result)
         {
             if (mapPointType != MapPointType.Ancient || roomType != RoomType.Event || modelId is null)
                 return true;

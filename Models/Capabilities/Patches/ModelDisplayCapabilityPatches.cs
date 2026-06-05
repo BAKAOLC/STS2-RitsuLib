@@ -59,9 +59,7 @@ namespace STS2RitsuLib.Models.Capabilities.Patches
                 return [new(typeof(RelicModel), "DynamicDescription", MethodType.Getter)];
             }
 
-            // ReSharper disable InconsistentNaming
             public static void Postfix(RelicModel __instance, ref LocString __result)
-                // ReSharper restore InconsistentNaming
             {
                 AddDynamicVars(__instance, __result);
             }
@@ -80,9 +78,7 @@ namespace STS2RitsuLib.Models.Capabilities.Patches
                 return [new(typeof(RelicModel), "DynamicEventDescription", MethodType.Getter)];
             }
 
-            // ReSharper disable InconsistentNaming
             public static void Postfix(RelicModel __instance, ref LocString __result)
-                // ReSharper restore InconsistentNaming
             {
                 AddDynamicVars(__instance, __result);
             }
@@ -101,9 +97,7 @@ namespace STS2RitsuLib.Models.Capabilities.Patches
                 return [new(typeof(PotionModel), "DynamicDescription", MethodType.Getter)];
             }
 
-            // ReSharper disable InconsistentNaming
             public static void Postfix(PotionModel __instance, ref LocString __result)
-                // ReSharper restore InconsistentNaming
             {
                 AddDynamicVars(__instance, __result);
             }
@@ -122,9 +116,7 @@ namespace STS2RitsuLib.Models.Capabilities.Patches
                 return [new(typeof(EnchantmentModel), "DynamicDescription", MethodType.Getter)];
             }
 
-            // ReSharper disable InconsistentNaming
             public static void Postfix(EnchantmentModel __instance, ref LocString __result)
-                // ReSharper restore InconsistentNaming
             {
                 AddDynamicVars(__instance, __result);
             }
@@ -143,9 +135,7 @@ namespace STS2RitsuLib.Models.Capabilities.Patches
                 return [new(typeof(EnchantmentModel), "DynamicExtraCardText", MethodType.Getter)];
             }
 
-            // ReSharper disable InconsistentNaming
             public static void Postfix(EnchantmentModel __instance, ref LocString? __result)
-                // ReSharper restore InconsistentNaming
             {
                 AddDynamicVars(__instance, __result);
             }
@@ -164,9 +154,7 @@ namespace STS2RitsuLib.Models.Capabilities.Patches
                 return [new(typeof(AfflictionModel), "DynamicDescription", MethodType.Getter)];
             }
 
-            // ReSharper disable InconsistentNaming
             public static void Postfix(AfflictionModel __instance, ref LocString __result)
-                // ReSharper restore InconsistentNaming
             {
                 AddDynamicVars(__instance, __result);
             }
@@ -185,9 +173,7 @@ namespace STS2RitsuLib.Models.Capabilities.Patches
                 return [new(typeof(AfflictionModel), "DynamicExtraCardText", MethodType.Getter)];
             }
 
-            // ReSharper disable InconsistentNaming
             public static void Postfix(AfflictionModel __instance, ref LocString? __result)
-                // ReSharper restore InconsistentNaming
             {
                 AddDynamicVars(__instance, __result);
             }
@@ -206,9 +192,7 @@ namespace STS2RitsuLib.Models.Capabilities.Patches
                 return [new(typeof(PowerModel), "Description", MethodType.Getter)];
             }
 
-            // ReSharper disable InconsistentNaming
             public static void Postfix(PowerModel __instance, ref LocString __result)
-                // ReSharper restore InconsistentNaming
             {
                 AddDynamicVars(__instance, __result);
             }
@@ -227,9 +211,7 @@ namespace STS2RitsuLib.Models.Capabilities.Patches
                 return [new(typeof(PowerModel), "SmartDescription", MethodType.Getter)];
             }
 
-            // ReSharper disable InconsistentNaming
             public static void Postfix(PowerModel __instance, ref LocString __result)
-                // ReSharper restore InconsistentNaming
             {
                 AddDynamicVars(__instance, __result);
             }
@@ -248,9 +230,7 @@ namespace STS2RitsuLib.Models.Capabilities.Patches
                 return [new(typeof(PowerModel), "RemoteDescription", MethodType.Getter)];
             }
 
-            // ReSharper disable InconsistentNaming
             public static void Postfix(PowerModel __instance, ref LocString __result)
-                // ReSharper restore InconsistentNaming
             {
                 AddDynamicVars(__instance, __result);
             }
@@ -269,9 +249,7 @@ namespace STS2RitsuLib.Models.Capabilities.Patches
                 return [new(typeof(OrbModel), "Description", MethodType.Getter)];
             }
 
-            // ReSharper disable InconsistentNaming
             public static void Postfix(OrbModel __instance, ref LocString __result)
-                // ReSharper restore InconsistentNaming
             {
                 AddDynamicVars(__instance, __result);
             }
@@ -290,9 +268,7 @@ namespace STS2RitsuLib.Models.Capabilities.Patches
                 return [new(typeof(OrbModel), "SmartDescription", MethodType.Getter)];
             }
 
-            // ReSharper disable InconsistentNaming
             public static void Postfix(OrbModel __instance, ref LocString __result)
-                // ReSharper restore InconsistentNaming
             {
                 AddDynamicVars(__instance, __result);
             }
@@ -311,9 +287,7 @@ namespace STS2RitsuLib.Models.Capabilities.Patches
                 return [new(typeof(RelicModel), "HoverTips", MethodType.Getter)];
             }
 
-            // ReSharper disable InconsistentNaming
             public static void Postfix(RelicModel __instance, ref IEnumerable<IHoverTip> __result)
-                // ReSharper restore InconsistentNaming
             {
                 AppendHoverTips(__instance, ref __result);
             }
@@ -332,9 +306,7 @@ namespace STS2RitsuLib.Models.Capabilities.Patches
                 return [new(typeof(RelicModel), "HoverTipsExcludingRelic", MethodType.Getter)];
             }
 
-            // ReSharper disable InconsistentNaming
             public static void Postfix(RelicModel __instance, ref IEnumerable<IHoverTip> __result)
-                // ReSharper restore InconsistentNaming
             {
                 AppendHoverTips(__instance, ref __result);
             }
@@ -353,9 +325,7 @@ namespace STS2RitsuLib.Models.Capabilities.Patches
                 return [new(typeof(PowerModel), "HoverTips", MethodType.Getter)];
             }
 
-            // ReSharper disable InconsistentNaming
             public static void Postfix(PowerModel __instance, ref IEnumerable<IHoverTip> __result)
-                // ReSharper restore InconsistentNaming
             {
                 AppendHoverTips(__instance, ref __result);
             }
@@ -374,9 +344,7 @@ namespace STS2RitsuLib.Models.Capabilities.Patches
                 return [new(typeof(OrbModel), "HoverTips", MethodType.Getter)];
             }
 
-            // ReSharper disable InconsistentNaming
             public static void Postfix(OrbModel __instance, ref IEnumerable<IHoverTip> __result)
-                // ReSharper restore InconsistentNaming
             {
                 AppendHoverTips(__instance, ref __result);
             }
@@ -395,9 +363,7 @@ namespace STS2RitsuLib.Models.Capabilities.Patches
                 return [new(typeof(PotionModel), "HoverTips", MethodType.Getter)];
             }
 
-            // ReSharper disable InconsistentNaming
             public static void Postfix(PotionModel __instance, ref IEnumerable<IHoverTip> __result)
-                // ReSharper restore InconsistentNaming
             {
                 AppendHoverTips(__instance, ref __result);
             }
@@ -416,9 +382,7 @@ namespace STS2RitsuLib.Models.Capabilities.Patches
                 return [new(typeof(AfflictionModel), "HoverTips", MethodType.Getter)];
             }
 
-            // ReSharper disable InconsistentNaming
             public static void Postfix(AfflictionModel __instance, ref IEnumerable<IHoverTip> __result)
-                // ReSharper restore InconsistentNaming
             {
                 AppendHoverTips(__instance, ref __result);
             }
@@ -437,9 +401,7 @@ namespace STS2RitsuLib.Models.Capabilities.Patches
                 return [new(typeof(EnchantmentModel), "HoverTips", MethodType.Getter)];
             }
 
-            // ReSharper disable InconsistentNaming
             public static void Postfix(EnchantmentModel __instance, ref IEnumerable<IHoverTip> __result)
-                // ReSharper restore InconsistentNaming
             {
                 AppendHoverTips(__instance, ref __result);
             }
@@ -458,9 +420,7 @@ namespace STS2RitsuLib.Models.Capabilities.Patches
                 return [new(typeof(CardModel), "RunAssetPaths", MethodType.Getter)];
             }
 
-            // ReSharper disable InconsistentNaming
             public static void Postfix(CardModel __instance, ref IEnumerable<string> __result)
-                // ReSharper restore InconsistentNaming
             {
                 AppendAssetPaths(__instance, new(__instance, ModelAssetPathScope.Run), ref __result);
             }
@@ -479,9 +439,7 @@ namespace STS2RitsuLib.Models.Capabilities.Patches
                 return [new(typeof(CharacterModel), "AssetPaths", MethodType.Getter)];
             }
 
-            // ReSharper disable InconsistentNaming
             public static void Postfix(CharacterModel __instance, ref IEnumerable<string> __result)
-                // ReSharper restore InconsistentNaming
             {
                 AppendAssetPaths(__instance, new(__instance, ModelAssetPathScope.General), ref __result);
             }
@@ -500,9 +458,7 @@ namespace STS2RitsuLib.Models.Capabilities.Patches
                 return [new(typeof(CharacterModel), "AssetPathsCharacterSelect", MethodType.Getter)];
             }
 
-            // ReSharper disable InconsistentNaming
             public static void Postfix(CharacterModel __instance, ref IEnumerable<string> __result)
-                // ReSharper restore InconsistentNaming
             {
                 AppendAssetPaths(__instance, new(__instance, ModelAssetPathScope.CharacterSelect), ref __result);
             }
@@ -521,9 +477,7 @@ namespace STS2RitsuLib.Models.Capabilities.Patches
                 return [new(typeof(OrbModel), "AssetPaths", MethodType.Getter)];
             }
 
-            // ReSharper disable InconsistentNaming
             public static void Postfix(OrbModel __instance, ref IEnumerable<string> __result)
-                // ReSharper restore InconsistentNaming
             {
                 AppendAssetPaths(__instance, new(__instance, ModelAssetPathScope.Combat), ref __result);
             }
@@ -542,9 +496,7 @@ namespace STS2RitsuLib.Models.Capabilities.Patches
                 return [new(typeof(MonsterModel), "AssetPaths", MethodType.Getter)];
             }
 
-            // ReSharper disable InconsistentNaming
             public static void Postfix(MonsterModel __instance, ref IEnumerable<string> __result)
-                // ReSharper restore InconsistentNaming
             {
                 AppendAssetPaths(__instance, new(__instance, ModelAssetPathScope.Combat), ref __result);
             }
@@ -563,9 +515,7 @@ namespace STS2RitsuLib.Models.Capabilities.Patches
                 return [new(typeof(ActModel), "AssetPaths", MethodType.Getter)];
             }
 
-            // ReSharper disable InconsistentNaming
             public static void Postfix(ActModel __instance, ref IEnumerable<string> __result)
-                // ReSharper restore InconsistentNaming
             {
                 AppendAssetPaths(__instance, new(__instance, ModelAssetPathScope.Map), ref __result);
             }
@@ -584,12 +534,10 @@ namespace STS2RitsuLib.Models.Capabilities.Patches
                 return [new(typeof(EncounterModel), nameof(EncounterModel.GetAssetPaths), [typeof(IRunState)])];
             }
 
-            // ReSharper disable InconsistentNaming
             public static void Postfix(
-                    EncounterModel __instance,
-                    IRunState runState,
-                    ref IEnumerable<string> __result)
-                // ReSharper restore InconsistentNaming
+                EncounterModel __instance,
+                IRunState runState,
+                ref IEnumerable<string> __result)
             {
                 AppendAssetPaths(__instance, new(__instance, ModelAssetPathScope.Combat, runState), ref __result);
             }
@@ -608,9 +556,7 @@ namespace STS2RitsuLib.Models.Capabilities.Patches
                 return [new(typeof(EventModel), nameof(EventModel.GetAssetPaths), [typeof(IRunState)])];
             }
 
-            // ReSharper disable InconsistentNaming
             public static void Postfix(EventModel __instance, IRunState runState, ref IEnumerable<string> __result)
-                // ReSharper restore InconsistentNaming
             {
                 AppendAssetPaths(__instance, new(__instance, ModelAssetPathScope.Run, runState), ref __result);
             }

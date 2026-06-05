@@ -33,7 +33,6 @@ namespace STS2RitsuLib.CardPiles.Patches
             return [new(typeof(NCardFlyShuffleVfx), nameof(NCardFlyShuffleVfx.Create))];
         }
 
-        // ReSharper disable InconsistentNaming
         /// <summary>
         ///     Rewrites the freshly created shuffle-vfx start position when <paramref name="startPile" /> is a
         ///     mod pile and it provided a custom start resolver.
@@ -50,6 +49,5 @@ namespace STS2RitsuLib.CardPiles.Patches
             var resolved = ModCardPileLayout.GetShuffleStartPosition(definition, startPile, targetPile);
             StartPositionField.SetValue(__result, resolved);
         }
-        // ReSharper restore InconsistentNaming
     }
 }

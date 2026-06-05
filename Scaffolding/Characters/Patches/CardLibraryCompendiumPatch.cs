@@ -61,7 +61,6 @@ namespace STS2RitsuLib.Scaffolding.Characters.Patches
             return [new(typeof(NCardLibrary), nameof(NCardLibrary._Ready))];
         }
 
-        // ReSharper disable InconsistentNaming
         /// <summary>
         ///     Clones vanilla pool-filter UI for each mod character and wires pool predicates so compendium filtering
         ///     works without <c>KeyNotFoundException</c>.
@@ -69,10 +68,9 @@ namespace STS2RitsuLib.Scaffolding.Characters.Patches
         ///     无需 <c>KeyNotFoundException</c> 即可工作。
         /// </summary>
         public static void Postfix(
-                NCardLibrary __instance,
-                Dictionary<NCardPoolFilter, Func<CardModel, bool>> ____poolFilters,
-                Dictionary<CharacterModel, NCardPoolFilter> ____cardPoolFilters)
-            // ReSharper restore InconsistentNaming
+            NCardLibrary __instance,
+            Dictionary<NCardPoolFilter, Func<CardModel, bool>> ____poolFilters,
+            Dictionary<CharacterModel, NCardPoolFilter> ____cardPoolFilters)
         {
             foreach (var (character, filter) in ____cardPoolFilters)
             {

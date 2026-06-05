@@ -37,9 +37,7 @@ namespace STS2RitsuLib.Lifecycle.Patches
         ///     Harmony prefix: publishes events before profile switch, progress save, or profile delete run.
         ///     Harmony prefix：在档案切换、进度保存或档案删除运行前发布事件。
         /// </summary>
-        // ReSharper disable InconsistentNaming
         public static void Prefix(MethodBase __originalMethod, SaveManager __instance, object[] __args)
-            // ReSharper restore InconsistentNaming
         {
             switch (__originalMethod.Name)
             {
@@ -73,9 +71,7 @@ namespace STS2RitsuLib.Lifecycle.Patches
         ///     Harmony postfix: publishes events after profile id init/switch, progress save, or profile delete complete.
         ///     Harmony postfix：在档案 ID 初始化/切换、进度保存或档案删除完成后发布事件。
         /// </summary>
-        // ReSharper disable InconsistentNaming
         public static void Postfix(MethodBase __originalMethod, SaveManager __instance, object[] __args)
-            // ReSharper restore InconsistentNaming
         {
             switch (__originalMethod.Name)
             {
@@ -154,7 +150,6 @@ namespace STS2RitsuLib.Lifecycle.Patches
         ///     Harmony prefix: publishes <see cref="RunSavingEvent" /> before the async save begins.
         ///     Harmony prefix：在异步保存开始前发布 <see cref="RunSavingEvent" />。
         /// </summary>
-        // ReSharper disable once InconsistentNaming
         public static void Prefix(SaveManager __instance, AbstractRoom? preFinishedRoom, bool saveProgress)
         {
             RitsuLibFramework.PublishLifecycleEvent(
@@ -167,10 +162,8 @@ namespace STS2RitsuLib.Lifecycle.Patches
         ///     Harmony postfix: chains onto the save task and publishes <see cref="RunSavedEvent" /> when it completes.
         ///     Harmony postfix：链接到保存任务，并在其完成时发布 <see cref="RunSavedEvent" />。
         /// </summary>
-        // ReSharper disable InconsistentNaming
         public static void Postfix(SaveManager __instance, AbstractRoom? preFinishedRoom, bool saveProgress,
-                ref Task __result)
-            // ReSharper restore InconsistentNaming
+            ref Task __result)
         {
             __result = LifecyclePatchTaskBridge.After(__result, () =>
                 RitsuLibFramework.PublishLifecycleEvent(

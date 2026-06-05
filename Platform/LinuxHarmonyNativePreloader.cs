@@ -10,6 +10,8 @@ namespace STS2RitsuLib.Platform
         private const int DlopenFlags = RtldNow | RtldGlobal;
 
         private static readonly Lock SyncRoot = new();
+
+        // ReSharper disable once CollectionNeverQueried.Local
         private static readonly List<IntPtr> Handles = [];
         private static bool _attempted;
 
