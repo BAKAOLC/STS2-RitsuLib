@@ -16,13 +16,13 @@ using STS2RitsuLib.Interop.Patches;
 using STS2RitsuLib.Keywords.Patches;
 using STS2RitsuLib.Lifecycle.Patches;
 using STS2RitsuLib.Localization.Patches;
-using STS2RitsuLib.Models.Capabilities;
 using STS2RitsuLib.Models.Capabilities.Patches;
 using STS2RitsuLib.Models.Identity.Patches;
 using STS2RitsuLib.Models.Patches;
 using STS2RitsuLib.Networking.JoinDiagnostics.Patches;
 using STS2RitsuLib.Networking.ManagedActions.Patches;
 using STS2RitsuLib.Networking.Sidecar.Patches;
+using STS2RitsuLib.Networking.StateDivergence.Patches;
 using STS2RitsuLib.Patching.Core;
 using STS2RitsuLib.Platform;
 using STS2RitsuLib.Platform.Patches;
@@ -34,7 +34,6 @@ using STS2RitsuLib.Scaffolding.Cards.HandGlow.Patches;
 using STS2RitsuLib.Scaffolding.Cards.HandOutline.Patches;
 using STS2RitsuLib.Scaffolding.Characters.Patches;
 using STS2RitsuLib.Scaffolding.Content.Patches;
-using STS2RitsuLib.Scaffolding.Godot;
 using STS2RitsuLib.Settings.Patches;
 using STS2RitsuLib.Timeline.Patches;
 using STS2RitsuLib.TopBar.Patches;
@@ -78,9 +77,6 @@ namespace STS2RitsuLib
 
         private static void RegisterLifecyclePatches()
         {
-            ModelSavedDataRegistry.EnsureInitialized();
-            ModelCapabilities.EnsureInitialized();
-
             var patcher = CreatePatcher(Const.ModId, "framework-core", "framework core");
             patcher.RegisterPatch<ModTypeDiscoveryPatch>();
             patcher.RegisterPatch<NAudioManagerGuidMappedStudioEventsPatches.PlayOneShot>();
@@ -211,6 +207,11 @@ namespace STS2RitsuLib
             patcher.RegisterPatch<JoinFailureDiagnosticsInitialInfoPatch>();
             patcher.RegisterPatch<JoinFailureDiagnosticsPopupCreatePatch>();
             patcher.RegisterPatch<JoinFailureDiagnosticsPopupReadyPatch>();
+            patcher.RegisterPatch<StateDivergenceDiagnosticsLogPatch>();
+            patcher.RegisterPatch<StateDivergenceSupplementSerializePatch>();
+            patcher.RegisterPatch<StateDivergenceSupplementDeserializePatch>();
+            patcher.RegisterPatch<StateDivergenceDiagnosticsPopupCreatePatch>();
+            patcher.RegisterPatch<StateDivergenceDiagnosticsPopupReadyPatch>();
             patcher.RegisterPatch<RunEndedLifecyclePatch>();
             patcher.RegisterPatch<CombatHookLifecyclePatch>();
             patcher.RegisterPatch<RewardHookLifecyclePatch>();
@@ -359,8 +360,6 @@ namespace STS2RitsuLib
 
         private static void RegisterContentAssetPatches()
         {
-            RitsuGodotNodeFactoryBootstrap.EnsureRegistered();
-
             var patcher = CreatePatcher(Const.ModId, "framework-content-assets", "content assets");
             patcher.RegisterPatch<EpochPortraitPathPatch>();
 #if STS2_AT_LEAST_0_106_0

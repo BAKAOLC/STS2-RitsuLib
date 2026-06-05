@@ -1,3 +1,4 @@
+using System.Text;
 using Godot;
 using MegaCrit.Sts2.Core.ControllerInput;
 using MegaCrit.Sts2.Core.Nodes.CommonUi;
@@ -5,13 +6,18 @@ using MegaCrit.Sts2.Core.Nodes.Screens.ScreenContext;
 using STS2RitsuLib.Settings;
 using STS2RitsuLib.Ui.Shell;
 using STS2RitsuLib.Ui.Shell.Theme;
+using STS2RitsuLib.Ui.Toast;
 
 namespace STS2RitsuLib.Networking.JoinDiagnostics
 {
     internal sealed partial class JoinFailureDiagnosticsPanel : Control, IScreenContext
     {
         private const int ControllerScrollStep = 72;
+        private const string FocusRefreshAttachedMeta = "ritsu_join_diagnostics_focus_refresh_attached";
+        private readonly List<Control> _focusChain = [];
         private readonly JoinFailureDiagnosticReport _report = null!;
+        private bool _focusRefreshScheduled;
+        private VBoxContainer? _issuesRoot;
         private ScrollContainer? _mainScroll;
 
         public JoinFailureDiagnosticsPanel(JoinFailureDiagnosticReport report)
@@ -32,7 +38,13 @@ namespace STS2RitsuLib.Networking.JoinDiagnostics
             SetAnchorsAndOffsetsPreset(LayoutPreset.FullRect);
             SetProcessUnhandledInput(true);
             Build();
-            Callable.From(() => DefaultFocusedControl?.GrabFocus()).CallDeferred();
+            AttachControllerFocusChromeRecursive(this);
+            ScheduleFocusRefresh();
+            Callable.From(() =>
+            {
+                DefaultFocusedControl ??= _focusChain.FirstOrDefault();
+                DefaultFocusedControl?.GrabFocus();
+            }).CallDeferred();
         }
 
         public override void _UnhandledInput(InputEvent @event)
@@ -56,22 +68,27 @@ namespace STS2RitsuLib.Networking.JoinDiagnostics
 
         private void Build()
         {
-            var center = new CenterContainer
+            var viewportMargin = new MarginContainer
             {
                 MouseFilter = MouseFilterEnum.Ignore,
             };
-            center.SetAnchorsAndOffsetsPreset(LayoutPreset.FullRect);
-            AddChild(center);
+            viewportMargin.SetAnchorsAndOffsetsPreset(LayoutPreset.FullRect);
+            viewportMargin.AddThemeConstantOverride("margin_left", 32);
+            viewportMargin.AddThemeConstantOverride("margin_top", 28);
+            viewportMargin.AddThemeConstantOverride("margin_right", 32);
+            viewportMargin.AddThemeConstantOverride("margin_bottom", 28);
+            AddChild(viewportMargin);
 
             var panel = new PanelContainer
             {
-                CustomMinimumSize = new(1080f, 720f),
+                SizeFlagsHorizontal = SizeFlags.ExpandFill,
+                SizeFlagsVertical = SizeFlags.ExpandFill,
                 MouseFilter = MouseFilterEnum.Stop,
             };
             panel.AddThemeStyleboxOverride("panel",
                 RitsuShellPanelStyles.CreateFramedSurface(RitsuShellTheme.Current.Surface.Content,
                     RitsuShellTheme.Current.Metric.Radius.Default));
-            center.AddChild(panel);
+            viewportMargin.AddChild(panel);
 
             var margin = new MarginContainer();
             margin.AddThemeConstantOverride("margin_left", 24);
@@ -90,7 +107,6 @@ namespace STS2RitsuLib.Networking.JoinDiagnostics
             margin.AddChild(root);
 
             root.AddChild(BuildHeader());
-            root.AddChild(BuildSummary());
             root.AddChild(BuildIssues());
             root.AddChild(BuildFooter());
         }
@@ -108,6 +124,15 @@ namespace STS2RitsuLib.Networking.JoinDiagnostics
             title.SizeFlagsHorizontal = SizeFlags.ExpandFill;
             row.AddChild(title);
 
+            var export = new ModSettingsTextButton(
+                T("button.copyReport", "Copy report"),
+                ModSettingsButtonTone.Normal,
+                CopyReportToClipboard)
+            {
+                CustomMinimumSize = new(190f, RitsuShellTheme.Current.Metric.Entry.ValueMinHeight),
+            };
+            row.AddChild(export);
+
             var close = new ModSettingsTextButton(
                 T("button.close", "Close"),
                 ModSettingsButtonTone.Normal,
@@ -121,37 +146,6 @@ namespace STS2RitsuLib.Networking.JoinDiagnostics
             return row;
         }
 
-        private Control BuildSummary()
-        {
-            var panel = new PanelContainer
-            {
-                MouseFilter = MouseFilterEnum.Ignore,
-                SizeFlagsHorizontal = SizeFlags.ExpandFill,
-            };
-            panel.AddThemeStyleboxOverride("panel", RitsuShellChromeStyles.CreateInsetSurfaceStyle());
-
-            var margin = new MarginContainer();
-            margin.AddThemeConstantOverride("margin_left", 14);
-            margin.AddThemeConstantOverride("margin_top", 10);
-            margin.AddThemeConstantOverride("margin_right", 14);
-            margin.AddThemeConstantOverride("margin_bottom", 10);
-            panel.AddChild(margin);
-
-            var box = new VBoxContainer
-            {
-                SizeFlagsHorizontal = SizeFlags.ExpandFill,
-                MouseFilter = MouseFilterEnum.Ignore,
-            };
-            box.AddThemeConstantOverride("separation", 6);
-            margin.AddChild(box);
-
-            box.AddChild(CreateLabel(T("section.summary", "Summary"), 19, RitsuShellTheme.Current.Text.RichTitle,
-                true));
-            box.AddChild(CreateLabel(_report.Summary, 18, RitsuShellTheme.Current.Text.RichBody));
-
-            return panel;
-        }
-
         private Control BuildIssues()
         {
             var scroll = new ScrollContainer
@@ -162,6 +156,7 @@ namespace STS2RitsuLib.Networking.JoinDiagnostics
                 MouseFilter = MouseFilterEnum.Stop,
                 FocusMode = FocusModeEnum.None,
             };
+            ModSettingsUiControlTheming.ApplySettingsScrollContainerTheme(scroll);
             _mainScroll = scroll;
 
             var box = new VBoxContainer
@@ -169,45 +164,82 @@ namespace STS2RitsuLib.Networking.JoinDiagnostics
                 SizeFlagsHorizontal = SizeFlags.ExpandFill,
                 MouseFilter = MouseFilterEnum.Ignore,
             };
-            box.AddThemeConstantOverride("separation", 16);
-            scroll.AddChild(box);
+            box.AddThemeConstantOverride("separation", 12);
+            var scrollMargin = new MarginContainer
+            {
+                SizeFlagsHorizontal = SizeFlags.ExpandFill,
+                MouseFilter = MouseFilterEnum.Ignore,
+            };
+            scrollMargin.AddThemeConstantOverride("margin_right",
+                ModSettingsUiControlTheming.ResolveSettingsScrollContentRightGutter(scroll));
+            scroll.AddChild(scrollMargin);
+            scrollMargin.AddChild(box);
+            _issuesRoot = box;
 
+            box.AddChild(BuildSummarySection());
             foreach (var issue in _report.Issues)
                 box.AddChild(BuildIssue(issue));
 
             return scroll;
         }
 
-        private Control BuildIssue(JoinFailureIssue issue)
+        private Control BuildSummarySection()
+        {
+            return new ModSettingsCollapsibleSection(
+                T("section.summary", "Summary"),
+                "join_summary",
+                _report.Summary,
+                false,
+                [BuildSummaryBody()]);
+        }
+
+        private Control BuildSummaryBody()
         {
             var box = new VBoxContainer
             {
                 SizeFlagsHorizontal = SizeFlags.ExpandFill,
                 MouseFilter = MouseFilterEnum.Ignore,
             };
-            box.AddThemeConstantOverride("separation", 9);
+            box.AddThemeConstantOverride("separation", 8);
+            box.AddChild(CreateInfoCard(_report.Summary, RitsuShellTheme.Current.Text.RichBody));
 
-            box.AddChild(CreateLabel(issue.Title, 21, RitsuShellTheme.Current.Text.RichTitle, true));
-            box.AddChild(CreateLabel(issue.Description, 17, RitsuShellTheme.Current.Text.RichBody));
+            if (_report.Host != null)
+                box.AddChild(BuildPeerSnapshotRow());
 
-            if (issue.Rows.Count == 0)
-                return box;
+            return box;
+        }
 
-            var table = new VBoxContainer
+        private Control BuildIssue(JoinFailureIssue issue)
+        {
+            return new ModSettingsCollapsibleSection(
+                issue.Title,
+                "join_issue_" + issue.Kind,
+                issue.Description,
+                ShouldStartCollapsed(issue),
+                [BuildIssueBody(issue)]);
+        }
+
+        private static bool ShouldStartCollapsed(JoinFailureIssue issue)
+        {
+            return issue.Kind is JoinFailureIssueKind.Network or JoinFailureIssueKind.Transport;
+        }
+
+        private Control BuildIssueBody(JoinFailureIssue issue)
+        {
+            var box = new VBoxContainer
             {
                 SizeFlagsHorizontal = SizeFlags.ExpandFill,
                 MouseFilter = MouseFilterEnum.Ignore,
             };
-            table.AddThemeConstantOverride("separation", 3);
-            box.AddChild(table);
+            box.AddThemeConstantOverride("separation", 10);
 
-            table.AddChild(BuildTableRow(
-                T("column.item", "Item"),
-                T("column.host", "Host"),
-                T("column.local", "Local"),
-                true));
-            foreach (var row in issue.Rows)
-                table.AddChild(BuildTableRow(row.Label, row.HostValue, row.LocalValue, false));
+            if (issue.Rows.Count == 0)
+            {
+                box.AddChild(CreateInfoCard(issue.Description, RitsuShellTheme.Current.Text.RichBody));
+                return box;
+            }
+
+            box.AddChild(BuildDetailRows(issue.Rows));
 
             if (issue.Kind == JoinFailureIssueKind.ModOrder &&
                 _report.Host is { } host &&
@@ -215,6 +247,112 @@ namespace STS2RitsuLib.Networking.JoinDiagnostics
                 box.AddChild(BuildModOrderLists(host.GameplayMods, _report.Local.GameplayMods));
 
             return box;
+        }
+
+        private Control BuildPeerSnapshotRow()
+        {
+            var row = new HBoxContainer
+            {
+                SizeFlagsHorizontal = SizeFlags.ExpandFill,
+                MouseFilter = MouseFilterEnum.Ignore,
+            };
+            row.AddThemeConstantOverride("separation", 10);
+
+            row.AddChild(CreateSnapshotCard(
+                T("column.host", "Host"),
+                _report.Host!.GameVersion,
+                _report.Host.ModelDbHash,
+                _report.Host.GameplayMods.Count));
+            row.AddChild(CreateSnapshotCard(
+                T("column.local", "Local"),
+                _report.Local.GameVersion,
+                _report.Local.ModelDbHash,
+                _report.Local.GameplayMods.Count));
+            return row;
+        }
+
+        private Control CreateSnapshotCard(string title, string version, uint modelDbHash, int modCount)
+        {
+            var panel = new PanelContainer
+            {
+                SizeFlagsHorizontal = SizeFlags.ExpandFill,
+                MouseFilter = MouseFilterEnum.Ignore,
+            };
+            panel.AddThemeStyleboxOverride("panel", ModSettingsUiFactory.CreateListItemCardStyle());
+
+            var box = CreateInsetVBox(panel, 10, 7, 10, 7, 4);
+            box.AddChild(CreateLabel(title, 16, RitsuShellTheme.Current.Text.RichTitle, true));
+            box.AddChild(CreateLabel(
+                F("snapshot.version", "Version: {0}", version),
+                14,
+                RitsuShellTheme.Current.Text.RichBody));
+            box.AddChild(CreateLabel(
+                F("snapshot.modelDb", "ModelDb: {0}", modelDbHash),
+                14,
+                RitsuShellTheme.Current.Text.RichBody));
+            box.AddChild(CreateLabel(
+                F("snapshot.mods", "Gameplay mods: {0}", modCount),
+                14,
+                RitsuShellTheme.Current.Text.RichBody));
+            return panel;
+        }
+
+        private Control BuildDetailRows(IReadOnlyList<JoinFailureDetailRow> rows)
+        {
+            var panel = new PanelContainer
+            {
+                SizeFlagsHorizontal = SizeFlags.ExpandFill,
+                MouseFilter = MouseFilterEnum.Ignore,
+            };
+            panel.AddThemeStyleboxOverride("panel", ModSettingsUiFactory.CreateListShellStyle());
+
+            var box = CreateInsetVBox(panel, 10, 8, 10, 8, 6);
+            box.AddChild(BuildDetailHeaderRow());
+            foreach (var row in rows)
+                box.AddChild(BuildDetailRow(row));
+
+            return panel;
+        }
+
+        private Control BuildDetailHeaderRow()
+        {
+            var row = new HBoxContainer
+            {
+                SizeFlagsHorizontal = SizeFlags.ExpandFill,
+                MouseFilter = MouseFilterEnum.Ignore,
+            };
+            row.AddThemeConstantOverride("separation", 10);
+            row.AddChild(CreateFixedHeaderLabel(T("column.item", "Item"), 250));
+            row.AddChild(CreateHeaderLabel(T("column.host", "Host")));
+            row.AddChild(CreateHeaderLabel(T("column.local", "Local")));
+            return row;
+        }
+
+        private Control BuildDetailRow(JoinFailureDetailRow detail)
+        {
+            var differs = !string.Equals(detail.HostValue, detail.LocalValue, StringComparison.Ordinal);
+            var panel = new PanelContainer
+            {
+                SizeFlagsHorizontal = SizeFlags.ExpandFill,
+                CustomMinimumSize = new(0f, 44f),
+                MouseFilter = MouseFilterEnum.Ignore,
+            };
+            panel.AddThemeStyleboxOverride("panel", ModSettingsUiFactory.CreateListItemCardStyle(differs));
+
+            var row = new HBoxContainer
+            {
+                SizeFlagsHorizontal = SizeFlags.ExpandFill,
+                SizeFlagsVertical = SizeFlags.ExpandFill,
+                MouseFilter = MouseFilterEnum.Ignore,
+                Alignment = BoxContainer.AlignmentMode.Center,
+            };
+            row.AddThemeConstantOverride("separation", 10);
+            panel.AddChild(row);
+
+            row.AddChild(CreateFixedValueLabel(detail.Label, 250, RitsuShellTheme.Current.Text.RichTitle, true));
+            row.AddChild(CreateValueLabel(detail.HostValue, ValueColor(detail.HostValue, differs)));
+            row.AddChild(CreateValueLabel(detail.LocalValue, ValueColor(detail.LocalValue, differs)));
+            return panel;
         }
 
         private Control BuildModOrderLists(
@@ -242,22 +380,9 @@ namespace STS2RitsuLib.Networking.JoinDiagnostics
                 SizeFlagsHorizontal = SizeFlags.ExpandFill,
                 MouseFilter = MouseFilterEnum.Ignore,
             };
-            panel.AddThemeStyleboxOverride("panel", RitsuShellChromeStyles.CreateListShellStyle());
+            panel.AddThemeStyleboxOverride("panel", ModSettingsUiFactory.CreateListShellStyle());
 
-            var margin = new MarginContainer();
-            margin.AddThemeConstantOverride("margin_left", 10);
-            margin.AddThemeConstantOverride("margin_top", 8);
-            margin.AddThemeConstantOverride("margin_right", 10);
-            margin.AddThemeConstantOverride("margin_bottom", 8);
-            panel.AddChild(margin);
-
-            var box = new VBoxContainer
-            {
-                SizeFlagsHorizontal = SizeFlags.ExpandFill,
-                MouseFilter = MouseFilterEnum.Ignore,
-            };
-            box.AddThemeConstantOverride("separation", 4);
-            margin.AddChild(box);
+            var box = CreateInsetVBox(panel, 10, 8, 10, 8, 6);
 
             box.AddChild(CreateLabel(title, 18, RitsuShellTheme.Current.Text.RichTitle, true));
 
@@ -266,7 +391,7 @@ namespace STS2RitsuLib.Networking.JoinDiagnostics
                 SizeFlagsHorizontal = SizeFlags.ExpandFill,
                 MouseFilter = MouseFilterEnum.Ignore,
             };
-            entries.AddThemeConstantOverride("separation", 5);
+            entries.AddThemeConstantOverride("separation", 6);
             box.AddChild(entries);
 
             for (var i = 0; i < mods.Count; i++)
@@ -274,40 +399,42 @@ namespace STS2RitsuLib.Networking.JoinDiagnostics
                 var mod = mods[i];
                 var matches = i < counterpart.Count &&
                               string.Equals(mod.Key, counterpart[i].Key, StringComparison.Ordinal);
-                var color = matches
-                    ? RitsuShellTheme.Current.Text.RichBody
-                    : RitsuShellTheme.Current.Text.HoverHighlight;
-                entries.AddChild(CreateLabel("#" + (i + 1) + "  " + FormatModLine(mod), 15, color));
+                entries.AddChild(BuildModOrderRow(i, mod, matches));
             }
 
             return panel;
         }
 
-        private Control BuildTableRow(string labelText, string hostText, string localText, bool header)
+        private Control BuildModOrderRow(int index, JoinDiagnosticsModEntry mod, bool matches)
         {
+            var panel = new PanelContainer
+            {
+                SizeFlagsHorizontal = SizeFlags.ExpandFill,
+                CustomMinimumSize = new(0f, 38f),
+                MouseFilter = MouseFilterEnum.Ignore,
+            };
+            panel.AddThemeStyleboxOverride("panel", ModSettingsUiFactory.CreateListItemCardStyle(!matches));
+
             var row = new HBoxContainer
             {
                 SizeFlagsHorizontal = SizeFlags.ExpandFill,
+                SizeFlagsVertical = SizeFlags.ExpandFill,
                 MouseFilter = MouseFilterEnum.Ignore,
+                Alignment = BoxContainer.AlignmentMode.Center,
             };
-            row.AddThemeConstantOverride("separation", 10);
+            row.AddThemeConstantOverride("separation", 8);
+            panel.AddChild(row);
 
-            row.AddChild(CreateCell(labelText, 280f, header));
-            row.AddChild(CreateCell(hostText, 370f, header));
-            row.AddChild(CreateCell(localText, 370f, header));
-            return row;
-        }
-
-        private Label CreateCell(string text, float width, bool header)
-        {
-            var label = CreateLabel(
-                text,
-                header ? 16 : 15,
-                header ? RitsuShellTheme.Current.Text.RichTitle : RitsuShellTheme.Current.Text.RichBody,
-                header);
-            label.CustomMinimumSize = new(width, 0f);
-            label.SizeFlagsHorizontal = SizeFlags.ExpandFill;
-            return label;
+            row.AddChild(CreateFixedValueLabel("#" + (index + 1).ToString("00"), 46,
+                RitsuShellTheme.Current.Text.Number, false));
+            row.AddChild(CreateValueLabel(FormatModLine(mod),
+                matches ? RitsuShellTheme.Current.Text.RichBody : RitsuShellTheme.Current.Text.HoverHighlight));
+            row.AddChild(CreateFixedValueLabel(
+                matches ? T("value.same", "same") : T("value.differs", "differs"),
+                76,
+                matches ? RitsuShellTheme.Current.Text.RichMuted : RitsuShellTheme.Current.Text.HoverHighlight,
+                false));
+            return panel;
         }
 
         private Control BuildFooter()
@@ -346,9 +473,161 @@ namespace STS2RitsuLib.Networking.JoinDiagnostics
             });
         }
 
+        private Label CreateHeaderLabel(string text)
+        {
+            var label = CreateLabel(text, 15, RitsuShellTheme.Current.Text.RichTitle, true);
+            label.SizeFlagsHorizontal = SizeFlags.ExpandFill;
+            return label;
+        }
+
+        private Label CreateFixedHeaderLabel(string text, float width)
+        {
+            var label = CreateHeaderLabel(text);
+            label.CustomMinimumSize = new(width, 24f);
+            label.SizeFlagsHorizontal = SizeFlags.ShrinkBegin;
+            return label;
+        }
+
+        private Label CreateValueLabel(string text, Color color, bool bold = false)
+        {
+            var label = CreateLabel(text, 14, color, bold);
+            label.CustomMinimumSize = new(0f, 28f);
+            label.SizeFlagsHorizontal = SizeFlags.ExpandFill;
+            label.VerticalAlignment = VerticalAlignment.Center;
+            label.TextOverrunBehavior = TextServer.OverrunBehavior.TrimEllipsis;
+            return label;
+        }
+
+        private Label CreateFixedValueLabel(string text, float width, Color color, bool bold)
+        {
+            var label = CreateValueLabel(text, color, bold);
+            label.CustomMinimumSize = new(width, 28f);
+            label.SizeFlagsHorizontal = SizeFlags.ShrinkBegin;
+            return label;
+        }
+
+        private Control CreateInfoCard(string text, Color color)
+        {
+            var panel = new PanelContainer
+            {
+                SizeFlagsHorizontal = SizeFlags.ExpandFill,
+                MouseFilter = MouseFilterEnum.Ignore,
+            };
+            panel.AddThemeStyleboxOverride("panel", ModSettingsUiFactory.CreateInsetSurfaceStyle());
+            var box = CreateInsetVBox(panel, 12, 9, 12, 9, 4);
+            box.AddChild(CreateLabel(text, 16, color));
+            return panel;
+        }
+
+        private static VBoxContainer CreateInsetVBox(
+            Container parent,
+            int left,
+            int top,
+            int right,
+            int bottom,
+            int separation)
+        {
+            var margin = new MarginContainer();
+            margin.AddThemeConstantOverride("margin_left", left);
+            margin.AddThemeConstantOverride("margin_top", top);
+            margin.AddThemeConstantOverride("margin_right", right);
+            margin.AddThemeConstantOverride("margin_bottom", bottom);
+            parent.AddChild(margin);
+
+            var box = new VBoxContainer
+            {
+                SizeFlagsHorizontal = SizeFlags.ExpandFill,
+                MouseFilter = MouseFilterEnum.Ignore,
+            };
+            box.AddThemeConstantOverride("separation", separation);
+            margin.AddChild(box);
+            return box;
+        }
+
         private void Close()
         {
             NModalContainer.Instance?.Clear();
+        }
+
+        private void CopyReportToClipboard()
+        {
+            DisplayServer.ClipboardSet(BuildExportReport());
+            ModSettingsClipboardAccess.InvalidateCache();
+            RitsuToastService.ShowInfo(
+                T("toast.reportCopied.body", "Join failure report copied to clipboard."),
+                T("toast.reportCopied.title", "Join diagnostics"));
+        }
+
+        private string BuildExportReport()
+        {
+            var builder = new StringBuilder();
+            builder.AppendLine(_report.Title);
+            builder.AppendLine(new('=', _report.Title.Length));
+            builder.AppendLine();
+            builder.AppendLine(T("section.summary", "Summary"));
+            builder.AppendLine(_report.Summary);
+            builder.AppendLine();
+            builder.AppendLine(F("footer.networkReason", "Network reason: {0}", _report.NetworkReason));
+            if (!string.IsNullOrWhiteSpace(_report.NetworkInfo))
+                builder.AppendLine(F("footer.networkInfo", "Info: {0}", _report.NetworkInfo));
+
+            builder.AppendLine();
+            AppendPeerSnapshot(builder, T("column.host", "Host"), _report.Host);
+            AppendPeerSnapshot(builder, T("column.local", "Local"), _report.Local);
+
+            foreach (var issue in _report.Issues)
+            {
+                builder.AppendLine();
+                builder.AppendLine(issue.Title);
+                builder.AppendLine(new('-', issue.Title.Length));
+                builder.AppendLine(issue.Description);
+
+                foreach (var row in issue.Rows)
+                    builder.AppendLine(
+                        $"{row.Label}: {T("column.host", "Host")}={row.HostValue}; {T("column.local", "Local")}={row.LocalValue}");
+
+                if (issue.Kind != JoinFailureIssueKind.ModOrder ||
+                    _report.Host is not { } host ||
+                    host.GameplayMods.Count != _report.Local.GameplayMods.Count) continue;
+                builder.AppendLine();
+                AppendModOrder(builder, T("column.hostOrder", "Host order"), host.GameplayMods,
+                    _report.Local.GameplayMods);
+                builder.AppendLine();
+                AppendModOrder(builder, T("column.localOrder", "Local order"), _report.Local.GameplayMods,
+                    host.GameplayMods);
+            }
+
+            return builder.ToString();
+        }
+
+        private static void AppendPeerSnapshot(StringBuilder builder, string title, JoinPeerSnapshot? snapshot)
+        {
+            builder.AppendLine(title);
+            if (snapshot == null)
+            {
+                builder.AppendLine("  <unknown>");
+                return;
+            }
+
+            builder.AppendLine("  " + F("snapshot.version", "Version: {0}", snapshot.GameVersion));
+            builder.AppendLine("  " + F("snapshot.modelDb", "ModelDb: {0}", snapshot.ModelDbHash));
+            builder.AppendLine("  " + F("snapshot.mods", "Gameplay mods: {0}", snapshot.GameplayMods.Count));
+        }
+
+        private static void AppendModOrder(
+            StringBuilder builder,
+            string title,
+            IReadOnlyList<JoinDiagnosticsModEntry> mods,
+            IReadOnlyList<JoinDiagnosticsModEntry> counterpart)
+        {
+            builder.AppendLine(title);
+            for (var i = 0; i < mods.Count; i++)
+            {
+                var matches = i < counterpart.Count &&
+                              string.Equals(mods[i].Key, counterpart[i].Key, StringComparison.Ordinal);
+                builder.AppendLine(
+                    $"  #{i + 1:00} [{(matches ? T("value.same", "same") : T("value.differs", "differs"))}] {FormatModLine(mods[i])}");
+            }
         }
 
         private bool TryScrollFromInput(InputEvent @event)
@@ -368,6 +647,89 @@ namespace STS2RitsuLib.Networking.JoinDiagnostics
 
             _mainScroll.ScrollVertical = next;
             return true;
+        }
+
+        private void AttachControllerFocusChromeRecursive(Node node)
+        {
+            if (node is BaseButton button)
+            {
+                ModSettingsFocusChrome.AttachControllerSelectionReticle(button);
+                if (!button.HasMeta(FocusRefreshAttachedMeta))
+                {
+                    button.SetMeta(FocusRefreshAttachedMeta, true);
+                    button.Pressed += ScheduleFocusRefresh;
+                    button.FocusEntered += () => _mainScroll?.EnsureControlVisible(button);
+                }
+            }
+
+            foreach (var child in node.GetChildren())
+                AttachControllerFocusChromeRecursive(child);
+        }
+
+        private void ScheduleFocusRefresh()
+        {
+            if (_focusRefreshScheduled)
+                return;
+
+            _focusRefreshScheduled = true;
+            Callable.From(RefreshFocusNavigationDeferred).CallDeferred();
+        }
+
+        private void RefreshFocusNavigationDeferred()
+        {
+            _focusRefreshScheduled = false;
+            if (!IsInsideTree())
+                return;
+
+            _focusChain.Clear();
+            CollectFocusChain(this, _focusChain);
+            WireFocusChain(_focusChain);
+
+            var owner = GetViewport()?.GuiGetFocusOwner();
+            if (owner != null && IsAncestorOf(owner) && owner.IsVisibleInTree())
+                return;
+
+            DefaultFocusedControl ??= _focusChain.FirstOrDefault();
+            DefaultFocusedControl?.GrabFocus();
+        }
+
+        private static void CollectFocusChain(Control root, ICollection<Control> chain)
+        {
+            if (root.IsVisibleInTree() &&
+                root.FocusMode == FocusModeEnum.All &&
+                root is BaseButton)
+                chain.Add(root);
+
+            foreach (var child in root.GetChildren())
+            {
+                if (child is not Control control || !control.IsVisibleInTree())
+                    continue;
+
+                CollectFocusChain(control, chain);
+            }
+        }
+
+        private static void WireFocusChain(IReadOnlyList<Control> chain)
+        {
+            for (var i = 0; i < chain.Count; i++)
+            {
+                var current = chain[i];
+                var self = current.GetPath();
+                current.FocusNeighborLeft = self;
+                current.FocusNeighborRight = self;
+                current.FocusNeighborTop = i > 0 ? chain[i - 1].GetPath() : self;
+                current.FocusNeighborBottom = i < chain.Count - 1 ? chain[i + 1].GetPath() : self;
+            }
+        }
+
+        private static Color ValueColor(string value, bool differs)
+        {
+            if (!differs)
+                return RitsuShellTheme.Current.Text.RichBody;
+
+            return string.Equals(value, T("value.missing", "Missing"), StringComparison.Ordinal)
+                ? RitsuShellTheme.Current.Text.HoverHighlight
+                : RitsuShellTheme.Current.Text.RichBody;
         }
 
         private static string FormatModLine(JoinDiagnosticsModEntry mod)

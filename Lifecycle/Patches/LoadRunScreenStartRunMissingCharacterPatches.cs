@@ -1,5 +1,6 @@
 using HarmonyLib;
 using MegaCrit.Sts2.Core.Commands;
+using MegaCrit.Sts2.Core.Entities.Multiplayer;
 using MegaCrit.Sts2.Core.Helpers;
 using MegaCrit.Sts2.Core.Logging;
 using MegaCrit.Sts2.Core.Models;
@@ -97,8 +98,10 @@ namespace STS2RitsuLib.Lifecycle.Patches
             var runState = RunState.FromSerializable(lobby.Run);
 #if !STS2_AT_LEAST_0_104_0
             RunManager.Instance.SetUpSavedMultiPlayer(runState, lobby);
-#else
+#elif !STS2_AT_LEAST_0_107_0
             await RunManager.Instance.SetUpSavedMultiPlayer(runState, lobby);
+#else
+            await RunManager.Instance.SetUpSavedMultiplayer(runState, lobby);
 #endif
             await game.LoadRun(runState, lobby.Run.PreFinishedRoom);
             CleanUpLobby(screen, false);
@@ -107,8 +110,14 @@ namespace STS2RitsuLib.Lifecycle.Patches
 
         private static void CleanUpLobby(NMultiplayerLoadGameScreen screen, bool disconnectSession)
         {
+#if !STS2_AT_LEAST_0_107_0
             var m = AccessTools.DeclaredMethod(typeof(NMultiplayerLoadGameScreen), "CleanUpLobby");
             m.Invoke(screen, [disconnectSession]);
+#else
+            var m = AccessTools.DeclaredMethod(typeof(NMultiplayerLoadGameScreen), "CleanUpLobby",
+                [typeof(bool), typeof(NetError)]);
+            m.Invoke(screen, [disconnectSession, NetError.Quit]);
+#endif
         }
     }
 
@@ -193,8 +202,10 @@ namespace STS2RitsuLib.Lifecycle.Patches
             var runState = RunState.FromSerializable(lobby.Run);
 #if !STS2_AT_LEAST_0_104_0
             RunManager.Instance.SetUpSavedMultiPlayer(runState, lobby);
-#else
+#elif !STS2_AT_LEAST_0_107_0
             await RunManager.Instance.SetUpSavedMultiPlayer(runState, lobby);
+#else
+            await RunManager.Instance.SetUpSavedMultiplayer(runState, lobby);
 #endif
             await game.LoadRun(runState, lobby.Run.PreFinishedRoom);
             CleanUpLobby(screen, false);
@@ -203,8 +214,13 @@ namespace STS2RitsuLib.Lifecycle.Patches
 
         private static void CleanUpLobby(NCustomRunLoadScreen screen, bool disconnectSession)
         {
+#if !STS2_AT_LEAST_0_107_0
             AccessTools.DeclaredMethod(typeof(NCustomRunLoadScreen), "CleanUpLobby")
                 .Invoke(screen, [disconnectSession]);
+#else
+            AccessTools.DeclaredMethod(typeof(NCustomRunLoadScreen), "CleanUpLobby", [typeof(bool), typeof(NetError)])
+                .Invoke(screen, [disconnectSession, NetError.Quit]);
+#endif
         }
     }
 
@@ -292,8 +308,10 @@ namespace STS2RitsuLib.Lifecycle.Patches
             var runState = RunState.FromSerializable(lobby.Run);
 #if !STS2_AT_LEAST_0_104_0
             RunManager.Instance.SetUpSavedMultiPlayer(runState, lobby);
-#else
+#elif !STS2_AT_LEAST_0_107_0
             await RunManager.Instance.SetUpSavedMultiPlayer(runState, lobby);
+#else
+            await RunManager.Instance.SetUpSavedMultiplayer(runState, lobby);
 #endif
             await game.LoadRun(runState, lobby.Run.PreFinishedRoom);
             CleanUpLobby(screen, false);
@@ -302,7 +320,12 @@ namespace STS2RitsuLib.Lifecycle.Patches
 
         private static void CleanUpLobby(NDailyRunLoadScreen screen, bool disconnectSession)
         {
+#if !STS2_AT_LEAST_0_107_0
             AccessTools.DeclaredMethod(typeof(NDailyRunLoadScreen), "CleanUpLobby").Invoke(screen, [disconnectSession]);
+#else
+            AccessTools.DeclaredMethod(typeof(NDailyRunLoadScreen), "CleanUpLobby", [typeof(bool), typeof(NetError)])
+                .Invoke(screen, [disconnectSession, NetError.Quit]);
+#endif
         }
     }
 }

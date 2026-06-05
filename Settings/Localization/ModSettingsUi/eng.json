@@ -226,7 +226,7 @@
   "ritsulib.debugLogViewer.lanAccess.label": "Allow LAN access",
   "ritsulib.debugLogViewer.lanAccess.description": "When enabled, the debug log viewer listens on all network interfaces so other devices on the same LAN can open it with the tokenized URL. Changes apply on next launch.",
   "ritsulib.debugLogViewer.port.label": "Viewer port",
-  "ritsulib.debugLogViewer.port.description": "HTTP port. If the port is busy, RitsuLib tries the following ports in order. Changes apply on next launch.",
+  "ritsulib.debugLogViewer.port.description": "HTTP port. If the port is busy, RitsuLib tries the following ports in order. Changes apply on next launch. For one process, pass -- --ritsulib-log-viewer-port=18743 to override this setting and disable fallback unless --ritsulib-log-viewer-port-fallback-count is also set.",
   "ritsulib.debugLogViewer.openNow.label": "Open viewer",
   "ritsulib.debugLogViewer.openNow.button": "Open log viewer",
   "ritsulib.debugLogViewer.openNow.description": "Opens the currently running log viewer in your system browser.",

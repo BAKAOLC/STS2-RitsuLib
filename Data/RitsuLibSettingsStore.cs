@@ -209,6 +209,7 @@ namespace STS2RitsuLib.Data
         {
             Initialize();
             var s = GetSettings();
+            var commandLine = RitsuDebugLogViewerCommandLine.ParseCurrentProcess();
             var changed = false;
             if (string.IsNullOrWhiteSpace(s.DebugLogViewerAccessToken))
             {
@@ -220,13 +221,32 @@ namespace STS2RitsuLib.Data
             if (changed)
                 Store.Save(Const.SettingsKey);
 
+            foreach (var warning in commandLine.Warnings)
+                RitsuLibFramework.Logger.Warn($"[DebugLogViewer] {warning}");
+
+            var port = Math.Clamp(s.DebugLogViewerPort, 1, 65535);
+            var portFallbackCount = Math.Clamp(s.DebugLogViewerPortFallbackCount, 0, 100);
+            if (commandLine.Port is { } commandLinePort)
+            {
+                port = commandLinePort;
+                portFallbackCount = commandLine.PortFallbackCount ?? 0;
+                RitsuLibFramework.Logger.Info(
+                    $"[DebugLogViewer] Command line override applied: port={port}, fallbackCount={portFallbackCount}.");
+            }
+            else if (commandLine.PortFallbackCount is { } commandLinePortFallbackCount)
+            {
+                portFallbackCount = commandLinePortFallbackCount;
+                RitsuLibFramework.Logger.Info(
+                    $"[DebugLogViewer] Command line override applied: fallbackCount={portFallbackCount}.");
+            }
+
             return new(
                 s.DebugLogViewerEnabled,
                 s.DebugLogViewerMirrorGameLogs,
                 s.DebugLogViewerAutoOpen,
                 s.DebugLogViewerLanAccessEnabled,
-                Math.Clamp(s.DebugLogViewerPort, 1, 65535),
-                Math.Clamp(s.DebugLogViewerPortFallbackCount, 0, 100),
+                port,
+                portFallbackCount,
                 s.DebugLogViewerAccessToken,
                 s.DebugLogViewerRingBufferCapacity,
                 s.DebugLogViewerQueueCapacity);

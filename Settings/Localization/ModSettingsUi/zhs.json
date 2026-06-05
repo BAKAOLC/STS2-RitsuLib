@@ -226,7 +226,7 @@
   "ritsulib.debugLogViewer.lanAccess.label": "允许局域网访问",
   "ritsulib.debugLogViewer.lanAccess.description": "启用后，调试日志查看器会监听所有网络接口，同一局域网内的其他设备可通过带 token 的 URL 打开。修改会在下次启动时生效。",
   "ritsulib.debugLogViewer.port.label": "查看器端口",
-  "ritsulib.debugLogViewer.port.description": "HTTP 端口。如果端口被占用，RitsuLib 会按顺序尝试后续端口。修改会在下次启动时生效。",
+  "ritsulib.debugLogViewer.port.description": "HTTP 端口。如果端口被占用，RitsuLib 会按顺序尝试后续端口。修改会在下次启动时生效。单个进程可传入 -- --ritsulib-log-viewer-port=18743 覆盖此设置，并默认禁用端口回退；需要回退时同时传入 --ritsulib-log-viewer-port-fallback-count。",
   "ritsulib.debugLogViewer.openNow.label": "打开查看器",
   "ritsulib.debugLogViewer.openNow.button": "打开日志查看器",
   "ritsulib.debugLogViewer.openNow.description": "在系统浏览器中打开当前正在运行的日志查看器。",

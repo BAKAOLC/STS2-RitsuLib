@@ -316,7 +316,11 @@ namespace STS2RitsuLib.RunData.Patches
 
         public static ModPatchTarget[] GetTargets()
         {
+#if !STS2_AT_LEAST_0_107_0
             return [new(typeof(StartRunLobby), nameof(StartRunLobby.CleanUp), [typeof(bool)])];
+#else
+            return [new(typeof(StartRunLobby), nameof(StartRunLobby.CleanUp), [typeof(bool), typeof(NetError)])];
+#endif
         }
 
         // ReSharper disable once InconsistentNaming

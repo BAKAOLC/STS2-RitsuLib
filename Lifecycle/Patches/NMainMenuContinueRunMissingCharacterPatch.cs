@@ -92,8 +92,10 @@ namespace STS2RitsuLib.Lifecycle.Patches
 
 #if !STS2_AT_LEAST_0_104_0
                 RunManager.Instance.SetUpSavedSinglePlayer(runState, serializableRun);
-#else
+#elif !STS2_AT_LEAST_0_107_0
                 await RunManager.Instance.SetUpSavedSinglePlayer(runState, serializableRun);
+#else
+                await RunManager.Instance.SetUpSavedSingleplayer(runState, serializableRun);
 #endif
                 Log.Info($"Continuing run with character: {serializableRun.Players[0].CharacterId}");
                 SfxCmd.Play(runState.Players[0].Character.CharacterTransitionSfx);

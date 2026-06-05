@@ -57,6 +57,74 @@ public sealed class MyStrike : ModCardTemplate(1, CardType.Attack, CardRarity.Co
 
 :::
 
+## Damage And Block Wrappers{lang="en"}
+
+::: en
+
+Use `ComputedDamage` and `ComputedBlock` for computed values that should still match normal card preview rules for Strength, Dexterity, Vulnerable, Frail, and card enchantments:
+
+```csharp
+public override DynamicVarSet DynamicVars => new()
+{
+    ModCardVars.ComputedDamage("damage", 6, (card, target) => BaseDamage + BonusDamage(card, target)),
+    ModCardVars.ComputedBlock("block", 5, card => card?.IsUpgraded == true ? 8 : 5),
+};
+```
+
+For Osty attacks, use `ComputedOstyDamage` so damage preview modifiers see Osty as the dealer:
+
+```csharp
+ModCardVars.ComputedOstyDamage("damage", 7, (card, target) => ResolveOstyDamage(card, target));
+```
+
+When the preview base amount differs from the live amount, pass a preview base factory. The result still goes through normal damage or block hooks:
+
+```csharp
+ModCardVars.ComputedDamage(
+    "damage",
+    6,
+    (card, target) => ResolveDamage(card, target),
+    (card, mode, target, runGlobalHooks) => ResolvePreviewDamageBase(card, mode, target));
+```
+
+Use plain `Computed` when the value should not pass through damage or block hooks.
+
+:::
+
+## 伤害与格挡包装{lang="zh-CN"}
+
+::: zh-CN
+
+当计算值仍需要符合普通卡牌预览规则时，使用 `ComputedDamage` 和 `ComputedBlock`，这样力量、敏捷、易伤、脆弱和卡牌附魔都会参与预览计算：
+
+```csharp
+public override DynamicVarSet DynamicVars => new()
+{
+    ModCardVars.ComputedDamage("damage", 6, (card, target) => BaseDamage + BonusDamage(card, target)),
+    ModCardVars.ComputedBlock("block", 5, card => card?.IsUpgraded == true ? 8 : 5),
+};
+```
+
+奥斯蒂攻击使用 `ComputedOstyDamage`，这样伤害预览修正会把奥斯蒂视为伤害来源：
+
+```csharp
+ModCardVars.ComputedOstyDamage("damage", 7, (card, target) => ResolveOstyDamage(card, target));
+```
+
+当预览基础值和实卡当前值不同时，传入 preview base factory。它返回的结果仍会继续经过普通伤害或格挡 hook：
+
+```csharp
+ModCardVars.ComputedDamage(
+    "damage",
+    6,
+    (card, target) => ResolveDamage(card, target),
+    (card, mode, target, runGlobalHooks) => ResolvePreviewDamageBase(card, mode, target));
+```
+
+如果数值不应该经过伤害或格挡 hook，继续使用普通 `Computed`。
+
+:::
+
 ## Add A Tooltip{lang="en"}
 
 ::: en

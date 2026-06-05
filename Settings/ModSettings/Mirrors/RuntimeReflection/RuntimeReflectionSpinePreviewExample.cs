@@ -1,5 +1,4 @@
 using Godot;
-using MegaCrit.Sts2.Core.Bindings.MegaSpine;
 using MegaCrit.Sts2.Core.Models;
 using MegaCrit.Sts2.Core.Models.Characters;
 using MegaCrit.Sts2.Core.Nodes.Combat;
@@ -7,6 +6,9 @@ using STS2RitsuLib.Data;
 using STS2RitsuLib.Ui.Shell.Theme;
 using STS2RitsuLib.Utils;
 using STS2RitsuLib.Utils.Persistence;
+#if !STS2_AT_LEAST_0_107_0
+using MegaCrit.Sts2.Core.Bindings.MegaSpine;
+#endif
 
 namespace STS2RitsuLib.Settings
 {
@@ -327,9 +329,14 @@ namespace STS2RitsuLib.Settings
             if (data == null)
                 return [];
 
-            var names = data.GetAnimations()
-                .Select(animationObject => new MegaAnimation(Variant.From(animationObject)).GetName())
-                .Where(name => !string.IsNullOrWhiteSpace(name)).ToList();
+            var names =
+#if !STS2_AT_LEAST_0_107_0
+                data.GetAnimations()
+                    .Select(animationObject => new MegaAnimation(Variant.From(animationObject)).GetName())
+#else
+                data.GetAnimationNames()
+#endif
+                    .Where(name => !string.IsNullOrWhiteSpace(name)).ToList();
 
             names.Sort(StringComparer.OrdinalIgnoreCase);
             return names;

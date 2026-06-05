@@ -10,30 +10,16 @@ namespace STS2RitsuLib.Networking.JoinDiagnostics
 
         public static void ShowDeferred(JoinFailureDiagnosticReport report)
         {
-            Callable.From(() => Show(report)).CallDeferred();
+            Callable.From(() =>
+            {
+                NModalContainer.Instance?.Clear();
+                Show(report);
+            }).CallDeferred();
         }
 
         public static void WireDetailsButton(NErrorPopup popup, JoinFailureDiagnosticReport report)
         {
-            var verticalPopup = popup.GetNodeOrNull<NVerticalPopup>("VerticalPopup");
-            if (verticalPopup == null)
-                return;
-
-            verticalPopup.InitNoButton(
-                new("main_menu_ui", "GENERIC_POPUP.ok"),
-                _ => ShowDeferred(report));
-            verticalPopup.NoButton.SetText(DetailsButtonText);
-            verticalPopup.NoButton.DisconnectHotkeys();
-            verticalPopup.YesButton.FocusMode = Control.FocusModeEnum.All;
-            verticalPopup.NoButton.FocusMode = Control.FocusModeEnum.All;
-
-            var yesPath = verticalPopup.YesButton.GetPath();
-            var noPath = verticalPopup.NoButton.GetPath();
-            verticalPopup.YesButton.FocusNeighborLeft = noPath;
-            verticalPopup.YesButton.FocusNeighborRight = noPath;
-            verticalPopup.NoButton.FocusNeighborLeft = yesPath;
-            verticalPopup.NoButton.FocusNeighborRight = yesPath;
-            Callable.From(() => verticalPopup.YesButton.GrabFocus()).CallDeferred();
+            DiagnosticPopupDetailsButton.Add(popup, DetailsButtonText, () => ShowDeferred(report));
         }
 
         private static void Show(JoinFailureDiagnosticReport report)

@@ -1,4 +1,5 @@
 using System.Reflection;
+using MegaCrit.Sts2.Core.Entities.Multiplayer;
 using MegaCrit.Sts2.Core.Multiplayer.Game;
 using STS2RitsuLib.Patching.Models;
 
@@ -11,8 +12,7 @@ namespace STS2RitsuLib.Networking.Sidecar.Patches
     internal sealed class RitsuLibSidecarChecksumDivergenceRelayPatch : IPatchMethod
     {
         private static readonly FieldInfo? NetChecksumDataChecksumField =
-            Type.GetType("MegaCrit.Sts2.Core.Multiplayer.Messages.Game.Checksums.NetChecksumData, sts2")
-                ?.GetField("checksum");
+            typeof(NetChecksumData).GetField("checksum");
 
         private static readonly FieldInfo? TrackedChecksumDataField =
             typeof(ChecksumTracker).GetNestedType("TrackedChecksum", BindingFlags.Instance | BindingFlags.NonPublic)
