@@ -1,27 +1,19 @@
 using HarmonyLib;
-using MegaCrit.Sts2.Core.Commands;
-using MegaCrit.Sts2.Core.Entities.Multiplayer;
-using MegaCrit.Sts2.Core.Helpers;
-using MegaCrit.Sts2.Core.Logging;
-using MegaCrit.Sts2.Core.Models;
 using MegaCrit.Sts2.Core.Multiplayer.Game.Lobby;
-using MegaCrit.Sts2.Core.Nodes;
-using MegaCrit.Sts2.Core.Nodes.Audio;
 using MegaCrit.Sts2.Core.Nodes.CommonUi;
 using MegaCrit.Sts2.Core.Nodes.Screens.CharacterSelect;
 using MegaCrit.Sts2.Core.Nodes.Screens.CustomRun;
 using MegaCrit.Sts2.Core.Nodes.Screens.DailyRun;
-using MegaCrit.Sts2.Core.Runs;
 using STS2RitsuLib.Patching.Models;
 using STS2RitsuLib.Saves;
 
 namespace STS2RitsuLib.Lifecycle.Patches
 {
     /// <summary>
-    ///     Compatibility: replaces multiplayer load-screen <c>BeginRun</c> so starting a run is blocked when any player
-    ///     references an unregistered character, without deleting saves; otherwise mirrors vanilla load flow.
-    ///     兼容性：替换多人加载界面的 <c>BeginRun</c>，当任意玩家引用未注册角色时阻止开始跑局且不删除存档；
-    ///     其他情况下镜像原版加载流程。
+    ///     Compatibility: blocks multiplayer load-screen <c>StartRun</c> when any player references an unregistered
+    ///     character, without deleting saves; otherwise leaves the vanilla load flow untouched.
+    ///     兼容性：当任意玩家引用未注册角色时阻止多人加载界面的 <c>StartRun</c> 且不删除存档；
+    ///     其他情况下保持原版加载流程不变。
     /// </summary>
     public class NMultiplayerLoadGameScreenBeginRunMissingCharacterPatch : IPatchMethod
     {
@@ -47,84 +39,32 @@ namespace STS2RitsuLib.Lifecycle.Patches
         /// <inheritdoc />
         public static ModPatchTarget[] GetTargets()
         {
-            return [new(typeof(NMultiplayerLoadGameScreen), "BeginRun")];
+            return [new(typeof(NMultiplayerLoadGameScreen), "StartRun")];
         }
 
         /// <summary>
-        ///     Harmony prefix: skips vanilla <c>BeginRun</c>, disables confirm/back, and runs async validation and load.
-        ///     Harmony prefix：跳过原版 <c>BeginRun</c>，禁用确认/返回按钮，并运行异步验证和加载。
+        ///     Harmony prefix: only replaces <c>StartRun</c> for invalid mod-character saves.
+        ///     Harmony prefix：仅在 mod 角色存档无效时替换 <c>StartRun</c>。
         /// </summary>
-        public static bool Prefix(NMultiplayerLoadGameScreen __instance)
+        public static bool Prefix(NMultiplayerLoadGameScreen __instance, ref Task __result)
         {
-            NAudioManager.Instance?.StopMusic();
-            ConfirmRef(__instance).Disable();
-            UnreadyRef(__instance).Disable();
-            TaskHelper.RunSafely(StartRunAsync(__instance));
+            var lobby = RunLobbyRef(__instance);
+            if (!RunResumeMissingCharacterSupport.AnyPlayerMissingRegisteredCharacter(lobby.Run))
+                return true;
+
+            __result = LoadRunMissingCharacterBlocker.BlockStartRunAsync(
+                "Multiplayer",
+                () => ConfirmRef(__instance).Enable(),
+                () => UnreadyRef(__instance).Enable());
             return false;
-        }
-
-        private static async Task StartRunAsync(NMultiplayerLoadGameScreen screen)
-        {
-            var lobby = RunLobbyRef(screen);
-            Log.Info("Loading a multiplayer run. Players: " + string.Join(",", lobby.ConnectedPlayerIds) + ".");
-            if (RunResumeMissingCharacterSupport.AnyPlayerMissingRegisteredCharacter(lobby.Run))
-            {
-                RitsuLibFramework.Logger.Warn(
-                    "[Saves] Multiplayer run load blocked: missing CharacterModel; run save not deleted.");
-                RunResumeMissingCharacterSupport.TryShowInvalidRunSaveModal();
-                ConfirmRef(screen).Enable();
-                UnreadyRef(screen).Enable();
-                return;
-            }
-
-            var serializablePlayer = lobby.Run.Players.First(p => p.NetId == lobby.NetService.NetId);
-            var cid = serializablePlayer.CharacterId;
-            if (cid == null)
-            {
-                RunResumeMissingCharacterSupport.TryShowInvalidRunSaveModal();
-                ConfirmRef(screen).Enable();
-                UnreadyRef(screen).Enable();
-                return;
-            }
-
-            var character = ModelDb.GetById<CharacterModel>(cid);
-            var game = NGame.Instance;
-            if (game == null)
-                throw new InvalidOperationException("NGame.Instance is null during multiplayer run load.");
-
-            SfxCmd.Play(character.CharacterTransitionSfx);
-            await game.Transition.FadeOut(0.8f, character.CharacterSelectTransitionPath);
-            var runState = RunState.FromSerializable(lobby.Run);
-#if !STS2_AT_LEAST_0_104_0
-            RunManager.Instance.SetUpSavedMultiPlayer(runState, lobby);
-#elif !STS2_AT_LEAST_0_107_0
-            await RunManager.Instance.SetUpSavedMultiPlayer(runState, lobby);
-#else
-            await RunManager.Instance.SetUpSavedMultiplayer(runState, lobby);
-#endif
-            await game.LoadRun(runState, lobby.Run.PreFinishedRoom);
-            CleanUpLobby(screen, false);
-            await game.Transition.FadeIn();
-        }
-
-        private static void CleanUpLobby(NMultiplayerLoadGameScreen screen, bool disconnectSession)
-        {
-#if !STS2_AT_LEAST_0_107_0
-            var m = AccessTools.DeclaredMethod(typeof(NMultiplayerLoadGameScreen), "CleanUpLobby");
-            m.Invoke(screen, [disconnectSession]);
-#else
-            var m = AccessTools.DeclaredMethod(typeof(NMultiplayerLoadGameScreen), "CleanUpLobby",
-                [typeof(bool), typeof(NetError)]);
-            m.Invoke(screen, [disconnectSession, NetError.Quit]);
-#endif
         }
     }
 
     /// <summary>
-    ///     Compatibility: replaces custom-run load-screen <c>BeginRun</c> so starting a run is blocked when any player
-    ///     references an unregistered character, without deleting saves; otherwise mirrors vanilla load flow.
-    ///     兼容性：替换自定义跑局加载界面的 <c>BeginRun</c>，当任意玩家引用未注册角色时阻止开始跑局且不删除存档；
-    ///     其他情况下镜像原版加载流程。
+    ///     Compatibility: blocks custom-run load-screen <c>StartRun</c> when any player references an unregistered
+    ///     character, without deleting saves; otherwise leaves the vanilla load flow untouched.
+    ///     兼容性：当任意玩家引用未注册角色时阻止自定义跑局加载界面的 <c>StartRun</c> 且不删除存档；
+    ///     其他情况下保持原版加载流程不变。
     /// </summary>
     public class NCustomRunLoadScreenBeginRunMissingCharacterPatch : IPatchMethod
     {
@@ -150,83 +90,32 @@ namespace STS2RitsuLib.Lifecycle.Patches
         /// <inheritdoc />
         public static ModPatchTarget[] GetTargets()
         {
-            return [new(typeof(NCustomRunLoadScreen), "BeginRun")];
+            return [new(typeof(NCustomRunLoadScreen), "StartRun")];
         }
 
         /// <summary>
-        ///     Harmony prefix: skips vanilla <c>BeginRun</c>, disables confirm/back, and runs async validation and load.
-        ///     Harmony prefix：跳过原版 <c>BeginRun</c>，禁用确认/返回按钮，并运行异步验证和加载。
+        ///     Harmony prefix: only replaces <c>StartRun</c> for invalid mod-character saves.
+        ///     Harmony prefix：仅在 mod 角色存档无效时替换 <c>StartRun</c>。
         /// </summary>
-        public static bool Prefix(NCustomRunLoadScreen __instance)
+        public static bool Prefix(NCustomRunLoadScreen __instance, ref Task __result)
         {
-            NAudioManager.Instance?.StopMusic();
-            ConfirmRef(__instance).Disable();
-            UnreadyRef(__instance).Disable();
-            TaskHelper.RunSafely(StartRunAsync(__instance));
+            var lobby = LobbyRef(__instance);
+            if (!RunResumeMissingCharacterSupport.AnyPlayerMissingRegisteredCharacter(lobby.Run))
+                return true;
+
+            __result = LoadRunMissingCharacterBlocker.BlockStartRunAsync(
+                "Custom run",
+                () => ConfirmRef(__instance).Enable(),
+                () => UnreadyRef(__instance).Enable());
             return false;
-        }
-
-        private static async Task StartRunAsync(NCustomRunLoadScreen screen)
-        {
-            var lobby = LobbyRef(screen);
-            Log.Info("Loading a custom multiplayer run. Players: " + string.Join(",", lobby.ConnectedPlayerIds) + ".");
-            if (RunResumeMissingCharacterSupport.AnyPlayerMissingRegisteredCharacter(lobby.Run))
-            {
-                RitsuLibFramework.Logger.Warn(
-                    "[Saves] Custom run load blocked: missing CharacterModel; run save not deleted.");
-                RunResumeMissingCharacterSupport.TryShowInvalidRunSaveModal();
-                ConfirmRef(screen).Enable();
-                UnreadyRef(screen).Enable();
-                return;
-            }
-
-            var serializablePlayer = lobby.Run.Players.First(p => p.NetId == lobby.NetService.NetId);
-            var cid = serializablePlayer.CharacterId;
-            if (cid == null)
-            {
-                RunResumeMissingCharacterSupport.TryShowInvalidRunSaveModal();
-                ConfirmRef(screen).Enable();
-                UnreadyRef(screen).Enable();
-                return;
-            }
-
-            var character = ModelDb.GetById<CharacterModel>(cid);
-            var game = NGame.Instance;
-            if (game == null)
-                throw new InvalidOperationException("NGame.Instance is null during custom run load.");
-
-            SfxCmd.Play(character.CharacterTransitionSfx);
-            await game.Transition.FadeOut(0.8f, character.CharacterSelectTransitionPath);
-            var runState = RunState.FromSerializable(lobby.Run);
-#if !STS2_AT_LEAST_0_104_0
-            RunManager.Instance.SetUpSavedMultiPlayer(runState, lobby);
-#elif !STS2_AT_LEAST_0_107_0
-            await RunManager.Instance.SetUpSavedMultiPlayer(runState, lobby);
-#else
-            await RunManager.Instance.SetUpSavedMultiplayer(runState, lobby);
-#endif
-            await game.LoadRun(runState, lobby.Run.PreFinishedRoom);
-            CleanUpLobby(screen, false);
-            await game.Transition.FadeIn();
-        }
-
-        private static void CleanUpLobby(NCustomRunLoadScreen screen, bool disconnectSession)
-        {
-#if !STS2_AT_LEAST_0_107_0
-            AccessTools.DeclaredMethod(typeof(NCustomRunLoadScreen), "CleanUpLobby")
-                .Invoke(screen, [disconnectSession]);
-#else
-            AccessTools.DeclaredMethod(typeof(NCustomRunLoadScreen), "CleanUpLobby", [typeof(bool), typeof(NetError)])
-                .Invoke(screen, [disconnectSession, NetError.Quit]);
-#endif
         }
     }
 
     /// <summary>
-    ///     Compatibility: replaces daily-run load-screen <c>BeginRun</c> so starting a run is blocked when any player
-    ///     references an unregistered character, without deleting saves; otherwise mirrors vanilla load flow.
-    ///     兼容性：替换每日跑局加载界面的 <c>BeginRun</c>，当任意玩家引用未注册角色时阻止开始跑局且不删除存档；
-    ///     其他情况下镜像原版加载流程。
+    ///     Compatibility: blocks daily-run load-screen <c>StartRun</c> when any player references an unregistered
+    ///     character, without deleting saves; otherwise leaves the vanilla load flow untouched.
+    ///     兼容性：当任意玩家引用未注册角色时阻止每日跑局加载界面的 <c>StartRun</c> 且不删除存档；
+    ///     其他情况下保持原版加载流程不变。
     /// </summary>
     public class NDailyRunLoadScreenBeginRunMissingCharacterPatch : IPatchMethod
     {
@@ -252,77 +141,43 @@ namespace STS2RitsuLib.Lifecycle.Patches
         /// <inheritdoc />
         public static ModPatchTarget[] GetTargets()
         {
-            return [new(typeof(NDailyRunLoadScreen), "BeginRun")];
+            return [new(typeof(NDailyRunLoadScreen), "StartRun")];
         }
 
         /// <summary>
-        ///     Harmony prefix: skips vanilla <c>BeginRun</c>, disables embark/back, and runs async validation and load.
-        ///     Harmony prefix：跳过原版 <c>BeginRun</c>，禁用出发/返回按钮，并运行异步验证和加载。
+        ///     Harmony prefix: only replaces <c>StartRun</c> for invalid mod-character saves.
+        ///     Harmony prefix：仅在 mod 角色存档无效时替换 <c>StartRun</c>。
         /// </summary>
-        public static bool Prefix(NDailyRunLoadScreen __instance)
+        public static bool Prefix(NDailyRunLoadScreen __instance, ref Task __result)
         {
-            NAudioManager.Instance?.StopMusic();
-            EmbarkRefLazy.Value(__instance).Disable();
-            UnreadyRefLazy.Value(__instance).Disable();
-            TaskHelper.RunSafely(StartRunAsync(__instance));
+            var lobby = LobbyRefLazy.Value(__instance);
+            if (lobby == null)
+                return true;
+
+            if (!RunResumeMissingCharacterSupport.AnyPlayerMissingRegisteredCharacter(lobby.Run))
+                return true;
+
+            __result = LoadRunMissingCharacterBlocker.BlockStartRunAsync(
+                "Daily run",
+                () => EmbarkRefLazy.Value(__instance).Enable(),
+                () => UnreadyRefLazy.Value(__instance).Enable());
             return false;
         }
+    }
 
-        private static async Task StartRunAsync(NDailyRunLoadScreen screen)
+    internal static class LoadRunMissingCharacterBlocker
+    {
+        internal static Task BlockStartRunAsync(
+            string source,
+            Action enablePrimaryButton,
+            Action enableBackButton)
         {
-            var lobby = LobbyRefLazy.Value(screen);
-            if (lobby == null)
-                return;
-
-            Log.Info("Loading a multiplayer run. Players: " + string.Join(",", lobby.ConnectedPlayerIds) + ".");
-            if (RunResumeMissingCharacterSupport.AnyPlayerMissingRegisteredCharacter(lobby.Run))
-            {
-                RitsuLibFramework.Logger.Warn(
-                    "[Saves] Daily run load blocked: missing CharacterModel; run save not deleted.");
-                RunResumeMissingCharacterSupport.TryShowInvalidRunSaveModal();
-                EmbarkRefLazy.Value(screen).Enable();
-                UnreadyRefLazy.Value(screen).Enable();
-                return;
-            }
-
-            var serializablePlayer = lobby.Run.Players.First(p => p.NetId == lobby.NetService.NetId);
-            var cid = serializablePlayer.CharacterId;
-            if (cid == null)
-            {
-                RunResumeMissingCharacterSupport.TryShowInvalidRunSaveModal();
-                EmbarkRefLazy.Value(screen).Enable();
-                UnreadyRefLazy.Value(screen).Enable();
-                return;
-            }
-
-            var character = ModelDb.GetById<CharacterModel>(cid);
-            var game = NGame.Instance;
-            if (game == null)
-                throw new InvalidOperationException("NGame.Instance is null during daily run load.");
-
-            SfxCmd.Play(character.CharacterTransitionSfx);
-            await game.Transition.FadeOut(0.8f, character.CharacterSelectTransitionPath);
-            var runState = RunState.FromSerializable(lobby.Run);
-#if !STS2_AT_LEAST_0_104_0
-            RunManager.Instance.SetUpSavedMultiPlayer(runState, lobby);
-#elif !STS2_AT_LEAST_0_107_0
-            await RunManager.Instance.SetUpSavedMultiPlayer(runState, lobby);
-#else
-            await RunManager.Instance.SetUpSavedMultiplayer(runState, lobby);
-#endif
-            await game.LoadRun(runState, lobby.Run.PreFinishedRoom);
-            CleanUpLobby(screen, false);
-            await game.Transition.FadeIn();
-        }
-
-        private static void CleanUpLobby(NDailyRunLoadScreen screen, bool disconnectSession)
-        {
-#if !STS2_AT_LEAST_0_107_0
-            AccessTools.DeclaredMethod(typeof(NDailyRunLoadScreen), "CleanUpLobby").Invoke(screen, [disconnectSession]);
-#else
-            AccessTools.DeclaredMethod(typeof(NDailyRunLoadScreen), "CleanUpLobby", [typeof(bool), typeof(NetError)])
-                .Invoke(screen, [disconnectSession, NetError.Quit]);
-#endif
+            RitsuLibFramework.Logger.Warn(
+                $"[Saves] {source} load blocked: missing CharacterModel; run save not deleted.");
+            RunResumeMissingCharacterSupport.TryShowInvalidRunSaveModal();
+            enablePrimaryButton();
+            enableBackButton();
+            return Task.CompletedTask;
         }
     }
 }
