@@ -153,7 +153,7 @@ namespace STS2RitsuLib.Diagnostics.CompendiumExport
             {
                 progressUi = CompendiumPngExportProgressOverlay.Attach(NGame.Instance, Math.Max(1, steps), title);
                 progressUi.SetProgress(0, null);
-                await RitsuGodotAwaitSafety.AwaitProcessFrameAsync(tree, owner: progressUi);
+                await RitsuGodotAwaitSafety.AwaitProcessFrameAsync(tree, progressUi);
 
                 var done = 0;
                 var saved = 0;
@@ -224,7 +224,7 @@ namespace STS2RitsuLib.Diagnostics.CompendiumExport
                 }
 
                 progressUi.SetProgress(Math.Max(1, steps), null);
-                await RitsuGodotAwaitSafety.AwaitProcessFrameAsync(tree, owner: progressUi);
+                await RitsuGodotAwaitSafety.AwaitProcessFrameAsync(tree, progressUi);
                 log?.Invoke(
                     userStopped
                         ? ModSettingsLocalization.Get("ritsulib.compendiumPngExport.stopped", "Export stopped by user.")

@@ -61,6 +61,7 @@ namespace STS2RitsuLib.Audio.Patches
                     FmodStudioMappedOneShotDiagnostics.BuildMappedOneShotFailureDetail(path, guid));
         }
 
+        // ReSharper disable once UnusedMethodReturnValue.Local
         private static bool TryStartMappedRunMusic(string operation, string path)
         {
             if (GuidMappedNaudioStudioProxy.TryStartMappedRunMusic(path))
@@ -70,6 +71,7 @@ namespace STS2RitsuLib.Audio.Patches
             return false;
         }
 
+        // ReSharper disable once UnusedMethodReturnValue.Local
         private static bool TryStartMappedRunAmbience(string operation, string path)
         {
             if (GuidMappedNaudioStudioProxy.TryStartMappedRunAmbience(path))

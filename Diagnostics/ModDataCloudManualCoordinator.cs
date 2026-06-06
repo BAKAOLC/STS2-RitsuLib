@@ -273,7 +273,7 @@ namespace STS2RitsuLib.Diagnostics
                 Node host = NGame.Instance != null ? NGame.Instance : tree.Root;
                 overlay = ModDataCloudProgressOverlay.Attach(host, Math.Max(1, paths.Count), progressTitle);
                 overlay.SetProgress(0, Math.Max(1, paths.Count), paths.Count > 0 ? paths[0] : null);
-                await RitsuGodotAwaitSafety.AwaitProcessFrameAsync(tree, owner: overlay);
+                await RitsuGodotAwaitSafety.AwaitProcessFrameAsync(tree, overlay);
 
                 var (queued, skipped, failed) = await ModDataCloudMirror.PushPathsAsync(
                     cloud,
@@ -370,7 +370,7 @@ namespace STS2RitsuLib.Diagnostics
                 Node host = NGame.Instance != null ? NGame.Instance : tree.Root;
                 overlay = ModDataCloudProgressOverlay.Attach(host, Math.Max(1, paths.Count), progressTitle);
                 overlay.SetProgress(0, Math.Max(1, paths.Count), paths.Count > 0 ? paths[0] : null);
-                await RitsuGodotAwaitSafety.AwaitProcessFrameAsync(tree, owner: overlay);
+                await RitsuGodotAwaitSafety.AwaitProcessFrameAsync(tree, overlay);
 
                 var (downloaded, failed) = await ModDataCloudMirror.PullPathsAsync(
                     cloud,

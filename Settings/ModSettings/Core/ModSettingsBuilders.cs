@@ -856,6 +856,7 @@ namespace STS2RitsuLib.Settings
             string id,
             ModSettingsText label,
             IModSettingsValueBinding<List<string>> binding,
+            // ReSharper disable once ParameterOnlyUsedForPreconditionCheck.Global
             bool allowMultipleBindings,
             bool allowModifierCombos = true,
             bool allowModifierOnly = true,

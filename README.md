@@ -126,7 +126,8 @@ RitsuLib's own docs are concise feature references. For a broader Chinese walkth
 
 [SlayTheSpire2 Modding Tutorials](https://glitchedreme.github.io/SlayTheSpire2ModdingTutorials/index.html)
 
-Original repository for this tutorial: [GlitchedReme/SlayTheSpire2ModdingTutorials](https://github.com/GlitchedReme/SlayTheSpire2ModdingTutorials)
+Original repository for this
+tutorial: [GlitchedReme/SlayTheSpire2ModdingTutorials](https://github.com/GlitchedReme/SlayTheSpire2ModdingTutorials)
 
 ## Related Libraries
 

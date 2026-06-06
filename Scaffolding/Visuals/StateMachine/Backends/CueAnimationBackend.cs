@@ -35,7 +35,6 @@ namespace STS2RitsuLib.Scaffolding.Visuals.StateMachine.Backends
     {
         private readonly VisualCueSet _cues;
         private readonly Callable _finishedCallable;
-        private readonly Node _root;
         private readonly Sprite2D _sprite;
         private string? _currentId;
         private string? _queuedId;
@@ -51,14 +50,14 @@ namespace STS2RitsuLib.Scaffolding.Visuals.StateMachine.Backends
             ArgumentNullException.ThrowIfNull(root);
             ArgumentNullException.ThrowIfNull(sprite);
             ArgumentNullException.ThrowIfNull(cues);
-            _root = root;
+            OwnerNode = root;
             _sprite = sprite;
             _cues = cues;
             _finishedCallable = Callable.From(OnSequenceFinished);
         }
 
         /// <inheritdoc />
-        public Node? OwnerNode => _root;
+        public Node OwnerNode { get; }
 
         /// <inheritdoc />
         public event Action<string>? Started;
@@ -95,7 +94,7 @@ namespace STS2RitsuLib.Scaffolding.Visuals.StateMachine.Backends
                 Interrupted?.Invoke(_currentId);
 
             UnsubscribeActivePlayer();
-            CueFrameSequencePlayer.StopUnder(_root);
+            CueFrameSequencePlayer.StopUnder(OwnerNode);
 
             _queuedId = null;
             _currentId = id;
@@ -104,7 +103,7 @@ namespace STS2RitsuLib.Scaffolding.Visuals.StateMachine.Backends
                 TryGetOrdinalIgnoreCase(sequences, id, out var sequence) &&
                 sequence is { Frames.Count: > 0 })
             {
-                var player = CueFrameSequencePlayer.EnsureUnder(_root);
+                var player = CueFrameSequencePlayer.EnsureUnder(OwnerNode);
                 if (!player.TryStart(_sprite, sequence))
                     return;
 
@@ -153,7 +152,7 @@ namespace STS2RitsuLib.Scaffolding.Visuals.StateMachine.Backends
             _queuedId = null;
             _currentId = null;
             UnsubscribeActivePlayer();
-            CueFrameSequencePlayer.StopUnder(_root);
+            CueFrameSequencePlayer.StopUnder(OwnerNode);
         }
 
         /// <inheritdoc />
@@ -186,7 +185,7 @@ namespace STS2RitsuLib.Scaffolding.Visuals.StateMachine.Backends
         public void Dispose()
         {
             UnsubscribeActivePlayer();
-            CueFrameSequencePlayer.StopUnder(_root);
+            CueFrameSequencePlayer.StopUnder(OwnerNode);
         }
 
         private void SubscribePlayer(CueFrameSequencePlayer player)
@@ -218,10 +217,10 @@ namespace STS2RitsuLib.Scaffolding.Visuals.StateMachine.Backends
 
         private void DeferCompletion(string id)
         {
-            if (!GodotObject.IsInstanceValid(_root))
+            if (!GodotObject.IsInstanceValid(OwnerNode))
                 return;
 
-            var tree = _root.GetTree();
+            var tree = OwnerNode.GetTree();
             if (tree == null)
             {
                 _currentId = null;
@@ -233,7 +232,7 @@ namespace STS2RitsuLib.Scaffolding.Visuals.StateMachine.Backends
             var timer = tree.CreateTimer(0.0);
             timer.Timeout += () =>
             {
-                if (!GodotObject.IsInstanceValid(_root) || !GodotObject.IsInstanceValid(_sprite))
+                if (!GodotObject.IsInstanceValid(OwnerNode) || !GodotObject.IsInstanceValid(_sprite))
                     return;
 
                 if (_currentId != id)

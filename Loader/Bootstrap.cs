@@ -217,7 +217,9 @@ namespace STS2RitsuLib.Loader
             {
                 manifest = JsonSerializer.Deserialize<BundleVariantManifest>(
                     File.ReadAllText(manifestPath),
+#pragma warning disable CA1869
                     new JsonSerializerOptions { PropertyNameCaseInsensitive = true });
+#pragma warning restore CA1869
             }
             catch (Exception ex)
             {

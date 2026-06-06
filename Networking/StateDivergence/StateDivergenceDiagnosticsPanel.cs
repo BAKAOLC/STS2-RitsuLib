@@ -615,7 +615,7 @@ namespace STS2RitsuLib.Networking.StateDivergence
         private static IReadOnlyList<IndexedLine> ParseIndexedLines(string text)
         {
             if (string.IsNullOrWhiteSpace(text) ||
-                (!text.Contains('\n') && text.StartsWith("<", StringComparison.Ordinal)))
+                (!text.Contains('\n') && text.StartsWith('<')))
                 return [];
 
             return text.Replace("\r\n", "\n")
