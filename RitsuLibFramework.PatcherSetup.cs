@@ -220,6 +220,7 @@ namespace STS2RitsuLib
             patcher.RegisterPatch<RelicRemovedLifecyclePatch>();
             patcher.RegisterPatch<RoomHookLifecyclePatch>();
             patcher.RegisterPatch<ActHookLifecyclePatch>();
+            patcher.RegisterPatch<AdditionalHookLifecyclePatch>();
             patcher.RegisterPatch<RoomExitLifecyclePatch>();
             patcher.RegisterPatch<ActTransitionLifecyclePatch>();
             patcher.RegisterPatch<ActEnterMapSelectionSyncPatch>();

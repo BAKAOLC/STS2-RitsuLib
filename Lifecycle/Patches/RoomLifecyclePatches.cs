@@ -1,4 +1,5 @@
 using System.Reflection;
+using HarmonyLib;
 using MegaCrit.Sts2.Core.Hooks;
 using MegaCrit.Sts2.Core.Rooms;
 using MegaCrit.Sts2.Core.Runs;
@@ -33,13 +34,17 @@ namespace STS2RitsuLib.Lifecycle.Patches
         }
 
         /// <summary>
-        ///     Harmony prefix: publishes <see cref="RoomEnteringEvent" /> before the original hook body for both
-        ///     <see cref="Hook.BeforeRoomEntered" /> and <see cref="Hook.AfterRoomEntered" /> targets.
-        ///     Harmony prefix：对 <see cref="Hook.BeforeRoomEntered" /> 和 <see cref="Hook.AfterRoomEntered" /> 两个目标，
-        ///     在原始 hook 主体前发布 <see cref="RoomEnteringEvent" />。
+        ///     Harmony prefix: publishes <see cref="RoomEnteringEvent" /> before the original
+        ///     <see cref="Hook.BeforeRoomEntered" /> hook body.
+        ///     Harmony prefix：在原始 <see cref="Hook.BeforeRoomEntered" /> hook 主体前发布
+        ///     <see cref="RoomEnteringEvent" />。
         /// </summary>
-        public static void Prefix(IRunState runState, AbstractRoom room)
+        [HarmonyPriority(Priority.First)]
+        public static void Prefix(MethodBase __originalMethod, object[] __args, IRunState runState, AbstractRoom room)
         {
+            if (__originalMethod.Name != nameof(Hook.BeforeRoomEntered))
+                return;
+
             RitsuLibFramework.PublishLifecycleEvent(
                 new RoomEnteringEvent(runState, room, DateTimeOffset.UtcNow),
                 nameof(RoomEnteringEvent)
@@ -54,16 +59,16 @@ namespace STS2RitsuLib.Lifecycle.Patches
         ///     原始任务完成后发布 <see cref="RoomEnteredEvent" />。
         ///     <see cref="RoomEnteredEvent" />。
         /// </summary>
+        [HarmonyPriority(Priority.Last)]
         public static void Postfix(MethodBase __originalMethod, object[] __args, ref Task __result)
         {
-            __result = __originalMethod.Name switch
+            __result = LifecyclePatchTaskBridge.After(__result, () =>
             {
-                nameof(Hook.AfterRoomEntered) => LifecyclePatchTaskBridge.After(__result,
-                    () => RitsuLibFramework.PublishLifecycleEvent(
+                if (__originalMethod.Name == nameof(Hook.AfterRoomEntered))
+                    RitsuLibFramework.PublishLifecycleEvent(
                         new RoomEnteredEvent((IRunState)__args[0], (AbstractRoom)__args[1], DateTimeOffset.UtcNow),
-                        nameof(RoomEnteredEvent))),
-                _ => __result,
-            };
+                        nameof(RoomEnteredEvent));
+            });
         }
     }
 
@@ -93,15 +98,18 @@ namespace STS2RitsuLib.Lifecycle.Patches
 
         /// <summary>
         ///     Harmony postfix: publishes <see cref="ActEnteredEvent" /> after the hook task completes.
-        ///     Harmony postfix：在 hook 任务完成后发布 <see cref="ActEnteredEvent" />。
+        ///     Harmony postfix：在 hook task 完成后发布 <see cref="ActEnteredEvent" />。
         /// </summary>
-        public static void Postfix(IRunState runState, ref Task __result)
+        [HarmonyPriority(Priority.Last)]
+        public static void Postfix(MethodBase __originalMethod, object[] __args, IRunState runState, ref Task __result)
         {
             __result = LifecyclePatchTaskBridge.After(__result, () =>
+            {
                 RitsuLibFramework.PublishLifecycleEvent(
                     new ActEnteredEvent(runState, runState.CurrentActIndex, DateTimeOffset.UtcNow),
                     nameof(ActEnteredEvent)
-                ));
+                );
+            });
         }
     }
 
