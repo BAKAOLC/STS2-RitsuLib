@@ -51,6 +51,7 @@ namespace STS2RitsuLib.Data
                             new RitsuLibSettingsV8ToV9Migration(),
                             new RitsuLibSettingsV9ToV10Migration(),
                             new RitsuLibSettingsV10ToV11Migration(),
+                            new RitsuLibSettingsV11ToV12Migration(),
                         ]);
                 }
 
@@ -288,6 +289,12 @@ namespace STS2RitsuLib.Data
         {
             Initialize();
             return GetSettings().UpdateCheckEnabled;
+        }
+
+        internal static bool IsMainMenuModSettingsButtonEnabled()
+        {
+            Initialize();
+            return GetSettings().MainMenuModSettingsButtonEnabled;
         }
 
         internal static RitsuToastSettings GetToastSettings()

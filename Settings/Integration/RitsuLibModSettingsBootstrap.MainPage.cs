@@ -65,6 +65,12 @@ namespace STS2RitsuLib.Settings
                         ui.UpdateCheckEnabled,
                         T("ritsulib.updateCheck.enabled.description",
                             "Checks for RitsuLib updates once after the first main menu load."))
+                    .AddToggle(
+                        "main_menu_mod_settings_button_enabled",
+                        T("ritsulib.mainMenuModSettingsButton.enabled.label", "Show main menu settings shortcut"),
+                        ui.MainMenuModSettingsButtonEnabled,
+                        T("ritsulib.mainMenuModSettingsButton.enabled.description",
+                            "Shows a RitsuLib settings shortcut under the patch notes button on the main menu."))
                     .AddButton(
                         "update_check_now",
                         T("ritsulib.updateCheck.now.label", "Check now"),

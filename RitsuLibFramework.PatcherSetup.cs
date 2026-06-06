@@ -472,6 +472,7 @@ namespace STS2RitsuLib
             patcher.RegisterPatch<ModSettingsSubmenuPatch>();
             patcher.RegisterPatch<ModSettingsRunSubmenuStackPatch>();
             patcher.RegisterPatch<SettingsScreenModSettingsButtonPatch>();
+            patcher.RegisterPatch<MainMenuModSettingsButtonPatch>();
             RegisterFrameworkPatcher(FrameworkPatcherArea.SettingsUi, patcher);
         }
 

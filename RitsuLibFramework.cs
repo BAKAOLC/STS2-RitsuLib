@@ -439,7 +439,7 @@ namespace STS2RitsuLib
             MaxHandSizePatchInstaller.EnsurePatched();
         }
 
-        private static string GetCompatBranchLabel()
+        internal static string GetCompatBranchLabel()
         {
 #if STS2_AT_LEAST_0_107_0
             return "0.107.0";
