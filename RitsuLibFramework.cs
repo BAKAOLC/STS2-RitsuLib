@@ -345,6 +345,8 @@ namespace STS2RitsuLib
                         ModTypeDiscoveryHub.EnsureBuiltInContributorsRegistered);
                     RitsuLibStartupAudit.Measure("secondaryResourceLocalization",
                         SecondaryResourceLocalizationBootstrap.Initialize);
+                    RitsuLibStartupAudit.Measure("secondaryResourceCloneBridge",
+                        SecondaryResourceCloneBridge.Initialize);
                 });
 
                 PublishLifecycleEvent(

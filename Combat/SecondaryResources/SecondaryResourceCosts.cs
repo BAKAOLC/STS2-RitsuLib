@@ -5,6 +5,7 @@ using CombatStateLike = MegaCrit.Sts2.Core.Combat.ICombatState;
 #endif
 using MegaCrit.Sts2.Core.Entities.Players;
 using MegaCrit.Sts2.Core.Models;
+using STS2RitsuLib.Models;
 using STS2RitsuLib.Utils;
 
 namespace STS2RitsuLib.Combat.SecondaryResources
@@ -94,6 +95,8 @@ namespace STS2RitsuLib.Combat.SecondaryResources
         /// </summary>
         public IReadOnlyList<string> ResourceIds =>
             _costs.Keys.OrderBy(static id => id, StringComparer.Ordinal).ToArray();
+
+        internal bool HasLayers => _costs.Count > 0;
 
         /// <summary>
         ///     Raised after attached secondary costs change.
@@ -198,6 +201,15 @@ namespace STS2RitsuLib.Combat.SecondaryResources
                 .ToDictionary(static pair => pair.Key, static pair => pair.Value, StringComparer.OrdinalIgnoreCase);
         }
 
+        internal SecondaryResourceCostSet Clone()
+        {
+            var clone = new SecondaryResourceCostSet();
+            foreach (var (resourceId, layers) in _costs)
+                clone._costs[resourceId] = layers.ToList();
+
+            return clone;
+        }
+
         private List<SecondaryResourceCostLayer> GetLayers(string resourceId)
         {
             var id = resourceId.Trim();
@@ -262,6 +274,38 @@ namespace STS2RitsuLib.Combat.SecondaryResources
             return ModSecondaryResourceRegistry.HasAny &&
                    card.TryGetSecondaryCosts(out var costs) &&
                    costs.HasCosts;
+        }
+
+        internal static bool CopySecondaryCostsTo(this CardModel source, CardModel destination)
+        {
+            ArgumentNullException.ThrowIfNull(source);
+            ArgumentNullException.ThrowIfNull(destination);
+
+            if (!source.TryGetSecondaryCosts(out var costs) || !costs.HasLayers)
+                return false;
+
+            CostSets.Set(destination, costs.Clone());
+            return true;
+        }
+    }
+
+    internal static class SecondaryResourceCloneBridge
+    {
+        private static bool _initialized;
+
+        public static void Initialize()
+        {
+            if (_initialized)
+                return;
+
+            _initialized = true;
+            ModelCloneRegistry.For(Const.ModId)
+                .Register<CardModel>("secondary_resource_costs", CopySecondaryCosts);
+        }
+
+        private static void CopySecondaryCosts(CardModel prototype, CardModel clone)
+        {
+            prototype.CopySecondaryCostsTo(clone);
         }
     }
 

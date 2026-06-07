@@ -19,6 +19,7 @@ namespace STS2RitsuLib.Settings.Patches
         private const string GroupNodeName = "RitsuLibMainMenuModSettings";
         private const string ButtonNodeName = "RitsuLibMainMenuModSettingsButton";
         private const string VersionLabelNodeName = "RitsuLibMainMenuModSettingsVersion";
+        private const string VisibilitySyncNodeName = "RitsuLibMainMenuModSettingsVisibilitySync";
 
         internal const float ButtonSize = 64f;
         internal const float GearBadgeSize = 24f;
@@ -81,6 +82,7 @@ namespace STS2RitsuLib.Settings.Patches
                 SyncPlacement(existing, patchNotesButton);
                 ApplyReleaseInfoTypography(existing, mainMenu);
                 RefreshVersionLabel(existing);
+                EnsureVisibilitySynchronizer(existing, mainMenu);
                 return existing;
             }
 
@@ -103,7 +105,24 @@ namespace STS2RitsuLib.Settings.Patches
             RitsuGodotTreeCompat.AddChildSafely(mainMenu, group);
             SyncPlacement(group, patchNotesButton);
             ApplyReleaseInfoTypography(group, mainMenu);
+            EnsureVisibilitySynchronizer(group, mainMenu);
             return group;
+        }
+
+        private static void EnsureVisibilitySynchronizer(Control group, NMainMenu mainMenu)
+        {
+            if (group.GetNodeOrNull<RitsuLibMainMenuModSettingsVisibilitySync>(VisibilitySyncNodeName) is { } existing)
+            {
+                existing.Configure(mainMenu, group);
+                return;
+            }
+
+            var sync = new RitsuLibMainMenuModSettingsVisibilitySync
+            {
+                Name = VisibilitySyncNodeName,
+            };
+            sync.Configure(mainMenu, group);
+            group.AddChild(sync);
         }
 
         private static void SyncPlacement(Control group, Control patchNotesButton)
@@ -174,16 +193,32 @@ namespace STS2RitsuLib.Settings.Patches
             label.Text = $"v{Const.Version}\ncompat {RitsuLibFramework.GetCompatBranchLabel()}";
         }
 
-        private static void SyncState(NMainMenu mainMenu, Control? group)
+        internal static void SyncState(NMainMenu mainMenu, Control? group)
         {
             if (group == null || !GodotObject.IsInstanceValid(group))
                 return;
 
             var shouldShow = RitsuLibSettingsStore.IsMainMenuModSettingsButtonEnabled() &&
-                             !mainMenu.SubmenuStack.SubmenusOpen;
+                             IsMainMenuShortcutSurfaceVisible(mainMenu);
             group.Visible = shouldShow;
             if (group.GetNodeOrNull<RitsuLibMainMenuModSettingsButton>(ButtonNodeName) is { } button)
                 button.SetEnabled(shouldShow);
+        }
+
+        private static bool IsMainMenuShortcutSurfaceVisible(NMainMenu mainMenu)
+        {
+            if (!GodotObject.IsInstanceValid(mainMenu) ||
+                mainMenu.SubmenuStack.SubmenusOpen)
+                return false;
+
+            if (mainMenu.GetNodeOrNull<Control>("%PatchNotesButton") is not { } patchNotesButton ||
+                !GodotObject.IsInstanceValid(patchNotesButton) ||
+                !patchNotesButton.Visible)
+                return false;
+
+            return mainMenu.PatchNotesScreen is not { } patchNotesScreen ||
+                   !GodotObject.IsInstanceValid(patchNotesScreen) ||
+                   (!patchNotesScreen.IsOpen && !patchNotesScreen.Visible);
         }
 
         private static void OpenModSettings(NMainMenu mainMenu)
@@ -193,6 +228,32 @@ namespace STS2RitsuLib.Settings.Patches
 
             RitsuLibModSettingsBootstrap.EnsureFrameworkPagesRegistered();
             mainMenu.SubmenuStack.PushSubmenuType<RitsuModSettingsSubmenu>();
+        }
+    }
+
+    internal sealed partial class RitsuLibMainMenuModSettingsVisibilitySync : Node
+    {
+        private Control? _group;
+        private NMainMenu? _mainMenu;
+
+        public void Configure(NMainMenu mainMenu, Control group)
+        {
+            _mainMenu = mainMenu;
+            _group = group;
+        }
+
+        public override void _Process(double delta)
+        {
+            if (_mainMenu == null ||
+                _group == null ||
+                !IsInstanceValid(_mainMenu) ||
+                !IsInstanceValid(_group))
+            {
+                QueueFree();
+                return;
+            }
+
+            MainMenuModSettingsButtonPatch.SyncState(_mainMenu, _group);
         }
     }
 
