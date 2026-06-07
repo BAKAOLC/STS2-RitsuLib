@@ -1,3 +1,4 @@
+using System.Globalization;
 using MegaCrit.Sts2.Core.Combat;
 using MegaCrit.Sts2.Core.Entities.Cards;
 using MegaCrit.Sts2.Core.Entities.Multiplayer;
@@ -25,6 +26,7 @@ namespace STS2RitsuLib.Interactions.RightClick
         private const string NonCombatActionKey = "model_right_click_noncombat";
         private const int InitialOffset = 0;
         private const int InterfaceBindingPriority = int.MinValue;
+        private const string CapabilityBindingSeparator = "\u001F";
         private const string RightClickPreflightSurface = "right-click preflight";
         private const string RightClickExecuteSurface = "right-click execute";
 
@@ -330,12 +332,12 @@ namespace STS2RitsuLib.Interactions.RightClick
                 payload.Trigger,
                 playerChoiceContext,
                 action);
-            var executed = false;
+            var completed = false;
             foreach (var bindingId in payload.BindingIds)
                 try
                 {
                     if (await TryExecuteBinding(bindingId, model, executionContext))
-                        executed = true;
+                        completed = true;
                 }
                 catch (Exception ex)
                 {
@@ -344,7 +346,7 @@ namespace STS2RitsuLib.Interactions.RightClick
                         $"ModelId='{model.Id}' OwnerType='{model.GetType().FullName}' Error='{ex.Message}'");
                 }
 
-            if (executed)
+            if (completed)
                 model.InvokeExecutionFinished();
         }
 
@@ -410,21 +412,27 @@ namespace STS2RitsuLib.Interactions.RightClick
             {
                 if (model is not IModRightClickableModel rightClickable)
                     return false;
-                if (!TryCanExecuteRightClickable(rightClickable, context))
+                if (!TryCanExecuteRightClickable(rightClickable, context, out var interfaceCanExecute))
                     return false;
+                if (!interfaceCanExecute)
+                    return true;
 
                 await rightClickable.OnRightClick(context);
                 return true;
             }
 
             if (bindingId == CapabilityBindingId)
-                return await TryExecuteCapabilityRightClick(model, context);
+                return await TryExecuteCapabilityRightClick(model, context, null);
+            if (TryParseCapabilityBindingId(bindingId, out var selectedCapabilities))
+                return await TryExecuteCapabilityRightClick(model, context, selectedCapabilities);
 
             var binding = TryGetBinding(bindingId);
             if (binding == null || !binding.ModelType.IsInstanceOfType(model))
                 return false;
-            if (!TryCanExecute(binding, context))
+            if (!TryCanExecute(binding, context, out var canExecute))
                 return false;
+            if (!canExecute)
+                return true;
 
             await binding.Execute(context);
             return true;
@@ -432,11 +440,14 @@ namespace STS2RitsuLib.Interactions.RightClick
 
         private static bool TryCanExecuteRightClickable(
             IModRightClickableModel rightClickable,
-            ModRightClickExecutionContext context)
+            ModRightClickExecutionContext context,
+            out bool canExecute)
         {
+            canExecute = false;
             try
             {
-                return rightClickable.CanExecuteRightClick(context);
+                canExecute = rightClickable.CanExecuteRightClick(context);
+                return true;
             }
             catch (Exception ex)
             {
@@ -450,14 +461,17 @@ namespace STS2RitsuLib.Interactions.RightClick
 
         private static bool TryCanExecute(
             RegisteredRightClickBinding binding,
-            ModRightClickExecutionContext context)
+            ModRightClickExecutionContext context,
+            out bool canExecute)
         {
+            canExecute = true;
             if (binding.CanExecute == null)
                 return true;
 
             try
             {
-                return binding.CanExecute(context);
+                canExecute = binding.CanExecute(context);
+                return true;
             }
             catch (Exception ex)
             {
@@ -471,16 +485,22 @@ namespace STS2RitsuLib.Interactions.RightClick
 
         private static async Task<bool> TryExecuteCapabilityRightClick(
             AbstractModel model,
-            ModRightClickExecutionContext context)
+            ModRightClickExecutionContext context,
+            IReadOnlyList<SelectedRightClickCapability>? selectedCapabilities)
         {
-            var localContext = new ModRightClickContext(context.Player, model, context.Trigger);
-            var executed = false;
-            foreach (var capability in GetRightClickCapabilities(model))
+            var completed = false;
+            foreach (var capability in GetRightClickCapabilities(model, selectedCapabilities))
             {
-                if (!TryCanHandleCapability(capability, localContext))
+                if (!TryCanExecuteCapability(capability, context, out var canExecute))
                     continue;
-                if (!TryCanExecuteCapability(capability, context))
+                if (!canExecute)
+                {
+                    completed = true;
+                    if (capability.RightClickRunMode == ModelRightClickCapabilityRunMode.Exclusive)
+                        break;
+
                     continue;
+                }
 
                 try
                 {
@@ -492,15 +512,33 @@ namespace STS2RitsuLib.Interactions.RightClick
                     continue;
                 }
 
-                executed = true;
+                completed = true;
                 if (capability.RightClickRunMode == ModelRightClickCapabilityRunMode.Exclusive)
                     break;
             }
 
-            return executed;
+            return completed;
         }
 
-        private static IReadOnlyList<IModelRightClickCapability> GetRightClickCapabilities(AbstractModel model)
+        private static IReadOnlyList<IModelRightClickCapability> GetRightClickCapabilities(
+            AbstractModel model,
+            IReadOnlyList<SelectedRightClickCapability>? selectedCapabilities = null)
+        {
+            var capabilities = GetAllRightClickCapabilities(model);
+            if (selectedCapabilities == null)
+                return capabilities;
+
+            var selected = new List<IModelRightClickCapability>(selectedCapabilities.Count);
+            selected.AddRange(from selectedCapability in selectedCapabilities
+                where selectedCapability.Index >= 0 && selectedCapability.Index < capabilities.Count &&
+                      string.Equals(GetCapabilityId(capabilities[selectedCapability.Index]),
+                          selectedCapability.CapabilityId, StringComparison.Ordinal)
+                select capabilities[selectedCapability.Index]);
+
+            return selected;
+        }
+
+        private static IReadOnlyList<IModelRightClickCapability> GetAllRightClickCapabilities(AbstractModel model)
         {
             if (ModelCapabilities.TryGet(model, out var collection))
                 return SortRightClickCapabilities(collection.All);
@@ -529,17 +567,74 @@ namespace STS2RitsuLib.Interactions.RightClick
 
         private static bool TryCanExecuteCapability(
             IModelRightClickCapability capability,
-            ModRightClickExecutionContext context)
+            ModRightClickExecutionContext context,
+            out bool canExecute)
         {
+            canExecute = false;
             try
             {
-                return capability.CanExecuteRightClick(context);
+                canExecute = capability.CanExecuteRightClick(context);
+                return true;
             }
             catch (Exception ex)
             {
                 ModelCapabilityDiagnostics.WarnFailure(RightClickExecuteSurface, context.Model, capability, ex);
                 return false;
             }
+        }
+
+        private static ModRightClickBindingId CreateCapabilityBindingId(
+            IReadOnlyList<SelectedRightClickCapability> selectedCapabilities)
+        {
+            var parts = new List<string>(2 + selectedCapabilities.Count * 2)
+            {
+                CapabilityBindingId.Id,
+                selectedCapabilities.Count.ToString(CultureInfo.InvariantCulture),
+            };
+            foreach (var selectedCapability in selectedCapabilities)
+            {
+                parts.Add(selectedCapability.Index.ToString(CultureInfo.InvariantCulture));
+                parts.Add(selectedCapability.CapabilityId);
+            }
+
+            return new(string.Join(CapabilityBindingSeparator, parts));
+        }
+
+        private static string GetCapabilityId(IModelRightClickCapability capability)
+        {
+            return ((IModelCapability)capability).CapabilityId;
+        }
+
+        private static bool TryParseCapabilityBindingId(
+            ModRightClickBindingId bindingId,
+            out IReadOnlyList<SelectedRightClickCapability> selectedCapabilities)
+        {
+            selectedCapabilities = [];
+            var prefix = CapabilityBindingId.Id + CapabilityBindingSeparator;
+            if (!bindingId.Id.StartsWith(prefix, StringComparison.Ordinal))
+                return false;
+
+            var parts = bindingId.Id.Split(CapabilityBindingSeparator);
+            if (parts.Length < 4 ||
+                !int.TryParse(parts[1], NumberStyles.None, CultureInfo.InvariantCulture, out var count) ||
+                count <= 0 ||
+                parts.Length != 2 + count * 2)
+                return false;
+
+            var capabilities = new List<SelectedRightClickCapability>(count);
+            for (var i = 0; i < count; i++)
+            {
+                var indexPart = parts[2 + i * 2];
+                var capabilityId = parts[3 + i * 2];
+                if (!int.TryParse(indexPart, NumberStyles.None, CultureInfo.InvariantCulture, out var index) ||
+                    string.IsNullOrWhiteSpace(capabilityId))
+                    return false;
+
+                capabilities.Add(new(index, capabilityId));
+            }
+
+            selectedCapabilities = capabilities;
+            return true;
         }
 
         private static IReadOnlyList<IModelRightClickCapability> SortRightClickCapabilities(
@@ -621,45 +716,45 @@ namespace STS2RitsuLib.Interactions.RightClick
             private static List<ModRightClickBindingId> CollectBindingIds(ModRightClickContext context)
             {
                 var bindings = GetBindingsSnapshot();
-                var ids = (from binding in bindings
+                var candidates = (from binding in bindings
                     where binding.ModelType.IsInstanceOfType(context.Model)
                     where TryCanHandleLocal(binding, context)
-                    select binding.Id).ToList();
+                    select new LocalRightClickCandidate(binding.Id, binding.Priority, binding.Sequence)).ToList();
 
                 if (context.Model is IModRightClickableModel rightClickable &&
                     TryCanHandleRightClickable(rightClickable, context))
-                    InsertBuiltInBinding(ids, bindings, InterfaceBindingId, InterfaceBindingPriority);
+                    candidates.Add(new(InterfaceBindingId, InterfaceBindingPriority, long.MaxValue));
 
-                return AddCapabilityBinding(context, ids);
+                AddCapabilityBindings(context, candidates);
+
+                return candidates
+                    .OrderByDescending(static candidate => candidate.Priority)
+                    .ThenBy(static candidate => candidate.Sequence)
+                    .Select(static candidate => candidate.Id)
+                    .ToList();
             }
 
-            private static List<ModRightClickBindingId> AddCapabilityBinding(
+            private static void AddCapabilityBindings(
                 ModRightClickContext context,
-                List<ModRightClickBindingId> ids)
+                List<LocalRightClickCandidate> candidates)
             {
-                var capabilities = GetRightClickCapabilities(context.Model)
-                    .Where(capability => TryCanHandleCapability(capability, context))
-                    .ToArray();
-                if (capabilities.Length == 0)
-                    return ids;
+                var capabilities = GetAllRightClickCapabilities(context.Model);
+                var selectedCapabilities = new List<SelectedRightClickCapability>();
+                var priority = int.MinValue;
+                for (var index = 0; index < capabilities.Count; index++)
+                {
+                    var capability = capabilities[index];
+                    if (!TryCanHandleCapability(capability, context))
+                        continue;
 
-                var priority = capabilities.Max(static capability => capability.RightClickPriority);
-                InsertBuiltInBinding(ids, GetBindingsSnapshot(), CapabilityBindingId, priority);
+                    selectedCapabilities.Add(new(index, GetCapabilityId(capability)));
+                    priority = Math.Max(priority, capability.RightClickPriority);
+                }
 
-                return ids;
-            }
+                if (selectedCapabilities.Count == 0)
+                    return;
 
-            private static void InsertBuiltInBinding(
-                List<ModRightClickBindingId> ids,
-                IReadOnlyList<RegisteredRightClickBinding> bindings,
-                ModRightClickBindingId id,
-                int priority)
-            {
-                var insertIndex =
-                    ids.Select(bindingId => bindings.FirstOrDefault(candidate => candidate.Id == bindingId))
-                        .TakeWhile(binding => binding != null && binding.Priority > priority).Count();
-
-                ids.Insert(insertIndex, id);
+                candidates.Add(new(CreateCapabilityBindingId(selectedCapabilities), priority, long.MinValue));
             }
 
             private static bool TryCanHandleRightClickable(
@@ -700,6 +795,8 @@ namespace STS2RitsuLib.Interactions.RightClick
             }
         }
 
+        private readonly record struct LocalRightClickCandidate(ModRightClickBindingId Id, int Priority, long Sequence);
+
         private sealed class RegisteredRightClickBinding(
             ModRightClickBindingId id,
             Type modelType,
@@ -733,6 +830,8 @@ namespace STS2RitsuLib.Interactions.RightClick
         }
 
         private readonly record struct OrderedRightClickCapability(IModelCapability Capability, int Index);
+
+        private readonly record struct SelectedRightClickCapability(int Index, string CapabilityId);
 
         private readonly record struct ModRightClickSyncPayload(
             ulong OwnerNetId,

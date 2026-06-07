@@ -4,7 +4,7 @@ namespace STS2RitsuLib
 {
     internal sealed partial class RitsuLibModImageResourceLoader : ResourceFormatLoader
     {
-        private const string ModImagePath = "res://STS2-RitsuLib/mod_image.png";
+        internal const string ModImagePath = "res://STS2-RitsuLib/mod_image.png";
         private const string EmbeddedResourceName = "STS2RitsuLib.Assets.mod_image.png";
 
         private static readonly StringName Texture2DType = new("Texture2D");

@@ -251,12 +251,28 @@ namespace STS2RitsuLib.Networking.ManagedActions
                 throw new InvalidOperationException("Managed net actions do not support GameActionType.None.");
         }
 
-        private static bool NextPayloadIsManagedAction(PacketReader reader)
+        internal static bool NextPayloadIsManagedAction(PacketReader reader, int bitOffset = InitialOffset)
         {
-            return TryPeekULong(reader, InitialOffset, out var magic) &&
+            return TryPeekULong(reader, bitOffset, out var magic) &&
                    magic == ManagedActionMagic &&
-                   TryPeekByte(reader, ManagedActionMagicBits, out var version) &&
+                   TryPeekByte(reader, bitOffset + ManagedActionMagicBits, out var version) &&
                    version == Version;
+        }
+
+        internal static bool TryPeekInt(
+            PacketReader reader,
+            int bitOffset,
+            int bits,
+            out int value)
+        {
+            value = 0;
+            if (!TryReadBits(reader, bitOffset, bits, out var buffer))
+                return false;
+
+            Span<byte> scratch = stackalloc byte[sizeof(int)];
+            buffer.AsSpan().CopyTo(scratch);
+            value = BinaryPrimitives.ReadInt32LittleEndian(scratch);
+            return true;
         }
 
         private static bool TryPeekULong(

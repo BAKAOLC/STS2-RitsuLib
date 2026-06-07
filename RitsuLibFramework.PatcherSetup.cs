@@ -7,6 +7,7 @@ using STS2RitsuLib.CardTags.Patches;
 using STS2RitsuLib.Combat.CardTargeting.Patches;
 using STS2RitsuLib.Combat.HealthBars.Patches;
 using STS2RitsuLib.Combat.Rewards.Patches;
+using STS2RitsuLib.Combat.SecondaryResources.Patches;
 using STS2RitsuLib.Combat.Ui.Patches;
 using STS2RitsuLib.Content.Patches;
 using STS2RitsuLib.Diagnostics;
@@ -170,7 +171,9 @@ namespace STS2RitsuLib
             patcher.RegisterPatch<RitsuLibSidecarNativeTrailerSendPatch>();
             if (!RitsuLibMobileSteamRuntime.SuppressNativeSteamIntegration)
                 patcher.RegisterPatch<RitsuLibSidecarNativeTrailerSteamSendPatch>();
+#if STS2_AT_LEAST_0_106_1
             patcher.RegisterPatch<RitsuLibSidecarSyncNetBufferPatch>();
+#endif
             patcher.RegisterPatch<RitsuLibSidecarSyncLocationChangedPatch>();
             patcher.RegisterPatch<RitsuLibManagedNetActionMessagePatches.RequestEnqueueManagedAction>();
             patcher.RegisterPatch<RitsuLibManagedNetActionMessagePatches.EnqueueManagedAction>();
@@ -290,6 +293,17 @@ namespace STS2RitsuLib
             patcher.RegisterPatch<ModelCapabilityHookListenerPatches.RunStateHookListenersPatch>();
             patcher.RegisterPatch<ModelCapabilityHookListenerPatches.CombatStateHookListenersPatch>();
             patcher.RegisterPatch<ModelCapabilityHookListenerPatches.HookPlayerChoiceContextConstructorPatch>();
+            patcher.RegisterPatch<CardModelCanPlaySecondaryResourcesPatch>();
+            patcher.RegisterPatch<CardModelSpendResourcesSecondaryResourcesPatch>();
+            patcher.RegisterPatch<CardModelOnPlayWrapperSecondaryResourcesPatch>();
+            patcher.RegisterPatch<HookBeforeCardPlayedSecondaryResourcesPatch>();
+            patcher.RegisterPatch<CardModelEndOfTurnSecondaryResourcesPatch>();
+            patcher.RegisterPatch<HookAfterSideTurnStartSecondaryResourcesPatch>();
+            patcher.RegisterPatch<NCombatUiActivateSecondaryResourcesPatch>();
+            patcher.RegisterPatch<NCombatUiAnimOutSecondaryResourcesPatch>();
+            patcher.RegisterPatch<NCombatUiDeactivateSecondaryResourcesPatch>();
+            patcher.RegisterPatch<NMultiplayerPlayerStateCombatSetUpSecondaryResourcesPatch>();
+            patcher.RegisterPatch<NMultiplayerPlayerStateCombatEndedSecondaryResourcesPatch>();
             patcher.RegisterPatch<OrbModelCapabilityPatches.OrbQueueBeforeTurnEndPatch>();
             patcher.RegisterPatch<OrbModelCapabilityPatches.OrbQueueAfterTurnStartPatch>();
             patcher.RegisterPatch<OrbModelCapabilityPatches.OrbCmdPassivePatch>();
@@ -472,6 +486,7 @@ namespace STS2RitsuLib
             patcher.RegisterPatch<ModSettingsSubmenuPatch>();
             patcher.RegisterPatch<ModSettingsRunSubmenuStackPatch>();
             patcher.RegisterPatch<SettingsScreenModSettingsButtonPatch>();
+            patcher.RegisterPatch<MainMenuModSettingsButtonPatch>();
             RegisterFrameworkPatcher(FrameworkPatcherArea.SettingsUi, patcher);
         }
 

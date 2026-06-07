@@ -15,6 +15,10 @@ namespace STS2RitsuLib.Networking.ManagedActions.Patches
 {
     internal static class RitsuLibManagedNetActionMessagePatches
     {
+        private const int ReplayEventTypeBits = 3;
+        private const int ReplayGameActionPlayerIdBits = 64;
+        private const int ReplayGameActionPayloadOffsetBits = ReplayEventTypeBits + ReplayGameActionPlayerIdBits;
+
         private static readonly AccessTools.FieldRef<ActionQueueSynchronizer, ActionQueueSet> ActionQueueSetRef =
             AccessTools.FieldRefAccess<ActionQueueSynchronizer, ActionQueueSet>("_actionQueueSet");
 
@@ -133,6 +137,14 @@ namespace STS2RitsuLib.Networking.ManagedActions.Patches
             return writer;
         }
 
+        private static PacketReader CreateProbeReader(PacketReader reader)
+        {
+            var probe = new PacketReader();
+            probe.Reset(reader.Buffer);
+            probe.BitPosition = reader.BitPosition;
+            return probe;
+        }
+
         internal sealed class RequestEnqueueManagedAction : IPatchMethod
         {
             public static string PatchId => "ritsulib_managed_net_action_request_enqueue_direct_send";
@@ -199,11 +211,11 @@ namespace STS2RitsuLib.Networking.ManagedActions.Patches
 
             public static bool Prefix(RequestEnqueueActionMessage __instance, PacketWriter writer)
             {
-                writer.Write(__instance.location);
-                if (RitsuLibManagedNetActions.TryWriteNetAction(writer, __instance.action)) return false;
-                writer.WriteByte((byte)__instance.action.ToId());
-                writer.Write(__instance.action);
+                if (__instance.action is not RitsuLibManagedNetAction)
+                    return true;
 
+                writer.Write(__instance.location);
+                RitsuLibManagedNetActions.TryWriteNetAction(writer, __instance.action);
                 return false;
             }
         }
@@ -226,8 +238,15 @@ namespace STS2RitsuLib.Networking.ManagedActions.Patches
 
             public static bool Prefix(ref RequestEnqueueActionMessage __instance, PacketReader reader)
             {
-                __instance.location = reader.Read<RunLocation>();
-                __instance.action = RitsuLibManagedNetActions.ReadNetAction(reader);
+                var probe = CreateProbeReader(reader);
+                var location = probe.Read<RunLocation>();
+                if (!RitsuLibManagedNetActions.NextPayloadIsManagedAction(probe))
+                    return true;
+
+                var action = RitsuLibManagedNetActions.ReadNetAction(probe);
+                __instance.location = location;
+                __instance.action = action;
+                reader.BitPosition = probe.BitPosition;
                 return false;
             }
         }
@@ -252,12 +271,12 @@ namespace STS2RitsuLib.Networking.ManagedActions.Patches
 
             public static bool Prefix(ActionEnqueuedMessage __instance, PacketWriter writer)
             {
+                if (__instance.action is not RitsuLibManagedNetAction)
+                    return true;
+
                 writer.WriteULong(__instance.playerId);
                 writer.Write(__instance.location);
-                if (RitsuLibManagedNetActions.TryWriteNetAction(writer, __instance.action)) return false;
-                writer.WriteByte((byte)__instance.action.ToId());
-                writer.Write(__instance.action);
-
+                RitsuLibManagedNetActions.TryWriteNetAction(writer, __instance.action);
                 return false;
             }
         }
@@ -282,9 +301,17 @@ namespace STS2RitsuLib.Networking.ManagedActions.Patches
 
             public static bool Prefix(ref ActionEnqueuedMessage __instance, PacketReader reader)
             {
-                __instance.playerId = reader.ReadULong();
-                __instance.location = reader.Read<RunLocation>();
-                __instance.action = RitsuLibManagedNetActions.ReadNetAction(reader);
+                var probe = CreateProbeReader(reader);
+                var playerId = probe.ReadULong();
+                var location = probe.Read<RunLocation>();
+                if (!RitsuLibManagedNetActions.NextPayloadIsManagedAction(probe))
+                    return true;
+
+                var action = RitsuLibManagedNetActions.ReadNetAction(probe);
+                __instance.playerId = playerId;
+                __instance.location = location;
+                __instance.action = action;
+                reader.BitPosition = probe.BitPosition;
                 return false;
             }
         }
@@ -309,35 +336,13 @@ namespace STS2RitsuLib.Networking.ManagedActions.Patches
 
             public static bool Prefix(CombatReplayEvent __instance, PacketWriter writer)
             {
-                writer.WriteInt((int)__instance.eventType, 3);
-                switch (__instance.eventType)
-                {
-                    case CombatReplayEventType.GameAction:
-                        writer.WriteULong(__instance.playerId!.Value);
-                        var action = __instance.action ??
-                                     throw new InvalidOperationException(
-                                         "Combat replay game action event has no action.");
-                        if (RitsuLibManagedNetActions.TryWriteNetAction(writer, action)) return false;
-                        writer.WriteByte((byte)action.ToId());
-                        writer.Write(action);
-                        break;
-                    case CombatReplayEventType.HookAction:
-                        writer.WriteULong(__instance.playerId!.Value);
-                        writer.WriteUInt(__instance.hookId!.Value);
-                        writer.WriteEnum(__instance.gameActionType!.Value);
-                        break;
-                    case CombatReplayEventType.ResumeAction:
-                        writer.WriteUInt(__instance.actionId!.Value);
-                        break;
-                    case CombatReplayEventType.PlayerChoice:
-                        writer.WriteULong(__instance.playerId!.Value);
-                        writer.WriteUInt(__instance.choiceId!.Value);
-                        writer.Write(__instance.playerChoiceResult!.Value);
-                        break;
-                    default:
-                        throw new ArgumentOutOfRangeException(nameof(__instance.eventType));
-                }
+                if (__instance.eventType != CombatReplayEventType.GameAction ||
+                    __instance.action is not RitsuLibManagedNetAction)
+                    return true;
 
+                writer.WriteInt((int)__instance.eventType, ReplayEventTypeBits);
+                writer.WriteULong(__instance.playerId!.Value);
+                RitsuLibManagedNetActions.TryWriteNetAction(writer, __instance.action);
                 return false;
             }
         }
@@ -362,31 +367,26 @@ namespace STS2RitsuLib.Networking.ManagedActions.Patches
 
             public static bool Prefix(ref CombatReplayEvent __instance, PacketReader reader)
             {
-                __instance.eventType = (CombatReplayEventType)reader.ReadInt(3);
-                switch (__instance.eventType)
-                {
-                    case CombatReplayEventType.GameAction:
-                        __instance.playerId = reader.ReadULong();
-                        __instance.action = RitsuLibManagedNetActions.ReadNetAction(reader);
-                        break;
-                    case CombatReplayEventType.HookAction:
-                        __instance.playerId = reader.ReadULong();
-                        __instance.hookId = reader.ReadUInt();
-                        __instance.gameActionType = reader.ReadEnum<GameActionType>();
-                        break;
-                    case CombatReplayEventType.ResumeAction:
-                        __instance.actionId = reader.ReadUInt();
-                        break;
-                    case CombatReplayEventType.PlayerChoice:
-                        __instance.playerId = reader.ReadULong();
-                        __instance.choiceId = reader.ReadUInt();
-                        __instance.playerChoiceResult = reader.Read<NetPlayerChoiceResult>();
-                        break;
-                    default:
-                        throw new ArgumentOutOfRangeException();
-                }
+                if (!ReplayEventPayloadIsManagedGameAction(reader))
+                    return true;
 
+                __instance.eventType = (CombatReplayEventType)reader.ReadInt(ReplayEventTypeBits);
+                __instance.playerId = reader.ReadULong();
+                __instance.action = RitsuLibManagedNetActions.ReadNetAction(reader);
                 return false;
+            }
+
+            private static bool ReplayEventPayloadIsManagedGameAction(PacketReader reader)
+            {
+                return RitsuLibManagedNetActions.TryPeekInt(
+                           reader,
+                           0,
+                           ReplayEventTypeBits,
+                           out var eventType) &&
+                       eventType == (int)CombatReplayEventType.GameAction &&
+                       RitsuLibManagedNetActions.NextPayloadIsManagedAction(
+                           reader,
+                           ReplayGameActionPayloadOffsetBits);
             }
         }
     }

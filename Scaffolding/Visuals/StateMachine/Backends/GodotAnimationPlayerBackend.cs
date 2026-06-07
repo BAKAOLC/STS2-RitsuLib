@@ -31,7 +31,7 @@ namespace STS2RitsuLib.Scaffolding.Visuals.StateMachine.Backends
         }
 
         /// <inheritdoc />
-        public Node? OwnerNode => _player;
+        public Node OwnerNode => _player;
 
         /// <inheritdoc />
         public event Action<string>? Started;

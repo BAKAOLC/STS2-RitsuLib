@@ -13,7 +13,7 @@ namespace STS2RitsuLib.Data.Models
         ///     Current schema version written by the library when creating or normalizing settings.
         ///     库在创建或规范化设置时写入的当前 schema 版本。
         /// </summary>
-        public const int CurrentSchemaVersion = 11;
+        public const int CurrentSchemaVersion = 12;
 
         /// <summary>
         ///     Persisted schema version used by the migration pipeline
@@ -370,6 +370,13 @@ namespace STS2RitsuLib.Data.Models
         /// </summary>
         [JsonPropertyName("update_check_enabled")]
         public bool UpdateCheckEnabled { get; set; } = true;
+
+        /// <summary>
+        ///     When true, shows the RitsuLib mod settings shortcut under the vanilla patch notes button on the main menu.
+        ///     为 true 时，在主菜单原版更新日志按钮下方显示 RitsuLib 模组设置快捷入口。
+        /// </summary>
+        [JsonPropertyName("main_menu_mod_settings_button_enabled")]
+        public bool MainMenuModSettingsButtonEnabled { get; set; } = true;
 
         /// <summary>
         ///     Enables global non-blocking toast notifications.

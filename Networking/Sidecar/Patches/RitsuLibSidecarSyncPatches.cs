@@ -5,6 +5,7 @@ using STS2RitsuLib.Patching.Models;
 
 namespace STS2RitsuLib.Networking.Sidecar.Patches
 {
+#if STS2_AT_LEAST_0_106_1
     /// <summary>
     ///     Releases sidecar sync packets inside the vanilla <see cref="NetMessageBus" /> buffer order.
     ///     在原版 <see cref="NetMessageBus" /> 缓冲顺序中释放 sidecar 同步包。
@@ -23,7 +24,7 @@ namespace STS2RitsuLib.Networking.Sidecar.Patches
         {
             return
             [
-                new(typeof(NetMessageBus), SetBufferMessagesMethodName, [typeof(bool)], true),
+                new(typeof(NetMessageBus), SetBufferMessagesMethodName, [typeof(bool)]),
             ];
         }
 
@@ -32,6 +33,7 @@ namespace STS2RitsuLib.Networking.Sidecar.Patches
             return RitsuLibSidecarSync.ReleaseNetBusBuffer(__instance, bufferMessages);
         }
     }
+#endif
 
     /// <summary>
     ///     Releases sidecar sync packets inside the vanilla run-location buffer order.
