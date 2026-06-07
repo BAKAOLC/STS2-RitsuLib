@@ -10,6 +10,117 @@ using MegaCrit.Sts2.Core.Nodes.HoverTips;
 namespace STS2RitsuLib.Combat.SecondaryResources
 {
     /// <summary>
+    ///     Hover-tip request for one secondary-resource display node.
+    ///     单个次级资源显示节点的悬浮提示请求。
+    /// </summary>
+    public readonly record struct SecondaryResourceHoverTipRequest(
+        SecondaryResourceDefinition Definition,
+        int Amount = 1,
+        int? MaxAmount = null);
+
+    /// <summary>
+    ///     Hover-tip placement context for one secondary-resource display node.
+    ///     单个次级资源显示节点的悬浮提示放置上下文。
+    /// </summary>
+    public readonly record struct SecondaryResourceHoverTipPlacementContext(
+        Control Owner,
+        NHoverTipSet TipSet,
+        SecondaryResourceDefinition Definition,
+        int Amount,
+        int? MaxAmount);
+
+    /// <summary>
+    ///     Hover-tip behavior for secondary-resource display nodes.
+    ///     次级资源显示节点的悬浮提示行为。
+    /// </summary>
+    public sealed record SecondaryResourceHoverTipStyle
+    {
+        private const float DefaultGap = 20f;
+
+        /// <summary>
+        ///     Whether the icon shows a hover tip.
+        ///     图标是否显示悬浮提示。
+        /// </summary>
+        public bool Enabled { get; init; } = true;
+
+        /// <summary>
+        ///     Resolver for the hover tip's screen-space top-left position.
+        ///     用于决定悬浮提示左上角屏幕空间位置的 resolver。
+        /// </summary>
+        public Func<SecondaryResourceHoverTipPlacementContext, Vector2> ResolveGlobalPosition { get; init; } =
+            ResolveAboveOwner;
+
+        /// <summary>
+        ///     Extra screen-space pixels added after custom position resolution.
+        ///     自定义位置解析后追加的屏幕空间偏移。
+        /// </summary>
+        public Vector2 ScreenOffset { get; init; }
+
+        /// <summary>
+        ///     Shared default hover-tip style.
+        ///     共享默认悬浮提示样式。
+        /// </summary>
+        public static SecondaryResourceHoverTipStyle Default { get; } = new();
+
+        private static Vector2 ResolveAboveOwner(SecondaryResourceHoverTipPlacementContext context)
+        {
+            var ownerRect = context.Owner.GetGlobalRect();
+            var tipSize = context.TipSet.Size;
+            if (tipSize.X < 1f || tipSize.Y < 1f)
+                tipSize = context.TipSet.GetCombinedMinimumSize();
+
+            return new(
+                ownerRect.Position.X + ownerRect.Size.X * 0.5f - tipSize.X * 0.5f,
+                ownerRect.Position.Y - tipSize.Y - DefaultGap);
+        }
+    }
+
+    /// <summary>
+    ///     Visual and hover-tip style for a secondary-resource icon node.
+    ///     次级资源图标节点的视觉和悬浮提示样式。
+    /// </summary>
+    public sealed record SecondaryResourceIconStyle
+    {
+        /// <summary>
+        ///     Root control and icon rectangle size.
+        ///     根 control 和图标矩形尺寸。
+        /// </summary>
+        public Vector2 Size { get; init; } = new(46f, 46f);
+
+        /// <summary>
+        ///     Icon offset inside the root control.
+        ///     图标在根 control 内的偏移。
+        /// </summary>
+        public Vector2 IconOffset { get; init; }
+
+        /// <summary>
+        ///     Texture expand mode.
+        ///     贴图 expand mode。
+        /// </summary>
+        public TextureRect.ExpandModeEnum ExpandMode { get; init; } = TextureRect.ExpandModeEnum.IgnoreSize;
+
+        /// <summary>
+        ///     Texture stretch mode.
+        ///     贴图 stretch mode。
+        /// </summary>
+        public TextureRect.StretchModeEnum StretchMode { get; init; } =
+            TextureRect.StretchModeEnum.KeepAspectCentered;
+
+        /// <summary>
+        ///     Optional hover-tip behavior. Null disables built-in hover-tip wiring.
+        ///     可选悬浮提示行为。为 null 时禁用内建悬浮提示绑定。
+        /// </summary>
+        public SecondaryResourceHoverTipStyle? HoverTip { get; init; } =
+            SecondaryResourceHoverTipStyle.Default;
+
+        /// <summary>
+        ///     Shared default icon style.
+        ///     共享默认图标样式。
+        /// </summary>
+        public static SecondaryResourceIconStyle Default { get; } = new();
+    }
+
+    /// <summary>
     ///     Visual style for the built-in secondary-resource counter nodes.
     ///     内建次级资源计数节点的视觉样式。
     /// </summary>
@@ -70,6 +181,14 @@ namespace STS2RitsuLib.Combat.SecondaryResources
         public int RowSeparation { get; init; } = 8;
 
         /// <summary>
+        ///     Optional icon-node style. When null, <see cref="IconSize" /> is used with
+        ///     <see cref="SecondaryResourceIconStyle.Default" />.
+        ///     可选图标节点样式。为 null 时使用 <see cref="IconSize" /> 和
+        ///     <see cref="SecondaryResourceIconStyle.Default" />。
+        /// </summary>
+        public SecondaryResourceIconStyle? IconStyle { get; init; }
+
+        /// <summary>
         ///     Optional amount formatter. Receives current amount and max amount.
         ///     可选数量格式化器，参数为当前数量和最大数量。
         /// </summary>
@@ -99,7 +218,7 @@ namespace STS2RitsuLib.Combat.SecondaryResources
         private MegaLabel _amountLabel = null!;
 
         private SecondaryResourceDefinition? _definition;
-        private TextureRect _icon = null!;
+        private NSecondaryResourceIcon _icon = null!;
         private int? _maxAmount;
         private SecondaryResourceCounterStyle _style = SecondaryResourceCounterStyle.Default;
 
@@ -163,6 +282,8 @@ namespace STS2RitsuLib.Combat.SecondaryResources
             _amountLabel.SetTextAutoSize(_style.Format(amount, maxAmount));
             _amountLabel.AddThemeColorOverride(ThemeConstants.Label.FontColor,
                 amount <= 0 ? _style.ZeroColor : _style.PositiveColor);
+            if (_icon != null)
+                _icon.SetAmount(_amount, _maxAmount);
         }
 
         /// <summary>
@@ -177,13 +298,11 @@ namespace STS2RitsuLib.Combat.SecondaryResources
 
             _icon = new()
             {
-                MouseFilter = MouseFilterEnum.Ignore,
-                ExpandMode = TextureRect.ExpandModeEnum.IgnoreSize,
-                StretchMode = TextureRect.StretchModeEnum.KeepAspectCentered,
-                CustomMinimumSize = _style.IconSize,
-                Size = _style.IconSize,
+                MouseFilter = MouseFilterEnum.Pass,
                 Position = GetIconPosition(),
             };
+            if (_definition != null)
+                _icon.Configure(_definition, ResolveIconStyle());
             AddChild(_icon);
 
             _amountLabel = new()
@@ -201,9 +320,6 @@ namespace STS2RitsuLib.Combat.SecondaryResources
             ApplyAmountLabelTheme();
             AddChild(_amountLabel);
 
-            Connect(Control.SignalName.MouseEntered, Callable.From(OnHovered));
-            Connect(Control.SignalName.MouseExited, Callable.From(OnUnhovered));
-
             ApplyDefinition();
             SetAmount(_amount, _maxAmount);
         }
@@ -219,7 +335,8 @@ namespace STS2RitsuLib.Combat.SecondaryResources
         /// </summary>
         public override void _ExitTree()
         {
-            NHoverTipSet.Remove(this);
+            if (_icon != null)
+                NHoverTipSet.Remove(_icon);
         }
 
         private void ApplyDefinition()
@@ -227,9 +344,8 @@ namespace STS2RitsuLib.Combat.SecondaryResources
             if (_definition == null || _icon == null)
                 return;
 
-            var iconPath = _definition.LargeIconPath ?? _definition.SmallIconPath;
-            if (!string.IsNullOrWhiteSpace(iconPath))
-                _icon.Texture = ResourceLoader.Load<Texture2D>(iconPath);
+            _icon.Configure(_definition, ResolveIconStyle());
+            _icon.SetAmount(_amount, _maxAmount);
         }
 
         private void ApplyAmountLabelTheme()
@@ -242,18 +358,291 @@ namespace STS2RitsuLib.Combat.SecondaryResources
             _amountLabel.AddThemeConstantOverride(ThemeConstants.Label.OutlineSize, _style.OutlineSize);
         }
 
-        private void OnHovered()
+        private SecondaryResourceIconStyle ResolveIconStyle()
         {
-            if (_definition == null)
-                return;
+            return _style.IconStyle ?? SecondaryResourceIconStyle.Default with
+            {
+                Size = _style.IconSize,
+            };
+        }
+    }
 
-            var hoverTip = SecondaryResourceHoverTipFactory.Create(_definition, _amount, _maxAmount);
-            NHoverTipSet.CreateAndShow(this, hoverTip)?.SetGlobalPosition(GlobalPosition + new Vector2(Size.X, 0f));
+    /// <summary>
+    ///     Built-in secondary-resource icon node with consistent texture setup and optional hover-tip wiring.
+    ///     内建次级资源图标节点，统一处理贴图设置和可选悬浮提示绑定。
+    /// </summary>
+    public partial class NSecondaryResourceIcon : Control
+    {
+        private int _amount = 1;
+        private SecondaryResourceDefinition? _definition;
+        private SecondaryResourceHoverTipBinder? _hoverTipBinder;
+        private int? _maxAmount;
+        private SecondaryResourceIconStyle _style = SecondaryResourceIconStyle.Default;
+        private TextureRect _texture = null!;
+
+        /// <summary>
+        ///     Creates and configures a secondary-resource icon.
+        ///     创建并配置次级资源图标。
+        /// </summary>
+        public static NSecondaryResourceIcon Create(
+            SecondaryResourceDefinition definition,
+            SecondaryResourceIconStyle? style = null,
+            int amount = 1,
+            int? maxAmount = null)
+        {
+            var icon = new NSecondaryResourceIcon();
+            icon.Configure(definition, style);
+            icon.SetAmount(amount, maxAmount);
+            return icon;
         }
 
-        private void OnUnhovered()
+        /// <summary>
+        ///     Configures the resource definition and visual style.
+        ///     配置资源定义和视觉样式。
+        /// </summary>
+        public void Configure(SecondaryResourceDefinition definition, SecondaryResourceIconStyle? style = null)
         {
-            NHoverTipSet.Remove(this);
+            ArgumentNullException.ThrowIfNull(definition);
+            _definition = definition;
+            _style = style ?? SecondaryResourceIconStyle.Default;
+            CustomMinimumSize = _style.Size;
+            Size = _style.Size;
+
+            if (IsNodeReady())
+            {
+                ApplyStyleAndDefinition();
+                RefreshHoverTipBinding();
+            }
+        }
+
+        /// <summary>
+        ///     Updates the amount displayed in this icon's hover tip.
+        ///     更新该图标悬浮提示中显示的数量。
+        /// </summary>
+        public void SetAmount(int amount, int? maxAmount = null)
+        {
+            _amount = amount;
+            _maxAmount = maxAmount;
+        }
+
+        /// <inheritdoc />
+        public override void _Ready()
+        {
+            MouseFilter = MouseFilterEnum.Stop;
+            _texture = new()
+            {
+                MouseFilter = MouseFilterEnum.Ignore,
+            };
+            AddChild(_texture);
+
+            ApplyStyleAndDefinition();
+            RefreshHoverTipBinding();
+        }
+
+        /// <inheritdoc />
+        public override void _ExitTree()
+        {
+            _hoverTipBinder?.Hide();
+        }
+
+        private void ApplyStyleAndDefinition()
+        {
+            if (_texture == null)
+                return;
+
+            CustomMinimumSize = _style.Size;
+            Size = _style.Size;
+            _texture.Position = _style.IconOffset;
+            _texture.CustomMinimumSize = _style.Size;
+            _texture.Size = _style.Size;
+            _texture.ExpandMode = _style.ExpandMode;
+            _texture.StretchMode = _style.StretchMode;
+
+            if (_definition == null)
+            {
+                _texture.Texture = null;
+                return;
+            }
+
+            var path = _definition.LargeIconPath ?? _definition.SmallIconPath;
+            _texture.Texture = string.IsNullOrWhiteSpace(path) ? null : ResourceLoader.Load<Texture2D>(path);
+        }
+
+        private void RefreshHoverTipBinding()
+        {
+            if (!IsNodeReady())
+                return;
+
+            if (_definition == null || _style.HoverTip is not { Enabled: true } hoverTipStyle)
+            {
+                _hoverTipBinder?.QueueFree();
+                _hoverTipBinder = null;
+                return;
+            }
+
+            if (_hoverTipBinder == null || !IsInstanceValid(_hoverTipBinder))
+            {
+                _hoverTipBinder = SecondaryResourceHoverTipBinder.Bind(
+                    this,
+                    CreateHoverTipRequest,
+                    hoverTipStyle);
+                return;
+            }
+
+            _hoverTipBinder.Configure(CreateHoverTipRequest, hoverTipStyle);
+        }
+
+        private SecondaryResourceHoverTipRequest? CreateHoverTipRequest()
+        {
+            return _definition == null ? null : new(_definition, _amount, _maxAmount);
+        }
+    }
+
+    /// <summary>
+    ///     Reusable binder that gives any secondary-resource display <see cref="Control" /> the same
+    ///     mouse-enter / mouse-exit hover-tip behavior used by vanilla resource counters.
+    ///     可复用绑定器，为任意次级资源显示 <see cref="Control" /> 提供与原版资源计数器一致的
+    ///     mouse-enter / mouse-exit 悬浮提示行为。
+    /// </summary>
+    public partial class SecondaryResourceHoverTipBinder : Node
+    {
+        private readonly Callable _hideCallable;
+        private readonly Callable _showCallable;
+        private Control _owner = null!;
+        private Func<SecondaryResourceHoverTipRequest?> _requestFactory = null!;
+        private SecondaryResourceHoverTipStyle _style = SecondaryResourceHoverTipStyle.Default;
+
+        /// <summary>
+        ///     Creates a binder node.
+        ///     创建绑定器节点。
+        /// </summary>
+        public SecondaryResourceHoverTipBinder()
+        {
+            _showCallable = Callable.From(Show);
+            _hideCallable = Callable.From(Hide);
+        }
+
+        /// <summary>
+        ///     Binds a secondary-resource hover tip to any display control.
+        ///     将次级资源悬浮提示绑定到任意显示 control。
+        /// </summary>
+        public static SecondaryResourceHoverTipBinder Bind(
+            Control owner,
+            Func<SecondaryResourceHoverTipRequest?> requestFactory,
+            SecondaryResourceHoverTipStyle? style = null)
+        {
+            ArgumentNullException.ThrowIfNull(owner);
+            ArgumentNullException.ThrowIfNull(requestFactory);
+
+            var binder = new SecondaryResourceHoverTipBinder
+            {
+                Name = "RitsuLibSecondaryResourceHoverTipBinder",
+                _owner = owner,
+            };
+            binder.Configure(requestFactory, style);
+            owner.AddChild(binder);
+            return binder;
+        }
+
+        /// <summary>
+        ///     Binds a fixed secondary-resource definition with dynamic amount providers.
+        ///     使用固定次级资源定义和动态数量 provider 绑定悬浮提示。
+        /// </summary>
+        public static SecondaryResourceHoverTipBinder Bind(
+            Control owner,
+            SecondaryResourceDefinition definition,
+            Func<int> amount,
+            Func<int?>? maxAmount = null,
+            SecondaryResourceHoverTipStyle? style = null)
+        {
+            ArgumentNullException.ThrowIfNull(definition);
+            ArgumentNullException.ThrowIfNull(amount);
+
+            return Bind(
+                owner,
+                () => new(definition, amount(), maxAmount?.Invoke()),
+                style);
+        }
+
+        /// <summary>
+        ///     Updates the request factory and style used by this binder.
+        ///     更新该绑定器使用的请求 factory 和样式。
+        /// </summary>
+        public void Configure(
+            Func<SecondaryResourceHoverTipRequest?> requestFactory,
+            SecondaryResourceHoverTipStyle? style = null)
+        {
+            ArgumentNullException.ThrowIfNull(requestFactory);
+            _requestFactory = requestFactory;
+            _style = style ?? SecondaryResourceHoverTipStyle.Default;
+        }
+
+        /// <inheritdoc />
+        public override void _Ready()
+        {
+            _owner ??= GetParent<Control>();
+
+            ConnectOwnerSignals();
+        }
+
+        /// <inheritdoc />
+        public override void _ExitTree()
+        {
+            Hide();
+            DisconnectOwnerSignals();
+        }
+
+        /// <summary>
+        ///     Shows the current hover tip, if the request factory returns one.
+        ///     如果请求 factory 返回内容，则显示当前悬浮提示。
+        /// </summary>
+        public void Show()
+        {
+            if (_requestFactory == null || _owner == null || !IsInstanceValid(_owner))
+                return;
+
+            var request = _requestFactory();
+            if (request == null)
+                return;
+
+            SecondaryResourceHoverTipFactory.Show(
+                _owner,
+                request.Value.Definition,
+                request.Value.Amount,
+                request.Value.MaxAmount,
+                _style);
+        }
+
+        /// <summary>
+        ///     Removes the active hover tip owned by this binder's control.
+        ///     移除此绑定器 control 拥有的当前悬浮提示。
+        /// </summary>
+        public void Hide()
+        {
+            if (_owner != null && IsInstanceValid(_owner))
+                NHoverTipSet.Remove(_owner);
+        }
+
+        private void ConnectOwnerSignals()
+        {
+            if (_owner == null || !IsInstanceValid(_owner))
+                return;
+
+            if (!_owner.IsConnected(Control.SignalName.MouseEntered, _showCallable))
+                _owner.Connect(Control.SignalName.MouseEntered, _showCallable);
+            if (!_owner.IsConnected(Control.SignalName.MouseExited, _hideCallable))
+                _owner.Connect(Control.SignalName.MouseExited, _hideCallable);
+        }
+
+        private void DisconnectOwnerSignals()
+        {
+            if (_owner == null || !IsInstanceValid(_owner))
+                return;
+
+            if (_owner.IsConnected(Control.SignalName.MouseEntered, _showCallable))
+                _owner.Disconnect(Control.SignalName.MouseEntered, _showCallable);
+            if (_owner.IsConnected(Control.SignalName.MouseExited, _hideCallable))
+                _owner.Disconnect(Control.SignalName.MouseExited, _hideCallable);
         }
     }
 
@@ -420,6 +809,41 @@ namespace STS2RitsuLib.Combat.SecondaryResources
             description += $"\nAmount: {amountText}";
 
             return CreateRaw(definition.Id, title, description, icon);
+        }
+
+        /// <summary>
+        ///     Creates and shows a secondary-resource hover tip for an icon owner.
+        ///     为图标 owner 创建并显示次级资源悬浮提示。
+        /// </summary>
+        public static NHoverTipSet? Show(
+            Control owner,
+            SecondaryResourceDefinition definition,
+            int amount,
+            int? maxAmount = null,
+            SecondaryResourceHoverTipStyle? style = null)
+        {
+            ArgumentNullException.ThrowIfNull(owner);
+            ArgumentNullException.ThrowIfNull(definition);
+
+            var resolvedStyle = style ?? SecondaryResourceHoverTipStyle.Default;
+            if (!resolvedStyle.Enabled)
+                return null;
+
+            var hoverTip = Create(definition, amount, maxAmount);
+            NHoverTipSet.Remove(owner);
+            var tipSet = NHoverTipSet.CreateAndShow(owner, hoverTip);
+            if (tipSet == null)
+                return null;
+
+            var context = new SecondaryResourceHoverTipPlacementContext(
+                owner,
+                tipSet,
+                definition,
+                amount,
+                maxAmount);
+            tipSet.GlobalPosition = resolvedStyle.ResolveGlobalPosition(context) + resolvedStyle.ScreenOffset;
+
+            return tipSet;
         }
 
         private static Texture2D? LoadIcon(SecondaryResourceDefinition definition)
