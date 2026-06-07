@@ -22,6 +22,7 @@ nav:
   guide_asset_profiles: 资源配置与回退
   guide_godot_scene: Godot 场景编写
   guide_creature_visuals: 生物视觉与动画
+  guide_secondary_resources: 次级资源
   guide_mod_settings: Mod 设置
   guide_localization: 本地化与关键词
   guide_loc_string: LocString 占位符

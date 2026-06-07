@@ -78,6 +78,7 @@ Read [Getting started](/guide/getting-started) first if the mod does not already
 | Goal | Page |
 | --- | --- |
 | Save mod data and run migrations | [Persistence](/guide/persistence-guide) |
+| Add combat-side secondary resources and card costs | [Secondary resources](/guide/secondary-resources) |
 | Add settings pages | [Mod settings](/guide/mod-settings) |
 | Use localized text, keywords, and SmartFormat | [Localization and keywords](/guide/localization-and-keywords) |
 | Understand LocString placeholders | [LocString placeholders](/guide/loc-string-placeholder-resolution) |
@@ -99,6 +100,7 @@ Read [Getting started](/guide/getting-started) first if the mod does not already
 | 目标 | 页面 |
 | --- | --- |
 | 保存 Mod 数据并做迁移 | [持久化](/guide/persistence-guide) |
+| 添加战斗次级资源和卡牌附加费用 | [次级资源](/guide/secondary-resources) |
 | 添加设置页面 | [Mod 设置](/guide/mod-settings) |
 | 使用本地化文本、关键词和 SmartFormat | [本地化与关键词](/guide/localization-and-keywords) |
 | 理解 LocString 占位符 | [LocString 占位符](/guide/loc-string-placeholder-resolution) |

@@ -87,6 +87,38 @@ See [Debug log viewer](/guide/debug-log-viewer) for setup and usage details.
 
 :::
 
+## Missing Character Saves{lang="en"}
+
+::: en
+
+If a continue-run save references a character that is no longer registered, RitsuLib now blocks the resume attempt before vanilla run restoration starts.
+
+Expected behavior:
+
+- The run save stays on disk
+- The player gets the normal load-failure UI
+- RitsuLib logs a warning explaining that the save references an unregistered character
+
+Treat this as a dependency or load-order problem, not as a signal to delete the save immediately.
+
+:::
+
+## 缺失角色的继续跑局存档{lang="zh-CN"}
+
+::: zh-CN
+
+如果“继续跑局”读取到的存档引用了当前未注册的角色，RitsuLib 现在会在原版恢复跑局之前直接拦截这次继续流程。
+
+预期行为：
+
+- 跑局存档文件会保留在磁盘上
+- 玩家看到正常的读取失败 UI
+- RitsuLib 会记录一条警告，说明该存档引用了未注册角色
+
+这通常是依赖缺失或加载顺序问题，不应立刻把它当作“必须删除存档”的信号。
+
+:::
+
 ## Game Source Notes{lang="en"}
 
 ::: en

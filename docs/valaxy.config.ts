@@ -88,6 +88,7 @@ export default defineValaxyConfig<PressTheme.Config>({
         text: 'nav.group_runtime_apis',
         items: [
           { text: 'nav.guide_persistence', link: '/guide/persistence-guide' },
+          { text: 'nav.guide_secondary_resources', link: '/guide/secondary-resources' },
           { text: 'nav.guide_mod_settings', link: '/guide/mod-settings' },
           { text: 'nav.guide_localization', link: '/guide/localization-and-keywords' },
           { text: 'nav.guide_loc_string', link: '/guide/loc-string-placeholder-resolution' },
