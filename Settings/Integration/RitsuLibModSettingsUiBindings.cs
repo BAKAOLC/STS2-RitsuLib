@@ -46,6 +46,7 @@ namespace STS2RitsuLib.Settings
         public IModSettingsValueBinding<bool> SelfCheckOnFirstMainMenu { get; private init; } = null!;
         public IModSettingsValueBinding<string> UiShellThemeId { get; private init; } = null!;
         public IModSettingsValueBinding<bool> UpdateCheckEnabled { get; private init; } = null!;
+        public IModSettingsValueBinding<bool> MainMenuModSettingsButtonEnabled { get; private init; } = null!;
         public IModSettingsValueBinding<bool> ToastEnabled { get; private init; } = null!;
         public IModSettingsValueBinding<string> ToastAnchor { get; private init; } = null!;
         public IModSettingsValueBinding<double> ToastOffsetX { get; private init; } = null!;
@@ -281,6 +282,13 @@ namespace STS2RitsuLib.Settings
                         settings => settings.UpdateCheckEnabled,
                         (settings, value) => settings.UpdateCheckEnabled = value),
                     () => defaults.UpdateCheckEnabled),
+                MainMenuModSettingsButtonEnabled = ModSettingsBindings.WithDefault(
+                    ModSettingsBindings.Global<RitsuLibSettings, bool>(
+                        Const.ModId,
+                        Const.SettingsKey,
+                        settings => settings.MainMenuModSettingsButtonEnabled,
+                        (settings, value) => settings.MainMenuModSettingsButtonEnabled = value),
+                    () => defaults.MainMenuModSettingsButtonEnabled),
                 ToastEnabled = ModSettingsBindings.WithDefault(
                     ModSettingsBindings.Global<RitsuLibSettings, bool>(
                         Const.ModId,

@@ -162,7 +162,7 @@ namespace STS2RitsuLib.Diagnostics.CardExport
             {
                 progressUi = CardPngExportProgressOverlay.Attach(NGame.Instance, totalSteps);
                 progressUi.SetProgress(0, null);
-                await RitsuGodotAwaitSafety.AwaitProcessFrameAsync(tree, owner: progressUi);
+                await RitsuGodotAwaitSafety.AwaitProcessFrameAsync(tree, progressUi);
 
                 var exportedBase = 0;
                 var savedFiles = 0;
@@ -229,7 +229,7 @@ namespace STS2RitsuLib.Diagnostics.CardExport
                 }
 
                 progressUi.SetProgress(totalSteps, null);
-                await RitsuGodotAwaitSafety.AwaitProcessFrameAsync(tree, owner: progressUi);
+                await RitsuGodotAwaitSafety.AwaitProcessFrameAsync(tree, progressUi);
 
                 log?.Invoke(
                     $"Finished. {savedFiles} file(s) saved, {failures} failed. Base cards: {exportedBase}. Output: {outDir}");

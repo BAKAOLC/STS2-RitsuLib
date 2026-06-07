@@ -119,7 +119,7 @@ namespace STS2RitsuLib.Settings
 
         private sealed class LiteralModSettingsText(string text) : ModSettingsText
         {
-            internal override string? FallbackText => text;
+            internal override string FallbackText => text;
 
             public override string Resolve()
             {
@@ -160,7 +160,7 @@ namespace STS2RitsuLib.Settings
 
         private sealed class LocStringModSettingsText(string table, string key, string fallback) : ModSettingsText
         {
-            internal override string? FallbackText => fallback;
+            internal override string FallbackText => fallback;
 
             public override string Resolve()
             {
@@ -179,7 +179,7 @@ namespace STS2RitsuLib.Settings
 
         private sealed class ExistingLocStringModSettingsText(LocString locString, string fallback) : ModSettingsText
         {
-            internal override string? FallbackText => fallback;
+            internal override string FallbackText => fallback;
 
             public override string Resolve()
             {
@@ -197,7 +197,7 @@ namespace STS2RitsuLib.Settings
 
         private sealed class I18NModSettingsText(I18N localization, string key, string fallback) : ModSettingsText
         {
-            internal override string? FallbackText => fallback;
+            internal override string FallbackText => fallback;
 
             public override string Resolve()
             {
@@ -216,7 +216,7 @@ namespace STS2RitsuLib.Settings
         private sealed class DeferredI18NModSettingsText(Func<I18N> localizationFactory, string key, string fallback)
             : ModSettingsText
         {
-            internal override string? FallbackText => fallback;
+            internal override string FallbackText => fallback;
 
             public override string Resolve()
             {

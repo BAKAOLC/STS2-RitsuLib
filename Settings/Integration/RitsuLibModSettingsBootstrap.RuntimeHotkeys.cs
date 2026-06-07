@@ -4,6 +4,7 @@ namespace STS2RitsuLib.Settings
 {
     internal static partial class RitsuLibModSettingsBootstrap
     {
+        // ReSharper disable once UnusedMethodReturnValue.Local
         private static ModSettingsPageBuilder ConfigureRuntimeHotkeysPage(
             ModSettingsPageBuilder page,
             IReadOnlyList<string> categoryOrder)

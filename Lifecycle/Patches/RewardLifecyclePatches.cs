@@ -4,6 +4,7 @@ using CombatStateCompat = MegaCrit.Sts2.Core.Combat.CombatState;
 using CombatStateCompat = MegaCrit.Sts2.Core.Combat.ICombatState;
 #endif
 using System.Reflection;
+using HarmonyLib;
 using MegaCrit.Sts2.Core.Commands;
 using MegaCrit.Sts2.Core.Entities.Gold;
 using MegaCrit.Sts2.Core.Entities.Players;
@@ -49,30 +50,37 @@ namespace STS2RitsuLib.Lifecycle.Patches
         ///     event on the continuation of the original task.
         ///     Harmony postfix：在匹配的 hook 方法完成后，在原始任务的延续中发布对应的奖励/经济生命周期事件。
         /// </summary>
+        [HarmonyPriority(Priority.Last)]
         public static void Postfix(MethodBase __originalMethod, object[] __args, ref Task __result)
         {
-            __result = __originalMethod.Name switch
+            __result = LifecyclePatchTaskBridge.After(__result, () =>
             {
-                nameof(Hook.AfterGoldGained) => LifecyclePatchTaskBridge.After(__result,
-                    () => RitsuLibFramework.PublishLifecycleEvent(
-                        new GoldGainedEvent((IRunState)__args[0], (Player)__args[1], ((Player)__args[1]).Gold,
-                            DateTimeOffset.UtcNow), nameof(GoldGainedEvent))),
-                nameof(Hook.AfterPotionProcured) => LifecyclePatchTaskBridge.After(__result,
-                    () => RitsuLibFramework.PublishLifecycleEvent(
-                        new PotionProcuredEvent((IRunState)__args[0], (CombatStateCompat?)__args[1],
-                            (PotionModel)__args[2],
-                            DateTimeOffset.UtcNow), nameof(PotionProcuredEvent))),
-                nameof(Hook.AfterPotionDiscarded) => LifecyclePatchTaskBridge.After(__result,
-                    () => RitsuLibFramework.PublishLifecycleEvent(
-                        new PotionDiscardedEvent((IRunState)__args[0], (CombatStateCompat?)__args[1],
-                            (PotionModel)__args[2],
-                            DateTimeOffset.UtcNow), nameof(PotionDiscardedEvent))),
-                nameof(Hook.AfterRewardTaken) => LifecyclePatchTaskBridge.After(__result,
-                    () => RitsuLibFramework.PublishLifecycleEvent(
-                        new RewardTakenEvent((IRunState)__args[0], (Player)__args[1], (Reward)__args[2],
-                            DateTimeOffset.UtcNow), nameof(RewardTakenEvent))),
-                _ => __result,
-            };
+                switch (__originalMethod.Name)
+                {
+                    case nameof(Hook.AfterGoldGained):
+                        RitsuLibFramework.PublishLifecycleEvent(
+                            new GoldGainedEvent((IRunState)__args[0], (Player)__args[1], ((Player)__args[1]).Gold,
+                                DateTimeOffset.UtcNow), nameof(GoldGainedEvent));
+                        break;
+                    case nameof(Hook.AfterPotionProcured):
+                        RitsuLibFramework.PublishLifecycleEvent(
+                            new PotionProcuredEvent((IRunState)__args[0], (CombatStateCompat?)__args[1],
+                                (PotionModel)__args[2],
+                                DateTimeOffset.UtcNow), nameof(PotionProcuredEvent));
+                        break;
+                    case nameof(Hook.AfterPotionDiscarded):
+                        RitsuLibFramework.PublishLifecycleEvent(
+                            new PotionDiscardedEvent((IRunState)__args[0], (CombatStateCompat?)__args[1],
+                                (PotionModel)__args[2],
+                                DateTimeOffset.UtcNow), nameof(PotionDiscardedEvent));
+                        break;
+                    case nameof(Hook.AfterRewardTaken):
+                        RitsuLibFramework.PublishLifecycleEvent(
+                            new RewardTakenEvent((IRunState)__args[0], (Player)__args[1], (Reward)__args[2],
+                                DateTimeOffset.UtcNow), nameof(RewardTakenEvent));
+                        break;
+                }
+            });
         }
     }
 

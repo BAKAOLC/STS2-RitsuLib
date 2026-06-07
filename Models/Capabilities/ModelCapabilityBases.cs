@@ -375,7 +375,7 @@ namespace STS2RitsuLib.Models.Capabilities
         public int RemainingTurns { get; private set; } = 1;
 
         /// <inheritdoc />
-        protected override JsonNode? SaveAdditionalState()
+        protected override JsonNode SaveAdditionalState()
         {
             return new JsonObject
             {

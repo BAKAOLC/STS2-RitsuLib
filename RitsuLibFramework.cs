@@ -14,6 +14,7 @@ using STS2RitsuLib.CardTags;
 using STS2RitsuLib.Combat.CardTargeting;
 using STS2RitsuLib.Combat.HandSize;
 using STS2RitsuLib.Combat.HealthBars;
+using STS2RitsuLib.Combat.SecondaryResources;
 using STS2RitsuLib.Compat;
 using STS2RitsuLib.Content;
 using STS2RitsuLib.Data;
@@ -342,6 +343,8 @@ namespace STS2RitsuLib
                     RitsuLibStartupAudit.Measure("godotNodeFactories", RitsuGodotNodeFactoryBootstrap.EnsureRegistered);
                     RitsuLibStartupAudit.Measure("modTypeDiscoveryBuiltIns",
                         ModTypeDiscoveryHub.EnsureBuiltInContributorsRegistered);
+                    RitsuLibStartupAudit.Measure("secondaryResourceLocalization",
+                        SecondaryResourceLocalizationBootstrap.Initialize);
                 });
 
                 PublishLifecycleEvent(
@@ -382,6 +385,7 @@ namespace STS2RitsuLib
                     RitsuLibStartupAudit.Measure("runtimeServices", () =>
                     {
                         EnsureFrameworkInteropBootstrapRegistered();
+                        SecondaryResourcePersistence.Initialize();
                         RuntimeHotkeyService.Initialize();
                         RitsuToastService.Initialize();
                         RitsuLibUpdateCheckService.Initialize();
@@ -439,7 +443,7 @@ namespace STS2RitsuLib
             MaxHandSizePatchInstaller.EnsurePatched();
         }
 
-        private static string GetCompatBranchLabel()
+        internal static string GetCompatBranchLabel()
         {
 #if STS2_AT_LEAST_0_107_0
             return "0.107.0";
@@ -532,6 +536,15 @@ namespace STS2RitsuLib
         public static ModContentRegistry GetContentRegistry(string modId)
         {
             return ModContentRegistry.For(modId);
+        }
+
+        /// <summary>
+        ///     Returns the secondary-resource registry for <paramref name="modId" />.
+        ///     返回 <paramref name="modId" /> 的次级资源注册表。
+        /// </summary>
+        public static ModSecondaryResourceRegistry GetSecondaryResourceRegistry(string modId)
+        {
+            return ModSecondaryResourceRegistry.For(modId);
         }
 
         /// <summary>

@@ -47,12 +47,13 @@ namespace STS2RitsuLib.Scaffolding.Godot.NodeAttachments
 
         private static void Attach(Node parent, NodeAttachmentDefinition definition)
         {
+            var attachParent = ResolveAttachParent(parent, definition);
             var attached = AttachedNodes.GetOrCreate(parent);
             if (attached.TryGetValue(definition.Id, out var tracked))
             {
                 if (GodotObject.IsInstanceValid(tracked))
                 {
-                    EnsureAttached(parent, tracked, definition);
+                    EnsureAttached(attachParent, tracked, definition);
                     return;
                 }
 
@@ -60,7 +61,7 @@ namespace STS2RitsuLib.Scaffolding.Godot.NodeAttachments
             }
 
             if (!string.IsNullOrWhiteSpace(definition.Name) &&
-                TryFindDirectChildByName(parent, definition.Name, out var existing))
+                TryFindDirectChildByName(attachParent, definition.Name, out var existing))
                 switch (definition.Options.DuplicatePolicy)
                 {
                     case NodeAttachmentDuplicatePolicy.AllowDuplicateName:
@@ -70,8 +71,8 @@ namespace STS2RitsuLib.Scaffolding.Godot.NodeAttachments
                             throw new InvalidOperationException(
                                 $"Existing child '{definition.Name}' is {existing.GetType().FullName}, expected {definition.NodeType.FullName}.");
                         attached[definition.Id] = existing;
-                        ApplyNodeOptions(parent, existing, definition);
-                        ApplyInsertion(parent, existing, definition);
+                        ApplyNodeOptions(existing, definition);
+                        ApplyInsertion(attachParent, existing, definition);
                         return;
                     case NodeAttachmentDuplicatePolicy.SkipIfExistingByName:
                         return;
@@ -82,16 +83,18 @@ namespace STS2RitsuLib.Scaffolding.Godot.NodeAttachments
                         throw new InvalidOperationException(
                             $"Parent {parent.GetType().FullName} already has a direct child named '{definition.Name}'.");
                     default:
+#pragma warning disable CA2208
                         throw new ArgumentOutOfRangeException(nameof(definition.Options.DuplicatePolicy));
+#pragma warning restore CA2208
                 }
 
             var child = definition.CreateNode(parent);
-            ApplyNodeOptions(parent, child, definition);
+            ApplyNodeOptions(child, definition);
 
             if (definition.Options.SetupTiming == NodeAttachmentSetupTiming.BeforeAdd)
                 definition.RunSetup(parent, child);
 
-            EnsureAttached(parent, child, definition);
+            EnsureAttached(attachParent, child, definition);
 
             if (definition.Options.SetupTiming == NodeAttachmentSetupTiming.AfterAdd)
                 definition.RunSetup(parent, child);
@@ -99,16 +102,26 @@ namespace STS2RitsuLib.Scaffolding.Godot.NodeAttachments
             attached[definition.Id] = child;
         }
 
-        private static void EnsureAttached(Node parent, Node child, NodeAttachmentDefinition definition)
+        private static Node ResolveAttachParent(Node lifecycleParent, NodeAttachmentDefinition definition)
+        {
+            var attachParent = definition.Options.AttachParentSelector?.Invoke(lifecycleParent) ?? lifecycleParent;
+            if (!GodotObject.IsInstanceValid(attachParent))
+                throw new InvalidOperationException(
+                    $"Node attachment '{definition.Id}' resolved an invalid attach parent.");
+
+            return attachParent;
+        }
+
+        private static void EnsureAttached(Node attachParent, Node child, NodeAttachmentDefinition definition)
         {
             if (!GodotObject.IsInstanceValid(child))
                 throw new InvalidOperationException(
                     $"Node attachment '{definition.Id}' produced an invalid node instance.");
 
             var currentParent = child.GetParent();
-            if (currentParent == parent)
+            if (currentParent == attachParent)
             {
-                ApplyInsertion(parent, child, definition);
+                ApplyInsertion(attachParent, child, definition);
                 return;
             }
 
@@ -119,22 +132,24 @@ namespace STS2RitsuLib.Scaffolding.Godot.NodeAttachments
             switch (definition.Options.AddMode)
             {
                 case NodeAttachmentAddMode.AddChildSafely:
-                    RitsuGodotTreeCompat.AddChildSafely(parent, child);
+                    RitsuGodotTreeCompat.AddChildSafely(attachParent, child);
                     break;
                 case NodeAttachmentAddMode.AddChildDirect:
-                    parent.AddChild(child);
+                    attachParent.AddChild(child);
                     break;
                 default:
+#pragma warning disable CA2208
                     throw new ArgumentOutOfRangeException(nameof(definition.Options.AddMode));
+#pragma warning restore CA2208
             }
 
             if (definition.Options.UniqueNameInOwner)
-                child.Owner = parent;
+                child.Owner = attachParent;
 
-            ApplyInsertion(parent, child, definition);
+            ApplyInsertion(attachParent, child, definition);
         }
 
-        private static void ApplyNodeOptions(Node parent, Node child, NodeAttachmentDefinition definition)
+        private static void ApplyNodeOptions(Node child, NodeAttachmentDefinition definition)
         {
             if (!string.IsNullOrWhiteSpace(definition.Name))
                 child.Name = definition.Name;

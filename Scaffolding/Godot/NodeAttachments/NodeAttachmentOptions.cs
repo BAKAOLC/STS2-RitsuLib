@@ -1,3 +1,5 @@
+using Godot;
+
 namespace STS2RitsuLib.Scaffolding.Godot.NodeAttachments
 {
     /// <summary>
@@ -42,6 +44,12 @@ namespace STS2RitsuLib.Scaffolding.Godot.NodeAttachments
         ///     将子节点加入父节点时使用的方法。
         /// </summary>
         public NodeAttachmentAddMode AddMode { get; init; } = NodeAttachmentAddMode.AddChildSafely;
+
+        /// <summary>
+        ///     Optional selector for the concrete node that receives the child. The lifecycle parent is passed in.
+        ///     可选的实际子节点接收者选择器；参数为生命周期父节点。
+        /// </summary>
+        public Func<Node, Node?>? AttachParentSelector { get; init; }
 
         /// <summary>
         ///     Whether setup runs before or after the child is added to the tree.

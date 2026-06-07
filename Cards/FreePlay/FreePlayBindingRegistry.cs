@@ -161,6 +161,25 @@ namespace STS2RitsuLib.Cards.FreePlay
             return Resolve(play).IsFree;
         }
 
+        /// <summary>
+        ///     Returns whether the card is already marked free before a <see cref="CardPlay" /> exists.
+        ///     This does not consume next-play free charges.
+        ///     在 <see cref="CardPlay" /> 尚未创建前返回此卡是否已被标记为免费。
+        ///     此方法不会消费下一次出牌免费层数。
+        /// </summary>
+        public static bool IsCardFreeForUpcomingPlay(CardModel card)
+        {
+            ArgumentNullException.ThrowIfNull(card);
+
+            if (!CardStates.TryGetValue(card, out var state))
+                return false;
+
+            var combatState = ResolveCombatState(card);
+            return state.NextPlayCharges > 0 ||
+                   (state.FreeThisCombatState != null &&
+                    ReferenceEquals(state.FreeThisCombatState, combatState));
+        }
+
         private static FreePlayResolution BuildResolution(CardPlay play)
         {
             if (play.IsAutoPlay)

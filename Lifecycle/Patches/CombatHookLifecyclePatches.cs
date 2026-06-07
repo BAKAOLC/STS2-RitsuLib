@@ -4,6 +4,7 @@ using CombatStateCompat = MegaCrit.Sts2.Core.Combat.CombatState;
 using CombatStateCompat = MegaCrit.Sts2.Core.Combat.ICombatState;
 #endif
 using System.Reflection;
+using HarmonyLib;
 using MegaCrit.Sts2.Core.Combat;
 using MegaCrit.Sts2.Core.Entities.Cards;
 using MegaCrit.Sts2.Core.Entities.Creatures;
@@ -90,6 +91,7 @@ namespace STS2RitsuLib.Lifecycle.Patches
         ///     Harmony prefix：为在战斗、side turn、
         ///     卡牌打出、flush 和生物死亡之前运行的 hook 方法发布同步生命周期事件。
         /// </summary>
+        [HarmonyPriority(Priority.First)]
         public static void Prefix(MethodBase __originalMethod, object[] __args)
         {
             switch (__originalMethod.Name)
@@ -154,63 +156,81 @@ namespace STS2RitsuLib.Lifecycle.Patches
         ///     Harmony postfix：链接到原始异步 <see cref="Task" />，并在
         ///     战斗结束、胜利、回合、卡牌牌堆变化、flush 完成和死亡解析后发布生命周期事件。
         /// </summary>
+        [HarmonyPriority(Priority.Last)]
         public static void Postfix(MethodBase __originalMethod, object[] __args, ref Task __result)
         {
-            __result = __originalMethod.Name switch
+            __result = LifecyclePatchTaskBridge.After(__result, () =>
             {
-                nameof(Hook.AfterCombatEnd) => LifecyclePatchTaskBridge.After(__result,
-                    () => RitsuLibFramework.PublishLifecycleEvent(
-                        new CombatEndedEvent((IRunState)__args[0], (CombatStateCompat?)__args[1], (CombatRoom)__args[2],
-                            DateTimeOffset.UtcNow), nameof(CombatEndedEvent))),
-                nameof(Hook.AfterCombatVictory) => LifecyclePatchTaskBridge.After(__result,
-                    () => RitsuLibFramework.PublishLifecycleEvent(
-                        new CombatVictoryEvent((IRunState)__args[0], (CombatStateCompat?)__args[1],
-                            (CombatRoom)__args[2],
-                            DateTimeOffset.UtcNow), nameof(CombatVictoryEvent))),
-                nameof(Hook.AfterSideTurnStart) => LifecyclePatchTaskBridge.After(__result,
-                    () => RitsuLibFramework.PublishLifecycleEvent(
-                        new SideTurnStartedEvent((CombatStateCompat)__args[0], (CombatSide)__args[1],
-                            DateTimeOffset.UtcNow),
-                        nameof(SideTurnStartedEvent))),
-                nameof(Hook.AfterCardPlayed) => LifecyclePatchTaskBridge.After(__result,
-                    () => RitsuLibFramework.PublishLifecycleEvent(
-                        new CardPlayedEvent((CombatStateCompat)__args[0], (CardPlay)__args[2], DateTimeOffset.UtcNow),
-                        nameof(CardPlayedEvent))),
-                nameof(Hook.AfterCardChangedPiles) => LifecyclePatchTaskBridge.After(__result,
-                    () => RitsuLibFramework.PublishLifecycleEvent(
-                        new CardMovedBetweenPilesEvent((IRunState)__args[0], (CombatStateCompat?)__args[1],
-                            (CardModel)__args[2], (PileType)__args[3], (AbstractModel?)__args[4],
-                            DateTimeOffset.UtcNow), nameof(CardMovedBetweenPilesEvent))),
-                nameof(Hook.AfterCardDrawn) => LifecyclePatchTaskBridge.After(__result,
-                    () => RitsuLibFramework.PublishLifecycleEvent(
-                        new CardDrawnEvent((CombatStateCompat)__args[0], (CardModel)__args[2], (bool)__args[3],
-                            DateTimeOffset.UtcNow), nameof(CardDrawnEvent))),
-                nameof(Hook.AfterCardDiscarded) => LifecyclePatchTaskBridge.After(__result,
-                    () => RitsuLibFramework.PublishLifecycleEvent(
-                        new CardDiscardedEvent((CombatStateCompat)__args[0], (CardModel)__args[2],
-                            DateTimeOffset.UtcNow),
-                        nameof(CardDiscardedEvent))),
-                nameof(Hook.AfterCardExhausted) => LifecyclePatchTaskBridge.After(__result,
-                    () => RitsuLibFramework.PublishLifecycleEvent(
-                        new CardExhaustedEvent((CombatStateCompat)__args[0], (CardModel)__args[2], (bool)__args[3],
-                            DateTimeOffset.UtcNow), nameof(CardExhaustedEvent))),
+                switch (__originalMethod.Name)
+                {
+                    case nameof(Hook.AfterCombatEnd):
+                        RitsuLibFramework.PublishLifecycleEvent(
+                            new CombatEndedEvent((IRunState)__args[0], (CombatStateCompat?)__args[1],
+                                (CombatRoom)__args[2],
+                                DateTimeOffset.UtcNow), nameof(CombatEndedEvent));
+                        break;
+                    case nameof(Hook.AfterCombatVictory):
+                        RitsuLibFramework.PublishLifecycleEvent(
+                            new CombatVictoryEvent((IRunState)__args[0], (CombatStateCompat?)__args[1],
+                                (CombatRoom)__args[2],
+                                DateTimeOffset.UtcNow), nameof(CombatVictoryEvent));
+                        break;
+                    case nameof(Hook.AfterSideTurnStart):
+                        RitsuLibFramework.PublishLifecycleEvent(
+                            new SideTurnStartedEvent((CombatStateCompat)__args[0], (CombatSide)__args[1],
+                                DateTimeOffset.UtcNow),
+                            nameof(SideTurnStartedEvent));
+                        break;
+                    case nameof(Hook.AfterCardPlayed):
+                        RitsuLibFramework.PublishLifecycleEvent(
+                            new CardPlayedEvent((CombatStateCompat)__args[0], (CardPlay)__args[2],
+                                DateTimeOffset.UtcNow),
+                            nameof(CardPlayedEvent));
+                        break;
+                    case nameof(Hook.AfterCardChangedPiles):
+                        RitsuLibFramework.PublishLifecycleEvent(
+                            new CardMovedBetweenPilesEvent((IRunState)__args[0], (CombatStateCompat?)__args[1],
+                                (CardModel)__args[2], (PileType)__args[3], (AbstractModel?)__args[4],
+                                DateTimeOffset.UtcNow), nameof(CardMovedBetweenPilesEvent));
+                        break;
+                    case nameof(Hook.AfterCardDrawn):
+                        RitsuLibFramework.PublishLifecycleEvent(
+                            new CardDrawnEvent((CombatStateCompat)__args[0], (CardModel)__args[2], (bool)__args[3],
+                                DateTimeOffset.UtcNow), nameof(CardDrawnEvent));
+                        break;
+                    case nameof(Hook.AfterCardDiscarded):
+                        RitsuLibFramework.PublishLifecycleEvent(
+                            new CardDiscardedEvent((CombatStateCompat)__args[0], (CardModel)__args[2],
+                                DateTimeOffset.UtcNow),
+                            nameof(CardDiscardedEvent));
+                        break;
+                    case nameof(Hook.AfterCardExhausted):
+                        RitsuLibFramework.PublishLifecycleEvent(
+                            new CardExhaustedEvent((CombatStateCompat)__args[0], (CardModel)__args[2], (bool)__args[3],
+                                DateTimeOffset.UtcNow), nameof(CardExhaustedEvent));
+                        break;
 #if !STS2_AT_LEAST_0_105_0
-                nameof(Hook.AfterCardRetained) => LifecyclePatchTaskBridge.After(__result,
-                    () => PublishLegacyCardRetained((CombatStateCompat)__args[0], (CardModel)__args[1])),
+                    case nameof(Hook.AfterCardRetained):
+                        PublishLegacyCardRetained((CombatStateCompat)__args[0], (CardModel)__args[1]);
+                        break;
 #else
-                nameof(Hook.AfterFlush) => LifecyclePatchTaskBridge.After(__result,
-                    () => PublishCardsFlushed(
-                        (CombatStateCompat)__args[0],
-                        (Player)__args[1],
-                        (IReadOnlyCollection<CardModel>)__args[3],
-                        (IReadOnlyCollection<CardModel>)__args[4])),
+                    case nameof(Hook.AfterFlush):
+                        PublishCardsFlushed(
+                            (CombatStateCompat)__args[0],
+                            (Player)__args[1],
+                            (IReadOnlyCollection<CardModel>)__args[3],
+                            (IReadOnlyCollection<CardModel>)__args[4]);
+                        break;
 #endif
-                nameof(Hook.AfterDeath) => LifecyclePatchTaskBridge.After(__result,
-                    () => RitsuLibFramework.PublishLifecycleEvent(
-                        new CreatureDiedEvent((IRunState)__args[0], (CombatStateCompat?)__args[1], (Creature)__args[2],
-                            (bool)__args[3], (float)__args[4], DateTimeOffset.UtcNow), nameof(CreatureDiedEvent))),
-                _ => __result,
-            };
+                    case nameof(Hook.AfterDeath):
+                        RitsuLibFramework.PublishLifecycleEvent(
+                            new CreatureDiedEvent((IRunState)__args[0], (CombatStateCompat?)__args[1],
+                                (Creature)__args[2],
+                                (bool)__args[3], (float)__args[4], DateTimeOffset.UtcNow),
+                            nameof(CreatureDiedEvent));
+                        break;
+                }
+            });
         }
 
 #if !STS2_AT_LEAST_0_105_0

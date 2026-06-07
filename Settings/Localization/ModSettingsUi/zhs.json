@@ -91,6 +91,8 @@
   "ritsulib.uiShellTheme.resetFile.description": "将磁盘中已存在的内置主题文件覆盖为内嵌默认版本。",
   "ritsulib.updateCheck.enabled.label": "检查 RitsuLib 更新",
   "ritsulib.updateCheck.enabled.description": "首次进入主菜单后检查一次 RitsuLib 更新。",
+  "ritsulib.mainMenuModSettingsButton.enabled.label": "显示主菜单设置快捷入口",
+  "ritsulib.mainMenuModSettingsButton.enabled.description": "在主菜单更新日志按钮下方显示 RitsuLib 设置快捷入口。",
   "ritsulib.modSourceHoverTips.enabled.label": "显示内容来源悬停提示",
   "ritsulib.modSourceHoverTips.enabled.description": "为卡牌、遗物、药水、事件、关键词和其他模型悬停提示显示内容来源模组。",
   "ritsulib.modSourceHoverTips.includeVanilla.label": "包含原版内容来源",

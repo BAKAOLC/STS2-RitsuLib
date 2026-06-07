@@ -8,7 +8,7 @@ namespace STS2RitsuLib.Settings
         : ModSettingsEntryDefinition(inner.Id, inner.Label, inner.Description)
     {
         public override Func<bool>? VisibilityPredicate => inner.VisibilityPredicate;
-        public override Func<bool>? EnabledPredicate => EvaluateEnabled;
+        public override Func<bool> EnabledPredicate => EvaluateEnabled;
 
         internal override bool CanResetToDefault => inner.CanResetToDefault;
 

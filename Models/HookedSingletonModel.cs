@@ -87,6 +87,18 @@ namespace STS2RitsuLib.Models
         public override bool ShouldReceiveCombatHooks { get; }
 
         /// <summary>
+        ///     Gets the run state most recently supplied by the hook subscription callback.
+        ///     获取 hook 订阅回调最近提供的跑局状态。
+        /// </summary>
+        protected IRunState? CurrentRunState { get; private set; }
+
+        /// <summary>
+        ///     Gets the combat state most recently supplied by the hook subscription callback.
+        ///     获取 hook 订阅回调最近提供的战斗状态。
+        /// </summary>
+        protected CombatState? CurrentCombatState { get; private set; }
+
+        /// <summary>
         ///     Provides the run-scoped sub-models that should receive run-state hook callbacks for this singleton.
         ///     提供应为此单例接收跑局状态 hook 回调的跑局作用域子模型。
         /// </summary>
@@ -100,6 +112,8 @@ namespace STS2RitsuLib.Models
         /// </returns>
         private IEnumerable<AbstractModel> RunSubModels(RunState runState)
         {
+            CurrentRunState = runState;
+            CurrentCombatState = null;
             return [this];
         }
 
@@ -117,6 +131,8 @@ namespace STS2RitsuLib.Models
         /// </returns>
         private IEnumerable<AbstractModel> CombatSubModels(CombatState combatState)
         {
+            CurrentCombatState = combatState;
+            CurrentRunState = combatState.RunState;
             return [this];
         }
     }

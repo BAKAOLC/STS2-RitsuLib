@@ -778,7 +778,8 @@ namespace STS2RitsuLib.Content
             {
                 if (!RegisteredModelCapabilities.Add(capabilityType))
                 {
-                    _logger.Debug($"[Content] Skipping duplicate model capability registration: {capabilityType.Name}");
+                    _logger.Debug(
+                        $"[Content] Skipping duplicate model capability registration: {capabilityType.Name}");
                     return;
                 }
 
@@ -787,7 +788,7 @@ namespace STS2RitsuLib.Content
 
             var capabilityId = ResolveModelCapabilityId(capabilityType, publicEntry);
             ModelCapabilityRegistry.RegisterModelCapability(capabilityType, capabilityId);
-            _logger.Info($"[Content] Registered model capability: {capabilityType.Name} ({capabilityId})");
+            _logger.Info($"[Content] Registered model capability: {capabilityType.Name} (id={capabilityId})");
         }
 
         /// <summary>
@@ -1641,13 +1642,14 @@ namespace STS2RitsuLib.Content
             ApplyFixedPublicEntryForModel(modelType, publicEntry);
             RegistrationConflictDetector.ThrowIfModelIdConflicts(poolType);
             RegistrationConflictDetector.ThrowIfModelIdConflicts(modelType);
+            var modelLabel = FormatModelForLog(modelType);
 
             lock (SyncRoot)
             {
                 if (!RegisteredPoolContent.Add((poolType, modelType)))
                 {
                     _logger.Debug(
-                        $"[Content] Skipping duplicate {contentKind} registration: {modelType.Name} -> {poolType.Name}");
+                        $"[Content] Skipping duplicate {contentKind} registration: {modelLabel} -> {poolType.Name}");
                     return;
                 }
 
@@ -1655,7 +1657,7 @@ namespace STS2RitsuLib.Content
             }
 
             ModHelper.AddModelToPool(poolType, modelType);
-            _logger.Info($"[Content] Registered {contentKind}: {modelType.Name} -> {poolType.Name}");
+            _logger.Info($"[Content] Registered {contentKind}: {modelLabel} -> {poolType.Name}");
         }
 
         private void RegisterCharacterStarterModel(Type characterType, Type modelType, Type expectedModelBaseType,
@@ -1670,6 +1672,7 @@ namespace STS2RitsuLib.Content
             EnsureModelType(modelType, expectedModelBaseType, nameof(modelType));
             RegistrationConflictDetector.ThrowIfModelIdConflicts(characterType);
             RegistrationConflictDetector.ThrowIfModelIdConflicts(modelType);
+            var modelLabel = FormatModelForLog(modelType);
 
             lock (SyncRoot)
             {
@@ -1677,7 +1680,7 @@ namespace STS2RitsuLib.Content
             }
 
             _logger.Info(
-                $"[Content] Registered starter {kind.ToString().ToLowerInvariant()}: {modelType.Name} x{count} -> {characterType.Name}");
+                $"[Content] Registered starter {kind.ToString().ToLowerInvariant()}: {modelLabel} x{count} -> {characterType.Name}");
         }
 
         private void RegisterStandaloneModel(
@@ -1690,19 +1693,20 @@ namespace STS2RitsuLib.Content
             EnsureModelType(modelType, expectedBaseType, nameof(modelType));
             PrimeOwnedType(modelType);
             RegistrationConflictDetector.ThrowIfModelIdConflicts(modelType);
+            var modelLabel = FormatModelForLog(modelType);
 
             lock (SyncRoot)
             {
                 if (!registry.Add(modelType))
                 {
-                    _logger.Debug($"[Content] Skipping duplicate {contentKind} registration: {modelType.Name}");
+                    _logger.Debug($"[Content] Skipping duplicate {contentKind} registration: {modelLabel}");
                     return;
                 }
 
                 RememberOwner(modelType);
             }
 
-            _logger.Info($"[Content] Registered {contentKind}: {modelType.Name}");
+            _logger.Info($"[Content] Registered {contentKind}: {modelLabel}");
         }
 
         private void RegisterModifier(
@@ -1715,12 +1719,13 @@ namespace STS2RitsuLib.Content
             EnsureModelType(modifierType, typeof(ModifierModel), nameof(modifierType));
             PrimeOwnedType(modifierType);
             RegistrationConflictDetector.ThrowIfModelIdConflicts(modifierType);
+            var modifierLabel = FormatModelForLog(modifierType);
 
             lock (SyncRoot)
             {
                 if (registry.Any(entry => entry.ModifierType == modifierType))
                 {
-                    _logger.Debug($"[Content] Skipping duplicate {contentKind} registration: {modifierType.Name}");
+                    _logger.Debug($"[Content] Skipping duplicate {contentKind} registration: {modifierLabel}");
                     return;
                 }
 
@@ -1728,7 +1733,7 @@ namespace STS2RitsuLib.Content
                 RememberOwner(modifierType);
             }
 
-            _logger.Info($"[Content] Registered {contentKind}: {modifierType.Name}");
+            _logger.Info($"[Content] Registered {contentKind}: {modifierLabel}");
         }
 
         private void RegisterScopedModel(
@@ -1745,6 +1750,7 @@ namespace STS2RitsuLib.Content
             PrimeOwnedType(modelType);
             RegistrationConflictDetector.ThrowIfModelIdConflicts(scopeType);
             RegistrationConflictDetector.ThrowIfModelIdConflicts(modelType);
+            var modelLabel = FormatModelForLog(modelType);
 
             lock (SyncRoot)
             {
@@ -1757,14 +1763,14 @@ namespace STS2RitsuLib.Content
                 if (!entries.Add(modelType))
                 {
                     _logger.Debug(
-                        $"[Content] Skipping duplicate {contentKind} registration: {modelType.Name} -> {scopeType.Name}");
+                        $"[Content] Skipping duplicate {contentKind} registration: {modelLabel} -> {scopeType.Name}");
                     return;
                 }
 
                 RememberOwner(modelType);
             }
 
-            _logger.Info($"[Content] Registered {contentKind}: {modelType.Name} -> {scopeType.Name}");
+            _logger.Info($"[Content] Registered {contentKind}: {modelLabel} -> {scopeType.Name}");
         }
 
         private void EnsureMutable(string operation)
@@ -1842,6 +1848,13 @@ namespace STS2RitsuLib.Content
                 return false;
 
             return registeredCharacterType != typeof(CharacterModel);
+        }
+
+        private static string FormatModelForLog(Type modelType)
+        {
+            return TryGetFixedPublicEntry(modelType, out var entry)
+                ? $"{modelType.Name} (id={entry})"
+                : modelType.Name;
         }
 
         private static Type[] GetRegisteredCharacterStarterTypes(Type characterType, CharacterStarterContentKind kind)

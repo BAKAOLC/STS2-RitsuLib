@@ -1,13 +1,6 @@
 using HarmonyLib;
-using MegaCrit.Sts2.Core.Commands;
-using MegaCrit.Sts2.Core.Helpers;
-using MegaCrit.Sts2.Core.Logging;
-using MegaCrit.Sts2.Core.Multiplayer;
-using MegaCrit.Sts2.Core.Nodes;
 using MegaCrit.Sts2.Core.Nodes.Audio;
-using MegaCrit.Sts2.Core.Nodes.GodotExtensions;
 using MegaCrit.Sts2.Core.Nodes.Screens.MainMenu;
-using MegaCrit.Sts2.Core.Runs;
 using MegaCrit.Sts2.Core.Saves;
 using STS2RitsuLib.Patching.Models;
 using STS2RitsuLib.Saves;
@@ -15,12 +8,10 @@ using STS2RitsuLib.Saves;
 namespace STS2RitsuLib.Lifecycle.Patches
 {
     /// <summary>
-    ///     Before <see cref="RunState.FromSerializable" />, reject saves that reference unregistered characters so the
-    ///     vanilla <c>catch { DisplayLoadSaveError(); throw; }</c> path never runs (avoids TaskHelper rethrow freeze).
-    ///     Run files are not deleted.
-    ///     在 <see cref="RunState.FromSerializable" /> 前拒绝引用未注册角色的存档，使
-    ///     原版 <c>catch { DisplayLoadSaveError(); throw; }</c> 路径不会运行（避免 TaskHelper 重新抛出导致卡死）。
-    ///     跑局文件不会被删除。
+    ///     Before <c>OnContinueButtonPressedAsync</c> reaches <c>RunState.FromSerializable</c>, rejects saves
+    ///     that reference unregistered characters. The normal vanilla continue flow is left untouched.
+    ///     在 <c>OnContinueButtonPressedAsync</c> 进入 <c>RunState.FromSerializable</c> 前拒绝引用未注册角色的存档。
+    ///     正常原版继续跑局流程保持不变。
     /// </summary>
     public class NMainMenuContinueRunMissingCharacterPatch : IPatchMethod
     {
@@ -47,68 +38,34 @@ namespace STS2RitsuLib.Lifecycle.Patches
         /// <inheritdoc />
         public static ModPatchTarget[] GetTargets()
         {
-            return [new(typeof(NMainMenu), "OnContinueButtonPressed", [typeof(NButton)])];
+            return [new(typeof(NMainMenu), "OnContinueButtonPressedAsync")];
         }
 
         /// <summary>
-        ///     Harmony prefix: replaces Continue handling with safe read validation and async continue; returns false to
-        ///     skip vanilla.
-        ///     Harmony prefix：用安全读取验证和异步继续流程替换 Continue 处理；返回 false 以跳过原版逻辑。
+        ///     Harmony prefix: only replaces the continue task for invalid mod-character saves.
+        ///     Harmony prefix：仅在 mod 角色存档无效时替换继续跑局任务。
         /// </summary>
-        public static bool Prefix(NMainMenu __instance, NButton _)
+        public static bool Prefix(NMainMenu __instance, ref Task __result)
         {
             var read = ReadRunSaveResultRef(__instance);
-            if (read is not { Success: true } || read.SaveData == null)
-                DisplayLoadSaveError(__instance);
-            else
-                TaskHelper.RunSafely(ContinueRunAsync(__instance, read.SaveData));
+            if (read is not { Success: true, SaveData: not null } ||
+                !RunResumeMissingCharacterSupport.AnyPlayerMissingRegisteredCharacter(read.SaveData))
+                return true;
 
+            __result = BlockContinueRunAsync(__instance);
             return false;
         }
 
-        private static async Task ContinueRunAsync(NMainMenu menu, SerializableRun serializableRun)
+        private static Task BlockContinueRunAsync(NMainMenu menu)
         {
-            _ = 2;
             var continueButton = ContinueButtonRef(menu);
-            try
-            {
-                continueButton.Disable();
-                NAudioManager.Instance?.StopMusic();
-
-                if (RunResumeMissingCharacterSupport.AnyPlayerMissingRegisteredCharacter(serializableRun))
-                {
-                    RitsuLibFramework.Logger.Warn(
-                        "[Saves] Continue run blocked: save references character(s) not in ModelDb (e.g. mod not loaded). " +
-                        "Run save was left on disk.");
-                    DisplayLoadSaveError(menu);
-                    return;
-                }
-
-                var runState = RunState.FromSerializable(serializableRun);
-                var game = NGame.Instance;
-                if (game == null)
-                    throw new InvalidOperationException("NGame.Instance is null during continue run.");
-
-#if !STS2_AT_LEAST_0_104_0
-                RunManager.Instance.SetUpSavedSinglePlayer(runState, serializableRun);
-#elif !STS2_AT_LEAST_0_107_0
-                await RunManager.Instance.SetUpSavedSinglePlayer(runState, serializableRun);
-#else
-                await RunManager.Instance.SetUpSavedSingleplayer(runState, serializableRun);
-#endif
-                Log.Info($"Continuing run with character: {serializableRun.Players[0].CharacterId}");
-                SfxCmd.Play(runState.Players[0].Character.CharacterTransitionSfx);
-                await game.Transition.FadeOut(0.8f,
-                    runState.Players[0].Character.CharacterSelectTransitionPath);
-                game.ReactionContainer.InitializeNetworking(new NetSingleplayerGameService());
-                await game.LoadRun(runState, serializableRun.PreFinishedRoom);
-                await game.Transition.FadeIn();
-            }
-            catch (Exception)
-            {
-                DisplayLoadSaveError(menu);
-                throw;
-            }
+            continueButton.Disable();
+            NAudioManager.Instance?.StopMusic();
+            RitsuLibFramework.Logger.Warn(
+                "[Saves] Continue run blocked: save references character(s) not in ModelDb (e.g. mod not loaded). " +
+                "Run save was left on disk.");
+            DisplayLoadSaveError(menu);
+            return Task.CompletedTask;
         }
     }
 }

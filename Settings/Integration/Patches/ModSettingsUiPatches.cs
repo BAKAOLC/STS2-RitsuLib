@@ -260,7 +260,11 @@ namespace STS2RitsuLib.Settings.Patches
             EnsureGeneralSettingsContentTracksChildAdds(content);
 
             if (TryGetEntryLine(content) is { } existing)
+            {
+                if (content.GetNodeOrNull<Control>(EntryDividerNodeName) is { } existingDivider)
+                    MoveEntryAboveNativeModSettings(content, existingDivider, existing);
                 return existing;
+            }
 
             RemoveStaleEntryNodes(content);
 
@@ -272,11 +276,7 @@ namespace STS2RitsuLib.Settings.Patches
             content.AddChild(divider);
             content.AddChild(line);
 
-            var creditsDivider = content.GetNodeOrNull<Control>("CreditsDivider");
-            if (creditsDivider == null) return line;
-            var targetIndex = creditsDivider.GetIndex();
-            content.MoveChild(divider, targetIndex);
-            content.MoveChild(line, targetIndex + 1);
+            MoveEntryAboveNativeModSettings(content, divider, line);
 
             return line;
 
@@ -285,6 +285,29 @@ namespace STS2RitsuLib.Settings.Patches
                 SchedulePrewarmStep(screen, 0);
                 screen.GetAncestorOfType<NSubmenuStack>()?.PushSubmenuType(typeof(RitsuModSettingsSubmenu));
             }
+        }
+
+        private static void MoveEntryAboveNativeModSettings(
+            VBoxContainer content,
+            Control divider,
+            MarginContainer line)
+        {
+            var anchor = content.GetNodeOrNull<Control>("ModdingDivider") ??
+                         content.GetNodeOrNull<Control>("CreditsDivider");
+            if (anchor == null)
+                return;
+
+            MoveChildBefore(content, line, anchor);
+            MoveChildBefore(content, divider, line);
+        }
+
+        private static void MoveChildBefore(VBoxContainer content, Control child, Control anchor)
+        {
+            var targetIndex = anchor.GetIndex();
+            if (child.GetIndex() < targetIndex)
+                targetIndex--;
+
+            content.MoveChild(child, targetIndex);
         }
 
         internal static MarginContainer? TryGetEntryLine(VBoxContainer content)
