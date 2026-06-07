@@ -81,6 +81,36 @@ RitsuLibFramework.RegisterModSettings("MyMod", page => page
 
 :::
 
+## Open Pages In Game{lang="en"}
+
+::: en
+
+RitsuLib surfaces registered settings pages from multiple built-in entry points:
+
+- Main menu patch notes area: the framework can show a dedicated RitsuLib settings shortcut under the vanilla patch-notes button
+- Pause and settings surfaces: existing RitsuLib settings integrations still expose the same registered pages there
+
+The main-menu shortcut is controlled by RitsuLib's own global setting `main_menu_mod_settings_button_enabled`.
+
+When documenting your mod for players, mention both the main menu and pause-menu paths if the setting matters during a run.
+
+:::
+
+## 游戏内打开入口{lang="zh-CN"}
+
+::: zh-CN
+
+RitsuLib 现在会通过多个内建入口暴露已注册的设置页：
+
+- 主菜单 patch notes 区域：框架可以在原版更新日志按钮下方显示一个专用的 RitsuLib 设置快捷入口
+- 暂停菜单和设置界面：原有的 RitsuLib 设置集成仍会在这些界面暴露同一批已注册页面
+
+主菜单快捷入口由 RitsuLib 自身的全局设置 `main_menu_mod_settings_button_enabled` 控制。
+
+如果你的 Mod 文档里需要告诉玩家去哪里改设置，建议同时写出主菜单入口和跑局内暂停菜单入口。
+
+:::
+
 ## Controls{lang="en"}
 
 ::: en
