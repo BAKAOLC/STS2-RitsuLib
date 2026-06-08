@@ -217,10 +217,17 @@ namespace STS2RitsuLib.Combat.SecondaryResources
         private int _amount;
         private MegaLabel _amountLabel = null!;
 
+        private Player? _boundPlayer;
         private SecondaryResourceDefinition? _definition;
         private NSecondaryResourceIcon _icon = null!;
         private int? _maxAmount;
         private SecondaryResourceCounterStyle _style = SecondaryResourceCounterStyle.Default;
+
+        /// <summary>
+        ///     Whether this counter refreshes the bound player's resource every frame.
+        ///     该计数器是否每帧刷新已绑定玩家的资源数量。
+        /// </summary>
+        public bool AutoRefresh { get; set; }
 
         /// <summary>
         ///     Creates and configures a counter for <paramref name="definition" />.
@@ -252,6 +259,17 @@ namespace STS2RitsuLib.Combat.SecondaryResources
         }
 
         /// <summary>
+        ///     Binds this counter to a player for automatic or manual refreshes.
+        ///     将该计数器绑定到一名玩家，用于自动或手动刷新。
+        /// </summary>
+        public void Bind(Player? player, bool autoRefresh = true)
+        {
+            _boundPlayer = player;
+            AutoRefresh = autoRefresh;
+            Refresh(_boundPlayer);
+        }
+
+        /// <summary>
         ///     Refreshes the displayed amount from <paramref name="player" />.
         ///     从 <paramref name="player" /> 刷新显示数量。
         /// </summary>
@@ -263,6 +281,7 @@ namespace STS2RitsuLib.Combat.SecondaryResources
                 return;
             }
 
+            Visible = true;
             SetAmount(
                 SecondaryResourceCmd.Get(player, _definition.Id),
                 SecondaryResourceCmd.GetMax(player, _definition.Id));
@@ -321,6 +340,15 @@ namespace STS2RitsuLib.Combat.SecondaryResources
 
             ApplyDefinition();
             SetAmount(_amount, _maxAmount);
+        }
+
+        /// <inheritdoc />
+        public override void _Process(double delta)
+        {
+            if (AutoRefresh && _boundPlayer != null)
+            {
+                Refresh(_boundPlayer);
+            }
         }
 
         private Vector2 GetIconPosition()
@@ -759,8 +787,14 @@ namespace STS2RitsuLib.Combat.SecondaryResources
         /// </summary>
         public override void _Process(double delta)
         {
-            if (AutoRefresh && _boundDefinitions != null)
-                Refresh(_boundPlayer, _boundDefinitions);
+            if (!AutoRefresh || _boundDefinitions == null || _boundPlayer == null)
+                return;
+
+            foreach (var definition in _boundDefinitions)
+            {
+                if (_counters.TryGetValue(definition.Id, out var counter))
+                    counter.Refresh(_boundPlayer);
+            }
         }
 
         private NSecondaryResourceCounter GetOrCreateCounter(SecondaryResourceDefinition definition)
