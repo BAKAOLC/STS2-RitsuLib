@@ -302,10 +302,11 @@ namespace STS2RitsuLib.Combat.SecondaryResources
                 MinFontSize = Math.Max(8, _style.FontSize - 10),
                 MaxFontSize = _style.FontSize,
             };
-            AddChild(_label);
 
             ApplyLayout();
             ApplyLabelTheme();
+            AddChild(_label);
+
             ApplyDefinition();
 
             if (_plan != null && _line != null)
