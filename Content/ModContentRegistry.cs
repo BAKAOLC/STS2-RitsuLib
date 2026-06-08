@@ -1246,6 +1246,8 @@ namespace STS2RitsuLib.Content
                     registry._freezeReason = reason;
             }
 
+            ResolvedModelCache.MarkFrozen();
+
             foreach (var registry in Registries.Values)
                 registry._logger.Info($"[Content] Content registration is now frozen ({reason}).");
 
@@ -1356,12 +1358,12 @@ namespace STS2RitsuLib.Content
 
         internal static IEnumerable<CharacterModel> AppendCharacters(IEnumerable<CharacterModel> source)
         {
-            return AppendResolved(source, ResolveModels<CharacterModel>(RegisteredCharacters));
+            return MergeGlobalCatalog(ContentCatalogId.Characters, source);
         }
 
         internal static IEnumerable<CharacterModel> GetModCharacters()
         {
-            return ResolveModels<CharacterModel>(RegisteredCharacters);
+            return ResolvedModelCache.GetGlobal<CharacterModel>(ContentCatalogId.Characters);
         }
 
         /// <summary>
@@ -1458,12 +1460,12 @@ namespace STS2RitsuLib.Content
 
         internal static IEnumerable<EventModel> AppendSharedEvents(IEnumerable<EventModel> source)
         {
-            return AppendResolved(source, ResolveModels<EventModel>(RegisteredSharedEvents));
+            return MergeGlobalCatalog(ContentCatalogId.SharedEvents, source);
         }
 
         internal static IEnumerable<ActModel> AppendActs(IEnumerable<ActModel> source)
         {
-            return AppendResolved(source, ResolveModels<ActModel>(RegisteredActs));
+            return MergeGlobalCatalog(ContentCatalogId.Acts, source);
         }
 
         internal static Type[] GetRegisteredActTypes()
@@ -1476,28 +1478,27 @@ namespace STS2RitsuLib.Content
 
         internal static IEnumerable<PowerModel> AppendPowers(IEnumerable<PowerModel> source)
         {
-            return AppendResolved(source, ResolveModels<PowerModel>(RegisteredPowers));
+            return MergeGlobalCatalog(ContentCatalogId.Powers, source);
         }
 
         internal static IEnumerable<OrbModel> AppendOrbs(IEnumerable<OrbModel> source)
         {
-            return AppendResolved(source, ResolveModels<OrbModel>(RegisteredOrbs));
+            return MergeGlobalCatalog(ContentCatalogId.Orbs, source);
         }
 
         internal static IEnumerable<EnchantmentModel> AppendEnchantments(IEnumerable<EnchantmentModel> source)
         {
-            return AppendResolved(source, ResolveModels<EnchantmentModel>(RegisteredEnchantments));
+            return MergeGlobalCatalog(ContentCatalogId.Enchantments, source);
         }
 
         internal static IEnumerable<AfflictionModel> AppendAfflictions(IEnumerable<AfflictionModel> source)
         {
-            return AppendResolved(source, ResolveModels<AfflictionModel>(RegisteredAfflictions));
+            return MergeGlobalCatalog(ContentCatalogId.Afflictions, source);
         }
 
         internal static IReadOnlyList<AchievementModel> AppendAchievements(IReadOnlyList<AchievementModel> source)
         {
-            var additional = ResolveModels<AchievementModel>(RegisteredAchievements);
-            return additional.Length == 0 ? source : MergeDistinctByModelId(source, additional);
+            return MergeGlobalCatalogList(ContentCatalogId.Achievements, source);
         }
 
         internal static IReadOnlyList<ModifierModel> AppendGoodModifiers(IReadOnlyList<ModifierModel> source)
@@ -1528,50 +1529,49 @@ namespace STS2RitsuLib.Content
 
         internal static IEnumerable<RelicPoolModel> AppendSharedRelicPools(IEnumerable<RelicPoolModel> source)
         {
-            return AppendResolved(source, ResolveModels<RelicPoolModel>(RegisteredSharedRelicPools));
+            return MergeGlobalCatalog(ContentCatalogId.SharedRelicPools, source);
         }
 
         internal static IEnumerable<PotionPoolModel> AppendSharedPotionPools(IEnumerable<PotionPoolModel> source)
         {
-            return AppendResolved(source, ResolveModels<PotionPoolModel>(RegisteredSharedPotionPools));
+            return MergeGlobalCatalog(ContentCatalogId.SharedPotionPools, source);
         }
 
         internal static IEnumerable<CardPoolModel> AppendSharedCardPools(IEnumerable<CardPoolModel> source)
         {
-            return AppendResolved(source, ResolveModels<CardPoolModel>(RegisteredSharedCardPools));
+            return MergeGlobalCatalog(ContentCatalogId.SharedCardPools, source);
         }
 
         internal static IEnumerable<EventModel> AppendActEvents(ActModel act, IEnumerable<EventModel> source)
         {
-            return AppendResolved(source, ResolveScopedModels<EventModel>(RegisteredActEvents, act.GetType()));
+            return MergeScopedCatalog(ContentCatalogId.ActEvents, act.GetType(), source);
         }
 
         internal static IEnumerable<EncounterModel> AppendActEncounters(ActModel act,
             IEnumerable<EncounterModel> source)
         {
-            return AppendResolved(source, ResolveScopedModels<EncounterModel>(RegisteredActEncounters, act.GetType()));
+            return MergeScopedCatalog(ContentCatalogId.ActEncounters, act.GetType(), source);
         }
 
         internal static IEnumerable<EncounterModel> AppendGlobalEncounters(IEnumerable<EncounterModel> source)
         {
-            return AppendResolved(source, ResolveModels<EncounterModel>(RegisteredGlobalEncounters));
+            return MergeGlobalCatalog(ContentCatalogId.GlobalEncounters, source);
         }
 
         internal static IEnumerable<MonsterModel> AppendRegisteredMonsters(IEnumerable<MonsterModel> source)
         {
-            var additional = ResolveModels<MonsterModel>(RegisteredMonsters);
-            return MergeDistinctByModelId(source, additional);
+            return MergeGlobalCatalog(ContentCatalogId.Monsters, source);
         }
 
         internal static IEnumerable<AncientEventModel> AppendSharedAncients(IEnumerable<AncientEventModel> source)
         {
-            return AppendResolved(source, ResolveModels<AncientEventModel>(RegisteredSharedAncients));
+            return MergeGlobalCatalog(ContentCatalogId.SharedAncients, source);
         }
 
         internal static IEnumerable<AncientEventModel> AppendActAncients(ActModel act,
             IEnumerable<AncientEventModel> source)
         {
-            return AppendResolved(source, ResolveScopedModels<AncientEventModel>(RegisteredActAncients, act.GetType()));
+            return MergeScopedCatalog(ContentCatalogId.ActAncients, act.GetType(), source);
         }
 
         internal static Type[] GetRegisteredBadgeTypes()
@@ -1810,35 +1810,6 @@ namespace STS2RitsuLib.Content
                 );
         }
 
-        private static TModel[] ResolveModels<TModel>(IEnumerable<Type> modelTypes)
-            where TModel : AbstractModel
-        {
-            lock (SyncRoot)
-            {
-                return modelTypes
-                    .OrderBy(static t => t.FullName ?? t.Name, StringComparer.Ordinal)
-                    .Select(ModelDb.GetId)
-                    .Select(ModelDb.GetById<TModel>)
-                    .ToArray();
-            }
-        }
-
-        private static TModel[] ResolveScopedModels<TModel>(Dictionary<Type, HashSet<Type>> registry,
-            Type scopeType)
-            where TModel : AbstractModel
-        {
-            lock (SyncRoot)
-            {
-                return !registry.TryGetValue(scopeType, out var modelTypes)
-                    ? []
-                    : modelTypes
-                        .OrderBy(static t => t.FullName ?? t.Name, StringComparer.Ordinal)
-                        .Select(ModelDb.GetId)
-                        .Select(ModelDb.GetById<TModel>)
-                        .ToArray();
-            }
-        }
-
         private static bool MatchesRegisteredStarterCharacter(Type registeredCharacterType, Type runtimeCharacterType)
         {
             if (registeredCharacterType == runtimeCharacterType)
@@ -1872,20 +1843,6 @@ namespace STS2RitsuLib.Content
                     .SelectMany(static x => Enumerable.Repeat(x.entry.ModelType, x.entry.Count))
                     .ToArray();
             }
-        }
-
-        private static TModel[] AppendResolved<TModel>(IEnumerable<TModel> source,
-            IEnumerable<TModel> additional)
-            where TModel : AbstractModel
-        {
-            return source.Concat(additional).DistinctBy(static model => model.Id).ToArray();
-        }
-
-        private static List<TModel> MergeDistinctByModelId<TModel>(IEnumerable<TModel> first,
-            IEnumerable<TModel> second)
-            where TModel : AbstractModel
-        {
-            return first.Concat(second).DistinctBy(static m => m.Id).ToList();
         }
 
         /// <summary>

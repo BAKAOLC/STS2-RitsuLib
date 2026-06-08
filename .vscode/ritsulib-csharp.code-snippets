@@ -1,0 +1,24 @@
+{
+  "RitsuLib bilingual summary": {
+    "scope": "csharp",
+    "prefix": "docbi",
+    "description": "Bilingual XML doc summary with xml:lang paras",
+    "body": [
+      "/// <summary>",
+      "/// <para xml:lang=\"en\">${1:English summary.}</para>",
+      "/// <para xml:lang=\"zh-CN\">${2:中文摘要。}</para>",
+      "/// </summary>"
+    ]
+  },
+  "RitsuLib bilingual summary with cref": {
+    "scope": "csharp",
+    "prefix": "docbic",
+    "description": "Bilingual XML doc summary with see cref",
+    "body": [
+      "/// <summary>",
+      "/// <para xml:lang=\"en\">${1:Summary referencing} <see cref=\"${2:TypeName}\" />.</para>",
+      "/// <para xml:lang=\"zh-CN\">${3:中文摘要，引用} <see cref=\"$2\" />。</para>",
+      "/// </summary>"
+    ]
+  }
+}

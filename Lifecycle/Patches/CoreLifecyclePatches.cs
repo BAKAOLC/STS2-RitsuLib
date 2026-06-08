@@ -19,11 +19,8 @@ using STS2RitsuLib.Unlocks;
 namespace STS2RitsuLib.Lifecycle.Patches
 {
     /// <summary>
-    ///     Publishes <see cref="EssentialInitializationStartingEvent" /> / <see cref="DeferredInitializationStartingEvent" />
-    ///     and matching completed events around vanilla one-time initialization.
-    ///     在原版一次性初始化前后发布 <see cref="EssentialInitializationStartingEvent" /> /
-    ///     <see cref="DeferredInitializationStartingEvent" />
-    ///     以及对应的 completed 事件。
+    /// <para xml:lang="en">Publishes <see cref="EssentialInitializationStartingEvent" /> / <see cref="DeferredInitializationStartingEvent" /> and matching completed events around vanilla one-time initialization.</para>
+    /// <para xml:lang="zh-CN">在原版一次性初始化前后发布 <see cref="EssentialInitializationStartingEvent" /> / <see cref="DeferredInitializationStartingEvent" /> 以及对应的 completed 事件。</para>
     /// </summary>
     public class CoreInitializationLifecyclePatch : IPatchMethod
     {
@@ -48,8 +45,8 @@ namespace STS2RitsuLib.Lifecycle.Patches
         }
 
         /// <summary>
-        ///     Emits “starting” lifecycle events before essential or deferred initialization runs.
-        ///     在必要或延迟初始化运行前发出“starting”生命周期事件。
+        /// <para xml:lang="en">Emits “starting” lifecycle events before essential or deferred initialization runs.</para>
+        /// <para xml:lang="zh-CN">在必要或延迟初始化运行前发出“starting”生命周期事件。</para>
         /// </summary>
         public static void Prefix(MethodBase __originalMethod)
         {
@@ -71,8 +68,8 @@ namespace STS2RitsuLib.Lifecycle.Patches
         }
 
         /// <summary>
-        ///     Emits “completed” lifecycle events after essential or deferred initialization runs.
-        ///     在必要或延迟初始化运行后发出“completed”生命周期事件。
+        /// <para xml:lang="en">Emits “completed” lifecycle events after essential or deferred initialization runs.</para>
+        /// <para xml:lang="zh-CN">在必要或延迟初始化运行后发出“completed”生命周期事件。</para>
         /// </summary>
         public static void Postfix(MethodBase __originalMethod)
         {
@@ -95,10 +92,8 @@ namespace STS2RitsuLib.Lifecycle.Patches
     }
 
     /// <summary>
-    ///     Hooks <see cref="ModelDb" /> and related init to freeze registries, inject models, and publish model lifecycle
-    ///     events.
-    ///     hook <see cref="ModelDb" /> 和相关 init，以冻结注册表、注入模型并发布模型生命周期
-    ///     事件。
+    /// <para xml:lang="en">Hooks <see cref="ModelDb" /> and related init to freeze registries, inject models, and publish model lifecycle events.</para>
+    /// <para xml:lang="zh-CN">hook <see cref="ModelDb" /> 和相关 init，以冻结注册表、注入模型并发布模型生命周期事件。</para>
     /// </summary>
     public class ModelRegistryLifecyclePatch : IPatchMethod
     {
@@ -127,8 +122,8 @@ namespace STS2RitsuLib.Lifecycle.Patches
         }
 
         /// <summary>
-        ///     Runs registry freezes, validation, and “starting” model lifecycle events before targeted init methods.
-        ///     在目标初始化方法前运行注册表冻结、验证和“starting”模型生命周期事件。
+        /// <para xml:lang="en">Runs registry freezes, validation, and “starting” model lifecycle events before targeted init methods.</para>
+        /// <para xml:lang="zh-CN">在目标初始化方法前运行注册表冻结、验证和“starting”模型生命周期事件。</para>
         /// </summary>
         public static void Prefix(MethodBase __originalMethod)
         {
@@ -172,8 +167,8 @@ namespace STS2RitsuLib.Lifecycle.Patches
         }
 
         /// <summary>
-        ///     Publishes “completed” model lifecycle events after <see cref="ModelDb" /> init phases.
-        ///     在 <see cref="ModelDb" /> 初始化阶段后发布“completed”模型生命周期事件。
+        /// <para xml:lang="en">Publishes “completed” model lifecycle events after <see cref="ModelDb" /> init phases.</para>
+        /// <para xml:lang="zh-CN">在 <see cref="ModelDb" /> 初始化阶段后发布“completed”模型生命周期事件。</para>
         /// </summary>
         public static void Postfix(MethodBase __originalMethod)
         {
@@ -181,6 +176,8 @@ namespace STS2RitsuLib.Lifecycle.Patches
             {
                 case nameof(ModelDb.Init):
                     ValidateFrozenRegistrations(nameof(ModelDb.Init));
+                    RitsuLibStartupAudit.Measure("modelDb.warmResolvedCaches",
+                        ModContentRegistry.WarmResolvedModelCaches);
                     RitsuLibFramework.PublishLifecycleEvent(
                         new ModelRegistryInitializedEvent(ModelDb.AllAbstractModelSubtypes.Length,
                             DateTimeOffset.UtcNow),
@@ -218,8 +215,8 @@ namespace STS2RitsuLib.Lifecycle.Patches
     }
 
     /// <summary>
-    ///     Publishes <see cref="GameTreeEnteredEvent" /> and <see cref="GameReadyEvent" /> for <see cref="NGame" />.
-    ///     为 <see cref="NGame" /> 发布 <see cref="GameTreeEnteredEvent" /> 和 <see cref="GameReadyEvent" />。
+    /// <para xml:lang="en">Publishes <see cref="GameTreeEnteredEvent" /> and <see cref="GameReadyEvent" /> for <see cref="NGame" />.</para>
+    /// <para xml:lang="zh-CN">为 <see cref="NGame" /> 发布 <see cref="GameTreeEnteredEvent" /> 和 <see cref="GameReadyEvent" />。</para>
     /// </summary>
     public class GameNodeLifecyclePatch : IPatchMethod
     {
@@ -243,8 +240,8 @@ namespace STS2RitsuLib.Lifecycle.Patches
         }
 
         /// <summary>
-        ///     Dispatches game tree / ready lifecycle events based on which <see cref="NGame" /> method was patched.
-        ///     根据被补丁的 <see cref="NGame" /> 方法分发游戏树/就绪生命周期事件。
+        /// <para xml:lang="en">Dispatches game tree / ready lifecycle events based on which <see cref="NGame" /> method was patched.</para>
+        /// <para xml:lang="zh-CN">根据被补丁的 <see cref="NGame" /> 方法分发游戏树/就绪生命周期事件。</para>
         /// </summary>
         public static void Postfix(MethodBase __originalMethod, NGame __instance)
         {
@@ -267,8 +264,8 @@ namespace STS2RitsuLib.Lifecycle.Patches
     }
 
     /// <summary>
-    ///     Publishes <see cref="RunStartedEvent" /> and <see cref="RunLoadedEvent" /> from <see cref="RunManager" />.
-    ///     从 <see cref="RunManager" /> 发布 <see cref="RunStartedEvent" /> 和 <see cref="RunLoadedEvent" />。
+    /// <para xml:lang="en">Publishes <see cref="RunStartedEvent" /> and <see cref="RunLoadedEvent" /> from <see cref="RunManager" />.</para>
+    /// <para xml:lang="zh-CN">从 <see cref="RunManager" /> 发布 <see cref="RunStartedEvent" /> 和 <see cref="RunLoadedEvent" />。</para>
     /// </summary>
     public class RunLifecyclePatch : IPatchMethod
     {
@@ -292,8 +289,8 @@ namespace STS2RitsuLib.Lifecycle.Patches
         }
 
         /// <summary>
-        ///     Emits run started/loaded events after new or saved run initialization.
-        ///     在新跑局或存档跑局初始化后发出跑局开始/加载事件。
+        /// <para xml:lang="en">Emits run started/loaded events after new or saved run initialization.</para>
+        /// <para xml:lang="zh-CN">在新跑局或存档跑局初始化后发出跑局开始/加载事件。</para>
         /// </summary>
         public static void Postfix(
             MethodBase __originalMethod,
@@ -322,8 +319,8 @@ namespace STS2RitsuLib.Lifecycle.Patches
     }
 
     /// <summary>
-    ///     Publishes <see cref="RunEndedEvent" /> and forwards run end to <see cref="ModUnlockRegistry" />.
-    ///     发布 <see cref="RunEndedEvent" />，并将跑局结束转发给 <see cref="ModUnlockRegistry" />。
+    /// <para xml:lang="en">Publishes <see cref="RunEndedEvent" /> and forwards run end to <see cref="ModUnlockRegistry" />.</para>
+    /// <para xml:lang="zh-CN">发布 <see cref="RunEndedEvent" />，并将跑局结束转发给 <see cref="ModUnlockRegistry" />。</para>
     /// </summary>
     public class RunEndedLifecyclePatch : IPatchMethod
     {
@@ -349,8 +346,8 @@ namespace STS2RitsuLib.Lifecycle.Patches
         }
 
         /// <summary>
-        ///     Captures vanilla's own run-end guard before <see cref="RunManager.OnEnded" /> mutates it.
-        ///     在 <see cref="RunManager.OnEnded" /> 修改原版跑局结束保护标记前捕获它。
+        /// <para xml:lang="en">Captures vanilla's own run-end guard before <see cref="RunManager.OnEnded" /> mutates it.</para>
+        /// <para xml:lang="zh-CN">在 <see cref="RunManager.OnEnded" /> 修改原版跑局结束保护标记前捕获它。</para>
         /// </summary>
         public static void Prefix(RunManager __instance, out bool __state)
         {
@@ -358,8 +355,8 @@ namespace STS2RitsuLib.Lifecycle.Patches
         }
 
         /// <summary>
-        ///     Runs unlock bookkeeping and publishes <see cref="RunEndedEvent" /> when a run terminates.
-        ///     当跑局终止时运行解锁记账并发布 <see cref="RunEndedEvent" />。
+        /// <para xml:lang="en">Runs unlock bookkeeping and publishes <see cref="RunEndedEvent" /> when a run terminates.</para>
+        /// <para xml:lang="zh-CN">当跑局终止时运行解锁记账并发布 <see cref="RunEndedEvent" />。</para>
         /// </summary>
         public static void Postfix(RunManager __instance, bool isVictory, SerializableRun __result, bool __state)
         {

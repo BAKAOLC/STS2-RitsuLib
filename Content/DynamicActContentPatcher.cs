@@ -188,20 +188,26 @@ namespace STS2RitsuLib.Content
 
         private static void AllEventsPostfix(ActModel __instance, ref IEnumerable<EventModel> __result)
         {
-            __result = ModContentRegistry.AppendActEvents(__instance, __result);
+            __result = ModelDbGetterMerge.MergeEnumerable(
+                __result,
+                source => ModContentRegistry.AppendActEvents(__instance, source));
         }
 
         private static void AllAncientsPostfix(ActModel __instance, ref IEnumerable<AncientEventModel> __result)
         {
-            __result = ModContentRegistry.AppendActAncients(__instance, __result);
+            __result = ModelDbGetterMerge.MergeEnumerable(
+                __result,
+                source => ModContentRegistry.AppendActAncients(__instance, source));
         }
 
         private static void AllEncountersPostfix(ActModel __instance, ref IEnumerable<EncounterModel> __result)
         {
-            __result = ModEncounterActValidityFilter.FilterForAct(
-                __instance,
-                ModContentRegistry.AppendGlobalEncounters(
-                    ModContentRegistry.AppendActEncounters(__instance, __result)));
+            __result = ModelDbGetterMerge.MergeEnumerable(
+                __result,
+                source => ModEncounterActValidityFilter.FilterForAct(
+                    __instance,
+                    ModContentRegistry.AppendGlobalEncounters(
+                        ModContentRegistry.AppendActEncounters(__instance, source))));
         }
 
         private static void BossDiscoveryOrderPostfix(ActModel __instance, ref IEnumerable<EncounterModel> __result)
@@ -220,7 +226,9 @@ namespace STS2RitsuLib.Content
             __result = ModAncientActValidityFilter.FilterForAct(
                 __instance,
                 ModUnlockRegistry.FilterUnlocked(
-                    ModContentRegistry.AppendActAncients(__instance, __result),
+                    ModelDbGetterMerge.MergeEnumerable(
+                        __result,
+                        source => ModContentRegistry.AppendActAncients(__instance, source)),
                     unlockState));
         }
     }
