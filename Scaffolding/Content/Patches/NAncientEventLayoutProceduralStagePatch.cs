@@ -16,28 +16,20 @@ namespace STS2RitsuLib.Scaffolding.Content.Patches
     ///     <see cref="AncientEventPresentationAssetProfile.StageProcedural" /> 时，
     ///     用程序化舞台图层替换已实例化的背景子树。
     /// </summary>
-    public class NAncientEventLayoutProceduralStagePatch : IPatchMethod
+    internal class NAncientEventLayoutProceduralStagePatch : IPatchMethod
     {
-        /// <inheritdoc cref="IPatchMethod.PatchId" />
         public static string PatchId => "n_ancient_event_layout_procedural_stage";
 
-        /// <inheritdoc cref="IPatchMethod.Description" />
         public static string Description =>
             "Mount AncientEventStageProceduralVisualSet layers on NAncientBgContainer after layout init";
 
-        /// <inheritdoc cref="IPatchMethod.IsCritical" />
         public static bool IsCritical => false;
 
-        /// <inheritdoc cref="IPatchMethod.GetTargets" />
         public static ModPatchTarget[] GetTargets()
         {
             return [new(typeof(NAncientEventLayout), "InitializeVisuals")];
         }
 
-        /// <summary>
-        ///     Replaces the instantiated background subtree with procedural sprites when <c>StageProcedural</c> is set.
-        ///     当设置了 <c>StageProcedural</c> 时，用程序化 sprite 替换已实例化的背景子树。
-        /// </summary>
         public static void Postfix(NAncientEventLayout __instance)
         {
             var ancient = AncientEvent(__instance);

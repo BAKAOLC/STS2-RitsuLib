@@ -28,19 +28,15 @@ namespace STS2RitsuLib.Timeline.Patches
     ///     动画扩展只会在 <see cref="NeowEpoch.QueueUnlocks" /> 刚刚将该批次入队时合并（pending 标志来自
     ///     <see cref="QueueTimelineExpansionUnlockModSlotsAfterNeowPatch" />）。
     /// </summary>
-    public sealed class NTimelineScreenAddEpochSlotsMergeModTemplatesPatch : IPatchMethod
+    internal sealed class NTimelineScreenAddEpochSlotsMergeModTemplatesPatch : IPatchMethod
     {
-        /// <inheritdoc />
         public static string PatchId => "n_timeline_screen_add_epoch_slots_merge_mod_templates";
 
-        /// <inheritdoc />
         public static string Description =>
             "Merge obtained, Neow-unlocked root, or parent-visible ModEpochTemplate slots after Neow expansion";
 
-        /// <inheritdoc />
         public static bool IsCritical => false;
 
-        /// <inheritdoc />
         public static ModPatchTarget[] GetTargets()
         {
             return
@@ -51,12 +47,6 @@ namespace STS2RitsuLib.Timeline.Patches
             ];
         }
 
-        /// <summary>
-        ///     Cold: merge after Neow primary expansion has touched save. Animated: merge only with pending from Neow
-        ///     <see cref="NeowEpoch.QueueUnlocks" /> plus matching slot batch.
-        ///     冷打开：在 Neow 主扩展触及存档后合并。动画：仅在来自 Neow
-        ///     <see cref="NeowEpoch.QueueUnlocks" /> 的 pending 状态加上匹配槽批次时合并。
-        /// </summary>
         public static void Prefix(List<EpochSlotData> slotsToAdd, bool isAnimated)
         {
             var progress = SaveManager.Instance?.Progress;

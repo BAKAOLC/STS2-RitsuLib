@@ -79,19 +79,15 @@ namespace STS2RitsuLib.Scaffolding.Characters.Patches
     ///     Maintains selection-policy scope for vanilla character-select flows.
     ///     为原版角色选择流程维护选择策略作用域。
     /// </summary>
-    public class CharacterVanillaSelectionPolicyPatches : IPatchMethod
+    internal class CharacterVanillaSelectionPolicyPatches : IPatchMethod
     {
-        /// <inheritdoc />
         public static string PatchId => "character_vanilla_selection_policy";
 
-        /// <inheritdoc />
         public static string Description =>
             "Apply mod character vanilla selection policy to vanilla character-select visibility and random roll";
 
-        /// <inheritdoc />
         public static bool IsCritical => false;
 
-        /// <inheritdoc />
         public static ModPatchTarget[] GetTargets()
         {
             return
@@ -103,19 +99,11 @@ namespace STS2RitsuLib.Scaffolding.Characters.Patches
             ];
         }
 
-        /// <summary>
-        ///     Enters selection scope for character-list consumers.
-        ///     为角色列表消费者进入选择作用域。
-        /// </summary>
         public static void Prefix(MethodBase __originalMethod)
         {
             CharacterVanillaSelectionPolicyScope.Enter(__originalMethod);
         }
 
-        /// <summary>
-        ///     Ensures scope cleanup even when target method throws.
-        ///     即使目标方法抛出，也确保作用域清理。
-        /// </summary>
         public static void Finalizer(MethodBase __originalMethod)
         {
             CharacterVanillaSelectionPolicyScope.Exit(__originalMethod);
@@ -126,18 +114,12 @@ namespace STS2RitsuLib.Scaffolding.Characters.Patches
     ///     Applies scoped selection policy to <see cref="ModelDb.AllCharacters" />.
     ///     将带作用域的选择策略应用到 <see cref="ModelDb.AllCharacters" />。
     /// </summary>
-    public class CharacterVanillaSelectionPolicyAllCharactersPatch : IPatchMethod
+    internal class CharacterVanillaSelectionPolicyAllCharactersPatch : IPatchMethod
     {
-        /// <inheritdoc />
         public static string PatchId => "character_vanilla_selection_policy_all_characters";
-
-        /// <inheritdoc />
         public static string Description => "Filter ModelDb.AllCharacters by current vanilla selection scope";
-
-        /// <inheritdoc />
         public static bool IsCritical => false;
 
-        /// <inheritdoc />
         public static ModPatchTarget[] GetTargets()
         {
             return [new(typeof(ModelDb), nameof(ModelDb.AllCharacters), MethodType.Getter)];

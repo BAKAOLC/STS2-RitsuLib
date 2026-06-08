@@ -32,22 +32,17 @@ namespace STS2RitsuLib.Scaffolding.Characters.Patches
     ///         状态机会通过 <see cref="ConditionalWeakTable{TKey,TValue}" /> 按视觉根缓存，因此工厂在每个战斗生命周期中最多运行一次。
     ///     </para>
     /// </remarks>
-    public class ModCreatureCombatAnimationPlaybackPatch : IPatchMethod
+    internal class ModCreatureCombatAnimationPlaybackPatch : IPatchMethod
     {
         private static readonly ConditionalWeakTable<Node, StateMachineSlot> StateMachinesByVisuals = new();
-
-        /// <inheritdoc cref="IPatchMethod.PatchId" />
         public static string PatchId => "mod_creature_combat_animation_playback";
 
-        /// <inheritdoc cref="IPatchMethod.Description" />
         public static string Description =>
             "Route NCreature.SetAnimationTrigger through ModAnimStateMachine when opted in (Spine or non-Spine); "
             + "otherwise cue playback for non-Spine";
 
-        /// <inheritdoc cref="IPatchMethod.IsCritical" />
         public static bool IsCritical => false;
 
-        /// <inheritdoc cref="IPatchMethod.GetTargets" />
         public static ModPatchTarget[] GetTargets()
         {
             return [new(typeof(NCreature), nameof(NCreature.SetAnimationTrigger))];
@@ -92,12 +87,6 @@ namespace STS2RitsuLib.Scaffolding.Characters.Patches
                    float.IsFinite(seconds);
         }
 
-        /// <summary>
-        ///     Returns <see langword="false" /> when the trigger was consumed (skip vanilla
-        ///     <see cref="NCreature.SetAnimationTrigger" /> body).
-        ///     触发器已被消费时返回 <see langword="false" />（跳过原版
-        ///     <see cref="NCreature.SetAnimationTrigger" /> 方法体）。
-        /// </summary>
         public static bool Prefix(NCreature __instance, string trigger)
         {
             if (TryRouteToStateMachine(__instance, trigger))

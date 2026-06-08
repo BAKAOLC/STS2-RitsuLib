@@ -67,18 +67,12 @@ namespace STS2RitsuLib.Scaffolding.Content.Patches
     ///     Replaces <see cref="OrbModel.GetRandomOrb" /> only when registered mod orbs opt in to the random pool.
     ///     仅当已注册 mod 充能球选择加入随机池时替换 <see cref="OrbModel.GetRandomOrb" />。
     /// </summary>
-    public sealed class OrbModelRandomPoolPolicyPatch : IPatchMethod
+    internal sealed class OrbModelRandomPoolPolicyPatch : IPatchMethod
     {
-        /// <inheritdoc />
         public static string PatchId => "orb_model_random_pool_policy";
-
-        /// <inheritdoc />
         public static bool IsCritical => false;
-
-        /// <inheritdoc />
         public static string Description => "Include opt-in mod orbs in OrbModel.GetRandomOrb";
 
-        /// <inheritdoc />
         public static ModPatchTarget[] GetTargets()
         {
             return [new(typeof(OrbModel), nameof(OrbModel.GetRandomOrb), [typeof(Rng)])];
@@ -170,18 +164,12 @@ namespace STS2RitsuLib.Scaffolding.Content.Patches
     ///     Applies <see cref="IModOrbValueDisplayPolicy" /> after vanilla orb visual refresh.
     ///     在原版充能球视觉刷新之后应用 <see cref="IModOrbValueDisplayPolicy" />。
     /// </summary>
-    public sealed class NOrbValueDisplayPolicyPatch : IPatchMethod
+    internal sealed class NOrbValueDisplayPolicyPatch : IPatchMethod
     {
-        /// <inheritdoc />
         public static string PatchId => "norb_value_display_policy";
-
-        /// <inheritdoc />
         public static bool IsCritical => false;
-
-        /// <inheritdoc />
         public static string Description => "Allow mod orbs to control passive/evoke value labels";
 
-        /// <inheritdoc />
         public static ModPatchTarget[] GetTargets()
         {
             return [new(typeof(NOrb), nameof(NOrb.UpdateVisuals), [typeof(bool)])];

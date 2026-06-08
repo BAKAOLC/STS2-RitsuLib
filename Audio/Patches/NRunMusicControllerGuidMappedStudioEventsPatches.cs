@@ -16,7 +16,7 @@ namespace STS2RitsuLib.Audio.Patches
     ///     Harmony patches for run-scoped music and ambience paths that bypass <see cref="NAudioManager" />.
     ///     处理绕过 <see cref="NAudioManager" /> 的 run 级音乐和 ambience 路径的 Harmony patch。
     /// </summary>
-    public static class NRunMusicControllerGuidMappedStudioEventsPatches
+    internal static class NRunMusicControllerGuidMappedStudioEventsPatches
     {
         private static readonly StringName StopMusicMethod = new("stop_music");
         private static readonly StringName StopAmbienceMethod = new("stop_ambience");
@@ -85,19 +85,14 @@ namespace STS2RitsuLib.Audio.Patches
         ///     Handles mapped act BGM before it reaches the vanilla run music proxy.
         ///     在映射的 act BGM 进入原版 run music proxy 前接管它。
         /// </summary>
-        public sealed class UpdateMusic : IPatchMethod
+        internal sealed class UpdateMusic : IPatchMethod
         {
-            /// <inheritdoc />
             public static string PatchId => "nrun_music_guid_mapped_update_music";
-
-            /// <inheritdoc />
             public static bool IsCritical => false;
 
-            /// <inheritdoc />
             public static string Description =>
                 "Starts GUID-backed run music after NRunMusicController.UpdateMusic chooses a mapped act track";
 
-            /// <inheritdoc />
             public static ModPatchTarget[] GetTargets()
             {
                 return [new(typeof(NRunMusicController), nameof(NRunMusicController.UpdateMusic))];
@@ -149,29 +144,20 @@ namespace STS2RitsuLib.Audio.Patches
         ///     Handles combat encounter CustomBgm, which calls the run music proxy directly.
         ///     处理会直接调用 run music proxy 的战斗遭遇 CustomBgm。
         /// </summary>
-        public sealed class PlayCustomMusic : IPatchMethod
+        internal sealed class PlayCustomMusic : IPatchMethod
         {
-            /// <inheritdoc />
             public static string PatchId => "nrun_music_guid_mapped_play_custom_music";
-
-            /// <inheritdoc />
             public static bool IsCritical => false;
 
-            /// <inheritdoc />
             public static string Description =>
                 "GUID-backed NRunMusicController.PlayCustomMusic for EncounterModel.CustomBgm";
 
-            /// <inheritdoc />
             public static ModPatchTarget[] GetTargets()
             {
                 return
                     [new(typeof(NRunMusicController), nameof(NRunMusicController.PlayCustomMusic), [typeof(string)])];
             }
 
-            /// <summary>
-            ///     Starts mapped custom BGM and skips the vanilla proxy for guids.txt-only paths.
-            ///     播放映射的自定义 BGM，并对仅存在于 guids.txt 的路径跳过原版 proxy。
-            /// </summary>
             public static bool Prefix(NRunMusicController __instance, string customMusic, Node ____proxy)
             {
                 _ = __instance;
@@ -193,28 +179,19 @@ namespace STS2RitsuLib.Audio.Patches
         ///     Restores mapped act music when leaving a custom-BGM combat.
         ///     离开自定义 BGM 战斗时恢复映射的 act 音乐。
         /// </summary>
-        public sealed class StopCustomMusic : IPatchMethod
+        internal sealed class StopCustomMusic : IPatchMethod
         {
-            /// <inheritdoc />
             public static string PatchId => "nrun_music_guid_mapped_stop_custom_music";
-
-            /// <inheritdoc />
             public static bool IsCritical => false;
 
-            /// <inheritdoc />
             public static string Description =>
                 "Restores GUID-backed act music in NRunMusicController.StopCustomMusic";
 
-            /// <inheritdoc />
             public static ModPatchTarget[] GetTargets()
             {
                 return [new(typeof(NRunMusicController), nameof(NRunMusicController.StopCustomMusic))];
             }
 
-            /// <summary>
-            ///     Restores the selected act track when it only exists in GUID mappings.
-            ///     当选中的 act 曲目只存在于 GUID 映射时恢复该曲目。
-            /// </summary>
             public static bool Prefix(NRunMusicController __instance, string ____currentTrack, Node ____proxy)
             {
                 _ = __instance;
@@ -238,28 +215,19 @@ namespace STS2RitsuLib.Audio.Patches
         ///     Releases mapped run music and ambience alongside the vanilla proxy.
         ///     随原版 proxy 一起释放映射的 run music 和 ambience。
         /// </summary>
-        public sealed class StopMusic : IPatchMethod
+        internal sealed class StopMusic : IPatchMethod
         {
-            /// <inheritdoc />
             public static string PatchId => "nrun_music_guid_mapped_stop_music";
-
-            /// <inheritdoc />
             public static bool IsCritical => false;
 
-            /// <inheritdoc />
             public static string Description =>
                 "Releases mapped run music and ambience in NRunMusicController.StopMusic";
 
-            /// <inheritdoc />
             public static ModPatchTarget[] GetTargets()
             {
                 return [new(typeof(NRunMusicController), nameof(NRunMusicController.StopMusic))];
             }
 
-            /// <summary>
-            ///     Releases mapped run-owned instances before vanilla unloads run audio.
-            ///     在原版卸载 run 音频前释放 run 拥有的映射实例。
-            /// </summary>
             public static void Prefix(NRunMusicController __instance)
             {
                 _ = __instance;
@@ -276,19 +244,14 @@ namespace STS2RitsuLib.Audio.Patches
         ///     Routes numeric music parameter updates used by boss BGM progression.
         ///     路由 boss BGM 进度使用的数值音乐参数更新。
         /// </summary>
-        public sealed class UpdateMusicParameter : IPatchMethod
+        internal sealed class UpdateMusicParameter : IPatchMethod
         {
-            /// <inheritdoc />
             public static string PatchId => "nrun_music_guid_mapped_update_music_parameter";
-
-            /// <inheritdoc />
             public static bool IsCritical => false;
 
-            /// <inheritdoc />
             public static string Description =>
                 "Routes NRunMusicController.UpdateMusicParameter to active mapped run music";
 
-            /// <inheritdoc />
             public static ModPatchTarget[] GetTargets()
             {
                 return
@@ -298,10 +261,6 @@ namespace STS2RitsuLib.Audio.Patches
                 ];
             }
 
-            /// <summary>
-            ///     Applies boss-progress parameters to the mapped run music instance.
-            ///     将 boss 进度参数应用到映射的 run music 实例。
-            /// </summary>
             public static bool Prefix(NRunMusicController __instance, string label, float trackIndex)
             {
                 _ = __instance;
@@ -317,28 +276,19 @@ namespace STS2RitsuLib.Audio.Patches
         ///     Handles mapped act or encounter ambience before it reaches the vanilla run music proxy.
         ///     在映射的 act 或遭遇 ambience 进入原版 run music proxy 前接管它。
         /// </summary>
-        public sealed class UpdateAmbience : IPatchMethod
+        internal sealed class UpdateAmbience : IPatchMethod
         {
-            /// <inheritdoc />
             public static string PatchId => "nrun_music_guid_mapped_update_ambience";
-
-            /// <inheritdoc />
             public static bool IsCritical => false;
 
-            /// <inheritdoc />
             public static string Description =>
                 "Starts GUID-backed run ambience after NRunMusicController.UpdateAmbience chooses a mapped path";
 
-            /// <inheritdoc />
             public static ModPatchTarget[] GetTargets()
             {
                 return [new(typeof(NRunMusicController), nameof(NRunMusicController.UpdateAmbience))];
             }
 
-            /// <summary>
-            ///     Mirrors vanilla ambience selection, then skips the vanilla proxy for mapped ambience.
-            ///     复现原版 ambience 选择，然后对映射 ambience 跳过原版 proxy。
-            /// </summary>
             public static bool Prefix(
                 NRunMusicController __instance,
                 IRunState ____runState,
@@ -375,28 +325,19 @@ namespace STS2RitsuLib.Audio.Patches
         ///     Mirrors campfire ambience parameter updates for mapped ambience events.
         ///     为映射的 ambience 事件复现营火 ambience 参数更新。
         /// </summary>
-        public sealed class TriggerCampfireGoingOut : IPatchMethod
+        internal sealed class TriggerCampfireGoingOut : IPatchMethod
         {
-            /// <inheritdoc />
             public static string PatchId => "nrun_music_guid_mapped_trigger_campfire_going_out";
-
-            /// <inheritdoc />
             public static bool IsCritical => false;
 
-            /// <inheritdoc />
             public static string Description =>
                 "Routes NRunMusicController.TriggerCampfireGoingOut to active mapped ambience";
 
-            /// <inheritdoc />
             public static ModPatchTarget[] GetTargets()
             {
                 return [new(typeof(NRunMusicController), nameof(NRunMusicController.TriggerCampfireGoingOut))];
             }
 
-            /// <summary>
-            ///     Applies the campfire transition parameter to mapped ambience.
-            ///     将营火转场参数应用到映射的 ambience。
-            /// </summary>
             public static void Postfix(NRunMusicController __instance)
             {
                 _ = __instance;

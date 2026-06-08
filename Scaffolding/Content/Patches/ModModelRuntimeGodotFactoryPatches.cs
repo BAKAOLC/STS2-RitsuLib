@@ -16,25 +16,20 @@ namespace STS2RitsuLib.Scaffolding.Content.Patches
     ///     从原版模型入口点调用 mod 运行时 Godot 工厂接口的 Harmony 补丁。前缀使用
     ///     Harmony <c>Priority.First</c> 因此当工厂返回 <c>null</c> 时，基于路径的覆盖仍会运行。
     /// </summary>
-    public static class ModModelRuntimeGodotFactoryPatches
+    internal static class ModModelRuntimeGodotFactoryPatches
     {
         /// <summary>
         ///     Patches <see cref="MonsterModel.CreateVisuals" /> for <see cref="IModCreatureVisualsFactory" />.
         ///     为 <see cref="IModCreatureVisualsFactory" /> 修补<see cref="MonsterModel.CreateVisuals" />。
         /// </summary>
-        public class MonsterCreatureVisualsRuntimeFactoryPatch : IPatchMethod
+        internal class MonsterCreatureVisualsRuntimeFactoryPatch : IPatchMethod
         {
-            /// <inheritdoc cref="IPatchMethod.PatchId" />
             public static string PatchId => "runtime_godot_factory_monster_creature_visuals";
-
-            /// <inheritdoc cref="IPatchMethod.IsCritical" />
             public static bool IsCritical => false;
 
-            /// <inheritdoc cref="IPatchMethod.Description" />
             public static string Description =>
                 "Allow mod monsters to supply NCreatureVisuals from code before VisualsPath load";
 
-            /// <inheritdoc cref="IPatchMethod.GetTargets" />
             public static ModPatchTarget[] GetTargets()
             {
                 return [new(typeof(MonsterModel), nameof(MonsterModel.CreateVisuals))];
@@ -70,19 +65,14 @@ namespace STS2RitsuLib.Scaffolding.Content.Patches
         ///     Patches <see cref="CharacterModel.CreateVisuals" /> for <see cref="IModCreatureVisualsFactory" />.
         ///     为 <see cref="IModCreatureVisualsFactory" /> 修补<see cref="CharacterModel.CreateVisuals" />。
         /// </summary>
-        public class CharacterCreatureVisualsRuntimeFactoryPatch : IPatchMethod
+        internal class CharacterCreatureVisualsRuntimeFactoryPatch : IPatchMethod
         {
-            /// <inheritdoc cref="IPatchMethod.PatchId" />
             public static string PatchId => "runtime_godot_factory_character_creature_visuals";
-
-            /// <inheritdoc cref="IPatchMethod.IsCritical" />
             public static bool IsCritical => false;
 
-            /// <inheritdoc cref="IPatchMethod.Description" />
             public static string Description =>
                 "Allow mod characters to supply NCreatureVisuals from code before VisualsPath load";
 
-            /// <inheritdoc cref="IPatchMethod.GetTargets" />
             public static ModPatchTarget[] GetTargets()
             {
                 return [new(typeof(CharacterModel), nameof(CharacterModel.CreateVisuals))];
@@ -120,19 +110,14 @@ namespace STS2RitsuLib.Scaffolding.Content.Patches
         ///     为 <see cref="IModCreatureAnimatorFactory" /> 修补
         ///     <see cref="CharacterModel.GenerateAnimator" />。
         /// </summary>
-        public class CharacterCreatureAnimatorRuntimeFactoryPatch : IPatchMethod
+        internal class CharacterCreatureAnimatorRuntimeFactoryPatch : IPatchMethod
         {
-            /// <inheritdoc cref="IPatchMethod.PatchId" />
             public static string PatchId => "runtime_godot_factory_character_creature_animator";
-
-            /// <inheritdoc cref="IPatchMethod.IsCritical" />
             public static bool IsCritical => false;
 
-            /// <inheritdoc cref="IPatchMethod.Description" />
             public static string Description =>
                 "Allow mod characters to supply CreatureAnimator (Spine state graph) from code";
 
-            /// <inheritdoc cref="IPatchMethod.GetTargets" />
             public static ModPatchTarget[] GetTargets()
             {
                 return [new(typeof(CharacterModel), nameof(CharacterModel.GenerateAnimator))];
@@ -168,19 +153,14 @@ namespace STS2RitsuLib.Scaffolding.Content.Patches
         ///     Patches <see cref="MonsterModel.GenerateAnimator" /> for <see cref="IModCreatureAnimatorFactory" />.
         ///     为 <see cref="IModCreatureAnimatorFactory" /> 修补<see cref="MonsterModel.GenerateAnimator" />。
         /// </summary>
-        public class MonsterCreatureAnimatorRuntimeFactoryPatch : IPatchMethod
+        internal class MonsterCreatureAnimatorRuntimeFactoryPatch : IPatchMethod
         {
-            /// <inheritdoc cref="IPatchMethod.PatchId" />
             public static string PatchId => "runtime_godot_factory_monster_creature_animator";
-
-            /// <inheritdoc cref="IPatchMethod.IsCritical" />
             public static bool IsCritical => false;
 
-            /// <inheritdoc cref="IPatchMethod.Description" />
             public static string Description =>
                 "Allow mod monsters to supply CreatureAnimator (Spine state graph) from code";
 
-            /// <inheritdoc cref="IPatchMethod.GetTargets" />
             public static ModPatchTarget[] GetTargets()
             {
                 return [new(typeof(MonsterModel), nameof(MonsterModel.GenerateAnimator))];
@@ -209,19 +189,14 @@ namespace STS2RitsuLib.Scaffolding.Content.Patches
         ///     Patches <see cref="EncounterModel.CreateScene" /> for <see cref="IModEncounterCombatSceneFactory" />.
         ///     为 <see cref="IModEncounterCombatSceneFactory" /> 修补<see cref="EncounterModel.CreateScene" />。
         /// </summary>
-        public class EncounterCombatSceneRuntimeFactoryPatch : IPatchMethod
+        internal class EncounterCombatSceneRuntimeFactoryPatch : IPatchMethod
         {
-            /// <inheritdoc cref="IPatchMethod.PatchId" />
             public static string PatchId => "runtime_godot_factory_encounter_combat_scene";
-
-            /// <inheritdoc cref="IPatchMethod.IsCritical" />
             public static bool IsCritical => false;
 
-            /// <inheritdoc cref="IPatchMethod.Description" />
             public static string Description =>
                 "Allow mod encounters to supply combat Control from code before encounter scene path load";
 
-            /// <inheritdoc cref="IPatchMethod.GetTargets" />
             public static ModPatchTarget[] GetTargets()
             {
                 return [new(typeof(EncounterModel), nameof(EncounterModel.CreateScene))];
@@ -250,19 +225,14 @@ namespace STS2RitsuLib.Scaffolding.Content.Patches
         ///     Patches <see cref="EventModel.CreateScene" /> for <see cref="IModEventLayoutPackedSceneFactory" />.
         ///     为 <see cref="IModEventLayoutPackedSceneFactory" /> 修补<see cref="EventModel.CreateScene" />。
         /// </summary>
-        public class EventLayoutPackedSceneRuntimeFactoryPatch : IPatchMethod
+        internal class EventLayoutPackedSceneRuntimeFactoryPatch : IPatchMethod
         {
-            /// <inheritdoc cref="IPatchMethod.PatchId" />
             public static string PatchId => "runtime_godot_factory_event_layout_packed_scene";
-
-            /// <inheritdoc cref="IPatchMethod.IsCritical" />
             public static bool IsCritical => false;
 
-            /// <inheritdoc cref="IPatchMethod.Description" />
             public static string Description =>
                 "Allow mod events to supply layout PackedScene from code before LayoutScenePath load";
 
-            /// <inheritdoc cref="IPatchMethod.GetTargets" />
             public static ModPatchTarget[] GetTargets()
             {
                 return [new(typeof(EventModel), nameof(EventModel.CreateScene))];
@@ -293,19 +263,14 @@ namespace STS2RitsuLib.Scaffolding.Content.Patches
         ///     为
         ///     <see cref="IModEventBackgroundPackedSceneFactory" /> 修补 <see cref="EventModel.CreateBackgroundScene" />。
         /// </summary>
-        public class EventBackgroundPackedSceneRuntimeFactoryPatch : IPatchMethod
+        internal class EventBackgroundPackedSceneRuntimeFactoryPatch : IPatchMethod
         {
-            /// <inheritdoc cref="IPatchMethod.PatchId" />
             public static string PatchId => "runtime_godot_factory_event_background_packed_scene";
-
-            /// <inheritdoc cref="IPatchMethod.IsCritical" />
             public static bool IsCritical => false;
 
-            /// <inheritdoc cref="IPatchMethod.Description" />
             public static string Description =>
                 "Allow mod events to supply background PackedScene from code before BackgroundScenePath load";
 
-            /// <inheritdoc cref="IPatchMethod.GetTargets" />
             public static ModPatchTarget[] GetTargets()
             {
                 return [new(typeof(EventModel), nameof(EventModel.CreateBackgroundScene))];
@@ -342,18 +307,12 @@ namespace STS2RitsuLib.Scaffolding.Content.Patches
         ///     Patches <c>EventModel.HasVfx</c> for <see cref="IModEventVfxFactory" />.
         ///     为 <see cref="IModEventVfxFactory" /> 修补<c>EventModel.HasVfx</c>。
         /// </summary>
-        public class EventHasVfxRuntimeFactoryPatch : IPatchMethod
+        internal class EventHasVfxRuntimeFactoryPatch : IPatchMethod
         {
-            /// <inheritdoc cref="IPatchMethod.PatchId" />
             public static string PatchId => "runtime_godot_factory_event_has_vfx";
-
-            /// <inheritdoc cref="IPatchMethod.IsCritical" />
             public static bool IsCritical => false;
-
-            /// <inheritdoc cref="IPatchMethod.Description" />
             public static string Description => "Treat mod event Vfx factory as HasVfx when flagged";
 
-            /// <inheritdoc cref="IPatchMethod.GetTargets" />
             public static ModPatchTarget[] GetTargets()
             {
                 return [new(typeof(EventModel), "HasVfx", MethodType.Getter)];
@@ -378,18 +337,12 @@ namespace STS2RitsuLib.Scaffolding.Content.Patches
         ///     Patches <see cref="EventModel.CreateVfx" /> for <see cref="IModEventVfxFactory" />.
         ///     为 <see cref="IModEventVfxFactory" /> 修补<see cref="EventModel.CreateVfx" />。
         /// </summary>
-        public class EventCreateVfxRuntimeFactoryPatch : IPatchMethod
+        internal class EventCreateVfxRuntimeFactoryPatch : IPatchMethod
         {
-            /// <inheritdoc cref="IPatchMethod.PatchId" />
             public static string PatchId => "runtime_godot_factory_event_create_vfx";
-
-            /// <inheritdoc cref="IPatchMethod.IsCritical" />
             public static bool IsCritical => false;
-
-            /// <inheritdoc cref="IPatchMethod.Description" />
             public static string Description => "Allow mod events to supply VFX Node2D from code before VfxPath load";
 
-            /// <inheritdoc cref="IPatchMethod.GetTargets" />
             public static ModPatchTarget[] GetTargets()
             {
                 return [new(typeof(EventModel), nameof(EventModel.CreateVfx))];
@@ -418,19 +371,14 @@ namespace STS2RitsuLib.Scaffolding.Content.Patches
         ///     Patches <see cref="OrbModel.CreateSprite" /> for <see cref="IModOrbSpriteFactory" />.
         ///     为 <see cref="IModOrbSpriteFactory" /> 修补<see cref="OrbModel.CreateSprite" />。
         /// </summary>
-        public class OrbSpriteRuntimeFactoryPatch : IPatchMethod
+        internal class OrbSpriteRuntimeFactoryPatch : IPatchMethod
         {
-            /// <inheritdoc cref="IPatchMethod.PatchId" />
             public static string PatchId => "runtime_godot_factory_orb_sprite";
-
-            /// <inheritdoc cref="IPatchMethod.IsCritical" />
             public static bool IsCritical => false;
 
-            /// <inheritdoc cref="IPatchMethod.Description" />
             public static string Description =>
                 "Mod orbs: code factory first, then Ritsu Godot Node2D scene conversion (baselib-style tscn) before raw vanilla load";
 
-            /// <inheritdoc cref="IPatchMethod.GetTargets" />
             public static ModPatchTarget[] GetTargets()
             {
                 return [new(typeof(OrbModel), nameof(OrbModel.CreateSprite))];

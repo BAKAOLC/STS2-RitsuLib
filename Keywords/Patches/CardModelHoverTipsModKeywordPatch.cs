@@ -19,30 +19,20 @@ namespace STS2RitsuLib.Keywords.Patches
     ///     补丁（<see cref="HoverTipFactoryFromKeywordPatch" />）会为每个 mod
     ///     关键词返回真实悬停提示。此 postfix 只用于遵守退出标记。
     /// </summary>
-    public sealed class CardModelHoverTipsModKeywordPatch : IPatchMethod
+    internal sealed class CardModelHoverTipsModKeywordPatch : IPatchMethod
     {
-        /// <inheritdoc />
         public static string PatchId => "ritsulib_card_model_hover_tips_mod_keyword_exclude";
 
-        /// <inheritdoc />
         public static string Description =>
             "Remove mod keyword hover tips from CardModel.HoverTips when IncludeInCardHoverTip is false";
 
-        /// <inheritdoc />
         public static bool IsCritical => false;
 
-        /// <inheritdoc />
         public static ModPatchTarget[] GetTargets()
         {
             return [new(typeof(CardModel), "HoverTips", MethodType.Getter)];
         }
 
-        /// <summary>
-        ///     Removes any mod-keyword hover tip that vanilla produced (via
-        ///     <see cref="HoverTipFactory.FromKeyword" />) but is marked non-hoverable in the registry.
-        ///     移除原版生成的、但在注册表中标记为不可悬停的任何 mod-keyword 悬停提示（通过
-        ///     <see cref="HoverTipFactory.FromKeyword" /> 生成）。
-        /// </summary>
         public static void Postfix(CardModel __instance, ref IEnumerable<IHoverTip> __result)
         {
             HashSet<IHoverTip>? toRemove = null;

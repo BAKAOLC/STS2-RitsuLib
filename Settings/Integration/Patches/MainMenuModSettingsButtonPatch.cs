@@ -14,7 +14,7 @@ namespace STS2RitsuLib.Settings.Patches
     /// </summary>
     [HarmonyAfter(Const.BaseLibHarmonyId)]
     [HarmonyPriority(Priority.Last)]
-    public class MainMenuModSettingsButtonPatch : IPatchMethod
+    internal class MainMenuModSettingsButtonPatch : IPatchMethod
     {
         private const string GroupNodeName = "RitsuLibMainMenuModSettings";
         private const string ButtonNodeName = "RitsuLibMainMenuModSettingsButton";
@@ -29,18 +29,13 @@ namespace STS2RitsuLib.Settings.Patches
         private const float VersionLabelHeight = 45f;
         private const float VersionLabelLeft = -218f;
         private const float VersionLabelRight = -6f;
-
-        /// <inheritdoc />
         public static string PatchId => "ritsulib_main_menu_mod_settings_button";
 
-        /// <inheritdoc />
         public static string Description =>
             "Add the RitsuLib mod settings shortcut under the main menu patch notes button";
 
-        /// <inheritdoc />
         public static bool IsCritical => false;
 
-        /// <inheritdoc />
         public static ModPatchTarget[] GetTargets()
         {
             return
@@ -50,10 +45,6 @@ namespace STS2RitsuLib.Settings.Patches
             ];
         }
 
-        /// <summary>
-        ///     Ensures the shortcut exists and mirrors vanilla main-menu submenu visibility state.
-        ///     确保快捷入口存在，并同步原版主菜单子菜单打开时的可见状态。
-        /// </summary>
         public static void Postfix(NMainMenu __instance)
         {
             try

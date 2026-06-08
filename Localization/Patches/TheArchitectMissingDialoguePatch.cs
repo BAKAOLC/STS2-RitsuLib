@@ -31,19 +31,15 @@ namespace STS2RitsuLib.Localization.Patches
     ///     启用，且角色类型通过 <see cref="ModContentRegistry" /> 注册时生效。否则使用原版
     ///     行为（PROCEED 上可能发生 NRE）。
     /// </summary>
-    public class TheArchitectLoadDialogueMissingFallbackPatch : IPatchMethod
+    internal class TheArchitectLoadDialogueMissingFallbackPatch : IPatchMethod
     {
-        /// <inheritdoc />
         public static string PatchId => "the_architect_load_dialogue_missing_fallback";
 
-        /// <inheritdoc />
         public static string Description =>
             "THE_ARCHITECT: requires debug compat master + ancient shim; registry characters only; LoadDialogue null fallback";
 
-        /// <inheritdoc />
         public static bool IsCritical => false;
 
-        /// <inheritdoc />
         public static ModPatchTarget[] GetTargets()
         {
             return
@@ -52,10 +48,6 @@ namespace STS2RitsuLib.Localization.Patches
             ];
         }
 
-        /// <summary>
-        ///     After vanilla <c>LoadDialogue</c>, assign a no-op dialogue when none matched so PROCEED / <c>WinRun</c> is safe.
-        ///     原版 <c>LoadDialogue</c> 后，如果没有匹配项，则分配一个 no-op dialogue，使 PROCEED / <c>WinRun</c> 安全。
-        /// </summary>
         public static void Postfix(TheArchitect __instance)
         {
             var dialogueField = AccessTools.Field(typeof(TheArchitect), "_dialogue");

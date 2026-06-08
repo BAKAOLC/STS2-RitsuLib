@@ -11,28 +11,20 @@ namespace STS2RitsuLib.Lifecycle.Patches
     ///     随后重新抛出。该异常会经由 <c>TaskHelper.RunSafely</c> 传播并可能冻结输入。在原版
     ///     处理后吞掉异常，使菜单保持可用（与继续跑局缺失角色补丁思路一致）。
     /// </summary>
-    public class NRunHistoryRefreshAndSelectRunSuppressRethrowPatch : IPatchMethod
+    internal class NRunHistoryRefreshAndSelectRunSuppressRethrowPatch : IPatchMethod
     {
-        /// <inheritdoc />
         public static string PatchId => "nrun_history_refresh_and_select_run_suppress_rethrow";
 
-        /// <inheritdoc />
         public static string Description =>
             "Run history: after failed load UI state, do not rethrow (avoids TaskHelper stall)";
 
-        /// <inheritdoc />
         public static bool IsCritical => false;
 
-        /// <inheritdoc />
         public static ModPatchTarget[] GetTargets()
         {
             return [new(typeof(NRunHistory), "RefreshAndSelectRun", [typeof(int)])];
         }
 
-        /// <summary>
-        ///     Harmony finalizer: swallow exceptions so arrow navigation and menu remain responsive.
-        ///     Harmony finalizer：吞掉异常，使方向键导航和菜单保持响应。
-        /// </summary>
         public static Exception? Finalizer(Exception? __exception)
         {
             if (__exception == null)

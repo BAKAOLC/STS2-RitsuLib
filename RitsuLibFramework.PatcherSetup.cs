@@ -216,29 +216,86 @@ namespace STS2RitsuLib
             patcher.RegisterPatch<StateDivergenceDiagnosticsPopupCreatePatch>();
             patcher.RegisterPatch<StateDivergenceDiagnosticsPopupReadyPatch>();
             patcher.RegisterPatch<RunEndedLifecyclePatch>();
-            patcher.RegisterPatch<CombatHookLifecyclePatch>();
-            patcher.RegisterPatch<RewardHookLifecyclePatch>();
+            patcher.RegisterPatch<BeforeCombatStartLifecyclePatch>();
+            patcher.RegisterPatch<AfterCombatEndLifecyclePatch>();
+            patcher.RegisterPatch<AfterCombatVictoryLifecyclePatch>();
+            patcher.RegisterPatch<BeforeSideTurnStartLifecyclePatch>();
+            patcher.RegisterPatch<AfterSideTurnStartLifecyclePatch>();
+            patcher.RegisterPatch<BeforeCardPlayedLifecyclePatch>();
+            patcher.RegisterPatch<AfterCardPlayedLifecyclePatch>();
+            patcher.RegisterPatch<AfterCardChangedPilesLifecyclePatch>();
+            patcher.RegisterPatch<AfterCardDrawnLifecyclePatch>();
+            patcher.RegisterPatch<AfterCardDiscardedLifecyclePatch>();
+            patcher.RegisterPatch<AfterCardExhaustedLifecyclePatch>();
+            patcher.RegisterPatch<BeforeFlushLifecyclePatch>();
+#if !STS2_AT_LEAST_0_105_0
+            patcher.RegisterPatch<AfterCardRetainedLifecyclePatch>();
+#else
+            patcher.RegisterPatch<AfterFlushLifecyclePatch>();
+#endif
+            patcher.RegisterPatch<BeforeDeathLifecyclePatch>();
+            patcher.RegisterPatch<AfterDeathLifecyclePatch>();
+            patcher.RegisterPatch<AfterGoldGainedLifecyclePatch>();
+            patcher.RegisterPatch<AfterPotionProcuredLifecyclePatch>();
+            patcher.RegisterPatch<AfterPotionDiscardedLifecyclePatch>();
+            patcher.RegisterPatch<AfterRewardTakenLifecyclePatch>();
             patcher.RegisterPatch<GoldLossLifecyclePatch>();
             patcher.RegisterPatch<RelicObtainedLifecyclePatch>();
             patcher.RegisterPatch<RelicRemovedLifecyclePatch>();
-            patcher.RegisterPatch<RoomHookLifecyclePatch>();
+            patcher.RegisterPatch<BeforeRoomEnteredLifecyclePatch>();
+            patcher.RegisterPatch<AfterRoomEnteredLifecyclePatch>();
             patcher.RegisterPatch<ActHookLifecyclePatch>();
-            patcher.RegisterPatch<AdditionalHookLifecyclePatch>();
+            patcher.RegisterPatch<BeforeAttackLifecyclePatch>();
+            patcher.RegisterPatch<AfterAttackLifecyclePatch>();
+            patcher.RegisterPatch<AfterBlockBrokenLifecyclePatch>();
+            patcher.RegisterPatch<AfterBlockClearedLifecyclePatch>();
+            patcher.RegisterPatch<BeforeBlockGainedLifecyclePatch>();
+            patcher.RegisterPatch<AfterBlockGainedLifecyclePatch>();
+            patcher.RegisterPatch<BeforeCardAutoPlayedLifecyclePatch>();
+            patcher.RegisterPatch<AfterCardEnteredCombatLifecyclePatch>();
+            patcher.RegisterPatch<AfterCardGeneratedForCombatLifecyclePatch>();
+            patcher.RegisterPatch<BeforeCardRemovedLifecyclePatch>();
+            patcher.RegisterPatch<AfterCreatureAddedToCombatLifecyclePatch>();
+            patcher.RegisterPatch<AfterCurrentHpChangedLifecyclePatch>();
+            patcher.RegisterPatch<AfterEnergyResetLifecyclePatch>();
+            patcher.RegisterPatch<AfterEnergySpentLifecyclePatch>();
+            patcher.RegisterPatch<BeforeHandDrawLifecyclePatch>();
+            patcher.RegisterPatch<AfterHandEmptiedLifecyclePatch>();
+            patcher.RegisterPatch<AfterItemPurchasedLifecyclePatch>();
+            patcher.RegisterPatch<AfterMapGeneratedLifecyclePatch>();
+            patcher.RegisterPatch<AfterPlayerTurnStartLifecyclePatch>();
+            patcher.RegisterPatch<BeforePotionUsedLifecyclePatch>();
+            patcher.RegisterPatch<AfterPotionUsedLifecyclePatch>();
+            patcher.RegisterPatch<AfterRestSiteHealLifecyclePatch>();
+            patcher.RegisterPatch<AfterRestSiteSmithLifecyclePatch>();
+            patcher.RegisterPatch<AfterShuffleLifecyclePatch>();
+            patcher.RegisterPatch<AfterStarsGainedLifecyclePatch>();
+            patcher.RegisterPatch<AfterStarsSpentLifecyclePatch>();
+            patcher.RegisterPatch<AfterSummonLifecyclePatch>();
+            patcher.RegisterPatch<AfterTakingExtraTurnLifecyclePatch>();
+            patcher.RegisterPatch<BeforeTurnEndLifecyclePatch>();
+            patcher.RegisterPatch<AfterTurnEndLifecyclePatch>();
             patcher.RegisterPatch<RoomExitLifecyclePatch>();
-            patcher.RegisterPatch<ActTransitionLifecyclePatch>();
+            patcher.RegisterPatch<ActEnteringLifecyclePatch>();
+            patcher.RegisterPatch<RewardsScreenContinuingLifecyclePatch>();
             patcher.RegisterPatch<ActEnterMapSelectionSyncPatch>();
-            patcher.RegisterPatch<SaveManagerLifecyclePatch>();
+            patcher.RegisterPatch<ProfileIdInitializedLifecyclePatch>();
+            patcher.RegisterPatch<ProfileSwitchLifecyclePatch>();
+            patcher.RegisterPatch<ProgressSaveLifecyclePatch>();
+            patcher.RegisterPatch<ProfileDeleteLifecyclePatch>();
             patcher.RegisterPatch<ModDataCloudSyncPatches.AfterInitProfileId>();
             patcher.RegisterPatch<ModDataCloudSyncPatches.AfterSwitchProfileId>();
             patcher.RegisterPatch<RunSavingLifecyclePatch>();
-            patcher.RegisterPatch<EpochLifecyclePatch>();
+            patcher.RegisterPatch<EpochObtainedLifecyclePatch>();
+            patcher.RegisterPatch<EpochRevealedLifecyclePatch>();
             patcher.RegisterPatch<UnlockIncrementLifecyclePatch>();
             patcher.RegisterPatch<GameOverScreenLifecyclePatch>();
             patcher.RegisterPatch<NHealthBarReadyForecastPatch>();
             patcher.RegisterPatch<NHealthBarRefreshForegroundOrderedPatch>();
             patcher.RegisterPatch<CardModelShouldGlowGoldRegistryPatch>();
             patcher.RegisterPatch<CardModelShouldGlowRedRegistryPatch>();
-            patcher.RegisterPatch<CardModelSetToFreeBindingPatch>();
+            patcher.RegisterPatch<CardModelSetToFreeThisTurnBindingPatch>();
+            patcher.RegisterPatch<CardModelSetToFreeThisCombatBindingPatch>();
             patcher.RegisterPatch<NHandCardHolderUpdateCardHandOutlinePatch>();
             patcher.RegisterPatch<NHandCardHolderFlashHandOutlinePatch>();
             patcher.RegisterPatch<NHandCardHolderDynamicOutlineTickPatch>();
@@ -382,12 +439,17 @@ namespace STS2RitsuLib
         {
             var patcher = CreatePatcher(Const.ModId, "framework-content-assets", "content assets");
             patcher.RegisterPatch<EpochPortraitPathPatch>();
+            patcher.RegisterPatch<EpochBigPortraitPathPatch>();
 #if STS2_AT_LEAST_0_106_0
             patcher.RegisterPatch<EpochArtPlaceholderPatch>();
 #endif
             patcher.RegisterPatch<CardPortraitPathPatch>();
+            patcher.RegisterPatch<CardBetaPortraitPathPatch>();
             patcher.RegisterPatch<CardPortraitAvailabilityPatch>();
+            patcher.RegisterPatch<CardBetaPortraitAvailabilityPatch>();
             patcher.RegisterPatch<CardTextureOverridePatch>();
+            patcher.RegisterPatch<CardPortraitBorderTexturePatch>();
+            patcher.RegisterPatch<CardEnergyIconTexturePatch>();
             patcher.RegisterPatch<CardFrameMaterialPatch>();
             patcher.RegisterPatch<CardPoolFrameMaterialPatch>();
             patcher.RegisterPatch<CardPortraitMaterialPatch>();
@@ -413,10 +475,14 @@ namespace STS2RitsuLib
             patcher.RegisterPatch<EnergyIconFormatterPatch>();
 
             patcher.RegisterPatch<RelicIconPathPatch>();
+            patcher.RegisterPatch<RelicPackedIconOutlinePathPatch>();
             patcher.RegisterPatch<RelicTexturePatch>();
+            patcher.RegisterPatch<RelicIconOutlineTexturePatch>();
+            patcher.RegisterPatch<RelicBigIconTexturePatch>();
 
             patcher.RegisterPatch<PowerIconPathPatch>();
             patcher.RegisterPatch<PowerTexturePatch>();
+            patcher.RegisterPatch<PowerBigIconTexturePatch>();
             patcher.RegisterPatch<PowerResolvedBigIconPathPatch>();
 
             patcher.RegisterPatch<OrbIconPatch>();
@@ -425,7 +491,9 @@ namespace STS2RitsuLib
             patcher.RegisterPatch<NOrbValueDisplayPolicyPatch>();
 
             patcher.RegisterPatch<PotionImagePathPatch>();
+            patcher.RegisterPatch<PotionOutlinePathPatch>();
             patcher.RegisterPatch<PotionTexturePatch>();
+            patcher.RegisterPatch<PotionOutlineTexturePatch>();
 
             patcher.RegisterPatch<AfflictionOverlayPathPatch>();
             patcher.RegisterPatch<AfflictionHasOverlayPatch>();
@@ -437,6 +505,8 @@ namespace STS2RitsuLib
             patcher.RegisterPatch<ActBackgroundScenePathPatch>();
             patcher.RegisterPatch<ActRestSiteBackgroundPathPatch>();
             patcher.RegisterPatch<ActMapBackgroundPathPatch>();
+            patcher.RegisterPatch<ActMapMidBackgroundPathPatch>();
+            patcher.RegisterPatch<ActMapBottomBackgroundPathPatch>();
             patcher.RegisterPatch<ActGenerateBackgroundAssetsPatch>();
             patcher.RegisterPatch<ActAssetPathsBackgroundLayersPatch>();
 
@@ -468,7 +538,9 @@ namespace STS2RitsuLib
             patcher.RegisterPatch<EventCreateVfxPatch>();
             patcher.RegisterPatch<EventGetAssetPathsPatch>();
             patcher.RegisterPatch<AncientMapIconTexturePatch>();
+            patcher.RegisterPatch<AncientMapIconOutlineTexturePatch>();
             patcher.RegisterPatch<AncientRunHistoryIconTexturePatch>();
+            patcher.RegisterPatch<AncientRunHistoryIconOutlineTexturePatch>();
             patcher.RegisterPatch<ImageHelperAncientModRunHistoryIconPathPatch>();
             patcher.RegisterPatch<ImageHelperModEncounterRunHistoryIconPathPatch>();
             patcher.RegisterPatch<AncientMapNodeAssetPathsPatch>();

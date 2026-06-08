@@ -14,29 +14,20 @@ namespace STS2RitsuLib.Scaffolding.Content.Patches
     ///     编程式槽位（需要 <see cref="ActModel" /> + <see cref="Rng" />；原版
     ///     <c>CreateBackgroundAssetsForCustom</c> 只接收 <c>Rng</c>）。
     /// </summary>
-    public class EncounterGetBackgroundAssetsProgrammaticPrepPatch : IPatchMethod
+    internal class EncounterGetBackgroundAssetsProgrammaticPrepPatch : IPatchMethod
     {
-        /// <inheritdoc cref="IPatchMethod.PatchId" />
         public static string PatchId => "content_encounter_programmatic_background_prep";
 
-        /// <inheritdoc cref="IPatchMethod.Description" />
         public static string Description =>
             "Prepare ModEncounterTemplate programmatic combat BackgroundAssets for CreateBackgroundAssetsForCustom";
 
-        /// <inheritdoc cref="IPatchMethod.IsCritical" />
         public static bool IsCritical => false;
 
-        /// <inheritdoc cref="IPatchMethod.GetTargets" />
         public static ModPatchTarget[] GetTargets()
         {
             return [new(typeof(EncounterModel), "GetBackgroundAssets", [typeof(ActModel), typeof(Rng)])];
         }
 
-        /// <summary>
-        ///     Invokes <see cref="ModEncounterTemplate.PrepareProgrammaticCombatBackground" /> when the encounter has no cached
-        ///     background yet.
-        ///     当遭遇还没有缓存的背景时，调用 <see cref="ModEncounterTemplate.PrepareProgrammaticCombatBackground" />。
-        /// </summary>
         public static void Prefix(EncounterModel __instance, ActModel parentAct, Rng rng)
         {
             if (__instance is not ModEncounterTemplate { UsesProgrammaticCombatBackground: true } template)

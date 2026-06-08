@@ -12,27 +12,17 @@ namespace STS2RitsuLib.Scaffolding.Content.Patches
     ///     修补 <see cref="RestSiteOption.Icon" />，当选项实现
     ///     <see cref="IModRestSiteOptionAssetOverrides" /> 时加载自定义纹理。
     /// </summary>
-    public class RestSiteOptionIconPatch : IPatchMethod
+    internal class RestSiteOptionIconPatch : IPatchMethod
     {
-        /// <inheritdoc cref="IPatchMethod.PatchId" />
         public static string PatchId => "content_asset_override_rest_site_option_icon";
-
-        /// <inheritdoc cref="IPatchMethod.Description" />
         public static string Description => "Allow mod rest site options to override icon texture";
-
-        /// <inheritdoc cref="IPatchMethod.IsCritical" />
         public static bool IsCritical => false;
 
-        /// <inheritdoc cref="IPatchMethod.GetTargets" />
         public static ModPatchTarget[] GetTargets()
         {
             return [new(typeof(RestSiteOption), "Icon", MethodType.Getter)];
         }
 
-        /// <summary>
-        ///     Loads the texture from <see cref="IModRestSiteOptionAssetOverrides.CustomIconPath" /> when present.
-        ///     存在时从 <see cref="IModRestSiteOptionAssetOverrides.CustomIconPath" /> 加载纹理。
-        /// </summary>
         public static bool Prefix(RestSiteOption __instance, ref Texture2D __result)
         {
             return ContentAssetOverridePatchHelper.TryUseTextureOverride<IModRestSiteOptionAssetOverrides>(
@@ -51,27 +41,17 @@ namespace STS2RitsuLib.Scaffolding.Content.Patches
     ///     实现 <see cref="IModRestSiteOptionCustomTitle" /> 时返回自定义 <see cref="LocString" />。
     ///     实现 <c>IModRestSiteOptionCustomTitle</c>。
     /// </summary>
-    public class RestSiteOptionTitlePatch : IPatchMethod
+    internal class RestSiteOptionTitlePatch : IPatchMethod
     {
-        /// <inheritdoc cref="IPatchMethod.PatchId" />
         public static string PatchId => "content_asset_override_rest_site_option_title";
-
-        /// <inheritdoc cref="IPatchMethod.Description" />
         public static string Description => "Allow mod rest site options to override title";
-
-        /// <inheritdoc cref="IPatchMethod.IsCritical" />
         public static bool IsCritical => false;
 
-        /// <inheritdoc cref="IPatchMethod.GetTargets" />
         public static ModPatchTarget[] GetTargets()
         {
             return [new(typeof(RestSiteOption), "Title", MethodType.Getter)];
         }
 
-        /// <summary>
-        ///     Returns <see cref="IModRestSiteOptionCustomTitle.CustomTitle" /> when non-null.
-        ///     当non-null时返回 <see cref="IModRestSiteOptionCustomTitle.CustomTitle" />。
-        /// </summary>
         public static bool Prefix(RestSiteOption __instance, ref LocString __result)
         {
             if (__instance is not IModRestSiteOptionCustomTitle { CustomTitle: { } customTitle })

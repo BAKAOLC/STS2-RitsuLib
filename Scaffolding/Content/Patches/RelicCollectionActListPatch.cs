@@ -12,7 +12,7 @@ namespace STS2RitsuLib.Scaffolding.Content.Patches
     ///     Replaces the vanilla relic collection's hard-coded ancient act list with the runtime <see cref="ModelDb.Acts" />
     ///     sequence so registered mod acts can contribute ancient relic subcategories.
     /// </summary>
-    public class RelicCollectionActListPatch : IPatchMethod
+    internal class RelicCollectionActListPatch : IPatchMethod
     {
         private static readonly MethodInfo ModelDbActsGetter =
             AccessTools.PropertyGetter(typeof(ModelDb), nameof(ModelDb.Acts));
@@ -20,16 +20,10 @@ namespace STS2RitsuLib.Scaffolding.Content.Patches
         private static readonly MethodInfo RuntimeActListMethod =
             AccessTools.DeclaredMethod(typeof(RelicCollectionActListPatch), nameof(GetRuntimeActList));
 
-        /// <inheritdoc />
         public static string PatchId => "relic_collection_runtime_act_list";
-
-        /// <inheritdoc />
         public static string Description => "Use runtime ModelDb.Acts for relic collection ancient categories";
-
-        /// <inheritdoc />
         public static bool IsCritical => false;
 
-        /// <inheritdoc />
         public static ModPatchTarget[] GetTargets()
         {
             return [new(typeof(NRelicCollectionCategory), nameof(NRelicCollectionCategory.LoadRelics))];

@@ -18,28 +18,17 @@ namespace STS2RitsuLib.CardPiles.Patches
     ///     没有此 patch 时，只要调用方使用 mod-minted pile id，原版 switch 就会落入
     ///     <c>ArgumentOutOfRangeException</c>；因此它必须作为 Prefix 而不是 Postfix 运行。
     /// </remarks>
-    public sealed class ModCardPileGetPatch : IPatchMethod
+    internal sealed class ModCardPileGetPatch : IPatchMethod
     {
-        /// <inheritdoc />
         public static string PatchId => "ritsulib_card_pile_get_mod_route";
-
-        /// <inheritdoc />
         public static string Description => "Route CardPile.Get to ModCardPileStorage for minted mod PileType values";
-
-        /// <inheritdoc />
         public static bool IsCritical => false;
 
-        /// <inheritdoc />
         public static ModPatchTarget[] GetTargets()
         {
             return [new(typeof(CardPile), nameof(CardPile.Get))];
         }
 
-        /// <summary>
-        ///     Resolves mod piles before vanilla's switch throws; returns <c>true</c> to continue vanilla
-        ///     execution for unrecognized values.
-        ///     在原版 switch 抛异常前解析 mod pile；对未识别值返回 <c>true</c> 以继续执行原版逻辑。
-        /// </summary>
         public static bool Prefix(PileType type, Player player, ref CardPile? __result)
         {
             if (!ModCardPileRegistry.IsModPileType(type))

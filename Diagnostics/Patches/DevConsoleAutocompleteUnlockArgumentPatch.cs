@@ -11,7 +11,7 @@ namespace STS2RitsuLib.Diagnostics.Patches
     ///     Supplies <c>unlock &lt;type&gt; &lt;id&gt;...</c> autocomplete via
     ///     <see cref="AbstractConsoleCmd.CompleteArgument" />.
     /// </summary>
-    public sealed class DevConsoleAutocompleteUnlockArgumentPatch : IPatchMethod
+    internal sealed class DevConsoleAutocompleteUnlockArgumentPatch : IPatchMethod
     {
         private static readonly MethodInfo CompleteArgumentMethod = AccessTools.Method(
             typeof(AbstractConsoleCmd),
@@ -21,25 +21,17 @@ namespace STS2RitsuLib.Diagnostics.Patches
                 typeof(Func<string, string, bool>),
             ]);
 
-        /// <inheritdoc />
         public static string PatchId => "dev_console_autocomplete_unlock_argument";
-
-        /// <inheritdoc />
         public static bool IsCritical => false;
 
-        /// <inheritdoc />
         public static string Description =>
             "DevConsole unlock: autocomplete discovery ids after the discovery type token";
 
-        /// <inheritdoc />
         public static ModPatchTarget[] GetTargets()
         {
             return [new(typeof(UnlockConsoleCmd), nameof(UnlockConsoleCmd.GetArgumentCompletions), true)];
         }
 
-        /// <summary>
-        ///     Routes <c>unlock cards ID ...</c> completion through <see cref="AbstractConsoleCmd.CompleteArgument" />.
-        /// </summary>
         public static bool Prefix(UnlockConsoleCmd __instance, string[] args, ref CompletionResult __result)
         {
             if (args.Length < 2 || CompleteArgumentMethod == null)

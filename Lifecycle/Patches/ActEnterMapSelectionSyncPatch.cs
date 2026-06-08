@@ -17,19 +17,15 @@ namespace STS2RitsuLib.Lifecycle.Patches
     ///     一致（避免 patch <see cref="RunManager.SetActInternal" />，因为其 Harmony postfix 可能在
     ///     <see cref="RunManager.GenerateMap" /> 完成前运行）。
     /// </summary>
-    public sealed class ActEnterMapSelectionSyncPatch : IPatchMethod
+    internal sealed class ActEnterMapSelectionSyncPatch : IPatchMethod
     {
-        /// <inheritdoc />
         public static string PatchId => "act_enter_map_selection_sync";
 
-        /// <inheritdoc />
         public static string Description =>
             "After RunManager.GenerateMap completes, call MapSelectionSynchronizer.BeforeMapGenerated when EnterAct replaced the act model";
 
-        /// <inheritdoc />
         public static bool IsCritical => false;
 
-        /// <inheritdoc />
         public static ModPatchTarget[] GetTargets()
         {
             return
@@ -38,10 +34,6 @@ namespace STS2RitsuLib.Lifecycle.Patches
             ];
         }
 
-        /// <summary>
-        ///     Harmony postfix: synchronizer bump after <see cref="RunManager.GenerateMap" /> has completed.
-        ///     Harmony postfix：在 <see cref="RunManager.GenerateMap" /> 完成后递增同步器。
-        /// </summary>
         public static void Postfix(ref Task __result)
         {
             __result = LifecyclePatchTaskBridge.After(__result, BumpMapSelectionSynchronizerIfRequested);

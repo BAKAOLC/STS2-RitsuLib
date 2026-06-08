@@ -19,7 +19,7 @@ namespace STS2RitsuLib.Scaffolding.Characters.Patches
     ///     重新实现 <c>NFakeMerchant.AfterRoomIsLoaded</c>，让玩家摊位视觉使用与 <see cref="NMerchantCharacter" /> 相同的路径，和
     ///     <see cref="NMerchantRoomProceduralCharacterInstantiationPatch" /> 一致（包括程序化商人外壳和世界 cue 播放）。
     /// </summary>
-    public class NFakeMerchantProceduralCharacterInstantiationPatch : IPatchMethod
+    internal class NFakeMerchantProceduralCharacterInstantiationPatch : IPatchMethod
     {
         private static readonly AccessTools.FieldRef<NFakeMerchant, List<Player>> PlayersRef =
             AccessTools.FieldRefAccess<NFakeMerchant, List<Player>>("_players");
@@ -34,27 +34,18 @@ namespace STS2RitsuLib.Scaffolding.Characters.Patches
             AccessTools.MethodDelegate<Func<NFakeMerchant, Task>>(
                 AccessTools.Method(typeof(NFakeMerchant), "ShowWelcomeDialogue"));
 
-        /// <inheritdoc cref="IPatchMethod.PatchId" />
         public static string PatchId => "n_fake_merchant_procedural_character_instantiation";
 
-        /// <inheritdoc cref="IPatchMethod.Description" />
         public static string Description =>
             "Instantiate fake-merchant event player visuals via merchant character path when mod merchant visuals apply";
 
-        /// <inheritdoc cref="IPatchMethod.IsCritical" />
         public static bool IsCritical => false;
 
-        /// <inheritdoc cref="IPatchMethod.GetTargets" />
         public static ModPatchTarget[] GetTargets()
         {
             return [new(typeof(NFakeMerchant), "AfterRoomIsLoaded")];
         }
 
-        /// <summary>
-        ///     Replaces vanilla player combat-style visuals layout; returns <see langword="false" /> so the
-        ///     original <c>AfterRoomIsLoaded</c> is skipped.
-        ///     替换原版玩家战斗风格的视觉布局；返回 <see langword="false" />，使原始 <c>AfterRoomIsLoaded</c> 被跳过。
-        /// </summary>
         public static bool Prefix(NFakeMerchant __instance)
         {
             RunAfterRoomIsLoaded(__instance);

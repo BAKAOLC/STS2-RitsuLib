@@ -16,7 +16,7 @@ namespace STS2RitsuLib.Lifecycle.Patches
     ///     将跑局历史 UI 中的 <c>ModelDb.GetById&lt;CharacterModel&gt;</c> 和 <c>GetById&lt;ActModel&gt;</c> 替换为
     ///     <see cref="RunHistoryMissingModelSupport" />，使缺失 mod 内容时不会抛错。
     /// </summary>
-    public class RunHistoryMissingModelDbGetByIdTranspilerPatch : IPatchMethod
+    internal class RunHistoryMissingModelDbGetByIdTranspilerPatch : IPatchMethod
     {
         private static readonly MethodInfo CharacterFallback =
             AccessTools.DeclaredMethod(typeof(RunHistoryMissingModelSupport),
@@ -26,17 +26,13 @@ namespace STS2RitsuLib.Lifecycle.Patches
             AccessTools.DeclaredMethod(typeof(RunHistoryMissingModelSupport),
                 nameof(RunHistoryMissingModelSupport.ActForRunHistory));
 
-        /// <inheritdoc />
         public static string PatchId => "run_history_missing_model_db_getbyid_transpile";
 
-        /// <inheritdoc />
         public static string Description =>
             "Transpile run-history methods to use Character/Act fallbacks when ModelDb has no entry";
 
-        /// <inheritdoc />
         public static bool IsCritical => false;
 
-        /// <inheritdoc />
         public static ModPatchTarget[] GetTargets()
         {
             return

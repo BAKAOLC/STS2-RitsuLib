@@ -12,7 +12,7 @@ namespace STS2RitsuLib.Scaffolding.Content.Patches
     ///     Appends registered mod rules into <see cref="AncientEventModel" /> initial options after vanilla generation.
     ///     原版生成后，将已注册 mod 规则追加到 <see cref="AncientEventModel" /> 初始选项中。
     /// </summary>
-    public class AncientEventInitialOptionsRegistryPatch : IPatchMethod
+    internal class AncientEventInitialOptionsRegistryPatch : IPatchMethod
     {
         private static readonly MethodInfo RelicOptionMethod = typeof(AncientEventModel)
             .GetMethods(BindingFlags.Instance | BindingFlags.NonPublic | BindingFlags.DeclaredOnly)
@@ -28,26 +28,18 @@ namespace STS2RitsuLib.Scaffolding.Content.Patches
                        && parameters[2].ParameterType == typeof(string);
             });
 
-        /// <inheritdoc cref="IPatchMethod.PatchId" />
         public static string PatchId => "ancient_event_initial_options_registry";
 
-        /// <inheritdoc cref="IPatchMethod.Description" />
         public static string Description =>
             "Append ModAncientOptionRegistry results into AncientEventModel initial option list";
 
-        /// <inheritdoc cref="IPatchMethod.IsCritical" />
         public static bool IsCritical => false;
 
-        /// <inheritdoc cref="IPatchMethod.GetTargets" />
         public static ModPatchTarget[] GetTargets()
         {
             return [new(typeof(AncientEventModel), "GenerateInitialOptionsWrapper")];
         }
 
-        /// <summary>
-        ///     Appends matching registered options after vanilla generated initial options are materialized.
-        ///     在原版生成的初始选项实体化后，追加匹配的已注册选项。
-        /// </summary>
         public static void Postfix(AncientEventModel __instance, ref IReadOnlyList<EventOption> __result)
         {
             ReplaceDebugRelicOptionWithPreparedOption(__instance, ref __result);

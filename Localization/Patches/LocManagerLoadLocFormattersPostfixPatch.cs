@@ -9,28 +9,20 @@ namespace STS2RitsuLib.Localization.Patches
     ///     Injects mod-registered SmartFormat extensions after the game creates its localization formatter.
     ///     游戏创建其本地化 formatter 后，注入 mod 注册的 SmartFormat extension。
     /// </summary>
-    public sealed class LocManagerLoadLocFormattersPostfixPatch : IPatchMethod
+    internal sealed class LocManagerLoadLocFormattersPostfixPatch : IPatchMethod
     {
-        /// <inheritdoc />
         public static string PatchId => "loc_manager_load_loc_formatters_register_mod_extensions";
 
-        /// <inheritdoc />
         public static string Description =>
             "Inject mod-registered SmartFormat IFormatter / ISource into LocManager";
 
-        /// <inheritdoc />
         public static bool IsCritical => false;
 
-        /// <inheritdoc />
         public static ModPatchTarget[] GetTargets()
         {
             return [new(typeof(LocManager), "LoadLocFormatters")];
         }
 
-        /// <summary>
-        ///     Adds all registered mod SmartFormat extensions to the freshly created localization formatter.
-        ///     将所有已注册的 mod SmartFormat extension 添加到刚创建的本地化 formatter。
-        /// </summary>
         public static void Postfix(SmartFormatter ____smartFormatter)
         {
             try

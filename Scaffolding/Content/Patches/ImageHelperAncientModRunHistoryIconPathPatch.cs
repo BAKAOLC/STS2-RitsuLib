@@ -23,19 +23,15 @@ namespace STS2RitsuLib.Scaffolding.Content.Patches
     /// </summary>
     [HarmonyAfter(Const.BaseLibHarmonyId)]
     [HarmonyPriority(Priority.Last)]
-    public class ImageHelperAncientModRunHistoryIconPathPatch : IPatchMethod
+    internal class ImageHelperAncientModRunHistoryIconPathPatch : IPatchMethod
     {
-        /// <inheritdoc cref="IPatchMethod.PatchId" />
         public static string PatchId => "image_helper_ancient_mod_run_history_icon_path";
 
-        /// <inheritdoc cref="IPatchMethod.Description" />
         public static string Description =>
             "Route Ancient+Event run-history icon paths through IModAncientEventAssetOverrides when resources exist";
 
-        /// <inheritdoc cref="IPatchMethod.IsCritical" />
         public static bool IsCritical => false;
 
-        /// <inheritdoc cref="IPatchMethod.GetTargets" />
         public static ModPatchTarget[] GetTargets()
         {
             return
@@ -45,10 +41,6 @@ namespace STS2RitsuLib.Scaffolding.Content.Patches
             ];
         }
 
-        /// <summary>
-        ///     Supplies mod run-history texture paths before vanilla builds <c>ui/run_history/&lt;entry&gt;.png</c> paths.
-        ///     在原版构建 <c>ui/run_history/&lt;entry&gt;.png</c> 路径之前，提供 mod 跑局历史纹理路径。
-        /// </summary>
         public static bool Prefix(
             MethodBase __originalMethod,
             MapPointType mapPointType,

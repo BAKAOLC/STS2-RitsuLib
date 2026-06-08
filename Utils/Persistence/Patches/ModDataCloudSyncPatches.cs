@@ -5,7 +5,7 @@ namespace STS2RitsuLib.Utils.Persistence.Patches
 {
     internal static class ModDataCloudSyncPatches
     {
-        public sealed class AfterInitProfileId : IPatchMethod
+        internal sealed class AfterInitProfileId : IPatchMethod
         {
             public static string PatchId => "ritsulib_mod_data_cloud_after_init_profile";
 
@@ -25,7 +25,7 @@ namespace STS2RitsuLib.Utils.Persistence.Patches
             }
         }
 
-        public sealed class AfterSwitchProfileId : IPatchMethod
+        internal sealed class AfterSwitchProfileId : IPatchMethod
         {
             public static string PatchId => "ritsulib_mod_data_cloud_after_switch_profile";
 

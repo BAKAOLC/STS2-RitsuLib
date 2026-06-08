@@ -15,7 +15,7 @@ namespace STS2RitsuLib.Lifecycle.Patches
     ///     兼容性：当任意玩家引用未注册角色时阻止多人加载界面的 <c>StartRun</c> 且不删除存档；
     ///     其他情况下保持原版加载流程不变。
     /// </summary>
-    public class NMultiplayerLoadGameScreenBeginRunMissingCharacterPatch : IPatchMethod
+    internal class NMultiplayerLoadGameScreenBeginRunMissingCharacterPatch : IPatchMethod
     {
         private static readonly AccessTools.FieldRef<NMultiplayerLoadGameScreen, LoadRunLobby> RunLobbyRef =
             AccessTools.FieldRefAccess<NMultiplayerLoadGameScreen, LoadRunLobby>("_runLobby");
@@ -26,26 +26,18 @@ namespace STS2RitsuLib.Lifecycle.Patches
         private static readonly AccessTools.FieldRef<NMultiplayerLoadGameScreen, NBackButton> UnreadyRef =
             AccessTools.FieldRefAccess<NMultiplayerLoadGameScreen, NBackButton>("_unreadyButton");
 
-        /// <inheritdoc />
         public static string PatchId => "nmultiplayer_load_game_begin_run_missing_character";
 
-        /// <inheritdoc />
         public static string Description =>
             "Multiplayer load screen: block StartRun when a saved player character is not registered; no save deletion";
 
-        /// <inheritdoc />
         public static bool IsCritical => false;
 
-        /// <inheritdoc />
         public static ModPatchTarget[] GetTargets()
         {
             return [new(typeof(NMultiplayerLoadGameScreen), "StartRun")];
         }
 
-        /// <summary>
-        ///     Harmony prefix: only replaces <c>StartRun</c> for invalid mod-character saves.
-        ///     Harmony prefix：仅在 mod 角色存档无效时替换 <c>StartRun</c>。
-        /// </summary>
         public static bool Prefix(NMultiplayerLoadGameScreen __instance, ref Task __result)
         {
             var lobby = RunLobbyRef(__instance);
@@ -66,7 +58,7 @@ namespace STS2RitsuLib.Lifecycle.Patches
     ///     兼容性：当任意玩家引用未注册角色时阻止自定义跑局加载界面的 <c>StartRun</c> 且不删除存档；
     ///     其他情况下保持原版加载流程不变。
     /// </summary>
-    public class NCustomRunLoadScreenBeginRunMissingCharacterPatch : IPatchMethod
+    internal class NCustomRunLoadScreenBeginRunMissingCharacterPatch : IPatchMethod
     {
         private static readonly AccessTools.FieldRef<NCustomRunLoadScreen, LoadRunLobby> LobbyRef =
             AccessTools.FieldRefAccess<NCustomRunLoadScreen, LoadRunLobby>("_lobby");
@@ -77,26 +69,18 @@ namespace STS2RitsuLib.Lifecycle.Patches
         private static readonly AccessTools.FieldRef<NCustomRunLoadScreen, NBackButton> UnreadyRef =
             AccessTools.FieldRefAccess<NCustomRunLoadScreen, NBackButton>("_unreadyButton");
 
-        /// <inheritdoc />
         public static string PatchId => "ncustom_run_load_begin_run_missing_character";
 
-        /// <inheritdoc />
         public static string Description =>
             "Custom run load screen: block StartRun when a saved player character is not registered; no save deletion";
 
-        /// <inheritdoc />
         public static bool IsCritical => false;
 
-        /// <inheritdoc />
         public static ModPatchTarget[] GetTargets()
         {
             return [new(typeof(NCustomRunLoadScreen), "StartRun")];
         }
 
-        /// <summary>
-        ///     Harmony prefix: only replaces <c>StartRun</c> for invalid mod-character saves.
-        ///     Harmony prefix：仅在 mod 角色存档无效时替换 <c>StartRun</c>。
-        /// </summary>
         public static bool Prefix(NCustomRunLoadScreen __instance, ref Task __result)
         {
             var lobby = LobbyRef(__instance);
@@ -117,7 +101,7 @@ namespace STS2RitsuLib.Lifecycle.Patches
     ///     兼容性：当任意玩家引用未注册角色时阻止每日跑局加载界面的 <c>StartRun</c> 且不删除存档；
     ///     其他情况下保持原版加载流程不变。
     /// </summary>
-    public class NDailyRunLoadScreenBeginRunMissingCharacterPatch : IPatchMethod
+    internal class NDailyRunLoadScreenBeginRunMissingCharacterPatch : IPatchMethod
     {
         private static readonly Lazy<AccessTools.FieldRef<NDailyRunLoadScreen, LoadRunLobby?>> LobbyRefLazy =
             new(() => AccessTools.FieldRefAccess<NDailyRunLoadScreen, LoadRunLobby?>("_lobby"));
@@ -128,26 +112,18 @@ namespace STS2RitsuLib.Lifecycle.Patches
         private static readonly Lazy<AccessTools.FieldRef<NDailyRunLoadScreen, NBackButton>> UnreadyRefLazy =
             new(() => AccessTools.FieldRefAccess<NDailyRunLoadScreen, NBackButton>("_unreadyButton"));
 
-        /// <inheritdoc />
         public static string PatchId => "ndaily_run_load_begin_run_missing_character";
 
-        /// <inheritdoc />
         public static string Description =>
             "Daily run load screen: block StartRun when a saved player character is not registered; no save deletion";
 
-        /// <inheritdoc />
         public static bool IsCritical => false;
 
-        /// <inheritdoc />
         public static ModPatchTarget[] GetTargets()
         {
             return [new(typeof(NDailyRunLoadScreen), "StartRun")];
         }
 
-        /// <summary>
-        ///     Harmony prefix: only replaces <c>StartRun</c> for invalid mod-character saves.
-        ///     Harmony prefix：仅在 mod 角色存档无效时替换 <c>StartRun</c>。
-        /// </summary>
         public static bool Prefix(NDailyRunLoadScreen __instance, ref Task __result)
         {
             var lobby = LobbyRefLazy.Value(__instance);

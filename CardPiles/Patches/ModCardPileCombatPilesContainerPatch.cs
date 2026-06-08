@@ -17,27 +17,17 @@ namespace STS2RitsuLib.CardPiles.Patches
     ///     （<see cref="ModCardPileUiStyle.BottomLeft" />
     ///     <see cref="ModCardPileUiStyle.BottomRight" />）
     /// </summary>
-    public sealed class ModCardPileCombatPilesContainerReadyPatch : IPatchMethod
+    internal sealed class ModCardPileCombatPilesContainerReadyPatch : IPatchMethod
     {
-        /// <inheritdoc />
         public static string PatchId => "ritsulib_combat_piles_container_ready";
-
-        /// <inheritdoc />
         public static string Description => "Inject mod card pile buttons into NCombatPilesContainer on ready";
-
-        /// <inheritdoc />
         public static bool IsCritical => false;
 
-        /// <inheritdoc />
         public static ModPatchTarget[] GetTargets()
         {
             return [new(typeof(NCombatPilesContainer), nameof(NCombatPilesContainer._Ready))];
         }
 
-        /// <summary>
-        ///     Injects mod bottom-row pile buttons after vanilla wiring completes.
-        ///     在原版接线完成后注入 mod 底部 row 牌堆按钮。
-        /// </summary>
         public static void Postfix(NCombatPilesContainer __instance)
         {
             ModCardPileInjector.InjectCombatButtons(__instance);
@@ -52,18 +42,12 @@ namespace STS2RitsuLib.CardPiles.Patches
     ///     <see cref="NModCardPileButton" />，使每个 mod 牌堆与原版 draw / discard / exhaust 按钮一起绑定到
     ///     当前 <see cref="Player" />。
     /// </summary>
-    public sealed class ModCardPileCombatPilesContainerInitializePatch : IPatchMethod
+    internal sealed class ModCardPileCombatPilesContainerInitializePatch : IPatchMethod
     {
-        /// <inheritdoc />
         public static string PatchId => "ritsulib_combat_piles_container_initialize";
-
-        /// <inheritdoc />
         public static string Description => "Initialize injected mod pile buttons with the current player";
-
-        /// <inheritdoc />
         public static bool IsCritical => false;
 
-        /// <inheritdoc />
         public static ModPatchTarget[] GetTargets()
         {
             return
@@ -72,10 +56,6 @@ namespace STS2RitsuLib.CardPiles.Patches
             ];
         }
 
-        /// <summary>
-        ///     Binds each mod pile button to the current player.
-        ///     将每个 mod pile 按钮绑定到当前玩家。
-        /// </summary>
         public static void Postfix(NCombatPilesContainer __instance, Player player)
         {
             foreach (var button in __instance.GetChildren().OfType<NModCardPileButton>())

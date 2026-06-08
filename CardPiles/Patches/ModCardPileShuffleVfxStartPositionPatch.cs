@@ -12,33 +12,23 @@ namespace STS2RitsuLib.CardPiles.Patches
     ///     当源牌堆是 mod 牌堆，且该牌堆注册了
     ///     <see cref="ModCardPileSpec.FlightStartPositionResolver" /> 时，覆盖 shuffle 飞行动画的源/起点位置。
     /// </summary>
-    public sealed class ModCardPileShuffleVfxStartPositionPatch : IPatchMethod
+    internal sealed class ModCardPileShuffleVfxStartPositionPatch : IPatchMethod
     {
         private static readonly FieldInfo? StartPositionField =
             AccessTools.Field(typeof(NCardFlyShuffleVfx), "_startPos");
 
-        /// <inheritdoc />
         public static string PatchId => "ritsulib_mod_pile_shuffle_vfx_start_position";
 
-        /// <inheritdoc />
         public static string Description =>
             "Allow mod card piles to customize shuffle-fly source positions";
 
-        /// <inheritdoc />
         public static bool IsCritical => false;
 
-        /// <inheritdoc />
         public static ModPatchTarget[] GetTargets()
         {
             return [new(typeof(NCardFlyShuffleVfx), nameof(NCardFlyShuffleVfx.Create))];
         }
 
-        /// <summary>
-        ///     Rewrites the freshly created shuffle-vfx start position when <paramref name="startPile" /> is a
-        ///     mod pile and it provided a custom start resolver.
-        ///     当 <paramref name="startPile" /> 是 mod pile 且提供了自定义 start resolver 时，
-        ///     重写刚创建的 shuffle-vfx start position。
-        /// </summary>
         public static void Postfix(CardPile startPile, CardPile targetPile, ref NCardFlyShuffleVfx? __result)
         {
             if (__result == null || StartPositionField == null)

@@ -28,19 +28,11 @@ namespace STS2RitsuLib.Combat.CardTargeting.Patches
 
         public static bool IsCritical => false;
 
-        /// <summary>
-        ///     Targets <c>NCardPlay.ShowMultiCreatureTargetingVisuals</c>.
-        ///     目标方法为 <c>NCardPlay.ShowMultiCreatureTargetingVisuals</c>。
-        /// </summary>
         public static ModPatchTarget[] GetTargets()
         {
             return [new(typeof(NCardPlay), "ShowMultiCreatureTargetingVisuals")];
         }
 
-        /// <summary>
-        ///     Applies custom multi-target reticle filtering after vanilla visual processing.
-        ///     在原版可视化处理后应用自定义群体目标的指示器筛选逻辑。
-        /// </summary>
         public static void Postfix(NCardPlay __instance)
         {
             if (__instance.Card is not { TargetType: var targetType })
@@ -77,19 +69,11 @@ namespace STS2RitsuLib.Combat.CardTargeting.Patches
 
         public static bool IsCritical => false;
 
-        /// <summary>
-        ///     Targets <see cref="ActionTargetExtensions.IsSingleTarget" />.
-        ///     目标方法为 <see cref="ActionTargetExtensions.IsSingleTarget" />。
-        /// </summary>
         public static ModPatchTarget[] GetTargets()
         {
             return [new(typeof(ActionTargetExtensions), nameof(ActionTargetExtensions.IsSingleTarget))];
         }
 
-        /// <summary>
-        ///     Marks custom single-target types as valid single-target types.
-        ///     将自定义单体目标类型标记为有效的单体目标类型。
-        /// </summary>
         public static void Postfix(TargetType targetType, ref bool __result)
         {
             if (__result)
@@ -110,19 +94,11 @@ namespace STS2RitsuLib.Combat.CardTargeting.Patches
 
         public static string Description => "按自定义单体目标过滤候选生物";
 
-        /// <summary>
-        ///     Targets <see cref="NTargetManager.AllowedToTargetCreature" />.
-        ///     目标方法为 <see cref="NTargetManager.AllowedToTargetCreature" />。
-        /// </summary>
         public static ModPatchTarget[] GetTargets()
         {
             return [new(typeof(NTargetManager), nameof(NTargetManager.AllowedToTargetCreature))];
         }
 
-        /// <summary>
-        ///     Replaces vanilla target validation when a custom single-target type is active.
-        ///     当当前类型为自定义单体目标时，替换原版目标校验逻辑。
-        /// </summary>
         public static bool Prefix(NTargetManager __instance, Creature creature, ref bool __result)
         {
             if (!CustomTargetTypeResolver.TryIsAllowedSingleTarget(__instance._validTargetsType, creature,
@@ -144,19 +120,11 @@ namespace STS2RitsuLib.Combat.CardTargeting.Patches
 
         public static string Description => "按自定义单体目标过滤 CanPlayTargeting";
 
-        /// <summary>
-        ///     Targets <see cref="CardModel.CanPlayTargeting" />.
-        ///     目标方法为 <see cref="CardModel.CanPlayTargeting" />。
-        /// </summary>
         public static ModPatchTarget[] GetTargets()
         {
             return [new(typeof(CardModel), nameof(CardModel.CanPlayTargeting))];
         }
 
-        /// <summary>
-        ///     Applies custom predicate-based validation for single-target cards.
-        ///     对单体目标卡牌应用基于自定义谓词的可打出校验。
-        /// </summary>
         public static bool Prefix(CardModel __instance, Creature? target, ref bool __result)
         {
             if (target == null)
@@ -180,19 +148,11 @@ namespace STS2RitsuLib.Combat.CardTargeting.Patches
 
         public static string Description => "按自定义单体目标过滤 IsValidTarget";
 
-        /// <summary>
-        ///     Targets <see cref="CardModel.IsValidTarget" />.
-        ///     目标方法为 <see cref="CardModel.IsValidTarget" />。
-        /// </summary>
         public static ModPatchTarget[] GetTargets()
         {
             return [new(typeof(CardModel), nameof(CardModel.IsValidTarget), [typeof(Creature)])];
         }
 
-        /// <summary>
-        ///     Applies custom predicate-based target validity checks.
-        ///     应用基于自定义谓词的目标有效性校验。
-        /// </summary>
         public static bool Prefix(CardModel __instance, Creature? target, ref bool __result)
         {
             if (target == null)
@@ -233,19 +193,11 @@ namespace STS2RitsuLib.Combat.CardTargeting.Patches
 
         public static string Description => "自定义单体目标使用鼠标单体选择流程";
 
-        /// <summary>
-        ///     Targets <c>NMouseCardPlay.TargetSelection</c>.
-        ///     目标方法为 <c>NMouseCardPlay.TargetSelection</c>。
-        /// </summary>
         public static ModPatchTarget[] GetTargets()
         {
             return [new(typeof(NMouseCardPlay), "TargetSelection", [typeof(TargetMode)])];
         }
 
-        /// <summary>
-        ///     Intercepts mouse targeting for custom single-target types.
-        ///     拦截自定义单体目标类型的鼠标选目标流程。
-        /// </summary>
         public static bool Prefix(NMouseCardPlay __instance, TargetMode targetMode, ref Task __result)
         {
             var card = GetCard(__instance);
@@ -309,19 +261,11 @@ namespace STS2RitsuLib.Combat.CardTargeting.Patches
 
         public static bool IsCritical => false;
 
-        /// <summary>
-        ///     Targets <see cref="NControllerCardPlay.Start" />.
-        ///     目标方法为 <see cref="NControllerCardPlay.Start" />。
-        /// </summary>
         public static ModPatchTarget[] GetTargets()
         {
             return [new(typeof(NControllerCardPlay), nameof(NControllerCardPlay.Start), Type.EmptyTypes)];
         }
 
-        /// <summary>
-        ///     Replaces controller start logic when card uses a custom single-target type.
-        ///     当卡牌使用自定义单体目标类型时，替换手柄起始逻辑。
-        /// </summary>
         public static bool Prefix(NControllerCardPlay __instance)
         {
             var card = GetCard(__instance);
@@ -386,19 +330,11 @@ namespace STS2RitsuLib.Combat.CardTargeting.Patches
 
         public static bool IsCritical => false;
 
-        /// <summary>
-        ///     Targets the private single-target controller flow.
-        ///     目标方法为私有的手柄单体选目标流程。
-        /// </summary>
         public static ModPatchTarget[] GetTargets()
         {
             return [new(typeof(NControllerCardPlay), "SingleCreatureTargeting", [typeof(TargetType)])];
         }
 
-        /// <summary>
-        ///     Intercepts controller single-targeting for custom single-target types.
-        ///     拦截自定义单体目标类型的手柄单体选目标逻辑。
-        /// </summary>
         public static bool Prefix(NControllerCardPlay __instance, TargetType targetType, ref Task __result)
         {
             if (!CustomTargetTypeResolver.IsCustomSingleTargetType(targetType))
@@ -496,19 +432,11 @@ namespace STS2RitsuLib.Combat.CardTargeting.Patches
 
         public static string Description => "修复自定义单体目标 TryPlayCard 丢失目标问题";
 
-        /// <summary>
-        ///     Targets <c>NCardPlay.TryPlayCard(Creature)</c>.
-        ///     目标方法为 <c>NCardPlay.TryPlayCard(Creature)</c>。
-        /// </summary>
         public static ModPatchTarget[] GetTargets()
         {
             return [new(typeof(NCardPlay), "TryPlayCard", [typeof(Creature)])];
         }
 
-        /// <summary>
-        ///     Reimplements try-play path for custom single-target cards.
-        ///     为自定义单体目标卡牌重实现 TryPlay 执行路径。
-        /// </summary>
         public static bool Prefix(NCardPlay __instance, Creature? target)
         {
             var card = __instance.Card;

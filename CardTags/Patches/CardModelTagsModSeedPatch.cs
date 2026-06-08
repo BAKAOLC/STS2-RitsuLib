@@ -18,32 +18,22 @@ namespace STS2RitsuLib.CardTags.Patches
     ///     让 <see cref="ModCardTemplate.RegisteredCardTagIds" /> 与 <c>CanonicalTags</c> 保持分离，使 mod 仍可覆盖
     ///     原版规范标签而不会丢失声明式 mod 标签。
     /// </summary>
-    public sealed class CardModelTagsModSeedPatch : IPatchMethod
+    internal sealed class CardModelTagsModSeedPatch : IPatchMethod
     {
         private static readonly ConditionalWeakTable<CardModel, object> SeededCards = new();
         private static readonly object SeededMarker = new();
-
-        /// <inheritdoc />
         public static string PatchId => "ritsulib_card_model_tags_mod_seed";
 
-        /// <inheritdoc />
         public static string Description =>
             "Seed ModCardTemplate.RegisteredCardTagIds into CardModel.Tags after the canonical set is built";
 
-        /// <inheritdoc />
         public static bool IsCritical => true;
 
-        /// <inheritdoc />
         public static ModPatchTarget[] GetTargets()
         {
             return [new(typeof(CardModel), "Tags", MethodType.Getter)];
         }
 
-        /// <summary>
-        ///     Unions minted <see cref="CardTag" /> values into the physical <see cref="HashSet{T}" /> storage the first
-        ///     time the getter runs.
-        ///     在 getter 首次运行时，将已生成的 <see cref="CardTag" /> 值合并到底层物理 <see cref="HashSet{T}" /> 存储中。
-        /// </summary>
         public static void Postfix(CardModel __instance, IEnumerable<CardTag> __result)
         {
             if (__instance is not ModCardTemplate template)

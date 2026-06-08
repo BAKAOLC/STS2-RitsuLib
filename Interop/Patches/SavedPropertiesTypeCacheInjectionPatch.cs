@@ -16,22 +16,17 @@ namespace STS2RitsuLib.Interop.Patches
     ///     在确定性的初始化点注入所有声明 <see cref="SavedPropertyAttribute" /> 的已加载 mod 模型类型，
     ///     使多人对等端构建相同的 <see cref="SavedPropertiesTypeCache" /> net-id 表。
     /// </summary>
-    public sealed class SavedPropertiesTypeCacheInjectionPatch : IPatchMethod
+    internal sealed class SavedPropertiesTypeCacheInjectionPatch : IPatchMethod
     {
         private static readonly Lock Gate = new();
         private static bool _completed;
-
-        /// <inheritdoc />
         public static string PatchId => "ritsulib_saved_properties_type_cache_injection";
 
-        /// <inheritdoc />
         public static string Description =>
             "Deterministic SavedPropertiesTypeCache injection for modded models with SavedProperty";
 
-        /// <inheritdoc />
         public static bool IsCritical => true;
 
-        /// <inheritdoc />
         public static ModPatchTarget[] GetTargets()
         {
             return [new(typeof(LocManager), nameof(LocManager.Initialize))];

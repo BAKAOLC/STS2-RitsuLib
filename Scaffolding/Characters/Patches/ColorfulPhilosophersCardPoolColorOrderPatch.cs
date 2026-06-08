@@ -8,19 +8,15 @@ namespace STS2RitsuLib.Scaffolding.Characters.Patches
     /// <summary>
     ///     Appends opt-in mod character card pools to Colorful Philosophers reward color candidates.
     /// </summary>
-    public class ColorfulPhilosophersCardPoolColorOrderPatch : IPatchMethod
+    internal class ColorfulPhilosophersCardPoolColorOrderPatch : IPatchMethod
     {
-        /// <inheritdoc cref="IPatchMethod.PatchId" />
         public static string PatchId => "colorful_philosophers_card_pool_color_order";
 
-        /// <inheritdoc cref="IPatchMethod.Description" />
         public static string Description =>
             "Append opt-in mod character card pools to Colorful Philosophers color order";
 
-        /// <inheritdoc cref="IPatchMethod.IsCritical" />
         public static bool IsCritical => false;
 
-        /// <inheritdoc cref="IPatchMethod.GetTargets" />
         public static ModPatchTarget[] GetTargets()
         {
             return [new(typeof(ColorfulPhilosophers), "CardPoolColorOrder", MethodType.Getter)];

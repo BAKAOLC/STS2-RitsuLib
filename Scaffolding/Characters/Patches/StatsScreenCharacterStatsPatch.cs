@@ -15,29 +15,20 @@ namespace STS2RitsuLib.Scaffolding.Characters.Patches
     ///     基础游戏 NGeneralStatsGrid.LoadStats 硬编码了五个原版角色，
     ///     没有此补丁时，mod 角色记录永远不会渲染。
     /// </summary>
-    public class StatsScreenCharacterStatsPatch : IPatchMethod
+    internal class StatsScreenCharacterStatsPatch : IPatchMethod
     {
-        /// <inheritdoc cref="IPatchMethod.PatchId" />
         public static string PatchId => "stats_screen_mod_character_sections";
 
-        /// <inheritdoc cref="IPatchMethod.Description" />
         public static string Description =>
             "Append registered mod characters to NGeneralStatsGrid character history sections";
 
-        /// <inheritdoc cref="IPatchMethod.IsCritical" />
         public static bool IsCritical => false;
 
-        /// <inheritdoc cref="IPatchMethod.GetTargets" />
         public static ModPatchTarget[] GetTargets()
         {
             return [new(typeof(NGeneralStatsGrid), nameof(NGeneralStatsGrid.LoadStats))];
         }
 
-        /// <summary>
-        ///     Invokes private <c>CreateCharacterSection</c> for each entry from
-        ///     <see cref="ModContentRegistry.GetModCharacters" />.
-        ///     对 <see cref="ModContentRegistry.GetModCharacters" /> 返回的每个条目调用私有 <c>CreateCharacterSection</c>。
-        /// </summary>
         public static void Postfix(NGeneralStatsGrid __instance)
         {
             var progressSave = SaveManager.Instance.Progress;

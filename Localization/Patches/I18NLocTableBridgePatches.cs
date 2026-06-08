@@ -20,18 +20,12 @@ namespace STS2RitsuLib.Localization.Patches
     ///     Resolves registered virtual I18N tables through <c>LocManager.GetTable</c>.
     ///     通过 <c>LocManager.GetTable</c> 解析已注册的虚拟 I18N table。
     /// </summary>
-    public class LocManagerGetTableI18NBridgePatch : IPatchMethod
+    internal class LocManagerGetTableI18NBridgePatch : IPatchMethod
     {
-        /// <inheritdoc />
         public static string PatchId => "loc_manager_get_table_i18n_bridge";
-
-        /// <inheritdoc />
         public static string Description => "Resolve registered I18N virtual tables from LocManager.GetTable";
-
-        /// <inheritdoc />
         public static bool IsCritical => true;
 
-        /// <inheritdoc />
         public static ModPatchTarget[] GetTargets()
         {
             return
@@ -59,18 +53,12 @@ namespace STS2RitsuLib.Localization.Patches
     ///     Bridges <c>LocTable.HasEntry</c> to <see cref="I18NLocTableBridge" /> for virtual <c>MODID_I18N_STEM</c> tables.
     ///     将 <c>LocTable.HasEntry</c> 桥接到 <see cref="I18NLocTableBridge" />，用于虚拟 <c>MODID_I18N_STEM</c> table。
     /// </summary>
-    public class LocTableHasEntryI18NBridgePatch : IPatchMethod
+    internal class LocTableHasEntryI18NBridgePatch : IPatchMethod
     {
-        /// <inheritdoc />
         public static string PatchId => "loc_table_has_entry_i18n_bridge";
-
-        /// <inheritdoc />
         public static string Description => "Resolve LocTable.HasEntry via registered I18N virtual tables";
-
-        /// <inheritdoc />
         public static bool IsCritical => true;
 
-        /// <inheritdoc />
         public static ModPatchTarget[] GetTargets()
         {
             return
@@ -102,18 +90,12 @@ namespace STS2RitsuLib.Localization.Patches
     ///     将 <c>LocTable.IsLocalKey</c> 桥接到 <see cref="I18NLocTableBridge" />，用于虚拟 <c>MODID_I18N_STEM</c>
     ///     table。
     /// </summary>
-    public class LocTableIsLocalKeyI18NBridgePatch : IPatchMethod
+    internal class LocTableIsLocalKeyI18NBridgePatch : IPatchMethod
     {
-        /// <inheritdoc />
         public static string PatchId => "loc_table_is_local_key_i18n_bridge";
-
-        /// <inheritdoc />
         public static string Description => "Resolve LocTable.IsLocalKey via registered I18N virtual tables";
-
-        /// <inheritdoc />
         public static bool IsCritical => true;
 
-        /// <inheritdoc />
         public static ModPatchTarget[] GetTargets()
         {
             return
@@ -141,18 +123,12 @@ namespace STS2RitsuLib.Localization.Patches
     ///     Bridges <c>LocTable.GetRawText</c> to <see cref="I18NLocTableBridge" /> for virtual <c>MODID_I18N_STEM</c> tables.
     ///     将 <c>LocTable.GetRawText</c> 桥接到 <see cref="I18NLocTableBridge" />，用于虚拟 <c>MODID_I18N_STEM</c> table。
     /// </summary>
-    public class LocTableGetRawTextI18NBridgePatch : IPatchMethod
+    internal class LocTableGetRawTextI18NBridgePatch : IPatchMethod
     {
-        /// <inheritdoc />
         public static string PatchId => "loc_table_get_raw_text_i18n_bridge";
-
-        /// <inheritdoc />
         public static string Description => "Resolve LocTable.GetRawText via registered I18N virtual tables";
-
-        /// <inheritdoc />
         public static bool IsCritical => true;
 
-        /// <inheritdoc />
         public static ModPatchTarget[] GetTargets()
         {
             return
@@ -185,18 +161,12 @@ namespace STS2RitsuLib.Localization.Patches
     ///     将 <c>LocTable.GetLocString</c> 桥接到 <see cref="I18NLocTableBridge" />，用于虚拟 <c>MODID_I18N_STEM</c>
     ///     table。
     /// </summary>
-    public class LocTableGetLocStringI18NBridgePatch : IPatchMethod
+    internal class LocTableGetLocStringI18NBridgePatch : IPatchMethod
     {
-        /// <inheritdoc />
         public static string PatchId => "loc_table_get_loc_string_i18n_bridge";
-
-        /// <inheritdoc />
         public static string Description => "Resolve LocTable.GetLocString via registered I18N virtual tables";
-
-        /// <inheritdoc />
         public static bool IsCritical => true;
 
-        /// <inheritdoc />
         public static ModPatchTarget[] GetTargets()
         {
             return

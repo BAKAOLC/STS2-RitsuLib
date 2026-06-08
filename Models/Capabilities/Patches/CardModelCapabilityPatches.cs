@@ -43,16 +43,10 @@ namespace STS2RitsuLib.Models.Capabilities.Patches
         /// </summary>
         internal sealed class UpdateDynamicVarPreviewPatch : IPatchMethod
         {
-            /// <inheritdoc />
             public static string PatchId => "ritsulib_card_capability_dynamic_vars";
-
-            /// <inheritdoc />
             public static string Description => "Update model-capability card dynamic vars through CardModel preview";
-
-            /// <inheritdoc />
             public static bool IsCritical => true;
 
-            /// <inheritdoc />
             public static ModPatchTarget[] GetTargets()
             {
                 return
@@ -451,16 +445,10 @@ namespace STS2RitsuLib.Models.Capabilities.Patches
         /// </summary>
         internal sealed class DescriptionForPilePatch : IPatchMethod
         {
-            /// <inheritdoc />
             public static string PatchId => "ritsulib_card_capability_description_for_pile";
-
-            /// <inheritdoc />
             public static string Description => "Apply model-capability card description modifiers";
-
-            /// <inheritdoc />
             public static bool IsCritical => false;
 
-            /// <inheritdoc />
             public static ModPatchTarget[] GetTargets()
             {
                 return
@@ -487,16 +475,10 @@ namespace STS2RitsuLib.Models.Capabilities.Patches
         /// </summary>
         internal sealed class DescriptionForUpgradePreviewPatch : IPatchMethod
         {
-            /// <inheritdoc />
             public static string PatchId => "ritsulib_card_capability_description_for_upgrade_preview";
-
-            /// <inheritdoc />
             public static string Description => "Apply model-capability card description modifiers to upgrade previews";
-
-            /// <inheritdoc />
             public static bool IsCritical => false;
 
-            /// <inheritdoc />
             public static ModPatchTarget[] GetTargets()
             {
                 return [new(typeof(CardModel), nameof(CardModel.GetDescriptionForUpgradePreview), Type.EmptyTypes)];
@@ -515,16 +497,10 @@ namespace STS2RitsuLib.Models.Capabilities.Patches
         /// </summary>
         internal sealed class HoverTipsPatch : IPatchMethod
         {
-            /// <inheritdoc />
             public static string PatchId => "ritsulib_card_capability_hover_tips";
-
-            /// <inheritdoc />
             public static string Description => "Append model-capability card hover tips";
-
-            /// <inheritdoc />
             public static bool IsCritical => false;
 
-            /// <inheritdoc />
             public static ModPatchTarget[] GetTargets()
             {
                 return [new(typeof(CardModel), "HoverTips", MethodType.Getter)];
@@ -546,16 +522,10 @@ namespace STS2RitsuLib.Models.Capabilities.Patches
         /// </summary>
         internal sealed class ShouldGlowGoldPatch : IPatchMethod
         {
-            /// <inheritdoc />
             public static string PatchId => "ritsulib_card_capability_should_glow_gold";
-
-            /// <inheritdoc />
             public static string Description => "Merge model-capability gold glow predicates";
-
-            /// <inheritdoc />
             public static bool IsCritical => false;
 
-            /// <inheritdoc />
             public static ModPatchTarget[] GetTargets()
             {
                 return [new(typeof(CardModel), "ShouldGlowGold", MethodType.Getter)];
@@ -574,16 +544,10 @@ namespace STS2RitsuLib.Models.Capabilities.Patches
         /// </summary>
         internal sealed class ShouldGlowRedPatch : IPatchMethod
         {
-            /// <inheritdoc />
             public static string PatchId => "ritsulib_card_capability_should_glow_red";
-
-            /// <inheritdoc />
             public static string Description => "Merge model-capability red glow predicates";
-
-            /// <inheritdoc />
             public static bool IsCritical => false;
 
-            /// <inheritdoc />
             public static ModPatchTarget[] GetTargets()
             {
                 return [new(typeof(CardModel), "ShouldGlowRed", MethodType.Getter)];

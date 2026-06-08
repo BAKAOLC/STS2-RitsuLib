@@ -80,30 +80,20 @@ namespace STS2RitsuLib.Scaffolding.Characters.Patches
     ///         除非某个怪物设置了 <see cref="MonsterModel.DeathAnimLengthOverride" />。
     ///     </para>
     /// </remarks>
-    public class NCreatureNonSpineDeathAnimationTriggerPatch : IPatchMethod
+    internal class NCreatureNonSpineDeathAnimationTriggerPatch : IPatchMethod
     {
-        /// <inheritdoc cref="IPatchMethod.PatchId" />
         public static string PatchId => "ncreature_non_spine_death_animation_trigger";
 
-        /// <inheritdoc cref="IPatchMethod.Description" />
         public static string Description =>
             "Dispatch the Dead animation trigger for RitsuLib-managed non-Spine creatures so StartDeathAnim animates correctly";
 
-        /// <inheritdoc cref="IPatchMethod.IsCritical" />
         public static bool IsCritical => false;
 
-        /// <inheritdoc cref="IPatchMethod.GetTargets" />
         public static ModPatchTarget[] GetTargets()
         {
             return [new(typeof(NCreature), nameof(NCreature.StartDeathAnim))];
         }
 
-        /// <summary>
-        ///     Dispatches <c>Dead</c> through <see cref="NCreature.SetAnimationTrigger" /> for RitsuLib-managed
-        ///     non-Spine creatures only; returns silently otherwise.
-        ///     仅为 RitsuLib 管理的非 Spine 生物通过 <see cref="NCreature.SetAnimationTrigger" /> 派发
-        ///     <c>Dead</c>；否则静默返回。
-        /// </summary>
         public static void Postfix(NCreature __instance, bool shouldRemove, ref float __result)
         {
             if (!CombatAnimationStateMachineTriggerScope.AppliesToDeathPostfix(__instance))
@@ -153,33 +143,23 @@ namespace STS2RitsuLib.Scaffolding.Characters.Patches
     ///     <c>Revive</c>（关于保持两者同步，见接口备注）。当 <c>AnimTempRevive</c>
     ///     也运行时，原版淡化 tween 仍会与触发的动画并行运行；想要干净复活动画的 mod 应将这段短暂淡化视为预期行为。
     /// </remarks>
-    public class NCreatureNonSpineReviveAnimationTriggerPatch : IPatchMethod
+    internal class NCreatureNonSpineReviveAnimationTriggerPatch : IPatchMethod
     {
         private static readonly AccessTools.FieldRef<NCreature, CreatureAnimator?> SpineAnimatorRef =
             AccessTools.FieldRefAccess<NCreature, CreatureAnimator?>("_spineAnimator");
 
-        /// <inheritdoc cref="IPatchMethod.PatchId" />
         public static string PatchId => "ncreature_non_spine_revive_animation_trigger";
 
-        /// <inheritdoc cref="IPatchMethod.Description" />
         public static string Description =>
             "Dispatch the Revive animation trigger for RitsuLib-managed creatures so StartReviveAnim animates correctly";
 
-        /// <inheritdoc cref="IPatchMethod.IsCritical" />
         public static bool IsCritical => false;
 
-        /// <inheritdoc cref="IPatchMethod.GetTargets" />
         public static ModPatchTarget[] GetTargets()
         {
             return [new(typeof(NCreature), nameof(NCreature.StartReviveAnim))];
         }
 
-        /// <summary>
-        ///     Dispatches <c>Revive</c> through <see cref="NCreature.SetAnimationTrigger" /> when in scope; skips when
-        ///     vanilla already dispatched <c>Revive</c> on the Spine <see cref="CreatureAnimator" />.
-        ///     在作用域内时通过 <see cref="NCreature.SetAnimationTrigger" /> 派发 <c>Revive</c>；当
-        ///     原版已在 Spine <see cref="CreatureAnimator" /> 上派发 <c>Revive</c> 时跳过。
-        /// </summary>
         public static void Postfix(NCreature __instance)
         {
             if (!CombatAnimationStateMachineTriggerScope.AppliesToRevivePostfix(__instance))

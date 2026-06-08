@@ -35,28 +35,20 @@ namespace STS2RitsuLib.CardPiles.Patches
     ///         仍通过替换 <c>__result</c> 工作。
     ///     </para>
     /// </remarks>
-    public sealed class ModCardPileAllPilesPatch : IPatchMethod
+    internal sealed class ModCardPileAllPilesPatch : IPatchMethod
     {
-        /// <inheritdoc />
         public static string PatchId => "ritsulib_player_combat_state_all_piles_append";
 
-        /// <inheritdoc />
         public static string Description =>
             "Append ritsulib CombatOnly mod piles to PlayerCombatState.AllPiles without transpiling";
 
-        /// <inheritdoc />
         public static bool IsCritical => false;
 
-        /// <inheritdoc />
         public static ModPatchTarget[] GetTargets()
         {
             return [new(typeof(PlayerCombatState), nameof(PlayerCombatState.AllPiles), MethodType.Getter)];
         }
 
-        /// <summary>
-        ///     Merges mod piles into <see cref="PlayerCombatState.AllPiles" />'s return value.
-        ///     将 mod 牌堆合并进 <see cref="PlayerCombatState.AllPiles" /> 的返回值。
-        /// </summary>
         public static void Postfix(PlayerCombatState __instance, ref IReadOnlyList<CardPile> __result)
         {
             var modPiles = ModCardPileStorage.GetOrCreateCombatPiles(__instance);

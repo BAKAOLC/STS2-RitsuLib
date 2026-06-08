@@ -18,33 +18,22 @@ namespace STS2RitsuLib.Keywords.Patches
     /// </summary>
     [HarmonyBefore(Const.BaseLibHarmonyId)]
     [HarmonyPriority(Priority.First)]
-    public sealed class HoverTipFactoryFromKeywordPatch : IPatchMethod
+    internal sealed class HoverTipFactoryFromKeywordPatch : IPatchMethod
     {
         private static readonly Dictionary<CardKeyword, IHoverTip> ModKeywordTipCache = [];
         private static readonly Lock SyncRoot = new();
-
-        /// <inheritdoc />
         public static string PatchId => "ritsulib_hover_tip_factory_from_keyword_mod_route";
 
-        /// <inheritdoc />
         public static string Description =>
             "Route HoverTipFactory.FromKeyword to ModKeywordRegistry for minted mod CardKeyword values";
 
-        /// <inheritdoc />
         public static bool IsCritical => false;
 
-        /// <inheritdoc />
         public static ModPatchTarget[] GetTargets()
         {
             return [new(typeof(HoverTipFactory), nameof(HoverTipFactory.FromKeyword))];
         }
 
-        /// <summary>
-        ///     Short-circuits mod keyword lookups before vanilla's slug-based <see cref="HoverTip" /> construction
-        ///     runs, returning a cached registry-built tip. Non-mod values return <c>true</c> so vanilla executes.
-        ///     在原版基于 slug 的 <see cref="HoverTip" /> 构造
-        ///     运行前短路 mod 关键词查找，返回一个注册表构建的缓存提示。非 mod 值返回 <c>true</c>，使原版继续执行。
-        /// </summary>
         public static bool Prefix(CardKeyword keyword, ref IHoverTip __result)
         {
             if (!ModKeywordRegistry.TryGetByCardKeyword(keyword, out var definition))

@@ -17,17 +17,13 @@ namespace STS2RitsuLib.Models.Capabilities.Patches
         /// </summary>
         internal sealed class SavedPropertiesFromInternalPatch : IPatchMethod
         {
-            /// <inheritdoc />
             public static string PatchId => "ritsulib_model_saved_data_SavedProperties_FromInternal";
 
-            /// <inheritdoc />
             public static string Description =>
                 "Bridge ModelSavedData through SavedProperties save -> SavedProperties.FromInternal(...)";
 
-            /// <inheritdoc />
             public static bool IsCritical => true;
 
-            /// <inheritdoc />
             public static ModPatchTarget[] GetTargets()
             {
                 return
@@ -61,17 +57,13 @@ namespace STS2RitsuLib.Models.Capabilities.Patches
         /// </summary>
         internal sealed class SavedPropertiesFillInternalPatch : IPatchMethod
         {
-            /// <inheritdoc />
             public static string PatchId => "ritsulib_model_saved_data_SavedProperties_FillInternal";
 
-            /// <inheritdoc />
             public static string Description =>
                 "Bridge ModelSavedData through SavedProperties load -> SavedProperties.FillInternal(...)";
 
-            /// <inheritdoc />
             public static bool IsCritical => true;
 
-            /// <inheritdoc />
             public static ModPatchTarget[] GetTargets()
             {
                 return

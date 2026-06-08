@@ -12,19 +12,15 @@ namespace STS2RitsuLib.Unlocks.Patches
     /// <summary>
     ///     Backfills mod character root epochs from existing prerequisite character run history.
     /// </summary>
-    public sealed class ModCharacterRootEpochBackfillPatch : IPatchMethod
+    internal sealed class ModCharacterRootEpochBackfillPatch : IPatchMethod
     {
-        /// <inheritdoc />
         public static string PatchId => "mod_character_root_epoch_backfill";
 
-        /// <inheritdoc />
         public static string Description =>
             "Backfill mod character root unlock epochs when prerequisite character runs already exist";
 
-        /// <inheritdoc />
         public static bool IsCritical => false;
 
-        /// <inheritdoc />
         public static ModPatchTarget[] GetTargets()
         {
             return
@@ -34,18 +30,12 @@ namespace STS2RitsuLib.Unlocks.Patches
             ];
         }
 
-        /// <summary>
-        ///     Runs before unlock state generation so character select sees newly backfilled root epochs.
-        /// </summary>
         public static void Prefix(MethodBase __originalMethod, SaveManager __instance)
         {
             if (__originalMethod.Name == nameof(SaveManager.GenerateUnlockStateFromProgress))
                 ModCharacterRootEpochBackfill.TryBackfill(__instance);
         }
 
-        /// <summary>
-        ///     Runs after progress load so profile data is persisted once when backfill is needed.
-        /// </summary>
         public static void Postfix(MethodBase __originalMethod, SaveManager __instance)
         {
             if (__originalMethod.Name == nameof(SaveManager.InitProgressData))

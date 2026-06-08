@@ -26,19 +26,15 @@ namespace STS2RitsuLib.Scaffolding.Content.Patches
     ///     在 <see cref="MegaCrit.Sts2.Core.Models.CardPoolModel" /> 上实现
     ///     <see cref="IModTextEnergyIconPool.TextEnergyIconPath" /> 后即可使用任意资源路径。
     /// </summary>
-    public class EnergyIconFormatterPatch : IPatchMethod
+    internal class EnergyIconFormatterPatch : IPatchMethod
     {
-        /// <inheritdoc cref="IPatchMethod.PatchId" />
         public static string PatchId => "energy_icon_formatter_text_icon_override";
 
-        /// <inheritdoc cref="IPatchMethod.Description" />
         public static string Description =>
             "Allow mod card pools to override the small energy icon path in rich-text card descriptions";
 
-        /// <inheritdoc cref="IPatchMethod.IsCritical" />
         public static bool IsCritical => false;
 
-        /// <inheritdoc cref="IPatchMethod.GetTargets" />
         public static ModPatchTarget[] GetTargets()
         {
             return [new(typeof(EnergyIconsFormatter), "TryEvaluateFormat")];

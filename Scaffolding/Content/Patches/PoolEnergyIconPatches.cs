@@ -27,19 +27,15 @@ namespace STS2RitsuLib.Scaffolding.Content.Patches
     ///     为 <see cref="EnergyIconHelper.GetPath(string)" /> 添加前缀，使实现 <see cref="IModBigEnergyIconPool" /> 的池
     ///     可以替换解析出的大图标路径。
     /// </summary>
-    public class EnergyIconHelperPathPatch : IPatchMethod
+    internal class EnergyIconHelperPathPatch : IPatchMethod
     {
-        /// <inheritdoc cref="IPatchMethod.PatchId" />
         public static string PatchId => "energy_icon_helper_big_icon_override";
 
-        /// <inheritdoc cref="IPatchMethod.Description" />
         public static string Description =>
             "Allow mod pools to override the large energy icon path resolved by EnergyIconHelper";
 
-        /// <inheritdoc cref="IPatchMethod.IsCritical" />
         public static bool IsCritical => false;
 
-        /// <inheritdoc cref="IPatchMethod.GetTargets" />
         public static ModPatchTarget[] GetTargets()
         {
             return

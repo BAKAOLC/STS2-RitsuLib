@@ -16,30 +16,20 @@ namespace STS2RitsuLib.Unlocks.Patches
     ///     即使 UI 槽位已处于已获得（点击显示）状态，也永远不会计入 <see cref="SaveManager.GetDiscoveredEpochCount" />、主菜单时间线提示或相关 UX，
     ///     即便 UI 槽位已处于已获得（点击显示）状态。
     /// </summary>
-    public sealed class ProgressSaveManagerGetRevealableEpochsModTemplatePatch : IPatchMethod
+    internal sealed class ProgressSaveManagerGetRevealableEpochsModTemplatePatch : IPatchMethod
     {
-        /// <inheritdoc />
         public static string PatchId => "progress_save_manager_get_revealable_epochs_mod_template";
 
-        /// <inheritdoc />
         public static string Description =>
             "Union ModEpochTemplate rows in Obtained/ObtainedNoSlot into GetRevealableEpochs when vanilla omits them";
 
-        /// <inheritdoc />
         public static bool IsCritical => false;
 
-        /// <inheritdoc />
         public static ModPatchTarget[] GetTargets()
         {
             return [new(typeof(ProgressSaveManager), nameof(ProgressSaveManager.GetRevealableEpochs), Type.EmptyTypes)];
         }
 
-        /// <summary>
-        ///     Appends mod template epochs that satisfy vanilla's satisfied-state filter but were dropped for lack of
-        ///     reachability from Neow.
-        ///     追加满足原版已满足状态过滤器、但因缺少
-        ///     从 Neow 的可达性而被丢弃的 mod 模板纪元。
-        /// </summary>
         public static IEnumerable<SerializableEpoch> Postfix(
             IEnumerable<SerializableEpoch> __result,
             ProgressSaveManager __instance)

@@ -12,28 +12,20 @@ namespace STS2RitsuLib.Scaffolding.Characters.Patches
     ///     战斗生物节点 ready 后，如果视觉支持，则可选择从
     ///     <see cref="IModCharacterAssetOverrides.CustomCombatSpineSkeletonDataPath" /> 换入 mod Spine skeleton 数据。
     /// </summary>
-    public class CharacterCombatSpineOverridePatch : IPatchMethod
+    internal class CharacterCombatSpineOverridePatch : IPatchMethod
     {
-        /// <inheritdoc cref="IPatchMethod.PatchId" />
         public static string PatchId => "character_combat_spine_override";
 
-        /// <inheritdoc cref="IPatchMethod.Description" />
         public static string Description =>
             "Allow mod characters to replace combat Spine skeleton data while reusing existing visuals scenes";
 
-        /// <inheritdoc cref="IPatchMethod.IsCritical" />
         public static bool IsCritical => false;
 
-        /// <inheritdoc cref="IPatchMethod.GetTargets" />
         public static ModPatchTarget[] GetTargets()
         {
             return [new(typeof(NCreature), nameof(NCreature._Ready))];
         }
 
-        /// <summary>
-        ///     Loads and applies the override skeleton resource to the player’s combat visuals when eligible.
-        ///     符合条件时，加载覆盖 skeleton 资源并应用到玩家的战斗视觉。
-        /// </summary>
         public static void Postfix(NCreature __instance)
         {
             var player = __instance.Entity?.Player;

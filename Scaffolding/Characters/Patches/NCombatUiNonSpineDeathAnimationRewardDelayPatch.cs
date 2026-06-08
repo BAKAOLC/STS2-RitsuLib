@@ -17,7 +17,7 @@ namespace STS2RitsuLib.Scaffolding.Characters.Patches
     /// <summary>
     ///     Includes RitsuLib-managed non-Spine death animation durations in combat reward timing.
     /// </summary>
-    public class NCombatUiNonSpineDeathAnimationRewardDelayPatch : IPatchMethod
+    internal class NCombatUiNonSpineDeathAnimationRewardDelayPatch : IPatchMethod
     {
 #if STS2_AT_LEAST_0_105_0
         private static readonly AccessTools.FieldRef<NCombatUi, CancellationTokenSource> CtsRef =
@@ -31,27 +31,18 @@ namespace STS2RitsuLib.Scaffolding.Characters.Patches
         private static readonly AccessTools.FieldRef<NCombatUi, CombatState> StateRef =
             AccessTools.FieldRefAccess<NCombatUi, CombatState>("_state");
 #endif
-
-        /// <inheritdoc cref="IPatchMethod.PatchId" />
         public static string PatchId => "ncombat_ui_non_spine_death_animation_reward_delay";
 
-        /// <inheritdoc cref="IPatchMethod.Description" />
         public static string Description =>
             "Include RitsuLib-managed non-Spine death animation durations when delaying combat rewards";
 
-        /// <inheritdoc cref="IPatchMethod.IsCritical" />
         public static bool IsCritical => false;
 
-        /// <inheritdoc cref="IPatchMethod.GetTargets" />
         public static ModPatchTarget[] GetTargets()
         {
             return [new(typeof(NCombatUi), "ShowRewards", [typeof(CombatRoom)])];
         }
 
-        /// <summary>
-        ///     Replaces vanilla reward timing with equivalent logic that also considers RitsuLib non-Spine death
-        ///     delays.
-        /// </summary>
         public static bool Prefix(NCombatUi __instance, CombatRoom room, ref Task __result)
         {
             __result = ShowRewards(__instance, room);

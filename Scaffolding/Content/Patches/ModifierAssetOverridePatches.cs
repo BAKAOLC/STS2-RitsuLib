@@ -27,18 +27,12 @@ namespace STS2RitsuLib.Scaffolding.Content.Patches
     ///     Patches <see cref="ModifierModel" /> icon path for <see cref="IModModifierAssetOverrides" />.
     ///     为 <see cref="IModModifierAssetOverrides" /> 修补 <see cref="ModifierModel" /> 图标路径。
     /// </summary>
-    public sealed class ModifierIconPathPatch : IPatchMethod
+    internal sealed class ModifierIconPathPatch : IPatchMethod
     {
-        /// <inheritdoc />
         public static string PatchId => "content_asset_override_modifier_icon_path";
-
-        /// <inheritdoc />
         public static string Description => "Allow mod modifiers to override IconPath";
-
-        /// <inheritdoc />
         public static bool IsCritical => false;
 
-        /// <inheritdoc />
         public static ModPatchTarget[] GetTargets()
         {
             return [new(typeof(ModifierModel), "IconPath", MethodType.Getter)];

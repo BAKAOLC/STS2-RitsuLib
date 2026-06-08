@@ -81,18 +81,12 @@ namespace STS2RitsuLib.Scaffolding.Content.Patches
     ///     Patches <see cref="EncounterModel.CreateScene" /> for mod encounter scene path overrides.
     ///     为 mod 遭遇场景路径覆盖修补 <see cref="EncounterModel.CreateScene" />。
     /// </summary>
-    public class EncounterCreateScenePatch : IPatchMethod
+    internal class EncounterCreateScenePatch : IPatchMethod
     {
-        /// <inheritdoc cref="IPatchMethod.PatchId" />
         public static string PatchId => "content_asset_override_encounter_create_scene";
-
-        /// <inheritdoc cref="IPatchMethod.Description" />
         public static string Description => "Allow mod encounters to override CreateScene packed scene path";
-
-        /// <inheritdoc cref="IPatchMethod.IsCritical" />
         public static bool IsCritical => false;
 
-        /// <inheritdoc cref="IPatchMethod.GetTargets" />
         public static ModPatchTarget[] GetTargets()
         {
             return [new(typeof(EncounterModel), nameof(EncounterModel.CreateScene))];
@@ -134,19 +128,15 @@ namespace STS2RitsuLib.Scaffolding.Content.Patches
     ///     修补 <c>EncounterModel.CreateBackgroundAssetsForCustom</c>，以支持 mod 背景场景和/或图层
     ///     目录。
     /// </summary>
-    public class EncounterCreateBackgroundAssetsForCustomPatch : IPatchMethod
+    internal class EncounterCreateBackgroundAssetsForCustomPatch : IPatchMethod
     {
-        /// <inheritdoc cref="IPatchMethod.PatchId" />
         public static string PatchId => "content_asset_override_encounter_create_background_assets_custom";
 
-        /// <inheritdoc cref="IPatchMethod.Description" />
         public static string Description =>
             "Allow mod encounters to customize BackgroundAssets (path-based or programmatic via ModEncounterTemplate)";
 
-        /// <inheritdoc cref="IPatchMethod.IsCritical" />
         public static bool IsCritical => false;
 
-        /// <inheritdoc cref="IPatchMethod.GetTargets" />
         public static ModPatchTarget[] GetTargets()
         {
             return
@@ -223,18 +213,12 @@ namespace STS2RitsuLib.Scaffolding.Content.Patches
     ///     Patches <see cref="EncounterModel.BossNodePath" /> for mod map node spine overrides.
     ///     为 mod 地图节点 Spine 覆盖修补 <see cref="EncounterModel.BossNodePath" />。
     /// </summary>
-    public class EncounterBossNodePathPatch : IPatchMethod
+    internal class EncounterBossNodePathPatch : IPatchMethod
     {
-        /// <inheritdoc cref="IPatchMethod.PatchId" />
         public static string PatchId => "content_asset_override_encounter_boss_node_path";
-
-        /// <inheritdoc cref="IPatchMethod.Description" />
         public static string Description => "Allow mod encounters to override BossNodePath";
-
-        /// <inheritdoc cref="IPatchMethod.IsCritical" />
         public static bool IsCritical => false;
 
-        /// <inheritdoc cref="IPatchMethod.GetTargets" />
         public static ModPatchTarget[] GetTargets()
         {
             return [new(typeof(EncounterModel), "BossNodePath", MethodType.Getter)];
@@ -267,18 +251,12 @@ namespace STS2RitsuLib.Scaffolding.Content.Patches
     ///     Patches <see cref="EncounterModel.MapNodeAssetPaths" /> when a mod supplies an explicit path list.
     ///     当a mod supplies an explicit 路径 列表时修补<see cref="EncounterModel.MapNodeAssetPaths" />。
     /// </summary>
-    public class EncounterMapNodeAssetPathsPatch : IPatchMethod
+    internal class EncounterMapNodeAssetPathsPatch : IPatchMethod
     {
-        /// <inheritdoc cref="IPatchMethod.PatchId" />
         public static string PatchId => "content_asset_override_encounter_map_node_asset_paths";
-
-        /// <inheritdoc cref="IPatchMethod.Description" />
         public static string Description => "Allow mod encounters to override MapNodeAssetPaths";
-
-        /// <inheritdoc cref="IPatchMethod.IsCritical" />
         public static bool IsCritical => false;
 
-        /// <inheritdoc cref="IPatchMethod.GetTargets" />
         public static ModPatchTarget[] GetTargets()
         {
             return [new(typeof(EncounterModel), "MapNodeAssetPaths", MethodType.Getter)];
@@ -320,19 +298,15 @@ namespace STS2RitsuLib.Scaffolding.Content.Patches
     ///     Merges mod encounter paths into <see cref="EncounterModel.GetAssetPaths" /> for preloading.
     ///     将 mod 遭遇路径合并到 <see cref="EncounterModel.GetAssetPaths" />，用于预加载。
     /// </summary>
-    public class EncounterGetAssetPathsPatch : IPatchMethod
+    internal class EncounterGetAssetPathsPatch : IPatchMethod
     {
-        /// <inheritdoc cref="IPatchMethod.PatchId" />
         public static string PatchId => "content_asset_override_encounter_get_asset_paths";
 
-        /// <inheritdoc cref="IPatchMethod.Description" />
         public static string Description =>
             "Merge mod encounter scene, extras, and layer scenes into GetAssetPaths; omit synthetic encounters/<modId> preload when using borrowed or factory scenes";
 
-        /// <inheritdoc cref="IPatchMethod.IsCritical" />
         public static bool IsCritical => false;
 
-        /// <inheritdoc cref="IPatchMethod.GetTargets" />
         public static ModPatchTarget[] GetTargets()
         {
             return [new(typeof(EncounterModel), nameof(EncounterModel.GetAssetPaths))];

@@ -19,7 +19,7 @@ namespace STS2RitsuLib.Scaffolding.Characters.Patches
     ///     <c>.Merchant</c> 的角色可以使用内存外壳（镜像原版布局；否则通过 <see cref="RitsuGodotNodeFactories" /> 加载 <c>MerchantAnimPath</c> 以支持
     ///     baselib 风格场景）。
     /// </summary>
-    public class NMerchantRoomProceduralCharacterInstantiationPatch : IPatchMethod
+    internal class NMerchantRoomProceduralCharacterInstantiationPatch : IPatchMethod
     {
         private static readonly AccessTools.FieldRef<NMerchantRoom, List<Player>> PlayersRef =
             AccessTools.FieldRefAccess<NMerchantRoom, List<Player>>("_players");
@@ -30,26 +30,18 @@ namespace STS2RitsuLib.Scaffolding.Characters.Patches
         private static readonly AccessTools.FieldRef<NMerchantRoom, List<NMerchantCharacter>> PlayerVisualsRef =
             AccessTools.FieldRefAccess<NMerchantRoom, List<NMerchantCharacter>>("_playerVisuals");
 
-        /// <inheritdoc cref="IPatchMethod.PatchId" />
         public static string PatchId => "n_merchant_room_procedural_character_instantiation";
 
-        /// <inheritdoc cref="IPatchMethod.Description" />
         public static string Description =>
             "Instantiate merchant characters via ModWorldSceneVisualNodeFactory when procedural merchant visuals are set";
 
-        /// <inheritdoc cref="IPatchMethod.IsCritical" />
         public static bool IsCritical => false;
 
-        /// <inheritdoc cref="IPatchMethod.GetTargets" />
         public static ModPatchTarget[] GetTargets()
         {
             return [new(typeof(NMerchantRoom), "AfterRoomIsLoaded")];
         }
 
-        /// <summary>
-        ///     Replaces vanilla layout; returns <see langword="false" /> so the original <c>AfterRoomIsLoaded</c> is skipped.
-        ///     替换原版布局；返回 <see langword="false" />，使原始 <c>AfterRoomIsLoaded</c> 被跳过。
-        /// </summary>
         public static bool Prefix(NMerchantRoom __instance)
         {
             RunAfterRoomIsLoaded(__instance);

@@ -27,28 +27,20 @@ namespace STS2RitsuLib.CardPiles.Patches
     ///     <c>_ =&gt; throw new ArgumentOutOfRangeException()</c>；否则当 mod pile 持有 card 时，
     ///     每次运行时 card lookup 都会被中止。
     /// </remarks>
-    public sealed class ModCardPileFindOnTablePatch : IPatchMethod
+    internal sealed class ModCardPileFindOnTablePatch : IPatchMethod
     {
-        /// <inheritdoc />
         public static string PatchId => "ritsulib_ncard_find_on_table_mod_route";
 
-        /// <inheritdoc />
         public static string Description =>
             "Resolve NCard.FindOnTable for cards held in visible mod piles (ExtraHand containers)";
 
-        /// <inheritdoc />
         public static bool IsCritical => false;
 
-        /// <inheritdoc />
         public static ModPatchTarget[] GetTargets()
         {
             return [new(typeof(NCard), nameof(NCard.FindOnTable))];
         }
 
-        /// <summary>
-        ///     Short-circuits vanilla for cards whose resolved pile is a mod pile.
-        ///     对解析出的 pile 是 mod pile 的 card 短路原版逻辑。
-        /// </summary>
         public static bool Prefix(CardModel card, PileType? overridePile, ref NCard? __result)
         {
             var pileType = card.Pile?.Type ?? overridePile;

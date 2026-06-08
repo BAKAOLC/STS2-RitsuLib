@@ -10,28 +10,20 @@ namespace STS2RitsuLib.Scaffolding.Characters.Patches
     ///     在休息点房间完成布局后，为使用 <see cref="IModCharacterAssetOverrides.WorldProceduralVisuals" /><c>.RestSite</c> 的角色驱动程序化休息点视觉（按章节
     ///     loop cue）。
     /// </summary>
-    public class NRestSiteRoomProceduralVisualPlaybackPatch : IPatchMethod
+    internal class NRestSiteRoomProceduralVisualPlaybackPatch : IPatchMethod
     {
-        /// <inheritdoc cref="IPatchMethod.PatchId" />
         public static string PatchId => "n_rest_site_room_procedural_visual_playback";
 
-        /// <inheritdoc cref="IPatchMethod.Description" />
         public static string Description =>
             "Apply procedural rest-site frame / texture cues after NRestSiteRoom._Ready";
 
-        /// <inheritdoc cref="IPatchMethod.IsCritical" />
         public static bool IsCritical => false;
 
-        /// <inheritdoc cref="IPatchMethod.GetTargets" />
         public static ModPatchTarget[] GetTargets()
         {
             return [new(typeof(NRestSiteRoom), nameof(NRestSiteRoom._Ready))];
         }
 
-        /// <summary>
-        ///     Runs after vanilla <c>_Ready</c> so all rest-site character nodes exist.
-        ///     在原版 <c>_Ready</c> 之后运行，确保所有休息点角色节点都已存在。
-        /// </summary>
         public static void Postfix(NRestSiteRoom __instance)
         {
             foreach (var c in __instance.Characters)

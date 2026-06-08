@@ -10,19 +10,15 @@ namespace STS2RitsuLib.Content.Patches
     ///     强制 RitsuLib 注册内容使用一种固定公共条目格式。
     ///     这让游戏本地化键和默认资源路径保持可预测，而无需额外的重写补丁。
     /// </summary>
-    public class ModelDbModdedEntryPatch : IPatchMethod
+    internal class ModelDbModdedEntryPatch : IPatchMethod
     {
-        /// <inheritdoc />
         public static string PatchId => "modeldb_modded_entry_identity";
 
-        /// <inheritdoc />
         public static string Description =>
             "Force RitsuLib-registered models to use a fixed mod-scoped ModelDb entry format";
 
-        /// <inheritdoc />
         public static bool IsCritical => true;
 
-        /// <inheritdoc />
         public static ModPatchTarget[] GetTargets()
         {
             return [new(typeof(ModelDb), nameof(ModelDb.GetEntry), [typeof(Type)])];

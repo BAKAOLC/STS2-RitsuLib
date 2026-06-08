@@ -24,33 +24,22 @@ namespace STS2RitsuLib.Content.Patches
     ///     ID。此后置补丁会合并 <see cref="ModelDb" /> 内容，并像原版
     ///     <c>Init</c> 一样重新计算位大小和哈希。
     /// </summary>
-    public class ModelIdSerializationCacheDynamicContentPatch : IPatchMethod
+    internal class ModelIdSerializationCacheDynamicContentPatch : IPatchMethod
     {
         // Setter invocation happens at init-time only; keep the simple reflection path to
         // avoid delegate-signature mismatches across different runtime property types.
-
-        /// <inheritdoc />
         public static string PatchId => "model_id_serialization_cache_dynamic_content";
 
-        /// <inheritdoc />
         public static string Description =>
             "Include ModelDb-injected dynamic mod models in ModelIdSerializationCache maps and hash";
 
-        /// <inheritdoc />
         public static bool IsCritical => true;
 
-        /// <inheritdoc />
         public static ModPatchTarget[] GetTargets()
         {
             return [new(typeof(ModelIdSerializationCache), nameof(ModelIdSerializationCache.Init))];
         }
 
-        /// <summary>
-        ///     After vanilla <see cref="ModelIdSerializationCache.Init" />, merges injected <see cref="ModelDb" /> entries
-        ///     into net ID maps and refreshes bit sizes and hash.
-        ///     在原版 <see cref="ModelIdSerializationCache.Init" /> 之后，将注入的 <see cref="ModelDb" /> 条目
-        ///     合并进 net ID 映射，并刷新位大小和哈希。
-        /// </summary>
         public static void Postfix()
         {
             var contentById = GetModelDbContentById();

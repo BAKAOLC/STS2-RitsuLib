@@ -13,7 +13,7 @@ namespace STS2RitsuLib.Lifecycle.Patches
     ///     在 <c>OnContinueButtonPressedAsync</c> 进入 <c>RunState.FromSerializable</c> 前拒绝引用未注册角色的存档。
     ///     正常原版继续跑局流程保持不变。
     /// </summary>
-    public class NMainMenuContinueRunMissingCharacterPatch : IPatchMethod
+    internal class NMainMenuContinueRunMissingCharacterPatch : IPatchMethod
     {
         private static readonly AccessTools.FieldRef<NMainMenu, ReadSaveResult<SerializableRun>?> ReadRunSaveResultRef =
             AccessTools.FieldRefAccess<NMainMenu, ReadSaveResult<SerializableRun>?>("_readRunSaveResult");
@@ -25,26 +25,18 @@ namespace STS2RitsuLib.Lifecycle.Patches
             AccessTools.MethodDelegate<Action<NMainMenu>>(
                 AccessTools.DeclaredMethod(typeof(NMainMenu), "DisplayLoadSaveError"));
 
-        /// <inheritdoc />
         public static string PatchId => "nmain_menu_continue_run_missing_character";
 
-        /// <inheritdoc />
         public static string Description =>
             "Main menu Continue: block resume when CharacterModel is missing; no save deletion; avoid throw after invalid-save UI";
 
-        /// <inheritdoc />
         public static bool IsCritical => false;
 
-        /// <inheritdoc />
         public static ModPatchTarget[] GetTargets()
         {
             return [new(typeof(NMainMenu), "OnContinueButtonPressedAsync")];
         }
 
-        /// <summary>
-        ///     Harmony prefix: only replaces the continue task for invalid mod-character saves.
-        ///     Harmony prefix：仅在 mod 角色存档无效时替换继续跑局任务。
-        /// </summary>
         public static bool Prefix(NMainMenu __instance, ref Task __result)
         {
             var read = ReadRunSaveResultRef(__instance);

@@ -31,18 +31,12 @@ namespace STS2RitsuLib.Scaffolding.Content.Patches
     /// </summary>
     [HarmonyAfter(Const.BaseLibHarmonyId)]
     [HarmonyPriority(Priority.Last)]
-    public class MonsterVisualsPathPatch : IPatchMethod
+    internal class MonsterVisualsPathPatch : IPatchMethod
     {
-        /// <inheritdoc cref="IPatchMethod.PatchId" />
         public static string PatchId => "content_asset_override_monster_visuals_path";
-
-        /// <inheritdoc cref="IPatchMethod.Description" />
         public static string Description => "Allow mod monsters to override VisualsPath";
-
-        /// <inheritdoc cref="IPatchMethod.IsCritical" />
         public static bool IsCritical => false;
 
-        /// <inheritdoc cref="IPatchMethod.GetTargets" />
         public static ModPatchTarget[] GetTargets()
         {
             return [new(typeof(MonsterModel), "VisualsPath", MethodType.Getter)];

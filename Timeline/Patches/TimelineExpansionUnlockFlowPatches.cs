@@ -18,19 +18,15 @@ namespace STS2RitsuLib.Timeline.Patches
     ///     <see cref="MegaCrit.Sts2.Core.Saves.SaveManager.UnlockSlot" /> 后立即剔除 mod 扩展 id（IsValid false），导致实时扩展 UI 损坏，而冷
     ///     重载在缓存与字典匹配后仍会显示槽。
     /// </summary>
-    public class QueueTimelineExpansionSyncEpochIdListPatch : IPatchMethod
+    internal class QueueTimelineExpansionSyncEpochIdListPatch : IPatchMethod
     {
-        /// <inheritdoc />
         public static string PatchId => "queue_timeline_expansion_sync_epoch_id_list";
 
-        /// <inheritdoc />
         public static string Description =>
             "Sync EpochModel.AllEpochIds with the epoch type dictionary before QueueTimelineExpansion runs UnlockSlot";
 
-        /// <inheritdoc />
         public static bool IsCritical => false;
 
-        /// <inheritdoc />
         public static ModPatchTarget[] GetTargets()
         {
             return
@@ -39,10 +35,6 @@ namespace STS2RitsuLib.Timeline.Patches
             ];
         }
 
-        /// <summary>
-        ///     Ensures <see cref="EpochModel.IsValid" /> sees every id present in <see cref="EpochModel.Get" />.
-        ///     确保 <see cref="EpochModel.IsValid" /> 看到存在于其中的每个 id <see cref="EpochModel.Get" />。
-        /// </summary>
         public static void Prefix(EpochModel[] epochs)
         {
             ArgumentNullException.ThrowIfNull(epochs);
@@ -60,19 +52,15 @@ namespace STS2RitsuLib.Timeline.Patches
     ///     按错误纪元顺序将数据送入 <see cref="MegaCrit.Sts2.Core.Nodes.Screens.Timeline.NTimelineScreen.AddEpochSlots" />
     ///     。
     /// </summary>
-    public class NUnlockTimelineScreenExpansionSlotSortPatch : IPatchMethod
+    internal class NUnlockTimelineScreenExpansionSlotSortPatch : IPatchMethod
     {
-        /// <inheritdoc />
         public static string PatchId => "n_unlock_timeline_screen_expansion_slot_sort";
 
-        /// <inheritdoc />
         public static string Description =>
             "Sort timeline expansion slots by Era then EraPosition for mod-compatible column ordering";
 
-        /// <inheritdoc />
         public static bool IsCritical => false;
 
-        /// <inheritdoc />
         public static ModPatchTarget[] GetTargets()
         {
             return
@@ -82,10 +70,6 @@ namespace STS2RitsuLib.Timeline.Patches
             ];
         }
 
-        /// <summary>
-        ///     Replaces the vanilla <c>_erasToUnlock</c> ordering with era-stable sorting.
-        ///     用纪元稳定排序替换原版 <c>_erasToUnlock</c> 顺序。
-        /// </summary>
         public static void Postfix(NUnlockTimelineScreen __instance, List<EpochSlotData> eras)
         {
             ArgumentNullException.ThrowIfNull(eras);
@@ -113,19 +97,15 @@ namespace STS2RitsuLib.Timeline.Patches
     ///     动画版 <see cref="MegaCrit.Sts2.Core.Nodes.Screens.Timeline.NTimelineScreen.AddEpochSlots" /> 前缀在当前会话中合并
     ///     相同的 mod 槽。
     /// </summary>
-    public sealed class QueueTimelineExpansionUnlockModSlotsAfterNeowPatch : IPatchMethod
+    internal sealed class QueueTimelineExpansionUnlockModSlotsAfterNeowPatch : IPatchMethod
     {
-        /// <inheritdoc />
         public static string PatchId => "queue_timeline_expansion_unlock_mod_slots_after_neow";
 
-        /// <inheritdoc />
         public static string Description =>
             "After Neow primary timeline expansion, obtain Ironclad-gated mod character roots and unlock merged mod slots";
 
-        /// <inheritdoc />
         public static bool IsCritical => false;
 
-        /// <inheritdoc />
         public static ModPatchTarget[] GetTargets()
         {
             return
@@ -134,10 +114,6 @@ namespace STS2RitsuLib.Timeline.Patches
             ];
         }
 
-        /// <summary>
-        ///     Runs after vanilla queues the expansion list and unlocks vanilla slots.
-        ///     在之后运行： 原版 将扩展列表入队 并解锁原版槽。
-        /// </summary>
         public static void Postfix(EpochModel[] epochs)
         {
             ArgumentNullException.ThrowIfNull(epochs);

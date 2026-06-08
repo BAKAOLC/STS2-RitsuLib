@@ -16,19 +16,15 @@ namespace STS2RitsuLib.Unlocks.Patches
     ///     未抛出异常的情况；Finalizer 则从未知 mod
     ///     角色触发的原版 <c>ArgumentOutOfRangeException</c> 中恢复。
     /// </summary>
-    public class EliteEpochAfterCombatFallbackPatch : IPatchMethod
+    internal class EliteEpochAfterCombatFallbackPatch : IPatchMethod
     {
-        /// <inheritdoc />
         public static string PatchId => "elite_epoch_after_combat_fallback";
 
-        /// <inheritdoc />
         public static string Description =>
             "Elite epoch unlock fallback when CheckFifteenElitesDefeatedEpoch is missing (stable vs beta)";
 
-        /// <inheritdoc />
         public static bool IsCritical => false;
 
-        /// <inheritdoc />
         public static ModPatchTarget[] GetTargets()
         {
             return
@@ -38,10 +34,6 @@ namespace STS2RitsuLib.Unlocks.Patches
             ];
         }
 
-        /// <summary>
-        ///     After an elite combat win, applies mod elite epoch handling when no dedicated check method exists.
-        ///     精英战斗胜利后，在不存在专用检查方法时应用 mod 精英纪元处理。
-        /// </summary>
         public static void Postfix(ProgressSaveManager __instance, Player localPlayer, CombatRoom room)
         {
             if (EliteEpochModHandling.HasDedicatedEliteEpochCheckMethod)
@@ -56,10 +48,6 @@ namespace STS2RitsuLib.Unlocks.Patches
             EliteEpochModHandling.TryHandleModEliteEpoch(__instance, localPlayer);
         }
 
-        /// <summary>
-        ///     Swallows expected vanilla argument exceptions after attempting mod elite epoch recovery.
-        ///     尝试恢复 mod 精英纪元后，吞掉预期的原版参数异常。
-        /// </summary>
         public static Exception? Finalizer(
             Exception? __exception,
             ProgressSaveManager __instance,

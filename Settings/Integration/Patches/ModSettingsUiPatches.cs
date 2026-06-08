@@ -20,29 +20,18 @@ namespace STS2RitsuLib.Settings.Patches
     /// </summary>
     [HarmonyAfter(Const.BaseLibHarmonyId)]
     [HarmonyPriority(Priority.Last)]
-    public class ModSettingsSubmenuPatch : IPatchMethod
+    internal class ModSettingsSubmenuPatch : IPatchMethod
     {
         internal static readonly ConditionalWeakTable<NSubmenuStack, RitsuModSettingsSubmenu> Submenus = new();
-
-        /// <inheritdoc />
         public static string PatchId => "ritsulib_mod_settings_submenu";
-
-        /// <inheritdoc />
         public static string Description => "Inject RitsuLib mod settings submenu into the main menu stack";
-
-        /// <inheritdoc />
         public static bool IsCritical => false;
 
-        /// <inheritdoc />
         public static ModPatchTarget[] GetTargets()
         {
             return [new(typeof(NMainMenuSubmenuStack), nameof(NMainMenuSubmenuStack.GetSubmenuType), [typeof(Type)])];
         }
 
-        /// <summary>
-        ///     Returns a cached <see cref="RitsuModSettingsSubmenu" /> for the stack when the requested type matches.
-        ///     当请求的类型匹配时，为该 stack 返回缓存的 <see cref="RitsuModSettingsSubmenu" />。
-        /// </summary>
         public static bool Prefix(NMainMenuSubmenuStack __instance, Type type, ref NSubmenu __result)
         {
             if (type != typeof(RitsuModSettingsSubmenu))
@@ -72,27 +61,17 @@ namespace STS2RitsuLib.Settings.Patches
     ///     Harmony patch：每个 <see cref="NRunSubmenuStack" />（跑局中暂停 / 设置）复用一个
     ///     <see cref="RitsuModSettingsSubmenu" />，对应 <see cref="ModSettingsSubmenuPatch" /> 的做法。
     /// </summary>
-    public class ModSettingsRunSubmenuStackPatch : IPatchMethod
+    internal class ModSettingsRunSubmenuStackPatch : IPatchMethod
     {
-        /// <inheritdoc />
         public static string PatchId => "ritsulib_mod_settings_submenu_run_stack";
-
-        /// <inheritdoc />
         public static string Description => "Inject RitsuLib mod settings submenu into the run submenu stack";
-
-        /// <inheritdoc />
         public static bool IsCritical => false;
 
-        /// <inheritdoc />
         public static ModPatchTarget[] GetTargets()
         {
             return [new(typeof(NRunSubmenuStack), nameof(NRunSubmenuStack.GetSubmenuType), [typeof(Type)])];
         }
 
-        /// <summary>
-        ///     Returns a cached <see cref="RitsuModSettingsSubmenu" /> for the run stack when the requested type matches.
-        ///     当请求的类型匹配时，为跑局 stack 返回缓存的 <see cref="RitsuModSettingsSubmenu" />。
-        /// </summary>
         public static bool Prefix(NRunSubmenuStack __instance, Type type, ref NSubmenu __result)
         {
             if (type != typeof(RitsuModSettingsSubmenu))
@@ -111,7 +90,7 @@ namespace STS2RitsuLib.Settings.Patches
     /// </summary>
     [HarmonyAfter(Const.BaseLibHarmonyId)]
     [HarmonyPriority(Priority.Last)]
-    public class SettingsScreenModSettingsButtonPatch : IPatchMethod
+    internal class SettingsScreenModSettingsButtonPatch : IPatchMethod
     {
         private const string GeneralSettingsResizeHookMeta = "ritsulib_general_settings_content_resize_hook";
 
@@ -126,16 +105,10 @@ namespace STS2RitsuLib.Settings.Patches
         private static readonly ConditionalWeakTable<NSettingsScreen, ModSettingsMirrorPrewarmSession> PrewarmSessions =
             new();
 
-        /// <inheritdoc />
         public static string PatchId => "ritsulib_mod_settings_button";
-
-        /// <inheritdoc />
         public static string Description => "Add RitsuLib mod settings entry point to the settings screen";
-
-        /// <inheritdoc />
         public static bool IsCritical => false;
 
-        /// <inheritdoc />
         public static ModPatchTarget[] GetTargets()
         {
             return
@@ -146,10 +119,6 @@ namespace STS2RitsuLib.Settings.Patches
             ];
         }
 
-        /// <summary>
-        ///     Ensures the entry line exists and refreshes chrome on ready, open, and show.
-        ///     在 ready、open、show 时确保入口行存在并刷新外观。
-        /// </summary>
         public static void Postfix(NSettingsScreen __instance)
         {
             RitsuLibModSettingsBootstrap.EnsureFrameworkPagesRegistered();

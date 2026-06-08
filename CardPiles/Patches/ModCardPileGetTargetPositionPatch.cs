@@ -16,28 +16,20 @@ namespace STS2RitsuLib.CardPiles.Patches
     ///     值会抛出 <see cref="ArgumentOutOfRangeException" />。
     ///     <see cref="ArgumentOutOfRangeException" />。
     /// </summary>
-    public sealed class ModCardPileGetTargetPositionPatch : IPatchMethod
+    internal sealed class ModCardPileGetTargetPositionPatch : IPatchMethod
     {
-        /// <inheritdoc />
         public static string PatchId => "ritsulib_pile_get_target_position_mod_route";
 
-        /// <inheritdoc />
         public static string Description =>
             "Provide NCard fly-in targets for mod card piles before the vanilla switch throws";
 
-        /// <inheritdoc />
         public static bool IsCritical => false;
 
-        /// <inheritdoc />
         public static ModPatchTarget[] GetTargets()
         {
             return [new(typeof(PileTypeExtensions), nameof(PileTypeExtensions.GetTargetPosition))];
         }
 
-        /// <summary>
-        ///     Returns false (skip vanilla) when the pile type was minted by ritsulib.
-        ///     当 pile type 由 ritsulib minted 时返回 false（跳过原版）。
-        /// </summary>
         public static bool Prefix(PileType pileType, NCard? node, ref Vector2 __result)
         {
             if (!ModCardPileRegistry.TryGetByPileType(pileType, out var definition))

@@ -56,19 +56,15 @@ namespace STS2RitsuLib.Localization.Patches
     ///     <c>LocTable.GetLocString</c> 中的缺失项返回占位 <c>LocString</c>，并按每个键记录一次 <c>[Localization][DebugCompat]</c>。为 false
     ///     时，使用原版缺失即抛出的行为。
     /// </summary>
-    public class LocTableGetLocStringCompatibilityPatch : IPatchMethod
+    internal class LocTableGetLocStringCompatibilityPatch : IPatchMethod
     {
-        /// <inheritdoc />
         public static string PatchId => "loc_table_get_loc_string_debug_compat";
 
-        /// <inheritdoc />
         public static string Description =>
             "Use key placeholder for LocTable.GetLocString missing entries in debug compatibility mode";
 
-        /// <inheritdoc />
         public static bool IsCritical => false;
 
-        /// <inheritdoc />
         public static ModPatchTarget[] GetTargets()
         {
             return
@@ -77,10 +73,6 @@ namespace STS2RitsuLib.Localization.Patches
             ];
         }
 
-        /// <summary>
-        ///     Short-circuits the target method with a synthesized loc string when a placeholder is required.
-        ///     需要 placeholder 时，用合成的 loc string 短路目标方法。
-        /// </summary>
         public static bool Prefix(LocTable __instance, string key, ref LocString __result)
         {
             if (!LocTableCompatibilityPatchHelper.ShouldUsePlaceholder(
@@ -103,19 +95,15 @@ namespace STS2RitsuLib.Localization.Patches
     ///     字符串，并为 <c>LocTable.GetRawText</c> 中的缺失项按每个键记录一次 <c>[Localization][DebugCompat]</c>。
     ///     为 false 时，使用原版缺失即抛出的行为。
     /// </summary>
-    public class LocTableGetRawTextCompatibilityPatch : IPatchMethod
+    internal class LocTableGetRawTextCompatibilityPatch : IPatchMethod
     {
-        /// <inheritdoc />
         public static string PatchId => "loc_table_get_raw_text_debug_compat";
 
-        /// <inheritdoc />
         public static string Description =>
             "Use key placeholder for LocTable.GetRawText missing entries in debug compatibility mode";
 
-        /// <inheritdoc />
         public static bool IsCritical => false;
 
-        /// <inheritdoc />
         public static ModPatchTarget[] GetTargets()
         {
             return
@@ -124,10 +112,6 @@ namespace STS2RitsuLib.Localization.Patches
             ];
         }
 
-        /// <summary>
-        ///     Short-circuits the target method with the key as raw text when a placeholder is required.
-        ///     需要占位时，以键作为 raw text 短路目标方法。
-        /// </summary>
         public static bool Prefix(LocTable __instance, string key, ref string __result)
         {
             if (!LocTableCompatibilityPatchHelper.ShouldUsePlaceholder(

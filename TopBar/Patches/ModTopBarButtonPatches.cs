@@ -27,30 +27,17 @@ namespace STS2RitsuLib.TopBar.Patches
     ///     永远不会拆成“牌堆行”和“动作行”。
     ///     永远不会拆成“牌堆行”和“动作行”。
     /// </summary>
-    public sealed class ModTopBarActionButtonReadyPatch : IPatchMethod
+    internal sealed class ModTopBarActionButtonReadyPatch : IPatchMethod
     {
-        /// <inheritdoc />
         public static string PatchId => "ritsulib_top_bar_ready_action_inject";
-
-        /// <inheritdoc />
         public static string Description => "Inject mod action buttons into NTopBar";
-
-        /// <inheritdoc />
         public static bool IsCritical => false;
 
-        /// <inheritdoc />
         public static ModPatchTarget[] GetTargets()
         {
             return [new(typeof(NTopBar), nameof(NTopBar._Ready))];
         }
 
-        /// <summary>
-        ///     Wires generic mod top-bar buttons alongside the vanilla deck/map/pause nodes and any
-        ///     pile-backed <see cref="STS2RitsuLib.CardPiles.ModCardPileUiStyle.TopBarDeck" /> buttons.
-        ///     将通用 mod 顶部栏按钮接入原版 deck / map / pause 节点以及任何
-        ///     牌堆支持的 <see cref="STS2RitsuLib.CardPiles.ModCardPileUiStyle.TopBarDeck" /> 按钮旁。
-        ///     牌堆支持的 <c>STS2RitsuLib.CardPiles.ModCardPileUiStyle.TopBarDeck</c> 按钮。
-        /// </summary>
         public static void Postfix(NTopBar __instance)
         {
             var definitions = ModTopBarButtonRegistry.GetDefinitionsSnapshot();
@@ -77,19 +64,15 @@ namespace STS2RitsuLib.TopBar.Patches
     ///     <see cref="Player" />，发生在 <see cref="NTopBar.Initialize" /> 时，对应
     ///     <c>ModCardPileTopBarInitializePatch</c>。
     /// </summary>
-    public sealed class ModTopBarActionButtonInitializePatch : IPatchMethod
+    internal sealed class ModTopBarActionButtonInitializePatch : IPatchMethod
     {
-        /// <inheritdoc />
         public static string PatchId => "ritsulib_top_bar_initialize_action_bind";
 
-        /// <inheritdoc />
         public static string Description =>
             "Bind mod action buttons to the local player on NTopBar.Initialize";
 
-        /// <inheritdoc />
         public static bool IsCritical => false;
 
-        /// <inheritdoc />
         public static ModPatchTarget[] GetTargets()
         {
             return
@@ -98,11 +81,6 @@ namespace STS2RitsuLib.TopBar.Patches
             ];
         }
 
-        /// <summary>
-        ///     Binds each injected action button to the local <see cref="Player" />.
-        ///     将每个注入的动作按钮绑定到本地 <see cref="Player" />。
-        ///     将每个注入的动作按钮绑定到本地 <c>Player</c>。
-        /// </summary>
         public static void Postfix(NTopBar __instance, IRunState runState)
         {
             var player = LocalContext.GetMe(runState);

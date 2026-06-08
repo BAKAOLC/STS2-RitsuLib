@@ -31,19 +31,15 @@ namespace STS2RitsuLib.Scaffolding.Content.Patches
     /// </summary>
     [HarmonyAfter(Const.BaseLibHarmonyId)]
     [HarmonyPriority(Priority.Last)]
-    public sealed class ImageHelperModEncounterRunHistoryIconPathPatch : IPatchMethod
+    internal sealed class ImageHelperModEncounterRunHistoryIconPathPatch : IPatchMethod
     {
-        /// <inheritdoc />
         public static string PatchId => "image_helper_mod_encounter_run_history_icon_path";
 
-        /// <inheritdoc />
         public static string Description =>
             "Route encounter run-history icon paths through IModEncounterAssetOverrides custom texture paths";
 
-        /// <inheritdoc />
         public static bool IsCritical => false;
 
-        /// <inheritdoc />
         public static ModPatchTarget[] GetTargets()
         {
             return
@@ -53,10 +49,6 @@ namespace STS2RitsuLib.Scaffolding.Content.Patches
             ];
         }
 
-        /// <summary>
-        ///     Harmony prefix: return the configured <c>res://images/…</c> path when present on disk / in the resource loader.
-        ///     Harmony 前缀：当配置的 <c>res://images/…</c> 路径存在于磁盘 / 资源加载器中时返回该路径。
-        /// </summary>
         public static bool Prefix(
             MethodBase __originalMethod,
             MapPointType mapPointType,

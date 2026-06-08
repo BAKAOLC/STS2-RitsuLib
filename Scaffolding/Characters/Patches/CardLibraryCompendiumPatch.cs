@@ -43,30 +43,20 @@ namespace STS2RitsuLib.Scaffolding.Characters.Patches
     /// </summary>
     [HarmonyAfter(Const.BaseLibHarmonyId)]
     [HarmonyPriority(Priority.Last)]
-    public class CardLibraryCompendiumPatch : IPatchMethod
+    internal class CardLibraryCompendiumPatch : IPatchMethod
     {
-        /// <inheritdoc cref="IPatchMethod.PatchId" />
         public static string PatchId => "card_library_compendium_mod_character_filter";
 
-        /// <inheritdoc cref="IPatchMethod.Description" />
         public static string Description =>
             "Sync card library compendium pool-filter icons to CharacterModel.IconTexture; add mod character filter buttons";
 
-        /// <inheritdoc cref="IPatchMethod.IsCritical" />
         public static bool IsCritical => false;
 
-        /// <inheritdoc cref="IPatchMethod.GetTargets" />
         public static ModPatchTarget[] GetTargets()
         {
             return [new(typeof(NCardLibrary), nameof(NCardLibrary._Ready))];
         }
 
-        /// <summary>
-        ///     Clones vanilla pool-filter UI for each mod character and wires pool predicates so compendium filtering
-        ///     works without <c>KeyNotFoundException</c>.
-        ///     为每个 mod 角色克隆原版牌池过滤 UI，并接线牌池谓词，使 compendium 过滤
-        ///     无需 <c>KeyNotFoundException</c> 即可工作。
-        /// </summary>
         public static void Postfix(
             NCardLibrary __instance,
             Dictionary<NCardPoolFilter, Func<CardModel, bool>> ____poolFilters,

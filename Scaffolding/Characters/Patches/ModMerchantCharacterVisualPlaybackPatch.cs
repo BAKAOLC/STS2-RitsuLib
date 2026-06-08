@@ -17,30 +17,21 @@ namespace STS2RitsuLib.Scaffolding.Characters.Patches
     ///     没有 Spine 的商人角色场景使用 <see cref="ModCreatureVisualPlayback" /> 处理
     ///     <see cref="NMerchantCharacter.PlayAnimation" />（纹理、AnimationPlayer、AnimatedSprite2D）。
     /// </summary>
-    public class ModMerchantCharacterVisualPlaybackPatch : IPatchMethod
+    internal class ModMerchantCharacterVisualPlaybackPatch : IPatchMethod
     {
         private static readonly ConditionalWeakTable<Node, StateMachineSlot> StateMachinesByRoot = new();
-
-        /// <inheritdoc cref="IPatchMethod.PatchId" />
         public static string PatchId => "mod_merchant_character_visual_playback";
 
-        /// <inheritdoc cref="IPatchMethod.Description" />
         public static string Description =>
             "Play non-Spine merchant character animations via ModCreatureVisualPlayback";
 
-        /// <inheritdoc cref="IPatchMethod.IsCritical" />
         public static bool IsCritical => false;
 
-        /// <inheritdoc cref="IPatchMethod.GetTargets" />
         public static ModPatchTarget[] GetTargets()
         {
             return [new(typeof(NMerchantCharacter), nameof(NMerchantCharacter.PlayAnimation))];
         }
 
-        /// <summary>
-        ///     Returns <see langword="false" /> when playback handled the request (skip vanilla Spine path).
-        ///     播放已处理请求时返回 <see langword="false" />（跳过原版 Spine 路径）。
-        /// </summary>
         public static bool Prefix(NMerchantCharacter __instance, string anim, bool loop)
         {
             var children = __instance.GetChildren();

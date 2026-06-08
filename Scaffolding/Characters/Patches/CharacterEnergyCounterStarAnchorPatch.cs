@@ -15,30 +15,19 @@ namespace STS2RitsuLib.Scaffolding.Characters.Patches
     /// </summary>
     [HarmonyAfter(Const.BaseLibHarmonyId)]
     [HarmonyPriority(Priority.Last)]
-    public sealed class CharacterEnergyCounterStarAnchorPatch : IPatchMethod
+    internal sealed class CharacterEnergyCounterStarAnchorPatch : IPatchMethod
     {
         private static readonly FieldInfo? EnergyCounterField = AccessTools.Field(typeof(NCombatUi), "_energyCounter");
         private static readonly FieldInfo? StarCounterField = AccessTools.Field(typeof(NCombatUi), "_starCounter");
-
-        /// <inheritdoc />
         public static string PatchId => "character_energy_counter_star_anchor";
-
-        /// <inheritdoc />
         public static string Description => "Reparent star counter to energy counter %StarAnchor when present";
-
-        /// <inheritdoc />
         public static bool IsCritical => false;
 
-        /// <inheritdoc />
         public static ModPatchTarget[] GetTargets()
         {
             return [new(typeof(NCombatUi), nameof(NCombatUi.Activate), [typeof(CombatState)])];
         }
 
-        /// <summary>
-        ///     Moves the star counter under <c>%StarAnchor</c> and resets anchor/offset fields for predictable layout.
-        ///     将星星计数器移动到 <c>%StarAnchor</c> 下，并重置 anchor/offset 字段以获得可预测布局。
-        /// </summary>
         public static void Postfix(NCombatUi __instance)
         {
             if (EnergyCounterField?.GetValue(__instance) is not NEnergyCounter energyCounter)

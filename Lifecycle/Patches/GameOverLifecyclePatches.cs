@@ -9,18 +9,12 @@ namespace STS2RitsuLib.Lifecycle.Patches
     ///     Publishes a lifecycle event when <see cref="NGameOverScreen" /> is created from run state and save data.
     ///     当 <see cref="NGameOverScreen" /> 从跑局状态和存档数据创建时发布生命周期事件。
     /// </summary>
-    public class GameOverScreenLifecyclePatch : IPatchMethod
+    internal class GameOverScreenLifecyclePatch : IPatchMethod
     {
-        /// <inheritdoc />
         public static string PatchId => "game_over_screen_lifecycle";
-
-        /// <inheritdoc />
         public static string Description => "Publish lifecycle events when the game over screen is created";
-
-        /// <inheritdoc />
         public static bool IsCritical => false;
 
-        /// <inheritdoc />
         public static ModPatchTarget[] GetTargets()
         {
             return
@@ -30,10 +24,6 @@ namespace STS2RitsuLib.Lifecycle.Patches
             ];
         }
 
-        /// <summary>
-        ///     Harmony postfix: when creation succeeds, publishes <see cref="GameOverScreenCreatedEvent" />.
-        ///     Harmony postfix：创建成功时发布 <see cref="GameOverScreenCreatedEvent" />。
-        /// </summary>
         public static void Postfix(RunState runState, SerializableRun serializableRun, NGameOverScreen? __result)
         {
             if (__result == null)

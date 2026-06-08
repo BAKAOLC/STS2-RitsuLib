@@ -11,7 +11,7 @@ namespace STS2RitsuLib.Interop.Patches
     ///     将 <see cref="SavedAttachedState{TKey,TValue}" /> 实例桥接到 <see cref="SavedProperties" />
     ///     序列化和反序列化。
     /// </summary>
-    public static class SavedAttachedStatePatches
+    internal static class SavedAttachedStatePatches
     {
         private static void ExportAttachedStates(ref SavedProperties? __result, object model)
         {
@@ -39,19 +39,15 @@ namespace STS2RitsuLib.Interop.Patches
         ///     Exports registered saved attached states after vanilla model properties are serialized.
         ///     在原版模型属性序列化后导出已注册的已保存附加状态。
         /// </summary>
-        public sealed class SavedPropertiesFromInternalPatch : IPatchMethod
+        internal sealed class SavedPropertiesFromInternalPatch : IPatchMethod
         {
-            /// <inheritdoc />
             public static string PatchId => "ritsulib_saved_attached_state_SavedProperties_FromInternal";
 
-            /// <inheritdoc />
             public static string Description =>
                 "Bridge SavedAttachedState through SavedProperties save -> SavedProperties.FromInternal(...)";
 
-            /// <inheritdoc />
             public static bool IsCritical => false;
 
-            /// <inheritdoc />
             public static ModPatchTarget[] GetTargets()
             {
                 return
@@ -61,10 +57,6 @@ namespace STS2RitsuLib.Interop.Patches
                 ];
             }
 
-            /// <summary>
-            ///     Exports registered saved attached states after vanilla model properties are serialized.
-            ///     在原版模型属性序列化后导出已注册的已保存附加状态。
-            /// </summary>
             public static void Postfix(ref SavedProperties? __result, object model, ModelId? id)
             {
                 ExportAttachedStates(ref __result, model);
@@ -75,19 +67,15 @@ namespace STS2RitsuLib.Interop.Patches
         ///     Imports registered saved attached states after vanilla model properties are deserialized.
         ///     在原版模型属性反序列化后导入已注册的已保存附加状态。
         /// </summary>
-        public sealed class SavedPropertiesFillInternalPatch : IPatchMethod
+        internal sealed class SavedPropertiesFillInternalPatch : IPatchMethod
         {
-            /// <inheritdoc />
             public static string PatchId => "ritsulib_saved_attached_state_SavedProperties_FillInternal";
 
-            /// <inheritdoc />
             public static string Description =>
                 "Bridge SavedAttachedState through SavedProperties load -> SavedProperties.FillInternal(...)";
 
-            /// <inheritdoc />
             public static bool IsCritical => false;
 
-            /// <inheritdoc />
             public static ModPatchTarget[] GetTargets()
             {
                 return
@@ -96,10 +84,6 @@ namespace STS2RitsuLib.Interop.Patches
                 ];
             }
 
-            /// <summary>
-            ///     Imports registered saved attached states after vanilla model properties are deserialized.
-            ///     在原版模型属性反序列化后导入已注册的已保存附加状态。
-            /// </summary>
             public static void Postfix(SavedProperties __instance, object model)
             {
                 ImportAttachedStates(__instance, model);

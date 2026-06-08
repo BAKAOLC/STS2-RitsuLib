@@ -21,19 +21,15 @@ namespace STS2RitsuLib.Unlocks.Patches
     ///     Replaces vanilla ascension-one epoch checks for mod-owned characters with registry-driven epoch grants.
     ///     将 mod 拥有角色的原版进阶一纪元检查替换为由注册表驱动的纪元授予。
     /// </summary>
-    public class AscensionOneEpochCompatibilityPatch : IPatchMethod
+    internal class AscensionOneEpochCompatibilityPatch : IPatchMethod
     {
-        /// <inheritdoc />
         public static string PatchId => "ascension_one_epoch_compatibility";
 
-        /// <inheritdoc />
         public static string Description =>
             "Handle ascension-one epoch unlock checks for mod characters via registered RitsuLib unlock rules";
 
-        /// <inheritdoc />
         public static bool IsCritical => false;
 
-        /// <inheritdoc />
         public static ModPatchTarget[] GetTargets()
         {
             return
@@ -44,10 +40,6 @@ namespace STS2RitsuLib.Unlocks.Patches
             ];
         }
 
-        /// <summary>
-        ///     Obtains the registered ascension-one epoch when appropriate; skips vanilla when handled.
-        ///     在适当时获得已注册的进阶一纪元；已处理时跳过原版逻辑。
-        /// </summary>
         public static bool Prefix(SerializablePlayer serializablePlayer, SerializableRun serializableRun)
         {
             ArgumentNullException.ThrowIfNull(serializablePlayer);
@@ -100,19 +92,15 @@ namespace STS2RitsuLib.Unlocks.Patches
     ///     Extends vanilla post-run character-unlock epoch checks with registered and template-derived mod grants.
     ///     用已注册和模板推导出的 mod 授予扩展原版跑局后角色解锁纪元检查。
     /// </summary>
-    public class PostRunCharacterUnlockEpochCompatibilityPatch : IPatchMethod
+    internal class PostRunCharacterUnlockEpochCompatibilityPatch : IPatchMethod
     {
-        /// <inheritdoc />
         public static string PatchId => "postrun_character_unlock_epoch_compatibility";
 
-        /// <inheritdoc />
         public static string Description =>
             "Handle registered or template-derived post-run character unlock epochs without blocking vanilla chains";
 
-        /// <inheritdoc />
         public static bool IsCritical => false;
 
-        /// <inheritdoc />
         public static ModPatchTarget[] GetTargets()
         {
             return
@@ -123,10 +111,6 @@ namespace STS2RitsuLib.Unlocks.Patches
             ];
         }
 
-        /// <summary>
-        ///     Obtains registered or template-derived post-run character-unlock epochs when appropriate.
-        ///     在适当时获得已注册或模板推导出的跑局后角色解锁纪元。
-        /// </summary>
         public static bool Prefix(SerializablePlayer serializablePlayer, SerializableRun serializableRun)
         {
             ArgumentNullException.ThrowIfNull(serializablePlayer);
@@ -183,19 +167,15 @@ namespace STS2RitsuLib.Unlocks.Patches
     ///     Overrides ascension reveal queries for characters with a registered reveal epoch dependency.
     ///     覆盖已注册显示纪元依赖的角色进阶显示查询。
     /// </summary>
-    public class AscensionEpochRevealCompatibilityPatch : IPatchMethod
+    internal class AscensionEpochRevealCompatibilityPatch : IPatchMethod
     {
-        /// <inheritdoc />
         public static string PatchId => "ascension_epoch_reveal_compatibility";
 
-        /// <inheritdoc />
         public static string Description =>
             "Handle ascension reveal checks for mod characters via registered RitsuLib unlock rules";
 
-        /// <inheritdoc />
         public static bool IsCritical => false;
 
-        /// <inheritdoc />
         public static ModPatchTarget[] GetTargets()
         {
             return [new(typeof(StartRunLobby), "IsAscensionEpochRevealed", [typeof(ModelId)])];

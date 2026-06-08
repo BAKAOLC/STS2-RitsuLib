@@ -11,37 +11,25 @@ namespace STS2RitsuLib.Timeline.Patches
     ///     <see cref="MegaCrit.Sts2.Core.Timeline.EpochModel.QueueTimelineExpansion" /> 调用方 (角色线, 遗物行,
     ///     etc.) 不会解锁或播放每个的动画 <see cref="STS2RitsuLib.Timeline.Scaffolding.ModEpochTemplate" />。
     /// </summary>
-    public sealed class NeowEpochQueueUnlocksCoExpansionScopePatch : IPatchMethod
+    internal sealed class NeowEpochQueueUnlocksCoExpansionScopePatch : IPatchMethod
     {
-        /// <inheritdoc />
         public static string PatchId => "neow_epoch_queue_unlocks_co_expansion_scope";
 
-        /// <inheritdoc />
         public static string Description =>
             "Track NeowEpoch.QueueUnlocks so QueueTimelineExpansion postfix only co-unlocks mod slots in that flow";
 
-        /// <inheritdoc />
         public static bool IsCritical => false;
 
-        /// <inheritdoc />
         public static ModPatchTarget[] GetTargets()
         {
             return [new(typeof(NeowEpoch), nameof(NeowEpoch.QueueUnlocks), Type.EmptyTypes)];
         }
 
-        /// <summary>
-        ///     Increments depth before Neow&apos;s unlock queue runs.
-        ///     在之前递增深度： Neow&apos;s 解锁队列运行。
-        /// </summary>
         public static void Prefix()
         {
             ModTimelineNeowCoExpansion.EnterNeowQueueUnlocks();
         }
 
-        /// <summary>
-        ///     Always decrements depth, even when <see cref="NeowEpoch.QueueUnlocks" /> throws.
-        ///     始终递减深度, 即使 <see cref="NeowEpoch.QueueUnlocks" /> 抛出异常。
-        /// </summary>
         public static void Finalizer(Exception? __exception)
         {
             ModTimelineNeowCoExpansion.ExitNeowQueueUnlocks();

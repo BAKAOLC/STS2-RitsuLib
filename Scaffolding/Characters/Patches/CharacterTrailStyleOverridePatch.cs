@@ -11,28 +11,20 @@ namespace STS2RitsuLib.Scaffolding.Characters.Patches
     ///     在 <see cref="NCardTrailVfx.Create" /> 之后，如果存在，则将 <see cref="IModCharacterAssetOverrides.CustomTrailStyle" /> 的
     ///     modulate 和宽度应用到 line、particle 和 sprite 节点。
     /// </summary>
-    public class CharacterTrailStyleOverridePatch : IPatchMethod
+    internal class CharacterTrailStyleOverridePatch : IPatchMethod
     {
-        /// <inheritdoc cref="IPatchMethod.PatchId" />
         public static string PatchId => "character_trail_style_override";
 
-        /// <inheritdoc cref="IPatchMethod.Description" />
         public static string Description =>
             "Allow mod characters to reuse a vanilla trail scene and override its visual properties";
 
-        /// <inheritdoc cref="IPatchMethod.IsCritical" />
         public static bool IsCritical => false;
 
-        /// <inheritdoc cref="IPatchMethod.GetTargets" />
         public static ModPatchTarget[] GetTargets()
         {
             return [new(typeof(NCardTrailVfx), nameof(NCardTrailVfx.Create), [typeof(Control), typeof(string)])];
         }
 
-        /// <summary>
-        ///     Mutates the created trail instance in place when the owning card’s character supplies a trail style.
-        ///     当所属卡牌的角色提供 trail style 时，原地修改已创建的 trail 实例。
-        /// </summary>
         public static void Postfix(Control card, ref NCardTrailVfx? __result)
         {
             if (__result == null || card is not NCard nCard)

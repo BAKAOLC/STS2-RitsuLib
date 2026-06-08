@@ -105,30 +105,17 @@ namespace STS2RitsuLib.Scaffolding.Characters.Patches
     /// </summary>
     [HarmonyAfter(Const.BaseLibHarmonyId)]
     [HarmonyPriority(Priority.Last)]
-    public class CharacterIconOutlineTexturePathPatch : IPatchMethod
+    internal class CharacterIconOutlineTexturePathPatch : IPatchMethod
     {
-        /// <inheritdoc />
         public static string PatchId => "character_asset_override_icon_outline_texture_path";
-
-        /// <inheritdoc />
         public static string Description => "Allow mod characters to override CharacterModel.IconOutlineTexturePath";
-
-        /// <inheritdoc />
         public static bool IsCritical => false;
 
-        /// <inheritdoc />
         public static ModPatchTarget[] GetTargets()
         {
             return [new(typeof(CharacterModel), nameof(CharacterModel.IconOutlineTexturePath), MethodType.Getter)];
         }
 
-        /// <summary>
-        ///     When the instance implements <see cref="IModCharacterAssetOverrides" /> and a valid override path exists,
-        ///     replaces the getter result; otherwise runs the original method.
-        ///     当实例实现 <see cref="IModCharacterAssetOverrides" /> 且存在有效覆盖路径时，
-        ///     替换 getter 结果；否则运行原始方法。
-        ///     替换 getter 结果；否则运行原始方法。
-        /// </summary>
         public static bool Prefix(CharacterModel __instance, ref string __result)
         {
             return CharacterAssetOverridePatchHelper.TryUseOverride(
@@ -145,27 +132,17 @@ namespace STS2RitsuLib.Scaffolding.Characters.Patches
     /// </summary>
     [HarmonyAfter(Const.BaseLibHarmonyId)]
     [HarmonyPriority(Priority.Last)]
-    public class CharacterVisualsPathPatch : IPatchMethod
+    internal class CharacterVisualsPathPatch : IPatchMethod
     {
-        /// <inheritdoc />
         public static string PatchId => "character_asset_override_visuals_path";
-
-        /// <inheritdoc />
         public static string Description => "Allow mod characters to override CharacterModel.VisualsPath";
-
-        /// <inheritdoc />
         public static bool IsCritical => false;
 
-        /// <inheritdoc />
         public static ModPatchTarget[] GetTargets()
         {
             return [new(typeof(CharacterModel), nameof(CharacterModel.VisualsPath), MethodType.Getter)];
         }
 
-        /// <summary>
-        ///     Supplies <see cref="IModCharacterAssetOverrides.CustomVisualsPath" /> when the resource exists.
-        ///     资源存在时提供 <see cref="IModCharacterAssetOverrides.CustomVisualsPath" />。
-        /// </summary>
         public static bool Prefix(CharacterModel __instance, ref string __result)
         {
             return CharacterAssetOverridePatchHelper.TryUseOverride(
@@ -182,27 +159,17 @@ namespace STS2RitsuLib.Scaffolding.Characters.Patches
     /// </summary>
     [HarmonyAfter(Const.BaseLibHarmonyId)]
     [HarmonyPriority(Priority.Last)]
-    public class CharacterEnergyCounterPathPatch : IPatchMethod
+    internal class CharacterEnergyCounterPathPatch : IPatchMethod
     {
-        /// <inheritdoc />
         public static string PatchId => "character_asset_override_energy_counter_path";
-
-        /// <inheritdoc />
         public static string Description => "Allow mod characters to override CharacterModel.EnergyCounterPath";
-
-        /// <inheritdoc />
         public static bool IsCritical => false;
 
-        /// <inheritdoc />
         public static ModPatchTarget[] GetTargets()
         {
             return [new(typeof(CharacterModel), nameof(CharacterModel.EnergyCounterPath), MethodType.Getter)];
         }
 
-        /// <summary>
-        ///     Supplies <see cref="IModCharacterAssetOverrides.CustomEnergyCounterPath" /> when the resource exists.
-        ///     资源存在时提供 <see cref="IModCharacterAssetOverrides.CustomEnergyCounterPath" />。
-        /// </summary>
         public static bool Prefix(CharacterModel __instance, ref string __result)
         {
             return CharacterAssetOverridePatchHelper.TryUseOverride(__instance, ref __result,
@@ -217,27 +184,17 @@ namespace STS2RitsuLib.Scaffolding.Characters.Patches
     /// </summary>
     [HarmonyAfter(Const.BaseLibHarmonyId)]
     [HarmonyPriority(Priority.Last)]
-    public class CharacterMerchantAnimPathPatch : IPatchMethod
+    internal class CharacterMerchantAnimPathPatch : IPatchMethod
     {
-        /// <inheritdoc />
         public static string PatchId => "character_asset_override_merchant_anim_path";
-
-        /// <inheritdoc />
         public static string Description => "Allow mod characters to override CharacterModel.MerchantAnimPath";
-
-        /// <inheritdoc />
         public static bool IsCritical => false;
 
-        /// <inheritdoc />
         public static ModPatchTarget[] GetTargets()
         {
             return [new(typeof(CharacterModel), nameof(CharacterModel.MerchantAnimPath), MethodType.Getter)];
         }
 
-        /// <summary>
-        ///     Supplies <see cref="IModCharacterAssetOverrides.CustomMerchantAnimPath" /> when the resource exists.
-        ///     资源存在时提供 <see cref="IModCharacterAssetOverrides.CustomMerchantAnimPath" />。
-        /// </summary>
         public static bool Prefix(CharacterModel __instance, ref string __result)
         {
             return CharacterAssetOverridePatchHelper.TryUseOverride(__instance, ref __result,
@@ -252,27 +209,17 @@ namespace STS2RitsuLib.Scaffolding.Characters.Patches
     /// </summary>
     [HarmonyAfter(Const.BaseLibHarmonyId)]
     [HarmonyPriority(Priority.Last)]
-    public class CharacterRestSiteAnimPathPatch : IPatchMethod
+    internal class CharacterRestSiteAnimPathPatch : IPatchMethod
     {
-        /// <inheritdoc />
         public static string PatchId => "character_asset_override_rest_site_anim_path";
-
-        /// <inheritdoc />
         public static string Description => "Allow mod characters to override CharacterModel.RestSiteAnimPath";
-
-        /// <inheritdoc />
         public static bool IsCritical => false;
 
-        /// <inheritdoc />
         public static ModPatchTarget[] GetTargets()
         {
             return [new(typeof(CharacterModel), nameof(CharacterModel.RestSiteAnimPath), MethodType.Getter)];
         }
 
-        /// <summary>
-        ///     Supplies <see cref="IModCharacterAssetOverrides.CustomRestSiteAnimPath" /> when the resource exists.
-        ///     资源存在时提供 <see cref="IModCharacterAssetOverrides.CustomRestSiteAnimPath" />。
-        /// </summary>
         public static bool Prefix(CharacterModel __instance, ref string __result)
         {
             return CharacterAssetOverridePatchHelper.TryUseOverride(__instance, ref __result,
@@ -287,27 +234,17 @@ namespace STS2RitsuLib.Scaffolding.Characters.Patches
     /// </summary>
     [HarmonyAfter(Const.BaseLibHarmonyId)]
     [HarmonyPriority(Priority.Last)]
-    public class CharacterIconTexturePathPatch : IPatchMethod
+    internal class CharacterIconTexturePathPatch : IPatchMethod
     {
-        /// <inheritdoc />
         public static string PatchId => "character_asset_override_icon_texture_path";
-
-        /// <inheritdoc />
         public static string Description => "Allow mod characters to override CharacterModel.IconTexturePath";
-
-        /// <inheritdoc />
         public static bool IsCritical => false;
 
-        /// <inheritdoc />
         public static ModPatchTarget[] GetTargets()
         {
             return [new(typeof(CharacterModel), nameof(CharacterModel.IconTexturePath), MethodType.Getter)];
         }
 
-        /// <summary>
-        ///     Supplies <see cref="IModCharacterAssetOverrides.CustomIconTexturePath" /> when the resource exists.
-        ///     资源存在时提供 <see cref="IModCharacterAssetOverrides.CustomIconTexturePath" />。
-        /// </summary>
         public static bool Prefix(CharacterModel __instance, ref string __result)
         {
             return CharacterAssetOverridePatchHelper.TryUseOverride(__instance, ref __result,
@@ -322,27 +259,17 @@ namespace STS2RitsuLib.Scaffolding.Characters.Patches
     /// </summary>
     [HarmonyAfter(Const.BaseLibHarmonyId)]
     [HarmonyPriority(Priority.Last)]
-    public class CharacterIconPathPatch : IPatchMethod
+    internal class CharacterIconPathPatch : IPatchMethod
     {
-        /// <inheritdoc />
         public static string PatchId => "character_asset_override_icon_path";
-
-        /// <inheritdoc />
         public static string Description => "Allow mod characters to override CharacterModel.IconPath";
-
-        /// <inheritdoc />
         public static bool IsCritical => false;
 
-        /// <inheritdoc />
         public static ModPatchTarget[] GetTargets()
         {
             return [new(typeof(CharacterModel), "IconPath", MethodType.Getter)];
         }
 
-        /// <summary>
-        ///     Supplies <see cref="IModCharacterAssetOverrides.CustomIconPath" /> when the resource exists.
-        ///     资源存在时提供 <see cref="IModCharacterAssetOverrides.CustomIconPath" />。
-        /// </summary>
         public static bool Prefix(CharacterModel __instance, ref string __result)
         {
             return CharacterAssetOverridePatchHelper.TryUseOverride(
@@ -359,27 +286,17 @@ namespace STS2RitsuLib.Scaffolding.Characters.Patches
     /// </summary>
     [HarmonyAfter(Const.BaseLibHarmonyId)]
     [HarmonyPriority(Priority.Last)]
-    public class CharacterSelectBgPathPatch : IPatchMethod
+    internal class CharacterSelectBgPathPatch : IPatchMethod
     {
-        /// <inheritdoc />
         public static string PatchId => "character_asset_override_select_bg_path";
-
-        /// <inheritdoc />
         public static string Description => "Allow mod characters to override CharacterModel.CharacterSelectBg";
-
-        /// <inheritdoc />
         public static bool IsCritical => false;
 
-        /// <inheritdoc />
         public static ModPatchTarget[] GetTargets()
         {
             return [new(typeof(CharacterModel), nameof(CharacterModel.CharacterSelectBg), MethodType.Getter)];
         }
 
-        /// <summary>
-        ///     Supplies <see cref="IModCharacterAssetOverrides.CustomCharacterSelectBgPath" /> when the resource exists.
-        ///     资源存在时提供 <see cref="IModCharacterAssetOverrides.CustomCharacterSelectBgPath" />。
-        /// </summary>
         public static bool Prefix(CharacterModel __instance, ref string __result)
         {
             return CharacterAssetOverridePatchHelper.TryUseOverride(__instance, ref __result,
@@ -394,27 +311,17 @@ namespace STS2RitsuLib.Scaffolding.Characters.Patches
     /// </summary>
     [HarmonyAfter(Const.BaseLibHarmonyId)]
     [HarmonyPriority(Priority.Last)]
-    public class CharacterSelectIconPathPatch : IPatchMethod
+    internal class CharacterSelectIconPathPatch : IPatchMethod
     {
-        /// <inheritdoc />
         public static string PatchId => "character_asset_override_select_icon_path";
-
-        /// <inheritdoc />
         public static string Description => "Allow character-select icon path override for vanilla and mod characters";
-
-        /// <inheritdoc />
         public static bool IsCritical => false;
 
-        /// <inheritdoc />
         public static ModPatchTarget[] GetTargets()
         {
             return [new(typeof(CharacterModel), "CharacterSelectIconPath", null, true, MethodType.Getter)];
         }
 
-        /// <summary>
-        ///     Supplies <see cref="IModCharacterAssetOverrides.CustomCharacterSelectIconPath" /> when the resource exists.
-        ///     资源存在时提供 <see cref="IModCharacterAssetOverrides.CustomCharacterSelectIconPath" />。
-        /// </summary>
         public static bool Prefix(CharacterModel __instance, ref string __result)
         {
             return CharacterAssetOverridePatchHelper.TryUseOverride(
@@ -431,28 +338,20 @@ namespace STS2RitsuLib.Scaffolding.Characters.Patches
     /// </summary>
     [HarmonyAfter(Const.BaseLibHarmonyId)]
     [HarmonyPriority(Priority.Last)]
-    public class CharacterSelectLockedIconPathPatch : IPatchMethod
+    internal class CharacterSelectLockedIconPathPatch : IPatchMethod
     {
-        /// <inheritdoc />
         public static string PatchId => "character_asset_override_select_locked_icon_path";
 
-        /// <inheritdoc />
         public static string Description =>
             "Allow character-select locked icon path override for vanilla and mod characters";
 
-        /// <inheritdoc />
         public static bool IsCritical => false;
 
-        /// <inheritdoc />
         public static ModPatchTarget[] GetTargets()
         {
             return [new(typeof(CharacterModel), "CharacterSelectLockedIconPath", null, true, MethodType.Getter)];
         }
 
-        /// <summary>
-        ///     Supplies <see cref="IModCharacterAssetOverrides.CustomCharacterSelectLockedIconPath" /> when valid.
-        ///     有效时提供 <see cref="IModCharacterAssetOverrides.CustomCharacterSelectLockedIconPath" />。
-        /// </summary>
         public static bool Prefix(CharacterModel __instance, ref string __result)
         {
             return CharacterAssetOverridePatchHelper.TryUseOverride(
@@ -469,27 +368,17 @@ namespace STS2RitsuLib.Scaffolding.Characters.Patches
     /// </summary>
     [HarmonyAfter(Const.BaseLibHarmonyId)]
     [HarmonyPriority(Priority.Last)]
-    public class CharacterMapMarkerPathPatch : IPatchMethod
+    internal class CharacterMapMarkerPathPatch : IPatchMethod
     {
-        /// <inheritdoc />
         public static string PatchId => "character_asset_override_map_marker_path";
-
-        /// <inheritdoc />
         public static string Description => "Allow character map-marker path override for vanilla and mod characters";
-
-        /// <inheritdoc />
         public static bool IsCritical => false;
 
-        /// <inheritdoc />
         public static ModPatchTarget[] GetTargets()
         {
             return [new(typeof(CharacterModel), "MapMarkerPath", null, true, MethodType.Getter)];
         }
 
-        /// <summary>
-        ///     Supplies <see cref="IModCharacterAssetOverrides.CustomMapMarkerPath" /> when valid.
-        ///     有效时提供 <see cref="IModCharacterAssetOverrides.CustomMapMarkerPath" />。
-        /// </summary>
         public static bool Prefix(CharacterModel __instance, ref string __result)
         {
             return CharacterAssetOverridePatchHelper.TryUseOverride(
@@ -506,19 +395,15 @@ namespace STS2RitsuLib.Scaffolding.Characters.Patches
     /// </summary>
     [HarmonyAfter(Const.BaseLibHarmonyId)]
     [HarmonyPriority(Priority.Last)]
-    public class CharacterSelectTransitionPathPatch : IPatchMethod
+    internal class CharacterSelectTransitionPathPatch : IPatchMethod
     {
-        /// <inheritdoc />
         public static string PatchId => "character_asset_override_transition_path";
 
-        /// <inheritdoc />
         public static string Description =>
             "Allow mod characters to override CharacterModel.CharacterSelectTransitionPath";
 
-        /// <inheritdoc />
         public static bool IsCritical => false;
 
-        /// <inheritdoc />
         public static ModPatchTarget[] GetTargets()
         {
             return
@@ -527,10 +412,6 @@ namespace STS2RitsuLib.Scaffolding.Characters.Patches
             ];
         }
 
-        /// <summary>
-        ///     Supplies <see cref="IModCharacterAssetOverrides.CustomCharacterSelectTransitionPath" /> when valid.
-        ///     有效时提供 <see cref="IModCharacterAssetOverrides.CustomCharacterSelectTransitionPath" />。
-        /// </summary>
         public static bool Prefix(CharacterModel __instance, ref string __result)
         {
             return CharacterAssetOverridePatchHelper.TryUseOverride(
@@ -547,27 +428,17 @@ namespace STS2RitsuLib.Scaffolding.Characters.Patches
     /// </summary>
     [HarmonyAfter(Const.BaseLibHarmonyId)]
     [HarmonyPriority(Priority.Last)]
-    public class CharacterTrailPathPatch : IPatchMethod
+    internal class CharacterTrailPathPatch : IPatchMethod
     {
-        /// <inheritdoc />
         public static string PatchId => "character_asset_override_trail_path";
-
-        /// <inheritdoc />
         public static string Description => "Allow mod characters to override CharacterModel.TrailPath";
-
-        /// <inheritdoc />
         public static bool IsCritical => false;
 
-        /// <inheritdoc />
         public static ModPatchTarget[] GetTargets()
         {
             return [new(typeof(CharacterModel), nameof(CharacterModel.TrailPath), MethodType.Getter)];
         }
 
-        /// <summary>
-        ///     Supplies <see cref="IModCharacterAssetOverrides.CustomTrailPath" /> when the resource exists.
-        ///     资源存在时提供 <see cref="IModCharacterAssetOverrides.CustomTrailPath" />。
-        /// </summary>
         public static bool Prefix(CharacterModel __instance, ref string __result)
         {
             return CharacterAssetOverridePatchHelper.TryUseOverride(
@@ -584,27 +455,17 @@ namespace STS2RitsuLib.Scaffolding.Characters.Patches
     /// </summary>
     [HarmonyAfter(Const.BaseLibHarmonyId)]
     [HarmonyPriority(Priority.Last)]
-    public class CharacterAttackSfxPatch : IPatchMethod
+    internal class CharacterAttackSfxPatch : IPatchMethod
     {
-        /// <inheritdoc />
         public static string PatchId => "character_asset_override_attack_sfx";
-
-        /// <inheritdoc />
         public static string Description => "Allow mod characters to override CharacterModel.AttackSfx";
-
-        /// <inheritdoc />
         public static bool IsCritical => false;
 
-        /// <inheritdoc />
         public static ModPatchTarget[] GetTargets()
         {
             return [new(typeof(CharacterModel), nameof(CharacterModel.AttackSfx), MethodType.Getter)];
         }
 
-        /// <summary>
-        ///     Supplies <see cref="IModCharacterAssetOverrides.CustomAttackSfx" /> when non-empty.
-        ///     非空时提供 <see cref="IModCharacterAssetOverrides.CustomAttackSfx" />。
-        /// </summary>
         public static bool Prefix(CharacterModel __instance, ref string __result)
         {
             return CharacterAssetOverridePatchHelper.TryUseOverride(
@@ -622,27 +483,17 @@ namespace STS2RitsuLib.Scaffolding.Characters.Patches
     /// </summary>
     [HarmonyAfter(Const.BaseLibHarmonyId)]
     [HarmonyPriority(Priority.Last)]
-    public class CharacterCastSfxPatch : IPatchMethod
+    internal class CharacterCastSfxPatch : IPatchMethod
     {
-        /// <inheritdoc />
         public static string PatchId => "character_asset_override_cast_sfx";
-
-        /// <inheritdoc />
         public static string Description => "Allow mod characters to override CharacterModel.CastSfx";
-
-        /// <inheritdoc />
         public static bool IsCritical => false;
 
-        /// <inheritdoc />
         public static ModPatchTarget[] GetTargets()
         {
             return [new(typeof(CharacterModel), nameof(CharacterModel.CastSfx), MethodType.Getter)];
         }
 
-        /// <summary>
-        ///     Supplies <see cref="IModCharacterAssetOverrides.CustomCastSfx" /> when non-empty.
-        ///     非空时提供 <see cref="IModCharacterAssetOverrides.CustomCastSfx" />。
-        /// </summary>
         public static bool Prefix(CharacterModel __instance, ref string __result)
         {
             return CharacterAssetOverridePatchHelper.TryUseOverride(
@@ -660,27 +511,17 @@ namespace STS2RitsuLib.Scaffolding.Characters.Patches
     /// </summary>
     [HarmonyAfter(Const.BaseLibHarmonyId)]
     [HarmonyPriority(Priority.Last)]
-    public class CharacterDeathSfxPatch : IPatchMethod
+    internal class CharacterDeathSfxPatch : IPatchMethod
     {
-        /// <inheritdoc />
         public static string PatchId => "character_asset_override_death_sfx";
-
-        /// <inheritdoc />
         public static string Description => "Allow mod characters to override CharacterModel.DeathSfx";
-
-        /// <inheritdoc />
         public static bool IsCritical => false;
 
-        /// <inheritdoc />
         public static ModPatchTarget[] GetTargets()
         {
             return [new(typeof(CharacterModel), nameof(CharacterModel.DeathSfx), MethodType.Getter)];
         }
 
-        /// <summary>
-        ///     Supplies <see cref="IModCharacterAssetOverrides.CustomDeathSfx" /> when non-empty.
-        ///     非空时提供 <see cref="IModCharacterAssetOverrides.CustomDeathSfx" />。
-        /// </summary>
         public static bool Prefix(CharacterModel __instance, ref string __result)
         {
             return CharacterAssetOverridePatchHelper.TryUseOverride(
@@ -698,27 +539,17 @@ namespace STS2RitsuLib.Scaffolding.Characters.Patches
     /// </summary>
     [HarmonyAfter(Const.BaseLibHarmonyId)]
     [HarmonyPriority(Priority.Last)]
-    public class CharacterArmPointingTexturePathPatch : IPatchMethod
+    internal class CharacterArmPointingTexturePathPatch : IPatchMethod
     {
-        /// <inheritdoc />
         public static string PatchId => "character_asset_override_arm_pointing_texture_path";
-
-        /// <inheritdoc />
         public static string Description => "Allow mod characters to override CharacterModel.ArmPointingTexturePath";
-
-        /// <inheritdoc />
         public static bool IsCritical => false;
 
-        /// <inheritdoc />
         public static ModPatchTarget[] GetTargets()
         {
             return [new(typeof(CharacterModel), nameof(CharacterModel.ArmPointingTexturePath), MethodType.Getter)];
         }
 
-        /// <summary>
-        ///     Supplies <see cref="IModCharacterAssetOverrides.CustomArmPointingTexturePath" /> when the resource exists.
-        ///     资源存在时提供 <see cref="IModCharacterAssetOverrides.CustomArmPointingTexturePath" />。
-        /// </summary>
         public static bool Prefix(CharacterModel __instance, ref string __result)
         {
             return CharacterAssetOverridePatchHelper.TryUseOverride(__instance, ref __result,
@@ -733,27 +564,17 @@ namespace STS2RitsuLib.Scaffolding.Characters.Patches
     /// </summary>
     [HarmonyAfter(Const.BaseLibHarmonyId)]
     [HarmonyPriority(Priority.Last)]
-    public class CharacterArmRockTexturePathPatch : IPatchMethod
+    internal class CharacterArmRockTexturePathPatch : IPatchMethod
     {
-        /// <inheritdoc />
         public static string PatchId => "character_asset_override_arm_rock_texture_path";
-
-        /// <inheritdoc />
         public static string Description => "Allow mod characters to override CharacterModel.ArmRockTexturePath";
-
-        /// <inheritdoc />
         public static bool IsCritical => false;
 
-        /// <inheritdoc />
         public static ModPatchTarget[] GetTargets()
         {
             return [new(typeof(CharacterModel), nameof(CharacterModel.ArmRockTexturePath), MethodType.Getter)];
         }
 
-        /// <summary>
-        ///     Supplies <see cref="IModCharacterAssetOverrides.CustomArmRockTexturePath" /> when the resource exists.
-        ///     资源存在时提供 <see cref="IModCharacterAssetOverrides.CustomArmRockTexturePath" />。
-        /// </summary>
         public static bool Prefix(CharacterModel __instance, ref string __result)
         {
             return CharacterAssetOverridePatchHelper.TryUseOverride(__instance, ref __result,
@@ -768,27 +589,17 @@ namespace STS2RitsuLib.Scaffolding.Characters.Patches
     /// </summary>
     [HarmonyAfter(Const.BaseLibHarmonyId)]
     [HarmonyPriority(Priority.Last)]
-    public class CharacterArmPaperTexturePathPatch : IPatchMethod
+    internal class CharacterArmPaperTexturePathPatch : IPatchMethod
     {
-        /// <inheritdoc />
         public static string PatchId => "character_asset_override_arm_paper_texture_path";
-
-        /// <inheritdoc />
         public static string Description => "Allow mod characters to override CharacterModel.ArmPaperTexturePath";
-
-        /// <inheritdoc />
         public static bool IsCritical => false;
 
-        /// <inheritdoc />
         public static ModPatchTarget[] GetTargets()
         {
             return [new(typeof(CharacterModel), nameof(CharacterModel.ArmPaperTexturePath), MethodType.Getter)];
         }
 
-        /// <summary>
-        ///     Supplies <see cref="IModCharacterAssetOverrides.CustomArmPaperTexturePath" /> when the resource exists.
-        ///     资源存在时提供 <see cref="IModCharacterAssetOverrides.CustomArmPaperTexturePath" />。
-        /// </summary>
         public static bool Prefix(CharacterModel __instance, ref string __result)
         {
             return CharacterAssetOverridePatchHelper.TryUseOverride(__instance, ref __result,
@@ -803,27 +614,17 @@ namespace STS2RitsuLib.Scaffolding.Characters.Patches
     /// </summary>
     [HarmonyAfter(Const.BaseLibHarmonyId)]
     [HarmonyPriority(Priority.Last)]
-    public class CharacterArmScissorsTexturePathPatch : IPatchMethod
+    internal class CharacterArmScissorsTexturePathPatch : IPatchMethod
     {
-        /// <inheritdoc />
         public static string PatchId => "character_asset_override_arm_scissors_texture_path";
-
-        /// <inheritdoc />
         public static string Description => "Allow mod characters to override CharacterModel.ArmScissorsTexturePath";
-
-        /// <inheritdoc />
         public static bool IsCritical => false;
 
-        /// <inheritdoc />
         public static ModPatchTarget[] GetTargets()
         {
             return [new(typeof(CharacterModel), nameof(CharacterModel.ArmScissorsTexturePath), MethodType.Getter)];
         }
 
-        /// <summary>
-        ///     Supplies <see cref="IModCharacterAssetOverrides.CustomArmScissorsTexturePath" /> when the resource exists.
-        ///     资源存在时提供 <see cref="IModCharacterAssetOverrides.CustomArmScissorsTexturePath" />。
-        /// </summary>
         public static bool Prefix(CharacterModel __instance, ref string __result)
         {
             return CharacterAssetOverridePatchHelper.TryUseOverride(__instance, ref __result,

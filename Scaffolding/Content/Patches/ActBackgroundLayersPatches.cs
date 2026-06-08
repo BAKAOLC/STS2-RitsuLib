@@ -11,29 +11,17 @@ namespace STS2RitsuLib.Scaffolding.Content.Patches
     ///     Patches <see cref="ActModel.GenerateBackgroundAssets" /> so mod acts can use a custom <c>res://</c> layers folder.
     ///     补丁 <see cref="ActModel.GenerateBackgroundAssets" />，使 mod 章节可以使用自定义 <c>res://</c> layers 文件夹。
     /// </summary>
-    public class ActGenerateBackgroundAssetsPatch : IPatchMethod
+    internal class ActGenerateBackgroundAssetsPatch : IPatchMethod
     {
-        /// <inheritdoc cref="IPatchMethod.PatchId" />
         public static string PatchId => "content_asset_override_act_generate_background_assets";
-
-        /// <inheritdoc cref="IPatchMethod.Description" />
         public static string Description => "Allow mod acts to build BackgroundAssets from a custom layers directory";
-
-        /// <inheritdoc cref="IPatchMethod.IsCritical" />
         public static bool IsCritical => false;
 
-        /// <inheritdoc cref="IPatchMethod.GetTargets" />
         public static ModPatchTarget[] GetTargets()
         {
             return [new(typeof(ActModel), nameof(ActModel.GenerateBackgroundAssets))];
         }
 
-        /// <summary>
-        ///     When <see cref="IModActAssetOverrides.CustomBackgroundLayersDirectoryPath" /> is set and valid, builds layers
-        ///     from that directory; main scene uses <see cref="ActModel.BackgroundScenePath" /> (including existing path patches).
-        ///     当 <see cref="IModActAssetOverrides.CustomBackgroundLayersDirectoryPath" /> 已设置且有效时，从该目录构建图层；
-        ///     主场景使用 <see cref="ActModel.BackgroundScenePath" />（包括既有路径补丁）。
-        /// </summary>
         public static bool Prefix(ActModel __instance, Rng rng, ref BackgroundAssets __result)
         {
             if (__instance is not IModActAssetOverrides overrides)
@@ -77,27 +65,17 @@ namespace STS2RitsuLib.Scaffolding.Content.Patches
     ///     Appends all <c>.tscn</c> paths under the custom layers directory to <see cref="ActModel.AssetPaths" /> for preload.
     ///     将自定义 layers 目录下的所有 <c>.tscn</c> 路径追加到 <see cref="ActModel.AssetPaths" />，用于预加载。
     /// </summary>
-    public class ActAssetPathsBackgroundLayersPatch : IPatchMethod
+    internal class ActAssetPathsBackgroundLayersPatch : IPatchMethod
     {
-        /// <inheritdoc cref="IPatchMethod.PatchId" />
         public static string PatchId => "content_asset_override_act_asset_paths_background_layers";
-
-        /// <inheritdoc cref="IPatchMethod.Description" />
         public static string Description => "Include custom act layer scenes in ActModel.AssetPaths";
-
-        /// <inheritdoc cref="IPatchMethod.IsCritical" />
         public static bool IsCritical => false;
 
-        /// <inheritdoc cref="IPatchMethod.GetTargets" />
         public static ModPatchTarget[] GetTargets()
         {
             return [new(typeof(ActModel), "AssetPaths", MethodType.Getter)];
         }
 
-        /// <summary>
-        ///     Concatenates every layer scene path under the configured directory.
-        ///     拼接已配置目录下的每个图层场景路径。
-        /// </summary>
         public static void Postfix(ActModel __instance, ref IEnumerable<string> __result)
         {
             if (__instance is not IModActAssetOverrides overrides)

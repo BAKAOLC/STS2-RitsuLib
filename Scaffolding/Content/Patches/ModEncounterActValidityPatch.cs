@@ -8,19 +8,15 @@ namespace STS2RitsuLib.Scaffolding.Content.Patches
     ///     Repairs saved boss selections that were generated before
     ///     <see cref="IModEncounterActValidity.IsValidForAct" /> rules changed.
     /// </summary>
-    public class ModEncounterActValidityPatch : IPatchMethod
+    internal class ModEncounterActValidityPatch : IPatchMethod
     {
-        /// <inheritdoc />
         public static string PatchId => "mod_encounter_act_validity";
 
-        /// <inheritdoc />
         public static string Description =>
             "Validate saved boss encounters against IModEncounterActValidity after run load";
 
-        /// <inheritdoc />
         public static bool IsCritical => false;
 
-        /// <inheritdoc />
         public static ModPatchTarget[] GetTargets()
         {
             return
@@ -29,9 +25,6 @@ namespace STS2RitsuLib.Scaffolding.Content.Patches
             ];
         }
 
-        /// <summary>
-        ///     Re-rolls saved boss choices that are no longer valid for this act.
-        /// </summary>
         public static void Postfix(ActModel __instance, Rng rng)
         {
             ArgumentNullException.ThrowIfNull(__instance);

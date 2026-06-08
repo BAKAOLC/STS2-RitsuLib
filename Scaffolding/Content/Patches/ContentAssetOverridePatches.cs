@@ -1,9 +1,6 @@
-using System.Reflection;
 using Godot;
 using HarmonyLib;
 using MegaCrit.Sts2.Core.Assets;
-using MegaCrit.Sts2.Core.Entities.Cards;
-using MegaCrit.Sts2.Core.Entities.UI;
 using MegaCrit.Sts2.Core.Events;
 using MegaCrit.Sts2.Core.Helpers;
 using MegaCrit.Sts2.Core.Models;
@@ -11,8 +8,6 @@ using MegaCrit.Sts2.Core.Nodes.Cards;
 using MegaCrit.Sts2.Core.Runs;
 using MegaCrit.Sts2.Core.Timeline;
 using STS2RitsuLib.Patching.Models;
-using STS2RitsuLib.Scaffolding.Characters;
-using STS2RitsuLib.Timeline.Scaffolding;
 using STS2RitsuLib.Utils;
 
 namespace STS2RitsuLib.Scaffolding.Content.Patches
@@ -773,981 +768,16 @@ namespace STS2RitsuLib.Scaffolding.Content.Patches
     ///     Patches <see cref="EpochModel" /> portrait path getters for <see cref="IModEpochAssetOverrides" />.
     ///     为 <see cref="IModEpochAssetOverrides" /> 修补<see cref="EpochModel" /> portrait 路径 getter。
     /// </summary>
-    public class EpochPortraitPathPatch : IPatchMethod
-    {
-        /// <inheritdoc cref="IPatchMethod.PatchId" />
-        public static string PatchId => "content_asset_override_epoch_portrait_path";
-
-        /// <inheritdoc cref="IPatchMethod.Description" />
-        public static string Description => "Allow mod epochs to override packed and large portrait paths";
-
-        /// <inheritdoc cref="IPatchMethod.IsCritical" />
-        public static bool IsCritical => false;
-
-        /// <inheritdoc cref="IPatchMethod.GetTargets" />
-        public static ModPatchTarget[] GetTargets()
-        {
-            return
-            [
-                new(typeof(EpochModel), "PackedPortraitPath", MethodType.Getter),
-#if STS2_AT_LEAST_0_106_0
-                new(typeof(EpochModel), "ResolvedPortraitPath", MethodType.Getter),
-#else
-                new(typeof(EpochModel), "BigPortraitPath", MethodType.Getter),
-#endif
-            ];
-        }
-
-        /// <summary>
-        ///     Dispatches string overrides for packed atlas vs large portrait paths.
-        ///     按 packed atlas 与大型肖像路径分派字符串覆盖。
-        /// </summary>
-        public static bool Prefix(MethodBase __originalMethod, EpochModel __instance, ref string __result)
-        {
-            return __originalMethod.Name switch
-            {
-                "get_PackedPortraitPath" => ContentAssetOverridePatchHelper
-                    .TryUseStringOverride<IModEpochAssetOverrides>(
-                        __instance,
-                        ref __result,
-                        o => o.CustomPackedPortraitPath,
-                        nameof(IModEpochAssetOverrides.CustomPackedPortraitPath)),
-                "get_BigPortraitPath" or "get_ResolvedPortraitPath" => ContentAssetOverridePatchHelper
-                    .TryUseStringOverride<IModEpochAssetOverrides>(
-                        __instance,
-                        ref __result,
-                        o => o.CustomBigPortraitPath,
-                        nameof(IModEpochAssetOverrides.CustomBigPortraitPath)),
-                _ => true,
-            };
-        }
-    }
-
-#if STS2_AT_LEAST_0_106_0
-    /// <summary>
-    ///     Allows mod epoch art overrides to control the placeholder label.
-    /// </summary>
-    public class EpochArtPlaceholderPatch : IPatchMethod
-    {
-        /// <inheritdoc cref="IPatchMethod.PatchId" />
-        public static string PatchId => "content_asset_override_epoch_art_placeholder";
-
-        /// <inheritdoc cref="IPatchMethod.Description" />
-        public static string Description => "Allow mod epochs to suppress the timeline placeholder label";
-
-        /// <inheritdoc cref="IPatchMethod.IsCritical" />
-        public static bool IsCritical => false;
-
-        /// <inheritdoc cref="IPatchMethod.GetTargets" />
-        public static ModPatchTarget[] GetTargets()
-        {
-            return [new(typeof(EpochModel), "IsArtPlaceholder", MethodType.Getter)];
-        }
-
-        /// <summary>
-        ///     Suppresses the vanilla placeholder label for mod epochs with custom artwork.
-        /// </summary>
-        public static bool Prefix(EpochModel __instance, ref bool __result)
-        {
-            if (__instance is IModEpochAssetOverrides overrides &&
-                !string.IsNullOrWhiteSpace(overrides.CustomBigPortraitPath) &&
-                AssetPathDiagnostics.Exists(
-                    overrides.CustomBigPortraitPath,
-                    __instance,
-                    nameof(IModEpochAssetOverrides.CustomBigPortraitPath)))
-            {
-                __result = false;
-                return false;
-            }
-
-            if (!IsCharacterUnlockEpochTemplate(__instance.GetType()))
-                return true;
-
-            __result = false;
-            return false;
-        }
-
-        private static bool IsCharacterUnlockEpochTemplate(Type type)
-        {
-            for (var current = type; current != null; current = current.BaseType)
-                if (current.IsGenericType &&
-                    current.GetGenericTypeDefinition() ==
-                    typeof(CharacterUnlockEpochTemplate<>))
-                    return true;
-
-            return false;
-        }
-    }
-#endif
-
-    /// <summary>
-    ///     Patches <see cref="CardModel" /> portrait path getters for <see cref="IModCardAssetOverrides" />.
-    ///     为 <see cref="IModCardAssetOverrides" /> 修补<see cref="CardModel" /> portrait 路径 getter。
-    /// </summary>
-    public class CardPortraitPathPatch : IPatchMethod
-    {
-        /// <inheritdoc cref="IPatchMethod.PatchId" />
-        public static string PatchId => "content_asset_override_card_portrait_path";
-
-        /// <inheritdoc cref="IPatchMethod.Description" />
-        public static string Description => "Allow mod cards to override CardModel portrait paths";
-
-        /// <inheritdoc cref="IPatchMethod.IsCritical" />
-        public static bool IsCritical => false;
-
-        /// <inheritdoc cref="IPatchMethod.GetTargets" />
-        public static ModPatchTarget[] GetTargets()
-        {
-            return
-            [
-                new(typeof(CardModel), "PortraitPath", MethodType.Getter),
-                new(typeof(CardModel), "BetaPortraitPath", MethodType.Getter),
-            ];
-        }
-
-        /// <summary>
-        ///     Dispatches to portrait or beta portrait override based on the patched getter.
-        ///     根据被修补的 getter 分派到肖像或 beta 肖像覆盖。
-        /// </summary>
-        public static bool Prefix(MethodBase __originalMethod, CardModel __instance, ref string __result)
-        {
-            return __originalMethod.Name switch
-            {
-                "get_PortraitPath" => TryCardPortraitPath(__instance, ref __result),
-                "get_BetaPortraitPath" => TryCardBetaPortraitPath(__instance, ref __result),
-                _ => true,
-            };
-        }
-
-        private static bool TryCardPortraitPath(CardModel instance, ref string result)
-        {
-            if (!ModCharacterOwnedVisualOverrideHelper.TryCardPortraitPath(instance, ref result))
-                return false;
-
-            return ContentAssetOverridePatchHelper.TryUseStringOverride<IModCardAssetOverrides>(
-                instance, ref result, o => o.CustomPortraitPath, nameof(IModCardAssetOverrides.CustomPortraitPath));
-        }
-
-        private static bool TryCardBetaPortraitPath(CardModel instance, ref string result)
-        {
-            if (!ModCharacterOwnedVisualOverrideHelper.TryCardBetaPortraitPath(instance, ref result))
-                return false;
-
-            return ContentAssetOverridePatchHelper.TryUseStringOverride<IModCardAssetOverrides>(
-                instance, ref result, o => o.CustomBetaPortraitPath,
-                nameof(IModCardAssetOverrides.CustomBetaPortraitPath));
-        }
-    }
-
-    /// <summary>
-    ///     Patches portrait availability flags so custom paths from <see cref="IModCardAssetOverrides" /> are honored.
-    ///     修补肖像可用性标志，使来自 <see cref="IModCardAssetOverrides" /> 的自定义路径生效。
-    /// </summary>
-    public class CardPortraitAvailabilityPatch : IPatchMethod
-    {
-        /// <inheritdoc cref="IPatchMethod.PatchId" />
-        public static string PatchId => "content_asset_override_card_portrait_availability";
-
-        /// <inheritdoc cref="IPatchMethod.Description" />
-        public static string Description => "Allow mod cards to override CardModel portrait availability checks";
-
-        /// <inheritdoc cref="IPatchMethod.IsCritical" />
-        public static bool IsCritical => false;
-
-        /// <inheritdoc cref="IPatchMethod.GetTargets" />
-        public static ModPatchTarget[] GetTargets()
-        {
-            return
-            [
-                new(typeof(CardModel), "HasPortrait", MethodType.Getter),
-                new(typeof(CardModel), "HasBetaPortrait", MethodType.Getter),
-            ];
-        }
-
-        /// <summary>
-        ///     Sets boolean availability from whether the corresponding custom portrait path exists on disk.
-        ///     根据对应自定义肖像路径是否存在于磁盘上来设置布尔可用性。
-        /// </summary>
-        public static bool Prefix(MethodBase __originalMethod, CardModel __instance, ref bool __result)
-        {
-            if (__instance is not IModCardAssetOverrides overrides)
-                return true;
-
-            return __originalMethod.Name switch
-            {
-                "get_HasPortrait" => TryHasPortrait(__instance, overrides, ref __result),
-                "get_HasBetaPortrait" => TryHasBetaPortrait(__instance, overrides, ref __result),
-                _ => true,
-            };
-        }
-
-        private static bool TryHasPortrait(CardModel instance, IModCardAssetOverrides overrides, ref bool result)
-        {
-            if (!ModCharacterOwnedVisualOverrideHelper.TryCardPortraitExists(instance, ref result))
-                return false;
-
-            return ContentAssetOverridePatchHelper.TryUseExistenceOverride(
-                instance, overrides.CustomPortraitPath, nameof(IModCardAssetOverrides.CustomPortraitPath), ref result);
-        }
-
-        private static bool TryHasBetaPortrait(CardModel instance, IModCardAssetOverrides overrides, ref bool result)
-        {
-            if (!ModCharacterOwnedVisualOverrideHelper.TryCardBetaPortraitExists(instance, ref result))
-                return false;
-
-            return ContentAssetOverridePatchHelper.TryUseExistenceOverride(
-                instance, overrides.CustomBetaPortraitPath, nameof(IModCardAssetOverrides.CustomBetaPortraitPath),
-                ref result);
-        }
-    }
-
-    /// <summary>
-    ///     Patches card frame, portrait border, and energy icon texture getters for mod path overrides.
-    ///     为 mod 路径覆盖修补卡牌框、肖像边框和能量图标纹理 getter。
-    /// </summary>
-    public class CardTextureOverridePatch : IPatchMethod
-    {
-        /// <inheritdoc cref="IPatchMethod.PatchId" />
-        public static string PatchId => "content_asset_override_card_texture";
-
-        /// <inheritdoc cref="IPatchMethod.Description" />
-        public static string Description =>
-            "Allow mod cards to override card frame, portrait border, and energy icon textures";
-
-        /// <inheritdoc cref="IPatchMethod.IsCritical" />
-        public static bool IsCritical => false;
-
-        /// <inheritdoc cref="IPatchMethod.GetTargets" />
-        public static ModPatchTarget[] GetTargets()
-        {
-            return
-            [
-                new(typeof(CardModel), "Frame", MethodType.Getter),
-                new(typeof(CardModel), "PortraitBorder", MethodType.Getter),
-                new(typeof(CardModel), "EnergyIcon", MethodType.Getter),
-            ];
-        }
-
-        /// <summary>
-        ///     Loads textures from the matching <see cref="IModCardAssetOverrides" /> path when present.
-        ///     存在时从匹配的 <see cref="IModCardAssetOverrides" /> 路径加载纹理。
-        /// </summary>
-        public static bool Prefix(MethodBase __originalMethod, CardModel __instance, ref Texture2D __result)
-        {
-            return __originalMethod.Name switch
-            {
-                "get_Frame" => TryCardFrameTexture(__instance, ref __result),
-                "get_PortraitBorder" => TryCardPortraitBorderTexture(__instance, ref __result),
-                "get_EnergyIcon" => TryCardEnergyIconTexture(__instance, ref __result),
-                _ => true,
-            };
-        }
-
-        private static bool TryCardFrameTexture(CardModel instance, ref Texture2D result)
-        {
-            if (!ModCharacterOwnedVisualOverrideHelper.TryCardFrameTexture(instance, ref result))
-                return false;
-
-            return ContentAssetOverridePatchHelper.TryUseTextureOverride<IModCardAssetOverrides>(
-                instance, ref result, o => o.CustomFramePath, nameof(IModCardAssetOverrides.CustomFramePath));
-        }
-
-        private static bool TryCardPortraitBorderTexture(CardModel instance, ref Texture2D result)
-        {
-            if (!ModCharacterOwnedVisualOverrideHelper.TryCardPortraitBorderTexture(instance, ref result))
-                return false;
-
-            return ContentAssetOverridePatchHelper.TryUseTextureOverride<IModCardAssetOverrides>(
-                instance, ref result, o => o.CustomPortraitBorderPath,
-                nameof(IModCardAssetOverrides.CustomPortraitBorderPath));
-        }
-
-        private static bool TryCardEnergyIconTexture(CardModel instance, ref Texture2D result)
-        {
-            if (!ModCharacterOwnedVisualOverrideHelper.TryCardEnergyIconTexture(instance, ref result))
-                return false;
-
-            return ContentAssetOverridePatchHelper.TryUseTextureOverride<IModCardAssetOverrides>(
-                instance, ref result, o => o.CustomEnergyIconPath, nameof(IModCardAssetOverrides.CustomEnergyIconPath));
-        }
-    }
-
-    /// <summary>
-    ///     Patches <see cref="CardModel" /> frame material resolution for custom <c>.tres</c> paths.
-    ///     修补 <see cref="CardModel" /> 边框材质解析，以支持自定义 <c>.tres</c> 路径。
-    /// </summary>
-    public class CardFrameMaterialPatch : IPatchMethod
-    {
-        /// <inheritdoc cref="IPatchMethod.PatchId" />
-        public static string PatchId => "content_asset_override_card_frame_material";
-
-        /// <inheritdoc cref="IPatchMethod.Description" />
-        public static string Description => "Allow mod cards to override card frame materials";
-
-        /// <inheritdoc cref="IPatchMethod.IsCritical" />
-        public static bool IsCritical => false;
-
-        /// <inheritdoc cref="IPatchMethod.GetTargets" />
-        public static ModPatchTarget[] GetTargets()
-        {
-            return
-            [
-                new(typeof(CardModel), "FrameMaterial", MethodType.Getter),
-            ];
-        }
-
-        /// <summary>
-        ///     Loads <see cref="Material" /> from <see cref="IModCardAssetOverrides.CustomFrameMaterialPath" /> when valid.
-        ///     有效时从 <see cref="IModCardAssetOverrides.CustomFrameMaterialPath" /> 加载<see cref="Material" />。
-        /// </summary>
-        public static bool Prefix(CardModel __instance, ref Material __result)
-        {
-            if (!ContentAssetOverridePatchHelper.TryUseDirectMaterialOverride<IModCardFrameMaterialOverride>(
-                    __instance, ref __result, static o => o.CustomFrameMaterial))
-                return false;
-
-            if (ExternalCardMaterialOverrideRegistry.TryGetFrameMaterial(__instance, out var externalFrameMaterial))
-            {
-                __result = externalFrameMaterial;
-                return false;
-            }
-
-            if (!ModCharacterOwnedVisualOverrideHelper.TryCardFrameMaterial(__instance, ref __result))
-                return false;
-
-            return ContentAssetOverridePatchHelper.TryUseMaterialOverride<IModCardAssetOverrides>(
-                __instance,
-                ref __result,
-                o => o.CustomFrameMaterialPath,
-                nameof(IModCardAssetOverrides.CustomFrameMaterialPath));
-        }
-    }
-
-    /// <summary>
-    ///     Patches pool-level frame material so <see cref="IModCardPoolFrameMaterial.PoolFrameMaterial" /> can replace path
-    ///     lookup.
-    ///     修补池级边框材质，使 <see cref="IModCardPoolFrameMaterial.PoolFrameMaterial" /> 可以替换路径
-    ///     查找。
-    /// </summary>
-    public class CardPoolFrameMaterialPatch : IPatchMethod
-    {
-        /// <inheritdoc cref="IPatchMethod.PatchId" />
-        public static string PatchId => "content_asset_override_card_pool_frame_material";
-
-        /// <inheritdoc cref="IPatchMethod.Description" />
-        public static string Description => "Allow mod card pools to directly supply a Material for card frames";
-
-        /// <inheritdoc cref="IPatchMethod.IsCritical" />
-        public static bool IsCritical => false;
-
-        /// <inheritdoc cref="IPatchMethod.GetTargets" />
-        public static ModPatchTarget[] GetTargets()
-        {
-            return
-            [
-                new(typeof(CardPoolModel), "FrameMaterial", MethodType.Getter),
-            ];
-        }
-
-        /// <summary>
-        ///     Returns the pool’s inline material when the pool implements <see cref="IModCardPoolFrameMaterial" />.
-        ///     当池实现 <see cref="IModCardPoolFrameMaterial" /> 时，返回池的内联材质。
-        /// </summary>
-        public static bool Prefix(CardPoolModel __instance, ref Material __result)
-        {
-            if (__instance is not IModCardPoolFrameMaterial pool)
-            {
-                if (!ExternalCardMaterialOverrideRegistry.TryGetPoolFrameMaterial(__instance, out var externalMaterial))
-                    return true;
-
-                __result = externalMaterial;
-                return false;
-            }
-
-            var material = pool.PoolFrameMaterial;
-            if (material != null)
-            {
-                __result = material;
-                return false;
-            }
-
-            if (!ExternalCardMaterialOverrideRegistry.TryGetPoolFrameMaterial(__instance,
-                    out var externalFrameMaterial))
-                return true;
-
-            __result = externalFrameMaterial;
-            return false;
-        }
-    }
-
-    /// <summary>
-    ///     Applies custom portrait <see cref="Material" /> overrides after <see cref="NCard" /> reloads vanilla visuals.
-    ///     在 <see cref="NCard" /> 重载原版视觉后应用自定义卡图 <see cref="Material" /> 覆盖。
-    /// </summary>
-    public class CardPortraitMaterialPatch : IPatchMethod
-    {
-        /// <inheritdoc cref="IPatchMethod.PatchId" />
-        public static string PatchId => "content_asset_override_card_portrait_material";
-
-        /// <inheritdoc cref="IPatchMethod.Description" />
-        public static string Description => "Allow mod cards to override the NCard portrait material";
-
-        /// <inheritdoc cref="IPatchMethod.IsCritical" />
-        public static bool IsCritical => false;
-
-        /// <inheritdoc cref="IPatchMethod.GetTargets" />
-        public static ModPatchTarget[] GetTargets()
-        {
-            return [new(typeof(NCard), "Reload")];
-        }
-
-        /// <summary>
-        ///     Reapplies the custom material because vanilla <c>Reload</c> clears portrait materials for visible cards.
-        ///     重新应用自定义材质，因为原版 <c>Reload</c> 会清空可见卡牌的卡图材质。
-        /// </summary>
-        public static void Postfix(NCard __instance)
-        {
-            var model = __instance.Model;
-            if (model == null || __instance.Visibility != ModelVisibility.Visible)
-                return;
-
-            if (!TryGetPortraitMaterial(model, out var material))
-                return;
-
-            var portrait = GetPortraitNode(__instance, model);
-            if (portrait == null)
-                return;
-
-            portrait.Material = material;
-        }
-
-        private static TextureRect? GetPortraitNode(NCard card, CardModel model)
-        {
-            var path = model.Rarity == CardRarity.Ancient ? "%AncientPortrait" : "%Portrait";
-            return card.GetNodeOrNull<TextureRect>(path);
-        }
-
-        private static bool TryGetPortraitMaterial(CardModel card, out Material material)
-        {
-            material = null!;
-            if (!ContentAssetOverridePatchHelper.TryUseDirectMaterialOverride<IModCardPortraitMaterialOverride>(
-                    card, ref material, static o => o.CustomPortraitMaterial))
-                return true;
-
-            if (ExternalCardMaterialOverrideRegistry.TryGetPortraitMaterial(card, out material))
-                return true;
-
-            if (!ModCharacterOwnedVisualOverrideHelper.TryCardPortraitMaterial(card, ref material))
-                return true;
-
-            return !ContentAssetOverridePatchHelper.TryUseMaterialOverride<IModCardAssetOverrides>(
-                card,
-                ref material,
-                static o => o.CustomPortraitMaterialPath,
-                nameof(IModCardAssetOverrides.CustomPortraitMaterialPath));
-        }
-    }
-
-    /// <summary>
-    ///     Patches <see cref="CardModel.AllPortraitPaths" /> so custom portrait/beta paths participate in preload lists.
-    ///     修补<see cref="CardModel.AllPortraitPaths" />，使自定义 portrait/beta 路径 participate in 预加载 列表。
-    /// </summary>
-    public class CardAllPortraitPathsPatch : IPatchMethod
-    {
-        /// <inheritdoc cref="IPatchMethod.PatchId" />
-        public static string PatchId => "content_asset_override_card_all_portrait_paths";
-
-        /// <inheritdoc cref="IPatchMethod.Description" />
-        public static string Description => "Allow mod cards to advertise custom portrait assets for preloading";
-
-        /// <inheritdoc cref="IPatchMethod.IsCritical" />
-        public static bool IsCritical => false;
-
-        /// <inheritdoc cref="IPatchMethod.GetTargets" />
-        public static ModPatchTarget[] GetTargets()
-        {
-            return
-            [
-                new(typeof(CardModel), "AllPortraitPaths", MethodType.Getter),
-            ];
-        }
-
-        /// <summary>
-        ///     Replaces the enumerable with verified custom portrait paths when the card implements overrides.
-        ///     当卡牌实现覆盖时，用已验证的自定义肖像路径替换可枚举集合。
-        /// </summary>
-        public static bool Prefix(CardModel __instance, ref IEnumerable<string> __result)
-        {
-            var ownedCharacterPaths = ModCharacterOwnedVisualOverrideHelper.GetExistingCardPortraitPaths(__instance);
-            if (ownedCharacterPaths.Length <= 0)
-                return __instance is not IModCardAssetOverrides overrides
-                       || ContentAssetOverridePatchHelper.TryUsePortraitPathList(__instance, overrides, ref __result);
-            __result = ownedCharacterPaths;
-            return false;
-        }
-    }
-
-    /// <summary>
-    ///     Patches built-in overlay scene path for cards implementing <see cref="IModCardAssetOverrides" />.
-    ///     为实现 <see cref="IModCardAssetOverrides" /> 的卡牌修补内置覆盖层场景路径。
-    /// </summary>
-    public class CardOverlayPathPatch : IPatchMethod
-    {
-        /// <inheritdoc cref="IPatchMethod.PatchId" />
-        public static string PatchId => "content_asset_override_card_overlay_path";
-
-        /// <inheritdoc cref="IPatchMethod.Description" />
-        public static string Description => "Allow mod cards to override overlay scene paths";
-
-        /// <inheritdoc cref="IPatchMethod.IsCritical" />
-        public static bool IsCritical => false;
-
-        /// <inheritdoc cref="IPatchMethod.GetTargets" />
-        public static ModPatchTarget[] GetTargets()
-        {
-            return
-            [
-                new(typeof(CardModel), "OverlayPath", MethodType.Getter),
-            ];
-        }
-
-        /// <summary>
-        ///     Supplies <see cref="IModCardAssetOverrides.CustomOverlayScenePath" /> when the resource exists.
-        ///     当资源存在时提供 <see cref="IModCardAssetOverrides.CustomOverlayScenePath" />。
-        /// </summary>
-        public static bool Prefix(CardModel __instance, ref string __result)
-        {
-            if (!ModCharacterOwnedVisualOverrideHelper.TryCardOverlayPath(__instance, ref __result))
-                return false;
-
-            return ContentAssetOverridePatchHelper.TryUseStringOverride<IModCardAssetOverrides>(
-                __instance,
-                ref __result,
-                o => o.CustomOverlayScenePath,
-                nameof(IModCardAssetOverrides.CustomOverlayScenePath));
-        }
-    }
-
-    /// <summary>
-    ///     Patches <see cref="CardModel.HasBuiltInOverlay" /> using existence checks on custom overlay scene paths.
-    ///     使用自定义覆盖层场景路径的存在性检查来修补 <see cref="CardModel.HasBuiltInOverlay" />。
-    /// </summary>
-    public class CardOverlayAvailabilityPatch : IPatchMethod
-    {
-        /// <inheritdoc cref="IPatchMethod.PatchId" />
-        public static string PatchId => "content_asset_override_card_overlay_availability";
-
-        /// <inheritdoc cref="IPatchMethod.Description" />
-        public static string Description => "Allow mod cards to advertise overlay availability from custom scene paths";
-
-        /// <inheritdoc cref="IPatchMethod.IsCritical" />
-        public static bool IsCritical => false;
-
-        /// <inheritdoc cref="IPatchMethod.GetTargets" />
-        public static ModPatchTarget[] GetTargets()
-        {
-            return
-            [
-                new(typeof(CardModel), "HasBuiltInOverlay", MethodType.Getter),
-            ];
-        }
-
-        /// <summary>
-        ///     Sets <c>true</c> when <see cref="IModCardAssetOverrides.CustomOverlayScenePath" /> resolves to an existing
-        ///     resource.
-        ///     当 <see cref="IModCardAssetOverrides.CustomOverlayScenePath" /> 解析到现有
-        ///     资源时设置为 <c>true</c>。
-        /// </summary>
-        public static bool Prefix(CardModel __instance, ref bool __result)
-        {
-            if (!ModCharacterOwnedVisualOverrideHelper.TryCardOverlayExists(__instance, ref __result))
-                return false;
-
-            if (__instance is not IModCardAssetOverrides overrides)
-                return true;
-
-            return ContentAssetOverridePatchHelper.TryUseExistenceOverride(
-                __instance,
-                overrides.CustomOverlayScenePath,
-                nameof(IModCardAssetOverrides.CustomOverlayScenePath),
-                ref __result);
-        }
-    }
-
-    /// <summary>
-    ///     Patches <see cref="CardModel.CreateOverlay" /> to instantiate mod overlay scenes when configured.
-    ///     修补 <see cref="CardModel.CreateOverlay" />，在配置后实例化 mod 覆盖层场景。
-    /// </summary>
-    public class CardOverlayCreatePatch : IPatchMethod
-    {
-        /// <inheritdoc cref="IPatchMethod.PatchId" />
-        public static string PatchId => "content_asset_override_card_create_overlay";
-
-        /// <inheritdoc cref="IPatchMethod.Description" />
-        public static string Description => "Allow mod cards to instantiate overlays from custom scene paths";
-
-        /// <inheritdoc cref="IPatchMethod.IsCritical" />
-        public static bool IsCritical => false;
-
-        /// <inheritdoc cref="IPatchMethod.GetTargets" />
-        public static ModPatchTarget[] GetTargets()
-        {
-            return
-            [
-                new(typeof(CardModel), nameof(CardModel.CreateOverlay)),
-            ];
-        }
-
-        /// <summary>
-        ///     Instantiates <see cref="IModCardAssetOverrides.CustomOverlayScenePath" /> when the packed scene exists.
-        ///     当 packed scene 存在时实例化 <see cref="IModCardAssetOverrides.CustomOverlayScenePath" />。
-        /// </summary>
-        public static bool Prefix(CardModel __instance, ref Control __result)
-        {
-            if (!ModCharacterOwnedVisualOverrideHelper.TryCardCreateOverlay(__instance, ref __result))
-                return false;
-
-            if (__instance is not IModCardAssetOverrides overrides)
-                return true;
-
-            var path = overrides.CustomOverlayScenePath;
-            if (string.IsNullOrWhiteSpace(path) ||
-                !AssetPathDiagnostics.Exists(path, __instance, nameof(IModCardAssetOverrides.CustomOverlayScenePath)))
-                return true;
-
-            __result = ResourceLoader.Load<PackedScene>(path).Instantiate<Control>();
-            return false;
-        }
-    }
-
-    /// <summary>
-    ///     Patches <see cref="RelicModel.IconPath" /> and packed atlas icon/outline path getters (used by vanilla
-    ///     <c>Icon</c> / <c>IconOutline</c> loaders) for mod-character per–relic-id paths (owner match) first, then
-    ///     <see cref="IModRelicAssetOverrides" />.
-    ///     修补 <see cref="RelicModel.IconPath" /> 和 packed atlas 图标/轮廓路径 getter（原版
-    ///     <c>Icon</c> / <c>IconOutline</c> 加载器使用）：优先使用 mod 角色按遗物 id 的路径（所有者匹配），然后使用
-    ///     <see cref="IModRelicAssetOverrides" />。
-    /// </summary>
-    public class RelicIconPathPatch : IPatchMethod
-    {
-        /// <inheritdoc cref="IPatchMethod.PatchId" />
-        public static string PatchId => "content_asset_override_relic_icon_path";
-
-        /// <inheritdoc cref="IPatchMethod.Description" />
-        public static string Description =>
-            "Owned-relic character overrides first, then mod relic custom icon and packed atlas paths";
-
-        /// <inheritdoc cref="IPatchMethod.IsCritical" />
-        public static bool IsCritical => false;
-
-        /// <inheritdoc cref="IPatchMethod.GetTargets" />
-        public static ModPatchTarget[] GetTargets()
-        {
-            return
-            [
-                new(typeof(RelicModel), "IconPath", MethodType.Getter),
-                new(typeof(RelicModel), "PackedIconPath", null, true, MethodType.Getter),
-                new(typeof(RelicModel), "PackedIconOutlinePath", null, true, MethodType.Getter),
-            ];
-        }
-
-        /// <summary>
-        ///     Supplies <see cref="IModCharacterAssetOverrides.TryGetVanillaRelicVisualOverrideForOwnedRelic" /> when
-        ///     applicable, then <see cref="IModRelicAssetOverrides" /> custom paths.
-        ///     当条件满足时提供 <see cref="IModCharacterAssetOverrides.TryGetVanillaRelicVisualOverrideForOwnedRelic" />
-        ///     applicable, then <see cref="IModRelicAssetOverrides" /> 自定义 路径。
-        /// </summary>
-        [HarmonyPriority(410)]
-        public static bool Prefix(MethodBase __originalMethod, RelicModel __instance, ref string __result)
-        {
-            return __originalMethod.Name switch
-            {
-                "get_IconPath" or "get_PackedIconPath" => TryRelicMainIconPath(__instance, ref __result),
-                "get_PackedIconOutlinePath" => TryRelicPackedIconOutlinePath(__instance, ref __result),
-                _ => true,
-            };
-        }
-
-        private static bool TryRelicMainIconPath(RelicModel instance, ref string result)
-        {
-            if (!ModCharacterOwnedVisualOverrideHelper.TryRelicIconPath(instance, ref result))
-                return false;
-
-            // ReSharper disable once InvertIf
-            if (ExternalAssetOverrideRegistry.TryGetRelicIconPath(instance, out var externalPath))
-            {
-                result = externalPath;
-                return false;
-            }
-
-            return ContentAssetOverridePatchHelper.TryUseStringOverride<IModRelicAssetOverrides>(
-                instance,
-                ref result,
-                o => o.CustomIconPath,
-                nameof(IModRelicAssetOverrides.CustomIconPath));
-        }
-
-        private static bool TryRelicPackedIconOutlinePath(RelicModel instance, ref string result)
-        {
-            if (!ModCharacterOwnedVisualOverrideHelper.TryRelicIconOutlinePath(instance, ref result))
-                return false;
-
-            // ReSharper disable once InvertIf
-            if (ExternalAssetOverrideRegistry.TryGetRelicIconOutlinePath(instance, out var externalPath))
-            {
-                result = externalPath;
-                return false;
-            }
-
-            return ContentAssetOverridePatchHelper.TryUseStringOverride<IModRelicAssetOverrides>(
-                instance,
-                ref result,
-                o => o.CustomIconOutlinePath,
-                nameof(IModRelicAssetOverrides.CustomIconOutlinePath));
-        }
-    }
-
-    /// <summary>
-    ///     Patches relic icon texture getters (main, outline, big): mod-character owned-relic overrides first, then
-    ///     <see cref="IModRelicAssetOverrides" />.
-    ///     修补遗物图标纹理 getter（主图、轮廓、大图）：优先使用 mod 角色拥有的遗物覆盖，然后使用
-    ///     <see cref="IModRelicAssetOverrides" />。
-    /// </summary>
-    public class RelicTexturePatch : IPatchMethod
-    {
-        /// <inheritdoc cref="IPatchMethod.PatchId" />
-        public static string PatchId => "content_asset_override_relic_texture";
-
-        /// <inheritdoc cref="IPatchMethod.Description" />
-        public static string Description =>
-            "Owned-relic character overrides first, then mod relic icon textures";
-
-        /// <inheritdoc cref="IPatchMethod.IsCritical" />
-        public static bool IsCritical => false;
-
-        /// <inheritdoc cref="IPatchMethod.GetTargets" />
-        public static ModPatchTarget[] GetTargets()
-        {
-            return
-            [
-                new(typeof(RelicModel), "Icon", MethodType.Getter),
-                new(typeof(RelicModel), "IconOutline", MethodType.Getter),
-                new(typeof(RelicModel), "BigIcon", MethodType.Getter),
-            ];
-        }
-
-        /// <summary>
-        ///     Dispatches texture loading to mod-character overrides first, then mod relic overrides.
-        ///     优先将纹理加载分派到 mod 角色覆盖，然后使用 mod 遗物覆盖。
-        /// </summary>
-        public static bool Prefix(MethodBase __originalMethod, RelicModel __instance, ref Texture2D __result)
-        {
-            return __originalMethod.Name switch
-            {
-                "get_Icon" => TryRelicIconTexture(__instance, ref __result),
-                "get_IconOutline" => TryRelicIconOutlineTexture(__instance, ref __result),
-                "get_BigIcon" => TryRelicBigIconTexture(__instance, ref __result),
-                _ => true,
-            };
-        }
-
-        private static bool TryRelicIconTexture(RelicModel instance, ref Texture2D result)
-        {
-            // ReSharper disable once ConvertIfStatementToReturnStatement
-            if (!ModCharacterOwnedVisualOverrideHelper.TryRelicIconTexture(instance, ref result))
-                return false;
-
-            // ReSharper disable once InvertIf
-            if (ExternalAssetOverrideRegistry.TryGetRelicIconTexture(instance, out var externalTexture))
-            {
-                result = externalTexture;
-                return false;
-            }
-
-            return ContentAssetOverridePatchHelper.TryUseTextureOverride<IModRelicAssetOverrides>(instance,
-                ref result, o => o.CustomIconPath, nameof(IModRelicAssetOverrides.CustomIconPath));
-        }
-
-        private static bool TryRelicIconOutlineTexture(RelicModel instance, ref Texture2D result)
-        {
-            // ReSharper disable once ConvertIfStatementToReturnStatement
-            if (!ModCharacterOwnedVisualOverrideHelper.TryRelicIconOutlineTexture(instance, ref result))
-                return false;
-
-            // ReSharper disable once InvertIf
-            if (ExternalAssetOverrideRegistry.TryGetRelicIconOutlineTexture(instance, out var externalTexture))
-            {
-                result = externalTexture;
-                return false;
-            }
-
-            return ContentAssetOverridePatchHelper.TryUseTextureOverride<IModRelicAssetOverrides>(instance,
-                ref result, o => o.CustomIconOutlinePath,
-                nameof(IModRelicAssetOverrides.CustomIconOutlinePath));
-        }
-
-        private static bool TryRelicBigIconTexture(RelicModel instance, ref Texture2D result)
-        {
-            // ReSharper disable once ConvertIfStatementToReturnStatement
-            if (!ModCharacterOwnedVisualOverrideHelper.TryRelicBigIconTexture(instance, ref result))
-                return false;
-
-            // ReSharper disable once InvertIf
-            if (ExternalAssetOverrideRegistry.TryGetRelicBigIconTexture(instance, out var externalTexture))
-            {
-                result = externalTexture;
-                return false;
-            }
-
-            return ContentAssetOverridePatchHelper.TryUseTextureOverride<IModRelicAssetOverrides>(instance,
-                ref result, o => o.CustomBigIconPath, nameof(IModRelicAssetOverrides.CustomBigIconPath));
-        }
-    }
-
-    /// <summary>
-    ///     Patches <see cref="PowerModel.IconPath" /> and <see cref="PowerModel.PackedIconPath" /> (used by vanilla
-    ///     <c>Icon</c> loader) for <see cref="IModPowerAssetOverrides" />.
-    ///     为 <see cref="IModPowerAssetOverrides" /> 修补 <see cref="PowerModel.IconPath" /> 和
-    ///     <see cref="PowerModel.PackedIconPath" />（原版
-    ///     <c>Icon</c> 加载器使用）。
-    /// </summary>
-    public class PowerIconPathPatch : IPatchMethod
-    {
-        /// <inheritdoc cref="IPatchMethod.PatchId" />
-        public static string PatchId => "content_asset_override_power_icon_path";
-
-        /// <inheritdoc cref="IPatchMethod.Description" />
-        public static string Description => "Allow mod powers to override icon and packed atlas icon paths";
-
-        /// <inheritdoc cref="IPatchMethod.IsCritical" />
-        public static bool IsCritical => false;
-
-        /// <inheritdoc cref="IPatchMethod.GetTargets" />
-        public static ModPatchTarget[] GetTargets()
-        {
-            return
-            [
-                new(typeof(PowerModel), "IconPath", MethodType.Getter),
-                new(typeof(PowerModel), "PackedIconPath", null, true, MethodType.Getter),
-            ];
-        }
-
-        /// <summary>
-        ///     Supplies <see cref="IModPowerAssetOverrides.CustomIconPath" /> when the resource exists.
-        ///     当资源存在时提供 <see cref="IModPowerAssetOverrides.CustomIconPath" />。
-        /// </summary>
-        [HarmonyPriority(410)]
-        public static bool Prefix(MethodBase __originalMethod, PowerModel __instance, ref string __result)
-        {
-            return __originalMethod.Name switch
-            {
-                "get_IconPath" or "get_PackedIconPath" => TryPowerIconPath(__instance, ref __result),
-                _ => true,
-            };
-        }
-
-        private static bool TryPowerIconPath(PowerModel instance, ref string result)
-        {
-            // ReSharper disable once InvertIf
-            if (ExternalAssetOverrideRegistry.TryGetPowerIconPath(instance, out var externalPath))
-            {
-                result = externalPath;
-                return false;
-            }
-
-            return ContentAssetOverridePatchHelper.TryUseStringOverride<IModPowerAssetOverrides>(
-                instance,
-                ref result,
-                o => o.CustomIconPath,
-                nameof(IModPowerAssetOverrides.CustomIconPath));
-        }
-    }
-
-    /// <summary>
-    ///     Patches power standard and big icon textures for mod path overrides.
-    ///     为 mod 路径覆盖修补能力标准图标和大图标纹理。
-    /// </summary>
-    public class PowerTexturePatch : IPatchMethod
-    {
-        /// <inheritdoc cref="IPatchMethod.PatchId" />
-        public static string PatchId => "content_asset_override_power_texture";
-
-        /// <inheritdoc cref="IPatchMethod.Description" />
-        public static string Description => "Allow mod powers to override icon textures";
-
-        /// <inheritdoc cref="IPatchMethod.IsCritical" />
-        public static bool IsCritical => false;
-
-        /// <inheritdoc cref="IPatchMethod.GetTargets" />
-        public static ModPatchTarget[] GetTargets()
-        {
-            return
-            [
-                new(typeof(PowerModel), "Icon", MethodType.Getter),
-                new(typeof(PowerModel), "BigIcon", MethodType.Getter),
-            ];
-        }
-
-        /// <summary>
-        ///     Dispatches to <see cref="IModPowerAssetOverrides.CustomIconPath" /> or
-        ///     <see cref="IModPowerAssetOverrides.CustomBigIconPath" />.
-        ///     分派到 <see cref="IModPowerAssetOverrides.CustomIconPath" /> 或
-        ///     <see cref="IModPowerAssetOverrides.CustomBigIconPath" />。
-        /// </summary>
-        public static bool Prefix(MethodBase __originalMethod, PowerModel __instance, ref Texture2D __result)
-        {
-            return __originalMethod.Name switch
-            {
-                "get_Icon" => TryPowerIconTexture(__instance, ref __result),
-                "get_BigIcon" => TryPowerBigIconTexture(__instance, ref __result),
-                _ => true,
-            };
-        }
-
-        private static bool TryPowerIconTexture(PowerModel instance, ref Texture2D result)
-        {
-            // ReSharper disable once InvertIf
-            if (ExternalAssetOverrideRegistry.TryGetPowerIconTexture(instance, out var externalTexture))
-            {
-                result = externalTexture;
-                return false;
-            }
-
-            return ContentAssetOverridePatchHelper.TryUseTextureOverride<IModPowerAssetOverrides>(instance,
-                ref result, o => o.CustomIconPath, nameof(IModPowerAssetOverrides.CustomIconPath));
-        }
-
-        private static bool TryPowerBigIconTexture(PowerModel instance, ref Texture2D result)
-        {
-            // ReSharper disable once InvertIf
-            if (ExternalAssetOverrideRegistry.TryGetPowerBigIconTexture(instance, out var externalTexture))
-            {
-                result = externalTexture;
-                return false;
-            }
-
-            return ContentAssetOverridePatchHelper.TryUseTextureOverride<IModPowerAssetOverrides>(
-                instance, ref result, o => o.CustomBigIconPath,
-                nameof(IModPowerAssetOverrides.CustomBigIconPath));
-        }
-    }
-
     /// <summary>
     ///     Patches orb HUD icon (<see cref="CompressedTexture2D" />) for <see cref="IModOrbAssetOverrides" />.
     ///     为 <see cref="IModOrbAssetOverrides" /> 修补充能球 HUD 图标 (<see cref="CompressedTexture2D" />)。
     /// </summary>
-    public class OrbIconPatch : IPatchMethod
+    internal class OrbIconPatch : IPatchMethod
     {
-        /// <inheritdoc cref="IPatchMethod.PatchId" />
         public static string PatchId => "content_asset_override_orb_icon";
-
-        /// <inheritdoc cref="IPatchMethod.Description" />
         public static string Description => "Allow mod orbs to override icon textures";
-
-        /// <inheritdoc cref="IPatchMethod.IsCritical" />
         public static bool IsCritical => false;
 
-        /// <inheritdoc cref="IPatchMethod.GetTargets" />
         public static ModPatchTarget[] GetTargets()
         {
             return
@@ -1788,18 +818,12 @@ namespace STS2RitsuLib.Scaffolding.Content.Patches
     ///     Patches orb visuals scene path for combat presentation overrides.
     ///     为战斗表现覆盖修补充能球视觉场景路径。
     /// </summary>
-    public class OrbSpritePathPatch : IPatchMethod
+    internal class OrbSpritePathPatch : IPatchMethod
     {
-        /// <inheritdoc cref="IPatchMethod.PatchId" />
         public static string PatchId => "content_asset_override_orb_sprite_path";
-
-        /// <inheritdoc cref="IPatchMethod.Description" />
         public static string Description => "Allow mod orbs to override visuals scene paths";
-
-        /// <inheritdoc cref="IPatchMethod.IsCritical" />
         public static bool IsCritical => false;
 
-        /// <inheritdoc cref="IPatchMethod.GetTargets" />
         public static ModPatchTarget[] GetTargets()
         {
             return
@@ -1835,18 +859,12 @@ namespace STS2RitsuLib.Scaffolding.Content.Patches
     ///     Patches <see cref="OrbModel.AssetPaths" /> so custom icon and visuals paths appear in preload enumeration.
     ///     修补 <see cref="OrbModel.AssetPaths" />，使自定义图标和视觉路径出现在预加载枚举中。
     /// </summary>
-    public class OrbAssetPathsPatch : IPatchMethod
+    internal class OrbAssetPathsPatch : IPatchMethod
     {
-        /// <inheritdoc cref="IPatchMethod.PatchId" />
         public static string PatchId => "content_asset_override_orb_asset_paths";
-
-        /// <inheritdoc cref="IPatchMethod.Description" />
         public static string Description => "Allow mod orbs to advertise custom asset paths";
-
-        /// <inheritdoc cref="IPatchMethod.IsCritical" />
         public static bool IsCritical => false;
 
-        /// <inheritdoc cref="IPatchMethod.GetTargets" />
         public static ModPatchTarget[] GetTargets()
         {
             return
@@ -1898,49 +916,28 @@ namespace STS2RitsuLib.Scaffolding.Content.Patches
     ///     为 <see cref="IModPotionAssetOverrides" /> 修补药水图像和轮廓路径 getter（包括原版
     ///     <c>Image</c> / 预加载使用的 packed atlas 路径 getter）。
     /// </summary>
-    public class PotionImagePathPatch : IPatchMethod
+    internal class PotionImagePathPatch : IPatchMethod
     {
-        /// <inheritdoc cref="IPatchMethod.PatchId" />
         public static string PatchId => "content_asset_override_potion_image_path";
-
-        /// <inheritdoc cref="IPatchMethod.Description" />
         public static string Description => "Allow mod potions to override image and packed atlas paths";
-
-        /// <inheritdoc cref="IPatchMethod.IsCritical" />
         public static bool IsCritical => false;
 
-        /// <inheritdoc cref="IPatchMethod.GetTargets" />
         public static ModPatchTarget[] GetTargets()
         {
             return
             [
                 new(typeof(PotionModel), "ImagePath", MethodType.Getter),
-                new(typeof(PotionModel), "OutlinePath", MethodType.Getter),
                 new(typeof(PotionModel), "PackedImagePath", null, true, MethodType.Getter),
-                new(typeof(PotionModel), "PackedOutlinePath", null, true, MethodType.Getter),
             ];
         }
 
-        /// <summary>
-        ///     Dispatches to <see cref="IModPotionAssetOverrides.CustomImagePath" /> or
-        ///     <see cref="IModPotionAssetOverrides.CustomOutlinePath" />.
-        ///     分派到 <see cref="IModPotionAssetOverrides.CustomImagePath" /> 或
-        ///     <see cref="IModPotionAssetOverrides.CustomOutlinePath" />。
-        /// </summary>
         [HarmonyPriority(410)]
-        public static bool Prefix(MethodBase __originalMethod, PotionModel __instance, ref string __result)
+        public static bool Prefix(PotionModel __instance, ref string __result)
         {
-            return __originalMethod.Name switch
-            {
-                "get_ImagePath" => TryPotionImagePath(__instance, ref __result),
-                "get_OutlinePath" => TryPotionOutlinePath(__instance, ref __result),
-                "get_PackedImagePath" => TryPotionImagePath(__instance, ref __result),
-                "get_PackedOutlinePath" => TryPotionOutlinePath(__instance, ref __result),
-                _ => true,
-            };
+            return TryPotionImagePath(__instance, ref __result);
         }
 
-        private static bool TryPotionImagePath(PotionModel instance, ref string result)
+        internal static bool TryPotionImagePath(PotionModel instance, ref string result)
         {
             if (!ModCharacterOwnedVisualOverrideHelper.TryPotionImagePath(instance, ref result))
                 return false;
@@ -1956,7 +953,7 @@ namespace STS2RitsuLib.Scaffolding.Content.Patches
                 instance, ref result, o => o.CustomImagePath, nameof(IModPotionAssetOverrides.CustomImagePath));
         }
 
-        private static bool TryPotionOutlinePath(PotionModel instance, ref string result)
+        internal static bool TryPotionOutlinePath(PotionModel instance, ref string result)
         {
             if (!ModCharacterOwnedVisualOverrideHelper.TryPotionOutlinePath(instance, ref result))
                 return false;
@@ -1974,45 +971,55 @@ namespace STS2RitsuLib.Scaffolding.Content.Patches
     }
 
     /// <summary>
+    ///     Patches potion outline path getters for mod path overrides.
+    ///     为 mod 路径覆盖修补药水轮廓路径 getter。
+    /// </summary>
+    internal class PotionOutlinePathPatch : IPatchMethod
+    {
+        public static string PatchId => "content_asset_override_potion_outline_path";
+        public static string Description => "Allow mod potions to override outline and packed atlas paths";
+        public static bool IsCritical => false;
+
+        public static ModPatchTarget[] GetTargets()
+        {
+            return
+            [
+                new(typeof(PotionModel), "OutlinePath", MethodType.Getter),
+                new(typeof(PotionModel), "PackedOutlinePath", null, true, MethodType.Getter),
+            ];
+        }
+
+        [HarmonyPriority(410)]
+        public static bool Prefix(PotionModel __instance, ref string __result)
+        {
+            return PotionImagePathPatch.TryPotionOutlinePath(__instance, ref __result);
+        }
+    }
+
+    /// <summary>
     ///     Patches potion image and outline textures for mod path overrides.
     ///     为 mod 路径覆盖修补药水图像和轮廓纹理。
     /// </summary>
-    public class PotionTexturePatch : IPatchMethod
+    internal class PotionTexturePatch : IPatchMethod
     {
-        /// <inheritdoc cref="IPatchMethod.PatchId" />
         public static string PatchId => "content_asset_override_potion_texture";
-
-        /// <inheritdoc cref="IPatchMethod.Description" />
         public static string Description => "Allow mod potions to override image textures";
-
-        /// <inheritdoc cref="IPatchMethod.IsCritical" />
         public static bool IsCritical => false;
 
-        /// <inheritdoc cref="IPatchMethod.GetTargets" />
         public static ModPatchTarget[] GetTargets()
         {
             return
             [
                 new(typeof(PotionModel), "Image", MethodType.Getter),
-                new(typeof(PotionModel), "Outline", MethodType.Getter),
             ];
         }
 
-        /// <summary>
-        ///     Loads textures from the matching <see cref="IModPotionAssetOverrides" /> path property.
-        ///     从匹配的 <see cref="IModPotionAssetOverrides" /> 路径属性加载纹理。
-        /// </summary>
-        public static bool Prefix(MethodBase __originalMethod, PotionModel __instance, ref Texture2D __result)
+        public static bool Prefix(PotionModel __instance, ref Texture2D __result)
         {
-            return __originalMethod.Name switch
-            {
-                "get_Image" => TryPotionImageTexture(__instance, ref __result),
-                "get_Outline" => TryPotionOutlineTexture(__instance, ref __result),
-                _ => true,
-            };
+            return TryPotionImageTexture(__instance, ref __result);
         }
 
-        private static bool TryPotionImageTexture(PotionModel instance, ref Texture2D result)
+        internal static bool TryPotionImageTexture(PotionModel instance, ref Texture2D result)
         {
             if (!ModCharacterOwnedVisualOverrideHelper.TryPotionImageTexture(instance, ref result))
                 return false;
@@ -2028,7 +1035,7 @@ namespace STS2RitsuLib.Scaffolding.Content.Patches
                 instance, ref result, o => o.CustomImagePath, nameof(IModPotionAssetOverrides.CustomImagePath));
         }
 
-        private static bool TryPotionOutlineTexture(PotionModel instance, ref Texture2D result)
+        internal static bool TryPotionOutlineTexture(PotionModel instance, ref Texture2D result)
         {
             if (!ModCharacterOwnedVisualOverrideHelper.TryPotionOutlineTexture(instance, ref result))
                 return false;
@@ -2046,21 +1053,36 @@ namespace STS2RitsuLib.Scaffolding.Content.Patches
     }
 
     /// <summary>
+    ///     Patches potion outline texture for mod path overrides.
+    ///     为 mod 路径覆盖修补药水轮廓纹理。
+    /// </summary>
+    internal class PotionOutlineTexturePatch : IPatchMethod
+    {
+        public static string PatchId => "content_asset_override_potion_outline_texture";
+        public static string Description => "Allow mod potions to override outline textures";
+        public static bool IsCritical => false;
+
+        public static ModPatchTarget[] GetTargets()
+        {
+            return [new(typeof(PotionModel), "Outline", MethodType.Getter)];
+        }
+
+        public static bool Prefix(PotionModel __instance, ref Texture2D __result)
+        {
+            return PotionTexturePatch.TryPotionOutlineTexture(__instance, ref __result);
+        }
+    }
+
+    /// <summary>
     ///     Patches run-summary banner texture for cards implementing <see cref="IModCardAssetOverrides" />.
     ///     为实现 <see cref="IModCardAssetOverrides" /> 的卡牌修补跑局摘要横幅纹理。
     /// </summary>
-    public class CardBannerTexturePatch : IPatchMethod
+    internal class CardBannerTexturePatch : IPatchMethod
     {
-        /// <inheritdoc cref="IPatchMethod.PatchId" />
         public static string PatchId => "content_asset_override_card_banner_texture";
-
-        /// <inheritdoc cref="IPatchMethod.Description" />
         public static string Description => "Allow mod cards to override BannerTexture";
-
-        /// <inheritdoc cref="IPatchMethod.IsCritical" />
         public static bool IsCritical => false;
 
-        /// <inheritdoc cref="IPatchMethod.GetTargets" />
         public static ModPatchTarget[] GetTargets()
         {
             return [new(typeof(CardModel), "BannerTexture", MethodType.Getter)];
@@ -2085,18 +1107,12 @@ namespace STS2RitsuLib.Scaffolding.Content.Patches
     ///     Patches banner <see cref="Material" /> resolution for mod cards.
     ///     为 mod 卡牌修补横幅 <see cref="Material" /> 解析。
     /// </summary>
-    public class CardBannerMaterialPatch : IPatchMethod
+    internal class CardBannerMaterialPatch : IPatchMethod
     {
-        /// <inheritdoc cref="IPatchMethod.PatchId" />
         public static string PatchId => "content_asset_override_card_banner_material";
-
-        /// <inheritdoc cref="IPatchMethod.Description" />
         public static string Description => "Allow mod cards to override BannerMaterial";
-
-        /// <inheritdoc cref="IPatchMethod.IsCritical" />
         public static bool IsCritical => false;
 
-        /// <inheritdoc cref="IPatchMethod.GetTargets" />
         public static ModPatchTarget[] GetTargets()
         {
             return [new(typeof(CardModel), "BannerMaterial", MethodType.Getter)];
@@ -2138,18 +1154,12 @@ namespace STS2RitsuLib.Scaffolding.Content.Patches
     ///     Patches act main background scene path for <see cref="IModActAssetOverrides" />.
     ///     为 <see cref="IModActAssetOverrides" /> 修补章节 主背景场景 路径。
     /// </summary>
-    public class ActBackgroundScenePathPatch : IPatchMethod
+    internal class ActBackgroundScenePathPatch : IPatchMethod
     {
-        /// <inheritdoc cref="IPatchMethod.PatchId" />
         public static string PatchId => "content_asset_override_act_background_scene_path";
-
-        /// <inheritdoc cref="IPatchMethod.Description" />
         public static string Description => "Allow mod acts to override background scene path";
-
-        /// <inheritdoc cref="IPatchMethod.IsCritical" />
         public static bool IsCritical => false;
 
-        /// <inheritdoc cref="IPatchMethod.GetTargets" />
         public static ModPatchTarget[] GetTargets()
         {
             return [new(typeof(ActModel), "BackgroundScenePath", MethodType.Getter)];
@@ -2182,18 +1192,12 @@ namespace STS2RitsuLib.Scaffolding.Content.Patches
     ///     Patches rest-site background scene path for mod acts.
     ///     为 mod 章节修补休息处背景场景路径。
     /// </summary>
-    public class ActRestSiteBackgroundPathPatch : IPatchMethod
+    internal class ActRestSiteBackgroundPathPatch : IPatchMethod
     {
-        /// <inheritdoc cref="IPatchMethod.PatchId" />
         public static string PatchId => "content_asset_override_act_rest_site_background_path";
-
-        /// <inheritdoc cref="IPatchMethod.Description" />
         public static string Description => "Allow mod acts to override rest site background path";
-
-        /// <inheritdoc cref="IPatchMethod.IsCritical" />
         public static bool IsCritical => false;
 
-        /// <inheritdoc cref="IPatchMethod.GetTargets" />
         public static ModPatchTarget[] GetTargets()
         {
             return [new(typeof(ActModel), "RestSiteBackgroundPath", MethodType.Getter)];
@@ -2226,44 +1230,26 @@ namespace STS2RitsuLib.Scaffolding.Content.Patches
     ///     Patches act map layer background image paths (top/mid/bottom) for mod acts.
     ///     为 mod 章节修补章节地图图层背景图像路径（top/mid/bottom）。
     /// </summary>
-    public class ActMapBackgroundPathPatch : IPatchMethod
+    internal class ActMapBackgroundPathPatch : IPatchMethod
     {
-        /// <inheritdoc cref="IPatchMethod.PatchId" />
         public static string PatchId => "content_asset_override_act_map_background_path";
-
-        /// <inheritdoc cref="IPatchMethod.Description" />
         public static string Description => "Allow mod acts to override map background paths";
-
-        /// <inheritdoc cref="IPatchMethod.IsCritical" />
         public static bool IsCritical => false;
 
-        /// <inheritdoc cref="IPatchMethod.GetTargets" />
         public static ModPatchTarget[] GetTargets()
         {
             return
             [
                 new(typeof(ActModel), "MapTopBgPath", MethodType.Getter),
-                new(typeof(ActModel), "MapMidBgPath", MethodType.Getter),
-                new(typeof(ActModel), "MapBotBgPath", MethodType.Getter),
             ];
         }
 
-        /// <summary>
-        ///     Dispatches to the matching <see cref="IModActAssetOverrides" /> map layer path property.
-        ///     分派到匹配的 <see cref="IModActAssetOverrides" /> map layer 路径属性。
-        /// </summary>
-        public static bool Prefix(MethodBase __originalMethod, ActModel __instance, ref string __result)
+        public static bool Prefix(ActModel __instance, ref string __result)
         {
-            return __originalMethod.Name switch
-            {
-                "get_MapTopBgPath" => TryActMapTopBgPath(__instance, ref __result),
-                "get_MapMidBgPath" => TryActMapMidBgPath(__instance, ref __result),
-                "get_MapBotBgPath" => TryActMapBotBgPath(__instance, ref __result),
-                _ => true,
-            };
+            return TryActMapTopBgPath(__instance, ref __result);
         }
 
-        private static bool TryActMapTopBgPath(ActModel instance, ref string result)
+        internal static bool TryActMapTopBgPath(ActModel instance, ref string result)
         {
             if (!ContentAssetOverridePatchHelper.TryUseExternalPathOverride(
                     instance,
@@ -2279,7 +1265,7 @@ namespace STS2RitsuLib.Scaffolding.Content.Patches
                 nameof(IModActAssetOverrides.CustomMapTopBgPath));
         }
 
-        private static bool TryActMapMidBgPath(ActModel instance, ref string result)
+        internal static bool TryActMapMidBgPath(ActModel instance, ref string result)
         {
             if (!ContentAssetOverridePatchHelper.TryUseExternalPathOverride(
                     instance,
@@ -2295,7 +1281,7 @@ namespace STS2RitsuLib.Scaffolding.Content.Patches
                 nameof(IModActAssetOverrides.CustomMapMidBgPath));
         }
 
-        private static bool TryActMapBotBgPath(ActModel instance, ref string result)
+        internal static bool TryActMapBotBgPath(ActModel instance, ref string result)
         {
             if (!ContentAssetOverridePatchHelper.TryUseExternalPathOverride(
                     instance,
@@ -2313,6 +1299,48 @@ namespace STS2RitsuLib.Scaffolding.Content.Patches
     }
 
     /// <summary>
+    ///     Patches act middle map background image path for mod acts.
+    ///     为 mod 章节修补章节地图中层背景图像路径。
+    /// </summary>
+    internal class ActMapMidBackgroundPathPatch : IPatchMethod
+    {
+        public static string PatchId => "content_asset_override_act_map_mid_background_path";
+        public static string Description => "Allow mod acts to override middle map background paths";
+        public static bool IsCritical => false;
+
+        public static ModPatchTarget[] GetTargets()
+        {
+            return [new(typeof(ActModel), "MapMidBgPath", MethodType.Getter)];
+        }
+
+        public static bool Prefix(ActModel __instance, ref string __result)
+        {
+            return ActMapBackgroundPathPatch.TryActMapMidBgPath(__instance, ref __result);
+        }
+    }
+
+    /// <summary>
+    ///     Patches act bottom map background image path for mod acts.
+    ///     为 mod 章节修补章节地图底层背景图像路径。
+    /// </summary>
+    internal class ActMapBottomBackgroundPathPatch : IPatchMethod
+    {
+        public static string PatchId => "content_asset_override_act_map_bottom_background_path";
+        public static string Description => "Allow mod acts to override bottom map background paths";
+        public static bool IsCritical => false;
+
+        public static ModPatchTarget[] GetTargets()
+        {
+            return [new(typeof(ActModel), "MapBotBgPath", MethodType.Getter)];
+        }
+
+        public static bool Prefix(ActModel __instance, ref string __result)
+        {
+            return ActMapBackgroundPathPatch.TryActMapBotBgPath(__instance, ref __result);
+        }
+    }
+
+    /// <summary>
     ///     Patches <c>EventModel.BackgroundScenePath</c> so preloads and <see cref="EventModel.CreateBackgroundScene" /> use
     ///     <see cref="IModEventAssetOverrides.CustomBackgroundScenePath" /> instead of the synthetic
     ///     <c>events/background_scenes/&lt;id&gt;.tscn</c> path (which mod packs usually do not ship).
@@ -2321,19 +1349,15 @@ namespace STS2RitsuLib.Scaffolding.Content.Patches
     ///     <see cref="IModEventAssetOverrides.CustomBackgroundScenePath" />，而不是合成的
     ///     <c>events/background_scenes/&lt;id&gt;.tscn</c> 路径（mod 包通常不会提供该路径）。
     /// </summary>
-    public class EventBackgroundScenePathGetterPatch : IPatchMethod
+    internal class EventBackgroundScenePathGetterPatch : IPatchMethod
     {
-        /// <inheritdoc cref="IPatchMethod.PatchId" />
         public static string PatchId => "content_asset_override_event_background_scene_path_getter";
 
-        /// <inheritdoc cref="IPatchMethod.Description" />
         public static string Description =>
             "Route EventModel.BackgroundScenePath to mod CustomBackgroundScenePath when the resource exists";
 
-        /// <inheritdoc cref="IPatchMethod.IsCritical" />
         public static bool IsCritical => false;
 
-        /// <inheritdoc cref="IPatchMethod.GetTargets" />
         public static ModPatchTarget[] GetTargets()
         {
             return [new(typeof(EventModel), "BackgroundScenePath", MethodType.Getter)];
@@ -2366,18 +1390,12 @@ namespace STS2RitsuLib.Scaffolding.Content.Patches
     ///     Patches <see cref="EventModel.CreateScene" /> for <see cref="IModEventAssetOverrides" />.
     ///     为 <see cref="IModEventAssetOverrides" /> 修补<see cref="EventModel.CreateScene" />。
     /// </summary>
-    public class EventLayoutScenePatch : IPatchMethod
+    internal class EventLayoutScenePatch : IPatchMethod
     {
-        /// <inheritdoc cref="IPatchMethod.PatchId" />
         public static string PatchId => "content_asset_override_event_layout_scene";
-
-        /// <inheritdoc cref="IPatchMethod.Description" />
         public static string Description => "Allow mod events to override layout packed scene";
-
-        /// <inheritdoc cref="IPatchMethod.IsCritical" />
         public static bool IsCritical => false;
 
-        /// <inheritdoc cref="IPatchMethod.GetTargets" />
         public static ModPatchTarget[] GetTargets()
         {
             return [new(typeof(EventModel), nameof(EventModel.CreateScene))];
@@ -2410,18 +1428,12 @@ namespace STS2RitsuLib.Scaffolding.Content.Patches
     ///     Patches <see cref="EventModel.CreateInitialPortrait" /> for <see cref="IModEventAssetOverrides" />.
     ///     为 <see cref="IModEventAssetOverrides" /> 修补<see cref="EventModel.CreateInitialPortrait" />。
     /// </summary>
-    public class EventInitialPortraitPatch : IPatchMethod
+    internal class EventInitialPortraitPatch : IPatchMethod
     {
-        /// <inheritdoc cref="IPatchMethod.PatchId" />
         public static string PatchId => "content_asset_override_event_initial_portrait";
-
-        /// <inheritdoc cref="IPatchMethod.Description" />
         public static string Description => "Allow mod events to override initial portrait texture";
-
-        /// <inheritdoc cref="IPatchMethod.IsCritical" />
         public static bool IsCritical => false;
 
-        /// <inheritdoc cref="IPatchMethod.GetTargets" />
         public static ModPatchTarget[] GetTargets()
         {
             return [new(typeof(EventModel), nameof(EventModel.CreateInitialPortrait))];
@@ -2452,18 +1464,12 @@ namespace STS2RitsuLib.Scaffolding.Content.Patches
     ///     Patches <see cref="EventModel.CreateBackgroundScene" /> for <see cref="IModEventAssetOverrides" />.
     ///     为 <see cref="IModEventAssetOverrides" /> 修补<see cref="EventModel.CreateBackgroundScene" />。
     /// </summary>
-    public class EventBackgroundScenePatch : IPatchMethod
+    internal class EventBackgroundScenePatch : IPatchMethod
     {
-        /// <inheritdoc cref="IPatchMethod.PatchId" />
         public static string PatchId => "content_asset_override_event_background_scene";
-
-        /// <inheritdoc cref="IPatchMethod.Description" />
         public static string Description => "Allow mod events to override background packed scene";
-
-        /// <inheritdoc cref="IPatchMethod.IsCritical" />
         public static bool IsCritical => false;
 
-        /// <inheritdoc cref="IPatchMethod.GetTargets" />
         public static ModPatchTarget[] GetTargets()
         {
             return [new(typeof(EventModel), nameof(EventModel.CreateBackgroundScene))];
@@ -2500,18 +1506,12 @@ namespace STS2RitsuLib.Scaffolding.Content.Patches
     ///     Patches <see cref="EventModel.HasVfx" /> for mod VFX scene overrides.
     ///     为 mod VFX 场景覆盖修补 <see cref="EventModel.HasVfx" />。
     /// </summary>
-    public class EventHasVfxPatch : IPatchMethod
+    internal class EventHasVfxPatch : IPatchMethod
     {
-        /// <inheritdoc cref="IPatchMethod.PatchId" />
         public static string PatchId => "content_asset_override_event_has_vfx";
-
-        /// <inheritdoc cref="IPatchMethod.Description" />
         public static string Description => "Allow mod events to advertise custom VFX scene availability";
-
-        /// <inheritdoc cref="IPatchMethod.IsCritical" />
         public static bool IsCritical => false;
 
-        /// <inheritdoc cref="IPatchMethod.GetTargets" />
         public static ModPatchTarget[] GetTargets()
         {
             return [new(typeof(EventModel), "HasVfx", MethodType.Getter)];
@@ -2548,18 +1548,12 @@ namespace STS2RitsuLib.Scaffolding.Content.Patches
     ///     Patches <see cref="EventModel.CreateVfx" /> for <see cref="IModEventAssetOverrides" />.
     ///     为 <see cref="IModEventAssetOverrides" /> 修补<see cref="EventModel.CreateVfx" />。
     /// </summary>
-    public class EventCreateVfxPatch : IPatchMethod
+    internal class EventCreateVfxPatch : IPatchMethod
     {
-        /// <inheritdoc cref="IPatchMethod.PatchId" />
         public static string PatchId => "content_asset_override_event_create_vfx";
-
-        /// <inheritdoc cref="IPatchMethod.Description" />
         public static string Description => "Allow mod events to instantiate custom VFX scenes";
-
-        /// <inheritdoc cref="IPatchMethod.IsCritical" />
         public static bool IsCritical => false;
 
-        /// <inheritdoc cref="IPatchMethod.GetTargets" />
         public static ModPatchTarget[] GetTargets()
         {
             return [new(typeof(EventModel), nameof(EventModel.CreateVfx))];
@@ -2601,18 +1595,12 @@ namespace STS2RitsuLib.Scaffolding.Content.Patches
     ///     Appends custom event asset paths to <see cref="EventModel.GetAssetPaths" /> for preloading.
     ///     将自定义事件资源路径追加到 <see cref="EventModel.GetAssetPaths" />，用于预加载。
     /// </summary>
-    public class EventGetAssetPathsPatch : IPatchMethod
+    internal class EventGetAssetPathsPatch : IPatchMethod
     {
-        /// <inheritdoc cref="IPatchMethod.PatchId" />
         public static string PatchId => "content_asset_override_event_get_asset_paths";
-
-        /// <inheritdoc cref="IPatchMethod.Description" />
         public static string Description => "Merge mod event custom paths into GetAssetPaths preload lists";
-
-        /// <inheritdoc cref="IPatchMethod.IsCritical" />
         public static bool IsCritical => false;
 
-        /// <inheritdoc cref="IPatchMethod.GetTargets" />
         public static ModPatchTarget[] GetTargets()
         {
             return [new(typeof(EventModel), nameof(EventModel.GetAssetPaths))];
@@ -2761,42 +1749,26 @@ namespace STS2RitsuLib.Scaffolding.Content.Patches
     ///     Patches ancient map icon textures for <see cref="IModAncientEventAssetOverrides" />.
     ///     为 <see cref="IModAncientEventAssetOverrides" /> 修补远古事件地图图标纹理。
     /// </summary>
-    public class AncientMapIconTexturePatch : IPatchMethod
+    internal class AncientMapIconTexturePatch : IPatchMethod
     {
-        /// <inheritdoc cref="IPatchMethod.PatchId" />
         public static string PatchId => "content_asset_override_ancient_map_icon_texture";
-
-        /// <inheritdoc cref="IPatchMethod.Description" />
         public static string Description => "Allow mod ancients to override map node icon textures";
-
-        /// <inheritdoc cref="IPatchMethod.IsCritical" />
         public static bool IsCritical => false;
 
-        /// <inheritdoc cref="IPatchMethod.GetTargets" />
         public static ModPatchTarget[] GetTargets()
         {
             return
             [
                 new(typeof(AncientEventModel), "MapIcon", MethodType.Getter),
-                new(typeof(AncientEventModel), "MapIconOutline", MethodType.Getter),
             ];
         }
 
-        /// <summary>
-        ///     Dispatches compressed texture loading to the matching ancient override path.
-        ///     将压缩纹理加载分派到匹配的远古事件覆盖路径。
-        /// </summary>
-        public static bool Prefix(MethodBase __originalMethod, AncientEventModel __instance, ref Texture2D __result)
+        public static bool Prefix(AncientEventModel __instance, ref Texture2D __result)
         {
-            return __originalMethod.Name switch
-            {
-                "get_MapIcon" => TryAncientMapIcon(__instance, ref __result),
-                "get_MapIconOutline" => TryAncientMapIconOutline(__instance, ref __result),
-                _ => true,
-            };
+            return TryAncientMapIcon(__instance, ref __result);
         }
 
-        private static bool TryAncientMapIcon(AncientEventModel instance, ref Texture2D result)
+        internal static bool TryAncientMapIcon(AncientEventModel instance, ref Texture2D result)
         {
             // ReSharper disable once InvertIf
             if (!ContentAssetOverridePatchHelper.TryUseExternalCompressedTexturePathAsTexture2DOverride(
@@ -2814,7 +1786,7 @@ namespace STS2RitsuLib.Scaffolding.Content.Patches
                 nameof(IModAncientEventAssetOverrides.CustomMapIconPath));
         }
 
-        private static bool TryAncientMapIconOutline(AncientEventModel instance, ref Texture2D result)
+        internal static bool TryAncientMapIconOutline(AncientEventModel instance, ref Texture2D result)
         {
             // ReSharper disable once InvertIf
             if (!ContentAssetOverridePatchHelper.TryUseExternalCompressedTexturePathAsTexture2DOverride(
@@ -2836,45 +1808,50 @@ namespace STS2RitsuLib.Scaffolding.Content.Patches
     }
 
     /// <summary>
+    ///     Patches ancient map node icon outline textures for <see cref="IModAncientEventAssetOverrides" />.
+    ///     为 <see cref="IModAncientEventAssetOverrides" /> 修补远古事件地图节点图标轮廓纹理。
+    /// </summary>
+    internal class AncientMapIconOutlineTexturePatch : IPatchMethod
+    {
+        public static string PatchId => "content_asset_override_ancient_map_icon_outline_texture";
+        public static string Description => "Allow mod ancients to override map node icon outline textures";
+        public static bool IsCritical => false;
+
+        public static ModPatchTarget[] GetTargets()
+        {
+            return [new(typeof(AncientEventModel), "MapIconOutline", MethodType.Getter)];
+        }
+
+        public static bool Prefix(AncientEventModel __instance, ref Texture2D __result)
+        {
+            return AncientMapIconTexturePatch.TryAncientMapIconOutline(__instance, ref __result);
+        }
+    }
+
+    /// <summary>
     ///     Patches ancient run-history icon textures for <see cref="IModAncientEventAssetOverrides" />.
     ///     为 <see cref="IModAncientEventAssetOverrides" /> 修补远古事件跑局历史图标纹理。
     /// </summary>
-    public class AncientRunHistoryIconTexturePatch : IPatchMethod
+    internal class AncientRunHistoryIconTexturePatch : IPatchMethod
     {
-        /// <inheritdoc cref="IPatchMethod.PatchId" />
         public static string PatchId => "content_asset_override_ancient_run_history_icon_texture";
-
-        /// <inheritdoc cref="IPatchMethod.Description" />
         public static string Description => "Allow mod ancients to override run history icon textures";
-
-        /// <inheritdoc cref="IPatchMethod.IsCritical" />
         public static bool IsCritical => false;
 
-        /// <inheritdoc cref="IPatchMethod.GetTargets" />
         public static ModPatchTarget[] GetTargets()
         {
             return
             [
                 new(typeof(AncientEventModel), "RunHistoryIcon", MethodType.Getter),
-                new(typeof(AncientEventModel), "RunHistoryIconOutline", MethodType.Getter),
             ];
         }
 
-        /// <summary>
-        ///     Dispatches compressed texture loading to the matching ancient override path.
-        ///     将压缩纹理加载分派到匹配的远古事件覆盖路径。
-        /// </summary>
-        public static bool Prefix(MethodBase __originalMethod, AncientEventModel __instance, ref Texture2D __result)
+        public static bool Prefix(AncientEventModel __instance, ref Texture2D __result)
         {
-            return __originalMethod.Name switch
-            {
-                "get_RunHistoryIcon" => TryAncientRunHistoryIcon(__instance, ref __result),
-                "get_RunHistoryIconOutline" => TryAncientRunHistoryIconOutline(__instance, ref __result),
-                _ => true,
-            };
+            return TryAncientRunHistoryIcon(__instance, ref __result);
         }
 
-        private static bool TryAncientRunHistoryIcon(AncientEventModel instance, ref Texture2D result)
+        internal static bool TryAncientRunHistoryIcon(AncientEventModel instance, ref Texture2D result)
         {
             if (!ContentAssetOverridePatchHelper.TryUseExternalCompressedTexturePathAsTexture2DOverride(
                     instance,
@@ -2893,7 +1870,7 @@ namespace STS2RitsuLib.Scaffolding.Content.Patches
                 nameof(IModAncientEventAssetOverrides.CustomRunHistoryIconPath));
         }
 
-        private static bool TryAncientRunHistoryIconOutline(AncientEventModel instance, ref Texture2D result)
+        internal static bool TryAncientRunHistoryIconOutline(AncientEventModel instance, ref Texture2D result)
         {
             if (!ContentAssetOverridePatchHelper.TryUseExternalCompressedTexturePathAsTexture2DOverride(
                     instance,
@@ -2914,21 +1891,36 @@ namespace STS2RitsuLib.Scaffolding.Content.Patches
     }
 
     /// <summary>
+    ///     Patches ancient run-history icon outline textures for <see cref="IModAncientEventAssetOverrides" />.
+    ///     为 <see cref="IModAncientEventAssetOverrides" /> 修补远古事件跑局历史图标轮廓纹理。
+    /// </summary>
+    internal class AncientRunHistoryIconOutlineTexturePatch : IPatchMethod
+    {
+        public static string PatchId => "content_asset_override_ancient_run_history_icon_outline_texture";
+        public static string Description => "Allow mod ancients to override run history icon outline textures";
+        public static bool IsCritical => false;
+
+        public static ModPatchTarget[] GetTargets()
+        {
+            return [new(typeof(AncientEventModel), "RunHistoryIconOutline", MethodType.Getter)];
+        }
+
+        public static bool Prefix(AncientEventModel __instance, ref Texture2D __result)
+        {
+            return AncientRunHistoryIconTexturePatch.TryAncientRunHistoryIconOutline(__instance, ref __result);
+        }
+    }
+
+    /// <summary>
     ///     Merges custom map node asset paths into <see cref="AncientEventModel.MapNodeAssetPaths" />.
     ///     将自定义地图节点资源路径合并到 <see cref="AncientEventModel.MapNodeAssetPaths" />。
     /// </summary>
-    public class AncientMapNodeAssetPathsPatch : IPatchMethod
+    internal class AncientMapNodeAssetPathsPatch : IPatchMethod
     {
-        /// <inheritdoc cref="IPatchMethod.PatchId" />
         public static string PatchId => "content_asset_override_ancient_map_node_asset_paths";
-
-        /// <inheritdoc cref="IPatchMethod.Description" />
         public static string Description => "Allow mod ancients to include custom paths in MapNodeAssetPaths";
-
-        /// <inheritdoc cref="IPatchMethod.IsCritical" />
         public static bool IsCritical => false;
 
-        /// <inheritdoc cref="IPatchMethod.GetTargets" />
         public static ModPatchTarget[] GetTargets()
         {
             return [new(typeof(AncientEventModel), "MapNodeAssetPaths", MethodType.Getter)];
@@ -2989,18 +1981,12 @@ namespace STS2RitsuLib.Scaffolding.Content.Patches
     ///     Patches <see cref="AfflictionModel" /> overlay scene path for <see cref="IModAfflictionAssetOverrides" />.
     ///     为 <see cref="IModAfflictionAssetOverrides" /> 修补<see cref="AfflictionModel" /> overlay 场景 路径。
     /// </summary>
-    public class AfflictionOverlayPathPatch : IPatchMethod
+    internal class AfflictionOverlayPathPatch : IPatchMethod
     {
-        /// <inheritdoc cref="IPatchMethod.PatchId" />
         public static string PatchId => "content_asset_override_affliction_overlay_path";
-
-        /// <inheritdoc cref="IPatchMethod.Description" />
         public static string Description => "Allow mod afflictions to override OverlayPath";
-
-        /// <inheritdoc cref="IPatchMethod.IsCritical" />
         public static bool IsCritical => false;
 
-        /// <inheritdoc cref="IPatchMethod.GetTargets" />
         public static ModPatchTarget[] GetTargets()
         {
             return [new(typeof(AfflictionModel), "OverlayPath", MethodType.Getter)];
@@ -3031,18 +2017,12 @@ namespace STS2RitsuLib.Scaffolding.Content.Patches
     ///     Patches <see cref="AfflictionModel.HasOverlay" /> from custom overlay path existence.
     ///     根据自定义 overlay 路径 existence修补<see cref="AfflictionModel.HasOverlay" />。
     /// </summary>
-    public class AfflictionHasOverlayPatch : IPatchMethod
+    internal class AfflictionHasOverlayPatch : IPatchMethod
     {
-        /// <inheritdoc cref="IPatchMethod.PatchId" />
         public static string PatchId => "content_asset_override_affliction_has_overlay";
-
-        /// <inheritdoc cref="IPatchMethod.Description" />
         public static string Description => "Allow mod afflictions to advertise overlay availability";
-
-        /// <inheritdoc cref="IPatchMethod.IsCritical" />
         public static bool IsCritical => false;
 
-        /// <inheritdoc cref="IPatchMethod.GetTargets" />
         public static ModPatchTarget[] GetTargets()
         {
             return [new(typeof(AfflictionModel), "HasOverlay", MethodType.Getter)];
@@ -3091,18 +2071,12 @@ namespace STS2RitsuLib.Scaffolding.Content.Patches
     ///     Patches <see cref="AfflictionModel.CreateOverlay" /> to instantiate mod overlay scenes when configured.
     ///     修补 <see cref="AfflictionModel.CreateOverlay" />，在配置后实例化 mod 覆盖层场景。
     /// </summary>
-    public class AfflictionCreateOverlayPatch : IPatchMethod
+    internal class AfflictionCreateOverlayPatch : IPatchMethod
     {
-        /// <inheritdoc cref="IPatchMethod.PatchId" />
         public static string PatchId => "content_asset_override_affliction_create_overlay";
-
-        /// <inheritdoc cref="IPatchMethod.Description" />
         public static string Description => "Allow mod afflictions to instantiate overlays from custom scene paths";
-
-        /// <inheritdoc cref="IPatchMethod.IsCritical" />
         public static bool IsCritical => false;
 
-        /// <inheritdoc cref="IPatchMethod.GetTargets" />
         public static ModPatchTarget[] GetTargets()
         {
             return [new(typeof(AfflictionModel), nameof(AfflictionModel.CreateOverlay))];
@@ -3173,18 +2147,12 @@ namespace STS2RitsuLib.Scaffolding.Content.Patches
     ///     Patches <see cref="EnchantmentModel" /> intended icon path for <see cref="IModEnchantmentAssetOverrides" />.
     ///     为 <see cref="IModEnchantmentAssetOverrides" /> 修补<see cref="EnchantmentModel" /> intended 图标 路径。
     /// </summary>
-    public class EnchantmentIntendedIconPathPatch : IPatchMethod
+    internal class EnchantmentIntendedIconPathPatch : IPatchMethod
     {
-        /// <inheritdoc cref="IPatchMethod.PatchId" />
         public static string PatchId => "content_asset_override_enchantment_intended_icon_path";
-
-        /// <inheritdoc cref="IPatchMethod.Description" />
         public static string Description => "Allow mod enchantments to override IntendedIconPath";
-
-        /// <inheritdoc cref="IPatchMethod.IsCritical" />
         public static bool IsCritical => false;
 
-        /// <inheritdoc cref="IPatchMethod.GetTargets" />
         public static ModPatchTarget[] GetTargets()
         {
             return [new(typeof(EnchantmentModel), "IntendedIconPath", MethodType.Getter)];
@@ -3215,18 +2183,12 @@ namespace STS2RitsuLib.Scaffolding.Content.Patches
     ///     Patches <see cref="PowerModel.ResolvedBigIconPath" /> so preload lists include mod big-icon paths.
     ///     修补<see cref="PowerModel.ResolvedBigIconPath" />，使预加载 列表 include mod big-图标 路径。
     /// </summary>
-    public class PowerResolvedBigIconPathPatch : IPatchMethod
+    internal class PowerResolvedBigIconPathPatch : IPatchMethod
     {
-        /// <inheritdoc cref="IPatchMethod.PatchId" />
         public static string PatchId => "content_asset_override_power_resolved_big_icon_path";
-
-        /// <inheritdoc cref="IPatchMethod.Description" />
         public static string Description => "Allow mod powers to override ResolvedBigIconPath for preloading";
-
-        /// <inheritdoc cref="IPatchMethod.IsCritical" />
         public static bool IsCritical => false;
 
-        /// <inheritdoc cref="IPatchMethod.GetTargets" />
         public static ModPatchTarget[] GetTargets()
         {
             return [new(typeof(PowerModel), "ResolvedBigIconPath", MethodType.Getter)];

@@ -10,19 +10,15 @@ namespace STS2RitsuLib.Timeline.Patches
     ///     Applies era-axis icon policy with default behavior that hides icons when a custom era has no texture.
     ///     应用 纪元轴图标策略 默认行为是在以下情况隐藏图标： a 自定义纪元没有纹理。
     /// </summary>
-    public sealed class NTimelineScreenGetEraIconPolicyPatch : IPatchMethod
+    internal sealed class NTimelineScreenGetEraIconPolicyPatch : IPatchMethod
     {
-        /// <inheritdoc />
         public static string PatchId => "n_timeline_screen_get_era_icon_policy";
 
-        /// <inheritdoc />
         public static string Description =>
             "Apply configurable era-axis icon policy and default-hide missing custom era icons";
 
-        /// <inheritdoc />
         public static bool IsCritical => false;
 
-        /// <inheritdoc />
         public static ModPatchTarget[] GetTargets()
         {
             return
@@ -31,12 +27,6 @@ namespace STS2RitsuLib.Timeline.Patches
             ];
         }
 
-        /// <summary>
-        ///     Uses <see cref="ModTimelineEraIconRegistry" /> when configured; otherwise keeps vanilla icon resolution if
-        ///     resources exist and hides icon when they do not.
-        ///     配置后使用 <see cref="ModTimelineEraIconRegistry" />；否则在
-        ///     资源存在时保留原版图标解析，资源不存在时隐藏图标。
-        /// </summary>
         public static bool Prefix(EpochEra era, ref (Texture2D Texture, string Name) __result)
         {
             if (ModTimelineEraIconRegistry.TryResolve(era, out var enabled, out var texturePath))
@@ -88,18 +78,12 @@ namespace STS2RitsuLib.Timeline.Patches
     ///     Hides the era icon node when no texture was resolved.
     ///     未解析到纹理时隐藏 era 图标节点。
     /// </summary>
-    public sealed class NEraColumnHideEmptyIconPatch : IPatchMethod
+    internal sealed class NEraColumnHideEmptyIconPatch : IPatchMethod
     {
-        /// <inheritdoc />
         public static string PatchId => "n_era_column_hide_empty_icon";
-
-        /// <inheritdoc />
         public static string Description => "Hide era-axis icon node when texture is null";
-
-        /// <inheritdoc />
         public static bool IsCritical => false;
 
-        /// <inheritdoc />
         public static ModPatchTarget[] GetTargets()
         {
             return
@@ -108,10 +92,6 @@ namespace STS2RitsuLib.Timeline.Patches
             ];
         }
 
-        /// <summary>
-        ///     Ensures no empty placeholder icon remains visible when texture is absent.
-        ///     确保 不会留下可见的空占位图标 当纹理缺失时。
-        /// </summary>
         public static void Postfix(NEraColumn __instance)
         {
             var icon = __instance.GetNode<TextureRect>("%Icon");

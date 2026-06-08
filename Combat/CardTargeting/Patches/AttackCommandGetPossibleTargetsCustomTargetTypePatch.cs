@@ -24,19 +24,11 @@ namespace STS2RitsuLib.Combat.CardTargeting.Patches
 
         public static bool IsCritical => false;
 
-        /// <summary>
-        ///     Targets <see cref="AttackCommand.GetPossibleTargets" />.
-        ///     目标方法为 <see cref="AttackCommand.GetPossibleTargets" />。
-        /// </summary>
         public static ModPatchTarget[] GetTargets()
         {
             return [new(typeof(AttackCommand), nameof(AttackCommand.GetPossibleTargets))];
         }
 
-        /// <summary>
-        ///     Returns custom targets when present; otherwise falls back to vanilla behavior.
-        ///     若存在自定义目标则直接返回；否则回退到原版逻辑。
-        /// </summary>
         public static bool Prefix(AttackCommand __instance, ref IReadOnlyList<Creature> __result)
         {
             if (!CustomTargets.TryGetValue(__instance, out var box) || box.Value == null)

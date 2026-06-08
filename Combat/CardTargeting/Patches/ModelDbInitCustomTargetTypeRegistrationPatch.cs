@@ -16,19 +16,11 @@ namespace STS2RitsuLib.Combat.CardTargeting.Patches
 
         public static bool IsCritical => false;
 
-        /// <summary>
-        ///     Targets the model database initialization entry point.
-        ///     目标为模型数据库初始化入口。
-        /// </summary>
         public static ModPatchTarget[] GetTargets()
         {
             return [new(typeof(ModelDb), nameof(ModelDb.Init))];
         }
 
-        /// <summary>
-        ///     Performs registry bootstrap for built-in custom target types.
-        ///     执行内置自定义目标类型注册表引导。
-        /// </summary>
         public static void Postfix()
         {
             CustomTargetTypeRegistry.RegisterBuiltIns();
