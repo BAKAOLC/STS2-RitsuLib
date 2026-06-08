@@ -232,7 +232,7 @@ namespace STS2RitsuLib.Settings
         }
     }
 
-    internal sealed partial class ModSettingsSliderControl : HBoxContainer
+    internal sealed partial class ModSettingsSliderControl : Control
     {
         private readonly double _bindingValueAtConstruct;
         private readonly Func<double, string>? _formatter;
@@ -260,10 +260,7 @@ namespace STS2RitsuLib.Settings
                     RitsuShellTheme.Current.Metric.Entry.ValueMinHeight));
             SizeFlagsHorizontal = SizeFlags.ShrinkEnd;
             SizeFlagsVertical = SizeFlags.ShrinkCenter;
-            Alignment = AlignmentMode.Center;
             MouseFilter = MouseFilterEnum.Ignore;
-            AddThemeConstantOverride("separation",
-                RitsuShellThemeLayoutResolver.ResolveInt("components.slider.layout.rowSeparation", 8));
 
             var valueEdit = new LineEdit
             {
@@ -282,22 +279,6 @@ namespace STS2RitsuLib.Settings
                 RitsuShellTheme.Current.Font.Body);
             AddChild(valueEdit);
             _valueEdit = valueEdit;
-
-            var sliderPanel = new MarginContainer
-            {
-                SizeFlagsHorizontal = SizeFlags.ExpandFill,
-                SizeFlagsVertical = SizeFlags.ShrinkCenter,
-                CustomMinimumSize = RitsuShellThemeLayoutResolver.ResolveMinSize(
-                    "components.slider.layout.track.minSize",
-                    new(RitsuShellTheme.Current.Metric.Slider.TrackMinWidth,
-                        RitsuShellTheme.Current.Metric.Slider.ValueFieldHeight)),
-                MouseFilter = MouseFilterEnum.Ignore,
-            };
-            sliderPanel.AddThemeConstantOverride("margin_top",
-                RitsuShellThemeLayoutResolver.ResolveInt("components.slider.layout.track.margin.top", 4));
-            sliderPanel.AddThemeConstantOverride("margin_bottom",
-                RitsuShellThemeLayoutResolver.ResolveInt("components.slider.layout.track.margin.bottom", 4));
-            AddChild(sliderPanel);
 
             var normalizedInitial = NormalizeSliderValue(initialValue, minValue, maxValue, step);
             var slider = new HSlider
@@ -318,7 +299,7 @@ namespace STS2RitsuLib.Settings
             slider.AddThemeStyleboxOverride("slider", CreateSliderStyle(false));
             slider.AddThemeStyleboxOverride("grabber_area", CreateSliderStyle(false));
             slider.AddThemeStyleboxOverride("grabber_area_highlight", CreateSliderStyle(true));
-            sliderPanel.AddChild(slider);
+            AddChild(slider);
             _slider = slider;
         }
 
@@ -367,6 +348,31 @@ namespace STS2RitsuLib.Settings
             ModSettingsFocusChrome.AttachControllerSelectionReticle(_slider);
             ModSettingsFocusChrome.AttachControllerSelectionReticle(_valueEdit);
             ApplySliderMouseFilterForInputMode();
+            LayoutChildren();
+        }
+
+        public override void _Notification(int what)
+        {
+            base._Notification(what);
+            if (what == (int)NotificationResized)
+                LayoutChildren();
+        }
+
+        public override Vector2 _GetMinimumSize()
+        {
+            var valueMin = _valueEdit?.GetCombinedMinimumSize() ?? Vector2.Zero;
+            var trackMin = RitsuShellThemeLayoutResolver.ResolveMinSize(
+                "components.slider.layout.track.minSize",
+                new(RitsuShellTheme.Current.Metric.Slider.TrackMinWidth,
+                    RitsuShellTheme.Current.Metric.Slider.ValueFieldHeight));
+            var separation = RitsuShellThemeLayoutResolver.ResolveInt("components.slider.layout.rowSeparation", 8);
+            var rowMin = RitsuShellThemeLayoutResolver.ResolveMinSize(
+                "components.slider.layout.rowMinSize",
+                new(RitsuShellTheme.Current.Metric.Slider.RowMinWidth,
+                    RitsuShellTheme.Current.Metric.Entry.ValueMinHeight));
+            return new(
+                Math.Max(rowMin.X, valueMin.X + separation + trackMin.X),
+                Math.Max(rowMin.Y, Math.Max(valueMin.Y, trackMin.Y)));
         }
 
         private void OnControllerUiModeChanged()
@@ -381,6 +387,33 @@ namespace STS2RitsuLib.Settings
 
             var blockMouse = NControllerManager.Instance?.IsUsingController == true;
             _slider.MouseFilter = blockMouse ? MouseFilterEnum.Ignore : MouseFilterEnum.Pass;
+        }
+
+        private void LayoutChildren()
+        {
+            if (_valueEdit == null || _slider == null)
+                return;
+
+            var separation = RitsuShellThemeLayoutResolver.ResolveInt("components.slider.layout.rowSeparation", 8);
+            var valueMin = _valueEdit.GetCombinedMinimumSize();
+            var trackMin = RitsuShellThemeLayoutResolver.ResolveMinSize(
+                "components.slider.layout.track.minSize",
+                new(RitsuShellTheme.Current.Metric.Slider.TrackMinWidth,
+                    RitsuShellTheme.Current.Metric.Slider.ValueFieldHeight));
+            var topMargin = RitsuShellThemeLayoutResolver.ResolveInt("components.slider.layout.track.margin.top", 4);
+            var bottomMargin =
+                RitsuShellThemeLayoutResolver.ResolveInt("components.slider.layout.track.margin.bottom", 4);
+            var contentHeight = Math.Max(valueMin.Y, trackMin.Y);
+            var valueY = Math.Max(0f, (Size.Y - valueMin.Y) * 0.5f);
+            _valueEdit.Position = new(0f, valueY);
+            _valueEdit.Size = valueMin;
+
+            var trackX = valueMin.X + separation;
+            var trackW = Math.Max(0f, Size.X - trackX);
+            var trackH = Math.Max(0f, contentHeight - topMargin - bottomMargin);
+            var trackY = Math.Max(0f, (Size.Y - contentHeight) * 0.5f) + topMargin;
+            _slider.Position = new(trackX, trackY);
+            _slider.Size = new(Math.Max(trackW, trackMin.X), trackH);
         }
 
         private void OnSliderValueChanged(double value)
@@ -525,7 +558,7 @@ namespace STS2RitsuLib.Settings
     ///     但比较和 binding I/O 保持在 <see cref="float" /> 空间，以匹配不带 double 桥接的过时
     ///     <c>AddSlider(..., IModSettingsValueBinding&lt;float&gt;, ...)</c> mod。
     /// </summary>
-    public sealed partial class ModSettingsFloatSliderControl : HBoxContainer
+    public sealed partial class ModSettingsFloatSliderControl : Control
     {
         private readonly float _bindingValueAtConstruct;
         private readonly Func<float, string>? _formatter;
@@ -581,10 +614,7 @@ namespace STS2RitsuLib.Settings
                     RitsuShellTheme.Current.Metric.Entry.ValueMinHeight));
             SizeFlagsHorizontal = SizeFlags.ShrinkEnd;
             SizeFlagsVertical = SizeFlags.ShrinkCenter;
-            Alignment = AlignmentMode.Center;
             MouseFilter = MouseFilterEnum.Ignore;
-            AddThemeConstantOverride("separation",
-                RitsuShellThemeLayoutResolver.ResolveInt("components.slider.layout.rowSeparation", 8));
 
             var valueEdit = new LineEdit
             {
@@ -603,22 +633,6 @@ namespace STS2RitsuLib.Settings
                 RitsuShellTheme.Current.Font.Body);
             AddChild(valueEdit);
             _valueEdit = valueEdit;
-
-            var sliderPanel = new MarginContainer
-            {
-                SizeFlagsHorizontal = SizeFlags.ExpandFill,
-                SizeFlagsVertical = SizeFlags.ShrinkCenter,
-                CustomMinimumSize = RitsuShellThemeLayoutResolver.ResolveMinSize(
-                    "components.slider.layout.track.minSize",
-                    new(RitsuShellTheme.Current.Metric.Slider.TrackMinWidth,
-                        RitsuShellTheme.Current.Metric.Slider.ValueFieldHeight)),
-                MouseFilter = MouseFilterEnum.Ignore,
-            };
-            sliderPanel.AddThemeConstantOverride("margin_top",
-                RitsuShellThemeLayoutResolver.ResolveInt("components.slider.layout.track.margin.top", 4));
-            sliderPanel.AddThemeConstantOverride("margin_bottom",
-                RitsuShellThemeLayoutResolver.ResolveInt("components.slider.layout.track.margin.bottom", 4));
-            AddChild(sliderPanel);
 
             var normalizedInitial = NormalizeSliderValue(initialValue, minValue, maxValue, step);
             var slider = new HSlider
@@ -639,7 +653,7 @@ namespace STS2RitsuLib.Settings
             slider.AddThemeStyleboxOverride("slider", CreateFloatSliderStyle(false));
             slider.AddThemeStyleboxOverride("grabber_area", CreateFloatSliderStyle(false));
             slider.AddThemeStyleboxOverride("grabber_area_highlight", CreateFloatSliderStyle(true));
-            sliderPanel.AddChild(slider);
+            AddChild(slider);
             _slider = slider;
         }
 
@@ -695,6 +709,33 @@ namespace STS2RitsuLib.Settings
             ModSettingsFocusChrome.AttachControllerSelectionReticle(_slider);
             ModSettingsFocusChrome.AttachControllerSelectionReticle(_valueEdit);
             ApplyFloatSliderMouseFilterForInputMode();
+            LayoutChildren();
+        }
+
+        /// <inheritdoc />
+        public override void _Notification(int what)
+        {
+            base._Notification(what);
+            if (what == (int)NotificationResized)
+                LayoutChildren();
+        }
+
+        /// <inheritdoc />
+        public override Vector2 _GetMinimumSize()
+        {
+            var valueMin = _valueEdit?.GetCombinedMinimumSize() ?? Vector2.Zero;
+            var trackMin = RitsuShellThemeLayoutResolver.ResolveMinSize(
+                "components.slider.layout.track.minSize",
+                new(RitsuShellTheme.Current.Metric.Slider.TrackMinWidth,
+                    RitsuShellTheme.Current.Metric.Slider.ValueFieldHeight));
+            var separation = RitsuShellThemeLayoutResolver.ResolveInt("components.slider.layout.rowSeparation", 8);
+            var rowMin = RitsuShellThemeLayoutResolver.ResolveMinSize(
+                "components.slider.layout.rowMinSize",
+                new(RitsuShellTheme.Current.Metric.Slider.RowMinWidth,
+                    RitsuShellTheme.Current.Metric.Entry.ValueMinHeight));
+            return new(
+                Math.Max(rowMin.X, valueMin.X + separation + trackMin.X),
+                Math.Max(rowMin.Y, Math.Max(valueMin.Y, trackMin.Y)));
         }
 
         private void OnFloatSliderControllerUiModeChanged()
@@ -709,6 +750,33 @@ namespace STS2RitsuLib.Settings
 
             var blockMouse = NControllerManager.Instance?.IsUsingController == true;
             _slider.MouseFilter = blockMouse ? MouseFilterEnum.Ignore : MouseFilterEnum.Pass;
+        }
+
+        private void LayoutChildren()
+        {
+            if (_valueEdit == null || _slider == null)
+                return;
+
+            var separation = RitsuShellThemeLayoutResolver.ResolveInt("components.slider.layout.rowSeparation", 8);
+            var valueMin = _valueEdit.GetCombinedMinimumSize();
+            var trackMin = RitsuShellThemeLayoutResolver.ResolveMinSize(
+                "components.slider.layout.track.minSize",
+                new(RitsuShellTheme.Current.Metric.Slider.TrackMinWidth,
+                    RitsuShellTheme.Current.Metric.Slider.ValueFieldHeight));
+            var topMargin = RitsuShellThemeLayoutResolver.ResolveInt("components.slider.layout.track.margin.top", 4);
+            var bottomMargin =
+                RitsuShellThemeLayoutResolver.ResolveInt("components.slider.layout.track.margin.bottom", 4);
+            var contentHeight = Math.Max(valueMin.Y, trackMin.Y);
+            var valueY = Math.Max(0f, (Size.Y - valueMin.Y) * 0.5f);
+            _valueEdit.Position = new(0f, valueY);
+            _valueEdit.Size = valueMin;
+
+            var trackX = valueMin.X + separation;
+            var trackW = Math.Max(0f, Size.X - trackX);
+            var trackH = Math.Max(0f, contentHeight - topMargin - bottomMargin);
+            var trackY = Math.Max(0f, (Size.Y - contentHeight) * 0.5f) + topMargin;
+            _slider.Position = new(trackX, trackY);
+            _slider.Size = new(Math.Max(trackW, trackMin.X), trackH);
         }
 
         private void OnSliderValueChanged(double value)
@@ -864,13 +932,16 @@ namespace STS2RitsuLib.Settings
     ///     The stored option value type.
     ///     存储的选项值类型。
     /// </typeparam>
-    public sealed partial class ModSettingsChoiceControl<TValue> : HBoxContainer
+    public sealed partial class ModSettingsChoiceControl<TValue> : Control
     {
         private readonly Action<TValue>? _onChanged;
+        private StyleBoxFlat _centerStyle = ModSettingsUiFactory.CreateSurfaceStyle();
         private int _currentIndex;
         private TValue? _currentValue;
         private Label? _label;
+        private Button? _nextButton;
         private (TValue Value, string Label)[] _optionsWithValues = [];
+        private Button? _previousButton;
         private bool _suppressCallbacks;
 
         /// <summary>
@@ -905,31 +976,16 @@ namespace STS2RitsuLib.Settings
             SizeFlagsHorizontal = SizeFlags.ShrinkEnd;
             SizeFlagsVertical = SizeFlags.ShrinkCenter;
             MouseFilter = MouseFilterEnum.Ignore;
-            Alignment = AlignmentMode.Center;
-            AddThemeConstantOverride("separation",
-                RitsuShellThemeLayoutResolver.ResolveInt("components.choice.layout.rowSeparation", 6));
 
-            AddChild(new ModSettingsMiniButton("<", () => Shift(-1))
+            _previousButton = new ModSettingsMiniButton("<", () => Shift(-1))
             {
                 CustomMinimumSize = RitsuShellThemeLayoutResolver.ResolveMinSize(
                     "components.choice.layout.stepButton.minSize",
                     new(RitsuShellTheme.Current.Metric.Entry.MiniStepperButtonSize,
                         RitsuShellTheme.Current.Metric.Entry.MiniStepperButtonSize)),
                 SizeFlagsVertical = SizeFlags.ShrinkCenter,
-            });
-
-            var center = new PanelContainer
-            {
-                CustomMinimumSize = RitsuShellThemeLayoutResolver.ResolveMinSize(
-                    "components.choice.layout.center.minSize",
-                    new(RitsuShellTheme.Current.Metric.Choice.CenterMinWidth,
-                        RitsuShellTheme.Current.Metric.Slider.ValueFieldHeight)),
-                SizeFlagsHorizontal = SizeFlags.ExpandFill,
-                SizeFlagsVertical = SizeFlags.ShrinkCenter,
-                MouseFilter = MouseFilterEnum.Ignore,
             };
-            center.AddThemeStyleboxOverride("panel", ModSettingsUiFactory.CreateSurfaceStyle());
-            AddChild(center);
+            AddChild(_previousButton);
 
             var label = new Label
             {
@@ -944,17 +1000,18 @@ namespace STS2RitsuLib.Settings
             label.AddThemeFontOverride("font", RitsuShellTheme.Current.Font.BodyBold);
             label.AddThemeFontSizeOverride("font_size", RitsuShellTheme.Current.Metric.FontSize.ValueLabel);
             label.AddThemeColorOverride("font_color", RitsuShellTheme.Current.Text.LabelPrimary);
-            center.AddChild(label);
+            AddChild(label);
             _label = label;
 
-            AddChild(new ModSettingsMiniButton(">", () => Shift(1))
+            _nextButton = new ModSettingsMiniButton(">", () => Shift(1))
             {
                 CustomMinimumSize = RitsuShellThemeLayoutResolver.ResolveMinSize(
                     "components.choice.layout.stepButton.minSize",
                     new(RitsuShellTheme.Current.Metric.Entry.MiniStepperButtonSize,
                         RitsuShellTheme.Current.Metric.Entry.MiniStepperButtonSize)),
                 SizeFlagsVertical = SizeFlags.ShrinkCenter,
-            });
+            };
+            AddChild(_nextButton);
         }
 
         /// <summary>
@@ -977,6 +1034,45 @@ namespace STS2RitsuLib.Settings
                 startingIndex = 0;
             _currentIndex = startingIndex;
             RefreshCurrentLabel();
+            LayoutChildren();
+        }
+
+        /// <inheritdoc />
+        public override void _Notification(int what)
+        {
+            base._Notification(what);
+            if (what == (int)NotificationResized)
+            {
+                LayoutChildren();
+                return;
+            }
+
+            if (what != (int)NotificationThemeChanged)
+                return;
+            _centerStyle = ModSettingsUiFactory.CreateSurfaceStyle();
+            LayoutChildren();
+            QueueRedraw();
+        }
+
+        /// <inheritdoc />
+        public override Vector2 _GetMinimumSize()
+        {
+            var buttonMin = ResolveStepButtonMinSize();
+            var centerMin = ResolveCenterMinSize();
+            var separation = ResolveRowSeparation();
+            var rowMin = RitsuShellThemeLayoutResolver.ResolveMinSize(
+                "components.choice.layout.rowMinSize",
+                new(RitsuShellTheme.Current.Metric.Choice.RowMinWidth,
+                    RitsuShellTheme.Current.Metric.Entry.ValueMinHeight));
+            return new(
+                Math.Max(rowMin.X, buttonMin.X * 2f + separation * 2f + centerMin.X),
+                Math.Max(rowMin.Y, Math.Max(buttonMin.Y, centerMin.Y)));
+        }
+
+        /// <inheritdoc />
+        public override void _Draw()
+        {
+            DrawStyleBox(_centerStyle, GetCenterRect());
         }
 
         private void Shift(int delta)
@@ -1052,6 +1148,68 @@ namespace STS2RitsuLib.Settings
             if (_optionsWithValues.Length == 0 || _label == null)
                 return;
             _label.Text = _optionsWithValues[_currentIndex].Label;
+        }
+
+        private void LayoutChildren()
+        {
+            if (_previousButton == null || _nextButton == null || _label == null)
+                return;
+
+            var buttonMin = ResolveStepButtonMinSize();
+            var y = Math.Max(0f, (Size.Y - buttonMin.Y) * 0.5f);
+            _previousButton.Position = new(0f, y);
+            _previousButton.Size = buttonMin;
+            _nextButton.Position = new(Math.Max(0f, Size.X - buttonMin.X), y);
+            _nextButton.Size = buttonMin;
+
+            var centerRect = GetCenterRect();
+            var margins = GetCenterMargins();
+            _label.Position = new(centerRect.Position.X + margins.Left, centerRect.Position.Y + margins.Top);
+            _label.Size = new(
+                Math.Max(0f, centerRect.Size.X - margins.Left - margins.Right),
+                Math.Max(0f, centerRect.Size.Y - margins.Top - margins.Bottom));
+        }
+
+        private Rect2 GetCenterRect()
+        {
+            var buttonMin = ResolveStepButtonMinSize();
+            var centerMin = ResolveCenterMinSize();
+            var separation = ResolveRowSeparation();
+            var x = buttonMin.X + separation;
+            var width = Math.Max(centerMin.X, Size.X - buttonMin.X * 2f - separation * 2f);
+            var height = Math.Max(centerMin.Y, Size.Y);
+            var y = Math.Max(0f, (Size.Y - height) * 0.5f);
+            return new(x, y, width, height);
+        }
+
+        private BoxEdges GetCenterMargins()
+        {
+            return new(
+                Mathf.RoundToInt(_centerStyle.ContentMarginLeft),
+                Mathf.RoundToInt(_centerStyle.ContentMarginTop),
+                Mathf.RoundToInt(_centerStyle.ContentMarginRight),
+                Mathf.RoundToInt(_centerStyle.ContentMarginBottom));
+        }
+
+        private static Vector2 ResolveStepButtonMinSize()
+        {
+            return RitsuShellThemeLayoutResolver.ResolveMinSize(
+                "components.choice.layout.stepButton.minSize",
+                new(RitsuShellTheme.Current.Metric.Entry.MiniStepperButtonSize,
+                    RitsuShellTheme.Current.Metric.Entry.MiniStepperButtonSize));
+        }
+
+        private static Vector2 ResolveCenterMinSize()
+        {
+            return RitsuShellThemeLayoutResolver.ResolveMinSize(
+                "components.choice.layout.center.minSize",
+                new(RitsuShellTheme.Current.Metric.Choice.CenterMinWidth,
+                    RitsuShellTheme.Current.Metric.Slider.ValueFieldHeight));
+        }
+
+        private static int ResolveRowSeparation()
+        {
+            return RitsuShellThemeLayoutResolver.ResolveInt("components.choice.layout.rowSeparation", 6);
         }
     }
 
@@ -5162,14 +5320,20 @@ namespace STS2RitsuLib.Settings
     internal sealed partial class ModSettingsCollapsibleHeaderButton : ModSettingsGamepadCompatibleButton
     {
         private readonly Action? _action;
+        private bool _applyingSelectedState;
         private Label? _arrowLabel;
         private bool _contentEnabled = true;
-        private MarginContainer? _measureFrame;
+        private BoxEdges _headerPadding;
+        private int _headerSeparation;
         private bool _selected;
         private string? _subtitle;
         private Label? _subtitleLabel;
+        private int _textSeparation;
         private string _title = string.Empty;
         private Label? _titleLabel;
+        private bool _visualContentEnabled;
+        private bool _visualSelected;
+        private bool _visualStateApplied;
 
         public ModSettingsCollapsibleHeaderButton(string title, string? subtitle, Action action)
         {
@@ -5190,41 +5354,19 @@ namespace STS2RitsuLib.Settings
             AddThemeStyleboxOverride("pressed", CreateHeaderStyle(true, true, true));
             AddThemeStyleboxOverride("focus", CreateHeaderStyle(false, true, true));
 
-            var frame = new MarginContainer
-            {
-                MouseFilter = MouseFilterEnum.Ignore,
-            };
-            frame.SetAnchorsPreset(LayoutPreset.FullRect);
-            frame.OffsetLeft = 0;
-            frame.OffsetTop = 0;
-            frame.OffsetRight = 0;
-            frame.OffsetBottom = 0;
             var headerPadding = RitsuShellThemeLayoutResolver.ResolveEdges(
                 "components.collapsible.layout.header.padding", 14);
-            headerPadding = new(
+            _headerPadding = new(
                 RitsuShellThemeLayoutResolver.ResolveInt("components.collapsible.layout.header.padding.left",
                     headerPadding.Left),
                 RitsuShellThemeLayoutResolver.ResolveInt("components.collapsible.layout.header.padding.top", 10),
                 RitsuShellThemeLayoutResolver.ResolveInt("components.collapsible.layout.header.padding.right",
                     headerPadding.Right),
                 RitsuShellThemeLayoutResolver.ResolveInt("components.collapsible.layout.header.padding.bottom", 10));
-            frame.AddThemeConstantOverride("margin_left", headerPadding.Left);
-            frame.AddThemeConstantOverride("margin_top", headerPadding.Top);
-            frame.AddThemeConstantOverride("margin_right", headerPadding.Right);
-            frame.AddThemeConstantOverride("margin_bottom", headerPadding.Bottom);
-            AddChild(frame);
-            _measureFrame = frame;
-
-            var root = new HBoxContainer
-            {
-                MouseFilter = MouseFilterEnum.Ignore,
-                SizeFlagsHorizontal = SizeFlags.ExpandFill,
-                SizeFlagsVertical = SizeFlags.ExpandFill,
-                Alignment = BoxContainer.AlignmentMode.Center,
-            };
-            root.AddThemeConstantOverride("separation", RitsuShellThemeLayoutResolver.ResolveInt(
-                "components.collapsible.layout.header.separation", 12));
-            frame.AddChild(root);
+            _headerSeparation = RitsuShellThemeLayoutResolver.ResolveInt(
+                "components.collapsible.layout.header.separation", 12);
+            _textSeparation = RitsuShellThemeLayoutResolver.ResolveInt(
+                "components.collapsible.layout.header.textSeparation", 2);
 
             var arrowLabel = new Label
             {
@@ -5239,18 +5381,8 @@ namespace STS2RitsuLib.Settings
             arrowLabel.AddThemeFontOverride("font", RitsuShellTheme.Current.Font.BodyBold);
             arrowLabel.AddThemeFontSizeOverride("font_size", RitsuShellTheme.Current.Metric.FontSize.HeaderArrow);
             arrowLabel.AddThemeColorOverride("font_color", RitsuShellTheme.Current.Text.RichSecondary);
-            root.AddChild(arrowLabel);
+            AddChild(arrowLabel);
             _arrowLabel = arrowLabel;
-
-            var textColumn = new VBoxContainer
-            {
-                SizeFlagsHorizontal = SizeFlags.ExpandFill,
-                SizeFlagsVertical = SizeFlags.ShrinkCenter,
-                MouseFilter = MouseFilterEnum.Ignore,
-            };
-            textColumn.AddThemeConstantOverride("separation",
-                RitsuShellThemeLayoutResolver.ResolveInt("components.collapsible.layout.header.textSeparation", 2));
-            root.AddChild(textColumn);
 
             var titleLabel = new Label
             {
@@ -5264,7 +5396,7 @@ namespace STS2RitsuLib.Settings
             titleLabel.AddThemeFontOverride("font", RitsuShellTheme.Current.Font.BodyBold);
             titleLabel.AddThemeFontSizeOverride("font_size", RitsuShellTheme.Current.Metric.FontSize.HeaderTitle);
             titleLabel.AddThemeColorOverride("font_color", RitsuShellTheme.Current.Text.LabelPrimary);
-            textColumn.AddChild(titleLabel);
+            AddChild(titleLabel);
             _titleLabel = titleLabel;
 
             var subtitleLabel = new Label
@@ -5281,7 +5413,7 @@ namespace STS2RitsuLib.Settings
             subtitleLabel.AddThemeFontOverride("font", RitsuShellTheme.Current.Font.Body);
             subtitleLabel.AddThemeFontSizeOverride("font_size", RitsuShellTheme.Current.Metric.FontSize.HeaderSubtitle);
             subtitleLabel.AddThemeColorOverride("font_color", RitsuShellTheme.Current.Text.LabelSecondary);
-            textColumn.AddChild(subtitleLabel);
+            AddChild(subtitleLabel);
             _subtitleLabel = subtitleLabel;
 
             Pressed += () =>
@@ -5318,16 +5450,12 @@ namespace STS2RitsuLib.Settings
             }
 
             CustomMinimumSize = ResolveHeaderMinSize(subtitle);
-            Callable.From(UpdateMinimumSize).CallDeferred();
+            RequestLayout();
         }
 
         public override Vector2 _GetMinimumSize()
         {
-            var baseMin = base._GetMinimumSize();
-            if (_measureFrame == null)
-                return baseMin;
-            var inner = _measureFrame.GetCombinedMinimumSize();
-            return new(baseMin.X, Mathf.Max(baseMin.Y, inner.Y));
+            return CustomMinimumSize;
         }
 
         public override void _Ready()
@@ -5337,7 +5465,30 @@ namespace STS2RitsuLib.Settings
             if (_subtitleLabel != null)
                 _subtitleLabel.Text = _subtitle ?? string.Empty;
             ApplySelectedState();
-            Callable.From(UpdateMinimumSize).CallDeferred();
+            RequestLayout();
+        }
+
+        public override void _Notification(int what)
+        {
+            base._Notification(what);
+            switch (what)
+            {
+                case (int)NotificationResized:
+                    LayoutLabels();
+                    break;
+                case (int)NotificationThemeChanged:
+                    RefreshLayoutTokens();
+                    if (_applyingSelectedState)
+                    {
+                        RequestLayout();
+                        break;
+                    }
+
+                    _visualStateApplied = false;
+                    ApplySelectedState();
+                    RequestLayout();
+                    break;
+            }
         }
 
         public void SetSelected(bool selected)
@@ -5354,10 +5505,26 @@ namespace STS2RitsuLib.Settings
 
         private void ApplySelectedState()
         {
-            AddThemeStyleboxOverride("normal", CreateHeaderStyle(_selected, false, _contentEnabled));
-            AddThemeStyleboxOverride("hover", CreateHeaderStyle(_selected, true, _contentEnabled));
-            AddThemeStyleboxOverride("pressed", CreateHeaderStyle(true, true, _contentEnabled));
-            AddThemeStyleboxOverride("focus", CreateHeaderStyle(_selected, true, _contentEnabled));
+            if (_visualStateApplied && _visualSelected == _selected && _visualContentEnabled == _contentEnabled)
+                return;
+
+            _visualSelected = _selected;
+            _visualContentEnabled = _contentEnabled;
+            _visualStateApplied = true;
+
+            _applyingSelectedState = true;
+            try
+            {
+                AddThemeStyleboxOverride("normal", CreateHeaderStyle(_selected, false, _contentEnabled));
+                AddThemeStyleboxOverride("hover", CreateHeaderStyle(_selected, true, _contentEnabled));
+                AddThemeStyleboxOverride("pressed", CreateHeaderStyle(true, true, _contentEnabled));
+                AddThemeStyleboxOverride("focus", CreateHeaderStyle(_selected, true, _contentEnabled));
+            }
+            finally
+            {
+                _applyingSelectedState = false;
+            }
+
             if (_arrowLabel != null)
                 _arrowLabel.Text = _selected ? "▼" : "▶";
 
@@ -5365,6 +5532,70 @@ namespace STS2RitsuLib.Settings
             ApplyLabelOpacity(_arrowLabel, opacity);
             ApplyLabelOpacity(_titleLabel, opacity);
             ApplyLabelOpacity(_subtitleLabel, opacity);
+            QueueRedraw();
+        }
+
+        private void RequestLayout()
+        {
+            UpdateMinimumSize();
+            LayoutLabels();
+        }
+
+        private void RefreshLayoutTokens()
+        {
+            var headerPadding = RitsuShellThemeLayoutResolver.ResolveEdges(
+                "components.collapsible.layout.header.padding", 14);
+            _headerPadding = new(
+                RitsuShellThemeLayoutResolver.ResolveInt("components.collapsible.layout.header.padding.left",
+                    headerPadding.Left),
+                RitsuShellThemeLayoutResolver.ResolveInt("components.collapsible.layout.header.padding.top", 10),
+                RitsuShellThemeLayoutResolver.ResolveInt("components.collapsible.layout.header.padding.right",
+                    headerPadding.Right),
+                RitsuShellThemeLayoutResolver.ResolveInt("components.collapsible.layout.header.padding.bottom", 10));
+            _headerSeparation = RitsuShellThemeLayoutResolver.ResolveInt(
+                "components.collapsible.layout.header.separation", 12);
+            _textSeparation = RitsuShellThemeLayoutResolver.ResolveInt(
+                "components.collapsible.layout.header.textSeparation", 2);
+        }
+
+        private void LayoutLabels()
+        {
+            if (!IsInsideTree())
+                return;
+
+            var contentX = (float)_headerPadding.Left;
+            var contentY = (float)_headerPadding.Top;
+            var contentWidth = Math.Max(0f, Size.X - _headerPadding.Left - _headerPadding.Right);
+            var contentHeight = Math.Max(0f, Size.Y - _headerPadding.Top - _headerPadding.Bottom);
+            var arrowMin = _arrowLabel?.GetCombinedMinimumSize() ?? Vector2.Zero;
+            if (_arrowLabel is { Visible: true })
+            {
+                _arrowLabel.Position = new(contentX, contentY + Math.Max(0f, (contentHeight - arrowMin.Y) * 0.5f));
+                _arrowLabel.Size = arrowMin;
+            }
+
+            var textX = contentX + arrowMin.X + _headerSeparation;
+            var textWidth = Math.Max(0f, contentX + contentWidth - textX);
+            var titleMin = _titleLabel?.GetCombinedMinimumSize() ?? Vector2.Zero;
+            var subtitleVisible = _subtitleLabel is { Visible: true };
+            var subtitleMin = subtitleVisible ? _subtitleLabel!.GetCombinedMinimumSize() : Vector2.Zero;
+            var textHeight = titleMin.Y;
+            if (subtitleVisible)
+                textHeight += _textSeparation + subtitleMin.Y;
+
+            var y = contentY + Math.Max(0f, (contentHeight - textHeight) * 0.5f);
+            if (_titleLabel is { Visible: true })
+            {
+                _titleLabel.Position = new(textX, y);
+                _titleLabel.Size = new(textWidth, titleMin.Y);
+                y += titleMin.Y;
+            }
+
+            if (!subtitleVisible)
+                return;
+            y += _textSeparation;
+            _subtitleLabel!.Position = new(textX, y);
+            _subtitleLabel.Size = new(textWidth, subtitleMin.Y);
         }
 
         private static StyleBoxFlat CreateHeaderStyle(bool selected, bool hovered, bool contentEnabled)
@@ -5434,7 +5665,7 @@ namespace STS2RitsuLib.Settings
         }
     }
 
-    internal sealed partial class ModSettingsCollapsibleSection : VBoxContainer
+    internal sealed partial class ModSettingsCollapsibleSection : Control
     {
         private readonly Control[]? _contentControls;
         private readonly string? _description;
@@ -5443,10 +5674,13 @@ namespace STS2RitsuLib.Settings
         private readonly bool _startCollapsed;
         private readonly string? _title;
         private bool _collapsed;
-        private VBoxContainer? _content;
+        private Control? _content;
         private bool _contentEnabled = true;
+        private Control? _header;
         private Action? _lazyContentBuilder;
         private bool _lazyContentBuilt;
+        private int _separation;
+        private StyleBoxFlat _surfaceStyle = ModSettingsUiFactory.CreateSurfaceStyle();
         private ModSettingsCollapsibleHeaderButton? _toggle;
 
         public ModSettingsCollapsibleSection(string title, string? sectionId, string? description, bool startCollapsed,
@@ -5459,36 +5693,20 @@ namespace STS2RitsuLib.Settings
             _contentControls = contentControls;
             _headerActions = headerActions;
             MouseFilter = MouseFilterEnum.Ignore;
-            AddThemeConstantOverride("separation",
-                RitsuShellThemeLayoutResolver.ResolveInt("components.collapsible.layout.sectionSeparation", 8));
+            SizeFlagsHorizontal = SizeFlags.ExpandFill;
+            _separation = RitsuShellThemeLayoutResolver.ResolveInt("components.collapsible.layout.cardSeparation", 8);
         }
 
         public ModSettingsCollapsibleSection()
         {
         }
 
-        internal VBoxContainer ContentHost => _content ??= CreateContentHost();
+        internal Control ContentHost => _content ??= CreateContentHost();
 
         public override void _Ready()
         {
             if (!string.IsNullOrWhiteSpace(_sectionId))
                 Name = $"Section_{_sectionId}";
-
-            var card = new PanelContainer
-            {
-                SizeFlagsHorizontal = SizeFlags.ExpandFill,
-                MouseFilter = MouseFilterEnum.Ignore,
-            };
-            card.AddThemeStyleboxOverride("panel", ModSettingsUiFactory.CreateSurfaceStyle());
-            AddChild(card);
-
-            var cardContent = new VBoxContainer
-            {
-                MouseFilter = MouseFilterEnum.Ignore,
-            };
-            cardContent.AddThemeConstantOverride("separation",
-                RitsuShellThemeLayoutResolver.ResolveInt("components.collapsible.layout.cardSeparation", 8));
-            card.AddChild(cardContent);
 
             if (_title != null)
                 _toggle = new(_title, _description, ToggleCollapsed)
@@ -5498,46 +5716,102 @@ namespace STS2RitsuLib.Settings
 
             if (_toggle != null || _headerActions != null)
             {
-                var headerRow = new HBoxContainer
+                if (_toggle != null && _headerActions == null)
                 {
-                    SizeFlagsHorizontal = SizeFlags.ExpandFill,
-                    MouseFilter = MouseFilterEnum.Ignore,
-                    Alignment = AlignmentMode.Center,
-                };
-                headerRow.AddThemeConstantOverride("separation",
-                    RitsuShellThemeLayoutResolver.ResolveInt("components.collapsible.layout.headerRowSeparation", 10));
-                if (_toggle != null)
-                {
-                    _toggle.SizeFlagsHorizontal = SizeFlags.ExpandFill;
-                    headerRow.AddChild(_toggle);
+                    _header = _toggle;
+                    AddChild(_toggle);
                 }
                 else
                 {
-                    headerRow.AddChild(new Control
+                    var headerRow = new HBoxContainer
                     {
                         SizeFlagsHorizontal = SizeFlags.ExpandFill,
                         MouseFilter = MouseFilterEnum.Ignore,
-                    });
-                }
+                        Alignment = BoxContainer.AlignmentMode.Center,
+                    };
+                    headerRow.AddThemeConstantOverride("separation",
+                        RitsuShellThemeLayoutResolver.ResolveInt("components.collapsible.layout.headerRowSeparation",
+                            10));
+                    if (_toggle != null)
+                    {
+                        _toggle.SizeFlagsHorizontal = SizeFlags.ExpandFill;
+                        headerRow.AddChild(_toggle);
+                    }
+                    else
+                    {
+                        headerRow.AddChild(new Control
+                        {
+                            SizeFlagsHorizontal = SizeFlags.ExpandFill,
+                            MouseFilter = MouseFilterEnum.Ignore,
+                        });
+                    }
 
-                if (_headerActions != null)
-                {
-                    _headerActions.SizeFlagsVertical = SizeFlags.ShrinkCenter;
-                    headerRow.AddChild(_headerActions);
-                }
+                    if (_headerActions != null)
+                    {
+                        _headerActions.SizeFlagsVertical = SizeFlags.ShrinkCenter;
+                        headerRow.AddChild(_headerActions);
+                    }
 
-                cardContent.AddChild(headerRow);
+                    _header = headerRow;
+                    AddChild(headerRow);
+                }
             }
 
             _content ??= CreateContentHost();
             if (_contentControls != null && _content.GetChildCount() == 0)
                 foreach (var control in _contentControls)
                     _content.AddChild(control);
-            cardContent.AddChild(_content);
+            AddChild(_content);
 
             _collapsed = _startCollapsed;
             ApplyCollapsedState();
             ApplyContentEnabledState();
+            RequestLayout();
+        }
+
+        public override void _Notification(int what)
+        {
+            base._Notification(what);
+            switch (what)
+            {
+                case (int)NotificationResized:
+                    LayoutChildren();
+                    break;
+                case (int)NotificationThemeChanged:
+                    _surfaceStyle = ModSettingsUiFactory.CreateSurfaceStyle();
+                    _separation = RitsuShellThemeLayoutResolver.ResolveInt(
+                        "components.collapsible.layout.cardSeparation", 8);
+                    RequestLayout();
+                    break;
+            }
+        }
+
+        public override Vector2 _GetMinimumSize()
+        {
+            var margins = GetSurfaceMargins();
+            var minWidth = 0f;
+            var minHeight = 0f;
+            var headerMin = GetVisibleMinSize(_header);
+            var contentMin = GetVisibleMinSize(_content);
+            if (headerMin.Y > 0f)
+            {
+                minWidth = Math.Max(minWidth, headerMin.X);
+                minHeight += headerMin.Y;
+            }
+
+            if (!(contentMin.Y > 0f))
+                return new(minWidth + margins.Left + margins.Right, minHeight + margins.Top + margins.Bottom);
+            if (minHeight > 0f)
+                minHeight += _separation;
+            minWidth = Math.Max(minWidth, contentMin.X);
+            minHeight += contentMin.Y;
+
+            return new(minWidth + margins.Left + margins.Right, minHeight + margins.Top + margins.Bottom);
+        }
+
+        public override void _Draw()
+        {
+            DrawStyleBox(_surfaceStyle, new(Vector2.Zero, Size));
         }
 
         private void ToggleCollapsed()
@@ -5586,8 +5860,13 @@ namespace STS2RitsuLib.Settings
         private void ApplyCollapsedState()
         {
             if (_content != null)
+            {
                 _content.Visible = !_collapsed;
+                ModSettingsUiFactory.FastVerticalStack.RequestAncestorLayouts(_content);
+            }
+
             _toggle?.SetSelected(!_collapsed);
+            RequestLayout();
         }
 
         internal void SetContentEnabled(bool enabled)
@@ -5609,12 +5888,63 @@ namespace STS2RitsuLib.Settings
             _toggle?.SetContentEnabled(_contentEnabled);
         }
 
-        private static VBoxContainer CreateContentHost()
+        private static Control CreateContentHost()
         {
-            var content = new VBoxContainer { MouseFilter = MouseFilterEnum.Ignore };
-            content.AddThemeConstantOverride("separation",
-                RitsuShellThemeLayoutResolver.ResolveInt("components.collapsible.layout.contentSeparation", 8));
-            return content;
+            return new ModSettingsUiFactory.FastVerticalStack(
+                RitsuShellThemeLayoutResolver.ResolveInt("components.collapsible.layout.contentSeparation", 8))
+            {
+                MouseFilter = MouseFilterEnum.Ignore,
+            };
+        }
+
+        private void RequestLayout()
+        {
+            UpdateMinimumSize();
+            LayoutChildren();
+            QueueRedraw();
+            ModSettingsUiFactory.FastVerticalStack.RequestAncestorLayouts(this);
+        }
+
+        private void LayoutChildren()
+        {
+            if (!IsInsideTree())
+                return;
+
+            var margins = GetSurfaceMargins();
+            var x = (float)margins.Left;
+            var y = (float)margins.Top;
+            var width = Math.Max(0f, Size.X - margins.Left - margins.Right);
+
+            if (_header is { Visible: true })
+            {
+                var headerMin = _header.GetCombinedMinimumSize();
+                _header.Position = new(x, y);
+                _header.Size = new(Math.Max(width, headerMin.X), headerMin.Y);
+                y += headerMin.Y;
+            }
+
+            if (_content is not { Visible: true })
+                return;
+
+            if (y > margins.Top)
+                y += _separation;
+            var contentMin = _content.GetCombinedMinimumSize();
+            _content.Position = new(x, y);
+            _content.Size = new(Math.Max(width, contentMin.X), contentMin.Y);
+        }
+
+        private BoxEdges GetSurfaceMargins()
+        {
+            return new(
+                Mathf.RoundToInt(_surfaceStyle.ContentMarginLeft),
+                Mathf.RoundToInt(_surfaceStyle.ContentMarginTop),
+                Mathf.RoundToInt(_surfaceStyle.ContentMarginRight),
+                Mathf.RoundToInt(_surfaceStyle.ContentMarginBottom));
+        }
+
+        private static Vector2 GetVisibleMinSize(Control? control)
+        {
+            return control is { Visible: true } ? control.GetCombinedMinimumSize() : Vector2.Zero;
         }
 
         private void EnsureExpandedSectionVisible()

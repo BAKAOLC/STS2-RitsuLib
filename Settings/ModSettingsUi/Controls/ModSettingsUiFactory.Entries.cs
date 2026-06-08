@@ -39,16 +39,15 @@ namespace STS2RitsuLib.Settings
             return MaybeWrapDynamicVisibility(context, container, page.VisibleWhen);
         }
 
-        internal static VBoxContainer CreatePageContentHost(ModSettingsPage page)
+        internal static FastVerticalStack CreatePageContentHost(ModSettingsPage page)
         {
-            var container = new VBoxContainer
+            var container = new FastVerticalStack(
+                RitsuShellThemeLayoutResolver.ResolveInt("components.page.layout.sectionSeparation", 8))
             {
                 Name = $"Page_{SanitizeName(page.ModId)}_{SanitizeName(page.Id)}",
                 SizeFlagsHorizontal = Control.SizeFlags.ExpandFill,
                 MouseFilter = Control.MouseFilterEnum.Ignore,
             };
-            container.AddThemeConstantOverride("separation",
-                RitsuShellThemeLayoutResolver.ResolveInt("components.page.layout.sectionSeparation", 8));
             return container;
         }
 
@@ -100,11 +99,15 @@ namespace STS2RitsuLib.Settings
                     var sectionPlan = builtSection;
                     builtSection.LazyContentSection.SetLazyContentBuilder(() =>
                     {
-                        foreach (var entry in section.Entries)
+                        using (FastVerticalStack.DeferLayoutRequests())
                         {
-                            var item = CreateEntryBuildItem(context, page, section, entry, sectionPlan, entryNodePool);
-                            (item.Parent ?? sectionPlan.EntryHost).AddChild(item.Control);
-                            item.AfterAdded?.Invoke(item.Control);
+                            foreach (var entry in section.Entries)
+                            {
+                                var item = CreateEntryBuildItem(context, page, section, entry, sectionPlan,
+                                    entryNodePool);
+                                (item.Parent ?? sectionPlan.EntryHost).AddChild(item.Control);
+                                item.AfterAdded?.Invoke(item.Control);
+                            }
                         }
 
                         if (page.EnabledWhen != null)

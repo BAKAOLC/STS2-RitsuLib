@@ -250,7 +250,7 @@ namespace STS2RitsuLib.Settings.Patches
 
         private static ModSettingsMirrorPrewarmSession CreatePrewarmSession(NSettingsScreen _)
         {
-            return ModSettingsMirrorRegistrarBootstrap.CreatePrewarmSession();
+            return ModSettingsMirrorRegistrarBootstrap.GetOrCreateBackgroundPrewarmSession();
         }
 
         private static MarginContainer EnsureEntryPoint(NSettingsScreen screen)

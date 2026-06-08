@@ -2,7 +2,10 @@ namespace STS2RitsuLib.Settings
 {
     internal static class ModSettingsMirrorRegistrarBootstrap
     {
+        private static readonly Lock BackgroundPrewarmLock = new();
+
         private static volatile bool _backgroundPrewarmComplete;
+        private static ModSettingsMirrorPrewarmSession? _backgroundPrewarmSession;
 
         public static bool IsBackgroundPrewarmComplete => _backgroundPrewarmComplete;
 
@@ -31,6 +34,14 @@ namespace STS2RitsuLib.Settings
                 new BackgroundPrewarmWork(RuntimeReflectionMirrorSource.TryRegisterMirroredPages),
                 new BackgroundPrewarmWork(() => BaseLibToRitsuGeneratedMirrorSource.TryRegisterMirroredPages()),
             ]);
+        }
+
+        public static ModSettingsMirrorPrewarmSession GetOrCreateBackgroundPrewarmSession()
+        {
+            lock (BackgroundPrewarmLock)
+            {
+                return _backgroundPrewarmSession ??= CreatePrewarmSession();
+            }
         }
 
         private sealed class BackgroundPrewarmWork(Func<int> register) : IModSettingsMirrorPrewarmWork
@@ -109,29 +120,57 @@ namespace STS2RitsuLib.Settings
 
     internal sealed class ModSettingsMirrorPrewarmSession(IReadOnlyList<IModSettingsMirrorPrewarmWork> workItems)
     {
+        private readonly Lock _sync = new();
+        private int _added;
         private int _workIndex;
 
-        public int Added { get; private set; }
+        public int Added
+        {
+            get
+            {
+                lock (_sync)
+                {
+                    return _added;
+                }
+            }
+        }
 
-        public bool IsComplete => _workIndex >= workItems.Count;
+        public bool IsComplete
+        {
+            get
+            {
+                lock (_sync)
+                {
+                    return IsCompleteLocked();
+                }
+            }
+        }
 
         public bool Resume()
         {
-            if (IsComplete)
-                return true;
-
-            while (_workIndex < workItems.Count)
+            lock (_sync)
             {
-                var work = workItems[_workIndex];
-                Added += work.Resume();
-                if (!work.IsComplete)
-                    return false;
+                if (IsCompleteLocked())
+                    return true;
 
-                _workIndex++;
+                while (_workIndex < workItems.Count)
+                {
+                    var work = workItems[_workIndex];
+                    _added += work.Resume();
+                    if (!work.IsComplete)
+                        return false;
+
+                    _workIndex++;
+                }
+
+                ModSettingsMirrorRegistrarBootstrap.MarkBackgroundPrewarmComplete();
+                return true;
             }
+        }
 
-            ModSettingsMirrorRegistrarBootstrap.MarkBackgroundPrewarmComplete();
-            return true;
+        private bool IsCompleteLocked()
+        {
+            return _workIndex >= workItems.Count;
         }
     }
 }
