@@ -1,5 +1,4 @@
-using MegaCrit.Sts2.Core.Entities.Cards;
-using MegaCrit.Sts2.Core.Entities.Creatures;
+using HarmonyLib;
 using MegaCrit.Sts2.Core.Models;
 using STS2RitsuLib.Keywords;
 using STS2RitsuLib.Patching.Models;
@@ -19,14 +18,10 @@ namespace STS2RitsuLib.Cards.Patches
 
         public static ModPatchTarget[] GetTargets()
         {
-            return
-            [
-                new(typeof(CardModel), nameof(CardModel.GetDescriptionForPile),
-                    [typeof(PileType), typeof(Creature)]),
-                new(typeof(CardModel), nameof(CardModel.GetDescriptionForUpgradePreview), Type.EmptyTypes),
-            ];
+            return [CardDescriptionPatchTarget.Create()];
         }
 
+        [HarmonyPriority(Priority.Last)]
         public static void Postfix(CardModel __instance, ref string __result)
         {
             ModKeywordCardDescriptionInjector.AppendFragments(__instance, ref __result);

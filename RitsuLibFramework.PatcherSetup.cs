@@ -380,8 +380,7 @@ namespace STS2RitsuLib
             patcher.RegisterPatch<CardModelCapabilityPatches.FinalizeUpgradeInternalPatch>();
             patcher.RegisterPatch<CardModelCapabilityPatches.DowngradeInternalPatch>();
             patcher.RegisterPatch<CardModelCapabilityPatches.TransformPatch>();
-            patcher.RegisterPatch<CardModelCapabilityPatches.DescriptionForPilePatch>();
-            patcher.RegisterPatch<CardModelCapabilityPatches.DescriptionForUpgradePreviewPatch>();
+            patcher.RegisterPatch<CardModelCapabilityPatches.DescriptionPatch>();
             patcher.RegisterPatch<CardModelCapabilityPatches.HoverTipsPatch>();
             patcher.RegisterPatch<CardModelCapabilityPatches.ShouldGlowGoldPatch>();
             patcher.RegisterPatch<CardModelCapabilityPatches.ShouldGlowRedPatch>();
