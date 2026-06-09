@@ -166,14 +166,6 @@ namespace STS2RitsuLib.Settings
             private readonly BoxEdges _lineMargins;
             private Control? _actionControl;
             private MegaRichTextLabel? _descriptionLabel;
-            private Vector2 _drawnDescriptionMinSize;
-            private Rect2 _drawnDescriptionRect;
-            private string _drawnDescriptionText = string.Empty;
-            private Vector2 _drawnLabelMinSize;
-            private Rect2 _drawnLabelRect;
-            private string _drawnLabelText = string.Empty;
-            private bool _drawsDescriptionText;
-            private bool _drawsLabelText;
             private MegaRichTextLabel? _label;
             private int _layoutDeferDepth;
             private bool _layoutDirty;
@@ -196,6 +188,11 @@ namespace STS2RitsuLib.Settings
                         lineMargins.Right),
                     RitsuShellThemeLayoutResolver.ResolveInt("components.entryLine.layout.margin.bottom", 4));
                 _surfaceStyle = CreateEntrySurfaceStyle();
+
+                _label = CreateHeaderLabel(string.Empty, RitsuShellTheme.Current.Metric.FontSize.SettingLineTitle,
+                    HorizontalAlignment.Left, null, RitsuShellTheme.Current.Text.RichTitle);
+                _label.SizeFlagsHorizontal = SizeFlags.ExpandFill;
+                AddChild(_label);
 
                 _valueControl = valueControl;
                 if (_valueControl == null) return;
@@ -298,7 +295,6 @@ namespace STS2RitsuLib.Settings
                 if (what != (int)NotificationThemeChanged)
                     return;
                 _surfaceStyle = CreateEntrySurfaceStyle();
-                RefreshDrawnTextMetrics();
                 RequestLayout();
             }
 
@@ -325,11 +321,6 @@ namespace STS2RitsuLib.Settings
             public override void _Draw()
             {
                 DrawStyleBox(_surfaceStyle, GetSurfaceRect());
-                DrawPlainText(_drawnLabelText, _drawnLabelRect, RitsuShellTheme.Current.Font.Body,
-                    RitsuShellTheme.Current.Metric.FontSize.SettingLineTitle,
-                    RitsuShellTheme.Current.Text.RichTitle);
-                DrawPlainText(_drawnDescriptionText, _drawnDescriptionRect, RitsuShellTheme.Current.Font.Body, 16,
-                    RitsuShellTheme.Current.Text.RichSecondary);
             }
 
             protected void ReplaceValueControl(Control? next)
@@ -385,23 +376,9 @@ namespace STS2RitsuLib.Settings
                 var displayText = string.IsNullOrWhiteSpace(text)
                     ? ModSettingsLocalization.Get("entry.label.empty", "-")
                     : text;
-                if (CanDrawPlainText(displayText, false))
-                {
-                    RemoveRichLabel(ref _label);
-                    _drawsLabelText = true;
-                    _drawnLabelText = displayText;
-                    _drawnLabelMinSize = MeasurePlainText(displayText, RitsuShellTheme.Current.Font.Body,
-                        RitsuShellTheme.Current.Metric.FontSize.SettingLineTitle);
-                }
-                else
-                {
-                    _drawsLabelText = false;
-                    _drawnLabelText = string.Empty;
-                    _drawnLabelMinSize = Vector2.Zero;
-                    var label = EnsureRichLabel();
-                    label.SetTextAutoSize(displayText);
-                    label.Visible = true;
-                }
+                var label = EnsureRichLabel();
+                label.SetTextAutoSize(displayText);
+                label.Visible = true;
 
                 RequestLayout();
             }
@@ -410,31 +387,19 @@ namespace STS2RitsuLib.Settings
             {
                 if (string.IsNullOrWhiteSpace(text))
                 {
-                    RemoveRichLabel(ref _descriptionLabel);
-                    _drawsDescriptionText = false;
-                    _drawnDescriptionText = string.Empty;
-                    _drawnDescriptionMinSize = Vector2.Zero;
+                    if (_descriptionLabel != null)
+                    {
+                        _descriptionLabel.SetTextAutoSize(string.Empty);
+                        _descriptionLabel.Visible = false;
+                    }
 
                     RequestLayout();
                     return;
                 }
 
-                if (CanDrawPlainText(text, true))
-                {
-                    RemoveRichLabel(ref _descriptionLabel);
-                    _drawsDescriptionText = true;
-                    _drawnDescriptionText = text;
-                    _drawnDescriptionMinSize = MeasurePlainText(text, RitsuShellTheme.Current.Font.Body, 16);
-                }
-                else
-                {
-                    _drawsDescriptionText = false;
-                    _drawnDescriptionText = string.Empty;
-                    _drawnDescriptionMinSize = Vector2.Zero;
-                    var descriptionLabel = EnsureRichDescriptionLabel();
-                    descriptionLabel.SetTextAutoSize(text);
-                    descriptionLabel.Visible = true;
-                }
+                var descriptionLabel = EnsureRichDescriptionLabel();
+                descriptionLabel.SetTextAutoSize(text);
+                descriptionLabel.Visible = true;
 
                 RequestLayout();
             }
@@ -461,21 +426,6 @@ namespace STS2RitsuLib.Settings
                 return _descriptionLabel;
             }
 
-            private void RemoveRichLabel(ref MegaRichTextLabel? label)
-            {
-                if (label == null)
-                    return;
-
-                if (IsInstanceValid(label))
-                {
-                    if (label.GetParent() == this)
-                        RemoveChild(label);
-                    label.QueueFree();
-                }
-
-                label = null;
-            }
-
             private void RequestLayout()
             {
                 if (_layoutDeferDepth > 0)
@@ -488,16 +438,6 @@ namespace STS2RitsuLib.Settings
                 LayoutChildren();
                 QueueRedraw();
                 FastVerticalStack.RequestAncestorLayouts(this);
-            }
-
-            private void RefreshDrawnTextMetrics()
-            {
-                if (_drawsLabelText)
-                    _drawnLabelMinSize = MeasurePlainText(_drawnLabelText, RitsuShellTheme.Current.Font.Body,
-                        RitsuShellTheme.Current.Metric.FontSize.SettingLineTitle);
-                if (_drawsDescriptionText)
-                    _drawnDescriptionMinSize = MeasurePlainText(_drawnDescriptionText,
-                        RitsuShellTheme.Current.Font.Body, 16);
             }
 
             private IDisposable DeferLineLayoutRequests()
@@ -542,30 +482,14 @@ namespace STS2RitsuLib.Settings
                     textHeight += columnSeparation + descriptionMin.Y;
                 var y = content.Position.Y + Math.Max(0f, (content.Size.Y - textHeight) * 0.5f);
 
-                if (_drawsLabelText)
+                if (_label is { Visible: true })
                 {
-                    _drawnLabelRect = new(content.Position.X, y, textWidth, labelMin.Y);
+                    _label.Position = new(content.Position.X, y);
+                    _label.Size = new(textWidth, labelMin.Y);
                     y += labelMin.Y;
-                }
-                else
-                {
-                    _drawnLabelRect = default;
-                    if (_label is { Visible: true })
-                    {
-                        _label.Position = new(content.Position.X, y);
-                        _label.Size = new(textWidth, labelMin.Y);
-                        y += labelMin.Y;
-                    }
                 }
 
                 y += columnSeparation;
-                if (_drawsDescriptionText)
-                {
-                    _drawnDescriptionRect = new(content.Position.X, y, textWidth, descriptionMin.Y);
-                    return;
-                }
-
-                _drawnDescriptionRect = default;
                 if (_descriptionLabel is not { Visible: true }) return;
                 _descriptionLabel.Position = new(content.Position.X, y);
                 _descriptionLabel.Size = new(textWidth, descriptionMin.Y);
@@ -612,41 +536,12 @@ namespace STS2RitsuLib.Settings
 
             private Vector2 GetLabelMinSize()
             {
-                return _drawsLabelText ? _drawnLabelMinSize : GetVisibleMinSize(_label);
+                return GetVisibleMinSize(_label);
             }
 
             private Vector2 GetDescriptionMinSize()
             {
-                return _drawsDescriptionText ? _drawnDescriptionMinSize : GetVisibleMinSize(_descriptionLabel);
-            }
-
-            private static bool CanDrawPlainText(string text, bool description)
-            {
-                if (string.IsNullOrWhiteSpace(text))
-                    return false;
-                if (text.Contains('[') || text.Contains("<c>", StringComparison.OrdinalIgnoreCase) ||
-                    text.Contains("</c>", StringComparison.OrdinalIgnoreCase))
-                    return false;
-                if (text.Contains('\n') || text.Contains('\r'))
-                    return false;
-                return !description || text.Length <= 96;
-            }
-
-            private static Vector2 MeasurePlainText(string text, Font font, int fontSize)
-            {
-                var size = font.GetStringSize(text, HorizontalAlignment.Left, -1f, fontSize);
-                return new(size.X, Math.Max(size.Y, font.GetHeight(fontSize)));
-            }
-
-            private void DrawPlainText(string text, Rect2 rect, Font font, int fontSize, Color color)
-            {
-                if (string.IsNullOrEmpty(text) || rect.Size.X <= 0f || rect.Size.Y <= 0f)
-                    return;
-
-                var baseline = rect.Position + new Vector2(0f,
-                    Math.Max(0f, (rect.Size.Y - font.GetHeight(fontSize)) * 0.5f) + font.GetAscent(fontSize));
-                font.DrawString(GetCanvasItem(), baseline, text, HorizontalAlignment.Left, rect.Size.X, fontSize,
-                    color);
+                return GetVisibleMinSize(_descriptionLabel);
             }
 
             private static Vector2 GetVisibleMinSize(Control? control)
