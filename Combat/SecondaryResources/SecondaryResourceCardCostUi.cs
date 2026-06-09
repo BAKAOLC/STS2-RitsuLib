@@ -113,6 +113,7 @@ namespace STS2RitsuLib.Combat.SecondaryResources
         private string? _resourceId;
         private SecondaryResourceCardCostUiStyle _style = SecondaryResourceCardCostUiStyle.Default;
         private TextureRect _texture = null!;
+        private string? _useId;
 
         /// <summary>
         ///     Whether this node refreshes the bound card's resolved payment plan every frame.
@@ -149,6 +150,36 @@ namespace STS2RitsuLib.Combat.SecondaryResources
         }
 
         /// <summary>
+        ///     Creates and configures a card-cost display node for one play-use id.
+        ///     为一个出牌条款 id 创建并配置卡牌费用显示节点。
+        /// </summary>
+        public static NSecondaryResourceCardCostUi CreateForUse(
+            string useId,
+            string resourceId,
+            SecondaryResourceCardCostUiStyle? style = null)
+        {
+            var node = new NSecondaryResourceCardCostUi();
+            node.Configure(style);
+            node.BindUse(useId, resourceId);
+            return node;
+        }
+
+        /// <summary>
+        ///     Creates and configures a card-cost display node for one play-use id.
+        ///     为一个出牌条款 id 创建并配置卡牌费用显示节点。
+        /// </summary>
+        public static NSecondaryResourceCardCostUi CreateForUse(
+            string useId,
+            SecondaryResourceDefinition definition,
+            SecondaryResourceCardCostUiStyle? style = null)
+        {
+            var node = new NSecondaryResourceCardCostUi();
+            node.Configure(style);
+            node.BindUse(useId, definition);
+            return node;
+        }
+
+        /// <summary>
         ///     Configures the visual style.
         ///     配置视觉样式。
         /// </summary>
@@ -179,6 +210,7 @@ namespace STS2RitsuLib.Combat.SecondaryResources
         public void Bind(string resourceId)
         {
             ArgumentException.ThrowIfNullOrWhiteSpace(resourceId);
+            _useId = null;
             _resourceId = resourceId.Trim();
 
             if (ModSecondaryResourceRegistry.TryGet(_resourceId, out var definition))
@@ -194,6 +226,44 @@ namespace STS2RitsuLib.Combat.SecondaryResources
         public void Bind(SecondaryResourceDefinition definition)
         {
             ArgumentNullException.ThrowIfNull(definition);
+            _useId = null;
+            _resourceId = definition.Id;
+            _definition = definition;
+
+            if (!IsNodeReady())
+                return;
+
+            ApplyDefinition();
+        }
+
+        /// <summary>
+        ///     Binds this node to one play-use id and its resource id.
+        ///     将该节点绑定到一个出牌条款 id 及其资源 id。
+        /// </summary>
+        public void BindUse(string useId, string resourceId)
+        {
+            ArgumentException.ThrowIfNullOrWhiteSpace(useId);
+            ArgumentException.ThrowIfNullOrWhiteSpace(resourceId);
+
+            _useId = useId.Trim();
+            _resourceId = resourceId.Trim();
+
+            if (ModSecondaryResourceRegistry.TryGet(_resourceId, out var definition))
+                BindUse(_useId, definition);
+            else if (IsNodeReady())
+                Visible = false;
+        }
+
+        /// <summary>
+        ///     Binds this node to one play-use id and resource definition.
+        ///     将该节点绑定到一个出牌条款 id 及其资源定义。
+        /// </summary>
+        public void BindUse(string useId, SecondaryResourceDefinition definition)
+        {
+            ArgumentException.ThrowIfNullOrWhiteSpace(useId);
+            ArgumentNullException.ThrowIfNull(definition);
+
+            _useId = useId.Trim();
             _resourceId = definition.Id;
             _definition = definition;
 
@@ -246,8 +316,7 @@ namespace STS2RitsuLib.Combat.SecondaryResources
                     ApplyDefinition();
             }
 
-            var line = plan.Lines.FirstOrDefault(line =>
-                string.Equals(line.ResourceId, _resourceId, StringComparison.OrdinalIgnoreCase));
+            var line = FindLine(plan);
             if (line == null)
             {
                 Visible = false;
@@ -275,9 +344,9 @@ namespace STS2RitsuLib.Combat.SecondaryResources
             Visible = true;
             _label.SetTextAutoSize(_style.Format(line));
             _label.AddThemeColorOverride(ThemeConstants.Label.FontColor,
-                line.IsAffordable ? _style.AffordableColor : _style.UnaffordableColor);
+                line.CanPlay ? _style.AffordableColor : _style.UnaffordableColor);
             _label.AddThemeColorOverride(ThemeConstants.Label.FontOutlineColor,
-                line.IsAffordable ? _style.AffordableOutlineColor : _style.UnaffordableOutlineColor);
+                line.CanPlay ? _style.AffordableOutlineColor : _style.UnaffordableOutlineColor);
         }
 
         /// <inheritdoc />
@@ -347,6 +416,16 @@ namespace STS2RitsuLib.Combat.SecondaryResources
 
             var path = _definition.SmallIconPath ?? _definition.LargeIconPath;
             _texture.Texture = string.IsNullOrWhiteSpace(path) ? null : ResourceLoader.Load<Texture2D>(path);
+        }
+
+        private SecondaryResourcePaymentLine? FindLine(SecondaryResourcePaymentPlan plan)
+        {
+            if (!string.IsNullOrWhiteSpace(_useId))
+                return plan.Lines.FirstOrDefault(line =>
+                    string.Equals(line.UseId, _useId, StringComparison.OrdinalIgnoreCase));
+
+            return plan.Lines.FirstOrDefault(line =>
+                string.Equals(line.ResourceId, _resourceId, StringComparison.OrdinalIgnoreCase));
         }
 
         private void ApplyLabelTheme()

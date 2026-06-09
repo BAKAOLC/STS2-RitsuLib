@@ -16,10 +16,16 @@ namespace STS2RitsuLib.Combat.SecondaryResources
         IReadOnlyDictionary<string, SecondaryResourcePlayLedgerLine> Lines)
     {
         /// <summary>
+        ///     Play-use lines keyed by stable use id.
+        ///     按稳定条款 id 索引的出牌条款明细。
+        /// </summary>
+        public IReadOnlyDictionary<string, SecondaryResourcePlayLedgerLine> UseLines { get; init; } = Lines;
+
+        /// <summary>
         ///     True when at least one resource line exists.
         ///     至少存在一个资源行时为 true。
         /// </summary>
-        public bool HasLines => Lines.Count > 0;
+        public bool HasLines => Lines.Count > 0 || UseLines.Count > 0;
 
         /// <summary>
         ///     Empty ledger with no lines.
@@ -42,6 +48,16 @@ namespace STS2RitsuLib.Combat.SecondaryResources
         }
 
         /// <summary>
+        ///     Returns the amount spent for a play-use id.
+        ///     返回某个出牌条款 id 的消耗数量。
+        /// </summary>
+        public int SpentByUse(string useId)
+        {
+            ArgumentException.ThrowIfNullOrWhiteSpace(useId);
+            return UseLines.TryGetValue(useId.Trim(), out var line) ? line.AmountSpent : 0;
+        }
+
+        /// <summary>
         ///     Returns the value captured for a resource.
         ///     返回某个资源捕获到的数值。
         /// </summary>
@@ -52,6 +68,16 @@ namespace STS2RitsuLib.Combat.SecondaryResources
         }
 
         /// <summary>
+        ///     Returns the value captured for a play-use id.
+        ///     返回某个出牌条款 id 捕获到的数值。
+        /// </summary>
+        public int ValueByUse(string useId)
+        {
+            ArgumentException.ThrowIfNullOrWhiteSpace(useId);
+            return UseLines.TryGetValue(useId.Trim(), out var line) ? line.Value : 0;
+        }
+
+        /// <summary>
         ///     Returns whether a resource was captured as X.
         ///     返回某个资源是否按 X 值捕获。
         /// </summary>
@@ -59,6 +85,26 @@ namespace STS2RitsuLib.Combat.SecondaryResources
         {
             ArgumentException.ThrowIfNullOrWhiteSpace(resourceId);
             return Lines.TryGetValue(resourceId.Trim(), out var line) && line.CostsX;
+        }
+
+        /// <summary>
+        ///     Returns whether a play-use line was activated for this play.
+        ///     返回某个出牌条款行是否在本次出牌中激活。
+        /// </summary>
+        public bool Activated(string useId)
+        {
+            ArgumentException.ThrowIfNullOrWhiteSpace(useId);
+            return UseLines.TryGetValue(useId.Trim(), out var line) && line.Activated;
+        }
+
+        /// <summary>
+        ///     Attempts to get a play-use line by use id.
+        ///     尝试按条款 id 获取出牌条款行。
+        /// </summary>
+        public bool TryGetUseLine(string useId, out SecondaryResourcePlayLedgerLine line)
+        {
+            ArgumentException.ThrowIfNullOrWhiteSpace(useId);
+            return UseLines.TryGetValue(useId.Trim(), out line!);
         }
     }
 
@@ -71,33 +117,92 @@ namespace STS2RitsuLib.Combat.SecondaryResources
         int AmountSpent,
         int Value,
         bool CostsX,
-        bool IsFree);
+        bool IsFree)
+    {
+        /// <summary>
+        ///     Stable play-use id for this line.
+        ///     该行的稳定出牌条款 id。
+        /// </summary>
+        public string UseId { get; init; } = ResourceId;
+
+        /// <summary>
+        ///     Semantic role for this line.
+        ///     该行的语义角色。
+        /// </summary>
+        public SecondaryResourceUseKind Kind { get; init; } = SecondaryResourceUseKind.RequiredCost;
+
+        /// <summary>
+        ///     True when this line was active for the play.
+        ///     该行已在本次出牌中激活。
+        /// </summary>
+        public bool Activated { get; init; } = IsFree || AmountSpent > 0 || Value > 0;
+
+        /// <summary>
+        ///     True when this line came from an optional spend.
+        ///     该行来自可选支付时为 true。
+        /// </summary>
+        public bool IsOptional => Kind == SecondaryResourceUseKind.OptionalSpend;
+    }
 
     internal sealed class SecondaryResourcePlayLedgerBuilder(
         CardModel card,
         Player? player,
         bool isFree)
     {
-        private readonly Dictionary<string, SecondaryResourcePlayLedgerLine> _lines =
+        private readonly Dictionary<string, SecondaryResourcePlayLedgerLine> _useLines =
             new(StringComparer.OrdinalIgnoreCase);
 
         public void Add(SecondaryResourcePaymentLine line)
         {
-            _lines[line.ResourceId] = new(
+            _useLines[line.UseId] = new(
                 line.ResourceId,
                 line.IsFree ? 0 : line.AmountToSpend,
                 line.Value,
                 line.CostsX,
-                line.IsFree);
+                line.IsFree)
+            {
+                UseId = line.UseId,
+                Kind = line.Kind,
+                Activated = line.Activated,
+            };
         }
 
         public SecondaryResourcePlayLedger Build()
         {
+            var useLines = _useLines
+                .OrderBy(static pair => pair.Key, StringComparer.Ordinal)
+                .ToDictionary(static pair => pair.Key, static pair => pair.Value,
+                    StringComparer.OrdinalIgnoreCase);
+
+            var resourceLines = useLines.Values
+                .GroupBy(static line => line.ResourceId, StringComparer.OrdinalIgnoreCase)
+                .OrderBy(static group => group.Key, StringComparer.Ordinal)
+                .ToDictionary(
+                    static group => group.Key,
+                    static group =>
+                    {
+                        var lines = group.ToArray();
+                        return new SecondaryResourcePlayLedgerLine(
+                            group.Key,
+                            lines.Sum(static line => line.AmountSpent),
+                            lines.Sum(static line => line.Value),
+                            lines.Any(static line => line.CostsX),
+                            lines.All(static line => line.IsFree))
+                        {
+                            UseId = group.Key,
+                            Kind = lines.Any(static line => line.Kind == SecondaryResourceUseKind.RequiredCost)
+                                ? SecondaryResourceUseKind.RequiredCost
+                                : SecondaryResourceUseKind.OptionalSpend,
+                            Activated = lines.Any(static line => line.Activated),
+                        };
+                    },
+                    StringComparer.OrdinalIgnoreCase);
+
             return new(card, player, isFree,
-                _lines
-                    .OrderBy(static pair => pair.Key, StringComparer.Ordinal)
-                    .ToDictionary(static pair => pair.Key, static pair => pair.Value,
-                        StringComparer.OrdinalIgnoreCase));
+                resourceLines)
+            {
+                UseLines = useLines,
+            };
         }
     }
 

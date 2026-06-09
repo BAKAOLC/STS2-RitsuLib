@@ -85,10 +85,12 @@ namespace STS2RitsuLib.Combat.SecondaryResources
             if (!ModSecondaryResourceRegistry.HasAny)
                 return [];
 
-            var linesByResource = plan.Lines.ToDictionary(
-                static line => line.ResourceId,
-                static line => line,
-                StringComparer.OrdinalIgnoreCase);
+            var linesByResource = plan.Lines
+                .GroupBy(static line => line.ResourceId, StringComparer.OrdinalIgnoreCase)
+                .ToDictionary(
+                    static group => group.Key,
+                    static group => group.First(),
+                    StringComparer.OrdinalIgnoreCase);
 
             return ModSecondaryResourceRegistry.GetDefinitionsSnapshot()
                 .Where(definition =>

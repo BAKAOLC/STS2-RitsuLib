@@ -169,6 +169,35 @@ Use `SecondaryResourceCostDuration` to scope temporary modifiers:
 
 When the player cannot pay all material secondary costs, `CanPlay` fails automatically.
 
+For optional "kicker" style payments, use card play uses instead of hard costs:
+
+```csharp
+card.SecondaryResourceUses()
+    .SpendIfAvailable("bonus_charge", charge.Id, 2);
+```
+
+Optional spends never block `CanPlay`. If enough resource remains after required costs, RitsuLib spends it during
+`SpendResources` and records the line as activated on the play ledger:
+
+```csharp
+var ledger = cardPlay.SecondaryResources();
+if (ledger.Activated("bonus_charge"))
+{
+    // extra effect
+}
+```
+
+You can also declare required costs through the same use set when one card needs multiple named lines:
+
+```csharp
+card.SecondaryResourceUses()
+    .Require("entry_fee", charge.Id, 1)
+    .SpendIfAvailable("bonus_charge", charge.Id, 2);
+```
+
+Required uses reserve resource before optional spends, so optional lines cannot consume resource needed by hard costs.
+Existing `SecondaryCosts()` entries are treated as unnamed required uses keyed by resource id for compatibility.
+
 :::
 
 ## 附加卡牌费用{lang="zh-CN"}
@@ -196,6 +225,35 @@ card.SecondaryCosts()
 | `ThisCombat` | 卡牌对象离开战斗时 |
 
 玩家无法支付全部有效次级费用时，`CanPlay` 会自动失败。
+
+对于类似 kicker 的“可选支付并触发额外效果”，使用出牌条款，而不是硬费用：
+
+```csharp
+card.SecondaryResourceUses()
+    .SpendIfAvailable("bonus_charge", charge.Id, 2);
+```
+
+可选支付永远不会阻止 `CanPlay`。如果在必需费用预留后仍有足够资源，RitsuLib 会在 `SpendResources` 阶段消耗它，
+并在本次出牌的 ledger 上把该条款标记为已激活：
+
+```csharp
+var ledger = cardPlay.SecondaryResources();
+if (ledger.Activated("bonus_charge"))
+{
+    // 额外效果
+}
+```
+
+如果一张牌需要多个具名行，也可以通过同一个 use set 声明必需费用：
+
+```csharp
+card.SecondaryResourceUses()
+    .Require("entry_fee", charge.Id, 1)
+    .SpendIfAvailable("bonus_charge", charge.Id, 2);
+```
+
+必需条款会先预留资源，然后再判断可选支付，所以可选行不会抢走硬费用所需的资源。为了兼容旧代码，已有
+`SecondaryCosts()` 条目会被视为以 resource id 为 key 的未具名必需条款。
 
 :::
 

@@ -225,7 +225,7 @@ namespace STS2RitsuLib.Combat.SecondaryResources
     ///     Extension helpers for card-attached secondary costs.
     ///     卡牌附加次级费用的扩展辅助工具。
     /// </summary>
-    public static class SecondaryResourceCardExtensions
+    public static partial class SecondaryResourceCardExtensions
     {
         private static readonly AttachedState<CardModel, SecondaryResourceCostSet> CostSets = new(() => new());
 
@@ -255,8 +255,9 @@ namespace STS2RitsuLib.Combat.SecondaryResources
         /// </summary>
         public static bool ClearSecondaryCostsUntilPlayed(this CardModel card)
         {
-            return card.TryGetSecondaryCosts(out var costs) &&
-                   costs.ClearDuration(SecondaryResourceCostDuration.UntilPlayed);
+            var changed = card.TryGetSecondaryCosts(out var costs) &&
+                          costs.ClearDuration(SecondaryResourceCostDuration.UntilPlayed);
+            return card.ClearSecondaryResourceUsesUntilPlayed() || changed;
         }
 
         /// <summary>
@@ -265,15 +266,14 @@ namespace STS2RitsuLib.Combat.SecondaryResources
         /// </summary>
         public static bool ClearSecondaryCostsThisTurn(this CardModel card)
         {
-            return card.TryGetSecondaryCosts(out var costs) &&
-                   costs.ClearDuration(SecondaryResourceCostDuration.ThisTurn);
+            var changed = card.TryGetSecondaryCosts(out var costs) &&
+                          costs.ClearDuration(SecondaryResourceCostDuration.ThisTurn);
+            return card.ClearSecondaryResourceUsesThisTurn() || changed;
         }
 
         internal static bool HasMaterialSecondaryCosts(this CardModel card)
         {
-            return ModSecondaryResourceRegistry.HasAny &&
-                   card.TryGetSecondaryCosts(out var costs) &&
-                   costs.HasCosts;
+            return card.HasMaterialSecondaryResourceWork();
         }
 
         internal static bool CopySecondaryCostsTo(this CardModel source, CardModel destination)
@@ -306,6 +306,7 @@ namespace STS2RitsuLib.Combat.SecondaryResources
         private static void CopySecondaryCosts(CardModel prototype, CardModel clone)
         {
             prototype.CopySecondaryCostsTo(clone);
+            prototype.CopySecondaryResourceUsesTo(clone);
         }
     }
 
@@ -331,7 +332,43 @@ namespace STS2RitsuLib.Combat.SecondaryResources
         ///     True when the player has enough resource for this line.
         ///     玩家拥有足够资源支付该行时为 true。
         /// </summary>
-        public bool IsAffordable => IsPreview || IsFree || AmountAvailable >= AmountToSpend;
+        public bool IsAffordable => IsPreview || IsFree || AmountAvailable >= Cost;
+
+        /// <summary>
+        ///     True when this line cannot block card play.
+        ///     该行不会阻止卡牌打出时为 true。
+        /// </summary>
+        public bool IsOptional => !BlocksPlay;
+
+        /// <summary>
+        ///     True when this line allows the card play to proceed.
+        ///     该行允许卡牌继续打出时为 true。
+        /// </summary>
+        public bool CanPlay => !BlocksPlay || IsAffordable;
+
+        /// <summary>
+        ///     Stable play-use id for this line.
+        ///     该行的稳定出牌条款 id。
+        /// </summary>
+        public string UseId { get; init; } = ResourceId;
+
+        /// <summary>
+        ///     Semantic role for this line.
+        ///     该行的语义角色。
+        /// </summary>
+        public SecondaryResourceUseKind Kind { get; init; } = SecondaryResourceUseKind.RequiredCost;
+
+        /// <summary>
+        ///     True when this line can block card play if it cannot be paid.
+        ///     该行无法支付时会阻止卡牌打出。
+        /// </summary>
+        public bool BlocksPlay { get; init; } = true;
+
+        /// <summary>
+        ///     True when this line is active for the current play plan.
+        ///     该行在当前出牌计划中已激活。
+        /// </summary>
+        public bool Activated { get; init; }
 
         /// <summary>
         ///     True when the line was resolved without a player/combat owner and is only suitable for display.
@@ -354,7 +391,7 @@ namespace STS2RitsuLib.Combat.SecondaryResources
         ///     True when every line can be paid.
         ///     每一行都可支付时为 true。
         /// </summary>
-        public bool IsAffordable => Lines.All(static line => line.IsAffordable);
+        public bool IsAffordable => Lines.All(static line => line.CanPlay);
 
         /// <summary>
         ///     True when at least one resource line exists.
@@ -393,24 +430,36 @@ namespace STS2RitsuLib.Combat.SecondaryResources
             ArgumentNullException.ThrowIfNull(card);
 
             var player = card.Owner;
-            if (!ModSecondaryResourceRegistry.HasAny ||
-                !card.TryGetSecondaryCosts(out var costs))
+            if (!ModSecondaryResourceRegistry.HasAny)
+                return SecondaryResourcePaymentPlan.Empty(card, player, isFree);
+
+            var uses = SnapshotUses(card);
+            if (uses.Count == 0)
                 return SecondaryResourcePaymentPlan.Empty(card, player, isFree);
 
             if (player == null)
-                return PlanPreview(card, costs, isFree);
+                return PlanPreview(card, uses, isFree);
 
             var combatState = card.CombatState ?? player.Creature?.CombatState;
             if (combatState == null)
-                return PlanPreview(card, costs, isFree);
+                return PlanPreview(card, uses, isFree);
 
             var lines = new List<SecondaryResourcePaymentLine>();
-            foreach (var pair in costs.Snapshot())
+            var remainingByResource = new Dictionary<string, int>(StringComparer.OrdinalIgnoreCase);
+            foreach (var use in uses)
             {
-                if (!ModSecondaryResourceRegistry.TryGet(pair.Key, out var definition))
+                if (!ModSecondaryResourceRegistry.TryGet(use.ResourceId, out var definition))
                     continue;
 
-                lines.Add(ResolveLine(combatState, player, card, definition, pair.Value, isFree));
+                if (!remainingByResource.TryGetValue(definition.Id, out var available))
+                {
+                    available = SecondaryResourceCmd.Get(player, definition.Id);
+                    remainingByResource[definition.Id] = available;
+                }
+
+                var line = ResolveLine(combatState, player, card, definition, use, available, isFree);
+                lines.Add(line);
+                remainingByResource[definition.Id] = Math.Max(0, available - line.AmountToSpend);
             }
 
             return new(card, player, isFree, lines);
@@ -480,25 +529,48 @@ namespace STS2RitsuLib.Combat.SecondaryResources
 
             var builder = new SecondaryResourcePlayLedgerBuilder(plan.Card, plan.Player, true);
             foreach (var line in plan.Lines)
-                builder.Add(line with { IsFree = true, AmountToSpend = 0 });
+            {
+                var freeLine = line.Kind == SecondaryResourceUseKind.OptionalSpend
+                    ? line with { IsFree = true, AmountToSpend = 0, Value = 0, Activated = false }
+                    : line with { IsFree = true, AmountToSpend = 0, Activated = true };
+                builder.Add(freeLine);
+            }
 
             var ledger = builder.Build();
             SecondaryResourcePlayLedgerRuntime.SetPending(plan.Card, ledger);
             return ledger;
         }
 
+        private static IReadOnlyList<SecondaryResourcePlayUse> SnapshotUses(CardModel card)
+        {
+            var uses = new List<SecondaryResourcePlayUse>();
+            if (card.TryGetSecondaryCosts(out var costs))
+                uses.AddRange(costs.Snapshot().Select(pair =>
+                    new SecondaryResourcePlayUse(pair.Key, pair.Key, pair.Value,
+                        SecondaryResourceUseKind.RequiredCost)));
+
+            if (card.TryGetSecondaryResourceUses(out var playUses))
+                uses.AddRange(playUses.Snapshot());
+
+            return uses
+                .Where(static use => use.IsMaterial)
+                .OrderBy(static use => use.Kind == SecondaryResourceUseKind.RequiredCost ? 0 : 1)
+                .ThenBy(static use => use.Id, StringComparer.Ordinal)
+                .ToArray();
+        }
+
         private static SecondaryResourcePaymentPlan PlanPreview(
             CardModel card,
-            SecondaryResourceCostSet costs,
+            IReadOnlyList<SecondaryResourcePlayUse> uses,
             bool isFree)
         {
             var lines = new List<SecondaryResourcePaymentLine>();
-            foreach (var pair in costs.Snapshot())
+            foreach (var use in uses)
             {
-                if (!ModSecondaryResourceRegistry.TryGet(pair.Key, out var definition))
+                if (!ModSecondaryResourceRegistry.TryGet(use.ResourceId, out var definition))
                     continue;
 
-                lines.Add(ResolvePreviewLine(definition, pair.Value, isFree));
+                lines.Add(ResolvePreviewLine(definition, use, isFree));
             }
 
             return new(card, null, isFree, lines);
@@ -506,18 +578,27 @@ namespace STS2RitsuLib.Combat.SecondaryResources
 
         private static SecondaryResourcePaymentLine ResolvePreviewLine(
             SecondaryResourceDefinition definition,
-            SecondaryResourceCost cost,
+            SecondaryResourcePlayUse use,
             bool isFree)
         {
+            var cost = use.Cost;
             var fixedCost = Math.Max(0, cost.Amount);
             if (!cost.CostsX)
                 return new(definition.Id, definition, fixedCost, 0, isFree ? 0 : fixedCost, fixedCost, false, isFree)
                 {
+                    UseId = use.Id,
+                    Kind = use.Kind,
+                    BlocksPlay = use.Kind == SecondaryResourceUseKind.RequiredCost,
+                    Activated = use.Kind == SecondaryResourceUseKind.RequiredCost && !isFree,
                     IsPreview = true,
                 };
 
             return new(definition.Id, definition, fixedCost, 0, 0, 0, true, isFree)
             {
+                UseId = use.Id,
+                Kind = use.Kind,
+                BlocksPlay = use.Kind == SecondaryResourceUseKind.RequiredCost,
+                Activated = false,
                 IsPreview = true,
             };
         }
@@ -527,25 +608,58 @@ namespace STS2RitsuLib.Combat.SecondaryResources
             Player player,
             CardModel card,
             SecondaryResourceDefinition definition,
-            SecondaryResourceCost cost,
+            SecondaryResourcePlayUse use,
+            int available,
             bool isFree)
         {
-            var available = SecondaryResourceCmd.Get(player, definition.Id);
+            var cost = use.Cost;
             var modifiedCost = SecondaryResourceHook.ModifyCost(
                 new(combatState, player, card, definition, cost.Amount),
                 cost.Amount);
             var fixedCost = Math.Max(0, (int)Math.Ceiling(modifiedCost));
+            var isRequired = use.Kind == SecondaryResourceUseKind.RequiredCost;
 
             if (!cost.CostsX)
-                return new(definition.Id, definition, fixedCost, available, isFree ? 0 : fixedCost, fixedCost,
-                    false, isFree);
+            {
+                var activated = isRequired
+                    ? isFree || available >= fixedCost
+                    : !isFree && available >= fixedCost;
+                var amountToSpend = !isRequired && !activated
+                    ? 0
+                    : isFree
+                        ? 0
+                        : fixedCost;
+                var value = !isRequired && !activated ? 0 : fixedCost;
+                return new(definition.Id, definition, fixedCost, available, amountToSpend, value, false, isFree)
+                {
+                    UseId = use.Id,
+                    Kind = use.Kind,
+                    BlocksPlay = isRequired,
+                    Activated = activated,
+                };
+            }
 
             var xBase = Math.Max(0, available);
             var xValue = SecondaryResourceHook.ModifyXValue(
                 new(combatState, player, card, definition, xBase),
                 xBase);
             xValue = Math.Max(0, xValue) * cost.XMultiplier;
-            return new(definition.Id, definition, fixedCost, available, isFree ? 0 : available, xValue, true, isFree);
+            var xActivated = isRequired || (!isFree && available > 0);
+            return new(
+                definition.Id,
+                definition,
+                fixedCost,
+                available,
+                isFree || !xActivated ? 0 : available,
+                xActivated ? xValue : 0,
+                true,
+                isFree)
+            {
+                UseId = use.Id,
+                Kind = use.Kind,
+                BlocksPlay = isRequired,
+                Activated = xActivated,
+            };
         }
     }
 }
