@@ -1,3 +1,4 @@
+using System.Collections;
 using System.Reflection;
 using MegaCrit.Sts2.Core.Entities.Cards;
 using MegaCrit.Sts2.Core.HoverTips;
@@ -108,9 +109,15 @@ namespace STS2RitsuLib.Content
 
         internal static ContentSourceInfo ResolveKeyword(CardKeyword keyword)
         {
-            return ModKeywordRegistry.TryGetByCardKeyword(keyword, out var def)
-                ? ResolveMod(def.ModId)
-                : ContentSourceInfo.Vanilla;
+            if (Enum.IsDefined(keyword))
+                return ContentSourceInfo.Vanilla;
+
+            if (ModKeywordRegistry.TryGetByCardKeyword(keyword, out var def))
+                return ResolveMod(def.ModId);
+
+            return TryResolveBaseLibKeyword(keyword, out var baseLibSource)
+                ? baseLibSource
+                : ContentSourceInfo.Unknown;
         }
 
         internal static ContentSourceInfo Resolve(IContentSourceSupplier supplier)
@@ -161,6 +168,18 @@ namespace STS2RitsuLib.Content
             return CacheModSource(new(modId, NormalizeDisplayName(displayName, modId)));
         }
 
+        private static bool TryResolveBaseLibKeyword(CardKeyword keyword, out ContentSourceInfo source)
+        {
+            if (!BaseLibKeywordSourceResolver.Contains(keyword))
+            {
+                source = default;
+                return false;
+            }
+
+            source = ContentSourceInfo.BaseLib;
+            return true;
+        }
+
         private static ContentSourceInfo CacheModSource(ContentSourceInfo source)
         {
             lock (SyncRoot)
@@ -192,6 +211,8 @@ namespace STS2RitsuLib.Content
         internal readonly record struct ContentSourceInfo(string Id, string DisplayName)
         {
             public static ContentSourceInfo Vanilla { get; } = new("Vanilla", "Slay The Spire2");
+            public static ContentSourceInfo BaseLib { get; } = new("BaseLib", "BaseLib");
+            public static ContentSourceInfo Unknown { get; } = new("Unknown", "Unknown");
 
             public bool IsVanilla => string.Equals(Id, Vanilla.Id, StringComparison.OrdinalIgnoreCase);
 
@@ -200,6 +221,31 @@ namespace STS2RitsuLib.Content
                 return string.Equals(DisplayName, Id, StringComparison.OrdinalIgnoreCase)
                     ? DisplayName
                     : $"{DisplayName} ({Id})";
+            }
+        }
+
+        private static class BaseLibKeywordSourceResolver
+        {
+            private const string CustomKeywordsTypeName = "BaseLib.Patches.Content.CustomKeywords";
+            private const string KeywordIdsFieldName = "KeywordIDs";
+
+            private static readonly Lazy<IDictionary?> KeywordIds = new(FindKeywordIds);
+
+            internal static bool Contains(CardKeyword keyword)
+            {
+                return KeywordIds.Value?.Contains((int)keyword) == true;
+            }
+
+            private static IDictionary? FindKeywordIds()
+            {
+                var type = AppDomain.CurrentDomain
+                    .GetAssemblies()
+                    .Select(assembly => assembly.GetType(CustomKeywordsTypeName, false))
+                    .FirstOrDefault(static type => type != null);
+                var field = type?.GetField(
+                    KeywordIdsFieldName,
+                    BindingFlags.Public | BindingFlags.Static);
+                return field?.GetValue(null) as IDictionary;
             }
         }
     }
