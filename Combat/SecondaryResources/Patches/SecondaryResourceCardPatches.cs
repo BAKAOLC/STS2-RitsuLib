@@ -6,6 +6,7 @@ using CombatStateLike = MegaCrit.Sts2.Core.Combat.ICombatState;
 using MegaCrit.Sts2.Core.Combat;
 using MegaCrit.Sts2.Core.Entities.Cards;
 using MegaCrit.Sts2.Core.Entities.Creatures;
+using MegaCrit.Sts2.Core.Entities.Players;
 using MegaCrit.Sts2.Core.GameActions.Multiplayer;
 using MegaCrit.Sts2.Core.Hooks;
 using MegaCrit.Sts2.Core.Models;
@@ -167,11 +168,16 @@ namespace STS2RitsuLib.Combat.SecondaryResources.Patches
         {
             return
             [
+#if STS2_AT_LEAST_0_106_0
                 new(typeof(Hook), nameof(Hook.AfterSideTurnStart),
                     [typeof(CombatStateLike), typeof(CombatSide), typeof(IReadOnlyList<Creature>)]),
+#else
+                new(typeof(Hook), nameof(Hook.AfterSideTurnStart), [typeof(CombatStateLike), typeof(CombatSide)]),
+#endif
             ];
         }
 
+#if STS2_AT_LEAST_0_106_0
         public static void Postfix(
             CombatSide side,
             IReadOnlyList<Creature> participants,
@@ -181,16 +187,31 @@ namespace STS2RitsuLib.Combat.SecondaryResources.Patches
                 side != CombatSide.Player)
                 return;
 
-            __result = After(__result, participants);
+            var players = participants
+                .Where(static creature => creature is { IsPlayer: true, Player: not null })
+                .Select(static creature => creature.Player!)
+                .Distinct()
+                .ToArray();
+            __result = After(__result, players);
         }
+#else
+        public static void Postfix(
+            CombatStateLike combatState,
+            CombatSide side,
+            ref Task __result)
+        {
+            if (!ModSecondaryResourceRegistry.HasAny ||
+                side != CombatSide.Player)
+                return;
 
-        private static async Task After(Task original, IReadOnlyList<Creature> participants)
+            __result = After(__result, combatState.Players.Distinct().ToArray());
+        }
+#endif
+
+        private static async Task After(Task original, IReadOnlyList<Player> players)
         {
             await original;
-            foreach (var player in participants
-                         .Where(static creature => creature is { IsPlayer: true, Player: not null })
-                         .Select(static creature => creature.Player!)
-                         .Distinct())
+            foreach (var player in players)
                 await SecondaryResourceCmd.ApplyTurnStartPolicies(player);
         }
     }
