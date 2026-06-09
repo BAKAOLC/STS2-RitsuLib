@@ -418,6 +418,26 @@ namespace STS2RitsuLib.Content.Patches
         }
     }
 
+    internal sealed class ContentSourcePotionFactoryHoverTipPatch : IPatchMethod
+    {
+        public static string PatchId => "content_source_potion_factory_hover_tip";
+
+        public static string Description =>
+            "Regenerate potion factory hover tips so content source text follows current settings";
+
+        public static bool IsCritical => false;
+
+        public static ModPatchTarget[] GetTargets()
+        {
+            return [new(typeof(HoverTipFactory), "FromPotion", [typeof(PotionModel)])];
+        }
+
+        public static void Postfix(PotionModel model, ref IHoverTip __result)
+        {
+            __result = model.HoverTip;
+        }
+    }
+
     internal sealed class ContentSourceCardHoverTipsPatch : IPatchMethod
     {
         public static string PatchId => "content_source_card_hover_tips";
@@ -545,8 +565,7 @@ namespace STS2RitsuLib.Content.Patches
 
         public static void Prefix(Control owner, ref IEnumerable<IHoverTip> hoverTips)
         {
-            if (!RitsuLibSettingsStore.IsModSourceHoverTipsEnabled() ||
-                !RitsuLibSettingsStore.ShouldShowCreatureModSourceHoverTips())
+            if (!RitsuLibSettingsStore.IsModSourceHoverTipsEnabled())
                 return;
 
             switch (owner)

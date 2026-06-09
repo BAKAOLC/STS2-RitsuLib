@@ -466,6 +466,7 @@ namespace STS2RitsuLib
             patcher.RegisterPatch<ContentSourceEnergyHoverTipPatch>();
             patcher.RegisterPatch<ContentSourceCardHoverTipsPatch>();
             patcher.RegisterPatch<ContentSourceModelHoverTipPatch>();
+            patcher.RegisterPatch<ContentSourcePotionFactoryHoverTipPatch>();
             patcher.RegisterPatch<ContentSourcePowerHoverTipsPatch>();
             patcher.RegisterPatch<ContentSourceNHoverTipSetShowPatch>();
             patcher.RegisterPatch<ContentSourceCreatureHoverTipsPatch>();

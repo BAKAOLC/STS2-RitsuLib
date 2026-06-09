@@ -69,6 +69,7 @@ namespace STS2RitsuLib.Content
                 OrbModel => RitsuLibSettingsStore.ShouldShowOrbModSourceHoverTips(),
                 EnchantmentModel => RitsuLibSettingsStore.ShouldShowEnchantmentModSourceHoverTips(),
                 AfflictionModel => RitsuLibSettingsStore.ShouldShowAfflictionModSourceHoverTips(),
+                MonsterModel => RitsuLibSettingsStore.ShouldShowCreatureModSourceHoverTips(),
                 _ => true,
             };
         }
@@ -127,12 +128,12 @@ namespace STS2RitsuLib.Content
 
         private static ContentSourceInfo ResolveUncached(Type modelType)
         {
-            if (ModContentRegistry.TryGetOwnerModId(modelType, out var ownerModId))
-                return ResolveMod(ownerModId);
-
             var assembly = modelType.Assembly;
             if (assembly == GameAssembly)
                 return ContentSourceInfo.Vanilla;
+
+            if (ModContentRegistry.TryGetOwnerModId(modelType, out var ownerModId))
+                return ResolveMod(ownerModId);
 
             foreach (var mod in Sts2ModManagerCompat.EnumerateModsForManifestLookup())
             {
