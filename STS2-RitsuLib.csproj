@@ -83,6 +83,12 @@
         <PackageReference Include="System.IO.Hashing" Version="9.0.0"/>
     </ItemGroup>
     <ItemGroup>
+        <ProjectReference Include="Analyzers\STS2.RitsuLib.Analyzers.csproj"
+                          OutputItemType="Analyzer"
+                          ReferenceOutputAssembly="false"
+                          PrivateAssets="all"/>
+    </ItemGroup>
+    <ItemGroup>
         <Publicize Include="sts2" IncludeCompilerGeneratedMembers="false" IncludeVirtualMembers="false"/>
     </ItemGroup>
     <ItemGroup>
@@ -119,6 +125,11 @@
         <EmbeddedResource Remove="sts-2-source\**"/>
 
         <Compile Remove="build\**\*.cs"/>
+        <Compile Remove="Analyzers\**"/>
+        <None Remove="Analyzers\**"/>
+        <Content Remove="Analyzers\**"/>
+        <EmbeddedResource Remove="Analyzers\**"/>
+
         <!-- Loader is a separate assembly; keep it out of Godot.Sdk default globs. -->
         <Compile Remove="Loader\**"/>
         <None Remove="Loader\**"/>
