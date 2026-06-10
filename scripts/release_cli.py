@@ -82,7 +82,7 @@ def _git_tag_command(
 
 def _parse_args(argv: list[str]) -> argparse.Namespace:
     p = argparse.ArgumentParser(
-        description="STS2-RitsuLib release: dev → version bump → merge main → tag → push (NuGet.org optional via --push-nuget; tag CI publishes by default).",
+        description="STS2-RitsuLib release: dev → version bump → merge main → tag → push → local latest build (NuGet.org optional via --push-nuget; tag CI publishes by default).",
     )
     p.add_argument(
         "--bump",
@@ -173,6 +173,19 @@ def _read_default_compat_targets(csproj_path: Path) -> list[str]:
     return [v.strip() for v in raw.split(";") if v.strip()]
 
 
+def _read_latest_compat_target(csproj_path: Path) -> str:
+    try:
+        raw = get_csproj_property(csproj_path, "RitsuLibLatestApiCompat")
+    except (OSError, RuntimeError) as e:
+        msg = f"Could not evaluate MSBuild property RitsuLibLatestApiCompat: {e}"
+        raise RuntimeError(msg) from e
+    latest = raw.strip()
+    if not latest:
+        msg = "RitsuLibLatestApiCompat evaluated empty (dotnet msbuild -getProperty)."
+        raise RuntimeError(msg)
+    return latest
+
+
 def _resolve_compat_targets(raw: str, defaults: list[str]) -> list[str]:
     if raw.strip().lower() == "all":
         return defaults
@@ -189,6 +202,33 @@ def _commit_message_merge(dev: str, main: str, v: str) -> str:
 
 def _tag_name(v: str) -> str:
     return f"v{v}"
+
+
+def _run_post_push_local_build(
+    ritsulib: Path,
+    args: argparse.Namespace,
+    *,
+    latest_compat_target: str,
+) -> None:
+    build_args = [
+        "dotnet",
+        "build",
+        str(ritsulib / RITSULIB_CSPROJ_NAME),
+        "-c",
+        args.configuration,
+        f"/p:Sts2ApiCompat={latest_compat_target}",
+        "/p:RitsuLibTelemetryBuildChannel=release",
+    ]
+    if args.sts2_api_signature_root:
+        build_args.append(f"/p:Sts2ApiSignatureRoot={Path(args.sts2_api_signature_root)}")
+    if args.sts2_dir:
+        build_args.append(f"/p:Sts2Dir={Path(args.sts2_dir)}")
+
+    print(
+        f"[release] Building latest local mod copy ({latest_compat_target})...",
+        flush=True,
+    )
+    subprocess.run(build_args, cwd=ritsulib, check=True)
 
 
 def _preflight_release(
@@ -291,6 +331,7 @@ def main(argv: list[str] | None = None) -> int:
         print("[release] done (artifacts-only).")
         return 0
 
+    latest_compat_target = _read_latest_compat_target(csproj)
     current_v = VersionTriple.parse(current_text)
     next_v = resolve_next_version(
         current_v,
@@ -337,7 +378,7 @@ def main(argv: list[str] | None = None) -> int:
                 f"[release] DRY-RUN warning: remote {args.remote!r} is not configured.",
                 file=sys.stderr,
             )
-        print("[release] DRY-RUN: no file writes, git mutations, push, or NuGet push")
+        print("[release] DRY-RUN: no file writes, git mutations, push, NuGet push, or local build")
         plan_marks: frozenset[str] | None = None
         if repo_is_git:
             try:
@@ -377,6 +418,7 @@ def main(argv: list[str] | None = None) -> int:
             compat_targets,
             tag_message_file=tag_msg_file,
             conflict_marks=plan_marks,
+            latest_compat_target=latest_compat_target,
             suggest_plan_fetch=bool(
                 plan_marks is not None
                 and not args.plan_fetch
@@ -510,6 +552,12 @@ def main(argv: list[str] | None = None) -> int:
             "[release] Skipping local NuGet push (default); packages are published by the tag release workflow.",
         )
 
+    _run_post_push_local_build(
+        ritsulib,
+        args,
+        latest_compat_target=latest_compat_target,
+    )
+
     print("[release] done.")
     return 0
 
@@ -539,6 +587,7 @@ def _print_git_plan(
     *,
     tag_message_file: Path | None = None,
     conflict_marks: frozenset[str] | None = None,
+    latest_compat_target: str,
     suggest_plan_fetch: bool = False,
     sign_tag: bool = True,
 ) -> None:
@@ -622,6 +671,13 @@ def _print_git_plan(
         )
     else:
         step("(skip local NuGet; tag workflow publishes packages)", step_id="")
+    step(
+        (
+            f"dotnet build {RITSULIB_CSPROJ_NAME} -c {args.configuration} "
+            f"/p:Sts2ApiCompat={latest_compat_target} /p:RitsuLibTelemetryBuildChannel=release"
+        ),
+        step_id="",
+    )
 
 
 _PESSIMISTIC_CONFLICT_STEPS = frozenset(
