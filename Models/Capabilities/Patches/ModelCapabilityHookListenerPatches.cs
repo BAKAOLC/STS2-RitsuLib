@@ -61,24 +61,6 @@ namespace STS2RitsuLib.Models.Capabilities.Patches
 
         internal sealed class HookPlayerChoiceContextConstructorPatch : IPatchMethod
         {
-            private static readonly FieldInfo LocalPlayerIdField =
-                AccessTools.Field(typeof(HookPlayerChoiceContext), "_localPlayerId")!;
-
-            private static readonly FieldInfo TaskAssignedCompletionSourceField =
-                AccessTools.Field(typeof(HookPlayerChoiceContext), "_taskAssignedCompletionSource")!;
-
-            private static readonly FieldInfo? PausedBeforeTaskAssignedCompletionSourceField =
-                AccessTools.Field(typeof(HookPlayerChoiceContext), "_pausedBeforeTaskAssignedCompletionSource");
-
-            private static readonly FieldInfo PausedCompletionSourceField =
-                AccessTools.Field(typeof(HookPlayerChoiceContext), "_pausedCompletionSource")!;
-
-            private static readonly FieldInfo GameActionTypeField =
-                AccessTools.Field(typeof(HookPlayerChoiceContext), "_gameActionType")!;
-
-            private static readonly FieldInfo SourceField =
-                AccessTools.Field(typeof(HookPlayerChoiceContext), "<Source>k__BackingField")!;
-
             private static readonly FieldInfo OwnerField =
                 AccessTools.Field(typeof(HookPlayerChoiceContext), "<Owner>k__BackingField")!;
 
@@ -101,30 +83,19 @@ namespace STS2RitsuLib.Models.Capabilities.Patches
                 ];
             }
 
-            public static bool Prefix(
+            public static void Postfix(
                 HookPlayerChoiceContext __instance,
                 AbstractModel source,
-                ulong localPlayerId,
-                CombatStateCompat combatState,
-                GameActionType gameActionType)
+                CombatStateCompat combatState)
             {
-                LocalPlayerIdField.SetValue(__instance, localPlayerId);
-                TaskAssignedCompletionSourceField.SetValue(__instance, new TaskCompletionSource());
-                PausedBeforeTaskAssignedCompletionSourceField?.SetValue(__instance, new TaskCompletionSource());
-                PausedCompletionSourceField.SetValue(__instance, new TaskCompletionSource());
-                SourceField.SetValue(__instance, source);
-                OwnerField.SetValue(__instance, ResolveOwner(source, combatState));
-                __instance.PushModel(source);
-                GameActionTypeField.SetValue(__instance, gameActionType);
+                if (source is not IModelCapability) return;
 
-                return false;
+                OwnerField.SetValue(__instance, ResolveOwner(source, combatState));
             }
 
             private static Player? ResolveOwner(AbstractModel source, CombatStateCompat combatState)
             {
-                var contextSource = source is IModelCapability { Owner: { } capabilityOwner }
-                    ? capabilityOwner
-                    : source;
+                var contextSource = ((IModelCapability)source).Owner;
 
                 return contextSource switch
                 {

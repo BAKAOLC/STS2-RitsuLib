@@ -27,23 +27,16 @@ namespace STS2RitsuLib.Models.Capabilities
     {
         internal static IEnumerable<AbstractModel> ExpandOwnerHookListeners(IEnumerable<AbstractModel> owners)
         {
-            var snapshot = owners.ToArray();
-            HashSet<AbstractModel> alreadyExpandedOwners = new(ReferenceEqualityComparer.Instance);
-
-            foreach (var capability in snapshot.OfType<IModelCapability>())
-                if (capability.Owner != null)
-                    alreadyExpandedOwners.Add(capability.Owner);
-
-            foreach (var owner in snapshot)
+            foreach (var owner in owners)
             {
-                if (owner is IModelCapability)
+                if (owner is IModelCapability capability)
                 {
-                    yield return owner;
+                    if (capability.Owner == null)
+                        yield return owner;
                     continue;
                 }
 
-                var capabilities =
-                    alreadyExpandedOwners.Contains(owner) ? [] : GetOwnerHookCapabilities(owner);
+                var capabilities = GetOwnerHookCapabilities(owner);
 
                 foreach (var entry in capabilities)
                     if (entry.OwnerHookOrder < 0 && TryGetStillAttachedModel(entry, owner, out var model))
