@@ -138,6 +138,10 @@ namespace STS2RitsuLib
             patcher.RegisterPatch<DevConsoleAutocompleteEnhancementPatch>();
             patcher.RegisterPatch<DevConsoleAutocompleteUnlockArgumentPatch>();
             patcher.RegisterPatch<DevConsoleAutocompleteApplyCandidatePatch>();
+            patcher.RegisterPatch<DevConsoleHistoryNavigationInputPatch>();
+            patcher.RegisterPatch<DevConsoleHistoryNavigationProcessCommandPatch>();
+            patcher.RegisterPatch<DevConsoleHistoryNavigationHideConsolePatch>();
+            patcher.RegisterPatch<DevConsoleHistoryNavigationShowConsolePatch>();
             patcher.RegisterPatch<NMainMenuContinueRunMissingCharacterPatch>();
             patcher.RegisterPatch<NMainMenuReadyLifecyclePatch>();
             patcher.RegisterPatch<NContinueRunInfoShowInfoModelNotFoundPatch>();
