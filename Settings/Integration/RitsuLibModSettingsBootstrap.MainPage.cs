@@ -147,6 +147,25 @@ namespace STS2RitsuLib.Settings
                 .AddSection("dev_debug_tools", section => section
                     .WithTitle(T("ritsulib.section.devDebugTools.title", "Developer debug tools"))
                     .Collapsible()
+                    .AddToggle(
+                        "dev_console_history_navigation_patch_enabled",
+                        T("ritsulib.devConsole.historyNavigation.label", "Console history navigation fix"),
+                        ui.DevConsoleHistoryNavigationPatchEnabled,
+                        T("ritsulib.devConsole.historyNavigation.description",
+                            "When enabled, RitsuLib replaces vanilla dev-console up/down history navigation with draft-preserving behavior."))
+                    .AddToggle(
+                        "dev_console_clear_input_on_visibility_change",
+                        T("ritsulib.devConsole.clearInputOnVisibilityChange.label",
+                            "Clear console input when hidden"),
+                        ui.DevConsoleClearInputOnVisibilityChange,
+                        T("ritsulib.devConsole.clearInputOnVisibilityChange.description",
+                            "When enabled, hiding or showing the dev console clears the current input buffer. Off by default."))
+                    .AddToggle(
+                        "dev_console_autocomplete_enhancements_enabled",
+                        T("ritsulib.devConsole.autocompleteEnhancements.label", "Console autocomplete enhancements"),
+                        ui.DevConsoleAutocompleteEnhancementsEnabled,
+                        T("ritsulib.devConsole.autocompleteEnhancements.description",
+                            "When enabled, RitsuLib enhances dev-console autocomplete matching, candidate display, and extra command argument sources."))
                     .AddSubpage(
                         "debug_log_viewer_open",
                         T("ritsulib.debugLogViewer.pageLink.label", "Debug log viewer"),
