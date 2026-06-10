@@ -1,8 +1,10 @@
+using System.Diagnostics.CodeAnalysis;
 using System.Runtime.CompilerServices;
 using Godot;
 using HarmonyLib;
 using MegaCrit.Sts2.Core.DevConsole;
 using MegaCrit.Sts2.Core.Nodes.Debug;
+using STS2RitsuLib.Data;
 using STS2RitsuLib.Patching.Models;
 using GameDevConsole = MegaCrit.Sts2.Core.DevConsole.DevConsole;
 
@@ -26,16 +28,34 @@ namespace STS2RitsuLib.Diagnostics.Patches
             return States.GetValue(console, static _ => new());
         }
 
-        internal static void RestoreDraftIfBrowsing(NDevConsole console)
+        internal static bool TryGetNavigationFields(
+            NDevConsole console,
+            [NotNullWhen(true)] out GameDevConsole? devConsole,
+            [NotNullWhen(true)] out LineEdit? inputBuffer)
+        {
+            devConsole = DevConsoleField(console);
+            inputBuffer = InputBufferField(console);
+            return devConsole != null && inputBuffer != null;
+        }
+
+        internal static TabCompletionState? GetTabCompletion(NDevConsole console)
+        {
+            return TabCompletionField(console);
+        }
+
+        internal static void ResetVisibilityState(NDevConsole console, bool clearInput)
         {
             var state = Get(console);
-            if (state.Cursor < 0)
-                return;
+            state.Reset();
 
-            state.Cursor = -1;
-            InputBufferField(console).Text = state.Draft;
-            console.MoveInputCursorToEndOfLine();
-            DevConsoleField(console).historyIndex = 0;
+            if (clearInput && InputBufferField(console) is { } inputBuffer)
+            {
+                inputBuffer.Text = string.Empty;
+                console.MoveInputCursorToEndOfLine();
+            }
+
+            if (DevConsoleField(console) is { } devConsole)
+                devConsole.historyIndex = 0;
         }
 
         internal sealed class HistoryState
@@ -69,18 +89,34 @@ namespace STS2RitsuLib.Diagnostics.Patches
 
         public static bool Prefix(NDevConsole __instance, InputEvent inputEvent)
         {
+            var historyPatchEnabled = RitsuLibSettingsStore.IsDevConsoleHistoryNavigationPatchEnabled();
+            var clearInputOnVisibilityChange =
+                RitsuLibSettingsStore.ShouldClearDevConsoleInputOnVisibilityChange();
+            if (!historyPatchEnabled && !clearInputOnVisibilityChange)
+                return true;
+
             if (inputEvent is not InputEventKey { Pressed: not false } keyEvent)
                 return true;
 
             if (!__instance.Visible)
                 return true;
 
-            var tabCompletion = DevConsoleHistoryNavigationState.TabCompletionField(__instance);
+            var tabCompletion = DevConsoleHistoryNavigationState.GetTabCompletion(__instance);
+            if (tabCompletion == null)
+                return true;
+
             if (WillCloseConsole(keyEvent, tabCompletion))
             {
-                DevConsoleHistoryNavigationState.RestoreDraftIfBrowsing(__instance);
+                if (clearInputOnVisibilityChange)
+                    DevConsoleHistoryNavigationState.ResetVisibilityState(
+                        __instance,
+                        true);
+
                 return true;
             }
+
+            if (!historyPatchEnabled)
+                return true;
 
             if (keyEvent.Keycode is not Key.Up and not Key.Down)
                 return true;
@@ -88,7 +124,9 @@ namespace STS2RitsuLib.Diagnostics.Patches
             if (tabCompletion.InSelectionMode)
                 return true;
 
-            Navigate(__instance, keyEvent.Keycode);
+            if (!Navigate(__instance, keyEvent.Keycode))
+                return true;
+
             __instance.GetViewport().SetInputAsHandled();
             return false;
         }
@@ -106,10 +144,14 @@ namespace STS2RitsuLib.Diagnostics.Patches
                    || (keyEvent.IsShiftPressed() && keyEvent.Keycode == Key.Key8);
         }
 
-        private static void Navigate(NDevConsole consoleNode, Key key)
+        private static bool Navigate(NDevConsole consoleNode, Key key)
         {
-            var devConsole = DevConsoleHistoryNavigationState.DevConsoleField(consoleNode);
-            var inputBuffer = DevConsoleHistoryNavigationState.InputBufferField(consoleNode);
+            if (!DevConsoleHistoryNavigationState.TryGetNavigationFields(
+                    consoleNode,
+                    out var devConsole,
+                    out var inputBuffer))
+                return false;
+
             var history = devConsole.history;
             var state = DevConsoleHistoryNavigationState.Get(consoleNode);
 
@@ -117,7 +159,7 @@ namespace STS2RitsuLib.Diagnostics.Patches
             {
                 state.Reset();
                 devConsole.historyIndex = 0;
-                return;
+                return true;
             }
 
             if (state.Cursor >= 0
@@ -132,12 +174,13 @@ namespace STS2RitsuLib.Diagnostics.Patches
                 : NavigateNewer(state, history);
 
             if (!moved)
-                return;
+                return true;
 
             devConsole.historyIndex = Math.Max(state.Cursor, 0);
             var text = state.Cursor >= 0 ? history[state.Cursor] : state.Draft;
             inputBuffer.Text = text;
             consoleNode.MoveInputCursorToEndOfLine();
+            return true;
         }
 
         private static bool NavigateOlder(
@@ -208,12 +251,15 @@ namespace STS2RitsuLib.Diagnostics.Patches
 
         public static void Postfix(NDevConsole __instance)
         {
+            if (!RitsuLibSettingsStore.IsDevConsoleHistoryNavigationPatchEnabled())
+                return;
+
             DevConsoleHistoryNavigationState.Get(__instance).Reset();
         }
     }
 
     /// <summary>
-    ///     Cancels transient history browsing when closing the console without submitting a command.
+    ///     Resets transient history browsing when closing the console without submitting a command.
     /// </summary>
     internal sealed class DevConsoleHistoryNavigationHideConsolePatch : IPatchMethod
     {
@@ -221,7 +267,7 @@ namespace STS2RitsuLib.Diagnostics.Patches
         public static bool IsCritical => false;
 
         public static string Description =>
-            "DevConsole history navigation: restore draft when the console is hidden mid-navigation";
+            "DevConsole history navigation: reset transient state when the console is hidden";
 
         public static ModPatchTarget[] GetTargets()
         {
@@ -230,12 +276,17 @@ namespace STS2RitsuLib.Diagnostics.Patches
 
         public static void Prefix(NDevConsole __instance)
         {
-            DevConsoleHistoryNavigationState.RestoreDraftIfBrowsing(__instance);
+            if (!RitsuLibSettingsStore.ShouldClearDevConsoleInputOnVisibilityChange())
+                return;
+
+            DevConsoleHistoryNavigationState.ResetVisibilityState(
+                __instance,
+                true);
         }
     }
 
     /// <summary>
-    ///     Restores the draft before showing the console if another path hid it while history browsing was active.
+    ///     Resets transient history browsing before showing the console if another path hid it.
     /// </summary>
     internal sealed class DevConsoleHistoryNavigationShowConsolePatch : IPatchMethod
     {
@@ -243,7 +294,7 @@ namespace STS2RitsuLib.Diagnostics.Patches
         public static bool IsCritical => false;
 
         public static string Description =>
-            "DevConsole history navigation: restore draft before the console is shown";
+            "DevConsole history navigation: reset transient state before the console is shown";
 
         public static ModPatchTarget[] GetTargets()
         {
@@ -252,7 +303,12 @@ namespace STS2RitsuLib.Diagnostics.Patches
 
         public static void Prefix(NDevConsole __instance)
         {
-            DevConsoleHistoryNavigationState.RestoreDraftIfBrowsing(__instance);
+            if (!RitsuLibSettingsStore.ShouldClearDevConsoleInputOnVisibilityChange())
+                return;
+
+            DevConsoleHistoryNavigationState.ResetVisibilityState(
+                __instance,
+                true);
         }
     }
 }

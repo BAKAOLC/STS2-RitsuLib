@@ -17,6 +17,9 @@ namespace STS2RitsuLib.Settings
         public IModSettingsValueBinding<bool> DebugLogViewerAutoOpen { get; private init; } = null!;
         public IModSettingsValueBinding<bool> DebugLogViewerLanAccessEnabled { get; private init; } = null!;
         public IModSettingsValueBinding<int> DebugLogViewerPort { get; private init; } = null!;
+        public IModSettingsValueBinding<bool> DevConsoleHistoryNavigationPatchEnabled { get; private init; } = null!;
+        public IModSettingsValueBinding<bool> DevConsoleAutocompleteEnhancementsEnabled { get; private init; } = null!;
+        public IModSettingsValueBinding<bool> DevConsoleClearInputOnVisibilityChange { get; private init; } = null!;
 
         public IModSettingsValueBinding<bool> DebugCompatAncientArchitect { get; private init; } =
             null!;
@@ -168,6 +171,27 @@ namespace STS2RitsuLib.Settings
                         settings => Math.Clamp(settings.DebugLogViewerPort, 1, 65535),
                         (settings, value) => settings.DebugLogViewerPort = Math.Clamp(value, 1, 65535)),
                     () => defaults.DebugLogViewerPort),
+                DevConsoleHistoryNavigationPatchEnabled = ModSettingsBindings.WithDefault(
+                    ModSettingsBindings.Global<RitsuLibSettings, bool>(
+                        Const.ModId,
+                        Const.SettingsKey,
+                        settings => settings.DevConsoleHistoryNavigationPatchEnabled,
+                        (settings, value) => settings.DevConsoleHistoryNavigationPatchEnabled = value),
+                    () => defaults.DevConsoleHistoryNavigationPatchEnabled),
+                DevConsoleAutocompleteEnhancementsEnabled = ModSettingsBindings.WithDefault(
+                    ModSettingsBindings.Global<RitsuLibSettings, bool>(
+                        Const.ModId,
+                        Const.SettingsKey,
+                        settings => settings.DevConsoleAutocompleteEnhancementsEnabled,
+                        (settings, value) => settings.DevConsoleAutocompleteEnhancementsEnabled = value),
+                    () => defaults.DevConsoleAutocompleteEnhancementsEnabled),
+                DevConsoleClearInputOnVisibilityChange = ModSettingsBindings.WithDefault(
+                    ModSettingsBindings.Global<RitsuLibSettings, bool>(
+                        Const.ModId,
+                        Const.SettingsKey,
+                        settings => settings.DevConsoleClearInputOnVisibilityChange,
+                        (settings, value) => settings.DevConsoleClearInputOnVisibilityChange = value),
+                    () => defaults.DevConsoleClearInputOnVisibilityChange),
                 ModSourceHoverTipsEnabled = ModSettingsBindings.WithDefault(
                     ModSettingsBindings.Global<RitsuLibSettings, bool>(
                         Const.ModId,

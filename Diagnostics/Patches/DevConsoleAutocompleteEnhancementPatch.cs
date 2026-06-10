@@ -1,5 +1,6 @@
 using MegaCrit.Sts2.Core.DevConsole;
 using MegaCrit.Sts2.Core.DevConsole.ConsoleCommands;
+using STS2RitsuLib.Data;
 using STS2RitsuLib.Diagnostics.DevConsole;
 using STS2RitsuLib.Patching.Models;
 
@@ -26,6 +27,9 @@ namespace STS2RitsuLib.Diagnostics.Patches
             string[] completedArgs,
             ref Func<string, string, bool>? matchPredicate)
         {
+            if (!RitsuLibSettingsStore.IsDevConsoleAutocompleteEnhancementsEnabled())
+                return;
+
             var enhancements = DevConsoleAutocompleteRegistry.Resolve(
                 __instance,
                 completedArgs,
@@ -45,6 +49,9 @@ namespace STS2RitsuLib.Diagnostics.Patches
             string[] completedArgs,
             ref CompletionResult __result)
         {
+            if (!RitsuLibSettingsStore.IsDevConsoleAutocompleteEnhancementsEnabled())
+                return;
+
             var enhancements = DevConsoleAutocompleteRegistry.Resolve(
                 __instance,
                 completedArgs,

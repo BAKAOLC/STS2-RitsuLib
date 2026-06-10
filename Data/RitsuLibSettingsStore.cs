@@ -253,6 +253,24 @@ namespace STS2RitsuLib.Data
                 s.DebugLogViewerQueueCapacity);
         }
 
+        internal static bool IsDevConsoleHistoryNavigationPatchEnabled()
+        {
+            Initialize();
+            return GetSettings().DevConsoleHistoryNavigationPatchEnabled;
+        }
+
+        internal static bool IsDevConsoleAutocompleteEnhancementsEnabled()
+        {
+            Initialize();
+            return GetSettings().DevConsoleAutocompleteEnhancementsEnabled;
+        }
+
+        internal static bool ShouldClearDevConsoleInputOnVisibilityChange()
+        {
+            Initialize();
+            return GetSettings().DevConsoleClearInputOnVisibilityChange;
+        }
+
         private static RitsuLibSettings GetSettings()
         {
             return Store.Get<RitsuLibSettings>(Const.SettingsKey);

@@ -133,6 +133,27 @@ namespace STS2RitsuLib.Data.Models
         public int DebugLogViewerQueueCapacity { get; set; } = 4096;
 
         /// <summary>
+        ///     When true, RitsuLib replaces vanilla dev-console history navigation with draft-preserving behavior.
+        ///     为 true 时，RitsuLib 会替换原版开发者控制台历史导航，使其保留正在编辑的草稿。
+        /// </summary>
+        [JsonPropertyName("dev_console_history_navigation_patch_enabled")]
+        public bool DevConsoleHistoryNavigationPatchEnabled { get; set; } = true;
+
+        /// <summary>
+        ///     When true, RitsuLib applies dev-console autocomplete display and candidate-source enhancements.
+        ///     为 true 时，RitsuLib 会应用开发者控制台补全显示和候选来源增强。
+        /// </summary>
+        [JsonPropertyName("dev_console_autocomplete_enhancements_enabled")]
+        public bool DevConsoleAutocompleteEnhancementsEnabled { get; set; } = true;
+
+        /// <summary>
+        ///     When true, hides/shows of the dev console clear the current input buffer.
+        ///     为 true 时，开发者控制台隐藏 / 显示路径会清空当前输入框。
+        /// </summary>
+        [JsonPropertyName("dev_console_clear_input_on_visibility_change")]
+        public bool DevConsoleClearInputOnVisibilityChange { get; set; }
+
+        /// <summary>
         ///     When true, cards, relics, and potions append a hover tip showing their source mod.
         ///     为 true 时，卡牌、遗物和药水会追加显示其来源 mod 的悬停提示。
         /// </summary>

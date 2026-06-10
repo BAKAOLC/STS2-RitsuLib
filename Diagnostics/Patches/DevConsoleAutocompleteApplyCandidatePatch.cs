@@ -1,6 +1,7 @@
 using HarmonyLib;
 using MegaCrit.Sts2.Core.DevConsole;
 using MegaCrit.Sts2.Core.Nodes.Debug;
+using STS2RitsuLib.Data;
 using STS2RitsuLib.Diagnostics.DevConsole;
 using STS2RitsuLib.Patching.Models;
 
@@ -27,6 +28,9 @@ namespace STS2RitsuLib.Diagnostics.Patches
 
         public static void Prefix(NDevConsole __instance)
         {
+            if (!RitsuLibSettingsStore.IsDevConsoleAutocompleteEnhancementsEnabled())
+                return;
+
             var tabCompletion = TabCompletionField(__instance);
             if (!tabCompletion.InSelectionMode)
                 return;

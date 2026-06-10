@@ -2,6 +2,7 @@ using System.Reflection;
 using HarmonyLib;
 using MegaCrit.Sts2.Core.DevConsole;
 using MegaCrit.Sts2.Core.DevConsole.ConsoleCommands;
+using STS2RitsuLib.Data;
 using STS2RitsuLib.Diagnostics.DevConsole;
 using STS2RitsuLib.Patching.Models;
 
@@ -34,6 +35,9 @@ namespace STS2RitsuLib.Diagnostics.Patches
 
         public static bool Prefix(UnlockConsoleCmd __instance, string[] args, ref CompletionResult __result)
         {
+            if (!RitsuLibSettingsStore.IsDevConsoleAutocompleteEnhancementsEnabled())
+                return true;
+
             if (args.Length < 2 || CompleteArgumentMethod == null)
                 return true;
 
