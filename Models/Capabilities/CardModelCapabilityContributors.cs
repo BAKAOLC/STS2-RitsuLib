@@ -75,6 +75,74 @@ namespace STS2RitsuLib.Models.Capabilities
     }
 
     /// <summary>
+    ///     Context passed to card-title contributors.
+    ///     传给卡牌标题贡献者的上下文。
+    /// </summary>
+    public readonly record struct CardTitleContext(
+        CardModel Card,
+        LocString BaseTitleLocString,
+        string BaseTitle,
+        string UpgradeSuffix,
+        string VanillaTitle);
+
+    /// <summary>
+    ///     Placement for capability-provided card title fragments.
+    ///     能力提供的卡牌标题片段插入位置。
+    /// </summary>
+    public enum CardTitleFragmentPlacement
+    {
+        /// <summary>
+        ///     Insert before the card's base title.
+        ///     插入到卡牌基础标题之前。
+        /// </summary>
+        BeforeBase,
+
+        /// <summary>
+        ///     Replace the card's base title. The first replacement wins.
+        ///     替换卡牌基础标题；第一个替换胜出。
+        /// </summary>
+        ReplaceBase,
+
+        /// <summary>
+        ///     Insert after the selected base title and before the vanilla upgrade suffix.
+        ///     插入到选定基础标题之后、原版升级后缀之前。
+        /// </summary>
+        AfterBase,
+
+        /// <summary>
+        ///     Insert after the vanilla upgrade suffix.
+        ///     插入到原版升级后缀之后。
+        /// </summary>
+        AfterTitle,
+    }
+
+    /// <summary>
+    ///     Localized card title fragment contributed by a capability.
+    ///     由能力贡献的本地化卡牌标题片段。
+    /// </summary>
+    public readonly record struct CardTitleFragment(
+        LocString Text,
+        CardTitleFragmentPlacement Placement = CardTitleFragmentPlacement.AfterBase,
+        int Order = 0);
+
+    /// <summary>
+    ///     Optional model capability that contributes localized card-title fragments.
+    ///     可选能力：贡献本地化卡牌标题片段。
+    /// </summary>
+    public interface ICardTitleContributor
+    {
+        /// <summary>
+        ///     Returns title fragments for the owning card. Fragments are formatted through the game
+        ///     <see cref="LocString" /> pipeline with the owning card's dynamic vars. Multiple prefix/suffix
+        ///     fragments compose by order; multiple base replacements are reported when
+        ///     <see cref="ModelCapabilityDiagnostics.ConflictLogs" /> is enabled.
+        ///     返回所属卡牌的标题片段。片段会带所属卡牌动态变量进入游戏原生 <see cref="LocString" /> 格式化管线。
+        ///     多个前缀/后缀片段按顺序组合；多个基础标题替换会按冲突诊断设置记录。
+        /// </summary>
+        IEnumerable<CardTitleFragment> GetTitleFragments(CardTitleContext context);
+    }
+
+    /// <summary>
     ///     Optional model capability that contributes hand glow predicates.
     ///     可选能力：贡献手牌发光判定。
     /// </summary>
@@ -239,9 +307,97 @@ namespace STS2RitsuLib.Models.Capabilities
         private const string DowngradeLifecycleSurface = "card lifecycle/downgraded";
         private const string TransformFromLifecycleSurface = "card lifecycle/transform-from";
         private const string TransformToLifecycleSurface = "card lifecycle/transform-to";
+        private const string TitleSurface = "card display/title";
         private const string HoverTipsSurface = "card display/hover-tips";
         private const string GoldGlowSurface = "card display/gold-glow";
         private const string RedGlowSurface = "card display/red-glow";
+
+        internal static void ApplyTitleFragments(CardTitleContext context, ref string title)
+        {
+            List<OrderedTitleFragment> beforeFragments = [];
+            List<OrderedTitleFragment> afterBaseFragments = [];
+            List<OrderedTitleFragment> afterTitleFragments = [];
+            OrderedTitleFragment? replacementFragment = null;
+            ICardTitleContributor? replacementSource = null;
+            var capabilityIndex = 0;
+            foreach (var capability in GetCapabilities<ICardTitleContributor>(context.Card))
+            {
+                var currentSourceIndex = capabilityIndex++;
+                IReadOnlyList<CardTitleFragment> fragments;
+                try
+                {
+                    fragments = (capability.GetTitleFragments(context) ?? []).ToArray();
+                }
+                catch (Exception ex)
+                {
+                    LogFailure(capability, context.Card, TitleSurface, ex);
+                    continue;
+                }
+
+                foreach (var (locString, placement, order) in fragments)
+                    TryRun(capability, context.Card, TitleSurface, () =>
+                    {
+                        PrepareTitleFragment(context, locString, capability);
+                        var text = locString.GetFormattedText();
+                        if (text.Length == 0) return;
+
+                        var orderedFragment = new OrderedTitleFragment(
+                            text,
+                            order,
+                            currentSourceIndex);
+                        switch (placement)
+                        {
+                            case CardTitleFragmentPlacement.BeforeBase:
+                                beforeFragments.Add(orderedFragment);
+                                break;
+                            case CardTitleFragmentPlacement.ReplaceBase:
+                                if (replacementFragment == null)
+                                {
+                                    replacementFragment = orderedFragment;
+                                    replacementSource = capability;
+                                    break;
+                                }
+
+                                ModelCapabilityDiagnostics.WarnSurfaceConflict(
+                                    TitleSurface,
+                                    context.Card,
+                                    replacementSource!,
+                                    replacementFragment.Value.Text,
+                                    capability,
+                                    text);
+                                break;
+                            case CardTitleFragmentPlacement.AfterTitle:
+                                afterTitleFragments.Add(orderedFragment);
+                                break;
+                            default:
+                                afterBaseFragments.Add(orderedFragment);
+                                break;
+                        }
+                    });
+            }
+
+            if (beforeFragments.Count == 0 &&
+                replacementFragment == null &&
+                afterBaseFragments.Count == 0 &&
+                afterTitleFragments.Count == 0)
+                return;
+
+            title = string.Concat(
+                beforeFragments
+                    .OrderBy(static fragment => fragment.Order)
+                    .ThenBy(static fragment => fragment.SourceIndex)
+                    .Select(static fragment => fragment.Text)
+                    .Concat([replacementFragment?.Text ?? context.BaseTitle])
+                    .Concat(afterBaseFragments
+                        .OrderBy(static fragment => fragment.Order)
+                        .ThenBy(static fragment => fragment.SourceIndex)
+                        .Select(static fragment => fragment.Text))
+                    .Concat([context.UpgradeSuffix])
+                    .Concat(afterTitleFragments
+                        .OrderBy(static fragment => fragment.Order)
+                        .ThenBy(static fragment => fragment.SourceIndex)
+                        .Select(static fragment => fragment.Text)));
+        }
 
         internal static CardType ApplyCardType(CardModel card, CardType current)
         {
@@ -525,6 +681,26 @@ namespace STS2RitsuLib.Models.Capabilities
                     energyVar.ColorPrefix = energyPrefix;
         }
 
+        private static void PrepareTitleFragment(
+            CardTitleContext context,
+            LocString locString,
+            ICardTitleContributor source)
+        {
+            var card = context.Card;
+
+            card.DynamicVars.AddTo(locString);
+            if (source is IModelDynamicVarContributor dynamicVarCapability)
+                dynamicVarCapability.GetDynamicVars(card).AddTo(locString);
+
+            var upgradeDisplay = card.IsUpgraded
+                ? UpgradeDisplay.Upgraded
+                : UpgradeDisplay.Normal;
+            locString.Add(new IfUpgradedVar(upgradeDisplay));
+            locString.Add("BaseTitle", context.BaseTitle);
+            locString.Add("UpgradeSuffix", context.UpgradeSuffix);
+            locString.Add("VanillaTitle", context.VanillaTitle);
+        }
+
         internal static IEnumerable<IHoverTip> GetHoverTips(CardModel card)
         {
             foreach (var tip in ModelCapabilityHost.GetHoverTips(card))
@@ -696,6 +872,8 @@ namespace STS2RitsuLib.Models.Capabilities
         {
             return ReferenceEquals(capability.Owner, card);
         }
+
+        private readonly record struct OrderedTitleFragment(string Text, int Order, int SourceIndex);
 
         private readonly record struct OrderedDescriptionFragment(string Text, int Order, int SourceIndex);
     }

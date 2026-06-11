@@ -68,6 +68,48 @@ namespace STS2RitsuLib.Models.Capabilities.Patches
             }
         }
 
+        /// <summary>
+        ///     Applies capability title fragments after CardModel formats the base title.
+        ///     在 CardModel 格式化基础标题后应用能力标题片段。
+        /// </summary>
+        internal sealed class TitlePatch : IPatchMethod
+        {
+            public static string PatchId => "ritsulib_card_capability_title";
+
+            public static string Description => "Apply model-capability card title fragments";
+
+            public static bool IsCritical => false;
+
+            public static ModPatchTarget[] GetTargets()
+            {
+                return [new(typeof(CardModel), "Title", MethodType.Getter)];
+            }
+
+            public static void Postfix(CardModel __instance, ref string __result)
+            {
+                var baseTitleLocString = __instance.TitleLocString;
+                var baseTitle = baseTitleLocString.GetFormattedText();
+                var upgradeSuffix = GetUpgradeSuffix(__instance);
+                var context = new CardTitleContext(
+                    __instance,
+                    baseTitleLocString,
+                    baseTitle,
+                    upgradeSuffix,
+                    baseTitle + upgradeSuffix);
+                CardModelCapabilityHost.ApplyTitleFragments(context, ref __result);
+            }
+
+            private static string GetUpgradeSuffix(CardModel card)
+            {
+                if (!card.IsUpgraded)
+                    return "";
+
+                return card.MaxUpgradeLevel > 1
+                    ? $"+{card.CurrentUpgradeLevel}"
+                    : "+";
+            }
+        }
+
         internal sealed class CardTypePatch : IPatchMethod
         {
             public static string PatchId => "ritsulib_card_capability_type";
