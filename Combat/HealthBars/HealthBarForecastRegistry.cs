@@ -37,9 +37,11 @@ namespace STS2RitsuLib.Combat.HealthBars
 
         /// <summary>
         ///     Each segment spans from the empty edge by its own <c>Amount</c> (capped to remaining HP). Larger
-        ///     <c>Amount</c> is drawn behind; smaller in front. Equal widths rotate front/back on a timer.
+        ///     <c>Amount</c> is drawn behind; smaller in front. Equal widths stack deterministically by
+        ///     <c>Order</c>, then registration order — later on top.
         ///     每个片段从空白边缘开始，按自身 <c>Amount</c> 跨越（限制为剩余 HP）。较大的
-        ///     <c>Amount</c> 绘制在后方；较小的绘制在前方。宽度相等时按计时器轮换前后顺序。
+        ///     <c>Amount</c> 绘制在后方；较小的绘制在前方。宽度相等时按 <c>Order</c>、再按注册顺序
+        ///     确定性叠放，靠后者在上层。
         /// </summary>
         OverlapFromOrigin = 1,
     }
@@ -98,9 +100,10 @@ namespace STS2RitsuLib.Combat.HealthBars
     /// </param>
     /// <param name="LeftExclusiveZGroup">
     ///     For <see cref="HealthBarForecastLeftOriginLayout.OverlapFromOrigin" />: larger values draw above smaller values.
-    ///     Within the same group, longer strips sit behind shorter strips; equal widths rotate.
+    ///     Within the same group, longer strips sit behind shorter strips; equal widths stack by
+    ///     <c>Order</c>, then registration order — later on top.
     ///     对 <see cref="HealthBarForecastLeftOriginLayout.OverlapFromOrigin" />：较大值绘制在较小值上方。
-    ///     同一组内，较长条位于较短条后方；宽度相等时轮换。
+    ///     同一组内，较长条位于较短条后方；宽度相等时按 <c>Order</c>、再按注册顺序叠放，靠后者在上层。
     /// </param>
     /// <param name="AffectsHpLabel">
     ///     Whether this segment can recolor the HP label when it reaches lethal threshold. Defaults to true to preserve

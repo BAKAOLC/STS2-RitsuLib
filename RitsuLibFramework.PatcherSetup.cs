@@ -296,6 +296,7 @@ namespace STS2RitsuLib
             patcher.RegisterPatch<GameOverScreenLifecyclePatch>();
             patcher.RegisterPatch<NHealthBarReadyForecastPatch>();
             patcher.RegisterPatch<NHealthBarRefreshForegroundOrderedPatch>();
+            patcher.RegisterPatch<NHealthBarContainerResizeForecastPatch>();
             patcher.RegisterPatch<CardModelShouldGlowGoldRegistryPatch>();
             patcher.RegisterPatch<CardModelShouldGlowRedRegistryPatch>();
             patcher.RegisterPatch<CardModelSetToFreeThisTurnBindingPatch>();
