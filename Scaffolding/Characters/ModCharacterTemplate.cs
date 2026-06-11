@@ -401,6 +401,54 @@ namespace STS2RitsuLib.Scaffolding.Characters
             : ModelDb.GetById<CharacterModel>(ModelDb.GetId(UnlocksAfterRunAsType));
 
         /// <summary>
+        ///     Local starting deck cards owned by this character class. Additive character-starter registrations are appended
+        ///     after this collection by <see cref="StartingDeck" />.
+        ///     此角色类拥有的本地初始牌组卡牌。<see cref="StartingDeck" /> 会在此集合之后追加增量角色初始内容注册。
+        /// </summary>
+        protected virtual IEnumerable<CardModel> LocalStartingDeck
+        {
+            get
+            {
+#pragma warning disable CS0618 // Intentional compatibility bridge from legacy type-based hooks
+                return StartingDeckEntries
+                    .SelectMany(static entry => Enumerable.Repeat(entry.CardType, Math.Max(entry.Count, 0)))
+                    .Select(static type => ModelDb.GetById<CardModel>(ModelDb.GetId(type)))
+                    .ToArray();
+#pragma warning restore CS0618
+            }
+        }
+
+        /// <summary>
+        ///     Local starting relics owned by this character class. Additive character-starter registrations are appended
+        ///     after this collection by <see cref="StartingRelics" />.
+        ///     此角色类拥有的本地初始遗物。<see cref="StartingRelics" /> 会在此集合之后追加增量角色初始内容注册。
+        /// </summary>
+        protected virtual IEnumerable<RelicModel> LocalStartingRelics
+        {
+            get
+            {
+#pragma warning disable CS0618 // Intentional compatibility bridge from legacy type-based hooks
+                return ResolveModels<RelicModel>(StartingRelicTypes);
+#pragma warning restore CS0618
+            }
+        }
+
+        /// <summary>
+        ///     Local starting potions owned by this character class. Additive character-starter registrations are appended
+        ///     after this collection by <see cref="StartingPotions" />.
+        ///     此角色类拥有的本地初始药水。<see cref="StartingPotions" /> 会在此集合之后追加增量角色初始内容注册。
+        /// </summary>
+        protected virtual IEnumerable<PotionModel> LocalStartingPotions
+        {
+            get
+            {
+#pragma warning disable CS0618 // Intentional compatibility bridge from legacy type-based hooks
+                return ResolveModels<PotionModel>(StartingPotionTypes);
+#pragma warning restore CS0618
+            }
+        }
+
+        /// <summary>
         ///     Legacy local starter-deck hook. Prefer additive character-starter registration so starter content can be
         ///     appended outside the character class and remain insensitive to registration order.
         ///     旧版本地初始牌组钩子。优先使用增量角色初始内容注册，使初始内容可以
@@ -748,51 +796,29 @@ namespace STS2RitsuLib.Scaffolding.Characters
 
         private IEnumerable<CardModel> ResolveStartingDeck()
         {
-            var localTypes = GetLocalStartingDeckEntries()
-                .SelectMany(static entry => Enumerable.Repeat(entry.CardType, Math.Max(entry.Count, 0)));
             var registeredTypes = ModContentRegistry.GetRegisteredCharacterStarterCards(GetType());
 
-            return localTypes
-                .Concat(registeredTypes)
-                .Select(type => ModelDb.GetById<CardModel>(ModelDb.GetId(type)))
+            return LocalStartingDeck
+                .Concat(ResolveModels<CardModel>(registeredTypes))
                 .ToArray();
         }
 
         private IReadOnlyList<RelicModel> ResolveStartingRelics()
         {
-            return GetLocalStartingRelicTypes()
-                .Concat(ModContentRegistry.GetRegisteredCharacterStarterRelics(GetType()))
-                .Select(type => ModelDb.GetById<RelicModel>(ModelDb.GetId(type)))
+            var registeredTypes = ModContentRegistry.GetRegisteredCharacterStarterRelics(GetType());
+
+            return LocalStartingRelics
+                .Concat(ResolveModels<RelicModel>(registeredTypes))
                 .ToArray();
         }
 
         private IReadOnlyList<PotionModel> ResolveStartingPotions()
         {
-            return GetLocalStartingPotionTypes()
-                .Concat(ModContentRegistry.GetRegisteredCharacterStarterPotions(GetType()))
-                .Select(type => ModelDb.GetById<PotionModel>(ModelDb.GetId(type)))
+            var registeredTypes = ModContentRegistry.GetRegisteredCharacterStarterPotions(GetType());
+
+            return LocalStartingPotions
+                .Concat(ResolveModels<PotionModel>(registeredTypes))
                 .ToArray();
-        }
-
-        private IReadOnlyList<StartingDeckEntry> GetLocalStartingDeckEntries()
-        {
-#pragma warning disable CS0618 // Intentional legacy compatibility hooks
-            return StartingDeckEntries.ToArray();
-#pragma warning restore CS0618
-        }
-
-        private IReadOnlyList<Type> GetLocalStartingRelicTypes()
-        {
-#pragma warning disable CS0618 // Intentional legacy compatibility hooks
-            return StartingRelicTypes.ToArray();
-#pragma warning restore CS0618
-        }
-
-        private IReadOnlyList<Type> GetLocalStartingPotionTypes()
-        {
-#pragma warning disable CS0618 // Intentional legacy compatibility hooks
-            return StartingPotionTypes.ToArray();
-#pragma warning restore CS0618
         }
     }
 }

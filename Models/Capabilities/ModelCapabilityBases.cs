@@ -5,6 +5,7 @@ using MegaCrit.Sts2.Core.Entities.Creatures;
 using MegaCrit.Sts2.Core.GameActions.Multiplayer;
 using MegaCrit.Sts2.Core.Models;
 using MegaCrit.Sts2.Core.Rooms;
+using STS2RitsuLib.Cards;
 
 namespace STS2RitsuLib.Models.Capabilities
 {
@@ -272,10 +273,15 @@ namespace STS2RitsuLib.Models.Capabilities
     ///     Card capability base that handles plays of its owning card.
     ///     处理所属卡牌打出事件的卡牌能力基类。
     /// </summary>
-    public abstract class CardPlayCapability : CardCapability
+    public abstract class CardPlayCapability : CardCapability, ICardOnPlayHookListener
     {
         /// <inheritdoc />
-        public override Task AfterCardPlayed(PlayerChoiceContext choiceContext, CardPlay cardPlay)
+        public Task AfterCardOnPlayCompleted(CardOnPlayCompletedContext context)
+        {
+            return NotifyOwnerCardPlayed(context.ChoiceContext, context.CardPlay);
+        }
+
+        internal Task NotifyOwnerCardPlayed(PlayerChoiceContext choiceContext, CardPlay cardPlay)
         {
             return ShouldHandleCardPlay(cardPlay)
                 ? OnOwnerCardPlayed(choiceContext, cardPlay)
@@ -292,8 +298,8 @@ namespace STS2RitsuLib.Models.Capabilities
         }
 
         /// <summary>
-        ///     Called after the owning card is played.
-        ///     所属卡牌打出后调用。
+        ///     Called after the owning card's OnPlay body completes.
+        ///     所属卡牌的 OnPlay 主体完成后调用。
         /// </summary>
         protected abstract Task OnOwnerCardPlayed(PlayerChoiceContext choiceContext, CardPlay cardPlay);
     }
@@ -312,8 +318,8 @@ namespace STS2RitsuLib.Models.Capabilities
         }
 
         /// <summary>
-        ///     Called once after the owning card is played, before the capability removes itself.
-        ///     所属卡牌打出后调用一次，随后能力会移除自身。
+        ///     Called once after the owning card's OnPlay body completes, before the capability removes itself.
+        ///     所属卡牌的 OnPlay 主体完成后调用一次，随后能力会移除自身。
         /// </summary>
         protected abstract Task OnOwnerCardPlayedOnce(PlayerChoiceContext choiceContext, CardPlay cardPlay);
     }

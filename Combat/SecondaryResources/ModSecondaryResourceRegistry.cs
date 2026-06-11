@@ -1,3 +1,4 @@
+using MegaCrit.Sts2.Core.HoverTips;
 using MegaCrit.Sts2.Core.Models;
 using STS2RitsuLib.Content;
 
@@ -137,6 +138,30 @@ namespace STS2RitsuLib.Combat.SecondaryResources
             {
                 return Definitions.Values.OrderBy(static definition => definition.Id, StringComparer.Ordinal).ToArray();
             }
+        }
+
+        /// <summary>
+        ///     Convenience wrapper that builds a <see cref="HoverTip" /> from a registered
+        ///     <see cref="SecondaryResourceDefinition" />.
+        ///     便捷包装：使用已注册的 <see cref="SecondaryResourceDefinition" /> 构建 <see cref="HoverTip" />。
+        /// </summary>
+        /// <param name="resourceId">
+        ///     Full secondary-resource id.
+        ///     完整次级资源 id。
+        /// </param>
+        /// <param name="amount">
+        ///     Current amount exposed to localization variables. Defaults to <c>0</c> for simple description tips.
+        ///     暴露给本地化变量的当前数量。简单描述 tip 默认使用 <c>0</c>。
+        /// </param>
+        /// <param name="maxAmount">
+        ///     Optional max amount exposed to localization variables.
+        ///     暴露给本地化变量的可选最大数量。
+        /// </param>
+        public static HoverTip CreateHoverTip(string resourceId, int amount = 0, int? maxAmount = null)
+        {
+            return !TryGet(resourceId, out var definition)
+                ? throw new KeyNotFoundException($"Secondary resource is not registered: {resourceId}")
+                : SecondaryResourceHoverTipFactory.Create(definition, amount, maxAmount);
         }
 
         /// <summary>

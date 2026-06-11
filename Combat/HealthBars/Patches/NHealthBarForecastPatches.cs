@@ -16,8 +16,6 @@ namespace STS2RitsuLib.Combat.HealthBars.Patches
     /// </summary>
     internal static class NHealthBarForecastPatchHelper
     {
-        private const int OverlapEqualWidthRotatePeriodMs = 1800;
-
         private static readonly AttachedState<NHealthBar, HealthBarForecastUiState?> UiStates = new(() => null);
 
         private static readonly Color DoomLethalTextColor = new("FB8DFF");
@@ -58,10 +56,10 @@ namespace STS2RitsuLib.Combat.HealthBars.Patches
 
             var maxWidth = GetMaxFgWidth(healthBar);
             var hpForeground = healthBar._hpForeground;
-            var hpFromForeground =
-                Math.Clamp(HpFromOffsetRight(healthBar, hpForeground.OffsetRight, visualDenom), 0,
-                    creature.CurrentHp);
-            var baseHp = hpForeground.Visible || hpFromForeground < creature.CurrentHp ? hpFromForeground : 0;
+            var poisonDamage = creature.HasPower<PoisonPower>()
+                ? Math.Max(0, creature.GetPower<PoisonPower>()?.CalculateTotalDamageNextTurn() ?? 0)
+                : 0;
+            var baseHp = Math.Max(0, creature.CurrentHp - poisonDamage);
 
             var rightSegments = customSegments
                 .Where(segment => segment.Direction == HealthBarForecastGrowthDirection.FromRight)
@@ -136,7 +134,7 @@ namespace STS2RitsuLib.Combat.HealthBars.Patches
             if (remainingHp <= 0)
             {
                 HideSegments(state.LeftSegments);
-                state.LastRender = new(true, rightForecastEdgeOffsetRight, lethalRightColor, null);
+                state.LastRender = new(true, rightForecastEdgeOffsetRight, lethalRightColor, null, 0);
                 return;
             }
 
@@ -179,10 +177,60 @@ namespace STS2RitsuLib.Combat.HealthBars.Patches
             HideSegments(state.LeftSegments, leftIndex);
             var lethalLeftColor = ResolveLeftLethalColor(creature, remainingHp, leftSegments, state.OverlapLeftZ);
             state.LastRender =
-                new(rightIndex > 0, rightForecastEdgeOffsetRight, lethalRightColor, lethalLeftColor);
+                new(rightIndex > 0, rightForecastEdgeOffsetRight, lethalRightColor, lethalLeftColor, remainingHp);
         }
 
         public static void RefreshMiddlegroundOverlay(NHealthBar healthBar)
+        {
+            if (BaseLibHealthBarForecastBridge.ShouldRitsuRendererStandDown())
+                return;
+
+            var state = UiStates[healthBar];
+            if (state == null)
+                return;
+
+            if (!state.LastRender.HasRightForecast)
+            {
+                state.MiddlegroundTweenTarget = null;
+                return;
+            }
+
+            var creature = healthBar._creature;
+            if (creature.CurrentHp <= 0 || creature.IsInfiniteHpDisplayed())
+                return;
+
+            var hpMiddleground = healthBar._hpMiddleground;
+            var targetOffsetRight = state.LastRender.RightForecastEdgeOffsetRight;
+            var hpChanged = creature.CurrentHp != state.MiddlegroundHpOnLastTween ||
+                            creature.MaxHp != state.MiddlegroundMaxHpOnLastTween;
+            var targetChanged = state.MiddlegroundTweenTarget is not { } lastTarget ||
+                                !Mathf.IsEqualApprox(lastTarget, targetOffsetRight);
+            if (!hpChanged && !targetChanged)
+                return;
+
+            state.MiddlegroundHpOnLastTween = creature.CurrentHp;
+            state.MiddlegroundMaxHpOnLastTween = creature.MaxHp;
+            state.MiddlegroundTweenTarget = targetOffsetRight;
+
+            var shouldAnimateImmediately = targetOffsetRight >= hpMiddleground.OffsetRight;
+            hpMiddleground.OffsetRight += 1f;
+
+            healthBar._middlegroundTween?.Kill();
+            var tween = healthBar.CreateTween();
+            tween.TweenProperty(hpMiddleground, "offset_right", targetOffsetRight - 2f, 1.0)
+                .SetDelay(shouldAnimateImmediately ? 0.0 : 1.0)
+                .SetEase(Tween.EaseType.Out)
+                .SetTrans(Tween.TransitionType.Expo);
+            healthBar._middlegroundTween = tween;
+        }
+
+        /// <summary>
+        ///     Repositions the middleground without animation after the bar container was resized; vanilla snapped it to
+        ///     the un-forecasted HP edge inside <c>SetHpBarContainerSizeWithOffsetsImmediately</c>.
+        ///     在血条容器尺寸变化后无动画地复位 middleground；原版在
+        ///     <c>SetHpBarContainerSizeWithOffsetsImmediately</c> 中把它对齐到了未应用 forecast 的 HP 边缘。
+        /// </summary>
+        public static void SnapMiddlegroundToForecast(NHealthBar healthBar)
         {
             if (BaseLibHealthBarForecastBridge.ShouldRitsuRendererStandDown())
                 return;
@@ -195,18 +243,12 @@ namespace STS2RitsuLib.Combat.HealthBars.Patches
             if (creature.CurrentHp <= 0 || creature.IsInfiniteHpDisplayed())
                 return;
 
-            var hpMiddleground = healthBar._hpMiddleground;
             var targetOffsetRight = state.LastRender.RightForecastEdgeOffsetRight;
-            var shouldAnimateImmediately = targetOffsetRight >= hpMiddleground.OffsetRight;
-            hpMiddleground.OffsetRight += 1f;
-
             healthBar._middlegroundTween?.Kill();
-            var tween = healthBar.CreateTween();
-            tween.TweenProperty(hpMiddleground, "offset_right", targetOffsetRight - 2f, 1.0)
-                .SetDelay(shouldAnimateImmediately ? 0.0 : 1.0)
-                .SetEase(Tween.EaseType.Out)
-                .SetTrans(Tween.TransitionType.Expo);
-            healthBar._middlegroundTween = tween;
+            healthBar._hpMiddleground.OffsetRight = targetOffsetRight - 2f;
+            state.MiddlegroundHpOnLastTween = creature.CurrentHp;
+            state.MiddlegroundMaxHpOnLastTween = creature.MaxHp;
+            state.MiddlegroundTweenTarget = targetOffsetRight;
         }
 
         public static void RefreshTextOverlay(NHealthBar healthBar)
@@ -262,7 +304,6 @@ namespace STS2RitsuLib.Combat.HealthBars.Patches
 
                 EnsureSegmentCount(state.LeftSegments, state.LeftContainer, leftIndex + 1, state.LeftTemplate);
                 var node = state.LeftSegments[leftIndex];
-                node.ZIndex = 0;
                 var startWidth = GetFgWidth(healthBar, segmentStart, visualDenom);
                 var endWidth = GetFgWidth(healthBar, leftAccumulated, visualDenom);
 
@@ -298,17 +339,19 @@ namespace STS2RitsuLib.Combat.HealthBars.Patches
 
             foreach (var grp in overlapSegments.GroupBy(s => s.LeftExclusiveZGroup).OrderBy(g => g.Key))
             {
+                // Larger amounts draw first (bottom); equal amounts stack deterministically by Order then
+                // registration order, later on top. No time-based reordering: the health bar only refreshes
+                // on game events, so a timer could never animate reliably and would flip at random refreshes.
+                // 较大 Amount 先绘制（底层）；等宽片段按 Order、再按注册顺序确定性叠放，靠后者在上层。
+                // 不做基于时间的重排：血条仅在游戏事件时刷新，计时器无法可靠生效，只会在随机刷新时翻转。
                 var sorted = grp
                     .OrderByDescending(s => s.Amount)
                     .ThenBy(s => s.Order)
                     .ThenBy(s => s.SequenceOrder)
                     .ToArray();
-                var ranks = AssignOverlapStackRanks(sorted);
-                var zBase = OverlapGroupZBase(grp.Key);
 
-                for (var i = 0; i < sorted.Length; i++)
+                foreach (var segment in sorted)
                 {
-                    var segment = sorted[i];
                     var visibleAmount = Math.Min(segment.Amount, remainingHp);
                     if (visibleAmount <= 0)
                         continue;
@@ -316,9 +359,7 @@ namespace STS2RitsuLib.Combat.HealthBars.Patches
                     EnsureSegmentCount(state.LeftSegments, state.LeftContainer, leftIndex + 1, state.LeftTemplate);
                     var node = state.LeftSegments[leftIndex];
                     var endWidth = GetFgWidth(healthBar, visibleAmount, visualDenom);
-                    var zKey = zBase + ranks[i];
-                    node.ZIndex = 0;
-                    state.OverlapLeftZ.Add((segment, zKey));
+                    state.OverlapLeftZ.Add((segment, leftIndex));
 
                     node.Visible = true;
                     ApplyForecastSegmentAppearance(
@@ -335,35 +376,6 @@ namespace STS2RitsuLib.Combat.HealthBars.Patches
                     leftIndex++;
                 }
             }
-        }
-
-        private static int OverlapGroupZBase(int exclusiveGroup)
-        {
-            return 20 + exclusiveGroup * 120;
-        }
-
-        private static int[] AssignOverlapStackRanks(CustomSegment[] sortedByAmountDesc)
-        {
-            var n = sortedByAmountDesc.Length;
-            var ranks = new int[n];
-            var i = 0;
-            while (i < n)
-            {
-                var j = i + 1;
-                while (j < n && sortedByAmountDesc[j].Amount == sortedByAmountDesc[i].Amount)
-                    j++;
-
-                var runLen = j - i;
-                var rot = runLen <= 1
-                    ? 0
-                    : (int)(Time.GetTicksMsec() / OverlapEqualWidthRotatePeriodMs % (ulong)runLen);
-                for (var k = 0; k < runLen; k++)
-                    ranks[i + k] = i + (k + rot) % runLen;
-
-                i = j;
-            }
-
-            return ranks;
         }
 
         private static CustomSegment[] GetCustomSegments(Creature creature)
@@ -416,11 +428,16 @@ namespace STS2RitsuLib.Combat.HealthBars.Patches
             mask.AddChild(rightContainer);
             mask.AddChild(leftContainer);
 
+            var rightTemplate = CreateSegmentTemplate(poisonForeground, "RitsuForecastRightTemplate");
+            var leftTemplate = CreateSegmentTemplate(doomForeground, "RitsuForecastLeftTemplate");
+            rightContainer.AddChild(rightTemplate);
+            leftContainer.AddChild(leftTemplate);
+
             UiStates[healthBar] = new(
                 rightContainer,
                 leftContainer,
-                CreateSegmentTemplate(poisonForeground, "RitsuForecastRightTemplate"),
-                CreateSegmentTemplate(doomForeground, "RitsuForecastLeftTemplate"),
+                rightTemplate,
+                leftTemplate,
                 []);
             return true;
         }
@@ -442,8 +459,13 @@ namespace STS2RitsuLib.Combat.HealthBars.Patches
             var duplicate = (NinePatchRect)template.Duplicate();
             duplicate.Name = name;
             duplicate.Visible = false;
+            duplicate.Modulate = Colors.White;
             duplicate.SelfModulate = Colors.White;
             duplicate.Material = null;
+            duplicate.ZIndex = 0;
+            duplicate.MouseFilter = Control.MouseFilterEnum.Ignore;
+            duplicate.OffsetLeft = 0f;
+            duplicate.OffsetRight = 0f;
             return duplicate;
         }
 
@@ -455,17 +477,36 @@ namespace STS2RitsuLib.Combat.HealthBars.Patches
                 poisonForeground.GetParent() is not Control mask)
                 return;
 
-            // Right forecast should override poison, but still be clipped by HP.
-            var poisonIndex = poisonForeground.GetIndex();
-            var hpIndex = hpForeground.GetIndex();
-            var rightTargetIndex = Math.Clamp(poisonIndex, 0, hpIndex);
-            mask.MoveChild(state.RightContainer, rightTargetIndex);
+            if (poisonForeground.GetIndex() < hpForeground.GetIndex())
+                MoveChildAfter(mask, state.RightContainer, poisonForeground);
+            else
+                MoveChildBefore(mask, state.RightContainer, hpForeground);
 
-            // Left forecast should sit under doom-like overlays so vanilla doom remains part of final stacking.
-            var doomIndex = doomForeground.GetIndex();
-            var childCount = mask.GetChildCount();
-            var leftTargetIndex = Math.Clamp(doomIndex, 0, Math.Max(0, childCount - 1));
-            mask.MoveChild(state.LeftContainer, leftTargetIndex);
+            MoveChildBefore(mask, state.LeftContainer, doomForeground);
+        }
+
+        private static void MoveChildAfter(Control parent, Control node, Control anchor)
+        {
+            if (node.GetParent() != parent || anchor.GetParent() != parent)
+                return;
+
+            var nodeIndex = node.GetIndex();
+            var anchorIndex = anchor.GetIndex();
+            var targetIndex = nodeIndex > anchorIndex ? anchorIndex + 1 : anchorIndex;
+            if (nodeIndex != targetIndex)
+                parent.MoveChild(node, targetIndex);
+        }
+
+        private static void MoveChildBefore(Control parent, Control node, Control anchor)
+        {
+            if (node.GetParent() != parent || anchor.GetParent() != parent)
+                return;
+
+            var nodeIndex = node.GetIndex();
+            var anchorIndex = anchor.GetIndex();
+            var targetIndex = nodeIndex > anchorIndex ? anchorIndex : Math.Max(0, anchorIndex - 1);
+            if (nodeIndex != targetIndex)
+                parent.MoveChild(node, targetIndex);
         }
 
         private static void EnsureSegmentCount(
@@ -533,19 +574,6 @@ namespace STS2RitsuLib.Combat.HealthBars.Patches
             return Math.Max(width, creature.CurrentHp > 0 ? 12f : 0f);
         }
 
-        private static int HpFromOffsetRight(NHealthBar healthBar, float offsetRight, int visualDenom)
-        {
-            if (visualDenom <= 0)
-                return 0;
-
-            var maxWidth = GetMaxFgWidth(healthBar);
-            if (maxWidth <= 0f)
-                return 0;
-
-            var width = Math.Clamp(offsetRight + maxWidth, 0f, maxWidth);
-            return (int)Math.Round(width / maxWidth * visualDenom);
-        }
-
         private static Color DarkenForOutline(Color color)
         {
             return new(
@@ -560,34 +588,33 @@ namespace STS2RitsuLib.Combat.HealthBars.Patches
             if (doomAmount <= 0)
                 return false;
 
-            var graftAgg = HealthBarVisualGraftRegistry.Aggregate(creature);
-            var visualDenom = Math.Max(creature.MaxHp, creature.CurrentHp + Math.Max(0, graftAgg.GraftHp));
-            var hpAfterRight = Math.Clamp(
-                HpFromOffsetRight(healthBar, healthBar._hpForeground.OffsetRight, visualDenom),
-                0,
-                creature.CurrentHp);
-            return hpAfterRight > 0 && doomAmount >= hpAfterRight;
+            var state = UiStates[healthBar];
+            if (state == null || !state.LastRender.HasRightForecast)
+                return false;
+
+            var remainingHp = state.LastRender.RemainingHpAfterRight;
+            return remainingHp > 0 && doomAmount >= remainingHp;
         }
 
         private static Color? ResolveLeftLethalColor(
             Creature creature,
             int remainingHp,
             IReadOnlyList<CustomSegment> leftSegments,
-            List<(CustomSegment seg, int zKey)> overlapZ)
+            List<(CustomSegment seg, int drawIndex)> overlapZ)
         {
             if (remainingHp <= 0)
                 return null;
 
             Color? overlapLethal = null;
             var hasOverlapLethal = false;
-            var bestZ = int.MinValue;
-            foreach (var (seg, zKey) in overlapZ)
+            var bestDrawIndex = int.MinValue;
+            foreach (var (seg, drawIndex) in overlapZ)
             {
                 if (seg.Amount < remainingHp)
                     continue;
-                if (zKey < bestZ)
+                if (drawIndex < bestDrawIndex)
                     continue;
-                bestZ = zKey;
+                bestDrawIndex = drawIndex;
                 hasOverlapLethal = true;
                 overlapLethal = seg.AffectsHpLabel ? seg.Color : null;
             }
@@ -646,8 +673,11 @@ namespace STS2RitsuLib.Combat.HealthBars.Patches
             public NinePatchRect LeftTemplate { get; } = leftTemplate;
             public List<NinePatchRect> RightSegments { get; } = rightSegments;
             public List<NinePatchRect> LeftSegments { get; } = [];
-            public List<(CustomSegment seg, int zKey)> OverlapLeftZ { get; } = [];
+            public List<(CustomSegment seg, int drawIndex)> OverlapLeftZ { get; } = [];
             public HealthBarForecastRenderResult LastRender { get; set; } = HealthBarForecastRenderResult.Empty;
+            public float? MiddlegroundTweenTarget { get; set; }
+            public int MiddlegroundHpOnLastTween { get; set; } = -1;
+            public int MiddlegroundMaxHpOnLastTween { get; set; } = -1;
         }
 
         /// <summary>
@@ -670,9 +700,40 @@ namespace STS2RitsuLib.Combat.HealthBars.Patches
             bool HasRightForecast,
             float RightForecastEdgeOffsetRight,
             Color? LethalRightColor,
-            Color? LethalLeftColor)
+            Color? LethalLeftColor,
+            int RemainingHpAfterRight)
         {
-            public static HealthBarForecastRenderResult Empty => new(false, 0f, null, null);
+            public static HealthBarForecastRenderResult Empty => new(false, 0f, null, null, 0);
+        }
+    }
+
+    /// <summary>
+    ///     Runs visual graft, forecast overlay, then graft touchup in one deterministic order with a reentrancy guard:
+    ///     the graft pass resizes the bar container, whose resize patch would otherwise re-enter this chain.
+    ///     以确定顺序运行 visual graft、forecast 覆盖层和 graft touchup，并带重入守卫：
+    ///     graft 阶段会调整血条容器尺寸，否则其 resize 补丁会重入此链。
+    /// </summary>
+    internal static class NHealthBarOverlayRefreshChain
+    {
+        [ThreadStatic] private static bool _isRunning;
+
+        public static bool Run(NHealthBar healthBar)
+        {
+            if (_isRunning)
+                return false;
+
+            _isRunning = true;
+            try
+            {
+                NHealthBarGraftUiPatchHelper.RefreshGraftOverlay(healthBar);
+                NHealthBarForecastPatchHelper.RefreshForegroundOverlay(healthBar);
+                NHealthBarGraftUiPatchHelper.AfterForecastTouchup(healthBar);
+                return true;
+            }
+            finally
+            {
+                _isRunning = false;
+            }
         }
     }
 
@@ -714,9 +775,35 @@ namespace STS2RitsuLib.Combat.HealthBars.Patches
 
         public static void Postfix(NHealthBar __instance)
         {
-            NHealthBarGraftUiPatchHelper.RefreshGraftOverlay(__instance);
-            NHealthBarForecastPatchHelper.RefreshForegroundOverlay(__instance);
-            NHealthBarGraftUiPatchHelper.AfterForecastTouchup(__instance);
+            NHealthBarOverlayRefreshChain.Run(__instance);
+        }
+    }
+
+    [HarmonyAfter(Const.BaseLibHarmonyId)]
+    [HarmonyPriority(Priority.Last)]
+    internal sealed class NHealthBarContainerResizeForecastPatch : IPatchMethod
+    {
+        public static string PatchId => "health_bar_forecast_container_resize";
+
+        public static string Description =>
+            "Re-run health bar overlays after the bar container is resized so segment offsets track the new width";
+
+        public static bool IsCritical => false;
+
+        public static ModPatchTarget[] GetTargets()
+        {
+            return [new(typeof(NHealthBar), "SetHpBarContainerSizeWithOffsetsImmediately", true)];
+        }
+
+        public static void Postfix(NHealthBar __instance)
+        {
+            if (__instance._creature == null)
+                return;
+
+            if (!NHealthBarOverlayRefreshChain.Run(__instance))
+                return;
+
+            NHealthBarForecastPatchHelper.SnapMiddlegroundToForecast(__instance);
         }
     }
 

@@ -296,6 +296,7 @@ namespace STS2RitsuLib
             patcher.RegisterPatch<GameOverScreenLifecyclePatch>();
             patcher.RegisterPatch<NHealthBarReadyForecastPatch>();
             patcher.RegisterPatch<NHealthBarRefreshForegroundOrderedPatch>();
+            patcher.RegisterPatch<NHealthBarContainerResizeForecastPatch>();
             patcher.RegisterPatch<CardModelShouldGlowGoldRegistryPatch>();
             patcher.RegisterPatch<CardModelShouldGlowRedRegistryPatch>();
             patcher.RegisterPatch<CardModelSetToFreeThisTurnBindingPatch>();
@@ -371,6 +372,7 @@ namespace STS2RitsuLib
             patcher.RegisterPatch<OrbModelCapabilityPatches.OrbCmdPassivePatch>();
             patcher.RegisterPatch<OrbModelCapabilityPatches.AfterOrbEvokedHookPatch>();
             patcher.RegisterPatch<CardModelCapabilityPatches.UpdateDynamicVarPreviewPatch>();
+            patcher.RegisterPatch<CardModelCapabilityPatches.TitlePatch>();
             patcher.RegisterPatch<CardModelCapabilityPatches.CardTypePatch>();
             patcher.RegisterPatch<CardModelCapabilityPatches.CardRarityPatch>();
             patcher.RegisterPatch<CardModelCapabilityPatches.TargetTypePatch>();
@@ -378,6 +380,7 @@ namespace STS2RitsuLib
             patcher.RegisterPatch<CardModelCapabilityPatches.IsPlayablePatch>();
             patcher.RegisterPatch<CardModelCapabilityPatches.HasTurnEndInHandEffectPatch>();
             patcher.RegisterPatch<CardModelCapabilityPatches.ResultPileTypeForCardPlayPatch>();
+            patcher.RegisterPatch<CardOnPlayHookPatch>();
             patcher.RegisterPatch<CardModelCapabilityPatches.TransformCarryOverPatch>();
             patcher.RegisterPatch<CardModelCapabilityPatches.FromSerializableUpgradeReplayPatch>();
             patcher.RegisterPatch<CardModelCapabilityPatches.UpgradeInternalPatch>();
