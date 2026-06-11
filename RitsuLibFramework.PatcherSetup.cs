@@ -379,6 +379,7 @@ namespace STS2RitsuLib
             patcher.RegisterPatch<CardModelCapabilityPatches.IsPlayablePatch>();
             patcher.RegisterPatch<CardModelCapabilityPatches.HasTurnEndInHandEffectPatch>();
             patcher.RegisterPatch<CardModelCapabilityPatches.ResultPileTypeForCardPlayPatch>();
+            patcher.RegisterPatch<CardOnPlayHookPatch>();
             patcher.RegisterPatch<CardModelCapabilityPatches.TransformCarryOverPatch>();
             patcher.RegisterPatch<CardModelCapabilityPatches.FromSerializableUpgradeReplayPatch>();
             patcher.RegisterPatch<CardModelCapabilityPatches.UpgradeInternalPatch>();
