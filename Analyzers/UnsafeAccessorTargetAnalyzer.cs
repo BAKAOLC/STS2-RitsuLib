@@ -8,7 +8,7 @@ using System.Reflection.PortableExecutable;
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.Diagnostics;
 
-namespace STS2.RitsuLib.Analyzers
+namespace STS2RitsuLib.Analyzers
 {
     [DiagnosticAnalyzer(LanguageNames.CSharp)]
     public sealed class UnsafeAccessorTargetAnalyzer : DiagnosticAnalyzer

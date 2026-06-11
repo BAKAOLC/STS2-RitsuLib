@@ -3,6 +3,8 @@
         <TargetFramework>netstandard2.0</TargetFramework>
         <LangVersion>latest</LangVersion>
         <Nullable>enable</Nullable>
+        <AssemblyName>STS2-RitsuLib.Analyzers</AssemblyName>
+        <RootNamespace>STS2RitsuLib.Analyzers</RootNamespace>
         <IsPackable>false</IsPackable>
         <IncludeBuildOutput>false</IncludeBuildOutput>
         <GenerateDocumentationFile>false</GenerateDocumentationFile>
