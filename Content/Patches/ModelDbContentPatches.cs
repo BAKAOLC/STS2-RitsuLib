@@ -180,13 +180,13 @@ namespace STS2RitsuLib.Content.Patches
     }
 
     /// <summary>
-    ///     <para xml:lang="en">Appends RitsuLib-registered shared events to <see cref="ModelDb.AllEvents" />.</para>
-    ///     <para xml:lang="zh-CN">将 RitsuLib 注册的共享事件追加到 <see cref="ModelDb.AllEvents" />。</para>
+    ///     <para xml:lang="en">Appends RitsuLib-registered events to <see cref="ModelDb.AllEvents" />.</para>
+    ///     <para xml:lang="zh-CN">将 RitsuLib 注册的事件追加到 <see cref="ModelDb.AllEvents" />。</para>
     /// </summary>
     internal class AllEventsPatch : IPatchMethod
     {
         public static string PatchId => "modeldb_all_events";
-        public static string Description => "Append registered shared events to ModelDb.AllEvents";
+        public static string Description => "Append registered events to ModelDb.AllEvents";
         public static bool IsCritical => true;
 
         public static ModPatchTarget[] GetTargets()
@@ -196,7 +196,7 @@ namespace STS2RitsuLib.Content.Patches
 
         public static void Postfix(ref IEnumerable<EventModel> __result)
         {
-            ModelDbContentPatchHelper.Append(ref __result, ModContentRegistry.AppendSharedEvents);
+            ModelDbContentPatchHelper.Append(ref __result, ModContentRegistry.AppendAllEvents);
         }
     }
 
