@@ -170,6 +170,11 @@ namespace STS2RitsuLib.Models.Capabilities
                 dynamicVar.UpgradeValueBy(0m);
         }
 
+        internal void NotifyLoadedFromSave()
+        {
+            OnLoadedFromSave();
+        }
+
         /// <summary>
         ///     Removes this capability from its owner collection when it is currently attached.
         ///     当前能力已附加时，将其从所属 collection 中移除。
@@ -193,6 +198,14 @@ namespace STS2RitsuLib.Models.Capabilities
         ///     当此能力被分离时调用。
         /// </summary>
         protected virtual void OnDetach(AbstractModel owner)
+        {
+        }
+
+        /// <summary>
+        ///     Called only after this capability's owner has been restored as part of a saved-run load.
+        ///     仅当此能力的 owner 作为跑局读档的一部分恢复后调用。
+        /// </summary>
+        protected virtual void OnLoadedFromSave()
         {
         }
 
@@ -334,6 +347,14 @@ namespace STS2RitsuLib.Models.Capabilities
         {
         }
 
+        /// <summary>
+        ///     Called only after this capability's typed owner has been restored as part of a saved-run load.
+        ///     仅当此能力的类型化 owner 作为跑局读档的一部分恢复后调用。
+        /// </summary>
+        protected virtual void OnLoadedFromSave(TModel owner)
+        {
+        }
+
         /// <inheritdoc />
         protected sealed override void OnAttach(AbstractModel owner)
         {
@@ -344,6 +365,13 @@ namespace STS2RitsuLib.Models.Capabilities
         protected sealed override void OnDetach(AbstractModel owner)
         {
             OnDetach((TModel)owner);
+        }
+
+        /// <inheritdoc />
+        protected sealed override void OnLoadedFromSave()
+        {
+            if (Owner is { } owner)
+                OnLoadedFromSave(owner);
         }
     }
 
@@ -400,7 +428,7 @@ namespace STS2RitsuLib.Models.Capabilities
         /// </summary>
         protected virtual TState ReadState(JsonNode? state, int schemaVersion)
         {
-            return state?.Deserialize<TState>(ModelSavedDataJson.Options) ?? new();
+            return state?.Deserialize<TState>(ModelSavedDataJson.Options) ?? new TState();
         }
     }
 
@@ -458,7 +486,7 @@ namespace STS2RitsuLib.Models.Capabilities
         /// </summary>
         protected virtual TState ReadState(JsonNode? state, int schemaVersion)
         {
-            return state?.Deserialize<TState>(ModelSavedDataJson.Options) ?? new();
+            return state?.Deserialize<TState>(ModelSavedDataJson.Options) ?? new TState();
         }
     }
 }

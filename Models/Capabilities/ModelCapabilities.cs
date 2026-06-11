@@ -90,7 +90,15 @@ namespace STS2RitsuLib.Models.Capabilities
 
         private static ModelCapabilitySaveDocument? Export(AbstractModel model)
         {
-            return TryGet(model, out var collection) && collection.ShouldSave() ? collection.Save() : null;
+            if (!TryGet(model, out var collection))
+            {
+                if (!ModelCapabilityDefaults.HasDefaultCapabilitySource(model))
+                    return null;
+
+                collection = Get(model);
+            }
+
+            return collection.ShouldSave() ? collection.Save() : null;
         }
 
         private static void Import(AbstractModel model, ModelCapabilitySaveDocument? document)

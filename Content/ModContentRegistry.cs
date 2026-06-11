@@ -1463,6 +1463,18 @@ namespace STS2RitsuLib.Content
             return MergeGlobalCatalog(ContentCatalogId.SharedEvents, source);
         }
 
+        internal static IEnumerable<EventModel> AppendAllEvents(IEnumerable<EventModel> source)
+        {
+            var merged = AppendSharedEvents(source);
+            var catalog = GetCatalog(ContentCatalogId.ActEvents);
+            var actTypes = GetRegisteredActEventScopeTypes();
+            var additional = actTypes
+                .SelectMany(static actType =>
+                    ResolvedModelCache.GetScoped<EventModel>(ContentCatalogId.ActEvents, actType))
+                .ToArray();
+            return ContentMergeStrategies.GetEnumerable<EventModel>(catalog.MergeMode).Merge(merged, additional);
+        }
+
         internal static IEnumerable<ActModel> AppendActs(IEnumerable<ActModel> source)
         {
             return MergeGlobalCatalog(ContentCatalogId.Acts, source);
@@ -1473,6 +1485,14 @@ namespace STS2RitsuLib.Content
             lock (SyncRoot)
             {
                 return RegisteredActs.ToArray();
+            }
+        }
+
+        private static Type[] GetRegisteredActEventScopeTypes()
+        {
+            lock (SyncRoot)
+            {
+                return RegisteredActEvents.Keys.ToArray();
             }
         }
 

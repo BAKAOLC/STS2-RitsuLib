@@ -8,6 +8,7 @@ namespace STS2RitsuLib.Models.Capabilities
     /// </summary>
     public sealed class ModelCapabilitySet
     {
+        private const string LoadSurface = "model-capability-load";
         private readonly List<IModelCapability> _capabilities = [];
         private readonly HashSet<IModelCapability> _defaultCapabilities = new(ReferenceEqualityComparer.Instance);
         private readonly List<ModelCapabilitySaveEntry> _unknownEntries = [];
@@ -601,6 +602,7 @@ namespace STS2RitsuLib.Models.Capabilities
                 {
                     LoadCapabilityState(defaultCapability, entry);
                     AddDefaultCapability(defaultCapability);
+                    NotifyCapabilityLoadedFromSave(defaultCapability);
                     continue;
                 }
 
@@ -613,6 +615,7 @@ namespace STS2RitsuLib.Models.Capabilities
                 LoadCapabilityState(capability, entry);
                 _capabilities.Add(capability);
                 capability.Attach(Owner, true);
+                NotifyCapabilityLoadedFromSave(capability);
             }
         }
 
@@ -697,6 +700,22 @@ namespace STS2RitsuLib.Models.Capabilities
         {
             if (capability is IModelCapabilityJsonState state)
                 state.LoadState(entry.Data?.DeepClone(), entry.Schema);
+        }
+
+        private void NotifyCapabilityLoadedFromSave(IModelCapability capability)
+        {
+            if (capability is not ModelCapability modelCapability ||
+                !ReferenceEquals(capability.Owner, Owner))
+                return;
+
+            try
+            {
+                modelCapability.NotifyLoadedFromSave();
+            }
+            catch (Exception ex)
+            {
+                ModelCapabilityDiagnostics.WarnFailure(LoadSurface, Owner, capability, ex);
+            }
         }
 
         internal void MarkDirtyFromHost()
