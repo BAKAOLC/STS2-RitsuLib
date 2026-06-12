@@ -414,7 +414,7 @@ namespace STS2RitsuLib.Combat.SecondaryResources
             if (_definition == null || _texture == null)
                 return;
 
-            var path = _definition.SmallIconPath ?? _definition.LargeIconPath;
+            var path = _definition.LargeIconPath ?? _definition.SmallIconPath;
             _texture.Texture = string.IsNullOrWhiteSpace(path) ? null : ResourceLoader.Load<Texture2D>(path);
         }
 
