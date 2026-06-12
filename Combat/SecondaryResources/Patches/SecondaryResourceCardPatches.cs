@@ -51,7 +51,10 @@ namespace STS2RitsuLib.Combat.SecondaryResources.Patches
     internal sealed class CardModelSpendResourcesSecondaryResourcesPatch : IPatchMethod
     {
         public static string PatchId => "ritsulib_secondary_resource_spend_resources";
-        public static string Description => "Commit secondary-resource payments after CardModel.SpendResources";
+
+        public static string Description =>
+            "Capture and commit secondary-resource payments alongside CardModel.SpendResources";
+
         public static bool IsCritical => false;
 
         public static ModPatchTarget[] GetTargets()
@@ -59,23 +62,35 @@ namespace STS2RitsuLib.Combat.SecondaryResources.Patches
             return [new(typeof(CardModel), nameof(CardModel.SpendResources))];
         }
 
-        public static void Postfix(CardModel __instance, ref Task<(int, int)> __result)
+        public static void Prefix(CardModel __instance, out SecondaryResourcePaymentPlan? __state)
         {
+            __state = null;
             if (!ModSecondaryResourceRegistry.HasAny ||
                 !__instance.HasMaterialSecondaryCosts())
                 return;
 
-            __result = After(__instance, __result);
+            var isFree = FreePlayBindingRegistry.IsCardFreeForUpcomingPlay(__instance);
+            var plan = SecondaryResourcePaymentResolver.Plan(__instance, isFree);
+            if (plan.HasLines)
+                __state = plan;
         }
 
-        private static async Task<(int, int)> After(CardModel card, Task<(int, int)> original)
+        public static void Postfix(
+            CardModel __instance,
+            SecondaryResourcePaymentPlan? __state,
+            ref Task<(int, int)> __result)
+        {
+            if (__state is { HasLines: true })
+                __result = After(__instance, __state, __result);
+        }
+
+        private static async Task<(int, int)> After(
+            CardModel card,
+            SecondaryResourcePaymentPlan plan,
+            Task<(int, int)> original)
         {
             var resources = await original;
-            var isFree = FreePlayBindingRegistry.IsCardFreeForUpcomingPlay(card);
-            var plan = SecondaryResourcePaymentResolver.Plan(card, isFree);
-            if (plan.HasLines)
-                await SecondaryResourcePaymentResolver.Commit(plan, card);
-
+            await SecondaryResourcePaymentResolver.Commit(plan, card);
             return resources;
         }
     }

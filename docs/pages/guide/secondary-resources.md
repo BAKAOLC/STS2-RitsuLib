@@ -264,6 +264,8 @@ card.SecondaryResourceUses()
 Implement `ISecondaryResourceHookListener` on models or capabilities when the resource should react to gameplay:
 
 - Modify gain, max amount, costs, or captured secondary X values
+- Use `ModifySecondaryResourceCostLate(...)` when a cost modifier should run after normal secondary cost modifiers,
+  mirroring the game's late energy-cost pass
 - Veto gain, spend, or built-in reset steps
 - React after change, spend, or reset
 
@@ -292,6 +294,8 @@ For text:
 如果资源需要响应游戏逻辑，可以在模型或 capability 上实现 `ISecondaryResourceHookListener`：
 
 - 修正 gain、max、cost 或捕获到的次级 X 值
+- 如果某个费用修正应在普通次级费用修正之后执行，使用 `ModifySecondaryResourceCostLate(...)`，对应游戏的 late
+  energy-cost pass
 - 阻止 gain、spend 或内建 reset
 - 在 change、spend、reset 之后执行附加逻辑
 

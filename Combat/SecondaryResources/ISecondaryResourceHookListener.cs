@@ -34,6 +34,15 @@ namespace STS2RitsuLib.Combat.SecondaryResources
         }
 
         /// <summary>
+        ///     Modifies a card secondary-resource cost after the normal cost-modifier pass.
+        ///     在普通费用修正阶段之后修正卡牌的次级资源费用。
+        /// </summary>
+        decimal ModifySecondaryResourceCostLate(SecondaryResourceCostContext context, decimal cost)
+        {
+            return cost;
+        }
+
+        /// <summary>
         ///     Modifies a captured secondary X value.
         ///     修正捕获到的次级 X 值。
         /// </summary>
