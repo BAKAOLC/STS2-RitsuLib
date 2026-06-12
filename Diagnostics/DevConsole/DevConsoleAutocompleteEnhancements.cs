@@ -77,10 +77,34 @@ namespace STS2RitsuLib.Diagnostics.DevConsole
         AncientChoiceDisplayLabels = 1 << 8,
 
         /// <summary>
+        ///     Appends registered secondary-resource ids to candidate lists.
+        /// </summary>
+        IncludeSecondaryResourceCandidates = 1 << 9,
+
+        /// <summary>
+        ///     Allows matching secondary-resource ids by localized title text or unique local id.
+        /// </summary>
+        SecondaryResourceLocalizedTitleMatch = 1 << 10,
+
+        /// <summary>
+        ///     Appends localized secondary-resource titles in parentheses.
+        /// </summary>
+        SecondaryResourceDisplayLabels = 1 << 11,
+
+        /// <summary>
         ///     <c>ancient</c> choice argument: localized match/display on event options (often relic rewards).
         /// </summary>
         AncientChoice = AncientChoiceLocalizedTitleMatch |
                         AncientChoiceDisplayLabels |
                         DeduplicateCandidates,
+
+        /// <summary>
+        ///     Full secondary-resource id autocomplete: registered ids, localized match/display, unique local-id match,
+        ///     and de-duplication.
+        /// </summary>
+        SecondaryResourceId = IncludeSecondaryResourceCandidates |
+                              SecondaryResourceLocalizedTitleMatch |
+                              SecondaryResourceDisplayLabels |
+                              DeduplicateCandidates,
     }
 }

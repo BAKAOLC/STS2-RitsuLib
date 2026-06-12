@@ -64,6 +64,23 @@ namespace STS2RitsuLib.Diagnostics.DevConsole
         }
 
         /// <summary>
+        ///     Chains <paramref name="inner" /> with localized secondary-resource title and unique local-id matching.
+        /// </summary>
+        public static Func<string, string, bool> WithSecondaryResourceLocalizedTitleMatch(
+            Func<string, string, bool>? inner = null)
+        {
+            var baseMatch = inner ?? DefaultPrefixMatch;
+            return (candidate, partial) =>
+            {
+                if (baseMatch(candidate, partial))
+                    return true;
+
+                var resourceId = DevConsoleAutocompleteDisplay.StripLocalizedSuffix(candidate);
+                return DevConsoleSecondaryResourceAutocompleteCatalog.MatchesResourceIdOrTitle(resourceId, partial);
+            };
+        }
+
+        /// <summary>
         ///     Chains <paramref name="inner" /> with localized ancient-choice matching for a resolved ancient id.
         /// </summary>
         public static Func<string, string, bool> WithAncientChoiceLocalizedMatch(
@@ -125,6 +142,27 @@ namespace STS2RitsuLib.Diagnostics.DevConsole
                 .ToList();
 
             result.CommonPrefix = DevConsoleAutocompleteDisplay.ComputeCommonPrefix(tokens, result.CommandPrefix);
+        }
+
+        /// <summary>
+        ///     Decorates secondary-resource id candidates with localized suffix labels.
+        /// </summary>
+        public static void ApplySecondaryResourceDisplayLabels(ref CompletionResult result)
+        {
+            if (result.Candidates.Count == 0)
+                return;
+
+            var resourceIds = result.Candidates
+                .Select(DevConsoleAutocompleteDisplay.StripLocalizedSuffix)
+                .ToList();
+
+            result.Candidates = resourceIds
+                .Select(resourceId => DevConsoleAutocompleteDisplay.FormatCandidate(
+                    resourceId,
+                    DevConsoleSecondaryResourceAutocompleteCatalog.TryGetLocalizedTitle(resourceId)))
+                .ToList();
+
+            result.CommonPrefix = DevConsoleAutocompleteDisplay.ComputeCommonPrefix(resourceIds, result.CommandPrefix);
         }
 
         private static bool DefaultPrefixMatch(string candidate, string partial)

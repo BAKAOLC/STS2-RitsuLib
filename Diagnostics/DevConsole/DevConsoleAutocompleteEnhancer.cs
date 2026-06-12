@@ -30,6 +30,9 @@ namespace STS2RitsuLib.Diagnostics.DevConsole
             if (enhancements.HasFlag(DevConsoleAutocompleteEnhancements.PileNameLocalizedTitleMatch))
                 predicate = DevConsoleAutocompleteMatchExtensions.WithLocalizedPileTitleMatch(predicate);
 
+            if (enhancements.HasFlag(DevConsoleAutocompleteEnhancements.SecondaryResourceLocalizedTitleMatch))
+                predicate = DevConsoleAutocompleteMatchExtensions.WithSecondaryResourceLocalizedTitleMatch(predicate);
+
             if (!enhancements.HasFlag(DevConsoleAutocompleteEnhancements.AncientChoiceLocalizedTitleMatch))
                 return predicate;
             var ancientEntryId = completedArgs is { Count: > 0 } ? completedArgs[0] : null;
@@ -54,6 +57,9 @@ namespace STS2RitsuLib.Diagnostics.DevConsole
             if (enhancements.HasFlag(DevConsoleAutocompleteEnhancements.IncludeModPileCandidates))
                 DevConsolePileNameAutocompleteCatalog.AppendModPileCandidates(result.Candidates);
 
+            if (enhancements.HasFlag(DevConsoleAutocompleteEnhancements.IncludeSecondaryResourceCandidates))
+                DevConsoleSecondaryResourceAutocompleteCatalog.AppendResourceIdCandidates(result.Candidates);
+
             if (result.Candidates.Count == 0)
                 return;
 
@@ -66,6 +72,9 @@ namespace STS2RitsuLib.Diagnostics.DevConsole
 
             if (enhancements.HasFlag(DevConsoleAutocompleteEnhancements.PileNameDisplayLabels))
                 DevConsoleAutocompleteMatchExtensions.ApplyPileDisplayLabels(ref result);
+
+            if (enhancements.HasFlag(DevConsoleAutocompleteEnhancements.SecondaryResourceDisplayLabels))
+                DevConsoleAutocompleteMatchExtensions.ApplySecondaryResourceDisplayLabels(ref result);
 
             if (enhancements.HasFlag(DevConsoleAutocompleteEnhancements.DeduplicateCandidates))
                 result.Candidates = result.Candidates
