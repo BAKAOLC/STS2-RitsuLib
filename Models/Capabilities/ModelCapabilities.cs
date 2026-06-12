@@ -90,6 +90,7 @@ namespace STS2RitsuLib.Models.Capabilities
 
         private static ModelCapabilitySaveDocument? Export(AbstractModel model)
         {
+            // ReSharper disable once InvertIf
             if (!TryGet(model, out var collection))
             {
                 if (!ModelCapabilityDefaults.HasDefaultCapabilitySource(model))
