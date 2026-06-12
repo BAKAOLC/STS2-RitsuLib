@@ -3,6 +3,7 @@ using MegaCrit.Sts2.addons.mega_text;
 using MegaCrit.Sts2.Core.Assets;
 using MegaCrit.Sts2.Core.Helpers;
 using MegaCrit.Sts2.Core.Models;
+using STS2RitsuLib.Cards.FreePlay;
 
 namespace STS2RitsuLib.Combat.SecondaryResources
 {
@@ -290,7 +291,9 @@ namespace STS2RitsuLib.Combat.SecondaryResources
         public void Refresh(CardModel card)
         {
             ArgumentNullException.ThrowIfNull(card);
-            Refresh(card, SecondaryResourcePaymentResolver.Plan(card));
+            Refresh(card, SecondaryResourcePaymentResolver.Plan(
+                card,
+                FreePlayBindingRegistry.IsCardFreeForUpcomingPlay(card)));
         }
 
         /// <summary>

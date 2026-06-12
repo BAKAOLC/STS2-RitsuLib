@@ -87,6 +87,7 @@ namespace STS2RitsuLib.Combat.SecondaryResources
                 .Any(predicate => predicate(context)))
                 return true;
 
+            // ReSharper disable once InvertIf
             if (context.Amount > definition.DefaultAmount)
             {
                 if (retainMaterialVisibility &&

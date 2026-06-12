@@ -6,6 +6,7 @@ using MegaCrit.Sts2.Core.Nodes.Cards;
 using MegaCrit.Sts2.Core.Nodes.Combat;
 using MegaCrit.Sts2.Core.Nodes.Multiplayer;
 using MegaCrit.Sts2.Core.Nodes.Rooms;
+using STS2RitsuLib.Cards.FreePlay;
 using STS2RitsuLib.Scaffolding.Godot.NodeAttachments;
 using STS2RitsuLib.Utils;
 
@@ -199,7 +200,9 @@ namespace STS2RitsuLib.Combat.SecondaryResources
         {
             CardUpdaters.GetOrCreate(parent).Add(card =>
             {
-                var plan = SecondaryResourcePaymentResolver.Plan(card);
+                var plan = SecondaryResourcePaymentResolver.Plan(
+                    card,
+                    FreePlayBindingRegistry.IsCardFreeForUpcomingPlay(card));
                 var definitions = ModSecondaryResourceRegistry.GetDefinitionsSnapshot();
                 update(new(
                     parent,
