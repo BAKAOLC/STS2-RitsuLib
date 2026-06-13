@@ -1,5 +1,6 @@
 using MegaCrit.Sts2.Core.Entities.Players;
 using MegaCrit.Sts2.Core.Models;
+using STS2RitsuLib.Utils;
 
 namespace STS2RitsuLib.Combat.SecondaryResources
 {
@@ -35,11 +36,21 @@ namespace STS2RitsuLib.Combat.SecondaryResources
     /// </summary>
     public static class SecondaryResourceVisibility
     {
+        private static readonly AttachedState<PlayerCombatState, HashSet<string>> CombatUiSeenMaterialResources =
+            new(() => new(StringComparer.OrdinalIgnoreCase));
+
         /// <summary>
         ///     Returns definitions visible for a combat UI update.
         ///     返回一次战斗 UI 更新中可见的资源定义。
         /// </summary>
         public static IReadOnlyList<SecondaryResourceDefinition> GetCombatUiDefinitions(Player? player)
+        {
+            return GetCombatUiDefinitions(player, false);
+        }
+
+        internal static IReadOnlyList<SecondaryResourceDefinition> GetCombatUiDefinitions(
+            Player? player,
+            bool retainMaterialVisibility)
         {
             if (!ModSecondaryResourceRegistry.HasAny)
                 return [];
@@ -49,11 +60,19 @@ namespace STS2RitsuLib.Combat.SecondaryResources
                 return [];
 
             return definitions
-                .Where(definition => definition.IsVisibleInCombatUi(player))
+                .Where(definition => IsVisibleInCombatUi(definition, player, retainMaterialVisibility))
                 .ToArray();
         }
 
         internal static bool IsVisibleInCombatUi(SecondaryResourceDefinition definition, Player player)
+        {
+            return IsVisibleInCombatUi(definition, player, false);
+        }
+
+        private static bool IsVisibleInCombatUi(
+            SecondaryResourceDefinition definition,
+            Player player,
+            bool retainMaterialVisibility)
         {
             ArgumentNullException.ThrowIfNull(definition);
             ArgumentNullException.ThrowIfNull(player);
@@ -68,7 +87,19 @@ namespace STS2RitsuLib.Combat.SecondaryResources
                 .Any(predicate => predicate(context)))
                 return true;
 
-            return context.Amount > definition.DefaultAmount;
+            // ReSharper disable once InvertIf
+            if (context.Amount > definition.DefaultAmount)
+            {
+                if (retainMaterialVisibility &&
+                    player.PlayerCombatState != null)
+                    CombatUiSeenMaterialResources.GetOrCreate(player.PlayerCombatState).Add(definition.Id);
+
+                return true;
+            }
+
+            return retainMaterialVisibility &&
+                   player.PlayerCombatState != null &&
+                   CombatUiSeenMaterialResources.GetOrCreate(player.PlayerCombatState).Contains(definition.Id);
         }
 
         /// <summary>

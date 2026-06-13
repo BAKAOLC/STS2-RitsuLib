@@ -1,4 +1,5 @@
 using Godot;
+using MegaCrit.Sts2.Core.Entities.Cards;
 using MegaCrit.Sts2.Core.Helpers;
 using MegaCrit.Sts2.Core.Models;
 
@@ -61,6 +62,46 @@ namespace STS2RitsuLib.Scaffolding.Content
     ///     Direct portrait material override.
     ///     直接覆盖卡图材质。
     /// </param>
+    /// <param name="AncientBorderPath">
+    ///     Ancient card border texture path.
+    ///     Ancient 卡牌边框贴图路径。
+    /// </param>
+    /// <param name="AncientTextBgPath">
+    ///     Ancient card text background texture path.
+    ///     Ancient 卡牌文本背景贴图路径。
+    /// </param>
+    /// <param name="PortraitBorderMaterialPath">
+    ///     Material path for portrait border rendering.
+    ///     肖像边框渲染使用的材质路径。
+    /// </param>
+    /// <param name="PortraitBorderMaterial">
+    ///     Direct portrait border material override.
+    ///     直接覆盖肖像边框材质。
+    /// </param>
+    /// <param name="EnergyIconMaterialPath">
+    ///     Material path for energy icon rendering.
+    ///     能量图标渲染使用的材质路径。
+    /// </param>
+    /// <param name="EnergyIconMaterial">
+    ///     Direct energy icon material override.
+    ///     直接覆盖能量图标材质。
+    /// </param>
+    /// <param name="AncientBorderMaterialPath">
+    ///     Material path for ancient card border rendering.
+    ///     Ancient 卡牌边框渲染使用的材质路径。
+    /// </param>
+    /// <param name="AncientBorderMaterial">
+    ///     Direct ancient card border material override.
+    ///     直接覆盖 Ancient 卡牌边框材质。
+    /// </param>
+    /// <param name="AncientTextBgMaterialPath">
+    ///     Material path for ancient card text background rendering.
+    ///     Ancient 卡牌文本背景渲染使用的材质路径。
+    /// </param>
+    /// <param name="AncientTextBgMaterial">
+    ///     Direct ancient card text background material override.
+    ///     直接覆盖 Ancient 卡牌文本背景材质。
+    /// </param>
     public sealed record CardAssetProfile(
         string? PortraitPath = null,
         string? BetaPortraitPath = null,
@@ -74,7 +115,17 @@ namespace STS2RitsuLib.Scaffolding.Content
         Material? FrameMaterial = null,
         Material? BannerMaterial = null,
         string? PortraitMaterialPath = null,
-        Material? PortraitMaterial = null)
+        Material? PortraitMaterial = null,
+        string? AncientBorderPath = null,
+        string? AncientTextBgPath = null,
+        string? PortraitBorderMaterialPath = null,
+        Material? PortraitBorderMaterial = null,
+        string? EnergyIconMaterialPath = null,
+        Material? EnergyIconMaterial = null,
+        string? AncientBorderMaterialPath = null,
+        Material? AncientBorderMaterial = null,
+        string? AncientTextBgMaterialPath = null,
+        Material? AncientTextBgMaterial = null)
     {
         /// <summary>
         ///     Backward-compatible constructor preserving the original parameter list.
@@ -132,6 +183,42 @@ namespace STS2RitsuLib.Scaffolding.Content
                 BannerMaterialPath,
                 FrameMaterial,
                 BannerMaterial,
+                null)
+        {
+        }
+
+        /// <summary>
+        ///     Backward-compatible constructor preserving the portrait material parameter list.
+        ///     保留卡图材质参数列表的向后兼容构造函数。
+        /// </summary>
+        public CardAssetProfile(
+            string? PortraitPath,
+            string? BetaPortraitPath,
+            string? FramePath,
+            string? PortraitBorderPath,
+            string? EnergyIconPath,
+            string? FrameMaterialPath,
+            string? OverlayScenePath,
+            string? BannerTexturePath,
+            string? BannerMaterialPath,
+            Material? FrameMaterial,
+            Material? BannerMaterial,
+            string? PortraitMaterialPath,
+            Material? PortraitMaterial)
+            : this(
+                PortraitPath,
+                BetaPortraitPath,
+                FramePath,
+                PortraitBorderPath,
+                EnergyIconPath,
+                FrameMaterialPath,
+                OverlayScenePath,
+                BannerTexturePath,
+                BannerMaterialPath,
+                FrameMaterial,
+                BannerMaterial,
+                PortraitMaterialPath,
+                PortraitMaterial,
                 null)
         {
         }
@@ -569,6 +656,28 @@ namespace STS2RitsuLib.Scaffolding.Content
         }
 
         /// <summary>
+        ///     Builds default portrait, overlay, ancient border, and ancient text background paths for an ancient card.
+        ///     为 ancient 卡牌构建默认肖像、覆盖层、ancient 边框和 ancient 文本背景路径。
+        /// </summary>
+        public static CardAssetProfile AncientCard(string poolEntry, string cardEntry, CardType cardType)
+        {
+            ArgumentException.ThrowIfNullOrWhiteSpace(poolEntry);
+            ArgumentException.ThrowIfNullOrWhiteSpace(cardEntry);
+
+            var normalizedPool = Normalize(poolEntry);
+            var normalizedCard = Normalize(cardEntry);
+            var normalizedType = NormalizeAncientCardType(cardType);
+            return new(
+                ImageHelper.GetImagePath($"packed/card_portraits/{normalizedPool}/{normalizedCard}.png"),
+                ImageHelper.GetImagePath($"packed/card_portraits/{normalizedPool}/beta/{normalizedCard}.png"),
+                OverlayScenePath: SceneHelper.GetScenePath($"cards/overlays/{normalizedCard}"),
+                AncientBorderPath: ImageHelper.GetImagePath(
+                    "atlases/compressed_atlas.sprites/ancient_card_border.png.tres"),
+                AncientTextBgPath: ImageHelper.GetImagePath(
+                    $"atlases/compressed_atlas.sprites/ancient_text_bg_{normalizedType}.png.tres"));
+        }
+
+        /// <summary>
         ///     Builds default relic icon paths for <paramref name="relicEntry" />.
         ///     为 <paramref name="relicEntry" /> 构建默认遗物图标路径。
         /// </summary>
@@ -827,6 +936,17 @@ namespace STS2RitsuLib.Scaffolding.Content
         private static string Normalize(string value)
         {
             return value.Trim().ToLowerInvariant();
+        }
+
+        private static string NormalizeAncientCardType(CardType cardType)
+        {
+            return cardType switch
+            {
+                CardType.None or CardType.Status or CardType.Curse => "skill",
+                CardType.Attack or CardType.Skill or CardType.Power or CardType.Quest =>
+                    cardType.ToString().ToLowerInvariant(),
+                _ => throw new ArgumentOutOfRangeException(nameof(cardType), cardType, null),
+            };
         }
     }
 }

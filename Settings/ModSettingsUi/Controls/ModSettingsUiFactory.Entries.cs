@@ -381,7 +381,8 @@ namespace STS2RitsuLib.Settings
                 placeholder,
                 entry.MaxLength,
                 CreateStringFieldCommitHandler(context, entry),
-                entry.ValueValidationVisual);
+                entry.ValueValidationVisual,
+                entry.ValueValidationCommit);
             RegisterRefreshWhenAlive(context, control, () => control.SetValue(entry.Binding.Read()),
                 ModSettingsUiRefreshSpec.ForBinding(entry.Binding));
 

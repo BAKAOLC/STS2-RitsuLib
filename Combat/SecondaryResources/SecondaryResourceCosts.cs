@@ -335,6 +335,18 @@ namespace STS2RitsuLib.Combat.SecondaryResources
         public bool IsAffordable => IsPreview || IsFree || AmountAvailable >= Cost;
 
         /// <summary>
+        ///     True when spend hooks allow this line to spend its resource.
+        ///     spend hook 允许该行消耗资源时为 true。
+        /// </summary>
+        public bool SpendAllowed { get; init; } = true;
+
+        /// <summary>
+        ///     True when this line can execute its resource spend.
+        ///     该行可以执行资源消耗时为 true。
+        /// </summary>
+        public bool CanSpend => IsPreview || IsFree || AmountToSpend <= 0 || SpendAllowed;
+
+        /// <summary>
         ///     True when this line cannot block card play.
         ///     该行不会阻止卡牌打出时为 true。
         /// </summary>
@@ -344,7 +356,7 @@ namespace STS2RitsuLib.Combat.SecondaryResources
         ///     True when this line allows the card play to proceed.
         ///     该行允许卡牌继续打出时为 true。
         /// </summary>
-        public bool CanPlay => !BlocksPlay || IsAffordable;
+        public bool CanPlay => !BlocksPlay || (IsAffordable && CanSpend);
 
         /// <summary>
         ///     Stable play-use id for this line.
@@ -425,7 +437,10 @@ namespace STS2RitsuLib.Combat.SecondaryResources
         ///     Resolves secondary-resource costs for a card.
         ///     解析卡牌的次级资源费用。
         /// </summary>
-        public static SecondaryResourcePaymentPlan Plan(CardModel card, bool isFree = false)
+        public static SecondaryResourcePaymentPlan Plan(
+            CardModel card,
+            bool isFree = false,
+            AbstractModel? source = null)
         {
             ArgumentNullException.ThrowIfNull(card);
 
@@ -457,7 +472,7 @@ namespace STS2RitsuLib.Combat.SecondaryResources
                     remainingByResource[definition.Id] = available;
                 }
 
-                var line = ResolveLine(combatState, player, card, definition, use, available, isFree);
+                var line = ResolveLine(combatState, player, card, definition, use, available, isFree, source);
                 lines.Add(line);
                 remainingByResource[definition.Id] = Math.Max(0, available - line.AmountToSpend);
             }
@@ -503,9 +518,13 @@ namespace STS2RitsuLib.Combat.SecondaryResources
             var builder = new SecondaryResourcePlayLedgerBuilder(plan.Card, plan.Player, plan.IsFree);
             foreach (var line in plan.Lines)
             {
-                if (!line.IsFree && line.AmountToSpend > 0)
+                if (!line.CanPlay)
+                    throw new InvalidOperationException(
+                        $"Cannot commit unplayable secondary resource payment for {line.ResourceId} on {plan.Card.Id.Entry}.");
+
+                if (line is { IsFree: false, AmountToSpend: > 0 })
                 {
-                    var spent = await SecondaryResourceCmd.Spend(
+                    var spent = await SecondaryResourceCmd.SpendResolvedCardPayment(
                         plan.Player,
                         line.ResourceId,
                         line.AmountToSpend,
@@ -615,7 +634,8 @@ namespace STS2RitsuLib.Combat.SecondaryResources
             SecondaryResourceDefinition definition,
             SecondaryResourcePlayUse use,
             int available,
-            bool isFree)
+            bool isFree,
+            AbstractModel? source)
         {
             var cost = use.Cost;
             var modifiedCost = SecondaryResourceHook.ModifyCost(
@@ -634,6 +654,13 @@ namespace STS2RitsuLib.Combat.SecondaryResources
                     : isFree
                         ? 0
                         : fixedCost;
+                var spendAllowed = CanSpend(combatState, player, card, definition, amountToSpend, source);
+                if (!isRequired && !spendAllowed)
+                {
+                    activated = false;
+                    amountToSpend = 0;
+                }
+
                 var value = !isRequired && !activated ? 0 : fixedCost;
                 return new(definition.Id, definition, fixedCost, available, amountToSpend, value, false, isFree)
                 {
@@ -641,6 +668,7 @@ namespace STS2RitsuLib.Combat.SecondaryResources
                     Kind = use.Kind,
                     BlocksPlay = isRequired,
                     Activated = activated,
+                    SpendAllowed = spendAllowed,
                 };
             }
 
@@ -650,12 +678,21 @@ namespace STS2RitsuLib.Combat.SecondaryResources
                 xBase);
             xValue = Math.Max(0, xValue) * cost.XMultiplier;
             var xActivated = isRequired || (!isFree && available > 0);
+            var amountToSpendForX = isFree || !xActivated ? 0 : available;
+            var xSpendAllowed = CanSpend(combatState, player, card, definition, amountToSpendForX, source);
+            // ReSharper disable once InvertIf
+            if (!isRequired && !xSpendAllowed)
+            {
+                xActivated = false;
+                amountToSpendForX = 0;
+            }
+
             return new(
                 definition.Id,
                 definition,
                 fixedCost,
                 available,
-                isFree || !xActivated ? 0 : available,
+                amountToSpendForX,
                 xActivated ? xValue : 0,
                 true,
                 isFree)
@@ -664,7 +701,21 @@ namespace STS2RitsuLib.Combat.SecondaryResources
                 Kind = use.Kind,
                 BlocksPlay = isRequired,
                 Activated = xActivated,
+                SpendAllowed = xSpendAllowed,
             };
+        }
+
+        private static bool CanSpend(
+            CombatStateLike combatState,
+            Player player,
+            CardModel card,
+            SecondaryResourceDefinition definition,
+            int amount,
+            AbstractModel? source)
+        {
+            return amount <= 0 ||
+                   SecondaryResourceHook.ShouldSpend(
+                       new(combatState, player, definition, card, amount, source ?? card));
         }
     }
 }

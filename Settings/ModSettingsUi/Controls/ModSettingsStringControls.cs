@@ -9,6 +9,7 @@ namespace STS2RitsuLib.Settings
     /// </summary>
     public sealed partial class ModSettingsStringLineControl : HBoxContainer
     {
+        private readonly Func<string, bool>? _commitValidation;
         private readonly int? _maxLength;
         private readonly Action<string>? _onChanged;
         private readonly Func<string, bool>? _validationVisual;
@@ -70,9 +71,16 @@ namespace STS2RitsuLib.Settings
         /// </param>
         public ModSettingsStringLineControl(string? initialValue, string? placeholder, int? maxLength,
             Action<string> onChanged, Func<string, bool>? validationVisual)
+            : this(initialValue, placeholder, maxLength, onChanged, validationVisual, null)
+        {
+        }
+
+        internal ModSettingsStringLineControl(string? initialValue, string? placeholder, int? maxLength,
+            Action<string> onChanged, Func<string, bool>? validationVisual, Func<string, bool>? commitValidation)
         {
             _onChanged = onChanged;
             _maxLength = maxLength;
+            _commitValidation = commitValidation;
             _validationVisual = validationVisual;
             _lastCommitted = ModSettingsStringEditorShared.ClampToMaxLength(initialValue ?? string.Empty, maxLength);
 
@@ -103,10 +111,10 @@ namespace STS2RitsuLib.Settings
             edit.TextChanged += OnLineEditTextChanged;
             edit.TextSubmitted += text =>
             {
-                Commit(text);
+                Commit(text, true);
                 edit.ReleaseFocusIfInsideTree();
             };
-            edit.FocusExited += () => Commit(edit.Text);
+            edit.FocusExited += () => Commit(edit.Text, true);
             AddChild(edit);
             ModSettingsFocusChrome.AttachControllerSelectionReticle(edit);
             Editor = edit;
@@ -155,15 +163,23 @@ namespace STS2RitsuLib.Settings
         {
             if (_suppressCallbacks)
                 return;
-            Commit(newText);
+            Commit(newText, false);
         }
 
-        private void Commit(string? text)
+        private void Commit(string? text, bool revertInvalid)
         {
             if (_suppressCallbacks)
                 return;
 
             var t = ModSettingsStringEditorShared.ClampToMaxLength(text ?? string.Empty, _maxLength);
+            if (!CanCommit(t))
+            {
+                ApplyValidationChrome(t);
+                if (revertInvalid && Editor != null)
+                    Editor.Text = _lastCommitted;
+                return;
+            }
+
             if (t == _lastCommitted)
             {
                 ApplyValidationChrome(Editor?.Text ?? t);
@@ -175,15 +191,31 @@ namespace STS2RitsuLib.Settings
             ApplyValidationChrome(t);
         }
 
+        private bool CanCommit(string text)
+        {
+            if (_commitValidation == null)
+                return true;
+
+            try
+            {
+                return _commitValidation(text);
+            }
+            catch
+            {
+                return false;
+            }
+        }
+
         private void ApplyValidationChrome(string text)
         {
-            if (_validationVisual == null || Editor == null)
+            var validator = _validationVisual ?? _commitValidation;
+            if (validator == null || Editor == null)
                 return;
 
             bool ok;
             try
             {
-                ok = _validationVisual(text);
+                ok = validator(text);
             }
             catch
             {

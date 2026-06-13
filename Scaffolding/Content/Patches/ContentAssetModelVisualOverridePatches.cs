@@ -243,7 +243,7 @@ namespace STS2RitsuLib.Scaffolding.Content.Patches
         public static string PatchId => "content_asset_override_card_texture";
 
         public static string Description =>
-            "Allow mod cards to override card frame, portrait border, and energy icon textures";
+            "Allow mod cards to override card frame, portrait border, energy icon, and ancient textures";
 
         public static bool IsCritical => false;
 
@@ -287,6 +287,28 @@ namespace STS2RitsuLib.Scaffolding.Content.Patches
             return ContentAssetOverridePatchHelper.TryUseTextureOverride<IModCardAssetOverrides>(
                 instance, ref result, o => o.CustomEnergyIconPath, nameof(IModCardAssetOverrides.CustomEnergyIconPath));
         }
+
+#if STS2_AT_LEAST_0_105_0
+        internal static bool TryCardAncientBorderTexture(CardModel instance, ref Texture2D result)
+        {
+            if (!ModCharacterOwnedVisualOverrideHelper.TryCardAncientBorderTexture(instance, ref result))
+                return false;
+
+            return ContentAssetOverridePatchHelper.TryUseTextureOverride<IModCardAssetOverrides>(
+                instance, ref result, o => o.CustomAncientBorderPath,
+                nameof(IModCardAssetOverrides.CustomAncientBorderPath));
+        }
+#endif
+
+        internal static bool TryCardAncientTextBgTexture(CardModel instance, ref Texture2D result)
+        {
+            if (!ModCharacterOwnedVisualOverrideHelper.TryCardAncientTextBgTexture(instance, ref result))
+                return false;
+
+            return ContentAssetOverridePatchHelper.TryUseTextureOverride<IModCardAssetOverrides>(
+                instance, ref result, o => o.CustomAncientTextBgPath,
+                nameof(IModCardAssetOverrides.CustomAncientTextBgPath));
+        }
     }
 
     internal class CardPortraitBorderTexturePatch : IPatchMethod
@@ -320,6 +342,42 @@ namespace STS2RitsuLib.Scaffolding.Content.Patches
         public static bool Prefix(CardModel __instance, ref Texture2D __result)
         {
             return CardTextureOverridePatch.TryCardEnergyIconTexture(__instance, ref __result);
+        }
+    }
+
+#if STS2_AT_LEAST_0_105_0
+    internal class CardAncientBorderTexturePatch : IPatchMethod
+    {
+        public static string PatchId => "content_asset_override_card_ancient_border_texture";
+        public static string Description => "Allow mod cards to override ancient card border textures";
+        public static bool IsCritical => false;
+
+        public static ModPatchTarget[] GetTargets()
+        {
+            return [new(typeof(CardModel), "AncientBorder", MethodType.Getter)];
+        }
+
+        public static bool Prefix(CardModel __instance, ref Texture2D __result)
+        {
+            return CardTextureOverridePatch.TryCardAncientBorderTexture(__instance, ref __result);
+        }
+    }
+#endif
+
+    internal class CardAncientTextBgTexturePatch : IPatchMethod
+    {
+        public static string PatchId => "content_asset_override_card_ancient_text_bg_texture";
+        public static string Description => "Allow mod cards to override ancient card text background textures";
+        public static bool IsCritical => false;
+
+        public static ModPatchTarget[] GetTargets()
+        {
+            return [new(typeof(CardModel), "AncientTextBg", MethodType.Getter)];
+        }
+
+        public static bool Prefix(CardModel __instance, ref Texture2D __result)
+        {
+            return CardTextureOverridePatch.TryCardAncientTextBgTexture(__instance, ref __result);
         }
     }
 
@@ -467,6 +525,114 @@ namespace STS2RitsuLib.Scaffolding.Content.Patches
                 static o => o.CustomPortraitMaterialPath,
                 nameof(IModCardAssetOverrides.CustomPortraitMaterialPath));
         }
+    }
+
+    /// <summary>
+    ///     Applies custom <see cref="Material" /> overrides for card subnodes that do not expose model material getters.
+    ///     为没有 model 材质 getter 的卡牌子节点应用自定义 <see cref="Material" /> 覆盖。
+    /// </summary>
+    internal class CardNodeMaterialPatch : IPatchMethod
+    {
+        public static string PatchId => "content_asset_override_card_node_material";
+
+        public static string Description =>
+            "Allow mod cards to override portrait border, energy icon, and ancient node materials";
+
+        public static bool IsCritical => false;
+
+        public static ModPatchTarget[] GetTargets()
+        {
+            return [new(typeof(NCard), "Reload")];
+        }
+
+        public static void Postfix(NCard __instance)
+        {
+            var model = __instance.Model;
+            if (model == null || __instance.Visibility != ModelVisibility.Visible)
+                return;
+
+            ApplyMaterial<IModCardPortraitBorderMaterialOverride>(
+                __instance,
+                model,
+                "%PortraitBorder",
+                static o => o.CustomPortraitBorderMaterial,
+                static o => o.CustomPortraitBorderMaterialPath,
+                nameof(IModCardAssetOverrides.CustomPortraitBorderMaterialPath),
+                ModCharacterOwnedVisualOverrideHelper.TryCardPortraitBorderMaterial);
+
+            ApplyMaterial<IModCardEnergyIconMaterialOverride>(
+                __instance,
+                model,
+                "%EnergyIcon",
+                static o => o.CustomEnergyIconMaterial,
+                static o => o.CustomEnergyIconMaterialPath,
+                nameof(IModCardAssetOverrides.CustomEnergyIconMaterialPath),
+                ModCharacterOwnedVisualOverrideHelper.TryCardEnergyIconMaterial);
+
+            ApplyMaterial<IModCardAncientBorderMaterialOverride>(
+                __instance,
+                model,
+                "%AncientBorder",
+                static o => o.CustomAncientBorderMaterial,
+                static o => o.CustomAncientBorderMaterialPath,
+                nameof(IModCardAssetOverrides.CustomAncientBorderMaterialPath),
+                ModCharacterOwnedVisualOverrideHelper.TryCardAncientBorderMaterial);
+
+            ApplyMaterial<IModCardAncientTextBgMaterialOverride>(
+                __instance,
+                model,
+                "%AncientTextBg",
+                static o => o.CustomAncientTextBgMaterial,
+                static o => o.CustomAncientTextBgMaterialPath,
+                nameof(IModCardAssetOverrides.CustomAncientTextBgMaterialPath),
+                ModCharacterOwnedVisualOverrideHelper.TryCardAncientTextBgMaterial);
+        }
+
+        private static void ApplyMaterial<TDirectOverride>(
+            NCard card,
+            CardModel model,
+            NodePath nodePath,
+            Func<TDirectOverride, Material?> directSelector,
+            Func<IModCardAssetOverrides, string?> pathSelector,
+            string memberName,
+            TryCharacterOwnedMaterialOverride tryCharacterOwned)
+            where TDirectOverride : class
+        {
+            if (!TryGetMaterial(model, directSelector, pathSelector, memberName, tryCharacterOwned, out var material))
+                return;
+
+            var node = card.GetNodeOrNull<CanvasItem>(nodePath);
+            if (node == null)
+                return;
+
+            node.Material = material;
+        }
+
+        private static bool TryGetMaterial<TDirectOverride>(
+            CardModel model,
+            Func<TDirectOverride, Material?> directSelector,
+            Func<IModCardAssetOverrides, string?> pathSelector,
+            string memberName,
+            TryCharacterOwnedMaterialOverride tryCharacterOwned,
+            out Material material)
+            where TDirectOverride : class
+        {
+            material = null!;
+            if (!ContentAssetOverridePatchHelper.TryUseDirectMaterialOverride(
+                    model, ref material, directSelector))
+                return true;
+
+            if (!tryCharacterOwned(model, ref material))
+                return true;
+
+            return !ContentAssetOverridePatchHelper.TryUseMaterialOverride(
+                model,
+                ref material,
+                pathSelector,
+                memberName);
+        }
+
+        private delegate bool TryCharacterOwnedMaterialOverride(CardModel model, ref Material material);
     }
 
     /// <summary>

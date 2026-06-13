@@ -264,7 +264,11 @@ card.SecondaryResourceUses()
 Implement `ISecondaryResourceHookListener` on models or capabilities when the resource should react to gameplay:
 
 - Modify gain, max amount, costs, or captured secondary X values
+- Use `ModifySecondaryResourceCostLate(...)` when a cost modifier should run after normal secondary cost modifiers,
+  mirroring the game's late energy-cost pass
 - Veto gain, spend, or built-in reset steps
+- `ShouldSpendSecondaryResource(...)` blocks `CanPlay` for required card costs; optional spend lines simply become
+  inactive when vetoed
 - React after change, spend, or reset
 
 For process-wide behavior, register a global listener through `SecondaryResourceHook.RegisterGlobalListener(...)`.
@@ -273,6 +277,7 @@ For combat presentation:
 
 - `AlwaysShowInCombatUi(...)` and `AlwaysShowInCombatUiForCharacter(...)` keep a resource visible before it is gained
 - `RegisterCombatUi(...)`, `RegisterCardUi(...)`, and `RegisterMultiplayerPlayerStateUi(...)` attach custom Godot nodes through the node-attachment runtime
+- custom `RegisterCombatUi(...)` updates should use `ctx.VisibleDefinitions` or `definition.IsVisibleInCombatUi(ctx.Player)` when deciding whether their nodes are visible
 - `NSecondaryResourceCardCostUi` is a simple single-resource card-cost wrapper node for `RegisterCardUi(...)`; bind one resource id per node and place each node yourself
 - Built-in `NSecondaryResourceIcon` / `NSecondaryResourceCounter` hover tips always use the resource title and description. Pass a `SecondaryResourceIconStyle` with `HoverTip = SecondaryResourceHoverTipStyle.Default with { ResolveGlobalPosition = ... }` when you need custom placement. Hover-tip title and description receive `Amount`, `HasMaxAmount`, and `MaxAmount` LocString variables so localization can decide how to show dynamic amounts.
 
@@ -291,7 +296,10 @@ For text:
 如果资源需要响应游戏逻辑，可以在模型或 capability 上实现 `ISecondaryResourceHookListener`：
 
 - 修正 gain、max、cost 或捕获到的次级 X 值
+- 如果某个费用修正应在普通次级费用修正之后执行，使用 `ModifySecondaryResourceCostLate(...)`，对应游戏的 late
+  energy-cost pass
 - 阻止 gain、spend 或内建 reset
+- `ShouldSpendSecondaryResource(...)` 会让必需卡牌费用在 `CanPlay` 阶段被阻止；可选支付行被阻止时只会变为未激活
 - 在 change、spend、reset 之后执行附加逻辑
 
 进程级行为可通过 `SecondaryResourceHook.RegisterGlobalListener(...)` 注册全局监听器。
@@ -300,6 +308,7 @@ For text:
 
 - `AlwaysShowInCombatUi(...)` 和 `AlwaysShowInCombatUiForCharacter(...)` 可以让资源在尚未获得前也显示出来
 - `RegisterCombatUi(...)`、`RegisterCardUi(...)`、`RegisterMultiplayerPlayerStateUi(...)` 可以借助 node attachment 体系挂接自定义 Godot 节点
+- 自定义 `RegisterCombatUi(...)` 更新逻辑应使用 `ctx.VisibleDefinitions` 或 `definition.IsVisibleInCombatUi(ctx.Player)` 判断节点是否可见
 - `NSecondaryResourceCardCostUi` 是用于 `RegisterCardUi(...)` 的单资源简易卡牌费用包装节点；每个节点绑定一个 resource id，并由注册方分别指定位置
 - 内建 `NSecondaryResourceIcon` / `NSecondaryResourceCounter` 的 hover tip 始终使用资源的 title 和 description。需要自定义位置时，传入带 `HoverTip = SecondaryResourceHoverTipStyle.Default with { ResolveGlobalPosition = ... }` 的 `SecondaryResourceIconStyle`。hover-tip title 和 description 会收到 `Amount`、`HasMaxAmount` 和 `MaxAmount` 这些 LocString 变量，由本地化文本决定如何显示动态数量。
 

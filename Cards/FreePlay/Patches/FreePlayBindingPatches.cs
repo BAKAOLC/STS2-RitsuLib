@@ -1,4 +1,6 @@
+using MegaCrit.Sts2.Core.Entities.Cards;
 using MegaCrit.Sts2.Core.Models;
+using MegaCrit.Sts2.Core.Nodes.Cards;
 using STS2RitsuLib.Patching.Models;
 
 namespace STS2RitsuLib.Cards.FreePlay.Patches
@@ -21,6 +23,7 @@ namespace STS2RitsuLib.Cards.FreePlay.Patches
         public static void Postfix(CardModel __instance)
         {
             FreePlayBindingRegistry.MarkCardFreeNextPlay(__instance);
+            FreePlayCardVisuals.Refresh(__instance);
         }
     }
 
@@ -41,6 +44,18 @@ namespace STS2RitsuLib.Cards.FreePlay.Patches
         public static void Postfix(CardModel __instance)
         {
             FreePlayBindingRegistry.MarkCardFreeThisCombat(__instance);
+            FreePlayCardVisuals.Refresh(__instance);
+        }
+    }
+
+    internal static class FreePlayCardVisuals
+    {
+        public static void Refresh(CardModel card)
+        {
+            if (card.Pile == null)
+                return;
+
+            NCard.FindOnTable(card)?.UpdateVisuals(card.Pile.Type, CardPreviewMode.Normal);
         }
     }
 }

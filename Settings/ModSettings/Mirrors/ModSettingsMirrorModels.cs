@@ -78,6 +78,7 @@ namespace STS2RitsuLib.Settings
         ModSettingsText? Body = null,
         int? MaxLength = null,
         Func<string, bool>? ValidationVisual = null,
+        Func<string, bool>? ValidationCommit = null,
         bool AllowModifierCombos = true,
         bool AllowModifierOnly = true,
         bool DistinguishModifierSides = false,
@@ -94,6 +95,7 @@ namespace STS2RitsuLib.Settings
         bool EditAlpha = true,
         bool EditIntensity = false,
         Type? EnumType = null,
+        Func<object, ModSettingsText>? EnumOptionLabel = null,
         Func<IModSettingsUiActionHost, Control>? CustomControlFactory = null,
         ModSettingsHostSurface ReadOnlyOnHostSurfaces = ModSettingsHostSurface.None,
         Func<bool>? VisibleWhen = null);

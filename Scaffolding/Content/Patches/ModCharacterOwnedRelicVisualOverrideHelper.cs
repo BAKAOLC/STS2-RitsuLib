@@ -204,10 +204,16 @@ namespace STS2RitsuLib.Scaffolding.Content.Patches
                 if (string.IsNullOrWhiteSpace(a.PortraitPath) && string.IsNullOrWhiteSpace(a.BetaPortraitPath) &&
                     string.IsNullOrWhiteSpace(a.FramePath) && string.IsNullOrWhiteSpace(a.PortraitBorderPath) &&
                     string.IsNullOrWhiteSpace(a.EnergyIconPath) && string.IsNullOrWhiteSpace(a.FrameMaterialPath) &&
+                    string.IsNullOrWhiteSpace(a.AncientBorderPath) &&
+                    string.IsNullOrWhiteSpace(a.AncientTextBgPath) &&
                     string.IsNullOrWhiteSpace(a.OverlayScenePath) && string.IsNullOrWhiteSpace(a.BannerTexturePath) &&
                     string.IsNullOrWhiteSpace(a.BannerMaterialPath) && a.FrameMaterial == null &&
                     a.BannerMaterial == null && string.IsNullOrWhiteSpace(a.PortraitMaterialPath) &&
-                    a.PortraitMaterial == null)
+                    a.PortraitMaterial == null &&
+                    string.IsNullOrWhiteSpace(a.PortraitBorderMaterialPath) && a.PortraitBorderMaterial == null &&
+                    string.IsNullOrWhiteSpace(a.EnergyIconMaterialPath) && a.EnergyIconMaterial == null &&
+                    string.IsNullOrWhiteSpace(a.AncientBorderMaterialPath) && a.AncientBorderMaterial == null &&
+                    string.IsNullOrWhiteSpace(a.AncientTextBgMaterialPath) && a.AncientTextBgMaterial == null)
                     return null;
 
                 return a;
@@ -445,6 +451,38 @@ namespace STS2RitsuLib.Scaffolding.Content.Patches
             return false;
         }
 
+        internal static bool TryCardAncientBorderTexture(CardModel instance, ref Texture2D result)
+        {
+            var overrides = TryGetOwningCharacterOverrides(instance);
+            var profile = overrides?.TryGetVanillaCardVisualOverrideForContext(instance);
+            if (profile == null)
+                return true;
+
+            var path = profile.AncientBorderPath;
+            if (string.IsNullOrWhiteSpace(path) ||
+                !AssetPathDiagnostics.Exists(path, instance, nameof(CardAssetProfile.AncientBorderPath)))
+                return true;
+
+            result = ResourceLoader.Load<Texture2D>(path);
+            return false;
+        }
+
+        internal static bool TryCardAncientTextBgTexture(CardModel instance, ref Texture2D result)
+        {
+            var overrides = TryGetOwningCharacterOverrides(instance);
+            var profile = overrides?.TryGetVanillaCardVisualOverrideForContext(instance);
+            if (profile == null)
+                return true;
+
+            var path = profile.AncientTextBgPath;
+            if (string.IsNullOrWhiteSpace(path) ||
+                !AssetPathDiagnostics.Exists(path, instance, nameof(CardAssetProfile.AncientTextBgPath)))
+                return true;
+
+            result = ResourceLoader.Load<Texture2D>(path);
+            return false;
+        }
+
         internal static bool TryCardFrameMaterial(CardModel instance, ref Material result)
         {
             var overrides = TryGetOwningCharacterOverrides(instance);
@@ -483,6 +521,94 @@ namespace STS2RitsuLib.Scaffolding.Content.Patches
             var path = profile.PortraitMaterialPath;
             if (string.IsNullOrWhiteSpace(path) ||
                 !AssetPathDiagnostics.Exists(path, instance, nameof(CardAssetProfile.PortraitMaterialPath)))
+                return true;
+
+            result = ResourceLoader.Load<Material>(path);
+            return false;
+        }
+
+        internal static bool TryCardPortraitBorderMaterial(CardModel instance, ref Material result)
+        {
+            var overrides = TryGetOwningCharacterOverrides(instance);
+            var profile = overrides?.TryGetVanillaCardVisualOverrideForContext(instance);
+            if (profile == null)
+                return true;
+
+            if (profile.PortraitBorderMaterial != null)
+            {
+                result = profile.PortraitBorderMaterial;
+                return false;
+            }
+
+            var path = profile.PortraitBorderMaterialPath;
+            if (string.IsNullOrWhiteSpace(path) ||
+                !AssetPathDiagnostics.Exists(path, instance, nameof(CardAssetProfile.PortraitBorderMaterialPath)))
+                return true;
+
+            result = ResourceLoader.Load<Material>(path);
+            return false;
+        }
+
+        internal static bool TryCardEnergyIconMaterial(CardModel instance, ref Material result)
+        {
+            var overrides = TryGetOwningCharacterOverrides(instance);
+            var profile = overrides?.TryGetVanillaCardVisualOverrideForContext(instance);
+            if (profile == null)
+                return true;
+
+            if (profile.EnergyIconMaterial != null)
+            {
+                result = profile.EnergyIconMaterial;
+                return false;
+            }
+
+            var path = profile.EnergyIconMaterialPath;
+            if (string.IsNullOrWhiteSpace(path) ||
+                !AssetPathDiagnostics.Exists(path, instance, nameof(CardAssetProfile.EnergyIconMaterialPath)))
+                return true;
+
+            result = ResourceLoader.Load<Material>(path);
+            return false;
+        }
+
+        internal static bool TryCardAncientBorderMaterial(CardModel instance, ref Material result)
+        {
+            var overrides = TryGetOwningCharacterOverrides(instance);
+            var profile = overrides?.TryGetVanillaCardVisualOverrideForContext(instance);
+            if (profile == null)
+                return true;
+
+            if (profile.AncientBorderMaterial != null)
+            {
+                result = profile.AncientBorderMaterial;
+                return false;
+            }
+
+            var path = profile.AncientBorderMaterialPath;
+            if (string.IsNullOrWhiteSpace(path) ||
+                !AssetPathDiagnostics.Exists(path, instance, nameof(CardAssetProfile.AncientBorderMaterialPath)))
+                return true;
+
+            result = ResourceLoader.Load<Material>(path);
+            return false;
+        }
+
+        internal static bool TryCardAncientTextBgMaterial(CardModel instance, ref Material result)
+        {
+            var overrides = TryGetOwningCharacterOverrides(instance);
+            var profile = overrides?.TryGetVanillaCardVisualOverrideForContext(instance);
+            if (profile == null)
+                return true;
+
+            if (profile.AncientTextBgMaterial != null)
+            {
+                result = profile.AncientTextBgMaterial;
+                return false;
+            }
+
+            var path = profile.AncientTextBgMaterialPath;
+            if (string.IsNullOrWhiteSpace(path) ||
+                !AssetPathDiagnostics.Exists(path, instance, nameof(CardAssetProfile.AncientTextBgMaterialPath)))
                 return true;
 
             result = ResourceLoader.Load<Material>(path);

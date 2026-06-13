@@ -533,6 +533,8 @@ namespace STS2RitsuLib.Settings
         /// </summary>
         public Func<string, bool>? ValueValidationVisual { get; init; }
 
+        internal Func<string, bool>? ValueValidationCommit { get; init; }
+
         internal override Control CreateControl(ModSettingsUiContext context)
         {
             return ModSettingsUiFactory.CreateStringLineEntry(context, this);

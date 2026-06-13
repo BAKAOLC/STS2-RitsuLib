@@ -19,6 +19,15 @@ namespace STS2RitsuLib.Diagnostics.DevConsole
         }
 
         /// <summary>
+        ///     Appends <c> (localized-title)</c> to <paramref name="entryId" /> when a localized title is provided.
+        /// </summary>
+        public static string FormatCandidate(string entryId, string? localizedTitle)
+        {
+            ArgumentException.ThrowIfNullOrWhiteSpace(entryId);
+            return FormatWithTitle(entryId, localizedTitle);
+        }
+
+        /// <summary>
         ///     Appends <c> (localized-title)</c> to an ancient choice token when a title exists.
         /// </summary>
         public static string FormatAncientChoiceCandidate(string ancientEntryId, string choiceToken)

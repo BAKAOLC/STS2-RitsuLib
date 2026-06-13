@@ -131,6 +131,39 @@ namespace STS2RitsuLib.Combat.SecondaryResources
             if (!SecondaryResourceHook.ShouldSpend(spendContext))
                 return false;
 
+            return await SpendCore(player, definition, combatState, amount, card, source);
+        }
+
+        internal static async Task<bool> SpendResolvedCardPayment(
+            Player player,
+            string resourceId,
+            int amount,
+            CardModel card,
+            AbstractModel? source = null)
+        {
+            ArgumentNullException.ThrowIfNull(card);
+
+            if (amount <= 0)
+                return true;
+
+            if (!TryResolve(player, resourceId, out var combatState, out var definition))
+                return false;
+
+            return await SpendCore(player, definition, combatState, amount, card, source);
+        }
+
+        private static async Task<bool> SpendCore(
+            Player player,
+            SecondaryResourceDefinition definition,
+            CombatStateLike combatState,
+            int amount,
+            CardModel? card,
+            AbstractModel? source)
+        {
+            if (Get(player, definition.Id) < amount)
+                return false;
+
+            var spendContext = new SecondaryResourceSpendContext(combatState, player, definition, card, amount, source);
             var oldAmount = Get(player, definition.Id);
             var newAmount = await SetCore(
                 combatState,
@@ -254,6 +287,7 @@ namespace STS2RitsuLib.Combat.SecondaryResources
                 source);
 
             SecondaryResourceHistory.Changed(combatState, context);
+            SecondaryResourceUiRuntime.UpdateCurrentCombatUi(player);
             await SecondaryResourceHook.AfterChanged(context);
             if (afterReset)
                 await SecondaryResourceHook.AfterReset(context);

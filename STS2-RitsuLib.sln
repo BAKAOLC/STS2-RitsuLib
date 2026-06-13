@@ -11,7 +11,7 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Properties", "Properties", 
 		.\Sts2PathDiscovery.props = .\Sts2PathDiscovery.props
 	EndProjectSection
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "STS2.RitsuLib.Analyzers", "Analyzers\STS2.RitsuLib.Analyzers.csproj", "{EB94728C-3FFA-46C3-8295-74BB50CF4B6A}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "STS2-RitsuLib-Analyzers", "Analyzers\STS2-RitsuLib-Analyzers.csproj", "{EB94728C-3FFA-46C3-8295-74BB50CF4B6A}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution

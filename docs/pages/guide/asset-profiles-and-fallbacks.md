@@ -25,6 +25,11 @@ public sealed class MyCard : ModCardTemplate(1, CardType.Attack, CardRarity.Comm
 
 RitsuLib reads only non-empty fields. Missing fields keep the base game value or the template fallback.
 
+For cards, texture fields cover portrait, beta portrait, frame, portrait border, energy icon, banner, overlay scene, and
+ancient-only border/text background. Material fields are available for portrait, frame, portrait border, energy icon,
+banner, ancient border, and ancient text background; direct `Material` instance fields can be used when a material should
+be created in code instead of loaded from a resource path.
+
 :::
 
 ## 优先使用 Profile{lang="zh-CN"}
@@ -46,6 +51,10 @@ public sealed class MyCard : ModCardTemplate(1, CardType.Attack, CardRarity.Comm
 ```
 
 RitsuLib 只读取非空字段。没有填写的字段会保留游戏原值或模板回退值。
+
+卡牌 profile 的贴图字段覆盖 portrait、beta portrait、frame、portrait border、energy icon、banner、overlay scene，
+以及 ancient 专用的 border/text background。材质字段覆盖 portrait、frame、portrait border、energy icon、banner、
+ancient border 和 ancient text background；如果材质需要在代码中创建，也可以使用直接的 `Material` 实例字段。
 
 :::
 

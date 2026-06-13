@@ -1,9 +1,12 @@
 using Godot;
+using MegaCrit.Sts2.Core.Context;
 using MegaCrit.Sts2.Core.Entities.Players;
 using MegaCrit.Sts2.Core.Models;
 using MegaCrit.Sts2.Core.Nodes.Cards;
 using MegaCrit.Sts2.Core.Nodes.Combat;
 using MegaCrit.Sts2.Core.Nodes.Multiplayer;
+using MegaCrit.Sts2.Core.Nodes.Rooms;
+using STS2RitsuLib.Cards.FreePlay;
 using STS2RitsuLib.Scaffolding.Godot.NodeAttachments;
 using STS2RitsuLib.Utils;
 
@@ -74,6 +77,20 @@ namespace STS2RitsuLib.Combat.SecondaryResources
 
             foreach (var updater in updaters.ToArray())
                 updater(player);
+        }
+
+        internal static void UpdateCurrentCombatUi(Player player)
+        {
+            ArgumentNullException.ThrowIfNull(player);
+            if (!ModSecondaryResourceRegistry.HasAny ||
+                !LocalContext.IsMe(player))
+                return;
+
+            var ui = NCombatRoom.Instance?.Ui;
+            if (ui == null || !GodotObject.IsInstanceValid(ui))
+                return;
+
+            UpdateCombatUi(ui, player);
         }
 
         /// <summary>
@@ -170,7 +187,7 @@ namespace STS2RitsuLib.Combat.SecondaryResources
                     node,
                     player,
                     definitions,
-                    SecondaryResourceVisibility.GetCombatUiDefinitions(player)));
+                    SecondaryResourceVisibility.GetCombatUiDefinitions(player, true)));
             });
         }
 
@@ -183,7 +200,9 @@ namespace STS2RitsuLib.Combat.SecondaryResources
         {
             CardUpdaters.GetOrCreate(parent).Add(card =>
             {
-                var plan = SecondaryResourcePaymentResolver.Plan(card);
+                var plan = SecondaryResourcePaymentResolver.Plan(
+                    card,
+                    FreePlayBindingRegistry.IsCardFreeForUpcomingPlay(card));
                 var definitions = ModSecondaryResourceRegistry.GetDefinitionsSnapshot();
                 update(new(
                     parent,

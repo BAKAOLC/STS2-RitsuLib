@@ -56,10 +56,13 @@ namespace STS2RitsuLib.Combat.SecondaryResources
         ///     Applies cost hooks.
         ///     应用费用 hook。
         /// </summary>
-        public static decimal ModifyCost(SecondaryResourceCostContext context, decimal amount)
+        public static decimal ModifyCost(SecondaryResourceCostContext context, decimal cost)
         {
-            return IterateListeners(context.CombatState).Aggregate(amount,
+            var modifiedCost = IterateListeners(context.CombatState, context.Card).Aggregate(cost,
                 (current, listener) => listener.ModifySecondaryResourceCost(context, current));
+
+            return IterateListeners(context.CombatState, context.Card).Aggregate(modifiedCost,
+                (current, listener) => listener.ModifySecondaryResourceCostLate(context, current));
         }
 
         /// <summary>
@@ -68,7 +71,7 @@ namespace STS2RitsuLib.Combat.SecondaryResources
         /// </summary>
         public static int ModifyXValue(SecondaryResourceXContext context, int value)
         {
-            return IterateListeners(context.CombatState).Aggregate(value,
+            return IterateListeners(context.CombatState, context.Card).Aggregate(value,
                 (current, listener) => listener.ModifySecondaryResourceXValue(context, current));
         }
 
@@ -88,7 +91,7 @@ namespace STS2RitsuLib.Combat.SecondaryResources
         /// </summary>
         public static bool ShouldSpend(SecondaryResourceSpendContext context)
         {
-            return IterateListeners(context.CombatState)
+            return IterateListeners(context.CombatState, context.Card)
                 .All(listener => listener.ShouldSpendSecondaryResource(context));
         }
 
@@ -118,7 +121,7 @@ namespace STS2RitsuLib.Combat.SecondaryResources
         /// </summary>
         public static async Task AfterSpent(SecondaryResourceSpendContext context)
         {
-            foreach (var listener in IterateListeners(context.CombatState))
+            foreach (var listener in IterateListeners(context.CombatState, context.Card))
                 await listener.AfterSecondaryResourceSpent(context);
         }
 
@@ -132,7 +135,9 @@ namespace STS2RitsuLib.Combat.SecondaryResources
                 await listener.AfterSecondaryResourceReset(context);
         }
 
-        private static IEnumerable<ISecondaryResourceHookListener> IterateListeners(CombatStateLike combatState)
+        private static IEnumerable<ISecondaryResourceHookListener> IterateListeners(
+            CombatStateLike combatState,
+            params AbstractModel?[] extraModels)
         {
             if (!ModSecondaryResourceRegistry.HasAny)
                 yield break;
@@ -140,14 +145,13 @@ namespace STS2RitsuLib.Combat.SecondaryResources
             HashSet<object> seen = new(ReferenceEqualityComparer.Instance);
 
             foreach (var model in combatState.IterateHookListeners())
-            {
-                if (model is ISecondaryResourceHookListener modelListener && seen.Add(modelListener))
-                    yield return modelListener;
+            foreach (var listener in IterateModelListeners(model, seen))
+                yield return listener;
 
-                foreach (var capability in IterateCapabilityListeners(model))
-                    if (seen.Add(capability))
-                        yield return capability;
-            }
+            foreach (var model in extraModels)
+                if (model != null)
+                    foreach (var listener in IterateModelListeners(model, seen))
+                        yield return listener;
 
             ISecondaryResourceHookListener[] globals;
             lock (SyncRoot)
@@ -158,6 +162,18 @@ namespace STS2RitsuLib.Combat.SecondaryResources
             foreach (var listener in globals)
                 if (seen.Add(listener))
                     yield return listener;
+        }
+
+        private static IEnumerable<ISecondaryResourceHookListener> IterateModelListeners(
+            AbstractModel model,
+            HashSet<object> seen)
+        {
+            if (model is ISecondaryResourceHookListener modelListener && seen.Add(modelListener))
+                yield return modelListener;
+
+            foreach (var capability in IterateCapabilityListeners(model))
+                if (seen.Add(capability))
+                    yield return capability;
         }
 
         private static IEnumerable<ISecondaryResourceHookListener> IterateCapabilityListeners(AbstractModel model)

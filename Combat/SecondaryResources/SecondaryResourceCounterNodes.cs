@@ -219,6 +219,7 @@ namespace STS2RitsuLib.Combat.SecondaryResources
 
         private Player? _boundPlayer;
         private SecondaryResourceDefinition? _definition;
+        private bool _hasBeenMaterial;
         private NSecondaryResourceIcon _icon = null!;
         private int? _maxAmount;
         private SecondaryResourceCounterStyle _style = SecondaryResourceCounterStyle.Default;
@@ -264,6 +265,12 @@ namespace STS2RitsuLib.Combat.SecondaryResources
         /// </summary>
         public void Bind(Player? player, bool autoRefresh = true)
         {
+            if (!ReferenceEquals(_boundPlayer, player))
+            {
+                _hasBeenMaterial = false;
+                Visible = false;
+            }
+
             _boundPlayer = player;
             AutoRefresh = autoRefresh;
             Refresh(_boundPlayer);
@@ -281,10 +288,11 @@ namespace STS2RitsuLib.Combat.SecondaryResources
                 return;
             }
 
-            Visible = true;
-            SetAmount(
-                SecondaryResourceCmd.Get(player, _definition.Id),
-                SecondaryResourceCmd.GetMax(player, _definition.Id));
+            var amount = SecondaryResourceCmd.Get(player, _definition.Id);
+            var maxAmount = SecondaryResourceCmd.GetMax(player, _definition.Id);
+            _hasBeenMaterial = _hasBeenMaterial || amount > _definition.DefaultAmount;
+            Visible = _hasBeenMaterial || _definition.IsVisibleInCombatUi(player);
+            SetAmount(amount, maxAmount);
         }
 
         /// <summary>

@@ -418,10 +418,46 @@ namespace STS2RitsuLib.Scaffolding.Content.Patches
         string? CustomEnergyIconPath { get; }
 
         /// <summary>
+        ///     Override for ancient card border texture path.
+        ///     Ancient 卡牌边框纹理路径覆盖。
+        /// </summary>
+        string? CustomAncientBorderPath => AssetProfile.AncientBorderPath;
+
+        /// <summary>
+        ///     Override for ancient card text background texture path.
+        ///     Ancient 卡牌文本背景纹理路径覆盖。
+        /// </summary>
+        string? CustomAncientTextBgPath => AssetProfile.AncientTextBgPath;
+
+        /// <summary>
         ///     Override for frame <see cref="Material" /> resource path.
         ///     边框 <see cref="Material" /> 资源路径覆盖。
         /// </summary>
         string? CustomFrameMaterialPath { get; }
+
+        /// <summary>
+        ///     Override for portrait border <see cref="Material" /> resource path.
+        ///     肖像边框 <see cref="Material" /> 资源路径覆盖。
+        /// </summary>
+        string? CustomPortraitBorderMaterialPath => AssetProfile.PortraitBorderMaterialPath;
+
+        /// <summary>
+        ///     Override for energy icon <see cref="Material" /> resource path.
+        ///     能量图标 <see cref="Material" /> 资源路径覆盖。
+        /// </summary>
+        string? CustomEnergyIconMaterialPath => AssetProfile.EnergyIconMaterialPath;
+
+        /// <summary>
+        ///     Override for ancient card border <see cref="Material" /> resource path.
+        ///     Ancient 卡牌边框 <see cref="Material" /> 资源路径覆盖。
+        /// </summary>
+        string? CustomAncientBorderMaterialPath => AssetProfile.AncientBorderMaterialPath;
+
+        /// <summary>
+        ///     Override for ancient card text background <see cref="Material" /> resource path.
+        ///     Ancient 卡牌文本背景 <see cref="Material" /> 资源路径覆盖。
+        /// </summary>
+        string? CustomAncientTextBgMaterialPath => AssetProfile.AncientTextBgMaterialPath;
 
         /// <summary>
         ///     Override for built-in overlay packed scene path.
@@ -476,6 +512,66 @@ namespace STS2RitsuLib.Scaffolding.Content.Patches
         ///     返回 <c>null</c> 以继续使用其它覆盖层。
         /// </summary>
         Material? CustomFrameMaterial => null;
+    }
+
+    /// <summary>
+    ///     Optional direct portrait border <see cref="Material" /> override for cards.
+    ///     用于卡牌的可选直接肖像边框 <see cref="Material" /> 覆盖。
+    /// </summary>
+    public interface IModCardPortraitBorderMaterialOverride
+    {
+        /// <summary>
+        ///     Direct portrait border material override.
+        ///     Return <c>null</c> to continue with other override layers.
+        ///     直接的肖像边框材质覆盖。
+        ///     返回 <c>null</c> 以继续使用其它覆盖层。
+        /// </summary>
+        Material? CustomPortraitBorderMaterial => null;
+    }
+
+    /// <summary>
+    ///     Optional direct energy icon <see cref="Material" /> override for cards.
+    ///     用于卡牌的可选直接能量图标 <see cref="Material" /> 覆盖。
+    /// </summary>
+    public interface IModCardEnergyIconMaterialOverride
+    {
+        /// <summary>
+        ///     Direct energy icon material override.
+        ///     Return <c>null</c> to continue with other override layers.
+        ///     直接的能量图标材质覆盖。
+        ///     返回 <c>null</c> 以继续使用其它覆盖层。
+        /// </summary>
+        Material? CustomEnergyIconMaterial => null;
+    }
+
+    /// <summary>
+    ///     Optional direct ancient card border <see cref="Material" /> override for cards.
+    ///     用于 ancient 卡牌的可选直接边框 <see cref="Material" /> 覆盖。
+    /// </summary>
+    public interface IModCardAncientBorderMaterialOverride
+    {
+        /// <summary>
+        ///     Direct ancient card border material override.
+        ///     Return <c>null</c> to continue with other override layers.
+        ///     直接的 ancient 卡牌边框材质覆盖。
+        ///     返回 <c>null</c> 以继续使用其它覆盖层。
+        /// </summary>
+        Material? CustomAncientBorderMaterial => null;
+    }
+
+    /// <summary>
+    ///     Optional direct ancient card text background <see cref="Material" /> override for cards.
+    ///     用于 ancient 卡牌的可选直接文本背景 <see cref="Material" /> 覆盖。
+    /// </summary>
+    public interface IModCardAncientTextBgMaterialOverride
+    {
+        /// <summary>
+        ///     Direct ancient card text background material override.
+        ///     Return <c>null</c> to continue with other override layers.
+        ///     直接的 ancient 卡牌文本背景材质覆盖。
+        ///     返回 <c>null</c> 以继续使用其它覆盖层。
+        /// </summary>
+        Material? CustomAncientTextBgMaterial => null;
     }
 
     /// <summary>
