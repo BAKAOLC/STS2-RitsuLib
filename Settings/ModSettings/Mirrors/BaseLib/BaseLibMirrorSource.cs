@@ -16,6 +16,10 @@ namespace STS2RitsuLib.Settings
         private const string SliderLabelFormatAttributeName = "BaseLib.Config.SliderLabelFormatAttribute";
         private const string ConfigTextInputAttributeName = "BaseLib.Config.ConfigTextInputAttribute";
         private const string ConfigColorPickerAttributeName = "BaseLib.Config.ConfigColorPickerAttribute";
+
+        private const string ConfigDropdownOverrideLocalizationAttributeName =
+            "BaseLib.Config.ConfigDropdownOverrideLocalizationAttribute";
+
         private const string ConfigHoverTipAttributeName = "BaseLib.Config.ConfigHoverTipAttribute";
         private const string ConfigHoverTipsByDefaultAttributeName = "BaseLib.Config.ConfigHoverTipsByDefaultAttribute";
         private const string HoverTipsByDefaultAttributeName = "BaseLib.Config.HoverTipsByDefaultAttribute";
@@ -77,6 +81,7 @@ namespace STS2RitsuLib.Settings
                 var sliderFormatType = ResolveType(SliderLabelFormatAttributeName);
                 var textInputAttrType = ResolveType(ConfigTextInputAttributeName);
                 var colorPickerAttrType = ResolveType(ConfigColorPickerAttributeName);
+                var dropdownOverrideAttrType = ResolveType(ConfigDropdownOverrideLocalizationAttributeName);
                 var hoverTipAttrType = ResolveType(ConfigHoverTipAttributeName);
                 var configHoverTipsByDefaultAttrType = ResolveType(ConfigHoverTipsByDefaultAttributeName);
                 var hoverTipsByDefaultAttrType = ResolveType(HoverTipsByDefaultAttributeName);
@@ -108,7 +113,8 @@ namespace STS2RitsuLib.Settings
                     var page = BaseLibMirrorMapper.TryCreatePage(modId, pageId, sortOrder, pageTitle, pageDescription,
                         host,
                         configProps, sectionAttrType, hideUiAttrType, buttonAttrType, configSliderType, sliderRangeType,
-                        sliderFormatType, textInputAttrType, colorPickerAttrType, hoverTipAttrType,
+                        sliderFormatType, textInputAttrType, colorPickerAttrType, dropdownOverrideAttrType,
+                        hoverTipAttrType,
                         configHoverTipsByDefaultAttrType, hoverTipsByDefaultAttrType, visibleIfAttrType,
                         configConcreteType, modConfigType);
                     if (page == null)

@@ -11,7 +11,15 @@ namespace STS2RitsuLib.Settings
         private const string SectionAttrName = "BaseLibToRitsu.Generated.ConfigSectionAttribute";
         private const string HideUiAttrName = "BaseLibToRitsu.Generated.ConfigHideInUI";
         private const string ButtonAttrName = "BaseLibToRitsu.Generated.ConfigButtonAttribute";
+        private const string SliderAttrName = "BaseLibToRitsu.Generated.ConfigSliderAttribute";
+        private const string SliderRangeAttrName = "BaseLibToRitsu.Generated.SliderRangeAttribute";
+        private const string SliderLabelFormatAttrName = "BaseLibToRitsu.Generated.SliderLabelFormatAttribute";
+        private const string TextInputAttrName = "BaseLibToRitsu.Generated.ConfigTextInputAttribute";
         private const string ColorPickerAttrName = "BaseLibToRitsu.Generated.ConfigColorPickerAttribute";
+
+        private const string DropdownOverrideAttrName =
+            "BaseLibToRitsu.Generated.ConfigDropdownOverrideLocalizationAttribute";
+
         private const string HoverTipAttrName = "BaseLibToRitsu.Generated.ConfigHoverTipAttribute";
         private const string HoverTipsByDefaultAttrName = "BaseLibToRitsu.Generated.ConfigHoverTipsByDefaultAttribute";
         private const string LegacyHoverTipsByDefaultAttrName = "BaseLibToRitsu.Generated.HoverTipsByDefaultAttribute";
@@ -61,7 +69,9 @@ namespace STS2RitsuLib.Settings
                     let propertyNames = ReadPropertyNames(propertiesField, config)
                     let page = BaseLibToRitsuGeneratedMirrorMapper.TryCreatePage(modId, pageId, sortOrder, pageTitle,
                         pageDescription, host, propertyNames, context.SectionAttrType, context.HideUiAttrType,
-                        context.ButtonAttrType, context.ColorPickerAttrType, context.HoverTipAttrType,
+                        context.ButtonAttrType, context.SliderAttrType, context.SliderRangeAttrType,
+                        context.SliderLabelFormatAttrType, context.TextInputAttrType, context.ColorPickerAttrType,
+                        context.DropdownOverrideAttrType, context.HoverTipAttrType,
                         context.HoverTipsByDefaultAttrType, context.LegacyHoverTipsByDefaultAttrType,
                         context.VisibleIfAttrType, configType, context.ModConfigType)
                     where page != null
@@ -127,7 +137,10 @@ namespace STS2RitsuLib.Settings
 
                 yield return new(assembly, registryType, modConfigType, assembly.GetType(SectionAttrName, false),
                     assembly.GetType(HideUiAttrName, false), assembly.GetType(ButtonAttrName, false),
-                    assembly.GetType(ColorPickerAttrName, false), assembly.GetType(HoverTipAttrName, false),
+                    assembly.GetType(SliderAttrName, false), assembly.GetType(SliderRangeAttrName, false),
+                    assembly.GetType(SliderLabelFormatAttrName, false), assembly.GetType(TextInputAttrName, false),
+                    assembly.GetType(ColorPickerAttrName, false), assembly.GetType(DropdownOverrideAttrName, false),
+                    assembly.GetType(HoverTipAttrName, false),
                     assembly.GetType(HoverTipsByDefaultAttrName, false),
                     assembly.GetType(LegacyHoverTipsByDefaultAttrName, false),
                     assembly.GetType(VisibleIfAttrName, false));
@@ -141,7 +154,12 @@ namespace STS2RitsuLib.Settings
             Type? SectionAttrType,
             Type? HideUiAttrType,
             Type? ButtonAttrType,
+            Type? SliderAttrType,
+            Type? SliderRangeAttrType,
+            Type? SliderLabelFormatAttrType,
+            Type? TextInputAttrType,
             Type? ColorPickerAttrType,
+            Type? DropdownOverrideAttrType,
             Type? HoverTipAttrType,
             Type? HoverTipsByDefaultAttrType,
             Type? LegacyHoverTipsByDefaultAttrType,

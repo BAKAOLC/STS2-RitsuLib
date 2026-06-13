@@ -795,6 +795,19 @@ namespace STS2RitsuLib.Settings
             ModSettingsText? description,
             Func<string, bool>? valueValidationVisual)
         {
+            return AddString(id, label, binding, placeholder, maxLength, description, valueValidationVisual, null);
+        }
+
+        internal ModSettingsSectionBuilder AddString(
+            string id,
+            ModSettingsText label,
+            IModSettingsValueBinding<string> binding,
+            ModSettingsText? placeholder,
+            int? maxLength,
+            ModSettingsText? description,
+            Func<string, bool>? valueValidationVisual,
+            Func<string, bool>? valueValidationCommit)
+        {
             if (maxLength is < 1)
                 throw new ArgumentOutOfRangeException(nameof(maxLength), "maxLength must be null or >= 1.");
 
@@ -802,6 +815,7 @@ namespace STS2RitsuLib.Settings
                 new StringModSettingsEntryDefinition(id, label, binding, placeholder, maxLength, description)
                 {
                     ValueValidationVisual = valueValidationVisual,
+                    ValueValidationCommit = valueValidationCommit,
                 });
             return this;
         }

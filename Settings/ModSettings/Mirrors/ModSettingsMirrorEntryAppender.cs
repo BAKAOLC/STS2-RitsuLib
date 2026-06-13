@@ -80,7 +80,7 @@ namespace STS2RitsuLib.Settings
                 case ModSettingsMirrorEntryKind.String:
                     section.AddString(entry.Id, entry.Label, (IModSettingsValueBinding<string>)entry.Binding!,
                         entry.Placeholder,
-                        entry.MaxLength, entry.Description, entry.ValidationVisual);
+                        entry.MaxLength, entry.Description, entry.ValidationVisual, entry.ValidationCommit);
                     ApplyVisibility(section, entry);
                     return;
                 case ModSettingsMirrorEntryKind.MultilineString:
@@ -164,7 +164,10 @@ namespace STS2RitsuLib.Settings
             ModSettingsMirrorEntryDefinition entry)
             where TEnum : struct, Enum
         {
-            section.AddEnumChoice(entry.Id, entry.Label, (IModSettingsValueBinding<TEnum>)entry.Binding!, null,
+            Func<TEnum, ModSettingsText>? labelFactory = entry.EnumOptionLabel == null
+                ? null
+                : value => entry.EnumOptionLabel(value);
+            section.AddEnumChoice(entry.Id, entry.Label, (IModSettingsValueBinding<TEnum>)entry.Binding!, labelFactory,
                 entry.Description,
                 entry.ChoicePresentation);
         }

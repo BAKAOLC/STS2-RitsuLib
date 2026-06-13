@@ -1,4 +1,5 @@
 using System.Reflection;
+using System.Text.RegularExpressions;
 using Godot;
 using MegaCrit.Sts2.Core.Localization;
 
@@ -17,7 +18,12 @@ namespace STS2RitsuLib.Settings
             Type? sectionAttrType,
             Type? hideUiAttrType,
             Type? buttonAttrType,
+            Type? sliderAttrType,
+            Type? sliderRangeAttrType,
+            Type? sliderFormatAttrType,
+            Type? textInputAttrType,
             Type? colorPickerAttrType,
+            Type? dropdownOverrideAttrType,
             Type? hoverTipAttrType,
             Type? hoverTipsByDefaultAttrType,
             Type? legacyHoverTipsByDefaultAttrType,
@@ -46,7 +52,9 @@ namespace STS2RitsuLib.Settings
                     {
                         case PropertyInfo property:
                         {
-                            var mapped = TryMapProperty(modId, property, host, colorPickerAttrType, hoverTipAttrType,
+                            var mapped = TryMapProperty(modId, property, host, sliderAttrType, sliderRangeAttrType,
+                                sliderFormatAttrType, textInputAttrType, colorPickerAttrType, dropdownOverrideAttrType,
+                                hoverTipAttrType,
                                 hoverTipsByDefaultAttrType, legacyHoverTipsByDefaultAttrType, visibleIfAttrType,
                                 configType, modConfigType);
                             if (mapped != null)
@@ -119,7 +127,9 @@ namespace STS2RitsuLib.Settings
         }
 
         private static ModSettingsMirrorEntryDefinition? TryMapProperty(string modId, PropertyInfo prop,
-            BaseLibToRitsuGeneratedMirrorHost host, Type? colorPickerAttrType, Type? hoverTipAttrType,
+            BaseLibToRitsuGeneratedMirrorHost host, Type? sliderAttrType, Type? sliderRangeAttrType,
+            Type? sliderFormatAttrType, Type? textInputAttrType, Type? colorPickerAttrType,
+            Type? dropdownOverrideAttrType, Type? hoverTipAttrType,
             Type? hoverTipsByDefaultAttrType, Type? legacyHoverTipsByDefaultAttrType, Type? visibleIfAttrType,
             Type configType, Type modConfigType)
         {
@@ -139,6 +149,8 @@ namespace STS2RitsuLib.Settings
 
             if (type == typeof(Color))
             {
+                var (editAlpha, editIntensity) =
+                    ResolveColorPickerUiOptions(prop, colorPickerAttrType, typeof(Color));
                 var colorBinding = ModSettingsBindings.Callback(modId, dataKey,
                     () => ModSettingsColorControl.FormatStoredColorString((Color)prop.GetValue(null)!),
                     value =>
@@ -150,44 +162,78 @@ namespace STS2RitsuLib.Settings
                         host.NotifyChanged();
                     },
                     host.Save);
-                return new(id, ModSettingsMirrorEntryKind.Color, label, colorBinding, description, EditAlpha: true,
-                    EditIntensity: false, VisibleWhen: visibilityPredicate);
+                return new(id, ModSettingsMirrorEntryKind.Color, label, colorBinding, description, EditAlpha: editAlpha,
+                    EditIntensity: editIntensity, VisibleWhen: visibilityPredicate);
             }
 
             var asColor = colorPickerAttrType != null && prop.GetCustomAttribute(colorPickerAttrType, false) != null;
             if (type == typeof(string) && asColor)
+            {
+                var (editAlpha, _) = ResolveColorPickerUiOptions(prop, colorPickerAttrType, typeof(string));
                 return new(id, ModSettingsMirrorEntryKind.Color, label,
-                    CallbackForStaticProperty<string>(modId, dataKey, prop, host), description, EditAlpha: true,
+                    CallbackForStaticProperty<string>(modId, dataKey, prop, host), description, EditAlpha: editAlpha,
                     EditIntensity: false, VisibleWhen: visibilityPredicate);
+            }
 
             if (type == typeof(string))
+            {
+                var (maxLength, placeholder, validator) = ResolveTextInputOptions(prop, textInputAttrType, host);
                 return new(id, ModSettingsMirrorEntryKind.String, label,
                     CallbackForStaticProperty<string>(modId, dataKey, prop, host), description,
+                    Placeholder: placeholder, MaxLength: maxLength, ValidationVisual: validator,
+                    ValidationCommit: validator,
                     VisibleWhen: visibilityPredicate);
+            }
+
+            ReadSliderRange(prop, sliderAttrType, sliderRangeAttrType, out var min, out var max, out var step);
+            var sliderFormat = ResolveSliderDisplayFormat(prop, host, sliderAttrType, sliderFormatAttrType);
 
             if (type == typeof(int))
             {
+                var minInt = Mathf.RoundToInt(min);
+                var maxInt = Mathf.RoundToInt(max);
+                var stepInt = Mathf.Max(1, Mathf.RoundToInt(step));
+                if (maxInt < minInt)
+                    (minInt, maxInt) = (maxInt, minInt);
                 var intBinding = ModSettingsBindings.Callback(modId, dataKey,
                     () => (int)prop.GetValue(null)!,
                     value =>
                     {
-                        prop.SetValue(null, value);
+                        var intValue = Mathf.Clamp(value, minInt, maxInt);
+                        intValue = minInt + (intValue - minInt) / stepInt * stepInt;
+                        prop.SetValue(null, intValue);
                         host.NotifyChanged();
                     },
                     host.Save);
                 return new(id, ModSettingsMirrorEntryKind.IntSlider, label, intBinding, description,
-                    new(0d, 100d, 1d), VisibleWhen: visibilityPredicate);
+                    new(minInt, maxInt, stepInt), VisibleWhen: visibilityPredicate);
             }
 
             if (type == typeof(float))
+            {
+                var floatMin = (float)min;
+                var floatMax = (float)max;
+                var floatStep = step <= 0d ? 1f : (float)step;
+                if (floatMax < floatMin)
+                    (floatMin, floatMax) = (floatMax, floatMin);
+                Func<float, string>? formatFloat = string.IsNullOrEmpty(sliderFormat)
+                    ? null
+                    : value => string.Format(sliderFormat, value);
                 return new(id, ModSettingsMirrorEntryKind.Slider, label,
                     CallbackForStaticProperty<float>(modId, dataKey, prop, host), description,
-                    new(0d, 100d, 1d, null, value => value.ToString("0.##")), VisibleWhen: visibilityPredicate);
+                    new(floatMin, floatMax, floatStep, null, formatFloat), VisibleWhen: visibilityPredicate);
+            }
 
             if (type == typeof(double))
+            {
+                var doubleStep = step <= 0d ? 1d : step;
+                if (max < min)
+                    (min, max) = (max, min);
                 return new(id, ModSettingsMirrorEntryKind.Slider, label,
                     CallbackForStaticProperty<double>(modId, dataKey, prop, host), description,
-                    new(0d, 100d, 1d, value => value.ToString("0.##")), VisibleWhen: visibilityPredicate);
+                    new(min, max, doubleStep, TryGetSliderLabelFormatterDouble(sliderFormat)),
+                    VisibleWhen: visibilityPredicate);
+            }
 
             if (!type.IsEnum)
                 return null;
@@ -198,6 +244,8 @@ namespace STS2RitsuLib.Settings
                 .Invoke(null, [modId, dataKey, prop, host]);
             return new(id, ModSettingsMirrorEntryKind.EnumChoice, label, enumBinding, description,
                 ChoicePresentation: ModSettingsChoicePresentation.Stepper, EnumType: type,
+                EnumOptionLabel: value => ModSettingsText.Dynamic(() =>
+                    ResolveEnumOptionLabel(prop, host, dropdownOverrideAttrType, value)),
                 VisibleWhen: visibilityPredicate);
         }
 
@@ -257,6 +305,140 @@ namespace STS2RitsuLib.Settings
                     host.NotifyChanged();
                 },
                 host.Save);
+        }
+
+        private static void ReadSliderRange(PropertyInfo prop, Type? sliderAttrType, Type? sliderRangeAttrType,
+            out double min, out double max, out double step)
+        {
+            min = 0;
+            max = 100;
+            step = 1;
+            object? rangeAttribute = null;
+            if (sliderAttrType != null)
+                rangeAttribute = prop.GetCustomAttribute(sliderAttrType, false);
+            if (rangeAttribute == null && sliderRangeAttrType != null)
+                rangeAttribute = prop.GetCustomAttribute(sliderRangeAttrType, false);
+            if (rangeAttribute == null)
+                return;
+
+            var type = rangeAttribute.GetType();
+            min = Convert.ToDouble(type.GetProperty("Min")?.GetValue(rangeAttribute) ?? 0.0);
+            max = Convert.ToDouble(type.GetProperty("Max")?.GetValue(rangeAttribute) ?? 100.0);
+            step = Convert.ToDouble(type.GetProperty("Step")?.GetValue(rangeAttribute) ?? 1.0);
+        }
+
+        private static string? ResolveSliderDisplayFormat(PropertyInfo prop, BaseLibToRitsuGeneratedMirrorHost host,
+            Type? sliderAttrType, Type? sliderFormatAttrType)
+        {
+            var fallback = TryGetSliderFormat(prop, sliderAttrType, sliderFormatAttrType);
+            var prefix = host.ModPrefix;
+            if (string.IsNullOrWhiteSpace(prefix))
+                return fallback;
+
+            var key = prefix + ModSettingsMirrorSlugPolicy.Normalize(prop.Name) + ".sliderFormat";
+            return LocString.GetIfExists("settings_ui", key)?.GetRawText() ?? fallback;
+        }
+
+        private static string? TryGetSliderFormat(PropertyInfo prop, Type? sliderAttrType, Type? sliderFormatAttrType)
+        {
+            if (sliderAttrType != null && prop.GetCustomAttribute(sliderAttrType, false) is { } sliderAttribute)
+            {
+                var format = sliderAttrType.GetProperty("Format")?.GetValue(sliderAttribute) as string;
+                if (!string.IsNullOrEmpty(format))
+                    return format;
+            }
+
+            if (sliderFormatAttrType == null ||
+                prop.GetCustomAttribute(sliderFormatAttrType, false) is not { } formatAttribute)
+                return null;
+
+            var legacyFormat = sliderFormatAttrType.GetProperty("Format")?.GetValue(formatAttribute) as string;
+            return string.IsNullOrEmpty(legacyFormat) ? null : legacyFormat;
+        }
+
+        private static Func<double, string>? TryGetSliderLabelFormatterDouble(string? sliderFormat)
+        {
+            return string.IsNullOrEmpty(sliderFormat) ? null : value => string.Format(sliderFormat, value);
+        }
+
+        private static (bool EditAlpha, bool EditIntensity) ResolveColorPickerUiOptions(PropertyInfo prop,
+            Type? colorPickerAttrType, Type storageType)
+        {
+            var editAlpha = true;
+            var editIntensity = false;
+            if (colorPickerAttrType == null || prop.GetCustomAttribute(colorPickerAttrType, false) is not { } attribute)
+                return (editAlpha, editIntensity);
+
+            if (colorPickerAttrType.GetProperty("EditAlpha")?.GetValue(attribute) is bool editAlphaValue)
+                editAlpha = editAlphaValue;
+            if (storageType == typeof(Color) &&
+                colorPickerAttrType.GetProperty("EditIntensity")?.GetValue(attribute) is bool editIntensityValue)
+                editIntensity = editIntensityValue;
+            return (editAlpha, editIntensity);
+        }
+
+        private static (int? MaxLength, ModSettingsText? Placeholder, Func<string, bool>? Validator)
+            ResolveTextInputOptions(PropertyInfo prop, Type? textInputAttrType, BaseLibToRitsuGeneratedMirrorHost host)
+        {
+            int? maxLength = null;
+            Func<string, bool>? validator = null;
+            var placeholder = TryResolvePlaceholder(prop, host);
+
+            if (textInputAttrType == null || prop.GetCustomAttribute(textInputAttrType, false) is not { } attribute)
+                return (maxLength, placeholder, validator);
+
+            if (textInputAttrType.GetProperty("MaxLength")?.GetValue(attribute) is int maxLengthValue and > 0)
+                maxLength = maxLengthValue;
+
+            var pattern = textInputAttrType.GetProperty("AllowedCharactersRegex")?.GetValue(attribute) as string;
+            if (string.IsNullOrEmpty(pattern) || pattern == ".*")
+                return (maxLength, placeholder, validator);
+
+            try
+            {
+                var regex = new Regex($"^(?:{pattern})$", RegexOptions.Compiled);
+                validator = regex.IsMatch;
+            }
+            catch (Exception ex)
+            {
+                RitsuLibFramework.Logger.Warn(
+                    $"[BaseLibToRitsuGeneratedMirrorSource] Invalid ConfigTextInput regex for '{prop.Name}': {ex.Message}");
+            }
+
+            return (maxLength, placeholder, validator);
+        }
+
+        private static ModSettingsText? TryResolvePlaceholder(PropertyInfo prop,
+            BaseLibToRitsuGeneratedMirrorHost host)
+        {
+            var prefix = host.ModPrefix;
+            if (string.IsNullOrWhiteSpace(prefix))
+                return null;
+
+            var key = prefix + ModSettingsMirrorSlugPolicy.Normalize(prop.Name) + ".placeholder";
+            return LocString.Exists("settings_ui", key)
+                ? ModSettingsText.Dynamic(() => LocString.GetIfExists("settings_ui", key)?.GetFormattedText() ?? "")
+                : null;
+        }
+
+        private static string ResolveEnumOptionLabel(PropertyInfo prop, BaseLibToRitsuGeneratedMirrorHost host,
+            Type? dropdownOverrideAttrType, object value)
+        {
+            var fallback = value.ToString() ?? "UNKNOWN";
+            var prefix = host.ModPrefix;
+            if (string.IsNullOrWhiteSpace(prefix))
+                return fallback;
+
+            var propertyName = ModSettingsMirrorSlugPolicy.Normalize(prop.Name);
+            if (dropdownOverrideAttrType != null &&
+                prop.GetCustomAttribute(dropdownOverrideAttrType, false) is { } overrideAttribute &&
+                dropdownOverrideAttrType.GetProperty("OverridePropertyName")?.GetValue(overrideAttribute) is string
+                    overridePropertyName &&
+                !string.IsNullOrWhiteSpace(overridePropertyName))
+                propertyName = overridePropertyName;
+
+            var key = $"{prefix}{propertyName}.{fallback}";
+            return LocString.GetIfExists("settings_ui", key)?.GetRawText() ?? fallback;
         }
 
         private static ModSettingsText? TryHoverTip(MemberInfo member, Type configType,
