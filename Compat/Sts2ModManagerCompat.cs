@@ -91,6 +91,25 @@ namespace STS2RitsuLib.Compat
                 .ToArray();
         }
 
+        internal static IReadOnlyList<RitsuModInfo> BuildModInfos(string? modId = null, RitsuModSource? source = null)
+        {
+            return EnumerateModsForManifestLookup()
+                .Select(TryBuildModInfo)
+                .Where(entry => entry != null)
+                .Select(entry => entry!)
+                .Where(entry => MatchesModQuery(entry, modId, source))
+                .OrderBy(GetBestModInfoRank)
+                .ThenBy(entry => entry.Id, StringComparer.OrdinalIgnoreCase)
+                .ThenBy(entry => entry.Source)
+                .ToArray();
+        }
+
+        internal static bool TryGetBestModInfo(string modId, RitsuModSource? source, out RitsuModInfo? info)
+        {
+            info = BuildModInfos(modId, source).FirstOrDefault();
+            return info != null;
+        }
+
         private static Sts2ModInventoryEntry? TryBuildModInventoryEntry(Mod mod)
         {
             try
@@ -117,6 +136,92 @@ namespace STS2RitsuLib.Compat
                     $"[Compat] Failed to describe a registered mod for inventory telemetry: {ex.Message}");
                 return null;
             }
+        }
+
+        private static RitsuModInfo? TryBuildModInfo(Mod mod)
+        {
+            try
+            {
+                var manifest = ReadManifest(mod);
+                var assembly = ReadAssembly(mod);
+                var assemblyName = ResolveAssemblyName(assembly);
+                var errors = ReadErrors(mod);
+                var fallbackName = assemblyName?.Name ?? "<unknown>";
+                var id = manifest == null ? fallbackName : ReadManifestId(manifest) ?? fallbackName;
+                var name = manifest == null ? fallbackName : ReadManifestName(manifest) ?? fallbackName;
+
+                return new(
+                    id,
+                    name,
+                    manifest == null ? null : ReadManifestVersion(manifest),
+                    ParseLoadState(ReadLoadState(mod, errors.Count)),
+                    ParseSource(ReadSource(mod)),
+                    manifest == null || ReadManifestAffectsGameplay(manifest),
+                    assemblyName?.Name,
+                    assemblyName?.Version?.ToString(),
+                    errors);
+            }
+            catch (Exception ex)
+            {
+                RitsuLibFramework.Logger.Warn(
+                    $"[Compat] Failed to describe a registered mod for ModManager interop: {ex.Message}");
+                return null;
+            }
+        }
+
+        private static bool MatchesModQuery(RitsuModInfo entry, string? modId, RitsuModSource? source)
+        {
+            if (modId != null && !string.Equals(entry.Id, modId, StringComparison.Ordinal))
+                return false;
+
+            return source == null || entry.Source == source.Value;
+        }
+
+        private static int GetBestModInfoRank(RitsuModInfo entry)
+        {
+            var stateRank = entry.State switch
+            {
+                RitsuModLoadState.Loaded => 0,
+                RitsuModLoadState.Pending => 1,
+                RitsuModLoadState.AddedAtRuntime => 2,
+                RitsuModLoadState.Failed => 3,
+                RitsuModLoadState.Disabled => 4,
+                RitsuModLoadState.DisabledDuplicate => 5,
+                _ => 6,
+            };
+
+            var sourceRank = entry.Source switch
+            {
+                RitsuModSource.ModsDirectory => 0,
+                RitsuModSource.SteamWorkshop => 1,
+                _ => 2,
+            };
+
+            return stateRank * 10 + sourceRank;
+        }
+
+        private static RitsuModSource ParseSource(string source)
+        {
+            return source switch
+            {
+                nameof(ModSource.ModsDirectory) => RitsuModSource.ModsDirectory,
+                nameof(ModSource.SteamWorkshop) => RitsuModSource.SteamWorkshop,
+                _ => RitsuModSource.Unknown,
+            };
+        }
+
+        private static RitsuModLoadState ParseLoadState(string state)
+        {
+            return state switch
+            {
+                nameof(ModLoadState.None) => RitsuModLoadState.Pending,
+                nameof(ModLoadState.Loaded) => RitsuModLoadState.Loaded,
+                nameof(ModLoadState.Failed) => RitsuModLoadState.Failed,
+                nameof(ModLoadState.Disabled) => RitsuModLoadState.Disabled,
+                "DisabledDuplicate" => RitsuModLoadState.DisabledDuplicate,
+                nameof(ModLoadState.AddedAtRuntime) => RitsuModLoadState.AddedAtRuntime,
+                _ => RitsuModLoadState.Unknown,
+            };
         }
 
         private static Func<Mod, ModManifest?> CreateModManifestAccessor()
