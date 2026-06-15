@@ -587,7 +587,7 @@ namespace STS2RitsuLib.Settings
             _mirrorPrewarmUiRefreshTask = null;
 
             foreach (var cache in _pageContentCaches.Values)
-                cache.BuildCancellation?.Cancel();
+                CancelPageBuild(cache, true);
         }
 
         private void ObserveBackgroundUiTask(Task task, string operation)
@@ -1561,10 +1561,7 @@ namespace STS2RitsuLib.Settings
 
             foreach (var cache in _pageContentCaches.Values)
             {
-                cache.BuildCancellation?.Cancel();
-                cache.BuildTask = null;
-                if (cache.State == PageBuildState.Building)
-                    cache.State = PageBuildState.NotBuilt;
+                CancelPageBuild(cache, true);
                 if (IsInstanceValid(cache.Root))
                     cache.Root.Visible = false;
             }
@@ -1806,9 +1803,7 @@ namespace STS2RitsuLib.Settings
 
         private void ReleasePageContentCache(string pageKey, PageContentCache cache)
         {
-            cache.BuildCancellation?.Cancel();
-            cache.BuildCancellation = null;
-            cache.BuildTask = null;
+            CancelPageBuild(cache, false);
             cache.RefreshRegistrations.Clear();
             cache.VisibilityTargets.Clear();
             if (IsInstanceValid(cache.Root))
@@ -2244,7 +2239,7 @@ namespace STS2RitsuLib.Settings
         {
             switch (cache.State)
             {
-                case PageBuildState.Ready or PageBuildState.Failed:
+                case PageBuildState.Ready:
                     return Task.CompletedTask;
                 case PageBuildState.Building when cache.BuildTask != null:
                 {
@@ -2318,7 +2313,10 @@ namespace STS2RitsuLib.Settings
                     {
                         ct.ThrowIfCancellationRequested();
                         if (buildVersion != cache.BuildVersion || !IsInstanceValid(cache.Root))
+                        {
+                            AbandonPageBuild(nextHeader, nextContent);
                             return;
+                        }
 
                         (item.Parent ?? nextContent).AddChild(item.Control);
                         item.AfterAdded?.Invoke(item.Control);
@@ -2339,7 +2337,10 @@ namespace STS2RitsuLib.Settings
                 }
 
                 if (buildVersion != cache.BuildVersion || !IsInstanceValid(cache.Root))
+                {
+                    AbandonPageBuild(nextHeader, nextContent);
                     return;
+                }
 
                 cache.HeaderHost = ReplaceHostNode(cache.Root, cache.HeaderHost, nextHeader);
                 cache.ContentHost = ReplaceHostNode(cache.Root, cache.ContentHost, nextContent);
@@ -2347,9 +2348,7 @@ namespace STS2RitsuLib.Settings
             }
             catch (OperationCanceledException)
             {
-                RecycleReusableEntryNodes(nextContent);
-                nextHeader.QueueFree();
-                nextContent.QueueFree();
+                AbandonPageBuild(nextHeader, nextContent);
                 if (buildVersion == cache.BuildVersion && cache.State == PageBuildState.Building)
                     cache.State = PageBuildState.NotBuilt;
             }
@@ -2379,6 +2378,25 @@ namespace STS2RitsuLib.Settings
                     cache.BuildCancellation = null;
                 }
             }
+        }
+
+        private static void CancelPageBuild(PageContentCache cache, bool resetBuildingState)
+        {
+            cache.BuildVersion++;
+            cache.BuildCancellation?.Cancel();
+            cache.BuildCancellation = null;
+            cache.BuildTask = null;
+            if (resetBuildingState && cache.State == PageBuildState.Building)
+                cache.State = PageBuildState.NotBuilt;
+        }
+
+        private void AbandonPageBuild(Node nextHeader, Node nextContent)
+        {
+            RecycleReusableEntryNodes(nextContent);
+            if (IsInstanceValid(nextHeader))
+                nextHeader.QueueFree();
+            if (IsInstanceValid(nextContent))
+                nextContent.QueueFree();
         }
 
         private void CompletePageBuild(ModSettingsPage page, PageContentCache cache)
@@ -3275,7 +3293,7 @@ namespace STS2RitsuLib.Settings
 
             foreach (var cache in _pageContentCaches.Values)
             {
-                cache.BuildCancellation?.Cancel();
+                CancelPageBuild(cache, false);
                 if (IsInstanceValid(cache.Root))
                     cache.Root.QueueFree();
             }
