@@ -113,6 +113,7 @@ namespace STS2RitsuLib.Settings
         private bool _paneHotkeysPushed;
         private AcceptDialog? _pasteErrorDialog;
         private bool _pendingRefreshFlush;
+        private int _pendingScrollResetGeneration;
         private bool _pendingScrollResetToTop;
         private Timer? _refreshDebounceTimer;
         private bool _refreshNextFlushAsFullPass;
@@ -586,6 +587,8 @@ namespace STS2RitsuLib.Settings
             _focusNavigationRefreshScheduled = false;
             _shellThemeWatcherQueued = false;
             _suppressScrollSync = false;
+            _pendingScrollResetGeneration++;
+            _pendingScrollResetToTop = false;
             _initialUiTask = null;
             _mirrorPrewarmUiRefreshTask = null;
 
@@ -764,7 +767,7 @@ namespace STS2RitsuLib.Settings
             _selectedPageId = pageId;
             _selectedSectionId = null;
             _selectionDirty = true;
-            _contentOnlyRebuildNeedsContentFocus = true;
+            _contentOnlyRebuildNeedsContentFocus = false;
             EnsureUiUpToDate();
         }
 
@@ -777,6 +780,7 @@ namespace STS2RitsuLib.Settings
             if (string.IsNullOrWhiteSpace(_selectedModId))
                 return;
 
+            CancelPendingContentScrollReset();
             if (string.Equals(_selectedPageId, pageId, StringComparison.OrdinalIgnoreCase) &&
                 string.Equals(_selectedSectionId, sectionId, StringComparison.OrdinalIgnoreCase))
             {
@@ -864,6 +868,7 @@ namespace STS2RitsuLib.Settings
 
             if (scrollTarget != null)
             {
+                CancelPendingContentScrollReset();
                 AlignScrollToAnchor(scrollTarget);
                 if (options.Focus)
                     FocusTarget(scrollTarget);
@@ -1783,7 +1788,8 @@ namespace STS2RitsuLib.Settings
             }
 
             RefreshFocusNavigation();
-            CallDeferredIfAlive(ScrollToSelectedAnchor);
+            if (!string.IsNullOrWhiteSpace(_selectedSectionId))
+                CallDeferredIfAlive(ScrollToSelectedAnchor);
             SweepPageContentCachePool(pageKey);
         }
 
@@ -2650,30 +2656,44 @@ namespace STS2RitsuLib.Settings
 
             _scrollContainer.QueueSort();
             if (_pendingScrollResetToTop)
-            {
                 ResetContentScrollToTop();
-                CallDeferredIfAlive(ResetPendingContentScrollToTop);
-            }
             else
-            {
                 _scrollContainer.ScrollVertical = Mathf.Max(0, _scrollContainer.ScrollVertical);
-            }
         }
 
         private void ScheduleContentScrollResetToTop()
         {
+            var generation = ++_pendingScrollResetGeneration;
             _pendingScrollResetToTop = true;
+            _suppressScrollSync = true;
             ResetContentScrollToTop();
-            CallDeferredIfAlive(ResetPendingContentScrollToTop);
+            ObserveBackgroundUiTask(ResetContentScrollToTopAcrossFramesAsync(generation), "content_scroll_reset");
         }
 
-        private void ResetPendingContentScrollToTop()
+        private void CancelPendingContentScrollReset()
         {
             if (!_pendingScrollResetToTop)
                 return;
 
+            _pendingScrollResetGeneration++;
+            _pendingScrollResetToTop = false;
+            _suppressScrollSync = false;
+        }
+
+        private async Task ResetContentScrollToTopAcrossFramesAsync(int generation)
+        {
+            for (var i = 0; i < 4; i++)
+            {
+                await this.AwaitRitsuProcessFrame(CancellationToken.None);
+                if (!IsInstanceValid(this) || generation != _pendingScrollResetGeneration)
+                    return;
+
+                ResetContentScrollToTop();
+            }
+
             ResetContentScrollToTop();
             _pendingScrollResetToTop = false;
+            _suppressScrollSync = false;
         }
 
         private void ResetContentScrollToTop()
@@ -2710,6 +2730,8 @@ namespace STS2RitsuLib.Settings
 
         private void ScrollToSelectedAnchor()
         {
+            CancelPendingContentScrollReset();
+            RefreshContentLayout();
             _suppressScrollSync = true;
             if (!string.IsNullOrWhiteSpace(_selectedSectionId))
                 if (TryFindSectionAnchorOnSelectedPage(_selectedSectionId, out var target))
@@ -2725,6 +2747,8 @@ namespace STS2RitsuLib.Settings
 
         private void AlignScrollToAnchor(Control target)
         {
+            CancelPendingContentScrollReset();
+            RefreshContentLayout();
             var desired = TryComputeTargetOffsetInSelectedContent(target, out var targetTopInContent)
                 ? Mathf.RoundToInt(targetTopInContent - 12f)
                 : Mathf.RoundToInt(target.GlobalPosition.Y -
