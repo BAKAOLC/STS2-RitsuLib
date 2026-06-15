@@ -188,7 +188,7 @@ namespace STS2RitsuLib.Networking.JoinDiagnostics
             return new ModSettingsCollapsibleSection(
                 T("section.summary", "Summary"),
                 "join_summary",
-                _report.Summary,
+                null,
                 false,
                 [BuildSummaryBody()]);
         }
@@ -214,7 +214,7 @@ namespace STS2RitsuLib.Networking.JoinDiagnostics
             return new ModSettingsCollapsibleSection(
                 issue.Title,
                 "join_issue_" + issue.Kind,
-                issue.Description,
+                null,
                 ShouldStartCollapsed(issue),
                 [BuildIssueBody(issue)]);
         }

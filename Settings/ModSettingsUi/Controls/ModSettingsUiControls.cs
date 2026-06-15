@@ -5728,6 +5728,7 @@ namespace STS2RitsuLib.Settings
             _contentControls = contentControls;
             _headerActions = headerActions;
             MouseFilter = MouseFilterEnum.Ignore;
+            ClipContents = true;
             SizeFlagsHorizontal = SizeFlags.ExpandFill;
             _separation = RitsuShellThemeLayoutResolver.ResolveInt("components.collapsible.layout.cardSeparation", 8);
         }
@@ -5824,6 +5825,10 @@ namespace STS2RitsuLib.Settings
         public override Vector2 _GetMinimumSize()
         {
             var margins = GetSurfaceMargins();
+            var contentWidth = ResolveInnerWidth(margins);
+            PrepareChildWidth(_header, contentWidth, false);
+            PrepareChildWidth(_content, contentWidth, false);
+
             var minWidth = 0f;
             var minHeight = 0f;
             var headerMin = GetVisibleMinSize(_header);
@@ -5948,13 +5953,15 @@ namespace STS2RitsuLib.Settings
             var margins = GetSurfaceMargins();
             var x = (float)margins.Left;
             var y = (float)margins.Top;
-            var width = Math.Max(0f, Size.X - margins.Left - margins.Right);
+            var width = ResolveInnerWidth(margins);
+            PrepareChildWidth(_header, width, true);
+            PrepareChildWidth(_content, width, true);
 
             if (_header is { Visible: true })
             {
                 var headerMin = _header.GetCombinedMinimumSize();
                 _header.Position = new(x, y);
-                _header.Size = new(Math.Max(width, headerMin.X), headerMin.Y);
+                _header.Size = new(width, headerMin.Y);
                 y += headerMin.Y;
             }
 
@@ -5965,7 +5972,29 @@ namespace STS2RitsuLib.Settings
                 y += _separation;
             var contentMin = _content.GetCombinedMinimumSize();
             _content.Position = new(x, y);
-            _content.Size = new(Math.Max(width, contentMin.X), contentMin.Y);
+            _content.Size = new(width, contentMin.Y);
+        }
+
+        private float ResolveInnerWidth(BoxEdges margins)
+        {
+            return Math.Max(0f, Size.X - margins.Left - margins.Right);
+        }
+
+        private static void PrepareChildWidth(Control? control, float width, bool requestLayout)
+        {
+            if (control is not { Visible: true } || width <= 1f)
+                return;
+
+            if (control is ModSettingsUiFactory.FastVerticalStack stack)
+            {
+                if (requestLayout)
+                    stack.SetLayoutWidth(width);
+                else
+                    stack.SetLayoutWidthFromParent(width);
+            }
+
+            if (Math.Abs(control.Size.X - width) >= 0.5f)
+                control.Size = new(width, control.Size.Y);
         }
 
         private BoxEdges GetSurfaceMargins()

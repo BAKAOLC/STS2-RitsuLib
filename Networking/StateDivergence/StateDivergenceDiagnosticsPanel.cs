@@ -186,7 +186,7 @@ namespace STS2RitsuLib.Networking.StateDivergence
             return new ModSettingsCollapsibleSection(
                 T("section.summary.title", "Summary"),
                 "state_divergence_summary",
-                _report.Summary,
+                null,
                 false,
                 [BuildSummaryBody()]);
         }

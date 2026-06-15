@@ -15,7 +15,10 @@ namespace STS2RitsuLib.Localization
     {
         private const string AncientLocTable = "ancients";
         private const string ArchitectKey = "THE_ARCHITECT";
+        private const string ArchitectBaseKeyPrefix = ArchitectKey + ".talk.";
         private const string AttackKeySuffix = "-attack";
+        private const string StartAttackKeySuffix = "-startattack";
+        private const string EndAttackKeySuffix = "-endattack";
         private const string VisitIndexKeySuffix = "-visit";
 
         /// <summary>
@@ -53,7 +56,7 @@ namespace STS2RitsuLib.Localization
             ArgumentException.ThrowIfNullOrWhiteSpace(baseKey);
 
             var dialogues = new List<AncientDialogue>();
-            var isArchitect = baseKey.StartsWith(ArchitectKey, StringComparison.OrdinalIgnoreCase);
+            var isArchitect = baseKey.StartsWith(ArchitectBaseKeyPrefix, StringComparison.OrdinalIgnoreCase);
 
             var dialogueIndex = 0;
             var visitIndex = 0;
@@ -70,11 +73,13 @@ namespace STS2RitsuLib.Localization
                     lineKey = ExistingLine(locTable, baseKey, dialogueIndex, sfxPaths.Count);
                 }
 
-                var endAttackers = ResolveArchitectAttackers(locTable, baseKey, dialogueIndex, isArchitect);
+                var (startAttackers, endAttackers) =
+                    ResolveArchitectAttackers(locTable, baseKey, dialogueIndex, isArchitect);
 
                 dialogues.Add(new(sfxPaths.ToArray())
                 {
                     VisitIndex = visitIndex,
+                    StartAttackers = startAttackers,
                     EndAttackers = endAttackers,
                 });
 
@@ -201,19 +206,31 @@ namespace STS2RitsuLib.Localization
             return currentVisitIndex;
         }
 
-        private static ArchitectAttackers ResolveArchitectAttackers(
+        private static (ArchitectAttackers StartAttackers, ArchitectAttackers EndAttackers) ResolveArchitectAttackers(
             string locTable,
             string baseKey,
             int dialogueIndex,
             bool isArchitect)
         {
             if (!isArchitect)
-                return ArchitectAttackers.None;
+                return (ArchitectAttackers.None, ArchitectAttackers.None);
+
+            var startAttackers = ArchitectAttackers.None;
+            var endAttackers = ArchitectAttackers.Architect;
 
             var attackString = LocString.GetIfExists(locTable, $"{baseKey}{dialogueIndex}{AttackKeySuffix}");
-            return Enum.TryParse(attackString?.GetRawText(), true, out ArchitectAttackers result)
-                ? result
-                : ArchitectAttackers.Architect;
+            if (Enum.TryParse(attackString?.GetRawText(), true, out ArchitectAttackers result))
+                endAttackers = result;
+
+            attackString = LocString.GetIfExists(locTable, $"{baseKey}{dialogueIndex}{StartAttackKeySuffix}");
+            if (Enum.TryParse(attackString?.GetRawText(), true, out result))
+                startAttackers = result;
+
+            attackString = LocString.GetIfExists(locTable, $"{baseKey}{dialogueIndex}{EndAttackKeySuffix}");
+            if (Enum.TryParse(attackString?.GetRawText(), true, out result))
+                endAttackers = result;
+
+            return (startAttackers, endAttackers);
         }
 
         private static bool DialogueExists(string locTable, string baseKey, int index)

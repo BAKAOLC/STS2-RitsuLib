@@ -1,4 +1,3 @@
-using System.Reflection;
 using System.Runtime.InteropServices;
 using System.Text.Json.Nodes;
 using Godot;
@@ -12,17 +11,7 @@ namespace STS2RitsuLib.Telemetry
     internal static class TelemetryEnvelopeFactory
     {
         internal const string BasePayloadOverrideKey = "__ritsulib_base_payload";
-        private const string DevPackageVersionPrefix = "9999.0.0-dev.";
         private static readonly string SessionId = Guid.NewGuid().ToString("N");
-        private static readonly Assembly Assembly = typeof(Const).Assembly;
-
-        private static readonly string InformationalVersion =
-            Assembly.GetCustomAttribute<AssemblyInformationalVersionAttribute>()?.InformationalVersion ??
-            Const.Version;
-
-        private static readonly IReadOnlyDictionary<string, string> Metadata =
-            Assembly.GetCustomAttributes<AssemblyMetadataAttribute>()
-                .ToDictionary(x => x.Key, x => x.Value ?? "", StringComparer.OrdinalIgnoreCase);
 
         internal static TelemetryEnvelope Create(
             TelemetryApplicant applicant,
@@ -61,7 +50,7 @@ namespace STS2RitsuLib.Telemetry
                 ["anonymous_install_id"] = TelemetryIdentityStore.AnonymousInstallId,
                 ["session_id"] = SessionId,
                 ["ritsulib_version"] = Const.Version,
-                ["ritsulib_informational_version"] = InformationalVersion,
+                ["ritsulib_informational_version"] = RitsuLibBuildInfo.InformationalVersion,
                 ["ritsulib_build_channel"] = ResolveBuildChannel(),
                 ["ritsulib_build_configuration"] = ResolveBuildConfiguration(),
                 ["applicant_id"] = applicant.ApplicantId,
@@ -109,12 +98,12 @@ namespace STS2RitsuLib.Telemetry
 
         private static string ResolveBuildChannel()
         {
-            if (Metadata.TryGetValue("RitsuLibTelemetryBuildChannel", out var channel) &&
+            if (RitsuLibBuildInfo.Metadata.TryGetValue("RitsuLibTelemetryBuildChannel", out var channel) &&
                 !string.IsNullOrWhiteSpace(channel))
                 return channel;
 
             // ReSharper disable once ConvertIfStatementToReturnStatement
-            if (InformationalVersion.StartsWith(DevPackageVersionPrefix, StringComparison.OrdinalIgnoreCase))
+            if (RitsuLibBuildInfo.IsDevBuild)
                 return "dev";
 
 #if DEBUG
@@ -126,7 +115,7 @@ namespace STS2RitsuLib.Telemetry
 
         private static string ResolveBuildConfiguration()
         {
-            if (Metadata.TryGetValue("RitsuLibTelemetryBuildConfiguration", out var configuration) &&
+            if (RitsuLibBuildInfo.Metadata.TryGetValue("RitsuLibTelemetryBuildConfiguration", out var configuration) &&
                 !string.IsNullOrWhiteSpace(configuration))
                 return configuration;
 

@@ -390,6 +390,7 @@ namespace STS2RitsuLib
                         SecondaryResourcePersistence.Initialize();
                         RuntimeHotkeyService.Initialize();
                         RitsuToastService.Initialize();
+                        RuntimeDetourCompatibilityScanner.Initialize();
                         RitsuLibUpdateCheckService.Initialize();
                     });
                     SubscribeLifecycleOnce<MainMenuReadyEvent>(_ =>
@@ -424,7 +425,10 @@ namespace STS2RitsuLib
         internal static string BuildVersionLogText()
         {
             var compatBranchLabel = GetCompatBranchLabel();
-            return $"Version: {Const.Version} [compat branch: {compatBranchLabel}]";
+            var devBuildText = RitsuLibBuildInfo.IsDevBuild
+                ? $" [dev build: {RitsuLibBuildInfo.InformationalVersion}]"
+                : "";
+            return $"Version: {Const.Version}{devBuildText} [compat branch: {compatBranchLabel}]";
         }
 
         private static void EnsureFrameworkInteropBootstrapRegistered()

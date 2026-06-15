@@ -62,6 +62,15 @@ namespace STS2RitsuLib.Compat
             return result;
         }
 
+        internal static IReadOnlyList<Sts2LoadedModAssemblyEntry> BuildLoadedModAssemblyEntries()
+        {
+            return EnumerateLoadedModsWithAssembly()
+                .Select(TryBuildLoadedModAssemblyEntry)
+                .Where(entry => entry != null)
+                .Select(entry => entry!)
+                .ToArray();
+        }
+
         /// <summary>
         ///     All registered mods (including disabled / not loaded), for manifest name/description lookup.
         ///     所有已注册 mod（包括禁用/未加载的 mod），用于清单名称/描述查找。
@@ -134,6 +143,34 @@ namespace STS2RitsuLib.Compat
             {
                 RitsuLibFramework.Logger.Warn(
                     $"[Compat] Failed to describe a registered mod for inventory telemetry: {ex.Message}");
+                return null;
+            }
+        }
+
+        private static Sts2LoadedModAssemblyEntry? TryBuildLoadedModAssemblyEntry(Mod mod)
+        {
+            try
+            {
+                var manifest = ReadManifest(mod);
+                var assembly = ReadAssembly(mod);
+                if (assembly == null)
+                    return null;
+
+                var assemblyName = ResolveAssemblyName(assembly);
+                var fallbackName = assemblyName?.Name ?? "<unknown>";
+                var id = manifest == null ? fallbackName : ReadManifestId(manifest) ?? fallbackName;
+                var name = manifest == null ? fallbackName : ReadManifestName(manifest) ?? fallbackName;
+
+                return new(
+                    id,
+                    name,
+                    manifest == null ? null : ReadManifestVersion(manifest),
+                    assembly);
+            }
+            catch (Exception ex)
+            {
+                RitsuLibFramework.Logger.Warn(
+                    $"[Compat] Failed to inspect a loaded mod assembly for compatibility diagnostics: {ex.Message}");
                 return null;
             }
         }
@@ -386,4 +423,10 @@ namespace STS2RitsuLib.Compat
         string? AssemblyName,
         string? AssemblyVersion,
         IReadOnlyList<LocString> Errors);
+
+    internal sealed record Sts2LoadedModAssemblyEntry(
+        string Id,
+        string Name,
+        string? Version,
+        Assembly Assembly);
 }

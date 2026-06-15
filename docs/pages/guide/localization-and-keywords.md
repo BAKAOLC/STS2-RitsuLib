@@ -229,8 +229,13 @@ The Architect uses the same `ancients` table. To add dialogue for a mod characte
 For Architect dialogue, optional `-attack` values are `None`, `Player`, `Architect`, or `Both`. Optional `-visit` keys
 can override the visit index:
 
+Explicit `-startattack` and `-endattack` keys are also supported. `-startattack` sets `StartAttackers`,
+and `-endattack` sets `EndAttackers`.
+
 ```json
 {
+  "THE_ARCHITECT.talk.MY_MOD_CHARACTER_SEER.1-startattack": "Player",
+  "THE_ARCHITECT.talk.MY_MOD_CHARACTER_SEER.1-endattack": "Both",
   "THE_ARCHITECT.talk.MY_MOD_CHARACTER_SEER.1-visit": "3"
 }
 ```
@@ -286,10 +291,14 @@ Ancient / 先古之民对话写在 `ancients` 表中。Key 格式为：
 }
 ```
 
-建筑师对话可选的 `-attack` 值为 `None`、`Player`、`Architect` 或 `Both`。可选的 `-visit` key 可以覆写访问序号：
+建筑师对话可选的 `-attack` 值为 `None`、`Player`、`Architect` 或 `Both`。同时也支持显式的
+`-startattack` 与 `-endattack` key：`-startattack` 设置 `StartAttackers`，`-endattack` 设置
+`EndAttackers`。可选的 `-visit` key 可以覆写访问序号：
 
 ```json
 {
+  "THE_ARCHITECT.talk.MY_MOD_CHARACTER_SEER.1-startattack": "Player",
+  "THE_ARCHITECT.talk.MY_MOD_CHARACTER_SEER.1-endattack": "Both",
   "THE_ARCHITECT.talk.MY_MOD_CHARACTER_SEER.1-visit": "3"
 }
 ```

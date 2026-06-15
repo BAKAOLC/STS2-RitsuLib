@@ -26,6 +26,12 @@ namespace STS2RitsuLib.Updates
                     if (!RitsuLibSettingsStore.IsUpdateCheckEnabled())
                         return;
 
+                    if (RitsuLibBuildInfo.IsDevBuild)
+                    {
+                        ShowDevBuildToast();
+                        return;
+                    }
+
                     _ = CheckAsync(false);
                 });
             }
@@ -33,6 +39,12 @@ namespace STS2RitsuLib.Updates
 
         internal static void CheckNowFromSettings()
         {
+            if (RitsuLibBuildInfo.IsDevBuild)
+            {
+                PostToMainLoop(ShowDevBuildToast);
+                return;
+            }
+
             _ = CheckAsync(true);
         }
 
@@ -112,6 +124,17 @@ namespace STS2RitsuLib.Updates
                 null,
                 level,
                 UpdateCheckToastDurationSeconds));
+        }
+
+        private static void ShowDevBuildToast()
+        {
+            ShowUpdateCheckToast(
+                Format(
+                    "ritsulib.updateCheck.toast.devBuildBody",
+                    "This is a RitsuLib dev build ({0}). Stable release update checks are skipped.",
+                    RitsuLibBuildInfo.InformationalVersion),
+                L("ritsulib.updateCheck.toast.devBuildTitle", "RitsuLib dev build"),
+                RitsuToastLevel.Info);
         }
 
         private static void OpenReleasePage(Uri releasePageUri)

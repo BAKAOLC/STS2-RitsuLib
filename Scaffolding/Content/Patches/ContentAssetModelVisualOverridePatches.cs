@@ -567,6 +567,14 @@ namespace STS2RitsuLib.Scaffolding.Content.Patches
                 nameof(IModCardAssetOverrides.CustomAncientBannerPath),
                 ModCharacterOwnedVisualOverrideHelper.TryCardAncientBannerTexture);
 
+            ApplyTexture(
+                __instance,
+                model,
+                "%TitleBanner",
+                static o => o.CustomBannerTexturePath,
+                nameof(IModCardAssetOverrides.CustomBannerTexturePath),
+                ModCharacterOwnedVisualOverrideHelper.TryCardBannerTexture);
+
             ApplyMaterial<IModCardPortraitBorderMaterialOverride>(
                 __instance,
                 model,

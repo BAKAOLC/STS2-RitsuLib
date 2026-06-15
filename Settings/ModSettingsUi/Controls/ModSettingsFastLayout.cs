@@ -10,6 +10,7 @@ namespace STS2RitsuLib.Settings
         {
             private static readonly HashSet<FastVerticalStack> DeferredLayoutStacks = [];
             private static int _layoutDeferDepth;
+            private float _layoutWidthOverride = -1f;
             private int _separation;
 
             public FastVerticalStack(int separation = 0)
@@ -61,22 +62,57 @@ namespace STS2RitsuLib.Settings
 
             public override Vector2 _GetMinimumSize()
             {
-                var min = Vector2.Zero;
+                var layoutWidth = ResolveLayoutWidth();
+                var minHeight = 0f;
                 var visibleCount = 0;
                 foreach (var child in GetChildren())
                 {
                     if (child is not Control control || !IsInstanceValid(control) || !control.Visible)
                         continue;
 
+                    if (layoutWidth > 1f)
+                        PrepareChildWidth(control, layoutWidth);
                     var childMin = control.GetCombinedMinimumSize();
-                    min.X = Math.Max(min.X, childMin.X);
-                    min.Y += childMin.Y;
+                    minHeight += childMin.Y;
                     visibleCount++;
                 }
 
                 if (visibleCount > 1)
-                    min.Y += _separation * (visibleCount - 1);
-                return min;
+                    minHeight += _separation * (visibleCount - 1);
+                if (layoutWidth > 1f)
+                    return new(1f, minHeight);
+
+                var minWidth = 0f;
+                foreach (var child in GetChildren())
+                {
+                    if (child is not Control control || !IsInstanceValid(control) || !control.Visible)
+                        continue;
+
+                    minWidth = Math.Max(minWidth, control.GetCombinedMinimumSize().X);
+                }
+
+                return new(minWidth, minHeight);
+            }
+
+            internal void SetLayoutWidth(float width)
+            {
+                SetLayoutWidth(width, true);
+            }
+
+            internal void SetLayoutWidthFromParent(float width)
+            {
+                SetLayoutWidth(width, false);
+            }
+
+            private void SetLayoutWidth(float width, bool requestLayout)
+            {
+                var normalized = width > 1f ? width : -1f;
+                if (Math.Abs(_layoutWidthOverride - normalized) < 0.5f)
+                    return;
+
+                _layoutWidthOverride = normalized;
+                if (requestLayout)
+                    RequestLayout();
             }
 
             internal void RequestLayout()
@@ -110,9 +146,19 @@ namespace STS2RitsuLib.Settings
                 if (DeferredLayoutStacks.Count == 0)
                     return;
 
-                var stacks = DeferredLayoutStacks.ToArray();
+                var stacks = DeferredLayoutStacks
+                    .Where(IsInstanceValid)
+                    .OrderByDescending(GetTreeDepth)
+                    .ToArray();
                 DeferredLayoutStacks.Clear();
                 foreach (var stack in stacks)
+                {
+                    stack.UpdateMinimumSize();
+                    if (stack.IsInsideTree())
+                        stack.QueueSort();
+                }
+
+                foreach (var stack in stacks.Reverse())
                 {
                     if (!IsInstanceValid(stack))
                         continue;
@@ -123,9 +169,19 @@ namespace STS2RitsuLib.Settings
                 }
             }
 
+            private static int GetTreeDepth(Node node)
+            {
+                var depth = 0;
+                for (var current = node.GetParent(); current != null; current = current.GetParent())
+                    depth++;
+                return depth;
+            }
+
             private void LayoutChildren()
             {
-                var width = Size.X;
+                var width = ResolveLayoutWidth();
+                if (width <= 1f)
+                    width = Size.X;
                 var y = 0f;
                 var placedAny = false;
                 foreach (var child in GetChildren())
@@ -136,12 +192,32 @@ namespace STS2RitsuLib.Settings
                     if (placedAny)
                         y += _separation;
 
+                    if (width > 1f)
+                        PrepareChildWidth(control, width);
                     var childMin = control.GetCombinedMinimumSize();
                     control.Position = new(0f, y);
-                    control.Size = new(Math.Max(width, childMin.X), childMin.Y);
+                    control.Size = new(width > 1f ? width : childMin.X, childMin.Y);
                     y += childMin.Y;
                     placedAny = true;
                 }
+            }
+
+            private float ResolveLayoutWidth()
+            {
+                if (_layoutWidthOverride > 1f)
+                    return _layoutWidthOverride;
+                return Size.X > 1f ? Size.X : 0f;
+            }
+
+            private static void PrepareChildWidth(Control control, float width)
+            {
+                if (width <= 1f)
+                    return;
+
+                if (control is FastVerticalStack stack)
+                    stack.SetLayoutWidthFromParent(width);
+                if (Math.Abs(control.Size.X - width) >= 0.5f)
+                    control.Size = new(width, control.Size.Y);
             }
 
             private sealed class DeferredLayoutScope : IDisposable
@@ -305,6 +381,15 @@ namespace STS2RitsuLib.Settings
                 var valueMin = GetVisibleMinSize(_valueControl);
                 var actionMin = GetVisibleMinSize(_actionControl);
                 var rowSeparation = ResolveRowSeparation();
+                var availableContentWidth = ResolveCurrentContentWidth();
+                if (availableContentWidth > 1f)
+                {
+                    actionMin.X = Math.Min(actionMin.X, availableContentWidth);
+                    var remaining = Math.Max(0f, availableContentWidth - actionMin.X -
+                                                 (actionMin.X > 0f ? rowSeparation : 0f));
+                    valueMin.X = Math.Min(valueMin.X, remaining);
+                }
+
                 var controlWidth = valueMin.X + actionMin.X;
                 if (valueMin.X > 0f && actionMin.X > 0f)
                     controlWidth += rowSeparation;
@@ -456,25 +541,30 @@ namespace STS2RitsuLib.Settings
                 var columnSeparation = ResolveLeftColumnSeparation();
                 var actionMin = GetVisibleMinSize(_actionControl);
                 var valueMin = GetVisibleMinSize(_valueControl);
+                var contentLeft = content.Position.X;
                 var right = content.Position.X + content.Size.X;
 
                 if (_actionControl is { Visible: true })
                 {
-                    _actionControl.Position = new(right - actionMin.X,
+                    var actionWidth = Math.Min(actionMin.X, Math.Max(0f, right - contentLeft));
+                    _actionControl.Position = new(right - actionWidth,
                         content.Position.Y + Math.Max(0f, (content.Size.Y - actionMin.Y) * 0.5f));
-                    _actionControl.Size = actionMin;
-                    right -= actionMin.X + rowSeparation;
+                    _actionControl.Size = new(actionWidth, actionMin.Y);
+                    right -= actionWidth + rowSeparation;
                 }
 
                 if (_valueControl is { Visible: true })
                 {
-                    _valueControl.Position = new(right - valueMin.X,
+                    var valueWidth = Math.Min(valueMin.X, Math.Max(0f, right - contentLeft));
+                    _valueControl.Position = new(right - valueWidth,
                         content.Position.Y + Math.Max(0f, (content.Size.Y - valueMin.Y) * 0.5f));
-                    _valueControl.Size = valueMin;
-                    right -= valueMin.X + rowSeparation;
+                    _valueControl.Size = new(valueWidth, valueMin.Y);
+                    right -= valueWidth + rowSeparation;
                 }
 
                 var textWidth = Math.Max(0f, right - content.Position.X);
+                PrepareTextLabelWidth(_label, textWidth);
+                PrepareTextLabelWidth(_descriptionLabel, textWidth);
                 var labelMin = GetLabelMinSize();
                 var descriptionMin = GetDescriptionMinSize();
                 var textHeight = labelMin.Y;
@@ -495,14 +585,58 @@ namespace STS2RitsuLib.Settings
                 _descriptionLabel.Size = new(textWidth, descriptionMin.Y);
             }
 
+            private static void PrepareTextLabelWidth(MegaRichTextLabel? label, float width)
+            {
+                if (label is not { Visible: true } || width <= 1f)
+                    return;
+
+                if (Math.Abs(label.Size.X - width) < 0.5f)
+                    return;
+
+                label.Size = new(width, Math.Max(label.Size.Y, label.CustomMinimumSize.Y));
+                label.UpdateMinimumSize();
+            }
+
             private Vector2 ComputeTextColumnMinSize()
             {
+                var currentTextWidth = ResolveCurrentTextColumnWidth();
+                PrepareTextLabelWidth(_label, currentTextWidth);
+                PrepareTextLabelWidth(_descriptionLabel, currentTextWidth);
                 var labelMin = GetLabelMinSize();
                 var descriptionMin = GetDescriptionMinSize();
                 var height = labelMin.Y;
                 if (descriptionMin.Y > 0f)
                     height += ResolveLeftColumnSeparation() + descriptionMin.Y;
-                return new(Math.Max(labelMin.X, descriptionMin.X), height);
+                return new(Math.Min(Math.Max(labelMin.X, descriptionMin.X), ResolveTextColumnMaxMinimumWidth()),
+                    height);
+            }
+
+            private float ResolveCurrentTextColumnWidth()
+            {
+                var contentWidth = ResolveCurrentContentWidth();
+                if (contentWidth <= 1f)
+                    return 0f;
+
+                var actionMin = GetVisibleMinSize(_actionControl);
+                var valueMin = GetVisibleMinSize(_valueControl);
+                var rowSeparation = ResolveRowSeparation();
+                var controlWidth = valueMin.X + actionMin.X;
+                if (valueMin.X > 0f && actionMin.X > 0f)
+                    controlWidth += rowSeparation;
+                if (controlWidth > 0f)
+                    controlWidth += rowSeparation;
+                return Math.Max(0f, contentWidth - controlWidth);
+            }
+
+            private float ResolveCurrentContentWidth()
+            {
+                if (Size.X <= 1f)
+                    return 0f;
+
+                var surfaceMargins = GetSurfaceMargins();
+                return Math.Max(0f,
+                    Size.X - _lineMargins.Left - _lineMargins.Right -
+                    surfaceMargins.Left - surfaceMargins.Right);
             }
 
             private Rect2 GetSurfaceRect()
@@ -560,6 +694,12 @@ namespace STS2RitsuLib.Settings
                     "components.entryLine.layout.leftColumnSeparation", 5);
             }
 
+            private static int ResolveTextColumnMaxMinimumWidth()
+            {
+                return RitsuShellThemeLayoutResolver.ResolveInt(
+                    "components.entryLine.layout.textColumnMaxMinimumWidth", 360);
+            }
+
             private sealed class LineLayoutScope(FastSettingLine line) : IDisposable
             {
                 private bool _disposed;
@@ -577,6 +717,104 @@ namespace STS2RitsuLib.Settings
                     line._layoutDirty = false;
                     line.RequestLayout();
                 }
+            }
+        }
+
+        internal sealed partial class FixedWidthScrollContent : Control
+        {
+            private Control? _content;
+            private int _rightGutter;
+            private float _viewportHeight;
+            private float _viewportWidth = -1f;
+
+            public FixedWidthScrollContent()
+            {
+                SizeFlagsHorizontal = SizeFlags.ExpandFill;
+                MouseFilter = MouseFilterEnum.Ignore;
+                ClipContents = true;
+            }
+
+            internal void Configure(Control content, int rightGutter)
+            {
+                _content = content;
+                _rightGutter = Math.Max(0, rightGutter);
+                if (content.GetParent() != this)
+                    AddChild(content);
+                RequestLayout();
+            }
+
+            internal void SetViewportSize(Vector2 size)
+            {
+                var width = size.X > 1f ? size.X : -1f;
+                var height = Math.Max(0f, size.Y);
+                if (Math.Abs(_viewportWidth - width) < 0.5f &&
+                    Math.Abs(_viewportHeight - height) < 0.5f)
+                    return;
+
+                _viewportWidth = width;
+                _viewportHeight = height;
+                RequestLayout();
+            }
+
+            public override Vector2 _GetMinimumSize()
+            {
+                var contentHeight = _content is { Visible: true }
+                    ? _content.GetCombinedMinimumSize().Y
+                    : 0f;
+                return new(1f, contentHeight);
+            }
+
+            public override void _Notification(int what)
+            {
+                base._Notification(what);
+                switch (what)
+                {
+                    case (int)NotificationResized:
+                    case (int)NotificationChildOrderChanged:
+                        LayoutChildren();
+                        break;
+                }
+            }
+
+            internal void RequestLayout()
+            {
+                UpdateMinimumSize();
+                LayoutChildren();
+            }
+
+            private void LayoutChildren()
+            {
+                var width = ResolveViewportWidth();
+                var contentWidth = ResolveContentWidth(width);
+                PrepareContentWidth(contentWidth);
+
+                if (_content is not { Visible: true }) return;
+                var contentHeight = _content.GetCombinedMinimumSize().Y;
+                _content.Position = Vector2.Zero;
+                _content.Size = new(contentWidth, contentHeight);
+            }
+
+            private void PrepareContentWidth(float width)
+            {
+                if (_content == null || width <= 1f)
+                    return;
+
+                if (_content is FastVerticalStack stack)
+                    stack.SetLayoutWidth(width);
+                if (Math.Abs(_content.Size.X - width) >= 0.5f)
+                    _content.Size = new(width, _content.Size.Y);
+            }
+
+            private float ResolveViewportWidth()
+            {
+                if (_viewportWidth > 1f)
+                    return _viewportWidth;
+                return Size.X > 1f ? Size.X : 1f;
+            }
+
+            private float ResolveContentWidth(float viewportWidth)
+            {
+                return Math.Max(1f, viewportWidth - _rightGutter);
             }
         }
 

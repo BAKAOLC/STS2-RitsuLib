@@ -40,7 +40,7 @@
 
     <PropertyGroup Label="NuGet package">
         <IsPackable>true</IsPackable>
-        <Version>0.4.22</Version>
+        <Version>0.4.23</Version>
         <Authors>OLC</Authors>
         <Description>Shared framework library for Slay the Spire 2 mods.</Description>
         <PackageReadmeFile>README.md</PackageReadmeFile>
@@ -52,6 +52,18 @@
         <PackageId Condition="'$(Sts2ApiCompat)' != '$(RitsuLibLatestApiCompat)'">STS2.RitsuLib.Compat.$(Sts2ApiCompat)</PackageId>
         <TargetsForTfmSpecificContentInPackage>$(TargetsForTfmSpecificContentInPackage);PackRitsuDebugLogViewerAssets</TargetsForTfmSpecificContentInPackage>
     </PropertyGroup>
+
+    <PropertyGroup Label="Dev build detection">
+        <RitsuLibDevBuildVersion Condition="'$(RitsuLibDevBuildVersion)' == '' and '$(AssemblyInformationalVersion)' != ''">$(AssemblyInformationalVersion)</RitsuLibDevBuildVersion>
+        <RitsuLibDevBuildVersion Condition="'$(RitsuLibDevBuildVersion)' == '' and '$(PackageVersion)' != ''">$(PackageVersion)</RitsuLibDevBuildVersion>
+        <RitsuLibDevBuildVersion Condition="'$(RitsuLibDevBuildVersion)' == ''">$(Version)</RitsuLibDevBuildVersion>
+        <RitsuLibIsDevBuild Condition="'$(RitsuLibIsDevBuild)' == '' and '$(RitsuLibDevBuildVersion)' != '' and $([System.String]::Copy('$(RitsuLibDevBuildVersion)').StartsWith('9999.0.0-dev.')) == 'true'">true</RitsuLibIsDevBuild>
+        <RitsuLibIsDevBuild Condition="'$(RitsuLibIsDevBuild)' == ''">false</RitsuLibIsDevBuild>
+    </PropertyGroup>
+
+    <Target Name="LogRitsuLibDevBuild" BeforeTargets="CoreCompile" Condition="'$(RitsuLibIsDevBuild)' == 'true'">
+        <Message Text="RitsuLib dev build: $(RitsuLibDevBuildVersion)" Importance="high"/>
+    </Target>
 
     <Target Name="ValidateSts2ApiSignatures" BeforeTargets="ResolveAssemblyReferences">
         <Error
