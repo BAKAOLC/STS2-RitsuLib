@@ -390,6 +390,7 @@ namespace STS2RitsuLib
                         SecondaryResourcePersistence.Initialize();
                         RuntimeHotkeyService.Initialize();
                         RitsuToastService.Initialize();
+                        RuntimeDetourCompatibilityScanner.Initialize();
                         RitsuLibUpdateCheckService.Initialize();
                     });
                     SubscribeLifecycleOnce<MainMenuReadyEvent>(_ =>
