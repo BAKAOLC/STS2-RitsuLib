@@ -1,0 +1,184 @@
+#if !STS2_AT_LEAST_0_104_0
+using CombatStateLike = MegaCrit.Sts2.Core.Combat.CombatState;
+#else
+using CombatStateLike = MegaCrit.Sts2.Core.Combat.ICombatState;
+#endif
+using MegaCrit.Sts2.Core.Commands;
+using MegaCrit.Sts2.Core.Commands.Builders;
+using MegaCrit.Sts2.Core.Entities.Creatures;
+using MegaCrit.Sts2.Core.GameActions.Multiplayer;
+using MegaCrit.Sts2.Core.Models;
+using MegaCrit.Sts2.Core.ValueProps;
+using STS2RitsuLib.Models.Capabilities;
+
+namespace STS2RitsuLib.Combat.AttackHits
+{
+    /// <summary>
+    ///     Dispatches per-hit attack hooks to game hook listeners and attached model capabilities.
+    ///     将每段攻击 hook 分发给游戏 hook listener 和附加的模型 capability。
+    /// </summary>
+    public static class AttackHitHook
+    {
+        /// <summary>
+        ///     Wrapper used by the <c>AttackCommand.Execute</c> transpiler.
+        ///     由 <c>AttackCommand.Execute</c> 转译器调用的包装器。
+        /// </summary>
+        public static Task<IEnumerable<DamageResult>> DamageWithAttackHitHooks(
+            PlayerChoiceContext choiceContext,
+            IEnumerable<Creature> targets,
+            decimal amount,
+            ValueProp props,
+            Creature? dealer,
+            CardModel? cardSource,
+            AttackCommand attack,
+            int hitIndex,
+            decimal totalHitCount)
+        {
+            var targetList = targets as IReadOnlyList<Creature> ?? targets.ToArray();
+            var context = TryCreateContext(
+                choiceContext,
+                targetList,
+                amount,
+                props,
+                dealer,
+                cardSource,
+                attack,
+                hitIndex,
+                totalHitCount);
+            return context == null
+                ? CreatureCmd.Damage(choiceContext, targetList, amount, props, dealer, cardSource)
+                : DamageAndAfterAttackHit(context, targetList, props, dealer, cardSource);
+        }
+
+        private static async Task<IEnumerable<DamageResult>> DamageAndAfterAttackHit(
+            AttackHitContext context,
+            IReadOnlyList<Creature> targetList,
+            ValueProp props,
+            Creature? dealer,
+            CardModel? cardSource)
+        {
+            await BeforeAttackHit(context);
+
+            var results = (await CreatureCmd.Damage(
+                context.ChoiceContext,
+                targetList,
+                context.Damage,
+                props,
+                dealer,
+                cardSource)).ToArray();
+
+            context.SetResults(results);
+            await AfterAttackHit(context);
+            return results;
+        }
+
+        /// <summary>
+        ///     Runs before-hit hooks.
+        ///     运行前置命中 hook。
+        /// </summary>
+        public static async Task BeforeAttackHit(AttackHitContext context)
+        {
+            foreach (var entry in IterateListeners(context.CombatState, context.Attack.ModelSource, context.CardSource))
+                await Invoke(context, entry, static (listener, ctx) => listener.BeforeAttackHit(ctx));
+        }
+
+        /// <summary>
+        ///     Runs after-hit hooks.
+        ///     运行后置命中 hook。
+        /// </summary>
+        public static async Task AfterAttackHit(AttackHitContext context)
+        {
+            foreach (var entry in IterateListeners(context.CombatState, context.Attack.ModelSource, context.CardSource))
+                await Invoke(context, entry, static (listener, ctx) => listener.AfterAttackHit(ctx));
+        }
+
+        private static async Task Invoke(
+            AttackHitContext context,
+            ListenerEntry entry,
+            Func<IAttackHitHookListener, AttackHitContext, Task> callback)
+        {
+            if (entry.Model == null)
+            {
+                await callback(entry.Listener, context);
+                return;
+            }
+
+            context.ChoiceContext.PushModel(entry.Model);
+            try
+            {
+                await callback(entry.Listener, context);
+                entry.Model.InvokeExecutionFinished();
+            }
+            finally
+            {
+                context.ChoiceContext.PopModel(entry.Model);
+            }
+        }
+
+        private static IEnumerable<ListenerEntry> IterateListeners(
+            CombatStateLike combatState,
+            params AbstractModel?[] extraModels)
+        {
+            HashSet<object> seen = new(ReferenceEqualityComparer.Instance);
+
+            foreach (var model in combatState.IterateHookListeners())
+            foreach (var listener in IterateModelListeners(model, seen))
+                yield return listener;
+
+            foreach (var model in extraModels)
+                if (model != null)
+                    foreach (var listener in IterateModelListeners(model, seen))
+                        yield return listener;
+        }
+
+        private static IEnumerable<ListenerEntry> IterateModelListeners(AbstractModel model, HashSet<object> seen)
+        {
+            if (model is IAttackHitHookListener modelListener && seen.Add(modelListener))
+                yield return new(modelListener, model);
+
+            foreach (var capability in IterateCapabilityListeners(model))
+                if (seen.Add(capability))
+                    yield return new(capability, capability as AbstractModel);
+        }
+
+        private static IEnumerable<IAttackHitHookListener> IterateCapabilityListeners(AbstractModel model)
+        {
+            if (!ModelCapabilities.TryGet(model, out var capabilities))
+                yield break;
+
+            foreach (var capability in capabilities.All)
+                if (capability is IAttackHitHookListener listener)
+                    yield return listener;
+        }
+
+        private static AttackHitContext? TryCreateContext(
+            PlayerChoiceContext choiceContext,
+            IReadOnlyList<Creature> targets,
+            decimal amount,
+            ValueProp props,
+            Creature? dealer,
+            CardModel? cardSource,
+            AttackCommand attack,
+            int hitIndex,
+            decimal totalHitCount)
+        {
+            var combatState = attack?.Attacker?.CombatState;
+            if (attack == null || combatState == null)
+                return null;
+
+            return new(
+                combatState,
+                choiceContext,
+                attack,
+                targets,
+                hitIndex,
+                totalHitCount,
+                amount,
+                props,
+                dealer,
+                cardSource);
+        }
+
+        private readonly record struct ListenerEntry(IAttackHitHookListener Listener, AbstractModel? Model);
+    }
+}

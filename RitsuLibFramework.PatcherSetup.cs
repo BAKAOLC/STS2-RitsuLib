@@ -4,6 +4,7 @@ using STS2RitsuLib.Cards.FreePlay.Patches;
 using STS2RitsuLib.Cards.Patches;
 using STS2RitsuLib.Cards.Transforms.Patches;
 using STS2RitsuLib.CardTags.Patches;
+using STS2RitsuLib.Combat.AttackHits.Patches;
 using STS2RitsuLib.Combat.CardTargeting.Patches;
 using STS2RitsuLib.Combat.HealthBars.Patches;
 using STS2RitsuLib.Combat.Rewards.Patches;
@@ -250,6 +251,7 @@ namespace STS2RitsuLib
             patcher.RegisterPatch<BeforeRoomEnteredLifecyclePatch>();
             patcher.RegisterPatch<AfterRoomEnteredLifecyclePatch>();
             patcher.RegisterPatch<ActHookLifecyclePatch>();
+            patcher.RegisterPatch<AttackCommandExecuteHitHookPatch>();
             patcher.RegisterPatch<BeforeAttackLifecyclePatch>();
             patcher.RegisterPatch<AfterAttackLifecyclePatch>();
             patcher.RegisterPatch<AfterBlockBrokenLifecyclePatch>();
