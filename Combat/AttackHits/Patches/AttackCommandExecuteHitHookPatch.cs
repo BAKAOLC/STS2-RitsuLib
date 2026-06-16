@@ -90,10 +90,11 @@ namespace STS2RitsuLib.Combat.AttackHits.Patches
                 return rewriter.Instructions();
             }
 
-            var report = rewriter.ReplaceEach(
+            var report = HarmonyAsyncIl.ReplaceAwaitedCalls(
+                rewriter,
                 operation,
-                (code, index) => HarmonyIl.IsCallTo(code[index], damageMethod),
-                (_, _) =>
+                damageMethod,
+                _ =>
                 [
                     HarmonyIl.Ldarg(0),
                     HarmonyIl.Ldfld(attackField),

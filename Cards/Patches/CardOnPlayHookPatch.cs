@@ -39,7 +39,8 @@ namespace STS2RitsuLib.Cards.Patches
             if (onPlayMethod == null || wrapperMethod == null)
                 return rewriter.Instructions();
 
-            var report = rewriter.ReplaceCall(
+            var report = HarmonyAsyncIl.RedirectAwaitedCalls(
+                rewriter,
                 operation,
                 onPlayMethod,
                 wrapperMethod,

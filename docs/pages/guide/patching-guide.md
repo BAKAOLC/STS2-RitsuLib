@@ -244,6 +244,38 @@ For methods that another mod may have already modified, pass an `alreadySatisfie
 
 :::
 
+## Async Patch Helpers{lang="en"}
+
+::: en
+
+For async methods that can be composed at the method boundary, prefer a normal Harmony postfix that replaces
+`ref Task __result` / `ref Task<T> __result` with `HarmonyAsyncTaskBridge.After(...)`.
+
+For async state-machine transpilers, use `HarmonyAsyncIl` to recognize compiler-generated await sites before
+rewriting them. `RedirectAwaitedCalls` is the narrowest option: it only redirects calls that are directly awaited
+by the state machine and requires the replacement method to preserve the stack shape and exact awaitable return
+type. Use `ReplaceAwaitedCalls` when the replacement must load extra state-machine fields or emit a short custom
+instruction payload before returning the same awaitable type.
+
+```csharp
+var rewriter = HarmonyIlRewriter.From(instructions);
+var report = HarmonyAsyncIl.RedirectAwaitedCalls(
+    rewriter,
+    "Redirect awaited OnPlay",
+    originalOnPlayMethod,
+    wrapperMethod,
+    code => code.Any(instruction => HarmonyIl.IsCallTo(instruction, wrapperMethod)));
+
+report.RequireSucceeded();
+report.RequireExactly(1);
+return rewriter.InstructionsChecked("Redirect awaited OnPlay");
+```
+
+This helper does not create new async states. If a patch needs an additional independent await point, prefer a
+task-wrapper design or a narrower awaited-call wrapper first.
+
+:::
+
 ## Transpiler 包装器{lang="zh-CN"}
 
 ::: zh-CN
@@ -278,6 +310,35 @@ return rewriter.InstructionsChecked("MyPatch insert override");
 用 report expectation 证明改写已经发生，或证明等价 IL 已经存在。
 用 `InstructionsChecked` 验证常见结构问题，例如 branch label 缺失、反射 operand 类型错误。
 目标方法可能已被其它 mod 修改时，传入 `alreadySatisfied` 谓词，并优先使用 `TryFindAfter` / `TryFindBefore` 这类锚点搜索，避免替换过宽的指令区间。
+
+:::
+
+## Async Patch 辅助工具{lang="zh-CN"}
+
+::: zh-CN
+
+如果 async 方法可以在方法边界组合，优先使用普通 Harmony postfix，把 `ref Task __result` /
+`ref Task<T> __result` 替换为 `HarmonyAsyncTaskBridge.After(...)`。
+
+如果必须 patch async 状态机 transpiler，使用 `HarmonyAsyncIl` 先识别编译器生成的 await 点，再做改写。
+`RedirectAwaitedCalls` 是最窄的选项：它只重定向被状态机直接 await 的调用，并要求替换方法保持相同的栈形状和完全一致的 awaitable 返回类型。
+如果替换逻辑需要加载额外的状态机字段，或需要发出一小段自定义指令 payload，使用 `ReplaceAwaitedCalls`，但 payload 末尾仍必须返回同一个 awaitable 类型。
+
+```csharp
+var rewriter = HarmonyIlRewriter.From(instructions);
+var report = HarmonyAsyncIl.RedirectAwaitedCalls(
+    rewriter,
+    "Redirect awaited OnPlay",
+    originalOnPlayMethod,
+    wrapperMethod,
+    code => code.Any(instruction => HarmonyIl.IsCallTo(instruction, wrapperMethod)));
+
+report.RequireSucceeded();
+report.RequireExactly(1);
+return rewriter.InstructionsChecked("Redirect awaited OnPlay");
+```
+
+这个辅助工具不会创建新的 async state。如果 patch 需要额外的独立 await 点，优先考虑 task-wrapper 设计或更窄的 awaited-call wrapper。
 
 :::
 
