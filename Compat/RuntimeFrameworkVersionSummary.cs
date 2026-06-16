@@ -151,10 +151,9 @@ namespace STS2RitsuLib.Compat
             var informationalVersion = assembly
                 .GetCustomAttribute<AssemblyInformationalVersionAttribute>()
                 ?.InformationalVersion;
-            if (!string.IsNullOrWhiteSpace(informationalVersion))
-                return informationalVersion.Trim();
-
-            return assembly.GetName().Version?.ToString();
+            return !string.IsNullOrWhiteSpace(informationalVersion)
+                ? informationalVersion.Trim()
+                : assembly.GetName().Version?.ToString();
         }
     }
 }

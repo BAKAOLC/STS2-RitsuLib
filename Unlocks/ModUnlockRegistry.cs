@@ -139,10 +139,8 @@ namespace STS2RitsuLib.Unlocks
 
             var serializable = unlockState.ToSerializable();
             var unlockedEpochs = serializable.UnlockedEpochs.ToHashSet(StringComparer.Ordinal);
-            var changed = false;
-
-            foreach (var epochId in obtainedRequiredEpochIds)
-                changed |= unlockedEpochs.Add(epochId);
+            var changed =
+                obtainedRequiredEpochIds.Aggregate(false, (current, epochId) => current | unlockedEpochs.Add(epochId));
 
             return changed
                 ? new(unlockedEpochs, serializable.EncountersSeen, serializable.NumberOfRuns)

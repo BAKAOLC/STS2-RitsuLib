@@ -708,14 +708,12 @@ namespace STS2RitsuLib.Networking.JoinDiagnostics
                     continue;
                 }
 
-                if (host.GameplayMods.Count == _report.Local.GameplayMods.Count)
-                {
-                    AppendModOrder(builder, T("column.hostOrder", "Host order"), host.GameplayMods,
-                        _report.Local.GameplayMods);
-                    builder.AppendLine();
-                    AppendModOrder(builder, T("column.localOrder", "Local order"), _report.Local.GameplayMods,
-                        host.GameplayMods);
-                }
+                if (host.GameplayMods.Count != _report.Local.GameplayMods.Count) continue;
+                AppendModOrder(builder, T("column.hostOrder", "Host order"), host.GameplayMods,
+                    _report.Local.GameplayMods);
+                builder.AppendLine();
+                AppendModOrder(builder, T("column.localOrder", "Local order"), _report.Local.GameplayMods,
+                    host.GameplayMods);
             }
 
             return builder.ToString();
