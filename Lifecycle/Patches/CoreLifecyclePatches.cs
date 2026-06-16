@@ -127,7 +127,7 @@ namespace STS2RitsuLib.Lifecycle.Patches
                     ModUnlockRegistry.FreezeRegistrations(nameof(ModelDb.Init));
                     RitsuLibStartupAudit.Measure("modelDb.validateCollisions",
                         RegistrationConflictDetector.ValidateAndLogModelIdCollisions);
-                    RefreshModTypeCache();
+                    RefreshModTypeCache("ModelDb.Init");
                     RitsuLibStartupAudit.Measure("modelDb.injectDynamicModels",
                         ModContentRegistry.InjectDynamicRegisteredModels);
                     RitsuLibFramework.PublishLifecycleEvent(
@@ -137,7 +137,7 @@ namespace STS2RitsuLib.Lifecycle.Patches
                     break;
                 case ({ } declaringType, nameof(ModelIdSerializationCache.Init))
                     when declaringType == typeof(ModelIdSerializationCache):
-                    RefreshModTypeCache();
+                    RefreshModTypeCache("ModelIdSerializationCache.Init");
                     break;
                 case ({ } declaringType, nameof(ModelDb.InitIds)) when declaringType == typeof(ModelDb):
                     RitsuLibFramework.PublishLifecycleEvent(
@@ -183,9 +183,18 @@ namespace STS2RitsuLib.Lifecycle.Patches
             }
         }
 
-        private static void RefreshModTypeCache()
+        private static void RefreshModTypeCache(string phase)
         {
-            ReflectionHelperModTypesField?.SetValue(null, null);
+            if (ReflectionHelperModTypesField is null)
+                return;
+
+            if (ReflectionHelperModTypesField.GetValue(null) is Type[] cachedTypes)
+                RitsuLibFramework.Logger.Warn(
+                    $"[ModelDb] ReflectionHelper.ModTypes was already cached before {phase} ({cachedTypes.Length} types). " +
+                    "Clearing the cache so the next scan includes all loaded mod types; another mod likely accessed " +
+                    "ReflectionHelper.ModTypes before mod loading completed.");
+
+            ReflectionHelperModTypesField.SetValue(null, null);
         }
 
         private static void ValidateFrozenRegistrations(string reason)
