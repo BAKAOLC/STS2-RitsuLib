@@ -387,6 +387,7 @@ namespace STS2RitsuLib
                     RitsuLibStartupAudit.Measure("runtimeServices", () =>
                     {
                         EnsureFrameworkInteropBootstrapRegistered();
+                        ModCardPilePersistence.Initialize();
                         SecondaryResourcePersistence.Initialize();
                         RuntimeHotkeyService.Initialize();
                         RitsuToastService.Initialize();

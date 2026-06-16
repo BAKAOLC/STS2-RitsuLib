@@ -19,8 +19,8 @@ namespace STS2RitsuLib.CardPiles
     ///     </para>
     ///     <para>
     ///         <see cref="ModCardPileScope.RunPersistent" /> piles are keyed by <see cref="Player" /> and
-    ///         persist across combats for the lifetime of the player instance. Serialization is a follow-up;
-    ///         for now the piles refill from empty at run load.
+    ///         persist across combats for the lifetime of the player instance. Their contents are serialized
+    ///         by <see cref="ModCardPilePersistence" />.
     ///     </para>
     ///     <para>
     ///         <see cref="ModCardPileScope.CombatOnly" /> 牌堆按 <see cref="PlayerCombatState" /> 索引，
@@ -28,7 +28,7 @@ namespace STS2RitsuLib.CardPiles
     ///     </para>
     ///     <para>
     ///         <see cref="ModCardPileScope.RunPersistent" /> 牌堆按 <see cref="Player" /> 索引，并在 player
-    ///         实例生命周期内跨战斗保留。序列化是后续工作；目前 run load 时这些牌堆会从空状态重新开始。
+    ///         实例生命周期内跨战斗保留。其内容由 <see cref="ModCardPilePersistence" /> 序列化。
     ///     </para>
     /// </remarks>
     internal static class ModCardPileStorage

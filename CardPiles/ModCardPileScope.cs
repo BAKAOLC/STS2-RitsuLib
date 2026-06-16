@@ -11,8 +11,8 @@ namespace STS2RitsuLib.CardPiles
     ///     </para>
     ///     <para>
     ///         <see cref="RunPersistent" /> piles live on <c>Player</c> and persist across combats (much like
-    ///         <c>Player.Deck</c>). They participate in <c>Player.Piles</c> after they have been resolved, but
-    ///         persistence remains best-effort until explicit serialization support is added.
+    ///         <c>Player.Deck</c>). They participate in <c>Player.Piles</c> after they have been resolved and
+    ///         are serialized through RitsuLib run-saved data.
     ///     </para>
     ///     <para>
     ///         <see cref="CombatOnly" /> 牌堆存在于 <c>PlayerCombatState</c> 上，并随
@@ -20,8 +20,8 @@ namespace STS2RitsuLib.CardPiles
     ///     </para>
     ///     <para>
     ///         <see cref="RunPersistent" /> 牌堆存在于 <c>Player</c> 上，并跨战斗保留（很像
-    ///         <c>Player.Deck</c>）。解析后它们会参与 <c>Player.Piles</c>，但
-    ///         在加入显式序列化支持前，持久化仍是 best-effort。
+    ///         <c>Player.Deck</c>）。解析后它们会参与 <c>Player.Piles</c>，并通过 RitsuLib
+    ///         跑局保存数据序列化。
     ///     </para>
     /// </remarks>
     public enum ModCardPileScope
@@ -33,8 +33,8 @@ namespace STS2RitsuLib.CardPiles
         CombatOnly = 0,
 
         /// <summary>
-        ///     Attached to a <c>Player</c> for the duration of a run. Currently stored in memory only.
-        ///     在一次跑局期间附加到 <c>Player</c>。目前仅存储在内存中。
+        ///     Attached to a <c>Player</c> for the duration of a run and saved with run data.
+        ///     在一次跑局期间附加到 <c>Player</c>，并随跑局数据保存。
         /// </summary>
         RunPersistent = 1,
     }

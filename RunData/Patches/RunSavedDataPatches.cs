@@ -19,6 +19,7 @@ using MegaCrit.Sts2.Core.Saves;
 using MegaCrit.Sts2.Core.Saves.Managers;
 using MegaCrit.Sts2.Core.Saves.Test;
 using MegaCrit.Sts2.Core.Unlocks;
+using STS2RitsuLib.CardPiles;
 using STS2RitsuLib.Networking.MessageExtensions;
 using STS2RitsuLib.Patching.Models;
 using GameMode = MegaCrit.Sts2.Core.Runs.GameMode;
@@ -398,6 +399,7 @@ namespace STS2RitsuLib.RunData.Patches
         public static void Postfix(SerializableRun save, RunState __result)
         {
             RunSavedDataRegistry.Import(save, __result);
+            ModCardPilePersistence.RestoreFromSavedData(__result);
         }
     }
 
@@ -756,6 +758,7 @@ namespace STS2RitsuLib.RunData.Patches
             if (!string.IsNullOrWhiteSpace(payload) && __instance.State != null)
             {
                 RunSavedDataRegistry.ImportPayloadIntoRun(__instance.State, payload);
+                ModCardPilePersistence.RestoreFromSavedData(__instance.State);
                 if (__instance.NetService?.Type.IsMultiplayer() == true)
                     RitsuLibFramework.PublishLifecycleEvent(
                         new RunSavedDataPreparingEvent(__instance.State, true, DateTimeOffset.UtcNow),
