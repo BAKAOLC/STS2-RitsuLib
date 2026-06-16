@@ -7,6 +7,7 @@ using MegaCrit.Sts2.Core.Localization;
 using MegaCrit.Sts2.Core.Models;
 using MegaCrit.Sts2.Core.Multiplayer.Messages.Game.Checksums;
 using MegaCrit.Sts2.Core.Saves.Runs;
+using STS2RitsuLib.Compat;
 
 namespace STS2RitsuLib.Networking.StateDivergence
 {
@@ -25,18 +26,19 @@ namespace STS2RitsuLib.Networking.StateDivergence
                 remoteMessage.senderChecksum,
                 L("value.remoteContext", "Remote divergence message"),
                 remoteMessage.senderCombatState);
+            var localSupplement = StateDivergenceSupplementPayloadCodec.CreateLocalSnapshot(local.Checksum);
+            var hasRemoteSupplement = StateDivergenceSupplementStore.TryTake(remote.Checksum, out var remoteSupplement);
 
-            var sections = new List<StateDivergenceDiagnosticSection>
-            {
-                BuildOverview(local, remote, remotePeerId, role),
-                BuildProtocolMaps(local.Checksum, remote.Checksum),
-                BuildSynchronizers(local.FullState, remote.FullState),
-                BuildCreatures(local.FullState, remote.FullState),
-                BuildPlayers(local.FullState, remote.FullState),
-                BuildRng(local.FullState, remote.FullState),
-                BuildRelicGrabBags(local.FullState, remote.FullState),
-            };
-
+            var sections = BuildSections(local, remote, remotePeerId, role, localSupplement,
+                hasRemoteSupplement ? remoteSupplement : null, false);
+            var exportSections = BuildSections(local, remote, remotePeerId, role, localSupplement,
+                hasRemoteSupplement ? remoteSupplement : null, true);
+            var hasLocalContentMods =
+                ContentModInventoryPayloadCodec.TryDecode(localSupplement.ContentMods, out var localContentMods);
+            IReadOnlyList<ContentModInventoryEntry> remoteContentMods = [];
+            var hasRemoteContentMods = hasRemoteSupplement &&
+                                       ContentModInventoryPayloadCodec.TryDecode(remoteSupplement.ContentMods,
+                                           out remoteContentMods);
             var issueCount = sections.Sum(s => s.Rows.Count);
             if (issueCount == 0)
                 sections.Add(new(
@@ -54,19 +56,45 @@ namespace STS2RitsuLib.Networking.StateDivergence
                 new(local.Checksum.id, local.Checksum.checksum, local.Context),
                 new(remote.Checksum.id, remote.Checksum.checksum, remote.Context),
                 sections,
+                exportSections,
+                hasLocalContentMods ? localContentMods : [],
+                hasRemoteContentMods ? remoteContentMods : [],
+                hasRemoteContentMods,
+                localSupplement.Progress,
+                hasRemoteSupplement ? remoteSupplement.Progress : null,
                 local.FullState.ToString(),
                 remote.FullState.ToString());
         }
 
-        private static StateDivergenceDiagnosticSection BuildProtocolMaps(
-            NetChecksumData localChecksum,
-            NetChecksumData remoteChecksum)
+        private static List<StateDivergenceDiagnosticSection> BuildSections(
+            StateDivergenceTrackedState local,
+            StateDivergenceTrackedState remote,
+            ulong remotePeerId,
+            string role,
+            StateDivergenceSupplementPayload localSupplement,
+            StateDivergenceSupplementPayload? remoteSupplement,
+            bool includeMatching)
         {
-            var local = StateDivergenceSupplementPayloadCodec.CreateLocalSnapshot(localChecksum);
-            var hasRemote = StateDivergenceSupplementStore.TryTake(remoteChecksum, out var remote);
+            return
+            [
+                BuildOverview(local, remote, remotePeerId, role, includeMatching),
+                BuildProtocolMaps(localSupplement, remoteSupplement, includeMatching),
+                BuildSynchronizers(local.FullState, remote.FullState, includeMatching),
+                BuildCreatures(local.FullState, remote.FullState, includeMatching),
+                BuildPlayers(local.FullState, remote.FullState, includeMatching),
+                BuildRng(local.FullState, remote.FullState, includeMatching),
+                BuildRelicGrabBags(local.FullState, remote.FullState, includeMatching),
+            ];
+        }
+
+        private static StateDivergenceDiagnosticSection BuildProtocolMaps(
+            StateDivergenceSupplementPayload local,
+            StateDivergenceSupplementPayload? remote,
+            bool includeMatching)
+        {
             var rows = new List<StateDivergenceDiagnosticRow>();
 
-            if (!hasRemote)
+            if (remote == null)
             {
                 rows.Add(new(
                     "savedProperties.supplement",
@@ -78,12 +106,12 @@ namespace STS2RitsuLib.Networking.StateDivergence
             else
             {
                 AddIfDifferent(rows, "savedProperties.netIdBitSize",
-                    local.SavedPropertyNetIdBitSize, remote.SavedPropertyNetIdBitSize);
+                    local.SavedPropertyNetIdBitSize, remote.SavedPropertyNetIdBitSize, includeMatching);
                 AddIfDifferent(rows, "savedProperties.count",
-                    local.SavedPropertyNames.Count, remote.SavedPropertyNames.Count);
+                    local.SavedPropertyNames.Count, remote.SavedPropertyNames.Count, includeMatching);
                 AddIfDifferent(rows, "savedProperties.mapHash",
-                    FormatHash(local.SavedPropertyMapHash), FormatHash(remote.SavedPropertyMapHash));
-                AddSavedPropertyMapRows(rows, local.SavedPropertyNames, remote.SavedPropertyNames);
+                    FormatHash(local.SavedPropertyMapHash), FormatHash(remote.SavedPropertyMapHash), includeMatching);
+                AddSavedPropertyMapRows(rows, local.SavedPropertyNames, remote.SavedPropertyNames, includeMatching);
             }
 
             return new(
@@ -97,7 +125,8 @@ namespace STS2RitsuLib.Networking.StateDivergence
         private static void AddSavedPropertyMapRows(
             ICollection<StateDivergenceDiagnosticRow> rows,
             IReadOnlyList<string> local,
-            IReadOnlyList<string> remote)
+            IReadOnlyList<string> remote,
+            bool includeMatching)
         {
             var count = Math.Max(local.Count, remote.Count);
             var localLines = new List<string>();
@@ -107,7 +136,7 @@ namespace STS2RitsuLib.Networking.StateDivergence
             {
                 var l = i < local.Count ? local[i] : L("value.missing", "Missing");
                 var r = i < remote.Count ? remote[i] : L("value.missing", "Missing");
-                if (string.Equals(l, r, StringComparison.Ordinal))
+                if (!includeMatching && string.Equals(l, r, StringComparison.Ordinal))
                     continue;
 
                 localLines.Add($"{i:0000}  {l}");
@@ -129,11 +158,13 @@ namespace STS2RitsuLib.Networking.StateDivergence
             StateDivergenceTrackedState local,
             StateDivergenceTrackedState remote,
             ulong remotePeerId,
-            string role)
+            string role,
+            bool includeMatching)
         {
             var rows = new List<StateDivergenceDiagnosticRow>();
-            AddIfDifferent(rows, "checksum.id", local.Checksum.id, remote.Checksum.id);
-            AddIfDifferent(rows, "checksum.value", local.Checksum.checksum, remote.Checksum.checksum);
+            AddIfDifferent(rows, "checksum.id", local.Checksum.id, remote.Checksum.id, includeMatching);
+            AddIfDifferent(rows, "checksum.value", local.Checksum.checksum, remote.Checksum.checksum,
+                includeMatching);
             rows.Add(new("context.local", local.Context, remote.Context,
                 L("detail.context",
                     "Local context is recorded by this peer; remote context is not carried by the vanilla divergence message.")));
@@ -147,17 +178,20 @@ namespace STS2RitsuLib.Networking.StateDivergence
 
         private static StateDivergenceDiagnosticSection BuildSynchronizers(
             NetFullCombatState local,
-            NetFullCombatState remote)
+            NetFullCombatState remote,
+            bool includeMatching)
         {
             var rows = new List<StateDivergenceDiagnosticRow>();
-            AddIfDifferent(rows, "choices.nextChoiceIds", Join(local.nextChoiceIds), Join(remote.nextChoiceIds));
+            AddIfDifferent(rows, "choices.nextChoiceIds", Join(local.nextChoiceIds), Join(remote.nextChoiceIds),
+                includeMatching);
 #if STS2_AT_LEAST_0_106_0
-            AddIfDifferent(rows, "rewards.nextRewardIds", Join(local.nextRewardIds), Join(remote.nextRewardIds));
+            AddIfDifferent(rows, "rewards.nextRewardIds", Join(local.nextRewardIds), Join(remote.nextRewardIds),
+                includeMatching);
 #endif
             AddIfDifferent(rows, "actions.lastExecutedActionId", Format(local.lastExecutedActionId),
-                Format(remote.lastExecutedActionId));
+                Format(remote.lastExecutedActionId), includeMatching);
             AddIfDifferent(rows, "actions.lastExecutedHookId", Format(local.lastExecutedHookId),
-                Format(remote.lastExecutedHookId));
+                Format(remote.lastExecutedHookId), includeMatching);
             return new(
                 L("section.sync.title", "Sync markers"),
                 L("section.sync.description", "Choice IDs, reward IDs, and the last executed action or hook."),
@@ -167,10 +201,11 @@ namespace STS2RitsuLib.Networking.StateDivergence
 
         private static StateDivergenceDiagnosticSection BuildCreatures(
             NetFullCombatState local,
-            NetFullCombatState remote)
+            NetFullCombatState remote,
+            bool includeMatching)
         {
             var rows = new List<StateDivergenceDiagnosticRow>();
-            AddIfDifferent(rows, "creatures.count", local.Creatures.Count, remote.Creatures.Count);
+            AddIfDifferent(rows, "creatures.count", local.Creatures.Count, remote.Creatures.Count, includeMatching);
 
             var count = Math.Max(local.Creatures.Count, remote.Creatures.Count);
             for (var i = 0; i < count; i++)
@@ -184,11 +219,12 @@ namespace STS2RitsuLib.Networking.StateDivergence
                 var l = local.Creatures[i];
                 var r = remote.Creatures[i];
                 var path = $"creatures[{i}]";
-                AddIfDifferent(rows, path + ".identity", CreatureIdentity(l), CreatureIdentity(r));
-                AddIfDifferent(rows, path + ".currentHp", l.currentHp, r.currentHp);
-                AddIfDifferent(rows, path + ".maxHp", l.maxHp, r.maxHp);
-                AddIfDifferent(rows, path + ".block", l.block, r.block);
-                AddIfDifferent(rows, path + ".powers", FormatPowers(l.powers), FormatPowers(r.powers));
+                AddIfDifferent(rows, path + ".identity", CreatureIdentity(l), CreatureIdentity(r), includeMatching);
+                AddIfDifferent(rows, path + ".currentHp", l.currentHp, r.currentHp, includeMatching);
+                AddIfDifferent(rows, path + ".maxHp", l.maxHp, r.maxHp, includeMatching);
+                AddIfDifferent(rows, path + ".block", l.block, r.block, includeMatching);
+                AddIfDifferent(rows, path + ".powers", FormatPowers(l.powers), FormatPowers(r.powers),
+                    includeMatching);
             }
 
             return new(
@@ -200,10 +236,11 @@ namespace STS2RitsuLib.Networking.StateDivergence
 
         private static StateDivergenceDiagnosticSection BuildPlayers(
             NetFullCombatState local,
-            NetFullCombatState remote)
+            NetFullCombatState remote,
+            bool includeMatching)
         {
             var rows = new List<StateDivergenceDiagnosticRow>();
-            AddIfDifferent(rows, "players.count", local.Players.Count, remote.Players.Count);
+            AddIfDifferent(rows, "players.count", local.Players.Count, remote.Players.Count, includeMatching);
 
             var count = Math.Max(local.Players.Count, remote.Players.Count);
             for (var i = 0; i < count; i++)
@@ -217,24 +254,26 @@ namespace STS2RitsuLib.Networking.StateDivergence
                 var l = local.Players[i];
                 var r = remote.Players[i];
                 var path = $"players[{i}]";
-                AddIfDifferent(rows, path + ".playerId", l.playerId, r.playerId);
-                AddIfDifferent(rows, path + ".character", Format(l.characterId), Format(r.characterId));
+                AddIfDifferent(rows, path + ".playerId", l.playerId, r.playerId, includeMatching);
+                AddIfDifferent(rows, path + ".character", Format(l.characterId), Format(r.characterId),
+                    includeMatching);
 #if STS2_AT_LEAST_0_106_0
-                AddIfDifferent(rows, path + ".turnNumber", l.turnNumber, r.turnNumber);
-                AddIfDifferent(rows, path + ".phase", l.phase, r.phase);
+                AddIfDifferent(rows, path + ".turnNumber", l.turnNumber, r.turnNumber, includeMatching);
+                AddIfDifferent(rows, path + ".phase", l.phase, r.phase, includeMatching);
 #else
-                AddIfDifferent(rows, path + ".maxStars", l.maxStars, r.maxStars);
+                AddIfDifferent(rows, path + ".maxStars", l.maxStars, r.maxStars, includeMatching);
 #endif
-                AddIfDifferent(rows, path + ".energy", l.energy, r.energy);
-                AddIfDifferent(rows, path + ".stars", l.stars, r.stars);
-                AddIfDifferent(rows, path + ".maxPotionCount", l.maxPotionCount, r.maxPotionCount);
-                AddIfDifferent(rows, path + ".gold", l.gold, r.gold);
+                AddIfDifferent(rows, path + ".energy", l.energy, r.energy, includeMatching);
+                AddIfDifferent(rows, path + ".stars", l.stars, r.stars, includeMatching);
+                AddIfDifferent(rows, path + ".maxPotionCount", l.maxPotionCount, r.maxPotionCount,
+                    includeMatching);
+                AddIfDifferent(rows, path + ".gold", l.gold, r.gold, includeMatching);
                 AddIfDifferent(rows, path + ".potions", Join(l.potions.Select(p => Format(p.id))),
-                    Join(r.potions.Select(p => Format(p.id))));
-                CompareRelics(rows, path + ".relics", l.relics, r.relics);
+                    Join(r.potions.Select(p => Format(p.id))), includeMatching);
+                CompareRelics(rows, path + ".relics", l.relics, r.relics, includeMatching);
                 AddIfDifferent(rows, path + ".orbs", Join(l.orbs.Select(FormatOrb)),
-                    Join(r.orbs.Select(FormatOrb)));
-                ComparePiles(rows, path, l.piles, r.piles);
+                    Join(r.orbs.Select(FormatOrb)), includeMatching);
+                ComparePiles(rows, path, l.piles, r.piles, includeMatching);
             }
 
             return new(
@@ -248,9 +287,10 @@ namespace STS2RitsuLib.Networking.StateDivergence
             ICollection<StateDivergenceDiagnosticRow> rows,
             string playerPath,
             IReadOnlyList<NetFullCombatState.CombatPileState> local,
-            IReadOnlyList<NetFullCombatState.CombatPileState> remote)
+            IReadOnlyList<NetFullCombatState.CombatPileState> remote,
+            bool includeMatching)
         {
-            AddIfDifferent(rows, playerPath + ".piles.count", local.Count, remote.Count);
+            AddIfDifferent(rows, playerPath + ".piles.count", local.Count, remote.Count, includeMatching);
 
             var pileTypes = local.Select(p => p.pileType)
                 .Concat(remote.Select(p => p.pileType))
@@ -260,8 +300,8 @@ namespace STS2RitsuLib.Networking.StateDivergence
             {
                 var l = local.FirstOrDefault(p => EqualityComparer<object>.Default.Equals(p.pileType, pileType));
                 var r = remote.FirstOrDefault(p => EqualityComparer<object>.Default.Equals(p.pileType, pileType));
-                var items = BuildCardListItems(l.cards ?? [], r.cards ?? []);
-                if (!HasVisibleModelListDifference(items))
+                var items = BuildCardListItems(l.cards ?? [], r.cards ?? [], includeMatching);
+                if (!includeMatching && !HasVisibleModelListDifference(items))
                     continue;
 
                 rows.Add(new(
@@ -281,10 +321,11 @@ namespace STS2RitsuLib.Networking.StateDivergence
             ICollection<StateDivergenceDiagnosticRow> rows,
             string path,
             IReadOnlyList<NetFullCombatState.RelicState> local,
-            IReadOnlyList<NetFullCombatState.RelicState> remote)
+            IReadOnlyList<NetFullCombatState.RelicState> remote,
+            bool includeMatching)
         {
-            var items = BuildRelicListItems(local, remote);
-            if (!HasVisibleModelListDifference(items))
+            var items = BuildRelicListItems(local, remote, includeMatching);
+            if (!includeMatching && !HasVisibleModelListDifference(items))
                 return;
 
             rows.Add(new(
@@ -301,11 +342,12 @@ namespace STS2RitsuLib.Networking.StateDivergence
 
         private static StateDivergenceDiagnosticSection BuildRng(
             NetFullCombatState local,
-            NetFullCombatState remote)
+            NetFullCombatState remote,
+            bool includeMatching)
         {
             var rows = new List<StateDivergenceDiagnosticRow>();
-            AddIfDifferent(rows, "rng.run.seed", local.Rng.Seed ?? "", remote.Rng.Seed ?? "");
-            CompareCounters(rows, "rng.run.counters", local.Rng.Counters, remote.Rng.Counters);
+            AddIfDifferent(rows, "rng.run.seed", local.Rng.Seed ?? "", remote.Rng.Seed ?? "", includeMatching);
+            CompareCounters(rows, "rng.run.counters", local.Rng.Counters, remote.Rng.Counters, includeMatching);
 
             var count = Math.Max(local.Players.Count, remote.Players.Count);
             for (var i = 0; i < count; i++)
@@ -314,9 +356,9 @@ namespace STS2RitsuLib.Networking.StateDivergence
                     continue;
 
                 AddIfDifferent(rows, $"players[{i}].rng.seed", local.Players[i].rngSet.Seed,
-                    remote.Players[i].rngSet.Seed);
+                    remote.Players[i].rngSet.Seed, includeMatching);
                 CompareCounters(rows, $"players[{i}].rng.counters", local.Players[i].rngSet.Counters,
-                    remote.Players[i].rngSet.Counters);
+                    remote.Players[i].rngSet.Counters, includeMatching);
             }
 
             return new(
@@ -328,7 +370,8 @@ namespace STS2RitsuLib.Networking.StateDivergence
 
         private static StateDivergenceDiagnosticSection BuildRelicGrabBags(
             NetFullCombatState local,
-            NetFullCombatState remote)
+            NetFullCombatState remote,
+            bool includeMatching)
         {
             var rows = new List<StateDivergenceDiagnosticRow>();
             var count = Math.Max(local.Players.Count, remote.Players.Count);
@@ -345,7 +388,8 @@ namespace STS2RitsuLib.Networking.StateDivergence
                     r.TryGetValue(rarity, out var rIds);
                     AddIfDifferent(rows, $"players[{i}].relicGrabBag.{rarity}",
                         Join((lIds ?? []).Select(Format)),
-                        Join((rIds ?? []).Select(Format)));
+                        Join((rIds ?? []).Select(Format)),
+                        includeMatching);
                 }
             }
 
@@ -360,14 +404,15 @@ namespace STS2RitsuLib.Networking.StateDivergence
             ICollection<StateDivergenceDiagnosticRow> rows,
             string path,
             IReadOnlyDictionary<TKey, int> local,
-            IReadOnlyDictionary<TKey, int> remote)
+            IReadOnlyDictionary<TKey, int> remote,
+            bool includeMatching)
             where TKey : notnull
         {
             foreach (var key in local.Keys.Concat(remote.Keys).Distinct().OrderBy(k => k.ToString()))
             {
                 local.TryGetValue(key, out var l);
                 remote.TryGetValue(key, out var r);
-                AddIfDifferent(rows, $"{path}.{key}", l, r);
+                AddIfDifferent(rows, $"{path}.{key}", l, r, includeMatching);
             }
         }
 
@@ -375,11 +420,12 @@ namespace STS2RitsuLib.Networking.StateDivergence
             ICollection<StateDivergenceDiagnosticRow> rows,
             string path,
             object? local,
-            object? remote)
+            object? remote,
+            bool includeMatching = false)
         {
             var l = Format(local);
             var r = Format(remote);
-            if (!string.Equals(l, r, StringComparison.Ordinal))
+            if (includeMatching || !string.Equals(l, r, StringComparison.Ordinal))
                 rows.Add(new(path, l, r));
         }
 
@@ -399,7 +445,8 @@ namespace STS2RitsuLib.Networking.StateDivergence
 
         private static IReadOnlyList<StateDivergenceDiagnosticModelListItem> BuildCardListItems(
             IReadOnlyList<NetFullCombatState.CardState> local,
-            IReadOnlyList<NetFullCombatState.CardState> remote)
+            IReadOnlyList<NetFullCombatState.CardState> remote,
+            bool includeMatching)
         {
             var items = new List<StateDivergenceDiagnosticModelListItem>();
             var count = Math.Max(local.Count, remote.Count);
@@ -410,7 +457,7 @@ namespace STS2RitsuLib.Networking.StateDivergence
                 var localSummary = hasLocal ? FormatCardSummary(local[i]) : L("value.missing", "Missing");
                 var remoteSummary = hasRemote ? FormatCardSummary(remote[i]) : L("value.missing", "Missing");
                 var differences = hasLocal && hasRemote && ModelIdsEqual(local[i].card.Id, remote[i].card.Id)
-                    ? CompareCardState(local[i], remote[i], "")
+                    ? CompareCardState(local[i], remote[i], "", includeMatching)
                     : [];
 
                 items.Add(new(i.ToString("00"), localSummary, remoteSummary, differences));
@@ -421,7 +468,8 @@ namespace STS2RitsuLib.Networking.StateDivergence
 
         private static IReadOnlyList<StateDivergenceDiagnosticModelListItem> BuildRelicListItems(
             IReadOnlyList<NetFullCombatState.RelicState> local,
-            IReadOnlyList<NetFullCombatState.RelicState> remote)
+            IReadOnlyList<NetFullCombatState.RelicState> remote,
+            bool includeMatching)
         {
             var items = new List<StateDivergenceDiagnosticModelListItem>();
             var count = Math.Max(local.Count, remote.Count);
@@ -432,7 +480,7 @@ namespace STS2RitsuLib.Networking.StateDivergence
                 var localSummary = hasLocal ? FormatRelicSummary(local[i]) : L("value.missing", "Missing");
                 var remoteSummary = hasRemote ? FormatRelicSummary(remote[i]) : L("value.missing", "Missing");
                 var differences = hasLocal && hasRemote && ModelIdsEqual(local[i].relic.Id, remote[i].relic.Id)
-                    ? CompareRelicState(local[i], remote[i], "")
+                    ? CompareRelicState(local[i], remote[i], "", includeMatching)
                     : [];
 
                 items.Add(new(i.ToString("00"), localSummary, remoteSummary, differences));
@@ -453,36 +501,42 @@ namespace STS2RitsuLib.Networking.StateDivergence
             NetFullCombatState.CardState local,
             NetFullCombatState.CardState remote,
             string prefix,
+            bool includeMatching,
             int savedPropertyDepth = 0)
         {
             var differences = new List<StateDivergenceDiagnosticFieldDifference>();
             AddFieldIfDifferent(differences, prefix + "upgrade",
-                local.card.CurrentUpgradeLevel, remote.card.CurrentUpgradeLevel);
+                local.card.CurrentUpgradeLevel, remote.card.CurrentUpgradeLevel, includeMatching);
             AddFieldIfDifferent(differences, prefix + "floor",
-                FormatNullableInt(local.card.FloorAddedToDeck), FormatNullableInt(remote.card.FloorAddedToDeck));
+                FormatNullableInt(local.card.FloorAddedToDeck), FormatNullableInt(remote.card.FloorAddedToDeck),
+                includeMatching);
             AddFieldIfDifferent(differences, prefix + "energyCost",
-                FormatNullableInt(local.energyCost), FormatNullableInt(remote.energyCost));
+                FormatNullableInt(local.energyCost), FormatNullableInt(remote.energyCost), includeMatching);
             AddFieldIfDifferent(differences, prefix + "affliction.id",
-                Format(local.affliction), Format(remote.affliction));
+                Format(local.affliction), Format(remote.affliction), includeMatching);
             AddFieldIfDifferent(differences, prefix + "affliction.count",
-                local.afflictionCount, remote.afflictionCount);
+                local.afflictionCount, remote.afflictionCount, includeMatching);
             AddFieldIfDifferent(differences, prefix + "keywords",
-                Join(local.keywords), Join(remote.keywords));
-            CompareEnchantment(differences, prefix + "enchantment", local.card.Enchantment, remote.card.Enchantment);
+                Join(local.keywords), Join(remote.keywords), includeMatching);
+            CompareEnchantment(differences, prefix + "enchantment", local.card.Enchantment, remote.card.Enchantment,
+                includeMatching);
             CompareSavedProperties(differences, prefix + "props", local.card.Props, remote.card.Props,
-                savedPropertyDepth);
+                savedPropertyDepth, includeMatching);
             return differences;
         }
 
         private static IReadOnlyList<StateDivergenceDiagnosticFieldDifference> CompareRelicState(
             NetFullCombatState.RelicState local,
             NetFullCombatState.RelicState remote,
-            string prefix)
+            string prefix,
+            bool includeMatching)
         {
             var differences = new List<StateDivergenceDiagnosticFieldDifference>();
             AddFieldIfDifferent(differences, prefix + "floor",
-                FormatNullableInt(local.relic.FloorAddedToDeck), FormatNullableInt(remote.relic.FloorAddedToDeck));
-            CompareSavedProperties(differences, prefix + "props", local.relic.Props, remote.relic.Props, 0);
+                FormatNullableInt(local.relic.FloorAddedToDeck), FormatNullableInt(remote.relic.FloorAddedToDeck),
+                includeMatching);
+            CompareSavedProperties(differences, prefix + "props", local.relic.Props, remote.relic.Props, 0,
+                includeMatching);
             return differences;
         }
 
@@ -490,16 +544,18 @@ namespace STS2RitsuLib.Networking.StateDivergence
             ICollection<StateDivergenceDiagnosticFieldDifference> differences,
             string path,
             SerializableEnchantment? local,
-            SerializableEnchantment? remote)
+            SerializableEnchantment? remote,
+            bool includeMatching)
         {
             if (local == null || remote == null || !ModelIdsEqual(local.Id, remote.Id))
             {
-                AddFieldIfDifferent(differences, path, FormatEnchantment(local), FormatEnchantment(remote));
+                AddFieldIfDifferent(differences, path, FormatEnchantment(local), FormatEnchantment(remote),
+                    includeMatching);
                 return;
             }
 
-            AddFieldIfDifferent(differences, path + ".amount", local.Amount, remote.Amount);
-            CompareSavedProperties(differences, path + ".props", local.Props, remote.Props, 0);
+            AddFieldIfDifferent(differences, path + ".amount", local.Amount, remote.Amount, includeMatching);
+            CompareSavedProperties(differences, path + ".props", local.Props, remote.Props, 0, includeMatching);
         }
 
         private static void CompareSavedProperties(
@@ -507,21 +563,26 @@ namespace STS2RitsuLib.Networking.StateDivergence
             string path,
             SavedProperties? local,
             SavedProperties? remote,
-            int depth)
+            int depth,
+            bool includeMatching)
         {
             if (local == null || remote == null)
             {
-                AddFieldIfDifferent(differences, path, FormatSavedProperties(local), FormatSavedProperties(remote));
+                AddFieldIfDifferent(differences, path, FormatSavedProperties(local), FormatSavedProperties(remote),
+                    includeMatching);
                 return;
             }
 
-            CompareSavedPropertyBucket(differences, path, local.ints, remote.ints, value => Format(value));
-            CompareSavedPropertyBucket(differences, path, local.bools, remote.bools, value => Format(value));
-            CompareSavedPropertyBucket(differences, path, local.strings, remote.strings, Format);
-            CompareIntArrayProperties(differences, path, local.intArrays, remote.intArrays);
-            CompareSavedPropertyBucket(differences, path, local.modelIds, remote.modelIds, Format);
-            CompareSavedCardProperties(differences, path, local.cards, remote.cards, depth);
-            CompareSavedCardArrayProperties(differences, path, local.cardArrays, remote.cardArrays, depth);
+            CompareSavedPropertyBucket(differences, path, local.ints, remote.ints, value => Format(value),
+                includeMatching);
+            CompareSavedPropertyBucket(differences, path, local.bools, remote.bools, value => Format(value),
+                includeMatching);
+            CompareSavedPropertyBucket(differences, path, local.strings, remote.strings, Format, includeMatching);
+            CompareIntArrayProperties(differences, path, local.intArrays, remote.intArrays, includeMatching);
+            CompareSavedPropertyBucket(differences, path, local.modelIds, remote.modelIds, Format, includeMatching);
+            CompareSavedCardProperties(differences, path, local.cards, remote.cards, depth, includeMatching);
+            CompareSavedCardArrayProperties(differences, path, local.cardArrays, remote.cardArrays, depth,
+                includeMatching);
         }
 
         private static void CompareSavedPropertyBucket<T>(
@@ -529,7 +590,8 @@ namespace STS2RitsuLib.Networking.StateDivergence
             string path,
             IReadOnlyList<SavedProperties.SavedProperty<T>>? local,
             IReadOnlyList<SavedProperties.SavedProperty<T>>? remote,
-            Func<T?, string> format)
+            Func<T?, string> format,
+            bool includeMatching)
         {
             var names = (local?.Select(p => p.name) ?? [])
                 .Concat(remote?.Select(p => p.name) ?? [])
@@ -542,7 +604,8 @@ namespace STS2RitsuLib.Networking.StateDivergence
                 var hasRemote = TryGetSavedProperty(remote, name, out var remoteValue);
                 AddFieldIfDifferent(differences, path + "." + name,
                     hasLocal ? format(localValue) : L("value.missing", "Missing"),
-                    hasRemote ? format(remoteValue) : L("value.missing", "Missing"));
+                    hasRemote ? format(remoteValue) : L("value.missing", "Missing"),
+                    includeMatching);
             }
         }
 
@@ -550,7 +613,8 @@ namespace STS2RitsuLib.Networking.StateDivergence
             ICollection<StateDivergenceDiagnosticFieldDifference> differences,
             string path,
             IReadOnlyList<SavedProperties.SavedProperty<int[]>>? local,
-            IReadOnlyList<SavedProperties.SavedProperty<int[]>>? remote)
+            IReadOnlyList<SavedProperties.SavedProperty<int[]>>? remote,
+            bool includeMatching)
         {
             var names = (local?.Select(p => p.name) ?? [])
                 .Concat(remote?.Select(p => p.name) ?? [])
@@ -563,7 +627,8 @@ namespace STS2RitsuLib.Networking.StateDivergence
                 var hasRemote = TryGetSavedProperty(remote, name, out var remoteValue);
                 AddFieldIfDifferent(differences, path + "." + name,
                     hasLocal ? FormatIntArrayProperty(name, localValue) : L("value.missing", "Missing"),
-                    hasRemote ? FormatIntArrayProperty(name, remoteValue) : L("value.missing", "Missing"));
+                    hasRemote ? FormatIntArrayProperty(name, remoteValue) : L("value.missing", "Missing"),
+                    includeMatching);
             }
         }
 
@@ -572,7 +637,8 @@ namespace STS2RitsuLib.Networking.StateDivergence
             string path,
             IReadOnlyList<SavedProperties.SavedProperty<SerializableCard>>? local,
             IReadOnlyList<SavedProperties.SavedProperty<SerializableCard>>? remote,
-            int depth)
+            int depth,
+            bool includeMatching)
         {
             var names = (local?.Select(p => p.name) ?? [])
                 .Concat(remote?.Select(p => p.name) ?? [])
@@ -586,7 +652,8 @@ namespace STS2RitsuLib.Networking.StateDivergence
                 CompareSavedCard(differences, path + "." + name,
                     hasLocal ? localCard : null,
                     hasRemote ? remoteCard : null,
-                    depth);
+                    depth,
+                    includeMatching);
             }
         }
 
@@ -595,7 +662,8 @@ namespace STS2RitsuLib.Networking.StateDivergence
             string path,
             IReadOnlyList<SavedProperties.SavedProperty<SerializableCard[]>>? local,
             IReadOnlyList<SavedProperties.SavedProperty<SerializableCard[]>>? remote,
-            int depth)
+            int depth,
+            bool includeMatching)
         {
             var names = (local?.Select(p => p.name) ?? [])
                 .Concat(remote?.Select(p => p.name) ?? [])
@@ -613,7 +681,8 @@ namespace STS2RitsuLib.Networking.StateDivergence
                     CompareSavedCard(differences, $"{path}.{name}[{i}]",
                         i < l.Length ? l[i] : null,
                         i < r.Length ? r[i] : null,
-                        depth);
+                        depth,
+                        includeMatching);
             }
         }
 
@@ -622,18 +691,21 @@ namespace STS2RitsuLib.Networking.StateDivergence
             string path,
             SerializableCard? local,
             SerializableCard? remote,
-            int depth)
+            int depth,
+            bool includeMatching)
         {
             if (local == null || remote == null || !ModelIdsEqual(local.Id, remote.Id) ||
                 depth >= MaxNestedSavedCardDepth)
             {
-                AddFieldIfDifferent(differences, path, FormatSerializableCard(local), FormatSerializableCard(remote));
+                AddFieldIfDifferent(differences, path, FormatSerializableCard(local), FormatSerializableCard(remote),
+                    includeMatching);
                 return;
             }
 
             var nestedLocal = new NetFullCombatState.CardState { card = local };
             var nestedRemote = new NetFullCombatState.CardState { card = remote };
-            foreach (var difference in CompareCardState(nestedLocal, nestedRemote, path + ".", depth + 1)
+            foreach (var difference in CompareCardState(nestedLocal, nestedRemote, path + ".", includeMatching,
+                             depth + 1)
                          .Where(d => !d.Path.EndsWith(".energyCost", StringComparison.Ordinal) &&
                                      !d.Path.Contains(".affliction.", StringComparison.Ordinal) &&
                                      !d.Path.EndsWith(".keywords", StringComparison.Ordinal)))
@@ -663,11 +735,12 @@ namespace STS2RitsuLib.Networking.StateDivergence
             ICollection<StateDivergenceDiagnosticFieldDifference> differences,
             string path,
             object? local,
-            object? remote)
+            object? remote,
+            bool includeMatching = false)
         {
             var l = Format(local);
             var r = Format(remote);
-            if (!string.Equals(l, r, StringComparison.Ordinal))
+            if (includeMatching || !string.Equals(l, r, StringComparison.Ordinal))
                 differences.Add(new(path, l, r));
         }
 

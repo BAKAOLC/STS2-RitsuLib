@@ -3,6 +3,7 @@ using Godot;
 using MegaCrit.Sts2.Core.ControllerInput;
 using MegaCrit.Sts2.Core.Nodes.CommonUi;
 using MegaCrit.Sts2.Core.Nodes.Screens.ScreenContext;
+using STS2RitsuLib.Compat;
 using STS2RitsuLib.Settings;
 using STS2RitsuLib.Ui.Shell;
 using STS2RitsuLib.Ui.Shell.Theme;
@@ -698,8 +699,13 @@ namespace STS2RitsuLib.Networking.StateDivergence
             builder.AppendLine();
             AppendChecksum(builder, T("column.local", "Local"), _report.LocalChecksum);
             AppendChecksum(builder, T("column.remote", "Remote"), _report.RemoteChecksum);
+            AppendContentMods(builder, T("column.local", "Local"), _report.LocalContentMods, true);
+            AppendContentMods(builder, T("column.remote", "Remote"), _report.RemoteContentMods,
+                _report.HasRemoteContentModInventory);
+            AppendProgress(builder, T("column.local", "Local"), _report.LocalProgress);
+            AppendProgress(builder, T("column.remote", "Remote"), _report.RemoteProgress);
 
-            foreach (var section in _report.Sections)
+            foreach (var section in _report.ExportSections)
             {
                 builder.AppendLine();
                 builder.AppendLine(section.Title);
@@ -723,6 +729,56 @@ namespace STS2RitsuLib.Networking.StateDivergence
             builder.AppendLine("  " + F("checksum.id", "ID: {0}", info.Id));
             builder.AppendLine("  " + F("checksum.value", "Checksum: {0}", info.Checksum));
             builder.AppendLine("  " + F("checksum.context", "Context: {0}", info.Context));
+        }
+
+        private static void AppendContentMods(
+            StringBuilder builder,
+            string peerTitle,
+            IReadOnlyList<ContentModInventoryEntry> mods,
+            bool inventoryAvailable)
+        {
+            builder.AppendLine();
+            builder.AppendLine(peerTitle + " " + T("section.contentDependencyMods", "content/dependency mods"));
+            if (!inventoryAvailable)
+            {
+                builder.AppendLine("  <unavailable>");
+                return;
+            }
+
+            if (mods.Count == 0)
+            {
+                builder.AppendLine("  <none>");
+                return;
+            }
+
+            foreach (var mod in mods)
+                builder.AppendLine("  " + FormatContentModInventoryLine(mod));
+        }
+
+        private static void AppendProgress(
+            StringBuilder builder,
+            string peerTitle,
+            ProgressDiagnosticsSnapshot? progress)
+        {
+            builder.AppendLine();
+            builder.AppendLine(peerTitle + " " + T("section.progress", "progress"));
+            if (progress == null)
+            {
+                builder.AppendLine("  <unavailable>");
+                return;
+            }
+
+            builder.AppendLine($"  schemaVersion={progress.SchemaVersion}");
+            builder.AppendLine($"  numberOfRuns={progress.NumberOfRuns}");
+            builder.AppendLine("  epochs:");
+            if (progress.Epochs.Count == 0)
+            {
+                builder.AppendLine("    <none>");
+                return;
+            }
+
+            foreach (var epoch in progress.Epochs)
+                builder.AppendLine($"    {epoch.Id}: state={epoch.State} obtainDate={epoch.ObtainDate}");
         }
 
         private static void AppendReportRow(StringBuilder builder, StateDivergenceDiagnosticRow row)
@@ -765,6 +821,20 @@ namespace STS2RitsuLib.Networking.StateDivergence
         {
             foreach (var line in text.Replace("\r\n", "\n").Split('\n'))
                 builder.AppendLine(indent + line);
+        }
+
+        private static string FormatContentModInventoryLine(ContentModInventoryEntry mod)
+        {
+            var name = string.IsNullOrWhiteSpace(mod.Name) || string.Equals(mod.Name, mod.Id, StringComparison.Ordinal)
+                ? mod.Id
+                : mod.Name + " (" + mod.Id + ")";
+            var version = string.IsNullOrWhiteSpace(mod.Version) ? T("value.noVersion", "No version") : mod.Version;
+            var role = mod.IsDependency
+                ? T("value.dependency", "dependency")
+                : T("value.content", "content");
+            var enabled = mod.IsEnabled ? T("value.enabled", "enabled") : T("value.disabled", "disabled");
+            return
+                $"#{mod.Index + 1:00} [{role}, {enabled}] {name} version={version} source={mod.Source}";
         }
 
         private bool TryScrollFromInput(InputEvent @event)

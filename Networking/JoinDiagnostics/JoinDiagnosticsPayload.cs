@@ -4,6 +4,7 @@ using MegaCrit.Sts2.Core.Debug;
 using MegaCrit.Sts2.Core.Modding;
 using MegaCrit.Sts2.Core.Multiplayer.Messages.Lobby;
 using MegaCrit.Sts2.Core.Multiplayer.Serialization;
+using STS2RitsuLib.Compat;
 using STS2RitsuLib.Networking.MessageExtensions;
 
 namespace STS2RitsuLib.Networking.JoinDiagnostics
@@ -13,7 +14,8 @@ namespace STS2RitsuLib.Networking.JoinDiagnostics
         uint ModelDbHash,
         string GameMode,
         string SessionState,
-        IReadOnlyList<JoinDiagnosticsModEntry> GameplayMods);
+        IReadOnlyList<JoinDiagnosticsModEntry> GameplayMods,
+        string? ContentMods);
 
     internal sealed record JoinDiagnosticsModEntry(
         int Index,
@@ -28,12 +30,13 @@ namespace STS2RitsuLib.Networking.JoinDiagnostics
         uint ModelDbHash,
         string GameMode,
         string SessionState,
-        IReadOnlyList<JoinDiagnosticsModEntry> GameplayMods);
+        IReadOnlyList<JoinDiagnosticsModEntry> GameplayMods,
+        IReadOnlyList<ContentModInventoryEntry> ContentMods);
 
     internal static class JoinDiagnosticsPayloadCodec
     {
         private const string ExtensionId = "ritsulib.joinDiagnostics";
-        private const int PayloadVersion = 1;
+        private const int PayloadVersion = 2;
         private static int _registered;
 
         private static readonly JsonSerializerOptions JsonOptions = new()
@@ -76,7 +79,8 @@ namespace STS2RitsuLib.Networking.JoinDiagnostics
                     message.idDatabaseHash,
                     message.gameMode.ToString(),
                     message.sessionState.ToString(),
-                    CreateLocalModEntries());
+                    CreateLocalModEntries(),
+                    ContentModInventoryPayloadCodec.Encode(CreateLocalContentModEntries()));
                 return JsonSerializer.Serialize(payload, JsonOptions);
             }
             catch (Exception ex)
@@ -90,6 +94,13 @@ namespace STS2RitsuLib.Networking.JoinDiagnostics
         {
             try
             {
+                if (version == 1)
+                {
+                    JoinFailureDiagnosticsService.ObserveHostPayload(ConvertLegacyPayload(
+                        JsonSerializer.Deserialize<JoinDiagnosticsPayloadV1>(json, JsonOptions)));
+                    return;
+                }
+
                 if (version != PayloadVersion)
                 {
                     RitsuLibFramework.Logger.Warn($"[JoinDiagnostics] Unsupported payload version: {version}");
@@ -112,7 +123,8 @@ namespace STS2RitsuLib.Networking.JoinDiagnostics
                 ModelIdSerializationCache.Hash,
                 string.Empty,
                 string.Empty,
-                CreateLocalModEntries());
+                CreateLocalModEntries(),
+                CreateLocalContentModEntries());
         }
 
         public static JoinPeerSnapshot CreateHostSnapshot(
@@ -126,7 +138,8 @@ namespace STS2RitsuLib.Networking.JoinDiagnostics
                 message.sessionState.ToString(),
                 payload?.GameplayMods.Count > 0
                     ? payload.GameplayMods
-                    : CreateFallbackModEntries(message.mods));
+                    : CreateFallbackModEntries(message.mods),
+                CreateHostContentModEntries(message, payload));
         }
 
         private static IReadOnlyList<JoinDiagnosticsModEntry> CreateLocalModEntries()
@@ -152,6 +165,20 @@ namespace STS2RitsuLib.Networking.JoinDiagnostics
                 .ToArray();
         }
 
+        private static IReadOnlyList<ContentModInventoryEntry> CreateLocalContentModEntries()
+        {
+            return ContentModLoadOrderInventory.BuildRuntimeRelevantInventory();
+        }
+
+        private static IReadOnlyList<ContentModInventoryEntry> CreateHostContentModEntries(
+            InitialGameInfoMessage message,
+            JoinDiagnosticsPayload? payload)
+        {
+            return ContentModInventoryPayloadCodec.TryDecode(payload?.ContentMods, out var entries)
+                ? entries
+                : CreateFallbackContentModEntries(message.mods);
+        }
+
         private static IReadOnlyList<JoinDiagnosticsModEntry> CreateFallbackModEntries(IReadOnlyList<string>? keys)
         {
             if (keys == null || keys.Count == 0)
@@ -166,9 +193,54 @@ namespace STS2RitsuLib.Networking.JoinDiagnostics
             }).ToArray();
         }
 
+        private static IReadOnlyList<ContentModInventoryEntry> CreateFallbackContentModEntries(
+            IReadOnlyList<string>? keys)
+        {
+            if (keys == null || keys.Count == 0)
+                return [];
+
+            return keys.Select((key, i) =>
+            {
+                var split = key.LastIndexOf('-');
+                var id = split > 0 ? key[..split] : key;
+                var version = split > 0 && split < key.Length - 1 ? key[(split + 1)..] : string.Empty;
+                return new ContentModInventoryEntry(
+                    i,
+                    id,
+                    version,
+                    id,
+                    string.Empty,
+                    true,
+                    true,
+                    false);
+            }).ToArray();
+        }
+
         private static string BuildKey(string id, string version)
         {
             return id + "-" + version;
         }
+
+        private static JoinDiagnosticsPayload? ConvertLegacyPayload(JoinDiagnosticsPayloadV1? payload)
+        {
+            if (payload == null)
+                return null;
+
+            return new(
+                payload.GameVersion,
+                payload.ModelDbHash,
+                payload.GameMode,
+                payload.SessionState,
+                payload.GameplayMods,
+                payload.ContentMods == null ? null : ContentModInventoryPayloadCodec.Encode(payload.ContentMods));
+        }
+
+        private sealed record JoinDiagnosticsPayloadV1(
+            string GameVersion,
+            uint ModelDbHash,
+            string GameMode,
+            string SessionState,
+            IReadOnlyList<JoinDiagnosticsModEntry> GameplayMods,
+            IReadOnlyList<ContentModInventoryEntry>? ContentMods);
     }
 }

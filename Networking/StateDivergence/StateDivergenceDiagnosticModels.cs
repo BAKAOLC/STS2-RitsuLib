@@ -1,4 +1,5 @@
 using MegaCrit.Sts2.Core.Entities.Multiplayer;
+using STS2RitsuLib.Compat;
 
 namespace STS2RitsuLib.Networking.StateDivergence
 {
@@ -10,6 +11,12 @@ namespace STS2RitsuLib.Networking.StateDivergence
         StateDivergenceChecksumInfo LocalChecksum,
         StateDivergenceChecksumInfo RemoteChecksum,
         IReadOnlyList<StateDivergenceDiagnosticSection> Sections,
+        IReadOnlyList<StateDivergenceDiagnosticSection> ExportSections,
+        IReadOnlyList<ContentModInventoryEntry> LocalContentMods,
+        IReadOnlyList<ContentModInventoryEntry> RemoteContentMods,
+        bool HasRemoteContentModInventory,
+        ProgressDiagnosticsSnapshot? LocalProgress,
+        ProgressDiagnosticsSnapshot? RemoteProgress,
         string LocalStateDump,
         string RemoteStateDump);
 

@@ -7,6 +7,7 @@ using MegaCrit.Sts2.Core.Entities.Multiplayer;
 using MegaCrit.Sts2.Core.Multiplayer.Messages.Game.Checksums;
 using MegaCrit.Sts2.Core.Multiplayer.Serialization;
 using MegaCrit.Sts2.Core.Saves.Runs;
+using STS2RitsuLib.Compat;
 using STS2RitsuLib.Networking.MessageExtensions;
 
 namespace STS2RitsuLib.Networking.StateDivergence
@@ -16,12 +17,14 @@ namespace STS2RitsuLib.Networking.StateDivergence
         uint ChecksumValue,
         int SavedPropertyNetIdBitSize,
         uint SavedPropertyMapHash,
-        IReadOnlyList<string> SavedPropertyNames);
+        IReadOnlyList<string> SavedPropertyNames,
+        string? ContentMods,
+        ProgressDiagnosticsSnapshot? Progress);
 
     internal static class StateDivergenceSupplementPayloadCodec
     {
         private const string ExtensionId = "ritsulib.stateDivergence";
-        private const int PayloadVersion = 1;
+        private const int PayloadVersion = 2;
         private static int _registered;
 
         private static readonly JsonSerializerOptions JsonOptions = new()
@@ -63,7 +66,9 @@ namespace STS2RitsuLib.Networking.StateDivergence
                 checksum.checksum,
                 SavedPropertiesTypeCache.NetIdBitSize,
                 StableHash(propertyNames),
-                propertyNames);
+                propertyNames,
+                ContentModInventoryPayloadCodec.Encode(ContentModLoadOrderInventory.BuildRuntimeRelevantInventory()),
+                ProgressDiagnosticsSnapshot.CreateLocal());
         }
 
         private static string? SerializePayload(StateDivergenceMessage message)
@@ -86,7 +91,7 @@ namespace STS2RitsuLib.Networking.StateDivergence
         {
             try
             {
-                if (version != PayloadVersion)
+                if (version != 1 && version != PayloadVersion)
                 {
                     RitsuLibFramework.Logger.Warn(
                         $"[State divergence diagnostics] Unsupported supplement payload version: {version}");
@@ -94,9 +99,12 @@ namespace STS2RitsuLib.Networking.StateDivergence
                 }
 
                 var bytes = Gunzip(Convert.FromBase64String(encoded));
-                var payload = JsonSerializer.Deserialize<StateDivergenceSupplementPayload>(
-                    Encoding.UTF8.GetString(bytes),
-                    JsonOptions);
+                var json = Encoding.UTF8.GetString(bytes);
+                var payload = version == 1
+                    ? ConvertLegacyPayload(JsonSerializer.Deserialize<StateDivergenceSupplementPayloadV1>(
+                        json,
+                        JsonOptions))
+                    : JsonSerializer.Deserialize<StateDivergenceSupplementPayload>(json, JsonOptions);
                 if (payload != null)
                     StateDivergenceSupplementStore.Store(payload);
             }
@@ -155,6 +163,31 @@ namespace STS2RitsuLib.Networking.StateDivergence
                 return hash;
             }
         }
+
+        private static StateDivergenceSupplementPayload? ConvertLegacyPayload(
+            StateDivergenceSupplementPayloadV1? payload)
+        {
+            if (payload == null)
+                return null;
+
+            return new(
+                payload.ChecksumId,
+                payload.ChecksumValue,
+                payload.SavedPropertyNetIdBitSize,
+                payload.SavedPropertyMapHash,
+                payload.SavedPropertyNames,
+                payload.ContentMods == null ? null : ContentModInventoryPayloadCodec.Encode(payload.ContentMods),
+                payload.Progress);
+        }
+
+        private sealed record StateDivergenceSupplementPayloadV1(
+            uint ChecksumId,
+            uint ChecksumValue,
+            int SavedPropertyNetIdBitSize,
+            uint SavedPropertyMapHash,
+            IReadOnlyList<string> SavedPropertyNames,
+            IReadOnlyList<ContentModInventoryEntry>? ContentMods,
+            ProgressDiagnosticsSnapshot? Progress);
     }
 
     internal static class StateDivergenceSupplementStore

@@ -3,6 +3,7 @@ using Godot;
 using MegaCrit.Sts2.Core.ControllerInput;
 using MegaCrit.Sts2.Core.Nodes.CommonUi;
 using MegaCrit.Sts2.Core.Nodes.Screens.ScreenContext;
+using STS2RitsuLib.Compat;
 using STS2RitsuLib.Settings;
 using STS2RitsuLib.Ui.Shell;
 using STS2RitsuLib.Ui.Shell.Theme;
@@ -243,8 +244,8 @@ namespace STS2RitsuLib.Networking.JoinDiagnostics
 
             if (issue.Kind == JoinFailureIssueKind.ModOrder &&
                 _report.Host is { } host &&
-                host.GameplayMods.Count == _report.Local.GameplayMods.Count)
-                box.AddChild(BuildModOrderLists(host.GameplayMods, _report.Local.GameplayMods));
+                TryBuildRelevantModOrderLists(host, _report.Local, out var orderLists))
+                box.AddChild(orderLists);
 
             return box;
         }
@@ -370,6 +371,79 @@ namespace STS2RitsuLib.Networking.JoinDiagnostics
             return row;
         }
 
+        private bool TryBuildRelevantModOrderLists(
+            JoinPeerSnapshot host,
+            JoinPeerSnapshot local,
+            out Control orderLists)
+        {
+            if (host.ContentMods.Count > 0 &&
+                local.ContentMods.Count > 0 &&
+                host.ContentMods.Count == local.ContentMods.Count)
+            {
+                orderLists = BuildContentModOrderLists(host.ContentMods, local.ContentMods);
+                return true;
+            }
+
+            if (host.GameplayMods.Count == local.GameplayMods.Count)
+            {
+                orderLists = BuildModOrderLists(host.GameplayMods, local.GameplayMods);
+                return true;
+            }
+
+            orderLists = null!;
+            return false;
+        }
+
+        private Control BuildContentModOrderLists(
+            IReadOnlyList<ContentModInventoryEntry> hostMods,
+            IReadOnlyList<ContentModInventoryEntry> localMods)
+        {
+            var row = new HBoxContainer
+            {
+                SizeFlagsHorizontal = SizeFlags.ExpandFill,
+                MouseFilter = MouseFilterEnum.Ignore,
+            };
+            row.AddThemeConstantOverride("separation", 14);
+            row.AddChild(BuildContentModOrderList(T("column.hostOrder", "Host order"), hostMods, localMods));
+            row.AddChild(BuildContentModOrderList(T("column.localOrder", "Local order"), localMods, hostMods));
+            return row;
+        }
+
+        private Control BuildContentModOrderList(
+            string title,
+            IReadOnlyList<ContentModInventoryEntry> mods,
+            IReadOnlyList<ContentModInventoryEntry> counterpart)
+        {
+            var panel = new PanelContainer
+            {
+                SizeFlagsHorizontal = SizeFlags.ExpandFill,
+                MouseFilter = MouseFilterEnum.Ignore,
+            };
+            panel.AddThemeStyleboxOverride("panel", ModSettingsUiFactory.CreateListShellStyle());
+
+            var box = CreateInsetVBox(panel, 10, 8, 10, 8, 6);
+            box.AddChild(CreateLabel(title, 18, RitsuShellTheme.Current.Text.RichTitle, true));
+
+            var entries = new VBoxContainer
+            {
+                SizeFlagsHorizontal = SizeFlags.ExpandFill,
+                MouseFilter = MouseFilterEnum.Ignore,
+            };
+            entries.AddThemeConstantOverride("separation", 6);
+            box.AddChild(entries);
+
+            for (var i = 0; i < mods.Count; i++)
+            {
+                var mod = mods[i];
+                var matches = i < counterpart.Count &&
+                              string.Equals(mod.Id, counterpart[i].Id, StringComparison.Ordinal) &&
+                              string.Equals(mod.Version, counterpart[i].Version, StringComparison.Ordinal);
+                entries.AddChild(BuildContentModOrderRow(i, mod, matches));
+            }
+
+            return panel;
+        }
+
         private Control BuildModOrderList(
             string title,
             IReadOnlyList<JoinDiagnosticsModEntry> mods,
@@ -402,6 +476,38 @@ namespace STS2RitsuLib.Networking.JoinDiagnostics
                 entries.AddChild(BuildModOrderRow(i, mod, matches));
             }
 
+            return panel;
+        }
+
+        private Control BuildContentModOrderRow(int index, ContentModInventoryEntry mod, bool matches)
+        {
+            var panel = new PanelContainer
+            {
+                SizeFlagsHorizontal = SizeFlags.ExpandFill,
+                CustomMinimumSize = new(0f, 38f),
+                MouseFilter = MouseFilterEnum.Ignore,
+            };
+            panel.AddThemeStyleboxOverride("panel", ModSettingsUiFactory.CreateListItemCardStyle(!matches));
+
+            var row = new HBoxContainer
+            {
+                SizeFlagsHorizontal = SizeFlags.ExpandFill,
+                SizeFlagsVertical = SizeFlags.ExpandFill,
+                MouseFilter = MouseFilterEnum.Ignore,
+                Alignment = BoxContainer.AlignmentMode.Center,
+            };
+            row.AddThemeConstantOverride("separation", 8);
+            panel.AddChild(row);
+
+            row.AddChild(CreateFixedValueLabel("#" + (index + 1).ToString("00"), 46,
+                RitsuShellTheme.Current.Text.Number, false));
+            row.AddChild(CreateValueLabel(FormatContentModLine(mod),
+                matches ? RitsuShellTheme.Current.Text.RichBody : RitsuShellTheme.Current.Text.HoverHighlight));
+            row.AddChild(CreateFixedValueLabel(
+                matches ? T("value.same", "same") : T("value.differs", "differs"),
+                76,
+                matches ? RitsuShellTheme.Current.Text.RichMuted : RitsuShellTheme.Current.Text.HoverHighlight,
+                false));
             return panel;
         }
 
@@ -574,6 +680,8 @@ namespace STS2RitsuLib.Networking.JoinDiagnostics
             builder.AppendLine();
             AppendPeerSnapshot(builder, T("column.host", "Host"), _report.Host);
             AppendPeerSnapshot(builder, T("column.local", "Local"), _report.Local);
+            AppendPeerContentMods(builder, T("column.host", "Host"), _report.Host);
+            AppendPeerContentMods(builder, T("column.local", "Local"), _report.Local);
 
             foreach (var issue in _report.Issues)
             {
@@ -586,15 +694,29 @@ namespace STS2RitsuLib.Networking.JoinDiagnostics
                     builder.AppendLine(
                         $"{row.Label}: {T("column.host", "Host")}={row.HostValue}; {T("column.local", "Local")}={row.LocalValue}");
 
-                if (issue.Kind != JoinFailureIssueKind.ModOrder ||
-                    _report.Host is not { } host ||
-                    host.GameplayMods.Count != _report.Local.GameplayMods.Count) continue;
+                if (issue.Kind != JoinFailureIssueKind.ModOrder || _report.Host is not { } host) continue;
+
                 builder.AppendLine();
-                AppendModOrder(builder, T("column.hostOrder", "Host order"), host.GameplayMods,
-                    _report.Local.GameplayMods);
-                builder.AppendLine();
-                AppendModOrder(builder, T("column.localOrder", "Local order"), _report.Local.GameplayMods,
-                    host.GameplayMods);
+                if (host.ContentMods.Count > 0 &&
+                    _report.Local.ContentMods.Count > 0 &&
+                    host.ContentMods.Count == _report.Local.ContentMods.Count)
+                {
+                    AppendContentModOrder(builder, T("column.hostOrder", "Host order"), host.ContentMods,
+                        _report.Local.ContentMods);
+                    builder.AppendLine();
+                    AppendContentModOrder(builder, T("column.localOrder", "Local order"), _report.Local.ContentMods,
+                        host.ContentMods);
+                    continue;
+                }
+
+                if (host.GameplayMods.Count == _report.Local.GameplayMods.Count)
+                {
+                    AppendModOrder(builder, T("column.hostOrder", "Host order"), host.GameplayMods,
+                        _report.Local.GameplayMods);
+                    builder.AppendLine();
+                    AppendModOrder(builder, T("column.localOrder", "Local order"), _report.Local.GameplayMods,
+                        host.GameplayMods);
+                }
             }
 
             return builder.ToString();
@@ -614,6 +736,46 @@ namespace STS2RitsuLib.Networking.JoinDiagnostics
             builder.AppendLine("  " + F("snapshot.mods", "Gameplay mods: {0}", snapshot.GameplayMods.Count));
         }
 
+        private static void AppendPeerGameplayMods(StringBuilder builder, string peerTitle, JoinPeerSnapshot? snapshot)
+        {
+            builder.AppendLine();
+            builder.AppendLine(peerTitle + " " + T("section.gameplayMods", "gameplay mods"));
+            if (snapshot == null)
+            {
+                builder.AppendLine("  <unknown>");
+                return;
+            }
+
+            if (snapshot.GameplayMods.Count == 0)
+            {
+                builder.AppendLine("  <none>");
+                return;
+            }
+
+            foreach (var mod in snapshot.GameplayMods)
+                builder.AppendLine("  " + FormatGameplayModInventoryLine(mod));
+        }
+
+        private static void AppendPeerContentMods(StringBuilder builder, string peerTitle, JoinPeerSnapshot? snapshot)
+        {
+            builder.AppendLine();
+            builder.AppendLine(peerTitle + " " + T("section.contentDependencyMods", "content/dependency mods"));
+            if (snapshot == null)
+            {
+                builder.AppendLine("  <unknown>");
+                return;
+            }
+
+            if (snapshot.ContentMods.Count == 0)
+            {
+                builder.AppendLine("  <none>");
+                return;
+            }
+
+            foreach (var mod in snapshot.ContentMods)
+                builder.AppendLine("  " + FormatContentModInventoryLine(mod));
+        }
+
         private static void AppendModOrder(
             StringBuilder builder,
             string title,
@@ -627,6 +789,23 @@ namespace STS2RitsuLib.Networking.JoinDiagnostics
                               string.Equals(mods[i].Key, counterpart[i].Key, StringComparison.Ordinal);
                 builder.AppendLine(
                     $"  #{i + 1:00} [{(matches ? T("value.same", "same") : T("value.differs", "differs"))}] {FormatModLine(mods[i])}");
+            }
+        }
+
+        private static void AppendContentModOrder(
+            StringBuilder builder,
+            string title,
+            IReadOnlyList<ContentModInventoryEntry> mods,
+            IReadOnlyList<ContentModInventoryEntry> counterpart)
+        {
+            builder.AppendLine(title);
+            for (var i = 0; i < mods.Count; i++)
+            {
+                var matches = i < counterpart.Count &&
+                              string.Equals(mods[i].Id, counterpart[i].Id, StringComparison.Ordinal) &&
+                              string.Equals(mods[i].Version, counterpart[i].Version, StringComparison.Ordinal);
+                builder.AppendLine(
+                    $"  #{i + 1:00} [{(matches ? T("value.same", "same") : T("value.differs", "differs"))}] {FormatContentModLine(mods[i])}");
             }
         }
 
@@ -751,6 +930,35 @@ namespace STS2RitsuLib.Networking.JoinDiagnostics
                 return mod.Name + " (" + mod.Key + ")";
 
             return mod.Key;
+        }
+
+        private static string FormatGameplayModInventoryLine(JoinDiagnosticsModEntry mod)
+        {
+            var name = string.IsNullOrWhiteSpace(mod.Name) || string.Equals(mod.Name, mod.Id, StringComparison.Ordinal)
+                ? mod.Id
+                : mod.Name + " (" + mod.Id + ")";
+            var version = string.IsNullOrWhiteSpace(mod.Version) ? T("value.noVersion", "No version") : mod.Version;
+            var source = string.IsNullOrWhiteSpace(mod.Source) ? "" : " source=" + mod.Source;
+            return $"#{mod.Index + 1:00} {name} version={version} key={mod.Key}{source}";
+        }
+
+        private static string FormatContentModInventoryLine(ContentModInventoryEntry mod)
+        {
+            return FormatContentModLine(mod);
+        }
+
+        private static string FormatContentModLine(ContentModInventoryEntry mod)
+        {
+            var name = string.IsNullOrWhiteSpace(mod.Name) || string.Equals(mod.Name, mod.Id, StringComparison.Ordinal)
+                ? mod.Id
+                : mod.Name + " (" + mod.Id + ")";
+            var version = string.IsNullOrWhiteSpace(mod.Version) ? T("value.noVersion", "No version") : mod.Version;
+            var role = mod.IsDependency
+                ? T("value.dependency", "dependency")
+                : T("value.content", "content");
+            var enabled = mod.IsEnabled ? T("value.enabled", "enabled") : T("value.disabled", "disabled");
+            return
+                $"#{mod.Index + 1:00} [{role}, {enabled}] {name} version={version} source={mod.Source}";
         }
 
         private static string T(string key, string fallback)
