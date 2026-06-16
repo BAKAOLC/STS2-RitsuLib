@@ -30,6 +30,12 @@ namespace STS2RitsuLib.Compat
             return string.Join("\n", lines);
         }
 
+        internal static string BuildInlineUiText(bool includeMissingBaseLib)
+        {
+            var lines = BuildDisplayLines(includeMissingBaseLib);
+            return string.Join("  |  ", lines);
+        }
+
         internal static IReadOnlyList<string> BuildDisplayLines(bool includeMissingBaseLib)
         {
             var lines = new List<string> { BuildRitsuLibDisplayLine() };

@@ -201,8 +201,6 @@ namespace STS2RitsuLib.Networking.StateDivergence
             };
             box.AddThemeConstantOverride("separation", 8);
             box.AddChild(CreateInfoCard(_report.Summary, RitsuShellTheme.Current.Text.RichBody));
-            box.AddChild(CreateInfoCard(RuntimeFrameworkVersionSummary.BuildUiText(false),
-                RitsuShellTheme.Current.Text.RichMuted));
             box.AddChild(BuildChecksumCards());
             return box;
         }
@@ -532,7 +530,7 @@ namespace STS2RitsuLib.Networking.StateDivergence
             };
             row.AddThemeConstantOverride("separation", 10);
             var label = CreateLabel(
-                F("footer.context", "Role: {0}  Remote peer: {1}", _report.Role, _report.RemotePeerId),
+                RuntimeFrameworkVersionSummary.BuildInlineUiText(false),
                 14,
                 RitsuShellTheme.Current.Text.LabelSecondary);
             label.SizeFlagsHorizontal = SizeFlags.ExpandFill;

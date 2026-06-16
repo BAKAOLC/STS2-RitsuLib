@@ -203,8 +203,6 @@ namespace STS2RitsuLib.Networking.JoinDiagnostics
             };
             box.AddThemeConstantOverride("separation", 8);
             box.AddChild(CreateInfoCard(_report.Summary, RitsuShellTheme.Current.Text.RichBody));
-            box.AddChild(CreateInfoCard(RuntimeFrameworkVersionSummary.BuildUiText(false),
-                RitsuShellTheme.Current.Text.RichMuted));
 
             if (_report.Host != null)
                 box.AddChild(BuildPeerSnapshotRow());
@@ -554,11 +552,8 @@ namespace STS2RitsuLib.Networking.JoinDiagnostics
             };
             row.AddThemeConstantOverride("separation", 10);
 
-            var reason = F("footer.networkReason", "Network reason: {0}", _report.NetworkReason);
-            if (!string.IsNullOrWhiteSpace(_report.NetworkInfo))
-                reason += "  " + F("footer.networkInfo", "Info: {0}", _report.NetworkInfo);
-
-            var label = CreateLabel(reason, 14, RitsuShellTheme.Current.Text.LabelSecondary);
+            var label = CreateLabel(RuntimeFrameworkVersionSummary.BuildInlineUiText(false), 14,
+                RitsuShellTheme.Current.Text.LabelSecondary);
             label.SizeFlagsHorizontal = SizeFlags.ExpandFill;
             row.AddChild(label);
             return row;
