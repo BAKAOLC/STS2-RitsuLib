@@ -151,6 +151,9 @@ namespace STS2RitsuLib
             patcher.RegisterPatch<NRunHistoryRefreshAndSelectRunSuppressRethrowPatch>();
             patcher.RegisterPatch<SentryDiagnosticsTelemetryPatch>();
             patcher.RegisterPatch<RunHistoryMissingModelDbGetByIdTranspilerPatch>();
+#if STS2_AT_LEAST_0_106_1
+            patcher.RegisterPatch<NRunHistoryDroppedFilePreviewPatch>();
+#endif
             patcher.RegisterPatch<NMultiplayerLoadGameScreenBeginRunMissingCharacterPatch>();
             patcher.RegisterPatch<NMultiplayerTestCharacterPaginatorAllCharactersPatch>();
             patcher.RegisterPatch<NCustomRunLoadScreenBeginRunMissingCharacterPatch>();
