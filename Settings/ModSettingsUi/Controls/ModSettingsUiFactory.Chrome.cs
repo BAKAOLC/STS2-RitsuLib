@@ -504,7 +504,7 @@ namespace STS2RitsuLib.Settings
                 return inner;
 
             Apply();
-            RegisterRefreshWhenAlive(context, inner, Apply, ModSettingsUiRefreshSpec.Always);
+            context.RegisterDynamicVisibility(inner, predicate);
             return inner;
 
             void Apply()
