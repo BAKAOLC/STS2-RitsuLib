@@ -13,7 +13,6 @@ using STS2RitsuLib.Combat.Ui.Patches;
 using STS2RitsuLib.Content.Patches;
 using STS2RitsuLib.Diagnostics;
 using STS2RitsuLib.Diagnostics.Patches;
-using STS2RitsuLib.Interactions.RightClick.Patches;
 using STS2RitsuLib.Interop.Patches;
 using STS2RitsuLib.Keywords.Patches;
 using STS2RitsuLib.Lifecycle.Patches;
@@ -157,10 +156,7 @@ namespace STS2RitsuLib
             patcher.RegisterPatch<NMultiplayerLoadGameScreenBeginRunMissingCharacterPatch>();
             patcher.RegisterPatch<NMultiplayerTestCharacterPaginatorAllCharactersPatch>();
             patcher.RegisterPatch<NCustomRunLoadScreenBeginRunMissingCharacterPatch>();
-            if (RitsuLibMobileSteamRuntime.SuppressNativeSteamIntegration)
-                patcher.RegisterPatch<RitsuLibMobileModelDbInitPostfixPatch>();
-            else
-                patcher.RegisterPatch<NDailyRunLoadScreenBeginRunMissingCharacterPatch>();
+            patcher.RegisterPatch<RitsuLibModelDbInitPostfixPatch>();
             patcher.RegisterPatch<LocManagerGetTableI18NBridgePatch>();
             patcher.RegisterPatch<LocTableHasEntryI18NBridgePatch>();
             patcher.RegisterPatch<LocTableIsLocalKeyI18NBridgePatch>();
@@ -193,7 +189,6 @@ namespace STS2RitsuLib
             patcher.RegisterPatch<RitsuLibManagedNetActionMessagePatches.AnnouncementDeserialize>();
             patcher.RegisterPatch<RitsuLibManagedNetActionMessagePatches.ReplayEventSerialize>();
             patcher.RegisterPatch<RitsuLibManagedNetActionMessagePatches.ReplayEventDeserialize>();
-            patcher.RegisterPatch<ModModelIdentityRunStateCreatePatch>();
             patcher.RegisterPatch<ModModelIdentityPlayerRunStatePatch>();
             patcher.RegisterPatch<ModModelIdentityRunStateAddCardPatch>();
             patcher.RegisterPatch<ModModelIdentityCombatStateAddCardPatch>();
@@ -330,10 +325,6 @@ namespace STS2RitsuLib
             patcher.RegisterPatch<HoveredModelTrackerRelicVisibilityPatch>();
             patcher.RegisterPatch<NIntentExtraCornerAmountLabelsPatch>();
             patcher.RegisterPatch<NIntentExtraCornerAmountLabelsExitTreePatch>();
-            patcher.RegisterPatch<ModRightClickCardHolderPatch>();
-            patcher.RegisterPatch<ModRightClickRelicPatch>();
-            patcher.RegisterPatch<ModRightClickPowerPatch>();
-            patcher.RegisterPatch<ModRightClickPotionPatch>();
             patcher.RegisterPatch<ArchaicToothGetTranscendenceStarterCardPatch>();
             patcher.RegisterPatch<ArchaicToothGetTranscendenceTransformedCardPatch>();
             patcher.RegisterPatch<ArchaicToothTranscendenceCardsPatch>();
@@ -675,13 +666,6 @@ namespace STS2RitsuLib
         private static void RegisterUnlockPatches()
         {
             var patcher = CreatePatcher(Const.ModId, "framework-unlocks", "unlocks");
-            if (!RitsuLibMobileSteamRuntime.SuppressNativeSteamIntegration)
-            {
-                patcher.RegisterPatch<CharacterUnlockFilterPatch>();
-                patcher.RegisterPatch<SharedAncientUnlockFilterPatch>();
-                patcher.RegisterPatch<EliteEpochAfterCombatFallbackPatch>();
-            }
-
             patcher.RegisterPatch<CharacterUnlockEpochRuntimeCompatibilityPatch>();
             patcher.RegisterPatch<CardUnlockFilterPatch>();
             patcher.RegisterPatch<RelicUnlockFilterPatch>();
