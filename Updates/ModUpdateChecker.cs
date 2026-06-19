@@ -1,6 +1,7 @@
 using System.Net;
 using System.Text.Json;
 using Godot;
+using STS2RitsuLib.Platform.Steam;
 using STS2RitsuLib.Ui.Toast;
 using STS2RitsuLib.Utils;
 using HttpClient = System.Net.Http.HttpClient;
@@ -74,6 +75,12 @@ namespace STS2RitsuLib.Updates
             CancellationToken cancellationToken = default)
         {
             ValidateOptions(options);
+
+            if (ShouldSkipForSteamWorkshop(options))
+                return new(
+                    ModUpdateCheckStatus.Skipped,
+                    options.CurrentVersion,
+                    Message: "External update check skipped because this install is managed by Steam Workshop.");
 
             if (!SimpleSemanticVersion.TryParse(options.CurrentVersion, out var currentVersion))
                 return new(
@@ -341,6 +348,8 @@ namespace STS2RitsuLib.Updates
                         $"{options.DisplayName.Trim()} is up to date ({result.CurrentVersion}).",
                         $"{options.DisplayName.Trim()} update check");
                     break;
+                case ModUpdateCheckStatus.Skipped:
+                    break;
                 case ModUpdateCheckStatus.InvalidData:
                 case ModUpdateCheckStatus.RequestFailed:
                     RitsuToastService.ShowWarning(
@@ -407,6 +416,10 @@ namespace STS2RitsuLib.Updates
                     RitsuLibFramework.Logger.Debug(
                         $"[UpdateCheck] {options.ModId} is up to date ({result.CurrentVersion}).");
                     break;
+                case ModUpdateCheckStatus.Skipped:
+                    RitsuLibFramework.Logger.Debug(
+                        $"[UpdateCheck] {options.ModId} skipped: {result.Message ?? result.Status.ToString()}");
+                    break;
                 case ModUpdateCheckStatus.InvalidData:
                 case ModUpdateCheckStatus.RequestFailed:
                     RitsuLibFramework.Logger.Warn(
@@ -444,11 +457,39 @@ namespace STS2RitsuLib.Updates
                 throw new ArgumentException("ReleasePageUri must use http or https when provided.", nameof(options));
             if (options.Timeout <= TimeSpan.Zero)
                 throw new ArgumentOutOfRangeException(nameof(options), "Timeout must be positive.");
+            if (options.SteamWorkshopItemId is 0)
+                throw new ArgumentOutOfRangeException(nameof(options),
+                    "SteamWorkshopItemId must be positive when provided.");
         }
 
         private static bool IsWebUri(Uri uri)
         {
             return uri is { IsAbsoluteUri: true, Scheme: "http" or "https" };
+        }
+
+        private static bool ShouldSkipForSteamWorkshop(ModUpdateCheckOptions options)
+        {
+            if (!options.SkipWhenLoadedFromSteamWorkshop)
+                return false;
+
+            if (options.SteamWorkshopItemId is { } itemId)
+            {
+                if (!string.IsNullOrWhiteSpace(options.InstallSourcePath))
+                    return SteamWorkshopInstallSource.IsPathLoadedFromSteamWorkshopItem(
+                        options.InstallSourcePath,
+                        itemId);
+
+                return options.InstallSourceAssembly != null &&
+                       SteamWorkshopInstallSource.IsAssemblyLoadedFromSteamWorkshopItem(
+                           options.InstallSourceAssembly,
+                           itemId);
+            }
+
+            if (!string.IsNullOrWhiteSpace(options.InstallSourcePath))
+                return SteamWorkshopInstallSource.IsPathLoadedFromSteamWorkshop(options.InstallSourcePath);
+
+            return options.InstallSourceAssembly != null &&
+                   SteamWorkshopInstallSource.IsAssemblyLoadedFromSteamWorkshop(options.InstallSourceAssembly);
         }
 
         private static string NormalizeSessionKey(string modId)

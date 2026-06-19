@@ -700,6 +700,20 @@ namespace STS2RitsuLib.Interop.AutoRegistration
     }
 
     /// <summary>
+    ///     Registers the annotated ancient card type as a preferred Dusty Tome candidate for the given character.
+    ///     将带注解的 ancient 卡牌类型注册为给定角色的 Dusty Tome 优先候选。
+    /// </summary>
+    [AttributeUsage(AttributeTargets.Class, AllowMultiple = true, Inherited = false)]
+    public sealed class RegisterDustyTomeCardAttribute(Type characterType) : AutoRegistrationAttribute
+    {
+        /// <summary>
+        ///     Character type whose Dusty Tome pool should include the annotated card.
+        ///     应将带注解卡牌加入 Dusty Tome 候选池的角色类型。
+        /// </summary>
+        public Type CharacterType { get; } = characterType;
+    }
+
+    /// <summary>
     ///     Registers a TouchOfOrobas refinement mapping from the annotated starter relic type to the given upgraded relic.
     ///     注册从带注解的初始遗物类型到给定升级遗物的 TouchOfOrobas 精炼映射。
     /// </summary>

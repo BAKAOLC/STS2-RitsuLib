@@ -199,24 +199,24 @@ def _parse_args(argv: list[str]) -> argparse.Namespace:
     )
     p.add_argument(
         "--workshop-description",
-        default=os.environ.get("RITSLIB_WORKSHOP_DESCRIPTION", workshop_ops.DEFAULT_WORKSHOP_DESCRIPTION),
-        help="Workshop description written to workshop.json.",
+        default=os.environ.get("RITSLIB_WORKSHOP_DESCRIPTION", ""),
+        help="Optional Workshop description written to workshop.json. Omitted by default.",
     )
     p.add_argument(
         "--workshop-schinese-title",
         default=os.environ.get(
             "RITSLIB_WORKSHOP_SCHINESE_TITLE",
-            workshop_ops.DEFAULT_WORKSHOP_SCHINESE_TITLE,
+            "",
         ),
-        help="Simplified Chinese Workshop title written to workshop.json localized.schinese.",
+        help="Optional Simplified Chinese Workshop title written to workshop.json localized.schinese.",
     )
     p.add_argument(
         "--workshop-schinese-description",
         default=os.environ.get(
             "RITSLIB_WORKSHOP_SCHINESE_DESCRIPTION",
-            workshop_ops.DEFAULT_WORKSHOP_SCHINESE_DESCRIPTION,
+            "",
         ),
-        help="Simplified Chinese Workshop description written to workshop.json localized.schinese.",
+        help="Optional Simplified Chinese Workshop description written to workshop.json localized.schinese.",
     )
     p.add_argument(
         "--workshop-tags",

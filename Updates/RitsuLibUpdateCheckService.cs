@@ -1,5 +1,6 @@
 using Godot;
 using STS2RitsuLib.Data;
+using STS2RitsuLib.Platform.Steam;
 using STS2RitsuLib.Settings;
 using STS2RitsuLib.Ui.Toast;
 
@@ -26,6 +27,13 @@ namespace STS2RitsuLib.Updates
                     if (!RitsuLibSettingsStore.IsUpdateCheckEnabled())
                         return;
 
+                    if (IsLoadedFromSteamWorkshop())
+                    {
+                        RitsuLibFramework.Logger.Info(
+                            "[UpdateCheck] RitsuLib external update check skipped: loaded from Steam Workshop.");
+                        return;
+                    }
+
                     if (RitsuLibBuildInfo.IsDevBuild)
                     {
                         ShowDevBuildToast();
@@ -39,6 +47,14 @@ namespace STS2RitsuLib.Updates
 
         internal static void CheckNowFromSettings()
         {
+            if (IsLoadedFromSteamWorkshop())
+            {
+                RitsuLibFramework.Logger.Info(
+                    "[UpdateCheck] RitsuLib manual external update check routed to Steam Workshop: loaded from Steam Workshop.");
+                SteamWorkshopUpdateCoordinator.CheckNowFromSettings();
+                return;
+            }
+
             if (RitsuLibBuildInfo.IsDevBuild)
             {
                 PostToMainLoop(ShowDevBuildToast);
@@ -166,7 +182,17 @@ namespace STS2RitsuLib.Updates
                 ManifestUri = ManifestUri,
                 ReleasePageUri = ReleasePageFallbackUri,
                 ToastDurationSeconds = UpdateCheckToastDurationSeconds,
+                SkipWhenLoadedFromSteamWorkshop = true,
+                SteamWorkshopItemId = Const.SteamWorkshopItemId,
+                InstallSourceAssembly = typeof(RitsuLibFramework).Assembly,
             };
+        }
+
+        private static bool IsLoadedFromSteamWorkshop()
+        {
+            return RitsuLibFramework.IsAssemblyLoadedFromSteamWorkshopItem(
+                typeof(RitsuLibFramework).Assembly,
+                Const.SteamWorkshopItemId);
         }
 
         private static string L(string key, string fallback)

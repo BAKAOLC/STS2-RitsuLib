@@ -1,3 +1,4 @@
+using System.Reflection;
 using System.Text.Json.Serialization;
 
 namespace STS2RitsuLib.Updates
@@ -68,6 +69,32 @@ namespace STS2RitsuLib.Updates
         ///     可选正文覆盖。留空时使用 manifest 消息或默认正文。
         /// </summary>
         public string? ToastBody { get; init; }
+
+        /// <summary>
+        ///     When true, skips the external manifest check if the configured install source is loaded from Steam Workshop.
+        ///     为 true 时，如果配置的安装来源来自 Steam Workshop，则跳过外部 manifest 检查。
+        /// </summary>
+        public bool SkipWhenLoadedFromSteamWorkshop { get; init; }
+
+        /// <summary>
+        ///     Steam Workshop item id that owns this update check. When set, Workshop skip logic only applies when the
+        ///     install source path belongs to this exact item.
+        ///     此更新检查对应的 Steam Workshop item id。设置后，仅当安装来源路径属于该 item 时才跳过外部检查。
+        /// </summary>
+        public ulong? SteamWorkshopItemId { get; init; }
+
+        /// <summary>
+        ///     Optional assembly used to detect whether this mod was loaded from Steam Workshop.
+        ///     用于检测此 Mod 是否从 Steam Workshop 加载的可选程序集。
+        /// </summary>
+        public Assembly? InstallSourceAssembly { get; init; }
+
+        /// <summary>
+        ///     Optional path used to detect whether this mod was loaded from Steam Workshop. When set, this takes
+        ///     precedence over <see cref="InstallSourceAssembly" />.
+        ///     用于检测此 Mod 是否从 Steam Workshop 加载的可选路径。设置后优先于 <see cref="InstallSourceAssembly" />。
+        /// </summary>
+        public string? InstallSourcePath { get; init; }
 
         /// <summary>
         ///     Creates update-check options from string URLs for the common call path.
@@ -221,6 +248,12 @@ namespace STS2RitsuLib.Updates
         ///     端点无法连接或返回了非成功响应。
         /// </summary>
         RequestFailed,
+
+        /// <summary>
+        ///     The check was intentionally skipped, for example because Steam Workshop manages the installed copy.
+        ///     检查被有意跳过，例如当前安装副本由 Steam Workshop 管理。
+        /// </summary>
+        Skipped,
     }
 
     /// <summary>

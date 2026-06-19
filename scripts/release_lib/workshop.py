@@ -7,16 +7,6 @@ from pathlib import Path
 
 
 DEFAULT_WORKSHOP_TITLE = "RitsuLib"
-DEFAULT_WORKSHOP_DESCRIPTION = (
-    "Shared framework library for Slay the Spire 2 mods. RitsuLib provides reusable "
-    "patching, persistence, lifecycle, localization, settings UI, content registration, "
-    "and utility APIs for other mods."
-)
-DEFAULT_WORKSHOP_SCHINESE_TITLE = "RitsuLib"
-DEFAULT_WORKSHOP_SCHINESE_DESCRIPTION = (
-    "Slay the Spire 2 模组共享框架库。RitsuLib 为其他模组提供可复用的补丁、"
-    "持久化、生命周期、本地化、设置界面、内容注册和工具 API。"
-)
 DEFAULT_WORKSHOP_TAGS = ("Tools & APIs",)
 
 WORKSHOP_CONFIG_NAME = "workshop.json"
@@ -42,7 +32,7 @@ def prepare_workshop_workspace(
     bundle_staging_root: Path,
     workspace: Path,
     title: str,
-    description: str,
+    description: str | None,
     visibility: str,
     tags: list[str],
     change_note: str,
@@ -113,7 +103,7 @@ def write_workshop_config(
     path: Path,
     *,
     title: str,
-    description: str,
+    description: str | None,
     visibility: str,
     tags: list[str],
     change_note: str,
@@ -121,13 +111,15 @@ def write_workshop_config(
 ) -> None:
     config = {
         "title": title,
-        "description": description,
-        "localized": localized,
         "visibility": visibility,
         "changeNote": change_note,
         "tags": tags,
         "dependencies": [],
     }
+    if description:
+        config["description"] = description
+    if localized:
+        config["localized"] = localized
     path.write_text(
         json.dumps(config, ensure_ascii=False, indent=2) + "\n",
         encoding="utf-8",

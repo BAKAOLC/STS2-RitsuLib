@@ -13,7 +13,7 @@ namespace STS2RitsuLib.Scaffolding.Content
     ///     若要复用原版章节随游戏发布的美术，请从 <see cref="AssetProfile" /> 设置
     ///     <see cref="ContentAssetProfiles.FromVanillaActId" />（使用原版文件夹名，而不是此章节的模型 id）。
     /// </summary>
-    public abstract class ModActTemplate : ActModel, IModActAssetOverrides
+    public abstract class ModActTemplate : ActModel, IModActAssetOverrides, IModActRandomListPolicy
     {
         /// <inheritdoc />
         public override string ChestSpineResourcePath =>
@@ -42,5 +42,8 @@ namespace STS2RitsuLib.Scaffolding.Content
 
         /// <inheritdoc />
         public virtual string? CustomBackgroundLayersDirectoryPath => AssetProfile.BackgroundLayersDirectoryPath;
+
+        /// <inheritdoc />
+        public virtual bool AllowInRandomActList => false;
     }
 }

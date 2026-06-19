@@ -1774,6 +1774,31 @@ namespace STS2RitsuLib.Scaffolding.Content
         }
 
         /// <summary>
+        ///     Queues <see cref="RitsuLibFramework.RegisterDustyTomeCard{TCharacter,TAncientCard}" /> using this pack’s
+        ///     mod id.
+        ///     将 <see cref="RitsuLibFramework.RegisterDustyTomeCard{TCharacter,TAncientCard}" /> 加入队列，使用此包的
+        ///     mod id。
+        /// </summary>
+        public ModContentPackBuilder DustyTomeCard<TCharacter, TAncientCard>()
+            where TCharacter : CharacterModel
+            where TAncientCard : CardModel
+        {
+            return AddStep(ctx =>
+                RitsuLibFramework.RegisterDustyTomeCard<TCharacter, TAncientCard>(ctx.ModId));
+        }
+
+        /// <summary>
+        ///     Queues Dusty Tome card registration by character id and ancient card type, using this pack’s mod id.
+        ///     按角色 id 和 ancient 卡牌类型将 Dusty Tome 卡牌注册加入队列，使用此包的 mod id。
+        /// </summary>
+        public ModContentPackBuilder DustyTomeCard(ModelId characterId, Type ancientCardType)
+        {
+            ArgumentNullException.ThrowIfNull(ancientCardType);
+            return AddStep(ctx =>
+                RitsuLibFramework.RegisterDustyTomeCard(characterId, ancientCardType, ctx.ModId));
+        }
+
+        /// <summary>
         ///     Queues <see cref="RitsuLibFramework.RegisterTouchOfOrobasRefinementMapping{TStarterRelic,TUpgradedRelic}" />
         ///     using this pack’s mod id.
         ///     将 <see cref="RitsuLibFramework.RegisterTouchOfOrobasRefinementMapping{TStarterRelic,TUpgradedRelic}" /> 加入队列，使用此包的

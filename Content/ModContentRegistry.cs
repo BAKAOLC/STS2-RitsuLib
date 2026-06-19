@@ -660,7 +660,10 @@ namespace STS2RitsuLib.Content
 
         /// <summary>
         ///     Registers a mod act model for inclusion in <see cref="ModelDb.Acts" />.
+        ///     This does not opt the act into vanilla act-list randomization; implement
+        ///     <see cref="IModActRandomListPolicy" /> when that behavior is intended.
         ///     注册 mod 章节模型，以纳入 <see cref="ModelDb.Acts" />。
+        ///     这不会让该章节进入原版章节列表随机；若需要该行为，请实现 <see cref="IModActRandomListPolicy" />。
         /// </summary>
         public void RegisterAct<TAct>() where TAct : ActModel
         {
@@ -669,7 +672,10 @@ namespace STS2RitsuLib.Content
 
         /// <summary>
         ///     Registers <paramref name="actType" /> for inclusion in <see cref="ModelDb.Acts" />.
+        ///     This does not opt the act into vanilla act-list randomization; implement
+        ///     <see cref="IModActRandomListPolicy" /> when that behavior is intended.
         ///     注册 <paramref name="actType" />，以纳入 <see cref="ModelDb.Acts" />。
+        ///     这不会让该章节进入原版章节列表随机；若需要该行为，请实现 <see cref="IModActRandomListPolicy" />。
         /// </summary>
         public void RegisterAct(Type actType)
         {

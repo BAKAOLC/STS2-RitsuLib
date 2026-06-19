@@ -1,6 +1,7 @@
 using HarmonyLib;
 using MegaCrit.Sts2.Core.Models;
 using STS2RitsuLib.Patching.Models;
+using STS2RitsuLib.Scaffolding.Content;
 
 namespace STS2RitsuLib.Content.Patches
 {
@@ -80,6 +81,57 @@ namespace STS2RitsuLib.Content.Patches
         public static void Postfix(ref IEnumerable<ActModel> __result)
         {
             ModelDbContentPatchHelper.Append(ref __result, ModContentRegistry.AppendActs);
+        }
+    }
+
+    /// <summary>
+    ///     <para xml:lang="en">
+    ///         Prevents registered mod acts from entering vanilla act-list randomization unless they explicitly opt in.
+    ///     </para>
+    ///     <para xml:lang="zh-CN">阻止已注册 mod 章节默认进入原版章节列表随机逻辑，除非其显式选择加入。</para>
+    /// </summary>
+    internal class ActsByIndexPatch : IPatchMethod
+    {
+        public static string PatchId => "modeldb_acts_by_index";
+        public static string Description => "Apply registered act random-list policy to ModelDb.ActsByIndex";
+        public static bool IsCritical => true;
+
+        public static ModPatchTarget[] GetTargets()
+        {
+            return [new(typeof(ModelDb), "ActsByIndex", MethodType.Getter)];
+        }
+
+        [HarmonyAfter(Const.BaseLibHarmonyId)]
+        [HarmonyPriority(Priority.Last)]
+        public static void Postfix(ref IReadOnlyList<IReadOnlyList<ActModel>> __result)
+        {
+            var registeredTypes = ModContentRegistry.GetRegisteredActTypes().ToHashSet();
+            if (registeredTypes.Count == 0)
+                return;
+
+            var registeredActs = ModContentRegistry.AppendActs([])
+                .Where(static act => act.Index >= 0)
+                .Where(static act => act is IModActRandomListPolicy { AllowInRandomActList: true })
+                .ToArray();
+
+            var buckets = __result
+                .Select(acts => acts
+                    .Where(act => !registeredTypes.Contains(act.GetType()) ||
+                                  act is IModActRandomListPolicy { AllowInRandomActList: true })
+                    .ToList())
+                .ToList();
+
+            foreach (var act in registeredActs)
+            {
+                while (buckets.Count <= act.Index)
+                    buckets.Add([]);
+
+                var bucket = buckets[act.Index];
+                if (bucket.All(existing => existing.Id != act.Id))
+                    bucket.Add(act);
+            }
+
+            __result = buckets;
         }
     }
 

@@ -334,6 +334,7 @@ namespace STS2RitsuLib
             patcher.RegisterPatch<ArchaicToothGetTranscendenceStarterCardPatch>();
             patcher.RegisterPatch<ArchaicToothGetTranscendenceTransformedCardPatch>();
             patcher.RegisterPatch<ArchaicToothTranscendenceCardsPatch>();
+            patcher.RegisterPatch<DustyTomeSetupForPlayerPatch>();
             patcher.RegisterPatch<TouchOfOrobasGetUpgradedStarterRelicPatch>();
             patcher.RegisterPatch<CardModelIsValidTargetAnyPlayerPatch>();
             patcher.RegisterPatch<NCardPlayTryPlayCardAnyPlayerPatch>();
@@ -637,6 +638,7 @@ namespace STS2RitsuLib
             patcher.RegisterPatch<AllCharactersPatch>();
             patcher.RegisterPatch<AllMonstersPatch>();
             patcher.RegisterPatch<ActsPatch>();
+            patcher.RegisterPatch<ActsByIndexPatch>();
             patcher.RegisterPatch<RelicCollectionActListPatch>();
             patcher.RegisterPatch<AllPowersPatch>();
             patcher.RegisterPatch<AllOrbsPatch>();

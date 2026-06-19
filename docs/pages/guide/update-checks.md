@@ -22,6 +22,20 @@ RitsuLibFramework.RegisterModUpdateCheck(new()
 });
 ```
 
+For mods that are also distributed through Steam Workshop, wrap the options with `SkipModUpdateCheckWhenLoadedFromSteamWorkshop` and pass the mod's Workshop item id. This keeps local/manual installs on the external update source, while that exact Workshop item is left to Steam's Workshop update flow.
+
+```csharp
+RitsuLibFramework.RegisterModUpdateCheck(
+    RitsuLibFramework.SkipModUpdateCheckWhenLoadedFromSteamWorkshop(new()
+    {
+        ModId = MyModConst.ModId,
+        DisplayName = MyModConst.Name,
+        CurrentVersion = MyModConst.Version,
+        ManifestUri = new("https://example.com/my-mod/update.json"),
+        ReleasePageUri = new("https://example.com/my-mod/releases"),
+    }, typeof(MyModPlugin).Assembly, 1234567890));
+```
+
 If the manifest version is newer, RitsuLib shows a normal non-persistent info toast. Clicking the toast opens `release_page_url` from the manifest, or `ReleasePageUri` from options when the manifest omits it.
 
 ```json
@@ -51,6 +65,20 @@ RitsuLibFramework.RegisterModUpdateCheck(new()
     ManifestUri = new("https://example.com/my-mod/update.json"),
     ReleasePageUri = new("https://example.com/my-mod/releases"),
 });
+```
+
+如果 Mod 同时通过 Steam 创意工坊发布，可以用 `SkipModUpdateCheckWhenLoadedFromSteamWorkshop` 包装选项，并传入该 Mod 的 Workshop item id。这样本地/手动安装仍然使用外部更新源，而该精确 Workshop item 交给 Steam 的 Workshop 更新流程。
+
+```csharp
+RitsuLibFramework.RegisterModUpdateCheck(
+    RitsuLibFramework.SkipModUpdateCheckWhenLoadedFromSteamWorkshop(new()
+    {
+        ModId = MyModConst.ModId,
+        DisplayName = MyModConst.Name,
+        CurrentVersion = MyModConst.Version,
+        ManifestUri = new("https://example.com/my-mod/update.json"),
+        ReleasePageUri = new("https://example.com/my-mod/releases"),
+    }, typeof(MyModPlugin).Assembly, 1234567890));
 ```
 
 如果 manifest 里的版本更新，RitsuLib 会显示一个普通、非持久的信息 toast。点击 toast 时优先打开 manifest 里的 `release_page_url`；如果 manifest 没有提供，则打开选项里的 `ReleasePageUri`。
