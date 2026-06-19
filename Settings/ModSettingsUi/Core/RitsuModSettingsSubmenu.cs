@@ -706,8 +706,8 @@ namespace STS2RitsuLib.Settings
             var contentVisibilityChanged = ApplyDynamicVisibilityTargets(_globalDynamicVisibilityTargets);
             ApplyDynamicVisibilityTargets(_sidebarDynamicVisibilityTargets);
             if (includeAllPages)
-                foreach (var pageCache in _pageContentCaches.Values)
-                    contentVisibilityChanged |= ApplyDynamicVisibilityTargets(pageCache.VisibilityTargets);
+                contentVisibilityChanged = _pageContentCaches.Values.Aggregate(contentVisibilityChanged,
+                    (current, pageCache) => current | ApplyDynamicVisibilityTargets(pageCache.VisibilityTargets));
             else if (!string.IsNullOrWhiteSpace(_selectedPageId) && !string.IsNullOrWhiteSpace(_selectedModId) &&
                      _pageContentCaches.TryGetValue(CreatePageCacheKey(_selectedModId, _selectedPageId),
                          out var selectedVisibilityPage))
@@ -739,7 +739,7 @@ namespace STS2RitsuLib.Settings
         private static bool TryMeasurePageContentHeight(PageContentCache? cache, out float height)
         {
             height = 0f;
-            if (cache == null || cache.State != PageBuildState.Ready || !IsInstanceValid(cache.Root))
+            if (cache is not { State: PageBuildState.Ready } || !IsInstanceValid(cache.Root))
                 return false;
 
             height = cache.Root.GetCombinedMinimumSize().Y;

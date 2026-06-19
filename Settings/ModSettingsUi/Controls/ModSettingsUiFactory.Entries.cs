@@ -464,6 +464,35 @@ namespace STS2RitsuLib.Settings
                 entry.Description);
         }
 
+        public static Control CreateInputBindingEntry(ModSettingsUiContext context,
+            InputBindingModSettingsEntryDefinition entry)
+        {
+            var control = new ModSettingsKeyBindingControl(
+                entry.Binding.Read(),
+                entry.AllowModifierCombos,
+                entry.AllowModifierOnly,
+                entry.DistinguishModifierSides,
+                value =>
+                {
+                    entry.Binding.Write(value);
+                    context.MarkDirty(entry.Binding);
+                    context.RequestRefresh();
+                },
+                entry.AllowActionBindings);
+            RegisterRefreshWhenAlive(context, control, () => control.SetValue(entry.Binding.Read()),
+                ModSettingsUiRefreshSpec.ForBinding(entry.Binding));
+
+            return CreateSettingLine(
+                context,
+                () => ModSettingsUiContext.Resolve(entry.Label),
+                () => ModSettingsUiControlFactoryHelper.ResolveDescription(entry.Description),
+                control,
+                entry.Binding,
+                entry.MenuCapabilities,
+                entry.Label,
+                entry.Description);
+        }
+
         public static Control CreateMultiKeyBindingEntry(ModSettingsUiContext context,
             MultiKeyBindingModSettingsEntryDefinition entry)
         {

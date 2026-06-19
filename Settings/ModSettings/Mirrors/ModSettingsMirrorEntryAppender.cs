@@ -94,6 +94,12 @@ namespace STS2RitsuLib.Settings
                         entry.Description);
                     ApplyVisibility(section, entry);
                     return;
+                case ModSettingsMirrorEntryKind.InputBinding:
+                    section.AddInputBinding(entry.Id, entry.Label, (IModSettingsValueBinding<string>)entry.Binding!,
+                        entry.AllowModifierCombos, entry.AllowModifierOnly, entry.DistinguishModifierSides,
+                        entry.AllowActionBindings, entry.Description);
+                    ApplyVisibility(section, entry);
+                    return;
                 case ModSettingsMirrorEntryKind.MultiKeyBinding:
                     section.AddKeyBinding(entry.Id, entry.Label, (IModSettingsValueBinding<List<string>>)entry.Binding!,
                         true, entry.AllowModifierCombos, entry.AllowModifierOnly, entry.DistinguishModifierSides,

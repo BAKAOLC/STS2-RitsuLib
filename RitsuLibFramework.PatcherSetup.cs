@@ -30,6 +30,7 @@ using STS2RitsuLib.Platform.Patches;
 using STS2RitsuLib.Relics.Patches;
 using STS2RitsuLib.Relics.Visibility.Patches;
 using STS2RitsuLib.RunData.Patches;
+using STS2RitsuLib.RuntimeInput.Patches;
 using STS2RitsuLib.Saves.Patches;
 using STS2RitsuLib.Scaffolding.Cards.HandGlow.Patches;
 using STS2RitsuLib.Scaffolding.Cards.HandOutline.Patches;
@@ -138,6 +139,8 @@ namespace STS2RitsuLib
             patcher.RegisterPatch<CoreInitializationLifecyclePatch>();
             patcher.RegisterPatch<DevConsoleAutocompleteEnhancementPatch>();
             patcher.RegisterPatch<DevConsoleAutocompleteUnlockArgumentPatch>();
+            patcher.RegisterPatch<RitsuSteamInputManifestInstallPatch>();
+            patcher.RegisterPatch<RitsuSteamInputBackendProcessPatch>();
             patcher.RegisterPatch<DevConsoleAutocompleteApplyCandidatePatch>();
             patcher.RegisterPatch<DevConsoleAutocompleteGhostTextPatch>();
             patcher.RegisterPatch<DevConsoleHistoryNavigationInputPatch>();
@@ -149,6 +152,9 @@ namespace STS2RitsuLib
             patcher.RegisterPatch<NContinueRunInfoShowInfoModelNotFoundPatch>();
             patcher.RegisterPatch<NRunHistoryRefreshAndSelectRunSuppressRethrowPatch>();
             patcher.RegisterPatch<SentryDiagnosticsTelemetryPatch>();
+#if STS2_AT_LEAST_0_107_1
+            patcher.RegisterPatch<SentryGdExtensionShutdown1071WorkaroundPatch>();
+#endif
             patcher.RegisterPatch<RunHistoryMissingModelDbGetByIdTranspilerPatch>();
 #if STS2_AT_LEAST_0_106_1
             patcher.RegisterPatch<NRunHistoryDroppedFilePreviewPatch>();

@@ -207,6 +207,7 @@ def run_pack(
         "/p:ContinuousIntegrationBuild=false",
         "/p:IncludeSymbols=true",
         "/p:SymbolPackageFormat=snupkg",
+        "/p:RitsuLibCopyToGame=false",
         f"/p:Sts2ApiCompat={compat_target}",
     ]
     if version_override is not None and version_override.strip():

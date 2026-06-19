@@ -30,6 +30,7 @@ using STS2RitsuLib.Models;
 using STS2RitsuLib.Models.Capabilities;
 using STS2RitsuLib.Patching.Core;
 using STS2RitsuLib.Platform;
+using STS2RitsuLib.Platform.Steam;
 using STS2RitsuLib.RunData;
 using STS2RitsuLib.RuntimeInput;
 using STS2RitsuLib.Scaffolding.Ancients.Options;
@@ -393,6 +394,7 @@ namespace STS2RitsuLib
                         RitsuToastService.Initialize();
                         RuntimeDetourCompatibilityScanner.Initialize();
                         RitsuLibUpdateCheckService.Initialize();
+                        SteamWorkshopUpdateCoordinator.Initialize();
                     });
                     SubscribeLifecycleOnce<MainMenuReadyEvent>(_ =>
                     {

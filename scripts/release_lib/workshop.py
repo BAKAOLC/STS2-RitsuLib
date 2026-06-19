@@ -12,7 +12,12 @@ DEFAULT_WORKSHOP_DESCRIPTION = (
     "patching, persistence, lifecycle, localization, settings UI, content registration, "
     "and utility APIs for other mods."
 )
-DEFAULT_WORKSHOP_TAGS = ("tool",)
+DEFAULT_WORKSHOP_SCHINESE_TITLE = "RitsuLib"
+DEFAULT_WORKSHOP_SCHINESE_DESCRIPTION = (
+    "Slay the Spire 2 模组共享框架库。RitsuLib 为其他模组提供可复用的补丁、"
+    "持久化、生命周期、本地化、设置界面、内容注册和工具 API。"
+)
+DEFAULT_WORKSHOP_TAGS = ("Tools & APIs",)
 
 WORKSHOP_CONFIG_NAME = "workshop.json"
 WORKSHOP_CONTENT_DIR_NAME = "content"
@@ -41,6 +46,7 @@ def prepare_workshop_workspace(
     visibility: str,
     tags: list[str],
     change_note: str,
+    localized: dict[str, dict[str, str]],
 ) -> None:
     if not bundle_staging_root.is_dir():
         msg = f"bundle staging directory does not exist: {bundle_staging_root}"
@@ -64,6 +70,7 @@ def prepare_workshop_workspace(
         visibility=visibility,
         tags=tags,
         change_note=change_note,
+        localized=localized,
     )
 
 
@@ -110,10 +117,12 @@ def write_workshop_config(
     visibility: str,
     tags: list[str],
     change_note: str,
+    localized: dict[str, dict[str, str]],
 ) -> None:
     config = {
         "title": title,
         "description": description,
+        "localized": localized,
         "visibility": visibility,
         "changeNote": change_note,
         "tags": tags,

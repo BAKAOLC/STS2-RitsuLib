@@ -393,6 +393,14 @@ namespace STS2RitsuLib.Data.Models
         public bool UpdateCheckEnabled { get; set; } = true;
 
         /// <summary>
+        ///     When true and Steam Workshop is active, RitsuLib asks Steam to download subscribed workshop items whose
+        ///     state is installed but still marked as needing an update.
+        ///     为 true 且 Steam Workshop 可用时，RitsuLib 会请求 Steam 下载已订阅且仍标记为需要更新的 Workshop 项。
+        /// </summary>
+        [JsonPropertyName("steam_workshop_auto_update_check_enabled")]
+        public bool SteamWorkshopAutoUpdateCheckEnabled { get; set; } = true;
+
+        /// <summary>
         ///     When true, shows the RitsuLib mod settings shortcut under the vanilla patch notes button on the main menu.
         ///     为 true 时，在主菜单原版更新日志按钮下方显示 RitsuLib 模组设置快捷入口。
         /// </summary>

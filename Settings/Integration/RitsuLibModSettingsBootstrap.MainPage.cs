@@ -1,5 +1,6 @@
 using STS2RitsuLib.Data;
 using STS2RitsuLib.Diagnostics;
+using STS2RitsuLib.Platform.Steam;
 using STS2RitsuLib.Ui.Shell.Theme;
 using STS2RitsuLib.Updates;
 using STS2RitsuLib.Utils.Persistence;
@@ -144,6 +145,23 @@ namespace STS2RitsuLib.Settings
                         ModSettingsButtonTone.Danger,
                         T("ritsulib.modCloud.clear.description",
                             "Deletes mod data from Steam Cloud for this profile. Local files are not removed. Requires confirmation.")))
+                .AddSection("steam_workshop_updates", section => section
+                    .WithTitle(T("ritsulib.section.steamWorkshopUpdates.title", "Steam Workshop updates"))
+                    .Collapsible()
+                    .AddToggle(
+                        "steam_workshop_auto_update_check_enabled",
+                        T("ritsulib.steamWorkshop.autoUpdateCheck.label", "Auto-check stale Workshop items"),
+                        ui.SteamWorkshopAutoUpdateCheckEnabled,
+                        T("ritsulib.steamWorkshop.autoUpdateCheck.description",
+                            "Once after the first main menu load, asks Steam to download subscribed Workshop items that Steam still marks as needing an update."))
+                    .AddButton(
+                        "steam_workshop_check_now",
+                        T("ritsulib.steamWorkshop.checkNow.label", "Check Workshop updates now"),
+                        T("ritsulib.steamWorkshop.checkNow.button", "Check Workshop"),
+                        SteamWorkshopUpdateCoordinator.CheckNowFromSettings,
+                        ModSettingsButtonTone.Normal,
+                        T("ritsulib.steamWorkshop.checkNow.description",
+                            "Checks subscribed Workshop item states immediately and asks Steam to download any stale installed items.")))
                 .AddSection("dev_debug_tools", section => section
                     .WithTitle(T("ritsulib.section.devDebugTools.title", "Developer debug tools"))
                     .Collapsible()

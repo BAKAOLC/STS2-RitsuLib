@@ -188,9 +188,9 @@ def _parse_args(argv: list[str]) -> argparse.Namespace:
     )
     p.add_argument(
         "--workshop-visibility",
-        default=os.environ.get("RITSLIB_WORKSHOP_VISIBILITY", "private"),
+        default=os.environ.get("RITSLIB_WORKSHOP_VISIBILITY", "public"),
         choices=("private", "public", "unlisted", "friends_only"),
-        help="Workshop visibility written to workshop.json (default: private).",
+        help="Workshop visibility written to workshop.json (default: public).",
     )
     p.add_argument(
         "--workshop-title",
@@ -203,12 +203,28 @@ def _parse_args(argv: list[str]) -> argparse.Namespace:
         help="Workshop description written to workshop.json.",
     )
     p.add_argument(
+        "--workshop-schinese-title",
+        default=os.environ.get(
+            "RITSLIB_WORKSHOP_SCHINESE_TITLE",
+            workshop_ops.DEFAULT_WORKSHOP_SCHINESE_TITLE,
+        ),
+        help="Simplified Chinese Workshop title written to workshop.json localized.schinese.",
+    )
+    p.add_argument(
+        "--workshop-schinese-description",
+        default=os.environ.get(
+            "RITSLIB_WORKSHOP_SCHINESE_DESCRIPTION",
+            workshop_ops.DEFAULT_WORKSHOP_SCHINESE_DESCRIPTION,
+        ),
+        help="Simplified Chinese Workshop description written to workshop.json localized.schinese.",
+    )
+    p.add_argument(
         "--workshop-tags",
         default=os.environ.get(
             "RITSLIB_WORKSHOP_TAGS",
             ",".join(workshop_ops.DEFAULT_WORKSHOP_TAGS),
         ),
-        help="Comma-separated Workshop tags written to workshop.json (default: tool).",
+        help="Comma-separated Workshop tags written to workshop.json (default: Tools & APIs).",
     )
     p.add_argument(
         "--workshop-change-note",
@@ -323,12 +339,25 @@ def _prepare_and_maybe_upload_workshop(
         raise RuntimeError(msg)
 
     fallback_note = f"RitsuLib {effective_version}"
-    change_note = (args.workshop_change_note or "").strip()
-    if not change_note:
-        change_note = workshop_ops.read_workshop_change_note(
-            release_notes_file,
-            fallback=fallback_note,
-        )
+    default_change_note = workshop_ops.read_workshop_change_note(
+        release_notes_file,
+        fallback=fallback_note,
+    )
+    change_note = (args.workshop_change_note or "").strip() or default_change_note
+
+    localized: dict[str, dict[str, str]] = {}
+    schinese_title = (args.workshop_schinese_title or "").strip()
+    schinese_description = (args.workshop_schinese_description or "").strip()
+    schinese = {
+        key: value
+        for key, value in {
+            "title": schinese_title,
+            "description": schinese_description,
+        }.items()
+        if value
+    }
+    if schinese:
+        localized["schinese"] = schinese
 
     workshop_ops.prepare_workshop_workspace(
         bundle_staging_root=bundle_root,
@@ -338,6 +367,7 @@ def _prepare_and_maybe_upload_workshop(
         visibility=args.workshop_visibility,
         tags=_workshop_tags(args.workshop_tags),
         change_note=change_note,
+        localized=localized,
     )
     print(f"[release] Workshop workspace prepared: {workspace}", flush=True)
 

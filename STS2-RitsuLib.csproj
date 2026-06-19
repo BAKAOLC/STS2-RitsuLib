@@ -33,6 +33,7 @@
         <RitsuLibViewerDistDir>$(RitsuLibViewerProjectDir)\dist</RitsuLibViewerDistDir>
         <RitsuLibBuildViewer Condition="'$(RitsuLibBuildViewer)' == '' and Exists('$(RitsuLibViewerProjectDir)\package.json')">true</RitsuLibBuildViewer>
         <RitsuLibBuildViewer Condition="'$(RitsuLibBuildViewer)' == ''">false</RitsuLibBuildViewer>
+        <RitsuLibCopyToGame Condition="'$(RitsuLibCopyToGame)' == ''">true</RitsuLibCopyToGame>
         <RitsuLibAnalyzerProject>$(MSBuildProjectDirectory)\Analyzers\STS2-RitsuLib-Analyzers.csproj</RitsuLibAnalyzerProject>
         <RitsuLibAnalyzerTargetFramework>netstandard2.0</RitsuLibAnalyzerTargetFramework>
         <RitsuLibAnalyzerAssembly>$(MSBuildProjectDirectory)\Analyzers\bin\$(Configuration)\$(RitsuLibAnalyzerTargetFramework)\STS2-RitsuLib.Analyzers.dll</RitsuLibAnalyzerAssembly>
@@ -40,7 +41,7 @@
 
     <PropertyGroup Label="NuGet package">
         <IsPackable>true</IsPackable>
-        <Version>0.4.25</Version>
+        <Version>0.4.26</Version>
         <Authors>OLC</Authors>
         <Description>Shared framework library for Slay the Spire 2 mods.</Description>
         <PackageReadmeFile>README.md</PackageReadmeFile>
@@ -204,9 +205,11 @@
             </TfmSpecificPackageFile>
         </ItemGroup>
     </Target>
-    <Target Name="Copy Mod" AfterTargets="Build" Condition="'$(Sts2ApiCompat)' == '$(RitsuLibLatestApiCompat)'">
+    <Target Name="Copy Mod" AfterTargets="Build" Condition="'$(RitsuLibCopyToGame)' == 'true' and '$(Sts2ApiCompat)' == '$(RitsuLibLatestApiCompat)'">
         <Message Text="Copying mod to Slay the Spire 2 mods folder..." Importance="high"/>
         <MakeDir Directories="$(Sts2Dir)\mods\$(MSBuildProjectName)\"/>
+        <RemoveDir Directories="$(Sts2Dir)\mods\$(MSBuildProjectName)\lib"/>
+        <Delete Files="$(Sts2Dir)\mods\$(MSBuildProjectName)\compat-target.txt;$(Sts2Dir)\mods\$(MSBuildProjectName)\ritsulib-variants.json;$(Sts2Dir)\mods\$(MSBuildProjectName)\ritsulib-variants.manifest;$(Sts2Dir)\mods\$(MSBuildProjectName)\STS2-RitsuLib.Loader.pdb"/>
         <Copy SourceFiles="$(TargetPath)" DestinationFolder="$(Sts2Dir)\mods\$(MSBuildProjectName)\"/>
         <Copy SourceFiles="$(RitsuLibManifestGenerated)" DestinationFiles="$(Sts2Dir)\mods\$(MSBuildProjectName)\mod_manifest.json"/>
         <ItemGroup>

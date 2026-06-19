@@ -18,6 +18,7 @@ namespace STS2RitsuLib.Settings
         {
             var added = 0;
             added += BaseLibMirrorSource.TryRegisterMirroredPages();
+            added += JmcModLibMirrorSource.TryRegisterMirroredPages();
             added += ModConfigMirrorSource.TryRegisterMirroredPages();
             added += RuntimeInteropMirrorSource.TryRegisterMirroredPages();
             added += RuntimeReflectionMirrorSource.TryRegisterMirroredPages();
@@ -29,6 +30,7 @@ namespace STS2RitsuLib.Settings
         {
             return new([
                 new BackgroundPrewarmWork(() => BaseLibMirrorSource.TryRegisterMirroredPages()),
+                new BackgroundPrewarmWork(() => JmcModLibMirrorSource.TryRegisterMirroredPages()),
                 new BackgroundPrewarmWork(() => ModConfigMirrorSource.TryRegisterMirroredPages()),
                 new BackgroundPrewarmWork(RuntimeInteropMirrorSource.TryRegisterMirroredPages),
                 new BackgroundPrewarmWork(RuntimeReflectionMirrorSource.TryRegisterMirroredPages),

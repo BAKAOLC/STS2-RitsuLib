@@ -5,12 +5,17 @@ namespace STS2RitsuLib.RuntimeInput
 {
     internal static class RuntimeHotkeyParser
     {
+        private const string ActionPrefix = "action:";
+
         public static bool TryParse(string? text, out RuntimeHotkeyBinding binding, out string normalized)
         {
             binding = default;
             normalized = string.Empty;
             if (string.IsNullOrWhiteSpace(text))
                 return false;
+
+            if (TryParseActionBinding(text, out binding, out normalized))
+                return true;
 
             var parts = text.Split('+', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries);
             if (parts.Length == 0)
@@ -67,8 +72,14 @@ namespace STS2RitsuLib.RuntimeInput
                 return false;
 
             normalized = BuildCanonicalString(primaryKey.Value, ctrl, alt, shift, meta);
-            binding = new(primaryKey.Value, ctrl, alt, shift, meta, normalized);
+            binding = new(RuntimeHotkeyBindingKind.Key, primaryKey.Value, ctrl, alt, shift, meta, null, normalized);
             return true;
+        }
+
+        public static string ActionBinding(string actionName)
+        {
+            var normalizedAction = NormalizeActionName(actionName);
+            return string.IsNullOrWhiteSpace(normalizedAction) ? string.Empty : $"{ActionPrefix}{normalizedAction}";
         }
 
         public static string NormalizeOrDefault(string? text, string fallback)
@@ -248,6 +259,37 @@ namespace STS2RitsuLib.RuntimeInput
                 }
 
             return false;
+        }
+
+        private static bool TryParseActionBinding(string text, out RuntimeHotkeyBinding binding, out string normalized)
+        {
+            binding = default;
+            normalized = string.Empty;
+
+            var trimmed = text.Trim();
+            if (!trimmed.StartsWith(ActionPrefix, StringComparison.OrdinalIgnoreCase))
+                return false;
+
+            var actionName = NormalizeActionName(trimmed[ActionPrefix.Length..]);
+            if (string.IsNullOrWhiteSpace(actionName))
+                return false;
+
+            normalized = $"{ActionPrefix}{actionName}";
+            binding = new(
+                RuntimeHotkeyBindingKind.Action,
+                Key.None,
+                ModifierRequirement.NotPressed,
+                ModifierRequirement.NotPressed,
+                ModifierRequirement.NotPressed,
+                ModifierRequirement.NotPressed,
+                actionName,
+                normalized);
+            return true;
+        }
+
+        private static string NormalizeActionName(string? actionName)
+        {
+            return actionName?.Trim() ?? string.Empty;
         }
 
         private static string BuildCanonicalString(Key primaryKey, ModifierRequirement ctrl, ModifierRequirement alt,

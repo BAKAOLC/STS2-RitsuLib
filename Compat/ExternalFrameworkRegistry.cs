@@ -8,6 +8,7 @@ namespace STS2RitsuLib.Compat
     {
         public const string BaseLib = "baselib";
         public const string BaseLibToRitsuGenerated = "baselib-to-ritsu-generated";
+        public const string JmcModLib = "jmcmodlib";
         public const string ModConfig = "modconfig";
     }
 
@@ -30,6 +31,9 @@ namespace STS2RitsuLib.Compat
             [ExternalFrameworkIds.BaseLibToRitsuGenerated] = new(
                 ExternalFrameworkIds.BaseLibToRitsuGenerated,
                 ["BaseLibToRitsu.Generated.ModConfigRegistry"]),
+            [ExternalFrameworkIds.JmcModLib] = new(
+                ExternalFrameworkIds.JmcModLib,
+                ["JmcModLib.Config.ConfigManager", "JmcModLib.Core.ModRegistry"]),
             [ExternalFrameworkIds.ModConfig] = new(
                 ExternalFrameworkIds.ModConfig,
                 ["ModConfig.ModConfigApi"]),
