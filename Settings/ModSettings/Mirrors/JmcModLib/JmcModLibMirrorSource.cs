@@ -94,25 +94,16 @@ namespace STS2RitsuLib.Settings
             MethodInfo? resetAssembly)
         {
             var groups = ReadGroups(getGroups, assembly, entries);
-            var sections = new List<ModSettingsMirrorSectionDefinition>();
-
-            foreach (var group in groups)
-            {
-                var sectionEntries = entries
-                    .Where(entry => string.Equals(ReadStringProperty(entry, "Group"), group, StringComparison.Ordinal))
+            var sections = (from @group in groups
+                let sectionEntries = entries.Where(entry =>
+                        string.Equals(ReadStringProperty(entry, "Group"), @group, StringComparison.Ordinal))
                     .Select(TryCreateEntry)
                     .Where(static entry => entry != null)
                     .Select(static entry => entry!)
-                    .ToArray();
-
-                if (sectionEntries.Length == 0)
-                    continue;
-
-                sections.Add(new(
-                    ModSettingsMirrorSlugPolicy.Normalize(group),
-                    sectionEntries,
-                    JmcText(() => ResolveJmcGroupName(assembly, group, entries))));
-            }
+                    .ToArray()
+                where sectionEntries.Length != 0
+                select new ModSettingsMirrorSectionDefinition(ModSettingsMirrorSlugPolicy.Normalize(@group),
+                    sectionEntries, JmcText(() => ResolveJmcGroupName(assembly, @group, entries)))).ToList();
 
             if (sections.Count == 0)
                 return null;
@@ -165,9 +156,11 @@ namespace STS2RitsuLib.Settings
 
                 if (uiName == "UIToggleAttribute" || valueType == typeof(bool))
                     return new(id, ModSettingsMirrorEntryKind.Toggle, label, CreateBinding(
-                        entry,
-                        value => value is bool b && b,
-                        value => value));
+                            entry,
+                            value => value is true,
+                            value => value),
+                        description,
+                        DescriptionAsHoverTip: true);
 
                 if (uiName == "UIKeybindAttribute" || valueType == typeof(Key) ||
                     valueType?.FullName == JmcKeyBindingTypeName)
@@ -179,13 +172,13 @@ namespace STS2RitsuLib.Settings
                 if (uiName == "UIColorAttribute" || valueType == typeof(Color))
                     return CreateColorEntry(id, label, description, entry, uiAttribute, valueType);
 
-                if (uiName is "UISliderAttribute" or "UIIntSliderAttribute")
-                    return CreateSliderEntry(id, label, description, entry, uiAttribute, valueType);
-
-                if (uiName == "UIDropdownAttribute")
-                    return CreateChoiceEntry(id, label, description, entry, uiAttribute, valueType);
-
-                return CreateFallbackEntry(id, label, description, entry, valueType);
+                return uiName switch
+                {
+                    "UISliderAttribute" or "UIIntSliderAttribute" => CreateSliderEntry(id, label, description, entry,
+                        uiAttribute, valueType),
+                    "UIDropdownAttribute" => CreateChoiceEntry(id, label, description, entry, uiAttribute, valueType),
+                    _ => CreateFallbackEntry(id, label, description, entry, valueType),
+                };
             }
             catch (Exception ex)
             {
@@ -207,7 +200,8 @@ namespace STS2RitsuLib.Settings
                 label,
                 Description: description,
                 ButtonLabel: JmcText(() => ResolveJmcButtonText(entry)),
-                OnClick: () => invoke?.Invoke(entry, null));
+                OnClick: () => invoke?.Invoke(entry, null),
+                DescriptionAsHoverTip: true);
         }
 
         private static ModSettingsMirrorEntryDefinition CreateKeybindEntry(
@@ -232,7 +226,8 @@ namespace STS2RitsuLib.Settings
                         value => Enum.TryParse<Key>(StripActionBinding(value), true, out var key) ? key : Key.None),
                     description,
                     AllowModifierCombos: false,
-                    AllowModifierOnly: false);
+                    AllowModifierOnly: false,
+                    DescriptionAsHoverTip: true);
 
             return new(
                 id,
@@ -245,7 +240,8 @@ namespace STS2RitsuLib.Settings
                 description,
                 AllowModifierCombos: allowKeyboard,
                 AllowModifierOnly: false,
-                AllowActionBindings: allowController);
+                AllowActionBindings: allowController,
+                DescriptionAsHoverTip: true);
         }
 
         private static ModSettingsMirrorEntryDefinition CreateStringEntry(
@@ -263,7 +259,8 @@ namespace STS2RitsuLib.Settings
                 label,
                 CreateBinding(entry, value => value?.ToString() ?? string.Empty, value => value),
                 description,
-                MaxLength: maxLength > 0 ? maxLength : null);
+                MaxLength: maxLength > 0 ? maxLength : null,
+                DescriptionAsHoverTip: true);
         }
 
         private static ModSettingsMirrorEntryDefinition CreateColorEntry(
@@ -291,7 +288,8 @@ namespace STS2RitsuLib.Settings
                         return value;
                     }),
                 description,
-                EditAlpha: ReadBoolProperty(uiAttribute, "AllowAlpha", true));
+                EditAlpha: ReadBoolProperty(uiAttribute, "AllowAlpha", true),
+                DescriptionAsHoverTip: true);
         }
 
         private static ModSettingsMirrorEntryDefinition CreateSliderEntry(
@@ -316,7 +314,8 @@ namespace STS2RitsuLib.Settings
                         value => Convert.ToInt32(value ?? 0),
                         value => value),
                     description,
-                    new(min, max, step));
+                    new(min, max, step),
+                    DescriptionAsHoverTip: true);
 
             return new(
                 id,
@@ -327,7 +326,8 @@ namespace STS2RitsuLib.Settings
                     value => Convert.ToDouble(value ?? 0.0),
                     value => Convert.ChangeType(value, Nullable.GetUnderlyingType(valueType!) ?? valueType!)),
                 description,
-                new(min, max, step));
+                new(min, max, step),
+                DescriptionAsHoverTip: true);
         }
 
         private static ModSettingsMirrorEntryDefinition CreateChoiceEntry(
@@ -347,7 +347,8 @@ namespace STS2RitsuLib.Settings
                     CreateEnumBinding(entry, actualType),
                     description,
                     ChoicePresentation: ModSettingsChoicePresentation.Dropdown,
-                    EnumType: actualType);
+                    EnumType: actualType,
+                    DescriptionAsHoverTip: true);
 
             var options = ReadStringListProperty(uiAttribute, "Options");
             if (options.Count == 0)
@@ -363,7 +364,8 @@ namespace STS2RitsuLib.Settings
                     .Select(option => new ModSettingsMirrorChoiceOption(option,
                         JmcText(() => ResolveJmcOptionText(entry, option))))
                     .ToArray(),
-                ChoicePresentation: ModSettingsChoicePresentation.Dropdown);
+                ChoicePresentation: ModSettingsChoicePresentation.Dropdown,
+                DescriptionAsHoverTip: true);
         }
 
         private static ModSettingsMirrorEntryDefinition CreateFallbackEntry(
@@ -381,7 +383,8 @@ namespace STS2RitsuLib.Settings
                     CreateEnumBinding(entry, valueType),
                     description,
                     ChoicePresentation: ModSettingsChoicePresentation.Dropdown,
-                    EnumType: valueType);
+                    EnumType: valueType,
+                    DescriptionAsHoverTip: true);
 
             return CreateStringEntry(id, label, description, entry, null);
         }
@@ -560,20 +563,20 @@ namespace STS2RitsuLib.Settings
 
         private static IReadOnlyList<object> ReadEntries(MethodInfo getEntries, Assembly assembly)
         {
-            if (getEntries.Invoke(null, [assembly]) is not IEnumerable enumerable)
-                return [];
-
-            var entries = new List<object>();
-            foreach (var item in enumerable)
-                if (item != null)
-                    entries.Add(item);
-            return entries;
+            return getEntries.Invoke(null, [assembly]) is not IEnumerable enumerable
+                ? []
+                : enumerable.OfType<object>().ToList();
         }
 
         private static IReadOnlyList<string> ReadGroups(MethodInfo? getGroups, Assembly assembly,
             IReadOnlyList<object> entries)
         {
-            if (getGroups?.Invoke(null, [assembly]) is IEnumerable enumerable)
+            if (getGroups?.Invoke(null, [assembly]) is not IEnumerable enumerable)
+                return entries
+                    .Select(entry => ReadStringProperty(entry, "Group"))
+                    .Where(static group => !string.IsNullOrWhiteSpace(group))
+                    .Distinct(StringComparer.Ordinal)
+                    .ToArray()!;
             {
                 var groups = new List<string>();
                 foreach (var item in enumerable)
@@ -665,7 +668,7 @@ namespace STS2RitsuLib.Settings
             return ModSettingsText.Dynamic(() => resolve() ?? string.Empty);
         }
 
-        private static ModSettingsText? JmcTextOrNull(Func<string?> resolve)
+        private static ModSettingsText JmcTextOrNull(Func<string?> resolve)
         {
             return ModSettingsText.Dynamic(() => resolve() ?? string.Empty);
         }
@@ -680,8 +683,15 @@ namespace STS2RitsuLib.Settings
 
         private static string? ResolveJmcDescription(object entry)
         {
-            return InvokeConfigLocalization("GetDescription", [entry]) ??
-                   ReadStringProperty(ReadProperty(entry, "Attribute"), "Description");
+            var description = InvokeConfigLocalization("GetDescription", [entry]) ??
+                              ReadStringProperty(ReadProperty(entry, "Attribute"), "Description");
+            if (!ReadBoolProperty(ReadProperty(entry, "Attribute"), "RestartRequired"))
+                return description;
+
+            var restartText = $"[color=#e0b24f]{ResolveJmcRestartRequiredText()}[/color]";
+            return string.IsNullOrWhiteSpace(description)
+                ? restartText
+                : $"{description}\n{restartText}";
         }
 
         private static string ResolveJmcButtonText(object entry)
@@ -701,6 +711,12 @@ namespace STS2RitsuLib.Settings
             return InvokeConfigLocalization("GetGroupName", [assembly, group, entries]) ?? group;
         }
 
+        private static string ResolveJmcRestartRequiredText()
+        {
+            return InvokeJmcUiText("RestartRequired") ??
+                   ModSettingsLocalization.Get("jmc.mirror.restartRequired", "Requires restart to fully apply.");
+        }
+
         private static string? InvokeConfigLocalization(string methodName, object?[] args)
         {
             try
@@ -712,6 +728,7 @@ namespace STS2RitsuLib.Settings
                 if (methods == null)
                     return null;
 
+                // ReSharper disable once LoopCanBeConvertedToQuery
                 foreach (var method in methods)
                 {
                     var coerced = CoerceLocalizationArgs(method, args);
@@ -721,6 +738,21 @@ namespace STS2RitsuLib.Settings
                 }
 
                 return null;
+            }
+            catch
+            {
+                return null;
+            }
+        }
+
+        private static string? InvokeJmcUiText(string methodName)
+        {
+            try
+            {
+                return ExternalFrameworkRegistry.ResolveType("JmcModLib.Config.UI.ModSettingsText")
+                    ?.GetMethod(methodName, BindingFlags.Public | BindingFlags.Static, null, [], null)
+                    ?.Invoke(null, null)
+                    ?.ToString();
             }
             catch
             {
@@ -742,20 +774,15 @@ namespace STS2RitsuLib.Settings
                     continue;
                 }
 
-                if (arg is IEnumerable<object> objects &&
-                    parameterType.IsGenericType &&
-                    parameterType.GetGenericArguments() is [{ } itemType] &&
-                    parameterType.GetGenericTypeDefinition() == typeof(IReadOnlyCollection<>))
-                {
-                    var items = objects.Where(item => itemType.IsInstanceOfType(item)).ToArray();
-                    var array = Array.CreateInstance(itemType, items.Length);
-                    for (var itemIndex = 0; itemIndex < items.Length; itemIndex++)
-                        array.SetValue(items[itemIndex], itemIndex);
-                    result[i] = array;
-                    continue;
-                }
-
-                return null;
+                if (arg is not IEnumerable<object> objects ||
+                    !parameterType.IsGenericType ||
+                    parameterType.GetGenericArguments() is not [{ } itemType] ||
+                    parameterType.GetGenericTypeDefinition() != typeof(IReadOnlyCollection<>)) return null;
+                var items = objects.Where(item => itemType.IsInstanceOfType(item)).ToArray();
+                var array = Array.CreateInstance(itemType, items.Length);
+                for (var itemIndex = 0; itemIndex < items.Length; itemIndex++)
+                    array.SetValue(items[itemIndex], itemIndex);
+                result[i] = array;
             }
 
             return result;

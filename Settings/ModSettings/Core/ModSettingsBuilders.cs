@@ -1052,6 +1052,27 @@ namespace STS2RitsuLib.Settings
             return this;
         }
 
+        internal ModSettingsSectionBuilder WithEntryHoverTip(string id, ModSettingsText title,
+            ModSettingsText description)
+        {
+            ArgumentException.ThrowIfNullOrWhiteSpace(id);
+            ArgumentNullException.ThrowIfNull(title);
+            ArgumentNullException.ThrowIfNull(description);
+
+            var index = _entries.FindIndex(existing =>
+                string.Equals(existing.Id, id, StringComparison.OrdinalIgnoreCase));
+            if (index < 0)
+                throw new InvalidOperationException($"Settings entry '{id}' does not exist in section '{Id}'.");
+
+            var entry = _entries[index];
+            _entries[index] = new ModSettingsEntryHoverTipWrapper(entry, title, description)
+            {
+                MenuCapabilities = entry.MenuCapabilities,
+                ReadOnlyOnHostSurfaces = entry.ReadOnlyOnHostSurfaces,
+            };
+            return this;
+        }
+
         private void AddEntry(string id, ModSettingsEntryDefinition entry)
         {
             ArgumentException.ThrowIfNullOrWhiteSpace(id);
