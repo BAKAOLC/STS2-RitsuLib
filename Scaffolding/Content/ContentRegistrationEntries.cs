@@ -891,6 +891,36 @@ namespace STS2RitsuLib.Scaffolding.Content
     }
 
     /// <summary>
+    ///     Registers a <see cref="DustyTome" /> candidate (character → ancient card).
+    ///     注册一个 <see cref="DustyTome" /> 候选（角色 → ancient 卡牌）。
+    /// </summary>
+    public sealed class DustyTomeCardRegistrationEntry<TCharacter, TAncientCard> : IContentRegistrationEntry
+        where TCharacter : CharacterModel
+        where TAncientCard : CardModel
+    {
+        /// <inheritdoc />
+        public void Register(ModContentRegistry registry)
+        {
+            RitsuLibFramework.RegisterDustyTomeCard<TCharacter, TAncientCard>(registry.ModId);
+        }
+    }
+
+    /// <summary>
+    ///     Registers a <see cref="DustyTome" /> candidate with explicit character id and ancient card type.
+    ///     使用显式角色 id 和 ancient 卡牌类型注册一个 <see cref="DustyTome" /> 候选。
+    /// </summary>
+    public sealed record DustyTomeCardByIdRegistrationEntry(
+        ModelId CharacterId,
+        Type AncientCardType) : IContentRegistrationEntry
+    {
+        /// <inheritdoc />
+        public void Register(ModContentRegistry registry)
+        {
+            RitsuLibFramework.RegisterDustyTomeCard(CharacterId, AncientCardType, registry.ModId);
+        }
+    }
+
+    /// <summary>
     ///     Registers a <see cref="TouchOfOrobas" /> refinement mapping (starter relic → upgraded relic).
     ///     注册一个 <see cref="TouchOfOrobas" /> 精炼映射（初始遗物 → 升级遗物）。
     /// </summary>

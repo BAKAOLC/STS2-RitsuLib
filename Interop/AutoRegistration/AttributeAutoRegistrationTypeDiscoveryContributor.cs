@@ -805,6 +805,25 @@ namespace STS2RitsuLib.Interop.AutoRegistration
                                     [TypeDependencyKey(type), TypeDependencyKey(archaicTooth.AncientCardType)]));
                             });
                         break;
+                    case RegisterDustyTomeCardAttribute dustyTome:
+                        RegisterCase(
+                            $"RegisterDustyTomeCard:{dustyTome.CharacterType.FullName}->{type.FullName}",
+                            () =>
+                            {
+                                EnsureConcreteSubtype(type, typeof(CardModel), nameof(type));
+                                EnsureConcreteSubtype(dustyTome.CharacterType, typeof(CharacterModel),
+                                    nameof(dustyTome.CharacterType));
+                                operations.Add(CreateOperation(ownerModId, type, AutoRegistrationPhase.AncientMappings,
+                                    dustyTome.Order,
+                                    $"RegisterDustyTomeCard:{dustyTome.CharacterType.FullName}->{type.FullName}",
+                                    nameof(RegisterDustyTomeCardAttribute),
+                                    () => RitsuLibFramework.RegisterDustyTomeCard(
+                                        dustyTome.CharacterType,
+                                        type,
+                                        ownerModId),
+                                    [TypeDependencyKey(dustyTome.CharacterType), TypeDependencyKey(type)]));
+                            });
+                        break;
                     case RegisterTouchOfOrobasRefinementAttribute touchOfOrobas:
                         RegisterCase(
                             $"RegisterTouchOfOrobasRefinement:{type.FullName}->{touchOfOrobas.UpgradedRelicType.FullName}",

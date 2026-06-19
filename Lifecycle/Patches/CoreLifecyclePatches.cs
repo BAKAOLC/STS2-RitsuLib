@@ -189,6 +189,7 @@ namespace STS2RitsuLib.Lifecycle.Patches
             ModEpochGatedContentRegistry.ValidateFrozenModelReferences();
             ModUnlockRegistry.ValidateFrozenModelReferences();
             OrobasAncientUpgradeRegistry.ValidateFrozenRegistrations();
+            DustyTomeCardRegistry.ValidateFrozenRegistrations();
         }
     }
 
