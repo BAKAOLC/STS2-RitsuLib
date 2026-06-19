@@ -6,6 +6,7 @@ namespace STS2RitsuLib.Settings
     {
         BaseLib,
         BaseLibToRitsuGenerated,
+        JmcModLib,
         ModConfig,
         RuntimeInterop,
         RuntimeReflection,
@@ -127,6 +128,7 @@ namespace STS2RitsuLib.Settings
                 {
                     result.Add(ModSettingsMirrorSource.BaseLib);
                     result.Add(ModSettingsMirrorSource.BaseLibToRitsuGenerated);
+                    result.Add(ModSettingsMirrorSource.JmcModLib);
                     result.Add(ModSettingsMirrorSource.ModConfig);
                     result.Add(ModSettingsMirrorSource.RuntimeInterop);
                     result.Add(ModSettingsMirrorSource.RuntimeReflection);
@@ -181,6 +183,16 @@ namespace STS2RitsuLib.Settings
                 token.Equals("mod-settings", StringComparison.OrdinalIgnoreCase))
             {
                 source = ModSettingsMirrorSource.ModConfig;
+                return true;
+            }
+
+            if (token.Equals("jmc", StringComparison.OrdinalIgnoreCase) ||
+                token.Equals("jml", StringComparison.OrdinalIgnoreCase) ||
+                token.Equals("jmcmodlib", StringComparison.OrdinalIgnoreCase) ||
+                token.Equals("jmc_mod_lib", StringComparison.OrdinalIgnoreCase) ||
+                token.Equals("jmc-mod-lib", StringComparison.OrdinalIgnoreCase))
+            {
+                source = ModSettingsMirrorSource.JmcModLib;
                 return true;
             }
 
