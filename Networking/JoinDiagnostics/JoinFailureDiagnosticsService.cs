@@ -1,5 +1,6 @@
 using MegaCrit.Sts2.Core.Entities.Multiplayer;
 using MegaCrit.Sts2.Core.Multiplayer.Messages.Lobby;
+using STS2RitsuLib.Compat;
 
 namespace STS2RitsuLib.Networking.JoinDiagnostics
 {
@@ -146,10 +147,26 @@ namespace STS2RitsuLib.Networking.JoinDiagnostics
             JoinPeerSnapshot host,
             JoinPeerSnapshot local)
         {
-            var hostByKey = host.GameplayMods.ToDictionary(m => m.Key, StringComparer.Ordinal);
-            var localByKey = local.GameplayMods.ToDictionary(m => m.Key, StringComparer.Ordinal);
-            var missingOnLocal = host.GameplayMods.Where(m => !localByKey.ContainsKey(m.Key)).ToList();
-            var missingOnHost = local.GameplayMods.Where(m => !hostByKey.ContainsKey(m.Key)).ToList();
+            if (host.HasProcessedContentMods &&
+                local.HasProcessedContentMods &&
+                (host.ContentMods.Count > 0 || local.ContentMods.Count > 0))
+            {
+                AddContentModIssues(issues, host.ContentMods, local.ContentMods);
+                return;
+            }
+
+            AddGameplayModIssues(issues, host.GameplayMods, local.GameplayMods);
+        }
+
+        private static void AddGameplayModIssues(
+            ICollection<JoinFailureIssue> issues,
+            IReadOnlyList<JoinDiagnosticsModEntry> hostMods,
+            IReadOnlyList<JoinDiagnosticsModEntry> localMods)
+        {
+            var hostByKey = hostMods.ToDictionary(m => m.Key, StringComparer.Ordinal);
+            var localByKey = localMods.ToDictionary(m => m.Key, StringComparer.Ordinal);
+            var missingOnLocal = hostMods.Where(m => !localByKey.ContainsKey(m.Key)).ToList();
+            var missingOnHost = localMods.Where(m => !hostByKey.ContainsKey(m.Key)).ToList();
             var versionRows = ExtractVersionRows(missingOnLocal, missingOnHost);
 
             if (missingOnLocal.Count > 0 || missingOnHost.Count > 0 || versionRows.Count > 0)
@@ -173,16 +190,16 @@ namespace STS2RitsuLib.Networking.JoinDiagnostics
                 return;
             }
 
-            if (host.GameplayMods.Count != local.GameplayMods.Count ||
-                host.GameplayMods.Select(m => m.Key).SequenceEqual(local.GameplayMods.Select(m => m.Key),
+            if (hostMods.Count != localMods.Count ||
+                hostMods.Select(m => m.Key).SequenceEqual(localMods.Select(m => m.Key),
                     StringComparer.Ordinal))
                 return;
 
             var firstDifferentIndex = -1;
             var differentPositions = 0;
-            for (var i = 0; i < host.GameplayMods.Count; i++)
+            for (var i = 0; i < hostMods.Count; i++)
             {
-                if (string.Equals(host.GameplayMods[i].Key, local.GameplayMods[i].Key, StringComparison.Ordinal))
+                if (string.Equals(hostMods[i].Key, localMods[i].Key, StringComparison.Ordinal))
                     continue;
 
                 if (firstDifferentIndex < 0)
@@ -199,8 +216,70 @@ namespace STS2RitsuLib.Networking.JoinDiagnostics
                     new(T("row.orderMismatchCount", "Different positions"), differentPositions.ToString(),
                         differentPositions.ToString()),
                     new(F("row.firstDifferentPosition", "First different position: {0}", firstDifferentIndex + 1),
-                        FormatModValue(host.GameplayMods[firstDifferentIndex]),
-                        FormatModValue(local.GameplayMods[firstDifferentIndex])),
+                        FormatModValue(hostMods[firstDifferentIndex]),
+                        FormatModValue(localMods[firstDifferentIndex])),
+                ]));
+        }
+
+        private static void AddContentModIssues(
+            ICollection<JoinFailureIssue> issues,
+            IReadOnlyList<ContentModInventoryEntry> hostMods,
+            IReadOnlyList<ContentModInventoryEntry> localMods)
+        {
+            var hostByKey = hostMods.ToDictionary(ContentModKey, StringComparer.Ordinal);
+            var localByKey = localMods.ToDictionary(ContentModKey, StringComparer.Ordinal);
+            var missingOnLocal = hostMods.Where(m => !localByKey.ContainsKey(ContentModKey(m))).ToList();
+            var missingOnHost = localMods.Where(m => !hostByKey.ContainsKey(ContentModKey(m))).ToList();
+            var versionRows = ExtractContentVersionRows(missingOnLocal, missingOnHost);
+
+            if (missingOnLocal.Count > 0 || missingOnHost.Count > 0 || versionRows.Count > 0)
+            {
+                var rows = new List<JoinFailureDetailRow>();
+                rows.AddRange(versionRows);
+                rows.AddRange(missingOnLocal.Select(m => new JoinFailureDetailRow(
+                    FormatContentModLabel(m),
+                    FormatContentModValue(m),
+                    T("value.missing", "Missing"))));
+                rows.AddRange(missingOnHost.Select(m => new JoinFailureDetailRow(
+                    FormatContentModLabel(m),
+                    T("value.missing", "Missing"),
+                    FormatContentModValue(m))));
+
+                issues.Add(new(
+                    JoinFailureIssueKind.ModSet,
+                    T("issue.modSet.title", "Gameplay mod mismatch"),
+                    T("issue.modSet.body", "The host and local gameplay mod lists are not the same."),
+                    LimitRows(rows)));
+                return;
+            }
+
+            if (hostMods.Count != localMods.Count ||
+                hostMods.Select(ContentModKey).SequenceEqual(localMods.Select(ContentModKey), StringComparer.Ordinal))
+                return;
+
+            var firstDifferentIndex = -1;
+            var differentPositions = 0;
+            for (var i = 0; i < hostMods.Count; i++)
+            {
+                if (string.Equals(ContentModKey(hostMods[i]), ContentModKey(localMods[i]), StringComparison.Ordinal))
+                    continue;
+
+                if (firstDifferentIndex < 0)
+                    firstDifferentIndex = i;
+                differentPositions++;
+            }
+
+            issues.Add(new(
+                JoinFailureIssueKind.ModOrder,
+                T("issue.modOrder.title", "Gameplay mod order differs"),
+                T("issue.modOrder.body",
+                    "Both sides have the same gameplay mods, but their load order is different. This can change ModelDb registration order."),
+                [
+                    new(T("row.orderMismatchCount", "Different positions"), differentPositions.ToString(),
+                        differentPositions.ToString()),
+                    new(F("row.firstDifferentPosition", "First different position: {0}", firstDifferentIndex + 1),
+                        FormatContentModValue(hostMods[firstDifferentIndex]),
+                        FormatContentModValue(localMods[firstDifferentIndex])),
                 ]));
         }
 
@@ -249,6 +328,33 @@ namespace STS2RitsuLib.Networking.JoinDiagnostics
             return rows;
         }
 
+        private static List<JoinFailureDetailRow> ExtractContentVersionRows(
+            List<ContentModInventoryEntry> missingOnLocal,
+            List<ContentModInventoryEntry> missingOnHost)
+        {
+            var rows = new List<JoinFailureDetailRow>();
+            for (var i = missingOnLocal.Count - 1; i >= 0; i--)
+            {
+                var hostMod = missingOnLocal[i];
+                var localIndex = missingOnHost.FindIndex(m =>
+                    !string.IsNullOrEmpty(m.Id) &&
+                    string.Equals(m.Id, hostMod.Id, StringComparison.Ordinal) &&
+                    string.Equals(m.Source, hostMod.Source, StringComparison.Ordinal));
+                if (localIndex < 0)
+                    continue;
+
+                var localMod = missingOnHost[localIndex];
+                rows.Add(new(
+                    FormatContentModLabel(hostMod),
+                    FormatContentModValue(hostMod),
+                    FormatContentModValue(localMod)));
+                missingOnLocal.RemoveAt(i);
+                missingOnHost.RemoveAt(localIndex);
+            }
+
+            return rows;
+        }
+
         private static IReadOnlyList<JoinFailureDetailRow> LimitRows(IReadOnlyList<JoinFailureDetailRow> rows)
         {
             const int maxRows = 24;
@@ -278,6 +384,28 @@ namespace STS2RitsuLib.Networking.JoinDiagnostics
                 ? T("value.noVersion", "No version")
                 : mod.Version;
             return "#" + (mod.Index + 1) + "  " + mod.Key + "  " + version;
+        }
+
+        private static string FormatContentModLabel(ContentModInventoryEntry mod)
+        {
+            if (!string.IsNullOrWhiteSpace(mod.Name) &&
+                !string.Equals(mod.Name, mod.Id, StringComparison.Ordinal))
+                return mod.Name + " (" + mod.Id + ")";
+
+            return string.IsNullOrWhiteSpace(mod.Id) ? ContentModKey(mod) : mod.Id;
+        }
+
+        private static string FormatContentModValue(ContentModInventoryEntry mod)
+        {
+            var version = string.IsNullOrWhiteSpace(mod.Version)
+                ? T("value.noVersion", "No version")
+                : mod.Version;
+            return "#" + (mod.Index + 1) + "  " + mod.Id + "-" + version;
+        }
+
+        private static string ContentModKey(ContentModInventoryEntry mod)
+        {
+            return mod.Source + "\0" + mod.Id + "\0" + mod.Version;
         }
 
         private static string LocalizeReason(NetError reason)

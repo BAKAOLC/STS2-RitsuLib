@@ -31,7 +31,8 @@ namespace STS2RitsuLib.Networking.JoinDiagnostics
         string GameMode,
         string SessionState,
         IReadOnlyList<JoinDiagnosticsModEntry> GameplayMods,
-        IReadOnlyList<ContentModInventoryEntry> ContentMods);
+        IReadOnlyList<ContentModInventoryEntry> ContentMods,
+        bool HasProcessedContentMods);
 
     internal static class JoinDiagnosticsPayloadCodec
     {
@@ -124,13 +125,15 @@ namespace STS2RitsuLib.Networking.JoinDiagnostics
                 string.Empty,
                 string.Empty,
                 CreateLocalModEntries(),
-                CreateLocalContentModEntries());
+                CreateLocalContentModEntries(),
+                true);
         }
 
         public static JoinPeerSnapshot CreateHostSnapshot(
             InitialGameInfoMessage message,
             JoinDiagnosticsPayload? payload)
         {
+            var contentMods = CreateHostContentModEntries(message, payload, out var hasProcessedContentMods);
             return new(
                 message.version,
                 message.idDatabaseHash,
@@ -139,7 +142,8 @@ namespace STS2RitsuLib.Networking.JoinDiagnostics
                 payload?.GameplayMods.Count > 0
                     ? payload.GameplayMods
                     : CreateFallbackModEntries(GetFallbackGameplayModKeys(message)),
-                CreateHostContentModEntries(message, payload));
+                contentMods,
+                hasProcessedContentMods);
         }
 
         private static IReadOnlyList<JoinDiagnosticsModEntry> CreateLocalModEntries()
@@ -172,9 +176,11 @@ namespace STS2RitsuLib.Networking.JoinDiagnostics
 
         private static IReadOnlyList<ContentModInventoryEntry> CreateHostContentModEntries(
             InitialGameInfoMessage message,
-            JoinDiagnosticsPayload? payload)
+            JoinDiagnosticsPayload? payload,
+            out bool hasProcessedContentMods)
         {
-            return ContentModInventoryPayloadCodec.TryDecode(payload?.ContentMods, out var entries)
+            hasProcessedContentMods = ContentModInventoryPayloadCodec.TryDecode(payload?.ContentMods, out var entries);
+            return hasProcessedContentMods
                 ? entries
                 : CreateFallbackContentModEntries(GetFallbackContentModKeys(message));
         }
