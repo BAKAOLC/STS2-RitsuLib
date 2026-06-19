@@ -629,6 +629,81 @@ namespace STS2RitsuLib.Settings
     }
 
     /// <summary>
+    ///     Input binding capture row writing either a key token or <c>action:&lt;name&gt;</c> token to <see cref="Binding" />.
+    ///     输入绑定捕获行，将按键 token 或 <c>action:&lt;name&gt;</c> token 写入 <see cref="Binding" />。
+    /// </summary>
+    public sealed class InputBindingModSettingsEntryDefinition(
+        string id,
+        ModSettingsText label,
+        IModSettingsValueBinding<string> binding,
+        bool allowModifierCombos,
+        bool allowModifierOnly,
+        bool distinguishModifierSides,
+        bool allowActionBindings,
+        ModSettingsText? description)
+        : ModSettingsEntryDefinition(id, label, description)
+    {
+        /// <summary>
+        ///     Backing binding for the serialized input binding string.
+        ///     序列化输入绑定字符串的后备绑定。
+        /// </summary>
+        public IModSettingsValueBinding<string> Binding { get; } = binding;
+
+        /// <summary>
+        ///     Whether modifier+key combinations are allowed.
+        ///     是否允许修饰键加按键组合。
+        /// </summary>
+        public bool AllowModifierCombos { get; } = allowModifierCombos;
+
+        /// <summary>
+        ///     Whether modifier-only shortcuts are allowed.
+        ///     是否允许仅修饰键快捷键。
+        /// </summary>
+        public bool AllowModifierOnly { get; } = allowModifierOnly;
+
+        /// <summary>
+        ///     Whether left/right modifier sides are distinguished.
+        ///     是否区分左/右修饰键。
+        /// </summary>
+        public bool DistinguishModifierSides { get; } = distinguishModifierSides;
+
+        /// <summary>
+        ///     Whether Godot/STS2 action bindings can be captured.
+        ///     是否允许捕获 Godot/STS2 action 绑定。
+        /// </summary>
+        public bool AllowActionBindings { get; } = allowActionBindings;
+
+        internal override bool CanResetToDefault => BindingCanResetToDefault(Binding);
+
+        internal override void CollectChromeBindingSnapshots(
+            Dictionary<string, ModSettingsChromeBindingSnapshot> target)
+        {
+            ModSettingsClipboardData.AddChromeBindingSnapshot(target, Id, Binding);
+        }
+
+        internal override bool TryPasteChromeBindingSnapshot(ModSettingsChromeBindingSnapshot snap,
+            IModSettingsUiActionHost host)
+        {
+            var adapter = ModSettingsUiFactory.ResolveClipboardAdapter(Binding);
+            if (!ModSettingsClipboardData.TryApplySerializedValueToBinding(Binding, adapter, snap, out var v))
+                return false;
+            Binding.Write(v);
+            host.MarkDirty(Binding);
+            return true;
+        }
+
+        internal override Control CreateControl(ModSettingsUiContext context)
+        {
+            return ModSettingsUiFactory.CreateInputBindingEntry(context, this);
+        }
+
+        internal override bool TryResetToDefault(IModSettingsUiActionHost host)
+        {
+            return TryResetBindingToDefault(Binding, host);
+        }
+    }
+
+    /// <summary>
     ///     Multi-key binding capture row writing a binding list to <see cref="Binding" />.
     ///     将绑定列表写入 <see cref="Binding" /> 的多按键绑定捕获行。
     /// </summary>

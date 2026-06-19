@@ -108,6 +108,19 @@ namespace STS2RitsuLib.RuntimeInput
         }
 
         /// <summary>
+        ///     Returns the canonical runtime input binding string for a Godot/STS2 action.
+        ///     返回 Godot/STS2 action 的规范运行时输入绑定字符串。
+        /// </summary>
+        /// <param name="actionName">
+        ///     Action name such as <c>accept</c> or <c>view_map</c>.
+        ///     action 名称，例如 <c>accept</c> 或 <c>view_map</c>。
+        /// </param>
+        public static string ActionBinding(string actionName)
+        {
+            return RuntimeHotkeyParser.ActionBinding(actionName);
+        }
+
+        /// <summary>
         ///     Returns the normalized binding string, or <paramref name="fallback" /> when parsing fails.
         ///     返回规范化绑定字符串；解析失败时返回 <paramref name="fallback" />。
         /// </summary>

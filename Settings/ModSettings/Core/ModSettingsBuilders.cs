@@ -863,6 +863,29 @@ namespace STS2RitsuLib.Settings
         }
 
         /// <summary>
+        ///     Adds an input binding capture row that can record keyboard shortcuts and Godot/STS2 action bindings.
+        ///     添加输入绑定捕获行，可记录键盘快捷键和 Godot/STS2 action 绑定。
+        /// </summary>
+        public ModSettingsSectionBuilder AddInputBinding(
+            string id,
+            ModSettingsText label,
+            IModSettingsValueBinding<string> binding,
+            bool allowModifierCombos = true,
+            bool allowModifierOnly = true,
+            bool distinguishModifierSides = false,
+            bool allowActionBindings = true,
+            ModSettingsText? description = null)
+        {
+            var entry = new InputBindingModSettingsEntryDefinition(id, label, binding, allowModifierCombos,
+                allowModifierOnly, distinguishModifierSides, allowActionBindings, description)
+            {
+                MenuCapabilities = ModSettingsMenuCapabilities.Copy | ModSettingsMenuCapabilities.ResetToDefault,
+            };
+            AddEntry(id, entry);
+            return this;
+        }
+
+        /// <summary>
         ///     Adds a multi-key binding capture row. This path is native-only and must be explicitly opted into.
         ///     添加多按键绑定捕获行。此路径仅限原生，必须显式选择启用。
         /// </summary>

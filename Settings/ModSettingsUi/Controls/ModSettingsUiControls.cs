@@ -2679,6 +2679,7 @@ namespace STS2RitsuLib.Settings
     /// </summary>
     public sealed partial class ModSettingsKeyBindingControl : VBoxContainer, IModSettingsDirectionalInputClaimant
     {
+        private readonly bool _allowActionBindings;
         private readonly bool _allowModifierCombos;
         private readonly bool _allowModifierOnly;
         private readonly bool _distinguishModifierSides;
@@ -2715,9 +2716,20 @@ namespace STS2RitsuLib.Settings
         /// </param>
         public ModSettingsKeyBindingControl(string initialValue, bool allowModifierCombos, bool allowModifierOnly,
             bool distinguishModifierSides, Action<string> onChanged)
+            : this(initialValue, allowModifierCombos, allowModifierOnly, distinguishModifierSides, onChanged, false)
+        {
+        }
+
+        /// <summary>
+        ///     Creates a keyboard/action binding capture editor.
+        ///     创建键盘/action 绑定捕获编辑器。
+        /// </summary>
+        public ModSettingsKeyBindingControl(string initialValue, bool allowModifierCombos, bool allowModifierOnly,
+            bool distinguishModifierSides, Action<string> onChanged, bool allowActionBindings)
         {
             _allowModifierCombos = allowModifierCombos;
             _allowModifierOnly = allowModifierOnly;
+            _allowActionBindings = allowActionBindings;
             _distinguishModifierSides = distinguishModifierSides;
             _onChanged = onChanged;
             _currentValue = initialValue;
@@ -2773,10 +2785,13 @@ namespace STS2RitsuLib.Settings
                 MouseFilter = MouseFilterEnum.Ignore,
                 SizeFlagsHorizontal = SizeFlags.ExpandFill,
                 AutowrapMode = TextServer.AutowrapMode.WordSmart,
-                Text = allowModifierCombos
-                    ? ModSettingsLocalization.Get("keybinding.hint.combo",
-                        "Click to record. Supports key combinations.")
-                    : ModSettingsLocalization.Get("keybinding.hint.single", "Click to record a single key."),
+                Text = allowActionBindings
+                    ? ModSettingsLocalization.Get("keybinding.hint.input",
+                        "Click to record. Supports key combinations and controller actions.")
+                    : allowModifierCombos
+                        ? ModSettingsLocalization.Get("keybinding.hint.combo",
+                            "Click to record. Supports key combinations.")
+                        : ModSettingsLocalization.Get("keybinding.hint.single", "Click to record a single key."),
             };
             hint.AddThemeFontOverride("font", RitsuShellTheme.Current.Font.Body);
             hint.AddThemeFontSizeOverride("font_size", RitsuShellTheme.Current.Metric.Keybinding.HintFontSize);
@@ -2786,6 +2801,7 @@ namespace STS2RitsuLib.Settings
 
             RefreshText();
             SetProcessUnhandledKeyInput(true);
+            SetProcessUnhandledInput(allowActionBindings);
         }
 
         /// <summary>
@@ -2876,6 +2892,23 @@ namespace STS2RitsuLib.Settings
             RefreshText();
         }
 
+        /// <inheritdoc />
+        public override void _UnhandledInput(InputEvent @event)
+        {
+            if (!_allowActionBindings || !_capturing ||
+                @event is not InputEventAction { Pressed: true } actionEvent || actionEvent.IsEcho())
+                return;
+
+            var binding = RuntimeHotkeyService.ActionBinding(actionEvent.Action.ToString());
+            if (string.IsNullOrWhiteSpace(binding))
+                return;
+
+            GetViewport().SetInputAsHandled();
+            ApplyBinding(binding, true);
+            _capturing = false;
+            _pendingModifierBindings.Clear();
+        }
+
         private void BeginCapture()
         {
             _capturing = true;
@@ -2926,16 +2959,21 @@ namespace STS2RitsuLib.Settings
             var hintText = _capturing
                 ? string.IsNullOrWhiteSpace(pendingBindingText)
                     ? ModSettingsLocalization.Get("keybinding.hint.capturing",
-                        "Press a key combination. Esc cancels, Backspace/Delete clears.")
+                        _allowActionBindings
+                            ? "Press a key combination or controller action. Esc cancels, Backspace/Delete clears."
+                            : "Press a key combination. Esc cancels, Backspace/Delete clears.")
                     : ModSettingsLocalization.Get("keybinding.hint.capturingPending",
                         "Modifier keys recorded. Press another key to complete, or release to keep a modifier-only binding.")
-                : _allowModifierCombos
-                    ? _allowModifierOnly
-                        ? ModSettingsLocalization.Get("keybinding.hint.combo",
-                            "Click to record. Supports key combinations.")
-                        : ModSettingsLocalization.Get("keybinding.hint.comboNonModifier",
-                            "Click to record. Supports key combinations and requires a non-modifier key.")
-                    : ModSettingsLocalization.Get("keybinding.hint.single", "Click to record a single key.");
+                : _allowActionBindings
+                    ? ModSettingsLocalization.Get("keybinding.hint.input",
+                        "Click to record. Supports key combinations and controller actions.")
+                    : _allowModifierCombos
+                        ? _allowModifierOnly
+                            ? ModSettingsLocalization.Get("keybinding.hint.combo",
+                                "Click to record. Supports key combinations.")
+                            : ModSettingsLocalization.Get("keybinding.hint.comboNonModifier",
+                                "Click to record. Supports key combinations and requires a non-modifier key.")
+                        : ModSettingsLocalization.Get("keybinding.hint.single", "Click to record a single key.");
             if (_hintLabel != null)
                 _hintLabel.Text = hintText;
         }

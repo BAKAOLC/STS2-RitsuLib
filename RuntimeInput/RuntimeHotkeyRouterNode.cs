@@ -11,6 +11,7 @@ namespace STS2RitsuLib.RuntimeInput
         public override void _EnterTree()
         {
             SetProcessUnhandledKeyInput(true);
+            SetProcessUnhandledInput(true);
         }
 
         public RuntimeHotkeyHandle Register(RuntimeHotkeyBinding binding, Action callback,
@@ -136,6 +137,26 @@ namespace STS2RitsuLib.RuntimeInput
             }
         }
 
+        public override void _UnhandledInput(InputEvent @event)
+        {
+            if (@event is not InputEventAction { Pressed: true } actionEvent || actionEvent.IsEcho())
+                return;
+
+            for (var i = _registrations.Count - 1; i >= 0; i--)
+            {
+                var registration = _registrations[i];
+                if (!ShouldConsider(registration.Options))
+                    continue;
+                if (!registration.Matches(actionEvent))
+                    continue;
+
+                registration.Callback();
+                if (registration.Options.MarkInputHandled)
+                    GetViewport()?.SetInputAsHandled();
+                return;
+            }
+        }
+
         private static bool ShouldConsider(RuntimeHotkeyOptions options)
         {
             if (options.SuppressWhenDevConsoleVisible && NDevConsole.Instance.Visible)
@@ -174,6 +195,15 @@ namespace STS2RitsuLib.RuntimeInput
         {
             for (var i = 0; i < _bindings.Count; i++)
                 if (_bindings[i].Matches(keyEvent))
+                    return true;
+
+            return false;
+        }
+
+        public bool Matches(InputEventAction actionEvent)
+        {
+            for (var i = 0; i < _bindings.Count; i++)
+                if (_bindings[i].Matches(actionEvent))
                     return true;
 
             return false;
