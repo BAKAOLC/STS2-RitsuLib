@@ -20,7 +20,7 @@ namespace STS2RitsuLib.Loader
     public static class Bootstrap
     {
         private const string RealDllName = "STS2-RitsuLib.dll";
-        private const string VariantManifestName = "ritsulib-variants.json";
+        private const string VariantManifestName = "ritsulib-variants.manifest";
         private const string CompatTargetMarkerName = "compat-target.txt";
         private static readonly Lock VariantAssembliesLock = new();
         private static readonly List<Assembly> VariantAssemblies = [];
