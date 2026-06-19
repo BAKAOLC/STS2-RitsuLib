@@ -10,6 +10,7 @@ from pathlib import Path
 from release_lib import git_ops
 from release_lib import nuget as nuget_ops
 from release_lib import plan_analysis
+from release_lib import workshop as workshop_ops
 from release_lib.bundle import compose_bundle_zip
 from release_lib.msbuild_eval import get_csproj_property
 from release_lib.repo_layout import (
@@ -155,6 +156,65 @@ def _parse_args(argv: list[str]) -> argparse.Namespace:
         action="store_true",
         help="With --dry-run: run git fetch for dev/main before computing [may conflict] hints from refs",
     )
+    p.add_argument(
+        "--prepare-workshop",
+        action="store_true",
+        help="After building the loader variant bundle staging, prepare the local Steam Workshop workspace.",
+    )
+    p.add_argument(
+        "--push-workshop",
+        action="store_true",
+        help="Prepare then upload the local Steam Workshop workspace using ModUploader.exe.",
+    )
+    p.add_argument(
+        "--mod-uploader-exe",
+        default=os.environ.get("RITSLIB_MOD_UPLOADER_EXE"),
+        help="Path to ModUploader.exe. Required for --push-workshop.",
+    )
+    p.add_argument(
+        "--workshop-workspace",
+        default=os.environ.get("RITSLIB_WORKSHOP_WORKSPACE"),
+        help="Path to the local Steam Workshop workspace.",
+    )
+    p.add_argument(
+        "--workshop-item-id",
+        default=os.environ.get("RITSLIB_WORKSHOP_ITEM_ID"),
+        help="Existing Steam Workshop item ID to update. If omitted, mod_id.txt in the workspace is used.",
+    )
+    p.add_argument(
+        "--workshop-create",
+        action="store_true",
+        help="Allow --push-workshop to create a new Steam Workshop item when no item ID/mod_id.txt exists.",
+    )
+    p.add_argument(
+        "--workshop-visibility",
+        default=os.environ.get("RITSLIB_WORKSHOP_VISIBILITY", "private"),
+        choices=("private", "public", "unlisted", "friends_only"),
+        help="Workshop visibility written to workshop.json (default: private).",
+    )
+    p.add_argument(
+        "--workshop-title",
+        default=os.environ.get("RITSLIB_WORKSHOP_TITLE", workshop_ops.DEFAULT_WORKSHOP_TITLE),
+        help="Workshop title written to workshop.json.",
+    )
+    p.add_argument(
+        "--workshop-description",
+        default=os.environ.get("RITSLIB_WORKSHOP_DESCRIPTION", workshop_ops.DEFAULT_WORKSHOP_DESCRIPTION),
+        help="Workshop description written to workshop.json.",
+    )
+    p.add_argument(
+        "--workshop-tags",
+        default=os.environ.get(
+            "RITSLIB_WORKSHOP_TAGS",
+            ",".join(workshop_ops.DEFAULT_WORKSHOP_TAGS),
+        ),
+        help="Comma-separated Workshop tags written to workshop.json (default: tool).",
+    )
+    p.add_argument(
+        "--workshop-change-note",
+        default=os.environ.get("RITSLIB_WORKSHOP_CHANGE_NOTE"),
+        help="Workshop update note. Defaults to the English section of the configured release notes file.",
+    )
     return p.parse_args(argv)
 
 
@@ -231,6 +291,73 @@ def _run_post_push_local_build(
     subprocess.run(build_args, cwd=ritsulib, check=True)
 
 
+def _workshop_requested(args: argparse.Namespace) -> bool:
+    return bool(args.prepare_workshop or args.push_workshop)
+
+
+def _path_arg(raw: str | None, *, base: Path) -> Path | None:
+    if raw is None or not raw.strip():
+        return None
+    p = Path(raw.strip()).expanduser()
+    return p.resolve() if p.is_absolute() else (base / p).resolve()
+
+
+def _workshop_tags(raw: str) -> list[str]:
+    return [tag.strip() for tag in raw.split(",") if tag.strip()]
+
+
+def _prepare_and_maybe_upload_workshop(
+    ritsulib: Path,
+    args: argparse.Namespace,
+    *,
+    bundle_root: Path,
+    release_notes_file: Path | None,
+    effective_version: str,
+) -> None:
+    if not _workshop_requested(args):
+        return
+
+    workspace = _path_arg(args.workshop_workspace, base=ritsulib)
+    if workspace is None:
+        msg = "Workshop workspace is required. Pass --workshop-workspace or set RITSLIB_WORKSHOP_WORKSPACE."
+        raise RuntimeError(msg)
+
+    fallback_note = f"RitsuLib {effective_version}"
+    change_note = (args.workshop_change_note or "").strip()
+    if not change_note:
+        change_note = workshop_ops.read_workshop_change_note(
+            release_notes_file,
+            fallback=fallback_note,
+        )
+
+    workshop_ops.prepare_workshop_workspace(
+        bundle_staging_root=bundle_root,
+        workspace=workspace,
+        title=args.workshop_title,
+        description=args.workshop_description,
+        visibility=args.workshop_visibility,
+        tags=_workshop_tags(args.workshop_tags),
+        change_note=change_note,
+    )
+    print(f"[release] Workshop workspace prepared: {workspace}", flush=True)
+
+    if not args.push_workshop:
+        return
+
+    uploader_exe = _path_arg(args.mod_uploader_exe, base=ritsulib)
+    if uploader_exe is None:
+        msg = "ModUploader path is required for --push-workshop. Pass --mod-uploader-exe or set RITSLIB_MOD_UPLOADER_EXE."
+        raise RuntimeError(msg)
+
+    workshop_ops.upload_workshop_workspace(
+        uploader_exe=uploader_exe,
+        workspace=workspace,
+        item_id=(args.workshop_item_id or "").strip() or None,
+        allow_create=args.workshop_create,
+    )
+    print(f"[release] Workshop upload completed: {workspace}", flush=True)
+
+
 def _preflight_release(
     repo: Path,
     remote: str,
@@ -297,6 +424,7 @@ def main(argv: list[str] | None = None) -> int:
         print("[release] no compatibility targets resolved from --compat-targets.", file=sys.stderr)
         return 1
     current_text = read_csproj_version(csproj)
+    release_notes_file = _resolve_release_tag_message_file(repo)
 
     print(f"[release] repo root: {repo}", flush=True)
 
@@ -328,6 +456,17 @@ def main(argv: list[str] | None = None) -> int:
         print(f"[release] Artifacts packages: {', '.join(pkg.name for pkg in packages)}")
         print(f"[release] Artifacts zips: {', '.join(zip_path.name for zip_path in zips)}")
         print(f"[release] Bundle zip: {bundle_zip.name}")
+        try:
+            _prepare_and_maybe_upload_workshop(
+                ritsulib,
+                args,
+                bundle_root=bundle_root,
+                release_notes_file=release_notes_file,
+                effective_version=eff_ver,
+            )
+        except RuntimeError as e:
+            print(f"[release] {e}", file=sys.stderr)
+            return 1
         print("[release] done (artifacts-only).")
         return 0
 
@@ -340,7 +479,7 @@ def main(argv: list[str] | None = None) -> int:
     )
     next_text = str(next_v)
     tag = _tag_name(next_text)
-    tag_msg_file = _resolve_release_tag_message_file(repo)
+    tag_msg_file = release_notes_file
 
     print(f"[release] version:   {current_text} -> {next_text}", flush=True)
     if args.version_override:
@@ -551,6 +690,42 @@ def main(argv: list[str] | None = None) -> int:
         print(
             "[release] Skipping local NuGet push (default); packages are published by the tag release workflow.",
         )
+        bundle_root = ritsulib / ARTIFACTS_BUNDLE_STAGING
+        if _workshop_requested(args):
+            packages, github_zips = nuget_ops.build_artifacts(
+                ritsulib,
+                configuration=args.configuration,
+                skip_build=args.skip_build,
+                compat_targets=compat_targets,
+                version_override=args.version_override,
+                sts2_api_signature_root=Path(args.sts2_api_signature_root) if args.sts2_api_signature_root else None,
+                sts2_dir=Path(args.sts2_dir) if args.sts2_dir else None,
+                bundle_staging_root=bundle_root,
+            )
+            eff_ver = (args.version_override or "").strip() or str(next_text)
+            bundle_zip = compose_bundle_zip(
+                ritsulib,
+                configuration=args.configuration,
+                effective_version=eff_ver,
+                sts2_api_signature_root=Path(args.sts2_api_signature_root) if args.sts2_api_signature_root else None,
+                sts2_dir=Path(args.sts2_dir) if args.sts2_dir else None,
+                bundle_staging_root=bundle_root,
+            )
+            print(f"[release] Workshop artifact packages: {', '.join(pkg.name for pkg in packages)}")
+            print(f"[release] Workshop artifact zips: {', '.join(zip_path.name for zip_path in github_zips)}")
+            print(f"[release] Workshop bundle zip: {bundle_zip.name}")
+
+    try:
+        _prepare_and_maybe_upload_workshop(
+            ritsulib,
+            args,
+            bundle_root=bundle_root,
+            release_notes_file=release_notes_file,
+            effective_version=(args.version_override or "").strip() or str(next_text),
+        )
+    except RuntimeError as e:
+        print(f"[release] {e}", file=sys.stderr)
+        return 1
 
     _run_post_push_local_build(
         ritsulib,
@@ -671,6 +846,19 @@ def _print_git_plan(
         )
     else:
         step("(skip local NuGet; tag workflow publishes packages)", step_id="")
+        if _workshop_requested(args):
+            step(
+                f"dotnet pack + github zip + bundle staging for Workshop (targets: {', '.join(compat_targets)})",
+                step_id="",
+            )
+    if _workshop_requested(args):
+        workspace = args.workshop_workspace or "<missing --workshop-workspace>"
+        step(f"prepare Steam Workshop workspace: {workspace}", step_id="")
+    if args.push_workshop:
+        uploader = args.mod_uploader_exe or "<missing --mod-uploader-exe>"
+        item_arg = f" -i {args.workshop_item_id}" if args.workshop_item_id else " (using mod_id.txt)"
+        create = " create allowed" if args.workshop_create else ""
+        step(f"{uploader} upload -w {args.workshop_workspace or '<workspace>'}{item_arg}{create}", step_id="")
     step(
         (
             f"dotnet build {RITSULIB_CSPROJ_NAME} -c {args.configuration} "

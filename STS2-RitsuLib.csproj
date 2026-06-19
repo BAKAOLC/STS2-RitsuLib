@@ -1,6 +1,6 @@
 <Project Sdk="Godot.NET.Sdk/4.5.1">
     <PropertyGroup Label="Compatibility (STS2 API, signatures, defines)">
-        <RitsuLibCompatTargets>0.107.1;0.107.0;0.106.1;0.103.2</RitsuLibCompatTargets>
+        <RitsuLibCompatTargets>0.107.1</RitsuLibCompatTargets>
         <RitsuLibLatestApiCompat>0.107.1</RitsuLibLatestApiCompat>
         <Sts2ApiCompat Condition="'$(Sts2ApiCompat)' == ''">$(RitsuLibLatestApiCompat)</Sts2ApiCompat>
         <Sts2ApiSignatureDir Condition="'$(Sts2ApiSignatureRoot)' != ''">$(Sts2ApiSignatureRoot)\$(Sts2ApiCompat)</Sts2ApiSignatureDir>
