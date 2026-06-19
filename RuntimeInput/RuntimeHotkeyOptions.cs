@@ -37,6 +37,14 @@ namespace STS2RitsuLib.RuntimeInput
         public RuntimeHotkeyText? Category { get; init; }
 
         /// <summary>
+        ///     When true, <c>action:&lt;name&gt;</c> bindings in this registration are exposed as optional Steam Input
+        ///     digital actions when the game is running through Steam.
+        ///     为 true 时，此注册中的 <c>action:&lt;name&gt;</c> 绑定会在游戏通过 Steam 运行时作为可选
+        ///     Steam Input 数字动作暴露。
+        /// </summary>
+        public bool ExposeToSteamInput { get; init; }
+
+        /// <summary>
         ///     When true, marks the input event as handled after the hotkey callback runs.
         ///     为 true 时，在热键回调运行后将输入事件标记为已处理。
         /// </summary>

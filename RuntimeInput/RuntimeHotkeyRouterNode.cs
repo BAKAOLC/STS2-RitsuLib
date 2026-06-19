@@ -24,6 +24,7 @@ namespace STS2RitsuLib.RuntimeInput
             RuntimeHotkeyOptions? options)
         {
             var registration = new RuntimeHotkeyRegistration(bindings, callback, options ?? new RuntimeHotkeyOptions());
+            registration.InitializeOptionalSteamInputActions();
             _registrations.Add(registration);
             return new(this, registration);
         }
@@ -180,15 +181,22 @@ namespace STS2RitsuLib.RuntimeInput
         RuntimeHotkeyOptions options)
     {
         private readonly List<RuntimeHotkeyBinding> _bindings = bindings.ToList();
+        private readonly List<IDisposable> _steamInputRegistrations = [];
 
         public IReadOnlyList<RuntimeHotkeyBinding> Bindings => _bindings;
         public Action Callback { get; } = callback;
         public RuntimeHotkeyOptions Options { get; } = options;
 
+        public void InitializeOptionalSteamInputActions()
+        {
+            SyncOptionalSteamInputActions();
+        }
+
         public void SetBindings(IEnumerable<RuntimeHotkeyBinding> bindings)
         {
             _bindings.Clear();
             _bindings.AddRange(bindings);
+            SyncOptionalSteamInputActions();
         }
 
         public bool Matches(InputEventKey keyEvent)
@@ -236,6 +244,32 @@ namespace STS2RitsuLib.RuntimeInput
         {
             return text?.Resolve();
         }
+
+        private void SyncOptionalSteamInputActions()
+        {
+            foreach (var registration in _steamInputRegistrations)
+                registration.Dispose();
+            _steamInputRegistrations.Clear();
+
+            if (!Options.ExposeToSteamInput)
+                return;
+
+            var displayName = Options.DisplayName ??
+                              RuntimeHotkeyText.Literal(Options.DebugName ?? Options.Id ?? "RitsuLib action");
+            // ReSharper disable once ForeachCanBePartlyConvertedToQueryUsingAnotherGetEnumerator
+            foreach (var binding in _bindings)
+            {
+                if (binding.Kind != RuntimeHotkeyBindingKind.Action ||
+                    string.IsNullOrWhiteSpace(binding.ActionName))
+                    continue;
+
+                _steamInputRegistrations.Add(RitsuSteamInputActionRegistry.RegisterAction(
+                    binding.ActionName,
+                    displayName,
+                    Options.Description,
+                    Options.Id));
+            }
+        }
     }
 
     internal sealed class RuntimeHotkeyHandle(RuntimeHotkeyRouterNode owner, RuntimeHotkeyRegistration registration)
@@ -279,6 +313,7 @@ namespace STS2RitsuLib.RuntimeInput
         {
             if (_owner == null || _registration == null)
                 return;
+            _registration.SetBindings([]);
             _owner.Unregister(_registration);
             _owner = null;
             _registration = null;
