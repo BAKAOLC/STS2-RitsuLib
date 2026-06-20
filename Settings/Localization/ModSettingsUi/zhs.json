@@ -187,6 +187,7 @@
   "ritsulib.updateCheck.toast.devBuildTitle": "RitsuLib dev build",
   "ritsulib.updateCheck.toast.devBuildBody": "当前加载的是 RitsuLib dev build（{0}），已跳过稳定版更新检查。",
   "ritsulib.updateCheck.toast.failed": "更新检查失败：{0}",
+  "ritsulib.section.updateChecks.title": "RitsuLib 更新",
   "ritsulib.section.steamWorkshopUpdates.title": "Steam 创意工坊更新",
   "ritsulib.section.steamWorkshopUpdates.description": "请求 Steam 下载已订阅创意工坊项目的可用更新。",
   "ritsulib.steamWorkshop.autoUpdateCheck.label": "自动检查创意工坊更新",

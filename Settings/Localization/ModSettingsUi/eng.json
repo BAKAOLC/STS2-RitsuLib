@@ -187,6 +187,7 @@
   "ritsulib.updateCheck.toast.devBuildTitle": "RitsuLib dev build",
   "ritsulib.updateCheck.toast.devBuildBody": "This is a RitsuLib dev build ({0}). Stable release update checks are skipped.",
   "ritsulib.updateCheck.toast.failed": "Update check failed: {0}",
+  "ritsulib.section.updateChecks.title": "RitsuLib updates",
   "ritsulib.section.steamWorkshopUpdates.title": "Steam Workshop updates",
   "ritsulib.section.steamWorkshopUpdates.description": "Ask Steam to download available updates for subscribed Workshop items.",
   "ritsulib.steamWorkshop.autoUpdateCheck.label": "Auto-check Workshop updates",
