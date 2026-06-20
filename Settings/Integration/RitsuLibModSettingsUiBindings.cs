@@ -1,3 +1,4 @@
+using STS2RitsuLib.Data;
 using STS2RitsuLib.Data.Models;
 using STS2RitsuLib.Ui.Shell.Theme;
 using STS2RitsuLib.Ui.Toast;
@@ -51,6 +52,7 @@ namespace STS2RitsuLib.Settings
         public IModSettingsValueBinding<bool> UpdateCheckEnabled { get; private init; } = null!;
         public IModSettingsValueBinding<bool> SteamWorkshopAutoUpdateCheckEnabled { get; private init; } = null!;
         public IModSettingsValueBinding<bool> MainMenuModSettingsButtonEnabled { get; private init; } = null!;
+        public IModSettingsValueBinding<string> ModelDbDeterministicSortMode { get; private init; } = null!;
         public IModSettingsValueBinding<bool> ToastEnabled { get; private init; } = null!;
         public IModSettingsValueBinding<string> ToastAnchor { get; private init; } = null!;
         public IModSettingsValueBinding<double> ToastOffsetX { get; private init; } = null!;
@@ -321,6 +323,16 @@ namespace STS2RitsuLib.Settings
                         settings => settings.MainMenuModSettingsButtonEnabled,
                         (settings, value) => settings.MainMenuModSettingsButtonEnabled = value),
                     () => defaults.MainMenuModSettingsButtonEnabled),
+                ModelDbDeterministicSortMode = ModSettingsBindings.WithDefault(
+                    ModSettingsBindings.Global<RitsuLibSettings, string>(
+                        Const.ModId,
+                        Const.SettingsKey,
+                        settings => RitsuLibSettingsStore.NormalizeModelDbDeterministicSortMode(
+                            settings.ModelDbDeterministicSortMode),
+                        (settings, value) =>
+                            settings.ModelDbDeterministicSortMode =
+                                RitsuLibSettingsStore.NormalizeModelDbDeterministicSortMode(value)),
+                    () => defaults.ModelDbDeterministicSortMode),
                 ToastEnabled = ModSettingsBindings.WithDefault(
                     ModSettingsBindings.Global<RitsuLibSettings, bool>(
                         Const.ModId,

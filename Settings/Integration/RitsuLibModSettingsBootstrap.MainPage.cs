@@ -1,7 +1,10 @@
+using MegaCrit.Sts2.Core.Runs;
+using STS2RitsuLib.Content.Patches;
 using STS2RitsuLib.Data;
 using STS2RitsuLib.Diagnostics;
 using STS2RitsuLib.Platform.Steam;
 using STS2RitsuLib.Ui.Shell.Theme;
+using STS2RitsuLib.Ui.Toast;
 using STS2RitsuLib.Updates;
 using STS2RitsuLib.Utils.Persistence;
 
@@ -34,6 +37,28 @@ namespace STS2RitsuLib.Settings
                         T("button.open", "Open"),
                         T("ritsulib.contentModLoadOrder.pageLink.description",
                             "Sort, copy, or apply the saved load order for content-affecting mods and their dependencies."))
+                    .AddChoice(
+                        "modeldb_deterministic_sort_mode",
+                        T("ritsulib.modelDbDeterministicSort.label", "Enable ModelDb deterministic sorting"),
+                        ui.ModelDbDeterministicSortMode,
+                        [
+                            new("off", T("ritsulib.modelDbDeterministicSort.option.off", "Off")),
+                            new("auto",
+                                T("ritsulib.modelDbDeterministicSort.option.auto",
+                                    "When RitsuLib-related registered content is detected")),
+                            new("force", T("ritsulib.modelDbDeterministicSort.option.force", "Force enabled")),
+                        ],
+                        T("ritsulib.modelDbDeterministicSort.description",
+                            "Controls whether ModelIdSerializationCache is rebuilt from deterministic final ModelDb content during initialization."),
+                        ModSettingsChoicePresentation.Dropdown)
+                    .AddButton(
+                        "modeldb_deterministic_sort_now",
+                        T("ritsulib.modelDbDeterministicSort.now.label", "Manual ModelDb deterministic sort"),
+                        T("ritsulib.modelDbDeterministicSort.now.button", "Sort now"),
+                        TryRebuildModelDbDeterministicCacheFromSettings,
+                        ModSettingsButtonTone.Normal,
+                        T("ritsulib.modelDbDeterministicSort.now.description",
+                            "Rebuilds the current session's ModelIdSerializationCache immediately."))
                     .AddSubpage(
                         "toast_open",
                         T("ritsulib.toast.pageLink.label", "Toast notifications"),
@@ -240,6 +265,65 @@ namespace STS2RitsuLib.Settings
             if (!RitsuShellThemeCatalog.TryRestoreAllExistingDiskThemesFromEmbedded(out _))
                 return;
             RitsuShellThemeRuntime.ReapplyActiveTheme(true);
+        }
+
+        private static void TryRebuildModelDbDeterministicCacheFromSettings()
+        {
+            var title = L("ritsulib.modelDbDeterministicSort.toast.title", "ModelDb deterministic sort");
+            if (!CanManuallyRebuildModelDbDeterministicCache())
+            {
+                var body = L(
+                    "ritsulib.modelDbDeterministicSort.toast.blockedActiveSession",
+                    "ModelDb deterministic sort can only be applied before a run, lobby, or network session starts.");
+                RitsuLibFramework.Logger.Warn(
+                    "[ModelIdSerializationCache] Manual deterministic rebuild blocked: active run, lobby, or network session.");
+                RitsuToastService.ShowWarning(body, title);
+                return;
+            }
+
+            var result = ModelIdSerializationCacheDynamicContentPatch.RebuildDeterministicCacheForSettings();
+            if (!result.Applied)
+            {
+                var reason = result.Reason ?? L("ritsulib.modelDbDeterministicSort.toast.notAppliedUnknown",
+                    "The cache could not be rebuilt.");
+                RitsuLibFramework.Logger.Warn(
+                    $"[ModelIdSerializationCache] Manual deterministic rebuild skipped: {reason}");
+                RitsuToastService.ShowWarning(
+                    string.Format(
+                        L("ritsulib.modelDbDeterministicSort.toast.notApplied",
+                            "ModelDb deterministic sort was not applied: {0}"),
+                        reason),
+                    title);
+                return;
+            }
+
+            RitsuLibFramework.Logger.Info(
+                $"[ModelIdSerializationCache] Manual deterministic rebuild applied. Hash: {result.InitialHash} -> {result.FinalHash}.");
+            RitsuToastService.ShowInfo(
+                string.Format(
+                    L("ritsulib.modelDbDeterministicSort.toast.applied",
+                        "ModelDb deterministic sort applied. Hash: {0} -> {1}."),
+                    result.InitialHash,
+                    result.FinalHash),
+                title);
+        }
+
+        private static bool CanManuallyRebuildModelDbDeterministicCache()
+        {
+            try
+            {
+                var runManager = RunManager.Instance;
+                return runManager is
+                {
+                    IsInProgress: false,
+                    RunLobby: null,
+                    NetService.IsConnected: false,
+                };
+            }
+            catch
+            {
+                return false;
+            }
         }
     }
 }

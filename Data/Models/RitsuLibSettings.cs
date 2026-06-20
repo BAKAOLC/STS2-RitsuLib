@@ -408,6 +408,15 @@ namespace STS2RitsuLib.Data.Models
         public bool MainMenuModSettingsButtonEnabled { get; set; } = true;
 
         /// <summary>
+        ///     Automatic ModelDb deterministic final-content cache policy. Valid values: <c>off</c>, <c>auto</c>,
+        ///     <c>force</c>. Default <c>auto</c>.
+        ///     ModelDb 确定性最终内容缓存的自动策略。有效值：<c>off</c>、<c>auto</c>、<c>force</c>。默认
+        ///     <c>auto</c>。
+        /// </summary>
+        [JsonPropertyName("modeldb_deterministic_sort_mode")]
+        public string ModelDbDeterministicSortMode { get; set; } = "auto";
+
+        /// <summary>
         ///     Enables global non-blocking toast notifications.
         ///     启用全局非阻塞 toast 通知。
         /// </summary>

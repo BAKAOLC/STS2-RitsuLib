@@ -321,6 +321,22 @@ namespace STS2RitsuLib.Data
             return GetSettings().MainMenuModSettingsButtonEnabled;
         }
 
+        internal static ModelDbDeterministicSortMode GetModelDbDeterministicSortMode()
+        {
+            Initialize();
+            return ParseModelDbDeterministicSortMode(GetSettings().ModelDbDeterministicSortMode);
+        }
+
+        internal static string NormalizeModelDbDeterministicSortMode(string? value)
+        {
+            return ParseModelDbDeterministicSortMode(value) switch
+            {
+                ModelDbDeterministicSortMode.Disabled => "off",
+                ModelDbDeterministicSortMode.Force => "force",
+                _ => "auto",
+            };
+        }
+
         internal static RitsuToastSettings GetToastSettings()
         {
             Initialize();
@@ -361,6 +377,16 @@ namespace STS2RitsuLib.Data
                 "fade" => RitsuToastAnimationPreset.Fade,
                 "fadescale" => RitsuToastAnimationPreset.FadeScale,
                 _ => RitsuToastAnimationPreset.FadeSlide,
+            };
+        }
+
+        private static ModelDbDeterministicSortMode ParseModelDbDeterministicSortMode(string? value)
+        {
+            return value?.Trim().ToLowerInvariant() switch
+            {
+                "off" or "disabled" => ModelDbDeterministicSortMode.Disabled,
+                "force" or "forced" => ModelDbDeterministicSortMode.Force,
+                _ => ModelDbDeterministicSortMode.Auto,
             };
         }
     }
