@@ -11,7 +11,7 @@ cover: https://wrxinyue.s3.bitiful.net/slay-the-spire-2-wallpaper.webp
 
 Use `RitsuLibFramework.RegisterModUpdateCheck(...)` when a mod should periodically check a small mirrored or self-hosted JSON file after the first main menu loads. Do not point `ManifestUri` at GitHub, GitHub API, or raw GitHub content; use a CDN, your own site, or another mirror. The release page can still be whichever page you want users to open.
 
-Automatic checks are serialized by RitsuLib and use the global RitsuLib update-check interval. Players can also configure automatic checks that become due in combat to run after combat ends. Update toasts from automatic checks are deferred until the main menu is active.
+Automatic checks are serialized by RitsuLib and use the global RitsuLib update-check interval. Players can also configure automatic checks to pause while the run is in a combat room and resume after leaving it. Update toasts from automatic checks are deferred until the main menu is active.
 
 ```csharp
 RitsuLibFramework.RegisterModUpdateCheck(new()
@@ -58,7 +58,7 @@ If the manifest version is newer, RitsuLib shows a normal non-persistent info to
 
 如果一个 Mod 需要在首次主菜单加载后周期性检查更新，使用 `RitsuLibFramework.RegisterModUpdateCheck(...)`。`ManifestUri` 不要指向 GitHub、GitHub API 或 raw GitHub 内容；请使用 CDN、自有站点或其他镜像。发布页可以是你希望用户点击后打开的任意页面。
 
-自动检查由 RitsuLib 串行执行，并使用 RitsuLib 的全局更新检查间隔。玩家也可以配置在战斗中到期的自动检查于战斗结束后执行。自动检查产生的更新 toast 会延后到主菜单处于活动状态时显示。
+自动检查由 RitsuLib 串行执行，并使用 RitsuLib 的全局更新检查间隔。玩家也可以配置自动检查在跑局处于战斗房间时暂停，并在离开战斗房间后继续。自动检查产生的更新 toast 会延后到主菜单处于活动状态时显示。
 
 ```csharp
 RitsuLibFramework.RegisterModUpdateCheck(new()

@@ -7,7 +7,7 @@ namespace STS2RitsuLib.Updates
         private static readonly Lock SyncRoot = new();
         private static readonly Dictionary<string, ScheduledCheck> Checks = new(StringComparer.Ordinal);
         private static int _cycleRunning;
-        private static int _deferredCycleRequested;
+        private static int? _deferredFromOrder;
         private static int _nextOrder;
         private static bool _initialized;
         private static bool _loopStarted;
@@ -51,8 +51,7 @@ namespace STS2RitsuLib.Updates
                 UpdateCheckSessionState.Initialize();
                 RitsuLibFramework.SubscribeLifecycle<MainMenuReadyEvent>(_ => StartLoop());
                 RitsuLibFramework.SubscribeLifecycle<MainMenuReadyEvent>(_ => TryRunDeferredCycle());
-                RitsuLibFramework.SubscribeLifecycle<CombatEndedEvent>(_ => TryRunDeferredCycle());
-                RitsuLibFramework.SubscribeLifecycle<CombatVictoryEvent>(_ => TryRunDeferredCycle());
+                RitsuLibFramework.SubscribeLifecycle<RoomExitedEvent>(_ => TryRunDeferredCycle());
                 RitsuLibFramework.SubscribeLifecycle<RunEndedEvent>(_ => TryRunDeferredCycle());
             }
         }
@@ -93,19 +92,19 @@ namespace STS2RitsuLib.Updates
         {
             if (ShouldDeferForCombat())
             {
-                RequestDeferredCycle($"{source} cycle reached combat");
+                RequestDeferredCycle($"{source} cycle reached a combat room", 0);
                 return;
             }
 
             if (Interlocked.Exchange(ref _cycleRunning, 1) != 0)
             {
-                RequestDeferredCycle($"{source} cycle overlapped another update check cycle");
+                RequestDeferredCycle($"{source} cycle overlapped another update check cycle", 0);
                 return;
             }
 
             try
             {
-                await RunCycleCoreAsync().ConfigureAwait(false);
+                await RunCycleCoreAsync(0).ConfigureAwait(false);
             }
             finally
             {
@@ -114,20 +113,23 @@ namespace STS2RitsuLib.Updates
             }
         }
 
-        private static async Task RunCycleCoreAsync()
+        private static async Task RunCycleCoreAsync(int resumeFromOrder)
         {
             var deferInCombat = RitsuLibSettingsStore.ShouldDeferUpdateChecksInCombat();
             ScheduledCheck[] checks;
             lock (SyncRoot)
             {
-                checks = Checks.Values.OrderBy(check => check.Order).ToArray();
+                checks = Checks.Values
+                    .Where(check => check.Order >= resumeFromOrder)
+                    .OrderBy(check => check.Order)
+                    .ToArray();
             }
 
             foreach (var check in checks)
             {
-                if (deferInCombat && UpdateCheckSessionState.IsCombatActive)
+                if (deferInCombat && UpdateCheckSessionState.IsCombatRoomActive)
                 {
-                    RequestDeferredCycle("combat became active during update check cycle");
+                    RequestDeferredCycle("entered a combat room during update check cycle", check.Order);
                     return;
                 }
 
@@ -151,19 +153,31 @@ namespace STS2RitsuLib.Updates
         private static bool ShouldDeferForCombat()
         {
             return RitsuLibSettingsStore.ShouldDeferUpdateChecksInCombat() &&
-                   UpdateCheckSessionState.IsCombatActive;
+                   UpdateCheckSessionState.IsCombatRoomActive;
         }
 
-        private static void RequestDeferredCycle(string reason)
+        private static void RequestDeferredCycle(string reason, int resumeFromOrder)
         {
-            Interlocked.Exchange(ref _deferredCycleRequested, 1);
+            lock (SyncRoot)
+            {
+                _deferredFromOrder = _deferredFromOrder is { } existing
+                    ? Math.Min(existing, resumeFromOrder)
+                    : resumeFromOrder;
+            }
+
             RitsuLibFramework.Logger.Debug($"[UpdateCheck] Automatic check cycle deferred: {reason}.");
         }
 
         private static void TryRunDeferredCycle()
         {
-            if (Interlocked.CompareExchange(ref _deferredCycleRequested, 0, 0) == 0)
-                return;
+            int resumeFromOrder;
+            lock (SyncRoot)
+            {
+                if (_deferredFromOrder is not { } deferredFromOrder)
+                    return;
+
+                resumeFromOrder = deferredFromOrder;
+            }
 
             if (ShouldDeferForCombat())
                 return;
@@ -171,13 +185,19 @@ namespace STS2RitsuLib.Updates
             if (Interlocked.CompareExchange(ref _cycleRunning, 1, 0) != 0)
                 return;
 
-            Interlocked.Exchange(ref _deferredCycleRequested, 0);
+            lock (SyncRoot)
+            {
+                if (_deferredFromOrder == resumeFromOrder)
+                    _deferredFromOrder = null;
+            }
+
             _ = Task.Run(async () =>
             {
                 try
                 {
-                    RitsuLibFramework.Logger.Debug("[UpdateCheck] Running deferred automatic check cycle.");
-                    await RunCycleCoreAsync().ConfigureAwait(false);
+                    RitsuLibFramework.Logger.Debug(
+                        $"[UpdateCheck] Resuming deferred automatic check cycle from order {resumeFromOrder}.");
+                    await RunCycleCoreAsync(resumeFromOrder).ConfigureAwait(false);
                 }
                 finally
                 {

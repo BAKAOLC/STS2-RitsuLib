@@ -103,10 +103,10 @@ namespace STS2RitsuLib.Settings
                             "Controls how often automatic RitsuLib, Workshop, and registered mod update checks run."))
                     .AddToggle(
                         "update_check_skip_in_combat",
-                        T("ritsulib.updateCheck.skipInCombat.label", "Defer automatic checks in combat"),
+                        T("ritsulib.updateCheck.skipInCombat.label", "Defer automatic checks in combat rooms"),
                         ui.UpdateCheckSkipInCombat,
                         T("ritsulib.updateCheck.skipInCombat.description",
-                            "When enabled, periodic automatic update checks that become due in combat run after combat ends."))
+                            "When enabled, automatic update checks pause while the run is in a combat room and resume after leaving it."))
                     .AddToggle(
                         "main_menu_mod_settings_button_enabled",
                         T("ritsulib.mainMenuModSettingsButton.enabled.label", "Show main menu settings shortcut"),

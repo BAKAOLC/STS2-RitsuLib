@@ -1,17 +1,19 @@
+using MegaCrit.Sts2.Core.Rooms;
+
 namespace STS2RitsuLib.Updates
 {
     internal static class UpdateCheckSessionState
     {
         private static int _initialized;
-        private static volatile bool _isCombatActive;
+        private static volatile bool _isCombatRoomActive;
         private static volatile bool _isMainMenuActive;
 
-        internal static bool IsCombatActive
+        internal static bool IsCombatRoomActive
         {
             get
             {
                 Initialize();
-                return _isCombatActive;
+                return _isCombatRoomActive;
             }
         }
 
@@ -31,20 +33,24 @@ namespace STS2RitsuLib.Updates
 
             RitsuLibFramework.SubscribeLifecycle<MainMenuReadyEvent>(_ =>
             {
-                _isCombatActive = false;
+                _isCombatRoomActive = false;
                 _isMainMenuActive = true;
                 UpdateCheckNotificationQueue.FlushPending();
             });
             RitsuLibFramework.SubscribeLifecycle<RunStartedEvent>(_ => _isMainMenuActive = false);
             RitsuLibFramework.SubscribeLifecycle<RunLoadedEvent>(_ => _isMainMenuActive = false);
-            RitsuLibFramework.SubscribeLifecycle<CombatStartingEvent>(_ =>
+            RitsuLibFramework.SubscribeLifecycle<RoomEnteringEvent>(evt =>
             {
                 _isMainMenuActive = false;
-                _isCombatActive = true;
+                if (evt.Room is CombatRoom)
+                    _isCombatRoomActive = true;
             });
-            RitsuLibFramework.SubscribeLifecycle<CombatEndedEvent>(_ => _isCombatActive = false);
-            RitsuLibFramework.SubscribeLifecycle<CombatVictoryEvent>(_ => _isCombatActive = false);
-            RitsuLibFramework.SubscribeLifecycle<RunEndedEvent>(_ => _isCombatActive = false);
+            RitsuLibFramework.SubscribeLifecycle<RoomExitedEvent>(evt =>
+            {
+                if (evt.Room is CombatRoom)
+                    _isCombatRoomActive = false;
+            });
+            RitsuLibFramework.SubscribeLifecycle<RunEndedEvent>(_ => _isCombatRoomActive = false);
         }
     }
 }
