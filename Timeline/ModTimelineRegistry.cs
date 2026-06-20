@@ -192,6 +192,14 @@ namespace STS2RitsuLib.Timeline
             ModTimelineLayoutRegistry.FreezeAndValidate();
         }
 
+        internal static int RegisteredEpochCount()
+        {
+            lock (SyncRoot)
+            {
+                return RegisteredEpochTypes.Count;
+            }
+        }
+
         /// <summary>
         ///     Rewrites <see cref="EpochModel.AllEpochIds" /> from the live <c>_epochTypeDictionary</c> so
         ///     <see cref="EpochModel.IsValid" /> matches <see cref="EpochModel.Get" /> after third-party dictionary edits or

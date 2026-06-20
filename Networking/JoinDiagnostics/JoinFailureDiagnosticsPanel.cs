@@ -266,16 +266,23 @@ namespace STS2RitsuLib.Networking.JoinDiagnostics
                 T("column.host", "Host"),
                 _report.Host!.GameVersion,
                 _report.Host.ModelDbHash,
+                _report.Host.ModelDbHashUsesDeterministicCache,
                 _report.Host.GameplayMods.Count));
             row.AddChild(CreateSnapshotCard(
                 T("column.local", "Local"),
                 _report.Local.GameVersion,
                 _report.Local.ModelDbHash,
+                _report.Local.ModelDbHashUsesDeterministicCache,
                 _report.Local.GameplayMods.Count));
             return row;
         }
 
-        private Control CreateSnapshotCard(string title, string version, uint modelDbHash, int modCount)
+        private Control CreateSnapshotCard(
+            string title,
+            string version,
+            uint modelDbHash,
+            bool modelDbHashUsesDeterministicCache,
+            int modCount)
         {
             var panel = new PanelContainer
             {
@@ -292,6 +299,11 @@ namespace STS2RitsuLib.Networking.JoinDiagnostics
                 RitsuShellTheme.Current.Text.RichBody));
             box.AddChild(CreateLabel(
                 F("snapshot.modelDb", "ModelDb: {0}", modelDbHash),
+                14,
+                RitsuShellTheme.Current.Text.RichBody));
+            box.AddChild(CreateLabel(
+                F("snapshot.modelDbMode", "ModelDb mode: {0}",
+                    FormatModelDbHashMode(modelDbHashUsesDeterministicCache)),
                 14,
                 RitsuShellTheme.Current.Text.RichBody));
             box.AddChild(CreateLabel(
@@ -833,6 +845,8 @@ namespace STS2RitsuLib.Networking.JoinDiagnostics
 
             builder.AppendLine("  " + F("snapshot.version", "Version: {0}", snapshot.GameVersion));
             builder.AppendLine("  " + F("snapshot.modelDb", "ModelDb: {0}", snapshot.ModelDbHash));
+            builder.AppendLine("  " + F("snapshot.modelDbMode", "ModelDb mode: {0}",
+                FormatModelDbHashMode(snapshot.ModelDbHashUsesDeterministicCache)));
             builder.AppendLine("  " + F("snapshot.mods", "Gameplay mods: {0}", snapshot.GameplayMods.Count));
         }
 
@@ -1067,6 +1081,13 @@ namespace STS2RitsuLib.Networking.JoinDiagnostics
         private static string FormatVersion(string version)
         {
             return string.IsNullOrWhiteSpace(version) ? T("value.noVersion", "No version") : version;
+        }
+
+        private static string FormatModelDbHashMode(bool deterministic)
+        {
+            return deterministic
+                ? T("value.modelDbHashMode.deterministic", "Stable sorting")
+                : T("value.modelDbHashMode.notReported", "Stable sorting not reported");
         }
 
         private static string T(string key, string fallback)

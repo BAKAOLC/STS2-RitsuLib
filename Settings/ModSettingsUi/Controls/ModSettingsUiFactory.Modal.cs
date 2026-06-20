@@ -4,7 +4,11 @@ using STS2RitsuLib.Ui.Shell.Theme;
 
 namespace STS2RitsuLib.Settings
 {
-    internal static partial class ModSettingsUiFactory
+    /// <summary>
+    ///     Factory for reusable RitsuLib mod-settings UI chrome and controls.
+    ///     可复用的 RitsuLib Mod 设置 UI chrome 与控件工厂。
+    /// </summary>
+    public static partial class ModSettingsUiFactory
     {
         private const int ModalCanvasLayer = 120;
 
@@ -12,7 +16,7 @@ namespace STS2RitsuLib.Settings
         ///     Full-viewport dim + centered panel, same chrome as mod settings. Blocks input under the layer.
         ///     全视口变暗 + 居中面板，外观与 mod 设置相同。阻止该层下方的输入。
         /// </summary>
-        internal static void ShowStyledConfirm(
+        public static void ShowStyledConfirm(
             Node attachParent,
             string title,
             string body,
@@ -286,7 +290,11 @@ namespace STS2RitsuLib.Settings
             }
         }
 
-        internal static void ShowStyledNotice(
+        /// <summary>
+        ///     Shows a styled one-button notice dialog.
+        ///     显示主题化单按钮提示对话框。
+        /// </summary>
+        public static void ShowStyledNotice(
             Node attachParent,
             string title,
             string body,

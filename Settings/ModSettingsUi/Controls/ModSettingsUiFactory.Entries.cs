@@ -3,7 +3,11 @@ using STS2RitsuLib.Ui.Shell.Theme;
 
 namespace STS2RitsuLib.Settings
 {
-    internal static partial class ModSettingsUiFactory
+    /// <summary>
+    ///     Factory for reusable RitsuLib mod-settings UI chrome and controls.
+    ///     可复用的 RitsuLib Mod 设置 UI chrome 与控件工厂。
+    /// </summary>
+    public static partial class ModSettingsUiFactory
     {
         private const float PageContentWidth = 0f;
 
@@ -27,7 +31,7 @@ namespace STS2RitsuLib.Settings
             }, spec);
         }
 
-        public static Control CreatePageContent(ModSettingsUiContext context, ModSettingsPage page)
+        internal static Control CreatePageContent(ModSettingsUiContext context, ModSettingsPage page)
         {
             var container = CreatePageContentHost(page);
             foreach (var item in CreatePageBuildItems(context, page))
@@ -170,7 +174,7 @@ namespace STS2RitsuLib.Settings
             return predicate?.Invoke() ?? true;
         }
 
-        public static Control CreateToggleEntry(ModSettingsUiContext context, ToggleModSettingsEntryDefinition entry)
+        internal static Control CreateToggleEntry(ModSettingsUiContext context, ToggleModSettingsEntryDefinition entry)
         {
             var control = new ModSettingsToggleControl(
                 entry.Binding.Read(),
@@ -194,7 +198,7 @@ namespace STS2RitsuLib.Settings
                 entry.Description);
         }
 
-        public static Control CreateSliderEntry(ModSettingsUiContext context, SliderModSettingsEntryDefinition entry)
+        internal static Control CreateSliderEntry(ModSettingsUiContext context, SliderModSettingsEntryDefinition entry)
         {
             ModSettingsSliderControl? controlSlot = null;
             var control = new ModSettingsSliderControl(
@@ -243,7 +247,7 @@ namespace STS2RitsuLib.Settings
             }
         }
 
-        public static Control CreateFloatSliderEntry(ModSettingsUiContext context,
+        internal static Control CreateFloatSliderEntry(ModSettingsUiContext context,
             FloatSliderModSettingsEntryDefinition entry)
         {
             ModSettingsFloatSliderControl? controlSlot = null;
@@ -293,7 +297,7 @@ namespace STS2RitsuLib.Settings
             }
         }
 
-        public static Control CreateChoiceEntry<TValue>(ModSettingsUiContext context,
+        internal static Control CreateChoiceEntry<TValue>(ModSettingsUiContext context,
             ChoiceModSettingsEntryDefinition<TValue> entry)
         {
             var resolvedOptions = entry.Options
@@ -346,7 +350,7 @@ namespace STS2RitsuLib.Settings
                 entry.Description);
         }
 
-        public static Control CreateColorEntry(ModSettingsUiContext context, ColorModSettingsEntryDefinition entry)
+        internal static Control CreateColorEntry(ModSettingsUiContext context, ColorModSettingsEntryDefinition entry)
         {
             var control = new ModSettingsColorControl(
                 entry.Binding.Read(),
@@ -372,7 +376,7 @@ namespace STS2RitsuLib.Settings
                 entry.Description);
         }
 
-        public static Control CreateStringLineEntry(ModSettingsUiContext context,
+        internal static Control CreateStringLineEntry(ModSettingsUiContext context,
             StringModSettingsEntryDefinition entry)
         {
             var placeholder = ResolveStringFieldPlaceholder(entry);
@@ -397,7 +401,7 @@ namespace STS2RitsuLib.Settings
                 entry.Description);
         }
 
-        public static Control CreateStringMultilineEntry(ModSettingsUiContext context,
+        internal static Control CreateStringMultilineEntry(ModSettingsUiContext context,
             MultilineStringModSettingsEntryDefinition entry)
         {
             var placeholder = ResolveStringFieldPlaceholder(entry);
@@ -436,7 +440,7 @@ namespace STS2RitsuLib.Settings
             };
         }
 
-        public static Control CreateKeyBindingEntry(ModSettingsUiContext context,
+        internal static Control CreateKeyBindingEntry(ModSettingsUiContext context,
             KeyBindingModSettingsEntryDefinition entry)
         {
             var control = new ModSettingsKeyBindingControl(
@@ -464,7 +468,7 @@ namespace STS2RitsuLib.Settings
                 entry.Description);
         }
 
-        public static Control CreateInputBindingEntry(ModSettingsUiContext context,
+        internal static Control CreateInputBindingEntry(ModSettingsUiContext context,
             InputBindingModSettingsEntryDefinition entry)
         {
             var control = new ModSettingsKeyBindingControl(
@@ -493,7 +497,7 @@ namespace STS2RitsuLib.Settings
                 entry.Description);
         }
 
-        public static Control CreateMultiKeyBindingEntry(ModSettingsUiContext context,
+        internal static Control CreateMultiKeyBindingEntry(ModSettingsUiContext context,
             MultiKeyBindingModSettingsEntryDefinition entry)
         {
             var control = new ModSettingsMultiKeyBindingControl(
@@ -520,7 +524,7 @@ namespace STS2RitsuLib.Settings
                 entry.Description);
         }
 
-        public static Control CreateButtonEntry(ModSettingsUiContext context, ButtonModSettingsEntryDefinition entry)
+        internal static Control CreateButtonEntry(ModSettingsUiContext context, ButtonModSettingsEntryDefinition entry)
         {
             var control = new ModSettingsTextButton(
                 ModSettingsUiContext.Resolve(entry.ButtonText),
@@ -541,7 +545,7 @@ namespace STS2RitsuLib.Settings
                 entry.Description);
         }
 
-        public static Control CreateHostContextButtonEntry(ModSettingsUiContext context,
+        internal static Control CreateHostContextButtonEntry(ModSettingsUiContext context,
             HostContextButtonModSettingsEntryDefinition entry)
         {
             var control = new ModSettingsTextButton(
@@ -563,7 +567,7 @@ namespace STS2RitsuLib.Settings
                 entry.Description);
         }
 
-        public static Control CreateHeaderEntry(ModSettingsUiContext context, HeaderModSettingsEntryDefinition entry)
+        internal static Control CreateHeaderEntry(ModSettingsUiContext context, HeaderModSettingsEntryDefinition entry)
         {
             var container = new VBoxContainer
             {
@@ -580,7 +584,7 @@ namespace STS2RitsuLib.Settings
             return container;
         }
 
-        public static Control CreateParagraphEntry(ModSettingsUiContext context,
+        internal static Control CreateParagraphEntry(ModSettingsUiContext context,
             ParagraphModSettingsEntryDefinition entry)
         {
             var cap = entry.MaxBodyHeight ?? ModSettingsUiPresentation.ParagraphMaxBodyHeight;
@@ -588,7 +592,7 @@ namespace STS2RitsuLib.Settings
                 () => ModSettingsUiContext.Resolve(entry.Label), cap);
         }
 
-        public static Control CreateInfoCardEntry(ModSettingsUiContext context,
+        internal static Control CreateInfoCardEntry(ModSettingsUiContext context,
             InfoCardModSettingsEntryDefinition entry)
         {
             var line = new MarginContainer
@@ -637,7 +641,7 @@ namespace STS2RitsuLib.Settings
             return line;
         }
 
-        public static Control CreateRuntimeHotkeySummaryEntry(ModSettingsUiContext context,
+        internal static Control CreateRuntimeHotkeySummaryEntry(ModSettingsUiContext context,
             RuntimeHotkeySummaryModSettingsEntryDefinition entry)
         {
             var line = new MarginContainer
@@ -774,7 +778,7 @@ namespace STS2RitsuLib.Settings
             return line;
         }
 
-        public static Control CreateImageEntry(ModSettingsUiContext context, ImageModSettingsEntryDefinition entry)
+        internal static Control CreateImageEntry(ModSettingsUiContext context, ImageModSettingsEntryDefinition entry)
         {
             var container = new VBoxContainer
             {
@@ -814,18 +818,18 @@ namespace STS2RitsuLib.Settings
             return container;
         }
 
-        public static Control CreateCustomEntry(ModSettingsUiContext context, CustomModSettingsEntryDefinition entry)
+        internal static Control CreateCustomEntry(ModSettingsUiContext context, CustomModSettingsEntryDefinition entry)
         {
             return entry.ControlFactory(context);
         }
 
-        public static Control CreateListEntry<TItem>(ModSettingsUiContext context,
+        internal static Control CreateListEntry<TItem>(ModSettingsUiContext context,
             ListModSettingsEntryDefinition<TItem> entry)
         {
             return new ModSettingsListControl<TItem>(context, entry);
         }
 
-        public static Control CreateIntSliderEntry(ModSettingsUiContext context,
+        internal static Control CreateIntSliderEntry(ModSettingsUiContext context,
             IntSliderModSettingsEntryDefinition entry)
         {
             ModSettingsSliderControl? controlSlot = null;
@@ -876,7 +880,8 @@ namespace STS2RitsuLib.Settings
             }
         }
 
-        public static Control CreateSubpageEntry(ModSettingsUiContext context, SubpageModSettingsEntryDefinition entry)
+        internal static Control CreateSubpageEntry(ModSettingsUiContext context,
+            SubpageModSettingsEntryDefinition entry)
         {
             var control = new ModSettingsTextButton(
                 ModSettingsUiContext.Resolve(entry.ButtonText, ModSettingsLocalization.Get("button.open", "Open")),

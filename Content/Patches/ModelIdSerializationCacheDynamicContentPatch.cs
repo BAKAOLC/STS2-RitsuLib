@@ -8,30 +8,31 @@ using HarmonyLib;
 using MegaCrit.Sts2.Core.Models;
 using MegaCrit.Sts2.Core.Multiplayer.Serialization;
 using MegaCrit.Sts2.Core.Timeline;
+using STS2RitsuLib.Data;
+using STS2RitsuLib.Data.Models;
+using STS2RitsuLib.Patching.Core;
 using STS2RitsuLib.Patching.Models;
+using STS2RitsuLib.Timeline;
 
 namespace STS2RitsuLib.Content.Patches
 {
     /// <summary>
-    ///     <see cref="ModelIdSerializationCache.Init" /> only walks <see cref="ModelDb.AllAbstractModelSubtypes" />, so
-    ///     Reflection.Emit placeholder models (and any other injected types not returned by mod subtype scan) never receive
-    ///     net
-    ///     IDs. This postfix merges <see cref="ModelDb" /> content and recomputes bit sizes and hash like vanilla
-    ///     <c>Init</c>.
-    ///     <see cref="ModelIdSerializationCache.Init" /> 只遍历 <see cref="ModelDb.AllAbstractModelSubtypes" />，因此
-    ///     Reflection.Emit 占位模型（以及任何其它未由 mod 子类型扫描返回的注入类型）永远不会获得
-    ///     net
-    ///     ID。此后置补丁会合并 <see cref="ModelDb" /> 内容，并像原版
-    ///     <c>Init</c> 一样重新计算位大小和哈希。
+    ///     Rebuilds <see cref="ModelIdSerializationCache" /> from the finalized <see cref="ModelDb" /> content after
+    ///     the existing initialization path when registered extensions are present, using a strict deterministic order
+    ///     so all registered models share one stable net-id and hash source.
+    ///     当存在注册扩展内容时，在既有初始化路径之后使用严格确定的顺序，从最终 <see cref="ModelDb" /> 内容重建
+    ///     <see cref="ModelIdSerializationCache" />，让所有已注册模型共用同一个稳定的 net-id 与 hash 来源。
     /// </summary>
-    internal class ModelIdSerializationCacheDynamicContentPatch : IPatchMethod
+    internal sealed class ModelIdSerializationCacheDynamicContentPatch : IPatchMethod
     {
+        internal static bool UsesDeterministicCache { get; private set; }
+
         // Setter invocation happens at init-time only; keep the simple reflection path to
         // avoid delegate-signature mismatches across different runtime property types.
         public static string PatchId => "model_id_serialization_cache_dynamic_content";
 
         public static string Description =>
-            "Include ModelDb-injected dynamic mod models in ModelIdSerializationCache maps and hash";
+            "Rebuild ModelIdSerializationCache maps and hash from deterministically sorted final ModelDb content";
 
         public static bool IsCritical => true;
 
@@ -42,9 +43,33 @@ namespace STS2RitsuLib.Content.Patches
 
         public static void Postfix()
         {
+            var mode = RitsuLibSettingsStore.GetModelDbDeterministicSortMode();
+            if (mode == ModelDbDeterministicSortMode.Disabled)
+            {
+                UsesDeterministicCache = false;
+                PatchLog.For<ModelIdSerializationCacheDynamicContentPatch>().Info(
+                    "[ModelIdSerializationCache] Deterministic final-content cache disabled by settings.");
+                return;
+            }
+
+            var result = RebuildDeterministicCache(mode == ModelDbDeterministicSortMode.Force);
+            LogAutomaticResult(result);
+        }
+
+        internal static ModelDbDeterministicCacheRebuildResult RebuildDeterministicCacheForSettings()
+        {
+            return RebuildDeterministicCache(true);
+        }
+
+        private static ModelDbDeterministicCacheRebuildResult RebuildDeterministicCache(bool force)
+        {
+            UsesDeterministicCache = false;
             var contentById = GetModelDbContentById();
             if (contentById == null || contentById.Count == 0)
-                return;
+                return ModelDbDeterministicCacheRebuildResult.NotApplied("ModelDb content is not available.");
+
+            if (!force && !HasRegisteredSerializationContent(contentById))
+                return ModelDbDeterministicCacheRebuildResult.NotApplied("No matching content was detected.");
 
             var catMap =
                 GetStaticField<Dictionary<string, int>>(typeof(ModelIdSerializationCache), "_categoryNameToNetIdMap");
@@ -52,33 +77,69 @@ namespace STS2RitsuLib.Content.Patches
             var entMap =
                 GetStaticField<Dictionary<string, int>>(typeof(ModelIdSerializationCache), "_entryNameToNetIdMap");
             var entList = GetStaticField<List<string>>(typeof(ModelIdSerializationCache), "_netIdToEntryNameMap");
+            var epochMap =
+                GetStaticField<Dictionary<string, int>>(typeof(ModelIdSerializationCache), "_epochNameToNetIdMap");
+            var epochList = GetStaticField<List<string>>(typeof(ModelIdSerializationCache), "_netIdToEpochNameMap");
 
-            if (catMap == null || catList == null || entMap == null || entList == null)
-                return;
+            if (catMap == null || catList == null || entMap == null || entList == null ||
+                epochMap == null || epochList == null)
+                return ModelDbDeterministicCacheRebuildResult.NotApplied(
+                    "ModelIdSerializationCache internals are not available.");
 
-            foreach (DictionaryEntry entry in contentById)
+            var initialHash = ModelIdSerializationCache.Hash;
+
+            var modelEntries = GetSortedModelEntries(contentById);
+            var epochIds = EpochModel.AllEpochIds
+                .Distinct(StringComparer.Ordinal)
+                .OrderBy(static id => id, StringComparer.Ordinal)
+                .ToArray();
+
+            catMap.Clear();
+            catList.Clear();
+            entMap.Clear();
+            entList.Clear();
+            epochMap.Clear();
+            epochList.Clear();
+
+            EnsureCategory(ModelId.none.Category, catMap, catList);
+            EnsureEntry(ModelId.none.Entry, entMap, entList);
+
+            foreach (var entry in modelEntries)
             {
-                if (entry.Key is not ModelId id)
-                    continue;
-
+                var id = entry.Id;
                 EnsureCategory(id.Category, catMap, catList);
                 EnsureEntry(id.Entry, entMap, entList);
             }
 
-            var maxCategory = catList.Count;
-            var maxEntry = entList.Count;
-            var epochList = GetStaticField<List<string>>(typeof(ModelIdSerializationCache), "_netIdToEpochNameMap");
-            var maxEpoch = epochList?.Count ?? 0;
+            foreach (var epochId in epochIds)
+                EnsureEpoch(epochId, epochMap, epochList);
 
             SetStaticProperty(typeof(ModelIdSerializationCache), nameof(ModelIdSerializationCache.CategoryIdBitSize),
-                Mathf.CeilToInt(Math.Log2(maxCategory)));
+                GetBitSize(catList.Count));
             SetStaticProperty(typeof(ModelIdSerializationCache), nameof(ModelIdSerializationCache.EntryIdBitSize),
-                Mathf.CeilToInt(Math.Log2(maxEntry)));
+                GetBitSize(entList.Count));
             SetStaticProperty(typeof(ModelIdSerializationCache), nameof(ModelIdSerializationCache.EpochIdBitSize),
-                Mathf.CeilToInt(Math.Log2(maxEpoch)));
+                GetBitSize(epochList.Count));
 
-            var newHash = ComputeHashLikeVanilla(contentById, maxCategory, maxEntry, maxEpoch);
+            var newHash = ComputeHash(modelEntries, epochIds, catList.Count, entList.Count, epochList.Count);
             SetStaticProperty(typeof(ModelIdSerializationCache), nameof(ModelIdSerializationCache.Hash), newHash);
+            UsesDeterministicCache = true;
+
+            return ModelDbDeterministicCacheRebuildResult.Rebuilt(initialHash, newHash);
+        }
+
+        private static void LogAutomaticResult(ModelDbDeterministicCacheRebuildResult result)
+        {
+            if (!result.Applied)
+            {
+                PatchLog.For<ModelIdSerializationCacheDynamicContentPatch>().Info(
+                    "[ModelIdSerializationCache] Deterministic final-content cache not enabled.");
+                return;
+            }
+
+            PatchLog.For<ModelIdSerializationCacheDynamicContentPatch>().Info(
+                "[ModelIdSerializationCache] Deterministic final-content cache enabled. " +
+                $"Hash: {result.InitialHash} -> {result.FinalHash}.");
         }
 
         private static IDictionary? GetModelDbContentById()
@@ -87,29 +148,82 @@ namespace STS2RitsuLib.Content.Patches
             return field?.GetValue(null) as IDictionary;
         }
 
-        private static uint ComputeHashLikeVanilla(IDictionary contentById, int maxCategory, int maxEntry, int maxEpoch)
+        private static bool HasRegisteredSerializationContent(IDictionary contentById)
+        {
+            foreach (DictionaryEntry entry in contentById)
+                if (entry.Value is AbstractModel model &&
+                    ModContentRegistry.TryGetOwnerModId(model.GetType(), out _))
+                    return true;
+
+            return ModTimelineRegistry.RegisteredEpochCount() > 0;
+        }
+
+        private static ModelCacheEntry[] GetSortedModelEntries(IDictionary contentById)
+        {
+            var entries = new List<ModelCacheEntry>(contentById.Count);
+            foreach (DictionaryEntry entry in contentById)
+            {
+                if (entry.Key is not ModelId id || entry.Value is not AbstractModel model)
+                    continue;
+
+                entries.Add(new(model.GetType(), id, ResolveOwnerModId(model.GetType())));
+            }
+
+            entries.Sort(CompareModelCacheEntries);
+            return entries.ToArray();
+        }
+
+        private static int CompareModelCacheEntries(ModelCacheEntry left, ModelCacheEntry right)
+        {
+            var c = string.CompareOrdinal(left.Id.Category, right.Id.Category);
+            if (c != 0)
+                return c;
+
+            c = string.CompareOrdinal(left.Id.Entry, right.Id.Entry);
+            if (c != 0)
+                return c;
+
+            c = string.CompareOrdinal(left.ModelType.Name, right.ModelType.Name);
+            if (c != 0)
+                return c;
+
+            c = string.CompareOrdinal(left.OwnerModId, right.OwnerModId);
+            if (c != 0)
+                return c;
+
+            c = string.CompareOrdinal(left.ModelType.FullName ?? left.ModelType.Name,
+                right.ModelType.FullName ?? right.ModelType.Name);
+            if (c != 0)
+                return c;
+
+            return string.CompareOrdinal(left.ModelType.Assembly.GetName().Name,
+                right.ModelType.Assembly.GetName().Name);
+        }
+
+        private static string ResolveOwnerModId(Type modelType)
+        {
+            return ModContentRegistry.TryGetOwnerModId(modelType, out var ownerModId)
+                ? ownerModId
+                : string.Empty;
+        }
+
+        private static uint ComputeHash(
+            IReadOnlyList<ModelCacheEntry> modelEntries,
+            IReadOnlyList<string> epochIds,
+            int maxCategory,
+            int maxEntry,
+            int maxEpoch)
         {
             var buffer = new byte[512];
             var xxHash = new XxHash32();
 
-            var types = new HashSet<Type>();
-            foreach (var t in ModelDb.AllAbstractModelSubtypes)
-                types.Add(t);
-
-            foreach (DictionaryEntry entry in contentById)
-                if (entry.Value is AbstractModel model)
-                    types.Add(model.GetType());
-
-            var sorted = types.ToList();
-            sorted.Sort((a, b) => string.CompareOrdinal(a.Name, b.Name));
-
-            foreach (var id in sorted.Select(ModelDb.GetId))
+            foreach (var id in modelEntries.Select(static entry => entry.Id))
             {
                 AppendUtf8(xxHash, id.Category, buffer);
                 AppendUtf8(xxHash, id.Entry, buffer);
             }
 
-            foreach (var epochId in EpochModel.AllEpochIds)
+            foreach (var epochId in epochIds)
                 AppendUtf8(xxHash, epochId, buffer);
 
             BinaryPrimitives.WriteInt32LittleEndian(buffer.AsSpan(), maxCategory);
@@ -146,6 +260,22 @@ namespace STS2RitsuLib.Content.Patches
             list.Add(entry);
         }
 
+        private static void EnsureEpoch(string epochId, Dictionary<string, int> map, List<string> list)
+        {
+            if (map.ContainsKey(epochId))
+                return;
+
+            map[epochId] = list.Count;
+            list.Add(epochId);
+        }
+
+        private static int GetBitSize(int count)
+        {
+            return count <= 1
+                ? 0
+                : Mathf.CeilToInt(Math.Log2(count));
+        }
+
         private static T? GetStaticField<T>(Type declaringType, string name)
             where T : class
         {
@@ -156,6 +286,25 @@ namespace STS2RitsuLib.Content.Patches
         {
             var prop = declaringType.GetProperty(name, BindingFlags.Public | BindingFlags.Static);
             prop?.GetSetMethod(true)?.Invoke(null, [value]);
+        }
+
+        private readonly record struct ModelCacheEntry(Type ModelType, ModelId Id, string OwnerModId);
+
+        internal readonly record struct ModelDbDeterministicCacheRebuildResult(
+            bool Applied,
+            uint InitialHash,
+            uint FinalHash,
+            string? Reason)
+        {
+            public static ModelDbDeterministicCacheRebuildResult Rebuilt(uint initialHash, uint finalHash)
+            {
+                return new(true, initialHash, finalHash, null);
+            }
+
+            public static ModelDbDeterministicCacheRebuildResult NotApplied(string reason)
+            {
+                return new(false, 0, 0, reason);
+            }
         }
     }
 }

@@ -5,6 +5,7 @@ using MegaCrit.Sts2.Core.Modding;
 using MegaCrit.Sts2.Core.Multiplayer.Messages.Lobby;
 using MegaCrit.Sts2.Core.Multiplayer.Serialization;
 using STS2RitsuLib.Compat;
+using STS2RitsuLib.Content.Patches;
 using STS2RitsuLib.Networking.MessageExtensions;
 
 namespace STS2RitsuLib.Networking.JoinDiagnostics
@@ -15,7 +16,8 @@ namespace STS2RitsuLib.Networking.JoinDiagnostics
         string GameMode,
         string SessionState,
         IReadOnlyList<JoinDiagnosticsModEntry> GameplayMods,
-        string? ContentMods);
+        string? ContentMods,
+        bool ModelDbHashUsesDeterministicCache);
 
     internal sealed record JoinDiagnosticsModEntry(
         int Index,
@@ -32,7 +34,8 @@ namespace STS2RitsuLib.Networking.JoinDiagnostics
         string SessionState,
         IReadOnlyList<JoinDiagnosticsModEntry> GameplayMods,
         IReadOnlyList<ContentModInventoryEntry> ContentMods,
-        bool HasProcessedContentMods);
+        bool HasProcessedContentMods,
+        bool ModelDbHashUsesDeterministicCache);
 
     internal static class JoinDiagnosticsPayloadCodec
     {
@@ -81,7 +84,8 @@ namespace STS2RitsuLib.Networking.JoinDiagnostics
                     message.gameMode.ToString(),
                     message.sessionState.ToString(),
                     CreateLocalModEntries(),
-                    ContentModInventoryPayloadCodec.Encode(CreateLocalContentModEntries()));
+                    ContentModInventoryPayloadCodec.Encode(CreateLocalContentModEntries()),
+                    ModelIdSerializationCacheDynamicContentPatch.UsesDeterministicCache);
                 return JsonSerializer.Serialize(payload, JsonOptions);
             }
             catch (Exception ex)
@@ -126,7 +130,8 @@ namespace STS2RitsuLib.Networking.JoinDiagnostics
                 string.Empty,
                 CreateLocalModEntries(),
                 CreateLocalContentModEntries(),
-                true);
+                true,
+                ModelIdSerializationCacheDynamicContentPatch.UsesDeterministicCache);
         }
 
         public static JoinPeerSnapshot CreateHostSnapshot(
@@ -143,7 +148,8 @@ namespace STS2RitsuLib.Networking.JoinDiagnostics
                     ? payload.GameplayMods
                     : CreateFallbackModEntries(GetFallbackGameplayModKeys(message)),
                 contentMods,
-                hasProcessedContentMods);
+                hasProcessedContentMods,
+                payload?.ModelDbHashUsesDeterministicCache ?? false);
         }
 
         private static IReadOnlyList<JoinDiagnosticsModEntry> CreateLocalModEntries()
@@ -249,7 +255,7 @@ namespace STS2RitsuLib.Networking.JoinDiagnostics
                     string.Empty,
                     true,
                     true,
-                    false);
+                    ContentModLoadOrderInventory.IsDependencyLibraryId(id));
             }).ToArray();
         }
 
@@ -269,7 +275,8 @@ namespace STS2RitsuLib.Networking.JoinDiagnostics
                 payload.GameMode,
                 payload.SessionState,
                 payload.GameplayMods,
-                payload.ContentMods == null ? null : ContentModInventoryPayloadCodec.Encode(payload.ContentMods));
+                payload.ContentMods == null ? null : ContentModInventoryPayloadCodec.Encode(payload.ContentMods),
+                false);
         }
 
         private sealed record JoinDiagnosticsPayloadV1(

@@ -1,7 +1,10 @@
+using MegaCrit.Sts2.Core.Runs;
+using STS2RitsuLib.Content.Patches;
 using STS2RitsuLib.Data;
 using STS2RitsuLib.Diagnostics;
 using STS2RitsuLib.Platform.Steam;
 using STS2RitsuLib.Ui.Shell.Theme;
+using STS2RitsuLib.Ui.Toast;
 using STS2RitsuLib.Updates;
 using STS2RitsuLib.Utils.Persistence;
 
@@ -33,7 +36,29 @@ namespace STS2RitsuLib.Settings
                         "content-mod-load-order",
                         T("button.open", "Open"),
                         T("ritsulib.contentModLoadOrder.pageLink.description",
-                            "Sort, copy, or apply the saved load order for content-affecting mods and their dependencies."))
+                            "Sort, copy, or apply the saved load order for relevant content mods, framework libraries, and dependencies."))
+                    .AddChoice(
+                        "modeldb_deterministic_sort_mode",
+                        T("ritsulib.modelDbDeterministicSort.label", "Enable ModelDb deterministic sorting"),
+                        ui.ModelDbDeterministicSortMode,
+                        [
+                            new("off", T("ritsulib.modelDbDeterministicSort.option.off", "Off")),
+                            new("auto",
+                                T("ritsulib.modelDbDeterministicSort.option.auto",
+                                    "When RitsuLib-related registered content is detected")),
+                            new("force", T("ritsulib.modelDbDeterministicSort.option.force", "Force enabled")),
+                        ],
+                        T("ritsulib.modelDbDeterministicSort.description",
+                            "Controls whether ModelIdSerializationCache is rebuilt from deterministic final ModelDb content during initialization."),
+                        ModSettingsChoicePresentation.Dropdown)
+                    .AddButton(
+                        "modeldb_deterministic_sort_now",
+                        T("ritsulib.modelDbDeterministicSort.now.label", "Manual ModelDb deterministic sort"),
+                        T("ritsulib.modelDbDeterministicSort.now.button", "Sort now"),
+                        TryRebuildModelDbDeterministicCacheFromSettings,
+                        ModSettingsButtonTone.Normal,
+                        T("ritsulib.modelDbDeterministicSort.now.description",
+                            "Rebuilds the current session's ModelIdSerializationCache immediately."))
                     .AddSubpage(
                         "toast_open",
                         T("ritsulib.toast.pageLink.label", "Toast notifications"),
@@ -61,25 +86,11 @@ namespace STS2RitsuLib.Settings
                         T("ritsulib.uiShellTheme.resetFile.description",
                             "Overwrite existing built-in theme files on disk with their embedded default versions."))
                     .AddToggle(
-                        "update_check_enabled",
-                        T("ritsulib.updateCheck.enabled.label", "Check for RitsuLib updates"),
-                        ui.UpdateCheckEnabled,
-                        T("ritsulib.updateCheck.enabled.description",
-                            "Checks for RitsuLib updates once after the first main menu load."))
-                    .AddToggle(
                         "main_menu_mod_settings_button_enabled",
                         T("ritsulib.mainMenuModSettingsButton.enabled.label", "Show main menu settings shortcut"),
                         ui.MainMenuModSettingsButtonEnabled,
                         T("ritsulib.mainMenuModSettingsButton.enabled.description",
                             "Shows a RitsuLib settings shortcut under the patch notes button on the main menu."))
-                    .AddButton(
-                        "update_check_now",
-                        T("ritsulib.updateCheck.now.label", "Check now"),
-                        T("ritsulib.updateCheck.now.button", "Check for updates"),
-                        RitsuLibUpdateCheckService.CheckNowFromSettings,
-                        ModSettingsButtonTone.Normal,
-                        T("ritsulib.updateCheck.now.description",
-                            "Checks the bundled RitsuLib update source immediately and shows a toast with the result."))
                     .AddToggle(
                         "debug_compatibility_mode",
                         T("ritsulib.debugCompatibility.label", "Debug compatibility mode"),
@@ -111,9 +122,60 @@ namespace STS2RitsuLib.Settings
                             ui.DebugCompatAncientArchitect,
                             T("ritsulib.debugCompatAncientArchitect.description",
                                 "Inject empty Lines entries for ModContentRegistry ancients when vanilla provides no dialogue.")))
+                .AddSection("ritsulib_updates", section => section
+                    .WithTitle(T("ritsulib.section.updateChecks.title", "RitsuLib updates"))
+                    .Collapsible()
+                    .AddToggle(
+                        "update_check_enabled",
+                        T("ritsulib.updateCheck.enabled.label", "Check for RitsuLib updates"),
+                        ui.UpdateCheckEnabled,
+                        T("ritsulib.updateCheck.enabled.description",
+                            "Checks for RitsuLib updates periodically. Update notifications are shown on the main menu."))
+                    .AddSlider(
+                        "update_check_interval_minutes",
+                        T("ritsulib.updateCheck.interval.label", "Automatic check interval (minutes)"),
+                        ui.UpdateCheckIntervalMinutes,
+                        5d,
+                        360d,
+                        5d,
+                        value => value.ToString("0"),
+                        T("ritsulib.updateCheck.interval.description",
+                            "Controls how often automatic RitsuLib, Workshop, and registered mod update checks run."))
+                    .AddToggle(
+                        "update_check_skip_in_combat",
+                        T("ritsulib.updateCheck.skipInCombat.label", "Defer automatic checks in combat rooms"),
+                        ui.UpdateCheckSkipInCombat,
+                        T("ritsulib.updateCheck.skipInCombat.description",
+                            "When enabled, automatic update checks pause while the run is in a combat room and resume after leaving it."))
+                    .AddButton(
+                        "update_check_now",
+                        T("ritsulib.updateCheck.now.label", "Check now"),
+                        T("ritsulib.updateCheck.now.button", "Check for updates"),
+                        RitsuLibUpdateCheckService.CheckNowFromSettings,
+                        ModSettingsButtonTone.Normal,
+                        T("ritsulib.updateCheck.now.description",
+                            "Checks the bundled RitsuLib update source immediately and shows a toast with the result.")))
+                .AddSection("steam_workshop_updates", section => section
+                    .WithVisibleWhen(SteamWorkshopUpdateCoordinator.CanUseSteamWorkshopUpdates)
+                    .WithTitle(T("ritsulib.section.steamWorkshopUpdates.title", "Steam Workshop updates"))
+                    .Collapsible()
+                    .AddToggle(
+                        "steam_workshop_auto_update_check_enabled",
+                        T("ritsulib.steamWorkshop.autoUpdateCheck.label", "Auto-check Workshop updates"),
+                        ui.SteamWorkshopAutoUpdateCheckEnabled,
+                        T("ritsulib.steamWorkshop.autoUpdateCheck.description",
+                            "Periodically checks subscribed Workshop items and asks Steam to download any items with available updates. Notifications are shown on the main menu."))
+                    .AddButton(
+                        "steam_workshop_check_now",
+                        T("ritsulib.steamWorkshop.checkNow.label", "Check Workshop updates now"),
+                        T("ritsulib.steamWorkshop.checkNow.button", "Check Workshop"),
+                        SteamWorkshopUpdateCoordinator.CheckNowFromSettings,
+                        ModSettingsButtonTone.Normal,
+                        T("ritsulib.steamWorkshop.checkNow.description",
+                            "Checks subscribed Workshop item states immediately and asks Steam to download any items with available updates.")))
                 .AddSection("steam_cloud_mod_data", section => section
                     .WithTitle(T("ritsulib.section.steamCloudModData.title", "Steam Cloud (mod data)"))
-                    .WithEnabledWhen(ModDataCloudHost.CanUseModDataCloud)
+                    .WithVisibleWhen(ModDataCloudHost.CanUseModDataCloud)
                     .Collapsible()
                     .AddToggle(
                         "sync_mod_data_to_steam_cloud",
@@ -145,23 +207,6 @@ namespace STS2RitsuLib.Settings
                         ModSettingsButtonTone.Danger,
                         T("ritsulib.modCloud.clear.description",
                             "Deletes mod data from Steam Cloud for this profile. Local files are not removed. Requires confirmation.")))
-                .AddSection("steam_workshop_updates", section => section
-                    .WithTitle(T("ritsulib.section.steamWorkshopUpdates.title", "Steam Workshop updates"))
-                    .Collapsible()
-                    .AddToggle(
-                        "steam_workshop_auto_update_check_enabled",
-                        T("ritsulib.steamWorkshop.autoUpdateCheck.label", "Auto-check Workshop updates"),
-                        ui.SteamWorkshopAutoUpdateCheckEnabled,
-                        T("ritsulib.steamWorkshop.autoUpdateCheck.description",
-                            "Once after the first main menu load, checks subscribed Workshop items and asks Steam to download any items with available updates."))
-                    .AddButton(
-                        "steam_workshop_check_now",
-                        T("ritsulib.steamWorkshop.checkNow.label", "Check Workshop updates now"),
-                        T("ritsulib.steamWorkshop.checkNow.button", "Check Workshop"),
-                        SteamWorkshopUpdateCoordinator.CheckNowFromSettings,
-                        ModSettingsButtonTone.Normal,
-                        T("ritsulib.steamWorkshop.checkNow.description",
-                            "Checks subscribed Workshop item states immediately and asks Steam to download any items with available updates.")))
                 .AddSection("dev_debug_tools", section => section
                     .WithTitle(T("ritsulib.section.devDebugTools.title", "Developer debug tools"))
                     .Collapsible()
@@ -240,6 +285,65 @@ namespace STS2RitsuLib.Settings
             if (!RitsuShellThemeCatalog.TryRestoreAllExistingDiskThemesFromEmbedded(out _))
                 return;
             RitsuShellThemeRuntime.ReapplyActiveTheme(true);
+        }
+
+        private static void TryRebuildModelDbDeterministicCacheFromSettings()
+        {
+            var title = L("ritsulib.modelDbDeterministicSort.toast.title", "ModelDb deterministic sort");
+            if (!CanManuallyRebuildModelDbDeterministicCache())
+            {
+                var body = L(
+                    "ritsulib.modelDbDeterministicSort.toast.blockedActiveSession",
+                    "ModelDb deterministic sort can only be applied before a run, lobby, or network session starts.");
+                RitsuLibFramework.Logger.Warn(
+                    "[ModelIdSerializationCache] Manual deterministic rebuild blocked: active run, lobby, or network session.");
+                RitsuToastService.ShowWarning(body, title);
+                return;
+            }
+
+            var result = ModelIdSerializationCacheDynamicContentPatch.RebuildDeterministicCacheForSettings();
+            if (!result.Applied)
+            {
+                var reason = result.Reason ?? L("ritsulib.modelDbDeterministicSort.toast.notAppliedUnknown",
+                    "The cache could not be rebuilt.");
+                RitsuLibFramework.Logger.Warn(
+                    $"[ModelIdSerializationCache] Manual deterministic rebuild skipped: {reason}");
+                RitsuToastService.ShowWarning(
+                    string.Format(
+                        L("ritsulib.modelDbDeterministicSort.toast.notApplied",
+                            "ModelDb deterministic sort was not applied: {0}"),
+                        reason),
+                    title);
+                return;
+            }
+
+            RitsuLibFramework.Logger.Info(
+                $"[ModelIdSerializationCache] Manual deterministic rebuild applied. Hash: {result.InitialHash} -> {result.FinalHash}.");
+            RitsuToastService.ShowInfo(
+                string.Format(
+                    L("ritsulib.modelDbDeterministicSort.toast.applied",
+                        "ModelDb deterministic sort applied. Hash: {0} -> {1}."),
+                    result.InitialHash,
+                    result.FinalHash),
+                title);
+        }
+
+        private static bool CanManuallyRebuildModelDbDeterministicCache()
+        {
+            try
+            {
+                var runManager = RunManager.Instance;
+                return runManager is
+                {
+                    IsInProgress: false,
+                    RunLobby: null,
+                    NetService.IsConnected: false,
+                };
+            }
+            catch
+            {
+                return false;
+            }
         }
     }
 }

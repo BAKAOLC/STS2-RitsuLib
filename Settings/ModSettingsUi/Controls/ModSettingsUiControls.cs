@@ -6068,15 +6068,42 @@ namespace STS2RitsuLib.Settings
         }
     }
 
-    internal enum ModSettingsSidebarItemKind
+    /// <summary>
+    ///     Semantic role for a settings sidebar item.
+    ///     设置侧栏项的语义角色。
+    /// </summary>
+    public enum ModSettingsSidebarItemKind
     {
+        /// <summary>
+        ///     Top-level mod group row.
+        ///     顶层 Mod 分组行。
+        /// </summary>
         ModGroup,
+
+        /// <summary>
+        ///     Settings page row.
+        ///     设置页面行。
+        /// </summary>
         Page,
+
+        /// <summary>
+        ///     Section row inside a page.
+        ///     页面内的小节行。
+        /// </summary>
         Section,
+
+        /// <summary>
+        ///     Utility or secondary action row.
+        ///     工具或次级操作行。
+        /// </summary>
         Utility,
     }
 
-    internal sealed partial class ModSettingsSidebarButton : ModSettingsGamepadCompatibleButton
+    /// <summary>
+    ///     Themed sidebar navigation button used by the RitsuLib settings UI.
+    ///     RitsuLib 设置 UI 使用的主题化侧栏导航按钮。
+    /// </summary>
+    public sealed partial class ModSettingsSidebarButton : ModSettingsGamepadCompatibleButton
     {
         private readonly int _indentLevel;
         private readonly ModSettingsSidebarItemKind _kind;
@@ -6084,6 +6111,10 @@ namespace STS2RitsuLib.Settings
         private readonly string? _rawText;
         private bool _selected;
 
+        /// <summary>
+        ///     Creates a themed sidebar navigation button.
+        ///     创建主题化侧栏导航按钮。
+        /// </summary>
         public ModSettingsSidebarButton(string text, Action? action,
             ModSettingsSidebarItemKind kind = ModSettingsSidebarItemKind.Page,
             string? prefix = null,
@@ -6152,16 +6183,25 @@ namespace STS2RitsuLib.Settings
             };
         }
 
+        /// <summary>
+        ///     Godot serialization constructor.
+        ///     Godot 序列化构造函数。
+        /// </summary>
         public ModSettingsSidebarButton()
         {
         }
 
+        /// <inheritdoc />
         public override void _Ready()
         {
             Text = string.IsNullOrWhiteSpace(_prefix) ? _rawText ?? string.Empty : $"{_prefix}  {_rawText}";
             SetSelected(_selected);
         }
 
+        /// <summary>
+        ///     Updates the selected visual state.
+        ///     更新选中视觉状态。
+        /// </summary>
         public void SetSelected(bool selected)
         {
             _selected = selected;

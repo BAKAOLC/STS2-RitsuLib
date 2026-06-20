@@ -12,6 +12,7 @@ namespace STS2RitsuLib.Updates
         private static readonly Uri ManifestUri = new("https://sts2-ritsulib.ritsukage.com/ritsulib-update.json");
         private static readonly Uri ReleasePageFallbackUri = new("https://sts2-ritsulib.ritsukage.com/");
         private static readonly Lock SyncRoot = new();
+        private static int _devBuildAutoToastShown;
         private static bool _initialized;
 
         internal static void Initialize()
@@ -22,26 +23,11 @@ namespace STS2RitsuLib.Updates
                     return;
 
                 _initialized = true;
-                RitsuLibFramework.SubscribeLifecycleOnce<MainMenuReadyEvent>(evt =>
-                {
-                    if (!RitsuLibSettingsStore.IsUpdateCheckEnabled())
-                        return;
-
-                    if (IsLoadedFromSteamWorkshop())
-                    {
-                        RitsuLibFramework.Logger.Info(
-                            "[UpdateCheck] RitsuLib external update check skipped: loaded from Steam Workshop.");
-                        return;
-                    }
-
-                    if (RitsuLibBuildInfo.IsDevBuild)
-                    {
-                        ShowDevBuildToast();
-                        return;
-                    }
-
-                    _ = CheckAsync(false);
-                });
+                AutomaticUpdateCheckScheduler.Register(
+                    "ritsulib",
+                    "RitsuLib",
+                    RitsuLibSettingsStore.IsUpdateCheckEnabled,
+                    CheckAutoAsync);
             }
         }
 
@@ -61,16 +47,44 @@ namespace STS2RitsuLib.Updates
                 return;
             }
 
-            _ = CheckAsync(true);
+            _ = CheckAsync(true, false);
         }
 
-        private static async Task CheckAsync(bool showCompletionToast)
+        private static async Task CheckAutoAsync(CancellationToken cancellationToken)
+        {
+            if (IsLoadedFromSteamWorkshop())
+            {
+                RitsuLibFramework.Logger.Info(
+                    "[UpdateCheck] RitsuLib external update check skipped: loaded from Steam Workshop.");
+                return;
+            }
+
+            if (RitsuLibBuildInfo.IsDevBuild)
+            {
+                if (Interlocked.Exchange(ref _devBuildAutoToastShown, 1) == 0)
+                    ShowToast(true, "ritsulib-dev-build", ShowDevBuildToast);
+                return;
+            }
+
+            await CheckAsync(false, true).ConfigureAwait(false);
+        }
+
+        private static async Task CheckAsync(bool showCompletionToast, bool deferToastToMainMenu)
         {
             try
             {
                 var options = BuildOptions();
                 var result = await ModUpdateChecker.CheckAsync(options).ConfigureAwait(false);
-                PostToMainLoop(() => ShowResultToast(options, result, showCompletionToast));
+                var shouldDeferToast = deferToastToMainMenu &&
+                                       result is
+                                       {
+                                           Status: ModUpdateCheckStatus.UpdateAvailable,
+                                           ReleasePageUri: not null,
+                                       };
+                ShowToast(
+                    shouldDeferToast,
+                    "ritsulib-update",
+                    () => ShowResultToast(options, result, showCompletionToast));
             }
             catch (Exception ex)
             {
@@ -170,6 +184,17 @@ namespace STS2RitsuLib.Updates
             }
 
             action();
+        }
+
+        private static void ShowToast(bool deferToMainMenu, string key, Action action)
+        {
+            if (deferToMainMenu)
+            {
+                UpdateCheckNotificationQueue.ShowWhenMainMenu(key, action);
+                return;
+            }
+
+            PostToMainLoop(action);
         }
 
         private static ModUpdateCheckOptions BuildOptions()

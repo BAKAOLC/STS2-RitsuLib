@@ -24,6 +24,7 @@ namespace STS2RitsuLib.Networking.JoinDiagnostics
         GameVersion,
         ModSet,
         ModOrder,
+        ModelDbHashMode,
         ModelDb,
         Network,
     }

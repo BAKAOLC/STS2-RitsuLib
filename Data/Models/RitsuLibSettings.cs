@@ -13,7 +13,7 @@ namespace STS2RitsuLib.Data.Models
         ///     Current schema version written by the library when creating or normalizing settings.
         ///     库在创建或规范化设置时写入的当前 schema 版本。
         /// </summary>
-        public const int CurrentSchemaVersion = 12;
+        public const int CurrentSchemaVersion = 13;
 
         /// <summary>
         ///     Persisted schema version used by the migration pipeline
@@ -386,11 +386,25 @@ namespace STS2RitsuLib.Data.Models
         public string UiShellThemeId { get; set; } = "default";
 
         /// <summary>
-        ///     When true, RitsuLib checks its mirrored update manifest once after the first main menu load.
-        ///     为 true 时，RitsuLib 会在首次进入主菜单后检查一次镜像更新 manifest。
+        ///     When true, RitsuLib periodically checks its mirrored update manifest.
+        ///     为 true 时，RitsuLib 会周期性检查镜像更新 manifest。
         /// </summary>
         [JsonPropertyName("update_check_enabled")]
         public bool UpdateCheckEnabled { get; set; } = true;
+
+        /// <summary>
+        ///     Automatic update-check interval in minutes. Applies to RitsuLib, Workshop, and registered mod checks.
+        ///     自动更新检查间隔（分钟）。应用于 RitsuLib、Workshop 和已注册的 Mod 检查。
+        /// </summary>
+        [JsonPropertyName("update_check_interval_minutes")]
+        public double UpdateCheckIntervalMinutes { get; set; } = 60d;
+
+        /// <summary>
+        ///     When true, periodic automatic update checks are deferred while combat is active.
+        ///     为 true 时，周期性自动更新检查会在战斗中延后。
+        /// </summary>
+        [JsonPropertyName("update_check_skip_in_combat")]
+        public bool UpdateCheckSkipInCombat { get; set; } = true;
 
         /// <summary>
         ///     When true and Steam Workshop is active, RitsuLib asks Steam to download subscribed workshop items whose
@@ -406,6 +420,15 @@ namespace STS2RitsuLib.Data.Models
         /// </summary>
         [JsonPropertyName("main_menu_mod_settings_button_enabled")]
         public bool MainMenuModSettingsButtonEnabled { get; set; } = true;
+
+        /// <summary>
+        ///     Automatic ModelDb deterministic final-content cache policy. Valid values: <c>off</c>, <c>auto</c>,
+        ///     <c>force</c>. Default <c>auto</c>.
+        ///     ModelDb 确定性最终内容缓存的自动策略。有效值：<c>off</c>、<c>auto</c>、<c>force</c>。默认
+        ///     <c>auto</c>。
+        /// </summary>
+        [JsonPropertyName("modeldb_deterministic_sort_mode")]
+        public string ModelDbDeterministicSortMode { get; set; } = "auto";
 
         /// <summary>
         ///     Enables global non-blocking toast notifications.

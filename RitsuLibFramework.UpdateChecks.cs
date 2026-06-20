@@ -105,14 +105,14 @@ namespace STS2RitsuLib
         }
 
         /// <summary>
-        ///     Schedules one non-blocking update check for a mod when the first main menu is ready. The check reads a
-        ///     small JSON manifest and shows a normal toast when a newer version is available.
-        ///     在首次主菜单就绪时为 Mod 安排一次非阻塞更新检查。检查会读取一个小型 JSON manifest，
-        ///     并在发现新版本时显示普通 toast。
+        ///     Registers a periodic non-blocking update check for a mod. Automatic checks start when the first main menu
+        ///     is ready, read a small JSON manifest, and show update toasts only while the main menu is active.
+        ///     为 Mod 注册周期性非阻塞更新检查。自动检查会在首次主菜单就绪后开始，读取一个小型 JSON manifest，
+        ///     并且只在主菜单处于活动状态时显示更新 toast。
         /// </summary>
         /// <returns>
-        ///     A disposable lifecycle subscription. Disposing it before the first main menu cancels the scheduled check.
-        ///     生命周期订阅。首次主菜单前释放它可取消已安排的检查。
+        ///     A disposable registration. Disposing it cancels later automatic checks.
+        ///     可释放的注册。释放后会取消后续自动检查。
         /// </returns>
         public static IDisposable RegisterModUpdateCheck(ModUpdateCheckOptions options)
         {
@@ -120,8 +120,8 @@ namespace STS2RitsuLib
         }
 
         /// <summary>
-        ///     Schedules one update check using string URLs for the common mod call path.
-        ///     使用字符串 URL 为常见 Mod 调用路径安排一次更新检查。
+        ///     Registers a periodic update check using string URLs for the common mod call path.
+        ///     使用字符串 URL 为常见 Mod 调用路径注册周期性更新检查。
         /// </summary>
         public static IDisposable RegisterModUpdateCheck(
             string modId,

@@ -17,11 +17,11 @@ namespace STS2RitsuLib.Settings
         internal static void SortDeterministically()
         {
             var currentOrder = ContentModLoadOrderInventory.BuildCurrentOrder();
-            var relevantKeys = ContentModLoadOrderInventory.BuildRelevantKeys(currentOrder);
+            var relevantKeys = BuildVisibleRelevantKeys(currentOrder);
             if (relevantKeys.Count == 0)
             {
                 ShowWarning("ritsulib.contentModLoadOrder.toast.noContentMods",
-                    "No content-affecting mods were found.");
+                    "No relevant mods were found.");
                 return;
             }
 
@@ -36,7 +36,7 @@ namespace STS2RitsuLib.Settings
         internal static void CopyCurrentOrder()
         {
             var currentOrder = ContentModLoadOrderInventory.BuildCurrentOrder();
-            var relevantKeys = ContentModLoadOrderInventory.BuildRelevantKeys(currentOrder);
+            var relevantKeys = BuildVisibleRelevantKeys(currentOrder);
             var copiedOrder = currentOrder
                 .Where(entry => relevantKeys.Contains(entry.Key))
                 .Select(entry => entry.Id)
@@ -46,7 +46,7 @@ namespace STS2RitsuLib.Settings
             if (copiedOrder.Length == 0)
             {
                 ShowWarning("ritsulib.contentModLoadOrder.toast.noContentMods",
-                    "No content-affecting mods were found.");
+                    "No relevant mods were found.");
                 return;
             }
 
@@ -107,7 +107,7 @@ namespace STS2RitsuLib.Settings
         internal static string FormatCurrentOrderPreview()
         {
             var currentOrder = ContentModLoadOrderInventory.BuildCurrentOrder();
-            var relevantKeys = ContentModLoadOrderInventory.BuildRelevantKeys(currentOrder);
+            var relevantKeys = BuildVisibleRelevantKeys(currentOrder);
             var entries = currentOrder
                 .Where(entry => relevantKeys.Contains(entry.Key))
                 .Select(entry => entry.Id)
@@ -128,53 +128,81 @@ namespace STS2RitsuLib.Settings
             var relevantKeys = ContentModLoadOrderInventory.BuildRelevantKeys(currentOrder);
             var relevantDependencyIds =
                 ContentModLoadOrderInventory.BuildRelevantDependencyIds(currentOrder, relevantKeys);
+            var hiddenKeys = BuildHiddenDuplicateWorkshopKeys(currentOrder);
             var currentEntries = currentOrder
-                .Where(entry => relevantKeys.Contains(entry.Key))
+                .Where(entry => relevantKeys.Contains(entry.Key) && !hiddenKeys.Contains(entry.Key))
                 .ToArray();
-            var currentById = currentEntries
+            var currentByKey = currentEntries
                 .Select((entry, index) => (entry, position: index + 1))
-                .GroupBy(item => item.entry.Id, StringComparer.Ordinal)
-                .ToDictionary(group => group.Key, group => group.First(), StringComparer.Ordinal);
-            var targetEntries = BuildRelevantTargetOrder(currentOrder).ToArray();
-            var targetById = targetEntries
-                .Select((entry, index) => (entry.Id, position: index + 1))
-                .GroupBy(item => item.Id, StringComparer.Ordinal)
-                .ToDictionary(group => group.Key, group => group.First().position, StringComparer.Ordinal);
+                .ToDictionary(item => item.entry.Key, item => item, StringComparer.Ordinal);
+            var targetEntries = BuildRelevantTargetOrder(currentOrder)
+                .Where(entry => !hiddenKeys.Contains(entry.Key))
+                .ToArray();
+            var targetByKey = targetEntries
+                .Select((entry, index) => (entry.Key, position: index + 1))
+                .ToDictionary(item => item.Key, item => item.position, StringComparer.Ordinal);
 
             var currentPreview = currentEntries
                 .Select((entry, index) => new ContentModLoadOrderPreviewEntry(
                     entry.Id,
                     entry.DisplayName,
+                    entry.Source.ToString(),
                     entry.AffectsGameplay,
                     relevantDependencyIds.Contains(entry.Id),
                     index + 1,
-                    targetById.GetValueOrDefault(entry.Id)))
+                    targetByKey.GetValueOrDefault(entry.Key)))
                 .ToArray();
             var targetPreview = targetEntries
                 .Select((entry, index) =>
                 {
-                    var source = currentById[entry.Id];
+                    var currentSource = currentByKey[entry.Key];
                     return new ContentModLoadOrderPreviewEntry(
                         entry.Id,
                         entry.DisplayName,
+                        entry.Source.ToString(),
                         entry.AffectsGameplay,
                         relevantDependencyIds.Contains(entry.Id),
                         index + 1,
-                        source.position);
+                        currentSource.position);
                 })
                 .ToArray();
 
             return new(currentPreview, targetPreview);
         }
 
+        private static IReadOnlySet<string> BuildHiddenDuplicateWorkshopKeys(
+            IReadOnlyList<CurrentModEntry> currentOrder)
+        {
+            var localIds = currentOrder
+                .Where(entry => entry.Source == ModSource.ModsDirectory)
+                .Select(entry => entry.Id)
+                .ToHashSet(StringComparer.Ordinal);
+
+            if (localIds.Count == 0)
+                return new HashSet<string>(StringComparer.Ordinal);
+
+            return currentOrder
+                .Where(entry => entry.Source == ModSource.SteamWorkshop && localIds.Contains(entry.Id))
+                .Select(entry => entry.Key)
+                .ToHashSet(StringComparer.Ordinal);
+        }
+
         private static IReadOnlyList<CurrentModEntry> BuildRelevantTargetOrder(
             IReadOnlyList<CurrentModEntry> currentOrder)
         {
-            var relevantKeys = ContentModLoadOrderInventory.BuildRelevantKeys(currentOrder);
+            var relevantKeys = BuildVisibleRelevantKeys(currentOrder);
             var priorityById = BuildDeterministicPriorityById(currentOrder, relevantKeys);
             return ContentModLoadOrderInventory.BuildDependencyValidPriorityOrder(currentOrder, priorityById, LogPrefix)
                 .Where(entry => relevantKeys.Contains(entry.Key))
                 .ToArray();
+        }
+
+        private static IReadOnlySet<string> BuildVisibleRelevantKeys(IReadOnlyList<CurrentModEntry> currentOrder)
+        {
+            var hiddenKeys = BuildHiddenDuplicateWorkshopKeys(currentOrder);
+            return ContentModLoadOrderInventory.BuildRelevantKeys(currentOrder)
+                .Where(key => !hiddenKeys.Contains(key))
+                .ToHashSet(StringComparer.Ordinal);
         }
 
         private static IReadOnlyDictionary<string, int> BuildDeterministicPriorityById(
@@ -211,9 +239,18 @@ namespace STS2RitsuLib.Settings
         {
             var settings = SaveManager.Instance.SettingsSave;
             settings.ModSettings ??= new();
+            var hiddenKeys = BuildHiddenDuplicateWorkshopKeys(currentOrder);
+            var sortableOrder = currentOrder
+                .Where(entry => !hiddenKeys.Contains(entry.Key))
+                .ToArray();
+            var hiddenOrder = currentOrder
+                .Where(entry => hiddenKeys.Contains(entry.Key))
+                .ToArray();
 
             var ordered =
-                ContentModLoadOrderInventory.BuildDependencyValidPriorityOrder(currentOrder, priorityById, LogPrefix);
+                ContentModLoadOrderInventory.BuildDependencyValidPriorityOrder(sortableOrder, priorityById, LogPrefix)
+                    .Concat(hiddenOrder)
+                    .ToArray();
 
             settings.ModSettings.ModList = ordered
                 .Select(entry => new SettingsSaveMod
@@ -272,7 +309,7 @@ namespace STS2RitsuLib.Settings
         {
             if (orderedIds.Count == 0)
                 return L("ritsulib.contentModLoadOrder.preview.empty",
-                    "No content-affecting mods were found.");
+                    "No relevant mods were found.");
 
             var namesById = ContentModLoadOrderInventory.BuildCurrentOrder()
                 .GroupBy(entry => entry.Id, StringComparer.Ordinal)
@@ -314,6 +351,7 @@ namespace STS2RitsuLib.Settings
     internal sealed record ContentModLoadOrderPreviewEntry(
         string Id,
         string DisplayName,
+        string Source,
         bool AffectsGameplay,
         bool IsDependency,
         int Position,

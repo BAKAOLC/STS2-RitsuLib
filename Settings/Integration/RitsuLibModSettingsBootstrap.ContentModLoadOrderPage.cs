@@ -1,4 +1,6 @@
 using Godot;
+using MegaCrit.Sts2.Core.Modding;
+using MegaCrit.Sts2.Core.Nodes.Screens.ModdingScreen;
 using STS2RitsuLib.Ui.Shell.Theme;
 
 namespace STS2RitsuLib.Settings
@@ -17,7 +19,7 @@ namespace STS2RitsuLib.Settings
                     .WithSortOrder(-875)
                     .WithTitle(T("ritsulib.page.contentModLoadOrder.title", "Content mod load order"))
                     .WithDescription(T("ritsulib.page.contentModLoadOrder.description",
-                        "Save, copy, and apply deterministic ordering for content-affecting mods and their installed dependencies."))
+                        "Save, copy, and apply deterministic ordering for relevant content mods, framework libraries, and installed dependencies."))
                     .AddSection("content_mod_load_order_actions", section => section
                         .WithTitle(T("ritsulib.section.contentModLoadOrder.actions.title", "Actions"))
                         .WithDescription(T("ritsulib.section.contentModLoadOrder.actions.description",
@@ -25,7 +27,7 @@ namespace STS2RitsuLib.Settings
                         .AddButton(
                             "content_mod_load_order_sort",
                             T("ritsulib.contentModLoadOrder.sort.label", "Deterministic sort"),
-                            T("ritsulib.contentModLoadOrder.sort.button", "Sort content mods"),
+                            T("ritsulib.contentModLoadOrder.sort.button", "Sort relevant mods"),
                             host =>
                             {
                                 ContentModLoadOrderCoordinator.SortDeterministically();
@@ -57,7 +59,7 @@ namespace STS2RitsuLib.Settings
                     .AddSection("content_mod_load_order_preview", section => section
                         .WithTitle(T("ritsulib.section.contentModLoadOrder.preview.title", "Preview"))
                         .WithDescription(T("ritsulib.section.contentModLoadOrder.preview.description",
-                            "Shows content-affecting mods plus their installed dependencies. Other mods keep their relative slots."))
+                            "Shows content-affecting mods, framework libraries, and installed dependencies. Other mods keep their relative slots."))
                         .AddCustom(
                             "content_mod_load_order_compare",
                             T("ritsulib.contentModLoadOrder.compare.label", "Order comparison"),
@@ -148,7 +150,7 @@ namespace STS2RitsuLib.Settings
                 empty.AddThemeStyleboxOverride("panel", ModSettingsUiFactory.CreateInsetSurfaceStyle());
                 empty.CustomMinimumSize = new(0f, 56f);
                 empty.AddChild(CreatePreviewLabel(
-                    L("ritsulib.contentModLoadOrder.preview.empty", "No content-affecting mods were found."),
+                    L("ritsulib.contentModLoadOrder.preview.empty", "No relevant mods were found."),
                     RitsuShellTheme.Current.Text.RichSecondary,
                     15));
                 column.AddChild(empty);
@@ -201,6 +203,7 @@ namespace STS2RitsuLib.Settings
             rowPanel.AddChild(row);
 
             row.AddChild(CreateDependencyRail(entry.IsDependency));
+            row.AddChild(CreateSourceIconSlot(entry.Source));
             row.AddChild(CreateFixedLabel($"#{entry.Position:00}", 42, RitsuShellTheme.Current.Text.Number, 15));
 
             var textRow = new HBoxContainer
@@ -239,12 +242,40 @@ namespace STS2RitsuLib.Settings
         private static Label CreateDependencyPill()
         {
             var label = CreateFixedLabel(
-                L("ritsulib.contentModLoadOrder.preview.dependency", "dep"),
-                52,
+                L("ritsulib.contentModLoadOrder.preview.dependency", "前置"),
+                86,
                 RitsuShellTheme.Current.Text.Number,
                 13);
             label.HorizontalAlignment = HorizontalAlignment.Center;
             return label;
+        }
+
+        private static Control CreateSourceIconSlot(string source)
+        {
+            var slot = new CenterContainer
+            {
+                CustomMinimumSize = new(24f, 24f),
+                SizeFlagsHorizontal = Control.SizeFlags.ShrinkBegin,
+                SizeFlagsVertical = Control.SizeFlags.ShrinkCenter,
+                MouseFilter = Control.MouseFilterEnum.Ignore,
+            };
+
+            if (TryParseModSource(source, out var modSource))
+                slot.AddChild(new TextureRect
+                {
+                    Texture = NModMenuRow.GetPlatformIcon(modSource),
+                    CustomMinimumSize = new(22f, 22f),
+                    ExpandMode = TextureRect.ExpandModeEnum.IgnoreSize,
+                    StretchMode = TextureRect.StretchModeEnum.KeepAspectCentered,
+                    MouseFilter = Control.MouseFilterEnum.Ignore,
+                });
+
+            return slot;
+        }
+
+        private static bool TryParseModSource(string source, out ModSource modSource)
+        {
+            return Enum.TryParse(source, out modSource) && Enum.IsDefined(modSource);
         }
 
         private static Label CreateRelationPill(string text, bool highlighted)

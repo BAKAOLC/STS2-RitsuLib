@@ -5,7 +5,11 @@ using STS2RitsuLib.Ui.Shell.Theme;
 
 namespace STS2RitsuLib.Settings
 {
-    internal static partial class ModSettingsUiFactory
+    /// <summary>
+    ///     Factory for reusable RitsuLib mod-settings UI chrome and controls.
+    ///     可复用的 RitsuLib Mod 设置 UI chrome 与控件工厂。
+    /// </summary>
+    public static partial class ModSettingsUiFactory
     {
         private const string EnabledSyncMetaKey = "__ritsu_enabled_sync_attached";
         private const string EnabledSyncOriginalMouseFilterMetaKey = "__ritsu_enabled_orig_mouse_filter";
@@ -25,6 +29,10 @@ namespace STS2RitsuLib.Settings
         private const double ContextMenuLongPressSeconds = 0.55;
         private const string ContextMenuButtonMetaKey = "_ritsulib_context_menu_button";
 
+        /// <summary>
+        ///     Creates a themed settings sidebar navigation button.
+        ///     创建主题化设置侧栏导航按钮。
+        /// </summary>
         public static ModSettingsSidebarButton CreateSidebarButton(string text, Action onPressed,
             ModSettingsSidebarItemKind kind = ModSettingsSidebarItemKind.Page,
             string? prefix = null,
@@ -33,6 +41,10 @@ namespace STS2RitsuLib.Settings
             return new(text, onPressed, kind, prefix, indentLevel);
         }
 
+        /// <summary>
+        ///     Creates a themed divider line.
+        ///     创建主题化分割线。
+        /// </summary>
         public static ColorRect CreateDivider()
         {
             return new()
@@ -885,7 +897,11 @@ namespace STS2RitsuLib.Settings
             return label;
         }
 
-        private static MegaRichTextLabel CreateHeaderLabel(string text, int fontSize, HorizontalAlignment alignment,
+        /// <summary>
+        ///     Creates a themed rich-text header label.
+        ///     创建主题化富文本标题标签。
+        /// </summary>
+        public static MegaRichTextLabel CreateHeaderLabel(string text, int fontSize, HorizontalAlignment alignment,
             float? scrollViewportHeight = null, Color? textModulate = null)
         {
             var boundedScroll = scrollViewportHeight is > 0f;
@@ -980,7 +996,11 @@ namespace STS2RitsuLib.Settings
             }
         }
 
-        internal static MegaRichTextLabel CreateInlineDescription(string text)
+        /// <summary>
+        ///     Creates a themed inline description label.
+        ///     创建主题化行内说明标签。
+        /// </summary>
+        public static MegaRichTextLabel CreateInlineDescription(string text)
         {
             var label = CreateHeaderLabel(text, 16, HorizontalAlignment.Left, null,
                 RitsuShellTheme.Current.Text.RichSecondary);
@@ -1038,12 +1058,20 @@ namespace STS2RitsuLib.Settings
             return string.Join("_", text.Split(Path.GetInvalidFileNameChars(), StringSplitOptions.RemoveEmptyEntries));
         }
 
-        internal static StyleBoxFlat CreateSurfaceStyle()
+        /// <summary>
+        ///     Creates the standard settings surface style.
+        ///     创建标准设置表面样式。
+        /// </summary>
+        public static StyleBoxFlat CreateSurfaceStyle()
         {
             return RitsuShellChromeStyles.CreateSurfaceStyle();
         }
 
-        internal static StyleBoxFlat CreateEntryFieldFrameStyle(bool emphasized)
+        /// <summary>
+        ///     Creates the standard settings value-field frame style.
+        ///     创建标准设置值字段边框样式。
+        /// </summary>
+        public static StyleBoxFlat CreateEntryFieldFrameStyle(bool emphasized)
         {
             return RitsuShellChromeStyles.CreateEntryFieldFrameStyle(emphasized);
         }
@@ -1054,7 +1082,7 @@ namespace STS2RitsuLib.Settings
         ///     <see cref="ColorPickerButton" /> 的边框：边框/bg 语言与 <see cref="CreateSurfaceStyle" /> 相同，但内容边距<b>相等</b>
         ///     ，让内部色块在方形按钮内保持正方形。
         /// </summary>
-        internal static StyleBoxFlat CreateColorPickerSwatchFrameStyle()
+        public static StyleBoxFlat CreateColorPickerSwatchFrameStyle()
         {
             return RitsuShellChromeStyles.CreateColorPickerSwatchFrameStyle();
         }
@@ -1064,17 +1092,29 @@ namespace STS2RitsuLib.Settings
             return CreateSurfaceStyle();
         }
 
-        internal static StyleBoxFlat CreateInsetSurfaceStyle()
+        /// <summary>
+        ///     Creates the standard inset settings surface style.
+        ///     创建标准内嵌设置表面样式。
+        /// </summary>
+        public static StyleBoxFlat CreateInsetSurfaceStyle()
         {
             return RitsuShellChromeStyles.CreateInsetSurfaceStyle();
         }
 
-        internal static StyleBoxFlat CreateChromeActionsMenuStyle(bool highlighted)
+        /// <summary>
+        ///     Creates the standard chrome actions menu style.
+        ///     创建标准 chrome 操作菜单样式。
+        /// </summary>
+        public static StyleBoxFlat CreateChromeActionsMenuStyle(bool highlighted)
         {
             return RitsuShellChromeStyles.CreateChromeActionsMenuStyle(highlighted);
         }
 
-        internal static StyleBoxFlat CreatePageToolbarTrayStyle()
+        /// <summary>
+        ///     Creates the standard page toolbar tray style.
+        ///     创建标准页面工具栏托盘样式。
+        /// </summary>
+        public static StyleBoxFlat CreatePageToolbarTrayStyle()
         {
             return RitsuShellChromeStyles.CreatePageToolbarTrayStyle();
         }
@@ -1135,22 +1175,38 @@ namespace STS2RitsuLib.Settings
             return new FastPageHeaderBar(titleLabel, pageDescription, back, trailingMenu);
         }
 
-        internal static StyleBoxFlat CreateListShellStyle()
+        /// <summary>
+        ///     Creates the standard scrollable list shell style.
+        ///     创建标准可滚动列表外壳样式。
+        /// </summary>
+        public static StyleBoxFlat CreateListShellStyle()
         {
             return RitsuShellChromeStyles.CreateListShellStyle();
         }
 
-        internal static StyleBoxFlat CreateListItemCardStyle(bool accent = false)
+        /// <summary>
+        ///     Creates the standard list item card style.
+        ///     创建标准列表项卡片样式。
+        /// </summary>
+        public static StyleBoxFlat CreateListItemCardStyle(bool accent = false)
         {
             return RitsuShellChromeStyles.CreateListItemCardStyle(accent);
         }
 
-        internal static StyleBoxFlat CreateListEditorSurfaceStyle()
+        /// <summary>
+        ///     Creates the standard inline list-editor surface style.
+        ///     创建标准行内列表编辑器表面样式。
+        /// </summary>
+        public static StyleBoxFlat CreateListEditorSurfaceStyle()
         {
             return RitsuShellChromeStyles.CreateListEditorSurfaceStyle();
         }
 
-        internal static StyleBoxFlat CreatePillStyle(bool highlighted = false)
+        /// <summary>
+        ///     Creates the standard compact pill style.
+        ///     创建标准紧凑胶囊样式。
+        /// </summary>
+        public static StyleBoxFlat CreatePillStyle(bool highlighted = false)
         {
             return RitsuShellChromeStyles.CreatePillStyle(highlighted);
         }

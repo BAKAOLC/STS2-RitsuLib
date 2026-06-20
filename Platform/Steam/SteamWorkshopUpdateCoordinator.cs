@@ -3,6 +3,7 @@ using MegaCrit.Sts2.Core.Platform.Steam;
 using STS2RitsuLib.Data;
 using STS2RitsuLib.Settings;
 using STS2RitsuLib.Ui.Toast;
+using STS2RitsuLib.Updates;
 
 namespace STS2RitsuLib.Platform.Steam
 {
@@ -27,30 +28,34 @@ namespace STS2RitsuLib.Platform.Steam
 
                 _initialized = true;
                 RitsuLibFramework.Logger.Info("[SteamWorkshopUpdate] Coordinator initialized.");
-                RitsuLibFramework.SubscribeLifecycleOnce<MainMenuReadyEvent>(evt =>
-                {
-                    if (!RitsuLibSettingsStore.IsSteamWorkshopUpdateCheckEnabled())
+                AutomaticUpdateCheckScheduler.Register(
+                    "steam-workshop",
+                    "Steam Workshop updates",
+                    RitsuLibSettingsStore.IsSteamWorkshopUpdateCheckEnabled,
+                    cancellationToken =>
                     {
-                        RitsuLibFramework.Logger.Info("[SteamWorkshopUpdate] Auto check skipped: setting disabled.");
-                        return;
-                    }
-
-                    RitsuLibFramework.Logger.Info("[SteamWorkshopUpdate] Auto check requested after first main menu.");
-                    _ = CheckAsync(CheckSource.Auto);
-                });
+                        RitsuLibFramework.Logger.Info("[SteamWorkshopUpdate] Auto check requested.");
+                        return CheckAsync(CheckSource.Auto, true, cancellationToken);
+                    });
             }
         }
 
         internal static void CheckNowFromSettings()
         {
             RitsuLibFramework.Logger.Info("[SteamWorkshopUpdate] Manual check requested from settings.");
-            _ = CheckAsync(CheckSource.Manual);
+            _ = CheckAsync(CheckSource.Manual, false);
         }
 
-        private static Task CheckAsync(CheckSource source)
+        private static Task CheckAsync(
+            CheckSource source,
+            bool deferToastToMainMenu,
+            CancellationToken cancellationToken = default)
         {
             if (Interlocked.Exchange(ref _checkRunning, 1) == 0)
-                return Task.Run(() =>
+                // ReSharper disable once MethodSupportsCancellation
+#pragma warning disable CA2016
+                return Task.Run(async () =>
+#pragma warning restore CA2016
                 {
                     try
                     {
@@ -61,30 +66,34 @@ namespace STS2RitsuLib.Platform.Steam
                             RitsuLibFramework.Logger.Info(
                                 $"[SteamWorkshopUpdate] {source} check skipped: Steam is not initialized.");
                             if (ShouldShowCompletionToast(source))
-                                PostToMainLoop(() => ShowToast(
+                                ShowToast(
                                     L("ritsulib.steamWorkshop.toast.unavailable",
                                         "Steam Workshop is not available in this session."),
-                                    RitsuToastLevel.Info));
+                                    RitsuToastLevel.Info,
+                                    deferToastToMainMenu);
                             return;
                         }
 
-                        var result = RitsuSteamWorkshopUpdates.TriggerMissingUpdates();
+                        var result = await RitsuSteamWorkshopUpdates
+                            .TriggerMissingUpdatesAsync(cancellationToken)
+                            .ConfigureAwait(false);
                         RitsuLibFramework.Logger.Info(
                             $"[SteamWorkshopUpdate] {source} check result: Available={result.Available}, " +
                             $"Inspected={result.InspectedCount}, NeedsUpdate={result.NeedsUpdateCount}, " +
                             $"Triggered={result.TriggeredCount}, AlreadyQueued={result.AlreadyQueuedCount}, " +
                             $"Failed={result.FailedCount}, Error={result.ErrorMessage ?? "<none>"}.");
                         LogCheckSummary(source, result);
-                        PostToMainLoop(() => ShowResultToast(result, source));
+                        ShowResultToast(result, source, deferToastToMainMenu);
                     }
                     catch (Exception ex)
                     {
                         RitsuLibFramework.Logger.Warn($"[SteamWorkshopUpdate] Check failed: {ex.Message}");
                         if (ShouldShowCompletionToast(source))
-                            PostToMainLoop(() => ShowToast(
+                            ShowToast(
                                 Format("ritsulib.steamWorkshop.toast.failed", "Steam Workshop check failed: {0}",
                                     ex.Message),
-                                RitsuToastLevel.Warning));
+                                RitsuToastLevel.Warning,
+                                deferToastToMainMenu);
                     }
                     finally
                     {
@@ -94,14 +103,18 @@ namespace STS2RitsuLib.Platform.Steam
             RitsuLibFramework.Logger.Info(
                 $"[SteamWorkshopUpdate] {source} check skipped: another check is already running.");
             if (ShouldShowCompletionToast(source))
-                PostToMainLoop(() => ShowToast(
+                ShowToast(
                     L("ritsulib.steamWorkshop.toast.busy",
                         "Another Steam Workshop update check is already running."),
-                    RitsuToastLevel.Info));
+                    RitsuToastLevel.Info,
+                    deferToastToMainMenu);
             return Task.CompletedTask;
         }
 
-        private static void ShowResultToast(RitsuSteamWorkshopUpdateResult result, CheckSource source)
+        private static void ShowResultToast(
+            RitsuSteamWorkshopUpdateResult result,
+            CheckSource source,
+            bool deferToastToMainMenu)
         {
             if (!result.Available)
             {
@@ -114,7 +127,8 @@ namespace STS2RitsuLib.Platform.Steam
                                 "ritsulib.steamWorkshop.toast.failed",
                                 "Steam Workshop check failed: {0}",
                                 result.ErrorMessage),
-                        result.ErrorMessage == null ? RitsuToastLevel.Info : RitsuToastLevel.Warning);
+                        result.ErrorMessage == null ? RitsuToastLevel.Info : RitsuToastLevel.Warning,
+                        deferToastToMainMenu);
                 return;
             }
 
@@ -127,7 +141,8 @@ namespace STS2RitsuLib.Platform.Steam
                         result.NeedsUpdateCount,
                         result.TriggeredCount,
                         result.FailedCount),
-                    RitsuToastLevel.Warning);
+                    RitsuToastLevel.Warning,
+                    deferToastToMainMenu);
                 return;
             }
 
@@ -143,7 +158,8 @@ namespace STS2RitsuLib.Platform.Steam
                             ? "Auto update check found {0} Workshop item(s) with updates and queued Steam downloads. Restart after Steam finishes downloading."
                             : "Queued Steam Workshop update download for {0} item(s). Restart after Steam finishes downloading.",
                         result.TriggeredCount),
-                    RitsuToastLevel.Info);
+                    RitsuToastLevel.Info,
+                    deferToastToMainMenu);
                 return;
             }
 
@@ -155,7 +171,8 @@ namespace STS2RitsuLib.Platform.Steam
                             "ritsulib.steamWorkshop.toast.alreadyQueued",
                             "{0} Workshop item(s) already have downloads queued or running.",
                             result.AlreadyQueuedCount),
-                        RitsuToastLevel.Info);
+                        RitsuToastLevel.Info,
+                        deferToastToMainMenu);
                 return;
             }
 
@@ -165,7 +182,8 @@ namespace STS2RitsuLib.Platform.Steam
                         "ritsulib.steamWorkshop.toast.none",
                         "Checked {0} subscribed Workshop item(s). No missing updates were found.",
                         result.InspectedCount),
-                    RitsuToastLevel.Info);
+                    RitsuToastLevel.Info,
+                    deferToastToMainMenu);
         }
 
         private static bool ShouldShowCompletionToast(CheckSource source)
@@ -213,7 +231,20 @@ namespace STS2RitsuLib.Platform.Steam
                 $"NeedsUpdate={result.NeedsUpdateCount}, AlreadyQueued={result.AlreadyQueuedCount}.");
         }
 
-        private static void ShowToast(string body, RitsuToastLevel level)
+        private static void ShowToast(string body, RitsuToastLevel level, bool deferToMainMenu)
+        {
+            if (deferToMainMenu)
+            {
+                UpdateCheckNotificationQueue.ShowWhenMainMenu(
+                    "steam-workshop",
+                    () => ShowToastNow(body, level));
+                return;
+            }
+
+            PostToMainLoop(() => ShowToastNow(body, level));
+        }
+
+        private static void ShowToastNow(string body, RitsuToastLevel level)
         {
             RitsuToastService.Show(new(
                 body,

@@ -22,13 +22,13 @@ namespace STS2RitsuLib.Updates
         private static readonly HashSet<string> ScheduledSessionChecks = new(StringComparer.Ordinal);
 
         /// <summary>
-        ///     Schedules one update check when the first main menu is ready, then shows a normal non-persistent toast
-        ///     when a newer version is available.
-        ///     在首次主菜单就绪时安排一次更新检查；发现新版本时显示普通、非持久 toast。
+        ///     Registers a periodic automatic update check. Checks start after the first main menu is ready and update
+        ///     notifications are deferred until the main menu is active.
+        ///     注册周期性自动更新检查。检查会在首次主菜单就绪后开始，更新通知会延后到主菜单处于活动状态时显示。
         /// </summary>
         /// <returns>
-        ///     A disposable lifecycle subscription. Disposing it before the first main menu cancels the scheduled check.
-        ///     生命周期订阅。首次主菜单前释放它可取消已安排的检查。
+        ///     A disposable registration. Disposing it cancels later automatic checks for this mod.
+        ///     可释放的注册。释放后会取消此 Mod 后续自动检查。
         /// </returns>
         public static IDisposable RegisterOnFirstMainMenu(ModUpdateCheckOptions options)
         {
@@ -41,15 +41,22 @@ namespace STS2RitsuLib.Updates
                     return new NoopDisposable();
             }
 
-            return RitsuLibFramework.SubscribeLifecycleOnce<MainMenuReadyEvent>(evt =>
-            {
-                _ = CheckAndToastAsync(options);
-            });
+            var registration = AutomaticUpdateCheckScheduler.Register(
+                $"mod-update:{key}",
+                options.DisplayName,
+                static () => true,
+                cancellationToken => CheckAndToastAsync(
+                    options,
+                    false,
+                    true,
+                    $"mod-update:{key}",
+                    cancellationToken));
+            return new RegisteredSessionCheck(key, registration);
         }
 
         /// <summary>
-        ///     Schedules one update check using string URLs for the common call path.
-        ///     使用字符串 URL 为常见调用路径安排一次更新检查。
+        ///     Registers a periodic update check using string URLs for the common call path.
+        ///     使用字符串 URL 为常见调用路径注册周期性更新检查。
         /// </summary>
         public static IDisposable RegisterOnFirstMainMenu(
             string modId,
@@ -178,21 +185,36 @@ namespace STS2RitsuLib.Updates
         ///     Runs the update check immediately and shows a toast when a newer version is available.
         ///     立即运行更新检查；发现新版本时显示 toast。
         /// </summary>
-        public static async Task<ModUpdateCheckResult> CheckAndToastAsync(
+        public static Task<ModUpdateCheckResult> CheckAndToastAsync(
             ModUpdateCheckOptions options,
             bool showCompletionToast = false,
             CancellationToken cancellationToken = default)
+        {
+            return CheckAndToastAsync(
+                options,
+                showCompletionToast,
+                false,
+                null,
+                cancellationToken);
+        }
+
+        private static async Task<ModUpdateCheckResult> CheckAndToastAsync(
+            ModUpdateCheckOptions options,
+            bool showCompletionToast,
+            bool deferToastToMainMenu,
+            string? notificationKey,
+            CancellationToken cancellationToken)
         {
             var result = await CheckAsync(options, cancellationToken).ConfigureAwait(false);
             if (result.Status != ModUpdateCheckStatus.UpdateAvailable || result.ReleasePageUri == null)
             {
                 LogNonSuccess(options, result);
                 if (showCompletionToast)
-                    PostToMainLoop(() => ShowCompletionToast(options, result));
+                    ShowToast(deferToastToMainMenu, notificationKey, () => ShowCompletionToast(options, result));
                 return result;
             }
 
-            PostToMainLoop(() => ShowUpdateToast(options, result));
+            ShowToast(deferToastToMainMenu, notificationKey, () => ShowUpdateToast(options, result));
             return result;
         }
 
@@ -439,6 +461,21 @@ namespace STS2RitsuLib.Updates
             action();
         }
 
+        private static void ShowToast(bool deferToMainMenu, string? notificationKey, Action action)
+        {
+            if (deferToMainMenu)
+            {
+                UpdateCheckNotificationQueue.ShowWhenMainMenu(
+                    string.IsNullOrWhiteSpace(notificationKey)
+                        ? "mod-update:unknown"
+                        : notificationKey,
+                    action);
+                return;
+            }
+
+            PostToMainLoop(action);
+        }
+
         private static void ValidateOptions(ModUpdateCheckOptions options)
         {
             ArgumentNullException.ThrowIfNull(options);
@@ -501,6 +538,24 @@ namespace STS2RitsuLib.Updates
         {
             public void Dispose()
             {
+            }
+        }
+
+        private sealed class RegisteredSessionCheck(string key, IDisposable inner) : IDisposable
+        {
+            private bool _disposed;
+
+            public void Dispose()
+            {
+                if (_disposed)
+                    return;
+
+                _disposed = true;
+                inner.Dispose();
+                lock (SessionLock)
+                {
+                    ScheduledSessionChecks.Remove(key);
+                }
             }
         }
     }

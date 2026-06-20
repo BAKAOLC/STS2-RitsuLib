@@ -4,7 +4,11 @@ using STS2RitsuLib.Ui.Shell.Theme;
 
 namespace STS2RitsuLib.Settings
 {
-    internal static partial class ModSettingsUiFactory
+    /// <summary>
+    ///     Factory for reusable RitsuLib mod-settings UI chrome and controls.
+    ///     可复用的 RitsuLib Mod 设置 UI chrome 与控件工厂。
+    /// </summary>
+    public static partial class ModSettingsUiFactory
     {
         internal sealed partial class FastVerticalStack : Container
         {
