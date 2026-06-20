@@ -82,7 +82,7 @@ namespace STS2RitsuLib.Scaffolding.Godot
                     nameof(scene));
 
             RequireMainThread(nameof(CreateFromScene));
-            RitsuLibFramework.Logger.Info($"[Godot] Creating {typeof(TNode).Name} from scene {scene.ResourcePath}");
+            RitsuLibFramework.Logger.Debug($"[Godot] Creating {typeof(TNode).Name} from scene {scene.ResourcePath}");
             if (!Factories.TryGetValue(typeof(TNode), out var factory))
                 throw new InvalidOperationException($"No node factory registered for {typeof(TNode).Name}");
 
@@ -136,7 +136,7 @@ namespace STS2RitsuLib.Scaffolding.Godot
                            throw new InvalidOperationException($"ResourceLoader.Load returned null for path: {s}");
             }
 
-            RitsuLibFramework.Logger.Info($"[Godot] Creating {typeof(TNode).Name} from {resource.GetType().Name}");
+            RitsuLibFramework.Logger.Debug($"[Godot] Creating {typeof(TNode).Name} from {resource.GetType().Name}");
             return (TNode)factory.CreateFromResource(resource, style);
         }
 
