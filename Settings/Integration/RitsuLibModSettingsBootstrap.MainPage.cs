@@ -36,7 +36,7 @@ namespace STS2RitsuLib.Settings
                         "content-mod-load-order",
                         T("button.open", "Open"),
                         T("ritsulib.contentModLoadOrder.pageLink.description",
-                            "Sort, copy, or apply the saved load order for content-affecting mods and their dependencies."))
+                            "Sort, copy, or apply the saved load order for relevant content mods, framework libraries, and dependencies."))
                     .AddChoice(
                         "modeldb_deterministic_sort_mode",
                         T("ritsulib.modelDbDeterministicSort.label", "Enable ModelDb deterministic sorting"),

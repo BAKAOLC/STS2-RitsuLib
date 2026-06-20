@@ -159,7 +159,9 @@ namespace STS2RitsuLib.Compat
                 .ToDictionary(group => group.Key, group => group.First().Key, StringComparer.Ordinal);
             var relevantKeys = new HashSet<string>(StringComparer.Ordinal);
             var pending =
-                new Queue<string>(currentOrder.Where(entry => entry.AffectsGameplay).Select(entry => entry.Key));
+                new Queue<string>(currentOrder
+                    .Where(entry => entry.AffectsGameplay || IsDependencyLibraryEntry(entry))
+                    .Select(entry => entry.Key));
 
             while (pending.Count > 0)
             {
@@ -186,11 +188,28 @@ namespace STS2RitsuLib.Compat
             var dependencyIds = new HashSet<string>(StringComparer.Ordinal);
 
             foreach (var entry in currentOrder.Where(entry => relevantKeys.Contains(entry.Key)))
-            foreach (var dependencyId in entry.Dependencies)
-                if (relevantIds.Contains(dependencyId))
-                    dependencyIds.Add(dependencyId);
+            {
+                if (IsDependencyLibraryEntry(entry))
+                    dependencyIds.Add(entry.Id);
+
+                foreach (var dependencyId in entry.Dependencies)
+                    if (relevantIds.Contains(dependencyId))
+                        dependencyIds.Add(dependencyId);
+            }
 
             return dependencyIds;
+        }
+
+        private static bool IsDependencyLibraryEntry(CurrentModEntry entry)
+        {
+            return IsDependencyLibraryId(entry.Id);
+        }
+
+        internal static bool IsDependencyLibraryId(string id)
+        {
+            return id.Contains("lib", StringComparison.OrdinalIgnoreCase) ||
+                   id.Contains("library", StringComparison.OrdinalIgnoreCase) ||
+                   id.Contains("api", StringComparison.OrdinalIgnoreCase);
         }
 
         private static CurrentModEntry? TryCreateCurrentModEntry(Mod mod, int discoveryIndex)
