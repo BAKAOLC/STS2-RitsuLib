@@ -28,6 +28,7 @@ using STS2RitsuLib.Localization;
 using STS2RitsuLib.Localization.SmartFormat;
 using STS2RitsuLib.Models;
 using STS2RitsuLib.Models.Capabilities;
+using STS2RitsuLib.Patching.Compat;
 using STS2RitsuLib.Patching.Core;
 using STS2RitsuLib.Platform;
 using STS2RitsuLib.Platform.Steam;
@@ -330,6 +331,7 @@ namespace STS2RitsuLib
                 Logger.Info(BuildVersionLogText());
                 Logger.Info("Initializing shared framework...");
 
+                RitsuLibStartupAudit.Measure("harmonyInitSetterCompat", HarmonyInitSetterCompat.Install);
                 RitsuLibStartupAudit.Measure("settingsStore", RitsuLibSettingsStore.Initialize);
                 RitsuLibStartupAudit.Measure("debugLogViewer",
                     () => RitsuDebugLogPipeline.Initialize(RitsuLibSettingsStore.GetDebugLogViewerOptions()));
