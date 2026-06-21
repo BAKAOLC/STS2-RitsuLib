@@ -217,6 +217,7 @@
   "ritsulib.steamWorkshop.toast.progress.download": "正在下载创意工坊更新：{0}/{1} 个项目，{2}/{3}。\n当前：{4}",
   "ritsulib.steamWorkshop.toast.progress.downloadWaiting": "正在下载创意工坊更新：{0}/{1} 个项目。正在等待 Steam 返回下载大小……\n当前：{2}",
   "ritsulib.steamWorkshop.toast.progress.downloadUnknownItem": "未知项目",
+  "ritsulib.steamWorkshop.toast.changedSinceLastCheck": "相比上次检查有变化：{0}",
   "ritsulib.section.steamCloudModData.title": "Steam 云（模组数据）",
   "ritsulib.section.steamCloudModData.description": "在此管理模组数据与 Steam 云的同步。",
   "ritsulib.syncModDataSteamCloud.label": "将模组数据同步到 Steam 云",

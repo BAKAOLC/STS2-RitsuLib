@@ -160,11 +160,11 @@ namespace STS2RitsuLib.Platform.Steam
                     "m_nPublishedFileId",
                     BindingFlags.Public | BindingFlags.Instance);
                 var steamUgcDetailsTitle = steamUgcDetailsType.GetField(
-                        "m_rgchTitle",
-                        BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance)
-                    ?? steamUgcDetailsType.GetField(
-                        "m_rgchTitle_",
-                        BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance);
+                                               "m_rgchTitle",
+                                               BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance)
+                                           ?? steamUgcDetailsType.GetField(
+                                               "m_rgchTitle_",
+                                               BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance);
                 var steamUgcDetailsUpdated = steamUgcDetailsType.GetField(
                     "m_rtimeUpdated",
                     BindingFlags.Public | BindingFlags.Instance);
@@ -376,6 +376,7 @@ namespace STS2RitsuLib.Platform.Steam
                         .ConfigureAwait(false);
                     RitsuLibFramework.Logger.Info(
                         $"[SteamWorkshopUpdate] Refreshed Workshop details for {remoteUpdateTimes.Count}/{items.Count} subscribed item(s).");
+                    var previousUpdateTimes = SteamWorkshopUpdateSnapshotStore.GetItems();
 
                     var inspected = 0;
                     var needsUpdate = 0;
@@ -384,6 +385,7 @@ namespace STS2RitsuLib.Platform.Steam
                     var failed = 0;
                     var downloadsSuspended = false;
                     List<RitsuSteamWorkshopDownloadItem> triggeredItems = [];
+                    List<RitsuSteamWorkshopChangedItem> changedItems = [];
                     progress?.Report(new(
                         RitsuSteamWorkshopUpdateProgressStage.InspectingItems,
                         0,
@@ -407,6 +409,13 @@ namespace STS2RitsuLib.Platform.Steam
                         }
 
                         needsUpdate++;
+                        var displayName = hasRemoteDetails
+                            ? ResolveItemDisplayName(item, remoteDetails)
+                            : $"Workshop item {item.Id}";
+                        if (hasRemoteDetails &&
+                            (!previousUpdateTimes.TryGetValue(item.Id, out var previous) ||
+                             previous.Updated != remoteDetails.Updated))
+                            changedItems.Add(new(item.Id, displayName, remoteDetails.Updated));
                         RitsuLibFramework.Logger.Info(
                             $"[SteamWorkshopUpdate] Workshop item {item.Id} needs update. State={item.State}, LocalTimestamp={item.LocalTimestamp?.ToString() ?? "<unknown>"}, RemoteUpdated={(hasRemoteDetails ? remoteDetails.Updated.ToString() : "<unknown>")}.");
                         if (HasFlag(item.State, itemStateFlags.Downloading) ||
@@ -430,7 +439,7 @@ namespace STS2RitsuLib.Platform.Steam
                         if (InvokeDownloadItem(item.Handle, mode))
                         {
                             triggered++;
-                            triggeredItems.Add(new(item.Id, ResolveItemDisplayName(item, remoteDetails)));
+                            triggeredItems.Add(new(item.Id, displayName));
                             RitsuLibFramework.Logger.Info(
                                 suspendDownloadsUntilGameExit
                                     ? $"[SteamWorkshopUpdate] Queued Steam Workshop update for item {item.Id}; downloads remain suspended until game exit."
@@ -455,7 +464,10 @@ namespace STS2RitsuLib.Platform.Steam
 
                     RitsuLibFramework.Logger.Info(
                         $"[SteamWorkshopUpdate] Scan complete. Inspected={inspected}, NeedsUpdate={needsUpdate}, Triggered={triggered}, AlreadyQueued={alreadyQueued}, Failed={failed}.");
-                    return new(true, inspected, needsUpdate, triggered, alreadyQueued, failed, null, triggeredItems);
+                    if (remoteUpdateTimes.Count > 0 || items.Count == 0)
+                        SaveRemoteUpdateSnapshot(remoteUpdateTimes);
+                    return new(true, inspected, needsUpdate, triggered, alreadyQueued, failed, null, triggeredItems,
+                        changedItems);
 
                     void ReportInspectionProgress()
                     {
@@ -624,6 +636,15 @@ namespace STS2RitsuLib.Platform.Steam
                 }
 
                 return details;
+            }
+
+            private static void SaveRemoteUpdateSnapshot(
+                IReadOnlyDictionary<ulong, RemoteItemDetails> remoteUpdateTimes)
+            {
+                Dictionary<ulong, SteamWorkshopStoredUpdateItem> snapshot = [];
+                foreach (var (itemId, details) in remoteUpdateTimes)
+                    snapshot[itemId] = new(details.Updated, details.Title);
+                SteamWorkshopUpdateSnapshotStore.Replace(snapshot);
             }
 
             private async Task<IReadOnlyDictionary<ulong, RemoteItemDetails>> QueryRemoteUpdateTimesBatchAsync(

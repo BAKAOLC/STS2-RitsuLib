@@ -8,7 +8,8 @@ namespace STS2RitsuLib.Platform.Steam
         int AlreadyQueuedCount,
         int FailedCount,
         string? ErrorMessage = null,
-        IReadOnlyList<RitsuSteamWorkshopDownloadItem>? TriggeredItems = null)
+        IReadOnlyList<RitsuSteamWorkshopDownloadItem>? TriggeredItems = null,
+        IReadOnlyList<RitsuSteamWorkshopChangedItem>? ChangedItems = null)
     {
         internal static RitsuSteamWorkshopUpdateResult Unavailable(string? errorMessage = null)
         {
@@ -41,4 +42,6 @@ namespace STS2RitsuLib.Platform.Steam
         string? CurrentItemName = null);
 
     internal sealed record RitsuSteamWorkshopDownloadItem(ulong Id, string DisplayName);
+
+    internal sealed record RitsuSteamWorkshopChangedItem(ulong Id, string DisplayName, uint RemoteUpdated);
 }

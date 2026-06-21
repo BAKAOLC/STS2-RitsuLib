@@ -217,6 +217,7 @@
   "ritsulib.steamWorkshop.toast.progress.download": "Downloading Workshop updates: {0}/{1} item(s), {2}/{3}.\nCurrent: {4}",
   "ritsulib.steamWorkshop.toast.progress.downloadWaiting": "Downloading Workshop updates: {0}/{1} item(s). Waiting for Steam download size...\nCurrent: {2}",
   "ritsulib.steamWorkshop.toast.progress.downloadUnknownItem": "unknown item",
+  "ritsulib.steamWorkshop.toast.changedSinceLastCheck": "Changed since last check: {0}",
   "ritsulib.section.steamCloudModData.title": "Steam Cloud (mod data)",
   "ritsulib.section.steamCloudModData.description": "Manage syncing mod data with Steam Cloud here.",
   "ritsulib.syncModDataSteamCloud.label": "Sync mod data to Steam Cloud",

@@ -10,6 +10,7 @@ namespace STS2RitsuLib.Platform.Steam
     internal static class SteamWorkshopUpdateCoordinator
     {
         private const double ToastDurationSeconds = 7.0d;
+        private const int MaxChangedItemsInToast = 10;
         private static readonly Lock SyncRoot = new();
         private static bool _initialized;
         private static int _checkRunning;
@@ -189,16 +190,18 @@ namespace STS2RitsuLib.Platform.Steam
                     source == CheckSource.Auto &&
                     downloadMode == SteamWorkshopDownloadTriggerMode.QueueSuspendedUntilGameExit;
                 return ToastRequest(
-                    Format(
-                        isAutoQueuedUntilExit
-                            ? "ritsulib.steamWorkshop.toast.autoPartial"
-                            : "ritsulib.steamWorkshop.toast.partial",
-                        isAutoQueuedUntilExit
-                            ? "Found {0} Workshop item(s) with updates. Queued {1} for after the game exits; {2} failed. See game log for details."
-                            : "Found {0} Workshop item(s) with updates. Queued {1}; {2} failed. See game log for details.",
-                        result.NeedsUpdateCount,
-                        result.TriggeredCount,
-                        result.FailedCount),
+                    AppendChangedItemList(
+                        Format(
+                            isAutoQueuedUntilExit
+                                ? "ritsulib.steamWorkshop.toast.autoPartial"
+                                : "ritsulib.steamWorkshop.toast.partial",
+                            isAutoQueuedUntilExit
+                                ? "Found {0} Workshop item(s) with updates. Queued {1} for after the game exits; {2} failed. See game log for details."
+                                : "Found {0} Workshop item(s) with updates. Queued {1}; {2} failed. See game log for details.",
+                            result.NeedsUpdateCount,
+                            result.TriggeredCount,
+                            result.FailedCount),
+                        result.ChangedItems),
                     RitsuToastLevel.Warning);
             }
 
@@ -206,24 +209,28 @@ namespace STS2RitsuLib.Platform.Steam
             {
                 if (downloadFinished)
                     return ToastRequest(
-                        Format(
-                            "ritsulib.steamWorkshop.toast.downloadFinished",
-                            "Downloaded {0} Steam Workshop update(s). Restart the game to load the new files.",
-                            result.TriggeredCount),
+                        AppendChangedItemList(
+                            Format(
+                                "ritsulib.steamWorkshop.toast.downloadFinished",
+                                "Downloaded {0} Steam Workshop update(s). Restart the game to load the new files.",
+                                result.TriggeredCount),
+                            result.ChangedItems),
                         RitsuToastLevel.Info);
 
                 var isAutoQueuedUntilExit =
                     source == CheckSource.Auto &&
                     downloadMode == SteamWorkshopDownloadTriggerMode.QueueSuspendedUntilGameExit;
                 return ToastRequest(
-                    Format(
-                        isAutoQueuedUntilExit
-                            ? "ritsulib.steamWorkshop.toast.autoTriggered"
-                            : "ritsulib.steamWorkshop.toast.triggered",
-                        isAutoQueuedUntilExit
-                            ? "Auto update check found {0} Workshop item(s) with updates and queued Steam downloads for after the game exits."
-                            : "Queued Steam Workshop update download for {0} item(s). Restart after Steam finishes downloading.",
-                        result.TriggeredCount),
+                    AppendChangedItemList(
+                        Format(
+                            isAutoQueuedUntilExit
+                                ? "ritsulib.steamWorkshop.toast.autoTriggered"
+                                : "ritsulib.steamWorkshop.toast.triggered",
+                            isAutoQueuedUntilExit
+                                ? "Auto update check found {0} Workshop item(s) with updates and queued Steam downloads for after the game exits."
+                                : "Queued Steam Workshop update download for {0} item(s). Restart after Steam finishes downloading.",
+                            result.TriggeredCount),
+                        result.ChangedItems),
                     RitsuToastLevel.Info);
             }
 
@@ -232,10 +239,12 @@ namespace STS2RitsuLib.Platform.Steam
                 if (!forceCompletionToast && !ShouldShowCompletionToast(source))
                     return null;
                 return ToastRequest(
-                    Format(
-                        "ritsulib.steamWorkshop.toast.alreadyQueued",
-                        "{0} Workshop item(s) already have downloads queued or running.",
-                        result.AlreadyQueuedCount),
+                    AppendChangedItemList(
+                        Format(
+                            "ritsulib.steamWorkshop.toast.alreadyQueued",
+                            "{0} Workshop item(s) already have downloads queued or running.",
+                            result.AlreadyQueuedCount),
+                        result.ChangedItems),
                     RitsuToastLevel.Info);
             }
 
@@ -257,6 +266,27 @@ namespace STS2RitsuLib.Platform.Steam
                 null,
                 level,
                 ToastDurationSeconds);
+        }
+
+        private static string AppendChangedItemList(
+            string body,
+            IReadOnlyList<RitsuSteamWorkshopChangedItem>? changedItems)
+        {
+            if (changedItems is not { Count: > 0 })
+                return body;
+
+            var names = changedItems
+                .Take(MaxChangedItemsInToast)
+                .Select(static item => item.DisplayName)
+                .ToArray();
+            var remaining = changedItems.Count - names.Length;
+            var list = remaining > 0
+                ? $"{string.Join(", ", names)} (+{remaining})"
+                : string.Join(", ", names);
+            return body + "\n" + Format(
+                "ritsulib.steamWorkshop.toast.changedSinceLastCheck",
+                "Changed since last check: {0}",
+                list);
         }
 
         private static bool ShouldShowCompletionToast(CheckSource source)
