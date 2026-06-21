@@ -260,7 +260,7 @@
           "$ref": "#/$defs/text"
         },
         "defaultValue": {
-          "description": "Optional default value. When GetRitsuLibSettingValue(key) returns null, RitsuLib may write back this value and save, then use it for UI display.",
+          "description": "Optional default value. When GetRitsuLibSettingValue(key) returns null, RitsuLib may write back this value and save, then use it for UI display. Editable controls also use it for reset-to-default actions.",
           "oneOf": [
             { "type": "boolean" },
             { "type": "number" },
@@ -425,7 +425,7 @@
                 "defaultValue": {
                   "type": "string",
                   "minLength": 1,
-                  "description": "Optional default option value written back when missing (Get returns null). Must match one of options[].value (or string option)."
+                  "description": "Optional default option value written back when missing (Get returns null) and used for reset-to-default actions. Must match one of options[].value (or string option)."
                 },
                 "presentation": {
                   "type": "string",
