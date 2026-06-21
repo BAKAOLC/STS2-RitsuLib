@@ -8,6 +8,7 @@ using HarmonyLib;
 using MegaCrit.Sts2.Core.Models;
 using MegaCrit.Sts2.Core.Multiplayer.Serialization;
 using MegaCrit.Sts2.Core.Timeline;
+using STS2RitsuLib.Compat;
 using STS2RitsuLib.Data;
 using STS2RitsuLib.Data.Models;
 using STS2RitsuLib.Patching.Core;
@@ -166,7 +167,11 @@ namespace STS2RitsuLib.Content.Patches
                 if (entry.Key is not ModelId id || entry.Value is not AbstractModel model)
                     continue;
 
-                entries.Add(new(model.GetType(), id, ResolveOwnerModId(model.GetType())));
+                var modelType = model.GetType();
+                if (!Sts2ModManagerCompat.IsGameplayRelevantLoadedModType(modelType))
+                    continue;
+
+                entries.Add(new(modelType, id, ResolveOwnerModId(modelType)));
             }
 
             entries.Sort(CompareModelCacheEntries);

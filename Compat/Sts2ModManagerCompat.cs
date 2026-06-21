@@ -71,6 +71,27 @@ namespace STS2RitsuLib.Compat
                 .ToArray();
         }
 
+        internal static bool IsGameplayRelevantLoadedModType(Type type)
+        {
+            foreach (var mod in EnumerateLoadedModsWithAssembly())
+                try
+                {
+                    if (ReadAssembly(mod) != type.Assembly)
+                        continue;
+
+                    var manifest = ReadManifest(mod);
+                    return manifest == null || ReadManifestAffectsGameplay(manifest);
+                }
+                catch (Exception ex)
+                {
+                    RitsuLibFramework.Logger.Warn(
+                        $"[Compat] Failed to inspect loaded mod gameplay relevance for {type.FullName}: {ex.Message}");
+                    return true;
+                }
+
+            return true;
+        }
+
         /// <summary>
         ///     All registered mods (including disabled / not loaded), for manifest name/description lookup.
         ///     所有已注册 mod（包括禁用/未加载的 mod），用于清单名称/描述查找。
