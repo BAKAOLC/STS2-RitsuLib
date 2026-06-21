@@ -389,10 +389,13 @@ namespace STS2RitsuLib.Platform.Steam
         private sealed class WorkshopUpdateProgressToast(CheckSource source)
             : IProgress<RitsuSteamWorkshopUpdateProgress>, IProgress<RitsuSteamWorkshopDownloadProgress>
         {
+            private static readonly TimeSpan ProgressUpdateMinInterval = TimeSpan.FromMilliseconds(250);
             private readonly Lock _syncRoot = new();
             private bool _completed;
             private RitsuToastHandle? _handle;
+            private DateTimeOffset _lastProgressUpdateAt;
             private RitsuSteamWorkshopUpdateProgress? _latestProgress;
+            private bool _progressUpdateQueued;
 
             public void Report(RitsuSteamWorkshopDownloadProgress value)
             {
@@ -415,20 +418,57 @@ namespace STS2RitsuLib.Platform.Steam
 
             public void Report(RitsuSteamWorkshopUpdateProgress value)
             {
+                TimeSpan delay;
                 lock (_syncRoot)
                 {
                     if (_completed)
                         return;
                     _latestProgress = value;
+                    if (_progressUpdateQueued)
+                        return;
+
+                    _progressUpdateQueued = true;
+                    delay = ResolveProgressUpdateDelay();
                 }
 
+                if (delay > TimeSpan.Zero)
+                {
+                    _ = DelayProgressUpdateAsync(delay);
+                    return;
+                }
+
+                PostProgressUpdateToMainLoop();
+            }
+
+            private async Task DelayProgressUpdateAsync(TimeSpan delay)
+            {
+                await Task.Delay(delay).ConfigureAwait(false);
+                PostProgressUpdateToMainLoop();
+            }
+
+            private TimeSpan ResolveProgressUpdateDelay()
+            {
+                if (_lastProgressUpdateAt == default)
+                    return TimeSpan.Zero;
+
+                var elapsed = DateTimeOffset.UtcNow - _lastProgressUpdateAt;
+                return elapsed >= ProgressUpdateMinInterval
+                    ? TimeSpan.Zero
+                    : ProgressUpdateMinInterval - elapsed;
+            }
+
+            private void PostProgressUpdateToMainLoop()
+            {
                 PostToMainLoop(() =>
                 {
                     lock (_syncRoot)
                     {
                         if (_completed)
                             return;
-                        UpdateNow(value);
+                        _progressUpdateQueued = false;
+                        _lastProgressUpdateAt = DateTimeOffset.UtcNow;
+                        if (_latestProgress is { } latestProgress)
+                            UpdateNow(latestProgress);
                     }
                 });
             }

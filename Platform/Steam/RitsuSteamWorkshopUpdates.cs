@@ -1,13 +1,16 @@
 using System.Linq.Expressions;
 using System.Reflection;
+using System.Text;
 
 namespace STS2RitsuLib.Platform.Steam
 {
     internal static class RitsuSteamWorkshopUpdates
     {
-        private const int QueryBatchSize = 50;
+        private const int QueryBatchSize = 20;
         private static readonly TimeSpan QueryTimeout = TimeSpan.FromSeconds(15);
-        private static readonly TimeSpan DownloadProgressPollInterval = TimeSpan.FromMilliseconds(750);
+        private static readonly TimeSpan QueryBatchDelay = TimeSpan.FromMilliseconds(250);
+        private static readonly TimeSpan ItemProcessingDelay = TimeSpan.FromMilliseconds(50);
+        private static readonly TimeSpan DownloadProgressPollInterval = TimeSpan.FromMilliseconds(1500);
         private static readonly TimeSpan DownloadProgressIdleTimeout = TimeSpan.FromSeconds(30);
         private static readonly Lazy<Bindings?> LazyBindings = new(CreateBindings);
 
@@ -157,8 +160,11 @@ namespace STS2RitsuLib.Platform.Steam
                     "m_nPublishedFileId",
                     BindingFlags.Public | BindingFlags.Instance);
                 var steamUgcDetailsTitle = steamUgcDetailsType.GetField(
-                    "m_rgchTitle",
-                    BindingFlags.Public | BindingFlags.Instance);
+                        "m_rgchTitle",
+                        BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance)
+                    ?? steamUgcDetailsType.GetField(
+                        "m_rgchTitle_",
+                        BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance);
                 var steamUgcDetailsUpdated = steamUgcDetailsType.GetField(
                     "m_rtimeUpdated",
                     BindingFlags.Public | BindingFlags.Instance);
@@ -209,7 +215,6 @@ namespace STS2RitsuLib.Platform.Steam
                     releaseQueryUgcRequest == null ||
                     setAllowCachedResponse == null ||
                     steamUgcDetailsItemId == null ||
-                    steamUgcDetailsTitle == null ||
                     steamUgcDetailsUpdated == null ||
                     queryCompletedResult == null ||
                     queryCompletedReturned == null ||
@@ -321,7 +326,7 @@ namespace STS2RitsuLib.Platform.Steam
             MethodInfo setAllowCachedResponse,
             Type steamUgcDetailsType,
             FieldInfo steamUgcDetailsItemId,
-            FieldInfo steamUgcDetailsTitle,
+            FieldInfo? steamUgcDetailsTitle,
             FieldInfo steamUgcDetailsUpdated,
             FieldInfo queryCompletedResult,
             FieldInfo queryCompletedReturned,
@@ -361,7 +366,8 @@ namespace STS2RitsuLib.Platform.Steam
                     RitsuLibFramework.Logger.Info(
                         $"[SteamWorkshopUpdate] Scanning subscribed Workshop items. Reported={subscribedCount}, Returned={actualCount}.");
 
-                    var items = BuildItemSnapshots(itemArray, actualCount);
+                    var items = await BuildItemSnapshotsAsync(itemArray, actualCount, progress, cancellationToken)
+                        .ConfigureAwait(false);
                     progress?.Report(new(
                         RitsuSteamWorkshopUpdateProgressStage.RefreshingDetails,
                         0,
@@ -385,6 +391,9 @@ namespace STS2RitsuLib.Platform.Steam
 
                     foreach (var item in items)
                     {
+                        if (inspected > 0)
+                            await Task.Delay(ItemProcessingDelay, cancellationToken).ConfigureAwait(false);
+
                         inspected++;
                         var hasRemoteDetails = remoteUpdateTimes.TryGetValue(item.Id, out var remoteDetails);
                         var stateNeedsUpdate = HasFlag(item.State, itemStateFlags.NeedsUpdate);
@@ -540,28 +549,50 @@ namespace STS2RitsuLib.Platform.Steam
                 return false;
             }
 
-            private IReadOnlyList<ItemSnapshot> BuildItemSnapshots(Array itemArray, uint actualCount)
+            private async Task<IReadOnlyList<ItemSnapshot>> BuildItemSnapshotsAsync(
+                Array itemArray,
+                uint actualCount,
+                IProgress<RitsuSteamWorkshopUpdateProgress>? progress,
+                CancellationToken cancellationToken)
             {
                 List<ItemSnapshot> items = [];
                 for (var i = 0; i < actualCount; i++)
                 {
+                    if (i > 0)
+                        await Task.Delay(ItemProcessingDelay, cancellationToken).ConfigureAwait(false);
+
                     var item = itemArray.GetValue(i);
                     if (item == null)
+                    {
+                        ReportProgress(i + 1);
                         continue;
+                    }
 
                     var state = Convert.ToUInt32(getItemState.Invoke(null, [item]));
                     var itemId = GetItemId(item);
                     if (itemId == 0)
+                    {
+                        ReportProgress(i + 1);
                         continue;
+                    }
 
                     items.Add(new(
                         item,
                         itemId,
                         state,
                         TryGetLocalTimestamp(item, state)));
+                    ReportProgress(i + 1);
                 }
 
                 return items;
+
+                void ReportProgress(int completed)
+                {
+                    progress?.Report(new(
+                        RitsuSteamWorkshopUpdateProgressStage.ReadingSubscriptions,
+                        Math.Min((int)actualCount, completed),
+                        (int)Math.Max(1u, actualCount)));
+                }
             }
 
             private async Task<IReadOnlyDictionary<ulong, RemoteItemDetails>> QueryRemoteUpdateTimesAsync(
@@ -575,6 +606,9 @@ namespace STS2RitsuLib.Platform.Steam
                 Dictionary<ulong, RemoteItemDetails> details = [];
                 for (var offset = 0; offset < items.Count; offset += QueryBatchSize)
                 {
+                    if (offset > 0)
+                        await Task.Delay(QueryBatchDelay, cancellationToken).ConfigureAwait(false);
+
                     var batch = items
                         .Skip(offset)
                         .Take(QueryBatchSize)
@@ -760,12 +794,16 @@ namespace STS2RitsuLib.Platform.Steam
 
             private string? ReadItemTitle(object details)
             {
+                if (steamUgcDetailsTitle == null)
+                    return null;
+
                 try
                 {
                     return steamUgcDetailsTitle.GetValue(details) switch
                     {
                         string title when !string.IsNullOrWhiteSpace(title) => title.Trim(),
                         char[] chars => new string(chars).TrimEnd('\0').Trim(),
+                        byte[] bytes => Encoding.UTF8.GetString(bytes).TrimEnd('\0').Trim(),
                         _ => null,
                     };
                 }
