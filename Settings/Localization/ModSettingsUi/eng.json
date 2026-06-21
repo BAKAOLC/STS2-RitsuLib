@@ -5,6 +5,7 @@
   "entry.subtitle": "Edit mod options exposed to players.",
   "baselib.mirroredPage.title": "Mod config",
   "baselib.mirroredPage.description": "This page mirrors BaseLib-generated mod configuration entries.",
+  "modconfig.mirroredPage.description": "This page mirrors ModConfig-registered settings into the RitsuLib settings UI.",
   "baselib.restoreDefaults.cancel": "Cancel",
   "baselib.restoreDefaults.confirm": "Restore defaults",
   "jmc.mirror.page.description": "Mirrored settings for JmcModLib-managed config entries.",

@@ -51,11 +51,9 @@ namespace STS2RitsuLib.Settings
                 if (registrations is not IEnumerable enumerable)
                     return 0;
 
-                pageTitle ??= ModSettingsLocalization.Text("modconfig.mirroredPage.title", "Mod config (ModConfig)");
                 var pageDescription = ModSettingsLocalization.Text(
                     "modconfig.mirroredPage.description",
-                    "Proxy page for a mod registered with the ModConfig library. Values are stored by ModConfig.");
-
+                    "This page mirrors ModConfig-registered settings into the RitsuLib settings UI.");
                 var added = 0;
                 foreach (var item in enumerable)
                 {
@@ -216,8 +214,8 @@ namespace STS2RitsuLib.Settings
             string modId,
             string pageId,
             int sortOrder,
-            ModSettingsText pageTitle,
-            ModSettingsText pageDescription,
+            ModSettingsText? pageTitle,
+            ModSettingsText? pageDescription,
             object registration,
             MethodInfo getValueOpen,
             MethodInfo setValue,
@@ -251,12 +249,16 @@ namespace STS2RitsuLib.Settings
             {
                 ModSettingsRegistry.Register(modId, builder =>
                 {
+                    var modDisplayName = ModSettingsText.Dynamic(() =>
+                        ResolveRegistrationDisplayName(registration, i18NGet));
+
                     builder
-                        .WithTitle(pageTitle)
-                        .WithDescription(pageDescription)
+                        .WithTitle(pageTitle ?? modDisplayName)
                         .WithSortOrder(sortOrder)
-                        .WithModDisplayName(ModSettingsText.Dynamic(() =>
-                            ResolveRegistrationDisplayName(registration, i18NGet)));
+                        .WithModDisplayName(modDisplayName);
+
+                    if (pageDescription != null)
+                        builder.WithDescription(pageDescription);
 
                     for (var sectionIndex = 0; sectionIndex < sectionPlans.Count; sectionIndex++)
                     {

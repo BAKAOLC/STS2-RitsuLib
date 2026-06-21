@@ -88,6 +88,7 @@ namespace STS2RitsuLib.Settings
         private Control _contentBuildOverlay = null!;
         private MegaRichTextLabel _contentBuildOverlayLabel = null!;
         private MegaRichTextLabel? _contentEmptyStateLabel;
+        private int _contentLayoutRefreshGeneration;
         private ModSettingsUiFactory.FastVerticalStack _contentList = null!;
 
         private bool _contentOnlyRebuildNeedsContentFocus;
@@ -1815,6 +1816,7 @@ namespace STS2RitsuLib.Settings
 
             selectedCache.Root.Visible = true;
             RefreshPageHostLayout(selectedCache);
+            ScheduleSelectedContentLayoutRefreshAcrossFrames();
             switch (selectedCache.State)
             {
                 case PageBuildState.NotBuilt or PageBuildState.Failed:
@@ -2542,6 +2544,33 @@ namespace STS2RitsuLib.Settings
             _contentList.RequestLayout();
             _scrollContainer.QueueSort();
             CallDeferredIfAlive(RefreshContentLayout);
+        }
+
+        private void ScheduleSelectedContentLayoutRefreshAcrossFrames()
+        {
+            var generation = ++_contentLayoutRefreshGeneration;
+            ObserveBackgroundUiTask(RefreshSelectedContentLayoutAcrossFramesAsync(generation),
+                "selected_content_layout_refresh");
+        }
+
+        private async Task RefreshSelectedContentLayoutAcrossFramesAsync(int generation)
+        {
+            for (var i = 0; i < 2; i++)
+            {
+                await this.AwaitRitsuProcessFrame(CancellationToken.None);
+                if (!IsInstanceValid(this) || generation != _contentLayoutRefreshGeneration)
+                    return;
+
+                RefreshSelectedContentLayoutNow();
+            }
+        }
+
+        private void RefreshSelectedContentLayoutNow()
+        {
+            if (TryGetSelectedPageContentCache(out var cache))
+                RefreshPageHostLayout(cache);
+            else
+                RefreshContentLayout();
         }
 
         private void RecycleReusableEntryNodes(Node root)

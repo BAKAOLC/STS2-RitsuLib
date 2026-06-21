@@ -5,6 +5,7 @@
   "entry.subtitle": "在这里调整向玩家公开的模组选项。",
   "baselib.mirroredPage.title": "模组配置",
   "baselib.mirroredPage.description": "本页面镜像展示 BaseLib 自动生成的模组配置项。",
+  "modconfig.mirroredPage.description": "本页面将通过 ModConfig 注册的设置项镜像展示到 RitsuLib 设置界面。",
   "baselib.restoreDefaults.cancel": "取消",
   "baselib.restoreDefaults.confirm": "还原默认值",
   "jmc.mirror.page.description": "镜像展示由 JmcModLib 管理的模组配置项。",
