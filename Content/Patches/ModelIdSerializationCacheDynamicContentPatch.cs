@@ -20,13 +20,16 @@ namespace STS2RitsuLib.Content.Patches
     /// <summary>
     ///     Rebuilds <see cref="ModelIdSerializationCache" /> from the finalized <see cref="ModelDb" /> content after
     ///     the existing initialization path when registered extensions are present, using a strict deterministic order
-    ///     so all registered models share one stable net-id and hash source.
+    ///     so all network-relevant models share one stable net-id and hash source.
     ///     当存在注册扩展内容时，在既有初始化路径之后使用严格确定的顺序，从最终 <see cref="ModelDb" /> 内容重建
-    ///     <see cref="ModelIdSerializationCache" />，让所有已注册模型共用同一个稳定的 net-id 与 hash 来源。
+    ///     <see cref="ModelIdSerializationCache" />，让所有网络相关模型共用同一个稳定的 net-id 与 hash 来源。
     /// </summary>
     internal sealed class ModelIdSerializationCacheDynamicContentPatch : IPatchMethod
     {
         internal static bool UsesDeterministicCache { get; private set; }
+
+        private static IReadOnlyDictionary<ModelId, ModelSortIds> LocalOnlyModelSortIds { get; set; } =
+            new Dictionary<ModelId, ModelSortIds>();
 
         // Setter invocation happens at init-time only; keep the simple reflection path to
         // avoid delegate-signature mismatches across different runtime property types.
@@ -89,7 +92,8 @@ namespace STS2RitsuLib.Content.Patches
 
             var initialHash = ModelIdSerializationCache.Hash;
 
-            var modelEntries = GetSortedModelEntries(contentById);
+            var modelEntries = GetSortedModelEntries(contentById, false);
+            var allModelEntries = GetSortedModelEntries(contentById, true);
             var epochIds = EpochModel.AllEpochIds
                 .Distinct(StringComparer.Ordinal)
                 .OrderBy(static id => id, StringComparer.Ordinal)
@@ -114,6 +118,20 @@ namespace STS2RitsuLib.Content.Patches
 
             foreach (var epochId in epochIds)
                 EnsureEpoch(epochId, epochMap, epochList);
+
+            var localOnlySortIds = BuildLocalOnlySortIds(
+                allModelEntries,
+                modelEntries,
+                catMap,
+                catList.Count,
+                entMap,
+                entList.Count);
+            LocalOnlyModelSortIds = localOnlySortIds;
+
+            if (localOnlySortIds.Count > 0)
+                PatchLog.For<ModelIdSerializationCacheDynamicContentPatch>().Info(
+                    "[ModelIdSerializationCache] Assigned local-only sort IDs for " +
+                    $"{localOnlySortIds.Count} non-gameplay ModelDb model(s); they are excluded from network maps and hash.");
 
             SetStaticProperty(typeof(ModelIdSerializationCache), nameof(ModelIdSerializationCache.CategoryIdBitSize),
                 GetBitSize(catList.Count));
@@ -149,6 +167,11 @@ namespace STS2RitsuLib.Content.Patches
             return field?.GetValue(null) as IDictionary;
         }
 
+        internal static bool TryGetLocalOnlySortIds(ModelId id, out ModelSortIds sortIds)
+        {
+            return LocalOnlyModelSortIds.TryGetValue(id, out sortIds);
+        }
+
         private static bool HasRegisteredSerializationContent(IDictionary contentById)
         {
             foreach (DictionaryEntry entry in contentById)
@@ -159,7 +182,7 @@ namespace STS2RitsuLib.Content.Patches
             return ModTimelineRegistry.RegisteredEpochCount() > 0;
         }
 
-        private static ModelCacheEntry[] GetSortedModelEntries(IDictionary contentById)
+        private static ModelCacheEntry[] GetSortedModelEntries(IDictionary contentById, bool includeLocalOnly)
         {
             var entries = new List<ModelCacheEntry>(contentById.Count);
             foreach (DictionaryEntry entry in contentById)
@@ -168,7 +191,7 @@ namespace STS2RitsuLib.Content.Patches
                     continue;
 
                 var modelType = model.GetType();
-                if (!Sts2ModManagerCompat.IsGameplayRelevantLoadedModType(modelType))
+                if (!includeLocalOnly && !Sts2ModManagerCompat.IsGameplayRelevantLoadedModType(modelType))
                     continue;
 
                 entries.Add(new(modelType, id, ResolveOwnerModId(modelType)));
@@ -176,6 +199,61 @@ namespace STS2RitsuLib.Content.Patches
 
             entries.Sort(CompareModelCacheEntries);
             return entries.ToArray();
+        }
+
+        private static IReadOnlyDictionary<ModelId, ModelSortIds> BuildLocalOnlySortIds(
+            IReadOnlyList<ModelCacheEntry> allModelEntries,
+            IReadOnlyList<ModelCacheEntry> networkModelEntries,
+            IReadOnlyDictionary<string, int> networkCategoryMap,
+            int networkCategoryCount,
+            IReadOnlyDictionary<string, int> networkEntryMap,
+            int networkEntryCount)
+        {
+            var networkIds = networkModelEntries
+                .Select(static entry => entry.Id)
+                .ToHashSet();
+            var localCategoryIds = new Dictionary<string, int>(StringComparer.Ordinal);
+            var localEntryIds = new Dictionary<string, int>(StringComparer.Ordinal);
+            var result = new Dictionary<ModelId, ModelSortIds>();
+
+            foreach (var entry in allModelEntries)
+            {
+                var id = entry.Id;
+                if (networkIds.Contains(id))
+                    continue;
+
+                var categoryId = GetLocalSortId(
+                    id.Category,
+                    networkCategoryMap,
+                    networkCategoryCount,
+                    localCategoryIds);
+                var entryId = GetLocalSortId(
+                    id.Entry,
+                    networkEntryMap,
+                    networkEntryCount,
+                    localEntryIds);
+
+                result[id] = new(categoryId, entryId);
+            }
+
+            return result;
+        }
+
+        private static int GetLocalSortId(
+            string name,
+            IReadOnlyDictionary<string, int> networkMap,
+            int networkCount,
+            Dictionary<string, int> localIds)
+        {
+            if (networkMap.TryGetValue(name, out var networkId))
+                return networkId;
+
+            if (localIds.TryGetValue(name, out var localId))
+                return localId;
+
+            localId = networkCount + localIds.Count;
+            localIds[name] = localId;
+            return localId;
         }
 
         private static int CompareModelCacheEntries(ModelCacheEntry left, ModelCacheEntry right)
@@ -293,6 +371,8 @@ namespace STS2RitsuLib.Content.Patches
             prop?.GetSetMethod(true)?.Invoke(null, [value]);
         }
 
+        internal readonly record struct ModelSortIds(int CategorySortingId, int EntrySortingId);
+
         private readonly record struct ModelCacheEntry(Type ModelType, ModelId Id, string OwnerModId);
 
         internal readonly record struct ModelDbDeterministicCacheRebuildResult(
@@ -310,6 +390,40 @@ namespace STS2RitsuLib.Content.Patches
             {
                 return new(false, 0, 0, reason);
             }
+        }
+    }
+
+    internal sealed class LocalOnlyModelIdSortingPatch : IPatchMethod
+    {
+        private static readonly FieldInfo? CategorySortingIdField =
+            AccessTools.DeclaredField(typeof(AbstractModel), "<CategorySortingId>k__BackingField");
+
+        private static readonly FieldInfo? EntrySortingIdField =
+            AccessTools.DeclaredField(typeof(AbstractModel), "<EntrySortingId>k__BackingField");
+
+        public static string PatchId => "local_only_model_id_sorting";
+
+        public static string Description =>
+            "Allow non-gameplay local-only ModelDb models to initialize without entering network net-id maps";
+
+        public static bool IsCritical => true;
+
+        public static ModPatchTarget[] GetTargets()
+        {
+            return [new(typeof(AbstractModel), nameof(AbstractModel.InitId), [typeof(ModelId)])];
+        }
+
+        public static Exception? Finalizer(Exception? __exception, AbstractModel __instance)
+        {
+            if (__exception is not ArgumentException ||
+                CategorySortingIdField == null ||
+                EntrySortingIdField == null ||
+                !ModelIdSerializationCacheDynamicContentPatch.TryGetLocalOnlySortIds(__instance.Id, out var sortIds))
+                return __exception;
+
+            CategorySortingIdField.SetValue(__instance, sortIds.CategorySortingId);
+            EntrySortingIdField.SetValue(__instance, sortIds.EntrySortingId);
+            return null;
         }
     }
 }

@@ -658,6 +658,7 @@ namespace STS2RitsuLib
             patcher.RegisterPatch<AllPotionPoolsPatch>();
             patcher.RegisterPatch<ModelDbModdedEntryPatch>();
             patcher.RegisterPatch<ModelIdSerializationCacheDynamicContentPatch>();
+            patcher.RegisterPatch<LocalOnlyModelIdSortingPatch>();
             patcher.RegisterPatch<DynamicActContentPatchBootstrap>();
             patcher.RegisterPatch<DynamicCharacterStarterContentPatchBootstrap>();
             RegisterFrameworkPatcher(FrameworkPatcherArea.ContentRegistry, patcher);
