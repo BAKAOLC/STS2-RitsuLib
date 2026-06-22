@@ -38,6 +38,21 @@ namespace STS2RitsuLib.Platform.Steam
             Store.Save(DataKey);
         }
 
+        internal static void Merge(IReadOnlyDictionary<ulong, SteamWorkshopStoredUpdateItem> items)
+        {
+            EnsureInitialized();
+            Store.Modify<SteamWorkshopUpdateSnapshotData>(DataKey, data =>
+            {
+                foreach (var (itemId, item) in items)
+                    data.Items[itemId.ToString()] = new()
+                    {
+                        Updated = item.Updated,
+                        Title = item.Title,
+                    };
+            });
+            Store.Save(DataKey);
+        }
+
         private static void EnsureInitialized()
         {
             lock (SyncRoot)

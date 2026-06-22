@@ -36,7 +36,7 @@ namespace STS2RitsuLib.Platform.Steam
                     cancellationToken =>
                     {
                         RitsuLibFramework.Logger.Info("[SteamWorkshopUpdate] Auto check requested.");
-                        return CheckAsync(CheckSource.Auto, true, cancellationToken);
+                        return CheckAsync(CheckSource.Auto, true, cancellationToken: cancellationToken);
                     });
             }
         }
@@ -47,9 +47,27 @@ namespace STS2RitsuLib.Platform.Steam
             _ = CheckAsync(CheckSource.Manual, false);
         }
 
-        private static Task CheckAsync(
-            CheckSource source,
+        internal static void CheckRitsuLibNowFromSettings()
+        {
+            RitsuLibFramework.Logger.Info(
+                "[SteamWorkshopUpdate] Manual RitsuLib Workshop item check requested from settings.");
+            _ = CheckItemAsync(Const.SteamWorkshopItemId, false);
+        }
+
+        internal static Task CheckItemAsync(
+            ulong itemId,
+            bool automatic,
+            bool deferToastToMainMenu = false,
+            CancellationToken cancellationToken = default)
+        {
+            ArgumentOutOfRangeException.ThrowIfZero(itemId);
+            var source = automatic ? CheckSource.Auto : CheckSource.Manual;
+            return CheckAsync(source, deferToastToMainMenu, [itemId], cancellationToken);
+        }
+
+        private static Task CheckAsync(CheckSource source,
             bool deferToastToMainMenu,
+            IReadOnlyCollection<ulong>? itemIds = null,
             CancellationToken cancellationToken = default)
         {
             if (Interlocked.Exchange(ref _checkRunning, 1) == 0)
@@ -85,7 +103,7 @@ namespace STS2RitsuLib.Platform.Steam
 
                         var downloadMode = ResolveDownloadMode(source);
                         var result = await RitsuSteamWorkshopUpdates
-                            .TriggerMissingUpdatesAsync(downloadMode, progressToast, cancellationToken)
+                            .TriggerMissingUpdatesAsync(downloadMode, progressToast, itemIds, cancellationToken)
                             .ConfigureAwait(false);
                         RitsuLibFramework.Logger.Info(
                             $"[SteamWorkshopUpdate] {source} check result: Available={result.Available}, " +
