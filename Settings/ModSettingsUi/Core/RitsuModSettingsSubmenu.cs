@@ -1315,7 +1315,7 @@ namespace STS2RitsuLib.Settings
 
         private void CreateContentBuildOverlay(Control parent)
         {
-            var overlay = new ColorRect
+            var overlay = new ContentBuildOverlay
             {
                 Name = "RitsuContentBuildOverlay",
                 AnchorRight = 1f,
@@ -1325,7 +1325,6 @@ namespace STS2RitsuLib.Settings
                 MouseFilter = MouseFilterEnum.Stop,
                 FocusMode = FocusModeEnum.All,
                 Visible = false,
-                Color = new(0f, 0f, 0f, 0.22f),
             };
             parent.AddChild(overlay);
             _contentBuildOverlay = overlay;
@@ -1878,6 +1877,8 @@ namespace STS2RitsuLib.Settings
 
             _contentBuildOverlay.Visible = true;
             _contentBuildOverlay.MoveToFront();
+            if (_contentBuildOverlay is ContentBuildOverlay buildOverlay)
+                buildOverlay.SetActive(true);
             var focusOwner = GetViewport()?.GuiGetFocusOwner();
             if (focusOwner != null && IsInstanceValid(focusOwner) && _contentPanelRoot.IsAncestorOf(focusOwner))
                 GrabControlDeferred(ResolveSidebarTargetMatchingContent());
@@ -1889,6 +1890,8 @@ namespace STS2RitsuLib.Settings
                 return;
 
             _contentBuildOverlay.Visible = false;
+            if (_contentBuildOverlay is ContentBuildOverlay buildOverlay)
+                buildOverlay.SetActive(false);
         }
 
         private void RefreshContentBuildOverlayVisibility()
@@ -3183,6 +3186,51 @@ namespace STS2RitsuLib.Settings
             }
 
             return builder.ToString();
+        }
+
+        private sealed partial class ContentBuildOverlay : Control
+        {
+            private const float FullCircleRadians = 6.2831855f;
+            private const float SpinRadiansPerSecond = 4.8f;
+            private float _spin;
+
+            public ContentBuildOverlay()
+            {
+                SetProcess(false);
+            }
+
+            public void SetActive(bool active)
+            {
+                SetProcess(active);
+                if (active)
+                    QueueRedraw();
+            }
+
+            public override void _Process(double delta)
+            {
+                _spin = Mathf.PosMod(_spin + (float)delta * SpinRadiansPerSecond, FullCircleRadians);
+                QueueRedraw();
+            }
+
+            public override void _Draw()
+            {
+                DrawRect(new(Vector2.Zero, Size), new(0f, 0f, 0f, 0.42f));
+
+                var minSide = Math.Min(Size.X, Size.Y);
+                if (minSide < 24f)
+                    return;
+
+                var center = Size * 0.5f;
+                var radius = Mathf.Clamp(minSide * 0.045f, 18f, 38f);
+                var width = Mathf.Clamp(radius * 0.16f, 3.5f, 6f);
+                var trackColor = new Color(1f, 1f, 1f, 0.18f);
+                var accent = RitsuShellTheme.Current.Text.HoverHighlight;
+                var arcColor = new Color(accent.R, accent.G, accent.B, 0.92f);
+
+                DrawArc(center, radius, 0f, FullCircleRadians, 72, trackColor, width, true);
+                DrawArc(center, radius, _spin, _spin + FullCircleRadians * 0.72f, 48, arcColor, width, true);
+                DrawCircle(center, Math.Max(2.5f, width * 0.55f), new(1f, 1f, 1f, 0.52f));
+            }
         }
 
         private sealed record ModSettingsSidebarRow(
