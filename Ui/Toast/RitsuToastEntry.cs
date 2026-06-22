@@ -1,4 +1,5 @@
 using Godot;
+using STS2RitsuLib.Ui.Shell.Theme;
 
 namespace STS2RitsuLib.Ui.Toast
 {
@@ -83,8 +84,10 @@ namespace STS2RitsuLib.Ui.Toast
             ApplyHoverVisual(false);
             _titleLabel?.AddThemeColorOverride("font_color", style.TitleColor);
             _titleLabel?.AddThemeFontSizeOverride("font_size", style.TitleFontSize);
+            _titleLabel?.AddThemeFontOverride("font", RitsuShellTheme.Current.Font.Body);
             _bodyLabel?.AddThemeColorOverride("font_color", style.BodyColor);
             _bodyLabel?.AddThemeFontSizeOverride("font_size", style.BodyFontSize);
+            _bodyLabel?.AddThemeFontOverride("font", RitsuShellTheme.Current.Font.Body);
             if (_textColumn != null)
             {
                 _textColumn.AddThemeConstantOverride("separation",

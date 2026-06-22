@@ -149,10 +149,36 @@ namespace STS2RitsuLib.Ui.Shell.Theme
 
                 if (loaded == null || !GodotObject.IsInstanceValid(loaded))
                     loaded = fallback;
+                else if (IsProton && loaded is FontVariation fv && fv.BaseFont is FontFile baseFont)
+                    AddCjkFallbacks(baseFont);
 
                 FontCache[s] = loaded;
                 return loaded;
             }
+        }
+
+        private static readonly bool IsProton = !string.IsNullOrEmpty(
+            System.Environment.GetEnvironmentVariable("STEAM_COMPAT_DATA_PATH"));
+
+        private static void AddCjkFallbacks(FontFile baseFont)
+        {
+            var combined = new Godot.Collections.Array<Font>();
+            var existing = baseFont.GetFallbacks();
+            if (existing != null)
+            {
+                foreach (var f in existing)
+                    combined.Add(f);
+            }
+
+            var msyh = new FontFile();
+            if (msyh.LoadDynamicFont("C:\\windows\\Fonts\\msyh.ttf") == Error.Ok)
+                combined.Add(msyh);
+
+            var msgothic = new FontFile();
+            if (msgothic.LoadDynamicFont("C:\\windows\\Fonts\\msgothic.ttc") == Error.Ok)
+                combined.Add(msgothic);
+
+            baseFont.SetFallbacks(combined);
         }
 
         private static Font GetFallbackFont()
@@ -165,6 +191,9 @@ namespace STS2RitsuLib.Ui.Shell.Theme
                 var loaded = ResourceLoader.Load<Font>(DefaultFontFallbackPath);
                 if (loaded == null || !GodotObject.IsInstanceValid(loaded))
                     loaded = new FontVariation();
+
+                if (IsProton && loaded is FontVariation fv && fv.BaseFont is FontFile baseFont)
+                    AddCjkFallbacks(baseFont);
 
                 _fallbackFont = loaded;
                 FontCache[DefaultFontFallbackPath] = loaded;

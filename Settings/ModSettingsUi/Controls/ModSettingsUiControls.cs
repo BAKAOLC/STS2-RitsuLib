@@ -2098,6 +2098,11 @@ namespace STS2RitsuLib.Settings
                         ?? _faceButton.GetThemeIcon("select_arrow", "Tree");
             if (arrow == null)
                 return;
+            if (!string.IsNullOrEmpty(System.Environment.GetEnvironmentVariable("STEAM_COMPAT_DATA_PATH")))
+            {
+                _faceButton.Icon = null;
+                return;
+            }
 
             _faceButton.Icon = arrow;
             _faceButton.IconAlignment = HorizontalAlignment.Right;
