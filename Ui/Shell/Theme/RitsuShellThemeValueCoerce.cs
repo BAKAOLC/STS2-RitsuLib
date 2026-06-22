@@ -159,7 +159,7 @@ namespace STS2RitsuLib.Ui.Shell.Theme
 
                 if (loaded == null || !GodotObject.IsInstanceValid(loaded))
                     loaded = fallback;
-                else if (IsProton && loaded is FontVariation fv && fv.BaseFont is FontFile baseFont)
+                else if (IsProton && loaded is FontVariation { BaseFont: FontFile baseFont })
                     AddCjkFallbacks(baseFont);
 
                 FontCache[s] = loaded;
@@ -178,9 +178,9 @@ namespace STS2RitsuLib.Ui.Shell.Theme
                 foreach (var f in existing)
                     combined.Add(f);
 
-            AddDynamicFontIfAvailable(combined, "C:\\windows\\Fonts\\msyh.ttc");
-            AddDynamicFontIfAvailable(combined, "C:\\windows\\Fonts\\msyh.ttf");
-            AddDynamicFontIfAvailable(combined, "C:\\windows\\Fonts\\msgothic.ttc");
+            AddDynamicFontIfAvailable(combined, @"C:\windows\Fonts\msyh.ttc");
+            AddDynamicFontIfAvailable(combined, @"C:\windows\Fonts\msyh.ttf");
+            AddDynamicFontIfAvailable(combined, @"C:\windows\Fonts\msgothic.ttc");
 
             baseFont.SetFallbacks(combined);
             baseFont.SetMeta(ProtonCjkFallbacksAppliedMetaKey, true);
@@ -209,7 +209,7 @@ namespace STS2RitsuLib.Ui.Shell.Theme
                 if (loaded == null || !GodotObject.IsInstanceValid(loaded))
                     loaded = new FontVariation();
 
-                if (IsProton && loaded is FontVariation fv && fv.BaseFont is FontFile baseFont)
+                if (IsProton && loaded is FontVariation { BaseFont: FontFile baseFont })
                     AddCjkFallbacks(baseFont);
 
                 _fallbackFont = loaded;
