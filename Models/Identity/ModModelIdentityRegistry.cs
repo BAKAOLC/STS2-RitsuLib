@@ -1,5 +1,6 @@
 using MegaCrit.Sts2.Core.Entities.Players;
 using MegaCrit.Sts2.Core.Models;
+using STS2RitsuLib.Content.Patches;
 
 namespace STS2RitsuLib.Models.Identity
 {
@@ -28,7 +29,7 @@ namespace STS2RitsuLib.Models.Identity
 
         public static ModModelIdentity EnsureRegistered(AbstractModel? model)
         {
-            if (model is not { IsMutable: true })
+            if (model is not { IsMutable: true } || IsLocalOnly(model))
                 return ModModelIdentity.None;
 
             lock (Gate)
@@ -46,7 +47,7 @@ namespace STS2RitsuLib.Models.Identity
         public static bool TryGetToken(AbstractModel? model, out ModModelIdentityToken token)
         {
             token = default;
-            if (model == null)
+            if (model == null || IsLocalOnly(model))
                 return false;
 
             lock (Gate)
@@ -57,6 +58,11 @@ namespace STS2RitsuLib.Models.Identity
                 token = new(new(identity), model.Id);
                 return true;
             }
+        }
+
+        private static bool IsLocalOnly(AbstractModel model)
+        {
+            return ModelIdSerializationCacheDynamicContentPatch.IsLocalOnlyModelId(model.Id);
         }
 
         public static bool TryResolve(ModModelIdentityToken token, out AbstractModel model)
