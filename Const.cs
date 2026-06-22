@@ -22,7 +22,7 @@ namespace STS2RitsuLib
         ///     Assembly / manifest version string.
         ///     程序集/清单版本字符串。
         /// </summary>
-        public const string Version = "0.4.33";
+        public const string Version = "0.4.34";
 
         /// <summary>
         ///     Steam Workshop item id for the official RitsuLib release.
