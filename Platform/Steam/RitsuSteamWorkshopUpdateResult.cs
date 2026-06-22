@@ -9,6 +9,7 @@ namespace STS2RitsuLib.Platform.Steam
         int FailedCount,
         string? ErrorMessage = null,
         IReadOnlyList<RitsuSteamWorkshopDownloadItem>? TriggeredItems = null,
+        IReadOnlyList<RitsuSteamWorkshopDownloadItem>? MonitorItems = null,
         IReadOnlyList<RitsuSteamWorkshopChangedItem>? ChangedItems = null)
     {
         internal static RitsuSteamWorkshopUpdateResult Unavailable(string? errorMessage = null)

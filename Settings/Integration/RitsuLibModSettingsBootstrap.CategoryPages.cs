@@ -177,14 +177,7 @@ namespace STS2RitsuLib.Settings
                             T("ritsulib.steamWorkshop.autoUpdateCheck.label", "Auto-check Workshop updates"),
                             ui.SteamWorkshopAutoUpdateCheckEnabled,
                             T("ritsulib.steamWorkshop.autoUpdateCheck.description",
-                                "Periodically checks subscribed Workshop items and queues available updates for Steam to download after the game exits. Notifications are shown on the main menu."))
-                        .AddToggle(
-                            "steam_workshop_auto_update_high_priority_download_enabled",
-                            T("ritsulib.steamWorkshop.highPriorityDownload.label",
-                                "Download immediately during auto-checks"),
-                            ui.SteamWorkshopAutoUpdateHighPriorityDownloadEnabled,
-                            T("ritsulib.steamWorkshop.highPriorityDownload.description",
-                                "When enabled, automatic Workshop checks start high-priority Steam downloads immediately and show download progress. Off keeps downloads queued until the game exits."))
+                                "Periodically checks subscribed Workshop items and asks Steam to queue available updates. Notifications are shown on the main menu."))
                         .AddButton(
                             "steam_workshop_check_now",
                             T("ritsulib.steamWorkshop.checkNow.label", "Check Workshop updates now"),
