@@ -1,6 +1,5 @@
 using Godot;
 using MegaCrit.Sts2.addons.mega_text;
-using MegaCrit.Sts2.Core.Nodes.Combat;
 using MegaCrit.Sts2.Core.Nodes.Screens.Settings;
 using STS2RitsuLib.Ui.Shell.Theme;
 
@@ -178,11 +177,6 @@ namespace STS2RitsuLib.Settings
             label.MinFontSize = 16;
             label.MaxFontSize = 28;
             AddChild(label);
-
-            var reticle = ModSettingsUiResources.SelectionReticleScene.Instantiate<NSelectionReticle>();
-            reticle.Name = "SelectionReticle";
-            reticle.SetAnchorsAndOffsetsPreset(LayoutPreset.FullRect);
-            AddChild(reticle);
         }
 
         public ModSettingsGameSettingsEntryButton()

@@ -20,13 +20,6 @@ namespace STS2RitsuLib.Settings
         public ModSettingsGamepadCompatibleButton()
         {
             ClipContents = false;
-            TreeEntered += AttachFocusReticleOnce;
-        }
-
-        private void AttachFocusReticleOnce()
-        {
-            TreeEntered -= AttachFocusReticleOnce;
-            ModSettingsFocusChrome.AttachControllerSelectionReticle(this);
         }
 
         /// <summary>

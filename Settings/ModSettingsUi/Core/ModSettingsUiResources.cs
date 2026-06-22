@@ -1,6 +1,5 @@
 using Godot;
 using MegaCrit.Sts2.Core.Assets;
-using MegaCrit.Sts2.Core.Helpers;
 using STS2RitsuLib.Utils;
 
 namespace STS2RitsuLib.Settings
@@ -38,13 +37,6 @@ namespace STS2RitsuLib.Settings
         /// </summary>
         public static Font KreonButton =>
             PreloadManager.Cache.GetAsset<Font>("res://themes/kreon_bold_glyph_space_two.tres");
-
-        /// <summary>
-        ///     Gets the shared selection reticle scene used by interactive settings controls.
-        ///     获取交互式设置控件使用的共享选择光标场景。
-        /// </summary>
-        public static PackedScene SelectionReticleScene =>
-            PreloadManager.Cache.GetScene(SceneHelper.GetScenePath("ui/selection_reticle"));
 
         /// <summary>
         ///     Gets the standard textured button background used by settings action buttons.

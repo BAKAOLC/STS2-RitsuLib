@@ -116,7 +116,6 @@ namespace STS2RitsuLib.Settings
             };
             edit.FocusExited += () => Commit(edit.Text, true);
             AddChild(edit);
-            ModSettingsFocusChrome.AttachControllerSelectionReticle(edit);
             Editor = edit;
             ApplyValidationChrome(_lastCommitted);
         }
@@ -338,7 +337,6 @@ namespace STS2RitsuLib.Settings
             };
             edit.FocusExited += () => Commit(edit.Text);
             AddChild(edit);
-            ModSettingsFocusChrome.AttachControllerSelectionReticle(edit);
             Editor = edit;
         }
 

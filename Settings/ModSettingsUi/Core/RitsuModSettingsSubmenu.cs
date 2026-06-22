@@ -273,7 +273,6 @@ namespace STS2RitsuLib.Settings
         {
             ModSettingsBindingWriteEvents.ValueWritten -= _bindingWriteListener;
             PopPaneHotkeys();
-            ModSettingsFocusChrome.HideControllerSelectionReticle();
             FlushDirtyBindings();
             ProcessMode = ProcessModeEnum.Disabled;
             _lastVisibleMirrorRefreshPageKey = null;
@@ -300,7 +299,6 @@ namespace STS2RitsuLib.Settings
         {
             ModSettingsBindingWriteEvents.ValueWritten -= _bindingWriteListener;
             PopPaneHotkeys();
-            ModSettingsFocusChrome.HideControllerSelectionReticle();
             FlushPendingRefreshActionsImmediate();
             HideContentBuildOverlay();
             FlushDirtyBindings();
@@ -722,17 +720,14 @@ namespace STS2RitsuLib.Settings
 
             if ((!ReferenceEquals(node, this) && !IsAncestorOf(node)) ||
                 NControllerManager.Instance?.IsUsingController != true)
-            {
-                ModSettingsFocusChrome.HideControllerSelectionReticle();
                 return;
-            }
-
-            ModSettingsFocusChrome.ShowControllerSelectionReticle(node);
 
             if (_suppressScrollSync)
                 return;
 
-            if (_sidebarScrollContainer.IsAncestorOf(node))
+            if (node is ModSettingsSidebarList focusedSidebarList)
+                focusedSidebarList.EnsureActiveRowVisible();
+            else if (_sidebarScrollContainer.IsAncestorOf(node))
                 _sidebarScrollContainer.EnsureControlVisible(node);
             else if (_scrollContainer.IsAncestorOf(node))
                 _scrollContainer.EnsureControlVisible(node);
@@ -1002,14 +997,7 @@ namespace STS2RitsuLib.Settings
             var usingController = NControllerManager.Instance?.IsUsingController ?? false;
             _paneHotkeyHintRow.Visible = usingController && Visible;
             if (!usingController)
-            {
-                ModSettingsFocusChrome.HideControllerSelectionReticle();
                 return;
-            }
-
-            var focusOwner = GetViewport()?.GuiGetFocusOwner();
-            if (focusOwner != null && IsInstanceValid(focusOwner) && IsAncestorOf(focusOwner))
-                ModSettingsFocusChrome.ShowControllerSelectionReticle(focusOwner);
 
             if (NInputManager.Instance == null)
                 return;
@@ -3240,6 +3228,7 @@ namespace STS2RitsuLib.Settings
                 _activeVisibleIndex = 0;
                 TooltipText = string.Empty;
                 UpdateMinimumSize();
+                RequestScrollContainerLayout();
                 QueueRedraw();
             }
 
@@ -3249,6 +3238,7 @@ namespace STS2RitsuLib.Settings
                 _rows.AddRange(rows);
                 RefreshRows(false);
                 SyncSelection(_owner._selectedModId, _owner.GetSelectedPageKey(), _owner.GetSelectedSectionKey());
+                RequestScrollContainerLayout();
             }
 
             public void SyncSelection(string? selectedModId, string? selectedPageKey, string? selectedSectionKey)
@@ -3279,6 +3269,7 @@ namespace STS2RitsuLib.Settings
                 ClampActiveIndex();
                 UpdateTooltip();
                 UpdateMinimumSize();
+                RequestScrollContainerLayout();
                 QueueRedraw();
             }
 
@@ -3304,6 +3295,7 @@ namespace STS2RitsuLib.Settings
                     return;
                 UpdateTooltip();
                 UpdateMinimumSize();
+                RequestScrollContainerLayout();
                 QueueRedraw();
             }
 
@@ -3318,6 +3310,11 @@ namespace STS2RitsuLib.Settings
                 EnsureActiveVisible();
                 UpdateTooltip();
                 QueueRedraw();
+            }
+
+            public void EnsureActiveRowVisible()
+            {
+                EnsureActiveVisible();
             }
 
             public override Vector2 _GetMinimumSize()
@@ -3350,6 +3347,9 @@ namespace STS2RitsuLib.Settings
                         QueueRedraw();
                         break;
                     case (int)NotificationFocusEnter:
+                        EnsureActiveVisible();
+                        QueueRedraw();
+                        break;
                     case (int)NotificationFocusExit:
                     case (int)NotificationThemeChanged:
                         QueueRedraw();
@@ -3403,8 +3403,10 @@ namespace STS2RitsuLib.Settings
             {
                 var active = HasFocus() && visibleIndex == _activeVisibleIndex;
                 var highlighted = active || row.Selected;
-                DrawStyleBox(ModSettingsSidebarButton.CreateStyle(row.Selected, active || (_hovered && active),
-                    row.Kind, row.Depth), rect);
+                DrawStyleBox(active
+                        ? ModSettingsSidebarButton.CreateFocusStyle(row.Selected, row.Kind, row.Depth)
+                        : ModSettingsSidebarButton.CreateStyle(row.Selected, _hovered && active, row.Kind, row.Depth),
+                    rect);
 
                 var font = row.Kind == ModSettingsSidebarItemKind.ModGroup
                     ? RitsuShellTheme.Current.Font.BodyBold
@@ -3576,6 +3578,31 @@ namespace STS2RitsuLib.Settings
                               !RitsuShellTheme.Current.Metric.Sidebar.ShowInlinePageCount
                     ? $"{row.Label}\n{row.Meta}"
                     : GetActiveRow()?.Label ?? string.Empty;
+            }
+
+            private void RequestScrollContainerLayout(bool defer = true)
+            {
+                UpdateMinimumSize();
+                if (GetParent() is Control parent)
+                {
+                    parent.UpdateMinimumSize();
+                    if (parent is Container container)
+                        container.QueueSort();
+                }
+
+                if (FindAncestorScrollContainer(this) is { } scroll)
+                    scroll.QueueSort();
+
+                if (defer)
+                    Callable.From(DeferredRequestScrollContainerLayout).CallDeferred();
+            }
+
+            private void DeferredRequestScrollContainerLayout()
+            {
+                if (!IsInsideTree())
+                    return;
+
+                RequestScrollContainerLayout(false);
             }
 
             private static float ResolveRowHeight(ModSettingsSidebarRow row)

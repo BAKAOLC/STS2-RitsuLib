@@ -159,7 +159,6 @@ namespace STS2RitsuLib.Settings
                 edit.ReleaseFocusIfInsideTree();
             };
             edit.FocusExited += () => commit(edit.Text);
-            ModSettingsFocusChrome.AttachControllerSelectionReticle(edit);
             return edit;
         }
     }
