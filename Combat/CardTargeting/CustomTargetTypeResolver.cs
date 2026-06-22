@@ -24,8 +24,20 @@ namespace STS2RitsuLib.Combat.CardTargeting
         internal static bool TryIsAllowedSingleTarget(TargetType type, Creature creature, Player player,
             out bool allowed)
         {
-            return CustomTargetTypeRegistry.TryIsAllowedSingleTarget(type, creature, player, out allowed) ||
-                   BaseLibTargetTypeBridge.TryIsAllowedSingleTarget(type, creature, player, out allowed);
+            return TryIsAllowedSingleTarget(type, new(creature, player), out allowed);
+        }
+
+        internal static bool TryIsAllowedSingleTarget(
+            TargetType type,
+            CustomTargetContext context,
+            out bool allowed)
+        {
+            return CustomTargetTypeRegistry.TryIsAllowedSingleTarget(type, context, out allowed) ||
+                   BaseLibTargetTypeBridge.TryIsAllowedSingleTarget(
+                       type,
+                       context.TargetCreature,
+                       context.Player,
+                       out allowed);
         }
 
         internal static bool TryShouldIncludeMultiTarget(TargetType type, Creature creature, Player player,

@@ -24,6 +24,7 @@ namespace STS2RitsuLib.Settings
 
                 var ui = RitsuLibModSettingsUiBindings.Create();
                 RegisterMainSettingsPage(ui);
+                RegisterCategorySettingsPages(ui);
                 RegisterContentSourceHoverTipsPage(ui);
                 RegisterContentModLoadOrderPage();
                 RegisterToastSettingsPage(ui);
@@ -48,6 +49,7 @@ namespace STS2RitsuLib.Settings
 
                 var ui = RitsuLibModSettingsUiBindings.Create();
                 RegisterMainSettingsPage(ui);
+                RegisterCategorySettingsPages(ui);
                 RegisterContentSourceHoverTipsPage(ui);
                 RegisterContentModLoadOrderPage();
                 RegisterToastSettingsPage(ui);

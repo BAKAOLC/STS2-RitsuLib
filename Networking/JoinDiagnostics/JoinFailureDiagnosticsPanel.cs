@@ -945,15 +945,12 @@ namespace STS2RitsuLib.Networking.JoinDiagnostics
         private void AttachControllerFocusChromeRecursive(Node node)
         {
             if (node is BaseButton button)
-            {
-                ModSettingsFocusChrome.AttachControllerSelectionReticle(button);
                 if (!button.HasMeta(FocusRefreshAttachedMeta))
                 {
                     button.SetMeta(FocusRefreshAttachedMeta, true);
                     button.Pressed += ScheduleFocusRefresh;
                     button.FocusEntered += () => EnsureMainScrollControlVisible(button);
                 }
-            }
 
             foreach (var child in node.GetChildren())
                 AttachControllerFocusChromeRecursive(child);
@@ -1068,7 +1065,8 @@ namespace STS2RitsuLib.Networking.JoinDiagnostics
 
         private static string FormatContentModLine(ContentModInventoryEntry mod)
         {
-            return FormatContentModName(mod) + " version=" + FormatVersion(mod.Version);
+            var source = string.IsNullOrWhiteSpace(mod.Source) ? "" : " source=" + mod.Source;
+            return FormatContentModName(mod) + " version=" + FormatVersion(mod.Version) + source;
         }
 
         private static string FormatContentModName(ContentModInventoryEntry mod)

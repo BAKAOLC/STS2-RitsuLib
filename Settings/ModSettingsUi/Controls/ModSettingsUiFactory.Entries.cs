@@ -17,6 +17,9 @@ namespace STS2RitsuLib.Settings
         internal static void RegisterRefreshWhenAlive(ModSettingsUiContext context, GodotObject? node, Action action,
             ModSettingsUiRefreshSpec spec)
         {
+            if (spec.IsStaticDisplay)
+                return;
+
             if (node == null)
             {
                 context.RegisterRefresh(action, spec);
@@ -69,8 +72,7 @@ namespace STS2RitsuLib.Settings
                 {
                     var dividerVisibility = CreateDividerVisibilityPredicate(sectionVisible, index);
                     yield return new(
-                        MaybeWrapDynamicVisibility(context, CreateDivider(), dividerVisibility),
-                        false);
+                        MaybeWrapDynamicVisibility(context, CreateDivider(), dividerVisibility));
                 }
 
                 SectionBuildPlan? builtSection = null;
@@ -87,7 +89,7 @@ namespace STS2RitsuLib.Settings
                         ModSettingsLocalization.Get("section.failed.title", "Section failed to load"),
                         string.Format(
                             ModSettingsLocalization.Get("section.failed.body", "Failed to build section '{0}'."),
-                            section.Id)), true);
+                            section.Id)));
                 }
 
                 if (failedSection != null)
@@ -96,7 +98,7 @@ namespace STS2RitsuLib.Settings
                     continue;
                 }
 
-                yield return new(builtSection!.Control, true);
+                yield return new(builtSection!.Control);
 
                 if (builtSection.LazyContentSection != null)
                 {
@@ -1059,7 +1061,6 @@ namespace STS2RitsuLib.Settings
 
         internal sealed record PageBuildItem(
             Control Control,
-            bool YieldAfter,
             Control? Parent = null,
             Action<Control>? AfterAdded = null);
     }

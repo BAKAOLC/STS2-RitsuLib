@@ -284,6 +284,11 @@ namespace STS2RitsuLib.Settings
                 bag.Invoke(host, binding, list);
         }
 
+        internal static bool HasBindingActionAppender<TValue>()
+        {
+            return BindingAppenders.ContainsKey(typeof(TValue));
+        }
+
         internal static void AppendListItemActions<TItem>(IModSettingsUiActionHost host,
             ModSettingsListItemContext<TItem> itemContext, List<ModSettingsMenuAction> list)
         {

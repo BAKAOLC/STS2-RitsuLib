@@ -61,7 +61,6 @@ namespace STS2RitsuLib.Ui.Shell.Theme
             return new(
                 ReadColor(root, "semantic.color.surface.sidebar"),
                 ReadColor(root, "semantic.color.surface.content"),
-                ReadColor(root, "semantic.color.surface.contentBuildOverlay"),
                 new(ReadColor(root, "semantic.color.surface.entry.bg"),
                     ReadColor(root, "semantic.color.surface.entry.border"),
                     ReadColor(root, "semantic.color.surface.entry.shadow")),

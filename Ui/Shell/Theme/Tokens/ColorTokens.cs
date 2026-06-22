@@ -123,10 +123,6 @@ namespace STS2RitsuLib.Ui.Shell.Theme
     ///     Settings content pane background.
     ///     设置内容窗格背景。
     /// </param>
-    /// <param name="ContentBuildOverlay">
-    ///     Translucent overlay during content rebuilds.
-    ///     半透明覆盖层 内容重建期间。
-    /// </param>
     /// <param name="Entry">
     ///     Standard entry surface (background + border + shadow).
     ///     标准条目表面 (背景 + 边框 + shadow)。
@@ -142,7 +138,6 @@ namespace STS2RitsuLib.Ui.Shell.Theme
     public sealed record SurfaceTokens(
         Color Sidebar,
         Color Content,
-        Color ContentBuildOverlay,
         EntrySurfaceTokens Entry,
         InsetSurfaceTokens Inset,
         FramedSurfaceTokens Framed);

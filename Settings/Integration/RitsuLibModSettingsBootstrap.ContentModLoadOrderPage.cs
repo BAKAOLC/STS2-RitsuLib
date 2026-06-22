@@ -15,7 +15,6 @@ namespace STS2RitsuLib.Settings
                 Const.ModId,
                 page => page
                     .AsChildOf(Const.ModId)
-                    .WithSidebarVisibleOnlyWhenActive()
                     .WithSortOrder(-875)
                     .WithTitle(T("ritsulib.page.contentModLoadOrder.title", "Content mod load order"))
                     .WithDescription(T("ritsulib.page.contentModLoadOrder.description",
@@ -242,7 +241,7 @@ namespace STS2RitsuLib.Settings
         private static Label CreateDependencyPill()
         {
             var label = CreateFixedLabel(
-                L("ritsulib.contentModLoadOrder.preview.dependency", "前置"),
+                L("ritsulib.contentModLoadOrder.preview.dependency", "Dependency"),
                 86,
                 RitsuShellTheme.Current.Text.Number,
                 13);

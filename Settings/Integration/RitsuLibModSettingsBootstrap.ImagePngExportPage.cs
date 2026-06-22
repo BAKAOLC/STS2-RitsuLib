@@ -11,8 +11,7 @@ namespace STS2RitsuLib.Settings
             RitsuLibFramework.RegisterModSettings(
                 Const.ModId,
                 page => page
-                    .AsChildOf(Const.ModId)
-                    .WithSidebarVisibleOnlyWhenActive()
+                    .AsChildOf("developer-tools")
                     .WithSortOrder(-200)
                     .WithTitle(T("ritsulib.page.imagePngExport.title", "Image PNG export (dev)"))
                     .WithDescription(T("ritsulib.page.imagePngExport.description",

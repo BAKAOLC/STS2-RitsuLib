@@ -8,7 +8,6 @@ namespace STS2RitsuLib.Settings
                 Const.ModId,
                 page => page
                     .AsChildOf(Const.ModId)
-                    .WithSidebarVisibleOnlyWhenActive()
                     .WithSortOrder(-850)
                     .WithTitle(T("ritsulib.page.toast.title", "Toast notifications"))
                     .WithDescription(T("ritsulib.page.toast.description",

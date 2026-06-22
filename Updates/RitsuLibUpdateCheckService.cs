@@ -36,8 +36,8 @@ namespace STS2RitsuLib.Updates
             if (IsLoadedFromSteamWorkshop())
             {
                 RitsuLibFramework.Logger.Info(
-                    "[UpdateCheck] RitsuLib manual external update check routed to Steam Workshop: loaded from Steam Workshop.");
-                SteamWorkshopUpdateCoordinator.CheckNowFromSettings();
+                    "[UpdateCheck] RitsuLib manual external update check routed to its Steam Workshop item: loaded from Steam Workshop.");
+                SteamWorkshopUpdateCoordinator.CheckRitsuLibNowFromSettings();
                 return;
             }
 

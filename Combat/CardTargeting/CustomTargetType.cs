@@ -175,12 +175,46 @@ namespace STS2RitsuLib.Combat.CardTargeting
         }
 
         /// <summary>
+        ///     Registers a mod-scoped single-target <see cref="TargetType" /> with a source-aware predicate.
+        ///     Use this method when the target rule depends on the card or potion that started targeting.
+        ///     注册一个使用来源上下文的 mod 作用域单体目标 <see cref="TargetType" />。
+        ///     当目标规则取决于发起选目标的卡牌或药水时使用此重载。
+        /// </summary>
+        /// <param name="modId">
+        ///     Owning mod id.
+        ///     所属 mod ID。
+        /// </param>
+        /// <param name="localStem">
+        ///     Stable local id stem, normalized into <c>MODID_TARGETTYPE_STEM</c>.
+        ///     稳定的本地 ID 词干，会规范化为 <c>MODID_TARGETTYPE_STEM</c>。
+        /// </param>
+        /// <param name="canTarget">
+        ///     Predicate used by mouse/controller targeting and validation for candidate creatures.
+        ///     鼠标 / 手柄选目标与目标校验使用的候选生物谓词。
+        /// </param>
+        public static TargetType RegisterSingleTargetTypeWithContext(
+            string modId,
+            string localStem,
+            Func<CustomTargetContext, bool> canTarget)
+        {
+            ArgumentException.ThrowIfNullOrWhiteSpace(modId);
+            ArgumentException.ThrowIfNullOrWhiteSpace(localStem);
+            ArgumentNullException.ThrowIfNull(canTarget);
+
+            var (_, id, type) = DynamicEnumValueRegistry<TargetType>.RegisterOwned(modId, localStem);
+            CustomTargetTypeRegistry.RegisterSingleTargetTypeWithContext(type, id, canTarget);
+            return type;
+        }
+
+        /// <summary>
         ///     Registers a mod-scoped multi-target <see cref="TargetType" /> and returns the deterministic enum value.
-        ///     Cards using this target type play once with a null selected target; use
-        ///     <c>CardModelTargetingExtensions.GetTargets(...)</c> to resolve the affected creatures in card logic.
+        ///     Cards or potions using this target type play once with a null selected target; use
+        ///     <c>CardModelTargetingExtensions.GetTargets(...)</c> or
+        ///     <c>PotionModelTargetingExtensions.GetTargets(...)</c> to resolve the affected creatures.
         ///     注册一个 mod 作用域的群体目标 <see cref="TargetType" />，并返回确定性的枚举值。
-        ///     使用此目标类型的卡牌会以 null 已选目标打出一次；卡牌逻辑中可用
-        ///     <c>CardModelTargetingExtensions.GetTargets(...)</c> 解析实际影响的生物。
+        ///     使用此目标类型的卡牌或药水会以 null 已选目标执行一次；可用
+        ///     <c>CardModelTargetingExtensions.GetTargets(...)</c> 或
+        ///     <c>PotionModelTargetingExtensions.GetTargets(...)</c> 解析实际影响的生物。
         /// </summary>
         /// <param name="modId">
         ///     Owning mod id.
@@ -205,7 +239,13 @@ namespace STS2RitsuLib.Combat.CardTargeting
 
         /// <summary>
         ///     Registers a mod-scoped multi-target <see cref="TargetType" /> with a player-aware predicate.
+        ///     Cards or potions using this target type play once with a null selected target; resolve affected creatures
+        ///     with <c>CardModelTargetingExtensions.GetTargets(...)</c> or
+        ///     <c>PotionModelTargetingExtensions.GetTargets(...)</c>.
         ///     注册一个使用出牌玩家上下文的 mod 作用域群体目标 <see cref="TargetType" />。
+        ///     使用此目标类型的卡牌或药水会以 null 已选目标执行一次；可用
+        ///     <c>CardModelTargetingExtensions.GetTargets(...)</c> 或
+        ///     <c>PotionModelTargetingExtensions.GetTargets(...)</c> 解析实际影响的生物。
         /// </summary>
         /// <param name="modId">
         ///     Owning mod id.

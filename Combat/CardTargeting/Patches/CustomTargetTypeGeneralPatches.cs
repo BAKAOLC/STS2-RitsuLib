@@ -25,7 +25,7 @@ namespace STS2RitsuLib.Combat.CardTargeting.Patches
     {
         public static string PatchId => "card_target_custom_show_multi_target_visuals";
 
-        public static string Description => "为自定义群体目标显示筛选后的多目标指示";
+        public static string Description => "Show filtered multi-target visuals for custom target types";
 
         public static bool IsCritical => false;
 
@@ -67,7 +67,7 @@ namespace STS2RitsuLib.Combat.CardTargeting.Patches
     {
         public static string PatchId => "card_target_custom_is_single_target";
 
-        public static string Description => "将自定义单体目标识别为单目标类型";
+        public static string Description => "Treat custom single-target types as single-target";
 
         public static bool IsCritical => false;
 
@@ -94,7 +94,7 @@ namespace STS2RitsuLib.Combat.CardTargeting.Patches
     {
         public static string PatchId => "card_target_custom_allowed_to_target_creature";
 
-        public static string Description => "按自定义单体目标过滤候选生物";
+        public static string Description => "Filter candidate creatures with custom single-target predicates";
 
         public static ModPatchTarget[] GetTargets()
         {
@@ -107,8 +107,8 @@ namespace STS2RitsuLib.Combat.CardTargeting.Patches
             if (player == null)
                 return true;
 
-            if (!CustomTargetTypeResolver.TryIsAllowedSingleTarget(__instance._validTargetsType, creature,
-                    player,
+            var context = CustomTargetTypeSelectionContext.CreateContext(__instance, creature, player);
+            if (!CustomTargetTypeResolver.TryIsAllowedSingleTarget(__instance._validTargetsType, context,
                     out var allowed))
                 return true;
 
@@ -125,7 +125,7 @@ namespace STS2RitsuLib.Combat.CardTargeting.Patches
     {
         public static string PatchId => "card_target_custom_can_play_targeting";
 
-        public static string Description => "按自定义单体目标过滤 CanPlayTargeting";
+        public static string Description => "Filter CanPlayTargeting with custom single-target predicates";
 
         public static ModPatchTarget[] GetTargets()
         {
@@ -137,7 +137,8 @@ namespace STS2RitsuLib.Combat.CardTargeting.Patches
             if (target == null)
                 return true;
 
-            if (!CustomTargetTypeResolver.TryIsAllowedSingleTarget(__instance.TargetType, target, __instance.Owner,
+            if (!CustomTargetTypeResolver.TryIsAllowedSingleTarget(__instance.TargetType,
+                    CustomTargetContext.ForCard(target, __instance),
                     out var allowed))
                 return true;
 
@@ -154,7 +155,7 @@ namespace STS2RitsuLib.Combat.CardTargeting.Patches
     {
         public static string PatchId => "card_target_custom_is_valid_target";
 
-        public static string Description => "按自定义单体目标过滤 IsValidTarget";
+        public static string Description => "Filter IsValidTarget with custom single-target predicates";
 
         public static ModPatchTarget[] GetTargets()
         {
@@ -166,7 +167,8 @@ namespace STS2RitsuLib.Combat.CardTargeting.Patches
             if (target == null)
                 return true;
 
-            if (!CustomTargetTypeResolver.TryIsAllowedSingleTarget(__instance.TargetType, target, __instance.Owner,
+            if (!CustomTargetTypeResolver.TryIsAllowedSingleTarget(__instance.TargetType,
+                    CustomTargetContext.ForCard(target, __instance),
                     out var allowed))
                 return true;
 
@@ -200,7 +202,7 @@ namespace STS2RitsuLib.Combat.CardTargeting.Patches
 
         public static string PatchId => "card_target_custom_mouse_target_selection";
 
-        public static string Description => "自定义单体目标使用鼠标单体选择流程";
+        public static string Description => "Use mouse single-target flow for custom single-target types";
 
         public static ModPatchTarget[] GetTargets()
         {
@@ -223,12 +225,14 @@ namespace STS2RitsuLib.Combat.CardTargeting.Patches
         /// </summary>
         private static async Task RunTargeting(NMouseCardPlay instance, TargetMode targetMode, TargetType targetType)
         {
+            var card = GetCard(instance);
             var cardNode = GetCardNode(instance);
-            if (cardNode == null)
+            if (card == null || cardNode == null)
                 return;
 
             TryShowEvokingOrbs(instance);
             cardNode.CardHighlight.AnimFlash();
+            using var sourceContext = CustomTargetTypeSelectionContext.PushCard(NTargetManager.Instance, card);
             await SingleCreatureTargeting(instance, targetMode, targetType);
         }
     }
@@ -266,7 +270,7 @@ namespace STS2RitsuLib.Combat.CardTargeting.Patches
 
         public static string PatchId => "card_target_custom_controller_start";
 
-        public static string Description => "自定义单体目标使用手柄单体选择流程";
+        public static string Description => "Use controller single-target flow for custom single-target types";
 
         public static bool IsCritical => false;
 
@@ -335,7 +339,7 @@ namespace STS2RitsuLib.Combat.CardTargeting.Patches
 
         public static string PatchId => "card_target_custom_controller_single_targeting";
 
-        public static string Description => "为自定义单体目标提供手柄候选列表";
+        public static string Description => "Provide controller candidates for custom single-target types";
 
         public static bool IsCritical => false;
 
@@ -376,7 +380,8 @@ namespace STS2RitsuLib.Combat.CardTargeting.Patches
 
             var nodes = room.CreatureNodes
                 .Where(n =>
-                    CustomTargetTypeResolver.TryIsAllowedSingleTarget(targetType, n.Entity, card.Owner,
+                    CustomTargetTypeResolver.TryIsAllowedSingleTarget(targetType,
+                        CustomTargetContext.ForCard(n.Entity, card),
                         out var allowed) &&
                     allowed)
                 .ToList();
@@ -393,6 +398,7 @@ namespace STS2RitsuLib.Combat.CardTargeting.Patches
 
             try
             {
+                using var sourceContext = CustomTargetTypeSelectionContext.PushCard(targetManager, card);
                 targetManager.Connect(NTargetManager.SignalName.CreatureHovered, hoverCallable);
                 targetManager.Connect(NTargetManager.SignalName.CreatureUnhovered, unhoverCallable);
 
@@ -440,7 +446,7 @@ namespace STS2RitsuLib.Combat.CardTargeting.Patches
 
         public static string PatchId => "card_target_custom_try_play_card";
 
-        public static string Description => "修复自定义单体目标 TryPlayCard 丢失目标问题";
+        public static string Description => "Preserve selected targets in TryPlayCard for custom single-target types";
 
         public static ModPatchTarget[] GetTargets()
         {

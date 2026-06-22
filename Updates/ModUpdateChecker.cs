@@ -83,6 +83,13 @@ namespace STS2RitsuLib.Updates
         {
             ValidateOptions(options);
 
+            if (TryGetManagedSteamWorkshopItemId(options, out var workshopItemId))
+                return new(
+                    ModUpdateCheckStatus.Skipped,
+                    options.CurrentVersion,
+                    Message:
+                    $"External update check skipped because this install is managed by Steam Workshop item {workshopItemId}.");
+
             if (ShouldSkipForSteamWorkshop(options))
                 return new(
                     ModUpdateCheckStatus.Skipped,
@@ -205,6 +212,19 @@ namespace STS2RitsuLib.Updates
             string? notificationKey,
             CancellationToken cancellationToken)
         {
+            if (TryGetManagedSteamWorkshopItemId(options, out var workshopItemId))
+            {
+                var automatic = deferToastToMainMenu && !string.IsNullOrWhiteSpace(notificationKey);
+                await SteamWorkshopUpdateCoordinator
+                    .CheckItemAsync(workshopItemId, automatic, deferToastToMainMenu, cancellationToken)
+                    .ConfigureAwait(false);
+                return new(
+                    ModUpdateCheckStatus.Skipped,
+                    options.CurrentVersion,
+                    Message:
+                    $"External update check skipped because this install is managed by Steam Workshop item {workshopItemId}; checked that Workshop item instead.");
+            }
+
             var result = await CheckAsync(options, cancellationToken).ConfigureAwait(false);
             if (result.Status != ModUpdateCheckStatus.UpdateAvailable || result.ReleasePageUri == null)
             {
@@ -509,6 +529,9 @@ namespace STS2RitsuLib.Updates
             if (!options.SkipWhenLoadedFromSteamWorkshop)
                 return false;
 
+            if (TryGetManagedSteamWorkshopItemId(options, out _))
+                return true;
+
             if (options.SteamWorkshopItemId is { } itemId)
             {
                 if (!string.IsNullOrWhiteSpace(options.InstallSourcePath))
@@ -527,6 +550,47 @@ namespace STS2RitsuLib.Updates
 
             return options.InstallSourceAssembly != null &&
                    SteamWorkshopInstallSource.IsAssemblyLoadedFromSteamWorkshop(options.InstallSourceAssembly);
+        }
+
+        private static bool TryGetManagedSteamWorkshopItemId(ModUpdateCheckOptions options, out ulong itemId)
+        {
+            itemId = 0;
+            if (!options.SkipWhenLoadedFromSteamWorkshop)
+                return false;
+
+            if (options.SteamWorkshopItemId is { } configuredItemId)
+                return TryMatchConfiguredWorkshopItem(options, configuredItemId, out itemId);
+
+            if (!string.IsNullOrWhiteSpace(options.InstallSourcePath))
+                return SteamWorkshopInstallSource.TryGetWorkshopItemIdFromPath(options.InstallSourcePath, out itemId);
+
+            return options.InstallSourceAssembly != null &&
+                   SteamWorkshopInstallSource.TryGetWorkshopItemIdFromAssembly(
+                       options.InstallSourceAssembly,
+                       out itemId);
+        }
+
+        private static bool TryMatchConfiguredWorkshopItem(
+            ModUpdateCheckOptions options,
+            ulong configuredItemId,
+            out ulong itemId)
+        {
+            itemId = 0;
+            if (!string.IsNullOrWhiteSpace(options.InstallSourcePath))
+            {
+                if (!SteamWorkshopInstallSource.IsPathLoadedFromSteamWorkshopItem(
+                        options.InstallSourcePath,
+                        configuredItemId)) return false;
+                itemId = configuredItemId;
+                return true;
+            }
+
+            if (options.InstallSourceAssembly == null ||
+                !SteamWorkshopInstallSource.IsAssemblyLoadedFromSteamWorkshopItem(
+                    options.InstallSourceAssembly,
+                    configuredItemId)) return false;
+            itemId = configuredItemId;
+            return true;
         }
 
         private static string NormalizeSessionKey(string modId)

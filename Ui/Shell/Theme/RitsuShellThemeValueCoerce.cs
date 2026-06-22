@@ -1,5 +1,7 @@
 using System.Globalization;
 using Godot;
+using Godot.Collections;
+using Environment = System.Environment;
 
 namespace STS2RitsuLib.Ui.Shell.Theme
 {
@@ -16,8 +18,16 @@ namespace STS2RitsuLib.Ui.Shell.Theme
         /// </summary>
         public const string DefaultFontFallbackPath = "res://themes/kreon_regular_shared.tres";
 
+        private const string ProtonCjkFallbacksAppliedMetaKey = "_ritsulib_proton_cjk_fallbacks_applied";
+
         private static readonly Lock FontGate = new();
-        private static readonly Dictionary<string, Font> FontCache = new(StringComparer.Ordinal);
+
+        private static readonly System.Collections.Generic.Dictionary<string, Font> FontCache =
+            new(StringComparer.Ordinal);
+
+        private static readonly bool IsProton = !string.IsNullOrEmpty(
+            Environment.GetEnvironmentVariable("STEAM_COMPAT_DATA_PATH"));
+
         private static Font? _fallbackFont;
 
         /// <summary>
@@ -149,10 +159,43 @@ namespace STS2RitsuLib.Ui.Shell.Theme
 
                 if (loaded == null || !GodotObject.IsInstanceValid(loaded))
                     loaded = fallback;
+                else if (IsProton && loaded is FontVariation { BaseFont: FontFile baseFont })
+                    AddCjkFallbacks(baseFont);
 
                 FontCache[s] = loaded;
                 return loaded;
             }
+        }
+
+        private static void AddCjkFallbacks(FontFile baseFont)
+        {
+            if (baseFont.HasMeta(ProtonCjkFallbacksAppliedMetaKey))
+                return;
+
+            var combined = new Array<Font>();
+            var existing = baseFont.GetFallbacks();
+            if (existing != null)
+                foreach (var f in existing)
+                    combined.Add(f);
+
+            AddDynamicFontIfAvailable(combined, @"C:\windows\Fonts\msyh.ttc");
+            AddDynamicFontIfAvailable(combined, @"C:\windows\Fonts\msyh.ttf");
+            AddDynamicFontIfAvailable(combined, @"C:\windows\Fonts\msgothic.ttc");
+
+            baseFont.SetFallbacks(combined);
+            baseFont.SetMeta(ProtonCjkFallbacksAppliedMetaKey, true);
+        }
+
+        private static void AddDynamicFontIfAvailable(Array<Font> target, string path)
+        {
+            var font = new FontFile();
+            if (font.LoadDynamicFont(path) == Error.Ok)
+            {
+                target.Add(font);
+                return;
+            }
+
+            font.Dispose();
         }
 
         private static Font GetFallbackFont()
@@ -165,6 +208,9 @@ namespace STS2RitsuLib.Ui.Shell.Theme
                 var loaded = ResourceLoader.Load<Font>(DefaultFontFallbackPath);
                 if (loaded == null || !GodotObject.IsInstanceValid(loaded))
                     loaded = new FontVariation();
+
+                if (IsProton && loaded is FontVariation { BaseFont: FontFile baseFont })
+                    AddCjkFallbacks(baseFont);
 
                 _fallbackFont = loaded;
                 FontCache[DefaultFontFallbackPath] = loaded;

@@ -9,7 +9,7 @@ namespace STS2RitsuLib.Settings
             RitsuLibFramework.RegisterModSettings(
                 Const.ModId,
                 page => page
-                    .AsChildOf(Const.ModId)
+                    .AsChildOf("developer-tools")
                     .WithSortOrder(-240)
                     .WithTitle(T("ritsulib.debugLogViewer.title", "Debug log viewer"))
                     .WithDescription(T("ritsulib.debugLogViewer.description",

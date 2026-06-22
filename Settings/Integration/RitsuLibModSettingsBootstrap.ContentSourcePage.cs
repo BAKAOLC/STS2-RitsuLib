@@ -11,7 +11,6 @@ namespace STS2RitsuLib.Settings
                 Const.ModId,
                 page => page
                     .AsChildOf(Const.ModId)
-                    .WithSidebarVisibleOnlyWhenActive()
                     .WithSortOrder(-900)
                     .WithTitle(T("ritsulib.page.contentSourceHoverTips.title", "Content source display"))
                     .WithDescription(T("ritsulib.page.contentSourceHoverTips.description",

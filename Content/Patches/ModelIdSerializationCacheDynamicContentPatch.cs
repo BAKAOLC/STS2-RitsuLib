@@ -172,6 +172,11 @@ namespace STS2RitsuLib.Content.Patches
             return LocalOnlyModelSortIds.TryGetValue(id, out sortIds);
         }
 
+        internal static bool IsLocalOnlyModelId(ModelId id)
+        {
+            return LocalOnlyModelSortIds.ContainsKey(id);
+        }
+
         private static bool HasRegisteredSerializationContent(IDictionary contentById)
         {
             foreach (DictionaryEntry entry in contentById)
@@ -413,12 +418,12 @@ namespace STS2RitsuLib.Content.Patches
             return [new(typeof(AbstractModel), nameof(AbstractModel.InitId), [typeof(ModelId)])];
         }
 
-        public static Exception? Finalizer(Exception? __exception, AbstractModel __instance)
+        public static Exception? Finalizer(Exception? __exception, AbstractModel __instance, ModelId id)
         {
             if (__exception is not ArgumentException ||
                 CategorySortingIdField == null ||
                 EntrySortingIdField == null ||
-                !ModelIdSerializationCacheDynamicContentPatch.TryGetLocalOnlySortIds(__instance.Id, out var sortIds))
+                !ModelIdSerializationCacheDynamicContentPatch.TryGetLocalOnlySortIds(id, out var sortIds))
                 return __exception;
 
             CategorySortingIdField.SetValue(__instance, sortIds.CategorySortingId);

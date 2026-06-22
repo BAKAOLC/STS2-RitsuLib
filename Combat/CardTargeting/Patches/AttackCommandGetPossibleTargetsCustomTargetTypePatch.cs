@@ -20,7 +20,7 @@ namespace STS2RitsuLib.Combat.CardTargeting.Patches
 
         public static string PatchId => "card_target_custom_attack_command_get_possible_targets";
 
-        public static string Description => "让 AttackCommand 支持自定义筛选目标列表";
+        public static string Description => "Allow AttackCommand to use custom filtered target lists";
 
         public static bool IsCritical => false;
 

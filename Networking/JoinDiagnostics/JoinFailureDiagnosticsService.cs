@@ -274,10 +274,10 @@ namespace STS2RitsuLib.Networking.JoinDiagnostics
             bool suppressOrderIssueForModelDbMismatch,
             bool deterministicModelDbHash)
         {
-            var hostByKey = hostMods.ToDictionary(ContentModKey, StringComparer.Ordinal);
-            var localByKey = localMods.ToDictionary(ContentModKey, StringComparer.Ordinal);
-            var missingOnLocal = hostMods.Where(m => !localByKey.ContainsKey(ContentModKey(m))).ToList();
-            var missingOnHost = localMods.Where(m => !hostByKey.ContainsKey(ContentModKey(m))).ToList();
+            var hostByKey = BuildContentModIdentityMap(hostMods);
+            var localByKey = BuildContentModIdentityMap(localMods);
+            var missingOnLocal = hostMods.Where(m => !localByKey.ContainsKey(ContentModIdentityKey(m))).ToList();
+            var missingOnHost = localMods.Where(m => !hostByKey.ContainsKey(ContentModIdentityKey(m))).ToList();
             var versionRows = ExtractContentVersionRows(missingOnLocal, missingOnHost);
 
             if (missingOnLocal.Count > 0 || missingOnHost.Count > 0 || versionRows.Count > 0)
@@ -302,7 +302,8 @@ namespace STS2RitsuLib.Networking.JoinDiagnostics
             }
 
             if (hostMods.Count != localMods.Count ||
-                hostMods.Select(ContentModKey).SequenceEqual(localMods.Select(ContentModKey), StringComparer.Ordinal))
+                hostMods.Select(ContentModIdentityKey)
+                    .SequenceEqual(localMods.Select(ContentModIdentityKey), StringComparer.Ordinal))
                 return;
 
             if (suppressOrderIssueForModelDbMismatch)
@@ -312,7 +313,10 @@ namespace STS2RitsuLib.Networking.JoinDiagnostics
             var differentPositions = 0;
             for (var i = 0; i < hostMods.Count; i++)
             {
-                if (string.Equals(ContentModKey(hostMods[i]), ContentModKey(localMods[i]), StringComparison.Ordinal))
+                if (string.Equals(
+                        ContentModIdentityKey(hostMods[i]),
+                        ContentModIdentityKey(localMods[i]),
+                        StringComparison.Ordinal))
                     continue;
 
                 if (firstDifferentIndex < 0)
@@ -422,7 +426,7 @@ namespace STS2RitsuLib.Networking.JoinDiagnostics
                 var localIndex = missingOnHost.FindIndex(m =>
                     !string.IsNullOrEmpty(m.Id) &&
                     string.Equals(m.Id, hostMod.Id, StringComparison.Ordinal) &&
-                    string.Equals(m.Source, hostMod.Source, StringComparison.Ordinal));
+                    string.Equals(m.Id, hostMod.Id, StringComparison.Ordinal));
                 if (localIndex < 0)
                     continue;
 
@@ -476,7 +480,7 @@ namespace STS2RitsuLib.Networking.JoinDiagnostics
                 !string.Equals(mod.Name, mod.Id, StringComparison.Ordinal))
                 return mod.Name + " (" + mod.Id + ")";
 
-            return string.IsNullOrWhiteSpace(mod.Id) ? ContentModKey(mod) : mod.Id;
+            return string.IsNullOrWhiteSpace(mod.Id) ? ContentModIdentityKey(mod) : mod.Id;
         }
 
         private static string FormatContentModValue(ContentModInventoryEntry mod)
@@ -484,12 +488,21 @@ namespace STS2RitsuLib.Networking.JoinDiagnostics
             var version = string.IsNullOrWhiteSpace(mod.Version)
                 ? T("value.noVersion", "No version")
                 : mod.Version;
-            return "#" + (mod.Index + 1) + "  " + mod.Id + "  version=" + version;
+            var source = string.IsNullOrWhiteSpace(mod.Source) ? "" : "  source=" + mod.Source;
+            return "#" + (mod.Index + 1) + "  " + mod.Id + "  version=" + version + source;
         }
 
-        private static string ContentModKey(ContentModInventoryEntry mod)
+        private static IReadOnlyDictionary<string, ContentModInventoryEntry> BuildContentModIdentityMap(
+            IEnumerable<ContentModInventoryEntry> mods)
         {
-            return mod.Source + "\0" + mod.Id + "\0" + mod.Version;
+            return mods
+                .GroupBy(ContentModIdentityKey, StringComparer.Ordinal)
+                .ToDictionary(group => group.Key, group => group.First(), StringComparer.Ordinal);
+        }
+
+        private static string ContentModIdentityKey(ContentModInventoryEntry mod)
+        {
+            return mod.Id + "\0" + mod.Version;
         }
 
         private static string LocalizeReason(NetError reason)

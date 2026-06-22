@@ -13,30 +13,41 @@ namespace STS2RitsuLib.Platform.Steam
         private static readonly TimeSpan DownloadProgressPollInterval = TimeSpan.FromMilliseconds(1500);
         private static readonly TimeSpan DownloadProgressIdleTimeout = TimeSpan.FromSeconds(30);
         private static readonly Lazy<Bindings?> LazyBindings = new(CreateBindings);
+        private static readonly Lock TriggeredDownloadSyncRoot = new();
+        private static readonly HashSet<ulong> TriggeredDownloadItemIds = [];
 
         internal static bool IsAvailable => LazyBindings.Value != null;
 
+        internal static bool IsTriggeredDownloadItem(ulong itemId)
+        {
+            lock (TriggeredDownloadSyncRoot)
+            {
+                return TriggeredDownloadItemIds.Contains(itemId);
+            }
+        }
+
         internal static Task<RitsuSteamWorkshopUpdateResult> TriggerMissingUpdatesAsync(
-            SteamWorkshopDownloadTriggerMode mode = SteamWorkshopDownloadTriggerMode.HighPriorityImmediate,
             IProgress<RitsuSteamWorkshopUpdateProgress>? progress = null,
+            IReadOnlyCollection<ulong>? itemIds = null,
             CancellationToken cancellationToken = default)
         {
             var bindings = LazyBindings.Value;
             return bindings == null
                 ? Task.FromResult(
                     RitsuSteamWorkshopUpdateResult.Unavailable("Steamworks Workshop bindings are unavailable."))
-                : bindings.TriggerMissingUpdatesAsync(mode, progress, cancellationToken);
+                : bindings.TriggerMissingUpdatesAsync(progress, itemIds, cancellationToken);
         }
 
         internal static Task<bool> MonitorDownloadsAsync(
             IReadOnlyCollection<RitsuSteamWorkshopDownloadItem> items,
             IProgress<RitsuSteamWorkshopDownloadProgress>? progress = null,
+            bool stopWhenIdle = true,
             CancellationToken cancellationToken = default)
         {
             var bindings = LazyBindings.Value;
             return bindings == null || items.Count == 0
                 ? Task.FromResult(false)
-                : bindings.MonitorDownloadsAsync(items, progress, cancellationToken);
+                : bindings.MonitorDownloadsAsync(items, progress, stopWhenIdle, cancellationToken);
         }
 
         private static Bindings? CreateBindings()
@@ -116,12 +127,6 @@ namespace STS2RitsuLib.Platform.Steam
                     BindingFlags.Public | BindingFlags.Static,
                     null,
                     [publishedFileIdType, typeof(bool)],
-                    null);
-                var suspendDownloads = steamUgc.GetMethod(
-                    "SuspendDownloads",
-                    BindingFlags.Public | BindingFlags.Static,
-                    null,
-                    [typeof(bool)],
                     null);
                 var createQueryUgcDetailsRequest = steamUgc.GetMethod(
                     "CreateQueryUGCDetailsRequest",
@@ -208,7 +213,6 @@ namespace STS2RitsuLib.Platform.Steam
                     getItemInstallInfo == null ||
                     getItemDownloadInfo == null ||
                     downloadItem == null ||
-                    suspendDownloads == null ||
                     createQueryUgcDetailsRequest == null ||
                     sendQueryUgcRequest == null ||
                     getQueryUgcResult == null ||
@@ -241,7 +245,6 @@ namespace STS2RitsuLib.Platform.Steam
                     getItemInstallInfo,
                     getItemDownloadInfo,
                     downloadItem,
-                    suspendDownloads,
                     createQueryUgcDetailsRequest,
                     sendQueryUgcRequest,
                     getQueryUgcResult,
@@ -318,7 +321,6 @@ namespace STS2RitsuLib.Platform.Steam
             MethodInfo getItemInstallInfo,
             MethodInfo getItemDownloadInfo,
             MethodInfo downloadItem,
-            MethodInfo suspendDownloads,
             MethodInfo createQueryUgcDetailsRequest,
             MethodInfo sendQueryUgcRequest,
             MethodInfo getQueryUgcResult,
@@ -339,35 +341,55 @@ namespace STS2RitsuLib.Platform.Steam
         {
             // ReSharper disable once MemberHidesStaticFromOuterClass
             internal async Task<RitsuSteamWorkshopUpdateResult> TriggerMissingUpdatesAsync(
-                SteamWorkshopDownloadTriggerMode mode,
                 IProgress<RitsuSteamWorkshopUpdateProgress>? progress,
+                IReadOnlyCollection<ulong>? itemIds,
                 CancellationToken cancellationToken)
             {
                 try
                 {
                     progress?.Report(new(RitsuSteamWorkshopUpdateProgressStage.Starting, 0, 1));
-                    var suspendDownloadsUntilGameExit =
-                        mode == SteamWorkshopDownloadTriggerMode.QueueSuspendedUntilGameExit;
-                    var subscribedCount = Convert.ToUInt32(getNumSubscribedItems.Invoke(null, null));
-                    progress?.Report(new(
-                        RitsuSteamWorkshopUpdateProgressStage.ReadingSubscriptions,
-                        0,
-                        (int)Math.Max(1u, subscribedCount)));
-                    if (subscribedCount == 0)
+                    var selectedItemIds = itemIds?
+                        .Where(static itemId => itemId != 0)
+                        .Distinct()
+                        .ToArray();
+                    var scopedScan = selectedItemIds is { Length: > 0 };
+                    IReadOnlyList<ItemSnapshot> items;
+                    if (selectedItemIds is { Length: > 0 })
                     {
+                        progress?.Report(new(
+                            RitsuSteamWorkshopUpdateProgressStage.ReadingSubscriptions,
+                            0,
+                            Math.Max(1, selectedItemIds.Length)));
                         RitsuLibFramework.Logger.Info(
-                            "[SteamWorkshopUpdate] Scan complete: no subscribed Workshop items.");
-                        progress?.Report(new(RitsuSteamWorkshopUpdateProgressStage.ReadingSubscriptions, 1, 1));
-                        return new(true, 0, 0, 0, 0, 0);
+                            $"[SteamWorkshopUpdate] Scanning selected Workshop item(s). Count={selectedItemIds.Length}.");
+                        items = await BuildItemSnapshotsAsync(selectedItemIds, progress, cancellationToken)
+                            .ConfigureAwait(false);
+                    }
+                    else
+                    {
+                        var subscribedCount = Convert.ToUInt32(getNumSubscribedItems.Invoke(null, null));
+                        progress?.Report(new(
+                            RitsuSteamWorkshopUpdateProgressStage.ReadingSubscriptions,
+                            0,
+                            (int)Math.Max(1u, subscribedCount)));
+                        if (subscribedCount == 0)
+                        {
+                            RitsuLibFramework.Logger.Info(
+                                "[SteamWorkshopUpdate] Scan complete: no subscribed Workshop items.");
+                            progress?.Report(new(RitsuSteamWorkshopUpdateProgressStage.ReadingSubscriptions, 1, 1));
+                            return new(true, 0, 0, 0, 0, 0);
+                        }
+
+                        var itemArray = Array.CreateInstance(publishedFileIdType, subscribedCount);
+                        var actualCount =
+                            Convert.ToUInt32(getSubscribedItems.Invoke(null, [itemArray, subscribedCount]));
+                        RitsuLibFramework.Logger.Info(
+                            $"[SteamWorkshopUpdate] Scanning subscribed Workshop items. Reported={subscribedCount}, Returned={actualCount}.");
+
+                        items = await BuildItemSnapshotsAsync(itemArray, actualCount, progress, cancellationToken)
+                            .ConfigureAwait(false);
                     }
 
-                    var itemArray = Array.CreateInstance(publishedFileIdType, subscribedCount);
-                    var actualCount = Convert.ToUInt32(getSubscribedItems.Invoke(null, [itemArray, subscribedCount]));
-                    RitsuLibFramework.Logger.Info(
-                        $"[SteamWorkshopUpdate] Scanning subscribed Workshop items. Reported={subscribedCount}, Returned={actualCount}.");
-
-                    var items = await BuildItemSnapshotsAsync(itemArray, actualCount, progress, cancellationToken)
-                        .ConfigureAwait(false);
                     progress?.Report(new(
                         RitsuSteamWorkshopUpdateProgressStage.RefreshingDetails,
                         0,
@@ -383,8 +405,8 @@ namespace STS2RitsuLib.Platform.Steam
                     var triggered = 0;
                     var alreadyQueued = 0;
                     var failed = 0;
-                    var downloadsSuspended = false;
                     List<RitsuSteamWorkshopDownloadItem> triggeredItems = [];
+                    List<RitsuSteamWorkshopDownloadItem> monitorItems = [];
                     List<RitsuSteamWorkshopChangedItem> changedItems = [];
                     progress?.Report(new(
                         RitsuSteamWorkshopUpdateProgressStage.InspectingItems,
@@ -422,28 +444,21 @@ namespace STS2RitsuLib.Platform.Steam
                             HasFlag(item.State, itemStateFlags.DownloadPending))
                         {
                             alreadyQueued++;
+                            monitorItems.Add(new(item.Id, displayName));
                             RitsuLibFramework.Logger.Info(
                                 $"[SteamWorkshopUpdate] Workshop item {item.Id} already has a download queued or running.");
                             ReportInspectionProgress();
                             continue;
                         }
 
-                        if (suspendDownloadsUntilGameExit && !downloadsSuspended)
-                        {
-                            InvokeSuspendDownloads(true);
-                            downloadsSuspended = true;
-                            RitsuLibFramework.Logger.Info(
-                                "[SteamWorkshopUpdate] Suspended Steam Workshop downloads until game exit before queueing updates.");
-                        }
-
-                        if (InvokeDownloadItem(item.Handle, mode))
+                        if (InvokeDownloadItem(item.Handle))
                         {
                             triggered++;
                             triggeredItems.Add(new(item.Id, displayName));
+                            monitorItems.Add(new(item.Id, displayName));
+                            MarkTriggeredDownloadItem(item.Id);
                             RitsuLibFramework.Logger.Info(
-                                suspendDownloadsUntilGameExit
-                                    ? $"[SteamWorkshopUpdate] Queued Steam Workshop update for item {item.Id}; downloads remain suspended until game exit."
-                                    : $"[SteamWorkshopUpdate] Triggered Steam Workshop update for item {item.Id}.");
+                                $"[SteamWorkshopUpdate] Triggered Steam Workshop update for item {item.Id}.");
                         }
                         else
                         {
@@ -455,19 +470,12 @@ namespace STS2RitsuLib.Platform.Steam
                         ReportInspectionProgress();
                     }
 
-                    if (downloadsSuspended && triggered == 0)
-                    {
-                        InvokeSuspendDownloads(false);
-                        RitsuLibFramework.Logger.Info(
-                            "[SteamWorkshopUpdate] Resumed Steam Workshop downloads because no update downloads were queued.");
-                    }
-
                     RitsuLibFramework.Logger.Info(
                         $"[SteamWorkshopUpdate] Scan complete. Inspected={inspected}, NeedsUpdate={needsUpdate}, Triggered={triggered}, AlreadyQueued={alreadyQueued}, Failed={failed}.");
                     if (remoteUpdateTimes.Count > 0 || items.Count == 0)
-                        SaveRemoteUpdateSnapshot(remoteUpdateTimes);
+                        SaveRemoteUpdateSnapshot(remoteUpdateTimes, scopedScan);
                     return new(true, inspected, needsUpdate, triggered, alreadyQueued, failed, null, triggeredItems,
-                        changedItems);
+                        monitorItems, changedItems);
 
                     void ReportInspectionProgress()
                     {
@@ -488,10 +496,19 @@ namespace STS2RitsuLib.Platform.Steam
                 }
             }
 
+            private static void MarkTriggeredDownloadItem(ulong itemId)
+            {
+                lock (TriggeredDownloadSyncRoot)
+                {
+                    TriggeredDownloadItemIds.Add(itemId);
+                }
+            }
+
             // ReSharper disable once MemberHidesStaticFromOuterClass
             internal async Task<bool> MonitorDownloadsAsync(
                 IReadOnlyCollection<RitsuSteamWorkshopDownloadItem> downloadItems,
                 IProgress<RitsuSteamWorkshopDownloadProgress>? progress,
+                bool stopWhenIdle,
                 CancellationToken cancellationToken)
             {
                 Dictionary<ulong, DownloadMonitorItem> items = [];
@@ -547,7 +564,7 @@ namespace STS2RitsuLib.Platform.Steam
                     {
                         idleSince = DateTimeOffset.UtcNow;
                     }
-                    else if (DateTimeOffset.UtcNow - idleSince >= DownloadProgressIdleTimeout)
+                    else if (stopWhenIdle && DateTimeOffset.UtcNow - idleSince >= DownloadProgressIdleTimeout)
                     {
                         RitsuLibFramework.Logger.Warn(
                             "[SteamWorkshopUpdate] Stopped monitoring Workshop download progress because no active download progress was reported.");
@@ -607,6 +624,43 @@ namespace STS2RitsuLib.Platform.Steam
                 }
             }
 
+            private async Task<IReadOnlyList<ItemSnapshot>> BuildItemSnapshotsAsync(
+                IReadOnlyList<ulong> itemIds,
+                IProgress<RitsuSteamWorkshopUpdateProgress>? progress,
+                CancellationToken cancellationToken)
+            {
+                List<ItemSnapshot> items = [];
+                for (var i = 0; i < itemIds.Count; i++)
+                {
+                    if (i > 0)
+                        await Task.Delay(ItemProcessingDelay, cancellationToken).ConfigureAwait(false);
+
+                    if (CreatePublishedFileId(itemIds[i]) is not { } item)
+                    {
+                        ReportProgress(i + 1);
+                        continue;
+                    }
+
+                    var state = Convert.ToUInt32(getItemState.Invoke(null, [item]));
+                    items.Add(new(
+                        item,
+                        itemIds[i],
+                        state,
+                        TryGetLocalTimestamp(item, state)));
+                    ReportProgress(i + 1);
+                }
+
+                return items;
+
+                void ReportProgress(int completed)
+                {
+                    progress?.Report(new(
+                        RitsuSteamWorkshopUpdateProgressStage.ReadingSubscriptions,
+                        Math.Min(itemIds.Count, completed),
+                        Math.Max(1, itemIds.Count)));
+                }
+            }
+
             private async Task<IReadOnlyDictionary<ulong, RemoteItemDetails>> QueryRemoteUpdateTimesAsync(
                 IReadOnlyList<ItemSnapshot> items,
                 IProgress<RitsuSteamWorkshopUpdateProgress>? progress,
@@ -639,12 +693,16 @@ namespace STS2RitsuLib.Platform.Steam
             }
 
             private static void SaveRemoteUpdateSnapshot(
-                IReadOnlyDictionary<ulong, RemoteItemDetails> remoteUpdateTimes)
+                IReadOnlyDictionary<ulong, RemoteItemDetails> remoteUpdateTimes,
+                bool merge)
             {
                 Dictionary<ulong, SteamWorkshopStoredUpdateItem> snapshot = [];
                 foreach (var (itemId, details) in remoteUpdateTimes)
                     snapshot[itemId] = new(details.Updated, details.Title);
-                SteamWorkshopUpdateSnapshotStore.Replace(snapshot);
+                if (merge)
+                    SteamWorkshopUpdateSnapshotStore.Merge(snapshot);
+                else
+                    SteamWorkshopUpdateSnapshotStore.Replace(snapshot);
             }
 
             private async Task<IReadOnlyDictionary<ulong, RemoteItemDetails>> QueryRemoteUpdateTimesBatchAsync(
@@ -773,12 +831,11 @@ namespace STS2RitsuLib.Platform.Steam
                 return Convert.ToUInt32(queryCompletedReturned.GetValue(queryCompleted));
             }
 
-            private bool InvokeDownloadItem(object item, SteamWorkshopDownloadTriggerMode mode)
+            private bool InvokeDownloadItem(object item)
             {
                 try
                 {
-                    var highPriority = mode == SteamWorkshopDownloadTriggerMode.HighPriorityImmediate;
-                    return downloadItem.Invoke(null, [item, highPriority]) is true;
+                    return downloadItem.Invoke(null, [item, true]) is true;
                 }
                 catch
                 {
@@ -831,19 +888,6 @@ namespace STS2RitsuLib.Platform.Steam
                 catch
                 {
                     return null;
-                }
-            }
-
-            private void InvokeSuspendDownloads(bool suspend)
-            {
-                try
-                {
-                    suspendDownloads.Invoke(null, [suspend]);
-                }
-                catch (Exception ex)
-                {
-                    RitsuLibFramework.Logger.Warn(
-                        $"[SteamWorkshopUpdate] Failed to {(suspend ? "suspend" : "resume")} Steam Workshop downloads: {ex.Message}");
                 }
             }
 
@@ -908,11 +952,5 @@ namespace STS2RitsuLib.Platform.Steam
         private readonly record struct RemoteItemDetails(uint Updated, string? Title);
 
         private sealed record DownloadMonitorItem(object Handle, string DisplayName);
-    }
-
-    internal enum SteamWorkshopDownloadTriggerMode
-    {
-        HighPriorityImmediate,
-        QueueSuspendedUntilGameExit,
     }
 }

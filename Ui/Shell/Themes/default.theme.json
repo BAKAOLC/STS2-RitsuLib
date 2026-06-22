@@ -134,10 +134,6 @@
           "$value": "#141820FA",
           "$type": "color"
         },
-        "contentBuildOverlay": {
-          "$value": "#080A0FB8",
-          "$type": "color"
-        },
         "entry": {
           "bg": {
             "$value": "#181D26F6",

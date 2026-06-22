@@ -9,8 +9,7 @@ namespace STS2RitsuLib.Settings
             RitsuLibFramework.RegisterModSettings(
                 Const.ModId,
                 page => page
-                    .AsChildOf(Const.ModId)
-                    .WithSidebarVisibleOnlyWhenActive()
+                    .AsChildOf("developer-tools")
                     .WithSortOrder(-250)
                     .WithTitle(T("ritsulib.page.harmonyDump.title", "Harmony patch dump"))
                     .WithDescription(T("ritsulib.page.harmonyDump.description",
@@ -52,7 +51,7 @@ namespace STS2RitsuLib.Settings
             RitsuLibFramework.RegisterModSettings(
                 Const.ModId,
                 page => page
-                    .AsChildOf(Const.ModId)
+                    .AsChildOf("developer-tools")
                     .WithSortOrder(-225)
                     .WithTitle(T("ritsulib.page.selfCheck.title", "Self-check mode"))
                     .WithDescription(T("ritsulib.page.selfCheck.description",

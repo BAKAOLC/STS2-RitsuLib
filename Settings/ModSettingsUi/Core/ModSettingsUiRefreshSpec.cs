@@ -56,6 +56,9 @@ namespace STS2RitsuLib.Settings
         public static ModSettingsUiRefreshSpec StaticDisplay { get; } =
             new(ModSettingsRefreshRegistrationKind.SpecificBindings, ImmutableArray<IModSettingsBinding>.Empty);
 
+        internal bool IsStaticDisplay =>
+            Kind == ModSettingsRefreshRegistrationKind.SpecificBindings && Bindings.IsDefaultOrEmpty;
+
         public static ModSettingsUiRefreshSpec ForBinding(IModSettingsBinding binding)
         {
             return new(ModSettingsRefreshRegistrationKind.SpecificBindings, [binding]);

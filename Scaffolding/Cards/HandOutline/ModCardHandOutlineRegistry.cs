@@ -43,9 +43,9 @@ namespace STS2RitsuLib.Scaffolding.Cards.HandOutline
         /// </summary>
         public static void Register<TCard>(ModCardHandOutlineSwitchRule<TCard> rule) where TCard : CardModel
         {
-#pragma warning disable CS0618 // 类型或成员已过时
+#pragma warning disable CS0618 // Type or member is obsolete.
             Register<TCard>(rule.ToUntyped());
-#pragma warning restore CS0618 // 类型或成员已过时
+#pragma warning restore CS0618 // Type or member is obsolete.
         }
 
         /// <summary>

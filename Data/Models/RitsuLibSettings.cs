@@ -409,22 +409,12 @@ namespace STS2RitsuLib.Data.Models
         public bool UpdateCheckSkipInCombat { get; set; } = true;
 
         /// <summary>
-        ///     When true and Steam Workshop is active, RitsuLib queues subscribed workshop items whose state is installed
-        ///     but still marked as needing an update. Automatic checks leave Workshop downloads suspended until the game
-        ///     exits.
-        ///     为 true 且 Steam Workshop 可用时，RitsuLib 会将已订阅且仍标记为需要更新的 Workshop 项加入队列。
-        ///     自动检查会让 Workshop 下载保持暂停直到游戏退出。
+        ///     When true and Steam Workshop is active, RitsuLib checks subscribed workshop items and asks Steam to
+        ///     download items whose installed state still needs an update.
+        ///     为 true 且 Steam Workshop 可用时，RitsuLib 会检查已订阅的 Workshop 项，并请求 Steam 下载仍需更新的项。
         /// </summary>
         [JsonPropertyName("steam_workshop_auto_update_check_enabled")]
         public bool SteamWorkshopAutoUpdateCheckEnabled { get; set; } = true;
-
-        /// <summary>
-        ///     When true, automatic Steam Workshop update checks start high-priority downloads immediately instead of
-        ///     queueing downloads for after the game exits.
-        ///     为 true 时，Steam Workshop 自动更新检查会立即启动高优先级下载，而不是等游戏退出后再下载。
-        /// </summary>
-        [JsonPropertyName("steam_workshop_auto_update_high_priority_download_enabled")]
-        public bool SteamWorkshopAutoUpdateHighPriorityDownloadEnabled { get; set; }
 
         /// <summary>
         ///     When true, shows the RitsuLib mod settings shortcut under the vanilla patch notes button on the main menu.

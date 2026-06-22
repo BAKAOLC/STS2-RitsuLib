@@ -54,10 +54,6 @@ namespace STS2RitsuLib.Settings
         public IModSettingsValueBinding<bool> UpdateCheckSkipInCombat { get; private init; } = null!;
         public IModSettingsValueBinding<bool> SteamWorkshopAutoUpdateCheckEnabled { get; private init; } = null!;
 
-        public IModSettingsValueBinding<bool>
-            SteamWorkshopAutoUpdateHighPriorityDownloadEnabled { get; private init; } =
-            null!;
-
         public IModSettingsValueBinding<bool> MainMenuModSettingsButtonEnabled { get; private init; } = null!;
         public IModSettingsValueBinding<string> ModelDbDeterministicSortMode { get; private init; } = null!;
         public IModSettingsValueBinding<bool> ToastEnabled { get; private init; } = null!;
@@ -337,13 +333,6 @@ namespace STS2RitsuLib.Settings
                         settings => settings.SteamWorkshopAutoUpdateCheckEnabled,
                         (settings, value) => settings.SteamWorkshopAutoUpdateCheckEnabled = value),
                     () => defaults.SteamWorkshopAutoUpdateCheckEnabled),
-                SteamWorkshopAutoUpdateHighPriorityDownloadEnabled = ModSettingsBindings.WithDefault(
-                    ModSettingsBindings.Global<RitsuLibSettings, bool>(
-                        Const.ModId,
-                        Const.SettingsKey,
-                        settings => settings.SteamWorkshopAutoUpdateHighPriorityDownloadEnabled,
-                        (settings, value) => settings.SteamWorkshopAutoUpdateHighPriorityDownloadEnabled = value),
-                    () => defaults.SteamWorkshopAutoUpdateHighPriorityDownloadEnabled),
                 MainMenuModSettingsButtonEnabled = ModSettingsBindings.WithDefault(
                     ModSettingsBindings.Global<RitsuLibSettings, bool>(
                         Const.ModId,

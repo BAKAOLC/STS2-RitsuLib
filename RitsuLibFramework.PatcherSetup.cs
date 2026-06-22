@@ -141,6 +141,7 @@ namespace STS2RitsuLib
             patcher.RegisterPatch<DevConsoleAutocompleteUnlockArgumentPatch>();
             patcher.RegisterPatch<RitsuSteamInputManifestInstallPatch>();
             patcher.RegisterPatch<RitsuSteamInputBackendProcessPatch>();
+            patcher.RegisterPatch<SteamWorkshopRuntimeInstallCallbackPatch>();
             patcher.RegisterPatch<DevConsoleAutocompleteApplyCandidatePatch>();
             patcher.RegisterPatch<DevConsoleAutocompleteGhostTextPatch>();
             patcher.RegisterPatch<DevConsoleHistoryNavigationInputPatch>();
@@ -349,10 +350,14 @@ namespace STS2RitsuLib
             patcher.RegisterPatch<NTargetManagerAllowedToTargetCreatureCustomTargetTypePatch>();
             patcher.RegisterPatch<CardModelCanPlayTargetingCustomTargetTypePatch>();
             patcher.RegisterPatch<CardModelIsValidTargetCustomTargetTypePatch>();
+            patcher.RegisterPatch<PotionModelIsValidTargetCustomTargetTypePatch>();
             patcher.RegisterPatch<NCardPlayTryPlayCardCustomTargetTypePatch>();
             patcher.RegisterPatch<NMouseCardPlayTargetSelectionCustomTargetTypePatch>();
             patcher.RegisterPatch<NControllerCardPlayStartCustomTargetTypePatch>();
             patcher.RegisterPatch<NControllerCardPlaySingleTargetingCustomTargetTypePatch>();
+            patcher.RegisterPatch<NPotionPopupCustomTargetLabelPatch>();
+            patcher.RegisterPatch<NPotionHolderUsePotionCustomSingleTargetPatch>();
+            patcher.RegisterPatch<PotionModelOnUseWrapperCustomMultiTargetVfxPatch>();
             patcher.RegisterPatch<HoverTipFactoryFromKeywordPatch>();
             patcher.RegisterPatch<CardModelKeywordsModSeedPatch>();
             patcher.RegisterPatch<CardModelTagsModSeedPatch>();

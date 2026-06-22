@@ -868,15 +868,12 @@ namespace STS2RitsuLib.Networking.StateDivergence
         private void AttachControllerFocusChromeRecursive(Node node)
         {
             if (node is BaseButton button)
-            {
-                ModSettingsFocusChrome.AttachControllerSelectionReticle(button);
                 if (!button.HasMeta(FocusRefreshAttachedMeta))
                 {
                     button.SetMeta(FocusRefreshAttachedMeta, true);
                     button.Pressed += ScheduleFocusRefresh;
                     button.FocusEntered += () => EnsureMainScrollControlVisible(button);
                 }
-            }
 
             foreach (var child in node.GetChildren())
                 AttachControllerFocusChromeRecursive(child);

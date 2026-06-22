@@ -94,16 +94,9 @@ namespace STS2RitsuLib.Settings.Patches
     {
         private const string GeneralSettingsResizeHookMeta = "ritsulib_general_settings_content_resize_hook";
 
-        private const string PrewarmScheduledMeta = "ritsulib_mod_settings_prewarm_scheduled";
-        private const double PrewarmInitialDelaySeconds = 3.0d;
-        private const int PrewarmFrameDelay = 1;
-
         private const string EntryLineNodeName = "RitsuLibModSettings";
 
         private const string EntryDividerNodeName = "RitsuLibModSettingsDivider";
-
-        private static readonly ConditionalWeakTable<NSettingsScreen, ModSettingsMirrorPrewarmSession> PrewarmSessions =
-            new();
 
         public static string PatchId => "ritsulib_mod_settings_button";
         public static string Description => "Add RitsuLib mod settings entry point to the settings screen";
@@ -136,90 +129,6 @@ namespace STS2RitsuLib.Settings.Patches
             {
                 RitsuLibFramework.Logger.Warn($"[Settings] Failed to add mod settings entry point: {ex.Message}");
             }
-
-            TrySchedulePrewarm(__instance);
-        }
-
-        /// <summary>
-        ///     Pre-warms reflection and data registration while the user is still on the vanilla settings screen.
-        ///     Godot node creation stays lazy; reusable entry nodes are collected only from real page releases.
-        ///     在用户仍处于原版设置界面时预热反射和数据注册。Godot 节点创建保持懒加载；
-        ///     可复用 entry 节点只从实际页面释放中回收。
-        /// </summary>
-        private static void TrySchedulePrewarm(NSettingsScreen screen)
-        {
-            if (screen.HasMeta(PrewarmScheduledMeta))
-                return;
-            screen.SetMeta(PrewarmScheduledMeta, true);
-            ScheduleInitialPrewarmStep(screen);
-        }
-
-        private static void PrewarmStep(NSettingsScreen screen)
-        {
-            if (!GodotObject.IsInstanceValid(screen))
-                return;
-
-            try
-            {
-                var session = PrewarmSessions.GetValue(screen, CreatePrewarmSession);
-
-                if (!session.Resume())
-                {
-                    SchedulePrewarmStep(screen, PrewarmFrameDelay);
-                    return;
-                }
-
-                RitsuLibModSettingsBootstrap.RefreshDynamicPages();
-                PrewarmSessions.Remove(screen);
-            }
-            catch (Exception ex)
-            {
-                PrewarmSessions.Remove(screen);
-                RitsuLibFramework.Logger.Warn($"[Settings] Mod settings prewarm failed: {ex.Message}");
-            }
-        }
-
-        private static void SchedulePrewarmStep(NSettingsScreen screen, int delayFrames)
-        {
-            if (!GodotObject.IsInstanceValid(screen))
-                return;
-
-            if (delayFrames <= 0)
-            {
-                Callable.From(() =>
-                {
-                    if (GodotObject.IsInstanceValid(screen))
-                        PrewarmStep(screen);
-                }).CallDeferred();
-                return;
-            }
-
-            Callable.From(() =>
-            {
-                if (GodotObject.IsInstanceValid(screen))
-                    SchedulePrewarmStep(screen, delayFrames - 1);
-            }).CallDeferred();
-        }
-
-        private static void ScheduleInitialPrewarmStep(NSettingsScreen screen)
-        {
-            if (screen.GetTree() is not { } tree)
-            {
-                SchedulePrewarmStep(screen, PrewarmFrameDelay);
-                return;
-            }
-
-            var timer = tree.CreateTimer(PrewarmInitialDelaySeconds);
-            timer.Timeout += () =>
-            {
-                if (GodotObject.IsInstanceValid(screen))
-                    SchedulePrewarmStep(screen, 0);
-            };
-        }
-
-        private static ModSettingsMirrorPrewarmSession CreatePrewarmSession(NSettingsScreen _)
-        {
-            return ModSettingsMirrorRegistrarBootstrap.GetOrCreateBackgroundPrewarmSession();
         }
 
         private static MarginContainer EnsureEntryPoint(NSettingsScreen screen)
@@ -251,7 +160,6 @@ namespace STS2RitsuLib.Settings.Patches
 
             void OpenSubmenu()
             {
-                SchedulePrewarmStep(screen, 0);
                 screen.GetAncestorOfType<NSubmenuStack>()?.PushSubmenuType(typeof(RitsuModSettingsSubmenu));
             }
         }

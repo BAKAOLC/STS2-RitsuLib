@@ -692,6 +692,11 @@ namespace STS2RitsuLib.Settings
 
         private static StyleBoxFlat CreateSettingsScrollTrackStyle()
         {
+            return RitsuShellStyleCache.GetOrBuild("settings.scrollbar.track", BuildSettingsScrollTrackStyle);
+        }
+
+        private static StyleBoxFlat BuildSettingsScrollTrackStyle()
+        {
             var bg = ResolveSettingsScrollThemeColor("components.scrollbar.track.bg",
                 "semantic.color.surface.inset.bg", RitsuShellTheme.Current.Surface.Inset.Bg);
             var border = ResolveSettingsScrollThemeColor("components.scrollbar.track.border",
@@ -722,6 +727,12 @@ namespace STS2RitsuLib.Settings
         }
 
         private static StyleBoxFlat CreateSettingsScrollGrabberStyle(string basePath)
+        {
+            return RitsuShellStyleCache.GetOrBuild("settings.scrollbar.grabber." + basePath,
+                () => BuildSettingsScrollGrabberStyle(basePath));
+        }
+
+        private static StyleBoxFlat BuildSettingsScrollGrabberStyle(string basePath)
         {
             var bg = ResolveSettingsScrollThemeColor(basePath + ".bg", "components.chromeMenu.default.bg",
                 RitsuShellTheme.Current.Component.ChromeMenu.Default.Bg);

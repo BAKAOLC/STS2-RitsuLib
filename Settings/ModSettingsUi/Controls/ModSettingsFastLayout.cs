@@ -135,8 +135,15 @@ namespace STS2RitsuLib.Settings
             internal static void RequestAncestorLayouts(Control node)
             {
                 for (var current = node; current != null; current = current.GetParent() as Control)
-                    if (current is FastVerticalStack stack)
-                        stack.RequestLayout();
+                    switch (current)
+                    {
+                        case FastVerticalStack stack:
+                            stack.RequestLayout();
+                            continue;
+                        case FixedWidthScrollContent scrollContent:
+                            scrollContent.RequestLayout();
+                            break;
+                    }
             }
 
             internal static IDisposable DeferLayoutRequests()
@@ -361,11 +368,32 @@ namespace STS2RitsuLib.Settings
                 ReplaceActionControl(null);
                 if (GetParent() is { } parent)
                     parent.RemoveChild(this);
+                ClearChildLayoutState();
+            }
+
+            internal void RefreshLayoutAfterAdded()
+            {
+                RequestLayout();
+                CallDeferred(MethodName.DeferredRefreshLayoutAfterAdded);
+            }
+
+            private void DeferredRefreshLayoutAfterAdded()
+            {
+                if (!IsInsideTree())
+                    return;
+
+                RequestLayout();
             }
 
             public override void _Notification(int what)
             {
                 base._Notification(what);
+                if (what == NotificationEnterTree)
+                {
+                    RequestLayout();
+                    return;
+                }
+
                 if (what == (int)NotificationResized)
                 {
                     LayoutChildren();
@@ -467,6 +495,7 @@ namespace STS2RitsuLib.Settings
                     : text;
                 var label = EnsureRichLabel();
                 label.SetTextAutoSize(displayText);
+                ResetSettingTitleLabelLayout(label);
                 label.Visible = true;
 
                 RequestLayout();
@@ -500,9 +529,19 @@ namespace STS2RitsuLib.Settings
 
                 _label = CreateHeaderLabel(string.Empty, RitsuShellTheme.Current.Metric.FontSize.SettingLineTitle,
                     HorizontalAlignment.Left, null, RitsuShellTheme.Current.Text.RichTitle);
+                ResetSettingTitleLabelLayout(_label);
                 _label.SizeFlagsHorizontal = SizeFlags.ExpandFill;
                 AddChild(_label);
                 return _label;
+            }
+
+            private static void ResetSettingTitleLabelLayout(MegaRichTextLabel label)
+            {
+                var minHeight = ResolveSettingTitleLineMinHeight();
+                if (label.CustomMinimumSize.Y < minHeight)
+                    label.CustomMinimumSize = new(label.CustomMinimumSize.X, minHeight);
+                label.ScrollActive = false;
+                label.ScrollToLine(0);
             }
 
             private MegaRichTextLabel EnsureRichDescriptionLabel()
@@ -601,6 +640,25 @@ namespace STS2RitsuLib.Settings
                 label.UpdateMinimumSize();
             }
 
+            private void ClearChildLayoutState()
+            {
+                ClearControlLayout(_label);
+                ClearControlLayout(_descriptionLabel);
+                ClearControlLayout(_valueControl);
+                ClearControlLayout(_actionControl);
+                Size = Vector2.Zero;
+                CustomMinimumSize = Vector2.Zero;
+            }
+
+            private static void ClearControlLayout(Control? control)
+            {
+                if (control == null || !IsInstanceValid(control))
+                    return;
+
+                control.Position = Vector2.Zero;
+                control.Size = Vector2.Zero;
+            }
+
             private Vector2 ComputeTextColumnMinSize()
             {
                 var currentTextWidth = ResolveCurrentTextColumnWidth();
@@ -696,6 +754,13 @@ namespace STS2RitsuLib.Settings
             {
                 return RitsuShellThemeLayoutResolver.ResolveInt(
                     "components.entryLine.layout.leftColumnSeparation", 5);
+            }
+
+            private static int ResolveSettingTitleLineMinHeight()
+            {
+                return RitsuShellThemeLayoutResolver.ResolveInt(
+                    "components.entryLine.layout.titleMinHeight",
+                    Mathf.CeilToInt(RitsuShellTheme.Current.Metric.FontSize.SettingLineTitle * 1.35f));
             }
 
             private static int ResolveTextColumnMaxMinimumWidth()

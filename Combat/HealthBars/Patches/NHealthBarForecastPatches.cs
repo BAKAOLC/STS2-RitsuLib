@@ -342,8 +342,6 @@ namespace STS2RitsuLib.Combat.HealthBars.Patches
                 // Larger amounts draw first (bottom); equal amounts stack deterministically by Order then
                 // registration order, later on top. No time-based reordering: the health bar only refreshes
                 // on game events, so a timer could never animate reliably and would flip at random refreshes.
-                // 较大 Amount 先绘制（底层）；等宽片段按 Order、再按注册顺序确定性叠放，靠后者在上层。
-                // 不做基于时间的重排：血条仅在游戏事件时刷新，计时器无法可靠生效，只会在随机刷新时翻转。
                 var sorted = grp
                     .OrderByDescending(s => s.Amount)
                     .ThenBy(s => s.Order)
