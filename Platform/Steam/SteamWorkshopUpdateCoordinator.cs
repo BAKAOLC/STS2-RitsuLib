@@ -63,7 +63,7 @@ namespace STS2RitsuLib.Platform.Steam
                     {
                         RitsuLibFramework.Logger.Info(
                             $"[SteamWorkshopUpdate] Starting {source} check. SteamInitialized={SteamInitializer.Initialized}.");
-                        if (ShouldShowProgressToast(deferToastToMainMenu))
+                        if (ShouldShowProgressToast(source, deferToastToMainMenu))
                         {
                             progressToast = new(source);
                             progressToast.Start();
@@ -93,6 +93,12 @@ namespace STS2RitsuLib.Platform.Steam
                             $"Triggered={result.TriggeredCount}, AlreadyQueued={result.AlreadyQueuedCount}, " +
                             $"Failed={result.FailedCount}, Error={result.ErrorMessage ?? "<none>"}.");
                         LogCheckSummary(source, result);
+                        if (ShouldShowDownloadProgressToast(source, downloadMode, result, progressToast))
+                        {
+                            progressToast = new(source);
+                            progressToast.StartDownload(result.TriggeredItems!);
+                        }
+
                         var downloadFinished = await MonitorTriggeredDownloadsAsync(
                                 result,
                                 downloadMode,
@@ -184,6 +190,12 @@ namespace STS2RitsuLib.Platform.Steam
                 return ToastRequest(body, result.ErrorMessage == null ? RitsuToastLevel.Info : RitsuToastLevel.Warning);
             }
 
+            if (source == CheckSource.Auto &&
+                result is { NeedsUpdateCount: > 0, ChangedItems: not { Count: > 0 } } &&
+                !(downloadMode == SteamWorkshopDownloadTriggerMode.HighPriorityImmediate &&
+                  result.TriggeredCount > 0))
+                return null;
+
             if (result.FailedCount > 0)
             {
                 var isAutoQueuedUntilExit =
@@ -196,8 +208,8 @@ namespace STS2RitsuLib.Platform.Steam
                                 ? "ritsulib.steamWorkshop.toast.autoPartial"
                                 : "ritsulib.steamWorkshop.toast.partial",
                             isAutoQueuedUntilExit
-                                ? "Found {0} Workshop item(s) with updates. Queued {1} for after the game exits; {2} failed. See game log for details."
-                                : "Found {0} Workshop item(s) with updates. Queued {1}; {2} failed. See game log for details.",
+                                ? "Found {0} Workshop item(s) with updates. Queued {1}; {2} failed. After exiting the game, check Steam Downloads and launch again after Steam finishes."
+                                : "Found {0} Workshop item(s) with updates. Queued {1}; {2} failed. Check Steam Downloads and restart after Steam finishes.",
                             result.NeedsUpdateCount,
                             result.TriggeredCount,
                             result.FailedCount),
@@ -227,8 +239,8 @@ namespace STS2RitsuLib.Platform.Steam
                                 ? "ritsulib.steamWorkshop.toast.autoTriggered"
                                 : "ritsulib.steamWorkshop.toast.triggered",
                             isAutoQueuedUntilExit
-                                ? "Auto update check found {0} Workshop item(s) with updates and queued Steam downloads for after the game exits."
-                                : "Queued Steam Workshop update download for {0} item(s). Restart after Steam finishes downloading.",
+                                ? "Auto update check found {0} Workshop item(s) with updates and queued them in Steam. After exiting the game, check Steam Downloads and launch again after Steam finishes."
+                                : "Queued Steam Workshop update download for {0} item(s). Check Steam Downloads and restart after Steam finishes.",
                             result.TriggeredCount),
                         result.ChangedItems),
                     RitsuToastLevel.Info);
@@ -294,8 +306,11 @@ namespace STS2RitsuLib.Platform.Steam
             return source == CheckSource.Manual;
         }
 
-        private static bool ShouldShowProgressToast(bool deferToastToMainMenu)
+        private static bool ShouldShowProgressToast(CheckSource source, bool deferToastToMainMenu)
         {
+            if (source != CheckSource.Manual)
+                return false;
+
             return !deferToastToMainMenu || UpdateCheckSessionState.IsMainMenuActive;
         }
 
@@ -321,6 +336,18 @@ namespace STS2RitsuLib.Platform.Steam
             return await RitsuSteamWorkshopUpdates
                 .MonitorDownloadsAsync(result.TriggeredItems, progressToast, cancellationToken)
                 .ConfigureAwait(false);
+        }
+
+        private static bool ShouldShowDownloadProgressToast(
+            CheckSource source,
+            SteamWorkshopDownloadTriggerMode downloadMode,
+            RitsuSteamWorkshopUpdateResult result,
+            WorkshopUpdateProgressToast? progressToast)
+        {
+            return progressToast == null &&
+                   source == CheckSource.Auto &&
+                   downloadMode == SteamWorkshopDownloadTriggerMode.HighPriorityImmediate &&
+                   result.TriggeredItems is { Count: > 0 };
         }
 
         private static void LogCheckSummary(CheckSource source, RitsuSteamWorkshopUpdateResult result)
@@ -520,6 +547,22 @@ namespace STS2RitsuLib.Platform.Steam
                 });
             }
 
+            public void StartDownload(IReadOnlyList<RitsuSteamWorkshopDownloadItem> items)
+            {
+                PostToMainLoop(() =>
+                {
+                    lock (_syncRoot)
+                    {
+                        if (_completed)
+                            return;
+
+                        var total = Math.Max(1, items.Count);
+                        _handle = RitsuToastService.ShowTracked(BuildDownloadProgressRequest(
+                            new(0, total, 0, 0, items.FirstOrDefault()?.DisplayName)));
+                    }
+                });
+            }
+
             public void Complete(
                 RitsuSteamWorkshopUpdateResult result,
                 SteamWorkshopDownloadTriggerMode downloadMode,
@@ -530,11 +573,18 @@ namespace STS2RitsuLib.Platform.Steam
                     lock (_syncRoot)
                     {
                         _completed = true;
-                        var request = BuildResultToastRequest(result, source, true, downloadMode, downloadFinished)
-                                      ?? ToastRequest(
-                                          L("ritsulib.steamWorkshop.toast.done",
-                                              "Steam Workshop update check finished."),
-                                          RitsuToastLevel.Info);
+                        var request = BuildResultToastRequest(
+                            result,
+                            source,
+                            source == CheckSource.Manual,
+                            downloadMode,
+                            downloadFinished);
+                        if (request == null)
+                        {
+                            _handle?.Close();
+                            return;
+                        }
+
                         request = request.WithProgress(null).Persistent(false);
                         if (_handle?.Update(request) == true)
                             return;
