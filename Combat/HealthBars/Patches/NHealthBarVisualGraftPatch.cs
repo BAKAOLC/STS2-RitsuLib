@@ -79,8 +79,6 @@ namespace STS2RitsuLib.Combat.HealthBars.Patches
             // Do not recompute poison/doom/hp here: that already ran in RefreshGraftOverlay before the
             // forecast pass, and re-running it would overwrite the foreground offsets and visibility the
             // forecast overlay just applied.
-            // 不要在这里重算 poison/doom/hp：RefreshGraftOverlay 已在 forecast 之前执行过，
-            // 再次执行会覆盖 forecast 覆盖层刚刚应用的前景偏移和可见性。
             PositionGraftStrip(healthBar, creature, graftHp, visualDenom, metrics, state);
         }
 
@@ -298,8 +296,6 @@ namespace STS2RitsuLib.Combat.HealthBars.Patches
             strip.Visible = false;
             // Duplicate() captures the poison node's runtime state; normalize properties the game or
             // other overlays may have mutated so the strip starts from the scene's plain appearance.
-            // Duplicate() 会捕获 poison 节点的运行时状态；归一化游戏或其他覆盖层可能改动过的属性，
-            // 让 graft 条从场景的原始外观开始。
             strip.Modulate = Colors.White;
             strip.SelfModulate = Colors.White;
             strip.Material = null;

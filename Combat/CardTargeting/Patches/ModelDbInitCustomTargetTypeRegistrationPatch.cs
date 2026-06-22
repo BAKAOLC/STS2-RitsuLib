@@ -12,7 +12,7 @@ namespace STS2RitsuLib.Combat.CardTargeting.Patches
     {
         public static string PatchId => "card_target_model_db_init_custom_target_type_registration";
 
-        public static string Description => "注册 RitsuLib 自定义 TargetType 过滤器";
+        public static string Description => "Register RitsuLib custom TargetType filters";
 
         public static bool IsCritical => false;
 

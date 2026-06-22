@@ -241,7 +241,7 @@ namespace STS2RitsuLib.Settings
         private static Label CreateDependencyPill()
         {
             var label = CreateFixedLabel(
-                L("ritsulib.contentModLoadOrder.preview.dependency", "前置"),
+                L("ritsulib.contentModLoadOrder.preview.dependency", "Dependency"),
                 86,
                 RitsuShellTheme.Current.Text.Number,
                 13);
