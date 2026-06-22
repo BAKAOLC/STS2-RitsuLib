@@ -701,7 +701,10 @@ namespace STS2RitsuLib
 
         /// <summary>
         ///     Registers a mod-scoped multi-target <see cref="TargetType" /> and returns its deterministic enum value.
+        ///     Cards and potions using the target type execute once with a null selected target; use the target
+        ///     resolution extensions to get the affected creatures.
         ///     注册一个 mod 作用域的群体目标 <see cref="TargetType" />，并返回其确定性的枚举值。
+        ///     使用该目标类型的卡牌和药水会以 null 已选目标执行一次；可用目标解析扩展取得实际影响的生物。
         /// </summary>
         public static TargetType RegisterMultiTargetType(
             string modId,
@@ -714,7 +717,10 @@ namespace STS2RitsuLib
         /// <summary>
         ///     Registers a mod-scoped player-aware multi-target <see cref="TargetType" /> and returns its deterministic
         ///     enum value.
+        ///     Cards and potions using the target type execute once with a null selected target; use the target
+        ///     resolution extensions to get the affected creatures.
         ///     注册一个感知出牌玩家的 mod 作用域群体目标 <see cref="TargetType" />，并返回其确定性的枚举值。
+        ///     使用该目标类型的卡牌和药水会以 null 已选目标执行一次；可用目标解析扩展取得实际影响的生物。
         /// </summary>
         public static TargetType RegisterMultiTargetType(
             string modId,

@@ -354,8 +354,9 @@ namespace STS2RitsuLib
             patcher.RegisterPatch<NMouseCardPlayTargetSelectionCustomTargetTypePatch>();
             patcher.RegisterPatch<NControllerCardPlayStartCustomTargetTypePatch>();
             patcher.RegisterPatch<NControllerCardPlaySingleTargetingCustomTargetTypePatch>();
-            patcher.RegisterPatch<NPotionPopupCustomSingleTargetLabelPatch>();
+            patcher.RegisterPatch<NPotionPopupCustomTargetLabelPatch>();
             patcher.RegisterPatch<NPotionHolderUsePotionCustomSingleTargetPatch>();
+            patcher.RegisterPatch<PotionModelOnUseWrapperCustomMultiTargetVfxPatch>();
             patcher.RegisterPatch<HoverTipFactoryFromKeywordPatch>();
             patcher.RegisterPatch<CardModelKeywordsModSeedPatch>();
             patcher.RegisterPatch<CardModelTagsModSeedPatch>();

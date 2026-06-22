@@ -1,8 +1,10 @@
 using System.Reflection;
+using System.Reflection.Emit;
 using Godot;
 using HarmonyLib;
 using MegaCrit.Sts2.Core.Combat;
 using MegaCrit.Sts2.Core.Entities.Creatures;
+using MegaCrit.Sts2.Core.GameActions.Multiplayer;
 using MegaCrit.Sts2.Core.Models;
 using MegaCrit.Sts2.Core.Nodes.Combat;
 using MegaCrit.Sts2.Core.Nodes.CommonUi;
@@ -11,14 +13,15 @@ using MegaCrit.Sts2.Core.Nodes.Potions;
 using MegaCrit.Sts2.Core.Nodes.Rooms;
 using MegaCrit.Sts2.Core.Runs;
 using STS2RitsuLib.Patching.Models;
+using STS2RitsuLib.Utils.HarmonyIl;
 
 namespace STS2RitsuLib.Combat.CardTargeting.Patches
 {
     /// <summary>
-    ///     Shows "throw" for potions that use custom single-target types.
-    ///     对使用自定义单体目标类型的药水显示“投掷”。
+    ///     Shows "throw" for potions that use custom creature-target types.
+    ///     对使用自定义生物目标类型的药水显示“投掷”。
     /// </summary>
-    internal sealed class NPotionPopupCustomSingleTargetLabelPatch : IPatchMethod
+    internal sealed class NPotionPopupCustomTargetLabelPatch : IPatchMethod
     {
         private static readonly FieldInfo HolderField = AccessTools.DeclaredField(typeof(NPotionPopup), "_holder");
 
@@ -27,7 +30,7 @@ namespace STS2RitsuLib.Combat.CardTargeting.Patches
 
         public static string PatchId => "card_target_custom_potion_popup_label";
 
-        public static string Description => "Show the throw button label for custom single-target potions";
+        public static string Description => "Show the throw button label for custom creature-target potions";
 
         public static bool IsCritical => false;
 
@@ -43,7 +46,9 @@ namespace STS2RitsuLib.Combat.CardTargeting.Patches
                 return;
 
             var targetType = holder.Potion?.Model.TargetType;
-            if (targetType.HasValue && CustomTargetTypeResolver.IsCustomSingleTargetType(targetType.Value))
+            if (targetType.HasValue &&
+                (CustomTargetTypeResolver.IsCustomSingleTargetType(targetType.Value) ||
+                 CustomTargetTypeResolver.IsCustomMultiTargetType(targetType.Value)))
                 useButton.SetLocKey("POTION_POPUP.throw");
         }
     }
@@ -191,6 +196,94 @@ namespace STS2RitsuLib.Combat.CardTargeting.Patches
 
             __result = allowed;
             return false;
+        }
+    }
+
+    /// <summary>
+    ///     Uses custom multi-target predicates to place potion throw VFX over the affected creature group.
+    ///     使用自定义群体目标谓词，将药水投掷特效定位到实际受影响的生物集合中心。
+    /// </summary>
+    internal sealed class PotionModelOnUseWrapperCustomMultiTargetVfxPatch : IPatchMethod
+    {
+        private static readonly MethodInfo? GetCreaturesOnSideMethod =
+            AccessTools.DeclaredMethod(typeof(ICombatState), nameof(ICombatState.GetCreaturesOnSide),
+                [typeof(CombatSide)]);
+
+        private static readonly MethodInfo? GetPotionVfxTargetsMethod =
+            AccessTools.DeclaredMethod(typeof(PotionModelOnUseWrapperCustomMultiTargetVfxPatch),
+                nameof(GetPotionVfxTargets));
+
+        public static string PatchId => "card_target_custom_potion_multi_target_vfx";
+
+        public static string Description => "Use custom multi-target predicates for potion throw VFX";
+
+        public static bool IsCritical => false;
+
+        public static ModPatchTarget[] GetTargets()
+        {
+            return
+            [
+                PatchTarget.AsyncMethod<PotionModel>(
+                    nameof(PotionModel.OnUseWrapper),
+                    typeof(PlayerChoiceContext),
+                    typeof(Creature)),
+            ];
+        }
+
+        public static IEnumerable<CodeInstruction> Transpiler(
+            IEnumerable<CodeInstruction> instructions,
+            MethodBase __originalMethod)
+        {
+            const string operation = "[CustomTargetType] Redirect potion multi-target VFX target list";
+            var rewriter = HarmonyIlRewriter.From(instructions);
+
+            if (GetCreaturesOnSideMethod == null || GetPotionVfxTargetsMethod == null)
+            {
+                RitsuLibFramework.Logger.Warn($"{operation}: Could not resolve target methods.");
+                return rewriter.Instructions();
+            }
+
+            var stateMachineType = __originalMethod.DeclaringType;
+            if (stateMachineType == null || !TryResolvePotionField(stateMachineType, out var potionField))
+            {
+                RitsuLibFramework.Logger.Warn(
+                    $"{operation}: Could not resolve PotionModel field on {stateMachineType?.FullName ?? "<null>"}.");
+                return rewriter.Instructions();
+            }
+
+            var report = rewriter.ReplaceEach(
+                operation,
+                static (code, index) => HarmonyIl.IsCallTo(code[index], GetCreaturesOnSideMethod),
+                (_, _) =>
+                [
+                    new(OpCodes.Ldarg_0),
+                    new(OpCodes.Ldfld, potionField),
+                    new(OpCodes.Call, GetPotionVfxTargetsMethod),
+                ],
+                static code => code.Any(instruction => HarmonyIl.IsCallTo(instruction, GetPotionVfxTargetsMethod)));
+            if (!report.Succeeded || report.Applied != 2)
+                RitsuLibFramework.Logger.Warn(report.Describe());
+
+            return rewriter.InstructionsChecked(operation);
+        }
+
+        private static IReadOnlyList<Creature> GetPotionVfxTargets(
+            ICombatState combatState,
+            CombatSide side,
+            PotionModel potion)
+        {
+            if (CustomTargetTypeResolver.IsCustomMultiTargetType(potion.TargetType))
+                return potion.GetTargets();
+
+            return combatState.GetCreaturesOnSide(side);
+        }
+
+        private static bool TryResolvePotionField(Type stateMachineType, out FieldInfo potionField)
+        {
+            const BindingFlags flags = BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic;
+            potionField = stateMachineType.GetFields(flags)
+                .FirstOrDefault(static field => field.FieldType == typeof(PotionModel))!;
+            return potionField != null;
         }
     }
 }
