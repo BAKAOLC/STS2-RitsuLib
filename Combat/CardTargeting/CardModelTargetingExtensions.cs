@@ -65,8 +65,7 @@ namespace STS2RitsuLib.Combat.CardTargeting
                             return [];
                         return CustomTargetTypeResolver.TryIsAllowedSingleTarget(
                                    card.TargetType,
-                                   selectedTarget,
-                                   card.Owner,
+                                   CustomTargetContext.ForCard(selectedTarget, card),
                                    out var allowed) &&
                                allowed
                             ? [selectedTarget]
