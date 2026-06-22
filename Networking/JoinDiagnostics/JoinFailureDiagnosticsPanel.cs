@@ -1065,7 +1065,8 @@ namespace STS2RitsuLib.Networking.JoinDiagnostics
 
         private static string FormatContentModLine(ContentModInventoryEntry mod)
         {
-            return FormatContentModName(mod) + " version=" + FormatVersion(mod.Version);
+            var source = string.IsNullOrWhiteSpace(mod.Source) ? "" : " source=" + mod.Source;
+            return FormatContentModName(mod) + " version=" + FormatVersion(mod.Version) + source;
         }
 
         private static string FormatContentModName(ContentModInventoryEntry mod)
