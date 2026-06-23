@@ -221,12 +221,14 @@ namespace STS2RitsuLib.Platform.Steam
                 return ToastRequest(body, result.ErrorMessage == null ? RitsuToastLevel.Info : RitsuToastLevel.Warning);
             }
 
-            if (source == CheckSource.Subscription)
-                return BuildSubscriptionDownloadToast(result, downloadFinished);
-
-            if (source == CheckSource.Auto &&
-                result is { NeedsUpdateCount: > 0, ChangedItems: not { Count: > 0 }, TriggeredCount: <= 0 })
-                return null;
+            switch (source)
+            {
+                case CheckSource.Subscription:
+                    return BuildSubscriptionDownloadToast(result, downloadFinished);
+                case CheckSource.Auto when
+                    result is { NeedsUpdateCount: > 0, ChangedItems: not { Count: > 0 }, TriggeredCount: <= 0 }:
+                    return null;
+            }
 
             if (result.FailedCount > 0)
                 return ToastRequest(

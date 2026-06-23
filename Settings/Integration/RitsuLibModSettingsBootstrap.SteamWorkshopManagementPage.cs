@@ -537,11 +537,9 @@ namespace STS2RitsuLib.Settings
             public override void _Notification(int what)
             {
                 base._Notification(what);
-                if (what == (int)NotificationResized)
-                {
-                    UpdateMinimumHeight();
-                    SyncButtons();
-                }
+                if (what != (int)NotificationResized) return;
+                UpdateMinimumHeight();
+                SyncButtons();
             }
 
             public override void _Process(double delta)

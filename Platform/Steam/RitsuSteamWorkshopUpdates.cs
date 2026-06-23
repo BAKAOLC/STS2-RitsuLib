@@ -88,7 +88,7 @@ namespace STS2RitsuLib.Platform.Steam
             CancellationToken cancellationToken = default)
         {
             var bindings = LazyBindings.Value;
-            return bindings == null || !bindings.SupportsSearch || string.IsNullOrWhiteSpace(query)
+            return bindings is not { SupportsSearch: true } || string.IsNullOrWhiteSpace(query)
                 ? Task.FromResult<IReadOnlyList<RitsuSteamWorkshopItem>>([])
                 : bindings.SearchItemsAsync(query, limit, cancellationToken);
         }
@@ -745,6 +745,7 @@ namespace STS2RitsuLib.Platform.Steam
                 return false;
             }
 
+            // ReSharper disable once MemberHidesStaticFromOuterClass
             internal async Task<IReadOnlyList<RitsuSteamWorkshopItem>> ListSubscribedItemsAsync(
                 CancellationToken cancellationToken)
             {
@@ -759,6 +760,7 @@ namespace STS2RitsuLib.Platform.Steam
                 return await BuildWorkshopItemsAsync(snapshots, cancellationToken).ConfigureAwait(false);
             }
 
+            // ReSharper disable once MemberHidesStaticFromOuterClass
             internal async Task<IReadOnlyList<RitsuSteamWorkshopItem>> ListSubscribedItemsFromCacheAsync(
                 CancellationToken cancellationToken)
             {
@@ -767,6 +769,7 @@ namespace STS2RitsuLib.Platform.Steam
                 return BuildWorkshopItemsFromCache(ReadSubscribedItemSnapshots());
             }
 
+            // ReSharper disable once MemberHidesStaticFromOuterClass
             internal async Task<IReadOnlyList<RitsuSteamWorkshopItem>> QueryItemsAsync(
                 IReadOnlyCollection<ulong> itemIds,
                 CancellationToken cancellationToken)
@@ -782,6 +785,7 @@ namespace STS2RitsuLib.Platform.Steam
                 return await BuildWorkshopItemsAsync(snapshots, cancellationToken).ConfigureAwait(false);
             }
 
+            // ReSharper disable once MemberHidesStaticFromOuterClass
             internal async Task<IReadOnlyList<RitsuSteamWorkshopItem>> SearchItemsAsync(
                 string query,
                 uint limit,
@@ -843,11 +847,13 @@ namespace STS2RitsuLib.Platform.Steam
                 }
             }
 
+            // ReSharper disable once MemberHidesStaticFromOuterClass
             internal RitsuSteamWorkshopActionResult RequestSubscribe(ulong itemId)
             {
                 return InvokeItemAction(itemId, subscribeItem, "subscribe");
             }
 
+            // ReSharper disable once MemberHidesStaticFromOuterClass
             internal RitsuSteamWorkshopActionResult RequestUnsubscribe(ulong itemId)
             {
                 return InvokeItemAction(itemId, unsubscribeItem, "unsubscribe");
@@ -1306,6 +1312,7 @@ namespace STS2RitsuLib.Platform.Steam
                     return remoteDetails.Title;
                 if (!string.IsNullOrWhiteSpace(manifest.Name))
                     return manifest.Name;
+                // ReSharper disable once ConvertIfStatementToReturnStatement
                 if (!string.IsNullOrWhiteSpace(manifest.ModId))
                     return manifest.ModId;
                 return $"Workshop item {item.Id}";

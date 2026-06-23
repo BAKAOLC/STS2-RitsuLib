@@ -552,29 +552,27 @@ namespace STS2RitsuLib.Networking.JoinDiagnostics
             var result = new List<JoinFailureSuggestedSolution>();
             AddMissingWorkshopModSolutions(result, host, local, hostPayload);
 
-            if (IsOrderOnlyModelDbMismatch(host, local, issues, hostPayload))
-            {
-                result.Add(new(
-                    T("solution.sortMods.title", "Sort mod load order"),
-                    T("solution.sortMods.description",
-                        "Open content mod load order sorting. This rewrites the saved relevant mod order; restart the game before joining again."),
-                    T("solution.sortMods.button", "Open mod order sort"),
-                    JoinFailureSuggestedSolutionAction.OpenSettings,
-                    Const.ModId,
-                    "content-mod-load-order",
-                    "content_mod_load_order_actions",
-                    "content_mod_load_order_sort"));
-                result.Add(new(
-                    T("solution.sortModelDb.title", "Sort ModelDb for this session"),
-                    T("solution.sortModelDb.description",
-                        "Open manual ModelDb deterministic sorting. This only rebuilds the current session's ModelDb network cache and does not persist after restart."),
-                    T("solution.sortModelDb.button", "Open ModelDb sort"),
-                    JoinFailureSuggestedSolutionAction.OpenSettings,
-                    Const.ModId,
-                    "core",
-                    "core",
-                    "modeldb_deterministic_sort_now"));
-            }
+            if (!IsOrderOnlyModelDbMismatch(host, local, issues, hostPayload)) return result;
+            result.Add(new(
+                T("solution.sortMods.title", "Sort mod load order"),
+                T("solution.sortMods.description",
+                    "Open content mod load order sorting. This rewrites the saved relevant mod order; restart the game before joining again."),
+                T("solution.sortMods.button", "Open mod order sort"),
+                JoinFailureSuggestedSolutionAction.OpenSettings,
+                Const.ModId,
+                "content-mod-load-order",
+                "content_mod_load_order_actions",
+                "content_mod_load_order_sort"));
+            result.Add(new(
+                T("solution.sortModelDb.title", "Sort ModelDb for this session"),
+                T("solution.sortModelDb.description",
+                    "Open manual ModelDb deterministic sorting. This only rebuilds the current session's ModelDb network cache and does not persist after restart."),
+                T("solution.sortModelDb.button", "Open ModelDb sort"),
+                JoinFailureSuggestedSolutionAction.OpenSettings,
+                Const.ModId,
+                "core",
+                "core",
+                "modeldb_deterministic_sort_now"));
 
             return result;
         }

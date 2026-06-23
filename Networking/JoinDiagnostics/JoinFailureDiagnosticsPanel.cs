@@ -402,8 +402,11 @@ namespace STS2RitsuLib.Networking.JoinDiagnostics
             text.AddChild(CreateLabel(solution.Title, 16, RitsuShellTheme.Current.Text.RichTitle, true));
             text.AddChild(CreateLabel(solution.Description, 14, RitsuShellTheme.Current.Text.RichBody));
 
-            if (solution.Action == JoinFailureSuggestedSolutionAction.SubscribeWorkshopItem &&
-                solution.WorkshopItemId is { } workshopItemId)
+            if (solution is
+                {
+                    Action: JoinFailureSuggestedSolutionAction.SubscribeWorkshopItem,
+                    WorkshopItemId: { } workshopItemId,
+                })
                 row.AddChild(CreateSuggestedSolutionButton(
                     T("solution.subscribeWorkshopMod.openWorkshopButton", "Open Workshop"),
                     ModSettingsButtonTone.Normal,
