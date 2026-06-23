@@ -154,6 +154,9 @@ namespace STS2RitsuLib.Networking.JoinDiagnostics
                         FormatModelDbHashMode(local.ModelDbHashUsesDeterministicCache)),
                     new(T("row.modelDbHash", "ModelDb hash"), host.ModelDbHash.ToString(),
                         local.ModelDbHash.ToString()),
+                    new(T("row.modelDbHashModeDetail", "ModelDb hash mode detail"),
+                        FormatModelDbHashModeDetail(host),
+                        FormatModelDbHashModeDetail(local)),
                 ]));
         }
 
@@ -357,6 +360,9 @@ namespace STS2RitsuLib.Networking.JoinDiagnostics
                     new(T("row.modelDbHashMode", "ModelDb hash mode"),
                         FormatModelDbHashMode(host.ModelDbHashUsesDeterministicCache),
                         FormatModelDbHashMode(local.ModelDbHashUsesDeterministicCache)),
+                    new(T("row.modelDbHashModeDetail", "ModelDb hash mode detail"),
+                        FormatModelDbHashModeDetail(host),
+                        FormatModelDbHashModeDetail(local)),
                 ]));
         }
 
@@ -387,6 +393,13 @@ namespace STS2RitsuLib.Networking.JoinDiagnostics
             return deterministic
                 ? T("value.modelDbHashMode.deterministic", "Stable sorting")
                 : T("value.modelDbHashMode.notReported", "Stable sorting not reported");
+        }
+
+        private static string FormatModelDbHashModeDetail(JoinPeerSnapshot snapshot)
+        {
+            return string.IsNullOrWhiteSpace(snapshot.ModelDbHashModeDetail)
+                ? FormatModelDbHashMode(snapshot.ModelDbHashUsesDeterministicCache)
+                : snapshot.ModelDbHashModeDetail.Trim();
         }
 
         private static List<JoinFailureDetailRow> ExtractVersionRows(

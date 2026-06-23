@@ -267,12 +267,14 @@ namespace STS2RitsuLib.Networking.JoinDiagnostics
                 _report.Host!.GameVersion,
                 _report.Host.ModelDbHash,
                 _report.Host.ModelDbHashUsesDeterministicCache,
+                _report.Host.ModelDbHashModeDetail,
                 _report.Host.GameplayMods.Count));
             row.AddChild(CreateSnapshotCard(
                 T("column.local", "Local"),
                 _report.Local.GameVersion,
                 _report.Local.ModelDbHash,
                 _report.Local.ModelDbHashUsesDeterministicCache,
+                _report.Local.ModelDbHashModeDetail,
                 _report.Local.GameplayMods.Count));
             return row;
         }
@@ -282,6 +284,7 @@ namespace STS2RitsuLib.Networking.JoinDiagnostics
             string version,
             uint modelDbHash,
             bool modelDbHashUsesDeterministicCache,
+            string? modelDbHashModeDetail,
             int modCount)
         {
             var panel = new PanelContainer
@@ -306,6 +309,11 @@ namespace STS2RitsuLib.Networking.JoinDiagnostics
                     FormatModelDbHashMode(modelDbHashUsesDeterministicCache)),
                 14,
                 RitsuShellTheme.Current.Text.RichBody));
+            if (!string.IsNullOrWhiteSpace(modelDbHashModeDetail))
+                box.AddChild(CreateLabel(
+                    modelDbHashModeDetail.Trim(),
+                    13,
+                    RitsuShellTheme.Current.Text.RichMuted));
             box.AddChild(CreateLabel(
                 F("snapshot.mods", "Gameplay mods: {0}", modCount),
                 14,
@@ -847,6 +855,9 @@ namespace STS2RitsuLib.Networking.JoinDiagnostics
             builder.AppendLine("  " + F("snapshot.modelDb", "ModelDb: {0}", snapshot.ModelDbHash));
             builder.AppendLine("  " + F("snapshot.modelDbMode", "ModelDb mode: {0}",
                 FormatModelDbHashMode(snapshot.ModelDbHashUsesDeterministicCache)));
+            if (!string.IsNullOrWhiteSpace(snapshot.ModelDbHashModeDetail))
+                builder.AppendLine("  " + F("snapshot.modelDbModeDetail", "ModelDb mode detail: {0}",
+                    snapshot.ModelDbHashModeDetail.Trim()));
             builder.AppendLine("  " + F("snapshot.mods", "Gameplay mods: {0}", snapshot.GameplayMods.Count));
         }
 

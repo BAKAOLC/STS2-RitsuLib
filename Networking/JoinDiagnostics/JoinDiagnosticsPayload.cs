@@ -17,7 +17,8 @@ namespace STS2RitsuLib.Networking.JoinDiagnostics
         string SessionState,
         IReadOnlyList<JoinDiagnosticsModEntry> GameplayMods,
         string? ContentMods,
-        bool ModelDbHashUsesDeterministicCache);
+        bool ModelDbHashUsesDeterministicCache,
+        string? ModelDbHashModeDetail);
 
     internal sealed record JoinDiagnosticsModEntry(
         int Index,
@@ -35,12 +36,13 @@ namespace STS2RitsuLib.Networking.JoinDiagnostics
         IReadOnlyList<JoinDiagnosticsModEntry> GameplayMods,
         IReadOnlyList<ContentModInventoryEntry> ContentMods,
         bool HasProcessedContentMods,
-        bool ModelDbHashUsesDeterministicCache);
+        bool ModelDbHashUsesDeterministicCache,
+        string? ModelDbHashModeDetail);
 
     internal static class JoinDiagnosticsPayloadCodec
     {
         private const string ExtensionId = "ritsulib.joinDiagnostics";
-        private const int PayloadVersion = 2;
+        private const int PayloadVersion = 3;
         private static int _registered;
 
         private static readonly JsonSerializerOptions JsonOptions = new()
@@ -78,6 +80,7 @@ namespace STS2RitsuLib.Networking.JoinDiagnostics
         {
             try
             {
+                var cacheStatus = ModelIdSerializationCacheDynamicContentPatch.GetDeterministicCacheStatus();
                 var payload = new JoinDiagnosticsPayload(
                     message.version,
                     message.idDatabaseHash,
@@ -85,7 +88,8 @@ namespace STS2RitsuLib.Networking.JoinDiagnostics
                     message.sessionState.ToString(),
                     CreateLocalModEntries(),
                     ContentModInventoryPayloadCodec.Encode(CreateLocalContentModEntries()),
-                    ModelIdSerializationCacheDynamicContentPatch.UsesDeterministicCache);
+                    cacheStatus.IsActive,
+                    cacheStatus.Detail);
                 return JsonSerializer.Serialize(payload, JsonOptions);
             }
             catch (Exception ex)
@@ -106,7 +110,7 @@ namespace STS2RitsuLib.Networking.JoinDiagnostics
                     return;
                 }
 
-                if (version != PayloadVersion)
+                if (version != 2 && version != PayloadVersion)
                 {
                     RitsuLibFramework.Logger.Warn($"[JoinDiagnostics] Unsupported payload version: {version}");
                     return;
@@ -123,6 +127,7 @@ namespace STS2RitsuLib.Networking.JoinDiagnostics
 
         public static JoinPeerSnapshot CreateLocalSnapshot()
         {
+            var cacheStatus = ModelIdSerializationCacheDynamicContentPatch.GetDeterministicCacheStatus();
             return new(
                 ReleaseInfoManager.Instance.ReleaseInfo?.Version ?? GitHelper.ShortCommitId ?? "UNKNOWN",
                 ModelIdSerializationCache.Hash,
@@ -131,7 +136,8 @@ namespace STS2RitsuLib.Networking.JoinDiagnostics
                 CreateLocalModEntries(),
                 CreateLocalContentModEntries(),
                 true,
-                ModelIdSerializationCacheDynamicContentPatch.UsesDeterministicCache);
+                cacheStatus.IsActive,
+                cacheStatus.Detail);
         }
 
         public static JoinPeerSnapshot CreateHostSnapshot(
@@ -149,7 +155,8 @@ namespace STS2RitsuLib.Networking.JoinDiagnostics
                     : CreateFallbackModEntries(GetFallbackGameplayModKeys(message)),
                 contentMods,
                 hasProcessedContentMods,
-                payload?.ModelDbHashUsesDeterministicCache ?? false);
+                payload?.ModelDbHashUsesDeterministicCache ?? false,
+                payload?.ModelDbHashModeDetail);
         }
 
         private static IReadOnlyList<JoinDiagnosticsModEntry> CreateLocalModEntries()
@@ -276,7 +283,8 @@ namespace STS2RitsuLib.Networking.JoinDiagnostics
                 payload.SessionState,
                 payload.GameplayMods,
                 payload.ContentMods == null ? null : ContentModInventoryPayloadCodec.Encode(payload.ContentMods),
-                false);
+                false,
+                null);
         }
 
         private sealed record JoinDiagnosticsPayloadV1(
