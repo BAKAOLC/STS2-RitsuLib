@@ -75,6 +75,12 @@ namespace STS2RitsuLib.Settings
                         T("ritsulib.category.developerTools.description",
                             "Console fixes, diagnostics, self-checks, and export tools."))
                     .AddSubpage(
+                        "category_telemetry_open",
+                        T("ritsulib.telemetry.page.title", "Telemetry"),
+                        "telemetry",
+                        T("button.open", "Open"),
+                        T("ritsulib.telemetry.page.description", "Manage data sharing permissions."))
+                    .AddSubpage(
                         "category_runtime_hotkeys_open",
                         T("ritsulib.page.runtimeHotkeys.title", "Registered hotkeys"),
                         "runtime-hotkeys",
