@@ -23,12 +23,29 @@ namespace STS2RitsuLib.Models.Capabilities
         public int Count => _capabilities.Count;
 
         /// <summary>
-        ///     Adds <paramref name="capability" /> to the end of the list.
-        ///     将 <paramref name="capability" /> 添加到列表末尾。
+        ///     Adds an already-created capability instance to the end of the list.
+        ///     添加一个已经创建好的能力实例到列表末尾。
         /// </summary>
+        /// <remarks>
+        ///     Use this overload for plain, non-model-backed <see cref="IModelCapability" /> implementations or
+        ///     for instances that already came from the registry. Do not call constructors for types inheriting
+        ///     <see cref="ModelCapability" /> here; register the type with <c>RegisterModelCapability</c> and add
+        ///     it with <see cref="Add{TCapability}()" /> or <see cref="Add(Type)" /> so creation goes through
+        ///     <c>ModelDb</c>.
+        ///     此重载用于普通的、非模型化 <see cref="IModelCapability" /> 实现，或已由 registry 创建的实例。
+        ///     不要在这里直接构造继承 <see cref="ModelCapability" /> 的类型；应先用
+        ///     <c>RegisterModelCapability</c> 注册类型，再通过 <see cref="Add{TCapability}()" /> 或
+        ///     <see cref="Add(Type)" /> 添加，让创建流程经过 <c>ModelDb</c>。
+        /// </remarks>
         public IModelCapability Add(IModelCapability capability)
         {
             ArgumentNullException.ThrowIfNull(capability);
+            if (capability is ModelCapability &&
+                ModelCapabilityRegistry.GetCapabilityId(capability.GetType()) == null)
+                throw new InvalidOperationException(
+                    $"Model-backed capability type is not registered: {capability.GetType().FullName}. " +
+                    "Register it with RegisterModelCapability and add it by type instead of passing a constructed instance.");
+
             _capabilities.Add(capability);
             return capability;
         }
@@ -37,6 +54,12 @@ namespace STS2RitsuLib.Models.Capabilities
         ///     Creates a capability and adds it to the end of the list.
         ///     创建能力并添加到列表末尾。
         /// </summary>
+        /// <remarks>
+        ///     This is the preferred default-capability path for registered <see cref="ModelCapability" /> types.
+        ///     Registered model-backed capabilities are created through <c>ModelDb</c>, not by direct constructors.
+        ///     这是注册过的 <see cref="ModelCapability" /> 类型在默认能力中的首选入口。
+        ///     已注册的模型化能力会通过 <c>ModelDb</c> 创建，而不是直接调用构造函数。
+        /// </remarks>
         public TCapability Add<TCapability>() where TCapability : class, IModelCapability
         {
             var capability = CreateCapability<TCapability>();
@@ -48,6 +71,12 @@ namespace STS2RitsuLib.Models.Capabilities
         ///     Creates a capability of <paramref name="capabilityType" /> and adds it to the end of the list.
         ///     创建 <paramref name="capabilityType" /> 类型能力并添加到列表末尾。
         /// </summary>
+        /// <remarks>
+        ///     Use this overload when the capability type is only known at runtime. Registered
+        ///     <see cref="ModelCapability" /> types are created through <c>ModelDb</c>.
+        ///     当能力类型只在运行时已知时使用此重载。已注册的 <see cref="ModelCapability" /> 类型会通过
+        ///     <c>ModelDb</c> 创建。
+        /// </remarks>
         public IModelCapability Add(Type capabilityType)
         {
             var capability = CreateCapability(capabilityType);
@@ -96,7 +125,8 @@ namespace STS2RitsuLib.Models.Capabilities
 
             if (typeof(ModelCapability).IsAssignableFrom(typeof(TCapability)))
                 throw new InvalidOperationException(
-                    $"Model capability type is not registered: {typeof(TCapability).FullName}");
+                    $"Model capability type is not registered: {typeof(TCapability).FullName}. " +
+                    "Register it with RegisterModelCapability before adding it to a default capability list.");
 
             var capability = Activator.CreateInstance<TCapability>();
             return capability ?? throw new InvalidOperationException(
@@ -120,7 +150,8 @@ namespace STS2RitsuLib.Models.Capabilities
 
             if (typeof(ModelCapability).IsAssignableFrom(capabilityType))
                 throw new InvalidOperationException(
-                    $"Model capability type is not registered: {capabilityType.FullName}");
+                    $"Model capability type is not registered: {capabilityType.FullName}. " +
+                    "Register it with RegisterModelCapability before adding it to a default capability list.");
 
             var capability = Activator.CreateInstance(capabilityType) as IModelCapability;
             return capability ?? throw new InvalidOperationException(

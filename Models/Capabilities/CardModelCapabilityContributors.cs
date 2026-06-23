@@ -242,9 +242,9 @@ namespace STS2RitsuLib.Models.Capabilities
     public interface ICardStarCostContributor
     {
         /// <summary>
-        ///     Modifies the owning card's current local star cost. Negative costs represent no visible star cost
-        ///     and are left unchanged by the host.
-        ///     修改所属卡牌当前本地星星费用。负数费用表示没有可见星星费用，host 会保持不变。
+        ///     Modifies the owning card's current local star cost. Return a negative value to keep the
+        ///     star cost hidden.
+        ///     修改所属卡牌当前本地星星费用。返回负数会保持星星费用隐藏。
         /// </summary>
         int ModifyStarCost(CardModel card, int currentCost)
         {
@@ -498,7 +498,6 @@ namespace STS2RitsuLib.Models.Capabilities
         internal static int ApplyEnergyCost(CardModel card, CostModifiers modifiers, int current)
         {
             if (!modifiers.HasFlag(CostModifiers.Local) ||
-                card.IsCanonical ||
                 card.EnergyCost.CostsX ||
                 current < 0)
                 return current;
@@ -513,9 +512,7 @@ namespace STS2RitsuLib.Models.Capabilities
 
         internal static int ApplyStarCost(CardModel card, int current)
         {
-            if (card.IsCanonical ||
-                card.HasStarCostX ||
-                current < 0)
+            if (card.HasStarCostX)
                 return current;
 
             var result = current;
@@ -523,7 +520,7 @@ namespace STS2RitsuLib.Models.Capabilities
                 TryRun(capability, card, StarCostSurface,
                     () => result = capability.ModifyStarCost(card, result));
 
-            return Math.Max(0, result);
+            return result < 0 ? result : Math.Max(0, result);
         }
 
         internal static bool ApplyCanPlay(CardModel card, bool current)
