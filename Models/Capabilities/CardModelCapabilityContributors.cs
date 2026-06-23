@@ -217,6 +217,42 @@ namespace STS2RitsuLib.Models.Capabilities
     }
 
     /// <summary>
+    ///     Optional card capability that contributes local energy-cost modifications.
+    ///     可选卡牌能力：贡献卡牌本地能量费用修正。
+    /// </summary>
+    public interface ICardEnergyCostContributor
+    {
+        /// <summary>
+        ///     Modifies the owning card's current local energy cost. This runs when
+        ///     <see cref="CostModifiers.Local" /> is requested, including normal
+        ///     <see cref="CostModifiers.All" /> card display and playability checks.
+        ///     修改所属卡牌当前本地能量费用。当请求 <see cref="CostModifiers.Local" /> 时运行，
+        ///     包括常规 <see cref="CostModifiers.All" /> 卡牌显示与可打出检查。
+        /// </summary>
+        int ModifyEnergyCost(CardModel card, int currentCost, CostModifiers modifiers)
+        {
+            return currentCost;
+        }
+    }
+
+    /// <summary>
+    ///     Optional card capability that contributes local star-cost modifications.
+    ///     可选卡牌能力：贡献卡牌本地星星费用修正。
+    /// </summary>
+    public interface ICardStarCostContributor
+    {
+        /// <summary>
+        ///     Modifies the owning card's current local star cost. Negative costs represent no visible star cost
+        ///     and are left unchanged by the host.
+        ///     修改所属卡牌当前本地星星费用。负数费用表示没有可见星星费用，host 会保持不变。
+        /// </summary>
+        int ModifyStarCost(CardModel card, int currentCost)
+        {
+            return currentCost;
+        }
+    }
+
+    /// <summary>
     ///     Optional card capability that contributes play-state decisions.
     ///     可选卡牌能力：贡献出牌状态决策。
     /// </summary>
@@ -302,6 +338,8 @@ namespace STS2RitsuLib.Models.Capabilities
         private const string TransformCarryOverSurface = "card transform/carry-over";
         private const string DynamicVarPreviewSurface = "card dynamic-var/preview";
         private const string DescriptionSurface = "card description/fragments";
+        private const string EnergyCostSurface = "card energy-cost/local";
+        private const string StarCostSurface = "card star-cost/local";
         private const string UpgradeLifecycleSurface = "card lifecycle/upgraded";
         private const string FinalizeUpgradeLifecycleSurface = "card lifecycle/finalize-upgrade";
         private const string DowngradeLifecycleSurface = "card lifecycle/downgraded";
@@ -445,6 +483,47 @@ namespace STS2RitsuLib.Models.Capabilities
             }
 
             return extraTags is not { Count: > 0 } ? current : MergeTags(current, extraTags);
+        }
+
+        internal static bool HasEnergyCostContributors(CardModel card)
+        {
+            return GetCapabilities<ICardEnergyCostContributor>(card).Any();
+        }
+
+        internal static bool HasStarCostContributors(CardModel card)
+        {
+            return GetCapabilities<ICardStarCostContributor>(card).Any();
+        }
+
+        internal static int ApplyEnergyCost(CardModel card, CostModifiers modifiers, int current)
+        {
+            if (!modifiers.HasFlag(CostModifiers.Local) ||
+                card.IsCanonical ||
+                card.EnergyCost.CostsX ||
+                current < 0)
+                return current;
+
+            var result = current;
+            foreach (var capability in GetCapabilities<ICardEnergyCostContributor>(card))
+                TryRun(capability, card, EnergyCostSurface,
+                    () => result = capability.ModifyEnergyCost(card, result, modifiers));
+
+            return Math.Max(0, result);
+        }
+
+        internal static int ApplyStarCost(CardModel card, int current)
+        {
+            if (card.IsCanonical ||
+                card.HasStarCostX ||
+                current < 0)
+                return current;
+
+            var result = current;
+            foreach (var capability in GetCapabilities<ICardStarCostContributor>(card))
+                TryRun(capability, card, StarCostSurface,
+                    () => result = capability.ModifyStarCost(card, result));
+
+            return Math.Max(0, result);
         }
 
         internal static bool ApplyCanPlay(CardModel card, bool current)

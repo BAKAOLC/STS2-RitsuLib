@@ -1,9 +1,12 @@
 using System.Reflection;
 using System.Reflection.Emit;
 using HarmonyLib;
+using MegaCrit.Sts2.Core.Combat;
 using MegaCrit.Sts2.Core.Commands;
 using MegaCrit.Sts2.Core.Entities.Cards;
 using MegaCrit.Sts2.Core.Entities.Creatures;
+using MegaCrit.Sts2.Core.Helpers.Models;
+using MegaCrit.Sts2.Core.Hooks;
 using MegaCrit.Sts2.Core.HoverTips;
 using MegaCrit.Sts2.Core.Localization.DynamicVars;
 using MegaCrit.Sts2.Core.Models;
@@ -184,6 +187,146 @@ namespace STS2RitsuLib.Models.Capabilities.Patches
             public static void Postfix(CardModel __instance, ref IEnumerable<CardTag> __result)
             {
                 __result = CardModelCapabilityHost.ApplyTags(__instance, __result);
+            }
+        }
+
+        internal sealed class EnergyCostPatch : IPatchMethod
+        {
+            public static string PatchId => "ritsulib_card_capability_energy_cost";
+
+            public static string Description => "Apply model-capability card energy cost modifiers";
+
+            public static bool IsCritical => true;
+
+            public static ModPatchTarget[] GetTargets()
+            {
+                return [new(typeof(CardEnergyCost), nameof(CardEnergyCost.GetWithModifiers), [typeof(CostModifiers)])];
+            }
+
+            public static IEnumerable<CodeInstruction> Transpiler(IEnumerable<CodeInstruction> instructions)
+            {
+                var originalMethod = AccessTools.Method(
+                    typeof(Hook),
+                    nameof(Hook.ModifyEnergyCostInCombat),
+                    [typeof(ICombatState), typeof(CardModel), typeof(decimal)]);
+                var replacementMethod = AccessTools.Method(
+                    typeof(EnergyCostPatch),
+                    nameof(ModifyEnergyCostInCombat));
+
+                var code = instructions.ToList();
+                if (originalMethod == null || replacementMethod == null)
+                    return code;
+
+                var replaced = false;
+                for (var i = 0; i < code.Count; i++)
+                {
+                    if (!code[i].Calls(originalMethod))
+                        continue;
+
+                    code.Insert(i, CodeInstruction.LoadArgument(1));
+                    code[i + 1].operand = replacementMethod;
+                    replaced = true;
+                    i++;
+                }
+
+                if (!replaced)
+                    RitsuLibFramework.Logger.Warn($"{MissingLifecyclePatchWarning} Patch={PatchId}");
+
+                return code;
+            }
+
+            public static void Postfix(CardEnergyCost __instance, CostModifiers modifiers, ref int __result)
+            {
+                if (modifiers.HasFlag(CostModifiers.Global) && __instance._card.CombatState != null)
+                    return;
+
+                __result = CardModelCapabilityHost.ApplyEnergyCost(__instance._card, modifiers, __result);
+            }
+
+            private static decimal ModifyEnergyCostInCombat(
+                ICombatState combatState,
+                CardModel card,
+                decimal originalCost,
+                CostModifiers modifiers)
+            {
+                var localCost = modifiers.HasFlag(CostModifiers.Local)
+                    ? CardModelCapabilityHost.ApplyEnergyCost(card, modifiers, (int)originalCost)
+                    : (int)originalCost;
+                return Hook.ModifyEnergyCostInCombat(combatState, card, localCost);
+            }
+        }
+
+        internal sealed class HasLocalEnergyCostModifierPatch : IPatchMethod
+        {
+            public static string PatchId => "ritsulib_card_capability_has_local_energy_cost_modifier";
+
+            public static string Description => "Expose model-capability card energy cost modifiers as local modifiers";
+
+            public static bool IsCritical => true;
+
+            public static ModPatchTarget[] GetTargets()
+            {
+                return [new(typeof(CardEnergyCost), "HasLocalModifiers", MethodType.Getter)];
+            }
+
+            public static void Postfix(CardEnergyCost __instance, ref bool __result)
+            {
+                if (!__result && CardModelCapabilityHost.HasEnergyCostContributors(__instance._card))
+                    __result = true;
+            }
+        }
+
+        internal sealed class StarCostPatch : IPatchMethod
+        {
+            public static string PatchId => "ritsulib_card_capability_star_cost";
+
+            public static string Description => "Apply model-capability card star cost modifiers";
+
+            public static bool IsCritical => true;
+
+            public static ModPatchTarget[] GetTargets()
+            {
+                return [new(typeof(CardModel), "CurrentStarCost", MethodType.Getter)];
+            }
+
+            public static void Postfix(CardModel __instance, ref int __result)
+            {
+                __result = CardModelCapabilityHost.ApplyStarCost(__instance, __result);
+            }
+        }
+
+        internal sealed class StarCostColorPatch : IPatchMethod
+        {
+            public static string PatchId => "ritsulib_card_capability_star_cost_color";
+
+            public static string Description => "Apply model-capability card star cost color";
+
+            public static bool IsCritical => true;
+
+            public static ModPatchTarget[] GetTargets()
+            {
+                return
+                [
+                    new(typeof(CardCostHelper), nameof(CardCostHelper.GetStarCostColor),
+                        [typeof(CardModel), typeof(ICombatState)]),
+                ];
+            }
+
+            public static void Postfix(CardModel card, ICombatState? state, ref CardCostColor __result)
+            {
+                if (state == null ||
+                    __result == CardCostColor.InsufficientResources ||
+                    card.HasStarCostX ||
+                    !CardModelCapabilityHost.HasStarCostContributors(card))
+                    return;
+
+                var modifiedCost = card.GetStarCostWithModifiers();
+                __result = modifiedCost.CompareTo(card.BaseStarCost) switch
+                {
+                    > 0 => CardCostColor.Increased,
+                    < 0 => CardCostColor.Decreased,
+                    _ => CardCostColor.Unmodified,
+                };
             }
         }
 

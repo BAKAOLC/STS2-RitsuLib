@@ -387,6 +387,10 @@ namespace STS2RitsuLib
             patcher.RegisterPatch<CardModelCapabilityPatches.CardRarityPatch>();
             patcher.RegisterPatch<CardModelCapabilityPatches.TargetTypePatch>();
             patcher.RegisterPatch<CardModelCapabilityPatches.TagsPatch>();
+            patcher.RegisterPatch<CardModelCapabilityPatches.EnergyCostPatch>();
+            patcher.RegisterPatch<CardModelCapabilityPatches.HasLocalEnergyCostModifierPatch>();
+            patcher.RegisterPatch<CardModelCapabilityPatches.StarCostPatch>();
+            patcher.RegisterPatch<CardModelCapabilityPatches.StarCostColorPatch>();
             patcher.RegisterPatch<CardModelCapabilityPatches.IsPlayablePatch>();
             patcher.RegisterPatch<CardModelCapabilityPatches.HasTurnEndInHandEffectPatch>();
             patcher.RegisterPatch<CardModelCapabilityPatches.ResultPileTypeForCardPlayPatch>();
