@@ -1,7 +1,7 @@
 using System.Globalization;
 using Godot;
 using Godot.Collections;
-using Environment = System.Environment;
+using STS2RitsuLib.Platform;
 using FileAccess = Godot.FileAccess;
 
 namespace STS2RitsuLib.Ui.Shell.Theme
@@ -26,8 +26,7 @@ namespace STS2RitsuLib.Ui.Shell.Theme
         private static readonly System.Collections.Generic.Dictionary<string, Font> FontCache =
             new(StringComparer.Ordinal);
 
-        private static readonly bool IsProton = !string.IsNullOrEmpty(
-            Environment.GetEnvironmentVariable("STEAM_COMPAT_DATA_PATH"));
+        private static readonly bool IsProton = SteamCompatibilityRuntime.IsProtonLaunch;
 
         private static readonly string[] ProtonCjkFallbackFontPaths =
         [
