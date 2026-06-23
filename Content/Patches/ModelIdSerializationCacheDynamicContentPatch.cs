@@ -26,9 +26,9 @@ namespace STS2RitsuLib.Content.Patches
     /// </summary>
     internal sealed class ModelIdSerializationCacheDynamicContentPatch : IPatchMethod
     {
+        private static int _staleCacheWarningLogged;
         internal static bool UsesDeterministicCache { get; private set; }
         private static ModelDbCacheSignature? AppliedDeterministicCacheSignature { get; set; }
-        private static int _staleCacheWarningLogged;
 
         private static IReadOnlyDictionary<ModelId, ModelSortIds> LocalOnlyModelSortIds { get; set; } =
             new Dictionary<ModelId, ModelSortIds>();
@@ -86,7 +86,7 @@ namespace STS2RitsuLib.Content.Patches
             if (current == applied)
                 return ModelDbDeterministicCacheStatus.Active("Stable sorting");
 
-            var reason =
+            const string reason =
                 "RitsuLib rebuilt the ModelIdSerializationCache, but the current cache no longer matches " +
                 "RitsuLib's deterministic signature. Another patch likely rewrote the cache or hash after RitsuLib.";
             if (Interlocked.Exchange(ref _staleCacheWarningLogged, 1) == 0)

@@ -210,6 +210,9 @@ namespace STS2RitsuLib.Networking.JoinDiagnostics
             if (_report.Host != null)
                 box.AddChild(BuildPeerSnapshotRow());
 
+            if (_report.SuggestedSolutions.Count > 0)
+                box.AddChild(BuildSuggestedSolutions());
+
             return box;
         }
 
@@ -318,6 +321,68 @@ namespace STS2RitsuLib.Networking.JoinDiagnostics
                 F("snapshot.mods", "Gameplay mods: {0}", modCount),
                 14,
                 RitsuShellTheme.Current.Text.RichBody));
+            return panel;
+        }
+
+        private Control BuildSuggestedSolutions()
+        {
+            var panel = new PanelContainer
+            {
+                SizeFlagsHorizontal = SizeFlags.ExpandFill,
+                MouseFilter = MouseFilterEnum.Ignore,
+            };
+            panel.AddThemeStyleboxOverride("panel", ModSettingsUiFactory.CreateListShellStyle());
+
+            var box = CreateInsetVBox(panel, 10, 8, 10, 8, 8);
+            box.AddChild(CreateLabel(
+                T("section.suggestedSolutions", "Optional solutions"),
+                18,
+                RitsuShellTheme.Current.Text.RichTitle,
+                true));
+
+            foreach (var solution in _report.SuggestedSolutions)
+                box.AddChild(BuildSuggestedSolutionRow(solution));
+
+            return panel;
+        }
+
+        private Control BuildSuggestedSolutionRow(JoinFailureSuggestedSolution solution)
+        {
+            var panel = new PanelContainer
+            {
+                SizeFlagsHorizontal = SizeFlags.ExpandFill,
+                MouseFilter = MouseFilterEnum.Ignore,
+            };
+            panel.AddThemeStyleboxOverride("panel", ModSettingsUiFactory.CreateListItemCardStyle());
+
+            var row = new HBoxContainer
+            {
+                SizeFlagsHorizontal = SizeFlags.ExpandFill,
+                MouseFilter = MouseFilterEnum.Ignore,
+            };
+            row.AddThemeConstantOverride("separation", 12);
+            panel.AddChild(row);
+
+            var text = new VBoxContainer
+            {
+                SizeFlagsHorizontal = SizeFlags.ExpandFill,
+                MouseFilter = MouseFilterEnum.Ignore,
+            };
+            text.AddThemeConstantOverride("separation", 3);
+            row.AddChild(text);
+            text.AddChild(CreateLabel(solution.Title, 16, RitsuShellTheme.Current.Text.RichTitle, true));
+            text.AddChild(CreateLabel(solution.Description, 14, RitsuShellTheme.Current.Text.RichBody));
+
+            var button = new ModSettingsTextButton(
+                solution.ButtonText,
+                ModSettingsButtonTone.Accent,
+                () => OpenSuggestedSolution(solution))
+            {
+                CustomMinimumSize = new(210f, RitsuShellTheme.Current.Metric.Entry.ValueMinHeight),
+                SizeFlagsHorizontal = SizeFlags.ShrinkEnd,
+                SizeFlagsVertical = SizeFlags.ShrinkCenter,
+            };
+            row.AddChild(button);
             return panel;
         }
 
@@ -766,6 +831,23 @@ namespace STS2RitsuLib.Networking.JoinDiagnostics
         private void Close()
         {
             NModalContainer.Instance?.Clear();
+        }
+
+        private void OpenSuggestedSolution(JoinFailureSuggestedSolution solution)
+        {
+            var result = ModSettingsNavigator.RequestOpenByIds(
+                solution.ModId,
+                solution.PageId,
+                solution.SectionId,
+                solution.EntryId);
+            if (!result.Success)
+            {
+                RitsuLibFramework.Logger.Warn(
+                    $"[JoinDiagnostics] Failed to open suggested solution '{solution.Title}': {result.Message}");
+                return;
+            }
+
+            Close();
         }
 
         private void CopyReportToClipboard()

@@ -125,10 +125,12 @@ namespace STS2RitsuLib.Networking.JoinDiagnostics
                     []));
 
             var summary = issues[0].Description;
+            var suggestedSolutions = BuildSuggestedSolutions(host, local, issues, hostPayload);
             return new(
                 T("panel.title", "Join Failure Details"),
                 summary,
                 issues,
+                suggestedSolutions,
                 host,
                 local,
                 LocalizeReason(reason),
@@ -516,6 +518,56 @@ namespace STS2RitsuLib.Networking.JoinDiagnostics
         private static string ContentModIdentityKey(ContentModInventoryEntry mod)
         {
             return mod.Id + "\0" + mod.Version;
+        }
+
+        private static IReadOnlyList<JoinFailureSuggestedSolution> BuildSuggestedSolutions(
+            JoinPeerSnapshot? host,
+            JoinPeerSnapshot local,
+            IReadOnlyList<JoinFailureIssue> issues,
+            JoinDiagnosticsPayload? hostPayload)
+        {
+            if (!IsOrderOnlyModelDbMismatch(host, local, issues, hostPayload))
+                return [];
+
+            return
+            [
+                new(
+                    T("solution.sortMods.title", "Sort mod load order"),
+                    T("solution.sortMods.description",
+                        "Open content mod load order sorting. This rewrites the saved relevant mod order; restart the game before joining again."),
+                    T("solution.sortMods.button", "Open mod order sort"),
+                    Const.ModId,
+                    "content-mod-load-order",
+                    "content_mod_load_order_actions",
+                    "content_mod_load_order_sort"),
+                new(
+                    T("solution.sortModelDb.title", "Sort ModelDb for this session"),
+                    T("solution.sortModelDb.description",
+                        "Open manual ModelDb deterministic sorting. This only rebuilds the current session's ModelDb network cache and does not persist after restart."),
+                    T("solution.sortModelDb.button", "Open ModelDb sort"),
+                    Const.ModId,
+                    "core",
+                    "core",
+                    "modeldb_deterministic_sort_now"),
+            ];
+        }
+
+        private static bool IsOrderOnlyModelDbMismatch(
+            JoinPeerSnapshot? host,
+            JoinPeerSnapshot local,
+            IReadOnlyList<JoinFailureIssue> issues,
+            JoinDiagnosticsPayload? hostPayload)
+        {
+            if (hostPayload == null ||
+                host == null ||
+                host.ModelDbHash == local.ModelDbHash ||
+                host.ModelDbHashUsesDeterministicCache ||
+                local.ModelDbHashUsesDeterministicCache)
+                return false;
+
+            return issues.Count == 2 &&
+                   issues.Any(static issue => issue.Kind == JoinFailureIssueKind.ModOrder) &&
+                   issues.Any(static issue => issue.Kind == JoinFailureIssueKind.ModelDb);
         }
 
         private static string LocalizeReason(NetError reason)
