@@ -6,6 +6,7 @@ using CombatStateLike = MegaCrit.Sts2.Core.Combat.ICombatState;
 using MegaCrit.Sts2.Core.Entities.Players;
 using MegaCrit.Sts2.Core.Models;
 using STS2RitsuLib.Models;
+using STS2RitsuLib.Models.Capabilities;
 using STS2RitsuLib.Utils;
 
 namespace STS2RitsuLib.Combat.SecondaryResources
@@ -433,6 +434,9 @@ namespace STS2RitsuLib.Combat.SecondaryResources
     /// </summary>
     public static class SecondaryResourcePaymentResolver
     {
+        private const string CardUseContributorSurface = "secondary-resource/card-uses";
+        private const string CardCostContributorSurface = "secondary-resource/card-cost";
+
         /// <summary>
         ///     Resolves secondary-resource costs for a card.
         ///     解析卡牌的次级资源费用。
@@ -576,6 +580,8 @@ namespace STS2RitsuLib.Combat.SecondaryResources
             if (card.TryGetSecondaryResourceUses(out var playUses))
                 uses.AddRange(playUses.Snapshot());
 
+            uses.AddRange(GetCapabilityUses(card));
+
             return uses
                 .Where(static use => use.IsMaterial)
                 .OrderBy(static use => use.Kind == SecondaryResourceUseKind.RequiredCost ? 0 : 1)
@@ -594,19 +600,21 @@ namespace STS2RitsuLib.Combat.SecondaryResources
                 if (!ModSecondaryResourceRegistry.TryGet(use.ResourceId, out var definition))
                     continue;
 
-                lines.Add(ResolvePreviewLine(definition, use, isFree));
+                lines.Add(ResolvePreviewLine(card, definition, use, isFree));
             }
 
             return new(card, null, isFree, lines);
         }
 
         private static SecondaryResourcePaymentLine ResolvePreviewLine(
+            CardModel card,
             SecondaryResourceDefinition definition,
             SecondaryResourcePlayUse use,
             bool isFree)
         {
             var cost = use.Cost;
-            var fixedCost = Math.Max(0, cost.Amount);
+            var localCost = ModifyLocalCost(card, definition, use, cost.Amount);
+            var fixedCost = Math.Max(0, (int)Math.Ceiling(localCost));
             if (!cost.CostsX)
                 return new(definition.Id, definition, fixedCost, 0, isFree ? 0 : fixedCost, fixedCost, false, isFree)
                 {
@@ -638,9 +646,10 @@ namespace STS2RitsuLib.Combat.SecondaryResources
             AbstractModel? source)
         {
             var cost = use.Cost;
+            var localCost = ModifyLocalCost(card, definition, use, cost.Amount);
             var modifiedCost = SecondaryResourceHook.ModifyCost(
-                new(combatState, player, card, definition, cost.Amount),
-                cost.Amount);
+                new(combatState, player, card, definition, localCost),
+                localCost);
             var fixedCost = Math.Max(0, (int)Math.Ceiling(modifiedCost));
             var isRequired = use.Kind == SecondaryResourceUseKind.RequiredCost;
 
@@ -703,6 +712,41 @@ namespace STS2RitsuLib.Combat.SecondaryResources
                 Activated = xActivated,
                 SpendAllowed = xSpendAllowed,
             };
+        }
+
+        private static IEnumerable<SecondaryResourcePlayUse> GetCapabilityUses(CardModel card)
+        {
+            foreach (var capability in ModelCapabilityHost.GetCapabilities<ICardSecondaryResourceUseContributor>(card))
+            {
+                IEnumerable<SecondaryResourcePlayUse> uses = [];
+                ModelCapabilityHost.TryRun(
+                    (IModelCapability)capability,
+                    card,
+                    CardUseContributorSurface,
+                    () => uses = capability.GetSecondaryResourceUses(card) ?? []);
+
+                foreach (var use in uses)
+                    if (use.IsMaterial)
+                        yield return use;
+            }
+        }
+
+        private static decimal ModifyLocalCost(
+            CardModel card,
+            SecondaryResourceDefinition definition,
+            SecondaryResourcePlayUse use,
+            decimal cost)
+        {
+            var result = cost;
+            var context = new SecondaryResourceCardCostContext(card, definition, use, cost);
+            foreach (var capability in ModelCapabilityHost.GetCapabilities<ICardSecondaryResourceCostContributor>(card))
+                ModelCapabilityHost.TryRun(
+                    (IModelCapability)capability,
+                    card,
+                    CardCostContributorSurface,
+                    () => result = capability.ModifySecondaryResourceCost(context, result));
+
+            return result;
         }
 
         private static bool CanSpend(

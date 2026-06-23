@@ -65,6 +65,16 @@ namespace STS2RitsuLib.Combat.SecondaryResources
         decimal OriginalCost);
 
     /// <summary>
+    ///     Context for local card-attached secondary-resource cost modification.
+    ///     卡牌本地附加次级资源费用修正上下文。
+    /// </summary>
+    public readonly record struct SecondaryResourceCardCostContext(
+        CardModel Card,
+        SecondaryResourceDefinition Definition,
+        SecondaryResourcePlayUse Use,
+        decimal OriginalCost);
+
+    /// <summary>
     ///     Context for secondary X-value modification.
     ///     次级 X 值修正上下文。
     /// </summary>
