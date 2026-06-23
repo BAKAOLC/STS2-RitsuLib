@@ -22,10 +22,18 @@ namespace STS2RitsuLib.Networking.JoinDiagnostics
         string Title,
         string Description,
         string ButtonText,
-        string ModId,
-        string PageId,
-        string SectionId,
-        string EntryId);
+        JoinFailureSuggestedSolutionAction Action,
+        string? ModId = null,
+        string? PageId = null,
+        string? SectionId = null,
+        string? EntryId = null,
+        ulong? WorkshopItemId = null);
+
+    internal enum JoinFailureSuggestedSolutionAction
+    {
+        OpenSettings,
+        SubscribeWorkshopItem,
+    }
 
     internal enum JoinFailureIssueKind
     {

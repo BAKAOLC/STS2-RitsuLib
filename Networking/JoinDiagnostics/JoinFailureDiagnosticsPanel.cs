@@ -6,6 +6,8 @@ using MegaCrit.Sts2.Core.Nodes.CommonUi;
 using MegaCrit.Sts2.Core.Nodes.Screens.ModdingScreen;
 using MegaCrit.Sts2.Core.Nodes.Screens.ScreenContext;
 using STS2RitsuLib.Compat;
+using STS2RitsuLib.Diagnostics;
+using STS2RitsuLib.Platform.Steam;
 using STS2RitsuLib.Settings;
 using STS2RitsuLib.Ui.Shell;
 using STS2RitsuLib.Ui.Shell.Theme;
@@ -136,6 +138,15 @@ namespace STS2RitsuLib.Networking.JoinDiagnostics
                 CustomMinimumSize = new(190f, RitsuShellTheme.Current.Metric.Entry.ValueMinHeight),
             };
             row.AddChild(export);
+
+            var logs = new ModSettingsTextButton(
+                T("button.openLogs", "Open logs"),
+                ModSettingsButtonTone.Normal,
+                OpenLogFolder)
+            {
+                CustomMinimumSize = new(170f, RitsuShellTheme.Current.Metric.Entry.ValueMinHeight),
+            };
+            row.AddChild(logs);
 
             var close = new ModSettingsTextButton(
                 T("button.close", "Close"),
@@ -270,14 +281,12 @@ namespace STS2RitsuLib.Networking.JoinDiagnostics
                 _report.Host!.GameVersion,
                 _report.Host.ModelDbHash,
                 _report.Host.ModelDbHashUsesDeterministicCache,
-                _report.Host.ModelDbHashModeDetail,
                 _report.Host.GameplayMods.Count));
             row.AddChild(CreateSnapshotCard(
                 T("column.local", "Local"),
                 _report.Local.GameVersion,
                 _report.Local.ModelDbHash,
                 _report.Local.ModelDbHashUsesDeterministicCache,
-                _report.Local.ModelDbHashModeDetail,
                 _report.Local.GameplayMods.Count));
             return row;
         }
@@ -287,7 +296,6 @@ namespace STS2RitsuLib.Networking.JoinDiagnostics
             string version,
             uint modelDbHash,
             bool modelDbHashUsesDeterministicCache,
-            string? modelDbHashModeDetail,
             int modCount)
         {
             var panel = new PanelContainer
@@ -297,30 +305,51 @@ namespace STS2RitsuLib.Networking.JoinDiagnostics
             };
             panel.AddThemeStyleboxOverride("panel", ModSettingsUiFactory.CreateListItemCardStyle());
 
-            var box = CreateInsetVBox(panel, 10, 7, 10, 7, 4);
+            var box = CreateInsetVBox(panel, 10, 7, 10, 7, 6);
             box.AddChild(CreateLabel(title, 16, RitsuShellTheme.Current.Text.RichTitle, true));
-            box.AddChild(CreateLabel(
-                F("snapshot.version", "Version: {0}", version),
-                14,
-                RitsuShellTheme.Current.Text.RichBody));
-            box.AddChild(CreateLabel(
-                F("snapshot.modelDb", "ModelDb: {0}", modelDbHash),
-                14,
-                RitsuShellTheme.Current.Text.RichBody));
-            box.AddChild(CreateLabel(
-                F("snapshot.modelDbMode", "ModelDb mode: {0}",
-                    FormatModelDbHashMode(modelDbHashUsesDeterministicCache)),
-                14,
-                RitsuShellTheme.Current.Text.RichBody));
-            if (!string.IsNullOrWhiteSpace(modelDbHashModeDetail))
-                box.AddChild(CreateLabel(
-                    modelDbHashModeDetail.Trim(),
-                    13,
-                    RitsuShellTheme.Current.Text.RichMuted));
-            box.AddChild(CreateLabel(
-                F("snapshot.mods", "Gameplay mods: {0}", modCount),
-                14,
-                RitsuShellTheme.Current.Text.RichBody));
+
+            var grid = new GridContainer
+            {
+                Columns = 2,
+                SizeFlagsHorizontal = SizeFlags.ExpandFill,
+                MouseFilter = MouseFilterEnum.Ignore,
+            };
+            grid.AddThemeConstantOverride("h_separation", 10);
+            grid.AddThemeConstantOverride("v_separation", 6);
+            box.AddChild(grid);
+
+            grid.AddChild(CreateSnapshotField(
+                T("snapshot.version.label", "Version"),
+                version));
+            grid.AddChild(CreateSnapshotField(
+                T("snapshot.modelDb.label", "ModelDb"),
+                modelDbHash.ToString()));
+            grid.AddChild(CreateSnapshotField(
+                T("snapshot.modelDbMode.label", "ModelDb mode"),
+                FormatModelDbHashMode(modelDbHashUsesDeterministicCache)));
+            grid.AddChild(CreateSnapshotField(
+                T("snapshot.mods.label", "Gameplay mods"),
+                modCount.ToString()));
+            return panel;
+        }
+
+        private Control CreateSnapshotField(string label, string value)
+        {
+            var panel = new PanelContainer
+            {
+                SizeFlagsHorizontal = SizeFlags.ExpandFill,
+                CustomMinimumSize = new(0f, 40f),
+                MouseFilter = MouseFilterEnum.Ignore,
+            };
+            panel.AddThemeStyleboxOverride("panel", ModSettingsUiFactory.CreateInsetSurfaceStyle());
+
+            panel.AddChild(new SnapshotFieldDrawControl(label, value)
+            {
+                SizeFlagsHorizontal = SizeFlags.ExpandFill,
+                SizeFlagsVertical = SizeFlags.ExpandFill,
+                MouseFilter = MouseFilterEnum.Ignore,
+                CustomMinimumSize = new(0f, 36f),
+            });
             return panel;
         }
 
@@ -373,17 +402,31 @@ namespace STS2RitsuLib.Networking.JoinDiagnostics
             text.AddChild(CreateLabel(solution.Title, 16, RitsuShellTheme.Current.Text.RichTitle, true));
             text.AddChild(CreateLabel(solution.Description, 14, RitsuShellTheme.Current.Text.RichBody));
 
-            var button = new ModSettingsTextButton(
+            if (solution.Action == JoinFailureSuggestedSolutionAction.SubscribeWorkshopItem &&
+                solution.WorkshopItemId is { } workshopItemId)
+                row.AddChild(CreateSuggestedSolutionButton(
+                    T("solution.subscribeWorkshopMod.openWorkshopButton", "Open Workshop"),
+                    ModSettingsButtonTone.Normal,
+                    () => SteamWorkshopManager.Instance.TryOpenWorkshopPage(workshopItemId)));
+
+            row.AddChild(CreateSuggestedSolutionButton(
                 solution.ButtonText,
                 ModSettingsButtonTone.Accent,
-                () => OpenSuggestedSolution(solution))
+                () => OpenSuggestedSolution(solution)));
+            return panel;
+        }
+
+        private static ModSettingsTextButton CreateSuggestedSolutionButton(
+            string text,
+            ModSettingsButtonTone tone,
+            Action action)
+        {
+            return new(text, tone, action)
             {
                 CustomMinimumSize = new(210f, RitsuShellTheme.Current.Metric.Entry.ValueMinHeight),
                 SizeFlagsHorizontal = SizeFlags.ShrinkEnd,
                 SizeFlagsVertical = SizeFlags.ShrinkCenter,
             };
-            row.AddChild(button);
-            return panel;
         }
 
         private Control BuildDetailRows(IReadOnlyList<JoinFailureDetailRow> rows)
@@ -835,6 +878,18 @@ namespace STS2RitsuLib.Networking.JoinDiagnostics
 
         private void OpenSuggestedSolution(JoinFailureSuggestedSolution solution)
         {
+            if (solution.Action == JoinFailureSuggestedSolutionAction.SubscribeWorkshopItem)
+            {
+                if (solution.WorkshopItemId is not { } workshopItemId)
+                    return;
+
+                SteamWorkshopUpdateCoordinator.SubscribeItemFromUi(workshopItemId, solution.Title);
+                return;
+            }
+
+            if (solution.ModId == null)
+                return;
+
             var result = ModSettingsNavigator.RequestOpenByIds(
                 solution.ModId,
                 solution.PageId,
@@ -857,6 +912,11 @@ namespace STS2RitsuLib.Networking.JoinDiagnostics
             RitsuToastService.ShowInfo(
                 T("toast.reportCopied.body", "Join failure report copied to clipboard."),
                 T("toast.reportCopied.title", "Join diagnostics"));
+        }
+
+        private void OpenLogFolder()
+        {
+            GameLogFolderOpener.OpenFromUi(T("toast.reportCopied.title", "Join diagnostics"), "[JoinDiagnostics]");
         }
 
         private string BuildExportReport()
@@ -1189,6 +1249,65 @@ namespace STS2RitsuLib.Networking.JoinDiagnostics
         private static string F(string key, string fallback, params object?[] args)
         {
             return JoinFailureDiagnosticsLocalization.Format(key, fallback, args);
+        }
+
+        private sealed partial class SnapshotFieldDrawControl(string label, string value) : Control
+        {
+            private const float Padding = 6f;
+            private const float Gap = 6f;
+
+            public override void _Draw()
+            {
+                var split = Mathf.Floor(Size.X * 0.4f);
+                var labelRect = new Rect2(Padding, 0f, Math.Max(0f, split - Padding - Gap), Size.Y);
+                var valueRect = new Rect2(split + Gap, 0f, Math.Max(0f, Size.X - split - Padding - Gap), Size.Y);
+
+                DrawText(
+                    RitsuShellTheme.Current.Font.BodyBold,
+                    label,
+                    labelRect,
+                    18,
+                    RitsuShellTheme.Current.Text.RichMuted,
+                    false);
+                DrawText(
+                    RitsuShellTheme.Current.Font.Body,
+                    value,
+                    valueRect,
+                    20,
+                    RitsuShellTheme.Current.Text.RichBody,
+                    true);
+            }
+
+            private void DrawText(Font font, string text, Rect2 rect, int fontSize, Color color, bool alignRight)
+            {
+                var resolvedFontSize = ResolveFontSize(font, text, fontSize, rect.Size.X);
+                var size = font.GetStringSize(text, HorizontalAlignment.Left, -1f, resolvedFontSize);
+                var x = alignRight
+                    ? rect.Position.X + Math.Max(0f, rect.Size.X - size.X)
+                    : rect.Position.X;
+                var y = rect.Position.Y + (rect.Size.Y + size.Y) / 2f - 1f;
+                DrawString(
+                    font,
+                    new(x, y),
+                    text,
+                    HorizontalAlignment.Left,
+                    -1f,
+                    resolvedFontSize,
+                    color);
+            }
+
+            private static int ResolveFontSize(Font font, string text, int preferredFontSize, float width)
+            {
+                if (string.IsNullOrEmpty(text) || width <= 0f)
+                    return preferredFontSize;
+
+                const int minFontSize = 11;
+                for (var size = preferredFontSize; size > minFontSize; size--)
+                    if (font.GetStringSize(text, HorizontalAlignment.Left, -1f, size).X <= width)
+                        return size;
+
+                return minFontSize;
+            }
         }
     }
 

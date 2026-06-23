@@ -3,6 +3,7 @@
   "summary": "{0} differing field(s) found for checksum #{1}.",
   "button.details": "Details",
   "button.copyReport": "Copy report",
+  "button.openLogs": "Open logs",
   "button.close": "Close",
   "toast.reportCopied.title": "State divergence",
   "toast.reportCopied.body": "State divergence report copied to clipboard.",

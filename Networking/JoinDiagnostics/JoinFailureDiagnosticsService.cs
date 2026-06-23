@@ -156,9 +156,7 @@ namespace STS2RitsuLib.Networking.JoinDiagnostics
                         FormatModelDbHashMode(local.ModelDbHashUsesDeterministicCache)),
                     new(T("row.modelDbHash", "ModelDb hash"), host.ModelDbHash.ToString(),
                         local.ModelDbHash.ToString()),
-                    new(T("row.modelDbHashModeDetail", "ModelDb hash mode detail"),
-                        FormatModelDbHashModeDetail(host),
-                        FormatModelDbHashModeDetail(local)),
+                    ..BuildModelDbHashModeDetailRows(host, local),
                 ]));
         }
 
@@ -362,9 +360,7 @@ namespace STS2RitsuLib.Networking.JoinDiagnostics
                     new(T("row.modelDbHashMode", "ModelDb hash mode"),
                         FormatModelDbHashMode(host.ModelDbHashUsesDeterministicCache),
                         FormatModelDbHashMode(local.ModelDbHashUsesDeterministicCache)),
-                    new(T("row.modelDbHashModeDetail", "ModelDb hash mode detail"),
-                        FormatModelDbHashModeDetail(host),
-                        FormatModelDbHashModeDetail(local)),
+                    ..BuildModelDbHashModeDetailRows(host, local),
                 ]));
         }
 
@@ -402,6 +398,33 @@ namespace STS2RitsuLib.Networking.JoinDiagnostics
             return string.IsNullOrWhiteSpace(snapshot.ModelDbHashModeDetail)
                 ? FormatModelDbHashMode(snapshot.ModelDbHashUsesDeterministicCache)
                 : snapshot.ModelDbHashModeDetail.Trim();
+        }
+
+        private static IReadOnlyList<JoinFailureDetailRow> BuildModelDbHashModeDetailRows(
+            JoinPeerSnapshot host,
+            JoinPeerSnapshot local)
+        {
+            var hostDetail = GetAdditionalModelDbHashModeDetail(host);
+            var localDetail = GetAdditionalModelDbHashModeDetail(local);
+            return hostDetail == null && localDetail == null
+                ? []
+                :
+                [
+                    new(T("row.modelDbHashModeDetail", "ModelDb hash mode detail"),
+                        hostDetail ?? T("value.none", "None"),
+                        localDetail ?? T("value.none", "None")),
+                ];
+        }
+
+        private static string? GetAdditionalModelDbHashModeDetail(JoinPeerSnapshot snapshot)
+        {
+            var detail = snapshot.ModelDbHashModeDetail?.Trim();
+            if (string.IsNullOrWhiteSpace(detail) ||
+                string.Equals(detail, FormatModelDbHashMode(snapshot.ModelDbHashUsesDeterministicCache),
+                    StringComparison.Ordinal))
+                return null;
+
+            return detail;
         }
 
         private static List<JoinFailureDetailRow> ExtractVersionRows(
@@ -526,30 +549,119 @@ namespace STS2RitsuLib.Networking.JoinDiagnostics
             IReadOnlyList<JoinFailureIssue> issues,
             JoinDiagnosticsPayload? hostPayload)
         {
-            if (!IsOrderOnlyModelDbMismatch(host, local, issues, hostPayload))
-                return [];
+            var result = new List<JoinFailureSuggestedSolution>();
+            AddMissingWorkshopModSolutions(result, host, local, hostPayload);
 
-            return
-            [
-                new(
+            if (IsOrderOnlyModelDbMismatch(host, local, issues, hostPayload))
+            {
+                result.Add(new(
                     T("solution.sortMods.title", "Sort mod load order"),
                     T("solution.sortMods.description",
                         "Open content mod load order sorting. This rewrites the saved relevant mod order; restart the game before joining again."),
                     T("solution.sortMods.button", "Open mod order sort"),
+                    JoinFailureSuggestedSolutionAction.OpenSettings,
                     Const.ModId,
                     "content-mod-load-order",
                     "content_mod_load_order_actions",
-                    "content_mod_load_order_sort"),
-                new(
+                    "content_mod_load_order_sort"));
+                result.Add(new(
                     T("solution.sortModelDb.title", "Sort ModelDb for this session"),
                     T("solution.sortModelDb.description",
                         "Open manual ModelDb deterministic sorting. This only rebuilds the current session's ModelDb network cache and does not persist after restart."),
                     T("solution.sortModelDb.button", "Open ModelDb sort"),
+                    JoinFailureSuggestedSolutionAction.OpenSettings,
                     Const.ModId,
                     "core",
                     "core",
-                    "modeldb_deterministic_sort_now"),
-            ];
+                    "modeldb_deterministic_sort_now"));
+            }
+
+            return result;
+        }
+
+        private static void AddMissingWorkshopModSolutions(
+            ICollection<JoinFailureSuggestedSolution> result,
+            JoinPeerSnapshot? host,
+            JoinPeerSnapshot local,
+            JoinDiagnosticsPayload? hostPayload)
+        {
+            if (hostPayload == null || host == null)
+                return;
+
+            var addedWorkshopItemIds = new HashSet<ulong>();
+            if (host.HasProcessedContentMods && local.HasProcessedContentMods)
+            {
+                var localByKey = BuildContentModIdentityMap(local.ContentMods);
+                foreach (var mod in host.ContentMods)
+                {
+                    if (localByKey.ContainsKey(ContentModIdentityKey(mod)) ||
+                        mod.WorkshopItemId is not { } workshopItemId ||
+                        !addedWorkshopItemIds.Add(workshopItemId))
+                        continue;
+
+                    result.Add(BuildWorkshopSubscribeSolution(
+                        workshopItemId,
+                        FormatContentModLabel(mod),
+                        FormatWorkshopSubscribeModIdentity(mod)));
+                }
+
+                return;
+            }
+
+            var localByGameplayKey = local.GameplayMods.ToDictionary(m => m.Key, StringComparer.Ordinal);
+            foreach (var mod in host.GameplayMods)
+            {
+                if (localByGameplayKey.ContainsKey(mod.Key) ||
+                    mod.WorkshopItemId is not { } workshopItemId ||
+                    !addedWorkshopItemIds.Add(workshopItemId))
+                    continue;
+
+                result.Add(BuildWorkshopSubscribeSolution(
+                    workshopItemId,
+                    FormatModLabel(mod),
+                    FormatWorkshopSubscribeModIdentity(mod)));
+            }
+        }
+
+        private static JoinFailureSuggestedSolution BuildWorkshopSubscribeSolution(
+            ulong workshopItemId,
+            string modLabel,
+            string modIdentity)
+        {
+            return new(
+                F("solution.subscribeWorkshopMod.title", "Subscribe missing Workshop mod: {0}", modLabel),
+                F("solution.subscribeWorkshopMod.description",
+                    "The host has {0} from Steam Workshop item {1}, but local does not. Ask Steam to subscribe, then wait for the download and restart before joining again.",
+                    modIdentity,
+                    workshopItemId),
+                T("solution.subscribeWorkshopMod.button", "Subscribe"),
+                JoinFailureSuggestedSolutionAction.SubscribeWorkshopItem,
+                WorkshopItemId: workshopItemId);
+        }
+
+        private static string FormatWorkshopSubscribeModIdentity(JoinDiagnosticsModEntry mod)
+        {
+            return F(
+                "solution.subscribeWorkshopMod.modIdentity",
+                "{0}, version={1}",
+                FormatModLabel(mod),
+                FormatVersionForDisplay(mod.Version));
+        }
+
+        private static string FormatWorkshopSubscribeModIdentity(ContentModInventoryEntry mod)
+        {
+            return F(
+                "solution.subscribeWorkshopMod.modIdentity",
+                "{0}, version={1}",
+                FormatContentModLabel(mod),
+                FormatVersionForDisplay(mod.Version));
+        }
+
+        private static string FormatVersionForDisplay(string? version)
+        {
+            return string.IsNullOrWhiteSpace(version)
+                ? T("value.noVersion", "No version")
+                : version;
         }
 
         private static bool IsOrderOnlyModelDbMismatch(

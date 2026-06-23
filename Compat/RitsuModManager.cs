@@ -156,13 +156,15 @@ namespace STS2RitsuLib.Compat
     public sealed record RitsuModInfo(
         string Id,
         string Name,
+        string? Author,
         string? Version,
         RitsuModLoadState State,
         RitsuModSource Source,
         bool AffectsGameplay,
         string? AssemblyName,
         string? AssemblyVersion,
-        IReadOnlyList<LocString> Errors)
+        IReadOnlyList<LocString> Errors,
+        ulong? WorkshopItemId = null)
     {
         /// <summary>
         ///     True when the mod is either pending load or already loaded in this session.

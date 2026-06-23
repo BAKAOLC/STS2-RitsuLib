@@ -31,6 +31,12 @@ namespace STS2RitsuLib
         public const ulong SteamWorkshopItemId = 3747602295;
 
         /// <summary>
+        ///     Steam app id for Slay the Spire 2.
+        ///     Slay the Spire 2 的 Steam app id。
+        /// </summary>
+        public const uint Sts2SteamAppId = 2868840;
+
+        /// <summary>
         ///     Root key for RitsuLib JSON settings under the mod’s user folder.
         ///     mod 用户文件夹下 RitsuLib JSON 设置的根键。
         /// </summary>

@@ -13,13 +13,15 @@ namespace STS2RitsuLib.Platform.Steam
         private const int MaxChangedItemsInToast = 10;
         private static readonly Lock SyncRoot = new();
         private static readonly Lock AutoDownloadNotificationSyncRoot = new();
+        private static readonly Lock SubscriptionMonitorSyncRoot = new();
+        private static readonly HashSet<ulong> SubscriptionMonitorItemIds = [];
         private static AutoDownloadNotification? _autoDownloadNotification;
         private static bool _initialized;
         private static int _checkRunning;
 
         internal static bool CanUseSteamWorkshopUpdates()
         {
-            return SteamInitializer.Initialized && RitsuSteamWorkshopUpdates.IsAvailable;
+            return SteamWorkshopManager.Instance.IsAvailable;
         }
 
         internal static void Initialize()
@@ -54,6 +56,19 @@ namespace STS2RitsuLib.Platform.Steam
             RitsuLibFramework.Logger.Info(
                 "[SteamWorkshopUpdate] Manual RitsuLib Workshop item check requested from settings.");
             _ = CheckItemAsync(Const.SteamWorkshopItemId, false);
+        }
+
+        internal static RitsuSteamWorkshopActionResult SubscribeItemFromUi(ulong itemId, string? displayName = null)
+        {
+            var result = SteamWorkshopManager.Instance.SubscribeFromUi(itemId, displayName);
+            if (result.Accepted)
+                StartSubscriptionDownloadMonitor(itemId, displayName);
+            return result;
+        }
+
+        internal static RitsuSteamWorkshopActionResult UnsubscribeItemFromUi(ulong itemId, string? displayName = null)
+        {
+            return SteamWorkshopManager.Instance.UnsubscribeFromUi(itemId, displayName);
         }
 
         internal static Task CheckItemAsync(
@@ -206,6 +221,9 @@ namespace STS2RitsuLib.Platform.Steam
                 return ToastRequest(body, result.ErrorMessage == null ? RitsuToastLevel.Info : RitsuToastLevel.Warning);
             }
 
+            if (source == CheckSource.Subscription)
+                return BuildSubscriptionDownloadToast(result, downloadFinished);
+
             if (source == CheckSource.Auto &&
                 result is { NeedsUpdateCount: > 0, ChangedItems: not { Count: > 0 }, TriggeredCount: <= 0 })
                 return null;
@@ -273,6 +291,39 @@ namespace STS2RitsuLib.Platform.Steam
                 null,
                 level,
                 ToastDurationSeconds);
+        }
+
+        private static RitsuToastRequest BuildSubscriptionDownloadToast(
+            RitsuSteamWorkshopUpdateResult result,
+            bool downloadFinished)
+        {
+            var itemList = FormatDownloadItemList(result.MonitorItems);
+            return ToastRequest(
+                downloadFinished
+                    ? Format(
+                        "ritsulib.steamWorkshop.toast.subscribeDownloadFinished",
+                        "Steam finished downloading {0}. Restart the game to load the new files.",
+                        itemList)
+                    : Format(
+                        "ritsulib.steamWorkshop.toast.subscribeDownloadPending",
+                        "Steam accepted the subscription for {0}. The download is still queued, running, or not reporting progress yet. Check Steam Downloads and restart after it finishes.",
+                        itemList),
+                RitsuToastLevel.Info);
+        }
+
+        private static string FormatDownloadItemList(IReadOnlyList<RitsuSteamWorkshopDownloadItem>? items)
+        {
+            if (items is not { Count: > 0 })
+                return L("ritsulib.steamWorkshop.toast.progress.downloadUnknownItem", "unknown item");
+
+            var names = items
+                .Take(MaxChangedItemsInToast)
+                .Select(static item => item.DisplayName)
+                .ToArray();
+            var remaining = items.Count - names.Length;
+            return remaining > 0
+                ? $"{string.Join(", ", names)} (+{remaining})"
+                : string.Join(", ", names);
         }
 
         private static string AppendChangedItemList(
@@ -361,6 +412,56 @@ namespace STS2RitsuLib.Platform.Steam
             {
                 if (IsCurrentAutoDownloadNotification(notification))
                     ShowToastNow(BuildAutoDownloadFinishedToast(notification.Result));
+            });
+        }
+
+        private static void StartSubscriptionDownloadMonitor(ulong itemId, string? displayName)
+        {
+            lock (SubscriptionMonitorSyncRoot)
+            {
+                if (!SubscriptionMonitorItemIds.Add(itemId))
+                    return;
+            }
+
+            _ = Task.Run(async () =>
+            {
+                var item = new RitsuSteamWorkshopDownloadItem(
+                    itemId,
+                    FormatWorkshopItemName(itemId, displayName));
+                var items = new[] { item };
+                var result = new RitsuSteamWorkshopUpdateResult(
+                    true,
+                    1,
+                    1,
+                    1,
+                    0,
+                    0,
+                    TriggeredItems: items,
+                    MonitorItems: items);
+                var progressToast = new WorkshopUpdateProgressToast(CheckSource.Subscription);
+                var downloadFinished = false;
+                try
+                {
+                    await Task.Delay(1500).ConfigureAwait(false);
+                    progressToast.StartDownload(items);
+                    downloadFinished = await RitsuSteamWorkshopUpdates
+                        .MonitorDownloadsAsync(items, progressToast, true, CancellationToken.None)
+                        .ConfigureAwait(false);
+                }
+                catch (Exception ex)
+                {
+                    RitsuLibFramework.Logger.Warn(
+                        $"[SteamWorkshopUpdate] Subscription download monitor failed for item {itemId}: {ex.Message}");
+                }
+                finally
+                {
+                    lock (SubscriptionMonitorSyncRoot)
+                    {
+                        SubscriptionMonitorItemIds.Remove(itemId);
+                    }
+                }
+
+                progressToast.Complete(result, downloadFinished);
             });
         }
 
@@ -472,6 +573,74 @@ namespace STS2RitsuLib.Platform.Steam
             ShowToast(ToastRequest(body, level), deferToMainMenu);
         }
 
+        private static RitsuSteamWorkshopActionResult RequestSubscriptionAction(
+            ulong itemId,
+            string? displayName,
+            bool subscribe)
+        {
+            var action = subscribe ? "subscribe" : "unsubscribe";
+            RitsuLibFramework.Logger.Info(
+                $"[SteamWorkshopUpdate] Workshop {action} requested from UI. Item={itemId}.");
+            if (!SteamInitializer.Initialized)
+            {
+                var result = RitsuSteamWorkshopActionResult.Unavailable(itemId);
+                ShowToast(
+                    L("ritsulib.steamWorkshop.toast.unavailable",
+                        "Steam Workshop is not available in this session."),
+                    RitsuToastLevel.Warning,
+                    false);
+                return result;
+            }
+
+            var actionResult = subscribe
+                ? RitsuSteamWorkshopUpdates.RequestSubscribe(itemId)
+                : RitsuSteamWorkshopUpdates.RequestUnsubscribe(itemId);
+            var title = L("ritsulib.steamWorkshop.toast.title", "Steam Workshop updates");
+            if (!actionResult.Available)
+            {
+                RitsuToastService.ShowWarning(
+                    actionResult.ErrorMessage ??
+                    L("ritsulib.steamWorkshop.toast.unavailable",
+                        "Steam Workshop is not available in this session."),
+                    title);
+                return actionResult;
+            }
+
+            if (!actionResult.Accepted)
+            {
+                RitsuToastService.ShowWarning(
+                    Format(
+                        subscribe
+                            ? "ritsulib.steamWorkshop.toast.subscribeFailed"
+                            : "ritsulib.steamWorkshop.toast.unsubscribeFailed",
+                        subscribe
+                            ? "Steam did not accept the subscribe request for {0}."
+                            : "Steam did not accept the unsubscribe request for {0}.",
+                        FormatWorkshopItemName(itemId, displayName)),
+                    title);
+                return actionResult;
+            }
+
+            RitsuToastService.ShowInfo(
+                Format(
+                    subscribe
+                        ? "ritsulib.steamWorkshop.toast.subscribeRequested"
+                        : "ritsulib.steamWorkshop.toast.unsubscribeRequested",
+                    subscribe
+                        ? "Asked Steam to subscribe to {0}. Check Steam Downloads and restart after it finishes."
+                        : "Asked Steam to unsubscribe from {0}. Restart the game after Steam applies the change.",
+                    FormatWorkshopItemName(itemId, displayName)),
+                title);
+            return actionResult;
+        }
+
+        private static string FormatWorkshopItemName(ulong itemId, string? displayName)
+        {
+            return string.IsNullOrWhiteSpace(displayName)
+                ? $"Workshop item {itemId}"
+                : $"{displayName.Trim()} ({itemId})";
+        }
+
         private static void ShowToast(RitsuToastRequest request, bool deferToMainMenu)
         {
             if (deferToMainMenu)
@@ -515,6 +684,7 @@ namespace STS2RitsuLib.Platform.Steam
         {
             Auto,
             Manual,
+            Subscription,
         }
 
         private sealed class WorkshopUpdateProgressToast(CheckSource source)

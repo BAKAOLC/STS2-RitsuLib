@@ -22,6 +22,7 @@ namespace STS2RitsuLib.Networking
                     entry.Version,
                     entry.Name,
                     entry.Source,
+                    entry.WorkshopItemId,
                     BuildFlags(entry)))
                 .ToArray();
             var json = JsonSerializer.Serialize(compact, JsonOptions);
@@ -48,6 +49,7 @@ namespace STS2RitsuLib.Networking
                         entry.Version,
                         entry.Name,
                         entry.Source,
+                        entry.WorkshopItemId,
                         (entry.Flags & 1) != 0,
                         (entry.Flags & 2) != 0,
                         (entry.Flags & 4) != 0))
@@ -98,6 +100,7 @@ namespace STS2RitsuLib.Networking
             string Version,
             string Name,
             string Source,
+            ulong? WorkshopItemId,
             int Flags);
     }
 }

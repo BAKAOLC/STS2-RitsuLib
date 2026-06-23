@@ -172,6 +172,13 @@ namespace STS2RitsuLib.Settings
                         .WithVisibleWhen(SteamWorkshopUpdateCoordinator.CanUseSteamWorkshopUpdates)
                         .WithTitle(T("ritsulib.section.steamWorkshopUpdates.title", "Steam Workshop updates"))
                         .Collapsible()
+                        .AddSubpage(
+                            "steam_workshop_management_open",
+                            T("ritsulib.steamWorkshopManagement.pageLink.label", "Steam Workshop management"),
+                            "steam-workshop-management",
+                            T("button.open", "Open"),
+                            T("ritsulib.steamWorkshopManagement.pageLink.description",
+                                "Subscribe, unsubscribe, and inspect Workshop item states."))
                         .AddToggle(
                             "steam_workshop_auto_update_check_enabled",
                             T("ritsulib.steamWorkshop.autoUpdateCheck.label", "Auto-check Workshop updates"),

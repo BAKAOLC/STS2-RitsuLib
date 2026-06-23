@@ -26,7 +26,8 @@ namespace STS2RitsuLib.Networking.JoinDiagnostics
         string Id,
         string Version,
         string Name,
-        string Source);
+        string Source,
+        ulong? WorkshopItemId);
 
     internal sealed record JoinPeerSnapshot(
         string GameVersion,
@@ -177,7 +178,8 @@ namespace STS2RitsuLib.Networking.JoinDiagnostics
                         id,
                         version,
                         manifest?.name ?? id,
-                        m.modSource.ToString());
+                        m.modSource.ToString(),
+                        Sts2ModManagerCompat.TryGetWorkshopItemId(m));
                 })
                 .ToArray();
         }
@@ -239,7 +241,7 @@ namespace STS2RitsuLib.Networking.JoinDiagnostics
                 var split = key.LastIndexOf('-');
                 var id = split > 0 ? key[..split] : key;
                 var version = split > 0 && split < key.Length - 1 ? key[(split + 1)..] : string.Empty;
-                return new JoinDiagnosticsModEntry(i, key, id, version, id, string.Empty);
+                return new JoinDiagnosticsModEntry(i, key, id, version, id, string.Empty, null);
             }).ToArray();
         }
 
@@ -260,6 +262,7 @@ namespace STS2RitsuLib.Networking.JoinDiagnostics
                     version,
                     id,
                     string.Empty,
+                    null,
                     true,
                     true,
                     ContentModLoadOrderInventory.IsDependencyLibraryId(id));

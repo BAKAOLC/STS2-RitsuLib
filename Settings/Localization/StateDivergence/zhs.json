@@ -3,6 +3,7 @@
   "summary": "在 checksum #{1} 中发现 {0} 个差异字段。",
   "button.details": "详情",
   "button.copyReport": "复制报告",
+  "button.openLogs": "打开日志",
   "button.close": "关闭",
   "toast.reportCopied.title": "状态分歧",
   "toast.reportCopied.body": "状态分歧报告已复制到剪贴板。",

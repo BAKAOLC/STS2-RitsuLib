@@ -1,6 +1,8 @@
 using System.Linq.Expressions;
 using System.Reflection;
 using System.Text;
+using System.Text.Json;
+using STS2RitsuLib.Compat;
 
 namespace STS2RitsuLib.Platform.Steam
 {
@@ -17,6 +19,8 @@ namespace STS2RitsuLib.Platform.Steam
         private static readonly HashSet<ulong> TriggeredDownloadItemIds = [];
 
         internal static bool IsAvailable => LazyBindings.Value != null;
+
+        internal static bool IsSearchAvailable => LazyBindings.Value?.SupportsSearch == true;
 
         internal static bool IsTriggeredDownloadItem(ulong itemId)
         {
@@ -50,6 +54,65 @@ namespace STS2RitsuLib.Platform.Steam
                 : bindings.MonitorDownloadsAsync(items, progress, stopWhenIdle, cancellationToken);
         }
 
+        internal static Task<IReadOnlyList<RitsuSteamWorkshopItem>> ListSubscribedItemsAsync(
+            CancellationToken cancellationToken = default)
+        {
+            var bindings = LazyBindings.Value;
+            return bindings == null
+                ? Task.FromResult<IReadOnlyList<RitsuSteamWorkshopItem>>([])
+                : bindings.ListSubscribedItemsAsync(cancellationToken);
+        }
+
+        internal static Task<IReadOnlyList<RitsuSteamWorkshopItem>> ListSubscribedItemsFromCacheAsync(
+            CancellationToken cancellationToken = default)
+        {
+            var bindings = LazyBindings.Value;
+            return bindings == null
+                ? Task.FromResult<IReadOnlyList<RitsuSteamWorkshopItem>>([])
+                : bindings.ListSubscribedItemsFromCacheAsync(cancellationToken);
+        }
+
+        internal static Task<IReadOnlyList<RitsuSteamWorkshopItem>> QueryItemsAsync(
+            IReadOnlyCollection<ulong> itemIds,
+            CancellationToken cancellationToken = default)
+        {
+            var bindings = LazyBindings.Value;
+            return bindings == null || itemIds.Count == 0
+                ? Task.FromResult<IReadOnlyList<RitsuSteamWorkshopItem>>([])
+                : bindings.QueryItemsAsync(itemIds, cancellationToken);
+        }
+
+        internal static Task<IReadOnlyList<RitsuSteamWorkshopItem>> SearchItemsAsync(
+            string query,
+            uint limit = 20,
+            CancellationToken cancellationToken = default)
+        {
+            var bindings = LazyBindings.Value;
+            return bindings == null || !bindings.SupportsSearch || string.IsNullOrWhiteSpace(query)
+                ? Task.FromResult<IReadOnlyList<RitsuSteamWorkshopItem>>([])
+                : bindings.SearchItemsAsync(query, limit, cancellationToken);
+        }
+
+        internal static RitsuSteamWorkshopActionResult RequestSubscribe(ulong itemId)
+        {
+            var bindings = LazyBindings.Value;
+            return bindings == null
+                ? RitsuSteamWorkshopActionResult.Unavailable(
+                    itemId,
+                    "Steamworks Workshop bindings are unavailable.")
+                : bindings.RequestSubscribe(itemId);
+        }
+
+        internal static RitsuSteamWorkshopActionResult RequestUnsubscribe(ulong itemId)
+        {
+            var bindings = LazyBindings.Value;
+            return bindings == null
+                ? RitsuSteamWorkshopActionResult.Unavailable(
+                    itemId,
+                    "Steamworks Workshop bindings are unavailable.")
+                : bindings.RequestUnsubscribe(itemId);
+        }
+
         private static Bindings? CreateBindings()
         {
             if (RitsuLibMobileSteamRuntime.SuppressNativeSteamIntegration)
@@ -75,6 +138,9 @@ namespace STS2RitsuLib.Platform.Steam
                 var steamUgcQueryCompletedType =
                     steamworksAssembly.GetType("Steamworks.SteamUGCQueryCompleted_t", false);
                 var steamApiCallType = steamworksAssembly.GetType("Steamworks.SteamAPICall_t", false);
+                var steamAppIdType = steamworksAssembly.GetType("Steamworks.AppId_t", false);
+                var eUgcQueryType = steamworksAssembly.GetType("Steamworks.EUGCQuery", false);
+                var eUgcMatchingType = steamworksAssembly.GetType("Steamworks.EUGCMatchingUGCType", false);
                 if (steamUgc == null ||
                     publishedFileIdType == null ||
                     steamUgcDetailsType == null ||
@@ -89,6 +155,7 @@ namespace STS2RitsuLib.Platform.Steam
                 var publishedFileIdCtor = publishedFileIdType.GetConstructor([typeof(ulong)]);
                 var publishedFileIdValue =
                     publishedFileIdType.GetField("m_PublishedFileId", BindingFlags.Public | BindingFlags.Instance);
+                var steamAppIdCtor = steamAppIdType?.GetConstructor([typeof(uint)]);
                 var getNumSubscribedItems = steamUgc.GetMethod(
                     "GetNumSubscribedItems",
                     BindingFlags.Public | BindingFlags.Static,
@@ -128,12 +195,33 @@ namespace STS2RitsuLib.Platform.Steam
                     null,
                     [publishedFileIdType, typeof(bool)],
                     null);
+                var subscribeItem = steamUgc.GetMethod(
+                    "SubscribeItem",
+                    BindingFlags.Public | BindingFlags.Static,
+                    null,
+                    [publishedFileIdType],
+                    null);
+                var unsubscribeItem = steamUgc.GetMethod(
+                    "UnsubscribeItem",
+                    BindingFlags.Public | BindingFlags.Static,
+                    null,
+                    [publishedFileIdType],
+                    null);
                 var createQueryUgcDetailsRequest = steamUgc.GetMethod(
                     "CreateQueryUGCDetailsRequest",
                     BindingFlags.Public | BindingFlags.Static,
                     null,
                     [publishedFileIdType.MakeArrayType(), typeof(uint)],
                     null);
+                var createQueryAllUgcRequest =
+                    steamAppIdType == null || eUgcQueryType == null || eUgcMatchingType == null
+                        ? null
+                        : steamUgc.GetMethod(
+                            "CreateQueryAllUGCRequest",
+                            BindingFlags.Public | BindingFlags.Static,
+                            null,
+                            [eUgcQueryType, eUgcMatchingType, steamAppIdType, steamAppIdType, typeof(uint)],
+                            null);
                 var sendQueryUgcRequest = steamUgc.GetMethod(
                     "SendQueryUGCRequest",
                     BindingFlags.Public | BindingFlags.Static,
@@ -161,6 +249,36 @@ namespace STS2RitsuLib.Platform.Steam
                     null,
                     [createQueryUgcDetailsRequest?.ReturnType ?? typeof(object), typeof(uint)],
                     null);
+                var setSearchText =
+                    createQueryUgcDetailsRequest == null
+                        ? null
+                        : steamUgc.GetMethod(
+                            "SetSearchText",
+                            BindingFlags.Public | BindingFlags.Static,
+                            null,
+                            [createQueryUgcDetailsRequest.ReturnType, typeof(string)],
+                            null);
+                var setReturnLongDescription =
+                    createQueryUgcDetailsRequest == null
+                        ? null
+                        : steamUgc.GetMethod(
+                            "SetReturnLongDescription",
+                            BindingFlags.Public | BindingFlags.Static,
+                            null,
+                            [createQueryUgcDetailsRequest.ReturnType, typeof(bool)],
+                            null);
+                var getQueryUgcPreviewUrl =
+                    createQueryUgcDetailsRequest == null
+                        ? null
+                        : steamUgc.GetMethod(
+                            "GetQueryUGCPreviewURL",
+                            BindingFlags.Public | BindingFlags.Static,
+                            null,
+                            [
+                                createQueryUgcDetailsRequest.ReturnType, typeof(uint), typeof(string).MakeByRefType(),
+                                typeof(uint),
+                            ],
+                            null);
                 var steamUgcDetailsItemId = steamUgcDetailsType.GetField(
                     "m_nPublishedFileId",
                     BindingFlags.Public | BindingFlags.Instance);
@@ -170,6 +288,17 @@ namespace STS2RitsuLib.Platform.Steam
                                            ?? steamUgcDetailsType.GetField(
                                                "m_rgchTitle_",
                                                BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance);
+                var steamUgcDetailsDescription = steamUgcDetailsType.GetField(
+                                                     "m_rgchDescription",
+                                                     BindingFlags.Public | BindingFlags.NonPublic |
+                                                     BindingFlags.Instance)
+                                                 ?? steamUgcDetailsType.GetField(
+                                                     "m_rgchDescription_",
+                                                     BindingFlags.Public | BindingFlags.NonPublic |
+                                                     BindingFlags.Instance);
+                var steamUgcDetailsOwner = steamUgcDetailsType.GetField(
+                    "m_ulSteamIDOwner",
+                    BindingFlags.Public | BindingFlags.Instance);
                 var steamUgcDetailsUpdated = steamUgcDetailsType.GetField(
                     "m_rtimeUpdated",
                     BindingFlags.Public | BindingFlags.Instance);
@@ -213,6 +342,8 @@ namespace STS2RitsuLib.Platform.Steam
                     getItemInstallInfo == null ||
                     getItemDownloadInfo == null ||
                     downloadItem == null ||
+                    subscribeItem == null ||
+                    unsubscribeItem == null ||
                     createQueryUgcDetailsRequest == null ||
                     sendQueryUgcRequest == null ||
                     getQueryUgcResult == null ||
@@ -239,20 +370,31 @@ namespace STS2RitsuLib.Platform.Steam
                 return new(
                     publishedFileIdType,
                     publishedFileIdValue,
+                    steamAppIdCtor,
+                    createQueryAllUgcRequest,
                     getNumSubscribedItems,
                     getSubscribedItems,
                     getItemState,
                     getItemInstallInfo,
                     getItemDownloadInfo,
                     downloadItem,
+                    subscribeItem,
+                    unsubscribeItem,
                     createQueryUgcDetailsRequest,
                     sendQueryUgcRequest,
                     getQueryUgcResult,
                     releaseQueryUgcRequest,
                     setAllowCachedResponse,
+                    setSearchText,
+                    setReturnLongDescription,
+                    getQueryUgcPreviewUrl,
+                    eUgcQueryType,
+                    eUgcMatchingType,
                     steamUgcDetailsType,
                     steamUgcDetailsItemId,
                     steamUgcDetailsTitle,
+                    steamUgcDetailsDescription,
+                    steamUgcDetailsOwner,
                     steamUgcDetailsUpdated,
                     queryCompletedResult,
                     queryCompletedReturned,
@@ -288,6 +430,7 @@ namespace STS2RitsuLib.Platform.Steam
                 return ItemStateFlags.Default;
 
             return new(
+                GetEnumFlag(type, "k_EItemStateSubscribed", ItemStateFlags.Default.Subscribed),
                 GetEnumFlag(type, "k_EItemStateInstalled", ItemStateFlags.Default.Installed),
                 GetEnumFlag(type, "k_EItemStateNeedsUpdate", ItemStateFlags.Default.NeedsUpdate),
                 GetEnumFlag(type, "k_EItemStateDownloading", ItemStateFlags.Default.Downloading),
@@ -315,20 +458,31 @@ namespace STS2RitsuLib.Platform.Steam
         private sealed class Bindings(
             Type publishedFileIdType,
             FieldInfo publishedFileIdValue,
+            ConstructorInfo? steamAppIdCtor,
+            MethodInfo? createQueryAllUgcRequest,
             MethodInfo getNumSubscribedItems,
             MethodInfo getSubscribedItems,
             MethodInfo getItemState,
             MethodInfo getItemInstallInfo,
             MethodInfo getItemDownloadInfo,
             MethodInfo downloadItem,
+            MethodInfo subscribeItem,
+            MethodInfo unsubscribeItem,
             MethodInfo createQueryUgcDetailsRequest,
             MethodInfo sendQueryUgcRequest,
             MethodInfo getQueryUgcResult,
             MethodInfo releaseQueryUgcRequest,
             MethodInfo setAllowCachedResponse,
+            MethodInfo? setSearchText,
+            MethodInfo? setReturnLongDescription,
+            MethodInfo? getQueryUgcPreviewUrl,
+            Type? eUgcQueryType,
+            Type? eUgcMatchingType,
             Type steamUgcDetailsType,
             FieldInfo steamUgcDetailsItemId,
             FieldInfo? steamUgcDetailsTitle,
+            FieldInfo? steamUgcDetailsDescription,
+            FieldInfo? steamUgcDetailsOwner,
             FieldInfo steamUgcDetailsUpdated,
             FieldInfo queryCompletedResult,
             FieldInfo queryCompletedReturned,
@@ -339,6 +493,18 @@ namespace STS2RitsuLib.Platform.Steam
             Type callResultDelegateType,
             ItemStateFlags itemStateFlags)
         {
+            private static readonly Lock ManifestCacheSyncRoot = new();
+
+            private static readonly Dictionary<string, LocalWorkshopManifest> LocalManifestCache =
+                new(StringComparer.OrdinalIgnoreCase);
+
+            internal bool SupportsSearch =>
+                steamAppIdCtor != null &&
+                createQueryAllUgcRequest != null &&
+                setSearchText != null &&
+                eUgcQueryType != null &&
+                eUgcMatchingType != null;
+
             // ReSharper disable once MemberHidesStaticFromOuterClass
             internal async Task<RitsuSteamWorkshopUpdateResult> TriggerMissingUpdatesAsync(
                 IProgress<RitsuSteamWorkshopUpdateProgress>? progress,
@@ -399,6 +565,7 @@ namespace STS2RitsuLib.Platform.Steam
                     RitsuLibFramework.Logger.Info(
                         $"[SteamWorkshopUpdate] Refreshed Workshop details for {remoteUpdateTimes.Count}/{items.Count} subscribed item(s).");
                     var previousUpdateTimes = SteamWorkshopUpdateSnapshotStore.GetItems();
+                    var localManifests = BuildLocalManifestByWorkshopItemId();
 
                     var inspected = 0;
                     var needsUpdate = 0;
@@ -422,7 +589,7 @@ namespace STS2RitsuLib.Platform.Steam
                         var hasRemoteDetails = remoteUpdateTimes.TryGetValue(item.Id, out var remoteDetails);
                         var stateNeedsUpdate = HasFlag(item.State, itemStateFlags.NeedsUpdate);
                         var remoteNeedsUpdate = hasRemoteDetails &&
-                                                item.LocalTimestamp is { } localTimestamp &&
+                                                item.Install.LocalTimestamp is { } localTimestamp &&
                                                 remoteDetails.Updated > localTimestamp;
                         if (!stateNeedsUpdate && !remoteNeedsUpdate)
                         {
@@ -432,14 +599,14 @@ namespace STS2RitsuLib.Platform.Steam
 
                         needsUpdate++;
                         var displayName = hasRemoteDetails
-                            ? ResolveItemDisplayName(item, remoteDetails)
+                            ? ResolveItemDisplayName(item, remoteDetails, localManifests)
                             : $"Workshop item {item.Id}";
                         if (hasRemoteDetails &&
                             (!previousUpdateTimes.TryGetValue(item.Id, out var previous) ||
                              previous.Updated != remoteDetails.Updated))
                             changedItems.Add(new(item.Id, displayName, remoteDetails.Updated));
                         RitsuLibFramework.Logger.Info(
-                            $"[SteamWorkshopUpdate] Workshop item {item.Id} needs update. State={item.State}, LocalTimestamp={item.LocalTimestamp?.ToString() ?? "<unknown>"}, RemoteUpdated={(hasRemoteDetails ? remoteDetails.Updated.ToString() : "<unknown>")}.");
+                            $"[SteamWorkshopUpdate] Workshop item {item.Id} needs update. State={item.State}, LocalTimestamp={item.Install.LocalTimestamp?.ToString() ?? "<unknown>"}, RemoteUpdated={(hasRemoteDetails ? remoteDetails.Updated.ToString() : "<unknown>")}.");
                         if (HasFlag(item.State, itemStateFlags.Downloading) ||
                             HasFlag(item.State, itemStateFlags.DownloadPending))
                         {
@@ -578,6 +745,144 @@ namespace STS2RitsuLib.Platform.Steam
                 return false;
             }
 
+            internal async Task<IReadOnlyList<RitsuSteamWorkshopItem>> ListSubscribedItemsAsync(
+                CancellationToken cancellationToken)
+            {
+                var subscribedCount = Convert.ToUInt32(getNumSubscribedItems.Invoke(null, null));
+                if (subscribedCount == 0)
+                    return [];
+
+                var itemArray = Array.CreateInstance(publishedFileIdType, subscribedCount);
+                var actualCount = Convert.ToUInt32(getSubscribedItems.Invoke(null, [itemArray, subscribedCount]));
+                var snapshots = await BuildItemSnapshotsAsync(itemArray, actualCount, null, cancellationToken)
+                    .ConfigureAwait(false);
+                return await BuildWorkshopItemsAsync(snapshots, cancellationToken).ConfigureAwait(false);
+            }
+
+            internal async Task<IReadOnlyList<RitsuSteamWorkshopItem>> ListSubscribedItemsFromCacheAsync(
+                CancellationToken cancellationToken)
+            {
+                await Task.Delay(1, cancellationToken).ConfigureAwait(false);
+                cancellationToken.ThrowIfCancellationRequested();
+                return BuildWorkshopItemsFromCache(ReadSubscribedItemSnapshots());
+            }
+
+            internal async Task<IReadOnlyList<RitsuSteamWorkshopItem>> QueryItemsAsync(
+                IReadOnlyCollection<ulong> itemIds,
+                CancellationToken cancellationToken)
+            {
+                var ids = itemIds
+                    .Where(static id => id != 0)
+                    .Distinct()
+                    .ToArray();
+                if (ids.Length == 0)
+                    return [];
+
+                var snapshots = await BuildItemSnapshotsAsync(ids, null, cancellationToken).ConfigureAwait(false);
+                return await BuildWorkshopItemsAsync(snapshots, cancellationToken).ConfigureAwait(false);
+            }
+
+            internal async Task<IReadOnlyList<RitsuSteamWorkshopItem>> SearchItemsAsync(
+                string query,
+                uint limit,
+                CancellationToken cancellationToken)
+            {
+                if (!SupportsSearch || string.IsNullOrWhiteSpace(query))
+                    return [];
+
+                var appId = steamAppIdCtor!.Invoke([Const.Sts2SteamAppId]);
+                var queryHandle = createQueryAllUgcRequest!.Invoke(null,
+                [
+                    Enum.Parse(eUgcQueryType!, "k_EUGCQuery_RankedByTextSearch"),
+                    Enum.Parse(eUgcMatchingType!, "k_EUGCMatchingUGCType_Items"),
+                    appId,
+                    appId,
+                    1u,
+                ]);
+                if (queryHandle == null)
+                    return [];
+
+                try
+                {
+                    setSearchText!.Invoke(null, [queryHandle, query.Trim()]);
+                    setReturnLongDescription?.Invoke(null, [queryHandle, true]);
+                    setAllowCachedResponse.Invoke(null, [queryHandle, 0u]);
+                    var apiCall = sendQueryUgcRequest.Invoke(null, [queryHandle]);
+                    if (apiCall == null || Convert.ToUInt64(steamApiCallValue.GetValue(apiCall)) == 0)
+                    {
+                        RitsuLibFramework.Logger.Warn(
+                            "[SteamWorkshopUpdate] Steam rejected Workshop search query.");
+                        return [];
+                    }
+
+                    var queryCompleted = await WaitForQueryAsync(apiCall, cancellationToken)
+                        .ConfigureAwait(false);
+                    if (queryCompleted == null)
+                        return [];
+
+                    if (!IsResultOk(queryCompleted))
+                    {
+                        RitsuLibFramework.Logger.Warn(
+                            $"[SteamWorkshopUpdate] Workshop search query failed: {queryCompletedResult.GetValue(queryCompleted)}.");
+                        return [];
+                    }
+
+                    var returned = Math.Min(GetReturnedCount(queryCompleted), limit);
+                    var details = ReadQueryResults(queryHandle, returned);
+                    var localManifests = BuildLocalManifestByWorkshopItemId();
+                    return details.Values
+                        .Select(detail => BuildWorkshopItem(detail, localManifests))
+                        .Where(static item => item.Id != 0)
+                        .OrderBy(static item => item.DisplayName, StringComparer.OrdinalIgnoreCase)
+                        .ThenBy(static item => item.Id)
+                        .ToArray();
+                }
+                finally
+                {
+                    releaseQueryUgcRequest.Invoke(null, [queryHandle]);
+                }
+            }
+
+            internal RitsuSteamWorkshopActionResult RequestSubscribe(ulong itemId)
+            {
+                return InvokeItemAction(itemId, subscribeItem, "subscribe");
+            }
+
+            internal RitsuSteamWorkshopActionResult RequestUnsubscribe(ulong itemId)
+            {
+                return InvokeItemAction(itemId, unsubscribeItem, "unsubscribe");
+            }
+
+            private IReadOnlyList<ItemSnapshot> ReadSubscribedItemSnapshots()
+            {
+                var subscribedCount = Convert.ToUInt32(getNumSubscribedItems.Invoke(null, null));
+                if (subscribedCount == 0)
+                    return [];
+
+                var itemArray = Array.CreateInstance(publishedFileIdType, subscribedCount);
+                var actualCount = Convert.ToUInt32(getSubscribedItems.Invoke(null, [itemArray, subscribedCount]));
+                List<ItemSnapshot> items = [];
+                for (var i = 0; i < actualCount; i++)
+                {
+                    var item = itemArray.GetValue(i);
+                    if (item == null)
+                        continue;
+
+                    var state = Convert.ToUInt32(getItemState.Invoke(null, [item]));
+                    var itemId = GetItemId(item);
+                    if (itemId == 0)
+                        continue;
+
+                    items.Add(new(
+                        item,
+                        itemId,
+                        state,
+                        TryGetInstallSnapshot(item, state)));
+                }
+
+                return items;
+            }
+
             private async Task<IReadOnlyList<ItemSnapshot>> BuildItemSnapshotsAsync(
                 Array itemArray,
                 uint actualCount,
@@ -609,7 +914,7 @@ namespace STS2RitsuLib.Platform.Steam
                         item,
                         itemId,
                         state,
-                        TryGetLocalTimestamp(item, state)));
+                        TryGetInstallSnapshot(item, state)));
                     ReportProgress(i + 1);
                 }
 
@@ -622,6 +927,87 @@ namespace STS2RitsuLib.Platform.Steam
                         Math.Min((int)actualCount, completed),
                         (int)Math.Max(1u, actualCount)));
                 }
+            }
+
+            private async Task<IReadOnlyList<RitsuSteamWorkshopItem>> BuildWorkshopItemsAsync(
+                IReadOnlyList<ItemSnapshot> snapshots,
+                CancellationToken cancellationToken)
+            {
+                if (snapshots.Count == 0)
+                    return [];
+
+                var localManifests = BuildLocalManifestByWorkshopItemId();
+                var details = await QueryRemoteUpdateTimesAsync(snapshots, null, cancellationToken)
+                    .ConfigureAwait(false);
+                return snapshots
+                    .Select(snapshot =>
+                    {
+                        details.TryGetValue(snapshot.Id, out var detail);
+                        var manifest = localManifests.TryGetValue(snapshot.Id, out var modManagerManifest)
+                            ? modManagerManifest
+                            : TryReadLocalManifest(snapshot.Install.FolderPath);
+                        return new RitsuSteamWorkshopItem(
+                            snapshot.Id,
+                            ResolveItemDisplayName(snapshot, detail, manifest),
+                            manifest.ModId,
+                            manifest.Author,
+                            detail.OwnerSteamId,
+                            detail.Description,
+                            detail.PreviewUrl,
+                            HasFlag(snapshot.State, itemStateFlags.Subscribed),
+                            HasFlag(snapshot.State, itemStateFlags.Installed),
+                            HasFlag(snapshot.State, itemStateFlags.NeedsUpdate),
+                            HasFlag(snapshot.State, itemStateFlags.Downloading),
+                            HasFlag(snapshot.State, itemStateFlags.DownloadPending),
+                            snapshot.Install.LocalTimestamp,
+                            detail.Updated == 0 ? null : detail.Updated);
+                    })
+                    .OrderBy(static item => item.DisplayName, StringComparer.OrdinalIgnoreCase)
+                    .ThenBy(static item => item.Id)
+                    .ToArray();
+            }
+
+            private IReadOnlyList<RitsuSteamWorkshopItem> BuildWorkshopItemsFromCache(
+                IReadOnlyList<ItemSnapshot> snapshots)
+            {
+                if (snapshots.Count == 0)
+                    return [];
+
+                var localManifests = BuildLocalManifestByWorkshopItemId();
+                var cachedDetails = SteamWorkshopUpdateSnapshotStore.GetItems();
+                return snapshots
+                    .Select(snapshot =>
+                    {
+                        var manifest = localManifests.TryGetValue(snapshot.Id, out var modManagerManifest)
+                            ? modManagerManifest
+                            : TryReadLocalManifest(snapshot.Install.FolderPath);
+                        cachedDetails.TryGetValue(snapshot.Id, out var cached);
+                        var detail = new RemoteItemDetails(
+                            snapshot.Id,
+                            cached.Updated,
+                            NormalizeString(cached.Title),
+                            null,
+                            null,
+                            null);
+                        return new RitsuSteamWorkshopItem(
+                            snapshot.Id,
+                            ResolveItemDisplayName(snapshot, detail, manifest),
+                            manifest.ModId,
+                            manifest.Author,
+                            null,
+                            null,
+                            null,
+                            HasFlag(snapshot.State, itemStateFlags.Subscribed),
+                            HasFlag(snapshot.State, itemStateFlags.Installed),
+                            HasFlag(snapshot.State, itemStateFlags.NeedsUpdate),
+                            HasFlag(snapshot.State, itemStateFlags.Downloading),
+                            HasFlag(snapshot.State, itemStateFlags.DownloadPending),
+                            snapshot.Install.LocalTimestamp,
+                            cached.Updated == 0 ? null : cached.Updated);
+                    })
+                    .OrderBy(static item => item.DisplayName, StringComparer.OrdinalIgnoreCase)
+                    .ThenBy(static item => item.Id)
+                    .ToArray();
             }
 
             private async Task<IReadOnlyList<ItemSnapshot>> BuildItemSnapshotsAsync(
@@ -646,7 +1032,7 @@ namespace STS2RitsuLib.Platform.Steam
                         item,
                         itemIds[i],
                         state,
-                        TryGetLocalTimestamp(item, state)));
+                        TryGetInstallSnapshot(item, state)));
                     ReportProgress(i + 1);
                 }
 
@@ -719,6 +1105,7 @@ namespace STS2RitsuLib.Platform.Steam
 
                 try
                 {
+                    setReturnLongDescription?.Invoke(null, [queryHandle, true]);
                     setAllowCachedResponse.Invoke(null, [queryHandle, 0u]);
                     var apiCall = sendQueryUgcRequest.Invoke(null, [queryHandle]);
                     if (apiCall == null || Convert.ToUInt64(steamApiCallValue.GetValue(apiCall)) == 0)
@@ -813,8 +1200,14 @@ namespace STS2RitsuLib.Platform.Steam
                     var itemId = GetItemId(item);
                     var detail = args[2]!;
                     var updated = Convert.ToUInt32(steamUgcDetailsUpdated.GetValue(detail));
-                    if (itemId != 0 && updated != 0)
-                        detailsByItem[itemId] = new(updated, ReadItemTitle(detail));
+                    if (itemId != 0)
+                        detailsByItem[itemId] = new(
+                            itemId,
+                            updated,
+                            ReadItemTitle(detail),
+                            ReadItemDescription(detail),
+                            TryReadOwnerSteamId(detail),
+                            ReadPreviewUrl(queryHandle, i));
                 }
 
                 return detailsByItem;
@@ -843,6 +1236,34 @@ namespace STS2RitsuLib.Platform.Steam
                 }
             }
 
+            private RitsuSteamWorkshopActionResult InvokeItemAction(
+                ulong itemId,
+                MethodInfo action,
+                string actionName)
+            {
+                if (itemId == 0)
+                    return new(true, false, itemId, "Workshop item id must be positive.");
+
+                if (CreatePublishedFileId(itemId) is not { } item)
+                    return new(true, false, itemId, "Could not create Steam Workshop item id.");
+
+                try
+                {
+                    var apiCall = action.Invoke(null, [item]);
+                    var accepted = apiCall != null && Convert.ToUInt64(steamApiCallValue.GetValue(apiCall)) != 0;
+                    if (!accepted)
+                        RitsuLibFramework.Logger.Warn(
+                            $"[SteamWorkshopUpdate] Steam rejected Workshop {actionName} request for item {itemId}.");
+                    return new(true, accepted, itemId, accepted ? null : "Steam rejected the request.");
+                }
+                catch (Exception ex)
+                {
+                    RitsuLibFramework.Logger.Warn(
+                        $"[SteamWorkshopUpdate] Workshop {actionName} request failed for item {itemId}: {ex.Message}");
+                    return new(true, false, itemId, ex.Message);
+                }
+            }
+
             private bool TryGetDownloadInfo(object item, out ulong bytesDownloaded, out ulong bytesTotal)
             {
                 bytesDownloaded = 0;
@@ -863,25 +1284,145 @@ namespace STS2RitsuLib.Platform.Steam
                 }
             }
 
-            private string ResolveItemDisplayName(ItemSnapshot item, RemoteItemDetails remoteDetails)
+            private string ResolveItemDisplayName(
+                ItemSnapshot item,
+                RemoteItemDetails remoteDetails,
+                IReadOnlyDictionary<ulong, LocalWorkshopManifest> localManifests)
             {
-                return string.IsNullOrWhiteSpace(remoteDetails.Title)
-                    ? $"Workshop item {item.Id}"
-                    : remoteDetails.Title;
+                return ResolveItemDisplayName(
+                    item,
+                    remoteDetails,
+                    localManifests.TryGetValue(item.Id, out var manifest)
+                        ? manifest
+                        : TryReadLocalManifest(item.Install.FolderPath));
+            }
+
+            private static string ResolveItemDisplayName(
+                ItemSnapshot item,
+                RemoteItemDetails remoteDetails,
+                LocalWorkshopManifest manifest)
+            {
+                if (!string.IsNullOrWhiteSpace(remoteDetails.Title))
+                    return remoteDetails.Title;
+                if (!string.IsNullOrWhiteSpace(manifest.Name))
+                    return manifest.Name;
+                if (!string.IsNullOrWhiteSpace(manifest.ModId))
+                    return manifest.ModId;
+                return $"Workshop item {item.Id}";
+            }
+
+            private RitsuSteamWorkshopItem BuildWorkshopItem(
+                RemoteItemDetails detail,
+                IReadOnlyDictionary<ulong, LocalWorkshopManifest> localManifests)
+            {
+                if (detail.Id == 0 || CreatePublishedFileId(detail.Id) is not { } item)
+                    return new(
+                        0,
+                        "Workshop item 0",
+                        null,
+                        null,
+                        detail.OwnerSteamId,
+                        detail.Description,
+                        detail.PreviewUrl,
+                        false,
+                        false,
+                        false,
+                        false,
+                        false,
+                        null,
+                        detail.Updated == 0 ? null : detail.Updated);
+
+                var state = Convert.ToUInt32(getItemState.Invoke(null, [item]));
+                var install = TryGetInstallSnapshot(item, state);
+                var manifest = localManifests.TryGetValue(detail.Id, out var modManagerManifest)
+                    ? modManagerManifest
+                    : TryReadLocalManifest(install.FolderPath);
+                return new(
+                    detail.Id,
+                    string.IsNullOrWhiteSpace(detail.Title)
+                        ? !string.IsNullOrWhiteSpace(manifest.Name)
+                            ? manifest.Name
+                            : $"Workshop item {detail.Id}"
+                        : detail.Title,
+                    manifest.ModId,
+                    manifest.Author,
+                    detail.OwnerSteamId,
+                    detail.Description,
+                    detail.PreviewUrl,
+                    HasFlag(state, itemStateFlags.Subscribed),
+                    HasFlag(state, itemStateFlags.Installed),
+                    HasFlag(state, itemStateFlags.NeedsUpdate),
+                    HasFlag(state, itemStateFlags.Downloading),
+                    HasFlag(state, itemStateFlags.DownloadPending),
+                    install.LocalTimestamp,
+                    detail.Updated == 0 ? null : detail.Updated);
+            }
+
+            private static IReadOnlyDictionary<ulong, LocalWorkshopManifest> BuildLocalManifestByWorkshopItemId()
+            {
+                try
+                {
+                    Dictionary<ulong, LocalWorkshopManifest> manifests = [];
+                    foreach (var mod in Sts2ModManagerCompat.BuildModInfos(source: RitsuModSource.SteamWorkshop))
+                    {
+                        if (mod.WorkshopItemId is not { } workshopItemId || workshopItemId == 0)
+                            continue;
+
+                        manifests.TryAdd(workshopItemId, new(mod.Id, mod.Name, mod.Author));
+                    }
+
+                    return manifests;
+                }
+                catch (Exception ex)
+                {
+                    RitsuLibFramework.Logger.Warn(
+                        $"[SteamWorkshopUpdate] Failed to read Workshop manifest data from ModManager: {ex.Message}");
+                    return new Dictionary<ulong, LocalWorkshopManifest>();
+                }
             }
 
             private string? ReadItemTitle(object details)
             {
-                if (steamUgcDetailsTitle == null)
+                return ReadItemText(details, steamUgcDetailsTitle);
+            }
+
+            private string? ReadItemDescription(object details)
+            {
+                return ReadItemText(details, steamUgcDetailsDescription);
+            }
+
+            private string? ReadPreviewUrl(object queryHandle, uint itemIndex)
+            {
+                if (getQueryUgcPreviewUrl == null)
                     return null;
 
                 try
                 {
-                    return steamUgcDetailsTitle.GetValue(details) switch
+                    object?[] args = [queryHandle, itemIndex, string.Empty, 1024u];
+                    return getQueryUgcPreviewUrl.Invoke(null, args) is true &&
+                           args[2] is string url &&
+                           !string.IsNullOrWhiteSpace(url)
+                        ? url.Trim()
+                        : null;
+                }
+                catch
+                {
+                    return null;
+                }
+            }
+
+            private static string? ReadItemText(object details, FieldInfo? field)
+            {
+                if (field == null)
+                    return null;
+
+                try
+                {
+                    return field.GetValue(details) switch
                     {
-                        string title when !string.IsNullOrWhiteSpace(title) => title.Trim(),
-                        char[] chars => new string(chars).TrimEnd('\0').Trim(),
-                        byte[] bytes => Encoding.UTF8.GetString(bytes).TrimEnd('\0').Trim(),
+                        string text when !string.IsNullOrWhiteSpace(text) => text.Trim(),
+                        char[] chars => TrimText(new(chars)),
+                        byte[] bytes => TrimText(Encoding.UTF8.GetString(bytes)),
                         _ => null,
                     };
                 }
@@ -891,22 +1432,182 @@ namespace STS2RitsuLib.Platform.Steam
                 }
             }
 
-            private uint? TryGetLocalTimestamp(object item, uint state)
+            private static string? TrimText(string text)
+            {
+                return NormalizeString(text.TrimEnd('\0'));
+            }
+
+            private InstalledItemSnapshot TryGetInstallSnapshot(object item, uint state)
             {
                 if (!HasFlag(state, itemStateFlags.Installed))
-                    return null;
+                    return default;
 
                 try
                 {
                     object?[] args = [item, 0UL, string.Empty, 4096u, 0u];
-                    return getItemInstallInfo.Invoke(null, args) is true
-                        ? Convert.ToUInt32(args[4])
-                        : null;
+                    if (getItemInstallInfo.Invoke(null, args) is not true)
+                        return default;
+
+                    return new(
+                        args[2] as string,
+                        Convert.ToUInt32(args[4]));
+                }
+                catch
+                {
+                    return default;
+                }
+            }
+
+            private ulong? TryReadOwnerSteamId(object details)
+            {
+                if (steamUgcDetailsOwner == null)
+                    return null;
+
+                try
+                {
+                    var value = steamUgcDetailsOwner.GetValue(details);
+                    return value == null ? null : Convert.ToUInt64(value);
                 }
                 catch
                 {
                     return null;
                 }
+            }
+
+            private static LocalWorkshopManifest TryReadLocalManifest(string? folderPath)
+            {
+                if (string.IsNullOrWhiteSpace(folderPath))
+                    return default;
+
+                var key = folderPath.Trim();
+                lock (ManifestCacheSyncRoot)
+                {
+                    if (LocalManifestCache.TryGetValue(key, out var cached))
+                        return cached;
+                }
+
+                try
+                {
+                    var manifestPath = FindLocalManifestPath(key);
+                    if (manifestPath == null)
+                        return Cache(default);
+
+                    using var document = JsonDocument.Parse(File.ReadAllText(manifestPath));
+                    var root = document.RootElement;
+                    return Cache(new(
+                        ReadString(root, "id") ?? ReadString(root, "mod_id"),
+                        ReadString(root, "name") ?? ReadString(root, "display_name"),
+                        ReadAuthor(root)));
+                }
+                catch (Exception ex)
+                {
+                    RitsuLibFramework.Logger.Warn(
+                        $"[SteamWorkshopUpdate] Failed to read local Workshop manifest '{key}': {ex.Message}");
+                    return Cache(default);
+                }
+
+                LocalWorkshopManifest Cache(LocalWorkshopManifest manifest)
+                {
+                    lock (ManifestCacheSyncRoot)
+                    {
+                        LocalManifestCache[key] = manifest;
+                    }
+
+                    return manifest;
+                }
+            }
+
+            private static string? FindLocalManifestPath(string folderPath)
+            {
+                var direct = Path.Combine(folderPath, "mod_manifest.json");
+                return File.Exists(direct) ? direct : null;
+            }
+
+            private static string? ReadAuthor(JsonElement root)
+            {
+                var author = ReadString(root, "author");
+                if (!string.IsNullOrWhiteSpace(author))
+                    return author;
+
+                if (!root.TryGetProperty("authors", out var authors))
+                    return null;
+
+                if (authors.ValueKind == JsonValueKind.String)
+                    return NormalizeString(authors.GetString());
+
+                if (authors.ValueKind != JsonValueKind.Array)
+                    return null;
+
+                var values = authors.EnumerateArray()
+                    .Select(static entry =>
+                        entry.ValueKind == JsonValueKind.String ? NormalizeString(entry.GetString()) : null)
+                    .Where(static entry => !string.IsNullOrWhiteSpace(entry))
+                    .ToArray();
+                return values.Length == 0 ? null : string.Join(", ", values);
+            }
+
+            private static string? ReadString(JsonElement root, string propertyName)
+            {
+                return root.TryGetProperty(propertyName, out var property) &&
+                       property.ValueKind == JsonValueKind.String
+                    ? NormalizeString(property.GetString())
+                    : null;
+            }
+
+            private static string? NormalizeString(string? value)
+            {
+                var trimmed = StripBbCode(value?.Trim() ?? string.Empty).Trim();
+                return string.IsNullOrWhiteSpace(trimmed) ? null : trimmed;
+            }
+
+            private static string StripBbCode(string value)
+            {
+                if (string.IsNullOrEmpty(value) || !value.Contains('['))
+                    return value;
+
+                var builder = new StringBuilder(value.Length);
+                for (var i = 0; i < value.Length; i++)
+                {
+                    if (value[i] != '[')
+                    {
+                        builder.Append(value[i]);
+                        continue;
+                    }
+
+                    var end = value.IndexOf(']', i + 1);
+                    if (end < 0 || !IsLikelyBbCodeTag(value.AsSpan(i + 1, end - i - 1)))
+                    {
+                        builder.Append(value[i]);
+                        continue;
+                    }
+
+                    i = end;
+                }
+
+                return builder.ToString();
+            }
+
+            private static bool IsLikelyBbCodeTag(ReadOnlySpan<char> tag)
+            {
+                tag = tag.Trim();
+                if (tag.IsEmpty)
+                    return false;
+
+                if (tag[0] == '/')
+                    tag = tag[1..].TrimStart();
+                if (tag.IsEmpty || !char.IsLetter(tag[0]))
+                    return false;
+
+                for (var i = 1; i < tag.Length; i++)
+                {
+                    var c = tag[i];
+                    if (c == '=' || char.IsWhiteSpace(c))
+                        return true;
+                    if (!char.IsLetterOrDigit(c) && c != '_')
+                        return false;
+                }
+
+                return true;
             }
 
             private ulong GetItemId(object item)
@@ -935,21 +1636,32 @@ namespace STS2RitsuLib.Platform.Steam
         }
 
         private readonly record struct ItemStateFlags(
+            uint Subscribed,
             uint Installed,
             uint NeedsUpdate,
             uint Downloading,
             uint DownloadPending)
         {
-            internal static ItemStateFlags Default => new(4, 8, 16, 32);
+            internal static ItemStateFlags Default => new(1, 4, 8, 16, 32);
         }
 
         private sealed record ItemSnapshot(
             object Handle,
             ulong Id,
             uint State,
-            uint? LocalTimestamp);
+            InstalledItemSnapshot Install);
 
-        private readonly record struct RemoteItemDetails(uint Updated, string? Title);
+        private readonly record struct InstalledItemSnapshot(string? FolderPath, uint? LocalTimestamp);
+
+        private readonly record struct RemoteItemDetails(
+            ulong Id,
+            uint Updated,
+            string? Title,
+            string? Description,
+            ulong? OwnerSteamId,
+            string? PreviewUrl);
+
+        private readonly record struct LocalWorkshopManifest(string? ModId, string? Name, string? Author);
 
         private sealed record DownloadMonitorItem(object Handle, string DisplayName);
     }
