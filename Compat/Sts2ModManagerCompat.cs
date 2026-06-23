@@ -1,6 +1,7 @@
 using System.Reflection;
 using MegaCrit.Sts2.Core.Localization;
 using MegaCrit.Sts2.Core.Modding;
+using STS2RitsuLib.Platform.Steam;
 
 namespace STS2RitsuLib.Compat
 {
@@ -19,6 +20,7 @@ namespace STS2RitsuLib.Compat
         private static readonly Func<Mod, Assembly?> ReadAssembly = CreateModAssemblyAccessor();
         private static readonly Func<Mod, IReadOnlyList<LocString>> ReadErrors = CreateModErrorsAccessor();
         private static readonly Func<Mod, string> ReadSource = CreateModSourceAccessor();
+        private static readonly Func<Mod, string?> ReadPath = CreateModPathAccessor();
         private static readonly Func<Mod, int, string> ReadLoadState = CreateLoadStateAccessor();
 
         private static readonly Func<ModManifest, string?> ReadManifestId =
@@ -26,6 +28,9 @@ namespace STS2RitsuLib.Compat
 
         private static readonly Func<ModManifest, string?> ReadManifestName =
             CreateManifestStringAccessor("name", static manifest => manifest.name);
+
+        private static readonly Func<ModManifest, string?> ReadManifestAuthor =
+            CreateManifestStringAccessor("author", static manifest => manifest.author);
 
         private static readonly Func<ModManifest, string?> ReadManifestVersion =
             CreateManifestStringAccessor("version", static manifest => manifest.version);
@@ -134,6 +139,28 @@ namespace STS2RitsuLib.Compat
                 .ToArray();
         }
 
+        internal static ulong? TryGetWorkshopItemId(Mod mod)
+        {
+            ArgumentNullException.ThrowIfNull(mod);
+            try
+            {
+                if (SteamWorkshopInstallSource.TryGetWorkshopItemIdFromPath(ReadPath(mod), out var pathItemId))
+                    return pathItemId;
+
+                var assembly = ReadAssembly(mod);
+                if (assembly != null &&
+                    SteamWorkshopInstallSource.TryGetWorkshopItemIdFromAssembly(assembly, out var assemblyItemId))
+                    return assemblyItemId;
+            }
+            catch (Exception ex)
+            {
+                RitsuLibFramework.Logger.Warn(
+                    $"[Compat] Failed to inspect Workshop item id for a registered mod: {ex.Message}");
+            }
+
+            return null;
+        }
+
         internal static bool TryGetBestModInfo(string modId, RitsuModSource? source, out RitsuModInfo? info)
         {
             info = BuildModInfos(modId, source).FirstOrDefault();
@@ -211,13 +238,15 @@ namespace STS2RitsuLib.Compat
                 return new(
                     id,
                     name,
+                    manifest == null ? null : ReadManifestAuthor(manifest),
                     manifest == null ? null : ReadManifestVersion(manifest),
                     ParseLoadState(ReadLoadState(mod, errors.Count)),
                     ParseSource(ReadSource(mod)),
                     manifest == null || ReadManifestAffectsGameplay(manifest),
                     assemblyName?.Name,
                     assemblyName?.Version?.ToString(),
-                    errors);
+                    errors,
+                    TryGetWorkshopItemId(mod));
             }
             catch (Exception ex)
             {
@@ -316,6 +345,15 @@ namespace STS2RitsuLib.Compat
 
             var getter = CreateUntypedMemberGetter(typeof(Mod), "modSource");
             return mod => getter?.Invoke(mod)?.ToString() ?? "None";
+        }
+
+        private static Func<Mod, string?> CreateModPathAccessor()
+        {
+            if (typeof(Mod).GetField("path", InstanceMemberFlags) != null)
+                return static mod => mod.path;
+
+            var getter = CreateUntypedMemberGetter(typeof(Mod), "path");
+            return mod => getter?.Invoke(mod) as string;
         }
 
         private static Func<Mod, int, string> CreateLoadStateAccessor()

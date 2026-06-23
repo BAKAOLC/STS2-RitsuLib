@@ -1,7 +1,8 @@
 using System.Globalization;
 using Godot;
 using Godot.Collections;
-using Environment = System.Environment;
+using STS2RitsuLib.Platform;
+using FileAccess = Godot.FileAccess;
 
 namespace STS2RitsuLib.Ui.Shell.Theme
 {
@@ -25,8 +26,14 @@ namespace STS2RitsuLib.Ui.Shell.Theme
         private static readonly System.Collections.Generic.Dictionary<string, Font> FontCache =
             new(StringComparer.Ordinal);
 
-        private static readonly bool IsProton = !string.IsNullOrEmpty(
-            Environment.GetEnvironmentVariable("STEAM_COMPAT_DATA_PATH"));
+        private static readonly bool IsProton = SteamCompatibilityRuntime.IsProtonLaunch;
+
+        private static readonly string[] ProtonCjkFallbackFontPaths =
+        [
+            @"C:\windows\Fonts\msyh.ttc",
+            @"C:\windows\Fonts\msyh.ttf",
+            @"C:\windows\Fonts\msgothic.ttc",
+        ];
 
         private static Font? _fallbackFont;
 
@@ -178,16 +185,24 @@ namespace STS2RitsuLib.Ui.Shell.Theme
                 foreach (var f in existing)
                     combined.Add(f);
 
-            AddDynamicFontIfAvailable(combined, @"C:\windows\Fonts\msyh.ttc");
-            AddDynamicFontIfAvailable(combined, @"C:\windows\Fonts\msyh.ttf");
-            AddDynamicFontIfAvailable(combined, @"C:\windows\Fonts\msgothic.ttc");
+            foreach (var path in ProtonCjkFallbackFontPaths)
+                AddFontFallbackIfAvailable(combined, path);
 
             baseFont.SetFallbacks(combined);
             baseFont.SetMeta(ProtonCjkFallbacksAppliedMetaKey, true);
         }
 
-        private static void AddDynamicFontIfAvailable(Array<Font> target, string path)
+        private static void AddFontFallbackIfAvailable(Array<Font> target, string path)
         {
+            if (TryLoadFontResource(path, out var resourceFont))
+            {
+                target.Add(resourceFont);
+                return;
+            }
+
+            if (!RawFontFileExists(path))
+                return;
+
             var font = new FontFile();
             if (font.LoadDynamicFont(path) == Error.Ok)
             {
@@ -196,6 +211,33 @@ namespace STS2RitsuLib.Ui.Shell.Theme
             }
 
             font.Dispose();
+        }
+
+        private static bool TryLoadFontResource(string path, out Font font)
+        {
+            font = null!;
+            if (!IsGodotPath(path) || !ResourceLoader.Exists(path))
+                return false;
+
+            var loaded = ResourceLoader.Load<Font>(path);
+            if (loaded == null || !GodotObject.IsInstanceValid(loaded))
+                return false;
+
+            font = loaded;
+            return true;
+        }
+
+        private static bool RawFontFileExists(string path)
+        {
+            return IsGodotPath(path)
+                ? FileAccess.FileExists(path)
+                : File.Exists(path);
+        }
+
+        private static bool IsGodotPath(string path)
+        {
+            return path.StartsWith("res://", StringComparison.OrdinalIgnoreCase) ||
+                   path.StartsWith("user://", StringComparison.OrdinalIgnoreCase);
         }
 
         private static Font GetFallbackFont()

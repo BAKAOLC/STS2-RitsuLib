@@ -26,7 +26,9 @@ namespace STS2RitsuLib.Content.Patches
     /// </summary>
     internal sealed class ModelIdSerializationCacheDynamicContentPatch : IPatchMethod
     {
+        private static int _staleCacheWarningLogged;
         internal static bool UsesDeterministicCache { get; private set; }
+        private static ModelDbCacheSignature? AppliedDeterministicCacheSignature { get; set; }
 
         private static IReadOnlyDictionary<ModelId, ModelSortIds> LocalOnlyModelSortIds { get; set; } =
             new Dictionary<ModelId, ModelSortIds>();
@@ -51,6 +53,7 @@ namespace STS2RitsuLib.Content.Patches
             if (mode == ModelDbDeterministicSortMode.Disabled)
             {
                 UsesDeterministicCache = false;
+                AppliedDeterministicCacheSignature = null;
                 PatchLog.For<ModelIdSerializationCacheDynamicContentPatch>().Info(
                     "[ModelIdSerializationCache] Deterministic final-content cache disabled by settings.");
                 return;
@@ -65,9 +68,39 @@ namespace STS2RitsuLib.Content.Patches
             return RebuildDeterministicCache(true);
         }
 
+        internal static ModelDbDeterministicCacheStatus GetDeterministicCacheStatus()
+        {
+            if (!UsesDeterministicCache)
+                return ModelDbDeterministicCacheStatus.Inactive("Stable sorting is not active.");
+
+            var applied = AppliedDeterministicCacheSignature;
+            if (applied == null)
+                return ModelDbDeterministicCacheStatus.Inactive(
+                    "Stable sorting is not verifiable because no RitsuLib cache signature is available.");
+
+            var current = TryCaptureCurrentCacheSignature();
+            if (current == null)
+                return ModelDbDeterministicCacheStatus.Inactive(
+                    "Stable sorting is not verifiable because ModelIdSerializationCache internals are not available.");
+
+            if (current == applied)
+                return ModelDbDeterministicCacheStatus.Active("Stable sorting");
+
+            const string reason =
+                "RitsuLib rebuilt the ModelIdSerializationCache, but the current cache no longer matches " +
+                "RitsuLib's deterministic signature. Another patch likely rewrote the cache or hash after RitsuLib.";
+            if (Interlocked.Exchange(ref _staleCacheWarningLogged, 1) == 0)
+                PatchLog.For<ModelIdSerializationCacheDynamicContentPatch>().Warn(
+                    $"[ModelIdSerializationCache] {reason} Expected {applied}; current {current}.");
+
+            return ModelDbDeterministicCacheStatus.Inactive(reason);
+        }
+
         private static ModelDbDeterministicCacheRebuildResult RebuildDeterministicCache(bool force)
         {
             UsesDeterministicCache = false;
+            AppliedDeterministicCacheSignature = null;
+
             var contentById = GetModelDbContentById();
             if (contentById == null || contentById.Count == 0)
                 return ModelDbDeterministicCacheRebuildResult.NotApplied("ModelDb content is not available.");
@@ -143,6 +176,8 @@ namespace STS2RitsuLib.Content.Patches
             var newHash = ComputeHash(modelEntries, epochIds, catList.Count, entList.Count, epochList.Count);
             SetStaticProperty(typeof(ModelIdSerializationCache), nameof(ModelIdSerializationCache.Hash), newHash);
             UsesDeterministicCache = true;
+            AppliedDeterministicCacheSignature = TryCaptureCurrentCacheSignature();
+            Interlocked.Exchange(ref _staleCacheWarningLogged, 0);
 
             return ModelDbDeterministicCacheRebuildResult.Rebuilt(initialHash, newHash);
         }
@@ -288,6 +323,48 @@ namespace STS2RitsuLib.Content.Patches
                 right.ModelType.Assembly.GetName().Name);
         }
 
+        private static ModelDbCacheSignature? TryCaptureCurrentCacheSignature()
+        {
+            var catList = GetStaticField<List<string>>(typeof(ModelIdSerializationCache), "_netIdToCategoryNameMap");
+            var entList = GetStaticField<List<string>>(typeof(ModelIdSerializationCache), "_netIdToEntryNameMap");
+            var epochList = GetStaticField<List<string>>(typeof(ModelIdSerializationCache), "_netIdToEpochNameMap");
+            if (catList == null || entList == null || epochList == null)
+                return null;
+
+            return new(
+                ModelIdSerializationCache.Hash,
+                ModelIdSerializationCache.CategoryIdBitSize,
+                ModelIdSerializationCache.EntryIdBitSize,
+                ModelIdSerializationCache.EpochIdBitSize,
+                catList.Count,
+                entList.Count,
+                epochList.Count,
+                StableHash(catList),
+                StableHash(entList),
+                StableHash(epochList));
+        }
+
+        private static uint StableHash(IEnumerable<string> values)
+        {
+            unchecked
+            {
+                var hash = 2166136261u;
+                foreach (var value in values)
+                {
+                    foreach (var ch in value)
+                    {
+                        hash ^= ch;
+                        hash *= 16777619u;
+                    }
+
+                    hash ^= 0xffu;
+                    hash *= 16777619u;
+                }
+
+                return hash;
+            }
+        }
+
         private static string ResolveOwnerModId(Type modelType)
         {
             return ModContentRegistry.TryGetOwnerModId(modelType, out var ownerModId)
@@ -380,6 +457,18 @@ namespace STS2RitsuLib.Content.Patches
 
         private readonly record struct ModelCacheEntry(Type ModelType, ModelId Id, string OwnerModId);
 
+        private sealed record ModelDbCacheSignature(
+            uint Hash,
+            int CategoryIdBitSize,
+            int EntryIdBitSize,
+            int EpochIdBitSize,
+            int CategoryCount,
+            int EntryCount,
+            int EpochCount,
+            uint CategoryMapHash,
+            uint EntryMapHash,
+            uint EpochMapHash);
+
         internal readonly record struct ModelDbDeterministicCacheRebuildResult(
             bool Applied,
             uint InitialHash,
@@ -394,6 +483,19 @@ namespace STS2RitsuLib.Content.Patches
             public static ModelDbDeterministicCacheRebuildResult NotApplied(string reason)
             {
                 return new(false, 0, 0, reason);
+            }
+        }
+
+        internal readonly record struct ModelDbDeterministicCacheStatus(bool IsActive, string Detail)
+        {
+            public static ModelDbDeterministicCacheStatus Active(string detail)
+            {
+                return new(true, detail);
+            }
+
+            public static ModelDbDeterministicCacheStatus Inactive(string detail)
+            {
+                return new(false, detail);
             }
         }
     }

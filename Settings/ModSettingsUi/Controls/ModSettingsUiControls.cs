@@ -4,11 +4,11 @@ using Godot.Collections;
 using MegaCrit.Sts2.addons.mega_text;
 using MegaCrit.Sts2.Core.ControllerInput;
 using MegaCrit.Sts2.Core.Nodes.CommonUi;
+using STS2RitsuLib.Platform;
 using STS2RitsuLib.RuntimeInput;
 using STS2RitsuLib.Ui.Shell;
 using STS2RitsuLib.Ui.Shell.Theme;
 using Array = System.Array;
-using Environment = System.Environment;
 
 namespace STS2RitsuLib.Settings
 {
@@ -2110,7 +2110,7 @@ namespace STS2RitsuLib.Settings
             if (_faceButton == null)
                 return;
 
-            if (!string.IsNullOrEmpty(Environment.GetEnvironmentVariable("STEAM_COMPAT_DATA_PATH")))
+            if (SteamCompatibilityRuntime.IsProtonLaunch)
             {
                 _faceButton.Icon = null;
                 _faceButton.ExpandIcon = false;

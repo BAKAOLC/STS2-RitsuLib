@@ -45,4 +45,32 @@ namespace STS2RitsuLib.Platform.Steam
     internal sealed record RitsuSteamWorkshopDownloadItem(ulong Id, string DisplayName);
 
     internal sealed record RitsuSteamWorkshopChangedItem(ulong Id, string DisplayName, uint RemoteUpdated);
+
+    internal sealed record RitsuSteamWorkshopItem(
+        ulong Id,
+        string DisplayName,
+        string? ModId,
+        string? Author,
+        ulong? OwnerSteamId,
+        string? Description,
+        string? PreviewUrl,
+        bool IsSubscribed,
+        bool IsInstalled,
+        bool NeedsUpdate,
+        bool IsDownloading,
+        bool IsDownloadPending,
+        uint? LocalUpdated,
+        uint? RemoteUpdated);
+
+    internal sealed record RitsuSteamWorkshopActionResult(
+        bool Available,
+        bool Accepted,
+        ulong ItemId,
+        string? ErrorMessage = null)
+    {
+        internal static RitsuSteamWorkshopActionResult Unavailable(ulong itemId, string? errorMessage = null)
+        {
+            return new(false, false, itemId, errorMessage);
+        }
+    }
 }

@@ -3,14 +3,23 @@ using MegaCrit.Sts2.Core.Models;
 namespace STS2RitsuLib.Content
 {
     /// <summary>
-    /// <para xml:lang="en">Merges RitsuLib-registered run modifiers and exclusivity groups into <see cref="ModelDb" /> lists.</para>
-    /// <para xml:lang="zh-CN">将 RitsuLib 注册的运行修饰符与互斥组合并到 <see cref="ModelDb" /> 列表中。</para>
+    ///     <para xml:lang="en">
+    ///         Merges RitsuLib-registered run modifiers and exclusivity groups into <see cref="ModelDb" />
+    ///         lists.
+    ///     </para>
+    ///     <para xml:lang="zh-CN">将 RitsuLib 注册的运行修饰符与互斥组合并到 <see cref="ModelDb" /> 列表中。</para>
     /// </summary>
     internal static class ModifierContentMerge
     {
         /// <summary>
-        /// <para xml:lang="en">Inserts registered modifiers before or after <paramref name="source" /> using <see cref="ModifierRegistration.ModifierListSortOrder" />.</para>
-        /// <para xml:lang="zh-CN">按 <see cref="ModifierRegistration.ModifierListSortOrder" /> 在 <paramref name="source" /> 前后插入已注册修饰符。</para>
+        ///     <para xml:lang="en">
+        ///         Inserts registered modifiers before or after <paramref name="source" /> using
+        ///         <see cref="ModifierRegistration.ModifierListSortOrder" />.
+        ///     </para>
+        ///     <para xml:lang="zh-CN">
+        ///         按 <see cref="ModifierRegistration.ModifierListSortOrder" /> 在 <paramref name="source" />
+        ///         前后插入已注册修饰符。
+        ///     </para>
         /// </summary>
         public static IReadOnlyList<ModifierModel> InsertModifiers(
             IReadOnlyList<ModifierModel> source,
@@ -28,8 +37,11 @@ namespace STS2RitsuLib.Content
         }
 
         /// <summary>
-        /// <para xml:lang="en">Merges registered exclusivity groups into <paramref name="source" />, combining overlapping sets.</para>
-        /// <para xml:lang="zh-CN">将已注册互斥组合并到 <paramref name="source" />，并合并存在交集的集合。</para>
+        ///     <para xml:lang="en">
+        ///         Merges registered exclusivity groups into <paramref name="source" />, combining overlapping
+        ///         sets.
+        ///     </para>
+        ///     <para xml:lang="zh-CN">将已注册互斥组合并到 <paramref name="source" />，并合并存在交集的集合。</para>
         /// </summary>
         public static IReadOnlyList<IReadOnlySet<ModifierModel>> MergeMutuallyExclusiveModifiers(
             IReadOnlyList<IReadOnlySet<ModifierModel>> source,
@@ -113,16 +125,16 @@ namespace STS2RitsuLib.Content
     }
 
     /// <summary>
-    /// <para xml:lang="en">Registration metadata for a mod run modifier list entry.</para>
-    /// <para xml:lang="zh-CN">mod 运行修饰符列表条目的注册元数据。</para>
+    ///     <para xml:lang="en">Registration metadata for a mod run modifier list entry.</para>
+    ///     <para xml:lang="zh-CN">mod 运行修饰符列表条目的注册元数据。</para>
     /// </summary>
     /// <param name="ModifierType">
-    /// <para xml:lang="en">Concrete <see cref="ModifierModel" /> type.</para>
-    /// <para xml:lang="zh-CN">具体 <see cref="ModifierModel" /> 类型。</para>
+    ///     <para xml:lang="en">Concrete <see cref="ModifierModel" /> type.</para>
+    ///     <para xml:lang="zh-CN">具体 <see cref="ModifierModel" /> 类型。</para>
     /// </param>
     /// <param name="ModifierListSortOrder">
-    /// <para xml:lang="en">Negative values insert before the current list segment; non-negative values insert after.</para>
-    /// <para xml:lang="zh-CN">负值插入当前列表段之前；非负值插入之后。</para>
+    ///     <para xml:lang="en">Negative values insert before the current list segment; non-negative values insert after.</para>
+    ///     <para xml:lang="zh-CN">负值插入当前列表段之前；非负值插入之后。</para>
     /// </param>
     internal readonly record struct ModifierRegistration(Type ModifierType, int ModifierListSortOrder);
 }

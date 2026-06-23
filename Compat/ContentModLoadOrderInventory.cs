@@ -59,6 +59,7 @@ namespace STS2RitsuLib.Compat
                     entry.Version,
                     entry.DisplayName,
                     entry.Source.ToString(),
+                    entry.WorkshopItemId,
                     entry.IsEnabled,
                     entry.AffectsGameplay,
                     relevantDependencyIds.Contains(entry.Id)))
@@ -230,6 +231,7 @@ namespace STS2RitsuLib.Compat
                 version,
                 displayName,
                 mod.modSource,
+                Sts2ModManagerCompat.TryGetWorkshopItemId(mod),
                 isEnabled,
                 manifest?.affectsGameplay ?? true,
                 ReadDependencyIds(manifest),
@@ -268,6 +270,7 @@ namespace STS2RitsuLib.Compat
             string Version,
             string DisplayName,
             ModSource Source,
+            ulong? WorkshopItemId,
             bool IsEnabled,
             bool AffectsGameplay,
             IReadOnlyList<string> Dependencies,
@@ -291,6 +294,7 @@ namespace STS2RitsuLib.Compat
         string Version,
         string Name,
         string Source,
+        ulong? WorkshopItemId,
         bool IsEnabled,
         bool AffectsGameplay,
         bool IsDependency);

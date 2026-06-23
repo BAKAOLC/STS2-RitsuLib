@@ -22,13 +22,19 @@ namespace STS2RitsuLib
         ///     Assembly / manifest version string.
         ///     程序集/清单版本字符串。
         /// </summary>
-        public const string Version = "0.4.34";
+        public const string Version = "0.4.35";
 
         /// <summary>
         ///     Steam Workshop item id for the official RitsuLib release.
         ///     官方 RitsuLib 发布使用的 Steam Workshop item id。
         /// </summary>
         public const ulong SteamWorkshopItemId = 3747602295;
+
+        /// <summary>
+        ///     Steam app id for Slay the Spire 2.
+        ///     Slay the Spire 2 的 Steam app id。
+        /// </summary>
+        public const uint Sts2SteamAppId = 2868840;
 
         /// <summary>
         ///     Root key for RitsuLib JSON settings under the mod’s user folder.

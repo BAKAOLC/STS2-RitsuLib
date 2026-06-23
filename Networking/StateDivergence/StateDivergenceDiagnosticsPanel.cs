@@ -4,6 +4,7 @@ using MegaCrit.Sts2.Core.ControllerInput;
 using MegaCrit.Sts2.Core.Nodes.CommonUi;
 using MegaCrit.Sts2.Core.Nodes.Screens.ScreenContext;
 using STS2RitsuLib.Compat;
+using STS2RitsuLib.Diagnostics;
 using STS2RitsuLib.Settings;
 using STS2RitsuLib.Ui.Shell;
 using STS2RitsuLib.Ui.Shell.Theme;
@@ -132,6 +133,15 @@ namespace STS2RitsuLib.Networking.StateDivergence
                 CustomMinimumSize = new(190f, RitsuShellTheme.Current.Metric.Entry.ValueMinHeight),
             };
             row.AddChild(export);
+
+            var logs = new ModSettingsTextButton(
+                T("button.openLogs", "Open logs"),
+                ModSettingsButtonTone.Normal,
+                OpenLogFolder)
+            {
+                CustomMinimumSize = new(170f, RitsuShellTheme.Current.Metric.Entry.ValueMinHeight),
+            };
+            row.AddChild(logs);
 
             var close = new ModSettingsTextButton(
                 T("button.close", "Close"),
@@ -685,6 +695,11 @@ namespace STS2RitsuLib.Networking.StateDivergence
             RitsuToastService.ShowInfo(
                 T("toast.reportCopied.body", "State divergence report copied to clipboard."),
                 T("toast.reportCopied.title", "State divergence"));
+        }
+
+        private void OpenLogFolder()
+        {
+            GameLogFolderOpener.OpenFromUi(T("toast.reportCopied.title", "State divergence"), "[StateDivergence]");
         }
 
         private string BuildExportReport()

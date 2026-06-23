@@ -1,5 +1,6 @@
 using Godot;
 using MegaCrit.Sts2.addons.mega_text;
+using MegaCrit.Sts2.Core.Assets;
 using MegaCrit.Sts2.Core.Nodes.Screens.Settings;
 using STS2RitsuLib.Ui.Shell.Theme;
 
@@ -118,6 +119,8 @@ namespace STS2RitsuLib.Settings
     /// </summary>
     internal sealed partial class ModSettingsGameSettingsEntryButton : NSettingsButton
     {
+        private const string SelectionReticleScenePath = "res://scenes/ui/selection_reticle.tscn";
+
         private readonly Action? _action;
         private readonly string? _text;
         private MegaLabel? _buttonLabel;
@@ -177,6 +180,8 @@ namespace STS2RitsuLib.Settings
             label.MinFontSize = 16;
             label.MaxFontSize = 28;
             AddChild(label);
+
+            AddChild(CreateSelectionReticle());
         }
 
         public ModSettingsGameSettingsEntryButton()
@@ -210,6 +215,18 @@ namespace STS2RitsuLib.Settings
             base.OnRelease();
             _action?.Invoke();
             this.ReleaseFocusIfInsideTree();
+        }
+
+        private static Control CreateSelectionReticle()
+        {
+            var reticle = PreloadManager.Cache.GetScene(SelectionReticleScenePath).Instantiate<Control>();
+            reticle.Name = "SelectionReticle";
+            reticle.AnchorRight = 1f;
+            reticle.AnchorBottom = 1f;
+            reticle.GrowHorizontal = GrowDirection.Both;
+            reticle.GrowVertical = GrowDirection.Both;
+            reticle.MouseFilter = MouseFilterEnum.Ignore;
+            return reticle;
         }
     }
 }
