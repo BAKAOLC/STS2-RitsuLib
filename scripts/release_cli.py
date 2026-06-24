@@ -16,7 +16,7 @@ from release_lib.bundle import compose_bundle_zip
 from release_lib.msbuild_eval import get_csproj_property
 from release_lib.repo_layout import (
     ARTIFACTS_BUNDLE_STAGING,
-    CONST_CS_NAME,
+    CONST_CS_REL,
     DEFAULT_GIT_REMOTE,
     GIT_DEFAULT_DEV_BRANCH,
     GIT_DEFAULT_MAIN_BRANCH,
@@ -38,7 +38,7 @@ DEFAULT_DEV_BRANCH = GIT_DEFAULT_DEV_BRANCH
 DEFAULT_MAIN_BRANCH = GIT_DEFAULT_MAIN_BRANCH
 DEFAULT_REMOTE = DEFAULT_GIT_REMOTE
 
-_VERSIONED_FILES = (RITSULIB_CSPROJ_NAME, MOD_MANIFEST_NAME, CONST_CS_NAME)
+_VERSIONED_FILES = (RITSULIB_CSPROJ_NAME, MOD_MANIFEST_NAME, str(CONST_CS_REL))
 
 
 def _resolve_release_tag_message_file(repo: Path) -> Path | None:

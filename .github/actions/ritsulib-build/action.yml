@@ -36,7 +36,7 @@ runs:
       with:
         node-version: "22"
         cache: npm
-        cache-dependency-path: Viewer/package-lock.json
+        cache-dependency-path: components/viewer/package-lock.json
 
     - uses: astral-sh/setup-uv@v8.1.0
       with:

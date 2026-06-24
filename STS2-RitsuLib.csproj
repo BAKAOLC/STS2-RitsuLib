@@ -29,14 +29,14 @@
         <RitsuLibTelemetryBuildChannel Condition="'$(RitsuLibTelemetryBuildChannel)' == '' and '$(Configuration)' == 'Debug'">local_debug</RitsuLibTelemetryBuildChannel>
         <RitsuLibTelemetryBuildChannel Condition="'$(RitsuLibTelemetryBuildChannel)' == ''">local_release</RitsuLibTelemetryBuildChannel>
         <RitsuLibTelemetryBuildConfiguration Condition="'$(RitsuLibTelemetryBuildConfiguration)' == ''">$(Configuration)</RitsuLibTelemetryBuildConfiguration>
-        <RitsuLibViewerProjectDir>$(MSBuildProjectDirectory)\Viewer</RitsuLibViewerProjectDir>
+        <RitsuLibViewerProjectDir>$(MSBuildProjectDirectory)\components\viewer</RitsuLibViewerProjectDir>
         <RitsuLibViewerDistDir>$(RitsuLibViewerProjectDir)\dist</RitsuLibViewerDistDir>
         <RitsuLibBuildViewer Condition="'$(RitsuLibBuildViewer)' == '' and Exists('$(RitsuLibViewerProjectDir)\package.json')">true</RitsuLibBuildViewer>
         <RitsuLibBuildViewer Condition="'$(RitsuLibBuildViewer)' == ''">false</RitsuLibBuildViewer>
         <RitsuLibCopyToGame Condition="'$(RitsuLibCopyToGame)' == ''">true</RitsuLibCopyToGame>
-        <RitsuLibAnalyzerProject>$(MSBuildProjectDirectory)\Analyzers\STS2-RitsuLib-Analyzers.csproj</RitsuLibAnalyzerProject>
+        <RitsuLibAnalyzerProject>$(MSBuildProjectDirectory)\components\analyzers\STS2-RitsuLib-Analyzers.csproj</RitsuLibAnalyzerProject>
         <RitsuLibAnalyzerTargetFramework>netstandard2.0</RitsuLibAnalyzerTargetFramework>
-        <RitsuLibAnalyzerAssembly>$(MSBuildProjectDirectory)\Analyzers\bin\$(Configuration)\$(RitsuLibAnalyzerTargetFramework)\STS2-RitsuLib.Analyzers.dll</RitsuLibAnalyzerAssembly>
+        <RitsuLibAnalyzerAssembly>$(MSBuildProjectDirectory)\components\analyzers\bin\$(Configuration)\$(RitsuLibAnalyzerTargetFramework)\STS2-RitsuLib.Analyzers.dll</RitsuLibAnalyzerAssembly>
     </PropertyGroup>
 
     <PropertyGroup Label="NuGet package">
@@ -88,7 +88,7 @@
 
     <ItemGroup>
         <RitsuLibAnalyzerBuildInput Include="$(RitsuLibAnalyzerProject)"/>
-        <RitsuLibAnalyzerBuildInput Include="$(MSBuildProjectDirectory)\Analyzers\**\*.cs"/>
+        <RitsuLibAnalyzerBuildInput Include="$(MSBuildProjectDirectory)\components\analyzers\**\*.cs"/>
     </ItemGroup>
 
     <Target Name="BuildRitsuLibAnalyzers"
@@ -116,7 +116,7 @@
         <PackageReference Include="System.IO.Hashing" Version="9.0.0"/>
     </ItemGroup>
     <ItemGroup>
-        <ProjectReference Include="Analyzers\STS2-RitsuLib-Analyzers.csproj"
+        <ProjectReference Include="components\analyzers\STS2-RitsuLib-Analyzers.csproj"
                           OutputItemType="Analyzer"
                           ReferenceOutputAssembly="false"
                           PrivateAssets="all"/>
@@ -141,9 +141,15 @@
         <RitsuLibViewerBuildInputs Include="$(RitsuLibViewerProjectDir)\src\**\*"/>
     </ItemGroup>
     <ItemGroup>
-        <EmbeddedResource Include="Assets\mod_image.png" LogicalName="STS2RitsuLib.Assets.mod_image.png"/>
-        <EmbeddedResource Include="Settings\Localization\**\*.json"/>
-        <EmbeddedResource Include="Ui\Shell\Themes\*.theme.json"/>
+        <EmbeddedResource Include="resources\mod_image.png" LogicalName="STS2RitsuLib.Assets.mod_image.png"/>
+        <EmbeddedResource Include="src\Settings\Localization\JoinDiagnostics\*.json"
+                          LogicalName="STS2RitsuLib.Settings.Localization.JoinDiagnostics.%(Filename)%(Extension)"/>
+        <EmbeddedResource Include="src\Settings\Localization\ModSettingsUi\*.json"
+                          LogicalName="STS2RitsuLib.Settings.Localization.ModSettingsUi.%(Filename)%(Extension)"/>
+        <EmbeddedResource Include="src\Settings\Localization\StateDivergence\*.json"
+                          LogicalName="STS2RitsuLib.Settings.Localization.StateDivergence.%(Filename)%(Extension)"/>
+        <EmbeddedResource Include="src\Ui\Shell\Themes\*.theme.json"
+                          LogicalName="STS2RitsuLib.Ui.Shell.Themes.%(Filename)%(Extension)"/>
     </ItemGroup>
     <ItemGroup>
         <None Include="README.md" Pack="true" PackagePath="\"/>
@@ -158,16 +164,11 @@
         <EmbeddedResource Remove="sts-2-source\**"/>
 
         <Compile Remove="build\**\*.cs"/>
-        <Compile Remove="Analyzers\**"/>
-        <None Remove="Analyzers\**"/>
-        <Content Remove="Analyzers\**"/>
-        <EmbeddedResource Remove="Analyzers\**"/>
-
-        <!-- Loader is a separate assembly; keep it out of Godot.Sdk default globs. -->
-        <Compile Remove="Loader\**"/>
-        <None Remove="Loader\**"/>
-        <Content Remove="Loader\**"/>
-        <EmbeddedResource Remove="Loader\**"/>
+        <!-- Component projects are separate assemblies; keep them out of Godot.Sdk default globs. -->
+        <Compile Remove="components\**"/>
+        <None Remove="components\**"/>
+        <Content Remove="components\**"/>
+        <EmbeddedResource Remove="components\**"/>
 
         <!-- Repository tools are standalone projects; keep them out of the RitsuLib mod assembly. -->
         <Compile Remove="tools\**"/>
@@ -176,10 +177,6 @@
         <EmbeddedResource Remove="tools\**"/>
 
         <!-- The browser log viewer is built and copied as sidecar static assets, not Godot resources. -->
-        <Compile Remove="Viewer\**"/>
-        <None Remove="Viewer\node_modules\**"/>
-        <Content Remove="Viewer\node_modules\**"/>
-        <EmbeddedResource Remove="Viewer\**"/>
     </ItemGroup>
     <Target Name="BuildRitsuDebugLogViewer"
             BeforeTargets="Build"

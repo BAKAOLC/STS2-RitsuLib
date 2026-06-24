@@ -39,7 +39,7 @@
     </ItemGroup>
 
     <ItemGroup>
-        <Compile Include="..\Compat\Sts2HostVersion.cs" Link="Compat\Sts2HostVersion.cs"/>
-        <Compile Include="..\Platform\LinuxHarmonyNativePreloader.cs" Link="Platform\LinuxHarmonyNativePreloader.cs"/>
+        <Compile Include="..\..\src\Compat\Sts2HostVersion.cs" Link="Compat\Sts2HostVersion.cs"/>
+        <Compile Include="..\..\src\Platform\LinuxHarmonyNativePreloader.cs" Link="Platform\LinuxHarmonyNativePreloader.cs"/>
     </ItemGroup>
 </Project>

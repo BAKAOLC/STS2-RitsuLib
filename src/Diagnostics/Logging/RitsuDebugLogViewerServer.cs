@@ -184,7 +184,7 @@ namespace STS2RitsuLib.Diagnostics.Logging
                                         stream,
                                         503,
                                         "Service Unavailable",
-                                        "RitsuLib debug log viewer assets are unavailable. Build and package Viewer/index.html.")
+                                        "RitsuLib debug log viewer assets are unavailable. Build and package components/viewer/index.html.")
                                     .ConfigureAwait(false);
                             return;
                         case "/api/status":
