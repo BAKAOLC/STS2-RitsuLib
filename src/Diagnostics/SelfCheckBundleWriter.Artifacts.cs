@@ -216,17 +216,15 @@ namespace STS2RitsuLib.Diagnostics
                 $"STEAM_COMPAT_CLIENT_INSTALL_PATH present: {HasEnvironmentValue("STEAM_COMPAT_CLIENT_INSTALL_PATH")}",
                 $"WINEPREFIX present: {HasEnvironmentValue("WINEPREFIX")}",
                 $"DOTNET_ROOT present: {HasEnvironmentValue("DOTNET_ROOT")}",
+                RuntimeFrameworkVersionSummary.TryBuildBaseLibDisplayLine(out var baseLibLine)
+                    ? baseLibLine
+                    : "BaseLib: not detected",
+                "",
+                "Build Metadata:",
             };
 
-            if (RuntimeFrameworkVersionSummary.TryBuildBaseLibDisplayLine(out var baseLibLine))
-                lines.Add(baseLibLine);
-            else
-                lines.Add("BaseLib: not detected");
-
-            lines.Add("");
-            lines.Add("Build Metadata:");
-            foreach (var pair in RitsuLibBuildInfo.Metadata.OrderBy(x => x.Key, StringComparer.OrdinalIgnoreCase))
-                lines.Add($"- {pair.Key}: {SanitizeForReport(pair.Value)}");
+            lines.AddRange(RitsuLibBuildInfo.Metadata.OrderBy(x => x.Key, StringComparer.OrdinalIgnoreCase)
+                .Select(pair => $"- {pair.Key}: {SanitizeForReport(pair.Value)}"));
 
             TryWriteTextFile(target, string.Join(Environment.NewLine, lines) + Environment.NewLine, warnings);
             artifacts.Add(CreateArtifact("diagnostics/runtime_environment.txt", target, "diagnostic", null));
@@ -303,7 +301,7 @@ namespace STS2RitsuLib.Diagnostics
                 warnings);
             if (!string.IsNullOrWhiteSpace(infoText))
             {
-                var entryName = "crashes/coredump_info.txt";
+                const string entryName = "crashes/coredump_info.txt";
                 var target = GetBundlePath(bundleDir, entryName);
                 TryWriteTextFile(target, SanitizeForReport(infoText), warnings);
                 artifacts.Add(CreateArtifact(entryName, target, "crash", "coredumpctl info"));
@@ -440,11 +438,9 @@ namespace STS2RitsuLib.Diagnostics
                     if (b == -1)
                         break;
 
-                    if ((b & 0xC0) != 0x80)
-                    {
-                        stream.Seek(-1, SeekOrigin.Current);
-                        break;
-                    }
+                    if ((b & 0xC0) == 0x80) continue;
+                    stream.Seek(-1, SeekOrigin.Current);
+                    break;
                 }
 
                 truncated = true;
@@ -599,13 +595,13 @@ namespace STS2RitsuLib.Diagnostics
                 return "unknown";
 
             var value = bytes.Value;
-            if (value >= 1_073_741_824)
-                return $"{value / 1_073_741_824d:0.##} GiB";
-            if (value >= 1_048_576)
-                return $"{value / 1_048_576d:0.##} MiB";
-            if (value >= 1024)
-                return $"{value / 1024d:0.##} KiB";
-            return $"{value} B";
+            return value switch
+            {
+                >= 1_073_741_824 => $"{value / 1_073_741_824d:0.##} GiB",
+                >= 1_048_576 => $"{value / 1_048_576d:0.##} MiB",
+                >= 1024 => $"{value / 1024d:0.##} KiB",
+                _ => $"{value} B",
+            };
         }
 
         private static void TryDelete(string path)
