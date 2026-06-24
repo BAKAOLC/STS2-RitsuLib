@@ -42,6 +42,8 @@ namespace STS2RitsuLib.Ui.Toast
             MouseDefaultCursorShape = CursorShape.PointingHand;
             _progressVisible = false;
             _progressFraction = 1f;
+            CustomMinimumSize = Vector2.Zero;
+            Size = Vector2.Zero;
             UpdateRequest(request, style);
             _isExiting = false;
             Modulate = new(Modulate.R, Modulate.G, Modulate.B, 0f);
@@ -70,10 +72,29 @@ namespace STS2RitsuLib.Ui.Toast
 
         public Vector2 Measure(float width, float minHeight)
         {
-            CustomMinimumSize = new(Math.Max(120f, width), minHeight);
+            var measuredWidth = Math.Max(120f, width);
+            var measuredMinHeight = Math.Max(0f, minHeight);
+            CustomMinimumSize = new(measuredWidth, measuredMinHeight);
+            ApplyMeasurementWidth(measuredWidth);
             ResetSize();
             var min = GetCombinedMinimumSize();
-            return new(Math.Max(CustomMinimumSize.X, min.X), Math.Max(CustomMinimumSize.Y, min.Y));
+            var measuredSize = new Vector2(
+                Math.Max(CustomMinimumSize.X, min.X),
+                Math.Max(CustomMinimumSize.Y, min.Y));
+            ApplyMeasuredSize(measuredSize);
+            return measuredSize;
+        }
+
+        public void ApplyMeasuredSize(Vector2 measuredSize)
+        {
+            var size = new Vector2(Math.Max(1f, measuredSize.X), Math.Max(1f, measuredSize.Y));
+            CustomMinimumSize = size;
+            Size = size;
+            QueueSort();
+            _rootColumn?.QueueSort();
+            _row?.QueueSort();
+            _textColumn?.QueueSort();
+            ApplyProgressVisual();
         }
 
         public void ApplyStyle(RitsuToastVisualStyle style)
@@ -92,7 +113,7 @@ namespace STS2RitsuLib.Ui.Toast
             {
                 _textColumn.AddThemeConstantOverride("separation",
                     (int)Math.Round(style.TextSpacing, MidpointRounding.AwayFromZero));
-                _textColumn.CustomMinimumSize = new(style.Width, 0f);
+                _textColumn.CustomMinimumSize = new(Math.Max(1f, style.Width - style.PaddingHorizontal * 2f), 0f);
                 _textColumn.SizeFlagsHorizontal = SizeFlags.ShrinkBegin;
             }
 
@@ -188,6 +209,8 @@ namespace STS2RitsuLib.Ui.Toast
             _progressVisible = false;
             _progressFraction = 1f;
             ApplyProgressVisual();
+            CustomMinimumSize = Vector2.Zero;
+            Size = Vector2.Zero;
             if (_image == null) return;
             _image.Texture = null;
             _image.Visible = false;
@@ -304,6 +327,48 @@ namespace STS2RitsuLib.Ui.Toast
             _progressFill.Visible = _progressFraction > 0f && height > 0f;
             _progressFill.Position = Vector2.Zero;
             _progressFill.Size = new(Math.Max(0f, trackSize.X * _progressFraction), height);
+        }
+
+        private void ApplyMeasurementWidth(float outerWidth)
+        {
+            if (_style == null)
+                return;
+
+            var contentWidth = Math.Max(1f, outerWidth - _style.PaddingHorizontal * 2f);
+            var textWidth = contentWidth;
+            if (_request.Image != null)
+                textWidth = Math.Max(1f, contentWidth - _style.ImageSize - _style.RowSpacing);
+
+            if (_rootColumn != null)
+            {
+                _rootColumn.CustomMinimumSize = new(contentWidth, 0f);
+                _rootColumn.Size = new(contentWidth, Math.Max(1f, _rootColumn.Size.Y));
+            }
+
+            if (_row != null)
+            {
+                _row.CustomMinimumSize = new(contentWidth, 0f);
+                _row.Size = new(contentWidth, Math.Max(1f, _row.Size.Y));
+            }
+
+            if (_textColumn != null)
+            {
+                _textColumn.CustomMinimumSize = new(textWidth, 0f);
+                _textColumn.Size = new(textWidth, Math.Max(1f, _textColumn.Size.Y));
+            }
+
+            if (_titleLabel != null)
+            {
+                _titleLabel.CustomMinimumSize = new(textWidth, 0f);
+                _titleLabel.Size = new(textWidth, Math.Max(1f, _titleLabel.Size.Y));
+            }
+
+            // ReSharper disable once InvertIf
+            if (_bodyLabel != null)
+            {
+                _bodyLabel.CustomMinimumSize = new(textWidth, 0f);
+                _bodyLabel.Size = new(textWidth, Math.Max(1f, _bodyLabel.Size.Y));
+            }
         }
 
         private static StyleBoxFlat BuildPanel(RitsuToastVisualStyle style, Color borderColor, bool hovering)

@@ -435,6 +435,7 @@ namespace STS2RitsuLib.Ui.Toast
                     : MeasureItem(item, viewportSize.X);
                 item.MeasuredSize = size;
                 item.HasMeasuredSize = true;
+                item.Entry.ApplyMeasuredSize(size);
                 measured.Add(size);
                 margin = Math.Max(margin, item.Style.ScreenMargin);
             }
