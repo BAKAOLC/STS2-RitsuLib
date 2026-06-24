@@ -296,7 +296,7 @@ namespace STS2RitsuLib.Settings
                             "self-check",
                             T("button.open", "Open"),
                             T("ritsulib.section.selfCheck.description",
-                                "Run framework self-checks, export logs and Harmony dump into one folder, then pack them into a zip."))
+                                "Run framework self-checks, export logs, saves, crash diagnostics, runtime metadata, and Harmony dump into a zip."))
                         .AddSubpage(
                             "image_png_export_open",
                             T("ritsulib.section.imagePngExport.title", "Image PNG export (dev)"),

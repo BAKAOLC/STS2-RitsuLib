@@ -100,7 +100,7 @@ namespace STS2RitsuLib.Settings
                             SelfCheckBundleCoordinator.TryManualRunFromSettings,
                             ModSettingsButtonTone.Accent,
                             T("ritsulib.selfCheck.runNow.description",
-                                "Exports self-check report, Harmony patch dump, and godot.log copy, then creates a zip package."))),
+                                "Exports self-check report, Harmony patch dump, logs, saves, crash diagnostics, and runtime metadata, then creates a zip package."))),
                 "self-check");
         }
     }

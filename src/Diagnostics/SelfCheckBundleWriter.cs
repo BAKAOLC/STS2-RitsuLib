@@ -4,18 +4,16 @@ using System.Text.RegularExpressions;
 using Godot;
 using MegaCrit.Sts2.Core.Localization;
 using MegaCrit.Sts2.Core.Models;
+using STS2RitsuLib.Compat;
 using STS2RitsuLib.Content;
 using STS2RitsuLib.Keywords;
 using STS2RitsuLib.Scaffolding.Characters;
 using STS2RitsuLib.Utils;
-using Environment = System.Environment;
 
 namespace STS2RitsuLib.Diagnostics
 {
     internal static partial class SelfCheckBundleWriter
     {
-        private static readonly Regex GodotLogName = GodotLogNameRegex();
-
         private static readonly Regex KeywordId = KeywordIdRegex();
         private static readonly Regex PublicEntry = PublicEntryRegex();
 
@@ -52,12 +50,10 @@ namespace STS2RitsuLib.Diagnostics
 
                 var reportPath = Path.Combine(bundleDir, "self_check_report.log");
                 var dumpPath = Path.Combine(bundleDir, "harmony_patch_dump.log");
-                var logDir = Path.Combine(bundleDir, "logs");
-                Directory.CreateDirectory(logDir);
 
                 var dumpOk = HarmonyPatchDumpWriter.TryWrite(dumpPath, out var dumpErr);
                 var runtime = RitsuLibFramework.CaptureRuntimeSnapshot();
-                var copiedLogs = CopyGameLogs(logDir, out var logErrors);
+                var artifactResult = CollectSupportArtifacts(bundleDir);
                 var keywordDefs = ModKeywordRegistry.GetDefinitionsSnapshot();
                 var modelSnapshots = ModContentRegistry.GetRegisteredTypeSnapshots();
                 var replacementLayerSnapshots = ModContentRegistry.GetCharacterAssetReplacementLayerSnapshots();
@@ -67,7 +63,7 @@ namespace STS2RitsuLib.Diagnostics
                 var locCheck = CheckLocalization(keywordDefs, modelSnapshots);
 
                 File.WriteAllText(reportPath,
-                    BuildReport(runtime, dumpOk, dumpPath, dumpErr, copiedLogs, logErrors, charCheck, locCheck,
+                    BuildReport(runtime, dumpOk, dumpPath, dumpErr, artifactResult, charCheck, locCheck,
                         keywordDefs, modelSnapshots, replacementLayerSnapshots, replacementResolvedSnapshots),
                     new UTF8Encoding(false));
 
@@ -100,7 +96,7 @@ namespace STS2RitsuLib.Diagnostics
 
         private static string BuildReport(FrameworkRuntimeSnapshot runtime, bool dumpOk, string dumpPath,
             string? dumpErr,
-            string[] copiedLogs, IReadOnlyList<string> logErrors, CheckResult charCheck, CheckResult locCheck,
+            ArtifactCollectionResult artifactResult, CheckResult charCheck, CheckResult locCheck,
             IReadOnlyList<ModKeywordDefinition> keywordDefs,
             IReadOnlyList<ModContentRegistry.ModContentRegisteredTypeSnapshot> modelSnapshots,
             IReadOnlyList<ModContentRegistry.CharacterAssetReplacementLayerSnapshot> replacementLayerSnapshots,
@@ -114,6 +110,18 @@ namespace STS2RitsuLib.Diagnostics
             sb.AppendLine($"Version: {Const.Version}");
             sb.AppendLine($"Framework Active: {runtime.IsActive}");
             sb.AppendLine($"Framework Initialized: {runtime.IsInitialized}");
+            sb.AppendLine(
+                $"Host Version: {Sts2HostVersion.ReleaseLabel ?? Sts2HostVersion.Numeric?.ToString() ?? "unknown"}");
+            sb.AppendLine($"Compat Branch: {RitsuLibFramework.GetCompatBranchLabel()}");
+            sb.AppendLine($"Profile Services Initialized: {runtime.ProfileServicesInitialized}");
+            sb.AppendLine($"Registered Mod Settings: {runtime.HasRegisteredModSettings}");
+            sb.AppendLine($"Lifecycle Observers: {runtime.LifecycleObserverCount}");
+            sb.AppendLine($"Registered Script Assemblies: {runtime.RegisteredScriptAssemblyCount}");
+            sb.AppendLine();
+            sb.AppendLine("Framework Patcher Areas:");
+            foreach (var area in runtime.PatcherAreas.OrderBy(x => x.AreaName, StringComparer.OrdinalIgnoreCase))
+                sb.AppendLine(
+                    $"- {area.AreaName}: registered={area.IsRegistered}, applied={area.IsApplied}, patches={area.RegisteredPatchCount}, dynamic={area.RegisteredDynamicPatchCount}, appliedPatches={area.AppliedPatchCount}");
             sb.AppendLine();
             sb.AppendLine("Per Mod Summary:");
             foreach (var mod in perMod.OrderBy(m => m.ModId, StringComparer.OrdinalIgnoreCase))
@@ -180,10 +188,23 @@ namespace STS2RitsuLib.Diagnostics
                 sb.AppendLine(line);
             sb.AppendLine();
             sb.AppendLine($"Harmony Dump: {(dumpOk ? "PASS" : "FAIL")} {dumpPath} {dumpErr}");
-            sb.AppendLine($"Copied Logs: {copiedLogs.Length}");
-            foreach (var log in copiedLogs.OrderBy(x => x, StringComparer.OrdinalIgnoreCase))
-                sb.AppendLine($"- logs/{log}");
-            foreach (var err in logErrors) sb.AppendLine($"- [WARN] {err}");
+            sb.AppendLine();
+            sb.AppendLine("Support Artifacts:");
+            sb.AppendLine($"- total={artifactResult.Artifacts.Count}");
+            foreach (var group in artifactResult.Artifacts
+                         .GroupBy(x => x.Kind, StringComparer.OrdinalIgnoreCase)
+                         .OrderBy(x => x.Key, StringComparer.OrdinalIgnoreCase))
+                sb.AppendLine($"- {group.Key}: {group.Count()}");
+            if (artifactResult.Artifacts.Count == 0)
+                sb.AppendLine("- none");
+            else
+                foreach (var item in artifactResult.Artifacts
+                             .OrderBy(x => x.EntryName, StringComparer.OrdinalIgnoreCase)
+                             .Take(500))
+                    sb.AppendLine(
+                        $"- [{item.Kind}] {item.EntryName} size={FormatByteCount(item.SizeBytes)} source={item.SourcePath} {item.Note}");
+            foreach (var warning in artifactResult.Warnings)
+                sb.AppendLine($"- [WARN] {warning}");
             return sb.ToString();
         }
 
@@ -392,41 +413,6 @@ namespace STS2RitsuLib.Diagnostics
                 counter.Pass++;
             }
         }
-
-        private static string[] CopyGameLogs(string targetDirectory, out List<string> copyErrors)
-        {
-            copyErrors = [];
-            var sourceDir = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData),
-                "SlayTheSpire2", "logs");
-            if (!Directory.Exists(sourceDir))
-            {
-                copyErrors.Add($"logs source directory not found: {sourceDir}");
-                return [];
-            }
-
-            var candidates = Directory.GetFiles(sourceDir, "*.log", SearchOption.TopDirectoryOnly)
-                .Where(p => GodotLogName.IsMatch(Path.GetFileName(p)))
-                .OrderBy(p => p, StringComparer.OrdinalIgnoreCase)
-                .ToArray();
-            var copied = new List<string>();
-            foreach (var src in candidates)
-                try
-                {
-                    var name = Path.GetFileName(src);
-                    File.Copy(src, Path.Combine(targetDirectory, name), true);
-                    copied.Add(name);
-                }
-                catch (Exception ex)
-                {
-                    copyErrors.Add($"failed to copy {src}: {ex.Message}");
-                }
-
-            return [.. copied];
-        }
-
-        [GeneratedRegex(@"^godot(\d{4}-\d{2}-\d{2}T\d{2}\.\d{2}\.\d{2})?\.log$",
-            RegexOptions.IgnoreCase | RegexOptions.Compiled | RegexOptions.CultureInvariant)]
-        private static partial Regex GodotLogNameRegex();
 
         [GeneratedRegex("^[A-Z0-9_]+$", RegexOptions.Compiled)]
         private static partial Regex KeywordIdRegex();

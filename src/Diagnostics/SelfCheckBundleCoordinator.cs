@@ -17,19 +17,19 @@ namespace STS2RitsuLib.Diagnostics
             if (Interlocked.CompareExchange(ref _autoRunIssuedForSession, 1, 0) != 0)
                 return;
 
-            TryRunWithConfiguredPath(outputPath, "[SelfCheck][Auto]", false, out _, out _);
+            TryRunWithConfiguredPath(outputPath, "[SelfCheck][Auto]", false, false, out _, out _);
         }
 
         internal static void TryManualRunFromSettings()
         {
             var (outputPath, _) = RitsuLibSettingsStore.GetSelfCheckOptions();
-            TryRunWithConfiguredPath(outputPath, "[SelfCheck][Manual]", true, out _, out _);
+            TryRunWithConfiguredPath(outputPath, "[SelfCheck][Manual]", true, true, out _, out _);
         }
 
         internal static bool TryManualRunFromConsole(out string message)
         {
             var (outputPath, _) = RitsuLibSettingsStore.GetSelfCheckOptions();
-            return TryRunWithConfiguredPath(outputPath, "[SelfCheck][Console]", false, out _, out message);
+            return TryRunWithConfiguredPath(outputPath, "[SelfCheck][Console]", false, true, out _, out message);
         }
 
         internal static void TryOpenOutputFolderFromSettings()
@@ -66,6 +66,7 @@ namespace STS2RitsuLib.Diagnostics
         }
 
         private static bool TryRunWithConfiguredPath(string outputPath, string logPrefix, bool showPrompt,
+            bool revealZipOnSuccess,
             out string? zipPath, out string message)
         {
             zipPath = null;
@@ -100,6 +101,9 @@ namespace STS2RitsuLib.Diagnostics
             }
 
             RitsuLibFramework.Logger.Info($"{logPrefix} Export complete. Zip: {zipPath}");
+            if (revealZipOnSuccess)
+                TryRevealExportedZip(zipPath, logPrefix);
+
             var successPattern = ModSettingsLocalization.Get(
                 "ritsulib.selfCheck.prompt.success",
                 "Self-check complete. Exported zip: {0}");
@@ -107,6 +111,62 @@ namespace STS2RitsuLib.Diagnostics
             if (showPrompt)
                 ShowCompletionPrompt(promptTitle, message);
             return true;
+        }
+
+        private static void TryRevealExportedZip(string? zipPath, string logPrefix)
+        {
+            if (string.IsNullOrWhiteSpace(zipPath))
+                return;
+
+            try
+            {
+                var resolvedZipPath = ResolveShellPath(zipPath);
+                var error = OS.ShellShowInFileManager(resolvedZipPath);
+                if (error == Error.Ok)
+                {
+                    RitsuLibFramework.Logger.Info($"{logPrefix} Revealed self-check zip: {resolvedZipPath}");
+                    return;
+                }
+
+                RitsuLibFramework.Logger.Warn(
+                    $"{logPrefix} Failed to reveal self-check zip '{resolvedZipPath}' (Error: {error}).");
+                TryOpenContainingFolder(resolvedZipPath, logPrefix);
+            }
+            catch (Exception ex)
+            {
+                RitsuLibFramework.Logger.Warn(
+                    $"{logPrefix} Failed to reveal self-check zip '{zipPath}': {ex.Message}");
+                TryOpenContainingFolder(zipPath, logPrefix);
+            }
+        }
+
+        private static string ResolveShellPath(string path)
+        {
+            if (path.StartsWith("user://", StringComparison.OrdinalIgnoreCase) ||
+                path.StartsWith("res://", StringComparison.OrdinalIgnoreCase))
+                return ProjectSettings.GlobalizePath(path);
+
+            return Path.GetFullPath(path);
+        }
+
+        private static void TryOpenContainingFolder(string zipPath, string logPrefix)
+        {
+            try
+            {
+                var folder = Path.GetDirectoryName(zipPath);
+                if (string.IsNullOrWhiteSpace(folder))
+                    return;
+
+                var error = OS.ShellOpen(new Uri(folder + Path.DirectorySeparatorChar).AbsoluteUri);
+                if (error != Error.Ok)
+                    RitsuLibFramework.Logger.Warn(
+                        $"{logPrefix} Failed to open self-check output folder '{folder}' (Error: {error}).");
+            }
+            catch (Exception ex)
+            {
+                RitsuLibFramework.Logger.Warn(
+                    $"{logPrefix} Failed to open self-check output folder fallback: {ex.Message}");
+            }
         }
 
         private static void ShowCompletionPrompt(string title, string message)
