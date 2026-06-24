@@ -84,6 +84,7 @@ namespace STS2RitsuLib.Content.Patches
         }
     }
 
+#if STS2_AT_LEAST_0_107_1
     /// <summary>
     ///     <para xml:lang="en">
     ///         Prevents registered mod acts from entering vanilla act-list randomization unless they explicitly opt in.
@@ -141,6 +142,7 @@ namespace STS2RitsuLib.Content.Patches
             __result = buckets;
         }
     }
+#endif
 
     /// <summary>
     ///     <para xml:lang="en">Appends RitsuLib-registered shared events to <see cref="ModelDb.AllSharedEvents" />.</para>

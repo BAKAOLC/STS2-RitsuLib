@@ -1,7 +1,11 @@
+#if !STS2_AT_LEAST_0_104_0
+using CombatStateCompat = MegaCrit.Sts2.Core.Combat.CombatState;
+#else
+using CombatStateCompat = MegaCrit.Sts2.Core.Combat.ICombatState;
+#endif
 using System.Reflection;
 using System.Reflection.Emit;
 using HarmonyLib;
-using MegaCrit.Sts2.Core.Combat;
 using MegaCrit.Sts2.Core.Commands;
 using MegaCrit.Sts2.Core.Entities.Cards;
 using MegaCrit.Sts2.Core.Entities.Creatures;
@@ -208,7 +212,7 @@ namespace STS2RitsuLib.Models.Capabilities.Patches
                 var originalMethod = AccessTools.Method(
                     typeof(Hook),
                     nameof(Hook.ModifyEnergyCostInCombat),
-                    [typeof(ICombatState), typeof(CardModel), typeof(decimal)]);
+                    [typeof(CombatStateCompat), typeof(CardModel), typeof(decimal)]);
                 var replacementMethod = AccessTools.Method(
                     typeof(EnergyCostPatch),
                     nameof(ModifyEnergyCostInCombat));
@@ -244,7 +248,7 @@ namespace STS2RitsuLib.Models.Capabilities.Patches
             }
 
             private static decimal ModifyEnergyCostInCombat(
-                ICombatState combatState,
+                CombatStateCompat combatState,
                 CardModel card,
                 decimal originalCost,
                 CostModifiers modifiers)
@@ -308,11 +312,11 @@ namespace STS2RitsuLib.Models.Capabilities.Patches
                 return
                 [
                     new(typeof(CardCostHelper), nameof(CardCostHelper.GetStarCostColor),
-                        [typeof(CardModel), typeof(ICombatState)]),
+                        [typeof(CardModel), typeof(CombatStateCompat)]),
                 ];
             }
 
-            public static void Postfix(CardModel card, ICombatState? state, ref CardCostColor __result)
+            public static void Postfix(CardModel card, CombatStateCompat? state, ref CardCostColor __result)
             {
                 if (state == null ||
                     __result == CardCostColor.InsufficientResources ||

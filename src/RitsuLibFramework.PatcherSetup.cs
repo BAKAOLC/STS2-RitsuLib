@@ -350,7 +350,9 @@ namespace STS2RitsuLib
             patcher.RegisterPatch<NTargetManagerAllowedToTargetCreatureCustomTargetTypePatch>();
             patcher.RegisterPatch<CardModelCanPlayTargetingCustomTargetTypePatch>();
             patcher.RegisterPatch<CardModelIsValidTargetCustomTargetTypePatch>();
+#if STS2_AT_LEAST_0_106_0
             patcher.RegisterPatch<PotionModelIsValidTargetCustomTargetTypePatch>();
+#endif
             patcher.RegisterPatch<NCardPlayTryPlayCardCustomTargetTypePatch>();
             patcher.RegisterPatch<NMouseCardPlayTargetSelectionCustomTargetTypePatch>();
             patcher.RegisterPatch<NControllerCardPlayStartCustomTargetTypePatch>();
@@ -648,7 +650,9 @@ namespace STS2RitsuLib
             patcher.RegisterPatch<AllCharactersPatch>();
             patcher.RegisterPatch<AllMonstersPatch>();
             patcher.RegisterPatch<ActsPatch>();
+#if STS2_AT_LEAST_0_107_1
             patcher.RegisterPatch<ActsByIndexPatch>();
+#endif
             patcher.RegisterPatch<RelicCollectionActListPatch>();
             patcher.RegisterPatch<AllPowersPatch>();
             patcher.RegisterPatch<AllOrbsPatch>();
