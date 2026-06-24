@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import argparse
 import os
+import shutil
 import subprocess
 import sys
 import xml.etree.ElementTree as ET
@@ -50,8 +51,11 @@ def _resolve_release_tag_message_file(repo: Path) -> Path | None:
                 return p
         except OSError:
             pass
+    workspace = (repo.parent / RITSLIB_RELEASE_TAG_MESSAGE_BASENAME).resolve()
     internal = (repo / RITSLIB_RELEASE_TAG_MESSAGE_BASENAME).resolve()
     try:
+        if workspace.is_file():
+            return workspace
         if internal.is_file():
             return internal
     except OSError:
@@ -285,6 +289,8 @@ def _run_post_push_local_build(
     args: argparse.Namespace,
     *,
     latest_compat_target: str,
+    sts2_api_signature_root: Path | None,
+    sts2_dir: Path | None,
 ) -> None:
     build_args = [
         "dotnet",
@@ -295,10 +301,10 @@ def _run_post_push_local_build(
         f"/p:Sts2ApiCompat={latest_compat_target}",
         "/p:RitsuLibTelemetryBuildChannel=release",
     ]
-    if args.sts2_api_signature_root:
-        build_args.append(f"/p:Sts2ApiSignatureRoot={Path(args.sts2_api_signature_root)}")
-    if args.sts2_dir:
-        build_args.append(f"/p:Sts2Dir={Path(args.sts2_dir)}")
+    if sts2_api_signature_root is not None:
+        build_args.append(f"/p:Sts2ApiSignatureRoot={sts2_api_signature_root}")
+    if sts2_dir is not None:
+        build_args.append(f"/p:Sts2Dir={sts2_dir}")
 
     print(
         f"[release] Building latest local mod copy ({latest_compat_target})...",
@@ -311,11 +317,27 @@ def _workshop_requested(args: argparse.Namespace) -> bool:
     return bool(args.prepare_workshop or args.push_workshop)
 
 
+def _require_tool(name: str) -> None:
+    if shutil.which(name) is None:
+        msg = f"Required external tool not found on PATH: {name}"
+        raise RuntimeError(msg)
+
+
 def _path_arg(raw: str | None, *, base: Path) -> Path | None:
     if raw is None or not raw.strip():
         return None
     p = Path(raw.strip()).expanduser()
     return p.resolve() if p.is_absolute() else (base / p).resolve()
+
+
+def _existing_dir_arg(raw: str | None, *, base: Path, label: str) -> Path | None:
+    p = _path_arg(raw, base=base)
+    if p is None:
+        return None
+    if not p.is_dir():
+        msg = f"{label} must point to an existing directory: {p}"
+        raise RuntimeError(msg)
+    return p
 
 
 def _workshop_tags(raw: str) -> list[str]:
@@ -338,12 +360,13 @@ def _prepare_and_maybe_upload_workshop(
         msg = "Workshop workspace is required. Pass --workshop-workspace or set RITSLIB_WORKSHOP_WORKSPACE."
         raise RuntimeError(msg)
 
-    fallback_note = f"RitsuLib {effective_version}"
-    default_change_note = workshop_ops.read_workshop_change_note(
-        release_notes_file,
-        fallback=fallback_note,
-    )
-    change_note = (args.workshop_change_note or "").strip() or default_change_note
+    change_note = (args.workshop_change_note or "").strip()
+    if not change_note:
+        fallback_note = f"RitsuLib {effective_version}"
+        change_note = workshop_ops.read_workshop_change_note(
+            release_notes_file,
+            fallback=fallback_note,
+        )
 
     localized: dict[str, dict[str, str]] = {}
     schinese_title = (args.workshop_schinese_title or "").strip()
@@ -429,6 +452,13 @@ def main(argv: list[str] | None = None) -> int:
     repo_is_git = True
 
     try:
+        _require_tool("git")
+        _require_tool("dotnet")
+    except RuntimeError as e:
+        print(f"[release] {e}", file=sys.stderr)
+        return 1
+
+    try:
         repo = git_ops.git_root(_SCRIPTS_DIR)
     except RuntimeError as e:
         if args.dry_run:
@@ -445,6 +475,21 @@ def main(argv: list[str] | None = None) -> int:
         return 1
 
     ritsulib = repo
+    try:
+        sts2_api_signature_root = _existing_dir_arg(
+            args.sts2_api_signature_root,
+            base=ritsulib,
+            label="--sts2-api-signature-root",
+        )
+        sts2_dir = _existing_dir_arg(
+            args.sts2_dir,
+            base=ritsulib,
+            label="--sts2-dir",
+        )
+    except RuntimeError as e:
+        print(f"[release] {e}", file=sys.stderr)
+        return 1
+
     csproj, manifest, const_cs = read_paths(ritsulib)
     compat_targets = _resolve_compat_targets(
         args.compat_targets,
@@ -470,8 +515,8 @@ def main(argv: list[str] | None = None) -> int:
             skip_build=args.skip_build,
             compat_targets=compat_targets,
             version_override=args.version_override,
-            sts2_api_signature_root=Path(args.sts2_api_signature_root) if args.sts2_api_signature_root else None,
-            sts2_dir=Path(args.sts2_dir) if args.sts2_dir else None,
+            sts2_api_signature_root=sts2_api_signature_root,
+            sts2_dir=sts2_dir,
             bundle_staging_root=bundle_root,
         )
         eff_ver = (args.version_override or "").strip() or current_text
@@ -479,8 +524,8 @@ def main(argv: list[str] | None = None) -> int:
             ritsulib,
             configuration=args.configuration,
             effective_version=eff_ver,
-            sts2_api_signature_root=Path(args.sts2_api_signature_root) if args.sts2_api_signature_root else None,
-            sts2_dir=Path(args.sts2_dir) if args.sts2_dir else None,
+            sts2_api_signature_root=sts2_api_signature_root,
+            sts2_dir=sts2_dir,
             bundle_staging_root=bundle_root,
         )
         print(f"[release] Artifacts packages: {', '.join(pkg.name for pkg in packages)}")
@@ -603,8 +648,8 @@ def main(argv: list[str] | None = None) -> int:
                 skip_build=args.skip_build,
                 compat_targets=compat_targets,
                 version_override=args.version_override,
-                sts2_api_signature_root=Path(args.sts2_api_signature_root) if args.sts2_api_signature_root else None,
-                sts2_dir=Path(args.sts2_dir) if args.sts2_dir else None,
+                sts2_api_signature_root=sts2_api_signature_root,
+                sts2_dir=sts2_dir,
             )
             print(f"[release] DRY-RUN: pack OK -> {', '.join(pkg_names)} (temp removed)")
         return 0
@@ -700,8 +745,8 @@ def main(argv: list[str] | None = None) -> int:
             skip_build=args.skip_build,
             compat_targets=compat_targets,
             version_override=args.version_override,
-            sts2_api_signature_root=Path(args.sts2_api_signature_root) if args.sts2_api_signature_root else None,
-            sts2_dir=Path(args.sts2_dir) if args.sts2_dir else None,
+            sts2_api_signature_root=sts2_api_signature_root,
+            sts2_dir=sts2_dir,
             bundle_staging_root=bundle_root,
         )
         eff_ver = (args.version_override or "").strip() or str(next_text)
@@ -709,8 +754,8 @@ def main(argv: list[str] | None = None) -> int:
             ritsulib,
             configuration=args.configuration,
             effective_version=eff_ver,
-            sts2_api_signature_root=Path(args.sts2_api_signature_root) if args.sts2_api_signature_root else None,
-            sts2_dir=Path(args.sts2_dir) if args.sts2_dir else None,
+            sts2_api_signature_root=sts2_api_signature_root,
+            sts2_dir=sts2_dir,
             bundle_staging_root=bundle_root,
         )
         print(f"[release] NuGet published: {', '.join(pkg.name for pkg in published)}")
@@ -728,8 +773,8 @@ def main(argv: list[str] | None = None) -> int:
                 skip_build=args.skip_build,
                 compat_targets=compat_targets,
                 version_override=args.version_override,
-                sts2_api_signature_root=Path(args.sts2_api_signature_root) if args.sts2_api_signature_root else None,
-                sts2_dir=Path(args.sts2_dir) if args.sts2_dir else None,
+                sts2_api_signature_root=sts2_api_signature_root,
+                sts2_dir=sts2_dir,
                 bundle_staging_root=bundle_root,
             )
             eff_ver = (args.version_override or "").strip() or str(next_text)
@@ -737,8 +782,8 @@ def main(argv: list[str] | None = None) -> int:
                 ritsulib,
                 configuration=args.configuration,
                 effective_version=eff_ver,
-                sts2_api_signature_root=Path(args.sts2_api_signature_root) if args.sts2_api_signature_root else None,
-                sts2_dir=Path(args.sts2_dir) if args.sts2_dir else None,
+                sts2_api_signature_root=sts2_api_signature_root,
+                sts2_dir=sts2_dir,
                 bundle_staging_root=bundle_root,
             )
             print(f"[release] Workshop artifact packages: {', '.join(pkg.name for pkg in packages)}")
@@ -761,6 +806,8 @@ def main(argv: list[str] | None = None) -> int:
         ritsulib,
         args,
         latest_compat_target=latest_compat_target,
+        sts2_api_signature_root=sts2_api_signature_root,
+        sts2_dir=sts2_dir,
     )
 
     print("[release] done.")

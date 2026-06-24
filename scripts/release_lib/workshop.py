@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import json
+import os
 import shutil
 import subprocess
 from pathlib import Path
@@ -13,6 +14,10 @@ WORKSHOP_CONFIG_NAME = "workshop.json"
 WORKSHOP_CONTENT_DIR_NAME = "content"
 WORKSHOP_PREVIEW_IMAGE_NAME = "image.png"
 WORKSHOP_MOD_ID_NAME = "mod_id.txt"
+_REPO_ROOT = Path(__file__).resolve().parents[2]
+_DEFAULT_MARKDOWN_STEAM_BBCODE_PROJECT = (
+    _REPO_ROOT / "tools" / "MarkdownSteamBbCode" / "MarkdownSteamBbCode.csproj"
+)
 
 
 def read_workshop_change_note(release_notes: Path | None, *, fallback: str) -> str:
@@ -24,7 +29,57 @@ def read_workshop_change_note(release_notes: Path | None, *, fallback: str) -> s
         return fallback
 
     english = text.split("\n---", 1)[0].strip()
-    return english or fallback
+    return markdown_to_steam_bbcode(english) if english else fallback
+
+
+def markdown_to_steam_bbcode(markdown: str) -> str:
+    tool_project = _resolve_markdown_steam_bbcode_project()
+    try:
+        result = subprocess.run(
+            [
+                "dotnet",
+                "run",
+                "--project",
+                str(tool_project),
+                "--",
+                "md2bb",
+            ],
+            input=markdown,
+            text=True,
+            encoding="utf-8",
+            capture_output=True,
+            check=True,
+        )
+    except FileNotFoundError as e:
+        msg = "dotnet was not found while converting Markdown to Steam BBCode."
+        raise RuntimeError(msg) from e
+    except subprocess.CalledProcessError as e:
+        detail = (e.stderr or e.stdout or "").strip()
+        msg = "Markdown to Steam BBCode conversion failed"
+        if detail:
+            msg += f": {detail}"
+        raise RuntimeError(msg) from e
+
+    return result.stdout.strip()
+
+
+def _resolve_markdown_steam_bbcode_project() -> Path:
+    raw = os.environ.get("RITSLIB_MARKDOWN_STEAM_BBCODE_PROJECT", "").strip()
+    if raw:
+        project = Path(raw).expanduser()
+        project = project.resolve() if project.is_absolute() else (_REPO_ROOT / project).resolve()
+    else:
+        project = _DEFAULT_MARKDOWN_STEAM_BBCODE_PROJECT
+
+    if not project.is_file():
+        msg = (
+            "MarkdownSteamBbCode tool project was not found. "
+            "Set RITSLIB_MARKDOWN_STEAM_BBCODE_PROJECT to the tool csproj path. "
+            f"Default path: {project}"
+        )
+        raise RuntimeError(msg)
+
+    return project
 
 
 def prepare_workshop_workspace(
@@ -87,7 +142,14 @@ def upload_workshop_workspace(
     cmd = [str(uploader_exe), "upload", "-w", str(workspace)]
     if item_id:
         cmd.extend(["-i", item_id])
-    subprocess.run(cmd, cwd=uploader_exe.parent, check=True)
+    try:
+        subprocess.run(cmd, cwd=uploader_exe.parent, check=True)
+    except FileNotFoundError as e:
+        msg = f"ModUploader executable could not be started: {uploader_exe}"
+        raise RuntimeError(msg) from e
+    except subprocess.CalledProcessError as e:
+        msg = f"ModUploader upload failed with exit code {e.returncode}: {uploader_exe}"
+        raise RuntimeError(msg) from e
 
 
 def copy_tree_contents(source: Path, destination: Path) -> None:

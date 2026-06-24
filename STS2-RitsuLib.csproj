@@ -169,6 +169,12 @@
         <Content Remove="Loader\**"/>
         <EmbeddedResource Remove="Loader\**"/>
 
+        <!-- Repository tools are standalone projects; keep them out of the RitsuLib mod assembly. -->
+        <Compile Remove="tools\**"/>
+        <None Remove="tools\**"/>
+        <Content Remove="tools\**"/>
+        <EmbeddedResource Remove="tools\**"/>
+
         <!-- The browser log viewer is built and copied as sidecar static assets, not Godot resources. -->
         <Compile Remove="Viewer\**"/>
         <None Remove="Viewer\node_modules\**"/>
