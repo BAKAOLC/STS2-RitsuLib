@@ -152,10 +152,10 @@ namespace STS2RitsuLib.Scaffolding.Content.Patches
             foreach (var pool in ModelDb.AllCards.Select(c => c.Pool).Distinct())
                 AddPoolIfMapped(dict, pool);
 
-            foreach (var pool in ModelDb.AllRelics.Select(r => r.Pool).Distinct())
+            foreach (var pool in ModelDb.AllRelicPools)
                 AddPoolIfMapped(dict, pool);
 
-            foreach (var pool in ModelDb.AllPotions.Select(p => p.Pool).Distinct())
+            foreach (var pool in ModelDb.AllPotionPools)
                 AddPoolIfMapped(dict, pool);
 
             return dict;
