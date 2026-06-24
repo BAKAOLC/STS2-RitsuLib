@@ -688,6 +688,7 @@ namespace STS2RitsuLib.Platform.Steam
                     return false;
 
                 var idleSince = DateTimeOffset.UtcNow;
+                HashSet<ulong> loggedUnavailableProgressItems = [];
                 while (!cancellationToken.IsCancellationRequested)
                 {
                     var completed = 0;
@@ -718,8 +719,9 @@ namespace STS2RitsuLib.Platform.Steam
                         }
                         else
                         {
-                            RitsuLibFramework.Logger.Debug(
-                                $"[SteamWorkshopUpdate] Download progress unavailable for Workshop item {itemId}. State={state}.");
+                            if (loggedUnavailableProgressItems.Add(itemId))
+                                RitsuLibFramework.Logger.Debug(
+                                    $"[SteamWorkshopUpdate] Download progress unavailable for Workshop item {itemId}. State={state}.");
                         }
                     }
 
