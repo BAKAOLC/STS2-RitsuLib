@@ -7,7 +7,7 @@ from pathlib import Path
 
 from release_lib.msbuild_eval import get_csproj_property
 from release_lib.repo_layout import (
-    CONST_CS_NAME,
+    CONST_CS_REL,
     MOD_MANIFEST_NAME,
     RITSULIB_CSPROJ_NAME,
 )
@@ -50,7 +50,7 @@ def read_csproj_version(path: Path) -> str:
 def read_paths(ritsulib_root: Path) -> tuple[Path, Path, Path]:
     csproj = ritsulib_root / RITSULIB_CSPROJ_NAME
     manifest = ritsulib_root / MOD_MANIFEST_NAME
-    const_cs = ritsulib_root / CONST_CS_NAME
+    const_cs = ritsulib_root / CONST_CS_REL
     for p in (csproj, manifest, const_cs):
         if not p.is_file():
             msg = f"Required file not found: {p}"

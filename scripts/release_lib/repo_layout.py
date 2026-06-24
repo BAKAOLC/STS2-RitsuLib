@@ -7,6 +7,7 @@ MOD_MANIFEST_NAME = "mod_manifest.json"
 VARIANT_MANIFEST_NAME = "ritsulib-variants.manifest"
 COMPAT_TARGET_MARKER_NAME = "compat-target.txt"
 CONST_CS_NAME = "Const.cs"
+CONST_CS_REL = Path("src") / CONST_CS_NAME
 
 DEV_PACKAGE_VERSION_PREFIX = "9999.0.0-dev"
 
@@ -17,9 +18,10 @@ ARTIFACTS_GITHUB = Path("artifacts") / "github"
 
 ARTIFACTS_BUNDLE_STAGING = Path("artifacts") / "bundle-staging"
 
-RITSULIB_LOADER_CSPROJ_REL = Path("Loader") / "STS2-RitsuLib-Loader.csproj"
+RITSULIB_LOADER_DIR_REL = Path("components") / "loader"
+RITSULIB_LOADER_CSPROJ_REL = RITSULIB_LOADER_DIR_REL / "STS2-RitsuLib-Loader.csproj"
 
-VIEWER_DIST_REL = Path("Viewer") / "dist"
+VIEWER_DIST_REL = Path("components") / "viewer" / "dist"
 VIEWER_OUTPUT_DIR_NAME = "viewer"
 
 GITHUB_ZIP_FILENAME_SUFFIX = ".github.zip"

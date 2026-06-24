@@ -1,0 +1,45 @@
+<Project Sdk="Microsoft.NET.Sdk">
+    <PropertyGroup>
+        <TargetFramework>net9.0</TargetFramework>
+        <ImplicitUsings>enable</ImplicitUsings>
+        <Nullable>enable</Nullable>
+        <AssemblyName>STS2-RitsuLib.Loader</AssemblyName>
+        <RootNamespace>STS2RitsuLib.Loader</RootNamespace>
+        <EnableDynamicLoading>true</EnableDynamicLoading>
+        <IsPackable>false</IsPackable>
+        <GenerateDocumentationFile>false</GenerateDocumentationFile>
+        <!-- The loader is intentionally AnyCPU while referenced game assemblies may be platform-specific. -->
+        <ResolveAssemblyWarnOrErrorOnTargetArchitectureMismatch>None</ResolveAssemblyWarnOrErrorOnTargetArchitectureMismatch>
+        <!-- Compile against oldest supported API signatures for stable surface. -->
+        <Sts2ApiCompat>0.103.2</Sts2ApiCompat>
+        <Sts2ApiSignatureDir Condition="'$(Sts2ApiSignatureRoot)' != ''">$(Sts2ApiSignatureRoot)\$(Sts2ApiCompat)</Sts2ApiSignatureDir>
+        <Sts2DataDir Condition="'$(Sts2ApiSignatureRoot)' != ''">$(Sts2ApiSignatureDir)</Sts2DataDir>
+    </PropertyGroup>
+
+    <Target Name="ValidateSts2ApiSignatures" BeforeTargets="ResolveAssemblyReferences">
+        <Error
+            Condition="'$(Sts2ApiSignatureRoot)' != '' and !Exists('$(Sts2ApiSignatureRoot)')"
+            Text="Sts2ApiSignatureRoot is set but the directory does not exist: '$(Sts2ApiSignatureRoot)'."/>
+        <Error
+            Condition="'$(Sts2ApiSignatureRoot)' != '' and Exists('$(Sts2ApiSignatureRoot)') and !Exists('$(Sts2ApiSignatureDir)\sts2.dll')"
+            Text="Sts2ApiSignatureRoot is set but missing expected file: '$(Sts2ApiSignatureDir)\sts2.dll'."/>
+        <Error
+            Condition="'$(Sts2ApiSignatureRoot)' != '' and Exists('$(Sts2ApiSignatureRoot)') and !Exists('$(Sts2ApiSignatureDir)\0Harmony.dll')"
+            Text="Sts2ApiSignatureRoot is set but missing expected file: '$(Sts2ApiSignatureDir)\0Harmony.dll'."/>
+    </Target>
+    <Target Name="ValidateSts2GameInstall" BeforeTargets="ResolveAssemblyReferences">
+        <Error
+            Condition="!Exists('$(Sts2DataDir)\sts2.dll')"
+            Text="Could not find sts2.dll under '$(Sts2DataDir)'. Set Sts2Dir in local.props (see local.props.template), or pass /p:Sts2Dir=... , or set Sts2ApiSignatureRoot for loader builds."/>
+    </Target>
+
+    <ItemGroup>
+        <Reference Include="sts2" HintPath="$(Sts2DataDir)\sts2.dll" Private="False"/>
+        <Reference Include="0Harmony" HintPath="$(Sts2DataDir)\0Harmony.dll" Private="False"/>
+    </ItemGroup>
+
+    <ItemGroup>
+        <Compile Include="..\..\src\Compat\Sts2HostVersion.cs" Link="Compat\Sts2HostVersion.cs"/>
+        <Compile Include="..\..\src\Platform\LinuxHarmonyNativePreloader.cs" Link="Platform\LinuxHarmonyNativePreloader.cs"/>
+    </ItemGroup>
+</Project>

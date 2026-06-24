@@ -10,6 +10,7 @@ from release_lib.repo_layout import (
     ARTIFACTS_GITHUB,
     GITHUB_BUNDLE_ZIP_SUFFIX,
     MOD_MANIFEST_NAME,
+    RITSULIB_LOADER_DIR_REL,
     RITSULIB_LOADER_CSPROJ_REL,
 )
 from release_lib.nuget import copy_viewer_dist_to
@@ -56,7 +57,7 @@ def compose_bundle_zip(
 
     subprocess.run(cmd, cwd=ritsulib_root, check=True)
 
-    loader_out = ritsulib_root / "Loader" / "bin" / configuration / "net9.0"
+    loader_out = ritsulib_root / RITSULIB_LOADER_DIR_REL / "bin" / configuration / "net9.0"
     loader_dll = loader_out / "STS2-RitsuLib.Loader.dll"
     loader_pdb = loader_out / "STS2-RitsuLib.Loader.pdb"
     if not loader_dll.is_file():

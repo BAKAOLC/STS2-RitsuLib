@@ -2,7 +2,7 @@
 # Visual Studio 2012
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "STS2-RitsuLib", "STS2-RitsuLib.csproj", "{61148A8E-0640-46D5-99EC-FD849671762E}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "STS2-RitsuLib-Loader", "Loader\STS2-RitsuLib-Loader.csproj", "{C3D4E5F6-A7B8-9012-CDEF-345678901234}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "STS2-RitsuLib-Loader", "components\loader\STS2-RitsuLib-Loader.csproj", "{C3D4E5F6-A7B8-9012-CDEF-345678901234}"
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Properties", "Properties", "{615F28BB-DB76-4ED4-AC07-32D7B3420F59}"
 	ProjectSection(SolutionItems) = preProject
@@ -11,7 +11,7 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Properties", "Properties", 
 		.\Sts2PathDiscovery.props = .\Sts2PathDiscovery.props
 	EndProjectSection
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "STS2-RitsuLib-Analyzers", "Analyzers\STS2-RitsuLib-Analyzers.csproj", "{EB94728C-3FFA-46C3-8295-74BB50CF4B6A}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "STS2-RitsuLib-Analyzers", "components\analyzers\STS2-RitsuLib-Analyzers.csproj", "{EB94728C-3FFA-46C3-8295-74BB50CF4B6A}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
