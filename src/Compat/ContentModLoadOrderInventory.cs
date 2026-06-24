@@ -264,6 +264,29 @@ namespace STS2RitsuLib.Compat
             return $"{source}\0{id}";
         }
 
+        internal static int RemoveLocalDuplicateWorkshopEntries(ModSettings? settings)
+        {
+            if (settings?.ModList is not { Count: > 0 } modList)
+                return 0;
+
+            var localIds = modList
+                .Where(entry => entry.Source == ModSource.ModsDirectory)
+                .Select(entry => entry.Id)
+                .Where(id => !string.IsNullOrWhiteSpace(id))
+                .ToHashSet(StringComparer.Ordinal);
+            if (localIds.Count == 0)
+                return 0;
+
+            var filtered = modList
+                .Where(entry => entry.Source != ModSource.SteamWorkshop || !localIds.Contains(entry.Id))
+                .ToList();
+            var removed = modList.Count - filtered.Count;
+            if (removed > 0)
+                settings.ModList = filtered;
+
+            return removed;
+        }
+
         internal sealed record CurrentModEntry(
             string Key,
             string Id,

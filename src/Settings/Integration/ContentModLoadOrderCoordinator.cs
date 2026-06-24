@@ -278,7 +278,13 @@ namespace STS2RitsuLib.Settings
                     IsEnabled = entry.IsEnabled,
                 })
                 .ToList();
-            return ordered;
+            ContentModLoadOrderInventory.RemoveLocalDuplicateWorkshopEntries(settings.ModSettings);
+            return ordered
+                .Where(entry => entry.Source != ModSource.SteamWorkshop ||
+                                !settings.ModSettings.ModList.Any(saved =>
+                                    saved.Source == ModSource.ModsDirectory &&
+                                    string.Equals(saved.Id, entry.Id, StringComparison.Ordinal)))
+                .ToArray();
         }
 
         private static void SaveAndLog(
