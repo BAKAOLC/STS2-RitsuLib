@@ -267,7 +267,7 @@
   "ritsulib.steamWorkshop.toast.progress.download": "正在下载创意工坊更新：{0}/{1} 个项目，{2}/{3}。\n当前：{4}",
   "ritsulib.steamWorkshop.toast.progress.downloadWaiting": "正在下载创意工坊更新：{0}/{1} 个项目。正在等待 Steam 返回下载大小……\n当前：{2}",
   "ritsulib.steamWorkshop.toast.progress.downloadUnknownItem": "未知项目",
-  "ritsulib.steamWorkshop.toast.changedSinceLastCheck": "相比上次检查有变化：{0}",
+  "ritsulib.steamWorkshop.toast.changedSinceLastCheck": "相比上次检查有变化：\n{0}",
   "ritsulib.steamWorkshop.toast.subscribeRequested": "已请求 Steam 订阅 {0}。请关注 Steam 下载页，等待下载完成后重启游戏。",
   "ritsulib.steamWorkshop.toast.unsubscribeRequested": "已请求 Steam 取消订阅 {0}。Steam 应用变化后请重启游戏。",
   "ritsulib.steamWorkshop.toast.subscribeFailed": "Steam 未接受对 {0} 的订阅请求。",

@@ -267,7 +267,7 @@
   "ritsulib.steamWorkshop.toast.progress.download": "Downloading Workshop updates: {0}/{1} item(s), {2}/{3}.\nCurrent: {4}",
   "ritsulib.steamWorkshop.toast.progress.downloadWaiting": "Downloading Workshop updates: {0}/{1} item(s). Waiting for Steam download size...\nCurrent: {2}",
   "ritsulib.steamWorkshop.toast.progress.downloadUnknownItem": "unknown item",
-  "ritsulib.steamWorkshop.toast.changedSinceLastCheck": "Changed since last check: {0}",
+  "ritsulib.steamWorkshop.toast.changedSinceLastCheck": "Changed since last check:\n{0}",
   "ritsulib.steamWorkshop.toast.subscribeRequested": "Asked Steam to subscribe to {0}. Check Steam Downloads and restart after it finishes.",
   "ritsulib.steamWorkshop.toast.unsubscribeRequested": "Asked Steam to unsubscribe from {0}. Restart the game after Steam applies the change.",
   "ritsulib.steamWorkshop.toast.subscribeFailed": "Steam did not accept the subscribe request for {0}.",

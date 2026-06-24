@@ -345,7 +345,7 @@ namespace STS2RitsuLib.Platform.Steam
                 : string.Join(", ", names);
             return body + "\n" + Format(
                 "ritsulib.steamWorkshop.toast.changedSinceLastCheck",
-                "Changed since last check: {0}",
+                "Changed since last check:\n{0}",
                 list);
         }
 
