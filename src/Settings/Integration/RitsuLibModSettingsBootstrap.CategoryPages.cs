@@ -303,7 +303,62 @@ namespace STS2RitsuLib.Settings
                             "image-png-export",
                             T("button.open", "Open"),
                             T("ritsulib.section.imagePngExport.description",
-                                "Card, relic, and potion image exports."))),
+                                "Card, relic, and potion image exports.")))
+                    .AddSection("dev_common_folders", section => section
+                        .WithTitle(T("ritsulib.section.devCommonFolders.title", "Common folders"))
+                        .WithDescription(T("ritsulib.section.devCommonFolders.description",
+                            "Open common game data folders in the system file explorer."))
+                        .Collapsible()
+                        .AddButton(
+                            "open_logs_folder",
+                            T("ritsulib.commonFolders.logs.label", "Logs folder"),
+                            T("ritsulib.commonFolders.logs.button", "Open logs"),
+                            () => GameCommonFolderOpener.OpenLogsFromUi(
+                                L("ritsulib.commonFolders.toastTitle", "Common folders"),
+                                "[Settings][CommonFolders][Logs]"),
+                            ModSettingsButtonTone.Normal,
+                            T("ritsulib.commonFolders.logs.description",
+                                "Opens the same folder as the open logs console command."))
+                        .AddButton(
+                            "open_saves_folder",
+                            T("ritsulib.commonFolders.saves.label", "Current profile saves folder"),
+                            T("ritsulib.commonFolders.saves.button", "Open saves"),
+                            () => GameCommonFolderOpener.OpenSavesFromUi(
+                                L("ritsulib.commonFolders.toastTitle", "Common folders"),
+                                "[Settings][CommonFolders][Saves]"),
+                            ModSettingsButtonTone.Normal,
+                            T("ritsulib.commonFolders.saves.description",
+                                "Opens the current profile's saves folder, matching the open saves console command."))
+                        .AddButton(
+                            "open_user_data_root_folder",
+                            T("ritsulib.commonFolders.root.label", "User data root"),
+                            T("ritsulib.commonFolders.root.button", "Open root"),
+                            () => GameCommonFolderOpener.OpenUserDataRootFromUi(
+                                L("ritsulib.commonFolders.toastTitle", "Common folders"),
+                                "[Settings][CommonFolders][Root]"),
+                            ModSettingsButtonTone.Normal,
+                            T("ritsulib.commonFolders.root.description",
+                                "Opens the game user data root folder."))
+                        .AddButton(
+                            "open_build_logs_folder",
+                            T("ritsulib.commonFolders.buildLogs.label", "Build logs folder"),
+                            T("ritsulib.commonFolders.buildLogs.button", "Open build logs"),
+                            () => GameCommonFolderOpener.OpenBuildLogsFromUi(
+                                L("ritsulib.commonFolders.toastTitle", "Common folders"),
+                                "[Settings][CommonFolders][BuildLogs]"),
+                            ModSettingsButtonTone.Normal,
+                            T("ritsulib.commonFolders.buildLogs.description",
+                                "Opens Godot Mono build logs."))
+                        .AddButton(
+                            "open_localization_override_folder",
+                            T("ritsulib.commonFolders.locOverride.label", "Localization override folder"),
+                            T("ritsulib.commonFolders.locOverride.button", "Open localization"),
+                            () => GameCommonFolderOpener.OpenLocalizationOverrideFromUi(
+                                L("ritsulib.commonFolders.toastTitle", "Common folders"),
+                                "[Settings][CommonFolders][LocOverride]"),
+                            ModSettingsButtonTone.Normal,
+                            T("ritsulib.commonFolders.locOverride.description",
+                                "Opens the localization_override folder."))),
                 "developer-tools");
         }
     }
