@@ -8,6 +8,7 @@ using MegaCrit.Sts2.Core.Nodes.GodotExtensions;
 using MegaCrit.Sts2.Core.Nodes.Screens;
 using MegaCrit.Sts2.Core.Nodes.Screens.MainMenu;
 using MegaCrit.Sts2.Core.Nodes.Screens.Settings;
+using STS2RitsuLib.Diagnostics;
 using STS2RitsuLib.Patching.Models;
 
 namespace STS2RitsuLib.Settings.Patches
@@ -98,6 +99,10 @@ namespace STS2RitsuLib.Settings.Patches
 
         private const string EntryDividerNodeName = "RitsuLibModSettingsDivider";
 
+        private const string LogsLineNodeName = "RitsuLibOpenLogs";
+
+        private const string LogsDividerNodeName = "RitsuLibOpenLogsDivider";
+
         public static string PatchId => "ritsulib_mod_settings_button";
         public static string Description => "Add RitsuLib mod settings entry point to the settings screen";
         public static bool IsCritical => false;
@@ -119,7 +124,9 @@ namespace STS2RitsuLib.Settings.Patches
             try
             {
                 var line = EnsureEntryPoint(__instance);
+                var logsLine = EnsureLogsEntryPoint(__instance);
                 RefreshState(line, __instance);
+                RefreshLogsState(logsLine);
                 var generalPanel = __instance.GetNode<NSettingsPanel>("%GeneralSettings");
                 ScheduleRefreshGeneralSettingsPanelSize(generalPanel);
                 if (generalPanel.Content is { } generalVBox)
@@ -164,6 +171,41 @@ namespace STS2RitsuLib.Settings.Patches
             }
         }
 
+        private static MarginContainer EnsureLogsEntryPoint(NSettingsScreen screen)
+        {
+            var panel = screen.GetNode<NSettingsPanel>("%GeneralSettings");
+            var content = panel.Content;
+            EnsureGeneralSettingsContentTracksChildAdds(content);
+
+            if (TryGetLogsLine(content) is { } existing)
+            {
+                if (content.GetNodeOrNull<Control>(LogsDividerNodeName) is { } existingDivider)
+                    MoveLogsEntryAboveCredits(content, existingDivider, existing);
+                return existing;
+            }
+
+            RemoveStaleLogsNodes(content);
+
+            var divider = ModSettingsUiFactory.CreateDivider();
+            divider.Name = LogsDividerNodeName;
+
+            var line = ModSettingsGameSettingsEntryLine.CreateOpenLogs(OpenLogsFolder);
+
+            content.AddChild(divider);
+            content.AddChild(line);
+
+            MoveLogsEntryAboveCredits(content, divider, line);
+
+            return line;
+
+            static void OpenLogsFolder()
+            {
+                GameLogFolderOpener.OpenFromUi(
+                    ModSettingsLocalization.Get("entry.openLogs.toastTitle", "Logs"),
+                    "[Settings][OpenLogs]");
+            }
+        }
+
         private static void MoveEntryAboveNativeModSettings(
             VBoxContainer content,
             Control divider,
@@ -171,6 +213,20 @@ namespace STS2RitsuLib.Settings.Patches
         {
             var anchor = content.GetNodeOrNull<Control>("ModdingDivider") ??
                          content.GetNodeOrNull<Control>("CreditsDivider");
+            if (anchor == null)
+                return;
+
+            MoveChildBefore(content, line, anchor);
+            MoveChildBefore(content, divider, line);
+        }
+
+        private static void MoveLogsEntryAboveCredits(
+            VBoxContainer content,
+            Control divider,
+            MarginContainer line)
+        {
+            var anchor = content.GetNodeOrNull<Control>("CreditsDivider") ??
+                         content.GetNodeOrNull<Control>("Credits");
             if (anchor == null)
                 return;
 
@@ -196,6 +252,20 @@ namespace STS2RitsuLib.Settings.Patches
             return line;
         }
 
+        internal static MarginContainer? TryGetLogsLine(VBoxContainer content)
+        {
+            var line = content.GetNodeOrNull<MarginContainer>(LogsLineNodeName);
+            if (line is null || !GodotObject.IsInstanceValid(line) || line.GetParent() != content)
+                return null;
+
+            return line;
+        }
+
+        internal static bool HasInjectedGeneralSettingsEntry(VBoxContainer content)
+        {
+            return TryGetEntryLine(content) != null || TryGetLogsLine(content) != null;
+        }
+
         private static void RemoveStaleEntryNodes(VBoxContainer content)
         {
             var divider = content.GetNodeOrNull<Control>(EntryDividerNodeName);
@@ -203,6 +273,17 @@ namespace STS2RitsuLib.Settings.Patches
                 divider.QueueFree();
 
             var line = content.GetNodeOrNull<Control>(EntryLineNodeName);
+            if (line != null && GodotObject.IsInstanceValid(line))
+                line.QueueFree();
+        }
+
+        private static void RemoveStaleLogsNodes(VBoxContainer content)
+        {
+            var divider = content.GetNodeOrNull<Control>(LogsDividerNodeName);
+            if (divider != null && GodotObject.IsInstanceValid(divider))
+                divider.QueueFree();
+
+            var line = content.GetNodeOrNull<Control>(LogsLineNodeName);
             if (line != null && GodotObject.IsInstanceValid(line))
                 line.QueueFree();
         }
@@ -228,7 +309,7 @@ namespace STS2RitsuLib.Settings.Patches
                 return;
 
             ScheduleRefreshGeneralSettingsPanelSize(panel);
-            if (TryGetEntryLine(content) != null)
+            if (HasInjectedGeneralSettingsEntry(content))
                 GeneralSettingsModEntryFocusWire.ScheduleTryWire(content);
         }
 
@@ -249,6 +330,17 @@ namespace STS2RitsuLib.Settings.Patches
                 label.SetTextAutoSize(ModSettingsLocalization.Get("entry.title", "Mod Settings (RitsuLib)"));
 
             if (line.GetNodeOrNull<NButton>("ContentRow/RitsuLibModSettingsButton") is { } button)
+                button.Enable();
+        }
+
+        private static void RefreshLogsState(MarginContainer line)
+        {
+            line.Visible = true;
+
+            if (line.GetNodeOrNull<MegaRichTextLabel>("ContentRow/Label") is { } label)
+                label.SetTextAutoSize(ModSettingsLocalization.Get("entry.openLogs.title", "Open Logs Folder"));
+
+            if (line.GetNodeOrNull<NButton>("ContentRow/RitsuLibOpenLogsButton") is { } button)
                 button.Enable();
         }
 
@@ -346,7 +438,7 @@ namespace STS2RitsuLib.Settings.Patches
             if (!GodotObject.IsInstanceValid(content))
                 return;
 
-            if (SettingsScreenModSettingsButtonPatch.TryGetEntryLine(content) == null)
+            if (!SettingsScreenModSettingsButtonPatch.HasInjectedGeneralSettingsEntry(content))
                 return;
 
             var list = new List<Control>();

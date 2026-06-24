@@ -21,9 +21,38 @@ namespace STS2RitsuLib.Settings
         /// </summary>
         public static MarginContainer Create(Action openAction)
         {
+            return Create(
+                "RitsuLibModSettings",
+                "RitsuLibModSettingsButton",
+                ModSettingsLocalization.Get("entry.title", "Mod Settings (RitsuLib)"),
+                ModSettingsLocalization.Get("button.open", "Open"),
+                openAction);
+        }
+
+        /// <summary>
+        ///     Builds the General-tab row that opens the game log folder.
+        ///     构建 General 标签页中用于打开游戏日志文件夹的行。
+        /// </summary>
+        public static MarginContainer CreateOpenLogs(Action openAction)
+        {
+            return Create(
+                "RitsuLibOpenLogs",
+                "RitsuLibOpenLogsButton",
+                ModSettingsLocalization.Get("entry.openLogs.title", "Open Logs Folder"),
+                ModSettingsLocalization.Get("entry.openLogs.button", "Open Logs"),
+                openAction);
+        }
+
+        private static MarginContainer Create(
+            string lineName,
+            string buttonName,
+            string labelText,
+            string buttonText,
+            Action openAction)
+        {
             var line = new MarginContainer
             {
-                Name = "RitsuLibModSettings",
+                Name = lineName,
                 CustomMinimumSize = RitsuShellThemeLayoutResolver.ResolveMinSize(
                     "components.gameSettingsEntry.layout.lineMinSize",
                     new(0f, 64f)),
@@ -56,15 +85,15 @@ namespace STS2RitsuLib.Settings
             line.AddChild(row);
 
             var label = CreateVanillaGeneralSettingsRowLabel(
-                ModSettingsLocalization.Get("entry.title", "Mod Settings (RitsuLib)"));
+                labelText);
             label.Name = "Label";
             label.SizeFlagsHorizontal = Control.SizeFlags.ExpandFill;
             row.AddChild(label);
 
             var button = new ModSettingsGameSettingsEntryButton(
-                ModSettingsLocalization.Get("button.open", "Open"), openAction)
+                buttonText, openAction)
             {
-                Name = "RitsuLibModSettingsButton",
+                Name = buttonName,
             };
             button.CustomMinimumSize = RitsuShellThemeLayoutResolver.ResolveMinSize(
                 "components.gameSettingsEntry.layout.buttonMinSize",
