@@ -632,7 +632,8 @@ namespace STS2RitsuLib.Settings
                 entryHost = container;
             }
 
-            var visibleHost = MaybeWrapDynamicVisibility(context, built, CreateSectionVisibilityPredicate(section));
+            var visibleHost = MaybeWrapDynamicVisibility(context, built,
+                ModSettingsVisibility.CreateSectionVisibilityPredicate(page, section));
 
             // For collapsible sections, keep the collapse toggle operable while disabling the content/actions.
             if (section.EnabledWhen == null || built is not ModSettingsCollapsibleSection collapsibleHost)
@@ -661,18 +662,6 @@ namespace STS2RitsuLib.Settings
             }
         }
 
-        private static Func<bool>? CreateSectionVisibilityPredicate(ModSettingsSection section)
-        {
-            if (section.VisibleWhen == null && section.VisibleOnHostSurfaces == ModSettingsHostSurface.All)
-                return null;
-
-            if (section.VisibleOnHostSurfaces == ModSettingsHostSurface.All)
-                return section.VisibleWhen;
-
-            return ModSettingsHostSurfaceResolver.CombineVisibility(section.VisibleWhen,
-                () => ModSettingsHostSurfaceResolver.IsVisibleOnCurrentHost(section.VisibleOnHostSurfaces));
-        }
-
         private static PageBuildItem CreateEntryBuildItem(ModSettingsUiContext context, ModSettingsPage page,
             ModSettingsSection section, ModSettingsEntryDefinition entry, SectionBuildPlan sectionPlan,
             ModSettingsReusableEntryNodePool? entryNodePool)
@@ -685,7 +674,8 @@ namespace STS2RitsuLib.Settings
                 control = TryCreatePooledStandardEntry(context, entry, entryNodePool, out var pooled)
                     ? pooled
                     : entry.CreateControl(context);
-                control = MaybeWrapDynamicVisibility(context, control, entry.VisibilityPredicate);
+                control = MaybeWrapDynamicVisibility(context, control,
+                    CreateEntryVisibilityPredicate(page, entry));
                 control = MaybeWrapDynamicEnabled(context, control, entry.EnabledPredicate);
             }
             catch (Exception ex)
@@ -711,6 +701,15 @@ namespace STS2RitsuLib.Settings
                 if (sectionPlan.SectionActionsButton != null)
                     AttachContextMenuTargets(added, added, sectionPlan.SectionActionsButton, false);
             });
+        }
+
+        private static Func<bool>? CreateEntryVisibilityPredicate(ModSettingsPage page,
+            ModSettingsEntryDefinition entry)
+        {
+            if (entry.VisibilityPredicate == null && entry is not SubpageModSettingsEntryDefinition)
+                return null;
+
+            return () => ModSettingsVisibility.IsEntryVisible(page, entry);
         }
 
         internal static Control MaybeWrapDynamicEnabled(ModSettingsUiContext context, Control host,

@@ -272,7 +272,7 @@ namespace STS2RitsuLib.Settings
             {
                 section = page.Sections.FirstOrDefault(s => string.Equals(s.Id, requested.SectionId,
                     StringComparison.OrdinalIgnoreCase));
-                if (section == null || !IsSectionCurrentlyVisible(section))
+                if (section == null || !IsSectionCurrentlyVisible(page, section))
                     return ModSettingsOpenResult.Error(
                         "section-not-found",
                         $"Settings section '{requested.SectionId}' was not found or is hidden.",
@@ -283,7 +283,7 @@ namespace STS2RitsuLib.Settings
             {
                 var candidateSections = section == null ? page.Sections : [section];
                 var matches = candidateSections
-                    .Where(IsSectionCurrentlyVisible)
+                    .Where(s => IsSectionCurrentlyVisible(page, s))
                     .SelectMany(s => s.Entries
                         .Where(e => string.Equals(e.Id, requested.EntryId, StringComparison.OrdinalIgnoreCase))
                         .Select(e => (Section: s, Entry: e)))
@@ -304,7 +304,7 @@ namespace STS2RitsuLib.Settings
                 }
 
                 section = matches[0].Section;
-                if (!IsEntryCurrentlyVisible(matches[0].Entry))
+                if (!IsEntryCurrentlyVisible(page, matches[0].Entry))
                     return ModSettingsOpenResult.Error(
                         "entry-hidden",
                         $"Settings entry '{requested.EntryId}' is currently hidden.",
@@ -399,34 +399,17 @@ namespace STS2RitsuLib.Settings
 
         private static bool IsPageCurrentlyVisible(ModSettingsPage page)
         {
-            return ModSettingsHostSurfaceResolver.IsVisibleOnCurrentHost(page.VisibleOnHostSurfaces) &&
-                   SafePredicate(page.VisibleWhen);
+            return ModSettingsVisibility.IsPageVisible(page);
         }
 
-        private static bool IsSectionCurrentlyVisible(ModSettingsSection section)
+        private static bool IsSectionCurrentlyVisible(ModSettingsPage page, ModSettingsSection section)
         {
-            return ModSettingsHostSurfaceResolver.IsVisibleOnCurrentHost(section.VisibleOnHostSurfaces) &&
-                   SafePredicate(section.VisibleWhen);
+            return ModSettingsVisibility.IsSectionVisible(page, section);
         }
 
-        private static bool IsEntryCurrentlyVisible(ModSettingsEntryDefinition entry)
+        private static bool IsEntryCurrentlyVisible(ModSettingsPage page, ModSettingsEntryDefinition entry)
         {
-            return SafePredicate(entry.VisibilityPredicate);
-        }
-
-        private static bool SafePredicate(Func<bool>? predicate)
-        {
-            if (predicate == null)
-                return true;
-
-            try
-            {
-                return predicate();
-            }
-            catch
-            {
-                return true;
-            }
+            return ModSettingsVisibility.IsEntryVisible(page, entry);
         }
     }
 }

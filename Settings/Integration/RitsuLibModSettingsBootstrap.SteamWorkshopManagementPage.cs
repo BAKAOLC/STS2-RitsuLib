@@ -13,6 +13,7 @@ namespace STS2RitsuLib.Settings
                 page => page
                     .AsChildOf("updates")
                     .WithSortOrder(-550)
+                    .WithVisibleWhen(SteamWorkshopUpdateCoordinator.CanUseSteamWorkshopUpdates)
                     .WithTitle(T("ritsulib.page.steamWorkshopManagement.title", "Steam Workshop management"))
                     .WithDescription(T("ritsulib.page.steamWorkshopManagement.description",
                         "Search, subscribe, unsubscribe, and inspect Steam Workshop items."))

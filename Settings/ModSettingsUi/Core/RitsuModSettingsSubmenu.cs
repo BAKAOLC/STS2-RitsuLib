@@ -1408,8 +1408,11 @@ namespace STS2RitsuLib.Settings
                 _pageSnapshots[pair.Key] = pair.Value;
         }
 
-        private void EnsureSelectionIsValid()
+        private bool EnsureSelectionIsValid()
         {
+            var previousModId = _selectedModId;
+            var previousPageId = _selectedPageId;
+            var previousSectionId = _selectedSectionId;
             var rootPages = ModSettingsRegistry.GetPages()
                 .Where(page => string.IsNullOrWhiteSpace(page.ParentPageId) &&
                                IsPageVisibleOnCurrentHost(page))
@@ -1425,7 +1428,7 @@ namespace STS2RitsuLib.Settings
                 _selectedModId = null;
                 _selectedPageId = null;
                 _selectedSectionId = null;
-                return;
+                return SelectionChanged();
             }
 
             if (string.IsNullOrWhiteSpace(_selectedModId) || rootPages.All(group =>
@@ -1448,14 +1451,23 @@ namespace STS2RitsuLib.Settings
             {
                 _selectedPageId = null;
                 _selectedSectionId = null;
-                return;
+                return SelectionChanged();
             }
 
             if (!string.IsNullOrWhiteSpace(_selectedPageId) && modPages.Any(page =>
-                    string.Equals(page.Id, _selectedPageId, StringComparison.OrdinalIgnoreCase))) return;
+                    string.Equals(page.Id, _selectedPageId, StringComparison.OrdinalIgnoreCase)))
+                return SelectionChanged();
             _selectedPageId = rootModPages[0].Id;
             _selectedSectionId = null;
             _selectionDirty = true;
+            return SelectionChanged();
+
+            bool SelectionChanged()
+            {
+                return !string.Equals(previousModId, _selectedModId, StringComparison.OrdinalIgnoreCase) ||
+                       !string.Equals(previousPageId, _selectedPageId, StringComparison.OrdinalIgnoreCase) ||
+                       !string.Equals(previousSectionId, _selectedSectionId, StringComparison.OrdinalIgnoreCase);
+            }
         }
 
         private void RebuildSidebar()
@@ -1543,7 +1555,7 @@ namespace STS2RitsuLib.Settings
                     select new ModSettingsSidebarRow(ModSettingsSidebarItemKind.Section, page.ModId, page.Id,
                         section.Id, sectionKey, ResolveSectionTitle(section), "·", depth + 1, null,
                         () => ActivateSidebarSection(page.ModId, page.Id, section.Id),
-                        CreateSidebarSectionVisibilityPredicate(section)));
+                        CreateSidebarSectionVisibilityPredicate(page, section)));
 
             if (!IsSelectedPageInNavSubtree(_selectedPageId, page, pages))
                 return;
@@ -1946,23 +1958,30 @@ namespace STS2RitsuLib.Settings
         private Func<bool>? CreateSidebarPageVisibilityPredicate(ModSettingsPage page,
             IReadOnlyList<ModSettingsPage> pages)
         {
-            if (page.VisibleWhen == null &&
-                page is { VisibleOnHostSurfaces: ModSettingsHostSurface.All, SidebarVisibleOnlyWhenActive: false })
+            if (page is
+                {
+                    VisibleOnHostSurfaces: ModSettingsHostSurface.All,
+                    SidebarVisibleOnlyWhenActive: false,
+                    VisibleWhen: null,
+                } &&
+                page.Sections.Count > 0 &&
+                page.Sections.All(section => section.VisibleWhen == null &&
+                                             section.VisibleOnHostSurfaces == ModSettingsHostSurface.All &&
+                                             section.Entries.Count > 0 &&
+                                             section.Entries.All(entry => entry.VisibilityPredicate == null &&
+                                                                          entry is not
+                                                                              SubpageModSettingsEntryDefinition)))
                 return null;
 
-            return () => (page.VisibleWhen?.Invoke() ?? true) &&
-                         ModSettingsHostSurfaceResolver.IsVisibleOnCurrentHost(page.VisibleOnHostSurfaces) &&
+            return () => IsPageVisibleOnCurrentHost(page) &&
                          (!page.SidebarVisibleOnlyWhenActive ||
                           IsSelectedPageInNavSubtree(_selectedPageId, page, pages));
         }
 
-        private static Func<bool>? CreateSidebarSectionVisibilityPredicate(ModSettingsSection section)
+        private static Func<bool>? CreateSidebarSectionVisibilityPredicate(ModSettingsPage page,
+            ModSettingsSection section)
         {
-            if (section.VisibleWhen == null && section.VisibleOnHostSurfaces == ModSettingsHostSurface.All)
-                return null;
-
-            return () => (section.VisibleWhen?.Invoke() ?? true) &&
-                         ModSettingsHostSurfaceResolver.IsVisibleOnCurrentHost(section.VisibleOnHostSurfaces);
+            return ModSettingsVisibility.CreateSectionVisibilityPredicate(page, section);
         }
 
         private void StartBuildPage(ModSettingsPage page, PageContentCache cache)
@@ -2197,7 +2216,7 @@ namespace STS2RitsuLib.Settings
 
         private static bool IsPageVisibleOnCurrentHost(ModSettingsPage page)
         {
-            return ModSettingsHostSurfaceResolver.IsVisibleOnCurrentHost(page.VisibleOnHostSurfaces);
+            return ModSettingsVisibility.IsPageVisible(page);
         }
 
         private void RefreshPageHostLayout(PageContentCache cache)
