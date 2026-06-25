@@ -142,6 +142,7 @@
     </ItemGroup>
     <ItemGroup>
         <EmbeddedResource Include="resources\mod_image.png" LogicalName="STS2RitsuLib.Assets.mod_image.png"/>
+        <EmbeddedResource Include="resources\mod_image_ex.png" LogicalName="STS2RitsuLib.Assets.mod_image_ex.png"/>
         <EmbeddedResource Include="src\Settings\Localization\JoinDiagnostics\*.json"
                           LogicalName="STS2RitsuLib.Settings.Localization.JoinDiagnostics.%(Filename)%(Extension)"/>
         <EmbeddedResource Include="src\Settings\Localization\ModSettingsUi\*.json"

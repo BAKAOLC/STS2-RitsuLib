@@ -6,6 +6,7 @@ namespace STS2RitsuLib
     {
         internal const string ModImagePath = "res://STS2-RitsuLib/mod_image.png";
         private const string EmbeddedResourceName = "STS2RitsuLib.Assets.mod_image.png";
+        private const string ExEmbeddedResourceName = "STS2RitsuLib.Assets.mod_image_ex.png";
 
         private static readonly StringName Texture2DType = new("Texture2D");
         private static readonly StringName ResourceType = new("Resource");
@@ -53,13 +54,14 @@ namespace STS2RitsuLib
 
             try
             {
+                var resourceName = GetEmbeddedResourceName(path);
                 using var stream = typeof(RitsuLibModImageResourceLoader)
                     .Assembly
-                    .GetManifestResourceStream(EmbeddedResourceName);
+                    .GetManifestResourceStream(resourceName);
                 if (stream == null)
                 {
                     RitsuLibFramework.Logger.Warn(
-                        $"[ModImage] Embedded resource not found: {EmbeddedResourceName}");
+                        $"[ModImage] Embedded resource not found: {resourceName}");
                     return default;
                 }
 
@@ -82,6 +84,19 @@ namespace STS2RitsuLib
         private static bool IsModImagePath(string path)
         {
             return string.Equals(path, ModImagePath, StringComparison.Ordinal);
+        }
+
+        private static string GetEmbeddedResourceName(string path)
+        {
+            return IsExModImageActive(path)
+                ? ExEmbeddedResourceName
+                : EmbeddedResourceName;
+        }
+
+        private static bool IsExModImageActive(string path)
+        {
+            return string.Equals(path, ModImagePath, StringComparison.Ordinal) &&
+                   RitsuLibEasterEggPolicy.IsJuneTwentySeventhInBeijing();
         }
     }
 }
