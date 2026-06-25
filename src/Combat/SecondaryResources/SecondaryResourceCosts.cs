@@ -388,6 +388,12 @@ namespace STS2RitsuLib.Combat.SecondaryResources
         ///     没有玩家/战斗 owner 时解析出的展示用行；只适合用于 UI 展示。
         /// </summary>
         public bool IsPreview { get; init; }
+
+        /// <summary>
+        ///     Unmodified fixed cost used for card-cost color comparison.
+        ///     用于卡牌费用颜色比较的未修改固定费用。
+        /// </summary>
+        public int BaseCost { get; init; } = Cost;
     }
 
     /// <summary>
@@ -559,7 +565,7 @@ namespace STS2RitsuLib.Combat.SecondaryResources
             foreach (var line in plan.Lines)
             {
                 var freeLine = line.Kind == SecondaryResourceUseKind.OptionalSpend
-                    ? line with { IsFree = true, AmountToSpend = 0, Value = 0, Activated = false }
+                    ? line with { IsFree = true, AmountToSpend = 0, Value = 0, Activated = true }
                     : line with { IsFree = true, AmountToSpend = 0, Activated = true };
                 builder.Add(freeLine);
             }
@@ -614,6 +620,7 @@ namespace STS2RitsuLib.Combat.SecondaryResources
         {
             var cost = use.Cost;
             var localCost = ModifyLocalCost(card, definition, use, cost.Amount);
+            var baseCost = Math.Max(0, cost.Amount);
             var fixedCost = Math.Max(0, (int)Math.Ceiling(localCost));
             if (!cost.CostsX)
                 return new(definition.Id, definition, fixedCost, 0, isFree ? 0 : fixedCost, fixedCost, false, isFree)
@@ -621,8 +628,9 @@ namespace STS2RitsuLib.Combat.SecondaryResources
                     UseId = use.Id,
                     Kind = use.Kind,
                     BlocksPlay = use.Kind == SecondaryResourceUseKind.RequiredCost,
-                    Activated = use.Kind == SecondaryResourceUseKind.RequiredCost && !isFree,
+                    Activated = use.Kind == SecondaryResourceUseKind.RequiredCost || isFree,
                     IsPreview = true,
+                    BaseCost = baseCost,
                 };
 
             return new(definition.Id, definition, fixedCost, 0, 0, 0, true, isFree)
@@ -630,8 +638,9 @@ namespace STS2RitsuLib.Combat.SecondaryResources
                 UseId = use.Id,
                 Kind = use.Kind,
                 BlocksPlay = use.Kind == SecondaryResourceUseKind.RequiredCost,
-                Activated = false,
+                Activated = isFree,
                 IsPreview = true,
+                BaseCost = baseCost,
             };
         }
 
@@ -647,6 +656,7 @@ namespace STS2RitsuLib.Combat.SecondaryResources
         {
             var cost = use.Cost;
             var localCost = ModifyLocalCost(card, definition, use, cost.Amount);
+            var baseCost = Math.Max(0, cost.Amount);
             var modifiedCost = SecondaryResourceHook.ModifyCost(
                 new(combatState, player, card, definition, localCost),
                 localCost);
@@ -655,9 +665,7 @@ namespace STS2RitsuLib.Combat.SecondaryResources
 
             if (!cost.CostsX)
             {
-                var activated = isRequired
-                    ? isFree || available >= fixedCost
-                    : !isFree && available >= fixedCost;
+                var activated = isFree || available >= fixedCost;
                 var amountToSpend = !isRequired && !activated
                     ? 0
                     : isFree
@@ -678,6 +686,7 @@ namespace STS2RitsuLib.Combat.SecondaryResources
                     BlocksPlay = isRequired,
                     Activated = activated,
                     SpendAllowed = spendAllowed,
+                    BaseCost = baseCost,
                 };
             }
 
@@ -686,7 +695,7 @@ namespace STS2RitsuLib.Combat.SecondaryResources
                 new(combatState, player, card, definition, xBase),
                 xBase);
             xValue = Math.Max(0, xValue) * cost.XMultiplier;
-            var xActivated = isRequired || (!isFree && available > 0);
+            var xActivated = isRequired || isFree || available > 0;
             var amountToSpendForX = isFree || !xActivated ? 0 : available;
             var xSpendAllowed = CanSpend(combatState, player, card, definition, amountToSpendForX, source);
             // ReSharper disable once InvertIf
@@ -696,13 +705,14 @@ namespace STS2RitsuLib.Combat.SecondaryResources
                 amountToSpendForX = 0;
             }
 
+            var effectiveXValue = isFree && !isRequired ? 0 : xValue;
             return new(
                 definition.Id,
                 definition,
                 fixedCost,
                 available,
                 amountToSpendForX,
-                xActivated ? xValue : 0,
+                xActivated ? effectiveXValue : 0,
                 true,
                 isFree)
             {
@@ -711,6 +721,7 @@ namespace STS2RitsuLib.Combat.SecondaryResources
                 BlocksPlay = isRequired,
                 Activated = xActivated,
                 SpendAllowed = xSpendAllowed,
+                BaseCost = baseCost,
             };
         }
 
