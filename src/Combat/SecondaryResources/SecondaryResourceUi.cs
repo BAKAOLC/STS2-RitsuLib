@@ -1,5 +1,6 @@
 using Godot;
 using MegaCrit.Sts2.Core.Context;
+using MegaCrit.Sts2.Core.Entities.Cards;
 using MegaCrit.Sts2.Core.Entities.Players;
 using MegaCrit.Sts2.Core.Models;
 using MegaCrit.Sts2.Core.Nodes.Cards;
@@ -34,6 +35,8 @@ namespace STS2RitsuLib.Combat.SecondaryResources
         TNode Node,
         CardModel Card,
         SecondaryResourcePaymentPlan Plan,
+        PileType PileType,
+        CardPreviewMode PreviewMode,
         IReadOnlyList<SecondaryResourceDefinition> Definitions,
         IReadOnlyList<SecondaryResourceDefinition> VisibleDefinitions)
         where TParent : Node
@@ -59,7 +62,10 @@ namespace STS2RitsuLib.Combat.SecondaryResources
     {
         private static readonly AttachedState<Node, List<Action<Player?>>> CombatUpdaters = new(() => []);
         private static readonly AttachedState<Node, List<Action>> CombatHiders = new(() => []);
-        private static readonly AttachedState<Node, List<Action<CardModel>>> CardUpdaters = new(() => []);
+
+        private static readonly AttachedState<Node, List<Action<CardModel, PileType, CardPreviewMode>>> CardUpdaters =
+            new(() => []);
+
         private static readonly AttachedState<Node, List<Action>> MultiplayerPlayerStateUpdaters = new(() => []);
         private static readonly AttachedState<Node, List<Action>> MultiplayerPlayerStateHiders = new(() => []);
         private static readonly AttachedState<NMultiplayerPlayerState, bool> MultiplayerPlayerStateCombatActive = new();
@@ -113,6 +119,19 @@ namespace STS2RitsuLib.Combat.SecondaryResources
         /// </summary>
         public static void UpdateCardUi(Node parent, CardModel card)
         {
+            UpdateCardUi(parent, card, PileType.None, CardPreviewMode.Normal);
+        }
+
+        /// <summary>
+        ///     Updates all secondary-resource card UI attachments for a parent node.
+        ///     更新父节点上的所有次级资源卡牌 UI 挂载项。
+        /// </summary>
+        public static void UpdateCardUi(
+            Node parent,
+            CardModel card,
+            PileType pileType,
+            CardPreviewMode previewMode)
+        {
             ArgumentNullException.ThrowIfNull(parent);
             ArgumentNullException.ThrowIfNull(card);
 
@@ -121,7 +140,7 @@ namespace STS2RitsuLib.Combat.SecondaryResources
                 return;
 
             foreach (var updater in updaters.ToArray())
-                updater(card);
+                updater(card, pileType, previewMode);
         }
 
         /// <summary>
@@ -198,7 +217,7 @@ namespace STS2RitsuLib.Combat.SecondaryResources
             where TParent : Node
             where TNode : Node
         {
-            CardUpdaters.GetOrCreate(parent).Add(card =>
+            CardUpdaters.GetOrCreate(parent).Add((card, pileType, previewMode) =>
             {
                 var plan = SecondaryResourcePaymentResolver.Plan(
                     card,
@@ -209,6 +228,8 @@ namespace STS2RitsuLib.Combat.SecondaryResources
                     node,
                     card,
                     plan,
+                    pileType,
+                    previewMode,
                     definitions,
                     SecondaryResourceVisibility.GetCardUiDefinitions(card, plan)));
             });

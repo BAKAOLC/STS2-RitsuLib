@@ -1,6 +1,7 @@
 using Godot;
 using MegaCrit.Sts2.addons.mega_text;
 using MegaCrit.Sts2.Core.Assets;
+using MegaCrit.Sts2.Core.Entities.Cards;
 using MegaCrit.Sts2.Core.Helpers;
 using MegaCrit.Sts2.Core.Models;
 using STS2RitsuLib.Cards.FreePlay;
@@ -146,7 +147,9 @@ namespace STS2RitsuLib.Combat.SecondaryResources
 
         private MegaLabel _label = null!;
         private SecondaryResourcePaymentLine? _line;
+        private PileType _pileType = PileType.Hand;
         private SecondaryResourcePaymentPlan? _plan;
+        private CardPreviewMode _previewMode = CardPreviewMode.Normal;
         private string? _resourceId;
         private SecondaryResourceCardCostUiStyle _style = SecondaryResourceCardCostUiStyle.Default;
         private TextureRect _texture = null!;
@@ -317,7 +320,7 @@ namespace STS2RitsuLib.Combat.SecondaryResources
         public void Refresh<TParent>(SecondaryResourceCardUiContext<TParent, NSecondaryResourceCardCostUi> context)
             where TParent : Node
         {
-            Refresh(context.Card, context.Plan);
+            Refresh(context.Card, context.Plan, context.PileType, context.PreviewMode);
         }
 
         /// <summary>
@@ -338,10 +341,25 @@ namespace STS2RitsuLib.Combat.SecondaryResources
         /// </summary>
         public void Refresh(CardModel card, SecondaryResourcePaymentPlan plan)
         {
+            Refresh(card, plan, _pileType, _previewMode);
+        }
+
+        /// <summary>
+        ///     Refreshes from a resolved payment plan and card visual context.
+        ///     根据已解析支付计划和卡牌视觉上下文刷新。
+        /// </summary>
+        public void Refresh(
+            CardModel card,
+            SecondaryResourcePaymentPlan plan,
+            PileType pileType,
+            CardPreviewMode previewMode)
+        {
             ArgumentNullException.ThrowIfNull(card);
             ArgumentNullException.ThrowIfNull(plan);
 
             _boundCard = card;
+            _pileType = pileType;
+            _previewMode = previewMode;
             if (string.IsNullOrWhiteSpace(_resourceId))
             {
                 Visible = false;
@@ -382,7 +400,7 @@ namespace STS2RitsuLib.Combat.SecondaryResources
 
             Visible = true;
             _label.SetTextAutoSize(_style.Format(line));
-            var (fontColor, outlineColor) = ResolveLabelColors(line);
+            var (fontColor, outlineColor) = ResolveLabelColors(line, _pileType, _previewMode);
             _label.AddThemeColorOverride(ThemeConstants.Label.FontColor, fontColor);
             _label.AddThemeColorOverride(ThemeConstants.Label.FontOutlineColor, outlineColor);
         }
@@ -476,22 +494,28 @@ namespace STS2RitsuLib.Combat.SecondaryResources
             _label.AddThemeConstantOverride(ThemeConstants.Label.OutlineSize, _style.OutlineSize);
         }
 
-        private (Color FontColor, Color OutlineColor) ResolveLabelColors(SecondaryResourcePaymentLine line)
+        private (Color FontColor, Color OutlineColor) ResolveLabelColors(
+            SecondaryResourcePaymentLine line,
+            PileType pileType,
+            CardPreviewMode previewMode)
         {
-            if (!line.CanPlay && line.BlocksPlay)
-                return (_style.UnaffordableColor, _style.UnaffordableOutlineColor);
-
-            if (line is { IsOptional: true, Activated: false } &&
-                _style.OptionalUnavailableColor is { } optionalUnavailableColor &&
-                _style.OptionalUnavailableOutlineColor is { } optionalUnavailableOutlineColor)
-                return (optionalUnavailableColor, optionalUnavailableOutlineColor);
-
-            return line.CostsX switch
-            {
-                false when line.Cost > line.BaseCost => (_style.IncreasedColor, _style.IncreasedOutlineColor),
-                false when line.Cost < line.BaseCost => (_style.DecreasedColor, _style.DecreasedOutlineColor),
-                _ => (_style.AffordableColor, _style.AffordableOutlineColor),
-            };
+            var useOptionalUnavailable =
+                _style.OptionalUnavailableColor.HasValue &&
+                _style.OptionalUnavailableOutlineColor.HasValue;
+            return SecondaryResourceCardCostHelper.GetCostColor(
+                    line,
+                    pileType,
+                    previewMode,
+                    includeOptionalUnavailable: useOptionalUnavailable) switch
+                {
+                    SecondaryResourceCardCostColor.Increased => (_style.IncreasedColor, _style.IncreasedOutlineColor),
+                    SecondaryResourceCardCostColor.Decreased => (_style.DecreasedColor, _style.DecreasedOutlineColor),
+                    SecondaryResourceCardCostColor.InsufficientResources =>
+                        (_style.UnaffordableColor, _style.UnaffordableOutlineColor),
+                    SecondaryResourceCardCostColor.OptionalUnavailable =>
+                        (_style.OptionalUnavailableColor!.Value, _style.OptionalUnavailableOutlineColor!.Value),
+                    _ => (_style.AffordableColor, _style.AffordableOutlineColor),
+                };
         }
     }
 }
