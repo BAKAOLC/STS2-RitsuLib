@@ -9,6 +9,10 @@ namespace STS2RitsuLib.Models.Capabilities
 
         private static readonly ConditionalWeakTable<CardModel, DeferredCapabilityImport> DeferredImports = [];
 
+        private static readonly ConditionalWeakTable<CardModel, DeferredModelSavedDataImport>
+            DeferredModelSavedDataImports =
+                [];
+
         public static IDisposable BeginCardDeserializeReplay()
         {
             CardDeserializeReplayDepth.Value++;
@@ -23,6 +27,33 @@ namespace STS2RitsuLib.Models.Capabilities
             DeferredImports.Remove(card);
             DeferredImports.Add(card, new(document));
             return true;
+        }
+
+        public static bool TryDeferCardModelSavedDataImport(AbstractModel model, ModelSavedDataDocument? document)
+        {
+            if (CardDeserializeReplayDepth.Value <= 0 || model is not CardModel card)
+                return false;
+
+            DeferredModelSavedDataImports.Remove(card);
+            DeferredModelSavedDataImports.Add(card, new(document));
+            return true;
+        }
+
+        public static void FlushDeferredCardModelSavedDataImport(CardModel? card)
+        {
+            if (card == null || !DeferredModelSavedDataImports.TryGetValue(card, out var deferredImport))
+                return;
+
+            DeferredModelSavedDataImports.Remove(card);
+            try
+            {
+                ModelSavedDataRuntime.AttachDocumentImmediate(card, deferredImport.Document);
+            }
+            catch (Exception ex)
+            {
+                RitsuLibFramework.Logger.Warn(
+                    $"[ModelSavedData] Failed to import deferred card model data for {card.Id}: {ex.Message}");
+            }
         }
 
         public static void FlushDeferredCardCapabilityImport(CardModel? card)
@@ -59,6 +90,11 @@ namespace STS2RitsuLib.Models.Capabilities
         private sealed class DeferredCapabilityImport(ModelCapabilitySaveDocument? document)
         {
             public ModelCapabilitySaveDocument? Document { get; } = document;
+        }
+
+        private sealed class DeferredModelSavedDataImport(ModelSavedDataDocument? document)
+        {
+            public ModelSavedDataDocument? Document { get; } = document;
         }
     }
 }

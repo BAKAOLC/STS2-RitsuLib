@@ -88,7 +88,11 @@ namespace STS2RitsuLib
             var added = false;
             foreach (var card in cards)
             {
-                var key = card.Id + (card.IsUpgraded ? "+" : string.Empty);
+                var key = card.CurrentUpgradeLevel <= 0
+                    ? card.Id.ToString()
+                    : card.MaxUpgradeLevel > 1
+                        ? $"{card.Id}+{card.CurrentUpgradeLevel}"
+                        : $"{card.Id}+";
                 if (!seen.Add(key)) continue;
 
                 cardContainer.Add(new(card));

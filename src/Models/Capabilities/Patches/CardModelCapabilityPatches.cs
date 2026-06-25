@@ -439,7 +439,10 @@ namespace STS2RitsuLib.Models.Capabilities.Patches
                 try
                 {
                     if (__exception == null)
+                    {
+                        ModelCapabilityUpgradeReplayContext.FlushDeferredCardModelSavedDataImport(__result);
                         ModelCapabilityUpgradeReplayContext.FlushDeferredCardCapabilityImport(__result);
+                    }
                 }
                 finally
                 {

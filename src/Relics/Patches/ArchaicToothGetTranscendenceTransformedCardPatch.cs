@@ -31,7 +31,7 @@ namespace STS2RitsuLib.Relics.Patches
                 return true;
 
             var cardModel = starterCard.Owner.RunState.CreateCard(template, starterCard.Owner);
-            if (starterCard.IsUpgraded)
+            for (var i = 0; i < starterCard.CurrentUpgradeLevel && cardModel.IsUpgradable; i++)
                 CardCmd.Upgrade(cardModel);
 
             if (starterCard.Enchantment != null)

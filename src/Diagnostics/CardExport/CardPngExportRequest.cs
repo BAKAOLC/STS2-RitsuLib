@@ -29,10 +29,10 @@ namespace STS2RitsuLib.Diagnostics.CardExport
         public CardPngExportCaptureMode CaptureMode { get; init; }
 
         /// <summary>
-        ///     When true, also exports an <c>_upgraded</c> PNG for cards where
+        ///     When true, also exports one <c>_upgraded</c> PNG for cards where
         ///     <see cref="MegaCrit.Sts2.Core.Models.CardModel.IsUpgradable" /> is true.
         ///     为 true 时，还会为
-        ///     <see cref="MegaCrit.Sts2.Core.Models.CardModel.IsUpgradable" /> 为 true 的卡牌导出 <c>_upgraded</c> PNG。
+        ///     <see cref="MegaCrit.Sts2.Core.Models.CardModel.IsUpgradable" /> 为 true 的卡牌导出一个 <c>_upgraded</c> PNG。
         /// </summary>
         public bool IncludeUpgradedVariants { get; init; }
 

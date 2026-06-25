@@ -63,6 +63,15 @@ namespace STS2RitsuLib.Models.Capabilities
         public static void AttachDocument(AbstractModel model, ModelSavedDataDocument? document)
         {
             ArgumentNullException.ThrowIfNull(model);
+            if (ModelCapabilityUpgradeReplayContext.TryDeferCardModelSavedDataImport(model, document))
+                return;
+
+            AttachDocumentImmediate(model, document);
+        }
+
+        internal static void AttachDocumentImmediate(AbstractModel model, ModelSavedDataDocument? document)
+        {
+            ArgumentNullException.ThrowIfNull(model);
             var bag = ModelBags.GetValue(model, _ => new());
             bag.PreservedDocument = document;
             bag.IsInitialized = false;
