@@ -40,7 +40,7 @@ namespace STS2RitsuLib.Combat.CardTargeting
                 {
                     if (selectedTarget == null)
                         return [];
-                    return potion.IsValidTarget(selectedTarget) ? [selectedTarget] : [];
+                    return IsValidTarget(potion, selectedTarget) ? [selectedTarget] : [];
                 }
                 case TargetType.AllAllies:
                     return state?.GetCreaturesOnSide(owner.Side).Where(c => c.IsAlive).ToList() ?? [];
@@ -58,7 +58,7 @@ namespace STS2RitsuLib.Combat.CardTargeting
                 case TargetType.TargetedNoCreature:
                     return [];
                 case TargetType.Self:
-                    return potion.IsValidTarget(selectedTarget ?? owner) ? [owner] : [];
+                    return IsValidTarget(potion, selectedTarget ?? owner) ? [owner] : [];
                 default:
                 {
                     if (CustomTargetTypeResolver.IsCustomSingleTargetType(potion.TargetType))
@@ -86,6 +86,33 @@ namespace STS2RitsuLib.Combat.CardTargeting
                            [];
                 }
             }
+        }
+
+        private static bool IsValidTarget(PotionModel potion, Creature? target)
+        {
+#if STS2_AT_LEAST_0_106_0
+            return potion.IsValidTarget(target);
+#else
+            if (target == null)
+                return potion.TargetType == TargetType.TargetedNoCreature || !potion.TargetType.IsSingleTarget();
+
+            if (!target.IsAlive)
+                return false;
+
+            if (potion.TargetType == TargetType.AnyEnemy)
+                return target.Side != potion.Owner.Creature.Side;
+
+            if (potion.TargetType == TargetType.AnyAlly)
+                return target.Side == potion.Owner.Creature.Side && target != potion.Owner.Creature;
+
+            if (potion.TargetType == TargetType.AnyPlayer)
+                return target.IsPlayer;
+
+            if (potion.TargetType == TargetType.Self)
+                return target == potion.Owner.Creature;
+
+            return false;
+#endif
         }
     }
 }

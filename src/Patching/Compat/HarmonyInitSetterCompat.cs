@@ -39,12 +39,12 @@ namespace STS2RitsuLib.Patching.Compat
                 patched += TryPatchImporter(
                     harmony,
                     _access,
-                    harmonyAssembly.GetType("MonoMod.Utils.MMReflectionImporter"),
+                    ResolveType(harmonyAssembly, "MonoMod.Utils", "MonoMod.Utils.MMReflectionImporter"),
                     "MonoMod.Utils.MMReflectionImporter");
                 patched += TryPatchImporter(
                     harmony,
                     _access,
-                    harmonyAssembly.GetType("Mono.Cecil.DefaultReflectionImporter"),
+                    ResolveType(harmonyAssembly, "Mono.Cecil", "Mono.Cecil.DefaultReflectionImporter"),
                     "Mono.Cecil.DefaultReflectionImporter");
 
                 if (patched == 0)
@@ -205,6 +205,36 @@ namespace STS2RitsuLib.Patching.Compat
             }
         }
 
+        private static Type? ResolveType(Assembly fallbackAssembly, string assemblyName, string fullName)
+        {
+            var type = fallbackAssembly.GetType(fullName, false);
+            if (type != null)
+                return type;
+
+            foreach (var assembly in AppDomain.CurrentDomain.GetAssemblies())
+            {
+                if (!string.Equals(assembly.GetName().Name, assemblyName, StringComparison.OrdinalIgnoreCase))
+                    continue;
+
+                type = assembly.GetType(fullName, false);
+                if (type != null)
+                    return type;
+            }
+
+            type = Type.GetType(fullName + ", " + assemblyName, false);
+            if (type != null)
+                return type;
+
+            try
+            {
+                return Assembly.Load(new AssemblyName(assemblyName)).GetType(fullName, false);
+            }
+            catch
+            {
+                return null;
+            }
+        }
+
         private sealed class ImporterAccess
         {
             private ImporterAccess(
@@ -313,8 +343,12 @@ namespace STS2RitsuLib.Patching.Compat
 
             private static Type RequiredType(Assembly assembly, string fullName)
             {
-                return assembly.GetType(fullName) ??
-                       throw new TypeLoadException($"{fullName} not found in Harmony assembly.");
+                var assemblyName = fullName.StartsWith("Mono.Cecil.", StringComparison.Ordinal)
+                    ? "Mono.Cecil"
+                    : assembly.GetName().Name!;
+                return ResolveType(assembly, assemblyName, fullName) ??
+                       throw new TypeLoadException(
+                           $"{fullName} not found in {assembly.GetName().Name} or {assemblyName}.");
             }
 
             private static PropertyInfo RequiredProperty(Type type, string name)

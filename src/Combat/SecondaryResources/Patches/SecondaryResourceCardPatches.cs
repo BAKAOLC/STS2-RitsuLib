@@ -11,7 +11,6 @@ using MegaCrit.Sts2.Core.GameActions.Multiplayer;
 using MegaCrit.Sts2.Core.Hooks;
 using MegaCrit.Sts2.Core.Models;
 using STS2RitsuLib.Cards.FreePlay;
-using STS2RitsuLib.Lifecycle.Patches;
 using STS2RitsuLib.Patching.Models;
 
 namespace STS2RitsuLib.Combat.SecondaryResources.Patches
@@ -116,24 +115,42 @@ namespace STS2RitsuLib.Combat.SecondaryResources.Patches
             ];
         }
 
-        public static void Prefix(CardModel __instance, bool isAutoPlay)
+        public static void Prefix(CardModel __instance, bool isAutoPlay, out IDisposable? __state)
         {
-            if (!isAutoPlay ||
-                !ModSecondaryResourceRegistry.HasAny ||
+            __state = null;
+            if (!ModSecondaryResourceRegistry.HasAny ||
                 !__instance.HasMaterialSecondaryCosts())
                 return;
 
-            var plan = SecondaryResourcePaymentResolver.Plan(__instance, true);
-            if (plan.HasLines)
-                SecondaryResourcePaymentResolver.CommitFree(plan);
+            if (isAutoPlay && !SecondaryResourcePlayLedgerRuntime.HasPending(__instance))
+            {
+                var plan = SecondaryResourcePaymentResolver.Plan(__instance, true);
+                if (plan.HasLines)
+                    SecondaryResourcePaymentResolver.CommitFree(plan);
+            }
+
+            __state = SecondaryResourcePlayLedgerRuntime.BeginPendingScope(__instance);
         }
 
-        public static void Postfix(CardModel __instance, ref Task __result)
+        public static void Postfix(CardModel __instance, IDisposable? __state, ref Task __result)
         {
             if (!ModSecondaryResourceRegistry.HasAny)
                 return;
 
-            __result = LifecyclePatchTaskBridge.After(__result, () => { __instance.ClearSecondaryCostsUntilPlayed(); });
+            __result = After(__instance, __state, __result);
+        }
+
+        private static async Task After(CardModel card, IDisposable? pendingScope, Task original)
+        {
+            try
+            {
+                await original;
+                card.ClearSecondaryCostsUntilPlayed();
+            }
+            finally
+            {
+                pendingScope?.Dispose();
+            }
         }
     }
 

@@ -1,4 +1,8 @@
 using System.Text;
+using Markdig;
+using Markdig.Extensions.Tables;
+using Markdig.Syntax;
+using Markdig.Syntax.Inlines;
 
 namespace ModUploader
 {

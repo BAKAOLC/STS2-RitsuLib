@@ -1,6 +1,7 @@
 using Godot;
 using STS2RitsuLib.Platform.Steam;
 using STS2RitsuLib.Ui.Shell.Theme;
+using STS2RitsuLib.Ui.Toast;
 
 namespace STS2RitsuLib.Settings
 {
@@ -39,6 +40,7 @@ namespace STS2RitsuLib.Settings
             private WorkshopItemCanvas? _searchList;
             private Label? _searchStatusLabel;
             private bool _subscribedContentBuilt;
+            private IReadOnlyList<RitsuSteamWorkshopItem> _subscribedItems = [];
             private WorkshopItemCanvas? _subscribedList;
             private Label? _subscribedStatusLabel;
 
@@ -166,6 +168,22 @@ namespace STS2RitsuLib.Settings
                         14);
                     _subscribedStatusLabel.SizeFlagsHorizontal = SizeFlags.ExpandFill;
                     row.AddChild(_subscribedStatusLabel);
+                    row.AddChild(new ModSettingsTextButton(
+                        L("ritsulib.steamWorkshopManagement.copy.button", "Copy loaded list"),
+                        ModSettingsButtonTone.Normal,
+                        CopySubscribedItems)
+                    {
+                        CustomMinimumSize = new(170f, RitsuShellTheme.Current.Metric.Entry.ValueMinHeight),
+                        SizeFlagsHorizontal = SizeFlags.ShrinkEnd,
+                    });
+                    row.AddChild(new ModSettingsTextButton(
+                        L("ritsulib.steamWorkshopManagement.import.button", "Import list"),
+                        ModSettingsButtonTone.Accent,
+                        ImportSubscribedItemsFromClipboard)
+                    {
+                        CustomMinimumSize = new(150f, RitsuShellTheme.Current.Metric.Entry.ValueMinHeight),
+                        SizeFlagsHorizontal = SizeFlags.ShrinkEnd,
+                    });
                     row.AddChild(new ModSettingsTextButton(
                         L("button.refresh", "Refresh"),
                         ModSettingsButtonTone.Normal,
@@ -360,6 +378,7 @@ namespace STS2RitsuLib.Settings
 
             private void PrepareSubscribedItems(IReadOnlyList<RitsuSteamWorkshopItem> items)
             {
+                _subscribedItems = items;
                 if (!SteamWorkshopManager.Instance.IsAvailable)
                 {
                     _subscribedList?.SetItems([]);
@@ -387,6 +406,50 @@ namespace STS2RitsuLib.Settings
 
                 _subscribedList?.SetMessage(null);
                 _subscribedList?.SetItems(items);
+            }
+
+            private void CopySubscribedItems()
+            {
+                var itemIds = _subscribedItems
+                    .Select(static item => item.Id)
+                    .Where(static id => id != 0)
+                    .Distinct()
+                    .ToArray();
+                if (itemIds.Length == 0)
+                {
+                    RitsuToastService.ShowWarning(
+                        L("ritsulib.steamWorkshopManagement.copy.empty",
+                            "No loaded Workshop subscriptions are available to copy."),
+                        L("ritsulib.steamWorkshop.toast.title", "Steam Workshop updates"));
+                    return;
+                }
+
+                DisplayServer.ClipboardSet(SteamWorkshopManager.FormatWorkshopItemIdList(itemIds));
+                ModSettingsClipboardAccess.InvalidateCache();
+                RitsuToastService.ShowInfo(
+                    string.Format(
+                        L("ritsulib.steamWorkshopManagement.copy.done",
+                            "Copied {0} Workshop item id(s) to the clipboard."),
+                        itemIds.Length),
+                    L("ritsulib.steamWorkshop.toast.title", "Steam Workshop updates"));
+            }
+
+            private void ImportSubscribedItemsFromClipboard()
+            {
+                if (!ModSettingsClipboardAccess.TryGetText(out var text) || string.IsNullOrWhiteSpace(text))
+                {
+                    RitsuToastService.ShowWarning(
+                        L("ritsulib.steamWorkshopManagement.import.clipboardEmpty",
+                            "Clipboard is empty or unavailable."),
+                        L("ritsulib.steamWorkshop.toast.title", "Steam Workshop updates"));
+                    return;
+                }
+
+                if (!SteamWorkshopImportDialog.Show(text, this, RefreshSubscribedItemsDelayed))
+                    RitsuToastService.ShowWarning(
+                        L("ritsulib.steamWorkshopManagement.import.noIds",
+                            "Clipboard does not contain any Workshop item ids."),
+                        L("ritsulib.steamWorkshop.toast.title", "Steam Workshop updates"));
             }
 
             private void OnOpenItem(RitsuSteamWorkshopItem item)

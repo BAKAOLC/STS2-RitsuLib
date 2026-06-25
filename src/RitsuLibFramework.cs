@@ -1109,6 +1109,30 @@ namespace STS2RitsuLib
         }
 
         /// <summary>
+        ///     Opens the Steam Workshop subscription import dialog for a text list of Workshop item ids or links.
+        ///     The dialog previews the items, defaults every item to selected, and lets the player choose which ones
+        ///     to subscribe to.
+        ///     使用创意工坊 item id 或链接文本列表打开 Steam 创意工坊订阅导入弹窗。该弹窗会预览项目，默认全选，
+        ///     并允许玩家选择要订阅的项目。
+        /// </summary>
+        /// <param name="workshopItemIds">
+        ///     Plain item ids, Steam Workshop links, or a copied list containing them.
+        ///     普通 item id、Steam 创意工坊链接，或包含它们的复制列表。
+        /// </param>
+        /// <param name="attachParent">
+        ///     Optional node used to find the active scene tree. Pass the current UI node when available.
+        ///     用于寻找当前场景树的可选节点；有当前 UI 节点时传入它。
+        /// </param>
+        /// <returns>
+        ///     True when a dialog was opened; false when no Workshop ids were found or no scene tree is available.
+        ///     弹窗已打开时为 true；未找到创意工坊 id 或没有可用场景树时为 false。
+        /// </returns>
+        public static bool ShowSteamWorkshopImportDialog(string workshopItemIds, Node? attachParent = null)
+        {
+            return SteamWorkshopImportDialog.Show(workshopItemIds, attachParent);
+        }
+
+        /// <summary>
         ///     Registers a telemetry applicant with its own fixed adapter/endpoint and data requests.
         ///     注册一个 telemetry 申请方；该申请方拥有自己的固定 adapter/endpoint 和数据申请。
         /// </summary>

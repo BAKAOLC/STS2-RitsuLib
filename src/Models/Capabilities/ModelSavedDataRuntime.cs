@@ -12,6 +12,14 @@ namespace STS2RitsuLib.Models.Capabilities
 
         public bool IsInitialized { get; set; }
 
+        internal void ResetForDocument(ModelSavedDataDocument? document)
+        {
+            _dirty.Clear();
+            _values.Clear();
+            PreservedDocument = document;
+            IsInitialized = false;
+        }
+
         public bool TryGet(ModelSavedDataSlotKey key, out object value)
         {
             return _values.TryGetValue(key, out value!);
@@ -63,9 +71,17 @@ namespace STS2RitsuLib.Models.Capabilities
         public static void AttachDocument(AbstractModel model, ModelSavedDataDocument? document)
         {
             ArgumentNullException.ThrowIfNull(model);
+            if (ModelCapabilityUpgradeReplayContext.TryDeferCardModelSavedDataImport(model, document))
+                return;
+
+            AttachDocumentImmediate(model, document);
+        }
+
+        internal static void AttachDocumentImmediate(AbstractModel model, ModelSavedDataDocument? document)
+        {
+            ArgumentNullException.ThrowIfNull(model);
             var bag = ModelBags.GetValue(model, _ => new());
-            bag.PreservedDocument = document;
-            bag.IsInitialized = false;
+            bag.ResetForDocument(document);
             ModelSavedDataRegistry.EnsureImported(model, bag);
         }
     }

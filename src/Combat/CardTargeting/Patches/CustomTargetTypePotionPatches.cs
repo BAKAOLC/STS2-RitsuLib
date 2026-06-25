@@ -1,3 +1,8 @@
+#if !STS2_AT_LEAST_0_104_0
+using CombatStateCompat = MegaCrit.Sts2.Core.Combat.CombatState;
+#else
+using CombatStateCompat = MegaCrit.Sts2.Core.Combat.ICombatState;
+#endif
 using System.Reflection;
 using System.Reflection.Emit;
 using Godot;
@@ -161,6 +166,7 @@ namespace STS2RitsuLib.Combat.CardTargeting.Patches
         }
     }
 
+#if STS2_AT_LEAST_0_106_0
     /// <summary>
     ///     Validates custom single-target potion targets through their registered predicate.
     ///     通过注册谓词校验自定义单体目标药水的目标。
@@ -198,6 +204,7 @@ namespace STS2RitsuLib.Combat.CardTargeting.Patches
             return false;
         }
     }
+#endif
 
     /// <summary>
     ///     Uses custom multi-target predicates to place potion throw VFX over the affected creature group.
@@ -206,7 +213,7 @@ namespace STS2RitsuLib.Combat.CardTargeting.Patches
     internal sealed class PotionModelOnUseWrapperCustomMultiTargetVfxPatch : IPatchMethod
     {
         private static readonly MethodInfo? GetCreaturesOnSideMethod =
-            AccessTools.DeclaredMethod(typeof(ICombatState), nameof(ICombatState.GetCreaturesOnSide),
+            AccessTools.DeclaredMethod(typeof(CombatStateCompat), nameof(CombatStateCompat.GetCreaturesOnSide),
                 [typeof(CombatSide)]);
 
         private static readonly MethodInfo? GetPotionVfxTargetsMethod =
@@ -268,7 +275,7 @@ namespace STS2RitsuLib.Combat.CardTargeting.Patches
         }
 
         private static IReadOnlyList<Creature> GetPotionVfxTargets(
-            ICombatState combatState,
+            CombatStateCompat combatState,
             CombatSide side,
             PotionModel potion)
         {

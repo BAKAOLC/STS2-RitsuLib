@@ -64,6 +64,7 @@ namespace STS2RitsuLib.Settings
         private readonly ModSettingsReusableEntryNodePool _reusableEntryNodePool = SharedReusableEntryNodePool;
 
         private readonly List<Control> _sidebarFocusChain = [];
+        private Label? _birthdayLabel;
         private Control? _contentBuildOverlay;
 
         private MegaRichTextLabel? _contentEmptyStateLabel;
@@ -168,6 +169,7 @@ namespace STS2RitsuLib.Settings
 
             body.AddChild(CreateSidebarPanel());
             body.AddChild(CreateContentPanel());
+            root.AddChild(CreateBirthdayLabel());
         }
 
         /// <inheritdoc />
@@ -257,6 +259,7 @@ namespace STS2RitsuLib.Settings
             ProcessMode = ProcessModeEnum.Inherit;
             _lastVisibleMirrorRefreshPageKey = null;
             TryStartShellThemeWatcher();
+            SyncBirthdayLabelVisibility();
             ShowContentBuildOverlay();
             if (!IsInitialUiReady)
             {
@@ -290,6 +293,7 @@ namespace STS2RitsuLib.Settings
             ApplySettingsFocusBehavior();
             PushPaneHotkeys();
             UpdatePaneHotkeyHintIcons();
+            SyncBirthdayLabelVisibility();
             RequestMirrorVisibilitySyncRefreshIfNeeded();
             QueueResizeLayoutRefresh();
         }
@@ -390,6 +394,7 @@ namespace STS2RitsuLib.Settings
         public override void _Process(double delta)
         {
             base._Process(delta);
+            SyncBirthdayLabelVisibility();
             if (_saveTimer < 0)
                 return;
 
@@ -1311,6 +1316,24 @@ namespace STS2RitsuLib.Settings
             CreateContentBuildOverlay(panel);
 
             return panel;
+        }
+
+        private Label CreateBirthdayLabel()
+        {
+            var label = new Label
+            {
+                Name = "RitsuBirthdayLabel",
+                HorizontalAlignment = HorizontalAlignment.Center,
+                SizeFlagsHorizontal = SizeFlags.ExpandFill,
+                SizeFlagsVertical = SizeFlags.ShrinkEnd,
+                MouseFilter = MouseFilterEnum.Ignore,
+                Visible = false,
+            };
+            _birthdayLabel = label;
+            ApplyBirthdayLabelText();
+            ApplyBirthdayLabelTheme();
+            SyncBirthdayLabelVisibility();
+            return label;
         }
 
         private void CreateContentBuildOverlay(Control parent)
@@ -2981,6 +3004,7 @@ namespace STS2RitsuLib.Settings
 
         private void ApplyStaticTexts()
         {
+            ApplyBirthdayLabelText();
         }
 
         private void ExpandOnlyMod(string? modId)
@@ -3114,7 +3138,38 @@ namespace STS2RitsuLib.Settings
             if (_scrollContainer != null && IsInstanceValid(_scrollContainer))
                 ModSettingsUiControlTheming.ApplySettingsScrollContainerTheme(_scrollContainer);
 
+            ApplyBirthdayLabelTheme();
             RitsuShellTooltipTheme.ApplyToTreeRoot(this);
+        }
+
+        private void ApplyBirthdayLabelTheme()
+        {
+            if (_birthdayLabel == null || !IsInstanceValid(_birthdayLabel))
+                return;
+
+            _birthdayLabel.AddThemeFontOverride("font", RitsuShellTheme.Current.Font.Body);
+            _birthdayLabel.AddThemeFontSizeOverride("font_size", 17);
+            _birthdayLabel.Modulate = RitsuShellTheme.Current.Text.RichSecondary;
+        }
+
+        private void ApplyBirthdayLabelText()
+        {
+            if (_birthdayLabel == null || !IsInstanceValid(_birthdayLabel))
+                return;
+
+            _birthdayLabel.Text = RitsuLibEasterEggLocalization.Get(
+                "birthday.label",
+                "Today is RitsuLib author OLC's birthday. Yay~");
+        }
+
+        private void SyncBirthdayLabelVisibility()
+        {
+            if (_birthdayLabel == null || !IsInstanceValid(_birthdayLabel))
+                return;
+
+            var visible = RitsuLibEasterEggPolicy.IsJuneTwentySeventhInBeijing();
+            if (_birthdayLabel.Visible != visible)
+                _birthdayLabel.Visible = visible;
         }
 
         private static int ResolveScrollbarContentRightGutter()

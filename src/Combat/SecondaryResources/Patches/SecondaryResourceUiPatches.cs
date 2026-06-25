@@ -127,13 +127,13 @@ namespace STS2RitsuLib.Combat.SecondaryResources.Patches
             return [new(typeof(NCard), nameof(NCard.UpdateVisuals), [typeof(PileType), typeof(CardPreviewMode)])];
         }
 
-        public static void Postfix(NCard __instance)
+        public static void Postfix(NCard __instance, PileType pileType, CardPreviewMode previewMode)
         {
             if (!ModSecondaryResourceRegistry.HasAny ||
                 __instance.Model == null)
                 return;
 
-            SecondaryResourceUiRuntime.UpdateCardUi(__instance, __instance.Model);
+            SecondaryResourceUiRuntime.UpdateCardUi(__instance, __instance.Model, pileType, previewMode);
         }
     }
 }

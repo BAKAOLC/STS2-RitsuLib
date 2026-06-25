@@ -246,6 +246,9 @@ namespace STS2RitsuLib.Combat.SecondaryResources
         private static readonly AttachedState<CardModel, Queue<SecondaryResourcePlayLedger>> PendingLedgers =
             new(() => new());
 
+        private static readonly AttachedState<CardModel, List<PendingLedgerBindingScope>> ActiveBindingScopes =
+            new(() => []);
+
         /// <summary>
         ///     Gets a ledger attached to a play, or an empty ledger.
         ///     获取附加在一次出牌上的 ledger；没有时返回空 ledger。
@@ -297,6 +300,39 @@ namespace STS2RitsuLib.Combat.SecondaryResources
         }
 
         /// <summary>
+        ///     Returns true when the card has a queued or active ledger waiting to bind.
+        ///     当卡牌有等待绑定或正在作用域内复用的 ledger 时返回 true。
+        /// </summary>
+        public static bool HasPending(CardModel card)
+        {
+            ArgumentNullException.ThrowIfNull(card);
+
+            if (ActiveBindingScopes.TryGetValue(card, out var scopes) && scopes.Count > 0)
+                return true;
+
+            return PendingLedgers.TryGetValue(card, out var queue) && queue.Count > 0;
+        }
+
+        /// <summary>
+        ///     Starts an OnPlayWrapper binding scope, reusing one queued ledger for every CardPlay in that wrapper.
+        ///     开始 OnPlayWrapper 绑定作用域，让队列中的一个 ledger 复用于该 wrapper 内的每个 CardPlay。
+        /// </summary>
+        public static IDisposable? BeginPendingScope(CardModel card)
+        {
+            ArgumentNullException.ThrowIfNull(card);
+
+            if (!PendingLedgers.TryGetValue(card, out var queue) || queue.Count == 0)
+                return null;
+
+            var scope = new PendingLedgerBindingScope(card, queue.Dequeue());
+            ActiveBindingScopes.GetOrCreate(card).Add(scope);
+            if (queue.Count == 0)
+                PendingLedgers.Remove(card);
+
+            return scope;
+        }
+
+        /// <summary>
         ///     Binds a pending ledger to a newly created play, if present.
         ///     如果存在 pending ledger，则绑定到新创建的出牌。
         /// </summary>
@@ -304,11 +340,42 @@ namespace STS2RitsuLib.Combat.SecondaryResources
         {
             ArgumentNullException.ThrowIfNull(play);
 
+            if (ActiveBindingScopes.TryGetValue(play.Card, out var scopes) && scopes.Count > 0)
+            {
+                Attach(play, scopes[^1].Ledger);
+                return true;
+            }
+
             if (!PendingLedgers.TryGetValue(play.Card, out var queue) || queue.Count == 0)
                 return false;
 
             Attach(play, queue.Dequeue());
+            if (queue.Count == 0)
+                PendingLedgers.Remove(play.Card);
             return true;
+        }
+
+        private sealed class PendingLedgerBindingScope(
+            CardModel card,
+            SecondaryResourcePlayLedger ledger) : IDisposable
+        {
+            private bool _disposed;
+
+            public SecondaryResourcePlayLedger Ledger { get; } = ledger;
+
+            public void Dispose()
+            {
+                if (_disposed)
+                    return;
+
+                _disposed = true;
+                if (!ActiveBindingScopes.TryGetValue(card, out var scopes))
+                    return;
+
+                scopes.Remove(this);
+                if (scopes.Count == 0)
+                    ActiveBindingScopes.Remove(card);
+            }
         }
     }
 }
