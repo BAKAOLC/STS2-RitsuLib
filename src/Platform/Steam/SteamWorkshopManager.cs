@@ -1,3 +1,4 @@
+using System.Text;
 using Godot;
 using MegaCrit.Sts2.Core.Platform.Steam;
 using STS2RitsuLib.Settings;
@@ -151,6 +152,32 @@ namespace STS2RitsuLib.Platform.Steam
             return false;
         }
 
+        public static IReadOnlyList<ulong> ParseWorkshopItemIds(string? text)
+        {
+            if (string.IsNullOrWhiteSpace(text))
+                return [];
+
+            List<ulong> ids = [];
+            HashSet<ulong> seen = [];
+            foreach (var token in text.Split(
+                         ['\r', '\n', '\t', ' ', ',', ';'],
+                         StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries))
+                if (TryExtractWorkshopItemIdFromToken(token, out var itemId) && seen.Add(itemId))
+                    ids.Add(itemId);
+
+            if (ids.Count > 0)
+                return ids;
+
+            ids.AddRange(EnumerateDigitRunItemIds(text).Where(seen.Add));
+
+            return ids;
+        }
+
+        public static string FormatWorkshopItemIdList(IEnumerable<ulong> itemIds)
+        {
+            return string.Join('\n', itemIds.Where(static id => id != 0).Distinct());
+        }
+
         private static Texture2D? CreateTexture(byte[] bytes)
         {
             if (bytes.Length < 12)
@@ -195,6 +222,56 @@ namespace STS2RitsuLib.Platform.Steam
                 return PreviewImageFormat.Webp;
 
             return PreviewImageFormat.Unknown;
+        }
+
+        private static bool TryExtractWorkshopItemIdFromToken(string token, out ulong itemId)
+        {
+            itemId = 0;
+            var trimmed = token.Trim().Trim('"', '\'', '[', ']', '(', ')', '<', '>', '{', '}');
+            if (TryExtractWorkshopItemId(trimmed, out itemId))
+                return true;
+
+            var idIndex = trimmed.IndexOf("id=", StringComparison.OrdinalIgnoreCase);
+            if (idIndex < 0)
+                return false;
+
+            var value = trimmed[(idIndex + 3)..];
+            var end = value.IndexOfAny(['&', '?', '#', '"', '\'', ',', ';', ']', ')', '}']);
+            if (end >= 0)
+                value = value[..end];
+
+            return ulong.TryParse(Uri.UnescapeDataString(value), out itemId) && itemId != 0;
+        }
+
+        private static IEnumerable<ulong> EnumerateDigitRunItemIds(string text)
+        {
+            var builder = new StringBuilder();
+            foreach (var ch in text)
+            {
+                if (char.IsDigit(ch))
+                {
+                    builder.Append(ch);
+                    continue;
+                }
+
+                if (TryFlush(out var itemId))
+                    yield return itemId;
+            }
+
+            if (TryFlush(out var finalItemId))
+                yield return finalItemId;
+            yield break;
+
+            bool TryFlush(out ulong itemId)
+            {
+                itemId = 0;
+                if (builder.Length == 0)
+                    return false;
+
+                var value = builder.ToString();
+                builder.Clear();
+                return ulong.TryParse(value, out itemId) && itemId != 0;
+            }
         }
 
         private static RitsuSteamWorkshopActionResult RequestSubscriptionAction(
