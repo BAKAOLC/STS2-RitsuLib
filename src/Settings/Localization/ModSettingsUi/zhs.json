@@ -92,6 +92,7 @@
   "ritsulib.category.compatibility.label": "兼容性回退",
   "ritsulib.category.compatibility.description": "调试兼容模式与各项回退开关。",
   "ritsulib.category.updates.label": "更新",
+  "ritsulib.category.updatesWithWorkshop.label": "更新 & 创意工坊",
   "ritsulib.category.updates.description": "RitsuLib 与 Steam 创意工坊更新检查。",
   "ritsulib.category.cloud.label": "Steam 云",
   "ritsulib.category.cloud.description": "模组数据同步与手动 Steam 云操作。",

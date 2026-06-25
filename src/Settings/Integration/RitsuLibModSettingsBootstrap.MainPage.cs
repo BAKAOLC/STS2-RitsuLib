@@ -55,7 +55,7 @@ namespace STS2RitsuLib.Settings
                             "Debug compatibility mode and fallback shims."))
                     .AddSubpage(
                         "category_updates_open",
-                        T("ritsulib.category.updates.label", "Updates"),
+                        CreateUpdatesCategoryTitle(),
                         "updates",
                         T("button.open", "Open"),
                         T("ritsulib.category.updates.description",

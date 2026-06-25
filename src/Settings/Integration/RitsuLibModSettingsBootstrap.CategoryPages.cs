@@ -132,7 +132,7 @@ namespace STS2RitsuLib.Settings
                 page => page
                     .AsChildOf(Const.ModId)
                     .WithSortOrder(-600)
-                    .WithTitle(T("ritsulib.category.updates.label", "Updates"))
+                    .WithTitle(CreateUpdatesCategoryTitle())
                     .WithDescription(T("ritsulib.category.updates.description",
                         "RitsuLib and Steam Workshop update checks."))
                     .AddSection("ritsulib_updates", section => section
@@ -194,6 +194,13 @@ namespace STS2RitsuLib.Settings
                             T("ritsulib.steamWorkshop.checkNow.description",
                                 "Checks subscribed Workshop item states immediately and asks Steam to download any items with available updates."))),
                 "updates");
+        }
+
+        private static ModSettingsText CreateUpdatesCategoryTitle()
+        {
+            return ModSettingsText.Dynamic(() => SteamWorkshopUpdateCoordinator.CanUseSteamWorkshopUpdates()
+                ? L("ritsulib.category.updatesWithWorkshop.label", "Updates & Workshop")
+                : L("ritsulib.category.updates.label", "Updates"));
         }
 
         private static void RegisterCloudSettingsPage(RitsuLibModSettingsUiBindings ui)

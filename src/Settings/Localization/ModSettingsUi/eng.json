@@ -92,6 +92,7 @@
   "ritsulib.category.compatibility.label": "Compatibility fallbacks",
   "ritsulib.category.compatibility.description": "Debug compatibility mode and fallback shims.",
   "ritsulib.category.updates.label": "Updates",
+  "ritsulib.category.updatesWithWorkshop.label": "Updates & Workshop",
   "ritsulib.category.updates.description": "RitsuLib and Steam Workshop update checks.",
   "ritsulib.category.cloud.label": "Steam Cloud",
   "ritsulib.category.cloud.description": "Mod data sync and manual Steam Cloud actions.",
