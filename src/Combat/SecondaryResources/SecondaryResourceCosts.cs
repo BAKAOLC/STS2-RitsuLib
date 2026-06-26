@@ -451,6 +451,12 @@ namespace STS2RitsuLib.Combat.SecondaryResources
         public bool IsOptional => !BlocksPlay;
 
         /// <summary>
+        ///     True when this line is a repeatable extra spend.
+        ///     该行为可重复额外支付时为 true。
+        /// </summary>
+        public bool IsExtraSpend => Kind == SecondaryResourceUseKind.ExtraSpend;
+
+        /// <summary>
         ///     True when this line allows the card play to proceed.
         ///     该行允许卡牌继续打出时为 true。
         /// </summary>
@@ -482,6 +488,18 @@ namespace STS2RitsuLib.Combat.SecondaryResources
         /// </summary>
         public SecondaryResourceShortfallResolution ShortfallResolution { get; init; } =
             SecondaryResourceShortfallResolution.None;
+
+        /// <summary>
+        ///     Number of full extra-spend stacks paid by this line.
+        ///     该行支付的完整额外消耗层数。
+        /// </summary>
+        public int ExtraStacks { get; init; }
+
+        /// <summary>
+        ///     Amount spent as repeatable extra payment by this line.
+        ///     该行作为可重复额外支付消耗的数量。
+        /// </summary>
+        public int ExtraAmountToSpend { get; init; }
 
         /// <summary>
         ///     Stable play-use id for this line.
@@ -748,6 +766,8 @@ namespace STS2RitsuLib.Combat.SecondaryResources
                         CoveredShortfall = 0,
                         Shortfall = 0,
                         ShortfallResolution = SecondaryResourceShortfallResolution.None,
+                        ExtraAmountToSpend = 0,
+                        ExtraStacks = 0,
                     }
                     : line with
                     {
@@ -758,6 +778,8 @@ namespace STS2RitsuLib.Combat.SecondaryResources
                         CoveredShortfall = 0,
                         Shortfall = 0,
                         ShortfallResolution = SecondaryResourceShortfallResolution.None,
+                        ExtraAmountToSpend = 0,
+                        ExtraStacks = 0,
                     };
                 builder.Add(freeLine);
             }
@@ -780,7 +802,12 @@ namespace STS2RitsuLib.Combat.SecondaryResources
 
             return uses
                 .Where(static use => use.IsMaterial)
-                .OrderBy(static use => use.Kind == SecondaryResourceUseKind.RequiredCost ? 0 : 1)
+                .OrderBy(static use => use.Kind switch
+                {
+                    SecondaryResourceUseKind.RequiredCost => 0,
+                    SecondaryResourceUseKind.ExtraSpend => 1,
+                    _ => 2,
+                })
                 .ThenBy(static use => use.Id, StringComparer.Ordinal)
                 .ToArray();
         }
@@ -866,6 +893,22 @@ namespace STS2RitsuLib.Combat.SecondaryResources
             if (!cost.CostsX)
             {
                 var availableToSpend = Math.Max(0, available);
+                if (use.Kind == SecondaryResourceUseKind.ExtraSpend)
+                    return ResolveExtraSpendLine(
+                        combatState,
+                        player,
+                        card,
+                        definition,
+                        use,
+                        available,
+                        availableToSpend,
+                        fixedCost,
+                        displayCost,
+                        baseCost,
+                        canonicalCost,
+                        isFree,
+                        source);
+
                 var originalShortfall = isFree ? 0 : Math.Max(0, fixedCost - availableToSpend);
                 var initialAmountToSpend = ResolveAmountToSpend(
                     isRequired,
@@ -988,6 +1031,56 @@ namespace STS2RitsuLib.Combat.SecondaryResources
                 BaseCost = baseCost,
                 CanonicalCost = canonicalCost,
                 InsufficientPayment = baseInsufficientPayment,
+            };
+        }
+
+        private static SecondaryResourcePaymentLine ResolveExtraSpendLine(
+            CombatStateLike combatState,
+            Player player,
+            CardModel card,
+            SecondaryResourceDefinition definition,
+            SecondaryResourcePlayUse use,
+            int available,
+            int availableToSpend,
+            int perStackAmount,
+            int displayCost,
+            int baseCost,
+            int canonicalCost,
+            bool isFree,
+            AbstractModel? source)
+        {
+            var maxStacks = use.MaxExtraStacks ?? int.MaxValue;
+            var stacks = isFree || perStackAmount <= 0
+                ? 0
+                : Math.Min(maxStacks, availableToSpend / perStackAmount);
+            var amountToSpend = stacks * perStackAmount;
+            var spendAllowed = CanSpend(combatState, player, card, definition, amountToSpend, source);
+            // ReSharper disable once InvertIf
+            if (!spendAllowed)
+            {
+                stacks = 0;
+                amountToSpend = 0;
+            }
+
+            return new(
+                definition.Id,
+                definition,
+                displayCost,
+                available,
+                amountToSpend,
+                stacks,
+                false,
+                isFree)
+            {
+                UseId = use.Id,
+                Kind = use.Kind,
+                BlocksPlay = false,
+                Activated = stacks > 0,
+                SpendAllowed = spendAllowed,
+                BaseCost = baseCost,
+                CanonicalCost = canonicalCost,
+                ExtraStacks = stacks,
+                ExtraAmountToSpend = amountToSpend,
             };
         }
 

@@ -198,6 +198,39 @@ card.SecondaryResourceUses()
 Required uses reserve resource before optional spends, so optional lines cannot consume resource needed by hard costs.
 Existing `SecondaryCosts()` entries are treated as unnamed required uses keyed by resource id for compatibility.
 
+For repeatable "kicker stack" payments, use `SpendExtra(...)`. It runs after required payments and shortfall replacement,
+but before ordinary optional spends:
+
+```csharp
+card.SecondaryResourceUses()
+    .Require("seven_stars", stars.Id, 7)
+    .SpendExtra(
+        "seven_stars_bonus",
+        stars.Id,
+        perStackAmount: 2,
+        maxStacks: null);
+```
+
+`perStackAmount` must be positive. `maxStacks: null` means no explicit cap; RitsuLib spends as many full stacks as the
+remaining resource can pay. A remainder that cannot complete one stack is not spent.
+
+```csharp
+var ledger = cardPlay.SecondaryResources();
+var extraSpent = ledger.ExtraSpentByUse("seven_stars_bonus");
+var stacks = ledger.ExtraStacksByUse("seven_stars_bonus");
+var totalStarsSpent = ledger.Spent(stars.Id);
+
+if (stacks > 0)
+{
+    // one effect per extra stack
+}
+
+if (totalStarsSpent >= 20)
+{
+    // effect for spending at least 20 stars in total
+}
+```
+
 Required costs normally block play when the resource is short. To allow a required cost to pass with a shortfall, attach
 an explicit insufficient-payment policy:
 
@@ -327,6 +360,39 @@ card.SecondaryResourceUses()
 
 必需条款会先预留资源，然后再判断可选支付，所以可选行不会抢走硬费用所需的资源。为了兼容旧代码，已有
 `SecondaryCosts()` 条目会被视为以 resource id 为 key 的未具名必需条款。
+
+对于类似“每额外支付一份就叠一层”的 kicker 支付，使用 `SpendExtra(...)`。它会在必需支付和短缺替代之后、
+普通可选支付之前运行：
+
+```csharp
+card.SecondaryResourceUses()
+    .Require("seven_stars", stars.Id, 7)
+    .SpendExtra(
+        "seven_stars_bonus",
+        stars.Id,
+        perStackAmount: 2,
+        maxStacks: null);
+```
+
+`perStackAmount` 必须为正数。`maxStacks: null` 表示不设置显式上限；RitsuLib 会按剩余资源能支付的完整份数尽可能消耗。
+不足一整份的余数不会被消耗。
+
+```csharp
+var ledger = cardPlay.SecondaryResources();
+var extraSpent = ledger.ExtraSpentByUse("seven_stars_bonus");
+var stacks = ledger.ExtraStacksByUse("seven_stars_bonus");
+var totalStarsSpent = ledger.Spent(stars.Id);
+
+if (stacks > 0)
+{
+    // 每层额外支付触发一次
+}
+
+if (totalStarsSpent >= 20)
+{
+    // 本次总共消耗至少 20 个辉星时的效果
+}
+```
 
 必需费用默认会在资源不足时阻止出牌。如果某个必需费用允许短缺通过，可以显式附加短缺支付策略：
 

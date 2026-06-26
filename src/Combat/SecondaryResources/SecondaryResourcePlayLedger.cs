@@ -58,6 +58,35 @@ namespace STS2RitsuLib.Combat.SecondaryResources
         }
 
         /// <summary>
+        ///     Returns the total amount spent for a play-use id.
+        ///     返回某个出牌条款 id 的总消耗数量。
+        /// </summary>
+        public int TotalSpentByUse(string useId)
+        {
+            return SpentByUse(useId);
+        }
+
+        /// <summary>
+        ///     Returns the amount spent as repeatable extra payment for a play-use id.
+        ///     返回某个出牌条款 id 作为可重复额外支付消耗的数量。
+        /// </summary>
+        public int ExtraSpentByUse(string useId)
+        {
+            ArgumentException.ThrowIfNullOrWhiteSpace(useId);
+            return UseLines.TryGetValue(useId.Trim(), out var line) ? line.ExtraAmountSpent : 0;
+        }
+
+        /// <summary>
+        ///     Returns the full extra-spend stack count for a play-use id.
+        ///     返回某个出牌条款 id 的完整额外消耗层数。
+        /// </summary>
+        public int ExtraStacksByUse(string useId)
+        {
+            ArgumentException.ThrowIfNullOrWhiteSpace(useId);
+            return UseLines.TryGetValue(useId.Trim(), out var line) ? line.ExtraStacks : 0;
+        }
+
+        /// <summary>
         ///     Returns the value captured for a resource.
         ///     返回某个资源捕获到的数值。
         /// </summary>
@@ -75,6 +104,26 @@ namespace STS2RitsuLib.Combat.SecondaryResources
         {
             ArgumentException.ThrowIfNullOrWhiteSpace(resourceId);
             return Lines.TryGetValue(resourceId.Trim(), out var line) ? line.Shortfall : 0;
+        }
+
+        /// <summary>
+        ///     Returns the amount spent as repeatable extra payment for a resource.
+        ///     返回某个资源作为可重复额外支付消耗的数量。
+        /// </summary>
+        public int ExtraSpent(string resourceId)
+        {
+            ArgumentException.ThrowIfNullOrWhiteSpace(resourceId);
+            return Lines.TryGetValue(resourceId.Trim(), out var line) ? line.ExtraAmountSpent : 0;
+        }
+
+        /// <summary>
+        ///     Returns the full extra-spend stack count for a resource.
+        ///     返回某个资源的完整额外消耗层数。
+        /// </summary>
+        public int ExtraStacks(string resourceId)
+        {
+            ArgumentException.ThrowIfNullOrWhiteSpace(resourceId);
+            return Lines.TryGetValue(resourceId.Trim(), out var line) ? line.ExtraStacks : 0;
         }
 
         /// <summary>
@@ -216,10 +265,34 @@ namespace STS2RitsuLib.Combat.SecondaryResources
         public int CoveredShortfall { get; init; }
 
         /// <summary>
+        ///     Amount spent as a base required or optional payment.
+        ///     作为基础必需或可选支付消耗的数量。
+        /// </summary>
+        public int BaseAmountSpent { get; init; }
+
+        /// <summary>
+        ///     Amount spent as repeatable extra payment.
+        ///     作为可重复额外支付消耗的数量。
+        /// </summary>
+        public int ExtraAmountSpent { get; init; }
+
+        /// <summary>
+        ///     Full repeatable extra-spend stack count.
+        ///     完整可重复额外消耗层数。
+        /// </summary>
+        public int ExtraStacks { get; init; }
+
+        /// <summary>
         ///     True when this line came from an optional spend.
         ///     该行来自可选支付时为 true。
         /// </summary>
         public bool IsOptional => Kind == SecondaryResourceUseKind.OptionalSpend;
+
+        /// <summary>
+        ///     True when this line came from a repeatable extra spend.
+        ///     该行来自可重复额外支付时为 true。
+        /// </summary>
+        public bool IsExtraSpend => Kind == SecondaryResourceUseKind.ExtraSpend;
 
         /// <summary>
         ///     True when this line was activated by an allowed shortfall.
@@ -251,6 +324,13 @@ namespace STS2RitsuLib.Combat.SecondaryResources
                 OriginalShortfall = line.OriginalShortfall,
                 CoveredShortfall = line.CoveredShortfall,
                 Shortfall = line.Shortfall,
+                BaseAmountSpent = line.Kind == SecondaryResourceUseKind.ExtraSpend
+                    ? 0
+                    : line.IsFree
+                        ? 0
+                        : line.AmountToSpend,
+                ExtraAmountSpent = line.ExtraAmountToSpend,
+                ExtraStacks = line.ExtraStacks,
             };
         }
 
@@ -284,6 +364,9 @@ namespace STS2RitsuLib.Combat.SecondaryResources
                             OriginalShortfall = lines.Sum(static line => line.OriginalShortfall),
                             CoveredShortfall = lines.Sum(static line => line.CoveredShortfall),
                             Shortfall = lines.Sum(static line => line.Shortfall),
+                            BaseAmountSpent = lines.Sum(static line => line.BaseAmountSpent),
+                            ExtraAmountSpent = lines.Sum(static line => line.ExtraAmountSpent),
+                            ExtraStacks = lines.Sum(static line => line.ExtraStacks),
                         };
                     },
                     StringComparer.OrdinalIgnoreCase);
