@@ -40,6 +40,18 @@ namespace STS2RitsuLib.Combat.SecondaryResources
         SecondaryResourceUseKind Kind)
     {
         /// <summary>
+        ///     Lifetime of the active use layer that produced this descriptor.
+        ///     产生该条款描述的当前生效层生命周期。
+        /// </summary>
+        public SecondaryResourceCostDuration Duration { get; init; } = SecondaryResourceCostDuration.Permanent;
+
+        /// <summary>
+        ///     Current permanent base cost used for cost-color comparison when this use is temporarily overridden.
+        ///     该条款被临时覆盖时，用于费用颜色比较的当前永久基础费用。
+        /// </summary>
+        public SecondaryResourceCost BaseCost { get; init; } = Cost;
+
+        /// <summary>
         ///     Optional per-use policy for required payments that are short on resource.
         ///     必需支付资源不足时的可选 per-use 策略。
         /// </summary>
@@ -278,6 +290,7 @@ namespace STS2RitsuLib.Combat.SecondaryResources
             layers.Add(new(
                 new(normalizedUseId, normalizedResourceId, cost, kind)
                 {
+                    Duration = duration,
                     InsufficientPayment = insufficientPayment,
                     MaxExtraStacks = maxExtraStacks,
                 },
@@ -327,7 +340,17 @@ namespace STS2RitsuLib.Combat.SecondaryResources
         public IReadOnlyList<SecondaryResourcePlayUse> Snapshot()
         {
             return _uses
-                .Select(static pair => pair.Value[^1].Use)
+                .Select(static pair =>
+                {
+                    var layer = pair.Value[^1];
+                    var permanentCost = pair.Value.LastOrDefault(static candidate =>
+                        candidate.Duration == SecondaryResourceCostDuration.Permanent)?.Use.Cost ?? layer.Use.Cost;
+                    return layer.Use with
+                    {
+                        Duration = layer.Duration,
+                        BaseCost = permanentCost,
+                    };
+                })
                 .Where(static use => use.IsMaterial)
                 .OrderBy(static use => use.Kind switch
                 {

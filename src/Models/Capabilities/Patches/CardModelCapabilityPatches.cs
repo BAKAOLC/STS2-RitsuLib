@@ -18,6 +18,7 @@ using MegaCrit.Sts2.Core.Nodes.CommonUi;
 using MegaCrit.Sts2.Core.Random;
 using MegaCrit.Sts2.Core.Saves.Runs;
 using STS2RitsuLib.Cards;
+using STS2RitsuLib.Combat.SecondaryResources;
 using STS2RitsuLib.Patching.Models;
 using STS2RitsuLib.Utils.HarmonyIl;
 
@@ -466,6 +467,11 @@ namespace STS2RitsuLib.Models.Capabilities.Patches
                 return [new(typeof(CardModel), nameof(CardModel.UpgradeInternal), Type.EmptyTypes)];
             }
 
+            public static void Prefix(CardModel __instance)
+            {
+                SecondaryResourceUpgradePreviewCosts.Capture(__instance);
+            }
+
             public static IEnumerable<CodeInstruction> Transpiler(IEnumerable<CodeInstruction> instructions)
             {
                 var recalculateMethod = AccessTools.Method(
@@ -517,6 +523,7 @@ namespace STS2RitsuLib.Models.Capabilities.Patches
 
             public static void Postfix(CardModel __instance)
             {
+                SecondaryResourceUpgradePreviewCosts.Clear(__instance);
                 CardModelCapabilityHost.AfterOwnerCardUpgradeFinalized(__instance);
             }
         }

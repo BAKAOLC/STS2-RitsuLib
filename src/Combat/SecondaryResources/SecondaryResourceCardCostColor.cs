@@ -67,7 +67,9 @@ namespace STS2RitsuLib.Combat.SecondaryResources
             if (line.CostsX)
                 return SecondaryResourceCardCostColor.Unmodified;
 
-            if (previewMode == CardPreviewMode.Upgrade && line.BaseCost < line.CanonicalCost)
+            if (previewMode == CardPreviewMode.Upgrade &&
+                line.UpgradePreviewBaseCost is { } upgradePreviewBaseCost &&
+                line.BaseCost < upgradePreviewBaseCost)
                 return SecondaryResourceCardCostColor.Decreased;
 
             if (pileType != PileType.Hand)
@@ -83,6 +85,9 @@ namespace STS2RitsuLib.Combat.SecondaryResources
 
             if (includeOptionalUnavailable && line is { IsOptional: true, Activated: false })
                 return SecondaryResourceCardCostColor.OptionalUnavailable;
+
+            if (!line.HasRuntimeCostModifier)
+                return SecondaryResourceCardCostColor.Unmodified;
 
             if (line.Cost > line.BaseCost)
                 return SecondaryResourceCardCostColor.Increased;

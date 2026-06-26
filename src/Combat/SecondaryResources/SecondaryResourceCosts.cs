@@ -259,12 +259,16 @@ namespace STS2RitsuLib.Combat.SecondaryResources
                 .Select(static pair =>
                 {
                     var layer = pair.Value[^1];
+                    var permanentCost = pair.Value.LastOrDefault(static candidate =>
+                        candidate.Duration == SecondaryResourceCostDuration.Permanent)?.Cost ?? layer.Cost;
                     return new SecondaryResourcePlayUse(
                         pair.Key,
                         pair.Key,
                         layer.Cost,
                         SecondaryResourceUseKind.RequiredCost)
                     {
+                        Duration = layer.Duration,
+                        BaseCost = permanentCost,
                         InsufficientPayment = layer.InsufficientPayment,
                     };
                 })
@@ -538,10 +542,16 @@ namespace STS2RitsuLib.Combat.SecondaryResources
         public int BaseCost { get; init; } = Cost;
 
         /// <summary>
-        ///     Canonical fixed cost before upgrade-preview changes.
-        ///     升级预览变化前的 canonical 固定费用。
+        ///     Fixed cost before the current upgrade preview, when this line is being shown as an upgrade preview.
+        ///     当前行作为升级预览显示时，升级前的固定费用。
         /// </summary>
-        public int CanonicalCost { get; init; } = Cost;
+        public int? UpgradePreviewBaseCost { get; init; }
+
+        /// <summary>
+        ///     True when this line's displayed fixed cost differs because of a runtime cost effect.
+        ///     该行显示的固定费用因运行时费用效果而变化时为 true。
+        /// </summary>
+        public bool HasRuntimeCostModifier { get; init; }
     }
 
     /// <summary>
@@ -812,6 +822,12 @@ namespace STS2RitsuLib.Combat.SecondaryResources
                 .ToArray();
         }
 
+        internal static IReadOnlyList<SecondaryResourcePlayUse> SnapshotUsesForUpgradePreview(CardModel card)
+        {
+            ArgumentNullException.ThrowIfNull(card);
+            return SnapshotUses(card);
+        }
+
         private static SecondaryResourcePaymentPlan PlanPreview(
             CardModel card,
             IReadOnlyList<SecondaryResourcePlayUse> uses,
@@ -837,11 +853,14 @@ namespace STS2RitsuLib.Combat.SecondaryResources
         {
             var cost = use.Cost;
             var localCost = ModifyLocalCost(card, definition, use, cost.Amount);
-            var baseCost = Math.Max(0, cost.Amount);
-            var canonicalCost = ResolveCanonicalCost(card, use);
+            var baseCost = Math.Max(0, use.BaseCost.Amount);
+            var upgradePreviewBaseCost = SecondaryResourceUpgradePreviewCosts.GetBaseCost(card, use);
             var fixedCost = Math.Max(0, (int)Math.Ceiling(localCost));
             var displayCost = isFree ? 0 : fixedCost;
             var insufficientPayment = use.InsufficientPayment ?? definition.DefaultInsufficientPayment;
+            var hasRuntimeCostModifier = use.Duration != SecondaryResourceCostDuration.Permanent ||
+                                         localCost != cost.Amount ||
+                                         isFree;
             if (!cost.CostsX)
                 return new(definition.Id, definition, displayCost, 0, isFree ? 0 : fixedCost, fixedCost, false, isFree)
                 {
@@ -851,7 +870,8 @@ namespace STS2RitsuLib.Combat.SecondaryResources
                     Activated = use.Kind == SecondaryResourceUseKind.RequiredCost || isFree,
                     IsPreview = true,
                     BaseCost = baseCost,
-                    CanonicalCost = canonicalCost,
+                    UpgradePreviewBaseCost = upgradePreviewBaseCost,
+                    HasRuntimeCostModifier = hasRuntimeCostModifier,
                     InsufficientPayment = insufficientPayment,
                 };
 
@@ -863,7 +883,8 @@ namespace STS2RitsuLib.Combat.SecondaryResources
                 Activated = isFree,
                 IsPreview = true,
                 BaseCost = baseCost,
-                CanonicalCost = canonicalCost,
+                UpgradePreviewBaseCost = upgradePreviewBaseCost,
+                HasRuntimeCostModifier = hasRuntimeCostModifier,
                 InsufficientPayment = insufficientPayment,
             };
         }
@@ -880,13 +901,17 @@ namespace STS2RitsuLib.Combat.SecondaryResources
         {
             var cost = use.Cost;
             var localCost = ModifyLocalCost(card, definition, use, cost.Amount);
-            var baseCost = Math.Max(0, cost.Amount);
-            var canonicalCost = ResolveCanonicalCost(card, use);
+            var baseCost = Math.Max(0, use.BaseCost.Amount);
+            var upgradePreviewBaseCost = SecondaryResourceUpgradePreviewCosts.GetBaseCost(card, use);
             var modifiedCost = SecondaryResourceHook.ModifyCost(
                 new(combatState, player, card, definition, localCost),
                 localCost);
             var fixedCost = Math.Max(0, (int)Math.Ceiling(modifiedCost));
             var displayCost = isFree ? 0 : fixedCost;
+            var hasRuntimeCostModifier = use.Duration != SecondaryResourceCostDuration.Permanent ||
+                                         localCost != cost.Amount ||
+                                         modifiedCost != localCost ||
+                                         isFree;
             var isRequired = use.Kind == SecondaryResourceUseKind.RequiredCost;
             var baseInsufficientPayment = use.InsufficientPayment ?? definition.DefaultInsufficientPayment;
 
@@ -905,7 +930,7 @@ namespace STS2RitsuLib.Combat.SecondaryResources
                         fixedCost,
                         displayCost,
                         baseCost,
-                        canonicalCost,
+                        upgradePreviewBaseCost,
                         isFree,
                         source);
 
@@ -988,7 +1013,8 @@ namespace STS2RitsuLib.Combat.SecondaryResources
                     Activated = activated,
                     SpendAllowed = spendAllowed,
                     BaseCost = baseCost,
-                    CanonicalCost = canonicalCost,
+                    UpgradePreviewBaseCost = upgradePreviewBaseCost,
+                    HasRuntimeCostModifier = hasRuntimeCostModifier,
                     OriginalShortfall = originalShortfall,
                     CoveredShortfall = coveredShortfall,
                     Shortfall = shortfall,
@@ -1029,7 +1055,8 @@ namespace STS2RitsuLib.Combat.SecondaryResources
                 Activated = xActivated,
                 SpendAllowed = xSpendAllowed,
                 BaseCost = baseCost,
-                CanonicalCost = canonicalCost,
+                UpgradePreviewBaseCost = upgradePreviewBaseCost,
+                HasRuntimeCostModifier = hasRuntimeCostModifier,
                 InsufficientPayment = baseInsufficientPayment,
             };
         }
@@ -1045,7 +1072,7 @@ namespace STS2RitsuLib.Combat.SecondaryResources
             int perStackAmount,
             int displayCost,
             int baseCost,
-            int canonicalCost,
+            int? upgradePreviewBaseCost,
             bool isFree,
             AbstractModel? source)
         {
@@ -1078,7 +1105,8 @@ namespace STS2RitsuLib.Combat.SecondaryResources
                 Activated = stacks > 0,
                 SpendAllowed = spendAllowed,
                 BaseCost = baseCost,
-                CanonicalCost = canonicalCost,
+                UpgradePreviewBaseCost = upgradePreviewBaseCost,
+                HasRuntimeCostModifier = isFree || perStackAmount != baseCost,
                 ExtraStacks = stacks,
                 ExtraAmountToSpend = amountToSpend,
             };
@@ -1152,45 +1180,6 @@ namespace STS2RitsuLib.Combat.SecondaryResources
             }
         }
 
-        private static int ResolveCanonicalCost(CardModel card, SecondaryResourcePlayUse use)
-        {
-            var fallback = Math.Max(0, use.Cost.Amount);
-            if (card.CanonicalInstance == card)
-                return fallback;
-
-            return TryFindCanonicalUseCost(card.CanonicalInstance, use, out var canonicalCost)
-                ? Math.Max(0, canonicalCost.Amount)
-                : fallback;
-        }
-
-        private static bool TryFindCanonicalUseCost(
-            CardModel canonicalCard,
-            SecondaryResourcePlayUse use,
-            out SecondaryResourceCost cost)
-        {
-            if (canonicalCard.TryGetSecondaryResourceUses(out var uses))
-            {
-                var canonicalUse = uses.Snapshot().FirstOrDefault(candidate =>
-                    string.Equals(candidate.Id, use.Id, StringComparison.OrdinalIgnoreCase) &&
-                    string.Equals(candidate.ResourceId, use.ResourceId, StringComparison.OrdinalIgnoreCase) &&
-                    candidate.Kind == use.Kind);
-                if (canonicalUse != null)
-                {
-                    cost = canonicalUse.Cost;
-                    return true;
-                }
-            }
-
-            if (use.Kind == SecondaryResourceUseKind.RequiredCost &&
-                string.Equals(use.Id, use.ResourceId, StringComparison.OrdinalIgnoreCase) &&
-                canonicalCard.TryGetSecondaryCosts(out var costs) &&
-                costs.Snapshot().TryGetValue(use.ResourceId, out cost!))
-                return true;
-
-            cost = null!;
-            return false;
-        }
-
         private static decimal ModifyLocalCost(
             CardModel card,
             SecondaryResourceDefinition definition,
@@ -1220,6 +1209,50 @@ namespace STS2RitsuLib.Combat.SecondaryResources
             return amount <= 0 ||
                    SecondaryResourceHook.ShouldSpend(
                        new(combatState, player, definition, card, amount, source ?? card));
+        }
+    }
+
+    internal static class SecondaryResourceUpgradePreviewCosts
+    {
+        private static readonly AttachedState<CardModel, Dictionary<SecondaryResourcePlayUseKey, int>> BeforeUpgrade =
+            new();
+
+        internal static void Capture(CardModel card)
+        {
+            ArgumentNullException.ThrowIfNull(card);
+            var uses = SecondaryResourcePaymentResolver.SnapshotUsesForUpgradePreview(card);
+            BeforeUpgrade.Set(
+                card,
+                uses.ToDictionary(
+                    static use => SecondaryResourcePlayUseKey.From(use),
+                    static use => Math.Max(0, use.BaseCost.Amount)));
+        }
+
+        internal static void Clear(CardModel card)
+        {
+            ArgumentNullException.ThrowIfNull(card);
+            BeforeUpgrade.Remove(card);
+        }
+
+        internal static int? GetBaseCost(CardModel card, SecondaryResourcePlayUse use)
+        {
+            ArgumentNullException.ThrowIfNull(card);
+            ArgumentNullException.ThrowIfNull(use);
+            return BeforeUpgrade.TryGetValue(card, out var costs) &&
+                   costs.TryGetValue(SecondaryResourcePlayUseKey.From(use), out var cost)
+                ? cost
+                : null;
+        }
+    }
+
+    internal readonly record struct SecondaryResourcePlayUseKey(
+        string Id,
+        string ResourceId,
+        SecondaryResourceUseKind Kind)
+    {
+        public static SecondaryResourcePlayUseKey From(SecondaryResourcePlayUse use)
+        {
+            return new(use.Id, use.ResourceId, use.Kind);
         }
     }
 }

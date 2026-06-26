@@ -4,6 +4,7 @@ using MegaCrit.Sts2.Core.Assets;
 using MegaCrit.Sts2.Core.Entities.Cards;
 using MegaCrit.Sts2.Core.Helpers;
 using MegaCrit.Sts2.Core.Models;
+using MegaCrit.Sts2.Core.Nodes.Cards;
 using STS2RitsuLib.Cards.FreePlay;
 
 namespace STS2RitsuLib.Combat.SecondaryResources
@@ -31,6 +32,13 @@ namespace STS2RitsuLib.Combat.SecondaryResources
         ///     数量标签相对居中图标矩形的偏移。
         /// </summary>
         public Vector2 LabelOffset { get; init; }
+
+        /// <summary>
+        ///     Whether this cost node occupies the vanilla star-cost slot and should keep the enchantment tab in the
+        ///     vanilla star-cost layout.
+        ///     该费用节点是否占用原版辉星费用槽，并应让附魔标签保持原版辉星费用布局。
+        /// </summary>
+        public bool ReserveVanillaStarCostSlot { get; init; }
 
         /// <summary>
         ///     Amount-label font size.
@@ -333,6 +341,10 @@ namespace STS2RitsuLib.Combat.SecondaryResources
             where TParent : Node
         {
             Refresh(context.Card, context.Plan, context.PileType, context.PreviewMode);
+            if (Visible &&
+                _style.ReserveVanillaStarCostSlot &&
+                context.Parent is NCard card)
+                SecondaryResourceCardUiLayout.ReserveVanillaStarCostSlot(card);
         }
 
         /// <summary>
