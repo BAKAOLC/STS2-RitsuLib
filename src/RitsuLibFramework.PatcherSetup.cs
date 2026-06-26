@@ -309,6 +309,8 @@ namespace STS2RitsuLib
             patcher.RegisterPatch<CardModelShouldGlowGoldRegistryPatch>();
             patcher.RegisterPatch<CardModelShouldGlowRedRegistryPatch>();
             patcher.RegisterPatch<CardModelSetToFreeThisTurnBindingPatch>();
+            patcher.RegisterPatch<CardModelFreeThisTurnEndCleanupPatch>();
+            patcher.RegisterPatch<CardModelFreeAfterPlayedCleanupPatch>();
             patcher.RegisterPatch<CardModelSetToFreeThisCombatBindingPatch>();
             patcher.RegisterPatch<NHandCardHolderUpdateCardHandOutlinePatch>();
             patcher.RegisterPatch<NHandCardHolderFlashHandOutlinePatch>();
