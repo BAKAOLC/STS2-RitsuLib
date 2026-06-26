@@ -68,6 +68,36 @@ namespace STS2RitsuLib.Combat.SecondaryResources
         }
 
         /// <summary>
+        ///     Returns the shortfall amount for a resource.
+        ///     返回某个资源的短缺数量。
+        /// </summary>
+        public int Shortfall(string resourceId)
+        {
+            ArgumentException.ThrowIfNullOrWhiteSpace(resourceId);
+            return Lines.TryGetValue(resourceId.Trim(), out var line) ? line.Shortfall : 0;
+        }
+
+        /// <summary>
+        ///     Returns the original shortfall amount for a resource before replacement payments.
+        ///     返回替代支付前某个资源的原始短缺数量。
+        /// </summary>
+        public int OriginalShortfall(string resourceId)
+        {
+            ArgumentException.ThrowIfNullOrWhiteSpace(resourceId);
+            return Lines.TryGetValue(resourceId.Trim(), out var line) ? line.OriginalShortfall : 0;
+        }
+
+        /// <summary>
+        ///     Returns the covered shortfall amount for a resource.
+        ///     返回某个资源已被替代支付覆盖的短缺数量。
+        /// </summary>
+        public int CoveredShortfall(string resourceId)
+        {
+            ArgumentException.ThrowIfNullOrWhiteSpace(resourceId);
+            return Lines.TryGetValue(resourceId.Trim(), out var line) ? line.CoveredShortfall : 0;
+        }
+
+        /// <summary>
         ///     Returns the value captured for a play-use id.
         ///     返回某个出牌条款 id 捕获到的数值。
         /// </summary>
@@ -106,6 +136,36 @@ namespace STS2RitsuLib.Combat.SecondaryResources
             ArgumentException.ThrowIfNullOrWhiteSpace(useId);
             return UseLines.TryGetValue(useId.Trim(), out line!);
         }
+
+        /// <summary>
+        ///     Returns the shortfall amount for a play-use id.
+        ///     返回某个出牌条款 id 的短缺数量。
+        /// </summary>
+        public int ShortfallByUse(string useId)
+        {
+            ArgumentException.ThrowIfNullOrWhiteSpace(useId);
+            return UseLines.TryGetValue(useId.Trim(), out var line) ? line.Shortfall : 0;
+        }
+
+        /// <summary>
+        ///     Returns the original shortfall amount for a play-use id before replacement payments.
+        ///     返回替代支付前某个出牌条款 id 的原始短缺数量。
+        /// </summary>
+        public int OriginalShortfallByUse(string useId)
+        {
+            ArgumentException.ThrowIfNullOrWhiteSpace(useId);
+            return UseLines.TryGetValue(useId.Trim(), out var line) ? line.OriginalShortfall : 0;
+        }
+
+        /// <summary>
+        ///     Returns the covered shortfall amount for a play-use id.
+        ///     返回某个出牌条款 id 已被替代支付覆盖的短缺数量。
+        /// </summary>
+        public int CoveredShortfallByUse(string useId)
+        {
+            ArgumentException.ThrowIfNullOrWhiteSpace(useId);
+            return UseLines.TryGetValue(useId.Trim(), out var line) ? line.CoveredShortfall : 0;
+        }
     }
 
     /// <summary>
@@ -138,10 +198,34 @@ namespace STS2RitsuLib.Combat.SecondaryResources
         public bool Activated { get; init; } = IsFree || AmountSpent > 0 || Value > 0;
 
         /// <summary>
+        ///     Amount that remained unpaid for an allowed required-cost shortfall.
+        ///     允许的必需费用短缺中未支付的数量。
+        /// </summary>
+        public int Shortfall { get; init; }
+
+        /// <summary>
+        ///     Amount that was short before replacement payments.
+        ///     替代支付前的原始短缺数量。
+        /// </summary>
+        public int OriginalShortfall { get; init; }
+
+        /// <summary>
+        ///     Amount of the shortfall covered by replacement payments.
+        ///     由替代支付覆盖的短缺数量。
+        /// </summary>
+        public int CoveredShortfall { get; init; }
+
+        /// <summary>
         ///     True when this line came from an optional spend.
         ///     该行来自可选支付时为 true。
         /// </summary>
         public bool IsOptional => Kind == SecondaryResourceUseKind.OptionalSpend;
+
+        /// <summary>
+        ///     True when this line was activated by an allowed shortfall.
+        ///     该行通过允许的短缺被激活时为 true。
+        /// </summary>
+        public bool HasShortfall => Shortfall > 0;
     }
 
     internal sealed class SecondaryResourcePlayLedgerBuilder(
@@ -164,6 +248,9 @@ namespace STS2RitsuLib.Combat.SecondaryResources
                 UseId = line.UseId,
                 Kind = line.Kind,
                 Activated = line.Activated,
+                OriginalShortfall = line.OriginalShortfall,
+                CoveredShortfall = line.CoveredShortfall,
+                Shortfall = line.Shortfall,
             };
         }
 
@@ -194,6 +281,9 @@ namespace STS2RitsuLib.Combat.SecondaryResources
                                 ? SecondaryResourceUseKind.RequiredCost
                                 : SecondaryResourceUseKind.OptionalSpend,
                             Activated = lines.Any(static line => line.Activated),
+                            OriginalShortfall = lines.Sum(static line => line.OriginalShortfall),
+                            CoveredShortfall = lines.Sum(static line => line.CoveredShortfall),
+                            Shortfall = lines.Sum(static line => line.Shortfall),
                         };
                     },
                     StringComparer.OrdinalIgnoreCase);

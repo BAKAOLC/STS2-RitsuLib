@@ -54,6 +54,60 @@ namespace STS2RitsuLib.Combat.SecondaryResources
         AbstractModel? Source);
 
     /// <summary>
+    ///     Context for dynamic insufficient-payment policy resolution.
+    ///     动态解析资源不足支付策略的上下文。
+    /// </summary>
+    public readonly record struct SecondaryResourceInsufficientPaymentContext(
+        CombatStateLike CombatState,
+        Player Player,
+        SecondaryResourceDefinition Definition,
+        CardModel Card,
+        string UseId,
+        SecondaryResourceUseKind Kind,
+        int Cost,
+        int AmountAvailable,
+        int AmountToSpend,
+        int Shortfall,
+        AbstractModel? Source);
+
+    /// <summary>
+    ///     Context for pure shortfall-replacement planning.
+    ///     纯短缺替代规划上下文。
+    /// </summary>
+    public readonly record struct SecondaryResourceShortfallResolutionContext(
+        CombatStateLike CombatState,
+        Player Player,
+        SecondaryResourceDefinition Definition,
+        CardModel Card,
+        string UseId,
+        SecondaryResourceUseKind Kind,
+        int Cost,
+        int AmountAvailable,
+        int AmountToSpend,
+        int Shortfall,
+        AbstractModel? Source);
+
+    /// <summary>
+    ///     Context for a committed required-cost shortfall payment.
+    ///     已提交必需费用短缺支付的上下文。
+    /// </summary>
+    public readonly record struct SecondaryResourceShortfallContext(
+        CombatStateLike CombatState,
+        Player Player,
+        SecondaryResourceDefinition Definition,
+        CardModel Card,
+        string UseId,
+        SecondaryResourceUseKind Kind,
+        int Cost,
+        int AmountAvailable,
+        int AmountSpent,
+        int OriginalShortfall,
+        int CoveredShortfall,
+        int Shortfall,
+        AbstractModel? Source,
+        SecondaryResourcePlayLedger Ledger);
+
+    /// <summary>
     ///     Context for resource cost modification.
     ///     资源费用修正上下文。
     /// </summary>

@@ -34,6 +34,12 @@ namespace STS2RitsuLib.Combat.SecondaryResources
         SecondaryResourceUseKind Kind)
     {
         /// <summary>
+        ///     Optional per-use policy for required payments that are short on resource.
+        ///     必需支付资源不足时的可选 per-use 策略。
+        /// </summary>
+        public SecondaryResourceInsufficientPayment? InsufficientPayment { get; init; }
+
+        /// <summary>
         ///     True when this use can affect play/payment.
         ///     该条款可能影响出牌/支付时为 true。
         /// </summary>
@@ -94,6 +100,68 @@ namespace STS2RitsuLib.Combat.SecondaryResources
         }
 
         /// <summary>
+        ///     Attaches a required cost with an explicit shortfall policy.
+        ///     附加一个带显式短缺策略的必需费用。
+        /// </summary>
+        public SecondaryResourcePlayUseSet Require(
+            string useId,
+            string resourceId,
+            SecondaryResourceCost cost,
+            SecondaryResourceInsufficientPayment insufficientPayment,
+            SecondaryResourceCostDuration duration = SecondaryResourceCostDuration.Permanent)
+        {
+            return Set(
+                useId,
+                resourceId,
+                cost,
+                SecondaryResourceUseKind.RequiredCost,
+                duration,
+                insufficientPayment);
+        }
+
+        /// <summary>
+        ///     Attaches a required cost that can still be played with a shortfall.
+        ///     附加一个资源不足时仍可打出的必需费用。
+        /// </summary>
+        public SecondaryResourcePlayUseSet RequireAllowingShortfall(
+            string useId,
+            string resourceId,
+            int amount,
+            SecondaryResourceShortfallPaymentHandler? onShortfall = null,
+            bool spendAvailable = true,
+            SecondaryResourceShortfallResolver? resolveShortfall = null)
+        {
+            return RequireAllowingShortfall(
+                useId,
+                resourceId,
+                new SecondaryResourceCost(Math.Max(0, amount)),
+                onShortfall,
+                spendAvailable,
+                resolveShortfall);
+        }
+
+        /// <summary>
+        ///     Attaches a required cost that can still be played with a shortfall.
+        ///     附加一个资源不足时仍可打出的必需费用。
+        /// </summary>
+        public SecondaryResourcePlayUseSet RequireAllowingShortfall(
+            string useId,
+            string resourceId,
+            SecondaryResourceCost cost,
+            SecondaryResourceShortfallPaymentHandler? onShortfall = null,
+            bool spendAvailable = true,
+            SecondaryResourceShortfallResolver? resolveShortfall = null,
+            SecondaryResourceCostDuration duration = SecondaryResourceCostDuration.Permanent)
+        {
+            return Require(
+                useId,
+                resourceId,
+                cost,
+                SecondaryResourceInsufficientPayment.AllowPlay(onShortfall, spendAvailable, resolveShortfall),
+                duration);
+        }
+
+        /// <summary>
         ///     Attaches a permanent optional spend that activates only when it can be paid.
         ///     附加一个永久可选支付；仅在可支付时激活。
         /// </summary>
@@ -126,6 +194,21 @@ namespace STS2RitsuLib.Combat.SecondaryResources
             SecondaryResourceUseKind kind,
             SecondaryResourceCostDuration duration = SecondaryResourceCostDuration.Permanent)
         {
+            return Set(useId, resourceId, cost, kind, duration, null);
+        }
+
+        /// <summary>
+        ///     Sets a use descriptor for one use id and duration with an explicit shortfall policy.
+        ///     为单个条款 id 和持续时间设置带显式短缺策略的条款描述。
+        /// </summary>
+        public SecondaryResourcePlayUseSet Set(
+            string useId,
+            string resourceId,
+            SecondaryResourceCost cost,
+            SecondaryResourceUseKind kind,
+            SecondaryResourceCostDuration duration,
+            SecondaryResourceInsufficientPayment? insufficientPayment)
+        {
             ArgumentException.ThrowIfNullOrWhiteSpace(useId);
             ArgumentException.ThrowIfNullOrWhiteSpace(resourceId);
             ArgumentNullException.ThrowIfNull(cost);
@@ -135,7 +218,10 @@ namespace STS2RitsuLib.Combat.SecondaryResources
             var layers = GetLayers(normalizedUseId);
             layers.RemoveAll(layer => layer.Duration == duration);
             layers.Add(new(
-                new(normalizedUseId, normalizedResourceId, cost, kind),
+                new(normalizedUseId, normalizedResourceId, cost, kind)
+                {
+                    InsufficientPayment = insufficientPayment,
+                },
                 duration));
             Changed?.Invoke();
             return this;

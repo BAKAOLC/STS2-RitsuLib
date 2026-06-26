@@ -70,6 +70,28 @@ namespace STS2RitsuLib.Combat.SecondaryResources
         }
 
         /// <summary>
+        ///     Dynamically modifies the insufficient-payment policy for a required card payment.
+        ///     动态修正必需卡牌支付的资源不足策略。
+        /// </summary>
+        SecondaryResourceInsufficientPayment ModifySecondaryResourceInsufficientPayment(
+            SecondaryResourceInsufficientPaymentContext context,
+            SecondaryResourceInsufficientPayment payment)
+        {
+            return payment;
+        }
+
+        /// <summary>
+        ///     Resolves whether another payment source can cover a required card-payment shortfall.
+        ///     解析是否可用其他支付来源覆盖必需卡牌支付短缺。
+        /// </summary>
+        SecondaryResourceShortfallResolution ResolveSecondaryResourceShortfall(
+            SecondaryResourceShortfallResolutionContext context,
+            SecondaryResourceShortfallResolution current)
+        {
+            return current;
+        }
+
+        /// <summary>
         ///     Returns false to suppress the built-in turn-start reset for this resource.
         ///     返回 false 以阻止该资源的内建回合开始重置。
         /// </summary>
@@ -92,6 +114,15 @@ namespace STS2RitsuLib.Combat.SecondaryResources
         ///     在资源被消耗后运行。
         /// </summary>
         Task AfterSecondaryResourceSpent(SecondaryResourceSpendContext context)
+        {
+            return Task.CompletedTask;
+        }
+
+        /// <summary>
+        ///     Runs after a required card payment was committed with a secondary-resource shortfall.
+        ///     在必需卡牌支付以次级资源短缺形式提交后运行。
+        /// </summary>
+        Task AfterSecondaryResourceShortfallPayment(SecondaryResourceShortfallContext context)
         {
             return Task.CompletedTask;
         }

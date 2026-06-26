@@ -96,6 +96,30 @@ namespace STS2RitsuLib.Combat.SecondaryResources
         }
 
         /// <summary>
+        ///     Applies dynamic insufficient-payment policy hooks.
+        ///     应用动态资源不足支付策略 hook。
+        /// </summary>
+        public static SecondaryResourceInsufficientPayment ModifyInsufficientPayment(
+            SecondaryResourceInsufficientPaymentContext context,
+            SecondaryResourceInsufficientPayment payment)
+        {
+            return IterateListeners(context.CombatState, context.Card).Aggregate(payment,
+                (current, listener) => listener.ModifySecondaryResourceInsufficientPayment(context, current));
+        }
+
+        /// <summary>
+        ///     Applies shortfall-replacement planning hooks.
+        ///     应用短缺替代规划 hook。
+        /// </summary>
+        public static SecondaryResourceShortfallResolution ResolveShortfall(
+            SecondaryResourceShortfallResolutionContext context,
+            SecondaryResourceShortfallResolution resolution)
+        {
+            return IterateListeners(context.CombatState, context.Card).Aggregate(resolution,
+                (current, listener) => listener.ResolveSecondaryResourceShortfall(context, current));
+        }
+
+        /// <summary>
         ///     Returns whether a built-in reset should proceed.
         ///     返回是否应继续执行内建重置。
         /// </summary>
@@ -123,6 +147,16 @@ namespace STS2RitsuLib.Combat.SecondaryResources
         {
             foreach (var listener in IterateListeners(context.CombatState, context.Card))
                 await listener.AfterSecondaryResourceSpent(context);
+        }
+
+        /// <summary>
+        ///     Runs after-shortfall-payment hooks.
+        ///     运行短缺支付后 hook。
+        /// </summary>
+        public static async Task AfterShortfallPayment(SecondaryResourceShortfallContext context)
+        {
+            foreach (var listener in IterateListeners(context.CombatState, context.Card))
+                await listener.AfterSecondaryResourceShortfallPayment(context);
         }
 
         /// <summary>
