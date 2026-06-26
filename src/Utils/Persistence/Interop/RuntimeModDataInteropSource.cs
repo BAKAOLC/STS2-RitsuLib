@@ -21,7 +21,10 @@ namespace STS2RitsuLib.Utils.Persistence.Interop
 
         private static readonly HashSet<string> RegisteredInteropSlotKeys = new(StringComparer.OrdinalIgnoreCase);
 
+        private static readonly HashSet<string> ProcessedProviderNames = new(StringComparer.Ordinal);
+
         private static readonly List<InteropSlot> Slots = [];
+        private static readonly List<InteropApplyHook> ApplyHooks = [];
 
         private static bool _profileChangedHooked;
 
@@ -112,12 +115,17 @@ namespace STS2RitsuLib.Utils.Persistence.Interop
                 foreach (var provider in providers)
                     try
                     {
+                        var providerName = provider.ProviderType.FullName ?? provider.ProviderType.Name;
+                        if (ProcessedProviderNames.Contains(providerName))
+                            continue;
+
                         if (!TryReadSchema(provider, out var schema))
                             continue;
 
                         if (!TryRegisterFromSchema(provider, schema))
                             continue;
 
+                        ProcessedProviderNames.Add(providerName);
                         added++;
                     }
                     catch (Exception ex)
@@ -200,6 +208,8 @@ namespace STS2RitsuLib.Utils.Persistence.Interop
                     RitsuLibFramework.Logger.Warn(
                         $"[RuntimeModDataInteropSource] Push-after-load failed for '{slot.ModId}'::{slot.Key}: {ex.Message}");
                 }
+
+            ApplyLoadedDataHooks();
         }
 
         private static void OnProfileChangedSyncFromProviders(int oldProfileId, int newProfileId)
@@ -427,6 +437,15 @@ namespace STS2RitsuLib.Utils.Persistence.Interop
             if (!TryGetString(root, "modId", out var modId) || string.IsNullOrWhiteSpace(modId))
                 return false;
 
+            var syntaxVersion = 1;
+            if (TryGetInt(root, "syntaxVersion", out var sv))
+            {
+                if (sv is not 1 and not 2)
+                    return false;
+
+                syntaxVersion = sv.Value;
+            }
+
             var entries = new List<InteropEntry>();
             if (!TryGetEnumerable(root, "entries", out var entriesRaw))
                 return false;
@@ -435,7 +454,7 @@ namespace STS2RitsuLib.Utils.Persistence.Interop
             {
                 if (entryRaw == null || !TryAsMap(entryRaw, out var entryMap))
                     continue;
-                if (!TryParseEntry(entryMap, out var entry))
+                if (!TryParseEntry(entryMap, syntaxVersion, out var entry))
                     continue;
                 entries.Add(entry);
             }
@@ -443,11 +462,11 @@ namespace STS2RitsuLib.Utils.Persistence.Interop
             if (entries.Count == 0)
                 return false;
 
-            schema = new(modId.Trim(), entries);
+            schema = new(syntaxVersion, modId.Trim(), entries);
             return true;
         }
 
-        private static bool TryParseEntry(IDictionary<string, object?> map, out InteropEntry entry)
+        private static bool TryParseEntry(IDictionary<string, object?> map, int syntaxVersion, out InteropEntry entry)
         {
             entry = null!;
             if (!TryGetString(map, "key", out var key) || string.IsNullOrWhiteSpace(key))
@@ -515,8 +534,29 @@ namespace STS2RitsuLib.Utils.Persistence.Interop
             if (TryGetStringPaths(map, "jsonPathMergePush", out var jmp))
                 jsonPathMergePush = jmp;
 
+            var getMethod = syntaxVersion == 2 &&
+                            TryGetString(map, "getMethod", out var gm) && !string.IsNullOrWhiteSpace(gm)
+                ? gm.Trim()
+                : null;
+
+            var modifyMethod = syntaxVersion == 2 &&
+                               TryGetString(map, "modifyMethod", out var mm) && !string.IsNullOrWhiteSpace(mm)
+                ? mm.Trim()
+                : null;
+
+            var saveMethod = syntaxVersion == 2 &&
+                             TryGetString(map, "saveMethod", out var sm) && !string.IsNullOrWhiteSpace(sm)
+                ? sm.Trim()
+                : null;
+
+            var applyMethod = syntaxVersion == 2 &&
+                              TryGetString(map, "applyMethod", out var am) && !string.IsNullOrWhiteSpace(am)
+                ? am.Trim()
+                : null;
+
             entry = new(key.Trim(), fileName.Trim(), scope, autoCreate, dataTypeName, defaultFactory,
-                migrationConfig, migrations, jsonPathPull, jsonPathPush, jsonPathMergePush);
+                migrationConfig, migrations, jsonPathPull, jsonPathPush, jsonPathMergePush,
+                getMethod, modifyMethod, saveMethod, applyMethod);
             return true;
         }
 
@@ -596,6 +636,13 @@ namespace STS2RitsuLib.Utils.Persistence.Interop
 
         private static bool TryRegisterFromSchema(InteropProvider provider, InteropSchemaRoot schema)
         {
+            return schema.SyntaxVersion == 2
+                ? TryRegisterFromSchemaV2(provider, schema)
+                : TryRegisterFromSchemaV1(provider, schema);
+        }
+
+        private static bool TryRegisterFromSchemaV1(InteropProvider provider, InteropSchemaRoot schema)
+        {
             var channel = ReflectionStaticChannelBinder.Bind(provider.ProviderType,
                 ReflectionInteropConvention.ModData);
             var providerKey = provider.ProviderType.FullName ?? provider.ProviderType.Name;
@@ -606,7 +653,7 @@ namespace STS2RitsuLib.Utils.Persistence.Interop
 
             var store = ModDataStore.For(schema.ModId);
             var registeredAny = false;
-            using (RitsuLibFramework.BeginModDataRegistration(schema.ModId, false))
+            using (RitsuLibFramework.BeginModDataRegistration(schema.ModId))
             {
                 foreach (var entry in schema.Entries)
                 {
@@ -637,7 +684,8 @@ namespace STS2RitsuLib.Utils.Persistence.Interop
                                 continue;
                             }
 
-                            RegisterTypedEntry(store, schema.ModId, providerKey, entry, dataType, channel);
+                            RegisterTypedEntry(store, schema.ModId, provider.ProviderType, providerKey, entry,
+                                dataType, channel, false);
                         }
 
                         lock (Gate)
@@ -659,7 +707,96 @@ namespace STS2RitsuLib.Utils.Persistence.Interop
                 return false;
 
             PushLoadedForMod(schema.ModId, providerKey);
+            ApplyLoadedForMod(schema.ModId, providerKey);
             return true;
+        }
+
+        private static bool TryRegisterFromSchemaV2(InteropProvider provider, InteropSchemaRoot schema)
+        {
+            var providerKey = provider.ProviderType.FullName ?? provider.ProviderType.Name;
+            var channel = TryBindChannel(provider.ProviderType, out var boundChannel) ? boundChannel : null;
+            if (channel != null)
+                lock (Gate)
+                {
+                    ProviderAccessors[providerKey] = channel;
+                }
+
+            var store = ModDataStore.For(schema.ModId);
+            var registeredAny = false;
+            using (RitsuLibFramework.BeginModDataRegistration(schema.ModId))
+            {
+                foreach (var entry in schema.Entries)
+                {
+                    var slotKey = $"{schema.ModId}\u001f{entry.Key}";
+                    lock (Gate)
+                    {
+                        if (RegisteredInteropSlotKeys.Contains(slotKey))
+                        {
+                            RitsuLibFramework.Logger.Warn(
+                                $"[RuntimeModDataInteropSource] Skipping duplicate interop data key '{schema.ModId}'::{entry.Key}.");
+                            continue;
+                        }
+                    }
+
+                    try
+                    {
+                        if (string.IsNullOrWhiteSpace(entry.DataTypeName))
+                        {
+                            if (channel == null)
+                                throw new InvalidOperationException(
+                                    $"JSON interop entry '{schema.ModId}'::{entry.Key} requires GetRitsuLibModDataValue/SetRitsuLibModDataValue provider methods.");
+
+                            RegisterJsonEntry(store, schema.ModId, providerKey, entry, channel);
+                        }
+                        else
+                        {
+                            var dataType = ResolveExternalType(entry.DataTypeName);
+                            if (dataType == null)
+                            {
+                                RitsuLibFramework.Logger.Warn(
+                                    $"[RuntimeModDataInteropSource] dataType not found: {entry.DataTypeName}");
+                                continue;
+                            }
+
+                            RegisterTypedEntry(store, schema.ModId, provider.ProviderType, providerKey, entry,
+                                dataType, channel, true);
+                        }
+
+                        lock (Gate)
+                        {
+                            RegisteredInteropSlotKeys.Add(slotKey);
+                        }
+
+                        registeredAny = true;
+                    }
+                    catch (Exception ex)
+                    {
+                        RitsuLibFramework.Logger.Warn(
+                            $"[RuntimeModDataInteropSource] Register failed for '{schema.ModId}'::{entry.Key}: {ex.Message}");
+                    }
+                }
+            }
+
+            if (!registeredAny)
+                return false;
+
+            PushLoadedForMod(schema.ModId, providerKey);
+            ApplyLoadedForMod(schema.ModId, providerKey);
+            return true;
+        }
+
+        private static bool TryBindChannel(Type providerType, out ReflectionStaticChannel channel)
+        {
+            try
+            {
+                channel = ReflectionStaticChannelBinder.Bind(providerType, ReflectionInteropConvention.ModData);
+                return true;
+            }
+            catch
+            {
+                channel = null!;
+                return false;
+            }
         }
 
         private static void RegisterJsonEntry(
@@ -713,10 +850,12 @@ namespace STS2RitsuLib.Utils.Persistence.Interop
         private static void RegisterTypedEntry(
             ModDataStore store,
             string modId,
+            Type providerType,
             string providerKey,
             InteropEntry entry,
             Type dataType,
-            ReflectionStaticChannel channel)
+            ReflectionStaticChannel? channel,
+            bool patchStubs)
         {
             if (dataType is not { IsClass: true } || dataType.IsAbstract)
                 throw new InvalidOperationException($"dataType must be a concrete class: {dataType.FullName}");
@@ -729,7 +868,7 @@ namespace STS2RitsuLib.Utils.Persistence.Interop
             var typedRegister = RegisterClosedByDataType.GetOrAdd(dataType,
                 static t => ModDataStoreRegisterOpen.MakeGenericMethod(t));
 
-            var defaultFactory = BuildDefaultFactory(providerKey, dataType, entry.DefaultFactoryMethodName);
+            var defaultFactory = BuildDefaultFactory(providerType, dataType, entry.DefaultFactoryMethodName);
 
             typedRegister.Invoke(store,
             [
@@ -742,22 +881,70 @@ namespace STS2RitsuLib.Utils.Persistence.Interop
                 entry.Migrations,
             ]);
 
+            if (patchStubs)
+            {
+                var patched = RuntimeModDataStubPatcher.TryPatchEntry(
+                    providerType,
+                    modId,
+                    entry.Key,
+                    dataType,
+                    entry.GetMethodName,
+                    entry.ModifyMethodName,
+                    entry.SaveMethodName);
+                if (patched == 0)
+                    RitsuLibFramework.Logger.Warn(
+                        $"[RuntimeModDataInteropSource] No ModData stub methods were patched for '{modId}'::{entry.Key} on {providerType.FullName}.");
+                else
+                    RitsuLibFramework.Logger.Debug(
+                        $"[RuntimeModDataInteropSource] Patched {patched} ModData stub method(s) for '{modId}'::{entry.Key} on {providerType.FullName}.");
+            }
+
+            RegisterApplyHook(modId, providerKey, entry, providerType);
+
+            if (channel == null)
+                return;
+
             lock (Gate)
             {
                 Slots.Add(new(modId, entry.Key, providerKey, dataType, false, entry.Scope, null, null, null));
             }
         }
 
-        private static Delegate BuildDefaultFactory(string providerKey, Type dataType, string? defaultFactoryMethodName)
+        private static void RegisterApplyHook(
+            string modId,
+            string providerKey,
+            InteropEntry entry,
+            Type providerType)
         {
-            ReflectionStaticChannel channel;
-            lock (Gate)
+            if (string.IsNullOrWhiteSpace(entry.ApplyMethodName))
+                return;
+
+            var method = providerType.GetMethod(
+                entry.ApplyMethodName.Trim(),
+                BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Static);
+            if (method == null || method.ReturnType != typeof(void) || method.GetParameters().Length != 0)
             {
-                ProviderAccessors.TryGetValue(providerKey, out channel!);
+                RitsuLibFramework.Logger.Warn(
+                    $"[RuntimeModDataInteropSource] Invalid applyMethod on {providerType.FullName}: expected static void {entry.ApplyMethodName}().");
+                return;
             }
 
+            lock (Gate)
+            {
+                if (ApplyHooks.Any(h =>
+                        h.ModId == modId &&
+                        h.Key == entry.Key &&
+                        h.ProviderKey == providerKey &&
+                        h.Method == method))
+                    return;
+
+                ApplyHooks.Add(new(modId, entry.Key, providerKey, entry.Scope, method));
+            }
+        }
+
+        private static Delegate BuildDefaultFactory(Type providerType, Type dataType, string? defaultFactoryMethodName)
+        {
             if (string.IsNullOrWhiteSpace(defaultFactoryMethodName)) return CreateDefaultDelegate(dataType);
-            var providerType = channel.ProviderType;
             var method = providerType.GetMethod(defaultFactoryMethodName.Trim(),
                 BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Static);
             if (method == null || method.GetParameters().Length != 0)
@@ -831,6 +1018,46 @@ namespace STS2RitsuLib.Utils.Persistence.Interop
                 {
                     RitsuLibFramework.Logger.Warn(
                         $"[RuntimeModDataInteropSource] Initial push to provider failed for '{modId}'::{slot.Key}: {ex.Message}");
+                }
+        }
+
+        private static void ApplyLoadedForMod(string modId, string providerKey)
+        {
+            InteropApplyHook[] snapshot;
+            lock (Gate)
+            {
+                snapshot = [.. ApplyHooks.Where(h => h.ModId == modId && h.ProviderKey == providerKey)];
+            }
+
+            ApplyLoadedDataHooks(snapshot);
+        }
+
+        private static void ApplyLoadedDataHooks()
+        {
+            InteropApplyHook[] snapshot;
+            lock (Gate)
+            {
+                snapshot = [.. ApplyHooks];
+            }
+
+            ApplyLoadedDataHooks(snapshot);
+        }
+
+        private static void ApplyLoadedDataHooks(InteropApplyHook[] hooks)
+        {
+            foreach (var hook in hooks)
+                try
+                {
+                    var store = ModDataStore.For(hook.ModId);
+                    if (hook.Scope == SaveScope.Profile && !store.IsProfileInitialized)
+                        continue;
+
+                    hook.Method.Invoke(null, []);
+                }
+                catch (Exception ex)
+                {
+                    RitsuLibFramework.Logger.Warn(
+                        $"[RuntimeModDataInteropSource] applyMethod failed for '{hook.ModId}'::{hook.Key}: {ex.Message}");
                 }
         }
 
@@ -1045,9 +1272,16 @@ namespace STS2RitsuLib.Utils.Persistence.Interop
             string[]? JsonPathPush,
             string[]? JsonPathMergePush);
 
+        private sealed record InteropApplyHook(
+            string ModId,
+            string Key,
+            string ProviderKey,
+            SaveScope Scope,
+            MethodInfo Method);
+
         private sealed record InteropProvider(Type ProviderType, MethodInfo SchemaMethod);
 
-        private sealed record InteropSchemaRoot(string ModId, List<InteropEntry> Entries);
+        private sealed record InteropSchemaRoot(int SyntaxVersion, string ModId, List<InteropEntry> Entries);
 
         private sealed record InteropEntry(
             string Key,
@@ -1060,6 +1294,10 @@ namespace STS2RitsuLib.Utils.Persistence.Interop
             List<IMigration>? Migrations,
             string[]? JsonPathPull,
             string[]? JsonPathPush,
-            string[]? JsonPathMergePush);
+            string[]? JsonPathMergePush,
+            string? GetMethodName,
+            string? ModifyMethodName,
+            string? SaveMethodName,
+            string? ApplyMethodName);
     }
 }
