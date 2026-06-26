@@ -59,6 +59,34 @@ namespace STS2RitsuLib.Combat.SecondaryResources
     }
 
     /// <summary>
+    ///     SmartFormat source for the fixed secondary-resource localization marker.
+    ///     固定次级资源本地化 marker 的 SmartFormat source。
+    /// </summary>
+    public sealed class SecondaryResourceLocStringSource : ISource
+    {
+        /// <summary>
+        ///     Fixed selector used by localization JSON, for example
+        ///     <c>{secondaryResource:secondaryResourceIcons(charge,1)}</c>.
+        ///     本地化 JSON 使用的固定 selector，例如
+        ///     <c>{secondaryResource:secondaryResourceIcons(charge,1)}</c>。
+        /// </summary>
+        public const string SelectorName = "secondaryResource";
+
+        /// <inheritdoc />
+        public bool TryEvaluateSelector(ISelectorInfo selectorInfo)
+        {
+            ArgumentNullException.ThrowIfNull(selectorInfo);
+
+            if (selectorInfo.SelectorIndex != 0
+                || !StringComparer.Ordinal.Equals(selectorInfo.SelectorText, SelectorName))
+                return false;
+
+            selectorInfo.Result = SecondaryResourceLocStringMarker.Instance;
+            return true;
+        }
+    }
+
+    /// <summary>
     ///     SmartFormat formatter for secondary-resource rich-text icons.
     ///     次级资源富文本图标的 SmartFormat formatter。
     /// </summary>
@@ -106,6 +134,8 @@ namespace STS2RitsuLib.Combat.SecondaryResources
             var options = formattingInfo.FormatterOptions?.Trim() ?? string.Empty;
             switch (formattingInfo.CurrentValue)
             {
+                case SecondaryResourceLocStringMarker:
+                    return TryResolveMarkerOptions(formattingInfo.FormatterOptions, out resourceId, out amount);
                 case SecondaryResourceVar secondaryResourceVar:
                     resourceId = secondaryResourceVar.ResourceId;
                     amount = Convert.ToInt32(secondaryResourceVar.PreviewValue);
@@ -161,6 +191,29 @@ namespace STS2RitsuLib.Combat.SecondaryResources
 
             amount = 0;
             return false;
+        }
+
+        private static bool TryResolveMarkerOptions(string? options, out string resourceId, out int amount)
+        {
+            resourceId = string.Empty;
+            amount = 1;
+
+            var parts = (options ?? string.Empty)
+                .Split(',', StringSplitOptions.TrimEntries | StringSplitOptions.RemoveEmptyEntries);
+            if (parts.Length is < 1 or > 2)
+                return false;
+
+            resourceId = parts[0];
+            return parts.Length != 2 || TryParseAmount(parts[1], out amount);
+        }
+    }
+
+    internal sealed class SecondaryResourceLocStringMarker
+    {
+        public static readonly SecondaryResourceLocStringMarker Instance = new();
+
+        private SecondaryResourceLocStringMarker()
+        {
         }
     }
 
@@ -322,8 +375,9 @@ namespace STS2RitsuLib.Combat.SecondaryResources
                 return;
 
             _initialized = true;
-            ModSmartFormatExtensionRegistry.For(Const.ModId)
-                .Register<SecondaryResourceIconsFormatter>();
+            var registry = ModSmartFormatExtensionRegistry.For(Const.ModId);
+            registry.RegisterSource<SecondaryResourceLocStringSource>();
+            registry.Register<SecondaryResourceIconsFormatter>();
         }
     }
 }

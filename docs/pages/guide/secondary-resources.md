@@ -285,6 +285,10 @@ For text:
 
 - `SecondaryResourceText.GetIconTag(...)` returns a rich-text `[img]...[/img]` icon tag
 - `SecondaryResourceVars.For(...)` and `SecondaryResourceVars.ForLocal(...)` create SmartFormat-friendly dynamic vars
+- `{secondaryResource:secondaryResourceIcons(charge,1)}` renders a fixed amount from a registered resource id or
+  unique local id
+- `{Cost:secondaryResourceIcons(charge)}` renders a dynamic var amount with a fixed registered resource id or unique
+  local id
 - Titles and descriptions come from the resource loc table and keys
 
 :::
@@ -316,6 +320,8 @@ For text:
 
 - `SecondaryResourceText.GetIconTag(...)` 返回富文本 `[img]...[/img]` 图标标签
 - `SecondaryResourceVars.For(...)` 和 `SecondaryResourceVars.ForLocal(...)` 用于 SmartFormat 动态变量
+- `{secondaryResource:secondaryResourceIcons(charge,1)}` 用已注册资源 id 或唯一 local id 渲染固定数量
+- `{Cost:secondaryResourceIcons(charge)}` 用固定的已注册资源 id 或唯一 local id 渲染 dynamic var 数量
 - 标题和描述来自资源定义上的本地化表与 key
 
 :::
