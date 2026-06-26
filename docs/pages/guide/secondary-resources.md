@@ -198,7 +198,113 @@ card.SecondaryResourceUses()
 Required uses reserve resource before optional spends, so optional lines cannot consume resource needed by hard costs.
 Existing `SecondaryCosts()` entries are treated as unnamed required uses keyed by resource id for compatibility.
 
-:::
+For repeatable "kicker stack" payments, use `SpendExtra(...)`. It runs after required payments and shortfall replacement,
+but before ordinary optional spends:
+
+```csharp
+card.SecondaryResourceUses()
+    .Require("seven_stars", stars.Id, 7)
+    .SpendExtra(
+        "seven_stars_bonus",
+        stars.Id,
+        perStackAmount: 2,
+        maxStacks: null);
+```
+
+`perStackAmount` must be positive. `maxStacks: null` means no explicit cap; RitsuLib spends as many full stacks as the
+remaining resource can pay. A remainder that cannot complete one stack is not spent.
+
+```csharp
+var ledger = cardPlay.SecondaryResources();
+var extraSpent = ledger.ExtraSpentByUse("seven_stars_bonus");
+var stacks = ledger.ExtraStacksByUse("seven_stars_bonus");
+var totalStarsSpent = ledger.Spent(stars.Id);
+
+if (stacks > 0)
+{
+    // one effect per extra stack
+}
+
+if (totalStarsSpent >= 20)
+{
+    // effect for spending at least 20 stars in total
+}
+```
+
+Required costs normally block play when the resource is short. To allow a required cost to pass with a shortfall, attach
+an explicit insufficient-payment policy:
+
+```csharp
+card.SecondaryResourceUses()
+    .RequireAllowingShortfall(
+        "seven_stars",
+        stars.Id,
+        7,
+        onShortfall: async ctx =>
+        {
+            // Runs once during SpendResources, after available stars are spent.
+            await ApplyShortfallPenalty(ctx.Card, ctx.Shortfall);
+        });
+```
+
+`ctx.Shortfall` is the remaining unpaid amount. By default, RitsuLib spends the available amount first; pass
+`spendAvailable: false` if the shortfall payment should leave the resource untouched.
+
+When another payment source can replace the missing resource, add a side-effect-free resolver. The resolver is allowed
+to inspect state during `CanPlay`, but must not mutate state. Return a commit callback to spend the replacement source
+later:
+
+```csharp
+card.SecondaryResourceUses()
+    .RequireAllowingShortfall(
+        "seven_stars",
+        stars.Id,
+        7,
+        resolveShortfall: ctx =>
+        {
+            var backup = SecondaryResourceCmd.Get(ctx.Player, backupStars.Id);
+            if (backup < ctx.Shortfall)
+                return SecondaryResourceShortfallResolution.None;
+
+            return SecondaryResourceShortfallResolution.Cover(
+                ctx.Shortfall,
+                async commit =>
+                {
+                    await SecondaryResourceCmd.Spend(
+                        commit.Player,
+                        backupStars.Id,
+                        commit.CoveredShortfall,
+                        commit.Card,
+                        commit.Source);
+                });
+        },
+        onShortfall: async ctx =>
+        {
+            // Runs only for any remaining amount not covered by the replacement payment.
+            await ApplyShortfallPenalty(ctx.Card, ctx.Shortfall);
+        });
+```
+
+If replacement payments cover the full original shortfall, the line is considered playable without a remaining
+shortfall penalty. The ledger records all three amounts:
+
+```csharp
+var ledger = cardPlay.SecondaryResources();
+var original = ledger.OriginalShortfallByUse("seven_stars");
+var covered = ledger.CoveredShortfallByUse("seven_stars");
+var remaining = ledger.ShortfallByUse("seven_stars");
+```
+
+Model, capability, and global hook listeners can also participate in the same pre-commit planning step by implementing
+`ResolveSecondaryResourceShortfall(...)`. This hook receives the current resolution and should return a new pure
+resolution without mutating gameplay state.
+
+When the permission to use shortfall is itself dynamic, implement
+`ModifySecondaryResourceInsufficientPayment(...)`. For example, a relic can leave normal cards blocked by default, then
+return `SecondaryResourceInsufficientPayment.AllowPlayWithReplacement(...)` only while that relic is active. This hook
+also runs during `CanPlay`, so it must only inspect state and return a policy.
+
+::: 
 
 ## 附加卡牌费用{lang="zh-CN"}
 
@@ -255,6 +361,107 @@ card.SecondaryResourceUses()
 必需条款会先预留资源，然后再判断可选支付，所以可选行不会抢走硬费用所需的资源。为了兼容旧代码，已有
 `SecondaryCosts()` 条目会被视为以 resource id 为 key 的未具名必需条款。
 
+对于类似“每额外支付一份就叠一层”的 kicker 支付，使用 `SpendExtra(...)`。它会在必需支付和短缺替代之后、
+普通可选支付之前运行：
+
+```csharp
+card.SecondaryResourceUses()
+    .Require("seven_stars", stars.Id, 7)
+    .SpendExtra(
+        "seven_stars_bonus",
+        stars.Id,
+        perStackAmount: 2,
+        maxStacks: null);
+```
+
+`perStackAmount` 必须为正数。`maxStacks: null` 表示不设置显式上限；RitsuLib 会按剩余资源能支付的完整份数尽可能消耗。
+不足一整份的余数不会被消耗。
+
+```csharp
+var ledger = cardPlay.SecondaryResources();
+var extraSpent = ledger.ExtraSpentByUse("seven_stars_bonus");
+var stacks = ledger.ExtraStacksByUse("seven_stars_bonus");
+var totalStarsSpent = ledger.Spent(stars.Id);
+
+if (stacks > 0)
+{
+    // 每层额外支付触发一次
+}
+
+if (totalStarsSpent >= 20)
+{
+    // 本次总共消耗至少 20 个辉星时的效果
+}
+```
+
+必需费用默认会在资源不足时阻止出牌。如果某个必需费用允许短缺通过，可以显式附加短缺支付策略：
+
+```csharp
+card.SecondaryResourceUses()
+    .RequireAllowingShortfall(
+        "seven_stars",
+        stars.Id,
+        7,
+        onShortfall: async ctx =>
+        {
+            // 在 SpendResources 阶段运行一次；可用辉星已经先被消耗。
+            await ApplyShortfallPenalty(ctx.Card, ctx.Shortfall);
+        });
+```
+
+`ctx.Shortfall` 是剩余未支付数量。默认会先消耗可用资源；如果短缺支付不应改变该资源，传入
+`spendAvailable: false`。
+
+如果缺少的资源可以由其他支付来源替代，使用无副作用的 resolver。resolver 可以在 `CanPlay` 阶段读取状态，
+但不能修改状态；真正的替代支付应放在返回结果的 commit 回调中：
+
+```csharp
+card.SecondaryResourceUses()
+    .RequireAllowingShortfall(
+        "seven_stars",
+        stars.Id,
+        7,
+        resolveShortfall: ctx =>
+        {
+            var backup = SecondaryResourceCmd.Get(ctx.Player, backupStars.Id);
+            if (backup < ctx.Shortfall)
+                return SecondaryResourceShortfallResolution.None;
+
+            return SecondaryResourceShortfallResolution.Cover(
+                ctx.Shortfall,
+                async commit =>
+                {
+                    await SecondaryResourceCmd.Spend(
+                        commit.Player,
+                        backupStars.Id,
+                        commit.CoveredShortfall,
+                        commit.Card,
+                        commit.Source);
+                });
+        },
+        onShortfall: async ctx =>
+        {
+            // 只处理没有被替代支付覆盖的剩余短缺。
+            await ApplyShortfallPenalty(ctx.Card, ctx.Shortfall);
+        });
+```
+
+当替代支付完全覆盖原始短缺时，该行会被视为没有剩余短缺的可打出支付，不再触发短缺惩罚。ledger 会记录三段数量：
+
+```csharp
+var ledger = cardPlay.SecondaryResources();
+var original = ledger.OriginalShortfallByUse("seven_stars");
+var covered = ledger.CoveredShortfallByUse("seven_stars");
+var remaining = ledger.ShortfallByUse("seven_stars");
+```
+
+模型、capability 和全局 hook listener 也可以实现 `ResolveSecondaryResourceShortfall(...)` 参与同一个提交前规划步骤。
+这个 hook 会收到当前解析结果，并应返回一个新的纯解析结果；不要在这里修改游戏状态。
+
+如果“是否允许短缺”本身也是动态的，实现 `ModifySecondaryResourceInsufficientPayment(...)`。例如某个遗物可以让普通卡
+默认仍然被不足资源阻止，但在遗物生效时才返回 `SecondaryResourceInsufficientPayment.AllowPlayWithReplacement(...)`。
+这个 hook 同样会在 `CanPlay` 阶段运行，因此只能读取状态并返回策略。
+
 :::
 
 ## Hooks, UI, And Text{lang="en"}
@@ -264,6 +471,7 @@ card.SecondaryResourceUses()
 Implement `ISecondaryResourceHookListener` on models or capabilities when the resource should react to gameplay:
 
 - Modify gain, max amount, costs, or captured secondary X values
+- Dynamically modify whether a required shortfall blocks play, is allowed, or can be replaced
 - Use `ModifySecondaryResourceCostLate(...)` when a cost modifier should run after normal secondary cost modifiers,
   mirroring the game's late energy-cost pass
 - Veto gain, spend, or built-in reset steps
@@ -285,6 +493,10 @@ For text:
 
 - `SecondaryResourceText.GetIconTag(...)` returns a rich-text `[img]...[/img]` icon tag
 - `SecondaryResourceVars.For(...)` and `SecondaryResourceVars.ForLocal(...)` create SmartFormat-friendly dynamic vars
+- `{secondaryResource:secondaryResourceIcons(charge,1)}` renders a fixed amount from a registered resource id or
+  unique local id
+- `{Cost:secondaryResourceIcons(charge)}` renders a dynamic var amount with a fixed registered resource id or unique
+  local id
 - Titles and descriptions come from the resource loc table and keys
 
 :::
@@ -296,6 +508,7 @@ For text:
 如果资源需要响应游戏逻辑，可以在模型或 capability 上实现 `ISecondaryResourceHookListener`：
 
 - 修正 gain、max、cost 或捕获到的次级 X 值
+- 动态修正必需费用短缺是阻止出牌、允许短缺，还是可被替代支付覆盖
 - 如果某个费用修正应在普通次级费用修正之后执行，使用 `ModifySecondaryResourceCostLate(...)`，对应游戏的 late
   energy-cost pass
 - 阻止 gain、spend 或内建 reset
@@ -316,6 +529,8 @@ For text:
 
 - `SecondaryResourceText.GetIconTag(...)` 返回富文本 `[img]...[/img]` 图标标签
 - `SecondaryResourceVars.For(...)` 和 `SecondaryResourceVars.ForLocal(...)` 用于 SmartFormat 动态变量
+- `{secondaryResource:secondaryResourceIcons(charge,1)}` 用已注册资源 id 或唯一 local id 渲染固定数量
+- `{Cost:secondaryResourceIcons(charge)}` 用固定的已注册资源 id 或唯一 local id 渲染 dynamic var 数量
 - 标题和描述来自资源定义上的本地化表与 key
 
 :::

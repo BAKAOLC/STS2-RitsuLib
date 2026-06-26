@@ -33,6 +33,12 @@ namespace STS2RitsuLib.Combat.SecondaryResources
         InsufficientResources,
 
         /// <summary>
+        ///     A required cost is short on resource, but its policy still allows the card to be played.
+        ///     必需费用资源不足，但其策略仍允许卡牌打出。
+        /// </summary>
+        ShortfallPlayable,
+
+        /// <summary>
         ///     An optional spend is unavailable but does not block card play.
         ///     可选支付不可用，但不阻止卡牌打出。
         /// </summary>
@@ -71,6 +77,9 @@ namespace STS2RitsuLib.Combat.SecondaryResources
                 return pretendCardCanBePlayed
                     ? SecondaryResourceCardCostColor.Unmodified
                     : SecondaryResourceCardCostColor.InsufficientResources;
+
+            if (line.IsShortfallPlayable)
+                return SecondaryResourceCardCostColor.ShortfallPlayable;
 
             if (includeOptionalUnavailable && line is { IsOptional: true, Activated: false })
                 return SecondaryResourceCardCostColor.OptionalUnavailable;

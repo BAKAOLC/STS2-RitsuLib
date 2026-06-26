@@ -58,6 +58,35 @@ namespace STS2RitsuLib.Combat.SecondaryResources
         }
 
         /// <summary>
+        ///     Returns the total amount spent for a play-use id.
+        ///     返回某个出牌条款 id 的总消耗数量。
+        /// </summary>
+        public int TotalSpentByUse(string useId)
+        {
+            return SpentByUse(useId);
+        }
+
+        /// <summary>
+        ///     Returns the amount spent as repeatable extra payment for a play-use id.
+        ///     返回某个出牌条款 id 作为可重复额外支付消耗的数量。
+        /// </summary>
+        public int ExtraSpentByUse(string useId)
+        {
+            ArgumentException.ThrowIfNullOrWhiteSpace(useId);
+            return UseLines.TryGetValue(useId.Trim(), out var line) ? line.ExtraAmountSpent : 0;
+        }
+
+        /// <summary>
+        ///     Returns the full extra-spend stack count for a play-use id.
+        ///     返回某个出牌条款 id 的完整额外消耗层数。
+        /// </summary>
+        public int ExtraStacksByUse(string useId)
+        {
+            ArgumentException.ThrowIfNullOrWhiteSpace(useId);
+            return UseLines.TryGetValue(useId.Trim(), out var line) ? line.ExtraStacks : 0;
+        }
+
+        /// <summary>
         ///     Returns the value captured for a resource.
         ///     返回某个资源捕获到的数值。
         /// </summary>
@@ -65,6 +94,56 @@ namespace STS2RitsuLib.Combat.SecondaryResources
         {
             ArgumentException.ThrowIfNullOrWhiteSpace(resourceId);
             return Lines.TryGetValue(resourceId.Trim(), out var line) ? line.Value : 0;
+        }
+
+        /// <summary>
+        ///     Returns the shortfall amount for a resource.
+        ///     返回某个资源的短缺数量。
+        /// </summary>
+        public int Shortfall(string resourceId)
+        {
+            ArgumentException.ThrowIfNullOrWhiteSpace(resourceId);
+            return Lines.TryGetValue(resourceId.Trim(), out var line) ? line.Shortfall : 0;
+        }
+
+        /// <summary>
+        ///     Returns the amount spent as repeatable extra payment for a resource.
+        ///     返回某个资源作为可重复额外支付消耗的数量。
+        /// </summary>
+        public int ExtraSpent(string resourceId)
+        {
+            ArgumentException.ThrowIfNullOrWhiteSpace(resourceId);
+            return Lines.TryGetValue(resourceId.Trim(), out var line) ? line.ExtraAmountSpent : 0;
+        }
+
+        /// <summary>
+        ///     Returns the full extra-spend stack count for a resource.
+        ///     返回某个资源的完整额外消耗层数。
+        /// </summary>
+        public int ExtraStacks(string resourceId)
+        {
+            ArgumentException.ThrowIfNullOrWhiteSpace(resourceId);
+            return Lines.TryGetValue(resourceId.Trim(), out var line) ? line.ExtraStacks : 0;
+        }
+
+        /// <summary>
+        ///     Returns the original shortfall amount for a resource before replacement payments.
+        ///     返回替代支付前某个资源的原始短缺数量。
+        /// </summary>
+        public int OriginalShortfall(string resourceId)
+        {
+            ArgumentException.ThrowIfNullOrWhiteSpace(resourceId);
+            return Lines.TryGetValue(resourceId.Trim(), out var line) ? line.OriginalShortfall : 0;
+        }
+
+        /// <summary>
+        ///     Returns the covered shortfall amount for a resource.
+        ///     返回某个资源已被替代支付覆盖的短缺数量。
+        /// </summary>
+        public int CoveredShortfall(string resourceId)
+        {
+            ArgumentException.ThrowIfNullOrWhiteSpace(resourceId);
+            return Lines.TryGetValue(resourceId.Trim(), out var line) ? line.CoveredShortfall : 0;
         }
 
         /// <summary>
@@ -106,6 +185,36 @@ namespace STS2RitsuLib.Combat.SecondaryResources
             ArgumentException.ThrowIfNullOrWhiteSpace(useId);
             return UseLines.TryGetValue(useId.Trim(), out line!);
         }
+
+        /// <summary>
+        ///     Returns the shortfall amount for a play-use id.
+        ///     返回某个出牌条款 id 的短缺数量。
+        /// </summary>
+        public int ShortfallByUse(string useId)
+        {
+            ArgumentException.ThrowIfNullOrWhiteSpace(useId);
+            return UseLines.TryGetValue(useId.Trim(), out var line) ? line.Shortfall : 0;
+        }
+
+        /// <summary>
+        ///     Returns the original shortfall amount for a play-use id before replacement payments.
+        ///     返回替代支付前某个出牌条款 id 的原始短缺数量。
+        /// </summary>
+        public int OriginalShortfallByUse(string useId)
+        {
+            ArgumentException.ThrowIfNullOrWhiteSpace(useId);
+            return UseLines.TryGetValue(useId.Trim(), out var line) ? line.OriginalShortfall : 0;
+        }
+
+        /// <summary>
+        ///     Returns the covered shortfall amount for a play-use id.
+        ///     返回某个出牌条款 id 已被替代支付覆盖的短缺数量。
+        /// </summary>
+        public int CoveredShortfallByUse(string useId)
+        {
+            ArgumentException.ThrowIfNullOrWhiteSpace(useId);
+            return UseLines.TryGetValue(useId.Trim(), out var line) ? line.CoveredShortfall : 0;
+        }
     }
 
     /// <summary>
@@ -138,10 +247,58 @@ namespace STS2RitsuLib.Combat.SecondaryResources
         public bool Activated { get; init; } = IsFree || AmountSpent > 0 || Value > 0;
 
         /// <summary>
+        ///     Amount that remained unpaid for an allowed required-cost shortfall.
+        ///     允许的必需费用短缺中未支付的数量。
+        /// </summary>
+        public int Shortfall { get; init; }
+
+        /// <summary>
+        ///     Amount that was short before replacement payments.
+        ///     替代支付前的原始短缺数量。
+        /// </summary>
+        public int OriginalShortfall { get; init; }
+
+        /// <summary>
+        ///     Amount of the shortfall covered by replacement payments.
+        ///     由替代支付覆盖的短缺数量。
+        /// </summary>
+        public int CoveredShortfall { get; init; }
+
+        /// <summary>
+        ///     Amount spent as a base required or optional payment.
+        ///     作为基础必需或可选支付消耗的数量。
+        /// </summary>
+        public int BaseAmountSpent { get; init; }
+
+        /// <summary>
+        ///     Amount spent as repeatable extra payment.
+        ///     作为可重复额外支付消耗的数量。
+        /// </summary>
+        public int ExtraAmountSpent { get; init; }
+
+        /// <summary>
+        ///     Full repeatable extra-spend stack count.
+        ///     完整可重复额外消耗层数。
+        /// </summary>
+        public int ExtraStacks { get; init; }
+
+        /// <summary>
         ///     True when this line came from an optional spend.
         ///     该行来自可选支付时为 true。
         /// </summary>
         public bool IsOptional => Kind == SecondaryResourceUseKind.OptionalSpend;
+
+        /// <summary>
+        ///     True when this line came from a repeatable extra spend.
+        ///     该行来自可重复额外支付时为 true。
+        /// </summary>
+        public bool IsExtraSpend => Kind == SecondaryResourceUseKind.ExtraSpend;
+
+        /// <summary>
+        ///     True when this line was activated by an allowed shortfall.
+        ///     该行通过允许的短缺被激活时为 true。
+        /// </summary>
+        public bool HasShortfall => Shortfall > 0;
     }
 
     internal sealed class SecondaryResourcePlayLedgerBuilder(
@@ -164,6 +321,16 @@ namespace STS2RitsuLib.Combat.SecondaryResources
                 UseId = line.UseId,
                 Kind = line.Kind,
                 Activated = line.Activated,
+                OriginalShortfall = line.OriginalShortfall,
+                CoveredShortfall = line.CoveredShortfall,
+                Shortfall = line.Shortfall,
+                BaseAmountSpent = line.Kind == SecondaryResourceUseKind.ExtraSpend
+                    ? 0
+                    : line.IsFree
+                        ? 0
+                        : line.AmountToSpend,
+                ExtraAmountSpent = line.ExtraAmountToSpend,
+                ExtraStacks = line.ExtraStacks,
             };
         }
 
@@ -194,6 +361,12 @@ namespace STS2RitsuLib.Combat.SecondaryResources
                                 ? SecondaryResourceUseKind.RequiredCost
                                 : SecondaryResourceUseKind.OptionalSpend,
                             Activated = lines.Any(static line => line.Activated),
+                            OriginalShortfall = lines.Sum(static line => line.OriginalShortfall),
+                            CoveredShortfall = lines.Sum(static line => line.CoveredShortfall),
+                            Shortfall = lines.Sum(static line => line.Shortfall),
+                            BaseAmountSpent = lines.Sum(static line => line.BaseAmountSpent),
+                            ExtraAmountSpent = lines.Sum(static line => line.ExtraAmountSpent),
+                            ExtraStacks = lines.Sum(static line => line.ExtraStacks),
                         };
                     },
                     StringComparer.OrdinalIgnoreCase);

@@ -57,6 +57,12 @@ namespace STS2RitsuLib.Combat.SecondaryResources
         public Color UnaffordableColor { get; init; } = StsColors.red;
 
         /// <summary>
+        ///     Cost text color when a shortfall policy allows the card to be played.
+        ///     短缺策略允许卡牌打出时的文本颜色。
+        /// </summary>
+        public Color ShortfallPlayableColor { get; init; } = StsColors.energyBlue;
+
+        /// <summary>
         ///     Cost text color when the resolved cost is higher than the base cost but still playable.
         ///     已解析费用高于基础费用但仍可打出时的文本颜色。
         /// </summary>
@@ -85,6 +91,12 @@ namespace STS2RitsuLib.Combat.SecondaryResources
         ///     卡牌无法支付该行费用时的文本描边颜色。
         /// </summary>
         public Color UnaffordableOutlineColor { get; init; } = StsColors.unplayableEnergyCostOutline;
+
+        /// <summary>
+        ///     Cost text outline color when a shortfall policy allows the card to be played.
+        ///     短缺策略允许卡牌打出时的文本描边颜色。
+        /// </summary>
+        public Color ShortfallPlayableOutlineColor { get; init; } = StsColors.energyBlueOutline;
 
         /// <summary>
         ///     Cost text outline color when the resolved cost is higher than the base cost but still playable.
@@ -512,6 +524,8 @@ namespace STS2RitsuLib.Combat.SecondaryResources
                     SecondaryResourceCardCostColor.Decreased => (_style.DecreasedColor, _style.DecreasedOutlineColor),
                     SecondaryResourceCardCostColor.InsufficientResources =>
                         (_style.UnaffordableColor, _style.UnaffordableOutlineColor),
+                    SecondaryResourceCardCostColor.ShortfallPlayable =>
+                        (_style.ShortfallPlayableColor, _style.ShortfallPlayableOutlineColor),
                     SecondaryResourceCardCostColor.OptionalUnavailable =>
                         (_style.OptionalUnavailableColor!.Value, _style.OptionalUnavailableOutlineColor!.Value),
                     _ => (_style.AffordableColor, _style.AffordableOutlineColor),

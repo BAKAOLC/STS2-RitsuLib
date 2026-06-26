@@ -1,6 +1,188 @@
 namespace STS2RitsuLib.Combat.SecondaryResources
 {
     /// <summary>
+    ///     Behavior for required secondary-resource costs when the player does not have enough resource.
+    ///     玩家资源不足以支付必需次级资源费用时的行为。
+    /// </summary>
+    public enum SecondaryResourceInsufficientPaymentMode
+    {
+        /// <summary>
+        ///     Keep the current hard-cost behavior: the card cannot be played.
+        ///     保持当前硬费用行为：卡牌不能被打出。
+        /// </summary>
+        BlockPlay = 0,
+
+        /// <summary>
+        ///     Allow the card to be played and report the unpaid amount as a shortfall.
+        ///     允许卡牌被打出，并将未支付部分记录为短缺额。
+        /// </summary>
+        AllowPlay = 1,
+    }
+
+    /// <summary>
+    ///     Handles a committed secondary-resource shortfall payment.
+    ///     处理已提交的次级资源短缺支付。
+    /// </summary>
+    public delegate Task SecondaryResourceShortfallPaymentHandler(SecondaryResourceShortfallContext context);
+
+    /// <summary>
+    ///     Resolves whether another payment source can cover a secondary-resource shortfall.
+    ///     解析是否可用其他支付来源覆盖次级资源短缺。
+    /// </summary>
+    public delegate SecondaryResourceShortfallResolution SecondaryResourceShortfallResolver(
+        SecondaryResourceShortfallResolutionContext context);
+
+    /// <summary>
+    ///     Pure planning result for replacing a secondary-resource shortfall with another payment source.
+    ///     用其他支付来源替代次级资源短缺的纯规划结果。
+    /// </summary>
+    public sealed record SecondaryResourceShortfallResolution
+    {
+        /// <summary>
+        ///     No shortfall amount is covered.
+        ///     不覆盖任何短缺数量。
+        /// </summary>
+        public static SecondaryResourceShortfallResolution None { get; } = new();
+
+        /// <summary>
+        ///     Amount of the shortfall covered by the replacement payment.
+        ///     替代支付覆盖的短缺数量。
+        /// </summary>
+        public int CoveredAmount { get; init; }
+
+        /// <summary>
+        ///     Optional callback that commits the replacement payment.
+        ///     提交替代支付的可选回调。
+        /// </summary>
+        public SecondaryResourceShortfallPaymentHandler? OnCommit { get; init; }
+
+        /// <summary>
+        ///     Creates a resolution that covers part or all of the shortfall.
+        ///     创建覆盖部分或全部短缺的解析结果。
+        /// </summary>
+        public static SecondaryResourceShortfallResolution Cover(
+            int amount,
+            SecondaryResourceShortfallPaymentHandler? onCommit = null)
+        {
+            return new()
+            {
+                CoveredAmount = Math.Max(0, amount),
+                OnCommit = onCommit,
+            };
+        }
+
+        internal Task Commit(SecondaryResourceShortfallContext context)
+        {
+            return OnCommit?.Invoke(context) ?? Task.CompletedTask;
+        }
+    }
+
+    /// <summary>
+    ///     Policy for required secondary-resource payments that are short on resource.
+    ///     必需次级资源支付在资源不足时使用的策略。
+    /// </summary>
+    public sealed record SecondaryResourceInsufficientPayment
+    {
+        /// <summary>
+        ///     Shared policy that preserves the default hard-cost behavior.
+        ///     保持默认硬费用行为的共享策略。
+        /// </summary>
+        public static SecondaryResourceInsufficientPayment BlockPlay { get; } = new();
+
+        /// <summary>
+        ///     Selected shortfall behavior.
+        ///     选中的短缺行为。
+        /// </summary>
+        public SecondaryResourceInsufficientPaymentMode Mode { get; init; } =
+            SecondaryResourceInsufficientPaymentMode.BlockPlay;
+
+        /// <summary>
+        ///     True to spend as much of the available resource as possible before reporting the remaining shortfall.
+        ///     为 true 时先消耗可用资源，再把剩余部分报告为短缺额。
+        /// </summary>
+        public bool SpendAvailable { get; init; } = true;
+
+        /// <summary>
+        ///     Optional callback invoked once when the shortfall payment is committed.
+        ///     短缺支付提交时调用一次的可选回调。
+        /// </summary>
+        public SecondaryResourceShortfallPaymentHandler? OnShortfall { get; init; }
+
+        /// <summary>
+        ///     Optional pure resolver that can cover the shortfall with another payment source before commit.
+        ///     可选的纯解析器：在提交前判定能否用其他支付来源覆盖短缺。
+        /// </summary>
+        public SecondaryResourceShortfallResolver? ResolveShortfall { get; init; }
+
+        /// <summary>
+        ///     True when this policy allows a shortfall to pass card-play checks.
+        ///     此策略允许短缺通过出牌检查时为 true。
+        /// </summary>
+        public bool AllowsPlay => Mode == SecondaryResourceInsufficientPaymentMode.AllowPlay;
+
+        /// <summary>
+        ///     Creates a policy that allows play when the required resource is short.
+        ///     创建允许资源不足时打出卡牌的策略。
+        /// </summary>
+        public static SecondaryResourceInsufficientPayment AllowPlay(
+            SecondaryResourceShortfallPaymentHandler? onShortfall = null,
+            bool spendAvailable = true,
+            SecondaryResourceShortfallResolver? resolveShortfall = null)
+        {
+            return new()
+            {
+                Mode = SecondaryResourceInsufficientPaymentMode.AllowPlay,
+                SpendAvailable = spendAvailable,
+                OnShortfall = onShortfall,
+                ResolveShortfall = resolveShortfall,
+            };
+        }
+
+        /// <summary>
+        ///     Creates a policy that allows play and runs a synchronous shortfall callback.
+        ///     创建允许打出并运行同步短缺回调的策略。
+        /// </summary>
+        public static SecondaryResourceInsufficientPayment AllowPlay(
+            Action<SecondaryResourceShortfallContext> onShortfall,
+            bool spendAvailable = true,
+            SecondaryResourceShortfallResolver? resolveShortfall = null)
+        {
+            ArgumentNullException.ThrowIfNull(onShortfall);
+            return AllowPlay(
+                context =>
+                {
+                    onShortfall(context);
+                    return Task.CompletedTask;
+                },
+                spendAvailable,
+                resolveShortfall);
+        }
+
+        /// <summary>
+        ///     Creates a policy that first tries to replace a shortfall with another payment source.
+        ///     创建优先尝试用其他支付来源替代短缺的策略。
+        /// </summary>
+        public static SecondaryResourceInsufficientPayment AllowPlayWithReplacement(
+            SecondaryResourceShortfallResolver resolveShortfall,
+            SecondaryResourceShortfallPaymentHandler? onRemainingShortfall = null,
+            bool spendAvailable = true)
+        {
+            ArgumentNullException.ThrowIfNull(resolveShortfall);
+            return AllowPlay(onRemainingShortfall, spendAvailable, resolveShortfall);
+        }
+
+        internal Task InvokeShortfall(SecondaryResourceShortfallContext context)
+        {
+            return OnShortfall?.Invoke(context) ?? Task.CompletedTask;
+        }
+
+        internal SecondaryResourceShortfallResolution Resolve(SecondaryResourceShortfallResolutionContext context)
+        {
+            return ResolveShortfall?.Invoke(context) ?? SecondaryResourceShortfallResolution.None;
+        }
+    }
+
+    /// <summary>
     ///     Persistence scope for a secondary combat resource.
     ///     次级战斗资源的持久化范围。
     /// </summary>

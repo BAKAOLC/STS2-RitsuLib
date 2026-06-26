@@ -53,9 +53,16 @@ namespace STS2RitsuLib.Utils.Persistence
             {
                 ProfileManager.Instance.RefreshCurrentProfile();
 
+                var modDataInteropRegistered = ModDataRuntimeInterop.TryRegisterAll();
+                if (modDataInteropRegistered > 0)
+                    RitsuLibFramework.Logger.Debug(
+                        $"ModData runtime interop: registered {modDataInteropRegistered} provider schema(s) during data-ready refresh.");
+
                 RitsuLibFramework.EnsureProfileServicesInitialized();
 
                 var dataReloaded = ModDataStore.ReloadAllIfPathChanged();
+                if (dataReloaded)
+                    ModDataRuntimeInterop.PushLoadedDataToAllProviders();
 
                 var profileId = ProfileManager.Instance.CurrentProfileId;
                 bool isInitialReady;

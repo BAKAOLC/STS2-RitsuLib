@@ -21,6 +21,12 @@ namespace STS2RitsuLib.Combat.SecondaryResources
         ///     可选支付；玩家可支付时消耗并激活 ledger 行，否则卡牌仍可打出。
         /// </summary>
         OptionalSpend,
+
+        /// <summary>
+        ///     Repeatable extra payment. After required payments are reserved, spends as many full stacks as possible.
+        ///     可重复额外支付；必需支付预留后，按完整份数尽可能额外消耗。
+        /// </summary>
+        ExtraSpend,
     }
 
     /// <summary>
@@ -33,6 +39,18 @@ namespace STS2RitsuLib.Combat.SecondaryResources
         SecondaryResourceCost Cost,
         SecondaryResourceUseKind Kind)
     {
+        /// <summary>
+        ///     Optional per-use policy for required payments that are short on resource.
+        ///     必需支付资源不足时的可选 per-use 策略。
+        /// </summary>
+        public SecondaryResourceInsufficientPayment? InsufficientPayment { get; init; }
+
+        /// <summary>
+        ///     Optional maximum stack count for repeatable extra spends.
+        ///     可重复额外支付的可选最大层数。
+        /// </summary>
+        public int? MaxExtraStacks { get; init; }
+
         /// <summary>
         ///     True when this use can affect play/payment.
         ///     该条款可能影响出牌/支付时为 true。
@@ -94,6 +112,68 @@ namespace STS2RitsuLib.Combat.SecondaryResources
         }
 
         /// <summary>
+        ///     Attaches a required cost with an explicit shortfall policy.
+        ///     附加一个带显式短缺策略的必需费用。
+        /// </summary>
+        public SecondaryResourcePlayUseSet Require(
+            string useId,
+            string resourceId,
+            SecondaryResourceCost cost,
+            SecondaryResourceInsufficientPayment insufficientPayment,
+            SecondaryResourceCostDuration duration = SecondaryResourceCostDuration.Permanent)
+        {
+            return Set(
+                useId,
+                resourceId,
+                cost,
+                SecondaryResourceUseKind.RequiredCost,
+                duration,
+                insufficientPayment);
+        }
+
+        /// <summary>
+        ///     Attaches a required cost that can still be played with a shortfall.
+        ///     附加一个资源不足时仍可打出的必需费用。
+        /// </summary>
+        public SecondaryResourcePlayUseSet RequireAllowingShortfall(
+            string useId,
+            string resourceId,
+            int amount,
+            SecondaryResourceShortfallPaymentHandler? onShortfall = null,
+            bool spendAvailable = true,
+            SecondaryResourceShortfallResolver? resolveShortfall = null)
+        {
+            return RequireAllowingShortfall(
+                useId,
+                resourceId,
+                new SecondaryResourceCost(Math.Max(0, amount)),
+                onShortfall,
+                spendAvailable,
+                resolveShortfall);
+        }
+
+        /// <summary>
+        ///     Attaches a required cost that can still be played with a shortfall.
+        ///     附加一个资源不足时仍可打出的必需费用。
+        /// </summary>
+        public SecondaryResourcePlayUseSet RequireAllowingShortfall(
+            string useId,
+            string resourceId,
+            SecondaryResourceCost cost,
+            SecondaryResourceShortfallPaymentHandler? onShortfall = null,
+            bool spendAvailable = true,
+            SecondaryResourceShortfallResolver? resolveShortfall = null,
+            SecondaryResourceCostDuration duration = SecondaryResourceCostDuration.Permanent)
+        {
+            return Require(
+                useId,
+                resourceId,
+                cost,
+                SecondaryResourceInsufficientPayment.AllowPlay(onShortfall, spendAvailable, resolveShortfall),
+                duration);
+        }
+
+        /// <summary>
         ///     Attaches a permanent optional spend that activates only when it can be paid.
         ///     附加一个永久可选支付；仅在可支付时激活。
         /// </summary>
@@ -116,6 +196,31 @@ namespace STS2RitsuLib.Combat.SecondaryResources
         }
 
         /// <summary>
+        ///     Attaches a repeatable extra spend that consumes full stacks after required payments are reserved.
+        ///     附加一个可重复额外支付；必需支付预留后按完整份数消耗。
+        /// </summary>
+        public SecondaryResourcePlayUseSet SpendExtra(
+            string useId,
+            string resourceId,
+            int perStackAmount,
+            int? maxStacks = null,
+            SecondaryResourceCostDuration duration = SecondaryResourceCostDuration.Permanent)
+        {
+            ArgumentOutOfRangeException.ThrowIfNegativeOrZero(perStackAmount);
+            if (maxStacks is < 0)
+                throw new ArgumentOutOfRangeException(nameof(maxStacks));
+
+            return Set(
+                useId,
+                resourceId,
+                new(perStackAmount),
+                SecondaryResourceUseKind.ExtraSpend,
+                duration,
+                null,
+                maxStacks);
+        }
+
+        /// <summary>
         ///     Sets a use descriptor for one use id and duration.
         ///     为单个条款 id 和持续时间设置条款描述。
         /// </summary>
@@ -126,16 +231,56 @@ namespace STS2RitsuLib.Combat.SecondaryResources
             SecondaryResourceUseKind kind,
             SecondaryResourceCostDuration duration = SecondaryResourceCostDuration.Permanent)
         {
+            return Set(useId, resourceId, cost, kind, duration, null);
+        }
+
+        /// <summary>
+        ///     Sets a use descriptor for one use id and duration with an explicit shortfall policy.
+        ///     为单个条款 id 和持续时间设置带显式短缺策略的条款描述。
+        /// </summary>
+        public SecondaryResourcePlayUseSet Set(
+            string useId,
+            string resourceId,
+            SecondaryResourceCost cost,
+            SecondaryResourceUseKind kind,
+            SecondaryResourceCostDuration duration,
+            SecondaryResourceInsufficientPayment? insufficientPayment)
+        {
+            return Set(useId, resourceId, cost, kind, duration, insufficientPayment, null);
+        }
+
+        /// <summary>
+        ///     Sets a use descriptor for one use id and duration with explicit shortfall and extra-spend settings.
+        ///     为单个条款 id 和持续时间设置带显式短缺与额外支付设置的条款描述。
+        /// </summary>
+        public SecondaryResourcePlayUseSet Set(
+            string useId,
+            string resourceId,
+            SecondaryResourceCost cost,
+            SecondaryResourceUseKind kind,
+            SecondaryResourceCostDuration duration,
+            SecondaryResourceInsufficientPayment? insufficientPayment,
+            int? maxExtraStacks)
+        {
             ArgumentException.ThrowIfNullOrWhiteSpace(useId);
             ArgumentException.ThrowIfNullOrWhiteSpace(resourceId);
             ArgumentNullException.ThrowIfNull(cost);
+            if (maxExtraStacks is < 0)
+                throw new ArgumentOutOfRangeException(nameof(maxExtraStacks));
+            if (kind == SecondaryResourceUseKind.ExtraSpend && cost.CostsX)
+                throw new ArgumentException("Repeatable extra secondary-resource spends cannot use X costs.",
+                    nameof(cost));
 
             var normalizedUseId = useId.Trim();
             var normalizedResourceId = resourceId.Trim();
             var layers = GetLayers(normalizedUseId);
             layers.RemoveAll(layer => layer.Duration == duration);
             layers.Add(new(
-                new(normalizedUseId, normalizedResourceId, cost, kind),
+                new(normalizedUseId, normalizedResourceId, cost, kind)
+                {
+                    InsufficientPayment = insufficientPayment,
+                    MaxExtraStacks = maxExtraStacks,
+                },
                 duration));
             Changed?.Invoke();
             return this;
@@ -184,7 +329,12 @@ namespace STS2RitsuLib.Combat.SecondaryResources
             return _uses
                 .Select(static pair => pair.Value[^1].Use)
                 .Where(static use => use.IsMaterial)
-                .OrderBy(static use => use.Kind == SecondaryResourceUseKind.RequiredCost ? 0 : 1)
+                .OrderBy(static use => use.Kind switch
+                {
+                    SecondaryResourceUseKind.RequiredCost => 0,
+                    SecondaryResourceUseKind.ExtraSpend => 1,
+                    _ => 2,
+                })
                 .ThenBy(static use => use.Id, StringComparer.Ordinal)
                 .ToArray();
         }

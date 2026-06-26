@@ -100,6 +100,13 @@ namespace STS2RitsuLib.Combat.SecondaryResources
         public SecondaryResourcePersistencePolicy PersistencePolicy { get; init; }
 
         /// <summary>
+        ///     Default policy for required card payments that are short on this resource.
+        ///     此资源作为卡牌必需支付且数量不足时的默认策略。
+        /// </summary>
+        public SecondaryResourceInsufficientPayment DefaultInsufficientPayment { get; init; } =
+            SecondaryResourceInsufficientPayment.BlockPlay;
+
+        /// <summary>
         ///     Optional localization table for title and description.
         ///     用于标题和描述的可选本地化表。
         /// </summary>

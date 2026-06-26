@@ -132,12 +132,63 @@ namespace STS2RitsuLib.Combat.SecondaryResources
             SecondaryResourceCost cost,
             SecondaryResourceCostDuration duration)
         {
+            return Set(resourceId, cost, duration, null);
+        }
+
+        /// <summary>
+        ///     Sets a permanent fixed cost that can still be played with a shortfall.
+        ///     设置资源不足时仍可打出的永久固定费用。
+        /// </summary>
+        public SecondaryResourceCostSet SetAllowingShortfall(
+            string resourceId,
+            int amount,
+            SecondaryResourceShortfallPaymentHandler? onShortfall = null,
+            bool spendAvailable = true,
+            SecondaryResourceShortfallResolver? resolveShortfall = null)
+        {
+            return SetAllowingShortfall(
+                resourceId,
+                new SecondaryResourceCost(Math.Max(0, amount)),
+                onShortfall,
+                spendAvailable,
+                resolveShortfall);
+        }
+
+        /// <summary>
+        ///     Sets a cost that can still be played with a shortfall.
+        ///     设置资源不足时仍可打出的费用。
+        /// </summary>
+        public SecondaryResourceCostSet SetAllowingShortfall(
+            string resourceId,
+            SecondaryResourceCost cost,
+            SecondaryResourceShortfallPaymentHandler? onShortfall = null,
+            bool spendAvailable = true,
+            SecondaryResourceShortfallResolver? resolveShortfall = null,
+            SecondaryResourceCostDuration duration = SecondaryResourceCostDuration.Permanent)
+        {
+            return Set(
+                resourceId,
+                cost,
+                duration,
+                SecondaryResourceInsufficientPayment.AllowPlay(onShortfall, spendAvailable, resolveShortfall));
+        }
+
+        /// <summary>
+        ///     Sets a cost descriptor for one resource and duration with an explicit shortfall policy.
+        ///     为单个资源和持续时间设置带显式短缺策略的费用描述。
+        /// </summary>
+        public SecondaryResourceCostSet Set(
+            string resourceId,
+            SecondaryResourceCost cost,
+            SecondaryResourceCostDuration duration,
+            SecondaryResourceInsufficientPayment? insufficientPayment)
+        {
             ArgumentException.ThrowIfNullOrWhiteSpace(resourceId);
             ArgumentNullException.ThrowIfNull(cost);
 
             var layers = GetLayers(resourceId);
             layers.RemoveAll(layer => layer.Duration == duration);
-            layers.Add(new(cost, duration));
+            layers.Add(new(cost, duration, insufficientPayment));
             Changed?.Invoke();
             return this;
         }
@@ -200,6 +251,26 @@ namespace STS2RitsuLib.Combat.SecondaryResources
                 .Where(static pair => pair.Value.IsMaterial)
                 .OrderBy(static pair => pair.Key, StringComparer.Ordinal)
                 .ToDictionary(static pair => pair.Key, static pair => pair.Value, StringComparer.OrdinalIgnoreCase);
+        }
+
+        internal IReadOnlyList<SecondaryResourcePlayUse> SnapshotUses()
+        {
+            return _costs
+                .Select(static pair =>
+                {
+                    var layer = pair.Value[^1];
+                    return new SecondaryResourcePlayUse(
+                        pair.Key,
+                        pair.Key,
+                        layer.Cost,
+                        SecondaryResourceUseKind.RequiredCost)
+                    {
+                        InsufficientPayment = layer.InsufficientPayment,
+                    };
+                })
+                .Where(static use => use.IsMaterial)
+                .OrderBy(static use => use.Id, StringComparer.Ordinal)
+                .ToArray();
         }
 
         internal SecondaryResourceCostSet Clone()
@@ -313,7 +384,8 @@ namespace STS2RitsuLib.Combat.SecondaryResources
 
     internal sealed record SecondaryResourceCostLayer(
         SecondaryResourceCost Cost,
-        SecondaryResourceCostDuration Duration);
+        SecondaryResourceCostDuration Duration,
+        SecondaryResourceInsufficientPayment? InsufficientPayment = null);
 
     /// <summary>
     ///     Resolved payment line for a single resource.
@@ -336,6 +408,31 @@ namespace STS2RitsuLib.Combat.SecondaryResources
         public bool IsAffordable => IsPreview || IsFree || AmountAvailable >= Cost;
 
         /// <summary>
+        ///     Unpaid amount for this line after applying the selected spend behavior.
+        ///     应用所选消耗行为后该行未支付的数量。
+        /// </summary>
+        public int Shortfall { get; init; }
+
+        /// <summary>
+        ///     Shortfall before replacement payments cover any part of it.
+        ///     替代支付覆盖前的原始短缺数量。
+        /// </summary>
+        public int OriginalShortfall { get; init; }
+
+        /// <summary>
+        ///     Shortfall amount covered by a replacement payment.
+        ///     由替代支付覆盖的短缺数量。
+        /// </summary>
+        public int CoveredShortfall { get; init; }
+
+        /// <summary>
+        ///     Shortfall policy resolved for this line.
+        ///     该行解析出的短缺策略。
+        /// </summary>
+        public SecondaryResourceInsufficientPayment InsufficientPayment { get; init; } =
+            SecondaryResourceInsufficientPayment.BlockPlay;
+
+        /// <summary>
         ///     True when spend hooks allow this line to spend its resource.
         ///     spend hook 允许该行消耗资源时为 true。
         /// </summary>
@@ -354,10 +451,55 @@ namespace STS2RitsuLib.Combat.SecondaryResources
         public bool IsOptional => !BlocksPlay;
 
         /// <summary>
+        ///     True when this line is a repeatable extra spend.
+        ///     该行为可重复额外支付时为 true。
+        /// </summary>
+        public bool IsExtraSpend => Kind == SecondaryResourceUseKind.ExtraSpend;
+
+        /// <summary>
         ///     True when this line allows the card play to proceed.
         ///     该行允许卡牌继续打出时为 true。
         /// </summary>
-        public bool CanPlay => !BlocksPlay || (IsAffordable && CanSpend);
+        public bool CanPlay => !BlocksPlay || ((IsAffordable || IsShortfallPlayable || IsShortfallCovered) && CanSpend);
+
+        /// <summary>
+        ///     True when this required line is short on resource but its policy allows the play.
+        ///     必需行资源不足但策略允许出牌时为 true。
+        /// </summary>
+        public bool IsShortfallPlayable =>
+            BlocksPlay &&
+            Activated &&
+            Shortfall > 0 &&
+            InsufficientPayment.AllowsPlay;
+
+        /// <summary>
+        ///     True when a replacement payment fully covered the resource shortfall.
+        ///     替代支付已完全覆盖资源短缺时为 true。
+        /// </summary>
+        public bool IsShortfallCovered =>
+            BlocksPlay &&
+            Activated &&
+            OriginalShortfall > 0 &&
+            CoveredShortfall >= OriginalShortfall;
+
+        /// <summary>
+        ///     Replacement-payment resolution chosen for this line.
+        ///     该行选中的替代支付解析结果。
+        /// </summary>
+        public SecondaryResourceShortfallResolution ShortfallResolution { get; init; } =
+            SecondaryResourceShortfallResolution.None;
+
+        /// <summary>
+        ///     Number of full extra-spend stacks paid by this line.
+        ///     该行支付的完整额外消耗层数。
+        /// </summary>
+        public int ExtraStacks { get; init; }
+
+        /// <summary>
+        ///     Amount spent as repeatable extra payment by this line.
+        ///     该行作为可重复额外支付消耗的数量。
+        /// </summary>
+        public int ExtraAmountToSpend { get; init; }
 
         /// <summary>
         ///     Stable play-use id for this line.
@@ -556,7 +698,50 @@ namespace STS2RitsuLib.Combat.SecondaryResources
 
             var ledger = builder.Build();
             SecondaryResourcePlayLedgerRuntime.SetPending(plan.Card, ledger);
+            await RunShortfallPayments(plan, ledger, source ?? plan.Card);
             return ledger;
+        }
+
+        private static async Task RunShortfallPayments(
+            SecondaryResourcePaymentPlan plan,
+            SecondaryResourcePlayLedger ledger,
+            AbstractModel? source)
+        {
+            if (plan.Player?.Creature?.CombatState == null)
+                return;
+
+            var combatState = plan.Player.Creature.CombatState;
+            foreach (var line in plan.Lines)
+            {
+                if (line is not { Activated: true, OriginalShortfall: > 0, IsFree: false } ||
+                    !line.InsufficientPayment.AllowsPlay)
+                    continue;
+
+                var context = new SecondaryResourceShortfallContext(
+                    combatState,
+                    plan.Player,
+                    line.Definition,
+                    plan.Card,
+                    line.UseId,
+                    line.Kind,
+                    line.Cost,
+                    line.AmountAvailable,
+                    line.AmountToSpend,
+                    line.OriginalShortfall,
+                    line.CoveredShortfall,
+                    line.Shortfall,
+                    source,
+                    ledger);
+
+                if (line.CoveredShortfall > 0)
+                    await line.ShortfallResolution.Commit(context);
+
+                if (line.Shortfall <= 0)
+                    continue;
+
+                await line.InsufficientPayment.InvokeShortfall(context);
+                await SecondaryResourceHook.AfterShortfallPayment(context);
+            }
         }
 
         /// <summary>
@@ -571,8 +756,31 @@ namespace STS2RitsuLib.Combat.SecondaryResources
             foreach (var line in plan.Lines)
             {
                 var freeLine = line.Kind == SecondaryResourceUseKind.OptionalSpend
-                    ? line with { IsFree = true, AmountToSpend = 0, Value = 0, Activated = true }
-                    : line with { IsFree = true, AmountToSpend = 0, Activated = true };
+                    ? line with
+                    {
+                        IsFree = true,
+                        AmountToSpend = 0,
+                        Value = 0,
+                        Activated = true,
+                        OriginalShortfall = 0,
+                        CoveredShortfall = 0,
+                        Shortfall = 0,
+                        ShortfallResolution = SecondaryResourceShortfallResolution.None,
+                        ExtraAmountToSpend = 0,
+                        ExtraStacks = 0,
+                    }
+                    : line with
+                    {
+                        IsFree = true,
+                        AmountToSpend = 0,
+                        Activated = true,
+                        OriginalShortfall = 0,
+                        CoveredShortfall = 0,
+                        Shortfall = 0,
+                        ShortfallResolution = SecondaryResourceShortfallResolution.None,
+                        ExtraAmountToSpend = 0,
+                        ExtraStacks = 0,
+                    };
                 builder.Add(freeLine);
             }
 
@@ -585,9 +793,7 @@ namespace STS2RitsuLib.Combat.SecondaryResources
         {
             var uses = new List<SecondaryResourcePlayUse>();
             if (card.TryGetSecondaryCosts(out var costs))
-                uses.AddRange(costs.Snapshot().Select(pair =>
-                    new SecondaryResourcePlayUse(pair.Key, pair.Key, pair.Value,
-                        SecondaryResourceUseKind.RequiredCost)));
+                uses.AddRange(costs.SnapshotUses());
 
             if (card.TryGetSecondaryResourceUses(out var playUses))
                 uses.AddRange(playUses.Snapshot());
@@ -596,7 +802,12 @@ namespace STS2RitsuLib.Combat.SecondaryResources
 
             return uses
                 .Where(static use => use.IsMaterial)
-                .OrderBy(static use => use.Kind == SecondaryResourceUseKind.RequiredCost ? 0 : 1)
+                .OrderBy(static use => use.Kind switch
+                {
+                    SecondaryResourceUseKind.RequiredCost => 0,
+                    SecondaryResourceUseKind.ExtraSpend => 1,
+                    _ => 2,
+                })
                 .ThenBy(static use => use.Id, StringComparer.Ordinal)
                 .ToArray();
         }
@@ -630,6 +841,7 @@ namespace STS2RitsuLib.Combat.SecondaryResources
             var canonicalCost = ResolveCanonicalCost(card, use);
             var fixedCost = Math.Max(0, (int)Math.Ceiling(localCost));
             var displayCost = isFree ? 0 : fixedCost;
+            var insufficientPayment = use.InsufficientPayment ?? definition.DefaultInsufficientPayment;
             if (!cost.CostsX)
                 return new(definition.Id, definition, displayCost, 0, isFree ? 0 : fixedCost, fixedCost, false, isFree)
                 {
@@ -640,6 +852,7 @@ namespace STS2RitsuLib.Combat.SecondaryResources
                     IsPreview = true,
                     BaseCost = baseCost,
                     CanonicalCost = canonicalCost,
+                    InsufficientPayment = insufficientPayment,
                 };
 
             return new(definition.Id, definition, fixedCost, 0, 0, 0, true, isFree)
@@ -651,6 +864,7 @@ namespace STS2RitsuLib.Combat.SecondaryResources
                 IsPreview = true,
                 BaseCost = baseCost,
                 CanonicalCost = canonicalCost,
+                InsufficientPayment = insufficientPayment,
             };
         }
 
@@ -674,20 +888,95 @@ namespace STS2RitsuLib.Combat.SecondaryResources
             var fixedCost = Math.Max(0, (int)Math.Ceiling(modifiedCost));
             var displayCost = isFree ? 0 : fixedCost;
             var isRequired = use.Kind == SecondaryResourceUseKind.RequiredCost;
+            var baseInsufficientPayment = use.InsufficientPayment ?? definition.DefaultInsufficientPayment;
 
             if (!cost.CostsX)
             {
-                var activated = isFree || available >= fixedCost;
-                var amountToSpend = !isRequired && !activated
-                    ? 0
-                    : isFree
-                        ? 0
-                        : fixedCost;
+                var availableToSpend = Math.Max(0, available);
+                if (use.Kind == SecondaryResourceUseKind.ExtraSpend)
+                    return ResolveExtraSpendLine(
+                        combatState,
+                        player,
+                        card,
+                        definition,
+                        use,
+                        available,
+                        availableToSpend,
+                        fixedCost,
+                        displayCost,
+                        baseCost,
+                        canonicalCost,
+                        isFree,
+                        source);
+
+                var originalShortfall = isFree ? 0 : Math.Max(0, fixedCost - availableToSpend);
+                var initialAmountToSpend = ResolveAmountToSpend(
+                    isRequired,
+                    true,
+                    isFree,
+                    fixedCost,
+                    availableToSpend,
+                    baseInsufficientPayment);
+                var insufficientPayment = ResolveInsufficientPayment(
+                    combatState,
+                    player,
+                    card,
+                    definition,
+                    use,
+                    fixedCost,
+                    available,
+                    initialAmountToSpend,
+                    originalShortfall,
+                    source,
+                    baseInsufficientPayment);
+                var shortfallResolution = SecondaryResourceShortfallResolution.None;
+                if (isRequired && originalShortfall > 0 && insufficientPayment.AllowsPlay)
+                {
+                    var shortfallContext = new SecondaryResourceShortfallResolutionContext(
+                        combatState,
+                        player,
+                        definition,
+                        card,
+                        use.Id,
+                        use.Kind,
+                        fixedCost,
+                        available,
+                        ResolveAmountToSpend(true, true, isFree, fixedCost, availableToSpend, insufficientPayment),
+                        originalShortfall,
+                        source ?? card);
+                    shortfallResolution = insufficientPayment.Resolve(shortfallContext);
+                    shortfallResolution = SecondaryResourceHook.ResolveShortfall(
+                        shortfallContext,
+                        shortfallResolution);
+                }
+
+                var coveredShortfall = Math.Min(originalShortfall, Math.Max(0, shortfallResolution.CoveredAmount));
+                var shortfall = originalShortfall - coveredShortfall;
+                var shortfallAllowed = isRequired &&
+                                       originalShortfall > 0 &&
+                                       insufficientPayment.AllowsPlay &&
+                                       (shortfall > 0 || coveredShortfall >= originalShortfall);
+                var activated = isFree || availableToSpend >= fixedCost || shortfallAllowed;
+                var amountToSpend = ResolveAmountToSpend(
+                    isRequired,
+                    activated,
+                    isFree,
+                    fixedCost,
+                    availableToSpend,
+                    insufficientPayment);
                 var spendAllowed = CanSpend(combatState, player, card, definition, amountToSpend, source);
                 if (!isRequired && !spendAllowed)
                 {
                     activated = false;
                     amountToSpend = 0;
+                }
+
+                if (!activated)
+                {
+                    originalShortfall = 0;
+                    coveredShortfall = 0;
+                    shortfall = 0;
+                    shortfallResolution = SecondaryResourceShortfallResolution.None;
                 }
 
                 var value = !isRequired && !activated ? 0 : fixedCost;
@@ -700,6 +989,11 @@ namespace STS2RitsuLib.Combat.SecondaryResources
                     SpendAllowed = spendAllowed,
                     BaseCost = baseCost,
                     CanonicalCost = canonicalCost,
+                    OriginalShortfall = originalShortfall,
+                    CoveredShortfall = coveredShortfall,
+                    Shortfall = shortfall,
+                    InsufficientPayment = insufficientPayment,
+                    ShortfallResolution = shortfallResolution,
                 };
             }
 
@@ -736,7 +1030,109 @@ namespace STS2RitsuLib.Combat.SecondaryResources
                 SpendAllowed = xSpendAllowed,
                 BaseCost = baseCost,
                 CanonicalCost = canonicalCost,
+                InsufficientPayment = baseInsufficientPayment,
             };
+        }
+
+        private static SecondaryResourcePaymentLine ResolveExtraSpendLine(
+            CombatStateLike combatState,
+            Player player,
+            CardModel card,
+            SecondaryResourceDefinition definition,
+            SecondaryResourcePlayUse use,
+            int available,
+            int availableToSpend,
+            int perStackAmount,
+            int displayCost,
+            int baseCost,
+            int canonicalCost,
+            bool isFree,
+            AbstractModel? source)
+        {
+            var maxStacks = use.MaxExtraStacks ?? int.MaxValue;
+            var stacks = isFree || perStackAmount <= 0
+                ? 0
+                : Math.Min(maxStacks, availableToSpend / perStackAmount);
+            var amountToSpend = stacks * perStackAmount;
+            var spendAllowed = CanSpend(combatState, player, card, definition, amountToSpend, source);
+            // ReSharper disable once InvertIf
+            if (!spendAllowed)
+            {
+                stacks = 0;
+                amountToSpend = 0;
+            }
+
+            return new(
+                definition.Id,
+                definition,
+                displayCost,
+                available,
+                amountToSpend,
+                stacks,
+                false,
+                isFree)
+            {
+                UseId = use.Id,
+                Kind = use.Kind,
+                BlocksPlay = false,
+                Activated = stacks > 0,
+                SpendAllowed = spendAllowed,
+                BaseCost = baseCost,
+                CanonicalCost = canonicalCost,
+                ExtraStacks = stacks,
+                ExtraAmountToSpend = amountToSpend,
+            };
+        }
+
+        private static int ResolveAmountToSpend(
+            bool isRequired,
+            bool activated,
+            bool isFree,
+            int fixedCost,
+            int available,
+            SecondaryResourceInsufficientPayment insufficientPayment)
+        {
+            if (!activated || isFree)
+                return 0;
+
+            if (!isRequired || available >= fixedCost)
+                return fixedCost;
+
+            return insufficientPayment is { AllowsPlay: true, SpendAvailable: true }
+                ? available
+                : 0;
+        }
+
+        private static SecondaryResourceInsufficientPayment ResolveInsufficientPayment(
+            CombatStateLike combatState,
+            Player player,
+            CardModel card,
+            SecondaryResourceDefinition definition,
+            SecondaryResourcePlayUse use,
+            int cost,
+            int available,
+            int amountToSpend,
+            int shortfall,
+            AbstractModel? source,
+            SecondaryResourceInsufficientPayment payment)
+        {
+            if (use.Kind != SecondaryResourceUseKind.RequiredCost || shortfall <= 0)
+                return payment;
+
+            return SecondaryResourceHook.ModifyInsufficientPayment(
+                new(
+                    combatState,
+                    player,
+                    definition,
+                    card,
+                    use.Id,
+                    use.Kind,
+                    cost,
+                    available,
+                    amountToSpend,
+                    shortfall,
+                    source ?? card),
+                payment);
         }
 
         private static IEnumerable<SecondaryResourcePlayUse> GetCapabilityUses(CardModel card)

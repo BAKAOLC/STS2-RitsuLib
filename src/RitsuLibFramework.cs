@@ -381,12 +381,6 @@ namespace STS2RitsuLib
 
                     IsInitialized = true;
                     IsActive = true;
-                    var modDataInteropRegistered = RitsuLibStartupAudit.Measure("modDataInterop",
-                        ModDataRuntimeInterop.TryRegisterAll);
-                    if (modDataInteropRegistered > 0)
-                        Logger.Debug(
-                            $"ModData runtime interop: mirror-registered {modDataInteropRegistered} provider schema(s).");
-
                     RitsuLibStartupAudit.Measure("runtimeServices", () =>
                     {
                         EnsureFrameworkInteropBootstrapRegistered();
