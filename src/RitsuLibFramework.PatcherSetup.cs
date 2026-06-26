@@ -478,6 +478,7 @@ namespace STS2RitsuLib
             patcher.RegisterPatch<CardAncientTextBgTexturePatch>();
             patcher.RegisterPatch<CardFrameMaterialPatch>();
             patcher.RegisterPatch<CardPoolFrameMaterialPatch>();
+            patcher.RegisterPatch<CardVisualStylePatch>();
             patcher.RegisterPatch<CardPortraitMaterialPatch>();
             patcher.RegisterPatch<CardNodeMaterialPatch>();
             patcher.RegisterPatch<CardAllPortraitPathsPatch>();

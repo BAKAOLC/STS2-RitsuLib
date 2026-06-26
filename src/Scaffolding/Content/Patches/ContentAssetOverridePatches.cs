@@ -459,6 +459,12 @@ namespace STS2RitsuLib.Scaffolding.Content.Patches
         string? CustomAncientBannerPath => AssetProfile.AncientBannerPath;
 
         /// <summary>
+        ///     Optional visual layout override. Defaults to the base-game rarity-driven card layout.
+        ///     可选视觉布局覆盖。默认使用原版按稀有度驱动的卡牌布局。
+        /// </summary>
+        CardVisualStyle CustomVisualStyle => AssetProfile.VisualStyle;
+
+        /// <summary>
         ///     Override for frame <see cref="Material" /> resource path.
         ///     边框 <see cref="Material" /> 资源路径覆盖。
         /// </summary>

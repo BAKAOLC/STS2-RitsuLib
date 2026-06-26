@@ -6,6 +6,31 @@ using MegaCrit.Sts2.Core.Models;
 namespace STS2RitsuLib.Scaffolding.Content
 {
     /// <summary>
+    ///     Visual layout family used by <see cref="MegaCrit.Sts2.Core.Nodes.Cards.NCard" />.
+    ///     <see cref="MegaCrit.Sts2.Core.Nodes.Cards.NCard" /> 使用的视觉布局族。
+    /// </summary>
+    public enum CardVisualStyle
+    {
+        /// <summary>
+        ///     Use the base game's rarity check: <see cref="CardRarity.Ancient" /> cards use ancient visuals.
+        ///     使用原版稀有度判定：<see cref="CardRarity.Ancient" /> 卡牌使用 ancient 视觉。
+        /// </summary>
+        Default,
+
+        /// <summary>
+        ///     Force the standard card layout even when the card's rarity is <see cref="CardRarity.Ancient" />.
+        ///     即使卡牌稀有度为 <see cref="CardRarity.Ancient" />，也强制使用普通卡牌布局。
+        /// </summary>
+        Standard,
+
+        /// <summary>
+        ///     Force the ancient card layout without changing the card's gameplay rarity.
+        ///     不改变卡牌玩法稀有度，强制使用 ancient 卡牌布局。
+        /// </summary>
+        Ancient,
+    }
+
+    /// <summary>
     ///     Bundle of optional resource paths and materials for mod card portraits, frames, energy icon, overlay scene,
     ///     and banner.
     ///     Mod 卡牌肖像、边框、能量图标、覆盖场景和横幅的可选ResourcePath和材质集合。
@@ -114,6 +139,12 @@ namespace STS2RitsuLib.Scaffolding.Content
     ///     Direct ancient card title banner material override.
     ///     直接覆盖 Ancient 卡牌卡名横幅材质。
     /// </param>
+    /// <param name="VisualStyle">
+    ///     Optional visual layout override. <see cref="CardVisualStyle.Default" /> keeps the base-game
+    ///     <see cref="CardRarity.Ancient" /> check.
+    ///     可选视觉布局覆盖。<see cref="CardVisualStyle.Default" /> 保持原版
+    ///     <see cref="CardRarity.Ancient" /> 判定。
+    /// </param>
     public sealed record CardAssetProfile(
         string? PortraitPath = null,
         string? BetaPortraitPath = null,
@@ -140,7 +171,8 @@ namespace STS2RitsuLib.Scaffolding.Content
         Material? AncientTextBgMaterial = null,
         string? AncientBannerPath = null,
         string? AncientBannerMaterialPath = null,
-        Material? AncientBannerMaterial = null)
+        Material? AncientBannerMaterial = null,
+        CardVisualStyle VisualStyle = CardVisualStyle.Default)
     {
         /// <summary>
         ///     Backward-compatible constructor preserving the original parameter list.
@@ -747,7 +779,8 @@ namespace STS2RitsuLib.Scaffolding.Content
                     "atlases/compressed_atlas.sprites/ancient_card_border.png.tres"),
                 AncientTextBgPath: ImageHelper.GetImagePath(
                     $"atlases/compressed_atlas.sprites/ancient_text_bg_{normalizedType}.png.tres"),
-                AncientBannerPath: ImageHelper.GetImagePath("atlases/ui_atlas.sprites/card/ancient_banner.tres"));
+                AncientBannerPath: ImageHelper.GetImagePath("atlases/ui_atlas.sprites/card/ancient_banner.tres"),
+                VisualStyle: CardVisualStyle.Ancient);
         }
 
         /// <summary>
