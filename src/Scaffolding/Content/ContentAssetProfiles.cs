@@ -327,6 +327,68 @@ namespace STS2RitsuLib.Scaffolding.Content
         }
 
         /// <summary>
+        ///     Backward-compatible constructor preserving the ancient banner parameter list.
+        ///     保留 ancient 卡名横幅参数列表的向后兼容构造函数。
+        /// </summary>
+        public CardAssetProfile(
+            string? PortraitPath,
+            string? BetaPortraitPath,
+            string? FramePath,
+            string? PortraitBorderPath,
+            string? EnergyIconPath,
+            string? FrameMaterialPath,
+            string? OverlayScenePath,
+            string? BannerTexturePath,
+            string? BannerMaterialPath,
+            Material? FrameMaterial,
+            Material? BannerMaterial,
+            string? PortraitMaterialPath,
+            Material? PortraitMaterial,
+            string? AncientBorderPath,
+            string? AncientTextBgPath,
+            string? PortraitBorderMaterialPath,
+            Material? PortraitBorderMaterial,
+            string? EnergyIconMaterialPath,
+            Material? EnergyIconMaterial,
+            string? AncientBorderMaterialPath,
+            Material? AncientBorderMaterial,
+            string? AncientTextBgMaterialPath,
+            Material? AncientTextBgMaterial,
+            string? AncientBannerPath,
+            string? AncientBannerMaterialPath,
+            Material? AncientBannerMaterial)
+            : this(
+                PortraitPath,
+                BetaPortraitPath,
+                FramePath,
+                PortraitBorderPath,
+                EnergyIconPath,
+                FrameMaterialPath,
+                OverlayScenePath,
+                BannerTexturePath,
+                BannerMaterialPath,
+                FrameMaterial,
+                BannerMaterial,
+                PortraitMaterialPath,
+                PortraitMaterial,
+                AncientBorderPath,
+                AncientTextBgPath,
+                PortraitBorderMaterialPath,
+                PortraitBorderMaterial,
+                EnergyIconMaterialPath,
+                EnergyIconMaterial,
+                AncientBorderMaterialPath,
+                AncientBorderMaterial,
+                AncientTextBgMaterialPath,
+                AncientTextBgMaterial,
+                AncientBannerPath,
+                AncientBannerMaterialPath,
+                AncientBannerMaterial,
+                CardVisualStyle.Default)
+        {
+        }
+
+        /// <summary>
         ///     Default empty profile (no custom paths or materials).
         ///     默认空 profile（无自定义路径或材质）。
         /// </summary>
