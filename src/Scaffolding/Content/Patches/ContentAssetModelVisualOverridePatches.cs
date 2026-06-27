@@ -1,7 +1,9 @@
 using Godot;
 using HarmonyLib;
+using MegaCrit.Sts2.Core.Assets;
 using MegaCrit.Sts2.Core.Entities.Cards;
 using MegaCrit.Sts2.Core.Entities.UI;
+using MegaCrit.Sts2.Core.Helpers;
 using MegaCrit.Sts2.Core.Models;
 using MegaCrit.Sts2.Core.Nodes.Cards;
 using MegaCrit.Sts2.Core.Timeline;
@@ -470,6 +472,285 @@ namespace STS2RitsuLib.Scaffolding.Content.Patches
     }
 
     /// <summary>
+    ///     Applies explicit card visual style overrides after vanilla reloads rarity-driven card visuals.
+    ///     在原版按稀有度重载卡牌视觉后，应用显式卡面样式覆盖。
+    /// </summary>
+    internal class CardVisualStylePatch : IPatchMethod
+    {
+        private const string CanvasGroupBlurMaterialPath = "res://scenes/cards/card_canvas_group_blur_material.tres";
+
+        private const string CanvasGroupMaskBlurMaterialPath =
+            "res://scenes/cards/card_canvas_group_mask_blur_material.tres";
+
+        private const string CanvasGroupMaskMaterialPath = "res://scenes/cards/card_canvas_group_mask_material.tres";
+        private const string PortraitBlurMaterialPath = "res://scenes/cards/card_portrait_blur_material.tres";
+        public static string PatchId => "content_asset_override_card_visual_style";
+        public static string Description => "Allow CardAssetProfile to force standard or ancient card visuals";
+        public static bool IsCritical => false;
+
+        public static ModPatchTarget[] GetTargets()
+        {
+            return [new(typeof(NCard), "Reload")];
+        }
+
+        public static void Postfix(NCard __instance)
+        {
+            var model = __instance.Model;
+            if (model == null || !TryResolveVisualStyle(model, out var style))
+                return;
+
+            ApplyVisualStyle(__instance, model, style == CardVisualStyle.Ancient);
+        }
+
+        internal static bool UsesAncientVisualStyle(CardModel model)
+        {
+            return TryResolveVisualStyle(model, out var style)
+                ? style == CardVisualStyle.Ancient
+                : model.Rarity == CardRarity.Ancient;
+        }
+
+        private static bool TryResolveVisualStyle(CardModel model, out CardVisualStyle style)
+        {
+            if (ModCharacterOwnedVisualOverrideHelper.TryCardVisualStyle(model, out style))
+                return true;
+
+            if (model is IModCardAssetOverrides { CustomVisualStyle: not CardVisualStyle.Default } overrides)
+            {
+                style = overrides.CustomVisualStyle;
+                return true;
+            }
+
+            style = CardVisualStyle.Default;
+            return false;
+        }
+
+        private static void ApplyVisualStyle(NCard card, CardModel model, bool ancient)
+        {
+            SetVisible(card, "%PortraitBorder", !ancient);
+            SetVisible(card, "%Portrait", !ancient);
+            SetVisible(card, "%Frame", !ancient);
+            SetVisible(card, "%AncientPortrait", ancient);
+            SetVisible(card, "%AncientBorderGlassOverlay", ancient);
+            SetVisible(card, "%AncientBorder", ancient);
+            SetVisible(card, "%AncientTextBg", ancient);
+            SetVisible(card, "%AncientBanner", ancient);
+            SetVisible(card, "%TitleBanner", !ancient);
+
+            ApplyPortraitCanvasMaterials(card, ancient);
+
+            if (ancient)
+            {
+                SetTexture(card, "%AncientBorder", ResolveAncientBorderTexture(model));
+                SetTexture(card, "%AncientTextBg", ResolveAncientTextBgTexture(model));
+                SetTexture(card, "%AncientPortrait", model.Portrait);
+                SetTexture(card, "%AncientBanner", ResolveAncientBannerTexture(model));
+                SetMaterial(card, "%TitleBanner", null);
+                return;
+            }
+
+            SetTexture(card, "%Portrait", model.Portrait);
+            SetTexture(card, "%PortraitBorder", ResolveStandardPortraitBorderTexture(model));
+            SetMaterial(card, "%PortraitBorder", ResolveStandardBannerMaterial(model));
+            SetTexture(card, "%Frame", ResolveStandardFrameTexture(model));
+            SetMaterial(card, "%Frame", model.FrameMaterial);
+            SetTexture(card, "%TitleBanner", ResolveStandardBannerTexture());
+            SetMaterial(card, "%TitleBanner", ResolveStandardBannerMaterial(model));
+        }
+
+        private static void ApplyPortraitCanvasMaterials(NCard card, bool ancient)
+        {
+            var portraitCanvasGroup = card.GetNodeOrNull<CanvasItem>("%PortraitCanvasGroup");
+            var portrait = card.GetNodeOrNull<CanvasItem>("%Portrait");
+            var ancientPortrait = card.GetNodeOrNull<CanvasItem>("%AncientPortrait");
+
+            if (card.Visibility != ModelVisibility.Visible)
+            {
+                if (portraitCanvasGroup != null)
+                    portraitCanvasGroup.Material = LoadMaterial(
+                        ancient ? CanvasGroupMaskBlurMaterialPath : CanvasGroupBlurMaterialPath);
+                var blur = LoadMaterial(PortraitBlurMaterialPath);
+                if (portrait != null)
+                    portrait.Material = blur;
+                if (ancientPortrait != null)
+                    ancientPortrait.Material = blur;
+                return;
+            }
+
+            if (portraitCanvasGroup != null)
+                portraitCanvasGroup.Material = ancient ? LoadMaterial(CanvasGroupMaskMaterialPath) : null;
+            if (portrait != null)
+                portrait.Material = null;
+            if (ancientPortrait != null)
+                ancientPortrait.Material = null;
+        }
+
+        private static Texture2D ResolveAncientBorderTexture(CardModel model)
+        {
+            Texture2D texture = null!;
+            return CardTextureOverridePatch.TryCardAncientBorderTexture(model, ref texture)
+                ? model.AncientBorder
+                : texture;
+        }
+
+        private static Texture2D ResolveAncientTextBgTexture(CardModel model)
+        {
+            Texture2D texture = null!;
+            return CardTextureOverridePatch.TryCardAncientTextBgTexture(model, ref texture)
+                ? LoadTexture(AncientTextBgPath(model.Type))
+                : texture;
+        }
+
+        private static Texture2D ResolveAncientBannerTexture(CardModel model)
+        {
+            Texture2D texture = null!;
+            if (!ModCharacterOwnedVisualOverrideHelper.TryCardAncientBannerTexture(model, ref texture) ||
+                !ContentAssetOverridePatchHelper.TryUseTextureOverride<IModCardAssetOverrides>(
+                    model,
+                    ref texture,
+                    static o => o.CustomAncientBannerPath,
+                    nameof(IModCardAssetOverrides.CustomAncientBannerPath)))
+                return texture;
+
+            return LoadTexture(ImageHelper.GetImagePath("atlases/ui_atlas.sprites/card/ancient_banner.tres"));
+        }
+
+        private static Texture2D ResolveStandardFrameTexture(CardModel model)
+        {
+            Texture2D texture = null!;
+            return CardTextureOverridePatch.TryCardFrameTexture(model, ref texture)
+                ? LoadTexture(StandardFramePath(model.Type))
+                : texture;
+        }
+
+        private static Texture2D ResolveStandardPortraitBorderTexture(CardModel model)
+        {
+            Texture2D texture = null!;
+            return CardTextureOverridePatch.TryCardPortraitBorderTexture(model, ref texture)
+                ? LoadTexture(StandardPortraitBorderPath(model.Type))
+                : texture;
+        }
+
+        private static Texture2D ResolveStandardBannerTexture()
+        {
+            return LoadTexture(ImageHelper.GetImagePath("atlases/ui_atlas.sprites/card/card_banner.tres"));
+        }
+
+        private static Material ResolveStandardBannerMaterial(CardModel model)
+        {
+            Material material = null!;
+            if (model is IModCardBannerMaterialOverride { CustomBannerMaterial: { } directBannerMaterial })
+                return directBannerMaterial;
+
+            if (ExternalCardMaterialOverrideRegistry.TryGetBannerMaterial(model, out var externalBannerMaterial))
+                return externalBannerMaterial;
+
+            if (!ModCharacterOwnedVisualOverrideHelper.TryCardBannerMaterial(model, ref material) ||
+                !ContentAssetOverridePatchHelper.TryUseMaterialOverride<IModCardAssetOverrides>(
+                    model,
+                    ref material,
+                    static o => o.CustomBannerMaterialPath,
+                    nameof(IModCardAssetOverrides.CustomBannerMaterialPath)))
+                return material;
+
+            return LoadMaterial(StandardBannerMaterialPath(model.Rarity));
+        }
+
+        private static string StandardFramePath(CardType type)
+        {
+            var normalizedType = Normalize(StandardFrameCardType(type));
+            return ImageHelper.GetImagePath($"atlases/ui_atlas.sprites/card/card_frame_{normalizedType}_s.tres");
+        }
+
+        private static string StandardPortraitBorderPath(CardType type)
+        {
+            var normalizedType = Normalize(StandardPortraitBorderCardType(type));
+            return ImageHelper.GetImagePath(
+                $"atlases/ui_atlas.sprites/card/card_portrait_border_{normalizedType}_s.tres");
+        }
+
+        private static string AncientTextBgPath(CardType type)
+        {
+            var normalizedType = Normalize(AncientTextBgCardType(type));
+            return ImageHelper.GetImagePath(
+                $"atlases/compressed_atlas.sprites/ancient_text_bg_{normalizedType}.png.tres");
+        }
+
+        private static string StandardBannerMaterialPath(CardRarity rarity)
+        {
+            return rarity switch
+            {
+                CardRarity.Uncommon => "res://materials/cards/banners/card_banner_uncommon_mat.tres",
+                CardRarity.Rare => "res://materials/cards/banners/card_banner_rare_mat.tres",
+                CardRarity.Curse => "res://materials/cards/banners/card_banner_curse_mat.tres",
+                CardRarity.Status => "res://materials/cards/banners/card_banner_status_mat.tres",
+                CardRarity.Event => "res://materials/cards/banners/card_banner_event_mat.tres",
+                CardRarity.Quest => "res://materials/cards/banners/card_banner_quest_mat.tres",
+                _ => "res://materials/cards/banners/card_banner_common_mat.tres",
+            };
+        }
+
+        private static CardType StandardFrameCardType(CardType type)
+        {
+            return type switch
+            {
+                CardType.Attack or CardType.Skill or CardType.Power or CardType.Quest => type,
+                _ => CardType.Skill,
+            };
+        }
+
+        private static CardType StandardPortraitBorderCardType(CardType type)
+        {
+            return type switch
+            {
+                CardType.Attack or CardType.Skill or CardType.Power => type,
+                _ => CardType.Skill,
+            };
+        }
+
+        private static CardType AncientTextBgCardType(CardType type)
+        {
+            return type switch
+            {
+                CardType.Attack or CardType.Skill or CardType.Power or CardType.Quest => type,
+                _ => CardType.Skill,
+            };
+        }
+
+        private static string Normalize(CardType type)
+        {
+            return type.ToString().ToLowerInvariant();
+        }
+
+        private static Texture2D LoadTexture(string path)
+        {
+            return ResourceLoader.Load<Texture2D>(path);
+        }
+
+        private static Material LoadMaterial(string path)
+        {
+            return PreloadManager.Cache.GetMaterial(path);
+        }
+
+        private static void SetVisible(NCard card, NodePath nodePath, bool visible)
+        {
+            if (card.GetNodeOrNull<CanvasItem>(nodePath) is { } node)
+                node.Visible = visible;
+        }
+
+        private static void SetTexture(NCard card, NodePath nodePath, Texture2D texture)
+        {
+            if (card.GetNodeOrNull<TextureRect>(nodePath) is { } node)
+                node.Texture = texture;
+        }
+
+        private static void SetMaterial(NCard card, NodePath nodePath, Material? material)
+        {
+            if (card.GetNodeOrNull<CanvasItem>(nodePath) is { } node)
+                node.Material = material;
+        }
+    }
+
+    /// <summary>
     ///     Applies custom portrait <see cref="Material" /> overrides after <see cref="NCard" /> reloads vanilla visuals.
     ///     在 <see cref="NCard" /> 重载原版视觉后应用自定义卡图 <see cref="Material" /> 覆盖。
     /// </summary>
@@ -502,7 +783,7 @@ namespace STS2RitsuLib.Scaffolding.Content.Patches
 
         private static TextureRect? GetPortraitNode(NCard card, CardModel model)
         {
-            var path = model.Rarity == CardRarity.Ancient ? "%AncientPortrait" : "%Portrait";
+            var path = CardVisualStylePatch.UsesAncientVisualStyle(model) ? "%AncientPortrait" : "%Portrait";
             return card.GetNodeOrNull<TextureRect>(path);
         }
 

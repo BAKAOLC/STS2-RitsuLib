@@ -215,13 +215,26 @@ namespace STS2RitsuLib.Scaffolding.Content.Patches
                     string.IsNullOrWhiteSpace(a.EnergyIconMaterialPath) && a.EnergyIconMaterial == null &&
                     string.IsNullOrWhiteSpace(a.AncientBorderMaterialPath) && a.AncientBorderMaterial == null &&
                     string.IsNullOrWhiteSpace(a.AncientTextBgMaterialPath) && a.AncientTextBgMaterial == null &&
-                    string.IsNullOrWhiteSpace(a.AncientBannerMaterialPath) && a.AncientBannerMaterial == null)
+                    string.IsNullOrWhiteSpace(a.AncientBannerMaterialPath) && a.AncientBannerMaterial == null &&
+                    a.VisualStyle == CardVisualStyle.Default)
                     return null;
 
                 return a;
             }
 
             return null;
+        }
+
+        internal static bool TryCardVisualStyle(CardModel instance, out CardVisualStyle style)
+        {
+            style = CardVisualStyle.Default;
+            var overrides = TryGetOwningCharacterOverrides(instance);
+            var profile = overrides?.TryGetVanillaCardVisualOverrideForContext(instance);
+            if (profile?.VisualStyle is not { } resolved || resolved == CardVisualStyle.Default)
+                return false;
+
+            style = resolved;
+            return true;
         }
 
         internal static bool TryRelicIconPath(RelicModel instance, ref string result)

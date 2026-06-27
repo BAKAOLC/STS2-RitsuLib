@@ -1,3 +1,4 @@
+using System.Runtime.CompilerServices;
 using System.Text;
 using Godot;
 using MegaCrit.Sts2.addons.mega_text;
@@ -43,6 +44,7 @@ namespace STS2RitsuLib.Settings
         private static readonly StringName PaneSidebarHotkey = MegaInput.viewDeckAndTabLeft;
         private static readonly StringName PaneContentHotkey = MegaInput.viewExhaustPileAndTabRight;
         private static readonly ModSettingsReusableEntryNodePool SharedReusableEntryNodePool = new();
+        private static readonly ConditionalWeakTable<Control, PulseHighlightState> PulseHighlightStates = new();
 
         private readonly Action<IModSettingsBinding> _bindingWriteListener;
 
@@ -2658,9 +2660,14 @@ namespace STS2RitsuLib.Settings
             if (!IsInstanceValid(target))
                 return;
 
-            var original = target.Modulate;
+            var state = GetOrCreatePulseHighlightState(target);
+            state.Tween?.Kill();
+            target.Modulate = state.Original;
+
+            var original = state.Original;
             var highlight = new Color(1.35f, 1.18f, 0.65f, original.A);
             var tween = target.CreateTween();
+            state.Tween = tween;
             tween.TweenProperty(target, "modulate", highlight, 0.22d);
             tween.TweenInterval(0.18d);
             tween.TweenProperty(target, "modulate", original, 0.35d);
@@ -2668,6 +2675,30 @@ namespace STS2RitsuLib.Settings
             tween.TweenProperty(target, "modulate", highlight, 0.22d);
             tween.TweenInterval(0.18d);
             tween.TweenProperty(target, "modulate", original, 0.45d);
+            tween.TweenCallback(Callable.From(() => FinishPulseHighlight(target, state)));
+        }
+
+        private static PulseHighlightState GetOrCreatePulseHighlightState(Control target)
+        {
+            if (PulseHighlightStates.TryGetValue(target, out var state))
+                return state;
+
+            state = new(target.Modulate);
+            PulseHighlightStates.Add(target, state);
+            return state;
+        }
+
+        private static void FinishPulseHighlight(Control target, PulseHighlightState state)
+        {
+            if (!IsInstanceValid(target))
+                return;
+
+            if (!PulseHighlightStates.TryGetValue(target, out var current) || !ReferenceEquals(current, state))
+                return;
+
+            target.Modulate = state.Original;
+            state.Tween = null;
+            PulseHighlightStates.Remove(target);
         }
 
         private void RefreshFocusNavigation()
@@ -3811,6 +3842,12 @@ namespace STS2RitsuLib.Settings
             public List<ModSettingsRefreshRegistration> RefreshRegistrations { get; } = [];
             public List<(Control Control, Func<bool> Predicate)> VisibilityTargets { get; } = [];
             public Dictionary<string, Control> EntryAnchors { get; } = new(StringComparer.OrdinalIgnoreCase);
+        }
+
+        private sealed class PulseHighlightState(Color original)
+        {
+            public Color Original { get; } = original;
+            public Tween? Tween { get; set; }
         }
 
         private enum PageBuildState

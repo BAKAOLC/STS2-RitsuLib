@@ -81,6 +81,24 @@ namespace STS2RitsuLib.Cards.FreePlay
         }
 
         /// <summary>
+        ///     Marks that the given card should be treated as free until end of turn or its next play.
+        ///     标记给定卡牌在回合结束或下一次打出前应视为免费。
+        /// </summary>
+        /// <param name="card">
+        ///     Card receiving a current-turn free-play charge.
+        ///     获得本回合 free-play 层数的卡牌。
+        /// </param>
+        public static void MarkCardFreeThisTurn(CardModel card)
+        {
+            ArgumentNullException.ThrowIfNull(card);
+            CardStates.Update(card, state =>
+            {
+                state.ThisTurnCharges++;
+                return state;
+            });
+        }
+
+        /// <summary>
         ///     Marks that the given card should be treated as free for the current combat.
         ///     标记给定卡牌在当前战斗中应视为免费。
         /// </summary>
@@ -175,9 +193,63 @@ namespace STS2RitsuLib.Cards.FreePlay
                 return false;
 
             var combatState = ResolveCombatState(card);
-            return state.NextPlayCharges > 0 ||
+            return state.ThisTurnCharges > 0 ||
+                   state.NextPlayCharges > 0 ||
                    (state.FreeThisCombatState != null &&
                     ReferenceEquals(state.FreeThisCombatState, combatState));
+        }
+
+        /// <summary>
+        ///     Clears current-turn free-play charges that were not consumed by playing the card.
+        ///     清除未通过打出消耗的本回合 free-play 层数。
+        /// </summary>
+        /// <param name="card">
+        ///     Card receiving end-of-turn cleanup.
+        ///     正在执行回合结束清理的卡牌。
+        /// </param>
+        /// <returns>
+        ///     True when any current-turn free-play charge was cleared.
+        ///     清除了任意本回合 free-play 层数时返回 true。
+        /// </returns>
+        public static bool ClearCardFreeThisTurn(CardModel card)
+        {
+            ArgumentNullException.ThrowIfNull(card);
+
+            var changed = false;
+            CardStates.Update(card, state =>
+            {
+                changed = state.ThisTurnCharges > 0;
+                state.ThisTurnCharges = 0;
+                return state;
+            });
+            return changed;
+        }
+
+        /// <summary>
+        ///     Clears free-play bindings that expire after the card has been played.
+        ///     清除卡牌打出后过期的 free-play 绑定。
+        /// </summary>
+        /// <param name="card">
+        ///     Card receiving after-play cleanup.
+        ///     正在执行打出后清理的卡牌。
+        /// </param>
+        /// <returns>
+        ///     True when any after-play binding was cleared or consumed.
+        ///     清除或消费了任意打出后过期绑定时返回 true。
+        /// </returns>
+        public static bool ClearCardFreeAfterPlayed(CardModel card)
+        {
+            ArgumentNullException.ThrowIfNull(card);
+
+            var changed = false;
+            CardStates.Update(card, state =>
+            {
+                changed = state.ThisTurnCharges > 0 || state.NextPlayCharges > 0;
+                state.ThisTurnCharges = 0;
+                state.NextPlayCharges = Math.Max(0, state.NextPlayCharges - 1);
+                return state;
+            });
+            return changed;
         }
 
         private static FreePlayResolution BuildResolution(CardPlay play)
@@ -185,13 +257,13 @@ namespace STS2RitsuLib.Cards.FreePlay
             if (play.IsAutoPlay)
                 return new(true, false, false, false);
 
-            var isCardBindingFree = EvaluateAndConsumeCardBindings(play);
+            var isCardBindingFree = EvaluateCardBindings(play);
             var isDualResourceModelFree = IsFreeByDualResourceModel(play);
             var isRegisteredDetectorFree = EvaluateRegisteredDetectors(play);
             return new(false, isCardBindingFree, isDualResourceModelFree, isRegisteredDetectorFree);
         }
 
-        private static bool EvaluateAndConsumeCardBindings(CardPlay play)
+        private static bool EvaluateCardBindings(CardPlay play)
         {
             var card = play.Card;
             var state = CardStates.GetOrCreate(card);
@@ -200,15 +272,10 @@ namespace STS2RitsuLib.Cards.FreePlay
             if (state.FreeThisCombatState != null && ReferenceEquals(state.FreeThisCombatState, combatState))
                 return true;
 
-            if (state.NextPlayCharges <= 0)
-                return false;
+            if (state.ThisTurnCharges > 0)
+                return true;
 
-            CardStates.Update(card, current =>
-            {
-                current.NextPlayCharges = Math.Max(0, current.NextPlayCharges - 1);
-                return current;
-            });
-            return true;
+            return state.NextPlayCharges > 0;
         }
 
         private static bool EvaluateRegisteredDetectors(CardPlay play)
@@ -259,6 +326,7 @@ namespace STS2RitsuLib.Cards.FreePlay
 
         private sealed class CardFreeBindingState
         {
+            public int ThisTurnCharges { get; set; }
             public int NextPlayCharges { get; set; }
             public CombatStateLike? FreeThisCombatState { get; set; }
         }

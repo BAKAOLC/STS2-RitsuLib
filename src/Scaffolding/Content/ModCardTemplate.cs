@@ -125,6 +125,9 @@ namespace STS2RitsuLib.Scaffolding.Content
         public virtual string? CustomAncientBannerPath => AssetProfile.AncientBannerPath;
 
         /// <inheritdoc />
+        public virtual CardVisualStyle CustomVisualStyle => AssetProfile.VisualStyle;
+
+        /// <inheritdoc />
         public virtual string? CustomFrameMaterialPath => AssetProfile.FrameMaterialPath;
 
         /// <inheritdoc />

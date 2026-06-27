@@ -133,7 +133,9 @@ namespace STS2RitsuLib.Combat.SecondaryResources.Patches
                 __instance.Model == null)
                 return;
 
+            SecondaryResourceCardUiLayout.BeginUpdate(__instance);
             SecondaryResourceUiRuntime.UpdateCardUi(__instance, __instance.Model, pileType, previewMode);
+            SecondaryResourceCardUiLayout.ApplyReservedLayout(__instance);
         }
     }
 }
