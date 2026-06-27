@@ -39,6 +39,18 @@ namespace STS2RitsuLib.Models.Capabilities.Patches
             result = result.Concat(paths).Distinct(StringComparer.Ordinal).ToArray();
         }
 
+        private static void AppendCardOverlayAssetPaths(CardModel model, ref IEnumerable<string> result)
+        {
+            var paths = CardModelCapabilityHost.GetOverlayAssetPaths(model)
+                .Where(static path => !string.IsNullOrWhiteSpace(path))
+                .ToArray();
+
+            if (paths.Length == 0)
+                return;
+
+            result = result.Concat(paths).Distinct(StringComparer.Ordinal).ToArray();
+        }
+
         private static void AddDynamicVars<TModel>(TModel model, LocString? locString)
             where TModel : AbstractModel
         {
@@ -424,6 +436,7 @@ namespace STS2RitsuLib.Models.Capabilities.Patches
             public static void Postfix(CardModel __instance, ref IEnumerable<string> __result)
             {
                 AppendAssetPaths(__instance, new(__instance, ModelAssetPathScope.Run), ref __result);
+                AppendCardOverlayAssetPaths(__instance, ref __result);
             }
         }
 

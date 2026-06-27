@@ -407,6 +407,7 @@ namespace STS2RitsuLib
             patcher.RegisterPatch<CardModelCapabilityPatches.TransformPatch>();
             patcher.RegisterPatch<CardModelCapabilityPatches.DescriptionPatch>();
             patcher.RegisterPatch<CardModelCapabilityPatches.HoverTipsPatch>();
+            patcher.RegisterPatch<CardOverlayCapabilityPatches.ReloadOverlayPatch>();
             patcher.RegisterPatch<CardModelCapabilityPatches.ShouldGlowGoldPatch>();
             patcher.RegisterPatch<CardModelCapabilityPatches.ShouldGlowRedPatch>();
             patcher.RegisterPatch<ModelDisplayCapabilityPatches.RelicDynamicDescriptionPatch>();
