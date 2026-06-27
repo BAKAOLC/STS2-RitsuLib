@@ -555,6 +555,13 @@ namespace STS2RitsuLib.Scaffolding.Content.Patches
                 if (created == null)
                     return true;
 
+                if (!ContentAssetOverridePatchHelper.IsPackedSceneOverrideAvailable(
+                        __instance,
+                        created,
+                        nameof(IModEventLayoutPackedSceneFactory.TryCreateLayoutPackedScene),
+                        $"runtime factory '{factory.GetType().FullName}'"))
+                    return true;
+
                 __result = created;
                 return false;
             }
@@ -599,6 +606,13 @@ namespace STS2RitsuLib.Scaffolding.Content.Patches
 
                 var created = factory.TryCreateBackgroundPackedScene();
                 if (created == null)
+                    return true;
+
+                if (!ContentAssetOverridePatchHelper.IsPackedSceneOverrideAvailable(
+                        __instance,
+                        created,
+                        nameof(IModEventBackgroundPackedSceneFactory.TryCreateBackgroundPackedScene),
+                        $"runtime factory '{factory.GetType().FullName}'"))
                     return true;
 
                 __result = created;

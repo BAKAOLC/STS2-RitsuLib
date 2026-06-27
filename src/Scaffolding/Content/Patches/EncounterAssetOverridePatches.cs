@@ -99,26 +99,30 @@ namespace STS2RitsuLib.Scaffolding.Content.Patches
         public static bool Prefix(EncounterModel __instance, ref Control __result)
         {
             string? path;
+            string memberName;
             if (ExternalAssetOverrideRegistry.TryGetEncounterScenePath(__instance, out var externalPath))
+            {
                 path = externalPath;
+                memberName = "ExternalAssetOverrideRegistry.EncounterScenePath";
+            }
             else if (__instance is IModEncounterAssetOverrides overrides)
+            {
                 path = overrides.CustomEncounterScenePath;
+                memberName = nameof(IModEncounterAssetOverrides.CustomEncounterScenePath);
+            }
             else
+            {
                 return true;
+            }
 
             if (string.IsNullOrWhiteSpace(path))
                 return true;
 
-            var scene = ContentAssetOverridePatchHelper.ResolveScene(path);
-            if (scene == null)
-            {
-                ContentAssetOverridePatchHelper.WarnOverrideUnavailable(__instance,
-                    nameof(IModEncounterAssetOverrides.CustomEncounterScenePath), path, nameof(PackedScene));
-                return true;
-            }
-
-            __result = scene.Instantiate<Control>();
-            return false;
+            return !ContentAssetOverridePatchHelper.TryInstantiatePackedScenePathOverride(
+                __instance,
+                path,
+                memberName,
+                out __result);
         }
     }
 

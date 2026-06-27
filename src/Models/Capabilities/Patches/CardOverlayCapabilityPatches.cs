@@ -1,9 +1,9 @@
 using Godot;
-using MegaCrit.Sts2.Core.Assets;
 using MegaCrit.Sts2.Core.Helpers;
 using MegaCrit.Sts2.Core.Models;
 using MegaCrit.Sts2.Core.Nodes.Cards;
 using STS2RitsuLib.Patching.Models;
+using STS2RitsuLib.Scaffolding.Content.Patches;
 using STS2RitsuLib.Scaffolding.Godot;
 
 namespace STS2RitsuLib.Models.Capabilities.Patches
@@ -139,21 +139,32 @@ namespace STS2RitsuLib.Models.Capabilities.Patches
 
             if (!string.IsNullOrWhiteSpace(contribution.ScenePath))
             {
-                // ReSharper disable once InvertIf
-                if (!ResourceLoader.Exists(contribution.ScenePath))
-                {
-                    WarnInvalid(context.Card, ordered.Source, contribution,
-                        $"scene path does not exist: '{contribution.ScenePath}'");
-                    return null;
-                }
+                if (ContentAssetOverridePatchHelper.TryInstantiatePackedScenePathOverride(
+                        context.Card,
+                        contribution.ScenePath,
+                        $"CardOverlayContribution[{contribution.Id}].ScenePath",
+                        out var overlay))
+                    return overlay;
 
-                return PreloadManager.Cache
-                    .GetScene(contribution.ScenePath)
-                    .Instantiate<Control>();
+                WarnInvalid(context.Card, ordered.Source, contribution,
+                    $"scene path is not a valid {nameof(PackedScene)} {nameof(Control)} overlay: '{contribution.ScenePath}'");
+                return null;
             }
 
             if (contribution.Scene != null)
-                return contribution.Scene.Instantiate<Control>();
+            {
+                if (ContentAssetOverridePatchHelper.TryInstantiatePackedSceneOverride(
+                        context.Card,
+                        contribution.Scene,
+                        $"CardOverlayContribution[{contribution.Id}].Scene",
+                        $"capability source {FormatSource(ordered.Source)}",
+                        out var overlay))
+                    return overlay;
+
+                WarnInvalid(context.Card, ordered.Source, contribution,
+                    $"scene is not a valid {nameof(PackedScene)} {nameof(Control)} overlay");
+                return null;
+            }
 
             var control = contribution.Factory!(context);
             if (control == null)

@@ -739,9 +739,20 @@ namespace STS2RitsuLib.Scaffolding.Content.Patches
             return TryGet(EventBackgroundSceneProviders, model, out value);
         }
 
+        internal static bool TryGetEventBackgroundScene(EventModel model, out PackedScene value,
+            out string providerKey)
+        {
+            return TryGet(EventBackgroundSceneProviders, model, out value, out providerKey);
+        }
+
         internal static bool TryGetEventVfxScene(EventModel model, out PackedScene value)
         {
             return TryGet(EventVfxSceneProviders, model, out value);
+        }
+
+        internal static bool TryGetEventVfxScene(EventModel model, out PackedScene value, out string providerKey)
+        {
+            return TryGet(EventVfxSceneProviders, model, out value, out providerKey);
         }
 
         internal static bool TryGetEncounterScenePath(EncounterModel model, out string value)

@@ -677,7 +677,10 @@ namespace STS2RitsuLib.Scaffolding.Content.Patches
 
             var path = profile.OverlayScenePath;
             if (string.IsNullOrWhiteSpace(path) ||
-                !AssetPathDiagnostics.Exists(path, instance, nameof(CardAssetProfile.OverlayScenePath)))
+                !ContentAssetOverridePatchHelper.IsPackedScenePathOverrideAvailable(
+                    instance,
+                    path,
+                    nameof(CardAssetProfile.OverlayScenePath)))
                 return true;
 
             result = path;
@@ -695,7 +698,10 @@ namespace STS2RitsuLib.Scaffolding.Content.Patches
             if (string.IsNullOrWhiteSpace(path))
                 return true;
 
-            result = AssetPathDiagnostics.Exists(path, instance, nameof(CardAssetProfile.OverlayScenePath));
+            result = ContentAssetOverridePatchHelper.IsPackedScenePathOverrideAvailable(
+                instance,
+                path,
+                nameof(CardAssetProfile.OverlayScenePath));
             return false;
         }
 
@@ -707,12 +713,14 @@ namespace STS2RitsuLib.Scaffolding.Content.Patches
                 return true;
 
             var path = profile.OverlayScenePath;
-            if (string.IsNullOrWhiteSpace(path) ||
-                !AssetPathDiagnostics.Exists(path, instance, nameof(CardAssetProfile.OverlayScenePath)))
+            if (string.IsNullOrWhiteSpace(path))
                 return true;
 
-            result = ResourceLoader.Load<PackedScene>(path).Instantiate<Control>();
-            return false;
+            return !ContentAssetOverridePatchHelper.TryInstantiatePackedScenePathOverride(
+                instance,
+                path,
+                nameof(CardAssetProfile.OverlayScenePath),
+                out result);
         }
 
         internal static bool TryCardBannerTexture(CardModel instance, ref Texture2D result)

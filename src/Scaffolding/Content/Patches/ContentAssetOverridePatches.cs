@@ -169,6 +169,9 @@ namespace STS2RitsuLib.Scaffolding.Content.Patches
                 return true;
             }
 
+            if (!IsPackedSceneOverrideAvailable(instance, scene, memberName, $"path '{path}'"))
+                return true;
+
             __result = scene;
             return false;
         }
@@ -341,6 +344,13 @@ namespace STS2RitsuLib.Scaffolding.Content.Patches
         internal static bool TryInstantiatePackedSceneOverride(object instance, PackedScene? scene, string memberName,
             string source, out Control result)
         {
+            return TryInstantiatePackedSceneOverride<Control>(instance, scene, memberName, source, out result);
+        }
+
+        internal static bool TryInstantiatePackedSceneOverride<TNode>(object instance, PackedScene? scene,
+            string memberName, string source, out TNode result)
+            where TNode : Node
+        {
             result = null!;
             if (!IsPackedSceneOverrideAvailable(instance, scene, memberName, source))
                 return false;
@@ -348,9 +358,9 @@ namespace STS2RitsuLib.Scaffolding.Content.Patches
             try
             {
                 var node = scene!.Instantiate();
-                if (node is Control control)
+                if (node is TNode typed)
                 {
-                    result = control;
+                    result = typed;
                     return true;
                 }
 
@@ -358,7 +368,7 @@ namespace STS2RitsuLib.Scaffolding.Content.Patches
                     node.QueueFree();
 
                 RitsuLibFramework.Logger.Warn(
-                    $"[Assets] PackedScene override for {DescribeOwner(instance)}.{memberName} from {source} instantiated '{node?.GetType().FullName ?? "null"}' instead of {nameof(Control)}. Falling back to the base asset.");
+                    $"[Assets] PackedScene override for {DescribeOwner(instance)}.{memberName} from {source} instantiated '{node?.GetType().FullName ?? "null"}' instead of {typeof(TNode).Name}. Falling back to the base asset.");
             }
             catch (Exception ex)
             {
@@ -371,6 +381,13 @@ namespace STS2RitsuLib.Scaffolding.Content.Patches
 
         internal static bool TryInstantiatePackedScenePathOverride(object instance, string path, string memberName,
             out Control result)
+        {
+            return TryInstantiatePackedScenePathOverride<Control>(instance, path, memberName, out result);
+        }
+
+        internal static bool TryInstantiatePackedScenePathOverride<TNode>(object instance, string path,
+            string memberName, out TNode result)
+            where TNode : Node
         {
             result = null!;
 
@@ -416,6 +433,9 @@ namespace STS2RitsuLib.Scaffolding.Content.Patches
                 WarnOverrideUnavailable(instance, memberName, path, nameof(PackedScene));
                 return true;
             }
+
+            if (!IsPackedSceneOverrideAvailable(instance, scene, memberName, $"path '{path}'"))
+                return true;
 
             __result = scene;
             return false;
@@ -1711,7 +1731,13 @@ namespace STS2RitsuLib.Scaffolding.Content.Patches
                 return true;
 
             // ReSharper disable once InvertIf
-            if (ExternalAssetOverrideRegistry.TryGetEventBackgroundScene(__instance, out var externalScene))
+            if (ExternalAssetOverrideRegistry.TryGetEventBackgroundScene(__instance, out var externalScene,
+                    out var externalSceneProviderKey) &&
+                ContentAssetOverridePatchHelper.IsPackedSceneOverrideAvailable(
+                    __instance,
+                    externalScene,
+                    "ExternalAssetOverrideRegistry.EventBackgroundScene",
+                    $"provider '{externalSceneProviderKey}'"))
             {
                 __result = externalScene;
                 return false;
@@ -1746,10 +1772,24 @@ namespace STS2RitsuLib.Scaffolding.Content.Patches
         /// </summary>
         public static bool Prefix(EventModel __instance, ref bool __result)
         {
-            if (ExternalAssetOverrideRegistry.TryGetEventVfxScene(__instance, out var externalVfxScene))
+            if (ExternalAssetOverrideRegistry.TryGetEventVfxScene(__instance, out var externalVfxScene,
+                    out var externalVfxSceneProviderKey))
             {
-                __result = externalVfxScene != null;
-                return false;
+                if (ContentAssetOverridePatchHelper.IsPackedSceneOverrideAvailable(
+                        __instance,
+                        externalVfxScene,
+                        "ExternalAssetOverrideRegistry.EventVfxScene",
+                        $"provider '{externalVfxSceneProviderKey}'"))
+                {
+                    __result = true;
+                    return false;
+                }
+
+                if (__instance is not IModEventAssetOverrides)
+                {
+                    __result = false;
+                    return false;
+                }
             }
 
             if (__instance is not IModEventAssetOverrides overrides)
@@ -1759,10 +1799,10 @@ namespace STS2RitsuLib.Scaffolding.Content.Patches
             if (string.IsNullOrWhiteSpace(path))
                 return true;
 
-            if (!AssetPathDiagnostics.Exists(path, __instance, nameof(IModEventAssetOverrides.CustomVfxScenePath)))
-                return true;
-
-            __result = true;
+            __result = ContentAssetOverridePatchHelper.IsPackedScenePathOverrideAvailable(
+                __instance,
+                path,
+                nameof(IModEventAssetOverrides.CustomVfxScenePath));
             return false;
         }
     }
@@ -1788,11 +1828,15 @@ namespace STS2RitsuLib.Scaffolding.Content.Patches
         /// </summary>
         public static bool Prefix(EventModel __instance, ref Node2D __result)
         {
-            if (ExternalAssetOverrideRegistry.TryGetEventVfxScene(__instance, out var externalVfxScene))
-            {
-                __result = externalVfxScene.Instantiate<Node2D>();
+            if (ExternalAssetOverrideRegistry.TryGetEventVfxScene(__instance, out var externalVfxScene,
+                    out var externalVfxSceneProviderKey) &&
+                ContentAssetOverridePatchHelper.TryInstantiatePackedSceneOverride(
+                    __instance,
+                    externalVfxScene,
+                    "ExternalAssetOverrideRegistry.EventVfxScene",
+                    $"provider '{externalVfxSceneProviderKey}'",
+                    out __result))
                 return false;
-            }
 
             if (__instance is not IModEventAssetOverrides overrides)
                 return true;
@@ -1801,16 +1845,11 @@ namespace STS2RitsuLib.Scaffolding.Content.Patches
             if (string.IsNullOrWhiteSpace(path))
                 return true;
 
-            var scene = ContentAssetOverridePatchHelper.ResolveScene(path);
-            if (scene == null)
-            {
-                ContentAssetOverridePatchHelper.WarnOverrideUnavailable(__instance,
-                    nameof(IModEventAssetOverrides.CustomVfxScenePath), path, nameof(PackedScene));
-                return true;
-            }
-
-            __result = scene.Instantiate<Node2D>();
-            return false;
+            return !ContentAssetOverridePatchHelper.TryInstantiatePackedScenePathOverride(
+                __instance,
+                path,
+                nameof(IModEventAssetOverrides.CustomVfxScenePath),
+                out __result);
         }
     }
 
@@ -2221,18 +2260,30 @@ namespace STS2RitsuLib.Scaffolding.Content.Patches
         /// </summary>
         public static bool Prefix(AfflictionModel __instance, ref string __result)
         {
-            if (!ContentAssetOverridePatchHelper.TryUseExternalPathOverride(
+            if (ExternalAssetOverrideRegistry.TryGetAfflictionOverlayPath(__instance, out var externalPath,
+                    out var externalPathProviderKey) &&
+                ContentAssetOverridePatchHelper.IsPackedScenePathOverrideAvailable(
                     __instance,
-                    ref __result,
-                    () => ExternalAssetOverrideRegistry.TryGetAfflictionOverlayPath(__instance, out var path)
-                        ? path
-                        : null,
-                    "ExternalAssetOverrideRegistry.AfflictionOverlayPath"))
+                    externalPath,
+                    $"ExternalAssetOverrideRegistry.AfflictionOverlayPath[{externalPathProviderKey}]"))
+            {
+                __result = externalPath;
                 return false;
+            }
 
-            return ContentAssetOverridePatchHelper.TryUseStringOverride<IModAfflictionAssetOverrides>(
-                __instance, ref __result, o => o.CustomOverlayScenePath,
-                nameof(IModAfflictionAssetOverrides.CustomOverlayScenePath));
+            if (__instance is not IModAfflictionAssetOverrides overrides)
+                return true;
+
+            var path = overrides.CustomOverlayScenePath;
+            if (string.IsNullOrWhiteSpace(path) ||
+                !ContentAssetOverridePatchHelper.IsPackedScenePathOverrideAvailable(
+                    __instance,
+                    path,
+                    nameof(IModAfflictionAssetOverrides.CustomOverlayScenePath)))
+                return true;
+
+            __result = path;
+            return false;
         }
     }
 
