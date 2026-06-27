@@ -190,9 +190,10 @@ namespace STS2RitsuLib.Models.Capabilities
     }
 
     /// <summary>
-    ///     Optional card capability that contributes visual overlays to the owning card node. Contributions are added
-    ///     after vanilla affliction/built-in overlay handling, so they stack without replacing the vanilla overlay slot.
-    ///     可选卡牌能力：向所属卡牌节点贡献可视覆盖层。贡献项会在原版 affliction / built-in 覆盖层处理后加入，
+    ///     Optional card model or capability hook that contributes visual overlays to the owning card node.
+    ///     Contributions are added after vanilla affliction/built-in overlay handling, so they stack without replacing
+    ///     the vanilla overlay slot.
+    ///     可选卡牌模型或能力钩子：向所属卡牌节点贡献可视覆盖层。贡献项会在原版 affliction / built-in 覆盖层处理后加入，
     ///     因此会叠加显示，而不会替换原版覆盖层槽位。
     /// </summary>
     public interface ICardOverlayContributor
@@ -969,20 +970,27 @@ namespace STS2RitsuLib.Models.Capabilities
         internal static IEnumerable<OrderedCardOverlayContribution> GetOverlayContributions(
             CardOverlayContext context)
         {
-            var capabilityIndex = 0;
-            foreach (var capability in GetCapabilities<ICardOverlayContributor>(context.Card))
-            {
-                var currentSourceIndex = capabilityIndex++;
-                IReadOnlyList<CardOverlayContribution> contributions = [];
-                TryRun(capability, context.Card, OverlaySurface,
-                    () => contributions = (capability.GetCardOverlays(context) ?? []).ToArray());
+            var sourceIndex = 0;
+            if (context.Card is ICardOverlayContributor cardContributor)
+                foreach (var contribution in GetOverlayContributions(context, cardContributor, sourceIndex++))
+                    yield return contribution;
 
-                foreach (var contribution in contributions)
-                    yield return new(
-                        (IModelCapability)capability,
-                        contribution,
-                        currentSourceIndex);
-            }
+            foreach (var capability in GetCapabilities<ICardOverlayContributor>(context.Card))
+            foreach (var contribution in GetOverlayContributions(context, capability, sourceIndex++))
+                yield return contribution;
+        }
+
+        private static IEnumerable<OrderedCardOverlayContribution> GetOverlayContributions(
+            CardOverlayContext context,
+            ICardOverlayContributor source,
+            int sourceIndex)
+        {
+            IReadOnlyList<CardOverlayContribution> contributions = [];
+            TryRun(source, context.Card, OverlaySurface,
+                () => contributions = (source.GetCardOverlays(context) ?? []).ToArray());
+
+            foreach (var contribution in contributions)
+                yield return new(source, contribution, sourceIndex);
         }
 
         internal static IEnumerable<string> GetOverlayAssetPaths(CardModel card)
@@ -1160,7 +1168,7 @@ namespace STS2RitsuLib.Models.Capabilities
         private readonly record struct OrderedDescriptionFragment(string Text, int Order, int SourceIndex);
 
         internal readonly record struct OrderedCardOverlayContribution(
-            IModelCapability Source,
+            ICardOverlayContributor Source,
             CardOverlayContribution Contribution,
             int SourceIndex);
     }

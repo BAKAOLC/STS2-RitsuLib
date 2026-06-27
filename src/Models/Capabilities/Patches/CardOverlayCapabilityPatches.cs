@@ -184,14 +184,21 @@ namespace STS2RitsuLib.Models.Capabilities.Patches
 
         private static void WarnInvalid(
             CardModel card,
-            IModelCapability source,
+            object source,
             CardOverlayContribution contribution,
             string reason)
         {
             RitsuLibFramework.Logger.Warn(
                 $"[ModelCapabilities] Surface='{OverlaySurface}' ignored invalid overlay. " +
-                $"ModelId='{card.Id}' CapabilityId='{source.CapabilityId}' " +
-                $"CapabilityType='{source.GetType().FullName}' OverlayId='{contribution.Id}' Reason='{reason}'");
+                $"ModelId='{card.Id}' {FormatSource(source)} OverlayId='{contribution.Id}' Reason='{reason}'");
+        }
+
+        private static string FormatSource(object source)
+        {
+            if (source is IModelCapability capability)
+                return $"CapabilityId='{capability.CapabilityId}' CapabilityType='{source.GetType().FullName}'";
+
+            return $"SourceType='{source.GetType().FullName}'";
         }
     }
 }
