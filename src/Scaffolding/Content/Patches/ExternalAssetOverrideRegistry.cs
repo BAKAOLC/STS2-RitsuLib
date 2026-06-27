@@ -811,9 +811,21 @@ namespace STS2RitsuLib.Scaffolding.Content.Patches
             return TryGet(AfflictionOverlayPathProviders, model, out value);
         }
 
+        internal static bool TryGetAfflictionOverlayPath(AfflictionModel model, out string value,
+            out string providerKey)
+        {
+            return TryGet(AfflictionOverlayPathProviders, model, out value, out providerKey);
+        }
+
         internal static bool TryGetAfflictionOverlayScene(AfflictionModel model, out PackedScene value)
         {
             return TryGet(AfflictionOverlaySceneProviders, model, out value);
+        }
+
+        internal static bool TryGetAfflictionOverlayScene(AfflictionModel model, out PackedScene value,
+            out string providerKey)
+        {
+            return TryGet(AfflictionOverlaySceneProviders, model, out value, out providerKey);
         }
 
         internal static bool TryGetEnchantmentIconPath(EnchantmentModel model, out string value)
@@ -860,16 +872,27 @@ namespace STS2RitsuLib.Scaffolding.Content.Patches
             out string value)
             where TModel : class
         {
-            foreach (var provider in Snapshot(map))
+            return TryGet(map, model, out value, out _);
+        }
+
+        private static bool TryGet<TModel>(
+            Dictionary<string, Func<TModel, string?>> map,
+            TModel model,
+            out string value,
+            out string providerKey)
+            where TModel : class
+        {
+            foreach (var pair in SnapshotWithKeys(map))
             {
                 string? candidate;
                 try
                 {
-                    candidate = provider(model);
+                    candidate = pair.Value(model);
                 }
                 catch (Exception ex)
                 {
-                    RitsuLibFramework.Logger.Warn($"[Assets] External provider failed: {ex.Message}");
+                    RitsuLibFramework.Logger.Warn(
+                        $"[Assets] External provider '{pair.Key}' failed: {ex.Message}");
                     continue;
                 }
 
@@ -877,10 +900,12 @@ namespace STS2RitsuLib.Scaffolding.Content.Patches
                     continue;
 
                 value = candidate;
+                providerKey = pair.Key;
                 return true;
             }
 
             value = string.Empty;
+            providerKey = string.Empty;
             return false;
         }
 
@@ -891,16 +916,28 @@ namespace STS2RitsuLib.Scaffolding.Content.Patches
             where TModel : class
             where TValue : class
         {
-            foreach (var provider in Snapshot(map))
+            return TryGet(map, model, out value, out _);
+        }
+
+        private static bool TryGet<TModel, TValue>(
+            Dictionary<string, Func<TModel, TValue?>> map,
+            TModel model,
+            out TValue value,
+            out string providerKey)
+            where TModel : class
+            where TValue : class
+        {
+            foreach (var pair in SnapshotWithKeys(map))
             {
                 TValue? candidate;
                 try
                 {
-                    candidate = provider(model);
+                    candidate = pair.Value(model);
                 }
                 catch (Exception ex)
                 {
-                    RitsuLibFramework.Logger.Warn($"[Assets] External provider failed: {ex.Message}");
+                    RitsuLibFramework.Logger.Warn(
+                        $"[Assets] External provider '{pair.Key}' failed: {ex.Message}");
                     continue;
                 }
 
@@ -908,10 +945,12 @@ namespace STS2RitsuLib.Scaffolding.Content.Patches
                     continue;
 
                 value = candidate;
+                providerKey = pair.Key;
                 return true;
             }
 
             value = null!;
+            providerKey = string.Empty;
             return false;
         }
 
@@ -922,6 +961,16 @@ namespace STS2RitsuLib.Scaffolding.Content.Patches
             lock (SyncRoot)
             {
                 return providers.Values.ToArray();
+            }
+        }
+
+        private static KeyValuePair<string, Func<TModel, TValue?>>[] SnapshotWithKeys<TModel, TValue>(
+            Dictionary<string, Func<TModel, TValue?>> providers)
+            where TModel : class
+        {
+            lock (SyncRoot)
+            {
+                return providers.ToArray();
             }
         }
     }

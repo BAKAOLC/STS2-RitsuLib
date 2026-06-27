@@ -139,6 +139,7 @@ namespace STS2RitsuLib.Models.Capabilities.Patches
 
             if (!string.IsNullOrWhiteSpace(contribution.ScenePath))
             {
+                // ReSharper disable once InvertIf
                 if (!ResourceLoader.Exists(contribution.ScenePath))
                 {
                     WarnInvalid(context.Card, ordered.Source, contribution,

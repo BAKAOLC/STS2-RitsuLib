@@ -314,6 +314,77 @@ namespace STS2RitsuLib.Scaffolding.Content.Patches
                 $"[Assets] Resource exists but failed to load as {expectedType} for {DescribeOwner(instance)}.{memberName}: '{path}'. Falling back to the base asset.");
         }
 
+        internal static bool IsPackedSceneOverrideAvailable(object instance, PackedScene? scene, string memberName,
+            string source)
+        {
+            if (scene != null && GodotObject.IsInstanceValid(scene))
+                return true;
+
+            RitsuLibFramework.Logger.Warn(
+                $"[Assets] PackedScene override is invalid for {DescribeOwner(instance)}.{memberName} from {source}. Ignoring the override.");
+            return false;
+        }
+
+        internal static bool IsPackedScenePathOverrideAvailable(object instance, string path, string memberName)
+        {
+            var scene = ResolveScene(path);
+            // ReSharper disable once InvertIf
+            if (scene == null)
+            {
+                WarnOverrideUnavailable(instance, memberName, path, nameof(PackedScene));
+                return false;
+            }
+
+            return IsPackedSceneOverrideAvailable(instance, scene, memberName, $"path '{path}'");
+        }
+
+        internal static bool TryInstantiatePackedSceneOverride(object instance, PackedScene? scene, string memberName,
+            string source, out Control result)
+        {
+            result = null!;
+            if (!IsPackedSceneOverrideAvailable(instance, scene, memberName, source))
+                return false;
+
+            try
+            {
+                var node = scene!.Instantiate();
+                if (node is Control control)
+                {
+                    result = control;
+                    return true;
+                }
+
+                if (node != null && GodotObject.IsInstanceValid(node))
+                    node.QueueFree();
+
+                RitsuLibFramework.Logger.Warn(
+                    $"[Assets] PackedScene override for {DescribeOwner(instance)}.{memberName} from {source} instantiated '{node?.GetType().FullName ?? "null"}' instead of {nameof(Control)}. Falling back to the base asset.");
+            }
+            catch (Exception ex)
+            {
+                RitsuLibFramework.Logger.Warn(
+                    $"[Assets] Failed to instantiate PackedScene override for {DescribeOwner(instance)}.{memberName} from {source}: {ex.Message}. Falling back to the base asset.");
+            }
+
+            return false;
+        }
+
+        internal static bool TryInstantiatePackedScenePathOverride(object instance, string path, string memberName,
+            out Control result)
+        {
+            result = null!;
+
+            var scene = ResolveScene(path);
+            // ReSharper disable once InvertIf
+            if (scene == null)
+            {
+                WarnOverrideUnavailable(instance, memberName, path, nameof(PackedScene));
+                return false;
+            }
+
+            return TryInstantiatePackedSceneOverride(instance, scene, memberName, $"path '{path}'", out result);
+        }
+
         private static string DescribeOwner(object owner)
         {
             try
@@ -2186,36 +2257,40 @@ namespace STS2RitsuLib.Scaffolding.Content.Patches
         /// </summary>
         public static bool Prefix(AfflictionModel __instance, ref bool __result)
         {
-            if (ExternalAssetOverrideRegistry.TryGetAfflictionOverlayScene(__instance, out var externalScene))
+            if (ExternalAssetOverrideRegistry.TryGetAfflictionOverlayScene(__instance, out var externalScene,
+                    out var externalSceneProviderKey))
             {
-                __result = externalScene != null;
+                __result = ContentAssetOverridePatchHelper.IsPackedSceneOverrideAvailable(
+                    __instance,
+                    externalScene,
+                    "ExternalAssetOverrideRegistry.AfflictionOverlayScene",
+                    $"provider '{externalSceneProviderKey}'");
                 return false;
             }
 
-            var externalOverlayPath = string.Empty;
-            if (!ContentAssetOverridePatchHelper.TryUseExternalPathOverride(
-                    __instance,
-                    ref externalOverlayPath,
-                    () => ExternalAssetOverrideRegistry.TryGetAfflictionOverlayPath(__instance, out var path)
-                        ? path
-                        : null,
-                    "ExternalAssetOverrideRegistry.AfflictionOverlayPath"))
+            if (ExternalAssetOverrideRegistry.TryGetAfflictionOverlayPath(__instance, out var externalOverlayPath,
+                    out var externalPathProviderKey))
             {
-                __result = true;
+                __result = ContentAssetOverridePatchHelper.IsPackedScenePathOverrideAvailable(
+                    __instance,
+                    externalOverlayPath,
+                    $"ExternalAssetOverrideRegistry.AfflictionOverlayPath[{externalPathProviderKey}]");
                 return false;
             }
 
             var path = string.Empty;
-            return ContentAssetOverridePatchHelper.TryUseStringOverride<IModAfflictionAssetOverrides>(
-                       __instance,
-                       ref path,
-                       o => o.CustomOverlayScenePath,
-                       nameof(IModAfflictionAssetOverrides.CustomOverlayScenePath)) ||
-                   ContentAssetOverridePatchHelper.TryUseExistenceOverride(
-                       __instance,
-                       path,
-                       nameof(IModAfflictionAssetOverrides.CustomOverlayScenePath),
-                       ref __result);
+            if (ContentAssetOverridePatchHelper.TryUseStringOverride<IModAfflictionAssetOverrides>(
+                    __instance,
+                    ref path,
+                    o => o.CustomOverlayScenePath,
+                    nameof(IModAfflictionAssetOverrides.CustomOverlayScenePath)))
+                return true;
+
+            __result = ContentAssetOverridePatchHelper.IsPackedScenePathOverrideAvailable(
+                __instance,
+                path,
+                nameof(IModAfflictionAssetOverrides.CustomOverlayScenePath));
+            return false;
         }
     }
 
@@ -2240,24 +2315,22 @@ namespace STS2RitsuLib.Scaffolding.Content.Patches
         /// </summary>
         public static bool Prefix(AfflictionModel __instance, ref Control __result)
         {
-            if (ExternalAssetOverrideRegistry.TryGetAfflictionOverlayScene(__instance, out var externalScene))
-            {
-                __result = externalScene.Instantiate<Control>();
-                return false;
-            }
-
-            var externalOverlayPath = string.Empty;
-            if (!ContentAssetOverridePatchHelper.TryUseExternalPathOverride(
+            if (ExternalAssetOverrideRegistry.TryGetAfflictionOverlayScene(__instance, out var externalScene,
+                    out var externalSceneProviderKey))
+                return !ContentAssetOverridePatchHelper.TryInstantiatePackedSceneOverride(
                     __instance,
-                    ref externalOverlayPath,
-                    () => ExternalAssetOverrideRegistry.TryGetAfflictionOverlayPath(__instance, out var path)
-                        ? path
-                        : null,
-                    "ExternalAssetOverrideRegistry.AfflictionOverlayPath"))
-            {
-                __result = ResourceLoader.Load<PackedScene>(externalOverlayPath).Instantiate<Control>();
-                return false;
-            }
+                    externalScene,
+                    "ExternalAssetOverrideRegistry.AfflictionOverlayScene",
+                    $"provider '{externalSceneProviderKey}'",
+                    out __result);
+
+            if (ExternalAssetOverrideRegistry.TryGetAfflictionOverlayPath(__instance, out var externalOverlayPath,
+                    out var externalPathProviderKey))
+                return !ContentAssetOverridePatchHelper.TryInstantiatePackedScenePathOverride(
+                    __instance,
+                    externalOverlayPath,
+                    $"ExternalAssetOverrideRegistry.AfflictionOverlayPath[{externalPathProviderKey}]",
+                    out __result);
 
             var path = string.Empty;
             if (ContentAssetOverridePatchHelper.TryUseStringOverride<IModAfflictionAssetOverrides>(
@@ -2267,12 +2340,11 @@ namespace STS2RitsuLib.Scaffolding.Content.Patches
                     nameof(IModAfflictionAssetOverrides.CustomOverlayScenePath)))
                 return true;
 
-            if (!AssetPathDiagnostics.Exists(path, __instance,
-                    nameof(IModAfflictionAssetOverrides.CustomOverlayScenePath)))
-                return true;
-
-            __result = ResourceLoader.Load<PackedScene>(path).Instantiate<Control>();
-            return false;
+            return !ContentAssetOverridePatchHelper.TryInstantiatePackedScenePathOverride(
+                __instance,
+                path,
+                nameof(IModAfflictionAssetOverrides.CustomOverlayScenePath),
+                out __result);
         }
     }
 
