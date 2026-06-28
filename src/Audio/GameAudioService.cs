@@ -29,7 +29,10 @@ namespace STS2RitsuLib.Audio
                     StudioEventSource eventSource => PlayStudioEvent(eventSource, options),
                     StudioGuidSource guidSource => PlayStudioEventFromGuid(guidSource, options),
                     SoundFileSource fileSource => PlaySoundFile(fileSource, options),
+                    ResourceSoundFileSource resourceFileSource => PlayResourceSoundFile(resourceFileSource, options),
                     StreamingMusicSource musicSource => PlayStreamingMusic(musicSource, options),
+                    StreamingResourceMusicSource resourceMusicSource => PlayStreamingResourceMusic(resourceMusicSource,
+                        options),
                     SnapshotSource snapshotSource => PlaySnapshot(snapshotSource, options),
                     _ => AudioPlayResult.Fail(AudioPlayStatus.InvalidSource),
                 };
@@ -42,7 +45,10 @@ namespace STS2RitsuLib.Audio
                 StudioEventSource eventSource => PlayStudioEvent(eventSource, options),
                 StudioGuidSource guidSource => PlayStudioEventFromGuid(guidSource, options),
                 SoundFileSource fileSource => PlaySoundFile(fileSource, options),
+                ResourceSoundFileSource resourceFileSource => PlayResourceSoundFile(resourceFileSource, options),
                 StreamingMusicSource musicSource => PlayStreamingMusic(musicSource, options),
+                StreamingResourceMusicSource resourceMusicSource => PlayStreamingResourceMusic(resourceMusicSource,
+                    options),
                 SnapshotSource snapshotSource => PlaySnapshot(snapshotSource, options),
                 _ => AudioPlayResult.Fail(AudioPlayStatus.InvalidSource),
             };
@@ -60,6 +66,7 @@ namespace STS2RitsuLib.Audio
                 StudioEventSource eventSource => PlayStudioEvent(eventSource, options),
                 StudioGuidSource guidSource => PlayStudioGuid(guidSource, options),
                 SoundFileSource fileSource => PlaySoundFile(fileSource, options),
+                ResourceSoundFileSource resourceFileSource => PlayResourceSoundFile(resourceFileSource, options),
                 _ => Play(source, options),
             };
         }
@@ -73,7 +80,10 @@ namespace STS2RitsuLib.Audio
                 StudioEventSource eventSource => PlayStudioLoop(eventSource, options),
                 StudioGuidSource guidSource => PlayStudioLoopFromGuid(guidSource, options),
                 SoundFileSource fileSource => PlaySoundFile(fileSource, options),
+                ResourceSoundFileSource resourceFileSource => PlayResourceSoundFile(resourceFileSource, options),
                 StreamingMusicSource musicSource => PlayStreamingMusic(musicSource, options),
+                StreamingResourceMusicSource resourceMusicSource => PlayStreamingResourceMusic(resourceMusicSource,
+                    options),
                 _ => AudioPlayResult.Fail(AudioPlayStatus.NotSupported),
             };
 
@@ -90,6 +100,8 @@ namespace STS2RitsuLib.Audio
                 StudioEventSource eventSource => PlayStudioEvent(eventSource, options, true),
                 StudioGuidSource guidSource => PlayStudioEventFromGuid(guidSource, options, true),
                 StreamingMusicSource musicSource => PlayStreamingMusic(musicSource, options, true),
+                StreamingResourceMusicSource resourceMusicSource => PlayStreamingResourceMusic(resourceMusicSource,
+                    options, true),
                 _ => AudioPlayResult.Fail(AudioPlayStatus.NotSupported),
             };
 
@@ -256,10 +268,63 @@ namespace STS2RitsuLib.Audio
             return AudioPlayResult.Started(handle);
         }
 
+        private static AudioPlayResult PlayResourceSoundFile(ResourceSoundFileSource source,
+            AudioPlaybackOptions options)
+        {
+            var instance = FmodStudioStreamingFiles.TryCreateResourceSoundInstance(source.ResourcePath);
+            if (instance is null)
+                return AudioPlayResult.Fail(AudioPlayStatus.MissingInstance);
+
+            var handle = new AudioFileHandle(source, ResolveScope(options), instance);
+            if (!TryApplyRouting(handle, options))
+            {
+                handle.Dispose();
+                return AudioPlayResult.Fail(AudioPlayStatus.Failed, "Channel already occupied.");
+            }
+
+            handle.TrySetVolume(options.Volume);
+            handle.TrySetPitch(options.Pitch);
+            if (options.StartPaused)
+                handle.TryPause();
+            if (options.AutoPlay)
+                handle.TryPlay();
+
+            AudioLifecycleRegistry.Shared.Attach(handle, options);
+            return AudioPlayResult.Started(handle);
+        }
+
         private static AudioPlayResult PlayStreamingMusic(StreamingMusicSource source, AudioPlaybackOptions options,
             bool asMusic = false)
         {
             var instance = FmodStudioStreamingFiles.TryCreateStreamingMusicInstance(source.AbsolutePath);
+            if (instance is null)
+                return AudioPlayResult.Fail(AudioPlayStatus.MissingInstance);
+
+            AudioHandleBase handle = asMusic
+                ? new AudioMusicHandle(source, ResolveScope(options), instance)
+                : new AudioLoopHandle(source, ResolveScope(options), instance);
+
+            if (!TryApplyRouting(handle, options))
+            {
+                handle.Dispose();
+                return AudioPlayResult.Fail(AudioPlayStatus.Failed, "Channel already occupied.");
+            }
+
+            handle.TrySetVolume(options.Volume);
+            handle.TrySetPitch(options.Pitch);
+            if (options.StartPaused)
+                handle.TryPause();
+            if (options.AutoPlay)
+                handle.TryPlay();
+
+            AudioLifecycleRegistry.Shared.Attach(handle, options);
+            return AudioPlayResult.Started(handle);
+        }
+
+        private static AudioPlayResult PlayStreamingResourceMusic(StreamingResourceMusicSource source,
+            AudioPlaybackOptions options, bool asMusic = false)
+        {
+            var instance = FmodStudioStreamingFiles.TryCreateResourceStreamingMusicInstance(source.ResourcePath);
             if (instance is null)
                 return AudioPlayResult.Fail(AudioPlayStatus.MissingInstance);
 

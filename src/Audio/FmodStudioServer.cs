@@ -1,3 +1,4 @@
+using System.Security.Cryptography;
 using System.Text;
 using Godot;
 using STS2RitsuLib.Audio.Internal;
@@ -55,24 +56,40 @@ namespace STS2RitsuLib.Audio
 
             if (!FileAccess.FileExists(resourcePath))
             {
-                RitsuLibFramework.Logger.Warn($"[Audio] FMOD load_bank: file not found: {resourcePath}");
+                RitsuLibFramework.Logger.Warn(
+                    $"[Audio] FMOD load_bank: file not found: {resourcePath}; {DescribeResourceForDiagnostics(resourcePath)}");
                 return false;
             }
 
             if (!FmodStudioGateway.TryCall(out var result, FmodStudioMethodNames.LoadBank, resourcePath, (int)mode))
+            {
+                RitsuLibFramework.Logger.Warn(
+                    $"[Audio] FMOD load_bank call failed: {resourcePath}; {DescribeResourceForDiagnostics(resourcePath)}");
                 return false;
+            }
 
             switch (result.VariantType)
             {
                 case Variant.Type.Bool:
-                    return result.AsBool();
+                    if (result.AsBool())
+                        return true;
+
+                    RitsuLibFramework.Logger.Warn(
+                        $"[Audio] FMOD load_bank returned false: {resourcePath}; {DescribeResourceForDiagnostics(resourcePath)}");
+                    return false;
                 case Variant.Type.Nil:
+                    RitsuLibFramework.Logger.Warn(
+                        $"[Audio] FMOD load_bank returned nil: {resourcePath}; {DescribeResourceForDiagnostics(resourcePath)}");
                     return false;
                 default:
                 {
                     var bank = result.AsGodotObject();
                     if (bank is null || !GodotObject.IsInstanceValid(bank))
+                    {
+                        RitsuLibFramework.Logger.Warn(
+                            $"[Audio] FMOD load_bank returned invalid {result.VariantType}: {resourcePath}; {DescribeResourceForDiagnostics(resourcePath)}");
                         return false;
+                    }
 
                     lock (LoadedBankPinsGate)
                     {
@@ -82,6 +99,18 @@ namespace STS2RitsuLib.Audio
                     return true;
                 }
             }
+        }
+
+        /// <summary>
+        ///     Logs the Godot-side facts available before native FMOD receives a bank path. Native <c>FMOD_RESULT</c>
+        ///     values are only available if the GDExtension logs them.
+        ///     记录 native FMOD 收到 bank 路径前 Godot 侧可见的信息。native <c>FMOD_RESULT</c> 只有
+        ///     GDExtension 自身记录时才可见。
+        /// </summary>
+        public static void LogBankResourceDiagnostics(string resourcePath)
+        {
+            RitsuLibFramework.Logger.Info(
+                $"[Audio] FMOD bank resource diagnostics: {resourcePath}; {DescribeResourceForDiagnostics(resourcePath)}");
         }
 
         /// <summary>
@@ -481,6 +510,68 @@ namespace STS2RitsuLib.Audio
             }
 
             return false;
+        }
+
+        private static string DescribeResourceForDiagnostics(string resourcePath)
+        {
+            var parts = new List<string>
+            {
+                $"fileExists={FileAccess.FileExists(resourcePath)}",
+                $"resourceExists={ResourceLoader.Exists(resourcePath)}",
+            };
+
+            try
+            {
+                var bytes = FileAccess.GetFileAsBytes(resourcePath);
+                parts.Add($"bytes={bytes.Length}");
+                if (bytes.Length > 0)
+                {
+                    parts.Add($"sha256={Convert.ToHexString(SHA256.HashData(bytes)).ToLowerInvariant()}");
+                    parts.Add($"head={DescribeHead(bytes)}");
+                }
+            }
+            catch (Exception ex)
+            {
+                parts.Add($"readError={ex.GetType().Name}:{ex.Message}");
+            }
+
+            try
+            {
+                var resource = ResourceLoader.Load<Resource>(resourcePath);
+                parts.Add(resource is null
+                    ? "resourceType=<null>"
+                    : $"resourceType={resource.GetClass()}; resourcePath={resource.ResourcePath}");
+            }
+            catch (Exception ex)
+            {
+                parts.Add($"resourceLoadError={ex.GetType().Name}:{ex.Message}");
+            }
+
+            try
+            {
+                var globalized = ProjectSettings.GlobalizePath(resourcePath);
+                if (!string.IsNullOrWhiteSpace(globalized) &&
+                    !string.Equals(globalized, resourcePath, StringComparison.Ordinal))
+                    parts.Add($"globalized={globalized}");
+            }
+            catch (Exception ex)
+            {
+                parts.Add($"globalizeError={ex.GetType().Name}:{ex.Message}");
+            }
+
+            parts.Add("nativeResult=unavailable-from-managed-wrapper");
+            return string.Join("; ", parts);
+        }
+
+        private static string DescribeHead(byte[] bytes)
+        {
+            var n = Math.Min(bytes.Length, 16);
+            var hex = Convert.ToHexString(bytes, 0, n).ToLowerInvariant();
+            var ascii = new char[n];
+            for (var i = 0; i < n; i++)
+                ascii[i] = bytes[i] is >= 32 and <= 126 ? (char)bytes[i] : '.';
+
+            return $"{hex}/{new string(ascii)}";
         }
     }
 }

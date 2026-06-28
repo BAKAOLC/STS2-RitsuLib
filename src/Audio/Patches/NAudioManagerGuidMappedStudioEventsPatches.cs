@@ -24,6 +24,9 @@ namespace STS2RitsuLib.Audio.Patches
             if (!path.StartsWith("event:/", StringComparison.Ordinal))
                 return;
 
+            if (VirtualFmodEventRegistry.IsRegistered(path))
+                return;
+
             var pathExistsInRuntime = FmodStudioServer.TryCheckEventPath(path);
             if (pathExistsInRuntime != false)
                 return;
@@ -76,6 +79,9 @@ namespace STS2RitsuLib.Audio.Patches
                 if (string.IsNullOrWhiteSpace(path))
                     return false;
 
+                if (VirtualFmodEventRegistry.IsRegistered(path))
+                    return !VirtualFmodEventRegistry.TryPlayOneShot(path, volume, parameters);
+
                 if (!FmodStudioGuidPathTable.TryGetStudioGuidForEventPath(path, out var mappedGuid))
                 {
                     LogMissingStudioPathOnce("PlayOneShot", path);
@@ -120,6 +126,9 @@ namespace STS2RitsuLib.Audio.Patches
                 if (string.IsNullOrWhiteSpace(path))
                     return false;
 
+                if (VirtualFmodEventRegistry.IsRegistered(path))
+                    return !VirtualFmodEventRegistry.TryPlayLoop(path);
+
                 if (!GuidMappedNaudioStudioProxy.IsMappedPath(path))
                 {
                     LogMissingStudioPathOnce("PlayLoop", path);
@@ -163,7 +172,7 @@ namespace STS2RitsuLib.Audio.Patches
                     return true;
 
                 if (string.IsNullOrEmpty(path) || !GuidMappedNaudioStudioProxy.IsMappedPath(path))
-                    return true;
+                    return string.IsNullOrEmpty(path) || !VirtualFmodEventRegistry.TryStopLoop(path);
 
                 return !GuidMappedNaudioStudioProxy.TryStopMappedLoop(path);
             }
@@ -198,7 +207,8 @@ namespace STS2RitsuLib.Audio.Patches
                     return true;
 
                 if (string.IsNullOrEmpty(path) || !GuidMappedNaudioStudioProxy.IsMappedPath(path))
-                    return true;
+                    return string.IsNullOrEmpty(path) ||
+                           !VirtualFmodEventRegistry.TrySetParameter(path, param, value);
 
                 return !GuidMappedNaudioStudioProxy.TrySetParamOnFirstMappedLoop(path, param, value);
             }
@@ -229,6 +239,7 @@ namespace STS2RitsuLib.Audio.Patches
                     return;
 
                 GuidMappedNaudioStudioProxy.StopAllMappedLoops();
+                VirtualFmodEventRegistry.StopAllLoops();
             }
         }
 
@@ -256,6 +267,12 @@ namespace STS2RitsuLib.Audio.Patches
 
                 if (string.IsNullOrWhiteSpace(music))
                     return false;
+
+                if (VirtualFmodEventRegistry.IsRegistered(music))
+                {
+                    __instance.StopMusic();
+                    return !VirtualFmodEventRegistry.TryPlayMusic(music);
+                }
 
                 if (!GuidMappedNaudioStudioProxy.IsMappedPath(music))
                 {
@@ -300,6 +317,7 @@ namespace STS2RitsuLib.Audio.Patches
                     return;
 
                 GuidMappedNaudioStudioProxy.ReleaseMappedMusic();
+                VirtualFmodEventRegistry.StopMusic();
             }
         }
 
@@ -330,6 +348,9 @@ namespace STS2RitsuLib.Audio.Patches
 
                 if (NonInteractiveMode.IsActive)
                     return true;
+
+                if (VirtualFmodEventRegistry.HasActiveMusic())
+                    return false;
 
                 return !GuidMappedNaudioStudioProxy.TryUpdateMappedMusicParameter(parameter, value);
             }

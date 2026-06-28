@@ -34,6 +34,21 @@ namespace STS2RitsuLib.Audio
         }
 
         /// <summary>
+        ///     Creates a typed handle for a packed/imported Godot audio resource by materializing it to a private cache file.
+        ///     将 Godot 打包/导入音频资源 materialize 到私有缓存文件后，为短音效创建类型化句柄。
+        /// </summary>
+        public static AudioFileHandle? TryCreateResourceSoundHandle(string resourcePath,
+            AudioPlaybackOptions? options = null)
+        {
+            options ??= new();
+            var instance = TryCreateResourceSoundInstance(resourcePath);
+            return instance is null
+                ? null
+                : new AudioFileHandle(AudioSource.ResourceFile(resourcePath),
+                    options.ScopeToken?.Scope ?? options.Scope, instance);
+        }
+
+        /// <summary>
         ///     Creates a typed handle for a streaming loose-file music instance.
         ///     为流式松散文件音乐实例创建类型化句柄。
         /// </summary>
@@ -45,6 +60,22 @@ namespace STS2RitsuLib.Audio
             return instance is null
                 ? null
                 : new AudioMusicHandle(AudioSource.StreamingMusic(absolutePath),
+                    options.ScopeToken?.Scope ?? options.Scope, instance);
+        }
+
+        /// <summary>
+        ///     Creates a typed music handle for a packed/imported Godot audio resource by materializing it to a private cache
+        ///     file.
+        ///     将 Godot 打包/导入音频资源 materialize 到私有缓存文件后，为流式音乐创建类型化句柄。
+        /// </summary>
+        public static AudioMusicHandle? TryCreateResourceStreamingMusicHandle(string resourcePath,
+            AudioPlaybackOptions? options = null)
+        {
+            options ??= new();
+            var instance = TryCreateResourceStreamingMusicInstance(resourcePath);
+            return instance is null
+                ? null
+                : new AudioMusicHandle(AudioSource.StreamingResourceMusic(resourcePath),
                     options.ScopeToken?.Scope ?? options.Scope, instance);
         }
 
@@ -70,6 +101,16 @@ namespace STS2RitsuLib.Audio
         }
 
         /// <summary>
+        ///     Materializes a packed/imported Godot audio resource and preloads it as a sound.
+        ///     将 Godot 打包/导入音频资源 materialize 后预加载为 sound。
+        /// </summary>
+        public static bool TryPreloadResourceAsSound(string resourcePath)
+        {
+            return FmodPackedAudioResourceCache.TryMaterialize(resourcePath, out var absolutePath) &&
+                   TryPreloadAsSound(absolutePath);
+        }
+
+        /// <summary>
         ///     Preloads the loose audio file at <paramref name="absolutePath" /> as streaming music; succeeds immediately if
         ///     already tracked.
         ///     将 <paramref name="absolutePath" /> 处的松散音频文件预加载为流式音乐；如果
@@ -88,6 +129,16 @@ namespace STS2RitsuLib.Audio
 
             Loaded[resolvedPath] = LoadedKind.MusicStream;
             return true;
+        }
+
+        /// <summary>
+        ///     Materializes a packed/imported Godot audio resource and preloads it as streaming music.
+        ///     将 Godot 打包/导入音频资源 materialize 后预加载为流式音乐。
+        /// </summary>
+        public static bool TryPreloadResourceAsStreamingMusic(string resourcePath)
+        {
+            return FmodPackedAudioResourceCache.TryMaterialize(resourcePath, out var absolutePath) &&
+                   TryPreloadAsStreamingMusic(absolutePath);
         }
 
         /// <summary>
@@ -118,6 +169,17 @@ namespace STS2RitsuLib.Audio
         }
 
         /// <summary>
+        ///     Returns a playable sound instance for a packed/imported Godot audio resource.
+        ///     返回 Godot 打包/导入音频资源的可播放 sound 实例。
+        /// </summary>
+        public static GodotObject? TryCreateResourceSoundInstance(string resourcePath)
+        {
+            return !FmodPackedAudioResourceCache.TryMaterialize(resourcePath, out var absolutePath)
+                ? null
+                : TryCreateSoundInstance(absolutePath);
+        }
+
+        /// <summary>
         ///     Returns a streaming music instance, preloading as music when needed.
         ///     Accepts <c>res://</c> only when the path is a raw file for <see cref="FileAccess" />, absolute paths, and
         ///     <c>user://</c> (globalized).
@@ -141,6 +203,17 @@ namespace STS2RitsuLib.Audio
             return !FmodStudioGateway.TryCall(out var v, FmodStudioMethodNames.CreateSoundInstance, resolvedPath)
                 ? null
                 : v.AsGodotObject();
+        }
+
+        /// <summary>
+        ///     Returns a streaming music instance for a packed/imported Godot audio resource.
+        ///     返回 Godot 打包/导入音频资源的 streaming music 实例。
+        /// </summary>
+        public static GodotObject? TryCreateResourceStreamingMusicInstance(string resourcePath)
+        {
+            return !FmodPackedAudioResourceCache.TryMaterialize(resourcePath, out var absolutePath)
+                ? null
+                : TryCreateStreamingMusicInstance(absolutePath);
         }
 
         /// <summary>
@@ -168,6 +241,30 @@ namespace STS2RitsuLib.Audio
         }
 
         /// <summary>
+        ///     Materializes a packed/imported Godot audio resource, creates a sound instance, and plays it.
+        ///     将 Godot 打包/导入音频资源 materialize，创建 sound 实例并播放。
+        /// </summary>
+        public static bool TryPlayResourceSound(string resourcePath, float volume = 1f, float pitch = 1f)
+        {
+            var sound = TryCreateResourceSoundInstance(resourcePath);
+            if (sound is null)
+                return false;
+
+            try
+            {
+                sound.Call("set_volume", volume);
+                sound.Call("set_pitch", pitch);
+                sound.Call("play");
+                return true;
+            }
+            catch (Exception ex)
+            {
+                RitsuLibFramework.Logger.ErrorNoTrace($"[Audio] FMOD play resource file: {ex.Message}");
+                return false;
+            }
+        }
+
+        /// <summary>
         ///     Unloads a tracked file from FMOD and removes it from the local registry.
         ///     从 FMOD 卸载已跟踪文件，并将其从本地注册表移除。
         /// </summary>
@@ -178,6 +275,16 @@ namespace STS2RitsuLib.Audio
 
             return !Loaded.TryRemove(resolvedPath, out _) ||
                    FmodStudioGateway.TryCall(FmodStudioMethodNames.UnloadFile, resolvedPath);
+        }
+
+        /// <summary>
+        ///     Materializes a packed/imported resource path and unloads the cached file from FMOD if it is tracked.
+        ///     将打包/导入资源路径 materialize，并在已跟踪时从 FMOD 卸载缓存文件。
+        /// </summary>
+        public static bool TryUnloadResourceFile(string resourcePath)
+        {
+            return !FmodPackedAudioResourceCache.TryMaterialize(resourcePath, out var absolutePath) ||
+                   TryUnloadFile(absolutePath);
         }
 
         /// <summary>
