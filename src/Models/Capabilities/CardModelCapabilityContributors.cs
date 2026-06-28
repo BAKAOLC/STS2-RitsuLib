@@ -1,3 +1,4 @@
+using Godot;
 using MegaCrit.Sts2.Core.Combat;
 using MegaCrit.Sts2.Core.Entities.Cards;
 using MegaCrit.Sts2.Core.Entities.Creatures;
@@ -6,6 +7,7 @@ using MegaCrit.Sts2.Core.HoverTips;
 using MegaCrit.Sts2.Core.Localization;
 using MegaCrit.Sts2.Core.Localization.DynamicVars;
 using MegaCrit.Sts2.Core.Models;
+using MegaCrit.Sts2.Core.Nodes.Cards;
 
 namespace STS2RitsuLib.Models.Capabilities
 {
@@ -72,6 +74,151 @@ namespace STS2RitsuLib.Models.Capabilities
         ///     返回 <paramref name="card" /> 的额外悬停提示。
         /// </summary>
         IEnumerable<IHoverTip> GetHoverTips(CardModel card);
+    }
+
+    /// <summary>
+    ///     Runtime context for capability-provided card overlays.
+    ///     能力提供卡牌覆盖层时的运行时上下文。
+    /// </summary>
+    public readonly record struct CardOverlayContext(
+        CardModel Card,
+        NCard CardNode,
+        Node OverlayContainer);
+
+    /// <summary>
+    ///     One visual overlay contributed by a card capability. Exactly one creation source should be set:
+    ///     <see cref="ScenePath" />, <see cref="Scene" />, or <see cref="Factory" />.
+    ///     卡牌能力贡献的一个可视覆盖层。应且仅应设置一个创建来源：
+    ///     <see cref="ScenePath" />、<see cref="Scene" /> 或 <see cref="Factory" />。
+    /// </summary>
+    public sealed record CardOverlayContribution
+    {
+        /// <summary>
+        ///     Stable id for diagnostics and ordering within the contributing capability.
+        ///     用于诊断以及贡献能力内部排序的稳定 ID。
+        /// </summary>
+        public required string Id { get; init; }
+
+        /// <summary>
+        ///     Draw order among capability overlays. Larger values are added later and render above smaller values.
+        ///     能力覆盖层之间的绘制顺序。数值越大越晚加入，因此显示在更上层。
+        /// </summary>
+        public int Order { get; init; }
+
+        /// <summary>
+        ///     When true, RitsuLib applies a full-rect layout preset after the overlay node is created.
+        ///     为 true 时，RitsuLib 会在覆盖层节点创建后应用 full-rect 布局预设。
+        /// </summary>
+        public bool FullRect { get; init; } = true;
+
+        /// <summary>
+        ///     Packed scene path loaded through the game preload cache, matching vanilla card overlay creation.
+        ///     通过游戏 preload cache 加载的 PackedScene 路径，与原版卡牌覆盖层创建行为一致。
+        /// </summary>
+        public string? ScenePath { get; init; }
+
+        /// <summary>
+        ///     Already resolved packed scene.
+        ///     已解析的 PackedScene。
+        /// </summary>
+        public PackedScene? Scene { get; init; }
+
+        /// <summary>
+        ///     Factory for creating a fresh overlay control. It must return a new node each time because one
+        ///     <see cref="CardModel" /> can be displayed by multiple <see cref="NCard" /> nodes.
+        ///     用于创建全新覆盖层 Control 的工厂。每次必须返回新的节点，因为同一个
+        ///     <see cref="CardModel" /> 可能同时由多个 <see cref="NCard" /> 节点显示。
+        /// </summary>
+        public Func<CardOverlayContext, Control?>? Factory { get; init; }
+
+        /// <summary>
+        ///     Creates a contribution from a packed scene path.
+        ///     从 PackedScene 路径创建贡献项。
+        /// </summary>
+        public static CardOverlayContribution FromScenePath(
+            string id,
+            string scenePath,
+            int order = 0,
+            bool fullRect = true)
+        {
+            return new()
+            {
+                Id = id,
+                ScenePath = scenePath,
+                Order = order,
+                FullRect = fullRect,
+            };
+        }
+
+        /// <summary>
+        ///     Creates a contribution from an already resolved packed scene.
+        ///     从已解析的 PackedScene 创建贡献项。
+        /// </summary>
+        public static CardOverlayContribution FromScene(
+            string id,
+            PackedScene scene,
+            int order = 0,
+            bool fullRect = true)
+        {
+            return new()
+            {
+                Id = id,
+                Scene = scene,
+                Order = order,
+                FullRect = fullRect,
+            };
+        }
+
+        /// <summary>
+        ///     Creates a contribution from a control factory.
+        ///     从 Control 工厂创建贡献项。
+        /// </summary>
+        public static CardOverlayContribution FromFactory(
+            string id,
+            Func<CardOverlayContext, Control?> factory,
+            int order = 0,
+            bool fullRect = true)
+        {
+            return new()
+            {
+                Id = id,
+                Factory = factory,
+                Order = order,
+                FullRect = fullRect,
+            };
+        }
+    }
+
+    /// <summary>
+    ///     Optional card model or capability hook that contributes visual overlays to the owning card node.
+    ///     Contributions are added after vanilla affliction/built-in overlay handling, so they stack without replacing
+    ///     the vanilla overlay slot.
+    ///     可选卡牌模型或能力钩子：向所属卡牌节点贡献可视覆盖层。贡献项会在原版 affliction / built-in 覆盖层处理后加入，
+    ///     因此会叠加显示，而不会替换原版覆盖层槽位。
+    /// </summary>
+    public interface ICardOverlayContributor
+    {
+        /// <summary>
+        ///     Returns overlays for the current card node. Return an empty sequence when no overlay should be shown.
+        ///     返回当前卡牌节点的覆盖层。不需要显示覆盖层时返回空序列。
+        /// </summary>
+        IEnumerable<CardOverlayContribution> GetCardOverlays(CardOverlayContext context);
+    }
+
+    /// <summary>
+    ///     Optional card capability that contributes overlay asset paths for preload/diagnostics. Factory-created
+    ///     overlays that load resources internally should report those paths here or through
+    ///     <see cref="IModelAssetPathContributor{TModel}" />.
+    ///     可选卡牌能力：为覆盖层贡献预加载/诊断用资源路径。通过工厂创建且内部加载资源的覆盖层，应在这里或通过
+    ///     <see cref="IModelAssetPathContributor{TModel}" /> 报告这些路径。
+    /// </summary>
+    public interface ICardOverlayAssetPathContributor
+    {
+        /// <summary>
+        ///     Returns additional card overlay asset paths.
+        ///     返回额外的卡牌覆盖层资源路径。
+        /// </summary>
+        IEnumerable<string> GetCardOverlayAssetPaths(CardModel card);
     }
 
     /// <summary>
@@ -347,6 +494,8 @@ namespace STS2RitsuLib.Models.Capabilities
         private const string TransformToLifecycleSurface = "card lifecycle/transform-to";
         private const string TitleSurface = "card display/title";
         private const string HoverTipsSurface = "card display/hover-tips";
+        private const string OverlaySurface = "card display/overlay";
+        private const string OverlayAssetPathsSurface = "card asset/overlay-paths";
         private const string GoldGlowSurface = "card display/gold-glow";
         private const string RedGlowSurface = "card display/red-glow";
 
@@ -818,6 +967,45 @@ namespace STS2RitsuLib.Models.Capabilities
             }
         }
 
+        internal static IEnumerable<OrderedCardOverlayContribution> GetOverlayContributions(
+            CardOverlayContext context)
+        {
+            var sourceIndex = 0;
+            if (context.Card is ICardOverlayContributor cardContributor)
+                foreach (var contribution in GetOverlayContributions(context, cardContributor, sourceIndex++))
+                    yield return contribution;
+
+            foreach (var capability in GetCapabilities<ICardOverlayContributor>(context.Card))
+            foreach (var contribution in GetOverlayContributions(context, capability, sourceIndex++))
+                yield return contribution;
+        }
+
+        private static IEnumerable<OrderedCardOverlayContribution> GetOverlayContributions(
+            CardOverlayContext context,
+            ICardOverlayContributor source,
+            int sourceIndex)
+        {
+            IReadOnlyList<CardOverlayContribution> contributions = [];
+            TryRun(source, context.Card, OverlaySurface,
+                () => contributions = (source.GetCardOverlays(context) ?? []).ToArray());
+
+            foreach (var contribution in contributions)
+                yield return new(source, contribution, sourceIndex);
+        }
+
+        internal static IEnumerable<string> GetOverlayAssetPaths(CardModel card)
+        {
+            foreach (var capability in GetCapabilities<ICardOverlayAssetPathContributor>(card))
+            {
+                IEnumerable<string> paths = [];
+                TryRun(capability, card, OverlayAssetPathsSurface,
+                    () => paths = capability.GetCardOverlayAssetPaths(card));
+
+                foreach (var path in paths)
+                    yield return path;
+            }
+        }
+
         internal static bool ShouldGlowGold(CardModel card)
         {
             foreach (var capability in GetCapabilities<ICardGlowContributor>(card))
@@ -978,5 +1166,10 @@ namespace STS2RitsuLib.Models.Capabilities
         private readonly record struct OrderedTitleFragment(string Text, int Order, int SourceIndex);
 
         private readonly record struct OrderedDescriptionFragment(string Text, int Order, int SourceIndex);
+
+        internal readonly record struct OrderedCardOverlayContribution(
+            ICardOverlayContributor Source,
+            CardOverlayContribution Contribution,
+            int SourceIndex);
     }
 }

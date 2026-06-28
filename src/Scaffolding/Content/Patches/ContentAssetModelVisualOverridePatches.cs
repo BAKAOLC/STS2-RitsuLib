@@ -1039,11 +1039,19 @@ namespace STS2RitsuLib.Scaffolding.Content.Patches
             if (!ModCharacterOwnedVisualOverrideHelper.TryCardOverlayPath(__instance, ref __result))
                 return false;
 
-            return ContentAssetOverridePatchHelper.TryUseStringOverride<IModCardAssetOverrides>(
-                __instance,
-                ref __result,
-                o => o.CustomOverlayScenePath,
-                nameof(IModCardAssetOverrides.CustomOverlayScenePath));
+            if (__instance is not IModCardAssetOverrides overrides)
+                return true;
+
+            var path = overrides.CustomOverlayScenePath;
+            if (string.IsNullOrWhiteSpace(path) ||
+                !ContentAssetOverridePatchHelper.IsPackedScenePathOverrideAvailable(
+                    __instance,
+                    path,
+                    nameof(IModCardAssetOverrides.CustomOverlayScenePath)))
+                return true;
+
+            __result = path;
+            return false;
         }
     }
 
@@ -1073,11 +1081,15 @@ namespace STS2RitsuLib.Scaffolding.Content.Patches
             if (__instance is not IModCardAssetOverrides overrides)
                 return true;
 
-            return ContentAssetOverridePatchHelper.TryUseExistenceOverride(
+            var path = overrides.CustomOverlayScenePath;
+            if (string.IsNullOrWhiteSpace(path))
+                return true;
+
+            __result = ContentAssetOverridePatchHelper.IsPackedScenePathOverrideAvailable(
                 __instance,
-                overrides.CustomOverlayScenePath,
-                nameof(IModCardAssetOverrides.CustomOverlayScenePath),
-                ref __result);
+                path,
+                nameof(IModCardAssetOverrides.CustomOverlayScenePath));
+            return false;
         }
     }
 
@@ -1108,12 +1120,14 @@ namespace STS2RitsuLib.Scaffolding.Content.Patches
                 return true;
 
             var path = overrides.CustomOverlayScenePath;
-            if (string.IsNullOrWhiteSpace(path) ||
-                !AssetPathDiagnostics.Exists(path, __instance, nameof(IModCardAssetOverrides.CustomOverlayScenePath)))
+            if (string.IsNullOrWhiteSpace(path))
                 return true;
 
-            __result = ResourceLoader.Load<PackedScene>(path).Instantiate<Control>();
-            return false;
+            return !ContentAssetOverridePatchHelper.TryInstantiatePackedScenePathOverride(
+                __instance,
+                path,
+                nameof(IModCardAssetOverrides.CustomOverlayScenePath),
+                out __result);
         }
     }
 

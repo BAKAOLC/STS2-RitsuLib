@@ -87,16 +87,24 @@ namespace STS2RitsuLib.Settings
             if (mappedSections.Count == 0)
                 return null;
 
-            var restoreLabel = host.ResolveBaseLibLabel("RestoreDefaultsButton");
+            var restoreLabel = ModSettingsText.Dynamic(() => ResolveRestoreDefaultsButtonLabel(host));
             var restoreButton = new ModSettingsMirrorButtonDefinition(
                 "baselib_generated_restore_defaults",
-                ModSettingsText.Literal(restoreLabel),
-                ModSettingsText.Literal(restoreLabel),
+                restoreLabel,
+                restoreLabel,
                 () => ConfirmAndRestoreDefaults(host),
                 ModSettingsButtonTone.Danger);
 
             return new(modId, pageId, sortOrder, mappedSections, pageTitle, pageDescription,
                 host.ResolveModDisplayNameText(modId), null, null, restoreButton);
+        }
+
+        private static string ResolveRestoreDefaultsButtonLabel(BaseLibToRitsuGeneratedMirrorHost host)
+        {
+            var label = host.ResolveBaseLibLabel("RestoreDefaultsButton");
+            return string.IsNullOrWhiteSpace(label) || label == "RestoreDefaultsButton"
+                ? ModSettingsLocalization.Get("baselib.restoreDefaults.confirm", "Restore defaults")
+                : label;
         }
 
         private static List<PendingSection> BuildSections(List<MemberInfo> members, Type? sectionAttrType)
