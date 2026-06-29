@@ -1,6 +1,7 @@
 using MegaCrit.Sts2.Core.Localization;
 using MegaCrit.Sts2.Core.Models;
 using MegaCrit.Sts2.Core.Timeline;
+using STS2RitsuLib.Models;
 
 namespace STS2RitsuLib.Diagnostics.DevConsole
 {
@@ -138,24 +139,7 @@ namespace STS2RitsuLib.Diagnostics.DevConsole
 
         private static LocString DefaultTitleForAutocomplete(AbstractModel model)
         {
-            return model switch
-            {
-                CardModel => new("cards", model.Id.Entry + ".title"),
-                PotionModel => new("potions", model.Id.Entry + ".title"),
-                RelicModel => new("relics", model.Id.Entry + ".title"),
-                EncounterModel => new("encounters", model.Id.Entry + ".title"),
-                AfflictionModel => new("afflictions", model.Id.Entry + ".title"),
-                EnchantmentModel => new("enchantments", model.Id.Entry + ".title"),
-                AncientEventModel => new("ancients", model.Id.Entry + ".title"),
-                EventModel => new("events", model.Id.Entry + ".title"),
-                ActModel => new("acts", model.Id.Entry + ".title"),
-                PowerModel => new("powers", model.Id.Entry + ".title"),
-                MonsterModel => new("monsters", model.Id.Entry + ".name"),
-                OrbModel => new("orbs", model.Id.Entry + ".title"),
-                CharacterModel => new("characters", model.Id.Entry + ".title"),
-                ModifierModel => new("modifiers", model.Id.Entry + ".title"),
-                _ => new(model.Id.Category.ToLowerInvariant(), model.Id.Entry + ".title"),
-            };
+            return model.CreateDefaultTitleLocString();
         }
     }
 }
