@@ -26,12 +26,32 @@ namespace STS2RitsuLib.Combat.Healing
         /// </summary>
         public static decimal ModifyAmount(HealContext context, decimal amount)
         {
-            var modifiedAmount = IterateListeners(context).Aggregate(amount,
+            var additiveAmount = ApplyAdditive(context, amount);
+            var multiplicativeAmount = ApplyMultiplicative(context, additiveAmount);
+            var modifiedAmount = ApplyLate(context, multiplicativeAmount);
+
+            return Math.Max(0m, modifiedAmount);
+        }
+
+        private static decimal ApplyAdditive(HealContext context, decimal amount)
+        {
+            return amount + IterateListeners(context)
+                .Sum(listenerContext => listenerContext.Listener.ModifyHealAdditive(context, amount));
+        }
+
+        private static decimal ApplyMultiplicative(HealContext context, decimal amount)
+        {
+            return IterateListeners(context).Aggregate(amount,
+                (current, listenerContext) =>
+                    current * listenerContext.Listener.ModifyHealMultiplicative(context, amount));
+        }
+
+        private static decimal ApplyLate(HealContext context, decimal amount)
+        {
+            return IterateListeners(context).Aggregate(amount,
                 static (current, listenerContext) => listenerContext.Listener.ModifyHealAmount(
                     listenerContext.Context,
                     current));
-
-            return Math.Max(0m, modifiedAmount);
         }
 
         private static IEnumerable<ListenerContext> IterateListeners(HealContext context)
