@@ -1,4 +1,5 @@
 using MegaCrit.Sts2.Core.Models;
+using STS2RitsuLib.Diagnostics.DevConsole;
 using STS2RitsuLib.Interactions.RightClick.Patches;
 using STS2RitsuLib.Lifecycle.Patches;
 using STS2RitsuLib.Models.Identity.Patches;
@@ -53,6 +54,7 @@ namespace STS2RitsuLib.Platform.Patches
                 unlockPatches.AddRange(IPatchMethod.CreatePatchInfos<EliteEpochAfterCombatFallbackPatch>());
                 var unlocks = RitsuLibFramework.GetFrameworkPatcher(RitsuLibFramework.FrameworkPatcherArea.Unlocks);
                 unlocks.ApplyLateStaticPatches(unlockPatches.ToArray());
+                DevConsoleModelIdAutocompleteCatalog.Invalidate();
                 RitsuLibFramework.Logger.Info(
                     "[ModelDbDefer] Applied deferred patches after ModelDb.Init.");
             }

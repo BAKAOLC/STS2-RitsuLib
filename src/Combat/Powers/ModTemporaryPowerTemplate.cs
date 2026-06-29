@@ -8,6 +8,7 @@ using MegaCrit.Sts2.Core.HoverTips;
 using MegaCrit.Sts2.Core.Localization;
 using MegaCrit.Sts2.Core.Localization.DynamicVars;
 using MegaCrit.Sts2.Core.Models;
+using STS2RitsuLib.Models;
 using STS2RitsuLib.Scaffolding.Content;
 
 namespace STS2RitsuLib.Combat.Powers
@@ -102,7 +103,7 @@ namespace STS2RitsuLib.Combat.Powers
         }
 
         /// <inheritdoc />
-        public override LocString Title => ResolveOriginTitle();
+        public override LocString Title => OriginModel.ResolveTitleOr(InternallyAppliedPower.Title);
 
         /// <inheritdoc />
         protected override IEnumerable<IHoverTip> AdditionalHoverTips => ResolveExtraHoverTips();
@@ -249,21 +250,6 @@ namespace STS2RitsuLib.Combat.Powers
             yield return new IntVar(ExtraTurnCyclesVarName, 0);
             foreach (var dynVar in AdditionalCanonicalVars)
                 yield return dynVar;
-        }
-
-        private LocString ResolveOriginTitle()
-        {
-            return OriginModel switch
-            {
-                CardModel cardModel => cardModel.TitleLocString,
-                PotionModel potionModel => potionModel.Title,
-                RelicModel relicModel => relicModel.Title,
-                PowerModel powerModel => powerModel.Title,
-                OrbModel orbModel => orbModel.Title,
-                CharacterModel characterModel => characterModel.Title,
-                MonsterModel monsterModel => monsterModel.Title,
-                _ => InternallyAppliedPower.Title,
-            };
         }
 
         private IEnumerable<IHoverTip> ResolveExtraHoverTips()

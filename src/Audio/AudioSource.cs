@@ -43,12 +43,30 @@ namespace STS2RitsuLib.Audio
         }
 
         /// <summary>
+        ///     Creates a packed/imported Godot resource sound source.
+        ///     创建 Godot 打包/导入资源声音源。
+        /// </summary>
+        public static ResourceSoundFileSource ResourceFile(string resourcePath)
+        {
+            return new(resourcePath);
+        }
+
+        /// <summary>
         ///     Creates a loose-file streaming music source.
         ///     创建松散文件流式音乐源。
         /// </summary>
         public static StreamingMusicSource StreamingMusic(string absolutePath)
         {
             return new(absolutePath);
+        }
+
+        /// <summary>
+        ///     Creates a packed/imported Godot resource streaming music source.
+        ///     创建 Godot 打包/导入资源流式音乐源。
+        /// </summary>
+        public static StreamingResourceMusicSource StreamingResourceMusic(string resourcePath)
+        {
+            return new(resourcePath);
         }
 
         /// <summary>
@@ -80,10 +98,22 @@ namespace STS2RitsuLib.Audio
     public sealed record SoundFileSource(string AbsolutePath) : AudioSource;
 
     /// <summary>
+    ///     Packed/imported Godot resource sound source.
+    ///     Godot 打包/导入资源声音源。
+    /// </summary>
+    public sealed record ResourceSoundFileSource(string ResourcePath) : AudioSource;
+
+    /// <summary>
     ///     Loose-file streaming music source.
     ///     松散文件流式音乐源。
     /// </summary>
     public sealed record StreamingMusicSource(string AbsolutePath) : AudioSource;
+
+    /// <summary>
+    ///     Packed/imported Godot resource streaming music source.
+    ///     Godot 打包/导入资源流式音乐源。
+    /// </summary>
+    public sealed record StreamingResourceMusicSource(string ResourcePath) : AudioSource;
 
     /// <summary>
     ///     Snapshot source.

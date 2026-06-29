@@ -13,6 +13,7 @@ using STS2RitsuLib.Cards.Transforms;
 using STS2RitsuLib.CardTags;
 using STS2RitsuLib.Combat.CardTargeting;
 using STS2RitsuLib.Combat.HandSize;
+using STS2RitsuLib.Combat.Healing;
 using STS2RitsuLib.Combat.HealthBars;
 using STS2RitsuLib.Combat.SecondaryResources;
 using STS2RitsuLib.Compat;
@@ -854,6 +855,15 @@ namespace STS2RitsuLib
             where TSource : IHealthBarVisualGraftSource, new()
         {
             HealthBarVisualGraftRegistry.Register<TSource>(modId, sourceId);
+        }
+
+        /// <summary>
+        ///     Registers a process-wide creature healing amount listener through the framework.
+        ///     通过框架注册进程级生物治疗数值监听器。
+        /// </summary>
+        public static void RegisterHealHookListener(IHealHookListener listener)
+        {
+            HealHook.RegisterGlobalListener(listener);
         }
 
         /// <summary>

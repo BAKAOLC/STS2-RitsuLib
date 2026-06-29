@@ -12,6 +12,15 @@ namespace STS2RitsuLib.Diagnostics.DevConsole
         private static Dictionary<string, string>? _titlesByEntry;
         private static string? _builtForLanguage;
 
+        internal static void Invalidate()
+        {
+            lock (Sync)
+            {
+                _titlesByEntry = null;
+                _builtForLanguage = null;
+            }
+        }
+
         /// <summary>
         ///     Returns the localized title for <paramref name="entryId" />, or null when unknown or empty.
         /// </summary>
