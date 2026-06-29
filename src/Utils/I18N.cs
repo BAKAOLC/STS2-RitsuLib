@@ -254,7 +254,7 @@ namespace STS2RitsuLib.Utils
             _localKeys = loaded.LocalKeys;
             _loadedLanguage = language;
             _availableLanguagesCache = null;
-            RitsuLibFramework.Logger.Info(
+            RitsuLibFramework.Logger.Debug(
                 $"[{_instanceName}] Successfully reloaded translations for language '{language}' ({_translations.Count} entries)");
             BroadcastChange();
         }
@@ -340,7 +340,7 @@ namespace STS2RitsuLib.Utils
             _translations = loaded.Translations;
             _localKeys = loaded.LocalKeys;
             _loadedLanguage = language;
-            RitsuLibFramework.Logger.Info(
+            RitsuLibFramework.Logger.Debug(
                 $"[{_instanceName}] Successfully loaded translations for language '{_loadedLanguage}' ({_translations.Count} entries)");
         }
 
@@ -350,9 +350,14 @@ namespace STS2RitsuLib.Utils
             var localKeys = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
             var sourceCount = 0;
             var primarySourceCount = 0;
+            var fallbackSourceCount = 0;
+            string? fallbackLanguage = null;
 
             foreach (var step in ResolveLanguageLoadSteps(language))
             {
+                if (!step.IsPrimary)
+                    fallbackLanguage = step.Language;
+
                 foreach (var folder in _fsFolders)
                 {
                     var path = $"{folder}/{step.Language}.json";
@@ -361,8 +366,8 @@ namespace STS2RitsuLib.Utils
 
                     var newKeys = MergeTranslations(dictionary, step.IsPrimary);
                     sourceCount++;
-                    if (step.IsPrimary) primarySourceCount++;
-                    RitsuLibFramework.Logger.Info(
+                    CountSource(step.IsPrimary);
+                    RitsuLibFramework.Logger.Debug(
                         $"[{_instanceName}] Merged {DescribeLoadStep(step)} from FS: {path} ({dictionary.Count} entries, {newKeys} new)");
                 }
 
@@ -373,8 +378,8 @@ namespace STS2RitsuLib.Utils
 
                     var newKeys = MergeTranslations(dictionary, step.IsPrimary);
                     sourceCount++;
-                    if (step.IsPrimary) primarySourceCount++;
-                    RitsuLibFramework.Logger.Info(
+                    CountSource(step.IsPrimary);
+                    RitsuLibFramework.Logger.Debug(
                         $"[{_instanceName}] Merged {DescribeLoadStep(step)} from embedded: {res}.{step.Language}.json ({dictionary.Count} entries, {newKeys} new)");
                 }
 
@@ -386,22 +391,30 @@ namespace STS2RitsuLib.Utils
 
                     var newKeys = MergeTranslations(dictionary, step.IsPrimary);
                     sourceCount++;
-                    if (step.IsPrimary) primarySourceCount++;
-                    RitsuLibFramework.Logger.Info(
+                    CountSource(step.IsPrimary);
+                    RitsuLibFramework.Logger.Debug(
                         $"[{_instanceName}] Merged {DescribeLoadStep(step)} from PCK: {path} ({dictionary.Count} entries, {newKeys} new)");
                 }
             }
 
             if (merged.Count == 0)
                 RitsuLibFramework.Logger.Warn($"[{_instanceName}] No translations found for '{language}'");
-            else if (primarySourceCount == 0)
-                RitsuLibFramework.Logger.Warn(
-                    $"[{_instanceName}] No translations found for '{language}', using fallback entries");
             else
                 RitsuLibFramework.Logger.Info(
-                    $"[{_instanceName}] Total: {merged.Count} entries from {sourceCount} source(s)");
+                    $"[{_instanceName}] Loaded translations: language='{NormalizeLanguageCode(language)}', " +
+                    $"fallback='{fallbackLanguage ?? "<none>"}', entries={merged.Count}, local={localKeys.Count}, " +
+                    $"fallbackEntries={merged.Count - localKeys.Count}, sources={sourceCount} " +
+                    $"(local={primarySourceCount}, fallback={fallbackSourceCount})");
 
             return new(merged, localKeys);
+
+            void CountSource(bool isPrimary)
+            {
+                if (isPrimary)
+                    primarySourceCount++;
+                else
+                    fallbackSourceCount++;
+            }
 
             int MergeTranslations(IReadOnlyDictionary<string, string> dictionary, bool isPrimary)
             {
