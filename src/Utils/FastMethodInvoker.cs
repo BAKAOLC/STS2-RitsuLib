@@ -25,6 +25,7 @@ namespace STS2RitsuLib.Utils
             new();
 
         private static readonly ConcurrentDictionary<ConstructorInfo, Func<object?>> CtorCache = new();
+        private static readonly ConcurrentDictionary<MemberInfo, Func<object, object?>> InstanceGetterCache = new();
 
         public static TResult? Invoke0<TResult>(MethodInfo method, object? instance)
         {
@@ -148,11 +149,107 @@ namespace STS2RitsuLib.Utils
             return factory();
         }
 
+        public static Func<object, object?> CreateInstanceGetter(MemberInfo member)
+        {
+            ArgumentNullException.ThrowIfNull(member);
+            return InstanceGetterCache.GetOrAdd(member, BuildInstanceGetter);
+        }
+
+        public static object? GetInstanceValue(MemberInfo member, object instance)
+        {
+            var getter = CreateInstanceGetter(member);
+            return getter(instance);
+        }
+
+        public static Func<TDeclaring, TValue> CreateInstanceGetter<TDeclaring, TValue>(MemberInfo member)
+        {
+            ArgumentNullException.ThrowIfNull(member);
+
+            var instance = Expression.Parameter(typeof(TDeclaring), "instance");
+            var value = BuildInstanceMemberAccess(instance, member);
+            var body = value.Type == typeof(TValue)
+                ? value
+                : Expression.Convert(value, typeof(TValue));
+            return Expression.Lambda<Func<TDeclaring, TValue>>(body, instance).Compile();
+        }
+
         private static Func<object?> BuildCtor(ConstructorInfo ctor)
         {
             var newExpr = Expression.New(ctor);
             var body = Expression.Convert(newExpr, typeof(object));
             return Expression.Lambda<Func<object?>>(body).Compile();
+        }
+
+        private static Func<object, object?> BuildInstanceGetter(MemberInfo member)
+        {
+            return member switch
+            {
+                PropertyInfo property => BuildPropertyGetter(property),
+                FieldInfo field => BuildFieldGetter(field),
+                _ => throw new ArgumentException($"Member '{member}' is not a field or property.", nameof(member)),
+            };
+        }
+
+        private static Func<object, object?> BuildPropertyGetter(PropertyInfo property)
+        {
+            if (property.GetIndexParameters().Length != 0)
+                throw new ArgumentException($"Property '{property}' is indexed.", nameof(property));
+
+            var instance = Expression.Parameter(typeof(object), "instance");
+            var value = BuildInstanceMemberAccess(ConvertInstance(instance, property.DeclaringType!), property);
+            var body = Expression.Convert(value, typeof(object));
+            return Expression.Lambda<Func<object, object?>>(body, instance).Compile();
+        }
+
+        private static Func<object, object?> BuildFieldGetter(FieldInfo field)
+        {
+            if (field.IsStatic)
+                throw new ArgumentException($"Field '{field}' is static.", nameof(field));
+
+            var instance = Expression.Parameter(typeof(object), "instance");
+            var value = BuildInstanceMemberAccess(ConvertInstance(instance, field.DeclaringType!), field);
+            var body = Expression.Convert(value, typeof(object));
+            return Expression.Lambda<Func<object, object?>>(body, instance).Compile();
+        }
+
+        private static Expression BuildInstanceMemberAccess(Expression instance, MemberInfo member)
+        {
+            switch (member)
+            {
+                case PropertyInfo property:
+                {
+                    if (property.GetIndexParameters().Length != 0)
+                        throw new ArgumentException($"Property '{property}' is indexed.", nameof(member));
+                    var getter = property.GetGetMethod(true);
+                    if (getter == null)
+                        throw new ArgumentException($"Property '{property}' has no getter.", nameof(member));
+                    // ReSharper disable once ConvertIfStatementToReturnStatement
+                    if (getter.IsStatic)
+                        throw new ArgumentException($"Property '{property}' is static.", nameof(member));
+
+                    return Expression.Property(ConvertTypedInstance(instance, property.DeclaringType!), property);
+                }
+                case FieldInfo { IsStatic: false } field:
+                    return Expression.Field(ConvertTypedInstance(instance, field.DeclaringType!), field);
+                case FieldInfo field:
+                    throw new ArgumentException($"Field '{field}' is static.", nameof(member));
+                default:
+                    throw new ArgumentException($"Member '{member}' is not a field or property.", nameof(member));
+            }
+        }
+
+        private static Expression ConvertInstance(Expression instance, Type declaringType)
+        {
+            return declaringType.IsValueType
+                ? Expression.Unbox(instance, declaringType)
+                : Expression.Convert(instance, declaringType);
+        }
+
+        private static Expression ConvertTypedInstance(Expression instance, Type declaringType)
+        {
+            return instance.Type == declaringType
+                ? instance
+                : Expression.Convert(instance, declaringType);
         }
 
         private static Func<object?, object?> BuildInvoke0(MethodInfo method)
