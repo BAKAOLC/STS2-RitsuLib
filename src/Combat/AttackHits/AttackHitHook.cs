@@ -119,36 +119,10 @@ namespace STS2RitsuLib.Combat.AttackHits
             CombatStateLike combatState,
             params AbstractModel?[] extraModels)
         {
-            HashSet<object> seen = new(ReferenceEqualityComparer.Instance);
-
-            foreach (var model in combatState.IterateHookListeners())
-            foreach (var listener in IterateModelListeners(model, seen))
-                yield return listener;
-
-            foreach (var model in extraModels)
-                if (model != null)
-                    foreach (var listener in IterateModelListeners(model, seen))
-                        yield return listener;
-        }
-
-        private static IEnumerable<ListenerEntry> IterateModelListeners(AbstractModel model, HashSet<object> seen)
-        {
-            if (model is IAttackHitHookListener modelListener && seen.Add(modelListener))
-                yield return new(modelListener, model);
-
-            foreach (var capability in IterateCapabilityListeners(model))
-                if (seen.Add(capability))
-                    yield return new(capability, capability as AbstractModel);
-        }
-
-        private static IEnumerable<IAttackHitHookListener> IterateCapabilityListeners(AbstractModel model)
-        {
-            if (!ModelCapabilities.TryGet(model, out var capabilities))
-                yield break;
-
-            foreach (var capability in capabilities.All)
-                if (capability is IAttackHitHookListener listener)
-                    yield return listener;
+            return ModelHookListenerDispatcher.FromCombat<IAttackHitHookListener>(
+                combatState,
+                null,
+                extraModels).Select(entry => new ListenerEntry(entry.Listener, entry.Model));
         }
 
         private static AttackHitContext? TryCreateContext(

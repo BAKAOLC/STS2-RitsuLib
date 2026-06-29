@@ -1,8 +1,3 @@
-#if !STS2_AT_LEAST_0_104_0
-using CombatStateLike = MegaCrit.Sts2.Core.Combat.CombatState;
-#else
-using MegaCrit.Sts2.Core.Models;
-#endif
 using STS2RitsuLib.Models.Capabilities;
 
 namespace STS2RitsuLib.Combat.Healing
@@ -13,8 +8,7 @@ namespace STS2RitsuLib.Combat.Healing
     /// </summary>
     public static class HealHook
     {
-        private static readonly Lock SyncRoot = new();
-        private static readonly List<IHealHookListener> GlobalListeners = [];
+        private static readonly ModelHookListenerRegistry<IHealHookListener> GlobalListeners = new();
 
         /// <summary>
         ///     Registers a process-wide listener. Model-owned effects should usually implement
@@ -23,12 +17,7 @@ namespace STS2RitsuLib.Combat.Healing
         /// </summary>
         public static void RegisterGlobalListener(IHealHookListener listener)
         {
-            ArgumentNullException.ThrowIfNull(listener);
-            lock (SyncRoot)
-            {
-                if (!GlobalListeners.Contains(listener))
-                    GlobalListeners.Add(listener);
-            }
+            GlobalListeners.Register(listener);
         }
 
         /// <summary>
@@ -47,57 +36,23 @@ namespace STS2RitsuLib.Combat.Healing
 
         private static IEnumerable<ListenerContext> IterateListeners(HealContext context)
         {
-            HashSet<object> seen = new(ReferenceEqualityComparer.Instance);
-
-            foreach (var model in IterateModelSources(context))
-            foreach (var listener in IterateModelListeners(model, seen))
-                yield return new(listener, context);
-
-            IHealHookListener[] globals;
-            lock (SyncRoot)
-            {
-                globals = GlobalListeners.ToArray();
-            }
-
-            foreach (var listener in globals)
-                if (seen.Add(listener))
-                    yield return new(listener, context);
-        }
-
-        private static IEnumerable<AbstractModel> IterateModelSources(HealContext context)
-        {
             if (context.RunState != null)
             {
-                foreach (var model in context.RunState.IterateHookListeners(context.CombatState))
-                    yield return model;
+                foreach (var entry in ModelHookListenerDispatcher.FromRun(
+                             context.RunState,
+                             context.CombatState,
+                             GlobalListeners))
+                    yield return new(entry.Listener, context);
                 yield break;
             }
 
             if (context.CombatState == null)
                 yield break;
 
-            foreach (var model in context.CombatState.IterateHookListeners())
-                yield return model;
-        }
-
-        private static IEnumerable<IHealHookListener> IterateModelListeners(AbstractModel model, HashSet<object> seen)
-        {
-            if (model is IHealHookListener modelListener && seen.Add(modelListener))
-                yield return modelListener;
-
-            foreach (var capability in IterateCapabilityListeners(model))
-                if (seen.Add(capability))
-                    yield return capability;
-        }
-
-        private static IEnumerable<IHealHookListener> IterateCapabilityListeners(AbstractModel model)
-        {
-            if (!ModelCapabilities.TryGet(model, out var capabilities))
-                yield break;
-
-            foreach (var capability in capabilities.All)
-                if (capability is IHealHookListener listener)
-                    yield return listener;
+            foreach (var entry in ModelHookListenerDispatcher.FromCombat(
+                         context.CombatState,
+                         GlobalListeners))
+                yield return new(entry.Listener, context);
         }
 
         private readonly record struct ListenerContext(IHealHookListener Listener, HealContext Context);

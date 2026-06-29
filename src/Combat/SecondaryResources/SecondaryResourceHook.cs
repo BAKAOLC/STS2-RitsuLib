@@ -14,8 +14,7 @@ namespace STS2RitsuLib.Combat.SecondaryResources
     /// </summary>
     public static class SecondaryResourceHook
     {
-        private static readonly Lock SyncRoot = new();
-        private static readonly List<ISecondaryResourceHookListener> GlobalListeners = [];
+        private static readonly ModelHookListenerRegistry<ISecondaryResourceHookListener> GlobalListeners = new();
 
         /// <summary>
         ///     Registers a process-wide listener. Use sparingly; model-owned effects should usually implement the
@@ -24,12 +23,7 @@ namespace STS2RitsuLib.Combat.SecondaryResources
         /// </summary>
         public static void RegisterGlobalListener(ISecondaryResourceHookListener listener)
         {
-            ArgumentNullException.ThrowIfNull(listener);
-            lock (SyncRoot)
-            {
-                if (!GlobalListeners.Contains(listener))
-                    GlobalListeners.Add(listener);
-            }
+            GlobalListeners.Register(listener);
         }
 
         /// <summary>
@@ -176,48 +170,11 @@ namespace STS2RitsuLib.Combat.SecondaryResources
             if (!ModSecondaryResourceRegistry.HasAny)
                 yield break;
 
-            HashSet<object> seen = new(ReferenceEqualityComparer.Instance);
-
-            foreach (var model in combatState.IterateHookListeners())
-            foreach (var listener in IterateModelListeners(model, seen))
-                yield return listener;
-
-            foreach (var model in extraModels)
-                if (model != null)
-                    foreach (var listener in IterateModelListeners(model, seen))
-                        yield return listener;
-
-            ISecondaryResourceHookListener[] globals;
-            lock (SyncRoot)
-            {
-                globals = GlobalListeners.ToArray();
-            }
-
-            foreach (var listener in globals)
-                if (seen.Add(listener))
-                    yield return listener;
-        }
-
-        private static IEnumerable<ISecondaryResourceHookListener> IterateModelListeners(
-            AbstractModel model,
-            HashSet<object> seen)
-        {
-            if (model is ISecondaryResourceHookListener modelListener && seen.Add(modelListener))
-                yield return modelListener;
-
-            foreach (var capability in IterateCapabilityListeners(model))
-                if (seen.Add(capability))
-                    yield return capability;
-        }
-
-        private static IEnumerable<ISecondaryResourceHookListener> IterateCapabilityListeners(AbstractModel model)
-        {
-            if (!ModelCapabilities.TryGet(model, out var capabilities))
-                yield break;
-
-            foreach (var capability in capabilities.All)
-                if (capability is ISecondaryResourceHookListener listener)
-                    yield return listener;
+            foreach (var entry in ModelHookListenerDispatcher.FromCombat(
+                         combatState,
+                         GlobalListeners,
+                         extraModels))
+                yield return entry.Listener;
         }
     }
 }

@@ -43,8 +43,7 @@ namespace STS2RitsuLib.Cards
     /// </summary>
     public static class CardOnPlayHook
     {
-        private static readonly Lock SyncRoot = new();
-        private static readonly List<ICardOnPlayHookListener> GlobalListeners = [];
+        private static readonly ModelHookListenerRegistry<ICardOnPlayHookListener> GlobalListeners = new();
         private static readonly CardOnPlayDelegate CardOnPlay = CreateCardOnPlayDelegate();
 
         /// <summary>
@@ -54,12 +53,7 @@ namespace STS2RitsuLib.Cards
         /// </summary>
         public static void RegisterGlobalListener(ICardOnPlayHookListener listener)
         {
-            ArgumentNullException.ThrowIfNull(listener);
-            lock (SyncRoot)
-            {
-                if (!GlobalListeners.Contains(listener))
-                    GlobalListeners.Add(listener);
-            }
+            GlobalListeners.Register(listener);
         }
 
         /// <summary>
@@ -109,37 +103,9 @@ namespace STS2RitsuLib.Cards
 
         private static IEnumerable<ListenerEntry> IterateListeners(CombatStateLike combatState)
         {
-            HashSet<object> seen = new(ReferenceEqualityComparer.Instance);
-
-            foreach (var model in combatState.IterateHookListeners())
-            {
-                if (model is ICardOnPlayHookListener modelListener && seen.Add(modelListener))
-                    yield return new(modelListener, model);
-
-                foreach (var capability in IterateCapabilityListeners(model))
-                    if (seen.Add(capability))
-                        yield return new(capability, capability as AbstractModel);
-            }
-
-            ICardOnPlayHookListener[] globals;
-            lock (SyncRoot)
-            {
-                globals = GlobalListeners.ToArray();
-            }
-
-            foreach (var listener in globals)
-                if (seen.Add(listener))
-                    yield return new(listener, null);
-        }
-
-        private static IEnumerable<ICardOnPlayHookListener> IterateCapabilityListeners(AbstractModel model)
-        {
-            if (!ModelCapabilities.TryGet(model, out var capabilities))
-                yield break;
-
-            foreach (var capability in capabilities.All)
-                if (capability is ICardOnPlayHookListener listener)
-                    yield return listener;
+            return ModelHookListenerDispatcher.FromCombat(
+                combatState,
+                GlobalListeners).Select(entry => new ListenerEntry(entry.Listener, entry.Model));
         }
 
         private static CardOnPlayDelegate CreateCardOnPlayDelegate()
