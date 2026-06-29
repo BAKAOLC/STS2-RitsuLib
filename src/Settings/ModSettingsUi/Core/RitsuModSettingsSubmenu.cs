@@ -97,6 +97,8 @@ namespace STS2RitsuLib.Settings
         private bool _pendingScrollResetToTop;
         private Timer? _refreshDebounceTimer;
         private bool _refreshNextFlushAsFullPass;
+        private bool _resizeLayoutFinalRefreshQueued;
+        private int _resizeLayoutRefreshEpoch;
         private bool _resizeLayoutRefreshQueued;
         private TextureRect? _rightPaneHotkeyIcon;
         private double _saveTimer = -1;
@@ -117,6 +119,8 @@ namespace STS2RitsuLib.Settings
         private bool _sidebarStructureDirty = true;
         private bool _suppressScrollSync;
         private Callable _updatePaneHotkeyIconsCallable;
+        private Callable _viewportSizeChangedCallable;
+        private bool _viewportSizeSignalConnected;
 
         /// <summary>
         ///     Builds layout (header, sidebar, scrollable content) and wires initial structure.
@@ -225,6 +229,10 @@ namespace STS2RitsuLib.Settings
             _modSettingsGuiFocusCallable = Callable.From<Control>(OnModSettingsGuiFocusChanged);
             vp.Connect(Viewport.SignalName.GuiFocusChanged, _modSettingsGuiFocusCallable);
             _guiFocusSignalConnected = true;
+
+            _viewportSizeChangedCallable = Callable.From(OnViewportSizeChanged);
+            vp.Connect(Viewport.SignalName.SizeChanged, _viewportSizeChangedCallable);
+            _viewportSizeSignalConnected = true;
         }
 
         /// <inheritdoc />
@@ -238,6 +246,13 @@ namespace STS2RitsuLib.Settings
             {
                 vp.Disconnect(Viewport.SignalName.GuiFocusChanged, _modSettingsGuiFocusCallable);
                 _guiFocusSignalConnected = false;
+            }
+
+            if (vp != null && _viewportSizeSignalConnected &&
+                vp.IsConnected(Viewport.SignalName.SizeChanged, _viewportSizeChangedCallable))
+            {
+                vp.Disconnect(Viewport.SignalName.SizeChanged, _viewportSizeChangedCallable);
+                _viewportSizeSignalConnected = false;
             }
 
             TryDisconnectPaneHotkeyStyleSignals();
@@ -598,6 +613,11 @@ namespace STS2RitsuLib.Settings
 
             foreach (var cache in _pageContentCaches.Values)
                 CancelPageBuild(cache);
+        }
+
+        private void OnViewportSizeChanged()
+        {
+            QueueResizeLayoutRefresh();
         }
 
         private void ObserveBackgroundUiTask(Task task, string operation)
@@ -2343,18 +2363,54 @@ namespace STS2RitsuLib.Settings
             if (!IsInsideTree())
                 return;
 
+            _resizeLayoutRefreshEpoch++;
             RefreshLayoutAfterResize();
             if (_resizeLayoutRefreshQueued)
+            {
+                QueueFinalResizeLayoutRefresh();
                 return;
+            }
 
             _resizeLayoutRefreshQueued = true;
             CallDeferredIfAlive(FlushResizeLayoutRefresh);
+            QueueFinalResizeLayoutRefresh();
         }
 
         private void FlushResizeLayoutRefresh()
         {
             _resizeLayoutRefreshQueued = false;
             RefreshLayoutAfterResize();
+        }
+
+        private void QueueFinalResizeLayoutRefresh()
+        {
+            if (_resizeLayoutFinalRefreshQueued)
+                return;
+
+            _resizeLayoutFinalRefreshQueued = true;
+            ObserveBackgroundUiTask(FlushResizeLayoutAfterContainerSortAsync(), "resize_layout_refresh");
+        }
+
+        private async Task FlushResizeLayoutAfterContainerSortAsync()
+        {
+            try
+            {
+                while (IsInstanceValid(this))
+                {
+                    var observedEpoch = _resizeLayoutRefreshEpoch;
+                    await RitsuGodotAwaitSafety.AwaitProcessFramesAsync(GetTree(), 2, this);
+                    if (observedEpoch == _resizeLayoutRefreshEpoch)
+                        break;
+                }
+
+                _resizeLayoutFinalRefreshQueued = false;
+                RefreshLayoutAfterResize();
+            }
+            catch
+            {
+                _resizeLayoutFinalRefreshQueued = false;
+                throw;
+            }
         }
 
         private void RefreshLayoutAfterResize()
