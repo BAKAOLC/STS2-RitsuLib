@@ -6,6 +6,7 @@ using STS2RitsuLib.Cards.Transforms.Patches;
 using STS2RitsuLib.CardTags.Patches;
 using STS2RitsuLib.Combat.AttackHits.Patches;
 using STS2RitsuLib.Combat.CardTargeting.Patches;
+using STS2RitsuLib.Combat.Healing.Patches;
 using STS2RitsuLib.Combat.HealthBars.Patches;
 using STS2RitsuLib.Combat.Rewards.Patches;
 using STS2RitsuLib.Combat.SecondaryResources.Patches;
@@ -258,6 +259,7 @@ namespace STS2RitsuLib
             patcher.RegisterPatch<AfterRoomEnteredLifecyclePatch>();
             patcher.RegisterPatch<ActHookLifecyclePatch>();
             patcher.RegisterPatch<AttackCommandExecuteHitHookPatch>();
+            patcher.RegisterPatch<CreatureCmdHealHookPatch>();
             patcher.RegisterPatch<BeforeAttackLifecyclePatch>();
             patcher.RegisterPatch<AfterAttackLifecyclePatch>();
             patcher.RegisterPatch<AfterBlockBrokenLifecyclePatch>();
