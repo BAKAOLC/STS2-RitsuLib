@@ -1,6 +1,7 @@
 using Godot;
 using MegaCrit.Sts2.addons.mega_text;
 using MegaCrit.Sts2.Core.Nodes.Rooms;
+using STS2RitsuLib.Ui.Shell.Theme;
 
 namespace STS2RitsuLib.Combat.Ui.ExtraCornerAmountLabels
 {
@@ -26,16 +27,8 @@ namespace STS2RitsuLib.Combat.Ui.ExtraCornerAmountLabels
                 return;
             }
 
-            var fallback = ThemeDB.FallbackFont;
-            if (fallback != null)
-            {
-                target.AddThemeFontOverride(ThemeConstants.Label.Font, fallback);
-                target.AddThemeFontSizeOverride(ThemeConstants.Label.FontSize, 22);
-                target.AutoSizeEnabled = true;
-                return;
-            }
-
-            target.AddThemeFontOverride(ThemeConstants.Label.Font, new SystemFont());
+            target.AddThemeFontOverride(ThemeConstants.Label.Font,
+                RitsuShellThemeValueCoerce.AsFont(null));
             target.AddThemeFontSizeOverride(ThemeConstants.Label.FontSize, 22);
             target.AutoSizeEnabled = true;
         }
@@ -54,16 +47,8 @@ namespace STS2RitsuLib.Combat.Ui.ExtraCornerAmountLabels
                 return;
             }
 
-            var fallback = ThemeDB.FallbackFont;
-            if (fallback != null)
-            {
-                target.AddThemeFontOverride(ThemeConstants.RichTextLabel.NormalFont, fallback);
-                target.AddThemeFontSizeOverride(ThemeConstants.RichTextLabel.NormalFontSize, 22);
-                target.AutoSizeEnabled = true;
-                return;
-            }
-
-            target.AddThemeFontOverride(ThemeConstants.RichTextLabel.NormalFont, new SystemFont());
+            target.AddThemeFontOverride(ThemeConstants.RichTextLabel.NormalFont,
+                RitsuShellThemeValueCoerce.AsFont(null));
             target.AddThemeFontSizeOverride(ThemeConstants.RichTextLabel.NormalFontSize, 22);
             target.AutoSizeEnabled = true;
         }

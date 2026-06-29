@@ -2,6 +2,7 @@ using System.Reflection;
 using System.Text.RegularExpressions;
 using Godot;
 using MegaCrit.Sts2.Core.Localization;
+using STS2RitsuLib.Ui.Shell.Theme;
 
 namespace STS2RitsuLib.Settings
 {
@@ -395,7 +396,10 @@ namespace STS2RitsuLib.Settings
             if (labelFactory?.Invoke(null, [host.ResolveLabel(method.Name), 28]) is Control label)
                 return label;
 
-            return new Label { Text = host.ResolveLabel(method.Name) };
+            var fallback = new Label { Text = host.ResolveLabel(method.Name) };
+            fallback.AddThemeFontOverride("font", RitsuShellTheme.Current.Font.Body);
+            fallback.AddThemeFontSizeOverride("font_size", 28);
+            return fallback;
         }
 
         private static ModSettingsCallbackValueBinding<T> CallbackForStaticProperty<T>(

@@ -114,6 +114,8 @@ namespace STS2RitsuLib.Settings
                 SizeFlagsHorizontal = Control.SizeFlags.ShrinkBegin,
                 VerticalAlignment = VerticalAlignment.Center,
             };
+            characterLabel.AddThemeFontOverride("font", RitsuShellTheme.Current.Font.Body);
+            characterLabel.AddThemeFontSizeOverride("font_size", RitsuShellTheme.Current.Metric.FontSize.Secondary);
             characterRow.AddChild(characterLabel);
             root.AddChild(characterRow);
 
@@ -135,6 +137,9 @@ namespace STS2RitsuLib.Settings
                 Text = L("ritsulib.runtimeReflection.spine.animations.title", "Animations"),
                 SizeFlagsHorizontal = Control.SizeFlags.ExpandFill,
             };
+            animationsTitle.AddThemeFontOverride("font", RitsuShellTheme.Current.Font.BodyBold);
+            animationsTitle.AddThemeFontSizeOverride("font_size",
+                RitsuShellTheme.Current.Metric.FontSize.SettingLineTitle);
             root.AddChild(animationsTitle);
 
             NCreatureVisuals? currentVisuals = null;

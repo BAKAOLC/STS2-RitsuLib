@@ -1,7 +1,8 @@
 using System.Globalization;
 using Godot;
 using Godot.Collections;
-using STS2RitsuLib.Platform;
+using MegaCrit.Sts2.Core.Localization;
+using MegaCrit.Sts2.Core.Localization.Fonts;
 using FileAccess = Godot.FileAccess;
 
 namespace STS2RitsuLib.Ui.Shell.Theme
@@ -19,20 +20,20 @@ namespace STS2RitsuLib.Ui.Shell.Theme
         /// </summary>
         public const string DefaultFontFallbackPath = "res://themes/kreon_regular_shared.tres";
 
-        private const string ProtonCjkFallbacksAppliedMetaKey = "_ritsulib_proton_cjk_fallbacks_applied";
+        private const string GameFallbacksAppliedMetaKey = "_ritsulib_game_font_fallbacks_applied";
 
         private static readonly Lock FontGate = new();
 
         private static readonly System.Collections.Generic.Dictionary<string, Font> FontCache =
             new(StringComparer.Ordinal);
 
-        private static readonly bool IsProton = SteamCompatibilityRuntime.IsProtonLaunch;
-
-        private static readonly string[] ProtonCjkFallbackFontPaths =
+        private static readonly string[] GameFallbackFontPaths =
         [
-            @"C:\windows\Fonts\msyh.ttc",
-            @"C:\windows\Fonts\msyh.ttf",
-            @"C:\windows\Fonts\msgothic.ttc",
+            "res://themes/fonts/zhs/noto_sans_mono_cjksc_regular_shared.tres",
+            "res://themes/fonts/jpn/noto_sans_cjkjp_regular_shared.tres",
+            "res://themes/fonts/kor/gyeonggi_cheonnyeon_batang_bold_shared.tres",
+            "res://themes/fonts/tha/cs_chat_thai_ui_shared.tres",
+            "res://themes/fonts/rus/fira_sans_extra_condensed_regular_shared.tres",
         ];
 
         private static Font? _fallbackFont;
@@ -109,8 +110,11 @@ namespace STS2RitsuLib.Ui.Shell.Theme
         ///     从叶令牌加载字体（Godot 资源路径或主题相对文件）。路径无法解析时，回退到共享的
         ///     Kreon Regular 字体。
         /// </summary>
-        public static Font AsFont(LeafToken? leaf)
+        public static Font AsFont(LeafToken? leaf, FontType fontType = FontType.Regular)
         {
+            if (TryGetLocaleFont(fontType, out var localeFont))
+                return localeFont;
+
             var path = leaf?.Value as string;
             return TryLoadFont(path);
         }
@@ -166,17 +170,45 @@ namespace STS2RitsuLib.Ui.Shell.Theme
 
                 if (loaded == null || !GodotObject.IsInstanceValid(loaded))
                     loaded = fallback;
-                else if (IsProton && loaded is FontVariation { BaseFont: FontFile baseFont })
-                    AddCjkFallbacks(baseFont);
+                ApplyGameFallbacks(loaded);
 
                 FontCache[s] = loaded;
                 return loaded;
             }
         }
 
-        private static void AddCjkFallbacks(FontFile baseFont)
+        private static bool TryGetLocaleFont(FontType fontType, out Font font)
         {
-            if (baseFont.HasMeta(ProtonCjkFallbacksAppliedMetaKey))
+            font = null!;
+            var language = LocManager.Instance?.Language;
+            if (string.IsNullOrWhiteSpace(language) || !FontManager.NeedsFontSubstitution(language))
+                return false;
+
+            var substitute = FontManager.GetSubstituteFont(language, fontType);
+            if (substitute == null || !GodotObject.IsInstanceValid(substitute))
+                return false;
+
+            ApplyGameFallbacks(substitute);
+            font = substitute;
+            return true;
+        }
+
+        private static void ApplyGameFallbacks(Font font)
+        {
+            switch (font)
+            {
+                case FontVariation { BaseFont: FontFile baseFont }:
+                    AddGameFallbacks(baseFont);
+                    break;
+                case FontFile fontFile:
+                    AddGameFallbacks(fontFile);
+                    break;
+            }
+        }
+
+        private static void AddGameFallbacks(FontFile baseFont)
+        {
+            if (baseFont.HasMeta(GameFallbacksAppliedMetaKey))
                 return;
 
             var combined = new Array<Font>();
@@ -185,17 +217,22 @@ namespace STS2RitsuLib.Ui.Shell.Theme
                 foreach (var f in existing)
                     combined.Add(f);
 
-            foreach (var path in ProtonCjkFallbackFontPaths)
-                AddFontFallbackIfAvailable(combined, path);
+            foreach (var path in GameFallbackFontPaths)
+                AddFontFallbackIfAvailable(baseFont, combined, path);
 
             baseFont.SetFallbacks(combined);
-            baseFont.SetMeta(ProtonCjkFallbacksAppliedMetaKey, true);
+            baseFont.SetMeta(GameFallbacksAppliedMetaKey, true);
         }
 
-        private static void AddFontFallbackIfAvailable(Array<Font> target, string path)
+        private static void AddFontFallbackIfAvailable(FontFile baseFont, Array<Font> target, string path)
         {
             if (TryLoadFontResource(path, out var resourceFont))
             {
+                if (ReferenceEquals(resourceFont, baseFont) ||
+                    (resourceFont is FontVariation { BaseFont: FontFile resourceBaseFont } &&
+                     ReferenceEquals(resourceBaseFont, baseFont)))
+                    return;
+
                 target.Add(resourceFont);
                 return;
             }
@@ -251,8 +288,7 @@ namespace STS2RitsuLib.Ui.Shell.Theme
                 if (loaded == null || !GodotObject.IsInstanceValid(loaded))
                     loaded = new FontVariation();
 
-                if (IsProton && loaded is FontVariation { BaseFont: FontFile baseFont })
-                    AddCjkFallbacks(baseFont);
+                ApplyGameFallbacks(loaded);
 
                 _fallbackFont = loaded;
                 FontCache[DefaultFontFallbackPath] = loaded;

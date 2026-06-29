@@ -5,6 +5,7 @@ using MegaCrit.Sts2.Core.Nodes.Screens.MainMenu;
 using STS2RitsuLib.Data;
 using STS2RitsuLib.Patching.Models;
 using STS2RitsuLib.Scaffolding.Godot;
+using STS2RitsuLib.Ui.Shell.Theme;
 
 namespace STS2RitsuLib.Settings.Patches
 {
@@ -158,6 +159,7 @@ namespace STS2RitsuLib.Settings.Patches
             label.AddThemeColorOverride("font_shadow_color", new(0f, 0f, 0f, 0.72f));
             label.AddThemeConstantOverride("shadow_offset_x", 2);
             label.AddThemeConstantOverride("shadow_offset_y", 2);
+            label.AddThemeFontOverride("font", RitsuShellTheme.Current.Font.Body);
             label.AddThemeFontSizeOverride("font_size", 16);
             RefreshVersionLabel(label);
             return label;
