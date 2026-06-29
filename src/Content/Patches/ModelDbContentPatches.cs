@@ -289,13 +289,16 @@ namespace STS2RitsuLib.Content.Patches
     }
 
     /// <summary>
-    ///     <para xml:lang="en">Appends RitsuLib-registered shared ancients to <see cref="ModelDb.AllAncients" />.</para>
-    ///     <para xml:lang="zh-CN">将 RitsuLib 注册的共享ancient追加到 <see cref="ModelDb.AllAncients" />。</para>
+    ///     <para xml:lang="en">
+    ///         Appends RitsuLib-registered shared and act-scoped ancients to
+    ///         <see cref="ModelDb.AllAncients" />.
+    ///     </para>
+    ///     <para xml:lang="zh-CN">将 RitsuLib 注册的共享和 act-scoped ancient 追加到 <see cref="ModelDb.AllAncients" />。</para>
     /// </summary>
     internal class AllAncientsPatch : IPatchMethod
     {
         public static string PatchId => "modeldb_all_ancients";
-        public static string Description => "Append registered shared ancients to ModelDb.AllAncients";
+        public static string Description => "Append registered shared and act-scoped ancients to ModelDb.AllAncients";
         public static bool IsCritical => true;
 
         public static ModPatchTarget[] GetTargets()
@@ -305,7 +308,7 @@ namespace STS2RitsuLib.Content.Patches
 
         public static void Postfix(ref IEnumerable<AncientEventModel> __result)
         {
-            ModelDbContentPatchHelper.Append(ref __result, ModContentRegistry.AppendSharedAncients);
+            ModelDbContentPatchHelper.Append(ref __result, ModContentRegistry.AppendAllAncients);
         }
     }
 
@@ -486,6 +489,27 @@ namespace STS2RitsuLib.Content.Patches
         public static void Postfix(ref IEnumerable<RelicPoolModel> __result)
         {
             ModelDbContentPatchHelper.Append(ref __result, ModContentRegistry.AppendSharedRelicPools);
+        }
+    }
+
+    /// <summary>
+    ///     <para xml:lang="en">Appends RitsuLib-registered relics to <see cref="ModelDb.AllRelics" />.</para>
+    ///     <para xml:lang="zh-CN">将 RitsuLib 注册的遗物追加到 <see cref="ModelDb.AllRelics" />。</para>
+    /// </summary>
+    internal class AllRelicsPatch : IPatchMethod
+    {
+        public static string PatchId => "modeldb_all_relics";
+        public static string Description => "Append registered relics to ModelDb.AllRelics";
+        public static bool IsCritical => true;
+
+        public static ModPatchTarget[] GetTargets()
+        {
+            return [new(typeof(ModelDb), "AllRelics", MethodType.Getter)];
+        }
+
+        public static void Postfix(ref IEnumerable<RelicModel> __result)
+        {
+            ModelDbContentPatchHelper.Append(ref __result, ModContentRegistry.AppendRegisteredRelics);
         }
     }
 
