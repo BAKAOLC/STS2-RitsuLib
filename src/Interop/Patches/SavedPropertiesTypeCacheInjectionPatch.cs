@@ -5,6 +5,8 @@ using MegaCrit.Sts2.Core.Localization;
 using MegaCrit.Sts2.Core.Modding;
 using MegaCrit.Sts2.Core.Models;
 using MegaCrit.Sts2.Core.Saves.Runs;
+using STS2RitsuLib.Data;
+using STS2RitsuLib.Data.Models;
 using STS2RitsuLib.Interop.AutoRegistration;
 using STS2RitsuLib.Models.Capabilities;
 using STS2RitsuLib.Patching.Models;
@@ -22,6 +24,7 @@ namespace STS2RitsuLib.Interop.Patches
     {
         private static readonly Lock Gate = new();
         private static bool _completed;
+        internal static bool UsesDeterministicNetIdTable { get; private set; }
         public static string PatchId => "ritsulib_saved_properties_type_cache_injection";
 
         public static string Description =>
@@ -64,12 +67,14 @@ namespace STS2RitsuLib.Interop.Patches
 
             ModelSavedDataRegistry.FinalizeRegistration();
             SavedAttachedStateRegistry.FinalizePropertyNameRegistration();
+            var afterCount = GetPropertyNameCount();
+            var sorted = SortNetIdTableIfEnabled(modelTypes.Length > 0 || afterCount != beforeCount);
+            UsesDeterministicNetIdTable = sorted;
             RefreshNetIdBitSize();
 
-            var afterCount = GetPropertyNameCount();
-            if (injectedTypes > 0 || afterCount != beforeCount)
+            if (injectedTypes > 0 || sorted || afterCount != beforeCount)
                 RitsuLibFramework.Logger.Info(
-                    $"[SavedProperties] Injected {injectedTypes} mod model type(s); property net IDs: {beforeCount} -> {afterCount}, bit size {SavedPropertiesTypeCache.NetIdBitSize}.");
+                    $"[SavedProperties] Injected {injectedTypes} mod model type(s); property net IDs: {beforeCount} -> {afterCount}, bit size {SavedPropertiesTypeCache.NetIdBitSize}, deterministic sort: {(sorted ? "applied" : "not applied")}.");
         }
 
         private static bool HasSavedProperty(Type modelType)
@@ -107,15 +112,56 @@ namespace STS2RitsuLib.Interop.Patches
             return GetNetIdToPropertyNameMap()?.Count ?? 0;
         }
 
+        internal static bool RebuildDeterministicNetIdTableForSettings()
+        {
+            var sorted = SortNetIdTable(true);
+            UsesDeterministicNetIdTable = sorted;
+            RefreshNetIdBitSize();
+            return sorted;
+        }
+
         private static void RefreshNetIdBitSize()
         {
             var count = GetPropertyNameCount();
-            if (count <= 0)
-                return;
 
-            var newBitSize = Mathf.CeilToInt(Mathf.Log(count) / Mathf.Log(2));
+            var newBitSize = count <= 1
+                ? 0
+                : Mathf.CeilToInt(Mathf.Log(count) / Mathf.Log(2));
             AccessTools.Property(typeof(SavedPropertiesTypeCache), nameof(SavedPropertiesTypeCache.NetIdBitSize))
                 ?.SetValue(null, newBitSize);
+        }
+
+        private static bool SortNetIdTableIfEnabled(bool autoDetectedSavedPropertyContent)
+        {
+            var mode = RitsuLibSettingsStore.GetModelDbDeterministicSortMode();
+            if (mode == ModelDbDeterministicSortMode.Disabled ||
+                (mode == ModelDbDeterministicSortMode.Auto && !autoDetectedSavedPropertyContent))
+                return false;
+
+            return SortNetIdTable(true);
+        }
+
+        private static bool SortNetIdTable(bool requireMultipleEntries)
+        {
+            var propertyNameToNetIdMap = GetPropertyNameToNetIdMap();
+            var netIdToPropertyNameMap = GetNetIdToPropertyNameMap();
+            if (propertyNameToNetIdMap == null || netIdToPropertyNameMap == null ||
+                (requireMultipleEntries && netIdToPropertyNameMap.Count <= 1))
+                return false;
+
+            netIdToPropertyNameMap.Sort(StringComparer.Ordinal);
+
+            propertyNameToNetIdMap.Clear();
+            for (var i = 0; i < netIdToPropertyNameMap.Count; i++)
+                propertyNameToNetIdMap[netIdToPropertyNameMap[i]] = i;
+
+            return true;
+        }
+
+        private static Dictionary<string, int>? GetPropertyNameToNetIdMap()
+        {
+            return AccessTools.DeclaredField(typeof(SavedPropertiesTypeCache), "_propertyNameToNetIdMap")
+                ?.GetValue(null) as Dictionary<string, int>;
         }
 
         private static List<string>? GetNetIdToPropertyNameMap()

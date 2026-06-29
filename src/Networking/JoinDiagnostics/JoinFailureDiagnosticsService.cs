@@ -157,6 +157,7 @@ namespace STS2RitsuLib.Networking.JoinDiagnostics
                     new(T("row.modelDbHash", "ModelDb hash"), host.ModelDbHash.ToString(),
                         local.ModelDbHash.ToString()),
                     ..BuildModelDbHashModeDetailRows(host, local),
+                    ..BuildSavedPropertyNetIdSortRows(host, local),
                 ]));
         }
 
@@ -361,6 +362,7 @@ namespace STS2RitsuLib.Networking.JoinDiagnostics
                         FormatModelDbHashMode(host.ModelDbHashUsesDeterministicCache),
                         FormatModelDbHashMode(local.ModelDbHashUsesDeterministicCache)),
                     ..BuildModelDbHashModeDetailRows(host, local),
+                    ..BuildSavedPropertyNetIdSortRows(host, local),
                 ]));
         }
 
@@ -391,6 +393,13 @@ namespace STS2RitsuLib.Networking.JoinDiagnostics
             return deterministic
                 ? T("value.modelDbHashMode.deterministic", "Stable sorting")
                 : T("value.modelDbHashMode.notReported", "Stable sorting not reported");
+        }
+
+        private static string FormatSortMode(bool deterministic)
+        {
+            return deterministic
+                ? T("value.sortMode.deterministic", "Stable sorting")
+                : T("value.sortMode.existing", "Existing order");
         }
 
         private static string FormatModelDbHashModeDetail(JoinPeerSnapshot snapshot)
@@ -425,6 +434,29 @@ namespace STS2RitsuLib.Networking.JoinDiagnostics
                 return null;
 
             return detail;
+        }
+
+        private static IReadOnlyList<JoinFailureDetailRow> BuildSavedPropertyNetIdSortRows(
+            JoinPeerSnapshot host,
+            JoinPeerSnapshot local)
+        {
+            if (!host.SavedPropertyNetIdUsesDeterministicSort.HasValue &&
+                !local.SavedPropertyNetIdUsesDeterministicSort.HasValue)
+                return [];
+
+            return
+            [
+                new(T("row.savedPropertyNetIdSortMode", "SavedProperty net-id sort"),
+                    FormatOptionalSortMode(host.SavedPropertyNetIdUsesDeterministicSort),
+                    FormatOptionalSortMode(local.SavedPropertyNetIdUsesDeterministicSort)),
+            ];
+        }
+
+        private static string FormatOptionalSortMode(bool? deterministic)
+        {
+            return deterministic.HasValue
+                ? FormatSortMode(deterministic.Value)
+                : T("value.sortMode.notReported", "Not reported");
         }
 
         private static List<JoinFailureDetailRow> ExtractVersionRows(

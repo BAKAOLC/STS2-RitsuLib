@@ -53,8 +53,12 @@ namespace STS2RitsuLib.Networking.StateDivergence
                 F("summary", "{0} differing field(s) found for checksum #{1}.", issueCount, local.Checksum.id),
                 role,
                 remotePeerId,
-                new(local.Checksum.id, local.Checksum.checksum, local.Context),
-                new(remote.Checksum.id, remote.Checksum.checksum, remote.Context),
+                new(local.Checksum.id, local.Checksum.checksum, local.Context,
+                    localSupplement.ModelDbHashUsesDeterministicCache,
+                    localSupplement.SavedPropertyNetIdUsesDeterministicSort),
+                new(remote.Checksum.id, remote.Checksum.checksum, remote.Context,
+                    hasRemoteSupplement ? remoteSupplement.ModelDbHashUsesDeterministicCache : null,
+                    hasRemoteSupplement ? remoteSupplement.SavedPropertyNetIdUsesDeterministicSort : null),
                 sections,
                 exportSections,
                 hasLocalContentMods ? localContentMods : [],
@@ -105,6 +109,14 @@ namespace STS2RitsuLib.Networking.StateDivergence
             }
             else
             {
+                AddOptionalSortMode(rows, "modelDb.deterministicSort",
+                    local.ModelDbHashUsesDeterministicCache,
+                    remote.ModelDbHashUsesDeterministicCache,
+                    includeMatching);
+                AddOptionalSortMode(rows, "savedProperties.deterministicSort",
+                    local.SavedPropertyNetIdUsesDeterministicSort,
+                    remote.SavedPropertyNetIdUsesDeterministicSort,
+                    includeMatching);
                 AddIfDifferent(rows, "savedProperties.netIdBitSize",
                     local.SavedPropertyNetIdBitSize, remote.SavedPropertyNetIdBitSize, includeMatching);
                 AddIfDifferent(rows, "savedProperties.count",
@@ -120,6 +132,22 @@ namespace STS2RitsuLib.Networking.StateDivergence
                     "RitsuLib divergence supplement data that affects packet decoding, including SavedProperty net-id maps."),
                 rows.Count == 0,
                 rows);
+        }
+
+        private static void AddOptionalSortMode(
+            ICollection<StateDivergenceDiagnosticRow> rows,
+            string path,
+            bool? local,
+            bool? remote,
+            bool includeMatching)
+        {
+            if (!local.HasValue && !remote.HasValue)
+                return;
+
+            var l = FormatOptionalSortMode(local);
+            var r = FormatOptionalSortMode(remote);
+            if (includeMatching || !string.Equals(l, r, StringComparison.Ordinal))
+                rows.Add(new(path, l, r));
         }
 
         private static void AddSavedPropertyMapRows(
@@ -826,6 +854,16 @@ namespace STS2RitsuLib.Networking.StateDivergence
         private static string FormatHash(uint value)
         {
             return "0x" + value.ToString("X8");
+        }
+
+        private static string FormatOptionalSortMode(bool? deterministic)
+        {
+            return deterministic switch
+            {
+                true => L("value.sortMode.deterministic", "Stable sorting"),
+                false => L("value.sortMode.existing", "Existing order"),
+                _ => L("value.sortMode.notReported", "Not reported"),
+            };
         }
 
         private static string FormatIntArrayProperty(int[]? value)

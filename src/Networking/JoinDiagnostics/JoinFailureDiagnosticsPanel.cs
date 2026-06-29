@@ -281,12 +281,14 @@ namespace STS2RitsuLib.Networking.JoinDiagnostics
                 _report.Host!.GameVersion,
                 _report.Host.ModelDbHash,
                 _report.Host.ModelDbHashUsesDeterministicCache,
+                _report.Host.SavedPropertyNetIdUsesDeterministicSort,
                 _report.Host.GameplayMods.Count));
             row.AddChild(CreateSnapshotCard(
                 T("column.local", "Local"),
                 _report.Local.GameVersion,
                 _report.Local.ModelDbHash,
                 _report.Local.ModelDbHashUsesDeterministicCache,
+                _report.Local.SavedPropertyNetIdUsesDeterministicSort,
                 _report.Local.GameplayMods.Count));
             return row;
         }
@@ -296,6 +298,7 @@ namespace STS2RitsuLib.Networking.JoinDiagnostics
             string version,
             uint modelDbHash,
             bool modelDbHashUsesDeterministicCache,
+            bool? savedPropertyNetIdUsesDeterministicSort,
             int modCount)
         {
             var panel = new PanelContainer
@@ -325,8 +328,11 @@ namespace STS2RitsuLib.Networking.JoinDiagnostics
                 T("snapshot.modelDb.label", "ModelDb"),
                 modelDbHash.ToString()));
             grid.AddChild(CreateSnapshotField(
-                T("snapshot.modelDbMode.label", "ModelDb mode"),
-                FormatModelDbHashMode(modelDbHashUsesDeterministicCache)));
+                savedPropertyNetIdUsesDeterministicSort.HasValue
+                    ? T("snapshot.sortModes.label", "Sort modes")
+                    : T("snapshot.modelDbMode.label", "ModelDb mode"),
+                FormatSnapshotSortModes(modelDbHashUsesDeterministicCache,
+                    savedPropertyNetIdUsesDeterministicSort)));
             grid.AddChild(CreateSnapshotField(
                 T("snapshot.mods.label", "Gameplay mods"),
                 modCount.ToString()));
@@ -998,8 +1004,15 @@ namespace STS2RitsuLib.Networking.JoinDiagnostics
 
             builder.AppendLine("  " + F("snapshot.version", "Version: {0}", snapshot.GameVersion));
             builder.AppendLine("  " + F("snapshot.modelDb", "ModelDb: {0}", snapshot.ModelDbHash));
-            builder.AppendLine("  " + F("snapshot.modelDbMode", "ModelDb mode: {0}",
-                FormatModelDbHashMode(snapshot.ModelDbHashUsesDeterministicCache)));
+            builder.AppendLine("  " + F(
+                snapshot.SavedPropertyNetIdUsesDeterministicSort.HasValue
+                    ? "snapshot.sortModes"
+                    : "snapshot.modelDbMode",
+                snapshot.SavedPropertyNetIdUsesDeterministicSort.HasValue
+                    ? "Sort modes: {0}"
+                    : "ModelDb mode: {0}",
+                FormatSnapshotSortModes(snapshot.ModelDbHashUsesDeterministicCache,
+                    snapshot.SavedPropertyNetIdUsesDeterministicSort)));
             if (!string.IsNullOrWhiteSpace(snapshot.ModelDbHashModeDetail))
                 builder.AppendLine("  " + F("snapshot.modelDbModeDetail", "ModelDb mode detail: {0}",
                     snapshot.ModelDbHashModeDetail.Trim()));
@@ -1242,6 +1255,23 @@ namespace STS2RitsuLib.Networking.JoinDiagnostics
             return deterministic
                 ? T("value.modelDbHashMode.deterministic", "Stable sorting")
                 : T("value.modelDbHashMode.notReported", "Stable sorting not reported");
+        }
+
+        private static string FormatSnapshotSortModes(bool modelDbDeterministic, bool? savedPropertyDeterministic)
+        {
+            if (!savedPropertyDeterministic.HasValue)
+                return FormatModelDbHashMode(modelDbDeterministic);
+
+            return F("value.sortModes.joinSnapshot", "ModelDb {0} / SavedProperty {1}",
+                FormatCompactSortMode(modelDbDeterministic),
+                FormatCompactSortMode(savedPropertyDeterministic.Value));
+        }
+
+        private static string FormatCompactSortMode(bool deterministic)
+        {
+            return deterministic
+                ? T("value.sortMode.compact.deterministic", "stable")
+                : T("value.sortMode.compact.existing", "existing");
         }
 
         private static string T(string key, string fallback)

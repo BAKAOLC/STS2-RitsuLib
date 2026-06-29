@@ -1,5 +1,6 @@
 using MegaCrit.Sts2.Core.Runs;
 using STS2RitsuLib.Content.Patches;
+using STS2RitsuLib.Interop.Patches;
 using STS2RitsuLib.Ui.Shell.Theme;
 using STS2RitsuLib.Ui.Toast;
 
@@ -133,8 +134,11 @@ namespace STS2RitsuLib.Settings
                 return;
             }
 
+            var savedPropertySorted =
+                SavedPropertiesTypeCacheInjectionPatch.RebuildDeterministicNetIdTableForSettings();
             RitsuLibFramework.Logger.Info(
-                $"[ModelIdSerializationCache] Manual deterministic rebuild applied. Hash: {result.InitialHash} -> {result.FinalHash}.");
+                $"[ModelIdSerializationCache] Manual deterministic rebuild applied. Hash: {result.InitialHash} -> {result.FinalHash}. " +
+                $"SavedProperty net-id deterministic sort: {(savedPropertySorted ? "applied" : "not applied")}.");
             RitsuToastService.ShowInfo(
                 string.Format(
                     L("ritsulib.modelDbDeterministicSort.toast.applied",

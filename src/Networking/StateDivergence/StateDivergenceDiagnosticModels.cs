@@ -20,7 +20,12 @@ namespace STS2RitsuLib.Networking.StateDivergence
         string LocalStateDump,
         string RemoteStateDump);
 
-    internal sealed record StateDivergenceChecksumInfo(uint Id, uint Checksum, string Context);
+    internal sealed record StateDivergenceChecksumInfo(
+        uint Id,
+        uint Checksum,
+        string Context,
+        bool? ModelDbHashUsesDeterministicCache,
+        bool? SavedPropertyNetIdUsesDeterministicSort);
 
     internal sealed record StateDivergenceDiagnosticSection(
         string Title,

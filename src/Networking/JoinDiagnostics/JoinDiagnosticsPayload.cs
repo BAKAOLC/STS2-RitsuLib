@@ -6,6 +6,7 @@ using MegaCrit.Sts2.Core.Multiplayer.Messages.Lobby;
 using MegaCrit.Sts2.Core.Multiplayer.Serialization;
 using STS2RitsuLib.Compat;
 using STS2RitsuLib.Content.Patches;
+using STS2RitsuLib.Interop.Patches;
 using STS2RitsuLib.Networking.MessageExtensions;
 
 namespace STS2RitsuLib.Networking.JoinDiagnostics
@@ -18,7 +19,8 @@ namespace STS2RitsuLib.Networking.JoinDiagnostics
         IReadOnlyList<JoinDiagnosticsModEntry> GameplayMods,
         string? ContentMods,
         bool ModelDbHashUsesDeterministicCache,
-        string? ModelDbHashModeDetail);
+        string? ModelDbHashModeDetail,
+        bool? SavedPropertyNetIdUsesDeterministicSort);
 
     internal sealed record JoinDiagnosticsModEntry(
         int Index,
@@ -38,12 +40,13 @@ namespace STS2RitsuLib.Networking.JoinDiagnostics
         IReadOnlyList<ContentModInventoryEntry> ContentMods,
         bool HasProcessedContentMods,
         bool ModelDbHashUsesDeterministicCache,
-        string? ModelDbHashModeDetail);
+        string? ModelDbHashModeDetail,
+        bool? SavedPropertyNetIdUsesDeterministicSort);
 
     internal static class JoinDiagnosticsPayloadCodec
     {
         private const string ExtensionId = "ritsulib.joinDiagnostics";
-        private const int PayloadVersion = 3;
+        private const int PayloadVersion = 4;
         private static int _registered;
 
         private static readonly JsonSerializerOptions JsonOptions = new()
@@ -90,7 +93,8 @@ namespace STS2RitsuLib.Networking.JoinDiagnostics
                     CreateLocalModEntries(),
                     ContentModInventoryPayloadCodec.Encode(CreateLocalContentModEntries()),
                     cacheStatus.IsActive,
-                    cacheStatus.Detail);
+                    cacheStatus.Detail,
+                    SavedPropertiesTypeCacheInjectionPatch.UsesDeterministicNetIdTable);
                 return JsonSerializer.Serialize(payload, JsonOptions);
             }
             catch (Exception ex)
@@ -111,7 +115,7 @@ namespace STS2RitsuLib.Networking.JoinDiagnostics
                     return;
                 }
 
-                if (version != 2 && version != PayloadVersion)
+                if (version != 2 && version != 3 && version != PayloadVersion)
                 {
                     RitsuLibFramework.Logger.Warn($"[JoinDiagnostics] Unsupported payload version: {version}");
                     return;
@@ -138,7 +142,8 @@ namespace STS2RitsuLib.Networking.JoinDiagnostics
                 CreateLocalContentModEntries(),
                 true,
                 cacheStatus.IsActive,
-                cacheStatus.Detail);
+                cacheStatus.Detail,
+                SavedPropertiesTypeCacheInjectionPatch.UsesDeterministicNetIdTable);
         }
 
         public static JoinPeerSnapshot CreateHostSnapshot(
@@ -157,7 +162,8 @@ namespace STS2RitsuLib.Networking.JoinDiagnostics
                 contentMods,
                 hasProcessedContentMods,
                 payload?.ModelDbHashUsesDeterministicCache ?? false,
-                payload?.ModelDbHashModeDetail);
+                payload?.ModelDbHashModeDetail,
+                payload?.SavedPropertyNetIdUsesDeterministicSort);
         }
 
         private static IReadOnlyList<JoinDiagnosticsModEntry> CreateLocalModEntries()
@@ -287,6 +293,7 @@ namespace STS2RitsuLib.Networking.JoinDiagnostics
                 payload.GameplayMods,
                 payload.ContentMods == null ? null : ContentModInventoryPayloadCodec.Encode(payload.ContentMods),
                 false,
+                null,
                 null);
         }
 
