@@ -1274,6 +1274,36 @@ namespace STS2RitsuLib
             IEnumerable<string>? pckFolders = null,
             Assembly? resourceAssembly = null)
         {
+            return CreateLocalizationCore(instanceName, fileSystemFolders, resourceFolders, pckFolders,
+                resourceAssembly,
+                null);
+        }
+
+        /// <summary>
+        ///     Creates a <see cref="STS2RitsuLib.Utils.I18N" /> instance with an explicit fallback language.
+        ///     使用显式 fallback 语言创建 <see cref="STS2RitsuLib.Utils.I18N" /> 实例。
+        /// </summary>
+        public static I18N CreateLocalizationWithFallback(
+            string instanceName,
+            IEnumerable<string>? fileSystemFolders = null,
+            IEnumerable<string>? resourceFolders = null,
+            IEnumerable<string>? pckFolders = null,
+            Assembly? resourceAssembly = null,
+            string? fallbackLanguage = null)
+        {
+            return CreateLocalizationCore(instanceName, fileSystemFolders, resourceFolders, pckFolders,
+                resourceAssembly,
+                fallbackLanguage);
+        }
+
+        private static I18N CreateLocalizationCore(
+            string instanceName,
+            IEnumerable<string>? fileSystemFolders,
+            IEnumerable<string>? resourceFolders,
+            IEnumerable<string>? pckFolders,
+            Assembly? resourceAssembly,
+            string? fallbackLanguage)
+        {
             ArgumentException.ThrowIfNullOrWhiteSpace(instanceName);
 
             return new(
@@ -1281,7 +1311,8 @@ namespace STS2RitsuLib
                 fileSystemFolders?.ToArray() ?? [],
                 resourceFolders?.ToArray() ?? [],
                 pckFolders?.ToArray() ?? [],
-                resourceAssembly ?? Assembly.GetCallingAssembly()
+                resourceAssembly ?? Assembly.GetCallingAssembly(),
+                fallbackLanguage
             );
         }
 
@@ -1299,11 +1330,42 @@ namespace STS2RitsuLib
             IEnumerable<string>? pckFolders = null,
             Assembly? resourceAssembly = null)
         {
+            return CreateModLocalizationCore(modId, instanceName, fileSystemFolders, resourceFolders, pckFolders,
+                resourceAssembly, null);
+        }
+
+        /// <summary>
+        ///     Creates a <see cref="STS2RitsuLib.Utils.I18N" /> instance for a mod with an explicit fallback language.
+        ///     使用显式 fallback 语言为 mod 创建 <see cref="STS2RitsuLib.Utils.I18N" /> 实例。
+        /// </summary>
+        public static I18N CreateModLocalizationWithFallback(
+            string modId,
+            string instanceName,
+            IEnumerable<string>? fileSystemFolders = null,
+            IEnumerable<string>? resourceFolders = null,
+            IEnumerable<string>? pckFolders = null,
+            Assembly? resourceAssembly = null,
+            string? fallbackLanguage = null)
+        {
+            return CreateModLocalizationCore(modId, instanceName, fileSystemFolders, resourceFolders, pckFolders,
+                resourceAssembly, fallbackLanguage);
+        }
+
+        private static I18N CreateModLocalizationCore(
+            string modId,
+            string instanceName,
+            IEnumerable<string>? fileSystemFolders,
+            IEnumerable<string>? resourceFolders,
+            IEnumerable<string>? pckFolders,
+            Assembly? resourceAssembly,
+            string? fallbackLanguage)
+        {
             ArgumentException.ThrowIfNullOrWhiteSpace(modId);
             ArgumentException.ThrowIfNullOrWhiteSpace(instanceName);
 
             var folders = fileSystemFolders?.ToArray() ?? [$"{ProfileManager.GetAccountBasePath(modId)}/localization"];
-            return CreateLocalization(instanceName, folders, resourceFolders, pckFolders, resourceAssembly);
+            return CreateLocalizationCore(instanceName, folders, resourceFolders, pckFolders, resourceAssembly,
+                fallbackLanguage);
         }
 
         /// <summary>
