@@ -349,6 +349,7 @@ namespace STS2RitsuLib
             patcher.RegisterPatch<NControllerCardPlaySingleTargetingAnyPlayerPatch>();
             patcher.RegisterPatch<CardCmdAutoPlayAnyPlayerPatch>();
             patcher.RegisterPatch<ModelDbInitCustomTargetTypeRegistrationPatch>();
+            patcher.RegisterPatch<CardCmdAutoPlayCustomSingleTargetPatch>();
             patcher.RegisterPatch<AttackCommandGetPossibleTargetsCustomTargetTypePatch>();
             patcher.RegisterPatch<NCardPlayShowMultiCreatureTargetingVisualsCustomTargetTypePatch>();
             patcher.RegisterPatch<ActionTargetExtensionsIsSingleTargetCustomTargetTypePatch>();
