@@ -20,6 +20,10 @@ namespace STS2RitsuLib.Ui.Shell.Theme
 
         private static RitsuShellTheme? _current;
 
+        private static bool _fontSnapshotInvalidated;
+
+        private static bool _fontRefreshQueued;
+
         /// <summary>
         ///     Last applied theme id (lowercase). Defaults to <c>default</c> until a successful apply.
         ///     最后应用的主题 id (小写). 默认为 <c>default</c> 直到成功应用。
@@ -84,6 +88,7 @@ namespace STS2RitsuLib.Ui.Shell.Theme
 
                 _current = snapshot;
                 ActiveThemeId = resolvedId;
+                _fontSnapshotInvalidated = false;
             }
 
             NotifyChanged(snapshot!);
@@ -103,7 +108,33 @@ namespace STS2RitsuLib.Ui.Shell.Theme
         {
             if (forceReloadCatalog)
                 RitsuShellThemeCatalog.InvalidateCache();
+            RitsuShellThemeValueCoerce.InvalidateFontCache();
             ApplyThemeId(ActiveThemeId);
+        }
+
+        internal static void NotifyExternalFontCacheCleared()
+        {
+            lock (Gate)
+            {
+                _fontSnapshotInvalidated = true;
+                RitsuShellThemeValueCoerce.InvalidateFontCache();
+                if (_fontRefreshQueued)
+                    return;
+
+                _fontRefreshQueued = true;
+            }
+
+            try
+            {
+                Callable.From(FlushExternalFontCacheCleared).CallDeferred();
+            }
+            catch
+            {
+                lock (Gate)
+                {
+                    _fontRefreshQueued = false;
+                }
+            }
         }
 
         /// <summary>
@@ -171,19 +202,24 @@ namespace STS2RitsuLib.Ui.Shell.Theme
         {
             lock (Gate)
             {
-                if (_current == null || AreThemeFontsValid(_current.Font))
+                if (_current == null ||
+                    (!_fontSnapshotInvalidated &&
+                     AreThemeFontsValid(_current.Font) &&
+                     RitsuShellThemeValueCoerce.AreFontTokensCurrent(_current.Font)))
                     return;
 
                 if (TryBuildSnapshotLocked(ActiveThemeId, out var resolvedId, out var snapshot) && snapshot != null)
                 {
                     _current = snapshot;
                     ActiveThemeId = resolvedId;
+                    _fontSnapshotInvalidated = false;
                     return;
                 }
 
                 if (!TryBuildSnapshotLocked(DefaultThemeId, out resolvedId, out snapshot) || snapshot == null) return;
                 _current = snapshot;
                 ActiveThemeId = resolvedId;
+                _fontSnapshotInvalidated = false;
             }
         }
 
@@ -206,6 +242,16 @@ namespace STS2RitsuLib.Ui.Shell.Theme
 
             foreach (var reg in modSnapshot)
                 reg.OnApply?.Invoke(snapshot);
+        }
+
+        private static void FlushExternalFontCacheCleared()
+        {
+            lock (Gate)
+            {
+                _fontRefreshQueued = false;
+            }
+
+            ReapplyActiveTheme(false);
         }
     }
 }

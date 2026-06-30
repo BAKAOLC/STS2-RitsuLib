@@ -220,6 +220,56 @@ namespace STS2RitsuLib.Data
             IEnumerable<IMigration>? migrations = null)
             where T : class, new()
         {
+            Register(key, fileName, scope, true, defaultFactory, autoCreateIfMissing, migrationConfig, migrations);
+        }
+
+        /// <summary>
+        ///     Registers a JSON-backed persistence slot identified by <paramref name="key" />.
+        ///     注册一个由 JSON 支持、以 <c>key</c> 标识的持久化槽。
+        /// </summary>
+        /// <param name="key">
+        ///     Logical key used with <see cref="Get{T}" />, <see cref="Modify{T}" />, and <see cref="Save" />.
+        ///     与 <see cref="Get{T}" />、<see cref="Modify{T}" /> 和 <see cref="Save" /> 一起使用的逻辑键。
+        /// </param>
+        /// <param name="fileName">
+        ///     File name segment passed to <see cref="ProfileManager" /> path resolution.
+        ///     传递给 <see cref="ProfileManager" /> 路径解析的文件名片段。
+        /// </param>
+        /// <param name="scope">
+        ///     Global or profile persistence scope.
+        ///     全局或档案持久化作用域。
+        /// </param>
+        /// <param name="defaultFactory">
+        ///     Factory for the in-memory default when no file exists.
+        ///     文件不存在时用于创建内存默认值的工厂。
+        /// </param>
+        /// <param name="autoCreateIfMissing">
+        ///     When true, creates the on-disk file if absent after first save.
+        ///     为 true 时，首次保存后如果磁盘文件不存在则创建它。
+        /// </param>
+        /// <param name="migrationConfig">
+        ///     Optional schema versioning configuration for migrations.
+        ///     用于迁移的可选 schema 版本配置。
+        /// </param>
+        /// <param name="migrations">
+        ///     Optional migration steps; requires <paramref name="migrationConfig" />.
+        ///     可选迁移步骤；需要 <paramref name="migrationConfig" />。
+        /// </param>
+        /// <param name="syncToCloud">
+        ///     When false, this persisted slot stays local-only and is excluded from RitsuLib mod-data cloud sync.
+        ///     为 false 时，此持久化槽仅保留在本地，不参与 RitsuLib 的 mod data 云同步。
+        /// </param>
+        public void Register<T>(
+            string key,
+            string fileName,
+            SaveScope scope,
+            bool syncToCloud,
+            Func<T>? defaultFactory = null,
+            bool autoCreateIfMissing = false,
+            ModDataMigrationConfig? migrationConfig = null,
+            IEnumerable<IMigration>? migrations = null)
+            where T : class, new()
+        {
             if (_entries.ContainsKey(key))
                 throw new InvalidOperationException($"Data key '{key}' is already registered.");
 
@@ -243,7 +293,8 @@ namespace STS2RitsuLib.Data
             );
 
             _entries[key] = registration;
-            ModCloudSyncPathRegistry.RegisterModDataSlot(ModId, fileName, scope);
+            if (syncToCloud)
+                ModCloudSyncPathRegistry.RegisterModDataSlot(ModId, fileName, scope);
 
             if (_registrationScopeDepth > 0)
                 return;
@@ -265,6 +316,64 @@ namespace STS2RitsuLib.Data
             string fileName,
             SaveScope scope,
             Func<StorageContext> contextProvider,
+            Func<T>? defaultFactory = null,
+            bool autoCreateIfMissing = false,
+            ModDataMigrationConfig? migrationConfig = null,
+            IEnumerable<IMigration>? migrations = null)
+            where T : class, new()
+        {
+            Register(key, fileName, scope, contextProvider, true, defaultFactory, autoCreateIfMissing, migrationConfig,
+                migrations);
+        }
+
+        /// <summary>
+        ///     Registers a JSON-backed persistence slot identified by <paramref name="key" /> using an explicit
+        ///     <see cref="StorageContext" /> provider for path resolution.
+        ///     注册一个由 JSON 支持、以 <paramref name="key" /> 标识的持久化槽，并使用显式
+        ///     <see cref="StorageContext" /> 提供器解析路径。
+        /// </summary>
+        /// <param name="key">
+        ///     Logical key used with <see cref="Get{T}" />, <see cref="Modify{T}" />, and <see cref="Save" />.
+        ///     与 <see cref="Get{T}" />、<see cref="Modify{T}" /> 和 <see cref="Save" /> 一起使用的逻辑键。
+        /// </param>
+        /// <param name="fileName">
+        ///     File name segment passed to path resolution.
+        ///     传递给路径解析的文件名片段。
+        /// </param>
+        /// <param name="scope">
+        ///     Global or profile persistence scope.
+        ///     全局或档案持久化作用域。
+        /// </param>
+        /// <param name="contextProvider">
+        ///     Provider used to resolve the current storage context.
+        ///     用于解析当前存储上下文的提供器。
+        /// </param>
+        /// <param name="syncToCloud">
+        ///     When false, this persisted slot stays local-only and is excluded from RitsuLib mod-data cloud sync.
+        ///     为 false 时，此持久化槽仅保留在本地，不参与 RitsuLib 的 mod data 云同步。
+        /// </param>
+        /// <param name="defaultFactory">
+        ///     Factory for the in-memory default when no file exists.
+        ///     文件不存在时用于创建内存默认值的工厂。
+        /// </param>
+        /// <param name="autoCreateIfMissing">
+        ///     When true, creates the on-disk file if absent after first save.
+        ///     为 true 时，首次保存后如果磁盘文件不存在则创建它。
+        /// </param>
+        /// <param name="migrationConfig">
+        ///     Optional schema versioning configuration for migrations.
+        ///     用于迁移的可选 schema 版本配置。
+        /// </param>
+        /// <param name="migrations">
+        ///     Optional migration steps; requires <paramref name="migrationConfig" />.
+        ///     可选迁移步骤；需要 <paramref name="migrationConfig" />。
+        /// </param>
+        public void Register<T>(
+            string key,
+            string fileName,
+            SaveScope scope,
+            Func<StorageContext> contextProvider,
+            bool syncToCloud,
             Func<T>? defaultFactory = null,
             bool autoCreateIfMissing = false,
             ModDataMigrationConfig? migrationConfig = null,
@@ -293,7 +402,8 @@ namespace STS2RitsuLib.Data
             );
 
             _entries[key] = registration;
-            ModCloudSyncPathRegistry.RegisterModDataSlot(ModId, fileName, scope);
+            if (syncToCloud)
+                ModCloudSyncPathRegistry.RegisterModDataSlot(ModId, fileName, scope);
 
             if (_registrationScopeDepth > 0)
                 return;

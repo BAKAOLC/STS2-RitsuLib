@@ -119,6 +119,22 @@ namespace STS2RitsuLib.Ui.Shell.Theme
             return TryLoadFont(path);
         }
 
+        internal static void InvalidateFontCache()
+        {
+            lock (FontGate)
+            {
+                FontCache.Clear();
+                _fallbackFont = null;
+            }
+        }
+
+        internal static bool AreFontTokensCurrent(FontTokens fonts)
+        {
+            return IsFontTokenCurrent(fonts.Body, FontType.Regular) &&
+                   IsFontTokenCurrent(fonts.BodyBold, FontType.Bold) &&
+                   IsFontTokenCurrent(fonts.Button, FontType.Bold);
+        }
+
         /// <summary>
         ///     Parses <c>#RRGGBB</c> or <c>#RRGGBBAA</c>.
         ///     解析 <c>#RRGGBB</c> or <c>#RRGGBBAA</c>。
@@ -191,6 +207,16 @@ namespace STS2RitsuLib.Ui.Shell.Theme
             ApplyGameFallbacks(substitute);
             font = substitute;
             return true;
+        }
+
+        private static bool IsFontTokenCurrent(Font font, FontType fontType)
+        {
+            var language = LocManager.Instance?.Language;
+            if (string.IsNullOrWhiteSpace(language) || !FontManager.NeedsFontSubstitution(language))
+                return true;
+
+            var substitute = FontManager.GetSubstituteFont(language, fontType);
+            return substitute == null || ReferenceEquals(substitute, font);
         }
 
         private static void ApplyGameFallbacks(Font font)

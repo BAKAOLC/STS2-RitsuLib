@@ -40,6 +40,8 @@ using STS2RitsuLib.Scaffolding.Content.Patches;
 using STS2RitsuLib.Settings.Patches;
 using STS2RitsuLib.Timeline.Patches;
 using STS2RitsuLib.TopBar.Patches;
+using STS2RitsuLib.Ui.RichTextEffects.Patches;
+using STS2RitsuLib.Ui.Shell.Theme.Patches;
 using STS2RitsuLib.Unlocks.Patches;
 using STS2RitsuLib.Utils.Persistence.Patches;
 
@@ -124,6 +126,7 @@ namespace STS2RitsuLib
             patcher.RegisterPatch<RunSavedDataLobbyPlayerChangedCharacterHandlerPatch>();
             patcher.RegisterPatch<RunSavedDataLobbyPlayerJoinedPatch>();
             patcher.RegisterPatch<RunSavedDataPrepareNewRunPayloadPatch>();
+            patcher.RegisterPatch<RunSavedDataPrepareSingleplayerNewRunPayloadPatch>();
             patcher.RegisterPatch<RunSavedDataLobbyBeginRunMessageSerializePatch>();
             patcher.RegisterPatch<RunSavedDataLobbyBeginRunMessageDeserializePatch>();
             patcher.RegisterPatch<RunSavedDataInitializeNewRunPatch>();
@@ -348,6 +351,7 @@ namespace STS2RitsuLib
             patcher.RegisterPatch<NControllerCardPlaySingleTargetingAnyPlayerPatch>();
             patcher.RegisterPatch<CardCmdAutoPlayAnyPlayerPatch>();
             patcher.RegisterPatch<ModelDbInitCustomTargetTypeRegistrationPatch>();
+            patcher.RegisterPatch<CardCmdAutoPlayCustomSingleTargetPatch>();
             patcher.RegisterPatch<AttackCommandGetPossibleTargetsCustomTargetTypePatch>();
             patcher.RegisterPatch<NCardPlayShowMultiCreatureTargetingVisualsCustomTargetTypePatch>();
             patcher.RegisterPatch<ActionTargetExtensionsIsSingleTargetCustomTargetTypePatch>();
@@ -459,6 +463,9 @@ namespace STS2RitsuLib
             patcher.RegisterPatch<ModCardPileCombatUiActivatePatch>();
             patcher.RegisterPatch<ModTopBarActionButtonReadyPatch>();
             patcher.RegisterPatch<ModTopBarActionButtonInitializePatch>();
+            patcher.RegisterPatch<FontManagerClearCacheShellThemePatch>();
+            patcher.RegisterPatch<MegaRichTextLabelReadyModRichTextEffectPatch>();
+            patcher.RegisterPatch<MegaRichTextLabelSetTextAutoSizeModRichTextEffectPatch>();
             RegisterFrameworkPatcher(FrameworkPatcherArea.Core, patcher);
         }
 
