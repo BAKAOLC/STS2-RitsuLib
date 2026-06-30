@@ -1,6 +1,8 @@
 using System.Globalization;
+using System.Reflection;
 using Godot;
 using Godot.Collections;
+using HarmonyLib;
 using MegaCrit.Sts2.Core.Localization;
 using MegaCrit.Sts2.Core.Localization.Fonts;
 using FileAccess = Godot.FileAccess;
@@ -26,9 +28,6 @@ namespace STS2RitsuLib.Ui.Shell.Theme
 
         private static readonly System.Collections.Generic.Dictionary<string, Font> FontCache =
             new(StringComparer.Ordinal);
-
-        private static readonly System.Collections.Generic.Dictionary<string, Font?> GameLocaleFontResourceCache =
-            new(StringComparer.OrdinalIgnoreCase);
 
         private static readonly string[] GameFallbackFontPaths =
         [
@@ -214,6 +213,9 @@ namespace STS2RitsuLib.Ui.Shell.Theme
         private static bool TryGetExternalFontSubstitution(FontType fontType, out Font font)
         {
             font = null!;
+            if (!HasExternalFontSubstitutionPatch())
+                return false;
+
             var language = LocManager.Instance?.Language;
             if (string.IsNullOrWhiteSpace(language) || !FontManager.NeedsFontSubstitution(language))
                 return false;
@@ -231,6 +233,9 @@ namespace STS2RitsuLib.Ui.Shell.Theme
 
         private static bool IsFontTokenCurrent(Font font, FontType fontType)
         {
+            if (!HasExternalFontSubstitutionPatch())
+                return true;
+
             var language = LocManager.Instance?.Language;
             if (string.IsNullOrWhiteSpace(language) || !FontManager.NeedsFontSubstitution(language))
                 return true;
@@ -242,13 +247,39 @@ namespace STS2RitsuLib.Ui.Shell.Theme
             return substitute == null || ReferenceEquals(substitute, font);
         }
 
+        private static bool HasExternalFontSubstitutionPatch()
+        {
+            return HasHarmonyPatch(
+                       AccessTools.Method(
+                           typeof(FontManager),
+                           "GetFontForLanguage",
+                           [typeof(string), typeof(FontType)])) ||
+                   HasHarmonyPatch(
+                       AccessTools.Method(
+                           typeof(FontManager),
+                           nameof(FontManager.GetSubstituteFont),
+                           [typeof(string), typeof(FontType)]));
+
+            static bool HasHarmonyPatch(MethodBase? method)
+            {
+                if (method == null)
+                    return false;
+
+                var patchInfo = Harmony.GetPatchInfo(method);
+                return patchInfo != null &&
+                       (patchInfo.Prefixes.Count > 0 ||
+                        patchInfo.Postfixes.Count > 0 ||
+                        patchInfo.Transpilers.Count > 0 ||
+                        patchInfo.Finalizers.Count > 0);
+            }
+        }
+
         private static bool IsGameLocaleFontResource(Font font)
         {
             while (true)
             {
                 var path = font.ResourcePath;
                 if (!string.IsNullOrWhiteSpace(path) && GameLocaleFontResourcePaths.Contains(path)) return true;
-                if (IsKnownGameLocaleFontInstance(font)) return true;
 
                 if (font is FontVariation { BaseFont: { } baseFont })
                 {
@@ -259,37 +290,6 @@ namespace STS2RitsuLib.Ui.Shell.Theme
                 if (font is not FontFile fontFile) return false;
                 var basePath = fontFile.ResourcePath;
                 return !string.IsNullOrWhiteSpace(basePath) && GameLocaleFontResourcePaths.Contains(basePath);
-            }
-        }
-
-        private static bool IsKnownGameLocaleFontInstance(Font font)
-        {
-            foreach (var known in GameLocaleFontResourcePaths.Select(GetCachedGameLocaleFontResource)
-                         .OfType<Font>())
-            {
-                if (ReferenceEquals(font, known))
-                    return true;
-
-                if (known is FontVariation { BaseFont: { } knownBaseFont } &&
-                    ReferenceEquals(font, knownBaseFont))
-                    return true;
-            }
-
-            return false;
-        }
-
-        private static Font? GetCachedGameLocaleFontResource(string path)
-        {
-            lock (FontGate)
-            {
-                if (GameLocaleFontResourceCache.TryGetValue(path, out var cached))
-                    return cached;
-
-                var loaded = ResourceLoader.Exists(path)
-                    ? ResourceLoader.Load<Font>(path)
-                    : null;
-                GameLocaleFontResourceCache[path] = loaded;
-                return loaded;
             }
         }
 
