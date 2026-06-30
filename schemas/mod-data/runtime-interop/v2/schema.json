@@ -53,6 +53,10 @@
         "autoCreateIfMissing": {
           "type": "boolean"
         },
+        "syncToCloud": {
+          "type": "boolean",
+          "description": "When false, the persisted slot is excluded from RitsuLib mod-data cloud sync. Defaults to true."
+        },
         "dataType": {
           "type": "string",
           "minLength": 1,

@@ -31,12 +31,12 @@ namespace STS2RitsuLib.Utils.Persistence.Interop
         private static readonly Dictionary<string, ReflectionStaticChannel> ProviderAccessors =
             new(StringComparer.OrdinalIgnoreCase);
 
-        private static readonly MethodInfo ModDataStoreRegisterOpen =
+        private static readonly MethodInfo ModDataStoreRegisterWithCloudOpen =
             typeof(ModDataStore).GetMethods(BindingFlags.Public | BindingFlags.Instance)
                 .Single(m =>
                     m is { Name: nameof(ModDataStore.Register), IsGenericMethodDefinition: true } &&
                     m.GetGenericArguments().Length == 1 &&
-                    m.GetParameters().Length == 7 &&
+                    m.GetParameters().Length == 8 &&
                     m.GetParameters()[0].ParameterType == typeof(string));
 
         private static readonly MethodInfo ModDataStoreGetOpen =
@@ -52,7 +52,7 @@ namespace STS2RitsuLib.Utils.Persistence.Interop
                     m.GetGenericArguments().Length == 1);
 
         private static readonly MethodInfo RegisterJsonDocumentClosed =
-            ModDataStoreRegisterOpen.MakeGenericMethod(typeof(ModDataInteropJsonDocument));
+            ModDataStoreRegisterWithCloudOpen.MakeGenericMethod(typeof(ModDataInteropJsonDocument));
 
         private static readonly ConcurrentDictionary<Type, MethodInfo> RegisterClosedByDataType = new();
 
@@ -476,6 +476,11 @@ namespace STS2RitsuLib.Utils.Persistence.Interop
 
             var scope = ParseScope(TryGetString(map, "scope", out var scopeRaw) ? scopeRaw : null);
             var autoCreate = TryGetBool(map, "autoCreateIfMissing", out var ac) && ac;
+            var syncToCloud = true;
+            if (TryGetBool(map, "syncToCloud", out var syncToCloudValue))
+                syncToCloud = syncToCloudValue;
+            else if (TryGetBool(map, "cloudSync", out var cloudSyncValue))
+                syncToCloud = cloudSyncValue;
 
             var dataTypeName = TryGetString(map, "dataType", out var dt) && !string.IsNullOrWhiteSpace(dt)
                 ? dt.Trim()
@@ -554,7 +559,7 @@ namespace STS2RitsuLib.Utils.Persistence.Interop
                 ? am.Trim()
                 : null;
 
-            entry = new(key.Trim(), fileName.Trim(), scope, autoCreate, dataTypeName, defaultFactory,
+            entry = new(key.Trim(), fileName.Trim(), scope, autoCreate, syncToCloud, dataTypeName, defaultFactory,
                 migrationConfig, migrations, jsonPathPull, jsonPathPush, jsonPathMergePush,
                 getMethod, modifyMethod, saveMethod, applyMethod);
             return true;
@@ -834,6 +839,7 @@ namespace STS2RitsuLib.Utils.Persistence.Interop
                 entry.Key,
                 entry.FileName,
                 entry.Scope,
+                entry.SyncToCloud,
                 defaultFactory,
                 entry.AutoCreateIfMissing,
                 entry.MigrationConfig,
@@ -866,7 +872,7 @@ namespace STS2RitsuLib.Utils.Persistence.Interop
                     $"dataType '{dataType.FullName}' requires a parameterless ctor or defaultFactory method.");
 
             var typedRegister = RegisterClosedByDataType.GetOrAdd(dataType,
-                static t => ModDataStoreRegisterOpen.MakeGenericMethod(t));
+                static t => ModDataStoreRegisterWithCloudOpen.MakeGenericMethod(t));
 
             var defaultFactory = BuildDefaultFactory(providerType, dataType, entry.DefaultFactoryMethodName);
 
@@ -875,6 +881,7 @@ namespace STS2RitsuLib.Utils.Persistence.Interop
                 entry.Key,
                 entry.FileName,
                 entry.Scope,
+                entry.SyncToCloud,
                 defaultFactory,
                 entry.AutoCreateIfMissing,
                 entry.MigrationConfig,
@@ -1288,6 +1295,7 @@ namespace STS2RitsuLib.Utils.Persistence.Interop
             string FileName,
             SaveScope Scope,
             bool AutoCreateIfMissing,
+            bool SyncToCloud,
             string? DataTypeName,
             string? DefaultFactoryMethodName,
             ModDataMigrationConfig? MigrationConfig,

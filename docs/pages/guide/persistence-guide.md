@@ -77,6 +77,26 @@ Use `RitsuLibFramework.GetRunSavedDataStore(modId)` for data that belongs inside
 
 :::
 
+## Cloud Sync{lang="en"}
+
+::: en
+
+`SaveScope.Global` and `SaveScope.Profile` slots are eligible for RitsuLib mod-data cloud sync by default when the player enables Steam Cloud sync for mod data. For local-only persisted data, pass `syncToCloud: false`.
+
+```csharp
+store.Register(
+    key: "local_cache",
+    fileName: "local_cache.json",
+    scope: SaveScope.Global,
+    syncToCloud: false,
+    defaultFactory: () => new LocalCache(),
+    autoCreateIfMissing: true);
+```
+
+Use `SaveScope.InMemory` only for data that should not be written to disk at all.
+
+:::
+
 ## 选择作用域{lang="zh-CN"}
 
 ::: zh-CN
@@ -88,6 +108,26 @@ Use `RitsuLibFramework.GetRunSavedDataStore(modId)` for data that belongs inside
 | `SaveScope.InMemory` | 临时进程内数据：复用 store API，但不写盘。 |
 
 属于一次跑局存档的数据请使用 `RitsuLibFramework.GetRunSavedDataStore(modId)`。Run saved data 会嵌入跑局快照，并随存档读取、写入和多人同步一起流转。
+
+:::
+
+## 云同步{lang="zh-CN"}
+
+::: zh-CN
+
+玩家启用 mod data 的 Steam Cloud 同步后，`SaveScope.Global` 和 `SaveScope.Profile` 槽默认可以参与 RitsuLib 的 mod data 云同步。如果需要“写入本地但不进云”的持久化数据，传入 `syncToCloud: false`。
+
+```csharp
+store.Register(
+    key: "local_cache",
+    fileName: "local_cache.json",
+    scope: SaveScope.Global,
+    syncToCloud: false,
+    defaultFactory: () => new LocalCache(),
+    autoCreateIfMissing: true);
+```
+
+`SaveScope.InMemory` 只适合完全不写入磁盘的临时数据。
 
 :::
 
