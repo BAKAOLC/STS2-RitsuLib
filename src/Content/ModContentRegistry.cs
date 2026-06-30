@@ -1561,6 +1561,23 @@ namespace STS2RitsuLib.Content
             return MergeGlobalCatalog(ContentCatalogId.SharedRelicPools, source);
         }
 
+        internal static IEnumerable<RelicModel> AppendRegisteredRelics(IEnumerable<RelicModel> source)
+        {
+            Type[] relicTypes;
+            lock (SyncRoot)
+            {
+                relicTypes = RegisteredPoolContent
+                    .Select(static entry => entry.ModelType)
+                    .Where(static type => typeof(RelicModel).IsAssignableFrom(type))
+                    .Distinct()
+                    .ToArray();
+            }
+
+            var additional = ResolveExistingModels<RelicModel>(relicTypes);
+            return ContentMergeStrategies.GetEnumerable<RelicModel>(ContentMergeMode.AppendDistinctById)
+                .Merge(source, additional);
+        }
+
         internal static IEnumerable<PotionPoolModel> AppendSharedPotionPools(IEnumerable<PotionPoolModel> source)
         {
             return MergeGlobalCatalog(ContentCatalogId.SharedPotionPools, source);
@@ -1597,10 +1614,37 @@ namespace STS2RitsuLib.Content
             return MergeGlobalCatalog(ContentCatalogId.SharedAncients, source);
         }
 
+        internal static IEnumerable<AncientEventModel> AppendAllAncients(IEnumerable<AncientEventModel> source)
+        {
+            var merged = AppendSharedAncients(source);
+            var catalog = GetCatalog(ContentCatalogId.ActAncients);
+            Type[] ancientTypes;
+            lock (SyncRoot)
+            {
+                ancientTypes = RegisteredActAncients.Values
+                    .SelectMany(static set => set)
+                    .Distinct()
+                    .ToArray();
+            }
+
+            var additional = ResolveExistingModels<AncientEventModel>(ancientTypes);
+            return ContentMergeStrategies.GetEnumerable<AncientEventModel>(catalog.MergeMode).Merge(merged, additional);
+        }
+
         internal static IEnumerable<AncientEventModel> AppendActAncients(ActModel act,
             IEnumerable<AncientEventModel> source)
         {
             return MergeScopedCatalog(ContentCatalogId.ActAncients, act.GetType(), source);
+        }
+
+        private static TModel[] ResolveExistingModels<TModel>(IEnumerable<Type> modelTypes)
+            where TModel : AbstractModel
+        {
+            return modelTypes
+                .OrderBy(static type => type.FullName ?? type.Name, StringComparer.Ordinal)
+                .Select(static type => ModelDb.GetByIdOrNull<TModel>(ModelDb.GetId(type)))
+                .OfType<TModel>()
+                .ToArray();
         }
 
         internal static Type[] GetRegisteredBadgeTypes()

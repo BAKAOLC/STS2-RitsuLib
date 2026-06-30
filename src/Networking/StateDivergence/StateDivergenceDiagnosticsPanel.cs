@@ -241,8 +241,7 @@ namespace STS2RitsuLib.Networking.StateDivergence
             box.AddChild(CreateLabel(title, 16, RitsuShellTheme.Current.Text.RichTitle, true));
             box.AddChild(CreateLabel(F("checksum.id", "ID: {0}", info.Id), 14,
                 RitsuShellTheme.Current.Text.RichBody));
-            box.AddChild(CreateLabel(F("checksum.value", "Checksum: {0}", info.Checksum), 14,
-                RitsuShellTheme.Current.Text.RichBody));
+            box.AddChild(CreateLabel(FormatChecksumLine(info), 14, RitsuShellTheme.Current.Text.RichBody));
             box.AddChild(CreateLabel(F("checksum.context", "Context: {0}", info.Context), 14,
                 RitsuShellTheme.Current.Text.RichBody));
             return panel;
@@ -751,7 +750,7 @@ namespace STS2RitsuLib.Networking.StateDivergence
         {
             builder.AppendLine(title);
             builder.AppendLine("  " + F("checksum.id", "ID: {0}", info.Id));
-            builder.AppendLine("  " + F("checksum.value", "Checksum: {0}", info.Checksum));
+            builder.AppendLine("  " + FormatChecksumLine(info));
             builder.AppendLine("  " + F("checksum.context", "Context: {0}", info.Context));
         }
 
@@ -965,6 +964,41 @@ namespace STS2RitsuLib.Networking.StateDivergence
         private static string T(string key, string fallback)
         {
             return StateDivergenceDiagnosticsLocalization.Get(key, fallback);
+        }
+
+        private static string FormatChecksumLine(StateDivergenceChecksumInfo info)
+        {
+            var sortModes = FormatReportedSortModes(
+                info.ModelDbHashUsesDeterministicCache,
+                info.SavedPropertyNetIdUsesDeterministicSort);
+            return sortModes == null
+                ? F("checksum.value", "Checksum: {0}", info.Checksum)
+                : F("checksum.valueWithSort", "Checksum: {0}  Sort: {1}", info.Checksum, sortModes);
+        }
+
+        private static string? FormatReportedSortModes(bool? modelDbDeterministic, bool? savedPropertyDeterministic)
+        {
+            if (!modelDbDeterministic.HasValue && !savedPropertyDeterministic.HasValue)
+                return null;
+
+            if (!savedPropertyDeterministic.HasValue)
+                return F("value.sortModes.modelDbOnly", "ModelDb {0}",
+                    FormatCompactSortMode(modelDbDeterministic!.Value));
+
+            if (!modelDbDeterministic.HasValue)
+                return F("value.sortModes.savedPropertyOnly", "SavedProperty {0}",
+                    FormatCompactSortMode(savedPropertyDeterministic.Value));
+
+            return F("value.sortModes.stateDivergence", "ModelDb {0} / SavedProperty {1}",
+                FormatCompactSortMode(modelDbDeterministic.Value),
+                FormatCompactSortMode(savedPropertyDeterministic.Value));
+        }
+
+        private static string FormatCompactSortMode(bool deterministic)
+        {
+            return deterministic
+                ? T("value.sortMode.compact.deterministic", "stable")
+                : T("value.sortMode.compact.existing", "existing");
         }
 
         private static string F(string key, string fallback, params object?[] args)

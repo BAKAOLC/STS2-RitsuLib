@@ -12,6 +12,7 @@ using MegaCrit.Sts2.Core.Nodes.Screens;
 using MegaCrit.Sts2.Core.Nodes.Screens.Capstones;
 using MegaCrit.Sts2.Core.Nodes.Vfx;
 using STS2RitsuLib.TopBar;
+using STS2RitsuLib.Ui.Shell.Theme;
 
 namespace STS2RitsuLib.CardPiles.Nodes
 {
@@ -442,15 +443,8 @@ namespace STS2RitsuLib.CardPiles.Nodes
                 return;
             }
 
-            var fallback = ThemeDB.FallbackFont;
-            if (fallback != null)
-            {
-                countLabel.AddThemeFontOverride(ThemeConstants.Label.Font, fallback);
-                countLabel.AddThemeFontSizeOverride(ThemeConstants.Label.FontSize, 28);
-                return;
-            }
-
-            countLabel.AddThemeFontOverride(ThemeConstants.Label.Font, new SystemFont());
+            countLabel.AddThemeFontOverride(ThemeConstants.Label.Font,
+                RitsuShellThemeValueCoerce.AsFont(null));
             countLabel.AddThemeFontSizeOverride(ThemeConstants.Label.FontSize, 28);
         }
 

@@ -27,6 +27,7 @@
   "column.remote": "远端",
   "checksum.id": "ID: {0}",
   "checksum.value": "Checksum: {0}",
+  "checksum.valueWithSort": "Checksum: {0}  排序: {1}",
   "checksum.context": "上下文: {0}",
   "footer.context": "角色: {0}  远端 peer: {1}",
   "detail.context": "本地上下文由当前 peer 记录；原版状态分歧消息不会携带远端上下文。",
@@ -36,6 +37,14 @@
   "value.missing": "缺失",
   "value.empty": "<空>",
   "value.none": "<无>",
+  "value.sortMode.deterministic": "稳定排序",
+  "value.sortMode.existing": "既有顺序",
+  "value.sortMode.notReported": "未报告",
+  "value.sortMode.compact.deterministic": "稳定",
+  "value.sortMode.compact.existing": "既有",
+  "value.sortModes.modelDbOnly": "ModelDb {0}",
+  "value.sortModes.savedPropertyOnly": "SavedProperty {0}",
+  "value.sortModes.stateDivergence": "ModelDb {0} / SavedProperty {1}",
   "value.cardCount": "{0} 张牌",
   "value.cardIndex": "索引 {0}"
 }

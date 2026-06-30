@@ -455,6 +455,10 @@ var i18n = RitsuLibFramework.CreateModLocalization(
 var label = i18n.Get("settings.enabled", "Enabled");
 ```
 
+`I18N` follows the game's fallback behavior by default: a non-English current language loads that language first, then
+fills missing keys from `eng.json`. Use `CreateModLocalizationWithFallback(...)` to choose a different fallback
+language.
+
 Example `eng.json`:
 
 ```json
@@ -492,6 +496,9 @@ var i18n = RitsuLibFramework.CreateModLocalization(
 
 var label = i18n.Get("settings.enabled", "启用");
 ```
+
+`I18N` 默认遵循游戏自身的 fallback 行为：当前语言不是英语时，先加载当前语言，再用 `eng.json` 补缺失的 key。
+需要其他 fallback 语言时，使用 `CreateModLocalizationWithFallback(...)`。
 
 示例 `zhs.json`：
 

@@ -659,7 +659,9 @@ namespace STS2RitsuLib
 #if STS2_AT_LEAST_0_107_1
             patcher.RegisterPatch<ActsByIndexPatch>();
 #endif
+#if !STS2_AT_LEAST_0_107_1
             patcher.RegisterPatch<RelicCollectionActListPatch>();
+#endif
             patcher.RegisterPatch<AllPowersPatch>();
             patcher.RegisterPatch<AllOrbsPatch>();
             patcher.RegisterPatch<OrbModelRandomPoolPolicyPatch>();
@@ -675,6 +677,7 @@ namespace STS2RitsuLib
             patcher.RegisterPatch<BadModifiersPatch>();
             patcher.RegisterPatch<MutuallyExclusiveModifiersPatch>();
             patcher.RegisterPatch<AllRelicPoolsPatch>();
+            patcher.RegisterPatch<AllRelicsPatch>();
             patcher.RegisterPatch<AllPotionPoolsPatch>();
             patcher.RegisterPatch<ModelDbModdedEntryPatch>();
             patcher.RegisterPatch<ModelIdSerializationCacheDynamicContentPatch>();

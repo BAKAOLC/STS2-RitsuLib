@@ -2,6 +2,7 @@ using System.Reflection;
 using MegaCrit.Sts2.Core.Localization;
 using MegaCrit.Sts2.Core.Modding;
 using STS2RitsuLib.Platform.Steam;
+using STS2RitsuLib.Utils;
 
 namespace STS2RitsuLib.Compat
 {
@@ -432,43 +433,27 @@ namespace STS2RitsuLib.Compat
         {
             var field = type.GetField(memberName, InstanceMemberFlags);
             if (field != null)
-                return field.GetValue;
+                try
+                {
+                    return FastMethodInvoker.CreateInstanceGetter(field);
+                }
+                catch
+                {
+                    return field.GetValue;
+                }
 
             var property = type.GetProperty(memberName, InstanceMemberFlags);
             if (property == null)
                 return null;
 
-            var getter = property.GetGetMethod(true);
-            if (getter == null)
-                return property.GetValue;
-
             try
             {
-                return CreateUntypedPropertyGetter(type, property.PropertyType, getter);
+                return FastMethodInvoker.CreateInstanceGetter(property);
             }
             catch
             {
-                return target => getter.Invoke(target, null);
+                return property.GetValue;
             }
-        }
-
-        private static Func<object, object?> CreateUntypedPropertyGetter(
-            Type declaringType,
-            Type valueType,
-            MethodInfo getter)
-        {
-            var method = typeof(Sts2ModManagerCompat)
-                .GetMethod(nameof(CreateUntypedPropertyGetterCore), BindingFlags.Static | BindingFlags.NonPublic)!
-                .MakeGenericMethod(declaringType, valueType);
-            return (Func<object, object?>)method.Invoke(null, [getter])!;
-        }
-
-        private static Func<object, object?> CreateUntypedPropertyGetterCore<TDeclaring, TValue>(
-            MethodInfo getter)
-        {
-            var typedGetter = getter.CreateDelegate<Func<TDeclaring, TValue>>();
-
-            return target => typedGetter((TDeclaring)target);
         }
     }
 

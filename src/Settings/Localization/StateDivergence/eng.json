@@ -27,6 +27,7 @@
   "column.remote": "Remote",
   "checksum.id": "ID: {0}",
   "checksum.value": "Checksum: {0}",
+  "checksum.valueWithSort": "Checksum: {0}  Sort: {1}",
   "checksum.context": "Context: {0}",
   "footer.context": "Role: {0}  Remote peer: {1}",
   "detail.context": "Local context is recorded by this peer; remote context is not carried by the vanilla divergence message.",
@@ -36,6 +37,14 @@
   "value.missing": "Missing",
   "value.empty": "<empty>",
   "value.none": "<none>",
+  "value.sortMode.deterministic": "Stable sorting",
+  "value.sortMode.existing": "Existing order",
+  "value.sortMode.notReported": "Not reported",
+  "value.sortMode.compact.deterministic": "stable",
+  "value.sortMode.compact.existing": "existing",
+  "value.sortModes.modelDbOnly": "ModelDb {0}",
+  "value.sortModes.savedPropertyOnly": "SavedProperty {0}",
+  "value.sortModes.stateDivergence": "ModelDb {0} / SavedProperty {1}",
   "value.cardCount": "{0} card(s)",
   "value.cardIndex": "index {0}"
 }

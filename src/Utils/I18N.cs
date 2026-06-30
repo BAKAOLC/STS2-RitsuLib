@@ -14,6 +14,7 @@ namespace STS2RitsuLib.Utils
     /// </summary>
     public class I18N : IDisposable, IEnumerable<KeyValuePair<string, string>>
     {
+        private readonly string? _fallbackLanguage;
         private readonly string[] _fsFolders;
         private readonly string _instanceName;
         private readonly string[] _pckFolders;
@@ -22,6 +23,7 @@ namespace STS2RitsuLib.Utils
         private IReadOnlyList<string>? _availableLanguagesCache;
         private bool _disposed;
         private string? _loadedLanguage;
+        private HashSet<string> _localKeys = new(StringComparer.OrdinalIgnoreCase);
         private bool _subscribed;
         private Dictionary<string, string> _translations = new(StringComparer.OrdinalIgnoreCase);
 
@@ -29,17 +31,40 @@ namespace STS2RitsuLib.Utils
         ///     Creates an instance, optionally wiring locale change subscription when sources are configured.
         ///     创建实例；当配置了翻译来源时，可自动接入语言切换订阅。
         /// </summary>
+        /// <remarks>
+        ///     Optional fallback language code. When omitted, non-English languages fall back to <c>eng</c>, matching
+        ///     the game's <c>LocTable</c> fallback behavior.
+        ///     可选 fallback 语言代码。省略时，非英语语言会 fallback 到 <c>eng</c>，与游戏
+        ///     <c>LocTable</c> 的 fallback 行为一致。
+        /// </remarks>
         public I18N(string? instanceName = null,
             string[]? fsFolders = null,
             string[]? resourceFolders = null,
             string[]? pckFolders = null,
             Assembly? resourceAssembly = null)
+            : this(instanceName, fsFolders, resourceFolders, pckFolders, resourceAssembly, null)
+        {
+        }
+
+        /// <summary>
+        ///     Creates an instance with an explicit fallback language.
+        ///     使用显式 fallback 语言创建实例。
+        /// </summary>
+        public I18N(string? instanceName,
+            string[]? fsFolders,
+            string[]? resourceFolders,
+            string[]? pckFolders,
+            Assembly? resourceAssembly,
+            string? fallbackLanguage)
         {
             _instanceName = instanceName ?? "I18N";
             _resourceFolders = resourceFolders?.Where(f => !string.IsNullOrWhiteSpace(f)).ToArray() ?? [];
             _fsFolders = fsFolders?.Where(f => !string.IsNullOrWhiteSpace(f)).ToArray() ?? [];
             _pckFolders = pckFolders?.Where(f => !string.IsNullOrWhiteSpace(f)).ToArray() ?? [];
             _resourceAssembly = resourceAssembly ?? Assembly.GetCallingAssembly();
+            _fallbackLanguage = string.IsNullOrWhiteSpace(fallbackLanguage)
+                ? null
+                : NormalizeLanguageCode(fallbackLanguage);
 
             if (_resourceFolders.Length == 0 && _fsFolders.Length == 0 && _pckFolders.Length == 0)
                 RitsuLibFramework.Logger.Warn($"[{_instanceName}] Initialized with no translation sources");
@@ -58,6 +83,7 @@ namespace STS2RitsuLib.Utils
 
             TryUnsubscribe();
             _translations.Clear();
+            _localKeys.Clear();
             Changed = null;
             RitsuLibFramework.Logger.Info($"[{_instanceName}] Instance disposed and resources released");
             GC.SuppressFinalize(this);
@@ -120,6 +146,18 @@ namespace STS2RitsuLib.Utils
             ObjectDisposedException.ThrowIf(_disposed, this);
             EnsureLoaded();
             return _translations.ContainsKey(key);
+        }
+
+        /// <summary>
+        ///     Returns true when <paramref name="key" /> exists in the current language before fallback language entries
+        ///     are considered.
+        ///     当 <paramref name="key" /> 在 fallback 语言项介入前存在于当前语言中时返回 true。
+        /// </summary>
+        public bool ContainsLocalKey(string key)
+        {
+            ObjectDisposedException.ThrowIf(_disposed, this);
+            EnsureLoaded();
+            return _localKeys.Contains(key);
         }
 
         /// <summary>
@@ -211,10 +249,12 @@ namespace STS2RitsuLib.Utils
         public void ForceReload()
         {
             var language = ResolveLanguage();
-            _translations = LoadTranslations(language);
+            var loaded = LoadTranslations(language);
+            _translations = loaded.Translations;
+            _localKeys = loaded.LocalKeys;
             _loadedLanguage = language;
             _availableLanguagesCache = null;
-            RitsuLibFramework.Logger.Info(
+            RitsuLibFramework.Logger.Debug(
                 $"[{_instanceName}] Successfully reloaded translations for language '{language}' ({_translations.Count} entries)");
             BroadcastChange();
         }
@@ -296,59 +336,123 @@ namespace STS2RitsuLib.Utils
             var language = ResolveLanguage();
             if (string.Equals(_loadedLanguage, language, StringComparison.OrdinalIgnoreCase)) return;
 
-            _translations = LoadTranslations(language);
+            var loaded = LoadTranslations(language);
+            _translations = loaded.Translations;
+            _localKeys = loaded.LocalKeys;
             _loadedLanguage = language;
-            RitsuLibFramework.Logger.Info(
+            RitsuLibFramework.Logger.Debug(
                 $"[{_instanceName}] Successfully loaded translations for language '{_loadedLanguage}' ({_translations.Count} entries)");
         }
 
-        private Dictionary<string, string> LoadTranslations(string language)
+        private LoadedTranslations LoadTranslations(string language)
         {
             var merged = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
+            var localKeys = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
             var sourceCount = 0;
+            var primarySourceCount = 0;
+            var fallbackSourceCount = 0;
+            string? fallbackLanguage = null;
 
-            foreach (var folder in _fsFolders)
+            foreach (var step in ResolveLanguageLoadSteps(language))
             {
-                var path = $"{folder}/{language}.json";
-                var dictionary = TryLoadFromFileSystem(path);
-                if (dictionary is not { Count: > 0 }) continue;
+                if (!step.IsPrimary)
+                    fallbackLanguage = step.Language;
 
-                var newKeys = dictionary.Count(kvp => merged.TryAdd(kvp.Key, kvp.Value));
-                sourceCount++;
-                RitsuLibFramework.Logger.Info(
-                    $"[{_instanceName}] Merged from FS: {path} ({dictionary.Count} entries, {newKeys} new)");
-            }
+                foreach (var folder in _fsFolders)
+                {
+                    var path = $"{folder}/{step.Language}.json";
+                    var dictionary = TryLoadFromFileSystem(path);
+                    if (dictionary is not { Count: > 0 }) continue;
 
-            foreach (var res in _resourceFolders)
-            {
-                var dictionary = TryLoadEmbedded(res, language);
-                if (dictionary is not { Count: > 0 }) continue;
+                    var newKeys = MergeTranslations(dictionary, step.IsPrimary);
+                    sourceCount++;
+                    CountSource(step.IsPrimary);
+                    RitsuLibFramework.Logger.Debug(
+                        $"[{_instanceName}] Merged {DescribeLoadStep(step)} from FS: {path} ({dictionary.Count} entries, {newKeys} new)");
+                }
 
-                var newKeys = dictionary.Count(kvp => merged.TryAdd(kvp.Key, kvp.Value));
-                sourceCount++;
-                RitsuLibFramework.Logger.Info(
-                    $"[{_instanceName}] Merged from embedded: {res}.{language}.json ({dictionary.Count} entries, {newKeys} new)");
-            }
+                foreach (var res in _resourceFolders)
+                {
+                    var dictionary = TryLoadEmbedded(res, step.Language);
+                    if (dictionary is not { Count: > 0 }) continue;
 
-            foreach (var res in _pckFolders)
-            {
-                var path = $"{res}/{language}.json";
-                var dictionary = TryLoadFromPck(path);
-                if (dictionary is not { Count: > 0 }) continue;
+                    var newKeys = MergeTranslations(dictionary, step.IsPrimary);
+                    sourceCount++;
+                    CountSource(step.IsPrimary);
+                    RitsuLibFramework.Logger.Debug(
+                        $"[{_instanceName}] Merged {DescribeLoadStep(step)} from embedded: {res}.{step.Language}.json ({dictionary.Count} entries, {newKeys} new)");
+                }
 
-                var newKeys = dictionary.Count(kvp => merged.TryAdd(kvp.Key, kvp.Value));
-                sourceCount++;
-                RitsuLibFramework.Logger.Info(
-                    $"[{_instanceName}] Merged from PCK: {path} ({dictionary.Count} entries, {newKeys} new)");
+                foreach (var res in _pckFolders)
+                {
+                    var path = $"{res}/{step.Language}.json";
+                    var dictionary = TryLoadFromPck(path);
+                    if (dictionary is not { Count: > 0 }) continue;
+
+                    var newKeys = MergeTranslations(dictionary, step.IsPrimary);
+                    sourceCount++;
+                    CountSource(step.IsPrimary);
+                    RitsuLibFramework.Logger.Debug(
+                        $"[{_instanceName}] Merged {DescribeLoadStep(step)} from PCK: {path} ({dictionary.Count} entries, {newKeys} new)");
+                }
             }
 
             if (merged.Count == 0)
                 RitsuLibFramework.Logger.Warn($"[{_instanceName}] No translations found for '{language}'");
             else
                 RitsuLibFramework.Logger.Info(
-                    $"[{_instanceName}] Total: {merged.Count} entries from {sourceCount} source(s)");
+                    $"[{_instanceName}] Loaded translations: language='{NormalizeLanguageCode(language)}', " +
+                    $"fallback='{fallbackLanguage ?? "<none>"}', entries={merged.Count}, local={localKeys.Count}, " +
+                    $"fallbackEntries={merged.Count - localKeys.Count}, sources={sourceCount} " +
+                    $"(local={primarySourceCount}, fallback={fallbackSourceCount})");
 
-            return merged;
+            return new(merged, localKeys);
+
+            void CountSource(bool isPrimary)
+            {
+                if (isPrimary)
+                    primarySourceCount++;
+                else
+                    fallbackSourceCount++;
+            }
+
+            int MergeTranslations(IReadOnlyDictionary<string, string> dictionary, bool isPrimary)
+            {
+                var newKeys = 0;
+                foreach (var kvp in dictionary)
+                {
+                    if (isPrimary)
+                        localKeys.Add(kvp.Key);
+                    if (merged.TryAdd(kvp.Key, kvp.Value))
+                        newKeys++;
+                }
+
+                return newKeys;
+            }
+        }
+
+        private IEnumerable<LanguageLoadStep> ResolveLanguageLoadSteps(string language)
+        {
+            var normalizedLanguage = NormalizeLanguageCode(language);
+            yield return new(normalizedLanguage, true);
+
+            var fallback = ResolveFallbackLanguage(normalizedLanguage);
+            if (!string.IsNullOrWhiteSpace(fallback) &&
+                !string.Equals(normalizedLanguage, fallback, StringComparison.OrdinalIgnoreCase))
+                yield return new(fallback, false);
+        }
+
+        private string? ResolveFallbackLanguage(string language)
+        {
+            if (_fallbackLanguage != null)
+                return _fallbackLanguage;
+
+            return string.Equals(language, "eng", StringComparison.OrdinalIgnoreCase) ? null : "eng";
+        }
+
+        private static string DescribeLoadStep(LanguageLoadStep step)
+        {
+            return step.IsPrimary ? "current language" : $"fallback language '{step.Language}'";
         }
 
         private static IReadOnlyList<string> EnumerateJsonLanguagesInFolder(string folder)
@@ -571,5 +675,11 @@ namespace STS2RitsuLib.Utils
                 _ => text,
             };
         }
+
+        private readonly record struct LoadedTranslations(
+            Dictionary<string, string> Translations,
+            HashSet<string> LocalKeys);
+
+        private readonly record struct LanguageLoadStep(string Language, bool IsPrimary);
     }
 }

@@ -8,6 +8,8 @@ using MegaCrit.Sts2.Core.Multiplayer.Messages.Game.Checksums;
 using MegaCrit.Sts2.Core.Multiplayer.Serialization;
 using MegaCrit.Sts2.Core.Saves.Runs;
 using STS2RitsuLib.Compat;
+using STS2RitsuLib.Content.Patches;
+using STS2RitsuLib.Interop.Patches;
 using STS2RitsuLib.Networking.MessageExtensions;
 
 namespace STS2RitsuLib.Networking.StateDivergence
@@ -18,13 +20,15 @@ namespace STS2RitsuLib.Networking.StateDivergence
         int SavedPropertyNetIdBitSize,
         uint SavedPropertyMapHash,
         IReadOnlyList<string> SavedPropertyNames,
+        bool? ModelDbHashUsesDeterministicCache,
+        bool? SavedPropertyNetIdUsesDeterministicSort,
         string? ContentMods,
         ProgressDiagnosticsSnapshot? Progress);
 
     internal static class StateDivergenceSupplementPayloadCodec
     {
         private const string ExtensionId = "ritsulib.stateDivergence";
-        private const int PayloadVersion = 2;
+        private const int PayloadVersion = 3;
         private static int _registered;
 
         private static readonly JsonSerializerOptions JsonOptions = new()
@@ -61,12 +65,15 @@ namespace STS2RitsuLib.Networking.StateDivergence
         public static StateDivergenceSupplementPayload CreateLocalSnapshot(NetChecksumData checksum)
         {
             var propertyNames = GetSavedPropertyNames();
+            var modelDbCacheStatus = ModelIdSerializationCacheDynamicContentPatch.GetDeterministicCacheStatus();
             return new(
                 checksum.id,
                 checksum.checksum,
                 SavedPropertiesTypeCache.NetIdBitSize,
                 StableHash(propertyNames),
                 propertyNames,
+                modelDbCacheStatus.IsActive,
+                SavedPropertiesTypeCacheInjectionPatch.UsesDeterministicNetIdTable,
                 ContentModInventoryPayloadCodec.Encode(ContentModLoadOrderInventory.BuildRuntimeRelevantInventory()),
                 ProgressDiagnosticsSnapshot.CreateLocal());
         }
@@ -91,7 +98,7 @@ namespace STS2RitsuLib.Networking.StateDivergence
         {
             try
             {
-                if (version != 1 && version != PayloadVersion)
+                if (version != 1 && version != 2 && version != PayloadVersion)
                 {
                     RitsuLibFramework.Logger.Warn(
                         $"[State divergence diagnostics] Unsupported supplement payload version: {version}");
@@ -176,6 +183,8 @@ namespace STS2RitsuLib.Networking.StateDivergence
                 payload.SavedPropertyNetIdBitSize,
                 payload.SavedPropertyMapHash,
                 payload.SavedPropertyNames,
+                null,
+                null,
                 payload.ContentMods == null ? null : ContentModInventoryPayloadCodec.Encode(payload.ContentMods),
                 payload.Progress);
         }

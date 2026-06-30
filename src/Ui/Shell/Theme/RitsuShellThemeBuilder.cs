@@ -1,5 +1,6 @@
 using System.Text.Json;
 using Godot;
+using MegaCrit.Sts2.Core.Localization.Fonts;
 
 namespace STS2RitsuLib.Ui.Shell.Theme
 {
@@ -333,9 +334,9 @@ namespace STS2RitsuLib.Ui.Shell.Theme
         private static FontTokens BuildFontTokens(Dictionary<string, object?> root)
         {
             return new(
-                ReadFont(root, "semantic.fontFamily.body"),
-                ReadFont(root, "semantic.fontFamily.bodyBold"),
-                ReadFont(root, "semantic.fontFamily.button"));
+                ReadFont(root, "semantic.fontFamily.body", FontType.Regular),
+                ReadFont(root, "semantic.fontFamily.bodyBold", FontType.Bold),
+                ReadFont(root, "semantic.fontFamily.button", FontType.Bold));
         }
 
         private static Color ReadColor(Dictionary<string, object?> root, string path)
@@ -392,10 +393,10 @@ namespace STS2RitsuLib.Ui.Shell.Theme
             return false;
         }
 
-        private static Font ReadFont(Dictionary<string, object?> root, string path)
+        private static Font ReadFont(Dictionary<string, object?> root, string path, FontType fontType)
         {
             RitsuShellThemeReferenceResolver.TryFindLeaf(root, path, out var leaf);
-            return RitsuShellThemeValueCoerce.AsFont(leaf);
+            return RitsuShellThemeValueCoerce.AsFont(leaf, fontType);
         }
     }
 }

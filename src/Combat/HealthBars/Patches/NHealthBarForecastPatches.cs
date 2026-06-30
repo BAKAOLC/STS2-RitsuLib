@@ -16,6 +16,7 @@ namespace STS2RitsuLib.Combat.HealthBars.Patches
     /// </summary>
     internal static class NHealthBarForecastPatchHelper
     {
+        private const long BaseLibImportedSequenceOrderOffset = 500_000_000L;
         private static readonly AttachedState<NHealthBar, HealthBarForecastUiState?> UiStates = new(() => null);
 
         private static readonly Color DoomLethalTextColor = new("FB8DFF");
@@ -28,9 +29,12 @@ namespace STS2RitsuLib.Combat.HealthBars.Patches
             if (BaseLibHealthBarForecastBridge.ShouldRitsuRendererStandDown())
                 return;
 
+            var suppressBaseLibRenderer = BaseLibHealthBarForecastBridge.ShouldSuppressBaseLibRenderer();
             var creature = healthBar._creature;
             if (creature.CurrentHp <= 0 || creature.IsInfiniteHpDisplayed())
             {
+                if (suppressBaseLibRenderer)
+                    HideBaseLibForecastContainers(healthBar);
                 HideAllCustomSegments(healthBar);
                 return;
             }
@@ -38,6 +42,8 @@ namespace STS2RitsuLib.Combat.HealthBars.Patches
             var customSegments = GetCustomSegments(creature);
             if (customSegments.Length == 0)
             {
+                if (suppressBaseLibRenderer)
+                    HideBaseLibForecastContainers(healthBar);
                 HideAllCustomSegments(healthBar);
                 return;
             }
@@ -135,6 +141,8 @@ namespace STS2RitsuLib.Combat.HealthBars.Patches
             {
                 HideSegments(state.LeftSegments);
                 state.LastRender = new(true, rightForecastEdgeOffsetRight, lethalRightColor, null, 0);
+                if (suppressBaseLibRenderer)
+                    HideBaseLibForecastContainers(healthBar);
                 return;
             }
 
@@ -178,6 +186,9 @@ namespace STS2RitsuLib.Combat.HealthBars.Patches
             var lethalLeftColor = ResolveLeftLethalColor(creature, remainingHp, leftSegments, state.OverlapLeftZ);
             state.LastRender =
                 new(rightIndex > 0, rightForecastEdgeOffsetRight, lethalRightColor, lethalLeftColor, remainingHp);
+
+            if (suppressBaseLibRenderer)
+                HideBaseLibForecastContainers(healthBar);
         }
 
         public static void RefreshMiddlegroundOverlay(NHealthBar healthBar)
@@ -378,7 +389,7 @@ namespace STS2RitsuLib.Combat.HealthBars.Patches
 
         private static CustomSegment[] GetCustomSegments(Creature creature)
         {
-            return HealthBarForecastRegistry.GetSegments(creature)
+            var ritsuSegments = HealthBarForecastRegistry.GetSegments(creature)
                 .Select(registered => new CustomSegment(
                     registered.Segment.Amount,
                     registered.Segment.Color,
@@ -389,9 +400,42 @@ namespace STS2RitsuLib.Combat.HealthBars.Patches
                     registered.Segment.OverlaySelfModulate,
                     registered.Segment.LeftOriginLayout,
                     registered.Segment.LeftExclusiveZGroup,
-                    registered.Segment.AffectsHpLabel))
+                    registered.Segment.AffectsHpLabel));
+
+            var baseLibSegments = BaseLibHealthBarForecastBridge.GetImportedSegments(creature)
+                .Select(segment => new CustomSegment(
+                    segment.Amount,
+                    segment.Color,
+                    segment.Direction,
+                    segment.Order,
+                    BaseLibImportedSequenceOrderOffset + segment.SequenceOrder,
+                    segment.OverlayMaterial,
+                    segment.OverlaySelfModulate,
+                    segment.LeftOriginLayout,
+                    segment.LeftExclusiveZGroup,
+                    segment.AffectsHpLabel));
+
+            return ritsuSegments
+                .Concat(baseLibSegments)
                 .Where(segment => segment.Amount > 0)
                 .ToArray();
+        }
+
+        private static void HideBaseLibForecastContainers(NHealthBar healthBar)
+        {
+            if (healthBar._poisonForeground?.GetParent() is not Control mask)
+                return;
+
+            HideBaseLibForecastContainer(mask.GetNodeOrNull<Control>("BaseLibForecastRightContainer"));
+            HideBaseLibForecastContainer(mask.GetNodeOrNull<Control>("BaseLibForecastLeftContainer"));
+        }
+
+        private static void HideBaseLibForecastContainer(Control? container)
+        {
+            if (container == null)
+                return;
+
+            container.Visible = false;
         }
 
         private static void HideAllCustomSegments(NHealthBar healthBar)
