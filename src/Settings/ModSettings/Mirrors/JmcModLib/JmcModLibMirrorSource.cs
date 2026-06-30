@@ -387,7 +387,7 @@ namespace STS2RitsuLib.Settings
             var modId = TryReadContext(assembly).ModId ?? assembly?.GetName().Name ?? "jmcmodlib";
             var dataKey = ReadStringProperty(entry, "Key") ??
                           ReadStringProperty(entry, "StorageKey") ?? entry.GetHashCode().ToString();
-            return ModSettingsBindings.Callback(
+            var binding = ModSettingsBindings.Callback(
                 modId,
                 dataKey,
                 () => read(Invoke(entry, "GetValue")),
@@ -401,6 +401,10 @@ namespace STS2RitsuLib.Settings
                             { } flush)
                         flush.Invoke(null, [assembly]);
                 });
+
+            return TryReadDefault(entry, out var defaultValue)
+                ? ModSettingsBindings.WithDefault(binding, () => read(defaultValue))
+                : binding;
         }
 
         private static object CreateEnumBinding(object entry, Type enumType)
@@ -650,6 +654,20 @@ namespace STS2RitsuLib.Settings
                 if (item?.ToString() is { Length: > 0 } value)
                     values.Add(value);
             return values;
+        }
+
+        private static bool TryReadDefault(object entry, out object? value)
+        {
+            try
+            {
+                value = ReadProperty(entry, "DefaultValue");
+                return true;
+            }
+            catch
+            {
+                value = null;
+                return false;
+            }
         }
 
         private static ModSettingsText JmcText(Func<string?> resolve)
