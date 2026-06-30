@@ -9,6 +9,7 @@ using MegaCrit.Sts2.Core.Multiplayer.Game.Lobby;
 using MegaCrit.Sts2.Core.Multiplayer.Messages.Lobby;
 using MegaCrit.Sts2.Core.Multiplayer.Replay;
 using MegaCrit.Sts2.Core.Multiplayer.Serialization;
+using MegaCrit.Sts2.Core.Nodes;
 using MegaCrit.Sts2.Core.Rooms;
 using MegaCrit.Sts2.Core.Runs;
 using MegaCrit.Sts2.Core.Saves;
@@ -199,6 +200,8 @@ namespace STS2RitsuLib.RunData.Patches
     internal static class RunSavedDataStartRunLobbyAccess
     {
         private static readonly ConditionalWeakTable<INetGameService, StartRunLobby> LobbyByNetService = [];
+        private static readonly Lock ActiveLobbySync = new();
+        private static readonly List<WeakReference<StartRunLobby>> ActiveLobbies = [];
 
         private static readonly Func<string, ActModel?> GetActAccessor =
             AccessTools.MethodDelegate<Func<string, ActModel?>>(
@@ -208,11 +211,23 @@ namespace STS2RitsuLib.RunData.Patches
         {
             LobbyByNetService.Remove(lobby.NetService);
             LobbyByNetService.Add(lobby.NetService, lobby);
+            lock (ActiveLobbySync)
+            {
+                ActiveLobbies.RemoveAll(reference =>
+                    !reference.TryGetTarget(out var tracked) || ReferenceEquals(tracked, lobby));
+                ActiveLobbies.Add(new(lobby));
+            }
         }
 
         internal static void Untrack(StartRunLobby lobby)
         {
             LobbyByNetService.Remove(lobby.NetService);
+            lock (ActiveLobbySync)
+            {
+                ActiveLobbies.RemoveAll(reference =>
+                    !reference.TryGetTarget(out var tracked) || ReferenceEquals(tracked, lobby));
+            }
+
             RunSavedDataLobbyRuntime.RemoveSession(lobby);
         }
 
@@ -222,6 +237,35 @@ namespace STS2RitsuLib.RunData.Patches
             return netService != null && LobbyByNetService.TryGetValue(netService, out var lobby)
                 ? lobby
                 : null;
+        }
+
+        internal static StartRunLobby? TryFindSingleplayerLobby(CharacterModel character)
+        {
+            lock (ActiveLobbySync)
+            {
+                for (var i = ActiveLobbies.Count - 1; i >= 0; i--)
+                {
+                    if (!ActiveLobbies[i].TryGetTarget(out var lobby))
+                    {
+                        ActiveLobbies.RemoveAt(i);
+                        continue;
+                    }
+
+                    if (lobby.NetService.Type != NetGameType.Singleplayer ||
+                        lobby.Players.Count == 0 ||
+                        !IsSameCharacter(lobby.LocalPlayer.character, character))
+                        continue;
+
+                    return lobby;
+                }
+            }
+
+            return null;
+        }
+
+        private static bool IsSameCharacter(CharacterModel? left, CharacterModel right)
+        {
+            return left != null && (ReferenceEquals(left, right) || left.Id == right.Id);
         }
 
         [UnsafeAccessor(UnsafeAccessorKind.Method, Name = "GetUnlockState")]
@@ -701,6 +745,41 @@ namespace STS2RitsuLib.RunData.Patches
         }
     }
 
+    internal sealed class RunSavedDataPrepareSingleplayerNewRunPayloadPatch : IPatchMethod
+    {
+        public static string PatchId => "ritsulib_run_saved_data_prepare_singleplayer_new_run_payload";
+        public static string Description => "Prepare lobby RunSavedData payload before new single-player runs begin";
+        public static bool IsCritical => false;
+
+        public static ModPatchTarget[] GetTargets()
+        {
+            return
+            [
+                new(
+                    typeof(NGame),
+                    nameof(NGame.StartNewSingleplayerRun),
+                    [
+                        typeof(CharacterModel),
+                        typeof(bool),
+                        typeof(IReadOnlyList<ActModel>),
+                        typeof(IReadOnlyList<ModifierModel>),
+                        typeof(string),
+                        typeof(GameMode),
+                        typeof(int),
+                        typeof(DateTimeOffset?),
+                    ]),
+            ];
+        }
+
+        public static void Prefix(CharacterModel character, string seed, IReadOnlyList<ModifierModel> modifiers)
+        {
+            var lobby = RunSavedDataStartRunLobbyAccess.TryFindSingleplayerLobby(character);
+            RunSavedDataLobbyBeginRunMessageState.PreparedNewRunPayload = lobby == null
+                ? null
+                : RunSavedDataPatchHelpers.PrepareNewRunPayload(lobby, seed, modifiers);
+        }
+    }
+
     internal sealed class RunSavedDataInitializeNewRunPatch : IPatchMethod
     {
         public static string PatchId => "ritsulib_run_saved_data_initialize_new_run";
@@ -720,10 +799,12 @@ namespace STS2RitsuLib.RunData.Patches
             {
                 RunSavedDataRegistry.ImportPayloadIntoRun(__instance.State, payload);
                 ModCardPilePersistence.RestoreFromSavedData(__instance.State);
-                if (__instance.NetService?.Type.IsMultiplayer() == true)
-                    RitsuLibFramework.PublishLifecycleEvent(
-                        new RunSavedDataPreparingEvent(__instance.State, true, DateTimeOffset.UtcNow),
-                        nameof(RunSavedDataPreparingEvent));
+                RitsuLibFramework.PublishLifecycleEvent(
+                    new RunSavedDataPreparingEvent(
+                        __instance.State,
+                        __instance.NetService?.Type.IsMultiplayer() == true,
+                        DateTimeOffset.UtcNow),
+                    nameof(RunSavedDataPreparingEvent));
 
                 return;
             }
