@@ -720,7 +720,7 @@ namespace STS2RitsuLib.RunData.Patches
 
         public static void Postfix(StartRunLobby __instance, LobbyPlayer? __result)
         {
-            if (__result == null || __instance.NetService.Type != NetGameType.Host)
+            if (__result == null || __instance.NetService.Type == NetGameType.Client)
                 return;
 
             RunSavedDataLobby.PublishStagingEvent(__instance, RunSavedDataLobbyStagingReason.PlayerJoined);
