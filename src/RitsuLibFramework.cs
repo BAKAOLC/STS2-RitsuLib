@@ -1274,8 +1274,9 @@ namespace STS2RitsuLib
             IEnumerable<string>? pckFolders = null,
             Assembly? resourceAssembly = null)
         {
+            var callerAssembly = resourceAssembly ?? Assembly.GetCallingAssembly();
             return CreateLocalizationCore(instanceName, fileSystemFolders, resourceFolders, pckFolders,
-                resourceAssembly,
+                callerAssembly,
                 null);
         }
 
@@ -1291,8 +1292,9 @@ namespace STS2RitsuLib
             Assembly? resourceAssembly = null,
             string? fallbackLanguage = null)
         {
+            var callerAssembly = resourceAssembly ?? Assembly.GetCallingAssembly();
             return CreateLocalizationCore(instanceName, fileSystemFolders, resourceFolders, pckFolders,
-                resourceAssembly,
+                callerAssembly,
                 fallbackLanguage);
         }
 
@@ -1311,7 +1313,7 @@ namespace STS2RitsuLib
                 fileSystemFolders?.ToArray() ?? [],
                 resourceFolders?.ToArray() ?? [],
                 pckFolders?.ToArray() ?? [],
-                resourceAssembly ?? Assembly.GetCallingAssembly(),
+                resourceAssembly,
                 fallbackLanguage
             );
         }
@@ -1330,8 +1332,9 @@ namespace STS2RitsuLib
             IEnumerable<string>? pckFolders = null,
             Assembly? resourceAssembly = null)
         {
+            var callerAssembly = resourceAssembly ?? Assembly.GetCallingAssembly();
             return CreateModLocalizationCore(modId, instanceName, fileSystemFolders, resourceFolders, pckFolders,
-                resourceAssembly, null);
+                callerAssembly, null);
         }
 
         /// <summary>
@@ -1347,8 +1350,9 @@ namespace STS2RitsuLib
             Assembly? resourceAssembly = null,
             string? fallbackLanguage = null)
         {
+            var callerAssembly = resourceAssembly ?? Assembly.GetCallingAssembly();
             return CreateModLocalizationCore(modId, instanceName, fileSystemFolders, resourceFolders, pckFolders,
-                resourceAssembly, fallbackLanguage);
+                callerAssembly, fallbackLanguage);
         }
 
         private static I18N CreateModLocalizationCore(
