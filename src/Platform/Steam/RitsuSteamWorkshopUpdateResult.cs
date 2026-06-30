@@ -46,6 +46,23 @@ namespace STS2RitsuLib.Platform.Steam
 
     internal sealed record RitsuSteamWorkshopChangedItem(ulong Id, string DisplayName, uint RemoteUpdated);
 
+    internal sealed record RitsuSteamWorkshopSearchResult(
+        IReadOnlyList<RitsuSteamWorkshopItem> Items,
+        uint Page,
+        uint PageSize,
+        uint? TotalMatchingResults)
+    {
+        internal uint? TotalPages => TotalMatchingResults is { } total
+            ? Math.Max(1u, (total + PageSize - 1) / PageSize)
+            : null;
+
+        internal bool HasPreviousPage => Page > 1;
+
+        internal bool HasNextPage => TotalPages is { } totalPages
+            ? Page < totalPages
+            : (uint)Items.Count >= PageSize;
+    }
+
     internal sealed record RitsuSteamWorkshopItem(
         ulong Id,
         string DisplayName,

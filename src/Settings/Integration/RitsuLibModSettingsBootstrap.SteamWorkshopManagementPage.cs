@@ -37,7 +37,15 @@ namespace STS2RitsuLib.Settings
             private bool _searchContentBuilt;
             private LineEdit? _searchEdit;
             private int _searchGeneration;
+            private bool _searchHasNextPage;
+            private bool _searchHasPreviousPage;
             private WorkshopItemCanvas? _searchList;
+            private ModSettingsTextButton? _searchNextPageButton;
+            private uint _searchPage = 1;
+            private Label? _searchPageLabel;
+            private ModSettingsTextButton? _searchPreviousPageButton;
+            private string? _searchQuery;
+            private ScrollContainer? _searchScroll;
             private Label? _searchStatusLabel;
             private bool _subscribedContentBuilt;
             private IReadOnlyList<RitsuSteamWorkshopItem> _subscribedItems = [];
@@ -87,8 +95,10 @@ namespace STS2RitsuLib.Settings
                         RitsuShellTheme.Current.Text.RichMuted,
                         14);
                     box.AddChild(_searchStatusLabel);
+                    box.AddChild(BuildSearchPaginationRow());
 
                     var scroll = CreateResultsScroll();
+                    _searchScroll = scroll;
                     box.AddChild(scroll);
                     _searchList = CreateItemCanvas();
                     AddCanvasToScroll(scroll, _searchList);
@@ -131,6 +141,45 @@ namespace STS2RitsuLib.Settings
                     SizeFlagsHorizontal = SizeFlags.ShrinkEnd,
                 });
 
+                return row;
+            }
+
+            private Control BuildSearchPaginationRow()
+            {
+                var row = new HBoxContainer
+                {
+                    SizeFlagsHorizontal = SizeFlags.ExpandFill,
+                    MouseFilter = MouseFilterEnum.Ignore,
+                };
+                row.AddThemeConstantOverride("separation", 10);
+
+                _searchPageLabel = CreateLabel(string.Empty, RitsuShellTheme.Current.Text.RichMuted, 14);
+                _searchPageLabel.SizeFlagsHorizontal = SizeFlags.ExpandFill;
+                row.AddChild(_searchPageLabel);
+
+                _searchPreviousPageButton = new(
+                    L("ritsulib.steamWorkshopManagement.search.previousPage", "Previous"),
+                    ModSettingsButtonTone.Normal,
+                    () => SearchAdjacentPage(-1))
+                {
+                    CustomMinimumSize = new(130f, RitsuShellTheme.Current.Metric.Entry.ValueMinHeight),
+                    SizeFlagsHorizontal = SizeFlags.ShrinkEnd,
+                    Disabled = true,
+                };
+                row.AddChild(_searchPreviousPageButton);
+
+                _searchNextPageButton = new(
+                    L("ritsulib.steamWorkshopManagement.search.nextPage", "Next"),
+                    ModSettingsButtonTone.Normal,
+                    () => SearchAdjacentPage(1))
+                {
+                    CustomMinimumSize = new(130f, RitsuShellTheme.Current.Metric.Entry.ValueMinHeight),
+                    SizeFlagsHorizontal = SizeFlags.ShrinkEnd,
+                    Disabled = true,
+                };
+                row.AddChild(_searchNextPageButton);
+
+                SetSearchPagination(null, false, false);
                 return row;
             }
 
@@ -225,26 +274,65 @@ namespace STS2RitsuLib.Settings
                     return;
                 }
 
+                _searchQuery = query;
+                SearchPage(query, 1);
+            }
+
+            private void SearchAdjacentPage(int direction)
+            {
+                if (string.IsNullOrWhiteSpace(_searchQuery))
+                    return;
+
+                switch (direction)
+                {
+                    case < 0 when !_searchHasPreviousPage:
+                    case > 0 when !_searchHasNextPage:
+                        return;
+                    default:
+                    {
+                        var page = direction < 0
+                            ? Math.Max(1u, _searchPage - 1)
+                            : _searchPage + 1;
+                        SearchPage(_searchQuery, page);
+                        break;
+                    }
+                }
+            }
+
+            private void SearchPage(string query, uint page)
+            {
+                page = Math.Max(1u, page);
                 var generation = ++_searchGeneration;
                 _searchList?.SetMessage(null);
                 _searchList?.SetItems([]);
+                SetSearchPagination(null, false, false);
                 SetSearchStatus(
-                    L("ritsulib.steamWorkshopManagement.search.loading", "Searching Workshop..."),
+                    SteamWorkshopManager.TryExtractWorkshopItemId(query, out _)
+                        ? L("ritsulib.steamWorkshopManagement.search.loading", "Searching Workshop...")
+                        : string.Format(
+                            L("ritsulib.steamWorkshopManagement.search.loadingPage",
+                                "Searching Workshop page {0}..."),
+                            page),
                     false);
-                _ = SearchFromInputAsync(query, generation);
+                _ = SearchFromInputAsync(query, page, generation);
             }
 
-            private async Task SearchFromInputAsync(string query, int generation)
+            private async Task SearchFromInputAsync(string query, uint page, int generation)
             {
-                IReadOnlyList<RitsuSteamWorkshopItem> items;
+                RitsuSteamWorkshopSearchResult result;
                 try
                 {
                     if (SteamWorkshopManager.TryExtractWorkshopItemId(query, out var itemId))
-                        items = await SteamWorkshopManager.Instance.QueryItemsAsync([itemId])
+                    {
+                        var items = await SteamWorkshopManager.Instance.QueryItemsAsync([itemId])
                             .ConfigureAwait(false);
+                        result = new(items, 1, Math.Max(1u, (uint)items.Count), (uint)items.Count);
+                    }
                     else
-                        items = await SteamWorkshopManager.Instance.SearchItemsAsync(query)
+                    {
+                        result = await SteamWorkshopManager.Instance.SearchItemsAsync(query, page)
                             .ConfigureAwait(false);
+                    }
                 }
                 catch (Exception ex)
                 {
@@ -266,15 +354,16 @@ namespace STS2RitsuLib.Settings
                     if (generation != _searchGeneration)
                         return;
 
-                    PrepareSearchResults(items);
+                    PrepareSearchResults(result);
                 });
             }
 
-            private void PrepareSearchResults(IReadOnlyList<RitsuSteamWorkshopItem> items)
+            private void PrepareSearchResults(RitsuSteamWorkshopSearchResult result)
             {
                 if (!SteamWorkshopManager.Instance.IsAvailable)
                 {
                     _searchList?.SetItems([]);
+                    SetSearchPagination(null, false, false);
                     SetSearchStatus(
                         L("ritsulib.steamWorkshopManagement.status.unavailable",
                             "Steam Workshop is not available in this session."),
@@ -286,6 +375,7 @@ namespace STS2RitsuLib.Settings
                     !SteamWorkshopManager.TryExtractWorkshopItemId(_searchEdit?.Text ?? string.Empty, out _))
                 {
                     _searchList?.SetItems([]);
+                    SetSearchPagination(null, false, false);
                     SetSearchStatus(
                         L("ritsulib.steamWorkshopManagement.search.unavailable",
                             "Workshop text search is not available with the current Steamworks runtime."),
@@ -293,13 +383,13 @@ namespace STS2RitsuLib.Settings
                     return;
                 }
 
-                SetSearchStatus(
-                    string.Format(
-                        L("ritsulib.steamWorkshopManagement.search.count", "Search results: {0}"),
-                        items.Count),
-                    false);
+                _searchPage = result.Page;
+                _searchHasPreviousPage = result.HasPreviousPage;
+                _searchHasNextPage = result.HasNextPage;
+                SetSearchPagination(result, result.HasPreviousPage, result.HasNextPage);
+                SetSearchStatus(FormatSearchResultStatus(result), false);
 
-                if (items.Count == 0)
+                if (result.Items.Count == 0)
                 {
                     _searchList?.SetItems([]);
                     _searchList?.SetMessage(
@@ -308,7 +398,54 @@ namespace STS2RitsuLib.Settings
                 }
 
                 _searchList?.SetMessage(null);
-                _searchList?.SetItems(items);
+                _searchScroll?.SetDeferred(ScrollContainer.PropertyName.ScrollVertical, 0);
+                _searchList?.SetItems(result.Items);
+            }
+
+            private static string FormatSearchResultStatus(RitsuSteamWorkshopSearchResult result)
+            {
+                if (result.TotalMatchingResults is not { } total)
+                    return string.Format(
+                        L("ritsulib.steamWorkshopManagement.search.countPagedUnknownTotal",
+                            "Search results: page {0}, {1} item(s)"),
+                        result.Page,
+                        result.Items.Count);
+                var start = result.Items.Count == 0 ? 0 : (result.Page - 1) * result.PageSize + 1;
+                var end = start == 0 ? 0 : start + (uint)result.Items.Count - 1;
+                return string.Format(
+                    L("ritsulib.steamWorkshopManagement.search.countPaged",
+                        "Search results: {0}-{1} of {2}"),
+                    start,
+                    end,
+                    total);
+            }
+
+            private void SetSearchPagination(
+                RitsuSteamWorkshopSearchResult? result,
+                bool canPrevious,
+                bool canNext)
+            {
+                _searchHasPreviousPage = canPrevious;
+                _searchHasNextPage = canNext;
+                if (result != null)
+                    _searchPage = result.Page;
+
+                if (_searchPageLabel != null)
+                    _searchPageLabel.Text = result?.TotalPages is { } totalPages
+                        ? string.Format(
+                            L("ritsulib.steamWorkshopManagement.search.page", "Page {0} / {1}"),
+                            result.Page,
+                            totalPages)
+                        : result == null
+                            ? string.Empty
+                            : string.Format(
+                                L("ritsulib.steamWorkshopManagement.search.pageUnknown", "Page {0}"),
+                                result.Page);
+
+                if (_searchPreviousPageButton != null)
+                    _searchPreviousPageButton.Disabled = !canPrevious;
+                if (_searchNextPageButton != null)
+                    _searchNextPageButton.Disabled = !canNext;
             }
 
             private void SubscribeFromInput()
@@ -615,6 +752,7 @@ namespace STS2RitsuLib.Settings
                     return;
 
                 SyncButtons();
+                QueueRedraw();
             }
 
             public override void _Draw()
@@ -706,6 +844,9 @@ namespace STS2RitsuLib.Settings
                     .ConfigureAwait(false);
                 Callable.From(() =>
                 {
+                    if (!IsInstanceValid(this))
+                        return;
+
                     _previewTextures[previewUrl] = texture;
                     _loadingPreviewUrls.Remove(previewUrl);
                     QueueRedraw();
