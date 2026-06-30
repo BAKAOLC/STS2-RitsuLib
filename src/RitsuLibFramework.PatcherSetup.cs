@@ -40,6 +40,7 @@ using STS2RitsuLib.Scaffolding.Content.Patches;
 using STS2RitsuLib.Settings.Patches;
 using STS2RitsuLib.Timeline.Patches;
 using STS2RitsuLib.TopBar.Patches;
+using STS2RitsuLib.Ui.RichTextEffects.Patches;
 using STS2RitsuLib.Unlocks.Patches;
 using STS2RitsuLib.Utils.Persistence.Patches;
 
@@ -459,6 +460,8 @@ namespace STS2RitsuLib
             patcher.RegisterPatch<ModCardPileCombatUiActivatePatch>();
             patcher.RegisterPatch<ModTopBarActionButtonReadyPatch>();
             patcher.RegisterPatch<ModTopBarActionButtonInitializePatch>();
+            patcher.RegisterPatch<MegaRichTextLabelReadyModRichTextEffectPatch>();
+            patcher.RegisterPatch<MegaRichTextLabelSetTextAutoSizeModRichTextEffectPatch>();
             RegisterFrameworkPatcher(FrameworkPatcherArea.Core, patcher);
         }
 
