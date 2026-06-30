@@ -31,13 +31,7 @@ namespace STS2RitsuLib.Utils.Persistence.Interop
         private static readonly Dictionary<string, ReflectionStaticChannel> ProviderAccessors =
             new(StringComparer.OrdinalIgnoreCase);
 
-        private static readonly MethodInfo ModDataStoreRegisterWithCloudOpen =
-            typeof(ModDataStore).GetMethods(BindingFlags.Public | BindingFlags.Instance)
-                .Single(m =>
-                    m is { Name: nameof(ModDataStore.Register), IsGenericMethodDefinition: true } &&
-                    m.GetGenericArguments().Length == 1 &&
-                    m.GetParameters().Length == 8 &&
-                    m.GetParameters()[0].ParameterType == typeof(string));
+        private static readonly MethodInfo ModDataStoreRegisterWithCloudOpen = GetModDataStoreRegisterWithCloudOpen();
 
         private static readonly MethodInfo ModDataStoreGetOpen =
             typeof(ModDataStore).GetMethods(BindingFlags.Public | BindingFlags.Instance)
@@ -62,6 +56,27 @@ namespace STS2RitsuLib.Utils.Persistence.Interop
 
         private static readonly ConcurrentDictionary<string, Type?> ResolvedExternalTypeByName =
             new(StringComparer.Ordinal);
+
+        private static MethodInfo GetModDataStoreRegisterWithCloudOpen()
+        {
+            var dataType = Type.MakeGenericMethodParameter(0);
+            var defaultFactoryType = Type.MakeGenericSignatureType(typeof(Func<>), dataType);
+
+            return typeof(ModDataStore).GetMethod(
+                       nameof(ModDataStore.Register),
+                       BindingFlags.Public | BindingFlags.Instance,
+                       [
+                           typeof(string),
+                           typeof(string),
+                           typeof(SaveScope),
+                           typeof(bool),
+                           defaultFactoryType,
+                           typeof(bool),
+                           typeof(ModDataMigrationConfig),
+                           typeof(IEnumerable<IMigration>),
+                       ]) ??
+                   throw new MissingMethodException(typeof(ModDataStore).FullName, nameof(ModDataStore.Register));
+        }
 
         public static bool RegisterProviderType(string providerTypeFullName, string? assemblyName = null)
         {
