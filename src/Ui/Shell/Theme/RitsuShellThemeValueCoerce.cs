@@ -27,6 +27,9 @@ namespace STS2RitsuLib.Ui.Shell.Theme
         private static readonly System.Collections.Generic.Dictionary<string, Font> FontCache =
             new(StringComparer.Ordinal);
 
+        private static readonly System.Collections.Generic.Dictionary<string, Font?> GameLocaleFontResourceCache =
+            new(StringComparer.OrdinalIgnoreCase);
+
         private static readonly string[] GameFallbackFontPaths =
         [
             "res://themes/fonts/zhs/noto_sans_mono_cjksc_regular_shared.tres",
@@ -35,6 +38,21 @@ namespace STS2RitsuLib.Ui.Shell.Theme
             "res://themes/fonts/tha/cs_chat_thai_ui_shared.tres",
             "res://themes/fonts/rus/fira_sans_extra_condensed_regular_shared.tres",
         ];
+
+        private static readonly HashSet<string> GameLocaleFontResourcePaths = new(StringComparer.OrdinalIgnoreCase)
+        {
+            "res://themes/fonts/zhs/noto_sans_mono_cjksc_regular_shared.tres",
+            "res://themes/fonts/zhs/source_han_serif_sc_bold_shared.tres",
+            "res://themes/fonts/zhs/source_han_serif_sc_medium_shared.tres",
+            "res://themes/fonts/jpn/noto_sans_cjkjp_regular_shared.tres",
+            "res://themes/fonts/jpn/noto_sans_cjkjp_bold_shared.tres",
+            "res://themes/fonts/jpn/noto_sans_cjkjp_medium_shared.tres",
+            "res://themes/fonts/kor/gyeonggi_cheonnyeon_batang_bold_shared.tres",
+            "res://themes/fonts/tha/cs_chat_thai_ui_shared.tres",
+            "res://themes/fonts/rus/fira_sans_extra_condensed_regular_shared.tres",
+            "res://themes/fonts/rus/fira_sans_extra_condensed_bold_shared.tres",
+            "res://themes/fonts/rus/fira_sans_extra_condensed_italic_shared.tres",
+        };
 
         private static Font? _fallbackFont;
 
@@ -112,8 +130,8 @@ namespace STS2RitsuLib.Ui.Shell.Theme
         /// </summary>
         public static Font AsFont(LeafToken? leaf, FontType fontType = FontType.Regular)
         {
-            if (TryGetLocaleFont(fontType, out var localeFont))
-                return localeFont;
+            if (TryGetExternalFontSubstitution(fontType, out var externalFont))
+                return externalFont;
 
             var path = leaf?.Value as string;
             return TryLoadFont(path);
@@ -193,7 +211,7 @@ namespace STS2RitsuLib.Ui.Shell.Theme
             }
         }
 
-        private static bool TryGetLocaleFont(FontType fontType, out Font font)
+        private static bool TryGetExternalFontSubstitution(FontType fontType, out Font font)
         {
             font = null!;
             var language = LocManager.Instance?.Language;
@@ -202,6 +220,8 @@ namespace STS2RitsuLib.Ui.Shell.Theme
 
             var substitute = FontManager.GetSubstituteFont(language, fontType);
             if (substitute == null || !GodotObject.IsInstanceValid(substitute))
+                return false;
+            if (IsGameLocaleFontResource(substitute))
                 return false;
 
             ApplyGameFallbacks(substitute);
@@ -216,7 +236,61 @@ namespace STS2RitsuLib.Ui.Shell.Theme
                 return true;
 
             var substitute = FontManager.GetSubstituteFont(language, fontType);
+            if (substitute != null && IsGameLocaleFontResource(substitute))
+                return true;
+
             return substitute == null || ReferenceEquals(substitute, font);
+        }
+
+        private static bool IsGameLocaleFontResource(Font font)
+        {
+            while (true)
+            {
+                var path = font.ResourcePath;
+                if (!string.IsNullOrWhiteSpace(path) && GameLocaleFontResourcePaths.Contains(path)) return true;
+                if (IsKnownGameLocaleFontInstance(font)) return true;
+
+                if (font is FontVariation { BaseFont: { } baseFont })
+                {
+                    font = baseFont;
+                    continue;
+                }
+
+                if (font is not FontFile fontFile) return false;
+                var basePath = fontFile.ResourcePath;
+                return !string.IsNullOrWhiteSpace(basePath) && GameLocaleFontResourcePaths.Contains(basePath);
+            }
+        }
+
+        private static bool IsKnownGameLocaleFontInstance(Font font)
+        {
+            foreach (var known in GameLocaleFontResourcePaths.Select(GetCachedGameLocaleFontResource)
+                         .OfType<Font>())
+            {
+                if (ReferenceEquals(font, known))
+                    return true;
+
+                if (known is FontVariation { BaseFont: { } knownBaseFont } &&
+                    ReferenceEquals(font, knownBaseFont))
+                    return true;
+            }
+
+            return false;
+        }
+
+        private static Font? GetCachedGameLocaleFontResource(string path)
+        {
+            lock (FontGate)
+            {
+                if (GameLocaleFontResourceCache.TryGetValue(path, out var cached))
+                    return cached;
+
+                var loaded = ResourceLoader.Exists(path)
+                    ? ResourceLoader.Load<Font>(path)
+                    : null;
+                GameLocaleFontResourceCache[path] = loaded;
+                return loaded;
+            }
         }
 
         private static void ApplyGameFallbacks(Font font)
