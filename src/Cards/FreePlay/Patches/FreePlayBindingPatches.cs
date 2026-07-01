@@ -24,7 +24,7 @@ namespace STS2RitsuLib.Cards.FreePlay.Patches
 
         public static void Postfix(CardModel __instance)
         {
-            FreePlayBindingRegistry.MarkCardFreeThisTurn(__instance);
+            FreePlayBindingRegistry.MarkCardBaseCostsFreeThisTurn(__instance);
             FreePlayCardVisuals.Refresh(__instance);
         }
     }
@@ -103,7 +103,7 @@ namespace STS2RitsuLib.Cards.FreePlay.Patches
 
         public static void Postfix(CardModel __instance)
         {
-            FreePlayBindingRegistry.MarkCardFreeThisCombat(__instance);
+            FreePlayBindingRegistry.MarkCardBaseCostsFreeThisCombat(__instance);
             FreePlayCardVisuals.Refresh(__instance);
         }
     }

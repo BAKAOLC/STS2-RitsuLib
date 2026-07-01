@@ -333,7 +333,8 @@ namespace STS2RitsuLib.Combat.SecondaryResources
             {
                 var plan = SecondaryResourcePaymentResolver.Plan(
                     card,
-                    FreePlayBindingRegistry.IsCardFreeForUpcomingPlay(card));
+                    SecondaryResourcePaymentFreeMode.FromCardCostScope(
+                        FreePlayBindingRegistry.ResolveCardCostScopeForUpcomingPlay(card)));
                 var definitions = ModSecondaryResourceRegistry.GetDefinitionsSnapshot();
                 update(new(
                     parent,
