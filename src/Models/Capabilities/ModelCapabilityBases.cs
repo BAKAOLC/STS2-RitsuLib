@@ -276,15 +276,33 @@ namespace STS2RitsuLib.Models.Capabilities
     public abstract class CardPlayCapability : CardCapability, ICardOnPlayHookListener
     {
         /// <inheritdoc />
+        public Task<bool> BeforeCardOnPlay(BeforeCardOnPlayContext context)
+        {
+            return ShouldHandleCardPlay(context.CardPlay)
+                ? BeforeOwnerCardOnPlay(context.ChoiceContext, context.CardPlay)
+                : Task.FromResult(false);
+        }
+
+        /// <inheritdoc />
+        public Task AfterCardOnPlay(AfterCardOnPlayContext context)
+        {
+            return NotifyOwnerCardPlayed(context.ChoiceContext, context.CardPlay, context.OriginalOnPlayRan);
+        }
+
+        /// <inheritdoc />
+        [Obsolete("Use AfterCardOnPlay(AfterCardOnPlayContext) instead.")]
         public Task AfterCardOnPlayCompleted(CardOnPlayCompletedContext context)
         {
             return NotifyOwnerCardPlayed(context.ChoiceContext, context.CardPlay);
         }
 
-        internal Task NotifyOwnerCardPlayed(PlayerChoiceContext choiceContext, CardPlay cardPlay)
+        internal Task NotifyOwnerCardPlayed(
+            PlayerChoiceContext choiceContext,
+            CardPlay cardPlay,
+            bool originalOnPlayRan = true)
         {
             return ShouldHandleCardPlay(cardPlay)
-                ? OnOwnerCardPlayed(choiceContext, cardPlay)
+                ? OnOwnerCardPlayed(choiceContext, cardPlay, originalOnPlayRan)
                 : Task.CompletedTask;
         }
 
@@ -302,6 +320,29 @@ namespace STS2RitsuLib.Models.Capabilities
         ///     所属卡牌的 OnPlay 主体完成后调用。
         /// </summary>
         protected abstract Task OnOwnerCardPlayed(PlayerChoiceContext choiceContext, CardPlay cardPlay);
+
+        /// <summary>
+        ///     Called after the owning card's OnPlay body point.
+        ///     所属卡牌的 OnPlay 主体位置后调用。
+        /// </summary>
+        protected virtual Task OnOwnerCardPlayed(
+            PlayerChoiceContext choiceContext,
+            CardPlay cardPlay,
+            bool originalOnPlayRan)
+        {
+            return originalOnPlayRan
+                ? OnOwnerCardPlayed(choiceContext, cardPlay)
+                : Task.CompletedTask;
+        }
+
+        /// <summary>
+        ///     Runs before the owning card's OnPlay body. Return true to suppress the original body.
+        ///     在所属卡牌的 OnPlay 主体前运行。返回 true 可阻止原始主体执行。
+        /// </summary>
+        protected virtual Task<bool> BeforeOwnerCardOnPlay(PlayerChoiceContext choiceContext, CardPlay cardPlay)
+        {
+            return Task.FromResult(false);
+        }
     }
 
     /// <summary>

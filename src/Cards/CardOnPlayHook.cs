@@ -21,16 +21,61 @@ namespace STS2RitsuLib.Cards
         CardPlay CardPlay);
 
     /// <summary>
-    ///     Optional listener for card OnPlay completion hooks.
-    ///     卡牌 OnPlay 完成 hook 的可选监听器。
+    ///     Context for hooks that run before a card's own OnPlay body inside CardModel.OnPlayWrapper.
+    ///     在 CardModel.OnPlayWrapper 内、卡牌自身 OnPlay 主体前运行的 hook 上下文。
+    /// </summary>
+    public readonly record struct BeforeCardOnPlayContext(
+        CombatStateLike CombatState,
+        PlayerChoiceContext ChoiceContext,
+        CardPlay CardPlay);
+
+    /// <summary>
+    ///     Context for hooks that run after a card's own OnPlay body point inside CardModel.OnPlayWrapper.
+    ///     在 CardModel.OnPlayWrapper 内、卡牌自身 OnPlay 主体位置后运行的 hook 上下文。
+    /// </summary>
+    public readonly record struct AfterCardOnPlayContext(
+        CombatStateLike CombatState,
+        PlayerChoiceContext ChoiceContext,
+        CardPlay CardPlay,
+        bool OriginalOnPlayRan);
+
+    /// <summary>
+    ///     Optional listener for card OnPlay before and after hooks.
+    ///     卡牌 OnPlay 前置和后置 hook 的可选监听器。
     /// </summary>
     public interface ICardOnPlayHookListener
     {
         /// <summary>
-        ///     Runs after the card's own OnPlay body completes and before enchantment, affliction, and
-        ///     Hook.AfterCardPlayed processing.
-        ///     在卡牌自身 OnPlay 主体完成后、附魔/苦痛和 Hook.AfterCardPlayed 处理前运行。
+        ///     Runs before the card's own OnPlay body. Return true to suppress the original OnPlay body while keeping
+        ///     the rest of CardModel.OnPlayWrapper intact.
+        ///     在卡牌自身 OnPlay 主体前运行。返回 true 可阻止原始 OnPlay 主体，同时保留
+        ///     CardModel.OnPlayWrapper 的其他流程。
         /// </summary>
+        Task<bool> BeforeCardOnPlay(BeforeCardOnPlayContext context)
+        {
+            return Task.FromResult(false);
+        }
+
+        /// <summary>
+        ///     Runs after the card's own OnPlay body point and before enchantment, affliction, and
+        ///     Hook.AfterCardPlayed processing.
+        ///     在卡牌自身 OnPlay 主体位置后、附魔/苦痛和 Hook.AfterCardPlayed 处理前运行。
+        /// </summary>
+        Task AfterCardOnPlay(AfterCardOnPlayContext context)
+        {
+#pragma warning disable CS0618
+            return context.OriginalOnPlayRan
+                ? AfterCardOnPlayCompleted(new(context.CombatState, context.ChoiceContext, context.CardPlay))
+                : Task.CompletedTask;
+#pragma warning restore CS0618
+        }
+
+        /// <summary>
+        ///     Runs after the card's own OnPlay body or replacement point completes and before enchantment,
+        ///     affliction, and Hook.AfterCardPlayed processing.
+        ///     在卡牌自身 OnPlay 主体或替代位置完成后、附魔/苦痛和 Hook.AfterCardPlayed 处理前运行。
+        /// </summary>
+        [Obsolete("Use AfterCardOnPlay(AfterCardOnPlayContext) instead.")]
         Task AfterCardOnPlayCompleted(CardOnPlayCompletedContext context)
         {
             return Task.CompletedTask;
@@ -38,8 +83,8 @@ namespace STS2RitsuLib.Cards
     }
 
     /// <summary>
-    ///     Dispatches card OnPlay completion hooks to model, capability, and registered global listeners.
-    ///     将卡牌 OnPlay 完成 hook 分发给模型、capability 和已注册的全局监听器。
+    ///     Dispatches card OnPlay hooks to model, capability, and registered global listeners.
+    ///     将卡牌 OnPlay hook 分发给模型、capability 和已注册的全局监听器。
     /// </summary>
     public static class CardOnPlayHook
     {
@@ -57,41 +102,126 @@ namespace STS2RitsuLib.Cards
         }
 
         /// <summary>
-        ///     Runs the card's original OnPlay method and then dispatches OnPlay completion hooks.
-        ///     运行卡牌原始 OnPlay 方法，然后分发 OnPlay 完成 hook。
+        ///     Runs before hooks, the card's original OnPlay body when not suppressed, and after hooks.
+        ///     运行前置 hook、未被阻止时的卡牌原始 OnPlay 主体，以及后置 hook。
         /// </summary>
-        public static async Task RunOnPlayAndAfterCardOnPlayCompleted(
+        public static async Task RunCardOnPlayHooks(
             CardModel card,
             PlayerChoiceContext choiceContext,
             CardPlay cardPlay)
         {
-            await CardOnPlay(card, choiceContext, cardPlay);
-
             var combatState = card.CombatState;
+            var suppressOriginal = combatState != null &&
+                                   await BeforeCardOnPlay(new(combatState, choiceContext, cardPlay));
+            var originalOnPlayRan = false;
+            if (!suppressOriginal)
+            {
+                await CardOnPlay(card, choiceContext, cardPlay);
+                originalOnPlayRan = true;
+            }
+
+            combatState = card.CombatState;
             if (combatState == null)
                 return;
 
-            await AfterCardOnPlayCompleted(new(combatState, choiceContext, cardPlay));
+            await AfterCardOnPlay(new(combatState, choiceContext, cardPlay, originalOnPlayRan));
         }
 
         /// <summary>
-        ///     Runs OnPlay completion hooks.
-        ///     运行 OnPlay 完成 hook。
+        ///     Compatibility wrapper for the original RitsuLib card OnPlay hook injection method.
+        ///     RitsuLib 原卡牌 OnPlay hook 注入方法的兼容包装。
         /// </summary>
-        public static async Task AfterCardOnPlayCompleted(CardOnPlayCompletedContext context)
+        [Obsolete("Use RunCardOnPlayHooks(CardModel, PlayerChoiceContext, CardPlay) instead.")]
+        public static Task RunOnPlayAndAfterCardOnPlayCompleted(
+            CardModel card,
+            PlayerChoiceContext choiceContext,
+            CardPlay cardPlay)
+        {
+            return RunCardOnPlayHooks(card, choiceContext, cardPlay);
+        }
+
+        /// <summary>
+        ///     Runs card OnPlay before hooks and returns true when the original OnPlay body should be suppressed.
+        ///     运行卡牌 OnPlay 前置 hook，并在应阻止原始 OnPlay 主体时返回 true。
+        /// </summary>
+        public static async Task<bool> BeforeCardOnPlay(BeforeCardOnPlayContext context)
+        {
+            var suppressOriginal = false;
+            // ReSharper disable once LoopCanBeConvertedToQuery
+            foreach (var entry in IterateListeners(context.CombatState))
+                suppressOriginal |= await BeforeCardOnPlay(context, entry);
+
+            return suppressOriginal;
+        }
+
+        private static async Task<bool> BeforeCardOnPlay(BeforeCardOnPlayContext context, ListenerEntry entry)
+        {
+            if (entry.Model == null)
+                return await entry.Listener.BeforeCardOnPlay(context);
+
+            context.ChoiceContext.PushModel(entry.Model);
+            try
+            {
+                var suppressOriginal = await entry.Listener.BeforeCardOnPlay(context);
+                entry.Model.InvokeExecutionFinished();
+                return suppressOriginal;
+            }
+            finally
+            {
+                context.ChoiceContext.PopModel(entry.Model);
+            }
+        }
+
+        /// <summary>
+        ///     Runs OnPlay after hooks.
+        ///     运行 OnPlay 后置 hook。
+        /// </summary>
+        public static async Task AfterCardOnPlay(AfterCardOnPlayContext context)
         {
             foreach (var entry in IterateListeners(context.CombatState))
             {
                 if (entry.Model == null)
                 {
-                    await entry.Listener.AfterCardOnPlayCompleted(context);
+                    await entry.Listener.AfterCardOnPlay(context);
                     continue;
                 }
 
                 context.ChoiceContext.PushModel(entry.Model);
                 try
                 {
+                    await entry.Listener.AfterCardOnPlay(context);
+                    entry.Model.InvokeExecutionFinished();
+                }
+                finally
+                {
+                    context.ChoiceContext.PopModel(entry.Model);
+                }
+            }
+        }
+
+        /// <summary>
+        ///     Runs the original OnPlay completion hooks.
+        ///     运行原有 OnPlay 完成 hook。
+        /// </summary>
+        [Obsolete("Use AfterCardOnPlay(AfterCardOnPlayContext) instead.")]
+        public static async Task AfterCardOnPlayCompleted(CardOnPlayCompletedContext context)
+        {
+            foreach (var entry in IterateListeners(context.CombatState))
+            {
+                if (entry.Model == null)
+                {
+#pragma warning disable CS0618
                     await entry.Listener.AfterCardOnPlayCompleted(context);
+#pragma warning restore CS0618
+                    continue;
+                }
+
+                context.ChoiceContext.PushModel(entry.Model);
+                try
+                {
+#pragma warning disable CS0618
+                    await entry.Listener.AfterCardOnPlayCompleted(context);
+#pragma warning restore CS0618
                     entry.Model.InvokeExecutionFinished();
                 }
                 finally
