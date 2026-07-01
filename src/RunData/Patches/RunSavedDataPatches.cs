@@ -773,10 +773,19 @@ namespace STS2RitsuLib.RunData.Patches
             return [new(typeof(StartRunLobby), nameof(StartRunLobby.SetReady), [typeof(bool)])];
         }
 
-        public static void Prefix(StartRunLobby __instance, bool ready)
+        public static void Prefix(StartRunLobby __instance, bool ready, out IDisposable? __state)
         {
-            if (ready)
-                RunSavedDataLobbySync.TryPushContribution(__instance);
+            __state = null;
+            if (!ready)
+                return;
+
+            RunSavedDataLobbySync.TryPushContribution(__instance);
+            __state = RunSavedDataLobbySync.PushOutboundContribution(__instance);
+        }
+
+        public static void Postfix(IDisposable? __state)
+        {
+            __state?.Dispose();
         }
     }
 
