@@ -138,7 +138,8 @@ namespace STS2RitsuLib.RunData
 
         public static string? BuildLobbyContributionPayload(StartRunLobby lobby, ulong contributorNetId)
         {
-            if (!RunSavedDataLobbyRuntime.TryGetSession(lobby, out var session))
+            if (!IsActiveLobbyPlayer(lobby, contributorNetId) ||
+                !RunSavedDataLobbyRuntime.TryGetSession(lobby, out var session))
                 return null;
 
             var isHostNetId = contributorNetId == lobby.NetService.NetId;
@@ -154,6 +155,8 @@ namespace STS2RitsuLib.RunData
             if (!RunSavedDataLobbyRuntime.TryGetSession(lobby, out var session))
                 return null;
 
+            session.RemovePlayersExcept(GetActiveLobbyPlayerIds(lobby));
+
             var document = new RunSavedDataDocument();
             foreach (var slot in GetSlotsSnapshot())
                 slot.TryExportLobbyStaging(session, document);
@@ -163,7 +166,7 @@ namespace STS2RitsuLib.RunData
 
         public static void MergeLobbyContribution(StartRunLobby lobby, ulong contributorNetId, string? payload)
         {
-            if (string.IsNullOrWhiteSpace(payload))
+            if (string.IsNullOrWhiteSpace(payload) || !IsActiveLobbyPlayer(lobby, contributorNetId))
                 return;
 
             var document = RunSavedDataDocument.FromJson(payload);
@@ -187,6 +190,16 @@ namespace STS2RitsuLib.RunData
             {
                 return Slots.GetValueOrDefault(GetSlotId(modId, key));
             }
+        }
+
+        private static bool IsActiveLobbyPlayer(StartRunLobby lobby, ulong netId)
+        {
+            return lobby.Players.Any(player => player.id == netId);
+        }
+
+        private static HashSet<ulong> GetActiveLobbyPlayerIds(StartRunLobby lobby)
+        {
+            return [.. lobby.Players.Select(player => player.id)];
         }
 
         internal static IRunSavedDataSlot[] GetRegisteredSlots()

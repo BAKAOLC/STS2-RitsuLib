@@ -53,6 +53,36 @@ namespace STS2RitsuLib.RunData
             return removed;
         }
 
+        public bool RemovePlayer(ulong netId)
+        {
+            var removed = false;
+            foreach (var key in _playerValues.Keys.ToArray())
+            {
+                var players = _playerValues[key];
+                removed |= players.Remove(netId);
+                if (players.Count == 0)
+                    _playerValues.Remove(key);
+            }
+
+            return removed;
+        }
+
+        public bool RemovePlayersExcept(HashSet<ulong> activeNetIds)
+        {
+            var removed = false;
+            foreach (var key in _playerValues.Keys.ToArray())
+            {
+                var players = _playerValues[key];
+                removed = players.Keys.ToArray().Where(netId => !activeNetIds.Contains(netId))
+                    .Aggregate(removed, (current, netId) => current | players.Remove(netId));
+
+                if (players.Count == 0)
+                    _playerValues.Remove(key);
+            }
+
+            return removed;
+        }
+
         public IEnumerable<KeyValuePair<RunSavedDataSlotKey, object>> RunEntries()
         {
             return _runValues;
