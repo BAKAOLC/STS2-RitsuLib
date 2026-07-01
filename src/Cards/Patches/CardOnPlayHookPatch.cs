@@ -34,7 +34,7 @@ namespace STS2RitsuLib.Cards.Patches
                 [typeof(PlayerChoiceContext), typeof(CardPlay)]);
             var wrapperMethod = AccessTools.Method(
                 typeof(CardOnPlayHook),
-                nameof(CardOnPlayHook.RunOnPlayAndAfterCardOnPlayCompleted));
+                nameof(CardOnPlayHook.RunCardOnPlayHooks));
             var rewriter = HarmonyIlRewriter.From(instructions);
             if (onPlayMethod == null || wrapperMethod == null)
                 return rewriter.Instructions();

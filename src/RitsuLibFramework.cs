@@ -8,6 +8,7 @@ using MegaCrit.Sts2.Core.Logging;
 using MegaCrit.Sts2.Core.Modding;
 using MegaCrit.Sts2.Core.Models;
 using STS2RitsuLib.CardPiles;
+using STS2RitsuLib.Cards;
 using STS2RitsuLib.Cards.FreePlay;
 using STS2RitsuLib.Cards.Transforms;
 using STS2RitsuLib.CardTags;
@@ -864,6 +865,15 @@ namespace STS2RitsuLib
         public static void RegisterHealHookListener(IHealHookListener listener)
         {
             HealHook.RegisterGlobalListener(listener);
+        }
+
+        /// <summary>
+        ///     Registers a process-wide card OnPlay listener through the framework.
+        ///     通过框架注册进程级卡牌 OnPlay 监听器。
+        /// </summary>
+        public static void RegisterCardOnPlayHookListener(ICardOnPlayHookListener listener)
+        {
+            CardOnPlayHook.RegisterGlobalListener(listener);
         }
 
         /// <summary>

@@ -48,12 +48,12 @@ namespace STS2RitsuLib.Platform.Steam
             return RitsuSteamWorkshopUpdates.QueryItemsAsync(itemIds, cancellationToken);
         }
 
-        public Task<IReadOnlyList<RitsuSteamWorkshopItem>> SearchItemsAsync(
+        public Task<RitsuSteamWorkshopSearchResult> SearchItemsAsync(
             string query,
-            uint limit = 20,
+            uint page = 1,
             CancellationToken cancellationToken = default)
         {
-            return RitsuSteamWorkshopUpdates.SearchItemsAsync(query, limit, cancellationToken);
+            return RitsuSteamWorkshopUpdates.SearchItemsAsync(query, page, cancellationToken);
         }
 
         public RitsuSteamWorkshopActionResult SubscribeFromUi(ulong itemId, string? displayName = null)

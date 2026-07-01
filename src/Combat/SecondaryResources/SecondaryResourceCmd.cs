@@ -288,6 +288,7 @@ namespace STS2RitsuLib.Combat.SecondaryResources
 
             SecondaryResourceHistory.Changed(combatState, context);
             SecondaryResourceUiRuntime.UpdateCurrentCombatUi(player);
+            SecondaryResourceUiRuntime.NotifyCurrentCombatUiChanged(context);
             await SecondaryResourceHook.AfterChanged(context);
             if (afterReset)
                 await SecondaryResourceHook.AfterReset(context);

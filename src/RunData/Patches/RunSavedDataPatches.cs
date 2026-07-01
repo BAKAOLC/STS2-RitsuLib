@@ -634,7 +634,7 @@ namespace STS2RitsuLib.RunData.Patches
             ];
         }
 
-        public static void Postfix(StartRunLobby __instance, ulong senderId)
+        public static void Prefix(StartRunLobby __instance, ulong senderId)
         {
             RunSavedDataLobbySync.TryMergeVanillaTrailer(__instance, senderId);
         }
@@ -724,6 +724,68 @@ namespace STS2RitsuLib.RunData.Patches
                 return;
 
             RunSavedDataLobby.PublishStagingEvent(__instance, RunSavedDataLobbyStagingReason.PlayerJoined);
+        }
+    }
+
+    internal sealed class RunSavedDataLobbyPlayerLeftPatch : IPatchMethod
+    {
+        public static string PatchId => "ritsulib_run_saved_data_lobby_player_left";
+        public static string Description => "Remove lobby RunSavedData staging when a player leaves";
+        public static bool IsCritical => false;
+
+        public static ModPatchTarget[] GetTargets()
+        {
+            return [new(typeof(StartRunLobby), "HandlePlayerLeftMessage", [typeof(PlayerLeftMessage), typeof(ulong)])];
+        }
+
+        public static void Prefix(StartRunLobby __instance, PlayerLeftMessage message)
+        {
+            RunSavedDataLobby.RemovePlayer(__instance, message.playerId);
+        }
+    }
+
+    internal sealed class RunSavedDataLobbyHostClientDisconnectedPatch : IPatchMethod
+    {
+        public static string PatchId => "ritsulib_run_saved_data_lobby_host_client_disconnected";
+        public static string Description => "Remove host lobby RunSavedData staging when a client disconnects";
+        public static bool IsCritical => false;
+
+        public static ModPatchTarget[] GetTargets()
+        {
+            return
+                [new(typeof(StartRunLobby), "OnDisconnectedFromClientAsHost", [typeof(ulong), typeof(NetErrorInfo)])];
+        }
+
+        public static void Prefix(StartRunLobby __instance, ulong playerId)
+        {
+            RunSavedDataLobby.RemovePlayer(__instance, playerId);
+        }
+    }
+
+    internal sealed class RunSavedDataStartRunLobbySetReadyPatch : IPatchMethod
+    {
+        public static string PatchId => "ritsulib_run_saved_data_start_run_lobby_set_ready";
+        public static string Description => "Flush local RunSavedData lobby contribution before ready can start a run";
+        public static bool IsCritical => false;
+
+        public static ModPatchTarget[] GetTargets()
+        {
+            return [new(typeof(StartRunLobby), nameof(StartRunLobby.SetReady), [typeof(bool)])];
+        }
+
+        public static void Prefix(StartRunLobby __instance, bool ready, out IDisposable? __state)
+        {
+            __state = null;
+            if (!ready)
+                return;
+
+            RunSavedDataLobbySync.TryPushContribution(__instance);
+            __state = RunSavedDataLobbySync.PushOutboundContribution(__instance);
+        }
+
+        public static void Postfix(IDisposable? __state)
+        {
+            __state?.Dispose();
         }
     }
 

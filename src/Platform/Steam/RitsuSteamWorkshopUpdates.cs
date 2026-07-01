@@ -9,6 +9,7 @@ namespace STS2RitsuLib.Platform.Steam
     internal static class RitsuSteamWorkshopUpdates
     {
         private const int QueryBatchSize = 20;
+        private const uint SearchResultsPerPage = 50;
         private static readonly TimeSpan QueryTimeout = TimeSpan.FromSeconds(15);
         private static readonly TimeSpan QueryBatchDelay = TimeSpan.FromMilliseconds(250);
         private static readonly TimeSpan ItemProcessingDelay = TimeSpan.FromMilliseconds(50);
@@ -82,15 +83,16 @@ namespace STS2RitsuLib.Platform.Steam
                 : bindings.QueryItemsAsync(itemIds, cancellationToken);
         }
 
-        internal static Task<IReadOnlyList<RitsuSteamWorkshopItem>> SearchItemsAsync(
+        internal static Task<RitsuSteamWorkshopSearchResult> SearchItemsAsync(
             string query,
-            uint limit = 20,
+            uint page = 1,
             CancellationToken cancellationToken = default)
         {
+            page = Math.Max(1u, page);
             var bindings = LazyBindings.Value;
             return bindings is not { SupportsSearch: true } || string.IsNullOrWhiteSpace(query)
-                ? Task.FromResult<IReadOnlyList<RitsuSteamWorkshopItem>>([])
-                : bindings.SearchItemsAsync(query, limit, cancellationToken);
+                ? Task.FromResult(new RitsuSteamWorkshopSearchResult([], page, SearchResultsPerPage, null))
+                : bindings.SearchItemsAsync(query, page, cancellationToken);
         }
 
         internal static RitsuSteamWorkshopActionResult RequestSubscribe(ulong itemId)
@@ -308,6 +310,9 @@ namespace STS2RitsuLib.Platform.Steam
                 var queryCompletedReturned = steamUgcQueryCompletedType.GetField(
                     "m_unNumResultsReturned",
                     BindingFlags.Public | BindingFlags.Instance);
+                var queryCompletedTotalMatching = steamUgcQueryCompletedType.GetField(
+                    "m_unTotalMatchingResults",
+                    BindingFlags.Public | BindingFlags.Instance);
                 var steamApiCallValue = steamApiCallType.GetField(
                     "m_SteamAPICall",
                     BindingFlags.Public | BindingFlags.Instance);
@@ -398,6 +403,7 @@ namespace STS2RitsuLib.Platform.Steam
                     steamUgcDetailsUpdated,
                     queryCompletedResult,
                     queryCompletedReturned,
+                    queryCompletedTotalMatching,
                     steamApiCallValue,
                     callResultCreate,
                     callResultSet,
@@ -486,6 +492,7 @@ namespace STS2RitsuLib.Platform.Steam
             FieldInfo steamUgcDetailsUpdated,
             FieldInfo queryCompletedResult,
             FieldInfo queryCompletedReturned,
+            FieldInfo? queryCompletedTotalMatching,
             FieldInfo steamApiCallValue,
             MethodInfo callResultCreate,
             MethodInfo callResultSet,
@@ -788,13 +795,14 @@ namespace STS2RitsuLib.Platform.Steam
             }
 
             // ReSharper disable once MemberHidesStaticFromOuterClass
-            internal async Task<IReadOnlyList<RitsuSteamWorkshopItem>> SearchItemsAsync(
+            internal async Task<RitsuSteamWorkshopSearchResult> SearchItemsAsync(
                 string query,
-                uint limit,
+                uint page,
                 CancellationToken cancellationToken)
             {
+                page = Math.Max(1u, page);
                 if (!SupportsSearch || string.IsNullOrWhiteSpace(query))
-                    return [];
+                    return new([], page, SearchResultsPerPage, null);
 
                 var appId = steamAppIdCtor!.Invoke([Const.Sts2SteamAppId]);
                 var queryHandle = createQueryAllUgcRequest!.Invoke(null,
@@ -803,10 +811,10 @@ namespace STS2RitsuLib.Platform.Steam
                     Enum.Parse(eUgcMatchingType!, "k_EUGCMatchingUGCType_Items"),
                     appId,
                     appId,
-                    1u,
+                    page,
                 ]);
                 if (queryHandle == null)
-                    return [];
+                    return new([], page, SearchResultsPerPage, null);
 
                 try
                 {
@@ -818,30 +826,31 @@ namespace STS2RitsuLib.Platform.Steam
                     {
                         RitsuLibFramework.Logger.Warn(
                             "[SteamWorkshopUpdate] Steam rejected Workshop search query.");
-                        return [];
+                        return new([], page, SearchResultsPerPage, null);
                     }
 
                     var queryCompleted = await WaitForQueryAsync(apiCall, cancellationToken)
                         .ConfigureAwait(false);
                     if (queryCompleted == null)
-                        return [];
+                        return new([], page, SearchResultsPerPage, null);
 
                     if (!IsResultOk(queryCompleted))
                     {
                         RitsuLibFramework.Logger.Warn(
                             $"[SteamWorkshopUpdate] Workshop search query failed: {queryCompletedResult.GetValue(queryCompleted)}.");
-                        return [];
+                        return new([], page, SearchResultsPerPage, null);
                     }
 
-                    var returned = Math.Min(GetReturnedCount(queryCompleted), limit);
+                    var returned = GetReturnedCount(queryCompleted);
                     var details = ReadQueryResults(queryHandle, returned);
                     var localManifests = BuildLocalManifestByWorkshopItemId();
-                    return details.Values
+                    var items = details.Values
                         .Select(detail => BuildWorkshopItem(detail, localManifests))
                         .Where(static item => item.Id != 0)
                         .OrderBy(static item => item.DisplayName, StringComparer.OrdinalIgnoreCase)
                         .ThenBy(static item => item.Id)
                         .ToArray();
+                    return new(items, page, SearchResultsPerPage, GetTotalMatchingResults(queryCompleted));
                 }
                 finally
                 {
@@ -1230,6 +1239,15 @@ namespace STS2RitsuLib.Platform.Steam
             private uint GetReturnedCount(object queryCompleted)
             {
                 return Convert.ToUInt32(queryCompletedReturned.GetValue(queryCompleted));
+            }
+
+            private uint? GetTotalMatchingResults(object queryCompleted)
+            {
+                if (queryCompletedTotalMatching == null)
+                    return null;
+
+                var value = queryCompletedTotalMatching.GetValue(queryCompleted);
+                return value == null ? null : Convert.ToUInt32(value);
             }
 
             private bool InvokeDownloadItem(object item)

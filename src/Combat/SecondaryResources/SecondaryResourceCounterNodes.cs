@@ -6,6 +6,9 @@ using MegaCrit.Sts2.Core.Entities.Players;
 using MegaCrit.Sts2.Core.Helpers;
 using MegaCrit.Sts2.Core.HoverTips;
 using MegaCrit.Sts2.Core.Nodes.HoverTips;
+using MegaCrit.Sts2.Core.Nodes.Vfx.Utilities;
+using STS2RitsuLib.Scaffolding.Godot;
+using STS2RitsuLib.Utils;
 
 namespace STS2RitsuLib.Combat.SecondaryResources
 {
@@ -121,6 +124,163 @@ namespace STS2RitsuLib.Combat.SecondaryResources
     }
 
     /// <summary>
+    ///     Optional gain feedback for a secondary-resource counter.
+    ///     次级资源计数器的可选获得反馈。
+    /// </summary>
+    public sealed record SecondaryResourceCounterGainFeedback
+    {
+        private const string IroncladEnergyBackVfxPath =
+            "res://scenes/vfx/energy/ironclad/ironclad_energy_vfx_back.tscn";
+
+        private const string IroncladEnergyFrontVfxPath =
+            "res://scenes/vfx/energy/ironclad/ironclad_energy_vfx_front.tscn";
+
+        /// <summary>
+        ///     Ordered effects played when the displayed amount increases.
+        ///     显示数量增加时按顺序播放的效果。
+        /// </summary>
+        public IReadOnlyList<SecondaryResourceCounterGainEffect> Effects { get; init; } = [];
+
+        /// <summary>
+        ///     Empty feedback.
+        ///     空反馈。
+        /// </summary>
+        public static SecondaryResourceCounterGainFeedback None { get; } = new();
+
+        /// <summary>
+        ///     Star-counter-like gain feedback using the current icon's rendered size as its scale basis.
+        ///     使用当前图标实际渲染尺寸作为缩放基准的辉星计数器类型获得反馈。
+        /// </summary>
+        public static SecondaryResourceCounterGainFeedback StarCounterLike { get; } = From(
+            SecondaryResourceCounterGainEffects.IconBrightnessFlash(),
+            SecondaryResourceCounterGainEffects.StarCounterLikeBurst());
+
+        /// <summary>
+        ///     Energy-counter-like gain feedback using vanilla energy particle scenes.
+        ///     使用原版能量粒子场景的能量计数器类型获得反馈。
+        /// </summary>
+        public static SecondaryResourceCounterGainFeedback EnergyCounterLike { get; } = From(
+            SecondaryResourceCounterGainEffects.EnergyCounterLikeParticles(
+                IroncladEnergyBackVfxPath,
+                IroncladEnergyFrontVfxPath));
+
+        /// <summary>
+        ///     Creates feedback from one or more effects.
+        ///     从一个或多个效果创建反馈。
+        /// </summary>
+        public static SecondaryResourceCounterGainFeedback From(params SecondaryResourceCounterGainEffect[] effects)
+        {
+            ArgumentNullException.ThrowIfNull(effects);
+            return new()
+            {
+                Effects = effects.Where(static effect => effect != null).ToArray(),
+            };
+        }
+    }
+
+    /// <summary>
+    ///     Base type for one secondary-resource counter gain effect.
+    ///     单个次级资源计数器获得效果的基类。
+    /// </summary>
+    public abstract record SecondaryResourceCounterGainEffect;
+
+    /// <summary>
+    ///     Gain effect that flashes the icon with the vanilla HSV brightness shader.
+    ///     使用原版 HSV 亮度 shader 闪烁图标的获得效果。
+    /// </summary>
+    public sealed record SecondaryResourceCounterIconBrightnessFlashEffect(
+        float BrightnessFrom = 2f,
+        float BrightnessTo = 1f,
+        double DurationSeconds = 0.2) : SecondaryResourceCounterGainEffect;
+
+    /// <summary>
+    ///     Star-counter-like one-shot burst generated from the current resource icon.
+    ///     基于当前资源图标生成的一次性辉星计数器类型 burst。
+    /// </summary>
+    public sealed record SecondaryResourceCounterStarCounterLikeBurstEffect(
+        Color Color,
+        double DurationSeconds = 1.0) : SecondaryResourceCounterGainEffect;
+
+    /// <summary>
+    ///     Energy-counter-like particles using vanilla energy VFX scenes.
+    ///     使用原版能量 VFX 场景的能量计数器类型粒子。
+    /// </summary>
+    public sealed record SecondaryResourceCounterEnergyCounterLikeParticlesEffect(
+        string BackScenePath,
+        string FrontScenePath,
+        Vector2 Offset = default,
+        Vector2? Scale = null) : SecondaryResourceCounterGainEffect;
+
+    /// <summary>
+    ///     Gain effect that instantiates a caller-supplied one-shot scene.
+    ///     实例化调用方提供的一次性场景的获得效果。
+    /// </summary>
+    public sealed record SecondaryResourceCounterSceneBurstEffect(
+        string ScenePath,
+        Vector2 Offset = default,
+        Vector2? Scale = null,
+        bool BehindCounter = true) : SecondaryResourceCounterGainEffect;
+
+    /// <summary>
+    ///     Factory helpers for secondary-resource counter gain effects.
+    ///     次级资源计数器获得效果的工厂辅助方法。
+    /// </summary>
+    public static class SecondaryResourceCounterGainEffects
+    {
+        /// <summary>
+        ///     Creates an icon brightness flash effect.
+        ///     创建图标亮度闪光效果。
+        /// </summary>
+        public static SecondaryResourceCounterIconBrightnessFlashEffect IconBrightnessFlash(
+            float brightnessFrom = 2f,
+            float brightnessTo = 1f,
+            double durationSeconds = 0.2)
+        {
+            return new(brightnessFrom, brightnessTo, durationSeconds);
+        }
+
+        /// <summary>
+        ///     Creates a star-counter-like burst generated from the current resource icon.
+        ///     创建基于当前资源图标生成的辉星计数器类型 burst。
+        /// </summary>
+        public static SecondaryResourceCounterStarCounterLikeBurstEffect StarCounterLikeBurst(
+            Color? color = null,
+            double durationSeconds = 1.0)
+        {
+            return new(color ?? new Color(0.77f, 0.93f, 1f), durationSeconds);
+        }
+
+        /// <summary>
+        ///     Creates an energy-counter-like particle effect using vanilla energy VFX scenes.
+        ///     创建使用原版能量 VFX 场景的能量计数器类型粒子效果。
+        /// </summary>
+        public static SecondaryResourceCounterEnergyCounterLikeParticlesEffect EnergyCounterLikeParticles(
+            string backScenePath,
+            string frontScenePath,
+            Vector2 offset = default,
+            Vector2? scale = null)
+        {
+            ArgumentException.ThrowIfNullOrWhiteSpace(backScenePath);
+            ArgumentException.ThrowIfNullOrWhiteSpace(frontScenePath);
+            return new(backScenePath, frontScenePath, offset, scale);
+        }
+
+        /// <summary>
+        ///     Creates a caller-supplied scene burst effect.
+        ///     创建调用方提供的场景 burst 效果。
+        /// </summary>
+        public static SecondaryResourceCounterSceneBurstEffect SceneBurst(
+            string scenePath,
+            Vector2 offset = default,
+            Vector2? scale = null,
+            bool behindCounter = true)
+        {
+            ArgumentException.ThrowIfNullOrWhiteSpace(scenePath);
+            return new(scenePath, offset, scale, behindCounter);
+        }
+    }
+
+    /// <summary>
     ///     Visual style for the built-in secondary-resource counter nodes.
     ///     内建次级资源计数节点的视觉样式。
     /// </summary>
@@ -175,6 +335,18 @@ namespace STS2RitsuLib.Combat.SecondaryResources
         public Vector2 AmountLabelOffset { get; init; }
 
         /// <summary>
+        ///     Whether amount gains are displayed with vanilla star-counter-like smoothing.
+        ///     获得数量时是否使用类似原版辉星计数器的平滑显示。
+        /// </summary>
+        public bool AnimateAmountGain { get; init; } = true;
+
+        /// <summary>
+        ///     Smooth time for gain amount display animation.
+        ///     获得数量显示动画的平滑时间。
+        /// </summary>
+        public float AmountGainSmoothTime { get; init; } = 0.1f;
+
+        /// <summary>
         ///     Horizontal separation used by <see cref="NSecondaryResourceCounterRow" />.
         ///     <see cref="NSecondaryResourceCounterRow" /> 使用的水平间距。
         /// </summary>
@@ -187,6 +359,12 @@ namespace STS2RitsuLib.Combat.SecondaryResources
         ///     <see cref="SecondaryResourceIconStyle.Default" />。
         /// </summary>
         public SecondaryResourceIconStyle? IconStyle { get; init; }
+
+        /// <summary>
+        ///     Optional gain feedback. Null means the built-in counter has no gain feedback.
+        ///     可选获得反馈。null 表示内建计数器没有获得反馈。
+        /// </summary>
+        public SecondaryResourceCounterGainFeedback? GainFeedback { get; init; }
 
         /// <summary>
         ///     Optional amount formatter. Receives current amount and max amount.
@@ -214,15 +392,25 @@ namespace STS2RitsuLib.Combat.SecondaryResources
     public partial class NSecondaryResourceCounter : Control
     {
         private const string DefaultLabelFontPath = "res://themes/kreon_bold_shared.tres";
+
+        private readonly Dictionary<SecondaryResourceCounterEnergyCounterLikeParticlesEffect, EnergyCounterLikeVfxNodes>
+            _energyCounterLikeVfxNodes = new();
+
         private int _amount;
+        private float _amountDisplayVelocity;
         private MegaLabel _amountLabel = null!;
 
         private Player? _boundPlayer;
         private SecondaryResourceDefinition? _definition;
+        private int _displayedAmount;
         private bool _hasBeenMaterial;
+        private bool _hasDisplayedAmount;
         private NSecondaryResourceIcon _icon = null!;
+        private Tween? _iconBrightnessTween;
         private int? _maxAmount;
+        private float _smoothDisplayedAmount;
         private SecondaryResourceCounterStyle _style = SecondaryResourceCounterStyle.Default;
+        private bool _suppressNextGainFeedback = true;
 
         /// <summary>
         ///     Whether this counter refreshes the bound player's resource every frame.
@@ -252,6 +440,16 @@ namespace STS2RitsuLib.Combat.SecondaryResources
             ArgumentNullException.ThrowIfNull(definition);
             _definition = definition;
             _style = style ?? SecondaryResourceCounterStyle.Default;
+            _iconBrightnessTween?.Kill();
+            _iconBrightnessTween = null;
+            _amount = 0;
+            _displayedAmount = 0;
+            _smoothDisplayedAmount = 0f;
+            _amountDisplayVelocity = 0f;
+            _hasDisplayedAmount = false;
+            _maxAmount = null;
+            ClearEnergyCounterLikeVfxNodes();
+            _suppressNextGainFeedback = true;
             CustomMinimumSize = _style.CounterSize;
             Size = _style.CounterSize;
 
@@ -268,6 +466,13 @@ namespace STS2RitsuLib.Combat.SecondaryResources
             if (!ReferenceEquals(_boundPlayer, player))
             {
                 _hasBeenMaterial = false;
+                _amount = 0;
+                _displayedAmount = 0;
+                _smoothDisplayedAmount = 0f;
+                _amountDisplayVelocity = 0f;
+                _hasDisplayedAmount = false;
+                _maxAmount = null;
+                _suppressNextGainFeedback = true;
                 Visible = false;
             }
 
@@ -301,15 +506,31 @@ namespace STS2RitsuLib.Combat.SecondaryResources
         /// </summary>
         public void SetAmount(int amount, int? maxAmount = null)
         {
+            var oldAmount = _amount;
             _amount = amount;
             _maxAmount = maxAmount;
             if (!IsNodeReady())
                 return;
 
-            _amountLabel.SetTextAutoSize(_style.Format(amount, maxAmount));
-            _amountLabel.AddThemeColorOverride(ThemeConstants.Label.FontColor,
-                amount <= 0 ? _style.ZeroColor : _style.PositiveColor);
+            if (!_hasDisplayedAmount ||
+                !_style.AnimateAmountGain ||
+                amount <= oldAmount)
+            {
+                _smoothDisplayedAmount = amount;
+                _amountDisplayVelocity = 0f;
+                SetDisplayedAmount(amount);
+            }
+            else
+            {
+                UpdateAmountLabel(_displayedAmount);
+            }
+
             _icon?.SetAmount(_amount, _maxAmount);
+
+            if (!_suppressNextGainFeedback && amount > oldAmount)
+                PlayGainFeedback();
+
+            _suppressNextGainFeedback = false;
         }
 
         /// <summary>
@@ -354,6 +575,26 @@ namespace STS2RitsuLib.Combat.SecondaryResources
         public override void _Process(double delta)
         {
             if (AutoRefresh && _boundPlayer != null) Refresh(_boundPlayer);
+
+            if (!_style.AnimateAmountGain ||
+                !_hasDisplayedAmount ||
+                _displayedAmount == _amount)
+                return;
+
+            _smoothDisplayedAmount = MathHelper.SmoothDamp(
+                _smoothDisplayedAmount,
+                _amount,
+                ref _amountDisplayVelocity,
+                Math.Max(0.001f, _style.AmountGainSmoothTime),
+                (float)delta);
+
+            if (Math.Abs(_smoothDisplayedAmount - _amount) < 0.01f)
+            {
+                _smoothDisplayedAmount = _amount;
+                _amountDisplayVelocity = 0f;
+            }
+
+            SetDisplayedAmount(Mathf.RoundToInt(_smoothDisplayedAmount));
         }
 
         private Vector2 GetIconPosition()
@@ -367,8 +608,143 @@ namespace STS2RitsuLib.Combat.SecondaryResources
         /// </summary>
         public override void _ExitTree()
         {
+            _iconBrightnessTween?.Kill();
+            _iconBrightnessTween = null;
+            ClearEnergyCounterLikeVfxNodes();
             if (_icon != null)
                 NHoverTipSet.Remove(_icon);
+        }
+
+        private void SetDisplayedAmount(int amount)
+        {
+            _displayedAmount = amount;
+            _hasDisplayedAmount = true;
+            UpdateAmountLabel(amount);
+        }
+
+        private void UpdateAmountLabel(int amount)
+        {
+            _amountLabel.SetTextAutoSize(_style.Format(amount, _maxAmount));
+            _amountLabel.AddThemeColorOverride(ThemeConstants.Label.FontColor,
+                amount <= 0 ? _style.ZeroColor : _style.PositiveColor);
+        }
+
+        private void PlayGainFeedback()
+        {
+            if (_style.GainFeedback is not { Effects.Count: > 0 } feedback || _icon == null)
+                return;
+
+            foreach (var effect in feedback.Effects)
+                switch (effect)
+                {
+                    case SecondaryResourceCounterIconBrightnessFlashEffect flash:
+                        PlayIconBrightnessFlash(flash);
+                        break;
+                    case SecondaryResourceCounterStarCounterLikeBurstEffect burst:
+                        PlayStarCounterLikeBurst(burst);
+                        break;
+                    case SecondaryResourceCounterEnergyCounterLikeParticlesEffect particles:
+                        RestartEnergyCounterLikeParticles(particles);
+                        break;
+                    case SecondaryResourceCounterSceneBurstEffect scene:
+                        PlaySceneBurst(scene);
+                        break;
+                }
+        }
+
+        private void PlayIconBrightnessFlash(SecondaryResourceCounterIconBrightnessFlashEffect effect)
+        {
+            _icon.EnsureHsvMaterial();
+            _iconBrightnessTween?.Kill();
+            _iconBrightnessTween = CreateTween();
+            _iconBrightnessTween.TweenMethod(
+                Callable.From<float>(_icon.SetShaderBrightness),
+                effect.BrightnessFrom,
+                effect.BrightnessTo,
+                effect.DurationSeconds);
+        }
+
+        private void PlayStarCounterLikeBurst(SecondaryResourceCounterStarCounterLikeBurstEffect effect)
+        {
+            if (_icon.Texture == null)
+                return;
+
+            var rect = _icon.GetRenderedTextureRect();
+            var vfx = new NSecondaryResourceStarCounterLikeBurstVfx(
+                _icon.Texture,
+                rect.Size,
+                effect.Color,
+                effect.DurationSeconds)
+            {
+                Position = _icon.Position + rect.Position + rect.Size * 0.5f,
+            };
+            RitsuGodotTreeCompat.AddChildSafely(this, vfx);
+            RitsuGodotTreeCompat.MoveChildSafely(this, vfx, 0);
+        }
+
+        private void PlaySceneBurst(SecondaryResourceCounterSceneBurstEffect effect)
+        {
+            var rect = _icon.GetRenderedTextureRect();
+            var scene = PreloadManager.Cache.GetAsset<PackedScene>(effect.ScenePath);
+            var node = scene.Instantiate<Node2D>();
+            node.Position = _icon.Position + rect.Position + rect.Size * 0.5f + effect.Offset;
+            if (effect.Scale is { } scale)
+                node.Scale = scale;
+
+            RitsuGodotTreeCompat.AddChildSafely(this, node);
+            if (effect.BehindCounter)
+                RitsuGodotTreeCompat.MoveChildSafely(this, node, 0);
+        }
+
+        private void RestartEnergyCounterLikeParticles(SecondaryResourceCounterEnergyCounterLikeParticlesEffect effect)
+        {
+            var nodes = GetOrCreateEnergyCounterLikeVfxNodes(effect);
+            nodes.Back.Restart();
+            nodes.Front.Restart();
+        }
+
+        private EnergyCounterLikeVfxNodes GetOrCreateEnergyCounterLikeVfxNodes(
+            SecondaryResourceCounterEnergyCounterLikeParticlesEffect effect)
+        {
+            if (_energyCounterLikeVfxNodes.TryGetValue(effect, out var existing) &&
+                IsInstanceValid(existing.Back) &&
+                IsInstanceValid(existing.Front))
+                return existing;
+
+            var rect = _icon.GetRenderedTextureRect();
+            var center = _icon.Position + rect.Position + rect.Size * 0.5f + effect.Offset;
+            var scale = effect.Scale ?? Vector2.One * (Math.Min(rect.Size.X, rect.Size.Y) / 128f);
+
+            var back = PreloadManager.Cache.GetAsset<PackedScene>(effect.BackScenePath)
+                .Instantiate<NParticlesContainer>();
+            back.Position = center;
+            back.Scale = scale;
+            RitsuGodotTreeCompat.AddChildSafely(this, back);
+            RitsuGodotTreeCompat.MoveChildSafely(this, back, 0);
+
+            var front = PreloadManager.Cache.GetAsset<PackedScene>(effect.FrontScenePath)
+                .Instantiate<NParticlesContainer>();
+            front.Position = center;
+            front.Scale = scale;
+            RitsuGodotTreeCompat.AddChildSafely(this, front);
+            RitsuGodotTreeCompat.MoveChildSafely(this, front, _amountLabel.GetIndex());
+
+            var created = new EnergyCounterLikeVfxNodes(back, front);
+            _energyCounterLikeVfxNodes[effect] = created;
+            return created;
+        }
+
+        private void ClearEnergyCounterLikeVfxNodes()
+        {
+            foreach (var nodes in _energyCounterLikeVfxNodes.Values)
+            {
+                if (IsInstanceValid(nodes.Back))
+                    nodes.Back.QueueFree();
+                if (IsInstanceValid(nodes.Front))
+                    nodes.Front.QueueFree();
+            }
+
+            _energyCounterLikeVfxNodes.Clear();
         }
 
         private void ApplyDefinition()
@@ -397,6 +773,10 @@ namespace STS2RitsuLib.Combat.SecondaryResources
                 Size = _style.IconSize,
             };
         }
+
+        private readonly record struct EnergyCounterLikeVfxNodes(
+            NParticlesContainer Back,
+            NParticlesContainer Front);
     }
 
     /// <summary>
@@ -408,9 +788,16 @@ namespace STS2RitsuLib.Combat.SecondaryResources
         private int _amount = 1;
         private SecondaryResourceDefinition? _definition;
         private SecondaryResourceHoverTipBinder? _hoverTipBinder;
+        private ShaderMaterial? _hsvMaterial;
         private int? _maxAmount;
         private SecondaryResourceIconStyle _style = SecondaryResourceIconStyle.Default;
         private TextureRect _texture = null!;
+
+        /// <summary>
+        ///     Current texture loaded for this icon.
+        ///     当前图标加载的贴图。
+        /// </summary>
+        public Texture2D? Texture => _texture?.Texture;
 
         /// <summary>
         ///     Creates and configures a secondary-resource icon.
@@ -455,6 +842,67 @@ namespace STS2RitsuLib.Combat.SecondaryResources
             _maxAmount = maxAmount;
         }
 
+        /// <summary>
+        ///     Returns the texture's actual rendered rectangle relative to this icon node.
+        ///     返回贴图相对该图标节点的实际渲染矩形。
+        /// </summary>
+        public Rect2 GetRenderedTextureRect()
+        {
+            if (_texture?.Texture == null)
+                return new(_style.IconOffset, _style.Size);
+
+            var textureSize = _texture.Texture.GetSize();
+            var boxSize = _style.Size;
+            if (textureSize.X <= 0f || textureSize.Y <= 0f || boxSize.X <= 0f || boxSize.Y <= 0f)
+                return new(_style.IconOffset, boxSize);
+
+            var renderedSize = _style.StretchMode switch
+            {
+                TextureRect.StretchModeEnum.Keep => textureSize,
+                TextureRect.StretchModeEnum.KeepCentered => textureSize,
+                TextureRect.StretchModeEnum.KeepAspect => FitSize(textureSize, boxSize),
+                TextureRect.StretchModeEnum.KeepAspectCentered => FitSize(textureSize, boxSize),
+                TextureRect.StretchModeEnum.KeepAspectCovered => CoverSize(textureSize, boxSize),
+                _ => boxSize,
+            };
+
+            var offset = _style.StretchMode switch
+            {
+                TextureRect.StretchModeEnum.KeepCentered => (boxSize - renderedSize) * 0.5f,
+                TextureRect.StretchModeEnum.KeepAspectCentered => (boxSize - renderedSize) * 0.5f,
+                TextureRect.StretchModeEnum.KeepAspectCovered => (boxSize - renderedSize) * 0.5f,
+                _ => Vector2.Zero,
+            };
+
+            return new(_style.IconOffset + offset, renderedSize);
+        }
+
+        /// <summary>
+        ///     Ensures the icon texture uses an unmodulated HSV material.
+        ///     确保图标贴图使用未调制的 HSV 材质。
+        /// </summary>
+        public void EnsureHsvMaterial()
+        {
+            if (!IsNodeReady() || _texture == null)
+                return;
+
+            _hsvMaterial ??= MaterialUtils.CreateUnmodulatedHsvShaderMaterial();
+            _texture.Material = _hsvMaterial;
+        }
+
+        /// <summary>
+        ///     Sets the HSV brightness parameter used by gain feedback.
+        ///     设置获得反馈使用的 HSV 亮度参数。
+        /// </summary>
+        public void SetShaderBrightness(float value)
+        {
+            if (!IsNodeReady())
+                return;
+
+            EnsureHsvMaterial();
+            _hsvMaterial?.SetShaderParameter("v", value);
+        }
+
         /// <inheritdoc />
         public override void _Ready()
         {
@@ -487,6 +935,8 @@ namespace STS2RitsuLib.Combat.SecondaryResources
             _texture.Size = _style.Size;
             _texture.ExpandMode = _style.ExpandMode;
             _texture.StretchMode = _style.StretchMode;
+            if (_hsvMaterial != null)
+                _texture.Material = _hsvMaterial;
 
             if (_definition == null)
             {
@@ -525,6 +975,158 @@ namespace STS2RitsuLib.Combat.SecondaryResources
         private SecondaryResourceHoverTipRequest? CreateHoverTipRequest()
         {
             return _definition == null ? null : new(_definition, _amount, _maxAmount);
+        }
+
+        private static Vector2 FitSize(Vector2 textureSize, Vector2 boxSize)
+        {
+            var scale = Math.Min(boxSize.X / textureSize.X, boxSize.Y / textureSize.Y);
+            return textureSize * scale;
+        }
+
+        private static Vector2 CoverSize(Vector2 textureSize, Vector2 boxSize)
+        {
+            var scale = Math.Max(boxSize.X / textureSize.X, boxSize.Y / textureSize.Y);
+            return textureSize * scale;
+        }
+    }
+
+    internal sealed partial class NSecondaryResourceStarCounterLikeBurstVfx : Node2D
+    {
+        private const float IconStartSizeFactor = 0.7662625f;
+        private const float IconEndSizeFactor = 1.25f;
+        private const float GlowStartSizeFactor = 1.735392f;
+        private const float GlowEndSizeFactor = 2.595368f;
+
+        private readonly Color _color;
+        private readonly double _durationSeconds;
+        private readonly Vector2 _renderedIconSize;
+        private readonly Texture2D? _texture;
+
+        public NSecondaryResourceStarCounterLikeBurstVfx(
+            Texture2D texture,
+            Vector2 renderedIconSize,
+            Color color,
+            double durationSeconds)
+        {
+            _texture = texture;
+            _renderedIconSize = renderedIconSize;
+            _color = color;
+            _durationSeconds = durationSeconds;
+        }
+
+        public NSecondaryResourceStarCounterLikeBurstVfx()
+        {
+        }
+
+        public override void _Ready()
+        {
+            var glow = CreateParticle(CreateGlowMaterial());
+            var icon = CreateParticle(CreateIconMaterial());
+            AddChild(glow);
+            AddChild(icon);
+            glow.Emitting = true;
+            icon.Emitting = true;
+
+            var timer = GetTree().CreateTimer(_durationSeconds + 0.05);
+            timer.Timeout += QueueFree;
+        }
+
+        private GpuParticles2D CreateParticle(ParticleProcessMaterial material)
+        {
+            return new()
+            {
+                Emitting = false,
+                Amount = 1,
+                Texture = _texture,
+                OneShot = true,
+                ProcessMaterial = material,
+            };
+        }
+
+        private ParticleProcessMaterial CreateIconMaterial()
+        {
+            return new()
+            {
+                ParticleFlagDisableZ = true,
+                AngularVelocityMin = 0.999984f,
+                AngularVelocityMax = 0.999984f,
+                AngularVelocityCurve = CreateCurveTexture(
+                    new(0f, 326.461f),
+                    new(1f, 303.241f),
+                    minValue: 0f,
+                    maxValue: 360f),
+                Gravity = Vector3.Zero,
+                ScaleCurve = CreateCurveTexture(
+                    new(0f, ResolveParticleScale(IconStartSizeFactor)),
+                    new(0.75f, ResolveParticleScale(IconEndSizeFactor)),
+                    width: 128,
+                    minValue: 0f,
+                    maxValue: 4f),
+                Color = _color,
+                AlphaCurve = CreateCurveTexture(
+                    new(0.151685f, 1f),
+                    new(0.99999f, 0f),
+                    new(1f, 0f)),
+            };
+        }
+
+        private ParticleProcessMaterial CreateGlowMaterial()
+        {
+            return new()
+            {
+                ParticleFlagDisableZ = true,
+                AngularVelocityMin = -1.60933e-05f,
+                AngularVelocityMax = -1.60933e-05f,
+                Gravity = Vector3.Zero,
+                ScaleCurve = CreateCurveTexture(
+                    new(0f, ResolveParticleScale(GlowStartSizeFactor)),
+                    new(1f, ResolveParticleScale(GlowEndSizeFactor)),
+                    width: 128),
+                Color = _color with { A = 0.592157f },
+                AlphaCurve = CreateCurveTexture(
+                    new(0.202247f, 1f),
+                    new(0.99999f, 0f),
+                    new(1f, 0f)),
+            };
+        }
+
+        private CurveTexture CreateCurveTexture(
+            Vector2 firstPoint,
+            Vector2 secondPoint,
+            Vector2? thirdPoint = null,
+            int width = 64,
+            float minValue = 0f,
+            float maxValue = 1f)
+        {
+            var curve = new Curve
+            {
+                MinValue = minValue,
+                MaxValue = maxValue,
+            };
+            curve.AddPoint(firstPoint);
+            curve.AddPoint(secondPoint);
+            if (thirdPoint is { } point)
+                curve.AddPoint(point);
+
+            return new()
+            {
+                Width = width,
+                Curve = curve,
+            };
+        }
+
+        private float ResolveParticleScale(float displaySizeFactor)
+        {
+            if (_texture == null) return displaySizeFactor;
+            var textureSize = _texture.GetSize();
+            if (textureSize.X <= 0f || textureSize.Y <= 0f ||
+                _renderedIconSize.X <= 0f || _renderedIconSize.Y <= 0f)
+                return displaySizeFactor;
+
+            var renderedScale = Math.Min(
+                _renderedIconSize.X / textureSize.X,
+                _renderedIconSize.Y / textureSize.Y);
+            return renderedScale * displaySizeFactor;
         }
     }
 

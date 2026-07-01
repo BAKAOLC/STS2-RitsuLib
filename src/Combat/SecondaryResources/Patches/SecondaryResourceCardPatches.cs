@@ -37,8 +37,9 @@ namespace STS2RitsuLib.Combat.SecondaryResources.Patches
                 !__instance.HasMaterialSecondaryCosts())
                 return;
 
-            var isFree = FreePlayBindingRegistry.IsCardFreeForUpcomingPlay(__instance);
-            var plan = SecondaryResourcePaymentResolver.Plan(__instance, isFree);
+            var freeMode = SecondaryResourcePaymentFreeMode.FromCardCostScope(
+                FreePlayBindingRegistry.ResolveCardCostScopeForUpcomingPlay(__instance));
+            var plan = SecondaryResourcePaymentResolver.Plan(__instance, freeMode);
             if (plan.IsAffordable)
                 return;
 
@@ -68,8 +69,9 @@ namespace STS2RitsuLib.Combat.SecondaryResources.Patches
                 !__instance.HasMaterialSecondaryCosts())
                 return;
 
-            var isFree = FreePlayBindingRegistry.IsCardFreeForUpcomingPlay(__instance);
-            var plan = SecondaryResourcePaymentResolver.Plan(__instance, isFree);
+            var freeMode = SecondaryResourcePaymentFreeMode.FromCardCostScope(
+                FreePlayBindingRegistry.ResolveCardCostScopeForUpcomingPlay(__instance));
+            var plan = SecondaryResourcePaymentResolver.Plan(__instance, freeMode);
             if (plan.HasLines)
                 __state = plan;
         }
@@ -124,7 +126,9 @@ namespace STS2RitsuLib.Combat.SecondaryResources.Patches
 
             if (isAutoPlay && !SecondaryResourcePlayLedgerRuntime.HasPending(__instance))
             {
-                var plan = SecondaryResourcePaymentResolver.Plan(__instance, true);
+                var plan = SecondaryResourcePaymentResolver.Plan(
+                    __instance,
+                    SecondaryResourcePaymentFreeMode.AllCosts);
                 if (plan.HasLines)
                     SecondaryResourcePaymentResolver.CommitFree(plan);
             }

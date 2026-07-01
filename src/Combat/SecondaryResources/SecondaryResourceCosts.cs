@@ -5,6 +5,7 @@ using CombatStateLike = MegaCrit.Sts2.Core.Combat.ICombatState;
 #endif
 using MegaCrit.Sts2.Core.Entities.Players;
 using MegaCrit.Sts2.Core.Models;
+using STS2RitsuLib.Cards.FreePlay;
 using STS2RitsuLib.Models;
 using STS2RitsuLib.Models.Capabilities;
 using STS2RitsuLib.Utils;
@@ -592,6 +593,26 @@ namespace STS2RitsuLib.Combat.SecondaryResources
         }
     }
 
+    internal readonly record struct SecondaryResourcePaymentFreeMode(
+        bool FixedCostsFree,
+        bool XCostsFree)
+    {
+        public static SecondaryResourcePaymentFreeMode None { get; } = new(false, false);
+        public static SecondaryResourcePaymentFreeMode AllCosts { get; } = new(true, true);
+
+        public bool IsFree => FixedCostsFree || XCostsFree;
+
+        public static SecondaryResourcePaymentFreeMode FromCardCostScope(FreePlayCardCostScope scope)
+        {
+            return new(scope.FixedSecondaryCostsFree, scope.XSecondaryCostsFree);
+        }
+
+        public bool AppliesTo(SecondaryResourceCost cost)
+        {
+            return cost.CostsX ? XCostsFree : FixedCostsFree;
+        }
+    }
+
     /// <summary>
     ///     Builds and commits secondary-resource card payment plans.
     ///     构建并提交卡牌的次级资源支付计划。
@@ -610,22 +631,33 @@ namespace STS2RitsuLib.Combat.SecondaryResources
             bool isFree = false,
             AbstractModel? source = null)
         {
+            return Plan(
+                card,
+                isFree ? SecondaryResourcePaymentFreeMode.AllCosts : SecondaryResourcePaymentFreeMode.None,
+                source);
+        }
+
+        internal static SecondaryResourcePaymentPlan Plan(
+            CardModel card,
+            SecondaryResourcePaymentFreeMode freeMode,
+            AbstractModel? source = null)
+        {
             ArgumentNullException.ThrowIfNull(card);
 
             var player = TryGetOwner(card);
             if (!ModSecondaryResourceRegistry.HasAny)
-                return SecondaryResourcePaymentPlan.Empty(card, player, isFree);
+                return SecondaryResourcePaymentPlan.Empty(card, player, freeMode.IsFree);
 
             var uses = SnapshotUses(card);
             if (uses.Count == 0)
-                return SecondaryResourcePaymentPlan.Empty(card, player, isFree);
+                return SecondaryResourcePaymentPlan.Empty(card, player, freeMode.IsFree);
 
             if (player == null)
-                return PlanPreview(card, uses, isFree);
+                return PlanPreview(card, uses, freeMode);
 
             var combatState = card.CombatState ?? player.Creature?.CombatState;
             if (combatState == null)
-                return PlanPreview(card, uses, isFree);
+                return PlanPreview(card, uses, freeMode);
 
             var lines = new List<SecondaryResourcePaymentLine>();
             var remainingByResource = new Dictionary<string, int>(StringComparer.OrdinalIgnoreCase);
@@ -640,12 +672,12 @@ namespace STS2RitsuLib.Combat.SecondaryResources
                     remainingByResource[definition.Id] = available;
                 }
 
-                var line = ResolveLine(combatState, player, card, definition, use, available, isFree, source);
+                var line = ResolveLine(combatState, player, card, definition, use, available, freeMode, source);
                 lines.Add(line);
                 remainingByResource[definition.Id] = Math.Max(0, available - line.AmountToSpend);
             }
 
-            return new(card, player, isFree, lines);
+            return new(card, player, freeMode.IsFree, lines);
         }
 
         private static Player? TryGetOwner(CardModel card)
@@ -831,7 +863,7 @@ namespace STS2RitsuLib.Combat.SecondaryResources
         private static SecondaryResourcePaymentPlan PlanPreview(
             CardModel card,
             IReadOnlyList<SecondaryResourcePlayUse> uses,
-            bool isFree)
+            SecondaryResourcePaymentFreeMode freeMode)
         {
             var lines = new List<SecondaryResourcePaymentLine>();
             foreach (var use in uses)
@@ -839,19 +871,20 @@ namespace STS2RitsuLib.Combat.SecondaryResources
                 if (!ModSecondaryResourceRegistry.TryGet(use.ResourceId, out var definition))
                     continue;
 
-                lines.Add(ResolvePreviewLine(card, definition, use, isFree));
+                lines.Add(ResolvePreviewLine(card, definition, use, freeMode));
             }
 
-            return new(card, null, isFree, lines);
+            return new(card, null, freeMode.IsFree, lines);
         }
 
         private static SecondaryResourcePaymentLine ResolvePreviewLine(
             CardModel card,
             SecondaryResourceDefinition definition,
             SecondaryResourcePlayUse use,
-            bool isFree)
+            SecondaryResourcePaymentFreeMode freeMode)
         {
             var cost = use.Cost;
+            var isFree = freeMode.AppliesTo(cost);
             var localCost = ModifyLocalCost(card, definition, use, cost.Amount);
             var baseCost = Math.Max(0, use.BaseCost.Amount);
             var upgradePreviewBaseCost = SecondaryResourceUpgradePreviewCosts.GetBaseCost(card, use);
@@ -896,10 +929,11 @@ namespace STS2RitsuLib.Combat.SecondaryResources
             SecondaryResourceDefinition definition,
             SecondaryResourcePlayUse use,
             int available,
-            bool isFree,
+            SecondaryResourcePaymentFreeMode freeMode,
             AbstractModel? source)
         {
             var cost = use.Cost;
+            var isFree = freeMode.AppliesTo(cost);
             var localCost = ModifyLocalCost(card, definition, use, cost.Amount);
             var baseCost = Math.Max(0, use.BaseCost.Amount);
             var upgradePreviewBaseCost = SecondaryResourceUpgradePreviewCosts.GetBaseCost(card, use);

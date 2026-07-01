@@ -27,6 +27,71 @@ namespace STS2RitsuLib.Combat.SecondaryResources
         where TNode : Node;
 
     /// <summary>
+    ///     Combat UI change-response context for a secondary-resource attachment.
+    ///     次级资源挂载节点的战斗 UI 变更响应上下文。
+    /// </summary>
+    public readonly record struct SecondaryResourceCombatUiChangeContext<TParent, TNode>(
+        TParent Parent,
+        TNode Node,
+        SecondaryResourceChangeContext Change,
+        IReadOnlyList<SecondaryResourceDefinition> Definitions,
+        IReadOnlyList<SecondaryResourceDefinition> VisibleDefinitions)
+        where TParent : Node
+        where TNode : Node
+    {
+        /// <summary>
+        ///     Player whose secondary resource changed.
+        ///     次级资源发生变化的玩家。
+        /// </summary>
+        public Player Player => Change.Player;
+
+        /// <summary>
+        ///     Resource definition whose amount changed.
+        ///     数量发生变化的资源定义。
+        /// </summary>
+        public SecondaryResourceDefinition Definition => Change.Definition;
+
+        /// <summary>
+        ///     Previous amount.
+        ///     变化前数量。
+        /// </summary>
+        public int OldAmount => Change.OldAmount;
+
+        /// <summary>
+        ///     New amount.
+        ///     变化后数量。
+        /// </summary>
+        public int NewAmount => Change.NewAmount;
+
+        /// <summary>
+        ///     Signed delta from old to new amount.
+        ///     从旧数量到新数量的带符号差值。
+        /// </summary>
+        public int Delta => Change.Delta;
+
+        /// <summary>
+        ///     Reason attached to the amount mutation.
+        ///     附加在数量变更上的原因。
+        /// </summary>
+        public SecondaryResourceChangeReason Reason => Change.Reason;
+
+        /// <summary>
+        ///     Optional source model supplied by the mutating command.
+        ///     变更命令提供的可选来源模型。
+        /// </summary>
+        public AbstractModel? Source => Change.Source;
+    }
+
+    /// <summary>
+    ///     Handles secondary-resource amount changes for a combat UI attachment.
+    ///     为战斗 UI 挂载节点处理次级资源数量变化。
+    /// </summary>
+    public delegate void SecondaryResourceCombatUiChangedHandler<TParent, TNode>(
+        SecondaryResourceCombatUiChangeContext<TParent, TNode> context)
+        where TParent : Node
+        where TNode : Node;
+
+    /// <summary>
     ///     Card UI update context for a secondary-resource attachment.
     ///     次级资源挂载节点的卡牌 UI 更新上下文。
     /// </summary>
@@ -61,6 +126,10 @@ namespace STS2RitsuLib.Combat.SecondaryResources
     public static class SecondaryResourceUiRuntime
     {
         private static readonly AttachedState<Node, List<Action<Player?>>> CombatUpdaters = new(() => []);
+
+        private static readonly AttachedState<Node, List<Action<SecondaryResourceChangeContext>>> CombatChangeHandlers =
+            new(() => []);
+
         private static readonly AttachedState<Node, List<Action>> CombatHiders = new(() => []);
 
         private static readonly AttachedState<Node, List<Action<CardModel, PileType, CardPreviewMode>>> CardUpdaters =
@@ -97,6 +166,34 @@ namespace STS2RitsuLib.Combat.SecondaryResources
                 return;
 
             UpdateCombatUi(ui, player);
+        }
+
+        internal static void NotifyCurrentCombatUiChanged(SecondaryResourceChangeContext change)
+        {
+            if (!ModSecondaryResourceRegistry.HasAny ||
+                !LocalContext.IsMe(change.Player))
+                return;
+
+            var ui = NCombatRoom.Instance?.Ui;
+            if (ui == null || !GodotObject.IsInstanceValid(ui))
+                return;
+
+            NotifyCombatUiChanged(ui, change);
+        }
+
+        /// <summary>
+        ///     Notifies all secondary-resource combat UI attachments for a parent node after an amount changes.
+        ///     在数量变化后通知父节点上的所有次级资源战斗 UI 挂载项。
+        /// </summary>
+        public static void NotifyCombatUiChanged(Node parent, SecondaryResourceChangeContext change)
+        {
+            ArgumentNullException.ThrowIfNull(parent);
+            if (!ModSecondaryResourceRegistry.HasAny ||
+                !CombatChangeHandlers.TryGetValue(parent, out var handlers))
+                return;
+
+            foreach (var handler in handlers.ToArray())
+                handler(change);
         }
 
         /// <summary>
@@ -193,7 +290,8 @@ namespace STS2RitsuLib.Combat.SecondaryResources
         internal static void RegisterCombatUpdater<TParent, TNode>(
             TParent parent,
             TNode node,
-            Action<SecondaryResourceCombatUiContext<TParent, TNode>> update)
+            Action<SecondaryResourceCombatUiContext<TParent, TNode>> update,
+            SecondaryResourceCombatUiChangedHandler<TParent, TNode>? changed = null)
             where TParent : Node
             where TNode : Node
         {
@@ -208,6 +306,20 @@ namespace STS2RitsuLib.Combat.SecondaryResources
                     definitions,
                     SecondaryResourceVisibility.GetCombatUiDefinitions(player, true)));
             });
+
+            if (changed == null)
+                return;
+
+            CombatChangeHandlers.GetOrCreate(parent).Add(change =>
+            {
+                var definitions = ModSecondaryResourceRegistry.GetDefinitionsSnapshot();
+                changed(new(
+                    parent,
+                    node,
+                    change,
+                    definitions,
+                    SecondaryResourceVisibility.GetCombatUiDefinitions(change.Player, true)));
+            });
         }
 
         internal static void RegisterCardUpdater<TParent, TNode>(
@@ -221,7 +333,8 @@ namespace STS2RitsuLib.Combat.SecondaryResources
             {
                 var plan = SecondaryResourcePaymentResolver.Plan(
                     card,
-                    FreePlayBindingRegistry.IsCardFreeForUpcomingPlay(card));
+                    SecondaryResourcePaymentFreeMode.FromCardCostScope(
+                        FreePlayBindingRegistry.ResolveCardCostScopeForUpcomingPlay(card)));
                 var definitions = ModSecondaryResourceRegistry.GetDefinitionsSnapshot();
                 update(new(
                     parent,
@@ -278,6 +391,21 @@ namespace STS2RitsuLib.Combat.SecondaryResources
         }
 
         /// <summary>
+        ///     Registers a NodeAttachment-backed combat UI node with a change-response route on <see cref="NCombatUi" />.
+        ///     在 <see cref="NCombatUi" /> 上注册一个基于 NodeAttachment 的战斗 UI 节点及其变更响应路由。
+        /// </summary>
+        public NodeAttachmentDefinition RegisterCombatUi<TNode>(
+            string localId,
+            Func<NCombatUi, TNode> factory,
+            Action<SecondaryResourceCombatUiContext<NCombatUi, TNode>> update,
+            SecondaryResourceCombatUiChangedHandler<NCombatUi, TNode> changed,
+            NodeAttachmentOptions? options = null)
+            where TNode : Node
+        {
+            return RegisterCombatUi<NCombatUi, TNode>(localId, factory, update, changed, options);
+        }
+
+        /// <summary>
         ///     Registers a NodeAttachment-backed combat UI node and update route.
         ///     注册一个基于 NodeAttachment 的战斗 UI 节点及其更新路由。
         /// </summary>
@@ -298,6 +426,34 @@ namespace STS2RitsuLib.Combat.SecondaryResources
                 (parent, node) =>
                 {
                     SecondaryResourceUiRuntime.RegisterCombatUpdater(parent, node, update);
+                    SecondaryResourceUiRuntime.HideCombatUi(parent);
+                },
+                options);
+        }
+
+        /// <summary>
+        ///     Registers a NodeAttachment-backed combat UI node with update and change-response routes.
+        ///     注册一个基于 NodeAttachment 的战斗 UI 节点及其更新和变更响应路由。
+        /// </summary>
+        public NodeAttachmentDefinition RegisterCombatUi<TParent, TNode>(
+            string localId,
+            Func<TParent, TNode> factory,
+            Action<SecondaryResourceCombatUiContext<TParent, TNode>> update,
+            SecondaryResourceCombatUiChangedHandler<TParent, TNode> changed,
+            NodeAttachmentOptions? options = null)
+            where TParent : Node
+            where TNode : Node
+        {
+            ArgumentNullException.ThrowIfNull(factory);
+            ArgumentNullException.ThrowIfNull(update);
+            ArgumentNullException.ThrowIfNull(changed);
+
+            return ModNodeAttachmentRegistry.For(_modId).RegisterReadyChild(
+                localId,
+                factory,
+                (parent, node) =>
+                {
+                    SecondaryResourceUiRuntime.RegisterCombatUpdater(parent, node, update, changed);
                     SecondaryResourceUiRuntime.HideCombatUi(parent);
                 },
                 options);

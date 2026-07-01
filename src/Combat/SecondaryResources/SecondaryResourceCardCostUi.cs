@@ -356,7 +356,8 @@ namespace STS2RitsuLib.Combat.SecondaryResources
             ArgumentNullException.ThrowIfNull(card);
             Refresh(card, SecondaryResourcePaymentResolver.Plan(
                 card,
-                FreePlayBindingRegistry.IsCardFreeForUpcomingPlay(card)));
+                SecondaryResourcePaymentFreeMode.FromCardCostScope(
+                    FreePlayBindingRegistry.ResolveCardCostScopeForUpcomingPlay(card))));
         }
 
         /// <summary>

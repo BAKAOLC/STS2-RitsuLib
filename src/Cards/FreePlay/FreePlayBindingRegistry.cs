@@ -27,6 +27,13 @@ namespace STS2RitsuLib.Cards.FreePlay
                               IsRegisteredDetectorFree;
     }
 
+    internal readonly record struct FreePlayCardCostScope(
+        bool FixedSecondaryCostsFree,
+        bool XSecondaryCostsFree)
+    {
+        public bool IsFree => FixedSecondaryCostsFree || XSecondaryCostsFree;
+    }
+
     /// <summary>
     ///     Extensible binding registry for "this play is free" semantics.
     ///     用于“本次出牌免费”语义的可扩展绑定注册表。
@@ -63,57 +70,67 @@ namespace STS2RitsuLib.Cards.FreePlay
         }
 
         /// <summary>
-        ///     Marks that the given card's next play should be treated as free.
-        ///     标记给定卡牌的下一次出牌应视为免费。
+        ///     Marks that the given card's base costs should be treated as free for its next play.
+        ///     标记给定卡牌下一次出牌的基础费用应视为免费。
         /// </summary>
         /// <param name="card">
-        ///     Card receiving a single-use free-play charge.
-        ///     获得一次性 free-play 层数的卡牌。
+        ///     Card receiving a single-use base-cost free charge.
+        ///     获得一次性基础费用免费层数的卡牌。
         /// </param>
         public static void MarkCardFreeNextPlay(CardModel card)
         {
             ArgumentNullException.ThrowIfNull(card);
             CardStates.Update(card, state =>
             {
-                state.NextPlayCharges++;
+                state.BaseCostsFreeNextPlayCharges++;
                 return state;
             });
         }
 
         /// <summary>
-        ///     Marks that the given card should be treated as free until end of turn or its next play.
-        ///     标记给定卡牌在回合结束或下一次打出前应视为免费。
+        ///     Marks that the given card's base costs should be treated as free until end of turn or its next play.
+        ///     标记给定卡牌在回合结束或下一次打出前，基础费用应视为免费。
         /// </summary>
         /// <param name="card">
-        ///     Card receiving a current-turn free-play charge.
-        ///     获得本回合 free-play 层数的卡牌。
+        ///     Card receiving a current-turn base-cost free charge.
+        ///     获得本回合基础费用免费层数的卡牌。
         /// </param>
         public static void MarkCardFreeThisTurn(CardModel card)
         {
+            MarkCardBaseCostsFreeThisTurn(card);
+        }
+
+        internal static void MarkCardBaseCostsFreeThisTurn(CardModel card)
+        {
             ArgumentNullException.ThrowIfNull(card);
             CardStates.Update(card, state =>
             {
-                state.ThisTurnCharges++;
+                state.BaseCostsFreeThisTurnCharges++;
+                return state;
+            });
+        }
+
+        internal static void MarkCardBaseCostsFreeThisCombat(CardModel card)
+        {
+            ArgumentNullException.ThrowIfNull(card);
+            CardStates.Update(card, state =>
+            {
+                state.BaseCostsFreeThisCombatState = ResolveCombatState(card);
                 return state;
             });
         }
 
         /// <summary>
-        ///     Marks that the given card should be treated as free for the current combat.
-        ///     标记给定卡牌在当前战斗中应视为免费。
+        ///     Marks that the given card's base costs should be treated as free for the current combat.
+        ///     标记给定卡牌在当前战斗中，基础费用应视为免费。
         /// </summary>
         /// <param name="card">
-        ///     Card receiving combat-duration free-play state.
-        ///     获得持续整场战斗 free-play 状态的卡牌。
+        ///     Card receiving combat-duration base-cost free state.
+        ///     获得持续整场战斗基础费用免费状态的卡牌。
         /// </param>
         public static void MarkCardFreeThisCombat(CardModel card)
         {
-            ArgumentNullException.ThrowIfNull(card);
-            CardStates.Update(card, state =>
-            {
-                state.FreeThisCombatState = ResolveCombatState(card);
-                return state;
-            });
+            MarkCardBaseCostsFreeThisCombat(card);
         }
 
         /// <summary>
@@ -187,16 +204,27 @@ namespace STS2RitsuLib.Cards.FreePlay
         /// </summary>
         public static bool IsCardFreeForUpcomingPlay(CardModel card)
         {
+            return ResolveCardCostScopeForUpcomingPlay(card).IsFree;
+        }
+
+        internal static FreePlayCardCostScope ResolveCardCostScopeForUpcomingPlay(CardModel card)
+        {
             ArgumentNullException.ThrowIfNull(card);
 
             if (!CardStates.TryGetValue(card, out var state))
-                return false;
+                return new(false, false);
 
             var combatState = ResolveCombatState(card);
-            return state.ThisTurnCharges > 0 ||
-                   state.NextPlayCharges > 0 ||
-                   (state.FreeThisCombatState != null &&
-                    ReferenceEquals(state.FreeThisCombatState, combatState));
+            var isFullFree = state.ThisTurnCharges > 0 ||
+                             state.NextPlayCharges > 0 ||
+                             (state.FreeThisCombatState != null &&
+                              ReferenceEquals(state.FreeThisCombatState, combatState));
+            var isBaseCostFree = isFullFree ||
+                                 state.BaseCostsFreeNextPlayCharges > 0 ||
+                                 state.BaseCostsFreeThisTurnCharges > 0 ||
+                                 (state.BaseCostsFreeThisCombatState != null &&
+                                  ReferenceEquals(state.BaseCostsFreeThisCombatState, combatState));
+            return new(isBaseCostFree, isFullFree);
         }
 
         /// <summary>
@@ -218,8 +246,10 @@ namespace STS2RitsuLib.Cards.FreePlay
             var changed = false;
             CardStates.Update(card, state =>
             {
-                changed = state.ThisTurnCharges > 0;
+                changed = state.ThisTurnCharges > 0 ||
+                          state.BaseCostsFreeThisTurnCharges > 0;
                 state.ThisTurnCharges = 0;
+                state.BaseCostsFreeThisTurnCharges = 0;
                 return state;
             });
             return changed;
@@ -244,9 +274,14 @@ namespace STS2RitsuLib.Cards.FreePlay
             var changed = false;
             CardStates.Update(card, state =>
             {
-                changed = state.ThisTurnCharges > 0 || state.NextPlayCharges > 0;
+                changed = state.ThisTurnCharges > 0 ||
+                          state.NextPlayCharges > 0 ||
+                          state.BaseCostsFreeNextPlayCharges > 0 ||
+                          state.BaseCostsFreeThisTurnCharges > 0;
                 state.ThisTurnCharges = 0;
                 state.NextPlayCharges = Math.Max(0, state.NextPlayCharges - 1);
+                state.BaseCostsFreeNextPlayCharges = Math.Max(0, state.BaseCostsFreeNextPlayCharges - 1);
+                state.BaseCostsFreeThisTurnCharges = 0;
                 return state;
             });
             return changed;
@@ -270,6 +305,16 @@ namespace STS2RitsuLib.Cards.FreePlay
             var combatState = ResolveCombatState(card);
 
             if (state.FreeThisCombatState != null && ReferenceEquals(state.FreeThisCombatState, combatState))
+                return true;
+
+            if (state.BaseCostsFreeThisCombatState != null &&
+                ReferenceEquals(state.BaseCostsFreeThisCombatState, combatState))
+                return true;
+
+            if (state.BaseCostsFreeThisTurnCharges > 0)
+                return true;
+
+            if (state.BaseCostsFreeNextPlayCharges > 0)
                 return true;
 
             if (state.ThisTurnCharges > 0)
@@ -329,6 +374,9 @@ namespace STS2RitsuLib.Cards.FreePlay
             public int ThisTurnCharges { get; set; }
             public int NextPlayCharges { get; set; }
             public CombatStateLike? FreeThisCombatState { get; set; }
+            public int BaseCostsFreeNextPlayCharges { get; set; }
+            public int BaseCostsFreeThisTurnCharges { get; set; }
+            public CombatStateLike? BaseCostsFreeThisCombatState { get; set; }
         }
 
         private sealed class PlayFreeBindingState

@@ -58,6 +58,14 @@ namespace STS2RitsuLib.RunData
 
             RunSavedDataLobbyRuntime.RemoveSession(lobby);
         }
+
+        internal static void RemovePlayer(StartRunLobby lobby, ulong netId)
+        {
+            if (!RunSavedDataLobbyRuntime.TryGetSession(lobby, out var session) || !session.RemovePlayer(netId))
+                return;
+
+            PublishStagingEvent(lobby, RunSavedDataLobbyStagingReason.PlayerLeft);
+        }
     }
 
     /// <summary>

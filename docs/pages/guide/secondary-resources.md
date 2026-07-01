@@ -486,9 +486,24 @@ For combat presentation:
 - `AlwaysShowInCombatUi(...)` and `AlwaysShowInCombatUiForCharacter(...)` keep a resource visible before it is gained
 - `RegisterCombatUi(...)`, `RegisterCardUi(...)`, and `RegisterMultiplayerPlayerStateUi(...)` attach custom Godot nodes through the node-attachment runtime
 - custom `RegisterCombatUi(...)` updates should use `ctx.VisibleDefinitions` or `definition.IsVisibleInCombatUi(ctx.Player)` when deciding whether their nodes are visible
+- the `RegisterCombatUi(...)` overload with `SecondaryResourceCombatUiChangedHandler` receives formal UI change
+  notifications after the combat UI refreshes. Use `ctx.Definition`, `ctx.OldAmount`, `ctx.NewAmount`, `ctx.Delta`,
+  `ctx.Reason`, and `ctx.Source` to play presentation-only feedback such as particles or pulses
 - `NSecondaryResourceCardCostUi` is a simple single-resource card-cost wrapper node for `RegisterCardUi(...)`; bind one resource id per node and place each node yourself
 - When a card-cost node is deliberately placed in the vanilla star-cost slot, set `SecondaryResourceCardCostUiStyle.ReserveVanillaStarCostSlot = true` so enchanted cards keep the same enchantment-tab layout vanilla uses for star-cost cards. For custom grouped cost UI, call `SecondaryResourceCardUiLayout.ReserveVanillaStarCostSlot(ctx.Parent)` from the card UI updater when the visible group occupies that slot.
 - Built-in `NSecondaryResourceIcon` / `NSecondaryResourceCounter` hover tips always use the resource title and description. Pass a `SecondaryResourceIconStyle` with `HoverTip = SecondaryResourceHoverTipStyle.Default with { ResolveGlobalPosition = ... }` when you need custom placement. Hover-tip title and description receive `Amount`, `HasMaxAmount`, and `MaxAmount` LocString variables so localization can decide how to show dynamic amounts.
+
+```csharp
+resources.RegisterCombatUi(
+    "charge_feedback",
+    parent => new MyChargeFeedbackNode(),
+    update: ctx => ctx.Node.Refresh(ctx.Player, ctx.VisibleDefinitions),
+    changed: ctx =>
+    {
+        if (ctx.Definition.Id == charge.Id && ctx.Delta > 0)
+            ctx.Node.PlayGainFeedback(ctx.Delta, ctx.Source);
+    });
+```
 
 For text:
 
@@ -523,9 +538,24 @@ For text:
 - `AlwaysShowInCombatUi(...)` 和 `AlwaysShowInCombatUiForCharacter(...)` 可以让资源在尚未获得前也显示出来
 - `RegisterCombatUi(...)`、`RegisterCardUi(...)`、`RegisterMultiplayerPlayerStateUi(...)` 可以借助 node attachment 体系挂接自定义 Godot 节点
 - 自定义 `RegisterCombatUi(...)` 更新逻辑应使用 `ctx.VisibleDefinitions` 或 `definition.IsVisibleInCombatUi(ctx.Player)` 判断节点是否可见
+- 带 `SecondaryResourceCombatUiChangedHandler` 的 `RegisterCombatUi(...)` 重载会在战斗 UI 刷新后收到正式的
+  UI 变更通知。用 `ctx.Definition`、`ctx.OldAmount`、`ctx.NewAmount`、`ctx.Delta`、`ctx.Reason` 和
+  `ctx.Source` 判断是否播放粒子、脉冲等纯表现反馈
 - `NSecondaryResourceCardCostUi` 是用于 `RegisterCardUi(...)` 的单资源简易卡牌费用包装节点；每个节点绑定一个 resource id，并由注册方分别指定位置
 - 如果卡牌费用节点明确放在原版辉星费用槽，设置 `SecondaryResourceCardCostUiStyle.ReserveVanillaStarCostSlot = true`，这样带附魔的卡会沿用原版辉星费用卡牌的附魔标签布局。自定义聚合费用 UI 可在可见费用组占用该槽位时，从卡牌 UI updater 调用 `SecondaryResourceCardUiLayout.ReserveVanillaStarCostSlot(ctx.Parent)`。
 - 内建 `NSecondaryResourceIcon` / `NSecondaryResourceCounter` 的 hover tip 始终使用资源的 title 和 description。需要自定义位置时，传入带 `HoverTip = SecondaryResourceHoverTipStyle.Default with { ResolveGlobalPosition = ... }` 的 `SecondaryResourceIconStyle`。hover-tip title 和 description 会收到 `Amount`、`HasMaxAmount` 和 `MaxAmount` 这些 LocString 变量，由本地化文本决定如何显示动态数量。
+
+```csharp
+resources.RegisterCombatUi(
+    "charge_feedback",
+    parent => new MyChargeFeedbackNode(),
+    update: ctx => ctx.Node.Refresh(ctx.Player, ctx.VisibleDefinitions),
+    changed: ctx =>
+    {
+        if (ctx.Definition.Id == charge.Id && ctx.Delta > 0)
+            ctx.Node.PlayGainFeedback(ctx.Delta, ctx.Source);
+    });
+```
 
 对于文本表现：
 
