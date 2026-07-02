@@ -1,6 +1,8 @@
 using Godot;
 using MegaCrit.Sts2.addons.mega_text;
 using MegaCrit.Sts2.Core.Assets;
+using MegaCrit.Sts2.Core.HoverTips;
+using MegaCrit.Sts2.Core.Nodes.HoverTips;
 using MegaCrit.Sts2.Core.Nodes.Screens.Settings;
 using STS2RitsuLib.Ui.Shell.Theme;
 
@@ -21,12 +23,23 @@ namespace STS2RitsuLib.Settings
         /// </summary>
         public static MarginContainer Create(Action openAction)
         {
+            return Create(openAction, null);
+        }
+
+        /// <summary>
+        ///     Builds the General-tab row with an optional vanilla-style settings hover tip.
+        ///     构建 General 标签页行，并可选添加原版设置风格的 hover tip。
+        /// </summary>
+        public static MarginContainer Create(Action openAction, IHoverTip? hoverTip)
+        {
+            var title = ModSettingsLocalization.Get("entry.title", "Mod Settings (RitsuLib)");
             return Create(
                 "RitsuLibModSettings",
                 "RitsuLibModSettingsButton",
-                ModSettingsLocalization.Get("entry.title", "Mod Settings (RitsuLib)"),
+                title,
                 ModSettingsLocalization.Get("button.open", "Open"),
-                openAction);
+                openAction,
+                hoverTip);
         }
 
         /// <summary>
@@ -35,12 +48,23 @@ namespace STS2RitsuLib.Settings
         /// </summary>
         public static MarginContainer CreateOpenLogs(Action openAction)
         {
+            return CreateOpenLogs(openAction, null);
+        }
+
+        /// <summary>
+        ///     Builds the General-tab row that opens the game log folder with an optional vanilla-style settings hover tip.
+        ///     构建 General 标签页中用于打开游戏日志文件夹的行，并可选添加原版设置风格的 hover tip。
+        /// </summary>
+        public static MarginContainer CreateOpenLogs(Action openAction, IHoverTip? hoverTip)
+        {
+            var title = ModSettingsLocalization.Get("entry.openLogs.title", "Open Logs Folder");
             return Create(
                 "RitsuLibOpenLogs",
                 "RitsuLibOpenLogsButton",
-                ModSettingsLocalization.Get("entry.openLogs.title", "Open Logs Folder"),
+                title,
                 ModSettingsLocalization.Get("entry.openLogs.button", "Open Logs"),
-                openAction);
+                openAction,
+                hoverTip);
         }
 
         private static MarginContainer Create(
@@ -48,7 +72,8 @@ namespace STS2RitsuLib.Settings
             string buttonName,
             string labelText,
             string buttonText,
-            Action openAction)
+            Action openAction,
+            IHoverTip? hoverTip = null)
         {
             var line = new MarginContainer
             {
@@ -102,7 +127,32 @@ namespace STS2RitsuLib.Settings
             button.SizeFlagsVertical = Control.SizeFlags.ShrinkBegin;
             row.AddChild(button);
 
+            AttachSettingsHoverTip(line, hoverTip);
+
             return line;
+        }
+
+        private static void AttachSettingsHoverTip(Control owner, IHoverTip? hoverTip)
+        {
+            if (hoverTip == null)
+                return;
+
+            owner.Connect(Control.SignalName.MouseEntered, Callable.From(OnHovered));
+            owner.Connect(Control.SignalName.MouseExited, Callable.From(OnUnhovered));
+            owner.Connect(Node.SignalName.TreeExiting, Callable.From(OnUnhovered));
+
+            return;
+
+            void OnHovered()
+            {
+                NHoverTipSet.CreateAndShow(owner, hoverTip)
+                    ?.SetGlobalPosition(owner.GlobalPosition + NSettingsScreen.settingTipsOffset);
+            }
+
+            void OnUnhovered()
+            {
+                NHoverTipSet.Remove(owner);
+            }
         }
 
         /// <summary>
@@ -252,6 +302,10 @@ namespace STS2RitsuLib.Settings
             reticle.Name = "SelectionReticle";
             reticle.AnchorRight = 1f;
             reticle.AnchorBottom = 1f;
+            reticle.OffsetLeft = 0f;
+            reticle.OffsetTop = 0f;
+            reticle.OffsetRight = 0f;
+            reticle.OffsetBottom = 0f;
             reticle.GrowHorizontal = GrowDirection.Both;
             reticle.GrowVertical = GrowDirection.Both;
             reticle.MouseFilter = MouseFilterEnum.Ignore;
