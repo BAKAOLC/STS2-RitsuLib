@@ -9,6 +9,11 @@ namespace STS2RitsuLib.Lifecycle.Patches
             return HarmonyAsyncTaskBridge.After(originalTask, continuation);
         }
 
+        public static Task After(Task originalTask, Func<Task> continuation)
+        {
+            return HarmonyAsyncTaskBridge.After(originalTask, continuation);
+        }
+
         public static Task<T> After<T>(Task<T> originalTask, Action<T> continuation)
         {
             return HarmonyAsyncTaskBridge.After(originalTask, continuation);
