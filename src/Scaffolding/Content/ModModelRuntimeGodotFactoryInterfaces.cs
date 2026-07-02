@@ -295,9 +295,9 @@ namespace STS2RitsuLib.Scaffolding.Content
     }
 
     /// <summary>
-    ///     Runtime <see cref="ModAnimStateMachine" /> factory for mod characters in merchant / rest-site contexts.
+    ///     Runtime <see cref="ModAnimStateMachine" /> factory for mod characters in merchant contexts.
     ///     Implement when the merchant visuals need state transitions rather than single-shot playback.
-    ///     Mod 角色在商人 / 休息点上下文中的运行时 <see cref="ModAnimStateMachine" /> 工厂。当商人视觉需要状态迁移而不是
+    ///     Mod 角色在商人上下文中的运行时 <see cref="ModAnimStateMachine" /> 工厂。当商人视觉需要状态迁移而不是
     ///     单次播放时实现此接口。
     /// </summary>
     public interface IModCharacterMerchantAnimationStateMachineFactory
@@ -315,5 +315,28 @@ namespace STS2RitsuLib.Scaffolding.Content
         ///     用于 cue 查找的所属角色模型。
         /// </param>
         ModAnimStateMachine? TryCreateMerchantAnimationStateMachine(Node merchantRoot, CharacterModel character);
+    }
+
+    /// <summary>
+    ///     Runtime <see cref="ModAnimStateMachine" /> factory for mod characters in rest-site contexts.
+    ///     Implement when rest-site visuals need the same trigger mapping / state transitions as combat visuals.
+    ///     Mod 角色在休息点上下文中的运行时 <see cref="ModAnimStateMachine" /> 工厂。当休息点视觉需要与战斗视觉一致的
+    ///     trigger 映射 / 状态迁移时实现此接口。
+    /// </summary>
+    public interface IModCharacterRestSiteAnimationStateMachineFactory
+    {
+        /// <summary>
+        ///     Builds a rest-site-context state machine, or <see langword="null" /> to defer to the single-shot path.
+        ///     构建休息点上下文状态机；返回 <see langword="null" /> 则交给单次播放路径。
+        /// </summary>
+        /// <param name="restSiteRoot">
+        ///     Rest-site character root.
+        ///     休息点角色根节点。
+        /// </param>
+        /// <param name="character">
+        ///     Owning character model for cue lookup.
+        ///     用于 cue 查找的所属角色模型。
+        /// </param>
+        ModAnimStateMachine? TryCreateRestSiteAnimationStateMachine(Node restSiteRoot, CharacterModel character);
     }
 }

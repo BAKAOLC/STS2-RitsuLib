@@ -2,6 +2,7 @@ using Godot;
 using MegaCrit.Sts2.Core.Animation;
 using MegaCrit.Sts2.Core.Bindings.MegaSpine;
 using MegaCrit.Sts2.Core.Models;
+using STS2RitsuLib.Scaffolding.Characters;
 using STS2RitsuLib.Scaffolding.Visuals.Definition;
 
 namespace STS2RitsuLib.Scaffolding.Visuals.StateMachine
@@ -195,6 +196,66 @@ namespace STS2RitsuLib.Scaffolding.Visuals.StateMachine
             return builder.BuildForVisualsRoot(visualsRoot, character, cueSet);
         }
 
+        /// <summary>
+        ///     Builds a standard merchant-context state machine using merchant world cues when available.
+        ///     使用可用的商店 world cue 构建标准商店上下文状态机。
+        /// </summary>
+        public static ModAnimStateMachine StandardMerchantCue(Node visualsRoot, CharacterModel? character,
+            string idleName,
+            string? deadName = null, bool deadLoop = false,
+            string? hitName = null, bool hitLoop = false,
+            string? attackName = null, bool attackLoop = false,
+            string? castName = null, bool castLoop = false,
+            string? relaxedName = null, bool relaxedLoop = true,
+            VisualCueSet? cueSet = null)
+        {
+            return StandardCue(
+                visualsRoot,
+                character,
+                idleName,
+                deadName,
+                deadLoop,
+                hitName,
+                hitLoop,
+                attackName,
+                attackLoop,
+                castName,
+                castLoop,
+                relaxedName,
+                relaxedLoop,
+                cueSet ?? TryGetMerchantCueSet(character));
+        }
+
+        /// <summary>
+        ///     Builds a standard rest-site-context state machine using rest-site world cues when available.
+        ///     使用可用的休息点 world cue 构建标准休息点上下文状态机。
+        /// </summary>
+        public static ModAnimStateMachine StandardRestSiteCue(Node visualsRoot, CharacterModel? character,
+            string idleName,
+            string? deadName = null, bool deadLoop = false,
+            string? hitName = null, bool hitLoop = false,
+            string? attackName = null, bool attackLoop = false,
+            string? castName = null, bool castLoop = false,
+            string? relaxedName = null, bool relaxedLoop = true,
+            VisualCueSet? cueSet = null)
+        {
+            return StandardCue(
+                visualsRoot,
+                character,
+                idleName,
+                deadName,
+                deadLoop,
+                hitName,
+                hitLoop,
+                attackName,
+                attackLoop,
+                castName,
+                castLoop,
+                relaxedName,
+                relaxedLoop,
+                cueSet ?? TryGetRestSiteCueSet(character));
+        }
+
         private static void AddOptional(ModAnimStateMachineBuilder builder, string? name, bool loop, string idleName,
             bool hasNext)
         {
@@ -204,6 +265,20 @@ namespace STS2RitsuLib.Scaffolding.Visuals.StateMachine
             var scope = builder.AddState(name, loop);
             if (hasNext)
                 scope.WithNext(idleName);
+        }
+
+        private static VisualCueSet? TryGetMerchantCueSet(CharacterModel? character)
+        {
+            return character is not IModCharacterAssetOverrides overrides
+                ? null
+                : overrides.WorldProceduralVisuals?.Merchant?.CueSet ?? overrides.VisualCues;
+        }
+
+        private static VisualCueSet? TryGetRestSiteCueSet(CharacterModel? character)
+        {
+            return character is not IModCharacterAssetOverrides overrides
+                ? null
+                : overrides.WorldProceduralVisuals?.RestSite?.CueSet ?? overrides.VisualCues;
         }
     }
 }

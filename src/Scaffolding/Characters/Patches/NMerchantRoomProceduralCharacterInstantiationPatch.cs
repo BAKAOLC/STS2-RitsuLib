@@ -95,16 +95,7 @@ namespace STS2RitsuLib.Scaffolding.Characters.Patches
         {
             var n = Math.Min(visuals.Count, players.Count);
             for (var i = 0; i < n; i++)
-            {
-                var character = players[i].Character;
-                if (character is not IModCharacterAssetOverrides
-                    {
-                        WorldProceduralVisuals.Merchant.CueSet: { } cueSet,
-                    })
-                    continue;
-
-                ModCreatureVisualPlayback.TryPlayOnVisualRoot(visuals[i], character, "relaxed_loop", true, cueSet);
-            }
+                visuals[i].PlayAnimation("relaxed_loop", true);
         }
     }
 }

@@ -337,7 +337,7 @@ namespace STS2RitsuLib.Scaffolding.Characters
         , IModCharacterAssetOverrides, IModCreatureVisualsFactory, IModCharacterCreatureVisualsFactory,
         IModCreatureAnimatorFactory, IModCharacterCreatureAnimatorFactory,
         IModCreatureCombatAnimationStateMachineFactory, IModNonSpineAnimationStateMachineFactory,
-        IModCharacterMerchantAnimationStateMachineFactory,
+        IModCharacterMerchantAnimationStateMachineFactory, IModCharacterRestSiteAnimationStateMachineFactory,
         IModCharacterEpochTimelineRequirement, IModCharacterVanillaSelectionPolicy,
         IModCharacterCardLibraryCompendiumPlacement, IModCharacterUnlockPrerequisite
 #pragma warning restore CS0618
@@ -657,6 +657,12 @@ namespace STS2RitsuLib.Scaffolding.Characters
             return SetupCustomMerchantAnimationStateMachine(merchantRoot, character);
         }
 
+        ModAnimStateMachine? IModCharacterRestSiteAnimationStateMachineFactory.
+            TryCreateRestSiteAnimationStateMachine(Node restSiteRoot, CharacterModel character)
+        {
+            return SetupCustomRestSiteAnimationStateMachine(restSiteRoot, character);
+        }
+
         Type? IModCharacterUnlockPrerequisite.UnlocksAfterRunAsType => UnlocksAfterRunAsType;
 
         /// <inheritdoc />
@@ -780,6 +786,27 @@ namespace STS2RitsuLib.Scaffolding.Characters
             CharacterModel character)
         {
             return null;
+        }
+
+        /// <summary>
+        ///     Optional override producing a rest-site <see cref="ModAnimStateMachine" /> for the character. The default
+        ///     delegates to <see cref="SetupCustomMerchantAnimationStateMachine" /> so one world-scene override can drive
+        ///     both merchant and rest-site visuals.
+        ///     可选覆盖，用于为角色生成休息点 <see cref="ModAnimStateMachine" />。默认转发到
+        ///     <see cref="SetupCustomMerchantAnimationStateMachine" />，因此一个世界场景 override 可同时驱动商人和休息点视觉。
+        /// </summary>
+        /// <param name="restSiteRoot">
+        ///     Rest-site character root node.
+        ///     休息点角色根节点。
+        /// </param>
+        /// <param name="character">
+        ///     Character model (always <see langword="this" />, exposed for convenience).
+        ///     角色模型（始终为 <see langword="this" />，仅为方便而暴露）。
+        /// </param>
+        protected virtual ModAnimStateMachine? SetupCustomRestSiteAnimationStateMachine(Node restSiteRoot,
+            CharacterModel character)
+        {
+            return SetupCustomMerchantAnimationStateMachine(restSiteRoot, character);
         }
 
         /// <summary>

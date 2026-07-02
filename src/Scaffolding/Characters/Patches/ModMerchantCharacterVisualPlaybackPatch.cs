@@ -38,13 +38,13 @@ namespace STS2RitsuLib.Scaffolding.Characters.Patches
             if (children.Count == 0)
                 return true;
 
-            if (children[0].GetType().Name.Equals(MegaSprite.spineClassName))
-                return true;
-
             ModCreatureVisualPlayback.TryResolveMerchantCharacterModel(__instance, out var character);
 
             if (TryRouteToStateMachine(__instance, character, anim))
                 return false;
+
+            if (children[0].GetType().Name.Equals(MegaSprite.spineClassName))
+                return true;
 
             var worldCues = TryGetMerchantWorldCueSet(character);
             return !ModCreatureVisualPlayback.TryPlayOnVisualRoot(__instance, character, anim, loop, worldCues);
@@ -61,7 +61,7 @@ namespace STS2RitsuLib.Scaffolding.Characters.Patches
             if (slot.StateMachine == null)
                 return false;
 
-            slot.StateMachine.SetTrigger(anim);
+            slot.StateMachine.SetTrigger(ModCreatureVisualPlayback.MapWorldAnimationToStateMachineTrigger(anim));
             return true;
         }
 
