@@ -100,6 +100,11 @@ namespace STS2RitsuLib.Combat.SecondaryResources
 
         internal bool HasLayers => _costs.Count > 0;
 
+        internal bool HasPermanentLayers =>
+            _costs.Values
+                .SelectMany(static layers => layers)
+                .Any(static layer => layer.Duration == SecondaryResourceCostDuration.Permanent);
+
         /// <summary>
         ///     Raised after attached secondary costs change.
         ///     在附加次级费用变化后触发。
@@ -287,6 +292,39 @@ namespace STS2RitsuLib.Combat.SecondaryResources
             return clone;
         }
 
+        internal bool ResetPermanentLayersFrom(SecondaryResourceCostSet? canonicalCosts)
+        {
+            var changed = false;
+            foreach (var resourceId in _costs.Keys.ToArray())
+            {
+                changed |= _costs[resourceId].RemoveAll(static layer =>
+                    layer.Duration == SecondaryResourceCostDuration.Permanent) > 0;
+                if (_costs[resourceId].Count == 0)
+                    _costs.Remove(resourceId);
+            }
+
+            if (canonicalCosts != null)
+                foreach (var (resourceId, canonicalLayers) in canonicalCosts._costs)
+                {
+                    var permanentLayers = canonicalLayers
+                        .Where(static layer => layer.Duration == SecondaryResourceCostDuration.Permanent)
+                        .ToArray();
+                    if (permanentLayers.Length == 0)
+                        continue;
+
+                    if (_costs.TryGetValue(resourceId, out var layers))
+                        layers.InsertRange(0, permanentLayers);
+                    else
+                        _costs[resourceId] = permanentLayers.ToList();
+                    changed = true;
+                }
+
+            if (changed)
+                Changed?.Invoke();
+
+            return changed;
+        }
+
         private List<SecondaryResourceCostLayer> GetLayers(string resourceId)
         {
             var id = resourceId.Trim();
@@ -363,6 +401,36 @@ namespace STS2RitsuLib.Combat.SecondaryResources
 
             CostSets.Set(destination, costs.Clone());
             return true;
+        }
+
+        internal static void ResetSecondaryResourcesForDowngrade(this CardModel card)
+        {
+            ArgumentNullException.ThrowIfNull(card);
+            var canonical = ModelDb.GetById<CardModel>(card.Id).ToMutable();
+            canonical.ResetSecondaryCostsForDowngradeFrom(card);
+            canonical.ResetSecondaryResourceUsesForDowngradeFrom(card);
+        }
+
+        // ReSharper disable once UnusedMethodReturnValue.Local
+        private static bool ResetSecondaryCostsForDowngradeFrom(
+            this CardModel canonical,
+            CardModel card)
+        {
+            ArgumentNullException.ThrowIfNull(canonical);
+            ArgumentNullException.ThrowIfNull(card);
+
+            var hasCanonicalCosts = canonical.TryGetSecondaryCosts(out var canonicalCosts) &&
+                                    canonicalCosts.HasPermanentLayers;
+            // ReSharper disable once InvertIf
+            if (!card.TryGetSecondaryCosts(out var costs))
+            {
+                if (!hasCanonicalCosts)
+                    return false;
+
+                costs = CostSets.Set(card, new());
+            }
+
+            return costs.ResetPermanentLayersFrom(hasCanonicalCosts ? canonicalCosts : null);
         }
     }
 

@@ -544,12 +544,15 @@ namespace STS2RitsuLib.Models.Capabilities.Patches
             public static IEnumerable<CodeInstruction> Transpiler(IEnumerable<CodeInstruction> instructions)
             {
                 var afterDowngradedMethod = AccessTools.Method(typeof(CardModel), "AfterDowngraded");
+                var resetSecondaryResourcesMethod = AccessTools.Method(
+                    typeof(SecondaryResourceCardExtensions),
+                    nameof(SecondaryResourceCardExtensions.ResetSecondaryResourcesForDowngrade));
                 var notifyMethod = AccessTools.Method(
                     typeof(CardModelCapabilityHost),
                     nameof(CardModelCapabilityHost.AfterOwnerCardDowngraded));
 
                 var code = instructions.ToList();
-                if (afterDowngradedMethod == null || notifyMethod == null)
+                if (afterDowngradedMethod == null || resetSecondaryResourcesMethod == null || notifyMethod == null)
                     return code;
 
                 var inserted = false;
@@ -558,7 +561,12 @@ namespace STS2RitsuLib.Models.Capabilities.Patches
                     if (!code[i].Calls(afterDowngradedMethod))
                         continue;
 
-                    code.InsertRange(i + 1,
+                    code.InsertRange(i,
+                    [
+                        CodeInstruction.LoadArgument(0),
+                        new(OpCodes.Call, resetSecondaryResourcesMethod),
+                    ]);
+                    code.InsertRange(i + 3,
                     [
                         CodeInstruction.LoadArgument(0),
                         new(OpCodes.Call, notifyMethod),
