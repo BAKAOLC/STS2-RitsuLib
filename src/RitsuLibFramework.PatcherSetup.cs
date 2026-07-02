@@ -654,6 +654,7 @@ namespace STS2RitsuLib
             patcher.RegisterPatch<NCreatureNonSpineDeathAnimationTriggerPatch>();
             patcher.RegisterPatch<NCombatUiNonSpineDeathAnimationRewardDelayPatch>();
             patcher.RegisterPatch<NCreatureNonSpineReviveAnimationTriggerPatch>();
+            patcher.RegisterPatch<ModMerchantCharacterReadyPlaybackPatch>();
             patcher.RegisterPatch<ModMerchantCharacterVisualPlaybackPatch>();
             patcher.RegisterPatch<NMerchantRoomProceduralCharacterInstantiationPatch>();
             patcher.RegisterPatch<NFakeMerchantProceduralCharacterInstantiationPatch>();

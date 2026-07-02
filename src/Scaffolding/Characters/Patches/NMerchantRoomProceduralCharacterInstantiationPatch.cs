@@ -76,6 +76,9 @@ namespace STS2RitsuLib.Scaffolding.Characters.Patches
                             player.Character.MerchantAnimPath,
                             nameof(IModCharacterAssetOverrides.CustomMerchantAnimPath),
                             PackedScene.GenEditState.Disabled);
+                    ModMerchantCharacterVisualPlaybackPatch.RegisterRitsuMerchantVisual(
+                        nMerchantCharacter,
+                        player.Character);
                     RitsuGodotTreeCompat.AddChildSafely(characterContainer, nMerchantCharacter);
                     RitsuGodotTreeCompat.MoveChildSafely(characterContainer, nMerchantCharacter, 0);
                     nMerchantCharacter.Position = new(num2, -50f * i);
