@@ -153,8 +153,13 @@ namespace STS2RitsuLib.Models.Capabilities.Patches
             {
                 return
                 [
+#if STS2_AT_LEAST_0_108_0
+                    new(typeof(OrbCmd), nameof(OrbCmd.Passive),
+                        [typeof(PlayerChoiceContext), typeof(OrbModel), typeof(Creature), typeof(bool)]),
+#else
                     new(typeof(OrbCmd), nameof(OrbCmd.Passive),
                         [typeof(PlayerChoiceContext), typeof(OrbModel), typeof(Creature)]),
+#endif
                 ];
             }
 

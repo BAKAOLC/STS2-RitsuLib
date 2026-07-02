@@ -70,9 +70,20 @@ namespace STS2RitsuLib.Combat.Rewards.Patches
 
                 if (cards.Count > 0)
                 {
+#if STS2_AT_LEAST_0_108_0
+                    var rerollOptions = new CardCreationOptions(
+                        [player.Character.CardPool],
+                        source,
+                        rarityOdds);
+#else
                     var options = new CardCreationOptions(cards, source, rarityOdds);
                     if (flags != 0) options.WithFlags(flags);
                     return new(options, save.OptionCount, player);
+#endif
+#if STS2_AT_LEAST_0_108_0
+                    if (flags != 0) rerollOptions.WithFlags(flags);
+                    return new(cards, source, player, rerollOptions);
+#endif
                 }
 
                 Log.Warn("[RitsuLib] Reward.FromSerializable: CustomCardPool had no resolvable cards, " +

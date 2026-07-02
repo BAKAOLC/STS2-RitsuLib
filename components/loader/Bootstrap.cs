@@ -19,11 +19,13 @@ namespace STS2RitsuLib.Loader
     [ModInitializer(nameof(Initialize))]
     public static class Bootstrap
     {
+        private const string ModId = "STS2-RitsuLib";
         private const string RealDllName = "STS2-RitsuLib.dll";
         private const string VariantManifestName = "ritsulib-variants.manifest";
         private const string CompatTargetMarkerName = "compat-target.txt";
         private static readonly Lock VariantAssembliesLock = new();
         private static readonly List<Assembly> VariantAssemblies = [];
+        private static readonly MethodInfo? AssociateAssemblyWithModMethod = CreateAssociateAssemblyWithModMethod();
         private static bool _reflectionBridgePatched;
 
         public static void Initialize()
@@ -73,6 +75,7 @@ namespace STS2RitsuLib.Loader
             {
                 realAsm = alc.LoadFromAssemblyPath(realDll);
                 RegisterVariantAssembly(realAsm);
+                AssociateVariantAssemblyWithGame(realAsm);
             }
             catch (Exception ex)
             {
@@ -103,7 +106,9 @@ namespace STS2RitsuLib.Loader
 
         private static void RegisterVariantAssembly(Assembly realAsm)
         {
-            EnsureReflectionBridgePatch();
+            if (AssociateAssemblyWithModMethod == null)
+                EnsureReflectionBridgePatch();
+
             lock (VariantAssembliesLock)
             {
                 if (VariantAssemblies.Any(assembly => string.Equals(
@@ -114,6 +119,32 @@ namespace STS2RitsuLib.Loader
 
                 VariantAssemblies.Add(realAsm);
             }
+        }
+
+        private static void AssociateVariantAssemblyWithGame(Assembly assembly)
+        {
+            if (AssociateAssemblyWithModMethod == null)
+                return;
+
+            try
+            {
+                AssociateAssemblyWithModMethod.Invoke(null, [ModId, assembly]);
+            }
+            catch (Exception ex)
+            {
+                Log.Warn(
+                    $"[RitsuLib.Loader] Failed to associate variant assembly {assembly.FullName} with {ModId}: {ex.Message}");
+            }
+        }
+
+        private static MethodInfo? CreateAssociateAssemblyWithModMethod()
+        {
+            return typeof(ModManager).GetMethod(
+                "AssociateAssemblyWithMod",
+                BindingFlags.Public | BindingFlags.Static,
+                null,
+                [typeof(string), typeof(Assembly)],
+                null);
         }
 
         private static void EnsureReflectionBridgePatch()

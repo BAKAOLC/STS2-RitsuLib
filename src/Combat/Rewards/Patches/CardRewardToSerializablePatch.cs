@@ -1,4 +1,5 @@
 using HarmonyLib;
+using MegaCrit.Sts2.Core.Models;
 using MegaCrit.Sts2.Core.Rewards;
 using MegaCrit.Sts2.Core.Runs;
 using MegaCrit.Sts2.Core.Saves.Runs;
@@ -52,12 +53,21 @@ namespace STS2RitsuLib.Combat.Rewards.Patches
             var result = new SerializableReward { RewardType = RewardType.Card };
             RewardExtData? ext = null;
 
+#if STS2_AT_LEAST_0_108_0
+            if (hasNoPools)
+            {
+                ext = BuildSpecificCardsExt(options, __instance.Cards);
+                result.Source = options.Source;
+                result.RarityOdds = options.RarityOdds;
+            }
+#else
             if (hasNoPools && options.CustomCardPool != null)
             {
                 ext = BuildCustomPoolExt(options);
                 result.Source = options.Source;
                 result.RarityOdds = options.RarityOdds;
             }
+#endif
             else if (hasFilter && options.CardPools.Count > 0)
             {
                 ext = BuildFilterSnapshotExt(options, __instance);
@@ -86,6 +96,19 @@ namespace STS2RitsuLib.Combat.Rewards.Patches
             return false;
         }
 
+#if STS2_AT_LEAST_0_108_0
+        private static RewardExtData BuildSpecificCardsExt(
+            CardCreationOptions options, IEnumerable<CardModel> cards)
+        {
+            return new()
+            {
+                IsCustomPool = true,
+                CustomCardIds = cards.Select(c => c.Id.ToString()).ToList(),
+                Source = (int)options.Source,
+                RarityOdds = (int)options.RarityOdds,
+            };
+        }
+#else
         private static RewardExtData BuildCustomPoolExt(CardCreationOptions options)
         {
             return new()
@@ -96,6 +119,7 @@ namespace STS2RitsuLib.Combat.Rewards.Patches
                 RarityOdds = (int)options.RarityOdds,
             };
         }
+#endif
 
         private static RewardExtData BuildFilterSnapshotExt(
             CardCreationOptions options, CardReward reward)

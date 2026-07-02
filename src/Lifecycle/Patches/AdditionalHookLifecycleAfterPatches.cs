@@ -495,6 +495,9 @@ namespace STS2RitsuLib.Lifecycle.Patches
             [
 #if !STS2_AT_LEAST_0_106_0
                 new(typeof(Hook), nameof(Hook.BeforeTurnEnd), [typeof(CombatStateCompat), typeof(CombatSide)]),
+#elif STS2_AT_LEAST_0_108_0
+                new(typeof(Hook), nameof(Hook.BeforeSideTurnEnd),
+                    [typeof(CombatStateCompat), typeof(CombatSide), typeof(IEnumerable<Creature>)]),
 #else
                 new(typeof(Hook), nameof(Hook.BeforeTurnEnd),
                     [typeof(CombatStateCompat), typeof(CombatSide), typeof(IEnumerable<Creature>)]),
@@ -536,6 +539,9 @@ namespace STS2RitsuLib.Lifecycle.Patches
             [
 #if !STS2_AT_LEAST_0_106_0
                 new(typeof(Hook), nameof(Hook.AfterTurnEnd), [typeof(CombatStateCompat), typeof(CombatSide)]),
+#elif STS2_AT_LEAST_0_108_0
+                new(typeof(Hook), nameof(Hook.AfterSideTurnEnd),
+                    [typeof(CombatStateCompat), typeof(CombatSide), typeof(IEnumerable<Creature>)]),
 #else
                 new(typeof(Hook), nameof(Hook.AfterTurnEnd),
                     [typeof(CombatStateCompat), typeof(CombatSide), typeof(IEnumerable<Creature>)]),

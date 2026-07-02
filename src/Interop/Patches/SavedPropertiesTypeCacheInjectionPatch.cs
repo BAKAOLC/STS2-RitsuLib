@@ -5,6 +5,7 @@ using MegaCrit.Sts2.Core.Localization;
 using MegaCrit.Sts2.Core.Modding;
 using MegaCrit.Sts2.Core.Models;
 using MegaCrit.Sts2.Core.Saves.Runs;
+using STS2RitsuLib.Compat;
 using STS2RitsuLib.Data;
 using STS2RitsuLib.Data.Models;
 using STS2RitsuLib.Interop.AutoRegistration;
@@ -58,19 +59,29 @@ namespace STS2RitsuLib.Interop.Patches
 
             foreach (var modelType in modelTypes)
             {
+#if STS2_AT_LEAST_0_108_0
+                SavedPropertiesTypeCache.InjectTypeIntoCache(modelType);
+                injectedTypes++;
+#else
                 if (SavedPropertiesTypeCache.GetJsonPropertiesForType(modelType) != null)
                     continue;
 
                 SavedPropertiesTypeCache.InjectTypeIntoCache(modelType);
                 injectedTypes++;
+#endif
             }
 
             ModelSavedDataRegistry.FinalizeRegistration();
             SavedAttachedStateRegistry.FinalizePropertyNameRegistration();
             var afterCount = GetPropertyNameCount();
+#if STS2_AT_LEAST_0_108_0
+            const bool sorted = false;
+            UsesDeterministicNetIdTable = false;
+#else
             var sorted = SortNetIdTableIfEnabled(modelTypes.Length > 0 || afterCount != beforeCount);
             UsesDeterministicNetIdTable = sorted;
             RefreshNetIdBitSize();
+#endif
 
             if (injectedTypes > 0 || sorted || afterCount != beforeCount)
                 RitsuLibFramework.Logger.Info(
@@ -87,16 +98,15 @@ namespace STS2RitsuLib.Interop.Patches
         private static IEnumerable<Type> GetModModelTypesWithSavedProperties()
         {
             return ModManager.GetLoadedMods()
-                .Select(static mod => new
+                .SelectMany(static mod => Sts2ModManagerCompat.GetAssemblies(mod).Select(assembly => new
                 {
-                    ModId = mod.manifest?.id ?? mod.assembly?.GetName().Name ?? mod.path,
-                    mod.assembly,
-                })
-                .Where(static mod => mod.assembly != null)
+                    ModId = mod.manifest?.id ?? assembly.GetName().Name ?? mod.path,
+                    Assembly = assembly,
+                }))
                 .OrderBy(static mod => mod.ModId, StringComparer.Ordinal)
-                .ThenBy(static mod => mod.assembly!.FullName, StringComparer.Ordinal)
+                .ThenBy(static mod => mod.Assembly.FullName, StringComparer.Ordinal)
                 .SelectMany(static mod =>
-                    AssemblyTypeScanHelper.GetLoadableTypes(mod.assembly!, RitsuLibFramework.Logger))
+                    AssemblyTypeScanHelper.GetLoadableTypes(mod.Assembly, RitsuLibFramework.Logger))
                 .Where(static type =>
                     type is { IsAbstract: false, IsInterface: false } &&
                     typeof(AbstractModel).IsAssignableFrom(type) &&

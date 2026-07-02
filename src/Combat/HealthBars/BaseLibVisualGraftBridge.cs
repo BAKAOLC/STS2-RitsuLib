@@ -102,11 +102,8 @@ namespace STS2RitsuLib.Combat.HealthBars
             }
 
             foreach (var mod in Sts2ModManagerCompat.EnumerateLoadedModsWithAssembly())
+            foreach (var assembly in Sts2ModManagerCompat.GetAssemblies(mod))
             {
-                var assembly = mod.assembly;
-                if (assembly == null)
-                    continue;
-
                 var type = assembly.GetType("BaseLib.Hooks.HealthBarVisualGraftRegistry");
                 if (type == null) continue;
                 _interopOk = true;

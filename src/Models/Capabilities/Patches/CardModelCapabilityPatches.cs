@@ -384,17 +384,28 @@ namespace STS2RitsuLib.Models.Capabilities.Patches
 
             public static ModPatchTarget[] GetTargets()
             {
-#if STS2_AT_LEAST_0_105_0
+#if STS2_AT_LEAST_0_108_0
+                return [new(typeof(CardModel), "GetResultPileTypeAndPositionForCardPlay", Type.EmptyTypes)];
+#elif STS2_AT_LEAST_0_105_0
                 return [new(typeof(CardModel), "GetResultPileTypeForCardPlay", Type.EmptyTypes)];
 #else
                 return [new(typeof(CardModel), "GetResultPileType", Type.EmptyTypes)];
 #endif
             }
 
+#if STS2_AT_LEAST_0_108_0
+            public static void Postfix(CardModel __instance, ref (PileType, CardPilePosition) __result)
+            {
+                __result.Item1 = CardModelCapabilityHost.ApplyResultPileTypeForCardPlay(
+                    __instance,
+                    __result.Item1);
+            }
+#else
             public static void Postfix(CardModel __instance, ref PileType __result)
             {
                 __result = CardModelCapabilityHost.ApplyResultPileTypeForCardPlay(__instance, __result);
             }
+#endif
         }
 
         internal sealed class TransformCarryOverPatch : IPatchMethod

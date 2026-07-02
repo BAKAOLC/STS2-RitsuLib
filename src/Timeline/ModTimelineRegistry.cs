@@ -290,8 +290,11 @@ namespace STS2RitsuLib.Timeline
         {
             var epochTypeDictionary =
                 GetStaticField<Dictionary<string, Type>>(typeof(EpochModel), "_epochTypeDictionary");
-            SetStaticField(typeof(EpochModel), "_allEpochIds",
-                epochTypeDictionary.Keys.OrderBy(id => id, StringComparer.Ordinal).ToArray());
+            var ids = epochTypeDictionary.Keys.OrderBy(id => id, StringComparer.Ordinal).ToList();
+
+            var field = typeof(EpochModel).GetField("_allEpochIds", BindingFlags.Static | BindingFlags.NonPublic)
+                        ?? throw new MissingFieldException(typeof(EpochModel).FullName, "_allEpochIds");
+            field.SetValue(null, field.FieldType == typeof(List<string>) ? ids : ids.ToArray());
         }
     }
 }

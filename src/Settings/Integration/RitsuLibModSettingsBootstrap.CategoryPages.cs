@@ -27,58 +27,75 @@ namespace STS2RitsuLib.Settings
                     .WithSortOrder(-990)
                     .WithTitle(T("ritsulib.category.core.label", "Core settings"))
                     .WithDescription(T("ritsulib.category.core.description",
-                        "Interface theme, main menu shortcut, and deterministic ModelDb controls."))
-                    .AddSection("core", section => section
-                        .WithTitle(T("ritsulib.category.core.label", "Core settings"))
-                        .AddChoice(
-                            "modeldb_deterministic_sort_mode",
-                            T("ritsulib.modelDbDeterministicSort.label", "Enable ModelDb deterministic sorting"),
-                            ui.ModelDbDeterministicSortMode,
-                            [
-                                new("off", T("ritsulib.modelDbDeterministicSort.option.off", "Off")),
-                                new("auto",
-                                    T("ritsulib.modelDbDeterministicSort.option.auto",
-                                        "When RitsuLib-related registered content is detected")),
-                                new("force", T("ritsulib.modelDbDeterministicSort.option.force", "Force enabled")),
-                            ],
-                            T("ritsulib.modelDbDeterministicSort.description",
-                                "Controls whether ModelIdSerializationCache is rebuilt from deterministic final ModelDb content during initialization."),
-                            ModSettingsChoicePresentation.Dropdown)
-                        .AddButton(
-                            "modeldb_deterministic_sort_now",
-                            T("ritsulib.modelDbDeterministicSort.now.label", "Manual ModelDb deterministic sort"),
-                            T("ritsulib.modelDbDeterministicSort.now.button", "Sort now"),
-                            TryRebuildModelDbDeterministicCacheFromSettings,
-                            ModSettingsButtonTone.Normal,
-                            T("ritsulib.modelDbDeterministicSort.now.description",
-                                "Rebuilds the current session's ModelIdSerializationCache immediately."))
-                        .AddChoice(
-                            "ui_shell_theme_id",
-                            T("ritsulib.uiShellTheme.label", "Interface theme"),
-                            ui.UiShellThemeId,
-                            RitsuShellThemeCatalog.RegisteredThemeIds
-                                .Select(id => new ModSettingsChoiceOption<string>(id,
-                                    T($"ritsulib.uiShellTheme.option.{id}", id)))
-                                .ToArray(),
-                            T("ritsulib.uiShellTheme.description",
-                                "Applies a built-in color theme to the Ritsu settings UI shell (sidebars, rows, and modals)."),
-                            ModSettingsChoicePresentation.Dropdown)
-                        .AddButton(
-                            "ui_shell_theme_reset_file",
-                            T("ritsulib.uiShellTheme.resetFile.label", "Reset existing theme files"),
-                            T("ritsulib.uiShellTheme.resetFile.button", "Reset theme files"),
-                            TryResetExistingThemeFiles,
-                            ModSettingsButtonTone.Normal,
-                            T("ritsulib.uiShellTheme.resetFile.description",
-                                "Overwrite existing built-in theme files on disk with their embedded default versions."))
-                        .AddToggle(
-                            "main_menu_mod_settings_button_enabled",
-                            T("ritsulib.mainMenuModSettingsButton.enabled.label", "Show main menu settings shortcut"),
-                            ui.MainMenuModSettingsButtonEnabled,
-                            T("ritsulib.mainMenuModSettingsButton.enabled.description",
-                                "Shows a RitsuLib settings shortcut under the patch notes button on the main menu."))),
+                        "Interface theme and main menu shortcut."))
+                    .AddSection("core", section => ConfigureCoreSettingsSection(section, ui)),
                 "core");
         }
+
+        private static void ConfigureCoreSettingsSection(
+            ModSettingsSectionBuilder section,
+            RitsuLibModSettingsUiBindings ui)
+        {
+            section.WithTitle(T("ritsulib.category.core.label", "Core settings"));
+#if !STS2_AT_LEAST_0_108_0
+            AddLegacyModelDbDeterministicSortControls(section, ui);
+#endif
+            section.AddChoice(
+                "ui_shell_theme_id",
+                T("ritsulib.uiShellTheme.label", "Interface theme"),
+                ui.UiShellThemeId,
+                RitsuShellThemeCatalog.RegisteredThemeIds
+                    .Select(id => new ModSettingsChoiceOption<string>(id,
+                        T($"ritsulib.uiShellTheme.option.{id}", id)))
+                    .ToArray(),
+                T("ritsulib.uiShellTheme.description",
+                    "Applies a built-in color theme to the Ritsu settings UI shell (sidebars, rows, and modals)."),
+                ModSettingsChoicePresentation.Dropdown);
+            section.AddButton(
+                "ui_shell_theme_reset_file",
+                T("ritsulib.uiShellTheme.resetFile.label", "Reset existing theme files"),
+                T("ritsulib.uiShellTheme.resetFile.button", "Reset theme files"),
+                TryResetExistingThemeFiles,
+                ModSettingsButtonTone.Normal,
+                T("ritsulib.uiShellTheme.resetFile.description",
+                    "Overwrite existing built-in theme files on disk with their embedded default versions."));
+            section.AddToggle(
+                "main_menu_mod_settings_button_enabled",
+                T("ritsulib.mainMenuModSettingsButton.enabled.label", "Show main menu settings shortcut"),
+                ui.MainMenuModSettingsButtonEnabled,
+                T("ritsulib.mainMenuModSettingsButton.enabled.description",
+                    "Shows a RitsuLib settings shortcut under the patch notes button on the main menu."));
+        }
+
+#if !STS2_AT_LEAST_0_108_0
+        private static void AddLegacyModelDbDeterministicSortControls(
+            ModSettingsSectionBuilder section,
+            RitsuLibModSettingsUiBindings ui)
+        {
+            section.AddChoice(
+                "modeldb_deterministic_sort_mode",
+                T("ritsulib.modelDbDeterministicSort.label", "Enable ModelDb deterministic sorting"),
+                ui.ModelDbDeterministicSortMode,
+                [
+                    new("off", T("ritsulib.modelDbDeterministicSort.option.off", "Off")),
+                    new("auto",
+                        T("ritsulib.modelDbDeterministicSort.option.auto",
+                            "When RitsuLib-related registered content is detected")),
+                    new("force", T("ritsulib.modelDbDeterministicSort.option.force", "Force enabled")),
+                ],
+                T("ritsulib.modelDbDeterministicSort.description",
+                    "Controls whether ModelIdSerializationCache is rebuilt from deterministic final ModelDb content during initialization."),
+                ModSettingsChoicePresentation.Dropdown);
+            section.AddButton(
+                "modeldb_deterministic_sort_now",
+                T("ritsulib.modelDbDeterministicSort.now.label", "Manual ModelDb deterministic sort"),
+                T("ritsulib.modelDbDeterministicSort.now.button", "Sort now"),
+                TryRebuildModelDbDeterministicCacheFromSettings,
+                ModSettingsButtonTone.Normal,
+                T("ritsulib.modelDbDeterministicSort.now.description",
+                    "Rebuilds the current session's ModelIdSerializationCache immediately."));
+        }
+#endif
 
         private static void RegisterCompatibilitySettingsPage(RitsuLibModSettingsUiBindings ui)
         {

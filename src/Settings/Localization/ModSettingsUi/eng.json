@@ -89,7 +89,7 @@
   "ritsulib.page.description": "Framework settings and settings UI reference entries.",
   "ritsulib.section.categories.title": "Categories",
   "ritsulib.category.core.label": "Core settings",
-  "ritsulib.category.core.description": "Interface theme, main menu shortcut, and deterministic ModelDb controls.",
+  "ritsulib.category.core.description": "Interface theme and main menu shortcut.",
   "ritsulib.category.compatibility.label": "Compatibility fallbacks",
   "ritsulib.category.compatibility.description": "Debug compatibility mode and fallback shims.",
   "ritsulib.category.updates.label": "Updates",

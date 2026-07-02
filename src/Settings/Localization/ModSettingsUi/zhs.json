@@ -89,7 +89,7 @@
   "ritsulib.page.description": "前置库设置与设置界面参考项。",
   "ritsulib.section.categories.title": "分类",
   "ritsulib.category.core.label": "核心设置",
-  "ritsulib.category.core.description": "界面主题、主菜单快捷入口与 ModelDb 确定性排序控制。",
+  "ritsulib.category.core.description": "界面主题与主菜单快捷入口。",
   "ritsulib.category.compatibility.label": "兼容性回退",
   "ritsulib.category.compatibility.description": "调试兼容模式与各项回退开关。",
   "ritsulib.category.updates.label": "更新",

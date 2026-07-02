@@ -22,6 +22,9 @@ Attribute registration requires the mod assembly to be registered once:
 ModTypeDiscoveryHub.RegisterModAssembly("MyMod", Assembly.GetExecutingAssembly());
 ```
 
+On STS2 versions that expose game-side assembly association, this also associates the assembly with your mod for the
+game's own content classification.
+
 If the annotated class lives in a helper assembly that the game does not map to your manifest id, add
 `[RitsuLibOwnedBy("MyMod")]` to the class or register that assembly with `ModTypeDiscoveryHub.RegisterModAssembly(...)`.
 
@@ -43,6 +46,8 @@ RitsuLib 提供两种常规注册风格，它们是平级入口：
 ```csharp
 ModTypeDiscoveryHub.RegisterModAssembly("MyMod", Assembly.GetExecutingAssembly());
 ```
+
+在提供游戏侧程序集关联 API 的 STS2 版本中，这也会把程序集关联到你的 mod，供游戏自己的内容分类使用。
 
 如果注解类位于游戏无法映射到你的 manifest id 的辅助程序集，可以给类加 `[RitsuLibOwnedBy("MyMod")]`，或为该程序集调用
 `ModTypeDiscoveryHub.RegisterModAssembly(...)`。

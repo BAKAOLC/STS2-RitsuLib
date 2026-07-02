@@ -132,11 +132,8 @@ namespace STS2RitsuLib.Combat.CardTargeting
                 return byQualifiedName;
 
             foreach (var mod in Sts2ModManagerCompat.EnumerateLoadedModsWithAssembly())
+            foreach (var assembly in Sts2ModManagerCompat.GetAssemblies(mod))
             {
-                var assembly = mod.assembly;
-                if (assembly == null)
-                    continue;
-
                 var type = assembly.GetType(BaseLibCustomTargetTypeName, false);
                 if (type != null)
                     return type;

@@ -18,7 +18,12 @@ namespace STS2RitsuLib.Compat
             BindingFlags.NonPublic;
 
         private static readonly Func<Mod, ModManifest?> ReadManifest = CreateModManifestAccessor();
-        private static readonly Func<Mod, Assembly?> ReadAssembly = CreateModAssemblyAccessor();
+        private static readonly Func<Mod, IReadOnlyList<Assembly>> ReadAssemblies = CreateModAssembliesAccessor();
+        private static readonly MethodInfo? AssociateAssemblyWithModMethod = CreateAssociateAssemblyWithModMethod();
+
+        private static readonly Func<Mod, Assembly?> ReadAssembly =
+            static mod => ReadAssemblies(mod).FirstOrDefault();
+
         private static readonly Func<Mod, IReadOnlyList<LocString>> ReadErrors = CreateModErrorsAccessor();
         private static readonly Func<Mod, string> ReadSource = CreateModSourceAccessor();
         private static readonly Func<Mod, string?> ReadPath = CreateModPathAccessor();
@@ -42,6 +47,16 @@ namespace STS2RitsuLib.Compat
         internal static IEnumerable<Mod> EnumerateLoadedModsWithAssembly()
         {
             return ModManager.GetLoadedMods();
+        }
+
+        internal static Assembly? GetAssembly(Mod mod)
+        {
+            return ReadAssembly(mod);
+        }
+
+        internal static IReadOnlyList<Assembly> GetAssemblies(Mod mod)
+        {
+            return ReadAssemblies(mod);
         }
 
         internal static IReadOnlyDictionary<string, Assembly> BuildLoadedModAssembliesByManifestId()
@@ -68,10 +83,37 @@ namespace STS2RitsuLib.Compat
             return result;
         }
 
+        internal static IReadOnlyDictionary<string, IReadOnlyList<Assembly>> BuildLoadedModAssemblyListsByManifestId()
+        {
+            var result = new Dictionary<string, IReadOnlyList<Assembly>>(StringComparer.Ordinal);
+
+            foreach (var mod in EnumerateLoadedModsWithAssembly())
+                try
+                {
+                    var manifest = ReadManifest(mod);
+                    var modId = manifest == null ? null : ReadManifestId(manifest);
+                    var assemblies = ReadAssemblies(mod)
+                        .Where(static assembly => assembly != null)
+                        .Distinct()
+                        .ToArray();
+                    if (string.IsNullOrWhiteSpace(modId) || assemblies.Length == 0)
+                        continue;
+
+                    result[modId] = assemblies;
+                }
+                catch (Exception ex)
+                {
+                    RitsuLibFramework.Logger.Warn(
+                        $"[Compat] Failed to inspect loaded mod assemblies for discovery interop: {ex.Message}");
+                }
+
+            return result;
+        }
+
         internal static IReadOnlyList<Sts2LoadedModAssemblyEntry> BuildLoadedModAssemblyEntries()
         {
             return EnumerateLoadedModsWithAssembly()
-                .Select(TryBuildLoadedModAssemblyEntry)
+                .SelectMany(TryBuildLoadedModAssemblyEntries)
                 .Where(entry => entry != null)
                 .Select(entry => entry!)
                 .ToArray();
@@ -82,7 +124,7 @@ namespace STS2RitsuLib.Compat
             foreach (var mod in EnumerateLoadedModsWithAssembly())
                 try
                 {
-                    if (ReadAssembly(mod) != type.Assembly)
+                    if (!ReadAssemblies(mod).Contains(type.Assembly))
                         continue;
 
                     var manifest = ReadManifest(mod);
@@ -96,6 +138,86 @@ namespace STS2RitsuLib.Compat
                 }
 
             return true;
+        }
+
+        internal static bool TryGetLoadedModIdForAssembly(Assembly assembly, out string modId)
+        {
+            ArgumentNullException.ThrowIfNull(assembly);
+
+            foreach (var mod in EnumerateLoadedModsWithAssembly())
+                try
+                {
+                    if (!ReadAssemblies(mod).Contains(assembly))
+                        continue;
+
+                    var manifest = ReadManifest(mod);
+                    modId = manifest == null ? "" : ReadManifestId(manifest) ?? "";
+                    return !string.IsNullOrWhiteSpace(modId);
+                }
+                catch (Exception ex)
+                {
+                    RitsuLibFramework.Logger.Warn(
+                        $"[Compat] Failed to resolve loaded mod ownership for assembly '{assembly.FullName}': {ex.Message}");
+                    break;
+                }
+
+            modId = "";
+            return false;
+        }
+
+        internal static IReadOnlyList<Assembly> GetLoadedModAssemblies(string modId)
+        {
+            ArgumentException.ThrowIfNullOrWhiteSpace(modId);
+
+            foreach (var mod in EnumerateLoadedModsWithAssembly())
+                try
+                {
+                    var manifest = ReadManifest(mod);
+                    if (manifest == null ||
+                        !string.Equals(ReadManifestId(manifest), modId, StringComparison.Ordinal))
+                        continue;
+
+                    return ReadAssemblies(mod).Distinct().ToArray();
+                }
+                catch (Exception ex)
+                {
+                    RitsuLibFramework.Logger.Warn(
+                        $"[Compat] Failed to resolve loaded assemblies for mod '{modId}': {ex.Message}");
+                    return [];
+                }
+
+            return [];
+        }
+
+        internal static bool TryAssociateAssemblyWithMod(string modId, Assembly assembly)
+        {
+            ArgumentException.ThrowIfNullOrWhiteSpace(modId);
+            ArgumentNullException.ThrowIfNull(assembly);
+
+            if (TryGetLoadedModIdForAssembly(assembly, out var existingModId))
+            {
+                if (string.Equals(existingModId, modId, StringComparison.Ordinal))
+                    return true;
+
+                RitsuLibFramework.Logger.Warn(
+                    $"[Compat] Assembly '{assembly.FullName}' is already associated with mod '{existingModId}', not '{modId}'.");
+                return false;
+            }
+
+            if (AssociateAssemblyWithModMethod == null)
+                return false;
+
+            try
+            {
+                AssociateAssemblyWithModMethod.Invoke(null, [modId, assembly]);
+                return true;
+            }
+            catch (Exception ex)
+            {
+                RitsuLibFramework.Logger.Warn(
+                    $"[Compat] Failed to associate assembly '{assembly.FullName}' with mod '{modId}': {ex.Message}");
+                return false;
+            }
         }
 
         /// <summary>
@@ -148,10 +270,9 @@ namespace STS2RitsuLib.Compat
                 if (SteamWorkshopInstallSource.TryGetWorkshopItemIdFromPath(ReadPath(mod), out var pathItemId))
                     return pathItemId;
 
-                var assembly = ReadAssembly(mod);
-                if (assembly != null &&
-                    SteamWorkshopInstallSource.TryGetWorkshopItemIdFromAssembly(assembly, out var assemblyItemId))
-                    return assemblyItemId;
+                foreach (var assembly in ReadAssemblies(mod))
+                    if (SteamWorkshopInstallSource.TryGetWorkshopItemIdFromAssembly(assembly, out var assemblyItemId))
+                        return assemblyItemId;
             }
             catch (Exception ex)
             {
@@ -196,31 +317,33 @@ namespace STS2RitsuLib.Compat
             }
         }
 
-        private static Sts2LoadedModAssemblyEntry? TryBuildLoadedModAssemblyEntry(Mod mod)
+        private static IReadOnlyList<Sts2LoadedModAssemblyEntry> TryBuildLoadedModAssemblyEntries(Mod mod)
         {
             try
             {
                 var manifest = ReadManifest(mod);
-                var assembly = ReadAssembly(mod);
-                if (assembly == null)
-                    return null;
+                var assemblies = ReadAssemblies(mod).Distinct().ToArray();
+                if (assemblies.Length == 0)
+                    return [];
 
-                var assemblyName = ResolveAssemblyName(assembly);
-                var fallbackName = assemblyName?.Name ?? "<unknown>";
+                var primaryAssemblyName = ResolveAssemblyName(assemblies.FirstOrDefault());
+                var fallbackName = primaryAssemblyName?.Name ?? "<unknown>";
                 var id = manifest == null ? fallbackName : ReadManifestId(manifest) ?? fallbackName;
                 var name = manifest == null ? fallbackName : ReadManifestName(manifest) ?? fallbackName;
 
-                return new(
-                    id,
-                    name,
-                    manifest == null ? null : ReadManifestVersion(manifest),
-                    assembly);
+                return assemblies
+                    .Select(assembly => new Sts2LoadedModAssemblyEntry(
+                        id,
+                        name,
+                        manifest == null ? null : ReadManifestVersion(manifest),
+                        assembly))
+                    .ToArray();
             }
             catch (Exception ex)
             {
                 RitsuLibFramework.Logger.Warn(
                     $"[Compat] Failed to inspect a loaded mod assembly for compatibility diagnostics: {ex.Message}");
-                return null;
+                return [];
             }
         }
 
@@ -321,13 +444,32 @@ namespace STS2RitsuLib.Compat
             return mod => getter?.Invoke(mod) as ModManifest;
         }
 
-        private static Func<Mod, Assembly?> CreateModAssemblyAccessor()
+        private static Func<Mod, IReadOnlyList<Assembly>> CreateModAssembliesAccessor()
         {
+#if STS2_AT_LEAST_0_108_0
+            if (typeof(Mod).GetField("assemblies", InstanceMemberFlags) != null)
+                return static mod => mod.assemblies;
+#else
             if (typeof(Mod).GetField("assembly", InstanceMemberFlags) != null)
-                return static mod => mod.assembly;
+                return static mod => mod.assembly == null ? [] : [mod.assembly];
+#endif
+
+            var assembliesGetter = CreateUntypedMemberGetter(typeof(Mod), "assemblies");
+            if (assembliesGetter != null)
+                return mod => NormalizeAssemblies(assembliesGetter.Invoke(mod) as IEnumerable<Assembly>);
 
             var getter = CreateUntypedMemberGetter(typeof(Mod), "assembly");
-            return mod => getter?.Invoke(mod) as Assembly;
+            return mod => getter?.Invoke(mod) is Assembly assembly ? [assembly] : [];
+        }
+
+        private static MethodInfo? CreateAssociateAssemblyWithModMethod()
+        {
+            return typeof(ModManager).GetMethod(
+                "AssociateAssemblyWithMod",
+                BindingFlags.Public | BindingFlags.Static,
+                null,
+                [typeof(string), typeof(Assembly)],
+                null);
         }
 
         private static Func<Mod, IReadOnlyList<LocString>> CreateModErrorsAccessor()
@@ -422,6 +564,11 @@ namespace STS2RitsuLib.Compat
         private static IReadOnlyList<LocString> NormalizeErrors(IEnumerable<LocString>? errors)
         {
             return errors?.Where(error => error != null).ToArray() ?? [];
+        }
+
+        private static IReadOnlyList<Assembly> NormalizeAssemblies(IEnumerable<Assembly>? assemblies)
+        {
+            return assemblies?.Where(assembly => assembly != null).ToArray() ?? [];
         }
 
         private static bool? ReadBool(Func<object, object?>? getter, object target)

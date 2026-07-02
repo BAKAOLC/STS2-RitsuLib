@@ -482,7 +482,7 @@ namespace STS2RitsuLib
             var patcher = CreatePatcher(Const.ModId, "framework-content-assets", "content assets");
             patcher.RegisterPatch<EpochPortraitPathPatch>();
             patcher.RegisterPatch<EpochBigPortraitPathPatch>();
-#if STS2_AT_LEAST_0_106_0
+#if STS2_AT_LEAST_0_106_0 && !STS2_AT_LEAST_0_108_0
             patcher.RegisterPatch<EpochArtPlaceholderPatch>();
 #endif
             patcher.RegisterPatch<CardPortraitPathPatch>();
@@ -607,7 +607,9 @@ namespace STS2RitsuLib
             var patcher = CreatePatcher(Const.ModId, "framework-settings-ui", "settings ui");
             patcher.RegisterPatch<ModSettingsSubmenuPatch>();
             patcher.RegisterPatch<ModSettingsRunSubmenuStackPatch>();
+#if !STS2_AT_LEAST_0_108_0
             patcher.RegisterPatch<SettingsSaveDuplicateWorkshopModListPatch>();
+#endif
             patcher.RegisterPatch<SettingsScreenModSettingsButtonPatch>();
             patcher.RegisterPatch<MainMenuModSettingsButtonPatch>();
             RegisterFrameworkPatcher(FrameworkPatcherArea.SettingsUi, patcher);
@@ -696,8 +698,10 @@ namespace STS2RitsuLib
             patcher.RegisterPatch<AllRelicsPatch>();
             patcher.RegisterPatch<AllPotionPoolsPatch>();
             patcher.RegisterPatch<ModelDbModdedEntryPatch>();
+#if !STS2_AT_LEAST_0_108_0
             patcher.RegisterPatch<ModelIdSerializationCacheDynamicContentPatch>();
             patcher.RegisterPatch<LocalOnlyModelIdSortingPatch>();
+#endif
             patcher.RegisterPatch<DynamicActContentPatchBootstrap>();
             patcher.RegisterPatch<DynamicCharacterStarterContentPatchBootstrap>();
             RegisterFrameworkPatcher(FrameworkPatcherArea.ContentRegistry, patcher);

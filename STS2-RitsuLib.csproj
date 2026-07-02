@@ -1,7 +1,8 @@
 <Project Sdk="Godot.NET.Sdk/4.5.1">
     <PropertyGroup Label="Compatibility (STS2 API, signatures, defines)">
-        <RitsuLibCompatTargets>0.107.1</RitsuLibCompatTargets>
-        <RitsuLibLatestApiCompat>0.107.1</RitsuLibLatestApiCompat>
+        <RitsuLibCompatTargets>0.108.0;0.107.1</RitsuLibCompatTargets>
+        <RitsuLibLatestApiCompat>0.108.0</RitsuLibLatestApiCompat>
+        <RitsuLibLatestGameVersion>0.108.0-rc.1</RitsuLibLatestGameVersion>
         <Sts2ApiCompat Condition="'$(Sts2ApiCompat)' == ''">$(RitsuLibLatestApiCompat)</Sts2ApiCompat>
         <Sts2ApiSignatureDir Condition="'$(Sts2ApiSignatureRoot)' != ''">$(Sts2ApiSignatureRoot)\$(Sts2ApiCompat)</Sts2ApiSignatureDir>
         <Sts2DataDir Condition="'$(Sts2ApiSignatureRoot)' != ''">$(Sts2ApiSignatureDir)</Sts2DataDir>
@@ -12,6 +13,7 @@
     <PropertyGroup Label="Mod manifest generation">
         <RitsuLibManifestSource>$(MSBuildProjectDirectory)\mod_manifest.json</RitsuLibManifestSource>
         <RitsuLibManifestGenerated>$(IntermediateOutputPath)mod_manifest.generated.json</RitsuLibManifestGenerated>
+        <RitsuLibManifestMinGameVersion Condition="'$(Sts2ApiCompat)' == '$(RitsuLibLatestApiCompat)' and '$(RitsuLibManifestMinGameVersion)' == ''">$(RitsuLibLatestGameVersion)</RitsuLibManifestMinGameVersion>
         <RitsuLibModDisplayName Condition="'$(Sts2ApiCompat)' == '$(RitsuLibLatestApiCompat)'">RitsuLib</RitsuLibModDisplayName>
         <RitsuLibModDisplayName Condition="'$(Sts2ApiCompat)' != '$(RitsuLibLatestApiCompat)'">RitsuLib (STS2 $(Sts2ApiCompat) compat)</RitsuLibModDisplayName>
     </PropertyGroup>

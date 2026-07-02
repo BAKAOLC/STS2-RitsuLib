@@ -9,8 +9,10 @@ using MegaCrit.Sts2.Core.Nodes.Cards;
 using MegaCrit.Sts2.Core.Timeline;
 using STS2RitsuLib.Patching.Models;
 using STS2RitsuLib.Scaffolding.Characters;
+#if !STS2_AT_LEAST_0_108_0
 using STS2RitsuLib.Timeline.Scaffolding;
 using STS2RitsuLib.Utils;
+#endif
 
 namespace STS2RitsuLib.Scaffolding.Content.Patches
 {
@@ -66,7 +68,7 @@ namespace STS2RitsuLib.Scaffolding.Content.Patches
         }
     }
 
-#if STS2_AT_LEAST_0_106_0
+#if STS2_AT_LEAST_0_106_0 && !STS2_AT_LEAST_0_108_0
     /// <summary>
     ///     Allows mod epoch art overrides to control the placeholder label.
     /// </summary>
