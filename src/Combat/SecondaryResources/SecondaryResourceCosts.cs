@@ -667,6 +667,7 @@ namespace STS2RitsuLib.Combat.SecondaryResources
     {
         public static SecondaryResourcePaymentFreeMode None { get; } = new(false, false);
         public static SecondaryResourcePaymentFreeMode AllCosts { get; } = new(true, true);
+        public static SecondaryResourcePaymentFreeMode AutoPlayCapture { get; } = new(true, false);
 
         public bool IsFree => FixedCostsFree || XCostsFree;
 
@@ -892,6 +893,32 @@ namespace STS2RitsuLib.Combat.SecondaryResources
                         ExtraStacks = 0,
                     };
                 builder.Add(freeLine);
+            }
+
+            var ledger = builder.Build();
+            SecondaryResourcePlayLedgerRuntime.SetPending(plan.Card, ledger);
+            return ledger;
+        }
+
+        internal static SecondaryResourcePlayLedger CommitAutoPlayCapture(SecondaryResourcePaymentPlan plan)
+        {
+            ArgumentNullException.ThrowIfNull(plan);
+
+            var builder = new SecondaryResourcePlayLedgerBuilder(plan.Card, plan.Player, true);
+            foreach (var line in plan.Lines)
+            {
+                var capturedLine = line with
+                {
+                    IsFree = true,
+                    AmountToSpend = 0,
+                    OriginalShortfall = 0,
+                    CoveredShortfall = 0,
+                    Shortfall = 0,
+                    ShortfallResolution = SecondaryResourceShortfallResolution.None,
+                    ExtraAmountToSpend = 0,
+                    ExtraStacks = 0,
+                };
+                builder.Add(capturedLine);
             }
 
             var ledger = builder.Build();

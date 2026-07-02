@@ -384,6 +384,7 @@ namespace STS2RitsuLib
             patcher.RegisterPatch<ModelCapabilityHookListenerPatches.HookPlayerChoiceContextConstructorPatch>();
             patcher.RegisterPatch<CardModelCanPlaySecondaryResourcesPatch>();
             patcher.RegisterPatch<CardModelSpendResourcesSecondaryResourcesPatch>();
+            patcher.RegisterPatch<CardCmdAutoPlaySecondaryResourceXCapturePatch>();
             patcher.RegisterPatch<CardModelOnPlayWrapperSecondaryResourcesPatch>();
             patcher.RegisterPatch<HookBeforeCardPlayedSecondaryResourcesPatch>();
             patcher.RegisterPatch<CardModelEndOfTurnSecondaryResourcesPatch>();

@@ -472,6 +472,34 @@ namespace STS2RitsuLib.Combat.SecondaryResources
             PendingLedgers.GetOrCreate(card).Enqueue(ledger);
         }
 
+        internal static bool TryRemovePending(CardModel card, SecondaryResourcePlayLedger ledger)
+        {
+            ArgumentNullException.ThrowIfNull(card);
+            ArgumentNullException.ThrowIfNull(ledger);
+
+            if (!PendingLedgers.TryGetValue(card, out var queue) || queue.Count == 0)
+                return false;
+
+            var removed = false;
+            var ledgers = queue.ToArray();
+            queue.Clear();
+            foreach (var candidate in ledgers)
+            {
+                if (!removed && ReferenceEquals(candidate, ledger))
+                {
+                    removed = true;
+                    continue;
+                }
+
+                queue.Enqueue(candidate);
+            }
+
+            if (queue.Count == 0)
+                PendingLedgers.Remove(card);
+
+            return removed;
+        }
+
         /// <summary>
         ///     Returns true when the card has a queued or active ledger waiting to bind.
         ///     当卡牌有等待绑定或正在作用域内复用的 ledger 时返回 true。
