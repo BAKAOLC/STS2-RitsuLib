@@ -383,7 +383,8 @@ namespace STS2RitsuLib.CardPiles
                 spec.HoverTipPlacement,
                 spec.VisibleWhen,
                 spec.FlightTargetPositionResolver,
-                spec.FlightStartPositionResolver);
+                spec.FlightStartPositionResolver,
+                spec.View);
 
             lock (SyncRoot)
             {
