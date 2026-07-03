@@ -61,8 +61,11 @@ def snapshot_bundle_variant_after_pack(
 
     manifest_dest = bundle_staging_root / MOD_MANIFEST_NAME
     if compat_target == latest_compat or not manifest_dest.is_file():
-        obj_dir = ritsulib_root / GODOT_MONO_OBJ_PREFIX / configuration
-        gen = obj_dir / "mod_manifest.generated.json"
+        gen = generated_manifest_path(
+            ritsulib_root,
+            configuration=configuration,
+            compat_target=compat_target,
+        )
         if gen.is_file():
             shutil.copy2(gen, manifest_dest)
         copy_viewer_dist_to(bundle_staging_root, ritsulib_root=ritsulib_root)
@@ -503,11 +506,14 @@ def create_github_zip(
 ) -> Path:
     output_dir.mkdir(parents=True, exist_ok=True)
     out_bin = ritsulib_root / GODOT_MONO_BIN_PREFIX / configuration
-    out_obj = ritsulib_root / GODOT_MONO_OBJ_PREFIX / configuration
     dll_path = out_bin / ritsulib_built_dll_name()
     doc_xml_path = out_bin / ritsulib_built_doc_xml_name()
     pdb_path = out_bin / ritsulib_built_pdb_name()
-    manifest_generated = out_obj / "mod_manifest.generated.json"
+    manifest_generated = generated_manifest_path(
+        ritsulib_root,
+        configuration=configuration,
+        compat_target=compat_target,
+    )
     manifest_path = manifest_generated if manifest_generated.is_file() else (ritsulib_root / MOD_MANIFEST_NAME)
     if not dll_path.is_file():
         msg = f"Could not find built DLL for zip packaging: {dll_path}"
@@ -533,6 +539,19 @@ def create_github_zip(
         zf.writestr("compat-target.txt", compat_target + "\n")
         write_viewer_dist_to_zip(zf, ritsulib_root=ritsulib_root)
     return zip_path
+
+
+def generated_manifest_path(
+    ritsulib_root: Path,
+    *,
+    configuration: str,
+    compat_target: str,
+) -> Path:
+    obj_root = ritsulib_root / GODOT_MONO_OBJ_PREFIX / configuration
+    compat_manifest = obj_root / compat_target / "mod_manifest.generated.json"
+    if compat_manifest.is_file():
+        return compat_manifest
+    return obj_root / "mod_manifest.generated.json"
 
 
 def run_push(package: Path, *, source: str, api_key: str) -> None:
