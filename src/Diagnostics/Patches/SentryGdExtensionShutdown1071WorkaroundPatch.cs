@@ -12,12 +12,12 @@ using STS2RitsuLib.Utils.HarmonyIl;
 namespace STS2RitsuLib.Diagnostics.Patches
 {
     /// <summary>
-    ///     Temporary workaround for STS2 0.107.1 native crashes when modded startup shuts down Sentry's
+    ///     Temporary workaround for STS2 0.107.1+ native crashes when modded startup shuts down Sentry's
     ///     GDExtension before process exit. Remove this patch after the host game fixes the shutdown path.
     /// </summary>
     internal sealed class SentryGdExtensionShutdown1071WorkaroundPatch : IPatchMethod
     {
-        private static readonly Version AffectedHostVersion = new(0, 107, 1);
+        private static readonly Version AffectedHostMinVersion = new(0, 107, 1);
 
         private static readonly MethodInfo SkipMethod =
             AccessTools.DeclaredMethod(typeof(SentryGdExtensionShutdown1071WorkaroundPatch),
@@ -28,7 +28,7 @@ namespace STS2RitsuLib.Diagnostics.Patches
         public static string PatchId => "sentry_gdextension_shutdown_01071_workaround";
 
         public static string Description =>
-            "Skip STS2 0.107.1 native Sentry GDExtension shutdown while preserving .NET Sentry shutdown";
+            "Skip STS2 0.107.1+ native Sentry GDExtension shutdown while preserving .NET Sentry shutdown";
 
         public static bool IsCritical => false;
 
@@ -55,7 +55,7 @@ namespace STS2RitsuLib.Diagnostics.Patches
 
         private static bool IsAffectedHost()
         {
-            return Sts2HostVersion.Numeric == AffectedHostVersion;
+            return Sts2HostVersion.Numeric >= AffectedHostMinVersion;
         }
 
         private static bool IsGodotObjectCall(MethodInfo method)
@@ -72,7 +72,7 @@ namespace STS2RitsuLib.Diagnostics.Patches
                 return default;
 
             PatchLog.For<SentryGdExtensionShutdown1071WorkaroundPatch>().Info(
-                "[SentryCompat] Skipped native Sentry GDExtension shutdown for STS2 0.107.1 workaround.");
+                "[SentryCompat] Skipped native Sentry GDExtension shutdown for STS2 0.107.1+ workaround.");
             return default;
         }
     }
