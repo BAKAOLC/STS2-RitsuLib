@@ -5978,6 +5978,7 @@ namespace STS2RitsuLib.Settings
         private Control? _content;
         private bool _contentEnabled = true;
         private Control? _header;
+        private bool _layoutRefreshDeferred;
         private Action? _lazyContentBuilder;
         private bool _lazyContentBuilt;
         private int _separation;
@@ -6173,7 +6174,6 @@ namespace STS2RitsuLib.Settings
 
             _toggle?.SetSelected(!_collapsed);
             RequestLayout();
-            Callable.From(RequestLayout).CallDeferred();
         }
 
         internal void SetContentEnabled(bool enabled)
@@ -6204,12 +6204,46 @@ namespace STS2RitsuLib.Settings
             };
         }
 
-        private void RequestLayout()
+        private void RequestLayout(bool defer = true)
         {
             UpdateMinimumSize();
             LayoutChildren();
             QueueRedraw();
+            RequestAncestorAndScrollLayouts();
+            if (defer)
+                ScheduleDeferredLayoutRefresh();
+        }
+
+        private void ScheduleDeferredLayoutRefresh()
+        {
+            if (_layoutRefreshDeferred || !IsInsideTree())
+                return;
+
+            _layoutRefreshDeferred = true;
+            Callable.From(DeferredRequestLayout).CallDeferred();
+        }
+
+        private void DeferredRequestLayout()
+        {
+            _layoutRefreshDeferred = false;
+            if (!IsInsideTree())
+                return;
+
+            RequestLayout(false);
+        }
+
+        private void RequestAncestorAndScrollLayouts()
+        {
             ModSettingsUiFactory.FastVerticalStack.RequestAncestorLayouts(this);
+            for (var current = GetParent() as Control; current != null; current = current.GetParent() as Control)
+            {
+                current.UpdateMinimumSize();
+                if (current is Container container && container.IsInsideTree())
+                    container.QueueSort();
+
+                if (current is ScrollContainer scroll)
+                    scroll.QueueSort();
+            }
         }
 
         private void LayoutChildren()
