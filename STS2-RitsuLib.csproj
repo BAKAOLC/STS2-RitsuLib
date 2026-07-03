@@ -2,7 +2,7 @@
     <PropertyGroup Label="Compatibility (STS2 API, signatures, defines)">
         <RitsuLibCompatTargets>0.108.0;0.107.1</RitsuLibCompatTargets>
         <RitsuLibLatestApiCompat>0.108.0</RitsuLibLatestApiCompat>
-        <RitsuLibLatestGameVersion>0.108.0-rc.1</RitsuLibLatestGameVersion>
+        <RitsuLibLatestGameVersion>0.108.0</RitsuLibLatestGameVersion>
         <Sts2ApiCompat Condition="'$(Sts2ApiCompat)' == ''">$(RitsuLibLatestApiCompat)</Sts2ApiCompat>
         <Sts2ApiSignatureDir Condition="'$(Sts2ApiSignatureRoot)' != ''">$(Sts2ApiSignatureRoot)\$(Sts2ApiCompat)</Sts2ApiSignatureDir>
         <Sts2DataDir Condition="'$(Sts2ApiSignatureRoot)' != ''">$(Sts2ApiSignatureDir)</Sts2DataDir>
