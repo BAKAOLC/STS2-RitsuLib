@@ -99,7 +99,9 @@ namespace STS2RitsuLib.Timeline
 
                 epochTypeDictionary[epochId] = epochType;
                 typeToIdDictionary[epochType] = epochId;
+#if STS2_AT_LEAST_0_108_0
                 AddEpochTypeToAllEpochsLocked(epochType);
+#endif
                 RefreshAllEpochIdsSnapshotLocked();
             }
 
@@ -287,12 +289,14 @@ namespace STS2RitsuLib.Timeline
             field.SetValue(null, value);
         }
 
+#if STS2_AT_LEAST_0_108_0
         private static void AddEpochTypeToAllEpochsLocked(Type epochType)
         {
             var allEpochs = GetStaticField<List<Type>>(typeof(EpochModel), "_allEpochs");
             if (!allEpochs.Contains(epochType))
                 allEpochs.Add(epochType);
         }
+#endif
 
         private static void RefreshAllEpochIdsSnapshotLocked()
         {
