@@ -42,7 +42,7 @@ namespace STS2RitsuLib.Platform.Steam
         ulong BytesTotal,
         string? CurrentItemName = null);
 
-    internal sealed record RitsuSteamWorkshopDownloadItem(ulong Id, string DisplayName);
+    internal sealed record RitsuSteamWorkshopDownloadItem(ulong Id, string DisplayName, uint? LocalUpdated = null);
 
     internal sealed record RitsuSteamWorkshopChangedItem(ulong Id, string DisplayName, uint RemoteUpdated);
 

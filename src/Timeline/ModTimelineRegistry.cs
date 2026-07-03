@@ -99,6 +99,7 @@ namespace STS2RitsuLib.Timeline
 
                 epochTypeDictionary[epochId] = epochType;
                 typeToIdDictionary[epochType] = epochId;
+                AddEpochTypeToAllEpochsLocked(epochType);
                 RefreshAllEpochIdsSnapshotLocked();
             }
 
@@ -284,6 +285,13 @@ namespace STS2RitsuLib.Timeline
                         ?? throw new MissingFieldException(ownerType.FullName, fieldName);
 
             field.SetValue(null, value);
+        }
+
+        private static void AddEpochTypeToAllEpochsLocked(Type epochType)
+        {
+            var allEpochs = GetStaticField<List<Type>>(typeof(EpochModel), "_allEpochs");
+            if (!allEpochs.Contains(epochType))
+                allEpochs.Add(epochType);
         }
 
         private static void RefreshAllEpochIdsSnapshotLocked()
