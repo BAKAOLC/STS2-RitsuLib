@@ -83,8 +83,10 @@ namespace STS2RitsuLib.Interop.Patches
             RefreshNetIdBitSize();
 #endif
 
+            // ReSharper disable once RedundantLogicalConditionalExpressionOperand
             if (injectedTypes > 0 || sorted || afterCount != beforeCount)
                 RitsuLibFramework.Logger.Info(
+                    // ReSharper disable once HeuristicUnreachableCode
                     $"[SavedProperties] Injected {injectedTypes} mod model type(s); property net IDs: {beforeCount} -> {afterCount}, bit size {SavedPropertiesTypeCache.NetIdBitSize}, deterministic sort: {(sorted ? "applied" : "not applied")}.");
         }
 

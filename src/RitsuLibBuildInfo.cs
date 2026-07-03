@@ -16,6 +16,11 @@ namespace STS2RitsuLib
             Assembly.GetCustomAttributes<AssemblyMetadataAttribute>()
                 .ToDictionary(x => x.Key, x => x.Value ?? "", StringComparer.OrdinalIgnoreCase);
 
+        internal static string Sts2ApiCompat { get; } =
+            Metadata.TryGetValue("Sts2ApiCompat", out var value) && !string.IsNullOrWhiteSpace(value)
+                ? value.Trim()
+                : "unknown";
+
         internal static bool IsDevBuild =>
             InformationalVersion.StartsWith(DevPackageVersionPrefix, StringComparison.OrdinalIgnoreCase) ||
             (Metadata.TryGetValue("RitsuLibTelemetryBuildChannel", out var channel) &&

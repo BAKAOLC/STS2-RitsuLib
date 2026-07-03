@@ -77,7 +77,7 @@ namespace STS2RitsuLib.Interop
             {
                 assemblySnapshot = RegisteredAssembliesByModId.ToDictionary(
                     static pair => pair.Key,
-                    static pair => (IReadOnlyList<Assembly>)pair.Value.ToArray(),
+                    static IReadOnlyList<Assembly> (pair) => pair.Value.ToArray(),
                     StringComparer.Ordinal);
                 contributorSnapshot = Contributors.ToArray();
             }
@@ -113,10 +113,9 @@ namespace STS2RitsuLib.Interop
             IModTypeDiscoveryContributor[] snapshot;
             lock (Gate)
             {
-                registeredAssemblies = RegisteredAssembliesByModId.ToDictionary(
-                    static pair => pair.Key,
-                    static pair => (IReadOnlyList<Assembly>)pair.Value.ToArray(),
-                    StringComparer.Ordinal);
+                registeredAssemblies = new(StringComparer.Ordinal);
+                foreach (var pair in RegisteredAssembliesByModId)
+                    registeredAssemblies.Add(pair.Key, pair.Value.ToArray());
                 snapshot = Contributors.ToArray();
             }
 

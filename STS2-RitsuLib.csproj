@@ -10,6 +10,10 @@
 
     <Import Project="$(MSBuildProjectDirectory)\build\RitsuLib.CompatDefines.targets"/>
 
+    <PropertyGroup Label="Compatibility build isolation">
+        <IntermediateOutputPath>$(MSBuildProjectDirectory)\.godot\mono\temp\obj\$(Configuration)\$(Sts2ApiCompat)\</IntermediateOutputPath>
+    </PropertyGroup>
+
     <PropertyGroup Label="Mod manifest generation">
         <RitsuLibManifestSource>$(MSBuildProjectDirectory)\mod_manifest.json</RitsuLibManifestSource>
         <RitsuLibManifestGenerated>$(IntermediateOutputPath)mod_manifest.generated.json</RitsuLibManifestGenerated>
@@ -43,7 +47,7 @@
 
     <PropertyGroup Label="NuGet package">
         <IsPackable>true</IsPackable>
-        <Version>0.4.47</Version>
+        <Version>0.4.48</Version>
         <Authors>OLC</Authors>
         <Description>Shared framework library for Slay the Spire 2 mods.</Description>
         <PackageReadmeFile>README.md</PackageReadmeFile>
@@ -113,6 +117,10 @@
         <AssemblyAttribute Include="System.Reflection.AssemblyMetadataAttribute">
             <_Parameter1>RitsuLibTelemetryBuildConfiguration</_Parameter1>
             <_Parameter2>$(RitsuLibTelemetryBuildConfiguration)</_Parameter2>
+        </AssemblyAttribute>
+        <AssemblyAttribute Include="System.Reflection.AssemblyMetadataAttribute">
+            <_Parameter1>Sts2ApiCompat</_Parameter1>
+            <_Parameter2>$(Sts2ApiCompat)</_Parameter2>
         </AssemblyAttribute>
         <PackageReference Include="Krafs.Publicizer" Version="2.3.0" PrivateAssets="all"/>
         <PackageReference Include="System.IO.Hashing" Version="9.0.0"/>

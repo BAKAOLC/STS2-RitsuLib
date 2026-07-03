@@ -1,12 +1,7 @@
 name: GitHub Pages
 
 on:
-  push:
-    branches:
-      - main
-    paths:
-      - "docs/**"
-      - ".github/workflows/gh-pages.yml"
+  workflow_dispatch:
   workflow_call:
 
 permissions:
