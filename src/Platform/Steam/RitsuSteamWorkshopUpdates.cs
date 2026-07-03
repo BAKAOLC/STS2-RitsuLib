@@ -14,6 +14,7 @@ namespace STS2RitsuLib.Platform.Steam
         private static readonly TimeSpan QueryBatchDelay = TimeSpan.FromMilliseconds(250);
         private static readonly TimeSpan ItemProcessingDelay = TimeSpan.FromMilliseconds(50);
         private static readonly TimeSpan DownloadProgressPollInterval = TimeSpan.FromMilliseconds(1500);
+        private static readonly TimeSpan DownloadProgressStartGraceTimeout = TimeSpan.FromSeconds(5);
         private static readonly TimeSpan DownloadProgressIdleTimeout = TimeSpan.FromSeconds(30);
         private static readonly Lazy<Bindings?> LazyBindings = new(CreateBindings);
         private static readonly Lock TriggeredDownloadSyncRoot = new();
@@ -625,7 +626,7 @@ namespace STS2RitsuLib.Platform.Steam
                             HasFlag(item.State, itemStateFlags.DownloadPending))
                         {
                             alreadyQueued++;
-                            monitorItems.Add(new(item.Id, displayName));
+                            monitorItems.Add(new(item.Id, displayName, item.Install.LocalTimestamp));
                             RitsuLibFramework.Logger.Info(
                                 $"[SteamWorkshopUpdate] Workshop item {item.Id} already has a download queued or running.");
                             ReportInspectionProgress();
@@ -635,8 +636,8 @@ namespace STS2RitsuLib.Platform.Steam
                         if (InvokeDownloadItem(item.Handle))
                         {
                             triggered++;
-                            triggeredItems.Add(new(item.Id, displayName));
-                            monitorItems.Add(new(item.Id, displayName));
+                            triggeredItems.Add(new(item.Id, displayName, item.Install.LocalTimestamp));
+                            monitorItems.Add(new(item.Id, displayName, item.Install.LocalTimestamp));
                             MarkTriggeredDownloadItem(item.Id);
                             RitsuLibFramework.Logger.Info(
                                 $"[SteamWorkshopUpdate] Triggered Steam Workshop update for item {item.Id}.");
@@ -705,12 +706,17 @@ namespace STS2RitsuLib.Platform.Steam
                 foreach (var workshopDownloadItem in downloadItems.Where(static item => item.Id != 0)
                              .DistinctBy(static item => item.Id))
                     if (CreatePublishedFileId(workshopDownloadItem.Id) is { } item)
-                        items[workshopDownloadItem.Id] = new(item, workshopDownloadItem.DisplayName);
+                        items[workshopDownloadItem.Id] = new(
+                            item,
+                            workshopDownloadItem.DisplayName,
+                            workshopDownloadItem.LocalUpdated);
 
                 if (items.Count == 0)
                     return false;
 
-                var idleSince = DateTimeOffset.UtcNow;
+                var startedAt = DateTimeOffset.UtcNow;
+                var idleSince = startedAt;
+                var observedDownloadActivity = false;
                 HashSet<ulong> loggedUnavailableProgressItems = [];
                 while (!cancellationToken.IsCancellationRequested)
                 {
@@ -736,7 +742,8 @@ namespace STS2RitsuLib.Platform.Steam
                         {
                             bytesDownloaded += itemDownloaded;
                             bytesTotal += itemTotal;
-                            active = true;
+                            active = itemTotal > 0 || itemDownloaded > 0;
+                            observedDownloadActivity |= active;
                             if (itemTotal > 0 && itemDownloaded >= itemTotal)
                                 completed++;
                         }
@@ -750,7 +757,24 @@ namespace STS2RitsuLib.Platform.Steam
 
                     progress?.Report(new(completed, items.Count, bytesDownloaded, bytesTotal, currentItemName));
                     if (completed >= items.Count)
-                        return true;
+                    {
+                        var localFilesChanged = HasAnyLocalInstallChanged(items);
+                        switch (localFilesChanged)
+                        {
+                            case false when
+                                !observedDownloadActivity &&
+                                DateTimeOffset.UtcNow - startedAt < DownloadProgressStartGraceTimeout:
+                                await Task.Delay(DownloadProgressPollInterval, cancellationToken)
+                                    .ConfigureAwait(false);
+                                continue;
+                            case false when !observedDownloadActivity:
+                                RitsuLibFramework.Logger.Info(
+                                    "[SteamWorkshopUpdate] Download monitor completed without observed Steam download activity or local install timestamp changes.");
+                                break;
+                        }
+
+                        return localFilesChanged || observedDownloadActivity;
+                    }
 
                     if (active)
                     {
@@ -765,6 +789,27 @@ namespace STS2RitsuLib.Platform.Steam
 
                     await Task.Delay(DownloadProgressPollInterval, cancellationToken)
                         .ConfigureAwait(false);
+                }
+
+                return false;
+            }
+
+            private bool HasAnyLocalInstallChanged(IReadOnlyDictionary<ulong, DownloadMonitorItem> items)
+            {
+                foreach (var (itemId, item) in items)
+                {
+                    var state = Convert.ToUInt32(getItemState.Invoke(null, [item.Handle]));
+                    var install = TryGetInstallSnapshot(item.Handle, state);
+                    if (install.LocalTimestamp is not { } current || item.InitialLocalTimestamp is not { } initial)
+                        continue;
+
+                    // ReSharper disable once InvertIf
+                    if (current != initial)
+                    {
+                        RitsuLibFramework.Logger.Info(
+                            $"[SteamWorkshopUpdate] Workshop item {itemId} local install timestamp changed from {initial} to {current}.");
+                        return true;
+                    }
                 }
 
                 return false;
@@ -1707,6 +1752,6 @@ namespace STS2RitsuLib.Platform.Steam
 
         private readonly record struct LocalWorkshopManifest(string? ModId, string? Name, string? Author);
 
-        private sealed record DownloadMonitorItem(object Handle, string DisplayName);
+        private sealed record DownloadMonitorItem(object Handle, string DisplayName, uint? InitialLocalTimestamp);
     }
 }

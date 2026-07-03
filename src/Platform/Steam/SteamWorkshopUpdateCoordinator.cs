@@ -242,8 +242,13 @@ namespace STS2RitsuLib.Platform.Steam
                         result.ChangedItems),
                     RitsuToastLevel.Warning);
 
-            if (downloadFinished && result.MonitorItems is { Count: > 0 })
-                return BuildAutoDownloadFinishedToast(result);
+            switch (downloadFinished)
+            {
+                case true when result.MonitorItems is { Count: > 0 }:
+                    return BuildAutoDownloadFinishedToast(result);
+                case false when result.MonitorItems is { Count: > 0 }:
+                    return null;
+            }
 
             if (result.TriggeredCount > 0)
                 return ToastRequest(
