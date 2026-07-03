@@ -571,7 +571,10 @@ namespace STS2RitsuLib.Platform.Steam
                         .ConfigureAwait(false);
                     RitsuLibFramework.Logger.Info(
                         $"[SteamWorkshopUpdate] Refreshed Workshop details for {remoteUpdateTimes.Count}/{items.Count} subscribed item(s).");
-                    var previousUpdateTimes = SteamWorkshopUpdateSnapshotStore.GetItems();
+                    var updateScope = SteamWorkshopUpdateScope.Current();
+                    RitsuLibFramework.Logger.Info(
+                        $"[SteamWorkshopUpdate] Using Workshop update scope '{updateScope.Key}' ({updateScope.DisplayName}).");
+                    var previousUpdateTimes = SteamWorkshopUpdateSnapshotStore.GetItems(updateScope);
                     var localManifests = BuildLocalManifestByWorkshopItemId();
 
                     var inspected = 0;
@@ -597,7 +600,11 @@ namespace STS2RitsuLib.Platform.Steam
                         var stateNeedsUpdate = HasFlag(item.State, itemStateFlags.NeedsUpdate);
                         var remoteNeedsUpdate = hasRemoteDetails &&
                                                 item.Install.LocalTimestamp is { } localTimestamp &&
-                                                remoteDetails.Updated > localTimestamp;
+                                                remoteDetails.Updated > localTimestamp &&
+                                                ShouldTryRemoteTimestampFallback(
+                                                    item.Id,
+                                                    remoteDetails,
+                                                    previousUpdateTimes);
                         if (!stateNeedsUpdate && !remoteNeedsUpdate)
                         {
                             ReportInspectionProgress();
@@ -645,9 +652,9 @@ namespace STS2RitsuLib.Platform.Steam
                     }
 
                     RitsuLibFramework.Logger.Info(
-                        $"[SteamWorkshopUpdate] Scan complete. Inspected={inspected}, NeedsUpdate={needsUpdate}, Triggered={triggered}, AlreadyQueued={alreadyQueued}, Failed={failed}.");
+                        $"[SteamWorkshopUpdate] Scan complete. Scope={updateScope.Key}, Inspected={inspected}, NeedsUpdate={needsUpdate}, Triggered={triggered}, AlreadyQueued={alreadyQueued}, Failed={failed}.");
                     if (remoteUpdateTimes.Count > 0 || items.Count == 0)
-                        SaveRemoteUpdateSnapshot(remoteUpdateTimes, scopedScan);
+                        SaveRemoteUpdateSnapshot(updateScope, remoteUpdateTimes, scopedScan);
                     return new(true, inspected, needsUpdate, triggered, alreadyQueued, failed, null, triggeredItems,
                         monitorItems, changedItems);
 
@@ -661,6 +668,15 @@ namespace STS2RitsuLib.Platform.Steam
                             triggered,
                             alreadyQueued,
                             failed));
+                    }
+
+                    static bool ShouldTryRemoteTimestampFallback(
+                        ulong itemId,
+                        RemoteItemDetails remoteDetails,
+                        IReadOnlyDictionary<ulong, SteamWorkshopStoredUpdateItem> previousUpdateTimes)
+                    {
+                        return !previousUpdateTimes.TryGetValue(itemId, out var previous) ||
+                               previous.Updated != remoteDetails.Updated;
                     }
                 }
                 catch (Exception ex)
@@ -991,7 +1007,7 @@ namespace STS2RitsuLib.Platform.Steam
                     return [];
 
                 var localManifests = BuildLocalManifestByWorkshopItemId();
-                var cachedDetails = SteamWorkshopUpdateSnapshotStore.GetItems();
+                var cachedDetails = SteamWorkshopUpdateSnapshotStore.GetItems(SteamWorkshopUpdateScope.Current());
                 return snapshots
                     .Select(snapshot =>
                     {
@@ -1096,6 +1112,7 @@ namespace STS2RitsuLib.Platform.Steam
             }
 
             private static void SaveRemoteUpdateSnapshot(
+                SteamWorkshopUpdateScope scope,
                 IReadOnlyDictionary<ulong, RemoteItemDetails> remoteUpdateTimes,
                 bool merge)
             {
@@ -1103,9 +1120,9 @@ namespace STS2RitsuLib.Platform.Steam
                 foreach (var (itemId, details) in remoteUpdateTimes)
                     snapshot[itemId] = new(details.Updated, details.Title);
                 if (merge)
-                    SteamWorkshopUpdateSnapshotStore.Merge(snapshot);
+                    SteamWorkshopUpdateSnapshotStore.Merge(scope, snapshot);
                 else
-                    SteamWorkshopUpdateSnapshotStore.Replace(snapshot);
+                    SteamWorkshopUpdateSnapshotStore.Replace(scope, snapshot);
             }
 
             private async Task<IReadOnlyDictionary<ulong, RemoteItemDetails>> QueryRemoteUpdateTimesBatchAsync(

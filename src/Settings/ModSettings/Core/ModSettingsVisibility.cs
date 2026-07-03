@@ -83,8 +83,8 @@ namespace STS2RitsuLib.Settings
         private static bool IsTargetPageVisible(string modId, string pageId, HashSet<string> visitingPages)
         {
             return ModSettingsRegistry.GetPages().FirstOrDefault(page =>
-                string.Equals(page.ModId, modId, StringComparison.OrdinalIgnoreCase) &&
-                string.Equals(page.Id, pageId, StringComparison.OrdinalIgnoreCase)) is not { } target ||
+                       string.Equals(page.ModId, modId, StringComparison.OrdinalIgnoreCase) &&
+                       string.Equals(page.Id, pageId, StringComparison.OrdinalIgnoreCase)) is not { } target ||
                    IsPageVisible(target, visitingPages);
         }
 
