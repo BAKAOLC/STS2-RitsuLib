@@ -4,6 +4,7 @@ using CombatStateLike = MegaCrit.Sts2.Core.Combat.CombatState;
 using CombatStateLike = MegaCrit.Sts2.Core.Combat.ICombatState;
 #endif
 using MegaCrit.Sts2.Core.Combat;
+using MegaCrit.Sts2.Core.Commands;
 using MegaCrit.Sts2.Core.Entities.Cards;
 using MegaCrit.Sts2.Core.Entities.Creatures;
 using MegaCrit.Sts2.Core.Entities.Players;
@@ -154,6 +155,61 @@ namespace STS2RitsuLib.Combat.SecondaryResources.Patches
             finally
             {
                 pendingScope?.Dispose();
+            }
+        }
+    }
+
+    internal sealed class CardCmdAutoPlaySecondaryResourceXCapturePatch : IPatchMethod
+    {
+        public static string PatchId => "ritsulib_secondary_resource_auto_play_x_capture";
+        public static string Description => "Capture secondary-resource X values during CardCmd.AutoPlay";
+        public static bool IsCritical => false;
+
+        public static ModPatchTarget[] GetTargets()
+        {
+            return [new(typeof(CardCmd), nameof(CardCmd.AutoPlay))];
+        }
+
+        public static void Prefix(
+            CardModel card,
+            bool skipXCapture,
+            out SecondaryResourcePlayLedger? __state)
+        {
+            __state = null;
+            if (skipXCapture ||
+                !ModSecondaryResourceRegistry.HasAny ||
+                !card.HasMaterialSecondaryCosts() ||
+                SecondaryResourcePlayLedgerRuntime.HasPending(card))
+                return;
+
+            var plan = SecondaryResourcePaymentResolver.Plan(
+                card,
+                SecondaryResourcePaymentFreeMode.AutoPlayCapture);
+            if (plan.HasLines)
+                __state = SecondaryResourcePaymentResolver.CommitAutoPlayCapture(plan);
+        }
+
+        public static void Postfix(
+            CardModel card,
+            SecondaryResourcePlayLedger? __state,
+            ref Task __result)
+        {
+            if (__state != null)
+                __result = After(card, __state, __result);
+        }
+
+        private static async Task After(
+            CardModel card,
+            SecondaryResourcePlayLedger ledger,
+            Task original)
+        {
+            try
+            {
+                await original;
+            }
+            finally
+            {
+                SecondaryResourcePlayLedgerRuntime.TryRemovePending(card, ledger);
             }
         }
     }

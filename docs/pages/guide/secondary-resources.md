@@ -481,6 +481,11 @@ Implement `ISecondaryResourceHookListener` on models or capabilities when the re
 
 For process-wide behavior, register a global listener through `SecondaryResourceHook.RegisterGlobalListener(...)`.
 
+For built-in energy and stars, use `IPlayerResourceHookListener` on a model or capability, or register a global listener
+through `PlayerResourceHook.RegisterGlobalListener(...)`. `AfterPlayerEnergyGained(...)` and
+`AfterPlayerStarsGained(...)` run after successful `PlayerCmd.GainEnergy(...)` / `PlayerCmd.GainStars(...)` calls and
+receive the actual gained amount plus old and new totals.
+
 For combat presentation:
 
 - `AlwaysShowInCombatUi(...)` and `AlwaysShowInCombatUiForCharacter(...)` keep a resource visible before it is gained
@@ -532,6 +537,11 @@ For text:
 - 在 change、spend、reset 之后执行附加逻辑
 
 进程级行为可通过 `SecondaryResourceHook.RegisterGlobalListener(...)` 注册全局监听器。
+
+内建能量和辉星使用模型或 capability 上的 `IPlayerResourceHookListener`，也可以通过
+`PlayerResourceHook.RegisterGlobalListener(...)` 注册全局监听器。`AfterPlayerEnergyGained(...)` 和
+`AfterPlayerStarsGained(...)` 会在成功调用 `PlayerCmd.GainEnergy(...)` / `PlayerCmd.GainStars(...)` 后运行，
+上下文包含实际获得量以及变化前后的总量。
 
 对于战斗表现层：
 

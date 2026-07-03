@@ -17,7 +17,7 @@ Choose the lightest visual hook that matches the job:
 | Use static frame cues | `VisualCueSet` on `CharacterAssetProfile` |
 | Build the node tree in code | Override `TryCreateCreatureVisuals()` |
 | Drive combat animations yourself | Override `SetupCustomCombatAnimationStateMachine(...)` |
-| Drive merchant / rest-site visuals | Override `SetupCustomMerchantAnimationStateMachine(...)` or `WorldProceduralVisuals` |
+| Drive merchant / rest-site visuals | Override `SetupCustomMerchantAnimationStateMachine(...)`, `SetupCustomRestSiteAnimationStateMachine(...)`, or use `WorldProceduralVisuals` |
 
 Start with paths and profiles. Move to factories only when static resources cannot express the behavior.
 
@@ -35,7 +35,7 @@ Start with paths and profiles. Move to factories only when static resources cann
 | 使用静态帧 cue | `CharacterAssetProfile` 上的 `VisualCueSet` |
 | 用代码构建节点树 | 覆写 `TryCreateCreatureVisuals()` |
 | 自己驱动战斗动画 | 覆写 `SetupCustomCombatAnimationStateMachine(...)` |
-| 驱动商店 / 篝火视觉 | 覆写 `SetupCustomMerchantAnimationStateMachine(...)` 或使用 `WorldProceduralVisuals` |
+| 驱动商店 / 篝火视觉 | 覆写 `SetupCustomMerchantAnimationStateMachine(...)`、`SetupCustomRestSiteAnimationStateMachine(...)`，或使用 `WorldProceduralVisuals` |
 
 从路径和 profile 开始。只有静态资源表达不了行为时，再使用 factory。
 
@@ -127,6 +127,11 @@ protected override ModAnimStateMachine? SetupCustomCombatAnimationStateMachine(
 
 Return `null` when the normal vanilla animation path should run.
 
+Merchant and rest-site state machines receive the same trigger names as combat (`Idle`, `Dead`, `Hit`, `Attack`,
+`Cast`, `Relaxed`, `Revive`). World animation names such as `relaxed_loop`, `die`, `overgrowth_loop`, `hive_loop`,
+and `glory_loop` are normalized before they reach the state machine. Use `ModAnimStateMachines.StandardMerchantCue`
+or `ModAnimStateMachines.StandardRestSiteCue` when your world visuals are backed by `WorldProceduralVisuals` cue sets.
+
 :::
 
 ## 状态机{lang="zh-CN"}
@@ -146,6 +151,11 @@ protected override ModAnimStateMachine? SetupCustomCombatAnimationStateMachine(
 ```
 
 返回 `null` 表示继续使用普通原版动画路径。
+
+商店和篝火状态机会收到与战斗相同的 trigger 名称（`Idle`、`Dead`、`Hit`、`Attack`、`Cast`、`Relaxed`、
+`Revive`）。`relaxed_loop`、`die`、`overgrowth_loop`、`hive_loop`、`glory_loop` 等世界场景动画名会在进入
+状态机前被规范化。世界视觉由 `WorldProceduralVisuals` cue set 驱动时，可使用
+`ModAnimStateMachines.StandardMerchantCue` 或 `ModAnimStateMachines.StandardRestSiteCue`。
 
 :::
 

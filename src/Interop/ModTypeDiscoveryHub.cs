@@ -17,7 +17,7 @@ namespace STS2RitsuLib.Interop
         private static readonly Lock Gate = new();
         private static readonly List<IModTypeDiscoveryContributor> Contributors = [];
 
-        private static readonly Dictionary<string, Assembly> RegisteredAssembliesByModId =
+        private static readonly Dictionary<string, List<Assembly>> RegisteredAssembliesByModId =
             new(StringComparer.Ordinal);
 
         private static bool _builtInsRegistered;
@@ -39,9 +39,11 @@ namespace STS2RitsuLib.Interop
 
         /// <summary>
         ///     Registers a mod assembly for the one-shot discovery pipeline. Mods should call this from their initializer
-        ///     before <see cref="ModTypeDiscoveryPatch" /> runs.
+        ///     before <see cref="ModTypeDiscoveryPatch" /> runs. On hosts that expose mod assembly association,
+        ///     RitsuLib also forwards the registration to the game through that API.
         ///     为一次性 discovery 管线注册一个 mod assembly。mod 应在其 initializer 中、
-        ///     <see cref="ModTypeDiscoveryPatch" /> 运行前调用。
+        ///     <see cref="ModTypeDiscoveryPatch" /> 运行前调用。若宿主提供 mod assembly 关联 API，
+        ///     RitsuLib 也会通过该 API 把注册同步给游戏本体。
         /// </summary>
         public static void RegisterModAssembly(string modId, Assembly assembly)
         {
@@ -50,8 +52,17 @@ namespace STS2RitsuLib.Interop
 
             lock (Gate)
             {
-                RegisteredAssembliesByModId[modId] = assembly;
+                if (!RegisteredAssembliesByModId.TryGetValue(modId, out var assemblies))
+                {
+                    assemblies = [];
+                    RegisteredAssembliesByModId[modId] = assemblies;
+                }
+
+                if (!assemblies.Contains(assembly))
+                    assemblies.Add(assembly);
             }
+
+            Sts2ModManagerCompat.TryAssociateAssemblyWithMod(modId, assembly);
         }
 
         /// <summary>
@@ -60,11 +71,14 @@ namespace STS2RitsuLib.Interop
         /// </summary>
         public static void LogDiagnostics()
         {
-            Dictionary<string, Assembly> assemblySnapshot;
+            Dictionary<string, IReadOnlyList<Assembly>> assemblySnapshot;
             IModTypeDiscoveryContributor[] contributorSnapshot;
             lock (Gate)
             {
-                assemblySnapshot = new(RegisteredAssembliesByModId, StringComparer.Ordinal);
+                assemblySnapshot = RegisteredAssembliesByModId.ToDictionary(
+                    static pair => pair.Key,
+                    static pair => (IReadOnlyList<Assembly>)pair.Value.ToArray(),
+                    StringComparer.Ordinal);
                 contributorSnapshot = Contributors.ToArray();
             }
 
@@ -72,9 +86,12 @@ namespace STS2RitsuLib.Interop
             RitsuLibFramework.Logger.Info($"  Contributors ({contributorSnapshot.Length}):");
             foreach (var c in contributorSnapshot)
                 RitsuLibFramework.Logger.Info($"    - {c.GetType().FullName}");
-            RitsuLibFramework.Logger.Info($"  Registered assemblies ({assemblySnapshot.Count}):");
-            foreach (var (modId, assembly) in assemblySnapshot.OrderBy(kv => kv.Key, StringComparer.Ordinal))
-                RitsuLibFramework.Logger.Info($"    - {modId} → {assembly.GetName().Name}");
+            RitsuLibFramework.Logger.Info(
+                $"  Registered assemblies ({assemblySnapshot.Sum(static pair => pair.Value.Count)}):");
+            foreach (var (modId, assemblies) in assemblySnapshot.OrderBy(static kv => kv.Key, StringComparer.Ordinal))
+            foreach (var assembly in assemblies.OrderBy(static assembly => assembly.GetName().Name,
+                         StringComparer.Ordinal))
+                RitsuLibFramework.Logger.Info($"    - {modId} -> {assembly.GetName().Name}");
         }
 
         internal static void EnsureBuiltInContributorsRegistered()
@@ -92,18 +109,24 @@ namespace STS2RitsuLib.Interop
 
         internal static void RunOnce(Harmony harmony)
         {
-            Dictionary<string, Assembly> scanMap;
+            Dictionary<string, IReadOnlyList<Assembly>> registeredAssemblies;
             IModTypeDiscoveryContributor[] snapshot;
             lock (Gate)
             {
-                scanMap = new(RegisteredAssembliesByModId, StringComparer.Ordinal);
+                registeredAssemblies = RegisteredAssembliesByModId.ToDictionary(
+                    static pair => pair.Key,
+                    static pair => (IReadOnlyList<Assembly>)pair.Value.ToArray(),
+                    StringComparer.Ordinal);
                 snapshot = Contributors.ToArray();
             }
 
-            var targetMap = BuildTargetAssemblyMap(scanMap);
-            var orderedAssemblies = scanMap
-                .OrderBy(static kv => kv.Key, StringComparer.Ordinal)
-                .Select(static kv => kv.Value)
+            AlignRegisteredAssembliesWithGame(registeredAssemblies);
+
+            var targetMap = BuildTargetAssemblyMap(registeredAssemblies);
+            var orderedAssemblies = BuildScanAssemblyMap(registeredAssemblies)
+                .OrderBy(static kv => kv.ModId, StringComparer.Ordinal)
+                .ThenBy(static kv => kv.Assembly.GetName().Name, StringComparer.Ordinal)
+                .Select(static kv => kv.Assembly)
                 .Distinct()
                 .ToArray();
 
@@ -119,17 +142,101 @@ namespace STS2RitsuLib.Interop
             }
         }
 
+        internal static bool TryResolveRegisteredModId(Assembly assembly, out string modId)
+        {
+            ArgumentNullException.ThrowIfNull(assembly);
+
+            lock (Gate)
+            {
+                foreach (var (candidateModId, assemblies) in RegisteredAssembliesByModId)
+                    if (assemblies.Contains(assembly))
+                    {
+                        modId = candidateModId;
+                        return true;
+                    }
+            }
+
+            modId = "";
+            return false;
+        }
+
+        internal static IReadOnlyList<Assembly> GetKnownAssembliesForMod(string modId, Assembly? legacyFallback)
+        {
+            ArgumentException.ThrowIfNullOrWhiteSpace(modId);
+
+            var result = new List<Assembly>();
+            AddRange(Sts2ModManagerCompat.GetLoadedModAssemblies(modId));
+
+            lock (Gate)
+            {
+                if (RegisteredAssembliesByModId.TryGetValue(modId, out var registeredAssemblies))
+                    AddRange(registeredAssemblies);
+            }
+
+            if (legacyFallback != null)
+                Add(legacyFallback);
+
+            return result.ToArray();
+
+            void AddRange(IEnumerable<Assembly> assemblies)
+            {
+                foreach (var assembly in assemblies)
+                    Add(assembly);
+            }
+
+            void Add(Assembly assembly)
+            {
+                if (!result.Contains(assembly))
+                    result.Add(assembly);
+            }
+        }
+
         private static IReadOnlyDictionary<string, Assembly> BuildTargetAssemblyMap(
-            IReadOnlyDictionary<string, Assembly> registeredAssembliesByModId)
+            IReadOnlyDictionary<string, IReadOnlyList<Assembly>> registeredAssembliesByModId)
         {
             var result = new Dictionary<string, Assembly>(
                 Sts2ModManagerCompat.BuildLoadedModAssembliesByManifestId(),
                 StringComparer.Ordinal);
 
-            foreach (var (modId, assembly) in registeredAssembliesByModId)
-                result[modId] = assembly;
+            foreach (var (modId, assemblies) in registeredAssembliesByModId)
+                if (assemblies.Count > 0)
+                    result[modId] = assemblies[0];
 
             return result;
         }
+
+        private static IReadOnlyList<ScanAssemblyEntry> BuildScanAssemblyMap(
+            IReadOnlyDictionary<string, IReadOnlyList<Assembly>> registeredAssembliesByModId)
+        {
+            var result = new List<ScanAssemblyEntry>();
+
+            foreach (var (modId, assemblies) in Sts2ModManagerCompat.BuildLoadedModAssemblyListsByManifestId())
+            foreach (var assembly in assemblies)
+                Add(modId, assembly);
+
+            foreach (var (modId, assemblies) in registeredAssembliesByModId)
+            foreach (var assembly in assemblies)
+                Add(modId, assembly);
+
+            return result;
+
+            void Add(string modId, Assembly assembly)
+            {
+                if (result.Any(entry => entry.Assembly == assembly))
+                    return;
+
+                result.Add(new(modId, assembly));
+            }
+        }
+
+        private static void AlignRegisteredAssembliesWithGame(
+            IReadOnlyDictionary<string, IReadOnlyList<Assembly>> registeredAssembliesByModId)
+        {
+            foreach (var (modId, assemblies) in registeredAssembliesByModId)
+            foreach (var assembly in assemblies)
+                Sts2ModManagerCompat.TryAssociateAssemblyWithMod(modId, assembly);
+        }
+
+        private readonly record struct ScanAssemblyEntry(string ModId, Assembly Assembly);
     }
 }

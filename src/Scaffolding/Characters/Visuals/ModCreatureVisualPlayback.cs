@@ -46,6 +46,11 @@ namespace STS2RitsuLib.Scaffolding.Characters.Visuals
 
         private static readonly string[] IdleCueNames = ["idle", "Idle", "relaxed_loop"];
 
+        private static readonly string[] RelaxedCueNames = ["relaxed", "Relaxed", "relaxed_loop", "idle", "Idle"];
+
+        private static readonly string[] RestSiteLoopCueNames =
+            ["relaxed", "Relaxed", "relaxed_loop", "idle", "Idle"];
+
         private static readonly string[] HurtCueNames = ["hurt", "hit", "Hit"];
 
         private static readonly string[] AttackCueNames = ["attack", "Attack"];
@@ -238,6 +243,25 @@ namespace STS2RitsuLib.Scaffolding.Characters.Visuals
             return FakeMerchantVisualSlots.TryGetValue(screen, out var slot) ? slot.Visuals : null;
         }
 
+        internal static string MapWorldAnimationToStateMachineTrigger(string animName)
+        {
+            if (string.IsNullOrWhiteSpace(animName))
+                return animName;
+
+            return animName.ToLowerInvariant() switch
+            {
+                "idle" => CreatureAnimator.idleTrigger,
+                "relaxed" or "relaxed_loop" or "overgrowth_loop" or "hive_loop" or "glory_loop" => "Relaxed",
+                "die" or "death" or "dead" => CreatureAnimator.deathTrigger,
+                "hurt" or "hit" => CreatureAnimator.hitTrigger,
+                "attack" => CreatureAnimator.attackTrigger,
+                "cast" => CreatureAnimator.castTrigger,
+                "revive" => CreatureAnimator.reviveTrigger,
+                "stun" => "Stun",
+                _ => animName,
+            };
+        }
+
         private static string MapAnimatorTriggerToCue(string trigger)
         {
             return trigger switch
@@ -259,6 +283,8 @@ namespace STS2RitsuLib.Scaffolding.Characters.Visuals
             {
                 "die" => DieCueNames,
                 "idle" => IdleCueNames,
+                "relaxed" or "relaxed_loop" => RelaxedCueNames,
+                "overgrowth_loop" or "hive_loop" or "glory_loop" => RestSiteLoopFallback(primaryCue),
                 "hurt" => HurtCueNames,
                 "attack" => AttackCueNames,
                 "cast" => CastCueNames,
@@ -274,6 +300,11 @@ namespace STS2RitsuLib.Scaffolding.Characters.Visuals
             return string.Equals(primaryCue, lower, StringComparison.Ordinal)
                 ? [primaryCue]
                 : [primaryCue, lower];
+        }
+
+        private static string[] RestSiteLoopFallback(string primaryCue)
+        {
+            return [primaryCue, ..RestSiteLoopCueNames];
         }
 
         private static bool TryApplyVisualCues(Node visualsRoot, CharacterModel? character,

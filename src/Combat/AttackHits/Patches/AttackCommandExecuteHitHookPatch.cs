@@ -2,6 +2,7 @@ using System.Reflection;
 using HarmonyLib;
 using MegaCrit.Sts2.Core.Commands;
 using MegaCrit.Sts2.Core.Commands.Builders;
+using MegaCrit.Sts2.Core.Entities.Cards;
 using MegaCrit.Sts2.Core.Entities.Creatures;
 using MegaCrit.Sts2.Core.GameActions.Multiplayer;
 using MegaCrit.Sts2.Core.Models;
@@ -47,6 +48,9 @@ namespace STS2RitsuLib.Combat.AttackHits.Patches
                     typeof(ValueProp),
                     typeof(Creature),
                     typeof(CardModel),
+#if STS2_AT_LEAST_0_108_0
+                    typeof(CardPlay),
+#endif
                 ]);
             var wrapperMethod = AccessTools.Method(
                 typeof(AttackHitHook),
@@ -58,6 +62,9 @@ namespace STS2RitsuLib.Combat.AttackHits.Patches
                     typeof(ValueProp),
                     typeof(Creature),
                     typeof(CardModel),
+#if STS2_AT_LEAST_0_108_0
+                    typeof(CardPlay),
+#endif
                     typeof(AttackCommand),
                     typeof(int),
                     typeof(decimal),

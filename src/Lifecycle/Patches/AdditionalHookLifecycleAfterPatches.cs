@@ -67,6 +67,34 @@ namespace STS2RitsuLib.Lifecycle.Patches
         }
     }
 
+    internal sealed class AfterEnergyGainedLifecyclePatch : IPatchMethod
+    {
+        public static string PatchId => "additional_hook_lifecycle_after_energy_gained";
+        public static string Description => "Publish energy gained lifecycle events";
+        public static bool IsCritical => false;
+
+        public static ModPatchTarget[] GetTargets()
+        {
+            return [new(typeof(PlayerCombatState), nameof(PlayerCombatState.GainEnergy), [typeof(decimal)])];
+        }
+
+        public static void Prefix(PlayerCombatState __instance, out int __state)
+        {
+            __state = __instance.Energy;
+        }
+
+        public static void Postfix(PlayerCombatState __instance, Player ____player, int __state)
+        {
+            var amount = __instance.Energy - __state;
+            if (amount <= 0 || ____player.Creature?.CombatState is not { } combatState)
+                return;
+
+            RitsuLibFramework.PublishLifecycleEvent(
+                new EnergyGainedEvent(combatState, amount, ____player, DateTimeOffset.UtcNow),
+                nameof(EnergyGainedEvent));
+        }
+    }
+
     internal sealed class AfterEnergyResetLifecyclePatch : IPatchMethod
     {
         public static string PatchId => "additional_hook_lifecycle_after_energy_reset";
@@ -467,6 +495,9 @@ namespace STS2RitsuLib.Lifecycle.Patches
             [
 #if !STS2_AT_LEAST_0_106_0
                 new(typeof(Hook), nameof(Hook.BeforeTurnEnd), [typeof(CombatStateCompat), typeof(CombatSide)]),
+#elif STS2_AT_LEAST_0_108_0
+                new(typeof(Hook), nameof(Hook.BeforeSideTurnEnd),
+                    [typeof(CombatStateCompat), typeof(CombatSide), typeof(IEnumerable<Creature>)]),
 #else
                 new(typeof(Hook), nameof(Hook.BeforeTurnEnd),
                     [typeof(CombatStateCompat), typeof(CombatSide), typeof(IEnumerable<Creature>)]),
@@ -508,6 +539,9 @@ namespace STS2RitsuLib.Lifecycle.Patches
             [
 #if !STS2_AT_LEAST_0_106_0
                 new(typeof(Hook), nameof(Hook.AfterTurnEnd), [typeof(CombatStateCompat), typeof(CombatSide)]),
+#elif STS2_AT_LEAST_0_108_0
+                new(typeof(Hook), nameof(Hook.AfterSideTurnEnd),
+                    [typeof(CombatStateCompat), typeof(CombatSide), typeof(IEnumerable<Creature>)]),
 #else
                 new(typeof(Hook), nameof(Hook.AfterTurnEnd),
                     [typeof(CombatStateCompat), typeof(CombatSide), typeof(IEnumerable<Creature>)]),

@@ -151,6 +151,17 @@ namespace STS2RitsuLib
     ) : IFrameworkLifecycleEvent;
 
     /// <summary>
+    ///     Energy was gained.
+    ///     能量已获得。
+    /// </summary>
+    public readonly record struct EnergyGainedEvent(
+        CombatStateCompat CombatState,
+        int Amount,
+        Player Gainer,
+        DateTimeOffset OccurredAtUtc
+    ) : IFrameworkLifecycleEvent;
+
+    /// <summary>
     ///     Player energy was reset.
     ///     玩家能量已重置。
     /// </summary>

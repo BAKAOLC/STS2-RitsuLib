@@ -67,7 +67,7 @@ namespace STS2RitsuLib.Combat.SecondaryResources
         ///     True when this use can affect play/payment.
         ///     该条款可能影响出牌/支付时为 true。
         /// </summary>
-        public bool IsMaterial => Cost.IsMaterial;
+        public bool IsMaterial => Cost.IsMaterial || Kind == SecondaryResourceUseKind.OptionalSpend;
     }
 
     /// <summary>
@@ -94,6 +94,11 @@ namespace STS2RitsuLib.Combat.SecondaryResources
             _uses.Keys.OrderBy(static id => id, StringComparer.Ordinal).ToArray();
 
         internal bool HasLayers => _uses.Count > 0;
+
+        internal bool HasPermanentLayers =>
+            _uses.Values
+                .SelectMany(static layers => layers)
+                .Any(static layer => layer.Duration == SecondaryResourceCostDuration.Permanent);
 
         /// <summary>
         ///     Raised after attached secondary-resource uses change.
@@ -371,6 +376,39 @@ namespace STS2RitsuLib.Combat.SecondaryResources
             return clone;
         }
 
+        internal bool ResetPermanentLayersFrom(SecondaryResourcePlayUseSet? canonicalUses)
+        {
+            var changed = false;
+            foreach (var useId in _uses.Keys.ToArray())
+            {
+                changed |= _uses[useId].RemoveAll(static layer =>
+                    layer.Duration == SecondaryResourceCostDuration.Permanent) > 0;
+                if (_uses[useId].Count == 0)
+                    _uses.Remove(useId);
+            }
+
+            if (canonicalUses != null)
+                foreach (var (useId, canonicalLayers) in canonicalUses._uses)
+                {
+                    var permanentLayers = canonicalLayers
+                        .Where(static layer => layer.Duration == SecondaryResourceCostDuration.Permanent)
+                        .ToArray();
+                    if (permanentLayers.Length == 0)
+                        continue;
+
+                    if (_uses.TryGetValue(useId, out var layers))
+                        layers.InsertRange(0, permanentLayers);
+                    else
+                        _uses[useId] = permanentLayers.ToList();
+                    changed = true;
+                }
+
+            if (changed)
+                Changed?.Invoke();
+
+            return changed;
+        }
+
         private List<SecondaryResourcePlayUseLayer> GetLayers(string useId)
         {
             if (_uses.TryGetValue(useId, out var layers)) return layers;
@@ -440,6 +478,27 @@ namespace STS2RitsuLib.Combat.SecondaryResources
 
             UseSets.Set(destination, uses.Clone());
             return true;
+        }
+
+        internal static bool ResetSecondaryResourceUsesForDowngradeFrom(
+            this CardModel canonical,
+            CardModel card)
+        {
+            ArgumentNullException.ThrowIfNull(canonical);
+            ArgumentNullException.ThrowIfNull(card);
+
+            var hasCanonicalUses = canonical.TryGetSecondaryResourceUses(out var canonicalUses) &&
+                                   canonicalUses.HasPermanentLayers;
+            // ReSharper disable once InvertIf
+            if (!card.TryGetSecondaryResourceUses(out var uses))
+            {
+                if (!hasCanonicalUses)
+                    return false;
+
+                uses = UseSets.Set(card, new());
+            }
+
+            return uses.ResetPermanentLayersFrom(hasCanonicalUses ? canonicalUses : null);
         }
     }
 }

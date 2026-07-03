@@ -384,17 +384,28 @@ namespace STS2RitsuLib.Models.Capabilities.Patches
 
             public static ModPatchTarget[] GetTargets()
             {
-#if STS2_AT_LEAST_0_105_0
+#if STS2_AT_LEAST_0_108_0
+                return [new(typeof(CardModel), "GetResultPileTypeAndPositionForCardPlay", Type.EmptyTypes)];
+#elif STS2_AT_LEAST_0_105_0
                 return [new(typeof(CardModel), "GetResultPileTypeForCardPlay", Type.EmptyTypes)];
 #else
                 return [new(typeof(CardModel), "GetResultPileType", Type.EmptyTypes)];
 #endif
             }
 
+#if STS2_AT_LEAST_0_108_0
+            public static void Postfix(CardModel __instance, ref (PileType, CardPilePosition) __result)
+            {
+                __result.Item1 = CardModelCapabilityHost.ApplyResultPileTypeForCardPlay(
+                    __instance,
+                    __result.Item1);
+            }
+#else
             public static void Postfix(CardModel __instance, ref PileType __result)
             {
                 __result = CardModelCapabilityHost.ApplyResultPileTypeForCardPlay(__instance, __result);
             }
+#endif
         }
 
         internal sealed class TransformCarryOverPatch : IPatchMethod
@@ -544,12 +555,15 @@ namespace STS2RitsuLib.Models.Capabilities.Patches
             public static IEnumerable<CodeInstruction> Transpiler(IEnumerable<CodeInstruction> instructions)
             {
                 var afterDowngradedMethod = AccessTools.Method(typeof(CardModel), "AfterDowngraded");
+                var resetSecondaryResourcesMethod = AccessTools.Method(
+                    typeof(SecondaryResourceCardExtensions),
+                    nameof(SecondaryResourceCardExtensions.ResetSecondaryResourcesForDowngrade));
                 var notifyMethod = AccessTools.Method(
                     typeof(CardModelCapabilityHost),
                     nameof(CardModelCapabilityHost.AfterOwnerCardDowngraded));
 
                 var code = instructions.ToList();
-                if (afterDowngradedMethod == null || notifyMethod == null)
+                if (afterDowngradedMethod == null || resetSecondaryResourcesMethod == null || notifyMethod == null)
                     return code;
 
                 var inserted = false;
@@ -558,7 +572,12 @@ namespace STS2RitsuLib.Models.Capabilities.Patches
                     if (!code[i].Calls(afterDowngradedMethod))
                         continue;
 
-                    code.InsertRange(i + 1,
+                    code.InsertRange(i,
+                    [
+                        CodeInstruction.LoadArgument(0),
+                        new(OpCodes.Call, resetSecondaryResourcesMethod),
+                    ]);
+                    code.InsertRange(i + 3,
                     [
                         CodeInstruction.LoadArgument(0),
                         new(OpCodes.Call, notifyMethod),

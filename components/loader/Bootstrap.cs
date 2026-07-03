@@ -19,11 +19,13 @@ namespace STS2RitsuLib.Loader
     [ModInitializer(nameof(Initialize))]
     public static class Bootstrap
     {
+        private const string ModId = "STS2-RitsuLib";
         private const string RealDllName = "STS2-RitsuLib.dll";
         private const string VariantManifestName = "ritsulib-variants.manifest";
         private const string CompatTargetMarkerName = "compat-target.txt";
         private static readonly Lock VariantAssembliesLock = new();
         private static readonly List<Assembly> VariantAssemblies = [];
+        private static readonly MethodInfo? AssociateAssemblyWithModMethod = CreateAssociateAssemblyWithModMethod();
         private static bool _reflectionBridgePatched;
 
         public static void Initialize()
@@ -73,6 +75,7 @@ namespace STS2RitsuLib.Loader
             {
                 realAsm = alc.LoadFromAssemblyPath(realDll);
                 RegisterVariantAssembly(realAsm);
+                AssociateVariantAssemblyWithGame(realAsm);
             }
             catch (Exception ex)
             {
@@ -104,6 +107,7 @@ namespace STS2RitsuLib.Loader
         private static void RegisterVariantAssembly(Assembly realAsm)
         {
             EnsureReflectionBridgePatch();
+
             lock (VariantAssembliesLock)
             {
                 if (VariantAssemblies.Any(assembly => string.Equals(
@@ -114,6 +118,111 @@ namespace STS2RitsuLib.Loader
 
                 VariantAssemblies.Add(realAsm);
             }
+        }
+
+        private static void AssociateVariantAssemblyWithGame(Assembly assembly)
+        {
+            if (AssociateAssemblyWithModMethod != null)
+            {
+                try
+                {
+                    AssociateAssemblyWithModMethod.Invoke(null, [ModId, assembly]);
+                    if (IsAssemblyAssociatedWithMod(ModId, assembly))
+                        return;
+
+                    Log.Warn(
+                        $"[RitsuLib.Loader] Host AssociateAssemblyWithMod did not record variant assembly {assembly.FullName} for {ModId}; applying initializer fallback.");
+                }
+                catch (Exception ex)
+                {
+                    Log.Warn(
+                        $"[RitsuLib.Loader] Failed to associate variant assembly {assembly.FullName} with {ModId}: {ex.Message}");
+                }
+            }
+
+            if (TryAssociateAssemblyWithModList(ModId, assembly))
+                return;
+
+            Log.Warn(
+                $"[RitsuLib.Loader] Could not associate variant assembly {assembly.FullName} with {ModId}; relying on reflection bridge for type discovery.");
+        }
+
+        private static bool IsAssemblyAssociatedWithMod(string modId, Assembly assembly)
+        {
+            return TryFindMod(modId, out var mod) &&
+                   TryGetMutableAssembliesList(mod, out var assemblies) &&
+                   ContainsAssembly(assemblies, assembly);
+        }
+
+        private static bool TryAssociateAssemblyWithModList(string modId, Assembly assembly)
+        {
+            if (!TryFindMod(modId, out var mod))
+                return false;
+
+            if (!TryGetMutableAssembliesList(mod, out var assemblies))
+                return false;
+
+            if (!ContainsAssembly(assemblies, assembly))
+            {
+                assemblies.Add(assembly);
+                Log.Info($"[RitsuLib.Loader] Associated variant assembly {assembly.FullName} with {modId} during initialization.");
+            }
+
+            return true;
+        }
+
+        private static bool TryFindMod(string modId, out Mod mod)
+        {
+            foreach (var candidate in ModManager.Mods)
+            {
+                if (!string.Equals(ReadManifestId(candidate), modId, StringComparison.Ordinal))
+                    continue;
+
+                mod = candidate;
+                return true;
+            }
+
+            mod = null!;
+            return false;
+        }
+
+        private static string? ReadManifestId(Mod mod)
+        {
+            var manifest = typeof(Mod).GetField("manifest", BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic)
+                ?.GetValue(mod);
+            return manifest?.GetType().GetField("id", BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic)
+                ?.GetValue(manifest) as string;
+        }
+
+        private static bool TryGetMutableAssembliesList(Mod mod, out System.Collections.IList assemblies)
+        {
+            assemblies = null!;
+            var value = typeof(Mod).GetField("assemblies", BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic)
+                ?.GetValue(mod);
+            if (value is not System.Collections.IList list)
+                return false;
+
+            assemblies = list;
+            return true;
+        }
+
+        private static bool ContainsAssembly(System.Collections.IEnumerable assemblies, Assembly assembly)
+        {
+            foreach (var item in assemblies)
+                if (ReferenceEquals(item, assembly))
+                    return true;
+
+            return false;
+        }
+
+        private static MethodInfo? CreateAssociateAssemblyWithModMethod()
+        {
+            return typeof(ModManager).GetMethod(
+                "AssociateAssemblyWithMod",
+                BindingFlags.Public | BindingFlags.Static,
+                null,
+                [typeof(string), typeof(Assembly)],
+                null);
         }
 
         private static void EnsureReflectionBridgePatch()

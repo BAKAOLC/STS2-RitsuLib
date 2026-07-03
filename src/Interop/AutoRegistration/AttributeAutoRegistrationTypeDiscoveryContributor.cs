@@ -6,6 +6,7 @@ using MegaCrit.Sts2.Core.Timeline;
 using SmartFormat.Core.Extensions;
 using STS2RitsuLib.CardPiles;
 using STS2RitsuLib.CardTags;
+using STS2RitsuLib.Compat;
 using STS2RitsuLib.Content;
 using STS2RitsuLib.Diagnostics;
 using STS2RitsuLib.Keywords;
@@ -1444,6 +1445,12 @@ namespace STS2RitsuLib.Interop.AutoRegistration
             var typeOverride = type.GetCustomAttribute<RitsuLibOwnedByAttribute>(false);
             if (typeOverride != null)
                 return typeOverride.ModId;
+
+            if (Sts2ModManagerCompat.TryGetLoadedModIdForAssembly(type.Assembly, out var loadedOwnerModId))
+                return loadedOwnerModId;
+
+            if (ModTypeDiscoveryHub.TryResolveRegisteredModId(type.Assembly, out var registeredOwnerModId))
+                return registeredOwnerModId;
 
             foreach (var pair in modAssembliesByManifestId)
                 if (pair.Value == type.Assembly)

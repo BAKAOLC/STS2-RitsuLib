@@ -1,8 +1,12 @@
+#if !STS2_AT_LEAST_0_108_0
 using MegaCrit.Sts2.Core.Runs;
 using STS2RitsuLib.Content.Patches;
 using STS2RitsuLib.Interop.Patches;
+#endif
 using STS2RitsuLib.Ui.Shell.Theme;
+#if !STS2_AT_LEAST_0_108_0
 using STS2RitsuLib.Ui.Toast;
+#endif
 
 namespace STS2RitsuLib.Settings
 {
@@ -10,91 +14,99 @@ namespace STS2RitsuLib.Settings
     {
         private static void RegisterMainSettingsPage(RitsuLibModSettingsUiBindings ui)
         {
-            RitsuLibFramework.RegisterModSettings(Const.ModId, page => page
-                .WithModDisplayName(T("ritsulib.mod.displayName", "RitsuLib"))
-                .WithModSidebarOrder(-10_000)
-                .WithTitle(T("ritsulib.page.title", "Settings"))
-                .WithDescription(T("ritsulib.page.description",
-                    "Framework settings and settings UI reference entries."))
-                .WithSortOrder(-1000)
-                .AddSection("categories", section => section
-                    .WithTitle(T("ritsulib.section.categories.title", "Categories"))
-                    .AddSubpage(
-                        "category_core_open",
-                        T("ritsulib.category.core.label", "Core settings"),
-                        "core",
-                        T("button.open", "Open"),
-                        T("ritsulib.category.core.description",
-                            "Interface theme, main menu shortcut, and deterministic ModelDb controls."))
-                    .AddSubpage(
-                        "category_content_source_open",
-                        T("ritsulib.modSourceHoverTips.pageLink.label", "Content source display"),
-                        "content-source-hover-tips",
-                        T("button.open", "Open"),
-                        T("ritsulib.modSourceHoverTips.pageLink.description",
-                            "Choose which content groups show source hover tips."))
-                    .AddSubpage(
-                        "category_content_load_order_open",
-                        T("ritsulib.contentModLoadOrder.pageLink.label", "Content mod load order"),
-                        "content-mod-load-order",
-                        T("button.open", "Open"),
-                        T("ritsulib.contentModLoadOrder.pageLink.description",
-                            "Sort, copy, or apply the saved load order for relevant content mods, framework libraries, and dependencies."))
-                    .AddSubpage(
-                        "category_toast_open",
-                        T("ritsulib.toast.pageLink.label", "Toast notifications"),
-                        "toast",
-                        T("button.open", "Open"),
-                        T("ritsulib.toast.pageLink.description",
-                            "Configure stack placement, queue limits, and animation for global toast notifications."))
-                    .AddSubpage(
-                        "category_compatibility_open",
-                        T("ritsulib.category.compatibility.label", "Compatibility fallbacks"),
-                        "compatibility",
-                        T("button.open", "Open"),
-                        T("ritsulib.category.compatibility.description",
-                            "Debug compatibility mode and fallback shims."))
-                    .AddSubpage(
-                        "category_updates_open",
-                        CreateUpdatesCategoryTitle(),
-                        "updates",
-                        T("button.open", "Open"),
-                        T("ritsulib.category.updates.description",
-                            "RitsuLib and Steam Workshop update checks."))
-                    .AddSubpage(
-                        "category_cloud_open",
-                        T("ritsulib.category.cloud.label", "Steam Cloud"),
-                        "cloud",
-                        T("button.open", "Open"),
-                        T("ritsulib.category.cloud.description",
-                            "Mod data sync and manual Steam Cloud actions."))
-                    .AddSubpage(
-                        "category_developer_tools_open",
-                        T("ritsulib.category.developerTools.label", "Developer tools"),
-                        "developer-tools",
-                        T("button.open", "Open"),
-                        T("ritsulib.category.developerTools.description",
-                            "Console fixes, diagnostics, self-checks, and export tools."))
-                    .AddSubpage(
-                        "category_telemetry_open",
-                        T("ritsulib.telemetry.page.title", "Telemetry"),
-                        "telemetry",
-                        T("button.open", "Open"),
-                        T("ritsulib.telemetry.page.description", "Manage data sharing permissions."))
-                    .AddSubpage(
-                        "category_runtime_hotkeys_open",
-                        T("ritsulib.page.runtimeHotkeys.title", "Registered hotkeys"),
-                        "runtime-hotkeys",
-                        T("button.open", "Open"),
-                        T("ritsulib.page.runtimeHotkeys.description",
-                            "Inspect currently registered runtime hotkeys and their active bindings."))
-                    .AddSubpage(
-                        "category_control_preview_open",
-                        T("ritsulib.reference.gallery.label", "Control preview"),
-                        "debug-showcase",
-                        T("button.open", "Open"),
-                        T("ritsulib.reference.gallery.description",
-                            "Reference page only. Values on this page are not persisted."))));
+            RitsuLibFramework.RegisterModSettings(Const.ModId, page =>
+            {
+                page.WithModDisplayName(T("ritsulib.mod.displayName", "RitsuLib"))
+                    .WithModSidebarOrder(-10_000)
+                    .WithTitle(T("ritsulib.page.title", "Settings"))
+                    .WithDescription(T("ritsulib.page.description",
+                        "Framework settings and settings UI reference entries."))
+                    .WithSortOrder(-1000)
+                    .AddSection("categories", ConfigureMainCategoriesSection);
+            });
+        }
+
+        private static void ConfigureMainCategoriesSection(ModSettingsSectionBuilder section)
+        {
+            section.WithTitle(T("ritsulib.section.categories.title", "Categories"));
+            section.AddSubpage(
+                "category_core_open",
+                T("ritsulib.category.core.label", "Core settings"),
+                "core",
+                T("button.open", "Open"),
+                T("ritsulib.category.core.description",
+                    "Interface theme and main menu shortcut."));
+            section.AddSubpage(
+                "category_content_source_open",
+                T("ritsulib.modSourceHoverTips.pageLink.label", "Content source display"),
+                "content-source-hover-tips",
+                T("button.open", "Open"),
+                T("ritsulib.modSourceHoverTips.pageLink.description",
+                    "Choose which content groups show source hover tips."));
+#if !STS2_AT_LEAST_0_108_0
+            section.AddSubpage(
+                "category_content_load_order_open",
+                T("ritsulib.contentModLoadOrder.pageLink.label", "Content mod load order"),
+                "content-mod-load-order",
+                T("button.open", "Open"),
+                T("ritsulib.contentModLoadOrder.pageLink.description",
+                    "Sort, copy, or apply the saved load order for relevant content mods, framework libraries, and dependencies."));
+#endif
+            section.AddSubpage(
+                "category_toast_open",
+                T("ritsulib.toast.pageLink.label", "Toast notifications"),
+                "toast",
+                T("button.open", "Open"),
+                T("ritsulib.toast.pageLink.description",
+                    "Configure stack placement, queue limits, and animation for global toast notifications."));
+            section.AddSubpage(
+                "category_compatibility_open",
+                T("ritsulib.category.compatibility.label", "Compatibility fallbacks"),
+                "compatibility",
+                T("button.open", "Open"),
+                T("ritsulib.category.compatibility.description",
+                    "Debug compatibility mode and fallback shims."));
+            section.AddSubpage(
+                "category_updates_open",
+                CreateUpdatesCategoryTitle(),
+                "updates",
+                T("button.open", "Open"),
+                T("ritsulib.category.updates.description",
+                    "RitsuLib and Steam Workshop update checks."));
+            section.AddSubpage(
+                "category_cloud_open",
+                T("ritsulib.category.cloud.label", "Steam Cloud"),
+                "cloud",
+                T("button.open", "Open"),
+                T("ritsulib.category.cloud.description",
+                    "Mod data sync and manual Steam Cloud actions."));
+            section.AddSubpage(
+                "category_developer_tools_open",
+                T("ritsulib.category.developerTools.label", "Developer tools"),
+                "developer-tools",
+                T("button.open", "Open"),
+                T("ritsulib.category.developerTools.description",
+                    "Console fixes, diagnostics, self-checks, and export tools."));
+            section.AddSubpage(
+                "category_telemetry_open",
+                T("ritsulib.telemetry.page.title", "Telemetry"),
+                "telemetry",
+                T("button.open", "Open"),
+                T("ritsulib.telemetry.page.description", "Manage data sharing permissions."));
+            section.AddSubpage(
+                "category_runtime_hotkeys_open",
+                T("ritsulib.page.runtimeHotkeys.title", "Registered hotkeys"),
+                "runtime-hotkeys",
+                T("button.open", "Open"),
+                T("ritsulib.page.runtimeHotkeys.description",
+                    "Inspect currently registered runtime hotkeys and their active bindings."));
+            section.AddSubpage(
+                "category_control_preview_open",
+                T("ritsulib.reference.gallery.label", "Control preview"),
+                "debug-showcase",
+                T("button.open", "Open"),
+                T("ritsulib.reference.gallery.description",
+                    "Reference page only. Values on this page are not persisted."));
         }
 
         private static void TryResetExistingThemeFiles()
@@ -104,6 +116,7 @@ namespace STS2RitsuLib.Settings
             RitsuShellThemeRuntime.ReapplyActiveTheme(true);
         }
 
+#if !STS2_AT_LEAST_0_108_0
         private static void TryRebuildModelDbDeterministicCacheFromSettings()
         {
             var title = L("ritsulib.modelDbDeterministicSort.toast.title", "ModelDb deterministic sort");
@@ -166,5 +179,6 @@ namespace STS2RitsuLib.Settings
                 return false;
             }
         }
+#endif
     }
 }

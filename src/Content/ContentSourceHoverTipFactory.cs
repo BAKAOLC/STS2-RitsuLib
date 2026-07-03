@@ -144,7 +144,7 @@ namespace STS2RitsuLib.Content
 
             foreach (var mod in Sts2ModManagerCompat.EnumerateModsForManifestLookup())
             {
-                if (mod.assembly != assembly)
+                if (!Sts2ModManagerCompat.GetAssemblies(mod).Contains(assembly))
                     continue;
 
                 var modId = NormalizeModId(mod.manifest?.id, assembly);

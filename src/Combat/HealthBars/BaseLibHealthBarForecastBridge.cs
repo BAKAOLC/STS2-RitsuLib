@@ -424,11 +424,8 @@ namespace STS2RitsuLib.Combat.HealthBars
 
             var loadedWithAssembly = Sts2ModManagerCompat.EnumerateLoadedModsWithAssembly();
             foreach (var mod in loadedWithAssembly)
+            foreach (var assembly in Sts2ModManagerCompat.GetAssemblies(mod))
             {
-                var assembly = mod.assembly;
-                if (assembly == null)
-                    continue;
-
                 var type = assembly.GetType("BaseLib.Hooks.HealthBarForecastRegistry");
                 if (type != null)
                     return type;

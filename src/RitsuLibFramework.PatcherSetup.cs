@@ -8,6 +8,7 @@ using STS2RitsuLib.Combat.AttackHits.Patches;
 using STS2RitsuLib.Combat.CardTargeting.Patches;
 using STS2RitsuLib.Combat.Healing.Patches;
 using STS2RitsuLib.Combat.HealthBars.Patches;
+using STS2RitsuLib.Combat.PlayerResources.Patches;
 using STS2RitsuLib.Combat.Rewards.Patches;
 using STS2RitsuLib.Combat.SecondaryResources.Patches;
 using STS2RitsuLib.Combat.Ui.Patches;
@@ -272,12 +273,15 @@ namespace STS2RitsuLib
             patcher.RegisterPatch<AfterBlockClearedLifecyclePatch>();
             patcher.RegisterPatch<BeforeBlockGainedLifecyclePatch>();
             patcher.RegisterPatch<AfterBlockGainedLifecyclePatch>();
+            patcher.RegisterPatch<PlayerCmdGainEnergyHookPatch>();
+            patcher.RegisterPatch<PlayerCmdGainStarsHookPatch>();
             patcher.RegisterPatch<BeforeCardAutoPlayedLifecyclePatch>();
             patcher.RegisterPatch<AfterCardEnteredCombatLifecyclePatch>();
             patcher.RegisterPatch<AfterCardGeneratedForCombatLifecyclePatch>();
             patcher.RegisterPatch<BeforeCardRemovedLifecyclePatch>();
             patcher.RegisterPatch<AfterCreatureAddedToCombatLifecyclePatch>();
             patcher.RegisterPatch<AfterCurrentHpChangedLifecyclePatch>();
+            patcher.RegisterPatch<AfterEnergyGainedLifecyclePatch>();
             patcher.RegisterPatch<AfterEnergyResetLifecyclePatch>();
             patcher.RegisterPatch<AfterEnergySpentLifecyclePatch>();
             patcher.RegisterPatch<BeforeHandDrawLifecyclePatch>();
@@ -380,6 +384,7 @@ namespace STS2RitsuLib
             patcher.RegisterPatch<ModelCapabilityHookListenerPatches.HookPlayerChoiceContextConstructorPatch>();
             patcher.RegisterPatch<CardModelCanPlaySecondaryResourcesPatch>();
             patcher.RegisterPatch<CardModelSpendResourcesSecondaryResourcesPatch>();
+            patcher.RegisterPatch<CardCmdAutoPlaySecondaryResourceXCapturePatch>();
             patcher.RegisterPatch<CardModelOnPlayWrapperSecondaryResourcesPatch>();
             patcher.RegisterPatch<HookBeforeCardPlayedSecondaryResourcesPatch>();
             patcher.RegisterPatch<CardModelEndOfTurnSecondaryResourcesPatch>();
@@ -477,7 +482,7 @@ namespace STS2RitsuLib
             var patcher = CreatePatcher(Const.ModId, "framework-content-assets", "content assets");
             patcher.RegisterPatch<EpochPortraitPathPatch>();
             patcher.RegisterPatch<EpochBigPortraitPathPatch>();
-#if STS2_AT_LEAST_0_106_0
+#if STS2_AT_LEAST_0_106_0 && !STS2_AT_LEAST_0_108_0
             patcher.RegisterPatch<EpochArtPlaceholderPatch>();
 #endif
             patcher.RegisterPatch<CardPortraitPathPatch>();
@@ -602,7 +607,9 @@ namespace STS2RitsuLib
             var patcher = CreatePatcher(Const.ModId, "framework-settings-ui", "settings ui");
             patcher.RegisterPatch<ModSettingsSubmenuPatch>();
             patcher.RegisterPatch<ModSettingsRunSubmenuStackPatch>();
+#if !STS2_AT_LEAST_0_108_0
             patcher.RegisterPatch<SettingsSaveDuplicateWorkshopModListPatch>();
+#endif
             patcher.RegisterPatch<SettingsScreenModSettingsButtonPatch>();
             patcher.RegisterPatch<MainMenuModSettingsButtonPatch>();
             RegisterFrameworkPatcher(FrameworkPatcherArea.SettingsUi, patcher);
@@ -650,6 +657,7 @@ namespace STS2RitsuLib
             patcher.RegisterPatch<NCreatureNonSpineDeathAnimationTriggerPatch>();
             patcher.RegisterPatch<NCombatUiNonSpineDeathAnimationRewardDelayPatch>();
             patcher.RegisterPatch<NCreatureNonSpineReviveAnimationTriggerPatch>();
+            patcher.RegisterPatch<ModMerchantCharacterReadyPlaybackPatch>();
             patcher.RegisterPatch<ModMerchantCharacterVisualPlaybackPatch>();
             patcher.RegisterPatch<NMerchantRoomProceduralCharacterInstantiationPatch>();
             patcher.RegisterPatch<NFakeMerchantProceduralCharacterInstantiationPatch>();
@@ -690,8 +698,10 @@ namespace STS2RitsuLib
             patcher.RegisterPatch<AllRelicsPatch>();
             patcher.RegisterPatch<AllPotionPoolsPatch>();
             patcher.RegisterPatch<ModelDbModdedEntryPatch>();
+#if !STS2_AT_LEAST_0_108_0
             patcher.RegisterPatch<ModelIdSerializationCacheDynamicContentPatch>();
             patcher.RegisterPatch<LocalOnlyModelIdSortingPatch>();
+#endif
             patcher.RegisterPatch<DynamicActContentPatchBootstrap>();
             patcher.RegisterPatch<DynamicCharacterStarterContentPatchBootstrap>();
             RegisterFrameworkPatcher(FrameworkPatcherArea.ContentRegistry, patcher);

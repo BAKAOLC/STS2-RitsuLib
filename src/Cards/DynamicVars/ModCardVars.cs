@@ -575,6 +575,9 @@ namespace STS2RitsuLib.Cards.DynamicVars
                         value,
                         props,
                         card,
+#if STS2_AT_LEAST_0_108_0
+                        null,
+#endif
                         ModifyDamageHookType.All,
                         previewMode,
                         out _),

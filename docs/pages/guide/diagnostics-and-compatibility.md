@@ -47,7 +47,7 @@ RitsuLib 会尽量为常见作者错误记录一次清楚的警告：
 
 ::: en
 
-RitsuLib's own debug compatibility mode is off by default. When enabled in the RitsuLib settings page, it exposes fallback toggles for development and compatibility testing.
+RitsuLib's own debug compatibility mode is on by default. The RitsuLib settings page exposes fallback toggles for development and compatibility testing, and you can turn the mode off there when you need strict vanilla behavior.
 
 Use it to investigate missing localization, invalid unlock epochs, and missing Architect dialogue. Do not rely on debug fallbacks as the normal release path for your mod.
 
@@ -57,7 +57,7 @@ Use it to investigate missing localization, invalid unlock epochs, and missing A
 
 ::: zh-CN
 
-RitsuLib 自带的 debug compatibility mode 默认关闭。开启后，RitsuLib 设置页会显示用于开发和兼容测试的回退开关。
+RitsuLib 自带的 debug compatibility mode 默认开启。RitsuLib 设置页会显示用于开发和兼容测试的回退开关；需要严格使用原版行为时，可以在那里关闭该模式。
 
 它适合调查缺失本地化、无效解锁 epoch、建筑师缺少对话等问题。不要把 debug 回退当作 Mod 的正常发布路径。
 

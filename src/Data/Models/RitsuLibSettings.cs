@@ -13,7 +13,7 @@ namespace STS2RitsuLib.Data.Models
         ///     Current schema version written by the library when creating or normalizing settings.
         ///     库在创建或规范化设置时写入的当前 schema 版本。
         /// </summary>
-        public const int CurrentSchemaVersion = 14;
+        public const int CurrentSchemaVersion = 15;
 
         internal const double DefaultToastDurationSeconds = 6d;
 
@@ -41,7 +41,7 @@ namespace STS2RitsuLib.Data.Models
         ///     <c>THE_ARCHITECT</c> 加载等）。
         /// </summary>
         [JsonPropertyName("debug_compatibility_mode")]
-        public bool DebugCompatibilityMode { get; set; }
+        public bool DebugCompatibilityMode { get; set; } = true;
 
         /// <summary>
         ///     When master is on: soft-fail missing <c>LocTable</c> keys with placeholders and one-time

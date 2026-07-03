@@ -5,6 +5,7 @@ using CombatStateLike = MegaCrit.Sts2.Core.Combat.ICombatState;
 #endif
 using MegaCrit.Sts2.Core.Commands;
 using MegaCrit.Sts2.Core.Commands.Builders;
+using MegaCrit.Sts2.Core.Entities.Cards;
 using MegaCrit.Sts2.Core.Entities.Creatures;
 using MegaCrit.Sts2.Core.GameActions.Multiplayer;
 using MegaCrit.Sts2.Core.Models;
@@ -30,6 +31,9 @@ namespace STS2RitsuLib.Combat.AttackHits
             ValueProp props,
             Creature? dealer,
             CardModel? cardSource,
+#if STS2_AT_LEAST_0_108_0
+            CardPlay? cardPlay,
+#endif
             AttackCommand attack,
             int hitIndex,
             decimal totalHitCount)
@@ -46,8 +50,13 @@ namespace STS2RitsuLib.Combat.AttackHits
                 hitIndex,
                 totalHitCount);
             return context == null
+#if STS2_AT_LEAST_0_108_0
+                ? CreatureCmd.Damage(choiceContext, targetList, amount, props, dealer, cardSource, cardPlay)
+                : DamageAndAfterAttackHit(context, targetList, props, dealer, cardSource, cardPlay);
+#else
                 ? CreatureCmd.Damage(choiceContext, targetList, amount, props, dealer, cardSource)
-                : DamageAndAfterAttackHit(context, targetList, props, dealer, cardSource);
+                : DamageAndAfterAttackHit(context, targetList, props, dealer, cardSource, attack);
+#endif
         }
 
         private static async Task<IEnumerable<DamageResult>> DamageAndAfterAttackHit(
@@ -55,10 +64,25 @@ namespace STS2RitsuLib.Combat.AttackHits
             IReadOnlyList<Creature> targetList,
             ValueProp props,
             Creature? dealer,
-            CardModel? cardSource)
+            CardModel? cardSource,
+#if STS2_AT_LEAST_0_108_0
+            CardPlay? cardPlay)
+#else
+            AttackCommand attack)
+#endif
         {
             await BeforeAttackHit(context);
 
+#if STS2_AT_LEAST_0_108_0
+            var results = (await CreatureCmd.Damage(
+                context.ChoiceContext,
+                targetList,
+                context.Damage,
+                props,
+                dealer,
+                cardSource,
+                cardPlay)).ToArray();
+#else
             var results = (await CreatureCmd.Damage(
                 context.ChoiceContext,
                 targetList,
@@ -66,6 +90,7 @@ namespace STS2RitsuLib.Combat.AttackHits
                 props,
                 dealer,
                 cardSource)).ToArray();
+#endif
 
             context.SetResults(results);
             await AfterAttackHit(context);

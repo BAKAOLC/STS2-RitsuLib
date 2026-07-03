@@ -78,7 +78,12 @@ namespace STS2RitsuLib.Scaffolding.Visuals.StateMachine.Backends
                 _paused = false;
             }
 
+#if STS2_AT_LEAST_0_108_0
+            animationState.SetAnimation(id, loop);
+            using var track = animationState.GetCurrent(0);
+#else
             var track = animationState.SetAnimation(id, loop);
+#endif
             if (track == null)
                 return;
 
@@ -93,7 +98,11 @@ namespace STS2RitsuLib.Scaffolding.Visuals.StateMachine.Backends
                 return;
 
             var animationState = _controller.GetAnimationState();
+#if STS2_AT_LEAST_0_108_0
+            using var track = animationState.AddAnimationTracked(id, 0f, loop);
+#else
             var track = animationState.AddAnimation(id, 0f, loop);
+#endif
             if (loop)
                 OffsetLoopingAnimation(track);
         }

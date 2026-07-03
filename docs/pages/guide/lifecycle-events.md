@@ -71,6 +71,7 @@ RitsuLibFramework.SubscribeLifecycle<CombatStartingEvent>((evt, sub) =>
 | Profiles and saves | `ProfileIdInitializedEvent`, `ProfileSwitchingEvent`, `ProfileSwitchedEvent`, `RunSavingEvent`, `RunSavedEvent`, `ProgressSavingEvent`, `ProgressSavedEvent`, `ProfileDeletingEvent`, `ProfileDeletedEvent` |
 | Run flow | `RunStartedEvent`, `RunLoadedEvent`, `RunEndedEvent`, `RoomEnteringEvent`, `RoomEnteredEvent`, `RoomExitedEvent`, `ActEnteringEvent`, `ActEnteredEvent` |
 | Combat | `CombatStartingEvent`, `CombatEndedEvent`, `CombatVictoryEvent`, `SideTurnStartingEvent`, `SideTurnStartedEvent`, `CardPlayingEvent`, `CardPlayedEvent` |
+| Combat resources | `EnergyGainedEvent`, `EnergyResetEvent`, `EnergySpentEvent`, `StarsGainedEvent`, `StarsSpentEvent` |
 | Cards | `CardMovedBetweenPilesEvent`, `CardDrawnEvent`, `CardDiscardedEvent`, `CardExhaustedEvent`, `BeforeFlushEvent`, `CardsFlushedEvent` |
 | Rewards and inventory | `GoldGainedEvent`, `GoldLostEvent`, `PotionProcuredEvent`, `PotionDiscardedEvent`, `RelicObtainedEvent`, `RelicRemovedEvent`, `RewardTakenEvent` |
 | Unlocks | `EpochObtainedEvent`, `EpochRevealedEvent`, `UnlockIncrementedEvent` |
@@ -89,6 +90,7 @@ RitsuLibFramework.SubscribeLifecycle<CombatStartingEvent>((evt, sub) =>
 | 档位与存档 | `ProfileIdInitializedEvent`、`ProfileSwitchingEvent`、`ProfileSwitchedEvent`、`RunSavingEvent`、`RunSavedEvent`、`ProgressSavingEvent`、`ProgressSavedEvent`、`ProfileDeletingEvent`、`ProfileDeletedEvent` |
 | Run 流程 | `RunStartedEvent`、`RunLoadedEvent`、`RunEndedEvent`、`RoomEnteringEvent`、`RoomEnteredEvent`、`RoomExitedEvent`、`ActEnteringEvent`、`ActEnteredEvent` |
 | 战斗 | `CombatStartingEvent`、`CombatEndedEvent`、`CombatVictoryEvent`、`SideTurnStartingEvent`、`SideTurnStartedEvent`、`CardPlayingEvent`、`CardPlayedEvent` |
+| 战斗资源 | `EnergyGainedEvent`、`EnergyResetEvent`、`EnergySpentEvent`、`StarsGainedEvent`、`StarsSpentEvent` |
 | 卡牌 | `CardMovedBetweenPilesEvent`、`CardDrawnEvent`、`CardDiscardedEvent`、`CardExhaustedEvent`、`BeforeFlushEvent`、`CardsFlushedEvent` |
 | 奖励与物品栏 | `GoldGainedEvent`、`GoldLostEvent`、`PotionProcuredEvent`、`PotionDiscardedEvent`、`RelicObtainedEvent`、`RelicRemovedEvent`、`RewardTakenEvent` |
 | 解锁 | `EpochObtainedEvent`、`EpochRevealedEvent`、`UnlockIncrementedEvent` |

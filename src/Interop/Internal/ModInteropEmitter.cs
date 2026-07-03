@@ -18,7 +18,7 @@ namespace STS2RitsuLib.Interop.Internal
         private static readonly FieldInfo WrappedValueField =
             AccessTools.DeclaredField(typeof(InteropClassWrapper), nameof(InteropClassWrapper.Value))!;
 
-        private static readonly Dictionary<(string, Assembly?), Type> TypeResolutionCache = new();
+        private static readonly Dictionary<(string, string), Type> TypeResolutionCache = new();
 
         internal static void TryProcessType(
             Harmony harmony,
@@ -36,13 +36,15 @@ namespace STS2RitsuLib.Interop.Internal
 
             if (modInterop != null)
             {
-                if (!loadedAssembliesByModId.TryGetValue(modInterop.ModId, out var assembly))
+                loadedAssembliesByModId.TryGetValue(modInterop.ModId, out var legacyFallback);
+                var assemblies = ModTypeDiscoveryHub.GetKnownAssembliesForMod(modInterop.ModId, legacyFallback);
+                if (assemblies.Count == 0)
                     return;
 
                 RitsuLibFramework.Logger.Info($"[ModInterop] Processing type {t.FullName} -> mod {modInterop.ModId}");
 
                 var members = t.GetMembers(ValidMemberFlags);
-                GenInteropMembers(members, harmony, TargetResolutionContext.ForModAssembly(assembly),
+                GenInteropMembers(members, harmony, TargetResolutionContext.ForModAssemblies(assemblies),
                     modInterop.Type, true);
                 return;
             }
@@ -401,7 +403,7 @@ namespace STS2RitsuLib.Interop.Internal
 
         private static Type ResolveTargetType(string targetName, TargetResolutionContext targetContext)
         {
-            var key = (targetName, targetContext.ModAssembly);
+            var key = (targetName, targetContext.CacheKey);
             if (TypeResolutionCache.TryGetValue(key, out var cached))
                 return cached;
             var resolved = ResolveTargetTypeCore(targetName, targetContext);
@@ -422,10 +424,18 @@ namespace STS2RitsuLib.Interop.Internal
                 throw new InvalidOperationException(
                     $"ModInterop target type '{targetName}' must be a full type name inside the target mod assembly. Use AssemblyInterop for assembly-qualified CLR type names.");
 
-            return targetContext.ModAssembly!.GetType(targetName, false)
-                   ?? Type.GetType($"{targetName}, {targetContext.ModAssembly.FullName}", false)
-                   ?? throw new InvalidOperationException(
-                       $"Type {targetName} not found in assembly {targetContext.ModAssembly.FullName}");
+            foreach (var assembly in targetContext.ModAssemblies)
+            {
+                var resolved = assembly.GetType(targetName, false)
+                               ?? Type.GetType($"{targetName}, {assembly.FullName}", false);
+                if (resolved != null)
+                    return resolved;
+            }
+
+            var assemblyNames = string.Join(", ",
+                targetContext.ModAssemblies.Select(static assembly => assembly.FullName));
+            throw new InvalidOperationException(
+                $"Type {targetName} not found in mod assemblies: {assemblyNames}");
         }
 
         private static bool IsAssemblyQualifiedTypeName(string? targetName)
@@ -469,16 +479,23 @@ namespace STS2RitsuLib.Interop.Internal
                 $"{c.DeclaringType?.FullName}.ctor({string.Join(", ", c.GetParameters().Select(p => p.ParameterType.Name))})";
         }
 
-        private readonly record struct TargetResolutionContext(Assembly? ModAssembly, bool AssemblyQualifiedOnly)
+        private readonly record struct TargetResolutionContext(
+            IReadOnlyList<Assembly> ModAssemblies,
+            bool AssemblyQualifiedOnly,
+            string CacheKey)
         {
-            public static TargetResolutionContext ForModAssembly(Assembly assembly)
+            public static TargetResolutionContext ForModAssemblies(IReadOnlyList<Assembly> assemblies)
             {
-                return new(assembly, false);
+                var distinctAssemblies = assemblies.Distinct().ToArray();
+                return new(
+                    distinctAssemblies,
+                    false,
+                    string.Join("|", distinctAssemblies.Select(static assembly => assembly.FullName)));
             }
 
             public static TargetResolutionContext ForAssemblyQualifiedTypes()
             {
-                return new(null, true);
+                return new([], true, "<assembly-qualified>");
             }
         }
     }
