@@ -333,6 +333,8 @@ namespace STS2RitsuLib
                 Logger.Info(BuildVersionLogText());
                 Logger.Info("Initializing shared framework...");
 
+                RitsuLibStartupAudit.Measure("harmonyPatchAllTypeLoadGuard",
+                    () => HarmonyPatchAllTypeLoadGuard.Install(message => Logger.Warn(message)));
                 RitsuLibStartupAudit.Measure("harmonyInitSetterCompat", HarmonyInitSetterCompat.Install);
                 RitsuLibStartupAudit.Measure("settingsStore", RitsuLibSettingsStore.Initialize);
                 RitsuLibStartupAudit.Measure("debugLogViewer",
