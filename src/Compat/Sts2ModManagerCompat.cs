@@ -115,7 +115,7 @@ namespace STS2RitsuLib.Compat
             return EnumerateLoadedModsWithAssembly()
                 .SelectMany(TryBuildLoadedModAssemblyEntries)
                 .Where(entry => entry != null)
-                .Select(entry => entry!)
+                .Select(entry => entry)
                 .ToArray();
         }
 

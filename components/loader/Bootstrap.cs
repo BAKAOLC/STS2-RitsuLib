@@ -1,3 +1,4 @@
+using System.Collections;
 using System.Reflection;
 using System.Runtime.Loader;
 using System.Security.Cryptography;
@@ -123,7 +124,6 @@ namespace STS2RitsuLib.Loader
         private static void AssociateVariantAssemblyWithGame(Assembly assembly)
         {
             if (AssociateAssemblyWithModMethod != null)
-            {
                 try
                 {
                     AssociateAssemblyWithModMethod.Invoke(null, [ModId, assembly]);
@@ -138,7 +138,6 @@ namespace STS2RitsuLib.Loader
                     Log.Warn(
                         $"[RitsuLib.Loader] Failed to associate variant assembly {assembly.FullName} with {ModId}: {ex.Message}");
                 }
-            }
 
             if (TryAssociateAssemblyWithModList(ModId, assembly))
                 return;
@@ -162,10 +161,12 @@ namespace STS2RitsuLib.Loader
             if (!TryGetMutableAssembliesList(mod, out var assemblies))
                 return false;
 
+            // ReSharper disable once InvertIf
             if (!ContainsAssembly(assemblies, assembly))
             {
                 assemblies.Add(assembly);
-                Log.Info($"[RitsuLib.Loader] Associated variant assembly {assembly.FullName} with {modId} during initialization.");
+                Log.Info(
+                    $"[RitsuLib.Loader] Associated variant assembly {assembly.FullName} with {modId} during initialization.");
             }
 
             return true;
@@ -188,31 +189,30 @@ namespace STS2RitsuLib.Loader
 
         private static string? ReadManifestId(Mod mod)
         {
-            var manifest = typeof(Mod).GetField("manifest", BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic)
+            var manifest = typeof(Mod)
+                .GetField("manifest", BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic)
                 ?.GetValue(mod);
-            return manifest?.GetType().GetField("id", BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic)
+            return manifest?.GetType()
+                .GetField("id", BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic)
                 ?.GetValue(manifest) as string;
         }
 
-        private static bool TryGetMutableAssembliesList(Mod mod, out System.Collections.IList assemblies)
+        private static bool TryGetMutableAssembliesList(Mod mod, out IList assemblies)
         {
             assemblies = null!;
-            var value = typeof(Mod).GetField("assemblies", BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic)
+            var value = typeof(Mod).GetField("assemblies",
+                    BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic)
                 ?.GetValue(mod);
-            if (value is not System.Collections.IList list)
+            if (value is not IList list)
                 return false;
 
             assemblies = list;
             return true;
         }
 
-        private static bool ContainsAssembly(System.Collections.IEnumerable assemblies, Assembly assembly)
+        private static bool ContainsAssembly(IEnumerable assemblies, Assembly assembly)
         {
-            foreach (var item in assemblies)
-                if (ReferenceEquals(item, assembly))
-                    return true;
-
-            return false;
+            return assemblies.Cast<object?>().Any(item => ReferenceEquals(item, assembly));
         }
 
         private static MethodInfo? CreateAssociateAssemblyWithModMethod()
