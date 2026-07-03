@@ -152,6 +152,31 @@ namespace STS2RitsuLib.Settings
                     .WithTitle(CreateUpdatesCategoryTitle())
                     .WithDescription(T("ritsulib.category.updates.description",
                         "RitsuLib and Steam Workshop update checks."))
+                    .AddSection("steam_workshop_updates", section => section
+                        .WithVisibleWhen(SteamWorkshopUpdateCoordinator.CanUseSteamWorkshopUpdates)
+                        .WithTitle(T("ritsulib.section.steamWorkshopUpdates.title", "Steam Workshop updates"))
+                        .Collapsible()
+                        .AddSubpage(
+                            "steam_workshop_management_open",
+                            T("ritsulib.steamWorkshopManagement.pageLink.label", "Steam Workshop management"),
+                            "steam-workshop-management",
+                            T("button.open", "Open"),
+                            T("ritsulib.steamWorkshopManagement.pageLink.description",
+                                "Subscribe, unsubscribe, and inspect Workshop item states."))
+                        .AddToggle(
+                            "steam_workshop_auto_update_check_enabled",
+                            T("ritsulib.steamWorkshop.autoUpdateCheck.label", "Auto-check Workshop updates"),
+                            ui.SteamWorkshopAutoUpdateCheckEnabled,
+                            T("ritsulib.steamWorkshop.autoUpdateCheck.description",
+                                "Periodically checks subscribed Workshop items and asks Steam to queue available updates. Notifications are shown on the main menu."))
+                        .AddButton(
+                            "steam_workshop_check_now",
+                            T("ritsulib.steamWorkshop.checkNow.label", "Check Workshop updates now"),
+                            T("ritsulib.steamWorkshop.checkNow.button", "Check Workshop"),
+                            SteamWorkshopUpdateCoordinator.CheckNowFromSettings,
+                            ModSettingsButtonTone.Normal,
+                            T("ritsulib.steamWorkshop.checkNow.description",
+                                "Checks subscribed Workshop item states immediately and asks Steam to download any items with available updates.")))
                     .AddSection("ritsulib_updates", section => section
                         .WithTitle(T("ritsulib.section.updateChecks.title", "RitsuLib updates"))
                         .Collapsible()
@@ -184,32 +209,7 @@ namespace STS2RitsuLib.Settings
                             RitsuLibUpdateCheckService.CheckNowFromSettings,
                             ModSettingsButtonTone.Normal,
                             T("ritsulib.updateCheck.now.description",
-                                "Checks the bundled RitsuLib update source immediately and shows a toast with the result.")))
-                    .AddSection("steam_workshop_updates", section => section
-                        .WithVisibleWhen(SteamWorkshopUpdateCoordinator.CanUseSteamWorkshopUpdates)
-                        .WithTitle(T("ritsulib.section.steamWorkshopUpdates.title", "Steam Workshop updates"))
-                        .Collapsible()
-                        .AddSubpage(
-                            "steam_workshop_management_open",
-                            T("ritsulib.steamWorkshopManagement.pageLink.label", "Steam Workshop management"),
-                            "steam-workshop-management",
-                            T("button.open", "Open"),
-                            T("ritsulib.steamWorkshopManagement.pageLink.description",
-                                "Subscribe, unsubscribe, and inspect Workshop item states."))
-                        .AddToggle(
-                            "steam_workshop_auto_update_check_enabled",
-                            T("ritsulib.steamWorkshop.autoUpdateCheck.label", "Auto-check Workshop updates"),
-                            ui.SteamWorkshopAutoUpdateCheckEnabled,
-                            T("ritsulib.steamWorkshop.autoUpdateCheck.description",
-                                "Periodically checks subscribed Workshop items and asks Steam to queue available updates. Notifications are shown on the main menu."))
-                        .AddButton(
-                            "steam_workshop_check_now",
-                            T("ritsulib.steamWorkshop.checkNow.label", "Check Workshop updates now"),
-                            T("ritsulib.steamWorkshop.checkNow.button", "Check Workshop"),
-                            SteamWorkshopUpdateCoordinator.CheckNowFromSettings,
-                            ModSettingsButtonTone.Normal,
-                            T("ritsulib.steamWorkshop.checkNow.description",
-                                "Checks subscribed Workshop item states immediately and asks Steam to download any items with available updates."))),
+                                "Checks the bundled RitsuLib update source immediately and shows a toast with the result."))),
                 "updates");
         }
 
