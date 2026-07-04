@@ -1,4 +1,5 @@
 using System.Collections.Concurrent;
+using System.Text;
 using MegaCrit.Sts2.Core.Multiplayer.Serialization;
 
 namespace STS2RitsuLib.Networking.MessageExtensions
@@ -6,7 +7,8 @@ namespace STS2RitsuLib.Networking.MessageExtensions
     internal static class RitsuNetMessageTailExtensions
     {
         private const string Magic = "ritsulib.net.tail";
-        private const int ContainerVersion = 1;
+        private const int ContainerVersion = 2;
+        private const int LegacyStringContainerVersion = 1;
 
         private static readonly ConcurrentDictionary<Type, SortedDictionary<string, ExtensionRegistration>>
             Registrations =
@@ -17,6 +19,34 @@ namespace STS2RitsuLib.Networking.MessageExtensions
             int version,
             Func<TMessage, string?> writePayload,
             Action<int, string> readPayload)
+        {
+            ArgumentException.ThrowIfNullOrWhiteSpace(extensionId);
+            ArgumentNullException.ThrowIfNull(writePayload);
+            ArgumentNullException.ThrowIfNull(readPayload);
+            if (version is < 0 or > 255)
+                throw new ArgumentOutOfRangeException(nameof(version), version, "Version must fit in 8 bits.");
+
+            var map = Registrations.GetOrAdd(typeof(TMessage),
+                _ => new(StringComparer.Ordinal));
+
+            lock (map)
+            {
+                map[extensionId] = new(
+                    version,
+                    message =>
+                    {
+                        var payload = writePayload((TMessage)message);
+                        return string.IsNullOrWhiteSpace(payload) ? null : Encoding.UTF8.GetBytes(payload);
+                    },
+                    (payloadVersion, payload) => readPayload(payloadVersion, Encoding.UTF8.GetString(payload.Span)));
+            }
+        }
+
+        public static void RegisterBytes<TMessage>(
+            string extensionId,
+            int version,
+            Func<TMessage, byte[]?> writePayload,
+            Action<int, ReadOnlyMemory<byte>> readPayload)
         {
             ArgumentException.ThrowIfNullOrWhiteSpace(extensionId);
             ArgumentNullException.ThrowIfNull(writePayload);
@@ -41,7 +71,7 @@ namespace STS2RitsuLib.Networking.MessageExtensions
             var entries = new List<TailEntry>();
             foreach (var (id, registration) in registrations)
             {
-                string? payload;
+                byte[]? payload;
                 try
                 {
                     payload = registration.WritePayload(message!);
@@ -53,7 +83,7 @@ namespace STS2RitsuLib.Networking.MessageExtensions
                     continue;
                 }
 
-                if (string.IsNullOrWhiteSpace(payload))
+                if (payload is not { Length: > 0 })
                     continue;
 
                 entries.Add(new(id, registration.Version, payload));
@@ -70,7 +100,8 @@ namespace STS2RitsuLib.Networking.MessageExtensions
             {
                 writer.WriteString(entry.ExtensionId);
                 writer.WriteInt(entry.Version, 8);
-                writer.WriteString(entry.Payload);
+                writer.WriteInt(entry.Payload.Length);
+                writer.WriteBytes(entry.Payload, entry.Payload.Length);
             }
         }
 
@@ -99,7 +130,7 @@ namespace STS2RitsuLib.Networking.MessageExtensions
                 }
 
                 var containerVersion = reader.ReadInt(8);
-                if (containerVersion != ContainerVersion)
+                if (containerVersion != LegacyStringContainerVersion && containerVersion != ContainerVersion)
                 {
                     RitsuLibFramework.Logger.Warn(
                         $"[NetMessageTailExtensions] Unsupported trailer version {containerVersion} for {typeof(TMessage).Name}.");
@@ -111,7 +142,9 @@ namespace STS2RitsuLib.Networking.MessageExtensions
                 {
                     var id = reader.ReadString();
                     var version = reader.ReadInt(8);
-                    var payload = reader.ReadString();
+                    var payload = containerVersion == LegacyStringContainerVersion
+                        ? Encoding.UTF8.GetBytes(reader.ReadString())
+                        : ReadPayloadBytes(reader);
                     if (!registrationsById.TryGetValue(id, out var registration))
                         continue;
 
@@ -133,6 +166,17 @@ namespace STS2RitsuLib.Networking.MessageExtensions
             }
         }
 
+        private static byte[] ReadPayloadBytes(PacketReader reader)
+        {
+            var length = reader.ReadInt();
+            if (length < 0)
+                throw new InvalidDataException("Negative tail payload length.");
+
+            var payload = new byte[length];
+            reader.ReadBytes(payload, length);
+            return payload;
+        }
+
         public static void WriteLegacySingle(PacketWriter writer, string extensionId, int version, string? payload)
         {
             ArgumentException.ThrowIfNullOrWhiteSpace(extensionId);
@@ -144,6 +188,20 @@ namespace STS2RitsuLib.Networking.MessageExtensions
             writer.WriteBool(true);
             writer.WriteInt(version, 8);
             writer.WriteString(payload);
+        }
+
+        public static void WriteLegacySingleBytes(PacketWriter writer, string extensionId, int version, byte[]? payload)
+        {
+            ArgumentException.ThrowIfNullOrWhiteSpace(extensionId);
+            if (version is < 0 or > 255)
+                throw new ArgumentOutOfRangeException(nameof(version), version, "Version must fit in 8 bits.");
+            if (payload is not { Length: > 0 })
+                return;
+
+            writer.WriteBool(true);
+            writer.WriteInt(version, 8);
+            writer.WriteInt(payload.Length);
+            writer.WriteBytes(payload, payload.Length);
         }
 
         public static string? TryReadLegacySingle(PacketReader reader, string extensionId, int expectedVersion)
@@ -176,6 +234,51 @@ namespace STS2RitsuLib.Networking.MessageExtensions
             }
         }
 
+        public static byte[]? TryReadLegacySingleBytes(
+            PacketReader reader,
+            string extensionId,
+            int expectedVersion,
+            int legacyStringVersion,
+            out bool wasLegacyString)
+        {
+            wasLegacyString = false;
+            ArgumentException.ThrowIfNullOrWhiteSpace(extensionId);
+            if (expectedVersion is < 0 or > 255)
+                throw new ArgumentOutOfRangeException(nameof(expectedVersion), expectedVersion,
+                    "Version must fit in 8 bits.");
+            if (legacyStringVersion is < 0 or > 255)
+                throw new ArgumentOutOfRangeException(nameof(legacyStringVersion), legacyStringVersion,
+                    "Version must fit in 8 bits.");
+            if (reader.BitPosition >= reader.Buffer.Length * 8)
+                return null;
+
+            try
+            {
+                if (!reader.ReadBool())
+                    return null;
+
+                var version = reader.ReadInt(8);
+                if (version == expectedVersion)
+                    return ReadPayloadBytes(reader);
+
+                if (version == legacyStringVersion)
+                {
+                    wasLegacyString = true;
+                    return Encoding.UTF8.GetBytes(reader.ReadString());
+                }
+
+                RitsuLibFramework.Logger.Warn(
+                    $"[NetMessageTailExtensions] Unsupported legacy trailer version {version} for '{extensionId}'.");
+                return null;
+            }
+            catch (Exception ex)
+            {
+                RitsuLibFramework.Logger.Warn(
+                    $"[NetMessageTailExtensions] Failed to read legacy trailer '{extensionId}': {ex.Message}");
+                return null;
+            }
+        }
+
         private static bool TryGetRegistrations<TMessage>(
             out IReadOnlyList<KeyValuePair<string, ExtensionRegistration>> registrations)
         {
@@ -195,9 +298,9 @@ namespace STS2RitsuLib.Networking.MessageExtensions
 
         private sealed record ExtensionRegistration(
             int Version,
-            Func<object, string?> WritePayload,
-            Action<int, string> ReadPayload);
+            Func<object, byte[]?> WritePayload,
+            Action<int, ReadOnlyMemory<byte>> ReadPayload);
 
-        private sealed record TailEntry(string ExtensionId, int Version, string Payload);
+        private sealed record TailEntry(string ExtensionId, int Version, byte[] Payload);
     }
 }

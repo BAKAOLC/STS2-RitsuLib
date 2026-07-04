@@ -48,10 +48,23 @@ namespace STS2RitsuLib.Networking.StateDivergence
         string? CodeFunctionName,
         int? CodeLineNumber);
 
+    internal sealed record StateDivergenceSupplementPayloadV6(
+        uint ChecksumId,
+        uint ChecksumValue,
+        int SavedPropertyNetIdBitSize,
+        uint SavedPropertyMapHash,
+        IReadOnlyList<string> SavedPropertyNames,
+        bool? ModelDbHashUsesDeterministicCache,
+        bool? SavedPropertyNetIdUsesDeterministicSort,
+        IReadOnlyList<ContentModInventoryPayloadCodec.CompactEntry> LoadedMods,
+        IReadOnlyList<ContentModInventoryPayloadCodec.CompactEntry> ContentMods,
+        ProgressDiagnosticsSnapshot? Progress,
+        StateDivergenceRecentLogSnapshot? RecentLogs);
+
     internal static class StateDivergenceSupplementPayloadCodec
     {
         private const string ExtensionId = "ritsulib.stateDivergence";
-        private const int PayloadVersion = 5;
+        private const int PayloadVersion = 6;
         private const int MaxCompressedPayloadBytes = 128 * 1024;
         private static int _registered;
         private static readonly Lock PreparedOutgoingLock = new();
@@ -71,7 +84,7 @@ namespace STS2RitsuLib.Networking.StateDivergence
             if (Interlocked.Exchange(ref _registered, 1) == 1)
                 return;
 
-            RitsuNetMessageTailExtensions.Register<StateDivergenceMessage>(
+            RitsuNetMessageTailExtensions.RegisterBytes<StateDivergenceMessage>(
                 ExtensionId,
                 PayloadVersion,
                 SerializePayload,
@@ -123,7 +136,7 @@ namespace STS2RitsuLib.Networking.StateDivergence
             }
         }
 
-        private static string? SerializePayload(StateDivergenceMessage message)
+        private static byte[]? SerializePayload(StateDivergenceMessage message)
         {
             try
             {
@@ -160,24 +173,30 @@ namespace STS2RitsuLib.Networking.StateDivergence
             }
         }
 
-        private static void ReadPayload(int version, string encoded)
+        private static void ReadPayload(int version, ReadOnlyMemory<byte> encoded)
         {
             try
             {
-                if (version != 1 && version != 2 && version != 3 && version != 4 && version != PayloadVersion)
+                if (version != 1 && version != 2 && version != 3 && version != 4 && version != 5 &&
+                    version != PayloadVersion)
                 {
                     RitsuLibFramework.Logger.Warn(
                         $"[State divergence diagnostics] Unsupported supplement payload version: {version}");
                     return;
                 }
 
-                var bytes = Gunzip(Convert.FromBase64String(encoded));
-                var json = Encoding.UTF8.GetString(bytes);
-                var payload = version == 1
-                    ? ConvertLegacyPayload(JsonSerializer.Deserialize<StateDivergenceSupplementPayloadV1>(
+                var json = version == PayloadVersion
+                    ? Encoding.UTF8.GetString(Unbrotli(encoded.Span))
+                    : Encoding.UTF8.GetString(Gunzip(Convert.FromBase64String(Encoding.UTF8.GetString(encoded.Span))));
+                var payload = version switch
+                {
+                    1 => ConvertLegacyPayload(JsonSerializer.Deserialize<StateDivergenceSupplementPayloadV1>(
                         json,
-                        JsonOptions))
-                    : JsonSerializer.Deserialize<StateDivergenceSupplementPayload>(json, JsonOptions);
+                        JsonOptions)),
+                    PayloadVersion => FromWirePayload(
+                        JsonSerializer.Deserialize<StateDivergenceSupplementPayloadV6>(json, JsonOptions)),
+                    _ => JsonSerializer.Deserialize<StateDivergenceSupplementPayload>(json, JsonOptions),
+                };
                 if (payload != null)
                     StateDivergenceSupplementStore.Store(payload);
             }
@@ -196,18 +215,18 @@ namespace STS2RitsuLib.Networking.StateDivergence
                 : [];
         }
 
-        private static byte[] Gzip(byte[] data)
+        private static byte[] Brotli(byte[] data)
         {
             using var output = new MemoryStream();
-            using (var gzip = new GZipStream(output, CompressionLevel.SmallestSize, true))
+            using (var brotli = new BrotliStream(output, CompressionLevel.SmallestSize, true))
             {
-                gzip.Write(data, 0, data.Length);
+                brotli.Write(data, 0, data.Length);
             }
 
             return output.ToArray();
         }
 
-        private static string? EncodeWithinBudget(StateDivergenceSupplementPayload payload)
+        private static byte[]? EncodeWithinBudget(StateDivergenceSupplementPayload payload)
         {
             if (TryEncode(payload, out var encoded, out _))
                 return encoded;
@@ -216,7 +235,7 @@ namespace STS2RitsuLib.Networking.StateDivergence
             if (logs == null || logs.Records.Count == 0)
                 return null;
 
-            string? best = null;
+            byte[]? best = null;
             var low = 0;
             var high = logs.Records.Count;
             while (low <= high)
@@ -244,19 +263,19 @@ namespace STS2RitsuLib.Networking.StateDivergence
 
         private static bool TryEncode(
             StateDivergenceSupplementPayload payload,
-            out string encoded,
+            out byte[] encoded,
             out int compressedBytes)
         {
-            var json = JsonSerializer.Serialize(payload, JsonOptions);
-            var compressed = Gzip(Encoding.UTF8.GetBytes(json));
+            var json = JsonSerializer.Serialize(ToWirePayload(payload), JsonOptions);
+            var compressed = Brotli(Encoding.UTF8.GetBytes(json));
             compressedBytes = compressed.Length;
             if (compressed.Length > MaxCompressedPayloadBytes)
             {
-                encoded = "";
+                encoded = [];
                 return false;
             }
 
-            encoded = Convert.ToBase64String(compressed);
+            encoded = compressed;
             return true;
         }
 
@@ -307,6 +326,52 @@ namespace STS2RitsuLib.Networking.StateDivergence
             using var output = new MemoryStream();
             gzip.CopyTo(output);
             return output.ToArray();
+        }
+
+        private static byte[] Unbrotli(ReadOnlySpan<byte> data)
+        {
+            using var input = new MemoryStream(data.ToArray(), false);
+            using var brotli = new BrotliStream(input, CompressionMode.Decompress);
+            using var output = new MemoryStream();
+            brotli.CopyTo(output);
+            return output.ToArray();
+        }
+
+        private static StateDivergenceSupplementPayloadV6 ToWirePayload(StateDivergenceSupplementPayload payload)
+        {
+            ContentModInventoryPayloadCodec.TryDecode(payload.LoadedMods, out var loadedMods);
+            ContentModInventoryPayloadCodec.TryDecode(payload.ContentMods, out var contentMods);
+            return new(
+                payload.ChecksumId,
+                payload.ChecksumValue,
+                payload.SavedPropertyNetIdBitSize,
+                payload.SavedPropertyMapHash,
+                payload.SavedPropertyNames,
+                payload.ModelDbHashUsesDeterministicCache,
+                payload.SavedPropertyNetIdUsesDeterministicSort,
+                ContentModInventoryPayloadCodec.Compact(loadedMods),
+                ContentModInventoryPayloadCodec.Compact(contentMods),
+                payload.Progress,
+                payload.RecentLogs);
+        }
+
+        private static StateDivergenceSupplementPayload? FromWirePayload(StateDivergenceSupplementPayloadV6? payload)
+        {
+            if (payload == null)
+                return null;
+
+            return new(
+                payload.ChecksumId,
+                payload.ChecksumValue,
+                payload.SavedPropertyNetIdBitSize,
+                payload.SavedPropertyMapHash,
+                payload.SavedPropertyNames,
+                payload.ModelDbHashUsesDeterministicCache,
+                payload.SavedPropertyNetIdUsesDeterministicSort,
+                ContentModInventoryPayloadCodec.Encode(ContentModInventoryPayloadCodec.Expand(payload.LoadedMods)),
+                ContentModInventoryPayloadCodec.Encode(ContentModInventoryPayloadCodec.Expand(payload.ContentMods)),
+                payload.Progress,
+                payload.RecentLogs);
         }
 
         private static uint StableHash(IEnumerable<string> values)

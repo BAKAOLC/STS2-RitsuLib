@@ -1,3 +1,4 @@
+using System.IO.Compression;
 using System.Runtime.CompilerServices;
 using System.Text;
 using HarmonyLib;
@@ -26,7 +27,8 @@ namespace STS2RitsuLib.RunData.Patches
     internal static class RunSavedDataPatchHelpers
     {
         private const string TailExtensionId = "ritsulib.runSavedData";
-        private const int PayloadVersion = 1;
+        private const int PayloadVersion = 2;
+        private const int LegacyStringPayloadVersion = 1;
         private static readonly AsyncLocal<Stack<RunSavedDataSaveRunCapture>?> ActiveSaveRunCaptures = new();
 
         public static string GetRunSavePath(RunSaveManager manager, bool isMultiplayer)
@@ -150,7 +152,14 @@ namespace STS2RitsuLib.RunData.Patches
 
         public static void WritePayload(PacketWriter writer, string? payload)
         {
-            RitsuNetMessageTailExtensions.WriteLegacySingle(writer, TailExtensionId, PayloadVersion, payload);
+            if (string.IsNullOrWhiteSpace(payload))
+                return;
+
+            RitsuNetMessageTailExtensions.WriteLegacySingleBytes(
+                writer,
+                TailExtensionId,
+                PayloadVersion,
+                Brotli(Encoding.UTF8.GetBytes(payload)));
         }
 
         public static string? PrepareNewRunPayload(StartRunLobby lobby, string seed,
@@ -170,7 +179,38 @@ namespace STS2RitsuLib.RunData.Patches
 
         public static string? TryReadPayload(PacketReader reader)
         {
-            return RitsuNetMessageTailExtensions.TryReadLegacySingle(reader, TailExtensionId, PayloadVersion);
+            var payload = RitsuNetMessageTailExtensions.TryReadLegacySingleBytes(
+                reader,
+                TailExtensionId,
+                PayloadVersion,
+                LegacyStringPayloadVersion,
+                out var wasLegacyString);
+            if (payload == null)
+                return null;
+
+            return wasLegacyString
+                ? Encoding.UTF8.GetString(payload)
+                : Encoding.UTF8.GetString(Unbrotli(payload));
+        }
+
+        private static byte[] Brotli(byte[] data)
+        {
+            using var output = new MemoryStream();
+            using (var brotli = new BrotliStream(output, CompressionLevel.SmallestSize, true))
+            {
+                brotli.Write(data, 0, data.Length);
+            }
+
+            return output.ToArray();
+        }
+
+        private static byte[] Unbrotli(byte[] data)
+        {
+            using var input = new MemoryStream(data, false);
+            using var brotli = new BrotliStream(input, CompressionMode.Decompress);
+            using var output = new MemoryStream();
+            brotli.CopyTo(output);
+            return output.ToArray();
         }
     }
 

@@ -74,7 +74,7 @@ namespace STS2RitsuLib.Networking.JoinDiagnostics
             if (Interlocked.Exchange(ref _registered, 1) == 1)
                 return;
 
-            RitsuNetMessageTailExtensions.Register<InitialGameInfoMessage>(
+            RitsuNetMessageTailExtensions.RegisterBytes<InitialGameInfoMessage>(
                 ExtensionId,
                 PayloadVersion,
                 SerializePayload,
@@ -93,7 +93,7 @@ namespace STS2RitsuLib.Networking.JoinDiagnostics
             RitsuNetMessageTailExtensions.Read<InitialGameInfoMessage>(reader);
         }
 
-        private static string? SerializePayload(InitialGameInfoMessage message)
+        private static byte[]? SerializePayload(InitialGameInfoMessage message)
         {
             try
             {
@@ -117,14 +117,15 @@ namespace STS2RitsuLib.Networking.JoinDiagnostics
             }
         }
 
-        private static void ReadPayload(int version, string payload)
+        private static void ReadPayload(int version, ReadOnlyMemory<byte> payload)
         {
             try
             {
                 if (version == 1)
                 {
+                    var legacyJson = Encoding.UTF8.GetString(payload.Span);
                     JoinFailureDiagnosticsService.ObserveHostPayload(ConvertLegacyPayload(
-                        JsonSerializer.Deserialize<JoinDiagnosticsPayloadV1>(payload, JsonOptions)));
+                        JsonSerializer.Deserialize<JoinDiagnosticsPayloadV1>(legacyJson, JsonOptions)));
                     return;
                 }
 
@@ -134,7 +135,9 @@ namespace STS2RitsuLib.Networking.JoinDiagnostics
                     return;
                 }
 
-                var json = version == PayloadVersion ? DecodeCompressed(payload) : payload;
+                var json = version == PayloadVersion
+                    ? DecodeCompressed(payload.Span)
+                    : Encoding.UTF8.GetString(payload.Span);
                 var parsed = version == PayloadVersion
                     ? FromWirePayload(JsonSerializer.Deserialize<JoinDiagnosticsPayloadV5>(json, JsonOptions))
                     : JsonSerializer.Deserialize<JoinDiagnosticsPayload>(json, JsonOptions);
@@ -146,10 +149,10 @@ namespace STS2RitsuLib.Networking.JoinDiagnostics
             }
         }
 
-        private static string EncodeCompressed(JoinDiagnosticsPayloadV5 payload)
+        private static byte[] EncodeCompressed(JoinDiagnosticsPayloadV5 payload)
         {
             var json = JsonSerializer.Serialize(payload, JsonOptions);
-            return Convert.ToBase64String(Gzip(Encoding.UTF8.GetBytes(json)));
+            return Brotli(Encoding.UTF8.GetBytes(json));
         }
 
         private static JoinDiagnosticsPayload? FromWirePayload(JoinDiagnosticsPayloadV5? payload)
@@ -169,28 +172,28 @@ namespace STS2RitsuLib.Networking.JoinDiagnostics
                 payload.SavedPropertyNetIdUsesDeterministicSort);
         }
 
-        private static string DecodeCompressed(string encoded)
+        private static string DecodeCompressed(ReadOnlySpan<byte> compressed)
         {
-            return Encoding.UTF8.GetString(Gunzip(Convert.FromBase64String(encoded)));
+            return Encoding.UTF8.GetString(Unbrotli(compressed));
         }
 
-        private static byte[] Gzip(byte[] data)
+        private static byte[] Brotli(byte[] data)
         {
             using var output = new MemoryStream();
-            using (var gzip = new GZipStream(output, CompressionLevel.SmallestSize, true))
+            using (var brotli = new BrotliStream(output, CompressionLevel.SmallestSize, true))
             {
-                gzip.Write(data, 0, data.Length);
+                brotli.Write(data, 0, data.Length);
             }
 
             return output.ToArray();
         }
 
-        private static byte[] Gunzip(byte[] data)
+        private static byte[] Unbrotli(ReadOnlySpan<byte> data)
         {
-            using var input = new MemoryStream(data, false);
-            using var gzip = new GZipStream(input, CompressionMode.Decompress);
+            using var input = new MemoryStream(data.ToArray(), false);
+            using var brotli = new BrotliStream(input, CompressionMode.Decompress);
             using var output = new MemoryStream();
-            gzip.CopyTo(output);
+            brotli.CopyTo(output);
             return output.ToArray();
         }
 
