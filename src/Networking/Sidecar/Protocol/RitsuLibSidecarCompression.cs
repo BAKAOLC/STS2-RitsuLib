@@ -5,6 +5,9 @@ namespace STS2RitsuLib.Networking.Sidecar
 {
     internal static class RitsuLibSidecarCompression
     {
+        internal const int AutoCompressionMinPayloadBytes = 1024;
+        private const int MinAutoCompressionSavingsBytes = 32;
+
         internal static byte[] GzipCompress(ReadOnlySpan<byte> data)
         {
             using var output = new MemoryStream();
@@ -14,6 +17,31 @@ namespace STS2RitsuLib.Networking.Sidecar
             }
 
             return output.ToArray();
+        }
+
+        internal static byte[] BrotliCompress(ReadOnlySpan<byte> data)
+        {
+            using var output = new MemoryStream();
+            using (var br = new BrotliStream(output, CompressionLevel.SmallestSize, true))
+            {
+                br.Write(data);
+            }
+
+            return output.ToArray();
+        }
+
+        internal static bool TryBrotliAutoCompress(ReadOnlySpan<byte> data, [NotNullWhen(true)] out byte[]? compressed)
+        {
+            compressed = null;
+            if (data.Length < AutoCompressionMinPayloadBytes)
+                return false;
+
+            var candidate = BrotliCompress(data);
+            if (candidate.Length + MinAutoCompressionSavingsBytes >= data.Length)
+                return false;
+
+            compressed = candidate;
+            return true;
         }
 
         internal static bool TryGunzip(ReadOnlySpan<byte> compressed, [NotNullWhen(true)] out byte[]? decompressed)
@@ -28,6 +56,35 @@ namespace STS2RitsuLib.Networking.Sidecar
                 while (true)
                 {
                     var read = gz.Read(buffer);
+                    if (read <= 0)
+                        break;
+                    output.Write(buffer, 0, read);
+                    if (output.Length > RitsuLibSidecarWire.MaxPayloadBytes)
+                        return false;
+                }
+
+                decompressed = output.ToArray();
+                return true;
+            }
+            catch
+            {
+                return false;
+            }
+        }
+
+        internal static bool TryBrotliDecompress(ReadOnlySpan<byte> compressed,
+            [NotNullWhen(true)] out byte[]? decompressed)
+        {
+            decompressed = null;
+            try
+            {
+                using var input = new MemoryStream(compressed.ToArray(), false);
+                using var br = new BrotliStream(input, CompressionMode.Decompress);
+                using var output = new MemoryStream();
+                var buffer = new byte[8 * RitsuLibSidecarBinaryLayout.KiB];
+                while (true)
+                {
+                    var read = br.Read(buffer);
                     if (read <= 0)
                         break;
                     output.Write(buffer, 0, read);

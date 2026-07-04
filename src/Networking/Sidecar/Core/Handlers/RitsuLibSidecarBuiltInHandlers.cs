@@ -7,7 +7,8 @@ namespace STS2RitsuLib.Networking.Sidecar
     {
         private const RitsuLibSidecarPeerFeatures SupportedFeatures =
             RitsuLibSidecarPeerFeatures.ChunkedStreams |
-            RitsuLibSidecarPeerFeatures.ManagedNetActions;
+            RitsuLibSidecarPeerFeatures.ManagedNetActions |
+            RitsuLibSidecarPeerFeatures.BrotliPayloadCompression;
 
         private static readonly RitsuLibSidecarChunkReassembly Chunks = new();
 
@@ -120,8 +121,8 @@ namespace STS2RitsuLib.Networking.Sidecar
                 out var wire,
                 out var peerMax,
                 out var feats);
-            var ok = wire is >= 1 and <= RitsuLibSidecarWire.SupportedWireFormatVersionMax
-                     && wire <= peerMax;
+            var ok = wire == RitsuLibSidecarWire.CurrentWireFormatVersion
+                     && peerMax >= RitsuLibSidecarWire.CurrentWireFormatVersion;
             RitsuLibFramework.Logger.Debug(
                 $"[Sidecar] Handshake received sender={ctx.SenderNetId}, opcode={ctx.Opcode}, payloadLen={ctx.Payload.Length}, channel={ctx.Channel}, transferMode={ctx.TransferMode}, hostIngest={ctx.IsHostIngest}, wire={wire}, peerMax={peerMax}, features={feats}, ok={ok}");
             if (!ok) RitsuLibFramework.Logger.Warn($"[Sidecar] Handshake wire version {wire} not supported.");

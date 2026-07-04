@@ -1,3 +1,4 @@
+using MegaCrit.Sts2.Core.Multiplayer;
 using MegaCrit.Sts2.Core.Multiplayer.Game;
 using MegaCrit.Sts2.Core.Runs;
 
@@ -55,7 +56,9 @@ namespace STS2RitsuLib.Networking.Sidecar
             ReadOnlySpan<byte> additionalHeaderExtension = default)
         {
             RitsuLibSidecarProtocol.EnsureDefaultHandlers();
-            var env = RitsuLibSidecar.CreateEnvelopeWithDelivery(
+            var netService = runManager?.NetService;
+            var env = CreateEnvelopeForHost(
+                netService,
                 opcode,
                 payload,
                 deliverySemantics,
@@ -63,7 +66,7 @@ namespace STS2RitsuLib.Networking.Sidecar
                 gzip,
                 additionalHeaderExtension);
             RitsuLibSidecarNetworkMapping.GetNetworkParameters(Resolve(deliverySemantics), out var mode, out var ch);
-            return RitsuLibSidecarSend.TrySendToHost(runManager?.NetService, env, mode, ch);
+            return RitsuLibSidecarSend.TrySendToHost(netService, env, mode, ch);
         }
 
         /// <inheritdoc
@@ -78,7 +81,8 @@ namespace STS2RitsuLib.Networking.Sidecar
             ReadOnlySpan<byte> additionalHeaderExtension = default)
         {
             RitsuLibSidecarProtocol.EnsureDefaultHandlers();
-            var env = RitsuLibSidecar.CreateEnvelopeWithDelivery(
+            var env = CreateEnvelopeForHost(
+                netService,
                 opcode,
                 payload,
                 deliverySemantics,
@@ -138,7 +142,8 @@ namespace STS2RitsuLib.Networking.Sidecar
             ReadOnlySpan<byte> additionalHeaderExtension = default)
         {
             RitsuLibSidecarProtocol.EnsureDefaultHandlers();
-            var env = RitsuLibSidecar.CreateEnvelopeWithDelivery(
+            var env = CreateEnvelopeForPeer(
+                peerNetId,
                 opcode,
                 payload,
                 deliverySemantics,
@@ -162,7 +167,8 @@ namespace STS2RitsuLib.Networking.Sidecar
             ReadOnlySpan<byte> additionalHeaderExtension = default)
         {
             RitsuLibSidecarProtocol.EnsureDefaultHandlers();
-            var env = RitsuLibSidecar.CreateEnvelopeWithDelivery(
+            var env = CreateEnvelopeForPeer(
+                peerNetId,
                 opcode,
                 payload,
                 deliverySemantics,
@@ -217,7 +223,10 @@ namespace STS2RitsuLib.Networking.Sidecar
             ReadOnlySpan<byte> additionalHeaderExtension = default)
         {
             RitsuLibSidecarProtocol.EnsureDefaultHandlers();
-            var env = RitsuLibSidecar.CreateEnvelopeWithDelivery(
+            var netService = runManager?.NetService;
+            var env = CreateEnvelopeForBroadcast(
+                netService,
+                true,
                 opcode,
                 payload,
                 deliverySemantics,
@@ -225,7 +234,7 @@ namespace STS2RitsuLib.Networking.Sidecar
                 gzip,
                 additionalHeaderExtension);
             RitsuLibSidecarNetworkMapping.GetNetworkParameters(Resolve(deliverySemantics), out var mode, out var ch);
-            return RitsuLibSidecarSend.TryBroadcastToReadyPeers(runManager?.NetService, env, mode, ch);
+            return RitsuLibSidecarSend.TryBroadcastToReadyPeers(netService, env, mode, ch);
         }
 
         /// <inheritdoc
@@ -240,7 +249,9 @@ namespace STS2RitsuLib.Networking.Sidecar
             ReadOnlySpan<byte> additionalHeaderExtension = default)
         {
             RitsuLibSidecarProtocol.EnsureDefaultHandlers();
-            var env = RitsuLibSidecar.CreateEnvelopeWithDelivery(
+            var env = CreateEnvelopeForBroadcast(
+                netService,
+                true,
                 opcode,
                 payload,
                 deliverySemantics,
@@ -265,7 +276,9 @@ namespace STS2RitsuLib.Networking.Sidecar
             ReadOnlySpan<byte> additionalHeaderExtension = default)
         {
             RitsuLibSidecarProtocol.EnsureDefaultHandlers();
-            var env = RitsuLibSidecar.CreateEnvelopeWithDelivery(
+            var env = CreateEnvelopeForBroadcast(
+                netService,
+                false,
                 opcode,
                 payload,
                 deliverySemantics,
@@ -281,6 +294,89 @@ namespace STS2RitsuLib.Networking.Sidecar
             return s is RitsuLibSidecarDeliverySemantics.Unspecified
                 ? RitsuLibSidecarDeliverySemantics.StableSync
                 : s;
+        }
+
+        private static byte[] CreateEnvelopeForHost(
+            INetGameService? netService,
+            ulong opcode,
+            ReadOnlySpan<byte> payload,
+            RitsuLibSidecarDeliverySemantics deliverySemantics,
+            RitsuLibSidecarWireFlags extraFlags,
+            bool gzip,
+            ReadOnlySpan<byte> additionalHeaderExtension)
+        {
+            var compression = gzip
+                ? RitsuLibSidecarPayloadCompression.Gzip
+                : netService is NetClientGameService client
+                    ? RitsuLibSidecarPayloadCompressionSelector.ForPeer(opcode, payload, client.HostNetId)
+                    : RitsuLibSidecarPayloadCompression.None;
+            return RitsuLibSidecar.CreateEnvelopeWithDeliveryCompressed(
+                opcode,
+                payload,
+                deliverySemantics,
+                compression,
+                extraFlags,
+                additionalHeaderExtension);
+        }
+
+        private static byte[] CreateEnvelopeForPeer(
+            ulong peerNetId,
+            ulong opcode,
+            ReadOnlySpan<byte> payload,
+            RitsuLibSidecarDeliverySemantics deliverySemantics,
+            RitsuLibSidecarWireFlags extraFlags,
+            bool gzip,
+            ReadOnlySpan<byte> additionalHeaderExtension)
+        {
+            var compression = gzip
+                ? RitsuLibSidecarPayloadCompression.Gzip
+                : RitsuLibSidecarPayloadCompressionSelector.ForPeer(opcode, payload, peerNetId);
+            return RitsuLibSidecar.CreateEnvelopeWithDeliveryCompressed(
+                opcode,
+                payload,
+                deliverySemantics,
+                compression,
+                extraFlags,
+                additionalHeaderExtension);
+        }
+
+        private static byte[] CreateEnvelopeForBroadcast(
+            INetGameService? netService,
+            bool readyOnly,
+            ulong opcode,
+            ReadOnlySpan<byte> payload,
+            RitsuLibSidecarDeliverySemantics deliverySemantics,
+            RitsuLibSidecarWireFlags extraFlags,
+            bool gzip,
+            ReadOnlySpan<byte> additionalHeaderExtension)
+        {
+            var compression = gzip
+                ? RitsuLibSidecarPayloadCompression.Gzip
+                : RitsuLibSidecarPayloadCompressionSelector.ForPeers(
+                    opcode,
+                    payload,
+                    BroadcastTargetPeerIds(netService, readyOnly));
+            return RitsuLibSidecar.CreateEnvelopeWithDeliveryCompressed(
+                opcode,
+                payload,
+                deliverySemantics,
+                compression,
+                extraFlags,
+                additionalHeaderExtension);
+        }
+
+        private static IEnumerable<ulong> BroadcastTargetPeerIds(INetGameService? netService, bool readyOnly)
+        {
+            if (netService is not NetHostGameService host)
+                yield break;
+
+            foreach (var peer in host.ConnectedPeers)
+            {
+                if (readyOnly && !peer.readyForBroadcasting)
+                    continue;
+
+                yield return peer.peerId;
+            }
         }
     }
 }

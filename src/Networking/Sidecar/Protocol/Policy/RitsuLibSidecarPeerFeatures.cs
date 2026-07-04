@@ -24,5 +24,11 @@ namespace STS2RitsuLib.Networking.Sidecar
         ///     RitsuLib 管理的 action 可承载在原版 action 入队消息中。
         /// </summary>
         ManagedNetActions = 1 << 1,
+
+        /// <summary>
+        ///     Sidecar envelope payloads may use the Brotli payload compression flag.
+        ///     Sidecar envelope payload 可使用 Brotli payload 压缩标志。
+        /// </summary>
+        BrotliPayloadCompression = 1 << 2,
     }
 }

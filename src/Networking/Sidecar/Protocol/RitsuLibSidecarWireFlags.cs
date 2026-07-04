@@ -20,5 +20,11 @@ namespace STS2RitsuLib.Networking.Sidecar
         ///     载荷字节经过 gzip 压缩（RFC 1952）；处理器看到解压后的字节。
         /// </summary>
         PayloadGzip = 1u << 0,
+
+        /// <summary>
+        ///     Payload bytes are Brotli-compressed (RFC 7932); handlers see decompressed bytes.
+        ///     载荷字节经过 Brotli 压缩（RFC 7932）；处理器看到解压后的字节。
+        /// </summary>
+        PayloadBrotli = 1u << 1,
     }
 }

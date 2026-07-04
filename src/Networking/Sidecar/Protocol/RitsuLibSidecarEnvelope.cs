@@ -61,7 +61,11 @@ namespace STS2RitsuLib.Networking.Sidecar
             TotalLengthMismatch,
         }
 
-        private const uint KnownWireFlagsMask = (uint)RitsuLibSidecarWireFlags.PayloadGzip;
+        private const RitsuLibSidecarWireFlags PayloadCompressionFlags =
+            RitsuLibSidecarWireFlags.PayloadGzip |
+            RitsuLibSidecarWireFlags.PayloadBrotli;
+
+        private const uint KnownWireFlagsMask = (uint)PayloadCompressionFlags;
 
         /// <summary>
         ///     Parses an envelope from a byte array backing store.
@@ -141,16 +145,30 @@ namespace STS2RitsuLib.Networking.Sidecar
             var rawPayload = new ReadOnlyMemory<byte>(backing, payloadOffset, (int)payloadLen);
 
             ReadOnlyMemory<byte> logicalPayload;
-            if ((flags & RitsuLibSidecarWireFlags.PayloadGzip) != 0)
+            var compression = flags & PayloadCompressionFlags;
+            switch (compression)
             {
-                if (!RitsuLibSidecarCompression.TryGunzip(rawPayload.Span, out var decompressed))
-                    return ParseOutcome.PayloadLengthInvalid;
+                case RitsuLibSidecarWireFlags.None:
+                    logicalPayload = rawPayload;
+                    break;
+                case RitsuLibSidecarWireFlags.PayloadGzip:
+                {
+                    if (!RitsuLibSidecarCompression.TryGunzip(rawPayload.Span, out var decompressed))
+                        return ParseOutcome.PayloadLengthInvalid;
 
-                logicalPayload = decompressed;
-            }
-            else
-            {
-                logicalPayload = rawPayload;
+                    logicalPayload = decompressed;
+                    break;
+                }
+                case RitsuLibSidecarWireFlags.PayloadBrotli:
+                {
+                    if (!RitsuLibSidecarCompression.TryBrotliDecompress(rawPayload.Span, out var decompressed))
+                        return ParseOutcome.PayloadLengthInvalid;
+
+                    logicalPayload = decompressed;
+                    break;
+                }
+                default:
+                    return ParseOutcome.PayloadLengthInvalid;
             }
 
             parsed = new(wireVersion, flags, opcode, extMem, logicalPayload);
@@ -199,18 +217,62 @@ namespace STS2RitsuLib.Networking.Sidecar
             ReadOnlySpan<byte> payloadLogical,
             bool gzipLogicalPayload)
         {
+            return Build(
+                wireFormatVersion,
+                flags,
+                opcode,
+                headerExtension,
+                payloadLogical,
+                gzipLogicalPayload
+                    ? RitsuLibSidecarPayloadCompression.Gzip
+                    : RitsuLibSidecarPayloadCompression.None);
+        }
+
+        /// <summary>
+        ///     Builds a complete on-wire envelope using the requested payload compression mode.
+        ///     使用指定 payload 压缩模式构建完整线上 envelope。
+        /// </summary>
+        public static byte[] Build(
+            ushort wireFormatVersion,
+            RitsuLibSidecarWireFlags flags,
+            ulong opcode,
+            ReadOnlySpan<byte> headerExtension,
+            ReadOnlySpan<byte> payloadLogical,
+            RitsuLibSidecarPayloadCompression compression)
+        {
             if (wireFormatVersion is 0 or > RitsuLibSidecarWire.SupportedWireFormatVersionMax)
                 throw new ArgumentOutOfRangeException(nameof(wireFormatVersion));
 
             if (headerExtension.Length > RitsuLibSidecarWire.MaxHeaderExtensionBytes)
                 throw new ArgumentOutOfRangeException(nameof(headerExtension));
 
+            if (payloadLogical.Length > RitsuLibSidecarWire.MaxPayloadBytes)
+                throw new ArgumentOutOfRangeException(nameof(payloadLogical));
+
             var wirePayload = payloadLogical;
-            if (gzipLogicalPayload)
+            flags &= ~PayloadCompressionFlags;
+            switch (compression)
             {
-                var compressed = RitsuLibSidecarCompression.GzipCompress(payloadLogical);
-                wirePayload = compressed;
-                flags |= RitsuLibSidecarWireFlags.PayloadGzip;
+                case RitsuLibSidecarPayloadCompression.None:
+                    break;
+                case RitsuLibSidecarPayloadCompression.Gzip:
+                    wirePayload = RitsuLibSidecarCompression.GzipCompress(payloadLogical);
+                    flags |= RitsuLibSidecarWireFlags.PayloadGzip;
+                    break;
+                case RitsuLibSidecarPayloadCompression.Brotli:
+                    wirePayload = RitsuLibSidecarCompression.BrotliCompress(payloadLogical);
+                    flags |= RitsuLibSidecarWireFlags.PayloadBrotli;
+                    break;
+                case RitsuLibSidecarPayloadCompression.Auto:
+                    if (RitsuLibSidecarCompression.TryBrotliAutoCompress(payloadLogical, out var compressed))
+                    {
+                        wirePayload = compressed;
+                        flags |= RitsuLibSidecarWireFlags.PayloadBrotli;
+                    }
+
+                    break;
+                default:
+                    throw new ArgumentOutOfRangeException(nameof(compression));
             }
 
             if (wirePayload.Length > RitsuLibSidecarWire.MaxPayloadBytes)
