@@ -229,6 +229,11 @@ namespace STS2RitsuLib.Interop
                 .AppendLine(
                     "Mod authors should align their manifest id and runtime mod id, or prepare localization/save " +
                     "compatibility before that update.")
+                .AppendLine(
+                    "If a mod intentionally keeps these ids different, annotate the auto-registration source types " +
+                    "with [RitsuLibOwnedBy(\"...\")] to pin those auto-discovered entries to a fixed owner id. " +
+                    "For inherited auto-registration attributes, place [RitsuLibOwnedBy(\"...\")] on the type that " +
+                    "declares the inherited registration attribute.")
                 .AppendLine("Mismatches:");
 
             foreach (var mismatch in mismatches)
