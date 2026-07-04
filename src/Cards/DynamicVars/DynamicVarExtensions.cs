@@ -1,7 +1,9 @@
 using Godot;
+using MegaCrit.Sts2.Core.Entities.Creatures;
 using MegaCrit.Sts2.Core.HoverTips;
 using MegaCrit.Sts2.Core.Localization;
 using MegaCrit.Sts2.Core.Localization.DynamicVars;
+using MegaCrit.Sts2.Core.Models;
 
 namespace STS2RitsuLib.Cards.DynamicVars
 {
@@ -110,6 +112,74 @@ namespace STS2RitsuLib.Cards.DynamicVars
         public static bool HasPositiveValue(this DynamicVarSet dynamicVars, string key)
         {
             return dynamicVars.GetValueOrDefault(key) > 0m;
+        }
+
+        /// <summary>
+        ///     Computes the current value of a <see cref="ComputedDynamicVar" />.
+        ///     Returns <paramref name="defaultValue" /> when <paramref name="key" /> is missing or the variable is not
+        ///     a <see cref="ComputedDynamicVar" />. Optionally accepts <paramref name="target" /> for target-aware
+        ///     computation.
+        ///     计算指定 ID 的 <see cref="ComputedDynamicVar" /> 的当前值。
+        ///     <paramref name="key" /> 不存在或变量类型不匹配时返回 <paramref name="defaultValue" />。可提供
+        ///     <paramref name="target" /> 用于目标感知计算。
+        /// </summary>
+        public static decimal ComputeDynamicValue(this DynamicVarSet dynamicVars, string key, decimal defaultValue = 0m, Creature? target = null)
+        {
+            ArgumentNullException.ThrowIfNull(dynamicVars);
+            ArgumentException.ThrowIfNullOrWhiteSpace(key);
+            return dynamicVars.TryGetValue(key, out var value) && value is ComputedDynamicVar cv
+                ? cv.Calculate(target) : defaultValue;
+        }
+
+        /// <summary>
+        ///     Computes the current value of a <see cref="ComputedEnergyVar" />.
+        ///     Returns <paramref name="defaultValue" /> when <paramref name="key" /> is missing or the variable is not
+        ///     a <see cref="ComputedEnergyVar" />. Optionally accepts <paramref name="target" /> for target-aware
+        ///     computation.
+        ///     计算指定 ID 的 <see cref="ComputedEnergyVar" /> 的当前值。
+        ///     <paramref name="key" /> 不存在或变量类型不匹配时返回 <paramref name="defaultValue" />。可提供
+        ///     <paramref name="target" /> 用于目标感知计算。
+        /// </summary>
+        public static decimal ComputeEnergyValue(this DynamicVarSet dynamicVars, string key, decimal defaultValue = 0m, Creature? target = null)
+        {
+            ArgumentNullException.ThrowIfNull(dynamicVars);
+            ArgumentException.ThrowIfNullOrWhiteSpace(key);
+            return dynamicVars.TryGetValue(key, out var value) && value is ComputedEnergyVar cv
+                ? cv.Calculate(target) : defaultValue;
+        }
+
+        /// <summary>
+        ///     Computes the current value of a <see cref="ComputedPowerVar{T}" />.
+        ///     Returns <paramref name="defaultValue" /> when <paramref name="key" /> is missing or the variable is not
+        ///     a <see cref="ComputedPowerVar{T}" />. Optionally accepts <paramref name="target" /> for target-aware
+        ///     computation.
+        ///     计算指定 ID 的 <see cref="ComputedPowerVar{T}" /> 的当前值。
+        ///     <paramref name="key" /> 不存在或变量类型不匹配时返回 <paramref name="defaultValue" />。可提供
+        ///     <paramref name="target" /> 用于目标感知计算。
+        /// </summary>
+        public static decimal ComputePowerValue<T>(this DynamicVarSet dynamicVars, string key, decimal defaultValue = 0m, Creature? target = null) where T : PowerModel
+        {
+            ArgumentNullException.ThrowIfNull(dynamicVars);
+            ArgumentException.ThrowIfNullOrWhiteSpace(key);
+            return dynamicVars.TryGetValue(key, out var value) && value is ComputedPowerVar<T> cv
+                ? cv.Calculate(target) : defaultValue;
+        }
+
+        /// <summary>
+        ///     Computes the current value of a <see cref="ComputedStarsVar" />.
+        ///     Returns <paramref name="defaultValue" /> when <paramref name="key" /> is missing or the variable is not
+        ///     a <see cref="ComputedStarsVar" />. Optionally accepts <paramref name="target" /> for target-aware
+        ///     computation.
+        ///     计算指定 ID 的 <see cref="ComputedStarsVar" /> 的当前值。
+        ///     <paramref name="key" /> 不存在或变量类型不匹配时返回 <paramref name="defaultValue" />。可提供
+        ///     <paramref name="target" /> 用于目标感知计算。
+        /// </summary>
+        public static decimal ComputeStarsValue(this DynamicVarSet dynamicVars, string key, decimal defaultValue = 0m, Creature? target = null)
+        {
+            ArgumentNullException.ThrowIfNull(dynamicVars);
+            ArgumentException.ThrowIfNullOrWhiteSpace(key);
+            return dynamicVars.TryGetValue(key, out var value) && value is ComputedStarsVar cv
+                ? cv.Calculate(target) : defaultValue;
         }
     }
 }
