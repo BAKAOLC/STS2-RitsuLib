@@ -1,3 +1,5 @@
+using System.IO.Compression;
+using System.Text;
 using System.Text.Json;
 using System.Text.Json.Serialization;
 using MegaCrit.Sts2.Core.Debug;
@@ -31,6 +33,17 @@ namespace STS2RitsuLib.Networking.JoinDiagnostics
         string Source,
         ulong? WorkshopItemId);
 
+    internal sealed record JoinDiagnosticsPayloadV5(
+        string GameVersion,
+        uint ModelDbHash,
+        string GameMode,
+        string SessionState,
+        IReadOnlyList<JoinDiagnosticsModEntry> GameplayMods,
+        IReadOnlyList<ContentModInventoryPayloadCodec.CompactEntry> ContentMods,
+        bool ModelDbHashUsesDeterministicCache,
+        string? ModelDbHashModeDetail,
+        bool? SavedPropertyNetIdUsesDeterministicSort);
+
     internal sealed record JoinPeerSnapshot(
         string GameVersion,
         uint ModelDbHash,
@@ -46,7 +59,7 @@ namespace STS2RitsuLib.Networking.JoinDiagnostics
     internal static class JoinDiagnosticsPayloadCodec
     {
         private const string ExtensionId = "ritsulib.joinDiagnostics";
-        private const int PayloadVersion = 4;
+        private const int PayloadVersion = 5;
         private static int _registered;
 
         private static readonly JsonSerializerOptions JsonOptions = new()
@@ -85,17 +98,17 @@ namespace STS2RitsuLib.Networking.JoinDiagnostics
             try
             {
                 var cacheStatus = ModelIdSerializationCacheDynamicContentPatch.GetDeterministicCacheStatus();
-                var payload = new JoinDiagnosticsPayload(
+                var payload = new JoinDiagnosticsPayloadV5(
                     message.version,
                     message.idDatabaseHash,
                     message.gameMode.ToString(),
                     message.sessionState.ToString(),
                     CreateLocalModEntries(),
-                    ContentModInventoryPayloadCodec.Encode(CreateLocalContentModEntries()),
+                    ContentModInventoryPayloadCodec.Compact(CreateLocalContentModEntries()),
                     cacheStatus.IsActive,
                     cacheStatus.Detail,
                     SavedPropertiesTypeCacheInjectionPatch.UsesDeterministicNetIdTable);
-                return JsonSerializer.Serialize(payload, JsonOptions);
+                return EncodeCompressed(payload);
             }
             catch (Exception ex)
             {
@@ -104,30 +117,81 @@ namespace STS2RitsuLib.Networking.JoinDiagnostics
             }
         }
 
-        private static void ReadPayload(int version, string json)
+        private static void ReadPayload(int version, string payload)
         {
             try
             {
                 if (version == 1)
                 {
                     JoinFailureDiagnosticsService.ObserveHostPayload(ConvertLegacyPayload(
-                        JsonSerializer.Deserialize<JoinDiagnosticsPayloadV1>(json, JsonOptions)));
+                        JsonSerializer.Deserialize<JoinDiagnosticsPayloadV1>(payload, JsonOptions)));
                     return;
                 }
 
-                if (version != 2 && version != 3 && version != PayloadVersion)
+                if (version != 2 && version != 3 && version != 4 && version != PayloadVersion)
                 {
                     RitsuLibFramework.Logger.Warn($"[JoinDiagnostics] Unsupported payload version: {version}");
                     return;
                 }
 
-                JoinFailureDiagnosticsService.ObserveHostPayload(
-                    JsonSerializer.Deserialize<JoinDiagnosticsPayload>(json, JsonOptions));
+                var json = version == PayloadVersion ? DecodeCompressed(payload) : payload;
+                var parsed = version == PayloadVersion
+                    ? FromWirePayload(JsonSerializer.Deserialize<JoinDiagnosticsPayloadV5>(json, JsonOptions))
+                    : JsonSerializer.Deserialize<JoinDiagnosticsPayload>(json, JsonOptions);
+                JoinFailureDiagnosticsService.ObserveHostPayload(parsed);
             }
             catch (Exception ex)
             {
                 RitsuLibFramework.Logger.Warn($"[JoinDiagnostics] Failed to read payload: {ex.Message}");
             }
+        }
+
+        private static string EncodeCompressed(JoinDiagnosticsPayloadV5 payload)
+        {
+            var json = JsonSerializer.Serialize(payload, JsonOptions);
+            return Convert.ToBase64String(Gzip(Encoding.UTF8.GetBytes(json)));
+        }
+
+        private static JoinDiagnosticsPayload? FromWirePayload(JoinDiagnosticsPayloadV5? payload)
+        {
+            if (payload == null)
+                return null;
+
+            return new(
+                payload.GameVersion,
+                payload.ModelDbHash,
+                payload.GameMode,
+                payload.SessionState,
+                payload.GameplayMods,
+                ContentModInventoryPayloadCodec.Encode(ContentModInventoryPayloadCodec.Expand(payload.ContentMods)),
+                payload.ModelDbHashUsesDeterministicCache,
+                payload.ModelDbHashModeDetail,
+                payload.SavedPropertyNetIdUsesDeterministicSort);
+        }
+
+        private static string DecodeCompressed(string encoded)
+        {
+            return Encoding.UTF8.GetString(Gunzip(Convert.FromBase64String(encoded)));
+        }
+
+        private static byte[] Gzip(byte[] data)
+        {
+            using var output = new MemoryStream();
+            using (var gzip = new GZipStream(output, CompressionLevel.SmallestSize, true))
+            {
+                gzip.Write(data, 0, data.Length);
+            }
+
+            return output.ToArray();
+        }
+
+        private static byte[] Gunzip(byte[] data)
+        {
+            using var input = new MemoryStream(data, false);
+            using var gzip = new GZipStream(input, CompressionMode.Decompress);
+            using var output = new MemoryStream();
+            gzip.CopyTo(output);
+            return output.ToArray();
         }
 
         public static JoinPeerSnapshot CreateLocalSnapshot()

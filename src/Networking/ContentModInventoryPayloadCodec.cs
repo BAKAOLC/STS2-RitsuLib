@@ -17,7 +17,14 @@ namespace STS2RitsuLib.Networking
 
         internal static string Encode(IReadOnlyList<ContentModInventoryEntry> entries)
         {
-            var compact = entries.Select(entry => new CompactEntry(
+            var compact = Compact(entries);
+            var json = JsonSerializer.Serialize(compact, JsonOptions);
+            return Convert.ToBase64String(Gzip(Encoding.UTF8.GetBytes(json)));
+        }
+
+        internal static IReadOnlyList<CompactEntry> Compact(IReadOnlyList<ContentModInventoryEntry> entries)
+        {
+            return entries.Select(entry => new CompactEntry(
                     entry.Id,
                     entry.Version,
                     entry.Name,
@@ -25,8 +32,22 @@ namespace STS2RitsuLib.Networking
                     entry.WorkshopItemId,
                     BuildFlags(entry)))
                 .ToArray();
-            var json = JsonSerializer.Serialize(compact, JsonOptions);
-            return Convert.ToBase64String(Gzip(Encoding.UTF8.GetBytes(json)));
+        }
+
+        internal static IReadOnlyList<ContentModInventoryEntry> Expand(IReadOnlyList<CompactEntry> compact)
+        {
+            return compact
+                .Select((entry, index) => new ContentModInventoryEntry(
+                    index,
+                    entry.Id,
+                    entry.Version,
+                    entry.Name,
+                    entry.Source,
+                    entry.WorkshopItemId,
+                    (entry.Flags & 1) != 0,
+                    (entry.Flags & 2) != 0,
+                    (entry.Flags & 4) != 0))
+                .ToArray();
         }
 
         internal static bool TryDecode(string? encoded, out IReadOnlyList<ContentModInventoryEntry> entries)
@@ -42,18 +63,7 @@ namespace STS2RitsuLib.Networking
                 if (compact == null)
                     return false;
 
-                entries = compact
-                    .Select((entry, index) => new ContentModInventoryEntry(
-                        index,
-                        entry.Id,
-                        entry.Version,
-                        entry.Name,
-                        entry.Source,
-                        entry.WorkshopItemId,
-                        (entry.Flags & 1) != 0,
-                        (entry.Flags & 2) != 0,
-                        (entry.Flags & 4) != 0))
-                    .ToArray();
+                entries = Expand(compact);
                 return true;
             }
             catch (Exception ex)
@@ -95,7 +105,7 @@ namespace STS2RitsuLib.Networking
             return output.ToArray();
         }
 
-        private sealed record CompactEntry(
+        internal sealed record CompactEntry(
             string Id,
             string Version,
             string Name,
