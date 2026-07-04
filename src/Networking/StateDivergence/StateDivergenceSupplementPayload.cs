@@ -52,7 +52,7 @@ namespace STS2RitsuLib.Networking.StateDivergence
     {
         private const string ExtensionId = "ritsulib.stateDivergence";
         private const int PayloadVersion = 5;
-        private const int MaxCompressedPayloadBytes = 512 * 1024;
+        private const int MaxCompressedPayloadBytes = 128 * 1024;
         private static int _registered;
         private static readonly Lock PreparedOutgoingLock = new();
 
