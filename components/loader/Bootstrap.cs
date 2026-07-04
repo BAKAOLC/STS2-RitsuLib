@@ -7,6 +7,7 @@ using HarmonyLib;
 using MegaCrit.Sts2.Core.Logging;
 using MegaCrit.Sts2.Core.Modding;
 using STS2RitsuLib.Compat;
+using STS2RitsuLib.Patching.Compat;
 using STS2RitsuLib.Platform;
 
 namespace STS2RitsuLib.Loader
@@ -229,6 +230,8 @@ namespace STS2RitsuLib.Loader
         {
             if (_reflectionBridgePatched)
                 return;
+
+            HarmonyPatchAllTypeLoadGuard.Install(message => Log.Warn("[RitsuLib.Loader] " + message));
 
             var harmony = new Harmony("OLC.STS2-RitsuLib.Loader.ReflectionBridge");
             harmony.PatchAll(typeof(Bootstrap).Assembly);

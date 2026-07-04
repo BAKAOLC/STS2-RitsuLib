@@ -1,10 +1,170 @@
 using Godot;
 using MegaCrit.Sts2.Core.Entities.Cards;
+using MegaCrit.Sts2.Core.Entities.Players;
 using MegaCrit.Sts2.Core.Helpers;
 using MegaCrit.Sts2.Core.Models;
+using MegaCrit.Sts2.Core.Nodes.Screens;
 
 namespace STS2RitsuLib.Scaffolding.Content
 {
+    /// <summary>
+    ///     Runtime context passed to optional card-pool deck-view style providers.
+    ///     传给可选卡池牌组查看界面样式 provider 的运行时上下文。
+    /// </summary>
+    public sealed record CardPoolDeckViewStyleContext(
+        Player Player,
+        CharacterModel Character,
+        CardPoolModel CardPool,
+        NDeckViewScreen Screen);
+
+    /// <summary>
+    ///     Optional visual overrides for the vanilla deck-view screen when it displays a deck from this card pool.
+    ///     当原版牌组查看界面显示此卡池的牌组时使用的可选视觉覆盖。
+    /// </summary>
+    public sealed record CardPoolDeckViewStyle
+    {
+        /// <summary>
+        ///     Optional texture path for the deck-view sorting toolbar background. Null keeps the scene default.
+        ///     牌组查看排序工具栏背景的可选贴图路径。null 保留场景默认值。
+        /// </summary>
+        public string? ToolbarBackgroundTexturePath { get; init; }
+
+        /// <summary>
+        ///     Optional material applied to the deck-view sorting toolbar background.
+        ///     应用到牌组查看排序工具栏背景上的可选材质。
+        /// </summary>
+        public Material? ToolbarBackgroundMaterial { get; init; }
+
+        /// <summary>
+        ///     Optional runtime material provider for the deck-view sorting toolbar background. When non-null,
+        ///     it takes precedence over <see cref="ToolbarBackgroundMaterial" />.
+        ///     牌组查看排序工具栏背景的可选运行时材质 provider。非 null 时优先于
+        ///     <see cref="ToolbarBackgroundMaterial" />。
+        /// </summary>
+        public Func<CardPoolDeckViewStyleContext, Material?>? ToolbarBackgroundMaterialProvider { get; init; }
+
+        /// <summary>
+        ///     Optional HSV shader material used to hue deck-view sort buttons.
+        ///     用于给牌组查看排序按钮染色的可选 HSV shader 材质。
+        /// </summary>
+        public ShaderMaterial? SortButtonHueMaterial { get; init; }
+
+        /// <summary>
+        ///     Optional runtime provider for the deck-view sort-button hue material. When non-null, it takes
+        ///     precedence over <see cref="SortButtonHueMaterial" />.
+        ///     牌组查看排序按钮 hue 材质的可选运行时 provider。非 null 时优先于
+        ///     <see cref="SortButtonHueMaterial" />。
+        /// </summary>
+        public Func<CardPoolDeckViewStyleContext, ShaderMaterial?>? SortButtonHueMaterialProvider { get; init; }
+
+        /// <summary>
+        ///     When true, RitsuLib will not call <c>NCardViewSortButton.SetHue</c> while applying this style.
+        ///     为 true 时，RitsuLib 应用此样式时不会调用 <c>NCardViewSortButton.SetHue</c>。
+        /// </summary>
+        public bool? DisableSortButtonHue { get; init; }
+
+        /// <summary>
+        ///     Optional texture path applied to each deck-view sort button's background image.
+        ///     应用到每个牌组查看排序按钮背景图的可选贴图路径。
+        /// </summary>
+        public string? SortButtonBackgroundTexturePath { get; init; }
+
+        /// <summary>
+        ///     Optional material applied to each deck-view sort button's background image.
+        ///     应用到每个牌组查看排序按钮背景图的可选材质。
+        /// </summary>
+        public Material? SortButtonBackgroundMaterial { get; init; }
+
+        /// <summary>
+        ///     Optional runtime material provider for each deck-view sort button's background image. When non-null,
+        ///     it takes precedence over <see cref="SortButtonBackgroundMaterial" />.
+        ///     每个牌组查看排序按钮背景图的可选运行时材质 provider。非 null 时优先于
+        ///     <see cref="SortButtonBackgroundMaterial" />。
+        /// </summary>
+        public Func<CardPoolDeckViewStyleContext, Material?>? SortButtonBackgroundMaterialProvider { get; init; }
+
+        /// <summary>
+        ///     Optional text color for the deck-view upgrade-preview toggle label.
+        ///     牌组查看升级预览开关标签的可选文字颜色。
+        /// </summary>
+        public Color? UpgradePreviewLabelColor { get; init; }
+
+        /// <summary>
+        ///     Optional outline color for the deck-view upgrade-preview toggle label.
+        ///     牌组查看升级预览开关标签的可选描边颜色。
+        /// </summary>
+        public Color? UpgradePreviewLabelOutlineColor { get; init; }
+    }
+
+    /// <summary>
+    ///     Optional asset profile for card-pool-level presentation.
+    ///     卡池级表现资源的可选 asset profile。
+    /// </summary>
+    /// <param name="DeckViewStyle">
+    ///     Optional style overrides for the vanilla deck-view screen.
+    ///     原版牌组查看界面的可选样式覆盖。
+    /// </param>
+    public sealed record CardPoolAssetProfile(CardPoolDeckViewStyle? DeckViewStyle = null)
+    {
+        /// <summary>
+        ///     Default empty profile (no card-pool-level presentation overrides).
+        ///     默认空 profile（无卡池级表现覆盖）。
+        /// </summary>
+        public static CardPoolAssetProfile Empty { get; } = new();
+    }
+
+    /// <summary>
+    ///     Merge helpers for <see cref="CardPoolAssetProfile" />.
+    ///     <see cref="CardPoolAssetProfile" /> 的合并辅助工具。
+    /// </summary>
+    public static class CardPoolAssetProfiles
+    {
+        /// <summary>
+        ///     Per-field prefer-<paramref name="profile" /> / fallback-<paramref name="fallback" /> merge.
+        ///     逐字段合并：优先 <paramref name="profile" />，回退为 <paramref name="fallback" />。
+        /// </summary>
+        public static CardPoolAssetProfile Merge(CardPoolAssetProfile? fallback, CardPoolAssetProfile? profile)
+        {
+            fallback ??= CardPoolAssetProfile.Empty;
+            profile ??= CardPoolAssetProfile.Empty;
+
+            return new(MergeDeckViewStyle(fallback.DeckViewStyle, profile.DeckViewStyle));
+        }
+
+        private static CardPoolDeckViewStyle? MergeDeckViewStyle(
+            CardPoolDeckViewStyle? fallback,
+            CardPoolDeckViewStyle? profile)
+        {
+            if (fallback == null)
+                return profile;
+
+            if (profile == null)
+                return fallback;
+
+            return new()
+            {
+                ToolbarBackgroundTexturePath =
+                    profile.ToolbarBackgroundTexturePath ?? fallback.ToolbarBackgroundTexturePath,
+                ToolbarBackgroundMaterial = profile.ToolbarBackgroundMaterial ?? fallback.ToolbarBackgroundMaterial,
+                ToolbarBackgroundMaterialProvider =
+                    profile.ToolbarBackgroundMaterialProvider ?? fallback.ToolbarBackgroundMaterialProvider,
+                SortButtonHueMaterial = profile.SortButtonHueMaterial ?? fallback.SortButtonHueMaterial,
+                SortButtonHueMaterialProvider =
+                    profile.SortButtonHueMaterialProvider ?? fallback.SortButtonHueMaterialProvider,
+                DisableSortButtonHue = profile.DisableSortButtonHue ?? fallback.DisableSortButtonHue,
+                SortButtonBackgroundTexturePath =
+                    profile.SortButtonBackgroundTexturePath ?? fallback.SortButtonBackgroundTexturePath,
+                SortButtonBackgroundMaterial =
+                    profile.SortButtonBackgroundMaterial ?? fallback.SortButtonBackgroundMaterial,
+                SortButtonBackgroundMaterialProvider =
+                    profile.SortButtonBackgroundMaterialProvider ?? fallback.SortButtonBackgroundMaterialProvider,
+                UpgradePreviewLabelColor = profile.UpgradePreviewLabelColor ?? fallback.UpgradePreviewLabelColor,
+                UpgradePreviewLabelOutlineColor =
+                    profile.UpgradePreviewLabelOutlineColor ?? fallback.UpgradePreviewLabelOutlineColor,
+            };
+        }
+    }
+
     /// <summary>
     ///     Visual layout family used by <see cref="MegaCrit.Sts2.Core.Nodes.Cards.NCard" />.
     ///     <see cref="MegaCrit.Sts2.Core.Nodes.Cards.NCard" /> 使用的视觉布局族。

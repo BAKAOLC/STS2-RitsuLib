@@ -40,6 +40,7 @@
 
     <ItemGroup>
         <Compile Include="..\..\src\Compat\Sts2HostVersion.cs" Link="Compat\Sts2HostVersion.cs"/>
+        <Compile Include="..\..\src\Patching\Compat\HarmonyPatchAllTypeLoadGuard.cs" Link="Patching\Compat\HarmonyPatchAllTypeLoadGuard.cs"/>
         <Compile Include="..\..\src\Platform\LinuxHarmonyNativePreloader.cs" Link="Platform\LinuxHarmonyNativePreloader.cs"/>
     </ItemGroup>
 </Project>

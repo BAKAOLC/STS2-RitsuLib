@@ -4,6 +4,7 @@ using CombatStateLike = MegaCrit.Sts2.Core.Combat.CombatState;
 using CombatStateLike = MegaCrit.Sts2.Core.Combat.ICombatState;
 #endif
 using MegaCrit.Sts2.Core.Commands.Builders;
+using MegaCrit.Sts2.Core.Entities.Cards;
 using MegaCrit.Sts2.Core.Entities.Creatures;
 using MegaCrit.Sts2.Core.GameActions.Multiplayer;
 using MegaCrit.Sts2.Core.Models;
@@ -17,6 +18,8 @@ namespace STS2RitsuLib.Combat.AttackHits
     /// </summary>
     public sealed class AttackHitContext
     {
+        private IReadOnlyList<Creature> _targets;
+
         internal AttackHitContext(
             CombatStateLike combatState,
             PlayerChoiceContext choiceContext,
@@ -27,18 +30,26 @@ namespace STS2RitsuLib.Combat.AttackHits
             decimal damage,
             ValueProp damageProps,
             Creature? dealer,
-            CardModel? cardSource)
+            CardModel? cardSource
+#if STS2_AT_LEAST_0_108_0
+            ,
+            CardPlay? cardPlay
+#endif
+        )
         {
             CombatState = combatState;
             ChoiceContext = choiceContext;
             Attack = attack;
-            Targets = targets;
+            _targets = targets;
             HitIndex = hitIndex;
             TotalHitCount = totalHitCount;
             Damage = damage;
             DamageProps = damageProps;
             Dealer = dealer;
             CardSource = cardSource;
+#if STS2_AT_LEAST_0_108_0
+            CardPlay = cardPlay;
+#endif
         }
 
         /// <summary>
@@ -85,27 +96,50 @@ namespace STS2RitsuLib.Combat.AttackHits
 
         /// <summary>
         ///     Damage properties used for this hit.
-        ///     本段使用的伤害属性。
+        ///     Mutate this to change flags such as <see cref="ValueProp.Unblockable" /> for only this hit.
+        ///     本段使用的伤害属性。可修改此值，只影响本段，例如添加 <see cref="ValueProp.Unblockable" />。
         /// </summary>
-        public ValueProp DamageProps { get; }
+        public ValueProp DamageProps { get; set; }
 
         /// <summary>
         ///     Dealer passed to the damage command.
-        ///     传给伤害命令的伤害来源生物。
+        ///     Mutate this to change the damage dealer seen by damage hooks for only this hit.
+        ///     传给伤害命令的伤害来源生物。可修改此值，只影响本段伤害 hook 看到的来源。
         /// </summary>
-        public Creature? Dealer { get; }
+        public Creature? Dealer { get; set; }
 
         /// <summary>
         ///     Card source passed to the damage command, when any.
-        ///     传给伤害命令的卡牌来源（如果存在）。
+        ///     Mutate this to change the card source seen by damage hooks for only this hit.
+        ///     传给伤害命令的卡牌来源（如果存在）。可修改此值，只影响本段伤害 hook 看到的卡牌来源。
         /// </summary>
-        public CardModel? CardSource { get; }
+        public CardModel? CardSource { get; set; }
+
+#if STS2_AT_LEAST_0_108_0
+        /// <summary>
+        ///     Card play passed to the damage command, when any.
+        ///     Mutate this to change the card play seen by damage hooks for only this hit.
+        ///     传给伤害命令的卡牌打出上下文（如果存在）。可修改此值，只影响本段伤害 hook 看到的卡牌打出上下文。
+        /// </summary>
+        public CardPlay? CardPlay { get; set; }
+#endif
 
         /// <summary>
         ///     Targets passed to the damage command for this hit.
-        ///     本段传给伤害命令的目标列表。
+        ///     Mutate this to retarget only this hit.
+        ///     本段传给伤害命令的目标列表。可修改此值，只重定向本段。
         /// </summary>
-        public IReadOnlyList<Creature> Targets { get; }
+        public IReadOnlyList<Creature> Targets
+        {
+            get => _targets;
+            set
+            {
+                ArgumentNullException.ThrowIfNull(value);
+                foreach (var target in value)
+                    ArgumentNullException.ThrowIfNull(target);
+                _targets = value;
+            }
+        }
 
         /// <summary>
         ///     Single target for this hit when exactly one target is being damaged.

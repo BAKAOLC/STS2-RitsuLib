@@ -22,24 +22,45 @@ namespace STS2RitsuLib.Networking.StateDivergence
             ulong remotePeerId,
             string role)
         {
+            var localSupplement = StateDivergenceSupplementPayloadCodec.CreateLocalSnapshot(local.Checksum);
+            var hasRemoteSupplement =
+                StateDivergenceSupplementStore.TryTake(remoteMessage.senderChecksum, out var remoteSupplement);
+            return Build(local, remoteMessage, remotePeerId, role, localSupplement,
+                hasRemoteSupplement ? remoteSupplement : null);
+        }
+
+        public static StateDivergenceDiagnosticReport Build(
+            StateDivergenceTrackedState local,
+            StateDivergenceMessage remoteMessage,
+            ulong remotePeerId,
+            string role,
+            StateDivergenceSupplementPayload localSupplement,
+            StateDivergenceSupplementPayload? remoteSupplement)
+        {
             var remote = new StateDivergenceTrackedState(
                 remoteMessage.senderChecksum,
                 L("value.remoteContext", "Remote divergence message"),
                 remoteMessage.senderCombatState);
-            var localSupplement = StateDivergenceSupplementPayloadCodec.CreateLocalSnapshot(local.Checksum);
-            var hasRemoteSupplement = StateDivergenceSupplementStore.TryTake(remote.Checksum, out var remoteSupplement);
-
-            var sections = BuildSections(local, remote, remotePeerId, role, localSupplement,
-                hasRemoteSupplement ? remoteSupplement : null, false);
-            var exportSections = BuildSections(local, remote, remotePeerId, role, localSupplement,
-                hasRemoteSupplement ? remoteSupplement : null, true);
+            var hasLocalLoadedMods =
+                ContentModInventoryPayloadCodec.TryDecode(localSupplement.LoadedMods, out var localLoadedMods);
+            IReadOnlyList<ContentModInventoryEntry> remoteLoadedMods = [];
+            var hasRemoteLoadedMods = remoteSupplement != null &&
+                                      ContentModInventoryPayloadCodec.TryDecode(remoteSupplement.LoadedMods,
+                                          out remoteLoadedMods);
             var hasLocalContentMods =
                 ContentModInventoryPayloadCodec.TryDecode(localSupplement.ContentMods, out var localContentMods);
             IReadOnlyList<ContentModInventoryEntry> remoteContentMods = [];
-            var hasRemoteContentMods = hasRemoteSupplement &&
+            var hasRemoteContentMods = remoteSupplement != null &&
                                        ContentModInventoryPayloadCodec.TryDecode(remoteSupplement.ContentMods,
                                            out remoteContentMods);
-            var issueCount = sections.Sum(s => s.Rows.Count);
+
+            var sections = BuildSections(local, remote, remotePeerId, role, localSupplement,
+                remoteSupplement, hasLocalLoadedMods ? localLoadedMods : [], remoteLoadedMods,
+                hasLocalLoadedMods, hasRemoteLoadedMods, false);
+            var exportSections = BuildSections(local, remote, remotePeerId, role, localSupplement,
+                remoteSupplement, hasLocalLoadedMods ? localLoadedMods : [], remoteLoadedMods,
+                hasLocalLoadedMods, hasRemoteLoadedMods, true);
+            var issueCount = sections.Where(s => s.ContributesToIssueCount).Sum(s => s.Rows.Count);
             if (issueCount == 0)
                 sections.Add(new(
                     L("section.hiddenState.title", "No visible state fields differ"),
@@ -57,15 +78,18 @@ namespace STS2RitsuLib.Networking.StateDivergence
                     localSupplement.ModelDbHashUsesDeterministicCache,
                     localSupplement.SavedPropertyNetIdUsesDeterministicSort),
                 new(remote.Checksum.id, remote.Checksum.checksum, remote.Context,
-                    hasRemoteSupplement ? remoteSupplement.ModelDbHashUsesDeterministicCache : null,
-                    hasRemoteSupplement ? remoteSupplement.SavedPropertyNetIdUsesDeterministicSort : null),
+                    remoteSupplement?.ModelDbHashUsesDeterministicCache,
+                    remoteSupplement?.SavedPropertyNetIdUsesDeterministicSort),
                 sections,
                 exportSections,
+                hasLocalLoadedMods ? localLoadedMods : [],
+                hasRemoteLoadedMods ? remoteLoadedMods : [],
+                hasRemoteLoadedMods,
                 hasLocalContentMods ? localContentMods : [],
                 hasRemoteContentMods ? remoteContentMods : [],
                 hasRemoteContentMods,
                 localSupplement.Progress,
-                hasRemoteSupplement ? remoteSupplement.Progress : null,
+                remoteSupplement?.Progress,
                 local.FullState.ToString(),
                 remote.FullState.ToString());
         }
@@ -77,11 +101,17 @@ namespace STS2RitsuLib.Networking.StateDivergence
             string role,
             StateDivergenceSupplementPayload localSupplement,
             StateDivergenceSupplementPayload? remoteSupplement,
+            IReadOnlyList<ContentModInventoryEntry> localLoadedMods,
+            IReadOnlyList<ContentModInventoryEntry> remoteLoadedMods,
+            bool hasLocalLoadedMods,
+            bool hasRemoteLoadedMods,
             bool includeMatching)
         {
             return
             [
                 BuildOverview(local, remote, remotePeerId, role, includeMatching),
+                BuildLoadedMods(localLoadedMods, remoteLoadedMods, hasLocalLoadedMods, hasRemoteLoadedMods,
+                    includeMatching),
                 BuildProtocolMaps(localSupplement, remoteSupplement, includeMatching),
                 BuildSynchronizers(local.FullState, remote.FullState, includeMatching),
                 BuildCreatures(local.FullState, remote.FullState, includeMatching),
@@ -132,6 +162,203 @@ namespace STS2RitsuLib.Networking.StateDivergence
                     "RitsuLib divergence supplement data that affects packet decoding, including SavedProperty net-id maps."),
                 rows.Count == 0,
                 rows);
+        }
+
+        private static StateDivergenceDiagnosticSection BuildLoadedMods(
+            IReadOnlyList<ContentModInventoryEntry> local,
+            IReadOnlyList<ContentModInventoryEntry> remote,
+            bool hasLocal,
+            bool hasRemote,
+            bool includeMatching)
+        {
+            var rows = new List<StateDivergenceDiagnosticRow>();
+
+            if (hasRemote)
+            {
+                AddIfDifferent(rows, "loadedMods.count", local.Count, remote.Count, includeMatching);
+                AddLoadedModSetRows(rows, local, remote);
+                AddLoadedModVersionRows(rows, local, remote, includeMatching);
+                AddLoadedModOrderRows(rows, local, remote, includeMatching);
+            }
+            else
+            {
+                rows.Add(new(
+                    "loadedMods.supplement",
+                    hasLocal ? L("value.present", "Present") : L("value.missing", "Missing"),
+                    L("value.missing", "Missing"),
+                    L("detail.missingLoadedModInventory",
+                        "The remote peer did not include the full loaded-mod inventory added by this RitsuLib version.")));
+            }
+
+            rows.Add(new(
+                "loadedMods.fullList",
+                FormatLoadedModInventory(local, hasLocal),
+                FormatLoadedModInventory(remote, hasRemote),
+                L("detail.loadedModsFullList",
+                    "Complete mod inventory in the game's current runtime load order.")));
+
+            return new(
+                L("section.loadedMods.title", "Loaded mods"),
+                L("section.loadedMods.description",
+                    "Complete runtime mod inventory, plus set, version, source, and load-order differences."),
+                true,
+                rows,
+                false);
+        }
+
+        private static void AddLoadedModSetRows(
+            ICollection<StateDivergenceDiagnosticRow> rows,
+            IReadOnlyList<ContentModInventoryEntry> local,
+            IReadOnlyList<ContentModInventoryEntry> remote)
+        {
+            var remoteByKey = BuildLoadedModIdentityMap(remote);
+            var localByKey = BuildLoadedModIdentityMap(local);
+            var localOnly = local.Where(mod => !remoteByKey.ContainsKey(LoadedModIdentityKey(mod)))
+                .Select(FormatLoadedModLine)
+                .ToArray();
+            var remoteOnly = remote.Where(mod => !localByKey.ContainsKey(LoadedModIdentityKey(mod)))
+                .Select(FormatLoadedModLine)
+                .ToArray();
+
+            if (localOnly.Length == 0 && remoteOnly.Length == 0)
+                return;
+
+            rows.Add(new(
+                "loadedMods.set",
+                JoinLinesOrNone(localOnly),
+                JoinLinesOrNone(remoteOnly),
+                L("detail.loadedModSetMismatch",
+                    "Entries shown in this row are present only on that side, compared by mod id and source.")));
+        }
+
+        private static void AddLoadedModVersionRows(
+            ICollection<StateDivergenceDiagnosticRow> rows,
+            IReadOnlyList<ContentModInventoryEntry> local,
+            IReadOnlyList<ContentModInventoryEntry> remote,
+            bool includeMatching)
+        {
+            var remoteByKey = BuildLoadedModIdentityMap(remote);
+            foreach (var localMod in local)
+            {
+                if (!remoteByKey.TryGetValue(LoadedModIdentityKey(localMod), out var remoteMod))
+                    continue;
+
+                var path = "loadedMods." + FormatLoadedModPath(localMod);
+                AddIfDifferent(rows, path + ".version", FormatVersion(localMod.Version),
+                    FormatVersion(remoteMod.Version), includeMatching);
+                AddIfDifferent(rows, path + ".name", localMod.Name, remoteMod.Name, includeMatching);
+                AddIfDifferent(rows, path + ".workshopItemId", FormatWorkshopItemId(localMod.WorkshopItemId),
+                    FormatWorkshopItemId(remoteMod.WorkshopItemId), includeMatching);
+                AddIfDifferent(rows, path + ".affectsGameplay", localMod.AffectsGameplay,
+                    remoteMod.AffectsGameplay, includeMatching);
+            }
+        }
+
+        private static void AddLoadedModOrderRows(
+            ICollection<StateDivergenceDiagnosticRow> rows,
+            IReadOnlyList<ContentModInventoryEntry> local,
+            IReadOnlyList<ContentModInventoryEntry> remote,
+            bool includeMatching)
+        {
+            var localOrder = local.Select(LoadedModIdentityKey).ToArray();
+            var remoteOrder = remote.Select(LoadedModIdentityKey).ToArray();
+            var comparable = localOrder.Length == remoteOrder.Length &&
+                             localOrder.OrderBy(key => key, StringComparer.Ordinal)
+                                 .SequenceEqual(remoteOrder.OrderBy(key => key, StringComparer.Ordinal),
+                                     StringComparer.Ordinal);
+            if (!comparable)
+                return;
+
+            var firstDifferentIndex = -1;
+            var differentPositions = 0;
+            for (var i = 0; i < localOrder.Length; i++)
+            {
+                if (string.Equals(localOrder[i], remoteOrder[i], StringComparison.Ordinal))
+                    continue;
+
+                if (firstDifferentIndex < 0)
+                    firstDifferentIndex = i;
+                differentPositions++;
+            }
+
+            if (!includeMatching && differentPositions == 0)
+                return;
+
+            var detail = differentPositions == 0
+                ? L("detail.loadedModOrderMatches", "Both sides report the same loaded-mod order.")
+                : F("detail.loadedModOrderMismatch", "{0} loaded-mod position(s) differ; first mismatch at #{1}.",
+                    differentPositions, firstDifferentIndex + 1);
+            rows.Add(new(
+                "loadedMods.order",
+                FormatLoadedModOrder(local),
+                FormatLoadedModOrder(remote),
+                detail));
+        }
+
+        private static IReadOnlyDictionary<string, ContentModInventoryEntry> BuildLoadedModIdentityMap(
+            IEnumerable<ContentModInventoryEntry> mods)
+        {
+            return mods
+                .GroupBy(LoadedModIdentityKey, StringComparer.Ordinal)
+                .ToDictionary(group => group.Key, group => group.First(), StringComparer.Ordinal);
+        }
+
+        private static string LoadedModIdentityKey(ContentModInventoryEntry mod)
+        {
+            return mod.Source + "\0" + mod.Id;
+        }
+
+        private static string FormatLoadedModInventory(
+            IReadOnlyList<ContentModInventoryEntry> mods,
+            bool available)
+        {
+            if (!available)
+                return L("value.unavailable", "<unavailable>");
+
+            return mods.Count == 0
+                ? L("value.empty", "<empty>")
+                : string.Join(Environment.NewLine, mods.Select(FormatLoadedModLine));
+        }
+
+        private static string FormatLoadedModOrder(IReadOnlyList<ContentModInventoryEntry> mods)
+        {
+            return mods.Count == 0
+                ? L("value.empty", "<empty>")
+                : string.Join(Environment.NewLine, mods.Select(mod => $"#{mod.Index + 1:00} {mod.Source}:{mod.Id}"));
+        }
+
+        private static string FormatLoadedModLine(ContentModInventoryEntry mod)
+        {
+            var name = string.IsNullOrWhiteSpace(mod.Name) || string.Equals(mod.Name, mod.Id, StringComparison.Ordinal)
+                ? mod.Id
+                : mod.Name + " (" + mod.Id + ")";
+            var workshop = mod.WorkshopItemId.HasValue ? " workshop=" + mod.WorkshopItemId.Value : "";
+            var gameplay = mod.AffectsGameplay
+                ? L("value.affectsGameplay", "gameplay")
+                : L("value.noGameplay", "non-gameplay");
+            var dependency = mod.IsDependency ? ", " + L("value.dependency", "dependency") : "";
+            return
+                $"#{mod.Index + 1:00} [{gameplay}{dependency}] {name} version={FormatVersion(mod.Version)} source={mod.Source}{workshop}";
+        }
+
+        private static string FormatLoadedModPath(ContentModInventoryEntry mod)
+        {
+            return (mod.Source + "." + mod.Id).Replace(' ', '_');
+        }
+
+        private static string FormatVersion(string? version)
+        {
+            return string.IsNullOrWhiteSpace(version) ? L("value.noVersion", "No version") : version.Trim();
+        }
+
+        private static string FormatWorkshopItemId(ulong? itemId)
+        {
+            return itemId.HasValue ? itemId.Value.ToString() : L("value.none", "<none>");
+        }
+
+        private static string JoinLinesOrNone(IReadOnlyList<string> lines)
+        {
+            return lines.Count == 0 ? L("value.none", "<none>") : string.Join(Environment.NewLine, lines);
         }
 
         private static void AddOptionalSortMode(

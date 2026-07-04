@@ -119,6 +119,14 @@ namespace STS2RitsuLib.CardPiles
         public Func<ModCardPileVisibilityContext, bool>? VisibleWhen { get; init; }
 
         /// <summary>
+        ///     Optional default-screen capabilities. Null preserves legacy vanilla <c>NCardPileScreen</c>
+        ///     behavior: no card inspection, no upgrade-preview tickbox, and no sort bar.
+        ///     默认 screen 的可选能力。null 会保留旧的原版 <c>NCardPileScreen</c> 行为：无卡牌检查、
+        ///     无升级预览开关、无排序栏。
+        /// </summary>
+        public ModCardPileViewSpec? View { get; init; }
+
+        /// <summary>
         ///     Optional callback invoked when the pile's UI button is released. When null (the default) the
         ///     button falls back to <c>NCardPileScreen.ShowScreen</c> — the same behaviour as vanilla Draw /
         ///     Discard / Exhaust buttons. Supply a delegate to plug in a custom

@@ -26,9 +26,7 @@ namespace STS2RitsuLib.Settings
                 RegisterMainSettingsPage(ui);
                 RegisterCategorySettingsPages(ui);
                 RegisterContentSourceHoverTipsPage(ui);
-#if !STS2_AT_LEAST_0_108_0
                 RegisterContentModLoadOrderPage();
-#endif
                 RegisterSteamWorkshopManagementPage();
                 RegisterToastSettingsPage(ui);
                 RegisterDebugLogViewerPage(ui);
@@ -54,9 +52,7 @@ namespace STS2RitsuLib.Settings
                 RegisterMainSettingsPage(ui);
                 RegisterCategorySettingsPages(ui);
                 RegisterContentSourceHoverTipsPage(ui);
-#if !STS2_AT_LEAST_0_108_0
                 RegisterContentModLoadOrderPage();
-#endif
                 RegisterSteamWorkshopManagementPage();
                 RegisterToastSettingsPage(ui);
                 RegisterDebugLogViewerPage(ui);

@@ -760,6 +760,32 @@ namespace STS2RitsuLib.Scaffolding.Content.Patches
     }
 
     /// <summary>
+    ///     Optional asset profile for card-pool-level presentation overrides.
+    ///     卡池级表现覆盖的可选 asset profile。
+    /// </summary>
+    public interface IModCardPoolAssetOverrides
+    {
+        /// <summary>
+        ///     Card-pool-level asset profile. Return <see cref="CardPoolAssetProfile.Empty" /> when unused.
+        ///     卡池级 asset profile。未使用时返回 <see cref="CardPoolAssetProfile.Empty" />。
+        /// </summary>
+        CardPoolAssetProfile AssetProfile { get; }
+    }
+
+    /// <summary>
+    ///     Optional deck-view style override for a card pool.
+    ///     卡池的可选牌组查看界面样式覆盖。
+    /// </summary>
+    public interface IModCardPoolDeckViewStyle
+    {
+        /// <summary>
+        ///     Deck-view style for this pool, or <c>null</c> to keep vanilla behavior.
+        ///     此卡池的牌组查看样式；返回 <c>null</c> 保持原版行为。
+        /// </summary>
+        CardPoolDeckViewStyle? DeckViewStyle { get; }
+    }
+
+    /// <summary>
     ///     Optional relic icon paths for Harmony patches on <see cref="RelicModel" />.
     ///     用于 <see cref="RelicModel" /> 的 Harmony 补丁的可选遗物 图标路径。
     /// </summary>

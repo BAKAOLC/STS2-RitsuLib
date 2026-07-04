@@ -469,6 +469,7 @@ namespace STS2RitsuLib
             patcher.RegisterPatch<ModCardPileTopBarInitializePatch>();
             patcher.RegisterPatch<ModCardPileCombatUiReadyPatch>();
             patcher.RegisterPatch<ModCardPileCombatUiActivatePatch>();
+            patcher.RegisterPatch<ModCardPileScreenViewPatch>();
             patcher.RegisterPatch<ModTopBarActionButtonReadyPatch>();
             patcher.RegisterPatch<ModTopBarActionButtonInitializePatch>();
             patcher.RegisterPatch<FontManagerClearCacheShellThemePatch>();
@@ -498,6 +499,7 @@ namespace STS2RitsuLib
             patcher.RegisterPatch<CardAncientTextBgTexturePatch>();
             patcher.RegisterPatch<CardFrameMaterialPatch>();
             patcher.RegisterPatch<CardPoolFrameMaterialPatch>();
+            patcher.RegisterPatch<CardPoolDeckViewStylePatch>();
             patcher.RegisterPatch<CardVisualStylePatch>();
             patcher.RegisterPatch<CardPortraitMaterialPatch>();
             patcher.RegisterPatch<CardNodeMaterialPatch>();

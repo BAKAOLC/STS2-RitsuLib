@@ -104,6 +104,34 @@ namespace STS2RitsuLib.CardPiles
             Func<ModCardPileVisibilityContext, bool>? visibleWhen,
             Func<ModCardPileFlightTargetContext, Vector2?>? flightTargetPositionResolver,
             Func<ModCardPileFlightStartContext, Vector2?>? flightStartPositionResolver)
+            : this(modId, id, pileType, scope, style, anchor, iconPath, hotkeys, cardShouldBeVisible, onOpen,
+                hoverTipScreenOffset, hoverTipPlacement, visibleWhen, flightTargetPositionResolver,
+                flightStartPositionResolver, null)
+        {
+        }
+
+        /// <summary>
+        ///     Constructor with optional default-screen view capabilities. The extra parameter is appended so
+        ///     the historical constructor signature remains available for already-compiled mods.
+        ///     带默认 screen 可选查看能力的构造函数。额外参数追加在末尾，从而保留已编译 mod 使用的历史构造函数签名。
+        /// </summary>
+        public ModCardPileDefinition(
+            string modId,
+            string id,
+            PileType pileType,
+            ModCardPileScope scope,
+            ModCardPileUiStyle style,
+            ModCardPileAnchor anchor,
+            string? iconPath,
+            string[]? hotkeys,
+            bool cardShouldBeVisible,
+            Action<ModCardPileOpenContext>? onOpen,
+            Vector2 hoverTipScreenOffset,
+            ModCardPileHoverTipPlacement hoverTipPlacement,
+            Func<ModCardPileVisibilityContext, bool>? visibleWhen,
+            Func<ModCardPileFlightTargetContext, Vector2?>? flightTargetPositionResolver,
+            Func<ModCardPileFlightStartContext, Vector2?>? flightStartPositionResolver,
+            ModCardPileViewSpec? view)
         {
             ModId = modId;
             Id = id;
@@ -115,6 +143,7 @@ namespace STS2RitsuLib.CardPiles
             Hotkeys = hotkeys;
             CardShouldBeVisible = cardShouldBeVisible;
             OnOpen = onOpen;
+            View = view;
             HoverTipScreenOffset = hoverTipScreenOffset;
             HoverTipPlacement = hoverTipPlacement;
             VisibleWhen = visibleWhen;
@@ -348,6 +377,12 @@ namespace STS2RitsuLib.CardPiles
         ///     完整契约参见 <see cref="ModCardPileSpec.OnOpen" />。
         /// </summary>
         public Action<ModCardPileOpenContext>? OnOpen { get; }
+
+        /// <summary>
+        ///     Optional default-screen capabilities. Null means legacy <c>NCardPileScreen</c> behavior.
+        ///     默认 screen 的可选能力。null 表示旧的 <c>NCardPileScreen</c> 行为。
+        /// </summary>
+        public ModCardPileViewSpec? View { get; }
 
         /// <summary>
         ///     Extra pixels added to the hover tip position (see <see cref="ModCardPileSpec.HoverTipScreenOffset" />).

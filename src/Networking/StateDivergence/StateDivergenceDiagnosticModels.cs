@@ -12,6 +12,9 @@ namespace STS2RitsuLib.Networking.StateDivergence
         StateDivergenceChecksumInfo RemoteChecksum,
         IReadOnlyList<StateDivergenceDiagnosticSection> Sections,
         IReadOnlyList<StateDivergenceDiagnosticSection> ExportSections,
+        IReadOnlyList<ContentModInventoryEntry> LocalLoadedMods,
+        IReadOnlyList<ContentModInventoryEntry> RemoteLoadedMods,
+        bool HasRemoteLoadedModInventory,
         IReadOnlyList<ContentModInventoryEntry> LocalContentMods,
         IReadOnlyList<ContentModInventoryEntry> RemoteContentMods,
         bool HasRemoteContentModInventory,
@@ -31,7 +34,8 @@ namespace STS2RitsuLib.Networking.StateDivergence
         string Title,
         string Description,
         bool StartsCollapsed,
-        IReadOnlyList<StateDivergenceDiagnosticRow> Rows);
+        IReadOnlyList<StateDivergenceDiagnosticRow> Rows,
+        bool ContributesToIssueCount = true);
 
     internal enum StateDivergenceDiagnosticRowKind
     {

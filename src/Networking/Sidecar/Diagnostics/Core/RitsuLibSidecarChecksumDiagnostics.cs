@@ -1,5 +1,4 @@
 using MegaCrit.Sts2.Core.Entities.Multiplayer;
-using MegaCrit.Sts2.Core.Logging;
 using MegaCrit.Sts2.Core.Multiplayer;
 using MegaCrit.Sts2.Core.Multiplayer.Game;
 using MegaCrit.Sts2.Core.Runs;
@@ -32,26 +31,6 @@ namespace STS2RitsuLib.Networking.Sidecar
             _tracker = null;
         }
 
-        internal static void TryLogLocalCombatDump(string reason, RitsuLibSidecarDiagnosticRelaySession session)
-        {
-            try
-            {
-                var rm = RunManager.Instance;
-                if (rm?.State == null)
-                    return;
-                if (!RitsuLibSidecarDiagnosticRelayGate.TryConsumeLocalDump(session))
-                    return;
-
-                var snapshot = NetFullCombatState.FromRun(rm.State, null);
-                RitsuLibFramework.Logger.ErrorNoTrace(
-                    $"[Sidecar diagnostic dump tag={session.Tag}, checksum={session.ChecksumId}, nonce={session.Nonce}] {reason}\n{snapshot}");
-            }
-            catch (Exception ex)
-            {
-                Log.Warn($"[Sidecar diagnostic dump failed: {ex.Message}");
-            }
-        }
-
         internal static void TryTriggerHostCoordinatedDump(ulong divergentPeerId, uint checksumId)
         {
             try
@@ -66,15 +45,14 @@ namespace STS2RitsuLib.Networking.Sidecar
                         out var session))
                     return;
 
-                TryLogLocalCombatDump(
-                    $"Sidecar host divergence dump trigger (peer={divergentPeerId})",
-                    session);
                 var payload = RitsuLibSidecarDiagnosticPayload.BuildFanoutPayload(session);
                 RitsuLibSidecarHighLevelSend.TrySendAsHostBroadcast(
                     rm,
                     RitsuLibSidecarControlOpcodes.DiagnosticRelayDumpFanout,
                     payload,
                     RitsuLibSidecarDeliverySemantics.StableSync);
+                RitsuLibFramework.Logger.Debug(
+                    $"[Sidecar] Host divergence relay fanout sent peer={divergentPeerId}, checksum={checksumId}, tag={session.Tag}, nonce={session.Nonce}.");
             }
             catch (Exception ex)
             {
