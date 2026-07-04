@@ -152,7 +152,20 @@ namespace STS2RitsuLib.Networking.StateDivergence.Patches
                     activeRemoteSupplement?.RecentLogs,
                     "LogStateDivergence",
                     out var bundlePath,
+                    out var bundleFileName,
                     out var bundleError);
+                report = report with
+                {
+                    BundleFileName = bundleFileName,
+                    BundlePath = bundlePath,
+                    BundleError = bundleError,
+                };
+                logReport = logReport with
+                {
+                    BundleFileName = bundleFileName,
+                    BundlePath = bundlePath,
+                    BundleError = bundleError,
+                };
                 StateDivergenceDiagnosticsReports.Store(report, logReport, bundlePath, bundleError);
             }
             catch (Exception ex)

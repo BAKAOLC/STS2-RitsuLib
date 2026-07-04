@@ -21,7 +21,10 @@ namespace STS2RitsuLib.Networking.StateDivergence
         ProgressDiagnosticsSnapshot? LocalProgress,
         ProgressDiagnosticsSnapshot? RemoteProgress,
         string LocalStateDump,
-        string RemoteStateDump);
+        string RemoteStateDump,
+        string? BundleFileName = null,
+        string? BundlePath = null,
+        string? BundleError = null);
 
     internal sealed record StateDivergenceChecksumInfo(
         uint Id,

@@ -7,6 +7,8 @@ namespace STS2RitsuLib.Networking.StateDivergence
 {
     internal static class StateDivergenceLogBundleWriter
     {
+        private const int BundlesToKeep = 5;
+        private const string BundlePrefix = "ritsulib_state_divergence_";
         private static readonly Encoding Utf8NoBom = new UTF8Encoding(false);
 
         private static readonly JsonSerializerOptions JsonOptions = new(JsonSerializerDefaults.Web)
@@ -20,9 +22,11 @@ namespace STS2RitsuLib.Networking.StateDivergence
             StateDivergenceRecentLogSnapshot? remoteLogs,
             string trigger,
             out string? zipPath,
+            out string? zipFileName,
             out string? errorMessage)
         {
             zipPath = null;
+            zipFileName = null;
             errorMessage = null;
             string? bundleDir = null;
             try
@@ -32,7 +36,7 @@ namespace STS2RitsuLib.Networking.StateDivergence
 
                 var runId = DateTime.Now.ToString("yyyyMMdd_HHmmss");
                 var baseName =
-                    $"ritsulib_state_divergence_{runId}_checksum_{report.LocalChecksum.Id}_{report.LocalChecksum.Checksum:x8}";
+                    $"{BundlePrefix}{runId}_checksum_{report.LocalChecksum.Id}_{report.LocalChecksum.Checksum:x8}";
                 bundleDir = Path.Combine(logsDir, baseName);
                 Directory.CreateDirectory(bundleDir);
 
@@ -46,9 +50,11 @@ namespace STS2RitsuLib.Networking.StateDivergence
                 WriteJson(Path.Combine(bundleDir, "remote-debug-log.records.json"), remoteLogs?.Records ?? []);
 
                 zipPath = Path.Combine(logsDir, baseName + ".zip");
+                zipFileName = Path.GetFileName(zipPath);
                 if (File.Exists(zipPath))
                     File.Delete(zipPath);
                 ZipFile.CreateFromDirectory(bundleDir, zipPath, CompressionLevel.Optimal, false);
+                PruneOldBundles(logsDir, zipPath);
                 return true;
             }
             catch (Exception ex)
@@ -111,6 +117,34 @@ namespace STS2RitsuLib.Networking.StateDivergence
         private static void WriteJson(string path, object value)
         {
             File.WriteAllText(path, JsonSerializer.Serialize(value, JsonOptions), Utf8NoBom);
+        }
+
+        private static void PruneOldBundles(string logsDir, string currentZipPath)
+        {
+            try
+            {
+                var currentFullPath = Path.GetFullPath(currentZipPath);
+                var bundles = Directory.EnumerateFiles(logsDir, BundlePrefix + "*.zip", SearchOption.TopDirectoryOnly)
+                    .Select(path => new FileInfo(path))
+                    .Where(file => file.Exists)
+                    .OrderByDescending(file => file.LastWriteTimeUtc)
+                    .ThenByDescending(file => file.Name, StringComparer.OrdinalIgnoreCase)
+                    .ToArray();
+
+                foreach (var file in bundles.Skip(BundlesToKeep))
+                {
+                    if (string.Equals(Path.GetFullPath(file.FullName), currentFullPath,
+                            StringComparison.OrdinalIgnoreCase))
+                        continue;
+
+                    file.Delete();
+                }
+            }
+            catch (Exception ex)
+            {
+                RitsuLibFramework.Logger.Warn(
+                    $"[State divergence diagnostics] failed to prune old diagnostic bundles: {ex.Message}");
+            }
         }
 
         private static string ResolveLogsDirectory()

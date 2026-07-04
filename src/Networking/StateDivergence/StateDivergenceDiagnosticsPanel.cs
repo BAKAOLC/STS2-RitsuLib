@@ -8,7 +8,6 @@ using STS2RitsuLib.Diagnostics;
 using STS2RitsuLib.Settings;
 using STS2RitsuLib.Ui.Shell;
 using STS2RitsuLib.Ui.Shell.Theme;
-using STS2RitsuLib.Ui.Toast;
 
 namespace STS2RitsuLib.Networking.StateDivergence
 {
@@ -125,15 +124,6 @@ namespace STS2RitsuLib.Networking.StateDivergence
             title.SizeFlagsHorizontal = SizeFlags.ExpandFill;
             row.AddChild(title);
 
-            var export = new ModSettingsTextButton(
-                T("button.copyReport", "Copy report"),
-                ModSettingsButtonTone.Normal,
-                CopyReportToClipboard)
-            {
-                CustomMinimumSize = new(190f, RitsuShellTheme.Current.Metric.Entry.ValueMinHeight),
-            };
-            row.AddChild(export);
-
             var logs = new ModSettingsTextButton(
                 T("button.openLogs", "Open logs"),
                 ModSettingsButtonTone.Normal,
@@ -211,8 +201,21 @@ namespace STS2RitsuLib.Networking.StateDivergence
             };
             box.AddThemeConstantOverride("separation", 8);
             box.AddChild(CreateInfoCard(_report.Summary, RitsuShellTheme.Current.Text.RichBody));
+            box.AddChild(CreateInfoCard(FormatBundleArchiveLine(), RitsuShellTheme.Current.Text.RichBody));
             box.AddChild(BuildChecksumCards());
             return box;
+        }
+
+        private string FormatBundleArchiveLine()
+        {
+            if (!string.IsNullOrWhiteSpace(_report.BundleFileName))
+                return F("summary.bundleArchive",
+                    "Divergence report archive saved: {0}. Open the logs folder to send this file to the developer.",
+                    _report.BundleFileName);
+
+            return F("summary.bundleArchiveFailed",
+                "Divergence report archive was not saved: {0}.",
+                string.IsNullOrWhiteSpace(_report.BundleError) ? "unknown error" : _report.BundleError);
         }
 
         private Control BuildChecksumCards()
@@ -685,15 +688,6 @@ namespace STS2RitsuLib.Networking.StateDivergence
         private void Close()
         {
             NModalContainer.Instance?.Clear();
-        }
-
-        private void CopyReportToClipboard()
-        {
-            DisplayServer.ClipboardSet(BuildExportReport(_report));
-            ModSettingsClipboardAccess.InvalidateCache();
-            RitsuToastService.ShowInfo(
-                T("toast.reportCopied.body", "State divergence report copied to clipboard."),
-                T("toast.reportCopied.title", "State divergence"));
         }
 
         private void OpenLogFolder()
