@@ -8,9 +8,9 @@ namespace STS2RitsuLib.Combat.AttackHits
     {
         /// <summary>
         ///     Runs before the hit's damage command. Await game commands here, then mutate
-        ///     <see cref="AttackHitContext.Damage" /> to change this hit's base damage.
+        ///     damage command inputs on <see cref="AttackHitContext" /> to affect only this hit.
         ///     在本段伤害命令执行前运行。可在此 await 游戏命令，然后修改
-        ///     <see cref="AttackHitContext.Damage" /> 改变本段基础伤害。
+        ///     <see cref="AttackHitContext" /> 上的伤害命令输入，只影响本段。
         /// </summary>
         Task BeforeAttackHit(AttackHitContext context)
         {

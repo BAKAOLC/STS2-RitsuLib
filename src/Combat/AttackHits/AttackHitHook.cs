@@ -46,50 +46,44 @@ namespace STS2RitsuLib.Combat.AttackHits
                 props,
                 dealer,
                 cardSource,
+#if STS2_AT_LEAST_0_108_0
+                cardPlay,
+#endif
                 attack,
                 hitIndex,
                 totalHitCount);
             return context == null
 #if STS2_AT_LEAST_0_108_0
                 ? CreatureCmd.Damage(choiceContext, targetList, amount, props, dealer, cardSource, cardPlay)
-                : DamageAndAfterAttackHit(context, targetList, props, dealer, cardSource, cardPlay);
+                : DamageAndAfterAttackHit(context);
 #else
                 ? CreatureCmd.Damage(choiceContext, targetList, amount, props, dealer, cardSource)
-                : DamageAndAfterAttackHit(context, targetList, props, dealer, cardSource, attack);
+                : DamageAndAfterAttackHit(context);
 #endif
         }
 
         private static async Task<IEnumerable<DamageResult>> DamageAndAfterAttackHit(
-            AttackHitContext context,
-            IReadOnlyList<Creature> targetList,
-            ValueProp props,
-            Creature? dealer,
-            CardModel? cardSource,
-#if STS2_AT_LEAST_0_108_0
-            CardPlay? cardPlay)
-#else
-            AttackCommand attack)
-#endif
+            AttackHitContext context)
         {
             await BeforeAttackHit(context);
 
 #if STS2_AT_LEAST_0_108_0
             var results = (await CreatureCmd.Damage(
                 context.ChoiceContext,
-                targetList,
+                context.Targets,
                 context.Damage,
-                props,
-                dealer,
-                cardSource,
-                cardPlay)).ToArray();
+                context.DamageProps,
+                context.Dealer,
+                context.CardSource,
+                context.CardPlay)).ToArray();
 #else
             var results = (await CreatureCmd.Damage(
                 context.ChoiceContext,
-                targetList,
+                context.Targets,
                 context.Damage,
-                props,
-                dealer,
-                cardSource)).ToArray();
+                context.DamageProps,
+                context.Dealer,
+                context.CardSource)).ToArray();
 #endif
 
             context.SetResults(results);
@@ -157,6 +151,9 @@ namespace STS2RitsuLib.Combat.AttackHits
             ValueProp props,
             Creature? dealer,
             CardModel? cardSource,
+#if STS2_AT_LEAST_0_108_0
+            CardPlay? cardPlay,
+#endif
             AttackCommand attack,
             int hitIndex,
             decimal totalHitCount)
@@ -175,7 +172,12 @@ namespace STS2RitsuLib.Combat.AttackHits
                 amount,
                 props,
                 dealer,
-                cardSource);
+                cardSource
+#if STS2_AT_LEAST_0_108_0
+                ,
+                cardPlay
+#endif
+            );
         }
 
         private readonly record struct ListenerEntry(IAttackHitHookListener Listener, AbstractModel? Model);
