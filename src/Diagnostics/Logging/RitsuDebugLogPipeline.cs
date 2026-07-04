@@ -33,9 +33,6 @@ namespace STS2RitsuLib.Diagnostics.Logging
 
         public static void Initialize(RitsuDebugLogViewerOptions options)
         {
-            if (!options.Enabled)
-                return;
-
             lock (InitLock)
             {
                 if (_initialized)
@@ -46,34 +43,23 @@ namespace STS2RitsuLib.Diagnostics.Logging
                     _queueCapacity = Math.Clamp(options.QueueCapacity, 256, 100000);
                     _ring = new(Math.Clamp(options.RingBufferCapacity, 512, 100000));
                     _cts = new();
-
-                    _server = new(
-                        options.AccessToken,
-                        options.LanAccessEnabled,
-                        Snapshot,
-                        BuildStatus,
-                        ResolveViewerAssetRoot());
-                    _server.Start(options.Port, options.PortFallbackCount);
-
                     _worker = Task.Run(WorkerLoopAsync);
-                    if (options.MirrorGameLogs)
-                    {
-                        _godotLogListener = new();
-                        OS.AddLogger(_godotLogListener);
-                    }
+                    _godotLogListener = new();
+                    OS.AddLogger(_godotLogListener);
 
-                    if (options.AutoOpen)
-                        _ = Task.Run(() => AutoOpenViewerIfNoClientAsync(_cts.Token));
+                    if (options.Enabled)
+                        StartServer(options);
 
                     _initialized = true;
                     AppDomain.CurrentDomain.ProcessExit += OnProcessExit;
 
-                    RitsuLibFramework.Logger.Info(CreateViewerStartMessage(_server));
+                    if (_server != null)
+                        RitsuLibFramework.Logger.Info(CreateViewerStartMessage(_server));
                 }
                 catch (Exception ex)
                 {
                     CleanupAfterFailedStart();
-                    RitsuLibFramework.Logger.Warn($"[DebugLogViewer] Failed to start viewer: {ex.Message}");
+                    RitsuLibFramework.Logger.Warn($"[DebugLogViewer] Failed to initialize log capture: {ex.Message}");
                 }
             }
         }
@@ -96,6 +82,7 @@ namespace STS2RitsuLib.Diagnostics.Logging
 
         public static RitsuDebugLogRecord[] Snapshot(int limit)
         {
+            DrainQueue();
             return _ring?.Snapshot(limit) ?? [];
         }
 
@@ -108,6 +95,7 @@ namespace STS2RitsuLib.Diagnostics.Logging
                 sessionStartedAtUtc = SessionStartedAtUtc,
                 processId = Environment.ProcessId,
                 url = ViewerUrl,
+                serverEnabled = _server != null,
                 accessMode = _server?.AccessMode ?? "loopback",
                 lanAccessEnabled = _server?.LanAccessEnabled ?? false,
                 lanUrls = _server?.LanUrls ?? [],
@@ -118,6 +106,29 @@ namespace STS2RitsuLib.Diagnostics.Logging
                 queueCapacity = _queueCapacity,
                 dropped = Volatile.Read(ref _dropped),
             };
+        }
+
+        private static void StartServer(RitsuDebugLogViewerOptions options)
+        {
+            try
+            {
+                _server = new(
+                    options.AccessToken,
+                    options.LanAccessEnabled,
+                    Snapshot,
+                    BuildStatus,
+                    ResolveViewerAssetRoot());
+                _server.Start(options.Port, options.PortFallbackCount);
+
+                if (options.AutoOpen)
+                    _ = Task.Run(() => AutoOpenViewerIfNoClientAsync(_cts!.Token));
+            }
+            catch (Exception ex)
+            {
+                _server?.Dispose();
+                _server = null;
+                RitsuLibFramework.Logger.Warn($"[DebugLogViewer] Failed to start viewer server: {ex.Message}");
+            }
         }
 
         public static void ReportInternalWarning(string message)
@@ -167,12 +178,17 @@ namespace STS2RitsuLib.Diagnostics.Logging
                     return;
                 }
 
-                while (Queue.TryDequeue(out var record))
-                {
-                    Interlocked.Decrement(ref _queued);
-                    _ring?.Add(record);
-                    _server?.Broadcast(record);
-                }
+                DrainQueue();
+            }
+        }
+
+        private static void DrainQueue()
+        {
+            while (Queue.TryDequeue(out var record))
+            {
+                Interlocked.Decrement(ref _queued);
+                _ring?.Add(record);
+                _server?.Broadcast(record);
             }
         }
 

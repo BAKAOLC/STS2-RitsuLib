@@ -9,6 +9,7 @@ using MegaCrit.Sts2.Core.Multiplayer.Serialization;
 using MegaCrit.Sts2.Core.Saves.Runs;
 using STS2RitsuLib.Compat;
 using STS2RitsuLib.Content.Patches;
+using STS2RitsuLib.Diagnostics.Logging;
 using STS2RitsuLib.Interop.Patches;
 using STS2RitsuLib.Networking.MessageExtensions;
 
@@ -24,12 +25,21 @@ namespace STS2RitsuLib.Networking.StateDivergence
         bool? SavedPropertyNetIdUsesDeterministicSort,
         string? LoadedMods,
         string? ContentMods,
-        ProgressDiagnosticsSnapshot? Progress);
+        ProgressDiagnosticsSnapshot? Progress,
+        StateDivergenceRecentLogSnapshot? RecentLogs);
+
+    internal sealed record StateDivergenceRecentLogSnapshot(
+        DateTimeOffset CapturedAtUtc,
+        int TotalRecordCount,
+        int IncludedRecordCount,
+        int DroppedOldRecordCount,
+        IReadOnlyList<RitsuDebugLogRecord> Records);
 
     internal static class StateDivergenceSupplementPayloadCodec
     {
         private const string ExtensionId = "ritsulib.stateDivergence";
-        private const int PayloadVersion = 4;
+        private const int PayloadVersion = 5;
+        private const int MaxCompressedPayloadBytes = 512 * 1024;
         private static int _registered;
 
         private static readonly JsonSerializerOptions JsonOptions = new()
@@ -77,7 +87,8 @@ namespace STS2RitsuLib.Networking.StateDivergence
                 SavedPropertiesTypeCacheInjectionPatch.UsesDeterministicNetIdTable,
                 ContentModInventoryPayloadCodec.Encode(ContentModLoadOrderInventory.BuildRuntimeLoadedInventory()),
                 ContentModInventoryPayloadCodec.Encode(ContentModLoadOrderInventory.BuildRuntimeRelevantInventory()),
-                ProgressDiagnosticsSnapshot.CreateLocal());
+                ProgressDiagnosticsSnapshot.CreateLocal(),
+                CreateRecentLogSnapshot(RitsuDebugLogPipeline.Snapshot(0), 0));
         }
 
         private static string? SerializePayload(StateDivergenceMessage message)
@@ -85,8 +96,7 @@ namespace STS2RitsuLib.Networking.StateDivergence
             try
             {
                 var payload = CreateLocalSnapshot(message.senderChecksum);
-                var json = JsonSerializer.Serialize(payload, JsonOptions);
-                return Convert.ToBase64String(Gzip(Encoding.UTF8.GetBytes(json)));
+                return EncodeWithinBudget(payload);
             }
             catch (Exception ex)
             {
@@ -100,7 +110,7 @@ namespace STS2RitsuLib.Networking.StateDivergence
         {
             try
             {
-                if (version != 1 && version != 2 && version != 3 && version != PayloadVersion)
+                if (version != 1 && version != 2 && version != 3 && version != 4 && version != PayloadVersion)
                 {
                     RitsuLibFramework.Logger.Warn(
                         $"[State divergence diagnostics] Unsupported supplement payload version: {version}");
@@ -141,6 +151,71 @@ namespace STS2RitsuLib.Networking.StateDivergence
             }
 
             return output.ToArray();
+        }
+
+        private static string? EncodeWithinBudget(StateDivergenceSupplementPayload payload)
+        {
+            if (TryEncode(payload, out var encoded, out _))
+                return encoded;
+
+            var logs = payload.RecentLogs;
+            if (logs == null || logs.Records.Count == 0)
+                return null;
+
+            string? best = null;
+            var low = 0;
+            var high = logs.Records.Count;
+            while (low <= high)
+            {
+                var count = low + (high - low) / 2;
+                var candidate = payload with
+                {
+                    RecentLogs = CreateRecentLogSnapshot(logs.Records.TakeLast(count).ToArray(),
+                        logs.TotalRecordCount - count),
+                };
+
+                if (TryEncode(candidate, out var candidateEncoded, out _))
+                {
+                    best = candidateEncoded;
+                    low = count + 1;
+                }
+                else
+                {
+                    high = count - 1;
+                }
+            }
+
+            return best;
+        }
+
+        private static bool TryEncode(
+            StateDivergenceSupplementPayload payload,
+            out string encoded,
+            out int compressedBytes)
+        {
+            var json = JsonSerializer.Serialize(payload, JsonOptions);
+            var compressed = Gzip(Encoding.UTF8.GetBytes(json));
+            compressedBytes = compressed.Length;
+            if (compressed.Length > MaxCompressedPayloadBytes)
+            {
+                encoded = "";
+                return false;
+            }
+
+            encoded = Convert.ToBase64String(compressed);
+            return true;
+        }
+
+        private static StateDivergenceRecentLogSnapshot CreateRecentLogSnapshot(
+            IReadOnlyList<RitsuDebugLogRecord> records,
+            int droppedOldRecords)
+        {
+            return new(
+                DateTimeOffset.UtcNow,
+                records.Count + Math.Max(0, droppedOldRecords),
+                records.Count,
+                Math.Max(0, droppedOldRecords),
+                records);
         }
 
         private static byte[] Gunzip(byte[] data)
@@ -189,7 +264,8 @@ namespace STS2RitsuLib.Networking.StateDivergence
                 null,
                 null,
                 payload.ContentMods == null ? null : ContentModInventoryPayloadCodec.Encode(payload.ContentMods),
-                payload.Progress);
+                payload.Progress,
+                null);
         }
 
         private sealed record StateDivergenceSupplementPayloadV1(
