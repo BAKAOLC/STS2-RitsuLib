@@ -11,7 +11,7 @@ namespace STS2RitsuLib.Scaffolding.Content
     ///     并为 UI 补丁映射能量图标路径。
     /// </summary>
     public abstract class TypeListCardPoolModel : CardPoolModel, IModBigEnergyIconPool, IModTextEnergyIconPool,
-        IModCardPoolFrameMaterial
+        IModCardPoolFrameMaterial, IModCardPoolAssetOverrides, IModCardPoolDeckViewStyle
     {
         /// <summary>
         ///     Legacy hook: enumerating card types on the pool class. Prefer registering each card through
@@ -42,6 +42,12 @@ namespace STS2RitsuLib.Scaffolding.Content
 
         /// <inheritdoc cref="IModBigEnergyIconPool.BigEnergyIconPath" />
         public virtual string? BigEnergyIconPath => null;
+
+        /// <inheritdoc cref="IModCardPoolAssetOverrides.AssetProfile" />
+        public virtual CardPoolAssetProfile AssetProfile => CardPoolAssetProfile.Empty;
+
+        /// <inheritdoc cref="IModCardPoolDeckViewStyle.DeckViewStyle" />
+        public virtual CardPoolDeckViewStyle? DeckViewStyle => AssetProfile.DeckViewStyle;
 
         /// <summary>
         ///     Directly supply a <see cref="Material" /> for all card frames in this pool.
