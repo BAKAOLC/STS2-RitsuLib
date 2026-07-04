@@ -125,7 +125,7 @@ namespace STS2RitsuLib.Networking.StateDivergence.Patches
             return [new(typeof(ChecksumTracker), "LogStateDivergence")];
         }
 
-        public static void Postfix(
+        public static void Prefix(
             ChecksumTracker __instance,
             object localChecksum,
             StateDivergenceMessage message,
@@ -141,6 +141,9 @@ namespace STS2RitsuLib.Networking.StateDivergence.Patches
                 var hasRemoteSupplement =
                     StateDivergenceSupplementStore.TryTake(message.senderChecksum, out var remoteSupplement);
                 var activeRemoteSupplement = hasRemoteSupplement ? remoteSupplement : null;
+                if (string.Equals(role, "Client", StringComparison.Ordinal))
+                    StateDivergenceSupplementPayloadCodec.PrepareOutgoingSnapshot(localSupplement);
+
                 var report = StateDivergenceDiagnosticReportBuilder.Build(local, message, remoteId, role,
                     localSupplement, activeRemoteSupplement);
                 using var english = StateDivergenceDiagnosticsLocalization.UseEnglish();

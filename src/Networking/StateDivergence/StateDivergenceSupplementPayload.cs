@@ -33,7 +33,20 @@ namespace STS2RitsuLib.Networking.StateDivergence
         int TotalRecordCount,
         int IncludedRecordCount,
         int DroppedOldRecordCount,
-        IReadOnlyList<RitsuDebugLogRecord> Records);
+        IReadOnlyList<StateDivergenceLogRecord> Records);
+
+    internal sealed record StateDivergenceLogRecord(
+        long Id,
+        DateTimeOffset Timestamp,
+        string SeverityText,
+        int SeverityNumber,
+        string Body,
+        string? Source,
+        string? Category,
+        string? LoggerName,
+        string? CodeFilePath,
+        string? CodeFunctionName,
+        int? CodeLineNumber);
 
     internal static class StateDivergenceSupplementPayloadCodec
     {
@@ -41,6 +54,10 @@ namespace STS2RitsuLib.Networking.StateDivergence
         private const int PayloadVersion = 5;
         private const int MaxCompressedPayloadBytes = 512 * 1024;
         private static int _registered;
+        private static readonly Lock PreparedOutgoingLock = new();
+
+        private static readonly Dictionary<(uint Id, uint Checksum), Queue<StateDivergenceSupplementPayload>>
+            PreparedOutgoingPayloads = new();
 
         private static readonly JsonSerializerOptions JsonOptions = new()
         {
@@ -91,11 +108,28 @@ namespace STS2RitsuLib.Networking.StateDivergence
                 CreateRecentLogSnapshot(RitsuDebugLogPipeline.Snapshot(0), 0));
         }
 
+        public static void PrepareOutgoingSnapshot(StateDivergenceSupplementPayload payload)
+        {
+            lock (PreparedOutgoingLock)
+            {
+                var key = (payload.ChecksumId, payload.ChecksumValue);
+                if (!PreparedOutgoingPayloads.TryGetValue(key, out var queue))
+                {
+                    queue = new();
+                    PreparedOutgoingPayloads[key] = queue;
+                }
+
+                queue.Enqueue(payload);
+            }
+        }
+
         private static string? SerializePayload(StateDivergenceMessage message)
         {
             try
             {
-                var payload = CreateLocalSnapshot(message.senderChecksum);
+                var payload = TryTakePreparedOutgoingSnapshot(message.senderChecksum, out var prepared)
+                    ? prepared
+                    : CreateLocalSnapshot(message.senderChecksum);
                 return EncodeWithinBudget(payload);
             }
             catch (Exception ex)
@@ -103,6 +137,26 @@ namespace STS2RitsuLib.Networking.StateDivergence
                 RitsuLibFramework.Logger.Warn(
                     $"[State divergence diagnostics] Failed to create supplement payload: {ex.Message}");
                 return null;
+            }
+        }
+
+        private static bool TryTakePreparedOutgoingSnapshot(
+            NetChecksumData checksum,
+            out StateDivergenceSupplementPayload payload)
+        {
+            lock (PreparedOutgoingLock)
+            {
+                var key = (checksum.id, checksum.checksum);
+                if (!PreparedOutgoingPayloads.TryGetValue(key, out var queue) || queue.Count == 0)
+                {
+                    payload = null!;
+                    return false;
+                }
+
+                payload = queue.Dequeue();
+                if (queue.Count == 0)
+                    PreparedOutgoingPayloads.Remove(key);
+                return true;
             }
         }
 
@@ -210,12 +264,40 @@ namespace STS2RitsuLib.Networking.StateDivergence
             IReadOnlyList<RitsuDebugLogRecord> records,
             int droppedOldRecords)
         {
+            return CreateRecentLogSnapshot(records.Select(CreateLogRecord).ToArray(), droppedOldRecords);
+        }
+
+        private static StateDivergenceRecentLogSnapshot CreateRecentLogSnapshot(
+            IReadOnlyList<StateDivergenceLogRecord> records,
+            int droppedOldRecords)
+        {
             return new(
                 DateTimeOffset.UtcNow,
                 records.Count + Math.Max(0, droppedOldRecords),
                 records.Count,
                 Math.Max(0, droppedOldRecords),
                 records);
+        }
+
+        private static StateDivergenceLogRecord CreateLogRecord(RitsuDebugLogRecord record)
+        {
+            return new(
+                record.Id,
+                record.Timestamp,
+                record.SeverityText,
+                record.SeverityNumber,
+                record.Body,
+                EmptyToNull(record.Source),
+                EmptyToNull(record.Category),
+                EmptyToNull(record.LoggerName),
+                EmptyToNull(record.CodeFilePath),
+                EmptyToNull(record.CodeFunctionName),
+                record.CodeLineNumber);
+        }
+
+        private static string? EmptyToNull(string? value)
+        {
+            return string.IsNullOrWhiteSpace(value) ? null : value;
         }
 
         private static byte[] Gunzip(byte[] data)
