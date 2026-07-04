@@ -125,7 +125,7 @@ namespace STS2RitsuLib.Networking.StateDivergence
             row.AddChild(title);
 
             var logs = new ModSettingsTextButton(
-                T("button.openLogs", "Open logs"),
+                T("button.openLogs", "Open logs folder"),
                 ModSettingsButtonTone.Normal,
                 OpenLogFolder)
             {
