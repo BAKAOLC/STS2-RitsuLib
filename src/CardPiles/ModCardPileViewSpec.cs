@@ -99,6 +99,32 @@ namespace STS2RitsuLib.CardPiles
         public Func<ModCardPileViewStyleContext, ShaderMaterial?>? SortButtonHueMaterialProvider { get; init; }
 
         /// <summary>
+        ///     When true, the optional view will not call <c>NCardViewSortButton.SetHue</c> on sort buttons.
+        ///     为 true 时，可选查看界面不会对排序按钮调用 <c>NCardViewSortButton.SetHue</c>。
+        /// </summary>
+        public bool DisableSortButtonHue { get; init; }
+
+        /// <summary>
+        ///     Optional texture path applied to each sort button's background image.
+        ///     应用到每个排序按钮背景图的可选贴图路径。
+        /// </summary>
+        public string? SortButtonBackgroundTexturePath { get; init; }
+
+        /// <summary>
+        ///     Optional material applied to each sort button's background image.
+        ///     应用到每个排序按钮背景图的可选材质。
+        /// </summary>
+        public Material? SortButtonBackgroundMaterial { get; init; }
+
+        /// <summary>
+        ///     Optional runtime material provider for each sort button's background image. When non-null,
+        ///     it takes precedence over <see cref="SortButtonBackgroundMaterial" />.
+        ///     每个排序按钮背景图的可选运行时材质 provider。非 null 时优先于
+        ///     <see cref="SortButtonBackgroundMaterial" />。
+        /// </summary>
+        public Func<ModCardPileViewStyleContext, Material?>? SortButtonBackgroundMaterialProvider { get; init; }
+
+        /// <summary>
         ///     Optional text color for the upgrade-preview toggle label.
         ///     升级预览开关标签的可选文字颜色。
         /// </summary>

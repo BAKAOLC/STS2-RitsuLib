@@ -209,6 +209,7 @@ namespace STS2RitsuLib.CardPiles.Patches
 
                 toolbar.AddChild(button);
                 SetSortButtonLabel(button, GetSortLabel(option));
+                ApplySortButtonBackground(button);
                 SetSortButtonHue(button);
                 button.Connect(NClickableControl.SignalName.Released,
                     Callable.From<NButton>(_ => OnSortReleased(option, button)));
@@ -243,6 +244,9 @@ namespace STS2RitsuLib.CardPiles.Patches
 
         private void SetSortButtonHue(NCardViewSortButton button)
         {
+            if (view.DisableSortButtonHue)
+                return;
+
             var material = ResolveSortButtonHueMaterial();
             if (material == null)
                 return;
@@ -251,6 +255,43 @@ namespace STS2RitsuLib.CardPiles.Patches
                 button.SetHue(material);
             else
                 Callable.From(() => button.SetHue(material)).CallDeferred();
+        }
+
+        private void ApplySortButtonBackground(NCardViewSortButton button)
+        {
+            if (string.IsNullOrWhiteSpace(view.SortButtonBackgroundTexturePath) &&
+                view.SortButtonBackgroundMaterial == null &&
+                view.SortButtonBackgroundMaterialProvider == null)
+                return;
+
+            if (button.IsNodeReady())
+                Apply();
+            else
+                Callable.From(Apply).CallDeferred();
+            return;
+
+            void Apply()
+            {
+                var background = button.GetNodeOrNull<TextureRect>("%ButtonImage");
+                if (background == null)
+                    return;
+
+                if (!string.IsNullOrWhiteSpace(view.SortButtonBackgroundTexturePath))
+                    try
+                    {
+                        background.Texture =
+                            PreloadManager.Cache.GetAsset<Texture2D>(view.SortButtonBackgroundTexturePath);
+                    }
+                    catch (Exception ex)
+                    {
+                        RitsuLibFramework.Logger.Warn(
+                            $"[CardPiles] Could not load sort button background texture for '{definition.Id}': {ex.Message}");
+                    }
+
+                var material = ResolveSortButtonBackgroundMaterial();
+                if (material != null)
+                    background.Material = material;
+            }
         }
 
         private void OnSortReleased(ModCardPileSortOption option, NCardViewSortButton button)
@@ -353,6 +394,23 @@ namespace STS2RitsuLib.CardPiles.Patches
                 RitsuLibFramework.Logger.Warn(
                     $"[CardPiles] SortButtonHueMaterialProvider for '{definition.Id}' threw: {ex.Message}");
                 return view.SortButtonHueMaterial;
+            }
+        }
+
+        private Material? ResolveSortButtonBackgroundMaterial()
+        {
+            if (view.SortButtonBackgroundMaterialProvider == null)
+                return view.SortButtonBackgroundMaterial;
+
+            try
+            {
+                return view.SortButtonBackgroundMaterialProvider(StyleContext) ?? view.SortButtonBackgroundMaterial;
+            }
+            catch (Exception ex)
+            {
+                RitsuLibFramework.Logger.Warn(
+                    $"[CardPiles] SortButtonBackgroundMaterialProvider for '{definition.Id}' threw: {ex.Message}");
+                return view.SortButtonBackgroundMaterial;
             }
         }
     }

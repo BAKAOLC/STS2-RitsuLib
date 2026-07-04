@@ -58,6 +58,32 @@ namespace STS2RitsuLib.Scaffolding.Content
         public Func<CardPoolDeckViewStyleContext, ShaderMaterial?>? SortButtonHueMaterialProvider { get; init; }
 
         /// <summary>
+        ///     When true, RitsuLib will not call <c>NCardViewSortButton.SetHue</c> while applying this style.
+        ///     为 true 时，RitsuLib 应用此样式时不会调用 <c>NCardViewSortButton.SetHue</c>。
+        /// </summary>
+        public bool? DisableSortButtonHue { get; init; }
+
+        /// <summary>
+        ///     Optional texture path applied to each deck-view sort button's background image.
+        ///     应用到每个牌组查看排序按钮背景图的可选贴图路径。
+        /// </summary>
+        public string? SortButtonBackgroundTexturePath { get; init; }
+
+        /// <summary>
+        ///     Optional material applied to each deck-view sort button's background image.
+        ///     应用到每个牌组查看排序按钮背景图的可选材质。
+        /// </summary>
+        public Material? SortButtonBackgroundMaterial { get; init; }
+
+        /// <summary>
+        ///     Optional runtime material provider for each deck-view sort button's background image. When non-null,
+        ///     it takes precedence over <see cref="SortButtonBackgroundMaterial" />.
+        ///     每个牌组查看排序按钮背景图的可选运行时材质 provider。非 null 时优先于
+        ///     <see cref="SortButtonBackgroundMaterial" />。
+        /// </summary>
+        public Func<CardPoolDeckViewStyleContext, Material?>? SortButtonBackgroundMaterialProvider { get; init; }
+
+        /// <summary>
         ///     Optional text color for the deck-view upgrade-preview toggle label.
         ///     牌组查看升级预览开关标签的可选文字颜色。
         /// </summary>
@@ -125,6 +151,13 @@ namespace STS2RitsuLib.Scaffolding.Content
                 SortButtonHueMaterial = profile.SortButtonHueMaterial ?? fallback.SortButtonHueMaterial,
                 SortButtonHueMaterialProvider =
                     profile.SortButtonHueMaterialProvider ?? fallback.SortButtonHueMaterialProvider,
+                DisableSortButtonHue = profile.DisableSortButtonHue ?? fallback.DisableSortButtonHue,
+                SortButtonBackgroundTexturePath =
+                    profile.SortButtonBackgroundTexturePath ?? fallback.SortButtonBackgroundTexturePath,
+                SortButtonBackgroundMaterial =
+                    profile.SortButtonBackgroundMaterial ?? fallback.SortButtonBackgroundMaterial,
+                SortButtonBackgroundMaterialProvider =
+                    profile.SortButtonBackgroundMaterialProvider ?? fallback.SortButtonBackgroundMaterialProvider,
                 UpgradePreviewLabelColor = profile.UpgradePreviewLabelColor ?? fallback.UpgradePreviewLabelColor,
                 UpgradePreviewLabelOutlineColor =
                     profile.UpgradePreviewLabelOutlineColor ?? fallback.UpgradePreviewLabelOutlineColor,

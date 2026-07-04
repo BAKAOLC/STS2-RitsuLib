@@ -1,3 +1,5 @@
+using System.Reflection;
+using System.Reflection.Emit;
 using Godot;
 using HarmonyLib;
 using MegaCrit.Sts2.addons.mega_text;
@@ -16,8 +18,14 @@ namespace STS2RitsuLib.Scaffolding.Content.Patches
     /// </summary>
     internal sealed class CardPoolDeckViewStylePatch : IPatchMethod
     {
+        private const string SafeHueFallbackMaterialPath = "res://materials/cards/frames/card_frame_colorless_mat.tres";
+
         private static readonly AccessTools.FieldRef<NDeckViewScreen, Player> PlayerRef =
             AccessTools.FieldRefAccess<NDeckViewScreen, Player>("_player");
+
+        private static readonly MethodInfo ResolveVanillaDeckViewHueMaterialMethod = AccessTools.DeclaredMethod(
+            typeof(CardPoolDeckViewStylePatch),
+            nameof(ResolveVanillaDeckViewHueMaterial));
 
         public static string PatchId => "content_asset_override_card_pool_deck_view_style";
         public static string Description => "Allow card pools to style the vanilla deck-view screen";
@@ -26,6 +34,31 @@ namespace STS2RitsuLib.Scaffolding.Content.Patches
         public static ModPatchTarget[] GetTargets()
         {
             return [new(typeof(NDeckViewScreen), nameof(NDeckViewScreen._Ready))];
+        }
+
+        public static IEnumerable<CodeInstruction> Transpiler(IEnumerable<CodeInstruction> instructions)
+        {
+            var replaced = 0;
+            foreach (var instruction in instructions)
+            {
+                if (instruction.opcode == OpCodes.Castclass && instruction.operand is Type type &&
+                    type == typeof(ShaderMaterial))
+                {
+                    var loadScreen = new CodeInstruction(OpCodes.Ldarg_0);
+                    loadScreen.labels.AddRange(instruction.labels);
+                    instruction.labels.Clear();
+                    yield return loadScreen;
+                    yield return new(OpCodes.Call, ResolveVanillaDeckViewHueMaterialMethod);
+                    replaced++;
+                    continue;
+                }
+
+                yield return instruction;
+            }
+
+            if (replaced != 1)
+                RitsuLibFramework.Logger.Warn(
+                    $"[Assets] Expected to rewrite one NDeckViewScreen ShaderMaterial cast, but rewrote {replaced}.");
         }
 
         public static void Postfix(NDeckViewScreen __instance)
@@ -38,7 +71,7 @@ namespace STS2RitsuLib.Scaffolding.Content.Patches
 
             var context = new CardPoolDeckViewStyleContext(player, character, cardPool, __instance);
             ApplyToolbarBackground(__instance, cardPool, style, context);
-            ApplySortButtonHue(__instance, cardPool, style, context);
+            ApplySortButtons(__instance, cardPool, style, context);
             ApplyUpgradeLabel(__instance, style);
         }
 
@@ -80,16 +113,12 @@ namespace STS2RitsuLib.Scaffolding.Content.Patches
             }
         }
 
-        private static void ApplySortButtonHue(
+        private static void ApplySortButtons(
             NDeckViewScreen screen,
             CardPoolModel cardPool,
             CardPoolDeckViewStyle style,
             CardPoolDeckViewStyleContext context)
         {
-            var material = ResolveSortButtonHueMaterial(cardPool, style, context);
-            if (material == null)
-                return;
-
             foreach (var uniqueName in new[]
                      {
                          "%ObtainedSorter",
@@ -97,7 +126,59 @@ namespace STS2RitsuLib.Scaffolding.Content.Patches
                          "%CostSorter",
                          "%AlphabeticalSorter",
                      })
-                screen.GetNodeOrNull<NCardViewSortButton>(uniqueName)?.SetHue(material);
+            {
+                if (screen.GetNodeOrNull<NCardViewSortButton>(uniqueName) is not { } button)
+                    continue;
+
+                ApplySortButtonBackground(button, cardPool, style, context);
+                ApplySortButtonHue(button, cardPool, style, context);
+            }
+        }
+
+        private static void ApplySortButtonBackground(
+            NCardViewSortButton button,
+            CardPoolModel cardPool,
+            CardPoolDeckViewStyle style,
+            CardPoolDeckViewStyleContext context)
+        {
+            if (string.IsNullOrWhiteSpace(style.SortButtonBackgroundTexturePath) &&
+                style.SortButtonBackgroundMaterial == null &&
+                style.SortButtonBackgroundMaterialProvider == null)
+                return;
+
+            var background = button.GetNodeOrNull<TextureRect>("%ButtonImage");
+            if (background == null)
+                return;
+
+            if (!string.IsNullOrWhiteSpace(style.SortButtonBackgroundTexturePath))
+                try
+                {
+                    background.Texture =
+                        PreloadManager.Cache.GetAsset<Texture2D>(style.SortButtonBackgroundTexturePath);
+                }
+                catch (Exception ex)
+                {
+                    RitsuLibFramework.Logger.Warn(
+                        $"[Assets] Could not load deck-view sort button background texture '{style.SortButtonBackgroundTexturePath}' for '{cardPool.GetType().Name}': {ex.Message}");
+                }
+
+            var material = ResolveSortButtonBackgroundMaterial(cardPool, style, context);
+            if (material != null)
+                background.Material = material;
+        }
+
+        private static void ApplySortButtonHue(
+            NCardViewSortButton button,
+            CardPoolModel cardPool,
+            CardPoolDeckViewStyle style,
+            CardPoolDeckViewStyleContext context)
+        {
+            if (style.DisableSortButtonHue == true)
+                return;
+
+            var material = ResolveSortButtonHueMaterial(cardPool, style, context);
+            if (material != null)
+                button.SetHue(material);
         }
 
         private static void ApplyUpgradeLabel(NDeckViewScreen screen, CardPoolDeckViewStyle style)
@@ -150,6 +231,49 @@ namespace STS2RitsuLib.Scaffolding.Content.Patches
                     $"[Assets] Deck-view sort-button hue provider failed for '{cardPool.GetType().Name}': {ex.Message}");
                 return style.SortButtonHueMaterial;
             }
+        }
+
+        private static Material? ResolveSortButtonBackgroundMaterial(
+            CardPoolModel cardPool,
+            CardPoolDeckViewStyle style,
+            CardPoolDeckViewStyleContext context)
+        {
+            if (style.SortButtonBackgroundMaterialProvider == null)
+                return style.SortButtonBackgroundMaterial;
+
+            try
+            {
+                return style.SortButtonBackgroundMaterialProvider(context) ?? style.SortButtonBackgroundMaterial;
+            }
+            catch (Exception ex)
+            {
+                RitsuLibFramework.Logger.Warn(
+                    $"[Assets] Deck-view sort button background material provider failed for '{cardPool.GetType().Name}': {ex.Message}");
+                return style.SortButtonBackgroundMaterial;
+            }
+        }
+
+        private static ShaderMaterial ResolveVanillaDeckViewHueMaterial(Material material, NDeckViewScreen screen)
+        {
+            if (material is ShaderMaterial shaderMaterial)
+                return shaderMaterial;
+
+            var player = PlayerRef(screen);
+            var pool = player.Character.CardPool;
+            try
+            {
+                if (PreloadManager.Cache.GetMaterial(SafeHueFallbackMaterialPath) is ShaderMaterial fallback)
+                    return fallback;
+            }
+            catch (Exception ex)
+            {
+                RitsuLibFramework.Logger.Warn(
+                    $"[Assets] Could not load safe deck-view hue fallback for '{pool.GetType().Name}': {ex.Message}");
+            }
+
+            RitsuLibFramework.Logger.Warn(
+                $"[Assets] Deck-view frame material for '{pool.GetType().Name}' is {material.GetType().Name}, not ShaderMaterial. Using an empty ShaderMaterial fallback.");
+            return new();
         }
     }
 }
