@@ -689,7 +689,7 @@ namespace STS2RitsuLib.Networking.StateDivergence
 
         private void CopyReportToClipboard()
         {
-            DisplayServer.ClipboardSet(BuildExportReport());
+            DisplayServer.ClipboardSet(BuildExportReport(_report));
             ModSettingsClipboardAccess.InvalidateCache();
             RitsuToastService.ShowInfo(
                 T("toast.reportCopied.body", "State divergence report copied to clipboard."),
@@ -701,27 +701,30 @@ namespace STS2RitsuLib.Networking.StateDivergence
             GameLogFolderOpener.OpenFromUi(T("toast.reportCopied.title", "State divergence"), "[StateDivergence]");
         }
 
-        private string BuildExportReport()
+        internal static string BuildExportReport(StateDivergenceDiagnosticReport report)
         {
             var builder = new StringBuilder();
-            builder.AppendLine(_report.Title);
-            builder.AppendLine(new('=', _report.Title.Length));
+            builder.AppendLine(report.Title);
+            builder.AppendLine(new('=', report.Title.Length));
             builder.AppendLine();
-            builder.AppendLine(_report.Summary);
-            builder.AppendLine(F("footer.context", "Role: {0}  Remote peer: {1}", _report.Role,
-                _report.RemotePeerId));
+            builder.AppendLine(report.Summary);
+            builder.AppendLine(F("footer.context", "Role: {0}  Remote peer: {1}", report.Role,
+                report.RemotePeerId));
             builder.AppendLine();
             AppendRuntimeFrameworkVersions(builder);
             builder.AppendLine();
-            AppendChecksum(builder, T("column.local", "Local"), _report.LocalChecksum);
-            AppendChecksum(builder, T("column.remote", "Remote"), _report.RemoteChecksum);
-            AppendContentMods(builder, T("column.local", "Local"), _report.LocalContentMods, true);
-            AppendContentMods(builder, T("column.remote", "Remote"), _report.RemoteContentMods,
-                _report.HasRemoteContentModInventory);
-            AppendProgress(builder, T("column.local", "Local"), _report.LocalProgress);
-            AppendProgress(builder, T("column.remote", "Remote"), _report.RemoteProgress);
+            AppendChecksum(builder, T("column.local", "Local"), report.LocalChecksum);
+            AppendChecksum(builder, T("column.remote", "Remote"), report.RemoteChecksum);
+            AppendLoadedMods(builder, T("column.local", "Local"), report.LocalLoadedMods, true);
+            AppendLoadedMods(builder, T("column.remote", "Remote"), report.RemoteLoadedMods,
+                report.HasRemoteLoadedModInventory);
+            AppendContentMods(builder, T("column.local", "Local"), report.LocalContentMods, true);
+            AppendContentMods(builder, T("column.remote", "Remote"), report.RemoteContentMods,
+                report.HasRemoteContentModInventory);
+            AppendProgress(builder, T("column.local", "Local"), report.LocalProgress);
+            AppendProgress(builder, T("column.remote", "Remote"), report.RemoteProgress);
 
-            foreach (var section in _report.ExportSections)
+            foreach (var section in report.ExportSections)
             {
                 builder.AppendLine();
                 builder.AppendLine(section.Title);
@@ -733,9 +736,9 @@ namespace STS2RitsuLib.Networking.StateDivergence
 
             builder.AppendLine();
             builder.AppendLine("LOCAL STATE DUMP");
-            builder.AppendLine(_report.LocalStateDump);
+            builder.AppendLine(report.LocalStateDump);
             builder.AppendLine("REMOTE STATE DUMP");
-            builder.AppendLine(_report.RemoteStateDump);
+            builder.AppendLine(report.RemoteStateDump);
             return builder.ToString();
         }
 
@@ -752,6 +755,30 @@ namespace STS2RitsuLib.Networking.StateDivergence
             builder.AppendLine("  " + F("checksum.id", "ID: {0}", info.Id));
             builder.AppendLine("  " + FormatChecksumLine(info));
             builder.AppendLine("  " + F("checksum.context", "Context: {0}", info.Context));
+        }
+
+        private static void AppendLoadedMods(
+            StringBuilder builder,
+            string peerTitle,
+            IReadOnlyList<ContentModInventoryEntry> mods,
+            bool inventoryAvailable)
+        {
+            builder.AppendLine();
+            builder.AppendLine(peerTitle + " " + T("section.loadedMods.export", "all loaded mods"));
+            if (!inventoryAvailable)
+            {
+                builder.AppendLine("  <unavailable>");
+                return;
+            }
+
+            if (mods.Count == 0)
+            {
+                builder.AppendLine("  <none>");
+                return;
+            }
+
+            foreach (var mod in mods)
+                builder.AppendLine("  " + FormatLoadedModInventoryLine(mod));
         }
 
         private static void AppendContentMods(
@@ -858,6 +885,22 @@ namespace STS2RitsuLib.Networking.StateDivergence
             var enabled = mod.IsEnabled ? T("value.enabled", "enabled") : T("value.disabled", "disabled");
             return
                 $"#{mod.Index + 1:00} [{role}, {enabled}] {name} version={version} source={mod.Source}";
+        }
+
+        private static string FormatLoadedModInventoryLine(ContentModInventoryEntry mod)
+        {
+            var name = string.IsNullOrWhiteSpace(mod.Name) || string.Equals(mod.Name, mod.Id, StringComparison.Ordinal)
+                ? mod.Id
+                : mod.Name + " (" + mod.Id + ")";
+            var version = string.IsNullOrWhiteSpace(mod.Version) ? T("value.noVersion", "No version") : mod.Version;
+            var gameplay = mod.AffectsGameplay
+                ? T("value.affectsGameplay", "gameplay")
+                : T("value.noGameplay",
+                    "non-gameplay");
+            var enabled = mod.IsEnabled ? T("value.enabled", "enabled") : T("value.disabled", "disabled");
+            var workshop = mod.WorkshopItemId.HasValue ? " workshop=" + mod.WorkshopItemId.Value : "";
+            return
+                $"#{mod.Index + 1:00} [{gameplay}, {enabled}] {name} version={version} source={mod.Source}{workshop}";
         }
 
         private bool TryScrollFromInput(InputEvent @event)

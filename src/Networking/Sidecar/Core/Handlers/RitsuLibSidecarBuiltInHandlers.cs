@@ -108,10 +108,6 @@ namespace STS2RitsuLib.Networking.Sidecar
 
             RitsuLibFramework.Logger.Debug(
                 $"[Sidecar] Diagnostic relay fanout sender={ctx.SenderNetId}, originPeer={session.OriginatingSenderNetId}, checksum={session.ChecksumId}, tag={session.Tag}, payloadLen={ctx.Payload.Length}");
-
-            RitsuLibSidecarChecksumDiagnostics.TryLogLocalCombatDump(
-                $"Sidecar coordinated dump via host broadcast (originPeer={session.OriginatingSenderNetId})",
-                session);
         }
 
         private static void OnHandshake(RitsuLibSidecarDispatchContext ctx)

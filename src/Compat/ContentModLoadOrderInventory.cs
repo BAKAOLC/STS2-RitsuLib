@@ -46,13 +46,25 @@ namespace STS2RitsuLib.Compat
             return BuildRelevantInventory(BuildRuntimeLoadedOrder());
         }
 
+        internal static IReadOnlyList<ContentModInventoryEntry> BuildRuntimeLoadedInventory()
+        {
+            return BuildInventory(BuildRuntimeLoadedOrder(), true);
+        }
+
         private static IReadOnlyList<ContentModInventoryEntry> BuildRelevantInventory(
             IReadOnlyList<CurrentModEntry> currentOrder)
+        {
+            return BuildInventory(currentOrder, false);
+        }
+
+        private static IReadOnlyList<ContentModInventoryEntry> BuildInventory(
+            IReadOnlyList<CurrentModEntry> currentOrder,
+            bool includeAll)
         {
             var relevantKeys = BuildRelevantKeys(currentOrder);
             var relevantDependencyIds = BuildRelevantDependencyIds(currentOrder, relevantKeys);
             return currentOrder
-                .Where(entry => relevantKeys.Contains(entry.Key))
+                .Where(entry => includeAll || relevantKeys.Contains(entry.Key))
                 .Select((entry, index) => new ContentModInventoryEntry(
                     index,
                     entry.Id,

@@ -13,16 +13,37 @@ namespace STS2RitsuLib.Networking.StateDivergence.Patches
     {
         public static readonly ConditionalWeakTable<NErrorPopup, StateDivergenceDiagnosticReport> PopupReports = new();
         private static StateDivergenceDiagnosticReport? _latestReport;
+        private static bool _latestReportLogged;
 
         public static void Store(StateDivergenceDiagnosticReport report)
         {
             _latestReport = report;
+            _latestReportLogged = false;
         }
 
         public static bool TryGetLatest(out StateDivergenceDiagnosticReport report)
         {
             report = _latestReport!;
             return report != null;
+        }
+
+        public static void TryLogLatestToGameLog(string trigger)
+        {
+            if (_latestReport == null || _latestReportLogged)
+                return;
+
+            _latestReportLogged = true;
+            try
+            {
+                RitsuLibFramework.Logger.ErrorNoTrace(
+                    $"[State divergence diagnostics report: {trigger}]\n" +
+                    StateDivergenceDiagnosticsPanel.BuildExportReport(_latestReport));
+            }
+            catch (Exception ex)
+            {
+                RitsuLibFramework.Logger.Warn(
+                    $"[State divergence diagnostics] failed to write report to log: {ex.Message}");
+            }
         }
     }
 
@@ -156,6 +177,7 @@ namespace STS2RitsuLib.Networking.StateDivergence.Patches
 
             StateDivergenceDiagnosticsReports.PopupReports.Remove(__result);
             StateDivergenceDiagnosticsReports.PopupReports.Add(__result, report);
+            StateDivergenceDiagnosticsReports.TryLogLatestToGameLog("error popup created");
         }
     }
 

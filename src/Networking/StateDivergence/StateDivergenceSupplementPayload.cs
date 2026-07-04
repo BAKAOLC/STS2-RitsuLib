@@ -22,13 +22,14 @@ namespace STS2RitsuLib.Networking.StateDivergence
         IReadOnlyList<string> SavedPropertyNames,
         bool? ModelDbHashUsesDeterministicCache,
         bool? SavedPropertyNetIdUsesDeterministicSort,
+        string? LoadedMods,
         string? ContentMods,
         ProgressDiagnosticsSnapshot? Progress);
 
     internal static class StateDivergenceSupplementPayloadCodec
     {
         private const string ExtensionId = "ritsulib.stateDivergence";
-        private const int PayloadVersion = 3;
+        private const int PayloadVersion = 4;
         private static int _registered;
 
         private static readonly JsonSerializerOptions JsonOptions = new()
@@ -74,6 +75,7 @@ namespace STS2RitsuLib.Networking.StateDivergence
                 propertyNames,
                 modelDbCacheStatus.IsActive,
                 SavedPropertiesTypeCacheInjectionPatch.UsesDeterministicNetIdTable,
+                ContentModInventoryPayloadCodec.Encode(ContentModLoadOrderInventory.BuildRuntimeLoadedInventory()),
                 ContentModInventoryPayloadCodec.Encode(ContentModLoadOrderInventory.BuildRuntimeRelevantInventory()),
                 ProgressDiagnosticsSnapshot.CreateLocal());
         }
@@ -98,7 +100,7 @@ namespace STS2RitsuLib.Networking.StateDivergence
         {
             try
             {
-                if (version != 1 && version != 2 && version != PayloadVersion)
+                if (version != 1 && version != 2 && version != 3 && version != PayloadVersion)
                 {
                     RitsuLibFramework.Logger.Warn(
                         $"[State divergence diagnostics] Unsupported supplement payload version: {version}");
@@ -183,6 +185,7 @@ namespace STS2RitsuLib.Networking.StateDivergence
                 payload.SavedPropertyNetIdBitSize,
                 payload.SavedPropertyMapHash,
                 payload.SavedPropertyNames,
+                null,
                 null,
                 null,
                 payload.ContentMods == null ? null : ContentModInventoryPayloadCodec.Encode(payload.ContentMods),
