@@ -1,3 +1,4 @@
+using Godot;
 using MegaCrit.Sts2.Core.Nodes.Screens.CardLibrary;
 
 namespace STS2RitsuLib.CardPiles
@@ -60,6 +61,54 @@ namespace STS2RitsuLib.CardPiles
         ///     可选查看界面的初始排序优先级。null 使用牌堆正序。
         /// </summary>
         public IReadOnlyList<SortingOrders>? DefaultSorting { get; init; }
+
+        /// <summary>
+        ///     Optional texture path for the sort/upgrade toolbar background. Null uses the vanilla deck-view
+        ///     tab texture.
+        ///     排序/升级工具栏背景的可选贴图路径。null 使用原版牌组查看的 tab 贴图。
+        /// </summary>
+        public string? ToolbarBackgroundTexturePath { get; init; }
+
+        /// <summary>
+        ///     Optional material applied to the toolbar background texture.
+        ///     应用到工具栏背景贴图上的可选材质。
+        /// </summary>
+        public Material? ToolbarBackgroundMaterial { get; init; }
+
+        /// <summary>
+        ///     Optional runtime material provider for the toolbar background. When non-null, it takes
+        ///     precedence over <see cref="ToolbarBackgroundMaterial" />.
+        ///     工具栏背景的可选运行时材质 provider。非 null 时优先于 <see cref="ToolbarBackgroundMaterial" />。
+        /// </summary>
+        public Func<ModCardPileViewStyleContext, Material?>? ToolbarBackgroundMaterialProvider { get; init; }
+
+        /// <summary>
+        ///     Optional HSV shader material used to hue sort buttons, matching vanilla
+        ///     <c>NCardViewSortButton.SetHue</c> semantics.
+        ///     用于给排序按钮染色的可选 HSV shader 材质，语义与原版
+        ///     <c>NCardViewSortButton.SetHue</c> 一致。
+        /// </summary>
+        public ShaderMaterial? SortButtonHueMaterial { get; init; }
+
+        /// <summary>
+        ///     Optional runtime provider for the sort-button hue material. When non-null, it takes
+        ///     precedence over <see cref="SortButtonHueMaterial" />.
+        ///     排序按钮 hue 材质的可选运行时 provider。非 null 时优先于
+        ///     <see cref="SortButtonHueMaterial" />。
+        /// </summary>
+        public Func<ModCardPileViewStyleContext, ShaderMaterial?>? SortButtonHueMaterialProvider { get; init; }
+
+        /// <summary>
+        ///     Optional text color for the upgrade-preview toggle label.
+        ///     升级预览开关标签的可选文字颜色。
+        /// </summary>
+        public Color? UpgradePreviewLabelColor { get; init; }
+
+        /// <summary>
+        ///     Optional outline color for the upgrade-preview toggle label.
+        ///     升级预览开关标签的可选描边颜色。
+        /// </summary>
+        public Color? UpgradePreviewLabelOutlineColor { get; init; }
 
         internal bool HasAnyCapability => EnableCardInspect || EnableUpgradePreviewToggle || EnableSortBar;
 

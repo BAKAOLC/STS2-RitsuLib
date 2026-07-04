@@ -69,10 +69,11 @@ namespace STS2RitsuLib.CardPiles.Patches
         NButton backButton)
     {
         private const string SortButtonScenePath = "res://scenes/screens/deck_view_screen/deck_view_sort_button.tscn";
-        private const string SortBarTexturePath = "res://images/ui/color_tab_bar.png";
+        private const string DefaultSortBarTexturePath = "res://images/ui/color_tab_bar.png";
         private const string TickboxScenePath = "res://scenes/ui/tickbox.tscn";
 
         private readonly List<SortingOrders> _sortingPriority = view.CreateDefaultSorting();
+        private ModCardPileViewStyleContext StyleContext => new(definition, screen.Pile, screen);
 
         public void Install()
         {
@@ -175,7 +176,9 @@ namespace STS2RitsuLib.CardPiles.Patches
                 return new TextureRect
                 {
                     Name = $"RitsuLibCardPileViewToolbarBg_{definition.Id}",
-                    Texture = PreloadManager.Cache.GetAsset<Texture2D>(SortBarTexturePath),
+                    Texture = PreloadManager.Cache.GetAsset<Texture2D>(
+                        view.ToolbarBackgroundTexturePath ?? DefaultSortBarTexturePath),
+                    Material = ResolveToolbarBackgroundMaterial(),
                     MouseFilter = Control.MouseFilterEnum.Ignore,
                     ExpandMode = TextureRect.ExpandModeEnum.IgnoreSize,
                     AnchorLeft = 0.5f,
@@ -206,6 +209,7 @@ namespace STS2RitsuLib.CardPiles.Patches
 
                 toolbar.AddChild(button);
                 SetSortButtonLabel(button, GetSortLabel(option));
+                SetSortButtonHue(button);
                 button.Connect(NClickableControl.SignalName.Released,
                     Callable.From<NButton>(_ => OnSortReleased(option, button)));
             }
@@ -235,6 +239,18 @@ namespace STS2RitsuLib.CardPiles.Patches
                 button.SetLabel(label);
             else
                 Callable.From(() => button.SetLabel(label)).CallDeferred();
+        }
+
+        private void SetSortButtonHue(NCardViewSortButton button)
+        {
+            var material = ResolveSortButtonHueMaterial();
+            if (material == null)
+                return;
+
+            if (button.IsNodeReady())
+                button.SetHue(material);
+            else
+                Callable.From(() => button.SetHue(material)).CallDeferred();
         }
 
         private void OnSortReleased(ModCardPileSortOption option, NCardViewSortButton button)
@@ -272,6 +288,10 @@ namespace STS2RitsuLib.CardPiles.Patches
                     VerticalAlignment = VerticalAlignment.Center,
                 };
                 label.SetTextAutoSize(new LocString("gameplay_ui", "VIEW_UPGRADES").GetFormattedText());
+                if (view.UpgradePreviewLabelColor is { } labelColor)
+                    label.AddThemeColorOverride("font_color", labelColor);
+                if (view.UpgradePreviewLabelOutlineColor is { } outlineColor)
+                    label.AddThemeColorOverride("font_outline_color", outlineColor);
                 toggle.AddChild(label);
 
                 toolbar.AddChild(toggle);
@@ -300,6 +320,40 @@ namespace STS2RitsuLib.CardPiles.Patches
             };
 
             return new LocString("gameplay_ui", key).GetRawText();
+        }
+
+        private Material? ResolveToolbarBackgroundMaterial()
+        {
+            if (view.ToolbarBackgroundMaterialProvider == null)
+                return view.ToolbarBackgroundMaterial;
+
+            try
+            {
+                return view.ToolbarBackgroundMaterialProvider(StyleContext) ?? view.ToolbarBackgroundMaterial;
+            }
+            catch (Exception ex)
+            {
+                RitsuLibFramework.Logger.Warn(
+                    $"[CardPiles] ToolbarBackgroundMaterialProvider for '{definition.Id}' threw: {ex.Message}");
+                return view.ToolbarBackgroundMaterial;
+            }
+        }
+
+        private ShaderMaterial? ResolveSortButtonHueMaterial()
+        {
+            if (view.SortButtonHueMaterialProvider == null)
+                return view.SortButtonHueMaterial;
+
+            try
+            {
+                return view.SortButtonHueMaterialProvider(StyleContext) ?? view.SortButtonHueMaterial;
+            }
+            catch (Exception ex)
+            {
+                RitsuLibFramework.Logger.Warn(
+                    $"[CardPiles] SortButtonHueMaterialProvider for '{definition.Id}' threw: {ex.Message}");
+                return view.SortButtonHueMaterial;
+            }
         }
     }
 }
