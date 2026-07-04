@@ -43,7 +43,6 @@ namespace STS2RitsuLib.Settings
                 T("button.open", "Open"),
                 T("ritsulib.modSourceHoverTips.pageLink.description",
                     "Choose which content groups show source hover tips."));
-#if !STS2_AT_LEAST_0_108_0
             section.AddSubpage(
                 "category_content_load_order_open",
                 T("ritsulib.contentModLoadOrder.pageLink.label", "Content mod load order"),
@@ -51,7 +50,6 @@ namespace STS2RitsuLib.Settings
                 T("button.open", "Open"),
                 T("ritsulib.contentModLoadOrder.pageLink.description",
                     "Sort, copy, or apply the saved load order for relevant content mods, framework libraries, and dependencies."));
-#endif
             section.AddSubpage(
                 "category_toast_open",
                 T("ritsulib.toast.pageLink.label", "Toast notifications"),
