@@ -13,11 +13,13 @@ namespace STS2RitsuLib.Networking.StateDivergence.Patches
     {
         public static readonly ConditionalWeakTable<NErrorPopup, StateDivergenceDiagnosticReport> PopupReports = new();
         private static StateDivergenceDiagnosticReport? _latestReport;
+        private static StateDivergenceDiagnosticReport? _latestLogReport;
         private static bool _latestReportLogged;
 
-        public static void Store(StateDivergenceDiagnosticReport report)
+        public static void Store(StateDivergenceDiagnosticReport report, StateDivergenceDiagnosticReport logReport)
         {
             _latestReport = report;
+            _latestLogReport = logReport;
             _latestReportLogged = false;
         }
 
@@ -29,7 +31,7 @@ namespace STS2RitsuLib.Networking.StateDivergence.Patches
 
         public static void TryLogLatestToGameLog(string trigger)
         {
-            if (_latestReport == null || _latestReportLogged)
+            if (_latestLogReport == null || _latestReportLogged)
                 return;
 
             _latestReportLogged = true;
@@ -37,7 +39,7 @@ namespace STS2RitsuLib.Networking.StateDivergence.Patches
             {
                 RitsuLibFramework.Logger.ErrorNoTrace(
                     $"[State divergence diagnostics report: {trigger}]\n" +
-                    StateDivergenceDiagnosticsPanel.BuildExportReport(_latestReport));
+                    StateDivergenceDiagnosticsPanel.BuildExportReport(_latestLogReport));
             }
             catch (Exception ex)
             {
@@ -121,8 +123,16 @@ namespace STS2RitsuLib.Networking.StateDivergence.Patches
                     return;
 
                 var role = TryReadRole(__instance);
-                var report = StateDivergenceDiagnosticReportBuilder.Build(local, message, remoteId, role);
-                StateDivergenceDiagnosticsReports.Store(report);
+                var localSupplement = StateDivergenceSupplementPayloadCodec.CreateLocalSnapshot(local.Checksum);
+                var hasRemoteSupplement =
+                    StateDivergenceSupplementStore.TryTake(message.senderChecksum, out var remoteSupplement);
+                var activeRemoteSupplement = hasRemoteSupplement ? remoteSupplement : null;
+                var report = StateDivergenceDiagnosticReportBuilder.Build(local, message, remoteId, role,
+                    localSupplement, activeRemoteSupplement);
+                using var english = StateDivergenceDiagnosticsLocalization.UseEnglish();
+                var logReport = StateDivergenceDiagnosticReportBuilder.Build(local, message, remoteId, role,
+                    localSupplement, activeRemoteSupplement);
+                StateDivergenceDiagnosticsReports.Store(report, logReport);
             }
             catch (Exception ex)
             {

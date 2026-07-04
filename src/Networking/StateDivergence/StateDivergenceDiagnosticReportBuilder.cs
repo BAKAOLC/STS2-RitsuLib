@@ -22,31 +22,43 @@ namespace STS2RitsuLib.Networking.StateDivergence
             ulong remotePeerId,
             string role)
         {
+            var localSupplement = StateDivergenceSupplementPayloadCodec.CreateLocalSnapshot(local.Checksum);
+            var hasRemoteSupplement =
+                StateDivergenceSupplementStore.TryTake(remoteMessage.senderChecksum, out var remoteSupplement);
+            return Build(local, remoteMessage, remotePeerId, role, localSupplement,
+                hasRemoteSupplement ? remoteSupplement : null);
+        }
+
+        public static StateDivergenceDiagnosticReport Build(
+            StateDivergenceTrackedState local,
+            StateDivergenceMessage remoteMessage,
+            ulong remotePeerId,
+            string role,
+            StateDivergenceSupplementPayload localSupplement,
+            StateDivergenceSupplementPayload? remoteSupplement)
+        {
             var remote = new StateDivergenceTrackedState(
                 remoteMessage.senderChecksum,
                 L("value.remoteContext", "Remote divergence message"),
                 remoteMessage.senderCombatState);
-            var localSupplement = StateDivergenceSupplementPayloadCodec.CreateLocalSnapshot(local.Checksum);
-            var hasRemoteSupplement = StateDivergenceSupplementStore.TryTake(remote.Checksum, out var remoteSupplement);
-            var activeRemoteSupplement = hasRemoteSupplement ? remoteSupplement : null;
             var hasLocalLoadedMods =
                 ContentModInventoryPayloadCodec.TryDecode(localSupplement.LoadedMods, out var localLoadedMods);
             IReadOnlyList<ContentModInventoryEntry> remoteLoadedMods = [];
-            var hasRemoteLoadedMods = hasRemoteSupplement &&
+            var hasRemoteLoadedMods = remoteSupplement != null &&
                                       ContentModInventoryPayloadCodec.TryDecode(remoteSupplement.LoadedMods,
                                           out remoteLoadedMods);
             var hasLocalContentMods =
                 ContentModInventoryPayloadCodec.TryDecode(localSupplement.ContentMods, out var localContentMods);
             IReadOnlyList<ContentModInventoryEntry> remoteContentMods = [];
-            var hasRemoteContentMods = hasRemoteSupplement &&
+            var hasRemoteContentMods = remoteSupplement != null &&
                                        ContentModInventoryPayloadCodec.TryDecode(remoteSupplement.ContentMods,
                                            out remoteContentMods);
 
             var sections = BuildSections(local, remote, remotePeerId, role, localSupplement,
-                activeRemoteSupplement, hasLocalLoadedMods ? localLoadedMods : [], remoteLoadedMods,
+                remoteSupplement, hasLocalLoadedMods ? localLoadedMods : [], remoteLoadedMods,
                 hasLocalLoadedMods, hasRemoteLoadedMods, false);
             var exportSections = BuildSections(local, remote, remotePeerId, role, localSupplement,
-                activeRemoteSupplement, hasLocalLoadedMods ? localLoadedMods : [], remoteLoadedMods,
+                remoteSupplement, hasLocalLoadedMods ? localLoadedMods : [], remoteLoadedMods,
                 hasLocalLoadedMods, hasRemoteLoadedMods, true);
             var issueCount = sections.Where(s => s.ContributesToIssueCount).Sum(s => s.Rows.Count);
             if (issueCount == 0)
@@ -66,8 +78,8 @@ namespace STS2RitsuLib.Networking.StateDivergence
                     localSupplement.ModelDbHashUsesDeterministicCache,
                     localSupplement.SavedPropertyNetIdUsesDeterministicSort),
                 new(remote.Checksum.id, remote.Checksum.checksum, remote.Context,
-                    hasRemoteSupplement ? remoteSupplement.ModelDbHashUsesDeterministicCache : null,
-                    hasRemoteSupplement ? remoteSupplement.SavedPropertyNetIdUsesDeterministicSort : null),
+                    remoteSupplement?.ModelDbHashUsesDeterministicCache,
+                    remoteSupplement?.SavedPropertyNetIdUsesDeterministicSort),
                 sections,
                 exportSections,
                 hasLocalLoadedMods ? localLoadedMods : [],
@@ -77,7 +89,7 @@ namespace STS2RitsuLib.Networking.StateDivergence
                 hasRemoteContentMods ? remoteContentMods : [],
                 hasRemoteContentMods,
                 localSupplement.Progress,
-                hasRemoteSupplement ? remoteSupplement.Progress : null,
+                remoteSupplement?.Progress,
                 local.FullState.ToString(),
                 remote.FullState.ToString());
         }

@@ -6,6 +6,8 @@ namespace STS2RitsuLib.Networking.StateDivergence
 {
     internal static class StateDivergenceDiagnosticsLocalization
     {
+        private static readonly AsyncLocal<bool> ForceEnglish = new();
+
         private static readonly Lazy<I18N> InstanceFactory = new(() => new(
             "RitsuLib-StateDivergenceDiagnostics",
             resourceFolders: ["STS2RitsuLib.Settings.Localization.StateDivergence"],
@@ -13,7 +15,7 @@ namespace STS2RitsuLib.Networking.StateDivergence
 
         public static string Get(string key, string fallback)
         {
-            return InstanceFactory.Value.Get(key, fallback);
+            return ForceEnglish.Value ? fallback : InstanceFactory.Value.Get(key, fallback);
         }
 
         public static string Format(string key, string fallback, params object?[] args)
@@ -26,6 +28,21 @@ namespace STS2RitsuLib.Networking.StateDivergence
             catch (FormatException)
             {
                 return string.Format(CultureInfo.InvariantCulture, fallback, args);
+            }
+        }
+
+        public static IDisposable UseEnglish()
+        {
+            var previous = ForceEnglish.Value;
+            ForceEnglish.Value = true;
+            return new EnglishScope(previous);
+        }
+
+        private sealed class EnglishScope(bool previous) : IDisposable
+        {
+            public void Dispose()
+            {
+                ForceEnglish.Value = previous;
             }
         }
     }
