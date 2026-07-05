@@ -182,6 +182,7 @@ namespace STS2RitsuLib.Models.Capabilities.Patches
             }
         }
 
+#if STS2_AT_LEAST_0_108_0
         internal sealed class OrbModelTriggerPassivePatch : IPatchMethod
         {
             public static string PatchId => "ritsulib_orb_capability_trigger_passive";
@@ -217,6 +218,7 @@ namespace STS2RitsuLib.Models.Capabilities.Patches
                         nameof(RunPassiveWithCapability)));
             }
         }
+#endif
 
         internal sealed class AfterOrbEvokedHookPatch : IPatchMethod
         {

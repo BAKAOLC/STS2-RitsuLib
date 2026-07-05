@@ -398,7 +398,9 @@ namespace STS2RitsuLib
             patcher.RegisterPatch<OrbModelCapabilityPatches.OrbQueueBeforeTurnEndPatch>();
             patcher.RegisterPatch<OrbModelCapabilityPatches.OrbQueueAfterTurnStartPatch>();
             patcher.RegisterPatch<OrbModelCapabilityPatches.OrbCmdPassivePatch>();
+#if STS2_AT_LEAST_0_108_0
             patcher.RegisterPatch<OrbModelCapabilityPatches.OrbModelTriggerPassivePatch>();
+#endif
             patcher.RegisterPatch<OrbModelCapabilityPatches.AfterOrbEvokedHookPatch>();
             patcher.RegisterPatch<CardModelCapabilityPatches.UpdateDynamicVarPreviewPatch>();
             patcher.RegisterPatch<CardModelCapabilityPatches.TitlePatch>();
