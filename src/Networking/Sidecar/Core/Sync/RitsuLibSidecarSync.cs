@@ -81,9 +81,10 @@ namespace STS2RitsuLib.Networking.Sidecar
             NetTransferMode mode,
             int channel)
         {
+            var compression = RitsuLibSidecarPayloadCompressionSelector.ForPeer(opcode, payload, client.HostNetId);
             return RitsuLibSidecarSend.TrySendToHost(
                 client,
-                CreateEnvelope(opcode, payload, mode),
+                CreateEnvelope(opcode, payload, mode, compression),
                 mode,
                 channel);
         }
@@ -96,10 +97,11 @@ namespace STS2RitsuLib.Networking.Sidecar
             NetTransferMode mode,
             int channel)
         {
+            var compression = RitsuLibSidecarPayloadCompressionSelector.ForPeer(opcode, payload, peerNetId);
             return RitsuLibSidecarSend.TrySendToPeer(
                 host,
                 peerNetId,
-                CreateEnvelope(opcode, payload, mode),
+                CreateEnvelope(opcode, payload, mode, compression),
                 mode,
                 channel);
         }
@@ -122,9 +124,14 @@ namespace STS2RitsuLib.Networking.Sidecar
                 return false;
             }
 
-            var envelope = CreateEnvelope(opcode, payload, mode);
+            var targetPeers = RitsuLibSidecarSyncMessages.TargetPeers(host, excludePeerId, scope).ToArray();
+            var compression = RitsuLibSidecarPayloadCompressionSelector.ForPeers(
+                opcode,
+                payload,
+                targetPeers.Select(peer => peer.peerId));
+            var envelope = CreateEnvelope(opcode, payload, mode, compression);
 
-            return (from peer in RitsuLibSidecarSyncMessages.TargetPeers(host, excludePeerId, scope)
+            return (from peer in targetPeers
                 where failurePolicy != RitsuLibSidecarSyncFailurePolicy.BestEffort ||
                       RitsuLibSidecarSessionManager.CanSendToPeer(peer.peerId)
                 select RitsuLibSidecarSend.TrySendToPeer(host, peer.peerId, envelope, mode, channel)).Aggregate(true,
@@ -371,12 +378,17 @@ namespace STS2RitsuLib.Networking.Sidecar
             }
         }
 
-        private static byte[] CreateEnvelope(ulong opcode, ReadOnlySpan<byte> payload, NetTransferMode mode)
+        private static byte[] CreateEnvelope(
+            ulong opcode,
+            ReadOnlySpan<byte> payload,
+            NetTransferMode mode,
+            RitsuLibSidecarPayloadCompression compression)
         {
-            return RitsuLibSidecar.CreateEnvelopeWithDelivery(
+            return RitsuLibSidecar.CreateEnvelopeWithDeliveryCompressed(
                 opcode,
                 payload,
-                DeliveryFor(mode));
+                DeliveryFor(mode),
+                compression);
         }
 
         private static RitsuLibSidecarDeliverySemantics DeliveryFor(NetTransferMode mode)

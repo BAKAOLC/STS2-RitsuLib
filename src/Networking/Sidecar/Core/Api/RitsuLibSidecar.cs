@@ -53,6 +53,26 @@ namespace STS2RitsuLib.Networking.Sidecar
         }
 
         /// <summary>
+        ///     Builds an envelope with an explicit payload compression mode.
+        ///     使用显式 payload 压缩模式构建 envelope。
+        /// </summary>
+        public static byte[] CreateEnvelopeCompressed(
+            ulong opcode,
+            ReadOnlySpan<byte> payload,
+            RitsuLibSidecarPayloadCompression compression,
+            RitsuLibSidecarWireFlags extraFlags = RitsuLibSidecarWireFlags.None,
+            ReadOnlySpan<byte> headerExtension = default)
+        {
+            return RitsuLibSidecarEnvelope.Build(
+                RitsuLibSidecarWire.CurrentWireFormatVersion,
+                extraFlags,
+                opcode,
+                headerExtension,
+                payload,
+                compression);
+        }
+
+        /// <summary>
         ///     Builds an envelope with a 1-byte delivery tag plus optional <paramref name="additionalHeaderExtension" />.
         ///     <see cref="RitsuLibSidecarDeliverySemantics.Unspecified" /> omits the tag; extension is only
         ///     <paramref name="additionalHeaderExtension" />.
@@ -103,6 +123,27 @@ namespace STS2RitsuLib.Networking.Sidecar
             ext[0] = (byte)delivery;
             additionalHeaderExtension.CopyTo(ext.AsSpan(1));
             return CreateEnvelope(opcode, payload, extraFlags, gzipPayload, ext);
+        }
+
+        /// <summary>
+        ///     Builds an envelope with delivery metadata and an explicit payload compression mode.
+        ///     使用投递元数据和显式 payload 压缩模式构建 envelope。
+        /// </summary>
+        public static byte[] CreateEnvelopeWithDeliveryCompressed(
+            ulong opcode,
+            ReadOnlySpan<byte> payload,
+            RitsuLibSidecarDeliverySemantics delivery,
+            RitsuLibSidecarPayloadCompression compression,
+            RitsuLibSidecarWireFlags extraFlags = RitsuLibSidecarWireFlags.None,
+            ReadOnlySpan<byte> additionalHeaderExtension = default)
+        {
+            if (delivery is RitsuLibSidecarDeliverySemantics.Unspecified)
+                return CreateEnvelopeCompressed(opcode, payload, compression, extraFlags, additionalHeaderExtension);
+
+            var ext = new byte[1 + additionalHeaderExtension.Length];
+            ext[0] = (byte)delivery;
+            additionalHeaderExtension.CopyTo(ext.AsSpan(1));
+            return CreateEnvelopeCompressed(opcode, payload, compression, extraFlags, ext);
         }
     }
 }

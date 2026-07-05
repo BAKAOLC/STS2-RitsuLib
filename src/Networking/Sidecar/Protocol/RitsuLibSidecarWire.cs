@@ -28,13 +28,13 @@ namespace STS2RitsuLib.Networking.Sidecar
         ///     Wire format version written by <see cref="RitsuLibSidecar.CreateEnvelope" />.
         ///     <see cref="RitsuLibSidecar.CreateEnvelope" /> 写入的线格式版本。
         /// </summary>
-        public const ushort CurrentWireFormatVersion = 1;
+        public const ushort CurrentWireFormatVersion = 2;
 
         /// <summary>
         ///     Highest wire format this library accepts.
         ///     此库接受的最高线格式版本。
         /// </summary>
-        public const ushort SupportedWireFormatVersionMax = 1;
+        public const ushort SupportedWireFormatVersionMax = 2;
 
         /// <summary>
         ///     Maximum logical payload size (after gzip decompress).

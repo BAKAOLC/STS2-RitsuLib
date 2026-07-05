@@ -113,18 +113,21 @@ namespace STS2RitsuLib.Unlocks
             }
         }
 
-        internal static string[] GetObtainedRequiredEpochIds(ProgressState progress)
+        internal static string[] GetEffectiveRequiredEpochIds(ProgressState progress)
         {
             ArgumentNullException.ThrowIfNull(progress);
 
-            string[] epochIds;
+            KeyValuePair<ModelId, string>[] requirements;
             lock (SyncRoot)
             {
-                epochIds = [.. RequiredEpochsByModelId.Values.Distinct(StringComparer.Ordinal)];
+                requirements = [.. RequiredEpochsByModelId];
             }
 
-            return epochIds
-                .Where(progress.IsEpochObtained)
+            return requirements
+                .Where(entry => progress.IsEpochObtained(entry.Value) ||
+                                IsEpochRequirementIgnoredForModelId(entry.Key))
+                .Select(static entry => entry.Value)
+                .Distinct(StringComparer.Ordinal)
                 .ToArray();
         }
 
@@ -133,7 +136,7 @@ namespace STS2RitsuLib.Unlocks
             ArgumentNullException.ThrowIfNull(unlockState);
             ArgumentNullException.ThrowIfNull(progress);
 
-            var obtainedRequiredEpochIds = GetObtainedRequiredEpochIds(progress);
+            var obtainedRequiredEpochIds = GetEffectiveRequiredEpochIds(progress);
             if (obtainedRequiredEpochIds.Length == 0)
                 return unlockState;
 
@@ -145,6 +148,12 @@ namespace STS2RitsuLib.Unlocks
             return changed
                 ? new(unlockedEpochs, serializable.EncountersSeen, serializable.NumberOfRuns)
                 : unlockState;
+        }
+
+        private static bool IsEpochRequirementIgnoredForModelId(ModelId modelId)
+        {
+            var model = ModelDb.GetByIdOrNull<AbstractModel>(modelId);
+            return model != null && IsEpochRequirementIgnoredForModelType(model.GetType());
         }
 
         /// <summary>

@@ -106,35 +106,39 @@ namespace STS2RitsuLib.Interop.AutoRegistration
         private static IEnumerable<AutoRegistrationOperation> BuildOperations(Type type,
             IReadOnlyDictionary<string, Assembly> modAssembliesByManifestId)
         {
-            var ownerModId = ResolveOwnerModId(type, modAssembliesByManifestId);
-            if (ownerModId == null)
-                return [];
-
-            var contentRegistry = ModContentRegistry.For(ownerModId);
-            var keywordRegistry = ModKeywordRegistry.For(ownerModId);
-            var timelineRegistry = RitsuLibFramework.GetTimelineRegistry(ownerModId);
-            var unlockRegistry = RitsuLibFramework.GetUnlockRegistry(ownerModId);
-            var cardTagRegistry = RitsuLibFramework.GetCardTagRegistry(ownerModId);
-            var packContext = new ModContentPackContext(
-                ownerModId,
-                contentRegistry,
-                keywordRegistry,
-                timelineRegistry,
-                unlockRegistry,
-                cardTagRegistry);
             var operations = new List<AutoRegistrationOperation>();
             var signatures = new HashSet<string>(StringComparer.Ordinal);
 
             foreach (var attribute in type.GetCustomAttributes(false).OfType<Attribute>())
-                Append(attribute, false);
+                Append(attribute, type, false);
 
-            foreach (var attribute in EnumerateInheritedRegistrationAttributes(type))
-                Append(attribute, true);
+            foreach (var attributeSource in EnumerateInheritedRegistrationAttributes(type))
+                Append(attributeSource.Attribute, attributeSource.DeclaringType, true);
 
             return operations;
 
-            void Append(Attribute attribute, bool inherited)
+            void Append(Attribute attribute, Type attributeDeclaringType, bool inherited)
             {
+                if (attribute is not AutoRegistrationAttribute)
+                    return;
+
+                var ownerModId = ResolveOwnerModId(type, attributeDeclaringType, modAssembliesByManifestId);
+                if (ownerModId == null)
+                    return;
+
+                var contentRegistry = ModContentRegistry.For(ownerModId);
+                var keywordRegistry = ModKeywordRegistry.For(ownerModId);
+                var timelineRegistry = RitsuLibFramework.GetTimelineRegistry(ownerModId);
+                var unlockRegistry = RitsuLibFramework.GetUnlockRegistry(ownerModId);
+                var cardTagRegistry = RitsuLibFramework.GetCardTagRegistry(ownerModId);
+                var packContext = new ModContentPackContext(
+                    ownerModId,
+                    contentRegistry,
+                    keywordRegistry,
+                    timelineRegistry,
+                    unlockRegistry,
+                    cardTagRegistry);
+
                 switch (attribute)
                 {
                     case RegisterCardAttribute registerCard:
@@ -1093,14 +1097,14 @@ namespace STS2RitsuLib.Interop.AutoRegistration
             }
         }
 
-        private static IEnumerable<Attribute> EnumerateInheritedRegistrationAttributes(Type type)
+        private static IEnumerable<AutoRegistrationAttributeSource> EnumerateInheritedRegistrationAttributes(Type type)
         {
             ArgumentNullException.ThrowIfNull(type);
 
             for (var baseType = type.BaseType; baseType != null; baseType = baseType.BaseType)
                 foreach (var attribute in baseType.GetCustomAttributes(false).OfType<Attribute>())
                     if (attribute is AutoRegistrationAttribute { Inherit: true })
-                        yield return attribute;
+                        yield return new(attribute, baseType);
         }
 
         private static AutoRegistrationOperation CreateOperation(string ownerModId, Type sourceType,
@@ -1439,10 +1443,12 @@ namespace STS2RitsuLib.Interop.AutoRegistration
             return (Node)method.MakeGenericMethod(nodeType).Invoke(null, [scenePath])!;
         }
 
-        private static string? ResolveOwnerModId(Type type,
+        private static string? ResolveOwnerModId(
+            Type type,
+            Type attributeDeclaringType,
             IReadOnlyDictionary<string, Assembly> modAssembliesByManifestId)
         {
-            var typeOverride = type.GetCustomAttribute<RitsuLibOwnedByAttribute>(false);
+            var typeOverride = attributeDeclaringType.GetCustomAttribute<RitsuLibOwnedByAttribute>(false);
             if (typeOverride != null)
                 return typeOverride.ModId;
 
@@ -1582,6 +1588,8 @@ namespace STS2RitsuLib.Interop.AutoRegistration
             if (value <= 0)
                 throw new ArgumentOutOfRangeException(paramName, value, "Value must be positive.");
         }
+
+        private readonly record struct AutoRegistrationAttributeSource(Attribute Attribute, Type DeclaringType);
 
         private readonly record struct OperationPriority(AutoRegistrationOperation Operation)
             : IComparable<OperationPriority>

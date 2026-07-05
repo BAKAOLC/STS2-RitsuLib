@@ -4,6 +4,7 @@ using CombatStateLike = MegaCrit.Sts2.Core.Combat.CombatState;
 using CombatStateLike = MegaCrit.Sts2.Core.Combat.ICombatState;
 #endif
 using MegaCrit.Sts2.Core.Entities.Players;
+using MegaCrit.Sts2.Core.Hooks;
 using MegaCrit.Sts2.Core.Models;
 using STS2RitsuLib.Cards.FreePlay;
 using STS2RitsuLib.Models;
@@ -1153,9 +1154,10 @@ namespace STS2RitsuLib.Combat.SecondaryResources
             }
 
             var xBase = Math.Max(0, available);
+            var nativeXValue = Hook.ModifyXValue(combatState, card, xBase);
             var xValue = SecondaryResourceHook.ModifyXValue(
                 new(combatState, player, card, definition, xBase),
-                xBase);
+                nativeXValue);
             xValue = Math.Max(0, xValue) * cost.XMultiplier;
             var xActivated = isRequired || isFree || available > 0;
             var amountToSpendForX = isFree || !xActivated ? 0 : available;

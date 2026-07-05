@@ -14,12 +14,20 @@ namespace STS2RitsuLib.Networking.StateDivergence.Patches
         public static readonly ConditionalWeakTable<NErrorPopup, StateDivergenceDiagnosticReport> PopupReports = new();
         private static StateDivergenceDiagnosticReport? _latestReport;
         private static StateDivergenceDiagnosticReport? _latestLogReport;
+        private static string? _latestBundlePath;
+        private static string? _latestBundleError;
         private static bool _latestReportLogged;
 
-        public static void Store(StateDivergenceDiagnosticReport report, StateDivergenceDiagnosticReport logReport)
+        public static void Store(
+            StateDivergenceDiagnosticReport report,
+            StateDivergenceDiagnosticReport logReport,
+            string? bundlePath,
+            string? bundleError)
         {
             _latestReport = report;
             _latestLogReport = logReport;
+            _latestBundlePath = bundlePath;
+            _latestBundleError = bundleError;
             _latestReportLogged = false;
         }
 
@@ -37,9 +45,15 @@ namespace STS2RitsuLib.Networking.StateDivergence.Patches
             _latestReportLogged = true;
             try
             {
+                if (!string.IsNullOrWhiteSpace(_latestBundlePath))
+                {
+                    RitsuLibFramework.Logger.ErrorNoTrace(
+                        $"[State divergence diagnostics: {trigger}] Diagnostic bundle written: {_latestBundlePath}");
+                    return;
+                }
+
                 RitsuLibFramework.Logger.ErrorNoTrace(
-                    $"[State divergence diagnostics report: {trigger}]\n" +
-                    StateDivergenceDiagnosticsPanel.BuildExportReport(_latestLogReport));
+                    $"[State divergence diagnostics: {trigger}] Failed to write diagnostic bundle: {_latestBundleError ?? "unknown error"}");
             }
             catch (Exception ex)
             {
@@ -111,7 +125,7 @@ namespace STS2RitsuLib.Networking.StateDivergence.Patches
             return [new(typeof(ChecksumTracker), "LogStateDivergence")];
         }
 
-        public static void Postfix(
+        public static void Prefix(
             ChecksumTracker __instance,
             object localChecksum,
             StateDivergenceMessage message,
@@ -127,12 +141,35 @@ namespace STS2RitsuLib.Networking.StateDivergence.Patches
                 var hasRemoteSupplement =
                     StateDivergenceSupplementStore.TryTake(message.senderChecksum, out var remoteSupplement);
                 var activeRemoteSupplement = hasRemoteSupplement ? remoteSupplement : null;
+                if (string.Equals(role, "Client", StringComparison.Ordinal))
+                    StateDivergenceSupplementPayloadCodec.PrepareOutgoingSnapshot(localSupplement);
+
                 var report = StateDivergenceDiagnosticReportBuilder.Build(local, message, remoteId, role,
                     localSupplement, activeRemoteSupplement);
                 using var english = StateDivergenceDiagnosticsLocalization.UseEnglish();
                 var logReport = StateDivergenceDiagnosticReportBuilder.Build(local, message, remoteId, role,
                     localSupplement, activeRemoteSupplement);
-                StateDivergenceDiagnosticsReports.Store(report, logReport);
+                StateDivergenceLogBundleWriter.TryWrite(
+                    logReport,
+                    localSupplement.RecentLogs,
+                    activeRemoteSupplement?.RecentLogs,
+                    "LogStateDivergence",
+                    out var bundlePath,
+                    out var bundleFileName,
+                    out var bundleError);
+                report = report with
+                {
+                    BundleFileName = bundleFileName,
+                    BundlePath = bundlePath,
+                    BundleError = bundleError,
+                };
+                logReport = logReport with
+                {
+                    BundleFileName = bundleFileName,
+                    BundlePath = bundlePath,
+                    BundleError = bundleError,
+                };
+                StateDivergenceDiagnosticsReports.Store(report, logReport, bundlePath, bundleError);
             }
             catch (Exception ex)
             {

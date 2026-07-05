@@ -190,12 +190,13 @@ namespace STS2RitsuLib.Networking.StateDivergence
                         "The remote peer did not include the full loaded-mod inventory added by this RitsuLib version.")));
             }
 
-            rows.Add(new(
-                "loadedMods.fullList",
-                FormatLoadedModInventory(local, hasLocal),
-                FormatLoadedModInventory(remote, hasRemote),
-                L("detail.loadedModsFullList",
-                    "Complete mod inventory in the game's current runtime load order.")));
+            if (includeMatching)
+                rows.Add(new(
+                    "loadedMods.fullList",
+                    FormatLoadedModInventory(local, hasLocal),
+                    FormatLoadedModInventory(remote, hasRemote),
+                    L("detail.loadedModsFullList",
+                        "Complete mod inventory in the game's current runtime load order.")));
 
             return new(
                 L("section.loadedMods.title", "Loaded mods"),

@@ -117,11 +117,40 @@ namespace STS2RitsuLib.Unlocks.Patches
                 }
 
                 var stats = progress.GetStatsForCharacter(prerequisiteId);
-                if (stats is not { TotalWins: > 0 } && stats is not { TotalLosses: > 0 })
+                if (!HasAnyPrerequisiteCharacterProgress(stats))
                     continue;
 
                 yield return new(epoch.Id, character.Id);
             }
+        }
+
+        private static bool HasAnyPrerequisiteCharacterProgress(CharacterStats? stats)
+        {
+            return stats is
+                {
+                    TotalWins: > 0,
+                } or
+                {
+                    TotalLosses: > 0,
+                } or
+                {
+                    MaxAscension: > 0,
+                } or
+                {
+                    PreferredAscension: > 0,
+                } or
+                {
+                    Playtime: > 0,
+                } or
+                {
+                    FastestWinTime: >= 0,
+                } or
+                {
+                    BestWinStreak: > 0,
+                } or
+                {
+                    CurrentWinStreak: > 0,
+                };
         }
 
         private static bool TryGetCharacterUnlockType(Type epochType, out Type characterType)

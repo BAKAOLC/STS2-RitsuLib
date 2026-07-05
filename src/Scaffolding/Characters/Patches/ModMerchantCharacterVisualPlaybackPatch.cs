@@ -53,7 +53,10 @@ namespace STS2RitsuLib.Scaffolding.Characters.Patches
                 return true;
 
             var worldCues = TryGetMerchantWorldCueSet(character);
-            return !ModCreatureVisualPlayback.TryPlayOnVisualRoot(__instance, character, anim, loop, worldCues);
+            if (ModCreatureVisualPlayback.TryPlayOnVisualRoot(__instance, character, anim, loop, worldCues))
+                return false;
+
+            return !isRitsuMerchantVisual;
         }
 
         internal static void RegisterRitsuMerchantVisual(NMerchantCharacter visual, CharacterModel character)
