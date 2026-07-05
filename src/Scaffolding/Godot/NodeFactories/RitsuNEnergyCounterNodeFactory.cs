@@ -3,6 +3,7 @@ using Godot.Collections;
 using MegaCrit.Sts2.addons.mega_text;
 using MegaCrit.Sts2.Core.Assets;
 using MegaCrit.Sts2.Core.Nodes.Combat;
+using MegaCrit.Sts2.Core.Nodes.GodotExtensions;
 using MegaCrit.Sts2.Core.Nodes.Vfx.Utilities;
 
 namespace STS2RitsuLib.Scaffolding.Godot.NodeFactories
@@ -54,6 +55,9 @@ namespace STS2RitsuLib.Scaffolding.Godot.NodeFactories
             }
 
             TransferAndCreateNodes(target, source);
+
+            foreach (var container in target.GetChildrenRecursive<NParticlesContainer>())
+                SetParticles(container);
         }
 
         protected override void GenerateNode(NEnergyCounter target, IRitsuGodotNodeSlot required)
@@ -64,11 +68,11 @@ namespace STS2RitsuLib.Scaffolding.Godot.NodeFactories
                     target.AddChild(CreateDefaultLabel());
                     break;
                 case "%RotationLayers":
-                {
-                    var control = CreateFullRectControl(null);
-                    target.AddUniqueChild(control, "RotationLayers");
-                    break;
-                }
+                    {
+                        var control = CreateFullRectControl(null);
+                        target.AddUniqueChild(control, "RotationLayers");
+                        break;
+                    }
                 case "%EnergyVfxBack":
                     target.AddUniqueChild(CreateParticlesContainer(null, "EnergyVfxBack"));
                     break;
@@ -131,7 +135,6 @@ namespace STS2RitsuLib.Scaffolding.Godot.NodeFactories
             {
                 container.AddChild(singleParticle);
                 singleParticle.Owner = container;
-                SetParticles(container);
                 return container;
             }
 
@@ -141,7 +144,6 @@ namespace STS2RitsuLib.Scaffolding.Godot.NodeFactories
                 container.AddChild(source);
             }
 
-            SetParticles(container);
             return container;
         }
 
