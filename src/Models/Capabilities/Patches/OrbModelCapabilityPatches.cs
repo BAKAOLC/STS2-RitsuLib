@@ -3,98 +3,50 @@ using CombatStateCompat = MegaCrit.Sts2.Core.Combat.CombatState;
 #else
 using CombatStateCompat = MegaCrit.Sts2.Core.Combat.ICombatState;
 #endif
+using System.Reflection;
 using HarmonyLib;
 using MegaCrit.Sts2.Core.Commands;
-using MegaCrit.Sts2.Core.Context;
 using MegaCrit.Sts2.Core.Entities.Creatures;
 using MegaCrit.Sts2.Core.Entities.Orbs;
-using MegaCrit.Sts2.Core.Entities.Players;
 using MegaCrit.Sts2.Core.GameActions.Multiplayer;
 using MegaCrit.Sts2.Core.Hooks;
 using MegaCrit.Sts2.Core.Models;
 using STS2RitsuLib.Patching.Models;
+using STS2RitsuLib.Utils.HarmonyIl;
 
 namespace STS2RitsuLib.Models.Capabilities.Patches
 {
     internal static class OrbModelCapabilityPatches
     {
-        private static readonly AccessTools.FieldRef<OrbQueue, Player> OrbQueueOwner =
-            AccessTools.FieldRefAccess<OrbQueue, Player>("_owner");
+        private const string MissingOrbPatchWarning =
+            "[ModelCapabilities] Orb lifecycle patch did not find the expected awaited call site.";
 
-        private static async Task RunBeforeTurnEnd(OrbQueue orbQueue, PlayerChoiceContext choiceContext)
+        private static async Task RunBeforeTurnEndWithCapability(
+            OrbModel orb,
+            PlayerChoiceContext choiceContext)
         {
-            var owner = OrbQueueOwner(orbQueue);
-            foreach (var orb in orbQueue.Orbs.ToList())
-            {
-                if (owner.Creature.CombatState == null)
-                    return;
-
-                var triggerCount = Hook.ModifyOrbPassiveTriggerCount(
-                    owner.Creature.CombatState,
-                    orb,
-                    1,
-                    out var modifyingModels);
-                await Hook.AfterModifyingOrbPassiveTriggerCount(owner.Creature.CombatState, orb, modifyingModels);
-                if (owner.Creature.CombatState == null)
-                    return;
-
-                for (var i = 0; i < triggerCount; i++)
-                {
-                    await orb.BeforeTurnEndOrbTrigger(choiceContext);
-                    if (owner.Creature.CombatState == null)
-                        return;
-
-                    await ModelCapabilityHost.AfterOwnerOrbBeforeTurnEndTriggered(orb, choiceContext);
-                    await SmallWait(owner);
-                }
-            }
+            await orb.BeforeTurnEndOrbTrigger(choiceContext);
+            if (orb.Owner.Creature.CombatState != null)
+                await ModelCapabilityHost.AfterOwnerOrbBeforeTurnEndTriggered(orb, choiceContext);
         }
 
-        private static async Task RunAfterTurnStart(OrbQueue orbQueue, PlayerChoiceContext choiceContext)
+        private static async Task RunAfterTurnStartWithCapability(
+            OrbModel orb,
+            PlayerChoiceContext choiceContext)
         {
-            var owner = OrbQueueOwner(orbQueue);
-            foreach (var orb in orbQueue.Orbs.ToList())
-            {
-                if (owner.Creature.CombatState == null)
-                    return;
-
-                var triggerCount = Hook.ModifyOrbPassiveTriggerCount(
-                    owner.Creature.CombatState,
-                    orb,
-                    1,
-                    out var modifyingModels);
-                await Hook.AfterModifyingOrbPassiveTriggerCount(owner.Creature.CombatState, orb, modifyingModels);
-                if (owner.Creature.CombatState == null)
-                    return;
-
-                for (var i = 0; i < triggerCount; i++)
-                {
-                    await orb.AfterTurnStartOrbTrigger(choiceContext);
-                    if (owner.Creature.CombatState == null)
-                        return;
-
-                    await ModelCapabilityHost.AfterOwnerOrbAfterTurnStartTriggered(orb, choiceContext);
-                    await SmallWait(owner);
-                }
-            }
+            await orb.AfterTurnStartOrbTrigger(choiceContext);
+            if (orb.Owner.Creature.CombatState != null)
+                await ModelCapabilityHost.AfterOwnerOrbAfterTurnStartTriggered(orb, choiceContext);
         }
 
-        private static async Task SmallWait(Player owner)
-        {
-            if (LocalContext.IsMe(owner))
-                await Cmd.CustomScaledWait(0.1f, 0.25f);
-            else
-                await Cmd.Wait(0.05f);
-        }
-
-        private static async Task AfterExplicitPassive(
-            Task originalTask,
+        private static async Task RunPassiveWithCapability(
             OrbModel orb,
             PlayerChoiceContext choiceContext,
             Creature? target)
         {
-            await originalTask;
-            await ModelCapabilityHost.AfterOwnerOrbPassiveTriggered(orb, choiceContext, target);
+            await orb.Passive(choiceContext, target);
+            if (orb.Owner.Creature.CombatState != null)
+                await ModelCapabilityHost.AfterOwnerOrbPassiveTriggered(orb, choiceContext, target);
         }
 
         private static async Task AfterEvokeHook(
@@ -107,6 +59,29 @@ namespace STS2RitsuLib.Models.Capabilities.Patches
             await ModelCapabilityHost.AfterOwnerOrbEvoked(orb, choiceContext, targets);
         }
 
+        private static IEnumerable<CodeInstruction> RedirectSingleAwaitedCall(
+            IEnumerable<CodeInstruction> instructions,
+            string operation,
+            string patchId,
+            MethodInfo? fromMethod,
+            MethodInfo? wrapperMethod)
+        {
+            var rewriter = HarmonyIlRewriter.From(instructions);
+            if (fromMethod == null || wrapperMethod == null)
+                return rewriter.Instructions();
+
+            var report = HarmonyAsyncIl.RedirectAwaitedCalls(
+                rewriter,
+                operation,
+                fromMethod,
+                wrapperMethod,
+                code => code.Any(HarmonyIl.IsCall(wrapperMethod)));
+            if (!report.Succeeded || report.Applied != 1)
+                RitsuLibFramework.Logger.Warn($"{MissingOrbPatchWarning} Patch={patchId}. {report.Describe()}");
+
+            return rewriter.InstructionsChecked(operation);
+        }
+
         internal sealed class OrbQueueBeforeTurnEndPatch : IPatchMethod
         {
             public static string PatchId => "ritsulib_orb_capability_before_turn_end_trigger";
@@ -115,13 +90,22 @@ namespace STS2RitsuLib.Models.Capabilities.Patches
 
             public static ModPatchTarget[] GetTargets()
             {
-                return [new(typeof(OrbQueue), nameof(OrbQueue.BeforeTurnEnd), [typeof(PlayerChoiceContext)])];
+                return [PatchTarget.AsyncMethod<OrbQueue>(nameof(OrbQueue.BeforeTurnEnd), typeof(PlayerChoiceContext))];
             }
 
-            public static bool Prefix(OrbQueue __instance, PlayerChoiceContext choiceContext, ref Task __result)
+            public static IEnumerable<CodeInstruction> Transpiler(IEnumerable<CodeInstruction> instructions)
             {
-                __result = RunBeforeTurnEnd(__instance, choiceContext);
-                return false;
+                return RedirectSingleAwaitedCall(
+                    instructions,
+                    "[OrbCapabilities] OrbQueue.BeforeTurnEnd trigger notification",
+                    PatchId,
+                    AccessTools.Method(
+                        typeof(OrbModel),
+                        nameof(OrbModel.BeforeTurnEndOrbTrigger),
+                        [typeof(PlayerChoiceContext)]),
+                    AccessTools.Method(
+                        typeof(OrbModelCapabilityPatches),
+                        nameof(RunBeforeTurnEndWithCapability)));
             }
         }
 
@@ -133,13 +117,23 @@ namespace STS2RitsuLib.Models.Capabilities.Patches
 
             public static ModPatchTarget[] GetTargets()
             {
-                return [new(typeof(OrbQueue), nameof(OrbQueue.AfterTurnStart), [typeof(PlayerChoiceContext)])];
+                return
+                    [PatchTarget.AsyncMethod<OrbQueue>(nameof(OrbQueue.AfterTurnStart), typeof(PlayerChoiceContext))];
             }
 
-            public static bool Prefix(OrbQueue __instance, PlayerChoiceContext choiceContext, ref Task __result)
+            public static IEnumerable<CodeInstruction> Transpiler(IEnumerable<CodeInstruction> instructions)
             {
-                __result = RunAfterTurnStart(__instance, choiceContext);
-                return false;
+                return RedirectSingleAwaitedCall(
+                    instructions,
+                    "[OrbCapabilities] OrbQueue.AfterTurnStart trigger notification",
+                    PatchId,
+                    AccessTools.Method(
+                        typeof(OrbModel),
+                        nameof(OrbModel.AfterTurnStartOrbTrigger),
+                        [typeof(PlayerChoiceContext)]),
+                    AccessTools.Method(
+                        typeof(OrbModelCapabilityPatches),
+                        nameof(RunAfterTurnStartWithCapability)));
             }
         }
 
@@ -154,22 +148,73 @@ namespace STS2RitsuLib.Models.Capabilities.Patches
                 return
                 [
 #if STS2_AT_LEAST_0_108_0
-                    new(typeof(OrbCmd), nameof(OrbCmd.Passive),
-                        [typeof(PlayerChoiceContext), typeof(OrbModel), typeof(Creature), typeof(bool)]),
+                    PatchTarget.AsyncMethod(
+                        typeof(OrbCmd),
+                        nameof(OrbCmd.Passive),
+                        typeof(PlayerChoiceContext),
+                        typeof(OrbModel),
+                        typeof(Creature),
+                        typeof(bool)),
 #else
-                    new(typeof(OrbCmd), nameof(OrbCmd.Passive),
-                        [typeof(PlayerChoiceContext), typeof(OrbModel), typeof(Creature)]),
+                    PatchTarget.AsyncMethod(
+                        typeof(OrbCmd),
+                        nameof(OrbCmd.Passive),
+                        typeof(PlayerChoiceContext),
+                        typeof(OrbModel),
+                        typeof(Creature)),
 #endif
                 ];
             }
 
-            public static void Postfix(
-                PlayerChoiceContext choiceContext,
-                OrbModel orb,
-                Creature? target,
-                ref Task __result)
+            public static IEnumerable<CodeInstruction> Transpiler(IEnumerable<CodeInstruction> instructions)
             {
-                __result = AfterExplicitPassive(__result, orb, choiceContext, target);
+                return RedirectSingleAwaitedCall(
+                    instructions,
+                    "[OrbCapabilities] OrbCmd.Passive direct passive notification",
+                    PatchId,
+                    AccessTools.Method(
+                        typeof(OrbModel),
+                        nameof(OrbModel.Passive),
+                        [typeof(PlayerChoiceContext), typeof(Creature)]),
+                    AccessTools.Method(
+                        typeof(OrbModelCapabilityPatches),
+                        nameof(RunPassiveWithCapability)));
+            }
+        }
+
+        internal sealed class OrbModelTriggerPassivePatch : IPatchMethod
+        {
+            public static string PatchId => "ritsulib_orb_capability_trigger_passive";
+
+            public static string Description =>
+                "Notify orb capabilities after each OrbModel.TriggerPassive passive call";
+
+            public static bool IsCritical => true;
+
+            public static ModPatchTarget[] GetTargets()
+            {
+                return
+                [
+                    PatchTarget.AsyncMethod<OrbModel>(
+                        nameof(OrbModel.TriggerPassive),
+                        typeof(PlayerChoiceContext),
+                        typeof(Creature)),
+                ];
+            }
+
+            public static IEnumerable<CodeInstruction> Transpiler(IEnumerable<CodeInstruction> instructions)
+            {
+                return RedirectSingleAwaitedCall(
+                    instructions,
+                    "[OrbCapabilities] OrbModel.TriggerPassive passive notification",
+                    PatchId,
+                    AccessTools.Method(
+                        typeof(OrbModel),
+                        nameof(OrbModel.Passive),
+                        [typeof(PlayerChoiceContext), typeof(Creature)]),
+                    AccessTools.Method(
+                        typeof(OrbModelCapabilityPatches),
+                        nameof(RunPassiveWithCapability)));
             }
         }
 
