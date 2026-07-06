@@ -74,19 +74,21 @@ namespace STS2RitsuLib.Combat.HandSize
                 TryAddAsyncMoveNextPatch(builder, AccessTools.Method(typeof(CardPileCmd), nameof(CardPileCmd.Draw),
                         [typeof(PlayerChoiceContext), typeof(decimal), typeof(Player), typeof(bool)]),
                     transpilerStateMachine, "Patch CardPileCmd.Draw state machine max-hand-size constants");
-                TryAddAsyncMoveNextPatch(builder, AccessTools.Method(typeof(CardPileCmd), nameof(CardPileCmd.Add),
-                    [
-                        typeof(IEnumerable<CardModel>), typeof(CardPile), typeof(CardPilePosition),
-                        typeof(AbstractModel), typeof(bool),
-                    ]),
+                TryAddAsyncMoveNextPatch(builder, ResolveCardPileCmdAddMethod(),
                     transpilerStateMachine, "Patch CardPileCmd.Add state machine max-hand-size constants");
 
                 TryAddAsyncMoveNextPatch(builder, AccessTools.Method(typeof(Scrawl), "OnPlay",
                         [typeof(PlayerChoiceContext), typeof(CardPlay)]),
                     cardOnPlayTranspiler, "Patch Scrawl.OnPlay hand-size constant");
+                TryAddAsyncMoveNextPatch(builder, AccessTools.Method(typeof(Anointed), "OnPlay",
+                        [typeof(PlayerChoiceContext), typeof(CardPlay)]),
+                    cardOnPlayTranspiler, "Patch Anointed.OnPlay hand-size constant");
                 TryAddAsyncMoveNextPatch(builder, AccessTools.Method(typeof(Dredge), "OnPlay",
                         [typeof(PlayerChoiceContext), typeof(CardPlay)]),
                     cardOnPlayTranspiler, "Patch Dredge.OnPlay hand-size constant");
+                TryAddAsyncMoveNextPatch(builder, AccessTools.Method(typeof(NeowsFury), "OnPlay",
+                        [typeof(PlayerChoiceContext), typeof(CardPlay)]),
+                    cardOnPlayTranspiler, "Patch NeowsFury.OnPlay hand-size constant");
                 TryAddAsyncMoveNextPatch(builder, AccessTools.Method(typeof(CrashLanding), "OnPlay",
                         [typeof(PlayerChoiceContext), typeof(CardPlay)]),
                     cardOnPlayTranspiler, "Patch CrashLanding.OnPlay hand-size constant");
@@ -129,6 +131,20 @@ namespace STS2RitsuLib.Combat.HandSize
                     "[MaxHandSize] RitsuLib hand-size patch set installed (modern profile).");
 #endif
             }
+        }
+
+        private static MethodInfo? ResolveCardPileCmdAddMethod()
+        {
+            return AccessTools.Method(typeof(CardPileCmd), nameof(CardPileCmd.Add),
+                   [
+                       typeof(IEnumerable<CardModel>), typeof(CardPile), typeof(CardPilePosition),
+                       typeof(AbstractModel), typeof(bool), typeof(bool),
+                   ])
+                   ?? AccessTools.Method(typeof(CardPileCmd), nameof(CardPileCmd.Add),
+                   [
+                       typeof(IEnumerable<CardModel>), typeof(CardPile), typeof(CardPilePosition),
+                       typeof(AbstractModel), typeof(bool),
+                   ]);
         }
 
         private static HarmonyMethod FromMethodAfterBaseLib(string methodName)
