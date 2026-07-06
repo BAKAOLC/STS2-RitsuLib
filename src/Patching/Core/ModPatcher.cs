@@ -290,6 +290,96 @@ namespace STS2RitsuLib.Patching.Core
         }
 
         /// <summary>
+        ///     Removes Harmony patches owned by another Harmony id from a resolved target method. This is intended for narrow
+        ///     compatibility fixes where a dependency's patch is unsafe on the current game version and the caller replaces it
+        ///     with a safe patch through this patcher.
+        ///     从已解析的目标方法上移除另一个 Harmony id 拥有的 Harmony patch。用于依赖 mod 的 patch 在当前游戏版本
+        ///     不安全、调用方需要用本 patcher 的安全 patch 替换它的窄范围兼容修复。
+        /// </summary>
+        /// <param name="originalMethod">
+        ///     Original method whose patch list should be inspected.
+        ///     要检查 patch 列表的原始方法。
+        /// </param>
+        /// <param name="owner">
+        ///     Harmony owner id to remove.
+        ///     要移除的 Harmony owner id。
+        /// </param>
+        /// <param name="patchDeclaringType">
+        ///     Optional declaring type filter for the patch method.
+        ///     可选的 patch 方法声明类型过滤器。
+        /// </param>
+        /// <param name="patchMethodName">
+        ///     Optional patch method name filter.
+        ///     可选的 patch 方法名过滤器。
+        /// </param>
+        /// <param name="patchType">
+        ///     Harmony patch kind to inspect; <see cref="HarmonyPatchType.All" /> checks every kind.
+        ///     要检查的 Harmony patch 类型；<see cref="HarmonyPatchType.All" /> 会检查所有类型。
+        /// </param>
+        /// <returns>
+        ///     Number of patch methods removed.
+        ///     已移除的 patch 方法数量。
+        /// </returns>
+        public int UnpatchExternalPatches(
+            MethodBase originalMethod,
+            string owner,
+            Type? patchDeclaringType = null,
+            string? patchMethodName = null,
+            HarmonyPatchType patchType = HarmonyPatchType.All)
+        {
+            ArgumentNullException.ThrowIfNull(originalMethod);
+            ArgumentException.ThrowIfNullOrWhiteSpace(owner);
+
+            var patchInfo = Harmony.GetPatchInfo(originalMethod);
+            if (patchInfo == null)
+            {
+                logger.Info($"{_logPrefix}No Harmony patches found on {FormatMethod(originalMethod)}");
+                return 0;
+            }
+
+            var patches = EnumeratePatches(patchInfo, patchType)
+                .Where(patch => MatchesPatch(patch, owner, patchDeclaringType, patchMethodName))
+                .ToArray();
+
+            foreach (var patch in patches) _harmony.Unpatch(originalMethod, patch.PatchMethod);
+
+            logger.Info(
+                $"{_logPrefix}Removed {patches.Length} external patch(es) from {FormatMethod(originalMethod)} owned by '{owner}'");
+            return patches.Length;
+        }
+
+        /// <summary>
+        ///     Resolves <paramref name="target" /> and removes matching external Harmony patches. Missing targets can be
+        ///     ignored for optional compatibility paths.
+        ///     解析 <paramref name="target" /> 并移除匹配的外部 Harmony patch。可选兼容路径可以忽略缺失目标。
+        /// </summary>
+        public int UnpatchExternalPatches(
+            ModPatchTarget target,
+            string owner,
+            Type? patchDeclaringType = null,
+            string? patchMethodName = null,
+            HarmonyPatchType patchType = HarmonyPatchType.All,
+            bool ignoreIfTargetMissing = true)
+        {
+            ArgumentNullException.ThrowIfNull(target);
+
+            var originalMethod = PatchTargetMethodResolver.Resolve(target);
+            if (originalMethod != null)
+                return UnpatchExternalPatches(
+                    originalMethod,
+                    owner,
+                    patchDeclaringType,
+                    patchMethodName,
+                    patchType);
+
+            var message = $"{_logPrefix}External unpatch target not found: {target}";
+            if (!ignoreIfTargetMissing && !target.IgnoreIfMissing)
+                throw new MissingMethodException(target.TargetType.FullName, target.MethodName);
+            logger.Info(message);
+            return 0;
+        }
+
+        /// <summary>
         ///     Removes all applied patches tracked by this instance from the underlying Harmony id.
         ///     从底层 Harmony id 移除此实例跟踪的所有已应用补丁。
         /// </summary>
@@ -496,6 +586,46 @@ namespace STS2RitsuLib.Patching.Core
                 methodName,
                 BindingFlags.Static | BindingFlags.Public | BindingFlags.NonPublic
             );
+        }
+
+        private static IEnumerable<Patch> EnumeratePatches(Patches patchInfo, HarmonyPatchType patchType)
+        {
+            if (patchType is HarmonyPatchType.All or HarmonyPatchType.Prefix)
+                foreach (var patch in patchInfo.Prefixes)
+                    yield return patch;
+
+            if (patchType is HarmonyPatchType.All or HarmonyPatchType.Postfix)
+                foreach (var patch in patchInfo.Postfixes)
+                    yield return patch;
+
+            if (patchType is HarmonyPatchType.All or HarmonyPatchType.Transpiler)
+                foreach (var patch in patchInfo.Transpilers)
+                    yield return patch;
+
+            // ReSharper disable once InvertIf
+            if (patchType is HarmonyPatchType.All or HarmonyPatchType.Finalizer)
+                foreach (var patch in patchInfo.Finalizers)
+                    yield return patch;
+        }
+
+        private static bool MatchesPatch(
+            Patch patch,
+            string owner,
+            Type? patchDeclaringType,
+            string? patchMethodName)
+        {
+            if (patch.owner != owner)
+                return false;
+
+            if (patchDeclaringType != null && patch.PatchMethod.DeclaringType != patchDeclaringType)
+                return false;
+
+            return string.IsNullOrEmpty(patchMethodName) || patch.PatchMethod.Name == patchMethodName;
+        }
+
+        private static string FormatMethod(MethodBase method)
+        {
+            return $"{method.DeclaringType?.FullName}.{method.Name}";
         }
 
         /// <summary>

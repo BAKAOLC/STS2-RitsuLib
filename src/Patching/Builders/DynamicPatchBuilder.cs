@@ -201,6 +201,83 @@ namespace STS2RitsuLib.Patching.Builders
         }
 
         /// <summary>
+        ///     Attempts to resolve and append a method patch. Returns false when the target type is null or the target method
+        ///     is missing, instead of throwing. Use this for optional compatibility patches against another mod or a
+        ///     version-varying game API.
+        ///     尝试解析并追加方法 patch。目标类型为 null 或目标方法缺失时返回 false，而不是抛出异常。
+        ///     适用于针对其他 mod 或跨版本游戏 API 的可选兼容 patch。
+        /// </summary>
+        public bool TryAddMethod(
+            Type? targetType,
+            string methodName,
+            Type[]? parameterTypes = null,
+            HarmonyMethod? prefix = null,
+            HarmonyMethod? postfix = null,
+            HarmonyMethod? transpiler = null,
+            HarmonyMethod? finalizer = null,
+            bool isCritical = false,
+            string? description = null,
+            string? patchId = null,
+            MethodType harmonyMethodType = MethodType.Normal)
+        {
+            ArgumentException.ThrowIfNullOrWhiteSpace(methodName);
+
+            if (targetType == null)
+                return false;
+
+            var method = PatchTargetMethodResolver.Resolve(targetType, methodName, parameterTypes, harmonyMethodType);
+            if (method == null)
+                return false;
+
+            Add(
+                method,
+                prefix,
+                postfix,
+                transpiler,
+                finalizer,
+                isCritical,
+                description ?? $"Patch method {targetType.Name}.{methodName}",
+                patchId);
+            return true;
+        }
+
+        /// <summary>
+        ///     Attempts to resolve <paramref name="targetTypeName" /> with Harmony <see cref="AccessTools.TypeByName" /> and
+        ///     append a method patch. Returns false when the type or method is absent. This keeps optional inter-mod patches
+        ///     from needing their own reflection boilerplate.
+        ///     使用 Harmony <see cref="AccessTools.TypeByName" /> 尝试解析 <paramref name="targetTypeName" /> 并追加方法
+        ///     patch。类型或方法不存在时返回 false，用于减少可选跨 mod patch 的反射样板代码。
+        /// </summary>
+        public bool TryAddMethodByName(
+            string targetTypeName,
+            string methodName,
+            Type[]? parameterTypes = null,
+            HarmonyMethod? prefix = null,
+            HarmonyMethod? postfix = null,
+            HarmonyMethod? transpiler = null,
+            HarmonyMethod? finalizer = null,
+            bool isCritical = false,
+            string? description = null,
+            string? patchId = null,
+            MethodType harmonyMethodType = MethodType.Normal)
+        {
+            ArgumentException.ThrowIfNullOrWhiteSpace(targetTypeName);
+
+            return TryAddMethod(
+                AccessTools.TypeByName(targetTypeName),
+                methodName,
+                parameterTypes,
+                prefix,
+                postfix,
+                transpiler,
+                finalizer,
+                isCritical,
+                description,
+                patchId,
+                harmonyMethodType);
+        }
+
+        /// <summary>
         ///     Wraps a static patch method on <paramref name="patchType" /> as a <see cref="HarmonyMethod" />.
         ///     将 <paramref name="patchType" /> 上的静态 patch 方法包装为 <see cref="HarmonyMethod" />。
         /// </summary>

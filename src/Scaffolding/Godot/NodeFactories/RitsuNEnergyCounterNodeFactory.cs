@@ -68,11 +68,11 @@ namespace STS2RitsuLib.Scaffolding.Godot.NodeFactories
                     target.AddChild(CreateDefaultLabel());
                     break;
                 case "%RotationLayers":
-                    {
-                        var control = CreateFullRectControl(null);
-                        target.AddUniqueChild(control, "RotationLayers");
-                        break;
-                    }
+                {
+                    var control = CreateFullRectControl(null);
+                    target.AddUniqueChild(control, "RotationLayers");
+                    break;
+                }
                 case "%EnergyVfxBack":
                     target.AddUniqueChild(CreateParticlesContainer(null, "EnergyVfxBack"));
                     break;
@@ -131,18 +131,18 @@ namespace STS2RitsuLib.Scaffolding.Godot.NodeFactories
             if (source is CanvasItem sourceCanvas)
                 CopyCanvasItemProperties(container, sourceCanvas);
 
-            if (source is GpuParticles2D singleParticle)
+            switch (source)
             {
-                container.AddChild(singleParticle);
-                singleParticle.Owner = container;
-                return container;
+                case GpuParticles2D singleParticle:
+                    container.AddChild(singleParticle);
+                    singleParticle.Owner = container;
+                    return container;
+                case null:
+                    return container;
             }
 
-            if (source != null)
-            {
-                source.GetParent()?.RemoveChild(source);
-                container.AddChild(source);
-            }
+            source.GetParent()?.RemoveChild(source);
+            container.AddChild(source);
 
             return container;
         }
