@@ -1,3 +1,5 @@
+using System.Reflection;
+
 namespace STS2RitsuLib.Settings
 {
     /// <summary>
@@ -246,10 +248,22 @@ namespace STS2RitsuLib.Settings
         /// </summary>
         public static void Register(string modId, Action<ModSettingsPageBuilder> configure, string? pageId = null)
         {
+            RegisterCore(modId, configure, pageId, null);
+        }
+
+        internal static void RegisterWithSourceAssembly(string modId, Action<ModSettingsPageBuilder> configure,
+            string? pageId, Assembly? sourceAssembly)
+        {
+            RegisterCore(modId, configure, pageId, sourceAssembly);
+        }
+
+        private static void RegisterCore(string modId, Action<ModSettingsPageBuilder> configure, string? pageId,
+            Assembly? sourceAssembly)
+        {
             ArgumentException.ThrowIfNullOrWhiteSpace(modId);
             ArgumentNullException.ThrowIfNull(configure);
 
-            var builder = new ModSettingsPageBuilder(modId, pageId);
+            var builder = new ModSettingsPageBuilder(modId, pageId, sourceAssembly);
             configure(builder);
             Register(builder.Build());
         }

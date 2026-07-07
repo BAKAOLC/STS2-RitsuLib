@@ -10,6 +10,7 @@ using MegaCrit.Sts2.Core.Nodes.CommonUi;
 using MegaCrit.Sts2.Core.Nodes.GodotExtensions;
 using MegaCrit.Sts2.Core.Nodes.Screens.MainMenu;
 using MegaCrit.Sts2.Core.Nodes.Screens.ScreenContext;
+using STS2RitsuLib.Compat;
 using STS2RitsuLib.Ui.Shell;
 using STS2RitsuLib.Ui.Shell.Theme;
 using STS2RitsuLib.Utils;
@@ -1549,7 +1550,8 @@ namespace STS2RitsuLib.Settings
                     .ToArray();
                 var rootModPages = pages.Where(page => string.IsNullOrWhiteSpace(page.ParentPageId)).ToArray();
                 var navVisible = ShouldShowExpandedModNav(modId);
-                var title = ResolveSidebarModTitle(rootModPages.Length > 0 ? rootModPages : pages);
+                var titleSourcePages = rootModPages.Length > 0 ? rootModPages : pages;
+                var title = ResolveSidebarModTitle(titleSourcePages);
                 var pageCountText = string.Format(
                     ModSettingsLocalization.Get("sidebar.modMeta", "{0} pages"),
                     pages.Length);
@@ -1565,7 +1567,10 @@ namespace STS2RitsuLib.Settings
                     0,
                     pageCountText,
                     () => ActivateSidebarMod(modId),
-                    null));
+                    null)
+                {
+                    TooltipInfo = ResolveSidebarModTooltipInfo(modId, title, titleSourcePages),
+                });
 
                 if (!navVisible)
                     continue;
@@ -2309,6 +2314,34 @@ namespace STS2RitsuLib.Settings
         {
             var modId = pages[0].ModId;
             return ModSettingsLocalization.ResolveModName(modId, modId);
+        }
+
+        private static ModSettingsSidebarTooltipInfo ResolveSidebarModTooltipInfo(string modId, string displayName,
+            IReadOnlyList<ModSettingsPage> pages)
+        {
+            foreach (var assembly in pages
+                         .Where(static page => page.UseSourceAssemblyManifestLookup && page.SourceAssembly != null)
+                         .Select(static page => page.SourceAssembly!)
+                         .Distinct())
+                if (Sts2ModManagerCompat.TryGetBestModPresentationInfoForAssembly(assembly, out var assemblyInfo) &&
+                    assemblyInfo != null)
+                    return new(
+                        modId,
+                        string.IsNullOrWhiteSpace(assemblyInfo.Name) ? displayName : assemblyInfo.Name,
+                        assemblyInfo.Author,
+                        assemblyInfo.Version,
+                        assemblyInfo.Description,
+                        assemblyInfo.ModImagePath);
+
+            return Sts2ModManagerCompat.TryGetBestModPresentationInfo(modId, out var info) && info != null
+                ? new(
+                    modId,
+                    string.IsNullOrWhiteSpace(info.Name) ? displayName : info.Name,
+                    info.Author,
+                    info.Version,
+                    info.Description,
+                    info.ModImagePath)
+                : new(modId, displayName, null, null, null, null);
         }
 
         private static string ResolveSectionTitle(ModSettingsSection section)
@@ -3409,11 +3442,28 @@ namespace STS2RitsuLib.Settings
         {
             public bool Selected { get; set; }
 
+            public ModSettingsSidebarTooltipInfo? TooltipInfo { get; init; }
+
             public bool Visible { get; set; } = true;
         }
 
+        private sealed record ModSettingsSidebarTooltipInfo(
+            string ModId,
+            string Name,
+            string? Author,
+            string? Version,
+            string? Description,
+            string? ImagePath);
+
         private sealed partial class ModSettingsSidebarList : Control
         {
+            private const float ModTooltipImageSize = 128f;
+            private const float ModTooltipTextWidth = 326f;
+            private const float ModTooltipWidth = 492f;
+
+            private static readonly Dictionary<string, Texture2D?> ModImageTextureCache =
+                new(StringComparer.OrdinalIgnoreCase);
+
             private readonly RitsuModSettingsSubmenu _owner = null!;
             private readonly List<ModSettingsSidebarRow> _rows = [];
             private int _activeVisibleIndex;
@@ -3608,6 +3658,17 @@ namespace STS2RitsuLib.Settings
                 }
             }
 
+            public override Control _MakeCustomTooltip(string forText)
+            {
+                if (string.IsNullOrWhiteSpace(forText))
+                    return null!;
+
+                var row = GetActiveRow();
+                return row is { Kind: ModSettingsSidebarItemKind.ModGroup, TooltipInfo: not null }
+                    ? BuildModTooltip(row)
+                    : null!;
+            }
+
             private void DrawRow(ModSettingsSidebarRow row, int visibleIndex, Rect2 rect)
             {
                 var active = HasFocus() && visibleIndex == _activeVisibleIndex;
@@ -3782,11 +3843,79 @@ namespace STS2RitsuLib.Settings
 
             private void UpdateTooltip()
             {
-                TooltipText = GetActiveRow() is { } row && !string.IsNullOrWhiteSpace(row.Meta) &&
-                              row.Kind == ModSettingsSidebarItemKind.ModGroup &&
-                              !RitsuShellTheme.Current.Metric.Sidebar.ShowInlinePageCount
-                    ? $"{row.Label}\n{row.Meta}"
-                    : GetActiveRow()?.Label ?? string.Empty;
+                TooltipText = GetActiveRow() is { } row
+                    ? row.Label
+                    : string.Empty;
+            }
+
+            private static Control BuildModTooltip(ModSettingsSidebarRow row)
+            {
+                var info = row.TooltipInfo!;
+                var texture = LoadModImageTexture(info.ImagePath);
+                return new ModSettingsSidebarTooltipCard(row, texture);
+            }
+
+            private static Texture2D? LoadModImageTexture(string? path)
+            {
+                if (string.IsNullOrWhiteSpace(path))
+                    return null;
+
+                if (ModImageTextureCache.TryGetValue(path, out var cached))
+                    return cached;
+
+                Texture2D? texture = null;
+                try
+                {
+                    if (ResourceLoader.Exists(path))
+                        texture = PreloadManager.Cache.GetAsset<Texture2D>(path);
+                }
+                catch (Exception ex)
+                {
+                    RitsuLibFramework.Logger.Warn(
+                        $"[ModSettingsSidebarTooltip] Failed to load mod image '{path}': {ex.Message}");
+                }
+
+                ModImageTextureCache[path] = texture;
+                return texture;
+            }
+
+            private static StyleBoxFlat CreateModImageFrameStyle()
+            {
+                var border = RitsuShellThemeLayoutResolver.ResolveEdges("components.tooltip.layout.borderWidth",
+                    RitsuShellTheme.Current.Metric.BorderWidth.Thin);
+                var cornerRadii =
+                    RitsuShellThemeLayoutResolver.ResolveCornerRadii("components.tooltip.layout.image.cornerRadius",
+                        RitsuShellTheme.Current.Metric.Radius.Default);
+                return new()
+                {
+                    BgColor = RitsuShellTheme.Current.Surface.Inset.Bg,
+                    BorderColor = RitsuShellTheme.Current.Surface.Inset.Border,
+                    BorderWidthLeft = border.Left,
+                    BorderWidthTop = border.Top,
+                    BorderWidthRight = border.Right,
+                    BorderWidthBottom = border.Bottom,
+                    CornerRadiusTopLeft = cornerRadii.TopLeft,
+                    CornerRadiusTopRight = cornerRadii.TopRight,
+                    CornerRadiusBottomRight = cornerRadii.BottomRight,
+                    CornerRadiusBottomLeft = cornerRadii.BottomLeft,
+                    ContentMarginLeft = 4,
+                    ContentMarginTop = 4,
+                    ContentMarginRight = 4,
+                    ContentMarginBottom = 4,
+                };
+            }
+
+            private static string NormalizeTooltipDescription(string? description)
+            {
+                return string.IsNullOrWhiteSpace(description) ? string.Empty : description.Trim();
+            }
+
+            private static string ResolvePlaceholderInitial(string name, string modId)
+            {
+                var source = string.IsNullOrWhiteSpace(name) ? modId : name;
+                return string.IsNullOrWhiteSpace(source)
+                    ? "?"
+                    : source.Trim()[0].ToString().ToUpperInvariant();
             }
 
             private void RequestScrollContainerLayout(bool defer = true)
@@ -3880,6 +4009,233 @@ namespace STS2RitsuLib.Settings
                         return scroll;
 
                 return null;
+            }
+
+            private sealed partial class ModSettingsSidebarTooltipCard : Control
+            {
+                private const float Gap = 14f;
+                private const float MetaLabelWidth = 58f;
+                private const float MetaGap = 6f;
+                private const float RowGap = 4f;
+                private const float DescriptionGap = 7f;
+
+                private readonly ModSettingsSidebarRow _row = null!;
+                private readonly Texture2D? _texture;
+
+                public ModSettingsSidebarTooltipCard(ModSettingsSidebarRow row, Texture2D? texture)
+                {
+                    _row = row;
+                    _texture = texture;
+                    MouseFilter = MouseFilterEnum.Ignore;
+                    CustomMinimumSize = Measure();
+                }
+
+                public ModSettingsSidebarTooltipCard()
+                {
+                }
+
+                public override Vector2 _GetMinimumSize()
+                {
+                    return Measure();
+                }
+
+                public override void _Draw()
+                {
+                    var info = _row.TooltipInfo!;
+                    var panelStyle = RitsuShellChromeStyles.CreateTooltipPanelStyle();
+                    DrawStyleBox(panelStyle, new(Vector2.Zero, Size));
+
+                    var content = new Rect2(
+                        panelStyle.ContentMarginLeft,
+                        panelStyle.ContentMarginTop,
+                        Math.Max(1f, Size.X - panelStyle.ContentMarginLeft - panelStyle.ContentMarginRight),
+                        Math.Max(1f, Size.Y - panelStyle.ContentMarginTop - panelStyle.ContentMarginBottom));
+
+                    DrawImageSlot(info, new(content.Position, new(ModTooltipImageSize, ModTooltipImageSize)));
+
+                    var textX = content.Position.X + ModTooltipImageSize + Gap;
+                    var y = content.Position.Y;
+                    var width = Math.Max(1f, content.Size.X - ModTooltipImageSize - Gap);
+
+                    y = DrawWrappedText(info.Name, RitsuShellTheme.Current.Font.BodyBold, 22,
+                        RitsuShellTheme.Current.Text.LabelPrimary, textX, y, width);
+                    y += RowGap;
+                    y = DrawMetaLine("sidebar.tooltip.author", "Author", info.Author, textX, y, width);
+                    y = DrawMetaLine("sidebar.tooltip.version", "Version", info.Version, textX, y, width);
+                    y = DrawMetaLine("sidebar.tooltip.pages", "Pages", _row.Meta, textX, y, width);
+                    y = DrawMetaLine("sidebar.tooltip.id", "ID", info.ModId, textX, y, width);
+
+                    var description = NormalizeTooltipDescription(info.Description);
+                    if (string.IsNullOrWhiteSpace(description))
+                        return;
+
+                    y += DescriptionGap - RowGap;
+                    DrawWrappedText(description, RitsuShellTheme.Current.Font.Body, 15,
+                        RitsuShellTheme.Current.Text.LabelSecondary, textX, y, width);
+                }
+
+                private Vector2 Measure()
+                {
+                    var panelStyle = RitsuShellChromeStyles.CreateTooltipPanelStyle();
+                    var contentWidth = ModTooltipWidth - panelStyle.ContentMarginLeft - panelStyle.ContentMarginRight;
+                    var textWidth = Math.Max(1f, contentWidth - ModTooltipImageSize - Gap);
+                    var textHeight = MeasureWrappedText(_row.TooltipInfo!.Name, RitsuShellTheme.Current.Font.BodyBold,
+                        22, textWidth);
+                    textHeight += RowGap;
+                    textHeight += MeasureMetaLine("sidebar.tooltip.author", "Author", _row.TooltipInfo.Author,
+                        textWidth);
+                    textHeight += MeasureMetaLine("sidebar.tooltip.version", "Version", _row.TooltipInfo.Version,
+                        textWidth);
+                    textHeight += MeasureMetaLine("sidebar.tooltip.pages", "Pages", _row.Meta, textWidth);
+                    textHeight += MeasureMetaLine("sidebar.tooltip.id", "ID", _row.TooltipInfo.ModId, textWidth);
+
+                    var description = NormalizeTooltipDescription(_row.TooltipInfo.Description);
+                    if (!string.IsNullOrWhiteSpace(description))
+                    {
+                        textHeight += DescriptionGap;
+                        textHeight += MeasureWrappedText(description, RitsuShellTheme.Current.Font.Body, 15,
+                            textWidth);
+                    }
+
+                    var contentHeight = Math.Max(ModTooltipImageSize, textHeight);
+                    return new(
+                        ModTooltipWidth,
+                        panelStyle.ContentMarginTop + contentHeight + panelStyle.ContentMarginBottom);
+                }
+
+                private void DrawImageSlot(ModSettingsSidebarTooltipInfo info, Rect2 rect)
+                {
+                    DrawStyleBox(CreateModImageFrameStyle(), rect);
+                    var inner = rect.Grow(-4f);
+                    if (_texture != null)
+                    {
+                        DrawTextureRect(_texture, FitTextureRect(_texture, inner), false);
+                        return;
+                    }
+
+                    var text = ResolvePlaceholderInitial(info.Name, info.ModId);
+                    var font = RitsuShellTheme.Current.Font.BodyBold;
+                    const int fontSize = 34;
+                    var textSize = font.GetStringSize(text, HorizontalAlignment.Center, -1f, fontSize);
+                    var pos = new Vector2(
+                        inner.Position.X + Math.Max(0f, (inner.Size.X - textSize.X) * 0.5f),
+                        inner.Position.Y + Math.Max(0f, (inner.Size.Y - font.GetHeight(fontSize)) * 0.5f) +
+                        font.GetAscent(fontSize));
+                    DrawString(font, pos, text, HorizontalAlignment.Left, inner.Size.X, fontSize,
+                        RitsuShellTheme.Current.Text.HoverHighlight);
+                }
+
+                private static Rect2 FitTextureRect(Texture2D texture, Rect2 bounds)
+                {
+                    var textureSize = texture.GetSize();
+                    if (textureSize.X <= 0f || textureSize.Y <= 0f)
+                        return bounds;
+
+                    var scale = Math.Min(bounds.Size.X / textureSize.X, bounds.Size.Y / textureSize.Y);
+                    var size = textureSize * scale;
+                    return new(bounds.Position + (bounds.Size - size) * 0.5f, size);
+                }
+
+                private float DrawMetaLine(string labelKey, string fallback, string? value, float x, float y,
+                    float width)
+                {
+                    if (string.IsNullOrWhiteSpace(value))
+                        return y;
+
+                    var label = ModSettingsLocalization.Get(labelKey, fallback);
+                    var labelFont = RitsuShellTheme.Current.Font.BodyBold;
+                    var valueFont = RitsuShellTheme.Current.Font.Body;
+                    const int fontSize = 13;
+                    var valueX = x + MetaLabelWidth + MetaGap;
+                    var valueWidth = Math.Max(1f, width - MetaLabelWidth - MetaGap);
+                    var labelHeight = labelFont.GetHeight(fontSize);
+                    var lines = WrapText(value.Trim(), valueFont, fontSize, valueWidth);
+                    var rowHeight = Math.Max(labelHeight, lines.Count * valueFont.GetHeight(fontSize));
+
+                    DrawString(labelFont, new(x, y + labelFont.GetAscent(fontSize)), label,
+                        HorizontalAlignment.Left, MetaLabelWidth, fontSize, RitsuShellTheme.Current.Text.RichSecondary);
+
+                    var lineY = y;
+                    foreach (var line in lines)
+                    {
+                        DrawString(valueFont, new(valueX, lineY + valueFont.GetAscent(fontSize)), line,
+                            HorizontalAlignment.Left, valueWidth, fontSize, RitsuShellTheme.Current.Text.LabelPrimary);
+                        lineY += valueFont.GetHeight(fontSize);
+                    }
+
+                    return y + rowHeight + RowGap;
+                }
+
+                private float DrawWrappedText(string text, Font font, int fontSize, Color color, float x,
+                    float y, float width)
+                {
+                    foreach (var line in WrapText(text, font, fontSize, width))
+                    {
+                        DrawString(font, new(x, y + font.GetAscent(fontSize)), line, HorizontalAlignment.Left, width,
+                            fontSize, color);
+                        y += font.GetHeight(fontSize);
+                    }
+
+                    return y;
+                }
+
+                private float MeasureMetaLine(string labelKey, string fallback, string? value, float width)
+                {
+                    if (string.IsNullOrWhiteSpace(value))
+                        return 0f;
+
+                    _ = ModSettingsLocalization.Get(labelKey, fallback);
+                    const int fontSize = 13;
+                    var valueWidth = Math.Max(1f, width - MetaLabelWidth - MetaGap);
+                    var valueFont = RitsuShellTheme.Current.Font.Body;
+                    var labelHeight = RitsuShellTheme.Current.Font.BodyBold.GetHeight(fontSize);
+                    var lines = WrapText(value.Trim(), valueFont, fontSize, valueWidth);
+                    return Math.Max(labelHeight, lines.Count * valueFont.GetHeight(fontSize)) + RowGap;
+                }
+
+                private static float MeasureWrappedText(string text, Font font, int fontSize, float width)
+                {
+                    if (string.IsNullOrWhiteSpace(text))
+                        return 0f;
+
+                    return WrapText(text.Trim(), font, fontSize, width).Count * font.GetHeight(fontSize);
+                }
+
+                private static List<string> WrapText(string text, Font font, int fontSize, float width)
+                {
+                    if (string.IsNullOrWhiteSpace(text))
+                        return [];
+
+                    var lines = new List<string>();
+                    foreach (var paragraph in text.Replace("\r\n", "\n").Replace('\r', '\n').Split('\n'))
+                    {
+                        if (paragraph.Length == 0)
+                        {
+                            lines.Add(string.Empty);
+                            continue;
+                        }
+
+                        var current = "";
+                        foreach (var ch in paragraph)
+                        {
+                            var candidate = current + ch;
+                            if (current.Length > 0 &&
+                                font.GetStringSize(candidate, HorizontalAlignment.Left, -1f, fontSize).X > width)
+                            {
+                                lines.Add(current.TrimEnd());
+                                current = ch.ToString();
+                                continue;
+                            }
+
+                            current = candidate;
+                        }
+
+                        if (current.Length > 0)
+                            lines.Add(current.TrimEnd());
+                    }
+
+                    return lines;
+                }
             }
         }
 
