@@ -4233,7 +4233,6 @@ namespace STS2RitsuLib.Settings
                     y += RowGap;
                     y = DrawMetaLine("sidebar.tooltip.author", "Author", info.Author, textX, y, width);
                     y = DrawMetaLine("sidebar.tooltip.version", "Version", info.Version, textX, y, width);
-                    y = DrawMetaLine("sidebar.tooltip.pages", "Pages", _row.Meta, textX, y, width);
                     y = DrawMetaLine("sidebar.tooltip.id", "ID", info.ModId, textX, y, width);
 
                     var description = NormalizeTooltipDescription(info.Description);
@@ -4257,7 +4256,6 @@ namespace STS2RitsuLib.Settings
                         textWidth);
                     textHeight += MeasureMetaLine("sidebar.tooltip.version", "Version", _row.TooltipInfo.Version,
                         textWidth);
-                    textHeight += MeasureMetaLine("sidebar.tooltip.pages", "Pages", _row.Meta, textWidth);
                     textHeight += MeasureMetaLine("sidebar.tooltip.id", "ID", _row.TooltipInfo.ModId, textWidth);
 
                     var description = NormalizeTooltipDescription(_row.TooltipInfo.Description);
