@@ -3467,6 +3467,7 @@ namespace STS2RitsuLib.Settings
             private readonly RitsuModSettingsSubmenu _owner = null!;
             private readonly List<ModSettingsSidebarRow> _rows = [];
             private int _activeVisibleIndex;
+            private int _hoveredVisibleIndex = -1;
             private bool _hovered;
 
             public ModSettingsSidebarList(RitsuModSettingsSubmenu owner)
@@ -3485,6 +3486,7 @@ namespace STS2RitsuLib.Settings
             {
                 _rows.Clear();
                 _activeVisibleIndex = 0;
+                _hoveredVisibleIndex = -1;
                 TooltipText = string.Empty;
                 UpdateMinimumSize();
                 RequestScrollContainerLayout();
@@ -3526,6 +3528,7 @@ namespace STS2RitsuLib.Settings
                 if (selectedVisibleIndex >= 0)
                     _activeVisibleIndex = selectedVisibleIndex;
                 ClampActiveIndex();
+                ClampHoveredIndex();
                 UpdateTooltip();
                 UpdateMinimumSize();
                 RequestScrollContainerLayout();
@@ -3550,6 +3553,7 @@ namespace STS2RitsuLib.Settings
                 }
 
                 ClampActiveIndex();
+                ClampHoveredIndex();
                 if (!redraw)
                     return;
                 UpdateTooltip();
@@ -3599,10 +3603,12 @@ namespace STS2RitsuLib.Settings
                 {
                     case (int)NotificationMouseEnter:
                         _hovered = true;
-                        QueueRedraw();
+                        SetHoverFromY(GetLocalMousePosition().Y, false);
                         break;
                     case (int)NotificationMouseExit:
                         _hovered = false;
+                        _hoveredVisibleIndex = -1;
+                        UpdateTooltip();
                         QueueRedraw();
                         break;
                     case (int)NotificationFocusEnter:
@@ -3621,11 +3627,15 @@ namespace STS2RitsuLib.Settings
                 switch (@event)
                 {
                     case InputEventMouseMotion motion:
-                        SetActiveFromY(motion.Position.Y, false);
+                        SetHoverFromY(motion.Position.Y, false);
                         return;
                     case InputEventMouseButton { Pressed: true, ButtonIndex: MouseButton.Left } mouse:
-                        if (SetActiveFromY(mouse.Position.Y, true))
+                        if (SetHoverFromY(mouse.Position.Y, true))
+                        {
+                            _activeVisibleIndex = _hoveredVisibleIndex;
                             ActivateCurrent();
+                        }
+
                         AcceptEvent();
                         return;
                 }
@@ -3663,7 +3673,7 @@ namespace STS2RitsuLib.Settings
                 if (string.IsNullOrWhiteSpace(forText))
                     return null!;
 
-                var row = GetActiveRow();
+                var row = GetTooltipRow();
                 return row is { Kind: ModSettingsSidebarItemKind.ModGroup, TooltipInfo: not null }
                     ? BuildModTooltip(row)
                     : null!;
@@ -3672,10 +3682,11 @@ namespace STS2RitsuLib.Settings
             private void DrawRow(ModSettingsSidebarRow row, int visibleIndex, Rect2 rect)
             {
                 var active = HasFocus() && visibleIndex == _activeVisibleIndex;
-                var highlighted = active || row.Selected;
+                var hovered = _hovered && visibleIndex == _hoveredVisibleIndex;
+                var highlighted = active || hovered || row.Selected;
                 DrawStyleBox(active
                         ? ModSettingsSidebarButton.CreateFocusStyle(row.Selected, row.Kind, row.Depth)
-                        : ModSettingsSidebarButton.CreateStyle(row.Selected, _hovered && active, row.Kind, row.Depth),
+                        : ModSettingsSidebarButton.CreateStyle(row.Selected, hovered, row.Kind, row.Depth),
                     rect);
 
                 var font = row.Kind == ModSettingsSidebarItemKind.ModGroup
@@ -3688,7 +3699,7 @@ namespace STS2RitsuLib.Settings
                     ModSettingsSidebarItemKind.Section => 16,
                     _ => 17,
                 };
-                var style = ModSettingsSidebarButton.CreateStyle(row.Selected, active, row.Kind, row.Depth);
+                var style = ModSettingsSidebarButton.CreateStyle(row.Selected, active || hovered, row.Kind, row.Depth);
                 var left = style.ContentMarginLeft + ResolveTextLeftInset(row.Kind);
                 var right = style.ContentMarginRight;
                 var textX = rect.Position.X + left;
@@ -3733,13 +3744,22 @@ namespace STS2RitsuLib.Settings
                     HorizontalAlignment.Left, textWidth, metaSize, metaColor);
             }
 
-            private bool SetActiveFromY(float y, bool requireHit)
+            private bool SetHoverFromY(float y, bool requireHit)
             {
                 var range = ResolveVisibleRowIndexAt(y);
                 if (range < 0)
-                    return !requireHit;
+                {
+                    if (requireHit)
+                        return false;
 
-                _activeVisibleIndex = range;
+                    _hoveredVisibleIndex = -1;
+                    UpdateTooltip();
+                    QueueRedraw();
+                    return !requireHit;
+                }
+
+                _hovered = true;
+                _hoveredVisibleIndex = range;
                 UpdateTooltip();
                 QueueRedraw();
                 return true;
@@ -3792,6 +3812,26 @@ namespace STS2RitsuLib.Settings
                 return null;
             }
 
+            private ModSettingsSidebarRow? GetTooltipRow()
+            {
+                return _hovered && _hoveredVisibleIndex >= 0
+                    ? GetVisibleRow(_hoveredVisibleIndex)
+                    : GetActiveRow();
+            }
+
+            private ModSettingsSidebarRow? GetVisibleRow(int targetVisibleIndex)
+            {
+                var visibleIndex = 0;
+                foreach (var row in _rows.Where(row => row.Visible))
+                {
+                    if (visibleIndex == targetVisibleIndex)
+                        return row;
+                    visibleIndex++;
+                }
+
+                return null;
+            }
+
             private int VisibleRowCount()
             {
                 return _rows.Count(row => row.Visible);
@@ -3801,6 +3841,13 @@ namespace STS2RitsuLib.Settings
             {
                 var count = VisibleRowCount();
                 _activeVisibleIndex = count <= 0 ? 0 : Mathf.Clamp(_activeVisibleIndex, 0, count - 1);
+            }
+
+            private void ClampHoveredIndex()
+            {
+                var count = VisibleRowCount();
+                if (count <= 0 || _hoveredVisibleIndex >= count)
+                    _hoveredVisibleIndex = -1;
             }
 
             private void EnsureActiveVisible()
@@ -3843,7 +3890,7 @@ namespace STS2RitsuLib.Settings
 
             private void UpdateTooltip()
             {
-                TooltipText = GetActiveRow() is { } row
+                TooltipText = GetTooltipRow() is { } row
                     ? row.Label
                     : string.Empty;
             }
