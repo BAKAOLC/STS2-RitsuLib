@@ -201,6 +201,9 @@ namespace STS2RitsuLib.Networking.StateDivergence
             };
             box.AddThemeConstantOverride("separation", 8);
             box.AddChild(CreateInfoCard(_report.Summary, RitsuShellTheme.Current.Text.RichBody));
+            box.AddChild(CreateInfoCard(T("summary.originNote",
+                    "If you are seeing this window, the game itself has reported state divergence. This window only provides additional analysis of that state."),
+                RitsuShellTheme.Current.Text.RichMuted));
             box.AddChild(CreateInfoCard(FormatBundleArchiveLine(), RitsuShellTheme.Current.Text.RichBody));
             box.AddChild(BuildChecksumCards());
             return box;
@@ -702,6 +705,8 @@ namespace STS2RitsuLib.Networking.StateDivergence
             builder.AppendLine(new('=', report.Title.Length));
             builder.AppendLine();
             builder.AppendLine(report.Summary);
+            builder.AppendLine(T("summary.originNote",
+                "If you are seeing this window, the game itself has reported state divergence. This window only provides additional analysis of that state."));
             builder.AppendLine(F("footer.context", "Role: {0}  Remote peer: {1}", report.Role,
                 report.RemotePeerId));
             builder.AppendLine();

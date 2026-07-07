@@ -114,7 +114,8 @@ namespace STS2RitsuLib.Networking.JoinDiagnostics
                 AddVersionIssue(issues, host, local);
                 if (!modelDbMismatch && modelDbHashModeMismatch)
                     AddModelDbHashModeIssue(issues, host, local);
-                AddModelDbIssue(issues, host, local, deterministicModelDbHash, modelDbHashModeMismatch);
+                AddModelDbIssue(issues, host, local, deterministicModelDbHash, modelDbHashModeMismatch,
+                    IsOnlyVisibleModelDbHashDifferent(issues, host, local));
             }
 
             if (issues.Count == 0)
@@ -346,15 +347,17 @@ namespace STS2RitsuLib.Networking.JoinDiagnostics
             JoinPeerSnapshot host,
             JoinPeerSnapshot local,
             bool deterministicModelDbHash,
-            bool modelDbHashModeMismatch)
+            bool modelDbHashModeMismatch,
+            bool onlyVisibleModelDbHashDifferent)
         {
             if (host.ModelDbHash == local.ModelDbHash)
                 return;
 
             issues.Add(new(
                 JoinFailureIssueKind.ModelDb,
-                T("issue.modelDb.title", "ModelDb hash mismatch"),
-                GetModelDbMismatchBody(deterministicModelDbHash, modelDbHashModeMismatch),
+                GetModelDbMismatchTitle(onlyVisibleModelDbHashDifferent),
+                GetModelDbMismatchBody(deterministicModelDbHash, modelDbHashModeMismatch,
+                    onlyVisibleModelDbHashDifferent),
                 [
                     new(T("row.modelDbHash", "ModelDb hash"), host.ModelDbHash.ToString(),
                         local.ModelDbHash.ToString()),
@@ -366,6 +369,21 @@ namespace STS2RitsuLib.Networking.JoinDiagnostics
                 ]));
         }
 
+        private static bool IsOnlyVisibleModelDbHashDifferent(
+            IReadOnlyCollection<JoinFailureIssue> issues,
+            JoinPeerSnapshot host,
+            JoinPeerSnapshot local)
+        {
+            return issues.Count == 0 &&
+                   host.ModelDbHash != local.ModelDbHash &&
+                   host.ModelDbHashUsesDeterministicCache == local.ModelDbHashUsesDeterministicCache &&
+                   host.SavedPropertyNetIdUsesDeterministicSort == local.SavedPropertyNetIdUsesDeterministicSort &&
+                   string.Equals(
+                       NormalizeVisibleModeDetail(host.ModelDbHashModeDetail),
+                       NormalizeVisibleModeDetail(local.ModelDbHashModeDetail),
+                       StringComparison.Ordinal);
+        }
+
         private static string GetModOrderBody(bool deterministicModelDbHash)
         {
             return deterministicModelDbHash
@@ -375,8 +393,22 @@ namespace STS2RitsuLib.Networking.JoinDiagnostics
                     "Both sides have the same gameplay mods, but their load order is different. Deterministic final-content hashing is not active on at least one side, so load order can still affect diagnostics through the existing initialization path.");
         }
 
-        private static string GetModelDbMismatchBody(bool deterministicModelDbHash, bool modelDbHashModeMismatch)
+        private static string GetModelDbMismatchTitle(bool onlyVisibleModelDbHashDifferent)
         {
+            return onlyVisibleModelDbHashDifferent
+                ? T("issue.modelDbHashOnly.title", "Only ModelDb hash differs")
+                : T("issue.modelDb.title", "ModelDb hash mismatch");
+        }
+
+        private static string GetModelDbMismatchBody(
+            bool deterministicModelDbHash,
+            bool modelDbHashModeMismatch,
+            bool onlyVisibleModelDbHashDifferent)
+        {
+            if (onlyVisibleModelDbHashDifferent)
+                return T("issue.modelDbHashOnly.body",
+                    "The visible game version, mod list, load order, and hash modes match, but the ModelDb hash is different. This suggests a non-content mod may have registered a model it should not add, or another mod may have changed the ModelDb hash calculation or result.");
+
             if (modelDbHashModeMismatch)
                 return T("issue.modelDb.body.modeMismatch",
                     "The gameplay model database is different between host and local, and only one side reports stable ModelDb sorting. Enable the same ModelDb deterministic sorting setting and use a RitsuLib version that supports reporting this mode on both sides.");
@@ -386,6 +418,11 @@ namespace STS2RitsuLib.Networking.JoinDiagnostics
                     "The gameplay model database is different between host and local even though both sides use deterministic ModelDb hashing. If mod lists match, check runtime model registration, direct ModelDb patches, or different local mod files.")
                 : T("issue.modelDb.body.existing",
                     "The gameplay model database is different between host and local. Deterministic final-content hashing is not active on at least one side, so also compare mod load order and any library, patch, or runtime registration differences.");
+        }
+
+        private static string NormalizeVisibleModeDetail(string? value)
+        {
+            return string.IsNullOrWhiteSpace(value) ? "" : value.Trim();
         }
 
         private static string FormatModelDbHashMode(bool deterministic)

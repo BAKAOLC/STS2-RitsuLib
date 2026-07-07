@@ -8,6 +8,7 @@
   "toast.reportCopied.title": "State divergence",
   "toast.reportCopied.body": "State divergence report copied to clipboard.",
   "section.summary.title": "Summary",
+  "summary.originNote": "If you are seeing this window, the game itself has reported state divergence. This window only provides additional analysis of that state.",
   "summary.bundleArchive": "Divergence report archive saved: {0}. Open the logs folder to send this file to the developer.",
   "summary.bundleArchiveFailed": "Divergence report archive was not saved: {0}.",
   "section.overview.title": "Overview",
