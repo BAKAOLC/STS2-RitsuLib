@@ -1147,11 +1147,17 @@ namespace STS2RitsuLib.Settings
             if (IsFocusUnderPopupOrTransientWindow(fo))
                 return;
 
+            if (fo is ModSettingsSidebarList focusedSidebarList)
+            {
+                focusedSidebarList.ShowFocusTooltipFromNavigation();
+                return;
+            }
+
             if (fo != null && IsInstanceValid(fo) && _sidebarPanelRoot.IsAncestorOf(fo))
                 return;
 
             RebuildFocusChainsOnly();
-            GrabControlDeferred(ResolveSidebarTargetMatchingContent());
+            GrabControlDeferred(ResolveSidebarTargetMatchingContent(), true);
         }
 
         private Control? ResolveSidebarTargetMatchingContent()
@@ -2864,12 +2870,18 @@ namespace STS2RitsuLib.Settings
 
             var focusLost = owner == null || !IsInstanceValid(owner) || !IsAncestorOf(owner);
             if (focusLost)
-                GrabControlDeferred(_initialFocusedControl);
+                GrabControlDeferred(_initialFocusedControl,
+                    _initialFocusedControl is ModSettingsSidebarList && IsControllerInputActive());
             else
                 _initialFocusedControl?.TryGrabFocus();
         }
 
-        private static void GrabControlDeferred(Control? target)
+        private static bool IsControllerInputActive()
+        {
+            return NControllerManager.Instance?.IsUsingController ?? false;
+        }
+
+        private void GrabControlDeferred(Control? target, bool showSidebarFocusTooltip = false)
         {
             if (target == null)
                 return;
@@ -2881,6 +2893,8 @@ namespace STS2RitsuLib.Settings
                     return;
 
                 t.GrabFocus();
+                if (showSidebarFocusTooltip && t is ModSettingsSidebarList sidebarList)
+                    sidebarList.ShowFocusTooltipFromNavigation();
             }).CallDeferred();
         }
 
@@ -3467,8 +3481,11 @@ namespace STS2RitsuLib.Settings
             private readonly RitsuModSettingsSubmenu _owner = null!;
             private readonly List<ModSettingsSidebarRow> _rows = [];
             private int _activeVisibleIndex;
-            private int _hoveredVisibleIndex = -1;
+            private Control? _focusTooltipCard;
+            private bool _focusTooltipEnabledByNavigation;
+            private ModSettingsSidebarRow? _focusTooltipRow;
             private bool _hovered;
+            private int _hoveredVisibleIndex = -1;
 
             public ModSettingsSidebarList(RitsuModSettingsSubmenu owner)
             {
@@ -3487,6 +3504,8 @@ namespace STS2RitsuLib.Settings
                 _rows.Clear();
                 _activeVisibleIndex = 0;
                 _hoveredVisibleIndex = -1;
+                _focusTooltipEnabledByNavigation = false;
+                HideFocusTooltip();
                 TooltipText = string.Empty;
                 UpdateMinimumSize();
                 RequestScrollContainerLayout();
@@ -3530,6 +3549,7 @@ namespace STS2RitsuLib.Settings
                 ClampActiveIndex();
                 ClampHoveredIndex();
                 UpdateTooltip();
+                UpdateFocusTooltip();
                 UpdateMinimumSize();
                 RequestScrollContainerLayout();
                 QueueRedraw();
@@ -3557,6 +3577,7 @@ namespace STS2RitsuLib.Settings
                 if (!redraw)
                     return;
                 UpdateTooltip();
+                UpdateFocusTooltip();
                 UpdateMinimumSize();
                 RequestScrollContainerLayout();
                 QueueRedraw();
@@ -3569,15 +3590,30 @@ namespace STS2RitsuLib.Settings
                 if (count == 0)
                     return;
 
+                _hovered = false;
+                _hoveredVisibleIndex = -1;
+                _focusTooltipEnabledByNavigation = true;
                 _activeVisibleIndex = Mathf.Clamp(_activeVisibleIndex + delta, 0, count - 1);
                 EnsureActiveVisible();
                 UpdateTooltip();
+                UpdateFocusTooltip();
                 QueueRedraw();
             }
 
             public void EnsureActiveRowVisible()
             {
                 EnsureActiveVisible();
+            }
+
+            public void ShowFocusTooltipFromNavigation()
+            {
+                _hovered = false;
+                _hoveredVisibleIndex = -1;
+                _focusTooltipEnabledByNavigation = true;
+                EnsureActiveVisible();
+                UpdateTooltip();
+                UpdateFocusTooltip();
+                QueueRedraw();
             }
 
             public override Vector2 _GetMinimumSize()
@@ -3603,6 +3639,8 @@ namespace STS2RitsuLib.Settings
                 {
                     case (int)NotificationMouseEnter:
                         _hovered = true;
+                        _focusTooltipEnabledByNavigation = false;
+                        HideFocusTooltip();
                         SetHoverFromY(GetLocalMousePosition().Y, false);
                         break;
                     case (int)NotificationMouseExit:
@@ -3616,7 +3654,12 @@ namespace STS2RitsuLib.Settings
                         QueueRedraw();
                         break;
                     case (int)NotificationFocusExit:
+                        _focusTooltipEnabledByNavigation = false;
+                        HideFocusTooltip();
+                        QueueRedraw();
+                        break;
                     case (int)NotificationThemeChanged:
+                        UpdateFocusTooltip();
                         QueueRedraw();
                         break;
                 }
@@ -3626,10 +3669,15 @@ namespace STS2RitsuLib.Settings
             {
                 switch (@event)
                 {
+                    case InputEventScreenTouch or InputEventScreenDrag:
+                        DisableFocusTooltip();
+                        break;
                     case InputEventMouseMotion motion:
+                        DisableFocusTooltip();
                         SetHoverFromY(motion.Position.Y, false);
                         return;
                     case InputEventMouseButton { Pressed: true, ButtonIndex: MouseButton.Left } mouse:
+                        DisableFocusTooltip();
                         if (SetHoverFromY(mouse.Position.Y, true))
                         {
                             _activeVisibleIndex = _hoveredVisibleIndex;
@@ -3638,6 +3686,9 @@ namespace STS2RitsuLib.Settings
 
                         AcceptEvent();
                         return;
+                    case InputEventMouseButton { Pressed: true }:
+                        DisableFocusTooltip();
+                        break;
                 }
 
                 if (!@event.IsEcho() &&
@@ -3886,6 +3937,79 @@ namespace STS2RitsuLib.Settings
             private float ResolveActiveRowHeight()
             {
                 return GetActiveRow() is { } row ? ResolveRowHeight(row) : 0f;
+            }
+
+            private void DisableFocusTooltip()
+            {
+                _focusTooltipEnabledByNavigation = false;
+                HideFocusTooltip();
+            }
+
+            private void UpdateFocusTooltip()
+            {
+                if (!_focusTooltipEnabledByNavigation || !HasFocus() || _hovered)
+                {
+                    HideFocusTooltip();
+                    return;
+                }
+
+                var row = GetActiveRow();
+                if (row is not { Kind: ModSettingsSidebarItemKind.ModGroup, TooltipInfo: not null })
+                {
+                    HideFocusTooltip();
+                    return;
+                }
+
+                if (ReferenceEquals(_focusTooltipRow, row) &&
+                    _focusTooltipCard != null &&
+                    IsInstanceValid(_focusTooltipCard))
+                {
+                    PositionFocusTooltip(_focusTooltipCard);
+                    return;
+                }
+
+                HideFocusTooltip();
+                var card = BuildModTooltip(row);
+                card.Name = "RitsuSidebarFocusTooltip";
+                card.MouseFilter = MouseFilterEnum.Ignore;
+                card.ZIndex = 1000;
+                _owner.AddChild(card);
+                _focusTooltipCard = card;
+                _focusTooltipRow = row;
+                PositionFocusTooltip(card);
+            }
+
+            private void HideFocusTooltip()
+            {
+                if (_focusTooltipCard != null && IsInstanceValid(_focusTooltipCard))
+                    _focusTooltipCard.QueueFree();
+
+                _focusTooltipCard = null;
+                _focusTooltipRow = null;
+            }
+
+            private void PositionFocusTooltip(Control card)
+            {
+                if (!IsInstanceValid(card) || !IsInstanceValid(_owner))
+                    return;
+
+                var size = card.GetCombinedMinimumSize();
+                if (size.X <= 0f || size.Y <= 0f)
+                    size = card.CustomMinimumSize;
+                card.Size = size;
+
+                var listRect = GetGlobalRect();
+                var ownerRect = _owner.GetGlobalRect();
+                var rowTop = ResolveVisibleRowTop(_activeVisibleIndex);
+                var rowHeight = ResolveActiveRowHeight();
+                var preferredGlobal = new Vector2(
+                    listRect.End.X + 12f,
+                    listRect.Position.Y + rowTop + (rowHeight - size.Y) * 0.5f);
+
+                var position = preferredGlobal - ownerRect.Position;
+                position.X = Mathf.Clamp(position.X, 8f, Math.Max(8f, ownerRect.Size.X - size.X - 8f));
+                position.Y = Mathf.Clamp(position.Y, 8f, Math.Max(8f, ownerRect.Size.Y - size.Y - 8f));
+                card.Position = position;
             }
 
             private void UpdateTooltip()
