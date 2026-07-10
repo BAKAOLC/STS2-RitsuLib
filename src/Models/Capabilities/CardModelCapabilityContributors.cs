@@ -906,8 +906,13 @@ namespace STS2RitsuLib.Models.Capabilities
             var card = context.Card;
 
             card.DynamicVars.AddTo(locString);
-            if (source is IModelDynamicVarContributor dynamicVarCapability)
-                dynamicVarCapability.GetDynamicVars(card).AddTo(locString);
+            if (source is IModelDynamicVarContributor dynamicVarCapability and IModelCapability capability)
+                ModelCapabilityHost.AddDynamicVarsTo(
+                    card,
+                    capability,
+                    dynamicVarCapability.LocStringVariableScope,
+                    dynamicVarCapability.GetDynamicVars(card),
+                    locString);
 
             var upgradeDisplay = context.IsUpgradePreview
                 ? UpgradeDisplay.UpgradePreview
@@ -940,8 +945,13 @@ namespace STS2RitsuLib.Models.Capabilities
             var card = context.Card;
 
             card.DynamicVars.AddTo(locString);
-            if (source is IModelDynamicVarContributor dynamicVarCapability)
-                dynamicVarCapability.GetDynamicVars(card).AddTo(locString);
+            if (source is IModelDynamicVarContributor dynamicVarCapability and IModelCapability capability)
+                ModelCapabilityHost.AddDynamicVarsTo(
+                    card,
+                    capability,
+                    dynamicVarCapability.LocStringVariableScope,
+                    dynamicVarCapability.GetDynamicVars(card),
+                    locString);
 
             var upgradeDisplay = card.IsUpgraded
                 ? UpgradeDisplay.Upgraded
