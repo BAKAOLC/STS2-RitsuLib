@@ -7,7 +7,7 @@ namespace STS2RitsuLib.RunData
         internal static JsonSerializerOptions Options { get; } = new()
         {
             WriteIndented = false,
-            IncludeFields = false,
+            IncludeFields = true,
         };
     }
 }

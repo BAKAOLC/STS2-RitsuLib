@@ -10,6 +10,7 @@ using MegaCrit.Sts2.Core.Nodes.CommonUi;
 using MegaCrit.Sts2.Core.Nodes.GodotExtensions;
 using MegaCrit.Sts2.Core.Nodes.Screens.MainMenu;
 using MegaCrit.Sts2.Core.Nodes.Screens.ScreenContext;
+using STS2RitsuLib.Compat;
 using STS2RitsuLib.Ui.Shell;
 using STS2RitsuLib.Ui.Shell.Theme;
 using STS2RitsuLib.Utils;
@@ -1146,11 +1147,17 @@ namespace STS2RitsuLib.Settings
             if (IsFocusUnderPopupOrTransientWindow(fo))
                 return;
 
+            if (fo is ModSettingsSidebarList focusedSidebarList)
+            {
+                focusedSidebarList.ShowFocusTooltipFromNavigation();
+                return;
+            }
+
             if (fo != null && IsInstanceValid(fo) && _sidebarPanelRoot.IsAncestorOf(fo))
                 return;
 
             RebuildFocusChainsOnly();
-            GrabControlDeferred(ResolveSidebarTargetMatchingContent());
+            GrabControlDeferred(ResolveSidebarTargetMatchingContent(), true);
         }
 
         private Control? ResolveSidebarTargetMatchingContent()
@@ -1549,7 +1556,8 @@ namespace STS2RitsuLib.Settings
                     .ToArray();
                 var rootModPages = pages.Where(page => string.IsNullOrWhiteSpace(page.ParentPageId)).ToArray();
                 var navVisible = ShouldShowExpandedModNav(modId);
-                var title = ResolveSidebarModTitle(rootModPages.Length > 0 ? rootModPages : pages);
+                var titleSourcePages = rootModPages.Length > 0 ? rootModPages : pages;
+                var title = ResolveSidebarModTitle(titleSourcePages);
                 var pageCountText = string.Format(
                     ModSettingsLocalization.Get("sidebar.modMeta", "{0} pages"),
                     pages.Length);
@@ -1565,7 +1573,10 @@ namespace STS2RitsuLib.Settings
                     0,
                     pageCountText,
                     () => ActivateSidebarMod(modId),
-                    null));
+                    null)
+                {
+                    TooltipInfo = ResolveSidebarModTooltipInfo(modId, title, titleSourcePages),
+                });
 
                 if (!navVisible)
                     continue;
@@ -2311,6 +2322,34 @@ namespace STS2RitsuLib.Settings
             return ModSettingsLocalization.ResolveModName(modId, modId);
         }
 
+        private static ModSettingsSidebarTooltipInfo ResolveSidebarModTooltipInfo(string modId, string displayName,
+            IReadOnlyList<ModSettingsPage> pages)
+        {
+            foreach (var assembly in pages
+                         .Where(static page => page.UseSourceAssemblyManifestLookup && page.SourceAssembly != null)
+                         .Select(static page => page.SourceAssembly!)
+                         .Distinct())
+                if (Sts2ModManagerCompat.TryGetBestModPresentationInfoForAssembly(assembly, out var assemblyInfo) &&
+                    assemblyInfo != null)
+                    return new(
+                        modId,
+                        string.IsNullOrWhiteSpace(assemblyInfo.Name) ? displayName : assemblyInfo.Name,
+                        assemblyInfo.Author,
+                        assemblyInfo.Version,
+                        assemblyInfo.Description,
+                        assemblyInfo.ModImagePath);
+
+            return Sts2ModManagerCompat.TryGetBestModPresentationInfo(modId, out var info) && info != null
+                ? new(
+                    modId,
+                    string.IsNullOrWhiteSpace(info.Name) ? displayName : info.Name,
+                    info.Author,
+                    info.Version,
+                    info.Description,
+                    info.ModImagePath)
+                : new(modId, displayName, null, null, null, null);
+        }
+
         private static string ResolveSectionTitle(ModSettingsSection section)
         {
             return section.Title?.Resolve() ?? ModSettingsLocalization.Get("section.default", "Section");
@@ -2831,12 +2870,18 @@ namespace STS2RitsuLib.Settings
 
             var focusLost = owner == null || !IsInstanceValid(owner) || !IsAncestorOf(owner);
             if (focusLost)
-                GrabControlDeferred(_initialFocusedControl);
+                GrabControlDeferred(_initialFocusedControl,
+                    _initialFocusedControl is ModSettingsSidebarList && IsControllerInputActive());
             else
                 _initialFocusedControl?.TryGrabFocus();
         }
 
-        private static void GrabControlDeferred(Control? target)
+        private static bool IsControllerInputActive()
+        {
+            return NControllerManager.Instance?.IsUsingController ?? false;
+        }
+
+        private void GrabControlDeferred(Control? target, bool showSidebarFocusTooltip = false)
         {
             if (target == null)
                 return;
@@ -2848,6 +2893,8 @@ namespace STS2RitsuLib.Settings
                     return;
 
                 t.GrabFocus();
+                if (showSidebarFocusTooltip && t is ModSettingsSidebarList sidebarList)
+                    sidebarList.ShowFocusTooltipFromNavigation();
             }).CallDeferred();
         }
 
@@ -3409,15 +3456,36 @@ namespace STS2RitsuLib.Settings
         {
             public bool Selected { get; set; }
 
+            public ModSettingsSidebarTooltipInfo? TooltipInfo { get; init; }
+
             public bool Visible { get; set; } = true;
         }
 
+        private sealed record ModSettingsSidebarTooltipInfo(
+            string ModId,
+            string Name,
+            string? Author,
+            string? Version,
+            string? Description,
+            string? ImagePath);
+
         private sealed partial class ModSettingsSidebarList : Control
         {
+            private const float ModTooltipImageSize = 128f;
+            private const float ModTooltipTextWidth = 326f;
+            private const float ModTooltipWidth = 492f;
+
+            private static readonly Dictionary<string, Texture2D?> ModImageTextureCache =
+                new(StringComparer.OrdinalIgnoreCase);
+
             private readonly RitsuModSettingsSubmenu _owner = null!;
             private readonly List<ModSettingsSidebarRow> _rows = [];
             private int _activeVisibleIndex;
+            private Control? _focusTooltipCard;
+            private bool _focusTooltipEnabledByNavigation;
+            private ModSettingsSidebarRow? _focusTooltipRow;
             private bool _hovered;
+            private int _hoveredVisibleIndex = -1;
 
             public ModSettingsSidebarList(RitsuModSettingsSubmenu owner)
             {
@@ -3435,6 +3503,9 @@ namespace STS2RitsuLib.Settings
             {
                 _rows.Clear();
                 _activeVisibleIndex = 0;
+                _hoveredVisibleIndex = -1;
+                _focusTooltipEnabledByNavigation = false;
+                HideFocusTooltip();
                 TooltipText = string.Empty;
                 UpdateMinimumSize();
                 RequestScrollContainerLayout();
@@ -3476,7 +3547,9 @@ namespace STS2RitsuLib.Settings
                 if (selectedVisibleIndex >= 0)
                     _activeVisibleIndex = selectedVisibleIndex;
                 ClampActiveIndex();
+                ClampHoveredIndex();
                 UpdateTooltip();
+                UpdateFocusTooltip();
                 UpdateMinimumSize();
                 RequestScrollContainerLayout();
                 QueueRedraw();
@@ -3500,9 +3573,11 @@ namespace STS2RitsuLib.Settings
                 }
 
                 ClampActiveIndex();
+                ClampHoveredIndex();
                 if (!redraw)
                     return;
                 UpdateTooltip();
+                UpdateFocusTooltip();
                 UpdateMinimumSize();
                 RequestScrollContainerLayout();
                 QueueRedraw();
@@ -3515,15 +3590,30 @@ namespace STS2RitsuLib.Settings
                 if (count == 0)
                     return;
 
+                _hovered = false;
+                _hoveredVisibleIndex = -1;
+                _focusTooltipEnabledByNavigation = true;
                 _activeVisibleIndex = Mathf.Clamp(_activeVisibleIndex + delta, 0, count - 1);
                 EnsureActiveVisible();
                 UpdateTooltip();
+                UpdateFocusTooltip();
                 QueueRedraw();
             }
 
             public void EnsureActiveRowVisible()
             {
                 EnsureActiveVisible();
+            }
+
+            public void ShowFocusTooltipFromNavigation()
+            {
+                _hovered = false;
+                _hoveredVisibleIndex = -1;
+                _focusTooltipEnabledByNavigation = true;
+                EnsureActiveVisible();
+                UpdateTooltip();
+                UpdateFocusTooltip();
+                QueueRedraw();
             }
 
             public override Vector2 _GetMinimumSize()
@@ -3549,10 +3639,14 @@ namespace STS2RitsuLib.Settings
                 {
                     case (int)NotificationMouseEnter:
                         _hovered = true;
-                        QueueRedraw();
+                        _focusTooltipEnabledByNavigation = false;
+                        HideFocusTooltip();
+                        SetHoverFromY(GetLocalMousePosition().Y, false);
                         break;
                     case (int)NotificationMouseExit:
                         _hovered = false;
+                        _hoveredVisibleIndex = -1;
+                        UpdateTooltip();
                         QueueRedraw();
                         break;
                     case (int)NotificationFocusEnter:
@@ -3560,7 +3654,12 @@ namespace STS2RitsuLib.Settings
                         QueueRedraw();
                         break;
                     case (int)NotificationFocusExit:
+                        _focusTooltipEnabledByNavigation = false;
+                        HideFocusTooltip();
+                        QueueRedraw();
+                        break;
                     case (int)NotificationThemeChanged:
+                        UpdateFocusTooltip();
                         QueueRedraw();
                         break;
                 }
@@ -3570,14 +3669,26 @@ namespace STS2RitsuLib.Settings
             {
                 switch (@event)
                 {
+                    case InputEventScreenTouch or InputEventScreenDrag:
+                        DisableFocusTooltip();
+                        break;
                     case InputEventMouseMotion motion:
-                        SetActiveFromY(motion.Position.Y, false);
+                        DisableFocusTooltip();
+                        SetHoverFromY(motion.Position.Y, false);
                         return;
                     case InputEventMouseButton { Pressed: true, ButtonIndex: MouseButton.Left } mouse:
-                        if (SetActiveFromY(mouse.Position.Y, true))
+                        DisableFocusTooltip();
+                        if (SetHoverFromY(mouse.Position.Y, true))
+                        {
+                            _activeVisibleIndex = _hoveredVisibleIndex;
                             ActivateCurrent();
+                        }
+
                         AcceptEvent();
                         return;
+                    case InputEventMouseButton { Pressed: true }:
+                        DisableFocusTooltip();
+                        break;
                 }
 
                 if (!@event.IsEcho() &&
@@ -3608,13 +3719,25 @@ namespace STS2RitsuLib.Settings
                 }
             }
 
+            public override Control _MakeCustomTooltip(string forText)
+            {
+                if (string.IsNullOrWhiteSpace(forText))
+                    return null!;
+
+                var row = GetTooltipRow();
+                return row is { Kind: ModSettingsSidebarItemKind.ModGroup, TooltipInfo: not null }
+                    ? BuildModTooltip(row)
+                    : null!;
+            }
+
             private void DrawRow(ModSettingsSidebarRow row, int visibleIndex, Rect2 rect)
             {
                 var active = HasFocus() && visibleIndex == _activeVisibleIndex;
-                var highlighted = active || row.Selected;
+                var hovered = _hovered && visibleIndex == _hoveredVisibleIndex;
+                var highlighted = active || hovered || row.Selected;
                 DrawStyleBox(active
                         ? ModSettingsSidebarButton.CreateFocusStyle(row.Selected, row.Kind, row.Depth)
-                        : ModSettingsSidebarButton.CreateStyle(row.Selected, _hovered && active, row.Kind, row.Depth),
+                        : ModSettingsSidebarButton.CreateStyle(row.Selected, hovered, row.Kind, row.Depth),
                     rect);
 
                 var font = row.Kind == ModSettingsSidebarItemKind.ModGroup
@@ -3627,7 +3750,7 @@ namespace STS2RitsuLib.Settings
                     ModSettingsSidebarItemKind.Section => 16,
                     _ => 17,
                 };
-                var style = ModSettingsSidebarButton.CreateStyle(row.Selected, active, row.Kind, row.Depth);
+                var style = ModSettingsSidebarButton.CreateStyle(row.Selected, active || hovered, row.Kind, row.Depth);
                 var left = style.ContentMarginLeft + ResolveTextLeftInset(row.Kind);
                 var right = style.ContentMarginRight;
                 var textX = rect.Position.X + left;
@@ -3672,13 +3795,22 @@ namespace STS2RitsuLib.Settings
                     HorizontalAlignment.Left, textWidth, metaSize, metaColor);
             }
 
-            private bool SetActiveFromY(float y, bool requireHit)
+            private bool SetHoverFromY(float y, bool requireHit)
             {
                 var range = ResolveVisibleRowIndexAt(y);
                 if (range < 0)
-                    return !requireHit;
+                {
+                    if (requireHit)
+                        return false;
 
-                _activeVisibleIndex = range;
+                    _hoveredVisibleIndex = -1;
+                    UpdateTooltip();
+                    QueueRedraw();
+                    return !requireHit;
+                }
+
+                _hovered = true;
+                _hoveredVisibleIndex = range;
                 UpdateTooltip();
                 QueueRedraw();
                 return true;
@@ -3731,6 +3863,26 @@ namespace STS2RitsuLib.Settings
                 return null;
             }
 
+            private ModSettingsSidebarRow? GetTooltipRow()
+            {
+                return _hovered && _hoveredVisibleIndex >= 0
+                    ? GetVisibleRow(_hoveredVisibleIndex)
+                    : GetActiveRow();
+            }
+
+            private ModSettingsSidebarRow? GetVisibleRow(int targetVisibleIndex)
+            {
+                var visibleIndex = 0;
+                foreach (var row in _rows.Where(row => row.Visible))
+                {
+                    if (visibleIndex == targetVisibleIndex)
+                        return row;
+                    visibleIndex++;
+                }
+
+                return null;
+            }
+
             private int VisibleRowCount()
             {
                 return _rows.Count(row => row.Visible);
@@ -3740,6 +3892,13 @@ namespace STS2RitsuLib.Settings
             {
                 var count = VisibleRowCount();
                 _activeVisibleIndex = count <= 0 ? 0 : Mathf.Clamp(_activeVisibleIndex, 0, count - 1);
+            }
+
+            private void ClampHoveredIndex()
+            {
+                var count = VisibleRowCount();
+                if (count <= 0 || _hoveredVisibleIndex >= count)
+                    _hoveredVisibleIndex = -1;
             }
 
             private void EnsureActiveVisible()
@@ -3780,13 +3939,154 @@ namespace STS2RitsuLib.Settings
                 return GetActiveRow() is { } row ? ResolveRowHeight(row) : 0f;
             }
 
+            private void DisableFocusTooltip()
+            {
+                _focusTooltipEnabledByNavigation = false;
+                HideFocusTooltip();
+            }
+
+            private void UpdateFocusTooltip()
+            {
+                if (!_focusTooltipEnabledByNavigation || !HasFocus() || _hovered)
+                {
+                    HideFocusTooltip();
+                    return;
+                }
+
+                var row = GetActiveRow();
+                if (row is not { Kind: ModSettingsSidebarItemKind.ModGroup, TooltipInfo: not null })
+                {
+                    HideFocusTooltip();
+                    return;
+                }
+
+                if (ReferenceEquals(_focusTooltipRow, row) &&
+                    _focusTooltipCard != null &&
+                    IsInstanceValid(_focusTooltipCard))
+                {
+                    PositionFocusTooltip(_focusTooltipCard);
+                    return;
+                }
+
+                HideFocusTooltip();
+                var card = BuildModTooltip(row);
+                card.Name = "RitsuSidebarFocusTooltip";
+                card.MouseFilter = MouseFilterEnum.Ignore;
+                card.ZIndex = 1000;
+                _owner.AddChild(card);
+                _focusTooltipCard = card;
+                _focusTooltipRow = row;
+                PositionFocusTooltip(card);
+            }
+
+            private void HideFocusTooltip()
+            {
+                if (_focusTooltipCard != null && IsInstanceValid(_focusTooltipCard))
+                    _focusTooltipCard.QueueFree();
+
+                _focusTooltipCard = null;
+                _focusTooltipRow = null;
+            }
+
+            private void PositionFocusTooltip(Control card)
+            {
+                if (!IsInstanceValid(card) || !IsInstanceValid(_owner))
+                    return;
+
+                var size = card.GetCombinedMinimumSize();
+                if (size.X <= 0f || size.Y <= 0f)
+                    size = card.CustomMinimumSize;
+                card.Size = size;
+
+                var listRect = GetGlobalRect();
+                var ownerRect = _owner.GetGlobalRect();
+                var rowTop = ResolveVisibleRowTop(_activeVisibleIndex);
+                var rowHeight = ResolveActiveRowHeight();
+                var preferredGlobal = new Vector2(
+                    listRect.End.X + 12f,
+                    listRect.Position.Y + rowTop + (rowHeight - size.Y) * 0.5f);
+
+                var position = preferredGlobal - ownerRect.Position;
+                position.X = Mathf.Clamp(position.X, 8f, Math.Max(8f, ownerRect.Size.X - size.X - 8f));
+                position.Y = Mathf.Clamp(position.Y, 8f, Math.Max(8f, ownerRect.Size.Y - size.Y - 8f));
+                card.Position = position;
+            }
+
             private void UpdateTooltip()
             {
-                TooltipText = GetActiveRow() is { } row && !string.IsNullOrWhiteSpace(row.Meta) &&
-                              row.Kind == ModSettingsSidebarItemKind.ModGroup &&
-                              !RitsuShellTheme.Current.Metric.Sidebar.ShowInlinePageCount
-                    ? $"{row.Label}\n{row.Meta}"
-                    : GetActiveRow()?.Label ?? string.Empty;
+                TooltipText = GetTooltipRow() is { } row
+                    ? row.Label
+                    : string.Empty;
+            }
+
+            private static Control BuildModTooltip(ModSettingsSidebarRow row)
+            {
+                var info = row.TooltipInfo!;
+                var texture = LoadModImageTexture(info.ImagePath);
+                return new ModSettingsSidebarTooltipCard(row, texture);
+            }
+
+            private static Texture2D? LoadModImageTexture(string? path)
+            {
+                if (string.IsNullOrWhiteSpace(path))
+                    return null;
+
+                if (ModImageTextureCache.TryGetValue(path, out var cached))
+                    return cached;
+
+                Texture2D? texture = null;
+                try
+                {
+                    if (ResourceLoader.Exists(path))
+                        texture = PreloadManager.Cache.GetAsset<Texture2D>(path);
+                }
+                catch (Exception ex)
+                {
+                    RitsuLibFramework.Logger.Warn(
+                        $"[ModSettingsSidebarTooltip] Failed to load mod image '{path}': {ex.Message}");
+                }
+
+                ModImageTextureCache[path] = texture;
+                return texture;
+            }
+
+            private static StyleBoxFlat CreateModImageFrameStyle()
+            {
+                var border = RitsuShellThemeLayoutResolver.ResolveEdges("components.tooltip.layout.borderWidth",
+                    RitsuShellTheme.Current.Metric.BorderWidth.Thin);
+                var cornerRadii =
+                    RitsuShellThemeLayoutResolver.ResolveCornerRadii("components.tooltip.layout.image.cornerRadius",
+                        RitsuShellTheme.Current.Metric.Radius.Default);
+                return new()
+                {
+                    BgColor = RitsuShellTheme.Current.Surface.Inset.Bg,
+                    BorderColor = RitsuShellTheme.Current.Surface.Inset.Border,
+                    BorderWidthLeft = border.Left,
+                    BorderWidthTop = border.Top,
+                    BorderWidthRight = border.Right,
+                    BorderWidthBottom = border.Bottom,
+                    CornerRadiusTopLeft = cornerRadii.TopLeft,
+                    CornerRadiusTopRight = cornerRadii.TopRight,
+                    CornerRadiusBottomRight = cornerRadii.BottomRight,
+                    CornerRadiusBottomLeft = cornerRadii.BottomLeft,
+                    ContentMarginLeft = 4,
+                    ContentMarginTop = 4,
+                    ContentMarginRight = 4,
+                    ContentMarginBottom = 4,
+                };
+            }
+
+            private static string NormalizeTooltipDescription(string? description)
+            {
+                return string.IsNullOrWhiteSpace(description) ? string.Empty : description.Trim();
+            }
+
+            private static string ResolvePlaceholderInitial(string name, string modId)
+            {
+                var source = string.IsNullOrWhiteSpace(name) ? modId : name;
+                return string.IsNullOrWhiteSpace(source)
+                    ? "?"
+                    : source.Trim()[0].ToString().ToUpperInvariant();
             }
 
             private void RequestScrollContainerLayout(bool defer = true)
@@ -3880,6 +4180,231 @@ namespace STS2RitsuLib.Settings
                         return scroll;
 
                 return null;
+            }
+
+            private sealed partial class ModSettingsSidebarTooltipCard : Control
+            {
+                private const float Gap = 14f;
+                private const float MetaLabelWidth = 58f;
+                private const float MetaGap = 6f;
+                private const float RowGap = 4f;
+                private const float DescriptionGap = 7f;
+
+                private readonly ModSettingsSidebarRow _row = null!;
+                private readonly Texture2D? _texture;
+
+                public ModSettingsSidebarTooltipCard(ModSettingsSidebarRow row, Texture2D? texture)
+                {
+                    _row = row;
+                    _texture = texture;
+                    MouseFilter = MouseFilterEnum.Ignore;
+                    CustomMinimumSize = Measure();
+                }
+
+                public ModSettingsSidebarTooltipCard()
+                {
+                }
+
+                public override Vector2 _GetMinimumSize()
+                {
+                    return Measure();
+                }
+
+                public override void _Draw()
+                {
+                    var info = _row.TooltipInfo!;
+                    var panelStyle = RitsuShellChromeStyles.CreateTooltipPanelStyle();
+                    DrawStyleBox(panelStyle, new(Vector2.Zero, Size));
+
+                    var content = new Rect2(
+                        panelStyle.ContentMarginLeft,
+                        panelStyle.ContentMarginTop,
+                        Math.Max(1f, Size.X - panelStyle.ContentMarginLeft - panelStyle.ContentMarginRight),
+                        Math.Max(1f, Size.Y - panelStyle.ContentMarginTop - panelStyle.ContentMarginBottom));
+
+                    DrawImageSlot(info, new(content.Position, new(ModTooltipImageSize, ModTooltipImageSize)));
+
+                    var textX = content.Position.X + ModTooltipImageSize + Gap;
+                    var y = content.Position.Y;
+                    var width = Math.Max(1f, content.Size.X - ModTooltipImageSize - Gap);
+
+                    y = DrawWrappedText(info.Name, RitsuShellTheme.Current.Font.BodyBold, 22,
+                        RitsuShellTheme.Current.Text.LabelPrimary, textX, y, width);
+                    y += RowGap;
+                    y = DrawMetaLine("sidebar.tooltip.author", "Author", info.Author, textX, y, width);
+                    y = DrawMetaLine("sidebar.tooltip.version", "Version", info.Version, textX, y, width);
+                    y = DrawMetaLine("sidebar.tooltip.id", "ID", info.ModId, textX, y, width);
+
+                    var description = NormalizeTooltipDescription(info.Description);
+                    if (string.IsNullOrWhiteSpace(description))
+                        return;
+
+                    y += DescriptionGap - RowGap;
+                    DrawWrappedText(description, RitsuShellTheme.Current.Font.Body, 15,
+                        RitsuShellTheme.Current.Text.LabelSecondary, textX, y, width);
+                }
+
+                private Vector2 Measure()
+                {
+                    var panelStyle = RitsuShellChromeStyles.CreateTooltipPanelStyle();
+                    var contentWidth = ModTooltipWidth - panelStyle.ContentMarginLeft - panelStyle.ContentMarginRight;
+                    var textWidth = Math.Max(1f, contentWidth - ModTooltipImageSize - Gap);
+                    var textHeight = MeasureWrappedText(_row.TooltipInfo!.Name, RitsuShellTheme.Current.Font.BodyBold,
+                        22, textWidth);
+                    textHeight += RowGap;
+                    textHeight += MeasureMetaLine("sidebar.tooltip.author", "Author", _row.TooltipInfo.Author,
+                        textWidth);
+                    textHeight += MeasureMetaLine("sidebar.tooltip.version", "Version", _row.TooltipInfo.Version,
+                        textWidth);
+                    textHeight += MeasureMetaLine("sidebar.tooltip.id", "ID", _row.TooltipInfo.ModId, textWidth);
+
+                    var description = NormalizeTooltipDescription(_row.TooltipInfo.Description);
+                    if (!string.IsNullOrWhiteSpace(description))
+                    {
+                        textHeight += DescriptionGap;
+                        textHeight += MeasureWrappedText(description, RitsuShellTheme.Current.Font.Body, 15,
+                            textWidth);
+                    }
+
+                    var contentHeight = Math.Max(ModTooltipImageSize, textHeight);
+                    return new(
+                        ModTooltipWidth,
+                        panelStyle.ContentMarginTop + contentHeight + panelStyle.ContentMarginBottom);
+                }
+
+                private void DrawImageSlot(ModSettingsSidebarTooltipInfo info, Rect2 rect)
+                {
+                    DrawStyleBox(CreateModImageFrameStyle(), rect);
+                    var inner = rect.Grow(-4f);
+                    if (_texture != null)
+                    {
+                        DrawTextureRect(_texture, FitTextureRect(_texture, inner), false);
+                        return;
+                    }
+
+                    var text = ResolvePlaceholderInitial(info.Name, info.ModId);
+                    var font = RitsuShellTheme.Current.Font.BodyBold;
+                    const int fontSize = 34;
+                    var textSize = font.GetStringSize(text, HorizontalAlignment.Center, -1f, fontSize);
+                    var pos = new Vector2(
+                        inner.Position.X + Math.Max(0f, (inner.Size.X - textSize.X) * 0.5f),
+                        inner.Position.Y + Math.Max(0f, (inner.Size.Y - font.GetHeight(fontSize)) * 0.5f) +
+                        font.GetAscent(fontSize));
+                    DrawString(font, pos, text, HorizontalAlignment.Left, inner.Size.X, fontSize,
+                        RitsuShellTheme.Current.Text.HoverHighlight);
+                }
+
+                private static Rect2 FitTextureRect(Texture2D texture, Rect2 bounds)
+                {
+                    var textureSize = texture.GetSize();
+                    if (textureSize.X <= 0f || textureSize.Y <= 0f)
+                        return bounds;
+
+                    var scale = Math.Min(bounds.Size.X / textureSize.X, bounds.Size.Y / textureSize.Y);
+                    var size = textureSize * scale;
+                    return new(bounds.Position + (bounds.Size - size) * 0.5f, size);
+                }
+
+                private float DrawMetaLine(string labelKey, string fallback, string? value, float x, float y,
+                    float width)
+                {
+                    if (string.IsNullOrWhiteSpace(value))
+                        return y;
+
+                    var label = ModSettingsLocalization.Get(labelKey, fallback);
+                    var labelFont = RitsuShellTheme.Current.Font.BodyBold;
+                    var valueFont = RitsuShellTheme.Current.Font.Body;
+                    const int fontSize = 13;
+                    var valueX = x + MetaLabelWidth + MetaGap;
+                    var valueWidth = Math.Max(1f, width - MetaLabelWidth - MetaGap);
+                    var labelHeight = labelFont.GetHeight(fontSize);
+                    var lines = WrapText(value.Trim(), valueFont, fontSize, valueWidth);
+                    var rowHeight = Math.Max(labelHeight, lines.Count * valueFont.GetHeight(fontSize));
+
+                    DrawString(labelFont, new(x, y + labelFont.GetAscent(fontSize)), label,
+                        HorizontalAlignment.Left, MetaLabelWidth, fontSize, RitsuShellTheme.Current.Text.RichSecondary);
+
+                    var lineY = y;
+                    foreach (var line in lines)
+                    {
+                        DrawString(valueFont, new(valueX, lineY + valueFont.GetAscent(fontSize)), line,
+                            HorizontalAlignment.Left, valueWidth, fontSize, RitsuShellTheme.Current.Text.LabelPrimary);
+                        lineY += valueFont.GetHeight(fontSize);
+                    }
+
+                    return y + rowHeight + RowGap;
+                }
+
+                private float DrawWrappedText(string text, Font font, int fontSize, Color color, float x,
+                    float y, float width)
+                {
+                    foreach (var line in WrapText(text, font, fontSize, width))
+                    {
+                        DrawString(font, new(x, y + font.GetAscent(fontSize)), line, HorizontalAlignment.Left, width,
+                            fontSize, color);
+                        y += font.GetHeight(fontSize);
+                    }
+
+                    return y;
+                }
+
+                private float MeasureMetaLine(string labelKey, string fallback, string? value, float width)
+                {
+                    if (string.IsNullOrWhiteSpace(value))
+                        return 0f;
+
+                    _ = ModSettingsLocalization.Get(labelKey, fallback);
+                    const int fontSize = 13;
+                    var valueWidth = Math.Max(1f, width - MetaLabelWidth - MetaGap);
+                    var valueFont = RitsuShellTheme.Current.Font.Body;
+                    var labelHeight = RitsuShellTheme.Current.Font.BodyBold.GetHeight(fontSize);
+                    var lines = WrapText(value.Trim(), valueFont, fontSize, valueWidth);
+                    return Math.Max(labelHeight, lines.Count * valueFont.GetHeight(fontSize)) + RowGap;
+                }
+
+                private static float MeasureWrappedText(string text, Font font, int fontSize, float width)
+                {
+                    if (string.IsNullOrWhiteSpace(text))
+                        return 0f;
+
+                    return WrapText(text.Trim(), font, fontSize, width).Count * font.GetHeight(fontSize);
+                }
+
+                private static List<string> WrapText(string text, Font font, int fontSize, float width)
+                {
+                    if (string.IsNullOrWhiteSpace(text))
+                        return [];
+
+                    var lines = new List<string>();
+                    foreach (var paragraph in text.Replace("\r\n", "\n").Replace('\r', '\n').Split('\n'))
+                    {
+                        if (paragraph.Length == 0)
+                        {
+                            lines.Add(string.Empty);
+                            continue;
+                        }
+
+                        var current = "";
+                        foreach (var ch in paragraph)
+                        {
+                            var candidate = current + ch;
+                            if (current.Length > 0 &&
+                                font.GetStringSize(candidate, HorizontalAlignment.Left, -1f, fontSize).X > width)
+                            {
+                                lines.Add(current.TrimEnd());
+                                current = ch.ToString();
+                                continue;
+                            }
+
+                            current = candidate;
+                        }
+
+                        if (current.Length > 0)
+                            lines.Add(current.TrimEnd());
+                    }
+
+                    return lines;
+                }
             }
         }
 

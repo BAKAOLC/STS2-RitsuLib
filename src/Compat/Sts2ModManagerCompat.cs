@@ -38,6 +38,9 @@ namespace STS2RitsuLib.Compat
         private static readonly Func<ModManifest, string?> ReadManifestAuthor =
             CreateManifestStringAccessor("author", static manifest => manifest.author);
 
+        private static readonly Func<ModManifest, string?> ReadManifestDescription =
+            CreateManifestStringAccessor("description", static manifest => manifest.description);
+
         private static readonly Func<ModManifest, string?> ReadManifestVersion =
             CreateManifestStringAccessor("version", static manifest => manifest.version);
 
@@ -289,6 +292,35 @@ namespace STS2RitsuLib.Compat
             return info != null;
         }
 
+        internal static bool TryGetBestModPresentationInfo(string modId, out RitsuModPresentationInfo? info)
+        {
+            ArgumentException.ThrowIfNullOrWhiteSpace(modId);
+
+            info = EnumerateModsForManifestLookup()
+                .Select(TryBuildModPresentationInfo)
+                .Where(entry => entry != null)
+                .Select(entry => entry!)
+                .Where(entry => string.Equals(entry.Id, modId, StringComparison.OrdinalIgnoreCase))
+                .OrderBy(entry => entry.Rank)
+                .FirstOrDefault();
+            return info != null;
+        }
+
+        internal static bool TryGetBestModPresentationInfoForAssembly(Assembly assembly,
+            out RitsuModPresentationInfo? info)
+        {
+            ArgumentNullException.ThrowIfNull(assembly);
+
+            info = EnumerateModsForManifestLookup()
+                .Where(mod => TryModOwnsAssembly(mod, assembly))
+                .Select(TryBuildModPresentationInfo)
+                .Where(entry => entry != null)
+                .Select(entry => entry!)
+                .OrderBy(entry => entry.Rank)
+                .FirstOrDefault();
+            return info != null;
+        }
+
         private static Sts2ModInventoryEntry? TryBuildModInventoryEntry(Mod mod)
         {
             try
@@ -380,6 +412,50 @@ namespace STS2RitsuLib.Compat
             }
         }
 
+        private static RitsuModPresentationInfo? TryBuildModPresentationInfo(Mod mod)
+        {
+            try
+            {
+                var manifest = ReadManifest(mod);
+                var assembly = ReadAssembly(mod);
+                var assemblyName = ResolveAssemblyName(assembly);
+                var errors = ReadErrors(mod);
+                var fallbackName = assemblyName?.Name ?? "<unknown>";
+                var id = manifest == null ? fallbackName : ReadManifestId(manifest) ?? fallbackName;
+                var name = manifest == null ? fallbackName : ReadManifestName(manifest) ?? fallbackName;
+                var source = ParseSource(ReadSource(mod));
+                var state = ParseLoadState(ReadLoadState(mod, errors.Count));
+                return new(
+                    id,
+                    name,
+                    manifest == null ? null : ReadManifestAuthor(manifest),
+                    manifest == null ? null : ReadManifestVersion(manifest),
+                    manifest == null ? null : ReadManifestDescription(manifest),
+                    $"res://{id}/mod_image.png",
+                    GetBestModPresentationRank(state, source));
+            }
+            catch (Exception ex)
+            {
+                RitsuLibFramework.Logger.Warn(
+                    $"[Compat] Failed to describe a registered mod for settings UI presentation: {ex.Message}");
+                return null;
+            }
+        }
+
+        private static bool TryModOwnsAssembly(Mod mod, Assembly assembly)
+        {
+            try
+            {
+                return ReadAssemblies(mod).Contains(assembly);
+            }
+            catch (Exception ex)
+            {
+                RitsuLibFramework.Logger.Warn(
+                    $"[Compat] Failed to inspect mod assemblies for settings UI presentation: {ex.Message}");
+                return false;
+            }
+        }
+
         private static bool MatchesModQuery(RitsuModInfo entry, string? modId, RitsuModSource? source)
         {
             if (modId != null && !string.Equals(entry.Id, modId, StringComparison.Ordinal))
@@ -402,6 +478,29 @@ namespace STS2RitsuLib.Compat
             };
 
             var sourceRank = entry.Source switch
+            {
+                RitsuModSource.ModsDirectory => 0,
+                RitsuModSource.SteamWorkshop => 1,
+                _ => 2,
+            };
+
+            return stateRank * 10 + sourceRank;
+        }
+
+        private static int GetBestModPresentationRank(RitsuModLoadState state, RitsuModSource source)
+        {
+            var stateRank = state switch
+            {
+                RitsuModLoadState.Loaded => 0,
+                RitsuModLoadState.Pending => 1,
+                RitsuModLoadState.AddedAtRuntime => 2,
+                RitsuModLoadState.Failed => 3,
+                RitsuModLoadState.Disabled => 4,
+                RitsuModLoadState.DisabledDuplicate => 5,
+                _ => 6,
+            };
+
+            var sourceRank = source switch
             {
                 RitsuModSource.ModsDirectory => 0,
                 RitsuModSource.SteamWorkshop => 1,
@@ -620,4 +719,13 @@ namespace STS2RitsuLib.Compat
         string Name,
         string? Version,
         Assembly Assembly);
+
+    internal sealed record RitsuModPresentationInfo(
+        string Id,
+        string Name,
+        string? Author,
+        string? Version,
+        string? Description,
+        string? ModImagePath,
+        int Rank);
 }

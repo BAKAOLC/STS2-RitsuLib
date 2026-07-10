@@ -8,6 +8,7 @@
   "toast.reportCopied.title": "状态分歧",
   "toast.reportCopied.body": "状态分歧报告已复制到剪贴板。",
   "section.summary.title": "摘要",
+  "summary.originNote": "当你看到这个窗口，说明游戏本身报告了状态分歧。本窗口仅为对该状态的额外补充分析作用。",
   "summary.bundleArchive": "分歧报告归档已保存: {0}。请打开日志文件夹，将此文件发送给开发者。",
   "summary.bundleArchiveFailed": "分歧报告归档未保存: {0}。",
   "section.overview.title": "概览",

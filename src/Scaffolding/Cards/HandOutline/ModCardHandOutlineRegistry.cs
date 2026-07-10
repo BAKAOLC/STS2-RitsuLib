@@ -171,14 +171,10 @@ namespace STS2RitsuLib.Scaffolding.Cards.HandOutline
         /// </returns>
         public static bool TryRefreshOutlineForHolder(NHandCardHolder? holder)
         {
-            if (holder == null || !holder.IsNodeReady() || holder.CardNode?.Model is not { } model)
+            if (!ModCardHandOutlinePatchHelper.TryGetRule(holder, out var model, out var evaluation))
                 return false;
 
-            var evaluation = EvaluateBest(model);
-            if (!evaluation.HasValue)
-                return false;
-
-            ModCardHandOutlinePatchHelper.ApplyHighlight(holder, model, evaluation.Value);
+            ModCardHandOutlinePatchHelper.ApplyHighlight(holder, model, evaluation);
             return true;
         }
 
@@ -188,14 +184,11 @@ namespace STS2RitsuLib.Scaffolding.Cards.HandOutline
         /// </summary>
         public static bool TryRefreshDynamicOutlineForHolder(NHandCardHolder? holder)
         {
-            if (holder == null || !holder.IsNodeReady() || holder.CardNode?.Model is not { } model)
+            if (!ModCardHandOutlinePatchHelper.TryGetRule(holder, out var model, out var evaluation) ||
+                !evaluation.Rule.RefreshEveryFrame)
                 return false;
 
-            var evaluation = EvaluateBest(model);
-            if (evaluation is not { Rule.RefreshEveryFrame: true })
-                return false;
-
-            ModCardHandOutlinePatchHelper.ApplyHighlight(holder, model, evaluation.Value);
+            ModCardHandOutlinePatchHelper.ApplyHighlight(holder, model, evaluation);
             return true;
         }
 

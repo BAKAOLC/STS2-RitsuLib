@@ -217,6 +217,9 @@ namespace STS2RitsuLib.Networking.JoinDiagnostics
             };
             box.AddThemeConstantOverride("separation", 8);
             box.AddChild(CreateInfoCard(_report.Summary, RitsuShellTheme.Current.Text.RichBody));
+            box.AddChild(CreateInfoCard(T("summary.originNote",
+                    "If you are seeing this window, the game itself has reported a join failure. This window only provides additional analysis of that state."),
+                RitsuShellTheme.Current.Text.RichMuted));
 
             if (_report.Host != null)
                 box.AddChild(BuildPeerSnapshotRow());
@@ -936,6 +939,8 @@ namespace STS2RitsuLib.Networking.JoinDiagnostics
             builder.AppendLine();
             builder.AppendLine(T("section.summary", "Summary"));
             builder.AppendLine(_report.Summary);
+            builder.AppendLine(T("summary.originNote",
+                "If you are seeing this window, the game itself has reported a join failure. This window only provides additional analysis of that state."));
             builder.AppendLine();
             AppendRuntimeFrameworkVersions(builder);
             builder.AppendLine();

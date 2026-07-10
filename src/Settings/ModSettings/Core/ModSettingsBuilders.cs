@@ -1,3 +1,4 @@
+using System.Reflection;
 using Godot;
 
 namespace STS2RitsuLib.Settings
@@ -20,6 +21,7 @@ namespace STS2RitsuLib.Settings
         private ModSettingsHostSurface _pageVisibleOnHostSurfaces = ModSettingsHostSurface.All;
         private Func<bool>? _pageVisibleWhen;
         private bool _sidebarVisibleOnlyWhenActive;
+        private bool _useSourceAssemblyManifest = true;
 
         /// <summary>
         ///     Initializes a builder for mod <paramref name="modId" />; <paramref name="pageId" /> defaults to the mod id when
@@ -28,10 +30,16 @@ namespace STS2RitsuLib.Settings
         ///     默认使用 mod id。
         /// </summary>
         public ModSettingsPageBuilder(string modId, string? pageId = null)
+            : this(modId, pageId, null)
+        {
+        }
+
+        internal ModSettingsPageBuilder(string modId, string? pageId, Assembly? sourceAssembly)
         {
             ArgumentException.ThrowIfNullOrWhiteSpace(modId);
             ModId = modId;
             PageId = string.IsNullOrWhiteSpace(pageId) ? modId : pageId;
+            SourceAssembly = sourceAssembly;
         }
 
         /// <summary>
@@ -45,6 +53,12 @@ namespace STS2RitsuLib.Settings
         ///     稳定页面 id（用于导航和 chrome 剪贴板）。
         /// </summary>
         public string PageId { get; }
+
+        /// <summary>
+        ///     Assembly that registered this page, used to resolve the host ModManager manifest for sidebar presentation.
+        ///     注册此页面的程序集，用于解析宿主 ModManager manifest 作为侧边栏展示信息来源。
+        /// </summary>
+        public Assembly? SourceAssembly { get; }
 
         /// <summary>
         ///     When set, this page appears as a child of the given parent page id.
@@ -195,6 +209,27 @@ namespace STS2RitsuLib.Settings
         }
 
         /// <summary>
+        ///     Controls whether the settings sidebar may use <see cref="SourceAssembly" /> to find the host ModManager
+        ///     manifest for this page&apos;s mod group. Enabled by default.
+        ///     控制设置侧边栏是否可以使用 <see cref="SourceAssembly" /> 查找此页面所属 Mod 分组的宿主 ModManager manifest。
+        ///     默认启用。
+        /// </summary>
+        public ModSettingsPageBuilder WithSourceAssemblyManifestLookup(bool enabled = true)
+        {
+            _useSourceAssemblyManifest = enabled;
+            return this;
+        }
+
+        /// <summary>
+        ///     Prevents this page&apos;s source assembly from being used for sidebar manifest presentation lookup.
+        ///     禁止使用此页面来源程序集进行侧边栏 manifest 展示信息查找。
+        /// </summary>
+        public ModSettingsPageBuilder WithoutSourceAssemblyManifestLookup()
+        {
+            return WithSourceAssemblyManifestLookup(false);
+        }
+
+        /// <summary>
         ///     Host surfaces where controls on this page are read-only (combined with per-section masks).
         ///     此页面控件只读的宿主 surface（会与每个 section 的掩码组合）。
         /// </summary>
@@ -261,7 +296,9 @@ namespace STS2RitsuLib.Settings
                 _pageVisibleOnHostSurfaces,
                 _pageReadOnlyOnHostSurfaces,
                 _sidebarVisibleOnlyWhenActive,
-                _hideDescription
+                _hideDescription,
+                SourceAssembly,
+                _useSourceAssemblyManifest
             );
         }
     }

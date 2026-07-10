@@ -218,9 +218,14 @@ namespace STS2RitsuLib.Content
 
             public string Format()
             {
-                return string.Equals(DisplayName, Id, StringComparison.OrdinalIgnoreCase)
-                    ? DisplayName
-                    : $"{DisplayName} ({Id})";
+                return RitsuLibSettingsStore.GetModSourceHoverTipsDisplayStyle() switch
+                {
+                    ContentSourceDisplayStyle.Name => DisplayName,
+                    ContentSourceDisplayStyle.Id => Id,
+                    _ => string.Equals(DisplayName, Id, StringComparison.OrdinalIgnoreCase)
+                        ? DisplayName
+                        : $"{DisplayName} ({Id})",
+                };
             }
         }
 

@@ -65,7 +65,8 @@ namespace STS2RitsuLib.Networking.StateDivergence
     {
         private const string ExtensionId = "ritsulib.stateDivergence";
         private const int PayloadVersion = 6;
-        private const int MaxCompressedPayloadBytes = 128 * 1024;
+        private const int MaxRecentLogRecords = 5000;
+        private const int MaxCompressedPayloadBytes = 64 * 1024;
         private static int _registered;
         private static readonly Lock PreparedOutgoingLock = new();
 
@@ -118,7 +119,7 @@ namespace STS2RitsuLib.Networking.StateDivergence
                 ContentModInventoryPayloadCodec.Encode(ContentModLoadOrderInventory.BuildRuntimeLoadedInventory()),
                 ContentModInventoryPayloadCodec.Encode(ContentModLoadOrderInventory.BuildRuntimeRelevantInventory()),
                 ProgressDiagnosticsSnapshot.CreateLocal(),
-                CreateRecentLogSnapshot(RitsuDebugLogPipeline.Snapshot(0), 0));
+                CreateRecentLogSnapshot(RitsuDebugLogPipeline.Snapshot(MaxRecentLogRecords), 0));
         }
 
         public static void PrepareOutgoingSnapshot(StateDivergenceSupplementPayload payload)

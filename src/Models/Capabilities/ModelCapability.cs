@@ -24,8 +24,10 @@ namespace STS2RitsuLib.Models.Capabilities
 
         /// <summary>
         ///     Capability-owned dynamic vars used by localized text, gameplay commands, and card preview when the
-        ///     owner is a card.
-        ///     能力自有动态变量；可用于本地化文本、游戏指令，以及 owner 为卡牌时的卡牌预览。
+        ///     owner is a card. This set is independent from the owner's own dynamic-var set; read owner variables
+        ///     through <see cref="Owner" /> when capability behavior depends on them.
+        ///     能力自有动态变量；可用于本地化文本、游戏指令，以及 owner 为卡牌时的卡牌预览。该集合独立于 owner
+        ///     自身的动态变量集合；能力行为依赖 owner 变量时，应通过 <see cref="Owner" /> 读取。
         /// </summary>
         public DynamicVarSet DynamicVars
         {
@@ -108,6 +110,9 @@ namespace STS2RitsuLib.Models.Capabilities
             LoadDynamicVarState(obj[DynamicVarsStateKey]);
             LoadAdditionalState(obj[AdditionalStateKey], schemaVersion);
         }
+
+        /// <inheritdoc />
+        public virtual string? LocStringVariableScope => null;
 
         DynamicVarSet IModelDynamicVarContributor.GetDynamicVars(AbstractModel model)
         {

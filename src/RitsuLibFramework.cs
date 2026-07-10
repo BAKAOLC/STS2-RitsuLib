@@ -1,5 +1,6 @@
 using System.Collections.Concurrent;
 using System.Reflection;
+using System.Runtime.CompilerServices;
 using Godot;
 using MegaCrit.Sts2.Core.Entities.Cards;
 using MegaCrit.Sts2.Core.Entities.Creatures;
@@ -1023,10 +1024,11 @@ namespace STS2RitsuLib
         ///     Optional layout: <see cref="ModSettingsUiPresentation.ParagraphMaxBodyHeight" />.
         ///     可选布局：<see cref="ModSettingsUiPresentation.ParagraphMaxBodyHeight" />。
         /// </remarks>
+        [MethodImpl(MethodImplOptions.NoInlining)]
         public static void RegisterModSettings(string modId, Action<ModSettingsPageBuilder> configure,
             string? pageId = null)
         {
-            ModSettingsRegistry.Register(modId, configure, pageId);
+            ModSettingsRegistry.RegisterWithSourceAssembly(modId, configure, pageId, Assembly.GetCallingAssembly());
         }
 
         /// <summary>

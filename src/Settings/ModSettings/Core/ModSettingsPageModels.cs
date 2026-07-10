@@ -1,3 +1,5 @@
+using System.Reflection;
+
 namespace STS2RitsuLib.Settings
 {
     /// <summary>
@@ -58,7 +60,9 @@ namespace STS2RitsuLib.Settings
             ModSettingsHostSurface visibleOnHostSurfaces = ModSettingsHostSurface.All,
             ModSettingsHostSurface readOnlyOnHostSurfaces = ModSettingsHostSurface.None,
             bool sidebarVisibleOnlyWhenActive = false,
-            bool hideDescription = false)
+            bool hideDescription = false,
+            Assembly? sourceAssembly = null,
+            bool useSourceAssemblyManifestLookup = true)
         {
             ModId = modId;
             Id = id;
@@ -74,6 +78,8 @@ namespace STS2RitsuLib.Settings
             ReadOnlyOnHostSurfaces = readOnlyOnHostSurfaces;
             SidebarVisibleOnlyWhenActive = sidebarVisibleOnlyWhenActive;
             HideDescription = hideDescription;
+            SourceAssembly = sourceAssembly;
+            UseSourceAssemblyManifestLookup = useSourceAssemblyManifestLookup;
         }
 
         /// <summary>
@@ -167,6 +173,18 @@ namespace STS2RitsuLib.Settings
         ///     为 true 时，仅当当前选中页面是此页面或它的子页面时，才显示此页面的侧边栏行。
         /// </summary>
         public bool SidebarVisibleOnlyWhenActive { get; }
+
+        /// <summary>
+        ///     Assembly that registered this page, when available.
+        ///     注册此页面的程序集（如果可用）。
+        /// </summary>
+        public Assembly? SourceAssembly { get; }
+
+        /// <summary>
+        ///     Whether the sidebar may use <see cref="SourceAssembly" /> to resolve presentation metadata from ModManager.
+        ///     侧边栏是否可以使用 <see cref="SourceAssembly" /> 从 ModManager 解析展示元数据。
+        /// </summary>
+        public bool UseSourceAssemblyManifestLookup { get; }
     }
 
     /// <summary>
