@@ -26,6 +26,7 @@ namespace STS2RitsuLib.Settings
             null!;
 
         public IModSettingsValueBinding<bool> ModSourceHoverTipsEnabled { get; private init; } = null!;
+        public IModSettingsValueBinding<string> ModSourceHoverTipsDisplayStyle { get; private init; } = null!;
         public IModSettingsValueBinding<bool> ModSourceHoverTipsIncludeVanilla { get; private init; } = null!;
         public IModSettingsValueBinding<bool> ModSourceHoverTipsIncludeNonDetails { get; private init; } = null!;
         public IModSettingsValueBinding<bool> ModSourceHoverTipsCards { get; private init; } = null!;
@@ -205,6 +206,16 @@ namespace STS2RitsuLib.Settings
                         settings => settings.ModSourceHoverTipsEnabled,
                         (settings, value) => settings.ModSourceHoverTipsEnabled = value),
                     () => defaults.ModSourceHoverTipsEnabled),
+                ModSourceHoverTipsDisplayStyle = ModSettingsBindings.WithDefault(
+                    ModSettingsBindings.Global<RitsuLibSettings, string>(
+                        Const.ModId,
+                        Const.SettingsKey,
+                        settings => RitsuLibSettingsStore.NormalizeModSourceHoverTipsDisplayStyle(
+                            settings.ModSourceHoverTipsDisplayStyle),
+                        (settings, value) =>
+                            settings.ModSourceHoverTipsDisplayStyle =
+                                RitsuLibSettingsStore.NormalizeModSourceHoverTipsDisplayStyle(value)),
+                    () => defaults.ModSourceHoverTipsDisplayStyle),
                 ModSourceHoverTipsIncludeVanilla = ModSettingsBindings.WithDefault(
                     ModSettingsBindings.Global<RitsuLibSettings, bool>(
                         Const.ModId,

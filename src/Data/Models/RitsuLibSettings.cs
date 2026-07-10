@@ -163,6 +163,15 @@ namespace STS2RitsuLib.Data.Models
         public bool ModSourceHoverTipsEnabled { get; set; }
 
         /// <summary>
+        ///     Controls whether content source hover tips show the display name, mod id, or both. Valid values are
+        ///     <c>name</c>, <c>id</c>, and <c>name_and_id</c>. Default <c>name_and_id</c>.
+        ///     控制内容来源悬停提示显示名称、mod id 或两者。有效值为 <c>name</c>、<c>id</c> 和
+        ///     <c>name_and_id</c>。默认 <c>name_and_id</c>。
+        /// </summary>
+        [JsonPropertyName("mod_source_hover_tips_display_style")]
+        public string ModSourceHoverTipsDisplayStyle { get; set; } = "name_and_id";
+
+        /// <summary>
         ///     When true, vanilla cards, relics, and potions also show source hover tips.
         ///     为 true 时，原版卡牌、遗物和药水也会显示来源悬停提示。
         /// </summary>

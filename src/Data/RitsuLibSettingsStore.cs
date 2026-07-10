@@ -131,6 +131,22 @@ namespace STS2RitsuLib.Data
             return GetSettings().ModSourceHoverTipsEnabled;
         }
 
+        internal static ContentSourceDisplayStyle GetModSourceHoverTipsDisplayStyle()
+        {
+            Initialize();
+            return ParseContentSourceDisplayStyle(GetSettings().ModSourceHoverTipsDisplayStyle);
+        }
+
+        internal static string NormalizeModSourceHoverTipsDisplayStyle(string? value)
+        {
+            return ParseContentSourceDisplayStyle(value) switch
+            {
+                ContentSourceDisplayStyle.Name => "name",
+                ContentSourceDisplayStyle.Id => "id",
+                _ => "name_and_id",
+            };
+        }
+
         internal static bool ShouldIncludeVanillaModSourceHoverTips()
         {
             Initialize();
@@ -405,5 +421,22 @@ namespace STS2RitsuLib.Data
                 _ => ModelDbDeterministicSortMode.Auto,
             };
         }
+
+        private static ContentSourceDisplayStyle ParseContentSourceDisplayStyle(string? value)
+        {
+            return value?.Trim().ToLowerInvariant() switch
+            {
+                "name" => ContentSourceDisplayStyle.Name,
+                "id" => ContentSourceDisplayStyle.Id,
+                _ => ContentSourceDisplayStyle.NameAndId,
+            };
+        }
+    }
+
+    internal enum ContentSourceDisplayStyle
+    {
+        NameAndId,
+        Name,
+        Id,
     }
 }

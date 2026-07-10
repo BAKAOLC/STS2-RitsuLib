@@ -23,6 +23,23 @@ namespace STS2RitsuLib.Settings
                             ui.ModSourceHoverTipsEnabled,
                             T("ritsulib.modSourceHoverTips.enabled.description",
                                 "Shows which mod provides cards, relics, potions, events, keywords, and other model hover tips."))
+                        .AddChoice(
+                            "mod_source_hover_tips_display_style",
+                            T("ritsulib.modSourceHoverTips.displayStyle.label", "Source display style"),
+                            ui.ModSourceHoverTipsDisplayStyle,
+                            [
+                                new("name_and_id",
+                                    T("ritsulib.modSourceHoverTips.displayStyle.option.nameAndId",
+                                        "Name and ID")),
+                                new("name",
+                                    T("ritsulib.modSourceHoverTips.displayStyle.option.name", "Name only")),
+                                new("id", T("ritsulib.modSourceHoverTips.displayStyle.option.id", "ID only")),
+                            ],
+                            T("ritsulib.modSourceHoverTips.displayStyle.description",
+                                "Controls how the source mod is identified in hover tips."))
+                        .WithEntryVisibleWhen(
+                            "mod_source_hover_tips_display_style",
+                            RitsuLibSettingsStore.IsModSourceHoverTipsEnabled)
                         .AddToggle(
                             "mod_source_hover_tips_include_vanilla",
                             T("ritsulib.modSourceHoverTips.includeVanilla.label", "Include vanilla content source"),
