@@ -112,6 +112,8 @@ namespace STS2RitsuLib.Networking.StateDivergence
                 BuildOverview(local, remote, remotePeerId, role, includeMatching),
                 BuildLoadedMods(localLoadedMods, remoteLoadedMods, hasLocalLoadedMods, hasRemoteLoadedMods,
                     includeMatching),
+                BuildCommonIncompatibleMods(localLoadedMods, remoteLoadedMods, hasLocalLoadedMods,
+                    hasRemoteLoadedMods),
                 BuildProtocolMaps(localSupplement, remoteSupplement, includeMatching),
                 BuildSynchronizers(local.FullState, remote.FullState, includeMatching),
                 BuildCreatures(local.FullState, remote.FullState, includeMatching),
@@ -119,6 +121,59 @@ namespace STS2RitsuLib.Networking.StateDivergence
                 BuildRng(local.FullState, remote.FullState, includeMatching),
                 BuildRelicGrabBags(local.FullState, remote.FullState, includeMatching),
             ];
+        }
+
+        private static StateDivergenceDiagnosticSection BuildCommonIncompatibleMods(
+            IReadOnlyList<ContentModInventoryEntry> local,
+            IReadOnlyList<ContentModInventoryEntry> remote,
+            bool hasLocal,
+            bool hasRemote)
+        {
+            var localDetected = local
+                .Where(static mod => mod.IsCommonIncompatibleMod)
+                .ToArray();
+            var remoteDetected = remote
+                .Where(static mod => mod.IsCommonIncompatibleMod)
+                .ToArray();
+            if (localDetected.Length == 0 && remoteDetected.Length == 0)
+                return new(
+                    L("section.commonIncompatibleMods.title", "Common incompatible mods"),
+                    "",
+                    true,
+                    [],
+                    false);
+
+            return new(
+                L("section.commonIncompatibleMods.title", "Common incompatible mods"),
+                L("section.commonIncompatibleMods.warning",
+                    "Detected mods are known to potentially cause state divergence or other unexpected behavior. If you encounter a problem, try disabling these mods and check whether it can still be reproduced."),
+                false,
+                [
+                    new(
+                        "commonIncompatibleMods.mods",
+                        FormatCommonIncompatibleMods(localDetected, hasLocal),
+                        FormatCommonIncompatibleMods(remoteDetected, hasRemote)),
+                ],
+                false);
+        }
+
+        private static string FormatCommonIncompatibleMods(
+            IReadOnlyList<ContentModInventoryEntry> mods,
+            bool available)
+        {
+            if (!available)
+                return L("value.unavailable", "<unavailable>");
+
+            return mods.Count == 0
+                ? L("value.none", "<none>")
+                : string.Join(", ", mods.Select(FormatCommonIncompatibleModDisplayName)
+                    .Distinct(StringComparer.Ordinal));
+        }
+
+        private static string FormatCommonIncompatibleModDisplayName(ContentModInventoryEntry mod)
+        {
+            var name = string.IsNullOrWhiteSpace(mod.Name) ? mod.Id : mod.Name.Trim();
+            return $"{name}: {FormatVersion(mod.Version)}";
         }
 
         private static StateDivergenceDiagnosticSection BuildProtocolMaps(

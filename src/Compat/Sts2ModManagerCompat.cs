@@ -326,7 +326,8 @@ namespace STS2RitsuLib.Compat
             try
             {
                 var manifest = ReadManifest(mod);
-                var assembly = ReadAssembly(mod);
+                var assemblies = ReadAssemblies(mod);
+                var assembly = assemblies.FirstOrDefault();
                 var assemblyName = ResolveAssemblyName(assembly);
                 var errors = ReadErrors(mod);
                 var fallbackName = assemblyName?.Name ?? "<unknown>";
@@ -339,7 +340,8 @@ namespace STS2RitsuLib.Compat
                     manifest == null || ReadManifestAffectsGameplay(manifest),
                     assemblyName?.Name,
                     assemblyName?.Version?.ToString(),
-                    errors);
+                    errors,
+                    CommonIncompatibleModRegistry.IsMatch(assemblies));
             }
             catch (Exception ex)
             {
@@ -712,7 +714,8 @@ namespace STS2RitsuLib.Compat
         bool AffectsGameplay,
         string? AssemblyName,
         string? AssemblyVersion,
-        IReadOnlyList<LocString> Errors);
+        IReadOnlyList<LocString> Errors,
+        bool IsCommonIncompatibleMod);
 
     internal sealed record Sts2LoadedModAssemblyEntry(
         string Id,

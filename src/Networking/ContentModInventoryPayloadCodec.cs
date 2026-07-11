@@ -46,7 +46,8 @@ namespace STS2RitsuLib.Networking
                     entry.WorkshopItemId,
                     (entry.Flags & 1) != 0,
                     (entry.Flags & 2) != 0,
-                    (entry.Flags & 4) != 0))
+                    (entry.Flags & 4) != 0,
+                    (entry.Flags & 8) != 0))
                 .ToArray();
         }
 
@@ -82,6 +83,9 @@ namespace STS2RitsuLib.Networking
                 flags |= 2;
             if (entry.IsDependency)
                 flags |= 4;
+            if (entry.IsCommonIncompatibleMod)
+                flags |= 8;
+
             return flags;
         }
 

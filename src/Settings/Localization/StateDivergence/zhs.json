@@ -16,6 +16,8 @@
   "section.loadedMods.title": "已加载 mod",
   "section.loadedMods.description": "运行时已加载 mod 的集合、版本、来源和加载顺序差异。",
   "section.loadedMods.export": "全部已加载 mod",
+  "section.commonIncompatibleMods.title": "常见不兼容模组",
+  "section.commonIncompatibleMods.warning": "检测到已知可能引发状态分歧或其他异常的模组。如果遇到问题，可以尝试禁用这些模组后确认是否仍能复现。",
   "section.sync.title": "同步标记",
   "section.sync.description": "选择 ID、奖励 ID，以及最后执行的 action 或 hook。",
   "section.creatures.title": "生物",

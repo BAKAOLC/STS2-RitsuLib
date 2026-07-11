@@ -338,7 +338,8 @@ namespace STS2RitsuLib.Networking.JoinDiagnostics
                     null,
                     true,
                     true,
-                    ContentModLoadOrderInventory.IsDependencyLibraryId(id));
+                    ContentModLoadOrderInventory.IsDependencyLibraryId(id),
+                    false);
             }).ToArray();
         }
 
