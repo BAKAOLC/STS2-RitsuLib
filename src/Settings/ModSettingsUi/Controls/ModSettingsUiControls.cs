@@ -1028,6 +1028,7 @@ namespace STS2RitsuLib.Settings
                 SizeFlagsVertical = SizeFlags.ShrinkCenter,
             };
             AddChild(_nextButton);
+            SyncAvailability();
         }
 
         /// <summary>
@@ -1042,7 +1043,11 @@ namespace STS2RitsuLib.Settings
         public override void _Ready()
         {
             if (_optionsWithValues.Length == 0)
+            {
+                RefreshCurrentLabel();
+                LayoutChildren();
                 return;
+            }
 
             var startingIndex = Array.FindIndex(_optionsWithValues,
                 option => EqualityComparer<TValue>.Default.Equals(option.Value, _currentValue));
@@ -1156,14 +1161,30 @@ namespace STS2RitsuLib.Settings
                 _currentIndex = matched >= 0 ? matched : 0;
             }
 
+            SyncAvailability();
             RefreshCurrentLabel();
         }
 
         private void RefreshCurrentLabel()
         {
-            if (_optionsWithValues.Length == 0 || _label == null)
+            if (_label == null)
                 return;
+            if (_optionsWithValues.Length == 0)
+            {
+                _label.Text = ModSettingsLocalization.Get("choice.noAvailableOptions", "No available options");
+                return;
+            }
+
             _label.Text = _optionsWithValues[_currentIndex].Label;
+        }
+
+        private void SyncAvailability()
+        {
+            var disabled = _optionsWithValues.Length == 0;
+            if (_previousButton != null)
+                _previousButton.Disabled = disabled;
+            if (_nextButton != null)
+                _nextButton.Disabled = disabled;
         }
 
         private void LayoutChildren()
@@ -1260,6 +1281,7 @@ namespace STS2RitsuLib.Settings
         private PanelContainer? _dropPanel;
         private ScrollContainer? _dropScroll;
         private ModSettingsGamepadCompatibleButton? _faceButton;
+        private Action? _opening;
         private (TValue Value, string Label)[] _optionsWithValues = [];
         private int _selectedIndex;
         private int[] _slotOptionIndex = [];
@@ -1349,6 +1371,24 @@ namespace STS2RitsuLib.Settings
         void IModSettingsTransientPopupOwner.ForceCloseTransientUi()
         {
             CloseDropdown();
+        }
+
+        /// <summary>
+        ///     Raised immediately before the dropdown opens so callers can refresh its options on demand.
+        ///     在下拉列表展开前立即触发，调用方可据此按需刷新选项。
+        /// </summary>
+        public event Action? Opening
+        {
+            add
+            {
+                _opening += value;
+                SyncFaceAvailability();
+            }
+            remove
+            {
+                _opening -= value;
+                SyncFaceAvailability();
+            }
         }
 
         /// <inheritdoc />
@@ -1496,8 +1536,7 @@ namespace STS2RitsuLib.Settings
                     break;
                 }
 
-            if (_faceButton != null)
-                _faceButton.Disabled = _optionsWithValues.Length == 0;
+            SyncFaceAvailability();
             RefreshFaceLabel();
             if (_dropOpen)
                 RebuildListRows();
@@ -1505,13 +1544,26 @@ namespace STS2RitsuLib.Settings
 
         private void OnFacePressed()
         {
-            if (_faceButton == null || _faceButton.Disabled || _optionsWithValues.Length == 0)
+            if (_faceButton == null)
                 return;
 
             if (_dropOpen)
+            {
                 CloseDropdown();
-            else
-                OpenDropdown();
+                return;
+            }
+
+            _opening?.Invoke();
+            if (_faceButton.Disabled || _optionsWithValues.Length == 0)
+                return;
+
+            OpenDropdown();
+        }
+
+        private void SyncFaceAvailability()
+        {
+            if (_faceButton != null)
+                _faceButton.Disabled = _optionsWithValues.Length == 0 && _opening == null;
         }
 
         private void BuildDropdownShell()
@@ -2137,8 +2189,8 @@ namespace STS2RitsuLib.Settings
                 return;
             if (_optionsWithValues.Length == 0)
             {
-                _faceButton.Text = string.Empty;
-                _faceButton.TooltipText = string.Empty;
+                _faceButton.Text = ModSettingsLocalization.Get("choice.noAvailableOptions", "No available options");
+                _faceButton.TooltipText = _faceButton.Text;
                 return;
             }
 

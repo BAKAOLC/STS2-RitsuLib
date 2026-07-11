@@ -284,9 +284,7 @@ namespace STS2RitsuLib.Settings
         internal static Control CreateChoiceEntry<TValue>(ModSettingsUiContext context,
             ChoiceModSettingsEntryDefinition<TValue> entry)
         {
-            var resolvedOptions = entry.Options
-                .Select(option => (option.Value, Label: ModSettingsUiContext.Resolve(option.Label)))
-                .ToArray();
+            var resolvedOptions = ResolveOptions();
 
             Control control;
             Action refreshRegistration;
@@ -302,8 +300,16 @@ namespace STS2RitsuLib.Settings
                         context.MarkDirty(entry.Binding);
                         context.RequestRefresh();
                     });
+                if (entry.OptionsProvider != null)
+                    dropdown.Opening += () => dropdown.SetOptions(ResolveOptions(), entry.Binding.Read());
                 control = dropdown;
-                refreshRegistration = () => dropdown.SetValue(entry.Binding.Read());
+                refreshRegistration = () =>
+                {
+                    if (entry.OptionsProvider == null)
+                        dropdown.SetValue(entry.Binding.Read());
+                    else
+                        dropdown.SetOptions(ResolveOptions(), entry.Binding.Read());
+                };
             }
             else
             {
@@ -317,11 +323,19 @@ namespace STS2RitsuLib.Settings
                         context.RequestRefresh();
                     });
                 control = stepper;
-                refreshRegistration = () => stepper.SetValue(entry.Binding.Read());
+                refreshRegistration = () =>
+                {
+                    if (entry.OptionsProvider == null)
+                        stepper.SetValue(entry.Binding.Read());
+                    else
+                        stepper.SetOptions(ResolveOptions(), entry.Binding.Read());
+                };
             }
 
             RegisterRefreshWhenAlive(context, control, refreshRegistration,
-                ModSettingsUiRefreshSpec.ForBinding(entry.Binding));
+                entry.OptionsProvider == null
+                    ? ModSettingsUiRefreshSpec.ForBinding(entry.Binding)
+                    : ModSettingsUiRefreshSpec.Always);
 
             return CreateSettingLine(
                 context,
@@ -332,6 +346,14 @@ namespace STS2RitsuLib.Settings
                 entry.MenuCapabilities,
                 entry.Label,
                 entry.Description);
+
+            (TValue Value, string Label)[] ResolveOptions()
+            {
+                var options = entry.OptionsProvider?.Invoke() ?? entry.Options;
+                return options
+                    .Select(option => (option.Value, Label: ModSettingsUiContext.Resolve(option.Label)))
+                    .ToArray();
+            }
         }
 
         internal static Control CreateColorEntry(ModSettingsUiContext context, ColorModSettingsEntryDefinition entry)
