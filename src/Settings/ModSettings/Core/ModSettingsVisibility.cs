@@ -22,26 +22,10 @@ namespace STS2RitsuLib.Settings
             if (section.VisibleWhen == null &&
                 section.VisibleOnHostSurfaces == ModSettingsHostSurface.All &&
                 section.Entries.Count > 0 &&
-                section.Entries.All(entry => entry.VisibilityPredicate == null &&
-                                             entry is not SubpageModSettingsEntryDefinition))
+                section.Entries.All(entry => !RequiresDynamicEvaluation(entry)))
                 return null;
 
             return () => IsSectionVisible(page, section);
-        }
-
-        internal static bool SafePredicate(Func<bool>? predicate)
-        {
-            if (predicate == null)
-                return true;
-
-            try
-            {
-                return predicate();
-            }
-            catch
-            {
-                return true;
-            }
         }
 
         private static bool IsPageVisible(ModSettingsPage page, HashSet<string> visitingPages)
@@ -53,7 +37,7 @@ namespace STS2RitsuLib.Settings
             try
             {
                 return ModSettingsHostSurfaceResolver.IsVisibleOnCurrentHost(page.VisibleOnHostSurfaces) &&
-                       SafePredicate(page.VisibleWhen) &&
+                       ModSettingsPredicate.Evaluate(page.VisibleWhen) &&
                        page.Sections.Any(section => IsSectionVisible(page, section, visitingPages));
             }
             finally
@@ -66,18 +50,23 @@ namespace STS2RitsuLib.Settings
             HashSet<string> visitingPages)
         {
             return ModSettingsHostSurfaceResolver.IsVisibleOnCurrentHost(section.VisibleOnHostSurfaces) &&
-                   SafePredicate(section.VisibleWhen) &&
+                   ModSettingsPredicate.Evaluate(section.VisibleWhen) &&
                    section.Entries.Any(entry => IsEntryVisible(page, entry, visitingPages));
         }
 
         private static bool IsEntryVisible(ModSettingsPage page, ModSettingsEntryDefinition entry,
             HashSet<string> visitingPages)
         {
-            if (!SafePredicate(entry.VisibilityPredicate))
+            if (!ModSettingsPredicate.Evaluate(entry.VisibilityPredicate))
                 return false;
 
-            return entry is not SubpageModSettingsEntryDefinition subpage ||
-                   IsTargetPageVisible(page.ModId, subpage.TargetPageId, visitingPages);
+            return entry.VisibilityTargetPageId is not { } targetPageId ||
+                   IsTargetPageVisible(page.ModId, targetPageId, visitingPages);
+        }
+
+        internal static bool RequiresDynamicEvaluation(ModSettingsEntryDefinition entry)
+        {
+            return entry.VisibilityPredicate != null || entry.VisibilityTargetPageId != null;
         }
 
         private static bool IsTargetPageVisible(string modId, string pageId, HashSet<string> visitingPages)

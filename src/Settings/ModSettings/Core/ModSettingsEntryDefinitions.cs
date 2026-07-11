@@ -65,6 +65,12 @@ namespace STS2RitsuLib.Settings
         /// </summary>
         public virtual Func<bool>? EnabledPredicate => null;
 
+        /// <summary>
+        ///     Optional destination page whose visibility also controls this entry. Decorators must preserve it.
+        ///     可选的目标页面，其可见性也会控制此条目；decorator 必须保留该语义。
+        /// </summary>
+        internal virtual string? VisibilityTargetPageId => null;
+
         internal virtual bool CanResetToDefault => false;
 
         internal abstract Control CreateControl(ModSettingsUiContext context);

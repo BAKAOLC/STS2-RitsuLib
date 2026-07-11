@@ -1073,7 +1073,13 @@ namespace STS2RitsuLib.Settings
             return this;
         }
 
-        internal ModSettingsSectionBuilder WithEntryVisibleWhen(string id, Func<bool> predicate)
+        /// <summary>
+        ///     Hides one entry while <paramref name="predicate" /> is false. This applies to every entry kind and is
+        ///     re-evaluated whenever the settings UI refreshes.
+        ///     当 <paramref name="predicate" /> 为 false 时隐藏某个条目。此方法适用于所有条目类型，并会在
+        ///     设置 UI 刷新时重新计算。
+        /// </summary>
+        public ModSettingsSectionBuilder WithEntryVisibleWhen(string id, Func<bool> predicate)
         {
             ArgumentException.ThrowIfNullOrWhiteSpace(id);
             ArgumentNullException.ThrowIfNull(predicate);

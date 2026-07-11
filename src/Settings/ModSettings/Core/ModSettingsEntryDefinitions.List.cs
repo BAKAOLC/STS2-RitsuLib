@@ -204,6 +204,8 @@ namespace STS2RitsuLib.Settings
         ModSettingsText? description)
         : ModSettingsEntryDefinition(id, label, description)
     {
+        internal override string VisibilityTargetPageId => TargetPageId;
+
         /// <summary>
         ///     Destination page id.
         ///     目标页面 id。

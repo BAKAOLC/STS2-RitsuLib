@@ -2024,9 +2024,8 @@ namespace STS2RitsuLib.Settings
                 page.Sections.All(section => section.VisibleWhen == null &&
                                              section.VisibleOnHostSurfaces == ModSettingsHostSurface.All &&
                                              section.Entries.Count > 0 &&
-                                             section.Entries.All(entry => entry.VisibilityPredicate == null &&
-                                                                          entry is not
-                                                                              SubpageModSettingsEntryDefinition)))
+                                             section.Entries.All(entry =>
+                                                 !ModSettingsVisibility.RequiresDynamicEvaluation(entry))))
                 return null;
 
             return () => IsPageVisibleOnCurrentHost(page) &&

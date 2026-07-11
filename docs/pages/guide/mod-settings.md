@@ -215,10 +215,11 @@ page
 section.WithEntryReadOnlyOnHostSurfaces("dangerous_option", ModSettingsHostSurface.CombatPause);
 ```
 
-Use `WithVisibleWhen` and `WithEnabledWhen` for runtime conditions.
-Use `WithEntryEnabledWhen` for one entry:
+Use `WithVisibleWhen` and `WithEnabledWhen` for page or section runtime conditions.
+Use `WithEntryVisibleWhen` and `WithEntryEnabledWhen` for any entry kind:
 
 ```csharp
+section.WithEntryVisibleWhen("advanced_option", () => MyRuntime.ShowAdvancedOptions);
 section.WithEntryEnabledWhen("dangerous_option", () => MyRuntime.CanEditDangerousOption);
 ```
 
@@ -238,10 +239,11 @@ page
 section.WithEntryReadOnlyOnHostSurfaces("dangerous_option", ModSettingsHostSurface.CombatPause);
 ```
 
-运行时条件使用 `WithVisibleWhen` 和 `WithEnabledWhen`。
-单个条目可使用 `WithEntryEnabledWhen`：
+页面或 section 的运行时条件使用 `WithVisibleWhen` 和 `WithEnabledWhen`。
+任意类型的单个条目都可使用 `WithEntryVisibleWhen` 和 `WithEntryEnabledWhen`：
 
 ```csharp
+section.WithEntryVisibleWhen("advanced_option", () => MyRuntime.ShowAdvancedOptions);
 section.WithEntryEnabledWhen("dangerous_option", () => MyRuntime.CanEditDangerousOption);
 ```
 

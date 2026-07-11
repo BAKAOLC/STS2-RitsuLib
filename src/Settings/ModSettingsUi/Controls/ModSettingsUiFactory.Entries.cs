@@ -893,6 +893,9 @@ namespace STS2RitsuLib.Settings
             if (pool == null)
                 return false;
 
+            while (entry is ModSettingsEntryDecorator decorator)
+                entry = decorator.Inner;
+
             switch (entry)
             {
                 case ToggleModSettingsEntryDefinition toggle:

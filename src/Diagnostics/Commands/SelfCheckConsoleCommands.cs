@@ -118,7 +118,7 @@ namespace STS2RitsuLib.Diagnostics.Commands
         {
             RefreshSettingsPagesForCompletion();
             return ModSettingsRegistry.GetPages()
-                .Where(IsPageVisible)
+                .Where(ModSettingsVisibility.IsPageVisible)
                 .Select(static page => page.ModId)
                 .Distinct(StringComparer.OrdinalIgnoreCase)
                 .Order(StringComparer.OrdinalIgnoreCase)
@@ -130,7 +130,7 @@ namespace STS2RitsuLib.Diagnostics.Commands
             RefreshSettingsPagesForCompletion();
             return ModSettingsRegistry.GetPages()
                 .Where(page => string.Equals(page.ModId, modId, StringComparison.OrdinalIgnoreCase))
-                .Where(IsPageVisible)
+                .Where(ModSettingsVisibility.IsPageVisible)
                 .Select(static page => page.Id)
                 .Order(StringComparer.OrdinalIgnoreCase)
                 .ToArray();
@@ -139,8 +139,10 @@ namespace STS2RitsuLib.Diagnostics.Commands
         private static string[] GetSectionIdCandidates(string modId, string pageId)
         {
             RefreshSettingsPagesForCompletion();
-            return ModSettingsRegistry.TryGetPage(modId, pageId, out var page) && page != null && IsPageVisible(page)
-                ? page.Sections.Where(IsSectionVisible).Select(static section => section.Id)
+            return ModSettingsRegistry.TryGetPage(modId, pageId, out var page) && page != null &&
+                   ModSettingsVisibility.IsPageVisible(page)
+                ? page.Sections.Where(section => ModSettingsVisibility.IsSectionVisible(page, section))
+                    .Select(static section => section.Id)
                     .Order(StringComparer.OrdinalIgnoreCase).ToArray()
                 : [];
         }
@@ -148,14 +150,16 @@ namespace STS2RitsuLib.Diagnostics.Commands
         private static string[] GetEntryIdCandidates(string modId, string pageId, string sectionId)
         {
             RefreshSettingsPagesForCompletion();
-            if (!ModSettingsRegistry.TryGetPage(modId, pageId, out var page) || page == null || !IsPageVisible(page))
+            if (!ModSettingsRegistry.TryGetPage(modId, pageId, out var page) || page == null ||
+                !ModSettingsVisibility.IsPageVisible(page))
                 return [];
 
             var section = page.Sections.FirstOrDefault(s => string.Equals(s.Id, sectionId,
                 StringComparison.OrdinalIgnoreCase));
-            return section == null || !IsSectionVisible(section)
+            return section == null || !ModSettingsVisibility.IsSectionVisible(page, section)
                 ? []
-                : section.Entries.Where(IsEntryVisible).Select(static entry => entry.Id)
+                : section.Entries.Where(entry => ModSettingsVisibility.IsEntryVisible(page, entry))
+                    .Select(static entry => entry.Id)
                     .Order(StringComparer.OrdinalIgnoreCase).ToArray();
         }
 
@@ -170,38 +174,6 @@ namespace STS2RitsuLib.Diagnostics.Commands
             catch
             {
                 // Completion is best-effort; command execution reports concrete failures.
-            }
-        }
-
-        private static bool IsPageVisible(ModSettingsPage page)
-        {
-            return ModSettingsHostSurfaceResolver.IsVisibleOnCurrentHost(page.VisibleOnHostSurfaces) &&
-                   SafePredicate(page.VisibleWhen);
-        }
-
-        private static bool IsSectionVisible(ModSettingsSection section)
-        {
-            return ModSettingsHostSurfaceResolver.IsVisibleOnCurrentHost(section.VisibleOnHostSurfaces) &&
-                   SafePredicate(section.VisibleWhen);
-        }
-
-        private static bool IsEntryVisible(ModSettingsEntryDefinition entry)
-        {
-            return SafePredicate(entry.VisibilityPredicate);
-        }
-
-        private static bool SafePredicate(Func<bool>? predicate)
-        {
-            if (predicate == null)
-                return true;
-
-            try
-            {
-                return predicate();
-            }
-            catch
-            {
-                return true;
             }
         }
     }
