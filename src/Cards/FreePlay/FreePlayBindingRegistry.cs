@@ -110,6 +110,16 @@ namespace STS2RitsuLib.Cards.FreePlay
             });
         }
 
+        internal static void MarkCardBaseCostsFreeForRestOfTurn(CardModel card)
+        {
+            ArgumentNullException.ThrowIfNull(card);
+            CardStates.Update(card, state =>
+            {
+                state.BaseCostsFreeForRestOfTurnCharges++;
+                return state;
+            });
+        }
+
         internal static void MarkCardBaseCostsFreeThisCombat(CardModel card)
         {
             ArgumentNullException.ThrowIfNull(card);
@@ -222,6 +232,7 @@ namespace STS2RitsuLib.Cards.FreePlay
             var isBaseCostFree = isFullFree ||
                                  state.BaseCostsFreeNextPlayCharges > 0 ||
                                  state.BaseCostsFreeThisTurnCharges > 0 ||
+                                 state.BaseCostsFreeForRestOfTurnCharges > 0 ||
                                  (state.BaseCostsFreeThisCombatState != null &&
                                   ReferenceEquals(state.BaseCostsFreeThisCombatState, combatState));
             return new(isBaseCostFree, isFullFree);
@@ -247,9 +258,11 @@ namespace STS2RitsuLib.Cards.FreePlay
             CardStates.Update(card, state =>
             {
                 changed = state.ThisTurnCharges > 0 ||
-                          state.BaseCostsFreeThisTurnCharges > 0;
+                          state.BaseCostsFreeThisTurnCharges > 0 ||
+                          state.BaseCostsFreeForRestOfTurnCharges > 0;
                 state.ThisTurnCharges = 0;
                 state.BaseCostsFreeThisTurnCharges = 0;
+                state.BaseCostsFreeForRestOfTurnCharges = 0;
                 return state;
             });
             return changed;
@@ -314,6 +327,9 @@ namespace STS2RitsuLib.Cards.FreePlay
             if (state.BaseCostsFreeThisTurnCharges > 0)
                 return true;
 
+            if (state.BaseCostsFreeForRestOfTurnCharges > 0)
+                return true;
+
             if (state.BaseCostsFreeNextPlayCharges > 0)
                 return true;
 
@@ -376,6 +392,7 @@ namespace STS2RitsuLib.Cards.FreePlay
             public CombatStateLike? FreeThisCombatState { get; set; }
             public int BaseCostsFreeNextPlayCharges { get; set; }
             public int BaseCostsFreeThisTurnCharges { get; set; }
+            public int BaseCostsFreeForRestOfTurnCharges { get; set; }
             public CombatStateLike? BaseCostsFreeThisCombatState { get; set; }
         }
 
