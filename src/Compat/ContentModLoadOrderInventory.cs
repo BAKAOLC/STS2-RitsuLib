@@ -74,7 +74,8 @@ namespace STS2RitsuLib.Compat
                     entry.WorkshopItemId,
                     entry.IsEnabled,
                     entry.AffectsGameplay,
-                    relevantDependencyIds.Contains(entry.Id)))
+                    relevantDependencyIds.Contains(entry.Id),
+                    entry.IsCommonIncompatibleMod))
                 .ToArray();
         }
 
@@ -247,7 +248,8 @@ namespace STS2RitsuLib.Compat
                 isEnabled,
                 manifest?.affectsGameplay ?? true,
                 ReadDependencyIds(manifest),
-                discoveryIndex);
+                discoveryIndex,
+                CommonIncompatibleModRegistry.IsMatch(Sts2ModManagerCompat.GetAssemblies(mod)));
         }
 
         private static IReadOnlyList<string> ReadDependencyIds(ModManifest? manifest)
@@ -309,7 +311,8 @@ namespace STS2RitsuLib.Compat
             bool IsEnabled,
             bool AffectsGameplay,
             IReadOnlyList<string> Dependencies,
-            int DiscoveryIndex);
+            int DiscoveryIndex,
+            bool IsCommonIncompatibleMod);
 
         internal sealed class ModIdComparer : IComparer<string>
         {
@@ -332,5 +335,6 @@ namespace STS2RitsuLib.Compat
         ulong? WorkshopItemId,
         bool IsEnabled,
         bool AffectsGameplay,
-        bool IsDependency);
+        bool IsDependency,
+        bool IsCommonIncompatibleMod);
 }

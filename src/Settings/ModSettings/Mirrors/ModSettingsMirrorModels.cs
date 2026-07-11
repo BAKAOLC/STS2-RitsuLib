@@ -100,5 +100,6 @@ namespace STS2RitsuLib.Settings
         Func<object, ModSettingsText>? EnumOptionLabel = null,
         Func<IModSettingsUiActionHost, Control>? CustomControlFactory = null,
         ModSettingsHostSurface ReadOnlyOnHostSurfaces = ModSettingsHostSurface.None,
-        Func<bool>? VisibleWhen = null);
+        Func<bool>? VisibleWhen = null,
+        Func<IReadOnlyList<ModSettingsMirrorChoiceOption>>? ChoiceOptionsProvider = null);
 }

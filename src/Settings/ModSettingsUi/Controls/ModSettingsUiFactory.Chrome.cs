@@ -706,7 +706,7 @@ namespace STS2RitsuLib.Settings
         private static Func<bool>? CreateEntryVisibilityPredicate(ModSettingsPage page,
             ModSettingsEntryDefinition entry)
         {
-            if (entry.VisibilityPredicate == null && entry is not SubpageModSettingsEntryDefinition)
+            if (!ModSettingsVisibility.RequiresDynamicEvaluation(entry))
                 return null;
 
             return () => ModSettingsVisibility.IsEntryVisible(page, entry);

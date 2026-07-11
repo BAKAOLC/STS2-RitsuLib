@@ -732,6 +732,60 @@ namespace STS2RitsuLib.Settings
         }
 
         /// <summary>
+        ///     Adds choices that are re-evaluated on UI refresh and immediately before a dropdown opens. An empty
+        ///     result temporarily disables the control without changing the bound value.
+        ///     添加会在 UI 刷新及下拉列表展开前重新计算的选项；空结果会暂时禁用控件，但不会更改绑定值。
+        /// </summary>
+        /// <param name="id">
+        ///     Stable entry id within the section.
+        ///     Section 内稳定的条目 id。
+        /// </param>
+        /// <param name="label">
+        ///     Visible row label.
+        ///     可见行标签。
+        /// </param>
+        /// <param name="binding">
+        ///     Backing value binding.
+        ///     后端值绑定。
+        /// </param>
+        /// <param name="optionsProvider">
+        ///     Provider invoked when the control is created, on matching UI refresh passes, and before dropdown open.
+        ///     控件创建、匹配的 UI 刷新阶段及下拉列表展开前调用的选项提供器。
+        /// </param>
+        /// <param name="description">
+        ///     Optional hover description.
+        ///     可选悬停说明。
+        /// </param>
+        /// <param name="presentation">
+        ///     Choice presentation style.
+        ///     选项呈现样式。
+        /// </param>
+        public ModSettingsSectionBuilder AddDynamicChoice<TValue>(
+            string id,
+            ModSettingsText label,
+            IModSettingsValueBinding<TValue> binding,
+            Func<IReadOnlyList<ModSettingsChoiceOption<TValue>>> optionsProvider,
+            ModSettingsText? description = null,
+            ModSettingsChoicePresentation presentation = ModSettingsChoicePresentation.Stepper)
+        {
+            ArgumentNullException.ThrowIfNull(optionsProvider);
+            var options = optionsProvider();
+
+            var entry = new ChoiceModSettingsEntryDefinition<TValue>(
+                id,
+                label,
+                binding,
+                options,
+                presentation,
+                description)
+            {
+                OptionsProvider = optionsProvider,
+            };
+            AddEntry(id, entry);
+            return this;
+        }
+
+        /// <summary>
         ///     Adds a choice control for enum <typeparamref name="TEnum" /> with optional per-value labels.
         ///     为 enum <typeparamref name="TEnum" /> 添加 choice 控件，可为每个值指定可选标签。
         /// </summary>
@@ -1073,7 +1127,13 @@ namespace STS2RitsuLib.Settings
             return this;
         }
 
-        internal ModSettingsSectionBuilder WithEntryVisibleWhen(string id, Func<bool> predicate)
+        /// <summary>
+        ///     Hides one entry while <paramref name="predicate" /> is false. This applies to every entry kind and is
+        ///     re-evaluated whenever the settings UI refreshes.
+        ///     当 <paramref name="predicate" /> 为 false 时隐藏某个条目。此方法适用于所有条目类型，并会在
+        ///     设置 UI 刷新时重新计算。
+        /// </summary>
+        public ModSettingsSectionBuilder WithEntryVisibleWhen(string id, Func<bool> predicate)
         {
             ArgumentException.ThrowIfNullOrWhiteSpace(id);
             ArgumentNullException.ThrowIfNull(predicate);

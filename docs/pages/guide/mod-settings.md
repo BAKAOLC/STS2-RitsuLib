@@ -120,7 +120,7 @@ RitsuLib 现在会通过多个内建入口暴露已注册的设置页：
 | Toggle | `AddToggle` |
 | Integer slider | `AddIntSlider` |
 | Floating slider | `AddSlider` |
-| Choice / enum | `AddChoice`, `AddEnumChoice` |
+| Choice / enum | `AddChoice`, `AddDynamicChoice`, `AddEnumChoice` |
 | Color | `AddColor` |
 | Single-line text | `AddString` |
 | Multiline text | `AddMultilineString` |
@@ -133,6 +133,8 @@ RitsuLib 现在会通过多个内建入口暴露已注册的设置页：
 
 Every interactive control should have a stable entry id. Changing ids after release breaks clipboard and saved UI metadata expectations.
 
+Use `AddDynamicChoice` when the available values depend on runtime state or another setting. Its provider is re-evaluated when the settings UI refreshes and immediately before a dropdown opens. Returning no options temporarily disables the control without changing the bound value.
+
 :::
 
 ## 控件{lang="zh-CN"}
@@ -144,7 +146,7 @@ Every interactive control should have a stable entry id. Changing ids after rele
 | 开关 | `AddToggle` |
 | 整数滑条 | `AddIntSlider` |
 | 浮点滑条 | `AddSlider` |
-| 选项 / enum | `AddChoice`、`AddEnumChoice` |
+| 选项 / enum | `AddChoice`、`AddDynamicChoice`、`AddEnumChoice` |
 | 颜色 | `AddColor` |
 | 单行文本 | `AddString` |
 | 多行文本 | `AddMultilineString` |
@@ -156,6 +158,8 @@ Every interactive control should have a stable entry id. Changing ids after rele
 | 自定义 Godot 控件 | `AddCustom` |
 
 每个交互控件都应有稳定 entry id。发布后改 id 会破坏剪贴板和 UI 元数据预期。
+
+当可选值依赖运行时状态或其他设置时，使用 `AddDynamicChoice`。设置 UI 刷新及下拉列表展开前都会重新调用其提供器。返回空选项集会暂时禁用控件，但不会更改绑定值。
 
 :::
 
@@ -215,10 +219,11 @@ page
 section.WithEntryReadOnlyOnHostSurfaces("dangerous_option", ModSettingsHostSurface.CombatPause);
 ```
 
-Use `WithVisibleWhen` and `WithEnabledWhen` for runtime conditions.
-Use `WithEntryEnabledWhen` for one entry:
+Use `WithVisibleWhen` and `WithEnabledWhen` for page or section runtime conditions.
+Use `WithEntryVisibleWhen` and `WithEntryEnabledWhen` for any entry kind:
 
 ```csharp
+section.WithEntryVisibleWhen("advanced_option", () => MyRuntime.ShowAdvancedOptions);
 section.WithEntryEnabledWhen("dangerous_option", () => MyRuntime.CanEditDangerousOption);
 ```
 
@@ -238,10 +243,11 @@ page
 section.WithEntryReadOnlyOnHostSurfaces("dangerous_option", ModSettingsHostSurface.CombatPause);
 ```
 
-运行时条件使用 `WithVisibleWhen` 和 `WithEnabledWhen`。
-单个条目可使用 `WithEntryEnabledWhen`：
+页面或 section 的运行时条件使用 `WithVisibleWhen` 和 `WithEnabledWhen`。
+任意类型的单个条目都可使用 `WithEntryVisibleWhen` 和 `WithEntryEnabledWhen`：
 
 ```csharp
+section.WithEntryVisibleWhen("advanced_option", () => MyRuntime.ShowAdvancedOptions);
 section.WithEntryEnabledWhen("dangerous_option", () => MyRuntime.CanEditDangerousOption);
 ```
 

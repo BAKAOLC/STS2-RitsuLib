@@ -65,6 +65,12 @@ namespace STS2RitsuLib.Settings
         /// </summary>
         public virtual Func<bool>? EnabledPredicate => null;
 
+        /// <summary>
+        ///     Optional destination page whose visibility also controls this entry. Decorators must preserve it.
+        ///     可选的目标页面，其可见性也会控制此条目；decorator 必须保留该语义。
+        /// </summary>
+        internal virtual string? VisibilityTargetPageId => null;
+
         internal virtual bool CanResetToDefault => false;
 
         internal abstract Control CreateControl(ModSettingsUiContext context);
@@ -309,8 +315,10 @@ namespace STS2RitsuLib.Settings
     }
 
     /// <summary>
-    ///     Discrete choice control over <typeparamref name="TValue" /> with fixed <see cref="Options" />.
-    ///     基于 <typeparamref name="TValue" />、具有固定 <see cref="Options" /> 的离散 choice 控件。
+    ///     Discrete choice control over <typeparamref name="TValue" /> with fixed <see cref="Options" /> or a dynamic
+    ///     <see cref="OptionsProvider" />.
+    ///     基于 <typeparamref name="TValue" />、使用固定 <see cref="Options" /> 或动态
+    ///     <see cref="OptionsProvider" /> 的离散 choice 控件。
     /// </summary>
     public sealed class ChoiceModSettingsEntryDefinition<TValue>(
         string id,
@@ -328,10 +336,17 @@ namespace STS2RitsuLib.Settings
         public IModSettingsValueBinding<TValue> Binding { get; } = binding;
 
         /// <summary>
-        ///     Ordered choices shown in the UI.
-        ///     UI 中显示的有序选项。
+        ///     Initial ordered choices shown in the UI; also the complete fixed set when
+        ///     <see cref="OptionsProvider" /> is <see langword="null" />.
+        ///     UI 中显示的初始有序选项；当 <see cref="OptionsProvider" /> 为 <see langword="null" /> 时也是完整固定选项集。
         /// </summary>
         public IReadOnlyList<ModSettingsChoiceOption<TValue>> Options { get; } = options;
+
+        /// <summary>
+        ///     Optional provider that re-evaluates the available choices whenever the settings UI refreshes.
+        ///     可选提供器；每次设置 UI 刷新时重新计算可用选项。
+        /// </summary>
+        public Func<IReadOnlyList<ModSettingsChoiceOption<TValue>>>? OptionsProvider { get; internal set; }
 
         /// <summary>
         ///     Visual presentation (stepper, dropdown, etc.).

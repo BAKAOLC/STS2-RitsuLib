@@ -76,8 +76,11 @@ namespace STS2RitsuLib.Models.Capabilities
             if (!ModelCapabilities.TryGet(model, out var capabilities))
                 yield break;
 
-            foreach (var capability in capabilities.All)
-                if (capability is TListener listener && seen.Add(listener))
+            var candidates = capabilities.All.ToArray();
+            foreach (var capability in candidates)
+                if (ReferenceEquals(capability.Owner, model)
+                    && capability is TListener listener
+                    && seen.Add(listener))
                     yield return new(listener, capability as AbstractModel);
         }
     }

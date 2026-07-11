@@ -95,6 +95,17 @@ namespace STS2RitsuLib.Diagnostics
                 foreach (var mod in loadedMods)
                     text.AppendLine($"  * {FormatModName(mod)} ({FormatVersion(mod)})");
 
+                var commonIncompatibleMods = registeredMods
+                    .Where(static mod => mod.IsCommonIncompatibleMod)
+                    .ToArray();
+                if (commonIncompatibleMods.Length > 0)
+                {
+                    text.AppendLine("Common Incompatible Mods:");
+                    foreach (var mod in commonIncompatibleMods)
+                        text.AppendLine($"  * {FormatModName(mod)} ({FormatVersion(mod)}) " +
+                                        $"state={mod.State} source={mod.Source}");
+                }
+
                 RitsuLibFramework.Logger.Info(text.ToString());
             }
             catch (Exception ex)

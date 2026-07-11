@@ -1,6 +1,7 @@
 using System.Collections;
 using System.Reflection;
 using Godot;
+using MegaCrit.Sts2.addons.mega_text;
 using STS2RitsuLib.Compat;
 using STS2RitsuLib.RuntimeInput;
 
@@ -11,10 +12,12 @@ namespace STS2RitsuLib.Settings
         internal const string ConfigManagerTypeName = "JmcModLib.Config.ConfigManager";
         private const string ModRegistryTypeName = "JmcModLib.Core.ModRegistry";
         private const string JmcKeyBindingTypeName = "JmcModLib.Config.UI.JmcKeyBinding";
+        private const string JmcSecretEntryTypeName = "JmcModLib.Security.SecretEntry";
         private const string ActionPrefix = "action:";
 
         private static readonly Lock Gate = new();
         private static readonly HashSet<string> RegisteredPageKeys = new(StringComparer.Ordinal);
+        private static readonly HashSet<Assembly> RestartPendingAssemblies = [];
 
         public static bool IsJmcModLibPresent =>
             ExternalFrameworkRegistry.IsFrameworkPresent(ExternalFrameworkIds.JmcModLib);
@@ -108,6 +111,13 @@ namespace STS2RitsuLib.Settings
             if (sections.Count == 0)
                 return null;
 
+            if (entries.Any(IsRestartRequired))
+                sections.Add(new(
+                    "jmc_restart",
+                    [CreateRestartEntry(assembly)],
+                    ModSettingsLocalization.Text("jmc.mirror.restart.section", "Restart"),
+                    VisibleWhen: () => RestartPendingAssemblies.Contains(assembly)));
+
             ModSettingsMirrorButtonDefinition? restore = null;
             if (resetAssembly != null)
                 restore = new(
@@ -118,6 +128,8 @@ namespace STS2RitsuLib.Settings
                     {
                         resetAssembly.Invoke(null, [assembly]);
                         flush.Invoke(null, [assembly]);
+                        if (entries.Any(IsRestartRequired))
+                            RestartPendingAssemblies.Add(assembly);
                     },
                     ModSettingsButtonTone.Danger,
                     ModSettingsLocalization.Text("jmc.mirror.restore.description",
@@ -148,36 +160,47 @@ namespace STS2RitsuLib.Settings
                 var label = JmcText(() => ResolveJmcDisplayName(entry));
                 var description = JmcTextOrNull(() => ResolveJmcDescription(entry));
                 var valueType = ReadTypeProperty(entry, "ValueType");
+                if (entry.GetType().FullName == JmcSecretEntryTypeName)
+                    return CreateSecretEntry(id, label, description, entry) with
+                    {
+                        VisibleWhen = CreateVisibilityPredicate(entry),
+                    };
+
+                ModSettingsMirrorEntryDefinition definition;
                 if (valueType == typeof(void) || entry.GetType().Name.Equals("ButtonEntry", StringComparison.Ordinal))
-                    return CreateButtonEntry(id, label, description, entry);
-
-                var uiAttribute = ReadProperty(entry, "UIAttribute");
-                var uiName = uiAttribute?.GetType().Name ?? string.Empty;
-
-                if (uiName == "UIToggleAttribute" || valueType == typeof(bool))
-                    return new(id, ModSettingsMirrorEntryKind.Toggle, label, CreateBinding(
-                            entry,
-                            value => value is true,
-                            value => value),
-                        description);
-
-                if (uiName == "UIKeybindAttribute" || valueType == typeof(Key) ||
-                    valueType?.FullName == JmcKeyBindingTypeName)
-                    return CreateKeybindEntry(id, label, description, entry, valueType, uiAttribute);
-
-                if (uiName == "UIInputAttribute" || valueType == typeof(string))
-                    return CreateStringEntry(id, label, description, entry, uiAttribute);
-
-                if (uiName == "UIColorAttribute" || valueType == typeof(Color))
-                    return CreateColorEntry(id, label, description, entry, uiAttribute, valueType);
-
-                return uiName switch
                 {
-                    "UISliderAttribute" or "UIIntSliderAttribute" => CreateSliderEntry(id, label, description, entry,
-                        uiAttribute, valueType),
-                    "UIDropdownAttribute" => CreateChoiceEntry(id, label, description, entry, uiAttribute, valueType),
-                    _ => CreateFallbackEntry(id, label, description, entry, valueType),
-                };
+                    definition = CreateButtonEntry(id, label, description, entry);
+                }
+                else
+                {
+                    var uiAttribute = ReadProperty(entry, "UIAttribute");
+                    var uiName = uiAttribute?.GetType().Name ?? string.Empty;
+
+                    if (uiName == "UIToggleAttribute" || valueType == typeof(bool))
+                        definition = new(id, ModSettingsMirrorEntryKind.Toggle, label, CreateBinding(
+                                entry,
+                                value => value is true,
+                                value => value),
+                            description);
+                    else if (uiName == "UIKeybindAttribute" || valueType == typeof(Key) ||
+                             valueType?.FullName == JmcKeyBindingTypeName)
+                        definition = CreateKeybindEntry(id, label, description, entry, valueType, uiAttribute);
+                    else if (uiName == "UIInputAttribute" || valueType == typeof(string))
+                        definition = CreateStringEntry(id, label, description, entry, uiAttribute);
+                    else if (uiName == "UIColorAttribute" || valueType == typeof(Color))
+                        definition = CreateColorEntry(id, label, description, entry, uiAttribute, valueType);
+                    else
+                        definition = uiName switch
+                        {
+                            "UISliderAttribute" or "UIIntSliderAttribute" => CreateSliderEntry(id, label,
+                                description, entry, uiAttribute, valueType),
+                            "UIDropdownAttribute" => CreateChoiceEntry(id, label, description, entry, uiAttribute,
+                                valueType),
+                            _ => CreateFallbackEntry(id, label, description, entry, valueType),
+                        };
+                }
+
+                return definition with { VisibleWhen = CreateVisibilityPredicate(entry) };
             }
             catch (Exception ex)
             {
@@ -199,7 +222,195 @@ namespace STS2RitsuLib.Settings
                 label,
                 Description: description,
                 ButtonLabel: JmcText(() => ResolveJmcButtonText(entry)),
-                OnClick: () => invoke?.Invoke(entry, null));
+                OnClick: () => invoke?.Invoke(entry, null),
+                ButtonTone: ResolveJmcButtonTone(entry));
+        }
+
+        private static ModSettingsMirrorEntryDefinition CreateSecretEntry(
+            string id,
+            ModSettingsText label,
+            ModSettingsText? description,
+            object entry)
+        {
+            return new(
+                id,
+                ModSettingsMirrorEntryKind.Custom,
+                label,
+                Description: description,
+                CustomControlFactory: host => CreateSecretControl(entry, label, description, host));
+        }
+
+        private static Control CreateSecretControl(
+            object entry,
+            ModSettingsText label,
+            ModSettingsText? description,
+            IModSettingsUiActionHost host)
+        {
+            var panel = new PanelContainer
+            {
+                SizeFlagsHorizontal = Control.SizeFlags.ExpandFill,
+                MouseFilter = Control.MouseFilterEnum.Ignore,
+            };
+            panel.AddThemeStyleboxOverride("panel", ModSettingsUiFactory.CreateSurfaceStyle());
+
+            var margin = new MarginContainer { MouseFilter = Control.MouseFilterEnum.Ignore };
+            margin.AddThemeConstantOverride("margin_left", 16);
+            margin.AddThemeConstantOverride("margin_top", 12);
+            margin.AddThemeConstantOverride("margin_right", 16);
+            margin.AddThemeConstantOverride("margin_bottom", 12);
+            panel.AddChild(margin);
+
+            var content = new VBoxContainer
+            {
+                SizeFlagsHorizontal = Control.SizeFlags.ExpandFill,
+                MouseFilter = Control.MouseFilterEnum.Ignore,
+            };
+            content.AddThemeConstantOverride("separation", 8);
+            margin.AddChild(content);
+
+            var title = ModSettingsUiFactory.CreateHeaderLabel(
+                ModSettingsUiContext.Resolve(label),
+                18,
+                HorizontalAlignment.Left);
+            title.SizeFlagsHorizontal = Control.SizeFlags.ExpandFill;
+            content.AddChild(title);
+
+            if (description != null)
+            {
+                var body = ModSettingsUiFactory.CreateHeaderLabel(
+                    ModSettingsUiContext.Resolve(description),
+                    15,
+                    HorizontalAlignment.Left);
+                body.SizeFlagsHorizontal = Control.SizeFlags.ExpandFill;
+                body.FitContent = true;
+                content.AddChild(body);
+            }
+
+            var status = ModSettingsUiFactory.CreateHeaderLabel(
+                ResolveJmcSecretStatusText(entry),
+                15,
+                HorizontalAlignment.Left);
+            status.SizeFlagsHorizontal = Control.SizeFlags.ExpandFill;
+            status.FitContent = true;
+            content.AddChild(status);
+
+            var actions = new HBoxContainer
+            {
+                SizeFlagsHorizontal = Control.SizeFlags.ExpandFill,
+                Alignment = BoxContainer.AlignmentMode.End,
+                MouseFilter = Control.MouseFilterEnum.Ignore,
+            };
+            actions.AddThemeConstantOverride("separation", 10);
+            content.AddChild(actions);
+
+            var setButton = new ModSettingsTextButton(
+                ResolveJmcSecretButtonText(entry, true),
+                ModSettingsButtonTone.Accent,
+                () => OpenJmcSecretInput(entry, status, host));
+            var clearButton = new ModSettingsTextButton(
+                ResolveJmcSecretButtonText(entry, false),
+                ModSettingsButtonTone.Danger,
+                () => ConfirmClearJmcSecret(entry, status, host));
+            actions.AddChild(setButton);
+            actions.AddChild(clearButton);
+            return panel;
+        }
+
+        private static async void OpenJmcSecretInput(
+            object entry,
+            MegaRichTextLabel status,
+            IModSettingsUiActionHost host)
+        {
+            try
+            {
+                var assembly = entry.GetType().Assembly;
+                var popupType = assembly.GetType("JmcModLib.Prefabs.JmcSecretInputPopup");
+                var optionsType = assembly.GetType("JmcModLib.Prefabs.JmcSecretInputPopupOptions");
+                var slot = ReadProperty(entry, "Slot");
+                var protectionLevel = ReadProperty(slot, "ProtectionLevel");
+                if (popupType == null || optionsType == null || protectionLevel == null)
+                    return;
+                if (protectionLevel.ToString() == "Unavailable")
+                {
+                    ShowJmcNotice(
+                        InvokeJmcUiText("SecretInputUnavailableTitle") ?? "Secret storage unavailable",
+                        InvokeJmcUiText("SecretInputUnavailableBody") ??
+                        "This platform does not currently provide secure Secret storage for this entry.");
+                    return;
+                }
+
+                var options = Activator.CreateInstance(optionsType)!;
+                SetProperty(options, "Title", ResolveJmcDisplayName(entry));
+                var popupDescription = ResolveJmcDescription(entry);
+                if (protectionLevel.ToString() == "WeakFileProtection")
+                {
+                    var warning = Colorize("#e0b24f", InvokeJmcUiText("SecretInputWeakWarning") ??
+                                                      "Saving will use weak file protection.");
+                    popupDescription = string.IsNullOrWhiteSpace(popupDescription)
+                        ? warning
+                        : $"{popupDescription}\n{warning}";
+                }
+
+                SetProperty(options, "Description", popupDescription);
+                SetProperty(options, "Placeholder", InvokeJmcUiText("SecretInputPlaceholder"));
+                SetProperty(options, "ConfirmText", InvokeJmcUiText("SecretInputConfirm"));
+                SetProperty(options, "CancelText", InvokeJmcUiText("SecretInputCancel"));
+                SetProperty(options, "EmptyText", InvokeJmcUiText("SecretInputEmpty"));
+                SetProperty(options, "ProtectionLevel", protectionLevel);
+
+                if (popupType.GetMethod("PromptAsync", BindingFlags.Public | BindingFlags.Static)
+                        ?.Invoke(null, [options, ReadProperty(entry, "Assembly")]) is not Task task)
+                    return;
+
+                await task;
+                var value = task.GetType().GetProperty("Result")?.GetValue(task) as string;
+                if (value == null)
+                    return;
+
+                var args = new object?[] { value, null };
+                var saved = entry.GetType().GetMethod("TrySave", BindingFlags.Public | BindingFlags.Instance)
+                    ?.Invoke(entry, args) is true;
+                if (!saved)
+                    ShowJmcSecretNotice("SecretInputUnavailableTitle", "SecretSaveFailed", args[1]);
+            }
+            catch (Exception ex)
+            {
+                RitsuLibFramework.Logger.Warn($"[Settings] Failed to update JmcModLib Secret: {ex.Message}");
+            }
+            finally
+            {
+                status.Text = ResolveJmcSecretStatusText(entry);
+                host.RequestRefresh();
+            }
+        }
+
+        private static void ConfirmClearJmcSecret(
+            object entry,
+            MegaRichTextLabel status,
+            IModSettingsUiActionHost host)
+        {
+            if (Engine.GetMainLoop() is not SceneTree { Root: { } root })
+                return;
+
+            var submenu = ModSettingsMirrorUiActions.FindRitsuModSettingsSubmenu(root);
+            ModSettingsUiFactory.ShowStyledConfirm(
+                submenu is null ? root : submenu,
+                InvokeJmcUiText("SecretClearTitle") ?? "Clear Secret",
+                InvokeJmcUiText("SecretClearBody", ResolveJmcDisplayName(entry)) ??
+                $"Clear the saved Secret for {ResolveJmcDisplayName(entry)}?",
+                InvokeJmcUiText("SecretInputCancel") ?? "Cancel",
+                InvokeJmcUiText("SecretClearButton") ?? "Clear",
+                true,
+                () =>
+                {
+                    var args = new object?[] { null };
+                    var cleared = entry.GetType().GetMethod("TryDelete", BindingFlags.Public | BindingFlags.Instance)
+                        ?.Invoke(entry, args) is true;
+                    if (!cleared)
+                        ShowJmcSecretNotice("SecretClearTitle", "SecretClearFailed", args[0]);
+                    status.Text = ResolveJmcSecretStatusText(entry);
+                    host.RequestRefresh();
+                });
         }
 
         private static ModSettingsMirrorEntryDefinition CreateKeybindEntry(
@@ -331,17 +542,8 @@ namespace STS2RitsuLib.Settings
             Type? valueType)
         {
             var actualType = Nullable.GetUnderlyingType(valueType ?? typeof(string)) ?? valueType ?? typeof(string);
-            if (actualType.IsEnum)
-                return new(
-                    id,
-                    ModSettingsMirrorEntryKind.EnumChoice,
-                    label,
-                    CreateEnumBinding(entry, actualType),
-                    description,
-                    ChoicePresentation: ModSettingsChoicePresentation.Dropdown,
-                    EnumType: actualType);
 
-            var options = ReadStringListProperty(uiAttribute, "Options");
+            var options = ResolveOptions();
             if (options.Count == 0)
                 return CreateStringEntry(id, label, description, entry, null);
 
@@ -349,13 +551,20 @@ namespace STS2RitsuLib.Settings
                 id,
                 ModSettingsMirrorEntryKind.Choice,
                 label,
-                CreateBinding(entry, value => value?.ToString() ?? string.Empty, value => value),
+                CreateBinding(entry, value => value?.ToString() ?? string.Empty,
+                    value => ConvertChoiceValue(value, actualType)),
                 description,
-                ChoiceOptions: options
+                ChoiceOptions: options,
+                ChoicePresentation: ModSettingsChoicePresentation.Dropdown,
+                ChoiceOptionsProvider: ResolveOptions);
+
+            IReadOnlyList<ModSettingsMirrorChoiceOption> ResolveOptions()
+            {
+                return ResolveJmcDropdownOptions(entry, uiAttribute, actualType)
                     .Select(option => new ModSettingsMirrorChoiceOption(option,
                         JmcText(() => ResolveJmcOptionText(entry, option))))
-                    .ToArray(),
-                ChoicePresentation: ModSettingsChoicePresentation.Dropdown);
+                    .ToArray();
+            }
         }
 
         private static ModSettingsMirrorEntryDefinition CreateFallbackEntry(
@@ -391,7 +600,12 @@ namespace STS2RitsuLib.Settings
                 modId,
                 dataKey,
                 () => read(Invoke(entry, "GetValue")),
-                value => Invoke(entry, "SetValue", write(value)),
+                value =>
+                {
+                    Invoke(entry, "SetValue", write(value));
+                    if (assembly != null && IsRestartRequired(entry))
+                        RestartPendingAssemblies.Add(assembly);
+                },
                 () =>
                 {
                     if (assembly != null &&
@@ -554,6 +768,208 @@ namespace STS2RitsuLib.Settings
                 : value.Trim();
         }
 
+        private static Func<bool>? CreateVisibilityPredicate(object entry)
+        {
+            if (ReadProperty(entry, "VisibleWhenAttribute") == null)
+                return null;
+
+            var resolver = entry.GetType().Assembly
+                .GetType("JmcModLib.Config.UI.UIVisibilityResolver")
+                ?.GetMethod("IsVisible", BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Static);
+            return resolver == null
+                ? null
+                : () =>
+                {
+                    try
+                    {
+                        return resolver.Invoke(null, [entry]) is true;
+                    }
+                    catch (Exception ex)
+                    {
+                        RitsuLibFramework.Logger.Warn(
+                            $"[Settings] Failed to evaluate JmcModLib visibility for '{ReadStringProperty(entry, "Key")}': {ex.Message}");
+                        return false;
+                    }
+                };
+        }
+
+        private static IReadOnlyList<string> ResolveJmcDropdownOptions(object entry, object? uiAttribute,
+            Type valueType)
+        {
+            try
+            {
+                var resolver = entry.GetType().Assembly
+                    .GetType("JmcModLib.Config.UI.DropdownOptionsResolver")
+                    ?.GetMethod("Resolve", BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Static);
+                var resolved = resolver?.Invoke(null, [entry, uiAttribute, valueType]);
+                var options = resolved is IEnumerable enumerable
+                    ? enumerable.OfType<object>().Select(option => option.ToString() ?? string.Empty)
+                        .Where(static option => !string.IsNullOrWhiteSpace(option))
+                        .Distinct(StringComparer.Ordinal)
+                        .ToList()
+                    : [];
+                if (options.Count == 0)
+                    return options;
+
+                var current = Invoke(entry, "GetValue")?.ToString() ?? string.Empty;
+                if (options.Contains(current, StringComparer.OrdinalIgnoreCase))
+                    return options;
+
+                var provider = ReadProperty(entry, "DropdownOptionsProviderAttribute");
+                switch (ReadStringProperty(provider, "InvalidValuePolicy"))
+                {
+                    case "SelectFirstAvailable":
+                        Invoke(entry, "SetValue", ConvertChoiceValue(options[0], valueType));
+                        break;
+                    case "ResetToDefault":
+                    {
+                        var defaultValue = ReadProperty(entry, "DefaultValue");
+                        Invoke(entry, "SetValue", defaultValue);
+                        var defaultText = defaultValue?.ToString() ?? string.Empty;
+                        if (!string.IsNullOrWhiteSpace(defaultText) &&
+                            !options.Contains(defaultText, StringComparer.OrdinalIgnoreCase))
+                            options.Add(defaultText);
+                        break;
+                    }
+                    default:
+                        if (!string.IsNullOrWhiteSpace(current))
+                            options.Add(current);
+                        break;
+                }
+
+                return options;
+            }
+            catch (Exception ex)
+            {
+                RitsuLibFramework.Logger.Warn(
+                    $"[Settings] Failed to resolve JmcModLib dropdown options for '{ReadStringProperty(entry, "Key")}': {ex.Message}");
+                return [];
+            }
+        }
+
+        private static object ConvertChoiceValue(string value, Type valueType)
+        {
+            return valueType.IsEnum ? Enum.Parse(valueType, value, true) : value;
+        }
+
+        private static bool IsRestartRequired(object entry)
+        {
+            return ReadBoolProperty(ReadProperty(entry, "Attribute"), "RestartRequired");
+        }
+
+        private static ModSettingsButtonTone ResolveJmcButtonTone(object entry)
+        {
+            return ReadStringProperty(entry, "Color") switch
+            {
+                "Red" or "Reset" => ModSettingsButtonTone.Danger,
+                "Green" or "Gold" or "Blue" => ModSettingsButtonTone.Accent,
+                _ => ModSettingsButtonTone.Normal,
+            };
+        }
+
+        private static ModSettingsMirrorEntryDefinition CreateRestartEntry(Assembly assembly)
+        {
+            return new(
+                "jmc_restart_game",
+                ModSettingsMirrorEntryKind.Button,
+                ModSettingsLocalization.Text("jmc.mirror.restart.label", "Restart required"),
+                Description: ModSettingsLocalization.Text("jmc.mirror.restart.description",
+                    "Restart the game to fully apply the changed settings."),
+                ButtonLabel: ModSettingsLocalization.Text("jmc.mirror.restart.button", "Restart game"),
+                OnClick: () => TryShowJmcRestartConfirmation(assembly),
+                ButtonTone: ModSettingsButtonTone.Danger);
+        }
+
+        private static void TryShowJmcRestartConfirmation(Assembly assembly)
+        {
+            try
+            {
+                assembly.GetType("JmcModLib.Utils.GameRestart")
+                    ?.GetMethod("ShowRestartConfirmationAsync", BindingFlags.Public | BindingFlags.Static)
+                    ?.Invoke(null, [true, assembly]);
+            }
+            catch (Exception ex)
+            {
+                RitsuLibFramework.Logger.Warn(
+                    $"[Settings] Failed to open JmcModLib restart confirmation: {ex.Message}");
+            }
+        }
+
+        private static string ResolveJmcSecretButtonText(object entry, bool set)
+        {
+            var fallbackMethod = set ? "SecretSetButton" : "SecretClearButton";
+            var localizationMethod = set ? "GetSecretSetButtonText" : "GetSecretClearButtonText";
+            var fallback = InvokeJmcUiText(fallbackMethod) ?? (set ? "Set / Update" : "Clear");
+            return InvokeConfigLocalization(localizationMethod, [entry, fallback]) ?? fallback;
+        }
+
+        private static string ResolveJmcSecretStatusText(object entry)
+        {
+            var slot = ReadProperty(entry, "Slot");
+            var protection = ReadStringProperty(slot, "ProtectionLevel");
+            var exists = Invoke(entry, "Exists") is true;
+            return protection switch
+            {
+                "Unavailable" => Colorize("#d07f7f", InvokeJmcUiText("SecretStatusUnavailable") ??
+                                                     "Secure storage is not supported on this platform."),
+                "WeakFileProtection" when exists =>
+                    Colorize("#e0b24f", InvokeJmcUiText("SecretStatusSavedWeak") ??
+                                        "Saved with weak file protection."),
+                "WeakFileProtection" =>
+                    Colorize("#e0b24f", InvokeJmcUiText("SecretStatusWeak") ??
+                                        "Only weak file protection is available."),
+                _ when exists => Colorize("#7ee787", InvokeJmcUiText("SecretStatusSaved") ?? "Saved"),
+                _ => Colorize("#aab7bc", InvokeJmcUiText("SecretStatusMissing") ?? "Not saved"),
+            };
+        }
+
+        private static string Colorize(string color, string text)
+        {
+            return $"[color={color}]{text}[/color]";
+        }
+
+        private static void ShowJmcSecretNotice(string titleMethod, string bodyMethod, object? status)
+        {
+            if (Engine.GetMainLoop() is not SceneTree { Root: { } root })
+                return;
+
+            var title = InvokeJmcUiText(titleMethod) ?? "Secret storage error";
+            var body = InvokeJmcUiText(bodyMethod, FormatJmcSecretWriteStatus(status)) ??
+                       $"Secret operation failed: {FormatJmcSecretWriteStatus(status)}";
+            ModSettingsUiFactory.ShowStyledNotice(
+                // ReSharper disable once ReplaceConditionalExpressionWithNullCoalescing
+                ModSettingsMirrorUiActions.FindRitsuModSettingsSubmenu(root) is { } submenu ? submenu : root,
+                title,
+                body,
+                InvokeJmcUiText("Close") ?? "Close");
+        }
+
+        private static void ShowJmcNotice(string title, string body)
+        {
+            if (Engine.GetMainLoop() is not SceneTree { Root: { } root })
+                return;
+
+            ModSettingsUiFactory.ShowStyledNotice(
+                // ReSharper disable once ReplaceConditionalExpressionWithNullCoalescing
+                ModSettingsMirrorUiActions.FindRitsuModSettingsSubmenu(root) is { } submenu ? submenu : root,
+                title,
+                body,
+                InvokeJmcUiText("Close") ?? "Close");
+        }
+
+        private static string FormatJmcSecretWriteStatus(object? status)
+        {
+            return status?.ToString() switch
+            {
+                "Unavailable" => InvokeJmcUiText("SecretStatusUnavailable") ?? "Unavailable",
+                "AccessDenied" => InvokeJmcUiText("SecretStatusAccessDenied") ?? "Access denied",
+                "WeakProtectionNotAllowed" => InvokeJmcUiText("SecretStatusWeakNotAllowed") ??
+                                              "Weak file protection is not allowed",
+                "BackendError" => InvokeJmcUiText("SecretStatusBackendError") ?? "Secret backend error",
+                _ => status?.ToString() ?? "Unknown error",
+            };
+        }
+
         private static IReadOnlyList<object> ReadEntries(MethodInfo getEntries, Assembly assembly)
         {
             return getEntries.Invoke(null, [assembly]) is not IEnumerable enumerable
@@ -617,6 +1033,12 @@ namespace STS2RitsuLib.Settings
         {
             return target?.GetType().GetProperty(property, BindingFlags.Instance | BindingFlags.Public)
                 ?.GetValue(target);
+        }
+
+        private static void SetProperty(object target, string property, object? value)
+        {
+            target.GetType().GetProperty(property, BindingFlags.Instance | BindingFlags.Public)
+                ?.SetValue(target, value);
         }
 
         private static string? ReadStringProperty(object? target, string property)
@@ -752,14 +1174,15 @@ namespace STS2RitsuLib.Settings
             }
         }
 
-        private static string? InvokeJmcUiText(string methodName)
+        private static string? InvokeJmcUiText(string methodName, params object?[] args)
         {
             try
             {
-                return ExternalFrameworkRegistry.ResolveType("JmcModLib.Config.UI.ModSettingsText")
-                    ?.GetMethod(methodName, BindingFlags.Public | BindingFlags.Static, null, [], null)
-                    ?.Invoke(null, null)
-                    ?.ToString();
+                var method = ExternalFrameworkRegistry.ResolveType("JmcModLib.Config.UI.ModSettingsText")
+                    ?.GetMethods(BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Static)
+                    .FirstOrDefault(candidate => candidate.Name == methodName &&
+                                                 candidate.GetParameters().Length == args.Length);
+                return method?.Invoke(null, args)?.ToString();
             }
             catch
             {
