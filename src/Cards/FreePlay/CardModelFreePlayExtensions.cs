@@ -1,4 +1,3 @@
-using MegaCrit.Sts2.Core.Entities.Cards;
 using MegaCrit.Sts2.Core.Models;
 using STS2RitsuLib.Cards.FreePlay.Patches;
 
@@ -30,7 +29,7 @@ namespace STS2RitsuLib.Cards.FreePlay
             ArgumentNullException.ThrowIfNull(card);
 
             card.EnergyCost.SetThisTurn(0);
-            card.AddTemporaryStarCost(new TemporaryCardCost
+            card.AddTemporaryStarCost(new()
             {
                 Cost = 0,
                 ClearsWhenTurnEnds = true,

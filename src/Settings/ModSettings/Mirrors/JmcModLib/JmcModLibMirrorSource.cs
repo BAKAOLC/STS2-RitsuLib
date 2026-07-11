@@ -543,14 +543,6 @@ namespace STS2RitsuLib.Settings
         {
             var actualType = Nullable.GetUnderlyingType(valueType ?? typeof(string)) ?? valueType ?? typeof(string);
 
-            IReadOnlyList<ModSettingsMirrorChoiceOption> ResolveOptions()
-            {
-                return ResolveJmcDropdownOptions(entry, uiAttribute, actualType)
-                    .Select(option => new ModSettingsMirrorChoiceOption(option,
-                        JmcText(() => ResolveJmcOptionText(entry, option))))
-                    .ToArray();
-            }
-
             var options = ResolveOptions();
             if (options.Count == 0)
                 return CreateStringEntry(id, label, description, entry, null);
@@ -565,6 +557,14 @@ namespace STS2RitsuLib.Settings
                 ChoiceOptions: options,
                 ChoicePresentation: ModSettingsChoicePresentation.Dropdown,
                 ChoiceOptionsProvider: ResolveOptions);
+
+            IReadOnlyList<ModSettingsMirrorChoiceOption> ResolveOptions()
+            {
+                return ResolveJmcDropdownOptions(entry, uiAttribute, actualType)
+                    .Select(option => new ModSettingsMirrorChoiceOption(option,
+                        JmcText(() => ResolveJmcOptionText(entry, option))))
+                    .ToArray();
+            }
         }
 
         private static ModSettingsMirrorEntryDefinition CreateFallbackEntry(
@@ -937,6 +937,7 @@ namespace STS2RitsuLib.Settings
             var body = InvokeJmcUiText(bodyMethod, FormatJmcSecretWriteStatus(status)) ??
                        $"Secret operation failed: {FormatJmcSecretWriteStatus(status)}";
             ModSettingsUiFactory.ShowStyledNotice(
+                // ReSharper disable once ReplaceConditionalExpressionWithNullCoalescing
                 ModSettingsMirrorUiActions.FindRitsuModSettingsSubmenu(root) is { } submenu ? submenu : root,
                 title,
                 body,
@@ -949,6 +950,7 @@ namespace STS2RitsuLib.Settings
                 return;
 
             ModSettingsUiFactory.ShowStyledNotice(
+                // ReSharper disable once ReplaceConditionalExpressionWithNullCoalescing
                 ModSettingsMirrorUiActions.FindRitsuModSettingsSubmenu(root) is { } submenu ? submenu : root,
                 title,
                 body,
