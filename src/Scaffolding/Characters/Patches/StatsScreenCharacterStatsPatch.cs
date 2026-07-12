@@ -9,10 +9,10 @@ using STS2RitsuLib.Scaffolding.Godot;
 namespace STS2RitsuLib.Scaffolding.Characters.Patches
 {
     /// <summary>
-    ///     Appends mod character history sections to the general stats screen.
+    ///     Appends playable mod character history sections to the general stats screen.
     ///     Base game NGeneralStatsGrid.LoadStats hard-codes five vanilla characters,
     ///     so non-vanilla character records never render without this patch.
-    ///     向通用统计界面追加 mod 角色历史区段。
+    ///     向通用统计界面追加可玩 mod 角色历史区段。
     ///     基础游戏 NGeneralStatsGrid.LoadStats 硬编码了五个原版角色，
     ///     没有此补丁时，mod 角色记录永远不会渲染。
     /// </summary>
@@ -29,7 +29,7 @@ namespace STS2RitsuLib.Scaffolding.Characters.Patches
         public static string PatchId => "stats_screen_mod_character_sections";
 
         public static string Description =>
-            "Append non-vanilla character progress records to NGeneralStatsGrid character history sections";
+            "Append playable non-vanilla character progress records to NGeneralStatsGrid character history sections";
 
         public static bool IsCritical => false;
 
@@ -54,7 +54,7 @@ namespace STS2RitsuLib.Scaffolding.Characters.Patches
                 if ((object?)id == null || id == ModelId.none || visibleCharacterIds.Contains(id))
                     continue;
 
-                if (ModelDb.GetByIdOrNull<CharacterModel>(id) == null)
+                if (ModelDb.GetByIdOrNull<CharacterModel>(id) is not { IsPlayable: true })
                     continue;
 
                 var child = NCharacterStats.Create(stats);
