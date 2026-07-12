@@ -35,21 +35,6 @@ namespace STS2RitsuLib.Scaffolding.Content
             IModCardAncientBannerMaterialOverride
     {
         /// <summary>
-        ///     Legacy constructor overload; <paramref name="autoAdd" /> is ignored.
-        ///     旧版构造函数重载；<paramref name="autoAdd" /> 会被忽略。
-        /// </summary>
-        [Obsolete("The autoAdd parameter is no longer used and will be removed in a future version.")]
-        protected ModCardTemplate(
-            int baseCost,
-            CardType type,
-            CardRarity rarity,
-            TargetType target,
-            bool showInCardLibrary,
-            bool autoAdd) : this(baseCost, type, rarity, target, showInCardLibrary)
-        {
-        }
-
-        /// <summary>
         ///     Legacy string keyword declarations seeded onto every instance of this card on first
         ///     <see cref="CardModel.Keywords" /> access. Prefer overriding <see cref="CardModel.CanonicalKeywords" />
         ///     and returning <see cref="CardKeyword" /> values directly, using
