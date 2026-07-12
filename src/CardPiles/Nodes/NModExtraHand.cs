@@ -1,4 +1,5 @@
 using Godot;
+using MegaCrit.Sts2.Core.Entities.Cards;
 using MegaCrit.Sts2.Core.Entities.Players;
 using MegaCrit.Sts2.Core.Models;
 using MegaCrit.Sts2.Core.Nodes.Cards;
@@ -154,7 +155,7 @@ namespace STS2RitsuLib.CardPiles.Nodes
 
         private void AddVisualFor(CardModel card)
         {
-            if (_cards.ContainsKey(card))
+            if (!Definition.CardShouldBeVisible || _cards.ContainsKey(card))
                 return;
 
             var ncard = NCard.Create(card);
@@ -163,6 +164,7 @@ namespace STS2RitsuLib.CardPiles.Nodes
 
             _cards[card] = ncard;
             AddChild(ncard);
+            ncard.UpdateVisuals(PileType.Hand, CardPreviewMode.Normal);
         }
 
         private void ArrangeCards()
