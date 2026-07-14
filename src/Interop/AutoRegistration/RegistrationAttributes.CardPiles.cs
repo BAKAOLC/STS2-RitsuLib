@@ -166,6 +166,43 @@ namespace STS2RitsuLib.Interop.AutoRegistration
         public bool CardShouldBeVisible { get; set; }
 
         /// <summary>
+        ///     Built-in extra-hand arrangement direction. Defaults to the vanilla hand layout.
+        ///     额外手牌的内置排列方向。默认为原版手牌布局。
+        /// </summary>
+        public ModExtraHandLayoutDirection ExtraHandDirection { get; set; }
+            = ModExtraHandLayoutDirection.VanillaHand;
+
+        /// <summary>
+        ///     Horizontal/vertical extra-hand spacing in pixels. Defaults to <c>110</c>.
+        ///     水平/垂直额外手牌的像素间距。默认为 <c>110</c>。
+        /// </summary>
+        public float ExtraHandSpacing { get; set; } = 110f;
+
+        /// <summary>
+        ///     Horizontal/vertical extra-hand normal card scale. Defaults to <c>0.65</c>.
+        ///     水平/垂直额外手牌的常态卡牌缩放。默认为 <c>0.65</c>。
+        /// </summary>
+        public float ExtraHandCardScale { get; set; } = 0.65f;
+
+        /// <summary>
+        ///     Horizontal/vertical extra-hand focused card scale. Defaults to <c>1</c>.
+        ///     水平/垂直额外手牌的焦点卡牌缩放。默认为 <c>1</c>。
+        /// </summary>
+        public float ExtraHandHoverScale { get; set; } = 1f;
+
+        /// <summary>
+        ///     Whether extra-hand cards use vanilla playable glow rules. Defaults to true.
+        ///     额外手牌卡牌是否使用原版可打出发光规则。默认为 true。
+        /// </summary>
+        public bool ExtraHandShowPlayableGlow { get; set; } = true;
+
+        /// <summary>
+        ///     Whether extra-hand cards can be manually played through the vanilla pipeline. Defaults to true.
+        ///     额外手牌卡牌是否可通过原版流程手动打出。默认为 true。
+        /// </summary>
+        public bool ExtraHandAllowCardPlay { get; set; } = true;
+
+        /// <summary>
         ///     Added to the hover tip position after automatic placement (see <see cref="ModCardPileSpec.HoverTipScreenOffset" />
         ///     ).
         ///     自动放置后追加到悬停提示位置的偏移（参见 <see cref="ModCardPileSpec.HoverTipScreenOffset" />

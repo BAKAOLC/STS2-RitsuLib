@@ -384,7 +384,8 @@ namespace STS2RitsuLib.CardPiles
                 spec.VisibleWhen,
                 spec.FlightTargetPositionResolver,
                 spec.FlightStartPositionResolver,
-                spec.View);
+                spec.View,
+                spec.ExtraHand);
 
             lock (SyncRoot)
             {

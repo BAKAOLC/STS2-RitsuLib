@@ -34,10 +34,10 @@ namespace STS2RitsuLib.CardPiles
         BottomRight = 3,
 
         /// <summary>
-        ///     Extra hand-like container; cards inside are rendered as <c>NCard</c> nodes and can be previewed,
-        ///     similar to the vanilla <c>NPlayerHand</c>.
-        ///     类似 extra hand 的容器；其中卡牌会渲染为 <c>NCard</c> 节点并可预览，
-        ///     类似原版 <c>NPlayerHand</c>。
+        ///     Interactive extra-hand container. Visible cards use vanilla-compatible holders for hover tips,
+        ///     focus, glow, layout, and optional manual play; see <see cref="ModCardPileSpec.ExtraHand" />.
+        ///     交互式额外手牌容器。可见卡牌使用兼容原版的 holder，支持悬停提示、焦点、发光、布局与
+        ///     可选手动打出；参见 <see cref="ModCardPileSpec.ExtraHand" />。
         /// </summary>
         ExtraHand = 4,
     }

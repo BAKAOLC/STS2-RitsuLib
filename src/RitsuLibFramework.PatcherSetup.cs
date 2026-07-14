@@ -472,6 +472,9 @@ namespace STS2RitsuLib
             patcher.RegisterPatch<ModCardPileTopBarInitializePatch>();
             patcher.RegisterPatch<ModCardPileCombatUiReadyPatch>();
             patcher.RegisterPatch<ModCardPileCombatUiActivatePatch>();
+            patcher.RegisterPatch<ModExtraHandCardPlayPreparePatch>();
+            patcher.RegisterPatch<ModExtraHandCardPlayCancelPatch>();
+            patcher.RegisterPatch<ModExtraHandCardFlyArrivedPatch>();
             patcher.RegisterPatch<ModCardPileScreenViewPatch>();
             patcher.RegisterPatch<ModTopBarActionButtonReadyPatch>();
             patcher.RegisterPatch<ModTopBarActionButtonInitializePatch>();

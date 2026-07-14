@@ -1,6 +1,8 @@
 using MegaCrit.Sts2.Core.Entities.Cards;
 using MegaCrit.Sts2.Core.Models;
 using MegaCrit.Sts2.Core.Nodes.Cards;
+using MegaCrit.Sts2.Core.Nodes.Combat;
+using MegaCrit.Sts2.Core.Nodes.Rooms;
 using STS2RitsuLib.CardPiles.Nodes;
 using STS2RitsuLib.Patching.Models;
 
@@ -51,6 +53,8 @@ namespace STS2RitsuLib.CardPiles.Patches
 
             __result = definition.CardShouldBeVisible
                 ? ModCardPileButtonRegistry.TryGetExtraHand(definition)?.GetCard(card)
+                  ?? NCardPlayQueue.Instance?.GetCardNode(card)
+                  ?? NCombatRoom.Instance?.Ui?.GetCardFromPlayContainer(card)
                 : null;
             return false;
         }

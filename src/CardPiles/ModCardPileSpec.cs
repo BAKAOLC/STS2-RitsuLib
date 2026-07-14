@@ -86,6 +86,12 @@ namespace STS2RitsuLib.CardPiles
         public bool CardShouldBeVisible { get; init; }
 
         /// <summary>
+        ///     Presentation and interaction settings for <see cref="ModCardPileUiStyle.ExtraHand" />.
+        ///     <see cref="ModCardPileUiStyle.ExtraHand" /> 的展示与交互设置。
+        /// </summary>
+        public ModCardPileExtraHandSpec ExtraHand { get; init; } = new();
+
+        /// <summary>
         ///     Extra screen-space pixels added to the hover tip's resolved <see cref="Godot.Control.GlobalPosition" />.
         ///     Defaults to <see cref="Vector2.Zero" />. Most useful with <see cref="ModCardPileAnchorKind.Custom" />
         ///     when the automatic placement needs a small nudge.
