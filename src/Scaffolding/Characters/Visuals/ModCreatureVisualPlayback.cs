@@ -32,6 +32,9 @@ namespace STS2RitsuLib.Scaffolding.Characters.Visuals
     {
         private static readonly ConditionalWeakTable<Node, Func<string[], bool>> GodotAnimHandlers = new();
 
+        private static readonly ConditionalWeakTable<Node, RitsuCreatureVisualRegistration>
+            RitsuCreatureVisuals = new();
+
         private static readonly AccessTools.FieldRef<NMerchantRoom, List<Player>> MerchantRoomPlayersRef =
             AccessTools.FieldRefAccess<NMerchantRoom, List<Player>>("_players");
 
@@ -60,6 +63,21 @@ namespace STS2RitsuLib.Scaffolding.Characters.Visuals
         private static readonly string[] ReviveCueNames = ["revive", "Revive"];
 
         private static readonly string[] StunCueNames = ["stun", "Stun"];
+
+        internal static void RegisterRitsuCreatureVisual(Node visual)
+        {
+            RitsuCreatureVisuals.Remove(visual);
+            RitsuCreatureVisuals.Add(visual, new());
+        }
+
+        private static bool ShouldOwnCreatureVisualPlayback(NCreature creature)
+        {
+            var visuals = creature.Visuals;
+            if (visuals != null && RitsuCreatureVisuals.TryGetValue(visuals, out _))
+                return true;
+
+            return creature.Entity?.Player?.Character is IModCharacterAssetOverrides { VisualCues: not null };
+        }
 
         /// <summary>
         ///     Attempts to play a logical cue (idle, die, hurt, …) on combat-style <see cref="NCreatureVisuals" />.
@@ -158,7 +176,7 @@ namespace STS2RitsuLib.Scaffolding.Characters.Visuals
         /// </returns>
         public static bool TryPlayFromCreatureAnimatorTrigger(NCreature creature, string trigger)
         {
-            if (creature.HasSpineAnimation)
+            if (creature.HasSpineAnimation || !ShouldOwnCreatureVisualPlayback(creature))
                 return false;
 
             var primary = MapAnimatorTriggerToCue(trigger);
@@ -170,7 +188,9 @@ namespace STS2RitsuLib.Scaffolding.Characters.Visuals
             out float seconds)
         {
             seconds = 0f;
-            if (creature.HasSpineAnimation || !GodotObject.IsInstanceValid(creature.Visuals))
+            if (creature.HasSpineAnimation ||
+                !GodotObject.IsInstanceValid(creature.Visuals) ||
+                !ShouldOwnCreatureVisualPlayback(creature))
                 return false;
 
             var primary = MapAnimatorTriggerToCue(trigger);
@@ -554,10 +574,37 @@ namespace STS2RitsuLib.Scaffolding.Characters.Visuals
 
         private static Func<string[], bool>? BuildGodotAnimHandler(Node root)
         {
-            return FindNode<AnimationPlayer>(root)?.UseAnimationPlayer()
+            return FindNode<AnimationTree>(root)?.UseAnimationTree()
+                   ?? SearchRecursive<AnimationTree>(root)?.UseAnimationTree()
+                   ?? FindNode<AnimationPlayer>(root)?.UseAnimationPlayer()
                    ?? FindNode<AnimatedSprite2D>(root)?.UseAnimatedSprite2D()
                    ?? SearchRecursive<AnimationPlayer>(root)?.UseAnimationPlayer()
                    ?? SearchRecursive<AnimatedSprite2D>(root)?.UseAnimatedSprite2D();
+        }
+
+        private static Func<string[], bool>? UseAnimationTree(this AnimationTree animationTree)
+        {
+            if (animationTree.TreeRoot is not AnimationNodeStateMachine treeRoot)
+                return null;
+
+            var playback = animationTree.Get("parameters/playback").As<AnimationNodeStateMachinePlayback>();
+            if (playback == null)
+                return null;
+
+            return animNames =>
+            {
+                foreach (var name in animNames)
+                {
+                    if (string.IsNullOrWhiteSpace(name) || !treeRoot.HasNode(name))
+                        continue;
+
+                    animationTree.Active = true;
+                    playback.Travel(name);
+                    return true;
+                }
+
+                return false;
+            };
         }
 
         private static Func<string[], bool> UseAnimatedSprite2D(this AnimatedSprite2D animSprite)
@@ -691,6 +738,8 @@ namespace STS2RitsuLib.Scaffolding.Characters.Visuals
 
             return null;
         }
+
+        private sealed class RitsuCreatureVisualRegistration;
 
         private sealed class FakeMerchantPlayerVisualSlot
         {

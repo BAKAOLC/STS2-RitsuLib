@@ -1,5 +1,6 @@
 using System.Runtime.CompilerServices;
 using Godot;
+using HarmonyLib;
 using MegaCrit.Sts2.Core.Bindings.MegaSpine;
 using MegaCrit.Sts2.Core.Models;
 using MegaCrit.Sts2.Core.Nodes.Screens.Shops;
@@ -17,6 +18,7 @@ namespace STS2RitsuLib.Scaffolding.Characters.Patches
     ///     没有 Spine 的商人角色场景使用 <see cref="ModCreatureVisualPlayback" /> 处理
     ///     <see cref="NMerchantCharacter.PlayAnimation" />（纹理、AnimationPlayer、AnimatedSprite2D）。
     /// </summary>
+    [HarmonyBefore(Const.BaseLibHarmonyId)]
     internal class ModMerchantCharacterVisualPlaybackPatch : IPatchMethod
     {
         private static readonly ConditionalWeakTable<Node, StateMachineSlot> StateMachinesByRoot = new();
@@ -39,12 +41,11 @@ namespace STS2RitsuLib.Scaffolding.Characters.Patches
 
         public static bool Prefix(NMerchantCharacter __instance, string anim, bool loop)
         {
-            var isRitsuMerchantVisual = TryGetRegisteredMerchantCharacter(__instance, out var registeredCharacter);
-            if (__instance.GetChildCount() == 0)
-                return !isRitsuMerchantVisual;
+            if (!TryGetRegisteredMerchantCharacter(__instance, out var character))
+                return true;
 
-            if (!ModCreatureVisualPlayback.TryResolveMerchantCharacterModel(__instance, out var character))
-                character = registeredCharacter;
+            if (__instance.GetChildCount() == 0)
+                return false;
 
             if (TryRouteToStateMachine(__instance, character, anim))
                 return false;
@@ -53,10 +54,7 @@ namespace STS2RitsuLib.Scaffolding.Characters.Patches
                 return true;
 
             var worldCues = TryGetMerchantWorldCueSet(character);
-            if (ModCreatureVisualPlayback.TryPlayOnVisualRoot(__instance, character, anim, loop, worldCues))
-                return false;
-
-            return !isRitsuMerchantVisual;
+            return ModCreatureVisualPlayback.TryPlayOnVisualRoot(__instance, character, anim, loop, worldCues) && false;
         }
 
         internal static void RegisterRitsuMerchantVisual(NMerchantCharacter visual, CharacterModel character)

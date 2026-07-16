@@ -181,9 +181,8 @@ namespace STS2RitsuLib.CardPiles.Nodes
                 _pile = null;
             }
 
-            foreach (var holder in _holders.Values)
-                if (IsInstanceValid(holder))
-                    holder.QueueFree();
+            foreach (var holder in _holders.Values.Where(IsInstanceValid))
+                holder.QueueFree();
             _holders.Clear();
             _focusedHolder = null;
         }
@@ -346,6 +345,8 @@ namespace STS2RitsuLib.CardPiles.Nodes
                     holder.FocusNeighborBottom = next;
                 }
             }
+
+            return;
 
             static ModExtraHandCardTransform ResolveVanillaTransform(
                 NHandCardHolder holder,

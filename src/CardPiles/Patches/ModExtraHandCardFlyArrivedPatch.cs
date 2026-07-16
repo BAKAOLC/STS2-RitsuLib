@@ -1,6 +1,5 @@
 using System.Reflection;
 using HarmonyLib;
-using MegaCrit.Sts2.Core.Models;
 using MegaCrit.Sts2.Core.Nodes.Cards;
 using MegaCrit.Sts2.Core.Nodes.Vfx;
 using STS2RitsuLib.CardPiles.Nodes;
@@ -28,7 +27,7 @@ namespace STS2RitsuLib.CardPiles.Patches
 
         public static void Prefix(NCardFlyVfx __instance)
         {
-            if (CardField?.GetValue(__instance) is not NCard { Model: CardModel card })
+            if (CardField?.GetValue(__instance) is not NCard { Model: { } card })
                 return;
             if (IsAddingField?.GetValue(__instance) is not true)
                 return;

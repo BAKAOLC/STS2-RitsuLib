@@ -48,6 +48,11 @@ namespace STS2RitsuLib.Scaffolding.Characters.Patches
 
         public static bool Prefix(NFakeMerchant __instance)
         {
+            if (!PlayersRef(__instance).Any(static player =>
+                    NMerchantRoomProceduralCharacterInstantiationPatch.HasRitsuMerchantVisualOverride(
+                        player.Character)))
+                return true;
+
             RunAfterRoomIsLoaded(__instance);
             return false;
         }
@@ -76,15 +81,7 @@ namespace STS2RitsuLib.Scaffolding.Characters.Patches
 
                     var player = players[num3];
                     var nMerchantCharacter =
-                        ModWorldSceneVisualNodeFactory.TryInstantiateMerchantCharacter(player.Character)
-                        ?? CharacterWorldScenePathFactoryHelper.CreateFromSceneOrTexture<NMerchantCharacter>(
-                            player.Character,
-                            player.Character.MerchantAnimPath,
-                            nameof(IModCharacterAssetOverrides.CustomMerchantAnimPath),
-                            PackedScene.GenEditState.Disabled);
-                    ModMerchantCharacterVisualPlaybackPatch.RegisterRitsuMerchantVisual(
-                        nMerchantCharacter,
-                        player.Character);
+                        NMerchantRoomProceduralCharacterInstantiationPatch.CreateMerchantCharacter(player.Character);
 
                     RitsuGodotTreeCompat.AddChildSafely(characterContainer, nMerchantCharacter);
                     RitsuGodotTreeCompat.MoveChildSafely(characterContainer, nMerchantCharacter, 0);
@@ -98,18 +95,9 @@ namespace STS2RitsuLib.Scaffolding.Characters.Patches
             }
 
             ModCreatureVisualPlayback.RegisterFakeMerchantPlayerVisuals(screen, playerVisuals, players);
-            ApplyMerchantWorldVisuals(players, playerVisuals);
 
             if (!evt.StartedFight)
                 TaskHelper.RunSafely(ShowWelcomeDialogueInvoker(screen));
-        }
-
-        private static void ApplyMerchantWorldVisuals(IReadOnlyList<Player> players,
-            IReadOnlyList<NMerchantCharacter> visuals)
-        {
-            var n = Math.Min(visuals.Count, players.Count);
-            for (var i = 0; i < n; i++)
-                visuals[i].PlayAnimation("relaxed_loop", true);
         }
     }
 }

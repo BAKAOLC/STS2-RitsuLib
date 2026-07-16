@@ -54,8 +54,8 @@ namespace STS2RitsuLib.CardPiles
                 handPile.CardRemoved += origin.HandCardRemoved;
 
                 holder.BeginDrag();
-                var cardPlay = NControllerManager.Instance?.IsUsingController == true
-                    ? (NCardPlay)NControllerCardPlay.Create(holder)
+                NCardPlay cardPlay = NControllerManager.Instance?.IsUsingController == true
+                    ? NControllerCardPlay.Create(holder)
                     : NMouseCardPlay.Create(holder, MegaInput.releaseCard, false);
                 origin.CardPlay = cardPlay;
                 container.AddChild(cardPlay);
