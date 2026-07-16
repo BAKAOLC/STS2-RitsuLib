@@ -357,6 +357,7 @@ namespace STS2RitsuLib.Models.Capabilities
     {
         private static readonly Lock SyncRoot = new();
         private static readonly List<ModelDefaultCapabilityModifierEntry> Modifiers = [];
+        private static Dictionary<Type, bool> _defaultSourceByOwnerType = [];
         private static long _nextOrder;
 
         public static void Modify<TModel>(
@@ -409,6 +410,7 @@ namespace STS2RitsuLib.Models.Capabilities
                     order,
                     _nextOrder++,
                     modifier));
+                Volatile.Write(ref _defaultSourceByOwnerType, []);
             }
         }
 
@@ -419,9 +421,23 @@ namespace STS2RitsuLib.Models.Capabilities
                 return true;
 
             var ownerType = owner.GetType();
+            var cache = Volatile.Read(ref _defaultSourceByOwnerType);
+            if (cache.TryGetValue(ownerType, out var hasDefaultSource))
+                return hasDefaultSource;
+
             lock (SyncRoot)
             {
-                return Modifiers.Any(entry => entry.OwnerType.IsAssignableFrom(ownerType));
+                cache = Volatile.Read(ref _defaultSourceByOwnerType);
+                if (cache.TryGetValue(ownerType, out hasDefaultSource))
+                    return hasDefaultSource;
+
+                hasDefaultSource = Modifiers.Any(entry => entry.OwnerType.IsAssignableFrom(ownerType));
+                var updatedCache = new Dictionary<Type, bool>(cache)
+                {
+                    [ownerType] = hasDefaultSource,
+                };
+                Volatile.Write(ref _defaultSourceByOwnerType, updatedCache);
+                return hasDefaultSource;
             }
         }
 

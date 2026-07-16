@@ -46,16 +46,45 @@ namespace STS2RitsuLib.Models.Capabilities
             params AbstractModel?[] extraModels)
             where TListener : class
         {
-            HashSet<object> seen = new(ReferenceEqualityComparer.Instance);
+            HashSet<TListener> seen = new(ReferenceEqualityComparer.Instance);
 
             foreach (var model in models)
-            foreach (var listener in FromModel<TListener>(model, seen))
-                yield return listener;
+            {
+                if (model is TListener modelListener && seen.Add(modelListener))
+                    yield return new(modelListener, model);
+
+                if (!ModelCapabilities.TryGet(model, out var capabilities) || capabilities.Count == 0)
+                    continue;
+
+                var candidates = capabilities.All.ToArray();
+                foreach (var capability in candidates)
+                    if (ReferenceEquals(capability.Owner, model)
+                        && capability is TListener listener
+                        && seen.Add(listener))
+                        yield return new(listener, capability as AbstractModel);
+            }
 
             foreach (var model in extraModels)
-                if (model != null)
-                    foreach (var listener in FromModel<TListener>(model, seen))
-                        yield return listener;
+            {
+                switch (model)
+                {
+                    case null:
+                        continue;
+                    case TListener modelListener when seen.Add(modelListener):
+                        yield return new(modelListener, model);
+                        break;
+                }
+
+                if (!ModelCapabilities.TryGet(model, out var capabilities) || capabilities.Count == 0)
+                    continue;
+
+                var candidates = capabilities.All.ToArray();
+                foreach (var capability in candidates)
+                    if (ReferenceEquals(capability.Owner, model)
+                        && capability is TListener listener
+                        && seen.Add(listener))
+                        yield return new(listener, capability as AbstractModel);
+            }
 
             if (globalListeners == null)
                 yield break;
@@ -63,25 +92,6 @@ namespace STS2RitsuLib.Models.Capabilities
             foreach (var listener in globalListeners.Snapshot())
                 if (seen.Add(listener))
                     yield return new(listener, null);
-        }
-
-        private static IEnumerable<ModelHookListener<TListener>> FromModel<TListener>(
-            AbstractModel model,
-            HashSet<object> seen)
-            where TListener : class
-        {
-            if (model is TListener modelListener && seen.Add(modelListener))
-                yield return new(modelListener, model);
-
-            if (!ModelCapabilities.TryGet(model, out var capabilities))
-                yield break;
-
-            var candidates = capabilities.All.ToArray();
-            foreach (var capability in candidates)
-                if (ReferenceEquals(capability.Owner, model)
-                    && capability is TListener listener
-                    && seen.Add(listener))
-                    yield return new(listener, capability as AbstractModel);
         }
     }
 
