@@ -350,13 +350,13 @@ namespace STS2RitsuLib.Models.Capabilities
         private static IReadOnlyList<IModelCapability> GetCapabilitySnapshot(AbstractModel model)
         {
             if (ModelCapabilities.TryGet(model, out var collection))
-                return collection.Count == 0 ? [] : collection.All.ToArray();
+                return collection.Count == 0 ? [] : collection.GetAttachedSnapshot();
             if (!ModelCapabilityDefaults.HasDefaultCapabilitySource(model))
                 return [];
 
             collection = ModelCapabilities.Get(model);
 
-            return collection.Count == 0 ? [] : collection.All.ToArray();
+            return collection.Count == 0 ? [] : collection.GetAttachedSnapshot();
         }
     }
 }

@@ -57,42 +57,53 @@ namespace STS2RitsuLib.Models.Capabilities
             }
         }
 
-        private static IReadOnlyList<OwnerHookCapabilityEntry> GetOwnerHookCapabilities(AbstractModel owner)
+        private static OwnerHookCapabilitySnapshot GetOwnerHookCapabilities(AbstractModel owner)
         {
             if (!ModelCapabilities.TryGet(owner, out var collection))
             {
                 if (!ModelCapabilityDefaults.HasDefaultCapabilitySource(owner))
-                    return [];
+                    return default;
 
                 collection = ModelCapabilities.Get(owner);
             }
 
-            var capabilities = collection.All;
-            if (capabilities.Count == 0)
-                return [];
+            var capabilities = collection.GetAttachedSnapshot();
+            if (capabilities.Length == 0)
+                return default;
 
+            OwnerHookCapabilityEntry? singleListener = null;
             List<OwnerHookCapabilityEntry>? listeners = null;
-            for (var index = 0; index < capabilities.Count; index++)
+            for (var index = 0; index < capabilities.Length; index++)
             {
                 var capability = capabilities[index];
-                if (capability is not (IModelCapabilityHookListener { ShouldReceiveOwnerHooks: true } listener and AbstractModel model))
+                if (capability is not (IModelCapabilityHookListener { ShouldReceiveOwnerHooks: true } listener
+                    and AbstractModel model))
                     continue;
 
-                listeners ??= new(capabilities.Count);
-                listeners.Add(new(capability, model, listener.OwnerHookOrder, index));
+                var entry = new OwnerHookCapabilityEntry(capability, model, listener.OwnerHookOrder, index);
+                if (!singleListener.HasValue)
+                {
+                    singleListener = entry;
+                    continue;
+                }
+
+                listeners ??= new(capabilities.Length)
+                {
+                    singleListener.Value,
+                };
+                listeners.Add(entry);
             }
 
             if (listeners == null)
-                return [];
+                return new(singleListener);
 
-            if (listeners.Count > 1)
-                listeners.Sort(static (left, right) =>
-                {
-                    var order = left.OwnerHookOrder.CompareTo(right.OwnerHookOrder);
-                    return order != 0 ? order : left.Index.CompareTo(right.Index);
-                });
+            listeners.Sort(static (left, right) =>
+            {
+                var order = left.OwnerHookOrder.CompareTo(right.OwnerHookOrder);
+                return order != 0 ? order : left.Index.CompareTo(right.Index);
+            });
 
-            return listeners;
+            return new(listeners);
         }
 
         private static bool TryGetStillAttachedModel(
@@ -109,5 +120,38 @@ namespace STS2RitsuLib.Models.Capabilities
             AbstractModel Model,
             int OwnerHookOrder,
             int Index);
+
+        private readonly struct OwnerHookCapabilitySnapshot
+        {
+            private readonly OwnerHookCapabilityEntry? _single;
+            private readonly List<OwnerHookCapabilityEntry>? _multiple;
+
+            public OwnerHookCapabilitySnapshot(OwnerHookCapabilityEntry? single)
+            {
+                _single = single;
+                _multiple = null;
+            }
+
+            public OwnerHookCapabilitySnapshot(List<OwnerHookCapabilityEntry> multiple)
+            {
+                _single = null;
+                _multiple = multiple;
+            }
+
+            public int Count => _multiple?.Count ?? (_single.HasValue ? 1 : 0);
+
+            public OwnerHookCapabilityEntry this[int index]
+            {
+                get
+                {
+                    if (_multiple != null)
+                        return _multiple[index];
+                    if (index == 0 && _single is { } single)
+                        return single;
+
+                    throw new ArgumentOutOfRangeException(nameof(index));
+                }
+            }
+        }
     }
 }

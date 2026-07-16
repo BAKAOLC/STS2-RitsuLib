@@ -56,7 +56,7 @@ namespace STS2RitsuLib.Models.Capabilities
                 if (!ModelCapabilities.TryGet(model, out var capabilities) || capabilities.Count == 0)
                     continue;
 
-                var candidates = capabilities.All.ToArray();
+                var candidates = capabilities.GetAttachedSnapshot();
                 foreach (var capability in candidates)
                     if (ReferenceEquals(capability.Owner, model)
                         && capability is TListener listener
@@ -78,7 +78,7 @@ namespace STS2RitsuLib.Models.Capabilities
                 if (!ModelCapabilities.TryGet(model, out var capabilities) || capabilities.Count == 0)
                     continue;
 
-                var candidates = capabilities.All.ToArray();
+                var candidates = capabilities.GetAttachedSnapshot();
                 foreach (var capability in candidates)
                     if (ReferenceEquals(capability.Owner, model)
                         && capability is TListener listener
@@ -104,23 +104,24 @@ namespace STS2RitsuLib.Models.Capabilities
     {
         private readonly List<TListener> _listeners = [];
         private readonly Lock _syncRoot = new();
+        private TListener[] _snapshot = [];
 
         internal void Register(TListener listener)
         {
             ArgumentNullException.ThrowIfNull(listener);
             lock (_syncRoot)
             {
-                if (!_listeners.Contains(listener))
-                    _listeners.Add(listener);
+                if (_listeners.Contains(listener))
+                    return;
+
+                _listeners.Add(listener);
+                Volatile.Write(ref _snapshot, _listeners.ToArray());
             }
         }
 
         internal TListener[] Snapshot()
         {
-            lock (_syncRoot)
-            {
-                return _listeners.ToArray();
-            }
+            return Volatile.Read(ref _snapshot);
         }
     }
 }
