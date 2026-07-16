@@ -384,7 +384,9 @@ namespace STS2RitsuLib.Models.Capabilities.Patches
 
             public static ModPatchTarget[] GetTargets()
             {
-#if STS2_AT_LEAST_0_108_0
+#if STS2_AT_LEAST_0_109_0
+                return [new(typeof(CardModel), "GetResultLocationForCardPlay", Type.EmptyTypes)];
+#elif STS2_AT_LEAST_0_108_0
                 return [new(typeof(CardModel), "GetResultPileTypeAndPositionForCardPlay", Type.EmptyTypes)];
 #elif STS2_AT_LEAST_0_105_0
                 return [new(typeof(CardModel), "GetResultPileTypeForCardPlay", Type.EmptyTypes)];
@@ -393,7 +395,14 @@ namespace STS2RitsuLib.Models.Capabilities.Patches
 #endif
             }
 
-#if STS2_AT_LEAST_0_108_0
+#if STS2_AT_LEAST_0_109_0
+            public static void Postfix(CardModel __instance, ref CardLocation __result)
+            {
+                __result.pileType = CardModelCapabilityHost.ApplyResultPileTypeForCardPlay(
+                    __instance,
+                    __result.pileType);
+            }
+#elif STS2_AT_LEAST_0_108_0
             public static void Postfix(CardModel __instance, ref (PileType, CardPilePosition) __result)
             {
                 __result.Item1 = CardModelCapabilityHost.ApplyResultPileTypeForCardPlay(

@@ -6,7 +6,11 @@ using HarmonyLib;
 using MegaCrit.Sts2.Core.Entities.Multiplayer;
 using MegaCrit.Sts2.Core.Multiplayer.Messages.Game.Checksums;
 using MegaCrit.Sts2.Core.Multiplayer.Serialization;
-using MegaCrit.Sts2.Core.Saves.Runs;
+#if STS2_AT_LEAST_0_109_0
+using SavedPropertyCache = MegaCrit.Sts2.Core.Multiplayer.Serialization.ModelIdSerializationCache;
+#else
+using SavedPropertyCache = MegaCrit.Sts2.Core.Saves.Runs.SavedPropertiesTypeCache;
+#endif
 using STS2RitsuLib.Compat;
 using STS2RitsuLib.Content.Patches;
 using STS2RitsuLib.Diagnostics.Logging;
@@ -111,7 +115,7 @@ namespace STS2RitsuLib.Networking.StateDivergence
             return new(
                 checksum.id,
                 checksum.checksum,
-                SavedPropertiesTypeCache.NetIdBitSize,
+                GetSavedPropertyNetIdBitSize(),
                 StableHash(propertyNames),
                 propertyNames,
                 modelDbCacheStatus.IsActive,
@@ -210,10 +214,19 @@ namespace STS2RitsuLib.Networking.StateDivergence
 
         private static IReadOnlyList<string> GetSavedPropertyNames()
         {
-            return AccessTools.DeclaredField(typeof(SavedPropertiesTypeCache), "_netIdToPropertyNameMap")
+            return AccessTools.DeclaredField(typeof(SavedPropertyCache), "_netIdToPropertyNameMap")
                 ?.GetValue(null) is List<string> names
                 ? names.ToArray()
                 : [];
+        }
+
+        private static int GetSavedPropertyNetIdBitSize()
+        {
+#if STS2_AT_LEAST_0_109_0
+            return SavedPropertyCache.PropertyIdBitSize;
+#else
+            return SavedPropertyCache.NetIdBitSize;
+#endif
         }
 
         private static byte[] Brotli(byte[] data)
