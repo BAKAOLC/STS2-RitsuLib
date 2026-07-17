@@ -18,9 +18,6 @@ namespace STS2RitsuLib.Models.Capabilities.Patches
 {
     internal static class OrbModelCapabilityPatches
     {
-        private const string MissingOrbPatchWarning =
-            "[ModelCapabilities] Orb lifecycle patch did not find the expected awaited call site.";
-
         private static async Task RunBeforeTurnEndWithCapability(
             OrbModel orb,
             PlayerChoiceContext choiceContext)
@@ -67,19 +64,16 @@ namespace STS2RitsuLib.Models.Capabilities.Patches
             MethodInfo? wrapperMethod)
         {
             var rewriter = HarmonyIlRewriter.From(instructions);
-            if (fromMethod == null || wrapperMethod == null)
-                return rewriter.Instructions();
+            var requiredFromMethod = HarmonyIl.RequireMethod(fromMethod, $"{operation} ({patchId})");
+            var requiredWrapperMethod = HarmonyIl.RequireMethod(wrapperMethod, $"{operation} ({patchId})");
 
             var report = HarmonyAsyncIl.RedirectAwaitedCalls(
                 rewriter,
                 operation,
-                fromMethod,
-                wrapperMethod,
-                code => code.Any(HarmonyIl.IsCall(wrapperMethod)));
-            if (!report.Succeeded || report.Applied != 1)
-                RitsuLibFramework.Logger.Warn($"{MissingOrbPatchWarning} Patch={patchId}. {report.Describe()}");
-
-            return rewriter.InstructionsChecked(operation);
+                requiredFromMethod,
+                requiredWrapperMethod,
+                code => code.Any(HarmonyIl.IsCall(requiredWrapperMethod)));
+            return rewriter.InstructionsChecked(report);
         }
 
         internal sealed class OrbQueueBeforeTurnEndPatch : IPatchMethod

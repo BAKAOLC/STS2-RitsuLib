@@ -71,9 +71,15 @@ namespace STS2RitsuLib.Combat.HandSize
                 TryAddMethodPatch(builder, typeof(CardConsoleCmd), nameof(CardConsoleCmd.Process),
                     [typeof(Player), typeof(string[])], transpilerPlayerArg1);
 
+#if STS2_AT_LEAST_0_109_0
+                TryAddAsyncMoveNextPatch(builder, AccessTools.Method(typeof(CardPileCmd), "DrawInternal",
+                        [typeof(PlayerChoiceContext), typeof(decimal), typeof(Player), typeof(bool)]),
+                    transpilerStateMachine, "Patch CardPileCmd.DrawInternal state machine max-hand-size constants");
+#else
                 TryAddAsyncMoveNextPatch(builder, AccessTools.Method(typeof(CardPileCmd), nameof(CardPileCmd.Draw),
                         [typeof(PlayerChoiceContext), typeof(decimal), typeof(Player), typeof(bool)]),
                     transpilerStateMachine, "Patch CardPileCmd.Draw state machine max-hand-size constants");
+#endif
                 TryAddAsyncMoveNextPatch(builder, ResolveCardPileCmdAddMethod(),
                     transpilerStateMachine, "Patch CardPileCmd.Add state machine max-hand-size constants");
 

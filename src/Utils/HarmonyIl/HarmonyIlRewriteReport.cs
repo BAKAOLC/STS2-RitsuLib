@@ -66,6 +66,22 @@ namespace STS2RitsuLib.Utils.HarmonyIl
         }
 
         /// <summary>
+        ///     Requires an exact target-site and rewrite count, or accepts an equivalent rewrite that was already present.
+        ///     要求精确的目标点与改写次数，或接受已经存在的等价改写。
+        /// </summary>
+        public void RequireExactSitesOrAlreadySatisfied(int count = 1)
+        {
+            if (AlreadySatisfied)
+                return;
+
+            if (Matches != count)
+                throw new InvalidOperationException(
+                    $"{Operation} matched {Matches} target site(s), expected exactly {count}. {Describe()}");
+
+            RequireExactly(count);
+        }
+
+        /// <summary>
         ///     Returns a compact diagnostic string.
         ///     返回紧凑诊断字符串。
         /// </summary>

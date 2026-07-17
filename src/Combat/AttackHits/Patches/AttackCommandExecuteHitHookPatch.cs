@@ -37,65 +37,50 @@ namespace STS2RitsuLib.Combat.AttackHits.Patches
             MethodBase __originalMethod)
         {
             const string operation = "[AttackHitHook] Redirect per-hit CreatureCmd.Damage call";
-            var stateMachineType = __originalMethod.DeclaringType;
-            var damageMethod = AccessTools.Method(
-                typeof(CreatureCmd),
-                nameof(CreatureCmd.Damage),
-                [
-                    typeof(PlayerChoiceContext),
-                    typeof(IEnumerable<Creature>),
-                    typeof(decimal),
-                    typeof(ValueProp),
-                    typeof(Creature),
-                    typeof(CardModel),
+            var stateMachineType = __originalMethod.DeclaringType
+                                   ?? throw new InvalidOperationException(
+                                       $"{operation}: async state machine type could not be resolved.");
+            var damageMethod = HarmonyIl.RequireMethod(
+                AccessTools.Method(
+                    typeof(CreatureCmd),
+                    nameof(CreatureCmd.Damage),
+                    [
+                        typeof(PlayerChoiceContext),
+                        typeof(IEnumerable<Creature>),
+                        typeof(decimal),
+                        typeof(ValueProp),
+                        typeof(Creature),
+                        typeof(CardModel),
 #if STS2_AT_LEAST_0_108_0
-                    typeof(CardPlay),
+                        typeof(CardPlay),
 #endif
-                ]);
-            var wrapperMethod = AccessTools.Method(
-                typeof(AttackHitHook),
-                nameof(AttackHitHook.DamageWithAttackHitHooks),
-                [
-                    typeof(PlayerChoiceContext),
-                    typeof(IEnumerable<Creature>),
-                    typeof(decimal),
-                    typeof(ValueProp),
-                    typeof(Creature),
-                    typeof(CardModel),
+                    ]),
+                operation);
+            var wrapperMethod = HarmonyIl.RequireMethod(
+                AccessTools.Method(
+                    typeof(AttackHitHook),
+                    nameof(AttackHitHook.DamageWithAttackHitHooks),
+                    [
+                        typeof(PlayerChoiceContext),
+                        typeof(IEnumerable<Creature>),
+                        typeof(decimal),
+                        typeof(ValueProp),
+                        typeof(Creature),
+                        typeof(CardModel),
 #if STS2_AT_LEAST_0_108_0
-                    typeof(CardPlay),
+                        typeof(CardPlay),
 #endif
-                    typeof(AttackCommand),
-                    typeof(int),
-                    typeof(decimal),
-                ]);
+                        typeof(AttackCommand),
+                        typeof(int),
+                        typeof(decimal),
+                    ]),
+                operation);
 
             var rewriter = HarmonyIlRewriter.From(instructions);
-            if (damageMethod == null)
-            {
-                RitsuLibFramework.Logger.Warn($"{operation}: Could not resolve CreatureCmd.Damage target method.");
-                return rewriter.Instructions();
-            }
-
-            if (wrapperMethod == null)
-            {
-                RitsuLibFramework.Logger.Warn($"{operation}: Could not resolve AttackHitHook wrapper method.");
-                return rewriter.Instructions();
-            }
-
-            if (stateMachineType == null)
-            {
-                RitsuLibFramework.Logger.Warn($"{operation}: Missing async state machine type.");
-                return rewriter.Instructions();
-            }
-
             if (!TryResolveStateFields(stateMachineType, out var attackField, out var hitIndexField,
                     out var totalHitCountField))
-            {
-                RitsuLibFramework.Logger.Warn(
-                    $"{operation}: Could not resolve AttackCommand.Execute state fields on {stateMachineType.FullName}; per-hit hooks skipped.");
-                return rewriter.Instructions();
-            }
+                throw new InvalidOperationException(
+                    $"{operation}: AttackCommand.Execute state fields could not be resolved on {stateMachineType.FullName}.");
 
             var report = HarmonyAsyncIl.ReplaceAwaitedCalls(
                 rewriter,
@@ -112,10 +97,7 @@ namespace STS2RitsuLib.Combat.AttackHits.Patches
                     HarmonyIl.Call(wrapperMethod),
                 ],
                 code => code.Any(instruction => HarmonyIl.IsCallTo(instruction, wrapperMethod)));
-            if (!report.Succeeded || report.Applied != 1)
-                RitsuLibFramework.Logger.Warn(report.Describe());
-
-            return rewriter.InstructionsChecked(operation);
+            return rewriter.InstructionsChecked(report);
         }
 
         private static bool TryResolveStateFields(

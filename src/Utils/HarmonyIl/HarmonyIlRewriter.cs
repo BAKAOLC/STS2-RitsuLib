@@ -130,6 +130,37 @@ namespace STS2RitsuLib.Utils.HarmonyIl
         }
 
         /// <summary>
+        ///     Validates required rewrite reports and the resulting instruction list, then returns it.
+        ///     验证所需改写报告与最终指令列表，然后返回该列表。
+        /// </summary>
+        public List<CodeInstruction> InstructionsChecked(
+            IEnumerable<HarmonyIlRewriteReport> reports,
+            int expectedSites = 1)
+        {
+            ArgumentNullException.ThrowIfNull(reports);
+
+            var requiredReports = reports.ToArray();
+            foreach (var report in requiredReports)
+                report.RequireExactSitesOrAlreadySatisfied(expectedSites);
+
+            var operation = requiredReports.Length == 0
+                ? "Harmony IL rewrite"
+                : string.Join("; ", requiredReports.Select(static report => report.Operation));
+            return InstructionsChecked(operation);
+        }
+
+        /// <summary>
+        ///     Validates one required rewrite report and the resulting instruction list, then returns it.
+        ///     验证一个所需改写报告与最终指令列表，然后返回该列表。
+        /// </summary>
+        public List<CodeInstruction> InstructionsChecked(
+            HarmonyIlRewriteReport report,
+            int expectedSites = 1)
+        {
+            return InstructionsChecked([report], expectedSites);
+        }
+
+        /// <summary>
         ///     Validates the current instruction list.
         ///     验证当前指令列表。
         /// </summary>
