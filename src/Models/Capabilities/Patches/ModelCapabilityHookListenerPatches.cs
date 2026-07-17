@@ -86,17 +86,22 @@ namespace STS2RitsuLib.Models.Capabilities.Patches
             public static void Postfix(
                 HookPlayerChoiceContext __instance,
                 AbstractModel source,
-                CombatStateCompat combatState)
+                CombatStateCompat? combatState)
             {
                 if (source is not IModelCapability) return;
 
                 OwnerField.SetValue(__instance, ResolveOwner(source, combatState));
             }
 
-            private static Player? ResolveOwner(AbstractModel source, CombatStateCompat combatState)
+            private static Player? ResolveOwner(AbstractModel source, CombatStateCompat? combatState)
             {
                 var contextSource = ((IModelCapability)source).Owner;
 
+#if STS2_AT_LEAST_0_109_0
+                return contextSource == null
+                    ? null
+                    : HookPlayerChoiceContext.GetOwner(contextSource, combatState);
+#else
                 return contextSource switch
                 {
                     CardModel card => card.Owner,
@@ -106,11 +111,12 @@ namespace STS2RitsuLib.Models.Capabilities.Patches
                     EnchantmentModel enchantment => enchantment.Card?.Owner,
                     PowerModel { Owner: { } creature } => creature.IsPlayer
                         ? creature.Player
-                        : combatState.Players.Count > 0
+                        : combatState?.Players.Count > 0
                             ? combatState.Players[0]
                             : null,
                     _ => null,
                 };
+#endif
             }
         }
     }

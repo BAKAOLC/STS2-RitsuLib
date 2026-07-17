@@ -51,6 +51,16 @@ namespace STS2RitsuLib.Utils.HarmonyIl
     public static class HarmonyIl
     {
         /// <summary>
+        ///     Returns a required reflected method or throws a consistent IL rewrite error.
+        ///     返回必需的反射方法，或抛出统一的 IL 改写错误。
+        /// </summary>
+        public static MethodInfo RequireMethod(MethodInfo? method, string operation)
+        {
+            ArgumentException.ThrowIfNullOrWhiteSpace(operation);
+            return method ?? throw new MissingMethodException($"{operation}: required method could not be resolved.");
+        }
+
+        /// <summary>
         ///     Creates a local-load instruction using the short opcode where possible.
         ///     创建本地变量加载指令；可用时使用短 opcode。
         /// </summary>

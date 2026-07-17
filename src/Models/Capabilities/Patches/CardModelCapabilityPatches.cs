@@ -3,7 +3,6 @@ using CombatStateCompat = MegaCrit.Sts2.Core.Combat.CombatState;
 #else
 using CombatStateCompat = MegaCrit.Sts2.Core.Combat.ICombatState;
 #endif
-using System.Reflection;
 using System.Reflection.Emit;
 using HarmonyLib;
 using MegaCrit.Sts2.Core.Commands;
@@ -32,20 +31,6 @@ namespace STS2RitsuLib.Models.Capabilities.Patches
     {
         private const string MissingLifecyclePatchWarning =
             "[ModelCapabilities] Card lifecycle patch did not find the expected IL call site.";
-
-        private static void InsertDuplicatedReceiverNotification(
-            List<CodeInstruction> code,
-            int callIndex,
-            MethodInfo notifyMethod)
-        {
-            var call = code[callIndex];
-            var dup = new CodeInstruction(OpCodes.Dup);
-            dup.labels.AddRange(call.labels);
-            call.labels.Clear();
-
-            code.Insert(callIndex, dup);
-            code.Insert(callIndex + 2, new(OpCodes.Call, notifyMethod));
-        }
 
         /// <summary>
         ///     Updates capability dynamic vars through the same card preview path as vanilla card dynamic vars.
@@ -210,34 +195,29 @@ namespace STS2RitsuLib.Models.Capabilities.Patches
 
             public static IEnumerable<CodeInstruction> Transpiler(IEnumerable<CodeInstruction> instructions)
             {
-                var originalMethod = AccessTools.Method(
-                    typeof(Hook),
-                    nameof(Hook.ModifyEnergyCostInCombat),
-                    [typeof(CombatStateCompat), typeof(CardModel), typeof(decimal)]);
-                var replacementMethod = AccessTools.Method(
-                    typeof(EnergyCostPatch),
-                    nameof(ModifyEnergyCostInCombat));
+                const string operation = "[ModelCapabilities] Card energy cost hook injection";
+                var originalMethod = HarmonyIl.RequireMethod(
+                    AccessTools.Method(
+                        typeof(Hook),
+                        nameof(Hook.ModifyEnergyCostInCombat),
+                        [typeof(CombatStateCompat), typeof(CardModel), typeof(decimal)]),
+                    operation);
+                var replacementMethod = HarmonyIl.RequireMethod(
+                    AccessTools.Method(
+                        typeof(EnergyCostPatch),
+                        nameof(ModifyEnergyCostInCombat)),
+                    operation);
 
-                var code = instructions.ToList();
-                if (originalMethod == null || replacementMethod == null)
-                    return code;
-
-                var replaced = false;
-                for (var i = 0; i < code.Count; i++)
-                {
-                    if (!code[i].Calls(originalMethod))
-                        continue;
-
-                    code.Insert(i, CodeInstruction.LoadArgument(1));
-                    code[i + 1].operand = replacementMethod;
-                    replaced = true;
-                    i++;
-                }
-
-                if (!replaced)
-                    RitsuLibFramework.Logger.Warn($"{MissingLifecyclePatchWarning} Patch={PatchId}");
-
-                return code;
+                var rewriter = HarmonyIlRewriter.From(instructions);
+                var report = rewriter.ReplaceInstructions(
+                    operation,
+                    instruction => instruction.Calls(originalMethod),
+                    [
+                        CodeInstruction.LoadArgument(1),
+                        HarmonyIl.Call(replacementMethod),
+                    ],
+                    code => code.Any(HarmonyIl.IsCall(replacementMethod)));
+                return rewriter.InstructionsChecked(report);
             }
 
             public static void Postfix(CardEnergyCost __instance, CostModifiers modifiers, ref int __result)
@@ -494,36 +474,28 @@ namespace STS2RitsuLib.Models.Capabilities.Patches
 
             public static IEnumerable<CodeInstruction> Transpiler(IEnumerable<CodeInstruction> instructions)
             {
-                var recalculateMethod = AccessTools.Method(
-                    typeof(DynamicVarSet),
-                    nameof(DynamicVarSet.RecalculateForUpgradeOrEnchant));
-                var notifyMethod = AccessTools.Method(
-                    typeof(CardModelCapabilityHost),
-                    nameof(CardModelCapabilityHost.AfterOwnerCardUpgraded));
+                const string operation = "[ModelCapabilities] Card upgrade lifecycle injection";
+                var recalculateMethod = HarmonyIl.RequireMethod(
+                    AccessTools.Method(
+                        typeof(DynamicVarSet),
+                        nameof(DynamicVarSet.RecalculateForUpgradeOrEnchant)),
+                    operation);
+                var notifyMethod = HarmonyIl.RequireMethod(
+                    AccessTools.Method(
+                        typeof(CardModelCapabilityHost),
+                        nameof(CardModelCapabilityHost.AfterOwnerCardUpgraded)),
+                    operation);
 
-                var code = instructions.ToList();
-                if (recalculateMethod == null || notifyMethod == null)
-                    return code;
-
-                var inserted = false;
-                for (var i = 0; i < code.Count; i++)
-                {
-                    if (!code[i].Calls(recalculateMethod))
-                        continue;
-
-                    code.InsertRange(i + 1,
+                var rewriter = HarmonyIlRewriter.From(instructions);
+                var report = rewriter.InsertAfterCall(
+                    operation,
+                    recalculateMethod,
                     [
                         CodeInstruction.LoadArgument(0),
-                        new(OpCodes.Call, notifyMethod),
-                    ]);
-                    inserted = true;
-                    break;
-                }
-
-                if (!inserted)
-                    RitsuLibFramework.Logger.Warn($"{MissingLifecyclePatchWarning} Patch={PatchId}");
-
-                return code;
+                        HarmonyIl.Call(notifyMethod),
+                    ],
+                    code => code.Any(HarmonyIl.IsCall(notifyMethod)));
+                return rewriter.InstructionsChecked(report);
             }
         }
 
@@ -563,42 +535,35 @@ namespace STS2RitsuLib.Models.Capabilities.Patches
 
             public static IEnumerable<CodeInstruction> Transpiler(IEnumerable<CodeInstruction> instructions)
             {
-                var afterDowngradedMethod = AccessTools.Method(typeof(CardModel), "AfterDowngraded");
-                var resetSecondaryResourcesMethod = AccessTools.Method(
-                    typeof(SecondaryResourceCardExtensions),
-                    nameof(SecondaryResourceCardExtensions.ResetSecondaryResourcesForDowngrade));
-                var notifyMethod = AccessTools.Method(
-                    typeof(CardModelCapabilityHost),
-                    nameof(CardModelCapabilityHost.AfterOwnerCardDowngraded));
+                const string operation = "[ModelCapabilities] Card downgrade lifecycle injection";
+                var afterDowngradedMethod = HarmonyIl.RequireMethod(
+                    AccessTools.Method(typeof(CardModel), "AfterDowngraded"),
+                    operation);
+                var resetSecondaryResourcesMethod = HarmonyIl.RequireMethod(
+                    AccessTools.Method(
+                        typeof(SecondaryResourceCardExtensions),
+                        nameof(SecondaryResourceCardExtensions.ResetSecondaryResourcesForDowngrade)),
+                    operation);
+                var notifyMethod = HarmonyIl.RequireMethod(
+                    AccessTools.Method(
+                        typeof(CardModelCapabilityHost),
+                        nameof(CardModelCapabilityHost.AfterOwnerCardDowngraded)),
+                    operation);
 
-                var code = instructions.ToList();
-                if (afterDowngradedMethod == null || resetSecondaryResourcesMethod == null || notifyMethod == null)
-                    return code;
-
-                var inserted = false;
-                for (var i = 0; i < code.Count; i++)
-                {
-                    if (!code[i].Calls(afterDowngradedMethod))
-                        continue;
-
-                    code.InsertRange(i,
+                var rewriter = HarmonyIlRewriter.From(instructions);
+                var report = rewriter.TryReplaceFirst(
+                    operation,
+                    HarmonyIlPattern.Sequence(HarmonyIl.IsCall(afterDowngradedMethod)),
                     [
                         CodeInstruction.LoadArgument(0),
-                        new(OpCodes.Call, resetSecondaryResourcesMethod),
-                    ]);
-                    code.InsertRange(i + 3,
-                    [
+                        HarmonyIl.Call(resetSecondaryResourcesMethod),
+                        new(OpCodes.Callvirt, afterDowngradedMethod),
                         CodeInstruction.LoadArgument(0),
-                        new(OpCodes.Call, notifyMethod),
-                    ]);
-                    inserted = true;
-                    break;
-                }
-
-                if (!inserted)
-                    RitsuLibFramework.Logger.Warn($"{MissingLifecyclePatchWarning} Patch={PatchId}");
-
-                return code;
+                        HarmonyIl.Call(notifyMethod),
+                    ],
+                    code => code.Any(HarmonyIl.IsCall(resetSecondaryResourcesMethod)) &&
+                            code.Any(HarmonyIl.IsCall(notifyMethod)));
+                return rewriter.InstructionsChecked(report);
             }
         }
 
@@ -622,49 +587,49 @@ namespace STS2RitsuLib.Models.Capabilities.Patches
 
             public static IEnumerable<CodeInstruction> Transpiler(IEnumerable<CodeInstruction> instructions)
             {
-                var transformedFromMethod = AccessTools.Method(
-                    typeof(CardModel),
-                    nameof(CardModel.AfterTransformedFrom));
-                var transformedToMethod = AccessTools.Method(
-                    typeof(CardModel),
-                    nameof(CardModel.AfterTransformedTo));
-                var notifyFromMethod = AccessTools.Method(
-                    typeof(CardModelCapabilityHost),
-                    nameof(CardModelCapabilityHost.AfterOwnerCardTransformedFrom));
-                var notifyToMethod = AccessTools.Method(
-                    typeof(CardModelCapabilityHost),
-                    nameof(CardModelCapabilityHost.AfterOwnerCardTransformedTo));
+                const string fromOperation = "[ModelCapabilities] Card transform-from lifecycle injection";
+                const string toOperation = "[ModelCapabilities] Card transform-to lifecycle injection";
+                var transformedFromMethod = HarmonyIl.RequireMethod(
+                    AccessTools.Method(
+                        typeof(CardModel),
+                        nameof(CardModel.AfterTransformedFrom)),
+                    fromOperation);
+                var transformedToMethod = HarmonyIl.RequireMethod(
+                    AccessTools.Method(
+                        typeof(CardModel),
+                        nameof(CardModel.AfterTransformedTo)),
+                    toOperation);
+                var notifyFromMethod = HarmonyIl.RequireMethod(
+                    AccessTools.Method(
+                        typeof(CardModelCapabilityHost),
+                        nameof(CardModelCapabilityHost.AfterOwnerCardTransformedFrom)),
+                    fromOperation);
+                var notifyToMethod = HarmonyIl.RequireMethod(
+                    AccessTools.Method(
+                        typeof(CardModelCapabilityHost),
+                        nameof(CardModelCapabilityHost.AfterOwnerCardTransformedTo)),
+                    toOperation);
 
-                var code = instructions.ToList();
-                if (transformedFromMethod == null ||
-                    transformedToMethod == null ||
-                    notifyFromMethod == null ||
-                    notifyToMethod == null)
-                    return code;
-
-                var inserted = 0;
-                for (var i = 0; i < code.Count; i++)
-                {
-                    if (code[i].Calls(transformedFromMethod))
-                    {
-                        InsertDuplicatedReceiverNotification(code, i, notifyFromMethod);
-                        i += 2;
-                        inserted++;
-                        continue;
-                    }
-
-                    if (!code[i].Calls(transformedToMethod))
-                        continue;
-
-                    InsertDuplicatedReceiverNotification(code, i, notifyToMethod);
-                    i += 2;
-                    inserted++;
-                }
-
-                if (inserted == 0)
-                    RitsuLibFramework.Logger.Warn($"{MissingLifecyclePatchWarning} Patch={PatchId}");
-
-                return code;
+                var rewriter = HarmonyIlRewriter.From(instructions);
+                var fromReport = rewriter.TryReplaceFirst(
+                    fromOperation,
+                    HarmonyIlPattern.Sequence(HarmonyIl.IsCall(transformedFromMethod)),
+                    [
+                        new(OpCodes.Dup),
+                        new(OpCodes.Callvirt, transformedFromMethod),
+                        HarmonyIl.Call(notifyFromMethod),
+                    ],
+                    code => code.Any(HarmonyIl.IsCall(notifyFromMethod)));
+                var toReport = rewriter.TryReplaceFirst(
+                    toOperation,
+                    HarmonyIlPattern.Sequence(HarmonyIl.IsCall(transformedToMethod)),
+                    [
+                        new(OpCodes.Dup),
+                        new(OpCodes.Callvirt, transformedToMethod),
+                        HarmonyIl.Call(notifyToMethod),
+                    ],
+                    code => code.Any(HarmonyIl.IsCall(notifyToMethod)));
+                return rewriter.InstructionsChecked([fromReport, toReport]);
             }
         }
 

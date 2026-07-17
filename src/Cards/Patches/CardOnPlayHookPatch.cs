@@ -28,27 +28,33 @@ namespace STS2RitsuLib.Cards.Patches
         public static IEnumerable<CodeInstruction> Transpiler(IEnumerable<CodeInstruction> instructions)
         {
             const string operation = "[CardOnPlayHook] OnPlayWrapper injection";
-            var onPlayMethod = AccessTools.Method(
-                typeof(CardModel),
-                "OnPlay",
-                [typeof(PlayerChoiceContext), typeof(CardPlay)]);
-            var wrapperMethod = AccessTools.Method(
-                typeof(CardOnPlayHook),
-                nameof(CardOnPlayHook.RunCardOnPlayHooks));
+            var onPlayMethod = HarmonyIl.RequireMethod(
+                AccessTools.Method(
+                    typeof(CardModel),
+                    "OnPlay",
+                    [typeof(PlayerChoiceContext), typeof(CardPlay)]),
+                operation);
+            var wrapperMethod = HarmonyIl.RequireMethod(
+                AccessTools.Method(
+                    typeof(CardOnPlayHook),
+                    nameof(CardOnPlayHook.RunCardOnPlayHooks)),
+                operation);
             var rewriter = HarmonyIlRewriter.From(instructions);
-            if (onPlayMethod == null || wrapperMethod == null)
-                return rewriter.Instructions();
 
+#if STS2_AT_LEAST_0_109_0
+            var report = rewriter.RedirectCalls(
+                operation,
+                called => called == onPlayMethod ? wrapperMethod : null,
+                code => code.Any(HarmonyIl.IsCall(wrapperMethod)));
+#else
             var report = HarmonyAsyncIl.RedirectAwaitedCalls(
                 rewriter,
                 operation,
                 onPlayMethod,
                 wrapperMethod,
                 code => code.Any(HarmonyIl.IsCall(wrapperMethod)));
-            if (!report.Succeeded || report.Applied != 1)
-                RitsuLibFramework.Logger.Warn(report.Describe());
-
-            return rewriter.InstructionsChecked(operation);
+#endif
+            return rewriter.InstructionsChecked(report);
         }
     }
 }
