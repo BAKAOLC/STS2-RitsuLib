@@ -5,6 +5,7 @@ using MegaCrit.Sts2.Core.Models;
 using MegaCrit.Sts2.Core.Saves.Runs;
 #if STS2_AT_LEAST_0_109_0
 using SavedPropertyCache = MegaCrit.Sts2.Core.Multiplayer.Serialization.ModelIdSerializationCache;
+
 #else
 using SavedPropertyCache = MegaCrit.Sts2.Core.Saves.Runs.SavedPropertiesTypeCache;
 #endif
@@ -328,7 +329,7 @@ namespace STS2RitsuLib.Utils
             }
         }
 
-        internal static IReadOnlyList<string> FinalizePropertyNameRegistration()
+        internal static IReadOnlyList<string> FinalizePropertyNameRegistration(bool injectIntoBaseGameCache = true)
         {
             string[] names;
             lock (SyncRoot)
@@ -342,8 +343,10 @@ namespace STS2RitsuLib.Utils
                     .ToArray();
             }
 
-            foreach (var name in names)
-                InjectNameIntoBaseGameCache(name);
+            // ReSharper disable once InvertIf
+            if (injectIntoBaseGameCache)
+                foreach (var name in names)
+                    InjectNameIntoBaseGameCache(name);
 
             return names;
         }

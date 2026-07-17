@@ -92,15 +92,31 @@ namespace STS2RitsuLib.Lifecycle.Patches
 
         public static ModPatchTarget[] GetTargets()
         {
+#if STS2_AT_LEAST_0_109_0
+            return
+            [
+                new(typeof(Hook), nameof(Hook.AfterBlockBroken),
+                    [typeof(CombatStateCompat), typeof(PlayerChoiceContext), typeof(Creature), typeof(Creature)]),
+            ];
+#else
             return [new(typeof(Hook), nameof(Hook.AfterBlockBroken), [typeof(CombatStateCompat), typeof(Creature)])];
+#endif
         }
 
         [HarmonyPriority(Priority.Last)]
+#if STS2_AT_LEAST_0_109_0
+        public static void Postfix(CombatStateCompat __0, Creature __2, ref Task __result)
+#else
         public static void Postfix(CombatStateCompat __0, Creature __1, ref Task __result)
+#endif
         {
             __result = LifecyclePatchTaskBridge.After(__result, () =>
                 RitsuLibFramework.PublishLifecycleEvent(
+#if STS2_AT_LEAST_0_109_0
+                    new BlockBrokenEvent(__0, __2, DateTimeOffset.UtcNow),
+#else
                     new BlockBrokenEvent(__0, __1, DateTimeOffset.UtcNow),
+#endif
                     nameof(BlockBrokenEvent)));
         }
     }
