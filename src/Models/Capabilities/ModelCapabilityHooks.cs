@@ -37,39 +37,73 @@ namespace STS2RitsuLib.Models.Capabilities
                 }
 
                 var capabilities = GetOwnerHookCapabilities(owner);
+                var index = 0;
 
-                foreach (var entry in capabilities)
-                    if (entry.OwnerHookOrder < 0 && TryGetStillAttachedModel(entry, owner, out var model))
+                for (; index < capabilities.Count && capabilities[index].OwnerHookOrder < 0; index++)
+                {
+                    var entry = capabilities[index];
+                    if (TryGetStillAttachedModel(entry, owner, out var model))
                         yield return model;
+                }
 
                 yield return owner;
 
-                foreach (var entry in capabilities)
-                    if (entry.OwnerHookOrder >= 0 && TryGetStillAttachedModel(entry, owner, out var model))
+                for (; index < capabilities.Count; index++)
+                {
+                    var entry = capabilities[index];
+                    if (TryGetStillAttachedModel(entry, owner, out var model))
                         yield return model;
+                }
             }
         }
 
-        private static IReadOnlyList<OwnerHookCapabilityEntry> GetOwnerHookCapabilities(AbstractModel owner)
+        private static OwnerHookCapabilitySnapshot GetOwnerHookCapabilities(AbstractModel owner)
         {
             if (!ModelCapabilities.TryGet(owner, out var collection))
             {
                 if (!ModelCapabilityDefaults.HasDefaultCapabilitySource(owner))
-                    return [];
+                    return default;
 
                 collection = ModelCapabilities.Get(owner);
             }
 
-            var capabilities = collection.All;
-            if (capabilities.Count == 0)
-                return [];
+            var capabilities = collection.GetAttachedSnapshot();
+            if (capabilities.Length == 0)
+                return default;
 
-            return capabilities
-                .Select(static (capability, index) => new OwnerHookCapabilityEntry(capability, index))
-                .Where(static entry => entry is { ShouldReceiveOwnerHooks: true, Model: not null })
-                .OrderBy(static entry => entry.OwnerHookOrder)
-                .ThenBy(static entry => entry.Index)
-                .ToArray();
+            OwnerHookCapabilityEntry? singleListener = null;
+            List<OwnerHookCapabilityEntry>? listeners = null;
+            for (var index = 0; index < capabilities.Length; index++)
+            {
+                var capability = capabilities[index];
+                if (capability is not (IModelCapabilityHookListener { ShouldReceiveOwnerHooks: true } listener
+                    and AbstractModel model))
+                    continue;
+
+                var entry = new OwnerHookCapabilityEntry(capability, model, listener.OwnerHookOrder, index);
+                if (!singleListener.HasValue)
+                {
+                    singleListener = entry;
+                    continue;
+                }
+
+                listeners ??= new(capabilities.Length)
+                {
+                    singleListener.Value,
+                };
+                listeners.Add(entry);
+            }
+
+            if (listeners == null)
+                return new(singleListener);
+
+            listeners.Sort(static (left, right) =>
+            {
+                var order = left.OwnerHookOrder.CompareTo(right.OwnerHookOrder);
+                return order != 0 ? order : left.Index.CompareTo(right.Index);
+            });
+
+            return new(listeners);
         }
 
         private static bool TryGetStillAttachedModel(
@@ -77,19 +111,47 @@ namespace STS2RitsuLib.Models.Capabilities
             AbstractModel owner,
             out AbstractModel model)
         {
-            model = entry.Model!;
-            return model != null && ReferenceEquals(entry.Capability.Owner, owner);
+            model = entry.Model;
+            return ReferenceEquals(entry.Capability.Owner, owner);
         }
 
-        private readonly record struct OwnerHookCapabilityEntry(IModelCapability Capability, int Index)
+        private readonly record struct OwnerHookCapabilityEntry(
+            IModelCapability Capability,
+            AbstractModel Model,
+            int OwnerHookOrder,
+            int Index);
+
+        private readonly struct OwnerHookCapabilitySnapshot
         {
-            public bool ShouldReceiveOwnerHooks =>
-                Capability is IModelCapabilityHookListener { ShouldReceiveOwnerHooks: true };
+            private readonly OwnerHookCapabilityEntry? _single;
+            private readonly List<OwnerHookCapabilityEntry>? _multiple;
 
-            public int OwnerHookOrder =>
-                Capability is IModelCapabilityHookListener listener ? listener.OwnerHookOrder : 0;
+            public OwnerHookCapabilitySnapshot(OwnerHookCapabilityEntry? single)
+            {
+                _single = single;
+                _multiple = null;
+            }
 
-            public AbstractModel? Model => Capability as AbstractModel;
+            public OwnerHookCapabilitySnapshot(List<OwnerHookCapabilityEntry> multiple)
+            {
+                _single = null;
+                _multiple = multiple;
+            }
+
+            public int Count => _multiple?.Count ?? (_single.HasValue ? 1 : 0);
+
+            public OwnerHookCapabilityEntry this[int index]
+            {
+                get
+                {
+                    if (_multiple != null)
+                        return _multiple[index];
+                    if (index == 0 && _single is { } single)
+                        return single;
+
+                    throw new ArgumentOutOfRangeException(nameof(index));
+                }
+            }
         }
     }
 }

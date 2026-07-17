@@ -12,6 +12,7 @@ namespace STS2RitsuLib.Models.Capabilities
         private readonly List<IModelCapability> _capabilities = [];
         private readonly HashSet<IModelCapability> _defaultCapabilities = new(ReferenceEqualityComparer.Instance);
         private readonly List<ModelCapabilitySaveEntry> _unknownEntries = [];
+        private IModelCapability[]? _attachedSnapshot;
 
         internal ModelCapabilitySet(AbstractModel owner)
         {
@@ -43,6 +44,11 @@ namespace STS2RitsuLib.Models.Capabilities
         ///     当前附加能力数量。
         /// </summary>
         public int Count => _capabilities.Count;
+
+        internal IModelCapability[] GetAttachedSnapshot()
+        {
+            return _attachedSnapshot ??= _capabilities.ToArray();
+        }
 
         /// <summary>
         ///     Applies a capability, optionally merging it with an existing capability.
@@ -80,11 +86,13 @@ namespace STS2RitsuLib.Models.Capabilities
                     if (merged == null)
                     {
                         _capabilities.RemoveAt(i);
+                        InvalidateAttachedSnapshot();
                         MarkDirty();
                         return null;
                     }
 
                     _capabilities[i] = merged;
+                    InvalidateAttachedSnapshot();
                     if (defaultCapabilityId != null &&
                         string.Equals(merged.CapabilityId, defaultCapabilityId, StringComparison.Ordinal))
                         _defaultCapabilities.Add(merged);
@@ -98,6 +106,7 @@ namespace STS2RitsuLib.Models.Capabilities
                 return null;
 
             _capabilities.Add(incoming);
+            InvalidateAttachedSnapshot();
             incoming.Attach(Owner);
             MarkDynamicVarsJustUpgraded(incoming, options);
             MarkDirty();
@@ -138,6 +147,7 @@ namespace STS2RitsuLib.Models.Capabilities
                 throw new ArgumentOutOfRangeException(nameof(index), index, "Index is outside the set bounds.");
 
             _capabilities.Insert(index, capability);
+            InvalidateAttachedSnapshot();
             capability.Attach(Owner);
             MarkDirty();
             return capability;
@@ -274,6 +284,7 @@ namespace STS2RitsuLib.Models.Capabilities
             var removed = (TCapability)_capabilities[index];
             removed.Detach();
             _capabilities.RemoveAt(index);
+            InvalidateAttachedSnapshot();
             _defaultCapabilities.Remove(removed);
             MarkDirty();
             return removed;
@@ -295,6 +306,7 @@ namespace STS2RitsuLib.Models.Capabilities
             var removed = _capabilities[index];
             removed.Detach();
             _capabilities.RemoveAt(index);
+            InvalidateAttachedSnapshot();
             _defaultCapabilities.Remove(removed);
             MarkDirty();
             return removed;
@@ -314,6 +326,7 @@ namespace STS2RitsuLib.Models.Capabilities
             _capabilities[index].Detach();
             _defaultCapabilities.Remove(_capabilities[index]);
             _capabilities.RemoveAt(index);
+            InvalidateAttachedSnapshot();
             MarkDirty();
             return true;
         }
@@ -332,6 +345,7 @@ namespace STS2RitsuLib.Models.Capabilities
 
                 capability.Detach();
                 _capabilities.RemoveAt(i);
+                InvalidateAttachedSnapshot();
                 _defaultCapabilities.Remove(capability);
                 removed.Add(capability);
             }
@@ -361,6 +375,7 @@ namespace STS2RitsuLib.Models.Capabilities
 
                 capability.Detach();
                 _capabilities.RemoveAt(i);
+                InvalidateAttachedSnapshot();
                 _defaultCapabilities.Remove(capability);
                 removed.Add(capability);
             }
@@ -387,6 +402,7 @@ namespace STS2RitsuLib.Models.Capabilities
                 capability.Detach();
 
             _capabilities.Clear();
+            InvalidateAttachedSnapshot();
             _defaultCapabilities.Clear();
             if (unknownPolicy == UnknownModelCapabilityPolicy.Remove)
                 _unknownEntries.Clear();
@@ -408,6 +424,7 @@ namespace STS2RitsuLib.Models.Capabilities
                 capability.Detach();
 
             _capabilities.Clear();
+            InvalidateAttachedSnapshot();
             _defaultCapabilities.Clear();
             if (unknownPolicy == UnknownModelCapabilityPolicy.Remove)
                 _unknownEntries.Clear();
@@ -415,6 +432,7 @@ namespace STS2RitsuLib.Models.Capabilities
             foreach (var capability in capabilities)
             {
                 _capabilities.Add(capability);
+                InvalidateAttachedSnapshot();
                 capability.Attach(Owner);
             }
 
@@ -574,6 +592,7 @@ namespace STS2RitsuLib.Models.Capabilities
                 capability.Detach(true);
 
             _capabilities.Clear();
+            InvalidateAttachedSnapshot();
             _defaultCapabilities.Clear();
             _unknownEntries.Clear();
             IsDirty = false;
@@ -614,6 +633,7 @@ namespace STS2RitsuLib.Models.Capabilities
 
                 LoadCapabilityState(capability, entry);
                 _capabilities.Add(capability);
+                InvalidateAttachedSnapshot();
                 capability.Attach(Owner, true);
                 NotifyCapabilityLoadedFromSave(capability);
             }
@@ -647,6 +667,7 @@ namespace STS2RitsuLib.Models.Capabilities
                 capability.Detach(true);
 
             target._capabilities.Clear();
+            target.InvalidateAttachedSnapshot();
             target._defaultCapabilities.Clear();
             target._unknownEntries.Clear();
             target._unknownEntries.AddRange(_unknownEntries.Select(CloneEntry));
@@ -659,6 +680,7 @@ namespace STS2RitsuLib.Models.Capabilities
                     : CloneThroughSave(capability, target.Owner);
 
                 target._capabilities.Add(cloned);
+                target.InvalidateAttachedSnapshot();
                 if (_defaultCapabilities.Contains(capability))
                     target._defaultCapabilities.Add(cloned);
 
@@ -686,6 +708,7 @@ namespace STS2RitsuLib.Models.Capabilities
         private void AddDefaultCapability(IModelCapability capability)
         {
             _capabilities.Add(capability);
+            InvalidateAttachedSnapshot();
             _defaultCapabilities.Add(capability);
             capability.Attach(Owner, true);
         }
@@ -752,6 +775,11 @@ namespace STS2RitsuLib.Models.Capabilities
         private static bool CapabilityHasSavedState(IModelCapability capability)
         {
             return capability is IModelCapabilityJsonState state && state.SaveState() != null;
+        }
+
+        private void InvalidateAttachedSnapshot()
+        {
+            _attachedSnapshot = null;
         }
 
         private static void MarkDynamicVarsJustUpgraded(

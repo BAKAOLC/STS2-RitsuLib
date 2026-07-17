@@ -357,6 +357,7 @@ namespace STS2RitsuLib.Models.Capabilities
     {
         private static readonly Lock SyncRoot = new();
         private static readonly List<ModelDefaultCapabilityModifierEntry> Modifiers = [];
+        private static Dictionary<Type, ModelDefaultCapabilityModifierEntry[]> _modifiersByOwnerType = [];
         private static long _nextOrder;
 
         public static void Modify<TModel>(
@@ -409,6 +410,7 @@ namespace STS2RitsuLib.Models.Capabilities
                     order,
                     _nextOrder++,
                     modifier));
+                Volatile.Write(ref _modifiersByOwnerType, []);
             }
         }
 
@@ -418,11 +420,7 @@ namespace STS2RitsuLib.Models.Capabilities
             if (owner is IModelCapabilitySource)
                 return true;
 
-            var ownerType = owner.GetType();
-            lock (SyncRoot)
-            {
-                return Modifiers.Any(entry => entry.OwnerType.IsAssignableFrom(ownerType));
-            }
+            return GetModifiers(owner.GetType()).Length > 0;
         }
 
         internal static IReadOnlyList<IModelCapability> Create(AbstractModel owner)
@@ -441,14 +439,32 @@ namespace STS2RitsuLib.Models.Capabilities
 
         private static ModelDefaultCapabilityModifierEntry[] GetModifiers(AbstractModel owner)
         {
-            var ownerType = owner.GetType();
+            return GetModifiers(owner.GetType());
+        }
+
+        private static ModelDefaultCapabilityModifierEntry[] GetModifiers(Type ownerType)
+        {
+            var cache = Volatile.Read(ref _modifiersByOwnerType);
+            if (cache.TryGetValue(ownerType, out var modifiers))
+                return modifiers;
+
             lock (SyncRoot)
             {
-                return Modifiers
+                cache = Volatile.Read(ref _modifiersByOwnerType);
+                if (cache.TryGetValue(ownerType, out modifiers))
+                    return modifiers;
+
+                modifiers = Modifiers
                     .Where(entry => entry.OwnerType.IsAssignableFrom(ownerType))
                     .OrderBy(static entry => entry.Order)
                     .ThenBy(static entry => entry.RegistrationOrder)
                     .ToArray();
+                var updatedCache = new Dictionary<Type, ModelDefaultCapabilityModifierEntry[]>(cache)
+                {
+                    [ownerType] = modifiers,
+                };
+                Volatile.Write(ref _modifiersByOwnerType, updatedCache);
+                return modifiers;
             }
         }
 

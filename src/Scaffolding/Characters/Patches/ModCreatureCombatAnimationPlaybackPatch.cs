@@ -1,5 +1,6 @@
 using System.Runtime.CompilerServices;
 using Godot;
+using HarmonyLib;
 using MegaCrit.Sts2.Core.Models;
 using MegaCrit.Sts2.Core.Nodes.Combat;
 using STS2RitsuLib.Patching.Models;
@@ -32,6 +33,7 @@ namespace STS2RitsuLib.Scaffolding.Characters.Patches
     ///         状态机会通过 <see cref="ConditionalWeakTable{TKey,TValue}" /> 按视觉根缓存，因此工厂在每个战斗生命周期中最多运行一次。
     ///     </para>
     /// </remarks>
+    [HarmonyBefore(Const.BaseLibHarmonyId)]
     internal class ModCreatureCombatAnimationPlaybackPatch : IPatchMethod
     {
         private static readonly ConditionalWeakTable<Node, StateMachineSlot> StateMachinesByVisuals = new();

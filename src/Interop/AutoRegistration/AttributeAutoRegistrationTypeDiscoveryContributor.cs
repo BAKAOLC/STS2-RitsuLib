@@ -1202,6 +1202,15 @@ namespace STS2RitsuLib.Interop.AutoRegistration
                 IconPath = attr.IconPath,
                 Hotkeys = attr.Hotkeys,
                 CardShouldBeVisible = attr.CardShouldBeVisible,
+                ExtraHand = new()
+                {
+                    Direction = attr.ExtraHandDirection,
+                    Spacing = attr.ExtraHandSpacing,
+                    CardScale = Vector2.One * attr.ExtraHandCardScale,
+                    HoverScale = Vector2.One * attr.ExtraHandHoverScale,
+                    ShowPlayableGlow = attr.ExtraHandShowPlayableGlow,
+                    AllowCardPlay = attr.ExtraHandAllowCardPlay,
+                },
                 OnOpen = ResolveCardPileOpenHandler(declaringType),
                 HoverTipScreenOffset = new(attr.HoverTipOffsetX, attr.HoverTipOffsetY),
                 HoverTipPlacement = attr.HoverTipPlacement,

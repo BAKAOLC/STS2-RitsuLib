@@ -132,6 +132,34 @@ namespace STS2RitsuLib.CardPiles
             Func<ModCardPileFlightTargetContext, Vector2?>? flightTargetPositionResolver,
             Func<ModCardPileFlightStartContext, Vector2?>? flightStartPositionResolver,
             ModCardPileViewSpec? view)
+            : this(modId, id, pileType, scope, style, anchor, iconPath, hotkeys, cardShouldBeVisible, onOpen,
+                hoverTipScreenOffset, hoverTipPlacement, visibleWhen, flightTargetPositionResolver,
+                flightStartPositionResolver, view, new())
+        {
+        }
+
+        /// <summary>
+        ///     Constructor with extra-hand presentation and interaction capabilities.
+        ///     带额外手牌展示与交互能力的构造函数。
+        /// </summary>
+        public ModCardPileDefinition(
+            string modId,
+            string id,
+            PileType pileType,
+            ModCardPileScope scope,
+            ModCardPileUiStyle style,
+            ModCardPileAnchor anchor,
+            string? iconPath,
+            string[]? hotkeys,
+            bool cardShouldBeVisible,
+            Action<ModCardPileOpenContext>? onOpen,
+            Vector2 hoverTipScreenOffset,
+            ModCardPileHoverTipPlacement hoverTipPlacement,
+            Func<ModCardPileVisibilityContext, bool>? visibleWhen,
+            Func<ModCardPileFlightTargetContext, Vector2?>? flightTargetPositionResolver,
+            Func<ModCardPileFlightStartContext, Vector2?>? flightStartPositionResolver,
+            ModCardPileViewSpec? view,
+            ModCardPileExtraHandSpec extraHand)
         {
             ModId = modId;
             Id = id;
@@ -149,6 +177,7 @@ namespace STS2RitsuLib.CardPiles
             VisibleWhen = visibleWhen;
             FlightTargetPositionResolver = flightTargetPositionResolver;
             FlightStartPositionResolver = flightStartPositionResolver;
+            ExtraHand = extraHand ?? new();
         }
 
         /// <summary>
@@ -369,6 +398,12 @@ namespace STS2RitsuLib.CardPiles
         ///     <see cref="ModCardPileUiStyle.ExtraHand" /> 有意义）。
         /// </summary>
         public bool CardShouldBeVisible { get; }
+
+        /// <summary>
+        ///     Extra-hand presentation and interaction settings.
+        ///     额外手牌的展示与交互设置。
+        /// </summary>
+        public ModCardPileExtraHandSpec ExtraHand { get; }
 
         /// <summary>
         ///     Handler invoked when the pile's UI button is released. Null means "use the default

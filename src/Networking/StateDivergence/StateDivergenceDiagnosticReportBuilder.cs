@@ -8,6 +8,9 @@ using MegaCrit.Sts2.Core.Models;
 using MegaCrit.Sts2.Core.Multiplayer.Messages.Game.Checksums;
 using MegaCrit.Sts2.Core.Saves.Runs;
 using STS2RitsuLib.Compat;
+#if STS2_AT_LEAST_0_109_0
+using MegaCrit.Sts2.Core.Saves;
+#endif
 
 namespace STS2RitsuLib.Networking.StateDivergence
 {
@@ -658,7 +661,11 @@ namespace STS2RitsuLib.Networking.StateDivergence
         {
             var rows = new List<StateDivergenceDiagnosticRow>();
             AddIfDifferent(rows, "rng.run.seed", local.Rng.Seed ?? "", remote.Rng.Seed ?? "", includeMatching);
+#if STS2_AT_LEAST_0_109_0
+            CompareRngStates(rows, "rng.run.rngs", local.Rng.Rngs, remote.Rng.Rngs, includeMatching);
+#else
             CompareCounters(rows, "rng.run.counters", local.Rng.Counters, remote.Rng.Counters, includeMatching);
+#endif
 
             var count = Math.Max(local.Players.Count, remote.Players.Count);
             for (var i = 0; i < count; i++)
@@ -668,13 +675,22 @@ namespace STS2RitsuLib.Networking.StateDivergence
 
                 AddIfDifferent(rows, $"players[{i}].rng.seed", local.Players[i].rngSet.Seed,
                     remote.Players[i].rngSet.Seed, includeMatching);
+#if STS2_AT_LEAST_0_109_0
+                CompareRngStates(rows, $"players[{i}].rng.rngs", local.Players[i].rngSet.Rngs,
+                    remote.Players[i].rngSet.Rngs, includeMatching);
+#else
                 CompareCounters(rows, $"players[{i}].rng.counters", local.Players[i].rngSet.Counters,
                     remote.Players[i].rngSet.Counters, includeMatching);
+#endif
             }
 
             return new(
                 L("section.rng.title", "RNG"),
+#if STS2_AT_LEAST_0_109_0
+                L("section.rng.description", "Run and player RNG seeds and states."),
+#else
                 L("section.rng.description", "Run and player RNG seeds and counters."),
+#endif
                 rows.Count == 0,
                 rows);
         }
@@ -726,6 +742,28 @@ namespace STS2RitsuLib.Networking.StateDivergence
                 AddIfDifferent(rows, $"{path}.{key}", l, r, includeMatching);
             }
         }
+
+#if STS2_AT_LEAST_0_109_0
+        private static void CompareRngStates<TKey>(
+            ICollection<StateDivergenceDiagnosticRow> rows,
+            string path,
+            IReadOnlyDictionary<TKey, SerializableRng> local,
+            IReadOnlyDictionary<TKey, SerializableRng> remote,
+            bool includeMatching)
+            where TKey : notnull
+        {
+            foreach (var key in local.Keys.Concat(remote.Keys).Distinct().OrderBy(k => k.ToString()))
+            {
+                local.TryGetValue(key, out var l);
+                remote.TryGetValue(key, out var r);
+                AddIfDifferent(rows, $"{path}.{key}.counter", l?.counter, r?.counter, includeMatching);
+                AddIfDifferent(rows, $"{path}.{key}.state0", l?.state0, r?.state0, includeMatching);
+                AddIfDifferent(rows, $"{path}.{key}.state1", l?.state1, r?.state1, includeMatching);
+                AddIfDifferent(rows, $"{path}.{key}.state2", l?.state2, r?.state2, includeMatching);
+                AddIfDifferent(rows, $"{path}.{key}.state3", l?.state3, r?.state3, includeMatching);
+            }
+        }
+#endif
 
         private static void AddIfDifferent(
             ICollection<StateDivergenceDiagnosticRow> rows,

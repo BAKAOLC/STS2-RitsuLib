@@ -163,18 +163,42 @@ Owned button id 会是 `MY_MOD_TOPBARBUTTON_MY_PANEL`，hover 文本从 `static_
 
 ::: en
 
-Custom piles are useful for extra hand-like or discard-like collections.
+Custom piles are useful for extra hand-like or discard-like collections. An `ExtraHand` pile uses interactive
+vanilla card holders, including hover enlargement, keyword tips, controller focus, playable glow, and optional
+manual play through the normal targeting, resource-spend, hook, queue, and result-pile pipeline. Its default
+`VanillaHand` layout uses the same dynamic fan, scale, rotation, hover lift, and neighboring-card displacement as
+the player hand. Select `Horizontal` or `Vertical` to use the configurable linear spacing and scale instead.
 
 ```csharp
 RitsuLibFramework.CreateContentPack("MyMod")
     .CardPileOwned("archive", new ModCardPileSpec
     {
-        DisplayName = "Archive"
+        Style = ModCardPileUiStyle.ExtraHand,
+        Anchor = ModCardPileAnchor.AtCenter(new Vector2(260f, 520f)),
+        CardShouldBeVisible = true,
+        ExtraHand = new ModCardPileExtraHandSpec
+        {
+            Direction = ModExtraHandLayoutDirection.Vertical,
+            Spacing = 86f,
+            CardScale = Vector2.One * 0.55f,
+            HoverScale = Vector2.One,
+            ShowPlayableGlow = true,
+            AllowCardPlay = true,
+        },
     })
     .Apply();
 ```
 
-Use stable local stems. Pile ids are part of UI text, save-like state, and player expectations.
+Use `LayoutResolver` for per-card transforms and `OnCardVisualCreated` / `OnCardArrived` for custom presentation
+animations. `FlightTargetPositionResolver` and `FlightStartPositionResolver` customize the vanilla flight endpoints.
+
+When an extra-hand card is manually played, RitsuLib temporarily bridges it through the backend vanilla hand so
+the sealed vanilla `PlayCardAction` accepts it. A canceled target selection or queued action restores the card to
+its source pile. Consequently, vanilla logic that inspects `PileType.Hand` during targeting sees the card as a hand
+card, which is normally the desired semantics for a playable extra hand.
+
+Use stable local stems. Pile ids are part of UI text, persistence state, and localization keys. Add the generated
+pile id's `.title`, `.description`, and `.empty` entries to `static_hover_tips.json`.
 
 :::
 
@@ -182,17 +206,39 @@ Use stable local stems. Pile ids are part of UI text, save-like state, and playe
 
 ::: zh-CN
 
-自定义卡堆适合额外的手牌区、弃牌区或类似集合。
+自定义卡堆适合额外的手牌区、弃牌区或类似集合。`ExtraHand` 牌堆使用可交互的原版卡牌 holder，
+支持悬停放大、关键词提示、手柄焦点、可打出发光，并可选择通过原版目标选择、资源支付、hook、
+播放队列和结果牌堆流程手动打出。默认的 `VanillaHand` 布局使用与玩家手牌相同的动态扇形、缩放、
+旋转、悬停抬升和邻牌让位规则；显式选择 `Horizontal` 或 `Vertical` 后则使用可配置间距和缩放的线性布局。
 
 ```csharp
 RitsuLibFramework.CreateContentPack("MyMod")
     .CardPileOwned("archive", new ModCardPileSpec
     {
-        DisplayName = "Archive"
+        Style = ModCardPileUiStyle.ExtraHand,
+        Anchor = ModCardPileAnchor.AtCenter(new Vector2(260f, 520f)),
+        CardShouldBeVisible = true,
+        ExtraHand = new ModCardPileExtraHandSpec
+        {
+            Direction = ModExtraHandLayoutDirection.Vertical,
+            Spacing = 86f,
+            CardScale = Vector2.One * 0.55f,
+            HoverScale = Vector2.One,
+            ShowPlayableGlow = true,
+            AllowCardPlay = true,
+        },
     })
     .Apply();
 ```
 
-使用稳定 local stem。卡堆 ID 会影响 UI 文本、类似保存的状态和玩家预期。
+使用 `LayoutResolver` 可以逐卡指定变换，使用 `OnCardVisualCreated` / `OnCardArrived` 可以接入自定义
+展示动画；`FlightTargetPositionResolver` 与 `FlightStartPositionResolver` 用于自定义原版飞行动画端点。
+
+手动打出额外手牌卡牌时，RitsuLib 会临时将它桥接到后端原版手牌，使封闭的原版 `PlayCardAction`
+接受该卡牌。取消目标选择或已排队动作时，卡牌会恢复到来源牌堆。因此，目标选择期间检查
+`PileType.Hand` 的原版逻辑会将该卡视为手牌；对于“可打出的额外手牌”，这通常正是预期语义。
+
+使用稳定 local stem。卡堆 ID 会影响 UI 文本、持久化状态与本地化 key。请在
+`static_hover_tips.json` 中加入生成后牌堆 ID 对应的 `.title`、`.description` 与 `.empty` 条目。
 
 :::

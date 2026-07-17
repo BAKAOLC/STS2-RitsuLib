@@ -3,6 +3,12 @@ using System.Runtime.CompilerServices;
 using HarmonyLib;
 using MegaCrit.Sts2.Core.Models;
 using MegaCrit.Sts2.Core.Saves.Runs;
+#if STS2_AT_LEAST_0_109_0
+using SavedPropertyCache = MegaCrit.Sts2.Core.Multiplayer.Serialization.ModelIdSerializationCache;
+
+#else
+using SavedPropertyCache = MegaCrit.Sts2.Core.Saves.Runs.SavedPropertiesTypeCache;
+#endif
 
 namespace STS2RitsuLib.Utils
 {
@@ -323,13 +329,13 @@ namespace STS2RitsuLib.Utils
             }
         }
 
-        internal static void FinalizePropertyNameRegistration()
+        internal static IReadOnlyList<string> FinalizePropertyNameRegistration(bool injectIntoBaseGameCache = true)
         {
             string[] names;
             lock (SyncRoot)
             {
                 if (_propertyNamesFinalized)
-                    return;
+                    return [];
 
                 _propertyNamesFinalized = true;
                 names = RegisteredNames
@@ -337,8 +343,12 @@ namespace STS2RitsuLib.Utils
                     .ToArray();
             }
 
-            foreach (var name in names)
-                InjectNameIntoBaseGameCache(name);
+            // ReSharper disable once InvertIf
+            if (injectIntoBaseGameCache)
+                foreach (var name in names)
+                    InjectNameIntoBaseGameCache(name);
+
+            return names;
         }
 
         internal static IReadOnlyList<ISavedAttachedState> GetStatesForModel(object model)
@@ -489,21 +499,25 @@ namespace STS2RitsuLib.Utils
         private static void InjectNameIntoBaseGameCache(string name)
         {
             var propertyToId = AccessTools.StaticFieldRefAccess<Dictionary<string, int>>(
-                typeof(SavedPropertiesTypeCache),
+                typeof(SavedPropertyCache),
                 "_propertyNameToNetIdMap");
             var idToProperty = AccessTools.StaticFieldRefAccess<List<string>>(
-                typeof(SavedPropertiesTypeCache),
+                typeof(SavedPropertyCache),
                 "_netIdToPropertyNameMap");
 
             if (propertyToId.ContainsKey(name))
                 throw new InvalidOperationException(
-                    $"SavedAttachedState name is not unique in SavedPropertiesTypeCache: {name}");
+                    $"SavedAttachedState name is not unique in the saved-property net-id cache: {name}");
 
             propertyToId[name] = idToProperty.Count;
             idToProperty.Add(name);
 
             var newBitSize = (int)Math.Ceiling(Math.Log2(idToProperty.Count));
-            AccessTools.Property(typeof(SavedPropertiesTypeCache), nameof(SavedPropertiesTypeCache.NetIdBitSize))
+#if STS2_AT_LEAST_0_109_0
+            AccessTools.Property(typeof(SavedPropertyCache), nameof(SavedPropertyCache.PropertyIdBitSize))
+#else
+            AccessTools.Property(typeof(SavedPropertyCache), nameof(SavedPropertyCache.NetIdBitSize))
+#endif
                 ?.SetValue(null, newBitSize);
         }
 
@@ -511,7 +525,7 @@ namespace STS2RitsuLib.Utils
         {
             if (_propertyNamesFinalized)
                 throw new InvalidOperationException(
-                    $"SavedProperties extension property name '{name}' was registered after SavedPropertiesTypeCache finalization. " +
+                    $"SavedProperties extension property name '{name}' was registered after saved-property cache finalization. " +
                     "Register SavedAttachedState and ModelSavedData during mod type discovery or mod initialization.");
         }
     }

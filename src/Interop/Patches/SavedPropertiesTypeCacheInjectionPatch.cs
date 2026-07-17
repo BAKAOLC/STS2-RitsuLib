@@ -1,7 +1,6 @@
 using System.Reflection;
 using Godot;
 using HarmonyLib;
-using MegaCrit.Sts2.Core.Localization;
 using MegaCrit.Sts2.Core.Modding;
 using MegaCrit.Sts2.Core.Models;
 using MegaCrit.Sts2.Core.Saves.Runs;
@@ -12,32 +11,116 @@ using STS2RitsuLib.Interop.AutoRegistration;
 using STS2RitsuLib.Models.Capabilities;
 using STS2RitsuLib.Patching.Models;
 using STS2RitsuLib.Utils;
+#if STS2_AT_LEAST_0_109_0
+using System.IO.Hashing;
+using System.Text;
+#endif
+#if STS2_AT_LEAST_0_109_0
+using MegaCrit.Sts2.Core.Multiplayer.Serialization;
+using SavedPropertyCache = MegaCrit.Sts2.Core.Multiplayer.Serialization.ModelIdSerializationCache;
+
+#else
+using MegaCrit.Sts2.Core.Localization;
+using SavedPropertyCache = MegaCrit.Sts2.Core.Saves.Runs.SavedPropertiesTypeCache;
+#endif
 
 namespace STS2RitsuLib.Interop.Patches
 {
     /// <summary>
-    ///     Injects all loaded mod model types that declare <see cref="SavedPropertyAttribute" /> at a deterministic
-    ///     initialization point so multiplayer peers build the same <see cref="SavedPropertiesTypeCache" /> net-id table.
-    ///     在确定性的初始化点注入所有声明 <see cref="SavedPropertyAttribute" /> 的已加载 mod 模型类型，
-    ///     使多人对等端构建相同的 <see cref="SavedPropertiesTypeCache" /> net-id 表。
+    ///     Finalizes RitsuLib saved-property registrations at a deterministic initialization point and integrates them
+    ///     with the game's saved-property net-id table.
+    ///     在确定性的初始化点完成 RitsuLib 保存属性注册，并将其集成到游戏的保存属性 net-id 表。
     /// </summary>
     internal sealed class SavedPropertiesTypeCacheInjectionPatch : IPatchMethod
     {
         private static readonly Lock Gate = new();
         private static bool _completed;
+#if STS2_AT_LEAST_0_109_0
+        private static int _remainingGameplayTypes = -1;
+#endif
         internal static bool UsesDeterministicNetIdTable { get; private set; }
         public static string PatchId => "ritsulib_saved_properties_type_cache_injection";
 
         public static string Description =>
+#if STS2_AT_LEAST_0_109_0
+            "Collect synthetic SavedProperties names during native ModelIdSerializationCache initialization";
+#else
             "Deterministic SavedPropertiesTypeCache injection for modded models with SavedProperty";
+#endif
 
         public static bool IsCritical => true;
 
         public static ModPatchTarget[] GetTargets()
         {
+#if STS2_AT_LEAST_0_109_0
+            return
+            [
+                new(typeof(SavedPropertyCache), "CachePropertiesForType",
+                    [typeof(Type), typeof(XxHash32), typeof(byte[])]),
+            ];
+#else
             return [new(typeof(LocManager), nameof(LocManager.Initialize))];
+#endif
         }
 
+#if STS2_AT_LEAST_0_109_0
+        public static void Postfix(XxHash32? __1, byte[]? __2)
+        {
+            if (__1 == null || __2 == null)
+                return;
+
+            IReadOnlyList<string> syntheticNames;
+            int beforeCount;
+            int afterCount;
+            lock (Gate)
+            {
+                if (_completed)
+                    return;
+
+                if (_remainingGameplayTypes < 0)
+                    _remainingGameplayTypes = ContentSorter<ModelId>.Sort(
+                            ModelDb.All.Select(static model => model.GetType()),
+                            ModelDb.GetId)
+                        .Count(static item => item.mod?.manifest?.affectsGameplay ?? true);
+
+                _remainingGameplayTypes--;
+                if (_remainingGameplayTypes > 0)
+                    return;
+
+                _completed = true;
+                ModelSavedDataRegistry.FinalizeRegistration();
+                beforeCount = GetPropertyNameCount();
+                syntheticNames = SavedAttachedStateRegistry.FinalizePropertyNameRegistration(false);
+                foreach (var name in syntheticNames)
+                    InjectSyntheticName(name, __1, __2);
+                afterCount = GetPropertyNameCount();
+                UsesDeterministicNetIdTable = true;
+            }
+
+            if (syntheticNames.Count > 0)
+                RitsuLibFramework.Logger.Info(
+                    $"[SavedProperties] Collected {syntheticNames.Count} synthetic property name(s) during native " +
+                    $"cache initialization; property net IDs: {beforeCount} -> {afterCount}.");
+        }
+
+        private static void InjectSyntheticName(string name, XxHash32 hash, byte[] buffer)
+        {
+            var propertyNameToNetIdMap = GetPropertyNameToNetIdMap() ??
+                                         throw new InvalidOperationException(
+                                             "Native saved-property name-to-id map is unavailable.");
+            var netIdToPropertyNameMap = GetNetIdToPropertyNameMap() ??
+                                         throw new InvalidOperationException(
+                                             "Native saved-property id-to-name map is unavailable.");
+            if (propertyNameToNetIdMap.ContainsKey(name))
+                throw new InvalidOperationException(
+                    $"SavedAttachedState name is not unique in the native saved-property cache: {name}");
+
+            propertyNameToNetIdMap[name] = netIdToPropertyNameMap.Count;
+            netIdToPropertyNameMap.Add(name);
+            var bytes = Encoding.UTF8.GetBytes(name, 0, name.Length, buffer, 0);
+            hash.Append(buffer.AsSpan(0, bytes));
+        }
+#else
         /// <summary>
         ///     Injects cache entries after mod type-discovery contributors have had a chance to register content.
         ///     在 mod 类型发现贡献器有机会注册内容后注入缓存条目。
@@ -89,6 +172,7 @@ namespace STS2RitsuLib.Interop.Patches
                     // ReSharper disable once HeuristicUnreachableCode
                     $"[SavedProperties] Injected {injectedTypes} mod model type(s); property net IDs: {beforeCount} -> {afterCount}, bit size {SavedPropertiesTypeCache.NetIdBitSize}, deterministic sort: {(sorted ? "applied" : "not applied")}.");
         }
+#endif
 
         private static bool HasSavedProperty(Type modelType)
         {
@@ -139,7 +223,11 @@ namespace STS2RitsuLib.Interop.Patches
             var newBitSize = count <= 1
                 ? 0
                 : Mathf.CeilToInt(Mathf.Log(count) / Mathf.Log(2));
-            AccessTools.Property(typeof(SavedPropertiesTypeCache), nameof(SavedPropertiesTypeCache.NetIdBitSize))
+#if STS2_AT_LEAST_0_109_0
+            AccessTools.Property(typeof(SavedPropertyCache), nameof(SavedPropertyCache.PropertyIdBitSize))
+#else
+            AccessTools.Property(typeof(SavedPropertyCache), nameof(SavedPropertyCache.NetIdBitSize))
+#endif
                 ?.SetValue(null, newBitSize);
         }
 
@@ -172,13 +260,13 @@ namespace STS2RitsuLib.Interop.Patches
 
         private static Dictionary<string, int>? GetPropertyNameToNetIdMap()
         {
-            return AccessTools.DeclaredField(typeof(SavedPropertiesTypeCache), "_propertyNameToNetIdMap")
+            return AccessTools.DeclaredField(typeof(SavedPropertyCache), "_propertyNameToNetIdMap")
                 ?.GetValue(null) as Dictionary<string, int>;
         }
 
         private static List<string>? GetNetIdToPropertyNameMap()
         {
-            return AccessTools.DeclaredField(typeof(SavedPropertiesTypeCache), "_netIdToPropertyNameMap")
+            return AccessTools.DeclaredField(typeof(SavedPropertyCache), "_netIdToPropertyNameMap")
                 ?.GetValue(null) as List<string>;
         }
     }
