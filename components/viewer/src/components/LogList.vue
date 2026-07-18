@@ -8,6 +8,7 @@ import type {ColumnId} from "../viewerConfig";
 
 const props = defineProps<{
   records: LogRecord[];
+  appendedRecordKeys: string[];
   selectedIds: Set<string>;
   selectedRecord: LogRecord | null;
   visibleColumns: Set<ColumnId>;
@@ -30,8 +31,6 @@ const logList = ref<HTMLElement | null>(null);
 const scrollTop = ref(0);
 const enteringKeys = ref(new Set<string>());
 let programmaticScroll = false;
-let knownRecordKeys = new Set<string>();
-let initializedRecordKeys = false;
 
 const gridTemplate = computed(() => {
   if (compact.value)
@@ -67,20 +66,11 @@ watch(() => props.records.length, async () => {
     scrollToBottom();
 });
 
-watch(() => props.records.map((record) => props.recordKey(record)), (keys) => {
-  const nextKnownKeys = new Set(keys);
-  if (!initializedRecordKeys) {
-    knownRecordKeys = nextKnownKeys;
-    initializedRecordKeys = true;
-    return;
-  }
-
-  const addedKeys = keys.filter((key) => !knownRecordKeys.has(key));
-  knownRecordKeys = nextKnownKeys;
-  if (addedKeys.length === 0)
+watch(() => props.appendedRecordKeys, (keys) => {
+  if (keys.length === 0)
     return;
 
-  const animatedKeys = addedKeys.length > 80 ? addedKeys.slice(-20) : addedKeys;
+  const animatedKeys = keys.length > 80 ? keys.slice(-20) : keys;
   enteringKeys.value = new Set([...enteringKeys.value, ...animatedKeys]);
   window.setTimeout(() => {
     const next = new Set(enteringKeys.value);

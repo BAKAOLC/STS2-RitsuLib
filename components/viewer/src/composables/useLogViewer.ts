@@ -7,6 +7,7 @@ export function useLogViewer() {
     const token = params.get("token") ?? "";
 
     const records = shallowRef<LogRecord[]>([]);
+    const appendedRecordKeys = shallowRef<string[]>([]);
     const status = ref<Status | null>(null);
     const connection = ref<ConnectionState>("connecting");
     const paused = ref(false);
@@ -172,6 +173,7 @@ export function useLogViewer() {
         if (clearOnNewSession.value) {
             discardPendingRecords();
             records.value = [];
+            appendedRecordKeys.value = [];
             recordKeys.clear();
         }
 
@@ -233,6 +235,7 @@ export function useLogViewer() {
         const combined = records.value.concat(additions);
         if (combined.length <= 20000) {
             records.value = combined;
+            appendedRecordKeys.value = additions.map(recordKey);
             return;
         }
 
@@ -240,6 +243,7 @@ export function useLogViewer() {
         for (const record of removed)
             recordKeys.delete(recordKey(record));
         records.value = combined.slice(combined.length - 20000);
+        appendedRecordKeys.value = additions.map(recordKey);
     }
 
     function discardPendingRecords() {
@@ -270,6 +274,7 @@ export function useLogViewer() {
 
     function replaceRecords(items: LogRecord[]) {
         records.value = trimRecordList(items);
+        appendedRecordKeys.value = [];
         recordKeys = new Set(records.value.map(recordKey));
     }
 
@@ -328,6 +333,7 @@ export function useLogViewer() {
     function clearView() {
         discardPendingRecords();
         records.value = [];
+        appendedRecordKeys.value = [];
         recordKeys.clear();
         selectedRecord.value = null;
         clearSelection();
@@ -496,6 +502,7 @@ export function useLogViewer() {
 
     return {
         records,
+        appendedRecordKeys,
         status,
         connection,
         paused,
