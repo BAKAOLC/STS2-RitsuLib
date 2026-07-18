@@ -33,6 +33,7 @@ export function useLogViewer() {
     let activeSessionId: string | null = null;
     let events: EventSource | null = null;
     let statusTimer: number | null = null;
+    let recordKeys = new Set<string>();
 
     const api = (path: string) => {
         const join = path.includes("?") ? "&" : "?";
@@ -114,7 +115,7 @@ export function useLogViewer() {
     watch(clearOnNewSession, (value) => saveValue("clearOnNewSession", value ? "1" : "0"));
 
     async function loadHistory() {
-        records.value = await fetchHistory(activeSessionId);
+        replaceRecords(await fetchHistory(activeSessionId));
     }
 
     async function loadStatus() {
@@ -165,8 +166,10 @@ export function useLogViewer() {
         selectedRecord.value = null;
         payloadOpen.value = false;
         clearSelection();
-        if (clearOnNewSession.value)
+        if (clearOnNewSession.value) {
             records.value = [];
+            recordKeys.clear();
+        }
 
         void replaceCurrentSessionHistory(nextSessionId);
     }
@@ -187,7 +190,7 @@ export function useLogViewer() {
             const otherSessionRecords = clearOnNewSession.value
                 ? []
                 : records.value.filter((record) => record.sessionId !== sessionId);
-            records.value = trimRecordList(mergeRecords([...otherSessionRecords, ...history], currentSessionEvents));
+            replaceRecords(mergeRecords([...otherSessionRecords, ...history], currentSessionEvents));
             await nextTick();
         } catch {
             status.value = null;
@@ -200,11 +203,13 @@ export function useLogViewer() {
             sessionId: record.sessionId ?? sessionId ?? undefined
         };
         const key = recordKey(next);
-        if (records.value.some((existing) => recordKey(existing) === key))
+        if (recordKeys.has(key))
             return;
 
+        recordKeys.add(key);
         records.value.push(next);
-        records.value = trimRecordList(records.value);
+        if (records.value.length > 20000)
+            replaceRecords(trimRecordList(records.value));
     }
 
     function mergeRecords(base: LogRecord[], incoming: LogRecord[]) {
@@ -223,6 +228,11 @@ export function useLogViewer() {
 
     function trimRecordList(items: LogRecord[]) {
         return items.length > 20000 ? items.slice(items.length - 20000) : items;
+    }
+
+    function replaceRecords(items: LogRecord[]) {
+        records.value = trimRecordList(items);
+        recordKeys = new Set(records.value.map(recordKey));
     }
 
     function summarize(field: "source") {
@@ -279,6 +289,7 @@ export function useLogViewer() {
 
     function clearView() {
         records.value = [];
+        recordKeys.clear();
         selectedRecord.value = null;
         clearSelection();
     }
