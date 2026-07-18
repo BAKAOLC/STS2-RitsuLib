@@ -295,15 +295,26 @@ namespace STS2RitsuLib.Ui.Shell.Theme
 
         private static void ApplyGameFallbacks(Font font)
         {
-            switch (font)
+            var baseFont = FindBaseFontFile(font);
+            if (baseFont != null)
+                AddGameFallbacks(baseFont);
+        }
+
+        private static FontFile? FindBaseFontFile(Font font)
+        {
+            var visited = new HashSet<Font>(ReferenceEqualityComparer.Instance);
+            while (visited.Add(font))
             {
-                case FontVariation { BaseFont: FontFile baseFont }:
-                    AddGameFallbacks(baseFont);
-                    break;
-                case FontFile fontFile:
-                    AddGameFallbacks(fontFile);
-                    break;
+                if (font is FontFile fontFile)
+                    return fontFile;
+
+                if (font is not FontVariation { BaseFont: { } baseFont })
+                    return null;
+
+                font = baseFont;
             }
+
+            return null;
         }
 
         private static void AddGameFallbacks(FontFile baseFont)
@@ -329,8 +340,7 @@ namespace STS2RitsuLib.Ui.Shell.Theme
             if (TryLoadFontResource(path, out var resourceFont))
             {
                 if (ReferenceEquals(resourceFont, baseFont) ||
-                    (resourceFont is FontVariation { BaseFont: FontFile resourceBaseFont } &&
-                     ReferenceEquals(resourceBaseFont, baseFont)))
+                    ReferenceEquals(FindBaseFontFile(resourceFont), baseFont))
                     return;
 
                 target.Add(resourceFont);
