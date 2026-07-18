@@ -34,6 +34,8 @@ export function useLogViewer() {
     let events: EventSource | null = null;
     let statusTimer: number | null = null;
     let recordKeys = new Set<string>();
+    let pendingRecords: LogRecord[] = [];
+    let pendingRecordsFrame: number | null = null;
 
     const api = (path: string) => {
         const join = path.includes("?") ? "&" : "?";
@@ -99,6 +101,7 @@ export function useLogViewer() {
     onUnmounted(() => {
         events?.close();
         events = null;
+        discardPendingRecords();
         if (statusTimer != null) {
             window.clearInterval(statusTimer);
             statusTimer = null;
@@ -144,7 +147,7 @@ export function useLogViewer() {
                 return;
 
             const record = JSON.parse((event as MessageEvent).data) as LogRecord;
-            appendRecord(record, activeSessionId);
+            enqueueRecord(record, activeSessionId);
         });
     }
 
@@ -167,6 +170,7 @@ export function useLogViewer() {
         payloadOpen.value = false;
         clearSelection();
         if (clearOnNewSession.value) {
+            discardPendingRecords();
             records.value = [];
             recordKeys.clear();
         }
@@ -197,19 +201,46 @@ export function useLogViewer() {
         }
     }
 
-    function appendRecord(record: LogRecord, sessionId: string | null) {
-        const next = {
+    function enqueueRecord(record: LogRecord, sessionId: string | null) {
+        pendingRecords.push({
             ...record,
             sessionId: record.sessionId ?? sessionId ?? undefined
-        };
-        const key = recordKey(next);
-        if (recordKeys.has(key))
+        });
+        if (pendingRecordsFrame == null)
+            pendingRecordsFrame = window.requestAnimationFrame(flushPendingRecords);
+    }
+
+    function flushPendingRecords() {
+        pendingRecordsFrame = null;
+        if (pendingRecords.length === 0)
             return;
 
-        recordKeys.add(key);
-        records.value.push(next);
+        const incoming = pendingRecords;
+        pendingRecords = [];
+        const additions: LogRecord[] = [];
+        for (const record of incoming) {
+            const key = recordKey(record);
+            if (recordKeys.has(key))
+                continue;
+
+            recordKeys.add(key);
+            additions.push(record);
+        }
+
+        if (additions.length === 0)
+            return;
+
+        records.value.push(...additions);
         if (records.value.length > 20000)
             replaceRecords(trimRecordList(records.value));
+    }
+
+    function discardPendingRecords() {
+        if (pendingRecordsFrame != null) {
+            window.cancelAnimationFrame(pendingRecordsFrame);
+            pendingRecordsFrame = null;
+        }
+        pendingRecords = [];
     }
 
     function mergeRecords(base: LogRecord[], incoming: LogRecord[]) {
@@ -288,6 +319,7 @@ export function useLogViewer() {
     }
 
     function clearView() {
+        discardPendingRecords();
         records.value = [];
         recordKeys.clear();
         selectedRecord.value = null;
