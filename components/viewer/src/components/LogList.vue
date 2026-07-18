@@ -1,7 +1,7 @@
 <script lang="ts" setup>
 import {useVirtualizer} from "@tanstack/vue-virtual";
 import {useMediaQuery} from "@vueuse/core";
-import {type ComponentPublicInstance, computed, nextTick, ref, watch} from "vue";
+import {type ComponentPublicInstance, computed, onUnmounted, ref, watch} from "vue";
 import {useI18n} from "vue-i18n";
 import type {LogRecord, MessageSegment} from "../logTypes";
 import type {ColumnId} from "../viewerConfig";
@@ -31,6 +31,7 @@ const logList = ref<HTMLElement | null>(null);
 const scrollTop = ref(0);
 const enteringKeys = ref(new Set<string>());
 let programmaticScroll = false;
+let followScrollFrame: number | null = null;
 
 const gridTemplate = computed(() => {
   if (compact.value)
@@ -60,10 +61,21 @@ const virtualRows = computed(() => {
       .filter((row): row is { item: typeof row.item; record: LogRecord } => Boolean(row.record));
 });
 
-watch(() => props.records.length, async () => {
-  await nextTick();
+watch(() => props.records.length, () => {
   if (props.follow)
-    scrollToBottom();
+    scheduleFollowScroll();
+});
+
+watch(() => props.follow, (value) => {
+  if (value)
+    scheduleFollowScroll();
+});
+
+onUnmounted(() => {
+  if (followScrollFrame != null) {
+    window.cancelAnimationFrame(followScrollFrame);
+    followScrollFrame = null;
+  }
 });
 
 watch(() => props.appendedRecordKeys, (keys) => {
@@ -88,6 +100,17 @@ function handleScroll() {
     return;
 
   emit("update:follow", isAtBottom());
+}
+
+function scheduleFollowScroll() {
+  if (followScrollFrame != null)
+    return;
+
+  followScrollFrame = window.requestAnimationFrame(() => {
+    followScrollFrame = null;
+    if (props.follow)
+      scrollToBottom();
+  });
 }
 
 function scrollToBottom() {
