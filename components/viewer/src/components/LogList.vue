@@ -82,6 +82,9 @@ watch(() => props.appendedRecordKeys, (keys) => {
   if (keys.length === 0)
     return;
 
+  if (props.follow)
+    scheduleFollowScroll();
+
   const animatedKeys = keys.length > 80 ? keys.slice(-20) : keys;
   enteringKeys.value = new Set([...enteringKeys.value, ...animatedKeys]);
   window.setTimeout(() => {
