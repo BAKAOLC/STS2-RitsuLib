@@ -179,7 +179,7 @@ namespace STS2RitsuLib.Combat.HealthBars
 
         private static Type? ResolveBaseLibRegistryType()
         {
-            var registryType = ResolveRegistryTypeFromLoadedAssemblies();
+            var registryType = ResolveRegistryType();
             _baselibSupportsForecastInterop = registryType != null;
 
             if (!_baselibSupportsForecastInterop)
@@ -206,7 +206,7 @@ namespace STS2RitsuLib.Combat.HealthBars
                 return true;
             }
 
-            var registryType = ResolveRegistryTypeFromLoadedAssemblies();
+            var registryType = ResolveRegistryType();
             return registryType != null && TryResolveLegacyImportApi(registryType, out getSegments);
         }
 
@@ -416,24 +416,9 @@ namespace STS2RitsuLib.Combat.HealthBars
                 : HealthBarForecastLeftOriginLayout.Chained;
         }
 
-        private static Type? ResolveRegistryTypeFromLoadedAssemblies()
+        private static Type? ResolveRegistryType()
         {
-            var byQualifiedName = ExternalFrameworkRegistry.ResolveType("BaseLib.Hooks.HealthBarForecastRegistry");
-            if (byQualifiedName != null)
-                return byQualifiedName;
-
-            var loadedWithAssembly = Sts2ModManagerCompat.EnumerateLoadedModsWithAssembly();
-            foreach (var mod in loadedWithAssembly)
-            foreach (var assembly in Sts2ModManagerCompat.GetAssemblies(mod))
-            {
-                var type = assembly.GetType("BaseLib.Hooks.HealthBarForecastRegistry");
-                if (type != null)
-                    return type;
-            }
-
-            return AppDomain.CurrentDomain.GetAssemblies()
-                .Select(assembly => assembly.GetType("BaseLib.Hooks.HealthBarForecastRegistry")).OfType<Type>()
-                .FirstOrDefault();
+            return ExternalFrameworkRegistry.ResolveType("BaseLib.Hooks.HealthBarForecastRegistry");
         }
 
         internal readonly record struct BaseLibImportedHealthBarForecastSegment(

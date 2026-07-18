@@ -412,6 +412,8 @@ namespace STS2RitsuLib.Models.Capabilities
                     modifier));
                 Volatile.Write(ref _modifiersByOwnerType, []);
             }
+
+            ModelCapabilityHookListeners.InvalidateDefaultCapabilitySourceCache();
         }
 
         internal static bool HasDefaultCapabilitySource(AbstractModel owner)

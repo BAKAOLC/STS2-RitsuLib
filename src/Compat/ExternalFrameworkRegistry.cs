@@ -1,3 +1,5 @@
+using System.Collections.Concurrent;
+
 namespace STS2RitsuLib.Compat
 {
     /// <summary>
@@ -22,6 +24,7 @@ namespace STS2RitsuLib.Compat
     {
         private static readonly Lock Gate = new();
         private static readonly Dictionary<string, Func<bool>> CustomDetectors = [];
+        private static readonly ConcurrentDictionary<string, TypeResolution> TypeCache = new(StringComparer.Ordinal);
 
         private static readonly Dictionary<string, ProbeSpec> BuiltInProbes = new(StringComparer.OrdinalIgnoreCase)
         {
@@ -82,6 +85,7 @@ namespace STS2RitsuLib.Compat
         /// </summary>
         public static void RefreshKnownFrameworkPresence(string reason)
         {
+            TypeCache.Clear();
             lock (Gate)
             {
                 PresenceCache.Clear();
@@ -100,25 +104,32 @@ namespace STS2RitsuLib.Compat
         /// </summary>
         public static Type? ResolveType(string fullTypeName)
         {
+            ArgumentException.ThrowIfNullOrWhiteSpace(fullTypeName);
+
+            if (TypeCache.TryGetValue(fullTypeName, out var cached))
+                return cached.Type;
+
+            var resolved = ResolveTypeCore(fullTypeName);
+            return TypeCache.GetOrAdd(fullTypeName, new TypeResolution(resolved)).Type;
+        }
+
+        private static Type? ResolveTypeCore(string fullTypeName)
+        {
             var byQualifiedName = Type.GetType(fullTypeName);
             if (byQualifiedName != null)
                 return byQualifiedName;
 
             foreach (var assembly in AppDomain.CurrentDomain.GetAssemblies())
-            {
-                Type? type = null;
                 try
                 {
-                    type = assembly.GetType(fullTypeName, false);
+                    var type = assembly.GetType(fullTypeName, false);
+                    if (type != null)
+                        return type;
                 }
                 catch
                 {
                     // ignored
                 }
-
-                if (type != null)
-                    return type;
-            }
 
             return null;
         }
@@ -145,5 +156,7 @@ namespace STS2RitsuLib.Compat
         private readonly record struct ProbeSpec(
             string FrameworkId,
             IReadOnlyList<string> TypeMarkers);
+
+        private readonly record struct TypeResolution(Type? Type);
     }
 }
