@@ -31,6 +31,8 @@ namespace STS2RitsuLib.Keywords
 
         private static readonly Dictionary<CardKeyword, ModKeywordDefinition> DefinitionsByCardKeyword = [];
 
+        private static int _hasCardDescriptionPlacements;
+
         private readonly Logger _logger;
 
         private readonly string _modId;
@@ -55,6 +57,9 @@ namespace STS2RitsuLib.Keywords
         public static KeywordRegistrationState State => IsFrozen
             ? KeywordRegistrationState.Frozen
             : KeywordRegistrationState.Open;
+
+        internal static bool HasCardDescriptionPlacements =>
+            Volatile.Read(ref _hasCardDescriptionPlacements) != 0;
 
         /// <summary>
         ///     Returns the singleton registry for <paramref name="modId" />, creating it on first use.
@@ -362,6 +367,8 @@ namespace STS2RitsuLib.Keywords
 
                 Definitions[normalizedId] = definition;
                 DefinitionsByCardKeyword[cardKeywordValue] = definition;
+                if (definition.CardDescriptionPlacement != ModKeywordCardDescriptionPlacement.None)
+                    Volatile.Write(ref _hasCardDescriptionPlacements, 1);
             }
 
             _logger.Info(

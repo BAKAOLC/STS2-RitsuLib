@@ -14,46 +14,52 @@ namespace STS2RitsuLib.Keywords
         {
             description ??= string.Empty;
 
-            var before = new List<string>();
-            var after = new List<string>();
+            if (ModKeywordRegistry.IsFrozen && !ModKeywordRegistry.HasCardDescriptionPlacements)
+                return;
 
-            foreach (var id in EnumerateKeywordIds(card))
+            List<ModKeywordDefinition>? definitions = null;
+            foreach (var keyword in card.Keywords)
             {
-                if (!ModKeywordRegistry.TryGet(id, out var def))
+                if (!ModKeywordRegistry.TryGetByCardKeyword(keyword, out var definition) ||
+                    definition.CardDescriptionPlacement == ModKeywordCardDescriptionPlacement.None)
                     continue;
 
-                switch (def.CardDescriptionPlacement)
+                definitions ??= [];
+                definitions.Add(definition);
+            }
+
+            if (definitions == null)
+                return;
+
+            definitions.Sort(static (left, right) => StringComparer.Ordinal.Compare(left.Id, right.Id));
+
+            List<string>? before = null;
+            List<string>? after = null;
+            foreach (var definition in definitions)
+                switch (definition.CardDescriptionPlacement)
                 {
                     case ModKeywordCardDescriptionPlacement.BeforeCardDescription:
-                        before.Add(ModKeywordRegistry.GetCardText(id));
+                        before ??= [];
+                        before.Add(ModKeywordRegistry.GetCardText(definition.Id));
                         break;
                     case ModKeywordCardDescriptionPlacement.AfterCardDescription:
-                        after.Add(ModKeywordRegistry.GetCardText(id));
+                        after ??= [];
+                        after.Add(ModKeywordRegistry.GetCardText(definition.Id));
                         break;
                     case ModKeywordCardDescriptionPlacement.None:
                         break;
                 }
-            }
-
-            if (before.Count == 0 && after.Count == 0)
-                return;
 
             var lines = description.Length == 0 ? [] : description.Split('\n').ToList();
 
-            for (var i = before.Count - 1; i >= 0; i--)
-                lines.Insert(0, before[i]);
+            if (before != null)
+                for (var i = before.Count - 1; i >= 0; i--)
+                    lines.Insert(0, before[i]);
 
-            lines.AddRange(after);
+            if (after != null)
+                lines.AddRange(after);
 
             description = string.Join('\n', lines);
-        }
-
-        private static IEnumerable<string> EnumerateKeywordIds(CardModel card)
-        {
-            var seen = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
-            foreach (var id in card.GetModKeywordIds())
-                if (seen.Add(id))
-                    yield return id;
         }
     }
 }

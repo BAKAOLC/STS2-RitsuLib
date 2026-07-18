@@ -15,9 +15,12 @@ namespace STS2RitsuLib.Scaffolding.Cards.HandOutline
     /// </summary>
     public static class ModCardHandOutlineRegistry
     {
+        private static int _hasAny;
         private static int _sequence;
 
         private static readonly ConcurrentDictionary<Type, List<RegisteredRule>> RulesByCardType = new();
+
+        internal static bool HasAny => Volatile.Read(ref _hasAny) != 0;
 
         /// <summary>
         ///     Registers a rule for <typeparamref name="TCard" />. Throws if <see cref="ModContentRegistry.IsFrozen" />.
@@ -121,6 +124,7 @@ namespace STS2RitsuLib.Scaffolding.Cards.HandOutline
                     var copy = new List<RegisteredRule>(existing) { wrapped };
                     return copy;
                 });
+            Volatile.Write(ref _hasAny, 1);
         }
 
         /// <summary>
@@ -159,6 +163,7 @@ namespace STS2RitsuLib.Scaffolding.Cards.HandOutline
         public static void ClearForTests()
         {
             RulesByCardType.Clear();
+            Volatile.Write(ref _hasAny, 0);
         }
 
         /// <summary>

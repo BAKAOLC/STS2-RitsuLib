@@ -17,6 +17,9 @@ namespace STS2RitsuLib.Networking.Sidecar
         private static readonly Dictionary<ulong, RitsuLibSidecarPeerFeatures> PeerFeatures = [];
         private static readonly HashSet<ulong> HandshakeNegotiationTerminalPeers = [];
         private static readonly List<IRitsuLibSidecarCapabilityValidationRoute> ValidationRoutes = [];
+        private static IRitsuLibSidecarCapabilityValidationRoute[] _validationRoutesSnapshot = [];
+        private static ulong[] _peerIdsSnapshot = [];
+        private static ulong[] _supportedPeerIdsSnapshot = [];
 
         private static INetGameService? _currentNetService;
         private static long _epoch;
@@ -76,6 +79,7 @@ namespace STS2RitsuLib.Networking.Sidecar
                 ValidationRoutes.Add(new RitsuLibSidecarNativeTrailerValidationRoute());
                 if (!RitsuLibMobileSteamRuntime.SuppressNativeSteamIntegration)
                     ValidationRoutes.Add(new RitsuLibSidecarSteamLobbyValidationRoute());
+                RebuildValidationRoutesSnapshotLocked();
                 _providerBootstrapped = true;
             }
         }
@@ -94,6 +98,7 @@ namespace STS2RitsuLib.Networking.Sidecar
                     return;
                 ValidationRoutes.Add(route);
                 ValidationRoutes.Sort(static (a, b) => a.Order.CompareTo(b.Order));
+                RebuildValidationRoutesSnapshotLocked();
             }
         }
 
@@ -124,9 +129,13 @@ namespace STS2RitsuLib.Networking.Sidecar
                 else
                 {
                     SeedKnownPeers(netService);
-                    seededPeers = [..PeerReachability.Keys];
+                    RebuildPeerSnapshotsLocked();
+                    seededPeers = _peerIdsSnapshot;
                     boundEvt = new SidecarSessionBoundEvent(netService, _epoch);
                 }
+
+                if (netService == null || netService.Type == NetGameType.Singleplayer)
+                    RebuildPeerSnapshotsLocked();
             }
 
             if (unboundEvt is { } u)
@@ -173,9 +182,15 @@ namespace STS2RitsuLib.Networking.Sidecar
         {
             lock (Gate)
             {
-                return PeerReachability.Where(p => p.Value == RitsuLibSidecarPeerReachability.Supported)
-                    .Select(p => p.Key)
-                    .ToArray();
+                return [.. _supportedPeerIdsSnapshot];
+            }
+        }
+
+        internal static IReadOnlyList<ulong> GetSupportedPeersForIteration()
+        {
+            lock (Gate)
+            {
+                return _supportedPeerIdsSnapshot;
             }
         }
 
@@ -198,7 +213,8 @@ namespace STS2RitsuLib.Networking.Sidecar
         {
             lock (Gate)
             {
-                PeerReachability.Remove(peerNetId);
+                if (PeerReachability.Remove(peerNetId))
+                    RebuildPeerSnapshotsLocked();
                 PeerFeatures.Remove(peerNetId);
                 HandshakeNegotiationTerminalPeers.Remove(peerNetId);
             }
@@ -298,11 +314,11 @@ namespace STS2RitsuLib.Networking.Sidecar
         {
             EnsureProvidersBootstrapped();
             INetGameService? netService;
-            List<IRitsuLibSidecarCapabilityValidationRoute> routes;
+            IRitsuLibSidecarCapabilityValidationRoute[] routes;
             lock (Gate)
             {
                 netService = _currentNetService;
-                routes = [..ValidationRoutes];
+                routes = _validationRoutesSnapshot;
             }
 
             if (netService == null || netService.Type == NetGameType.Singleplayer)
@@ -342,7 +358,7 @@ namespace STS2RitsuLib.Networking.Sidecar
             {
                 if (_currentNetService == null || _currentNetService.Type == NetGameType.Singleplayer)
                     return;
-                peers = [..PeerReachability.Keys];
+                peers = _peerIdsSnapshot;
             }
 
             foreach (var peer in peers)
@@ -371,14 +387,20 @@ namespace STS2RitsuLib.Networking.Sidecar
             SidecarPeerReachabilityChangedEvent? evt;
             lock (Gate)
             {
-                var previous = PeerReachability.GetValueOrDefault(peerNetId, RitsuLibSidecarPeerReachability.Unknown);
+                var existed = PeerReachability.TryGetValue(peerNetId, out var previous);
+                if (!existed)
+                    previous = RitsuLibSidecarPeerReachability.Unknown;
+
                 if (previous == next)
                 {
                     PeerReachability[peerNetId] = next;
+                    if (!existed)
+                        RebuildPeerSnapshotsLocked();
                     return;
                 }
 
                 PeerReachability[peerNetId] = next;
+                RebuildPeerSnapshotsLocked();
                 evt = new SidecarPeerReachabilityChangedEvent(peerNetId, previous, next, reason, _epoch);
             }
 
@@ -395,14 +417,29 @@ namespace STS2RitsuLib.Networking.Sidecar
 
         private static void DispatchPublishLocalEvidence(INetGameService netService)
         {
-            List<IRitsuLibSidecarCapabilityValidationRoute> routes;
+            IRitsuLibSidecarCapabilityValidationRoute[] routes;
             lock (Gate)
             {
-                routes = [..ValidationRoutes];
+                routes = _validationRoutesSnapshot;
             }
 
-            foreach (var route in routes.Where(route => route.IsAvailable(netService)))
-                route.PublishLocalEvidence(netService);
+            foreach (var route in routes)
+                if (route.IsAvailable(netService))
+                    route.PublishLocalEvidence(netService);
+        }
+
+        private static void RebuildValidationRoutesSnapshotLocked()
+        {
+            _validationRoutesSnapshot = [.. ValidationRoutes];
+        }
+
+        private static void RebuildPeerSnapshotsLocked()
+        {
+            _peerIdsSnapshot = [.. PeerReachability.Keys];
+            _supportedPeerIdsSnapshot = PeerReachability
+                .Where(static pair => pair.Value == RitsuLibSidecarPeerReachability.Supported)
+                .Select(static pair => pair.Key)
+                .ToArray();
         }
 
         private static bool IsSemanticallySameService(INetGameService? a, INetGameService? b)

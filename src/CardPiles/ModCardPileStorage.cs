@@ -91,9 +91,7 @@ namespace STS2RitsuLib.CardPiles
         {
             ArgumentNullException.ThrowIfNull(state);
 
-            var definitions = ModCardPileRegistry.GetDefinitionsSnapshot()
-                .Where(definition => definition.Scope == ModCardPileScope.CombatOnly)
-                .ToArray();
+            var definitions = ModCardPileRegistry.GetCombatDefinitionsSnapshot();
             if (definitions.Length == 0)
                 return [];
 

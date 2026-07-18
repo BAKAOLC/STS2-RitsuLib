@@ -105,6 +105,19 @@ namespace STS2RitsuLib.Networking.Sidecar
             ulong[] peers;
             lock (ExchangeGate)
             {
+                var hasPendingAcknowledgement = false;
+                foreach (var state in NegotiationByPeer.Values)
+                {
+                    if (state.Phase != NegotiationOutboundPhase.AwaitingAck)
+                        continue;
+
+                    hasPendingAcknowledgement = true;
+                    break;
+                }
+
+                if (!hasPendingAcknowledgement)
+                    return;
+
                 peers = [..NegotiationByPeer.Keys];
             }
 
@@ -144,7 +157,7 @@ namespace STS2RitsuLib.Networking.Sidecar
                     TrySendHelloToPeerIfReachable(netService, client.HostNetId);
                     break;
                 case NetHostGameService:
-                    foreach (var peerNetId in RitsuLibSidecarSessionManager.GetSupportedPeersSnapshot())
+                    foreach (var peerNetId in RitsuLibSidecarSessionManager.GetSupportedPeersForIteration())
                         TrySendHelloToPeerIfReachable(netService, peerNetId);
                     break;
             }
