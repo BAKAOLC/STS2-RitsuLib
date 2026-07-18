@@ -208,12 +208,21 @@ export function useLogViewer() {
             ...record,
             sessionId: record.sessionId ?? sessionId ?? undefined
         });
+        if (pendingRecords.length >= 256) {
+            flushPendingRecords();
+            return;
+        }
+
         if (pendingRecordsFrame == null)
             pendingRecordsFrame = window.requestAnimationFrame(flushPendingRecords);
     }
 
     function flushPendingRecords() {
-        pendingRecordsFrame = null;
+        if (pendingRecordsFrame != null) {
+            window.cancelAnimationFrame(pendingRecordsFrame);
+            pendingRecordsFrame = null;
+        }
+
         if (pendingRecords.length === 0)
             return;
 
