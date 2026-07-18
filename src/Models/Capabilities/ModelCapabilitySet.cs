@@ -13,6 +13,7 @@ namespace STS2RitsuLib.Models.Capabilities
         private readonly HashSet<IModelCapability> _defaultCapabilities = new(ReferenceEqualityComparer.Instance);
         private readonly List<ModelCapabilitySaveEntry> _unknownEntries = [];
         private IModelCapability[]? _attachedSnapshot;
+        private IModelCapability[]? _ownerHookCandidateSnapshot;
 
         internal ModelCapabilitySet(AbstractModel owner)
         {
@@ -48,6 +49,13 @@ namespace STS2RitsuLib.Models.Capabilities
         internal IModelCapability[] GetAttachedSnapshot()
         {
             return _attachedSnapshot ??= _capabilities.ToArray();
+        }
+
+        internal IModelCapability[] GetOwnerHookCandidateSnapshot()
+        {
+            return _ownerHookCandidateSnapshot ??= _capabilities
+                .Where(static capability => capability is IModelCapabilityHookListener and AbstractModel)
+                .ToArray();
         }
 
         /// <summary>
@@ -780,6 +788,7 @@ namespace STS2RitsuLib.Models.Capabilities
         private void InvalidateAttachedSnapshot()
         {
             _attachedSnapshot = null;
+            _ownerHookCandidateSnapshot = null;
         }
 
         private static void MarkDynamicVarsJustUpgraded(

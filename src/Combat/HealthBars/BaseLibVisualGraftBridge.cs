@@ -94,21 +94,9 @@ namespace STS2RitsuLib.Combat.HealthBars
 
         private static Type? ResolveBaseLibRegistryType()
         {
-            var byQualifiedName = ExternalFrameworkRegistry.ResolveType("BaseLib.Hooks.HealthBarVisualGraftRegistry");
-            if (byQualifiedName != null)
-            {
-                _interopOk = true;
-                return byQualifiedName;
-            }
-
-            foreach (var mod in Sts2ModManagerCompat.EnumerateLoadedModsWithAssembly())
-            foreach (var assembly in Sts2ModManagerCompat.GetAssemblies(mod))
-            {
-                var type = assembly.GetType("BaseLib.Hooks.HealthBarVisualGraftRegistry");
-                if (type == null) continue;
-                _interopOk = true;
-                return type;
-            }
+            var registryType = ExternalFrameworkRegistry.ResolveType("BaseLib.Hooks.HealthBarVisualGraftRegistry");
+            if (registryType != null)
+                return registryType;
 
             if (!_loggedMissingRegistry)
             {
@@ -116,12 +104,8 @@ namespace STS2RitsuLib.Combat.HealthBars
                 RitsuLibFramework.Logger.Info("[HealthBarGraft] BaseLib graft registry type not found.");
             }
 
-            var fallback = AppDomain.CurrentDomain.GetAssemblies()
-                .Select(assembly => assembly.GetType("BaseLib.Hooks.HealthBarVisualGraftRegistry")).OfType<Type>()
-                .FirstOrDefault();
-            if (fallback != null)
-                _interopOk = true;
-            return fallback;
+            _interopOk = false;
+            return null;
         }
     }
 }

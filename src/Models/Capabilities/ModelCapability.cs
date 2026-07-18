@@ -42,6 +42,22 @@ namespace STS2RitsuLib.Models.Capabilities
         }
 
         /// <summary>
+        ///     Applies an in-place mutation to this capability and marks its owning capability set dirty.
+        ///     对此能力应用原地修改，并将其所属能力集合标记为已变更。
+        /// </summary>
+        /// <param name="modifier">
+        ///     Mutation to apply. This can be used by external callers to update capability-owned
+        ///     <see cref="DynamicVars" /> without separately marking the owner dirty.
+        ///     要应用的修改。外部调用方可借此更新能力自有的 <see cref="DynamicVars" />，无需另行将 owner 标脏。
+        /// </param>
+        public void Modify(Action<ModelCapability> modifier)
+        {
+            ArgumentNullException.ThrowIfNull(modifier);
+            modifier(this);
+            MarkDirty();
+        }
+
+        /// <summary>
         ///     Capability-owned canonical dynamic vars. Override to register vars directly on the capability.
         ///     能力拥有的动态变量原型。重写此属性即可直接在能力本身注册变量。
         /// </summary>

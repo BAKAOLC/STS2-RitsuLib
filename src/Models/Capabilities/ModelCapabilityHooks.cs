@@ -1,3 +1,4 @@
+using System.Runtime.CompilerServices;
 using MegaCrit.Sts2.Core.Models;
 
 namespace STS2RitsuLib.Models.Capabilities
@@ -25,6 +26,14 @@ namespace STS2RitsuLib.Models.Capabilities
 
     internal static class ModelCapabilityHookListeners
     {
+        private static readonly ConditionalWeakTable<AbstractModel, DefaultCapabilitySourceCache>
+            DefaultCapabilitySourceCaches = [];
+
+        internal static void InvalidateDefaultCapabilitySourceCache()
+        {
+            DefaultCapabilitySourceCaches.Clear();
+        }
+
         internal static IEnumerable<AbstractModel> ExpandOwnerHookListeners(IEnumerable<AbstractModel> owners)
         {
             foreach (var owner in owners)
@@ -61,13 +70,16 @@ namespace STS2RitsuLib.Models.Capabilities
         {
             if (!ModelCapabilities.TryGet(owner, out var collection))
             {
-                if (!ModelCapabilityDefaults.HasDefaultCapabilitySource(owner))
+                var sourceCache = DefaultCapabilitySourceCaches.GetValue(
+                    owner,
+                    static model => new(ModelCapabilityDefaults.HasDefaultCapabilitySource(model)));
+                if (!sourceCache.HasDefaultCapabilitySource)
                     return default;
 
                 collection = ModelCapabilities.Get(owner);
             }
 
-            var capabilities = collection.GetAttachedSnapshot();
+            var capabilities = collection.GetOwnerHookCandidateSnapshot();
             if (capabilities.Length == 0)
                 return default;
 
@@ -120,6 +132,8 @@ namespace STS2RitsuLib.Models.Capabilities
             AbstractModel Model,
             int OwnerHookOrder,
             int Index);
+
+        private sealed record DefaultCapabilitySourceCache(bool HasDefaultCapabilitySource);
 
         private readonly struct OwnerHookCapabilitySnapshot
         {

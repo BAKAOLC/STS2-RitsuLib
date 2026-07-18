@@ -51,6 +51,10 @@ namespace STS2RitsuLib.CardPiles.Patches
 
         public static void Postfix(PlayerCombatState __instance, ref IReadOnlyList<CardPile> __result)
         {
+            var definitions = ModCardPileRegistry.GetCombatDefinitionsSnapshot();
+            if (definitions.Length == 0 || ContainsAllDefinitions(__result, definitions))
+                return;
+
             var modPiles = ModCardPileStorage.GetOrCreateCombatPiles(__instance);
             if (modPiles.Count == 0)
                 return;
@@ -71,7 +75,46 @@ namespace STS2RitsuLib.CardPiles.Patches
 
         private static bool ContainsAll(IReadOnlyList<CardPile> haystack, IReadOnlyCollection<ModCardPile> needles)
         {
-            return needles.Select(needle => haystack.Any(t => ReferenceEquals(t, needle))).All(found => found);
+            foreach (var needle in needles)
+            {
+                var found = false;
+                for (var i = 0; i < haystack.Count; i++)
+                {
+                    if (!ReferenceEquals(haystack[i], needle))
+                        continue;
+
+                    found = true;
+                    break;
+                }
+
+                if (!found)
+                    return false;
+            }
+
+            return true;
+        }
+
+        private static bool ContainsAllDefinitions(
+            IReadOnlyList<CardPile> haystack,
+            IReadOnlyList<ModCardPileDefinition> definitions)
+        {
+            foreach (var definition in definitions)
+            {
+                var found = false;
+                for (var i = 0; i < haystack.Count; i++)
+                {
+                    if (haystack[i] is not ModCardPile pile || !ReferenceEquals(pile.Definition, definition))
+                        continue;
+
+                    found = true;
+                    break;
+                }
+
+                if (!found)
+                    return false;
+            }
+
+            return true;
         }
     }
 }

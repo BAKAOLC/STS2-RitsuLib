@@ -54,6 +54,9 @@ namespace STS2RitsuLib.CardPiles
 
         private static readonly Dictionary<PileType, ModCardPileDefinition> DefinitionsByPileType = [];
 
+        private static ModCardPileDefinition[] _combatDefinitionsSnapshot = [];
+        private static ModCardPileDefinition[] _definitionsSnapshot = [];
+
         private readonly Logger _logger;
         private readonly string _modId;
         private string? _freezeReason;
@@ -338,12 +341,12 @@ namespace STS2RitsuLib.CardPiles
         /// </summary>
         public static ModCardPileDefinition[] GetDefinitionsSnapshot()
         {
-            lock (SyncRoot)
-            {
-                return Definitions.Values
-                    .OrderBy(def => def.Id, StringComparer.Ordinal)
-                    .ToArray();
-            }
+            return [.. Volatile.Read(ref _definitionsSnapshot)];
+        }
+
+        internal static ModCardPileDefinition[] GetCombatDefinitionsSnapshot()
+        {
+            return Volatile.Read(ref _combatDefinitionsSnapshot);
         }
 
         /// <summary>
@@ -402,11 +405,22 @@ namespace STS2RitsuLib.CardPiles
 
                 Definitions[normalizedId] = definition;
                 DefinitionsByPileType[pileType] = definition;
+                RebuildDefinitionSnapshotsLocked();
             }
 
             _logger.Info($"[CardPiles] Registered pile: {normalizedId} (PileType=0x{(int)pileType:X8}, "
                          + $"Style={spec.Style}, Scope={spec.Scope})");
             return definition;
+        }
+
+        private static void RebuildDefinitionSnapshotsLocked()
+        {
+            var definitions = Definitions.Values
+                .OrderBy(definition => definition.Id, StringComparer.Ordinal)
+                .ToArray();
+            Volatile.Write(ref _definitionsSnapshot, definitions);
+            Volatile.Write(ref _combatDefinitionsSnapshot,
+                definitions.Where(definition => definition.Scope == ModCardPileScope.CombatOnly).ToArray());
         }
 
         private void EnsureMutable(string operation)
