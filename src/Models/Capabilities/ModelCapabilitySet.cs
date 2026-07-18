@@ -789,6 +789,7 @@ namespace STS2RitsuLib.Models.Capabilities
         {
             _attachedSnapshot = null;
             _ownerHookCandidateSnapshot = null;
+            ModelCapabilityHookListeners.InvalidateOwnerHookCapabilityCache(Owner);
         }
 
         private static void MarkDynamicVarsJustUpgraded(

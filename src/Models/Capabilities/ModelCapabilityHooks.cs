@@ -26,12 +26,18 @@ namespace STS2RitsuLib.Models.Capabilities
 
     internal static class ModelCapabilityHookListeners
     {
-        private static readonly ConditionalWeakTable<AbstractModel, DefaultCapabilitySourceCache>
-            DefaultCapabilitySourceCaches = [];
+        private static readonly object NoOwnerHookCapabilitiesMarker = new();
+
+        private static readonly ConditionalWeakTable<AbstractModel, object> OwnersWithoutHookCapabilities = [];
 
         internal static void InvalidateDefaultCapabilitySourceCache()
         {
-            DefaultCapabilitySourceCaches.Clear();
+            OwnersWithoutHookCapabilities.Clear();
+        }
+
+        internal static void InvalidateOwnerHookCapabilityCache(AbstractModel owner)
+        {
+            OwnersWithoutHookCapabilities.Remove(owner);
         }
 
         internal static IEnumerable<AbstractModel> ExpandOwnerHookListeners(IEnumerable<AbstractModel> owners)
@@ -42,6 +48,12 @@ namespace STS2RitsuLib.Models.Capabilities
                 {
                     if (capability.Owner == null)
                         yield return owner;
+                    continue;
+                }
+
+                if (OwnersWithoutHookCapabilities.TryGetValue(owner, out _))
+                {
+                    yield return owner;
                     continue;
                 }
 
@@ -70,18 +82,21 @@ namespace STS2RitsuLib.Models.Capabilities
         {
             if (!ModelCapabilities.TryGet(owner, out var collection))
             {
-                var sourceCache = DefaultCapabilitySourceCaches.GetValue(
-                    owner,
-                    static model => new(ModelCapabilityDefaults.HasDefaultCapabilitySource(model)));
-                if (!sourceCache.HasDefaultCapabilitySource)
+                if (!ModelCapabilityDefaults.HasDefaultCapabilitySource(owner))
+                {
+                    MarkOwnerWithoutHookCapabilities(owner);
                     return default;
+                }
 
                 collection = ModelCapabilities.Get(owner);
             }
 
             var capabilities = collection.GetOwnerHookCandidateSnapshot();
             if (capabilities.Length == 0)
+            {
+                MarkOwnerWithoutHookCapabilities(owner);
                 return default;
+            }
 
             OwnerHookCapabilityEntry? singleListener = null;
             List<OwnerHookCapabilityEntry>? listeners = null;
@@ -118,6 +133,11 @@ namespace STS2RitsuLib.Models.Capabilities
             return new(listeners);
         }
 
+        private static void MarkOwnerWithoutHookCapabilities(AbstractModel owner)
+        {
+            OwnersWithoutHookCapabilities.GetValue(owner, static _ => NoOwnerHookCapabilitiesMarker);
+        }
+
         private static bool TryGetStillAttachedModel(
             OwnerHookCapabilityEntry entry,
             AbstractModel owner,
@@ -132,8 +152,6 @@ namespace STS2RitsuLib.Models.Capabilities
             AbstractModel Model,
             int OwnerHookOrder,
             int Index);
-
-        private sealed record DefaultCapabilitySourceCache(bool HasDefaultCapabilitySource);
 
         private readonly struct OwnerHookCapabilitySnapshot
         {
