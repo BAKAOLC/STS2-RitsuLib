@@ -1,4 +1,4 @@
-import {computed, nextTick, onMounted, onUnmounted, ref, watch} from "vue";
+import {computed, nextTick, onMounted, onUnmounted, ref, shallowRef, watch} from "vue";
 import type {ConnectionState, LogRecord, NoiseRule, Status, ThemeMode} from "../logTypes";
 import {type ColumnId, defaultNoiseRules, logLevels, storagePrefix} from "../viewerConfig";
 
@@ -6,7 +6,7 @@ export function useLogViewer() {
     const params = new URLSearchParams(location.search);
     const token = params.get("token") ?? "";
 
-    const records = ref<LogRecord[]>([]);
+    const records = shallowRef<LogRecord[]>([]);
     const status = ref<Status | null>(null);
     const connection = ref<ConnectionState>("connecting");
     const paused = ref(false);
@@ -230,9 +230,16 @@ export function useLogViewer() {
         if (additions.length === 0)
             return;
 
-        records.value.push(...additions);
-        if (records.value.length > 20000)
-            replaceRecords(trimRecordList(records.value));
+        const combined = records.value.concat(additions);
+        if (combined.length <= 20000) {
+            records.value = combined;
+            return;
+        }
+
+        const removed = combined.slice(0, combined.length - 20000);
+        for (const record of removed)
+            recordKeys.delete(recordKey(record));
+        records.value = combined.slice(combined.length - 20000);
     }
 
     function discardPendingRecords() {
