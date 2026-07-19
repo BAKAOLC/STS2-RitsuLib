@@ -48,6 +48,34 @@ namespace STS2RitsuLib.Diagnostics
             }
         }
 
+        internal static void UpdateModelIdIndex(Type type, ModelId previousId, ModelId currentId)
+        {
+            if (previousId == currentId)
+                return;
+
+            lock (IndexGate)
+            {
+                if (_gameModelIdIndex == null)
+                    return;
+
+                if (_gameModelIdIndex.TryGetValue(previousId, out var previousBucket))
+                {
+                    previousBucket.Remove(type);
+                    if (previousBucket.Count == 0)
+                        _gameModelIdIndex.Remove(previousId);
+                }
+
+                if (!_gameModelIdIndex.TryGetValue(currentId, out var currentBucket))
+                {
+                    currentBucket = [];
+                    _gameModelIdIndex[currentId] = currentBucket;
+                }
+
+                if (!currentBucket.Contains(type))
+                    currentBucket.Add(type);
+            }
+        }
+
         internal static void ThrowIfModelIdConflicts(Type candidateType)
         {
             ArgumentNullException.ThrowIfNull(candidateType);
@@ -68,6 +96,7 @@ namespace STS2RitsuLib.Diagnostics
 
         internal static void ValidateAndLogModelIdCollisions()
         {
+            InvalidateModelIdIndex();
             var conflicts = GetGameModelIdIndex()
                 .Where(pair => pair.Value.Count > 1)
                 .ToArray();
