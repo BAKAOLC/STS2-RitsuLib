@@ -713,6 +713,27 @@ namespace STS2RitsuLib.Combat.SecondaryResources
             AbstractModel? source = null)
         {
             ArgumentNullException.ThrowIfNull(card);
+            return Plan(card, card.CombatState, freeMode, source);
+        }
+
+        internal static SecondaryResourcePaymentPlan PlanForCombat(
+            CardModel card,
+            CombatStateLike combatState,
+            SecondaryResourcePaymentFreeMode freeMode,
+            AbstractModel? source = null)
+        {
+            ArgumentNullException.ThrowIfNull(card);
+            ArgumentNullException.ThrowIfNull(combatState);
+            return Plan(card, combatState, freeMode, source);
+        }
+
+        private static SecondaryResourcePaymentPlan Plan(
+            CardModel card,
+            CombatStateLike? combatState,
+            SecondaryResourcePaymentFreeMode freeMode,
+            AbstractModel? source)
+        {
+            ArgumentNullException.ThrowIfNull(card);
 
             var player = TryGetOwner(card);
             if (!ModSecondaryResourceRegistry.HasAny)
@@ -725,7 +746,6 @@ namespace STS2RitsuLib.Combat.SecondaryResources
             if (player == null)
                 return PlanPreview(card, uses, freeMode);
 
-            var combatState = card.CombatState ?? player.Creature?.CombatState;
             if (combatState == null)
                 return PlanPreview(card, uses, freeMode);
 

@@ -170,10 +170,13 @@ namespace STS2RitsuLib.Combat.SecondaryResources
             if (!ModSecondaryResourceRegistry.HasAny)
                 yield break;
 
+            var combatExtraModels = extraModels
+                .Where(static model => model?.ShouldReceiveCombatHooks == true)
+                .ToArray();
             foreach (var entry in ModelHookListenerDispatcher.FromCombat(
                          combatState,
                          GlobalListeners,
-                         extraModels))
+                         combatExtraModels))
                 yield return entry.Listener;
         }
     }

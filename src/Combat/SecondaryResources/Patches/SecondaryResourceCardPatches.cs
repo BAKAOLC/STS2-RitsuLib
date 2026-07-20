@@ -182,8 +182,13 @@ namespace STS2RitsuLib.Combat.SecondaryResources.Patches
                 SecondaryResourcePlayLedgerRuntime.HasPending(card))
                 return;
 
-            var plan = SecondaryResourcePaymentResolver.Plan(
+            var combatState = card.CombatState ?? card.Owner.Creature?.CombatState;
+            if (combatState == null)
+                return;
+
+            var plan = SecondaryResourcePaymentResolver.PlanForCombat(
                 card,
+                combatState,
                 SecondaryResourcePaymentFreeMode.AutoPlayCapture);
             if (plan.HasLines)
                 __state = SecondaryResourcePaymentResolver.CommitAutoPlayCapture(plan);
