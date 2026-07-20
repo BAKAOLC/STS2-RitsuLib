@@ -1,5 +1,6 @@
 using STS2RitsuLib.Data;
 using STS2RitsuLib.Data.Models;
+using STS2RitsuLib.Graphics;
 using STS2RitsuLib.Ui.Shell.Theme;
 using STS2RitsuLib.Ui.Toast;
 
@@ -50,6 +51,7 @@ namespace STS2RitsuLib.Settings
         public IModSettingsValueBinding<string> SelfCheckOutputFolder { get; private init; } = null!;
         public IModSettingsValueBinding<bool> SelfCheckOnFirstMainMenu { get; private init; } = null!;
         public IModSettingsValueBinding<string> UiShellThemeId { get; private init; } = null!;
+        public IModSettingsValueBinding<string> CanvasTextureFilterMode { get; private init; } = null!;
         public IModSettingsValueBinding<bool> UpdateCheckEnabled { get; private init; } = null!;
         public IModSettingsValueBinding<double> UpdateCheckIntervalMinutes { get; private init; } = null!;
         public IModSettingsValueBinding<bool> UpdateCheckSkipInCombat { get; private init; } = null!;
@@ -316,6 +318,18 @@ namespace STS2RitsuLib.Settings
                             RitsuShellThemeRuntime.ApplyThemeId(n);
                         }),
                     () => defaults.UiShellThemeId),
+                CanvasTextureFilterMode = ModSettingsBindings.WithDefault(
+                    ModSettingsBindings.Global<RitsuLibSettings, string>(
+                        Const.ModId,
+                        Const.SettingsKey,
+                        settings => RitsuCanvasTextureFilterService.NormalizeMode(settings.CanvasTextureFilterMode),
+                        (settings, value) =>
+                        {
+                            var normalized = RitsuCanvasTextureFilterService.NormalizeMode(value);
+                            settings.CanvasTextureFilterMode = normalized;
+                            RitsuCanvasTextureFilterService.ApplyMode(normalized);
+                        }),
+                    () => defaults.CanvasTextureFilterMode),
                 UpdateCheckEnabled = ModSettingsBindings.WithDefault(
                     ModSettingsBindings.Global<RitsuLibSettings, bool>(
                         Const.ModId,
