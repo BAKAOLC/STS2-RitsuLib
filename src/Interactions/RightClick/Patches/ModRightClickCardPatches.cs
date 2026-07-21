@@ -1,8 +1,11 @@
 using Godot;
 using MegaCrit.Sts2.Core.Context;
 using MegaCrit.Sts2.Core.ControllerInput;
+using MegaCrit.Sts2.Core.Nodes.Cards;
 using MegaCrit.Sts2.Core.Nodes.Cards.Holders;
 using MegaCrit.Sts2.Core.Nodes.Combat;
+using MegaCrit.Sts2.Core.Nodes.CommonUi;
+using MegaCrit.Sts2.Core.Nodes.Screens;
 using STS2RitsuLib.Patching.Models;
 
 namespace STS2RitsuLib.Interactions.RightClick.Patches
@@ -74,6 +77,58 @@ namespace STS2RitsuLib.Interactions.RightClick.Patches
 
             if (ModRightClickRegistry.TryDispatch(new(player, card, trigger)))
                 viewport.SetInputAsHandled();
+        }
+    }
+
+    /// <summary>
+    ///     Connects right-click dispatch to cards shown in combat pile screens.
+    ///     将右键分发接入战斗牌堆 screen 中显示的卡牌。
+    /// </summary>
+    internal sealed class ModRightClickCardPilePatch : IPatchMethod
+    {
+        private const string OnHolderAltPressedMethodName = "OnHolderAltPressed";
+
+        public static string PatchId => "ritsulib_right_click_card_pile";
+        public static bool IsCritical => false;
+        public static string Description => "Connect RitsuLib model right-click dispatch to combat pile cards";
+
+        public static ModPatchTarget[] GetTargets()
+        {
+            return [new(typeof(NCardGrid), OnHolderAltPressedMethodName, [typeof(NCardHolder)])];
+        }
+
+        public static bool Prefix(NCardGrid __instance, NCardHolder holder)
+        {
+            if (!IsPileScreenGrid(__instance))
+                return true;
+
+            var hand = NPlayerHand.Instance;
+            if (hand == null || hand.InCardPlay || NTargetManager.Instance.IsInSelection)
+                return true;
+
+            var card = holder.CardModel;
+            if (card == null)
+                return true;
+
+            var player = LocalContext.GetMe(card.CombatState);
+            if (player == null)
+                return true;
+
+            var trigger = new ModRightClickTrigger(NControllerManager.Instance?.IsUsingController == true);
+            if (!ModRightClickRegistry.TryDispatch(new(player, card, trigger)))
+                return true;
+
+            holder.GetViewport().SetInputAsHandled();
+            return false;
+        }
+
+        private static bool IsPileScreenGrid(NCardGrid grid)
+        {
+            for (var node = grid.GetParent(); node != null; node = node.GetParent())
+                if (node is NCardPileScreen)
+                    return true;
+
+            return false;
         }
     }
 }

@@ -19,6 +19,11 @@ namespace STS2RitsuLib.Diagnostics.Patches
     {
         private static readonly Version AffectedHostMinVersion = new(0, 107, 1);
 
+        private const string BaseLibSkipPatchTypeName =
+            "BaseLib.Patches.Fixes.SkipSentryShutdownPatch";
+
+        private const string BaseLibSkipMethodName = "SkipShutdown";
+
         private static readonly MethodInfo SkipMethod =
             AccessTools.DeclaredMethod(typeof(SentryGdExtensionShutdown1071WorkaroundPatch),
                 nameof(SkipNativeGdExtensionShutdown));
@@ -37,6 +42,7 @@ namespace STS2RitsuLib.Diagnostics.Patches
             return [new(typeof(SentryService), nameof(SentryService.Shutdown), Type.EmptyTypes, true)];
         }
 
+        [HarmonyBefore(Const.BaseLibHarmonyId)]
         public static IEnumerable<CodeInstruction> Transpiler(IEnumerable<CodeInstruction> instructions)
         {
             if (!IsAffectedHost())
@@ -47,8 +53,8 @@ namespace STS2RitsuLib.Diagnostics.Patches
             var report = rewriter.RedirectCalls(
                 operation,
                 static method => IsGodotObjectCall(method) ? SkipMethod : null,
-                static code => code.Any(HarmonyIl.IsCall(SkipMethod)));
-            report.RequireApplied(1, 1);
+                static code => code.Any(HarmonyIl.IsCall(IsEquivalentSkipCall)));
+            report.RequireExactSitesOrAlreadySatisfied(1);
 
             return rewriter.InstructionsChecked(operation);
         }
@@ -64,6 +70,20 @@ namespace STS2RitsuLib.Diagnostics.Patches
                    method.Name == nameof(GodotObject.Call) &&
                    method.GetParameters().Select(static parameter => parameter.ParameterType)
                        .SequenceEqual([typeof(StringName), typeof(Variant[])]);
+        }
+
+        private static bool IsEquivalentSkipCall(MethodInfo method)
+        {
+            if (method == SkipMethod)
+                return true;
+
+            return string.Equals(method.DeclaringType?.FullName, BaseLibSkipPatchTypeName,
+                       StringComparison.Ordinal) &&
+                   string.Equals(method.Name, BaseLibSkipMethodName, StringComparison.Ordinal) &&
+                   method.IsStatic &&
+                   method.ReturnType == typeof(Variant) &&
+                   method.GetParameters().Select(static parameter => parameter.ParameterType)
+                       .SequenceEqual([typeof(GodotObject), typeof(StringName), typeof(Variant[])]);
         }
 
         private static Variant SkipNativeGdExtensionShutdown(GodotObject instance, StringName method, Variant[] args)

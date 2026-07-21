@@ -47,6 +47,7 @@ namespace STS2RitsuLib.Content.Patches
             return [new(typeof(ModelIdSerializationCache), nameof(ModelIdSerializationCache.Init))];
         }
 
+        [HarmonyPriority(Priority.First)]
         public static void Postfix()
         {
             var mode = RitsuLibSettingsStore.GetModelDbDeterministicSortMode();

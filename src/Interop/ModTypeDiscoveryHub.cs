@@ -44,10 +44,10 @@ namespace STS2RitsuLib.Interop
         /// <summary>
         ///     Registers a mod assembly for the one-shot discovery pipeline. Mods should call this from their initializer
         ///     before <see cref="ModTypeDiscoveryPatch" /> runs. On hosts that expose mod assembly association,
-        ///     RitsuLib also forwards the registration to the game through that API.
+        ///     RitsuLib forwards the registration to the game after mod initialization completes.
         ///     为一次性 discovery 管线注册一个 mod assembly。mod 应在其 initializer 中、
         ///     <see cref="ModTypeDiscoveryPatch" /> 运行前调用。若宿主提供 mod assembly 关联 API，
-        ///     RitsuLib 也会通过该 API 把注册同步给游戏本体。
+        ///     RitsuLib 会在 mod 初始化完成后把注册同步给游戏本体。
         /// </summary>
         public static void RegisterModAssembly(string modId, Assembly assembly)
         {
@@ -67,7 +67,6 @@ namespace STS2RitsuLib.Interop
             }
 
             RecordAssemblyModIdMismatch(modId, assembly);
-            Sts2ModManagerCompat.TryAssociateAssemblyWithMod(modId, assembly);
         }
 
         /// <summary>

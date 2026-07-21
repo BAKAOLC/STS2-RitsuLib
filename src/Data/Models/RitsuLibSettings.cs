@@ -397,6 +397,15 @@ namespace STS2RitsuLib.Data.Models
         public string UiShellThemeId { get; set; } = "default";
 
         /// <summary>
+        ///     Default texture filter inherited by 2D canvas items. Valid values: <c>nearest</c>, <c>linear</c>,
+        ///     <c>nearest_mipmap</c>, and <c>linear_mipmap</c>.
+        ///     2D CanvasItem 继承的默认纹理过滤模式。有效值：<c>nearest</c>、<c>linear</c>、
+        ///     <c>nearest_mipmap</c> 和 <c>linear_mipmap</c>。
+        /// </summary>
+        [JsonPropertyName("canvas_texture_filter_mode")]
+        public string CanvasTextureFilterMode { get; set; } = "linear_mipmap";
+
+        /// <summary>
         ///     When true, RitsuLib periodically checks its mirrored update manifest.
         ///     为 true 时，RitsuLib 会周期性检查镜像更新 manifest。
         /// </summary>

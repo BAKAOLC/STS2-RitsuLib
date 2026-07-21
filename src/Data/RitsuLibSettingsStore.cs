@@ -353,6 +353,12 @@ namespace STS2RitsuLib.Data
             return GetSettings().MainMenuModSettingsButtonEnabled;
         }
 
+        internal static string GetCanvasTextureFilterMode()
+        {
+            Initialize();
+            return GetSettings().CanvasTextureFilterMode;
+        }
+
         internal static ModelDbDeterministicSortMode GetModelDbDeterministicSortMode()
         {
             Initialize();

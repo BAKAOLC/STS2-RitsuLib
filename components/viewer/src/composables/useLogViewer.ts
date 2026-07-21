@@ -1,4 +1,4 @@
-import {computed, nextTick, onMounted, onUnmounted, ref, watch} from "vue";
+import {computed, nextTick, onMounted, onUnmounted, ref, shallowRef, watch} from "vue";
 import type {ConnectionState, LogRecord, NoiseRule, Status, ThemeMode} from "../logTypes";
 import {type ColumnId, defaultNoiseRules, logLevels, storagePrefix} from "../viewerConfig";
 
@@ -6,7 +6,8 @@ export function useLogViewer() {
     const params = new URLSearchParams(location.search);
     const token = params.get("token") ?? "";
 
-    const records = ref<LogRecord[]>([]);
+    const records = shallowRef<LogRecord[]>([]);
+    const appendedRecordKeys = shallowRef<string[]>([]);
     const status = ref<Status | null>(null);
     const connection = ref<ConnectionState>("connecting");
     const paused = ref(false);
@@ -33,6 +34,9 @@ export function useLogViewer() {
     let activeSessionId: string | null = null;
     let events: EventSource | null = null;
     let statusTimer: number | null = null;
+    let recordKeys = new Set<string>();
+    let pendingRecords: LogRecord[] = [];
+    let pendingRecordsFrame: number | null = null;
 
     const api = (path: string) => {
         const join = path.includes("?") ? "&" : "?";
@@ -98,6 +102,7 @@ export function useLogViewer() {
     onUnmounted(() => {
         events?.close();
         events = null;
+        discardPendingRecords();
         if (statusTimer != null) {
             window.clearInterval(statusTimer);
             statusTimer = null;
@@ -114,7 +119,7 @@ export function useLogViewer() {
     watch(clearOnNewSession, (value) => saveValue("clearOnNewSession", value ? "1" : "0"));
 
     async function loadHistory() {
-        records.value = await fetchHistory(activeSessionId);
+        replaceRecords(await fetchHistory(activeSessionId));
     }
 
     async function loadStatus() {
@@ -143,7 +148,7 @@ export function useLogViewer() {
                 return;
 
             const record = JSON.parse((event as MessageEvent).data) as LogRecord;
-            appendRecord(record, activeSessionId);
+            enqueueRecord(record, activeSessionId);
         });
     }
 
@@ -165,8 +170,12 @@ export function useLogViewer() {
         selectedRecord.value = null;
         payloadOpen.value = false;
         clearSelection();
-        if (clearOnNewSession.value)
+        if (clearOnNewSession.value) {
+            discardPendingRecords();
             records.value = [];
+            appendedRecordKeys.value = [];
+            recordKeys.clear();
+        }
 
         void replaceCurrentSessionHistory(nextSessionId);
     }
@@ -187,24 +196,71 @@ export function useLogViewer() {
             const otherSessionRecords = clearOnNewSession.value
                 ? []
                 : records.value.filter((record) => record.sessionId !== sessionId);
-            records.value = trimRecordList(mergeRecords([...otherSessionRecords, ...history], currentSessionEvents));
+            replaceRecords(mergeRecords([...otherSessionRecords, ...history], currentSessionEvents));
             await nextTick();
         } catch {
             status.value = null;
         }
     }
 
-    function appendRecord(record: LogRecord, sessionId: string | null) {
-        const next = {
+    function enqueueRecord(record: LogRecord, sessionId: string | null) {
+        pendingRecords.push({
             ...record,
             sessionId: record.sessionId ?? sessionId ?? undefined
-        };
-        const key = recordKey(next);
-        if (records.value.some((existing) => recordKey(existing) === key))
+        });
+        if (pendingRecords.length >= 256) {
+            flushPendingRecords();
+            return;
+        }
+
+        if (pendingRecordsFrame == null)
+            pendingRecordsFrame = window.requestAnimationFrame(flushPendingRecords);
+    }
+
+    function flushPendingRecords() {
+        if (pendingRecordsFrame != null) {
+            window.cancelAnimationFrame(pendingRecordsFrame);
+            pendingRecordsFrame = null;
+        }
+
+        if (pendingRecords.length === 0)
             return;
 
-        records.value.push(next);
-        records.value = trimRecordList(records.value);
+        const incoming = pendingRecords;
+        pendingRecords = [];
+        const additions: LogRecord[] = [];
+        for (const record of incoming) {
+            const key = recordKey(record);
+            if (recordKeys.has(key))
+                continue;
+
+            recordKeys.add(key);
+            additions.push(record);
+        }
+
+        if (additions.length === 0)
+            return;
+
+        const combined = records.value.concat(additions);
+        if (combined.length <= 20000) {
+            records.value = combined;
+            appendedRecordKeys.value = additions.map(recordKey);
+            return;
+        }
+
+        const removed = combined.slice(0, combined.length - 20000);
+        for (const record of removed)
+            recordKeys.delete(recordKey(record));
+        records.value = combined.slice(combined.length - 20000);
+        appendedRecordKeys.value = additions.map(recordKey);
+    }
+
+    function discardPendingRecords() {
+        if (pendingRecordsFrame != null) {
+            window.cancelAnimationFrame(pendingRecordsFrame);
+            pendingRecordsFrame = null;
+        }
+        pendingRecords = [];
     }
 
     function mergeRecords(base: LogRecord[], incoming: LogRecord[]) {
@@ -223,6 +279,12 @@ export function useLogViewer() {
 
     function trimRecordList(items: LogRecord[]) {
         return items.length > 20000 ? items.slice(items.length - 20000) : items;
+    }
+
+    function replaceRecords(items: LogRecord[]) {
+        records.value = trimRecordList(items);
+        appendedRecordKeys.value = [];
+        recordKeys = new Set(records.value.map(recordKey));
     }
 
     function summarize(field: "source") {
@@ -278,7 +340,10 @@ export function useLogViewer() {
     }
 
     function clearView() {
+        discardPendingRecords();
         records.value = [];
+        appendedRecordKeys.value = [];
+        recordKeys.clear();
         selectedRecord.value = null;
         clearSelection();
     }
@@ -446,6 +511,7 @@ export function useLogViewer() {
 
     return {
         records,
+        appendedRecordKeys,
         status,
         connection,
         paused,

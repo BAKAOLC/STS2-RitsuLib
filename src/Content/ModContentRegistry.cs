@@ -931,6 +931,7 @@ namespace STS2RitsuLib.Content
         {
             EnsureMutable($"register badge '{badgeType.Name}'");
             EnsureBadgeType(badgeType, nameof(badgeType));
+            PrimeOwnedType(badgeType);
 
             lock (SyncRoot)
             {
@@ -1950,6 +1951,8 @@ namespace STS2RitsuLib.Content
             if (options.Kind == ModelPublicEntryKind.FromTypeName)
                 return;
 
+            var previousId = ModelDb.GetId(modelType);
+
             // ReSharper disable once SwitchExpressionHandlesSomeKnownEnumValuesWithExceptionInDefault
             var resolved = options.Kind switch
             {
@@ -1972,6 +1975,8 @@ namespace STS2RitsuLib.Content
 
                 FixedPublicEntryOverrides[modelType] = resolved;
             }
+
+            RegistrationConflictDetector.UpdateModelIdIndex(modelType, previousId, ModelDb.GetId(modelType));
         }
 
         private string ResolveModelCapabilityId(Type capabilityType, ModelPublicEntryOptions options)
@@ -2004,10 +2009,14 @@ namespace STS2RitsuLib.Content
 
         private void PrimeOwnedType(Type type)
         {
+            var previousId = ModelDb.GetId(type);
+
             lock (SyncRoot)
             {
                 RegisteredTypeOwners[type] = ModId;
             }
+
+            RegistrationConflictDetector.UpdateModelIdIndex(type, previousId, ModelDb.GetId(type));
         }
 
         private enum CharacterStarterContentKind

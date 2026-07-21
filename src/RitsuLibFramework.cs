@@ -25,6 +25,7 @@ using STS2RitsuLib.Diagnostics;
 using STS2RitsuLib.Diagnostics.CardExport;
 using STS2RitsuLib.Diagnostics.CompendiumExport;
 using STS2RitsuLib.Diagnostics.Logging;
+using STS2RitsuLib.Graphics;
 using STS2RitsuLib.Interop;
 using STS2RitsuLib.Keywords;
 using STS2RitsuLib.Localization;
@@ -393,6 +394,7 @@ namespace STS2RitsuLib
                         SecondaryResourcePersistence.Initialize();
                         RuntimeHotkeyService.Initialize();
                         RitsuToastService.Initialize();
+                        RitsuCanvasTextureFilterService.Initialize();
                         RuntimeDetourCompatibilityScanner.Initialize();
                         RitsuLibUpdateCheckService.Initialize();
                         SteamWorkshopUpdateCoordinator.Initialize();

@@ -59,6 +59,21 @@ namespace STS2RitsuLib.Settings
                 ModSettingsButtonTone.Normal,
                 T("ritsulib.uiShellTheme.resetFile.description",
                     "Overwrite existing built-in theme files on disk with their embedded default versions."));
+            section.AddChoice(
+                "canvas_texture_filter_mode",
+                T("ritsulib.canvasTextureFilter.label", "2D texture filtering"),
+                ui.CanvasTextureFilterMode,
+                [
+                    new("nearest", T("ritsulib.canvasTextureFilter.option.nearest", "Nearest")),
+                    new("linear", T("ritsulib.canvasTextureFilter.option.linear", "Linear")),
+                    new("nearest_mipmap",
+                        T("ritsulib.canvasTextureFilter.option.nearestMipmap", "Nearest with mipmaps")),
+                    new("linear_mipmap",
+                        T("ritsulib.canvasTextureFilter.option.linearMipmap", "Linear with mipmaps")),
+                ],
+                T("ritsulib.canvasTextureFilter.description",
+                    "Sets the default filter inherited by 2D canvas items. Mipmap modes use mip levels when the texture contains them."),
+                ModSettingsChoicePresentation.Dropdown);
             section.AddToggle(
                 "main_menu_mod_settings_button_enabled",
                 T("ritsulib.mainMenuModSettingsButton.enabled.label", "Show main menu settings shortcut"),

@@ -42,6 +42,7 @@ namespace STS2RitsuLib.Platform.Patches
                     .. IPatchMethod.CreatePatchInfos<NDailyRunLoadScreenBeginRunMissingCharacterPatch>(),
                     .. IPatchMethod.CreatePatchInfos<ModModelIdentityRunStateCreatePatch>(),
                     .. IPatchMethod.CreatePatchInfos<ModRightClickCardHolderPatch>(),
+                    .. IPatchMethod.CreatePatchInfos<ModRightClickCardPilePatch>(),
                     .. IPatchMethod.CreatePatchInfos<ModRightClickRelicPatch>(),
                     .. IPatchMethod.CreatePatchInfos<ModRightClickPowerPatch>(),
                     .. IPatchMethod.CreatePatchInfos<ModRightClickPotionPatch>(),
