@@ -30,7 +30,7 @@ namespace STS2RitsuLib.Content.Patches
         ///     当 <paramref name="type" /> 由某个 mod 拥有时，将 <paramref name="__result" /> 替换为
         ///     RitsuLib 固定条目。
         /// </summary>
-        [HarmonyPriority(Priority.First)]
+        [HarmonyPriority(Priority.Last)]
         public static void Postfix(Type type, ref string __result)
         {
             if (!ModContentRegistry.TryGetFixedPublicEntry(type, out var fixedEntry))
