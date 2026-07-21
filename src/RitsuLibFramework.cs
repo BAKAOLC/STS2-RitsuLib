@@ -396,8 +396,8 @@ namespace STS2RitsuLib
                         RitsuToastService.Initialize();
                         RitsuCanvasTextureFilterService.Initialize();
                         RuntimeDetourCompatibilityScanner.Initialize();
-                        RitsuLibUpdateCheckService.Initialize();
                         SteamWorkshopUpdateCoordinator.Initialize();
+                        RitsuLibUpdateCheckService.Initialize();
                     });
                     SubscribeLifecycleOnce<MainMenuReadyEvent>(_ =>
                     {

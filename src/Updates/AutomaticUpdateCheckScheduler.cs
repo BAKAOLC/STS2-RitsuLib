@@ -49,14 +49,22 @@ namespace STS2RitsuLib.Updates
 
                 _initialized = true;
                 UpdateCheckSessionState.Initialize();
-                RitsuLibFramework.SubscribeLifecycle<MainMenuReadyEvent>(_ => StartLoop());
+                RitsuLibFramework.SubscribeLifecycle<EssentialInitializationStartingEvent>(_ =>
+                    StartLoop("essential initialization starting"));
+                RitsuLibFramework.SubscribeLifecycle<MainMenuReadyEvent>(_ =>
+                    StartLoop("first main menu fallback"));
                 RitsuLibFramework.SubscribeLifecycle<MainMenuReadyEvent>(_ => TryRunDeferredCycle());
                 RitsuLibFramework.SubscribeLifecycle<RoomExitedEvent>(_ => TryRunDeferredCycle());
                 RitsuLibFramework.SubscribeLifecycle<RunEndedEvent>(_ => TryRunDeferredCycle());
             }
         }
 
-        private static void StartLoop()
+        internal static void StartForGameStartupError()
+        {
+            StartLoop("game startup error");
+        }
+
+        private static void StartLoop(string trigger)
         {
             lock (SyncRoot)
             {
@@ -66,6 +74,8 @@ namespace STS2RitsuLib.Updates
                 _loopStarted = true;
             }
 
+            RitsuLibFramework.Logger.Info(
+                $"[UpdateCheck] Automatic scheduler started: {trigger}.");
             _ = Task.Run(RunLoopAsync);
         }
 

@@ -158,6 +158,7 @@ namespace STS2RitsuLib
             patcher.RegisterPatch<DevConsoleHistoryNavigationShowConsolePatch>();
             patcher.RegisterPatch<NMainMenuContinueRunMissingCharacterPatch>();
             patcher.RegisterPatch<NMainMenuReadyLifecyclePatch>();
+            patcher.RegisterPatch<NGameStartupErrorUpdateCheckPatch>();
             patcher.RegisterPatch<NContinueRunInfoShowInfoModelNotFoundPatch>();
             patcher.RegisterPatch<NRunHistoryRefreshAndSelectRunSuppressRethrowPatch>();
             patcher.RegisterPatch<SentryDiagnosticsTelemetryPatch>();

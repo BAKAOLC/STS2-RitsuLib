@@ -22,9 +22,9 @@ namespace STS2RitsuLib.Updates
         private static readonly HashSet<string> ScheduledSessionChecks = new(StringComparer.Ordinal);
 
         /// <summary>
-        ///     Registers a periodic automatic update check. Checks start after the first main menu is ready and update
+        ///     Registers a periodic automatic update check. Checks start before essential game initialization and update
         ///     notifications are deferred until the main menu is active.
-        ///     注册周期性自动更新检查。检查会在首次主菜单就绪后开始，更新通知会延后到主菜单处于活动状态时显示。
+        ///     注册周期性自动更新检查。检查会在游戏必要初始化前开始，更新通知会延后到主菜单处于活动状态时显示。
         /// </summary>
         /// <returns>
         ///     A disposable registration. Disposing it cancels later automatic checks for this mod.
@@ -226,15 +226,19 @@ namespace STS2RitsuLib.Updates
             }
 
             var result = await CheckAsync(options, cancellationToken).ConfigureAwait(false);
+            var isAutomaticCheck = deferToastToMainMenu && !string.IsNullOrWhiteSpace(notificationKey);
+            LogResult(options, result, isAutomaticCheck);
             if (result.Status != ModUpdateCheckStatus.UpdateAvailable || result.ReleasePageUri == null)
             {
-                LogNonSuccess(options, result);
                 if (showCompletionToast)
                     ShowToast(deferToastToMainMenu, notificationKey, () => ShowCompletionToast(options, result));
                 return result;
             }
 
-            ShowToast(deferToastToMainMenu, notificationKey, () => ShowUpdateToast(options, result));
+            ShowToast(
+                deferToastToMainMenu,
+                notificationKey,
+                () => ShowUpdateToastOnce(options, result, isAutomaticCheck));
             return result;
         }
 
@@ -450,10 +454,34 @@ namespace STS2RitsuLib.Updates
                     $"[UpdateCheck] Failed to open release page '{releasePageUri}': {error}");
         }
 
-        private static void LogNonSuccess(ModUpdateCheckOptions options, ModUpdateCheckResult result)
+        private static void ShowUpdateToastOnce(
+            ModUpdateCheckOptions options,
+            ModUpdateCheckResult result,
+            bool automatic)
+        {
+            if (automatic &&
+                !UpdateCheckSessionHistory.TryRecordNotifiedVersion(options.ModId, result.LatestVersion))
+                return;
+
+            ShowUpdateToast(options, result);
+        }
+
+        private static void LogResult(
+            ModUpdateCheckOptions options,
+            ModUpdateCheckResult result,
+            bool automatic)
         {
             switch (result.Status)
             {
+                case ModUpdateCheckStatus.UpdateAvailable:
+                    if (automatic &&
+                        !UpdateCheckSessionHistory.TryRecordLoggedVersion(options.ModId, result.LatestVersion))
+                        break;
+                    RitsuLibFramework.Logger.Info(
+                        $"[UpdateCheck] Update available for {options.ModId}: " +
+                        $"{result.CurrentVersion} -> {result.LatestVersion ?? "<unknown>"}; " +
+                        $"release={result.ReleasePageUri?.ToString() ?? "<none>"}.");
+                    break;
                 case ModUpdateCheckStatus.UpToDate:
                     RitsuLibFramework.Logger.Debug(
                         $"[UpdateCheck] {options.ModId} is up to date ({result.CurrentVersion}).");
