@@ -876,6 +876,15 @@ namespace STS2RitsuLib
         }
 
         /// <summary>
+        ///     Registers a process-wide BaseLib-compatible card type text modifier through the framework.
+        ///     通过框架注册进程级、与 BaseLib 兼容的卡牌类型文本修改器。
+        /// </summary>
+        public static void RegisterCardTypeTextModifier(ICardTypeTextModifier modifier)
+        {
+            CardTypeTextHook.RegisterGlobalModifier(modifier);
+        }
+
+        /// <summary>
         ///     Resolves the current max-hand-size value for <paramref name="player" />.
         ///     解析 <paramref name="player" /> 当前的最大手牌数值。
         /// </summary>

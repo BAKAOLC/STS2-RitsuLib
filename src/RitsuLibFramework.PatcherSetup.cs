@@ -405,6 +405,7 @@ namespace STS2RitsuLib
             patcher.RegisterPatch<OrbModelCapabilityPatches.AfterOrbEvokedHookPatch>();
             patcher.RegisterPatch<CardModelCapabilityPatches.UpdateDynamicVarPreviewPatch>();
             patcher.RegisterPatch<CardModelCapabilityPatches.TitlePatch>();
+            patcher.RegisterPatch<CardModelCapabilityPatches.TypeTextPatch>();
             patcher.RegisterPatch<CardModelCapabilityPatches.CardTypePatch>();
             patcher.RegisterPatch<CardModelCapabilityPatches.CardRarityPatch>();
             patcher.RegisterPatch<CardModelCapabilityPatches.TargetTypePatch>();

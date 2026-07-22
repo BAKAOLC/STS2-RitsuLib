@@ -11,8 +11,10 @@ using MegaCrit.Sts2.Core.Entities.Creatures;
 using MegaCrit.Sts2.Core.Helpers.Models;
 using MegaCrit.Sts2.Core.Hooks;
 using MegaCrit.Sts2.Core.HoverTips;
+using MegaCrit.Sts2.Core.Localization;
 using MegaCrit.Sts2.Core.Localization.DynamicVars;
 using MegaCrit.Sts2.Core.Models;
+using MegaCrit.Sts2.Core.Nodes.Cards;
 using MegaCrit.Sts2.Core.Nodes.CommonUi;
 using MegaCrit.Sts2.Core.Random;
 using MegaCrit.Sts2.Core.Saves.Runs;
@@ -101,6 +103,67 @@ namespace STS2RitsuLib.Models.Capabilities.Patches
                 return card.MaxUpgradeLevel > 1
                     ? $"+{card.CurrentUpgradeLevel}"
                     : "+";
+            }
+        }
+
+        /// <summary>
+        ///     Applies BaseLib-compatible type text modifiers before the plaque LocString is formatted.
+        ///     在类型牌匾 LocString 格式化前应用与 BaseLib 兼容的类型文本修改器。
+        /// </summary>
+        internal sealed class TypeTextPatch : IPatchMethod
+        {
+            public static string PatchId => "ritsulib_card_capability_type_text";
+
+            public static string Description => "Apply BaseLib-compatible card type text modifiers";
+
+            public static bool IsCritical => false;
+
+            public static ModPatchTarget[] GetTargets()
+            {
+                return [new(typeof(NCard), "UpdateTypePlaque")];
+            }
+
+            [HarmonyAfter(Const.BaseLibHarmonyId)]
+            public static IEnumerable<CodeInstruction> Transpiler(IEnumerable<CodeInstruction> instructions)
+            {
+                var code = instructions.ToList();
+                var applyMethod = AccessTools.Method(
+                    typeof(CardTypeTextHook),
+                    nameof(CardTypeTextHook.Apply));
+                if (applyMethod == null || code.Any(instruction => instruction.Calls(applyMethod)))
+                    return code;
+
+                var toLocStringMethod = AccessTools.Method(
+                    typeof(CardTypeExtensions),
+                    nameof(CardTypeExtensions.ToLocString));
+                var getFormattedTextMethod = AccessTools.Method(
+                    typeof(LocString),
+                    nameof(LocString.GetFormattedText));
+                var modelGetter = AccessTools.PropertyGetter(typeof(NCard), nameof(NCard.Model));
+                if (toLocStringMethod == null || getFormattedTextMethod == null || modelGetter == null)
+                    return code;
+
+                var toLocStringIndex = code.FindIndex(instruction => instruction.Calls(toLocStringMethod));
+                var getFormattedTextIndex = toLocStringIndex < 0
+                    ? -1
+                    : code.FindIndex(
+                        toLocStringIndex + 1,
+                        instruction => instruction.Calls(getFormattedTextMethod));
+                if (getFormattedTextIndex < 0)
+                {
+                    RitsuLibFramework.Logger.Warn(
+                        "[ModelCapabilities] Card type text patch did not find the expected LocString formatting site.");
+                    return code;
+                }
+
+                code.InsertRange(
+                    getFormattedTextIndex,
+                    [
+                        CodeInstruction.LoadArgument(0),
+                        new(OpCodes.Call, modelGetter),
+                        new(OpCodes.Call, applyMethod),
+                    ]);
+                return code;
             }
         }
 
