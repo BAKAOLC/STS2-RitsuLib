@@ -335,6 +335,9 @@ namespace STS2RitsuLib
                 Logger.Info(BuildVersionLogText());
                 Logger.Info("Initializing shared framework...");
 
+#if STS2_AT_LEAST_0_107_0 && !STS2_AT_LEAST_0_108_0
+                RitsuLibStartupAudit.Measure("legacyInputMapCompat", LegacyInputMapCompat.EnsureRegistered);
+#endif
                 RitsuLibStartupAudit.Measure("harmonyPatchAllTypeLoadGuard",
                     () => HarmonyPatchAllTypeLoadGuard.Install(message => Logger.Warn(message)));
                 RitsuLibStartupAudit.Measure("harmonyInitSetterCompat", HarmonyInitSetterCompat.Install);
