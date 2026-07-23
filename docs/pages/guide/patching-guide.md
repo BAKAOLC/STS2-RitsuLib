@@ -276,6 +276,39 @@ task-wrapper design or a narrower awaited-call wrapper first.
 
 :::
 
+## Original IL Inspection Helpers{lang="en"}
+
+::: en
+
+Submods that need to classify method behavior can inspect original IL without creating a transpiler.
+`GetOriginalIl()` resolves an async method to its generated `MoveNext` body by default and exposes both the
+instruction snapshot and its ordered call targets:
+
+```csharp
+var body = onPlayMethod.GetOriginalIl();
+var directlyCallsTarget = body.HasCall(IsTargetMethod);
+```
+
+For explicitly bounded helper-method traversal, use `HasOriginalIlCall()` or
+`FindOriginalIlCallPath()`:
+
+```csharp
+var path = onPlayMethod.FindOriginalIlCallPath(
+    isTarget: IsTargetMethod,
+    shouldTraverse: called => called.DeclaringType == cardType);
+```
+
+Traversal is opt-in and returns the shortest matching path. Supply a narrow `shouldTraverse` predicate; the helper
+does not infer virtual dispatch, delegate targets, reflection calls, or arbitrary transitive behavior.
+These APIs inspect original method IL. They do not include Harmony transpiler output and do not cache
+domain-specific classifications.
+
+This inspection layer and `HarmonyAsyncIl` serve different purposes. Inspection resolves an async method body and
+queries ordinary calls. `HarmonyAsyncIl` recognizes compiler-generated await-site structure when a transpiler must
+safely redirect or replace a directly awaited call.
+
+:::
+
 ## Transpiler 包装器{lang="zh-CN"}
 
 ::: zh-CN
@@ -339,6 +372,36 @@ return rewriter.InstructionsChecked("Redirect awaited OnPlay");
 ```
 
 这个辅助工具不会创建新的 async state。如果 patch 需要额外的独立 await 点，优先考虑 task-wrapper 设计或更窄的 awaited-call wrapper。
+
+:::
+
+## 原始 IL 检查工具{lang="zh-CN"}
+
+::: zh-CN
+
+子 Mod 需要判断方法行为时，可以直接检查原始 IL，不必为此创建 transpiler。
+`GetOriginalIl()` 默认把 async 方法解析到生成的 `MoveNext` 方法体，并提供指令快照和按顺序排列的调用目标：
+
+```csharp
+var body = onPlayMethod.GetOriginalIl();
+var directlyCallsTarget = body.HasCall(IsTargetMethod);
+```
+
+需要在明确边界内继续检查辅助方法时，使用 `HasOriginalIlCall()` 或
+`FindOriginalIlCallPath()`：
+
+```csharp
+var path = onPlayMethod.FindOriginalIlCallPath(
+    isTarget: IsTargetMethod,
+    shouldTraverse: called => called.DeclaringType == cardType);
+```
+
+方法下钻必须显式启用，并返回最短匹配路径。请提供范围尽量窄的 `shouldTraverse` 谓词；工具不会推断虚调用分派、
+委托目标、反射调用或任意传递行为。这些 API 检查的是原始方法 IL，不包含 Harmony transpiler 的输出，也不缓存
+特定业务的分类结果。
+
+这个检查层与 `HarmonyAsyncIl` 的用途不同：检查层负责解析 async 方法体并查询普通调用；
+`HarmonyAsyncIl` 负责在 transpiler 必须安全重定向或替换直接 await 调用时，识别编译器生成的 await 点结构。
 
 :::
 
