@@ -16,15 +16,13 @@ namespace STS2RitsuLib.Cards.FreePlay
     public sealed record FreePlayResolution(
         bool IsAutoPlayNoSpend,
         bool IsCardBindingFree,
-        bool IsDualResourceModelFree,
         bool IsRegisteredDetectorFree)
     {
         /// <summary>
         ///     True when any detection source marks this play as free.
         ///     任一检测来源将本次出牌标记为免费时为 true。
         /// </summary>
-        public bool IsFree => IsAutoPlayNoSpend || IsCardBindingFree || IsDualResourceModelFree ||
-                              IsRegisteredDetectorFree;
+        public bool IsFree => IsAutoPlayNoSpend || IsCardBindingFree || IsRegisteredDetectorFree;
     }
 
     internal readonly record struct FreePlayCardCostScope(
@@ -156,7 +154,7 @@ namespace STS2RitsuLib.Cards.FreePlay
             PlayStates.Set(play, new()
             {
                 IsResolved = true,
-                Resolution = new(false, true, false, false),
+                Resolution = new(false, true, false),
             });
         }
 
@@ -303,12 +301,11 @@ namespace STS2RitsuLib.Cards.FreePlay
         private static FreePlayResolution BuildResolution(CardPlay play)
         {
             if (play.IsAutoPlay)
-                return new(true, false, false, false);
+                return new(true, false, false);
 
             var isCardBindingFree = EvaluateCardBindings(play);
-            var isDualResourceModelFree = IsFreeByDualResourceModel(play);
             var isRegisteredDetectorFree = EvaluateRegisteredDetectors(play);
-            return new(false, isCardBindingFree, isDualResourceModelFree, isRegisteredDetectorFree);
+            return new(false, isCardBindingFree, isRegisteredDetectorFree);
         }
 
         private static bool EvaluateCardBindings(CardPlay play)
@@ -350,36 +347,6 @@ namespace STS2RitsuLib.Cards.FreePlay
             return detectors.Any(detector => detector(play));
         }
 
-        private static bool IsFreeByDualResourceModel(CardPlay play)
-        {
-            var card = play.Card;
-            var owner = card.Owner;
-            if (owner?.Creature == null)
-                return false;
-
-            if (play.IsAutoPlay)
-                return false;
-
-            var models = owner.Creature.Powers
-                .Cast<AbstractModel>()
-                .Concat(owner.Relics);
-
-            return models.Any(model => IsDualResourceZeroedByModel(model, card));
-        }
-
-        private static bool IsDualResourceZeroedByModel(AbstractModel model, CardModel card)
-        {
-            var energyOriginal = (decimal)card.EnergyCost.GetWithModifiers(CostModifiers.Local);
-            var starOriginal = card.CurrentStarCost;
-
-            var changedEnergy = model.TryModifyEnergyCostInCombat(card, energyOriginal, out var energyModified);
-            if (!changedEnergy || energyModified > 0m)
-                return false;
-
-            var changedStar = model.TryModifyStarCost(card, starOriginal, out var starModified);
-            return changedStar && starModified <= 0m;
-        }
-
         private static CombatStateLike? ResolveCombatState(CardModel card)
         {
             return card.CombatState ?? card.Owner?.Creature?.CombatState;
@@ -399,7 +366,7 @@ namespace STS2RitsuLib.Cards.FreePlay
         private sealed class PlayFreeBindingState
         {
             public bool IsResolved { get; set; }
-            public FreePlayResolution Resolution { get; set; } = new(false, false, false, false);
+            public FreePlayResolution Resolution { get; set; } = new(false, false, false);
         }
     }
 }

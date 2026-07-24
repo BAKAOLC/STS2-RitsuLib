@@ -52,10 +52,10 @@ namespace STS2RitsuLib.Combat.SecondaryResources
         /// </summary>
         public static decimal ModifyCost(SecondaryResourceCostContext context, decimal cost)
         {
-            var modifiedCost = IterateListeners(context.CombatState, context.Card).Aggregate(cost,
+            var modifiedCost = IterateCostListeners(context.CombatState, context.Card).Aggregate(cost,
                 (current, listener) => listener.ModifySecondaryResourceCost(context, current));
 
-            return IterateListeners(context.CombatState, context.Card).Aggregate(modifiedCost,
+            return IterateCostListeners(context.CombatState, context.Card).Aggregate(modifiedCost,
                 (current, listener) => listener.ModifySecondaryResourceCostLate(context, current));
         }
 
@@ -176,6 +176,24 @@ namespace STS2RitsuLib.Combat.SecondaryResources
             foreach (var entry in ModelHookListenerDispatcher.FromCombat(
                          combatState,
                          GlobalListeners,
+                         combatExtraModels))
+                yield return entry.Listener;
+        }
+
+        private static IEnumerable<ISecondaryResourceHookListener> IterateCostListeners(
+            CombatStateLike combatState,
+            params AbstractModel?[] extraModels)
+        {
+            if (!ModSecondaryResourceRegistry.HasAny)
+                yield break;
+
+            var combatExtraModels = extraModels
+                .Where(static model => model?.ShouldReceiveCombatHooks == true)
+                .ToArray();
+            foreach (var entry in ModelHookListenerDispatcher.FromCombatWithAdapters(
+                         combatState,
+                         GlobalListeners,
+                         SecondaryResourceModelHookRegistry.Bind,
                          combatExtraModels))
                 yield return entry.Listener;
         }

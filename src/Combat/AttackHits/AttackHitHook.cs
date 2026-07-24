@@ -140,7 +140,6 @@ namespace STS2RitsuLib.Combat.AttackHits
         {
             return ModelHookListenerDispatcher.FromCombat<IAttackHitHookListener>(
                 combatState,
-                null,
                 extraModels).Select(entry => new ListenerEntry(entry.Listener, entry.Model));
         }
 
