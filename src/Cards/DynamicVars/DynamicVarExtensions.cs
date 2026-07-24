@@ -1,3 +1,4 @@
+using System.Diagnostics.CodeAnalysis;
 using Godot;
 using MegaCrit.Sts2.Core.Entities.Creatures;
 using MegaCrit.Sts2.Core.HoverTips;
@@ -83,6 +84,43 @@ namespace STS2RitsuLib.Cards.DynamicVars
         }
 
         /// <summary>
+        ///     Tries to read a typed dynamic variable.
+        ///     尝试读取指定类型的动态变量。
+        /// </summary>
+        public static bool TryGet<TVar>(
+            this DynamicVarSet dynamicVars,
+            string key,
+            [MaybeNullWhen(false)] out TVar value)
+            where TVar : DynamicVar
+        {
+            ArgumentNullException.ThrowIfNull(dynamicVars);
+            ArgumentException.ThrowIfNullOrWhiteSpace(key);
+
+            if (dynamicVars.TryGetValue(key, out var dynamicVar) && dynamicVar is TVar typed)
+            {
+                value = typed;
+                return true;
+            }
+
+            value = null;
+            return false;
+        }
+
+        /// <summary>
+        ///     Reads a required typed dynamic variable.
+        ///     读取必需的指定类型动态变量。
+        /// </summary>
+        public static TVar GetRequired<TVar>(this DynamicVarSet dynamicVars, string key)
+            where TVar : DynamicVar
+        {
+            if (dynamicVars.TryGet<TVar>(key, out var value))
+                return value;
+
+            throw new KeyNotFoundException(
+                $"Dynamic var '{key}' was missing or was not a {typeof(TVar).Name}.");
+        }
+
+        /// <summary>
         ///     Reads an integer dynamic var, or <paramref name="defaultValue" /> when missing.
         ///     读取整数动态变量；缺失时返回 <paramref name="defaultValue" />。
         /// </summary>
@@ -115,6 +153,68 @@ namespace STS2RitsuLib.Cards.DynamicVars
         }
 
         /// <summary>
+        ///     Tries to calculate any RitsuLib computed dynamic variable through its common interface.
+        ///     尝试通过统一接口计算任意 RitsuLib 计算型动态变量。
+        /// </summary>
+        public static bool TryComputeValue(
+            this DynamicVarSet dynamicVars,
+            string key,
+            out decimal value,
+            Creature? target = null)
+        {
+            ArgumentNullException.ThrowIfNull(dynamicVars);
+            ArgumentException.ThrowIfNullOrWhiteSpace(key);
+
+            if (dynamicVars.TryGetValue(key, out var dynamicVar) &&
+                dynamicVar is IComputedDynamicVar computed)
+            {
+                value = computed.Calculate(target);
+                return true;
+            }
+
+            value = 0m;
+            return false;
+        }
+
+        /// <summary>
+        ///     Calculates a required RitsuLib computed dynamic variable.
+        ///     计算必需的 RitsuLib 计算型动态变量。
+        /// </summary>
+        public static decimal GetComputedValue(
+            this DynamicVarSet dynamicVars,
+            string key,
+            Creature? target = null)
+        {
+            if (dynamicVars.TryComputeValue(key, out var value, target))
+                return value;
+
+            throw new KeyNotFoundException(
+                $"Dynamic var '{key}' was missing or did not implement {nameof(IComputedDynamicVar)}.");
+        }
+
+        /// <summary>
+        ///     Calculates a computed variable or reads a regular variable's base value. Missing variables return
+        ///     <paramref name="defaultValue" />.
+        ///     计算计算型变量，或读取普通变量的基础值。变量不存在时返回 <paramref name="defaultValue" />。
+        /// </summary>
+        public static decimal EvaluateValueOrDefault(
+            this DynamicVarSet dynamicVars,
+            string key,
+            decimal defaultValue = 0m,
+            Creature? target = null)
+        {
+            ArgumentNullException.ThrowIfNull(dynamicVars);
+            ArgumentException.ThrowIfNullOrWhiteSpace(key);
+
+            if (!dynamicVars.TryGetValue(key, out var dynamicVar))
+                return defaultValue;
+
+            return dynamicVar is IComputedDynamicVar computed
+                ? computed.Calculate(target)
+                : dynamicVar.BaseValue;
+        }
+
+        /// <summary>
         ///     Computes the current value of a <see cref="ComputedDynamicVar" />.
         ///     Returns <paramref name="defaultValue" /> when <paramref name="key" /> is missing or the variable is not
         ///     a <see cref="ComputedDynamicVar" />. Optionally accepts <paramref name="target" /> for target-aware
@@ -123,12 +223,14 @@ namespace STS2RitsuLib.Cards.DynamicVars
         ///     <paramref name="key" /> 不存在或变量类型不匹配时返回 <paramref name="defaultValue" />。可提供
         ///     <paramref name="target" /> 用于目标感知计算。
         /// </summary>
-        public static decimal ComputeDynamicValue(this DynamicVarSet dynamicVars, string key, decimal defaultValue = 0m, Creature? target = null)
+        public static decimal ComputeDynamicValue(this DynamicVarSet dynamicVars, string key, decimal defaultValue = 0m,
+            Creature? target = null)
         {
             ArgumentNullException.ThrowIfNull(dynamicVars);
             ArgumentException.ThrowIfNullOrWhiteSpace(key);
-            return dynamicVars.TryGetValue(key, out var value) && value is ComputedDynamicVar cv
-                ? cv.Calculate(target) : defaultValue;
+            return dynamicVars.TryGet<ComputedDynamicVar>(key, out var value)
+                ? value.Calculate(target)
+                : defaultValue;
         }
 
         /// <summary>
@@ -140,12 +242,14 @@ namespace STS2RitsuLib.Cards.DynamicVars
         ///     <paramref name="key" /> 不存在或变量类型不匹配时返回 <paramref name="defaultValue" />。可提供
         ///     <paramref name="target" /> 用于目标感知计算。
         /// </summary>
-        public static decimal ComputeEnergyValue(this DynamicVarSet dynamicVars, string key, decimal defaultValue = 0m, Creature? target = null)
+        public static decimal ComputeEnergyValue(this DynamicVarSet dynamicVars, string key, decimal defaultValue = 0m,
+            Creature? target = null)
         {
             ArgumentNullException.ThrowIfNull(dynamicVars);
             ArgumentException.ThrowIfNullOrWhiteSpace(key);
-            return dynamicVars.TryGetValue(key, out var value) && value is ComputedEnergyVar cv
-                ? cv.Calculate(target) : defaultValue;
+            return dynamicVars.TryGet<ComputedEnergyVar>(key, out var value)
+                ? value.Calculate(target)
+                : defaultValue;
         }
 
         /// <summary>
@@ -157,12 +261,14 @@ namespace STS2RitsuLib.Cards.DynamicVars
         ///     <paramref name="key" /> 不存在或变量类型不匹配时返回 <paramref name="defaultValue" />。可提供
         ///     <paramref name="target" /> 用于目标感知计算。
         /// </summary>
-        public static decimal ComputePowerValue<T>(this DynamicVarSet dynamicVars, string key, decimal defaultValue = 0m, Creature? target = null) where T : PowerModel
+        public static decimal ComputePowerValue<T>(this DynamicVarSet dynamicVars, string key,
+            decimal defaultValue = 0m, Creature? target = null) where T : PowerModel
         {
             ArgumentNullException.ThrowIfNull(dynamicVars);
             ArgumentException.ThrowIfNullOrWhiteSpace(key);
-            return dynamicVars.TryGetValue(key, out var value) && value is ComputedPowerVar<T> cv
-                ? cv.Calculate(target) : defaultValue;
+            return dynamicVars.TryGet<ComputedPowerVar<T>>(key, out var value)
+                ? value.Calculate(target)
+                : defaultValue;
         }
 
         /// <summary>
@@ -174,12 +280,14 @@ namespace STS2RitsuLib.Cards.DynamicVars
         ///     <paramref name="key" /> 不存在或变量类型不匹配时返回 <paramref name="defaultValue" />。可提供
         ///     <paramref name="target" /> 用于目标感知计算。
         /// </summary>
-        public static decimal ComputeStarsValue(this DynamicVarSet dynamicVars, string key, decimal defaultValue = 0m, Creature? target = null)
+        public static decimal ComputeStarsValue(this DynamicVarSet dynamicVars, string key, decimal defaultValue = 0m,
+            Creature? target = null)
         {
             ArgumentNullException.ThrowIfNull(dynamicVars);
             ArgumentException.ThrowIfNullOrWhiteSpace(key);
-            return dynamicVars.TryGetValue(key, out var value) && value is ComputedStarsVar cv
-                ? cv.Calculate(target) : defaultValue;
+            return dynamicVars.TryGet<ComputedStarsVar>(key, out var value)
+                ? value.Calculate(target)
+                : defaultValue;
         }
     }
 }

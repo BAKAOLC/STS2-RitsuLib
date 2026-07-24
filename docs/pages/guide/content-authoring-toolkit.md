@@ -123,7 +123,10 @@ public sealed class MyStrike : ModCardTemplate(1, CardType.Attack, CardRarity.Co
 ```
 
 Use abstract base class attributes only with `Inherit = true`. The base class itself is not registered; each concrete
-derived type receives the inherited registration unless it declares an equivalent direct attribute.
+derived type receives the inherited registration unless a nearer type declares the same logical registration slot.
+A concrete `RegisterCard` therefore replaces the inherited card-pool registration even when it selects another pool.
+The same nearest-declaration rule applies to configurable slots such as starter counts, node attachments, timeline
+placement, and unlock thresholds. Distinct targets remain additive.
 
 ```csharp
 [RegisterCard(typeof(MyCardPool), Inherit = true)]
@@ -136,6 +139,18 @@ public sealed class MyBlock : MySkillCardBase
 {
 }
 ```
+
+To move one derived card to another pool, declare the replacement directly:
+
+```csharp
+[RegisterCard(typeof(MyOtherCardPool))]
+public sealed class MyOtherBlock : MySkillCardBase
+{
+}
+```
+
+`MyOtherBlock` is registered only in `MyOtherCardPool`, not in both pools. Declaring the same logical slot more than once
+on one class is an error.
 
 Do not put `StableEntryStem` or `FullPublicEntry` on an inherited base attribute unless every derived type is intended to
 share the same public entry. That is almost always wrong. Put stable entry overrides on the concrete class instead.
@@ -208,7 +223,9 @@ public sealed class MyStrike : ModCardTemplate(1, CardType.Attack, CardRarity.Co
 }
 ```
 
-抽象基类上的注册注解只有设置 `Inherit = true` 才会传给具体派生类。抽象基类本身不会被注册；每个具体派生类会获得继承来的注册，除非它声明了等价的直接注解。
+抽象基类上的注册注解只有设置 `Inherit = true` 才会传给具体派生类。抽象基类本身不会被注册；每个具体派生类会获得继承来的注册，除非更近的类型声明了同一逻辑注册槽位。
+因此，具体类上的 `RegisterCard` 会替换继承的卡池注册，即使它选择的是另一个卡池。starter 数量、节点挂载、时间线位置和解锁阈值等可配置槽位也遵循“最近声明优先”；
+不同目标的注册仍然可以累加。
 
 ```csharp
 [RegisterCard(typeof(MyCardPool), Inherit = true)]
@@ -221,6 +238,17 @@ public sealed class MyBlock : MySkillCardBase
 {
 }
 ```
+
+要把某个派生卡移动到另一个池，直接声明替换项：
+
+```csharp
+[RegisterCard(typeof(MyOtherCardPool))]
+public sealed class MyOtherBlock : MySkillCardBase
+{
+}
+```
+
+`MyOtherBlock` 只会注册到 `MyOtherCardPool`，不会同时进入两个池。同一个类重复声明同一逻辑槽位会报错。
 
 不要在继承型基类注解上设置 `StableEntryStem` 或 `FullPublicEntry`，除非你真的希望每个派生类型共享同一个公开 Entry。这几乎总是错误的。稳定 Entry 覆写应写在具体类上。
 

@@ -102,11 +102,9 @@ namespace STS2RitsuLib.Models
             lock (ResolverSync)
             {
                 var removed = RegisteredTitleResolvers.Remove(modelType);
-                if (removed)
-                {
-                    Interlocked.Increment(ref _titleResolverGeneration);
-                    TitleResolverCache.Clear();
-                }
+                if (!removed) return removed;
+                Interlocked.Increment(ref _titleResolverGeneration);
+                TitleResolverCache.Clear();
 
                 return removed;
             }
@@ -136,7 +134,7 @@ namespace STS2RitsuLib.Models
             ArgumentNullException.ThrowIfNull(model);
 
             var registeredResolver = GetRegisteredTitleResolver(model.GetType());
-            if (registeredResolver != null && registeredResolver(model) is { } registeredTitle)
+            if (registeredResolver?.Invoke(model) is { } registeredTitle)
             {
                 title = registeredTitle;
                 return true;

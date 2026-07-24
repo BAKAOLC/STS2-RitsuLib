@@ -52,9 +52,12 @@ Attributes also support `Order`, and pool-backed model attributes support `Stabl
 `RegisterCharacterStarterCard`, `RegisterCharacterStarterRelic`, and `RegisterCharacterStarterPotion` use `Order` for the
 final starter list order as well as operation ordering.
 
-When an attribute is placed on an abstract base class, it is inherited only if `Inherit = true` is set. Use that for broad
-registrations such as “all cards derived from this base go into this pool”; keep per-card stable entry overrides on the
-concrete classes.
+When an attribute is placed on an abstract base class, it is inherited only if `Inherit = true` is set. Inheritance is
+resolved by logical registration slot, with the nearest declaration winning. For example, a direct `RegisterCard` on a
+concrete card replaces an inherited `RegisterCard` even when it names a different pool; the card is not added to both
+pools. Configuration-only changes likewise replace inherited starter counts, node-attachment paths, timeline placement,
+and unlock thresholds. Registrations with distinct target ids or scopes remain additive, such as `RequireEpoch` entries
+for different epochs. Declaring the same logical slot more than once on one class is an error.
 
 :::
 
@@ -80,7 +83,9 @@ concrete classes.
 注解也支持 `Order`；带池的模型注解支持 `StableEntryStem` / `FullPublicEntry`。
 `RegisterCharacterStarterCard`、`RegisterCharacterStarterRelic`、`RegisterCharacterStarterPotion` 的 `Order` 既用于操作排序，也用于最终 starter 列表排序。
 
-注解放在抽象基类上时，只有设置 `Inherit = true` 才会传给派生类。它适合“所有继承这个基类的卡都进同一个池”这类宽泛注册；每张卡自己的稳定 Entry 覆写应保留在具体类上。
+注解放在抽象基类上时，只有设置 `Inherit = true` 才会传给派生类。继承按逻辑注册槽位解析，每个槽位采用最近的声明。例如，具体卡牌直接声明的
+`RegisterCard` 会替换继承的 `RegisterCard`，即使二者指定不同卡池，也不会把卡同时加入两个池。只修改 starter 数量、节点挂载场景路径、时间线位置或解锁阈值时，
+同样会替换继承配置。不同目标 ID 或作用域的注册仍会累加，例如针对不同纪元的多个 `RequireEpoch`。同一个类重复声明同一逻辑槽位会报错。
 
 :::
 
