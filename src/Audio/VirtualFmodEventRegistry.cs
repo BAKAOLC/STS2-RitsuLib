@@ -219,7 +219,7 @@ namespace STS2RitsuLib.Audio
             IAudioHandle[] handles;
             lock (Gate)
             {
-                handles = Loops.Values.SelectMany(static q => q).ToArray();
+                handles = [.. Loops.Values.SelectMany(static q => q)];
                 Loops.Clear();
             }
 

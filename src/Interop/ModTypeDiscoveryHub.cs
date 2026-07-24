@@ -81,9 +81,9 @@ namespace STS2RitsuLib.Interop
             {
                 assemblySnapshot = RegisteredAssembliesByModId.ToDictionary(
                     static pair => pair.Key,
-                    static IReadOnlyList<Assembly> (pair) => pair.Value.ToArray(),
+                    static IReadOnlyList<Assembly> (pair) => [.. pair.Value],
                     StringComparer.Ordinal);
-                contributorSnapshot = Contributors.ToArray();
+                contributorSnapshot = [.. Contributors];
             }
 
             RitsuLibFramework.Logger.Info("[ModTypeDiscoveryHub] Diagnostics:");
@@ -119,8 +119,8 @@ namespace STS2RitsuLib.Interop
             {
                 registeredAssemblies = new(StringComparer.Ordinal);
                 foreach (var pair in RegisteredAssembliesByModId)
-                    registeredAssemblies.Add(pair.Key, pair.Value.ToArray());
-                snapshot = Contributors.ToArray();
+                    registeredAssemblies.Add(pair.Key, [.. pair.Value]);
+                snapshot = [.. Contributors];
             }
 
             AlignRegisteredAssembliesWithGame(registeredAssemblies);
@@ -179,7 +179,7 @@ namespace STS2RitsuLib.Interop
             if (legacyFallback != null)
                 Add(legacyFallback);
 
-            return result.ToArray();
+            return [.. result];
 
             void AddRange(IEnumerable<Assembly> assemblies)
             {
@@ -199,11 +199,13 @@ namespace STS2RitsuLib.Interop
             AssemblyModIdMismatch[] mismatches;
             lock (Gate)
             {
-                mismatches = AssemblyModIdMismatches.Values
-                    .OrderBy(static mismatch => mismatch.CurrentEntryOwnerModId, StringComparer.Ordinal)
-                    .ThenBy(static mismatch => mismatch.RegisteredModId, StringComparer.Ordinal)
-                    .ThenBy(static mismatch => mismatch.AssemblyName, StringComparer.Ordinal)
-                    .ToArray();
+                mismatches =
+                [
+                    .. AssemblyModIdMismatches.Values
+                        .OrderBy(static mismatch => mismatch.CurrentEntryOwnerModId, StringComparer.Ordinal)
+                        .ThenBy(static mismatch => mismatch.RegisteredModId, StringComparer.Ordinal)
+                        .ThenBy(static mismatch => mismatch.AssemblyName, StringComparer.Ordinal),
+                ];
             }
 
             if (mismatches.Length == 0)

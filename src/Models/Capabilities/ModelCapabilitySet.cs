@@ -48,14 +48,16 @@ namespace STS2RitsuLib.Models.Capabilities
 
         internal IModelCapability[] GetAttachedSnapshot()
         {
-            return _attachedSnapshot ??= _capabilities.ToArray();
+            return _attachedSnapshot ??= [.. _capabilities];
         }
 
         internal IModelCapability[] GetOwnerHookCandidateSnapshot()
         {
-            return _ownerHookCandidateSnapshot ??= _capabilities
-                .Where(static capability => capability is IModelCapabilityHookListener and AbstractModel)
-                .ToArray();
+            return _ownerHookCandidateSnapshot ??=
+            [
+                .. _capabilities
+                    .Where(static capability => capability is IModelCapabilityHookListener and AbstractModel),
+            ];
         }
 
         /// <summary>
@@ -141,7 +143,7 @@ namespace STS2RitsuLib.Models.Capabilities
         {
             ArgumentNullException.ThrowIfNull(capabilities);
 
-            return capabilities.Select(capability => Apply(capability, options)).ToList();
+            return [.. capabilities.Select(capability => Apply(capability, options))];
         }
 
         /// <summary>
@@ -502,7 +504,7 @@ namespace STS2RitsuLib.Models.Capabilities
         /// </summary>
         public IReadOnlyList<TCapability> GetAll<TCapability>() where TCapability : class, IModelCapability
         {
-            return _capabilities.OfType<TCapability>().ToArray();
+            return [.. _capabilities.OfType<TCapability>()];
         }
 
         /// <summary>
@@ -513,9 +515,12 @@ namespace STS2RitsuLib.Models.Capabilities
         {
             ArgumentException.ThrowIfNullOrWhiteSpace(capabilityId);
 
-            return _capabilities
-                .Where(capability => string.Equals(capability.CapabilityId, capabilityId, StringComparison.Ordinal))
-                .ToArray();
+            return
+            [
+                .. _capabilities
+                    .Where(capability =>
+                        string.Equals(capability.CapabilityId, capabilityId, StringComparison.Ordinal)),
+            ];
         }
 
         /// <summary>

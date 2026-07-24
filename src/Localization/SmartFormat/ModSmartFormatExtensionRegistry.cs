@@ -252,12 +252,15 @@ namespace STS2RitsuLib.Localization.SmartFormat
         private static ModSmartFormatExtensionDefinition[] SortSnapshot(
             IEnumerable<ModSmartFormatExtensionDefinition> definitions)
         {
-            return definitions
-                .OrderBy(def => def.OwnerModId, StringComparer.OrdinalIgnoreCase)
-                .ThenBy(def => def.Order)
-                .ThenBy(def => def.ImplementationType.FullName ?? def.ImplementationType.Name, StringComparer.Ordinal)
-                .ThenBy(def => def.Sequence)
-                .ToArray();
+            return
+            [
+                .. definitions
+                    .OrderBy(def => def.OwnerModId, StringComparer.OrdinalIgnoreCase)
+                    .ThenBy(def => def.Order)
+                    .ThenBy(def => def.ImplementationType.FullName ?? def.ImplementationType.Name,
+                        StringComparer.Ordinal)
+                    .ThenBy(def => def.Sequence),
+            ];
         }
     }
 }

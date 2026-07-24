@@ -290,7 +290,7 @@ namespace STS2RitsuLib.Networking.MessageExtensions
 
             lock (map)
             {
-                registrations = map.ToArray();
+                registrations = [.. map];
             }
 
             return registrations.Count > 0;

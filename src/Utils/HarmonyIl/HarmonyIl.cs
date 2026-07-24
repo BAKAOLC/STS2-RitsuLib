@@ -677,6 +677,24 @@ namespace STS2RitsuLib.Utils.HarmonyIl
         }
 
         /// <summary>
+        ///     Tries to read the target method from a call/callvirt instruction.
+        ///     尝试从 call/callvirt 指令读取目标方法。
+        /// </summary>
+        public static bool TryGetCalledMethod(CodeInstruction instruction, out MethodInfo method)
+        {
+            ArgumentNullException.ThrowIfNull(instruction);
+
+            if (IsAnyCallInstruction(instruction) && instruction.operand is MethodInfo called)
+            {
+                method = called;
+                return true;
+            }
+
+            method = null!;
+            return false;
+        }
+
+        /// <summary>
         ///     Returns true when the instruction calls the supplied generic method definition.
         ///     当指令调用指定泛型方法定义时返回 true。
         /// </summary>
@@ -1043,7 +1061,7 @@ namespace STS2RitsuLib.Utils.HarmonyIl
         public static CodeInstruction[] CloneAll(IEnumerable<CodeInstruction> instructions)
         {
             ArgumentNullException.ThrowIfNull(instructions);
-            return instructions.Select(static instruction => instruction.Clone()).ToArray();
+            return [.. instructions.Select(static instruction => instruction.Clone())];
         }
 
         private static bool TryGetNumericIndex(object? operand, out int index)

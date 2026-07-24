@@ -290,6 +290,37 @@ namespace STS2RitsuLib.Models.Capabilities
     }
 
     /// <summary>
+    ///     Optional card interface for visually modifying its own type text. Returned strings use the same composition
+    ///     contract as BaseLib: entries containing <c>{Type}</c> wrap the selected base text, while entries without it
+    ///     replace the base text.
+    ///     可选卡牌接口：修改自身显示的类型文本。返回文本使用与 BaseLib 相同的组合契约：包含 <c>{Type}</c> 的条目
+    ///     包裹选定的基础文本，不包含它的条目替换基础文本。
+    /// </summary>
+    public interface ICustomTypeTextCard
+    {
+        /// <summary>
+        ///     Returns localized type text modifiers in application order.
+        ///     按应用顺序返回本地化类型文本修改器。
+        /// </summary>
+        IEnumerable<LocString> GetTypeModifiers();
+    }
+
+    /// <summary>
+    ///     Optional model or model-capability hook for visually modifying cards' type text. The method signature and
+    ///     composition contract match BaseLib's <c>ICardTypeTextModifier</c>.
+    ///     可选模型或模型能力 hook：修改卡牌显示的类型文本。方法签名与组合契约和 BaseLib 的
+    ///     <c>ICardTypeTextModifier</c> 一致。
+    /// </summary>
+    public interface ICardTypeTextModifier
+    {
+        /// <summary>
+        ///     Returns localized type text modifiers for <paramref name="card" /> in application order.
+        ///     按应用顺序返回 <paramref name="card" /> 的本地化类型文本修改器。
+        /// </summary>
+        IEnumerable<LocString> GetTypeModifiers(CardModel card);
+    }
+
+    /// <summary>
     ///     Optional model capability that contributes hand glow predicates.
     ///     可选能力：贡献手牌发光判定。
     /// </summary>
@@ -513,7 +544,7 @@ namespace STS2RitsuLib.Models.Capabilities
                 IReadOnlyList<CardTitleFragment> fragments;
                 try
                 {
-                    fragments = (capability.GetTitleFragments(context) ?? []).ToArray();
+                    fragments = [.. capability.GetTitleFragments(context) ?? []];
                 }
                 catch (Exception ex)
                 {
@@ -761,7 +792,7 @@ namespace STS2RitsuLib.Models.Capabilities
                 IReadOnlyList<CardDescriptionFragment> fragments;
                 try
                 {
-                    fragments = (capability.GetDescriptionFragments(context) ?? []).ToArray();
+                    fragments = [.. capability.GetDescriptionFragments(context) ?? []];
                 }
                 catch (Exception ex)
                 {
@@ -997,7 +1028,7 @@ namespace STS2RitsuLib.Models.Capabilities
         {
             IReadOnlyList<CardOverlayContribution> contributions = [];
             TryRun(source, context.Card, OverlaySurface,
-                () => contributions = (source.GetCardOverlays(context) ?? []).ToArray());
+                () => contributions = [.. source.GetCardOverlays(context) ?? []]);
 
             foreach (var contribution in contributions)
                 yield return new(source, contribution, sourceIndex);

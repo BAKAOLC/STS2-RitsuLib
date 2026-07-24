@@ -1696,11 +1696,13 @@ namespace STS2RitsuLib.Settings
             if (!TryGetEnumerable(map, key, out var raw))
                 return [];
 
-            return raw
-                .Select(static v => v?.ToString())
-                .Where(static s => !string.IsNullOrWhiteSpace(s))
-                .Select(static s => s!.Trim())
-                .ToArray();
+            return
+            [
+                .. raw
+                    .Select(static v => v?.ToString())
+                    .Where(static s => !string.IsNullOrWhiteSpace(s))
+                    .Select(static s => s!.Trim()),
+            ];
         }
 
         private static string TryResolveCurrentLang()

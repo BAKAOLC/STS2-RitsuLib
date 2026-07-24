@@ -51,39 +51,43 @@ namespace STS2RitsuLib.Content
             if (customGroups.Count == 0)
                 return source;
 
-            return customGroups
-                .Aggregate(
-                    source.Select(static set => set.ToHashSet()).ToList(),
-                    static (groups, customGroup) =>
-                    {
-                        var overlapping = groups.Where(g => g.Overlaps(customGroup)).ToList();
-                        var merged = customGroup.ToHashSet();
-                        foreach (var group in overlapping)
+            return
+            [
+                .. customGroups
+                    .Aggregate(
+                        source.Select(static set => set.ToHashSet()).ToList(),
+                        static (groups, customGroup) =>
                         {
-                            groups.Remove(group);
-                            merged.UnionWith(group);
-                        }
+                            var overlapping = groups.Where(g => g.Overlaps(customGroup)).ToList();
+                            var merged = customGroup.ToHashSet();
+                            foreach (var group in overlapping)
+                            {
+                                groups.Remove(group);
+                                merged.UnionWith(group);
+                            }
 
-                        groups.Add(merged);
-                        return groups;
-                    })
-                .Select(static IReadOnlySet<ModifierModel> (set) => set)
-                .ToList();
+                            groups.Add(merged);
+                            return groups;
+                        })
+                    .Select(static IReadOnlySet<ModifierModel> (set) => set),
+            ];
         }
 
         private static ModifierModel[] ResolveSlice(
             IReadOnlyList<ModifierRegistration> registrations,
             bool negativeSortOrder)
         {
-            return registrations
-                .Where(r => negativeSortOrder
-                    ? r.ModifierListSortOrder < 0
-                    : r.ModifierListSortOrder >= 0)
-                .OrderBy(static r => r.ModifierListSortOrder)
-                .ThenBy(static r => r.ModifierType.FullName ?? r.ModifierType.Name, StringComparer.Ordinal)
-                .Select(static r => ModelDb.GetById<ModifierModel>(ModelDb.GetId(r.ModifierType)))
-                .DistinctBy(static model => model.Id)
-                .ToArray();
+            return
+            [
+                .. registrations
+                    .Where(r => negativeSortOrder
+                        ? r.ModifierListSortOrder < 0
+                        : r.ModifierListSortOrder >= 0)
+                    .OrderBy(static r => r.ModifierListSortOrder)
+                    .ThenBy(static r => r.ModifierType.FullName ?? r.ModifierType.Name, StringComparer.Ordinal)
+                    .Select(static r => ModelDb.GetById<ModifierModel>(ModelDb.GetId(r.ModifierType)))
+                    .DistinctBy(static model => model.Id),
+            ];
         }
 
         private static List<HashSet<ModifierModel>> BuildExclusiveGroups(IReadOnlyList<HashSet<Type>> registeredGroups)

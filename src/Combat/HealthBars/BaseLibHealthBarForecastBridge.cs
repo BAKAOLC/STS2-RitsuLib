@@ -172,9 +172,11 @@ namespace STS2RitsuLib.Combat.HealthBars
 
         private static IEnumerable<object> GetSegmentsForCreature(Creature creature)
         {
-            return HealthBarForecastRegistry.GetSegments(creature)
-                .Select(registered => (object)registered.Segment)
-                .ToArray();
+            return
+            [
+                .. HealthBarForecastRegistry.GetSegments(creature)
+                    .Select(registered => (object)registered.Segment),
+            ];
         }
 
         private static Type? ResolveBaseLibRegistryType()

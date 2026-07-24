@@ -234,16 +234,19 @@ namespace STS2RitsuLib.Lifecycle.Patches
             {
                 BuildId = ReleaseInfoManager.Instance.ReleaseInfo?.Version ?? "NON-RELEASE-VERSION",
                 PlatformType = run.PlatformType,
-                Players = run.Players.Select(player => new RunHistoryPlayer
-                {
-                    Id = player.NetId,
-                    Character = player.CharacterId ?? ModelId.none,
-                    Deck = player.Deck ?? [],
-                    Relics = player.Relics ?? [],
-                    Potions = player.Potions ?? [],
-                    Badges = GetBadgesForPlayer(run, player, victory, isAbandoned),
-                    MaxPotionSlotCount = player.MaxPotionSlotCount,
-                }).ToList(),
+                Players =
+                [
+                    .. run.Players.Select(player => new RunHistoryPlayer
+                    {
+                        Id = player.NetId,
+                        Character = player.CharacterId ?? ModelId.none,
+                        Deck = player.Deck ?? [],
+                        Relics = player.Relics ?? [],
+                        Potions = player.Potions ?? [],
+                        Badges = GetBadgesForPlayer(run, player, victory, isAbandoned),
+                        MaxPotionSlotCount = player.MaxPotionSlotCount,
+                    }),
+                ],
                 GameMode = run.GameMode,
                 Win = victory,
                 KilledByEncounter = killedByEncounter,
@@ -270,9 +273,11 @@ namespace STS2RitsuLib.Lifecycle.Patches
 
             try
             {
-                return ScoreUtility.GetBadges(run, player.NetId, won)
-                    .Select(static badge => badge.ToSerializable())
-                    .ToList();
+                return
+                [
+                    .. ScoreUtility.GetBadges(run, player.NetId, won)
+                        .Select(static badge => badge.ToSerializable()),
+                ];
             }
             catch (Exception ex)
             {

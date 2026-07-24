@@ -48,12 +48,14 @@ namespace STS2RitsuLib.Scaffolding.Content.Patches
 
         private static OrbModel[] BuildCandidates(IReadOnlyCollection<ModelId> vanillaIds)
         {
-            return vanillaIds
-                .Select(static id => ModelDb.GetByIdOrNull<OrbModel>(id))
-                .OfType<OrbModel>()
-                .Concat(ModelDb.Orbs.Where(orb => ShouldAddFromModelDbOrbs(vanillaIds, orb)))
-                .DistinctBy(static orb => orb.Id)
-                .ToArray();
+            return
+            [
+                .. vanillaIds
+                    .Select(static id => ModelDb.GetByIdOrNull<OrbModel>(id))
+                    .OfType<OrbModel>()
+                    .Concat(ModelDb.Orbs.Where(orb => ShouldAddFromModelDbOrbs(vanillaIds, orb)))
+                    .DistinctBy(static orb => orb.Id),
+            ];
         }
 
         private static bool ShouldAddFromModelDbOrbs(IReadOnlyCollection<ModelId> vanillaIds, OrbModel orb)

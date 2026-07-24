@@ -31,10 +31,12 @@ namespace STS2RitsuLib.Scaffolding.Characters.Patches
             var modPools = ModelDb.AllCharacterCardPools
                 .Where(static pool => pool is IModColorfulPhilosophersCardPool);
 
-            __result = __result
-                .Concat(modPools)
-                .DistinctBy(static pool => pool.Id)
-                .ToArray();
+            __result =
+            [
+                .. __result
+                    .Concat(modPools)
+                    .DistinctBy(static pool => pool.Id),
+            ];
         }
     }
 }

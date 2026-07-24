@@ -44,10 +44,11 @@ namespace STS2RitsuLib.Settings
                 "ui_shell_theme_id",
                 T("ritsulib.uiShellTheme.label", "Interface theme"),
                 ui.UiShellThemeId,
-                RitsuShellThemeCatalog.RegisteredThemeIds
-                    .Select(id => new ModSettingsChoiceOption<string>(id,
-                        T($"ritsulib.uiShellTheme.option.{id}", id)))
-                    .ToArray(),
+                [
+                    .. RitsuShellThemeCatalog.RegisteredThemeIds
+                        .Select(id => new ModSettingsChoiceOption<string>(id,
+                            T($"ritsulib.uiShellTheme.option.{id}", id))),
+                ],
                 T("ritsulib.uiShellTheme.description",
                     "Applies a built-in color theme to the Ritsu settings UI shell (sidebars, rows, and modals)."),
                 ModSettingsChoicePresentation.Dropdown);

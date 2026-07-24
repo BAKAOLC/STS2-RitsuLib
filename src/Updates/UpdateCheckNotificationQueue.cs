@@ -33,7 +33,7 @@ namespace STS2RitsuLib.Updates
                 if (PendingByKey.Count == 0)
                     return;
 
-                pending = PendingByKey.Values.ToArray();
+                pending = [.. PendingByKey.Values];
                 PendingByKey.Clear();
             }
 

@@ -183,7 +183,7 @@ namespace STS2RitsuLib.Interactions.RightClick
             IModRightClickHandler[] handlers;
             lock (Gate)
             {
-                handlers = [..Handlers];
+                handlers = [.. Handlers];
             }
 
             return handlers.Any(handler => handler.TryHandle(context));
@@ -282,13 +282,13 @@ namespace STS2RitsuLib.Interactions.RightClick
 
             SerializeBindingIds(writer, payload.BindingIds);
             writer.ZeroByteRemainder();
-            return writer.Buffer.AsSpan(InitialOffset, writer.BytePosition).ToArray();
+            return [.. writer.Buffer.AsSpan(InitialOffset, writer.BytePosition)];
         }
 
         private static ModRightClickSyncPayload DeserializePayload(ReadOnlySpan<byte> bytes)
         {
             var reader = new PacketReader();
-            reader.Reset(bytes.ToArray());
+            reader.Reset([.. bytes]);
             var ownerNetId = reader.ReadULong();
             var kind = reader.ReadEnum<ModRightClickModelKind>();
             var modelId = reader.ReadFullModelId();
@@ -664,14 +664,16 @@ namespace STS2RitsuLib.Interactions.RightClick
         private static IReadOnlyList<IModelRightClickCapability> SortRightClickCapabilities(
             IReadOnlyList<IModelCapability> capabilities)
         {
-            return capabilities
-                .Select((capability, index) => new OrderedRightClickCapability(capability, index))
-                .Where(static entry => entry.Capability is IModelRightClickCapability)
-                .OrderByDescending(static entry =>
-                    ((IModelRightClickCapability)entry.Capability).RightClickPriority)
-                .ThenBy(static entry => entry.Index)
-                .Select(static entry => (IModelRightClickCapability)entry.Capability)
-                .ToArray();
+            return
+            [
+                .. capabilities
+                    .Select((capability, index) => new OrderedRightClickCapability(capability, index))
+                    .Where(static entry => entry.Capability is IModelRightClickCapability)
+                    .OrderByDescending(static entry =>
+                        ((IModelRightClickCapability)entry.Capability).RightClickPriority)
+                    .ThenBy(static entry => entry.Index)
+                    .Select(static entry => (IModelRightClickCapability)entry.Capability),
+            ];
         }
 
         private static RegisteredRightClickBinding? TryGetBinding(ModRightClickBindingId bindingId)
@@ -751,11 +753,13 @@ namespace STS2RitsuLib.Interactions.RightClick
 
                 AddCapabilityBindings(context, candidates);
 
-                return candidates
-                    .OrderByDescending(static candidate => candidate.Priority)
-                    .ThenBy(static candidate => candidate.Sequence)
-                    .Select(static candidate => candidate.Id)
-                    .ToList();
+                return
+                [
+                    .. candidates
+                        .OrderByDescending(static candidate => candidate.Priority)
+                        .ThenBy(static candidate => candidate.Sequence)
+                        .Select(static candidate => candidate.Id),
+                ];
             }
 
             private static void AddCapabilityBindings(

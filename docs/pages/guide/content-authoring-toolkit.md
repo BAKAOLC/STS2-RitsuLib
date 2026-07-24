@@ -346,6 +346,69 @@ base game class already reads `LocString` from its table.
 
 :::
 
+## Card Type Text{lang="en"}
+
+::: en
+
+The API mirrors BaseLib's type-text contracts and composition behavior. Implement `ICustomTypeTextCard` on a card when
+it modifies its own type plaque:
+
+```csharp
+IEnumerable<LocString> ICustomTypeTextCard.GetTypeModifiers()
+{
+    return
+    [
+        new LocString("my_mod_ui", "card_type.cursed"),
+    ];
+}
+```
+
+Implement `ICardTypeTextModifier.GetTypeModifiers(CardModel)` on a card capability, relic, power, or other model-owned
+effect. RitsuLib discovers model and capability implementations through the normal run/combat hook-listener order.
+Only genuinely process-wide effects should use `RitsuLibFramework.RegisterCardTypeTextModifier(...)`.
+
+Composition is intentionally identical to BaseLib:
+
+- A localized string containing `{Type}` wraps the selected base text.
+- A localized string without `{Type}` replaces the base text; the last replacement wins.
+- All replacements are selected before wrappers are applied. Wrappers retain their original source order.
+
+For example, `"Cursed {Type}"` turns `Attack` into `Cursed Attack`. When BaseLib is installed, its modifiers compose
+first, RitsuLib modifiers compose second, and the resulting `LocString` is formatted only once.
+
+:::
+
+## 卡牌类型文本{lang="zh-CN"}
+
+::: zh-CN
+
+该 API 镜像 BaseLib 的类型文本契约与组合行为。卡牌修改自身类型牌匾时，实现 `ICustomTypeTextCard`：
+
+```csharp
+IEnumerable<LocString> ICustomTypeTextCard.GetTypeModifiers()
+{
+    return
+    [
+        new LocString("my_mod_ui", "card_type.cursed"),
+    ];
+}
+```
+
+卡牌 capability、遗物、能力或其他模型所属效果实现
+`ICardTypeTextModifier.GetTypeModifiers(CardModel)`。RitsuLib 会按常规跑局/战斗 hook listener 顺序发现模型和
+capability 实现。只有真正的进程级效果才使用 `RitsuLibFramework.RegisterCardTypeTextModifier(...)`。
+
+组合行为有意保持与 BaseLib 完全一致：
+
+- 本地化文本包含 `{Type}` 时，包裹选定的基础文本。
+- 不包含 `{Type}` 时替换基础文本；最后一个 replacement 胜出。
+- 先选出全部 replacement，再应用 wrapper；wrapper 保持原始来源顺序。
+
+例如本地化值 `"诅咒{Type}"` 会把 `攻击` 变成 `诅咒攻击`。安装 BaseLib 时，先组合 BaseLib 修改器，再组合
+RitsuLib 修改器，最终得到的 `LocString` 只格式化一次。
+
+:::
+
 ## Entry Ids{lang="en"}
 
 ::: en

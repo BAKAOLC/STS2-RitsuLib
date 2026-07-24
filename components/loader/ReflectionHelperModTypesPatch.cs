@@ -12,7 +12,7 @@ namespace STS2RitsuLib.Loader
             if (variantTypes.Length == 0)
                 return;
 
-            __result = __result.Concat(variantTypes).Distinct().ToArray();
+            __result = [.. __result.Concat(variantTypes).Distinct()];
         }
     }
 }

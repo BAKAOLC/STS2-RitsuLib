@@ -42,7 +42,7 @@ namespace STS2RitsuLib.Utils.HarmonyIl
         public static IReadOnlyList<HarmonyAsyncAwaitSite> FindAwaitSites(IEnumerable<CodeInstruction> instructions)
         {
             ArgumentNullException.ThrowIfNull(instructions);
-            var code = instructions as IReadOnlyList<CodeInstruction> ?? instructions.ToList();
+            var code = instructions as IReadOnlyList<CodeInstruction> ?? [.. instructions];
             return FindAwaitSites(code);
         }
 
@@ -136,7 +136,7 @@ namespace STS2RitsuLib.Utils.HarmonyIl
             EnsureCompatibleAwaitedCallReplacement(fromMethod, toMethod);
 
             var before = code.Count;
-            if (alreadySatisfied?.Invoke(code.ToArray()) == true)
+            if (alreadySatisfied?.Invoke([.. code]) == true)
                 return new(operation, 0, 0, before, before, true);
 
             var matchedIndexes = new List<int>();
@@ -159,7 +159,7 @@ namespace STS2RitsuLib.Utils.HarmonyIl
                 appliedIndexes.Count,
                 before,
                 code.Count,
-                appliedIndexes.Count == 0 && alreadySatisfied?.Invoke(code.ToArray()) == true,
+                appliedIndexes.Count == 0 && alreadySatisfied?.Invoke([.. code]) == true,
                 matchedIndexes,
                 appliedIndexes);
         }
@@ -201,7 +201,7 @@ namespace STS2RitsuLib.Utils.HarmonyIl
             ArgumentNullException.ThrowIfNull(buildReplacement);
 
             var before = code.Count;
-            if (alreadySatisfied?.Invoke(code.ToArray()) == true)
+            if (alreadySatisfied?.Invoke([.. code]) == true)
                 return new(operation, 0, 0, before, before, true);
 
             var sites = FindAwaitSites(code)
@@ -230,7 +230,7 @@ namespace STS2RitsuLib.Utils.HarmonyIl
                 appliedIndexes.Count,
                 before,
                 code.Count,
-                appliedIndexes.Count == 0 && alreadySatisfied?.Invoke(code.ToArray()) == true,
+                appliedIndexes.Count == 0 && alreadySatisfied?.Invoke([.. code]) == true,
                 matchedIndexes,
                 appliedIndexes);
         }
@@ -616,7 +616,7 @@ namespace STS2RitsuLib.Utils.HarmonyIl
             ArgumentException.ThrowIfNullOrWhiteSpace(description);
             ArgumentNullException.ThrowIfNull(items);
             Description = description;
-            Items = items.ToList();
+            Items = [.. items];
         }
 
         /// <summary>

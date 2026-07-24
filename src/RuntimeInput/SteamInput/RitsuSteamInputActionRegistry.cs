@@ -54,10 +54,12 @@ namespace STS2RitsuLib.RuntimeInput
         {
             lock (SyncRoot)
             {
-                return Registrations.Values
-                    .Select(static registration => registration.ToDescriptor())
-                    .OrderBy(static action => action.SteamActionId, StringComparer.Ordinal)
-                    .ToArray();
+                return
+                [
+                    .. Registrations.Values
+                        .Select(static registration => registration.ToDescriptor())
+                        .OrderBy(static action => action.SteamActionId, StringComparer.Ordinal),
+                ];
             }
         }
 

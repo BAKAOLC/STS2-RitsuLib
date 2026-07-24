@@ -83,11 +83,13 @@ namespace STS2RitsuLib.Diagnostics
                 return [];
             }
 
-            return mods
-                .Select(TryBuildRiskMod)
-                .Where(risk => risk != null)
-                .Select(risk => risk!)
-                .ToArray();
+            return
+            [
+                .. mods
+                    .Select(TryBuildRiskMod)
+                    .Where(risk => risk != null)
+                    .Select(risk => risk!),
+            ];
         }
 
         private static RuntimeDetourRiskMod? TryBuildRiskMod(Sts2LoadedModAssemblyEntry mod)
@@ -172,9 +174,12 @@ namespace STS2RitsuLib.Diagnostics
                     conflicts.Add(new(group, hooks));
             }
 
-            return conflicts
-                .OrderBy(conflict => FormatMethod(conflict.HarmonyPatchGroup.OriginalMethod), StringComparer.Ordinal)
-                .ToArray();
+            return
+            [
+                .. conflicts
+                    .OrderBy(conflict => FormatMethod(conflict.HarmonyPatchGroup.OriginalMethod),
+                        StringComparer.Ordinal),
+            ];
         }
 
         private static IReadOnlyList<HarmonyPatchedMethodGroup> BuildHarmonyPatchIndex()
@@ -301,8 +306,8 @@ namespace STS2RitsuLib.Diagnostics
 
                 NModalContainer.Instance.Clear();
                 NModalContainer.Instance.Add(new RuntimeDetourCompatibilityPanel(
-                    riskMods.ToArray(),
-                    conflicts.ToArray(),
+                    [.. riskMods],
+                    [.. conflicts],
                     queryUnavailable));
             }
             catch (Exception ex)

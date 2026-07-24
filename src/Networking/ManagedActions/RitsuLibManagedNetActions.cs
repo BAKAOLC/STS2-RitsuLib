@@ -177,7 +177,7 @@ namespace STS2RitsuLib.Networking.ManagedActions
             writer.WriteULong(descriptorOpcode);
             writer.WriteEnum(actionType);
             writer.WriteInt(payload.Length);
-            writer.WriteBytes(payload.ToArray(), payload.Length);
+            writer.WriteBytes([.. payload], payload.Length);
         }
 
         internal static bool TryReadManagedActionBody(

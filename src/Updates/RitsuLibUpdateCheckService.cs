@@ -75,6 +75,7 @@ namespace STS2RitsuLib.Updates
             {
                 var options = BuildOptions();
                 var result = await ModUpdateChecker.CheckAsync(options).ConfigureAwait(false);
+                LogResult(result, deferToastToMainMenu);
                 var shouldDeferToast = deferToastToMainMenu &&
                                        result is
                                        {
@@ -84,7 +85,11 @@ namespace STS2RitsuLib.Updates
                 ShowToast(
                     shouldDeferToast,
                     "ritsulib-update",
-                    () => ShowResultToast(options, result, showCompletionToast));
+                    () => ShowResultToastOnce(
+                        options,
+                        result,
+                        showCompletionToast,
+                        deferToastToMainMenu));
             }
             catch (Exception ex)
             {
@@ -132,8 +137,6 @@ namespace STS2RitsuLib.Updates
 
                 case ModUpdateCheckStatus.InvalidData:
                 case ModUpdateCheckStatus.RequestFailed:
-                    RitsuLibFramework.Logger.Warn(
-                        $"[UpdateCheck] RitsuLib check skipped: {result.Message ?? result.Status.ToString()}");
                     if (showCompletionToast)
                         ShowUpdateCheckToast(
                             Format(
@@ -142,6 +145,49 @@ namespace STS2RitsuLib.Updates
                                 result.Message ?? result.Status.ToString()),
                             L("ritsulib.updateCheck.toast.title", "RitsuLib update check"),
                             RitsuToastLevel.Warning);
+                    break;
+            }
+        }
+
+        private static void ShowResultToastOnce(
+            ModUpdateCheckOptions options,
+            ModUpdateCheckResult result,
+            bool showCompletionToast,
+            bool automatic)
+        {
+            if (automatic &&
+                result.Status == ModUpdateCheckStatus.UpdateAvailable &&
+                !UpdateCheckSessionHistory.TryRecordNotifiedVersion(Const.ModId, result.LatestVersion))
+                return;
+
+            ShowResultToast(options, result, showCompletionToast);
+        }
+
+        private static void LogResult(ModUpdateCheckResult result, bool automatic)
+        {
+            switch (result.Status)
+            {
+                case ModUpdateCheckStatus.UpdateAvailable:
+                    if (automatic &&
+                        !UpdateCheckSessionHistory.TryRecordLoggedVersion(Const.ModId, result.LatestVersion))
+                        break;
+                    RitsuLibFramework.Logger.Info(
+                        $"[UpdateCheck] RitsuLib update available: " +
+                        $"{result.CurrentVersion} -> {result.LatestVersion ?? "<unknown>"}; " +
+                        $"release={result.ReleasePageUri?.ToString() ?? "<none>"}.");
+                    break;
+                case ModUpdateCheckStatus.UpToDate:
+                    RitsuLibFramework.Logger.Debug(
+                        $"[UpdateCheck] RitsuLib is up to date ({result.CurrentVersion}).");
+                    break;
+                case ModUpdateCheckStatus.Skipped:
+                    RitsuLibFramework.Logger.Debug(
+                        $"[UpdateCheck] RitsuLib check skipped: {result.Message ?? result.Status.ToString()}");
+                    break;
+                case ModUpdateCheckStatus.InvalidData:
+                case ModUpdateCheckStatus.RequestFailed:
+                    RitsuLibFramework.Logger.Warn(
+                        $"[UpdateCheck] RitsuLib check failed: {result.Message ?? result.Status.ToString()}");
                     break;
             }
         }

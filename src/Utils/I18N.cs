@@ -203,7 +203,7 @@ namespace STS2RitsuLib.Utils
         /// </summary>
         public IReadOnlyList<string> GetAllKeys(bool orderByKey = true)
         {
-            return EnumerateKeys(null, orderByKey).ToArray();
+            return [.. EnumerateKeys(null, orderByKey)];
         }
 
         /// <summary>
@@ -496,7 +496,9 @@ namespace STS2RitsuLib.Utils
 
             var prefix = resourceFolder + ".";
 
-            return (from name in names
+            return
+            [
+                .. from name in names
                 where name.StartsWith(prefix, StringComparison.Ordinal)
                 where name.EndsWith(".json", StringComparison.OrdinalIgnoreCase)
                 select name[prefix.Length..^5]
@@ -504,7 +506,8 @@ namespace STS2RitsuLib.Utils
                 let dot = core.IndexOf('.')
                 where dot < 0
                 where !string.IsNullOrWhiteSpace(core)
-                select core).ToList();
+                select core,
+            ];
         }
 
         private Dictionary<string, string>? TryLoadEmbedded(string resourceFolder, string language)

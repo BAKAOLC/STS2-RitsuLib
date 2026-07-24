@@ -20,7 +20,7 @@ namespace STS2RitsuLib.Timeline.Scaffolding
         public IReadOnlyList<RelicModel> Relics => ModEpochGatedContentRegistry.ResolveRelics(Id);
 
         /// <inheritdoc />
-        public override string UnlockText => CreateRelicUnlockText(Relics.ToList());
+        public override string UnlockText => CreateRelicUnlockText([.. Relics]);
 
         /// <summary>
         ///     Additional epoch types to append when this epoch unlocks.
@@ -31,7 +31,7 @@ namespace STS2RitsuLib.Timeline.Scaffolding
         /// <inheritdoc />
         public override EpochModel[] GetTimelineExpansion()
         {
-            return ExpansionEpochTypes.Select(type => Get(GetId(type))).ToArray();
+            return [.. ExpansionEpochTypes.Select(type => Get(GetId(type)))];
         }
 
         /// <inheritdoc />
@@ -42,7 +42,7 @@ namespace STS2RitsuLib.Timeline.Scaffolding
                     $"Pack-declared relic epoch '{Id}' has no relics in {nameof(ModEpochGatedContentRegistry)}. " +
                     "Register gated relics for this epoch via TimelineColumnPackEntry (e.g. .Epoch<TEpoch>(e => e.RelicsFromPool<...>())) with a non-empty pool.");
 
-            NTimelineScreen.Instance.QueueRelicUnlock(Relics.ToList());
+            NTimelineScreen.Instance.QueueRelicUnlock([.. Relics]);
 
             var expansion = GetTimelineExpansion();
             if (expansion.Length > 0)

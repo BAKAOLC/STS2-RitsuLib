@@ -183,7 +183,7 @@ namespace STS2RitsuLib.Networking.Sidecar
                 route,
                 locationTargeted,
                 location,
-                payload.ToArray());
+                [.. payload]);
             return true;
         }
 
@@ -322,7 +322,7 @@ namespace STS2RitsuLib.Networking.Sidecar
                 if (!HasReleasableLocationSidecar(location))
                     return true;
 
-                sidecar = [..WaitingForLocation];
+                sidecar = [.. WaitingForLocation];
                 WaitingForLocation.Clear();
             }
 
@@ -745,7 +745,7 @@ namespace STS2RitsuLib.Networking.Sidecar
             var writer = new PacketWriter { WarnOnGrow = false };
             writer.Write(location);
             writer.ZeroByteRemainder();
-            return writer.Buffer.AsSpan(InitialOffset, writer.BytePosition).ToArray();
+            return [.. writer.Buffer.AsSpan(InitialOffset, writer.BytePosition)];
         }
 
         private static bool TryReadLocation(ReadOnlySpan<byte> span, ref int offset, out RunLocation location)
@@ -757,7 +757,7 @@ namespace STS2RitsuLib.Networking.Sidecar
             try
             {
                 var reader = new PacketReader();
-                reader.Reset(locationBytes.ToArray());
+                reader.Reset([.. locationBytes]);
                 location = reader.Read<RunLocation>();
                 return true;
             }

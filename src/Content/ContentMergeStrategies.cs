@@ -69,9 +69,9 @@ namespace STS2RitsuLib.Content
         public IEnumerable<TModel> Merge(IEnumerable<TModel> source, TModel[] additional)
         {
             if (additional.Length == 0)
-                return source as TModel[] ?? source.ToArray();
+                return source as TModel[] ?? [.. source];
 
-            return source.Concat(additional).DistinctBy(static model => model.Id).ToArray();
+            return [.. source.Concat(additional).DistinctBy(static model => model.Id)];
         }
     }
 
@@ -82,10 +82,9 @@ namespace STS2RitsuLib.Content
 
         public IEnumerable<TModel> Merge(IEnumerable<TModel> source, TModel[] additional)
         {
-            if (additional.Length == 0)
-                return source;
-
-            return source.Concat(additional).DistinctBy(static model => model.Id).ToList();
+            return additional.Length == 0
+                ? source
+                : [.. source.Concat(additional).DistinctBy(static model => model.Id)];
         }
     }
 
@@ -99,7 +98,7 @@ namespace STS2RitsuLib.Content
             if (additional.Length == 0)
                 return source;
 
-            var result = source as List<TModel> ?? source.ToList();
+            var result = source as List<TModel> ?? [.. source];
             ContentMergeStrategies.AppendDistinctById(result, additional);
             return result;
         }

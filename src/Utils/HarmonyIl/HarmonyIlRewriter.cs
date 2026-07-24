@@ -67,7 +67,7 @@ namespace STS2RitsuLib.Utils.HarmonyIl
         private HarmonyIlRewriter(IEnumerable<CodeInstruction> instructions, HarmonyIlContext? context = null)
         {
             ArgumentNullException.ThrowIfNull(instructions);
-            _code = instructions.ToList();
+            _code = [.. instructions];
             Context = context;
         }
 
@@ -793,7 +793,7 @@ namespace STS2RitsuLib.Utils.HarmonyIl
             var ret = retMatches.RequireSingle();
             InsertAt(ret.Index, prefix, moveLabelsAndBlocksToInserted ? _code[ret.Index] : null);
             return new(operation, retMatches.Count, 1, before, _code.Count,
-                MatchedIndexes: retMatches.Items.Select(static match => match.Index).ToArray(),
+                MatchedIndexes: [.. retMatches.Items.Select(static match => match.Index)],
                 AppliedIndexes: [ret.Index]);
         }
 
@@ -933,7 +933,7 @@ namespace STS2RitsuLib.Utils.HarmonyIl
 
         private static int[] MatchIndexes(IReadOnlyList<HarmonyIlMatch> matches)
         {
-            return matches.Select(static match => match.Index).ToArray();
+            return [.. matches.Select(static match => match.Index)];
         }
 
         private void InsertAt(

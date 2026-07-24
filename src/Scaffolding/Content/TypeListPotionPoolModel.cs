@@ -40,9 +40,11 @@ namespace STS2RitsuLib.Scaffolding.Content
             var types = PotionTypes;
 #pragma warning restore CS0618
 
-            return types
-                .Select(type => ModelDb.GetById<PotionModel>(ModelDb.GetId(type)))
-                .ToArray();
+            return
+            [
+                .. types
+                    .Select(type => ModelDb.GetById<PotionModel>(ModelDb.GetId(type))),
+            ];
         }
     }
 }

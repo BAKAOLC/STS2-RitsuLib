@@ -436,10 +436,12 @@ namespace STS2RitsuLib.Networking.Sidecar
         private static void RebuildPeerSnapshotsLocked()
         {
             _peerIdsSnapshot = [.. PeerReachability.Keys];
-            _supportedPeerIdsSnapshot = PeerReachability
-                .Where(static pair => pair.Value == RitsuLibSidecarPeerReachability.Supported)
-                .Select(static pair => pair.Key)
-                .ToArray();
+            _supportedPeerIdsSnapshot =
+            [
+                .. PeerReachability
+                    .Where(static pair => pair.Value == RitsuLibSidecarPeerReachability.Supported)
+                    .Select(static pair => pair.Key),
+            ];
         }
 
         private static bool IsSemanticallySameService(INetGameService? a, INetGameService? b)

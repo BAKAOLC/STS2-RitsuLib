@@ -53,7 +53,7 @@ namespace STS2RitsuLib.Platform.Patches
                 unlockPatches.AddRange(IPatchMethod.CreatePatchInfos<SharedAncientUnlockFilterPatch>());
                 unlockPatches.AddRange(IPatchMethod.CreatePatchInfos<EliteEpochAfterCombatFallbackPatch>());
                 var unlocks = RitsuLibFramework.GetFrameworkPatcher(RitsuLibFramework.FrameworkPatcherArea.Unlocks);
-                unlocks.ApplyLateStaticPatches(unlockPatches.ToArray());
+                unlocks.ApplyLateStaticPatches([.. unlockPatches]);
                 RitsuLibFramework.Logger.Info(
                     "[ModelDbDefer] Applied deferred patches after ModelDb.Init.");
             }

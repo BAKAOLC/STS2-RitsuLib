@@ -40,9 +40,11 @@ namespace STS2RitsuLib.Scaffolding.Content
             var types = RelicTypes;
 #pragma warning restore CS0618
 
-            return types
-                .Select(type => ModelDb.GetById<RelicModel>(ModelDb.GetId(type)))
-                .ToArray();
+            return
+            [
+                .. types
+                    .Select(type => ModelDb.GetById<RelicModel>(ModelDb.GetId(type))),
+            ];
         }
     }
 }

@@ -51,7 +51,7 @@ namespace STS2RitsuLib.Keywords.Patches
             if (toRemove is null)
                 return;
 
-            __result = __result.Where(tip => !toRemove.Contains(tip)).ToArray();
+            __result = [.. __result.Where(tip => !toRemove.Contains(tip))];
         }
     }
 }

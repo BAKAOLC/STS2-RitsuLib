@@ -99,7 +99,7 @@ namespace STS2RitsuLib.Scaffolding.Godot
 
         protected RitsuGodotNodeFactory(IEnumerable<IRitsuGodotNodeSlot> namedNodes)
         {
-            NamedNodes = namedNodes.ToList();
+            NamedNodes = [.. namedNodes];
             FlexibleStructure = NamedNodes.Count == 0 || NamedNodes.All(static s => s.UniqueName);
             RitsuGodotNodeFactoryRegistry.RegisterFactory<T>(this);
         }

@@ -349,7 +349,7 @@ namespace STS2RitsuLib.Scaffolding.Content.Patches
             var factoryOnly =
                 (__instance as IModEncounterCombatSceneFactory)?.SuppliesEncounterCombatSceneFromFactory == true;
             if ((customSceneOk && !ResPathEquals(syntheticEncounterScene, customScene!)) || factoryOnly)
-                __result = __result.Where(p => !ResPathEquals(p, syntheticEncounterScene)).ToList();
+                __result = [.. __result.Where(p => !ResPathEquals(p, syntheticEncounterScene))];
 
             if (extras.Count == 0)
                 return;

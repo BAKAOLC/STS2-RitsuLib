@@ -289,7 +289,7 @@ namespace STS2RitsuLib.Settings
                 Title,
                 Description,
                 SortOrder,
-                _sections.ToArray(),
+                [.. _sections],
                 _pageVisibleWhen,
                 _pageEnabledWhen,
                 _menuCapabilities,

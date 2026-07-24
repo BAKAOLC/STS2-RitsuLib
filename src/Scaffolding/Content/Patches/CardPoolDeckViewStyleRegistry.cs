@@ -104,7 +104,7 @@ namespace STS2RitsuLib.Scaffolding.Content.Patches
         {
             lock (SyncRoot)
             {
-                return Providers.Values.ToArray();
+                return [.. Providers.Values];
             }
         }
     }

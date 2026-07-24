@@ -19,7 +19,7 @@ namespace STS2RitsuLib.Scaffolding.Cards.HandOutline
         public ModCardHandOutlineRules(params ModCardHandOutlineSwitchRule[] rules)
         {
             ArgumentNullException.ThrowIfNull(rules);
-            _rules = rules.ToArray();
+            _rules = [.. rules];
         }
 
         /// <summary>
@@ -135,7 +135,7 @@ namespace STS2RitsuLib.Scaffolding.Cards.HandOutline
         public ModCardHandOutlineRules(params ModCardHandOutlineSwitchRule<TCard>[] rules)
         {
             ArgumentNullException.ThrowIfNull(rules);
-            _rules = rules.ToArray();
+            _rules = [.. rules];
         }
 
         /// <summary>
@@ -201,7 +201,7 @@ namespace STS2RitsuLib.Scaffolding.Cards.HandOutline
 
         internal ModCardHandOutlineRules ToUntyped()
         {
-            return ModCardHandOutlineRules.Of((_rules ?? []).Select(static rule => rule.ToUntyped()).ToArray());
+            return ModCardHandOutlineRules.Of([.. (_rules ?? []).Select(static rule => rule.ToUntyped())]);
         }
     }
 }

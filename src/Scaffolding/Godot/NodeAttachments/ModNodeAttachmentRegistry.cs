@@ -167,11 +167,13 @@ namespace STS2RitsuLib.Scaffolding.Godot.NodeAttachments
         {
             lock (SyncRoot)
             {
-                return Definitions.Values
-                    .OrderBy(def => def.ParentType.FullName, StringComparer.Ordinal)
-                    .ThenBy(def => def.Order)
-                    .ThenBy(def => def.Id, StringComparer.Ordinal)
-                    .ToArray();
+                return
+                [
+                    .. Definitions.Values
+                        .OrderBy(def => def.ParentType.FullName, StringComparer.Ordinal)
+                        .ThenBy(def => def.Order)
+                        .ThenBy(def => def.Id, StringComparer.Ordinal),
+                ];
             }
         }
 
@@ -188,11 +190,13 @@ namespace STS2RitsuLib.Scaffolding.Godot.NodeAttachments
         {
             lock (SyncRoot)
             {
-                return Definitions.Values
-                    .Where(definition => definition.AppliesTo(parent))
-                    .OrderBy(definition => definition.Order)
-                    .ThenBy(definition => definition.Id, StringComparer.Ordinal)
-                    .ToArray();
+                return
+                [
+                    .. Definitions.Values
+                        .Where(definition => definition.AppliesTo(parent))
+                        .OrderBy(definition => definition.Order)
+                        .ThenBy(definition => definition.Id, StringComparer.Ordinal),
+                ];
             }
         }
 

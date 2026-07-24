@@ -103,7 +103,7 @@ namespace STS2RitsuLib.Loader
                 assemblies = [.. VariantAssemblies];
             }
 
-            return assemblies.SelectMany(GetLoadableTypes).Distinct().ToArray();
+            return [.. assemblies.SelectMany(GetLoadableTypes).Distinct()];
         }
 
         private static void RegisterVariantAssembly(Assembly realAsm)
@@ -347,8 +347,11 @@ namespace STS2RitsuLib.Loader
 
             var libRootFull = Path.GetFullPath(libRoot);
 
-            return manifest.Variants.Select(entry => TryCreateVariantCandidate(loaderDir, libRootFull, entry))
-                .OfType<VariantCandidate>().ToList();
+            return
+            [
+                .. manifest.Variants.Select(entry => TryCreateVariantCandidate(loaderDir, libRootFull, entry))
+                    .OfType<VariantCandidate>(),
+            ];
         }
 
         private static VariantCandidate? TryCreateVariantCandidate(

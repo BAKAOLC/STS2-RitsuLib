@@ -81,17 +81,21 @@ namespace STS2RitsuLib.Relics
             Type[] types;
             lock (Sync)
             {
-                types = TranscendenceMappings
-                    .Select(static mapping => mapping.TargetType)
-                    .Distinct()
-                    .OrderBy(static t => t.FullName ?? t.Name, StringComparer.Ordinal)
-                    .ToArray();
+                types =
+                [
+                    .. TranscendenceMappings
+                        .Select(static mapping => mapping.TargetType)
+                        .Distinct()
+                        .OrderBy(static t => t.FullName ?? t.Name, StringComparer.Ordinal),
+                ];
             }
 
             var seen = new HashSet<ModelId>();
-            List<CardModel> list = [];
-            list.AddRange(types.Select(ancientType => ModelDb.GetByIdOrNull<CardModel>(ModelDb.GetId(ancientType)))
-                .OfType<CardModel>().Where(card => seen.Add(card.Id)));
+            List<CardModel> list =
+            [
+                .. types.Select(ancientType => ModelDb.GetByIdOrNull<CardModel>(ModelDb.GetId(ancientType)))
+                    .OfType<CardModel>().Where(card => seen.Add(card.Id)),
+            ];
 
             return list;
         }

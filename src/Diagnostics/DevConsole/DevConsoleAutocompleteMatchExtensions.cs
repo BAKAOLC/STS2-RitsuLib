@@ -39,9 +39,11 @@ namespace STS2RitsuLib.Diagnostics.DevConsole
                 .Select(DevConsoleAutocompleteDisplay.StripLocalizedSuffix)
                 .ToList();
 
-            result.Candidates = entryIds
-                .Select(DevConsoleAutocompleteDisplay.FormatCandidate)
-                .ToList();
+            result.Candidates =
+            [
+                .. entryIds
+                    .Select(DevConsoleAutocompleteDisplay.FormatCandidate),
+            ];
 
             result.CommonPrefix = DevConsoleAutocompleteDisplay.ComputeCommonPrefix(entryIds, result.CommandPrefix);
         }
@@ -118,9 +120,11 @@ namespace STS2RitsuLib.Diagnostics.DevConsole
                 .Select(DevConsoleAutocompleteDisplay.StripLocalizedSuffix)
                 .ToList();
 
-            result.Candidates = tokens
-                .Select(token => DevConsoleAutocompleteDisplay.FormatAncientChoiceCandidate(ancientEntryId, token))
-                .ToList();
+            result.Candidates =
+            [
+                .. tokens
+                    .Select(token => DevConsoleAutocompleteDisplay.FormatAncientChoiceCandidate(ancientEntryId, token)),
+            ];
 
             result.CommonPrefix = DevConsoleAutocompleteDisplay.ComputeCommonPrefix(tokens, result.CommandPrefix);
         }
@@ -137,9 +141,11 @@ namespace STS2RitsuLib.Diagnostics.DevConsole
                 .Select(DevConsoleAutocompleteDisplay.StripLocalizedSuffix)
                 .ToList();
 
-            result.Candidates = tokens
-                .Select(DevConsoleAutocompleteDisplay.FormatPileCandidate)
-                .ToList();
+            result.Candidates =
+            [
+                .. tokens
+                    .Select(DevConsoleAutocompleteDisplay.FormatPileCandidate),
+            ];
 
             result.CommonPrefix = DevConsoleAutocompleteDisplay.ComputeCommonPrefix(tokens, result.CommandPrefix);
         }
@@ -156,11 +162,13 @@ namespace STS2RitsuLib.Diagnostics.DevConsole
                 .Select(DevConsoleAutocompleteDisplay.StripLocalizedSuffix)
                 .ToList();
 
-            result.Candidates = resourceIds
-                .Select(resourceId => DevConsoleAutocompleteDisplay.FormatCandidate(
-                    resourceId,
-                    DevConsoleSecondaryResourceAutocompleteCatalog.TryGetLocalizedTitle(resourceId)))
-                .ToList();
+            result.Candidates =
+            [
+                .. resourceIds
+                    .Select(resourceId => DevConsoleAutocompleteDisplay.FormatCandidate(
+                        resourceId,
+                        DevConsoleSecondaryResourceAutocompleteCatalog.TryGetLocalizedTitle(resourceId))),
+            ];
 
             result.CommonPrefix = DevConsoleAutocompleteDisplay.ComputeCommonPrefix(resourceIds, result.CommandPrefix);
         }

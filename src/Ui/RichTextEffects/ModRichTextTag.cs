@@ -39,7 +39,7 @@ namespace STS2RitsuLib.Ui.RichTextEffects
         public static string Wrap(string bbcode, string text, IEnumerable<ModRichTextTagParameter> parameters)
         {
             ArgumentNullException.ThrowIfNull(parameters);
-            return Wrap(bbcode, text, parameters.ToArray());
+            return Wrap(bbcode, text, [.. parameters]);
         }
 
         internal static string NormalizeName(string value, string label)

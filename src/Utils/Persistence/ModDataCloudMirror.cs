@@ -398,7 +398,7 @@ namespace STS2RitsuLib.Utils.Persistence
                 set.Add(name);
             }
 
-            return set.OrderBy(s => s, StringComparer.Ordinal).ToList();
+            return [.. set.OrderBy(s => s, StringComparer.Ordinal)];
         }
 
         private static async Task ReconcileCoreAsync(CloudSaveStore cloud, SceneTree tree)

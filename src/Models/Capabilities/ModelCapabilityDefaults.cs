@@ -309,7 +309,7 @@ namespace STS2RitsuLib.Models.Capabilities
         /// </summary>
         public IReadOnlyList<TCapability> GetAll<TCapability>() where TCapability : class, IModelCapability
         {
-            return _capabilities.OfType<TCapability>().ToArray();
+            return [.. _capabilities.OfType<TCapability>()];
         }
 
         /// <summary>
@@ -349,7 +349,7 @@ namespace STS2RitsuLib.Models.Capabilities
 
         internal IModelCapability[] ToArray()
         {
-            return _capabilities.ToArray();
+            return [.. _capabilities];
         }
     }
 
@@ -456,11 +456,13 @@ namespace STS2RitsuLib.Models.Capabilities
                 if (cache.TryGetValue(ownerType, out modifiers))
                     return modifiers;
 
-                modifiers = Modifiers
-                    .Where(entry => entry.OwnerType.IsAssignableFrom(ownerType))
-                    .OrderBy(static entry => entry.Order)
-                    .ThenBy(static entry => entry.RegistrationOrder)
-                    .ToArray();
+                modifiers =
+                [
+                    .. Modifiers
+                        .Where(entry => entry.OwnerType.IsAssignableFrom(ownerType))
+                        .OrderBy(static entry => entry.Order)
+                        .ThenBy(static entry => entry.RegistrationOrder),
+                ];
                 var updatedCache = new Dictionary<Type, ModelDefaultCapabilityModifierEntry[]>(cache)
                 {
                     [ownerType] = modifiers,

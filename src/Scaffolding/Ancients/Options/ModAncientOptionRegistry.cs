@@ -154,10 +154,12 @@ namespace STS2RitsuLib.Scaffolding.Ancients.Options
                         collected.AddRange(list);
             }
 
-            return collected
-                .OrderByDescending(static rule => rule.Rule.Priority)
-                .ThenBy(static rule => rule.RegistrationOrder)
-                .ToArray();
+            return
+            [
+                .. collected
+                    .OrderByDescending(static rule => rule.Rule.Priority)
+                    .ThenBy(static rule => rule.RegistrationOrder),
+            ];
         }
 
         private readonly record struct RegisteredRule(

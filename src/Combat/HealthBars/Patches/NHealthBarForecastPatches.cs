@@ -415,10 +415,12 @@ namespace STS2RitsuLib.Combat.HealthBars.Patches
                     segment.LeftExclusiveZGroup,
                     segment.AffectsHpLabel));
 
-            return ritsuSegments
-                .Concat(baseLibSegments)
-                .Where(segment => segment.Amount > 0)
-                .ToArray();
+            return
+            [
+                .. ritsuSegments
+                    .Concat(baseLibSegments)
+                    .Where(segment => segment.Amount > 0),
+            ];
         }
 
         private static void HideBaseLibForecastContainers(NHealthBar healthBar)
@@ -664,15 +666,17 @@ namespace STS2RitsuLib.Combat.HealthBars.Patches
             if (hasOverlapLethal)
                 return overlapLethal;
 
-            List<LethalCandidate> candidates = [];
-            candidates.AddRange(from segment in leftSegments
+            List<LethalCandidate> candidates =
+            [
+                .. from segment in leftSegments
                 where segment is
                 {
                     Amount: > 0, Direction: HealthBarForecastGrowthDirection.FromLeft,
                     LeftOriginLayout: HealthBarForecastLeftOriginLayout.Chained,
                 }
                 select new LethalCandidate(segment.Amount, segment.AffectsHpLabel ? segment.Color : null, segment.Order,
-                    segment.SequenceOrder));
+                    segment.SequenceOrder),
+            ];
 
             var doomAmount = creature.GetPowerAmount<DoomPower>();
             if (doomAmount > 0)

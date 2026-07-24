@@ -173,7 +173,7 @@ namespace STS2RitsuLib.Combat.SecondaryResources
             ArgumentNullException.ThrowIfNull(effects);
             return new()
             {
-                Effects = effects.Where(static effect => effect != null).ToArray(),
+                Effects = [.. effects.Where(static effect => effect != null)],
             };
         }
     }
@@ -1323,7 +1323,7 @@ namespace STS2RitsuLib.Combat.SecondaryResources
             ArgumentNullException.ThrowIfNull(definitions);
 
             _boundPlayer = player;
-            _boundDefinitions = definitions.ToArray();
+            _boundDefinitions = [.. definitions];
             AutoRefresh = autoRefresh;
             Refresh(_boundPlayer, _boundDefinitions);
         }
@@ -1339,7 +1339,7 @@ namespace STS2RitsuLib.Combat.SecondaryResources
             if (!IsNodeReady())
             {
                 _pendingPlayer = player;
-                _pendingDefinitions = visibleDefinitions.ToArray();
+                _pendingDefinitions = [.. visibleDefinitions];
                 return;
             }
 

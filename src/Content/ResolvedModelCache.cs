@@ -54,7 +54,7 @@ namespace STS2RitsuLib.Content
                 if (_phase >= ContentRegistryPhase.Resolved)
                     return;
 
-                catalogs = _catalogs.Values.ToArray();
+                catalogs = [.. _catalogs.Values];
             }
 
             var globalCache = new Dictionary<ContentCatalogId, object>();
@@ -117,11 +117,13 @@ namespace STS2RitsuLib.Content
         internal static TModel[] ResolveUncached<TModel>(IEnumerable<Type> modelTypes)
             where TModel : AbstractModel
         {
-            return modelTypes
-                .OrderBy(static t => t.FullName ?? t.Name, StringComparer.Ordinal)
-                .Select(ModelDb.GetId)
-                .Select(ModelDb.GetById<TModel>)
-                .ToArray();
+            return
+            [
+                .. modelTypes
+                    .OrderBy(static t => t.FullName ?? t.Name, StringComparer.Ordinal)
+                    .Select(ModelDb.GetId)
+                    .Select(ModelDb.GetById<TModel>),
+            ];
         }
 
         internal static Dictionary<Type, object> ResolveScopedUncached<TModel>(

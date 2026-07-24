@@ -19,10 +19,12 @@ namespace STS2RitsuLib.Timeline.Scaffolding
         protected sealed override string Id => StringHelper.Slugify(StoryKey);
 
         /// <inheritdoc />
-        public sealed override EpochModel[] Epochs => ModStoryEpochBindings
-            .GetOrderedEpochTypes(GetType())
-            .Select(ResolveEpoch)
-            .ToArray();
+        public sealed override EpochModel[] Epochs =>
+        [
+            .. ModStoryEpochBindings
+                .GetOrderedEpochTypes(GetType())
+                .Select(ResolveEpoch),
+        ];
 
         /// <summary>
         ///     Human-readable story key slugified into the model id.

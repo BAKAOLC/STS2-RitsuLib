@@ -209,10 +209,12 @@ namespace STS2RitsuLib.Utils
         {
             lock (_sync)
             {
-                return _byId
-                    .OrderBy(static pair => pair.Key, StringComparer.Ordinal)
-                    .Select(static pair => (pair.Key, pair.Value))
-                    .ToArray();
+                return
+                [
+                    .. _byId
+                        .OrderBy(static pair => pair.Key, StringComparer.Ordinal)
+                        .Select(static pair => (pair.Key, pair.Value)),
+                ];
             }
         }
 

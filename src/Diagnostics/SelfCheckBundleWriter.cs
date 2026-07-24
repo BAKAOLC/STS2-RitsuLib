@@ -235,7 +235,7 @@ namespace STS2RitsuLib.Diagnostics
                 Check(modId, c.Id.Entry, "DeathSfx", o.CustomDeathSfx, () => c.DeathSfx, false);
             }
 
-            return new(issues, counters.Select(kvp => kvp.Value.ToSnapshot(kvp.Key)).ToArray());
+            return new(issues, [.. counters.Select(kvp => kvp.Value.ToSnapshot(kvp.Key))]);
 
             void Check(string modId, string charId, string name, string? overrideValue, Func<string> resolveValue,
                 bool requireResource)
@@ -385,7 +385,7 @@ namespace STS2RitsuLib.Diagnostics
                 ApplyStatus(counter, hasFail, hasWarn);
             }
 
-            return new(issues, counters.Select(kvp => kvp.Value.ToSnapshot(kvp.Key)).ToArray());
+            return new(issues, [.. counters.Select(kvp => kvp.Value.ToSnapshot(kvp.Key))]);
 
             MutableModCheckCounter GetCounter(string modId)
             {
@@ -524,7 +524,7 @@ namespace STS2RitsuLib.Diagnostics
                 };
             }
 
-            return summaries.Values.ToList();
+            return [.. summaries.Values];
 
             void Ensure(string modId)
             {

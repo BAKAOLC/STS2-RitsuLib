@@ -75,23 +75,8 @@ namespace STS2RitsuLib.CardPiles.Patches
 
         private static bool ContainsAll(IReadOnlyList<CardPile> haystack, IReadOnlyCollection<ModCardPile> needles)
         {
-            foreach (var needle in needles)
-            {
-                var found = false;
-                for (var i = 0; i < haystack.Count; i++)
-                {
-                    if (!ReferenceEquals(haystack[i], needle))
-                        continue;
-
-                    found = true;
-                    break;
-                }
-
-                if (!found)
-                    return false;
-            }
-
-            return true;
+            return needles.Select(needle => haystack.Any(cardPile => ReferenceEquals(cardPile, needle)))
+                .All(found => found);
         }
 
         private static bool ContainsAllDefinitions(
@@ -101,9 +86,9 @@ namespace STS2RitsuLib.CardPiles.Patches
             foreach (var definition in definitions)
             {
                 var found = false;
-                for (var i = 0; i < haystack.Count; i++)
+                foreach (var cardPile in haystack)
                 {
-                    if (haystack[i] is not ModCardPile pile || !ReferenceEquals(pile.Definition, definition))
+                    if (cardPile is not ModCardPile pile || !ReferenceEquals(pile.Definition, definition))
                         continue;
 
                     found = true;

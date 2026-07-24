@@ -158,6 +158,7 @@ namespace STS2RitsuLib
             patcher.RegisterPatch<DevConsoleHistoryNavigationShowConsolePatch>();
             patcher.RegisterPatch<NMainMenuContinueRunMissingCharacterPatch>();
             patcher.RegisterPatch<NMainMenuReadyLifecyclePatch>();
+            patcher.RegisterPatch<NGameStartupErrorUpdateCheckPatch>();
             patcher.RegisterPatch<NContinueRunInfoShowInfoModelNotFoundPatch>();
             patcher.RegisterPatch<NRunHistoryRefreshAndSelectRunSuppressRethrowPatch>();
             patcher.RegisterPatch<SentryDiagnosticsTelemetryPatch>();
@@ -404,6 +405,7 @@ namespace STS2RitsuLib
             patcher.RegisterPatch<OrbModelCapabilityPatches.AfterOrbEvokedHookPatch>();
             patcher.RegisterPatch<CardModelCapabilityPatches.UpdateDynamicVarPreviewPatch>();
             patcher.RegisterPatch<CardModelCapabilityPatches.TitlePatch>();
+            patcher.RegisterPatch<CardModelCapabilityPatches.TypeTextPatch>();
             patcher.RegisterPatch<CardModelCapabilityPatches.CardTypePatch>();
             patcher.RegisterPatch<CardModelCapabilityPatches.CardRarityPatch>();
             patcher.RegisterPatch<CardModelCapabilityPatches.TargetTypePatch>();

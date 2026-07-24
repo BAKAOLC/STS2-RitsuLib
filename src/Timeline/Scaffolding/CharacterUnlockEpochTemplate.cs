@@ -29,7 +29,7 @@ namespace STS2RitsuLib.Timeline.Scaffolding
         /// <inheritdoc />
         public override EpochModel[] GetTimelineExpansion()
         {
-            return ExpansionEpochTypes.Select(type => Get(GetId(type))).ToArray();
+            return [.. ExpansionEpochTypes.Select(type => Get(GetId(type)))];
         }
 
         /// <inheritdoc />

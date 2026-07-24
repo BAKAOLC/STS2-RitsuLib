@@ -132,10 +132,12 @@ namespace STS2RitsuLib
             {
                 _lifecycleObservers = AppendItem(_lifecycleObservers, observer);
                 lifecycleSnapshot = replayCurrentState
-                    ? ReplayableLifecycleEvents.Values
-                        .Cast<IFrameworkLifecycleEvent>()
-                        .OrderBy(evt => evt.OccurredAtUtc)
-                        .ToArray()
+                    ?
+                    [
+                        .. ReplayableLifecycleEvents.Values
+                            .Cast<IFrameworkLifecycleEvent>()
+                            .OrderBy(evt => evt.OccurredAtUtc),
+                    ]
                     : [];
             }
 
@@ -253,10 +255,12 @@ namespace STS2RitsuLib
                     });
 
                     lifecycleSnapshot = replayCurrentState
-                        ? ReplayableLifecycleEvents.Values
-                            .Cast<IFrameworkLifecycleEvent>()
-                            .OrderBy(evt => evt.OccurredAtUtc)
-                            .ToArray()
+                        ?
+                        [
+                            .. ReplayableLifecycleEvents.Values
+                                .Cast<IFrameworkLifecycleEvent>()
+                                .OrderBy(evt => evt.OccurredAtUtc),
+                        ]
                         : [];
                 }
 
@@ -335,6 +339,9 @@ namespace STS2RitsuLib
                 Logger.Info(BuildVersionLogText());
                 Logger.Info("Initializing shared framework...");
 
+#if STS2_AT_LEAST_0_107_0 && !STS2_AT_LEAST_0_108_0
+                RitsuLibStartupAudit.Measure("legacyInputMapCompat", LegacyInputMapCompat.EnsureRegistered);
+#endif
                 RitsuLibStartupAudit.Measure("harmonyPatchAllTypeLoadGuard",
                     () => HarmonyPatchAllTypeLoadGuard.Install(message => Logger.Warn(message)));
                 RitsuLibStartupAudit.Measure("harmonyInitSetterCompat", HarmonyInitSetterCompat.Install);
@@ -396,8 +403,8 @@ namespace STS2RitsuLib
                         RitsuToastService.Initialize();
                         RitsuCanvasTextureFilterService.Initialize();
                         RuntimeDetourCompatibilityScanner.Initialize();
-                        RitsuLibUpdateCheckService.Initialize();
                         SteamWorkshopUpdateCoordinator.Initialize();
+                        RitsuLibUpdateCheckService.Initialize();
                     });
                     SubscribeLifecycleOnce<MainMenuReadyEvent>(_ =>
                     {
@@ -870,6 +877,15 @@ namespace STS2RitsuLib
         public static void RegisterCardOnPlayHookListener(ICardOnPlayHookListener listener)
         {
             CardOnPlayHook.RegisterGlobalListener(listener);
+        }
+
+        /// <summary>
+        ///     Registers a process-wide BaseLib-compatible card type text modifier through the framework.
+        ///     通过框架注册进程级、与 BaseLib 兼容的卡牌类型文本修改器。
+        /// </summary>
+        public static void RegisterCardTypeTextModifier(ICardTypeTextModifier modifier)
+        {
+            CardTypeTextHook.RegisterGlobalModifier(modifier);
         }
 
         /// <summary>

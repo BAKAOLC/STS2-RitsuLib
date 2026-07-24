@@ -118,7 +118,7 @@ namespace STS2RitsuLib.Diagnostics.DevConsole
             HashSet<Type>? visitedModelTypes = null)
         {
             if (model is not ITemporaryPower temporaryPower)
-                return DefaultTitleForAutocomplete(model);
+                return ResolveOwnTitleForAutocomplete(model);
 
             visitedModelTypes ??= [];
             if (!visitedModelTypes.Add(model.GetType()))
@@ -130,6 +130,20 @@ namespace STS2RitsuLib.Diagnostics.DevConsole
                 return ReferenceEquals(origin, model)
                     ? DefaultTitleForAutocomplete(model)
                     : ResolveTitleForAutocomplete(origin, visitedModelTypes);
+            }
+            catch
+            {
+                return DefaultTitleForAutocomplete(model);
+            }
+        }
+
+        private static LocString ResolveOwnTitleForAutocomplete(AbstractModel model)
+        {
+            try
+            {
+                return model.TryResolveTitle(out var title)
+                    ? title
+                    : DefaultTitleForAutocomplete(model);
             }
             catch
             {

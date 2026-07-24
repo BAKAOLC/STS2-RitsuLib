@@ -31,7 +31,7 @@ namespace STS2RitsuLib.Diagnostics.DevConsole
                 return false;
             }
 
-            candidates = source().ToList();
+            candidates = [.. source()];
             return true;
         }
     }

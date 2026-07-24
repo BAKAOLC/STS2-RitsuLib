@@ -311,11 +311,13 @@ namespace STS2RitsuLib.Diagnostics.Logging
 
             try
             {
-                return Dns.GetHostAddresses(Dns.GetHostName())
-                    .Where(IsUsableLanAddress)
-                    .Select(address => BuildUrl(address.ToString()))
-                    .Distinct(StringComparer.OrdinalIgnoreCase)
-                    .ToArray();
+                return
+                [
+                    .. Dns.GetHostAddresses(Dns.GetHostName())
+                        .Where(IsUsableLanAddress)
+                        .Select(address => BuildUrl(address.ToString()))
+                        .Distinct(StringComparer.OrdinalIgnoreCase),
+                ];
             }
             catch (Exception ex) when (ex is SocketException or InvalidOperationException)
             {

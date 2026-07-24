@@ -20,7 +20,7 @@ namespace STS2RitsuLib.Models.Capabilities.Patches
             if (tips.Length == 0)
                 return;
 
-            result = result.Concat(tips).Distinct().ToArray();
+            result = [.. result.Concat(tips).Distinct()];
         }
 
         private static void AppendAssetPaths<TModel>(
@@ -36,7 +36,7 @@ namespace STS2RitsuLib.Models.Capabilities.Patches
             if (paths.Length == 0)
                 return;
 
-            result = result.Concat(paths).Distinct(StringComparer.Ordinal).ToArray();
+            result = [.. result.Concat(paths).Distinct(StringComparer.Ordinal)];
         }
 
         private static void AppendCardOverlayAssetPaths(CardModel model, ref IEnumerable<string> result)
@@ -48,7 +48,7 @@ namespace STS2RitsuLib.Models.Capabilities.Patches
             if (paths.Length == 0)
                 return;
 
-            result = result.Concat(paths).Distinct(StringComparer.Ordinal).ToArray();
+            result = [.. result.Concat(paths).Distinct(StringComparer.Ordinal)];
         }
 
         private static void AddDynamicVars<TModel>(TModel model, LocString? locString)

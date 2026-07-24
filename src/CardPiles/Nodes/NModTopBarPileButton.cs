@@ -9,6 +9,7 @@ namespace STS2RitsuLib.CardPiles.Nodes
     ///     placement 差异（尺寸、margin）由 top-bar 注入 patch 处理，而不是由此类处理。保留此类型是为了之后
     ///     可以添加 style-specific 行为而不破坏调用方。
     /// </summary>
+    // ReSharper disable once ConvertToStaticClass
     public sealed partial class NModTopBarPileButton
     {
         /// <summary>

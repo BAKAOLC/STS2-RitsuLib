@@ -24,31 +24,35 @@ namespace STS2RitsuLib.Networking
 
         internal static IReadOnlyList<CompactEntry> Compact(IReadOnlyList<ContentModInventoryEntry> entries)
         {
-            return entries.Select(entry => new CompactEntry(
+            return
+            [
+                .. entries.Select(entry => new CompactEntry(
                     entry.Id,
                     entry.Version,
                     entry.Name,
                     entry.Source,
                     entry.WorkshopItemId,
-                    BuildFlags(entry)))
-                .ToArray();
+                    BuildFlags(entry))),
+            ];
         }
 
         internal static IReadOnlyList<ContentModInventoryEntry> Expand(IReadOnlyList<CompactEntry> compact)
         {
-            return compact
-                .Select((entry, index) => new ContentModInventoryEntry(
-                    index,
-                    entry.Id,
-                    entry.Version,
-                    entry.Name,
-                    entry.Source,
-                    entry.WorkshopItemId,
-                    (entry.Flags & 1) != 0,
-                    (entry.Flags & 2) != 0,
-                    (entry.Flags & 4) != 0,
-                    (entry.Flags & 8) != 0))
-                .ToArray();
+            return
+            [
+                .. compact
+                    .Select((entry, index) => new ContentModInventoryEntry(
+                        index,
+                        entry.Id,
+                        entry.Version,
+                        entry.Name,
+                        entry.Source,
+                        entry.WorkshopItemId,
+                        (entry.Flags & 1) != 0,
+                        (entry.Flags & 2) != 0,
+                        (entry.Flags & 4) != 0,
+                        (entry.Flags & 8) != 0)),
+            ];
         }
 
         internal static bool TryDecode(string? encoded, out IReadOnlyList<ContentModInventoryEntry> entries)

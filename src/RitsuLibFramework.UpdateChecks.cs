@@ -105,9 +105,10 @@ namespace STS2RitsuLib
         }
 
         /// <summary>
-        ///     Registers a periodic non-blocking update check for a mod. Automatic checks start when the first main menu
-        ///     is ready, read a small JSON manifest, and show update toasts only while the main menu is active.
-        ///     为 Mod 注册周期性非阻塞更新检查。自动检查会在首次主菜单就绪后开始，读取一个小型 JSON manifest，
+        ///     Registers a periodic non-blocking update check for a mod. Automatic checks start before essential game
+        ///     initialization, continue while the startup error dialog is active, and show update toasts only while the
+        ///     main menu is active.
+        ///     为 Mod 注册周期性非阻塞更新检查。自动检查会在游戏必要初始化前开始，在启动报错菜单期间继续运行，
         ///     并且只在主菜单处于活动状态时显示更新 toast。
         /// </summary>
         /// <returns>

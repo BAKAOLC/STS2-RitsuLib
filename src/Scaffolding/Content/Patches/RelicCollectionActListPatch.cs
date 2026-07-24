@@ -63,13 +63,15 @@ namespace STS2RitsuLib.Scaffolding.Content.Patches
 
         private static List<ActModel> GetRuntimeActList()
         {
-            return ModelDb.Acts
-                .DistinctBy(static act => act.Id)
-                .Select(static (act, index) => new { Act = act, Index = index })
-                .OrderBy(static item => GetVanillaActOrder(item.Act))
-                .ThenBy(static item => item.Index)
-                .Select(static item => item.Act)
-                .ToList();
+            return
+            [
+                .. ModelDb.Acts
+                    .DistinctBy(static act => act.Id)
+                    .Select(static (act, index) => new { Act = act, Index = index })
+                    .OrderBy(static item => GetVanillaActOrder(item.Act))
+                    .ThenBy(static item => item.Index)
+                    .Select(static item => item.Act),
+            ];
         }
 
         private static int GetVanillaActOrder(ActModel act)

@@ -13,10 +13,11 @@ namespace STS2RitsuLib.Networking
             return new(
                 progress.SchemaVersion,
                 progress.NumberOfRuns,
-                progress.Epochs
-                    .OrderBy(epoch => epoch.Id, StringComparer.Ordinal)
-                    .Select(epoch => new ProgressEpochEntry(epoch.Id, epoch.State.ToString(), epoch.ObtainDate))
-                    .ToArray());
+                [
+                    .. progress.Epochs
+                        .OrderBy(epoch => epoch.Id, StringComparer.Ordinal)
+                        .Select(epoch => new ProgressEpochEntry(epoch.Id, epoch.State.ToString(), epoch.ObtainDate)),
+                ]);
         }
     }
 

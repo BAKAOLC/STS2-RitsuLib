@@ -17,12 +17,11 @@ namespace STS2RitsuLib.Diagnostics.Patches
     /// </summary>
     internal sealed class SentryGdExtensionShutdown1071WorkaroundPatch : IPatchMethod
     {
-        private static readonly Version AffectedHostMinVersion = new(0, 107, 1);
-
         private const string BaseLibSkipPatchTypeName =
             "BaseLib.Patches.Fixes.SkipSentryShutdownPatch";
 
         private const string BaseLibSkipMethodName = "SkipShutdown";
+        private static readonly Version AffectedHostMinVersion = new(0, 107, 1);
 
         private static readonly MethodInfo SkipMethod =
             AccessTools.DeclaredMethod(typeof(SentryGdExtensionShutdown1071WorkaroundPatch),
@@ -54,7 +53,7 @@ namespace STS2RitsuLib.Diagnostics.Patches
                 operation,
                 static method => IsGodotObjectCall(method) ? SkipMethod : null,
                 static code => code.Any(HarmonyIl.IsCall(IsEquivalentSkipCall)));
-            report.RequireExactSitesOrAlreadySatisfied(1);
+            report.RequireExactSitesOrAlreadySatisfied();
 
             return rewriter.InstructionsChecked(operation);
         }

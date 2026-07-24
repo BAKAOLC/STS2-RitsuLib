@@ -93,7 +93,7 @@ namespace STS2RitsuLib.CardPiles.Patches
             if (!GodotObject.IsInstanceValid(grid))
                 return;
 
-            grid.SetCards(screen.Pile.Cards.ToList(), screen.Pile.Type, [.. _sortingPriority]);
+            grid.SetCards([.. screen.Pile.Cards], screen.Pile.Type, [.. _sortingPriority]);
         }
 
         private void OnScreenTreeExiting()

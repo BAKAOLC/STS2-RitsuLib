@@ -47,7 +47,7 @@ namespace STS2RitsuLib.Scaffolding.Content.Patches
             if (ShouldSkipInjection(__result))
                 return;
 
-            var mutable = __result as List<EventOption> ?? __result.ToList();
+            var mutable = __result as List<EventOption> ?? [.. __result];
             var countBefore = mutable.Count;
             ModAncientOptionRegistry.AppendRegisteredOptions(__instance, mutable);
 
@@ -85,7 +85,7 @@ namespace STS2RitsuLib.Scaffolding.Content.Patches
                 return;
 
             var replacement = CreateRelicOption(ancient, preparedRelic);
-            var mutable = options as List<EventOption> ?? options.ToList();
+            var mutable = options as List<EventOption> ?? [.. options];
             mutable[0] = replacement;
             GeneratedOptions(ancient) = mutable;
             options = mutable;

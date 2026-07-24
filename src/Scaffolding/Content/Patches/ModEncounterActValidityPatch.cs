@@ -81,9 +81,11 @@ namespace STS2RitsuLib.Scaffolding.Content.Patches
 
         private static EncounterModel[] GetValidBossCandidates(ActModel act)
         {
-            return act.AllBossEncounters
-                .Where(encounter => ModEncounterActValidityFilter.IsValidForAct(act, encounter))
-                .ToArray();
+            return
+            [
+                .. act.AllBossEncounters
+                    .Where(encounter => ModEncounterActValidityFilter.IsValidForAct(act, encounter)),
+            ];
         }
     }
 }

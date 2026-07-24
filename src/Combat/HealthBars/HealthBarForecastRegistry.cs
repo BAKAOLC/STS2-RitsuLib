@@ -345,7 +345,7 @@ namespace STS2RitsuLib.Combat.HealthBars
             ProviderEntry[] snapshot;
             lock (SyncRoot)
             {
-                snapshot = Providers.Values.OrderBy(entry => entry.RegistrationOrder).ToArray();
+                snapshot = [.. Providers.Values.OrderBy(entry => entry.RegistrationOrder)];
             }
 
             const long externalSourceOrderOffset = 1_000_000L;

@@ -252,13 +252,13 @@ namespace STS2RitsuLib.Timeline
         {
             var typeToIdDictionary =
                 GetStaticField<Dictionary<Type, string>>(typeof(EpochModel), "_typeToIdDictionary");
-            return typeToIdDictionary.Keys.ToArray();
+            return [.. typeToIdDictionary.Keys];
         }
 
         private static Type[] GetKnownStoryTypes()
         {
             var storyDictionary = GetStaticField<Dictionary<string, Type>>(typeof(StoryModel), "_storyTypeDictionary");
-            return storyDictionary.Values.ToArray();
+            return [.. storyDictionary.Values];
         }
 
         private static string GetStoryId(Type storyType)

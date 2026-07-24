@@ -31,7 +31,7 @@ namespace STS2RitsuLib.Audio.Internal
             LoopSlot[] slots;
             lock (Gate)
             {
-                slots = LoopQueues.Values.SelectMany(static list => list).ToArray();
+                slots = [.. LoopQueues.Values.SelectMany(static list => list)];
                 LoopQueues.Clear();
             }
 

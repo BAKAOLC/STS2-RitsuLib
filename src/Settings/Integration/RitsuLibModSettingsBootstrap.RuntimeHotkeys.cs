@@ -84,30 +84,33 @@ namespace STS2RitsuLib.Settings
             IReadOnlyList<string> categoryOrder)
         {
             var hotkeys = RuntimeHotkeyService.GetRegisteredHotkeys();
-            return hotkeys
-                .GroupBy(info => string.IsNullOrWhiteSpace(info.Category)
-                    ? L("ritsulib.runtimeHotkeys.category.other", "Other")
-                    : info.Category!)
-                .OrderBy(group =>
-                {
-                    var index = -1;
-                    for (var i = 0; i < categoryOrder.Count; i++)
+            return
+            [
+                .. hotkeys
+                    .GroupBy(info => string.IsNullOrWhiteSpace(info.Category)
+                        ? L("ritsulib.runtimeHotkeys.category.other", "Other")
+                        : info.Category!)
+                    .OrderBy(group =>
                     {
-                        if (!string.Equals(categoryOrder[i], group.Key, StringComparison.Ordinal))
-                            continue;
-                        index = i;
-                        break;
-                    }
+                        var index = -1;
+                        for (var i = 0; i < categoryOrder.Count; i++)
+                        {
+                            if (!string.Equals(categoryOrder[i], group.Key, StringComparison.Ordinal))
+                                continue;
+                            index = i;
+                            break;
+                        }
 
-                    return index < 0 ? int.MaxValue : index;
-                })
-                .ThenBy(group => group.Key, StringComparer.OrdinalIgnoreCase)
-                .Select(group => new RuntimeHotkeyCategoryGroup(
-                    group.Key,
-                    group.OrderBy(info => info.DisplayName ?? info.Id ?? info.CurrentBinding,
-                            StringComparer.OrdinalIgnoreCase)
-                        .ToList()))
-                .ToList();
+                        return index < 0 ? int.MaxValue : index;
+                    })
+                    .ThenBy(group => group.Key, StringComparer.OrdinalIgnoreCase)
+                    .Select(group => new RuntimeHotkeyCategoryGroup(
+                        group.Key,
+                        [
+                            .. group.OrderBy(info => info.DisplayName ?? info.Id ?? info.CurrentBinding,
+                                StringComparer.OrdinalIgnoreCase),
+                        ])),
+            ];
         }
 
         private static int CountRuntimeHotkeysInCategory(string category)
@@ -129,10 +132,12 @@ namespace STS2RitsuLib.Settings
 
         private static IReadOnlyList<ModSettingsText> GetRuntimeHotkeyBindingTexts(RuntimeHotkeyRegistrationInfo hotkey)
         {
-            return hotkey.CurrentBindings
-                .Select(binding => ModSettingsText.Dynamic(() => FormatRuntimeHotkeyBindingChip(hotkey.Id, binding,
-                    hotkey.DisplayName)))
-                .ToArray();
+            return
+            [
+                .. hotkey.CurrentBindings
+                    .Select(binding => ModSettingsText.Dynamic(() => FormatRuntimeHotkeyBindingChip(hotkey.Id, binding,
+                        hotkey.DisplayName))),
+            ];
         }
 
         private static string GetRuntimeHotkeyStableKey(RuntimeHotkeyRegistrationInfo hotkey)

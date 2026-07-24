@@ -410,10 +410,12 @@ namespace STS2RitsuLib.Scaffolding.Characters
             get
             {
 #pragma warning disable CS0618 // Intentional compatibility bridge from legacy type-based hooks
-                return StartingDeckEntries
-                    .SelectMany(static entry => Enumerable.Repeat(entry.CardType, Math.Max(entry.Count, 0)))
-                    .Select(static type => ModelDb.GetById<CardModel>(ModelDb.GetId(type)))
-                    .ToArray();
+                return
+                [
+                    .. StartingDeckEntries
+                        .SelectMany(static entry => Enumerable.Repeat(entry.CardType, Math.Max(entry.Count, 0)))
+                        .Select(static type => ModelDb.GetById<CardModel>(ModelDb.GetId(type))),
+                ];
 #pragma warning restore CS0618
             }
         }
@@ -816,36 +818,44 @@ namespace STS2RitsuLib.Scaffolding.Characters
         protected static IEnumerable<TModel> ResolveModels<TModel>(IEnumerable<Type> types)
             where TModel : AbstractModel
         {
-            return types
-                .Select(type => ModelDb.GetById<TModel>(ModelDb.GetId(type)))
-                .ToArray();
+            return
+            [
+                .. types
+                    .Select(type => ModelDb.GetById<TModel>(ModelDb.GetId(type))),
+            ];
         }
 
         private IEnumerable<CardModel> ResolveStartingDeck()
         {
             var registeredTypes = ModContentRegistry.GetRegisteredCharacterStarterCards(GetType());
 
-            return LocalStartingDeck
-                .Concat(ResolveModels<CardModel>(registeredTypes))
-                .ToArray();
+            return
+            [
+                .. LocalStartingDeck,
+                .. ResolveModels<CardModel>(registeredTypes),
+            ];
         }
 
         private IReadOnlyList<RelicModel> ResolveStartingRelics()
         {
             var registeredTypes = ModContentRegistry.GetRegisteredCharacterStarterRelics(GetType());
 
-            return LocalStartingRelics
-                .Concat(ResolveModels<RelicModel>(registeredTypes))
-                .ToArray();
+            return
+            [
+                .. LocalStartingRelics,
+                .. ResolveModels<RelicModel>(registeredTypes),
+            ];
         }
 
         private IReadOnlyList<PotionModel> ResolveStartingPotions()
         {
             var registeredTypes = ModContentRegistry.GetRegisteredCharacterStarterPotions(GetType());
 
-            return LocalStartingPotions
-                .Concat(ResolveModels<PotionModel>(registeredTypes))
-                .ToArray();
+            return
+            [
+                .. LocalStartingPotions,
+                .. ResolveModels<PotionModel>(registeredTypes),
+            ];
         }
     }
 }

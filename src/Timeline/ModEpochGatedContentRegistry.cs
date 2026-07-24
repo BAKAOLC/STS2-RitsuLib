@@ -132,9 +132,11 @@ namespace STS2RitsuLib.Timeline
             if (!TryGet(epochId, out var entry))
                 return [];
 
-            return entry.CardTypes
-                .Select(type => ModelDb.GetById<CardModel>(ModelDb.GetId(type)))
-                .ToArray();
+            return
+            [
+                .. entry.CardTypes
+                    .Select(type => ModelDb.GetById<CardModel>(ModelDb.GetId(type))),
+            ];
         }
 
         /// <summary>
@@ -146,9 +148,11 @@ namespace STS2RitsuLib.Timeline
             if (!TryGet(epochId, out var entry))
                 return [];
 
-            return entry.RelicTypes
-                .Select(type => ModelDb.GetById<RelicModel>(ModelDb.GetId(type)))
-                .ToArray();
+            return
+            [
+                .. entry.RelicTypes
+                    .Select(type => ModelDb.GetById<RelicModel>(ModelDb.GetId(type))),
+            ];
         }
 
         private static void EnsureMutable(string operation)

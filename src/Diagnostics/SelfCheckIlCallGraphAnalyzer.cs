@@ -138,7 +138,7 @@ namespace STS2RitsuLib.Diagnostics
                 }
                 catch (ReflectionTypeLoadException ex)
                 {
-                    types = ex.Types.Where(t => t != null).Cast<Type>().ToArray();
+                    types = [.. ex.Types.Where(t => t != null).Cast<Type>()];
                 }
                 catch
                 {
@@ -150,9 +150,11 @@ namespace STS2RitsuLib.Diagnostics
                     MethodBase[] methods;
                     try
                     {
-                        methods = type.GetMethods(methodFlags).Cast<MethodBase>()
-                            .Concat(type.GetConstructors(ctorFlags))
-                            .ToArray();
+                        methods =
+                        [
+                            .. type.GetMethods(methodFlags),
+                            .. type.GetConstructors(ctorFlags),
+                        ];
                     }
                     catch
                     {

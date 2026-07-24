@@ -49,7 +49,7 @@ namespace STS2RitsuLib.Networking.Sidecar
             decompressed = null;
             try
             {
-                using var input = new MemoryStream(compressed.ToArray(), false);
+                using var input = new MemoryStream([.. compressed], false);
                 using var gz = new GZipStream(input, CompressionMode.Decompress);
                 using var output = new MemoryStream();
                 var buffer = new byte[8 * RitsuLibSidecarBinaryLayout.KiB];
@@ -78,7 +78,7 @@ namespace STS2RitsuLib.Networking.Sidecar
             decompressed = null;
             try
             {
-                using var input = new MemoryStream(compressed.ToArray(), false);
+                using var input = new MemoryStream([.. compressed], false);
                 using var br = new BrotliStream(input, CompressionMode.Decompress);
                 using var output = new MemoryStream();
                 var buffer = new byte[8 * RitsuLibSidecarBinaryLayout.KiB];

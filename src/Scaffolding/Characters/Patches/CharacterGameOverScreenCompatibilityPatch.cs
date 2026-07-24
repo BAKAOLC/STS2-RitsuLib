@@ -70,8 +70,8 @@ namespace STS2RitsuLib.Scaffolding.Characters.Patches
                     if (runState.CurrentRoom is CombatRoom currentCombatRoom)
                         NCombatUiAnimOutCompat.AnimOutForGameOver(NCombatRoom.Instance.Ui, currentCombatRoom);
 
-                creatureNodes = NCombatRoom.Instance.CreatureNodes.ToList();
-                visuals = creatureNodes.Select(creature => creature.Visuals).ToList();
+                creatureNodes = [.. NCombatRoom.Instance.CreatureNodes];
+                visuals = [.. creatureNodes.Select(creature => creature.Visuals)];
             }
             else if (NMerchantRoom.Instance != null)
             {

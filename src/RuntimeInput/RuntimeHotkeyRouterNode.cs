@@ -180,7 +180,7 @@ namespace STS2RitsuLib.RuntimeInput
         Action callback,
         RuntimeHotkeyOptions options)
     {
-        private readonly List<RuntimeHotkeyBinding> _bindings = bindings.ToList();
+        private readonly List<RuntimeHotkeyBinding> _bindings = [.. bindings];
         private readonly List<IDisposable> _steamInputRegistrations = [];
 
         public IReadOnlyList<RuntimeHotkeyBinding> Bindings => _bindings;

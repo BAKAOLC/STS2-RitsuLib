@@ -116,7 +116,7 @@ namespace STS2RitsuLib.Content
             ArgumentNullException.ThrowIfNull(rules);
             EnsureMutable("register card hand outline rules");
             ModCardHandOutlineRegistry.Register<TCard>(
-                ModCardHandOutlineRules.Of(rules.Select(static rule => rule.ToSwitchRule()).ToArray()));
+                ModCardHandOutlineRules.Of([.. rules.Select(static rule => rule.ToSwitchRule())]));
         }
     }
 }

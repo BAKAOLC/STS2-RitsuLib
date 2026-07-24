@@ -72,9 +72,11 @@ namespace STS2RitsuLib.CardPiles
                 if (pile.Definition.Scope != ModCardPileScope.RunPersistent || pile.Cards.Count == 0)
                     continue;
 
-                snapshot.Piles[pile.Definition.Id] = pile.Cards
-                    .Select(card => card.ToSerializable())
-                    .ToList();
+                snapshot.Piles[pile.Definition.Id] =
+                [
+                    .. pile.Cards
+                        .Select(card => card.ToSerializable()),
+                ];
             }
 
             return snapshot;

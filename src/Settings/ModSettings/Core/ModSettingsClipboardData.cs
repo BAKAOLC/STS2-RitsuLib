@@ -340,9 +340,11 @@ namespace STS2RitsuLib.Settings
                     members.TryAdd(jsonName, new(jsonName, field.FieldType));
                 }
 
-                return members.Values
-                    .OrderBy(member => member.JsonName, StringComparer.Ordinal)
-                    .ToArray();
+                return
+                [
+                    .. members.Values
+                        .OrderBy(member => member.JsonName, StringComparer.Ordinal),
+                ];
             });
         }
 

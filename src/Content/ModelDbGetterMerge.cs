@@ -26,7 +26,7 @@ namespace STS2RitsuLib.Content
 
             try
             {
-                var materialized = source as TModel[] ?? source.ToArray();
+                var materialized = source as TModel[] ?? [.. source];
                 return append(materialized);
             }
             finally
@@ -47,7 +47,7 @@ namespace STS2RitsuLib.Content
 
             try
             {
-                var materialized = source as TItem[] ?? source.ToArray();
+                var materialized = source as TItem[] ?? [.. source];
                 return append(materialized);
             }
             finally
