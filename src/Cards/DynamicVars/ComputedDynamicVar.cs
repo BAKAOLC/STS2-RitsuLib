@@ -9,10 +9,9 @@ namespace STS2RitsuLib.Cards.DynamicVars
     ///     <see cref="DynamicVar" /> whose displayed value is produced by delegates instead of a fixed base amount.
     ///     显示值由委托生成、而不是使用固定基础数值的 <see cref="DynamicVar" />。
     /// </summary>
-    public sealed class ComputedDynamicVar : DynamicVar
+    public sealed class ComputedDynamicVar : DynamicVar, IComputedDynamicVar
     {
-        private readonly Func<CardModel?, Creature?, decimal> _currentValueFactory;
-        private readonly Func<CardModel?, CardPreviewMode, Creature?, bool, decimal>? _previewValueFactory;
+        private readonly ComputedDynamicVarEvaluator _evaluator;
 
         /// <summary>
         ///     Creates a computed variable with optional preview-specific logic.
@@ -39,13 +38,9 @@ namespace STS2RitsuLib.Cards.DynamicVars
             decimal baseValue,
             Func<CardModel?, decimal> currentValueFactory,
             Func<CardModel?, CardPreviewMode, Creature?, bool, decimal>? previewValueFactory = null)
-            : base(name, baseValue)
+            : this(name, baseValue, (card, _) => currentValueFactory(card), previewValueFactory)
         {
-            ArgumentException.ThrowIfNullOrWhiteSpace(name);
             ArgumentNullException.ThrowIfNull(currentValueFactory);
-
-            _currentValueFactory = (card, _) => currentValueFactory(card);
-            _previewValueFactory = previewValueFactory;
         }
 
         /// <summary>
@@ -78,8 +73,31 @@ namespace STS2RitsuLib.Cards.DynamicVars
             ArgumentException.ThrowIfNullOrWhiteSpace(name);
             ArgumentNullException.ThrowIfNull(currentValueFactory);
 
-            _currentValueFactory = currentValueFactory;
-            _previewValueFactory = previewValueFactory;
+            _evaluator = new(currentValueFactory, previewValueFactory);
+        }
+
+        /// <summary>
+        ///     Creates a computed variable from one context-aware factory used for current and preview evaluation.
+        ///     使用同一个上下文感知工厂创建用于当前值和预览求值的计算型变量。
+        /// </summary>
+        public ComputedDynamicVar(
+            string name,
+            ComputedDynamicVarFactory contextFactory,
+            decimal baseValue = 0m)
+            : this(name, baseValue, contextFactory)
+        {
+        }
+
+        internal ComputedDynamicVar(
+            string name,
+            decimal baseValue,
+            ComputedDynamicVarFactory contextFactory)
+            : base(name, baseValue)
+        {
+            ArgumentException.ThrowIfNullOrWhiteSpace(name);
+            ArgumentNullException.ThrowIfNull(contextFactory);
+
+            _evaluator = new(contextFactory);
         }
 
         /// <summary>
@@ -88,7 +106,7 @@ namespace STS2RitsuLib.Cards.DynamicVars
         /// </summary>
         public decimal Calculate(Creature? target)
         {
-            return _currentValueFactory(_owner as CardModel, target);
+            return _evaluator.Calculate(this, _owner, target);
         }
 
         /// <summary>
@@ -107,8 +125,13 @@ namespace STS2RitsuLib.Cards.DynamicVars
             Creature? target,
             bool runGlobalHooks)
         {
-            PreviewValue = _previewValueFactory?.Invoke(card, previewMode, target, runGlobalHooks)
-                           ?? _currentValueFactory(card, target);
+            PreviewValue = _evaluator.CalculatePreview(
+                this,
+                _owner,
+                card,
+                previewMode,
+                target,
+                runGlobalHooks);
         }
 
         /// <inheritdoc />

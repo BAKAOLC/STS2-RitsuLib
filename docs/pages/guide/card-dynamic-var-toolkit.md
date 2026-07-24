@@ -29,6 +29,8 @@ Then use those variable names in `cards.json`, for example `Deal {damage} damage
 
 Use a normal `IntVar` for values that already live on the card. Use `ComputedDynamicVar` when the display value depends on target, upgrade state, or preview mode.
 
+`ModCardVars` also provides typed shortcuts for common vanilla variables: `Bool`, `Cards`, `Damage`, `OstyDamage`, `Block`, `Gold`, `Heal`, `HpLoss`, `MaxHp`, `Repeat`, `Forge`, `Summon`, `Energy`, `Stars`, and `Power<T>`. Each variable with a vanilla default name also has a named overload.
+
 :::
 
 ## 添加变量{lang="zh-CN"}
@@ -54,6 +56,86 @@ public sealed class MyStrike : ModCardTemplate(1, CardType.Attack, CardRarity.Co
 然后在 `cards.json` 中使用这些变量名，例如 `造成 {damage} 点伤害。获得 {block} 点格挡。`
 
 值已经存在于卡牌上时，用普通 `IntVar`。显示值依赖目标、升级状态或预览模式时，用 `ComputedDynamicVar`。
+
+`ModCardVars` 还为常见原版变量提供了强类型快捷方法：`Bool`、`Cards`、`Damage`、`OstyDamage`、`Block`、`Gold`、`Heal`、`HpLoss`、`MaxHp`、`Repeat`、`Forge`、`Summon`、`Energy`、`Stars` 和 `Power<T>`。拥有原版默认名称的变量也都有具名重载。
+
+:::
+
+## Context Factories{lang="en"}
+
+::: en
+
+Use the context overload when one value depends on several pieces of card, run, combat, preview, or target state:
+
+```csharp
+public override DynamicVarSet DynamicVars => new()
+{
+    ModCardVars.Int("Heat", Heat),
+    ModCardVars.ComputedDamage(
+        "Damage",
+        static ctx =>
+        {
+            var heat = ctx.GetCardIntOrDefault("Heat");
+            var targetBonus = ctx.HasTarget && ctx.IsInCombat
+                ? ResolveTargetBonus(ctx.CombatState, ctx.Target)
+                : 0m;
+
+            return ctx.BaseValue + heat + targetBonus + (ctx.IsUpgraded ? 3m : 0m);
+        },
+        baseValue: 6),
+};
+```
+
+The same `ComputedDynamicVarContext` is used for live values and previews. Its convenience members avoid repeatedly rebuilding guarded state checks:
+
+- Evaluation: `IsCurrentValue`, `IsPreview`, `IsNormalPreview`, `IsUpgradePreview`, `IsMultiTargetPreview`, `ShouldRunGlobalHooks`.
+- Card: `Card`, `ModelOwner`, `IsMutableCard`, `IsCanonicalCard`, `IsUpgraded`, `IsEnchantmentPreview`.
+- Ownership and scope: `Player`, `SourceCreature`, `RunState`, `CombatState`, `CardScope`, plus matching `Has...` properties.
+- Location: `IsInRun`, `IsInCombat`, and `IsCardInCombat`. `IsInCombat` falls back to the owner's active combat; `IsCardInCombat` is only true when the card itself reports combat scope.
+- Variables: `TryGetCardVar<T>`, `GetRequiredCardVar<T>`, `GetCardBaseValueOrDefault`, `GetCardIntOrDefault`, and `EvaluateCardVarOrDefault`.
+
+Context overloads are available directly on `Computed`, `ComputedEnergy`, `ComputedStars`, `ComputedPower<T>`, `ComputedPowerAmountGiven<T>`, `ComputedDamage`, `ComputedOstyDamage`, and `ComputedBlock`. Their factory is the second argument so existing `Computed(name, baseValue, card => ...)` calls remain unambiguous.
+
+Prefer `static` factories. Dynamic vars are cloned with their cards; a static factory cannot accidentally retain the card instance from which the variable was created.
+
+:::
+
+## 上下文工厂{lang="zh-CN"}
+
+::: zh-CN
+
+当一个数值同时依赖卡牌、跑局、战斗、预览或目标等多种状态时，使用上下文重载：
+
+```csharp
+public override DynamicVarSet DynamicVars => new()
+{
+    ModCardVars.Int("Heat", Heat),
+    ModCardVars.ComputedDamage(
+        "Damage",
+        static ctx =>
+        {
+            var heat = ctx.GetCardIntOrDefault("Heat");
+            var targetBonus = ctx.HasTarget && ctx.IsInCombat
+                ? ResolveTargetBonus(ctx.CombatState, ctx.Target)
+                : 0m;
+
+            return ctx.BaseValue + heat + targetBonus + (ctx.IsUpgraded ? 3m : 0m);
+        },
+        baseValue: 6),
+};
+```
+
+实时值和预览共用同一个 `ComputedDynamicVarContext`。它提供的快捷成员可以避免用户反复拼装带空值保护的复杂判断：
+
+- 求值状态：`IsCurrentValue`、`IsPreview`、`IsNormalPreview`、`IsUpgradePreview`、`IsMultiTargetPreview`、`ShouldRunGlobalHooks`。
+- 卡牌状态：`Card`、`ModelOwner`、`IsMutableCard`、`IsCanonicalCard`、`IsUpgraded`、`IsEnchantmentPreview`。
+- 拥有者和作用域：`Player`、`SourceCreature`、`RunState`、`CombatState`、`CardScope`，以及对应的 `Has...` 属性。
+- 所处位置：`IsInRun`、`IsInCombat` 和 `IsCardInCombat`。`IsInCombat` 会回退到拥有者当前参与的战斗；只有卡牌自身报告战斗作用域时，`IsCardInCombat` 才为 true。
+- 变量读取：`TryGetCardVar<T>`、`GetRequiredCardVar<T>`、`GetCardBaseValueOrDefault`、`GetCardIntOrDefault` 和 `EvaluateCardVarOrDefault`。
+
+`Computed`、`ComputedEnergy`、`ComputedStars`、`ComputedPower<T>`、`ComputedPowerAmountGiven<T>`、`ComputedDamage`、`ComputedOstyDamage` 和 `ComputedBlock` 都直接提供上下文重载。上下文 factory 位于第二个参数，因此不会让已有的 `Computed(name, baseValue, card => ...)` 调用产生歧义。
+
+建议使用 `static` factory。动态变量会随卡牌克隆；静态 factory 不会意外保留创建变量时的卡牌实例。
 
 :::
 
@@ -89,6 +171,15 @@ ModCardVars.ComputedDamage(
 
 Use plain `Computed` when the value should not pass through damage or block hooks.
 
+The context overload keeps the same behavior without requiring a separate preview delegate:
+
+```csharp
+ModCardVars.ComputedDamage(
+    "damage",
+    static ctx => ctx.BaseValue + ResolveBonus(ctx.Player, ctx.Target),
+    baseValue: 6);
+```
+
 :::
 
 ## 伤害与格挡包装{lang="zh-CN"}
@@ -122,6 +213,15 @@ ModCardVars.ComputedDamage(
 ```
 
 如果数值不应该经过伤害或格挡 hook，继续使用普通 `Computed`。
+
+上下文重载不需要额外的 preview delegate，也会保留相同的预览修正规则：
+
+```csharp
+ModCardVars.ComputedDamage(
+    "damage",
+    static ctx => ctx.BaseValue + ResolveBonus(ctx.Player, ctx.Target),
+    baseValue: 6);
+```
 
 :::
 
@@ -252,9 +352,13 @@ Use extension helpers when a card or effect reads dynamic variables from another
 ```csharp
 var amount = card.DynamicVars.GetIntOrDefault("damage");
 var hasHeat = card.DynamicVars.HasPositiveValue("heat");
+var damageVar = card.DynamicVars.GetRequired<DamageVar>("Damage");
+var displayedValue = card.DynamicVars.EvaluateValueOrDefault("ComputedDamage", target: target);
 ```
 
-The helpers return defaults when the key is missing, which is usually better than assuming every card has your variable.
+Use `TryGet<T>` for optional typed access, `GetRequired<T>` when absence is a content error, `TryComputeValue` or `GetComputedValue` for any RitsuLib computed-var subtype, and `EvaluateValueOrDefault` when callers should transparently accept either a fixed or computed variable.
+
+The `...OrDefault` and `Try...` helpers do not throw for missing keys. Required helpers throw a descriptive exception for missing or mismatched variables.
 
 :::
 
@@ -267,9 +371,13 @@ The helpers return defaults when the key is missing, which is usually better tha
 ```csharp
 var amount = card.DynamicVars.GetIntOrDefault("damage");
 var hasHeat = card.DynamicVars.HasPositiveValue("heat");
+var damageVar = card.DynamicVars.GetRequired<DamageVar>("Damage");
+var displayedValue = card.DynamicVars.EvaluateValueOrDefault("ComputedDamage", target: target);
 ```
 
-变量不存在时这些方法会返回默认值，通常比假定每张牌都有你的变量更稳。
+可选的强类型访问使用 `TryGet<T>`；变量缺失属于内容错误时使用 `GetRequired<T>`；任意 RitsuLib 计算变量可用 `TryComputeValue` 或 `GetComputedValue`；调用方需要同时兼容固定变量和计算变量时使用 `EvaluateValueOrDefault`。
+
+`...OrDefault` 与 `Try...` 方法在 key 缺失时不会抛出异常。Required 方法会在变量缺失或类型不匹配时抛出带具体信息的异常。
 
 :::
 

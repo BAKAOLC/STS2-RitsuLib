@@ -1142,7 +1142,7 @@ namespace STS2RitsuLib.Interop.AutoRegistration
                     value.ModifierId ?? "<default>"),
                 RegisterMutuallyExclusiveModifierGroupAttribute value =>
                     ScopedSlot<RegisterMutuallyExclusiveModifierGroupAttribute>(
-                        value.MemberTypes.Select(TypeIdentity).Order(StringComparer.Ordinal).ToArray()),
+                        [.. value.MemberTypes.Select(TypeIdentity).Order(StringComparer.Ordinal)]),
                 CharacterStarterRegistrationAttributeBase value => ScopedSlotForType(
                     attribute.GetType(),
                     TypeIdentity(value.CharacterType)),

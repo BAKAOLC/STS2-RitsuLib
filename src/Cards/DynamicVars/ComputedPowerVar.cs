@@ -9,10 +9,9 @@ namespace STS2RitsuLib.Cards.DynamicVars
     ///     <see cref="PowerVar{T}" /> whose displayed amount is produced by delegates.
     ///     由委托生成显示层数的 <see cref="PowerVar{T}" />。
     /// </summary>
-    public sealed class ComputedPowerVar<T> : PowerVar<T> where T : PowerModel
+    public sealed class ComputedPowerVar<T> : PowerVar<T>, IComputedDynamicVar where T : PowerModel
     {
-        private readonly Func<CardModel?, Creature?, decimal> _currentValueFactory;
-        private readonly Func<CardModel?, CardPreviewMode, Creature?, bool, decimal>? _previewBaseValueFactory;
+        private readonly ComputedDynamicVarEvaluator _evaluator;
 
         /// <summary>
         ///     Creates a computed power variable named after <typeparamref name="T" />.
@@ -66,8 +65,42 @@ namespace STS2RitsuLib.Cards.DynamicVars
             ArgumentException.ThrowIfNullOrWhiteSpace(name);
             ArgumentNullException.ThrowIfNull(currentValueFactory);
 
-            _currentValueFactory = currentValueFactory;
-            _previewBaseValueFactory = previewBaseValueFactory;
+            _evaluator = new(currentValueFactory, previewBaseValueFactory);
+        }
+
+        /// <summary>
+        ///     Creates a context-aware computed power variable named after <typeparamref name="T" />.
+        ///     创建以 <typeparamref name="T" /> 命名的上下文感知计算型能力变量。
+        /// </summary>
+        public ComputedPowerVar(
+            ComputedDynamicVarFactory contextFactory,
+            decimal baseValue = 0m)
+            : this(typeof(T).Name, baseValue, contextFactory)
+        {
+        }
+
+        /// <summary>
+        ///     Creates a named context-aware computed power variable.
+        ///     创建具名的上下文感知计算型能力变量。
+        /// </summary>
+        public ComputedPowerVar(
+            string name,
+            ComputedDynamicVarFactory contextFactory,
+            decimal baseValue = 0m)
+            : this(name, baseValue, contextFactory)
+        {
+        }
+
+        internal ComputedPowerVar(
+            string name,
+            decimal baseValue,
+            ComputedDynamicVarFactory contextFactory)
+            : base(name, baseValue)
+        {
+            ArgumentException.ThrowIfNullOrWhiteSpace(name);
+            ArgumentNullException.ThrowIfNull(contextFactory);
+
+            _evaluator = new(contextFactory);
         }
 
         /// <summary>
@@ -76,7 +109,7 @@ namespace STS2RitsuLib.Cards.DynamicVars
         /// </summary>
         public decimal Calculate(Creature? target)
         {
-            return _currentValueFactory(_owner as CardModel, target);
+            return _evaluator.Calculate(this, _owner, target);
         }
 
         /// <summary>
@@ -95,10 +128,13 @@ namespace STS2RitsuLib.Cards.DynamicVars
             Creature? target,
             bool runGlobalHooks)
         {
-            var value = _previewBaseValueFactory?.Invoke(card, previewMode, target, runGlobalHooks)
-                        ?? _currentValueFactory(card, target);
-
-            PreviewValue = value;
+            PreviewValue = _evaluator.CalculatePreview(
+                this,
+                _owner,
+                card,
+                previewMode,
+                target,
+                runGlobalHooks);
         }
 
         /// <inheritdoc />
