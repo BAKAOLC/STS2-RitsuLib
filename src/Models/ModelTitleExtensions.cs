@@ -1,3 +1,4 @@
+using System.Collections.Concurrent;
 using System.Diagnostics.CodeAnalysis;
 using MegaCrit.Sts2.Core.Localization;
 using MegaCrit.Sts2.Core.Models;
@@ -5,11 +6,19 @@ using MegaCrit.Sts2.Core.Models;
 namespace STS2RitsuLib.Models
 {
     /// <summary>
-    ///     Helpers for resolving display titles from known vanilla model families.
-    ///     用于从已知原版模型族解析显示标题的辅助方法。
+    ///     Helpers for resolving display titles from registered resolvers and known vanilla model families.
+    ///     用于从已注册解析器和已知原版模型族解析显示标题的辅助方法。
     /// </summary>
     public static class ModelTitleExtensions
     {
+        private static readonly Lock ResolverSync = new();
+        private static readonly Dictionary<Type, Func<AbstractModel, LocString?>> RegisteredTitleResolvers = [];
+
+        private static readonly ConcurrentDictionary<TitleResolverCacheKey, TitleResolverLookup> TitleResolverCache =
+            new();
+
+        private static int _titleResolverGeneration;
+
         private static readonly ModelLocStringSource[] TitleSources =
         [
             TitleSource<CardModel>("cards", model => model.Id.Entry + ".title", model => model.TitleLocString),
@@ -35,9 +44,79 @@ namespace STS2RitsuLib.Models
         public static IReadOnlyList<ModelLocStringSource> KnownTitleSources => TitleSources;
 
         /// <summary>
+        ///     Registers or replaces the title resolver for <typeparamref name="TModel" /> and its derived types.
+        ///     More-specific registered model types take precedence.
+        ///     为 <typeparamref name="TModel" /> 及其派生类型注册或替换标题解析器；更具体的已注册模型类型优先。
+        /// </summary>
+        public static void RegisterTitleResolver<TModel>(Func<TModel, LocString?> resolver)
+            where TModel : AbstractModel
+        {
+            ArgumentNullException.ThrowIfNull(resolver);
+
+            RegisterTitleResolver(typeof(TModel), model => resolver((TModel)model));
+        }
+
+        /// <summary>
+        ///     Registers or replaces the title resolver for <paramref name="modelType" /> and its derived types.
+        ///     More-specific registered model types take precedence.
+        ///     为 <paramref name="modelType" /> 及其派生类型注册或替换标题解析器；更具体的已注册模型类型优先。
+        /// </summary>
+        public static void RegisterTitleResolver(
+            Type modelType,
+            Func<AbstractModel, LocString?> resolver)
+        {
+            ArgumentNullException.ThrowIfNull(modelType);
+            ArgumentNullException.ThrowIfNull(resolver);
+
+            if (!modelType.IsAssignableTo(typeof(AbstractModel)))
+                throw new ArgumentException(
+                    $"{modelType.FullName} must derive from {typeof(AbstractModel).FullName}.",
+                    nameof(modelType));
+
+            lock (ResolverSync)
+            {
+                RegisteredTitleResolvers[modelType] = resolver;
+                Interlocked.Increment(ref _titleResolverGeneration);
+                TitleResolverCache.Clear();
+            }
+        }
+
+        /// <summary>
+        ///     Unregisters the title resolver for exactly <typeparamref name="TModel" />.
+        ///     反注册精确对应 <typeparamref name="TModel" /> 的标题解析器。
+        /// </summary>
+        public static bool UnregisterTitleResolver<TModel>()
+            where TModel : AbstractModel
+        {
+            return UnregisterTitleResolver(typeof(TModel));
+        }
+
+        /// <summary>
+        ///     Unregisters the title resolver for exactly <paramref name="modelType" />.
+        ///     反注册精确对应 <paramref name="modelType" /> 的标题解析器。
+        /// </summary>
+        public static bool UnregisterTitleResolver(Type modelType)
+        {
+            ArgumentNullException.ThrowIfNull(modelType);
+
+            lock (ResolverSync)
+            {
+                var removed = RegisteredTitleResolvers.Remove(modelType);
+                if (removed)
+                {
+                    Interlocked.Increment(ref _titleResolverGeneration);
+                    TitleResolverCache.Clear();
+                }
+
+                return removed;
+            }
+        }
+
+        /// <summary>
         ///     Resolves a display title for <paramref name="model" />, or returns <paramref name="fallback" /> when the
-        ///     model family has no known title surface.
-        ///     解析 <paramref name="model" /> 的显示标题；若该模型族没有已知标题 surface，则返回
+        ///     model has no registered resolver and its family has no known title surface.
+        ///     解析 <paramref name="model" /> 的显示标题；若该模型没有已注册解析器，且所属模型族没有已知标题
+        ///     surface，则返回
         ///     <paramref name="fallback" />。
         /// </summary>
         public static LocString ResolveTitleOr(this AbstractModel model, LocString fallback)
@@ -49,21 +128,28 @@ namespace STS2RitsuLib.Models
         }
 
         /// <summary>
-        ///     Attempts to resolve a display title for known vanilla model families.
-        ///     尝试为已知原版模型族解析显示标题。
+        ///     Attempts to resolve a display title from a registered resolver, then from a known vanilla model family.
+        ///     尝试从已注册解析器解析显示标题；若未解析到标题，再尝试已知原版模型族。
         /// </summary>
         public static bool TryResolveTitle(this AbstractModel model, [NotNullWhen(true)] out LocString? title)
         {
             ArgumentNullException.ThrowIfNull(model);
 
-            if (!model.TryGetTitleLocStringSource(out var source))
+            var registeredResolver = GetRegisteredTitleResolver(model.GetType());
+            if (registeredResolver != null && registeredResolver(model) is { } registeredTitle)
             {
-                title = null;
-                return false;
+                title = registeredTitle;
+                return true;
             }
 
-            title = source.Resolve(model);
-            return true;
+            if (model.TryGetTitleLocStringSource(out var source))
+            {
+                title = source.Resolve(model);
+                return true;
+            }
+
+            title = null;
+            return false;
         }
 
         /// <summary>
@@ -105,5 +191,36 @@ namespace STS2RitsuLib.Models
                 model => key((TModel)model),
                 model => resolve((TModel)model));
         }
+
+        private static Func<AbstractModel, LocString?>? GetRegisteredTitleResolver(Type modelType)
+        {
+            while (true)
+            {
+                var generation = Volatile.Read(ref _titleResolverGeneration);
+                var lookup = TitleResolverCache.GetOrAdd(
+                    new(modelType, generation),
+                    static key => FindRegisteredTitleResolver(key.ModelType));
+                if (generation == Volatile.Read(ref _titleResolverGeneration))
+                    return lookup.Resolver;
+            }
+        }
+
+        private static TitleResolverLookup FindRegisteredTitleResolver(Type modelType)
+        {
+            lock (ResolverSync)
+            {
+                for (var current = modelType;
+                     current != null && typeof(AbstractModel).IsAssignableFrom(current);
+                     current = current.BaseType)
+                    if (RegisteredTitleResolvers.TryGetValue(current, out var resolver))
+                        return new(resolver);
+            }
+
+            return default;
+        }
+
+        private readonly record struct TitleResolverCacheKey(Type ModelType, int Generation);
+
+        private readonly record struct TitleResolverLookup(Func<AbstractModel, LocString?>? Resolver);
     }
 }
