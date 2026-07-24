@@ -58,9 +58,11 @@ namespace STS2RitsuLib.Combat.HandSize
             if (player.Creature?.CombatState is not { } combatState)
                 return [];
 
-            return ModelHookListenerDispatcher.FromCombat<IMaxHandSizeModifier>(combatState)
-                .Select(static entry => entry.Listener)
-                .ToArray();
+            return
+            [
+                .. ModelHookListenerDispatcher.FromCombat<IMaxHandSizeModifier>(combatState)
+                    .Select(static entry => entry.Listener),
+            ];
         }
     }
 }

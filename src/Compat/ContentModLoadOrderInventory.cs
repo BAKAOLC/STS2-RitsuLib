@@ -63,29 +63,33 @@ namespace STS2RitsuLib.Compat
         {
             var relevantKeys = BuildRelevantKeys(currentOrder);
             var relevantDependencyIds = BuildRelevantDependencyIds(currentOrder, relevantKeys);
-            return currentOrder
-                .Where(entry => includeAll || relevantKeys.Contains(entry.Key))
-                .Select((entry, index) => new ContentModInventoryEntry(
-                    index,
-                    entry.Id,
-                    entry.Version,
-                    entry.DisplayName,
-                    entry.Source.ToString(),
-                    entry.WorkshopItemId,
-                    entry.IsEnabled,
-                    entry.AffectsGameplay,
-                    relevantDependencyIds.Contains(entry.Id),
-                    entry.IsCommonIncompatibleMod))
-                .ToArray();
+            return
+            [
+                .. currentOrder
+                    .Where(entry => includeAll || relevantKeys.Contains(entry.Key))
+                    .Select((entry, index) => new ContentModInventoryEntry(
+                        index,
+                        entry.Id,
+                        entry.Version,
+                        entry.DisplayName,
+                        entry.Source.ToString(),
+                        entry.WorkshopItemId,
+                        entry.IsEnabled,
+                        entry.AffectsGameplay,
+                        relevantDependencyIds.Contains(entry.Id),
+                        entry.IsCommonIncompatibleMod)),
+            ];
         }
 
         private static IReadOnlyList<CurrentModEntry> BuildRuntimeLoadedOrder()
         {
-            return ModManager.GetLoadedMods()
-                .Select(TryCreateCurrentModEntry)
-                .Where(entry => entry != null)
-                .Select(entry => entry! with { IsEnabled = true })
-                .ToArray();
+            return
+            [
+                .. ModManager.GetLoadedMods()
+                    .Select(TryCreateCurrentModEntry)
+                    .Where(entry => entry != null)
+                    .Select(entry => entry! with { IsEnabled = true }),
+            ];
         }
 
         internal static IReadOnlyList<CurrentModEntry> BuildDependencyValidPriorityOrder(
@@ -260,7 +264,7 @@ namespace STS2RitsuLib.Compat
             var result = manifest.dependencies.Select(dependency => ReadDependencyId(dependency)?.Trim())
                 .Where(id => !string.IsNullOrWhiteSpace(id)).ToList();
 
-            return result.Distinct(StringComparer.Ordinal).ToArray()!;
+            return [.. result.Distinct(StringComparer.Ordinal)!]!;
         }
 
         private static string? ReadDependencyId(object? dependency)

@@ -92,7 +92,7 @@ namespace STS2RitsuLib.Scaffolding.Characters.Patches
             var matches = new List<HarmonyIlMatch>();
             matches.AddRange(CharacterSelectBgSceneLoadPattern(true).FindAll(code));
             matches.AddRange(CharacterSelectBgSceneLoadPattern(false).FindAll(code));
-            return matches.OrderBy(static match => match.Index).ToArray();
+            return [.. matches.OrderBy(static match => match.Index)];
         }
 
         private static HarmonyIlPattern CharacterSelectBgSceneLoadPattern(bool includeConvI8)

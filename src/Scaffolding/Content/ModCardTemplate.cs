@@ -68,7 +68,7 @@ namespace STS2RitsuLib.Scaffolding.Content
         protected virtual IEnumerable<IHoverTip> AdditionalHoverTips => [];
 
         /// <inheritdoc />
-        protected sealed override IEnumerable<IHoverTip> ExtraHoverTips => AdditionalHoverTips.ToArray();
+        protected sealed override IEnumerable<IHoverTip> ExtraHoverTips => [.. AdditionalHoverTips];
 
         /// <inheritdoc />
         public virtual Material? CustomAncientBannerMaterial => AssetProfile.AncientBannerMaterial;

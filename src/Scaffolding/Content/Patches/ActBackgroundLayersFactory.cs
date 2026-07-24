@@ -52,7 +52,7 @@ namespace STS2RitsuLib.Scaffolding.Content.Patches
             }
 
             var bgLayers = SelectRandomBackgroundLayers(rng, bgBySlot);
-            var fgLayer = rng.NextItem(fgCandidates.ToArray());
+            var fgLayer = rng.NextItem([.. fgCandidates]);
 
             return CombatBackgroundAssetsFactory.Construct(mainBackgroundScenePath, bgLayers, fgLayer);
         }
@@ -60,8 +60,11 @@ namespace STS2RitsuLib.Scaffolding.Content.Patches
         private static List<string> SelectRandomBackgroundLayers(Rng rng,
             Dictionary<string, List<string>> bgLayers)
         {
-            return bgLayers.OrderBy(k => k.Key, StringComparer.Ordinal).Select(kv => rng.NextItem(kv.Value))
-                .Select(item => item!).ToList();
+            return
+            [
+                .. bgLayers.OrderBy(k => k.Key, StringComparer.Ordinal).Select(kv => rng.NextItem(kv.Value))
+                    .Select(item => item!),
+            ];
         }
     }
 }

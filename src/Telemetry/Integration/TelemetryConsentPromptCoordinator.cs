@@ -106,10 +106,12 @@ namespace STS2RitsuLib.Telemetry.Integration
 
         private static TelemetryApplicant[] ResolvePendingApplicants()
         {
-            return TelemetryRegistry.GetApplicants()
-                .Where(applicant => TelemetryConsentStore.GetApplicantConsent(applicant.ApplicantId).Consent ==
-                                    TelemetryConsentState.Unknown)
-                .ToArray();
+            return
+            [
+                .. TelemetryRegistry.GetApplicants()
+                    .Where(applicant => TelemetryConsentStore.GetApplicantConsent(applicant.ApplicantId).Consent ==
+                                        TelemetryConsentState.Unknown),
+            ];
         }
 
         private static void GrantApplicant(TelemetryApplicant applicant)

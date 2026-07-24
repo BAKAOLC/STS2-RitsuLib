@@ -146,7 +146,7 @@ namespace STS2RitsuLib.Combat.HealthBars
             ProviderEntry[] snapshot;
             lock (SyncRoot)
             {
-                snapshot = Providers.Values.OrderBy(e => e.RegistrationOrder).ToArray();
+                snapshot = [.. Providers.Values.OrderBy(e => e.RegistrationOrder)];
             }
 
             foreach (var entry in snapshot)

@@ -79,10 +79,12 @@ namespace STS2RitsuLib.Telemetry
         {
             lock (Sync)
             {
-                return Applicants.Values
-                    .OrderBy(x => x.DisplayName, StringComparer.OrdinalIgnoreCase)
-                    .ThenBy(x => x.ApplicantId, StringComparer.OrdinalIgnoreCase)
-                    .ToArray();
+                return
+                [
+                    .. Applicants.Values
+                        .OrderBy(x => x.DisplayName, StringComparer.OrdinalIgnoreCase)
+                        .ThenBy(x => x.ApplicantId, StringComparer.OrdinalIgnoreCase),
+                ];
             }
         }
 
@@ -94,10 +96,12 @@ namespace STS2RitsuLib.Telemetry
         {
             lock (Sync)
             {
-                return ContributionProviders.Values
-                    .OrderBy(x => x.ContributorModId, StringComparer.OrdinalIgnoreCase)
-                    .ThenBy(x => x.ContributionId, StringComparer.OrdinalIgnoreCase)
-                    .ToArray();
+                return
+                [
+                    .. ContributionProviders.Values
+                        .OrderBy(x => x.ContributorModId, StringComparer.OrdinalIgnoreCase)
+                        .ThenBy(x => x.ContributionId, StringComparer.OrdinalIgnoreCase),
+                ];
             }
         }
 
@@ -129,16 +133,18 @@ namespace STS2RitsuLib.Telemetry
 
             lock (Sync)
             {
-                return ContributionProviders.Values
-                    .Where(provider =>
-                        provider.Visibility == TelemetryContributionVisibility.SharedToAuthorizedSubscribers)
-                    .Where(provider => provider.Category == request.Category)
-                    .Where(provider => SubscriptionMatches(provider, applicant, subscriptions, false))
-                    .Where(provider => TelemetryConsentStore.IsSharedContributionGranted(
-                        applicant.ApplicantId,
-                        provider.ContributorModId,
-                        provider.ContributionId))
-                    .ToArray();
+                return
+                [
+                    .. ContributionProviders.Values
+                        .Where(provider =>
+                            provider.Visibility == TelemetryContributionVisibility.SharedToAuthorizedSubscribers)
+                        .Where(provider => provider.Category == request.Category)
+                        .Where(provider => SubscriptionMatches(provider, applicant, subscriptions, false))
+                        .Where(provider => TelemetryConsentStore.IsSharedContributionGranted(
+                            applicant.ApplicantId,
+                            provider.ContributorModId,
+                            provider.ContributionId)),
+                ];
             }
         }
 
@@ -152,12 +158,14 @@ namespace STS2RitsuLib.Telemetry
 
             lock (Sync)
             {
-                return ContributionProviders.Values
-                    .Where(provider => provider.Visibility == TelemetryContributionVisibility.PrivateToApplicant)
-                    .Where(provider => provider.Category == request.Category)
-                    .Where(provider => SubscriptionMatches(provider, applicant, subscriptions, true))
-                    .Where(provider => IsOwnedByApplicant(provider, applicant))
-                    .ToArray();
+                return
+                [
+                    .. ContributionProviders.Values
+                        .Where(provider => provider.Visibility == TelemetryContributionVisibility.PrivateToApplicant)
+                        .Where(provider => provider.Category == request.Category)
+                        .Where(provider => SubscriptionMatches(provider, applicant, subscriptions, true))
+                        .Where(provider => IsOwnedByApplicant(provider, applicant)),
+                ];
             }
         }
 
@@ -166,15 +174,17 @@ namespace STS2RitsuLib.Telemetry
         {
             lock (Sync)
             {
-                return ContributionProviders.Values
-                    .Where(provider =>
-                        provider.Visibility == TelemetryContributionVisibility.SharedToAuthorizedSubscribers)
-                    .Where(provider => applicant.Requests.Any(request =>
-                        request.Category == provider.Category &&
-                        SubscriptionMatches(provider, applicant, request.ContributionSubscriptions, false)))
-                    .OrderBy(provider => provider.ContributorModId, StringComparer.OrdinalIgnoreCase)
-                    .ThenBy(provider => provider.ContributionId, StringComparer.OrdinalIgnoreCase)
-                    .ToArray();
+                return
+                [
+                    .. ContributionProviders.Values
+                        .Where(provider =>
+                            provider.Visibility == TelemetryContributionVisibility.SharedToAuthorizedSubscribers)
+                        .Where(provider => applicant.Requests.Any(request =>
+                            request.Category == provider.Category &&
+                            SubscriptionMatches(provider, applicant, request.ContributionSubscriptions, false)))
+                        .OrderBy(provider => provider.ContributorModId, StringComparer.OrdinalIgnoreCase)
+                        .ThenBy(provider => provider.ContributionId, StringComparer.OrdinalIgnoreCase),
+                ];
             }
         }
 

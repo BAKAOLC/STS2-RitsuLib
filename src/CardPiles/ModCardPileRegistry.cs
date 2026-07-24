@@ -357,10 +357,12 @@ namespace STS2RitsuLib.CardPiles
         {
             lock (SyncRoot)
             {
-                return Definitions.Values
-                    .Where(def => def.Style == style)
-                    .OrderBy(def => def.Id, StringComparer.Ordinal)
-                    .ToArray();
+                return
+                [
+                    .. Definitions.Values
+                        .Where(def => def.Style == style)
+                        .OrderBy(def => def.Id, StringComparer.Ordinal),
+                ];
             }
         }
 
@@ -420,7 +422,7 @@ namespace STS2RitsuLib.CardPiles
                 .ToArray();
             Volatile.Write(ref _definitionsSnapshot, definitions);
             Volatile.Write(ref _combatDefinitionsSnapshot,
-                definitions.Where(definition => definition.Scope == ModCardPileScope.CombatOnly).ToArray());
+                [.. definitions.Where(definition => definition.Scope == ModCardPileScope.CombatOnly)]);
         }
 
         private void EnsureMutable(string operation)

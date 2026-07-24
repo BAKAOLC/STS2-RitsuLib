@@ -441,10 +441,12 @@ namespace STS2RitsuLib.Settings
 
             public RitsuSteamWorkshopItem[] GetSelectedItems()
             {
-                return _cards
-                    .Where(static card => card.Selected && !card.Item.IsSubscribed)
-                    .Select(static card => card.Item)
-                    .ToArray();
+                return
+                [
+                    .. _cards
+                        .Where(static card => card.Selected && !card.Item.IsSubscribed)
+                        .Select(static card => card.Item),
+                ];
             }
 
             public void SetMessage(string? message)

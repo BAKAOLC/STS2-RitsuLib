@@ -27,7 +27,7 @@ namespace STS2RitsuLib.Settings
 
             var priorityById = BuildDeterministicPriorityById(currentOrder, relevantKeys);
             var applied = ApplyPriorityOrder(currentOrder, priorityById);
-            SaveAndLog("deterministic-sort", currentOrder, applied, priorityById.Keys.ToArray());
+            SaveAndLog("deterministic-sort", currentOrder, applied, [.. priorityById.Keys]);
             ShowInfo("ritsulib.contentModLoadOrder.toast.sorted",
                 "Saved deterministic order for {0} relevant mod(s). Restart the game to apply it.",
                 relevantKeys.Count);
@@ -117,9 +117,10 @@ namespace STS2RitsuLib.Settings
 
         internal static string FormatDeterministicOrderPreview()
         {
-            return FormatOrderPreview(BuildRelevantTargetOrder(ContentModLoadOrderInventory.BuildCurrentOrder())
-                .Select(entry => entry.Id)
-                .ToArray());
+            return FormatOrderPreview([
+                .. BuildRelevantTargetOrder(ContentModLoadOrderInventory.BuildCurrentOrder())
+                    .Select(entry => entry.Id),
+            ]);
         }
 
         internal static ContentModLoadOrderPreview BuildPreview()
@@ -191,10 +192,12 @@ namespace STS2RitsuLib.Settings
             var relevantKeys = BuildVisibleRelevantKeys(currentOrder);
             var priorityById = BuildDeterministicPriorityById(currentOrder, relevantKeys);
             var sortableOrder = BuildSortableOrder(currentOrder);
-            return ContentModLoadOrderInventory
-                .BuildDependencyValidPriorityOrder(sortableOrder, priorityById, LogPrefix)
-                .Where(entry => relevantKeys.Contains(entry.Key))
-                .ToArray();
+            return
+            [
+                .. ContentModLoadOrderInventory
+                    .BuildDependencyValidPriorityOrder(sortableOrder, priorityById, LogPrefix)
+                    .Where(entry => relevantKeys.Contains(entry.Key)),
+            ];
         }
 
         private static IReadOnlySet<string> BuildVisibleRelevantKeys(IReadOnlyList<CurrentModEntry> currentOrder)
@@ -209,9 +212,11 @@ namespace STS2RitsuLib.Settings
         private static IReadOnlyList<CurrentModEntry> BuildSortableOrder(IReadOnlyList<CurrentModEntry> currentOrder)
         {
             var trailingKeys = BuildTrailingKeys(currentOrder);
-            return currentOrder
-                .Where(entry => !trailingKeys.Contains(entry.Key))
-                .ToArray();
+            return
+            [
+                .. currentOrder
+                    .Where(entry => !trailingKeys.Contains(entry.Key)),
+            ];
         }
 
         private static IReadOnlySet<string> BuildTrailingKeys(IReadOnlyList<CurrentModEntry> currentOrder)
@@ -270,21 +275,25 @@ namespace STS2RitsuLib.Settings
                     .Concat(trailingOrder)
                     .ToArray();
 
-            settings.ModSettings.ModList = ordered
-                .Select(entry => new SettingsSaveMod
-                {
-                    Id = entry.Id,
-                    Source = entry.Source,
-                    IsEnabled = entry.IsEnabled,
-                })
-                .ToList();
+            settings.ModSettings.ModList =
+            [
+                .. ordered
+                    .Select(entry => new SettingsSaveMod
+                    {
+                        Id = entry.Id,
+                        Source = entry.Source,
+                        IsEnabled = entry.IsEnabled,
+                    }),
+            ];
             ContentModLoadOrderInventory.RemoveLocalDuplicateWorkshopEntries(settings.ModSettings);
-            return ordered
-                .Where(entry => entry.Source != ModSource.SteamWorkshop ||
-                                !settings.ModSettings.ModList.Any(saved =>
-                                    saved.Source == ModSource.ModsDirectory &&
-                                    string.Equals(saved.Id, entry.Id, StringComparison.Ordinal)))
-                .ToArray();
+            return
+            [
+                .. ordered
+                    .Where(entry => entry.Source != ModSource.SteamWorkshop ||
+                                    !settings.ModSettings.ModList.Any(saved =>
+                                        saved.Source == ModSource.ModsDirectory &&
+                                        string.Equals(saved.Id, entry.Id, StringComparison.Ordinal))),
+            ];
         }
 
         private static void SaveAndLog(
@@ -322,11 +331,13 @@ namespace STS2RitsuLib.Settings
 
         private static IReadOnlyList<string> NormalizeIds(IEnumerable<string> ids)
         {
-            return ids
-                .Select(id => id.Trim())
-                .Where(id => !string.IsNullOrWhiteSpace(id))
-                .Distinct(StringComparer.Ordinal)
-                .ToArray();
+            return
+            [
+                .. ids
+                    .Select(id => id.Trim())
+                    .Where(id => !string.IsNullOrWhiteSpace(id))
+                    .Distinct(StringComparer.Ordinal),
+            ];
         }
 
         private static string FormatOrderPreview(IReadOnlyList<string> orderedIds)

@@ -156,9 +156,11 @@ namespace STS2RitsuLib.Ui.RichTextEffects
         {
             lock (SyncRoot)
             {
-                return Registrations.Values
-                    .OrderBy(registration => registration.Bbcode, StringComparer.Ordinal)
-                    .ToArray();
+                return
+                [
+                    .. Registrations.Values
+                        .OrderBy(registration => registration.Bbcode, StringComparer.Ordinal),
+                ];
             }
         }
 
@@ -210,7 +212,7 @@ namespace STS2RitsuLib.Ui.RichTextEffects
                 if (Registrations.Count == 0)
                     return false;
 
-                snapshot = Registrations.Values.ToArray();
+                snapshot = [.. Registrations.Values];
             }
 
             var effects = label.CustomEffects;

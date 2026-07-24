@@ -239,7 +239,7 @@ namespace STS2RitsuLib.Content.Patches
             }
 
             entries.Sort(CompareModelCacheEntries);
-            return entries.ToArray();
+            return [.. entries];
         }
 
         private static IReadOnlyDictionary<ModelId, ModelSortIds> BuildLocalOnlySortIds(

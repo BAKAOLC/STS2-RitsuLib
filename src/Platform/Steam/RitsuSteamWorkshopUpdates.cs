@@ -1017,32 +1017,34 @@ namespace STS2RitsuLib.Platform.Steam
                 var localManifests = BuildLocalManifestByWorkshopItemId();
                 var details = await QueryRemoteUpdateTimesAsync(snapshots, null, cancellationToken)
                     .ConfigureAwait(false);
-                return snapshots
-                    .Select(snapshot =>
-                    {
-                        details.TryGetValue(snapshot.Id, out var detail);
-                        var manifest = localManifests.TryGetValue(snapshot.Id, out var modManagerManifest)
-                            ? modManagerManifest
-                            : TryReadLocalManifest(snapshot.Install.FolderPath);
-                        return new RitsuSteamWorkshopItem(
-                            snapshot.Id,
-                            ResolveItemDisplayName(snapshot, detail, manifest),
-                            manifest.ModId,
-                            manifest.Author,
-                            detail.OwnerSteamId,
-                            detail.Description,
-                            detail.PreviewUrl,
-                            HasFlag(snapshot.State, itemStateFlags.Subscribed),
-                            HasFlag(snapshot.State, itemStateFlags.Installed),
-                            HasFlag(snapshot.State, itemStateFlags.NeedsUpdate),
-                            HasFlag(snapshot.State, itemStateFlags.Downloading),
-                            HasFlag(snapshot.State, itemStateFlags.DownloadPending),
-                            snapshot.Install.LocalTimestamp,
-                            detail.Updated == 0 ? null : detail.Updated);
-                    })
-                    .OrderBy(static item => item.DisplayName, StringComparer.OrdinalIgnoreCase)
-                    .ThenBy(static item => item.Id)
-                    .ToArray();
+                return
+                [
+                    .. snapshots
+                        .Select(snapshot =>
+                        {
+                            details.TryGetValue(snapshot.Id, out var detail);
+                            var manifest = localManifests.TryGetValue(snapshot.Id, out var modManagerManifest)
+                                ? modManagerManifest
+                                : TryReadLocalManifest(snapshot.Install.FolderPath);
+                            return new RitsuSteamWorkshopItem(
+                                snapshot.Id,
+                                ResolveItemDisplayName(snapshot, detail, manifest),
+                                manifest.ModId,
+                                manifest.Author,
+                                detail.OwnerSteamId,
+                                detail.Description,
+                                detail.PreviewUrl,
+                                HasFlag(snapshot.State, itemStateFlags.Subscribed),
+                                HasFlag(snapshot.State, itemStateFlags.Installed),
+                                HasFlag(snapshot.State, itemStateFlags.NeedsUpdate),
+                                HasFlag(snapshot.State, itemStateFlags.Downloading),
+                                HasFlag(snapshot.State, itemStateFlags.DownloadPending),
+                                snapshot.Install.LocalTimestamp,
+                                detail.Updated == 0 ? null : detail.Updated);
+                        })
+                        .OrderBy(static item => item.DisplayName, StringComparer.OrdinalIgnoreCase)
+                        .ThenBy(static item => item.Id),
+                ];
             }
 
             private IReadOnlyList<RitsuSteamWorkshopItem> BuildWorkshopItemsFromCache(
@@ -1053,39 +1055,41 @@ namespace STS2RitsuLib.Platform.Steam
 
                 var localManifests = BuildLocalManifestByWorkshopItemId();
                 var cachedDetails = SteamWorkshopUpdateSnapshotStore.GetItems(SteamWorkshopUpdateScope.Current());
-                return snapshots
-                    .Select(snapshot =>
-                    {
-                        var manifest = localManifests.TryGetValue(snapshot.Id, out var modManagerManifest)
-                            ? modManagerManifest
-                            : TryReadLocalManifest(snapshot.Install.FolderPath);
-                        cachedDetails.TryGetValue(snapshot.Id, out var cached);
-                        var detail = new RemoteItemDetails(
-                            snapshot.Id,
-                            cached.Updated,
-                            NormalizeString(cached.Title),
-                            null,
-                            null,
-                            null);
-                        return new RitsuSteamWorkshopItem(
-                            snapshot.Id,
-                            ResolveItemDisplayName(snapshot, detail, manifest),
-                            manifest.ModId,
-                            manifest.Author,
-                            null,
-                            null,
-                            null,
-                            HasFlag(snapshot.State, itemStateFlags.Subscribed),
-                            HasFlag(snapshot.State, itemStateFlags.Installed),
-                            HasFlag(snapshot.State, itemStateFlags.NeedsUpdate),
-                            HasFlag(snapshot.State, itemStateFlags.Downloading),
-                            HasFlag(snapshot.State, itemStateFlags.DownloadPending),
-                            snapshot.Install.LocalTimestamp,
-                            cached.Updated == 0 ? null : cached.Updated);
-                    })
-                    .OrderBy(static item => item.DisplayName, StringComparer.OrdinalIgnoreCase)
-                    .ThenBy(static item => item.Id)
-                    .ToArray();
+                return
+                [
+                    .. snapshots
+                        .Select(snapshot =>
+                        {
+                            var manifest = localManifests.TryGetValue(snapshot.Id, out var modManagerManifest)
+                                ? modManagerManifest
+                                : TryReadLocalManifest(snapshot.Install.FolderPath);
+                            cachedDetails.TryGetValue(snapshot.Id, out var cached);
+                            var detail = new RemoteItemDetails(
+                                snapshot.Id,
+                                cached.Updated,
+                                NormalizeString(cached.Title),
+                                null,
+                                null,
+                                null);
+                            return new RitsuSteamWorkshopItem(
+                                snapshot.Id,
+                                ResolveItemDisplayName(snapshot, detail, manifest),
+                                manifest.ModId,
+                                manifest.Author,
+                                null,
+                                null,
+                                null,
+                                HasFlag(snapshot.State, itemStateFlags.Subscribed),
+                                HasFlag(snapshot.State, itemStateFlags.Installed),
+                                HasFlag(snapshot.State, itemStateFlags.NeedsUpdate),
+                                HasFlag(snapshot.State, itemStateFlags.Downloading),
+                                HasFlag(snapshot.State, itemStateFlags.DownloadPending),
+                                snapshot.Install.LocalTimestamp,
+                                cached.Updated == 0 ? null : cached.Updated);
+                        })
+                        .OrderBy(static item => item.DisplayName, StringComparer.OrdinalIgnoreCase)
+                        .ThenBy(static item => item.Id),
+                ];
             }
 
             private async Task<IReadOnlyList<ItemSnapshot>> BuildItemSnapshotsAsync(

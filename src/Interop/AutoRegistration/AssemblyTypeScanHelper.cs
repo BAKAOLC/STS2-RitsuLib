@@ -20,7 +20,7 @@ namespace STS2RitsuLib.Interop.AutoRegistration
                     logger.Warn(
                         $"[AutoRegister] Loader exception while scanning {assembly.FullName}: {loaderException!.Message}");
 
-                return ex.Types.Where(static t => t != null).Cast<Type>().ToArray();
+                return [.. ex.Types.Where(static t => t != null).Cast<Type>()];
             }
         }
     }

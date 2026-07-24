@@ -59,7 +59,9 @@ namespace STS2RitsuLib.Patching.Rules
                 .Where(TypeSelector)
                 .OrderBy(static t => t.FullName ?? t.Name, StringComparer.Ordinal);
 
-            return (from type in types
+            return
+            [
+                .. from type in types
                 let methods = type
                     .GetMethods(BindingFlags.Instance | BindingFlags.Static | BindingFlags.Public |
                                 BindingFlags.NonPublic)
@@ -75,7 +77,8 @@ namespace STS2RitsuLib.Patching.Rules
                     PatchType,
                     IsCritical,
                     $"{Description} -> {type.Name}.{FormatDescriptionSignature(method)}",
-                    parameterTypes)).ToArray();
+                    parameterTypes),
+            ];
         }
 
         /// <summary>
@@ -87,7 +90,7 @@ namespace STS2RitsuLib.Patching.Rules
             var result = new List<ModPatchInfo>();
             foreach (var assembly in assemblies)
                 result.AddRange(GeneratePatches(assembly));
-            return [..result];
+            return [.. result];
         }
 
         /// <inheritdoc />

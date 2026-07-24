@@ -228,7 +228,7 @@ namespace STS2RitsuLib.Models.Capabilities
                     return;
 
                 _listeners.Add(listener);
-                Volatile.Write(ref _snapshot, _listeners.ToArray());
+                Volatile.Write(ref _snapshot, [.. _listeners]);
             }
         }
 

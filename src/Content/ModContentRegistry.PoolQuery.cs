@@ -15,13 +15,15 @@ namespace STS2RitsuLib.Content
 
             lock (SyncRoot)
             {
-                return RegisteredPoolContent
-                    .Where(e => e.PoolType == poolType &&
-                                TryGetOwnerModId(e.ModelType, out var oid) &&
-                                string.Equals(oid, modId, StringComparison.OrdinalIgnoreCase))
-                    .Select(static e => e.ModelType)
-                    .Distinct()
-                    .ToArray();
+                return
+                [
+                    .. RegisteredPoolContent
+                        .Where(e => e.PoolType == poolType &&
+                                    TryGetOwnerModId(e.ModelType, out var oid) &&
+                                    string.Equals(oid, modId, StringComparison.OrdinalIgnoreCase))
+                        .Select(static e => e.ModelType)
+                        .Distinct(),
+                ];
             }
         }
     }

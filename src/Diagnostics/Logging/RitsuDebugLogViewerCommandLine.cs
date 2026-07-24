@@ -36,7 +36,7 @@ namespace STS2RitsuLib.Diagnostics.Logging
                 godotOptions.Warnings.Count > 0)
                 return godotOptions;
 
-            return Parse(Environment.GetCommandLineArgs().Skip(1).ToArray());
+            return Parse([.. Environment.GetCommandLineArgs().Skip(1)]);
         }
 
         internal static RitsuDebugLogViewerCommandLineOptions Parse(IReadOnlyList<string> args)

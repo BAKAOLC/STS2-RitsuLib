@@ -514,9 +514,11 @@ namespace STS2RitsuLib.Keywords
         {
             lock (SyncRoot)
             {
-                return Definitions.Values
-                    .OrderBy(def => def.Id, StringComparer.Ordinal)
-                    .ToArray();
+                return
+                [
+                    .. Definitions.Values
+                        .OrderBy(def => def.Id, StringComparer.Ordinal),
+                ];
             }
         }
 

@@ -1330,10 +1330,12 @@ namespace STS2RitsuLib.Content
                 AddScoped(list, RegisteredActAncients, typeof(ActModel), typeof(AncientEventModel),
                     "registered act ancient");
 
-                references = list
-                    .DistinctBy(static reference => (reference.ModelType, reference.ExpectedBaseType,
-                        reference.Description))
-                    .ToArray();
+                references =
+                [
+                    .. list
+                        .DistinctBy(static reference => (reference.ModelType, reference.ExpectedBaseType,
+                            reference.Description)),
+                ];
             }
 
             foreach (var reference in references)
@@ -1384,26 +1386,28 @@ namespace STS2RitsuLib.Content
         {
             lock (SyncRoot)
             {
-                return RegisteredTypeOwners
-                    .OrderBy(kvp => kvp.Value, StringComparer.OrdinalIgnoreCase)
-                    .ThenBy(kvp => kvp.Key.FullName, StringComparer.Ordinal)
-                    .Select(kvp =>
-                    {
-                        var modelType = kvp.Key;
-                        var modId = kvp.Value;
-                        var modelDbId = TryGetModelDbId(modelType);
-                        var expectedPublicEntry =
-                            TryGetExpectedPublicEntry(modelType, modId, out var hasExplicitOverride);
-                        var typeNamePublicEntry = TryGetTypeNamePublicEntry(modelType);
-                        return new ModContentRegisteredTypeSnapshot(
-                            modId,
-                            modelType,
-                            modelDbId,
-                            expectedPublicEntry,
-                            hasExplicitOverride,
-                            typeNamePublicEntry);
-                    })
-                    .ToArray();
+                return
+                [
+                    .. RegisteredTypeOwners
+                        .OrderBy(kvp => kvp.Value, StringComparer.OrdinalIgnoreCase)
+                        .ThenBy(kvp => kvp.Key.FullName, StringComparer.Ordinal)
+                        .Select(kvp =>
+                        {
+                            var modelType = kvp.Key;
+                            var modId = kvp.Value;
+                            var modelDbId = TryGetModelDbId(modelType);
+                            var expectedPublicEntry =
+                                TryGetExpectedPublicEntry(modelType, modId, out var hasExplicitOverride);
+                            var typeNamePublicEntry = TryGetTypeNamePublicEntry(modelType);
+                            return new ModContentRegisteredTypeSnapshot(
+                                modId,
+                                modelType,
+                                modelDbId,
+                                expectedPublicEntry,
+                                hasExplicitOverride,
+                                typeNamePublicEntry);
+                        }),
+                ];
             }
 
             static ModelId? TryGetModelDbId(Type modelType)
@@ -1494,7 +1498,7 @@ namespace STS2RitsuLib.Content
         {
             lock (SyncRoot)
             {
-                return RegisteredActs.ToArray();
+                return [.. RegisteredActs];
             }
         }
 
@@ -1502,7 +1506,7 @@ namespace STS2RitsuLib.Content
         {
             lock (SyncRoot)
             {
-                return RegisteredActEvents.Keys.ToArray();
+                return [.. RegisteredActEvents.Keys];
             }
         }
 
@@ -1567,11 +1571,13 @@ namespace STS2RitsuLib.Content
             Type[] relicTypes;
             lock (SyncRoot)
             {
-                relicTypes = RegisteredPoolContent
-                    .Select(static entry => entry.ModelType)
-                    .Where(static type => typeof(RelicModel).IsAssignableFrom(type))
-                    .Distinct()
-                    .ToArray();
+                relicTypes =
+                [
+                    .. RegisteredPoolContent
+                        .Select(static entry => entry.ModelType)
+                        .Where(static type => typeof(RelicModel).IsAssignableFrom(type))
+                        .Distinct(),
+                ];
             }
 
             var additional = ResolveExistingModels<RelicModel>(relicTypes);
@@ -1622,10 +1628,12 @@ namespace STS2RitsuLib.Content
             Type[] ancientTypes;
             lock (SyncRoot)
             {
-                ancientTypes = RegisteredActAncients.Values
-                    .SelectMany(static set => set)
-                    .Distinct()
-                    .ToArray();
+                ancientTypes =
+                [
+                    .. RegisteredActAncients.Values
+                        .SelectMany(static set => set)
+                        .Distinct(),
+                ];
             }
 
             var additional = ResolveExistingModels<AncientEventModel>(ancientTypes);
@@ -1641,20 +1649,24 @@ namespace STS2RitsuLib.Content
         private static TModel[] ResolveExistingModels<TModel>(IEnumerable<Type> modelTypes)
             where TModel : AbstractModel
         {
-            return modelTypes
-                .OrderBy(static type => type.FullName ?? type.Name, StringComparer.Ordinal)
-                .Select(static type => ModelDb.GetByIdOrNull<TModel>(ModelDb.GetId(type)))
-                .OfType<TModel>()
-                .ToArray();
+            return
+            [
+                .. modelTypes
+                    .OrderBy(static type => type.FullName ?? type.Name, StringComparer.Ordinal)
+                    .Select(static type => ModelDb.GetByIdOrNull<TModel>(ModelDb.GetId(type)))
+                    .OfType<TModel>(),
+            ];
         }
 
         internal static Type[] GetRegisteredBadgeTypes()
         {
             lock (SyncRoot)
             {
-                return RegisteredBadges
-                    .OrderBy(static t => t.FullName ?? t.Name, StringComparer.Ordinal)
-                    .ToArray();
+                return
+                [
+                    .. RegisteredBadges
+                        .OrderBy(static t => t.FullName ?? t.Name, StringComparer.Ordinal),
+                ];
             }
         }
 
@@ -1672,34 +1684,36 @@ namespace STS2RitsuLib.Content
 
             lock (SyncRoot)
             {
-                typesToInject = RegisteredPoolContent
-                    .SelectMany(static entry => new[] { entry.PoolType, entry.ModelType })
-                    .Concat(RegisteredCharacters)
-                    .Concat(RegisteredActs)
-                    .Concat(RegisteredMonsters)
-                    .Concat(RegisteredPowers)
-                    .Concat(RegisteredOrbs)
-                    .Concat(RegisteredModelCapabilities)
-                    .Concat(RegisteredEnchantments)
-                    .Concat(RegisteredAfflictions)
-                    .Concat(RegisteredAchievements)
-                    .Concat(RegisteredSingletons)
-                    .Concat(RegisteredSharedCardPools)
-                    .Concat(RegisteredSharedRelicPools)
-                    .Concat(RegisteredSharedPotionPools)
-                    .Concat(RegisteredGoodModifiers.Select(static registration => registration.ModifierType))
-                    .Concat(RegisteredBadModifiers.Select(static registration => registration.ModifierType))
-                    .Concat(RegisteredMutuallyExclusiveModifierGroups.SelectMany(static group => group))
-                    .Concat(RegisteredSharedEvents)
-                    .Concat(RegisteredSharedAncients)
-                    .Concat(RegisteredActEncounters.Values.SelectMany(static set => set))
-                    .Concat(RegisteredGlobalEncounters)
-                    .Concat(RegisteredActEvents.Values.SelectMany(static set => set))
-                    .Concat(RegisteredActAncients.Values.SelectMany(static set => set))
-                    .Distinct()
-                    .Where(static t => t.Assembly.IsDynamic)
-                    .OrderBy(static t => t.FullName ?? t.Name, StringComparer.Ordinal)
-                    .ToArray();
+                typesToInject =
+                [
+                    .. RegisteredPoolContent
+                        .SelectMany(static entry => new[] { entry.PoolType, entry.ModelType })
+                        .Concat(RegisteredCharacters)
+                        .Concat(RegisteredActs)
+                        .Concat(RegisteredMonsters)
+                        .Concat(RegisteredPowers)
+                        .Concat(RegisteredOrbs)
+                        .Concat(RegisteredModelCapabilities)
+                        .Concat(RegisteredEnchantments)
+                        .Concat(RegisteredAfflictions)
+                        .Concat(RegisteredAchievements)
+                        .Concat(RegisteredSingletons)
+                        .Concat(RegisteredSharedCardPools)
+                        .Concat(RegisteredSharedRelicPools)
+                        .Concat(RegisteredSharedPotionPools)
+                        .Concat(RegisteredGoodModifiers.Select(static registration => registration.ModifierType))
+                        .Concat(RegisteredBadModifiers.Select(static registration => registration.ModifierType))
+                        .Concat(RegisteredMutuallyExclusiveModifierGroups.SelectMany(static group => group))
+                        .Concat(RegisteredSharedEvents)
+                        .Concat(RegisteredSharedAncients)
+                        .Concat(RegisteredActEncounters.Values.SelectMany(static set => set))
+                        .Concat(RegisteredGlobalEncounters)
+                        .Concat(RegisteredActEvents.Values.SelectMany(static set => set))
+                        .Concat(RegisteredActAncients.Values.SelectMany(static set => set))
+                        .Distinct()
+                        .Where(static t => t.Assembly.IsDynamic)
+                        .OrderBy(static t => t.FullName ?? t.Name, StringComparer.Ordinal),
+                ];
             }
 
             foreach (var type in typesToInject)
@@ -1908,14 +1922,16 @@ namespace STS2RitsuLib.Content
 
             lock (SyncRoot)
             {
-                return RegisteredCharacterStarterContent
-                    .Select(static (entry, index) => new { entry, index })
-                    .OrderBy(static x => x.entry.Order)
-                    .ThenBy(static x => x.index)
-                    .Where(x => x.entry.Kind == kind && MatchesRegisteredStarterCharacter(x.entry.CharacterType,
-                        characterType))
-                    .SelectMany(static x => Enumerable.Repeat(x.entry.ModelType, x.entry.Count))
-                    .ToArray();
+                return
+                [
+                    .. RegisteredCharacterStarterContent
+                        .Select(static (entry, index) => new { entry, index })
+                        .OrderBy(static x => x.entry.Order)
+                        .ThenBy(static x => x.index)
+                        .Where(x => x.entry.Kind == kind && MatchesRegisteredStarterCharacter(x.entry.CharacterType,
+                            characterType))
+                        .SelectMany(static x => Enumerable.Repeat(x.entry.ModelType, x.entry.Count)),
+                ];
             }
         }
 

@@ -78,7 +78,7 @@ namespace STS2RitsuLib.Combat.Rewards.Patches
             {
                 result.Source = options.Source;
                 result.RarityOdds = options.RarityOdds;
-                result.CardPoolIds = options.CardPools.Select(p => p.Id).ToList();
+                result.CardPoolIds = [.. options.CardPools.Select(p => p.Id)];
             }
 
             result.OptionCount = GetOptionCount(__instance);
@@ -103,7 +103,7 @@ namespace STS2RitsuLib.Combat.Rewards.Patches
             return new()
             {
                 IsCustomPool = true,
-                CustomCardIds = cards.Select(c => c.Id.ToString()).ToList(),
+                CustomCardIds = [.. cards.Select(c => c.Id.ToString())],
                 Source = (int)options.Source,
                 RarityOdds = (int)options.RarityOdds,
             };
@@ -132,7 +132,7 @@ namespace STS2RitsuLib.Combat.Rewards.Patches
             return new()
             {
                 IsCustomPool = true,
-                CustomCardIds = allCards.Select(c => c.Id.ToString()).ToList(),
+                CustomCardIds = [.. allCards.Select(c => c.Id.ToString())],
                 Source = (int)options.Source,
                 RarityOdds = (int)options.RarityOdds,
             };

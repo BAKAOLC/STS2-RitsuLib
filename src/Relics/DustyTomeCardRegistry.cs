@@ -117,12 +117,14 @@ namespace STS2RitsuLib.Relics
                 static pair => pair.Key,
                 static IReadOnlyList<CardModel> (pair) =>
                 {
-                    return pair.Value
-                        .GroupBy(static candidate => candidate.Card.Id)
-                        .Select(static group => group.OrderBy(static candidate => candidate.RegistrationOrder)
-                            .First().Card)
-                        .OrderBy(static card => card.Id.ToString(), StringComparer.Ordinal)
-                        .ToArray();
+                    return
+                    [
+                        .. pair.Value
+                            .GroupBy(static candidate => candidate.Card.Id)
+                            .Select(static group => group.OrderBy(static candidate => candidate.RegistrationOrder)
+                                .First().Card)
+                            .OrderBy(static card => card.Id.ToString(), StringComparer.Ordinal),
+                    ];
                 });
         }
 

@@ -14,12 +14,14 @@ namespace STS2RitsuLib.Timeline.Scaffolding
         ///     Resolved <see cref="RelicModel" /> instances for <see cref="RelicTypes" />.
         ///     解析出的 <see cref="RelicModel" /> 实例，用于 <see cref="RelicTypes" />。
         /// </summary>
-        public IReadOnlyList<RelicModel> Relics => RelicTypes
-            .Select(type => ModelDb.GetById<RelicModel>(ModelDb.GetId(type)))
-            .ToArray();
+        public IReadOnlyList<RelicModel> Relics =>
+        [
+            .. RelicTypes
+                .Select(type => ModelDb.GetById<RelicModel>(ModelDb.GetId(type))),
+        ];
 
         /// <inheritdoc />
-        public override string UnlockText => CreateRelicUnlockText(Relics.ToList());
+        public override string UnlockText => CreateRelicUnlockText([.. Relics]);
 
         /// <summary>
         ///     CLR types of relics to unlock; each must be registered in <see cref="ModelDb" />.
@@ -47,13 +49,13 @@ namespace STS2RitsuLib.Timeline.Scaffolding
         /// <inheritdoc />
         public override EpochModel[] GetTimelineExpansion()
         {
-            return ExpansionEpochTypes.Select(type => Get(GetId(type))).ToArray();
+            return [.. ExpansionEpochTypes.Select(type => Get(GetId(type)))];
         }
 
         /// <inheritdoc />
         public override void QueueUnlocks()
         {
-            NTimelineScreen.Instance.QueueRelicUnlock(Relics.ToList());
+            NTimelineScreen.Instance.QueueRelicUnlock([.. Relics]);
 
             var expansion = GetTimelineExpansion();
             if (expansion.Length > 0)

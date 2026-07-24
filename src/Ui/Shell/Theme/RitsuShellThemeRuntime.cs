@@ -235,7 +235,7 @@ namespace STS2RitsuLib.Ui.Shell.Theme
             RitsuShellThemeModRegistration[] modSnapshot;
             lock (Gate)
             {
-                modSnapshot = ModRegistrations.Values.ToArray();
+                modSnapshot = [.. ModRegistrations.Values];
             }
 
             ThemeChanged?.Invoke();

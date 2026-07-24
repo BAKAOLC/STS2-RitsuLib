@@ -71,7 +71,7 @@ namespace STS2RitsuLib.Models.Capabilities
             PlayerChoiceContext choiceContext,
             IEnumerable<Creature> targets)
         {
-            var context = new OrbEvokeContext(orb, choiceContext, targets.ToArray());
+            var context = new OrbEvokeContext(orb, choiceContext, [.. targets]);
             foreach (var capability in GetCapabilities<OrbCapability>(orb))
             {
                 if (!IsStillAttachedToOrb(capability, orb))

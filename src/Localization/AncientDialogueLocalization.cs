@@ -76,7 +76,7 @@ namespace STS2RitsuLib.Localization
                 var (startAttackers, endAttackers) =
                     ResolveArchitectAttackers(locTable, baseKey, dialogueIndex, isArchitect);
 
-                dialogues.Add(new(sfxPaths.ToArray())
+                dialogues.Add(new([.. sfxPaths])
                 {
                     VisitIndex = visitIndex,
                     StartAttackers = startAttackers,

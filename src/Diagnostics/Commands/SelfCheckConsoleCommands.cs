@@ -117,23 +117,27 @@ namespace STS2RitsuLib.Diagnostics.Commands
         private static string[] GetModIdCandidates()
         {
             RefreshSettingsPagesForCompletion();
-            return ModSettingsRegistry.GetPages()
-                .Where(ModSettingsVisibility.IsPageVisible)
-                .Select(static page => page.ModId)
-                .Distinct(StringComparer.OrdinalIgnoreCase)
-                .Order(StringComparer.OrdinalIgnoreCase)
-                .ToArray();
+            return
+            [
+                .. ModSettingsRegistry.GetPages()
+                    .Where(ModSettingsVisibility.IsPageVisible)
+                    .Select(static page => page.ModId)
+                    .Distinct(StringComparer.OrdinalIgnoreCase)
+                    .Order(StringComparer.OrdinalIgnoreCase),
+            ];
         }
 
         private static string[] GetPageIdCandidates(string modId)
         {
             RefreshSettingsPagesForCompletion();
-            return ModSettingsRegistry.GetPages()
-                .Where(page => string.Equals(page.ModId, modId, StringComparison.OrdinalIgnoreCase))
-                .Where(ModSettingsVisibility.IsPageVisible)
-                .Select(static page => page.Id)
-                .Order(StringComparer.OrdinalIgnoreCase)
-                .ToArray();
+            return
+            [
+                .. ModSettingsRegistry.GetPages()
+                    .Where(page => string.Equals(page.ModId, modId, StringComparison.OrdinalIgnoreCase))
+                    .Where(ModSettingsVisibility.IsPageVisible)
+                    .Select(static page => page.Id)
+                    .Order(StringComparer.OrdinalIgnoreCase),
+            ];
         }
 
         private static string[] GetSectionIdCandidates(string modId, string pageId)
@@ -141,9 +145,12 @@ namespace STS2RitsuLib.Diagnostics.Commands
             RefreshSettingsPagesForCompletion();
             return ModSettingsRegistry.TryGetPage(modId, pageId, out var page) && page != null &&
                    ModSettingsVisibility.IsPageVisible(page)
-                ? page.Sections.Where(section => ModSettingsVisibility.IsSectionVisible(page, section))
-                    .Select(static section => section.Id)
-                    .Order(StringComparer.OrdinalIgnoreCase).ToArray()
+                ?
+                [
+                    .. page.Sections.Where(section => ModSettingsVisibility.IsSectionVisible(page, section))
+                        .Select(static section => section.Id)
+                        .Order(StringComparer.OrdinalIgnoreCase),
+                ]
                 : [];
         }
 
@@ -158,9 +165,12 @@ namespace STS2RitsuLib.Diagnostics.Commands
                 StringComparison.OrdinalIgnoreCase));
             return section == null || !ModSettingsVisibility.IsSectionVisible(page, section)
                 ? []
-                : section.Entries.Where(entry => ModSettingsVisibility.IsEntryVisible(page, entry))
-                    .Select(static entry => entry.Id)
-                    .Order(StringComparer.OrdinalIgnoreCase).ToArray();
+                :
+                [
+                    .. section.Entries.Where(entry => ModSettingsVisibility.IsEntryVisible(page, entry))
+                        .Select(static entry => entry.Id)
+                        .Order(StringComparer.OrdinalIgnoreCase),
+                ];
         }
 
         private static void RefreshSettingsPagesForCompletion()

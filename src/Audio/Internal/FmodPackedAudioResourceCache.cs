@@ -236,13 +236,13 @@ namespace STS2RitsuLib.Audio.Internal
                 while (packet.Length - offset >= 255)
                 {
                     segmentTable.Add(255);
-                    payload.AddRange(packet.AsSpan(offset, 255).ToArray());
+                    payload.AddRange([.. packet.AsSpan(offset, 255)]);
                     offset += 255;
                 }
 
                 segmentTable.Add((byte)(packet.Length - offset));
                 if (packet.Length > offset)
-                    payload.AddRange(packet.AsSpan(offset).ToArray());
+                    payload.AddRange([.. packet.AsSpan(offset)]);
             }
 
             if (segmentTable.Count > 255)

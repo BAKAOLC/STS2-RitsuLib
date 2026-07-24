@@ -132,10 +132,12 @@ namespace STS2RitsuLib.TopBar
         {
             lock (SyncRoot)
             {
-                return Definitions.Values
-                    .OrderBy(def => def.Order)
-                    .ThenBy(def => def.Id, StringComparer.Ordinal)
-                    .ToArray();
+                return
+                [
+                    .. Definitions.Values
+                        .OrderBy(def => def.Order)
+                        .ThenBy(def => def.Id, StringComparer.Ordinal),
+                ];
             }
         }
 

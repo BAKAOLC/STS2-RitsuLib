@@ -84,7 +84,7 @@ namespace STS2RitsuLib.Content
         {
             lock (SyncRoot)
             {
-                return CardLibraryCompendiumSharedPoolFilters.ToArray();
+                return [.. CardLibraryCompendiumSharedPoolFilters];
             }
         }
 

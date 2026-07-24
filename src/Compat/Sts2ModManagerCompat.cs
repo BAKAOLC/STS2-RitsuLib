@@ -115,11 +115,13 @@ namespace STS2RitsuLib.Compat
 
         internal static IReadOnlyList<Sts2LoadedModAssemblyEntry> BuildLoadedModAssemblyEntries()
         {
-            return EnumerateLoadedModsWithAssembly()
-                .SelectMany(TryBuildLoadedModAssemblyEntries)
-                .Where(entry => entry != null)
-                .Select(entry => entry)
-                .ToArray();
+            return
+            [
+                .. EnumerateLoadedModsWithAssembly()
+                    .SelectMany(TryBuildLoadedModAssemblyEntries)
+                    .Where(entry => entry != null)
+                    .Select(entry => entry),
+            ];
         }
 
         internal static bool IsGameplayRelevantLoadedModType(Type type)
@@ -180,7 +182,7 @@ namespace STS2RitsuLib.Compat
                         !string.Equals(ReadManifestId(manifest), modId, StringComparison.Ordinal))
                         continue;
 
-                    return ReadAssemblies(mod).Distinct().ToArray();
+                    return [.. ReadAssemblies(mod).Distinct()];
                 }
                 catch (Exception ex)
                 {
@@ -234,35 +236,41 @@ namespace STS2RitsuLib.Compat
 
         internal static IReadOnlyList<Sts2ModInventoryEntry> BuildModInventoryEntries()
         {
-            return EnumerateModsForManifestLookup()
-                .Select(TryBuildModInventoryEntry)
-                .Where(entry => entry != null)
-                .Select(entry => entry!)
-                .OrderBy(entry => entry.Id, StringComparer.OrdinalIgnoreCase)
-                .ThenBy(entry => entry.AssemblyName ?? "", StringComparer.OrdinalIgnoreCase)
-                .ToArray();
+            return
+            [
+                .. EnumerateModsForManifestLookup()
+                    .Select(TryBuildModInventoryEntry)
+                    .Where(entry => entry != null)
+                    .Select(entry => entry!)
+                    .OrderBy(entry => entry.Id, StringComparer.OrdinalIgnoreCase)
+                    .ThenBy(entry => entry.AssemblyName ?? "", StringComparer.OrdinalIgnoreCase),
+            ];
         }
 
         internal static IReadOnlyList<Sts2ModInventoryEntry> BuildLoadedModInventoryEntries()
         {
-            return EnumerateLoadedModsWithAssembly()
-                .Select(TryBuildModInventoryEntry)
-                .Where(entry => entry != null)
-                .Select(entry => entry!)
-                .ToArray();
+            return
+            [
+                .. EnumerateLoadedModsWithAssembly()
+                    .Select(TryBuildModInventoryEntry)
+                    .Where(entry => entry != null)
+                    .Select(entry => entry!),
+            ];
         }
 
         internal static IReadOnlyList<RitsuModInfo> BuildModInfos(string? modId = null, RitsuModSource? source = null)
         {
-            return EnumerateModsForManifestLookup()
-                .Select(TryBuildModInfo)
-                .Where(entry => entry != null)
-                .Select(entry => entry!)
-                .Where(entry => MatchesModQuery(entry, modId, source))
-                .OrderBy(GetBestModInfoRank)
-                .ThenBy(entry => entry.Id, StringComparer.OrdinalIgnoreCase)
-                .ThenBy(entry => entry.Source)
-                .ToArray();
+            return
+            [
+                .. EnumerateModsForManifestLookup()
+                    .Select(TryBuildModInfo)
+                    .Where(entry => entry != null)
+                    .Select(entry => entry!)
+                    .Where(entry => MatchesModQuery(entry, modId, source))
+                    .OrderBy(GetBestModInfoRank)
+                    .ThenBy(entry => entry.Id, StringComparer.OrdinalIgnoreCase)
+                    .ThenBy(entry => entry.Source),
+            ];
         }
 
         internal static ulong? TryGetWorkshopItemId(Mod mod)
@@ -365,13 +373,15 @@ namespace STS2RitsuLib.Compat
                 var id = manifest == null ? fallbackName : ReadManifestId(manifest) ?? fallbackName;
                 var name = manifest == null ? fallbackName : ReadManifestName(manifest) ?? fallbackName;
 
-                return assemblies
-                    .Select(assembly => new Sts2LoadedModAssemblyEntry(
-                        id,
-                        name,
-                        manifest == null ? null : ReadManifestVersion(manifest),
-                        assembly))
-                    .ToArray();
+                return
+                [
+                    .. assemblies
+                        .Select(assembly => new Sts2LoadedModAssemblyEntry(
+                            id,
+                            name,
+                            manifest == null ? null : ReadManifestVersion(manifest),
+                            assembly)),
+                ];
             }
             catch (Exception ex)
             {

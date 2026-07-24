@@ -981,7 +981,7 @@ namespace STS2RitsuLib.Settings
             TValue currentValue,
             Action<TValue> onChanged)
         {
-            _optionsWithValues = options.ToArray();
+            _optionsWithValues = [.. options];
             _currentValue = currentValue;
             _onChanged = onChanged;
 
@@ -1150,7 +1150,7 @@ namespace STS2RitsuLib.Settings
         /// </summary>
         public void SetOptions(IReadOnlyList<(TValue Value, string Label)> options, TValue selectedValue)
         {
-            _optionsWithValues = options.ToArray();
+            _optionsWithValues = [.. options];
             _currentValue = selectedValue;
             _currentIndex = 0;
 
@@ -1272,14 +1272,14 @@ namespace STS2RitsuLib.Settings
         private int _activePoolCount;
         private Control? _backdrop;
         private float _cachedDropdownBodyH;
+        private bool _dropOpen;
+        private PanelContainer? _dropPanel;
+        private ScrollContainer? _dropScroll;
         private float _dropdownListSeparation;
         private float _dropdownPanelMinWidth;
         private float _dropdownRowStride;
         private bool _dropdownScrollWired;
         private float _dropdownUniformRowLayoutWidth;
-        private bool _dropOpen;
-        private PanelContainer? _dropPanel;
-        private ScrollContainer? _dropScroll;
         private ModSettingsGamepadCompatibleButton? _faceButton;
         private Action? _opening;
         private (TValue Value, string Label)[] _optionsWithValues = [];
@@ -1309,7 +1309,7 @@ namespace STS2RitsuLib.Settings
             TValue currentValue,
             Action<TValue> onChanged)
         {
-            _optionsWithValues = options.ToArray();
+            _optionsWithValues = [.. options];
             _onChanged = onChanged;
 
             CustomMinimumSize = RitsuShellThemeLayoutResolver.ResolveMinSize(
@@ -1527,7 +1527,7 @@ namespace STS2RitsuLib.Settings
         /// </summary>
         public void SetOptions(IReadOnlyList<(TValue Value, string Label)> options, TValue selectedValue)
         {
-            _optionsWithValues = options.ToArray();
+            _optionsWithValues = [.. options];
             _selectedIndex = 0;
             for (var i = 0; i < _optionsWithValues.Length; i++)
                 if (EqualityComparer<TValue>.Default.Equals(_optionsWithValues[i].Value, selectedValue))
@@ -4074,7 +4074,7 @@ namespace STS2RitsuLib.Settings
             _values = NormalizeBindings(values);
             RefreshPresentation();
             if (notify)
-                InvokeOnChangedSafely(_values.ToList());
+                InvokeOnChangedSafely([.. _values]);
         }
 
         private void InvokeOnChangedSafely(List<string> values)
@@ -5244,7 +5244,7 @@ namespace STS2RitsuLib.Settings
         {
             return _entry.Binding is IStructuredModSettingsValueBinding<List<TItem>> structured
                 ? structured.Adapter.Clone(items)
-                : items.ToList();
+                : [.. items];
         }
 
         private static List<TItem> ReplaceAt(List<TItem> items, int index, TItem item)

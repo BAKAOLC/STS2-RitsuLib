@@ -41,7 +41,7 @@ namespace STS2RitsuLib.Scaffolding.MonsterMoves
 
             for (var i = 0; i < n; i++) moves[i].FollowUpState = moves[(i + 1) % n];
 
-            return new(moves.Cast<MonsterState>().ToList(), moves[0]);
+            return new([.. moves], moves[0]);
         }
 
         /// <summary>

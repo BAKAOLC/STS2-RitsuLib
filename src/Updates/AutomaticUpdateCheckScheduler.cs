@@ -129,10 +129,12 @@ namespace STS2RitsuLib.Updates
             ScheduledCheck[] checks;
             lock (SyncRoot)
             {
-                checks = Checks.Values
-                    .Where(check => check.Order >= resumeFromOrder)
-                    .OrderBy(check => check.Order)
-                    .ToArray();
+                checks =
+                [
+                    .. Checks.Values
+                        .Where(check => check.Order >= resumeFromOrder)
+                        .OrderBy(check => check.Order),
+                ];
             }
 
             foreach (var check in checks)

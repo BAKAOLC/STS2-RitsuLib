@@ -560,10 +560,12 @@ namespace STS2RitsuLib.Settings
 
             IReadOnlyList<ModSettingsMirrorChoiceOption> ResolveOptions()
             {
-                return ResolveJmcDropdownOptions(entry, uiAttribute, actualType)
-                    .Select(option => new ModSettingsMirrorChoiceOption(option,
-                        JmcText(() => ResolveJmcOptionText(entry, option))))
-                    .ToArray();
+                return
+                [
+                    .. ResolveJmcDropdownOptions(entry, uiAttribute, actualType)
+                        .Select(option => new ModSettingsMirrorChoiceOption(option,
+                            JmcText(() => ResolveJmcOptionText(entry, option)))),
+                ];
             }
         }
 
@@ -981,11 +983,12 @@ namespace STS2RitsuLib.Settings
             IReadOnlyList<object> entries)
         {
             if (getGroups?.Invoke(null, [assembly]) is not IEnumerable enumerable)
-                return entries
-                    .Select(entry => ReadStringProperty(entry, "Group"))
-                    .Where(static group => !string.IsNullOrWhiteSpace(group))
-                    .Distinct(StringComparer.Ordinal)
-                    .ToArray()!;
+                return [
+                    .. entries
+                        .Select(entry => ReadStringProperty(entry, "Group"))
+                        .Where(static group => !string.IsNullOrWhiteSpace(group))
+                        .Distinct(StringComparer.Ordinal)!,
+                ]!;
             {
                 var groups = new List<string>();
                 foreach (var item in enumerable)
@@ -995,11 +998,12 @@ namespace STS2RitsuLib.Settings
                     return groups;
             }
 
-            return entries
-                .Select(entry => ReadStringProperty(entry, "Group"))
-                .Where(static group => !string.IsNullOrWhiteSpace(group))
-                .Distinct(StringComparer.Ordinal)
-                .ToArray()!;
+            return [
+                .. entries
+                    .Select(entry => ReadStringProperty(entry, "Group"))
+                    .Where(static group => !string.IsNullOrWhiteSpace(group))
+                    .Distinct(StringComparer.Ordinal)!,
+            ]!;
         }
 
         private static JmcModContext TryReadContext(Assembly? assembly)

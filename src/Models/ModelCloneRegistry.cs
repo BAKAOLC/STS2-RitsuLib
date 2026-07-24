@@ -153,7 +153,7 @@ namespace STS2RitsuLib.Models
             ListenerEntry[] listeners;
             lock (SyncRoot)
             {
-                listeners = Listeners.Values.OrderBy(static entry => entry.RegistrationOrder).ToArray();
+                listeners = [.. Listeners.Values.OrderBy(static entry => entry.RegistrationOrder)];
             }
 
             foreach (var entry in listeners)

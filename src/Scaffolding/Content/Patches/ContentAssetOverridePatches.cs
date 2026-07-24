@@ -1156,7 +1156,7 @@ namespace STS2RitsuLib.Scaffolding.Content.Patches
                 (overrides.CustomIconPath, nameof(IModOrbAssetOverrides.CustomIconPath)),
                 (overrides.CustomVisualsScenePath, nameof(IModOrbAssetOverrides.CustomVisualsScenePath)));
             if (TryBuildOrbAssetPathsFromExternal(__instance, out var externalPaths))
-                paths = paths.Concat(externalPaths).Distinct(StringComparer.Ordinal).ToArray();
+                paths = [.. paths.Concat(externalPaths).Distinct(StringComparer.Ordinal)];
             if (paths.Length == 0)
                 return true;
 
@@ -1953,7 +1953,7 @@ namespace STS2RitsuLib.Scaffolding.Content.Patches
 
             if (__instance is not IModEventAssetOverrides eventOverrides)
             {
-                __result = externalMerged.Length == 0 ? paths : paths.Concat(externalMerged).Distinct().ToArray();
+                __result = externalMerged.Length == 0 ? paths : [.. paths.Concat(externalMerged).Distinct()];
                 return;
             }
 
@@ -1965,7 +1965,7 @@ namespace STS2RitsuLib.Scaffolding.Content.Patches
                     nameof(IModEventAssetOverrides.CustomBackgroundScenePath)),
                 (eventOverrides.CustomVfxScenePath, nameof(IModEventAssetOverrides.CustomVfxScenePath)));
             if (externalMerged.Length > 0)
-                merged = merged.Concat(externalMerged).Distinct().ToArray();
+                merged = [.. merged.Concat(externalMerged).Distinct()];
 
             if (__instance is IModAncientEventAssetOverrides ancientOverrides)
             {
@@ -2017,12 +2017,14 @@ namespace STS2RitsuLib.Scaffolding.Content.Patches
             if (paths.Length == 0)
                 return [];
 
-            return paths
-                .Where(path => AssetPathDiagnostics.Exists(
-                    path,
-                    instance,
-                    nameof(AncientEventPresentationAssetProfile.StageProcedural)))
-                .ToArray();
+            return
+            [
+                .. paths
+                    .Where(path => AssetPathDiagnostics.Exists(
+                        path,
+                        instance,
+                        nameof(AncientEventPresentationAssetProfile.StageProcedural))),
+            ];
         }
 
         private static IEnumerable<string> RemovePath(IEnumerable<string> paths, string? pathToRemove)

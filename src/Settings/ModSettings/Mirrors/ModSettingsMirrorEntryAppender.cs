@@ -62,16 +62,19 @@ namespace STS2RitsuLib.Settings
                 case ModSettingsMirrorEntryKind.Choice:
                     if (entry.ChoiceOptionsProvider == null)
                         section.AddChoice(entry.Id, entry.Label, (IModSettingsValueBinding<string>)entry.Binding!,
-                            entry.ChoiceOptions!
-                                .Select(option => new ModSettingsChoiceOption<string>(option.Value, option.Label))
-                                .ToArray(),
+                            [
+                                .. entry.ChoiceOptions!
+                                    .Select(option => new ModSettingsChoiceOption<string>(option.Value, option.Label)),
+                            ],
                             entry.Description, entry.ChoicePresentation);
                     else
                         section.AddDynamicChoice(entry.Id, entry.Label,
                             (IModSettingsValueBinding<string>)entry.Binding!,
-                            () => entry.ChoiceOptionsProvider()
-                                .Select(option => new ModSettingsChoiceOption<string>(option.Value, option.Label))
-                                .ToArray(),
+                            () =>
+                            [
+                                .. entry.ChoiceOptionsProvider()
+                                    .Select(option => new ModSettingsChoiceOption<string>(option.Value, option.Label)),
+                            ],
                             entry.Description, entry.ChoicePresentation);
                     ApplyVisibility(section, entry);
                     return;

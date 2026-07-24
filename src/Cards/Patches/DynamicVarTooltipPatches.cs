@@ -35,7 +35,7 @@ namespace STS2RitsuLib.Cards.Patches
             if (extraTips.Length == 0)
                 return;
 
-            __result = __result.Concat(extraTips).Distinct().ToArray();
+            __result = [.. __result.Concat(extraTips).Distinct()];
         }
     }
 

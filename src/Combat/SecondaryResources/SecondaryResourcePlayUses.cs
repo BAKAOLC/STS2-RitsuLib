@@ -91,7 +91,7 @@ namespace STS2RitsuLib.Combat.SecondaryResources
         ///     返回当前具有附加层的条款 id。
         /// </summary>
         public IReadOnlyList<string> UseIds =>
-            _uses.Keys.OrderBy(static id => id, StringComparer.Ordinal).ToArray();
+            [.. _uses.Keys.OrderBy(static id => id, StringComparer.Ordinal)];
 
         internal bool HasLayers => _uses.Count > 0;
 
@@ -344,34 +344,36 @@ namespace STS2RitsuLib.Combat.SecondaryResources
         /// </summary>
         public IReadOnlyList<SecondaryResourcePlayUse> Snapshot()
         {
-            return _uses
-                .Select(static pair =>
-                {
-                    var layer = pair.Value[^1];
-                    var permanentCost = pair.Value.LastOrDefault(static candidate =>
-                        candidate.Duration == SecondaryResourceCostDuration.Permanent)?.Use.Cost ?? layer.Use.Cost;
-                    return layer.Use with
+            return
+            [
+                .. _uses
+                    .Select(static pair =>
                     {
-                        Duration = layer.Duration,
-                        BaseCost = permanentCost,
-                    };
-                })
-                .Where(static use => use.IsMaterial)
-                .OrderBy(static use => use.Kind switch
-                {
-                    SecondaryResourceUseKind.RequiredCost => 0,
-                    SecondaryResourceUseKind.ExtraSpend => 1,
-                    _ => 2,
-                })
-                .ThenBy(static use => use.Id, StringComparer.Ordinal)
-                .ToArray();
+                        var layer = pair.Value[^1];
+                        var permanentCost = pair.Value.LastOrDefault(static candidate =>
+                            candidate.Duration == SecondaryResourceCostDuration.Permanent)?.Use.Cost ?? layer.Use.Cost;
+                        return layer.Use with
+                        {
+                            Duration = layer.Duration,
+                            BaseCost = permanentCost,
+                        };
+                    })
+                    .Where(static use => use.IsMaterial)
+                    .OrderBy(static use => use.Kind switch
+                    {
+                        SecondaryResourceUseKind.RequiredCost => 0,
+                        SecondaryResourceUseKind.ExtraSpend => 1,
+                        _ => 2,
+                    })
+                    .ThenBy(static use => use.Id, StringComparer.Ordinal),
+            ];
         }
 
         internal SecondaryResourcePlayUseSet Clone()
         {
             var clone = new SecondaryResourcePlayUseSet();
             foreach (var (useId, layers) in _uses)
-                clone._uses[useId] = layers.ToList();
+                clone._uses[useId] = [.. layers];
 
             return clone;
         }
@@ -399,7 +401,7 @@ namespace STS2RitsuLib.Combat.SecondaryResources
                     if (_uses.TryGetValue(useId, out var layers))
                         layers.InsertRange(0, permanentLayers);
                     else
-                        _uses[useId] = permanentLayers.ToList();
+                        _uses[useId] = [.. permanentLayers];
                     changed = true;
                 }
 

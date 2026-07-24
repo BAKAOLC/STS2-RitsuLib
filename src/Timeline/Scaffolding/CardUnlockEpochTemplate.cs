@@ -16,12 +16,14 @@ namespace STS2RitsuLib.Timeline.Scaffolding
         ///     Resolved <see cref="CardModel" /> instances for <see cref="CardTypes" />.
         ///     解析出的 <see cref="CardModel" /> 实例，用于 <see cref="CardTypes" />。
         /// </summary>
-        public IReadOnlyList<CardModel> Cards => CardTypes
-            .Select(type => ModelDb.GetById<CardModel>(ModelDb.GetId(type)))
-            .ToArray();
+        public IReadOnlyList<CardModel> Cards =>
+        [
+            .. CardTypes
+                .Select(type => ModelDb.GetById<CardModel>(ModelDb.GetId(type))),
+        ];
 
         /// <inheritdoc />
-        public override string UnlockText => CreateCardUnlockText(Cards.ToList());
+        public override string UnlockText => CreateCardUnlockText([.. Cards]);
 
         /// <summary>
         ///     CLR types of cards to unlock; each must be registered in <see cref="ModelDb" />.
@@ -49,7 +51,7 @@ namespace STS2RitsuLib.Timeline.Scaffolding
         /// <inheritdoc />
         public override EpochModel[] GetTimelineExpansion()
         {
-            return ExpansionEpochTypes.Select(type => Get(GetId(type))).ToArray();
+            return [.. ExpansionEpochTypes.Select(type => Get(GetId(type)))];
         }
 
         /// <inheritdoc />

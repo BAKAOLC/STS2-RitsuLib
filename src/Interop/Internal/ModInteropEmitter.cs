@@ -159,7 +159,7 @@ namespace STS2RitsuLib.Interop.Internal
 
                 var methodParamInfos = method.GetParameters();
                 var methodParams = methodParamInfos.Select(p => p.ParameterType).ToArray();
-                var nonStaticParamInfos = method.IsStatic ? methodParamInfos.Skip(1).ToArray() : methodParamInfos;
+                var nonStaticParamInfos = method.IsStatic ? [.. methodParamInfos.Skip(1)] : methodParamInfos;
 
                 MethodInfo? targetMethod = null;
                 var loadParams = new List<CodeInstruction>();
@@ -271,7 +271,7 @@ namespace STS2RitsuLib.Interop.Internal
                         else
                             PatchReturnInsertion(harmony, property.SetMethod,
                             [
-                                ..LoadWrappedTarget(targetType), new(OpCodes.Ldarg_1),
+                                .. LoadWrappedTarget(targetType), new(OpCodes.Ldarg_1),
                                 new(OpCodes.Call, targetProperty.SetMethod),
                             ]);
                     }
@@ -291,7 +291,7 @@ namespace STS2RitsuLib.Interop.Internal
                         else
                             PatchReturnInsertion(harmony, property.GetMethod,
                             [
-                                new(OpCodes.Pop), ..LoadWrappedTarget(targetType),
+                                new(OpCodes.Pop), .. LoadWrappedTarget(targetType),
                                 new(OpCodes.Call, targetProperty.GetMethod),
                             ]);
                     }
@@ -332,7 +332,7 @@ namespace STS2RitsuLib.Interop.Internal
                         else
                             PatchReturnInsertion(harmony, property.SetMethod,
                             [
-                                ..LoadWrappedTarget(targetType), new(OpCodes.Ldarg_1), new(OpCodes.Stfld, targetField),
+                                .. LoadWrappedTarget(targetType), new(OpCodes.Ldarg_1), new(OpCodes.Stfld, targetField),
                             ]);
                     }
 
@@ -346,7 +346,7 @@ namespace STS2RitsuLib.Interop.Internal
                             ]);
                         else
                             PatchReturnInsertion(harmony, property.GetMethod,
-                                [new(OpCodes.Pop), ..LoadWrappedTarget(targetType), new(OpCodes.Ldfld, targetField)]);
+                                [new(OpCodes.Pop), .. LoadWrappedTarget(targetType), new(OpCodes.Ldfld, targetField)]);
                     }
 
                     RitsuLibFramework.Logger.Info($"[ModInterop] Generated interop field property {property.Name}");

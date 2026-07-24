@@ -59,9 +59,11 @@ namespace STS2RitsuLib.Combat.SecondaryResources
             if (player == null)
                 return [];
 
-            return definitions
-                .Where(definition => IsVisibleInCombatUi(definition, player, retainMaterialVisibility))
-                .ToArray();
+            return
+            [
+                .. definitions
+                    .Where(definition => IsVisibleInCombatUi(definition, player, retainMaterialVisibility)),
+            ];
         }
 
         internal static bool IsVisibleInCombatUi(SecondaryResourceDefinition definition, Player player)
@@ -123,12 +125,14 @@ namespace STS2RitsuLib.Combat.SecondaryResources
                     static group => group.First(),
                     StringComparer.OrdinalIgnoreCase);
 
-            return ModSecondaryResourceRegistry.GetDefinitionsSnapshot()
-                .Where(definition =>
-                    definition.IsVisibleOnCard(
-                        card,
-                        linesByResource.GetValueOrDefault(definition.Id)))
-                .ToArray();
+            return
+            [
+                .. ModSecondaryResourceRegistry.GetDefinitionsSnapshot()
+                    .Where(definition =>
+                        definition.IsVisibleOnCard(
+                            card,
+                            linesByResource.GetValueOrDefault(definition.Id))),
+            ];
         }
     }
 }

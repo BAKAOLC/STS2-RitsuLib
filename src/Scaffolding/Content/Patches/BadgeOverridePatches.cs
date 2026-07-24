@@ -88,7 +88,7 @@ namespace STS2RitsuLib.Scaffolding.Content.Patches
             lock (SyncRoot)
             {
                 _badgeTypes = [.. ModContentRegistry.GetRegisteredBadgeTypes()];
-                return _badgeTypes.ToArray();
+                return [.. _badgeTypes];
             }
         }
 

@@ -971,7 +971,7 @@ namespace STS2RitsuLib.Scaffolding.Content.Patches
         {
             lock (SyncRoot)
             {
-                return providers.Values.ToArray();
+                return [.. providers.Values];
             }
         }
 
@@ -981,7 +981,7 @@ namespace STS2RitsuLib.Scaffolding.Content.Patches
         {
             lock (SyncRoot)
             {
-                return providers.ToArray();
+                return [.. providers];
             }
         }
     }

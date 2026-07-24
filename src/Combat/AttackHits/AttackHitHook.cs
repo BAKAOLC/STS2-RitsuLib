@@ -38,7 +38,7 @@ namespace STS2RitsuLib.Combat.AttackHits
             int hitIndex,
             decimal totalHitCount)
         {
-            var targetList = targets as IReadOnlyList<Creature> ?? targets.ToArray();
+            var targetList = targets as IReadOnlyList<Creature> ?? [.. targets];
             var context = TryCreateContext(
                 choiceContext,
                 targetList,

@@ -775,7 +775,7 @@ namespace STS2RitsuLib.Models.Capabilities.Patches
                 if (tips.Length == 0)
                     return;
 
-                __result = __result.Concat(tips).Distinct().ToArray();
+                __result = [.. __result.Concat(tips).Distinct()];
             }
         }
 

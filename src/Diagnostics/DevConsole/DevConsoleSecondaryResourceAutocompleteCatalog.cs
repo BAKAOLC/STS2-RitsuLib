@@ -12,10 +12,12 @@ namespace STS2RitsuLib.Diagnostics.DevConsole
         /// </summary>
         public static string[] GetResourceIds()
         {
-            return ModSecondaryResourceRegistry.GetDefinitionsSnapshot()
-                .Select(static definition => definition.Id)
-                .Order(StringComparer.OrdinalIgnoreCase)
-                .ToArray();
+            return
+            [
+                .. ModSecondaryResourceRegistry.GetDefinitionsSnapshot()
+                    .Select(static definition => definition.Id)
+                    .Order(StringComparer.OrdinalIgnoreCase),
+            ];
         }
 
         /// <summary>

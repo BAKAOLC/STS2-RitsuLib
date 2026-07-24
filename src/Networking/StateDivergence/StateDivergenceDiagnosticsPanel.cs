@@ -634,10 +634,12 @@ namespace STS2RitsuLib.Networking.StateDivergence
                 (!text.Contains('\n') && text.StartsWith('<')))
                 return [];
 
-            return text.Replace("\r\n", "\n")
-                .Split('\n', StringSplitOptions.RemoveEmptyEntries)
-                .Select(ParseIndexedLine)
-                .ToList();
+            return
+            [
+                .. text.Replace("\r\n", "\n")
+                    .Split('\n', StringSplitOptions.RemoveEmptyEntries)
+                    .Select(ParseIndexedLine),
+            ];
         }
 
         private static IndexedLine ParseIndexedLine(string line)

@@ -13,10 +13,12 @@ namespace STS2RitsuLib.Scaffolding.Content
             if (stage == null)
                 return [];
 
-            return Enumerate(stage)
-                .Where(path => !string.IsNullOrWhiteSpace(path))
-                .Distinct(StringComparer.Ordinal)
-                .ToArray();
+            return
+            [
+                .. Enumerate(stage)
+                    .Where(path => !string.IsNullOrWhiteSpace(path))
+                    .Distinct(StringComparer.Ordinal),
+            ];
         }
 
         private static IEnumerable<string> Enumerate(AncientEventStageProceduralVisualSet stage)

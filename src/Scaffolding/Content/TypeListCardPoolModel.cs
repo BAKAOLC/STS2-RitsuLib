@@ -67,9 +67,11 @@ namespace STS2RitsuLib.Scaffolding.Content
             var types = CardTypes;
 #pragma warning restore CS0618
 
-            return types
-                .Select(type => ModelDb.GetById<CardModel>(ModelDb.GetId(type)))
-                .ToArray();
+            return
+            [
+                .. types
+                    .Select(type => ModelDb.GetById<CardModel>(ModelDb.GetId(type))),
+            ];
         }
     }
 }

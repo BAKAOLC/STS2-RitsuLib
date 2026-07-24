@@ -97,7 +97,7 @@ namespace STS2RitsuLib.Combat.SecondaryResources
         ///     返回当前具有附加层的资源 id。
         /// </summary>
         public IReadOnlyList<string> ResourceIds =>
-            _costs.Keys.OrderBy(static id => id, StringComparer.Ordinal).ToArray();
+            [.. _costs.Keys.OrderBy(static id => id, StringComparer.Ordinal)];
 
         internal bool HasLayers => _costs.Count > 0;
 
@@ -262,33 +262,35 @@ namespace STS2RitsuLib.Combat.SecondaryResources
 
         internal IReadOnlyList<SecondaryResourcePlayUse> SnapshotUses()
         {
-            return _costs
-                .Select(static pair =>
-                {
-                    var layer = pair.Value[^1];
-                    var permanentCost = pair.Value.LastOrDefault(static candidate =>
-                        candidate.Duration == SecondaryResourceCostDuration.Permanent)?.Cost ?? layer.Cost;
-                    return new SecondaryResourcePlayUse(
-                        pair.Key,
-                        pair.Key,
-                        layer.Cost,
-                        SecondaryResourceUseKind.RequiredCost)
+            return
+            [
+                .. _costs
+                    .Select(static pair =>
                     {
-                        Duration = layer.Duration,
-                        BaseCost = permanentCost,
-                        InsufficientPayment = layer.InsufficientPayment,
-                    };
-                })
-                .Where(static use => use.IsMaterial)
-                .OrderBy(static use => use.Id, StringComparer.Ordinal)
-                .ToArray();
+                        var layer = pair.Value[^1];
+                        var permanentCost = pair.Value.LastOrDefault(static candidate =>
+                            candidate.Duration == SecondaryResourceCostDuration.Permanent)?.Cost ?? layer.Cost;
+                        return new SecondaryResourcePlayUse(
+                            pair.Key,
+                            pair.Key,
+                            layer.Cost,
+                            SecondaryResourceUseKind.RequiredCost)
+                        {
+                            Duration = layer.Duration,
+                            BaseCost = permanentCost,
+                            InsufficientPayment = layer.InsufficientPayment,
+                        };
+                    })
+                    .Where(static use => use.IsMaterial)
+                    .OrderBy(static use => use.Id, StringComparer.Ordinal),
+            ];
         }
 
         internal SecondaryResourceCostSet Clone()
         {
             var clone = new SecondaryResourceCostSet();
             foreach (var (resourceId, layers) in _costs)
-                clone._costs[resourceId] = layers.ToList();
+                clone._costs[resourceId] = [.. layers];
 
             return clone;
         }
@@ -316,7 +318,7 @@ namespace STS2RitsuLib.Combat.SecondaryResources
                     if (_costs.TryGetValue(resourceId, out var layers))
                         layers.InsertRange(0, permanentLayers);
                     else
-                        _costs[resourceId] = permanentLayers.ToList();
+                        _costs[resourceId] = [.. permanentLayers];
                     changed = true;
                 }
 
@@ -955,16 +957,18 @@ namespace STS2RitsuLib.Combat.SecondaryResources
 
             uses.AddRange(GetCapabilityUses(card));
 
-            return uses
-                .Where(static use => use.IsMaterial)
-                .OrderBy(static use => use.Kind switch
-                {
-                    SecondaryResourceUseKind.RequiredCost => 0,
-                    SecondaryResourceUseKind.ExtraSpend => 1,
-                    _ => 2,
-                })
-                .ThenBy(static use => use.Id, StringComparer.Ordinal)
-                .ToArray();
+            return
+            [
+                .. uses
+                    .Where(static use => use.IsMaterial)
+                    .OrderBy(static use => use.Kind switch
+                    {
+                        SecondaryResourceUseKind.RequiredCost => 0,
+                        SecondaryResourceUseKind.ExtraSpend => 1,
+                        _ => 2,
+                    })
+                    .ThenBy(static use => use.Id, StringComparer.Ordinal),
+            ];
         }
 
         internal static IReadOnlyList<SecondaryResourcePlayUse> SnapshotUsesForUpgradePreview(CardModel card)

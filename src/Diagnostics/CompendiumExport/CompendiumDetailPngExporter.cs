@@ -652,22 +652,26 @@ namespace STS2RitsuLib.Diagnostics.CompendiumExport
 
         private static List<RelicModel> BuildRelicExportList(string? idFilter)
         {
-            return ModelDb.AllRelics
-                .Where(r => r is not DeprecatedRelic)
-                .Where(r => idFilter == null || r.Id.Entry.Contains(idFilter, StringComparison.OrdinalIgnoreCase))
-                .OrderBy(r => r.Id.Entry, StringComparer.OrdinalIgnoreCase)
-                .ToList();
+            return
+            [
+                .. ModelDb.AllRelics
+                    .Where(r => r is not DeprecatedRelic)
+                    .Where(r => idFilter == null || r.Id.Entry.Contains(idFilter, StringComparison.OrdinalIgnoreCase))
+                    .OrderBy(r => r.Id.Entry, StringComparer.OrdinalIgnoreCase),
+            ];
         }
 
         private static List<PotionModel> BuildPotionExportList(string? idFilter)
         {
-            return ModelDb.AllPotions
-                .Where(p => p is not DeprecatedPotion)
-                .Where(p => idFilter == null || p.Id.Entry.Contains(idFilter, StringComparison.OrdinalIgnoreCase))
-                .GroupBy(p => p.Id)
-                .Select(g => g.First())
-                .OrderBy(p => p.Id.Entry, StringComparer.OrdinalIgnoreCase)
-                .ToList();
+            return
+            [
+                .. ModelDb.AllPotions
+                    .Where(p => p is not DeprecatedPotion)
+                    .Where(p => idFilter == null || p.Id.Entry.Contains(idFilter, StringComparison.OrdinalIgnoreCase))
+                    .GroupBy(p => p.Id)
+                    .Select(g => g.First())
+                    .OrderBy(p => p.Id.Entry, StringComparer.OrdinalIgnoreCase),
+            ];
         }
 
         private static (int allPotions, int deprecated, int poolEntries) GetPotionModelDbDiagnostics()

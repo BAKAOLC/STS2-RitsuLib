@@ -326,7 +326,7 @@ namespace STS2RitsuLib.Settings
                             "preview_list",
                             T("ritsulib.showcase.list.label", "Preview structured collection"),
                             new ModSettingsDebugShowcaseBinding<List<ModSettingsDebugShowcaseListItem>>(ui.PreviewList,
-                                value => ui.DebugShowcase.ListItems = value.ToList()),
+                                value => ui.DebugShowcase.ListItems = [.. value]),
                             ui.DebugShowcase.CreateListItem,
                             item => ModSettingsText.Literal($"{item.Name} ({item.Weight})"),
                             item => ModSettingsText.Literal(item.Enabled

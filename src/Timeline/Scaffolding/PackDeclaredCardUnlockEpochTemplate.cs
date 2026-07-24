@@ -24,7 +24,7 @@ namespace STS2RitsuLib.Timeline.Scaffolding
         public IReadOnlyList<CardModel> Cards => ModEpochGatedContentRegistry.ResolveCards(Id);
 
         /// <inheritdoc />
-        public override string UnlockText => CreateCardUnlockText(Cards.ToList());
+        public override string UnlockText => CreateCardUnlockText([.. Cards]);
 
         /// <summary>
         ///     Additional epoch types to append when this epoch unlocks.
@@ -35,7 +35,7 @@ namespace STS2RitsuLib.Timeline.Scaffolding
         /// <inheritdoc />
         public override EpochModel[] GetTimelineExpansion()
         {
-            return ExpansionEpochTypes.Select(type => Get(GetId(type))).ToArray();
+            return [.. ExpansionEpochTypes.Select(type => Get(GetId(type)))];
         }
 
         /// <inheritdoc />

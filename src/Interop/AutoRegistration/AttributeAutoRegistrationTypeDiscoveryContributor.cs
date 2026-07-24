@@ -331,7 +331,7 @@ namespace STS2RitsuLib.Interop.AutoRegistration
                         var memberTypes = ValidateTypeList(exclusiveGroup.MemberTypes,
                             nameof(exclusiveGroup.MemberTypes), typeof(ModifierModel));
                         var groupTypes = typeof(ModifierModel).IsAssignableFrom(type) && !type.IsAbstract
-                            ? memberTypes.Prepend(type).Distinct().ToArray()
+                            ? [.. memberTypes.Prepend(type).Distinct()]
                             : memberTypes;
                         if (groupTypes.Length < 2)
                             throw new InvalidOperationException(
@@ -864,7 +864,7 @@ namespace STS2RitsuLib.Interop.AutoRegistration
                             nameof(RegisterEpochCardsAttribute),
                             () => ModEpochGatedContentPackHelper.ApplyExplicitTypes(type, packContext, cardTypes,
                                 []),
-                            cardTypes.Select(TypeDependencyKey).ToArray()));
+                            [.. cardTypes.Select(TypeDependencyKey)]));
                         signatures.Add(epochCardsSignature);
                         break;
                     }

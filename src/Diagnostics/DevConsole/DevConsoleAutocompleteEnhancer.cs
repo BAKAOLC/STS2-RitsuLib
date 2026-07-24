@@ -77,9 +77,11 @@ namespace STS2RitsuLib.Diagnostics.DevConsole
                 DevConsoleAutocompleteMatchExtensions.ApplySecondaryResourceDisplayLabels(ref result);
 
             if (enhancements.HasFlag(DevConsoleAutocompleteEnhancements.DeduplicateCandidates))
-                result.Candidates = result.Candidates
-                    .Distinct(StringComparer.OrdinalIgnoreCase)
-                    .ToList();
+                result.Candidates =
+                [
+                    .. result.Candidates
+                        .Distinct(StringComparer.OrdinalIgnoreCase),
+                ];
         }
     }
 }

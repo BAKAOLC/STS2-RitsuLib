@@ -48,7 +48,7 @@ namespace STS2RitsuLib.Settings
                 object?[] convertedArgs;
                 try
                 {
-                    convertedArgs = conditionArgs.Select(arg => ConvertArgument(arg, propertyType)).ToArray();
+                    convertedArgs = [.. conditionArgs.Select(arg => ConvertArgument(arg, propertyType))];
                 }
                 catch
                 {
@@ -82,9 +82,11 @@ namespace STS2RitsuLib.Settings
                 object?[] resolvedArgs;
                 try
                 {
-                    resolvedArgs = method.GetParameters()
-                        .Select(ResolveMethodParameter)
-                        .ToArray();
+                    resolvedArgs =
+                    [
+                        .. method.GetParameters()
+                            .Select(ResolveMethodParameter),
+                    ];
                 }
                 catch
                 {

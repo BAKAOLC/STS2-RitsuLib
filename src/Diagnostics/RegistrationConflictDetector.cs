@@ -235,7 +235,7 @@ namespace STS2RitsuLib.Diagnostics
                 }
             }
 
-            return result.ToArray();
+            return [.. result];
         }
 
         private static IEnumerable<RitsuDynamicEnumEntry> GetRitsuDynamicEnumEntries()

@@ -6,8 +6,8 @@ namespace STS2RitsuLib.Scaffolding.Visuals.Definition
     /// </summary>
     public sealed class VisualFrameSequenceBuilder
     {
-        private readonly List<VisualFrame> _frames = [];
         private readonly List<VisualNodeStyle?> _frameStyles = [];
+        private readonly List<VisualFrame> _frames = [];
         private VisualNodeStyle? _defaultStyle;
         private bool _loop;
 
@@ -79,7 +79,7 @@ namespace STS2RitsuLib.Scaffolding.Visuals.Definition
             return _frames.Count == 0
                 ? throw new InvalidOperationException("Frame sequence must contain at least one frame.")
                 : new(
-                    _frames.ToArray(),
+                    [.. _frames],
                     _loop,
                     _defaultStyle,
                     _frameStyles.Any(static s => s != null) ? _frameStyles.ToArray() : null);

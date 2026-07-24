@@ -341,7 +341,7 @@ namespace STS2RitsuLib.Cards.FreePlay
             Func<CardPlay, bool>[] detectors;
             lock (Gate)
             {
-                detectors = RegisteredDetectors.Values.ToArray();
+                detectors = [.. RegisteredDetectors.Values];
             }
 
             return detectors.Any(detector => detector(play));

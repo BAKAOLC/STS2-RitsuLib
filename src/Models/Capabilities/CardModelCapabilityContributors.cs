@@ -544,7 +544,7 @@ namespace STS2RitsuLib.Models.Capabilities
                 IReadOnlyList<CardTitleFragment> fragments;
                 try
                 {
-                    fragments = (capability.GetTitleFragments(context) ?? []).ToArray();
+                    fragments = [.. capability.GetTitleFragments(context) ?? []];
                 }
                 catch (Exception ex)
                 {
@@ -792,7 +792,7 @@ namespace STS2RitsuLib.Models.Capabilities
                 IReadOnlyList<CardDescriptionFragment> fragments;
                 try
                 {
-                    fragments = (capability.GetDescriptionFragments(context) ?? []).ToArray();
+                    fragments = [.. capability.GetDescriptionFragments(context) ?? []];
                 }
                 catch (Exception ex)
                 {
@@ -1028,7 +1028,7 @@ namespace STS2RitsuLib.Models.Capabilities
         {
             IReadOnlyList<CardOverlayContribution> contributions = [];
             TryRun(source, context.Card, OverlaySurface,
-                () => contributions = (source.GetCardOverlays(context) ?? []).ToArray());
+                () => contributions = [.. source.GetCardOverlays(context) ?? []]);
 
             foreach (var contribution in contributions)
                 yield return new(source, contribution, sourceIndex);

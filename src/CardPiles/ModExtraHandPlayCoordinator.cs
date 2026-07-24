@@ -43,7 +43,7 @@ namespace STS2RitsuLib.CardPiles
                 return false;
 
             var origin = new PlayOrigin(container, holder, card, sourcePile, handPile,
-                Array.IndexOf(sourcePile.Cards.ToArray(), card));
+                Array.IndexOf([.. sourcePile.Cards], card));
             try
             {
                 sourcePile.RemoveInternal(card, true);

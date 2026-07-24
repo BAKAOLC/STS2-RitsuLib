@@ -620,7 +620,7 @@ namespace STS2RitsuLib.Saves
                 BestWinStreak = stats.BestWinStreak,
                 CurrentWinStreak = stats.CurrentWinStreak,
                 Playtime = stats.Playtime,
-                Badges = stats.Badges.Select(Clone).ToList(),
+                Badges = [.. stats.Badges.Select(Clone)],
             };
         }
 
@@ -641,7 +641,7 @@ namespace STS2RitsuLib.Saves
             return new()
             {
                 Id = stats.Id,
-                FightStats = stats.FightStats.Select(Clone).ToList(),
+                FightStats = [.. stats.FightStats.Select(Clone)],
             };
         }
 
@@ -650,7 +650,7 @@ namespace STS2RitsuLib.Saves
             return new()
             {
                 Id = stats.Id,
-                FightStats = stats.FightStats.Select(Clone).ToList(),
+                FightStats = [.. stats.FightStats.Select(Clone)],
             };
         }
 
@@ -659,7 +659,7 @@ namespace STS2RitsuLib.Saves
             return new()
             {
                 Id = stats.Id,
-                CharStats = stats.CharStats.Select(Clone).ToList(),
+                CharStats = [.. stats.CharStats.Select(Clone)],
             };
         }
 

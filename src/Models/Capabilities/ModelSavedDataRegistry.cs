@@ -105,9 +105,11 @@ namespace STS2RitsuLib.Models.Capabilities
         {
             lock (SyncRoot)
             {
-                return Slots.Values
-                    .Where(slot => slot.TargetType.IsInstanceOfType(model))
-                    .ToArray();
+                return
+                [
+                    .. Slots.Values
+                        .Where(slot => slot.TargetType.IsInstanceOfType(model)),
+                ];
             }
         }
     }

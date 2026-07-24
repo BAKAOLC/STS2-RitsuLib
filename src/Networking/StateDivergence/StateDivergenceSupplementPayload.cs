@@ -6,16 +6,17 @@ using HarmonyLib;
 using MegaCrit.Sts2.Core.Entities.Multiplayer;
 using MegaCrit.Sts2.Core.Multiplayer.Messages.Game.Checksums;
 using MegaCrit.Sts2.Core.Multiplayer.Serialization;
-#if STS2_AT_LEAST_0_109_0
-using SavedPropertyCache = MegaCrit.Sts2.Core.Multiplayer.Serialization.ModelIdSerializationCache;
-#else
-using SavedPropertyCache = MegaCrit.Sts2.Core.Saves.Runs.SavedPropertiesTypeCache;
-#endif
 using STS2RitsuLib.Compat;
 using STS2RitsuLib.Content.Patches;
 using STS2RitsuLib.Diagnostics.Logging;
 using STS2RitsuLib.Interop.Patches;
 using STS2RitsuLib.Networking.MessageExtensions;
+#if STS2_AT_LEAST_0_109_0
+using SavedPropertyCache = MegaCrit.Sts2.Core.Multiplayer.Serialization.ModelIdSerializationCache;
+
+#else
+using SavedPropertyCache = MegaCrit.Sts2.Core.Saves.Runs.SavedPropertiesTypeCache;
+#endif
 
 namespace STS2RitsuLib.Networking.StateDivergence
 {
@@ -257,7 +258,7 @@ namespace STS2RitsuLib.Networking.StateDivergence
                 var count = low + (high - low) / 2;
                 var candidate = payload with
                 {
-                    RecentLogs = CreateRecentLogSnapshot(logs.Records.TakeLast(count).ToArray(),
+                    RecentLogs = CreateRecentLogSnapshot([.. logs.Records.TakeLast(count)],
                         logs.TotalRecordCount - count),
                 };
 
@@ -297,7 +298,7 @@ namespace STS2RitsuLib.Networking.StateDivergence
             IReadOnlyList<RitsuDebugLogRecord> records,
             int droppedOldRecords)
         {
-            return CreateRecentLogSnapshot(records.Select(CreateLogRecord).ToArray(), droppedOldRecords);
+            return CreateRecentLogSnapshot([.. records.Select(CreateLogRecord)], droppedOldRecords);
         }
 
         private static StateDivergenceRecentLogSnapshot CreateRecentLogSnapshot(
@@ -344,7 +345,7 @@ namespace STS2RitsuLib.Networking.StateDivergence
 
         private static byte[] Unbrotli(ReadOnlySpan<byte> data)
         {
-            using var input = new MemoryStream(data.ToArray(), false);
+            using var input = new MemoryStream([.. data], false);
             using var brotli = new BrotliStream(input, CompressionMode.Decompress);
             using var output = new MemoryStream();
             brotli.CopyTo(output);

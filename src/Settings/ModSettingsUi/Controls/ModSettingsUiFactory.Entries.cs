@@ -350,9 +350,11 @@ namespace STS2RitsuLib.Settings
             (TValue Value, string Label)[] ResolveOptions()
             {
                 var options = entry.OptionsProvider?.Invoke() ?? entry.Options;
-                return options
-                    .Select(option => (option.Value, Label: ModSettingsUiContext.Resolve(option.Label)))
-                    .ToArray();
+                return
+                [
+                    .. options
+                        .Select(option => (option.Value, Label: ModSettingsUiContext.Resolve(option.Label))),
+                ];
             }
         }
 

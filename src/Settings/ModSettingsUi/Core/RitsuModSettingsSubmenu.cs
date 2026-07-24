@@ -682,15 +682,15 @@ namespace STS2RitsuLib.Settings
             var selectedLayoutPage = TryGetSelectedPageContentCache(out var selectedBefore) ? selectedBefore : null;
             var hadSelectedHeight = TryMeasurePageContentHeight(selectedLayoutPage, out var selectedHeightBefore);
 
-            RunRegistrations(_globalRefreshRegistrations.ToArray());
+            RunRegistrations([.. _globalRefreshRegistrations]);
 
             if (includeAllPages)
                 foreach (var pageCache in _pageContentCaches.Values)
-                    RunRegistrations(pageCache.RefreshRegistrations.ToArray());
+                    RunRegistrations([.. pageCache.RefreshRegistrations]);
             else if (!string.IsNullOrWhiteSpace(_selectedPageId) && !string.IsNullOrWhiteSpace(_selectedModId) &&
                      _pageContentCaches.TryGetValue(CreatePageCacheKey(_selectedModId, _selectedPageId),
                          out var selectedPageCache))
-                RunRegistrations(selectedPageCache.RefreshRegistrations.ToArray());
+                RunRegistrations([.. selectedPageCache.RefreshRegistrations]);
 
             _refreshBindingTriggers.Clear();
 

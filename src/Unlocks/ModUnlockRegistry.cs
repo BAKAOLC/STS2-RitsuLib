@@ -123,12 +123,14 @@ namespace STS2RitsuLib.Unlocks
                 requirements = [.. RequiredEpochsByModelId];
             }
 
-            return requirements
-                .Where(entry => progress.IsEpochObtained(entry.Value) ||
-                                IsEpochRequirementIgnoredForModelId(entry.Key))
-                .Select(static entry => entry.Value)
-                .Distinct(StringComparer.Ordinal)
-                .ToArray();
+            return
+            [
+                .. requirements
+                    .Where(entry => progress.IsEpochObtained(entry.Value) ||
+                                    IsEpochRequirementIgnoredForModelId(entry.Key))
+                    .Select(static entry => entry.Value)
+                    .Distinct(StringComparer.Ordinal),
+            ];
         }
 
         internal static UnlockState IncludeObtainedRequiredEpochs(UnlockState unlockState, ProgressState progress)
@@ -643,7 +645,7 @@ namespace STS2RitsuLib.Unlocks
         internal static IEnumerable<TModel> FilterUnlocked<TModel>(IEnumerable<TModel> source, UnlockState unlockState)
             where TModel : AbstractModel
         {
-            return source.Where(model => IsUnlocked(model, unlockState)).ToArray();
+            return [.. source.Where(model => IsUnlocked(model, unlockState))];
         }
 
         internal static bool TryGetEliteEpochRule(ModelId characterId, out EliteEpochUnlockRule rule)
@@ -720,7 +722,7 @@ namespace STS2RitsuLib.Unlocks
             PostRunEpochUnlockRule[] rules;
             lock (SyncRoot)
             {
-                rules = PostRunRules.ToArray();
+                rules = [.. PostRunRules];
             }
 
             if (rules.Length == 0)

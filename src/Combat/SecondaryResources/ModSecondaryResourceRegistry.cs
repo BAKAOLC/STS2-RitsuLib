@@ -136,7 +136,7 @@ namespace STS2RitsuLib.Combat.SecondaryResources
         {
             lock (SyncRoot)
             {
-                return Definitions.Values.OrderBy(static definition => definition.Id, StringComparer.Ordinal).ToArray();
+                return [.. Definitions.Values.OrderBy(static definition => definition.Id, StringComparer.Ordinal)];
             }
         }
 
@@ -240,7 +240,7 @@ namespace STS2RitsuLib.Combat.SecondaryResources
             lock (SyncRoot)
             {
                 return CombatUiVisibilityPredicates.TryGetValue(resourceId.Trim(), out var registrations)
-                    ? registrations.Select(static registration => registration.Predicate).ToArray()
+                    ? [.. registrations.Select(static registration => registration.Predicate)]
                     : [];
             }
         }

@@ -165,11 +165,11 @@ namespace STS2RitsuLib.Scaffolding.Content.Patches
                 scope = _pendingScope;
                 _pendingScope = RuntimeAssetRefreshScope.None;
                 _flushScheduled = false;
-                cardRules = PendingCardRules.ToArray();
-                relicRules = PendingRelicRules.ToArray();
-                potionRules = PendingPotionRules.ToArray();
-                powerRules = PendingPowerRules.ToArray();
-                orbRules = PendingOrbRules.ToArray();
+                cardRules = [.. PendingCardRules];
+                relicRules = [.. PendingRelicRules];
+                potionRules = [.. PendingPotionRules];
+                powerRules = [.. PendingPowerRules];
+                orbRules = [.. PendingOrbRules];
                 PendingCardRules.Clear();
                 PendingRelicRules.Clear();
                 PendingPotionRules.Clear();
