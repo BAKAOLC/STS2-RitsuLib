@@ -132,10 +132,12 @@ namespace STS2RitsuLib
             {
                 _lifecycleObservers = AppendItem(_lifecycleObservers, observer);
                 lifecycleSnapshot = replayCurrentState
-                    ? ReplayableLifecycleEvents.Values
-                        .Cast<IFrameworkLifecycleEvent>()
-                        .OrderBy(evt => evt.OccurredAtUtc)
-                        .ToArray()
+                    ?
+                    [
+                        .. ReplayableLifecycleEvents.Values
+                            .Cast<IFrameworkLifecycleEvent>()
+                            .OrderBy(evt => evt.OccurredAtUtc),
+                    ]
                     : [];
             }
 
@@ -253,10 +255,12 @@ namespace STS2RitsuLib
                     });
 
                     lifecycleSnapshot = replayCurrentState
-                        ? ReplayableLifecycleEvents.Values
-                            .Cast<IFrameworkLifecycleEvent>()
-                            .OrderBy(evt => evt.OccurredAtUtc)
-                            .ToArray()
+                        ?
+                        [
+                            .. ReplayableLifecycleEvents.Values
+                                .Cast<IFrameworkLifecycleEvent>()
+                                .OrderBy(evt => evt.OccurredAtUtc),
+                        ]
                         : [];
                 }
 

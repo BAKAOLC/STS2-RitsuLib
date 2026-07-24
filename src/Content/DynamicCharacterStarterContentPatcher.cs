@@ -132,9 +132,11 @@ namespace STS2RitsuLib.Content
             if (extraTypes.Length == 0)
                 return;
 
-            __result = __result
-                .Concat(extraTypes.Select(t => ModelDb.GetById<CardModel>(ModelDb.GetId(t))))
-                .ToList();
+            __result =
+            [
+                .. __result,
+                .. extraTypes.Select(t => ModelDb.GetById<CardModel>(ModelDb.GetId(t))),
+            ];
         }
 
         private static void StartingRelicsPostfix(CharacterModel __instance, ref IReadOnlyList<RelicModel> __result)
@@ -143,9 +145,11 @@ namespace STS2RitsuLib.Content
             if (extraTypes.Length == 0)
                 return;
 
-            __result = __result
-                .Concat(extraTypes.Select(t => ModelDb.GetById<RelicModel>(ModelDb.GetId(t))))
-                .ToList();
+            __result =
+            [
+                .. __result,
+                .. extraTypes.Select(t => ModelDb.GetById<RelicModel>(ModelDb.GetId(t))),
+            ];
         }
 
         private static void StartingPotionsPostfix(CharacterModel __instance, ref IReadOnlyList<PotionModel> __result)
@@ -154,9 +158,11 @@ namespace STS2RitsuLib.Content
             if (extraTypes.Length == 0)
                 return;
 
-            __result = __result
-                .Concat(extraTypes.Select(t => ModelDb.GetById<PotionModel>(ModelDb.GetId(t))))
-                .ToList();
+            __result =
+            [
+                .. __result,
+                .. extraTypes.Select(t => ModelDb.GetById<PotionModel>(ModelDb.GetId(t))),
+            ];
         }
     }
 }

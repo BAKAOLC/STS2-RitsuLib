@@ -56,10 +56,11 @@ namespace STS2RitsuLib.Scaffolding.Content
 
         /// <inheritdoc />
         public sealed override IEnumerable<IHoverTip> ExtraHoverTips =>
-            AdditionalHoverTips
-                .Concat(RegisteredKeywordIds.ToHoverTips())
-                .Concat(this.GetModKeywordHoverTips())
-                .ToArray();
+        [
+            .. AdditionalHoverTips,
+            .. RegisteredKeywordIds.ToHoverTips(),
+            .. this.GetModKeywordHoverTips(),
+        ];
 
         /// <inheritdoc />
         public virtual PotionAssetProfile AssetProfile => PotionAssetProfile.Empty;

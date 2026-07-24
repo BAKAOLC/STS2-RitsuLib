@@ -338,9 +338,11 @@ namespace STS2RitsuLib.Utils
                     return [];
 
                 _propertyNamesFinalized = true;
-                names = RegisteredNames
-                    .OrderBy(static name => name, StringComparer.Ordinal)
-                    .ToArray();
+                names =
+                [
+                    .. RegisteredNames
+                        .OrderBy(static name => name, StringComparer.Ordinal),
+                ];
             }
 
             // ReSharper disable once InvertIf
@@ -357,7 +359,7 @@ namespace STS2RitsuLib.Utils
 
             lock (SyncRoot)
             {
-                return RegisteredStates.Where(state => state.TargetType.IsInstanceOfType(model)).ToArray();
+                return [.. RegisteredStates.Where(state => state.TargetType.IsInstanceOfType(model))];
             }
         }
 
@@ -399,13 +401,13 @@ namespace STS2RitsuLib.Utils
                     (props.intArrays ??= []).Add(new(name, ints));
                     return true;
                 case Enum[] enums:
-                    (props.intArrays ??= []).Add(new(name, enums.Select(Convert.ToInt32).ToArray()));
+                    (props.intArrays ??= []).Add(new(name, [.. enums.Select(Convert.ToInt32)]));
                     return true;
                 case SerializableCard[] cardArray:
                     (props.cardArrays ??= []).Add(new(name, cardArray));
                     return true;
                 case List<SerializableCard> cardList:
-                    (props.cardArrays ??= []).Add(new(name, cardList.ToArray()));
+                    (props.cardArrays ??= []).Add(new(name, [.. cardList]));
                     return true;
                 default:
                     return false;

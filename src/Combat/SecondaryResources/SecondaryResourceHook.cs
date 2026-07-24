@@ -42,7 +42,7 @@ namespace STS2RitsuLib.Combat.SecondaryResources
         /// </summary>
         public static decimal ModifyGain(SecondaryResourceContext context, decimal amount)
         {
-            return IterateListeners(context.CombatState).Aggregate(amount,
+            return IterateListeners(context.CombatState, context.Source).Aggregate(amount,
                 (current, listener) => listener.ModifySecondaryResourceGain(context, current));
         }
 
@@ -75,7 +75,7 @@ namespace STS2RitsuLib.Combat.SecondaryResources
         /// </summary>
         public static bool ShouldGain(SecondaryResourceContext context, decimal amount)
         {
-            return IterateListeners(context.CombatState)
+            return IterateListeners(context.CombatState, context.Source)
                 .All(listener => listener.ShouldGainSecondaryResource(context, amount));
         }
 
@@ -85,7 +85,7 @@ namespace STS2RitsuLib.Combat.SecondaryResources
         /// </summary>
         public static bool ShouldSpend(SecondaryResourceSpendContext context)
         {
-            return IterateListeners(context.CombatState, context.Card)
+            return IterateListeners(context.CombatState, context.Card, context.Source)
                 .All(listener => listener.ShouldSpendSecondaryResource(context));
         }
 
@@ -97,7 +97,7 @@ namespace STS2RitsuLib.Combat.SecondaryResources
             SecondaryResourceInsufficientPaymentContext context,
             SecondaryResourceInsufficientPayment payment)
         {
-            return IterateListeners(context.CombatState, context.Card).Aggregate(payment,
+            return IterateListeners(context.CombatState, context.Card, context.Source).Aggregate(payment,
                 (current, listener) => listener.ModifySecondaryResourceInsufficientPayment(context, current));
         }
 
@@ -109,7 +109,7 @@ namespace STS2RitsuLib.Combat.SecondaryResources
             SecondaryResourceShortfallResolutionContext context,
             SecondaryResourceShortfallResolution resolution)
         {
-            return IterateListeners(context.CombatState, context.Card).Aggregate(resolution,
+            return IterateListeners(context.CombatState, context.Card, context.Source).Aggregate(resolution,
                 (current, listener) => listener.ResolveSecondaryResourceShortfall(context, current));
         }
 
@@ -119,7 +119,7 @@ namespace STS2RitsuLib.Combat.SecondaryResources
         /// </summary>
         public static bool ShouldReset(SecondaryResourceContext context)
         {
-            return IterateListeners(context.CombatState)
+            return IterateListeners(context.CombatState, context.Source)
                 .All(listener => listener.ShouldResetSecondaryResource(context));
         }
 
@@ -129,7 +129,7 @@ namespace STS2RitsuLib.Combat.SecondaryResources
         /// </summary>
         public static async Task AfterChanged(SecondaryResourceChangeContext context)
         {
-            foreach (var listener in IterateListeners(context.CombatState))
+            foreach (var listener in IterateListeners(context.CombatState, context.Source))
                 await listener.AfterSecondaryResourceChanged(context);
         }
 
@@ -139,7 +139,7 @@ namespace STS2RitsuLib.Combat.SecondaryResources
         /// </summary>
         public static async Task AfterSpent(SecondaryResourceSpendContext context)
         {
-            foreach (var listener in IterateListeners(context.CombatState, context.Card))
+            foreach (var listener in IterateListeners(context.CombatState, context.Card, context.Source))
                 await listener.AfterSecondaryResourceSpent(context);
         }
 
@@ -149,7 +149,7 @@ namespace STS2RitsuLib.Combat.SecondaryResources
         /// </summary>
         public static async Task AfterShortfallPayment(SecondaryResourceShortfallContext context)
         {
-            foreach (var listener in IterateListeners(context.CombatState, context.Card))
+            foreach (var listener in IterateListeners(context.CombatState, context.Card, context.Source))
                 await listener.AfterSecondaryResourceShortfallPayment(context);
         }
 
@@ -159,7 +159,7 @@ namespace STS2RitsuLib.Combat.SecondaryResources
         /// </summary>
         public static async Task AfterReset(SecondaryResourceChangeContext context)
         {
-            foreach (var listener in IterateListeners(context.CombatState))
+            foreach (var listener in IterateListeners(context.CombatState, context.Source))
                 await listener.AfterSecondaryResourceReset(context);
         }
 
@@ -170,9 +170,7 @@ namespace STS2RitsuLib.Combat.SecondaryResources
             if (!ModSecondaryResourceRegistry.HasAny)
                 yield break;
 
-            var combatExtraModels = extraModels
-                .Where(static model => model?.ShouldReceiveCombatHooks == true)
-                .ToArray();
+            var combatExtraModels = GetCombatExtraModels(extraModels);
             foreach (var entry in ModelHookListenerDispatcher.FromCombat(
                          combatState,
                          GlobalListeners,
@@ -187,15 +185,31 @@ namespace STS2RitsuLib.Combat.SecondaryResources
             if (!ModSecondaryResourceRegistry.HasAny)
                 yield break;
 
-            var combatExtraModels = extraModels
-                .Where(static model => model?.ShouldReceiveCombatHooks == true)
-                .ToArray();
+            var combatExtraModels = GetCombatExtraModels(extraModels);
             foreach (var entry in ModelHookListenerDispatcher.FromCombatWithAdapters(
                          combatState,
                          GlobalListeners,
                          SecondaryResourceModelHookRegistry.Bind,
                          combatExtraModels))
                 yield return entry.Listener;
+        }
+
+        private static AbstractModel?[] GetCombatExtraModels(AbstractModel?[] models)
+        {
+            var validCount = models.Count(model => model?.ShouldReceiveCombatHooks == true);
+
+            if (validCount == models.Length)
+                return models;
+            if (validCount == 0)
+                return [];
+
+            var result = new AbstractModel?[validCount];
+            var resultIndex = 0;
+            foreach (var model in models)
+                if (model?.ShouldReceiveCombatHooks == true)
+                    result[resultIndex++] = model;
+
+            return result;
         }
     }
 }

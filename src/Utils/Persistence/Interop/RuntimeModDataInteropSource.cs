@@ -595,7 +595,7 @@ namespace STS2RitsuLib.Utils.Persistence.Interop
             if (list.Count == 0)
                 return false;
 
-            paths = list.ToArray();
+            paths = [.. list];
             return true;
         }
 

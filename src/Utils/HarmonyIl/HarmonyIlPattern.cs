@@ -162,7 +162,7 @@ namespace STS2RitsuLib.Utils.HarmonyIl
             ArgumentException.ThrowIfNullOrWhiteSpace(description);
             ArgumentNullException.ThrowIfNull(matches);
             Description = description;
-            Items = matches.ToList();
+            Items = [.. matches];
         }
 
         /// <summary>

@@ -338,9 +338,11 @@ namespace STS2RitsuLib.Utils
         {
             lock (SyncRoot)
             {
-                return Definitions.Values
-                    .OrderBy(definition => definition.Id, StringComparer.Ordinal)
-                    .ToArray();
+                return
+                [
+                    .. Definitions.Values
+                        .OrderBy(definition => definition.Id, StringComparer.Ordinal),
+                ];
             }
         }
 

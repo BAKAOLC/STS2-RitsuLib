@@ -190,7 +190,7 @@ namespace STS2RitsuLib.Networking.JoinDiagnostics
 
         private static byte[] Unbrotli(ReadOnlySpan<byte> data)
         {
-            using var input = new MemoryStream(data.ToArray(), false);
+            using var input = new MemoryStream([.. data], false);
             using var brotli = new BrotliStream(input, CompressionMode.Decompress);
             using var output = new MemoryStream();
             brotli.CopyTo(output);
@@ -238,23 +238,25 @@ namespace STS2RitsuLib.Networking.JoinDiagnostics
             if (!ModManager.IsRunningModded())
                 return [];
 
-            return ModManager.GetLoadedMods()
-                .Where(m => m.manifest?.affectsGameplay ?? true)
-                .Select((m, i) =>
-                {
-                    var manifest = m.manifest;
-                    var id = manifest?.id ?? string.Empty;
-                    var version = manifest?.version ?? string.Empty;
-                    return new JoinDiagnosticsModEntry(
-                        i,
-                        BuildKey(id, version),
-                        id,
-                        version,
-                        manifest?.name ?? id,
-                        m.modSource.ToString(),
-                        Sts2ModManagerCompat.TryGetWorkshopItemId(m));
-                })
-                .ToArray();
+            return
+            [
+                .. ModManager.GetLoadedMods()
+                    .Where(m => m.manifest?.affectsGameplay ?? true)
+                    .Select((m, i) =>
+                    {
+                        var manifest = m.manifest;
+                        var id = manifest?.id ?? string.Empty;
+                        var version = manifest?.version ?? string.Empty;
+                        return new JoinDiagnosticsModEntry(
+                            i,
+                            BuildKey(id, version),
+                            id,
+                            version,
+                            manifest?.name ?? id,
+                            m.modSource.ToString(),
+                            Sts2ModManagerCompat.TryGetWorkshopItemId(m));
+                    }),
+            ];
         }
 
         private static IReadOnlyList<ContentModInventoryEntry> CreateLocalContentModEntries()
@@ -298,10 +300,7 @@ namespace STS2RitsuLib.Networking.JoinDiagnostics
             if (gameplayAffectingMods is not { Count: > 0 })
                 return otherMods;
 
-            if (otherMods is not { Count: > 0 })
-                return gameplayAffectingMods;
-
-            return gameplayAffectingMods.Concat(otherMods).ToArray();
+            return otherMods is not { Count: > 0 } ? gameplayAffectingMods : [.. gameplayAffectingMods, .. otherMods];
         }
 
         private static IReadOnlyList<JoinDiagnosticsModEntry> CreateFallbackModEntries(IReadOnlyList<string>? keys)
@@ -309,13 +308,16 @@ namespace STS2RitsuLib.Networking.JoinDiagnostics
             if (keys == null || keys.Count == 0)
                 return [];
 
-            return keys.Select((key, i) =>
-            {
-                var split = key.LastIndexOf('-');
-                var id = split > 0 ? key[..split] : key;
-                var version = split > 0 && split < key.Length - 1 ? key[(split + 1)..] : string.Empty;
-                return new JoinDiagnosticsModEntry(i, key, id, version, id, string.Empty, null);
-            }).ToArray();
+            return
+            [
+                .. keys.Select((key, i) =>
+                {
+                    var split = key.LastIndexOf('-');
+                    var id = split > 0 ? key[..split] : key;
+                    var version = split > 0 && split < key.Length - 1 ? key[(split + 1)..] : string.Empty;
+                    return new JoinDiagnosticsModEntry(i, key, id, version, id, string.Empty, null);
+                }),
+            ];
         }
 
         private static IReadOnlyList<ContentModInventoryEntry> CreateFallbackContentModEntries(
@@ -324,23 +326,26 @@ namespace STS2RitsuLib.Networking.JoinDiagnostics
             if (keys == null || keys.Count == 0)
                 return [];
 
-            return keys.Select((key, i) =>
-            {
-                var split = key.LastIndexOf('-');
-                var id = split > 0 ? key[..split] : key;
-                var version = split > 0 && split < key.Length - 1 ? key[(split + 1)..] : string.Empty;
-                return new ContentModInventoryEntry(
-                    i,
-                    id,
-                    version,
-                    id,
-                    string.Empty,
-                    null,
-                    true,
-                    true,
-                    ContentModLoadOrderInventory.IsDependencyLibraryId(id),
-                    false);
-            }).ToArray();
+            return
+            [
+                .. keys.Select((key, i) =>
+                {
+                    var split = key.LastIndexOf('-');
+                    var id = split > 0 ? key[..split] : key;
+                    var version = split > 0 && split < key.Length - 1 ? key[(split + 1)..] : string.Empty;
+                    return new ContentModInventoryEntry(
+                        i,
+                        id,
+                        version,
+                        id,
+                        string.Empty,
+                        null,
+                        true,
+                        true,
+                        ContentModLoadOrderInventory.IsDependencyLibraryId(id),
+                        false);
+                }),
+            ];
         }
 
         private static string BuildKey(string id, string version)

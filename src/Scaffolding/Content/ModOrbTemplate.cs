@@ -126,10 +126,11 @@ namespace STS2RitsuLib.Scaffolding.Content
 
         /// <inheritdoc />
         protected sealed override IEnumerable<IHoverTip> ExtraHoverTips =>
-            AdditionalHoverTips
-                .Concat(RegisteredKeywordIds.ToHoverTips())
-                .Concat(this.GetModKeywordHoverTips())
-                .ToArray();
+        [
+            .. AdditionalHoverTips,
+            .. RegisteredKeywordIds.ToHoverTips(),
+            .. this.GetModKeywordHoverTips(),
+        ];
 
         /// <inheritdoc />
         public override Color DarkenedColor => Colors.DarkSlateGray;

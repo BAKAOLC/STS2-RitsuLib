@@ -1,3 +1,4 @@
+using System.Collections.Concurrent;
 using MegaCrit.Sts2.Core.Combat;
 using MegaCrit.Sts2.Core.Entities.Cards;
 using MegaCrit.Sts2.Core.Models;
@@ -13,13 +14,11 @@ namespace STS2RitsuLib.Combat.SecondaryResources
     /// </summary>
     public static class SecondaryResourceModelHookRegistry
     {
-        private static readonly Lock Gate = new();
-
-        private static readonly Dictionary<Type, CostHooks> Hooks = new()
+        private static readonly ConcurrentDictionary<Type, CostHooks> Hooks = new(new Dictionary<Type, CostHooks>
         {
             [typeof(VoidFormPower)] = new(null, ModifyVoidFormCostLate),
             [typeof(BrilliantScarf)] = new(null, ModifyBrilliantScarfCostLate),
-        };
+        });
 
         /// <summary>
         ///     Registers or replaces normal and late secondary-resource cost hooks for an exact model type.
@@ -55,10 +54,7 @@ namespace STS2RitsuLib.Combat.SecondaryResources
             if (modifyCost == null && modifyCostLate == null)
                 throw new ArgumentException("At least one cost hook must be provided.");
 
-            lock (Gate)
-            {
-                Hooks[modelType] = new(modifyCost, modifyCostLate);
-            }
+            Hooks[modelType] = new(modifyCost, modifyCostLate);
         }
 
         /// <summary>
@@ -79,22 +75,14 @@ namespace STS2RitsuLib.Combat.SecondaryResources
         {
             ArgumentNullException.ThrowIfNull(modelType);
 
-            lock (Gate)
-            {
-                return Hooks.Remove(modelType);
-            }
+            return Hooks.TryRemove(modelType, out _);
         }
 
         internal static ISecondaryResourceHookListener? Bind(AbstractModel model)
         {
-            CostHooks hooks;
-            lock (Gate)
-            {
-                if (!Hooks.TryGetValue(model.GetType(), out hooks))
-                    return null;
-            }
-
-            return new BoundCostHooks(model, hooks);
+            return Hooks.TryGetValue(model.GetType(), out var hooks)
+                ? new BoundCostHooks(model, hooks)
+                : null;
         }
 
         private static decimal ModifyVoidFormCostLate(

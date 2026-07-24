@@ -17,12 +17,14 @@ namespace STS2RitsuLib.Utils.HarmonyIl
             SourceMethod = sourceMethod;
             BodyMethod = bodyMethod;
             Instructions = instructions;
-            CalledMethods = instructions
-                .Select(static instruction =>
-                    HarmonyIl.TryGetCalledMethod(instruction, out var called) ? called : null)
-                .Where(static method => method != null)
-                .Cast<MethodInfo>()
-                .ToList();
+            CalledMethods =
+            [
+                .. instructions
+                    .Select(static instruction =>
+                        HarmonyIl.TryGetCalledMethod(instruction, out var called) ? called : null)
+                    .Where(static method => method != null)
+                    .Cast<MethodInfo>(),
+            ];
         }
 
         /// <summary>

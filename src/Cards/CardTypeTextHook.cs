@@ -48,21 +48,23 @@ namespace STS2RitsuLib.Cards
                 foreach (var modifier in customTypeTextCard.GetTypeModifiers())
                     yield return modifier;
 
+            HashSet<ICardTypeTextModifier> seen = new(ReferenceEqualityComparer.Instance);
             foreach (var capability in ModelCapabilityHost.GetCapabilities<ICardTypeTextModifier>(card))
-            foreach (var modifier in capability.GetTypeModifiers(card))
-                yield return modifier;
+            {
+                seen.Add(capability);
+                foreach (var modifier in capability.GetTypeModifiers(card))
+                    yield return modifier;
+            }
 
-            foreach (var source in IterateHookModifiers(card))
+            foreach (var source in IterateHookModifiers(card, seen))
             foreach (var modifier in source.GetTypeModifiers(card))
                 yield return modifier;
         }
 
-        private static IEnumerable<ICardTypeTextModifier> IterateHookModifiers(CardModel card)
+        private static IEnumerable<ICardTypeTextModifier> IterateHookModifiers(
+            CardModel card,
+            HashSet<ICardTypeTextModifier> seen)
         {
-            HashSet<ICardTypeTextModifier> seen = new(ReferenceEqualityComparer.Instance);
-            foreach (var capability in ModelCapabilityHost.GetCapabilities<ICardTypeTextModifier>(card))
-                seen.Add(capability);
-
             if (card.RunState is { } runState)
             {
                 foreach (var entry in ModelHookListenerDispatcher.FromRun(

@@ -41,17 +41,19 @@ namespace STS2RitsuLib
         {
             lock (SyncRoot)
             {
-                return Enum.GetValues<FrameworkPatcherArea>()
-                    .SelectMany(area =>
-                    {
-                        if (!FrameworkPatchersByArea.TryGetValue(area, out var patcher))
-                            return [];
+                return
+                [
+                    .. Enum.GetValues<FrameworkPatcherArea>()
+                        .SelectMany(area =>
+                        {
+                            if (!FrameworkPatchersByArea.TryGetValue(area, out var patcher))
+                                return [];
 
-                        return patcher.RegisteredPatches
-                            .Select(patchInfo => CreatePatchBindingSnapshot(area, patcher, patchInfo))
-                            .ToArray();
-                    })
-                    .ToArray();
+                            return patcher.RegisteredPatches
+                                .Select(patchInfo => CreatePatchBindingSnapshot(area, patcher, patchInfo))
+                                .ToArray();
+                        }),
+                ];
             }
         }
 

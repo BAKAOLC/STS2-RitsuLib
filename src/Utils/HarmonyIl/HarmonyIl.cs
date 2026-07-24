@@ -1061,7 +1061,7 @@ namespace STS2RitsuLib.Utils.HarmonyIl
         public static CodeInstruction[] CloneAll(IEnumerable<CodeInstruction> instructions)
         {
             ArgumentNullException.ThrowIfNull(instructions);
-            return instructions.Select(static instruction => instruction.Clone()).ToArray();
+            return [.. instructions.Select(static instruction => instruction.Clone())];
         }
 
         private static bool TryGetNumericIndex(object? operand, out int index)

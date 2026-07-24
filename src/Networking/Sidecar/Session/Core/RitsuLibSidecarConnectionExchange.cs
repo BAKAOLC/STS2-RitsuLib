@@ -106,6 +106,7 @@ namespace STS2RitsuLib.Networking.Sidecar
             lock (ExchangeGate)
             {
                 var hasPendingAcknowledgement = false;
+                // ReSharper disable once ForeachCanBeConvertedToQueryUsingAnotherGetEnumerator
                 foreach (var state in NegotiationByPeer.Values)
                 {
                     if (state.Phase != NegotiationOutboundPhase.AwaitingAck)
@@ -118,7 +119,7 @@ namespace STS2RitsuLib.Networking.Sidecar
                 if (!hasPendingAcknowledgement)
                     return;
 
-                peers = [..NegotiationByPeer.Keys];
+                peers = [.. NegotiationByPeer.Keys];
             }
 
             foreach (var peerNetId in peers)

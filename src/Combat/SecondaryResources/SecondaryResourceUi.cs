@@ -374,6 +374,7 @@ namespace STS2RitsuLib.Combat.SecondaryResources
         }
     }
 
+    // ReSharper disable once ClassCannotBeInstantiated
     public sealed partial class ModSecondaryResourceRegistry
     {
         /// <summary>

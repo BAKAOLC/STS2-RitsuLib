@@ -119,14 +119,14 @@ namespace STS2RitsuLib.Models.Capabilities
             where TListener : class
         {
             HashSet<TListener> seen = new(ReferenceEqualityComparer.Instance);
+            HashSet<AbstractModel>? adaptedModels = null;
 
             foreach (var model in models)
             {
                 if (model is TListener modelListener && seen.Add(modelListener))
                     yield return new(modelListener, model);
 
-                var adapter = adapterResolver?.Invoke(model);
-                if (adapter != null && seen.Add(adapter))
+                if (TryResolveAdapter(model, out var adapter))
                     yield return new(adapter, model);
 
                 if (!ModelCapabilities.TryGet(model, out var capabilities) || capabilities.Count == 0)
@@ -134,10 +134,17 @@ namespace STS2RitsuLib.Models.Capabilities
 
                 var candidates = capabilities.GetAttachedSnapshot();
                 foreach (var capability in candidates)
-                    if (ReferenceEquals(capability.Owner, model)
-                        && capability is TListener listener
-                        && seen.Add(listener))
+                {
+                    if (!ReferenceEquals(capability.Owner, model))
+                        continue;
+
+                    if (capability is TListener listener && seen.Add(listener))
                         yield return new(listener, capability as AbstractModel);
+
+                    if (capability is AbstractModel capabilityModel &&
+                        TryResolveAdapter(capabilityModel, out adapter))
+                        yield return new(adapter, capabilityModel);
+                }
             }
 
             foreach (var model in extraModels)
@@ -151,8 +158,7 @@ namespace STS2RitsuLib.Models.Capabilities
                         break;
                 }
 
-                var adapter = adapterResolver?.Invoke(model);
-                if (adapter != null && seen.Add(adapter))
+                if (TryResolveAdapter(model, out var adapter))
                     yield return new(adapter, model);
 
                 if (!ModelCapabilities.TryGet(model, out var capabilities) || capabilities.Count == 0)
@@ -160,10 +166,17 @@ namespace STS2RitsuLib.Models.Capabilities
 
                 var candidates = capabilities.GetAttachedSnapshot();
                 foreach (var capability in candidates)
-                    if (ReferenceEquals(capability.Owner, model)
-                        && capability is TListener listener
-                        && seen.Add(listener))
+                {
+                    if (!ReferenceEquals(capability.Owner, model))
+                        continue;
+
+                    if (capability is TListener listener && seen.Add(listener))
                         yield return new(listener, capability as AbstractModel);
+
+                    if (capability is AbstractModel capabilityModel &&
+                        TryResolveAdapter(capabilityModel, out adapter))
+                        yield return new(adapter, capabilityModel);
+                }
             }
 
             if (globalListeners == null)
@@ -172,6 +185,26 @@ namespace STS2RitsuLib.Models.Capabilities
             foreach (var listener in globalListeners.Snapshot())
                 if (seen.Add(listener))
                     yield return new(listener, null);
+            yield break;
+
+            bool TryResolveAdapter(AbstractModel model, out TListener adapter)
+            {
+                adapter = null!;
+                if (adapterResolver == null || adaptedModels?.Contains(model) == true)
+                    return false;
+
+                var resolved = adapterResolver(model);
+                if (resolved == null)
+                    return false;
+
+                adaptedModels ??= new(ReferenceEqualityComparer.Instance);
+                adaptedModels.Add(model);
+                if (!seen.Add(resolved))
+                    return false;
+
+                adapter = resolved;
+                return true;
+            }
         }
     }
 

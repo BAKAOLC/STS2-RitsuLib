@@ -743,10 +743,7 @@ namespace STS2RitsuLib.Combat.SecondaryResources
             if (uses.Count == 0)
                 return SecondaryResourcePaymentPlan.Empty(card, player, freeMode.IsFree);
 
-            if (player == null)
-                return PlanPreview(card, uses, freeMode);
-
-            if (combatState == null)
+            if (player == null || combatState == null)
                 return PlanPreview(card, uses, freeMode);
 
             var lines = new List<SecondaryResourcePaymentLine>();
