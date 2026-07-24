@@ -16,10 +16,12 @@ namespace STS2RitsuLib.Interop.AutoRegistration
         public int Order { get; set; }
 
         /// <summary>
-        ///     When true on an attribute declared on a base type, the same registration is applied to concrete
-        ///     derived types (duplicate signatures from direct declarations on the derived type are skipped).
-        ///     当基类型上声明的 attribute 将此项设为 true 时，同一注册会应用到具体
-        ///     派生类型（派生类型直接声明产生的重复签名会被跳过）。
+        ///     When true on an attribute declared on a base type, the registration is available to concrete derived
+        ///     types. The nearest declaration wins per logical registration slot: a direct declaration can replace
+        ///     inherited configuration such as a pool, count, path, placement, or threshold, while registrations for
+        ///     distinct target ids or scopes remain additive.
+        ///     当基类型上声明的 attribute 将此项设为 true 时，该注册可应用到具体派生类型。每个逻辑注册槽位采用最近的声明：
+        ///     直接声明可以替换继承的卡池、数量、路径、位置或阈值等配置，而不同目标 ID 或作用域的注册仍会累加。
         /// </summary>
         public bool Inherit { get; set; }
     }

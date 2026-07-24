@@ -109,11 +109,9 @@ namespace STS2RitsuLib.Interop.AutoRegistration
             var operations = new List<AutoRegistrationOperation>();
             var signatures = new HashSet<string>(StringComparer.Ordinal);
 
-            foreach (var attribute in type.GetCustomAttributes(false).OfType<Attribute>())
-                Append(attribute, type, false);
-
-            foreach (var attributeSource in EnumerateInheritedRegistrationAttributes(type))
-                Append(attributeSource.Attribute, attributeSource.DeclaringType, true);
+            foreach (var attributeSource in EnumerateEffectiveRegistrationAttributes(type))
+                Append(attributeSource.Attribute, attributeSource.DeclaringType,
+                    attributeSource.DeclaringType != type);
 
             return operations;
 
@@ -1097,14 +1095,130 @@ namespace STS2RitsuLib.Interop.AutoRegistration
             }
         }
 
-        private static IEnumerable<AutoRegistrationAttributeSource> EnumerateInheritedRegistrationAttributes(Type type)
+        private static IEnumerable<AutoRegistrationAttributeSource> EnumerateEffectiveRegistrationAttributes(Type type)
         {
             ArgumentNullException.ThrowIfNull(type);
 
-            for (var baseType = type.BaseType; baseType != null; baseType = baseType.BaseType)
-                foreach (var attribute in baseType.GetCustomAttributes(false).OfType<Attribute>())
-                    if (attribute is AutoRegistrationAttribute { Inherit: true })
-                        yield return new(attribute, baseType);
+            var claimedSlots = new Dictionary<AutoRegistrationInheritanceSlot, Type>();
+
+            for (var declaringType = type; declaringType != null; declaringType = declaringType.BaseType)
+            {
+                var slotsAtLevel = new HashSet<AutoRegistrationInheritanceSlot>();
+                foreach (var attribute in declaringType.GetCustomAttributes(false)
+                             .OfType<AutoRegistrationAttribute>())
+                {
+                    if (declaringType != type && !attribute.Inherit)
+                        continue;
+
+                    var slot = GetInheritanceSlot(attribute);
+                    if (claimedSlots.ContainsKey(slot))
+                        continue;
+
+                    if (!slotsAtLevel.Add(slot))
+                        throw new InvalidOperationException(
+                            $"Type '{declaringType.FullName}' declares multiple auto-registration attributes for " +
+                            $"the same logical inheritance slot '{slot}'. Put only one registration in that slot; " +
+                            "use distinct target ids or scopes only for registrations that support multiple entries.");
+
+                    yield return new(attribute, declaringType);
+                }
+
+                foreach (var slot in slotsAtLevel)
+                    claimedSlots[slot] = declaringType;
+            }
+        }
+
+        private static AutoRegistrationInheritanceSlot GetInheritanceSlot(AutoRegistrationAttribute attribute)
+        {
+            ArgumentNullException.ThrowIfNull(attribute);
+
+            return attribute switch
+            {
+                RegisterCardAttribute => ExclusiveSlot<RegisterCardAttribute>(),
+                RegisterRelicAttribute => ExclusiveSlot<RegisterRelicAttribute>(),
+                RegisterPotionAttribute => ExclusiveSlot<RegisterPotionAttribute>(),
+                RegisterDefaultModelCapabilityAttribute value => ScopedSlot<RegisterDefaultModelCapabilityAttribute>(
+                    TypeIdentity(value.TargetModelType),
+                    value.ModifierId ?? "<default>"),
+                RegisterMutuallyExclusiveModifierGroupAttribute value =>
+                    ScopedSlot<RegisterMutuallyExclusiveModifierGroupAttribute>(
+                        value.MemberTypes.Select(TypeIdentity).Order(StringComparer.Ordinal).ToArray()),
+                CharacterStarterRegistrationAttributeBase value => ScopedSlotForType(
+                    attribute.GetType(),
+                    TypeIdentity(value.CharacterType)),
+                RegisterActEncounterAttribute value => ScopedSlot<RegisterActEncounterAttribute>(
+                    TypeIdentity(value.ActType)),
+                RegisterActEventAttribute value => ScopedSlot<RegisterActEventAttribute>(
+                    TypeIdentity(value.ActType)),
+                RegisterActAncientAttribute value => ScopedSlot<RegisterActAncientAttribute>(
+                    TypeIdentity(value.ActType)),
+                RegisterOwnedKeywordAttribute value => ScopedSlot<RegisterOwnedKeywordAttribute>(
+                    value.LocalKeywordStem),
+                RegisterOwnedCardKeywordAttribute value => ScopedSlot<RegisterOwnedCardKeywordAttribute>(
+                    value.LocalKeywordStem),
+                RegisterOwnedCardTagAttribute value => ScopedSlot<RegisterOwnedCardTagAttribute>(
+                    value.LocalCardTagStem),
+                RegisterOwnedCardPileAttribute value => ScopedSlot<RegisterOwnedCardPileAttribute>(
+                    value.LocalPileStem),
+                RegisterOwnedTopBarButtonAttribute value => ScopedSlot<RegisterOwnedTopBarButtonAttribute>(
+                    value.LocalButtonStem),
+                RegisterNodeAttachmentAttributeBase value => ScopedSlot<RegisterNodeAttachmentAttributeBase>(
+                    TypeIdentity(value.ParentType),
+                    value.LocalId),
+                AutoTimelineSlotAttribute
+                    or AutoTimelineSlotBeforeColumnAttribute
+                    or AutoTimelineSlotBeforeEpochColumnAttribute
+                    or AutoTimelineSlotAfterColumnAttribute
+                    or AutoTimelineSlotAfterEpochColumnAttribute
+                    or AutoTimelineSlotInColumnAttribute
+                    or AutoTimelineSlotInEpochColumnAttribute =>
+                    ExclusiveSlot<AutoTimelineSlotAttribute>(),
+                RegisterArchaicToothTranscendenceAttribute =>
+                    ExclusiveSlot<RegisterArchaicToothTranscendenceAttribute>(),
+                RegisterDustyTomeCardAttribute value => ScopedSlot<RegisterDustyTomeCardAttribute>(
+                    TypeIdentity(value.CharacterType)),
+                RegisterTouchOfOrobasRefinementAttribute =>
+                    ExclusiveSlot<RegisterTouchOfOrobasRefinementAttribute>(),
+                RegisterEpochCardsAttribute => ExclusiveSlot<RegisterEpochCardsAttribute>(),
+                RequireAllCardsInPoolAttribute value => ScopedSlot<RequireAllCardsInPoolAttribute>(
+                    TypeIdentity(value.PoolType)),
+                RegisterEpochRelicsFromPoolAttribute value => ScopedSlot<RegisterEpochRelicsFromPoolAttribute>(
+                    TypeIdentity(value.PoolType)),
+                RegisterStoryEpochAttribute => ExclusiveSlot<RegisterStoryEpochAttribute>(),
+                RequireEpochAttribute value => ScopedSlot<RequireEpochAttribute>(
+                    TypeIdentity(value.EpochType)),
+                CharacterEpochRegistrationAttributeBase value => ScopedSlotForType(
+                    attribute.GetType(),
+                    TypeIdentity(value.EpochType)),
+                _ => ExclusiveSlotForType(attribute.GetType()),
+            };
+
+            static AutoRegistrationInheritanceSlot ExclusiveSlot<TAttribute>()
+                where TAttribute : AutoRegistrationAttribute
+            {
+                return ExclusiveSlotForType(typeof(TAttribute));
+            }
+
+            static AutoRegistrationInheritanceSlot ExclusiveSlotForType(Type attributeType)
+            {
+                return new(TypeIdentity(attributeType), "");
+            }
+
+            static AutoRegistrationInheritanceSlot ScopedSlot<TAttribute>(params string[] scope)
+                where TAttribute : AutoRegistrationAttribute
+            {
+                return ScopedSlotForType(typeof(TAttribute), scope);
+            }
+
+            static AutoRegistrationInheritanceSlot ScopedSlotForType(Type attributeType, params string[] scope)
+            {
+                return new(TypeIdentity(attributeType), string.Join("\0", scope));
+            }
+
+            static string TypeIdentity(Type value)
+            {
+                return value.AssemblyQualifiedName ?? value.FullName ?? value.Name;
+            }
         }
 
         private static AutoRegistrationOperation CreateOperation(string ownerModId, Type sourceType,
@@ -1599,6 +1713,16 @@ namespace STS2RitsuLib.Interop.AutoRegistration
         }
 
         private readonly record struct AutoRegistrationAttributeSource(Attribute Attribute, Type DeclaringType);
+
+        private readonly record struct AutoRegistrationInheritanceSlot(string Family, string Scope)
+        {
+            public override string ToString()
+            {
+                return string.IsNullOrEmpty(Scope)
+                    ? Family
+                    : $"{Family}[{Scope.Replace("\0", ", ", StringComparison.Ordinal)}]";
+            }
+        }
 
         private readonly record struct OperationPriority(AutoRegistrationOperation Operation)
             : IComparable<OperationPriority>
