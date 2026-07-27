@@ -149,7 +149,16 @@ namespace STS2RitsuLib.Utils.HarmonyIl
             ArgumentNullException.ThrowIfNull(method);
 
             var bodyMethod = resolveAsync ? AccessTools.AsyncMoveNext(method) ?? method : method;
-            var instructions = PatchProcessor.GetOriginalInstructions(bodyMethod, out _);
+            IReadOnlyList<CodeInstruction> instructions;
+            try
+            {
+                instructions = PatchProcessor.GetOriginalInstructions(bodyMethod, out _);
+            }
+            catch (NotSupportedException)
+            {
+                instructions = HarmonyIlMethodReader.Read(bodyMethod);
+            }
+
             return new(method, bodyMethod, instructions);
         }
 
