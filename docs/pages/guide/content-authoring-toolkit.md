@@ -104,6 +104,7 @@ Common content attributes:
 | `RegisterActEncounter(typeof(act))` | Encounter for an act |
 | `RegisterSharedEvent`, `RegisterActEvent(typeof(act))` | Event content |
 | `RegisterSharedAncient`, `RegisterActAncient(typeof(act))` | Ancient event content |
+| `RegisterTrashHeapCard`, `RegisterTrashHeapRelic` | Trash Heap event candidates |
 | `RegisterAchievement`, `RegisterEnchantment`, `RegisterAffliction` | Metadata or card-state models |
 | `RegisterGoodModifier`, `RegisterBadModifier` | Daily modifiers |
 | `RegisterSharedCardPool`, `RegisterSharedRelicPool`, `RegisterSharedPotionPool` | Shared pools |
@@ -281,6 +282,7 @@ Important pack methods:
 | Characters | `.Character<T>()`, `.Character<T>(entry => ...)`, `.CharacterStarterCard<TCharacter,TCard>()`, starter relic / potion helpers |
 | World content | `.Act<T>()`, `.Monster<T>()`, `.ActEncounter<TAct,TEncounter>()`, `.SharedEvent<T>()`, `.ActEvent<TAct,TEvent>()` |
 | Ancients | `.SharedAncient<T>()`, `.ActAncient<TAct,TAncient>()`, `.AncientOption<TAncient>(rule)` |
+| Event candidates | `.TrashHeapCard<T>()`, `.TrashHeapRelic<T>()` |
 | Keywords and ids | `.CardKeywordOwnedByLocNamespace(...)`, `.KeywordOwned(...)`, `.CardTagOwned(...)` |
 | UI | `.CardPileOwned(...)`, `.TopBarButtonOwned(...)` |
 | Timeline and unlocks | `.Story<T>()`, `.Epoch<T>()`, `.StoryEpoch<TStory,TEpoch>()`, `.RequireEpoch<TModel,TEpoch>()`, unlock helpers |
@@ -319,6 +321,7 @@ RitsuLibFramework.CreateContentPack("MyMod")
 | 角色 | `.Character<T>()`、`.Character<T>(entry => ...)`、`.CharacterStarterCard<TCharacter,TCard>()`、初始遗物 / 药水辅助方法 |
 | 世界内容 | `.Act<T>()`、`.Monster<T>()`、`.ActEncounter<TAct,TEncounter>()`、`.SharedEvent<T>()`、`.ActEvent<TAct,TEvent>()` |
 | Ancient | `.SharedAncient<T>()`、`.ActAncient<TAct,TAncient>()`、`.AncientOption<TAncient>(rule)` |
+| 事件候选内容 | `.TrashHeapCard<T>()`、`.TrashHeapRelic<T>()` |
 | 关键词与 ID | `.CardKeywordOwnedByLocNamespace(...)`、`.KeywordOwned(...)`、`.CardTagOwned(...)` |
 | UI | `.CardPileOwned(...)`、`.TopBarButtonOwned(...)` |
 | 时间线与解锁 | `.Story<T>()`、`.Epoch<T>()`、`.StoryEpoch<TStory,TEpoch>()`、`.RequireEpoch<TModel,TEpoch>()`、解锁辅助方法 |

@@ -195,6 +195,76 @@ RitsuLibFramework.CreateContentPack("MyMod")
 
 :::
 
+## Extend The Trash Heap Candidate Pools{lang="en"}
+
+::: en
+
+After registering a card or relic as ModelDb content, add it to the corresponding Trash Heap option with the content-pack builder:
+
+```csharp
+[RegisterCard(typeof(MyCardPool))]
+[RegisterTrashHeapCard]
+public sealed class MyTrashHeapCard : ModCardTemplate
+{
+}
+
+[RegisterRelic(typeof(MyRelicPool))]
+[RegisterTrashHeapRelic]
+public sealed class MyTrashHeapRelic : ModRelicTemplate
+{
+}
+```
+
+Or use the content-pack builder:
+
+```csharp
+RitsuLibFramework.CreateContentPack("MyMod")
+    .TrashHeapCard<MyTrashHeapCard>()
+    .TrashHeapRelic<MyTrashHeapRelic>()
+    .Apply();
+```
+
+Registered cards are appended to the `Grab` candidate pool, and registered relics are appended to the `Dive In` candidate pool. The event chooses uniformly from the combined vanilla and registered candidates. RitsuLib removes duplicate model ids but does not apply rarity or unlock filters.
+
+For direct registration, use `RitsuLibFramework.RegisterTrashHeapCard<T>(modId)`, `RegisterTrashHeapRelic<T>(modId)`, or the matching methods on `ModContentRegistry`.
+
+:::
+
+## 扩展垃圾堆候选池{lang="zh-CN"}
+
+::: zh-CN
+
+先把卡牌或遗物注册为 ModelDb 内容，再通过 content-pack builder 将其加入垃圾堆的对应选项：
+
+```csharp
+[RegisterCard(typeof(MyCardPool))]
+[RegisterTrashHeapCard]
+public sealed class MyTrashHeapCard : ModCardTemplate
+{
+}
+
+[RegisterRelic(typeof(MyRelicPool))]
+[RegisterTrashHeapRelic]
+public sealed class MyTrashHeapRelic : ModRelicTemplate
+{
+}
+```
+
+也可以使用 content-pack builder：
+
+```csharp
+RitsuLibFramework.CreateContentPack("MyMod")
+    .TrashHeapCard<MyTrashHeapCard>()
+    .TrashHeapRelic<MyTrashHeapRelic>()
+    .Apply();
+```
+
+注册的卡牌会追加到“拿取”候选池，注册的遗物会追加到“深入翻找”候选池。事件会从原版与已注册内容组成的总候选池中等概率选择。RitsuLib 会按模型 id 去重，但不会额外应用稀有度或解锁条件筛选。
+
+直接注册时，可使用 `RitsuLibFramework.RegisterTrashHeapCard<T>(modId)`、`RegisterTrashHeapRelic<T>(modId)`，或 `ModContentRegistry` 上的对应方法。
+
+:::
+
 ## Ancient Dialogue{lang="en"}
 
 ::: en

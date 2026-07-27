@@ -284,6 +284,20 @@ namespace STS2RitsuLib.Interop.AutoRegistration
     public sealed class RegisterRelicAttribute(Type poolType) : ModelPublicEntryRegistrationAttributeBase(poolType);
 
     /// <summary>
+    ///     Registers the annotated card type as a candidate for the Trash Heap event's Grab option.
+    ///     将带注解的卡牌类型注册为垃圾堆事件“拿取”选项的候选。
+    /// </summary>
+    [AttributeUsage(AttributeTargets.Class, AllowMultiple = true, Inherited = false)]
+    public sealed class RegisterTrashHeapCardAttribute : ContentRegistrationAttribute;
+
+    /// <summary>
+    ///     Registers the annotated relic type as a candidate for the Trash Heap event's Dive In option.
+    ///     将带注解的遗物类型注册为垃圾堆事件“深入翻找”选项的候选。
+    /// </summary>
+    [AttributeUsage(AttributeTargets.Class, AllowMultiple = true, Inherited = false)]
+    public sealed class RegisterTrashHeapRelicAttribute : ContentRegistrationAttribute;
+
+    /// <summary>
     ///     Registers the annotated type as a potion in the given pool.
     ///     将带注解的类型注册为给定牌池中的药水。
     /// </summary>

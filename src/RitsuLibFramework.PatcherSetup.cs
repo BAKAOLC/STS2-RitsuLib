@@ -183,6 +183,8 @@ namespace STS2RitsuLib
             patcher.RegisterPatch<LocManagerLoadLocFormattersPostfixPatch>();
             patcher.RegisterPatch<AncientDialoguePopulateLocKeysPatch>();
             patcher.RegisterPatch<AncientEventInitialOptionsRegistryPatch>();
+            patcher.RegisterPatch<TrashHeapCardsRegistryPatch>();
+            patcher.RegisterPatch<TrashHeapRelicsRegistryPatch>();
             patcher.RegisterPatch<ModAncientActValidityPatch>();
             patcher.RegisterPatch<ModEncounterActValidityPatch>();
             patcher.RegisterPatch<TheArchitectLoadDialogueMissingFallbackPatch>();
