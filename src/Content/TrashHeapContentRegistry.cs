@@ -64,12 +64,21 @@ namespace STS2RitsuLib.Content
             ArgumentNullException.ThrowIfNull(modelType);
             ArgumentException.ThrowIfNullOrWhiteSpace(ownerModId);
 
+            var candidate = new RegisteredModel(modelType, ownerModId.Trim());
             lock (SyncRoot)
             {
-                if (registrations.Any(registration => registration.ModelType == modelType))
-                    return false;
+                var existingIndex = registrations.FindIndex(registration => registration.ModelType == modelType);
+                if (existingIndex >= 0)
+                {
+                    var existing = registrations[existingIndex];
+                    if (RegisteredModelComparer.Instance.Compare(candidate, existing) >= 0)
+                        return false;
 
-                registrations.Add(new(modelType, ownerModId.Trim()));
+                    registrations[existingIndex] = candidate;
+                    return true;
+                }
+
+                registrations.Add(candidate);
                 return true;
             }
         }
@@ -88,12 +97,8 @@ namespace STS2RitsuLib.Content
             string contentKind)
             where TModel : AbstractModel
         {
-            if (registrations.Count == 0)
-                return vanillaModels;
-
             var combined = new List<TModel>(vanillaModels.Length + registrations.Count);
             combined.AddRange(vanillaModels);
-            var existingIds = vanillaModels.Select(static model => model.Id).ToHashSet();
 
             foreach (var registration in registrations)
             {
@@ -109,15 +114,58 @@ namespace STS2RitsuLib.Content
                     continue;
                 }
 
-                if (model == null || !existingIds.Add(model.Id))
+                if (model == null)
                     continue;
 
                 combined.Add(model);
             }
 
-            return combined.Count == vanillaModels.Length ? vanillaModels : [.. combined];
+            combined.Sort(ModelComparer<TModel>.Instance);
+
+            var seenIds = new HashSet<ModelId>();
+            return [.. combined.Where(model => seenIds.Add(model.Id))];
         }
 
         private readonly record struct RegisteredModel(Type ModelType, string OwnerModId);
+
+        private sealed class RegisteredModelComparer : IComparer<RegisteredModel>
+        {
+            internal static RegisteredModelComparer Instance { get; } = new();
+
+            public int Compare(RegisteredModel x, RegisteredModel y)
+            {
+                var result = StringComparer.Ordinal.Compare(x.OwnerModId, y.OwnerModId);
+                if (result != 0)
+                    return result;
+
+                return StringComparer.Ordinal.Compare(
+                    x.ModelType.AssemblyQualifiedName ?? x.ModelType.FullName ?? x.ModelType.Name,
+                    y.ModelType.AssemblyQualifiedName ?? y.ModelType.FullName ?? y.ModelType.Name);
+            }
+        }
+
+        private sealed class ModelComparer<TModel> : IComparer<TModel>
+            where TModel : AbstractModel
+        {
+            internal static ModelComparer<TModel> Instance { get; } = new();
+
+            public int Compare(TModel? x, TModel? y)
+            {
+                if (ReferenceEquals(x, y))
+                    return 0;
+                if (x is null)
+                    return -1;
+                if (y is null)
+                    return 1;
+
+                var result = x.Id.CompareTo(y.Id);
+                if (result != 0)
+                    return result;
+
+                return StringComparer.Ordinal.Compare(
+                    x.GetType().AssemblyQualifiedName ?? x.GetType().FullName ?? x.GetType().Name,
+                    y.GetType().AssemblyQualifiedName ?? y.GetType().FullName ?? y.GetType().Name);
+            }
+        }
     }
 }
