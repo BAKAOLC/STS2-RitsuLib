@@ -1,4 +1,5 @@
 using System.Globalization;
+using System.Text;
 using MegaCrit.Sts2.Core.Combat;
 using MegaCrit.Sts2.Core.Entities.Cards;
 using MegaCrit.Sts2.Core.Entities.Multiplayer;
@@ -35,12 +36,13 @@ namespace STS2RitsuLib.Interactions.RightClick
         private const string RightClickExecuteSurface = "right-click execute";
 
         private static readonly Lock Gate = new();
+        private static long _nextHandlerSequence;
         private static long _nextBindingSequence;
         private static int _unsupportedProtocolWarningLogged;
 
-        private static readonly List<IModRightClickHandler> Handlers =
+        private static readonly List<RegisteredLocalRightClickHandler> Handlers =
         [
-            new BuiltInModelRightClickHandler(),
+            new(new BuiltInModelRightClickHandler(), 0, true),
         ];
 
         private static readonly List<RegisteredRightClickBinding> Bindings = [];
@@ -78,11 +80,12 @@ namespace STS2RitsuLib.Interactions.RightClick
             ArgumentNullException.ThrowIfNull(handler);
             lock (Gate)
             {
-                if (Handlers.Contains(handler))
+                if (Handlers.Any(existing =>
+                        EqualityComparer<IModRightClickHandler>.Default.Equals(existing.Handler, handler)))
                     return;
 
-                Handlers.Add(handler);
-                Handlers.Sort((a, b) => b.Priority.CompareTo(a.Priority));
+                Handlers.Add(new(handler, Interlocked.Increment(ref _nextHandlerSequence), false));
+                SortHandlers();
             }
         }
 
@@ -185,13 +188,13 @@ namespace STS2RitsuLib.Interactions.RightClick
         /// </summary>
         public static bool TryDispatch(ModRightClickContext context)
         {
-            IModRightClickHandler[] handlers;
+            RegisteredLocalRightClickHandler[] handlers;
             lock (Gate)
             {
                 handlers = [.. Handlers];
             }
 
-            foreach (var handler in handlers)
+            foreach (var (handler, _, _) in handlers)
                 try
                 {
                     if (handler.TryHandle(context))
@@ -200,7 +203,8 @@ namespace STS2RitsuLib.Interactions.RightClick
                 catch (Exception ex)
                 {
                     RitsuLibFramework.Logger.Warn(
-                        $"[RightClick] Local handler failed. HandlerType='{handler.GetType().FullName}' " +
+                        $"[RightClick] Local handler failed. " +
+                        $"HandlerType='{handler.GetType().FullName}' " +
                         $"ModelId='{context.Model.Id}' ModelType='{context.Model.GetType().FullName}' " +
                         $"Error='{ex.Message}'");
                 }
@@ -353,7 +357,7 @@ namespace STS2RitsuLib.Interactions.RightClick
             writer.WriteBool(payload.Trigger.IsController);
             writer.WriteBool(payload.Trigger.Metadata != null);
             if (payload.Trigger.Metadata != null)
-                writer.WriteString(payload.Trigger.Metadata);
+                WritePayloadString(writer, payload.Trigger.Metadata, "metadata");
 
             SerializeBindingIds(writer, payload.BindingIds);
             writer.WriteByte(TriggerExtensionMarker);
@@ -361,6 +365,7 @@ namespace STS2RitsuLib.Interactions.RightClick
             writer.WriteBool(payload.Trigger.ExpectedCardPile.HasValue);
             if (payload.Trigger.ExpectedCardPile.HasValue)
                 writer.WriteEnum(payload.Trigger.ExpectedCardPile.Value);
+            EnsurePayloadWithinLimit(writer);
             writer.ZeroByteRemainder();
             return [.. writer.Buffer.AsSpan(InitialOffset, writer.BytePosition)];
         }
@@ -375,7 +380,7 @@ namespace STS2RitsuLib.Interactions.RightClick
             var identity = new ModModelIdentity(reader.ReadUInt());
 
             var isController = reader.ReadBool();
-            var metadata = reader.ReadBool() ? reader.ReadString() : null;
+            var metadata = reader.ReadBool() ? ReadPayloadString(reader, "metadata") : null;
             var bindingIds = DeserializeBindingIds(reader);
             if (bindingIds.Count == 0)
                 bindingIds = [InterfaceBindingId];
@@ -822,13 +827,27 @@ namespace STS2RitsuLib.Interactions.RightClick
             });
         }
 
+        private static void SortHandlers()
+        {
+            Handlers.Sort(static (a, b) =>
+            {
+                var priority = b.Handler.Priority.CompareTo(a.Handler.Priority);
+                if (priority != 0)
+                    return priority;
+                if (a.IsBuiltIn != b.IsBuiltIn)
+                    return a.IsBuiltIn ? 1 : -1;
+
+                return a.Sequence.CompareTo(b.Sequence);
+            });
+        }
+
         private static void SerializeBindingIds(
             PacketWriter writer,
             IReadOnlyList<ModRightClickBindingId> bindingIds)
         {
             writer.WriteInt(bindingIds.Count);
             foreach (var bindingId in bindingIds)
-                writer.WriteString(bindingId.Id);
+                WritePayloadString(writer, bindingId.Id, "binding id");
         }
 
         private static IReadOnlyList<ModRightClickBindingId> DeserializeBindingIds(PacketReader reader)
@@ -846,18 +865,70 @@ namespace STS2RitsuLib.Interactions.RightClick
                     $"Right-click binding count {count} exceeds the payload's minimum encoded capacity.");
 
             var ids = new List<ModRightClickBindingId>(count);
+            var uniqueIds = new HashSet<string>(StringComparer.Ordinal);
             for (var i = 0; i < count; i++)
             {
-                var id = reader.ReadString();
-                if (!string.IsNullOrWhiteSpace(id))
-                    ids.Add(new(id.Trim()));
+                var id = ReadPayloadString(reader, "binding id").Trim();
+                if (id.Length == 0)
+                    throw new InvalidOperationException("Right-click binding id cannot be empty.");
+                if (!uniqueIds.Add(id))
+                    throw new InvalidOperationException($"Duplicate right-click binding id: {id}");
+
+                ids.Add(new(id));
             }
 
             return ids;
         }
 
+        private static void WritePayloadString(PacketWriter writer, string value, string fieldName)
+        {
+            var byteCount = Encoding.UTF8.GetByteCount(value);
+            if (byteCount > RitsuLibManagedNetActions.MaxPayloadBytes)
+                throw new InvalidOperationException(
+                    $"Right-click {fieldName} is {byteCount} bytes; maximum payload is " +
+                    $"{RitsuLibManagedNetActions.MaxPayloadBytes} bytes.");
+
+            writer.WriteString(value);
+            EnsurePayloadWithinLimit(writer);
+        }
+
+        private static string ReadPayloadString(PacketReader reader, string fieldName)
+        {
+            if (!HasRemainingBits(reader, 32))
+                throw new InvalidOperationException($"Missing right-click {fieldName} length.");
+
+            var byteCount = reader.ReadInt();
+            if (byteCount < 0 ||
+                byteCount > RitsuLibManagedNetActions.MaxPayloadBytes ||
+                !HasRemainingBits(reader, (long)byteCount * 8))
+                throw new InvalidOperationException($"Invalid right-click {fieldName} length: {byteCount}.");
+
+            if (byteCount == 0)
+                return string.Empty;
+
+            var bytes = new byte[byteCount];
+            reader.ReadBytes(bytes, byteCount);
+            return Encoding.UTF8.GetString(bytes);
+        }
+
+        private static void EnsurePayloadWithinLimit(PacketWriter writer)
+        {
+            if (writer.BytePosition > RitsuLibManagedNetActions.MaxPayloadBytes)
+                throw new InvalidOperationException(
+                    $"Right-click payload exceeds {RitsuLibManagedNetActions.MaxPayloadBytes} bytes.");
+        }
+
+        private static bool HasRemainingBits(PacketReader reader, long bitCount)
+        {
+            return bitCount >= 0 &&
+                   reader.BitPosition >= 0 &&
+                   (long)reader.Buffer.Length * 8 - reader.BitPosition >= bitCount;
+        }
+
         private sealed class BuiltInModelRightClickHandler : IModRightClickHandler
         {
+            public int Priority => int.MinValue;
+
             public bool TryHandle(ModRightClickContext context)
             {
                 var bindingIds = CollectBindingIds(context);
@@ -947,6 +1018,11 @@ namespace STS2RitsuLib.Interactions.RightClick
                 }
             }
         }
+
+        private readonly record struct RegisteredLocalRightClickHandler(
+            IModRightClickHandler Handler,
+            long Sequence,
+            bool IsBuiltIn);
 
         private readonly record struct LocalRightClickCandidate(ModRightClickBindingId Id, int Priority, long Sequence);
 
