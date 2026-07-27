@@ -8,7 +8,8 @@ namespace STS2RitsuLib.Networking.Sidecar
         private const RitsuLibSidecarPeerFeatures SupportedFeatures =
             RitsuLibSidecarPeerFeatures.ChunkedStreams |
             RitsuLibSidecarPeerFeatures.ManagedNetActions |
-            RitsuLibSidecarPeerFeatures.BrotliPayloadCompression;
+            RitsuLibSidecarPeerFeatures.BrotliPayloadCompression |
+            RitsuLibSidecarPeerFeatures.ModelRightClickV2;
 
         private static readonly RitsuLibSidecarChunkReassembly Chunks = new();
 

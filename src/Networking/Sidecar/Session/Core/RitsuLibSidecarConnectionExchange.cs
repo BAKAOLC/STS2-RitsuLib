@@ -13,7 +13,8 @@ namespace STS2RitsuLib.Networking.Sidecar
         private const RitsuLibSidecarPeerFeatures SupportedFeatures =
             RitsuLibSidecarPeerFeatures.ChunkedStreams |
             RitsuLibSidecarPeerFeatures.ManagedNetActions |
-            RitsuLibSidecarPeerFeatures.BrotliPayloadCompression;
+            RitsuLibSidecarPeerFeatures.BrotliPayloadCompression |
+            RitsuLibSidecarPeerFeatures.ModelRightClickV2;
 
         private const int HelloMaxPacketAttempts = 6;
 

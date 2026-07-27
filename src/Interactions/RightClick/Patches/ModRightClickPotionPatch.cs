@@ -41,7 +41,7 @@ namespace STS2RitsuLib.Interactions.RightClick.Patches
         {
             if (inputEvent is InputEventMouseButton { ButtonIndex: MouseButton.Right } rightClick &&
                 rightClick.IsReleased())
-                TryHandle(holder, new(false));
+                TryHandle(holder, new(false, null, ModRightClickSource.Potion));
         }
 
         private static void OnGuiInput(NPotionHolder holder, InputEvent inputEvent)
@@ -51,7 +51,7 @@ namespace STS2RitsuLib.Interactions.RightClick.Patches
                 actionEvent.IsPressed() &&
                 !actionEvent.IsEcho() &&
                 holder.HasFocus())
-                TryHandle(holder, new(true));
+                TryHandle(holder, new(true, null, ModRightClickSource.Potion));
         }
 
         private static void TryHandle(NPotionHolder holder, ModRightClickTrigger trigger)

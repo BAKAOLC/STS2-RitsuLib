@@ -52,13 +52,14 @@ namespace STS2RitsuLib.Interactions.RightClick.Patches
             {
                 case InputEventMouseButton { ButtonIndex: MouseButton.Right } mouseButton when
                     mouseButton.IsReleased():
-                    trigger = new(false);
+                    trigger = new(false, null, ModRightClickSource.Power);
                     return true;
                 case InputEventAction { Action: var action } actionEvent when
                     action == MegaInput.cancel &&
                     actionEvent.IsPressed() &&
+                    !actionEvent.IsEcho() &&
                     node.HasFocus():
-                    trigger = new(true);
+                    trigger = new(true, null, ModRightClickSource.Power);
                     return true;
                 default:
                     trigger = default;

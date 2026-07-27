@@ -41,10 +41,11 @@ namespace STS2RitsuLib.Interactions.RightClick.Patches
                 inputEvent is InputEventAction { Action: var action } actionEvent &&
                 action == MegaInput.cancel &&
                 actionEvent.IsPressed() &&
+                !actionEvent.IsEcho() &&
                 holder.HasFocus();
 
             if (triggeredByController)
-                TryHandle(holder, new(true));
+                TryHandle(holder, new(true, null, ModRightClickSource.HandCard));
         }
 
         private static void OnHitboxGuiInput(NCardHolder holder, InputEvent inputEvent)
@@ -54,7 +55,7 @@ namespace STS2RitsuLib.Interactions.RightClick.Patches
                 rightClick.IsPressed();
 
             if (triggeredByMouse)
-                TryHandle(holder, new(false));
+                TryHandle(holder, new(false, null, ModRightClickSource.HandCard));
         }
 
         private static void TryHandle(NCardHolder holder, ModRightClickTrigger trigger)
@@ -107,14 +108,22 @@ namespace STS2RitsuLib.Interactions.RightClick.Patches
                 return true;
 
             var card = holder.CardModel;
+            // ReSharper disable once UseNullPropagation
             if (card == null)
+                return true;
+            var pileType = card.Pile?.Type;
+            if (pileType is not { } expectedPile || !ModRightClickCardPilePolicy.IsSupported(expectedPile))
                 return true;
 
             var player = LocalContext.GetMe(card.CombatState);
             if (player == null)
                 return true;
 
-            var trigger = new ModRightClickTrigger(NControllerManager.Instance?.IsUsingController == true);
+            var trigger = new ModRightClickTrigger(
+                NControllerManager.Instance?.IsUsingController == true,
+                null,
+                ModRightClickSource.CombatPileCard,
+                expectedPile);
             if (!ModRightClickRegistry.TryDispatch(new(player, card, trigger)))
                 return true;
 

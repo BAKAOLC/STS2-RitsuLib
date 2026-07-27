@@ -217,6 +217,10 @@ namespace STS2RitsuLib
             patcher.RegisterPatch<ModModelIdentityPlayerRemovePotionPatch>();
             patcher.RegisterPatch<ModModelIdentityPowerApplyPatch>();
             patcher.RegisterPatch<ModModelIdentityPowerRemovePatch>();
+            patcher.RegisterPatch<ModModelIdentityOrbEnqueuePatch>();
+            patcher.RegisterPatch<ModModelIdentityOrbInsertPatch>();
+            patcher.RegisterPatch<ModModelIdentityOrbRemovePatch>();
+            patcher.RegisterPatch<ModModelIdentityOrbClearPatch>();
             patcher.RegisterPatch<ModModelIdentityEnchantmentPatch>();
             patcher.RegisterPatch<ModModelIdentityAfflictionPatch>();
             patcher.RegisterPatch<ModModelIdentityCombatStateAddCreaturePatch>();
