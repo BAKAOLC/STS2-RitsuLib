@@ -917,6 +917,26 @@ namespace STS2RitsuLib
         }
 
         /// <summary>
+        ///     Registers <typeparamref name="TCard" /> as a candidate for the Trash Heap event's Grab option.
+        ///     将 <typeparamref name="TCard" /> 注册为垃圾堆事件“拿取”选项的候选卡牌。
+        /// </summary>
+        public static void RegisterTrashHeapCard<TCard>(string modId)
+            where TCard : CardModel
+        {
+            GetContentRegistry(modId).RegisterTrashHeapCard<TCard>();
+        }
+
+        /// <summary>
+        ///     Registers <typeparamref name="TRelic" /> as a candidate for the Trash Heap event's Dive In option.
+        ///     将 <typeparamref name="TRelic" /> 注册为垃圾堆事件“深入翻找”选项的候选遗物。
+        /// </summary>
+        public static void RegisterTrashHeapRelic<TRelic>(string modId)
+            where TRelic : RelicModel
+        {
+            GetContentRegistry(modId).RegisterTrashHeapRelic<TRelic>();
+        }
+
+        /// <summary>
         ///     Creates a content pack builder for <paramref name="modId" />.
         ///     为 <paramref name="modId" /> 创建内容包构建器。
         /// </summary>

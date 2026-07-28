@@ -1,4 +1,5 @@
 using System.Globalization;
+using System.Text;
 using MegaCrit.Sts2.Core.Combat;
 using MegaCrit.Sts2.Core.Entities.Cards;
 using MegaCrit.Sts2.Core.Entities.Multiplayer;
@@ -6,12 +7,15 @@ using MegaCrit.Sts2.Core.Entities.Players;
 using MegaCrit.Sts2.Core.GameActions;
 using MegaCrit.Sts2.Core.GameActions.Multiplayer;
 using MegaCrit.Sts2.Core.Models;
+using MegaCrit.Sts2.Core.Multiplayer;
+using MegaCrit.Sts2.Core.Multiplayer.Game;
 using MegaCrit.Sts2.Core.Multiplayer.Serialization;
 using MegaCrit.Sts2.Core.Runs;
 using STS2RitsuLib.Content;
 using STS2RitsuLib.Models.Capabilities;
 using STS2RitsuLib.Models.Identity;
 using STS2RitsuLib.Networking.ManagedActions;
+using STS2RitsuLib.Networking.Sidecar;
 
 namespace STS2RitsuLib.Interactions.RightClick
 {
@@ -25,17 +29,20 @@ namespace STS2RitsuLib.Interactions.RightClick
         private const string CombatActionKey = "model_right_click_combat";
         private const string NonCombatActionKey = "model_right_click_noncombat";
         private const int InitialOffset = 0;
+        private const byte TriggerExtensionMarker = 0xA7;
         private const int InterfaceBindingPriority = int.MinValue;
         private const string CapabilityBindingSeparator = "\u001F";
         private const string RightClickPreflightSurface = "right-click preflight";
         private const string RightClickExecuteSurface = "right-click execute";
 
         private static readonly Lock Gate = new();
+        private static long _nextHandlerSequence;
         private static long _nextBindingSequence;
+        private static int _unsupportedProtocolWarningLogged;
 
-        private static readonly List<IModRightClickHandler> Handlers =
+        private static readonly List<RegisteredLocalRightClickHandler> Handlers =
         [
-            new BuiltInModelRightClickHandler(),
+            new(new BuiltInModelRightClickHandler(), 0, true),
         ];
 
         private static readonly List<RegisteredRightClickBinding> Bindings = [];
@@ -73,11 +80,12 @@ namespace STS2RitsuLib.Interactions.RightClick
             ArgumentNullException.ThrowIfNull(handler);
             lock (Gate)
             {
-                if (Handlers.Contains(handler))
+                if (Handlers.Any(existing =>
+                        EqualityComparer<IModRightClickHandler>.Default.Equals(existing.Handler, handler)))
                     return;
 
-                Handlers.Add(handler);
-                Handlers.Sort((a, b) => b.Priority.CompareTo(a.Priority));
+                Handlers.Add(new(handler, Interlocked.Increment(ref _nextHandlerSequence), false));
+                SortHandlers();
             }
         }
 
@@ -180,13 +188,28 @@ namespace STS2RitsuLib.Interactions.RightClick
         /// </summary>
         public static bool TryDispatch(ModRightClickContext context)
         {
-            IModRightClickHandler[] handlers;
+            RegisteredLocalRightClickHandler[] handlers;
             lock (Gate)
             {
                 handlers = [.. Handlers];
             }
 
-            return handlers.Any(handler => handler.TryHandle(context));
+            foreach (var (handler, _, _) in handlers)
+                try
+                {
+                    if (handler.TryHandle(context))
+                        return true;
+                }
+                catch (Exception ex)
+                {
+                    RitsuLibFramework.Logger.Warn(
+                        $"[RightClick] Local handler failed. " +
+                        $"HandlerType='{handler.GetType().FullName}' " +
+                        $"ModelId='{context.Model.Id}' ModelType='{context.Model.GetType().FullName}' " +
+                        $"Error='{ex.Message}'");
+                }
+
+            return false;
         }
 
         internal static void RegisterBuiltInSyncDescriptors()
@@ -201,6 +224,8 @@ namespace STS2RitsuLib.Interactions.RightClick
         {
             if (!TryCreatePayload(context, out var payload))
                 return false;
+            if (!CanRequestRightClickAction(payload))
+                return false;
 
             RegisterBuiltInSyncDescriptors();
             payload = payload with { BindingIds = [.. bindingIds] };
@@ -212,6 +237,49 @@ namespace STS2RitsuLib.Interactions.RightClick
                 descriptor,
                 payload,
                 context.Player.NetId);
+        }
+
+        private static bool CanRequestRightClickAction(ModRightClickSyncPayload payload)
+        {
+            var runManager = RunManager.Instance;
+            var net = runManager?.NetService;
+            if (runManager == null || net == null)
+                return false;
+
+            if (CombatManager.Instance.IsInProgress &&
+                runManager.ActionQueueSynchronizer.CombatState != ActionSynchronizerCombatState.PlayPhase)
+                return false;
+
+            if (!RequiresRightClickV2(payload))
+                return true;
+
+            var supported = net switch
+            {
+                { Type: NetGameType.Singleplayer } => true,
+                NetClientGameService client => PeerSupportsRightClickV2(client.HostNetId),
+                NetHostGameService host => host.ConnectedPeers
+                    .Where(static peer => peer.readyForBroadcasting)
+                    .All(static peer => PeerSupportsRightClickV2(peer.peerId)),
+                _ => false,
+            };
+            if (!supported && Interlocked.Exchange(ref _unsupportedProtocolWarningLogged, 1) == 0)
+                RitsuLibFramework.Logger.Warn(
+                    "[RightClick] A connected peer does not support the model-right-click v2 protocol. " +
+                    "The request was not sent.");
+
+            return supported;
+        }
+
+        private static bool RequiresRightClickV2(ModRightClickSyncPayload payload)
+        {
+            return payload.Kind == ModRightClickModelKind.Orb ||
+                   payload.Trigger.Source == ModRightClickSource.CombatPileCard;
+        }
+
+        private static bool PeerSupportsRightClickV2(ulong peerNetId)
+        {
+            return RitsuLibSidecarSessionManager.TryGetPeerFeatures(peerNetId, out var features) &&
+                   (features & RitsuLibSidecarPeerFeatures.ModelRightClickV2) != 0;
         }
 
         private static bool TryCreatePayload(ModRightClickContext context, out ModRightClickSyncPayload payload)
@@ -255,6 +323,10 @@ namespace STS2RitsuLib.Interactions.RightClick
                     kind = ModRightClickModelKind.Potion;
                     return true;
 
+                case OrbModel orb when IsOrbReachableForPlayer(orb, player):
+                    kind = ModRightClickModelKind.Orb;
+                    return true;
+
                 default:
                     return false;
             }
@@ -265,6 +337,13 @@ namespace STS2RitsuLib.Interactions.RightClick
             return power.Owner.Player == player ||
                    power.Owner.PetOwner == player ||
                    power.Owner.IsEnemy;
+        }
+
+        private static bool IsOrbReachableForPlayer(OrbModel orb, Player player)
+        {
+            return !orb.HasBeenRemovedFromState &&
+                   orb.Owner == player &&
+                   player.PlayerCombatState?.OrbQueue.Orbs.Contains(orb) == true;
         }
 
         private static byte[] SerializePayload(ModRightClickSyncPayload payload)
@@ -278,9 +357,15 @@ namespace STS2RitsuLib.Interactions.RightClick
             writer.WriteBool(payload.Trigger.IsController);
             writer.WriteBool(payload.Trigger.Metadata != null);
             if (payload.Trigger.Metadata != null)
-                writer.WriteString(payload.Trigger.Metadata);
+                WritePayloadString(writer, payload.Trigger.Metadata, "metadata");
 
             SerializeBindingIds(writer, payload.BindingIds);
+            writer.WriteByte(TriggerExtensionMarker);
+            writer.WriteEnum(payload.Trigger.Source);
+            writer.WriteBool(payload.Trigger.ExpectedCardPile.HasValue);
+            if (payload.Trigger.ExpectedCardPile.HasValue)
+                writer.WriteEnum(payload.Trigger.ExpectedCardPile.Value);
+            EnsurePayloadWithinLimit(writer);
             writer.ZeroByteRemainder();
             return [.. writer.Buffer.AsSpan(InitialOffset, writer.BytePosition)];
         }
@@ -295,16 +380,37 @@ namespace STS2RitsuLib.Interactions.RightClick
             var identity = new ModModelIdentity(reader.ReadUInt());
 
             var isController = reader.ReadBool();
-            var metadata = reader.ReadBool() ? reader.ReadString() : null;
+            var metadata = reader.ReadBool() ? ReadPayloadString(reader, "metadata") : null;
             var bindingIds = DeserializeBindingIds(reader);
             if (bindingIds.Count == 0)
                 bindingIds = [InterfaceBindingId];
+            var trigger = DeserializeTriggerExtension(reader, isController, metadata);
             return new(
                 ownerNetId,
                 kind,
                 new(identity, modelId),
-                new(isController, metadata),
+                trigger,
                 bindingIds);
+        }
+
+        private static ModRightClickTrigger DeserializeTriggerExtension(
+            PacketReader reader,
+            bool isController,
+            string? metadata)
+        {
+            var remainingBits = reader.Buffer.Length * 8 - reader.BitPosition;
+            if (remainingBits < 8 || reader.ReadByte() != TriggerExtensionMarker)
+                return new(isController, metadata);
+
+            var source = reader.ReadEnum<ModRightClickSource>();
+            if (!Enum.IsDefined(source))
+                throw new InvalidOperationException($"Unknown right-click source: {source}");
+
+            PileType? expectedCardPile = null;
+            if (reader.ReadBool())
+                expectedCardPile = reader.ReadEnum<PileType>();
+
+            return new(isController, metadata, source, expectedCardPile);
         }
 
         private static async Task ExecuteManaged(
@@ -334,12 +440,11 @@ namespace STS2RitsuLib.Interactions.RightClick
                 action);
             var completed = false;
             foreach (var bindingId in payload.BindingIds)
+            {
                 try
                 {
                     if (await TryExecuteBinding(bindingId, model, executionContext))
                         completed = true;
-                    if (!IsModelStillInState(model))
-                        break;
                 }
                 catch (Exception ex)
                 {
@@ -348,7 +453,11 @@ namespace STS2RitsuLib.Interactions.RightClick
                         $"ModelId='{model.Id}' OwnerType='{model.GetType().FullName}' Error='{ex.Message}'");
                 }
 
-            if (completed)
+                if (!IsModelStillInState(model))
+                    break;
+            }
+
+            if (completed && IsModelStillInState(model))
                 model.InvokeExecutionFinished();
         }
 
@@ -362,6 +471,7 @@ namespace STS2RitsuLib.Interactions.RightClick
                     RelicModel relic => !relic.HasBeenRemovedFromState && relic.Owner.Relics.Contains(relic),
                     PowerModel power => power.Owner.Powers.Contains(power),
                     PotionModel potion => !potion.HasBeenRemovedFromState && potion.Owner.Potions.Contains(potion),
+                    OrbModel orb => IsOrbReachableForPlayer(orb, orb.Owner),
                     _ => true,
                 };
             }
@@ -395,7 +505,7 @@ namespace STS2RitsuLib.Interactions.RightClick
             {
                 case ModRightClickModelKind.Card:
                     if (resolved is not CardModel card || card.Owner != player ||
-                        card.Pile?.Type != PileType.Hand)
+                        !IsCardInExpectedLocation(card, payload.Trigger))
                         return false;
 
                     model = card;
@@ -422,9 +532,31 @@ namespace STS2RitsuLib.Interactions.RightClick
                     model = potion;
                     return true;
 
+                case ModRightClickModelKind.Orb:
+                    if (resolved is not OrbModel orb || !IsOrbReachableForPlayer(orb, player))
+                        return false;
+
+                    model = orb;
+                    return true;
+
                 default:
                     return false;
             }
+        }
+
+        private static bool IsCardInExpectedLocation(CardModel card, ModRightClickTrigger trigger)
+        {
+            var pileType = card.Pile?.Type;
+            return trigger.Source switch
+            {
+                ModRightClickSource.HandCard => pileType == PileType.Hand,
+                ModRightClickSource.CombatPileCard =>
+                    trigger.ExpectedCardPile is { } expectedPile &&
+                    ModRightClickCardPilePolicy.IsSupported(expectedPile) &&
+                    pileType == expectedPile,
+                ModRightClickSource.Unknown => pileType == PileType.Hand,
+                _ => false,
+            };
         }
 
         private static async Task<bool> TryExecuteBinding(
@@ -439,7 +571,7 @@ namespace STS2RitsuLib.Interactions.RightClick
                 if (!TryCanExecuteRightClickable(rightClickable, context, out var interfaceCanExecute))
                     return false;
                 if (!interfaceCanExecute)
-                    return true;
+                    return false;
 
                 await rightClickable.OnRightClick(context);
                 return true;
@@ -456,7 +588,7 @@ namespace STS2RitsuLib.Interactions.RightClick
             if (!TryCanExecute(binding, context, out var canExecute))
                 return false;
             if (!canExecute)
-                return true;
+                return false;
 
             await binding.Execute(context);
             return true;
@@ -518,13 +650,7 @@ namespace STS2RitsuLib.Interactions.RightClick
                 if (!TryCanExecuteCapability(capability, context, out var canExecute))
                     continue;
                 if (!canExecute)
-                {
-                    completed = true;
-                    if (capability.RightClickRunMode == ModelRightClickCapabilityRunMode.Exclusive)
-                        break;
-
                     continue;
-                }
 
                 try
                 {
@@ -701,13 +827,27 @@ namespace STS2RitsuLib.Interactions.RightClick
             });
         }
 
+        private static void SortHandlers()
+        {
+            Handlers.Sort(static (a, b) =>
+            {
+                var priority = b.Handler.Priority.CompareTo(a.Handler.Priority);
+                if (priority != 0)
+                    return priority;
+                if (a.IsBuiltIn != b.IsBuiltIn)
+                    return a.IsBuiltIn ? 1 : -1;
+
+                return a.Sequence.CompareTo(b.Sequence);
+            });
+        }
+
         private static void SerializeBindingIds(
             PacketWriter writer,
             IReadOnlyList<ModRightClickBindingId> bindingIds)
         {
             writer.WriteInt(bindingIds.Count);
             foreach (var bindingId in bindingIds)
-                writer.WriteString(bindingId.Id);
+                WritePayloadString(writer, bindingId.Id, "binding id");
         }
 
         private static IReadOnlyList<ModRightClickBindingId> DeserializeBindingIds(PacketReader reader)
@@ -719,20 +859,76 @@ namespace STS2RitsuLib.Interactions.RightClick
             var count = reader.ReadInt();
             if (count <= 0)
                 return [];
+            var remainingStringBits = reader.Buffer.Length * 8 - reader.BitPosition;
+            if (count > remainingStringBits / 32)
+                throw new InvalidOperationException(
+                    $"Right-click binding count {count} exceeds the payload's minimum encoded capacity.");
 
             var ids = new List<ModRightClickBindingId>(count);
+            var uniqueIds = new HashSet<string>(StringComparer.Ordinal);
             for (var i = 0; i < count; i++)
             {
-                var id = reader.ReadString();
-                if (!string.IsNullOrWhiteSpace(id))
-                    ids.Add(new(id.Trim()));
+                var id = ReadPayloadString(reader, "binding id").Trim();
+                if (id.Length == 0)
+                    throw new InvalidOperationException("Right-click binding id cannot be empty.");
+                if (!uniqueIds.Add(id))
+                    throw new InvalidOperationException($"Duplicate right-click binding id: {id}");
+
+                ids.Add(new(id));
             }
 
             return ids;
         }
 
+        private static void WritePayloadString(PacketWriter writer, string value, string fieldName)
+        {
+            var byteCount = Encoding.UTF8.GetByteCount(value);
+            if (byteCount > RitsuLibManagedNetActions.MaxPayloadBytes)
+                throw new InvalidOperationException(
+                    $"Right-click {fieldName} is {byteCount} bytes; maximum payload is " +
+                    $"{RitsuLibManagedNetActions.MaxPayloadBytes} bytes.");
+
+            writer.WriteString(value);
+            EnsurePayloadWithinLimit(writer);
+        }
+
+        private static string ReadPayloadString(PacketReader reader, string fieldName)
+        {
+            if (!HasRemainingBits(reader, 32))
+                throw new InvalidOperationException($"Missing right-click {fieldName} length.");
+
+            var byteCount = reader.ReadInt();
+            if (byteCount < 0 ||
+                byteCount > RitsuLibManagedNetActions.MaxPayloadBytes ||
+                !HasRemainingBits(reader, (long)byteCount * 8))
+                throw new InvalidOperationException($"Invalid right-click {fieldName} length: {byteCount}.");
+
+            if (byteCount == 0)
+                return string.Empty;
+
+            var bytes = new byte[byteCount];
+            reader.ReadBytes(bytes, byteCount);
+            return Encoding.UTF8.GetString(bytes);
+        }
+
+        private static void EnsurePayloadWithinLimit(PacketWriter writer)
+        {
+            if (writer.BytePosition > RitsuLibManagedNetActions.MaxPayloadBytes)
+                throw new InvalidOperationException(
+                    $"Right-click payload exceeds {RitsuLibManagedNetActions.MaxPayloadBytes} bytes.");
+        }
+
+        private static bool HasRemainingBits(PacketReader reader, long bitCount)
+        {
+            return bitCount >= 0 &&
+                   reader.BitPosition >= 0 &&
+                   (long)reader.Buffer.Length * 8 - reader.BitPosition >= bitCount;
+        }
+
         private sealed class BuiltInModelRightClickHandler : IModRightClickHandler
         {
+            public int Priority => int.MinValue;
+
             public bool TryHandle(ModRightClickContext context)
             {
                 var bindingIds = CollectBindingIds(context);
@@ -822,6 +1018,11 @@ namespace STS2RitsuLib.Interactions.RightClick
                 }
             }
         }
+
+        private readonly record struct RegisteredLocalRightClickHandler(
+            IModRightClickHandler Handler,
+            long Sequence,
+            bool IsBuiltIn);
 
         private readonly record struct LocalRightClickCandidate(ModRightClickBindingId Id, int Priority, long Sequence);
 

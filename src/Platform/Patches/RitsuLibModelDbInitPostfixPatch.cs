@@ -46,6 +46,7 @@ namespace STS2RitsuLib.Platform.Patches
                     .. IPatchMethod.CreatePatchInfos<ModRightClickRelicPatch>(),
                     .. IPatchMethod.CreatePatchInfos<ModRightClickPowerPatch>(),
                     .. IPatchMethod.CreatePatchInfos<ModRightClickPotionPatch>(),
+                    .. IPatchMethod.CreatePatchInfos<ModRightClickOrbPatch>(),
                 ]);
 
                 var unlockPatches = new List<ModPatchInfo>();

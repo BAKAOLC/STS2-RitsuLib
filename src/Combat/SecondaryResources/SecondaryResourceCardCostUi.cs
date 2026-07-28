@@ -162,10 +162,17 @@ namespace STS2RitsuLib.Combat.SecondaryResources
     public partial class NSecondaryResourceCardCostUi : Control
     {
         private const string DefaultLabelFontPath = "res://themes/kreon_bold_shared.tres";
+        private bool _autoRefresh = true;
         private CardModel? _boundCard;
+        private SecondaryResourceState? _boundState;
         private SecondaryResourceDefinition? _definition;
+        private bool _hasLastFontColor;
+        private bool _hasLastOutlineColor;
 
         private MegaLabel _label = null!;
+        private Color _lastFontColor;
+        private Color _lastOutlineColor;
+        private string? _lastText;
         private SecondaryResourcePaymentLine? _line;
         private PileType _pileType = PileType.Hand;
         private SecondaryResourcePaymentPlan? _plan;
@@ -176,10 +183,20 @@ namespace STS2RitsuLib.Combat.SecondaryResources
         private string? _useId;
 
         /// <summary>
-        ///     Whether this node refreshes the bound card's resolved payment plan every frame.
-        ///     该节点是否每帧刷新已绑定卡牌的支付计划。
+        ///     Whether this node refreshes the bound card when its owner's secondary-resource state changes.
+        ///     该节点是否在卡牌所有者的次级资源状态变化时刷新已绑定卡牌。
         /// </summary>
-        public bool AutoRefresh { get; set; } = true;
+        public bool AutoRefresh
+        {
+            get => _autoRefresh;
+            set
+            {
+                if (_autoRefresh == value)
+                    return;
+                _autoRefresh = value;
+                UpdateStateSubscription();
+            }
+        }
 
         /// <summary>
         ///     Creates and configures a card-cost display node for one secondary resource.
@@ -276,7 +293,7 @@ namespace STS2RitsuLib.Combat.SecondaryResources
             if (ModSecondaryResourceRegistry.TryGet(_resourceId, out var definition))
                 Bind(definition);
             else if (IsNodeReady())
-                Visible = false;
+                UpdateVisibility(false);
         }
 
         /// <summary>
@@ -311,7 +328,7 @@ namespace STS2RitsuLib.Combat.SecondaryResources
             if (ModSecondaryResourceRegistry.TryGet(_resourceId, out var definition))
                 BindUse(_useId, definition);
             else if (IsNodeReady())
-                Visible = false;
+                UpdateVisibility(false);
         }
 
         /// <summary>
@@ -383,11 +400,12 @@ namespace STS2RitsuLib.Combat.SecondaryResources
             ArgumentNullException.ThrowIfNull(plan);
 
             _boundCard = card;
+            UpdateStateSubscription();
             _pileType = pileType;
             _previewMode = previewMode;
             if (string.IsNullOrWhiteSpace(_resourceId))
             {
-                Visible = false;
+                UpdateVisibility(false);
                 return;
             }
 
@@ -401,7 +419,7 @@ namespace STS2RitsuLib.Combat.SecondaryResources
             var line = FindLine(plan);
             if (line == null)
             {
-                Visible = false;
+                UpdateVisibility(false);
                 return;
             }
 
@@ -423,11 +441,29 @@ namespace STS2RitsuLib.Combat.SecondaryResources
             if (!IsNodeReady())
                 return;
 
-            Visible = true;
-            _label.SetTextAutoSize(_style.Format(line));
+            UpdateVisibility(true);
+            var text = _style.Format(line);
+            if (!string.Equals(_lastText, text, StringComparison.Ordinal))
+            {
+                _label.SetTextAutoSize(text);
+                _lastText = text;
+            }
+
             var (fontColor, outlineColor) = ResolveLabelColors(line, _pileType, _previewMode);
-            _label.AddThemeColorOverride(ThemeConstants.Label.FontColor, fontColor);
-            _label.AddThemeColorOverride(ThemeConstants.Label.FontOutlineColor, outlineColor);
+            if (!_hasLastFontColor || _lastFontColor != fontColor)
+            {
+                _label.AddThemeColorOverride(ThemeConstants.Label.FontColor, fontColor);
+                _lastFontColor = fontColor;
+                _hasLastFontColor = true;
+            }
+
+            // ReSharper disable once InvertIf
+            if (!_hasLastOutlineColor || _lastOutlineColor != outlineColor)
+            {
+                _label.AddThemeColorOverride(ThemeConstants.Label.FontOutlineColor, outlineColor);
+                _lastOutlineColor = outlineColor;
+                _hasLastOutlineColor = true;
+            }
         }
 
         /// <inheritdoc />
@@ -464,14 +500,13 @@ namespace STS2RitsuLib.Combat.SecondaryResources
             else if (_boundCard != null)
                 Refresh(_boundCard);
             else
-                Visible = false;
+                UpdateVisibility(false);
         }
 
         /// <inheritdoc />
-        public override void _Process(double delta)
+        public override void _ExitTree()
         {
-            if (AutoRefresh && _boundCard != null)
-                Refresh(_boundCard);
+            SetBoundState(null);
         }
 
         private void ApplyLayout()
@@ -517,6 +552,52 @@ namespace STS2RitsuLib.Combat.SecondaryResources
             _label.AddThemeColorOverride(ThemeConstants.Label.FontColor, _style.AffordableColor);
             _label.AddThemeColorOverride(ThemeConstants.Label.FontOutlineColor, _style.AffordableOutlineColor);
             _label.AddThemeConstantOverride(ThemeConstants.Label.OutlineSize, _style.OutlineSize);
+            _lastFontColor = _style.AffordableColor;
+            _lastOutlineColor = _style.AffordableOutlineColor;
+            _hasLastFontColor = true;
+            _hasLastOutlineColor = true;
+        }
+
+        private bool HasVisibleCanvasAncestor()
+        {
+            for (var ancestor = GetParent(); ancestor != null; ancestor = ancestor.GetParent())
+                if (ancestor is CanvasItem canvasItem)
+                    return canvasItem.IsVisibleInTree();
+
+            return true;
+        }
+
+        private void UpdateStateSubscription()
+        {
+            var state = _autoRefresh && ModSecondaryResourceRegistry.HasAny &&
+                        _boundCard is { IsCanonical: false, Owner: { } player }
+                ? SecondaryResourceStateStore.Get(player)
+                : null;
+            SetBoundState(state);
+        }
+
+        private void SetBoundState(SecondaryResourceState? state)
+        {
+            if (ReferenceEquals(_boundState, state))
+                return;
+            if (_boundState != null)
+                _boundState.Changed -= OnSecondaryResourceChanged;
+            _boundState = state;
+            if (_boundState != null)
+                _boundState.Changed += OnSecondaryResourceChanged;
+        }
+
+        private void OnSecondaryResourceChanged(SecondaryResourceChangedEvent change)
+        {
+            if (_boundCard == null || !HasVisibleCanvasAncestor())
+                return;
+            Refresh(_boundCard);
+        }
+
+        private void UpdateVisibility(bool visible)
+        {
+            if (Visible != visible)
+                Visible = visible;
         }
 
         private (Color FontColor, Color OutlineColor) ResolveLabelColors(

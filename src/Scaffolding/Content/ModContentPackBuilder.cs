@@ -838,6 +838,26 @@ namespace STS2RitsuLib.Scaffolding.Content
         }
 
         /// <summary>
+        ///     Queues <see cref="ModContentRegistry.RegisterTrashHeapCard{TCard}" /> for the Trash Heap Grab pool.
+        ///     将 <see cref="ModContentRegistry.RegisterTrashHeapCard{TCard}" /> 加入垃圾堆“拿取”卡牌池的注册队列。
+        /// </summary>
+        public ModContentPackBuilder TrashHeapCard<TCard>()
+            where TCard : CardModel
+        {
+            return AddStep(ctx => ctx.Content.RegisterTrashHeapCard<TCard>());
+        }
+
+        /// <summary>
+        ///     Queues <see cref="ModContentRegistry.RegisterTrashHeapRelic{TRelic}" /> for the Trash Heap Dive In pool.
+        ///     将 <see cref="ModContentRegistry.RegisterTrashHeapRelic{TRelic}" /> 加入垃圾堆“深入翻找”遗物池的注册队列。
+        /// </summary>
+        public ModContentPackBuilder TrashHeapRelic<TRelic>()
+            where TRelic : RelicModel
+        {
+            return AddStep(ctx => ctx.Content.RegisterTrashHeapRelic<TRelic>());
+        }
+
+        /// <summary>
         ///     Queues <see cref="ModSmartFormatExtensionRegistry.Register{TFormatter}" />.
         ///     将 <see cref="ModSmartFormatExtensionRegistry.Register{TFormatter}" /> 加入队列。
         /// </summary>

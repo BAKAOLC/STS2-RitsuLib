@@ -7,8 +7,8 @@ namespace STS2RitsuLib.Interactions.RightClick
     public enum ModRightClickModelKind
     {
         /// <summary>
-        ///     Hand card.
-        ///     手牌。
+        ///     Card in a supported combat UI surface.
+        ///     受支持战斗界面中的卡牌。
         /// </summary>
         Card = 0,
 
@@ -29,5 +29,11 @@ namespace STS2RitsuLib.Interactions.RightClick
         ///     药水。
         /// </summary>
         Potion = 3,
+
+        /// <summary>
+        ///     Orb in the local player's active orb queue.
+        ///     本地玩家当前充能球队列中的充能球。
+        /// </summary>
+        Orb = 4,
     }
 }

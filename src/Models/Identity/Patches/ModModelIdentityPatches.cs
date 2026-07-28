@@ -1,5 +1,6 @@
 using MegaCrit.Sts2.Core.Combat;
 using MegaCrit.Sts2.Core.Entities.Creatures;
+using MegaCrit.Sts2.Core.Entities.Orbs;
 using MegaCrit.Sts2.Core.Entities.Players;
 using MegaCrit.Sts2.Core.Entities.Potions;
 using MegaCrit.Sts2.Core.Models;
@@ -214,6 +215,85 @@ namespace STS2RitsuLib.Models.Identity.Patches
         public static void Prefix(PowerModel __instance)
         {
             ModModelIdentityRegistry.Unregister(__instance);
+        }
+    }
+
+    internal sealed class ModModelIdentityOrbEnqueuePatch : IPatchMethod
+    {
+        public static string PatchId => "ritsulib_model_identity_orb_enqueue";
+        public static bool IsCritical => false;
+        public static string Description => "Register orb identities after successful orb queue insertion";
+
+        public static ModPatchTarget[] GetTargets()
+        {
+            return [new(typeof(OrbQueue), nameof(OrbQueue.TryEnqueue), [typeof(OrbModel)], true)];
+        }
+
+        public static void Postfix(OrbModel orb, ref Task<bool> __result)
+        {
+            __result = RegisterAfterSuccessfulEnqueue(__result, orb);
+        }
+
+        private static async Task<bool> RegisterAfterSuccessfulEnqueue(Task<bool> resultTask, OrbModel orb)
+        {
+            var enqueued = await resultTask;
+            if (enqueued)
+                ModModelIdentityRegistry.EnsureRegistered(orb);
+
+            return enqueued;
+        }
+    }
+
+    internal sealed class ModModelIdentityOrbInsertPatch : IPatchMethod
+    {
+        public static string PatchId => "ritsulib_model_identity_orb_insert";
+        public static bool IsCritical => false;
+        public static string Description => "Register orb identities after direct orb queue insertion";
+
+        public static ModPatchTarget[] GetTargets()
+        {
+            return [new(typeof(OrbQueue), nameof(OrbQueue.Insert), [typeof(int), typeof(OrbModel)], true)];
+        }
+
+        public static void Postfix(OrbModel orb)
+        {
+            ModModelIdentityRegistry.EnsureRegistered(orb);
+        }
+    }
+
+    internal sealed class ModModelIdentityOrbRemovePatch : IPatchMethod
+    {
+        public static string PatchId => "ritsulib_model_identity_orb_remove";
+        public static bool IsCritical => false;
+        public static string Description => "Unregister orb identities after orb queue removal";
+
+        public static ModPatchTarget[] GetTargets()
+        {
+            return [new(typeof(OrbQueue), nameof(OrbQueue.Remove), [typeof(OrbModel)], true)];
+        }
+
+        public static void Postfix(OrbModel orb, bool __result)
+        {
+            if (__result)
+                ModModelIdentityRegistry.Unregister(orb);
+        }
+    }
+
+    internal sealed class ModModelIdentityOrbClearPatch : IPatchMethod
+    {
+        public static string PatchId => "ritsulib_model_identity_orb_clear";
+        public static bool IsCritical => false;
+        public static string Description => "Unregister orb identities when an orb queue is cleared";
+
+        public static ModPatchTarget[] GetTargets()
+        {
+            return [new(typeof(OrbQueue), nameof(OrbQueue.Clear), [], true)];
+        }
+
+        public static void Prefix(OrbQueue __instance)
+        {
+            foreach (var orb in __instance.Orbs)
+                ModModelIdentityRegistry.Unregister(orb);
         }
     }
 

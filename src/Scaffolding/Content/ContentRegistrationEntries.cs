@@ -745,6 +745,34 @@ namespace STS2RitsuLib.Scaffolding.Content
     }
 
     /// <summary>
+    ///     Registers a card candidate for the Trash Heap event's Grab option.
+    ///     为垃圾堆事件的“拿取”选项注册一张候选卡牌。
+    /// </summary>
+    public sealed class TrashHeapCardRegistrationEntry<TCard> : IContentRegistrationEntry
+        where TCard : CardModel
+    {
+        /// <inheritdoc />
+        public void Register(ModContentRegistry registry)
+        {
+            registry.RegisterTrashHeapCard<TCard>();
+        }
+    }
+
+    /// <summary>
+    ///     Registers a relic candidate for the Trash Heap event's Dive In option.
+    ///     为垃圾堆事件的“深入翻找”选项注册一个候选遗物。
+    /// </summary>
+    public sealed class TrashHeapRelicRegistrationEntry<TRelic> : IContentRegistrationEntry
+        where TRelic : RelicModel
+    {
+        /// <inheritdoc />
+        public void Register(ModContentRegistry registry)
+        {
+            registry.RegisterTrashHeapRelic<TRelic>();
+        }
+    }
+
+    /// <summary>
     ///     Registers a generated placeholder card from a stable entry stem.
     ///     通过稳定条目词干注册一张生成式占位卡牌。
     /// </summary>

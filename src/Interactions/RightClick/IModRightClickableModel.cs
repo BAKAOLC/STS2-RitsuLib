@@ -44,4 +44,7 @@ namespace STS2RitsuLib.Interactions.RightClick
 
     /// <inheritdoc />
     public interface IModRightClickablePotion : IModRightClickableModel;
+
+    /// <inheritdoc />
+    public interface IModRightClickableOrb : IModRightClickableModel;
 }

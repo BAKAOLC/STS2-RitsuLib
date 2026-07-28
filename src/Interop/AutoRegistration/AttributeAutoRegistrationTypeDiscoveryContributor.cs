@@ -175,6 +175,30 @@ namespace STS2RitsuLib.Interop.AutoRegistration
                                 [TypeDependencyKey(type)]));
                         });
                         break;
+                    case RegisterTrashHeapCardAttribute registerTrashHeapCard:
+                        RegisterCase($"RegisterTrashHeapCard:{type.FullName}", () =>
+                        {
+                            EnsureConcreteSubtype(type, typeof(CardModel), nameof(type));
+                            operations.Add(CreateOperation(ownerModId, type, AutoRegistrationPhase.ContentSecondary,
+                                registerTrashHeapCard.Order,
+                                $"RegisterTrashHeapCard:{type.FullName}",
+                                nameof(RegisterTrashHeapCardAttribute),
+                                () => contentRegistry.RegisterTrashHeapCard(type),
+                                [TypeDependencyKey(type)]));
+                        });
+                        break;
+                    case RegisterTrashHeapRelicAttribute registerTrashHeapRelic:
+                        RegisterCase($"RegisterTrashHeapRelic:{type.FullName}", () =>
+                        {
+                            EnsureConcreteSubtype(type, typeof(RelicModel), nameof(type));
+                            operations.Add(CreateOperation(ownerModId, type, AutoRegistrationPhase.ContentSecondary,
+                                registerTrashHeapRelic.Order,
+                                $"RegisterTrashHeapRelic:{type.FullName}",
+                                nameof(RegisterTrashHeapRelicAttribute),
+                                () => contentRegistry.RegisterTrashHeapRelic(type),
+                                [TypeDependencyKey(type)]));
+                        });
+                        break;
                     case RegisterCharacterAttribute registerCharacter:
                         RegisterCase($"RegisterCharacter:{type.FullName}", () =>
                         {

@@ -40,7 +40,7 @@ Use attributes when the registration belongs next to the model type. Register th
 | Pool content | `RegisterCard`, `RegisterRelic`, `RegisterPotion` |
 | Standalone models | `RegisterCharacter`, `RegisterPower`, `RegisterOrb`, `RegisterAchievement`, `RegisterSingleton` |
 | World content | `RegisterAct`, `RegisterMonster`, `RegisterGlobalEncounter`, `RegisterActEncounter` |
-| Events | `RegisterSharedEvent`, `RegisterActEvent`, `RegisterSharedAncient`, `RegisterActAncient` |
+| Events | `RegisterSharedEvent`, `RegisterActEvent`, `RegisterSharedAncient`, `RegisterActAncient`, `RegisterTrashHeapCard`, `RegisterTrashHeapRelic` |
 | Pools | `RegisterSharedCardPool`, `RegisterSharedRelicPool`, `RegisterSharedPotionPool` |
 | Keywords and ids | `RegisterOwnedKeyword`, `RegisterOwnedCardKeyword`, `RegisterOwnedCardTag` |
 | Timeline | `RegisterStory`, `RegisterEpoch`, `RegisterStoryEpoch`, `AutoTimelineSlot*` |
@@ -72,7 +72,7 @@ for different epochs. Declaring the same logical slot more than once on one clas
 | 池内容 | `RegisterCard`、`RegisterRelic`、`RegisterPotion` |
 | 独立模型 | `RegisterCharacter`、`RegisterPower`、`RegisterOrb`、`RegisterAchievement`、`RegisterSingleton` |
 | 世界内容 | `RegisterAct`、`RegisterMonster`、`RegisterGlobalEncounter`、`RegisterActEncounter` |
-| 事件 | `RegisterSharedEvent`、`RegisterActEvent`、`RegisterSharedAncient`、`RegisterActAncient` |
+| 事件 | `RegisterSharedEvent`、`RegisterActEvent`、`RegisterSharedAncient`、`RegisterActAncient`、`RegisterTrashHeapCard`、`RegisterTrashHeapRelic` |
 | 池 | `RegisterSharedCardPool`、`RegisterSharedRelicPool`、`RegisterSharedPotionPool` |
 | 关键词与 ID | `RegisterOwnedKeyword`、`RegisterOwnedCardKeyword`、`RegisterOwnedCardTag` |
 | 时间线 | `RegisterStory`、`RegisterEpoch`、`RegisterStoryEpoch`、`AutoTimelineSlot*` |

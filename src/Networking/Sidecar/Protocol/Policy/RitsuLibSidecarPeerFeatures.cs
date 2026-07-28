@@ -30,5 +30,11 @@ namespace STS2RitsuLib.Networking.Sidecar
         ///     Sidecar envelope payload 可使用 Brotli payload 压缩标志。
         /// </summary>
         BrotliPayloadCompression = 1 << 2,
+
+        /// <summary>
+        ///     Supports source-aware model right-click actions, including active combat orbs.
+        ///     支持带来源的模型右键动作，包括战斗中的充能球。
+        /// </summary>
+        ModelRightClickV2 = 1 << 3,
     }
 }

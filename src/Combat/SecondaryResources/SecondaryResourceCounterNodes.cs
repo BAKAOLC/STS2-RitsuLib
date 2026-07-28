@@ -247,7 +247,8 @@ namespace STS2RitsuLib.Combat.SecondaryResources
             Color? color = null,
             double durationSeconds = 1.0)
         {
-            return new(color ?? new Color(0.77f, 0.93f, 1f), durationSeconds);
+            return new(color ?? new Color(0.77f, 0.93f, 1f),
+                durationSeconds);
         }
 
         /// <summary>
@@ -262,7 +263,8 @@ namespace STS2RitsuLib.Combat.SecondaryResources
         {
             ArgumentException.ThrowIfNullOrWhiteSpace(backScenePath);
             ArgumentException.ThrowIfNullOrWhiteSpace(frontScenePath);
-            return new(backScenePath, frontScenePath, offset, scale);
+            return new(backScenePath, frontScenePath, offset,
+                scale);
         }
 
         /// <summary>
@@ -399,24 +401,39 @@ namespace STS2RitsuLib.Combat.SecondaryResources
         private int _amount;
         private float _amountDisplayVelocity;
         private MegaLabel _amountLabel = null!;
+        private bool _autoRefresh;
 
         private Player? _boundPlayer;
+        private SecondaryResourceState? _boundState;
         private SecondaryResourceDefinition? _definition;
         private int _displayedAmount;
         private bool _hasBeenMaterial;
         private bool _hasDisplayedAmount;
+        private bool _hasLastAmountColor;
         private NSecondaryResourceIcon _icon = null!;
         private Tween? _iconBrightnessTween;
+        private Color _lastAmountColor;
+        private string? _lastAmountText;
         private int? _maxAmount;
         private float _smoothDisplayedAmount;
         private SecondaryResourceCounterStyle _style = SecondaryResourceCounterStyle.Default;
         private bool _suppressNextGainFeedback = true;
 
         /// <summary>
-        ///     Whether this counter refreshes the bound player's resource every frame.
-        ///     该计数器是否每帧刷新已绑定玩家的资源数量。
+        ///     Whether this counter refreshes when the bound player's secondary-resource state changes.
+        ///     该计数器是否在已绑定玩家的次级资源状态变化时刷新。
         /// </summary>
-        public bool AutoRefresh { get; set; }
+        public bool AutoRefresh
+        {
+            get => _autoRefresh;
+            set
+            {
+                if (_autoRefresh == value)
+                    return;
+                _autoRefresh = value;
+                UpdateStateSubscription();
+            }
+        }
 
         /// <summary>
         ///     Creates and configures a counter for <paramref name="definition" />.
@@ -447,6 +464,8 @@ namespace STS2RitsuLib.Combat.SecondaryResources
             _smoothDisplayedAmount = 0f;
             _amountDisplayVelocity = 0f;
             _hasDisplayedAmount = false;
+            _lastAmountText = null;
+            _hasLastAmountColor = false;
             _maxAmount = null;
             ClearEnergyCounterLikeVfxNodes();
             _suppressNextGainFeedback = true;
@@ -471,6 +490,8 @@ namespace STS2RitsuLib.Combat.SecondaryResources
                 _smoothDisplayedAmount = 0f;
                 _amountDisplayVelocity = 0f;
                 _hasDisplayedAmount = false;
+                _lastAmountText = null;
+                _hasLastAmountColor = false;
                 _maxAmount = null;
                 _suppressNextGainFeedback = true;
                 Visible = false;
@@ -478,6 +499,7 @@ namespace STS2RitsuLib.Combat.SecondaryResources
 
             _boundPlayer = player;
             AutoRefresh = autoRefresh;
+            UpdateStateSubscription();
             Refresh(_boundPlayer);
         }
 
@@ -574,8 +596,6 @@ namespace STS2RitsuLib.Combat.SecondaryResources
         /// <inheritdoc />
         public override void _Process(double delta)
         {
-            if (AutoRefresh && _boundPlayer != null) Refresh(_boundPlayer);
-
             if (!_style.AnimateAmountGain ||
                 !_hasDisplayedAmount ||
                 _displayedAmount == _amount)
@@ -597,6 +617,34 @@ namespace STS2RitsuLib.Combat.SecondaryResources
             SetDisplayedAmount(Mathf.RoundToInt(_smoothDisplayedAmount));
         }
 
+        private void UpdateStateSubscription()
+        {
+            var state = _autoRefresh && ModSecondaryResourceRegistry.HasAny && _boundPlayer != null
+                ? SecondaryResourceStateStore.Get(_boundPlayer)
+                : null;
+            SetBoundState(state);
+        }
+
+        private void SetBoundState(SecondaryResourceState? state)
+        {
+            if (ReferenceEquals(_boundState, state))
+                return;
+            if (_boundState != null)
+                _boundState.Changed -= OnSecondaryResourceChanged;
+            _boundState = state;
+            if (_boundState != null)
+                _boundState.Changed += OnSecondaryResourceChanged;
+        }
+
+        private void OnSecondaryResourceChanged(SecondaryResourceChangedEvent change)
+        {
+            if (_boundPlayer == null || _definition == null ||
+                !ReferenceEquals(change.Player, _boundPlayer) ||
+                !string.Equals(change.Definition.Id, _definition.Id, StringComparison.OrdinalIgnoreCase))
+                return;
+            Refresh(_boundPlayer);
+        }
+
         private Vector2 GetIconPosition()
         {
             return (_style.CounterSize - _style.IconSize) * 0.5f;
@@ -608,6 +656,7 @@ namespace STS2RitsuLib.Combat.SecondaryResources
         /// </summary>
         public override void _ExitTree()
         {
+            SetBoundState(null);
             _iconBrightnessTween?.Kill();
             _iconBrightnessTween = null;
             ClearEnergyCounterLikeVfxNodes();
@@ -624,9 +673,19 @@ namespace STS2RitsuLib.Combat.SecondaryResources
 
         private void UpdateAmountLabel(int amount)
         {
-            _amountLabel.SetTextAutoSize(_style.Format(amount, _maxAmount));
-            _amountLabel.AddThemeColorOverride(ThemeConstants.Label.FontColor,
-                amount <= 0 ? _style.ZeroColor : _style.PositiveColor);
+            var text = _style.Format(amount, _maxAmount);
+            if (!string.Equals(_lastAmountText, text, StringComparison.Ordinal))
+            {
+                _amountLabel.SetTextAutoSize(text);
+                _lastAmountText = text;
+            }
+
+            var color = amount <= 0 ? _style.ZeroColor : _style.PositiveColor;
+            if (_hasLastAmountColor && _lastAmountColor == color)
+                return;
+            _amountLabel.AddThemeColorOverride(ThemeConstants.Label.FontColor, color);
+            _lastAmountColor = color;
+            _hasLastAmountColor = true;
         }
 
         private void PlayGainFeedback()
@@ -764,6 +823,8 @@ namespace STS2RitsuLib.Combat.SecondaryResources
             _amountLabel.AddThemeColorOverride(ThemeConstants.Label.FontColor, _style.PositiveColor);
             _amountLabel.AddThemeColorOverride(ThemeConstants.Label.FontOutlineColor, _style.OutlineColor);
             _amountLabel.AddThemeConstantOverride(ThemeConstants.Label.OutlineSize, _style.OutlineSize);
+            _lastAmountColor = _style.PositiveColor;
+            _hasLastAmountColor = true;
         }
 
         private SecondaryResourceIconStyle ResolveIconStyle()
@@ -974,7 +1035,7 @@ namespace STS2RitsuLib.Combat.SecondaryResources
 
         private SecondaryResourceHoverTipRequest? CreateHoverTipRequest()
         {
-            return _definition == null ? null : new(_definition, _amount, _maxAmount);
+            return _definition == null ? null : new SecondaryResourceHoverTipRequest(_definition, _amount, _maxAmount);
         }
 
         private static Vector2 FitSize(Vector2 textureSize, Vector2 boxSize)
@@ -1066,7 +1127,7 @@ namespace STS2RitsuLib.Combat.SecondaryResources
                 AlphaCurve = CreateCurveTexture(
                     new(0.151685f, 1f),
                     new(0.99999f, 0f),
-                    new(1f, 0f)),
+                    new Vector2(1f, 0f)),
             };
         }
 
@@ -1086,7 +1147,7 @@ namespace STS2RitsuLib.Combat.SecondaryResources
                 AlphaCurve = CreateCurveTexture(
                     new(0.202247f, 1f),
                     new(0.99999f, 0f),
-                    new(1f, 0f)),
+                    new Vector2(1f, 0f)),
             };
         }
 
@@ -1192,7 +1253,7 @@ namespace STS2RitsuLib.Combat.SecondaryResources
 
             return Bind(
                 owner,
-                () => new(definition, amount(), maxAmount?.Invoke()),
+                () => new SecondaryResourceHoverTipRequest(definition, amount(), maxAmount?.Invoke()),
                 style);
         }
 
@@ -1287,8 +1348,11 @@ namespace STS2RitsuLib.Combat.SecondaryResources
         private readonly Dictionary<string, NSecondaryResourceCounter> _counters =
             new(StringComparer.OrdinalIgnoreCase);
 
+        private bool _autoRefresh;
+
         private SecondaryResourceDefinition[]? _boundDefinitions;
         private Player? _boundPlayer;
+        private SecondaryResourceState? _boundState;
         private SecondaryResourceDefinition[]? _pendingDefinitions;
         private Player? _pendingPlayer;
 
@@ -1296,10 +1360,20 @@ namespace STS2RitsuLib.Combat.SecondaryResources
         private SecondaryResourceCounterStyle _style = SecondaryResourceCounterStyle.Default;
 
         /// <summary>
-        ///     Whether this row refreshes bound definitions every frame.
-        ///     该行是否每帧刷新已绑定的资源定义。
+        ///     Whether this row refreshes when the bound player's secondary-resource state changes.
+        ///     该行是否在已绑定玩家的次级资源状态变化时刷新。
         /// </summary>
-        public bool AutoRefresh { get; set; }
+        public bool AutoRefresh
+        {
+            get => _autoRefresh;
+            set
+            {
+                if (_autoRefresh == value)
+                    return;
+                _autoRefresh = value;
+                UpdateStateSubscription();
+            }
+        }
 
         /// <summary>
         ///     Configures the row style.
@@ -1325,6 +1399,7 @@ namespace STS2RitsuLib.Combat.SecondaryResources
             _boundPlayer = player;
             _boundDefinitions = [.. definitions];
             AutoRefresh = autoRefresh;
+            UpdateStateSubscription();
             Refresh(_boundPlayer, _boundDefinitions);
         }
 
@@ -1356,9 +1431,8 @@ namespace STS2RitsuLib.Combat.SecondaryResources
             foreach (var definition in visibleDefinitions)
             {
                 var counter = GetOrCreateCounter(definition);
-                counter.Visible = true;
-                counter.Refresh(player);
-                anyVisible = true;
+                counter.Bind(player, false);
+                anyVisible |= counter.Visible;
             }
 
             Visible = anyVisible;
@@ -1388,18 +1462,10 @@ namespace STS2RitsuLib.Combat.SecondaryResources
             Refresh(player, definitions);
         }
 
-        /// <summary>
-        ///     Refreshes bound resource definitions when automatic refresh is enabled.
-        ///     启用自动刷新时刷新已绑定的资源定义。
-        /// </summary>
-        public override void _Process(double delta)
+        /// <inheritdoc />
+        public override void _ExitTree()
         {
-            if (!AutoRefresh || _boundDefinitions == null || _boundPlayer == null)
-                return;
-
-            foreach (var definition in _boundDefinitions)
-                if (_counters.TryGetValue(definition.Id, out var counter))
-                    counter.Refresh(_boundPlayer);
+            SetBoundState(null);
         }
 
         private NSecondaryResourceCounter GetOrCreateCounter(SecondaryResourceDefinition definition)
@@ -1411,6 +1477,33 @@ namespace STS2RitsuLib.Combat.SecondaryResources
             _row.AddChild(created);
             _counters[definition.Id] = created;
             return created;
+        }
+
+        private void UpdateStateSubscription()
+        {
+            var state = _autoRefresh && ModSecondaryResourceRegistry.HasAny && _boundPlayer != null
+                ? SecondaryResourceStateStore.Get(_boundPlayer)
+                : null;
+            SetBoundState(state);
+        }
+
+        private void SetBoundState(SecondaryResourceState? state)
+        {
+            if (ReferenceEquals(_boundState, state))
+                return;
+            if (_boundState != null)
+                _boundState.Changed -= OnSecondaryResourceChanged;
+            _boundState = state;
+            if (_boundState != null)
+                _boundState.Changed += OnSecondaryResourceChanged;
+        }
+
+        private void OnSecondaryResourceChanged(SecondaryResourceChangedEvent change)
+        {
+            if (_boundPlayer == null || _boundDefinitions == null ||
+                !ReferenceEquals(change.Player, _boundPlayer))
+                return;
+            Refresh(_boundPlayer, _boundDefinitions);
         }
     }
 

@@ -49,11 +49,18 @@ namespace STS2RitsuLib.Networking.ManagedActions
     /// </summary>
     public static class RitsuLibManagedNetActions
     {
+        /// <summary>
+        ///     Maximum serialized payload size for one managed queue action.
+        ///     单个 managed queue action 的最大序列化载荷大小。
+        /// </summary>
+        public const int MaxPayloadBytes = 64 * 1024;
+
         private const ulong ManagedActionMagic = 0x4E_41_54_52_32_53_54_52; // RTS2RTAN
         private const byte Version = 1;
         private const int InitialOffset = 0;
         private const int ByteBits = 8;
         private const int ManagedActionMagicBits = 64;
+        private static readonly int GameActionTypeBits = GetEnumBitCount<GameActionType>();
 
         private static readonly Lock Gate = new();
         private static readonly Dictionary<ulong, RegistrationBase> Registrations = [];
@@ -127,6 +134,14 @@ namespace STS2RitsuLib.Networking.ManagedActions
                 return false;
 
             var payload = descriptor.Serialize(message);
+            if (payload.Length > MaxPayloadBytes)
+            {
+                RitsuLibFramework.Logger.Warn(
+                    $"[ManagedAction] Refusing oversized payload. ModuleId='{descriptor.ModuleId}' " +
+                    $"ActionKey='{descriptor.ActionKey}' Bytes={payload.Length} Limit={MaxPayloadBytes}.");
+                return false;
+            }
+
             var action = new RitsuLibManagedGameAction(
                 player,
                 opcode,
@@ -172,6 +187,10 @@ namespace STS2RitsuLib.Networking.ManagedActions
             GameActionType actionType,
             ReadOnlySpan<byte> payload)
         {
+            if (payload.Length > MaxPayloadBytes)
+                throw new InvalidOperationException(
+                    $"Managed action payload is {payload.Length} bytes; maximum is {MaxPayloadBytes}.");
+
             writer.WriteULong(ManagedActionMagic);
             writer.WriteByte(Version);
             writer.WriteULong(descriptorOpcode);
@@ -189,15 +208,21 @@ namespace STS2RitsuLib.Networking.ManagedActions
             descriptorOpcode = 0;
             actionType = default;
             payload = [];
-            if (reader.ReadULong() != ManagedActionMagic ||
-                reader.ReadByte() != Version)
+            if (!HasRemainingBits(reader, ManagedActionMagicBits + ByteBits) ||
+                reader.ReadULong() != ManagedActionMagic ||
+                reader.ReadByte() != Version ||
+                !HasRemainingBits(reader, 64 + GameActionTypeBits + 32))
                 return false;
 
             descriptorOpcode = reader.ReadULong();
             actionType = reader.ReadEnum<GameActionType>();
-            ValidateActionType(actionType);
+            if (!Enum.IsDefined(actionType) || actionType is GameActionType.None)
+                return false;
+
             var length = reader.ReadInt();
-            if (length < 0)
+            if (length < 0 ||
+                length > MaxPayloadBytes ||
+                !HasRemainingBits(reader, (long)length * ByteBits))
                 return false;
 
             payload = new byte[length];
@@ -324,6 +349,19 @@ namespace STS2RitsuLib.Networking.ManagedActions
         private static bool GetBit(byte[] buffer, int bitPosition)
         {
             return (buffer[bitPosition / ByteBits] & (1 << (bitPosition % ByteBits))) != 0;
+        }
+
+        private static bool HasRemainingBits(PacketReader reader, long bitCount)
+        {
+            return bitCount >= 0 &&
+                   reader.BitPosition >= 0 &&
+                   (long)reader.Buffer.Length * ByteBits - reader.BitPosition >= bitCount;
+        }
+
+        private static int GetEnumBitCount<T>() where T : struct, Enum
+        {
+            var maxValue = Enum.GetValues<T>().Max(static value => Convert.ToInt32(value));
+            return (int)Math.Ceiling(Math.Log2(maxValue) + 1d);
         }
 
         internal abstract class RegistrationBase(
