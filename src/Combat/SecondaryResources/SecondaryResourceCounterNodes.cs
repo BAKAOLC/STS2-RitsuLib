@@ -619,8 +619,9 @@ namespace STS2RitsuLib.Combat.SecondaryResources
 
         private void UpdateStateSubscription()
         {
-            var state = _autoRefresh && ModSecondaryResourceRegistry.HasAny && _boundPlayer != null
-                ? SecondaryResourceStateStore.Get(_boundPlayer)
+            var state = _autoRefresh && ModSecondaryResourceRegistry.HasAny &&
+                        _boundPlayer is { PlayerCombatState: not null } player
+                ? SecondaryResourceStateStore.Get(player)
                 : null;
             SetBoundState(state);
         }
@@ -1481,8 +1482,9 @@ namespace STS2RitsuLib.Combat.SecondaryResources
 
         private void UpdateStateSubscription()
         {
-            var state = _autoRefresh && ModSecondaryResourceRegistry.HasAny && _boundPlayer != null
-                ? SecondaryResourceStateStore.Get(_boundPlayer)
+            var state = _autoRefresh && ModSecondaryResourceRegistry.HasAny &&
+                        _boundPlayer is { PlayerCombatState: not null } player
+                ? SecondaryResourceStateStore.Get(player)
                 : null;
             SetBoundState(state);
         }
