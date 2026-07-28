@@ -570,7 +570,11 @@ namespace STS2RitsuLib.Combat.SecondaryResources
         private void UpdateStateSubscription()
         {
             var state = _autoRefresh && ModSecondaryResourceRegistry.HasAny &&
-                        _boundCard is { IsCanonical: false, Owner: { } player }
+                        _boundCard is
+                        {
+                            IsCanonical: false,
+                            Owner: { PlayerCombatState: not null } player,
+                        }
                 ? SecondaryResourceStateStore.Get(player)
                 : null;
             SetBoundState(state);
