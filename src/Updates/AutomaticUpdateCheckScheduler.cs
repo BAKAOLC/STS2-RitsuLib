@@ -37,7 +37,7 @@ namespace STS2RitsuLib.Updates
                 Checks[check.Id] = check;
             }
 
-            return new Registration(check.Id);
+            return new Registration(check);
         }
 
         private static void Initialize()
@@ -219,7 +219,7 @@ namespace STS2RitsuLib.Updates
             });
         }
 
-        private sealed class Registration(string id) : IDisposable
+        private sealed class Registration(ScheduledCheck check) : IDisposable
         {
             private bool _disposed;
 
@@ -231,7 +231,8 @@ namespace STS2RitsuLib.Updates
                 _disposed = true;
                 lock (SyncRoot)
                 {
-                    Checks.Remove(id);
+                    if (Checks.TryGetValue(check.Id, out var current) && ReferenceEquals(current, check))
+                        Checks.Remove(check.Id);
                 }
             }
         }
