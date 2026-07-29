@@ -19,6 +19,7 @@ namespace STS2RitsuLib.Scaffolding.Cards.HandOutline
         private static int _sequence;
 
         private static readonly ConcurrentDictionary<Type, List<RegisteredRule>> RulesByCardType = new();
+        private static readonly ConcurrentDictionary<int, byte> LoggedRuleFailures = new();
 
         internal static bool HasAny => Volatile.Read(ref _hasAny) != 0;
 
@@ -88,7 +89,7 @@ namespace STS2RitsuLib.Scaffolding.Cards.HandOutline
         /// </summary>
         public static void Register(Type cardType, ModCardHandOutlineRules rules)
         {
-            ArgumentNullException.ThrowIfNull(cardType);
+            ValidateRegistration(cardType);
 
             foreach (var rule in rules.Enumerate())
                 Register(cardType, rule);
@@ -100,18 +101,8 @@ namespace STS2RitsuLib.Scaffolding.Cards.HandOutline
         /// </summary>
         public static void Register(Type cardType, ModCardHandOutlineSwitchRule rule)
         {
-            ArgumentNullException.ThrowIfNull(cardType);
             ArgumentNullException.ThrowIfNull(rule.ColorWhen);
-
-            if (ModContentRegistry.IsFrozen)
-                throw new InvalidOperationException(
-                    "Cannot register card hand outline rules after content registration has been frozen. " +
-                    "Register from your mod initializer before ModelDb initializes.");
-
-            if (!typeof(CardModel).IsAssignableFrom(cardType))
-                throw new ArgumentException(
-                    $"Type '{cardType.FullName}' must be a subtype of {typeof(CardModel).FullName}.",
-                    nameof(cardType));
+            ValidateRegistration(cardType);
 
             var seq = Interlocked.Increment(ref _sequence);
             var wrapped = new RegisteredRule(rule, seq);
@@ -163,6 +154,7 @@ namespace STS2RitsuLib.Scaffolding.Cards.HandOutline
         public static void ClearForTests()
         {
             RulesByCardType.Clear();
+            LoggedRuleFailures.Clear();
             Volatile.Write(ref _hasAny, 0);
         }
 
@@ -179,8 +171,7 @@ namespace STS2RitsuLib.Scaffolding.Cards.HandOutline
             if (!ModCardHandOutlinePatchHelper.TryGetRule(holder, out var model, out var evaluation))
                 return false;
 
-            ModCardHandOutlinePatchHelper.ApplyHighlight(holder, model, evaluation);
-            return true;
+            return ModCardHandOutlinePatchHelper.ApplyHighlight(holder, model, evaluation);
         }
 
         /// <summary>
@@ -193,8 +184,7 @@ namespace STS2RitsuLib.Scaffolding.Cards.HandOutline
                 !evaluation.Rule.RefreshEveryFrame)
                 return false;
 
-            ModCardHandOutlinePatchHelper.ApplyHighlight(holder, model, evaluation);
-            return true;
+            return ModCardHandOutlinePatchHelper.ApplyHighlight(holder, model, evaluation);
         }
 
         internal static ModCardHandOutlineEvaluation? EvaluateBest(CardModel model)
@@ -211,7 +201,19 @@ namespace STS2RitsuLib.Scaffolding.Cards.HandOutline
 
                 foreach (var entry in list)
                 {
-                    var color = entry.Rule.ResolveColor(model);
+                    Color? color;
+                    try
+                    {
+                        color = entry.Rule.ResolveColor(model);
+                    }
+                    catch (Exception ex)
+                    {
+                        if (LoggedRuleFailures.TryAdd(entry.Sequence, 0))
+                            RitsuLibFramework.Logger.Warn(
+                                $"[CardHandOutline] Rule {entry.Sequence} for {t.FullName} threw and was ignored: {ex}");
+                        continue;
+                    }
+
                     if (!color.HasValue)
                         continue;
 
@@ -230,6 +232,21 @@ namespace STS2RitsuLib.Scaffolding.Cards.HandOutline
         {
             return candidate.Rule.Priority < best.Rule.Priority
                    || (candidate.Rule.Priority == best.Rule.Priority && candidate.Sequence <= best.Sequence);
+        }
+
+        private static void ValidateRegistration(Type cardType)
+        {
+            ArgumentNullException.ThrowIfNull(cardType);
+
+            if (ModContentRegistry.IsFrozen)
+                throw new InvalidOperationException(
+                    "Cannot register card hand outline rules after content registration has been frozen. " +
+                    "Register from your mod initializer before ModelDb initializes.");
+
+            if (!typeof(CardModel).IsAssignableFrom(cardType))
+                throw new ArgumentException(
+                    $"Type '{cardType.FullName}' must be a subtype of {typeof(CardModel).FullName}.",
+                    nameof(cardType));
         }
 
         private readonly record struct RegisteredRule(ModCardHandOutlineSwitchRule Rule, int Sequence);

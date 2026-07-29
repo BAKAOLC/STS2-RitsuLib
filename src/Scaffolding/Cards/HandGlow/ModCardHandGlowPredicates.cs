@@ -36,7 +36,7 @@ namespace STS2RitsuLib.Scaffolding.Cards.HandGlow
                 return false;
 
             return history.Entries.OfType<CardExhaustedEntry>()
-                .Any(e => e.HappenedThisTurn(combat) && e.Card.Owner == owner);
+                .Any(e => e.HappenedThisTurn(combat) && e.Actor == owner.Creature);
         }
 
         /// <summary>

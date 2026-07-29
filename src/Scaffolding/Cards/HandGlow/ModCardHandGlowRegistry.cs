@@ -17,7 +17,9 @@ namespace STS2RitsuLib.Scaffolding.Cards.HandGlow
     /// </summary>
     public static class ModCardHandGlowRegistry
     {
-        private static readonly ConcurrentDictionary<Type, ModCardHandGlowRules> RulesByCardType = new();
+        private static readonly ConcurrentDictionary<string, byte> LoggedRuleFailures = new(StringComparer.Ordinal);
+        private static readonly ConcurrentDictionary<Type, List<RegisteredRules>> RulesByCardType = new();
+        private static int _sequence;
 
         /// <summary>
         ///     Registers rules for <typeparamref name="TCard" />. Multiple calls for the same type OR-merge channels.
@@ -47,7 +49,11 @@ namespace STS2RitsuLib.Scaffolding.Cards.HandGlow
                     $"Type '{cardType.FullName}' must be a concrete subtype of {typeof(CardModel).FullName}.",
                     nameof(cardType));
 
-            RulesByCardType.AddOrUpdate(cardType, rules, (_, existing) => existing.Or(rules));
+            var registered = new RegisteredRules(rules, Interlocked.Increment(ref _sequence));
+            RulesByCardType.AddOrUpdate(
+                cardType,
+                _ => [registered],
+                (_, existing) => [.. existing, registered]);
         }
 
         /// <summary>
@@ -57,33 +63,62 @@ namespace STS2RitsuLib.Scaffolding.Cards.HandGlow
         public static void ClearForTests()
         {
             RulesByCardType.Clear();
+            LoggedRuleFailures.Clear();
         }
 
         internal static bool EvaluateRegistryGold(CardModel card)
         {
-            return EvaluateChannel(card, static r => r.GoldWhenBonusActive);
+            return EvaluateChannel(card, GoldSelector, "gold");
         }
 
         internal static bool EvaluateRegistryRed(CardModel card)
         {
-            return EvaluateChannel(card, static r => r.RedWhenHandWarning);
+            return EvaluateChannel(card, RedSelector, "red");
         }
 
-        private static bool EvaluateChannel(CardModel card, Func<ModCardHandGlowRules, Func<CardModel, bool>?> selector)
+        private static bool EvaluateChannel(
+            CardModel card,
+            Func<ModCardHandGlowRules, Func<CardModel, bool>?> selector,
+            string channel)
         {
             for (var t = card.GetType();
                  t != null && typeof(CardModel).IsAssignableFrom(t);
                  t = t.BaseType)
             {
-                if (!RulesByCardType.TryGetValue(t, out var rules))
+                if (!RulesByCardType.TryGetValue(t, out var registrations))
                     continue;
 
-                var pred = selector(rules);
-                if (pred != null && pred(card))
-                    return true;
+                foreach (var registration in registrations)
+                {
+                    var pred = selector(registration.Rules);
+                    if (pred == null)
+                        continue;
+
+                    try
+                    {
+                        if (pred(card))
+                            return true;
+                    }
+                    catch (Exception ex)
+                    {
+                        var warningKey = $"{registration.Sequence}|{channel}";
+                        if (LoggedRuleFailures.TryAdd(warningKey, 0))
+                            RitsuLibFramework.Logger.Warn(
+                                $"[CardHandGlow] {channel} rule {registration.Sequence} for {t.FullName} threw " +
+                                $"and was ignored: {ex}");
+                    }
+                }
             }
 
             return false;
         }
+
+        private static readonly Func<ModCardHandGlowRules, Func<CardModel, bool>?> GoldSelector =
+            static rules => rules.GoldWhenBonusActive;
+
+        private static readonly Func<ModCardHandGlowRules, Func<CardModel, bool>?> RedSelector =
+            static rules => rules.RedWhenHandWarning;
+
+        private readonly record struct RegisteredRules(ModCardHandGlowRules Rules, int Sequence);
     }
 }

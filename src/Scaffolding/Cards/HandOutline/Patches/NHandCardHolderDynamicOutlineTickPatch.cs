@@ -33,6 +33,7 @@ namespace STS2RitsuLib.Scaffolding.Cards.HandOutline.Patches
     internal sealed partial class NHandCardHolderDynamicOutlineTicker : Node
     {
         private const string NodeName = "RitsuLibDynamicHandOutlineTicker";
+        private bool _hadDynamicRule;
         private NHandCardHolder _holder = null!;
 
         internal static void Ensure(NHandCardHolder holder)
@@ -52,18 +53,41 @@ namespace STS2RitsuLib.Scaffolding.Cards.HandOutline.Patches
             });
         }
 
+        public override void _EnterTree()
+        {
+            SetProcess(true);
+        }
+
         public override void _Process(double delta)
         {
-            if (!ModCardHandOutlineRegistry.HasAny)
-                return;
-
             if (!IsInstanceValid(_holder) || !_holder.IsInsideTree())
             {
                 SetProcess(false);
                 return;
             }
 
-            ModCardHandOutlineRegistry.TryRefreshDynamicOutlineForHolder(_holder);
+            if (!ModCardHandOutlineRegistry.HasAny)
+            {
+                RestoreAfterDynamicRule();
+                return;
+            }
+
+            if (ModCardHandOutlineRegistry.TryRefreshDynamicOutlineForHolder(_holder))
+            {
+                _hadDynamicRule = true;
+                return;
+            }
+
+            RestoreAfterDynamicRule();
+        }
+
+        private void RestoreAfterDynamicRule()
+        {
+            if (!_hadDynamicRule)
+                return;
+
+            _hadDynamicRule = false;
+            _holder.UpdateCard();
         }
     }
 }
