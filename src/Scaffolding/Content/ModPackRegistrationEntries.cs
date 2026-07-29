@@ -150,8 +150,10 @@ namespace STS2RitsuLib.Scaffolding.Content
             var epochId = ModTimelineRegistry.GetEpochId(epochType);
             foreach (var t in types)
             {
-                if (!typeof(PotionModel).IsAssignableFrom(t))
-                    throw new ArgumentException($"Type '{t.Name}' must derive from PotionModel.", nameof(types));
+                if (t == null || !typeof(PotionModel).IsAssignableFrom(t))
+                    throw new ArgumentException(
+                        $"Type '{t?.Name ?? "<null>"}' must derive from PotionModel.",
+                        nameof(types));
 
                 context.Unlocks.RequireEpoch(t, epochId);
             }
