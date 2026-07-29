@@ -64,7 +64,9 @@ namespace STS2RitsuLib.Scaffolding.Characters.Patches
         {
             SyncExistingFilterIcons(____cardPoolFilters);
 
-            var modCharacters = ModContentRegistry.GetModCharacters().ToArray();
+            var modCharacters = ModContentRegistry.GetModCharacters()
+                .Where(character => !____cardPoolFilters.ContainsKey(character))
+                .ToArray();
             var sharedPoolFilters = ModContentRegistry.GetCardLibraryCompendiumSharedPoolFilters();
             if (modCharacters.Length == 0 && sharedPoolFilters.Count == 0)
                 return;
