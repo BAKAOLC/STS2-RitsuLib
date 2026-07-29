@@ -527,17 +527,51 @@ namespace STS2RitsuLib.Utils.HarmonyIl
         }
 
         /// <summary>
-        ///     Replaces a matched span with new instructions, moving labels and exception blocks from the first replaced
-        ///     instruction to the first inserted instruction.
-        ///     用新指令替换已匹配区间，并把第一条被替换指令的 labels 和 exception blocks
-        ///     转移到第一条插入指令。
+        ///     <para xml:lang="en">
+        ///         Replaces a matched span with new instructions. For a non-empty replacement, labels and exception
+        ///         blocks on the first replaced instruction move to the first replacement instruction.
+        ///     </para>
+        ///     <para xml:lang="zh-CN">
+        ///         用新指令替换已匹配区间。替换指令非空时，第一条被替换指令上的标签和异常块会转移到
+        ///         第一条替换指令。
+        ///     </para>
         /// </summary>
+        /// <param name="match">
+        ///     <para xml:lang="en">The non-empty span to replace.</para>
+        ///     <para xml:lang="zh-CN">要替换的非空区间。</para>
+        /// </param>
+        /// <param name="replacement">
+        ///     <para xml:lang="en">The replacement instructions.</para>
+        ///     <para xml:lang="zh-CN">替换指令。</para>
+        /// </param>
+        /// <exception cref="ArgumentNullException">
+        ///     <para xml:lang="en"><paramref name="replacement" /> is <see langword="null" />.</para>
+        ///     <para xml:lang="zh-CN"><paramref name="replacement" /> 为 <see langword="null" />。</para>
+        /// </exception>
+        /// <exception cref="ArgumentOutOfRangeException">
+        ///     <para xml:lang="en"><paramref name="match" /> is outside the current instruction list or is empty.</para>
+        ///     <para xml:lang="zh-CN"><paramref name="match" /> 超出当前指令列表范围或为空。</para>
+        /// </exception>
+        /// <exception cref="InvalidOperationException">
+        ///     <para xml:lang="en">
+        ///         The span contains control-flow metadata that cannot be preserved, or an empty replacement would
+        ///         remove metadata from its first instruction.
+        ///     </para>
+        ///     <para xml:lang="zh-CN">
+        ///         区间包含无法保留的控制流元数据，或空替换会移除其第一条指令上的元数据。
+        ///     </para>
+        /// </exception>
         public void Replace(HarmonyIlMatch match, IEnumerable<CodeInstruction> replacement)
         {
             ValidateMatch(match);
+            ArgumentNullException.ThrowIfNull(replacement);
             EnsureSafeToReplace(match);
 
             var replacements = replacement.ToList();
+            if (replacements.Count == 0 && HarmonyIl.HasMetadata(_code[match.Index]))
+                throw new InvalidOperationException(
+                    "Cannot remove a replacement span whose first instruction has labels or exception blocks.");
+
             if (replacements.Count > 0)
                 HarmonyIl.MoveMetadataToFirst(_code[match.Index], replacements);
 
@@ -546,9 +580,56 @@ namespace STS2RitsuLib.Utils.HarmonyIl
         }
 
         /// <summary>
-        ///     Replaces the first matched pattern and returns a rewrite report.
-        ///     替换第一个匹配模式并返回改写报告。
+        ///     <para xml:lang="en">
+        ///         Replaces the first span matched by <paramref name="pattern" /> and reports the rewrite result.
+        ///     </para>
+        ///     <para xml:lang="zh-CN">
+        ///         替换 <paramref name="pattern" /> 匹配的第一个区间，并报告改写结果。
+        ///     </para>
         /// </summary>
+        /// <param name="operation">
+        ///     <para xml:lang="en">The operation name recorded in the report.</para>
+        ///     <para xml:lang="zh-CN">记录在报告中的操作名称。</para>
+        /// </param>
+        /// <param name="pattern">
+        ///     <para xml:lang="en">The pattern used to find replacement spans.</para>
+        ///     <para xml:lang="zh-CN">用于查找替换区间的模式。</para>
+        /// </param>
+        /// <param name="replacement">
+        ///     <para xml:lang="en">The instructions used to replace the first matching span.</para>
+        ///     <para xml:lang="zh-CN">用于替换第一个匹配区间的指令。</para>
+        /// </param>
+        /// <param name="alreadySatisfied">
+        ///     <para xml:lang="en">An optional predicate that detects an already-applied rewrite.</para>
+        ///     <para xml:lang="zh-CN">用于检测改写是否已经应用的可选谓词。</para>
+        /// </param>
+        /// <returns>
+        ///     <para xml:lang="en">A report describing the matches and whether a replacement was applied.</para>
+        ///     <para xml:lang="zh-CN">描述匹配情况及是否应用替换的报告。</para>
+        /// </returns>
+        /// <exception cref="ArgumentException">
+        ///     <para xml:lang="en"><paramref name="operation" /> is empty or consists only of white-space characters.</para>
+        ///     <para xml:lang="zh-CN"><paramref name="operation" /> 为空或仅包含空白字符。</para>
+        /// </exception>
+        /// <exception cref="ArgumentNullException">
+        ///     <para xml:lang="en">
+        ///         <paramref name="operation" /> or <paramref name="pattern" /> is <see langword="null" />, or a match
+        ///         is found and <paramref name="replacement" /> is <see langword="null" />.
+        ///     </para>
+        ///     <para xml:lang="zh-CN">
+        ///         <paramref name="operation" /> 或 <paramref name="pattern" /> 为 <see langword="null" />，
+        ///         或找到匹配项时 <paramref name="replacement" /> 为 <see langword="null" />。
+        ///     </para>
+        /// </exception>
+        /// <exception cref="InvalidOperationException">
+        ///     <para xml:lang="en">
+        ///         The matched span contains control-flow metadata that cannot be preserved, or an empty replacement
+        ///         would remove metadata from its first instruction.
+        ///     </para>
+        ///     <para xml:lang="zh-CN">
+        ///         匹配区间包含无法保留的控制流元数据，或空替换会移除其第一条指令上的元数据。
+        ///     </para>
+        /// </exception>
         public HarmonyIlRewriteReport TryReplaceFirst(
             string operation,
             HarmonyIlPattern pattern,
