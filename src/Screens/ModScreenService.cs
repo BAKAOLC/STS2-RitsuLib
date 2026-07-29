@@ -77,9 +77,6 @@ namespace STS2RitsuLib.Screens
             if (ReferenceEquals(container.CurrentCapstoneScreen, screen))
                 return true;
 
-            if (container.InUse)
-                container.Close();
-
             container.Open(screen);
             return true;
         }
