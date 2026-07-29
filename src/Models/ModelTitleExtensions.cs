@@ -37,11 +37,14 @@ namespace STS2RitsuLib.Models
             TitleSource<EncounterModel>("encounters", model => model.Id.Entry + ".title", model => model.Title),
         ];
 
+        private static readonly IReadOnlyList<ModelLocStringSource> ReadOnlyTitleSources =
+            Array.AsReadOnly(TitleSources);
+
         /// <summary>
         ///     Known title LocString sources, ordered from more-specific model families to broader ones.
         ///     已知标题 LocString 来源，按更具体到更宽泛的模型族排序。
         /// </summary>
-        public static IReadOnlyList<ModelLocStringSource> KnownTitleSources => TitleSources;
+        public static IReadOnlyList<ModelLocStringSource> KnownTitleSources => ReadOnlyTitleSources;
 
         /// <summary>
         ///     Registers or replaces the title resolver for <typeparamref name="TModel" /> and its derived types.
