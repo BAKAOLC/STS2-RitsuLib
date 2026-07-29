@@ -9,6 +9,7 @@ using MegaCrit.Sts2.Core.Models;
 using MegaCrit.Sts2.Core.Nodes.CommonUi;
 using MegaCrit.Sts2.Core.Nodes.Screens;
 using STS2RitsuLib.Patching.Models;
+using STS2RitsuLib.Utils.HarmonyIl;
 
 namespace STS2RitsuLib.Scaffolding.Content.Patches
 {
@@ -27,6 +28,10 @@ namespace STS2RitsuLib.Scaffolding.Content.Patches
             typeof(CardPoolDeckViewStylePatch),
             nameof(ResolveVanillaDeckViewHueMaterial));
 
+        private static readonly MethodInfo CardPoolFrameMaterialGetter = AccessTools.PropertyGetter(
+            typeof(CardPoolModel),
+            nameof(CardPoolModel.FrameMaterial));
+
         public static string PatchId => "content_asset_override_card_pool_deck_view_style";
         public static string Description => "Allow card pools to style the vanilla deck-view screen";
         public static bool IsCritical => false;
@@ -38,27 +43,36 @@ namespace STS2RitsuLib.Scaffolding.Content.Patches
 
         public static IEnumerable<CodeInstruction> Transpiler(IEnumerable<CodeInstruction> instructions)
         {
-            var replaced = 0;
-            foreach (var instruction in instructions)
+            var code = instructions.ToList();
+            var matches = new List<int>();
+            for (var i = 1; i < code.Count; i++)
             {
-                if (instruction.opcode == OpCodes.Castclass && instruction.operand is Type type &&
-                    type == typeof(ShaderMaterial))
-                {
-                    var loadScreen = new CodeInstruction(OpCodes.Ldarg_0);
-                    loadScreen.labels.AddRange(instruction.labels);
-                    instruction.labels.Clear();
-                    yield return loadScreen;
-                    yield return new(OpCodes.Call, ResolveVanillaDeckViewHueMaterialMethod);
-                    replaced++;
-                    continue;
-                }
-
-                yield return instruction;
+                if (code[i].opcode == OpCodes.Castclass &&
+                    code[i].operand is Type type &&
+                    type == typeof(ShaderMaterial) &&
+                    HarmonyIl.IsCallTo(code[i - 1], CardPoolFrameMaterialGetter))
+                    matches.Add(i);
             }
 
-            if (replaced != 1)
+            if (matches.Count != 1)
+            {
                 RitsuLibFramework.Logger.Warn(
-                    $"[Assets] Expected to rewrite one NDeckViewScreen ShaderMaterial cast, but rewrote {replaced}.");
+                    $"[Assets] Expected one NDeckViewScreen CardPool.FrameMaterial ShaderMaterial cast, but found {matches.Count}; safe hue fallback patch skipped.");
+                return code;
+            }
+
+            var match = matches[0];
+            var cast = code[match];
+            var loadScreen = new CodeInstruction(OpCodes.Ldarg_0);
+            loadScreen.labels.AddRange(cast.labels);
+            loadScreen.blocks.AddRange(cast.blocks);
+            code.RemoveAt(match);
+            code.InsertRange(match,
+            [
+                loadScreen,
+                new(OpCodes.Call, ResolveVanillaDeckViewHueMaterialMethod),
+            ]);
+            return code;
         }
 
         public static void Postfix(NDeckViewScreen __instance)

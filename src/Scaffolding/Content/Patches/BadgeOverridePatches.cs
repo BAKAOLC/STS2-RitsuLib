@@ -63,18 +63,37 @@ namespace STS2RitsuLib.Scaffolding.Content.Patches
 
         internal static bool TryGetIconPath(string badgeId, [NotNullWhen(true)] out string? iconPath)
         {
-            lock (SyncRoot)
+            foreach (var pair in Snapshot())
             {
-                foreach (var value in IconPathProviders.Values.Select(provider => provider(badgeId))
-                             .Where(value => !string.IsNullOrWhiteSpace(value)))
+                string? value;
+                try
                 {
-                    iconPath = value!;
-                    return true;
+                    value = pair.Value(badgeId);
                 }
+                catch (Exception ex)
+                {
+                    RitsuLibFramework.Logger.Warn(
+                        $"[Assets] Badge icon provider '{pair.Key}' failed for '{badgeId}': {ex.Message}");
+                    continue;
+                }
+
+                if (string.IsNullOrWhiteSpace(value))
+                    continue;
+
+                iconPath = value;
+                return true;
             }
 
             iconPath = string.Empty;
             return false;
+        }
+
+        private static KeyValuePair<string, Func<string, string?>>[] Snapshot()
+        {
+            lock (SyncRoot)
+            {
+                return [.. IconPathProviders];
+            }
         }
     }
 

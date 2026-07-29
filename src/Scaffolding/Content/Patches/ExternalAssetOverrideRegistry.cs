@@ -777,14 +777,24 @@ namespace STS2RitsuLib.Scaffolding.Content.Patches
 
         internal static bool TryGetEncounterMapNodeAssetPaths(EncounterModel model, out IEnumerable<string> values)
         {
-            if (!TryGet(EncounterMapNodeAssetPathProviders, model, out var raw) || raw == null)
+            if (!TryGet(EncounterMapNodeAssetPathProviders, model, out var raw, out var providerKey) || raw == null)
             {
                 values = [];
                 return false;
             }
 
-            values = raw;
-            return true;
+            try
+            {
+                values = raw.ToArray();
+                return true;
+            }
+            catch (Exception ex)
+            {
+                RitsuLibFramework.Logger.Warn(
+                    $"[Assets] External provider '{providerKey}' failed while enumerating encounter map-node asset paths: {ex.Message}");
+                values = [];
+                return false;
+            }
         }
 
         internal static bool TryGetEncounterRunHistoryIconPath(EncounterModel model, out string value)
@@ -963,16 +973,6 @@ namespace STS2RitsuLib.Scaffolding.Content.Patches
             value = null!;
             providerKey = string.Empty;
             return false;
-        }
-
-        private static Func<TModel, TValue?>[] Snapshot<TModel, TValue>(
-            Dictionary<string, Func<TModel, TValue?>> providers)
-            where TModel : class
-        {
-            lock (SyncRoot)
-            {
-                return [.. providers.Values];
-            }
         }
 
         private static KeyValuePair<string, Func<TModel, TValue?>>[] SnapshotWithKeys<TModel, TValue>(
