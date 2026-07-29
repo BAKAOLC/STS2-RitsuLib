@@ -22,6 +22,10 @@ namespace STS2RitsuLib.Telemetry
         {
             ArgumentException.ThrowIfNullOrWhiteSpace(host);
             Host = new(host.TrimEnd('/'), UriKind.Absolute);
+            if (Host.Scheme is not ("http" or "https"))
+                throw new ArgumentException("The PostHog host must use HTTP or HTTPS.", nameof(host));
+
+            ArgumentException.ThrowIfNullOrWhiteSpace(projectApiKey);
             ProjectApiKey = projectApiKey;
         }
 
@@ -49,9 +53,6 @@ namespace STS2RitsuLib.Telemetry
             IReadOnlyList<TelemetryEnvelope> events,
             CancellationToken cancellationToken = default)
         {
-            if (string.IsNullOrWhiteSpace(ProjectApiKey))
-                return TelemetrySendResult.Fail("PostHog project API key is not configured.");
-
             var batch = events.Select(evt => new
             {
                 @event = evt.EventName,
@@ -80,6 +81,10 @@ namespace STS2RitsuLib.Telemetry
             catch (OperationCanceledException) when (!cancellationToken.IsCancellationRequested)
             {
                 return TelemetrySendResult.Fail($"Timed out posting telemetry to {Host}.");
+            }
+            catch (OperationCanceledException)
+            {
+                throw;
             }
             catch (Exception ex)
             {

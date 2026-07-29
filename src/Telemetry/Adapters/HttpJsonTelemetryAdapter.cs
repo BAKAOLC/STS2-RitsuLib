@@ -24,7 +24,12 @@ namespace STS2RitsuLib.Telemetry
         {
             ArgumentException.ThrowIfNullOrWhiteSpace(endpoint);
             Endpoint = new(endpoint, UriKind.Absolute);
-            _headers = headers ?? new Dictionary<string, string>();
+            if (Endpoint.Scheme is not ("http" or "https"))
+                throw new ArgumentException("The telemetry endpoint must use HTTP or HTTPS.", nameof(endpoint));
+
+            _headers = headers == null
+                ? new Dictionary<string, string>()
+                : new Dictionary<string, string>(headers, StringComparer.OrdinalIgnoreCase);
         }
 
         /// <summary>
@@ -73,6 +78,10 @@ namespace STS2RitsuLib.Telemetry
             catch (OperationCanceledException) when (!cancellationToken.IsCancellationRequested)
             {
                 return TelemetrySendResult.Fail($"Timed out posting telemetry to {Endpoint}.");
+            }
+            catch (OperationCanceledException)
+            {
+                throw;
             }
             catch (Exception ex)
             {
