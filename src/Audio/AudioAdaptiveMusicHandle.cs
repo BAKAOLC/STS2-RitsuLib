@@ -8,7 +8,7 @@ namespace STS2RitsuLib.Audio
     {
         private readonly AudioAdaptiveMusicPlan _plan;
         private AudioMusicHandle? _current;
-        private bool _disposed;
+        private int _disposed;
 
         internal AudioAdaptiveMusicHandle(AudioAdaptiveMusicPlan plan)
         {
@@ -21,23 +21,29 @@ namespace STS2RitsuLib.Audio
         /// </summary>
         public void Dispose()
         {
-            if (_disposed)
+            if (Interlocked.Exchange(ref _disposed, 1) != 0)
                 return;
 
-            _disposed = true;
-            Stop();
+            StopCore(true);
             AudioAdaptiveMusicDirector.Shared.Detach(this);
         }
 
         internal void SwitchTo(AudioMusicHandle? handle)
         {
-            _current?.Dispose();
-            _current = handle;
+            if (Volatile.Read(ref _disposed) != 0)
+            {
+                handle?.Dispose();
+                return;
+            }
+
+            Interlocked.Exchange(ref _current, handle)?.Dispose();
+            if (Volatile.Read(ref _disposed) != 0)
+                Interlocked.Exchange(ref _current, null)?.Dispose();
         }
 
         internal void RefreshVolume(float volume)
         {
-            _current?.TrySetVolume(volume);
+            Volatile.Read(ref _current)?.TrySetVolume(volume);
         }
 
         /// <summary>
@@ -46,11 +52,15 @@ namespace STS2RitsuLib.Audio
         /// </summary>
         public void Stop(bool restoreVanillaMusic = true)
         {
-            if (_disposed)
+            if (Volatile.Read(ref _disposed) != 0)
                 return;
 
-            _current?.Dispose();
-            _current = null;
+            StopCore(restoreVanillaMusic);
+        }
+
+        private void StopCore(bool restoreVanillaMusic)
+        {
+            Interlocked.Exchange(ref _current, null)?.Dispose();
 
             if (restoreVanillaMusic && _plan.RestoreVanillaMusicOnStop)
                 AudioVanillaBridge.RefreshRunMusic();
