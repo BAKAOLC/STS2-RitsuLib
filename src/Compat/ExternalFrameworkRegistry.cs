@@ -23,7 +23,8 @@ namespace STS2RitsuLib.Compat
     internal static class ExternalFrameworkRegistry
     {
         private static readonly Lock Gate = new();
-        private static readonly Dictionary<string, Func<bool>> CustomDetectors = [];
+        private static readonly Dictionary<string, Func<bool>> CustomDetectors =
+            new(StringComparer.OrdinalIgnoreCase);
         private static readonly ConcurrentDictionary<string, TypeResolution> TypeCache = new(StringComparer.Ordinal);
 
         private static readonly Dictionary<string, ProbeSpec> BuiltInProbes = new(StringComparer.OrdinalIgnoreCase)
