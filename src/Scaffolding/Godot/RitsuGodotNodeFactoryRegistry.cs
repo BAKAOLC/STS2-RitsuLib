@@ -90,7 +90,23 @@ namespace STS2RitsuLib.Scaffolding.Godot
             if (root == null)
                 throw new InvalidOperationException(
                     $"PackedScene.Instantiate returned null for '{scene.ResourcePath}'.");
-            return (TNode)factory.CreateFromNode(root, style);
+
+            try
+            {
+                var created = factory.CreateFromNode(root, style);
+                if (!GodotObject.IsInstanceValid(created))
+                    throw new InvalidOperationException(
+                        $"Factory for {typeof(TNode).FullName} returned a null or invalid Godot node.");
+
+                FreeUnusedSceneRoot(root, created);
+                return (TNode)created;
+            }
+            catch
+            {
+                if (GodotObject.IsInstanceValid(root))
+                    root.Free();
+                throw;
+            }
         }
 
         internal static TNode CreateFromScenePath<TNode>(string scenePath) where TNode : Node, new()
@@ -126,6 +142,10 @@ namespace STS2RitsuLib.Scaffolding.Godot
             where TNode : Node, new()
         {
             ArgumentNullException.ThrowIfNull(resource);
+            if (resource is GodotObject godotResource && !GodotObject.IsInstanceValid(godotResource))
+                throw new ArgumentException(
+                    "The supplied Godot resource native instance is invalid (freed).",
+                    nameof(resource));
 
             RequireMainThread(nameof(CreateFromResource));
             if (!Factories.TryGetValue(typeof(TNode), out var factory))
@@ -140,7 +160,23 @@ namespace STS2RitsuLib.Scaffolding.Godot
             }
 
             RitsuLibFramework.Logger.Debug($"[Godot] Creating {typeof(TNode).Name} from {resource.GetType().Name}");
-            return (TNode)factory.CreateFromResource(resource, style);
+            var created = factory.CreateFromResource(resource, style);
+            if (!GodotObject.IsInstanceValid(created))
+                throw new InvalidOperationException(
+                    $"Factory for {typeof(TNode).FullName} returned a null or invalid Godot node.");
+
+            return (TNode)created;
+        }
+
+        private static void FreeUnusedSceneRoot(Node root, Node created)
+        {
+            if (!GodotObject.IsInstanceValid(root) ||
+                root.GetInstanceId() == created.GetInstanceId() ||
+                root.IsAncestorOf(created) ||
+                root.GetParent() != null)
+                return;
+
+            root.Free();
         }
 
         private static void RequireMainThread(string operation)

@@ -10,7 +10,8 @@ namespace STS2RitsuLib.Scaffolding.Godot
     /// </summary>
     internal static class RitsuGodotNodeFactoryBootstrap
     {
-        private static int _initialized;
+        private static readonly object SyncRoot = new();
+        private static bool _initialized;
 
         /// <summary>
         ///     Idempotent; invoked during framework bootstrap so factories exist before runtime asset hooks run.
@@ -18,17 +19,21 @@ namespace STS2RitsuLib.Scaffolding.Godot
         /// </summary>
         internal static void EnsureRegistered()
         {
-            if (Interlocked.Exchange(ref _initialized, 1) != 0)
-                return;
+            lock (SyncRoot)
+            {
+                if (_initialized)
+                    return;
 
-            _ = new RitsuNCreatureVisualsNodeFactory();
-            _ = new RitsuNMerchantCharacterNodeFactory();
-            _ = new RitsuNRestSiteCharacterNodeFactory();
-            _ = new RitsuNode2DSceneRootFactory();
-            _ = new RitsuTextureRectControlNodeFactory();
-            _ = new RitsuNEnergyCounterNodeFactory();
-            _ = new RitsuNCardTrailVfxNodeFactory();
-            RitsuLibFramework.Logger.Info("[Godot] RitsuGodot node factories initialized.");
+                _ = new RitsuNCreatureVisualsNodeFactory();
+                _ = new RitsuNMerchantCharacterNodeFactory();
+                _ = new RitsuNRestSiteCharacterNodeFactory();
+                _ = new RitsuNode2DSceneRootFactory();
+                _ = new RitsuTextureRectControlNodeFactory();
+                _ = new RitsuNEnergyCounterNodeFactory();
+                _ = new RitsuNCardTrailVfxNodeFactory();
+                _initialized = true;
+                RitsuLibFramework.Logger.Info("[Godot] RitsuGodot node factories initialized.");
+            }
         }
     }
 }

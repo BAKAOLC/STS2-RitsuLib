@@ -28,8 +28,17 @@ namespace STS2RitsuLib.Scaffolding.Godot
         public virtual Node CreateFromResource(object resource, VisualNodeStyle? style)
         {
             var bare = CreateBareFromResource(resource);
-            CompleteBareRoot(bare, style);
-            return bare;
+            try
+            {
+                CompleteBareRoot(bare, style);
+                return bare;
+            }
+            catch
+            {
+                if (GodotObject.IsInstanceValid(bare))
+                    bare.Free();
+                throw;
+            }
         }
 
         /// <summary>
@@ -110,8 +119,16 @@ namespace STS2RitsuLib.Scaffolding.Godot
                 return typed;
 
             var target = new T();
-            ConvertScene(target, source);
-            return target;
+            try
+            {
+                ConvertScene(target, source);
+                return target;
+            }
+            catch
+            {
+                FreeFailedConversion(target, source);
+                throw;
+            }
         }
 
         public override Node CreateFromNode(Node source, VisualNodeStyle? style)
@@ -123,9 +140,17 @@ namespace STS2RitsuLib.Scaffolding.Godot
             }
 
             var target = new T();
-            ConvertScene(target, source);
-            ApplyStyle(target, false, style);
-            return target;
+            try
+            {
+                ConvertScene(target, source);
+                ApplyStyle(target, false, style);
+                return target;
+            }
+            catch
+            {
+                FreeFailedConversion(target, source);
+                throw;
+            }
         }
 
         public override Node CreateBareFromResource(object resource)
@@ -220,7 +245,7 @@ namespace STS2RitsuLib.Scaffolding.Godot
                     if (!named.IsValidType(node))
                     {
                         node.ReplaceBy(placeholder);
-                        node = ConvertNodeType(node, named.ExpectedNodeType);
+                        node = ConvertNodeTypeAndFreeUnusedSource(node, named.ExpectedNodeType);
                         placeholder.ReplaceBy(node);
                     }
 
@@ -256,7 +281,7 @@ namespace STS2RitsuLib.Scaffolding.Godot
                     if (!missing.IsValidType(node))
                     {
                         node.ReplaceBy(placeholder);
-                        node = ConvertNodeType(node, missing.ExpectedNodeType);
+                        node = ConvertNodeTypeAndFreeUnusedSource(node, missing.ExpectedNodeType);
                         placeholder.ReplaceBy(node);
                     }
 
@@ -271,6 +296,24 @@ namespace STS2RitsuLib.Scaffolding.Godot
             placeholder.QueueFree();
         }
 
+        private Node ConvertNodeTypeAndFreeUnusedSource(Node source, Type targetType)
+        {
+            var sourceType = source.GetType();
+            var sourceName = source.Name;
+            var converted = ConvertNodeType(source, targetType);
+            if (!GodotObject.IsInstanceValid(converted))
+                throw new InvalidOperationException(
+                    $"Factory for {typeof(T).Name} returned a null or invalid {targetType.Name} replacement for " +
+                    $"{sourceType.Name} '{sourceName}'.");
+
+            if (!ReferenceEquals(converted, source) &&
+                GodotObject.IsInstanceValid(source) &&
+                source.GetParent() == null)
+                source.Free();
+
+            return converted;
+        }
+
         protected virtual Node ConvertNodeType(Node node, Type targetType)
         {
             throw new InvalidOperationException(
@@ -278,6 +321,14 @@ namespace STS2RitsuLib.Scaffolding.Godot
         }
 
         protected abstract void GenerateNode(T target, IRitsuGodotNodeSlot required);
+
+        private static void FreeFailedConversion(T target, Node source)
+        {
+            if (GodotObject.IsInstanceValid(target))
+                target.Free();
+            if (GodotObject.IsInstanceValid(source))
+                source.Free();
+        }
 
         /// <summary>
         ///     Packed-scene children often still reference the old root as <see cref="Node.Owner" /> after

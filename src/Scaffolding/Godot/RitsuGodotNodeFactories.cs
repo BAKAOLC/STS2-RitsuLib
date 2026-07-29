@@ -166,8 +166,12 @@ namespace STS2RitsuLib.Scaffolding.Godot
 
         private static TNode RequireCreatedNode<TNode>(TNode? node, string factoryMember) where TNode : Node
         {
-            return node ?? throw new InvalidOperationException(
-                $"Registered Godot node factory member '{factoryMember}' returned null for {typeof(TNode).FullName}.");
+            if (GodotObject.IsInstanceValid(node))
+                return node!;
+
+            throw new InvalidOperationException(
+                $"Registered Godot node factory member '{factoryMember}' returned a null or invalid node for " +
+                $"{typeof(TNode).FullName}.");
         }
 
         private sealed class PublicRitsuGodotNodeFactoryAdapter<TNode>(IRitsuGodotNodeFactory<TNode> factory)
