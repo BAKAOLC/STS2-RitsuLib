@@ -12,12 +12,15 @@ namespace STS2RitsuLib.Models.Capabilities
 
         public bool IsInitialized { get; set; }
 
+        public bool ShouldImportMissingEntries { get; set; }
+
         internal void ResetForDocument(ModelSavedDataDocument? document)
         {
             _dirty.Clear();
             _values.Clear();
             PreservedDocument = document;
             IsInitialized = false;
+            ShouldImportMissingEntries = true;
         }
 
         public bool TryGet(ModelSavedDataSlotKey key, out object value)

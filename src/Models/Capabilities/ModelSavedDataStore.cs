@@ -91,12 +91,13 @@ namespace STS2RitsuLib.Models.Capabilities
             ArgumentException.ThrowIfNullOrWhiteSpace(slot.Key);
             lock (_slots)
             {
-                if (!_slots.TryAdd(slot.Key, slot))
+                if (_slots.ContainsKey(slot.Key))
                     throw new InvalidOperationException(
                         $"ModelSavedData key is already registered: {ModId}::{slot.Key}");
-            }
 
-            ModelSavedDataRegistry.Register(slot);
+                ModelSavedDataRegistry.Register(slot);
+                _slots.Add(slot.Key, slot);
+            }
         }
     }
 }

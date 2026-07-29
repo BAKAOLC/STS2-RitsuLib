@@ -62,20 +62,19 @@ namespace STS2RitsuLib.Models.Capabilities
                 return;
 
             bag.IsInitialized = true;
+            var shouldImportMissingEntries = bag.ShouldImportMissingEntries;
+            bag.ShouldImportMissingEntries = false;
             var document = bag.PreservedDocument;
-            if (document == null)
-                return;
-
             foreach (var slot in GetSlotsSnapshot(model))
-                if (document.TryGetRaw(slot.ModId, slot.Key, out var entry))
+                if (document != null && document.TryGetRaw(slot.ModId, slot.Key, out var entry))
                     slot.Import(model, entry, bag);
+                else if (shouldImportMissingEntries)
+                    slot.ImportMissing(model);
         }
 
         public static string? Export(AbstractModel model)
         {
-            if (!ModelSavedDataRuntime.TryGetBag(model, out var bag))
-                return null;
-
+            var bag = ModelSavedDataRuntime.GetBag(model);
             var document = bag.PreservedDocument?.Clone() ?? new();
 
             foreach (var slot in GetSlotsSnapshot(model))

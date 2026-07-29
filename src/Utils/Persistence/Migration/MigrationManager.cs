@@ -234,7 +234,7 @@ namespace STS2RitsuLib.Utils.Persistence.Migration
         ///     配置的当前 schema。返回路径使用最少迁移步骤数；平局时
         ///     按迭代顺序打破（注册顺序，然后按 FromVersion、ToVersion 排序）。
         /// </summary>
-        private static bool TryBuildShortestMigrationPath(
+        internal static bool TryBuildShortestMigrationPath(
             int startVersion,
             int targetVersion,
             List<IMigration> migrations,

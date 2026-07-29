@@ -77,11 +77,11 @@ namespace STS2RitsuLib.Models.Capabilities.Patches
                 if (model is not AbstractModel abstractModel)
                     return;
 
-                if (SavedAttachedStateRegistry.TryGetFromProperties<string>(
-                        __instance,
-                        ModelSavedDataRuntime.SavedPropertiesName,
-                        out var json))
-                    ModelSavedDataRegistry.Import(abstractModel, json);
+                SavedAttachedStateRegistry.TryGetFromProperties<string>(
+                    __instance,
+                    ModelSavedDataRuntime.SavedPropertiesName,
+                    out var json);
+                ModelSavedDataRegistry.Import(abstractModel, json);
             }
         }
     }

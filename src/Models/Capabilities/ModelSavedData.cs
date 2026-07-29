@@ -70,8 +70,15 @@ namespace STS2RitsuLib.Models.Capabilities
         {
             ArgumentNullException.ThrowIfNull(mutate);
             var value = _slot.GetOrCreate(model);
-            mutate(value);
-            _slot.Set(model, value);
+            try
+            {
+                mutate(value);
+            }
+            finally
+            {
+                _slot.Set(model, value);
+            }
+
             return value;
         }
     }

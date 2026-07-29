@@ -1,6 +1,7 @@
 using System.Text.Json;
 using System.Text.Json.Nodes;
 using MegaCrit.Sts2.Core.Models;
+using STS2RitsuLib.Utils.Persistence.Migration;
 
 namespace STS2RitsuLib.Models.Capabilities
 {
@@ -12,6 +13,7 @@ namespace STS2RitsuLib.Models.Capabilities
         ModelSavedDataOptions Options { get; }
         ModelSavedDataSlotKey SlotKey { get; }
         void Import(AbstractModel model, JsonObject entry, ModelSavedDataBag bag);
+        void ImportMissing(AbstractModel model);
         void Export(AbstractModel model, ModelSavedDataBag bag, ModelSavedDataDocument document);
 
         void Clone(AbstractModel prototype, AbstractModel clone, ModelSavedDataBag sourceBag,
@@ -36,7 +38,7 @@ namespace STS2RitsuLib.Models.Capabilities
         public string ModId { get; } = modId;
         public string Key { get; } = key;
         public Type TargetType { get; } = typeof(TTarget);
-        public ModelSavedDataOptions Options { get; } = options ?? new();
+        public ModelSavedDataOptions Options { get; } = ValidateOptions(options ?? new());
         public ModelSavedDataSlotKey SlotKey { get; } = new(modId, key);
 
         public void Import(AbstractModel model, JsonObject entry, ModelSavedDataBag bag)
@@ -50,9 +52,20 @@ namespace STS2RitsuLib.Models.Capabilities
             }
             catch (Exception ex)
             {
+                if (ShouldPropagateImportExceptions)
+                    throw;
+
                 RitsuLibFramework.Logger.Warn(
                     $"[ModelSavedData] Failed to import '{ModId}'::{Key} for {model.Id}: {ex.Message}");
             }
+        }
+
+        public void ImportMissing(AbstractModel model)
+        {
+            if (model is not TTarget target)
+                return;
+
+            ImportMissingCore(target);
         }
 
         public void Export(AbstractModel model, ModelSavedDataBag bag, ModelSavedDataDocument document)
@@ -60,14 +73,22 @@ namespace STS2RitsuLib.Models.Capabilities
             if (model is not TTarget target)
                 return;
 
-            if (!TryBuildEntry(target, bag, out var entry))
+            try
             {
-                if (bag.IsDirty(SlotKey))
-                    document.Remove(ModId, Key);
-                return;
-            }
+                if (!TryBuildEntry(target, bag, out var entry))
+                {
+                    if (ShouldRemovePreservedEntryWhenNotWritten(bag))
+                        document.Remove(ModId, Key);
+                    return;
+                }
 
-            document.SetRaw(ModId, Key, entry);
+                document.SetRaw(ModId, Key, entry);
+            }
+            catch (Exception ex)
+            {
+                RitsuLibFramework.Logger.Warn(
+                    $"[ModelSavedData] Failed to export '{ModId}'::{Key} for {model.Id}: {ex.Message}");
+            }
         }
 
         public void Clone(AbstractModel prototype, AbstractModel clone, ModelSavedDataBag sourceBag,
@@ -76,19 +97,27 @@ namespace STS2RitsuLib.Models.Capabilities
             if (prototype is not TTarget || clone is not TTarget)
                 return;
 
-            switch (Options.ClonePolicy)
+            try
             {
-                case ModelSavedDataClonePolicy.Drop:
-                    targetBag.Remove(SlotKey);
-                    break;
-                case ModelSavedDataClonePolicy.Share:
-                    if (sourceBag.TryGet(SlotKey, out var shared))
-                        targetBag.Set(SlotKey, shared, sourceBag.IsDirty(SlotKey));
-                    break;
-                default:
-                    if (sourceBag.TryGet(SlotKey, out var raw) && raw is TPayload typed)
-                        targetBag.Set(SlotKey, DeepClone(typed), sourceBag.IsDirty(SlotKey));
-                    break;
+                switch (Options.ClonePolicy)
+                {
+                    case ModelSavedDataClonePolicy.Drop:
+                        targetBag.Remove(SlotKey);
+                        break;
+                    case ModelSavedDataClonePolicy.Share:
+                        if (sourceBag.TryGet(SlotKey, out var shared))
+                            targetBag.Set(SlotKey, shared, sourceBag.IsDirty(SlotKey));
+                        break;
+                    default:
+                        if (sourceBag.TryGet(SlotKey, out var raw) && raw is TPayload typed)
+                            targetBag.Set(SlotKey, DeepClone(typed), sourceBag.IsDirty(SlotKey));
+                        break;
+                }
+            }
+            catch (Exception ex)
+            {
+                RitsuLibFramework.Logger.Warn(
+                    $"[ModelSavedData] Failed to clone '{ModId}'::{Key} for {prototype.Id}: {ex.Message}");
             }
         }
 
@@ -98,7 +127,7 @@ namespace STS2RitsuLib.Models.Capabilities
             if (bag.TryGet(SlotKey, out var value) && value is TPayload typed)
                 return typed;
 
-            var created = _defaultFactory();
+            var created = CreateDefault();
             bag.Set(SlotKey, created, false);
             return created;
         }
@@ -131,7 +160,7 @@ namespace STS2RitsuLib.Models.Capabilities
                 return;
             }
 
-            bag.Set(SlotKey, _defaultFactory());
+            bag.Set(SlotKey, CreateDefault());
         }
 
         public bool Remove(TTarget model)
@@ -178,11 +207,22 @@ namespace STS2RitsuLib.Models.Capabilities
         protected TPayload DeepClone(TPayload value)
         {
             var node = JsonSerializer.SerializeToNode(value, ModelSavedDataJson.Options);
-            return node?.Deserialize<TPayload>(ModelSavedDataJson.Options) ?? _defaultFactory();
+            return node?.Deserialize<TPayload>(ModelSavedDataJson.Options) ?? CreateDefault();
         }
 
         protected abstract bool TryBuildEntry(TTarget model, ModelSavedDataBag bag, out JsonObject entry);
         protected abstract void ImportCore(TTarget model, JsonObject entry, ModelSavedDataBag bag);
+
+        protected virtual void ImportMissingCore(TTarget model)
+        {
+        }
+
+        protected virtual bool ShouldRemovePreservedEntryWhenNotWritten(ModelSavedDataBag bag)
+        {
+            return bag.IsDirty(SlotKey);
+        }
+
+        protected virtual bool ShouldPropagateImportExceptions => false;
 
         private bool TryMigrate(JsonObject entry, int schema, out JsonObject migrated)
         {
@@ -196,27 +236,37 @@ namespace STS2RitsuLib.Models.Capabilities
             if (Options.Migrations == null || Options.Migrations.Count == 0)
                 return false;
 
+            var migrations = Options.Migrations
+                .OrderBy(static migration => migration.FromVersion)
+                .ThenBy(static migration => migration.ToVersion)
+                .ToList();
+            if (!MigrationManager.TryBuildShortestMigrationPath(
+                    schema,
+                    Options.SchemaVersion,
+                    migrations,
+                    out var plan))
+                return false;
+
             migrated = entry.DeepClone().AsObject();
             var current = schema;
-            while (current != Options.SchemaVersion)
+            foreach (var migration in plan)
             {
-                var migration = Options.Migrations.FirstOrDefault(m => m.FromVersion == current);
-                if (migration == null || !migration.Migrate(migrated))
+                if (!migration.Migrate(migrated))
                     return false;
 
                 current = migration.ToVersion;
                 migrated[SchemaPropertyName] = current;
             }
 
-            return true;
+            return current == Options.SchemaVersion;
         }
 
-        private bool IsDefaultValue(TPayload value)
+        protected bool IsDefaultValue(TPayload value)
         {
             try
             {
                 var left = JsonSerializer.SerializeToNode(value, ModelSavedDataJson.Options)?.ToJsonString();
-                var right = JsonSerializer.SerializeToNode(_defaultFactory(), ModelSavedDataJson.Options)
+                var right = JsonSerializer.SerializeToNode(CreateDefault(), ModelSavedDataJson.Options)
                     ?.ToJsonString();
                 return string.Equals(left, right, StringComparison.Ordinal);
             }
@@ -224,6 +274,29 @@ namespace STS2RitsuLib.Models.Capabilities
             {
                 return false;
             }
+        }
+
+        private TPayload CreateDefault()
+        {
+            return _defaultFactory()
+                   ?? throw new InvalidOperationException(
+                       $"ModelSavedData default factory returned null for '{ModId}'::{Key}.");
+        }
+
+        private static ModelSavedDataOptions ValidateOptions(ModelSavedDataOptions options)
+        {
+            if (options.SchemaVersion < 1)
+                throw new ArgumentOutOfRangeException(
+                    nameof(options),
+                    options.SchemaVersion,
+                    "ModelSavedData schema version must be at least 1.");
+
+            if (options.Migrations?.Any(static migration => migration.ToVersion <= migration.FromVersion) == true)
+                throw new ArgumentException(
+                    "Every ModelSavedData migration must advance to a higher version.",
+                    nameof(options));
+
+            return options;
         }
     }
 
@@ -285,15 +358,23 @@ namespace STS2RitsuLib.Models.Capabilities
             importer(model, TryReadData(entry, out var value) ? value : null);
         }
 
+        protected override void ImportMissingCore(TTarget model)
+        {
+            importer(model, null);
+        }
+
+        protected override bool ShouldRemovePreservedEntryWhenNotWritten(ModelSavedDataBag bag)
+        {
+            return true;
+        }
+
+        protected override bool ShouldPropagateImportExceptions => true;
+
         private bool ShouldWriteComputed(TPayload value)
         {
             return Options.WritePolicy switch
             {
-                ModelSavedDataWritePolicy.WhenNonDefault => !string.Equals(
-                    JsonSerializer.SerializeToNode(value, ModelSavedDataJson.Options)?.ToJsonString(),
-                    JsonSerializer.SerializeToNode(new TPayload(), ModelSavedDataJson.Options)
-                        ?.ToJsonString(),
-                    StringComparison.Ordinal),
+                ModelSavedDataWritePolicy.WhenNonDefault => !IsDefaultValue(value),
                 _ => true,
             };
         }
