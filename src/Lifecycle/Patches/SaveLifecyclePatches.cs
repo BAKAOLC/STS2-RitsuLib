@@ -54,23 +54,24 @@ namespace STS2RitsuLib.Lifecycle.Patches
             return [new(typeof(SaveManager), nameof(SaveManager.SwitchProfileId), [typeof(int)])];
         }
 
-        public static void Prefix(SaveManager __instance, int __0)
+        public static void Prefix(SaveManager __instance, int __0, out int? __state)
         {
+            __state = SaveLifecycleProfileId.TryGetCurrentProfileId(__instance);
             RitsuLibFramework.PublishLifecycleEvent(
                 new ProfileSwitchingEvent(
                     __instance,
-                    SaveLifecycleProfileId.TryGetCurrentProfileId(__instance),
+                    __state,
                     __0,
                     DateTimeOffset.UtcNow),
                 nameof(ProfileSwitchingEvent));
         }
 
-        public static void Postfix(SaveManager __instance, int __0)
+        public static void Postfix(SaveManager __instance, int? __state)
         {
             RitsuLibFramework.PublishLifecycleEvent(
                 new ProfileSwitchedEvent(
                     __instance,
-                    SaveLifecycleProfileId.TryGetCurrentProfileId(__instance) == __0 ? null : __0,
+                    __state,
                     __instance.CurrentProfileId,
                     DateTimeOffset.UtcNow),
                 nameof(ProfileSwitchedEvent));
