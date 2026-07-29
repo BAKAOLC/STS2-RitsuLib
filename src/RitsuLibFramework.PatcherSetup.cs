@@ -382,6 +382,9 @@ namespace STS2RitsuLib
             patcher.RegisterPatch<NPotionPopupCustomTargetLabelPatch>();
             patcher.RegisterPatch<NPotionHolderUsePotionCustomSingleTargetPatch>();
             patcher.RegisterPatch<PotionModelOnUseWrapperCustomMultiTargetVfxPatch>();
+            patcher.RegisterPatch<CardKeywordGetTitleModRoutePatch>();
+            patcher.RegisterPatch<CardKeywordGetDescriptionModRoutePatch>();
+            patcher.RegisterPatch<CardKeywordGetCardTextModRoutePatch>();
             patcher.RegisterPatch<HoverTipFactoryFromKeywordPatch>();
             patcher.RegisterPatch<CardModelKeywordsModSeedPatch>();
             patcher.RegisterPatch<CardModelTagsModSeedPatch>();

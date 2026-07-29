@@ -1,6 +1,7 @@
 using System.Runtime.CompilerServices;
 using MegaCrit.Sts2.Core.Entities.Cards;
 using MegaCrit.Sts2.Core.HoverTips;
+using MegaCrit.Sts2.Core.Localization;
 using MegaCrit.Sts2.Core.Models;
 
 namespace STS2RitsuLib.Keywords
@@ -292,6 +293,56 @@ namespace STS2RitsuLib.Keywords
         public static string GetModKeywordCardText(this CardKeyword value)
         {
             return ModKeywordRegistry.GetCardText(value);
+        }
+
+        /// <summary>
+        ///     <para xml:lang="en">
+        ///         Gets the title localization reference for a registered mod <see cref="CardKeyword" />.
+        ///     </para>
+        ///     <para xml:lang="zh-CN">
+        ///         获取已注册模组 <see cref="CardKeyword" /> 的标题本地化引用。
+        ///     </para>
+        /// </summary>
+        /// <param name="value">
+        ///     <para xml:lang="en">The registered mod keyword value.</para>
+        ///     <para xml:lang="zh-CN">已注册的模组关键词值。</para>
+        /// </param>
+        /// <returns>
+        ///     <para xml:lang="en">The keyword title's <see cref="LocString" />.</para>
+        ///     <para xml:lang="zh-CN">关键词标题的 <see cref="LocString" />。</para>
+        /// </returns>
+        /// <exception cref="KeyNotFoundException">
+        ///     <para xml:lang="en"><paramref name="value" /> is not a registered mod keyword.</para>
+        ///     <para xml:lang="zh-CN"><paramref name="value" /> 不是已注册的模组关键词。</para>
+        /// </exception>
+        public static LocString GetModKeywordTitle(this CardKeyword value)
+        {
+            return ModKeywordRegistry.GetTitle(value);
+        }
+
+        /// <summary>
+        ///     <para xml:lang="en">
+        ///         Gets the description localization reference for a registered mod <see cref="CardKeyword" />.
+        ///     </para>
+        ///     <para xml:lang="zh-CN">
+        ///         获取已注册模组 <see cref="CardKeyword" /> 的描述本地化引用。
+        ///     </para>
+        /// </summary>
+        /// <param name="value">
+        ///     <para xml:lang="en">The registered mod keyword value.</para>
+        ///     <para xml:lang="zh-CN">已注册的模组关键词值。</para>
+        /// </param>
+        /// <returns>
+        ///     <para xml:lang="en">The keyword description's <see cref="LocString" />.</para>
+        ///     <para xml:lang="zh-CN">关键词描述的 <see cref="LocString" />。</para>
+        /// </returns>
+        /// <exception cref="KeyNotFoundException">
+        ///     <para xml:lang="en"><paramref name="value" /> is not a registered mod keyword.</para>
+        ///     <para xml:lang="zh-CN"><paramref name="value" /> 不是已注册的模组关键词。</para>
+        /// </exception>
+        public static LocString GetModKeywordDescription(this CardKeyword value)
+        {
+            return ModKeywordRegistry.GetDescription(value);
         }
 
         /// <summary>
