@@ -149,6 +149,34 @@ namespace STS2RitsuLib.CardTags
         }
 
         /// <summary>
+        ///     <para xml:lang="en">
+        ///         Gets the registered mod card-tag definition represented by a <see cref="CardTag" />.
+        ///     </para>
+        ///     <para xml:lang="zh-CN">
+        ///         获取 <see cref="CardTag" /> 所表示的已注册模组卡牌标签定义。
+        ///     </para>
+        /// </summary>
+        /// <param name="value">
+        ///     <para xml:lang="en">The dynamic card-tag value to resolve.</para>
+        ///     <para xml:lang="zh-CN">要解析的动态卡牌标签值。</para>
+        /// </param>
+        /// <returns>
+        ///     <para xml:lang="en">The registered mod card-tag definition.</para>
+        ///     <para xml:lang="zh-CN">已注册的模组卡牌标签定义。</para>
+        /// </returns>
+        /// <exception cref="KeyNotFoundException">
+        ///     <para xml:lang="en"><paramref name="value" /> is not a registered mod card tag.</para>
+        ///     <para xml:lang="zh-CN"><paramref name="value" /> 不是已注册的模组卡牌标签。</para>
+        /// </exception>
+        public static ModCardTagDefinition Get(CardTag value)
+        {
+            return TryGetByCardTag(value, out var definition)
+                ? definition
+                : throw new KeyNotFoundException(
+                    $"CardTag '0x{(int)value:X8}' is not a registered mod card tag.");
+        }
+
+        /// <summary>
         ///     Reverse lookup for a minted <see cref="CardTag" /> value.
         ///     对已生成的 <see cref="CardTag" /> 值执行反向查找。
         /// </summary>

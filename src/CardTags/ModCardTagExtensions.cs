@@ -79,6 +79,33 @@ namespace STS2RitsuLib.CardTags
         }
 
         /// <summary>
+        ///     <para xml:lang="en">
+        ///         Determines whether a card's tag set contains a pre-minted mod <see cref="CardTag" />.
+        ///     </para>
+        ///     <para xml:lang="zh-CN">
+        ///         确定卡牌的标签集合是否包含预先生成的模组 <see cref="CardTag" />。
+        ///     </para>
+        /// </summary>
+        /// <param name="card">
+        ///     <para xml:lang="en">The card to inspect.</para>
+        ///     <para xml:lang="zh-CN">要检查的卡牌。</para>
+        /// </param>
+        /// <param name="value">
+        ///     <para xml:lang="en">The pre-minted tag value to find.</para>
+        ///     <para xml:lang="zh-CN">要查找的预生成标签值。</para>
+        /// </param>
+        /// <returns>
+        ///     <para xml:lang="en"><see langword="true" /> when the card contains the tag; otherwise, <see langword="false" />.</para>
+        ///     <para xml:lang="zh-CN">卡牌包含该标签时为 <see langword="true" />；否则为 <see langword="false" />。</para>
+        /// </returns>
+        public static bool HasModCardTag(this CardModel card, CardTag value)
+        {
+            ArgumentNullException.ThrowIfNull(card);
+
+            return card.Tags.Contains(value);
+        }
+
+        /// <summary>
         ///     Convenience: minted <see cref="CardTag" /> for <paramref name="qualifiedTagId" />.
         ///     便捷方法：获取 <paramref name="qualifiedTagId" /> 对应的已生成 <see cref="CardTag" />。
         /// </summary>

@@ -402,6 +402,34 @@ namespace STS2RitsuLib.Keywords
         }
 
         /// <summary>
+        ///     <para xml:lang="en">
+        ///         Gets the registered mod keyword definition represented by <paramref name="value" />.
+        ///     </para>
+        ///     <para xml:lang="zh-CN">
+        ///         获取 <paramref name="value" /> 所表示的已注册模组关键词定义。
+        ///     </para>
+        /// </summary>
+        /// <param name="value">
+        ///     <para xml:lang="en">The dynamic keyword value to resolve.</para>
+        ///     <para xml:lang="zh-CN">要解析的动态关键词值。</para>
+        /// </param>
+        /// <returns>
+        ///     <para xml:lang="en">The registered mod keyword definition.</para>
+        ///     <para xml:lang="zh-CN">已注册的模组关键词定义。</para>
+        /// </returns>
+        /// <exception cref="KeyNotFoundException">
+        ///     <para xml:lang="en"><paramref name="value" /> is not a registered mod keyword.</para>
+        ///     <para xml:lang="zh-CN"><paramref name="value" /> 不是已注册的模组关键词。</para>
+        /// </exception>
+        public static ModKeywordDefinition Get(CardKeyword value)
+        {
+            return TryGetByCardKeyword(value, out var definition)
+                ? definition
+                : throw new KeyNotFoundException(
+                    $"CardKeyword '0x{(int)value:X8}' is not a registered mod keyword.");
+        }
+
+        /// <summary>
         ///     Reverse lookup: resolves the mod keyword <see cref="ModKeywordDefinition" /> that minted
         ///     <paramref name="value" />. Returns <c>false</c> for vanilla <see cref="CardKeyword" /> literals and
         ///     for any value that was never registered.
@@ -540,6 +568,32 @@ namespace STS2RitsuLib.Keywords
         }
 
         /// <summary>
+        ///     <para xml:lang="en">
+        ///         Creates a native <see cref="IHoverTip" /> for the registered mod keyword
+        ///         <paramref name="value" />.
+        ///     </para>
+        ///     <para xml:lang="zh-CN">
+        ///         为已注册的模组关键词 <paramref name="value" /> 创建原版 <see cref="IHoverTip" />。
+        ///     </para>
+        /// </summary>
+        /// <param name="value">
+        ///     <para xml:lang="en">The registered mod keyword value to present.</para>
+        ///     <para xml:lang="zh-CN">要显示的已注册模组关键词值。</para>
+        /// </param>
+        /// <returns>
+        ///     <para xml:lang="en">A native hover tip using the registered localization and icon.</para>
+        ///     <para xml:lang="zh-CN">使用已注册本地化文本与图标的原版悬停提示。</para>
+        /// </returns>
+        /// <exception cref="KeyNotFoundException">
+        ///     <para xml:lang="en"><paramref name="value" /> is not a registered mod keyword.</para>
+        ///     <para xml:lang="zh-CN"><paramref name="value" /> 不是已注册的模组关键词。</para>
+        /// </exception>
+        public static IHoverTip CreateHoverTip(CardKeyword value)
+        {
+            return CreateHoverTip(Get(value).Id);
+        }
+
+        /// <summary>
         ///     Title <see cref="LocString" /> for the keyword.
         ///     keyword 的 title <see cref="LocString" />。
         /// </summary>
@@ -547,6 +601,31 @@ namespace STS2RitsuLib.Keywords
         {
             var definition = Get(id);
             return new(definition.TitleTable, definition.TitleKey);
+        }
+
+        /// <summary>
+        ///     <para xml:lang="en">
+        ///         Gets the registered mod keyword title as a <see cref="LocString" />.
+        ///     </para>
+        ///     <para xml:lang="zh-CN">
+        ///         获取已注册模组关键词标题的 <see cref="LocString" />。
+        ///     </para>
+        /// </summary>
+        /// <param name="value">
+        ///     <para xml:lang="en">The registered mod keyword value.</para>
+        ///     <para xml:lang="zh-CN">已注册的模组关键词值。</para>
+        /// </param>
+        /// <returns>
+        ///     <para xml:lang="en">The keyword title localization reference.</para>
+        ///     <para xml:lang="zh-CN">关键词标题的本地化引用。</para>
+        /// </returns>
+        /// <exception cref="KeyNotFoundException">
+        ///     <para xml:lang="en"><paramref name="value" /> is not a registered mod keyword.</para>
+        ///     <para xml:lang="zh-CN"><paramref name="value" /> 不是已注册的模组关键词。</para>
+        /// </exception>
+        public static LocString GetTitle(CardKeyword value)
+        {
+            return GetTitle(Get(value).Id);
         }
 
         /// <summary>
@@ -560,6 +639,31 @@ namespace STS2RitsuLib.Keywords
         }
 
         /// <summary>
+        ///     <para xml:lang="en">
+        ///         Gets the registered mod keyword description as a <see cref="LocString" />.
+        ///     </para>
+        ///     <para xml:lang="zh-CN">
+        ///         获取已注册模组关键词描述的 <see cref="LocString" />。
+        ///     </para>
+        /// </summary>
+        /// <param name="value">
+        ///     <para xml:lang="en">The registered mod keyword value.</para>
+        ///     <para xml:lang="zh-CN">已注册的模组关键词值。</para>
+        /// </param>
+        /// <returns>
+        ///     <para xml:lang="en">The keyword description localization reference.</para>
+        ///     <para xml:lang="zh-CN">关键词描述的本地化引用。</para>
+        /// </returns>
+        /// <exception cref="KeyNotFoundException">
+        ///     <para xml:lang="en"><paramref name="value" /> is not a registered mod keyword.</para>
+        ///     <para xml:lang="zh-CN"><paramref name="value" /> 不是已注册的模组关键词。</para>
+        /// </exception>
+        public static LocString GetDescription(CardKeyword value)
+        {
+            return GetDescription(Get(value).Id);
+        }
+
+        /// <summary>
         ///     BBCode snippet suitable for inline card text (gold title + period).
         ///     适合内联卡牌文本的 BBCode 片段（金色标题 + 句点）。
         /// </summary>
@@ -567,6 +671,32 @@ namespace STS2RitsuLib.Keywords
         {
             var period = new LocString("card_keywords", "PERIOD");
             return "[gold]" + GetTitle(id).GetFormattedText() + "[/gold]" + period.GetRawText();
+        }
+
+        /// <summary>
+        ///     <para xml:lang="en">
+        ///         Gets the registered mod keyword's inline card BBCode: a gold title followed by the localized keyword
+        ///         period.
+        ///     </para>
+        ///     <para xml:lang="zh-CN">
+        ///         获取已注册模组关键词的内联卡牌 BBCode，即金色标题及其后的本地化关键词句号。
+        ///     </para>
+        /// </summary>
+        /// <param name="value">
+        ///     <para xml:lang="en">The registered mod keyword value.</para>
+        ///     <para xml:lang="zh-CN">已注册的模组关键词值。</para>
+        /// </param>
+        /// <returns>
+        ///     <para xml:lang="en">Inline card BBCode containing the localized keyword title and period.</para>
+        ///     <para xml:lang="zh-CN">包含本地化关键词标题与句号的内联卡牌 BBCode。</para>
+        /// </returns>
+        /// <exception cref="KeyNotFoundException">
+        ///     <para xml:lang="en"><paramref name="value" /> is not a registered mod keyword.</para>
+        ///     <para xml:lang="zh-CN"><paramref name="value" /> 不是已注册的模组关键词。</para>
+        /// </exception>
+        public static string GetCardText(CardKeyword value)
+        {
+            return GetCardText(Get(value).Id);
         }
 
         private void EnsureMutable(string operation)

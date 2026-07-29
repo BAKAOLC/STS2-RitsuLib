@@ -150,6 +150,34 @@ namespace STS2RitsuLib.Utils
         }
 
         /// <summary>
+        ///     <para xml:lang="en">
+        ///         Gets the registered dynamic-enum definition represented by <paramref name="value" />.
+        ///     </para>
+        ///     <para xml:lang="zh-CN">
+        ///         获取 <paramref name="value" /> 所表示的已注册动态枚举定义。
+        ///     </para>
+        /// </summary>
+        /// <param name="value">
+        ///     <para xml:lang="en">The dynamic enum value to resolve.</para>
+        ///     <para xml:lang="zh-CN">要解析的动态枚举值。</para>
+        /// </param>
+        /// <returns>
+        ///     <para xml:lang="en">The registered dynamic-enum definition.</para>
+        ///     <para xml:lang="zh-CN">已注册的动态枚举定义。</para>
+        /// </returns>
+        /// <exception cref="KeyNotFoundException">
+        ///     <para xml:lang="en"><paramref name="value" /> is not registered for <typeparamref name="TEnum" />.</para>
+        ///     <para xml:lang="zh-CN"><paramref name="value" /> 未注册为 <typeparamref name="TEnum" />。</para>
+        /// </exception>
+        public static DynamicEnumValueDefinition<TEnum> Get(TEnum value)
+        {
+            return TryGetByValue(value, out var definition)
+                ? definition
+                : throw new KeyNotFoundException(
+                    $"{typeof(TEnum).Name} value '{value}' is not registered.");
+        }
+
+        /// <summary>
         ///     Resolves which mod registered <paramref name="id" />, if any.
         ///     解析 <paramref name="id" /> 是由哪个 mod 注册的（如果存在）。
         /// </summary>

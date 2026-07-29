@@ -202,6 +202,34 @@ namespace STS2RitsuLib.CardPiles
         }
 
         /// <summary>
+        ///     <para xml:lang="en">
+        ///         Gets the registered mod card-pile definition represented by a <see cref="PileType" />.
+        ///     </para>
+        ///     <para xml:lang="zh-CN">
+        ///         获取 <see cref="PileType" /> 所表示的已注册模组卡牌牌堆定义。
+        ///     </para>
+        /// </summary>
+        /// <param name="value">
+        ///     <para xml:lang="en">The dynamic card-pile value to resolve.</para>
+        ///     <para xml:lang="zh-CN">要解析的动态卡牌牌堆值。</para>
+        /// </param>
+        /// <returns>
+        ///     <para xml:lang="en">The registered mod card-pile definition.</para>
+        ///     <para xml:lang="zh-CN">已注册的模组卡牌牌堆定义。</para>
+        /// </returns>
+        /// <exception cref="KeyNotFoundException">
+        ///     <para xml:lang="en"><paramref name="value" /> is not a registered mod card pile.</para>
+        ///     <para xml:lang="zh-CN"><paramref name="value" /> 不是已注册的模组卡牌牌堆。</para>
+        /// </exception>
+        public static ModCardPileDefinition Get(PileType value)
+        {
+            return TryGetByPileType(value, out var definition)
+                ? definition
+                : throw new KeyNotFoundException(
+                    $"PileType '0x{(int)value:X8}' is not a registered mod card pile.");
+        }
+
+        /// <summary>
         ///     Resolves which mod registered <paramref name="pileId" />, if any.
         ///     解析 <paramref name="pileId" /> 由哪个 mod 注册（如果有）。
         /// </summary>
@@ -333,6 +361,32 @@ namespace STS2RitsuLib.CardPiles
             return !TryGet(id, out var definition)
                 ? throw new KeyNotFoundException($"Card pile '{NormalizeId(id)}' is not registered.")
                 : ModCardPileHoverTipFactory.Create(definition);
+        }
+
+        /// <summary>
+        ///     <para xml:lang="en">
+        ///         Creates a <see cref="HoverTip" /> for the registered mod card pile represented by
+        ///         <paramref name="value" />.
+        ///     </para>
+        ///     <para xml:lang="zh-CN">
+        ///         为 <paramref name="value" /> 所表示的已注册模组卡牌牌堆创建 <see cref="HoverTip" />。
+        ///     </para>
+        /// </summary>
+        /// <param name="value">
+        ///     <para xml:lang="en">The dynamic card-pile value to present.</para>
+        ///     <para xml:lang="zh-CN">要显示的动态卡牌牌堆值。</para>
+        /// </param>
+        /// <returns>
+        ///     <para xml:lang="en">A hover tip using the registered pile presentation.</para>
+        ///     <para xml:lang="zh-CN">使用已注册牌堆呈现信息的悬停提示。</para>
+        /// </returns>
+        /// <exception cref="KeyNotFoundException">
+        ///     <para xml:lang="en"><paramref name="value" /> is not a registered mod card pile.</para>
+        ///     <para xml:lang="zh-CN"><paramref name="value" /> 不是已注册的模组卡牌牌堆。</para>
+        /// </exception>
+        public static HoverTip CreateHoverTip(PileType value)
+        {
+            return ModCardPileHoverTipFactory.Create(Get(value));
         }
 
         /// <summary>

@@ -244,13 +244,54 @@ namespace STS2RitsuLib.Keywords
         }
 
         /// <summary>
-        ///     Card BBCode for the extended keyword id string via <see cref="ModKeywordRegistry.GetCardText" />.
-        ///     通过 <see cref="ModKeywordRegistry.GetCardText" /> 获取扩展关键词 id 字符串对应的卡牌 BBCode。
+        ///     <para xml:lang="en">
+        ///         Gets inline card BBCode for a registered mod keyword ID.
+        ///     </para>
+        ///     <para xml:lang="zh-CN">
+        ///         获取已注册模组关键词 ID 的内联卡牌 BBCode。
+        ///     </para>
         /// </summary>
+        /// <param name="keywordId">
+        ///     <para xml:lang="en">The registered keyword ID.</para>
+        ///     <para xml:lang="zh-CN">已注册的关键词 ID。</para>
+        /// </param>
+        /// <returns>
+        ///     <para xml:lang="en">Inline card BBCode containing the localized keyword title.</para>
+        ///     <para xml:lang="zh-CN">包含本地化关键词标题的内联卡牌 BBCode。</para>
+        /// </returns>
+        /// <exception cref="KeyNotFoundException">
+        ///     <para xml:lang="en"><paramref name="keywordId" /> is not registered.</para>
+        ///     <para xml:lang="zh-CN"><paramref name="keywordId" /> 尚未注册。</para>
+        /// </exception>
         public static string GetModKeywordCardText(this string keywordId)
         {
             ArgumentException.ThrowIfNullOrWhiteSpace(keywordId);
             return ModKeywordRegistry.GetCardText(keywordId);
+        }
+
+        /// <summary>
+        ///     <para xml:lang="en">
+        ///         Gets inline card BBCode for a registered mod <see cref="CardKeyword" />.
+        ///     </para>
+        ///     <para xml:lang="zh-CN">
+        ///         获取已注册模组 <see cref="CardKeyword" /> 的内联卡牌 BBCode。
+        ///     </para>
+        /// </summary>
+        /// <param name="value">
+        ///     <para xml:lang="en">The registered mod keyword value.</para>
+        ///     <para xml:lang="zh-CN">已注册的模组关键词值。</para>
+        /// </param>
+        /// <returns>
+        ///     <para xml:lang="en">Inline card BBCode containing the localized keyword title.</para>
+        ///     <para xml:lang="zh-CN">包含本地化关键词标题的内联卡牌 BBCode。</para>
+        /// </returns>
+        /// <exception cref="KeyNotFoundException">
+        ///     <para xml:lang="en"><paramref name="value" /> is not a registered mod keyword.</para>
+        ///     <para xml:lang="zh-CN"><paramref name="value" /> 不是已注册的模组关键词。</para>
+        /// </exception>
+        public static string GetModKeywordCardText(this CardKeyword value)
+        {
+            return ModKeywordRegistry.GetCardText(value);
         }
 
         /// <summary>

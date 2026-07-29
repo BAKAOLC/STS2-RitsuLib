@@ -150,6 +150,103 @@ namespace STS2RitsuLib.Combat.Rewards
         }
 
         /// <summary>
+        ///     <para xml:lang="en">Tries to get a registered reward definition by ID.</para>
+        ///     <para xml:lang="zh-CN">尝试按 ID 获取已注册的奖励定义。</para>
+        /// </summary>
+        /// <param name="id">
+        ///     <para xml:lang="en">The reward ID to resolve.</para>
+        ///     <para xml:lang="zh-CN">要解析的奖励 ID。</para>
+        /// </param>
+        /// <param name="definition">
+        ///     <para xml:lang="en">The registered definition when found.</para>
+        ///     <para xml:lang="zh-CN">找到时返回已注册的定义。</para>
+        /// </param>
+        /// <returns>
+        ///     <para xml:lang="en"><see langword="true" /> when the reward is registered; otherwise, <see langword="false" />.</para>
+        ///     <para xml:lang="zh-CN">奖励已注册时为 <see langword="true" />；否则为 <see langword="false" />。</para>
+        /// </returns>
+        public static bool TryGet(string id, out ModRewardDefinition definition)
+        {
+            ArgumentException.ThrowIfNullOrWhiteSpace(id);
+
+            lock (SyncRoot)
+            {
+                return Definitions.TryGetValue(NormalizeId(id), out definition!);
+            }
+        }
+
+        /// <summary>
+        ///     <para xml:lang="en">Gets a registered reward definition by ID.</para>
+        ///     <para xml:lang="zh-CN">按 ID 获取已注册的奖励定义。</para>
+        /// </summary>
+        /// <param name="id">
+        ///     <para xml:lang="en">The reward ID to resolve.</para>
+        ///     <para xml:lang="zh-CN">要解析的奖励 ID。</para>
+        /// </param>
+        /// <returns>
+        ///     <para xml:lang="en">The registered reward definition.</para>
+        ///     <para xml:lang="zh-CN">已注册的奖励定义。</para>
+        /// </returns>
+        /// <exception cref="KeyNotFoundException">
+        ///     <para xml:lang="en">No reward is registered under <paramref name="id" />.</para>
+        ///     <para xml:lang="zh-CN">没有使用 <paramref name="id" /> 注册的奖励。</para>
+        /// </exception>
+        public static ModRewardDefinition Get(string id)
+        {
+            return TryGet(id, out var definition)
+                ? definition
+                : throw new KeyNotFoundException($"Reward '{NormalizeId(id)}' is not registered.");
+        }
+
+        /// <summary>
+        ///     <para xml:lang="en">Tries to get a registered reward definition by <see cref="RewardType" />.</para>
+        ///     <para xml:lang="zh-CN">尝试按 <see cref="RewardType" /> 获取已注册的奖励定义。</para>
+        /// </summary>
+        /// <param name="rewardType">
+        ///     <para xml:lang="en">The dynamic reward type to resolve.</para>
+        ///     <para xml:lang="zh-CN">要解析的动态奖励类型。</para>
+        /// </param>
+        /// <param name="definition">
+        ///     <para xml:lang="en">The registered definition when found.</para>
+        ///     <para xml:lang="zh-CN">找到时返回已注册的定义。</para>
+        /// </param>
+        /// <returns>
+        ///     <para xml:lang="en"><see langword="true" /> when the reward type is registered; otherwise, <see langword="false" />.</para>
+        ///     <para xml:lang="zh-CN">奖励类型已注册时为 <see langword="true" />；否则为 <see langword="false" />。</para>
+        /// </returns>
+        public static bool TryGetByRewardType(RewardType rewardType, out ModRewardDefinition definition)
+        {
+            lock (SyncRoot)
+            {
+                return DefinitionsByRewardType.TryGetValue(rewardType, out definition!);
+            }
+        }
+
+        /// <summary>
+        ///     <para xml:lang="en">Gets a registered reward definition by <see cref="RewardType" />.</para>
+        ///     <para xml:lang="zh-CN">按 <see cref="RewardType" /> 获取已注册的奖励定义。</para>
+        /// </summary>
+        /// <param name="rewardType">
+        ///     <para xml:lang="en">The dynamic reward type to resolve.</para>
+        ///     <para xml:lang="zh-CN">要解析的动态奖励类型。</para>
+        /// </param>
+        /// <returns>
+        ///     <para xml:lang="en">The registered reward definition.</para>
+        ///     <para xml:lang="zh-CN">已注册的奖励定义。</para>
+        /// </returns>
+        /// <exception cref="KeyNotFoundException">
+        ///     <para xml:lang="en"><paramref name="rewardType" /> is not a registered mod reward.</para>
+        ///     <para xml:lang="zh-CN"><paramref name="rewardType" /> 不是已注册的模组奖励。</para>
+        /// </exception>
+        public static ModRewardDefinition Get(RewardType rewardType)
+        {
+            return TryGetByRewardType(rewardType, out var definition)
+                ? definition
+                : throw new KeyNotFoundException(
+                    $"RewardType '0x{(int)rewardType:X8}' is not a registered mod reward.");
+        }
+
+        /// <summary>
         ///     Returns the deterministic dynamic <see cref="RewardType" /> for a registered or raw reward id.
         ///     返回已注册或原始 reward id 对应的确定性动态 <see cref="RewardType" />。
         /// </summary>
@@ -227,6 +324,26 @@ namespace STS2RitsuLib.Combat.Rewards
 
             modId = string.Empty;
             return false;
+        }
+
+        /// <summary>
+        ///     <para xml:lang="en">Gets a snapshot of all registered reward definitions, ordered by ID.</para>
+        ///     <para xml:lang="zh-CN">获取所有已注册奖励定义的快照，并按 ID 排序。</para>
+        /// </summary>
+        /// <returns>
+        ///     <para xml:lang="en">A new array containing the registered definitions in ordinal ID order.</para>
+        ///     <para xml:lang="zh-CN">按 ID 序数顺序包含已注册定义的新数组。</para>
+        /// </returns>
+        public static ModRewardDefinition[] GetDefinitionsSnapshot()
+        {
+            lock (SyncRoot)
+            {
+                return
+                [
+                    .. Definitions.Values
+                        .OrderBy(definition => definition.Id, StringComparer.Ordinal),
+                ];
+            }
         }
 
         internal static bool TryCreate(
