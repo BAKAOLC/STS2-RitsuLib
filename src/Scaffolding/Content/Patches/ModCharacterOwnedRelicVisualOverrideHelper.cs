@@ -39,6 +39,15 @@ namespace STS2RitsuLib.Scaffolding.Content.Patches
             }
         }
 
+        internal static void InvalidateAllCaches()
+        {
+            lock (SyncRoot)
+            {
+                RegisteredProfileAdapters.Clear();
+                _cachedGlobalProfileAdapter = null;
+            }
+        }
+
         /// <summary>
         ///     Merge order (lowest → highest): character <see cref="IModCharacterAssetOverrides.AssetProfile" /> rows,
         ///     programmatic registry, then <see cref="ModContentRegistry.RegisterCharacterAssetReplacement" /> /
@@ -237,6 +246,31 @@ namespace STS2RitsuLib.Scaffolding.Content.Patches
             return true;
         }
 
+        private static bool TryLoadResource<TResource>(
+            string? path,
+            object instance,
+            string memberName,
+            out TResource resource)
+            where TResource : Resource
+        {
+            resource = null!;
+            if (string.IsNullOrWhiteSpace(path))
+                return false;
+
+            if (GodotResourcePath.TryLoad<TResource>(path, out var loaded) && loaded != null)
+            {
+                resource = loaded;
+                return true;
+            }
+
+            ContentAssetOverridePatchHelper.WarnOverrideUnavailable(
+                instance,
+                memberName,
+                path,
+                typeof(TResource).Name);
+            return false;
+        }
+
         internal static bool TryRelicIconPath(RelicModel instance, ref string result)
         {
             var overrides = TryGetOwningCharacterOverrides(instance);
@@ -262,12 +296,14 @@ namespace STS2RitsuLib.Scaffolding.Content.Patches
             if (profile == null)
                 return true;
 
-            var path = profile.IconPath;
-            if (string.IsNullOrWhiteSpace(path) ||
-                !AssetPathDiagnostics.Exists(path, instance, nameof(RelicAssetProfile.IconPath)))
+            if (!TryLoadResource(
+                    profile.IconPath,
+                    instance,
+                    nameof(RelicAssetProfile.IconPath),
+                    out Texture2D texture))
                 return true;
 
-            result = ResourceLoader.Load<Texture2D>(path);
+            result = texture;
             return false;
         }
 
@@ -296,12 +332,14 @@ namespace STS2RitsuLib.Scaffolding.Content.Patches
             if (profile == null)
                 return true;
 
-            var path = profile.IconOutlinePath;
-            if (string.IsNullOrWhiteSpace(path) ||
-                !AssetPathDiagnostics.Exists(path, instance, nameof(RelicAssetProfile.IconOutlinePath)))
+            if (!TryLoadResource(
+                    profile.IconOutlinePath,
+                    instance,
+                    nameof(RelicAssetProfile.IconOutlinePath),
+                    out Texture2D texture))
                 return true;
 
-            result = ResourceLoader.Load<Texture2D>(path);
+            result = texture;
             return false;
         }
 
@@ -313,12 +351,14 @@ namespace STS2RitsuLib.Scaffolding.Content.Patches
             if (profile == null)
                 return true;
 
-            var path = profile.BigIconPath;
-            if (string.IsNullOrWhiteSpace(path) ||
-                !AssetPathDiagnostics.Exists(path, instance, nameof(RelicAssetProfile.BigIconPath)))
+            if (!TryLoadResource(
+                    profile.BigIconPath,
+                    instance,
+                    nameof(RelicAssetProfile.BigIconPath),
+                    out Texture2D texture))
                 return true;
 
-            result = ResourceLoader.Load<Texture2D>(path);
+            result = texture;
             return false;
         }
 
@@ -361,12 +401,14 @@ namespace STS2RitsuLib.Scaffolding.Content.Patches
             if (profile == null)
                 return true;
 
-            var path = profile.ImagePath;
-            if (string.IsNullOrWhiteSpace(path) ||
-                !AssetPathDiagnostics.Exists(path, instance, nameof(PotionAssetProfile.ImagePath)))
+            if (!TryLoadResource(
+                    profile.ImagePath,
+                    instance,
+                    nameof(PotionAssetProfile.ImagePath),
+                    out Texture2D texture))
                 return true;
 
-            result = ResourceLoader.Load<Texture2D>(path);
+            result = texture;
             return false;
         }
 
@@ -377,12 +419,14 @@ namespace STS2RitsuLib.Scaffolding.Content.Patches
             if (profile == null)
                 return true;
 
-            var path = profile.OutlinePath;
-            if (string.IsNullOrWhiteSpace(path) ||
-                !AssetPathDiagnostics.Exists(path, instance, nameof(PotionAssetProfile.OutlinePath)))
+            if (!TryLoadResource(
+                    profile.OutlinePath,
+                    instance,
+                    nameof(PotionAssetProfile.OutlinePath),
+                    out Texture2D texture))
                 return true;
 
-            result = ResourceLoader.Load<Texture2D>(path);
+            result = texture;
             return false;
         }
 
@@ -425,12 +469,14 @@ namespace STS2RitsuLib.Scaffolding.Content.Patches
             if (profile == null)
                 return true;
 
-            var path = profile.FramePath;
-            if (string.IsNullOrWhiteSpace(path) ||
-                !AssetPathDiagnostics.Exists(path, instance, nameof(CardAssetProfile.FramePath)))
+            if (!TryLoadResource(
+                    profile.FramePath,
+                    instance,
+                    nameof(CardAssetProfile.FramePath),
+                    out Texture2D texture))
                 return true;
 
-            result = ResourceLoader.Load<Texture2D>(path);
+            result = texture;
             return false;
         }
 
@@ -441,12 +487,14 @@ namespace STS2RitsuLib.Scaffolding.Content.Patches
             if (profile == null)
                 return true;
 
-            var path = profile.PortraitBorderPath;
-            if (string.IsNullOrWhiteSpace(path) ||
-                !AssetPathDiagnostics.Exists(path, instance, nameof(CardAssetProfile.PortraitBorderPath)))
+            if (!TryLoadResource(
+                    profile.PortraitBorderPath,
+                    instance,
+                    nameof(CardAssetProfile.PortraitBorderPath),
+                    out Texture2D texture))
                 return true;
 
-            result = ResourceLoader.Load<Texture2D>(path);
+            result = texture;
             return false;
         }
 
@@ -457,12 +505,14 @@ namespace STS2RitsuLib.Scaffolding.Content.Patches
             if (profile == null)
                 return true;
 
-            var path = profile.EnergyIconPath;
-            if (string.IsNullOrWhiteSpace(path) ||
-                !AssetPathDiagnostics.Exists(path, instance, nameof(CardAssetProfile.EnergyIconPath)))
+            if (!TryLoadResource(
+                    profile.EnergyIconPath,
+                    instance,
+                    nameof(CardAssetProfile.EnergyIconPath),
+                    out Texture2D texture))
                 return true;
 
-            result = ResourceLoader.Load<Texture2D>(path);
+            result = texture;
             return false;
         }
 
@@ -473,12 +523,14 @@ namespace STS2RitsuLib.Scaffolding.Content.Patches
             if (profile == null)
                 return true;
 
-            var path = profile.AncientBorderPath;
-            if (string.IsNullOrWhiteSpace(path) ||
-                !AssetPathDiagnostics.Exists(path, instance, nameof(CardAssetProfile.AncientBorderPath)))
+            if (!TryLoadResource(
+                    profile.AncientBorderPath,
+                    instance,
+                    nameof(CardAssetProfile.AncientBorderPath),
+                    out Texture2D texture))
                 return true;
 
-            result = ResourceLoader.Load<Texture2D>(path);
+            result = texture;
             return false;
         }
 
@@ -489,12 +541,14 @@ namespace STS2RitsuLib.Scaffolding.Content.Patches
             if (profile == null)
                 return true;
 
-            var path = profile.AncientTextBgPath;
-            if (string.IsNullOrWhiteSpace(path) ||
-                !AssetPathDiagnostics.Exists(path, instance, nameof(CardAssetProfile.AncientTextBgPath)))
+            if (!TryLoadResource(
+                    profile.AncientTextBgPath,
+                    instance,
+                    nameof(CardAssetProfile.AncientTextBgPath),
+                    out Texture2D texture))
                 return true;
 
-            result = ResourceLoader.Load<Texture2D>(path);
+            result = texture;
             return false;
         }
 
@@ -511,12 +565,14 @@ namespace STS2RitsuLib.Scaffolding.Content.Patches
                 return false;
             }
 
-            var path = profile.FrameMaterialPath;
-            if (string.IsNullOrWhiteSpace(path) ||
-                !AssetPathDiagnostics.Exists(path, instance, nameof(CardAssetProfile.FrameMaterialPath)))
+            if (!TryLoadResource(
+                    profile.FrameMaterialPath,
+                    instance,
+                    nameof(CardAssetProfile.FrameMaterialPath),
+                    out Material material))
                 return true;
 
-            result = ResourceLoader.Load<Material>(path);
+            result = material;
             return false;
         }
 
@@ -533,12 +589,14 @@ namespace STS2RitsuLib.Scaffolding.Content.Patches
                 return false;
             }
 
-            var path = profile.PortraitMaterialPath;
-            if (string.IsNullOrWhiteSpace(path) ||
-                !AssetPathDiagnostics.Exists(path, instance, nameof(CardAssetProfile.PortraitMaterialPath)))
+            if (!TryLoadResource(
+                    profile.PortraitMaterialPath,
+                    instance,
+                    nameof(CardAssetProfile.PortraitMaterialPath),
+                    out Material material))
                 return true;
 
-            result = ResourceLoader.Load<Material>(path);
+            result = material;
             return false;
         }
 
@@ -555,12 +613,14 @@ namespace STS2RitsuLib.Scaffolding.Content.Patches
                 return false;
             }
 
-            var path = profile.PortraitBorderMaterialPath;
-            if (string.IsNullOrWhiteSpace(path) ||
-                !AssetPathDiagnostics.Exists(path, instance, nameof(CardAssetProfile.PortraitBorderMaterialPath)))
+            if (!TryLoadResource(
+                    profile.PortraitBorderMaterialPath,
+                    instance,
+                    nameof(CardAssetProfile.PortraitBorderMaterialPath),
+                    out Material material))
                 return true;
 
-            result = ResourceLoader.Load<Material>(path);
+            result = material;
             return false;
         }
 
@@ -577,12 +637,14 @@ namespace STS2RitsuLib.Scaffolding.Content.Patches
                 return false;
             }
 
-            var path = profile.EnergyIconMaterialPath;
-            if (string.IsNullOrWhiteSpace(path) ||
-                !AssetPathDiagnostics.Exists(path, instance, nameof(CardAssetProfile.EnergyIconMaterialPath)))
+            if (!TryLoadResource(
+                    profile.EnergyIconMaterialPath,
+                    instance,
+                    nameof(CardAssetProfile.EnergyIconMaterialPath),
+                    out Material material))
                 return true;
 
-            result = ResourceLoader.Load<Material>(path);
+            result = material;
             return false;
         }
 
@@ -599,12 +661,14 @@ namespace STS2RitsuLib.Scaffolding.Content.Patches
                 return false;
             }
 
-            var path = profile.AncientBorderMaterialPath;
-            if (string.IsNullOrWhiteSpace(path) ||
-                !AssetPathDiagnostics.Exists(path, instance, nameof(CardAssetProfile.AncientBorderMaterialPath)))
+            if (!TryLoadResource(
+                    profile.AncientBorderMaterialPath,
+                    instance,
+                    nameof(CardAssetProfile.AncientBorderMaterialPath),
+                    out Material material))
                 return true;
 
-            result = ResourceLoader.Load<Material>(path);
+            result = material;
             return false;
         }
 
@@ -621,12 +685,14 @@ namespace STS2RitsuLib.Scaffolding.Content.Patches
                 return false;
             }
 
-            var path = profile.AncientTextBgMaterialPath;
-            if (string.IsNullOrWhiteSpace(path) ||
-                !AssetPathDiagnostics.Exists(path, instance, nameof(CardAssetProfile.AncientTextBgMaterialPath)))
+            if (!TryLoadResource(
+                    profile.AncientTextBgMaterialPath,
+                    instance,
+                    nameof(CardAssetProfile.AncientTextBgMaterialPath),
+                    out Material material))
                 return true;
 
-            result = ResourceLoader.Load<Material>(path);
+            result = material;
             return false;
         }
 
@@ -643,12 +709,14 @@ namespace STS2RitsuLib.Scaffolding.Content.Patches
                 return false;
             }
 
-            var path = profile.AncientBannerMaterialPath;
-            if (string.IsNullOrWhiteSpace(path) ||
-                !AssetPathDiagnostics.Exists(path, instance, nameof(CardAssetProfile.AncientBannerMaterialPath)))
+            if (!TryLoadResource(
+                    profile.AncientBannerMaterialPath,
+                    instance,
+                    nameof(CardAssetProfile.AncientBannerMaterialPath),
+                    out Material material))
                 return true;
 
-            result = ResourceLoader.Load<Material>(path);
+            result = material;
             return false;
         }
 
@@ -659,12 +727,14 @@ namespace STS2RitsuLib.Scaffolding.Content.Patches
             if (profile == null)
                 return true;
 
-            var path = profile.AncientBannerPath;
-            if (string.IsNullOrWhiteSpace(path) ||
-                !AssetPathDiagnostics.Exists(path, instance, nameof(CardAssetProfile.AncientBannerPath)))
+            if (!TryLoadResource(
+                    profile.AncientBannerPath,
+                    instance,
+                    nameof(CardAssetProfile.AncientBannerPath),
+                    out Texture2D texture))
                 return true;
 
-            result = ResourceLoader.Load<Texture2D>(path);
+            result = texture;
             return false;
         }
 
@@ -698,10 +768,13 @@ namespace STS2RitsuLib.Scaffolding.Content.Patches
             if (string.IsNullOrWhiteSpace(path))
                 return true;
 
-            result = ContentAssetOverridePatchHelper.IsPackedScenePathOverrideAvailable(
-                instance,
-                path,
-                nameof(CardAssetProfile.OverlayScenePath));
+            if (!ContentAssetOverridePatchHelper.IsPackedScenePathOverrideAvailable(
+                    instance,
+                    path,
+                    nameof(CardAssetProfile.OverlayScenePath)))
+                return true;
+
+            result = true;
             return false;
         }
 
@@ -730,12 +803,14 @@ namespace STS2RitsuLib.Scaffolding.Content.Patches
             if (profile == null)
                 return true;
 
-            var path = profile.BannerTexturePath;
-            if (string.IsNullOrWhiteSpace(path) ||
-                !AssetPathDiagnostics.Exists(path, instance, nameof(CardAssetProfile.BannerTexturePath)))
+            if (!TryLoadResource(
+                    profile.BannerTexturePath,
+                    instance,
+                    nameof(CardAssetProfile.BannerTexturePath),
+                    out Texture2D texture))
                 return true;
 
-            result = ResourceLoader.Load<Texture2D>(path);
+            result = texture;
             return false;
         }
 
@@ -752,12 +827,14 @@ namespace STS2RitsuLib.Scaffolding.Content.Patches
                 return false;
             }
 
-            var path = profile.BannerMaterialPath;
-            if (string.IsNullOrWhiteSpace(path) ||
-                !AssetPathDiagnostics.Exists(path, instance, nameof(CardAssetProfile.BannerMaterialPath)))
+            if (!TryLoadResource(
+                    profile.BannerMaterialPath,
+                    instance,
+                    nameof(CardAssetProfile.BannerMaterialPath),
+                    out Material material))
                 return true;
 
-            result = ResourceLoader.Load<Material>(path);
+            result = material;
             return false;
         }
 
@@ -778,7 +855,10 @@ namespace STS2RitsuLib.Scaffolding.Content.Patches
             if (string.IsNullOrWhiteSpace(path))
                 return true;
 
-            result = AssetPathDiagnostics.Exists(path, instance, nameof(CardAssetProfile.PortraitPath));
+            if (!AssetPathDiagnostics.Exists(path, instance, nameof(CardAssetProfile.PortraitPath)))
+                return true;
+
+            result = true;
             return false;
         }
 
@@ -793,21 +873,40 @@ namespace STS2RitsuLib.Scaffolding.Content.Patches
             if (string.IsNullOrWhiteSpace(path))
                 return true;
 
-            result = AssetPathDiagnostics.Exists(path, instance, nameof(CardAssetProfile.BetaPortraitPath));
+            if (!AssetPathDiagnostics.Exists(path, instance, nameof(CardAssetProfile.BetaPortraitPath)))
+                return true;
+
+            result = true;
             return false;
         }
 
-        internal static string[] GetExistingCardPortraitPaths(CardModel instance)
+        internal static bool TryGetExistingCardPortraitPaths(
+            CardModel instance,
+            out string? portraitPath,
+            out string? betaPortraitPath)
         {
+            portraitPath = null;
+            betaPortraitPath = null;
             var overrides = TryGetOwningCharacterOverrides(instance);
             var profile = overrides?.TryGetVanillaCardVisualOverrideForContext(instance);
             if (profile == null)
-                return [];
+                return false;
 
-            return AssetPathDiagnostics.CollectExistingPaths(
-                instance,
-                (profile.PortraitPath, nameof(CardAssetProfile.PortraitPath)),
-                (profile.BetaPortraitPath, nameof(CardAssetProfile.BetaPortraitPath)));
+            if (!string.IsNullOrWhiteSpace(profile.PortraitPath) &&
+                AssetPathDiagnostics.Exists(
+                    profile.PortraitPath,
+                    instance,
+                    nameof(CardAssetProfile.PortraitPath)))
+                portraitPath = profile.PortraitPath;
+
+            if (!string.IsNullOrWhiteSpace(profile.BetaPortraitPath) &&
+                AssetPathDiagnostics.Exists(
+                    profile.BetaPortraitPath,
+                    instance,
+                    nameof(CardAssetProfile.BetaPortraitPath)))
+                betaPortraitPath = profile.BetaPortraitPath;
+
+            return portraitPath != null || betaPortraitPath != null;
         }
 
         private static IModCharacterAssetOverrides? TryGetOwningCharacterOverrides(RelicModel instance)

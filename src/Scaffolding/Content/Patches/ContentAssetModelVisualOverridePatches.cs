@@ -196,8 +196,10 @@ namespace STS2RitsuLib.Scaffolding.Content.Patches
 
         public static bool Prefix(CardModel __instance, ref bool __result)
         {
-            return __instance is not IModCardAssetOverrides overrides ||
-                   TryHasPortrait(__instance, overrides, ref __result);
+            if (__instance is IModCardAssetOverrides overrides)
+                return TryHasPortrait(__instance, overrides, ref __result);
+
+            return ModCharacterOwnedVisualOverrideHelper.TryCardPortraitExists(__instance, ref __result);
         }
 
         internal static bool TryHasPortrait(CardModel instance, IModCardAssetOverrides overrides, ref bool result)
@@ -233,8 +235,10 @@ namespace STS2RitsuLib.Scaffolding.Content.Patches
 
         public static bool Prefix(CardModel __instance, ref bool __result)
         {
-            return __instance is not IModCardAssetOverrides overrides ||
-                   CardPortraitAvailabilityPatch.TryHasBetaPortrait(__instance, overrides, ref __result);
+            if (__instance is IModCardAssetOverrides overrides)
+                return CardPortraitAvailabilityPatch.TryHasBetaPortrait(__instance, overrides, ref __result);
+
+            return ModCharacterOwnedVisualOverrideHelper.TryCardBetaPortraitExists(__instance, ref __result);
         }
     }
 
@@ -1009,12 +1013,19 @@ namespace STS2RitsuLib.Scaffolding.Content.Patches
 
         public static bool Prefix(CardModel __instance, ref IEnumerable<string> __result)
         {
-            var ownedCharacterPaths = ModCharacterOwnedVisualOverrideHelper.GetExistingCardPortraitPaths(__instance);
-            if (ownedCharacterPaths.Length <= 0)
-                return __instance is not IModCardAssetOverrides overrides
-                       || ContentAssetOverridePatchHelper.TryUsePortraitPathList(__instance, overrides, ref __result);
-            __result = ownedCharacterPaths;
-            return false;
+            if (ModCharacterOwnedVisualOverrideHelper.TryGetExistingCardPortraitPaths(
+                    __instance,
+                    out var ownedPortraitPath,
+                    out var ownedBetaPortraitPath))
+            {
+                __result = ownedBetaPortraitPath == null
+                    ? [ownedPortraitPath ?? __instance.PortraitPath]
+                    : [ownedPortraitPath ?? __instance.PortraitPath, ownedBetaPortraitPath];
+                return false;
+            }
+
+            return __instance is not IModCardAssetOverrides overrides
+                   || ContentAssetOverridePatchHelper.TryUsePortraitPathList(__instance, overrides, ref __result);
         }
     }
 
@@ -1087,10 +1098,13 @@ namespace STS2RitsuLib.Scaffolding.Content.Patches
             if (string.IsNullOrWhiteSpace(path))
                 return true;
 
-            __result = ContentAssetOverridePatchHelper.IsPackedScenePathOverrideAvailable(
-                __instance,
-                path,
-                nameof(IModCardAssetOverrides.CustomOverlayScenePath));
+            if (!ContentAssetOverridePatchHelper.IsPackedScenePathOverrideAvailable(
+                    __instance,
+                    path,
+                    nameof(IModCardAssetOverrides.CustomOverlayScenePath)))
+                return true;
+
+            __result = true;
             return false;
         }
     }
@@ -1176,12 +1190,12 @@ namespace STS2RitsuLib.Scaffolding.Content.Patches
             if (!ModCharacterOwnedVisualOverrideHelper.TryRelicIconPath(instance, ref result))
                 return false;
 
-            // ReSharper disable once InvertIf
-            if (ExternalAssetOverrideRegistry.TryGetRelicIconPath(instance, out var externalPath))
-            {
-                result = externalPath;
+            if (!ContentAssetOverridePatchHelper.TryUseExternalPathOverride(
+                    instance,
+                    ref result,
+                    () => ExternalAssetOverrideRegistry.TryGetRelicIconPath(instance, out var path) ? path : null,
+                    "ExternalAssetOverrideRegistry.RelicIconPath"))
                 return false;
-            }
 
             return ContentAssetOverridePatchHelper.TryUseStringOverride<IModRelicAssetOverrides>(
                 instance,
@@ -1195,12 +1209,14 @@ namespace STS2RitsuLib.Scaffolding.Content.Patches
             if (!ModCharacterOwnedVisualOverrideHelper.TryRelicIconOutlinePath(instance, ref result))
                 return false;
 
-            // ReSharper disable once InvertIf
-            if (ExternalAssetOverrideRegistry.TryGetRelicIconOutlinePath(instance, out var externalPath))
-            {
-                result = externalPath;
+            if (!ContentAssetOverridePatchHelper.TryUseExternalPathOverride(
+                    instance,
+                    ref result,
+                    () => ExternalAssetOverrideRegistry.TryGetRelicIconOutlinePath(instance, out var path)
+                        ? path
+                        : null,
+                    "ExternalAssetOverrideRegistry.RelicIconOutlinePath"))
                 return false;
-            }
 
             return ContentAssetOverridePatchHelper.TryUseStringOverride<IModRelicAssetOverrides>(
                 instance,
@@ -1377,12 +1393,12 @@ namespace STS2RitsuLib.Scaffolding.Content.Patches
 
         private static bool TryPowerIconPath(PowerModel instance, ref string result)
         {
-            // ReSharper disable once InvertIf
-            if (ExternalAssetOverrideRegistry.TryGetPowerIconPath(instance, out var externalPath))
-            {
-                result = externalPath;
+            if (!ContentAssetOverridePatchHelper.TryUseExternalPathOverride(
+                    instance,
+                    ref result,
+                    () => ExternalAssetOverrideRegistry.TryGetPowerIconPath(instance, out var path) ? path : null,
+                    "ExternalAssetOverrideRegistry.PowerIconPath"))
                 return false;
-            }
 
             return ContentAssetOverridePatchHelper.TryUseStringOverride<IModPowerAssetOverrides>(
                 instance,

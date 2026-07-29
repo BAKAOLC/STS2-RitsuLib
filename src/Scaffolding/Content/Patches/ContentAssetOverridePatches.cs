@@ -113,19 +113,30 @@ namespace STS2RitsuLib.Scaffolding.Content.Patches
             return false;
         }
 
-        internal static bool TryUsePortraitPathList(object instance, IModCardAssetOverrides overrides,
+        internal static bool TryUsePortraitPathList(CardModel instance, IModCardAssetOverrides overrides,
             ref IEnumerable<string> __result)
         {
-            var paths = AssetPathDiagnostics.CollectExistingPaths(
-                instance,
-                (overrides.CustomPortraitPath, nameof(IModCardAssetOverrides.CustomPortraitPath)),
-                (overrides.CustomBetaPortraitPath, nameof(IModCardAssetOverrides.CustomBetaPortraitPath)));
-
-            if (paths.Length == 0)
+            var portraitPath = GetExistingPath(
+                overrides.CustomPortraitPath,
+                nameof(IModCardAssetOverrides.CustomPortraitPath));
+            var betaPortraitPath = GetExistingPath(
+                overrides.CustomBetaPortraitPath,
+                nameof(IModCardAssetOverrides.CustomBetaPortraitPath));
+            if (portraitPath == null && betaPortraitPath == null)
                 return true;
 
-            __result = paths;
+            __result = betaPortraitPath == null
+                ? [portraitPath ?? instance.PortraitPath]
+                : [portraitPath ?? instance.PortraitPath, betaPortraitPath];
             return false;
+
+            string? GetExistingPath(string? path, string memberName)
+            {
+                return !string.IsNullOrWhiteSpace(path) &&
+                       AssetPathDiagnostics.Exists(path, instance, memberName)
+                    ? path
+                    : null;
+            }
         }
 
         internal static bool TryUseExistenceOverride(object instance, string? path, string memberName,
@@ -134,7 +145,10 @@ namespace STS2RitsuLib.Scaffolding.Content.Patches
             if (string.IsNullOrWhiteSpace(path))
                 return true;
 
-            __result = AssetPathDiagnostics.Exists(path, instance, memberName);
+            if (!AssetPathDiagnostics.Exists(path, instance, memberName))
+                return true;
+
+            __result = true;
             return false;
         }
 
@@ -1838,10 +1852,13 @@ namespace STS2RitsuLib.Scaffolding.Content.Patches
             if (string.IsNullOrWhiteSpace(path))
                 return true;
 
-            __result = ContentAssetOverridePatchHelper.IsPackedScenePathOverrideAvailable(
-                __instance,
-                path,
-                nameof(IModEventAssetOverrides.CustomVfxScenePath));
+            if (!ContentAssetOverridePatchHelper.IsPackedScenePathOverrideAvailable(
+                    __instance,
+                    path,
+                    nameof(IModEventAssetOverrides.CustomVfxScenePath)))
+                return true;
+
+            __result = true;
             return false;
         }
     }
@@ -2394,10 +2411,13 @@ namespace STS2RitsuLib.Scaffolding.Content.Patches
                     nameof(IModAfflictionAssetOverrides.CustomOverlayScenePath)))
                 return true;
 
-            __result = ContentAssetOverridePatchHelper.IsPackedScenePathOverrideAvailable(
-                __instance,
-                path,
-                nameof(IModAfflictionAssetOverrides.CustomOverlayScenePath));
+            if (!ContentAssetOverridePatchHelper.IsPackedScenePathOverrideAvailable(
+                    __instance,
+                    path,
+                    nameof(IModAfflictionAssetOverrides.CustomOverlayScenePath)))
+                return true;
+
+            __result = true;
             return false;
         }
     }

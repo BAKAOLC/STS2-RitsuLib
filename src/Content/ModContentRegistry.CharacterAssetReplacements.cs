@@ -60,6 +60,7 @@ namespace STS2RitsuLib.Content
                     NextCharacterAssetReplacementWriteOrder());
             }
 
+            ModCharacterOwnedVisualOverrideHelper.InvalidateAllCaches();
             RuntimeAssetRefreshCoordinator.Request();
             _logger.Info("[Content] Registered global character asset replacement.");
         }
@@ -87,6 +88,7 @@ namespace STS2RitsuLib.Content
                 perMod[ModId] = new(assetProfile, NextCharacterAssetReplacementWriteOrder());
             }
 
+            ModCharacterOwnedVisualOverrideHelper.InvalidateCachesForCharacterEntry(normalizedEntry);
             RuntimeAssetRefreshCoordinator.Request();
             _logger.Info($"[Content] Registered character asset replacement for '{normalizedEntry}'.");
         }
@@ -109,6 +111,7 @@ namespace STS2RitsuLib.Content
             }
 
             if (!removed) return removed;
+            ModCharacterOwnedVisualOverrideHelper.InvalidateAllCaches();
             RuntimeAssetRefreshCoordinator.Request();
             _logger.Info("[Content] Cleared global character asset replacement.");
 
@@ -135,6 +138,7 @@ namespace STS2RitsuLib.Content
             }
 
             if (!removed) return removed;
+            ModCharacterOwnedVisualOverrideHelper.InvalidateCachesForCharacterEntry(canonical);
             RuntimeAssetRefreshCoordinator.Request();
             _logger.Info($"[Content] Removed character asset replacement for '{canonical}'.");
 
